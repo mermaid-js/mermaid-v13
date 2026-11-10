@@ -1,11 +1,12 @@
 /**
- * `pnpm gen:config` writes every file generated from the config schema;
+ * `pnpm gen:config` writes every file generated from the config schema, and assembles
+ * MIGRATION.md's per-diagram sections from `v13/docs/migration/*.md`;
  * `pnpm gen:config --check` fails instead when any of them is stale (R-CONF-4).
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { findFragments } from './fragments.ts';
+import { findFragments, findMigrationFragments } from './fragments.ts';
 import { SCHEMA_PATH, SchemaError, generate } from './generate.ts';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -14,7 +15,12 @@ const read = (path: string) =>
 const check = process.argv.includes('--check');
 
 try {
-  const { files } = await generate(read(SCHEMA_PATH) ?? '', read, findFragments(root));
+  const { files } = await generate(
+    read(SCHEMA_PATH) ?? '',
+    read,
+    findFragments(root),
+    findMigrationFragments(root)
+  );
   const stale = [...files].filter(([path, content]) => read(path) !== content).map(([p]) => p);
   if (check) {
     if (stale.length > 0) {

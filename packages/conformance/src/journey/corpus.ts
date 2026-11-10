@@ -16,7 +16,7 @@ import type { CorpusItem } from '../types.ts';
  * #302 (the model conversions of v12's grammar actions and DB, statements without separators,
  * and errors). `journey-cases/parser case entity actors` holds `#…;` entities in actor names:
  * v12 sorted them by its entity placeholders (`ﬂ°lt¶ß`), v13 by the names as written (a listed
- * divergence, `divergences.json`).
+ * divergence, `divergences/`).
  */
 function journeyCases(): CorpusItem[] {
   return JSON.parse(

@@ -1,0 +1,67 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# configDefaults: tools/gen-config writes src/generated/config-defaults.ts for the config section.
+configDefaults: true
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: sankey
+    title: Sankey diagram syntax
+    kinds:
+      module: parser/tokens.ts
+      object: SankeyKind
+      # One kind per rule where jison names two rules alike (`DQUOTE`) or the kind is named
+      # after what it holds (`Text` for `NON_ESCAPED_TEXT`).
+      unnamed:
+        OpenQuote:
+          mode: csv
+          pattern: '"'
+          terminal: DQUOTE
+        CloseQuote:
+          mode: escaped_text
+          pattern: '"(?!")'
+          terminal: DQUOTE
+        Text:
+          mode: csv
+          pattern: '[\x20-\x21\x23-\x2B\x2D-\x7E]*'
+          terminal: NON_ESCAPED_TEXT
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - plugin.ts
+    - index.ts
+    - config.ts
+    - testing.ts
+    - test-context.ts
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The sankey diagram plugin (SVG; `sankey`, `sankey-beta`).'
+  install: 'with `mermaid/slim`'
+
+# credits: licence credits for pnpm check:licenses (tools/release/src/licenses.ts, R-REL-4):
+# the upstreams this package's ported files derive from, and the files that must credit them.
+# mermaid's notices carry them too (its CDN build bundles this package): notices/mermaid.txt.
+credits:
+  upstreams:
+    - name: 'd3-sankey'
+      marker: 'https://github.com/d3/d3-sankey'
+      holder: ['Mike Bostock']
+      copyright: ['Copyright 2015, Mike Bostock']
+      license: BSD-3-Clause
+    - name: 'd3-array'
+      marker: 'https://github.com/d3/d3-array'
+      holder: ['Mike Bostock']
+      copyright: ['Copyright 2010-2020 Mike Bostock']
+      license: BSD-3-Clause
+    - name: 'd3-shape'
+      marker: 'https://github.com/d3/d3-shape'
+      holder: ['Mike Bostock']
+      copyright: ['Copyright 2010-2015 Mike Bostock']
+      license: BSD-3-Clause
+  files:
+    src/layout/d3-sankey.ts: ['d3-sankey', 'd3-array']
+    src/layout/layout.ts: ['d3-shape']

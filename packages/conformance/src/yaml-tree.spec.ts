@@ -6,6 +6,7 @@
  * what the renderer reads.
  */
 import { createHash } from 'node:crypto';
+import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseYaml, preprocess } from '@mermaid-js/core/preprocess';
@@ -14,6 +15,8 @@ import { corpusFromDir, REPO_ROOT } from './corpus.ts';
 import type { CorpusItem } from './types.ts';
 
 const CORPUS_DIR = 'e2e/diagrams';
+/** The pinned digests: `<folder>.txt` per e2e diagram folder with front matter or shape data. */
+const DIGESTS = join(import.meta.dirname, '__snapshots__', 'yaml-tree');
 
 /** What the source text under a node must look like, for its kind and style. */
 function badText(text: string, node: YamlNode): string | undefined {
@@ -125,7 +128,7 @@ describe('YAML default mode over the corpus', async () => {
   const items: CorpusItem[] = [];
   for await (const item of corpusFromDir(join(REPO_ROOT, CORPUS_DIR), CORPUS_DIR)) items.push(item);
 
-  it('reads front matter and shape data exactly as before (digest per diagram folder)', () => {
+  it('reads front matter and shape data exactly as before (digest per diagram folder)', async () => {
     const hashes = new Map<string, ReturnType<typeof createHash>>();
     const counts = new Map<string, number>();
     for (const { id, source: text } of items) {
@@ -150,6 +153,15 @@ describe('YAML default mode over the corpus', async () => {
         .map(([folder, h]) => [folder, `${counts.get(folder)} ${h.digest('hex').slice(0, 16)}`])
     );
     expect(Object.keys(digest).length).toBeGreaterThan(10);
-    expect(digest).toMatchSnapshot();
+    // One file per folder, so a port's fixtures change only its own digest file.
+    for (const [folder, line] of Object.entries(digest))
+      await expect(`${line}\n`).toMatchFileSnapshot(join(DIGESTS, `${folder}.txt`));
+    const files = readdirSync(DIGESTS)
+      .filter((f) => f.endsWith('.txt'))
+      .map((f) => f.slice(0, -'.txt'.length));
+    expect(
+      files.filter((f) => !(f in digest)),
+      'digests of folders with no reads'
+    ).toEqual([]);
   });
 });

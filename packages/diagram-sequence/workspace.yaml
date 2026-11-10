@@ -1,0 +1,17 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: sequence
+    title: Sequence diagram syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
+      # `accDescr {` and its `}`: jison returns no token for them, the lexer does.
+      unnamed:
+        AccDescrMultiline:
+          mode: INITIAL
+          pattern: (?i:accDescr)\s*\{\s*
+        AccDescrMultilineEnd:
+          mode: acc_descr_multiline
+          pattern: \}

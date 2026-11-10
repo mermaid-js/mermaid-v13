@@ -1,0 +1,20 @@
+wardley-beta:keyword
+title Tea:keyword
+anchor:keyword
+Customer:variable
+[:punctuation
+,:punctuation
+]:punctuation
+component:keyword
+"Cup of Tea":string
+[:punctuation
+,:punctuation
+]:punctuation
+(:punctuation
+build:keyword
+):punctuation
+Customer:variable
+->:operator
+"Cup of Tea":string
+evolve:keyword
+Customer:variable

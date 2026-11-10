@@ -8,7 +8,7 @@
  * Usage: `pnpm --filter @mermaid-js/diagram-sankey port:v12-specs` (also runs prettier).
  */
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -24,7 +24,7 @@ const DATA = ['energy.csv'];
 /**
  * `file: { test title (or its unique start): { reason, divergence } }`, in `v12-skips.json`.
  * Reasons are written into the file. Each skip names the parity divergence that is its cause
- * (an id in `packages/conformance/divergences.json`): the port refuses a skip whose divergence
+ * (an id in `packages/conformance/divergences/<type>.json`): the port refuses a skip whose divergence
  * is not listed, and `conformance/src/sankey/v12-skips.spec.ts` checks the same on every run,
  * so a skip cannot outlive its divergence. The oracle (12.2.0) parses `__proto__,A` /
  * `A,__proto__`, a cycle that v12's d3-sankey then refuses at render; v13 rejects it at parse
@@ -33,12 +33,13 @@ const DATA = ['energy.csv'];
 const SKIP = JSON.parse(
   readFileSync(new URL('./v12-skips.json', import.meta.url), 'utf8')
 ) as Record<string, Record<string, { reason: string; divergence: string }>>;
+/** The parity divergence ids: every `packages/conformance/divergences/<type>.json`. */
+const DIVERGENCES_DIR = join(ROOT, 'packages/conformance/divergences');
 const DIVERGENCES = new Set(
-  (
-    JSON.parse(readFileSync(join(ROOT, 'packages/conformance/divergences.json'), 'utf8')) as {
-      id: string;
-    }[]
-  ).map((d) => d.id)
+  readdirSync(DIVERGENCES_DIR)
+    .filter((f) => f.endsWith('.json'))
+    .flatMap((f) => JSON.parse(readFileSync(join(DIVERGENCES_DIR, f), 'utf8')) as { id: string }[])
+    .map((d) => d.id)
 );
 
 const git = (...args: string[]) =>

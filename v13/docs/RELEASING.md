@@ -6,31 +6,35 @@ Agents: the `release-alpha` skill (`.claude/skills/release-alpha/SKILL.md`) walk
 
 ## 1. What gets published
 
+<!-- BEGIN GENERATED DIAGRAM ROWS: pnpm regen -->
+
 | Package | What it is | Users install it… |
 | --- | --- | --- |
 | `mermaid` | The API (`render`, `initialize`, `run`, `mount`, CLI) plus every first-party diagram, each loaded on first use. | for everything: `npm install mermaid@v13-alpha` |
 | `mermaid/slim` | A subpath of `mermaid`, not a package: the same API with only the diagrams passed to `createMermaid({ diagrams })`. | to pick diagrams, with the `@mermaid-js/diagram-*` packages they want |
 | `@mermaid-js/core` | The DOM-free engine: plugin contract, parser kit, layout, SVG writer, theme, config. | never directly; `mermaid` brings it |
-| `@mermaid-js/diagram-flowchart` | The flowchart plugin (SVG, and text output from `/ascii`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-class` | The class diagram plugin (SVG; `classDiagram` and `classDiagram-v2`). | with `mermaid/slim` |
-| `@mermaid-js/diagram-state` | The state diagram plugin (SVG; `stateDiagram` and `stateDiagram-v2`). | with `mermaid/slim` |
-| `@mermaid-js/diagram-timeline` | The timeline plugin (SVG; `timeline`, `LR` and `TD`). | with `mermaid/slim` |
-| `@mermaid-js/diagram-info` | The info diagram plugin (SVG and text; `info`). | with `mermaid/slim` |
-| `@mermaid-js/diagram-pie` | The pie chart plugin (SVG; `pie`). | with `mermaid/slim` |
-| `@mermaid-js/diagram-packet` | The packet diagram plugin (SVG, and text output from `/ascii`; `packet`, `packet-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-cynefin` | The Cynefin framework plugin (SVG; `cynefin-beta`). | with `mermaid/slim` |
-| `@mermaid-js/diagram-quadrant` | The quadrant chart plugin (SVG; `quadrantChart`). | with `mermaid/slim` |
-| `@mermaid-js/diagram-mindmap` | The mindmap plugin (SVG; `mindmap`). | with `mermaid/slim` |
-| `@mermaid-js/diagram-gitgraph` | The git graph plugin (SVG; `gitGraph`, `LR`, `TB` and `BT`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-flowchart` | The flowchart plugin (SVG, and text output from `/ascii`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-gantt` | The gantt chart plugin (SVG; `gantt`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-gitgraph` | The git graph plugin (SVG; `gitGraph`, `LR`, `TB` and `BT`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-info` | The info diagram plugin (SVG and text; `info`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-kanban` | The kanban board plugin (SVG; `kanban`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-mindmap` | The mindmap plugin (SVG; `mindmap`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-packet` | The packet diagram plugin (SVG, and text output from `/ascii`; `packet`, `packet-beta`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-pie` | The pie chart plugin (SVG; `pie`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-quadrant` | The quadrant chart plugin (SVG; `quadrantChart`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-radar` | The radar chart plugin (SVG; `radar-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-sankey` | The sankey diagram plugin (SVG; `sankey`, `sankey-beta`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-state` | The state diagram plugin (SVG; `stateDiagram` and `stateDiagram-v2`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-timeline` | The timeline plugin (SVG; `timeline`, `LR` and `TD`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-treemap` | The treemap plugin (SVG; `treemap`, `treemap-beta`). | with `mermaid/slim` |
-| `@mermaid-js/diagram-wardley` | The Wardley map plugin (SVG; `wardley-beta`). | with `mermaid/slim` |,
-| `@mermaid-js/diagram-xychart` | The XY chart plugin (SVG; `xychart`, `xychart-beta`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-venn` | The Venn diagram plugin (SVG; `venn-beta`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-wardley` | The Wardley map plugin (SVG; `wardley-beta`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-xychart` | The XY chart plugin (SVG; `xychart`, `xychart-beta`). | with `mermaid/slim` |
 | `@mermaid-js/plugin-interactions` | v12 click callbacks as an extension plugin. | when they use `click A callback` |
+
+<!-- END GENERATED DIAGRAM ROWS -->
 
 The private workspace packages (`bench`, `conformance`, `dev`, `tools/*`) are never published.
 
