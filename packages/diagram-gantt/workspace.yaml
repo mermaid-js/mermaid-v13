@@ -1,0 +1,25 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: gantt
+    title: Gantt chart syntax
+    # The openers and closers of jison's start conditions are named in the grammar file.
+    kinds:
+      module: parser/tokens.ts
+      object: T
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - schedule/
+    - layout/
+    - render/
+    - dates/
+    - plugin.ts
+    - index.ts
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The gantt chart plugin (SVG; `gantt`).'
+  install: 'with `mermaid/slim`'

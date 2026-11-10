@@ -194,7 +194,7 @@ describe('xychart through the public API (#513)', () => {
   it('renders each case byte for byte as the plugin seam does, and rejects the same sources', async () => {
     const apis = new Map(THEMES.map((theme) => [theme, xyChartApi({ theme })]));
     // The seam leaves a directive core's preprocessing reports to the parser; the API rejects
-    // an unclosed one before it parses (UNCLOSED_DIRECTIVE, the T2 choice, `divergences.json`).
+    // an unclosed one before it parses (UNCLOSED_DIRECTIVE, the T2 choice, `divergences/`).
     const unclosed: string[] = [];
     let rendered = 0;
     for (const c of cases.filter((_, i) => i % 2 === 0)) {

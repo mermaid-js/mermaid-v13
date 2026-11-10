@@ -1,7 +1,8 @@
-import { mkdtempSync, readFileSync, realpathSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { load } from 'js-yaml';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { language as classFacet } from '@mermaid-js/diagram-class/language';
 import type { Bundle } from './build.ts';
@@ -15,157 +16,45 @@ const build = (entry: URL) =>
   });
 
 const inputs = (b: Bundle) => Object.values(b.graph).flatMap((f) => f.inputs);
-/** The first-party packages with a `./language` facet, and the subpaths it must not reach. */
-const PACKAGES = [
-  { name: 'flowchart', dir: 'diagram-flowchart', renderer: ['render/', 'ascii', 'plugin.ts'] },
-  { name: 'state', dir: 'diagram-state', renderer: ['render/', 'layout/', 'plugin.ts'] },
-  {
-    name: 'class',
-    dir: 'diagram-class',
-    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts'],
-  },
-  { name: 'quadrant', dir: 'diagram-quadrant', renderer: ['render/', 'layout/', 'index.ts'] },
-  {
-    name: 'journey',
-    dir: 'diagram-journey',
-    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts', 'labels.ts'],
-  },
-  {
-    name: 'timeline',
-    dir: 'diagram-timeline',
-    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts', 'model.ts'],
-  },
-  {
-    name: 'pie',
-    dir: 'diagram-pie',
-    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts'],
-  },
-  {
-    name: 'mindmap',
-    dir: 'diagram-mindmap',
-    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts', 'icons.ts'],
-  },
-  {
-    name: 'gitGraph',
-    dir: 'diagram-gitgraph',
-    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts', 'model.ts'],
-  },
-  {
-    name: 'gantt',
-    dir: 'diagram-gantt',
-    renderer: ['schedule/', 'layout/', 'render/', 'dates/', 'plugin.ts', 'index.ts'],
-  },
-  {
-    name: 'packet',
-    dir: 'diagram-packet',
-    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts', 'labels.ts'],
-  },
-  {
-    name: 'cynefin',
-    dir: 'diagram-cynefin',
-    renderer: ['render/', 'layout/', 'theme/', 'plugin.ts', 'index.ts', 'testing.ts'],
-  },
-  {
-    name: 'kanban',
-    dir: 'diagram-kanban',
-    renderer: ['render/', 'layout/', 'theme/', 'plugin.ts', 'index.ts', 'testing.ts'],
-  },
-  {
-    name: 'venn',
-    dir: 'diagram-venn',
-    renderer: [
-      'render/',
-      'layout/',
-      'solver/',
-      'theme/',
-      'plugin.ts',
-      'index.ts',
-      'labels.ts',
-      'config.ts',
-      'testing.ts',
-      'test-context.ts',
-    ],
-  },
-  {
-    name: 'info',
-    dir: 'diagram-info',
-    renderer: ['render.ts', 'layout.ts', 'ascii.ts', 'plugin.ts', 'index.ts'],
-  },
-  {
-    name: 'radar',
-    dir: 'diagram-radar',
-    renderer: [
-      'render/',
-      'layout/',
-      'theme/',
-      'plugin.ts',
-      'index.ts',
-      'labels.ts',
-      'config.ts',
-      'testing.ts',
-      'test-context.ts',
-    ],
-  },
-  {
-    name: 'sankey',
-    dir: 'diagram-sankey',
-    renderer: [
-      'render/',
-      'layout/',
-      'plugin.ts',
-      'index.ts',
-      'config.ts',
-      'testing.ts',
-      'test-context.ts',
-    ],
-  },
-  {
-    name: 'treemap',
-    dir: 'diagram-treemap',
-    renderer: [
-      'render/',
-      'layout/',
-      'theme/',
-      'plugin.ts',
-      'index.ts',
-      'config.ts',
-      'testing.ts',
-      'test-context.ts',
-    ],
-  },
-  {
-    name: 'wardley',
-    dir: 'diagram-wardley',
-    renderer: [
-      'render/',
-      'layout/',
-      'theme/',
-      'v12-specs/',
-      'plugin.ts',
-      'index.ts',
-      'config.ts',
-      'testing.ts',
-    ],
-  },
-  {
-    name: 'xychart',
-    dir: 'diagram-xychart',
-    renderer: [
-      'render/',
-      'layout/',
-      'theme/',
-      'v12-specs/',
-      'plugin.ts',
-      'index.ts',
-      'labels.ts',
-      'model.ts',
-      'config.ts',
-      'generated/config-defaults.ts',
-      'testing.ts',
-      'test-context.ts',
-    ],
-  },
-] as const;
+const ROOT = fileURLToPath(new URL('../../..', import.meta.url));
+
+interface Checked {
+  readonly name: string;
+  readonly dir: string;
+  readonly renderer: readonly string[];
+}
+
+/**
+ * The first-party packages with a `./language` facet, and the `src/` entries it must not reach:
+ * each package's own `workspace.yaml` `languageBundle.renderer` (a port declares its own there).
+ */
+function languagePackages(): { checked: Checked[]; unchecked: string[] } {
+  const checked: Checked[] = [];
+  const unchecked: string[] = [];
+  for (const dir of readdirSync(join(ROOT, 'packages')).sort()) {
+    const manifest = join(ROOT, 'packages', dir, 'package.json');
+    if (!dir.startsWith('diagram-') || !existsSync(manifest)) continue;
+    const { mermaid } = JSON.parse(readFileSync(manifest, 'utf8')) as {
+      mermaid?: { plugin?: string; language?: string };
+    };
+    if (mermaid?.plugin !== 'diagram' || mermaid.language === undefined) continue;
+    const wiring = join(ROOT, 'packages', dir, 'workspace.yaml');
+    const declared = existsSync(wiring)
+      ? (load(readFileSync(wiring, 'utf8')) as { languageBundle?: { renderer?: string[] } } | null)
+          ?.languageBundle?.renderer
+      : undefined;
+    if (declared === undefined) unchecked.push(dir);
+    else checked.push({ name: dir.slice('diagram-'.length), dir, renderer: declared });
+  }
+  return { checked, unchecked };
+}
+
+const { checked: PACKAGES, unchecked: UNCHECKED } = languagePackages();
+
+it('checks every ./language package but er (its own allow-list below) and sequence', () => {
+  expect(UNCHECKED).toEqual(['diagram-er', 'diagram-sequence']);
+  expect(PACKAGES.length).toBeGreaterThan(15);
+});
 
 /** The `./language` source entry, read from the installed package's export map. */
 function languageEntry(dir: string): URL {

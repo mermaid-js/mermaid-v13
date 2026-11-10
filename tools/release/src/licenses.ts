@@ -1,13 +1,11 @@
-// cspell:ignore fmin
 /**
  * License check (R-REL-4, D12): ported code carries its upstreams' attribution, under each
- * upstream's license (MIT unless the upstream says otherwise; d3-sankey, d3-array and d3-shape,
- * which sankey re-implements, and fmin, which venn.js bundles, are BSD 3-Clause; d3-hierarchy
- * and d3-format, which treemap re-implements, are ISC).
+ * upstream's license (MIT unless the upstream says otherwise: BSD 3-Clause or ISC).
  *
  * `UPSTREAMS` maps each upstream to the marker that credits it in a file's leading comment
- * block (the repository URLs of Pele, Iconify, d3, venn.js and fmin; Braintree's sanitize-url
- * package name). A file is derived from an upstream when its header has that marker. Then:
+ * block (its repository URL, or a package name). The shared upstreams are listed here; each
+ * diagram package lists its own in its `workspace.yaml` (`credits:`). A file is derived from an
+ * upstream when its header has that marker. Then:
  * - that header names the upstream's license and every copyright holder of the upstream;
  * - in a published package (`packages/*` without `"private": true`), and in a private one that
  *   holds a file of `REQUIRED_CREDITS` (so making a package private does not drop its credits),
@@ -26,6 +24,7 @@
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
+import { workspaceDiagrams } from '../../workspace/diagrams.ts';
 
 interface Upstream {
   /** The section heading in THIRD_PARTY_NOTICES. */
@@ -67,7 +66,12 @@ const licenseOf = (u: Upstream): License => u.license ?? 'MIT';
 /** `"a"`, or `"a" and "b"`: how a message names holders or copyright lines. */
 const quoted = (items: readonly string[]): string => items.map((i) => `"${i}"`).join(' and ');
 
-export const UPSTREAMS: readonly Upstream[] = [
+/**
+ * Upstreams of code outside the diagram packages. A diagram package declares the upstreams of
+ * its own ported files in its `workspace.yaml` (`credits.upstreams`, `tools/workspace`), so a
+ * port never edits this file.
+ */
+const SHARED_UPSTREAMS: readonly Upstream[] = [
   {
     name: 'Pele',
     marker: 'https://github.com/obsidianmd/pele',
@@ -87,90 +91,79 @@ export const UPSTREAMS: readonly Upstream[] = [
     holder: ['Vjacheslav Trushkin'],
     copyright: ['Copyright (c) 2021-PRESENT Vjacheslav Trushkin'],
   },
-  {
-    name: 'd3-sankey',
-    marker: 'https://github.com/d3/d3-sankey',
-    holder: ['Mike Bostock'],
-    copyright: ['Copyright 2015, Mike Bostock'],
-    license: 'BSD-3-Clause',
-  },
-  {
-    name: 'd3-array',
-    marker: 'https://github.com/d3/d3-array',
-    holder: ['Mike Bostock'],
-    copyright: ['Copyright 2010-2020 Mike Bostock'],
-    license: 'BSD-3-Clause',
-  },
-  {
-    name: 'd3-shape',
-    marker: 'https://github.com/d3/d3-shape',
-    holder: ['Mike Bostock'],
-    copyright: ['Copyright 2010-2015 Mike Bostock'],
-    license: 'BSD-3-Clause',
-  },
-  {
-    name: 'd3-hierarchy',
-    marker: 'https://github.com/d3/d3-hierarchy',
-    holder: ['Mike Bostock'],
-    copyright: ['Copyright 2010-2021 Mike Bostock'],
-    license: 'ISC',
-  },
-  {
-    name: 'd3-format',
-    marker: 'https://github.com/d3/d3-format',
-    holder: ['Mike Bostock'],
-    copyright: ['Copyright 2010-2026 Mike Bostock'],
-    license: 'ISC',
-  },
-  {
-    // cspell:ignore Frederickson Gratzl
-    name: 'venn.js',
-    marker: 'https://github.com/upsetjs/venn.js',
-    holder: ['Ben Frederickson', 'Samuel Gratzl'],
-    copyright: ['Copyright (c) 2013 Ben Frederickson', 'Copyright (c) 2021 Samuel Gratzl'],
-  },
-  {
-    // venn.js bundles fmin's optimisers, under fmin's own license.
-    name: 'fmin',
-    marker: 'https://github.com/benfred/fmin',
-    holder: ['Ben Frederickson'],
-    copyright: ['Copyright 2016, Ben Frederickson'],
-    license: 'BSD-3-Clause',
-  },
 ];
 
-/** Workspace-relative files that must credit these upstreams (checked when the file exists). */
+// A pre-manifest package's ported files need their credits as soon as they exist.
+const DIAGRAMS = workspaceDiagrams();
+
+/** A `credits.upstreams` row of `pkg`'s workspace.yaml, checked to be an {@link Upstream}. */
+function upstreamOf(pkg: string, row: Readonly<Record<string, unknown>>): Upstream {
+  const strings = (v: unknown) => Array.isArray(v) && v.every((s) => typeof s === 'string');
+  const { name, marker, holder, copyright, license } = row;
+  if (
+    typeof name !== 'string' ||
+    typeof marker !== 'string' ||
+    !strings(holder) ||
+    !strings(copyright) ||
+    (license !== undefined && !(typeof license === 'string' && license in LICENSE_HEADER))
+  )
+    throw new Error(
+      `${pkg}/workspace.yaml: credits.upstreams rows need name, marker, holder: [..], ` +
+        `copyright: [..] and an optional license (${Object.keys(LICENSE_HEADER).join(', ')})`
+    );
+  return row as unknown as Upstream;
+}
+
+/** Each diagram package's upstreams, by name, in package order (one definition per name). */
+const DIAGRAM_UPSTREAMS: ReadonlyMap<string, Upstream> = (() => {
+  const byName = new Map<string, Upstream>();
+  for (const d of DIAGRAMS)
+    for (const row of d.wiring.credits?.upstreams ?? []) {
+      const u = upstreamOf(d.dir, row);
+      const seen = byName.get(u.name);
+      if (seen && JSON.stringify(seen) !== JSON.stringify(u))
+        throw new Error(`${d.dir}/workspace.yaml: upstream "${u.name}" differs from another's`);
+      byName.set(u.name, u);
+    }
+  return byName;
+})();
+
+export const UPSTREAMS: readonly Upstream[] = [...SHARED_UPSTREAMS, ...DIAGRAM_UPSTREAMS.values()];
+
+/**
+ * Workspace-relative files that must credit these upstreams (checked when the file exists): the
+ * shared ones here, and each diagram package's `credits.files`.
+ */
 export const REQUIRED_CREDITS: Readonly<Record<string, readonly string[]>> = {
   'packages/core/src/svg/url.ts': ['Pele', '@braintree/sanitize-url'],
   'packages/plugin-icons/src/resolve.ts': ['@iconify/utils'],
   'packages/plugin-icons/src/name.ts': ['@iconify/utils'],
-  'packages/diagram-sankey/src/layout/d3-sankey.ts': ['d3-sankey', 'd3-array'],
-  'packages/diagram-sankey/src/layout/layout.ts': ['d3-shape'],
-  'packages/diagram-treemap/src/layout/tiles.ts': ['d3-hierarchy'],
-  'packages/diagram-treemap/src/format/d3-format.ts': ['d3-format'],
-  'packages/diagram-venn/src/solver/circles.ts': ['venn.js'],
-  'packages/diagram-venn/src/solver/fmin.ts': ['fmin', 'venn.js'],
-  'packages/diagram-venn/src/solver/index.ts': ['venn.js'],
-  'packages/diagram-venn/src/solver/normalize.ts': ['venn.js'],
-  'packages/diagram-venn/src/solver/regions.ts': ['venn.js'],
-  'packages/diagram-venn/src/solver/solve.ts': ['venn.js'],
+  ...Object.fromEntries(
+    DIAGRAMS.flatMap((d) =>
+      Object.entries(d.wiring.credits?.files ?? {}).map(([file, names]) => {
+        for (const n of names)
+          if (!UPSTREAMS.some((u) => u.name === n))
+            throw new Error(`${d.dir}/workspace.yaml: credits.files names no upstream "${n}"`);
+        return [`${d.dir}/${file}`, names] as const;
+      })
+    )
+  ),
 };
 
 /**
  * Workspace packages whose build bundles another package's ported code with the legal comments
- * stripped (mermaid's CDN build, `legalComments: 'none'`, bundles diagram-sankey,
- * diagram-treemap and diagram-venn), so their own notices carry those upstreams. Pending for the maintainer:
- * core's `@braintree/sanitize-url`.
+ * stripped, so their own notices carry those upstreams: mermaid's CDN build
+ * (`legalComments: 'none'`) bundles every diagram package, so mermaid carries every diagram
+ * package's upstreams. Pending for the maintainer: core's `@braintree/sanitize-url`.
  */
 export const BUNDLED_CREDITS: Readonly<Record<string, readonly string[]>> = {
+  // A pre-manifest package is not in mermaid's registry yet, so mermaid does not bundle it.
   'packages/mermaid': [
-    'd3-sankey',
-    'd3-array',
-    'd3-shape',
-    'd3-hierarchy',
-    'd3-format',
-    'venn.js',
-    'fmin',
+    ...new Set(
+      DIAGRAMS.filter((d) => d.manifest !== undefined).flatMap((d) =>
+        (d.wiring.credits?.upstreams ?? []).map((u) => upstreamOf(d.dir, u).name)
+      )
+    ),
   ],
 };
 

@@ -1,0 +1,24 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: timeline
+    title: Timeline syntax
+    # `accDescr {` and its `}` are named in the grammar file (jison returns no token for them).
+    kinds:
+      module: parser/tokens.ts
+      object: T
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - plugin.ts
+    - index.ts
+    - model.ts
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The timeline plugin (SVG; `timeline`, `LR` and `TD`).'
+  install: 'with `mermaid/slim`'

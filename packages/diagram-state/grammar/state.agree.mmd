@@ -1,0 +1,8 @@
+stateDiagram-v2
+  [*] --> Idle
+  state Busy {
+    [*] --> Working
+    Working --> [*]
+  }
+  Idle --> Busy : start
+  note right of Idle : waits
