@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { flowchartLanguage } from '@mermaid-js/diagram-flowchart/language';
 import { createLanguageService } from './index.ts';
 import type { DocumentSnapshot, Range } from './index.ts';
-import { facetlessType } from './testing/facetless.ts';
+import { noFacetType } from './testing/no-facet.ts';
 
 const service = createLanguageService();
 beforeAll(() => service.preload());
@@ -103,7 +103,7 @@ describe('diagnostics (D91)', () => {
 
   it('gives a v12 type with no facet one info diagnostic on its header', async () => {
     // The first generated row with no facet: there must still be one (see the helper).
-    const { type, header, source } = facetlessType();
+    const { type, header, source } = noFacetType();
     const doc = await open(`%% hi\n${source}`);
     expect(doc.facet).toBeUndefined();
     expect(doc.type).toBe(type);
@@ -270,7 +270,7 @@ describe('definition, references and rename (D92)', () => {
   });
 
   it('refuses everything on a type with no facet', async () => {
-    const { type, source } = facetlessType();
+    const { type, source } = noFacetType();
     const doc = await open(source);
     expect(doc.definition(1)).toBeUndefined();
     expect(doc.references(1)).toEqual([]);
