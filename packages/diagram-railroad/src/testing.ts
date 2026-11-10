@@ -22,6 +22,7 @@ export { railroadEbnfCategories } from './generated/railroad-ebnf.categories.ts'
 export { railroadAbnfCategories } from './generated/railroad-abnf.categories.ts';
 export { railroadPegCategories } from './generated/railroad-peg.categories.ts';
 export { railroadLayoutViolations, RAILROAD_METRICS } from './layout/index.ts';
+export { layoutInCells } from './layout/cells.ts';
 export { railroadSectionOf } from './config.ts';
 export { renderRailroadForTest, TEST_VERSION } from './render/harness.ts';
 export type { RenderedRailroad, RenderRailroadOptions } from './render/harness.ts';

@@ -5,18 +5,22 @@ import { cellProfile } from '@mermaid-js/core/layout';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import {
-  layoutRailroad,
   parseRailroad,
   type RailroadExpressionLayout,
   type RailroadLayout,
   type RailroadModel,
 } from '@mermaid-js/diagram-railroad';
-import { railroadLayoutViolations, railroadSectionOf } from '@mermaid-js/diagram-railroad/testing';
+import {
+  layoutInCells,
+  railroadLayoutViolations,
+  railroadSectionOf,
+} from '@mermaid-js/diagram-railroad/testing';
 import { createMermaid, MermaidError, type Mermaid, type TextRenderResult } from 'mermaid';
 import { notationOf, railroadGateCorpus } from './corpus.ts';
 
 // ASCII render properties over the railroad gate corpus (e2e fixtures, v12 spec strings, the
-// cases and the recovery set, each also with CRLF and comment lines), in both charsets, through
+// cases and the recovery set, each also with CRLF and comment lines), in both charsets and both
+// `ascii.padding` presets, through
 // the public `format: 'ascii'` API (#617, D518, R-ASCII-9): renders every diagram that renders to
 // SVG and rejects only what SVG rejects; deterministic; `rows` lines, none wider than `columns`
 // and one exactly that wide, no trailing spaces, no box glyph in `ascii`. The layout in cells
@@ -24,10 +28,13 @@ import { notationOf, railroadGateCorpus } from './corpus.ts';
 // nonterminal and special is a closed box of its kind's corners where the layout puts it, its
 // text inside on the track's row with a tee on each side where the track enters and leaves;
 // every rule starts with `name =` and has its two markers; and (unicode) the drawn track joins
-// each rule's start marker to its end marker.
+// each rule's start marker to its end marker; no box border, bypass or loop of a branch off a
+// choice's main line shares or touches the main line's row (#617 review).
 
 type Charset = 'unicode' | 'ascii';
 const CHARSETS: Charset[] = ['unicode', 'ascii'];
+type Padding = 'compact' | 'roomy';
+const PADDINGS: Padding[] = ['compact', 'roomy'];
 
 interface Case {
   id: string;
@@ -42,10 +49,19 @@ const failed: Record<string, string> = {};
 let rejected = 0;
 let theme: Theme;
 
-/** The layout the hook draws: the plugin's, in cells (the `compact` preset). */
-function cellLayout(model: RailroadModel, section: Record<string, unknown>): RailroadLayout {
-  const config = { railroad: section, ascii: { padding: 'compact' } } as unknown as ResolvedConfig;
-  return layoutRailroad(model, { config, measurer: cellMeasurer, theme, units: cellProfile() });
+/** The layout the hook draws: the plugin's, in cells under `padding`'s profile. */
+function cellLayout(
+  model: RailroadModel,
+  section: Record<string, unknown>,
+  padding: Padding
+): RailroadLayout {
+  const config = { railroad: section, ascii: { padding } } as unknown as ResolvedConfig;
+  return layoutInCells(model, {
+    config,
+    measurer: cellMeasurer,
+    theme,
+    units: cellProfile(padding),
+  });
 }
 
 const api = (): Mermaid => {
@@ -64,21 +80,23 @@ beforeAll(async () => {
     const parse = parseRailroad(item.source, { preprocessed: pre });
     const parses = !parse.diagnostics.some((d) => d.severity === 'error');
     try {
-      const out = {} as Case['out'];
-      const again = {} as Case['again'];
-      for (const charset of CHARSETS) {
-        const call = { format: 'ascii', config: { ascii: { charset } } } as const;
-        out[charset] = await first.render('mermaid-0', item.source, call);
-        again[charset] = (await fresh.render('mermaid-0', item.source, call)).text;
+      for (const padding of PADDINGS) {
+        const out = {} as Case['out'];
+        const again = {} as Case['again'];
+        for (const charset of CHARSETS) {
+          const call = { format: 'ascii', config: { ascii: { charset, padding } } } as const;
+          out[charset] = await first.render('mermaid-0', item.source, call);
+          again[charset] = (await fresh.render('mermaid-0', item.source, call)).text;
+        }
+        const layout = cellLayout(parse.model, railroadSectionOf(pre), padding);
+        cases.push({
+          id: `${padding} ${item.id}`,
+          model: parse.model,
+          layout: { unicode: layout, ascii: layout },
+          out,
+          again,
+        });
       }
-      const layout = cellLayout(parse.model, railroadSectionOf(pre));
-      cases.push({
-        id: item.id,
-        model: parse.model,
-        layout: { unicode: layout, ascii: layout },
-        out,
-        again,
-      });
       if (!parses) failed[item.id] = 'drawn although the parse has errors';
     } catch (e) {
       // Text is rejected only where SVG is too (preprocessing errors included).
@@ -204,7 +222,7 @@ function joined(
 describe('railroad ascii corpus properties (D518, R-ASCII-9)', { timeout: 120_000 }, () => {
   it('renders every railroad diagram that renders to SVG, and rejects the others with SYNTAX', () => {
     console.log(`railroad ascii corpus: ${cases.length} drawn, ${rejected} rejected as in SVG`);
-    expect(cases.length).toBeGreaterThan(500);
+    expect(cases.length).toBeGreaterThan(1_000);
     expect(rejected).toBeGreaterThan(0);
     expect(failed).toEqual({});
   });
@@ -271,7 +289,7 @@ describe('railroad ascii corpus properties (D518, R-ASCII-9)', { timeout: 120_00
         return found;
       })
     ).toEqual({});
-    expect(boxes).toBeGreaterThan(5_000);
+    expect(boxes).toBeGreaterThan(10_000);
   });
 
   it('starts each rule with `name =` and draws its two markers on the track', () => {
@@ -309,5 +327,47 @@ describe('railroad ascii corpus properties (D518, R-ASCII-9)', { timeout: 120_00
         });
       })
     ).toEqual({});
+  });
+
+  it('keeps every branch off a choice’s main line clear of its row, a blank row between', () => {
+    let choices = 0;
+    expect(
+      problems((c, cs) => {
+        const layout = c.layout[cs];
+        const at = grid(c.out[cs].text);
+        const dy = layout.rules[0]?.origin.y ?? 0;
+        const found: string[] = [];
+        for (const r of layout.rules) {
+          const walk = (e: RailroadExpressionLayout, ox: number, oy: number): void => {
+            for (const ch of e.children) walk(ch, ox + ch.x, oy + ch.y);
+            if (e.kind !== 'choice') return;
+            choices++;
+            const main = oy + e.up;
+            const row = main - dy;
+            if (!Number.isInteger(main)) found.push(`${e.ast}: main line at ${main}`);
+            const off = e.children.filter((b) => oy + b.y + b.up !== main);
+            for (const b of off) {
+              const top = oy + b.y;
+              const bottom = top + b.up + b.down;
+              if (bottom > main - 2 && top < main + 2)
+                found.push(`${b.ast}: rows ${top}-${bottom}, main line ${main}`);
+            }
+            // With no branch on it, the main line's row is blank between the choice's verticals.
+            if (off.length === e.children.length) {
+              const x0 = Math.floor(ox) + 2;
+              const x1 = Math.floor(ox + e.width) - 2;
+              for (let x = x0; x <= x1; x++)
+                if (at(x, row) !== ' ') {
+                  found.push(`${e.ast}: ${JSON.stringify(at(x, row))} on the main row at ${x}`);
+                  break;
+                }
+            }
+          };
+          walk(r.definition, r.origin.x + r.definition.x, r.origin.y + r.definition.y);
+        }
+        return found;
+      })
+    ).toEqual({});
+    expect(choices).toBeGreaterThan(1_000);
   });
 });

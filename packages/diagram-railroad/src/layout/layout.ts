@@ -29,8 +29,7 @@ import {
 } from '../config.ts';
 import type { RailroadModel, RailroadNode, RailroadRule } from '../model.ts';
 import { Box, shifted, Track, visitRule } from './geometry.ts';
-import { cellBoxMeasurer, cellLengths, inCells, metricsFor } from './cells.ts';
-import { BOLD_WEIGHT, NORMAL_WEIGHT, type RailroadMetrics } from './metrics.ts';
+import { BOLD_WEIGHT, NORMAL_WEIGHT, RAILROAD_METRICS, type RailroadMetrics } from './metrics.ts';
 import type {
   PlacedText,
   RailroadExpressionLayout,
@@ -41,25 +40,52 @@ import type {
 
 /**
  * What the layout reads from the render context; `warn` takes the one `RAILROAD_CONFIG_INVALID`
- * of an unusable colour or font (D515), where the section is checked. With the cell profile
- * (`units.id` `cell`, the text output) it lays out in cells (`cells.ts`).
+ * of an unusable colour or font (D515), where the section is checked. Under the cell profile
+ * (`units.id` `cell`) it does not warn: text draws none of those values.
  */
 export type RailroadLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
   Partial<Pick<RenderContext, 'warn' | 'units'>>;
 
 /**
- * Lays out a railroad diagram in px, or in cells with the cell profile: the same algorithm on
- * the cell tables, the `railroad` lengths unread (the text entry warns about them instead of
- * `RAILROAD_CONFIG_INVALID`, as text draws none of them).
+ * A choice's main line and its branches' tops (`tops`, moved in place) from v12's stacking:
+ * `side` is each branch's side of `centre` (-1 above, 0 on it, 1 below), `r` the arc radius.
  */
-export function layoutRailroad(model: RailroadModel, ctx: RailroadLayoutContext): RailroadLayout {
+export type ChoiceGuard = (
+  items: readonly { readonly up: number; readonly down: number }[],
+  tops: number[],
+  side: readonly number[],
+  centre: number,
+  r: number
+) => number;
+
+/**
+ * What the text entry hands the layout to lay out in cells (#617, `../ascii.ts` and `cells.ts`),
+ * so the SVG path carries none of it: the cell tables, the cell measurer, the main-line rule
+ * and the rows a rule takes below its definition.
+ */
+export interface RailroadCellOptions {
+  readonly lengths: RailroadLayoutConfig;
+  readonly metrics: RailroadMetrics;
+  readonly measurer: Measurer;
+  readonly guard: ChoiceGuard;
+  readonly ruleRoom: number;
+}
+
+/**
+ * Lays out a railroad diagram in px, or in cells with `cells` (the text entry's): the same
+ * algorithm on the cell tables, the `railroad` lengths unread.
+ */
+export function layoutRailroad(
+  model: RailroadModel,
+  ctx: RailroadLayoutContext,
+  cells?: RailroadCellOptions
+): RailroadLayout {
   const config = railroadConfig(railroadSection(ctx));
-  const cells = inCells(ctx);
-  const invalid = cells ? undefined : railroadConfigWarning(config);
+  const invalid = cells || ctx.units?.id === 'cell' ? undefined : railroadConfigWarning(config);
   if (invalid) ctx.warn?.(invalid);
-  const options = cells ? cellLengths(ctx.config) : config.lengths;
-  const m = metricsFor(cells);
-  const measurer = cells ? cellBoxMeasurer(ctx.measurer) : ctx.measurer;
+  const options = cells?.lengths ?? config.lengths;
+  const m = cells?.metrics ?? RAILROAD_METRICS;
+  const measurer = cells?.measurer ?? ctx.measurer;
   const units = cells ? 'cell' : 'px';
   const font = config.font;
   const text: FontKey = {
@@ -75,7 +101,7 @@ export function layoutRailroad(model: RailroadModel, ctx: RailroadLayoutContext)
     return { ...canvas, units, metrics: m, options, config, fonts, rules: [], bounds: canvas };
   }
 
-  const place = new Placer(options, m, measurer, text, ruleName);
+  const place = new Placer(options, m, measurer, text, ruleName, cells ?? { guard: pxGuard });
   const rules: RailroadRuleLayout[] = [];
   let y = options.padding;
   let widest = 0;
@@ -110,6 +136,29 @@ const ON_LINE = 1e-6;
 /** -1 above the main line, 1 below, 0 on it (`d` is the track's y less the main line's). */
 const onSide = (d: number): number => (Math.abs(d) <= ON_LINE ? 0 : Math.sign(d));
 
+/**
+ * D514 in px: the nearest branch above and below the main line reaches at least `2r` from it (a
+ * closer one, and every branch beyond it on that side, moves out); a branch on the main line
+ * sits exactly on it.
+ */
+const pxGuard: ChoiceGuard = (items, tops, side, centre, r) => {
+  let nearAbove = Infinity;
+  let nearBelow = Infinity;
+  items.forEach((it, i) => {
+    const d = Math.abs(tops[i]! + it.up - centre);
+    if (side[i]! < 0) nearAbove = Math.min(nearAbove, d);
+    else if (side[i]! > 0) nearBelow = Math.min(nearBelow, d);
+  });
+  const raise = nearAbove < 2 * r ? 2 * r - nearAbove : 0;
+  const lower = nearBelow < 2 * r ? 2 * r - nearBelow : 0;
+  const main = centre + raise;
+  items.forEach((it, i) => {
+    if (side[i] === 0) tops[i] = main - it.up;
+    else if (side[i]! > 0) tops[i] = tops[i]! + raise + lower;
+  });
+  return main;
+};
+
 /** v12's `RailroadRenderer` with the drawing taken out: one measured box per expression. */
 class Placer {
   private readonly widths = new Map<string, number>();
@@ -120,7 +169,9 @@ class Placer {
     private readonly m: RailroadMetrics,
     private readonly measurer: Measurer,
     private readonly font: FontKey,
-    private readonly ruleFont: FontKey
+    private readonly ruleFont: FontKey,
+    /** The main-line rule, and the rows below a rule's definition in cells (px: `2 × padding`). */
+    private readonly cells: Pick<RailroadCellOptions, 'guard'> & Partial<RailroadCellOptions>
   ) {
     this.lineHeight = measurer.metrics(font).lineHeight;
   }
@@ -172,7 +223,10 @@ class Placer {
         .lineTo(endX - mR, baseline)
         .done(),
       width: endX + mR,
-      height: Math.max(this.m.minRuleHeight, defY + height(def) + 2 * padding),
+      height: Math.max(
+        this.m.minRuleHeight,
+        defY + height(def) + (this.cells.ruleRoom ?? 2 * padding)
+      ),
     };
   }
 
@@ -289,28 +343,13 @@ class Placer {
     }
     const track = (i: number): number => tops[i]! + items[i]!.up;
 
-    // D514: the nearest branch above and below the main line reaches at least 2r from it.
     // `side` is v12's test (`elemCenterY === centerY`, `> centerY`), made before any move, with
     // a tolerance: measured sizes leave rounding noise, which must not move a branch v12 drew
     // on the main line out by 2r.
     const side = items.map((_, i) => onSide(track(i) - centre));
-    let nearAbove = Infinity;
-    let nearBelow = Infinity;
-    items.forEach((_, i) => {
-      const d = Math.abs(track(i) - centre);
-      if (side[i]! < 0) nearAbove = Math.min(nearAbove, d);
-      else if (side[i]! > 0) nearBelow = Math.min(nearBelow, d);
-    });
-    const raise = nearAbove < 2 * r ? 2 * r - nearAbove : 0;
-    const lower = nearBelow < 2 * r ? 2 * r - nearBelow : 0;
-    centre += raise;
+    centre = this.cells.guard(items, tops, side, centre, r);
     let bottom = 0;
-    items.forEach((it, i) => {
-      // A branch on the main line sits exactly on it.
-      if (side[i] === 0) tops[i] = centre - it.up;
-      else if (side[i]! > 0) tops[i] = tops[i]! + raise + lower;
-      bottom = Math.max(bottom, tops[i]! + height(it));
-    });
+    items.forEach((it, i) => void (bottom = Math.max(bottom, tops[i]! + height(it))));
 
     const children: RailroadExpressionLayout[] = [];
     const paths: TrackPath[] = [];

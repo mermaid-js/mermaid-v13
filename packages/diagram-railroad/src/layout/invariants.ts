@@ -30,7 +30,8 @@
 import type { Measurer } from '@mermaid-js/core/text';
 import type { RailroadLayoutConfig } from '../config.ts';
 import type { RailroadModel, RailroadNode } from '../model.ts';
-import { BOLD_WEIGHT, type RailroadMetrics } from './metrics.ts';
+import { visitExpressions } from './geometry.ts';
+import { BOLD_WEIGHT, CELL_MAIN_CLEARANCE, metricsFor, type RailroadMetrics } from './metrics.ts';
 import type {
   Point,
   RailroadExpressionLayout,
@@ -213,9 +214,15 @@ function trackViolations(e: RailroadExpressionLayout, node: RailroadNode, out: s
 /**
  * A choice against v12's stack (`railroadRenderer.ts:222-313`), worked out here from the
  * branches' sizes: a branch v12 put on the main line (within float noise) is on it and straight,
- * and the choice is no taller than v12's stack plus D514's guard on each side.
+ * and the choice is no taller than v12's stack plus D514's guard on each side (in px; in cells
+ * the main line keeps a row clear of each branch's extent instead, `cellViolations`).
  */
-function choiceViolations(e: RailroadExpressionLayout, o: RailroadLayoutConfig, out: string[]) {
+function choiceViolations(
+  e: RailroadExpressionLayout,
+  o: RailroadLayoutConfig,
+  out: string[],
+  cells: boolean
+) {
   const { verticalSeparation: vs, arcRadius: r } = o;
   const tracks: number[] = [];
   let total = 0;
@@ -245,7 +252,7 @@ function choiceViolations(e: RailroadExpressionLayout, o: RailroadLayoutConfig, 
   });
   const guard = (d: number) => (d < 2 * r ? 2 * r - d : 0);
   const most = total + guard(above) + guard(below);
-  if (e.up + e.down > most + EPS) {
+  if (!cells && e.up + e.down > most + EPS) {
     out.push(`${e.ast}: ${e.up + e.down} high, D514 needs at most ${most}`);
   }
 }
@@ -255,7 +262,8 @@ function expressionViolations(
   e: RailroadExpressionLayout,
   node: RailroadNode,
   o: RailroadLayoutConfig,
-  out: string[]
+  out: string[],
+  cells = false
 ): void {
   const at = e.ast;
   const r = o.arcRadius;
@@ -284,8 +292,8 @@ function expressionViolations(
   if (e.box && !inside(e.box, own)) out.push(`${at}: its rect is outside its box`);
 
   trackViolations(e, node, out);
-  if (node.type === 'choice') choiceViolations(e, o, out);
-  e.children.forEach((c, i) => expressionViolations(c, kids[i]!, o, out));
+  if (node.type === 'choice') choiceViolations(e, o, out, cells);
+  e.children.forEach((c, i) => expressionViolations(c, kids[i]!, o, out, cells));
 }
 
 /** The checks on one rule's markers and lead lines, in its coordinates. */
@@ -441,6 +449,25 @@ function measuredViolations(
 }
 
 /**
+ * In cells (#617 review): each choice's main line on a whole row, and a full row between it and
+ * the extent (box, bypass or loop) of every branch off it.
+ */
+function cellViolations(rule: RailroadRuleLayout, out: string[]): void {
+  visitExpressions(rule, (e, _dx, dy) => {
+    if (e.kind !== 'choice') return;
+    const main = dy + e.up;
+    if (!Number.isInteger(main)) out.push(`${e.ast}: the main line is between rows (${main})`);
+    for (const b of e.children) {
+      const top = dy + b.y;
+      if (near(top + b.up, main)) continue;
+      const bottom = top + b.up + b.down;
+      if (bottom > main - CELL_MAIN_CLEARANCE && top < main + CELL_MAIN_CLEARANCE)
+        out.push(`${b.ast}: rows ${top} to ${bottom} come within a row of the main line ${main}`);
+    }
+  });
+}
+
+/**
  * Every way `layout` breaks the railroad layout's invariants for `model`; none when it holds.
  * With `measurer` (the one the layout used), the texts' sizes are checked against it too.
  */
@@ -467,8 +494,13 @@ export function railroadLayoutViolations(
       out.push(`rule ${i} is ${rule.ast}, the model has ${mr.astId}`);
       return;
     }
-    expressionViolations(rule.definition, mr.definition, o, out);
-    ruleViolations(rule, layout.metrics, out);
+    expressionViolations(rule.definition, mr.definition, o, out, layout.units === 'cell');
+    ruleViolations(
+      rule,
+      (layout.metrics as RailroadMetrics | undefined) ?? metricsFor(layout.units === 'cell'),
+      out
+    );
+    if (layout.units === 'cell') cellViolations(rule, out);
     if (measurer) measuredViolations(rule, layout, measurer, out);
     // v12 ends the lead-out at the end marker's left edge, behind its start under a marker
     // wider than the gap: only the pieces are checked.

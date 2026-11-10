@@ -1,6 +1,6 @@
 // cspell:words nonterminal
 import { describe, expect, it } from 'vitest';
-import { draw, text } from './ascii/railroad.fixtures.ts';
+import { draw, mainRowClashes, text } from './ascii/railroad.fixtures.ts';
 import { railroadLayoutViolations } from './layout/index.ts';
 import { parseRailroad } from './parser/index.ts';
 
@@ -83,7 +83,9 @@ describe('choices (D518: centred, as SVG)', () => {
         '         ╭───╮',
         '       ╭─┤ a ├─╮',
         '       │ ╰───╯ │',
+        '       │       │',
         'r = ●──┤       ├──●',
+        '       │       │',
         '       │╭─────╮│',
         '       ╰┤ bbb ├╯',
         '        ╰─────╯'
@@ -94,10 +96,52 @@ describe('choices (D518: centred, as SVG)', () => {
         '         /---\\',
         '       +-+ a +-+',
         '       | \\---/ |',
+        '       |       |',
         'r = o--+       +--o',
+        '       |       |',
         '       |/-----\\|',
         '       ++ bbb ++',
         '        \\-----/'
+      )
+    );
+  });
+});
+
+describe('main line clearance in cells (#617 review)', () => {
+  const ebnf = (rule: string): string => `railroad-ebnf-beta\nr = ${rule} ;`;
+  const CASES = [
+    '"a" | "b"',
+    '["a"] | "b"',
+    '{"a" | "bb"}',
+    '"a" , ("b" | "c")',
+    '"a" | ["b"]',
+    '{"a"} | "b"',
+    '"a" | "b" | ["c"] | {"d"}',
+  ];
+
+  it.each(CASES)('keeps %s off the main row, a full row clear, in both presets', async (rule) => {
+    for (const padding of ['compact', 'roomy'] as const) {
+      const { layout, text: out } = await draw(ebnf(rule), { padding });
+      expect(mainRowClashes(layout), `${padding}\n${out}`).toEqual([]);
+    }
+  });
+
+  it('puts a two-branch main line a blank row from each box', async () => {
+    expect(await text(ebnf('"a" | "b"'), { padding: 'roomy' })).toBe(
+      lines(
+        '        ╭─────╮',
+        '        │     │',
+        '       ╭┤  a  ├╮',
+        '       ││     ││',
+        '       │╰─────╯│',
+        '       │       │',
+        'r = ●──┤       ├──●',
+        '       │       │',
+        '       │╭─────╮│',
+        '       ││     ││',
+        '       ╰┤  b  ├╯',
+        '        │     │',
+        '        ╰─────╯'
       )
     );
   });
@@ -119,13 +163,11 @@ describe('optionals and repetitions (D518: bypass above, loop below)', () => {
         'r = ●──┴┤ x ├┴──●',
         '        ╰───╯',
         '',
-        '',
         '        ╭───╮',
         's = ●──┬┤ y ├┬──●',
         '       │╰───╯│',
         '       │     │',
         '       ╰─────╯',
-        '',
         '',
         '       ╭─────╮',
         '       │     │',
@@ -140,7 +182,7 @@ describe('optionals and repetitions (D518: bypass above, loop below)', () => {
 
   it('shows no repeat count: ABNF 3*5x, 1*x and 2x draw the same (D518)', async () => {
     const out = await text('railroad-abnf-beta\na = 3*5"x";\nb = 1*"x";\nc = 2"x";');
-    const [a, b, c] = out.split('\n\n\n');
+    const [a, b, c] = out.split('\n\n');
     expect(a!.replace('a =', 'b =')).toBe(b);
     expect(c!.replace('c =', 'b =')).toBe(b);
   });
@@ -172,11 +214,25 @@ describe('ascii options', () => {
     }
   });
 
-  it('lays a px layout out again in cells, for a caller outside the pipeline', async () => {
+  it('takes the padding from the cell profile, not from the config', async () => {
+    const src = ir('r = terminal("a");');
+    expect(await text(src, { configPadding: 'roomy' })).toBe(await text(src));
+  });
+
+  it('checks a layout without its metrics without throwing', async () => {
+    const src = ir('r = terminal("a");');
+    const { layout } = await draw(src);
+    const { model } = parseRailroad(src);
+    const bare = { ...layout, metrics: undefined } as unknown as typeof layout;
+    expect(() => railroadLayoutViolations(model, bare)).not.toThrow();
+    expect(railroadLayoutViolations(model, bare)).toEqual([]);
+  });
+
+  it('draws a layout already in cells as it is, for a caller outside the pipeline', async () => {
     const src = ir('r = choice(terminal("a"), optional(nonterminal("b")));');
-    const px = await draw(src, { pxLayout: true });
-    expect(px.layout.units).toBe('px');
-    expect(px.text).toBe(await text(src));
+    const given = await draw(src, { cellLayout: true });
+    expect(given.layout.units).toBe('cell');
+    expect(given.text).toBe(await text(src));
   });
 });
 
@@ -232,5 +288,40 @@ describe('text', () => {
       expect(await text(src, { charset })).toBe(a);
       if (charset === 'ascii') expect(a).not.toMatch(/[^\x20-\x7e\n]/);
     }
+  });
+});
+
+type RawGlob = (
+  pattern: string,
+  options: { query: '?raw'; import: 'default'; eager: true }
+) => Readonly<Record<string, string>>;
+
+describe('bundles (#617 review)', () => {
+  // The cell tables and measurer are the `./ascii` entry's: the SVG chunk (`.`) reaches none of
+  // them, so an SVG render loads what it loaded before text output existed.
+  it('keeps the cell layout out of what the runtime entry imports', () => {
+    const sources = (import.meta as ImportMeta & { glob: RawGlob }).glob('./**/*.ts', {
+      query: '?raw',
+      import: 'default',
+      eager: true,
+    });
+    const seen = new Set<string>();
+    const visit = (file: string): void => {
+      if (seen.has(file) || !(file in sources)) return;
+      seen.add(file);
+      const dir = file.slice(0, file.lastIndexOf('/') + 1);
+      for (const m of sources[file]!.matchAll(/from '(\.[^']+)'/g)) {
+        const parts = `${dir}${m[1]}`.split('/');
+        const out: string[] = [];
+        for (const p of parts) {
+          if (p === '..') out.pop();
+          else if (p !== '.' || out.length === 0) out.push(p);
+        }
+        visit(out.join('/'));
+      }
+    };
+    visit('./index.ts');
+    expect(seen.has('./plugin.ts')).toBe(true);
+    expect([...seen].filter((f) => f.includes('cells.ts') || f.startsWith('./ascii'))).toEqual([]);
   });
 });

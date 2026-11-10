@@ -15,7 +15,7 @@ import { theme } from './theme/table.ts';
  * section. `layoutKind: 'custom'` with its own `RailroadLayout`. `parse` reads the notation its
  * header names; `layout` measures and places everything as v12 did; `render` writes the whole
  * `<svg>` document. Text output is the lazily loaded `./ascii` entry (manifest key `ascii`,
- * #617, D518), drawing what `layout` makes in cells under the cell profile. The registry loads
+ * #617, D518), which lays out again in cells with options of its own. The registry loads
  * it from the package's `mermaid` manifest (#615); `configDefaults` are the generated `railroad`
  * section defaults (the lengths and `useMaxWidth`; D515: the colours and fonts have none, so the
  * theme's are drawn).

@@ -47,10 +47,10 @@ export const BOLD_WEIGHT = 700;
 
 /**
  * The text output's fixed lengths in cells (#617, D518), in place of `RAILROAD_METRICS` when the
- * layout runs with the cell profile. A point is a cell's centre, so a box `w` wide covers `w + 1`
- * columns, its borders included; a corner of track is one cell. The name, a blank cell and the
- * start marker; one cell of track to the definition and from it to the end marker. No rule is
- * taller than its definition needs, and an empty diagram is empty.
+ * text entry lays out in cells (`cells.ts`). A point is a cell's centre, so a box `w` wide covers
+ * `w + 1` columns, its borders included; a corner of track is one cell. The name, a blank cell
+ * and the start marker; one cell of track to the definition and from it to the end marker. No
+ * rule is taller than its definition needs, and an empty diagram is empty.
  */
 export const RAILROAD_CELL_METRICS: RailroadMetrics = {
   terminalCornerRadius: 1,
@@ -68,8 +68,8 @@ export const RAILROAD_CELL_METRICS: RailroadMetrics = {
  * The text output's lengths in cells (#617), by `ascii.padding` (D77): a box is its text, a blank
  * cell each side (`CELL_TEXT_ROOM` and the padding) and its borders, three rows high (`roomy`:
  * two blank cells each side and a blank row above and below); one cell of track between the
- * elements of a sequence; branches and rules a row apart; corners of one cell. The `railroad`
- * section's px lengths are not read (the text entry warns when they are set).
+ * elements of a sequence; branches a row apart and a blank row between rules; corners of one
+ * cell. The `railroad` section's px lengths are not read (the text entry warns when set).
  */
 export const RAILROAD_CELL_LENGTHS: Readonly<Record<'compact' | 'roomy', RailroadLayoutConfig>> = {
   compact: {
@@ -98,3 +98,16 @@ export const CELL_TEXT_ROOM = 1;
 
 /** A text is one row in cells: its height is 0 between the cell centres. */
 export const CELL_TEXT_METRICS = { ascent: 0, descent: 0, lineHeight: 0 } as const;
+
+/**
+ * In cells, the rows from a choice's main line to the nearest extent (box, bypass or loop) of a
+ * branch off it: a full blank row between them (#617 review).
+ */
+export const CELL_MAIN_CLEARANCE = 2;
+
+/** In cells, a rule takes the rows its definition covers (a point is a cell's centre). */
+export const CELL_RULE_ROOM = 1;
+
+/** The fixed lengths of a layout in px or in cells (a layout made without them, read back). */
+export const metricsFor = (cells: boolean): RailroadMetrics =>
+  cells ? RAILROAD_CELL_METRICS : RAILROAD_METRICS;
