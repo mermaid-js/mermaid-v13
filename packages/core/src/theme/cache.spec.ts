@@ -110,6 +110,18 @@ describe('theme value cache', () => {
     expect(other[1]!.autoDeclarations()).toEqual({ light: {}, dark: {} });
   });
 
+  it('preserves resolution errors when equivalent overrides reuse a failed resolver', () => {
+    const rules = { extraInk: 'notAColourOrVariable', dependentInk: 'extraInk' };
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const theme = createTheme(base, { rules, themeVariables: { primaryColor: '#abcdef' } });
+      for (const name of ['extraInk', 'dependentInk'])
+        expect(() => theme.value(name)).toThrowError(
+          new SyntaxError('Unknown colour notAColourOrVariable')
+        );
+      expect(theme.value('primaryColor')).toBe('#abcdef');
+    }
+  });
+
   it('bounds retained value variants and reconstructs evicted values correctly', () => {
     const spec = { ...base };
     const first = createTheme(spec, { themeVariables: { strokeWidth: 1 } });

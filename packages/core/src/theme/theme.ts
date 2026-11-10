@@ -340,10 +340,13 @@ class Resolver {
     if (hit) return hit;
     if (this.active.has(key)) throw new Error(`Theme rule cycle through ${name}`);
     this.active.add(key);
-    const r = f();
-    this.active.delete(key);
-    this.memo.set(key, r);
-    return r;
+    try {
+      const r = f();
+      this.memo.set(key, r);
+      return r;
+    } finally {
+      this.active.delete(key);
+    }
   }
 
   private unset(name: string): Resolved {
@@ -840,10 +843,8 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
     table ?? NONE,
     options.rules ?? NONE,
   ]);
-  if (plain) {
-    const hit = variants.get('');
-    if (hit) return hit;
-  }
+  const cached = plain && variants.get('');
+  if (cached) return cached;
   const { defs, fragment } = themeDefinitions(table, options.rules);
   const overrides = checkOverrides(tv, defs, options.warn);
   const tablePalettes = Object.keys(defs).filter((name) => defs[name]!.kind === 'palette');
