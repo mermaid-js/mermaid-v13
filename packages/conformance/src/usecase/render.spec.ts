@@ -67,7 +67,7 @@ beforeAll(async () => {
 
 describe('usecase render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, with every kind of element', () => {
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(52);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(53);
     expect([...rejected].filter((id) => id.startsWith('e2e/'))).toEqual([]);
     expect(cases.length).toBeGreaterThan(100 * THEMES.length);
     const all = cases.map((c) => c.rendered.svg).join('');

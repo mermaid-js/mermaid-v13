@@ -9,52 +9,11 @@
 import { validateLayout, type LayoutModelNode, type Point } from '@mermaid-js/core/layout';
 import { ovalLevel, ovalOf } from './clip.ts';
 import type { UsecaseLayout } from './layout.ts';
+import { noteProblems, rectOf, SLACK, type Rect } from './notes.ts';
 import { isOval, type UsecaseEdgeView, type UsecasePrepared } from './prepare.ts';
-
-/** Core `validateLayout`'s slack, in px: how far a point may lie off an outline and count as on it. */
-const SLACK = 0.5;
-
-interface Rect {
-  readonly x0: number;
-  readonly y0: number;
-  readonly x1: number;
-  readonly y1: number;
-}
-
-const rectOf = (b: { x: number; y: number; width: number; height: number }): Rect => ({
-  x0: b.x - b.width / 2,
-  y0: b.y - b.height / 2,
-  x1: b.x + b.width / 2,
-  y1: b.y + b.height / 2,
-});
 
 const overlaps = (a: Rect, b: Rect): boolean =>
   a.x0 < b.x1 - SLACK && b.x0 < a.x1 - SLACK && a.y0 < b.y1 - SLACK && b.y0 < a.y1 - SLACK;
-
-/** Whether the segment from `a` to `b` runs through the inside of `r` (Liang–Barsky clipping). */
-function crosses(a: Point, b: Point, r: Rect): boolean {
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  let t0 = 0;
-  let t1 = 1;
-  const inner = { x0: r.x0 + SLACK, y0: r.y0 + SLACK, x1: r.x1 - SLACK, y1: r.y1 - SLACK };
-  for (const [p, q] of [
-    [-dx, a.x - inner.x0],
-    [dx, inner.x1 - a.x],
-    [-dy, a.y - inner.y0],
-    [dy, inner.y1 - a.y],
-  ] as const) {
-    if (p === 0) {
-      if (q < 0) return false;
-      continue;
-    }
-    const t = q / p;
-    if (p < 0) t0 = Math.max(t0, t);
-    else t1 = Math.min(t1, t);
-    if (t0 > t1) return false;
-  }
-  return true;
-}
 
 /** On the box's outline, within the slack. */
 function onBox(n: LayoutModelNode, p: Point): boolean {
@@ -120,35 +79,6 @@ function endProblems(
     const oval = isOval(v);
     if (!(oval ? onOval(n, p) : onBox(n, p)))
       out.push(`edge '${e.id}' does not meet the ${oval ? 'oval' : 'box'} of '${end}'`);
-  }
-  return out;
-}
-
-/**
- * A note beside its target, as v12 lays notes out (an internal edge one rank long):
- * - in the next rank over: along the flow, no other node lies wholly in the gap between them
- *   (none sits in a rank between);
- * - with nothing drawn between: the line joining the two centres crosses no other node (a
- *   boundary frame it may: a note is never a member).
- */
-function noteProblems(layout: UsecaseLayout, e: UsecaseEdgeView): string[] {
-  const out: string[] = [];
-  const note = layout.nodes.get(e.source);
-  const target = layout.nodes.get(e.target);
-  if (!note || !target) return out;
-  const across = layout.direction === 'LR' || layout.direction === 'RL';
-  const span = (r: Rect): [number, number] => (across ? [r.x0, r.x1] : [r.y0, r.y1]);
-  const [n0, n1] = span(rectOf(note));
-  const [t0, t1] = span(rectOf(target));
-  const gap: [number, number] = [Math.min(n1, t1), Math.max(n0, t0)];
-  for (const [id, n] of layout.nodes) {
-    if (id === e.source || id === e.target) continue;
-    const r = rectOf(n);
-    const [lo, hi] = span(r);
-    if (gap[0] < gap[1] && lo >= gap[0] - SLACK && hi <= gap[1] + SLACK)
-      out.push(`note '${e.source}' is a rank or more from its target: '${id}' lies between`);
-    if (crosses(note, target, r))
-      out.push(`note '${e.source}' has '${id}' between it and its target`);
   }
   return out;
 }

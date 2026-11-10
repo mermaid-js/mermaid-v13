@@ -159,7 +159,11 @@ export interface RelationEdgeView extends EdgeViewBase {
   readonly font: FontKey;
 }
 
-/** A note to its target, dotted with no markers (v12's internal `<note>-edge`). */
+/**
+ * A note to its target, dotted with no markers (v12's internal `<note>-edge`). `source` is the
+ * note and `target` its target, or the other way round where the note goes in the rank after its
+ * target (`notes.ts`): the ends are the graph edge's.
+ */
 export interface NoteEdgeView extends EdgeViewBase {
   /** Layout edge id: `<note AST id>-edge`. */
   readonly id: string;

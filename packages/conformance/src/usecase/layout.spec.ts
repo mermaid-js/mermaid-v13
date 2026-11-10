@@ -51,7 +51,7 @@ beforeAll(async () => {
 /**
  * What an engine is known to miss, exactly. `compass` holds each group as a rigid block (D326's
  * known gap), so a note outside a boundary sits a rank or more from a member it notes, or behind
- * another member.
+ * another member, whichever side of its target the layout puts it (`notes.ts` tries both).
  */
 const KNOWN: Readonly<Record<string, Readonly<Record<string, readonly string[]>>>> = {
   layered: {},
@@ -68,10 +68,6 @@ const KNOWN: Readonly<Record<string, Readonly<Record<string, readonly string[]>>
     'e2e/pr-check/small-representative-visual-snapshot.mmd': [
       "note 'note:1' is a rank or more from its target: 'actor:ContainedActor' lies between",
       "note 'note:1' is a rank or more from its target: 'usecase:Hostile' lies between",
-    ],
-    'v12-specs/usecase/usecase.parser.spec.ts#51': [
-      "note 'note:1' is a rank or more from its target: 'actor:User' lies between",
-      "note 'note:1' has 'actor:User' between it and its target",
     ],
     'v12-docs/usecase.md#23': [
       "note 'note:1' is a rank or more from its target: 'usecase:Browse' lies between",

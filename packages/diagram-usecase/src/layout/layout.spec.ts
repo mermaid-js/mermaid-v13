@@ -4,6 +4,7 @@ import { validateLayout, type LayoutGraph } from '@mermaid-js/core/layout';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import { parseUsecase } from '../parser/index.ts';
+import { usecaseLayoutProblems } from './invariants.ts';
 import { layoutUsecase, type UsecaseLayout, type UsecaseLayoutContext } from './layout.ts';
 
 let theme: Theme | undefined;
@@ -136,6 +137,29 @@ describe('boundaries, notes and edges', () => {
     ]);
     const e = out.usecase!.edges[0]!;
     expect([e.kind, e.dotted, 'label' in e]).toEqual(['note', true, false]);
+  });
+
+  it('puts a note on a boundary member beside it when another member sits in the rank before', async () => {
+    const { out } = await lay(
+      'usecase-beta\nsystemBoundary S\n  A\n  B\nend\nactor C\nC --> A\nB ..> : extend A\nnote for A "n"'
+    );
+    expect(usecaseLayoutProblems(out)).toEqual([]);
+    // The note's line runs from A on to the note, past the boundary's far side.
+    const e = out.usecase!.edges.find((v) => v.kind === 'note')!;
+    expect([e.source, e.target]).toEqual(['usecase:A', 'note:1']);
+    expect(out.usecase!.graph.edges.find((g) => g.id === e.id)).toMatchObject({
+      source: 'usecase:A',
+      target: 'note:1',
+    });
+  });
+
+  it('keeps a note before its target when it is beside it there', async () => {
+    const { out } = await lay(
+      'usecase-beta\nsystemBoundary S\n  A\n  B\nend\nactor C\nC --> B\nB ..> : extend A\nnote for B "n"'
+    );
+    expect(usecaseLayoutProblems(out)).toEqual([]);
+    const e = out.usecase!.edges.find((v) => v.kind === 'note')!;
+    expect([e.source, e.target]).toEqual(['note:1', 'usecase:B']);
   });
 
   it('takes minLen from the dash count and labels include and extend', async () => {
