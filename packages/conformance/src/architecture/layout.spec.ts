@@ -7,13 +7,13 @@
 // column, and the same bytes on every run. D326's corpus numbers over the 20 v12 fixtures are in
 // `compass/architecture-corpus.spec.ts`.
 import { beforeAll, describe, expect, it } from 'vitest';
-import { validateLayout } from '@mermaid-js/core/layout';
+import { validateLayout, type LayoutModel } from '@mermaid-js/core/layout';
 import { compass } from '@mermaid-js/core/layout/compass';
 import {
   architectureLayoutProblems,
   facingInLine,
   layoutBytes,
-  portLine,
+  portLines,
 } from '@mermaid-js/diagram-architecture/testing';
 import { architectureCases, architectureCorpus } from './corpus.ts';
 import { architectureLaidOut, type ArchitectureLaidOut } from './layout.ts';
@@ -21,6 +21,8 @@ import { architectureLaidOut, type ArchitectureLaidOut } from './layout.ts';
 interface Fixture extends ArchitectureLaidOut {
   readonly id: string;
   readonly source: string;
+  /** `compass(prepared.graph)`, laid out once. */
+  readonly layout: LayoutModel;
 }
 
 const fixtures: Fixture[] = [];
@@ -28,7 +30,13 @@ const fixtures: Fixture[] = [];
 beforeAll(async () => {
   for (const item of [...(await architectureCorpus()), ...architectureCases()]) {
     const laid = await architectureLaidOut(item.source, compass);
-    if (laid) fixtures.push({ id: item.id, source: item.source, ...laid });
+    if (laid)
+      fixtures.push({
+        id: item.id,
+        source: item.source,
+        ...laid,
+        layout: compass(laid.prepared.graph),
+      });
   }
 }, 60_000);
 
@@ -56,7 +64,7 @@ describe('architecture layout over parser-produced fixtures (#607)', () => {
     const problems: string[] = [];
     for (const f of fixtures) {
       const graph = f.prepared.graph;
-      const model = compass(graph);
+      const model = f.layout;
       for (const p of [
         ...validateLayout(graph, model),
         ...architectureLayoutProblems(graph, model),
@@ -71,7 +79,7 @@ describe('architecture layout over parser-produced fixtures (#607)', () => {
 
   it('lays out every service and junction, and every group and edge, by its model id', () => {
     for (const f of fixtures) {
-      const model = compass(f.prepared.graph);
+      const model = f.layout;
       const nodes = [...f.model.services, ...f.model.junctions].map((n) => n.id);
       expect([...model.nodes.keys()].sort(), f.id).toEqual([...nodes].sort());
       expect([...model.groups.keys()].sort(), f.id).toEqual(f.model.groups.map((g) => g.id).sort());
@@ -82,8 +90,7 @@ describe('architecture layout over parser-produced fixtures (#607)', () => {
   it('meets every facing edge between nodes in line straight on the corpus', () => {
     // Not vacuous: most facing edges of the corpus are between nodes in line.
     let count = 0;
-    for (const f of fixtures)
-      count += facingInLine(f.prepared.graph, compass(f.prepared.graph)).length;
+    for (const f of fixtures) count += facingInLine(f.prepared.graph, f.layout).length;
     expect(count).toBeGreaterThan(100);
   });
 
@@ -91,9 +98,7 @@ describe('architecture layout over parser-produced fixtures (#607)', () => {
     // v12 12.2.0 put `b` above the a–c row for `a:R -- T:b` and `e` below the d–f row for
     // `d:L -- B:e` (architectureTypes.ts:141; GAPS T3).
     const f = byId('layout-bends-follow-written-sides.mmd');
-    const graph = f.prepared.graph;
-    const model = compass(graph);
-    const at = (id: string) => portLine(graph, model, id);
+    const at = portLines(f.prepared.graph, f.layout);
     expect(at('c').y).toBe(at('a').y);
     expect(at('b').y).toBeGreaterThan(at('a').y);
     expect(at('b').x).toBeGreaterThan(at('a').x);
@@ -115,6 +120,24 @@ describe('architecture layout over parser-produced fixtures (#607)', () => {
     for (const g of graph.groups)
       expect(g.padding).toEqual({ top: 20, right: 20, bottom: 20, left: 20 });
     expect(graph.diagramPadding).toBe(20);
-    expect(validateLayout(graph, compass(graph))).toEqual([]);
+    expect(validateLayout(graph, f.layout)).toEqual([]);
+  });
+
+  it("measures in the source's theme and themeVariables, as a render does", async () => {
+    // The harness builds the theme as kanban's does: theme name ('auto' too), themeVariables.
+    const big = await architectureLaidOut(
+      '%%{init: {"themeVariables": {"fontSize": "32px", "fontFamily": "Courier"}}}%%\narchitecture-beta\n  service a[Alpha]',
+      compass
+    );
+    expect(big!.prepared.font).toMatchObject({ size: 32, family: 'Courier' });
+    const plain = await architectureLaidOut('architecture-beta\n  service a[Alpha]', compass);
+    expect(big!.prepared.nodes[0]!.label!.height).toBeGreaterThan(
+      plain!.prepared.nodes[0]!.label!.height
+    );
+    const auto = await architectureLaidOut(
+      '---\nconfig:\n  theme: auto\n---\narchitecture-beta\n  service a[Alpha]',
+      compass
+    );
+    expect(auto!.warnings).toEqual([]);
   });
 });

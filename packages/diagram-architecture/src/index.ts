@@ -22,7 +22,7 @@ export {
 export { detectArchitecture, parseArchitecture } from './parser/index.ts';
 export type * from './parser/ast.ts';
 export { layoutArchitecture, type ArchitectureLayout } from './layout/layout.ts';
-export { architectureSizesOf, prepareArchitecture } from './layout/prepare.ts';
+export { prepareArchitecture } from './layout/prepare.ts';
 export type {
   ArchitectureEdgeView,
   ArchitectureGroupView,

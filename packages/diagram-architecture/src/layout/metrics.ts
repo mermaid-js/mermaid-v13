@@ -41,6 +41,8 @@ export interface ArchitectureSizes {
   readonly arrow: number;
   /** The width a service label wraps at, `iconSize × 1.5`. */
   readonly labelWidth: number;
+  /** The line `left`/`right` ends meet a service or junction on, down from its top: `iconSize / 2`. */
+  readonly anchorY: number;
   /** Where a service label's top centre sits from the icon's corner: `(iconSize / 2, iconSize)`. */
   readonly labelAt: { readonly x: number; readonly y: number };
   /** How far a `{group}` end runs past its node: `padding + 4`, and on a bottom side 18 more. */
@@ -67,6 +69,7 @@ export function architectureSizes(
     padding,
     arrow: iconSize / M.arrowDivisor,
     labelWidth: iconSize * M.labelWidthRatio,
+    anchorY: iconSize / 2,
     labelAt: { x: iconSize / 2, y: iconSize },
     groupEdge: { side, bottom: side + M.groupEdgeBottom },
     junctionEnd: iconSize / 2,

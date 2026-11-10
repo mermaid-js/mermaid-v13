@@ -4,7 +4,7 @@
 // character, 20 px a line), so the expected sizes are worked out by hand, not by the code under
 // test.
 import { describe, expect, it } from 'vitest';
-import type { LayoutGraph, LayoutModel } from '@mermaid-js/core/layout';
+import { validateLayout, type LayoutGraph, type LayoutModel } from '@mermaid-js/core/layout';
 import { compass } from '@mermaid-js/core/layout/compass';
 import type { FontKey, Measurer } from '@mermaid-js/core/text';
 import { ARCHITECTURE_CONFIG_IGNORED } from '../codes.ts';
@@ -35,6 +35,7 @@ describe('the metrics table (v12 svgDraw.ts)', () => {
       groupIcon: 30,
       groupLabelGap: 4,
       groupDash: 8,
+      anchorY: 40,
     });
   });
 
@@ -46,7 +47,12 @@ describe('the metrics table (v12 svgDraw.ts)', () => {
       { x: 60, y: 120 },
       60,
     ]);
-    expect([s.groupEdge, s.groupIcon, s.groupDash]).toEqual([{ side: 24, bottom: 42 }, 15, 8]);
+    expect([s.groupEdge, s.groupIcon, s.groupDash, s.anchorY]).toEqual([
+      { side: 24, bottom: 42 },
+      15,
+      8,
+      60,
+    ]);
   });
 });
 
@@ -130,13 +136,14 @@ describe('groups', () => {
       padding: pad,
       title: { width: 30, height: 30 },
     });
-    expect(group(graph, 'c').title).toEqual({ width: 20, height: 20 });
+    // v12 starts a label 4 px past the corner with or without an icon (`svgDraw.ts:263`).
+    expect(group(graph, 'c').title).toEqual({ width: 24, height: 20 });
     expect(group(graph, 'd').title).toBeUndefined();
   });
 
   it('keeps a title as one line, however long (v12 wrapped it at the drawn group width)', async () => {
     const { graph } = await prepared('group a[aaaaaaaaaa bbbbbbbbbb cccccccccc]');
-    expect(group(graph, 'a').title).toEqual({ width: 320, height: 20 });
+    expect(group(graph, 'a').title).toEqual({ width: 324, height: 20 });
   });
 });
 
@@ -227,10 +234,14 @@ describe('config', () => {
   });
 
   it.each([
-    [{ iconSize: 0 }, 'architecture.iconSize'],
     [{ iconSize: 'big' }, 'architecture.iconSize'],
+    [{ iconSize: 1e4 }, 'architecture.iconSize'],
+    [{ iconSize: 1e308 }, 'architecture.iconSize'],
+    [{ iconSize: '1e9' }, 'architecture.iconSize'],
     [{ padding: -1 }, 'architecture.padding'],
     [{ padding: Number.NaN }, 'architecture.padding'],
+    [{ padding: 1e9 }, 'architecture.padding'],
+    [{ padding: 1e308 }, 'architecture.padding'],
   ])('lays out %j with the default and warns (pitfall 22)', async (conf, path) => {
     const { sizes, ctx } = await prepared('service a', { architecture: conf });
     expect([sizes.iconSize, sizes.padding]).toEqual([80, 40]);
@@ -239,10 +250,22 @@ describe('config', () => {
     ]);
   });
 
-  it('takes padding 0', async () => {
-    const { sizes, ctx } = await prepared('service a', { architecture: { padding: 0 } });
-    expect(sizes.padding).toBe(0);
-    expect(ctx.warnings).toEqual([]);
+  it('takes 0 and anything under 10000, as the other ports read lengths', async () => {
+    const src = 'group g[G]\nservice a[A] in g\nservice b[B]\na:R -- L:b';
+    for (const conf of [{ padding: 0 }, { iconSize: 0 }, { iconSize: 9999, padding: 9999 }]) {
+      const { graph, sizes, ctx } = await prepared(src, { architecture: conf });
+      expect(sizes, JSON.stringify(conf)).toMatchObject(conf);
+      expect(ctx.warnings).toEqual([]);
+      expect(validateLayout(graph, compass(graph))).toEqual([]);
+    }
+  });
+
+  it('warns once per key, with both keys wrong', async () => {
+    const { ctx } = await prepared('service a', { architecture: { iconSize: -1, padding: 1e9 } });
+    expect(ctx.warnings.map((w) => w.path)).toEqual([
+      'architecture.iconSize',
+      'architecture.padding',
+    ]);
   });
 });
 

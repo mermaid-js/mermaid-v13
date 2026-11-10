@@ -15,5 +15,6 @@ export {
   architectureLayoutProblems,
   facingInLine,
   layoutBytes,
-  portLine,
+  OPPOSITE_SIDE,
+  portLines,
 } from './layout/invariants.ts';

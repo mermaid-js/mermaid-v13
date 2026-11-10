@@ -8,7 +8,7 @@
  *   wide as the wider of the two, `iconSize` + the label's height high, and its `left`/`right`
  *   ends meet the icon's centre line (`anchorY`, D501).
  * - A junction is v12's invisible `iconSize` square, with no label.
- * - A group has `padding` on every side and a title band as wide as its icon and label.
+ * - A group has `padding` on every side and a title band: its icon, then 4 px and its label.
  * - An edge names both its sides, its `{group}` ends (`border`) and its label's size; the
  *   label is measured unwrapped, since v12 wrapped it to the drawn edge (D507: the renderer
  *   places it).
@@ -26,8 +26,8 @@ import type {
   Size,
 } from '@mermaid-js/core/layout';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
-import { ARCHITECTURE_CONFIG_IGNORED } from '../codes.ts';
 import type { ArchitectureModel, ArchitectureSide } from '../model.ts';
+import { configLengths } from './config-length.ts';
 import type { ArchitectureLayoutContext } from './context.ts';
 import { ARCHITECTURE_METRICS, architectureSizes, type ArchitectureSizes } from './metrics.ts';
 
@@ -83,40 +83,36 @@ const SIDE: Readonly<Record<ArchitectureSide, Side>> = {
   B: 'bottom',
 };
 
-/** A whole decimal number, spaces around it allowed: `"20"`, `" 20 "`, `"2.5"`; not `"20px"`. */
-const NUMERIC = /^\s*[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?\s*$/i;
-
 /**
- * A config length (a number, or a whole numeric string, as v12's arithmetic took it) of at least
- * 0, or above 0 when `positive`; else the default, with a warning when the key is set
- * (pitfall 22).
+ * The document's `iconSize` and `padding` (0 up to 10000, as the other ports read lengths; else
+ * v12's default with one `ARCHITECTURE_CONFIG_IGNORED` per key), and the lengths v12 drew with
+ * them. Read once per layout: renderers take `ArchitecturePrepared.sizes`.
  */
-function lengthOf(
-  ctx: ArchitectureLayoutContext,
-  value: unknown,
-  fallback: number,
-  path: string,
-  positive: boolean
-): number {
-  const n = typeof value === 'string' && NUMERIC.test(value) ? Number(value) : value;
-  if (typeof n === 'number' && Number.isFinite(n) && (positive ? n > 0 : n >= 0)) return n;
-  if (value !== undefined)
-    ctx.warn({
-      code: ARCHITECTURE_CONFIG_IGNORED,
-      message: `Ignored ${path}: it is not a number ${positive ? 'above' : 'of at least'} 0; using ${fallback}`,
-      path,
-    });
-  return fallback;
+function sizesOf(ctx: ArchitectureLayoutContext): ArchitectureSizes {
+  const M = ARCHITECTURE_METRICS;
+  const length = configLengths(
+    (ctx.config.architecture ?? {}) as Readonly<Record<string, unknown>>,
+    { iconSize: M.iconSize, padding: M.padding },
+    ctx.warn
+  );
+  return architectureSizes(length('iconSize') ?? M.iconSize, length('padding') ?? M.padding);
 }
 
-/** The document's `iconSize` and `padding`, and the lengths v12 drew with them. */
-export function architectureSizesOf(ctx: ArchitectureLayoutContext): ArchitectureSizes {
-  const conf = ctx.config.architecture ?? {};
-  const M = ARCHITECTURE_METRICS;
-  return architectureSizes(
-    lengthOf(ctx, conf.iconSize, M.iconSize, 'architecture.iconSize', true),
-    lengthOf(ctx, conf.padding, M.padding, 'architecture.padding', false)
-  );
+/**
+ * A group's title band: its icon, then the label `groupLabelGap` past the icon or past the corner
+ * (v12 `svgDraw.ts:263`), as high as the taller; absent with neither.
+ */
+function titleOf(
+  icon: boolean,
+  label: MeasuredLabel | undefined,
+  sizes: ArchitectureSizes
+): Size | undefined {
+  if (!icon && !label) return undefined;
+  const w = icon ? sizes.groupIcon : 0;
+  return {
+    width: w + (label ? sizes.groupLabelGap + label.width : 0),
+    height: Math.max(w, label?.height ?? 0),
+  };
 }
 
 /** Measures the model and builds the graph `compass` (or the engine `layout` names) gets. */
@@ -124,8 +120,8 @@ export function prepareArchitecture(
   model: ArchitectureModel,
   ctx: ArchitectureLayoutContext
 ): ArchitecturePrepared {
-  const sizes = architectureSizesOf(ctx);
-  const { iconSize, padding } = sizes;
+  const sizes = sizesOf(ctx);
+  const { iconSize, padding, anchorY } = sizes;
   // v12 drew every label in the global font (D507: `architecture.fontSize` is ignored).
   const font: FontKey = {
     family: ctx.theme.value('fontFamily'),
@@ -140,63 +136,52 @@ export function prepareArchitecture(
 
   const nodes: ArchitectureNodeView[] = [];
   const layoutNodes: LayoutNode[] = [];
-  model.services.forEach((s, index) => {
+  for (const [index, s] of model.services.entries()) {
     const label = measure(s.title, sizes.labelWidth);
-    const view: ArchitectureNodeView = {
-      id: s.id,
-      kind: 'service',
-      index,
-      ...(label ? { label } : {}),
-      width: Math.max(iconSize, label?.width ?? 0),
-      height: iconSize + (label?.height ?? 0),
-    };
-    nodes.push(view);
+    const width = Math.max(iconSize, label?.width ?? 0);
+    const height = iconSize + (label?.height ?? 0);
+    nodes.push({ id: s.id, kind: 'service', index, ...(label ? { label } : {}), width, height });
     layoutNodes.push({
       id: s.id,
-      width: view.width,
-      height: view.height,
-      anchorY: iconSize / 2,
+      width,
+      height,
+      anchorY,
       shape: 'service',
       ...(s.in === undefined ? {} : { parent: s.in }),
     });
-  });
-  model.junctions.forEach((j, index) => {
+  }
+  for (const [index, j] of model.junctions.entries()) {
     nodes.push({ id: j.id, kind: 'junction', index, width: iconSize, height: iconSize });
     layoutNodes.push({
       id: j.id,
       width: iconSize,
       height: iconSize,
-      anchorY: iconSize / 2,
+      anchorY,
       shape: 'junction',
       ...(j.in === undefined ? {} : { parent: j.in }),
     });
-  });
+  }
 
   const groups: ArchitectureGroupView[] = [];
-  const layoutGroups: LayoutGroup[] = model.groups.map((g, index) => {
+  const layoutGroups: LayoutGroup[] = [];
+  for (const [index, g] of model.groups.entries()) {
     const label = measure(g.title, Infinity);
-    const icon = g.icon === undefined ? 0 : sizes.groupIcon;
-    const title: Size | undefined =
-      icon === 0 && !label
-        ? undefined
-        : {
-            width: icon + (icon > 0 && label ? sizes.groupLabelGap : 0) + (label?.width ?? 0),
-            height: Math.max(icon, label?.height ?? 0),
-          };
+    const title = titleOf(g.icon !== undefined, label, sizes);
     groups.push({ id: g.id, index, ...(label ? { label } : {}), ...(title ? { title } : {}) });
-    return {
+    layoutGroups.push({
       id: g.id,
       ...(g.in === undefined ? {} : { parent: g.in }),
       padding: { top: padding, right: padding, bottom: padding, left: padding },
       ...(title ? { title } : {}),
-    };
-  });
+    });
+  }
 
   const edges: ArchitectureEdgeView[] = [];
-  const layoutEdges: LayoutEdge[] = model.edges.map((e, index) => {
+  const layoutEdges: LayoutEdge[] = [];
+  for (const [index, e] of model.edges.entries()) {
     const label = measure(e.title, Infinity);
     edges.push({ id: e.astId, index, ...(label ? { label } : {}) });
-    return {
+    layoutEdges.push({
       id: e.astId,
       source: e.lhsId,
       target: e.rhsId,
@@ -205,8 +190,8 @@ export function prepareArchitecture(
       // `lhsGroup`/`rhsGroup` are already false on an end in no group (D504).
       ...(e.lhsGroup || e.rhsGroup ? { border: { source: e.lhsGroup, target: e.rhsGroup } } : {}),
       ...(label ? { label: { width: label.width, height: label.height } } : {}),
-    };
-  });
+    });
+  }
 
   const align = model.alignments.map((a) => ({ axis: a.direction, members: a.members }));
   const graph: LayoutGraph = {

@@ -2,13 +2,14 @@
  * Parser-produced layout graphs for the architecture corpus specs (#607): a source is
  * preprocessed, its front matter and directives resolved over the defaults (as a render does),
  * parsed by the v13 parser and measured by `prepareArchitecture`, the builder the plugin calls,
- * with core's table measurer in the source's theme.
+ * with core's table measurer in the source's theme, built as a render builds it (kanban's test
+ * harness): the theme name (`auto` too), `themeVariables` and the config warnings.
  */
 import { CORE_DEFAULTS, resolveConfig, type ConfigInput } from '@mermaid-js/core/config';
 import type { LayoutEngine } from '@mermaid-js/core/layout';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { tableMeasurer } from '@mermaid-js/core/text';
-import { createTheme, isThemeName, loadTheme } from '@mermaid-js/core/theme';
+import { createTheme, loadTheme, resolveThemeName } from '@mermaid-js/core/theme';
 import {
   parseArchitecture,
   prepareArchitecture,
@@ -19,7 +20,7 @@ import {
 export interface ArchitectureLaidOut {
   readonly model: ArchitectureModel;
   readonly prepared: ArchitecturePrepared;
-  /** Warning codes the builder raised. */
+  /** Warning codes the config, the theme and the builder raised. */
   readonly warnings: readonly string[];
 }
 
@@ -35,18 +36,26 @@ export async function architectureLaidOut(
   const directives = pre.directives.flatMap((d) =>
     d.kind === 'init' && d.args && typeof d.args === 'object' ? [d.args as ConfigInput] : []
   );
-  const config = resolveConfig(CORE_DEFAULTS, {}, pre.frontMatter?.config, directives);
+  const warnings: string[] = [];
+  const warn = (w: { code: string }): void => void warnings.push(w.code);
+  const config = resolveConfig(CORE_DEFAULTS, {}, pre.frontMatter?.config, directives, undefined, {
+    warn,
+    section: 'architecture',
+  });
   const parse = parseArchitecture(source, { preprocessed: pre });
   if (parse.diagnostics.some((d) => d.severity === 'error')) return undefined;
-  const themeName =
-    typeof config.theme === 'string' && isThemeName(config.theme) ? config.theme : 'default';
-  const warnings: string[] = [];
+  const choice = resolveThemeName(config.theme, warn);
+  const theme = createTheme(await loadTheme(choice.name), {
+    themeVariables: config.themeVariables as Record<string, unknown> | undefined,
+    dark: choice.dark ? await loadTheme(choice.dark) : undefined,
+    warn,
+  });
   const prepared = prepareArchitecture(parse.model, {
     config,
     measurer: tableMeasurer,
-    theme: createTheme(await loadTheme(themeName)),
+    theme,
     layout: (graph) => engine(graph, { config }),
-    warn: (w) => warnings.push(w.code),
+    warn,
   });
   return { model: parse.model, prepared, warnings };
 }

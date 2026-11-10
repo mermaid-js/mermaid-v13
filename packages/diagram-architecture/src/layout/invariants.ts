@@ -11,7 +11,8 @@ import type { LayoutGraph, LayoutModel, Point, Side } from '@mermaid-js/core/lay
 // Floating-point noise, not a length (core's `validateLayout` slack).
 const SLACK = 0.5;
 
-const OPPOSITE: Readonly<Record<Side, Side>> = {
+/** The side that faces each side: an `R`–`L` or `T`–`B` edge is a facing one. */
+export const OPPOSITE_SIDE: Readonly<Record<Side, Side>> = {
   left: 'right',
   right: 'left',
   top: 'bottom',
@@ -48,23 +49,30 @@ function onSide(r: Rect, side: Side, p: Point): boolean {
   }
 }
 
-/** Where a node's `left`/`right` ends meet it (its `anchorY` line) and its middle across. */
-export function portLine(graph: LayoutGraph, model: LayoutModel, id: string): Point {
-  const n = graph.nodes.find((v) => v.id === id)!;
-  const m = model.nodes.get(id)!;
-  return { x: m.x, y: m.y - m.height / 2 + (n.anchorY ?? n.height / 2) };
+/**
+ * Where each node's `left`/`right` ends meet it (its `anchorY` line) and its middle across, by
+ * id. Build it once per laid-out graph: it indexes the graph's nodes.
+ */
+export function portLines(graph: LayoutGraph, model: LayoutModel): (id: string) => Point {
+  const byId = new Map(graph.nodes.map((n) => [n.id, n]));
+  return (id) => {
+    const n = byId.get(id)!;
+    const m = model.nodes.get(id)!;
+    return { x: m.x, y: m.y - m.height / 2 + (n.anchorY ?? n.height / 2) };
+  };
 }
 
 /** The edges between nodes in line whose named sides face each other, the target ahead. */
 export function facingInLine(graph: LayoutGraph, model: LayoutModel): string[] {
+  const portLine = portLines(graph, model);
   const out: string[] = [];
   for (const e of graph.edges) {
     const s = e.sides?.source;
     const t = e.sides?.target;
-    if (!s || !t || OPPOSITE[s] !== t || e.source === e.target) continue;
+    if (!s || !t || OPPOSITE_SIDE[s] !== t || e.source === e.target) continue;
     if (!model.nodes.has(e.source) || !model.nodes.has(e.target)) continue;
-    const a = portLine(graph, model, e.source);
-    const b = portLine(graph, model, e.target);
+    const a = portLine(e.source);
+    const b = portLine(e.target);
     const across = s === 'left' || s === 'right';
     const dir = s === 'right' || s === 'bottom' ? 1 : -1;
     const ahead = across ? (b.x - a.x) * dir > 0 : (b.y - a.y) * dir > 0;
@@ -77,6 +85,7 @@ export function facingInLine(graph: LayoutGraph, model: LayoutModel): string[] {
 /** One message per broken invariant; empty when the layout keeps them all. */
 export function architectureLayoutProblems(graph: LayoutGraph, model: LayoutModel): string[] {
   const problems: string[] = [];
+  const portLine = portLines(graph, model);
   const parent = new Map<string, string | undefined>(graph.nodes.map((n) => [n.id, n.parent]));
   const boxOf = (id: string, border: boolean | undefined): Rect | undefined => {
     const g = border ? parent.get(id) : undefined;
@@ -118,8 +127,8 @@ export function architectureLayoutProblems(graph: LayoutGraph, model: LayoutMode
     for (let i = 1; i < hint.members.length; i++) {
       const [x, y] = [hint.members[i - 1]!, hint.members[i]!];
       if (!model.nodes.has(x) || !model.nodes.has(y)) continue;
-      const a = portLine(graph, model, x);
-      const b = portLine(graph, model, y);
+      const a = portLine(x);
+      const b = portLine(y);
       const ok =
         hint.axis === 'row'
           ? Math.abs(a.y - b.y) <= SLACK && b.x > a.x
