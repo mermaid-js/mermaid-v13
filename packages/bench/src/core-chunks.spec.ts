@@ -132,10 +132,9 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
   });
 
   // D280, D533, R-LAYOUT-8: `mermaid` loads the `tree` and `swimlane` engines lazily; none of
-  // either may reach core. D537 (maintainer, 2026-11-08, "Lazy chunk for hops"): line hops too,
-  // loaded only for a render whose resolved `lineHops` is not `false`.
-  it.each(['tree', 'swimlane', 'hops'])(
-    'keeps the %s code out of core, in a lazy chunk of its own',
+  // either may reach core.
+  it.each(['tree', 'swimlane'])(
+    'keeps the %s engine out of core, in a lazy chunk of its own',
     (e) => {
       const isEngine = (input: string) => input.includes(`core/src/layout/${e}/`);
       expect(coreModules(stable).filter(isEngine)).toEqual([]);
@@ -146,6 +145,20 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
       expect(file.inputs.every(isEngine)).toBe(true);
     }
   );
+
+  // D537 (maintainer, 2026-11-08, "Lazy chunk for hops"): line hops stay out of core. The swimlane
+  // engine carries them too, so they may share a lazy chunk with their own entry, never with core
+  // or another engine.
+  it('keeps the line-hop code out of core, in lazy chunks of its own', () => {
+    const isHops = (input: string) => input.includes('core/src/layout/hops/');
+    expect(coreModules(stable).filter(isHops)).toEqual([]);
+    const files = Object.entries(stable.bundle.graph).filter(([, f]) => f.inputs.some(isHops));
+    expect(files.length).toBeGreaterThan(0);
+    for (const [path, file] of files) {
+      expect(stable.bundle.staticClosure).not.toContain(path);
+      expect(file.inputs.every(isHops), path).toBe(true);
+    }
+  });
 
   // D326, D327: `compass` too, and any graph type may select it.
   it('keeps the compass engine out of core, in a lazy chunk of its own', () => {
