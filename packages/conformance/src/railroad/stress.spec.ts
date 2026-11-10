@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { railroadTokens } from '@mermaid-js/diagram-railroad/testing';
 import type { RailroadNotation } from '@mermaid-js/diagram-railroad/testing';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5, spec #526 T1: the four railroad lexers are linear in input size, in every
  * rule: unclosed comments and specials, long rules and unterminated strings among them. Shape
  * copied from `../wardley/stress.spec.ts` (pie's pattern): n and 8n units; linear is ~8x,
- * quadratic ~64x, and the bar is 24x. Times are this thread's CPU time, best of five, and small
- * and large lexes alternate. Not measured on a steady machine: the bar is a ratio.
+ * quadratic ~64x, and the bar is 24x. Timed with the shared {@link linearRatio} (#643, pitfall 5).
+ * Not measured on a steady machine: the bar is a ratio.
  */
 const IR = 'railroad-beta\n';
 const E = 'railroad-ebnf-beta\n';
@@ -125,18 +126,6 @@ const SHAPES: [
   ['entities in strings', 'railroad', (n) => IR + 'a = terminal("' + '#a;'.repeat(n / 3) + '") ;'],
 ];
 
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 describe('stress: the railroad lexers are linear in input size', () => {
   it.each(SHAPES)(
     '%s',
@@ -144,21 +133,12 @@ describe('stress: the railroad lexers are linear in input size', () => {
       const small = build(4_000 * scale);
       const large = build(32_000 * scale);
       const lex = (src: string) => railroadTokens(notation, src);
-      lex(small); // warm up
-      lex(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => lex(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => lex(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => lex(small),
+          () => lex(large)
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );
