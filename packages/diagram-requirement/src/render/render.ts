@@ -256,7 +256,8 @@ function drawRelation({ w, layout, p, paint }: Scene, r: RelationView): void {
     r.markerAt === 'source'
       ? { x: path.sx, y: path.sy, ux: -path.sdx, uy: -path.sdy }
       : { x: path.ex, y: path.ey, ux: -path.edx, uy: -path.edy };
-  drawMarker(w, r.marker, end, paint.line.stroke, p.markers, r.dataId);
+  // A px layout always has the markers it made room for (only a cell layout has none).
+  if (p.markers) drawMarker(w, r.marker, end, paint.line.stroke, p.markers, r.dataId);
 }
 
 function drawRelationLabel({ w, layout, paint }: Scene, r: RelationView): void {

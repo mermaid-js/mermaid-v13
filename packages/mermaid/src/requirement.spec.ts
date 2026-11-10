@@ -212,6 +212,25 @@ describe('requirement diagrams through the public API (#587)', () => {
     expect(await line('ascii')).toBe(`| Text: ${'x'.repeat(39)}~ |`);
   });
 
+  it('cuts each line of a multi-line value at 40 value cells, continuation lines from their start (D438)', async () => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true });
+    const src = `requirementDiagram\n  requirement r {\n    text: "a<br>${'y'.repeat(50)}"\n  }\n`;
+    const body = async (charset: 'unicode' | 'ascii') => {
+      const rows = (await m.render('r8m', src, { format: 'ascii', ascii: { charset } })).text.split(
+        '\n'
+      );
+      const at = rows.findIndex((l) => l.includes('Text:'));
+      return rows.slice(at, at + 2);
+    };
+    // The box is as wide as its widest shown line: `Text: a` is shorter than the cut `y…` line.
+    expect(await body('unicode')).toEqual([
+      `│ Text: a${' '.repeat(33)} │`,
+      `│ ${'y'.repeat(39)}… │`,
+    ]);
+    expect(await body('ascii')).toEqual([`| Text: a${' '.repeat(33)} |`, `| ${'y'.repeat(39)}~ |`]);
+  });
+
   it('is never cropped: wider than ascii.maxWidth warns ASCII_TOO_WIDE (R-ASCII-8)', async () => {
     const m = createMermaid();
     m.initialize({ deterministic: true });

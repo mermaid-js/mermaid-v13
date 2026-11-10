@@ -13,14 +13,13 @@ import {
   cellMeasurer,
   repairRoutes,
   unicode,
-  type GlyphSet,
 } from '@mermaid-js/core/ascii';
 import { cellProfile } from '@mermaid-js/core/layout';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import type { RequirementRenderContext } from './layout/context.ts';
 import { layoutRequirement, type RequirementLayout } from './layout/layout.ts';
 import type { RequirementModel } from './model.ts';
-import { drawRequirement } from './ascii/draw.ts';
+import { drawRequirement, type RequirementGlyphs } from './ascii/draw.ts';
 import { asciiWarnings, type AsciiRouteWarning } from './ascii/warnings.ts';
 
 export type {
@@ -38,8 +37,22 @@ export interface RequirementAsciiContext extends RequirementRenderContext {
   readonly ast?: AstNode;
 }
 
-const glyphsFor = (ctx: RequirementRenderContext): GlyphSet =>
-  asciiOptions(ctx.config).charset === 'ascii' ? asciiGlyphs : unicode;
+/** Each charset's glyphs and marks (D438), the one place that tells the two apart. */
+const UNICODE_GLYPHS: RequirementGlyphs = {
+  set: unicode,
+  ellipsis: '…',
+  contains: '⊕',
+  joins: true,
+};
+const ASCII_GLYPHS: RequirementGlyphs = {
+  set: asciiGlyphs,
+  ellipsis: '~',
+  contains: '(+)',
+  joins: false,
+};
+
+const glyphsFor = (ctx: RequirementRenderContext): RequirementGlyphs =>
+  asciiOptions(ctx.config).charset === 'ascii' ? ASCII_GLYPHS : UNICODE_GLYPHS;
 
 /** Lays a requirement diagram out in cells: the cell measurer and profile (`ascii.padding`). */
 export function layoutAscii(

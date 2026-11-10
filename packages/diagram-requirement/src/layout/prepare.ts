@@ -49,10 +49,11 @@ export interface LineView {
   /** The kind and the name are centred; body lines start `bodyInset` in. */
   readonly align: 'center' | 'start';
   /**
-   * In cells (text output) only: the most cells a body line shows, its key and 40 cells of
-   * value; a longer line is cut to it, ending in an ellipsis (D438).
+   * In cells (text output) only: the most cells each line of a body line's label shows (D438):
+   * the first its key and 40 cells of value, a continuation line (no key) 40 cells from its
+   * start; a longer line is cut to it, ending in an ellipsis.
    */
-  readonly cut?: number;
+  readonly cuts?: readonly number[];
 }
 
 /** A requirement or an element measured as v12's `requirementBox`. */
@@ -113,8 +114,11 @@ export interface RequirementPrepared {
   readonly relations: readonly RelationView[];
   /** `flowchart.curve`, `rounded` when unset; the graph's `routing` follows it. */
   readonly curve: RequirementCurve;
-  /** The theme's marker geometry, which the room was sized for and the renderer draws. */
-  readonly markers: MarkerGeometry;
+  /**
+   * The theme's marker geometry, which the room was sized for and the renderer draws; unset in
+   * cells (text output draws its own marks, and the rank gap holds them).
+   */
+  readonly markers?: MarkerGeometry;
   /** The front-matter title (D218), as plain text in the theme's font; unset without one. */
   readonly title?: MeasuredLabel;
 }
@@ -252,14 +256,15 @@ function cellBoxView(of: BoxOf, { font, measure, styleOf }: BoxEnv, units: UnitP
     ['kind', measure(content.kind, font, 0)],
     ['name', measure(box.name, font, 0)],
   ];
-  const body = content.body.map(([part, text]): [LinePart, MeasuredLabel, number] => [
-    part,
-    measure(text, font, 0),
-    text.indexOf(': ') + ': '.length + C.value,
-  ]);
+  const body = content.body.map(([part, text]): [LinePart, MeasuredLabel, number[]] => {
+    const label = measure(text, font, 0);
+    const key = text.indexOf(': ') + ': '.length;
+    return [part, label, label.lines.map((_, i) => (i === 0 ? key : 0) + C.value)];
+  });
   let widest = 0;
   for (const [, l] of head) widest = Math.max(widest, l.width);
-  for (const [, l, cut] of body) widest = Math.max(widest, Math.min(l.width, cut));
+  for (const [, l, cuts] of body)
+    cuts.forEach((c, i) => (widest = Math.max(widest, Math.min(l.widths[i] ?? 0, c))));
   const border = 1;
   const width = widest + 2 * (pad.x + border);
   const lines: LineView[] = [];
@@ -272,8 +277,8 @@ function cellBoxView(of: BoxOf, { font, measure, styleOf }: BoxEnv, units: UnitP
   y += pad.y;
   const divider = y;
   if (body.length > 0) y += border + pad.y;
-  for (const [part, label, cut] of body) {
-    lines.push({ part, label, x: border + pad.x, y, align: 'start', cut });
+  for (const [part, label, cuts] of body) {
+    lines.push({ part, label, x: border + pad.x, y, align: 'start', cuts });
     y += label.lines.length;
   }
   if (body.length > 0) y += pad.y;
@@ -301,6 +306,58 @@ function requirementMetrics(room: MarkerExtent): LayoutMetrics {
 }
 
 /**
+ * The graph's boxes and relation lines, each label grown by the profile's `labelPatch`; with
+ * `room`, each line keeps it for its marker at the marked end.
+ */
+function nodesAndEdges(
+  boxes: readonly BoxView[],
+  relations: readonly RelationView[],
+  patch: { readonly x: number; readonly y: number },
+  room?: MarkerExtent
+): Pick<LayoutGraph, 'nodes' | 'edges'> {
+  const marker = (e: RelationView): Partial<LayoutEdge> => {
+    if (room === undefined) return {};
+    return e.markerAt === 'source' ? { startMarker: { ...room } } : { endMarker: { ...room } };
+  };
+  return {
+    nodes: boxes.map(
+      (v): LayoutNode => ({ id: v.id, width: v.width, height: v.height, shape: 'requirementBox' })
+    ),
+    edges: relations.map(
+      (e): LayoutEdge => ({
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        minLen: 1,
+        label: { width: e.label.width + patch.x, height: e.label.height + patch.y },
+        ...marker(e),
+      })
+    ),
+  };
+}
+
+/** The graph in px: v12's spacing and padding, the curve's routing, room for the markers. */
+function pxGraph(
+  model: RequirementModel,
+  boxes: readonly BoxView[],
+  relations: readonly RelationView[],
+  curve: RequirementCurve,
+  room: MarkerExtent
+): LayoutGraph {
+  const b = pxProfile.builder;
+  return {
+    direction: model.direction,
+    ...nodesAndEdges(boxes, relations, b.labelPatch, room),
+    groups: [],
+    spacing: { node: M.spacing.node, rank: M.spacing.rank, edge: b.spacing.edge },
+    diagramPadding: M.viewBoxPadding,
+    routing: ROUTING[curve] ?? 'stepped',
+    headRoom: room.length,
+    metrics: requirementMetrics(room),
+  };
+}
+
+/**
  * The graph in cells (#588): the cell profile's spacing, with a rank gap that holds both ends'
  * marks and a line cell beside the label (`C.rank`); with the ranks running down, ends along a
  * side far enough apart for the `contains` mark across a line, and self-loops reaching out far
@@ -318,18 +375,7 @@ function cellGraph(
   const across = model.direction === 'LR' || model.direction === 'RL';
   return {
     direction: model.direction,
-    nodes: boxes.map(
-      (v): LayoutNode => ({ id: v.id, width: v.width, height: v.height, shape: 'requirementBox' })
-    ),
-    edges: relations.map(
-      (e): LayoutEdge => ({
-        id: e.id,
-        source: e.source,
-        target: e.target,
-        minLen: 1,
-        label: { width: e.label.width + b.labelPatch.x, height: e.label.height + b.labelPatch.y },
-      })
-    ),
+    ...nodesAndEdges(boxes, relations, b.labelPatch),
     groups: [],
     spacing: { node: b.spacing.node, rank: Math.max(b.spacing.rank, C.rank), edge: b.spacing.edge },
     diagramPadding: b.diagramPadding,
@@ -392,43 +438,14 @@ export function prepareRequirement(
     });
   });
   const curve = requirementCurve(ctx.config.flowchart?.curve ?? 'rounded');
-  const b = pxProfile.builder;
-  const markers = markerGeometry(theme);
-  const room = markerRoom(markers);
-  const graph: LayoutGraph = cells
-    ? cellGraph(model, boxes, relations, cells)
-    : {
-        direction: model.direction,
-        nodes: boxes.map(
-          (v): LayoutNode => ({
-            id: v.id,
-            width: v.width,
-            height: v.height,
-            shape: 'requirementBox',
-          })
-        ),
-        edges: relations.map(
-          (e): LayoutEdge => ({
-            id: e.id,
-            source: e.source,
-            target: e.target,
-            minLen: 1,
-            label: {
-              width: e.label.width + b.labelPatch.x,
-              height: e.label.height + b.labelPatch.y,
-            },
-            ...(e.markerAt === 'source'
-              ? { startMarker: { ...room } }
-              : { endMarker: { ...room } }),
-          })
-        ),
-        groups: [],
-        spacing: { node: M.spacing.node, rank: M.spacing.rank, edge: b.spacing.edge },
-        diagramPadding: M.viewBoxPadding,
-        routing: ROUTING[curve] ?? 'stepped',
-        headRoom: room.length,
-        metrics: requirementMetrics(room),
-      };
+  // The marker geometry and its room are the px drawing's; text output draws its own marks.
+  let graph: LayoutGraph;
+  let markers: MarkerGeometry | undefined;
+  if (cells) graph = cellGraph(model, boxes, relations, cells);
+  else {
+    markers = markerGeometry(theme);
+    graph = pxGraph(model, boxes, relations, curve, markerRoom(markers));
+  }
   // v12 `insertTitle` writes the title as plain text in the diagram's font.
   const title = model.title?.trim();
   return {
@@ -436,7 +453,7 @@ export function prepareRequirement(
     boxes,
     relations,
     curve,
-    markers,
+    ...(markers ? { markers } : {}),
     ...(title ? { title: layoutLabel(title, font, Infinity, measurer) } : {}),
   };
 }

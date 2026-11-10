@@ -2,8 +2,8 @@
 // (`diagram-er/src/ascii/draw.ts`, copied, not imported): relation lines (solid for
 // `contains`, dotted for the rest) with their `<<kind>>` labels, the boxes with the kind and
 // the name above a divider and the body lines below it, a tee where a line leaves a box, the
-// `contains` mark at the source (`⊕`, `(+)` in ascii), the arrowhead at the target, and the
-// front-matter title on the first line.
+// `contains` mark at the source (`⊕`, `(+)` in ascii: {@link RequirementGlyphs}), the arrowhead
+// at the target, and the front-matter title on the first line.
 import {
   armOf,
   Canvas,
@@ -30,6 +30,20 @@ import {
 import type { LayoutModel, Point, Side } from '@mermaid-js/core/layout';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { BoxView, RelationView, RequirementPrepared } from '../layout/prepare.ts';
+
+/** A charset's glyphs and requirement's own marks in it, picked once (`glyphsFor`, `../ascii.ts`). */
+export interface RequirementGlyphs {
+  readonly set: GlyphSet;
+  /**
+   * The last cell of a cut value (D438): `…`, or `~` in ascii (packet's precedent: core's glyph
+   * sets have no ellipsis, and `ascii` stays pure ASCII).
+   */
+  readonly ellipsis: string;
+  /** The `contains` mark: one cell (`⊕`) on the end cell, or wider (`(+)`) beside it. */
+  readonly contains: string;
+  /** Whether a tee joins what the border already has there (the unicode box glyphs do). */
+  readonly joins: boolean;
+}
 
 interface Centred {
   x: number;
@@ -138,31 +152,34 @@ function drawLine(
 }
 
 /** The border glyph where a line leaves a box: a tee with its stem towards the line. */
-function tee(canvas: Canvas, glyphs: GlyphSet, end: End): void {
+function tee(canvas: Canvas, glyphs: RequirementGlyphs, end: End): void {
   const x = end.cell.x + DX[end.into];
   const y = end.cell.y + DY[end.into];
   const out = opposite(end.into);
-  const fallback = sideOf(glyphs.tee, out);
-  if (glyphs.name !== 'unicode') return void canvas.set(x, y, fallback);
+  const fallback = sideOf(glyphs.set.tee, out);
+  if (!glyphs.joins) return void canvas.set(x, y, fallback);
   const stub = glyphFor(armOf(out, 1), unicode)!;
   const merged = junction(canvas.get(x, y), stub);
   canvas.set(x, y, merged === stub ? fallback : merged);
 }
 
 /**
- * The `contains` mark on the end cell: `⊕`, or in ascii `(+)`, across a vertical line and
- * along a horizontal one, outwards from the box.
+ * The `contains` mark on the end cell: one cell on it; a wider one (`(+)`) centred across a
+ * vertical line and along a horizontal one, outwards from the box.
  */
-function containsMark(canvas: Canvas, glyphs: GlyphSet, end: End): void {
+function containsMark(canvas: Canvas, mark: string, end: End): void {
   const { x, y } = end.cell;
-  if (glyphs.name === 'unicode') return void canvas.set(x, y, '⊕');
-  if (end.into === UP || end.into === DOWN) return void drawText(canvas, x - 1, y, '(+)');
-  drawText(canvas, end.into === RIGHT ? x - 2 : x, y, '(+)');
+  const width = cellWidth(mark);
+  if (width === 1) return void canvas.set(x, y, mark);
+  if (end.into === UP || end.into === DOWN) {
+    return void drawText(canvas, x - Math.floor(width / 2), y, mark);
+  }
+  drawText(canvas, end.into === RIGHT ? x - width + 1 : x, y, mark);
 }
 
 /**
  * A box: the outline, the kind and the name centred, and with a body the divider row and the
- * body lines, each cut to its `cut` cells with `mark`.
+ * body lines, each line cut to its `cuts` cells with `mark`.
  */
 function drawBoxView(
   canvas: Canvas,
@@ -187,7 +204,8 @@ function drawBoxView(
     }
     line.label.lines.forEach((_, i) => {
       const text = textOf(line.label, i);
-      const shown = line.cut === undefined ? text : cut(text, line.cut, mark);
+      const most = line.cuts?.[i];
+      const shown = most === undefined ? text : cut(text, most, mark);
       drawText(canvas, r.x + line.x, r.y + line.y + i, shown);
     });
   }
@@ -208,12 +226,11 @@ export function drawRequirement(
   prepared: RequirementPrepared,
   layout: LayoutModel,
   routes: ReadonlyMap<string, readonly Point[]>,
-  glyphs: GlyphSet,
+  marks: RequirementGlyphs,
   options: DrawOptions
 ): string {
   const canvas = new Canvas();
-  // Core's glyph sets have no ellipsis; `~` keeps the `ascii` charset pure ASCII (packet's).
-  const mark = glyphs.name === 'unicode' ? '…' : '~';
+  const glyphs = marks.set;
 
   const ends: End[] = [];
   for (const r of prepared.relations) {
@@ -235,13 +252,13 @@ export function drawRequirement(
 
   for (const view of prepared.boxes) {
     const box = layout.nodes.get(view.id);
-    if (box) drawBoxView(canvas, glyphs, view, cellRect(box), mark);
+    if (box) drawBoxView(canvas, glyphs, view, cellRect(box), marks.ellipsis);
   }
 
   for (const end of ends) {
     if (end.source) {
-      tee(canvas, glyphs, end);
-      if (end.relation.marker === 'contains') containsMark(canvas, glyphs, end);
+      tee(canvas, marks, end);
+      if (end.relation.marker === 'contains') containsMark(canvas, marks.contains, end);
     } else if (end.relation.marker === 'arrow') {
       canvas.set(end.cell.x, end.cell.y, sideOf(glyphs.head, end.into));
     }
