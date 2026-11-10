@@ -62,7 +62,7 @@ interface Piece {
   box?: LabelBoxSpan;
 }
 
-// Anything that needs more than measuring once: markup, entities, escapes, explicit breaks,
+// Anything that needs parsing or normalization before wrapping: markup, entities, escapes, explicit breaks,
 // runs of white space and break hints.
 const RE_SLOW = /[<&*_`\\\n\r\t\u00ad\u200b]| {2}/;
 const RE_PLAIN_BREAK = /\\n|\r\n?|\n|<br\s*\/?>/i;
@@ -120,7 +120,8 @@ export function layoutLabel(
   if (text === '') return box([], [], []);
 
   const markdown = options.markdown === true;
-  if (!spans && !RE_SLOW.test(text) && !(markdown && RE_BULLET.test(text))) {
+  const plain = !spans && !RE_SLOW.test(text) && !(markdown && RE_BULLET.test(text));
+  if (plain) {
     const width = measurer.width(text, font, base);
     if (width <= maxWidth) return box([[run(text, base, width)]], [0], [width]);
   }
@@ -129,8 +130,13 @@ export function layoutLabel(
   const indents: number[] = [];
   const widths: number[] = [];
   const tags: Tags = { bold: 0, italic: 0 };
-  for (const { source, bullet } of markdown ? markdownLines(src) : plainLines(text)) {
-    const pieces = tidy(inline(source, base, tags, markdown, spans?.boxes));
+  let sources: SourceLine[];
+  if (plain) sources = [{ source: text }];
+  else sources = markdown ? markdownLines(src) : plainLines(text);
+  for (const { source, bullet } of sources) {
+    const pieces = plain
+      ? [{ text: source, style: base }]
+      : tidy(inline(source, base, tags, markdown, spans?.boxes));
     let indent = 0;
     let hang = 0;
     if (bullet !== undefined) {
@@ -477,7 +483,8 @@ function smallWidths(measure: Width): Width {
 /**
  * Splits a piece wider than the whole line at characters, pushing every full line to `out` and
  * returning the rest. Zero-width characters and the character after a ZWJ stay attached. A chunk
- * is as wide as its characters, so each character is measured once.
+ * is as wide as its characters, so each character is measured once. Slice completed chunks
+ * from the source instead of constructing a string at each character.
  */
 function split(
   part: string,
@@ -486,22 +493,23 @@ function split(
   max: number,
   out: Piece[][]
 ): string {
-  let chunk = '';
+  let start = 0;
+  let at = 0;
   let chunkWidth = 0;
   let prev = '';
   for (const ch of part) {
     const w = charWidth(ch, style);
-    const joined = chunk === '' || prev === ZWJ || w === 0 || ch.trim() === '';
+    const joined = start === at || prev === ZWJ || w === 0 || ch.trim() === '';
     if (!joined && chunkWidth + w > max) {
-      out.push([{ text: chunk, style }]);
-      chunk = '';
+      out.push([{ text: part.slice(start, at), style }]);
+      start = at;
       chunkWidth = 0;
     }
-    chunk += ch;
+    at += ch.length;
     chunkWidth += w;
     prev = ch;
   }
-  return chunk;
+  return part.slice(start);
 }
 
 /** Merges same-style pieces, trims the line ends, resolves break hints and measures the runs. */

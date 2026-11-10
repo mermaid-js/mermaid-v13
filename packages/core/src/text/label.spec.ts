@@ -50,6 +50,37 @@ describe('plain labels', () => {
     expect(texts(layout('aaaaaaaaaaaaaaaaaa', 40))).toEqual(['aaaaaaa', 'aaaaaaa', 'aaaa']);
   });
 
+  it('keeps plain wrapping identical to the markup path, including exact run widths', () => {
+    const labels = [
+      'aaa aaa aaa aaa aaa',
+      'one abcdefghijabcdefghij two',
+      '漢字漢「字」 字。字',
+      '😀😀😀 😀😀😀',
+      'e\u0301e\u0301e\u0301 👩\u200d💻👩\u200d💻',
+      'one\u00a0two\u2003three',
+    ];
+    for (const text of labels) {
+      for (const maxWidth of [-1, 0, 1, 25, 36.14, 40, Infinity]) {
+        for (const keepWords of [false, true]) {
+          for (const style of [0, Style.Bold | Style.Underline, Style.Mono]) {
+            for (const markdown of [false, true]) {
+              const options = { keepWords, style, markdown };
+              const plain = layoutLabel(text, arial, maxWidth, tableMeasurer, options);
+              const marked = layoutLabel(
+                `<span>${text}</span>`,
+                arial,
+                maxWidth,
+                tableMeasurer,
+                options
+              );
+              expect(plain).toEqual(marked);
+            }
+          }
+        }
+      }
+    }
+  });
+
   it('with keepWords, keeps a word wider than the box whole on its own line', () => {
     const keep = (raw: string, markdown = false): MeasuredLabel =>
       layoutLabel(raw, arial, 40, tableMeasurer, { keepWords: true, markdown });
@@ -131,6 +162,12 @@ describe('wrapping (R-TEXT-8)', () => {
     const box = layout('😀😀😀😀😀', 25);
     expect(texts(box)).toEqual(['😀😀', '😀😀', '😀']);
     expect(box.widths).toEqual([20, 20, 10]);
+  });
+
+  it('keeps combining marks and ZWJ sequences attached when splitting long words', () => {
+    expect(texts(layout('e\u0301e\u0301e\u0301', 6))).toEqual(['e\u0301', 'e\u0301', 'e\u0301']);
+    const joined = '👩\u200d💻';
+    expect(texts(layout(joined.repeat(3), 10))).toEqual([joined, joined, joined]);
   });
 
   it('breaks at a zero-width space and drops it from the output', () => {
