@@ -1,7 +1,8 @@
 {
   "tuning": {
     "ignoreCrossLaneEdges": true,
-    "optimizeRanksByCrossings": true
+    "optimizeRanksByCrossings": true,
+    "automaticLaneOrdering": false
   },
   "graph": {
     "direction": "TB",
