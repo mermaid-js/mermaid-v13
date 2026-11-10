@@ -8,13 +8,14 @@
  *
  * `padding` is a number, or a numeric string as its number (v12 passed it on as given), of 0 or
  * more, small enough that the bounds it pads stay finite (`PADDING_HEADROOM`); anything else is
- * v12's 30 with one `EVENTMODELING_CONFIG_INVALID`. `useMaxWidth` is a boolean, else true with
+ * the schema's default (v12's 30) with one `EVENTMODELING_CONFIG_INVALID`. `useMaxWidth` is a boolean, else true with
  * one (`eventModelingUseMaxWidth`, read by the renderer).
  */
 import type { Warning } from '@mermaid-js/core';
 import type { EventModelingDiagramConfig } from '@mermaid-js/core/config';
 import { EVENTMODELING_CONFIG_INVALID } from './codes.ts';
-import { EVENTMODELING_METRICS, PADDING_HEADROOM } from './layout/metrics.ts';
+import { eventmodelingConfigDefaults } from './generated/config-defaults.ts';
+import { PADDING_HEADROOM } from './layout/metrics.ts';
 
 export interface EventModelingConfig {
   /** The margin around what is drawn, px. */
@@ -26,7 +27,7 @@ export function eventModelingConfig(
   section: Readonly<EventModelingDiagramConfig> | undefined,
   warn: (w: Warning) => void
 ): EventModelingConfig {
-  const fallback = EVENTMODELING_METRICS.padding;
+  const fallback = eventmodelingConfigDefaults.padding!;
   // Typed as a number, but a directive can write anything.
   const given: unknown = section?.padding;
   if (given === undefined) return { padding: fallback };

@@ -46,8 +46,6 @@ export interface EventModelMetrics {
   readonly selfLoopRise: number;
   readonly selfLoopWidth: number;
   readonly selfLoopInset: number;
-  /** The margin around the content when `eventmodeling.padding` is unset (v12 `?? 30`). */
-  readonly padding: number;
 }
 
 export const EVENTMODELING_METRICS: EventModelMetrics = {
@@ -71,7 +69,6 @@ export const EVENTMODELING_METRICS: EventModelMetrics = {
   selfLoopRise: 10,
   selfLoopWidth: 10,
   selfLoopInset: 10,
-  padding: 30,
 };
 
 /**

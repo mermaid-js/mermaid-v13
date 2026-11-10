@@ -141,15 +141,7 @@ properties:
         `xyChartLegendTextColor`, the x and y axis `TitleColor`, `LabelColor`, `TickColor` and
         `LineColor`, `xyChartPlotColorPalette`; nested as v12's `xyChart.*`) are the same rules in
         both families: the background `background`, the other colours `primaryTextColor`, the
-        palette `plotColorArray` (each theme's own ten, D381). Event modeling's 15 colours
-        (`emUiFill`, `emUiStroke`, `emProcessorFill`, `emProcessorStroke`, `emReadModelFill`,
-        `emReadModelStroke`, `emCommandFill`, `emCommandStroke`, `emEventFill`, `emEventStroke`,
-        `emSwimlaneBackgroundOdd`, `emSwimlaneBackgroundStroke`, `emRelationStroke`,
-        `emArrowhead`, and `emTextColor`, new in v13, for box and lane text; flat only, D527) are
-        v12 `default`'s literals in every light theme, with relations and arrowheads on
-        `lineColor` and text on `textColor`, and v12 `dark`'s values in `dark`, `neo-dark`,
-        `redux-dark` and `redux-dark-color` (lanes `lightenHsl(background, 5%)` and `12%`); the
-        author's `darkMode` alone keeps the light values, as in v12. "padding" is `flowchart.padding`. Plain `redux` and
+        palette `plotColorArray` (each theme's own ten, D381). "padding" is `flowchart.padding`. Plain `redux` and
         `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`,
         `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and
         `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner
@@ -1175,7 +1167,7 @@ properties:
     x-mermaid: { status: pending }
   eventmodeling:
     $ref: '#/$defs/EventModelingDiagramConfig'
-    x-mermaid: { status: pending }
+    x-mermaid: { status: honoured, since: 13.0.0 }
   treeView:
     $ref: '#/$defs/TreeViewDiagramConfig'
     x-mermaid: { status: pending }

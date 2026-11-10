@@ -18,26 +18,11 @@ import { agreement, corpus, highlighters, ROOT } from './agreement-testing.ts';
  * Where TextMate and Monarch, which read a line at a time, cannot follow a token over its line
  * breaks (Lezer, which runs the patterns, agrees), as for wardley, pie and radar: a data block
  * (`{` ending its line, its lines, `}` starting a line), whose closer is a line break then `}`,
- * so its lines are coloured as code (the first case of each colour is named); and a `---` …
+ * so its lines are coloured as code (matched by token kind, whichever fixture shows it first); and a `---` …
  * `---` block in the body (v12's hidden YAML token, only in `eventmodeling-cases/yaml-in-body`).
  * A block `accDescr { … }` is written as a span and agrees.
  */
-const DATA = '/e2e/diagrams/eventmodeling/nightly-check/layout-data-literal.mmd';
-const LONG = '/e2e/diagrams/eventmodeling/nightly-check/layout-long-text.mmd';
-/** The first data block of each colour since #611's baselines (they sort first). */
-const BASELINE = '/e2e/diagrams/eventmodeling/baseline/data/long-names-and-data.mmd';
-const LINE_BASED = Object.fromEntries(
-  ['Monarch', 'TextMate'].flatMap((h) => [
-    [`${h}: DataBlock is String, highlighted Keyword`, `${LONG} at 209`],
-    [`${h}: DataBlock is String, highlighted Number`, `${BASELINE} at 824`],
-    [`${h}: DataBlock is String, highlighted Other`, `${BASELINE} at 548`],
-    [`${h}: DataBlock is String, highlighted Punctuation`, `${DATA} at 166`],
-    [`${h}: DataBlock is String, highlighted Variable`, `${BASELINE} at 813`],
-    [`${h}: Yaml is Meta, highlighted Number`, 'eventmodeling-cases/yaml-in-body at 21'],
-    [`${h}: Yaml is Meta, highlighted Other`, 'eventmodeling-cases/yaml-in-body at 14'],
-    [`${h}: Yaml is Meta, highlighted Variable`, 'eventmodeling-cases/yaml-in-body at 18'],
-  ])
-);
+const LINE_BASED = /^(?:Monarch|TextMate): (?:DataBlock is String|Yaml is Meta), highlighted \w+$/;
 
 /**
  * Cases of `packages/conformance/corpus/eventmodeling-cases.json` for the kinds the e2e corpus
@@ -69,7 +54,16 @@ describe('four-way highlighting agreement (eventmodeling)', () => {
       await highlighters('eventmodeling'),
       [...cases(), ...sources]
     );
-    expect(result.disagreements).toEqual(LINE_BASED);
+    // Only the line-based gap, by token kind wherever it first shows (any fixture), and in both
+    // line-based highlighters, so a fix shows up here too.
+    const keys = Object.keys(result.disagreements);
+    expect(keys.filter((k) => !LINE_BASED.test(k))).toEqual([]);
+    for (const h of ['Monarch', 'TextMate'])
+      for (const kind of ['DataBlock is String', 'Yaml is Meta'])
+        expect(
+          keys.some((k) => k.startsWith(`${h}: ${kind}`)),
+          `${h}: ${kind}`
+        ).toBe(true);
     expect(result.missing, 'kinds with no sample').toEqual([]);
   }, 120_000);
 });

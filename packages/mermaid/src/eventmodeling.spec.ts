@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { eventmodeling } from '@mermaid-js/diagram-eventmodeling';
 import { createMermaid, MermaidError, UnsupportedFormatError } from './index.ts';
@@ -90,6 +91,19 @@ describe('event models through the public API (#611)', () => {
     expect((e as UnsupportedFormatError).diagramType).toBe('eventmodeling');
   });
 
+  it.each(['sample', 'agree'])(
+    'renders the editor %s document as a valid model, with no warning',
+    async (name) => {
+      const file = new URL(
+        `../../diagram-eventmodeling/grammar/eventmodeling.${name}.mmd`,
+        import.meta.url
+      );
+      const r = await createMermaid().render('t', readFileSync(file, 'utf8'));
+      expect(r.diagramType).toBe('eventmodeling');
+      expect(r.warnings).toEqual([]);
+    }
+  );
+
   it('renders through mermaid/slim with the eventmodeling plugin passed in, alike', async () => {
     const slim = createSlim({ diagrams: [eventmodeling] });
     expect((await slim.render('t', TEXT)).svg).toBe((await createMermaid().render('t', TEXT)).svg);
@@ -98,28 +112,32 @@ describe('event models through the public API (#611)', () => {
 
 describe('the eventmodeling config section through render() (#611)', () => {
   const m = createMermaid();
-  const plain = m.render('t', TEXT);
+  let plain: Awaited<ReturnType<typeof m.render>>;
+
+  beforeAll(async () => {
+    plain = await m.render('t', TEXT);
+  });
 
   it('useMaxWidth: on by default, false draws at its own width', async () => {
-    expect((await plain).svg).toMatch(/<svg[^>]* width="100%"/);
+    expect(plain.svg).toMatch(/<svg[^>]* width="100%"/);
     const fixed = await m.render('t', withConfig('    useMaxWidth: false\n'));
     expect(fixed.warnings).toEqual([]);
     expect(fixed.svg).toMatch(/<svg[^>]* width="\d/);
   });
 
   it('padding: 30 by default, and the given margin around what is drawn', async () => {
-    const [x0, y0, w0, h0] = viewBox((await plain).svg);
+    const [x0, y0, w0, h0] = viewBox(plain.svg);
     const tight = await m.render('t', withConfig('    padding: 8\n'));
     expect(tight.warnings).toEqual([]);
     const [x, y, w, h] = viewBox(tight.svg);
     expect([x! - x0!, y! - y0!, w! - w0!, h! - h0!]).toEqual([22, 22, -44, -44]);
-    expect(boxXs(tight.svg)).toEqual(boxXs((await plain).svg));
+    expect(boxXs(tight.svg)).toEqual(boxXs(plain.svg));
   });
 
   it('a padding that is not a length draws with 30 and one EVENTMODELING_CONFIG_INVALID', async () => {
     for (const bad of ['-5', '"wide"']) {
       const r = await m.render('t', withConfig(`    padding: ${bad}\n`));
-      expect(viewBox(r.svg)).toEqual(viewBox((await plain).svg));
+      expect(viewBox(r.svg)).toEqual(viewBox(plain.svg));
       expect(r.warnings.map((w) => [w.code, w.path])).toEqual([
         ['EVENTMODELING_CONFIG_INVALID', 'eventmodeling.padding'],
       ]);
@@ -129,6 +147,6 @@ describe('the eventmodeling config section through render() (#611)', () => {
   it('rowHeight and useWidth are accepted and ignored, with no warning (v12 read neither)', async () => {
     const r = await m.render('t', withConfig('    rowHeight: 200\n    useWidth: 50\n'));
     expect(r.warnings).toEqual([]);
-    expect(r.svg).toBe((await plain).svg);
+    expect(r.svg).toBe(plain.svg);
   });
 });
