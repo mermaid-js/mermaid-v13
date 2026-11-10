@@ -1,0 +1,4 @@
+2:1-2:10 "title.txt" warning TREEVIEW_NAME_READ_AS_TITLE: `title.txt` is read as an empty `title` and a node `.txt`. Put the name in quotes, `"title.txt"`.
+3:10-3:14 "b.js" warning TREEVIEW_NODES_ON_ONE_LINE: `b.js` starts a second node on this line. It is read as a node of its own, indented by the blanks before it, so it may nest under the node before it. Put each node on its own line.
+4:9-4:10 " " error STRAY_BLANK: Unexpected blank: there is a blank at the end of line 4, which a treeView reads as the indent of the next node, and the next node has an indent of its own. Remove it.
+7:3-7:15 ":::highlight" warning TREEVIEW_ANNOTATION_NEXT_LINE: `:::highlight` starts a line, so it annotates `e.js`, the node before it. Write it after that name, on its line.
