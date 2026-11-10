@@ -63,6 +63,7 @@ export interface CdnFile {
 
 export interface CdnBuild {
   readonly outdir: string;
+  readonly meta: Metafile;
   readonly files: readonly CdnFile[];
   /** gzip-9 bytes of the ESM entry and every file it imports statically. */
   readonly esmClosureGzip: number;
@@ -285,6 +286,7 @@ export async function buildCdn(outdir: string = join(PACKAGE_DIR, 'dist')): Prom
   return {
     outdir,
     files,
+    meta: esm.metafile!,
     esmClosureGzip: closureGzip(files, ESM_FILE),
     loaderGzip: files.find((f) => f.path === LOADER_FILE)!.gzip,
   };

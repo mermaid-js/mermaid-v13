@@ -29,36 +29,10 @@
  * the scans to the next quote and to the next `]` or quote are cached, so failed bracket and
  * string matches do not rescan.
  */
-import {
-  codePointEnd,
-  COLON,
-  COMMA,
-  cook,
-  DASH,
-  DOT,
-  DQUOTE,
-  HASH,
-  isBlank,
-  isDigit,
-  isHex,
-  isLetter,
-  isSpace,
-  isWord,
-  Kind,
-  LBRACE,
-  LBRACKET,
-  LF,
-  lowerCode,
-  PERCENT,
-  QUOTE,
-  RBRACE,
-  RBRACKET,
-  RPAREN,
-  SEMI,
-  StateLexer,
-  UNDERSCORE,
-} from '@mermaid-js/core/parser-kit';
-import type { SourceView, StateLexerOptions, TokenStream } from '@mermaid-js/core/parser-kit';
+import { codePointEnd, COLON, COMMA, cook, DASH, DOT, DQUOTE, HASH, isBlank, isDigit, isHex, isLetter, isSpace, isWord, Kind, LBRACE, LBRACKET, LF, PERCENT, QUOTE, RBRACE, RBRACKET, RPAREN, SEMI, UNDERSCORE } from '@mermaid-js/core/parser-kit';
+import { lowerCode, StateLexer } from '@mermaid-js/core/parser-kit/state';
+import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { StateLexerOptions } from '@mermaid-js/core/parser-kit/state';
 import { T } from './tokens.ts';
 
 // Start conditions of venn.jison (`bol` is inclusive: INITIAL's rules apply there too).

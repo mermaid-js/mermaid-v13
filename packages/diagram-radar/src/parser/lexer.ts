@@ -29,30 +29,10 @@
  * string, `}`, YAML or directive scan that failed is not repeated for a start it covered.
  */
 // cspell:words accdescr acctitle über
-import {
-  APOSTROPHE,
-  COLON,
-  COMMA,
-  DASH,
-  DIGIT_0,
-  DOT,
-  DQUOTE,
-  isBlank,
-  isBreak,
-  isDigit,
-  isSpace,
-  isWord,
-  Kind,
-  LBRACE,
-  LBRACKET,
-  newlineAt,
-  PERCENT,
-  RBRACE,
-  RBRACKET,
-  RuleLexer,
-  SKIP,
-} from '@mermaid-js/core/parser-kit';
-import type { RuleLexerOptions, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import { APOSTROPHE, COLON, COMMA, DASH, DIGIT_0, DOT, DQUOTE, isBlank, isDigit, isSpace, isWord, Kind, LBRACE, LBRACKET, newlineAt, PERCENT, RBRACE, RBRACKET } from '@mermaid-js/core/parser-kit';
+import { isBreak, RuleLexer, SKIP } from '@mermaid-js/core/parser-kit/rule';
+import type { RuleLexerOptions } from '@mermaid-js/core/parser-kit/rule';
+import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { PREFIX_KEYWORDS, T } from './tokens.ts';
 
 const HEADER = 'radar-beta';

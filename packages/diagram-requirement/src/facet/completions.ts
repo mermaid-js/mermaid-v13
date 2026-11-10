@@ -34,7 +34,7 @@ import {
   tokenBefore,
   VALUES,
 } from './tables.ts';
-import { CompletionList as Items } from '@mermaid-js/core/parser-kit';
+import { CompletionList as Items } from '@mermaid-js/core/parser-kit/facet';
 
 /** Modes whose text is a value, not code: nothing is offered there. */
 const VALUE_MODES = new Set([

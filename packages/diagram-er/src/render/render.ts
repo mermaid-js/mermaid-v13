@@ -4,18 +4,8 @@
 // entity, attribute row, relationship and subgraph is one element with `data-id` and
 // `data-ast` (R-SVG-2, R-PARSE-8). Colours and sizes come from theme variables only (D152).
 import type { LayoutModelNode } from '@mermaid-js/core/layout';
-import {
-  cls,
-  edgeLabel,
-  openSvgRoot,
-  paletteSlots,
-  translate,
-  type Attrs,
-  type OutlinePaint,
-  type Paint,
-  type SafeValue,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import { cls, openSvgRoot, paletteSlots, translate, type Attrs, type OutlinePaint, type Paint, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
+import { edgeLabel } from '@mermaid-js/core/svg/edges';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { ErLayout } from '../layout/layout.ts';
 import type { ErRenderContext } from '../layout/context.ts';

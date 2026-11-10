@@ -31,26 +31,10 @@
  * left, so no later scan of that kind can rescan the same text; NUMBER2 has no backtracking.
  */
 // cspell:words accdescr acctitle treemapx
-import {
-  APOSTROPHE,
-  COLON,
-  COMMA,
-  DOT,
-  DQUOTE,
-  isBlank,
-  isBreak,
-  isDigit,
-  isLetter,
-  isWord,
-  Kind,
-  newlineAt,
-  PERCENT,
-  RuleLexer,
-  SEMI,
-  SKIP,
-  UNDERSCORE,
-} from '@mermaid-js/core/parser-kit';
-import type { RuleLexerOptions, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import { APOSTROPHE, COLON, COMMA, DOT, DQUOTE, isBlank, isDigit, isLetter, isWord, Kind, newlineAt, PERCENT, SEMI, UNDERSCORE } from '@mermaid-js/core/parser-kit';
+import { isBreak, RuleLexer, SKIP } from '@mermaid-js/core/parser-kit/rule';
+import type { RuleLexerOptions } from '@mermaid-js/core/parser-kit/rule';
+import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
 
 const HEADER = 'treemap';

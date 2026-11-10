@@ -29,14 +29,8 @@ import {
   sideways,
 } from '@mermaid-js/core/layout';
 import type { AgentflowDiagramConfig } from '@mermaid-js/core/config';
-import {
-  styleCache,
-  curveKind,
-  curveRouting,
-  textStyle,
-  type CheckedStyle,
-  type CurveKind,
-} from '@mermaid-js/core/svg';
+import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
+import { curveKind, curveRouting, textStyle, type CurveKind } from '@mermaid-js/core/svg/edges';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   AgentflowFlowModel,

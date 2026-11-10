@@ -4,9 +4,9 @@
  */
 import type { Range } from '@mermaid-js/core/parser-kit';
 import type { MindmapShape } from '../model.ts';
-export { lineBefore } from '@mermaid-js/core/parser-kit';
-export { span } from '@mermaid-js/core/parser-kit';
-export { code } from '@mermaid-js/core/parser-kit';
+export { lineBefore } from '@mermaid-js/core/parser-kit/facet';
+export { span } from '@mermaid-js/core/parser-kit/facet';
+export { code } from '@mermaid-js/core/parser-kit/facet';
 
 /** A shape written with delimiters: its opener, the closer it reads best with, its name. */
 export interface ShapeForm {

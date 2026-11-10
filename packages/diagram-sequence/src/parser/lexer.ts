@@ -15,40 +15,10 @@
  * it consumes (R-PARSE-7).
  */
 // cspell:words sequencediagram acctitle accdescr
-import {
-  AT,
-  BACKSLASH,
-  codePointEnd,
-  COLON,
-  COMMA,
-  CR,
-  DASH,
-  DOT,
-  GT,
-  HASH,
-  isDigit,
-  isSpace,
-  isWord,
-  Kind,
-  LBRACE,
-  LF,
-  lowerCode,
-  LPAREN,
-  LT,
-  PERCENT,
-  PIPE,
-  RBRACE,
-  RPAREN,
-  SEMI,
-  SLASH,
-  StateLexer,
-} from '@mermaid-js/core/parser-kit';
-import type {
-  Probe,
-  SourceView,
-  StateLexerOptions,
-  TokenStream,
-} from '@mermaid-js/core/parser-kit';
+import { AT, BACKSLASH, codePointEnd, COLON, COMMA, CR, DASH, DOT, GT, HASH, isDigit, isSpace, isWord, Kind, LBRACE, LF, LPAREN, LT, PERCENT, PIPE, RBRACE, RPAREN, SEMI, SLASH } from '@mermaid-js/core/parser-kit';
+import { lowerCode, StateLexer } from '@mermaid-js/core/parser-kit/state';
+import type { Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { StateLexerOptions } from '@mermaid-js/core/parser-kit/state';
 import { T } from './tokens.ts';
 
 // Start conditions of sequenceDiagram.jison (`CONFIG_DATA` is declared there, never entered).

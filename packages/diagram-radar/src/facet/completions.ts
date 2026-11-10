@@ -17,9 +17,9 @@ import { radarDocs } from '../generated/docs.ts';
 import type { RadarDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { declaredAxes, ITEMS, span, tokenBefore } from './tables.ts';
-import { atLineStart } from '@mermaid-js/core/parser-kit';
-import { wordRange } from '@mermaid-js/core/parser-kit';
-import { keywordCompletions } from '@mermaid-js/core/parser-kit';
+import { atLineStart } from '@mermaid-js/core/parser-kit/facet';
+import { wordRange } from '@mermaid-js/core/parser-kit/facet';
+import { keywordCompletions } from '@mermaid-js/core/parser-kit/facet';
 
 /** Whether `at` is inside a curve's `{ }`: the last brace before it is a `{`. */
 function inBraces(tokens: TokenStream | undefined, at: number): boolean {

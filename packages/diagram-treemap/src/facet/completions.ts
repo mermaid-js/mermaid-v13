@@ -21,9 +21,9 @@ import type { TreemapDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { ITEMS, span, tokenBefore } from './tables.ts';
 import type { ItemPlace } from './tables.ts';
-import { atLineStart } from '@mermaid-js/core/parser-kit';
-import { wordRange } from '@mermaid-js/core/parser-kit';
-import { keywordItem } from '@mermaid-js/core/parser-kit';
+import { atLineStart } from '@mermaid-js/core/parser-kit/facet';
+import { wordRange } from '@mermaid-js/core/parser-kit/facet';
+import { keywordItem } from '@mermaid-js/core/parser-kit/facet';
 
 /** The kind of the token that ends right at `at` (no blank between), if any. */
 function gluedBefore(tokens: TokenStream | undefined, at: number): number | undefined {

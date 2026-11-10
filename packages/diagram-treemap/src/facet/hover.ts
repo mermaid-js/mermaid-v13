@@ -14,7 +14,7 @@ import { T } from '../parser/tokens.ts';
 import { code, inside, span, statementAt } from './tables.ts';
 import { drawnValue, valuesOf } from './values.ts';
 import type { Values } from './values.ts';
-import { keywordHover } from '@mermaid-js/core/parser-kit';
+import { keywordHover } from '@mermaid-js/core/parser-kit/facet';
 
 /** Tokens that hold the statement's text too: only their keyword is hovered. */
 const KEYWORD_WORDS: Readonly<Partial<Record<number, string>>> = {

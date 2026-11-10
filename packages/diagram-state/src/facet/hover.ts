@@ -16,7 +16,7 @@ import type { StateDocument, StateRegionNode, StateStatementNode } from '../pars
 import type { StateModel } from '../parser/model.ts';
 import { T } from '../parser/tokens.ts';
 import { code, DIRECTIONS, KIND_NAMES, plural, span } from './tables.ts';
-import { trimmed } from '@mermaid-js/core/parser-kit';
+import { trimmed } from '@mermaid-js/core/parser-kit/facet';
 
 /** Kinds with no grammar terminal, and the kind whose doc covers them. */
 const DOC_OF: Readonly<Record<number, number>> = {

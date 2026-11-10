@@ -6,7 +6,7 @@ import { buildCdn, closureGzip, ESM_FILE } from './cdn-build.ts';
 
 const out = await buildCdn(mkdtempSync(join(tmpdir(), 'spike-cdn-')));
 const files = out.files.filter((f) => f.path.endsWith('.mjs'));
-const rows = files.map((f) => ({ path: f.path, gzip: f.gzip, bytes: f.bytes }));
+const rows = files.map((f) => ({ path: f.path, gzip: f.gzip, bytes: 0 }));
 const core = closureGzip(out.files, ESM_FILE);
 const closure = (root: string): number => closureGzip(out.files, root);
 const diagrams = rows.filter((r) => /chunks\/diagram-[a-z0-9]+\.mjs$/.test(r.path));

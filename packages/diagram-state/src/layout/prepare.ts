@@ -12,7 +12,8 @@ import {
   sideways,
   type UnitProfile,
 } from '@mermaid-js/core/layout';
-import { styleCache, textStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
+import { textStyle } from '@mermaid-js/core/svg/edges';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { StateModel, StateNode, StateNote, StateTransition } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from '@mermaid-js/core/config';

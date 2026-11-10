@@ -12,8 +12,8 @@ import { CYNEFIN_DOMAIN_NAMES } from '../model.ts';
 import type { CynefinDocument, CynefinDomainNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { code, DOMAIN_MEANING, domainLine, span } from './tables.ts';
-import { inside } from '@mermaid-js/core/parser-kit';
-import { keywordHover } from '@mermaid-js/core/parser-kit';
+import { inside } from '@mermaid-js/core/parser-kit/facet';
+import { keywordHover } from '@mermaid-js/core/parser-kit/facet';
 
 /** Statement tokens that hold their text too: only the keyword is hovered. */
 const VALUE_WORDS: Readonly<Partial<Record<number, string>>> = {

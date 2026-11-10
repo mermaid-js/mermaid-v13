@@ -23,7 +23,7 @@ import {
   showPercent,
   span,
 } from './tables.ts';
-import { keywordHover } from '@mermaid-js/core/parser-kit';
+import { keywordHover } from '@mermaid-js/core/parser-kit/facet';
 
 /** Tokens with a doc that hover leaves alone: names, values and text. */
 const NO_DOC = new Set<number>([T.String, T.Decimal, T.Int, T.Id, T.Name, T.LinkLabel]);

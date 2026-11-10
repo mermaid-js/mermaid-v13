@@ -28,28 +28,10 @@
  * block of the same domain replaced (D364), `CYNEFIN_SELF_LOOP` the `x --> x` transitions the
  * model leaves out (D365).
  */
-import {
-  APOSTROPHE,
-  DQUOTE,
-  ExpectedTable,
-  ID_CONTROL,
-  ID_RESERVED,
-  idEscaper,
-  Kind,
-  kindSet,
-  Probe,
-  RuleParser,
-  skipTo,
-  STOP,
-} from '@mermaid-js/core/parser-kit';
-import type {
-  AstId,
-  ParseOptions,
-  ParseResult,
-  Range,
-  RuleGrammar,
-  TokenStream,
-} from '@mermaid-js/core/parser-kit';
+import { APOSTROPHE, DQUOTE, ExpectedTable, ID_CONTROL, ID_RESERVED, idEscaper, Kind, kindSet, Probe, skipTo, STOP } from '@mermaid-js/core/parser-kit';
+import { RuleParser } from '@mermaid-js/core/parser-kit/rule';
+import type { AstId, ParseOptions, ParseResult, Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { RuleGrammar } from '@mermaid-js/core/parser-kit/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { CYNEFIN_DOMAIN_NAMES } from '../model.ts';

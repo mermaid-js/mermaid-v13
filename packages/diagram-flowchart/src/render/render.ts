@@ -3,25 +3,12 @@
 // one element with `data-id`, `data-ast` and semantic classes (R-SVG-2, -3, R-PARSE-8).
 import type { LayoutModel, LayoutModelNode, RoutePoint } from '@mermaid-js/core/layout';
 import { layered } from '@mermaid-js/core/layout';
-import {
-  checkLinkTarget,
-  checkUrl,
-  cls,
-  edgeLabel,
-  openSvgRoot,
-  paletteSlots,
-  textElement,
-  translate,
-  type Attrs,
-  type OutlinePaint,
-  type Paint,
-  type SafeValue,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import { checkLinkTarget, checkUrl, cls, openSvgRoot, paletteSlots, textElement, translate, type Attrs, type OutlinePaint, type Paint, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
+import { edgeLabel } from '@mermaid-js/core/svg/edges';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
 import { drawIcon, drawImage } from './assets.ts';
-import { arrowheads, marker, markerTrim, routePath, type Arrowheads } from '@mermaid-js/core/svg';
+import { arrowheads, marker, markerTrim, routePath, type Arrowheads } from '@mermaid-js/core/svg/edges';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
 import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
 

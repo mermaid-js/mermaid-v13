@@ -23,17 +23,10 @@
  * directive scan that failed is not repeated for a start it covered.
  */
 // cspell:words accdescr acctitle
-import {
-  DASH,
-  isBlank,
-  isBreak,
-  Kind,
-  newlineAt,
-  PERCENT,
-  RuleLexer,
-  SKIP,
-} from '@mermaid-js/core/parser-kit';
-import type { RuleLexerOptions, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import { DASH, isBlank, Kind, newlineAt, PERCENT } from '@mermaid-js/core/parser-kit';
+import { isBreak, RuleLexer, SKIP } from '@mermaid-js/core/parser-kit/rule';
+import type { RuleLexerOptions } from '@mermaid-js/core/parser-kit/rule';
+import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
 
 /** The shared terminals' kinds, and about how many characters one token takes. */

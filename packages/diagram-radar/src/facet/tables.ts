@@ -5,9 +5,9 @@
 import type { CompletionKind, Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import type { RadarAxisNode, RadarDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-export { tokenBefore } from '@mermaid-js/core/parser-kit';
-export { span } from '@mermaid-js/core/parser-kit';
-export { code } from '@mermaid-js/core/parser-kit';
+export { tokenBefore } from '@mermaid-js/core/parser-kit/facet';
+export { span } from '@mermaid-js/core/parser-kit/facet';
+export { code } from '@mermaid-js/core/parser-kit/facet';
 
 /** An item offered when the parser expects `kind`. */
 export interface KeywordItem {

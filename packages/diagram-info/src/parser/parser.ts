@@ -14,14 +14,10 @@
  * so it accepts and rejects what v12's parser does. Unlike v12 it does not stop at the first
  * error: it reports it, skips to the next line break and carries on (R-PARSE-4).
  */
-import { ExpectedTable, Kind, RuleParser, STOP } from '@mermaid-js/core/parser-kit';
-import type {
-  ParseOptions,
-  ParseResult,
-  Range,
-  RuleGrammar,
-  TokenStream,
-} from '@mermaid-js/core/parser-kit';
+import { ExpectedTable, Kind, STOP } from '@mermaid-js/core/parser-kit';
+import { RuleParser } from '@mermaid-js/core/parser-kit/rule';
+import type { ParseOptions, ParseResult, Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { RuleGrammar } from '@mermaid-js/core/parser-kit/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { InfoModel } from '../model.ts';

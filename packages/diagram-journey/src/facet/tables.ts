@@ -6,13 +6,13 @@ import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import { drawnScore } from '../score.ts';
 import type { JourneyTask } from '../model.ts';
 import { T } from '../parser/tokens.ts';
-import { code } from '@mermaid-js/core/parser-kit';
-import type { KeywordItem } from '@mermaid-js/core/parser-kit';
-export type { KeywordItem } from '@mermaid-js/core/parser-kit';
-export { plural } from '@mermaid-js/core/parser-kit';
-export { tokenBefore } from '@mermaid-js/core/parser-kit';
-export { span } from '@mermaid-js/core/parser-kit';
-export { code } from '@mermaid-js/core/parser-kit';
+import { code } from '@mermaid-js/core/parser-kit/facet';
+import type { KeywordItem } from '@mermaid-js/core/parser-kit/facet';
+export type { KeywordItem } from '@mermaid-js/core/parser-kit/facet';
+export { plural } from '@mermaid-js/core/parser-kit/facet';
+export { tokenBefore } from '@mermaid-js/core/parser-kit/facet';
+export { span } from '@mermaid-js/core/parser-kit/facet';
+export { code } from '@mermaid-js/core/parser-kit/facet';
 
 /** Statement keywords, in the order they are offered. */
 export const KEYWORDS: readonly KeywordItem[] = [

@@ -4,24 +4,8 @@
 // the AST is one element with `data-id` and `data-ast` (R-SVG-2, -3, R-PARSE-8). What the
 // boxes hold and where is `ClassLayout.class` (#155); this file only paints it.
 import type { LayoutModelNode } from '@mermaid-js/core/layout';
-import {
-  checkLinkTarget,
-  checkStyle,
-  checkUrl,
-  cls,
-  edgeLabel,
-  openSvgRoot,
-  paletteSlots,
-  routePath,
-  textElement,
-  translate,
-  type Attrs,
-  type CheckedStyle,
-  type OutlinePaint,
-  type Paint,
-  type SafeValue,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import { checkLinkTarget, checkStyle, checkUrl, cls, openSvgRoot, paletteSlots, textElement, translate, type Attrs, type CheckedStyle, type OutlinePaint, type Paint, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
+import { edgeLabel, routePath } from '@mermaid-js/core/svg/edges';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   ClassBoxView,

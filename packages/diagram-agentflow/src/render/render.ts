@@ -8,23 +8,8 @@
  * the drawn outlines already: the layout put them there (`layout/ends.ts`).
  */
 import { pxProfile } from '@mermaid-js/core/layout';
-import {
-  checkLinkTarget,
-  checkUrl,
-  cls,
-  edgeLabel,
-  marker,
-  markerTrim,
-  openSvgRoot,
-  px,
-  routePath,
-  textElement,
-  translate,
-  type Attrs,
-  type SafeUrl,
-  type SafeValue,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import { checkLinkTarget, checkUrl, cls, openSvgRoot, px, textElement, translate, type Attrs, type SafeUrl, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
+import { edgeLabel, marker, markerTrim, routePath } from '@mermaid-js/core/svg/edges';
 import { layoutLabel, type MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   AgentflowEdgeView,

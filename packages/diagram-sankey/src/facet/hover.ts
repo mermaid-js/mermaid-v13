@@ -11,7 +11,7 @@ import type { SankeyDocument, SankeyField } from '../parser/ast.ts';
 import { SankeyKind as T } from '../parser/tokens.ts';
 import { invalidity, readValue, trailingTextMessage } from '../parser/values.ts';
 import { code } from './tables.ts';
-import { inside } from '@mermaid-js/core/parser-kit';
+import { inside } from '@mermaid-js/core/parser-kit/facet';
 
 /** A sum as it reads, without the binary noise of adding decimals (`0.1 + 0.2`). */
 const total = (n: number) => String(Number(n.toPrecision(12)));

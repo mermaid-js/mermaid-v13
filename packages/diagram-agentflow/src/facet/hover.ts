@@ -25,8 +25,8 @@ import type { AgentflowFlowModel, AgentflowModel } from '../parser/model.ts';
 import { destructLink } from '../parser/model.ts';
 import { T } from '../parser/tokens.ts';
 import { code, describeLink, DIRECTION_DOCS, shapeText, span, tokenBefore } from './tables.ts';
-import { trimmed } from '@mermaid-js/core/parser-kit';
-import { plural } from '@mermaid-js/core/parser-kit';
+import { trimmed } from '@mermaid-js/core/parser-kit/facet';
+import { plural } from '@mermaid-js/core/parser-kit/facet';
 
 const LINK_TOKENS = new Set<number>([T.Link, T.StartLink]);
 

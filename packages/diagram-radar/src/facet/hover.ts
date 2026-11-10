@@ -11,8 +11,8 @@ import { radarDocs } from '../generated/docs.ts';
 import type { RadarAxisNode, RadarDocument, RadarEntryNode } from '../parser/ast.ts';
 import { T, TEXT_STATEMENTS } from '../parser/tokens.ts';
 import { code, declaredAxes, span } from './tables.ts';
-import { inside } from '@mermaid-js/core/parser-kit';
-import { keywordHover } from '@mermaid-js/core/parser-kit';
+import { inside } from '@mermaid-js/core/parser-kit/facet';
+import { keywordHover } from '@mermaid-js/core/parser-kit/facet';
 
 /** Tokens with a doc that hover leaves alone: punctuation and values. */
 const NO_DOC = new Set<number>([T.String, T.Number, T.Id]);

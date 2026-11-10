@@ -17,12 +17,12 @@ import {
   RISKS,
 } from '../parser/syntax.ts';
 import { KEYWORD_SPELLINGS, T } from '../parser/tokens.ts';
-import type { DetailedKeywordItem as KeywordItem } from '@mermaid-js/core/parser-kit';
-export type { DetailedKeywordItem as KeywordItem } from '@mermaid-js/core/parser-kit';
-export { plural } from '@mermaid-js/core/parser-kit';
-export { tokenBefore } from '@mermaid-js/core/parser-kit';
-export { span } from '@mermaid-js/core/parser-kit';
-export { code } from '@mermaid-js/core/parser-kit';
+import type { DetailedKeywordItem as KeywordItem } from '@mermaid-js/core/parser-kit/facet';
+export type { DetailedKeywordItem as KeywordItem } from '@mermaid-js/core/parser-kit/facet';
+export { plural } from '@mermaid-js/core/parser-kit/facet';
+export { tokenBefore } from '@mermaid-js/core/parser-kit/facet';
+export { span } from '@mermaid-js/core/parser-kit/facet';
+export { code } from '@mermaid-js/core/parser-kit/facet';
 
 const SPELLING: ReadonlyMap<number, string> = new Map(KEYWORD_SPELLINGS);
 

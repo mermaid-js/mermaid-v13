@@ -4,11 +4,11 @@
  */
 import type { CompletionKind, Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from '../parser/tokens.ts';
-import type { KindedKeywordItem as KeywordItem } from '@mermaid-js/core/parser-kit';
-export type { KindedKeywordItem as KeywordItem } from '@mermaid-js/core/parser-kit';
-export { tokenBefore } from '@mermaid-js/core/parser-kit';
-export { span } from '@mermaid-js/core/parser-kit';
-export { code } from '@mermaid-js/core/parser-kit';
+import type { KindedKeywordItem as KeywordItem } from '@mermaid-js/core/parser-kit/facet';
+export type { KindedKeywordItem as KeywordItem } from '@mermaid-js/core/parser-kit/facet';
+export { tokenBefore } from '@mermaid-js/core/parser-kit/facet';
+export { span } from '@mermaid-js/core/parser-kit/facet';
+export { code } from '@mermaid-js/core/parser-kit/facet';
 
 /** Everything completion offers, in the order it is offered. */
 export const ITEMS: readonly KeywordItem[] = [

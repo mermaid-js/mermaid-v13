@@ -4,8 +4,8 @@
  */
 import type { Range } from '@mermaid-js/core/parser-kit';
 import type { TreeViewDocument, TreeViewStatementNode } from '../parser/ast.ts';
-export { inside } from '@mermaid-js/core/parser-kit';
-export { span } from '@mermaid-js/core/parser-kit';
+export { inside } from '@mermaid-js/core/parser-kit/facet';
+export { span } from '@mermaid-js/core/parser-kit/facet';
 
 /** The statement of `doc` whose range holds `offset` (its ends included), if any. */
 export function statementAt(

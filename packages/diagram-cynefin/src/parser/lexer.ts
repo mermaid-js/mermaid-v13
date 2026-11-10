@@ -24,22 +24,10 @@
  * covered.
  */
 // cspell:words accdescr acctitle
-import {
-  APOSTROPHE,
-  COLON,
-  DASH,
-  DQUOTE,
-  isBlank,
-  isBreak,
-  isSpace,
-  Kind,
-  LOWER_C,
-  newlineAt,
-  PERCENT,
-  RuleLexer,
-  SKIP,
-} from '@mermaid-js/core/parser-kit';
-import type { RuleLexerOptions, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import { APOSTROPHE, COLON, DASH, DQUOTE, isBlank, isSpace, Kind, LOWER_C, newlineAt, PERCENT } from '@mermaid-js/core/parser-kit';
+import { isBreak, RuleLexer, SKIP } from '@mermaid-js/core/parser-kit/rule';
+import type { RuleLexerOptions } from '@mermaid-js/core/parser-kit/rule';
+import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { CYNEFIN_DOMAIN_NAMES } from '../model.ts';
 import { T } from './tokens.ts';
 

@@ -24,23 +24,10 @@
  * it covered.
  */
 // cspell:words accdescr acctitle
-import {
-  APOSTROPHE,
-  COLON,
-  DASH,
-  DIGIT_0,
-  DOT,
-  DQUOTE,
-  isBlank,
-  isBreak,
-  isDigit,
-  Kind,
-  newlineAt,
-  PERCENT,
-  RuleLexer,
-  SKIP,
-} from '@mermaid-js/core/parser-kit';
-import type { RuleLexerOptions, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import { APOSTROPHE, COLON, DASH, DIGIT_0, DOT, DQUOTE, isBlank, isDigit, Kind, newlineAt, PERCENT } from '@mermaid-js/core/parser-kit';
+import { isBreak, RuleLexer, SKIP } from '@mermaid-js/core/parser-kit/rule';
+import type { RuleLexerOptions } from '@mermaid-js/core/parser-kit/rule';
+import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
 
 /** The shared terminals' kinds, and about how many characters one token takes. */

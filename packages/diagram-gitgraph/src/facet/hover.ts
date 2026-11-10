@@ -11,8 +11,8 @@ import type { GitCommit, GitModel } from '../model.ts';
 import type { GitGraphDocument, GitStatementNode, GitValue } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { code, span, TEXT_WORDS } from './tables.ts';
-import { inside } from '@mermaid-js/core/parser-kit';
-import { keywordHover } from '@mermaid-js/core/parser-kit';
+import { inside } from '@mermaid-js/core/parser-kit/facet';
+import { keywordHover } from '@mermaid-js/core/parser-kit/facet';
 const plural = (n: number, word: string) =>
   n === 0 ? `no ${word}s` : `${n} ${word}${n === 1 ? '' : 's'}`;
 /** Kinds whose docs describe values, not keywords: no hover. */

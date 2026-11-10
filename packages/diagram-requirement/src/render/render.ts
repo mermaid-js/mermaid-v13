@@ -5,19 +5,8 @@
 // `path` carries `data-ast` (D437, R-PARSE-8), labels `data-id` only. Colours and sizes come
 // from the package's theme table (D152, D435); outlines and lines go through `w.outline`
 // (D301, D302), the markers are plain.
-import {
-  cls,
-  openSvgRoot,
-  paletteSlots,
-  px,
-  routePath,
-  translate,
-  type Attrs,
-  type OutlinePaint,
-  type Paint,
-  type SafeValue,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import { cls, openSvgRoot, paletteSlots, px, translate, type Attrs, type OutlinePaint, type Paint, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
+import { routePath } from '@mermaid-js/core/svg/edges';
 import type { RequirementRenderContext } from '../layout/context.ts';
 import type { RequirementLayout } from '../layout/layout.ts';
 import { REQUIREMENT_METRICS as M } from '../layout/metrics.ts';

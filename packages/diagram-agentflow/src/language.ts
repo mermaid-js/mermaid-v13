@@ -15,8 +15,8 @@ import { agentflowCategories } from './generated/categories.ts';
 import { agentflowTokens, parseAgentflow, RESERVED_ID } from './parser/index.ts';
 import type { AgentflowDocument } from './parser/index.ts';
 import { T } from './parser/tokens.ts';
-import { shapeReason } from '@mermaid-js/core/parser-kit';
-import { readsBack } from '@mermaid-js/core/parser-kit';
+import { shapeReason } from '@mermaid-js/core/parser-kit/facet';
+import { readsBack } from '@mermaid-js/core/parser-kit/facet';
 
 export { agentflowCategories } from './generated/categories.ts';
 export { agentflowDocs } from './generated/docs.ts';

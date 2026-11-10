@@ -7,7 +7,7 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { parseGitGraph } from '../parser/index.ts';
 import type { GitGraphParseResult } from '../parser/index.ts';
-import { isPlain } from '@mermaid-js/core/parser-kit';
+import { isPlain } from '@mermaid-js/core/parser-kit/facet';
 
 /** The `gitGraph` config keys the parse reads. */
 export interface DocumentGitConfig {

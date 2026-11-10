@@ -22,7 +22,7 @@ import type { TreeViewIconOptions } from '../icons.ts';
 import type { TreeViewModel, TreeViewNode } from '../model.ts';
 import { writtenName } from '../parser/convert.ts';
 import type { TreeViewDocument } from '../parser/ast.ts';
-import { isPlain } from '@mermaid-js/core/parser-kit';
+import { isPlain } from '@mermaid-js/core/parser-kit/facet';
 
 export interface Tree {
   /** The model node of each AST node, by AST id. */

@@ -37,33 +37,10 @@
  * is found once.
  */
 // cspell:words accdescr acctitle eventmodeling
-import {
-  APOSTROPHE,
-  BACKTICK,
-  DASH,
-  DOT,
-  DQUOTE,
-  isBlank,
-  isBreak,
-  isDigit,
-  isLetter,
-  isLineEnd,
-  isSpace,
-  isWord,
-  Kind,
-  LBRACE,
-  LBRACKET,
-  PERCENT,
-  RBRACE,
-  RBRACKET,
-  RuleLexer,
-  SKIP,
-  SLASH,
-  STAR,
-  UNDERSCORE,
-  UNSET,
-} from '@mermaid-js/core/parser-kit';
-import type { RuleLexerOptions, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import { APOSTROPHE, BACKTICK, DASH, DOT, DQUOTE, isBlank, isDigit, isLetter, isLineEnd, isSpace, isWord, Kind, LBRACE, LBRACKET, PERCENT, RBRACE, RBRACKET, SLASH, STAR, UNDERSCORE } from '@mermaid-js/core/parser-kit';
+import { isBreak, RuleLexer, SKIP, UNSET } from '@mermaid-js/core/parser-kit/rule';
+import type { RuleLexerOptions } from '@mermaid-js/core/parser-kit/rule';
+import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { KEYWORDS, T } from './tokens.ts';
 
 const HEADER = 'eventmodeling';

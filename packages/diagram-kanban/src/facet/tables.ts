@@ -5,10 +5,10 @@
  */
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { LINE_BREAK } from '../parser/text.ts';
-import { span } from '@mermaid-js/core/parser-kit';
-export { lineBefore } from '@mermaid-js/core/parser-kit';
-export { span } from '@mermaid-js/core/parser-kit';
-export { code } from '@mermaid-js/core/parser-kit';
+import { span } from '@mermaid-js/core/parser-kit/facet';
+export { lineBefore } from '@mermaid-js/core/parser-kit/facet';
+export { span } from '@mermaid-js/core/parser-kit/facet';
+export { code } from '@mermaid-js/core/parser-kit/facet';
 
 /**
  * The `@{ … }` keys v12's `addNode` reads (spec #424 story 4, D375, D376), in the order

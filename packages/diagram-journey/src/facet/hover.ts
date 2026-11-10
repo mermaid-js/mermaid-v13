@@ -11,7 +11,7 @@ import type { JourneyModel, JourneyTask } from '../model.ts';
 import type { JourneyDocument, JourneyTaskNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { code, meanScore, names, plural, scoreFace, span } from './tables.ts';
-import { inside } from '@mermaid-js/core/parser-kit';
+import { inside } from '@mermaid-js/core/parser-kit/facet';
 
 /** Keyword tokens that also hold text: the keyword hovered, and the doc it shows. */
 const WORDS: Readonly<Partial<Record<number, readonly [word: string, doc: number]>>> = {

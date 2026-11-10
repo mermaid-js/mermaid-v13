@@ -14,11 +14,11 @@ import {
   T,
 } from '../parser/tokens.ts';
 import { defaultLaneLabel } from '../structure.ts';
-import { tokenBefore } from '@mermaid-js/core/parser-kit';
-export { inside } from '@mermaid-js/core/parser-kit';
-export { tokenBefore } from '@mermaid-js/core/parser-kit';
-export { span } from '@mermaid-js/core/parser-kit';
-export { code } from '@mermaid-js/core/parser-kit';
+import { tokenBefore } from '@mermaid-js/core/parser-kit/facet';
+export { inside } from '@mermaid-js/core/parser-kit/facet';
+export { tokenBefore } from '@mermaid-js/core/parser-kit/facet';
+export { span } from '@mermaid-js/core/parser-kit/facet';
+export { code } from '@mermaid-js/core/parser-kit/facet';
 
 /** An item offered when the parser expects `kind`. */
 export interface KeywordItem {

@@ -37,9 +37,9 @@ import {
   tokenBefore,
 } from './tables.ts';
 import type { Arrow } from './tables.ts';
-import { CompletionList as Items } from '@mermaid-js/core/parser-kit';
-import { afterDirection } from '@mermaid-js/core/parser-kit';
-import { wordRunRange } from '@mermaid-js/core/parser-kit';
+import { CompletionList as Items } from '@mermaid-js/core/parser-kit/facet';
+import { afterDirection } from '@mermaid-js/core/parser-kit/facet';
+import { wordRunRange } from '@mermaid-js/core/parser-kit/facet';
 
 /** Modes in which a statement is being written (`class` is after the `class` keyword). */
 const CODE_MODES = new Set(['INITIAL', 'class', 'namespace', 'namespace-body']);

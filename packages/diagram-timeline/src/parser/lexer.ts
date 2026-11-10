@@ -16,28 +16,10 @@
  * is linear in the text it consumes (R-PARSE-7).
  */
 // cspell:words acctitle accdescr
-import {
-  COLON,
-  CR,
-  HASH,
-  isSpace,
-  isWord,
-  Kind,
-  LBRACE,
-  LF,
-  lowerCode,
-  PERCENT,
-  RBRACE,
-  SPACE,
-  StateLexer,
-  TAB,
-} from '@mermaid-js/core/parser-kit';
-import type {
-  Probe,
-  SourceView,
-  StateLexerOptions,
-  TokenStream,
-} from '@mermaid-js/core/parser-kit';
+import { COLON, CR, HASH, isSpace, isWord, Kind, LBRACE, LF, PERCENT, RBRACE, SPACE, TAB } from '@mermaid-js/core/parser-kit';
+import { lowerCode, StateLexer } from '@mermaid-js/core/parser-kit/state';
+import type { Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { StateLexerOptions } from '@mermaid-js/core/parser-kit/state';
 import { T } from './tokens.ts';
 
 // Start conditions of timeline.jison.

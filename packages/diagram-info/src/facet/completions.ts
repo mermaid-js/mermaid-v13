@@ -16,10 +16,10 @@ import type {
 import { infoDocs } from '../generated/docs.ts';
 import type { InfoDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { tokenBefore } from '@mermaid-js/core/parser-kit';
-import type { KindedKeywordItem } from '@mermaid-js/core/parser-kit';
-import { wordRange } from '@mermaid-js/core/parser-kit';
-import { keywordCompletions } from '@mermaid-js/core/parser-kit';
+import { tokenBefore } from '@mermaid-js/core/parser-kit/facet';
+import type { KindedKeywordItem } from '@mermaid-js/core/parser-kit/facet';
+import { wordRange } from '@mermaid-js/core/parser-kit/facet';
+import { keywordCompletions } from '@mermaid-js/core/parser-kit/facet';
 
 /** Everything completion offers, in the order it is offered. */
 const ITEMS: readonly KindedKeywordItem[] = [

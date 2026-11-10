@@ -10,7 +10,7 @@ import { sequenceHover } from './facet/hover.ts';
 import { sequenceCategories } from './generated/categories.ts';
 import { parseSequence } from './parser/index.ts';
 import type { SequenceDocument } from './parser/index.ts';
-import { shapeReason } from '@mermaid-js/core/parser-kit';
+import { shapeReason } from '@mermaid-js/core/parser-kit/facet';
 
 export { sequenceCategories } from './generated/categories.ts';
 export { sequenceDocs } from './generated/docs.ts';

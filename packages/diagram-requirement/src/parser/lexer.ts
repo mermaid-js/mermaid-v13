@@ -39,39 +39,10 @@
  * the line at every token, quadratic on a long line), and the scans to the next quote and the
  * next `}` are cached.
  */
-import {
-  codePointEnd,
-  COLON,
-  COMMA,
-  cook,
-  CR,
-  DASH,
-  DQUOTE,
-  EQUALS,
-  GT,
-  HASH,
-  isLineEnd,
-  isSpace,
-  isWord,
-  Kind,
-  LBRACE,
-  LF,
-  lowerCode,
-  LT,
-  PERCENT,
-  QUOTE,
-  RBRACE,
-  SEMI,
-  sourceView,
-  SPACE,
-  StateLexer,
-} from '@mermaid-js/core/parser-kit';
-import type {
-  Probe,
-  SourceView,
-  StateLexerOptions,
-  TokenStream,
-} from '@mermaid-js/core/parser-kit';
+import { codePointEnd, COLON, COMMA, cook, CR, DASH, DQUOTE, EQUALS, GT, HASH, isLineEnd, isSpace, isWord, Kind, LBRACE, LF, LT, PERCENT, QUOTE, RBRACE, SEMI, sourceView, SPACE } from '@mermaid-js/core/parser-kit';
+import { lowerCode, StateLexer } from '@mermaid-js/core/parser-kit/state';
+import type { Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { StateLexerOptions } from '@mermaid-js/core/parser-kit/state';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { KEYWORD_SPELLINGS, T } from './tokens.ts';

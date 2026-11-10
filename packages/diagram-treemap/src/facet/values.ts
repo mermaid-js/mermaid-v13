@@ -17,7 +17,7 @@ import { treemapValueOptions, type TreemapValueOptions } from '../options.ts';
 import type { TreemapDocument } from '../parser/ast.ts';
 import { d3Sum } from '../sum.ts';
 import { code } from './tables.ts';
-import { isPlain } from '@mermaid-js/core/parser-kit';
+import { isPlain } from '@mermaid-js/core/parser-kit/facet';
 
 /** A section's sum (d3's `sum`, as the layout takes it) and its number of leaves. */
 export interface Total {

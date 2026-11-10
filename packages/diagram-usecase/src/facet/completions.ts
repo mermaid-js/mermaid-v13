@@ -46,9 +46,9 @@ import {
   tokenBefore,
 } from './tables.ts';
 import type { MetadataKind } from './tables.ts';
-import { atLineStart } from '@mermaid-js/core/parser-kit';
-import { CompletionList as Items } from '@mermaid-js/core/parser-kit';
-import { wordRange } from '@mermaid-js/core/parser-kit';
+import { atLineStart } from '@mermaid-js/core/parser-kit/facet';
+import { CompletionList as Items } from '@mermaid-js/core/parser-kit/facet';
+import { wordRange } from '@mermaid-js/core/parser-kit/facet';
 
 /** Where a statement ends. */
 const LINE_BREAK = new Set<number>([Kind.Newline, Kind.EOF]);

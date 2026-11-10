@@ -7,10 +7,10 @@ import { Kind } from '@mermaid-js/core/parser-kit';
 import type { CompletionKind, Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import type { VennDocument, VennSetNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { tokenBefore } from '@mermaid-js/core/parser-kit';
-export { tokenBefore } from '@mermaid-js/core/parser-kit';
-export { span } from '@mermaid-js/core/parser-kit';
-export { code } from '@mermaid-js/core/parser-kit';
+import { tokenBefore } from '@mermaid-js/core/parser-kit/facet';
+export { tokenBefore } from '@mermaid-js/core/parser-kit/facet';
+export { span } from '@mermaid-js/core/parser-kit/facet';
+export { code } from '@mermaid-js/core/parser-kit/facet';
 
 /** A keyword offered when the parser expects one of `kinds`. */
 export interface KeywordItem {

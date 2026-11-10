@@ -30,14 +30,10 @@
     TitleAndAccessibilities: ((ACC_DESCR | ACC_TITLE | TITLE) EOL)+     EOL: NEWLINE+ | EOF
     Name: STRING | ID | NAME_WITH_SPACES     WN: WARDLEY_NUMBER     C: WN | INT
 */
-import { formatExpected, Kind, RuleParser, STOP } from '@mermaid-js/core/parser-kit';
-import type {
-  AstId,
-  ParseOptions,
-  ParseResult,
-  Range,
-  RuleGrammar,
-} from '@mermaid-js/core/parser-kit';
+import { formatExpected, Kind, STOP } from '@mermaid-js/core/parser-kit';
+import { RuleParser } from '@mermaid-js/core/parser-kit/rule';
+import type { AstId, ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
+import type { RuleGrammar } from '@mermaid-js/core/parser-kit/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { WardleyModel, WardleyStrategy } from '../model.ts';

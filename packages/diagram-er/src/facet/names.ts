@@ -3,10 +3,10 @@
 import { parseEr } from '../parser/index.ts';
 import { erTokens } from '../parser/tokens-api.ts';
 import { T } from '../parser/tokens.ts';
-import { shapeReason } from '@mermaid-js/core/parser-kit';
-import { readsBack } from '@mermaid-js/core/parser-kit';
-export { readsBack } from '@mermaid-js/core/parser-kit';
-export { shapeReason } from '@mermaid-js/core/parser-kit';
+import { shapeReason } from '@mermaid-js/core/parser-kit/facet';
+import { readsBack } from '@mermaid-js/core/parser-kit/facet';
+export { readsBack } from '@mermaid-js/core/parser-kit/facet';
+export { shapeReason } from '@mermaid-js/core/parser-kit/facet';
 
 export const HEADER = 'erDiagram\n';
 const KEYWORDS = new Set<number>([

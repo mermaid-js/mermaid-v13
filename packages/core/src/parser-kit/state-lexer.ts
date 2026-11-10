@@ -7,7 +7,7 @@
 import { CR, LF } from './char-codes.ts';
 import { isBlank, isSpace } from './chars.ts';
 import type { Probe } from './probe.ts';
-import { dropAt } from './rule-lexer.ts';
+import { dropAt } from './drop.ts';
 import { firstHole, localOffset, SourceOffsets } from './source-view.ts';
 import type { Hole, SourceView } from './source-view.ts';
 import { Kind, TokenWriter } from './tokens.ts';

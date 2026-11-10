@@ -11,7 +11,7 @@ import type { KanbanDocument, KanbanItemNode } from '../parser/ast.ts';
 import { FIRST_LINE } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
 import { code, KEY_DOCS, span } from './tables.ts';
-import { plural } from '@mermaid-js/core/parser-kit';
+import { plural } from '@mermaid-js/core/parser-kit/facet';
 
 /** The tokens of an item statement, its data aside. */
 const ITEM_TOKENS = new Set<number>([

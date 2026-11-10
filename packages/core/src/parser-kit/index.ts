@@ -58,13 +58,5 @@ export type {
   LanguageFacet,
   NameSyntax,
 } from './language.ts';
-// Spike (shared facet helpers): one self-contained block.
-export * from './facet.ts';
-export { dropAt, isBreak, RuleLexer, SKIP, tagQuotes, UNSET } from './rule-lexer.ts';
-export type { RuleLexerOptions } from './rule-lexer.ts';
-export { lowerCode, StateLexer } from './state-lexer.ts';
-export type { StateLexerOptions } from './state-lexer.ts';
+export { dropAt, tagQuotes } from './drop.ts';
 export { foundText, ID_CONTROL, ID_RESERVED, idEscaper, STOP, Stop } from './parser-support.ts';
-export { accDescrValue, accTitleValue, stringValue, titleValue } from './common-values.ts';
-export { RuleParser } from './rule-parser.ts';
-export type { RuleGrammar, RuleParserPre } from './rule-parser.ts';

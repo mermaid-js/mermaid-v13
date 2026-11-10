@@ -22,26 +22,10 @@
  * parser does not stop at the first error: it reports it, skips to the next line break and
  * carries on (R-PARSE-4). A statement with a syntax error changes nothing.
  */
-import {
-  APOSTROPHE,
-  DQUOTE,
-  ExpectedTable,
-  ID_CONTROL,
-  ID_RESERVED,
-  idEscaper,
-  Kind,
-  kindSet,
-  RuleParser,
-  STOP,
-} from '@mermaid-js/core/parser-kit';
-import type {
-  AstId,
-  ParseOptions,
-  ParseResult,
-  Range,
-  RuleGrammar,
-  TokenStream,
-} from '@mermaid-js/core/parser-kit';
+import { APOSTROPHE, DQUOTE, ExpectedTable, ID_CONTROL, ID_RESERVED, idEscaper, Kind, kindSet, STOP } from '@mermaid-js/core/parser-kit';
+import { RuleParser } from '@mermaid-js/core/parser-kit/rule';
+import type { AstId, ParseOptions, ParseResult, Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { RuleGrammar } from '@mermaid-js/core/parser-kit/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { GitDirection, GitModel, GitWrittenType } from '../model.ts';

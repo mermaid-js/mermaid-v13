@@ -12,12 +12,13 @@ import {
   pxProfile,
   sideways,
 } from '@mermaid-js/core/layout';
-import { styleCache, textStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
+import { textStyle } from '@mermaid-js/core/svg/edges';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { FlowModel, FlowModelEdge, FlowVertex } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { FlowRenderContext } from './context.ts';
-import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/core/svg';
+import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/core/svg/edges';
 import { dirOf, nesting, type Nesting } from './nesting.ts';
 import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
 import { assetSize } from './assets.ts';

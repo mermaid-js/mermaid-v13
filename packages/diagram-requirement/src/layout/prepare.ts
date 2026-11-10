@@ -10,14 +10,8 @@ import type {
   UnitProfile,
 } from '@mermaid-js/core/layout';
 import { pxProfile } from '@mermaid-js/core/layout';
-import {
-  checkStyle,
-  curveKind,
-  curveRouting,
-  textStyle,
-  type CheckedStyle,
-  type CurveKind,
-} from '@mermaid-js/core/svg';
+import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import { curveKind, curveRouting, textStyle, type CurveKind } from '@mermaid-js/core/svg/edges';
 import {
   fontSizePx,
   layoutLabel,

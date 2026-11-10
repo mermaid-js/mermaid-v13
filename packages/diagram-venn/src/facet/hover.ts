@@ -15,7 +15,7 @@ import type { VennDocument } from '../parser/ast.ts';
 import { idText, listOf } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
 import { code, setsByName, span, STYLE_KEYS } from './tables.ts';
-import { inside } from '@mermaid-js/core/parser-kit';
+import { inside } from '@mermaid-js/core/parser-kit/facet';
 
 /** Kinds whose doc is for the keyword at their start only: a title holds its text too. */
 const VALUE_WORDS: Readonly<Partial<Record<number, string>>> = { [T.Title]: 'title' };

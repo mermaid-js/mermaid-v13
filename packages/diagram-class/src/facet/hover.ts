@@ -18,7 +18,7 @@ import type { ClassModel } from '../parser/model.ts';
 import { DIRECTIONS as DIRECTION_OF } from '../parser/tables.ts';
 import { T } from '../parser/tokens.ts';
 import { ARROW_PARTS, code, DIRECTIONS, describeRelation, plural, span } from './tables.ts';
-import { trimmed } from '@mermaid-js/core/parser-kit';
+import { trimmed } from '@mermaid-js/core/parser-kit/facet';
 
 /** Every relationship statement of the AST, namespaces included. */
 function* relations(children: readonly ClassStatementNode[]): Generator<ClassRelationStmt> {

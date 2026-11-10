@@ -11,8 +11,8 @@ import { flowchartCategories } from './generated/categories.ts';
 import { flowchartTokens, parseFlowchart } from './parser/index.ts';
 import type { FlowDocument } from './parser/index.ts';
 import { T } from './parser/tokens.ts';
-import { shapeReason } from '@mermaid-js/core/parser-kit';
-import { readsBack } from '@mermaid-js/core/parser-kit';
+import { shapeReason } from '@mermaid-js/core/parser-kit/facet';
+import { readsBack } from '@mermaid-js/core/parser-kit/facet';
 
 export { flowchartCategories } from './generated/categories.ts';
 export { flowchartDocs } from './generated/docs.ts';

@@ -14,7 +14,7 @@ import {
   type LayoutNode,
   type UnitProfile,
 } from '@mermaid-js/core/layout';
-import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/core/svg';
+import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/core/svg/edges';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import {
   namespaceGroups,

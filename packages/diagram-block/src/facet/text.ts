@@ -3,11 +3,11 @@
  * and the token at one.
  */
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
-import { span } from '@mermaid-js/core/parser-kit';
-export { lineBefore } from '@mermaid-js/core/parser-kit';
-export { plural } from '@mermaid-js/core/parser-kit';
-export { span } from '@mermaid-js/core/parser-kit';
-export { code } from '@mermaid-js/core/parser-kit';
+import { span } from '@mermaid-js/core/parser-kit/facet';
+export { lineBefore } from '@mermaid-js/core/parser-kit/facet';
+export { plural } from '@mermaid-js/core/parser-kit/facet';
+export { span } from '@mermaid-js/core/parser-kit/facet';
+export { code } from '@mermaid-js/core/parser-kit/facet';
 
 /** A line break as the lexer reads one (`\s` takes the line separators). */
 export const LINE_BREAK = /[\n\r\u2028\u2029]/;

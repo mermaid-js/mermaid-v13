@@ -18,22 +18,10 @@
  * messages (D341), and counting resumes after the field, so one misplaced field gives one error.
  * Fields are split into rows as v12 split them, up to its 10,000-row cap (D342).
  */
-import {
-  APOSTROPHE,
-  DQUOTE,
-  ExpectedTable,
-  Kind,
-  kindSet,
-  RuleParser,
-  STOP,
-} from '@mermaid-js/core/parser-kit';
-import type {
-  ParseOptions,
-  ParseResult,
-  Range,
-  RuleGrammar,
-  TokenStream,
-} from '@mermaid-js/core/parser-kit';
+import { APOSTROPHE, DQUOTE, ExpectedTable, Kind, kindSet, STOP } from '@mermaid-js/core/parser-kit';
+import { RuleParser } from '@mermaid-js/core/parser-kit/rule';
+import type { ParseOptions, ParseResult, Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { RuleGrammar } from '@mermaid-js/core/parser-kit/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { packetConfig } from '../config.ts';

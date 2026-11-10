@@ -27,7 +27,7 @@ import type { TreeViewDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { span } from './ranges.ts';
 import { iconOptionsOf } from './tree.ts';
-import { keywordItem } from '@mermaid-js/core/parser-kit';
+import { keywordItem } from '@mermaid-js/core/parser-kit/facet';
 
 /** Where an item is offered, besides the parser expecting its kind. */
 type Place = 'header' | 'lineStart' | 'afterName';

@@ -11,7 +11,8 @@ import {
   pxProfile,
 } from '@mermaid-js/core/layout';
 import { erConfigDefaults } from '../generated/config-defaults.ts';
-import { styleCache, textStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
+import { textStyle } from '@mermaid-js/core/svg/edges';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   ErAttribute,

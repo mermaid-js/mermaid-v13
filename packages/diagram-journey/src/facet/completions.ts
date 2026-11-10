@@ -18,8 +18,8 @@ import type { JourneyModel } from '../model.ts';
 import type { JourneyDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { KEYWORDS, plural, span, tokenBefore } from './tables.ts';
-import { wordRangeOf } from '@mermaid-js/core/parser-kit';
-import { keywordCompletions } from '@mermaid-js/core/parser-kit';
+import { wordRangeOf } from '@mermaid-js/core/parser-kit/facet';
+import { keywordCompletions } from '@mermaid-js/core/parser-kit/facet';
 
 /** Characters a keyword is made of: the word being typed runs over them. */
 const WORD = /[A-Za-z]/;

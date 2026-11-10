@@ -32,38 +32,10 @@
  * and a string, `}`, YAML or directive scan that failed is not repeated for a start it covered.
  */
 // cspell:words accdescr acctitle über
-import {
-  AMP,
-  APOSTROPHE,
-  AT,
-  COMMA,
-  DASH,
-  DIGIT_0,
-  DOT,
-  DQUOTE,
-  GT,
-  isBlank,
-  isBreak,
-  isDigit,
-  isLetter,
-  isSpace,
-  isWord,
-  Kind,
-  LBRACE,
-  LBRACKET,
-  LPAREN,
-  LT,
-  PERCENT,
-  RBRACE,
-  RBRACKET,
-  RPAREN,
-  RuleLexer,
-  SEMI,
-  SKIP,
-  SLASH,
-  UNDERSCORE,
-} from '@mermaid-js/core/parser-kit';
-import type { RuleLexerOptions, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import { AMP, APOSTROPHE, AT, COMMA, DASH, DIGIT_0, DOT, DQUOTE, GT, isBlank, isDigit, isLetter, isSpace, isWord, Kind, LBRACE, LBRACKET, LPAREN, LT, PERCENT, RBRACE, RBRACKET, RPAREN, SEMI, SLASH, UNDERSCORE } from '@mermaid-js/core/parser-kit';
+import { isBreak, RuleLexer, SKIP } from '@mermaid-js/core/parser-kit/rule';
+import type { RuleLexerOptions } from '@mermaid-js/core/parser-kit/rule';
+import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { KEYWORDS, STRATEGIES, T } from './tokens.ts';
 
 const HEADER = 'wardley-beta';
