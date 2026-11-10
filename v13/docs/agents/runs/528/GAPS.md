@@ -39,6 +39,10 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - **For the maintainer (amends D536's "no core type change"):** lanes come from a new optional `LayoutModel.lanes` (set by `swimlane` only), so the renderer follows the engine that laid out; D536 said "no core type change" (types only, 0 B in core).
 
 ## #601 T3 integration
+- **Must (R-PERF-1, blocks #651):** #651's Bench gates fail R-PERF-1: loaded size, core + flowchart, 128.4 KB gz against 128 KB (D312). Local stand-in (`flowchartClosureSize` on the CDN entry): `mermaid-v13` + T0b 131,296 B; #651 at b4b6aa0a3 132,663 B (+~1,370: core ~+336, flowchart chunk ~+1,030). Agreed with the coordinator:
+  1. move lane drawing and lane warnings out of flowchart's main chunk into a lazily loaded flowchart sub-chunk, loaded with the swimlane engine (a plain flowchart pays nothing);
+  2. then, if still needed, trim or move T1's section layering out of core's static path.
+  - Don't propose raising R-PERF-1. Report before/after loaded size and core bytes in #651's body.
 - From T1: `e2e/diagrams/swimlanes/hand-drawn.txt` and the four-family visual baselines; the other `swimlane.*` statuses.
 
 ## #603 T4 ascii
