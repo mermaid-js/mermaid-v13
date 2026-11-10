@@ -60,6 +60,7 @@ class AgentflowParser extends StatementParser {
     this.header();
     this.document();
     db.finish((at) => this.lineOf(at));
+    this.dropUnclaimedReserved();
     // In source order (blocks left open are reported at the end, innermost first).
     st.diagnostics.list.sort((a, b) => a.range.start - b.range.start);
     const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');

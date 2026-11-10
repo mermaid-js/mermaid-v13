@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { agentflowLanguage, detectAgentflow } from '@mermaid-js/diagram-agentflow/language';
+import { agentflowLanguage } from '@mermaid-js/diagram-agentflow/language';
 import type { AgentflowFlow } from '@mermaid-js/diagram-agentflow/language';
 import type { AstNode, Range, SymbolOccurrence } from '@mermaid-js/core/parser-kit';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
 import type { DocumentSnapshot, TextEdit } from '@mermaid-js/language-service';
 import { loadOracle } from '../oracle.ts';
 import { agentflowCases, agentflowCorpus } from './corpus.ts';
+import { AGENTFLOW_FACET_ROW } from './service.ts';
 import { agentflowV12Snapshot, sortDiagnostics, type AgentflowSnapshot } from './v12.ts';
 
 /**
@@ -24,11 +25,7 @@ import { agentflowV12Snapshot, sortDiagnostics, type AgentflowSnapshot } from '.
  * The service gets the facet as an eager row, as a host bundling it would, until agentflow's
  * manifest has its `language` entry (#550); the last test then fails: drop the row.
  */
-const service = createLanguageService({
-  facets: [
-    { type: 'agentflow', id: 'agentflow', detector: detectAgentflow, facet: agentflowLanguage },
-  ],
-});
+const service = createLanguageService({ facets: [AGENTFLOW_FACET_ROW] });
 
 const FRESH = 'renamedZq7';
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);

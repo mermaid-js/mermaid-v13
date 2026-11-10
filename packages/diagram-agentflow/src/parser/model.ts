@@ -18,7 +18,7 @@ import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import type { AstId, Diagnostic, Range, RelatedInfo } from '@mermaid-js/core/parser-kit';
 import type { YamlMap } from '@mermaid-js/core/preprocess';
 import { collapsedInto, containment } from './containment.ts';
-import { drawnShape, isValidShape, resolveShape, vertexKind } from './shapes.ts';
+import { drawnShape, isValidShape, RESERVED_ID, resolveShape, vertexKind } from './shapes.ts';
 import type { AgentflowShape, VertexKind } from './shapes.ts';
 
 export type LabelType = 'text' | 'string' | 'markdown';
@@ -443,6 +443,11 @@ export class AgentflowBuilder {
     if (type !== undefined && type !== vertex.labelType) warn('labelType', type, '`markdown`');
   }
 
+  /** Whether a `connector connectors` or `flow connectors` takes the reserved id. */
+  reservedClaimed(): boolean {
+    return this.flowById.has(RESERVED_ID) || this.vertices.get(RESERVED_ID)?.connector === true;
+  }
+
   /**
    * v12's routing of a mention, first match wins: metadata of a flow or a connector goes to it,
    * the reserved `connectors` id and an edge id make no vertex. Whether it was routed.
@@ -459,7 +464,7 @@ export class AgentflowBuilder {
       existing.metadata = { ...existing.metadata, ...doc };
       return true;
     }
-    if (id === 'connectors') {
+    if (id === RESERVED_ID) {
       this.reservedAt.push(at);
       return true;
     }
@@ -858,7 +863,7 @@ export class AgentflowBuilder {
       (m) =>
         `${m.slice(0, -1)}: only a flow can be collapsed (as in v12). Put \`view: collapsed\` on a flow.`
     );
-    if (!flowById.has('connectors') && !vertices.get('connectors')?.connector) {
+    if (!this.reservedClaimed()) {
       once(
         'AGENTFLOW_RESERVED_ID',
         this.reservedAt.map((at) => ({ at, message: 'The node `connectors` is left out.' })),

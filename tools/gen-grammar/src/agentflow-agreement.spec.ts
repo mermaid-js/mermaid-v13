@@ -1,8 +1,10 @@
 /**
  * Agentflow highlighting (#549, language.md step 3): the four-way agreement of the kind →
  * category table with the generated TextMate, Monarch and Lezer grammars over the agentflow
- * corpus and fixtures, as `categories.spec.ts` checks flowchart's.
+ * corpus and the agentflow cases, as `categories.spec.ts` checks flowchart's.
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { Kind, TOKEN_CATEGORIES } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
@@ -11,45 +13,52 @@ import {
   agentflowTokens,
   AgentflowTokenKind as T,
   detectAgentflow,
+  parseAgentflow,
 } from '@mermaid-js/diagram-agentflow/language';
 // The lexer's source view gives the spans it removed (directives, dropped `;`).
 import { agentflowSourceView } from '../../../packages/diagram-agentflow/src/parser/source.ts';
-import { agreement, corpus, highlighters } from './agreement-testing.ts';
+import { agreement, corpus, highlighters, ROOT } from './agreement-testing.ts';
 
-/** Sources for the kinds the corpus lacks. */
-const FIXTURES: [string, string][] = [
-  ['no-dir', 'agentflow-beta\n  a --> b'],
-  ['callback', 'agentflow-beta TD\n  click a call foo(x) "tip"\n  b-->c'],
-  ['callback-empty', 'agentflow-beta TD\n  click a call foo()\n  b-->c'],
-  ['href', 'agentflow-beta TD\n  click a href "http://x" _blank\n  b-->c'],
-  ['interpolate', 'agentflow-beta TD\n  a-->b\n  linkStyle default interpolate basis'],
-  ['acc-descr-multiline', 'agentflow-beta TD\n  accDescr {\n    hello\n  }\n  a-->b'],
-  ['acc-title', 'agentflow-beta TD\n  accTitle: The title\n  accDescr: The description\n  a-->b'],
-  ['directive', 'agentflow-beta TD\n  %%{init: {}}%%\n  %% a comment\n  b-->c'],
-  ['props', 'agentflow-beta TD\n  a[|a:b|] --> b'],
-  [
-    'blocks',
-    'agentflow-beta LR\n  connector c[Hub]\n  flow f[F]@{ view: collapsed }\n    direction TB\n    a --x b\n    b -.- c\n  end\n  global\n    g\n  end',
-  ],
-  ['edge-text', 'agentflow-beta LR\n  a -- "why" --> b\n  a -->|`md`| b\n  a e1@--> b'],
-  [
-    'shapes',
-    'agentflow-beta LR\n  a((x)) --> b(((y)))\n  c([s]) --> d[[t]]\n  e[(c)] --> f>o]\n  g{d} --> h{{x}}\n  i[/l/] --> j[\\l\\]\n  k[/t\\] --> l[\\i/]\n  m(-e-)',
-  ],
-  [
-    'styles',
-    'agentflow-beta LR\n  classDef hot fill:#f00,color:#fff\n  a:::hot\n  class a,b hot\n  style a fill:#f9f;\n  linkStyle 0,1 stroke:red',
-  ],
-  ['unicode', 'agentflow-beta TD\n  é --> ü\n  1*2 --> B'],
-  ['md-string', 'agentflow-beta TD\n  a["`**md**`"] --> b'],
-  [
-    'directions',
-    'agentflow-beta TD\n  flow f\n    direction BT\n  end\n  flow g\n    direction LR\n  end\n  flow h\n    direction TD\n  end',
-  ],
-  ['semicolons', 'agentflow-beta TD\n  a --> b; b --> c;'],
-  ['tags', 'agentflow-beta TB\n  * --> v\n  a < b\n  A ^ v B\n  A \\| B\n  A ->B'],
-  ['comments', 'agentflow-beta TB\n  %% a line\n  a --> b %% after'],
-];
+/**
+ * The agentflow cases and v12 spec strings (`packages/conformance/corpus/agentflow-*.json`)
+ * that parse without an error, and the lexer-only cases {@link LEXER_ONLY}: they give the kinds
+ * the e2e corpus lacks a sample. The other rejected ones are left out: past an error the
+ * highlighters, which do not recover as the parser does, read the rest of the line differently.
+ */
+/**
+ * Cases the generated highlighters read differently from the lexer (GAPS #549, the grammar
+ * file's to fix, not this ticket's): a lone CR, which v12 lexes as a line break and the
+ * highlighters as none (`header-cr`), and `%%{ }`, which is no directive to v12 but one to
+ * TextMate and Monarch (`comment-directive-like`).
+ */
+const HIGHLIGHTERS_DIFFER = new Set([
+  'agentflow-cases/header-cr',
+  'agentflow-cases/comment-directive-like',
+]);
+
+/** Rejected cases kept for their tokens: ids, `*`, `^`, `v`, `<`, `\\|`, `-`, `[|f:v|]`. */
+const LEXER_ONLY = new Set([
+  'agentflow-cases/punctuation',
+  'agentflow-cases/punctuation-alone',
+  'agentflow-cases/minus',
+  'agentflow-cases/shape-14',
+]);
+
+const CASES = ['agentflow-cases.json', 'agentflow-v12-specs.json']
+  .flatMap(
+    (file) =>
+      JSON.parse(readFileSync(join(ROOT, 'packages/conformance/corpus', file), 'utf8')) as {
+        id: string;
+        source: string;
+      }[]
+  )
+  .filter(
+    (c) =>
+      LEXER_ONLY.has(c.id) ||
+      !parseAgentflow(c.source).diagnostics.some((d) => d.severity === 'error')
+  )
+  .filter((c) => !HIGHLIGHTERS_DIFFER.has(c.id))
+  .map((c): [string, string] => [c.id, c.source]);
 
 /**
  * Kinds with no sample: tokens that are blanks or empty, so no highlighter colours them, and
@@ -90,7 +99,7 @@ describe('four-way highlighting agreement (agentflow)', () => {
         exempt: (kind, _want, got) => kind === T.ShapeData && got === 'String',
       },
       await highlighters('agentflow'),
-      [...FIXTURES, ...sources],
+      [...CASES, ...sources],
       BLANK_KINDS
     );
     expect(result.disagreements).toEqual({});

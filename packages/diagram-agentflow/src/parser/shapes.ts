@@ -22,7 +22,7 @@ export const SHAPE_ALIASES: ReadonlyMap<string, string> = /* @__PURE__ */ new Ma
 ]);
 
 /** Shapes v0.8.1 removed (§4.3.3): drawn as the default, with `SHAPE_REMOVED`. */
-const REMOVED_SHAPES: ReadonlySet<string> = /* @__PURE__ */ new Set(
+export const REMOVED_SHAPES: ReadonlySet<string> = /* @__PURE__ */ new Set(
   (
     'doc stadium terminal circle trapezoid inv_trapezoid inv-trapezoid doublecircle ' +
     'double-circle typeDeclaration procs lean_left lean-left in-out cylinder ellipse odd ' +
@@ -35,7 +35,7 @@ const REMOVED_SHAPES: ReadonlySet<string> = /* @__PURE__ */ new Set(
 export type AgentflowShape = 'rounded' | 'fr-rect' | 'lean-r' | 'diam' | 'lin-doc' | 'hex';
 
 /** The shape each allowed resolved name is drawn with (v12's `ALLOWED_SHAPES`). */
-const ALLOWED: ReadonlyMap<string, AgentflowShape> = /* @__PURE__ */ new Map([
+export const ALLOWED: ReadonlyMap<string, AgentflowShape> = /* @__PURE__ */ new Map([
   ['roundedRect', 'rounded'],
   ['subroutine', 'fr-rect'],
   ['subprocess', 'fr-rect'],
@@ -129,3 +129,17 @@ const SHAPES: ReadonlySet<string> = /* @__PURE__ */ new Set(SHAPE_NAMES.split(' 
 export function isValidShape(name: string): boolean {
   return SHAPES.has(name);
 }
+
+/**
+ * Whether `@{ shape: name }` takes `name` without `UNKNOWN_SHAPE`: lower case, no `_` (v12's
+ * rule, as `dataShape` in `model.ts` checks it), and a shape v12 knows once its alias resolves.
+ */
+export function acceptsDataShape(name: string): boolean {
+  return name === name.toLowerCase() && !name.includes('_') && isValidShape(resolveShape(name)!);
+}
+
+/**
+ * The id v12 reserves for its connectors pseudo-flow: a mention of it makes no node
+ * (`AGENTFLOW_RESERVED_ID`) unless a `connector connectors` or `flow connectors` takes it (D464).
+ */
+export const RESERVED_ID = 'connectors';

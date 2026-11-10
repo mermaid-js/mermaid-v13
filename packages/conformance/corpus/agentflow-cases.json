@@ -588,8 +588,16 @@
     "source": "agentflow-beta\n a --> b --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c --> c direction TB"
   },
   {
+    "id": "agentflow-cases/direction-in-flow-td",
+    "source": "agentflow-beta\n flow f\n  direction TD\n  a --> b; b --> c\n end"
+  },
+  {
     "id": "agentflow-cases/punctuation",
     "source": "agentflow-beta\n a --> 1\n 1 --> 2\n a#b\n a;b\n a,b\n a*b\n a:b\n a|b|\n a v b\n a ^ b\n a < b\n a\\|b"
+  },
+  {
+    "id": "agentflow-cases/punctuation-alone",
+    "source": "agentflow-beta TB\n * --> v\n A \\| B\n A ->B"
   },
   {
     "id": "agentflow-cases/entities",

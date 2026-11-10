@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { agentflowLanguage, detectAgentflow } from '@mermaid-js/diagram-agentflow/language';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import { createLanguageService } from '@mermaid-js/language-service';
 import type { DocumentSnapshot } from '@mermaid-js/language-service';
+import { AGENTFLOW_FACET_ROW } from './service.ts';
 
 /**
  * v12's element-mapping specs (`agentflow-mappings`, `agentflow-attachment-mapping`,
@@ -16,11 +16,7 @@ import type { DocumentSnapshot } from '@mermaid-js/language-service';
  * The service gets the facet as an eager row until agentflow's manifest has its `language`
  * entry (#550).
  */
-const service = createLanguageService({
-  facets: [
-    { type: 'agentflow', id: 'agentflow', detector: detectAgentflow, facet: agentflowLanguage },
-  ],
-});
+const service = createLanguageService({ facets: [AGENTFLOW_FACET_ROW] });
 
 let n = 0;
 const open = (text: string): DocumentSnapshot => service.update(`test:///${n++}.mmd`, text);

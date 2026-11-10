@@ -50,6 +50,7 @@ import type {
 } from './ast.ts';
 import { destructLink } from './model.ts';
 import type { DocItem, LinkInfo, VertexParts } from './model.ts';
+import { RESERVED_ID } from './shapes.ts';
 import { T } from './tokens.ts';
 
 /** Vertices, chains and the statements other than blocks. */
@@ -67,8 +68,23 @@ export abstract class StatementParser extends ParserBase {
     // An edge id (`e1@{ … }`) names the edge: v12 never makes it a vertex.
     if (this.namesEdge(name)) return this.edgeSymbol(name, r);
     const creates =
-      !db.vertices.has(name) && !db.flow(name) && name.trim() !== '' && name !== 'connectors';
+      !db.vertices.has(name) && !db.flow(name) && name.trim() !== '' && name !== RESERVED_ID;
     this.st.symbol(name, 'node', r, creates ? 'def' : 'ref');
+  }
+
+  /**
+   * Once the text is read: the mentions of the reserved `connectors` id leave the symbols when
+   * no `connector connectors` or `flow connectors` takes it (also one written after them). v12
+   * makes no node of it, so it is no symbol: renaming it would make one.
+   */
+  protected dropUnclaimedReserved(): void {
+    const { symbols } = this.st;
+    if (this.db.reservedClaimed() || !symbols.some((s) => s.name === RESERVED_ID)) return;
+    const kept = symbols.filter(
+      (s) => s.name !== RESERVED_ID || (s.kind !== 'node' && s.kind !== 'subgraph')
+    );
+    symbols.length = 0;
+    symbols.push(...kept);
   }
 
   /** Whether `name` is an edge id and no vertex's (`e1` after `A e1@--> B`). */

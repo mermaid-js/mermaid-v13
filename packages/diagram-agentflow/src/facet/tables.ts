@@ -6,7 +6,13 @@
 import type { FlowchartDiagramConfig } from '@mermaid-js/core/config';
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import type { EdgeSemantic } from '../parser/model.ts';
-import { drawnShape, vertexKind } from '../parser/shapes.ts';
+import {
+  acceptsDataShape,
+  ALLOWED,
+  drawnShape,
+  SHAPE_ALIASES,
+  vertexKind,
+} from '../parser/shapes.ts';
 import type { AgentflowShape, VertexKind } from '../parser/shapes.ts';
 import { T } from '../parser/tokens.ts';
 
@@ -70,53 +76,55 @@ export const SEMANTICS: Readonly<Record<EdgeSemantic, string>> = {
   reference: 'the source refers to the target; no step follows',
 };
 
-/** What an arrow means: its semantic, from its type and stroke as the model records them. */
+/** What a link means: its semantic (`destructLink`'s), or that it has none. */
 export function describeLink(semantic: EdgeSemantic | undefined): string {
   return semantic === undefined ? 'no semantic' : `${semantic}: ${SEMANTICS[semantic]}`;
 }
 
-/** The six kind aliases v0.8.1 names (§4.3.2), offered first after `shape:`. */
-export const KIND_ALIASES: readonly string[] = [
-  'task',
-  'tool',
-  'input',
-  'decision',
-  'refdoc',
-  'action',
-];
-
-/**
- * Every other `shape:` value drawn as written (v12's `ALLOWED_SHAPES` and the default's names
- * that `@{ shape }` accepts in lower case): the removed and unsupported names are left out, as
- * they draw as the default with a warning, and so are `roundedRect`, `squareRect` and
- * `lean_right`, which v12 refuses there (`UNKNOWN_SHAPE`).
- */
-const OTHER_SHAPES = [
-  'rect',
-  'round',
-  'subroutine',
-  'subprocess',
-  'subproc',
-  'framed-rectangle',
-  'lean-right',
-  'diamond',
-  'lin-doc',
-  'lined-document',
-  'hexagon',
-  'hex',
-];
-
-/** A `shape:` value's kind and how it is drawn. */
+/** A `shape:` value: the kind it gives a node and the shape it is drawn with. */
 export interface ShapeValue {
   readonly name: string;
   readonly kind: VertexKind;
   readonly shape: AgentflowShape;
+  /** `task, drawn rounded`: the completion detail and the hover line. */
+  readonly detail: string;
 }
 
-/** The `shape:` values completion offers, the six aliases first. */
-export const SHAPE_VALUES: readonly ShapeValue[] = [...KIND_ALIASES, ...OTHER_SHAPES].map(
-  (name) => ({ name, kind: vertexKind(name), shape: drawnShape(name).shape })
-);
+const shapeValue = (name: string): ShapeValue => {
+  const kind = vertexKind(name);
+  const { shape } = drawnShape(name);
+  return { name, kind, shape, detail: `${kind}, drawn ${shape}` };
+};
+
+/**
+ * The `shape:` values completion offers, from the parser's tables (`parser/shapes.ts`): v0.8.1's
+ * aliases first, then the default's names and v12's `ALLOWED_SHAPES`; only names `@{ shape }`
+ * takes (`acceptsDataShape`: not `roundedRect` or `lean_right`), and so not the removed and
+ * unsupported ones, which draw as the default with a warning.
+ */
+export const SHAPE_VALUES: readonly ShapeValue[] = [
+  ...new Set([...SHAPE_ALIASES.keys(), 'rect', 'squareRect', ...ALLOWED.keys()]),
+]
+  .filter(acceptsDataShape)
+  .map(shapeValue);
+
+/** The six kind aliases (`task`, `tool`, …, `action`): the aliases that set a kind. */
+export const KIND_ALIASES: readonly string[] = [...SHAPE_ALIASES]
+  .filter(([alias, to]) => to !== 'rect' && acceptsDataShape(alias))
+  .map(([alias]) => alias);
+
+/**
+ * What a `shape:` name gives a node, for hover: the kind and drawing its completion detail
+ * names (`shapeValue`), as code, and the problem when it is not drawn as written.
+ */
+export function shapeText(name: string): string {
+  const { kind, shape } = shapeValue(name);
+  const facts = `Kind: ${code(kind)} · drawn as ${code(shape)}`;
+  const { problem } = drawnShape(name);
+  if (problem === 'removed') return `${facts}: removed in agentflow (\`SHAPE_REMOVED\`)`;
+  if (problem === 'unsupported') return `${facts}: not an agentflow shape (\`SHAPE_UNSUPPORTED\`)`;
+  return facts;
+}
 
 /** `view:` values a flow reads (`collapsed` draws it as a card). */
 export const VIEWS: readonly string[] = ['collapsed'];

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { agentflowLanguage, language } from './language.ts';
 import { SHAPE_VALUES } from './facet/tables.ts';
+import { ALLOWED, REMOVED_SHAPES, SHAPE_ALIASES } from './parser/shapes.ts';
 
 /**
  * The agentflow language facet (#549) at its own seam: the parse the service reads, completions
@@ -115,7 +116,7 @@ describe('agentflow completion', () => {
     expect(complete('agentflow-beta\na -- why ¦')).toEqual(['-->', '--x']);
   });
 
-  it('offers the six kind aliases first after `shape:`, every one drawn as written', () => {
+  it('offers the six kind aliases first after `shape:`, then every name drawn as written', () => {
     expect(complete('agentflow-beta\na@{ shape: ¦ }').slice(0, 6)).toEqual([
       'task',
       'tool',
@@ -124,11 +125,15 @@ describe('agentflow completion', () => {
       'refdoc',
       'action',
     ]);
-    for (const { name } of SHAPE_VALUES) {
+    // Both ways over the parser's shape tables: a name is offered iff it reads without a
+    // diagnostic (no `UNKNOWN_SHAPE`, `SHAPE_REMOVED` or `SHAPE_UNSUPPORTED`).
+    const offered = new Set(SHAPE_VALUES.map((s) => s.name));
+    const names = [...SHAPE_ALIASES.keys(), 'rect', 'squareRect', ...ALLOWED.keys()];
+    for (const name of [...names, ...REMOVED_SHAPES, 'cloud']) {
       const r = agentflowLanguage.parse(`agentflow-beta\na@{ shape: ${name} }\n`, {
         keepTokens: true,
       });
-      expect(r.diagnostics, name).toEqual([]);
+      expect(r.diagnostics.length === 0, name).toBe(offered.has(name));
     }
   });
 

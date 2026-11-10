@@ -320,12 +320,7 @@ const DATA_KEYS: Readonly<Record<DataOwner, Readonly<Record<string, readonly str
 /** A value after `key:` in a block of `owner`. */
 function dataValues(items: Items, owner: DataOwner, key: string): void {
   if (owner === 'node' && key === 'shape') {
-    for (const s of SHAPE_VALUES) {
-      const alias = KIND_ALIASES.includes(s.name);
-      items.add(s.name, 'shape', {
-        detail: alias ? `${s.kind} (drawn ${s.shape})` : `${s.kind}, drawn ${s.shape}`,
-      });
-    }
+    for (const s of SHAPE_VALUES) items.add(s.name, 'shape', { detail: s.detail });
     return;
   }
   for (const value of DATA_KEYS[owner][key] ?? []) items.add(value, 'constant');

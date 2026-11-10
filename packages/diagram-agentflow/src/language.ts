@@ -8,18 +8,17 @@
  * Symbols (D468): vertex, connector and flow ids share one name space (`node` and `subgraph`,
  * as flowchart groups them), class names are `class` symbols and edge ids `edge` symbols.
  */
-import type { FacetParseOptions, LanguageFacet } from '@mermaid-js/core/parser-kit';
+import type { LanguageFacet } from '@mermaid-js/core/parser-kit';
 import { agentflowCompletions } from './facet/completions.ts';
 import { agentflowHover } from './facet/hover.ts';
 import { agentflowCategories } from './generated/categories.ts';
-import { agentflowTokens, parseAgentflow } from './parser/index.ts';
-import type { AgentflowDocument, AgentflowParseResult } from './parser/index.ts';
+import { agentflowTokens, parseAgentflow, RESERVED_ID } from './parser/index.ts';
+import type { AgentflowDocument } from './parser/index.ts';
 import { T } from './parser/tokens.ts';
 
 export { agentflowCategories } from './generated/categories.ts';
 export { agentflowDocs } from './generated/docs.ts';
 export {
-  AGENTFLOW_DETECT,
   agentflowTokens,
   AgentflowTokenKind,
   detectAgentflow,
@@ -45,9 +44,6 @@ const KEYWORDS = new Set<number>([
   T.Dir,
 ]);
 
-/** The id v12 reserves for its connectors pseudo-flow: it makes no node (D464). */
-const RESERVED = 'connectors';
-
 /**
  * Why `name` cannot be an agentflow node, connector or flow id, or `undefined` when it can:
  * the parser must read `name` alone on a line as one node whose id is exactly `name`.
@@ -55,8 +51,8 @@ const RESERVED = 'connectors';
 function invalidIdReason(name: string): string | undefined {
   const shape = shapeReason(name);
   if (shape) return shape;
-  if (name === RESERVED) {
-    return "'connectors' is reserved: agentflow keeps it for its connectors and draws no node for it.";
+  if (name === RESERVED_ID) {
+    return `'${RESERVED_ID}' is reserved: agentflow keeps it for its connectors and draws no node for it.`;
   }
   const text = `${HEADER}${name}\n`;
   // Tokens that start inside the name (`end` takes its line break with it).
@@ -116,27 +112,10 @@ function invalidReason(name: string, kind = 'node'): string | undefined {
   return invalidIdReason(name);
 }
 
-/**
- * The parse the service reads: the parser's, less the mentions of the reserved `connectors` id
- * where it names nothing (no `connector connectors` or `flow connectors`). v12 makes no node of
- * it (`AGENTFLOW_RESERVED_ID`), so it is no symbol: renaming it would make a node.
- */
-function parse(text: string, options: FacetParseOptions): AgentflowParseResult {
-  const result = parseAgentflow(text, options);
-  const { model } = result;
-  const named =
-    model.vertices.some((v) => v.id === RESERVED) || model.flows.some((f) => f.id === RESERVED);
-  if (named || !result.symbols.some((s) => s.name === RESERVED)) return result;
-  const symbols = result.symbols.filter(
-    (s) => s.name !== RESERVED || (s.kind !== 'node' && s.kind !== 'subgraph')
-  );
-  return { ...result, symbols };
-}
-
 /** The agentflow facet. */
 export const agentflowLanguage: LanguageFacet<AgentflowDocument> = {
   id: 'agentflow',
-  parse,
+  parse: (text, options) => parseAgentflow(text, options),
   categories: agentflowCategories,
   namespaces: [['node', 'subgraph'], ['class'], ['edge']],
   isValidId: invalidReason,

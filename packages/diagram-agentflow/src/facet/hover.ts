@@ -23,9 +23,8 @@ import type {
 } from '../parser/ast.ts';
 import type { AgentflowFlowModel, AgentflowModel } from '../parser/model.ts';
 import { destructLink } from '../parser/model.ts';
-import { drawnShape, vertexKind } from '../parser/shapes.ts';
 import { T } from '../parser/tokens.ts';
-import { code, describeLink, DIRECTIONS, span, tokenBefore } from './tables.ts';
+import { code, describeLink, DIRECTIONS, shapeText, span, tokenBefore } from './tables.ts';
 
 const LINK_TOKENS = new Set<number>([T.Link, T.StartLink]);
 
@@ -183,17 +182,6 @@ function linkHover(
   return undefined;
 }
 
-/** What a `shape:` value gives a node. */
-function shapeText(name: string): string {
-  const check = drawnShape(name);
-  const kind = `Kind: ${code(vertexKind(name))}`;
-  if (check.problem === 'removed')
-    return `${kind} · removed in agentflow: drawn as ${code(check.shape)} (\`SHAPE_REMOVED\`)`;
-  if (check.problem === 'unsupported')
-    return `${kind} · not an agentflow shape: drawn as ${code(check.shape)} (\`SHAPE_UNSUPPORTED\`)`;
-  return `${kind} · drawn as ${code(check.shape)}`;
-}
-
 function shapeHover(text: string, token: Range, at: number): Hover | undefined {
   const body = text.slice(token.start, token.end);
   for (const m of body.matchAll(/(?:^|[\s,{])shape\s*:\s*([\w-]+)/g)) {
@@ -231,6 +219,36 @@ function bareKeyword(text: string, tokens: TokenStream | undefined, at: number):
     : { range: span(start, end), contents: `**${code(text.slice(start, end))}**\n\n${doc}` };
 }
 
+/**
+ * `accDescr {` and its `}`: the lexer gives them no token of their own (the opener and the
+ * closer attach to the description), so they are found around each description token. They
+ * show the doc `accDescr:` shows.
+ */
+function accDescrBlock(
+  text: string,
+  tokens: TokenStream | undefined,
+  at: number
+): Hover | undefined {
+  if (!tokens) return undefined;
+  const doc = agentflowDocs[T.AccDescr];
+  if (doc === undefined) return undefined;
+  for (let i = 0; i < tokens.length; i++) {
+    if (tokens.kind[i] !== T.AccDescrMultilineValue) continue;
+    const start = tokens.start[i] ?? 0;
+    const end = tokens.end[i] ?? 0;
+    const opener = /accDescr\s*\{\s*$/.exec(text.slice(Math.max(0, start - 256), start));
+    if (opener) {
+      const from = start - opener[0].length;
+      const brace = text.indexOf('{', from) + 1;
+      if (from <= at && at <= brace)
+        return { range: span(from, brace), contents: `**\`accDescr {\`**\n\n${doc}` };
+    }
+    if (text.charAt(end) === '}' && (at === end || at === end + 1))
+      return { range: span(end, end + 1), contents: `**\`}\`** closes \`accDescr {\`\n\n${doc}` };
+  }
+  return undefined;
+}
+
 export function agentflowHover(
   at: HoverTarget,
   doc: DocumentView<AgentflowDocument>
@@ -242,7 +260,11 @@ export function agentflowHover(
     if (contents !== undefined) return { range: at.symbol.range, contents };
   }
   const t = at.token;
-  if (!t) return bareKeyword(text, result.tokens, at.offset);
+  if (!t || t.kind === T.AccDescrMultilineValue) {
+    const block = accDescrBlock(text, result.tokens, at.offset);
+    if (block || t) return block;
+    return bareKeyword(text, result.tokens, at.offset);
+  }
   if (t.kind === T.ShapeData) return shapeHover(text, t.range, at.offset);
   // Tokens may take blanks and line breaks with them (`end`, links): only their text counts.
   const range = trimmed(text, t.range);

@@ -12,9 +12,9 @@
   4:14-4:22 "cylinder"
   | **`cylinder`** shape
   |
-  | Kind: `task` · removed in agentflow: drawn as `rounded` (`SHAPE_REMOVED`)
+  | Kind: `task` · drawn as `rounded`: removed in agentflow (`SHAPE_REMOVED`)
 @ 5:17  d@{ shape: clo|ud }
   5:14-5:19 "cloud"
   | **`cloud`** shape
   |
-  | Kind: `task` · not an agentflow shape: drawn as `rounded` (`SHAPE_UNSUPPORTED`)
+  | Kind: `task` · drawn as `rounded`: not an agentflow shape (`SHAPE_UNSUPPORTED`)
