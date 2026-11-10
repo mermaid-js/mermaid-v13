@@ -57,3 +57,14 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ## #603 T4 ascii
 - Closed: `swimlane-beta` ascii draws with `layered`, lanes as plain frames, one `ASCII_DROPPED` (`feature: 'layout'`), no `SWIMLANE_*`; no ascii code needed. `conformance/src/ascii/swimlane-corpus.spec.ts` runs the corpus in both charsets.
 - **For the maintainer (visible change for existing documents):** flowchart ascii now blanks the frame border beside a subgroup's *first* title line, not the widest line, so a multi-line subgraph title no longer leaves a gap cut off from the corner (`ascii/draw.ts`). v13-only fix; no snapshot changed.
+
+## Final whole-branch review (#651)
+- Ten findings, all fixed on `feature/528_final-review` (e492a21fa, fast-forwarded here), with core and loaded size unchanged:
+  - lanes read group boxes from the post-hook layout;
+  - the #634 pass keeps terminal legs pointing the right way and moves every interior rail (no cap of 8), with one segment list per edge;
+  - the lane part is first-party only and isn't attached to a third-party engine registered as `swimlane`;
+  - `SWIMLANE_SHARED_NODE` is deduplicated;
+  - left-aligned ascii titles get the first-line gap too;
+  - gen-config reads the lazy engine names once and rejects `flowchartLanes`;
+  - one shape classification in the engine's `config.ts`.
+- **Choice:** `DiagramPlugin.layoutParts` is documented as first-party only (`flowchartLanes`). A general part-loader mechanism would cost core bytes the R-PERF-1 margin doesn't have.

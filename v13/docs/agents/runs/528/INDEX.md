@@ -1,6 +1,6 @@
 # Run notes, spec #528 (M5b swimlane layout engine, flowchart `swimlane-beta`)
 
-Integration branch `feature/528_swimlane` (from `mermaid-v13` at 521fb76ee). Draft PR: #651.
+Integration branch `feature/528_swimlane` (from `mermaid-v13` at 521fb76ee). Draft PR: #651. CI at 2703485d2: R-PERF-1 PASS 127.8 KB (limit 128 KB), R-PERF-8 94.2 KB.
 
 T0a, T0b and T0c land as their own PRs into `mermaid-v13` (spec: reviewed apart from flowchart). The integration branch merges each T0 branch so T1+ can build on them, and re-merges `mermaid-v13` once they land.
 
