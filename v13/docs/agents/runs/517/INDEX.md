@@ -11,7 +11,7 @@ Integration branch `feature/517_usecase` (from `mermaid-v13` at 521fb76ee). Draf
 | T4 SVG renderer and theme table | #566 | #565, #561 | merged (ff 3444cda86; `.` 30.4 KB gz, core usedBy only) |
 | T5 integration | #567 | #561, #566 | merged (ff 79e171be6; chunk 35,451 B gz, load path 129,881 B gz) |
 | T6 language facet | #568 | #563 | merged (ff 4e7b9c1ea; `./language` 25.1 KB gz; registry wiring in T5) |
-| T7 ASCII (Should) | #569 | #565, #567 | open |
+| T7 ASCII (Should) | #569 | #565, #567 | merged (ff 892119ee6; text path 10,272 B gz) |
 
 - `01-v12-usecase.md`: pointer notes on v12 lexer, parser, model builder, DB, renderer, shapes, specs, corpus.
 - `02-v13-core.md`: pointer notes on the plugin contract, graph ports, conformance wiring, core seams.
@@ -34,8 +34,11 @@ block #521, c4 #522, agentflow #523, usecase #517, treeView #518, ishikawa #519 
 | #565 T3 | unchanged | 0 (no core or registry change) |
 | #566 T4 | 94,412 → 94,412 | 0 (core `usedBy` lists only, dropped from the bundle) |
 | #567 T5 | 94,412 → 94,430 | +18 (registry row, detector, config keys) |
+| #569 T7 | 94,430 → 94,444 | +14 (`ascii` in `formats`) |
 
 ## Merge log
+
+- 2026-11-10: `feature/569_usecase-ascii` fast-forwarded (892119ee6): lazily loaded `./ascii`, D478 shapes, both charsets. Full check 19,441 tests. Hosted CI on adb9a2b7d green after one rerun of a `packages/dev/src/watch.spec.ts` 5 s timeout.
 
 - 2026-11-10: `feature/567_usecase-integration` fast-forwarded (79e171be6): manifest, regen, config honoured, baselines, migration notes. Full check 19,411 tests, e2e 2,690 passed, warm render 49.2× geomean vs 12.2.0.
 
