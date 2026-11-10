@@ -10,7 +10,7 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { diagramPackages, ROOT, WIRING_FILE } from './diagrams.ts';
+import { ROOT, WIRING_FILE, workspaceDiagrams } from './diagrams.ts';
 import { DEPENDENCY_RULES, RELEASING, staleFiles, syncedFiles } from './sync.ts';
 
 /**
@@ -26,13 +26,14 @@ describe('pnpm regen: the workspace files a port used to edit by hand', () => {
   afterAll(() => rmSync(scratch, { recursive: true, force: true }));
 
   it('take a new diagram package from its own folder alone', () => {
-    // A copy of just the inputs: every rule's package.json, the diagram manifests, RELEASING.md.
+    // A copy of just the inputs: every rule's package.json, the diagram manifests (a
+    // pre-manifest package's too, which conformance depends on), RELEASING.md.
     const copy = (path: string) => {
       mkdirSync(join(scratch, path, '..'), { recursive: true });
       cpSync(join(ROOT, path), join(scratch, path));
     };
     for (const rule of DEPENDENCY_RULES) copy(`${rule.pkg}/package.json`);
-    for (const d of diagramPackages()) {
+    for (const d of workspaceDiagrams()) {
       copy(`${d.dir}/package.json`);
       if (existsSync(join(ROOT, d.dir, WIRING_FILE))) copy(`${d.dir}/${WIRING_FILE}`);
     }

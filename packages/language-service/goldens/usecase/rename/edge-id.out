@@ -1,0 +1,7 @@
+@ 3:8  User |e1@--> Login
+  prepare: 3:8-3:10 "e1"; rename to "buys":
+  %% rename-to: buys
+  usecase-beta
+    User buys@--> Login
+    buys@{ animation: fast }
+    style buys stroke:red

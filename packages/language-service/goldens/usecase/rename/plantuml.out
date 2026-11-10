@@ -1,0 +1,3 @@
+@ 3:9  actor |User
+  prepare: 3:9-3:13 "User"; rename to "Package":
+  refused: 'Package' is PlantUML syntax, which a usecase statement cannot start with.

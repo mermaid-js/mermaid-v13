@@ -1,0 +1,27 @@
+@ 6:12  User --> |
+  User node (actor) 6:12-6:12 "" -> "User"
+  Reset_password node (use case · Reset password) 6:12-6:12 "" -> "Reset_password"
+  Login node (use case) 6:12-6:12 "" -> "Login"
+  Lo node (use case) 6:12-6:12 "" -> "Lo"
+@ 7:11  User -->|
+  User node (actor) 7:11-7:11 "" -> "User"
+  Reset_password node (use case · Reset password) 7:11-7:11 "" -> "Reset_password"
+  Login node (use case) 7:11-7:11 "" -> "Login"
+  Lo node (use case) 7:11-7:11 "" -> "Lo"
+@ 8:14  User --> Lo|
+  Login node (use case) 8:12-8:14 "Lo" -> "Login"
+@ 9:18  actor User --> |
+  User node (actor) 9:18-9:18 "" -> "User"
+  Reset_password node (use case · Reset password) 9:18-9:18 "" -> "Reset_password"
+  Login node (use case) 9:18-9:18 "" -> "Login"
+  Lo node (use case) 9:18-9:18 "" -> "Lo"
+@ 10:23  User -- "label" --> |
+  User node (actor) 10:23-10:23 "" -> "User"
+  Reset_password node (use case · Reset password) 10:23-10:23 "" -> "Reset_password"
+  Login node (use case) 10:23-10:23 "" -> "Login"
+  Lo node (use case) 10:23-10:23 "" -> "Lo"
+@ 11:23  Login ..> : include |
+  User node (actor) 11:23-11:23 "" -> "User"
+  Reset_password node (use case · Reset password) 11:23-11:23 "" -> "Reset_password"
+  Login node (use case) 11:23-11:23 "" -> "Login"
+  Lo node (use case) 11:23-11:23 "" -> "Lo"
