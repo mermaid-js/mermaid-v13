@@ -10,7 +10,7 @@ T0a, T0b and T0c land as their own PRs into `mermaid-v13` (spec: reviewed apart 
 | T0b orthogonal router, post-processing, DDLT gates | #595 | `feature/595_swimlane-router` (own PR #639) | #593 | PR #639 ready (b1a443289; core 94,412 B gz unchanged; chunk ~43 KB gz). #634 and #636 need a D-id |
 | T0c shared line hops, lazy core chunk (closes #78) | #596 | `feature/596_line-hops` (own PR) | — | PR #646 ready (ddd32b7a2; core 94,412 → 94,541 B gz, hops +103, swimlane section defaults +26) |
 | T1 flowchart registration and config section | #597 | `feature/597_swimlane-registration` | #593, #595 | merged (ff f6928a06b; core 95,929 → 96,254 B gz, +325: section layering and directive routing) |
-| T2 lane drawing, palette, warnings | #598 | `feature/598_swimlane-lanes` | #597 | not started |
+| T2 lane drawing, palette, warnings | #598 | `feature/598_swimlane-lanes` | #597 | merged (f3157a61d; core 96,317 B gz with `mermaid-v13` at 8b336e2b0, T2 itself a few bytes) |
 | T3 integration | #601 | `feature/601_swimlane-integration` | #598, #596 | not started |
 | T4 ascii | #603 | `feature/603_swimlane-ascii` | #597 | not started |
 
