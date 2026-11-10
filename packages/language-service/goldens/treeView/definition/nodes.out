@@ -1,0 +1,6 @@
+@ 2:3  |src/
+  -> 2:3-2:6 "src"
+@ 5:7  in|dex.js
+  -> 5:5-5:13 "index.js"
+@ 6:8  "my f|ile"
+  -> 6:4-6:11 "my file"

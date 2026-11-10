@@ -1,0 +1,21 @@
+{
+  "usecase.parser.spec.ts": {
+    "preserves entity codes and literal backslash-n": "it calls v12's parser without the pipeline's `encodeEntities`, so `#40;` stays as written; mermaid@12 (the oracle) shows it as `(`, as v13 does (parity, `usecase-cases/entities-label`)",
+    "publishes a complete serializable AST v1 with ordered statements and exact spans": "it is about v12's `GraphAST` (`const ast = db.getAST()`), which v13 does not port (D476): nothing else is checked"
+  },
+  "usecase.spec.ts": {
+    "emits every node and boundary variant in committed model order": "it builds v12's DB model by hand (`createModel`, `commit`): no v13 code runs (v13's parse returns a frozen model)",
+    "maps relationship semantics, markers, animation, styles, and note attachments exactly": "it builds v12's DB model by hand (`createModel`, `commit`): no v13 code runs (v13's parse returns a frozen model)",
+    "flattens JSON rows depth-first using source property order": "it builds v12's DB model by hand (`createModel`, `commit`): no v13 code runs (v13's parse returns a frozen model)",
+    "consolidates canonical selectors and relies on shared animation keyframes": "it reads v12's CSS (`getStyles`); v13 writes no `<style>` (R-SEC-2) and colours through the theme table (T4, #566)"
+  },
+  "usecase.grammar.spec.ts": {
+    "defines the stable canonical CST rule names": "it reads Chevrotain's grammar productions; v13's parser is hand-written and builds no CST (D14)"
+  },
+  "usecaseDb.spec.ts": {
+    "atomically replaces committed state with a detached model": "it drives v12's DB commit protocol (`createModel`, `commit`): v13's parse returns a frozen model, no DB",
+    "keeps the previous commit when a replacement is incomplete": "it drives v12's DB commit protocol (`createModel`, `commit`): v13's parse returns a frozen model, no DB",
+    "clears every collection, counter, AST, direction, config, title, and accessibility field": "it drives v12's DB commit protocol (`createModel`, `commit`): v13's parse returns a frozen model, no DB",
+    "gives oval use cases extra label clearance over rectangular use cases": "it builds v12's DB model by hand (`createModel`, `commit`): no v13 code runs; the padding is T3's (#565)"
+  }
+}

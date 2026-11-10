@@ -1,0 +1,16 @@
+@ 2:12  User --> |Login
+  -> 2:12-2:17 "Login"
+@ 3:9  actor |User
+  -> 2:3-2:7 "User"
+@ 9:12  note for |Login "x"
+  -> 2:12-2:17 "Login"
+@ 10:9  class |Shop, Data, e1 hot
+  -> 4:18-4:22 "Shop"
+@ 10:15  class Shop, |Data, e1 hot
+  -> 7:8-7:12 "Data"
+@ 10:21  class Shop, Data, |e1 hot
+  -> 8:8-8:10 "e1"
+@ 11:3  |e1@{ animate: true }
+  -> 8:8-8:10 "e1"
+@ 12:9  style |User fill:red
+  -> 2:3-2:7 "User"

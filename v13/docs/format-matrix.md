@@ -33,9 +33,9 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `xychart` | `@mermaid-js/diagram-xychart` | yes | no |
 | `block` | not ported | no | no |
 | `eventmodeling` | not ported | no | no |
-| `treeView` | not ported | no | no |
+| `treeView` | `@mermaid-js/diagram-treeview` | yes | yes |
 | `radar` | `@mermaid-js/diagram-radar` | yes | no |
-| `ishikawa` | not ported | no | no |
+| `ishikawa` | `@mermaid-js/diagram-ishikawa` | yes | yes |
 | `treemap` | `@mermaid-js/diagram-treemap` | yes | no |
 | `railroad` | not ported | no | no |
 | `railroadEbnf` | not ported | no | no |
@@ -44,4 +44,4 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `venn` | `@mermaid-js/diagram-venn` | yes | no |
 | `wardley` | `@mermaid-js/diagram-wardley` | yes | no |
 | `cynefin` | `@mermaid-js/diagram-cynefin` | yes | no |
-| `usecase` | not ported | no | no |
+| `usecase` | `@mermaid-js/diagram-usecase` | yes | yes |

@@ -1,0 +1,8 @@
+1:1-1:32 "%%{init: {\"theme\": \"forest\"}}%%" macro
+2:1-2:14 "ishikawa-beta" keyword
+2:15-2:32 "%% header comment" comment
+3:3-3:15 "Blurry Photo" string
+4:3-4:15 "%% a comment" comment
+5:5-5:12 "Process" variable [declaration, definition]
+6:7-6:19 "Out of focus" variable [declaration, definition]
+8:5-8:9 "User" variable [declaration, definition]
