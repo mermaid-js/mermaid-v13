@@ -19,6 +19,7 @@ export {
   type AsciiHook,
   type DrawHooks,
   type Drawn,
+  type EdgeStep,
 } from './pipeline/draw.ts';
 export {
   HookRunner,

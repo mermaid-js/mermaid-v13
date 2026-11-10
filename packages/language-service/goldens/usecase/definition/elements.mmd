@@ -1,0 +1,12 @@
+usecase-beta
+  User --> |Login
+  actor |User
+  systemBoundary Shop
+    Login
+  end
+  json Data@{ "a": 1 }
+  User e1@--> Data
+  note for |Login "x"
+  class |Shop, |Data, |e1 hot
+  |e1@{ animate: true }
+  style |User fill:red

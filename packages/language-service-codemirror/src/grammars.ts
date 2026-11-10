@@ -31,6 +31,7 @@ export const LEZER_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, () => Promis
   timeline: () => import('./generated/timeline.parser.js').then((m) => m.parser),
   treemap: () => import('./generated/treemap.parser.js').then((m) => m.parser),
   treeView: () => import('./generated/treeView.parser.js').then((m) => m.parser),
+  usecase: () => import('./generated/usecase.parser.js').then((m) => m.parser),
   venn: () => import('./generated/venn.parser.js').then((m) => m.parser),
   wardley: () => import('./generated/wardley.parser.js').then((m) => m.parser),
   xychart: () => import('./generated/xychart.parser.js').then((m) => m.parser),
