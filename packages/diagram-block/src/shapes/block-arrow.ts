@@ -15,7 +15,8 @@ export type { Point } from './outline.ts';
 /** A direction as v12's grammar takes it (`DIR`), trimmed (D445). */
 export type ArrowDirection = 'right' | 'left' | 'up' | 'down' | 'x' | 'y';
 
-type DirectionName = Exclude<ArrowDirection, 'x' | 'y'>;
+/** A side a block arrow points to: `x` and `y` expanded. */
+export type ArrowSide = Exclude<ArrowDirection, 'x' | 'y'>;
 interface ArrowMetrics {
   height: number;
   midpoint: number;
@@ -25,11 +26,15 @@ interface ArrowMetrics {
 
 type ArrowPointsFactory = (metrics: ArrowMetrics) => Point[];
 
-const DIRECTION_ORDER: DirectionName[] = ['right', 'left', 'up', 'down'];
+const DIRECTION_ORDER: ArrowSide[] = ['right', 'left', 'up', 'down'];
 const POINT_KEY = 'point';
 
-const expandAndDeduplicateDirections = (directions: readonly string[]): Set<DirectionName> => {
-  const uniqueDirections = new Set<DirectionName>();
+/**
+ * The sides `directions` point to, each once (`x` is `right` and `left`, `y` is `up` and
+ * `down`); any other text points nowhere. The SVG polygon and the text box's arrowheads read it.
+ */
+export const arrowSides = (directions: readonly string[]): Set<ArrowSide> => {
+  const uniqueDirections = new Set<ArrowSide>();
 
   for (const direction of directions) {
     switch (direction) {
@@ -56,7 +61,7 @@ const expandAndDeduplicateDirections = (directions: readonly string[]): Set<Dire
   return uniqueDirections;
 };
 
-const getDirectionKey = (directions: Set<DirectionName>) =>
+const getDirectionKey = (directions: Set<ArrowSide>) =>
   DIRECTION_ORDER.filter((direction) => directions.has(direction)).join('|') || POINT_KEY;
 
 const arrowPointFactories = /* @__PURE__ */ new Map<string, ArrowPointsFactory>([
@@ -266,7 +271,7 @@ export const getArrowPoints = (
   node: { readonly padding?: number },
   totalWidth?: number
 ): Point[] => {
-  const key = getDirectionKey(expandAndDeduplicateDirections(duplicatedDirections));
+  const key = getDirectionKey(arrowSides(duplicatedDirections));
   const pointFactory = arrowPointFactories.get(key) ?? arrowPointFactories.get(POINT_KEY)!;
   return pointFactory(arrowMetrics(bbox, node.padding ?? 0, totalWidth));
 };

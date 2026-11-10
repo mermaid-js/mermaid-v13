@@ -29,7 +29,8 @@ export const BLOCK_TEXT_METRICS = {
   titleFrame: 6,
   /**
    * Blank cells around the drawing that lines may go round it in: `around`, and `perEdge` more
-   * for each edge up to `edges` of them (each line round the outside takes a lane).
+   * per lane, a lane for each edge up to `edges` of them, past that the edges' square root
+   * (`draw.ts` `margin`: each line round the outside takes a lane).
    */
   around: 2,
   perEdge: 2,

@@ -29,9 +29,11 @@ import {
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { InlineSpans } from '@mermaid-js/core/text';
 import type { BlockArrowType, BlockModel, BlockType } from '../model.ts';
+import type { ArrowSide } from '../shapes/block-arrow.ts';
 import { blockTextGrid, cut, textLabel, type BlockText, type TextBox } from './grid.ts';
 import { BLOCK_TEXT_METRICS, type TextSpacing } from './metrics.ts';
-import { Board, Cell, route, Use, type EndSpec, type Point, type Route } from './route.ts';
+import type { Point } from '../shapes/outline.ts';
+import { Board, route, Use, type EndSpec, type Route, type UseOf } from './route.ts';
 
 /** The text form of each block type that has one (D82's table, as flowchart's). */
 const FORMS: Partial<Record<BlockType, (g: GlyphSet) => BoxOptions>> = {
@@ -53,17 +55,8 @@ const FORMS: Partial<Record<BlockType, (g: GlyphSet) => BoxOptions>> = {
 export const hasTextForm = (type: BlockType): boolean =>
   type === 'block_arrow' || type === 'composite' || FORMS[type] !== undefined;
 
-/** The sides a block arrow points to (v12's directions: `x` both across, `y` both down). */
-function pointing(directions: readonly string[] | undefined): Dir[] {
-  const out = new Set<Dir>();
-  for (const d of directions ?? []) {
-    if (d === 'right' || d === 'x') out.add(RIGHT);
-    if (d === 'left' || d === 'x') out.add(LEFT);
-    if (d === 'up' || d === 'y') out.add(UP);
-    if (d === 'down' || d === 'y') out.add(DOWN);
-  }
-  return [...out];
-}
+/** The direction of each side a block arrow points to. */
+const SIDE_DIR: Readonly<Record<ArrowSide, Dir>> = { up: UP, right: RIGHT, down: DOWN, left: LEFT };
 
 /** The box side of each direction (`Dir`: up, right, down, left). */
 const MARK_SIDE = ['top', 'right', 'bottom', 'left'] as const;
@@ -82,10 +75,13 @@ const LOOP_SIDES: readonly (readonly [Dir, Dir])[] = [
   [RIGHT, RIGHT],
 ];
 
-function formOf(box: TextBox, directions: readonly string[] | undefined, g: GlyphSet): BoxOptions {
+function formOf(box: TextBox, g: GlyphSet): BoxOptions {
   if (box.type === 'block_arrow') {
     const marks: NonNullable<BoxOptions['marks']> = {};
-    for (const d of pointing(directions)) marks[MARK_SIDE[d]] = sideOf(g.head, d);
+    for (const side of box.directions ?? []) {
+      const d = SIDE_DIR[side];
+      marks[MARK_SIDE[d]] = sideOf(g.head, d);
+    }
     return { marks };
   }
   return FORMS[box.type]?.(g) ?? {};
@@ -113,14 +109,14 @@ function titleOf(r: CellRect, title: string): { x: number; width: number } | und
   return { x: r.x + Math.floor((r.width - w) / 2), width: w };
 }
 
-export interface DrawOptions {
+export interface BlockDrawOptions {
   readonly glyphs: GlyphSet;
   readonly spacing: TextSpacing;
   readonly maxWidth?: number;
   readonly inline?: InlineSpans;
 }
 
-export interface Drawn {
+export interface BlockDrawing {
   readonly text: string;
   /** The grid as drawn, in the text's cells before the margin is trimmed. */
   readonly grid: BlockText;
@@ -157,21 +153,11 @@ interface Scene {
   readonly marks: readonly Set<number>[];
 }
 
+/** A routed edge: the model's edge, its index among the model's edges, its route. */
 interface Routed {
-  readonly e: BlockModel['edges'][number];
-  readonly k: number;
-  readonly r: Route;
-}
-
-function directionsOf(model: BlockModel): Map<string, readonly string[] | undefined> {
-  const out = new Map<string, readonly string[] | undefined>();
-  const stack = [...model.blocks];
-  while (stack.length > 0) {
-    const b = stack.pop()!;
-    if (b.type === 'block_arrow') out.set(b.id, b.directions);
-    stack.push(...b.children);
-  }
-  return out;
+  readonly edge: BlockModel['edges'][number];
+  readonly index: number;
+  readonly route: Route;
 }
 
 /** A frame, its title on the top border with a blank either side. */
@@ -190,9 +176,9 @@ function drawFrame(sc: Scene, box: TextBox, i: number): void {
 }
 
 /** A leaf box in its shape's text form, its label centred. */
-function drawLeaf(sc: Scene, box: TextBox, i: number, directions: readonly string[] | undefined) {
+function drawLeaf(sc: Scene, box: TextBox, i: number) {
   const r = sc.rects[i]!;
-  const form = formOf(box, directions, sc.glyphs);
+  const form = formOf(box, sc.glyphs);
   drawBox(sc.canvas, sc.glyphs, r, form);
   sc.board.wall(r);
   // A line may leave a diamond or a hexagon at a side mark, the tee replacing it (as
@@ -228,7 +214,7 @@ function routeEdges(sc: Scene, model: BlockModel): { routed: Routed[]; forced: A
       : [[end(s, t), end(t, s)]];
     const r = route(sc.board, k, tries);
     if (r.forced) forced.push(e.ast);
-    if (r.cells.length > 0) routed.push({ e, k, r });
+    if (r.cells.length > 0) routed.push({ edge: e, index: k, route: r });
   });
   return { routed, forced };
 }
@@ -239,7 +225,7 @@ function dirTo(a: Point, b: Point): Dir {
 }
 
 /** One edge's line, its tees and its end markers. */
-function drawLine(sc: Scene, { e, r }: Routed): void {
+function drawLine(sc: Scene, { edge: e, route: r }: Routed): void {
   const { canvas, glyphs } = sc;
   const weight = e.thickness === 'thick' ? 2 : 1;
   const dotted = e.pattern === 'dotted';
@@ -299,20 +285,15 @@ class Labels {
     const { board, canvas } = this.sc;
     if (!board.inside(x, y)) return x >= 0 && y >= 0 && canvas.get(x, y) === ' ';
     const i = board.at(x, y);
-    return (
-      board.kind[i] === Cell.Free &&
-      board.use[i] === Use.None &&
-      this.labelled[i] === 0 &&
-      canvas.get(x, y) === ' '
-    );
+    return board.empty(i) && this.labelled[i] === 0 && canvas.get(x, y) === ' ';
   }
 
   /** A cell of edge `k`'s own straight run (`use`), not under a label. */
-  private own(x: number, y: number, k: number, use: number): boolean {
+  private own(x: number, y: number, k: number, use: UseOf): boolean {
     const { board } = this.sc;
     if (!board.inside(x, y)) return false;
     const i = board.at(x, y);
-    return board.owner[i] === k + 1 && board.use[i] === use && this.labelled[i] === 0;
+    return board.runOf(i, k, use) && this.labelled[i] === 0;
   }
 
   /** Whether `width` cells from `x` on row `y`, and a blank either side, are free but `skip`. */
@@ -361,7 +342,7 @@ class Labels {
           offer({ x, y, d: 1000 + Math.abs(y - m.y) + Math.abs(x + width / 2 - m.x) });
   }
 
-  place({ k, r }: Routed, text: string): void {
+  place({ index: k, route: r }: Routed, text: string): void {
     const width = cellWidth(text);
     if (width === 0) return;
     const mid = (r.cells.length - 1) / 2;
@@ -384,8 +365,19 @@ class Labels {
   }
 }
 
+/**
+ * The blank cells around the drawing that lines may go round it in: `around`, and `perEdge`
+ * more per lane, a lane per edge up to `edges` lanes or the edges' square root, whichever is
+ * more (each line round the outside takes a lane; a lane for every edge would make the board,
+ * and each search that spans it, grow with the square of the edges).
+ */
+function margin(edges: number): number {
+  const M = BLOCK_TEXT_METRICS;
+  return M.around + M.perEdge * Math.min(edges, Math.max(M.edges, Math.ceil(Math.sqrt(edges))));
+}
+
 /** Draws `model` on the text grid. */
-export function drawBlock(model: BlockModel, options: DrawOptions): Drawn {
+export function drawBlock(model: BlockModel, options: BlockDrawOptions): BlockDrawing {
   const { glyphs, spacing } = options;
   const mark = glyphs.name === 'unicode' ? '…' : '~';
   const grid = blockTextGrid(model, {
@@ -394,8 +386,8 @@ export function drawBlock(model: BlockModel, options: DrawOptions): Drawn {
     ...(options.maxWidth !== undefined ? { maxWidth: options.maxWidth } : {}),
     ...(options.inline ? { inline: options.inline } : {}),
   });
-  const T = BLOCK_TEXT_METRICS;
-  const A = T.around + T.perEdge * Math.min(model.edges.length, T.edges);
+  const M = BLOCK_TEXT_METRICS;
+  const A = margin(model.edges.length);
   const sc: Scene = {
     glyphs,
     canvas: new Canvas(),
@@ -404,24 +396,21 @@ export function drawBlock(model: BlockModel, options: DrawOptions): Drawn {
     rects: grid.boxes.map((b) => shift(b.rect, A)),
     marks: grid.boxes.map(() => new Set<number>()),
   };
-  const directions = directionsOf(model);
   // Pre-order: each frame before what is inside it.
-  grid.boxes.forEach((box, i) =>
-    box.frame ? drawFrame(sc, box, i) : drawLeaf(sc, box, i, directions.get(box.id))
-  );
+  grid.boxes.forEach((box, i) => (box.frame ? drawFrame(sc, box, i) : drawLeaf(sc, box, i)));
   const { routed, forced } = routeEdges(sc, model);
   for (const edge of routed) drawLine(sc, edge);
   const labels = new Labels(sc);
   for (const edge of routed) {
-    if (edge.e.label === '') continue;
-    const line = textLabel(edge.e.label, options.inline).lines.join(' ');
-    labels.place(edge, cut(line, T.labelCap, mark));
+    if (edge.edge.label === '') continue;
+    const line = textLabel(edge.edge.label, options.inline).lines.join(' ');
+    labels.place(edge, cut(line, M.labelCap, mark));
   }
 
   const { text, top, left } = trimmed(sc.canvas);
   const back = (p: Point): Point => ({ x: p.x - A, y: p.y - A });
   const routes = new Map<AstId, Route>(
-    routed.map(({ e, r }) => [e.ast, { ...r, cells: r.cells.map(back) }])
+    routed.map(({ edge, route: r }) => [edge.ast, { ...r, cells: r.cells.map(back) }])
   );
   return { text, grid, routes, origin: { x: A - left, y: A - top }, forced };
 }
@@ -435,8 +424,8 @@ function trimmed(canvas: Canvas): { text: string; top: number; left: number } {
     top++;
   }
   while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
-  const margin = Math.min(...lines.filter((l) => l !== '').map((l) => l.search(/\S/)));
-  const left = margin > 0 && Number.isFinite(margin) ? margin : 0;
+  const blank = Math.min(...lines.filter((l) => l !== '').map((l) => l.search(/\S/)));
+  const left = blank > 0 && Number.isFinite(blank) ? blank : 0;
   if (left > 0) lines = lines.map((l) => l.slice(left));
   return { text: lines.join('\n'), top, left };
 }

@@ -57,7 +57,7 @@ export function gridPosition(columns: number, position: number): { px: number; p
  * `columns`, a child wider than the rest of its row takes only the rest, so the next one starts
  * a row.
  */
-function advance(columns: number, position: number, span: number): number {
+export function gridAdvance(columns: number, position: number, span: number): number {
   return position + (columns > 0 ? Math.min(span, columns - (position % columns)) : span);
 }
 
@@ -210,7 +210,7 @@ export function placeGrid(root: GridNode, padding: number): void {
     for (const child of node.children) {
       const { py } = gridPosition(columns, pos);
       if (child.h > (rowHeights[py] ?? 0)) rowHeights[py] = child.h;
-      pos = advance(columns, pos, child.span);
+      pos = gridAdvance(columns, pos, child.span);
     }
     const rowOffsets: number[] = [];
     let offset = 0;
@@ -234,7 +234,7 @@ export function placeGrid(root: GridNode, padding: number): void {
       startX = child.x + child.w / 2;
       const rowHeight = rowHeights[py] ?? child.h;
       child.y = node.y - node.h / 2 + node.band + (rowOffsets[py] ?? 0) + rowHeight / 2 + padding;
-      pos = advance(columns, pos, child.span);
+      pos = gridAdvance(columns, pos, child.span);
     }
   }
 }

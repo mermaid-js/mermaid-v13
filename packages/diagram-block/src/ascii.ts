@@ -7,12 +7,8 @@
  * warning (D449). Composites are frames, spaces blank, labels cut with `…`, block arrows boxes
  * with an arrowhead per pointing side, edges stepped lines with arrowheads (`ascii/route.ts`).
  */
-import type { TextRenderContext } from '@mermaid-js/core';
-import { ascii as asciiGlyphs, asciiOptions, unicode } from '@mermaid-js/core/ascii';
 import type { BlockModel } from './model.ts';
-import { drawBlock, type Drawn } from './ascii/draw.ts';
-import { BLOCK_TEXT_METRICS } from './ascii/metrics.ts';
-import { asciiWarnings, type AsciiWarning } from './ascii/warnings.ts';
+import { drawBlockText, type BlockAsciiContext } from './ascii/text.ts';
 
 export type {
   AsciiDroppedFeature,
@@ -21,30 +17,7 @@ export type {
   AsciiShapeWarning,
   AsciiWarning,
 } from './ascii/warnings.ts';
-export type { BlockText, TextBox } from './ascii/grid.ts';
-export type { Drawn } from './ascii/draw.ts';
-export type { Point, Route } from './ascii/route.ts';
-export { BLOCK_TEXT_METRICS } from './ascii/metrics.ts';
-
-/** What the hook reads of core's `TextRenderContext`. */
-export type BlockAsciiContext = Pick<TextRenderContext, 'config' | 'warn'> &
-  Partial<Pick<TextRenderContext, 'ast' | 'inline'>>;
-
-/** The drawing and the grid it was drawn from (the conformance specs read the grid). */
-export function drawBlockText(
-  model: BlockModel,
-  ctx: BlockAsciiContext
-): Drawn & { readonly warnings: readonly AsciiWarning[] } {
-  const { charset, padding, maxWidth } = asciiOptions(ctx.config);
-  const drawn = drawBlock(model, {
-    glyphs: charset === 'ascii' ? asciiGlyphs : unicode,
-    spacing: BLOCK_TEXT_METRICS.spacing[padding],
-    ...(maxWidth !== undefined ? { maxWidth } : {}),
-    ...(ctx.inline ? { inline: ctx.inline } : {}),
-  });
-  const warnings = asciiWarnings(model, drawn.grid, drawn.forced, ctx.ast, ctx.inline);
-  return { ...drawn, warnings };
-}
+export type { BlockAsciiContext } from './ascii/text.ts';
 
 /**
  * The block `ascii` hook (DESIGN §12.1): the drawing as text, `\n` line ends, no trailing

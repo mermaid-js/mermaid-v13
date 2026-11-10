@@ -148,10 +148,9 @@ describe('the block facet', () => {
     expect(blockLanguage.isValidId('a', 'edge')).toBeTypeOf('string');
   });
 
-  it('hovers a block with its shape, span and columns, and a keyword with its doc', () => {
-    const text = 'block\n  block:g:2\n    columns 3\n    a{"Choice"}\n  end\n  a --> g';
+  const hoverIn = (text: string) => {
     const result = blockLanguage.parse(text, { keepTokens: true });
-    const hover = (needle: string, delta = 0) => {
+    return (needle: string, delta = 0) => {
       const offset = text.indexOf(needle) + delta;
       const symbol = result.symbols.find((s) => s.range.start <= offset && offset <= s.range.end);
       const tokens = result.tokens!;
@@ -168,6 +167,10 @@ describe('the block facet', () => {
         { text, result }
       )?.contents;
     };
+  };
+
+  it('hovers a block with its shape, span and columns, and a keyword with its doc', () => {
+    const hover = hoverIn('block\n  block:g:2\n    columns 3\n    a{"Choice"}\n  end\n  a --> g');
     expect(hover('g:2', 0)).toBe(
       '**block** `g`\n\nShape: composite, `block:id … end`\n\nSpan: 2 columns\n\nColumns: 3\n\nHolds 1 block'
     );
@@ -175,5 +178,12 @@ describe('the block facet', () => {
       '**block** `a`\n\nShape: diamond, `{"…"}`\n\nLabel: `Choice`\n\nSpan: 1 column\n\nIn `g`'
     );
     expect(hover('columns')).toMatch(/^\*\*`columns 3`\*\*\n\n`columns n` or `columns auto`/);
+  });
+
+  it('hovers a composite a later mention made a circle as the circle the diagram draws', () => {
+    const hover = hoverIn('block\nblock:a["Grp"]\n b c\nend\na(("x"))');
+    expect(hover('a((')).toBe(
+      '**block** `a`\n\nShape: circle, `(("…"))`\n\nLabel: `x`\n\nSpan: 1 column'
+    );
   });
 });

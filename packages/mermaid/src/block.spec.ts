@@ -229,6 +229,48 @@ describe('block diagrams through the public API (#558)', () => {
     expect(wide.text.split('\n').every((l) => !l.includes('…'))).toBe(true);
   });
 
+  it('draws a composite a later mention made a circle as a circle in SVG and text alike', async () => {
+    // v12's merge rule: a later type other than `na` wins, so `a` is a circle holding b and c.
+    const m = createMermaid();
+    const src = 'block\nblock:a["Grp"]\n b c\nend\na(("x"))';
+    const { svg } = await m.render('b11', src);
+    const groups = svg.match(/<g class="node [^"]*"[^>]*data-id="(a|b|c)"[^>]*>\s*<(\w+)/g) ?? [];
+    expect(groups.map((g) => /data-id="(\w)"[^>]*>\s*<(\w+)/.exec(g)!.slice(1).join(':'))).toEqual([
+      'a:circle',
+      'b:rect',
+      'c:rect',
+    ]);
+    expect(svg).not.toContain('composite');
+    const { text } = await m.render('b11', src, { format: 'ascii' });
+    // The circle's text form (rounded), its label inside, no frame titled "x"; b and c below it.
+    expect(text).toBe(
+      [
+        '╭────────────╮',
+        '│     x      │',
+        '╰────────────╯',
+        '',
+        '',
+        '┌───┐    ┌───┐',
+        '│ b │    │ c │',
+        '└───┘    └───┘',
+      ].join('\n')
+    );
+  });
+
+  it('draws composites 1,200 deep as text, past where a recursive grid ran out of stack', async () => {
+    // The text grid is iterative (as the layout and the SVG renderer are). The drawing grows by
+    // a frame each level, so the output limit is raised with the depth.
+    const depth = 1200;
+    const m = createMermaid();
+    m.initialize({ limits: { maxDepth: 10_000, maxOutputLength: 1e9 } });
+    const src = 'block\n' + 'block\n'.repeat(depth) + 'a\n' + 'end\n'.repeat(depth);
+    const { text, rows, columns } = await m.render('b12', src, { format: 'ascii' });
+    expect(rows).toBe(3 + 4 * depth);
+    expect(columns).toBe(5 + 6 * depth);
+    const middle = text.split('\n')[2 * depth + 1]!;
+    expect(middle).toBe('│  '.repeat(depth) + '│ a │' + '  │'.repeat(depth));
+  }, 60_000);
+
   it('ignores block.padding in text, an invalid one included, with no warning (D449)', async () => {
     const m = createMermaid();
     const src = 'block\n  a b';

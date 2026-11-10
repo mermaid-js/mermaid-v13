@@ -12,7 +12,7 @@ import type { RenderContext, Warning } from '@mermaid-js/core';
 import { BLOCK_CONFIG_INVALID } from '../codes.ts';
 import { checkStyle } from '@mermaid-js/core/svg';
 import { fontSizePx, layoutLabel, Style, type FontKey } from '@mermaid-js/core/text';
-import type { Block, BlockEdge, BlockModel } from '../model.ts';
+import { isComposite, type Block, type BlockEdge, type BlockModel } from '../model.ts';
 import { padsOf, type Pads } from '../shapes/leaf.ts';
 import { clipOutline, outlineExtent, type Point } from '../shapes/outline.ts';
 import { placeGrid, sizeGrid, type GridNode } from './grid.ts';
@@ -233,7 +233,7 @@ function measureGrid(
       }
       continue;
     }
-    const text = type === 'composite' && block.label === '' ? undefined : label(block);
+    const text = isComposite(block) && block.label === '' ? undefined : label(block);
     const natural = kindOf(type).natural({
       type,
       span: block.span,
@@ -290,7 +290,7 @@ function placedBlock(item: Item, padding: number, pads: Pads): BlockNodeLayout {
     ...(grid.children.length > 0 && grid.columns !== undefined ? { columns: grid.columns } : {}),
     cell,
     centre,
-    ...(block.colorIndex !== undefined && item.shape === 'composite'
+    ...(block.colorIndex !== undefined && isComposite(block)
       ? { colorIndex: block.colorIndex }
       : {}),
   };

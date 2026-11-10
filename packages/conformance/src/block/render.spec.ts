@@ -1,7 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { THEME_NAMES } from '@mermaid-js/core/theme';
-import { renderBlockForTest, type RenderedBlock } from '@mermaid-js/diagram-block/testing';
+import type { Block, BlockDocument, BlockModel } from '@mermaid-js/diagram-block';
+import { createMermaid, MermaidError, type Mermaid } from 'mermaid';
 import { astIndex, extents, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 import type { CorpusItem } from '../types.ts';
@@ -10,31 +11,77 @@ import { blockCases, blockCorpus } from './corpus.ts';
 /**
  * Render properties and the AST round-trip of block (spec #521 T4, DESIGN §13.2, §13.4,
  * R-PARSE-8, D224) over the parsed corpus: the e2e fixtures, the v12 spec and syntax-page strings
- * and the cases, each in every theme and `theme: 'auto'` set as `initialize()` would (a source's
- * own front matter still wins). Sources go through the plugin's own seam, parse → layout →
- * render (`renderBlockForTest`), not `createMermaid()`: block has no registry row until its
- * manifest (#558), and the checks read the layout beside the SVG. Sources the parser rejects
- * stay out. A source of more than `BIG` blocks (the 100,000-cell spacer) renders in one theme.
+ * and the cases, each in every theme and `theme: 'auto'` set with `initialize()` (a source's own
+ * front matter still wins). Sources go through the public API, `createMermaid()` with
+ * `deterministic: true` (`prepare()` for the model and the AST, `renderSync()` for the SVG);
+ * sources it rejects stay out. A source of more than `BIG` blocks and space cells (the
+ * 100,000-cell spacer) renders in one theme.
  *
  * Properties: well-formed XML, `assertInert`, deterministic, no NaN/Infinity/undefined, no
  * `foreignObject`, `<marker>`, `<filter>` and no `<style>` but `theme: 'auto'`'s, no element id
  * but the gradient's, every drawn coordinate (polygon points included) inside the viewBox,
  * every alias declared. Round-trip: each AST node has at most one `data-ast` element, every
  * `data-ast` names an AST node, a block's is its `g.node` and an edge's its `path`, and a node
- * has one exactly when the layout drew it: every block's first mention but a space's, every
- * edge between two drawn blocks.
+ * has one exactly when it is drawn: every block's first mention but a space's, every edge
+ * between two drawn blocks.
  */
 const THEMES = [...THEME_NAMES, 'auto'] as const;
 const TOL = 0.01;
 const BIG = 2000;
+const PREFIX = 'mermaid-0';
+
+interface Rendered {
+  readonly svg: string;
+  readonly model: BlockModel;
+  readonly ast: BlockDocument;
+  /** The render's gradient id, or false when the theme draws none (for `assertInert`). */
+  readonly gradient: string | false;
+  /** Whether the SVG carries a `theme: 'auto'` style sheet (for `assertInert`). */
+  readonly themeStyle: boolean;
+}
 
 interface Case {
   readonly id: string;
   readonly theme: string;
   readonly source: string;
-  readonly r: RenderedBlock;
+  readonly r: Rendered;
   readonly tree: SvgView;
 }
+
+const api = (theme: string): Mermaid => {
+  const m = createMermaid();
+  m.initialize({ deterministic: true, theme: theme as never });
+  return m;
+};
+
+async function render(m: Mermaid, source: string): Promise<Rendered> {
+  const prepared = await m.prepare(source, { id: PREFIX });
+  const { svg } = m.renderSync(source, { id: PREFIX });
+  const gradient = /<linearGradient id="([^"]+)"/.exec(svg)?.[1];
+  return {
+    svg,
+    model: prepared.parse.model as BlockModel,
+    ast: prepared.parse.ast as BlockDocument,
+    gradient: gradient ?? false,
+    themeStyle: String(prepared.config.theme) === 'auto',
+  };
+}
+
+/** Every model block in pre-order, without recursion. */
+function blocksOf(model: BlockModel): Block[] {
+  const out: Block[] = [];
+  const stack = [...model.blocks].reverse();
+  while (stack.length > 0) {
+    const b = stack.pop()!;
+    out.push(b);
+    for (let i = b.children.length - 1; i >= 0; i--) stack.push(b.children[i]!);
+  }
+  return out;
+}
+
+/** Blocks and space cells: what the layout places. */
+const cellsOf = (model: BlockModel): number =>
+  blocksOf(model).reduce((n, b) => n + (b.type === 'space' ? (b.cells ?? 1) : 1), 0);
 
 const cases: Case[] = [];
 let corpus: CorpusItem[];
@@ -42,15 +89,19 @@ const rejected = new Set<string>();
 
 beforeAll(async () => {
   corpus = [...(await blockCorpus()), ...blockCases()];
-  for (const theme of THEMES)
+  for (const theme of THEMES) {
+    const m = api(theme);
     for (const item of corpus) {
       if (rejected.has(item.id)) continue;
-      const r = await renderBlockForTest(item.source, { config: { theme } });
-      if (r.rejected) {
+      let r: Rendered;
+      try {
+        r = await render(m, item.source);
+      } catch (e) {
+        if (!(e instanceof MermaidError)) throw new Error(`${item.id}: ${String(e)}`, { cause: e });
         rejected.add(item.id);
         continue;
       }
-      if (r.layout.blocks.length > BIG && theme !== THEMES[0]) continue;
+      if (cellsOf(r.model) > BIG && theme !== THEMES[0]) continue;
       cases.push({
         id: `${item.id} ${theme}`,
         theme,
@@ -59,6 +110,7 @@ beforeAll(async () => {
         tree: parseSvg(r.svg),
       });
     }
+  }
 }, 600_000);
 
 /** Every polygon point, in root user units (translate() only, as `extents` reads them). */
@@ -116,11 +168,9 @@ describe('block render properties over the parsed corpus', () => {
     }
   });
 
-  it('is deterministic: a second render gives the same bytes (R-ARCH-6)', async () => {
+  it('is deterministic: a fresh API object renders the same bytes (R-ARCH-6)', async () => {
     for (const c of cases.filter((_, i) => i % 3 === 0))
-      expect((await renderBlockForTest(c.source, { config: { theme: c.theme } })).svg, c.id).toBe(
-        c.r.svg
-      );
+      expect((await render(api(c.theme), c.source)).svg, c.id).toBe(c.r.svg);
   });
 
   it("writes no element id but the gradient's (D182; block has no accessible title)", () => {
@@ -173,31 +223,35 @@ describe('block AST round-trip (R-PARSE-8)', () => {
         byAst.set(id, [...(byAst.get(id) ?? []), what]);
       }
       const expected = new Map<string, string>();
-      for (const b of c.r.layout.blocks)
-        if (b.outline) {
-          const cls = c.tree
-            .find((n, t) => t.getAttr(n, 'data-ast') === b.ast)
-            .map((n) => c.tree.getAttr(n, 'class'))[0];
-          expect(cls, `${c.id}: ${b.ast}`).toMatch(/^node /);
-          expected.set(b.ast, `g ${cls} ${b.id}`);
+      const drawnIds = new Set<string>();
+      const spaces = new Set<string>();
+      for (const b of blocksOf(c.r.model)) {
+        if (b.type === 'space') {
+          spaces.add(b.ast);
+          continue;
         }
-      for (const e of c.r.layout.edges)
-        expected.set(
-          e.ast,
-          `path edge-thickness-${e.thickness} edge-pattern-${e.pattern} flowchart-link ${e.id}`
-        );
+        drawnIds.add(b.id);
+        const cls = c.tree
+          .find((n, t) => t.getAttr(n, 'data-ast') === b.ast)
+          .map((n) => c.tree.getAttr(n, 'class'))[0];
+        expect(cls, `${c.id}: ${b.ast}`).toMatch(/^node /);
+        expected.set(b.ast, `g ${cls} ${b.id}`);
+      }
+      for (const e of c.r.model.edges)
+        if (drawnIds.has(e.start) && drawnIds.has(e.end))
+          expected.set(
+            e.ast,
+            `path edge-thickness-${e.thickness} edge-pattern-${e.pattern} flowchart-link ${e.id}`
+          );
       for (const [id, node] of index) {
         const want = expected.get(id);
         expect(byAst.get(id), `${c.id}: ${id}`).toEqual(want === undefined ? undefined : [want]);
         if (want) drawn++;
         else if (node.type === 'Block' || node.type === 'Composite' || node.type === 'Edge') {
-          // Not drawn: a later mention, a space, or an edge to a block the layout left out.
+          // Not drawn: a later mention, a space, or an edge to a block that is not drawn.
           undrawn++;
           if (node.type !== 'Edge')
-            expect(
-              id.includes('@') || c.r.layout.blocks.some((b) => b.ast === id && !b.outline),
-              `${c.id}: ${id}`
-            ).toBe(true);
+            expect(id.includes('@') || spaces.has(id), `${c.id}: ${id}`).toBe(true);
         }
       }
     }

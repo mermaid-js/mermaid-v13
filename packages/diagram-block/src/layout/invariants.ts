@@ -16,6 +16,7 @@
  * - each edge starts on its start block's outline and ends on its end block's;
  * - everything drawn is inside `bounds`.
  */
+import { isComposite } from '../model.ts';
 import { outlineDistance } from '../shapes/outline.ts';
 import { blockIndex, drawnBoxes } from './layout.ts';
 import type { BlockLayout, BlockNodeLayout, Rect } from './types.ts';
@@ -69,7 +70,7 @@ export function blockLayoutViolations(layout: BlockLayout): string[] {
     siblingsApart(layout.blocks, kids, eps, out);
     if (parent >= 0) {
       const p = layout.blocks[parent]!;
-      if (p.shape === 'composite') childrenInside(layout, p, kids, eps, out);
+      if (isComposite(p)) childrenInside(layout, p, kids, eps, out);
     }
   }
   edgesOnOutlines(layout, eps, out);

@@ -111,3 +111,12 @@ export interface BlockModel {
   /** Warning diagnostics of the parse (also in `ParseResult.diagnostics`). */
   readonly warnings: readonly Diagnostic[];
 }
+
+/**
+ * Whether `block` is drawn as a composite, a frame around its children: its type, by v12's
+ * merge rule (a later type other than `na` wins, GAPS #554), never whether it holds children.
+ * A composite a later mention turns into a leaf type (`block:a … end` then `a(("x"))`) keeps
+ * its children but is drawn as that leaf. The layout, the SVG renderer, the text grid and the
+ * hover all read this.
+ */
+export const isComposite = (block: Pick<Block, 'type'>): boolean => block.type === 'composite';

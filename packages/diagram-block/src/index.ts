@@ -9,8 +9,6 @@ export {
   blockTokens,
   detectBlock,
   JISON_NAMES,
-  MAX_SPACE_CELLS,
-  MAX_SPAN,
   parseBlock,
 } from './parser/index.ts';
 export type * from './parser/index.ts';
@@ -21,9 +19,7 @@ export {
   BLOCK_STYLE_UNKNOWN,
   BLOCK_TRUNCATED,
 } from './codes.ts';
-export { blockLabels } from './labels.ts';
 export { block } from './plugin.ts';
 export { renderBlock, type BlockRenderContext } from './render/index.ts';
-export { blockPadding, layoutBlock, type BlockLayoutContext } from './layout/index.ts';
+export { layoutBlock, type BlockLayoutContext } from './layout/index.ts';
 export type * from './layout/types.ts';
-export type { LeafShape } from './shapes/leaf.ts';

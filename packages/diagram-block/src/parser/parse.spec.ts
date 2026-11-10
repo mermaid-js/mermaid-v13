@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  BLOCK_SIZE_INVALID,
-  BLOCK_STYLE_UNKNOWN,
-  BLOCK_TRUNCATED,
-  MAX_SPACE_CELLS,
-  MAX_SPAN,
-  parseBlock,
-} from '../index.ts';
+import { BLOCK_SIZE_INVALID, BLOCK_STYLE_UNKNOWN, BLOCK_TRUNCATED, parseBlock } from '../index.ts';
+import { MAX_SPACE_CELLS, MAX_SPAN } from './index.ts';
 import type { Block, BlockStatementNode } from '../index.ts';
 
 const B = 'block\n';

@@ -13,7 +13,7 @@ import type {
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { blockDocs } from '../generated/docs.ts';
-import type { Block, BlockModel } from '../model.ts';
+import { isComposite, type Block, type BlockModel } from '../model.ts';
 import type { BlockDocument, BlockStatementNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { TYPE_NAMES } from './tables.ts';
@@ -69,7 +69,7 @@ function blockFacts({ block, parent }: Found): string[] {
   if (block.directions && block.directions.length > 0)
     facts.push(`Points: ${block.directions.join(', ')}`);
   facts.push(`Span: ${plural(block.span, 'column')}`);
-  if (block.type === 'composite' || block.children.length > 0) {
+  if (isComposite(block)) {
     const columns = block.columns === undefined || block.columns < 0 ? 'auto' : `${block.columns}`;
     facts.push(`Columns: ${columns}`, `Holds ${plural(block.children.length, 'block')}`);
   }

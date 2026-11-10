@@ -2,9 +2,9 @@
  * Test harness (`@mermaid-js/diagram-block/testing`): renders a block source through the
  * plugin's own seam, `parse` → `layout` → `render`, with the config, theme and render context of
  * the tests' one builder (`../test-context.ts`, as the pipeline builds them), and the stream
- * writer with the theme's gradient and an optional outline drawer. Block has no registry row
- * until its manifest (#558), so `createMermaid()` cannot draw it yet; this renders the plugin
- * alone and gives back what the public API does not return (the model, the AST, the layout).
+ * writer with the theme's gradient and an optional outline drawer. The package's own renderer
+ * specs use it to read what the public API does not return (the layout beside the SVG); the
+ * conformance gates render through `createMermaid()`.
  */
 import type { Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';

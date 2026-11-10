@@ -28,7 +28,7 @@ import {
   type SvgWriter,
 } from '@mermaid-js/core/svg';
 import type { BlockLayout, BlockNodeLayout, PlacedLabel } from '../layout/types.ts';
-import type { Block, BlockModel } from '../model.ts';
+import { isComposite, type Block, type BlockModel } from '../model.ts';
 import { drawShape } from '../shapes/draw.ts';
 import type { BlockRenderContext } from './context.ts';
 import { drawEdge, drawEdgeLabel } from './edges.ts';
@@ -122,7 +122,7 @@ function drawNode({ w, ctx, paint }: Scene, b: BlockNodeLayout, block: Block): v
   const { shape, outline } = b;
   if (shape === 'space' || !outline) return;
   const style = paint.styleOf(block);
-  const slot = shape === 'composite' ? paint.slotOf(b.colorIndex) : undefined;
+  const slot = isComposite(block) ? paint.slotOf(b.colorIndex) : undefined;
   w.open('g', {
     class: nodeClass(block),
     'data-id': b.id,

@@ -7,10 +7,16 @@
 import { cellMeasurer, cellWidth, graphemes, type CellRect } from '@mermaid-js/core/ascii';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import { layoutLabel, Style, type InlineSpans, type MeasuredLabel } from '@mermaid-js/core/text';
-import type { Block, BlockModel, BlockType } from '../model.ts';
+import { gridAdvance, gridPosition } from '../layout/grid.ts';
+import { isComposite, type Block, type BlockModel, type BlockType } from '../model.ts';
+import { arrowSides, type ArrowSide } from '../shapes/block-arrow.ts';
 import { BLOCK_TEXT_METRICS, type TextSpacing } from './metrics.ts';
 
-/** One drawn block: a leaf box or a composite's frame. */
+/**
+ * One drawn block: a leaf box or a composite's frame. A leaf that holds children (a composite a
+ * later mention turned into a leaf type) is its own box, its children below it in the same
+ * frame (`parent` is that frame).
+ */
 export interface TextBox {
   readonly id: string;
   readonly ast: AstId;
@@ -23,6 +29,8 @@ export interface TextBox {
   readonly lines: readonly string[];
   /** Whether the label was written bold or italic (text has neither). */
   readonly emphasis: boolean;
+  /** A block arrow's sides it points to, each once (`x` and `y` expanded). */
+  readonly directions?: readonly ArrowSide[];
 }
 
 /** The laid-out grid: boxes in pre-order (each frame before its children). */
@@ -90,6 +98,7 @@ export function cut(text: string, width: number, mark: string): string {
 /** A node of the text tree: a block, or a run of space cells. */
 interface Node {
   readonly block: Block;
+  /** Drawn as a frame around its children ({@link isComposite}). */
   readonly frame: boolean;
   readonly label: TextLabel;
   /** Columns taken; a space's run counts its cells one column each. */
@@ -99,7 +108,12 @@ interface Node {
   /** Natural size, then the drawn one. */
   w: number;
   h: number;
-  /** A frame's grid: columns, column width, row heights, each child's column and row. */
+  /**
+   * A leaf's own box height. A leaf a later mention made of a composite keeps its children
+   * (v12's merge rule): its box is drawn at the top of its cell and their grid below it.
+   */
+  box: number;
+  /** The grid of the node's children: columns, column width, row heights, each child's cell. */
   grid?: Grid;
 }
 
@@ -114,68 +128,77 @@ interface Grid {
 }
 
 const isSpace = (b: Block): boolean => b.type === 'space';
-const isFrame = (b: Block): boolean => b.type === 'composite' || b.children.length > 0;
 
-function tree(blocks: readonly Block[], inline: InlineSpans | undefined): Node[] {
-  return blocks.map((block) => ({
+function nodeOf(block: Block, inline: InlineSpans | undefined): Node {
+  const space = isSpace(block);
+  return {
     block,
-    frame: !isSpace(block) && isFrame(block),
-    label: isSpace(block) ? textLabel('') : textLabel(block.label, inline),
-    span: isSpace(block) ? 1 : block.span,
-    cells: isSpace(block) ? Math.max(0, block.cells ?? 1) : 1,
-    children: tree(block.children, inline),
+    frame: !space && isComposite(block),
+    label: space ? textLabel('') : textLabel(block.label, inline),
+    span: space ? 1 : block.span,
+    cells: space ? Math.max(0, block.cells ?? 1) : 1,
+    children: [],
     w: 0,
     h: 0,
-  }));
+    box: 0,
+  };
+}
+
+/** The text tree of `blocks`, and every node in pre-order, without recursion. */
+function tree(blocks: readonly Block[], inline: InlineSpans | undefined) {
+  const roots = blocks.map((b) => nodeOf(b, inline));
+  const order: Node[] = [];
+  const stack = [...roots].reverse();
+  while (stack.length > 0) {
+    const node = stack.pop()!;
+    order.push(node);
+    for (const c of node.block.children) node.children.push(nodeOf(c, inline));
+    for (let i = node.children.length - 1; i >= 0; i--) stack.push(node.children[i]!);
+  }
+  return { roots, order };
 }
 
 /**
- * v12's grid positions of `children` (`calculateBlockPosition`, `columnsFilled`): each child's
- * column and row; a space's run takes its cells one column each.
+ * v12's grid positions of `children` (`calculateBlockPosition`, `columnsFilled`, the px
+ * layout's rules): each child's column and row; a space's run takes its cells one column each.
  */
 function positions(children: readonly Node[], columns: number) {
   const at: { px: number; py: number }[] = [];
   let pos = 0;
   let widest = 0;
-  const cellOf = (p: number): { px: number; py: number } => {
-    if (columns <= 0) return { px: p, py: 0 };
-    if (columns === 1) return { px: 0, py: p };
-    return { px: p % columns, py: Math.floor(p / columns) };
-  };
-  const advance = (p: number, span: number): number =>
-    p + (columns > 0 ? Math.min(span, columns - (p % columns)) : span);
   for (const c of children) {
-    at.push(cellOf(pos));
+    at.push(gridPosition(columns, pos));
     if (isSpace(c.block)) {
       // A run of one-column cells.
       for (let k = 0; k < c.cells; k++) {
-        widest = Math.max(widest, cellOf(pos).px + 1);
-        pos = advance(pos, 1);
+        widest = Math.max(widest, gridPosition(columns, pos).px + 1);
+        pos = gridAdvance(columns, pos, 1);
       }
       continue;
     }
-    widest = Math.max(widest, cellOf(pos).px + c.span);
-    pos = advance(pos, c.span);
+    widest = Math.max(widest, gridPosition(columns, pos).px + c.span);
+    pos = gridAdvance(columns, pos, c.span);
   }
   return { at, widest };
 }
 
-/** Natural sizes, bottom up. */
+/** One node's natural size, from its children's (measured first). */
 function measure(node: Node, s: TextSpacing, cap: number): void {
+  if (isSpace(node.block)) return;
+  const kids = node.children.length > 0;
+  if (kids) node.grid = gridOf(node.children, node.block.columns ?? -1, s);
+  const inside = node.grid ? inner(node.grid, s) : { w: 0, h: 0 };
   if (!node.frame) {
-    if (isSpace(node.block)) return;
     const t = Math.max(1, Math.min(node.label.width, cap));
-    node.w = t + 2 * s.padX + 2;
-    node.h = Math.max(1, node.label.lines.length) + 2 * s.padY + 2;
+    node.box = Math.max(1, node.label.lines.length) + 2 * s.padY + 2;
+    node.w = Math.max(t + 2 * s.padX + 2, inside.w);
+    node.h = node.box + (inside.h > 0 ? s.gapY + inside.h : 0);
     return;
   }
-  for (const c of node.children) measure(c, s, cap);
-  node.grid = gridOf(node.children, node.block.columns ?? -1, s);
-  const { w, h } = inner(node.grid, s);
   const title =
     node.label.width > 0 ? Math.min(node.label.width, cap) + BLOCK_TEXT_METRICS.titleFrame : 0;
-  node.w = Math.max(w + 2 * s.marginX + 2, title, 4);
-  node.h = h + 2 * s.marginY + 2;
+  node.w = Math.max(inside.w + 2 * s.marginX + 2, title, 4);
+  node.h = inside.h + 2 * s.marginY + 2;
 }
 
 /**
@@ -215,14 +238,13 @@ function inner(g: Grid, s: TextSpacing): { w: number; h: number } {
   };
 }
 
-/** Stretches a grid over `area` and hands each child its cell, top down. */
+/** Stretches a grid over `area`: each drawn child and its cell, in order. */
 function place(
   children: readonly Node[],
   g: Grid,
   area: CellRect,
-  s: TextSpacing,
-  out: (node: Node, rect: CellRect) => void
-): void {
+  s: TextSpacing
+): [Node, CellRect][] {
   const cw =
     g.columns > 0
       ? Math.max(g.cw, Math.floor((area.width - (g.columns - 1) * s.gapX) / g.columns))
@@ -238,57 +260,83 @@ function place(
     top.push(y);
     y += h + s.gapY;
   }
+  const out: [Node, CellRect][] = [];
   children.forEach((c, i) => {
     const { px, row } = g.at[i]!;
     if (isSpace(c.block) || row < 0) return;
-    const cell: CellRect = {
-      x: area.x + px * (cw + s.gapX),
-      y: top[row]!,
-      width: c.span * cw + (c.span - 1) * s.gapX,
-      height: rh[row]!,
-    };
-    out(c, cell);
+    out.push([
+      c,
+      {
+        x: area.x + px * (cw + s.gapX),
+        y: top[row]!,
+        width: c.span * cw + (c.span - 1) * s.gapX,
+        height: rh[row]!,
+      },
+    ]);
   });
+  return out;
 }
 
 /** A frame's title: its label on one line, cut to `width`; none for an unlabelled frame. */
 const titleLines = (label: TextLabel, width: number, mark: string): string[] =>
   label.width > 0 ? [cut(label.lines.join(' '), width, mark)] : [];
 
-/** The grid of `model` in cells, labels cut at `cap`. */
-function layout(model: BlockModel, nodes: Node[], o: GridOptions, cap: number): BlockText {
+/** Where a node's children go in its cell: inside a frame, or below a leaf's own box. */
+function childArea(node: Node, cell: CellRect, s: TextSpacing): CellRect {
+  if (!node.frame) {
+    const y = cell.y + node.box + s.gapY;
+    return { x: cell.x, y, width: cell.width, height: cell.y + cell.height - y };
+  }
+  return {
+    x: cell.x + 1 + s.marginX,
+    y: cell.y + 1 + s.marginY,
+    width: cell.width - 2 - 2 * s.marginX,
+    height: cell.height - 2 - 2 * s.marginY,
+  };
+}
+
+/** The grid of `model` in cells, labels cut at `cap`. Iterative: composites nest thousands deep. */
+function layout(model: BlockModel, t: ReturnType<typeof tree>, o: GridOptions, cap: number) {
   const s = o.spacing;
-  for (const n of nodes) measure(n, s, cap);
-  const g = gridOf(nodes, model.columns, s);
+  // Children before their parents: pre-order backwards.
+  for (let i = t.order.length - 1; i >= 0; i--) measure(t.order[i]!, s, cap);
+  const g = gridOf(t.roots, model.columns, s);
   const size = inner(g, s);
   const boxes: TextBox[] = [];
-  const visit = (node: Node, rect: CellRect, parent: number | undefined): void => {
+  const stack: { node: Node; cell: CellRect; parent: number | undefined }[] = [];
+  const push = (cells: [Node, CellRect][], parent: number | undefined): void => {
+    for (let i = cells.length - 1; i >= 0; i--)
+      stack.push({ node: cells[i]![0], cell: cells[i]![1], parent });
+  };
+  push(place(t.roots, g, { x: 0, y: 0, width: size.w, height: size.h }, s), undefined);
+  while (stack.length > 0) {
+    const { node, cell, parent } = stack.pop()!;
     const index = boxes.length;
-    const width = rect.width;
+    const rect = node.frame || !node.grid ? cell : { ...cell, height: node.box };
     const lines = node.frame
-      ? titleLines(node.label, Math.min(cap, width - BLOCK_TEXT_METRICS.titleFrame), o.mark)
-      : node.label.lines.map((l) => cut(l, Math.min(cap, width - 2 - 2 * s.padX), o.mark));
+      ? titleLines(node.label, Math.min(cap, rect.width - BLOCK_TEXT_METRICS.titleFrame), o.mark)
+      : node.label.lines.map((l) => cut(l, Math.min(cap, rect.width - 2 - 2 * s.padX), o.mark));
+    const { block } = node;
     boxes.push({
-      id: node.block.id,
-      ast: node.block.ast,
-      type: node.block.type,
+      id: block.id,
+      ast: block.ast,
+      type: block.type,
       frame: node.frame,
       ...(parent !== undefined ? { parent } : {}),
       rect,
       lines,
       emphasis: node.label.emphasis,
+      ...(block.type === 'block_arrow'
+        ? { directions: [...arrowSides(block.directions ?? [])] }
+        : {}),
     });
-    if (!node.frame) return;
-    const area: CellRect = {
-      x: rect.x + 1 + s.marginX,
-      y: rect.y + 1 + s.marginY,
-      width: rect.width - 2 - 2 * s.marginX,
-      height: rect.height - 2 - 2 * s.marginY,
-    };
-    place(node.children, node.grid!, area, s, (c, cell) => visit(c, cell, index));
-  };
-  const all: CellRect = { x: 0, y: 0, width: size.w, height: size.h };
-  place(nodes, g, all, s, (c, cell) => visit(c, cell, undefined));
+    // A leaf's children are not in it: they sit in the frame around it.
+    if (node.grid)
+      push(
+        place(node.children, node.grid, childArea(node, cell, s), s),
+        node.frame ? index : parent
+      );
+  }
   return { boxes, width: size.w, height: size.h };
 }
 

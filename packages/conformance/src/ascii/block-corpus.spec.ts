@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cellWidth, graphemes } from '@mermaid-js/core/ascii';
 import { parseBlock, type BlockModel } from '@mermaid-js/diagram-block';
-import { drawBlockText, type Route, type TextBox } from '@mermaid-js/diagram-block/ascii';
+import { drawBlockText, type Route, type TextBox } from '@mermaid-js/diagram-block/testing';
 import { createMermaid, MermaidError, type TextRenderResult } from 'mermaid';
 import { blockCases, blockCorpus } from '../block/corpus.ts';
 import { nestedComposites } from './block-fuzz.ts';

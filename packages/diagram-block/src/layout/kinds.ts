@@ -5,7 +5,7 @@
  * (sized as the square, not as flowchart's rounded rectangle); the composite and the block
  * arrow have kinds of their own; a space is measured as nothing and draws nothing.
  */
-import type { BlockType } from '../model.ts';
+import { isComposite, type BlockType } from '../model.ts';
 import { blockArrowPolygon, blockArrowSize } from '../shapes/block-arrow.ts';
 import { keepsSize, leafOutline, leafSize, type LeafShape, type Pads } from '../shapes/leaf.ts';
 import type { Outline, Point } from '../shapes/outline.ts';
@@ -142,6 +142,6 @@ const leafOf = (type: BlockType): LeafShape => SHAPE_OF[type] as LeafShape;
 
 /** The kind a block of `type` is measured and drawn as (spaces have none). */
 export function kindOf(type: Exclude<BlockType, 'space'>): Kind {
-  const shape = SHAPE_OF[type];
-  return shape === 'composite' || shape === 'block-arrow' ? KINDS[shape] : KINDS.leaf;
+  if (isComposite({ type })) return KINDS.composite;
+  return SHAPE_OF[type] === 'block-arrow' ? KINDS['block-arrow'] : KINDS.leaf;
 }

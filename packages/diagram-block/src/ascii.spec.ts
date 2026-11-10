@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { blockTextGrid } from './ascii/grid.ts';
+import { BLOCK_TEXT_METRICS } from './ascii/metrics.ts';
 import { block, draw, text } from './ascii/block.fixtures.ts';
+import { parseBlock } from './parser/index.ts';
 
 // Block's `ascii` hook (#559, D449, D320, R-ASCII-5, R-ASCII-6), through the `./ascii` entry:
 // boxes on a character grid, one cell width per column at the widest label; composites as
@@ -58,6 +61,24 @@ describe('the grid (D449)', () => {
         '└──────────────────────────────┘    └──────────────────────────────┘'
       )
     );
+  });
+
+  it('lays out composites 3,000 deep without recursion, each frame inside the one around it', () => {
+    const depth = 3000;
+    const src = 'block\n' + 'block\n'.repeat(depth) + 'a\n' + 'end\n'.repeat(depth);
+    const { model, diagnostics } = parseBlock(src, { maxDepth: 10_000 });
+    expect(diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    const { spacing } = BLOCK_TEXT_METRICS;
+    const grid = blockTextGrid(model, { spacing: spacing.compact, mark: '…' });
+    expect(grid.boxes).toHaveLength(depth + 1);
+    grid.boxes.forEach((b, i) => {
+      expect(b.parent).toBe(i === 0 ? undefined : i - 1);
+      expect(b.frame).toBe(i < depth);
+    });
+    // Each frame is its border and margin wider and taller than the one inside it.
+    const { marginX, marginY } = spacing.compact;
+    expect(grid.width).toBe(5 + depth * (2 + 2 * marginX));
+    expect(grid.height).toBe(3 + depth * (2 + 2 * marginY));
   });
 
   it('draws nothing for an empty diagram', () => {
