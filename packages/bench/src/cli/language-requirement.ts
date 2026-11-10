@@ -6,11 +6,9 @@
  *
  *   pnpm --filter bench exec tsx --conditions=mermaid-source src/cli/language-requirement.ts
  *     [--runs 50] [--warmup 10] [--enforce]
- *
- * Until the manifest (#587) gives the facet its generated row, the facet is passed in.
  */
 import { createLanguageService } from '@mermaid-js/language-service';
-import { detectRequirement, requirementLanguage } from '@mermaid-js/diagram-requirement/language';
+import { requirementLanguage } from '@mermaid-js/diagram-requirement/language';
 import { bestOf, LANGUAGE_BUDGET_MS, typing } from '../language.ts';
 import {
   measureRequirement,
@@ -22,16 +20,7 @@ import { parseArgs } from './args.ts';
 
 const args = parseArgs(process.argv.slice(2));
 const log = (line: string) => process.stdout.write(line + '\n');
-const service = createLanguageService({
-  facets: [
-    {
-      type: 'requirement',
-      id: 'requirement',
-      detector: (src) => detectRequirement(src),
-      facet: requirementLanguage,
-    },
-  ],
-});
+const service = createLanguageService();
 await service.preload({ types: ['requirement'] });
 
 let over = false;
