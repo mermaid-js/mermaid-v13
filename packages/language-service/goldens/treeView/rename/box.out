@@ -1,0 +1,14 @@
+@ 3:6  ├── s|rc/
+  prepare: 3:5-3:8 "src"; rename to "lib":
+  %% rename-to: lib
+  treeView-beta
+  ├── lib/
+  │   └── a.js
+  └── "my dir/"
+@ 5:10  └── "my d|ir/"
+  prepare: 5:6-5:12 "my dir"; rename to "lib":
+  %% rename-to: lib
+  treeView-beta
+  ├── src/
+  │   └── a.js
+  └── "lib/"

@@ -1,0 +1,39 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# configDefaults: tools/gen-config writes src/generated/config-defaults.ts for the config section.
+configDefaults: true
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: usecase
+    title: Use case diagram syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+languageBundle:
+  renderer:
+    - ascii/
+    - ascii.ts
+    - render/
+    - layout/
+    - theme/
+    - plugin.ts
+    - index.ts
+    - labels.ts
+    - config.ts
+    - testing.ts
+    - test-context.ts
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The usecase diagram plugin (SVG; `usecase-beta`).'
+  install: 'with `mermaid/slim`'
+
+# credits: licence credits for pnpm check:licenses (tools/release/src/licenses.ts, R-REL-4). The
+# edge route drawing is Pele's `routePath` (a shared upstream: its MIT text is in this package's
+# THIRD_PARTY_NOTICES and in mermaid's), so the file must keep crediting it.
+credits:
+  files:
+    src/render/route.ts: ['Pele']
