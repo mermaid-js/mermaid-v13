@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { parseArchitecture } from '@mermaid-js/diagram-architecture';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5 and 11: the architecture parser, value conversion, v12's DB checks and the
  * symbol pass included, is linear in input size. Ids resolve through maps (an edge, an `in` and
  * an align member are lookups, not scans), an alignment's repeats through a set, and one
- * warning gathers every ignored `{group}`. Same frame as `stress.spec.ts`: n and 8n units, best
- * of five, bar 24x (linear ~8x, quadratic ~64x). Not measured on a steady machine: the bar is a
- * ratio.
+ * warning gathers every ignored `{group}`. Same frame as `stress.spec.ts`: n and 8n units timed
+ * by `linearRatio`, bar 24x (linear ~8x, quadratic ~64x). Not measured on a steady machine: the
+ * bar is a ratio.
  */
 const ids = (n: number, prefix = 's') => Array.from({ length: n }, (_, k) => `${prefix}${k}`);
 const services = (list: readonly string[], tail = '') =>
@@ -90,38 +91,18 @@ const SHAPES: [string, (n: number) => string][] = [
   ],
 ];
 
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 describe('stress: the architecture parser is linear in input size', () => {
   it.each(SHAPES)(
     '%s',
     (_name, build) => {
       const small = build(4_000);
       const large = build(32_000);
-      parseArchitecture(small); // warm up
-      parseArchitecture(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => parseArchitecture(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => parseArchitecture(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => parseArchitecture(small),
+          () => parseArchitecture(large)
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );
