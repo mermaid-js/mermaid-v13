@@ -1,0 +1,16 @@
+@ 5:18  gwt 01 given evt |
+  Item value (entity) 5:18-5:18 "" -> "Item"
+@ 6:23  gwt 01 given evt Item |
+  ui keyword (UI/Automation lane) 6:23-6:23 "" -> "ui "
+  pcr keyword (UI/Automation lane) 6:23-6:23 "" -> "pcr "
+  processor keyword (UI/Automation lane) 6:23-6:23 "" -> "processor "
+  cmd keyword (Command/Read Model lane) 6:23-6:23 "" -> "cmd "
+  command keyword (Command/Read Model lane) 6:23-6:23 "" -> "command "
+  rmo keyword (Command/Read Model lane) 6:23-6:23 "" -> "rmo "
+  readmodel keyword (Command/Read Model lane) 6:23-6:23 "" -> "readmodel "
+  evt keyword (Events lane) 6:23-6:23 "" -> "evt "
+  event keyword (Events lane) 6:23-6:23 "" -> "event "
+  when keyword 6:23-6:23 "" -> "when "
+  then keyword 6:23-6:23 "" -> "then "
+@ 7:33  gwt 01 given evt Item when cmd I|
+  Item value (entity) 7:32-7:33 "I" -> "Item"

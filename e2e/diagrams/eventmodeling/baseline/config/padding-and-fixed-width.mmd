@@ -1,0 +1,14 @@
+---
+config:
+  eventmodeling:
+    padding: 8
+    useMaxWidth: false
+description: >-
+  eventmodeling.padding (8, not 30) around what is drawn, and useMaxWidth off, so the root
+  takes the viewBox size
+---
+eventmodeling
+tf 01 ui Screen
+tf 02 cmd Submit ->> 01
+tf 03 evt Submitted ->> 02
+tf 04 rmo View ->> 03

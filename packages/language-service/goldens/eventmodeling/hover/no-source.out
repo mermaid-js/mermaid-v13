@@ -1,0 +1,21 @@
+@ 2:4  tf |01 ui First
+  2:4-2:6 "01"
+  | **frame** `01`: `ui First`
+  |
+  | In the **UI/Automation** lane.
+  |
+  | No source: the first frame, with no `->>`.
+@ 3:4  tf |02 ui SameLane
+  3:4-3:6 "02"
+  | **frame** `02`: `ui SameLane`
+  |
+  | In the **UI/Automation** lane.
+  |
+  | No source: no `->>`, and no earlier frame is in another lane.
+@ 4:4  rf |03 evt Reset
+  4:4-4:6 "03"
+  | **reset frame** `03`: `evt Reset`
+  |
+  | In the **Events** lane.
+  |
+  | No source: a reset frame with no `->>` gets no inferred one.

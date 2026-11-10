@@ -1,0 +1,30 @@
+eventmodeling
+tf 01 cmd SaveHtml [[Aligned]]
+tf 02 evt HtmlSaved [[Markup]]
+tf 03 rmo Tabbed [[Tabs]]
+tf 04 evt NoData [[Nothing]]
+tf 05 ui Braces {}
+
+data Aligned `json` {
+  {
+    "id":       42,
+    "name":     "Widget",
+    "price":    9.5,
+    "tags":     ["a",  "b"]
+  }
+}
+
+data Markup {
+  <div class="x">a &amp; b</div>
+  path: C:\new\table <br/> kept
+}
+
+data Tabs {
+	{
+		"id": 42,
+	  	"mixed":	true
+	}
+}
+
+data Nothing {
+}

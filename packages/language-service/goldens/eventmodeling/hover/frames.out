@@ -1,0 +1,71 @@
+@ 2:4  tf |01 ui Screen
+  2:4-2:6 "01"
+  | **frame** `01`: `ui Screen`
+  |
+  | In the **UI/Automation** lane.
+  |
+  | No source: the first frame, with no `->>`.
+  |
+  | Source of `02` (`cmd Add`) and `04` (`rmo View`).
+@ 3:4  tf |02 cmd Add
+  3:4-3:6 "02"
+  | **frame** `02`: `cmd Add`
+  |
+  | In the **Command/Read Model** lane.
+  |
+  | Source, inferred (no `->>`): `01` (`ui Screen`), the nearest earlier frame in another lane.
+  |
+  | Source of `03` (`evt Shop.Added`).
+@ 4:4  tf |03 evt Shop.Added ->> 02 ->> 05 ->> 09
+  4:4-4:6 "03"
+  | **frame** `03`: `evt Shop.Added`
+  |
+  | In the **Stream: Shop** lane.
+  |
+  | Sources (`->>`): `02` (`cmd Add`).
+  |
+  | Named but not drawn: `05` (it comes later) and `09` (no frame has it).
+  |
+  | Source of `04` (`rmo View`).
+@ 4:26  tf 03 evt Shop.Added ->> |02 ->> 05 ->> 09
+  4:26-4:28 "02"
+  | **frame** `02`: `cmd Add`
+  |
+  | In the **Command/Read Model** lane.
+  |
+  | Source, inferred (no `->>`): `01` (`ui Screen`), the nearest earlier frame in another lane.
+  |
+  | Source of `03` (`evt Shop.Added`).
+@ 4:34  tf 03 evt Shop.Added ->> 02 ->> 0|5 ->> 09
+  4:33-4:35 "05"
+  | **frame** `05`: `evt Late`
+  |
+  | In the **Events** lane.
+  |
+  | Sources (`->>`): `05` (`evt Late`).
+@ 4:40  tf 03 evt Shop.Added ->> 02 ->> 05 ->> |09
+  4:40-4:42 "09"
+  | **frame** `09`
+  |
+  | No frame has id `09`.
+@ 5:4  tf |04 rmo View ->> 03 ->> 01
+  5:4-5:6 "04"
+  | **frame** `04`: `rmo View`
+  |
+  | In the **Command/Read Model** lane.
+  |
+  | Sources (`->>`): `01` (`ui Screen`) and `03` (`evt Shop.Added`).
+@ 6:4  rf |06 evt Reset
+  6:4-6:6 "06"
+  | **reset frame** `06`: `evt Reset`
+  |
+  | In the **Events** lane.
+  |
+  | No source: a reset frame with no `->>` gets no inferred one.
+@ 7:20  tf 05 evt Late ->> |05
+  7:20-7:22 "05"
+  | **frame** `05`: `evt Late`
+  |
+  | In the **Events** lane.
+  |
+  | Sources (`->>`): `05` (`evt Late`).

@@ -1,0 +1,13 @@
+eventmodeling
+tf 01 cmd AddItem [[Payload]] { inline: 1 }
+tf 02 evt ItemAdded [[Missing]] { kept: 2 }
+tf 03 rmo Items [[Payload]]
+
+data Payload {
+    id: 7
+      nested: true
+}
+
+data Payload `json` {
+  second: "ignored"
+}
