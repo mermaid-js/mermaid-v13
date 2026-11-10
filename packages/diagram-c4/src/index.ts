@@ -1,31 +1,16 @@
 /**
  * `@mermaid-js/diagram-c4`: the C4 diagram plugin (spec #522): the plugin itself, the parser,
- * its model and AST, the lexer, the layout, the renderer, and the codes of the diagnostics and
+ * its model and AST, the lexer, the layout, and the codes of the diagnostics and
  * warnings it raises. Text output is the `./ascii` entry (#545).
  */
 export { c4 } from './plugin.ts';
-export { renderC4, type C4RenderContext } from './render/index.ts';
 export { C4TokenKind, c4Tokens, detectC4, JISON_NAMES, parseC4 } from './parser/index.ts';
 export type * from './parser/index.ts';
 export type * from './model.ts';
 export { C4_ELEMENT_KINDS, parentAlias } from './model.ts';
-export {
-  c4RelationPath,
-  C4_METRICS,
-  layoutC4,
-  shapeOf,
-  stereotypeText,
-  type C4LayoutContext,
-  type C4PathCommand,
-} from './layout/index.ts';
+export { layoutC4, type C4LayoutContext } from './layout/index.ts';
 export type * from './layout/types.ts';
-export {
-  C4_CONFIG_DEFAULTS,
-  c4Fonts,
-  c4LayoutConfig,
-  type C4Fonts,
-  type C4LayoutConfig,
-} from './config.ts';
+export { C4_CONFIG_DEFAULTS } from './config.ts';
 export {
   C4_BOUNDARY_CYCLE,
   C4_COLOR_INVALID,

@@ -7,7 +7,7 @@
 import { diagramStart, preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 
-export const C4_HEADER = /^C4(?:Context|Container|Component|Dynamic|Deployment)\b/;
+const C4_HEADER = /^C4(?:Context|Container|Component|Dynamic|Deployment)\b/;
 
 export function detectC4(src: string, pre: PreprocessResult = preprocess(src)): boolean {
   const at = diagramStart(src, pre);

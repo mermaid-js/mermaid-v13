@@ -226,7 +226,7 @@ function search(req: RouteRequest, field: RouteField, budget: RouteBudget): Cell
 }
 
 /** Every cell along `points`, in order (each pair level or upright). */
-export function cellsAlong(points: readonly Cell[]): Cell[] {
+function cellsAlong(points: readonly Cell[]): Cell[] {
   const out: Cell[] = [points[0]!];
   for (let i = 0; i + 1 < points.length; i++) {
     const b = points[i + 1]!;

@@ -3,12 +3,7 @@
  * layout invariants and the test helpers. They live outside the runtime entry, so the chunk
  * mermaid loads for a C4 render stays small (D217).
  */
-export { c4LayoutViolations, c4RelationCrossings } from './layout/invariants.ts';
+export { c4LayoutViolations } from './layout/invariants.ts';
 export { c4CellRect, drawC4 as c4AsciiDrawing, type C4Drawing } from './ascii/draw.ts';
-export { c4TestConfig, c4TestContext, parsedC4, type ParsedC4 } from './test-context.ts';
-export {
-  renderC4ForTest,
-  TEST_VERSION,
-  type RenderC4Options,
-  type RenderedC4,
-} from './render/harness.ts';
+export { c4TestContext, parsedC4, type ParsedC4 } from './test-context.ts';
+export { renderC4ForTest, type RenderC4Options, type RenderedC4 } from './render/harness.ts';

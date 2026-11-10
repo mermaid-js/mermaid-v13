@@ -47,7 +47,11 @@ export interface RenderedC4 {
   readonly themeStyle: boolean;
 }
 
-export const TEST_VERSION = '13.0.0-alpha.0';
+/**
+ * The version the harness writes as `data-mermaid-version`. Not exported: no spec reads it, and the
+ * built `./testing` entry cannot import `package.json` (its `rootDir` is `src`).
+ */
+const TEST_VERSION = '13.0.0-alpha.0';
 
 /** Renders `source`, parsed with its front matter and directives. */
 export async function renderC4ForTest(

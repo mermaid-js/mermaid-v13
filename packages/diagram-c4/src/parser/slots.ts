@@ -142,7 +142,7 @@ export const BOUNDARY = table(
  * spliced in as the third argument (v12's `splice(2, 0, …)`), so they are read as
  * {@link BOUNDARY}.
  */
-export const TYPED_BOUNDARY = table(
+const TYPED_BOUNDARY = table(
   'boundary',
   BOUNDARY.slots.filter((s) => s.name !== 'type'),
   2,
