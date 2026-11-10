@@ -5,6 +5,7 @@
   themeVariables property (object) 2:36-2:38 "th" -> "themeVariables: "
   themeCSS property (string) 2:36-2:38 "th" -> "themeCSS: "
   layout property (string) 2:36-2:38 "th" -> "layout: "
+  lineHops property (boolean | string) 2:36-2:38 "th" -> "lineHops: "
   ascii property (object) 2:36-2:38 "th" -> "ascii: "
   darkMode property (boolean) 2:36-2:38 "th" -> "darkMode: "
   fontFamily property (string) 2:36-2:38 "th" -> "fontFamily: "

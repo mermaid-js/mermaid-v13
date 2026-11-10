@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseSequence, sequenceTokens } from '@mermaid-js/diagram-sequence';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5: the sequence lexer is linear in input size, in every free-text state.
@@ -39,39 +40,18 @@ const SHAPES: [string, (n: number) => string][] = [
   ['CRLF lines', (n) => SD + 'A->>B: x\r\n'.repeat(n / 10)],
 ];
 
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 describe('stress: the sequence lexer is linear in input size', () => {
   it.each(SHAPES)(
     '%s',
     (_name, build) => {
       const small = build(4_000);
       const large = build(32_000);
-      sequenceTokens(small); // warm up
-      sequenceTokens(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => sequenceTokens(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => sequenceTokens(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => sequenceTokens(small),
+          () => sequenceTokens(large)
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );
@@ -102,21 +82,12 @@ describe('stress: the sequence parser is linear in input size', () => {
     (_name, build) => {
       const small = build(10_000);
       const large = build(80_000);
-      parseSequence(small); // warm up
-      parseSequence(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => parseSequence(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => parseSequence(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => parseSequence(small),
+          () => parseSequence(large)
+        )
+      ).toBeLessThan(24);
     },
     60_000
   );

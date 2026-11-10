@@ -1,0 +1,24 @@
+@ 2:9  actor |Clerk("Shop clerk")@{ type: hollow, business: true } <<Employee>>
+  2:9-2:14 "Clerk"
+  | **actor** `Clerk`
+  |
+  | Label: `Shop clerk` · Stereotype: «Employee» · Figure: hollow · Business
+  |
+  | Outside any system boundary · 1 relation
+@ 4:5  |Checkout[Pay]:::hot
+  4:5-4:13 "Checkout"
+  | **use case** `Checkout`
+  |
+  | Label: `Pay` · Drawn as a rectangle
+  |
+  | In system boundary `Shop` · 2 relations · 1 note · Class: `hot`
+@ 6:10  "Reset |password" --> Checkout
+  6:4-6:18 "Reset password"
+  | **use case** `Reset password` (id `Reset_password`)
+  |
+  | Outside any system boundary · 1 relation · Class: `hot`
+@ 9:19  class Reset_pass|word hot
+  9:9-9:23 "Reset_password"
+  | **use case** `Reset password` (id `Reset_password`)
+  |
+  | Outside any system boundary · 1 relation · Class: `hot`

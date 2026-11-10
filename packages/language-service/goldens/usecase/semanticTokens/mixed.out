@@ -1,0 +1,65 @@
+1:1-1:30 "%%{init: {\"theme\": \"dark\"}}%%" macro
+2:1-2:13 "usecase-beta" keyword
+3:3-3:15 "%% a comment" comment
+4:3-4:17 "accTitle: Shop" keyword
+5:3-5:12 "direction" keyword
+5:13-5:15 "LR" keyword
+6:3-6:8 "actor" keyword
+6:9-6:13 "User" variable [declaration, definition]
+6:13-6:15 "@{" operator
+6:16-6:20 "type" variable
+6:20-6:21 ":" operator
+6:22-6:28 "hollow" variable
+6:29-6:30 "}" operator
+6:31-6:33 "<<" operator
+6:33-6:38 "Human" string
+6:38-6:40 ">>" operator
+7:3-7:17 "systemBoundary" keyword
+7:18-7:22 "Shop" variable [declaration, definition]
+7:22-7:23 "[" operator
+7:23-7:33 "\"The shop\"" string
+7:33-7:34 "]" operator
+7:34-7:37 ":::" operator
+7:37-7:42 "frame" variable
+8:5-8:10 "Login" variable [declaration, definition]
+8:10-8:11 "(" operator
+8:11-8:15 "Sign" variable
+8:16-8:18 "in" variable
+8:18-8:19 ")" operator
+9:3-9:6 "end" keyword
+10:3-10:19 "\"Reset password\"" variable [declaration, definition]
+10:20-10:23 "-->" operator
+10:24-10:28 "Done" variable [declaration, definition]
+11:3-11:7 "User" variable
+11:8-11:10 "e1" variable [declaration, definition]
+11:10-11:11 "@" operator
+11:11-11:13 "--" operator
+11:14-11:20 "\"buys\"" string
+11:21-11:24 "-->" operator
+11:25-11:30 "Login" variable
+12:3-12:8 "Login" variable
+12:9-12:12 "..>" operator
+12:13-12:14 ":" operator
+12:15-12:22 "include" keyword
+12:23-12:27 "Done" variable
+13:3-13:7 "json" keyword
+13:8-13:12 "Data" variable [declaration, definition]
+13:12-13:13 "@" keyword
+13:13-13:23 "{ \"a\": 1 }" string
+14:3-14:11 "classDef" keyword
+14:12-14:17 "frame" variable
+14:18-14:24 "stroke" variable
+14:24-14:25 ":" operator
+14:25-14:29 "#333" enumMember
+14:29-14:30 "," operator
+14:30-14:42 "stroke-width" variable
+14:42-14:43 ":" operator
+14:43-14:46 "2px" variable
+15:3-15:8 "class" keyword
+15:9-15:14 "Login" variable
+15:15-15:20 "frame" variable
+16:3-16:8 "style" keyword
+16:9-16:13 "User" variable
+16:14-16:18 "fill" variable
+16:18-16:19 ":" operator
+16:19-16:23 "#f96" enumMember

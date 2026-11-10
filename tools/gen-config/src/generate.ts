@@ -123,11 +123,17 @@ function defaultsOf(root: RootSchema, node: SchemaNode): unknown {
   return Object.keys(out).length > 0 ? out : undefined;
 }
 
+/**
+ * Sections of core's own layout engines (D533): no package owns them, so their defaults resolve
+ * in core, as a layout plugin's fragment defaults do (`elk.lineHops`, D537).
+ */
+export const CORE_SECTIONS: ReadonlySet<string> = new Set(['swimlane']);
+
 function coreDefaults(root: RootSchema): Record<string, unknown> {
   const sections = new Set(sectionKeys(root));
   const out: Record<string, unknown> = {};
   for (const [key, node] of Object.entries(root.properties ?? {})) {
-    if (sections.has(key) || isRemoved(node)) {
+    if ((sections.has(key) && !CORE_SECTIONS.has(key)) || isRemoved(node)) {
       continue;
     }
     const value = defaultsOf(root, node);
@@ -730,7 +736,7 @@ export async function generate(
   files.set(
     `${CORE_GENERATED}/defaults.ts`,
     `${BANNER}import type { MermaidConfig } from './config.type.ts';\n\n` +
-      `/** Top-level defaults. Diagram sections live in their own packages. */\n` +
+      `/** Top-level defaults, and core's own engine sections. Diagram sections live in their own packages. */\n` +
       `export const CORE_DEFAULTS: MermaidConfig = ${ts(coreDefaults(root))};\n`
   );
   files.set(`${CORE_GENERATED}/keys.ts`, keyTreeSource(root));

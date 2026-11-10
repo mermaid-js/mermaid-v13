@@ -1,0 +1,10 @@
+requirementDiagram:keyword
+element:keyword
+sim:variable
+{:punctuation
+}:punctuation
+sim:variable
+-:operator
+satisfies:keyword
+->:operator
+req:variable

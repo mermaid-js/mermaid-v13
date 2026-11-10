@@ -1,0 +1,14 @@
+@ 2:11  element |sim:::hot {
+  2:11-2:14 "sim"
+  | **Element** `sim`
+  |
+  | type: `simulation` · docref: `reqs/sim`
+  |
+  | 1 relation · Class: `hot`
+@ 8:5  si|m - verifies -> r
+  8:3-8:6 "sim"
+  | **Element** `sim`
+  |
+  | type: `simulation` · docref: `reqs/sim`
+  |
+  | 1 relation · Class: `hot`

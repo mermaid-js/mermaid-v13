@@ -1,0 +1,216 @@
+(** Requirement diagram syntax (R-PARSE-9, D54): the normative grammar of `requirementDiagram`
+diagrams.
+
+The hand-written parser in `src/parser/` implements it; `tools/gen-grammar` builds a reference
+parser, a sentence generator, highlighters and the syntax reference page from it. mermaid@12
+decides what is valid, this file is fixed to match, and the parser must match this file
+(DESIGN §4.4), with two lexer rules decided for v13 (spec #520): a blank run before a line end
+ends at the line break (D431), and `direction` is read only at the start of a line (D432).
+
+**Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
+matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
+as `='x'`; `%%` comment lines removed and leading blanks trimmed; on a line with
+`style…:…#…;` (or `classDef…`) the last `;` dropped; `#name;` / `#123;` entities read as
+opaque text that no rule takes apart; and a line break appended. Keywords are matched without
+regard to case.
+
+Statements need no separator: `"a" - traces -> "b" "c" - traces -> "d"` is two relations. A
+line break after blanks is read as one more blank inside a statement, as mermaid@12 read it,
+and is a line break where one is needed. *)
+
+@lexer
+
+@options case-insensitive ;
+
+@modes string style acc_title acc_descr acc_descr_multiline ;
+
+(** `title …` is read, but no statement takes it: a requirement diagram has no title
+statement; set `title` in the front matter. *)
+title                     /title\s[^#\n;]+/                :keyword ;
+(** `accTitle: …` and `accDescr: …` take the rest of the line; `accDescr { … }` runs to `}`. *)
+acc_title                 /accTitle\s*:\s*/                push(acc_title) :keyword ;
+<acc_title> acc_title_value /[^\n]*/                       pop :string ;
+acc_descr                 /accDescr\s*:\s*/                push(acc_descr) :keyword ;
+<acc_descr> acc_descr_value /[^\n]*/                       pop :string ;
+-                         /accDescr\s*\{\s*/               push(acc_descr_multiline) attach-next :keyword ;
+<acc_descr_multiline> -   /\}/                             pop attach-prev :keyword ;
+<acc_descr_multiline> acc_descr_multiline_value /[^}]*/    :string ;
+
+(** `direction TB`, `BT`, `LR` or `RL`, at the start of a line (D432). *)
+direction_tb              /(?<=(?:^|\n)[^\S\n]*)direction[^\S\n\r  ]+TB\b/ :keyword ;
+direction_bt              /(?<=(?:^|\n)[^\S\n]*)direction[^\S\n\r  ]+BT\b/ :keyword ;
+direction_rl              /(?<=(?:^|\n)[^\S\n]*)direction[^\S\n\r  ]+RL\b/ :keyword ;
+direction_lr              /(?<=(?:^|\n)[^\S\n]*)direction[^\S\n\r  ]+LR\b/ :keyword ;
+
+NEWLINE                   /\n+/ ;
+(** Blanks at the start of a line are skipped, blank lines with them. *)
+-                         /(?<=(?:^|\n)[^\S\n]*)\s+/ ;
+(** Blanks after other text on a line, then the line break (D431): a line break of its own
+kind. *)
+NEWLINE_AFTER_BLANK       /[^\S\n]+\n+/ ;
+-                         /[^\S\n]+/ ;
+(** `#` or `%` at the start of a token begins a comment to the end of the line. *)
+-                         /#[^\n]*/                        :comment ;
+-                         /%[^\n]*/                        :comment ;
+(** The end of the text. *)
+EOF                       /$/ ;
+
+(** `requirementDiagram`: starts a requirement diagram, on a line of its own. *)
+RD                        /requirementDiagram\b/           :keyword ;
+
+STRUCT_START              /\{/                             :punctuation ;
+STRUCT_STOP               /\}/                             :punctuation ;
+(** `name:::class`: gives a box a class, as `class name class` does. *)
+STYLE_SEPARATOR           /:::/                            :operator ;
+COLONSEP                  /:/                              :punctuation ;
+
+ID                        /id\b/                           :keyword ;
+TEXT                      /text\b/                         :keyword ;
+RISK                      /risk\b/                         :keyword ;
+VERIFYMTHD                /verifyMethod\b/                 :keyword ;
+
+REQUIREMENT               /requirement\b/                  :keyword ;
+FUNCTIONAL_REQUIREMENT    /functionalRequirement\b/        :keyword ;
+INTERFACE_REQUIREMENT     /interfaceRequirement\b/         :keyword ;
+PERFORMANCE_REQUIREMENT   /performanceRequirement\b/       :keyword ;
+PHYSICAL_REQUIREMENT      /physicalRequirement\b/          :keyword ;
+DESIGN_CONSTRAINT         /designConstraint\b/             :keyword ;
+
+LOW_RISK                  /low\b/                          :constant ;
+MED_RISK                  /medium\b/                       :constant ;
+HIGH_RISK                 /high\b/                         :constant ;
+
+VERIFY_ANALYSIS           /analysis\b/                     :constant ;
+VERIFY_DEMONSTRATION      /demonstration\b/                :constant ;
+VERIFY_INSPECTION         /inspection\b/                   :constant ;
+VERIFY_TEST               /test\b/                         :constant ;
+
+ELEMENT                   /element\b/                      :keyword ;
+
+CONTAINS                  /contains\b/                     :keyword ;
+COPIES                    /copies\b/                       :keyword ;
+DERIVES                   /derives\b/                      :keyword ;
+SATISFIES                 /satisfies\b/                    :keyword ;
+VERIFIES                  /verifies\b/                     :keyword ;
+REFINES                   /refines\b/                      :keyword ;
+TRACES                    /traces\b/                       :keyword ;
+
+TYPE                      /type\b/                         :keyword ;
+DOCREF                    /docref\b/                       :keyword ;
+
+(** Styles: `style`, `classDef` and `class` read the rest of the line as names and styles;
+spaces between them are dropped. *)
+STYLE                     /style\b/                        push(style) :keyword ;
+<style> ALPHA             /\w+/                            :string ;
+<style> COLON             /:/                              :punctuation ;
+<style> SEMICOLON         /;/                              :punctuation ;
+(** `%` in a style is read, but no style takes it. *)
+<style> PERCENT           /%/                              :punctuation ;
+<style> MINUS             /-/                              :punctuation ;
+<style> BRKT              /#/                              :punctuation ;
+<style> -                 / / ;
+<style> -                 /"/                              push(string) attach-next :string ;
+<style> -                 /\n/                             pop ;
+
+CLASSDEF                  /classDef\b/                     push(style) :keyword ;
+CLASS                     /class\b/                        push(style) :keyword ;
+
+(** Relations: `a - satisfies -> b`, or `b <- satisfies - a`. *)
+END_ARROW_L               /<-/                             :operator ;
+END_ARROW_R               /->/                             :operator ;
+LINE                      /-/                              :operator ;
+
+(** A quoted name or text: `"…"`, line breaks included, no escapes. *)
+-                         /"/                              push(string) attach-next :string ;
+<string> -                /"/                              pop attach-prev :string ;
+<string> qString          /[^"]*/                          :string ;
+
+(** An unquoted name or text: up to `:`, `,`, `{`, `<`, `>`, `-`, `=` or the line end, blanks
+off both ends. *)
+unqString                 /[\w][^:,\r\n\{\<\>\-\=]*/       :variable ;
+
+<*> ALPHA                 /\w+/                            :string ;
+(** Never read: `\w+` comes first in every mode. *)
+<*> NUM                   /[0-9]+/                         :number ;
+<*> COMMA                 /,/                              :punctuation ;
+
+@trivia
+
+(** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
+whole line; both take their leading blanks. *)
+COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE                 /[^\S\n]*%%\{[\s\S]*?\}%%/        :meta ;
+
+@grammar
+
+(** A requirement diagram is `requirementDiagram` on a line of its own, then statements:
+requirements, elements, relations, classes and styles, the direction and the accessible title
+and description. *)
+diagram = Header nl { statement | nl } EOF ;
+Header @Header = RD ;
+nl = NEWLINE | NEWLINE_AFTER_BLANK ;
+(** A line break after blanks inside a statement: read as one more blank (D431). *)
+blank = [ NEWLINE_AFTER_BLANK ] ;
+
+statement = Requirement
+  | Element
+  | Relation
+  | Shorthand
+  | AccTitle
+  | AccDescr
+  | Direction nl
+  | Style
+  | ClassDef
+  | Class ;
+
+(** `requirement name { … }`, or one of `functionalRequirement`, `interfaceRequirement`,
+`performanceRequirement`, `physicalRequirement` and `designConstraint`: a requirement box. The
+`{` ends its line; each field, and the `}`, is on a line of its own. *)
+Requirement @Requirement = requirementKind blank name blank
+  [ STYLE_SEPARATOR blank idList blank ] STRUCT_START nl { requirementField | nl } STRUCT_STOP ;
+requirementKind = REQUIREMENT | FUNCTIONAL_REQUIREMENT | INTERFACE_REQUIREMENT
+  | PERFORMANCE_REQUIREMENT | PHYSICAL_REQUIREMENT | DESIGN_CONSTRAINT ;
+(** `id: …`, `text: …`, `risk: low|medium|high` and `verifymethod:
+analysis|demonstration|inspection|test`. A repeated field keeps its first value. *)
+requirementField = ID blank COLONSEP blank name nl
+  | TEXT blank COLONSEP blank name nl
+  | RISK blank COLONSEP blank risk nl
+  | VERIFYMTHD blank COLONSEP blank method nl ;
+risk = LOW_RISK | MED_RISK | HIGH_RISK ;
+method = VERIFY_ANALYSIS | VERIFY_DEMONSTRATION | VERIFY_INSPECTION | VERIFY_TEST ;
+
+(** `element name { … }`: an element box, with the fields `type: …` and `docref: …`. *)
+Element @Element = ELEMENT blank name blank [ STYLE_SEPARATOR blank idList blank ]
+  STRUCT_START nl { elementField | nl } STRUCT_STOP ;
+elementField = TYPE blank COLONSEP blank name nl | DOCREF blank COLONSEP blank name nl ;
+
+name = unqString | qString ;
+
+(** `a - satisfies -> b` or `b <- satisfies - a`: a relation from `a` to `b`, of the kinds
+`contains`, `copies`, `derives`, `satisfies`, `verifies`, `refines` and `traces`. *)
+Relation @Relation = name blank LINE blank relationship blank END_ARROW_R blank name
+  | name blank END_ARROW_L blank relationship blank LINE blank name ;
+relationship = CONTAINS | COPIES | DERIVES | SATISFIES | VERIFIES | REFINES | TRACES ;
+
+(** `name:::class,…`: gives a box classes (as `class` does). *)
+Shorthand @Class = name blank STYLE_SEPARATOR blank idList ;
+
+(** `accTitle: …`: the accessible title of the diagram. *)
+AccTitle @AccTitle = acc_title acc_title_value ;
+(** `accDescr: …` or `accDescr { … }`: the accessible description of the diagram. *)
+AccDescr @AccDescr = acc_descr acc_descr_value | acc_descr_multiline_value ;
+(** `direction LR`: the layout direction, on a line of its own. *)
+Direction @Direction = direction_tb | direction_bt | direction_rl | direction_lr ;
+
+(** `style name,… fill:#f9f,stroke:#333`: styles boxes defined before it. *)
+Style @Style = STYLE blank idList blank styles ;
+(** `classDef name,… fill:#f9f,color:#000`: defines classes of styles. *)
+ClassDef @ClassDef = CLASSDEF blank idList blank styles ;
+(** `class name,… class,…`: gives boxes defined before it classes. *)
+Class @Class = CLASS blank idList blank idList ;
+idList = idItem { blank COMMA blank idItem } ;
+idItem = ALPHA | name ;
+styles = style { blank COMMA blank style } ;
+style = styleComponent { blank styleComponent } ;
+styleComponent = ALPHA | COLON | BRKT | MINUS | SEMICOLON ;

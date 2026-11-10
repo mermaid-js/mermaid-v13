@@ -48,6 +48,26 @@ describe('cell measurer widths (D81)', () => {
     expect(graphemeWidth('️')).toBe(0);
   });
 
+  it('splits printable ASCII, box drawing and the ellipsis as the segmenter does', () => {
+    const segmenter = new Intl.Segmenter('en', { granularity: 'grapheme' });
+    const bySegmenter = (text: string) =>
+      [...segmenter.segment(text)].map(({ segment }) => ({
+        text: segment,
+        width: graphemeWidth(segment),
+      }));
+    const chars = [
+      ...Array.from({ length: 0x7f - 0x20 }, (_, i) => String.fromCodePoint(0x20 + i)),
+      ...Array.from({ length: 0x80 }, (_, i) => String.fromCodePoint(0x2500 + i)),
+      '…',
+    ];
+    const all = chars.join('');
+    expect(graphemes(all)).toEqual(bySegmenter(all));
+    for (const c of chars) expect(graphemes(c)).toEqual(bySegmenter(c));
+    // A mark or joiner after one of them leaves the fast set: the segmenter keeps the cluster.
+    for (const text of ['─́', 'a‍b', '│\u{FE0F}', 'x\ty'])
+      expect(graphemes(text)).toEqual(bySegmenter(text));
+  });
+
   it('ignores font and style, with one row per line', () => {
     const bold = { family: 'Courier', size: 40, weight: 700 };
     expect(cellMeasurer.width('abc', bold, 1)).toBe(3);

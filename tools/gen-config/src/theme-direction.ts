@@ -32,7 +32,7 @@ import {
   type DiagramThemeTable,
   type DiagramThemeVarDef,
 } from '../../../packages/core/src/theme/diagram.ts';
-import { parseRule, ruleRefs } from '../../../packages/core/src/theme/dsl.ts';
+import { parseRule, ruleRefs, type Expr } from '../../../packages/core/src/theme/dsl.ts';
 import { parseColor } from '../../../packages/core/src/theme/color.ts';
 import { PALETTE_SLOT, PALETTE_VARIABLES } from '../../../packages/core/src/theme/vocabulary.ts';
 
@@ -60,7 +60,8 @@ export interface DirectionInput {
 
 /**
  * One broken rule: which (`core-names-diagram` rule 1; `diagram-names-theme` rule 2;
- * `table-name-collision`, `table-reads-foreign` and `table-writes-foreign` rule 3;
+ * `table-name-collision`, `table-reads-foreign`, `table-writes-foreign` and
+ * `table-slot-not-palette` (a `slot()` whose first argument names no palette, D474) rule 3;
  * `table-not-vocabulary` rule 4), where (a file, or a type and the part of its table) and the
  * name at fault.
  */
@@ -71,6 +72,7 @@ export interface Violation {
     | 'table-name-collision'
     | 'table-reads-foreign'
     | 'table-writes-foreign'
+    | 'table-slot-not-palette'
     | 'table-not-vocabulary';
   readonly where: string;
   readonly name: string;
@@ -169,23 +171,47 @@ const declared = (d: { alias: string; kind: string; nested?: string } | undefine
   d && JSON.stringify([d.alias, d.kind, d.nested ?? null]);
 
 /**
- * What a table's rules read and its entries write. A `palette` variable's rule that names a shared
- * palette (D545) is in `palettes`, not `reads`: only such a rule may name a whole palette.
+ * A rule's reads (`ruleRefs`), with the palette a `slot(palette, n, fallback)` call names (D474)
+ * in `palettes` instead (a table's own palette variable among its reads): the call reads that
+ * palette's slot `n`, or its fallback. A `slot()` of anything else is in `badSlots`.
  */
-function tableReads(table: DiagramThemeTable): {
+function refs(e: Expr, out: TableReads, own: (name: string) => boolean): void {
+  if (e.k === 'call' && e.fn === 'slot') {
+    const [p, , fallback] = e.args;
+    if (p?.k === 'ref' && PALETTES.has(p.name)) out.palettes.push(p.name);
+    else if (p?.k === 'ref' && own(p.name)) out.reads.push(p.name);
+    else out.badSlots.push(p?.k === 'ref' ? p.name : String(p?.k));
+    if (fallback) refs(fallback, out, own);
+    return;
+  }
+  if (e.k === 'call') for (const a of e.args) refs(a, out, own);
+  else ruleRefs(e, (n) => parseColor(n) === undefined, out.reads);
+}
+
+interface TableReads {
   reads: string[];
   writes: string[];
   palettes: string[];
-} {
-  const reads: string[] = [];
-  const writes: string[] = [];
-  const palettes: string[] = [];
+  /** What a `slot()` names in its palette's place when that is no palette. */
+  badSlots: string[];
+}
+
+/**
+ * What a table's rules read and its entries write. A `palette` variable's rule that names a shared
+ * palette (D545) is in `palettes`, not `reads`: only such a rule, or a `slot()` call (D474), may
+ * name a whole palette.
+ */
+function tableReads(table: DiagramThemeTable): TableReads {
+  const out: TableReads = { reads: [], writes: [], palettes: [], badSlots: [] };
+  const { writes, palettes } = out;
+  // The table's own palette variables (D545) are palettes a `slot()` may name too.
+  const ownPalette = (name: string) => table.vars[name]?.kind === 'palette';
   const rules = (r: Readonly<Record<string, string>> | undefined) => {
     for (const [name, rule] of Object.entries(r ?? {})) {
       writes.push(name);
       const whole = rule.trim();
       if (table.vars[name]?.kind === 'palette' && PALETTES.has(whole)) palettes.push(whole);
-      else ruleRefs(parseRule(rule), (n) => parseColor(n) === undefined, reads);
+      else refs(parseRule(rule), out, ownPalette);
     }
   };
   const lits = (v: Readonly<Record<string, unknown>> | undefined) =>
@@ -198,7 +224,7 @@ function tableReads(table: DiagramThemeTable): {
       lits(e?.values);
       lits(e?.tokens);
     }
-  return { reads, writes, palettes };
+  return out;
 }
 
 /**
@@ -279,7 +305,9 @@ export function checkThemeDirection(input: DirectionInput): Violation[] {
   // 3. A table reads shared names, palette slots and its own (and a `palette` variable's rule a
   // whole palette, D545, which `tableReads` keeps apart); it writes only its own.
   for (const [type, table] of Object.entries(input.tables)) {
-    const { reads, writes } = tableReads(table);
+    const { reads, writes, badSlots } = tableReads(table);
+    for (const name of badSlots)
+      out.push({ rule: 'table-slot-not-palette', where: `${type} rules`, name });
     for (const name of reads)
       if (!input.shared.has(name) && !Object.hasOwn(table.vars, name) && !PALETTE_SLOT.test(name))
         out.push({ rule: 'table-reads-foreign', where: `${type} rules`, name });

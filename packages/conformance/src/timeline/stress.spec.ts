@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { timelineTokens } from '@mermaid-js/diagram-timeline';
+import { linearRatio } from '../linear-time.ts';
 
 /**
  * R-PARSE-7, pitfall 5: the timeline lexer is linear in input size, in every free-text state.
@@ -45,39 +46,18 @@ const SHAPES: [string, (n: number) => string][] = [
   ],
 ];
 
-/** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
-const cpuMs = (): number => {
-  const u =
-    typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
-  return (u.user + u.system) / 1000;
-};
-const cost = (run: () => unknown): number => {
-  const t0 = cpuMs();
-  run();
-  return cpuMs() - t0;
-};
-
 describe('stress: the timeline lexer is linear in input size', () => {
   it.each(SHAPES)(
     '%s',
     (_name, build) => {
       const small = build(4_000);
       const large = build(32_000);
-      timelineTokens(small); // warm up
-      timelineTokens(large);
-      let tSmall = Infinity;
-      let tLarge = Infinity;
-      for (let round = 0; round < 5; round++) {
-        tSmall = Math.min(
-          tSmall,
-          cost(() => timelineTokens(small))
-        );
-        tLarge = Math.min(
-          tLarge,
-          cost(() => timelineTokens(large))
-        );
-      }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(
+        linearRatio(
+          () => timelineTokens(small),
+          () => timelineTokens(large)
+        )
+      ).toBeLessThan(24);
     },
     30_000
   );

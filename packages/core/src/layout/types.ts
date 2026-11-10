@@ -52,7 +52,7 @@ export interface LayoutNode {
   /**
    * Where on the box, down from its top, the line that `left` and `right` edge ends meet lies
    * (D501): an architecture service's icon centre, above its label. Defaults to the middle.
-   * Only `compass` reads it.
+   * `compass` reads it, and `layered` for the ends it moves onto a named side (D503).
    */
   anchorY?: number;
 }
@@ -84,8 +84,9 @@ export interface LayoutEdge {
   /** As `startMarker`, at the target end. */
   endMarker?: EndMarker;
   /**
-   * The side each end leaves or enters by (D501, architecture's `a:R -- L:b`). Only `compass`
-   * reads it; where an end has none, it takes the side `direction` gives (D327).
+   * The side each end leaves or enters by (D501, architecture's `a:R -- L:b`). In `compass`, an
+   * end with none takes the side `direction` gives (D327). `layered` treats it as a hint (D503):
+   * ranks and node order stay, and only the end's route moves onto the side (not on the grid).
    */
   sides?: { source?: Side; target?: Side };
   /**

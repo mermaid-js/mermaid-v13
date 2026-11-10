@@ -1,0 +1,6 @@
+usecase-beta:keyword
+actor:keyword
+User:variable
+User:variable
+-->:operator
+Login:variable
