@@ -10,6 +10,7 @@ export type {
   AgentflowPrepared,
 } from './prepare.ts';
 export type { AgentflowLayoutContext, AgentflowWarning } from './context.ts';
-export { AGENTFLOW_CONFIG_INVALID } from './config-length.ts';
-export { shapeOutline } from './shapes.ts';
+export { AGENTFLOW_CONFIG_INVALID, configLengths } from './config-length.ts';
+export { AGENTFLOW_LENGTH_DEFAULTS } from './metrics.ts';
+export { cornerRadius, shapeOutline } from './shapes.ts';
 export type { LayoutShape, Pads, PadXY, ShapeGeometry } from './shapes.ts';

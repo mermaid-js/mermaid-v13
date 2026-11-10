@@ -24,3 +24,19 @@ grammars:
       documented:
         - Click
         - CallbackName
+
+# theme: what the theme specs need from this package (tools/gen-config/src/theme-packages.ts):
+# dynamicReads: names the sources build at run time, which the usedBy scan for literals can't see.
+theme:
+  # `padsOf` in layout/prepare.ts reads `${shape}PaddingX` / `${shape}PaddingY`.
+  dynamicReads:
+    [
+      'nodePaddingX',
+      'nodePaddingY',
+      'hexagonPaddingX',
+      'hexagonPaddingY',
+      'subroutinePaddingX',
+      'subroutinePaddingY',
+      'leanPaddingX',
+      'leanPaddingY',
+    ]

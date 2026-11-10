@@ -19,6 +19,8 @@ export const AGENTFLOW_LENGTH_DEFAULTS: Readonly<Record<string, number>> = Objec
   wrappingWidth: 120,
   minNodeWidth: 120,
   diagramPadding: 8,
+  /** Read by the renderer: the title's baseline this far above the drawing (D218). */
+  titleTopMargin: 25,
 });
 
 /** The `flowchart` length agentflow reads (D466), with v12's schema default. */
@@ -60,12 +62,16 @@ export interface AgentflowMetrics {
   readonly hexSpan: number;
   /** Kept clear at each end of a flat side when edges spread along it. */
   readonly corner: number;
-  /** v12's collapsed-flow card: fixed padding, label-to-row gap, indicator row, least width. */
+  /**
+   * v12's collapsed-flow card: fixed padding, label-to-row gap, indicator row, least width and
+   * corner radius (`collapsedGroup.ts`'s `flow` style: 10, as the expanded frame's).
+   */
   readonly card: {
     readonly pad: number;
     readonly gap: number;
     readonly row: number;
     readonly minWidth: number;
+    readonly radius: number;
   };
   /** Points per curved stretch of an outline (a rounded corner, half a wave): a count. */
   readonly curveSteps: number;
@@ -87,7 +93,7 @@ export const AGENTFLOW_METRICS: AgentflowMetrics = Object.freeze({
   roundSpan: 0.6,
   hexSpan: 0.5,
   corner: 12,
-  card: Object.freeze({ pad: 8, gap: 8, row: 20, minWidth: 80 }),
+  card: Object.freeze({ pad: 8, gap: 8, row: 20, minWidth: 80, radius: 10 }),
   curveSteps: 8,
   onSide: 0.5,
 });
