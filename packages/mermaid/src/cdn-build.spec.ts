@@ -34,7 +34,7 @@ const dependencies = new Set(
 );
 /**
  * The plugin ids whose package has a `./language` source entry, as `languageEntries()` in
- * `scripts/cdn-build.ts` finds them (a port adds the export with its facet).
+ * `scripts/cdn-build.ts` finds them: every registered diagram's.
  */
 const withLanguage = new Set<string>();
 for (const dir of readdirSync(new URL('../../', import.meta.url))) {
@@ -76,10 +76,12 @@ function staticClosure(): Set<string> {
 }
 
 describe('the CDN build (D162)', () => {
-  it('gives every first-party diagram, its ascii and language entries a stable chunk (language: when its package exports one)', () => {
+  it('gives every first-party diagram, its ascii and language entries a stable chunk', () => {
     for (const id of ids) {
       expect(file(`${chunk(id)}.mjs`), id).toBeDefined();
-      expect(file(`${chunk(id)}-language.mjs`) !== undefined, id).toBe(withLanguage.has(id));
+      // Every registered diagram's package exports `./language`, and the build bundles it.
+      expect(withLanguage.has(id), id).toBe(true);
+      expect(file(`${chunk(id)}-language.mjs`), id).toBeDefined();
     }
     for (const id of DETECTORS.filter((d) => d.formats?.includes('ascii')).map((d) => d.id))
       expect(file(`${chunk(id!)}-ascii.mjs`), id).toBeDefined();

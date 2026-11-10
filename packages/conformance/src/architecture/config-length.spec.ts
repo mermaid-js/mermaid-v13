@@ -6,7 +6,7 @@ import { REPO_ROOT } from '../index.ts';
 // Architecture reads `iconSize` and `padding` with the config-length reader class, er, state and
 // flowchart each keep a copy of (0 up to 10000, numeric strings, one warning per key; #607
 // review). No core helper exists yet, so the copy must stay the same reader: only the section
-// name and the warning code may differ.
+// name and the warning code may differ, and architecture imports its code from `codes.ts`.
 const read = (path: string) => readFileSync(join(REPO_ROOT, path), 'utf8');
 
 describe("architecture's config-length reader", () => {
@@ -15,7 +15,11 @@ describe("architecture's config-length reader", () => {
     const theirs = read('packages/diagram-class/src/layout/config-length.ts')
       .replaceAll('`class`', '`architecture`')
       .replaceAll('CLASS_CONFIG_IGNORED', 'ARCHITECTURE_CONFIG_IGNORED')
-      .replaceAll('`class.${key}`', '`architecture.${key}`');
+      .replaceAll('`class.${key}`', '`architecture.${key}`')
+      .replace(
+        "/** A config length the layout can't honour (pitfall 22): it draws with the default instead. */\nconst ARCHITECTURE_CONFIG_IGNORED = 'ARCHITECTURE_CONFIG_IGNORED';\n",
+        "import { ARCHITECTURE_CONFIG_IGNORED } from '../codes.ts';\n"
+      );
     expect(ours).toBe(theirs);
   });
 });

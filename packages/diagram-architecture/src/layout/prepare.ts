@@ -17,13 +17,14 @@
  * The lists are read in the model's order (v12's insertion order), so the graph, and with it
  * the layout, is the same on every run.
  */
-import type {
-  LayoutEdge,
-  LayoutGraph,
-  LayoutGroup,
-  LayoutNode,
-  Side,
-  Size,
+import {
+  pxProfile,
+  type LayoutEdge,
+  type LayoutGraph,
+  type LayoutGroup,
+  type LayoutNode,
+  type Side,
+  type Size,
 } from '@mermaid-js/core/layout';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import { architectureConfigDefaults } from '../generated/config-defaults.ts';
@@ -41,9 +42,6 @@ export interface ArchitectureNodeView {
   readonly index: number;
   /** A service's label, wrapped at `labelWidth`; absent for a junction or no label. */
   readonly label?: MeasuredLabel;
-  /** The layout box: the icon, with the label centred beneath it. */
-  readonly width: number;
-  readonly height: number;
 }
 
 export interface ArchitectureGroupView {
@@ -141,7 +139,7 @@ export function prepareArchitecture(
     const label = measure(s.title, sizes.labelWidth);
     const width = Math.max(iconSize, label?.width ?? 0);
     const height = iconSize + (label?.height ?? 0);
-    nodes.push({ id: s.id, kind: 'service', index, ...(label ? { label } : {}), width, height });
+    nodes.push({ id: s.id, kind: 'service', index, ...(label ? { label } : {}) });
     layoutNodes.push({
       id: s.id,
       width,
@@ -152,7 +150,7 @@ export function prepareArchitecture(
     });
   }
   for (const [index, j] of model.junctions.entries()) {
-    nodes.push({ id: j.id, kind: 'junction', index, width: iconSize, height: iconSize });
+    nodes.push({ id: j.id, kind: 'junction', index });
     layoutNodes.push({
       id: j.id,
       width: iconSize,
@@ -201,8 +199,9 @@ export function prepareArchitecture(
     nodes: layoutNodes,
     edges: layoutEdges,
     groups: layoutGroups,
-    // `compass` reads no spacing (its cell gap is its own, GAPS T0); other engines get `padding`.
-    spacing: { node: padding, rank: padding, edge: padding },
+    // `compass` reads no spacing (its cell gap is its own, GAPS T0); other engines get core's
+    // defaults, not the group `padding` (at 0 it packed them edge to edge).
+    spacing: pxProfile.builder.spacing,
     // v12's margin round the drawing is `padding` (`setupGraphViewbox`).
     diagramPadding: padding,
     ...(align.length > 0 ? { align } : {}),
