@@ -31,6 +31,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Note for T0b's follow-up: `pebr-2-edge-intrudes-lane-label` takes about 1.8–2.5 s per swimlane layout, so the swimlane corpus spec runs one test per fixture. Worth a stress check on the router.
 
 ## #598 T2 lane drawing
+- Unlisted timing failures in T2's full `pnpm check` (2026-11-10, under the lock, head 373234444; the load at that run was not recorded): `conformance/src/gantt/stress.spec.ts` "click then blanks" and "a long task text", `conformance/src/treemap/stress.spec.ts` "equal values". Alone at 2 workers, no lock, load average 8.2–10.7: both files pass (3 files, 200 tests). Reported to the wave coordinator for Knut.
 - Open: since #589 (block T0) flowchart has no theme table (`packages/diagram-flowchart/src/theme/` is gone; its shape rows are core rows). Lanes need no new variables per the spec (they read `clusterBkg`/`clusterBorder` and flowchart's existing per-subgraph palette). If T2 finds it needs a lane-only row, where it lives (flowchart's own table, recreated, versus core) is a choice the spec doesn't settle: record it here as **Choice** and follow `theming.md` as it stands after #589. D474's `slot(<palette>, <n>, <fallback>)` rule form (usecase T0 #620; `CONTRACT.md` "DSL additions") may fit the per-lane palette.
 
 ## #601 T3 integration
