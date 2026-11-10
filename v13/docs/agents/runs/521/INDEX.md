@@ -10,7 +10,7 @@ Worktrees: ticket branches are checked out one at a time in this session's own w
 | T1 lexer parity gate | #553 | #285 (merged) | merged (ff 7dfe6e49d; package entry 4,623 B gz, no core change) |
 | T2 grammar, parser, model, AST | #554 | #553 | merged (ff f8bf0c3c2; package entry 11,883 B gz, no core change) |
 | T3 layout | #555 | #554 | merged (ff e7fef7bd3; package entry 17,666 B gz, no core change) |
-| T4 SVG renderer and local shapes | #556 | #552, #555 | |
+| T4 SVG renderer and local shapes | #556 | #552, #555 | merged (ff 3c3553fc4; package entry 20,507 B gz, no core change) |
 | T6 language facet | #557 | #554 | |
 | T5 integration | #558 | #556, #557 | |
 | T7 ASCII renderer (optional, D320) | #559 | #558 | |
@@ -36,4 +36,5 @@ Block #521, c4 #522 and agentflow #523 run in parallel on AI-Max: at most one ti
 
 - #637 move done on `feature/521_block` (ae43c85ae, local): block's rows in its own files. Integration is not pushed until T5 adds the manifest (coordinator; #640 fixes `tools/workspace/sync.spec.ts` for pre-manifest packages).
 - T3 #555 merged (ff e7fef7bd3): exact v12 sizing to four nesting levels, linear (depth 800 with spans 7.7 ms, 16k spanning blocks 43 ms).
-- In flight: T4 #556 on `feature/556_block_render` in this worktree.
+- T4 #556 merged (ff 3c3553fc4).
+- In flight: T6 #557 on `feature/557_block_language` in this worktree.

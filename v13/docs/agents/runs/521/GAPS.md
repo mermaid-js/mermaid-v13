@@ -10,6 +10,8 @@ Unmet criteria and choices the spec and D-ids leave open, by owning ticket.
 
 - #637 move (2026-11-10): block's shared-file rows now live in its own files (`packages/diagram-block/workspace.yaml`, `packages/conformance/src/block/{tables,suite}.ts`, `packages/conformance/divergences/block.json`, `v13/docs/migration/block.md`). `tools/workspace/sync.spec.ts` "take a new diagram package from its own folder alone" fails while block is pre-manifest (its copy drops pre-manifest packages, so it does not expect `@mermaid-js/diagram-block` in conformance's devDependencies): fixed by #640 (open). Take #640's `sync.spec.ts` when it merges; until then the integration branch is not pushed (coordinator, 2026-11-10), at the latest T5 adds the manifest. `e2e/diagrams/block/hand-drawn.txt` (`sketched`, D447) lands with T4, when block draws.
 
+- Follow-up (flowchart, not this port): flowchart's `paletteSlots` fills from `bkgColorArray[order % bkg.length]`, where v12 used `bkgColorArray[(colorIndex % border.length) % bkg.length]`; they differ only when an author's two palettes have different lengths. Block's copy follows v12 (review of #556).
+
 ## T0 #552
 
 - Done in its own PR into `mermaid-v13`. Rows get `usedBy` `['flowchart']`; T4 adds `'block'` to each row it reads.
