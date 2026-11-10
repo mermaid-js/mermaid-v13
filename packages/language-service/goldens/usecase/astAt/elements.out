@@ -1,0 +1,13 @@
+@ 2:9  actor |User
+  actor:User 2:9-2:13 "User"
+@ 4:5  |Login(Sign in)
+  usecase:Login 4:5-4:19 "Login(Sign in)"
+  boundary:Shop 3:3-5:6 "systemBoundary Shop\n    Login(Sign in)\n  end"
+@ 6:12  User e1@-|-> Login
+  rel:e1 6:3-6:20 "User e1@--> Login"
+@ 7:14  note for Lo|gin "x"
+  note:1 7:3-7:21 "note for Login \"x\""
+@ 8:20  json Data@{ "a": |1 }
+  json:Data 8:3-8:23 "json Data@{ \"a\": 1 }"
+@ 9:17  class Login ho|t
+  class:1 9:3-9:18 "class Login hot"

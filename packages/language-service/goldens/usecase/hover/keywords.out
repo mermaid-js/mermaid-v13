@@ -1,0 +1,35 @@
+@ 2:13  direction |LR
+  2:13-2:15 "LR"
+  | **`LR`** direction: left to right (the default)
+  |
+  | `LR`: left to right.
+@ 3:3  |actor A
+  3:3-3:8 "actor"
+  | **`actor`**
+  |
+  | `actor A`, `actor A, B`, `actor A --> B`.
+@ 4:6  sys|temBoundary S
+  4:3-4:17 "systemBoundary"
+  | **`systemBoundary`**
+  |
+  | `systemBoundary Id(title)` or `systemBoundary "title"`, then `@{ … }` and `:::` classes, then one actor list or use case per line, and `end`.
+@ 5:3  |end
+  5:3-5:6 "end"
+  | **`end`**
+  |
+  | `end`: closes a `systemBoundary`.
+@ 6:5  no|te for A "x"
+  6:3-6:7 "note"
+  | **`note`**
+  |
+  | `note for Login "text"`: a note attached to an actor or use case.
+@ 7:8  class|Def hot fill:red
+  7:3-7:11 "classDef"
+  | **`classDef`**
+  |
+  | `classDef hot fill:#f96`: a class of styles (`default` applies to every element).
+@ 8:5  st|yle A fill:red
+  8:3-8:8 "style"
+  | **`style`**
+  |
+  | `style A fill:#f96`: styles one element or relation with an id.

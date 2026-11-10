@@ -1,0 +1,13 @@
+usecase-beta
+User --> Login
+actor User
+Login --> Logout
+systemBoundary Shop
+  Pay
+end
+json P@{"a": 1}
+User e1@--> P
+note for Login "n"
+note for User "m"
+classDef hot fill:red
+class Login hot

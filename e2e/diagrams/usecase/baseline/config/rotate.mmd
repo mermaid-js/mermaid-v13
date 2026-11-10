@@ -1,0 +1,23 @@
+---
+config:
+  theme: redux-color
+  usecase:
+    colorScheme: rotate
+description: colorScheme rotate in redux-color, actors then use cases on one palette counter and boundaries on their own, each stamped data-color-id; a classDef still wins
+---
+usecase-beta
+  actor Customer
+  actor Clerk
+  systemBoundary Shop
+    Browse
+    Checkout
+    Pay
+  end
+  systemBoundary Office
+    Refund:::flagged
+  end
+  Customer --> Browse
+  Customer --> Checkout
+  Checkout ..> : include Pay
+  Clerk --> Refund
+  classDef flagged fill:#fff3cd,stroke:#b58900

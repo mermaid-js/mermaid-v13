@@ -1,0 +1,8 @@
+%% rename-to: Store
+usecase-beta
+  systemBoundary |Shop
+    Login
+  end
+  class Shop hot
+  json |Data@{ "a": 1 }
+  Login --> Data
