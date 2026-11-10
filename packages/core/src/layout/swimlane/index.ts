@@ -14,3 +14,11 @@ import { swimlaneLayout } from './swimlane.ts';
  * `grid` and groups' own `direction` are not used; the model's direction is the graph's.
  */
 export const swimlane: LayoutEngine = (graph, ctx) => swimlaneLayout(graph, ctx?.config?.swimlane);
+
+/**
+ * The engine as the registry's loader reads a module (`layout`), and core's line-hop step, which
+ * `swimlane.lineHops` (default `arc`) needs: loading the engine loads hops too, so
+ * `preload({ layouts: ['swimlane'] })` covers `renderSync` (D537).
+ */
+export { swimlane as layout };
+export { lineHops } from '../hops/style.ts';

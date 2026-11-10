@@ -70,7 +70,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     detector: (text) => /^\s*pie/.test(text),
     load: () => import('@mermaid-js/diagram-pie/language').then((m) => m.language),
   },
-  { type: 'requirement', id: 'requirement', pattern: /^\s*requirement(Diagram)?/, detector: (text) => /^\s*requirement(Diagram)?/.test(text) },
+  {
+    type: 'requirement',
+    id: 'requirement',
+    section: 'requirement',
+    pattern: /^\s*requirement(Diagram)?/,
+    detector: (text) => /^\s*requirement(Diagram)?/.test(text),
+    load: () => import('@mermaid-js/diagram-requirement/language').then((m) => m.language),
+  },
   {
     type: 'sequence',
     id: 'sequence',
@@ -161,7 +168,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     detector: (text) => /^\s*eventmodeling/.test(text),
     load: () => import('@mermaid-js/diagram-eventmodeling/language').then((m) => m.language),
   },
-  { type: 'treeView', id: 'treeView', pattern: /^\s*treeView-beta/, detector: (text) => /^\s*treeView-beta/.test(text) },
+  {
+    type: 'treeView',
+    id: 'treeView',
+    section: 'treeView',
+    pattern: /^\s*treeView-beta/,
+    detector: (text) => /^\s*treeView-beta/.test(text),
+    load: () => import('@mermaid-js/diagram-treeview/language').then((m) => m.language),
+  },
   {
     type: 'radar',
     id: 'radar',
@@ -214,11 +228,18 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     detector: (text) => /^\s*cynefin-beta(?:[\s:]|$)/.test(text),
     load: () => import('@mermaid-js/diagram-cynefin/language').then((m) => m.language),
   },
-  { type: 'usecase', id: 'usecase', pattern: /^\s*usecase-beta(?:\s|$)/, detector: (text) => /^\s*usecase-beta(?:\s|$)/.test(text) },
+  {
+    type: 'usecase',
+    id: 'usecase',
+    section: 'usecase',
+    pattern: /^\s*usecase-beta(?:\s|$)/,
+    detector: (text) => /^\s*usecase-beta(?:\s|$)/.test(text),
+    load: () => import('@mermaid-js/diagram-usecase/language').then((m) => m.language),
+  },
 ];
 
 /**
  * The ids of the first-party types with a language facet, in detector order. Each editor
  * adapter's highlighter map has one row per id (D134), so a new facet fails to compile there.
  */
-export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'xychart' | 'eventmodeling' | 'radar' | 'ishikawa' | 'treemap' | 'venn' | 'wardley' | 'cynefin';
+export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'requirement' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'xychart' | 'eventmodeling' | 'treeView' | 'radar' | 'ishikawa' | 'treemap' | 'venn' | 'wardley' | 'cynefin' | 'usecase';

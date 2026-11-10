@@ -1,0 +1,20 @@
+usecase-beta
+  actor User
+  "Reset password" --> Login
+  User e1@--> Login
+  systemBoundary Shop
+  end
+  json Data@{ "a": 1 }
+  classDef hot fill:red
+  classDef cold fill:blue
+  note |
+  note for |
+  note for User |
+  class |
+  class User,|
+  class User |
+  class User, Login hot,|
+  style |
+  style User |
+  Login:::|
+  Login:::hot,|

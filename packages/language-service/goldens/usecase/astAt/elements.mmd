@@ -1,0 +1,9 @@
+usecase-beta
+  actor |User
+  systemBoundary Shop
+    |Login(Sign in)
+  end
+  User e1@-|-> Login
+  note for Lo|gin "x"
+  json Data@{ "a": |1 }
+  class Login ho|t

@@ -85,6 +85,26 @@ look?: ("classic" | "handDrawn" | "neo")
  */
 layout?: string
 /**
+ * Draws edge crossings as small arcs ("hops") or breaks in the line, so it
+ * is clear which line passes over which where two edges meet. Every
+ * diagram that draws edges reads it.
+ * 
+ * Of a horizontal and a vertical run, the horizontal one gives way;
+ * otherwise the later edge does. Only straight runs carry hops: curves
+ * and rounded corners are left as drawn, and a crossing too close to a
+ * bend gets no hop. `true` and `arc` draw a 6px arc, `gap` breaks the
+ * line. Off by default.
+ * 
+ * A layout engine's own `lineHops` (`swimlane.lineHops`, default `arc`;
+ * `elk.lineHops`, default `true`) applies when that engine lays the
+ * diagram out, so those layouts hop by default. Precedence: the engine
+ * key when set explicitly, then this key when set explicitly, then the
+ * engine's default. Setting this key to `false` turns hops off
+ * everywhere, engine keys included.
+ * 
+ */
+lineHops?: (false | true | "arc" | "gap")
+/**
  * The maximum allowed size of the users text diagram
  */
 maxTextSize?: number
@@ -425,6 +445,8 @@ layout?: string
  * Renders edge crossings as small arcs ("hops") or visible gaps so that
  * overlapping edges are easier to read. Set to `false` to disable. Edges
  * rendered as curves are skipped to avoid corrupting the geometry.
+ * Applies whenever the `swimlane` layout lays the diagram out, over the
+ * shared top-level `lineHops` unless that is `false` (D537).
  * 
  */
 lineHops?: (boolean | ("arc" | "gap"))
@@ -1473,6 +1495,19 @@ theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark"
  * 
  */
 look?: ("classic" | "handDrawn" | "neo")
+/**
+ * Defines which layout algorithm to use for rendering the diagram.
+ * 
+ */
+layout?: string
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 rect_fill?: string
 text_color?: string
 rect_border_size?: string
@@ -2284,6 +2319,14 @@ rowHeight?: number
  * via the `definition` "TreeViewDiagramConfig".
  */
 export interface TreeViewDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * Horizontal distance between rows differing by one level
  */
@@ -2406,6 +2449,19 @@ export interface UsecaseDiagramConfig extends BaseDiagramConfig {
  * 
  */
 theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
+/**
+ * Defines which layout algorithm to use for rendering the diagram.
+ * 
+ */
+layout?: string
 /**
  * @deprecated
  * Defines which main look to use for the diagram.

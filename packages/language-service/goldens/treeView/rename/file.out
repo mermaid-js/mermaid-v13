@@ -1,0 +1,8 @@
+@ 4:9  inde|x.js :::highlight ## entry
+  prepare: 4:5-4:13 "index.js"; rename to "main.ts":
+  %% rename-to: main.ts
+  treeView-beta
+    src/
+      main.ts :::highlight ## entry
+    lib/
+      index.js

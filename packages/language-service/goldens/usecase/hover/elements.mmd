@@ -1,0 +1,9 @@
+usecase-beta
+  actor |Clerk("Shop clerk")@{ type: hollow, business: true } <<Employee>>
+  systemBoundary Shop
+    |Checkout[Pay]:::hot
+  end
+  "Reset |password" --> Checkout
+  Clerk --> Checkout
+  note for Checkout "x"
+  class Reset_pass|word hot

@@ -146,6 +146,20 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
     }
   );
 
+  // D537 (maintainer, 2026-11-08, "Lazy chunk for hops"): line hops stay out of core. The swimlane
+  // engine carries them too, so they may share a lazy chunk with their own entry, never with core
+  // or another engine.
+  it('keeps the line-hop code out of core, in lazy chunks of its own', () => {
+    const isHops = (input: string) => input.includes('core/src/layout/hops/');
+    expect(coreModules(stable).filter(isHops)).toEqual([]);
+    const files = Object.entries(stable.bundle.graph).filter(([, f]) => f.inputs.some(isHops));
+    expect(files.length).toBeGreaterThan(0);
+    for (const [path, file] of files) {
+      expect(stable.bundle.staticClosure).not.toContain(path);
+      expect(file.inputs.every(isHops), path).toBe(true);
+    }
+  });
+
   // D326, D327: `compass` too, and any graph type may select it.
   it('keeps the compass engine out of core, in a lazy chunk of its own', () => {
     const isCompass = (input: string) => input.includes('core/src/layout/compass/');

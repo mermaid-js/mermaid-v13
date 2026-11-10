@@ -66,7 +66,14 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     formats: ['svg'],
     load: () => import('@mermaid-js/diagram-pie').then((m) => m.pie),
   },
-  { type: 'requirement', pattern: /^\s*requirement(Diagram)?/ },
+  {
+    type: 'requirement',
+    pattern: /^\s*requirement(Diagram)?/,
+    id: 'requirement',
+    formats: ['svg', 'ascii'],
+    load: () => import('@mermaid-js/diagram-requirement').then((m) => m.requirement),
+    loadAscii: () => import('@mermaid-js/diagram-requirement/ascii').then((m) => m.ascii),
+  },
   {
     type: 'sequence',
     pattern: /^\s*sequenceDiagram/,
@@ -149,7 +156,14 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     formats: ['svg'],
     load: () => import('@mermaid-js/diagram-eventmodeling').then((m) => m.eventmodeling),
   },
-  { type: 'treeView', pattern: /^\s*treeView-beta/ },
+  {
+    type: 'treeView',
+    pattern: /^\s*treeView-beta/,
+    id: 'treeView',
+    formats: ['svg', 'ascii'],
+    load: () => import('@mermaid-js/diagram-treeview').then((m) => m.treeView),
+    loadAscii: () => import('@mermaid-js/diagram-treeview/ascii').then((m) => m.ascii),
+  },
   {
     type: 'radar',
     pattern: /^\s*radar-beta/,
@@ -197,5 +211,12 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     formats: ['svg'],
     load: () => import('@mermaid-js/diagram-cynefin').then((m) => m.cynefin),
   },
-  { type: 'usecase', pattern: /^\s*usecase-beta(?:\s|$)/ },
+  {
+    type: 'usecase',
+    pattern: /^\s*usecase-beta(?:\s|$)/,
+    id: 'usecase',
+    formats: ['svg', 'ascii'],
+    load: () => import('@mermaid-js/diagram-usecase').then((m) => m.usecase),
+    loadAscii: () => import('@mermaid-js/diagram-usecase/ascii').then((m) => m.ascii),
+  },
 ];

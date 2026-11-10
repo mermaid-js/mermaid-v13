@@ -1,0 +1,6 @@
+@ 3:9  actor |User
+  prepare: 3:9-3:13 "User"; rename to "New user":
+  refused: 'New user' would not read as the same actor id everywhere it is used.
+@ 4:8  User |e1@--> Login
+  prepare: 4:8-4:10 "e1"; rename to "New user":
+  refused: 'New user' is not a usecase id: a relation id is ASCII letters, digits and `_`.

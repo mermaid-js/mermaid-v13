@@ -438,6 +438,17 @@ describe('CORE_DEFAULTS', () => {
       ...v12,
       theme: 'redux-color',
       layout: 'layered',
+      lineHops: false, // new in v13, shared by every edge-drawing diagram (D537)
+      // Core's own swimlane engine: its section's defaults resolve in core (D533, D537).
+      swimlane: {
+        useMaxWidth: true,
+        theme: 'redux-color',
+        layout: 'swimlane',
+        lineHops: 'arc',
+        ignoreCrossLaneEdges: true,
+        optimizeRanksByCrossings: true,
+        automaticLaneOrdering: false,
+      },
       securityLevel: 'default',
       maxEdges: 5000,
       look: undefined, // removed, no default (D153)

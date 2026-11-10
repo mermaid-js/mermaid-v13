@@ -1,0 +1,5 @@
+treeView-beta:keyword
+src/:variable
+"index.ts":string
+:::highlight:operator
+util.ts:variable

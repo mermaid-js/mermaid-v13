@@ -11,5 +11,5 @@
   // The generated parsers are plain JavaScript beside their `.d.ts`; `build` copies them to
   // `dist/generated/`, where the compiled `import()`s find them, one lazy file per type.
   "include": ["src"],
-  "exclude": ["src/**/*.spec.ts"]
+  "exclude": ["src/**/*.spec.ts", "src/testing/**"]
 }
