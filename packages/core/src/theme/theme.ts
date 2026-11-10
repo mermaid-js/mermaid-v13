@@ -49,11 +49,11 @@ import {
 } from './color.ts';
 import type { DiagramThemeFamily, DiagramThemeTable, ThemeFamily } from './diagram.ts';
 import { contrastCss } from './contrast-css.ts';
+import { ThemeCache, themeDefinitions, themeValueKey } from './cache.ts';
 import { parseRule, type Expr, type Fn } from './dsl.ts';
 import { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './spec.ts';
 import { BASE_PLOT, BASE_SERIES } from './specs/palettes.ts';
 import { baseScalesFor } from './specs/scales.ts';
-import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 import {
   GIT_PALETTE_LIMIT,
   PALETTE_LIMIT,
@@ -745,8 +745,8 @@ function paletteSource(
   return { spec: lists, user, slots };
 }
 
-/** Builds one render's theme. */
-interface ThemeParts {
+/** Reusable resolution state; no render ids or used-variable sets. */
+interface Resolvers {
   darkMode: boolean;
   main: Resolver;
   night: Resolver | undefined;
@@ -758,6 +758,19 @@ interface ThemeParts {
   rootTexts: Map<string, StyleText>;
   /** Each padding variable read so far: a multiple of the diagram's padding, or px. */
   paddings: Map<string, { readonly scale: boolean; readonly n: number }>;
+}
+
+type SharedTheme = Pick<
+  Theme,
+  'number' | 'padding' | 'value' | 'rgba' | 'ink' | 'paletteRgba' | 'palette'
+>;
+interface ThemeParts extends Resolvers, SharedTheme {
+  def: (name: string) => ThemeVarEntry;
+  decls: (
+    r: Resolver,
+    names: Iterable<string>,
+    colours: boolean | undefined
+  ) => Record<AliasName, ThemeRef>;
 }
 
 /** Literal values and tokens from a diagram table's family entries. */
@@ -811,43 +824,44 @@ function flatten(
   return out;
 }
 
-// Without overrides a theme derives the same values on every render, so its resolvers (and
-// their memos) are kept, keyed by the spec, the `auto` dark spec, the diagram's table and the
-// registered fragment rules (D336). A render's own state is only `used`.
-type Cache = WeakMap<object, Cache | ThemeParts>;
-const PLAIN: Cache = new WeakMap();
+// Specs, tables and fragment rules are immutable inputs. Keep value variants bounded under
+// their identities; the author's overrides are checked anew on every call, including warnings.
+const PARTS = new ThemeCache<ThemeParts>();
 const NONE = {};
+const MAX_VARIANTS = 32;
 
 function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
   const table = options.diagram;
   const tv = flatten(options.themeVariables, table);
   const plain = tv === undefined || Object.keys(tv).length === 0;
-  const keys: object[] = [spec, options.dark ?? NONE, table ?? NONE, options.rules ?? NONE];
-  let level: Cache = PLAIN;
+  const variants = PARTS.variants([
+    spec,
+    options.dark ?? NONE,
+    table ?? NONE,
+    options.rules ?? NONE,
+  ]);
   if (plain) {
-    for (const k of keys.slice(0, -1)) {
-      let next = level.get(k) as Cache | undefined;
-      if (!next) level.set(k, (next = new WeakMap()));
-      level = next;
-    }
-    const hit = level.get(keys[3]!) as ThemeParts | undefined;
+    const hit = variants.get('');
     if (hit) return hit;
   }
-  const defs: Record<string, ThemeVarEntry> = { ...THEME_VARIABLE_TABLE };
-  // A fragment's rule for a name the diagram's own table defines loses to the table (D337). A
-  // table var that shadows a core name is ignored, so it takes no fragment rule away either.
-  const fragment: Record<string, string> = {};
-  for (const [name, r] of Object.entries(options.rules ?? {})) {
-    if (table && own(table.vars, name) && !own(THEME_VARIABLE_TABLE, name)) continue;
-    fragment[name] = r;
-    if (!own(defs, name)) defs[name] = { alias: name, kind: 'color' };
-  }
-  for (const [name, v] of Object.entries(table?.vars ?? {}))
-    if (!own(THEME_VARIABLE_TABLE, name)) defs[name] = v;
+  const { defs, fragment } = themeDefinitions(table, options.rules);
   const overrides = checkOverrides(tv, defs, options.warn);
   const tablePalettes = Object.keys(defs).filter((name) => defs[name]!.kind === 'palette');
   const authorDark = tv?.darkMode === true || tv?.darkMode === 'true';
   const darkMode = spec.dark || authorDark;
+  const mainPalettes = paletteSource(spec, tv, options.warn, authorDark, tablePalettes);
+  const nightPalettes = options.dark
+    ? paletteSource(options.dark, tv, undefined, authorDark, tablePalettes)
+    : undefined;
+  const key = plain
+    ? ''
+    : themeValueKey(
+        authorDark,
+        overrides,
+        nightPalettes ? [mainPalettes, nightPalettes] : [mainPalettes]
+      );
+  const hit = variants.get(key);
+  if (hit) return hit;
   // The layers of today's precedence (spec #414): shared and diagram light/dark rules, the
   // theme's rules, the diagram's family rules, then the fragments'. Values beat every rule.
   const resolver = (s: ThemeSpec, dark: boolean, palettes?: PaletteSource): Resolver => {
@@ -863,35 +877,88 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
     const written = new Set([...Object.keys(s.rules ?? {}), ...Object.keys(fam.rules)]);
     return new Resolver(s, rules, { lits: fam.lits, rules: written }, overrides, defs, palettes);
   };
-  const parts: ThemeParts = {
+  const parts: Resolvers = {
     darkMode,
-    main: resolver(
-      spec,
-      darkMode,
-      paletteSource(spec, tv, options.warn, authorDark, tablePalettes)
-    ),
+    main: resolver(spec, darkMode, mainPalettes),
     // The dark spec's own palettes, so a series slot read follows it there (D332).
-    night: options.dark
-      ? resolver(
-          options.dark,
-          true,
-          paletteSource(options.dark, tv, undefined, authorDark, tablePalettes)
-        )
-      : undefined,
+    night: options.dark ? resolver(options.dark, true, nightPalettes) : undefined,
     palettes: new Map(),
     byName: new Map(Object.entries(defs)),
     rootTexts: new Map(),
     paddings: new Map(),
   };
-  if (plain) level.set(keys[3]!, parts);
-  return parts;
+  const shared = { ...parts, ...themeFunctions(parts) };
+  variants.set(key, shared);
+  if (variants.size > MAX_VARIANTS) variants.delete(variants.keys().next().value!);
+  return shared;
+}
+
+/** These operations close over only reusable resolution state, never one render. */
+function themeFunctions({ byName, main, palettes, paddings }: Resolvers) {
+  const def = (name: string): ThemeVarEntry => {
+    const d = byName.get(name);
+    if (!d) throw new TypeError(`Unknown theme variable ${JSON.stringify(name)}`);
+    return d;
+  };
+  const decls = (r: Resolver, names: Iterable<string>, colours: boolean | undefined) => {
+    const out: Record<AliasName, ThemeRef> = {};
+    const seen = new Set<string>();
+    const visit = (name: string): void => {
+      if (seen.has(name)) return;
+      seen.add(name);
+      const res = r.get(name);
+      const d = def(name);
+      if (colours === undefined || (d.kind === 'color') === colours)
+        out[`--_${d.alias}`] = `var(--mermaid-${name},${res.css})` as ThemeRef;
+      for (const dep of res.deps) visit(dep);
+    };
+    for (const name of names) visit(name);
+    return out;
+  };
+
+  const shared: SharedTheme = {
+    number(name) {
+      const kind = def(name).kind;
+      if (kind !== 'length' && kind !== 'padding' && kind !== 'opacity')
+        throw new TypeError(`${name} is not a length`);
+      return Number(main.get(name).lit);
+    },
+    padding(name, padding) {
+      let p = paddings.get(name);
+      if (!p) {
+        if (def(name).kind !== 'padding') throw new TypeError(`${name} is not a padding`);
+        const lit = main.get(name).lit;
+        const m = RE_PADDING.exec(lit);
+        p = m ? { scale: true, n: Number(m[1] ?? 1) } : { scale: false, n: Number(lit) };
+        paddings.set(name, p);
+      }
+      return p.scale ? p.n * padding : p.n;
+    },
+    value: (name) => main.get(name).lit,
+    rgba: (name) => main.get(name).rgba,
+    ink(fill) {
+      const c = parseColor(fill);
+      if (!c || c[3] < 0.5) return undefined;
+      const bg = main.opaque(c) as Rgba;
+      const text = main.get('nodeTextColor').rgba;
+      if (text && contrastRatio(main.opaque(text, bg) as Rgba, bg) >= AA) return undefined;
+      return (
+        contrastRatio(BLACK, bg) >= contrastRatio(WHITE, bg) ? '#000000' : '#ffffff'
+      ) as SafeColor;
+    },
+    paletteRgba: (name) => main.palette(name, true),
+    palette(name) {
+      let list = palettes.get(name);
+      if (!list) palettes.set(name, (list = main.palette(name)));
+      return list;
+    },
+  };
+  return { def, decls, ...shared };
 }
 
 export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme {
-  const { byName, darkMode, main, night, palettes, rootTexts, paddings } = themeParts(
-    spec,
-    options
-  );
+  const parts = themeParts(spec, options);
+  const { def, decls, darkMode, main, night, rootTexts } = parts;
   const vars = options.cssVariables !== false;
   const used = new Set<string>();
   // null: off. Built on first use, so the id prefix is only read when the gradient is on.
@@ -916,35 +983,22 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
     return grad ?? undefined;
   };
 
-  const def = (name: string): ThemeVarEntry => {
-    const d = byName.get(name);
-    if (!d) throw new TypeError(`Unknown theme variable ${JSON.stringify(name)}`);
-    return d;
-  };
   const ref = (name: string): ThemeRef => {
     used.add(name);
     return `var(--_${def(name).alias})` as ThemeRef;
-  };
-  const decls = (r: Resolver, names: Iterable<string>, colours: boolean | undefined) => {
-    const out: Record<AliasName, ThemeRef> = {};
-    const seen = new Set<string>();
-    const visit = (name: string): void => {
-      if (seen.has(name)) return;
-      seen.add(name);
-      const res = r.get(name);
-      const d = def(name);
-      if (colours === undefined || (d.kind === 'color') === colours)
-        out[`--_${d.alias}`] = `var(--mermaid-${name},${res.css})` as ThemeRef;
-      for (const dep of res.deps) visit(dep);
-    };
-    for (const name of names) visit(name);
-    return out;
   };
 
   const theme: Theme = {
     name: spec.name,
     dark: darkMode,
     cssVariables: vars,
+    number: parts.number,
+    padding: parts.padding,
+    value: parts.value,
+    rgba: parts.rgba,
+    ink: parts.ink,
+    paletteRgba: parts.paletteRgba,
+    palette: parts.palette,
     color(name) {
       if (def(name).kind !== 'color') throw new TypeError(`${name} is not a colour`);
       return vars ? ref(name) : (main.get(name).lit as SafeColor);
@@ -958,41 +1012,12 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
       if (def(name).kind !== 'length') throw new TypeError(`${name} is not a length`);
       return vars ? ref(name) : Number(main.get(name).lit);
     },
-    number(name) {
-      const kind = def(name).kind;
-      if (kind !== 'length' && kind !== 'padding' && kind !== 'opacity')
-        throw new TypeError(`${name} is not a length`);
-      return Number(main.get(name).lit);
-    },
-    padding(name, padding) {
-      let p = paddings.get(name);
-      if (!p) {
-        if (def(name).kind !== 'padding') throw new TypeError(`${name} is not a padding`);
-        const lit = main.get(name).lit;
-        const m = RE_PADDING.exec(lit);
-        p = m ? { scale: true, n: Number(m[1] ?? 1) } : { scale: false, n: Number(lit) };
-        paddings.set(name, p);
-      }
-      return p.scale ? p.n * padding : p.n;
-    },
     font(name = 'fontFamily') {
       return vars ? ref(name) : (main.get(name).lit as SafeValue);
     },
     filter(name) {
       if (def(name).kind !== 'filter') throw new TypeError(`${name} is not a filter`);
       return vars ? ref(name) : (main.get(name).lit as SafeFilter);
-    },
-    value: (name) => main.get(name).lit,
-    rgba: (name) => main.get(name).rgba,
-    ink(fill) {
-      const c = parseColor(fill);
-      if (!c || c[3] < 0.5) return undefined;
-      const bg = main.opaque(c) as Rgba;
-      const text = main.get('nodeTextColor').rgba;
-      if (text && contrastRatio(main.opaque(text, bg) as Rgba, bg) >= AA) return undefined;
-      return (
-        contrastRatio(BLACK, bg) >= contrastRatio(WHITE, bg) ? '#000000' : '#ffffff'
-      ) as SafeColor;
     },
     rootStyle: () => (vars ? decls(main, used, night ? false : undefined) : {}),
     rootStyleText() {
@@ -1009,12 +1034,6 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
       vars && night
         ? { light: decls(main, used, true), dark: decls(night, used, true) }
         : undefined,
-    paletteRgba: (name) => main.palette(name, true),
-    palette(name) {
-      let list = palettes.get(name);
-      if (!list) palettes.set(name, (list = main.palette(name)));
-      return list;
-    },
   };
   return theme;
 }
