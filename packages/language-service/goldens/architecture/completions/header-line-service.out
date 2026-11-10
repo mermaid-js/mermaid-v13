@@ -1,0 +1,9 @@
+@ 1:29  architecture-beta service a |
+  in keyword 1:29-1:29 "" -> "in "
+  (database) constant (built-in icon) 1:29-1:29 "" -> "(database)"
+  (server) constant (built-in icon) 1:29-1:29 "" -> "(server)"
+  (disk) constant (built-in icon) 1:29-1:29 "" -> "(disk)"
+  (internet) constant (built-in icon) 1:29-1:29 "" -> "(internet)"
+  (cloud) constant (built-in icon) 1:29-1:29 "" -> "(cloud)"
+  (unknown) constant (built-in icon) 1:29-1:29 "" -> "(unknown)"
+  (blank) constant (built-in icon) 1:29-1:29 "" -> "(blank)"

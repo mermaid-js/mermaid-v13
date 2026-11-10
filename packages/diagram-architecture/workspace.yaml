@@ -11,8 +11,18 @@ grammars:
       module: parser/tokens.ts
       object: T
 
-# languageBundle: none yet. The `./language` facet (and with it the manifest's `language` entry)
-# is T6's (#619), which adds this key with it.
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+# icons.ts reads the renderer's built-in table; the facet keeps its own list of the names.
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - plugin.ts
+    - icons.ts
+    - theme/
+    - index.ts
+    - testing.ts
+    - v12-specs/
 
 # release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
 release:

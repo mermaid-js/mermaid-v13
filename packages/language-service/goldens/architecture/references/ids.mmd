@@ -1,0 +1,7 @@
+architecture-beta
+  group api[API]
+  service |db(database) in api
+  junction hub in a|pi
+  db:L -- R:hub
+  hub:B --> T:|db
+  align column db |hub

@@ -30,6 +30,7 @@
   "peerDependencies": {
     "@mermaid-js/core": "workspace:*",
     "@mermaid-js/diagram-agentflow": "workspace:*",
+    "@mermaid-js/diagram-architecture": "workspace:*",
     "@mermaid-js/diagram-block": "workspace:*",
     "@mermaid-js/diagram-class": "workspace:*",
     "@mermaid-js/diagram-cynefin": "workspace:*",
@@ -60,6 +61,9 @@
   },
   "peerDependenciesMeta": {
     "@mermaid-js/diagram-agentflow": {
+      "optional": true
+    },
+    "@mermaid-js/diagram-architecture": {
       "optional": true
     },
     "@mermaid-js/diagram-block": {
@@ -147,6 +151,7 @@
   "devDependencies": {
     "@mermaid-js/core": "workspace:*",
     "@mermaid-js/diagram-agentflow": "workspace:*",
+    "@mermaid-js/diagram-architecture": "workspace:*",
     "@mermaid-js/diagram-block": "workspace:*",
     "@mermaid-js/diagram-class": "workspace:*",
     "@mermaid-js/diagram-cynefin": "workspace:*",

@@ -1,0 +1,20 @@
+@ 4:11  service |db(database) in api
+  prepare: 4:11-4:13 "db"; rename to "store":
+  %% rename-to: store
+  architecture-beta
+    group api[API]
+    service store(database) in api
+    junction hub in api
+    store:L -- R:hub
+    hub{group}:B --> T:store
+    align row hub store
+@ 8:18  align row hub d|b
+  prepare: 8:17-8:19 "db"; rename to "store":
+  %% rename-to: store
+  architecture-beta
+    group api[API]
+    service store(database) in api
+    junction hub in api
+    store:L -- R:hub
+    hub{group}:B --> T:store
+    align row hub store

@@ -1,0 +1,55 @@
+@ 6:6  db:|L -- R:hub
+  6:6-6:7 "L"
+  | **edge** `db` `L` – `R` `hub`
+  |
+  | From the left side (`L`) of service `db` to the right side (`R`) of junction `hub`.
+@ 7:9  db:L -|- R:hub
+  7:8-7:10 "--"
+  | **edge** `db` `L` – `R` `hub`
+  |
+  | From the left side (`L`) of service `db` to the right side (`R`) of junction `hub`.
+@ 8:13  hub:B <-->| T:web
+  8:12-8:13 ">"
+  | **edge** `hub` `B` – `T` `web`
+  |
+  | From the bottom side (`B`) of junction `hub` to the top side (`T`) of service `web`.
+  |
+  | Arrowhead at `hub` and `web`.
+@ 9:13  web:R -[re|ads]- L:db
+  9:10-9:17 "[reads]"
+  | **edge** `web` `R` – `L` `db`
+  |
+  | From the right side (`R`) of service `web` to the left side (`L`) of service `db`.
+  |
+  | Label `reads`.
+@ 10:27  web{group}:T -- B:db{gro|up}
+  10:23-10:30 "{group}"
+  | **edge** `web` `T` – `B` `db`
+  |
+  | From the top side (`T`) of service `web` (in no group, so `{group}` is ignored) to the bottom side (`B`) of group `api` (around service `db`).
+@ 11:13  db{group}:|R -- L:web
+  11:13-11:14 "R"
+  | **edge** `db` `R` – `L` `web`
+  |
+  | From the right side (`R`) of group `api` (around service `db`) to the left side (`L`) of service `web`.
+@ 12:12  api:R -- |L:web
+  12:12-12:13 "L"
+  | **edge** `api` `R` – `L` `web`
+  |
+  | From the right side (`R`) of group `api` to the left side (`L`) of service `web`.
+  |
+  | `api` is a group, and an edge cannot end at one, so this edge is an error: write `{group}` after a service or junction in `api` instead.
+@ 13:19  api{group}:R -- |L:web
+  13:19-13:20 "L"
+  | **edge** `api` `R` – `L` `web`
+  |
+  | From the right side (`R`) of group `api` to the left side (`L`) of service `web`.
+  |
+  | `api` is a group, and an edge cannot end at one, so this edge is an error: write `{group}` after a service or junction in `api` instead.
+@ 16:17  g{group}:B -- |T:web
+  16:17-16:18 "T"
+  | **edge** `g` `B` – `T` `web`
+  |
+  | From the bottom side (`B`) of group `g` to the top side (`T`) of service `web`.
+  |
+  | `g` is a group, and an edge cannot end at one, so this edge is an error: write `{group}` after a service or junction in `g` instead.

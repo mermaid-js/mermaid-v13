@@ -1,0 +1,14 @@
+@ 3:9  group |api[API]
+  prepare: 3:9-3:12 "api"; rename to "backend":
+  %% rename-to: backend
+  architecture-beta
+    group backend[API]
+    group inner in backend
+    service db in backend
+@ 5:18  service db in a|pi
+  prepare: 5:17-5:20 "api"; rename to "backend":
+  %% rename-to: backend
+  architecture-beta
+    group backend[API]
+    group inner in backend
+    service db in backend

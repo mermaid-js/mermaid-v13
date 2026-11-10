@@ -1,0 +1,6 @@
+@ 4:11  service |db in api
+  prepare: 4:11-4:13 "db"; rename to "hub":
+  refused: 'hub' is already a junction id in this diagram.
+@ 7:16  service x in |api
+  prepare: 7:16-7:19 "api"; rename to "hub":
+  refused: 'hub' is already a junction id in this diagram.

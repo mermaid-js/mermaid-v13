@@ -1,0 +1,7 @@
+@ 3:11  service |db
+  prepare: 3:11-3:13 "db"; rename to "Backend":
+  refused: `Backend` starts with a capital `B`, which reads as a side: an id cannot start with `L`, `R`, `T` or `B`. Choose another name, such as `backend`.
+@ 6:6  ser|vice x
+  prepare: refused: There is no id or class name here to rename.
+@ 7:6  db:|R -- L:web
+  prepare: refused: There is no id or class name here to rename.

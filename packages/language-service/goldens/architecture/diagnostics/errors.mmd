@@ -1,0 +1,13 @@
+architecture-beta
+  group api(cloud)[API]
+  service db(database)[Database] in api
+  service db(server)[Again]
+  service web(server) in nowhere
+  service cache in db
+  group self in self
+  db:L -- R:ghost
+  db:X -- L:web
+  Backend:R -- L:db
+  api:R -- L:web
+  align row db ghost
+  align column web web

@@ -1,0 +1,14 @@
+@ 6:9  align |
+  row keyword 6:9-6:9 "" -> "row "
+  column keyword 6:9-6:9 "" -> "column "
+@ 7:10  align r|
+  row keyword 7:9-7:10 "r" -> "row "
+@ 8:13  align row |
+  db node (service) 8:13-8:13 "" -> "db"
+  web node (service) 8:13-8:13 "" -> "web"
+  hub node (junction) 8:13-8:13 "" -> "hub"
+@ 9:19  align column db |
+  web node (service) 9:19-9:19 "" -> "web"
+  hub node (junction) 9:19-9:19 "" -> "hub"
+@ 10:20  align row db web |
+  hub node (junction) 10:20-10:20 "" -> "hub"

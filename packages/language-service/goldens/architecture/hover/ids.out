@@ -1,0 +1,40 @@
+@ 2:9  group |api(cloud)[API]
+  2:9-2:12 "api"
+  | **group** `api`
+  |
+  | Label `API`. Icon `cloud`. In no group.
+@ 3:19  group inner in a|pi
+  3:18-3:21 "api"
+  | **group** `api`
+  |
+  | Label `API`. Icon `cloud`. In no group.
+@ 4:11  service |db(database)[Database] in inner
+  4:11-4:13 "db"
+  | **service** `db`
+  |
+  | Label `Database`. Icon `database`. In group `inner`.
+@ 6:13  junction h|ub
+  6:12-6:15 "hub"
+  | **junction** `hub`
+  |
+  | In no group.
+@ 7:14  db:L -- R:h|ub
+  7:13-7:16 "hub"
+  | **junction** `hub`
+  |
+  | In no group.
+@ 8:4  w|eb:R -- L:ghost
+  8:3-8:6 "web"
+  | **service** `web`
+  |
+  | Label `Web`. Text icon `WWW`. In no group.
+@ 9:11  service |x
+  9:11-9:12 "x"
+  | **group** `x`
+  |
+  | In no group.
+@ 12:15  db:R -- L:gh|ost
+  12:13-12:18 "ghost"
+  | **id** `ghost`
+  |
+  | No service, junction or group has this id.
