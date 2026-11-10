@@ -1,0 +1,32 @@
+# Implementer brief (spec #519, M5b ishikawa port)
+
+- **Ticket:** `gh -R mermaid-js/mermaid-v13 issue view <N>`. **Spec:** #519 (its "Maintainer decisions" D491–D498 are decided; D490 and D499 are kept for escalations). **Docs:** `v13/docs/{DESIGN,REQUIREMENTS,DECISIONS}.md` (D314–D339, D431–D538, D540–D546; D224–D227 from pie also apply). **Recipe:** `v13/docs/agents/port-diagram/` (README, parser-method, pitfalls, theming, language).
+- **Notes:** this folder. Read `INDEX.md`, `01-v12-ishikawa.md`, `02-v13-seams.md`, `GAPS.md` (close the items listed for your ticket) and `tickets/<dep>.md` for each blocker.
+- **Closest ports:** pie (`packages/diagram-pie`, jison, `layoutKind: 'custom'`), kanban and cynefin (recent jison ports), venn (`packages/diagram-venn`, run notes `v13/docs/agents/runs/429/`: `custom` layout, `w.outline` hand-drawn). Copy, never import.
+- **v12 source** is deleted from the branch: `git show fa796a943:packages/mermaid/src/diagrams/ishikawa/<file>`. The oracle is `mermaid@12.2.0` in `packages/conformance` (D316); ask it, don't reason about v12 (pitfall 29). Pele (`/Users/knsv/repos/pele/src/diagrams/ishikawa/`) is an MIT reference, never the oracle (D325).
+- **Repo rules:** pnpm; no TS enums; no console in shipped packages. `@mermaid-js/diagram-ishikawa` imports only `@mermaid-js/core` subpaths and has zero dependencies (R-PERF-2); no roughjs (hand-drawn through `w.outline`). **No core change** (D491). Test sources are `.mmd` fixtures under `e2e/diagrams/ishikawa/`, never TS corpus arrays; failing or lexer-only inputs go in `packages/conformance/corpus/ishikawa-cases.json`. Never hand-edit generated files (registry, config, facets, grammars, theme tables) beyond what `gen:*` produces; regenerate on conflict. New files under any `generated/` folder are gitignored: `git add -f` them. Never edit `.github/workflows/*`, never loosen a gate, never `--no-verify`. No AI attribution in commits or files (no Co-Authored-By, no "Generated with").
+- **Theme:** the spec adds **no theme table**: ishikawa reads only shared `lineColor`, `mainBkg`, `textColor`, `fontFamily`, `fontSize`. If a ticket finds it needs a diagram-only variable, it goes in the package's `DiagramPlugin.theme` table per `v13/docs/agents/runs/414/CONTRACT.md` (keyed by family and `dark`, never a theme name, D331) and is flagged as a deviation. Shared theme code never names a diagram-only variable.
+- **Stress specs:** pie's ratio pattern (`tLarge / Math.max(tSmall, 2)`) or #531's CPU-time pattern; never absolute times.
+- **Worktree:** `/Users/knsv/repos/mermaid-v13/.claude/worktrees/t<N>` on `feature/<N>_<short>`. Work only there with absolute paths. Run `pnpm install` first (and again after adding a package; then delete `.eslintcache`).
+- **Integration branch:** `feature/519_ishikawa`, checked out at `/Users/knsv/repos/mermaid-v13/.claude/worktrees/519-ishikawa-dd8fa6`. Read only from it; never write there.
+- **Environment:** run every check with `PATH=$HOME/.volta/tools/image/node/24.16.0/bin:$PATH`, `PARSE_FIXTURE_PATH` unset (`env -u PARSE_FIXTURE_PATH`) and `VITEST_MAX_WORKERS=4`.
+- **Core size (R-PERF-8, D546: 98,304 B gz):** `measureCoreSize` in `packages/bench/src/core-size.spec.ts`, and `packages/mermaid/src/cdn-build.spec.ts`. Measure before and after anything that touches the registry; report both. Over the limit: stop and report the bytes; never touch the gate.
+- **Decisions:** not covered by the spec or a D-id? Choose the option most consistent with P1/P2, the spec and the D-ids, implement it, and say so under "Deviations" in your reply. Don't wait for an answer. Visible rendering changes from v12 not covered by D491–D498 need a D-id: flag them.
+
+## Steps
+
+1. Confirm the base: `git merge-base --is-ancestor feature/519_ishikawa HEAD`. If that fails, `git reset --hard feature/519_ishikawa`.
+2. Use the Skill tool with `tdd` (and `ddlt` for layout). Test through `createMermaid().render()` / `renderSync()`, except where the recipe step names its own seam (lexer parity, model parity, layout invariants). Before T5's manifest lands, render through the package's own test harness as pie's and venn's T4 did.
+3. Stay within the ticket's scope. Touch shared files minimally and additively.
+4. **Scoped handoff checks** (maintainer, 2026-11-09: the shared lock queue was over an hour). With no lock, `env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=2`: `vitest run packages/diagram-ishikawa`, the ishikawa conformance and parity specs (`vitest run packages/conformance/src/ishikawa` plus any `packages/conformance/src/ishikawa-*.spec.ts`), `tsc --noEmit -p` for each touched package, and eslint on the changed files. Paste the results into the handoff. **Exception:** a ticket that changes core (`packages/core/**`), shared conformance code (oracle, harvester, registry), `tools/*` or another package still runs the full `pnpm check` under the lock (below). The full check also runs on every integration-branch push. Commit. Don't push, open PRs, or comment on or close issues.
+5. Before reporting, `git merge feature/519_ishikawa` and run the step-4 checks again.
+6. Write `v13/docs/agents/runs/519/tickets/<N>.md` (≤ 40 lines) in your own worktree, committed on your branch: exports, how to use them, test helpers, gz size, core size before/after, decisions, unmet criteria.
+7. Reply in ≤ 12 lines: branch, head sha, checks, deviations, unmet criteria.
+
+## Machine-wide locks (seven sessions share this machine)
+
+- One lock for every running port (`m3-check.lock`, slot A; maintainer, 2026-11-09, load average ~30). Never use `m3-check-b.lock`. If a full check fails only on a timeout in a package you didn't touch, rerun it once.
+
+- Every full `pnpm check` (only for the exception in step 4), every `pnpm e2e` and every push: `env -u PARSE_FIXTURE_PATH lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock env VITEST_MAX_WORKERS=4 pnpm check` (the shell may set `PARSE_FIXTURE_PATH`; with it set the conformance corpus specs read an outside folder and fail). Also unset it for targeted conformance `vitest` runs. Targeted `vitest run <files>` while iterating need no lock.
+- A timing test that fails under load is not a regression: rerun it under the lock. Known flakes: R-LANG-4 (`language-budget*.spec.ts`), the dev explorer's "/node-render over 1 MiB is a 413" EPIPE, a `packages/core/src/preprocess/stress.spec.ts` timeout.
+- Timing numbers from this machine are "not measured on a steady machine"; report gz sizes.

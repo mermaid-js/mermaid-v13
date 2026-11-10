@@ -1,0 +1,6 @@
+ishikawa-beta:keyword
+Blurry photo:string
+Process:string
+Out of focus:string
+User:string
+Shaky hands:string

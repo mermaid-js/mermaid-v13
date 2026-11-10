@@ -28,9 +28,9 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'xychart', pattern: /^\s*xychart(-beta)?/, id: 'xychart', formats: ['svg'] },
   { type: 'block', pattern: /^\s*block(-beta)?/ },
   { type: 'eventmodeling', pattern: /^\s*eventmodeling/ },
-  { type: 'treeView', pattern: /^\s*treeView-beta/ },
+  { type: 'treeView', pattern: /^\s*treeView-beta/, id: 'treeView', formats: ['svg', 'ascii'] },
   { type: 'radar', pattern: /^\s*radar-beta/, id: 'radar', formats: ['svg'] },
-  { type: 'ishikawa', pattern: /^\s*ishikawa(-beta)?\b/i },
+  { type: 'ishikawa', pattern: /^\s*ishikawa(-beta)?\b/i, id: 'ishikawa', formats: ['svg', 'ascii'] },
   { type: 'treemap', pattern: /^\s*treemap/, id: 'treemap', formats: ['svg'] },
   { type: 'railroad', pattern: /^\s*railroad-beta/i },
   { type: 'railroadEbnf', pattern: /^\s*railroad-ebnf-beta/i },
@@ -39,5 +39,5 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'venn', pattern: /^\s*venn-beta/, id: 'venn', formats: ['svg'] },
   { type: 'wardley', pattern: /^\s*wardley-beta/i, id: 'wardley', formats: ['svg'] },
   { type: 'cynefin', pattern: /^\s*cynefin-beta(?:[\s:]|$)/, id: 'cynefin', formats: ['svg'] },
-  { type: 'usecase', pattern: /^\s*usecase-beta(?:\s|$)/ },
+  { type: 'usecase', pattern: /^\s*usecase-beta(?:\s|$)/, id: 'usecase', formats: ['svg', 'ascii'] },
 ];

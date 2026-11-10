@@ -1,0 +1,38 @@
+# Implementer brief (spec #518, M5b treeView port)
+
+- **Ticket:** `gh issue view -R mermaid-js/mermaid-v13 <N>`. **Spec:** #518 (its "Maintainer decisions" D481–D488 are decided; D480/D489 reserved for escalations). **Docs:** `v13/docs/{DESIGN,REQUIREMENTS,DECISIONS}.md` (D314–D339, D540–D546 for M5 and the theme T0; D213, D220–D229 from pie apply here). **Recipe:** `v13/docs/agents/port-diagram/` (README, parser-method, pitfalls, theming, language). **Theme contract:** `v13/docs/agents/runs/414/CONTRACT.md`.
+- **Worked examples:** `packages/diagram-treemap` (Langium in v12 with `INDENTATION`, `layoutKind: 'custom'`, the closest shape) and `packages/diagram-packet` (custom layout, `./ascii` entry for T7), their conformance suites `packages/conformance/src/{treemap,packet,pie}/`, and run notes `v13/docs/agents/runs/{428,421,288}/` (`288/tickets/304.md` is the Langium lexer oracle API, D220; `428/tickets/*.md` are the treemap handoffs). Newest ports: wardley, xychart, sankey, venn (runs 430, 426, 427, 429).
+- **v12 source:** `git show fa796a943:packages/mermaid/src/diagrams/treeView/<file>`, `git show fa796a943:packages/parser/src/language/treeView/<file>`, `git show fa796a943:packages/parser/tests/treeView.test.ts`, config `git show fa796a943:packages/mermaid/src/schemas/config.schema.yaml` (`TreeViewDiagramConfig`). The oracle is the `mermaid-v12` (12.2.0) and `mermaid-parser-v12` (2.0.1) dev dependencies in `packages/conformance`. The code is the oracle, not the docs page. Pele (`/Users/knsv/repos/pele/src/diagrams/treeview/`, if present) is an MIT reference, never the oracle (D325).
+- **Notes:** this folder. Read `INDEX.md`, `01-v12-treeview.md`, `GAPS.md` (close the items listed for your ticket) and `tickets/<dep>.md` for each blocker.
+- **Repo rules:** pnpm; no TS enums; no console in shipped packages. `@mermaid-js/diagram-treeview` imports only `@mermaid-js/core` subpaths, zero dependencies, never another diagram package. **No core change** (D481). Never edit `.github/workflows/*`. Never loosen a gate. Never use `--no-verify`. Test sources go in `.mmd` fixtures under `e2e/diagrams/tree-view/`, never hand-written TS corpus arrays; failing or lexer-only inputs go in `packages/conformance/corpus/treeView-cases.json`. Generated grammar files under `generated/` are gitignored: `git add -f` them. After adding a package, run `pnpm install` and delete `.eslintcache`.
+- **Harvest:** a `treeView` row in `HARVESTS` (`packages/conformance/src/cli/harvest-v12.ts`) run with `harvest:v12 treeView` (no script of its own, per `port-diagram/shared-files.md`). No new harvester.
+- **Theme:** the type's rows go in the package's `DiagramPlugin.theme` table per CONTRACT.md: `src/theme/vocabulary.ts`, `pnpm gen:theme` → `THEME_VARIABLE_TABLE`; keyed by family and `dark`, never a theme name (D331); nested `treeView` section (D335, D540, D541); `inline(v)` reads only what the theme wrote. Shared theme code never names a diagram-only variable. Core is near its gz limit (98,304 B, D546): no treeView code or row in core beyond the generated registry/config rows.
+- **v12 bugs not to copy:** the seven hard-coded colours (D483: dark entry), quadratic long names (R-PARSE-7, pitfall 5), the `constructor` crash with `showIcons` (D486: own-property lookups).
+- **Stress specs** use pie's ratio pattern (`tLarge / Math.max(tSmall, 2)`, best of N, CPU time) or #531's CPU-time pattern, never absolute times.
+- **Worktree:** `/Users/knsv/repos/mermaid-v13/.claude/worktrees/t<N>` on `feature/<N>_treeview-<short>`. Work only there with absolute paths; stay out of other worktrees. Run `pnpm install` first.
+- **Integration branch:** `feature/518_treeview`, checked out at `/Users/knsv/repos/mermaid-v13/.claude/worktrees/518-treeview-e1abe2`. Read only from it; never write there.
+- **Parallel wave-3 sessions** (block, c4, agentflow, usecase, ishikawa, requirement) edit shared files: the registry, detectors, `SECTION_OWNERS`, `LANGIUM_LEXERS`, `HARVESTS`, `JISON_TYPES`, knip entries, theme vocabulary lists, adapter regexes, language goldens' `empty.out`, licence tables, MIGRATION.md, RELEASING.md. Never hand-edit generated files (D112); run the `gen:*` script. Keep shared edits small and additive.
+- **No AI attribution** in commits or files (no Co-Authored-By, no "Generated with").
+- **Environment:** run every check as `PATH=$HOME/.volta/tools/image/node/24.16.0/bin:$PATH` with `PARSE_FIXTURE_PATH` unset (`env -u PARSE_FIXTURE_PATH`) and `VITEST_MAX_WORKERS=4`.
+- **Timing** on this machine is not trusted: timing tests assert ratios; report gz sizes; mark any timing "not measured on a steady machine".
+- **Undecided points:** the maintainer is not available. Pick the option most consistent with P1/P2, the spec and the D-ids, implement it, and list it under "Deviations" in your reply and handoff. Flag any visible rendering change not covered by a D-id.
+
+## Steps
+
+1. Confirm the base: `git merge-base --is-ancestor feature/518_treeview HEAD`. If that fails, `git reset --hard feature/518_treeview`.
+2. Use the Skill tool with `tdd`. Test through `createMermaid().render()` / `renderSync()`, except where the recipe step names its own seam (lexer parity, parser/model, layout invariants).
+3. Stay within the ticket's scope.
+4. **Scoped handoff checks** (maintainer, 2026-11-09: "Yes, scope ticket checks"), no lock, `env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=2`: `vitest run packages/diagram-treeview`, the treeView conformance and parity specs (`vitest run packages/conformance/src/treeView` plus any other conformance spec you touched), `tsc --noEmit -p` for each touched package, and eslint on the changed files. Paste the results into the handoff. **Exception:** a ticket that changes core, shared conformance code (oracle, harvester, registry), `tools/*` or another package runs the full `pnpm check` under the lock instead. The full check otherwise runs once per integration-branch push (pre-push hook). Commit with no AI attribution. Don't push, open PRs, or comment on or close issues.
+5. Before reporting, `git merge feature/518_treeview` and run the step-4 checks again.
+6. Write `tickets/<N>.md` (≤ 40 lines) in **your own worktree** at `v13/docs/agents/runs/518/tickets/<N>.md`, committed on your branch: exports, how to use them, test helpers, gz size, unmet criteria.
+7. Reply in ≤ 12 lines: branch, head sha, checks, deviations, unmet criteria.
+
+## Machine-wide locks (seven sessions share this machine)
+
+- **One lock again** (maintainer, load reduction): every full check, e2e run and push uses `/Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock`, shared with usecase, ishikawa and requirement; one full check at a time. Do not use `m3-check-b.lock`. A full check that fails only on a timeout in a package you did not touch: rerun once.
+
+- `PARSE_FIXTURE_PATH` may be set in this machine's shell; when it is, the conformance corpus specs read an outside folder and `pnpm check` (and the pre-push hook) fails. Always unset it.
+- Every full `pnpm check` (exception tickets and integration pushes only): `env -u PARSE_FIXTURE_PATH VITEST_MAX_WORKERS=4 lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock pnpm check`.
+- Every `pnpm e2e` / Playwright run: `env -u PARSE_FIXTURE_PATH lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock <command>`.
+- Targeted vitest runs outside the lock are fine with `VITEST_MAX_WORKERS=4`.
+- A timing test that fails under load is not a regression: rerun it under the lock before acting on it. Known flakes: `language-budget*.spec.ts` (R-LANG-4), the dev explorer's "/node-render over 1 MiB is a 413" EPIPE, `packages/core/src/preprocess/stress.spec.ts` timeouts.

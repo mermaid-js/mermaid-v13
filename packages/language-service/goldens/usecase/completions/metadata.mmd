@@ -1,0 +1,13 @@
+usecase-beta
+  actor User@{ | }
+  actor Admin@{ type: | }
+  systemBoundary Shop@{ type: | }
+  end
+  User e1@--> Login
+  e1@{ |
+  Login@{ business: true, | }
+  User@{
+    type: hollow,
+    |
+  }
+  Ghost@{ | }

@@ -1,0 +1,11 @@
+@ 2:1  |
+  title keyword 2:1-2:1 "" -> "title "
+  accTitle keyword 2:1-2:1 "" -> "accTitle: "
+  accDescr: keyword 2:1-2:1 "" -> "accDescr: "
+  accDescr { keyword 2:1-2:1 "" -> "accDescr { }"
+@ 3:6  acc|
+  accTitle keyword 3:3-3:6 "acc" -> "accTitle: "
+  accDescr: keyword 3:3-3:6 "acc" -> "accDescr: "
+  accDescr { keyword 3:3-3:6 "acc" -> "accDescr { }"
+@ 5:5  ti|
+  none
