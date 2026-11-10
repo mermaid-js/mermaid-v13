@@ -1,6 +1,6 @@
 // The `swimlane` engine through its export (D531–D536): a valid model in every direction, lanes
 // from top-level groups and the default lane, the tuning from `ctx.config.swimlane`, spacing
-// from `graph.spacing`, placeholder `stepped` routes until #595, and byte-identical output.
+// from `graph.spacing`, `stepped` routes from the orthogonal router, and byte-identical output.
 import { describe, expect, it } from 'vitest';
 import type { ResolvedConfig } from '../../config/resolve.ts';
 import type { Dir, LayoutGraph, LayoutModel } from '../types.ts';

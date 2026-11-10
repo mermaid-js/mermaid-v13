@@ -1,0 +1,261 @@
+{
+  "tuning": {},
+  "graph": {
+    "direction": "TB",
+    "nodes": [
+      {
+        "id": "A",
+        "width": 150,
+        "height": 46.1,
+        "shape": "rounded",
+        "parent": "X1",
+        "span": 126
+      },
+      {
+        "id": "B",
+        "width": 217.4857142857143,
+        "height": 48.1,
+        "shape": "hex",
+        "parent": "X1",
+        "span": 181.43571428571428
+      },
+      {
+        "id": "I",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "X1",
+        "span": 128
+      },
+      {
+        "id": "id1",
+        "width": 144,
+        "height": 70.95714285714286,
+        "shape": "cyl",
+        "parent": "X1",
+        "span": 86.39999999999999
+      },
+      {
+        "id": "Sys1",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "X3",
+        "span": 128
+      },
+      {
+        "id": "E",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "X3",
+        "span": 128
+      },
+      {
+        "id": "C",
+        "width": 217.4857142857143,
+        "height": 48.1,
+        "shape": "hex",
+        "parent": "X2",
+        "span": 181.43571428571428
+      },
+      {
+        "id": "D",
+        "width": 217.4857142857143,
+        "height": 48.1,
+        "shape": "hex",
+        "parent": "X2",
+        "span": 181.43571428571428
+      },
+      {
+        "id": "F",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "X2",
+        "span": 128
+      },
+      {
+        "id": "G",
+        "width": 152,
+        "height": 40.1,
+        "shape": "notch-pent",
+        "parent": "X2",
+        "span": 128
+      },
+      {
+        "id": "H",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "X2",
+        "span": 128
+      },
+      {
+        "id": "exit",
+        "width": 150,
+        "height": 46.1,
+        "shape": "rounded",
+        "parent": "X2",
+        "span": 126
+      }
+    ],
+    "groups": [
+      {
+        "id": "X1",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 17.122,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "X3",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 17.122,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "X2",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 17.122,
+          "height": 16.1
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "L_A_Sys1_0",
+        "source": "A",
+        "target": "Sys1",
+        "minLen": 1
+      },
+      {
+        "id": "L_Sys1_B_0",
+        "source": "Sys1",
+        "target": "B",
+        "minLen": 1
+      },
+      {
+        "id": "L_B_C_0",
+        "source": "B",
+        "target": "C",
+        "minLen": 1,
+        "label": {
+          "width": 49.352,
+          "height": 20.1
+        }
+      },
+      {
+        "id": "L_C_D_0",
+        "source": "C",
+        "target": "D",
+        "minLen": 1,
+        "label": {
+          "width": 49.352,
+          "height": 20.1
+        }
+      },
+      {
+        "id": "L_D_E_0",
+        "source": "D",
+        "target": "E",
+        "minLen": 1,
+        "label": {
+          "width": 49.352,
+          "height": 20.1
+        }
+      },
+      {
+        "id": "L_E_F_0",
+        "source": "E",
+        "target": "F",
+        "minLen": 1
+      },
+      {
+        "id": "L_F_G_0",
+        "source": "F",
+        "target": "G",
+        "minLen": 1
+      },
+      {
+        "id": "L_G_H_0",
+        "source": "G",
+        "target": "H",
+        "minLen": 1
+      },
+      {
+        "id": "L_H_I_0",
+        "source": "H",
+        "target": "I",
+        "minLen": 1
+      },
+      {
+        "id": "L_I_exit_0",
+        "source": "I",
+        "target": "exit",
+        "minLen": 1
+      },
+      {
+        "id": "L_B_exit_0",
+        "source": "B",
+        "target": "exit",
+        "minLen": 1,
+        "label": {
+          "width": 68.01400000000001,
+          "height": 20.1
+        }
+      }
+    ],
+    "spacing": {
+      "node": 50,
+      "rank": 50,
+      "edge": 20
+    },
+    "diagramPadding": 8,
+    "routing": "stepped",
+    "headRoom": 7,
+    "metrics": {
+      "portPitch": 16,
+      "minPitch": 8,
+      "portSep": 20,
+      "trackMargin": 18,
+      "trackPitch": 10,
+      "trackSpread": 14,
+      "levelMargin": 28,
+      "levelPitch": 12,
+      "levelLead": 12,
+      "levelClear": 8,
+      "levelTouch": 4,
+      "snap": 12,
+      "bendSnap": 24,
+      "leanClear": 40,
+      "fan": 24,
+      "loop": 26,
+      "loopGap": 6,
+      "loopLabel": 28,
+      "corner": 12,
+      "turnBreakpoint": 640,
+      "endLabelAlong": 4,
+      "endLabelAcross": 6
+    }
+  }
+}

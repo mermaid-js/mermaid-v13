@@ -1,0 +1,772 @@
+{
+  "tuning": {
+    "automaticLaneOrdering": true
+  },
+  "graph": {
+    "direction": "TB",
+    "nodes": [
+      {
+        "id": "1",
+        "width": 170.025,
+        "height": 40.1,
+        "shape": "stadium",
+        "parent": "Requestor",
+        "span": 129.925
+      },
+      {
+        "id": "2",
+        "width": 152,
+        "height": 72.30000000000001,
+        "shape": "rect",
+        "parent": "Requestor",
+        "span": 128
+      },
+      {
+        "id": "3",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "Requestor",
+        "span": 128
+      },
+      {
+        "id": "15",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "Requestor",
+        "span": 128
+      },
+      {
+        "id": "16",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "Requestor",
+        "span": 128
+      },
+      {
+        "id": "17",
+        "width": 152,
+        "height": 88.4,
+        "shape": "rect",
+        "parent": "Requestor",
+        "span": 128
+      },
+      {
+        "id": "18",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "Requestor",
+        "span": 128
+      },
+      {
+        "id": "24",
+        "width": 152,
+        "height": 120.60000000000001,
+        "shape": "rect",
+        "parent": "Requestor",
+        "span": 128
+      },
+      {
+        "id": "36",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "Requestor",
+        "span": 128
+      },
+      {
+        "id": "39",
+        "width": 170.025,
+        "height": 40.1,
+        "shape": "stadium",
+        "parent": "Requestor",
+        "span": 129.925
+      },
+      {
+        "id": "4",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "Department_Head",
+        "span": 128
+      },
+      {
+        "id": "19",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "Department_Head",
+        "span": 128
+      },
+      {
+        "id": "5",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Supply_Chain_Associate",
+        "span": 128
+      },
+      {
+        "id": "6",
+        "width": 152,
+        "height": 72.30000000000001,
+        "shape": "rect",
+        "parent": "Supply_Chain_Associate",
+        "span": 128
+      },
+      {
+        "id": "7",
+        "width": 182.2,
+        "height": 182.2,
+        "shape": "diam",
+        "parent": "Supply_Chain_Associate",
+        "span": 109.32
+      },
+      {
+        "id": "8",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "Supply_Chain_Associate",
+        "span": 128
+      },
+      {
+        "id": "9",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Supply_Chain_Associate",
+        "span": 128
+      },
+      {
+        "id": "11",
+        "width": 152,
+        "height": 88.4,
+        "shape": "rect",
+        "parent": "Supply_Chain_Associate",
+        "span": 128
+      },
+      {
+        "id": "12",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "Supply_Chain_Associate",
+        "span": 128
+      },
+      {
+        "id": "25",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "Supply_Chain_Associate",
+        "span": 128
+      },
+      {
+        "id": "29",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "Supply_Chain_Associate",
+        "span": 128
+      },
+      {
+        "id": "35",
+        "width": 152,
+        "height": 72.30000000000001,
+        "shape": "rect",
+        "parent": "Supply_Chain_Associate",
+        "span": 128
+      },
+      {
+        "id": "38",
+        "width": 152,
+        "height": 88.4,
+        "shape": "rect",
+        "parent": "Supply_Chain_Associate",
+        "span": 128
+      },
+      {
+        "id": "10",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "Supplier",
+        "span": 128
+      },
+      {
+        "id": "30",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "Supplier",
+        "span": 128
+      },
+      {
+        "id": "31",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Supplier",
+        "span": 128
+      },
+      {
+        "id": "32",
+        "width": 166.1,
+        "height": 166.1,
+        "shape": "diam",
+        "parent": "Supplier",
+        "span": 99.66
+      },
+      {
+        "id": "37",
+        "width": 152,
+        "height": 72.30000000000001,
+        "shape": "rect",
+        "parent": "Supplier",
+        "span": 128
+      },
+      {
+        "id": "13",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "Supply_Chain_Head",
+        "span": 128
+      },
+      {
+        "id": "14",
+        "width": 152,
+        "height": 104.5,
+        "shape": "rect",
+        "parent": "Supply_Chain_Head",
+        "span": 128
+      },
+      {
+        "id": "26",
+        "width": 152,
+        "height": 72.30000000000001,
+        "shape": "rect",
+        "parent": "Supply_Chain_Head",
+        "span": 128
+      },
+      {
+        "id": "20",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "General_Manager",
+        "span": 128
+      },
+      {
+        "id": "28",
+        "width": 152,
+        "height": 104.5,
+        "shape": "rect",
+        "parent": "General_Manager",
+        "span": 128
+      },
+      {
+        "id": "21",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "Finance_Manager",
+        "span": 128
+      },
+      {
+        "id": "22",
+        "width": 152,
+        "height": 56.2,
+        "shape": "rect",
+        "parent": "BOD",
+        "span": 128
+      },
+      {
+        "id": "23",
+        "width": 152,
+        "height": 104.5,
+        "shape": "rect",
+        "parent": "BOD",
+        "span": 128
+      },
+      {
+        "id": "27",
+        "width": 152,
+        "height": 72.30000000000001,
+        "shape": "rect",
+        "parent": "Finance_Head",
+        "span": 128
+      },
+      {
+        "id": "33",
+        "width": 182.2,
+        "height": 182.2,
+        "shape": "diam",
+        "parent": "Warehouse",
+        "span": 109.32
+      },
+      {
+        "id": "33a",
+        "width": 164,
+        "height": 60.300000000000004,
+        "shape": "fr-rect",
+        "parent": "Warehouse",
+        "span": 140
+      },
+      {
+        "id": "33b",
+        "width": 164,
+        "height": 60.300000000000004,
+        "shape": "fr-rect",
+        "parent": "Warehouse",
+        "span": 140
+      }
+    ],
+    "groups": [
+      {
+        "id": "Requestor",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 64.582,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Department_Head",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 110.488,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Supply_Chain_Associate",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 147.84,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Supplier",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 51.352,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Supply_Chain_Head",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 120.61,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "General_Manager",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 108.934,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Finance_Manager",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 108.934,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "BOD",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 30.338,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Finance_Head",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 87.15,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Warehouse",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 71.582,
+          "height": 16.1
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "L_1_2_0",
+        "source": "1",
+        "target": "2",
+        "minLen": 1
+      },
+      {
+        "id": "L_2_3_0",
+        "source": "2",
+        "target": "3",
+        "minLen": 1
+      },
+      {
+        "id": "L_3_4_0",
+        "source": "3",
+        "target": "4",
+        "minLen": 1
+      },
+      {
+        "id": "L_4_5_0",
+        "source": "4",
+        "target": "5",
+        "minLen": 1
+      },
+      {
+        "id": "L_5_6_0",
+        "source": "5",
+        "target": "6",
+        "minLen": 1
+      },
+      {
+        "id": "L_6_7_0",
+        "source": "6",
+        "target": "7",
+        "minLen": 1
+      },
+      {
+        "id": "L_7_8_0",
+        "source": "7",
+        "target": "8",
+        "minLen": 1,
+        "label": {
+          "width": 36.122,
+          "height": 20.1
+        }
+      },
+      {
+        "id": "L_8_9_0",
+        "source": "8",
+        "target": "9",
+        "minLen": 1
+      },
+      {
+        "id": "L_7_9_0",
+        "source": "7",
+        "target": "9",
+        "minLen": 1,
+        "label": {
+          "width": 29.892,
+          "height": 20.1
+        }
+      },
+      {
+        "id": "L_9_10_0",
+        "source": "9",
+        "target": "10",
+        "minLen": 1
+      },
+      {
+        "id": "L_10_11_0",
+        "source": "10",
+        "target": "11",
+        "minLen": 1
+      },
+      {
+        "id": "L_11_12_0",
+        "source": "11",
+        "target": "12",
+        "minLen": 1
+      },
+      {
+        "id": "L_12_13_0",
+        "source": "12",
+        "target": "13",
+        "minLen": 1
+      },
+      {
+        "id": "L_13_14_0",
+        "source": "13",
+        "target": "14",
+        "minLen": 1
+      },
+      {
+        "id": "L_14_15_0",
+        "source": "14",
+        "target": "15",
+        "minLen": 1
+      },
+      {
+        "id": "L_15_16_0",
+        "source": "15",
+        "target": "16",
+        "minLen": 1
+      },
+      {
+        "id": "L_16_17_0",
+        "source": "16",
+        "target": "17",
+        "minLen": 1
+      },
+      {
+        "id": "L_17_18_0",
+        "source": "17",
+        "target": "18",
+        "minLen": 1
+      },
+      {
+        "id": "L_18_19_0",
+        "source": "18",
+        "target": "19",
+        "minLen": 1
+      },
+      {
+        "id": "L_19_20_0",
+        "source": "19",
+        "target": "20",
+        "minLen": 1
+      },
+      {
+        "id": "L_20_21_0",
+        "source": "20",
+        "target": "21",
+        "minLen": 1
+      },
+      {
+        "id": "L_21_22_0",
+        "source": "21",
+        "target": "22",
+        "minLen": 1
+      },
+      {
+        "id": "L_22_23_0",
+        "source": "22",
+        "target": "23",
+        "minLen": 1
+      },
+      {
+        "id": "L_23_24_0",
+        "source": "23",
+        "target": "24",
+        "minLen": 1
+      },
+      {
+        "id": "L_24_25_0",
+        "source": "24",
+        "target": "25",
+        "minLen": 1
+      },
+      {
+        "id": "L_25_26_0",
+        "source": "25",
+        "target": "26",
+        "minLen": 1
+      },
+      {
+        "id": "L_26_27_0",
+        "source": "26",
+        "target": "27",
+        "minLen": 1
+      },
+      {
+        "id": "L_27_28_0",
+        "source": "27",
+        "target": "28",
+        "minLen": 1
+      },
+      {
+        "id": "L_28_29_0",
+        "source": "28",
+        "target": "29",
+        "minLen": 1
+      },
+      {
+        "id": "L_29_30_0",
+        "source": "29",
+        "target": "30",
+        "minLen": 1
+      },
+      {
+        "id": "L_30_31_0",
+        "source": "30",
+        "target": "31",
+        "minLen": 1
+      },
+      {
+        "id": "L_31_32_0",
+        "source": "31",
+        "target": "32",
+        "minLen": 1
+      },
+      {
+        "id": "L_32_33_0",
+        "source": "32",
+        "target": "33",
+        "minLen": 1,
+        "label": {
+          "width": 83.582,
+          "height": 20.1
+        }
+      },
+      {
+        "id": "L_33_33a_0",
+        "source": "33",
+        "target": "33a",
+        "minLen": 1,
+        "label": {
+          "width": 48.568,
+          "height": 20.1
+        }
+      },
+      {
+        "id": "L_33_33b_0",
+        "source": "33",
+        "target": "33b",
+        "minLen": 1,
+        "label": {
+          "width": 78.906,
+          "height": 20.1
+        }
+      },
+      {
+        "id": "L_33a_39_0",
+        "source": "33a",
+        "target": "39",
+        "minLen": 1
+      },
+      {
+        "id": "L_33b_39_0",
+        "source": "33b",
+        "target": "39",
+        "minLen": 1
+      },
+      {
+        "id": "L_32_35_0",
+        "source": "32",
+        "target": "35",
+        "minLen": 1,
+        "label": {
+          "width": 48.568,
+          "height": 20.1
+        }
+      },
+      {
+        "id": "L_35_36_0",
+        "source": "35",
+        "target": "36",
+        "minLen": 1
+      },
+      {
+        "id": "L_36_37_0",
+        "source": "36",
+        "target": "37",
+        "minLen": 1
+      },
+      {
+        "id": "L_37_38_0",
+        "source": "37",
+        "target": "38",
+        "minLen": 1
+      },
+      {
+        "id": "L_38_39_0",
+        "source": "38",
+        "target": "39",
+        "minLen": 1
+      }
+    ],
+    "spacing": {
+      "node": 50,
+      "rank": 50,
+      "edge": 20
+    },
+    "diagramPadding": 8,
+    "routing": "stepped",
+    "headRoom": 7,
+    "metrics": {
+      "portPitch": 16,
+      "minPitch": 8,
+      "portSep": 20,
+      "trackMargin": 18,
+      "trackPitch": 10,
+      "trackSpread": 14,
+      "levelMargin": 28,
+      "levelPitch": 12,
+      "levelLead": 12,
+      "levelClear": 8,
+      "levelTouch": 4,
+      "snap": 12,
+      "bendSnap": 24,
+      "leanClear": 40,
+      "fan": 24,
+      "loop": 26,
+      "loopGap": 6,
+      "loopLabel": 28,
+      "corner": 12,
+      "turnBreakpoint": 640,
+      "endLabelAlong": 4,
+      "endLabelAcross": 6
+    }
+  }
+}

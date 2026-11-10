@@ -1,0 +1,91 @@
+{
+  "tuning": {},
+  "graph": {
+    "direction": "LR",
+    "nodes": [
+      {
+        "id": "a",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "inner",
+        "span": 16.1
+      }
+    ],
+    "groups": [
+      {
+        "id": "lane1",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 75.46,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "lane2",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 51.366,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "inner",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 44.352,
+          "height": 16.1
+        },
+        "parent": "lane1"
+      }
+    ],
+    "edges": [],
+    "spacing": {
+      "node": 50,
+      "rank": 50,
+      "edge": 20
+    },
+    "diagramPadding": 8,
+    "routing": "stepped",
+    "headRoom": 7,
+    "metrics": {
+      "portPitch": 16,
+      "minPitch": 8,
+      "portSep": 20,
+      "trackMargin": 18,
+      "trackPitch": 10,
+      "trackSpread": 14,
+      "levelMargin": 28,
+      "levelPitch": 12,
+      "levelLead": 12,
+      "levelClear": 8,
+      "levelTouch": 4,
+      "snap": 12,
+      "bendSnap": 24,
+      "leanClear": 40,
+      "fan": 24,
+      "loop": 26,
+      "loopGap": 6,
+      "loopLabel": 28,
+      "corner": 12,
+      "turnBreakpoint": 640,
+      "endLabelAlong": 4,
+      "endLabelAcross": 6
+    }
+  }
+}
