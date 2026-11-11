@@ -18,8 +18,14 @@ import { configLengths, type ConfigLength } from './config-length.ts';
 import type { StateRenderContext } from './context.ts';
 import { stateConfigDefaults } from '../generated/config-defaults.ts';
 import { stateMetrics, type StateMetrics } from './metrics.ts';
-import { embedSize, type EmbedSlot } from './embed.ts';
-import { FOLDED_TYPE_SIZE, foldedSize, foldedTypeText } from '@mermaid-js/core/svg/folded';
+import type { EmbeddedDiagram } from '@mermaid-js/core';
+import { framedSize } from '@mermaid-js/core/svg/framed';
+import {
+  FOLDED_TYPE_SIZE,
+  foldedCells,
+  foldedSize,
+  foldedTypeText,
+} from '@mermaid-js/core/svg/folded';
 
 /** What a node is drawn as. `described`: a state with several description lines (v12 `rectWithTitle`). */
 export type StateShape =
@@ -53,7 +59,7 @@ export interface StateNodeView {
   state?: StateNode;
   note?: StateNote;
   /** An embedded diagram block (ADR-15): what it holds, `null` for a stand-in frame. */
-  embed?: EmbedSlot;
+  embed?: EmbeddedDiagram | null;
   /** A folded block (#670): its inner type (empty when unknown) and that type's label. */
   fold?: { readonly type: string; readonly label: MeasuredLabel };
 }
@@ -390,10 +396,7 @@ function folded(
   // In cells: the title rows, a divider and the type row, padded in a border (a text-form box).
   const pad = m.units.builder.nodePad;
   const { width: w, height: h } = m.cells
-    ? {
-        width: Math.max(label.width, fold.label.width) + 2 * (pad.x + 1),
-        height: label.lines.length + 2 + 2 * (pad.y + 1),
-      }
+    ? foldedCells({ width: label.width, rows: label.lines.length }, fold.label, pad)
     : foldedSize(label, fold.label, type.length);
   return { ...base, shape: 'embed', label, embed: null, fold, w, h };
 }
@@ -423,7 +426,8 @@ function measureState(
       // The title stays on one line: the strip is as wide as the inner diagram allows.
       const label = m.label(s.title ?? '', style, Infinity);
       const embed = m.embed?.(s.id) ?? null;
-      return { ...base, shape: 'embed', label, embed, ...embedSize(embed, label) };
+      const { width: w, height: h } = framedSize(embed, label);
+      return { ...base, shape: 'embed', label, embed, w, h };
     }
     case 'plain':
     case 'composite':

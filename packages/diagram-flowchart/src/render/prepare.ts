@@ -6,7 +6,12 @@
 import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
-import { FOLDED_TYPE_SIZE, foldedSize, foldedTypeText } from '@mermaid-js/core/svg/folded';
+import {
+  FOLDED_TYPE_SIZE,
+  foldedCells,
+  foldedSize,
+  foldedTypeText,
+} from '@mermaid-js/core/svg/folded';
 import {
   fontSizePx,
   layoutLabel,
@@ -321,8 +326,8 @@ function measureNode(
     if (fold) {
       // The title rows, a divider and the type, centred: as wide as the wider of the two.
       fold.label = m.label(fold.type, false, f, Infinity);
-      view.w = Math.max(lw, fold.label.width) + 2 * (pad.x + 1);
-      view.h = view.label.lines.length + 2 + 2 * (pad.y + 1);
+      const rows = view.label.lines.length;
+      ({ width: view.w, height: view.h } = foldedCells({ width: lw, rows }, fold.label, pad));
       return;
     }
     if (view.embedText) {

@@ -8,7 +8,8 @@ import type {
   RoutePoint,
 } from '@mermaid-js/core/layout';
 import { layered } from '@mermaid-js/core/layout';
-import { drawFolded } from '@mermaid-js/core/svg/folded';
+import { drawFolded, foldedInk } from '@mermaid-js/core/svg/folded';
+import { drawFramed } from '@mermaid-js/core/svg/framed';
 import {
   checkLinkTarget,
   checkUrl,
@@ -26,7 +27,6 @@ import {
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
 import { drawIcon, drawImage } from './assets.ts';
-import { drawEmbed } from './embed.ts';
 import { arrowheads, marker, markerTrim, routePath, type Arrowheads } from './edges.ts';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
 import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
@@ -234,9 +234,7 @@ function paints(theme: ThemeOf, flow: Prepared, lanes: boolean): Paints {
     ? { stroke: theme.color('clusterBorder') }
     : undefined;
   const laneStroke = lanes ? theme.color('clusterBorder') : undefined;
-  const folded = flow.nodes.some((v) => v.fold)
-    ? { ink: theme.color('nodeBorder'), muted: theme.color('mutedBorder') }
-    : undefined;
+  const folded = flow.nodes.some((v) => v.fold) ? foldedInk(theme) : undefined;
   const slotOf = paletteSlots(theme);
   const edgeLabel = flow.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
@@ -530,7 +528,7 @@ function drawNode(
       w.close();
       return;
     }
-    drawEmbed(w, view, view.embed, frame);
+    drawFramed(w, { width: view.w, height: view.h }, view.label.height, view.embed, frame);
   } else if (v?.img) drawImage(w, view, v.img, securityLevel, warn);
   else if (v?.icon) {
     // D298: the glyph takes the author's stroke, else nodeBorder (`node.stroke`, the gradient
