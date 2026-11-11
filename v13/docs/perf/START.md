@@ -1,13 +1,65 @@
 # Start here: flowchart performance
 
-## Execution status, 2026-11-10
+## Execution status, 2026-11-11
 
 **Formal headless Node round 0 is complete and published.** All 15 jobs completed under P27
 in `.tmp/perf-round-0-p27`. See [the generated report](runs/0/REPORT.md),
 [aggregate results](runs/0/RESULTS.json), and [baseline review](runs/0/REVIEW.md).
-No optimization hypothesis was implemented or evaluated. **Stop before round 1:** review the
-baseline with Knut before dispatching implementers. P28 resolves the former P18/P12 question:
-cache reset is for measurement only; production cache removal is not required.
+At round-0 publication no optimization hypothesis had been implemented or evaluated. Knut has
+now authorized the first round-1 batch: **5b, 2b and 1c**, each against the same frozen source
+snapshot. See [BATCH-1.md](runs/1/BATCH-1.md) for execution status and assignments. P28 resolves
+the former P18/P12 question: cache reset is for measurement only; production cache removal is
+not required. The round-0 evidence and review below remain unchanged.
+
+**Round 1's first batch is now complete.** [The report](runs/1/batch-1/REPORT.md) records
+2b, 1c and 5b as unfit: observed Node gains of 1.833%, 1.690% and 3.021% fall below the
+fixed 7.402% threshold. 5b also fails its measurer-call condition. All candidates passed
+Node acceptance and produced byte-identical SVGs for the frozen 5,000 records. No candidate
+is integrated; no accepted speedup is claimed. Other hypotheses remain untested. Docker was
+stopped before the final diagnostics/reference jobs; all timing comparisons used the same
+frozen P27 limits. Browser validation and e2e remain pending/unverified.
+
+**Round 1’s second batch is complete.** [The report](runs/1/batch-2/REPORT.md) records
+1a, 3c and 4b as unfit: observed gains of 2.251%, 2.405% and 2.702% remain below 7.402%.
+Their named counters pass, and all 5,000 SVGs are byte-identical. Nine accepted jobs completed;
+two invalid attempts were archived and excluded. Docker’s VM/backend was off during this batch,
+and P27 limits stayed unchanged. The exact round-1 Pelé reference from batch 1 was reused.
+See [BATCH-2.md](runs/1/BATCH-2.md) and [the review](runs/1/batch-2/REVIEW.md).
+
+**Round 1’s third batch is complete.** [The report](runs/1/batch-3/REPORT.md) records
+3b, 4a and 5a as unfit: observed gains of 2.312%, 1.503% and 2.504% remain below 7.402%.
+All named counter conditions pass and all 5,000 SVGs are byte-identical. Nine accepted jobs
+completed; two invalid jobs were archived and excluded. Source review found and fixed a
+cached-error diagnostic regression in 3b and a warning-callback palette-order regression in
+4a before fresh acceptance and formal measurement. See [BATCH-3.md](runs/1/BATCH-3.md) and
+[the review](runs/1/batch-3/REVIEW.md).
+
+**Round 1’s fourth batch is complete.** [The report](runs/1/batch-4/REPORT.md) records
+2c and 2d as unfit: observed gains of 1.875% and 1.926% remain below 7.402%.
+Both named conditions pass; all 5,000 SVGs are byte-identical. Front-matter full-reader time
+fell 70.730% in the separate diagnostic, which does not establish an accepted render gain.
+Diagnostic-only 4c attributes 0.775% of instrumented render time to internal conversion,
+including 0.640% in the 27-record large bucket. These costs are not achievable speedup claims.
+See [BATCH-4.md](runs/1/BATCH-4.md) and [the review](runs/1/batch-4/REVIEW.md).
+
+The [fifth batch](runs/1/batch-5/REPORT.md) tested 2a, the parser-sink/lazy-AST proposal.
+Its observed Node gain is **2.459%**, below the unchanged **7.40237%** threshold, so it is
+unfit. Counted parser creations fall from 7,433,113 to 5,036,158; sampled whole-render
+allocation falls **2.852%**. All 5,000 SVGs remain byte-identical. Explicitly forcing deferred
+metadata adds 7,181,290 counted creations, making that combined path more expensive than
+the eager base. See [BATCH-5.md](runs/1/BATCH-5.md) and the
+[independent review](runs/1/batch-5/REVIEW.md) for scope and evidence.
+
+Twelve optimization hypotheses have now been measured; none qualifies for integration.
+The separate 4c diagnostic is complete. Five batches supply 40 accepted jobs; fourteen invalid
+measurement attempts remain preserved and excluded. Batch 5 completed all four jobs on the
+first attempt. No runner is active, and the measurement window is closed. Other work and
+Docker may resume. The remaining hypotheses are **1b, 1d and 1e**; 3a remains withdrawn.
+No next batch is underway. Five batches remain part of round 1, not five completed empty rounds.
+Browser validation and e2e remain pending/unverified. Results are published in
+[PR #658](https://github.com/mermaid-js/mermaid-v13/pull/658), targeting the frozen
+preparation/base branch; no renderer optimization is included. The 2a requirement amendments
+remain proposed and unapproved; the rejected experiment does not require a delivery decision.
 
 The exact freeze prerequisite was `.tmp/perf-validation-p27-20261110-02/acceptance.json`:
 `validationProfile: "node"`, `sourceStable: true`, `ready: true`. Node 24.16.0 and pnpm 10.30.3

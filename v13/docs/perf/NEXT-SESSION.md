@@ -1,5 +1,17 @@
 # Next session: validate Node execution access, then headless round 0
 
+> Current execution checkpoint: round 0 and five round-1 batches are complete.
+> Twelve optimization hypotheses were measured and rejected; diagnostic-only 4c is complete.
+> See [START.md](START.md) and the reports for [batch 1](runs/1/batch-1/REPORT.md),
+> [batch 2](runs/1/batch-2/REPORT.md), [batch 3](runs/1/batch-3/REPORT.md),
+> [batch 4](runs/1/batch-4/REPORT.md), and [batch 5](runs/1/batch-5/REPORT.md).
+> 2a gained 2.459%, below the unchanged 7.40237% threshold. No optimization is integrated.
+> No runner is active; the measurement window is closed. Preserve all frozen evidence.
+> Do not rerun round 0 or redispatch rejected candidates. 1b, 1d and 1e remain unstarted;
+> 3a is withdrawn. No next batch is underway. Browser/e2e validation remains pending.
+> The round-0 launch instructions below are historical.
+
+
 **Completed on 2026-11-10:** formal headless Node round 0 is published at
 [runs/0/REPORT.md](runs/0/REPORT.md), with [baseline review](runs/0/REVIEW.md).
 [START.md](START.md) records the exact passing acceptance and completed P27 run. The workflow

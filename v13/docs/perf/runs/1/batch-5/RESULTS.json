@@ -1,0 +1,2366 @@
+{
+  "schemaVersion": 1,
+  "round": 1,
+  "batch": 5,
+  "scope": "formal",
+  "measurementEnvironment": {
+    "decision": "P27",
+    "limitsChanged": false,
+    "observedAt": "2026-11-11T10:02:08.007052+00:00",
+    "description": "Docker backend and VM absent in pre-window process snapshot; vmnetd helper remains. Existing Codex, Node/editor and esbuild background processes remain permitted within unchanged P27 limits. All dispatched agents completed; coordinator launches no parallel work during the serial runner. The runner records startup and continuous CPU observations for every job.",
+    "processSnapshot": {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch5-20261111/pre-window-processes.txt",
+      "sha256": "7e3d1c5392c0ab43cb44c7ed8cddbf00631c3b2c77d9cf6b19ba239b13ad0098"
+    },
+    "quietPolicy": {
+      "intervalMs": 1000,
+      "quietMs": 3000,
+      "maxCpuMs": 1536,
+      "maxTotalCpuMs": 1536
+    },
+    "evidence": {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch5-20261111/measurement-environment.json",
+      "sha256": "e7e1ab9ee634a29f66321ec7f21b10763ad118e345c2a85244af3201a4a94fda"
+    },
+    "invalidAttempts": []
+  },
+  "node": {
+    "version": "v24.16.0",
+    "execPath": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+    "sha256": "1ee75375e33b94fc34b3b19aede049e11dae90efb63b374dc96d6bdace70c4b8",
+    "versions": {
+      "node": "24.16.0",
+      "acorn": "8.16.0",
+      "ada": "3.4.4",
+      "amaro": "1.1.9",
+      "ares": "1.34.6",
+      "brotli": "1.2.0",
+      "cldr": "48.0",
+      "icu": "78.3",
+      "llhttp": "9.4.1",
+      "merve": "1.2.2",
+      "modules": "137",
+      "napi": "10",
+      "nbytes": "0.1.4",
+      "ncrypto": "0.0.1",
+      "nghttp2": "1.68.0",
+      "nghttp3": "",
+      "ngtcp2": "",
+      "openssl": "3.5.6",
+      "simdjson": "4.6.1",
+      "simdutf": "6.4.0",
+      "sqlite": "3.53.0",
+      "tz": "2026b",
+      "undici": "7.25.0",
+      "unicode": "17.0",
+      "uv": "1.52.1",
+      "uvwasi": "0.0.23",
+      "v8": "13.6.233.17-node.49",
+      "zlib": "1.3.1-e00f703",
+      "zstd": "1.5.7"
+    },
+    "execArgv": [],
+    "nodeOptions": ""
+  },
+  "machine": {
+    "hostname": "AI-Max",
+    "platform": "darwin",
+    "release": "25.5.0",
+    "arch": "arm64"
+  },
+  "validationProfile": "node",
+  "browserValidation": "unverified",
+  "e2e": "unverified",
+  "policy": {
+    "schemaVersion": 1,
+    "sampleCount": 5000,
+    "browserCount": 500,
+    "timing": {
+      "warmups": 3,
+      "pairs": 7,
+      "renderTimeoutMs": 30000,
+      "aaBlocks": 10,
+      "retries": 0,
+      "estimator": "median per diagram then geomean of head/base ratios",
+      "order": "alternate AB/BA by diagram index plus repetition plus block",
+      "errors": "fail whole experiment; preserve raw evidence; never drop a record"
+    },
+    "noise": {
+      "estimator": "exp(nearest-rank p95(abs(log(whole-sample geomean A/A ratio)))) - 1",
+      "minimumBlocks": 10
+    },
+    "fit": {
+      "minimumGain": 0.005,
+      "noiseMultiplier": 3,
+      "minimumByteReduction": 0.05,
+      "maximumBucketRegression": 0.01,
+      "flat": "abs(log(timeRatio)) <= log1p(noiseSpread)"
+    },
+    "buckets": [
+      {
+        "name": "tiny",
+        "minBytes": 0,
+        "maxBytes": 1024
+      },
+      {
+        "name": "small",
+        "minBytes": 1024,
+        "maxBytes": 4096
+      },
+      {
+        "name": "medium",
+        "minBytes": 4096,
+        "maxBytes": 16384
+      },
+      {
+        "name": "large",
+        "minBytes": 16384,
+        "maxBytes": null
+      }
+    ],
+    "configuration": {
+      "maxTextSize": 10000000,
+      "maxEdges": 1000000,
+      "peleOutputLimit": 9007199254740991,
+      "theme": "renderer defaults plus original input directives",
+      "pele": "native default font/wrap settings; no matching of v13 appearance",
+      "renderId": "m<sample-index>",
+      "reset": "AnalysisCache and text widths outside timing; configuration and loaded modules stay warm"
+    },
+    "diagnostics": {
+      "warmups": 3,
+      "repetitions": 7,
+      "emptyGraphRepetitions": 1000
+    },
+    "quiet": {
+      "intervalMs": 1000,
+      "quietMs": 3000,
+      "maxCpuMs": 1536,
+      "maxTotalCpuMs": 1536
+    },
+    "browser": {
+      "viewport": {
+        "width": 1600,
+        "height": 1200
+      },
+      "deviceScaleFactor": 1,
+      "colorScheme": "light"
+    },
+    "backgroundLoad": {
+      "decision": "P27",
+      "measurementEnvironment": "observed background activity; not an idle-host baseline",
+      "method": "60 consecutive 1000 ms process-snapshot intervals; nearest-rank p95 of total CPU delta; total limit is ceil(p95 * 1.20); the per-process field equals the total limit and imposes no additional cap",
+      "startedAt": "2026-11-10T13:02:09.057Z",
+      "finishedAt": "2026-11-10T13:03:14.100Z",
+      "machine": "AI-Max",
+      "node": "v24.16.0",
+      "samples": 60,
+      "actualDurationMs": 65008.65083300001,
+      "bufferFraction": 0.2,
+      "totalCpuMsP95": 1280,
+      "busiestProcessCpuMsP95": 330,
+      "frozenQuiet": {
+        "intervalMs": 1000,
+        "quietMs": 3000,
+        "maxCpuMs": 1536,
+        "maxTotalCpuMs": 1536
+      },
+      "previousPolicySha256": "711c4bdbb4719ef8d0b6c92773d404f397ab9895f368fa402961f3ef3c096200",
+      "rawEvidence": {
+        "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-background-baseline-20261110/observations.json",
+        "sha256": "11bcbacaadb794298981c6f5bee1ce0916a9c1cc35547caf6fde231ab3046705"
+      },
+      "calibrationScriptSha256": "43e914e30880dd017ed3180c7e2a08ae028824ecd7046a397ae2e51f483ec531",
+      "monitorSha256": "0525ae0e5588a107546f72d91e82c77605556a8d4b9d929d95258296a89f188a",
+      "calibrationDecision": "P26",
+      "calibrationPreviousPolicySha256": "8555678d001d8d8ed3363907d62cbc6142c5084786fb69acd00be34b5794e9a3",
+      "supersededPerProcessLimitMs": 396
+    }
+  },
+  "sample": {
+    "count": 5000,
+    "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+    "browserCount": 500,
+    "browserSubsetSha256": "0dc6c1ab4205b16317ebc2129271ed0c03533cc22d270ff7d0e2d1cd2474aa99"
+  },
+  "noiseReference": "../../0/RESULTS.json",
+  "pele": {
+    "count": 5000,
+    "geomeanHeadOverBase": 0.612500746370919,
+    "sumBaseNs": 3782524518,
+    "sumHeadNs": 2581545369,
+    "summedHeadOverBase": 0.6824926994432241,
+    "buckets": {
+      "tiny": {
+        "count": 1426,
+        "geomeanHeadOverBase": 0.5533594997405905
+      },
+      "small": {
+        "count": 3088,
+        "geomeanHeadOverBase": 0.6295906057959915
+      },
+      "medium": {
+        "count": 459,
+        "geomeanHeadOverBase": 0.6916049777079298
+      },
+      "large": {
+        "count": 27,
+        "geomeanHeadOverBase": 0.7120562485729249
+      }
+    },
+    "summedV13OverPele": 1.4652171383163477,
+    "evidence": [
+      {
+        "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch1-20261110/pele/header.json",
+        "sha256": "9a6bdf9fed473ec525e65bff4870741467c2a816ce155f6e9a27a7a8b72791e6"
+      },
+      {
+        "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch1-20261110/pele/queue.json",
+        "sha256": "e3e6b88f7e27663e98b71609d48f3d2a1d5093e628805d5bedf3b066e17f1444"
+      },
+      {
+        "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch1-20261110/pele/completion.json",
+        "sha256": "d985dca47a5856e271bef8416aca2a2f106c2495f6274a96f31d248f44a1ba6f"
+      },
+      {
+        "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch1-20261110/pele/raw/pele/result.json",
+        "sha256": "73a2d5a623b1ffac0db184c8e81cebbbe9cfbf748a1901561d1ad2a90551ceda"
+      }
+    ]
+  },
+  "candidates": [
+    {
+      "id": "2a",
+      "round": 1,
+      "batch": 5,
+      "baseSha": "094ec5283059b7a87c2c2745ea6dffcc5a4dcee7",
+      "headSha": "b096c2a90f32b8476e8a1bf1bd53e467ce456c0a",
+      "branch": "perf/round-1-2a-20261111",
+      "assignment": {
+        "role": "implementer",
+        "hypothesis": "2a",
+        "reason": "Parser sinks and lazy AST access change architecture and public behavior.",
+        "escalationReason": null,
+        "spawnOverrides": {
+          "model": "gpt-6-astra",
+          "reasoning_effort": "high",
+          "fork_turns": "none"
+        },
+        "agent": "/root/round1_2a",
+        "requestedModel": "gpt-6-astra",
+        "actualModel": "gpt-6-astra",
+        "requestedEffort": "high",
+        "actualEffort": "high"
+      },
+      "validationProfile": "node",
+      "browserValidation": "unverified",
+      "e2e": "unverified",
+      "pins": {
+        "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+        "browserSubsetSha256": "0dc6c1ab4205b16317ebc2129271ed0c03533cc22d270ff7d0e2d1cd2474aa99",
+        "baseArtifactSha256": "54c2879f56c867719fafb96e8f4359dcca471e323105ee0371afc5b1a8c4f612",
+        "headArtifactSha256": "d4fd2060f3adc34b254da9824c93a2fb1d2122f15cfeb75882d3f9edcc84bd94",
+        "baseSourceSha256": "579d554998695c7b14496f1428a844046960004cfe631a84b1f8025c60e410b9",
+        "headSourceSha256": "e23edaab5e4a9007c1a837d80c668eea767c96747dd05f4e847a8702c19d6c74",
+        "policySha256": "82a788a9ce59dfaea7f0f207e1f2933426ee3c0c0e888128d9d18976151e77ee"
+      },
+      "verdict": "unfit",
+      "delivery": "not-deliverable",
+      "deliveryScope": "candidate Node fit only; integration and final browser comparison are separate",
+      "lane": "byte-identical",
+      "reasons": [
+        "Node gain/flat-time byte reduction threshold failed"
+      ],
+      "metrics": {
+        "ratio": 0.9754117372288502,
+        "buckets": {
+          "tiny": {
+            "count": 1426,
+            "ratio": 0.9751929717498474
+          },
+          "small": {
+            "count": 3088,
+            "ratio": 0.9741492671760047
+          },
+          "medium": {
+            "count": 459,
+            "ratio": 0.9833062438940052
+          },
+          "large": {
+            "count": 27,
+            "ratio": 0.9980418815759385
+          }
+        },
+        "gain": 0.024588262771149783,
+        "spread": 0.024674571224540278,
+        "threshold": 0.07402371367362083,
+        "flat": false,
+        "baseBytes": 95296904,
+        "headBytes": 95296904,
+        "byteReduction": 0
+      },
+      "timing": {
+        "count": 5000,
+        "geomeanHeadOverBase": 0.9754117372288502,
+        "sumBaseNs": 3776149660,
+        "sumHeadNs": 3698109260,
+        "summedHeadOverBase": 0.9793333402998651,
+        "buckets": {
+          "tiny": {
+            "count": 1426,
+            "geomeanHeadOverBase": 0.9751929717498474
+          },
+          "small": {
+            "count": 3088,
+            "geomeanHeadOverBase": 0.9741492671760047
+          },
+          "medium": {
+            "count": 459,
+            "geomeanHeadOverBase": 0.9833062438940052
+          },
+          "large": {
+            "count": 27,
+            "geomeanHeadOverBase": 0.9980418815759385
+          }
+        }
+      },
+      "mechanism": {
+        "schemaVersion": 1,
+        "hypothesis": "2a",
+        "records": 5000,
+        "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+        "report": {
+          "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/summary.json",
+          "sha256": "a820adb2d819255614f7083e4270dfb1c701eda07f6ca218694f8f6201823ce0"
+        },
+        "changes": [
+          {
+            "name": "parserCreatedObjects",
+            "before": 7433113,
+            "after": 5036158
+          }
+        ],
+        "controls": [
+          {
+            "name": "nodes",
+            "before": 101398,
+            "after": 101398
+          },
+          {
+            "name": "edges",
+            "before": 106917,
+            "after": 106917
+          },
+          {
+            "name": "outputBytes",
+            "before": 95296904,
+            "after": 95296904
+          },
+          {
+            "name": "elements",
+            "before": 1043859,
+            "after": 1043859
+          },
+          {
+            "name": "attributes",
+            "before": 3614479,
+            "after": 3614479
+          }
+        ],
+        "supplemental": {
+          "renderTotals": {
+            "base": {
+              "total": 7433113,
+              "categories": {
+                "constructor": 239651,
+                "array": 2323311,
+                "function": 845714,
+                "native-array": 383177,
+                "object": 3491167,
+                "native-object": 111398,
+                "regexp": 38695
+              },
+              "sites": {
+                "packages/diagram-flowchart/src/parser/parser.ts:380:10:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:396:25:constructor": 5000,
+                "packages/core/src/parser-kit/result.ts:54:26:constructor": 5000,
+                "packages/core/src/parser-kit/result.ts:55:42:array": 5000,
+                "packages/core/src/parser-kit/result.ts:56:42:array": 5000,
+                "packages/core/src/parser-kit/result.ts:57:18:constructor": 5000,
+                "packages/core/src/parser-kit/ast.ts:105:28:constructor": 5000,
+                "packages/core/src/parser-kit/ast.ts:106:28:constructor": 5000,
+                "packages/core/src/parser-kit/ast.ts:107:32:constructor": 5000,
+                "packages/core/src/parser-kit/ast.ts:108:33:constructor": 5000,
+                "packages/core/src/parser-kit/result.ts:58:44:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:409:38:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:418:52:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:419:38:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:422:29:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:434:26:function": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:434:7:native-result": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:439:15:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:439:31:object": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:443:14:function": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:446:13:function": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:248:23:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:249:37:array": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:250:22:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:251:45:array": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:252:23:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:253:32:array": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:254:40:array": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:259:35:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:260:31:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:262:32:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:263:30:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:266:31:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:268:65:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:748:3:rest-array": 208407,
+                "packages/diagram-flowchart/src/parser/parser.ts:1600:17:object": 5000,
+                "packages/core/src/parser-kit/result.ts:74:23:object": 189350,
+                "packages/diagram-flowchart/src/parser/parser.ts:1603:29:object": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:1316:31:array": 184350,
+                "packages/diagram-flowchart/src/parser/parser.ts:1400:52:array": 156295,
+                "packages/diagram-flowchart/src/parser/parser.ts:1024:19:array": 256823,
+                "packages/diagram-flowchart/src/parser/parser.ts:774:25:array": 314381,
+                "packages/diagram-flowchart/src/parser/parser.ts:770:12:array": 314381,
+                "packages/diagram-flowchart/src/parser/parser.ts:561:12:object": 1014939,
+                "packages/core/src/parser-kit/result.ts:62:23:object": 339682,
+                "packages/diagram-flowchart/src/parser/parser.ts:933:32:object": 263138,
+                "packages/diagram-flowchart/src/parser/parser.ts:821:21:object": 127243,
+                "packages/diagram-flowchart/src/parser/parser.ts:555:12:object": 157217,
+                "packages/diagram-flowchart/src/parser/parser.ts:808:48:array": 125529,
+                "packages/diagram-flowchart/src/parser/parser.ts:804:12:object": 151660,
+                "packages/diagram-flowchart/src/parser/parser.ts:957:14:object": 85482,
+                "packages/diagram-flowchart/src/parser/model.ts:325:19:native-result": 101398,
+                "packages/diagram-flowchart/src/parser/model.ts:326:16:object": 101398,
+                "packages/diagram-flowchart/src/parser/model.ts:326:64:array": 101398,
+                "packages/diagram-flowchart/src/parser/model.ts:326:77:array": 101398,
+                "packages/diagram-flowchart/src/parser/parser.ts:1113:26:function": 156295,
+                "packages/diagram-flowchart/src/parser/parser.ts:1113:17:native-result": 156295,
+                "packages/diagram-flowchart/src/parser/parser.ts:1116:31:array": 156295,
+                "packages/diagram-flowchart/src/parser/model.ts:213:10:object": 100528,
+                "packages/diagram-flowchart/src/parser/parser.ts:1085:14:array": 85069,
+                "packages/diagram-flowchart/src/parser/parser.ts:1125:34:function": 100528,
+                "packages/diagram-flowchart/src/parser/parser.ts:1125:25:native-result": 100528,
+                "packages/diagram-flowchart/src/parser/parser.ts:1127:42:function": 100528,
+                "packages/core/src/parser-kit/ast.ts:120:45:constructor": 71956,
+                "packages/diagram-flowchart/src/parser/model.ts:406:33:object": 106917,
+                "packages/diagram-flowchart/src/parser/model.ts:416:16:array": 106917,
+                "packages/diagram-flowchart/src/parser/model.ts:425:50:constructor": 71956,
+                "packages/diagram-flowchart/src/parser/parser.ts:372:31:function": 200974,
+                "packages/diagram-flowchart/src/parser/parser.ts:372:51:function": 212976,
+                "packages/diagram-flowchart/src/parser/parser.ts:1134:31:object": 106917,
+                "packages/diagram-flowchart/src/parser/parser.ts:1137:18:object": 106917,
+                "packages/diagram-flowchart/src/parser/parser.ts:1404:18:object": 156295,
+                "packages/diagram-flowchart/src/parser/parser.ts:999:12:object": 166378,
+                "packages/diagram-flowchart/src/parser/parser.ts:967:16:object": 8912,
+                "packages/diagram-flowchart/src/parser/parser.ts:1080:21:object": 18820,
+                "packages/diagram-flowchart/src/parser/parser.ts:816:44:array": 10657,
+                "packages/diagram-flowchart/src/parser/parser.ts:1448:26:object": 10657,
+                "packages/core/src/parser-kit/result.ts:79:29:object": 10657,
+                "packages/core/src/parser-kit/result.ts:79:44:object": 10657,
+                "packages/diagram-flowchart/src/parser/parser.ts:1456:17:array": 10657,
+                "packages/diagram-flowchart/src/parser/parser.ts:1460:17:array": 10657,
+                "packages/core/src/parser-kit/result.ts:67:38:array": 10642,
+                "packages/diagram-flowchart/src/parser/parser.ts:1306:12:object": 28055,
+                "packages/diagram-flowchart/src/parser/parser.ts:1377:16:object": 3373,
+                "packages/diagram-flowchart/src/parser/parser.ts:1481:7:function": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:603:18:constructor": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:604:32:array": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:606:17:function": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:622:41:object": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:628:30:function": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:628:14:native-result": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:629:16:array": 10657,
+                "packages/diagram-flowchart/src/parser/parser.ts:1488:37:object": 10270,
+                "packages/core/src/parser-kit/result.ts:88:21:native-result": 10657,
+                "packages/diagram-flowchart/src/parser/parser.ts:1493:32:object": 10657,
+                "packages/diagram-flowchart/src/parser/parser.ts:1496:14:object": 10657,
+                "packages/diagram-flowchart/src/parser/parser.ts:1170:17:array": 18970,
+                "packages/diagram-flowchart/src/parser/parser.ts:1342:35:function": 11179,
+                "packages/diagram-flowchart/src/parser/parser.ts:1192:24:native-result": 16887,
+                "packages/diagram-flowchart/src/parser/parser.ts:1193:29:object": 31544,
+                "packages/diagram-flowchart/src/parser/model.ts:519:16:regexp": 11179,
+                "packages/diagram-flowchart/src/parser/model.ts:520:16:regexp": 11179,
+                "packages/diagram-flowchart/src/parser/model.ts:521:16:regexp": 11179,
+                "packages/diagram-flowchart/src/parser/model.ts:517:19:native-result": 11179,
+                "packages/diagram-flowchart/src/parser/model.ts:523:22:native-result": 11179,
+                "packages/diagram-flowchart/src/parser/model.ts:526:15:object": 11175,
+                "packages/diagram-flowchart/src/parser/model.ts:526:29:array": 11175,
+                "packages/diagram-flowchart/src/parser/model.ts:526:45:array": 11175,
+                "packages/diagram-flowchart/src/parser/parser.ts:1354:40:function": 5699,
+                "packages/diagram-flowchart/src/parser/model.ts:547:22:native-result": 27456,
+                "packages/diagram-flowchart/src/parser/parser.ts:469:49:function": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:469:22:native-result": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:658:30:object": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:660:17:array": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:660:21:native-result": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:662:16:array": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:662:20:native-result": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:664:17:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:480:31:object": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:483:14:object": 5000,
+                "packages/core/src/parser-kit/result.ts:102:36:object": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:863:26:object": 3858,
+                "packages/diagram-flowchart/src/parser/parser.ts:864:19:object": 3858,
+                "packages/diagram-flowchart/src/parser/parser.ts:869:44:object": 3838,
+                "packages/diagram-flowchart/src/parser/parser.ts:879:33:function": 3858,
+                "packages/diagram-flowchart/src/parser/parser.ts:882:12:object": 3858,
+                "packages/diagram-flowchart/src/parser/parser.ts:1017:71:object": 3858,
+                "packages/diagram-flowchart/src/parser/model.ts:288:13:object": 3858,
+                "packages/diagram-flowchart/src/parser/parser.ts:1019:18:object": 3858,
+                "packages/diagram-flowchart/src/parser/parser.ts:848:50:regexp": 2381,
+                "packages/diagram-flowchart/src/parser/parser.ts:1089:23:object": 15459,
+                "packages/diagram-flowchart/src/parser/parser.ts:812:48:array": 15459,
+                "packages/diagram-flowchart/src/parser/model.ts:188:10:object": 15459,
+                "packages/diagram-flowchart/src/parser/parser.ts:1099:19:object": 15459,
+                "packages/diagram-flowchart/src/parser/parser.ts:1101:14:array": 15459,
+                "packages/diagram-flowchart/src/parser/parser.ts:1121:45:native-result": 28322,
+                "packages/diagram-flowchart/src/parser/parser.ts:1326:47:object": 6918,
+                "packages/diagram-flowchart/src/parser/parser.ts:973:14:object": 1714,
+                "packages/diagram-flowchart/src/parser/parser.ts:1011:20:object": 21748,
+                "packages/diagram-flowchart/src/parser/parser.ts:1067:17:object": 205,
+                "packages/diagram-flowchart/src/parser/model.ts:377:18:function": 258,
+                "packages/diagram-flowchart/src/parser/parser.ts:1204:33:array": 873,
+                "packages/diagram-flowchart/src/parser/model.ts:471:18:regexp": 1351,
+                "packages/diagram-flowchart/src/parser/model.ts:511:43:function": 1351,
+                "packages/diagram-flowchart/src/parser/parser.ts:994:16:object": 639,
+                "packages/diagram-flowchart/src/parser/model.ts:312:33:object": 1228,
+                "packages/diagram-flowchart/src/parser/model.ts:601:57:regexp": 708,
+                "packages/diagram-flowchart/src/parser/parser.ts:1484:49:regexp": 708,
+                "packages/diagram-flowchart/src/parser/parser.ts:373:15:constructor": 82,
+                "packages/diagram-flowchart/src/parser/parser.ts:375:10:function": 82,
+                "packages/diagram-flowchart/src/parser/parser.ts:997:14:object": 13,
+                "packages/diagram-flowchart/src/parser/parser.ts:925:35:object": 80,
+                "packages/diagram-flowchart/src/parser/parser.ts:926:33:object": 80,
+                "packages/diagram-flowchart/src/parser/parser.ts:1246:19:object": 9,
+                "packages/diagram-flowchart/src/parser/parser.ts:1246:70:function": 9,
+                "packages/diagram-flowchart/src/parser/parser.ts:1234:3:rest-array": 15,
+                "packages/diagram-flowchart/src/parser/parser.ts:1237:38:array": 15,
+                "packages/diagram-flowchart/src/parser/model.ts:560:22:native-result": 9,
+                "packages/diagram-flowchart/src/parser/model.ts:563:13:object": 9,
+                "packages/diagram-flowchart/src/parser/model.ts:555:22:native-result": 6,
+                "packages/diagram-flowchart/src/parser/model.ts:224:46:object": 7,
+                "packages/diagram-flowchart/src/parser/model.ts:586:34:regexp": 2,
+                "packages/diagram-flowchart/src/parser/model.ts:590:34:regexp": 2,
+                "packages/core/src/parser-kit/ast.ts:82:27:regexp": 6,
+                "packages/core/src/parser-kit/ast.ts:82:38:function": 6,
+                "packages/diagram-flowchart/src/parser/model.ts:294:11:native-result": 2,
+                "packages/diagram-flowchart/src/parser/model.ts:294:60:object": 2
+              }
+            },
+            "head": {
+              "total": 5036158,
+              "categories": {
+                "constructor": 239569,
+                "array": 2317669,
+                "function": 208680,
+                "native-array": 366341,
+                "object": 1753806,
+                "native-object": 111398,
+                "regexp": 38695
+              },
+              "sites": {
+                "packages/diagram-flowchart/src/parser/parser.ts:386:10:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:466:25:constructor": 5000,
+                "packages/core/src/parser-kit/result.ts:54:26:constructor": 5000,
+                "packages/core/src/parser-kit/result.ts:55:42:array": 5000,
+                "packages/core/src/parser-kit/result.ts:56:42:array": 5000,
+                "packages/core/src/parser-kit/result.ts:57:18:constructor": 5000,
+                "packages/core/src/parser-kit/ast.ts:105:28:constructor": 5000,
+                "packages/core/src/parser-kit/ast.ts:106:28:constructor": 5000,
+                "packages/core/src/parser-kit/ast.ts:107:32:constructor": 5000,
+                "packages/core/src/parser-kit/ast.ts:108:33:constructor": 5000,
+                "packages/core/src/parser-kit/result.ts:58:44:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:479:38:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:488:52:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:489:38:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:492:29:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:505:26:function": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:505:7:native-result": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:510:15:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:510:31:object": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:514:14:function": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:517:13:function": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:248:23:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:249:37:array": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:250:22:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:251:45:array": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:252:23:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:253:32:array": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:254:40:array": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:259:35:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:260:31:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:262:32:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:263:30:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:266:31:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:268:65:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:820:3:rest-array": 208407,
+                "packages/diagram-flowchart/src/parser/parser.ts:1412:31:array": 184350,
+                "packages/diagram-flowchart/src/parser/parser.ts:1495:52:array": 156295,
+                "packages/diagram-flowchart/src/parser/parser.ts:1106:19:array": 256823,
+                "packages/diagram-flowchart/src/parser/parser.ts:846:25:array": 314381,
+                "packages/diagram-flowchart/src/parser/parser.ts:842:12:array": 314381,
+                "packages/diagram-flowchart/src/parser/parser.ts:633:12:object": 567451,
+                "packages/diagram-flowchart/src/parser/parser.ts:893:21:object": 127243,
+                "packages/diagram-flowchart/src/parser/parser.ts:627:12:object": 157217,
+                "packages/diagram-flowchart/src/parser/parser.ts:880:48:array": 125529,
+                "packages/diagram-flowchart/src/parser/parser.ts:876:12:object": 151660,
+                "packages/diagram-flowchart/src/parser/parser.ts:1034:14:object": 85482,
+                "packages/diagram-flowchart/src/parser/model.ts:325:19:native-result": 101398,
+                "packages/diagram-flowchart/src/parser/model.ts:326:16:object": 101398,
+                "packages/diagram-flowchart/src/parser/model.ts:326:64:array": 101398,
+                "packages/diagram-flowchart/src/parser/model.ts:326:77:array": 101398,
+                "packages/diagram-flowchart/src/parser/parser.ts:1195:17:native-result": 156295,
+                "packages/diagram-flowchart/src/parser/parser.ts:1198:31:array": 156295,
+                "packages/diagram-flowchart/src/parser/model.ts:213:10:object": 100528,
+                "packages/diagram-flowchart/src/parser/parser.ts:1167:14:array": 85069,
+                "packages/diagram-flowchart/src/parser/parser.ts:1207:25:native-result": 100528,
+                "packages/diagram-flowchart/src/parser/parser.ts:1209:42:function": 100528,
+                "packages/core/src/parser-kit/ast.ts:120:45:constructor": 71956,
+                "packages/diagram-flowchart/src/parser/model.ts:406:33:object": 106917,
+                "packages/diagram-flowchart/src/parser/model.ts:416:16:array": 106917,
+                "packages/diagram-flowchart/src/parser/model.ts:425:50:constructor": 71956,
+                "packages/diagram-flowchart/src/parser/parser.ts:1076:12:object": 166378,
+                "packages/diagram-flowchart/src/parser/parser.ts:1044:16:object": 8912,
+                "packages/diagram-flowchart/src/parser/parser.ts:1162:21:object": 18820,
+                "packages/diagram-flowchart/src/parser/parser.ts:888:44:array": 10657,
+                "packages/diagram-flowchart/src/parser/parser.ts:1545:26:object": 10657,
+                "packages/diagram-flowchart/src/parser/parser.ts:1553:17:array": 10657,
+                "packages/diagram-flowchart/src/parser/parser.ts:1557:17:array": 10657,
+                "packages/diagram-flowchart/src/parser/parser.ts:1472:16:object": 3373,
+                "packages/diagram-flowchart/src/parser/parser.ts:1578:7:function": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:603:18:constructor": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:604:32:array": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:606:17:function": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:622:41:object": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:628:30:function": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:628:14:native-result": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:629:16:array": 10657,
+                "packages/diagram-flowchart/src/parser/parser.ts:1254:17:array": 18970,
+                "packages/diagram-flowchart/src/parser/model.ts:519:16:regexp": 11179,
+                "packages/diagram-flowchart/src/parser/model.ts:520:16:regexp": 11179,
+                "packages/diagram-flowchart/src/parser/model.ts:521:16:regexp": 11179,
+                "packages/diagram-flowchart/src/parser/model.ts:517:19:native-result": 11179,
+                "packages/diagram-flowchart/src/parser/model.ts:523:22:native-result": 11179,
+                "packages/diagram-flowchart/src/parser/model.ts:526:15:object": 11175,
+                "packages/diagram-flowchart/src/parser/model.ts:526:29:array": 11175,
+                "packages/diagram-flowchart/src/parser/model.ts:526:45:array": 11175,
+                "packages/diagram-flowchart/src/parser/parser.ts:1451:40:function": 5699,
+                "packages/diagram-flowchart/src/parser/parser.ts:1276:24:native-result": 5708,
+                "packages/diagram-flowchart/src/parser/parser.ts:1277:29:object": 20365,
+                "packages/diagram-flowchart/src/parser/model.ts:547:22:native-result": 27456,
+                "packages/diagram-flowchart/src/parser/parser.ts:540:49:function": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:540:22:native-result": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:658:30:object": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:660:17:array": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:660:21:native-result": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:662:16:array": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:662:20:native-result": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:664:17:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:403:38:object": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:406:26:object": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:408:38:function": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:408:19:native-result": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:409:20:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:414:20:function": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:422:20:function": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:425:35:object": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:425:35:object-method": 30000,
+                "packages/diagram-flowchart/src/parser/parser.ts:935:26:object": 3858,
+                "packages/diagram-flowchart/src/parser/parser.ts:936:19:object": 3858,
+                "packages/diagram-flowchart/src/parser/parser.ts:941:44:object": 3838,
+                "packages/diagram-flowchart/src/parser/parser.ts:951:33:function": 3858,
+                "packages/diagram-flowchart/src/parser/parser.ts:954:12:object": 3858,
+                "packages/diagram-flowchart/src/parser/parser.ts:1097:61:object": 3858,
+                "packages/diagram-flowchart/src/parser/model.ts:288:13:object": 3858,
+                "packages/diagram-flowchart/src/parser/parser.ts:920:50:regexp": 2381,
+                "packages/diagram-flowchart/src/parser/parser.ts:1171:23:object": 15459,
+                "packages/diagram-flowchart/src/parser/parser.ts:884:48:array": 15459,
+                "packages/diagram-flowchart/src/parser/model.ts:188:10:object": 15459,
+                "packages/diagram-flowchart/src/parser/parser.ts:1181:19:object": 15459,
+                "packages/diagram-flowchart/src/parser/parser.ts:1183:14:array": 15459,
+                "packages/diagram-flowchart/src/parser/parser.ts:1203:45:native-result": 28322,
+                "packages/diagram-flowchart/src/parser/parser.ts:1422:47:object": 6918,
+                "packages/diagram-flowchart/src/parser/parser.ts:1050:14:object": 1714,
+                "packages/diagram-flowchart/src/parser/parser.ts:1149:17:object": 205,
+                "packages/diagram-flowchart/src/parser/model.ts:377:18:function": 258,
+                "packages/diagram-flowchart/src/parser/parser.ts:1288:33:array": 873,
+                "packages/diagram-flowchart/src/parser/model.ts:471:18:regexp": 1351,
+                "packages/diagram-flowchart/src/parser/model.ts:511:43:function": 1351,
+                "packages/diagram-flowchart/src/parser/parser.ts:1071:16:object": 639,
+                "packages/diagram-flowchart/src/parser/model.ts:312:33:object": 1228,
+                "packages/diagram-flowchart/src/parser/model.ts:601:57:regexp": 708,
+                "packages/diagram-flowchart/src/parser/parser.ts:1581:49:regexp": 708,
+                "packages/diagram-flowchart/src/parser/parser.ts:408:46:object": 162,
+                "packages/diagram-flowchart/src/parser/parser.ts:408:61:object": 162,
+                "packages/diagram-flowchart/src/parser/parser.ts:1074:14:object": 13,
+                "packages/diagram-flowchart/src/parser/parser.ts:1330:19:object": 9,
+                "packages/diagram-flowchart/src/parser/parser.ts:1330:70:function": 9,
+                "packages/diagram-flowchart/src/parser/parser.ts:1318:3:rest-array": 15,
+                "packages/diagram-flowchart/src/parser/parser.ts:1321:38:array": 15,
+                "packages/diagram-flowchart/src/parser/model.ts:560:22:native-result": 9,
+                "packages/diagram-flowchart/src/parser/model.ts:563:13:object": 9,
+                "packages/diagram-flowchart/src/parser/model.ts:555:22:native-result": 6,
+                "packages/diagram-flowchart/src/parser/model.ts:224:46:object": 7,
+                "packages/diagram-flowchart/src/parser/model.ts:586:34:regexp": 2,
+                "packages/diagram-flowchart/src/parser/model.ts:590:34:regexp": 2,
+                "packages/core/src/parser-kit/ast.ts:82:27:regexp": 6,
+                "packages/core/src/parser-kit/ast.ts:82:38:function": 6,
+                "packages/diagram-flowchart/src/parser/model.ts:294:11:native-result": 2,
+                "packages/diagram-flowchart/src/parser/model.ts:294:60:object": 2
+              }
+            }
+          },
+          "forcedMetadataTotals": {
+            "base": {
+              "total": 0,
+              "categories": {},
+              "sites": {}
+            },
+            "head": {
+              "total": 7181290,
+              "categories": {
+                "constructor": 239651,
+                "array": 2323311,
+                "function": 588891,
+                "native-array": 383177,
+                "object": 3496167,
+                "native-object": 111398,
+                "regexp": 38695
+              },
+              "sites": {
+                "packages/diagram-flowchart/src/parser/parser.ts:416:22:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:466:25:constructor": 5000,
+                "packages/core/src/parser-kit/result.ts:54:26:constructor": 5000,
+                "packages/core/src/parser-kit/result.ts:55:42:array": 5000,
+                "packages/core/src/parser-kit/result.ts:56:42:array": 5000,
+                "packages/core/src/parser-kit/result.ts:57:18:constructor": 5000,
+                "packages/core/src/parser-kit/ast.ts:105:28:constructor": 5000,
+                "packages/core/src/parser-kit/ast.ts:106:28:constructor": 5000,
+                "packages/core/src/parser-kit/ast.ts:107:32:constructor": 5000,
+                "packages/core/src/parser-kit/ast.ts:108:33:constructor": 5000,
+                "packages/core/src/parser-kit/result.ts:58:44:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:479:38:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:488:52:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:489:38:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:492:29:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:505:26:function": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:505:7:native-result": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:510:15:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:510:31:object": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:514:14:function": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:517:13:function": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:248:23:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:249:37:array": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:250:22:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:251:45:array": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:252:23:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:253:32:array": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:254:40:array": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:259:35:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:260:31:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:262:32:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:263:30:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:266:31:constructor": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:268:65:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:820:3:rest-array": 208407,
+                "packages/diagram-flowchart/src/parser/parser.ts:1701:19:object": 5000,
+                "packages/core/src/parser-kit/result.ts:74:23:object": 189350,
+                "packages/diagram-flowchart/src/parser/parser.ts:1704:31:object": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:1412:31:array": 184350,
+                "packages/diagram-flowchart/src/parser/parser.ts:1495:52:array": 156295,
+                "packages/diagram-flowchart/src/parser/parser.ts:1106:19:array": 256823,
+                "packages/diagram-flowchart/src/parser/parser.ts:846:25:array": 314381,
+                "packages/diagram-flowchart/src/parser/parser.ts:842:12:array": 314381,
+                "packages/diagram-flowchart/src/parser/parser.ts:633:12:object": 1014939,
+                "packages/core/src/parser-kit/result.ts:62:23:object": 339682,
+                "packages/diagram-flowchart/src/parser/parser.ts:1008:9:object": 263138,
+                "packages/diagram-flowchart/src/parser/parser.ts:893:21:object": 127243,
+                "packages/diagram-flowchart/src/parser/parser.ts:627:12:object": 157217,
+                "packages/diagram-flowchart/src/parser/parser.ts:880:48:array": 125529,
+                "packages/diagram-flowchart/src/parser/parser.ts:876:12:object": 151660,
+                "packages/diagram-flowchart/src/parser/parser.ts:1034:14:object": 85482,
+                "packages/diagram-flowchart/src/parser/model.ts:325:19:native-result": 101398,
+                "packages/diagram-flowchart/src/parser/model.ts:326:16:object": 101398,
+                "packages/diagram-flowchart/src/parser/model.ts:326:64:array": 101398,
+                "packages/diagram-flowchart/src/parser/model.ts:326:77:array": 101398,
+                "packages/diagram-flowchart/src/parser/parser.ts:1195:17:native-result": 156295,
+                "packages/diagram-flowchart/src/parser/parser.ts:1198:31:array": 156295,
+                "packages/diagram-flowchart/src/parser/model.ts:213:10:object": 100528,
+                "packages/diagram-flowchart/src/parser/parser.ts:1167:14:array": 85069,
+                "packages/diagram-flowchart/src/parser/parser.ts:1207:25:native-result": 100528,
+                "packages/diagram-flowchart/src/parser/parser.ts:1209:42:function": 100528,
+                "packages/core/src/parser-kit/ast.ts:120:45:constructor": 71956,
+                "packages/diagram-flowchart/src/parser/model.ts:406:33:object": 106917,
+                "packages/diagram-flowchart/src/parser/model.ts:416:16:array": 106917,
+                "packages/diagram-flowchart/src/parser/model.ts:425:50:constructor": 71956,
+                "packages/diagram-flowchart/src/parser/parser.ts:375:12:function": 200974,
+                "packages/diagram-flowchart/src/parser/parser.ts:375:32:function": 212976,
+                "packages/diagram-flowchart/src/parser/parser.ts:1217:33:object": 106917,
+                "packages/diagram-flowchart/src/parser/parser.ts:1220:20:object": 106917,
+                "packages/diagram-flowchart/src/parser/parser.ts:1500:20:object": 156295,
+                "packages/diagram-flowchart/src/parser/parser.ts:1076:12:object": 166378,
+                "packages/diagram-flowchart/src/parser/parser.ts:1044:16:object": 8912,
+                "packages/diagram-flowchart/src/parser/parser.ts:1162:21:object": 18820,
+                "packages/diagram-flowchart/src/parser/parser.ts:888:44:array": 10657,
+                "packages/diagram-flowchart/src/parser/parser.ts:1545:26:object": 10657,
+                "packages/core/src/parser-kit/result.ts:79:29:object": 10657,
+                "packages/core/src/parser-kit/result.ts:79:44:object": 10657,
+                "packages/diagram-flowchart/src/parser/parser.ts:1553:17:array": 10657,
+                "packages/diagram-flowchart/src/parser/parser.ts:1557:17:array": 10657,
+                "packages/core/src/parser-kit/result.ts:67:38:array": 10642,
+                "packages/diagram-flowchart/src/parser/parser.ts:1400:34:object": 28055,
+                "packages/diagram-flowchart/src/parser/parser.ts:1472:16:object": 3373,
+                "packages/diagram-flowchart/src/parser/parser.ts:1578:7:function": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:603:18:constructor": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:604:32:array": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:606:17:function": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:622:41:object": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:628:30:function": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:628:14:native-result": 10657,
+                "packages/diagram-flowchart/src/parser/model.ts:629:16:array": 10657,
+                "packages/diagram-flowchart/src/parser/parser.ts:1586:39:object": 10270,
+                "packages/core/src/parser-kit/result.ts:88:21:native-result": 10657,
+                "packages/diagram-flowchart/src/parser/parser.ts:1592:34:object": 10657,
+                "packages/diagram-flowchart/src/parser/parser.ts:1595:16:object": 10657,
+                "packages/diagram-flowchart/src/parser/parser.ts:1254:17:array": 18970,
+                "packages/diagram-flowchart/src/parser/parser.ts:1439:37:function": 11179,
+                "packages/diagram-flowchart/src/parser/parser.ts:1276:24:native-result": 16887,
+                "packages/diagram-flowchart/src/parser/parser.ts:1277:29:object": 31544,
+                "packages/diagram-flowchart/src/parser/model.ts:519:16:regexp": 11179,
+                "packages/diagram-flowchart/src/parser/model.ts:520:16:regexp": 11179,
+                "packages/diagram-flowchart/src/parser/model.ts:521:16:regexp": 11179,
+                "packages/diagram-flowchart/src/parser/model.ts:517:19:native-result": 11179,
+                "packages/diagram-flowchart/src/parser/model.ts:523:22:native-result": 11179,
+                "packages/diagram-flowchart/src/parser/model.ts:526:15:object": 11175,
+                "packages/diagram-flowchart/src/parser/model.ts:526:29:array": 11175,
+                "packages/diagram-flowchart/src/parser/model.ts:526:45:array": 11175,
+                "packages/diagram-flowchart/src/parser/parser.ts:1451:40:function": 5699,
+                "packages/diagram-flowchart/src/parser/model.ts:547:22:native-result": 27456,
+                "packages/diagram-flowchart/src/parser/parser.ts:540:49:function": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:540:22:native-result": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:658:30:object": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:660:17:array": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:660:21:native-result": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:662:16:array": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:662:20:native-result": 5000,
+                "packages/diagram-flowchart/src/parser/model.ts:664:17:array": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:552:31:object": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:555:14:object": 5000,
+                "packages/core/src/parser-kit/result.ts:102:36:object": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:418:18:object": 5000,
+                "packages/diagram-flowchart/src/parser/parser.ts:935:26:object": 3858,
+                "packages/diagram-flowchart/src/parser/parser.ts:936:19:object": 3858,
+                "packages/diagram-flowchart/src/parser/parser.ts:941:44:object": 3838,
+                "packages/diagram-flowchart/src/parser/parser.ts:951:33:function": 3858,
+                "packages/diagram-flowchart/src/parser/parser.ts:954:12:object": 3858,
+                "packages/diagram-flowchart/src/parser/parser.ts:1097:61:object": 3858,
+                "packages/diagram-flowchart/src/parser/model.ts:288:13:object": 3858,
+                "packages/diagram-flowchart/src/parser/parser.ts:1100:20:object": 3858,
+                "packages/diagram-flowchart/src/parser/parser.ts:920:50:regexp": 2381,
+                "packages/diagram-flowchart/src/parser/parser.ts:1171:23:object": 15459,
+                "packages/diagram-flowchart/src/parser/parser.ts:884:48:array": 15459,
+                "packages/diagram-flowchart/src/parser/model.ts:188:10:object": 15459,
+                "packages/diagram-flowchart/src/parser/parser.ts:1181:19:object": 15459,
+                "packages/diagram-flowchart/src/parser/parser.ts:1183:14:array": 15459,
+                "packages/diagram-flowchart/src/parser/parser.ts:1203:45:native-result": 28322,
+                "packages/diagram-flowchart/src/parser/parser.ts:1422:47:object": 6918,
+                "packages/diagram-flowchart/src/parser/parser.ts:1050:14:object": 1714,
+                "packages/diagram-flowchart/src/parser/parser.ts:1089:22:object": 21748,
+                "packages/diagram-flowchart/src/parser/parser.ts:1149:17:object": 205,
+                "packages/diagram-flowchart/src/parser/model.ts:377:18:function": 258,
+                "packages/diagram-flowchart/src/parser/parser.ts:1288:33:array": 873,
+                "packages/diagram-flowchart/src/parser/model.ts:471:18:regexp": 1351,
+                "packages/diagram-flowchart/src/parser/model.ts:511:43:function": 1351,
+                "packages/diagram-flowchart/src/parser/parser.ts:1071:16:object": 639,
+                "packages/diagram-flowchart/src/parser/model.ts:312:33:object": 1228,
+                "packages/diagram-flowchart/src/parser/model.ts:601:57:regexp": 708,
+                "packages/diagram-flowchart/src/parser/parser.ts:1581:49:regexp": 708,
+                "packages/diagram-flowchart/src/parser/parser.ts:376:15:constructor": 82,
+                "packages/diagram-flowchart/src/parser/parser.ts:378:10:function": 82,
+                "packages/diagram-flowchart/src/parser/parser.ts:1074:14:object": 13,
+                "packages/diagram-flowchart/src/parser/parser.ts:998:37:object": 80,
+                "packages/diagram-flowchart/src/parser/parser.ts:999:52:object": 80,
+                "packages/diagram-flowchart/src/parser/parser.ts:1330:19:object": 9,
+                "packages/diagram-flowchart/src/parser/parser.ts:1330:70:function": 9,
+                "packages/diagram-flowchart/src/parser/parser.ts:1318:3:rest-array": 15,
+                "packages/diagram-flowchart/src/parser/parser.ts:1321:38:array": 15,
+                "packages/diagram-flowchart/src/parser/model.ts:560:22:native-result": 9,
+                "packages/diagram-flowchart/src/parser/model.ts:563:13:object": 9,
+                "packages/diagram-flowchart/src/parser/model.ts:555:22:native-result": 6,
+                "packages/diagram-flowchart/src/parser/model.ts:224:46:object": 7,
+                "packages/diagram-flowchart/src/parser/model.ts:586:34:regexp": 2,
+                "packages/diagram-flowchart/src/parser/model.ts:590:34:regexp": 2,
+                "packages/core/src/parser-kit/ast.ts:82:27:regexp": 6,
+                "packages/core/src/parser-kit/ast.ts:82:38:function": 6,
+                "packages/diagram-flowchart/src/parser/model.ts:294:11:native-result": 2,
+                "packages/diagram-flowchart/src/parser/model.ts:294:60:object": 2
+              }
+            }
+          },
+          "objectsPerNode": {
+            "before": 73.30630781672222,
+            "after": 49.6672320953076
+          },
+          "objectsPerNodeAndEdge": {
+            "before": 35.68208242325325,
+            "after": 24.17568586035571
+          }
+        },
+        "limitations": [
+          "Untimed mechanism/output evidence; no acceptance/P12 or physical allocation verdict.",
+          "Counts executed object/array/regexp literals, new expressions, function/arrow expressions, object accessor/method function creation, rest parameter arrays and object-valued results of listed allocation-returning native calls in parser.ts/model.ts/result.ts/ast.ts only.",
+          "Counters reset after setup and cache reset before normal SVG render; no lazy metadata reads inside render count.",
+          "Native engine internal storage and implicit iterator/context allocations are excluded; new lazy closure function objects are counted and physical allocation separately measured by P7.",
+          "Unchanged lexer/preprocessing/render/API allocation sites excluded. Source-level counts do not estimate allocated bytes.",
+          "Forced metadata counts separately show the replay cost after rendering, and full prepared parse values compared using structuredClone + isDeepStrictEqual for all four variants.",
+          "Plain minified base/head and unminified instrumented base/head SVGs compared exactly; parser records never inferred from AST size.",
+          "Hindsight tools unavailable."
+        ],
+        "sources": [
+          {
+            "path": ".tmp/perf-2a-counters/entry.mjs",
+            "sha256": "f5cf4b6392f11e3a220be88b09d2b7e104061b635c6ae860d6b8cb24b3a34ed2"
+          },
+          {
+            "path": "packages/core/src/ascii/canvas.ts",
+            "sha256": "96cd456c7b2a1e0388977aaea96f01fa98c6c103432e1cf8605b8761160d300f"
+          },
+          {
+            "path": "packages/core/src/ascii/directions.ts",
+            "sha256": "1cfe076712f50334c5fe19e92fdee80a41f2b91568731d66ff0c75f9fcb25a5e"
+          },
+          {
+            "path": "packages/core/src/ascii/draw.ts",
+            "sha256": "42476f693c0816161531b946e3050e529bce2d7a45a0f23dc5fc50be89f3c9c1"
+          },
+          {
+            "path": "packages/core/src/ascii/glyphs.ts",
+            "sha256": "0409a5182f431457f277488ea116080b60c97b5c258a8fc196b65ffcfe22469e"
+          },
+          {
+            "path": "packages/core/src/ascii/index.ts",
+            "sha256": "7fdbebd45c6cb6c779952c819c890829bf8680c8080e19e3502f33d11a1e53b0"
+          },
+          {
+            "path": "packages/core/src/ascii/measurer.ts",
+            "sha256": "db0f2bc41a4c6ce0cbda7d92555b34e7f0ac909072631f3c886574231e91b4e0"
+          },
+          {
+            "path": "packages/core/src/ascii/options.ts",
+            "sha256": "5bfe2e1ea0b3085da9c8fe238a3a3d09de549ac8d496e55c4d3b1fca3d6668ac"
+          },
+          {
+            "path": "packages/core/src/ascii/repair.ts",
+            "sha256": "85fdba691d8418fabc0442898e0fbc2752ed2fe6b298af3e49f5e7465ce3de45"
+          },
+          {
+            "path": "packages/core/src/ascii/snap.ts",
+            "sha256": "c5b0850e41fb33f27273d69316ee4c052d357336e63f52e8ed28e23133026f44"
+          },
+          {
+            "path": "packages/core/src/config/fragment.ts",
+            "sha256": "b9521f5ba10201cb7163239218f386e44792eb469388d9f1a32de5fdca08afa8"
+          },
+          {
+            "path": "packages/core/src/config/freeze.ts",
+            "sha256": "e6ea84163eaad3a7e7401fb0f72bcea123f15eb42598d7189564cb0ac9702e11"
+          },
+          {
+            "path": "packages/core/src/config/generated/defaults.ts",
+            "sha256": "176f0a4ce1434d5cb9bbada830778bbe04843c9e651b6c6ca75480b44fae11e1"
+          },
+          {
+            "path": "packages/core/src/config/generated/keys.ts",
+            "sha256": "c85b7e5db15900f4539f02044e784d94d903b2726f043570ec4235af22a6e073"
+          },
+          {
+            "path": "packages/core/src/config/index.ts",
+            "sha256": "27d8fc25b66710822ee87135d838f75f8500f387ab6115999a6f5891e4259528"
+          },
+          {
+            "path": "packages/core/src/config/resolve.ts",
+            "sha256": "233c654cb9581adf861d54357660af28347803408b4136d91eceecdc56370308"
+          },
+          {
+            "path": "packages/core/src/config/secure.ts",
+            "sha256": "a544a4ce9fb90ef50beb50147a4cc155bf3227f42af2c4da6900f616e85d1815"
+          },
+          {
+            "path": "packages/core/src/index.ts",
+            "sha256": "8d38d72c1e8053a6b6fc575b806b7980c4a6f70595325a9086c3fc813618d76d"
+          },
+          {
+            "path": "packages/core/src/layout/index.ts",
+            "sha256": "aeec4cf2b11a9956f23876115cebf0f07b057b89e969134b1e76b01fb6f1f493"
+          },
+          {
+            "path": "packages/core/src/layout/layered/compound.ts",
+            "sha256": "bb98071ff1db47d783c3fe5b3009da933e59b7aa569d093a2cf557c938e5ef36"
+          },
+          {
+            "path": "packages/core/src/layout/layered/end-markers.ts",
+            "sha256": "29b2ce062c3032810d538a4bcea85d3712665c79b9fcf6e4246e2cc2b32082ed"
+          },
+          {
+            "path": "packages/core/src/layout/layered/grid-obstacles.ts",
+            "sha256": "fcb2315d830095956e51a60cc850441cdeb057c1b60d26a7d9a3b95858163136"
+          },
+          {
+            "path": "packages/core/src/layout/layered/index.ts",
+            "sha256": "d56e483c2b7c0d4482a83e3d20fbcfbf1fce8336c51047216363282ba78b4790"
+          },
+          {
+            "path": "packages/core/src/layout/layered/layered.ts",
+            "sha256": "54f0df6982384d97e63f46a107603edd0119f7df3571a8a4f7035f04f5419491"
+          },
+          {
+            "path": "packages/core/src/layout/tree/index.ts",
+            "sha256": "376ff6be5dbc05f1ee937742d820637f6cf7b81ba88b3dd7a793ab99187a6493"
+          },
+          {
+            "path": "packages/core/src/layout/tree/tree.ts",
+            "sha256": "a6e360196716d305c1b4f4e07dc563020bbc8e98f0d341f16de3f8f5f2632d75"
+          },
+          {
+            "path": "packages/core/src/layout/units.ts",
+            "sha256": "6e420a296b1e08be33c8e18a0635118405100de2bb3713578726892d1dabb022"
+          },
+          {
+            "path": "packages/core/src/layout/validate-grid.ts",
+            "sha256": "1a59d7acab7b9f8b7270e74ecfe121b1593b4b017de031be8b4d210773eed85c"
+          },
+          {
+            "path": "packages/core/src/layout/validate.ts",
+            "sha256": "6f411fcc5eb10ac39216d24e0e1c976733caa81334ec0017013906e5a4af7dae"
+          },
+          {
+            "path": "packages/core/src/limits/index.ts",
+            "sha256": "38f457bbc5a08fc6154ddd25b646c645383b54f9d8c841220495217509e66650"
+          },
+          {
+            "path": "packages/core/src/parser-kit/ast.ts",
+            "sha256": "91610727a80ca38c65223497375ffe42ecde5b002627810292c0030d84e7b360"
+          },
+          {
+            "path": "packages/core/src/parser-kit/categories.ts",
+            "sha256": "d80b02ae1b7582f16d0f30d9ba5e7ed1d5f9c462011c15ca962e9a926c494b0c"
+          },
+          {
+            "path": "packages/core/src/parser-kit/char-codes.ts",
+            "sha256": "1f59bd20c9d5d4b34c08af550f78c5eaf89f355f178726a2a8f0cb41c3a0c27e"
+          },
+          {
+            "path": "packages/core/src/parser-kit/chars.ts",
+            "sha256": "8b150f45ba8c81f47c2086646bef0fbd41c07e52969b004fdd3e9a74c367f85d"
+          },
+          {
+            "path": "packages/core/src/parser-kit/cursor.ts",
+            "sha256": "56c2dccd29f911bc432fd35db84f59245843a2ffb4aaf03d78dde38861cef3df"
+          },
+          {
+            "path": "packages/core/src/parser-kit/diagnostics.ts",
+            "sha256": "e2d4580ff30b9573c6496112171bd71a452b4c239b3040fe8d94467f6d315828"
+          },
+          {
+            "path": "packages/core/src/parser-kit/format.ts",
+            "sha256": "5eef4eb0fcbc37d2feba40d5049e0622c6177ada5251949c9432bdd33b1bb419"
+          },
+          {
+            "path": "packages/core/src/parser-kit/index.ts",
+            "sha256": "bd8910895810285c70ba1cd45544c752a976c4d14ab1d5ef6a74a586b70ec5a1"
+          },
+          {
+            "path": "packages/core/src/parser-kit/positions.ts",
+            "sha256": "eb719ad8a9d8345d3c666f7b0c5fbe07368c5012cfa223390146993ad96b185f"
+          },
+          {
+            "path": "packages/core/src/parser-kit/probe.ts",
+            "sha256": "d1836817274e9591c7f0421f5c141a486f56d92932525d5e0efc2bda87a2d525"
+          },
+          {
+            "path": "packages/core/src/parser-kit/recovery.ts",
+            "sha256": "e0e90d4226a2ef1b8a5676c4cf90157da0cdce0c81cc4823db3120bc27617001"
+          },
+          {
+            "path": "packages/core/src/parser-kit/result.ts",
+            "sha256": "c9302e7f7c9778d11c8fee08060a1e4ad510d4643065e5d9125d9824713d826c"
+          },
+          {
+            "path": "packages/core/src/parser-kit/scanner.ts",
+            "sha256": "cc4ca7e083481a539bc26253f11731a7d0238bdeccf84db840fc5d84a2268dc7"
+          },
+          {
+            "path": "packages/core/src/parser-kit/source-view.ts",
+            "sha256": "66fd95160a013ee111e6d62ed044da0f990e0c668a1abad9265dd17f086ffda4"
+          },
+          {
+            "path": "packages/core/src/parser-kit/tokens.ts",
+            "sha256": "099cfb5002f3317ba2924fc52027ce05611d3ff95de6ef5db7d67528c4f841a6"
+          },
+          {
+            "path": "packages/core/src/parser-kit/unicode-table.ts",
+            "sha256": "8b9ac3be71715474d333281c2b2142f194831aedaa8251e968a22628c515b578"
+          },
+          {
+            "path": "packages/core/src/parser-kit/view.ts",
+            "sha256": "3d7c7b2ec88c41816cc2ae9502197a13676d14082f0102991dc9c4bca7c98500"
+          },
+          {
+            "path": "packages/core/src/pipeline/draw.ts",
+            "sha256": "8d91211ed4e6ae1b68df1f3efb3533c45fe5c88e7a49c9164fa044194a18be73"
+          },
+          {
+            "path": "packages/core/src/pipeline/error-svg.ts",
+            "sha256": "0e1dbdba89ed00dd694f6ca0928f0abc113bc6f561869b4669d6a9405381ff2a"
+          },
+          {
+            "path": "packages/core/src/pipeline/errors.ts",
+            "sha256": "67e2630b199fc41bef3768dea11dc1a29cef4e95ab8ae6c16113f673baca30a0"
+          },
+          {
+            "path": "packages/core/src/pipeline/extensions.ts",
+            "sha256": "c68167b6decbaf6a7a4da65919f8d67a52d2e9993e1512a7333a4d12cfb2985b"
+          },
+          {
+            "path": "packages/core/src/pipeline/manifest.ts",
+            "sha256": "85fcfddfa5b3c8ca932aa81986be2abe6b6b0442e7f88f860088bf2d2dbaa90f"
+          },
+          {
+            "path": "packages/core/src/pipeline/types.ts",
+            "sha256": "89578f68f62b4c43bb7b614fdfc6fc7486a96731ced3b26f87f4a7bf7eb27939"
+          },
+          {
+            "path": "packages/core/src/preprocess/detect-text.ts",
+            "sha256": "3834b077dfb78ebf86e49cf6f2ec6676d69af077d9fd9e6d48a37bdfffa52042"
+          },
+          {
+            "path": "packages/core/src/preprocess/diagram-start.ts",
+            "sha256": "735811a83fbf4eaf7c08eeb79ee8bf20565cb9ab985714eacbb38fb4e5a5c6e4"
+          },
+          {
+            "path": "packages/core/src/preprocess/directives.ts",
+            "sha256": "2660b4e5a7cb7dcbe27e7a5d75bdfe906c770d17aa4a6b7adb5b63fa3d947482"
+          },
+          {
+            "path": "packages/core/src/preprocess/frontmatter.ts",
+            "sha256": "90b7b5c818b7831c7556d1567f932265662d40144a59e15e84ee156f3c03f011"
+          },
+          {
+            "path": "packages/core/src/preprocess/index.ts",
+            "sha256": "485554d05f48955a3d1f52a1578596c76b2d3bd0dca430077dd41002c3e4d4f9"
+          },
+          {
+            "path": "packages/core/src/preprocess/preprocess.ts",
+            "sha256": "c83a29294e62426a79b8125a789cfc7bc461014eaaea6a685a9f49d4e8bc8c2c"
+          },
+          {
+            "path": "packages/core/src/preprocess/yaml-nodes.ts",
+            "sha256": "7f818c5f4b89aa5c2dd519a591863f433238ae3788e6048b92425905be434f0e"
+          },
+          {
+            "path": "packages/core/src/preprocess/yaml-scalar.ts",
+            "sha256": "fe74b98cf590349061fd7792f08ebb61cc0d7c2a000c4dd7acca54f672b5440d"
+          },
+          {
+            "path": "packages/core/src/preprocess/yaml-text.ts",
+            "sha256": "d68fac7d5abcc05efdbd13e9e609d2ebd40fe49636a50d177c23c1309af38049"
+          },
+          {
+            "path": "packages/core/src/preprocess/yaml.ts",
+            "sha256": "11164bc50a9301ee5970058baaf216f2b590874e4954703a055e7a423c6c4d13"
+          },
+          {
+            "path": "packages/core/src/svg/allowlist.ts",
+            "sha256": "e6bd0160f8e2ba2ff17c015e7596f6270c0ad055aeee34e82cb5db0bc05de93b"
+          },
+          {
+            "path": "packages/core/src/svg/encode.ts",
+            "sha256": "798378f05711c74a3b344d0f24cf029534b1ee6febde241c0e83e92ffaf9ac0a"
+          },
+          {
+            "path": "packages/core/src/svg/escape.ts",
+            "sha256": "fdeb242c5e34465efb0e8193537893296cae9f00a50e9a4a8b3e0fe2156760ce"
+          },
+          {
+            "path": "packages/core/src/svg/index.ts",
+            "sha256": "981d53faf5787a468864f0add8269bee4639334bcd5993f57e7b2154cb435c41"
+          },
+          {
+            "path": "packages/core/src/svg/inert.ts",
+            "sha256": "5b71e786661ca932dfa9fe06640f7e9e5520ba890752a7c9e3c065e602577918"
+          },
+          {
+            "path": "packages/core/src/svg/path.ts",
+            "sha256": "be8fe4d8b613b4af52180c212ed04d837d7cfce663d51f7110f98ac931a3be80"
+          },
+          {
+            "path": "packages/core/src/svg/style.ts",
+            "sha256": "57e18d029826a9b61aadd3aff8291c4490be8b40d6ac399ed742fe4dfbcc0a72"
+          },
+          {
+            "path": "packages/core/src/svg/tree.ts",
+            "sha256": "62c63103665525a0b79e439e8a9ce7eea988cbc5b070a3ac1431bb02d5896f10"
+          },
+          {
+            "path": "packages/core/src/svg/url.ts",
+            "sha256": "aac65df00e5041794863381c011ef49f1eb22e311bff8dc2e78c02e456ac7638"
+          },
+          {
+            "path": "packages/core/src/svg/writer.ts",
+            "sha256": "66fa6145cbb30e19fea667b5d74540f3debc23a89fa4f34a690232f780d9709f"
+          },
+          {
+            "path": "packages/core/src/text/entities.ts",
+            "sha256": "c34d385f6fefbce083828938994f11d36b61581ad6a588f18ab45b778ff3f249"
+          },
+          {
+            "path": "packages/core/src/text/fonts.ts",
+            "sha256": "ad3bd0905f18323197516ded371e6f145c8da58a7a82ab0f2bc218dc90e2db20"
+          },
+          {
+            "path": "packages/core/src/text/index.ts",
+            "sha256": "01c667bb869e4424c7ba44d66106b4b04194e0c66e5e0abc01c2941cc6b4f67a"
+          },
+          {
+            "path": "packages/core/src/text/inline.ts",
+            "sha256": "26d786f561c468446ed0e44abaecf5615d09782579aa8d8e6d081948a5328307"
+          },
+          {
+            "path": "packages/core/src/text/label.ts",
+            "sha256": "d0bd7f0135836d6836b3081228454569d3771d907d6a8cab09aebc62bcad3de5"
+          },
+          {
+            "path": "packages/core/src/text/measurer.ts",
+            "sha256": "ae29be368643d25698b3f9aa6a0b95550f73782767365327872809198c1b0645"
+          },
+          {
+            "path": "packages/core/src/text/metrics.ts",
+            "sha256": "17cf09d58c5344208ba3420bfdaaf7da65ea52d85fd8a80b0e82e3e630aedbe6"
+          },
+          {
+            "path": "packages/core/src/text/table.ts",
+            "sha256": "427e453492581c7459fcf31e7b93ab88eafbe15f24b1cdfdd16a6c176a3730e8"
+          },
+          {
+            "path": "packages/core/src/theme/color.ts",
+            "sha256": "836cc02092c7b059d19fb24fbd6fe452e48ba9ea0b5fe631bba54b088f0763cf"
+          },
+          {
+            "path": "packages/core/src/theme/contrast-css.ts",
+            "sha256": "81e0d587414f5bb6755b9d910fc885ce91dc6f549491fb4e4a95eaf938e32d3e"
+          },
+          {
+            "path": "packages/core/src/theme/dsl.ts",
+            "sha256": "9c226c5b5af27e59a8e8dd21a0e7c28d8765921679f428b2f67d1e063eddf10e"
+          },
+          {
+            "path": "packages/core/src/theme/generated/variables.ts",
+            "sha256": "1120c9e30487c9008623b2be5576f92474d531e3c29482d2cc8737c76a53248e"
+          },
+          {
+            "path": "packages/core/src/theme/index.ts",
+            "sha256": "cabc6678933a26560c08a7ed6c8a8b8069acd4fdd7ff2a3e5daa9142bbbf4ad3"
+          },
+          {
+            "path": "packages/core/src/theme/named.ts",
+            "sha256": "db58c6367cb8839882f29d8f5b9fe063f6c3df17854f3132be6662818fd22317"
+          },
+          {
+            "path": "packages/core/src/theme/registry.ts",
+            "sha256": "2edb805a3f4e1bc6509e07c6b4028a5ce9deb85fc3f2e3243ed37c3e79a591cb"
+          },
+          {
+            "path": "packages/core/src/theme/spec.ts",
+            "sha256": "0a315c5b343d79b193b7aab705f5dfd0262918354aef184124035d61326c57f3"
+          },
+          {
+            "path": "packages/core/src/theme/specs/base.ts",
+            "sha256": "8253dd6edf03a8a5d681f7634674421f735280ac58fdadbd971c529f28ee6f42"
+          },
+          {
+            "path": "packages/core/src/theme/specs/dark.ts",
+            "sha256": "ae1d32352a968e1389f26d40b25efd547a4600c266f5e25366a039c148015acf"
+          },
+          {
+            "path": "packages/core/src/theme/specs/default.ts",
+            "sha256": "85ccf23db757a40ef87a0ddd6805937315e802cdac1a6f022a3de6cca5095561"
+          },
+          {
+            "path": "packages/core/src/theme/specs/forest.ts",
+            "sha256": "86838020f0e5216bc9a940dad41740c8ac12ed1123a010a61bfa7cdb551140fb"
+          },
+          {
+            "path": "packages/core/src/theme/specs/geometry.ts",
+            "sha256": "21a6e91271975549107620527c9da67c1dcc154d24ecf4a9fe855ca75ee48552"
+          },
+          {
+            "path": "packages/core/src/theme/specs/neo-dark.ts",
+            "sha256": "3841a9b84cb6365e7c035d0d26381dff1e6c3551e224be03f779475f96f2bb4c"
+          },
+          {
+            "path": "packages/core/src/theme/specs/neo.ts",
+            "sha256": "cef2128b30125e5594b55652caa176b6d303e9e3b5c6242c2ab01d9ace672652"
+          },
+          {
+            "path": "packages/core/src/theme/specs/neutral.ts",
+            "sha256": "d4d2df802fc6aa8a096ee6e8829542ef887d7bdc8f575afd52440eb1f8c7ea89"
+          },
+          {
+            "path": "packages/core/src/theme/specs/palettes.ts",
+            "sha256": "b662ac02db124890edffd54137acba97f5280b2869bc6c237d84440a6858ee71"
+          },
+          {
+            "path": "packages/core/src/theme/specs/redux-color.ts",
+            "sha256": "3494c16130c934176c4835713608f7cc02bc66c40fe06d28248a33c59c1e3a59"
+          },
+          {
+            "path": "packages/core/src/theme/specs/redux-dark-color.ts",
+            "sha256": "3d8d5ae1db23c0c871a07a422e8ce1e7de272b04855c150e0c26892f1154cf5c"
+          },
+          {
+            "path": "packages/core/src/theme/specs/redux-dark-values.ts",
+            "sha256": "e9767dedee782267d2e27fac799c3f46ffe1472ecf7e12d11b9f30944de1fa45"
+          },
+          {
+            "path": "packages/core/src/theme/specs/redux-dark.ts",
+            "sha256": "17599d9000c119942a567565615423e7b5a94df5b4183462489520116478d41c"
+          },
+          {
+            "path": "packages/core/src/theme/specs/redux.ts",
+            "sha256": "75a3c01ca09f55cb524e1c22f5490af6517e469aae8b054a723c64aa9434f770"
+          },
+          {
+            "path": "packages/core/src/theme/specs/scales.ts",
+            "sha256": "ae05bcfd56cbd00b38a5232d048057781d8694e578d3d417ce4e3435ec48e413"
+          },
+          {
+            "path": "packages/core/src/theme/theme.ts",
+            "sha256": "9cdd8e92d73e6188c2cd01af22fbdc21675116e343c32456fddb85f4eb03fd8e"
+          },
+          {
+            "path": "packages/core/src/theme/vocabulary.ts",
+            "sha256": "5705e46edcd62fe27d775d1f2f0fdfa80de282c23417335f12009521775ecbd6"
+          },
+          {
+            "path": "packages/core/src/timing/index.ts",
+            "sha256": "1c149470adea130e7e76d335cc155f15b3ad6b380dfa8262fa9aa78cd84a6779"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/generated/config-defaults.ts",
+            "sha256": "ea31884211c73b19761dc98101b504749c2736e1452549d24c309d0e5e3ab798"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/index.ts",
+            "sha256": "c214c3ea3695262260611bff1e6a9ae2869447879bb11baeb4a1f59ff9fb3577"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/labels.ts",
+            "sha256": "d566b388447b3329023e6ef2a98fdf2c2e140d93a90b29f5fac9b4f38134b183"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/parser/detect.ts",
+            "sha256": "49c31622943b53a19b57ac9a8ccfb719a1b19bfa0af0bba2c18cf8ebbee8f8ed"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/parser/index.ts",
+            "sha256": "e8e497550c31e04f3e8961cabf6c4ae544b8eb694d5c418c6001f01a153db022"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/parser/jison-names.ts",
+            "sha256": "c6344fdae17a9602b0c7a8cf007f86e16975ede2df2011b0f164dbfe86572d67"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/parser/lexer.ts",
+            "sha256": "14a5a44c0df2a75fe03e517c0fca68672dd31dfc8c7cbb35d207ce221be1a816"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/parser/model.ts",
+            "sha256": "8c91247a37776ccce58b0c085749caf886f60a093aa85adcef7cda79fe9b732a"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/parser/parser.ts",
+            "sha256": "a5ba78132ead51266ad7e9751151c9fd740b7a797d8b0bc30c82247ce52a17b2"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/parser/shapes.ts",
+            "sha256": "a6e37691e8daf9e3719624db8bc8aac771277d4769e3681d8725b71429d95539"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/parser/tokens-api.ts",
+            "sha256": "2da1d53fbb1f5066418b596efd81353acc025436b7a1509306e38bfe176de290"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/parser/tokens.ts",
+            "sha256": "d0a027e9b21de9dab21d3a9944377f89f422bd83d0c33d824955a261e1223a94"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/plugin.ts",
+            "sha256": "1ab1945992332f418e7993dbdf21f774e502cbf37226e1ddc17a753cd3a0c843"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/render/assets.ts",
+            "sha256": "f0b994410eb6bffaf47a9ac0306639270a3966c987539e02f6075cb35cfd281d"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/render/config-length.ts",
+            "sha256": "4170b7f905106351b946b57656258171b2b31ec29450cd1859eda39e1dd17f99"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/render/edges.ts",
+            "sha256": "7be1affa0508563d88a4ba6d1669f0912f1194ce3a6273a0ecfba85461653094"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/render/nesting.ts",
+            "sha256": "4fc807377f97f70381c72b0912b7779a58045cfe2513724c06490f87644f9c61"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/render/prepare.ts",
+            "sha256": "b71b57238256425c7e025240f5c048d09d58978e2b39bb5bb785817ea480209e"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/render/render.ts",
+            "sha256": "be748855e4e1a6f04715914e31fbc41e1fd52faa4daf2e07a7f1c2edbe4010d5"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/render/shapes.ts",
+            "sha256": "f5ab7412d4d5e638f951702a2514c100e26c246d01f26dc5c8338667cf96ffe6"
+          },
+          {
+            "path": "packages/mermaid/src/analysis-reset.ts",
+            "sha256": "c1a88c42db197c6c858d85c519f9109a246c8627516d51217ed5fd78cfb2294a"
+          },
+          {
+            "path": "packages/mermaid/src/api.ts",
+            "sha256": "ed73eac94d34aaf8d360861943b48bc915ac7c49abfd747bf4722727d5c83a52"
+          },
+          {
+            "path": "packages/mermaid/src/ascii.ts",
+            "sha256": "853125cc2054a7acd9d9cb2f85f117861716840db12076d4b36ff2adc12b01ef"
+          },
+          {
+            "path": "packages/mermaid/src/config-snapshot.ts",
+            "sha256": "967353006d89724c87432b5bbbae5cd2e498423ec0ec9ce82e8b70ab6e270062"
+          },
+          {
+            "path": "packages/mermaid/src/dom.ts",
+            "sha256": "678f06245393ff13280df03472722316c1b3829b42f127cb520013ea860c8188"
+          },
+          {
+            "path": "packages/mermaid/src/errors.ts",
+            "sha256": "83048b8b9ba70239df265ded6bd6611cc79cd0899f5382107e1e5216c3a056df"
+          },
+          {
+            "path": "packages/mermaid/src/exports.ts",
+            "sha256": "393b18aa6e5b0adfa7b6497f683b1702f485b41d96f8c49b7a8db03e2257090c"
+          },
+          {
+            "path": "packages/mermaid/src/generated/detectors.gen.ts",
+            "sha256": "9e2957f9cdfa3774fde73d1d4728eefe82bb72483d7a5344f1f1a23672dbd34d"
+          },
+          {
+            "path": "packages/mermaid/src/icon-packs.ts",
+            "sha256": "c694f0a8fccefed1c5cc84cb7a19f92b03c91cbc23a2f294be8f3bd69df1f93e"
+          },
+          {
+            "path": "packages/mermaid/src/measurer.ts",
+            "sha256": "f890ee6e75ac3a0f22a2e8b2a69b25a67dea9c6ec16f65995df78173a88a1fde"
+          },
+          {
+            "path": "packages/mermaid/src/registry.ts",
+            "sha256": "bd2ea1589ef5c16af5f90359efa28fe13faf240b416170ce9835b7e80c7d5269"
+          },
+          {
+            "path": "packages/mermaid/src/seam.ts",
+            "sha256": "ffbabef0cebc27a9a5fb2790a11c80ae57a352cd2a22013e9f46e432a0c0e95a"
+          },
+          {
+            "path": "packages/mermaid/src/slim.ts",
+            "sha256": "c30bdf54f554127e96bb21be73c0f8c6171d63ef1574563c0b6191f455a30e9b"
+          },
+          {
+            "path": "packages/mermaid/src/version.ts",
+            "sha256": "f1f2bc7fbd76db4266993629da56eb85e5248405627f4cff9d8b9304296befaf"
+          },
+          {
+            "path": "tools/perf/entries/v13-common.mjs",
+            "sha256": "c5769a269674ea13eca96551cf1ce2d24451dd49facf3d4e134840aba0d3a534"
+          }
+        ],
+        "declaredCondition": {
+          "counterNames": [
+            "parserCreatedObjects"
+          ],
+          "definition": "Executed object/array/regexp literals, new expressions, arrow/function expressions, object accessor/method functions, rest arrays, and object-valued results of allocation-returning native calls in parser.ts/model.ts/result.ts/ast.ts. Includes new lazy result/captured preprocessing/closures/getter+setter functions; raw categories and site lists retained.",
+          "controls": [
+            "All 5000 plain/instrumented base/head SVG outputs identical",
+            "All 5000 forced public parse results identical including model,diagnostics,AST,symbols,statements,tokens when requested",
+            "Direct parser remains eager; normal production renderer path used unchanged by benchmark",
+            "Captured replay context,freeze/seal,serialization,cache and resource/extension/ASCII/editor consumers preserved"
+          ],
+          "physicalAllocationCondition": "Fresh base and head P7 diagnostic jobs, fixed 3 warmups/7 independent sampled-allocation children each over 5000 records; median head allocation estimate must be strictly below base. Recompute from saved profiles and calibration. Report uncertainty/exclusions; no inference of bytes from object counts.",
+          "requirementAmendments": {
+            "status": "proposed; pending Knut review before delivery",
+            "references": [
+              "R-PARSE-3",
+              "DESIGN §4.2"
+            ]
+          },
+          "excludedFromCreationCount": [
+            "Unchanged lexer/preprocessing/render creation sites",
+            "Engine backing storage and implicit contexts/iterators",
+            "Physical bytes (measured separately by P7 sampling)"
+          ]
+        },
+        "evidence": [
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch5-20261111/mechanism-plan.json",
+            "sha256": "79b1776f8a52973ea0cb10704b7979ec87a26d55ceb044b1b5c0111537a47faa"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch5-20261111/normalize-mechanisms.py",
+            "sha256": "2121d44e888c3f41b9fef73580c752d41a7122ce45d0352c55c0fcfaecd91f79"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/README.md",
+            "sha256": "6cf59608b1ccb9c40a3ebb545cd9d35cfb5dad1f6b8e3857fec83c3fbf6e5d94"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/SHA256SUMS.json",
+            "sha256": "8a19123eefb6fb3e3d41e4b64949698d46ee8e13e84148fb1f9fc2ac39430b25"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/full-1/collect-1.log",
+            "sha256": "2a670108a0d90b26506ad97213c8d3e5d6fa0ac473741cc2016c65777c804ac5"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/full-1/collect.mjs",
+            "sha256": "279ea33f51a8cd9f6661372cf0b2fc38c7977e919dde2fb060e3d63357afe64f"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/full-1/per-record.jsonl",
+            "sha256": "4c09fb92c343ebf536b2fb713118b917f943a4a06f3a2d13176bb9d0668c539c"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/full-1/sites.json",
+            "sha256": "6b38fdd8f828800ccdf4a3a81f01accfeae4af3b264479551ecfc49072980ef0"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/full-1/source-manifest.json",
+            "sha256": "953e278833860fe173d99ee3a117dbbed89010642c9bb7e58105e762b3d533b7"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/full-1/summary.json",
+            "sha256": "6a3f5edcb98ba99b9577976c93f1de3790d75c475a5248f0b682f0189ac9c88a"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/full-2/collect-2.log",
+            "sha256": "2a670108a0d90b26506ad97213c8d3e5d6fa0ac473741cc2016c65777c804ac5"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/full-2/collect.mjs",
+            "sha256": "e6cb946165ef31232dc41603805736418375e126c0507e44af0caa8d23bd3d53"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/full-2/per-record.jsonl",
+            "sha256": "4c09fb92c343ebf536b2fb713118b917f943a4a06f3a2d13176bb9d0668c539c"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/full-2/sites.json",
+            "sha256": "6b38fdd8f828800ccdf4a3a81f01accfeae4af3b264479551ecfc49072980ef0"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/full-2/source-manifest.json",
+            "sha256": "953e278833860fe173d99ee3a117dbbed89010642c9bb7e58105e762b3d533b7"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/full-2/summary.json",
+            "sha256": "e79c941c13fdf946c17f9de66122515b57ed5618825f355972d1f64f7e6bb7e0"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/full-2/verify.log",
+            "sha256": "f32e4b75e79a79f7b6a8bbe130628ecc54199863051aca13deba3b538c7b1e25"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/smoke-1/per-record.jsonl",
+            "sha256": "6094c3d9496d8316c9a9b634c46f472da44b417ed5ce30ac29fc77e7568b59e0"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/smoke-1/sites.json",
+            "sha256": "d78e470d46e7b7bd4214b50dcba2c50fe5cb7f15b49f42a89570b3dfc2c79f1d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/smoke-1/source-manifest.json",
+            "sha256": "f01b722a0d1d257a3465164e5416844b6f4ce2fc115f2293f80ec035c7df8769"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/smoke-1/summary.json",
+            "sha256": "6cc323c64b3f57c80756e56b278e7f2c08ce7fbadd19fea6841613968d2406cb"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/smoke-2/per-record.jsonl",
+            "sha256": "ba7d0b974ef21c160f9101105bfdbf7743b13b9e3c36978f81b147190618c97e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/smoke-2/sites.json",
+            "sha256": "e7fde2ea6270547c033a291997049b4bb7fd62b85fb9dfae9b5e54f238a0e4a0"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/smoke-2/source-manifest.json",
+            "sha256": "f01b722a0d1d257a3465164e5416844b6f4ce2fc115f2293f80ec035c7df8769"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/attempts/smoke-2/summary.json",
+            "sha256": "ad2716f3f08820098c09f273c787637dc23bceb6b2c20abfa4cb76ee77877f41"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/checks/deferred-api-tests.log",
+            "sha256": "2cf04547f5f94582172111c5abaca74dc71d5380aaa926d4d14302c8e1fb7e35"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/checks/deferred-tests.log",
+            "sha256": "f698f1e4d69a9cc98968ff5506419e863af6251bb1a9a235907ee1f626bd55cf"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/checks/initial-tests.log",
+            "sha256": "6e6f3ab6bffdb10f87fcbd4ffdca648bd969546379e2286f8d601900f74cd03c"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/checks/install-2a.log",
+            "sha256": "5f34646a1a22bfa9408ccce91c95d1625908a607972b8d01e0a6a087a9be8939"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/checks/lint-node24.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/checks/lint-targeted-2.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/checks/lint-targeted.log",
+            "sha256": "16cce8033f3a484bae497508af59318b48cdc041be6a00e5ca6c235934bc8cd1"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/checks/prettier-node24.log",
+            "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/checks/targeted-tests-node24.log",
+            "sha256": "a95e31531e488936f862346a6d09a9ed62e0833166ce1691d500e7357814d277"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/checks/targeted-tests.log",
+            "sha256": "0d7c6fd12895877b64a827d05cb7d5cdc13942d61a4758e3443d45833e478218"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/checks/typecheck-flowchart-2.log",
+            "sha256": "1efc7bfefd51d2a0e015c212f642bed86b6af73ac6fb51ba2b411206dbcaf746"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/checks/typecheck-flowchart.log",
+            "sha256": "354b339bf56888a03e0b3b92edc2bce4477abb59202d48da8c25791981f67e00"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/checks/typecheck-mermaid.log",
+            "sha256": "13be90e61c3cb19c8cc5528101af19941ed46e03839cfdcb7b5855743f4f52da"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/checks/typecheck-node24.log",
+            "sha256": "77557b7ff8eea8144a1f7e680fe41e287004231ca025b401dbd0fb2da43c0537"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/collect-3.log",
+            "sha256": "3a14a567b72f8c66431ccbaecb3be64b0a148c1f232f973fa46481a3895d592c"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/collect.mjs",
+            "sha256": "ede24530c243580408bf49b402e038b1288eadc5fcfdec11d6f50fa82b2b0cfb"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/commit-without-installed-hooks.log",
+            "sha256": "5f637912137d22406a609ac10af58268b36a1391e45d77e2d5c253d965134dba"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/commit.log",
+            "sha256": "066c964e02ad24ba9bb9603bd002e77b84f913a5fda089971bfaf4425799515c"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/entry.mjs",
+            "sha256": "f5cf4b6392f11e3a220be88b09d2b7e104061b635c6ae860d6b8cb24b3a34ed2"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/instrumented-base/index.mjs",
+            "sha256": "b872ae58ce000bab7889fd26d99864e9fc643257de21c112fb9f5add0f7f1385"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/instrumented-base/metafile.json",
+            "sha256": "8ff39fad88cb1d8cb2cd8a6e31636b1b44b1279559815f35610a6ac23b28da8b"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/instrumented-base/packages/core/src/parser-kit/ast.ts",
+            "sha256": "a6764d3b9be377d174a9239d33f8c9ca76d51ef0f7c6ea92c631ad1dbb94f8e5"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/instrumented-base/packages/core/src/parser-kit/result.ts",
+            "sha256": "a98728ec8d4f52ea1d4b6b7fab7a0efafa49c19ea7884d3ef96faecc1c45e44e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/instrumented-base/packages/diagram-flowchart/src/parser/model.ts",
+            "sha256": "7b0886c7f37296edcadf441156dacccbe15881448ae6fbc83c99bc41662d2ed4"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/instrumented-base/packages/diagram-flowchart/src/parser/parser.ts",
+            "sha256": "154405823bb39bbe739188674d87d45381198dbb1711b331e7d147af4f030786"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/instrumented-head/index.mjs",
+            "sha256": "c7afc514774480a2de1b2f47e2a4c5a826dc60a93a18274f87b2cbd7f9d0816d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/instrumented-head/metafile.json",
+            "sha256": "4d29fd96c74a3b58841c7e979f5ac562fc6275ac88baf63a67d4a9c9344fe3c7"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/instrumented-head/packages/core/src/parser-kit/ast.ts",
+            "sha256": "a6764d3b9be377d174a9239d33f8c9ca76d51ef0f7c6ea92c631ad1dbb94f8e5"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/instrumented-head/packages/core/src/parser-kit/result.ts",
+            "sha256": "a98728ec8d4f52ea1d4b6b7fab7a0efafa49c19ea7884d3ef96faecc1c45e44e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/instrumented-head/packages/diagram-flowchart/src/parser/model.ts",
+            "sha256": "7b0886c7f37296edcadf441156dacccbe15881448ae6fbc83c99bc41662d2ed4"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/instrumented-head/packages/diagram-flowchart/src/parser/parser.ts",
+            "sha256": "ad3652f7d0723f0fa32f685b660c94e513f74f632996e8891ca5b9d3a530a9e9"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/per-record.jsonl",
+            "sha256": "7b05aeb4eb2b5c1fc9e42e29bc65ef07acea2251ed89c78fbaba65ddc3655c1e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/plain-base/index.mjs",
+            "sha256": "c8f28614079051744fcfbf1b49919c020a24d92130a98f59be06721d21ecf59b"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/plain-base/metafile.json",
+            "sha256": "5e9c776f6f4d8a227166d2a1563ff913ea684020b03c23e71fa3e13eff236c55"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/plain-head/index.mjs",
+            "sha256": "1fe462351620ea565346956306c4ab500a9cd7031c8d661439c06953495f0172"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/plain-head/metafile.json",
+            "sha256": "b7c0c56b0dbf6347d9e09a732ae0027ad7fea87729e05357795c336619c6e441"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/sites.json",
+            "sha256": "5fdd2dce0ad450059c841b863536b809ed0c63da7844dc383427b65ac55b75dc"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/smoke-1.log",
+            "sha256": "46e175fd78fe0e18a3d700d829218164178dfa58b1542615a4d2521c7a5a78de"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/smoke-2.log",
+            "sha256": "a745002abed327dd173f04e2ea6dbd157a89d36eb040071a4b023ad71de7e36e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/source-manifest.json",
+            "sha256": "953e278833860fe173d99ee3a117dbbed89010642c9bb7e58105e762b3d533b7"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/summary.json",
+            "sha256": "a820adb2d819255614f7083e4270dfb1c701eda07f6ca218694f8f6201823ce0"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/verify.log",
+            "sha256": "8b184282361d34792d1a9097a57a2d6eb50ddf0ae5cf879bf28c901a4034906d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-2a-counters/verify.mjs",
+            "sha256": "c28b8bc1bfcdc38fb96d9dd0cd596675a9e4e3a5a932b5421b1eb9cbbf3aaa36"
+          }
+        ],
+        "method": "Untimed instrumented executed operation counts; not physical allocation bytes. See preserved scripts for attribution.",
+        "normalization": {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch5-20261111/mechanism-2a.json",
+          "sha256": "1da1cf6ecea88c4ba9b40ea64286107d7692d344a50ddca80294e2e6381370ab"
+        },
+        "passed": true
+      },
+      "allocationComparison": {
+        "hypothesis": "2a",
+        "diagnosticOnly": true,
+        "method": "Existing P7 V8 sampling: median of seven independent child estimates under allocationRender; full 5000 records; reset/setup excluded",
+        "base": {
+          "medianEstimatedBytes": 1042068016,
+          "replicates": [
+            {
+              "estimatedBytes": 1046277608,
+              "samples": 62833,
+              "scope": "allocationRender"
+            },
+            {
+              "estimatedBytes": 1042068016,
+              "samples": 62544,
+              "scope": "allocationRender"
+            },
+            {
+              "estimatedBytes": 1043301640,
+              "samples": 62641,
+              "scope": "allocationRender"
+            },
+            {
+              "estimatedBytes": 1038612592,
+              "samples": 62357,
+              "scope": "allocationRender"
+            },
+            {
+              "estimatedBytes": 1035875128,
+              "samples": 62201,
+              "scope": "allocationRender"
+            },
+            {
+              "estimatedBytes": 1040802864,
+              "samples": 62479,
+              "scope": "allocationRender"
+            },
+            {
+              "estimatedBytes": 1045373864,
+              "samples": 62758,
+              "scope": "allocationRender"
+            }
+          ],
+          "minimumEstimatedBytes": 1035875128,
+          "maximumEstimatedBytes": 1046277608,
+          "replicateRelativeRange": 0.009982534575746925,
+          "maximumCalibrationRelativeError": 0.008311271667480469,
+          "checksum": 94791839,
+          "manifestSha256": "d9d14bc4d8bd31ec7c1d13e31469f3a5320cfa850f6800d05337d8f54969fdca",
+          "artifactDigest": "54c2879f56c867719fafb96e8f4359dcca471e323105ee0371afc5b1a8c4f612"
+        },
+        "head": {
+          "medianEstimatedBytes": 1012352464,
+          "replicates": [
+            {
+              "estimatedBytes": 1012352464,
+              "samples": 60766,
+              "scope": "allocationRender"
+            },
+            {
+              "estimatedBytes": 1007005768,
+              "samples": 60413,
+              "scope": "allocationRender"
+            },
+            {
+              "estimatedBytes": 1012903512,
+              "samples": 60791,
+              "scope": "allocationRender"
+            },
+            {
+              "estimatedBytes": 1012560544,
+              "samples": 60764,
+              "scope": "allocationRender"
+            },
+            {
+              "estimatedBytes": 1008174760,
+              "samples": 60515,
+              "scope": "allocationRender"
+            },
+            {
+              "estimatedBytes": 1010716592,
+              "samples": 60655,
+              "scope": "allocationRender"
+            },
+            {
+              "estimatedBytes": 1017058208,
+              "samples": 61046,
+              "scope": "allocationRender"
+            }
+          ],
+          "minimumEstimatedBytes": 1007005768,
+          "maximumEstimatedBytes": 1017058208,
+          "replicateRelativeRange": 0.00992978271646702,
+          "maximumCalibrationRelativeError": 0.014670848846435547,
+          "checksum": 94791839,
+          "manifestSha256": "5f6ca0f081251b4b17aafc44fd1006ff2a6f13c7d299564257a26b108aeadce5",
+          "artifactDigest": "d4fd2060f3adc34b254da9824c93a2fb1d2122f15cfeb75882d3f9edcc84bd94"
+        },
+        "ratio": 0.9714840571404698,
+        "reduction": 0.028515942859530186,
+        "passed": true,
+        "limitations": [
+          "Sampled estimates, not exact allocation bytes; excludes native/external buffers and allocations outside renderer stacks.",
+          "Calibration error and replicate spread are empirical descriptions, not confidence bounds.",
+          "Base and head diagnostic jobs run serially as separate passes; this is not interleaved acceptance timing.",
+          "A lower allocation estimate does not override P12 timing/bytes or correctness requirements."
+        ]
+      },
+      "requirementAmendments": {
+        "status": "pending Knut review before delivery",
+        "references": [
+          "R-PARSE-3",
+          "DESIGN §4.2"
+        ]
+      },
+      "baseDiagnostics": {
+        "methods": {
+          "measurerCalls": "Actual width-method invocations, including any width-cache hits. Vertical metrics invocations are excluded and reported separately when supplied by the renderer.",
+          "metricsCalls": "Optional actual vertical-metrics method invocations; available for v13, absent for Pele.",
+          "allocations": "V8 HeapProfiler.startSampling with collected minor/major objects included; sum selfSize below named allocationRender frame; median independent child estimates. Timing artifacts avoid diagnostic-counter allocations.",
+          "scavenge": "Pinned --trace-gc-nvp pause= with gc=s, only between synchronous render markers. Other GC, setup/reset pauses and final forced-boundary pause reported separately.",
+          "traceAllocation": "Supplemental sum of V8 allocated= over GC intervals through final forced boundary; byte-precise occupancy deltas, NOT exact gross allocation.",
+          "markup": "UTF-8 Buffer.byteLength plus quote-aware XML start-tag and attribute counting.",
+          "features": "v13 preprocessing, parser/token model and actual label layout inspection; number of occurrences and number of diagrams containing each feature.",
+          "stages": "Diagnostic stage clock; layout includes nested measure and graphLayout. Unaccounted time = total minus parse/layout/serialise; instrumentation overhead remains."
+        },
+        "renderers": {
+          "v13": {
+            "totals": {
+              "outputBytes": 95296904,
+              "elements": 1043859,
+              "attributes": 3614479,
+              "measurerCalls": 1198406,
+              "parserCalls": 5000,
+              "metricsCalls": 220480
+            },
+            "allocatedBytesEstimate": 1042068016,
+            "allocationError": {
+              "maximumCalibrationRelativeError": 0.008311271667480469,
+              "replicateRelativeRange": 0.009982534575746925,
+              "interpretation": "Empirical calibration error and replicate spread, not a general confidence bound. Excludes native/external buffers and allocations outside sampled renderer stacks."
+            },
+            "gc": {
+              "scavengePauseMs": 795.9000000000025,
+              "scavengeEvents": 747,
+              "otherGcPauseMs": 51.50000000000001,
+              "otherGcEvents": 39,
+              "boundaryGcPauseMs": 3.3,
+              "outsideRenderGcPauseMs": 97.4,
+              "intervalOccupancyAllocatedBytes": 57731050456,
+              "intervalOccupancyEvents": 877,
+              "pauseRoundingErrorMs": 39.300000000000004,
+              "scavengePauseMsPerPass": 113.70000000000036,
+              "otherGcPauseMsPerPass": 7.3571428571428585
+            }
+          },
+          "pele": {
+            "totals": {
+              "outputBytes": 81604595,
+              "elements": 962992,
+              "attributes": 3105130,
+              "measurerCalls": 828402,
+              "parserCalls": 5000
+            },
+            "allocatedBytesEstimate": 755547520,
+            "allocationError": {
+              "maximumCalibrationRelativeError": 0.008311271667480469,
+              "replicateRelativeRange": 0.00746446762210271,
+              "interpretation": "Empirical calibration error and replicate spread, not a general confidence bound. Excludes native/external buffers and allocations outside sampled renderer stacks."
+            },
+            "gc": {
+              "scavengePauseMs": 190.1000000000008,
+              "scavengeEvents": 543,
+              "otherGcPauseMs": 0,
+              "otherGcEvents": 0,
+              "boundaryGcPauseMs": 2.5,
+              "outsideRenderGcPauseMs": 0,
+              "intervalOccupancyAllocatedBytes": 36406334456,
+              "intervalOccupancyEvents": 544,
+              "pauseRoundingErrorMs": 27.150000000000002,
+              "scavengePauseMsPerPass": 27.15714285714297,
+              "otherGcPauseMsPerPass": 0
+            }
+          }
+        },
+        "features": {
+          "occurrences": {
+            "frontMatter": 1934,
+            "initDirectives": 162,
+            "themeVariables": 228,
+            "shapeData": 17172,
+            "subgraphs": 10653,
+            "comments": 12144,
+            "wideLabels": 66138,
+            "labelledEdges": 35013
+          },
+          "diagrams": {
+            "frontMatter": 1934,
+            "initDirectives": 162,
+            "themeVariables": 228,
+            "shapeData": 512,
+            "subgraphs": 2461,
+            "comments": 1297,
+            "wideLabels": 4796,
+            "labelledEdges": 3572
+          }
+        },
+        "emptyGraph": {
+          "repetitions": 1000,
+          "medianMs": {
+            "total": 0.03683300000000145,
+            "unaccounted": 0.009666999999993209,
+            "parse": 0.007000000000005002,
+            "measure": 0.006624999999999659,
+            "graphLayout": 0.00420799999999133,
+            "layout": 0.011333999999990851,
+            "serialise": 0.008583000000001562
+          }
+        }
+      },
+      "checks": [
+        {
+          "name": "environment",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node tools/perf/check-environment.mjs --node-only",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "tools/perf/check-environment.mjs",
+            "--node-only"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-11T09:56:42.313Z",
+          "finishedAt": "2026-11-11T09:56:42.518Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-validation-round1-02/environment.log",
+          "logSha256": "caa69c7e2be7d173a7602d85cc374cfadbc40573ccbaf3eec2c6a51d86037d88"
+        },
+        {
+          "name": "harness",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node --test tools/perf/acceptance.test.mjs tools/perf/browser.test.mjs tools/perf/build.test.mjs tools/perf/common.test.mjs tools/perf/diagnostics.test.mjs tools/perf/evaluate.test.mjs tools/perf/gates.test.mjs tools/perf/quiet.test.mjs tools/perf/report.test.mjs tools/perf/scheduler.test.mjs tools/perf/timing-worker.test.mjs",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "--test",
+            "tools/perf/acceptance.test.mjs",
+            "tools/perf/browser.test.mjs",
+            "tools/perf/build.test.mjs",
+            "tools/perf/common.test.mjs",
+            "tools/perf/diagnostics.test.mjs",
+            "tools/perf/evaluate.test.mjs",
+            "tools/perf/gates.test.mjs",
+            "tools/perf/quiet.test.mjs",
+            "tools/perf/report.test.mjs",
+            "tools/perf/scheduler.test.mjs",
+            "tools/perf/timing-worker.test.mjs"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-11T09:56:42.518Z",
+          "finishedAt": "2026-11-11T09:56:49.095Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-validation-round1-02/harness.log",
+          "logSha256": "26cd4f90384b1580398b87a07db8d0f4fc611cc796eb96e8ff2420569147e88a"
+        },
+        {
+          "name": "check",
+          "command": "pnpm check",
+          "argv": [
+            "pnpm",
+            "check"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-11T09:56:49.095Z",
+          "finishedAt": "2026-11-11T10:01:07.879Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-validation-round1-02/check.log",
+          "logSha256": "56a6fc2ce7e1b0414d879352223c7d93ed0556ffb41aceb8816878ddc1e36dc2"
+        },
+        {
+          "name": "security",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node node_modules/vitest/vitest.mjs run packages/conformance/src/cynefin/render.spec.ts packages/conformance/src/feature-plugins.spec.ts packages/conformance/src/flowchart-behaviour.spec.ts packages/conformance/src/flowchart-render.spec.ts packages/conformance/src/gantt/render-behaviour.spec.ts packages/conformance/src/gantt/schedule-stress.spec.ts packages/conformance/src/journey/render.spec.ts packages/conformance/src/mindmap/stress.spec.ts packages/conformance/src/packet/render.spec.ts packages/conformance/src/pie/render.spec.ts packages/conformance/src/quadrant/render.spec.ts packages/conformance/src/radar/render.spec.ts packages/conformance/src/sequence/render.spec.ts packages/conformance/src/state/render.spec.ts packages/conformance/src/stress.spec.ts packages/conformance/src/treemap/render.spec.ts packages/conformance/src/wardley/render.spec.ts packages/core/src/config/resolveConfig.spec.ts packages/core/src/limits/limits.spec.ts packages/core/src/svg/gradient.spec.ts packages/core/src/svg/image-url.spec.ts packages/core/src/svg/security.spec.ts packages/core/src/svg/url.spec.ts packages/core/src/svg/user-gradient.spec.ts packages/diagram-er/src/v12-specs/erDiagram.spec.ts packages/diagram-er/src/v12-specs/subgraph.spec.ts packages/diagram-flowchart/src/v12-specs/flow-arrows.spec.ts packages/diagram-flowchart/src/v12-specs/flow-comments.spec.ts packages/diagram-flowchart/src/v12-specs/flow-direction.spec.ts packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts packages/diagram-flowchart/src/v12-specs/flow-interactions.spec.ts packages/diagram-flowchart/src/v12-specs/flow-lines.spec.ts packages/diagram-flowchart/src/v12-specs/flow-md-string.spec.ts packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts packages/diagram-flowchart/src/v12-specs/flow-singlenode.spec.ts packages/diagram-flowchart/src/v12-specs/flow-style.spec.ts packages/diagram-flowchart/src/v12-specs/flow-text.spec.ts packages/diagram-flowchart/src/v12-specs/flow-vertice-chaining.spec.ts packages/diagram-flowchart/src/v12-specs/flow.spec.ts packages/diagram-flowchart/src/v12-specs/subgraph.spec.ts packages/diagram-kanban/src/parser/parse.spec.ts packages/diagram-kanban/src/render/render.spec.ts packages/diagram-mindmap/src/parser/parse.spec.ts packages/diagram-pie/src/v12-specs/pie.spec.ts packages/diagram-state/src/v12-specs/state-parser.spec.ts packages/diagram-state/src/v12-specs/state-style.spec.ts packages/language-service/src/front-matter.spec.ts packages/mermaid/src/api.spec.ts packages/mermaid/src/config-fragments.spec.ts packages/mermaid/src/extensions.spec.ts packages/mermaid/src/icon-contract.spec.ts packages/mermaid/src/inline-boxes.spec.ts packages/mermaid/src/limits.spec.ts packages/mermaid/src/mindmap.spec.ts packages/mermaid/src/render-safety.spec.ts packages/mermaid/src/sankey.spec.ts packages/plugin-hand-drawn/src/corpus.spec.ts packages/plugin-icons/src/corpus.spec.ts packages/plugin-icons/src/security.spec.ts packages/plugin-interactions/src/class.spec.ts packages/plugin-interactions/src/gantt.spec.ts packages/plugin-interactions/src/index.spec.ts packages/plugin-interactions/src/menus.spec.ts packages/plugin-math/src/engine.spec.ts packages/plugin-math/src/index.spec.ts tools/gen-config/src/migration.spec.ts",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "node_modules/vitest/vitest.mjs",
+            "run",
+            "packages/conformance/src/cynefin/render.spec.ts",
+            "packages/conformance/src/feature-plugins.spec.ts",
+            "packages/conformance/src/flowchart-behaviour.spec.ts",
+            "packages/conformance/src/flowchart-render.spec.ts",
+            "packages/conformance/src/gantt/render-behaviour.spec.ts",
+            "packages/conformance/src/gantt/schedule-stress.spec.ts",
+            "packages/conformance/src/journey/render.spec.ts",
+            "packages/conformance/src/mindmap/stress.spec.ts",
+            "packages/conformance/src/packet/render.spec.ts",
+            "packages/conformance/src/pie/render.spec.ts",
+            "packages/conformance/src/quadrant/render.spec.ts",
+            "packages/conformance/src/radar/render.spec.ts",
+            "packages/conformance/src/sequence/render.spec.ts",
+            "packages/conformance/src/state/render.spec.ts",
+            "packages/conformance/src/stress.spec.ts",
+            "packages/conformance/src/treemap/render.spec.ts",
+            "packages/conformance/src/wardley/render.spec.ts",
+            "packages/core/src/config/resolveConfig.spec.ts",
+            "packages/core/src/limits/limits.spec.ts",
+            "packages/core/src/svg/gradient.spec.ts",
+            "packages/core/src/svg/image-url.spec.ts",
+            "packages/core/src/svg/security.spec.ts",
+            "packages/core/src/svg/url.spec.ts",
+            "packages/core/src/svg/user-gradient.spec.ts",
+            "packages/diagram-er/src/v12-specs/erDiagram.spec.ts",
+            "packages/diagram-er/src/v12-specs/subgraph.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-arrows.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-comments.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-direction.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-interactions.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-lines.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-md-string.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-singlenode.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-style.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-text.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-vertice-chaining.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/subgraph.spec.ts",
+            "packages/diagram-kanban/src/parser/parse.spec.ts",
+            "packages/diagram-kanban/src/render/render.spec.ts",
+            "packages/diagram-mindmap/src/parser/parse.spec.ts",
+            "packages/diagram-pie/src/v12-specs/pie.spec.ts",
+            "packages/diagram-state/src/v12-specs/state-parser.spec.ts",
+            "packages/diagram-state/src/v12-specs/state-style.spec.ts",
+            "packages/language-service/src/front-matter.spec.ts",
+            "packages/mermaid/src/api.spec.ts",
+            "packages/mermaid/src/config-fragments.spec.ts",
+            "packages/mermaid/src/extensions.spec.ts",
+            "packages/mermaid/src/icon-contract.spec.ts",
+            "packages/mermaid/src/inline-boxes.spec.ts",
+            "packages/mermaid/src/limits.spec.ts",
+            "packages/mermaid/src/mindmap.spec.ts",
+            "packages/mermaid/src/render-safety.spec.ts",
+            "packages/mermaid/src/sankey.spec.ts",
+            "packages/plugin-hand-drawn/src/corpus.spec.ts",
+            "packages/plugin-icons/src/corpus.spec.ts",
+            "packages/plugin-icons/src/security.spec.ts",
+            "packages/plugin-interactions/src/class.spec.ts",
+            "packages/plugin-interactions/src/gantt.spec.ts",
+            "packages/plugin-interactions/src/index.spec.ts",
+            "packages/plugin-interactions/src/menus.spec.ts",
+            "packages/plugin-math/src/engine.spec.ts",
+            "packages/plugin-math/src/index.spec.ts",
+            "tools/gen-config/src/migration.spec.ts"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-11T10:01:07.879Z",
+          "finishedAt": "2026-11-11T10:01:25.177Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-validation-round1-02/security.log",
+          "logSha256": "edd6bbd69a5b40a0c726b1db3f305609c2e7e00f758ed9a8bba4deef013bccd5"
+        },
+        {
+          "name": "size",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node --import tsx --conditions=mermaid-source tools/perf/size-check.mjs",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "--import",
+            "tsx",
+            "--conditions=mermaid-source",
+            "tools/perf/size-check.mjs"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-11T10:01:25.177Z",
+          "finishedAt": "2026-11-11T10:01:27.353Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-validation-round1-02/size.log",
+          "logSha256": "7c1fa06398ba276831527462ebb8953e3768c976e3e495f7fb7ff6b94f1c9a11"
+        },
+        {
+          "name": "host",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node tools/perf/host-acceptance.mjs --out /Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-validation-round1-02/host",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "tools/perf/host-acceptance.mjs",
+            "--out",
+            "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-validation-round1-02/host"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-11T10:01:27.354Z",
+          "finishedAt": "2026-11-11T10:01:37.711Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-validation-round1-02/host.log",
+          "logSha256": "d480796160a289e33b609548b89fb7d68b4fbb43cfb5a21716bce35aa468e101"
+        },
+        {
+          "name": "browser",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "tools/perf/browser-acceptance.mjs",
+            "--out",
+            "/Users/knsv/repos/mermaid-v13-perf-round1-2a/.tmp/perf-validation-round1-02/browser"
+          ],
+          "status": "unverified",
+          "reason": "Deferred browser validation; not required for Node measurement readiness"
+        },
+        {
+          "name": "e2e",
+          "argv": [
+            "pnpm",
+            "e2e"
+          ],
+          "status": "unverified",
+          "reason": "Deferred browser validation; not required for Node measurement readiness"
+        }
+      ],
+      "diagnostics": {
+        "methods": {
+          "measurerCalls": "Actual width-method invocations, including any width-cache hits. Vertical metrics invocations are excluded and reported separately when supplied by the renderer.",
+          "metricsCalls": "Optional actual vertical-metrics method invocations; available for v13, absent for Pele.",
+          "allocations": "V8 HeapProfiler.startSampling with collected minor/major objects included; sum selfSize below named allocationRender frame; median independent child estimates. Timing artifacts avoid diagnostic-counter allocations.",
+          "scavenge": "Pinned --trace-gc-nvp pause= with gc=s, only between synchronous render markers. Other GC, setup/reset pauses and final forced-boundary pause reported separately.",
+          "traceAllocation": "Supplemental sum of V8 allocated= over GC intervals through final forced boundary; byte-precise occupancy deltas, NOT exact gross allocation.",
+          "markup": "UTF-8 Buffer.byteLength plus quote-aware XML start-tag and attribute counting.",
+          "features": "v13 preprocessing, parser/token model and actual label layout inspection; number of occurrences and number of diagrams containing each feature.",
+          "stages": "Diagnostic stage clock; layout includes nested measure and graphLayout. Unaccounted time = total minus parse/layout/serialise; instrumentation overhead remains."
+        },
+        "renderers": {
+          "v13": {
+            "totals": {
+              "outputBytes": 95296904,
+              "elements": 1043859,
+              "attributes": 3614479,
+              "measurerCalls": 1198406,
+              "parserCalls": 5000,
+              "metricsCalls": 220480
+            },
+            "allocatedBytesEstimate": 1012352464,
+            "allocationError": {
+              "maximumCalibrationRelativeError": 0.014670848846435547,
+              "replicateRelativeRange": 0.00992978271646702,
+              "interpretation": "Empirical calibration error and replicate spread, not a general confidence bound. Excludes native/external buffers and allocations outside sampled renderer stacks."
+            },
+            "gc": {
+              "scavengePauseMs": 623.6999999999986,
+              "scavengeEvents": 767,
+              "otherGcPauseMs": 25.899999999999995,
+              "otherGcEvents": 19,
+              "boundaryGcPauseMs": 3,
+              "outsideRenderGcPauseMs": 45.5,
+              "intervalOccupancyAllocatedBytes": 54758361352,
+              "intervalOccupancyEvents": 843,
+              "pauseRoundingErrorMs": 39.300000000000004,
+              "scavengePauseMsPerPass": 89.0999999999998,
+              "otherGcPauseMsPerPass": 3.6999999999999993
+            }
+          },
+          "pele": {
+            "totals": {
+              "outputBytes": 81604595,
+              "elements": 962992,
+              "attributes": 3105130,
+              "measurerCalls": 828402,
+              "parserCalls": 5000
+            },
+            "allocatedBytesEstimate": 754941888,
+            "allocationError": {
+              "maximumCalibrationRelativeError": 0.014670848846435547,
+              "replicateRelativeRange": 0.012902831535557874,
+              "interpretation": "Empirical calibration error and replicate spread, not a general confidence bound. Excludes native/external buffers and allocations outside sampled renderer stacks."
+            },
+            "gc": {
+              "scavengePauseMs": 190.00000000000074,
+              "scavengeEvents": 543,
+              "otherGcPauseMs": 0,
+              "otherGcEvents": 0,
+              "boundaryGcPauseMs": 2.5,
+              "outsideRenderGcPauseMs": 0,
+              "intervalOccupancyAllocatedBytes": 36406540416,
+              "intervalOccupancyEvents": 544,
+              "pauseRoundingErrorMs": 27.150000000000002,
+              "scavengePauseMsPerPass": 27.14285714285725,
+              "otherGcPauseMsPerPass": 0
+            }
+          }
+        },
+        "features": {
+          "occurrences": {
+            "frontMatter": 1934,
+            "initDirectives": 162,
+            "themeVariables": 228,
+            "shapeData": 17172,
+            "subgraphs": 10653,
+            "comments": 12144,
+            "wideLabels": 66138,
+            "labelledEdges": 35013
+          },
+          "diagrams": {
+            "frontMatter": 1934,
+            "initDirectives": 162,
+            "themeVariables": 228,
+            "shapeData": 512,
+            "subgraphs": 2461,
+            "comments": 1297,
+            "wideLabels": 4796,
+            "labelledEdges": 3572
+          }
+        },
+        "emptyGraph": {
+          "repetitions": 1000,
+          "medianMs": {
+            "total": 0.039083000000005086,
+            "unaccounted": 0.01029199999999264,
+            "parse": 0.0071669999999954825,
+            "measure": 0.006833000000000311,
+            "graphLayout": 0.004500000000007276,
+            "layout": 0.0118749999999892,
+            "serialise": 0.008833999999993125
+          }
+        }
+      },
+      "evidence": [
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch5-20261111/2a/header.json",
+          "sha256": "5b572e9c258b7dcee516c7cc5ac942cad5c4ab007b573750d0c9d9e5568bd075"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch5-20261111/2a/queue.json",
+          "sha256": "d2646d02d22037539a3cfd55307099c76bbc5cc3bc49d7501540f02b88d053cb"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch5-20261111/2a/completion.json",
+          "sha256": "27b8d17e012c8011f35ae62338072621dc025c69ed7d3bfac51f46e91055b69e"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch5-20261111/2a/p12-verdict.json",
+          "sha256": "2b67aca62b687b3c9d5fbf56af8994557a9d91567582fe69dcda2fc62bcbd7aa"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch5-20261111/2a/verdict.json",
+          "sha256": "3b26fb4a52aa70715d09b111df3f5fabb0186b84a152dffabbcf1b27ec75c5af"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch5-20261111/2a/raw/timing/result.json",
+          "sha256": "6f1c921011292c90754443593b66438b6d125fe3905054a786b58f7681facb73"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch5-20261111/2a/raw/gates/result.json",
+          "sha256": "ac27158eef90627908a4285b51542a11d1feab99d757dce5bd6e601dbcb3db2d"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch5-20261111/2a/raw/base-diagnostics/result.json",
+          "sha256": "382a452f2cc552a5e44a9468e5245040ac06b384fe791581f3c9662b7ba1916b"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch5-20261111/2a/raw/diagnostics/result.json",
+          "sha256": "f4c63c1484d63df9aad3ddca4773b5e496d3230863c2deecf32f8d37e7b62c9e"
+        }
+      ]
+    }
+  ]
+}

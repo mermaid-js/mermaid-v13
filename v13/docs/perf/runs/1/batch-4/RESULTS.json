@@ -1,0 +1,2328 @@
+{
+  "schemaVersion": 1,
+  "round": 1,
+  "batch": 4,
+  "scope": "formal",
+  "measurementEnvironment": {
+    "decision": "P27",
+    "limitsChanged": false,
+    "recordedAt": "2026-11-11T07:41:10.591214+00:00",
+    "dockerProcessMatches": [
+      "  555     1   0:18.46 /Library/PrivilegedHelperTools/com.docker.vmnetd"
+    ],
+    "processSnapshotSha256": "3f0eb12c333afcaa547df693ad4bbbc84c6447fb9b0097ec134736661688050c",
+    "description": "Docker VM/backend were absent before this window; the idle privileged helper and existing background services remained. The exact accepted round-1 Pelé reference is reused with its original environment. All dispatched work pauses during formal measurement.",
+    "evidence": {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/measurement-environment.json",
+      "sha256": "345041e054a073a8cc88b4f6d75416e3d8c1cdda7ecdb06ab1010e4321227320"
+    },
+    "invalidAttempts": [
+      {
+        "directory": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2c-invalid-1",
+        "journal": {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2c-invalid-1/scheduler.jsonl",
+          "sha256": "90a8b0dee336bd61311df4db0645e24f0b30f7a921c7f3eb3c468cfb5925bb45"
+        }
+      },
+      {
+        "directory": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2c-invalid-2",
+        "journal": {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2c-invalid-2/scheduler.jsonl",
+          "sha256": "805a3f7da6a30c72905d2ca59a372f36fae69438bc55764b964f6b7c49088836"
+        }
+      },
+      {
+        "directory": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2d-invalid-1",
+        "journal": {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2d-invalid-1/scheduler.jsonl",
+          "sha256": "cc4054eab1902df56d47d1d9ea85bc675c896ad204672174c60dc5b5e615fd5b"
+        }
+      },
+      {
+        "directory": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/4c-invalid-1",
+        "journal": {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/4c-invalid-1/scheduler.jsonl",
+          "sha256": "cc420008a888d5c182f68d11b72f6a9bc92e2ef40b8c6034cf0be631c65be61f"
+        }
+      }
+    ]
+  },
+  "node": {
+    "version": "v24.16.0",
+    "execPath": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+    "sha256": "1ee75375e33b94fc34b3b19aede049e11dae90efb63b374dc96d6bdace70c4b8",
+    "versions": {
+      "node": "24.16.0",
+      "acorn": "8.16.0",
+      "ada": "3.4.4",
+      "amaro": "1.1.9",
+      "ares": "1.34.6",
+      "brotli": "1.2.0",
+      "cldr": "48.0",
+      "icu": "78.3",
+      "llhttp": "9.4.1",
+      "merve": "1.2.2",
+      "modules": "137",
+      "napi": "10",
+      "nbytes": "0.1.4",
+      "ncrypto": "0.0.1",
+      "nghttp2": "1.68.0",
+      "nghttp3": "",
+      "ngtcp2": "",
+      "openssl": "3.5.6",
+      "simdjson": "4.6.1",
+      "simdutf": "6.4.0",
+      "sqlite": "3.53.0",
+      "tz": "2026b",
+      "undici": "7.25.0",
+      "unicode": "17.0",
+      "uv": "1.52.1",
+      "uvwasi": "0.0.23",
+      "v8": "13.6.233.17-node.49",
+      "zlib": "1.3.1-e00f703",
+      "zstd": "1.5.7"
+    },
+    "execArgv": [],
+    "nodeOptions": ""
+  },
+  "machine": {
+    "hostname": "AI-Max",
+    "platform": "darwin",
+    "release": "25.5.0",
+    "arch": "arm64"
+  },
+  "validationProfile": "node",
+  "browserValidation": "unverified",
+  "e2e": "unverified",
+  "policy": {
+    "schemaVersion": 1,
+    "sampleCount": 5000,
+    "browserCount": 500,
+    "timing": {
+      "warmups": 3,
+      "pairs": 7,
+      "renderTimeoutMs": 30000,
+      "aaBlocks": 10,
+      "retries": 0,
+      "estimator": "median per diagram then geomean of head/base ratios",
+      "order": "alternate AB/BA by diagram index plus repetition plus block",
+      "errors": "fail whole experiment; preserve raw evidence; never drop a record"
+    },
+    "noise": {
+      "estimator": "exp(nearest-rank p95(abs(log(whole-sample geomean A/A ratio)))) - 1",
+      "minimumBlocks": 10
+    },
+    "fit": {
+      "minimumGain": 0.005,
+      "noiseMultiplier": 3,
+      "minimumByteReduction": 0.05,
+      "maximumBucketRegression": 0.01,
+      "flat": "abs(log(timeRatio)) <= log1p(noiseSpread)"
+    },
+    "buckets": [
+      {
+        "name": "tiny",
+        "minBytes": 0,
+        "maxBytes": 1024
+      },
+      {
+        "name": "small",
+        "minBytes": 1024,
+        "maxBytes": 4096
+      },
+      {
+        "name": "medium",
+        "minBytes": 4096,
+        "maxBytes": 16384
+      },
+      {
+        "name": "large",
+        "minBytes": 16384,
+        "maxBytes": null
+      }
+    ],
+    "configuration": {
+      "maxTextSize": 10000000,
+      "maxEdges": 1000000,
+      "peleOutputLimit": 9007199254740991,
+      "theme": "renderer defaults plus original input directives",
+      "pele": "native default font/wrap settings; no matching of v13 appearance",
+      "renderId": "m<sample-index>",
+      "reset": "AnalysisCache and text widths outside timing; configuration and loaded modules stay warm"
+    },
+    "diagnostics": {
+      "warmups": 3,
+      "repetitions": 7,
+      "emptyGraphRepetitions": 1000
+    },
+    "quiet": {
+      "intervalMs": 1000,
+      "quietMs": 3000,
+      "maxCpuMs": 1536,
+      "maxTotalCpuMs": 1536
+    },
+    "browser": {
+      "viewport": {
+        "width": 1600,
+        "height": 1200
+      },
+      "deviceScaleFactor": 1,
+      "colorScheme": "light"
+    },
+    "backgroundLoad": {
+      "decision": "P27",
+      "measurementEnvironment": "observed background activity; not an idle-host baseline",
+      "method": "60 consecutive 1000 ms process-snapshot intervals; nearest-rank p95 of total CPU delta; total limit is ceil(p95 * 1.20); the per-process field equals the total limit and imposes no additional cap",
+      "startedAt": "2026-11-10T13:02:09.057Z",
+      "finishedAt": "2026-11-10T13:03:14.100Z",
+      "machine": "AI-Max",
+      "node": "v24.16.0",
+      "samples": 60,
+      "actualDurationMs": 65008.65083300001,
+      "bufferFraction": 0.2,
+      "totalCpuMsP95": 1280,
+      "busiestProcessCpuMsP95": 330,
+      "frozenQuiet": {
+        "intervalMs": 1000,
+        "quietMs": 3000,
+        "maxCpuMs": 1536,
+        "maxTotalCpuMs": 1536
+      },
+      "previousPolicySha256": "711c4bdbb4719ef8d0b6c92773d404f397ab9895f368fa402961f3ef3c096200",
+      "rawEvidence": {
+        "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-background-baseline-20261110/observations.json",
+        "sha256": "11bcbacaadb794298981c6f5bee1ce0916a9c1cc35547caf6fde231ab3046705"
+      },
+      "calibrationScriptSha256": "43e914e30880dd017ed3180c7e2a08ae028824ecd7046a397ae2e51f483ec531",
+      "monitorSha256": "0525ae0e5588a107546f72d91e82c77605556a8d4b9d929d95258296a89f188a",
+      "calibrationDecision": "P26",
+      "calibrationPreviousPolicySha256": "8555678d001d8d8ed3363907d62cbc6142c5084786fb69acd00be34b5794e9a3",
+      "supersededPerProcessLimitMs": 396
+    }
+  },
+  "sample": {
+    "count": 5000,
+    "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+    "browserCount": 500,
+    "browserSubsetSha256": "0dc6c1ab4205b16317ebc2129271ed0c03533cc22d270ff7d0e2d1cd2474aa99"
+  },
+  "noiseReference": "../../0/RESULTS.json",
+  "pele": {
+    "count": 5000,
+    "geomeanHeadOverBase": 0.612500746370919,
+    "sumBaseNs": 3782524518,
+    "sumHeadNs": 2581545369,
+    "summedHeadOverBase": 0.6824926994432241,
+    "buckets": {
+      "tiny": {
+        "count": 1426,
+        "geomeanHeadOverBase": 0.5533594997405905
+      },
+      "small": {
+        "count": 3088,
+        "geomeanHeadOverBase": 0.6295906057959915
+      },
+      "medium": {
+        "count": 459,
+        "geomeanHeadOverBase": 0.6916049777079298
+      },
+      "large": {
+        "count": 27,
+        "geomeanHeadOverBase": 0.7120562485729249
+      }
+    },
+    "summedV13OverPele": 1.4652171383163477,
+    "evidence": [
+      {
+        "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch1-20261110/pele/header.json",
+        "sha256": "9a6bdf9fed473ec525e65bff4870741467c2a816ce155f6e9a27a7a8b72791e6"
+      },
+      {
+        "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch1-20261110/pele/queue.json",
+        "sha256": "e3e6b88f7e27663e98b71609d48f3d2a1d5093e628805d5bedf3b066e17f1444"
+      },
+      {
+        "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch1-20261110/pele/completion.json",
+        "sha256": "d985dca47a5856e271bef8416aca2a2f106c2495f6274a96f31d248f44a1ba6f"
+      },
+      {
+        "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch1-20261110/pele/raw/pele/result.json",
+        "sha256": "73a2d5a623b1ffac0db184c8e81cebbbe9cfbf748a1901561d1ad2a90551ceda"
+      }
+    ]
+  },
+  "candidates": [
+    {
+      "id": "2c",
+      "round": 1,
+      "batch": 4,
+      "baseSha": "094ec5283059b7a87c2c2745ea6dffcc5a4dcee7",
+      "headSha": "cc6cd28f7a16afebeeefaa91947ea570fa9cd85c",
+      "branch": "perf/round-1-2c-20261111",
+      "assignment": {
+        "role": "implementer",
+        "hypothesis": "2c",
+        "reason": "Shape-data parsing must preserve YAML semantics and fallback behavior.",
+        "escalationReason": null,
+        "spawnOverrides": {
+          "model": "gpt-6-astra",
+          "reasoning_effort": "high",
+          "fork_turns": "none"
+        },
+        "agent": "/root/round1_2c",
+        "requestedModel": "gpt-6-astra",
+        "actualModel": "gpt-6-astra",
+        "requestedEffort": "high",
+        "actualEffort": "high"
+      },
+      "validationProfile": "node",
+      "browserValidation": "unverified",
+      "e2e": "unverified",
+      "pins": {
+        "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+        "browserSubsetSha256": "0dc6c1ab4205b16317ebc2129271ed0c03533cc22d270ff7d0e2d1cd2474aa99",
+        "baseArtifactSha256": "54c2879f56c867719fafb96e8f4359dcca471e323105ee0371afc5b1a8c4f612",
+        "headArtifactSha256": "58d7652ad71b0f4cfdd01ad726fc03bdab128ceabae18b71ff21d80f7ea7427e",
+        "baseSourceSha256": "579d554998695c7b14496f1428a844046960004cfe631a84b1f8025c60e410b9",
+        "headSourceSha256": "6b0211731a7f602e0d13b2fb70fbea6c330e272a0341dc097ef69ede343afbaa",
+        "policySha256": "82a788a9ce59dfaea7f0f207e1f2933426ee3c0c0e888128d9d18976151e77ee"
+      },
+      "verdict": "unfit",
+      "delivery": "not-deliverable",
+      "deliveryScope": "candidate Node fit only; integration and final browser comparison are separate",
+      "lane": "byte-identical",
+      "reasons": [
+        "Node gain/flat-time byte reduction threshold failed"
+      ],
+      "metrics": {
+        "ratio": 0.9812466664412324,
+        "buckets": {
+          "tiny": {
+            "count": 1426,
+            "ratio": 0.979454762302597
+          },
+          "small": {
+            "count": 3088,
+            "ratio": 0.980511689578548
+          },
+          "medium": {
+            "count": 459,
+            "ratio": 0.9911121715013474
+          },
+          "large": {
+            "count": 27,
+            "ratio": 0.9932601952258155
+          }
+        },
+        "gain": 0.018753333558767626,
+        "spread": 0.024674571224540278,
+        "threshold": 0.07402371367362083,
+        "flat": true,
+        "baseBytes": 95296904,
+        "headBytes": 95296904,
+        "byteReduction": 0
+      },
+      "timing": {
+        "count": 5000,
+        "geomeanHeadOverBase": 0.9812466664412324,
+        "sumBaseNs": 3805388943,
+        "sumHeadNs": 3746176226,
+        "summedHeadOverBase": 0.9844397726784482,
+        "buckets": {
+          "tiny": {
+            "count": 1426,
+            "geomeanHeadOverBase": 0.979454762302597
+          },
+          "small": {
+            "count": 3088,
+            "geomeanHeadOverBase": 0.980511689578548
+          },
+          "medium": {
+            "count": 459,
+            "geomeanHeadOverBase": 0.9911121715013474
+          },
+          "large": {
+            "count": 27,
+            "geomeanHeadOverBase": 0.9932601952258155
+          }
+        }
+      },
+      "mechanism": {
+        "schemaVersion": 1,
+        "hypothesis": "2c",
+        "records": 5000,
+        "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+        "report": {
+          "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/summary.json",
+          "sha256": "2cb0e8b9a1fd2eacc694d46f1f04033320bcc814c3fac8a2b91282a53f930fd7"
+        },
+        "changes": [
+          {
+            "name": "shapeDataYamlCalls",
+            "before": 3858,
+            "after": 646
+          }
+        ],
+        "controls": [
+          {
+            "name": "shapeDataCalls",
+            "before": 3858,
+            "after": 3858
+          },
+          {
+            "name": "outputBytes",
+            "before": 95296904,
+            "after": 95296904
+          },
+          {
+            "name": "elements",
+            "before": 1043859,
+            "after": 1043859
+          },
+          {
+            "name": "attributes",
+            "before": 3614479,
+            "after": 3614479
+          }
+        ],
+        "supplemental": {
+          "base": {
+            "shapeDataCalls": 3858,
+            "shapeDataYamlCalls": 3858,
+            "attempts": 0,
+            "hits": 0,
+            "fallbacks": 3858,
+            "outputBytes": 95296904,
+            "elements": 1043859,
+            "attributes": 3614479
+          },
+          "head": {
+            "shapeDataCalls": 3858,
+            "shapeDataYamlCalls": 646,
+            "attempts": 3858,
+            "hits": 3212,
+            "fallbacks": 646,
+            "outputBytes": 95296904,
+            "elements": 1043859,
+            "attributes": 3614479
+          }
+        },
+        "limitations": [
+          "Untimed mechanism/output evidence only; no formal acceptance or P12 performance verdict.",
+          "Actual full parseYaml calls are counted only inside flowchart shapeData, once per uncached render; setup counts are reset before each render.",
+          "Plain minified base/head and separate unminified instrumented base/head SVG outputs all compared byte-for-byte for each record.",
+          "Attempts/hits/fallbacks are supplemental; a base fallback is its original unconditional YAML read.",
+          "Counts do not measure allocated bytes, scavenge time, or physical instruction counts.",
+          "Hindsight tools unavailable during discovery.",
+          "Round-0 shapeData=17172 counts lexer token pieces, whereas baseline shapeDataYamlCalls=3858 counts completed parser reads. The denominators supplement recounts 3858 openers and all 17172 pieces; both are retained."
+        ],
+        "sources": [
+          {
+            "path": "packages/diagram-flowchart/src/parser/parser.ts",
+            "sha256": "e2548aca87a0f1724522710bc458850214b5b5a8c979f3afc81a1b24a49e7e8b"
+          },
+          {
+            "path": "packages/diagram-flowchart/src/parser/flat-shape-data.ts",
+            "sha256": "ae53b856b3bbb0052f131ce202e09081bd822e64723c4d65299981d18543d335"
+          }
+        ],
+        "declaredCondition": {
+          "counterNames": [
+            "shapeDataYamlCalls"
+          ],
+          "definition": "Actual full YAML reader calls attributable to shape-data parsing across one uncached render of each frozen record. Fast-path attempts, hits, fallbacks recorded separately.",
+          "controls": [
+            "All full-reader YAML semantics and diagnostics preserved via conservative fallback",
+            "All 5000 SVGs identical; plain and instrumented identical",
+            "No source mutation or production cache changes"
+          ]
+        },
+        "evidence": [
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/mechanism-plan.json",
+            "sha256": "b8cdbed60c0c96d0f80aa7fbdc311fe6a7439fb671d0907f88918116912bbfd3"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/normalize-mechanisms.py",
+            "sha256": "9c1258ef322e5c42cbdfacde37737780776da677754ce09af0edc4f20242e43a"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/SHA256SUMS.json",
+            "sha256": "8d9a6f63a886a1b519f70a66ba5a92dcc7e5e05ee3eaeac0b94ce8c509596c2c"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/baseline-parser.ts",
+            "sha256": "7761d086fc36db51f4b7f494a370234a946e357d7444c36a6ba53fe121a5c936"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/collect.log",
+            "sha256": "4466745d412ff8363fa6cb5eda95ecea1cd309511367c4ba7f7e8836d96f5695"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/collect.mjs",
+            "sha256": "d4b5b081f6acb3c2c654c697ec0b9a6c4762b1e0af27656057c3c12e7635725d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/commit.log",
+            "sha256": "8dd224be697a4c4277cb4d6ac1b0ccf0c593309ff938480b8ff87e96b2bdbc36"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/denominators-bundle.mjs",
+            "sha256": "95da9747c10d7a3aaab8b41fc4b7567c0148e9e164d3d54f33eaff51a5ec29bb"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/denominators.log",
+            "sha256": "7b72e0b87b83d459fafd63084acb308b668e1e0b456581e55a9065bfefc9e6ae"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/denominators.mjs",
+            "sha256": "5bcd27906b66e68f0e69d007c3590ae4ed8f59c086ebd51f88d2f98823e91cc4"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/instrumented-base/index.mjs",
+            "sha256": "eee19bc91880d0c1552b6789bf9c7e0f5e7f8bde2d8d66a2de5b91e944103ca0"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/instrumented-base/instrumented-parser.ts",
+            "sha256": "575b2037d850ae0c33da8fe8431316d5211749c6f080b9f2bd6e98ef2289f4e6"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/instrumented-base/metafile.json",
+            "sha256": "766144dd37b8d68023f06e48d85a4161032c95af4aaa26d1ca716c1ba60e3171"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/instrumented-head/index.mjs",
+            "sha256": "359f78df77d97ae9268833753283ff4c387bde675793ca6bfce9cef0af91a944"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/instrumented-head/instrumented-parser.ts",
+            "sha256": "4ba6aa4b50040c4a46d08ef5a1b4592493a939ca59b6aee51dc852bdb51f06fc"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/instrumented-head/metafile.json",
+            "sha256": "fecc1898468d3f541f0f10d266a24baa4bbd2ca3024f283aa3d66ac6ee1a8227"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/per-record.jsonl",
+            "sha256": "836d3d5552f2124173f738a76b3c27aed75f855f007d45634be991148369fe35"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/plain-base/index.mjs",
+            "sha256": "a6935408325e75777cfa20d99e8f3092c4ecaaeb246ab3b6f65e4f36e2e5ac0f"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/plain-base/metafile.json",
+            "sha256": "48215ec56b1de2b81e9cef939142721cc67878cfe44d234d2f9eda8b1ab16504"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/plain-head/index.mjs",
+            "sha256": "c93a5b099cc2f670c5ea6a019a38e392a07b23f0e02345b894164647e1853cae"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/plain-head/metafile.json",
+            "sha256": "df5b01e1cb566a6ef9eaba993a0593bb89bd56e2a5a096c2ede06a8256d87c7d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/source-manifest.json",
+            "sha256": "e15926e4860be556e970169ecb910fe63752ea05a9f61cb7888fd7accc7e9a03"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/summary.json",
+            "sha256": "2cb0e8b9a1fd2eacc694d46f1f04033320bcc814c3fac8a2b91282a53f930fd7"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/verify.log",
+            "sha256": "705a7e4a48be80cedfd2eccee1eae9f24cccaca31c1395688d32c4d980cac522"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-2c-counters/verify.mjs",
+            "sha256": "006056cc3c3fcfcd1899b94680a5d4be93c083b386c8ab20438f49c86a2a11f3"
+          }
+        ],
+        "method": "Untimed instrumented executed operation counts; not physical allocation bytes. See preserved scripts for attribution.",
+        "normalization": {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/mechanism-2c.json",
+          "sha256": "76b1e31c8c2f93f65a87faa4f4eca354001f13e8d6b6f8f3d56c771ee4cc4241"
+        },
+        "passed": true
+      },
+      "yamlReaderTiming": null,
+      "checks": [
+        {
+          "name": "environment",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node tools/perf/check-environment.mjs --node-only",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "tools/perf/check-environment.mjs",
+            "--node-only"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-11T07:24:39.303Z",
+          "finishedAt": "2026-11-11T07:24:39.512Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-validation-round1-02/environment.log",
+          "logSha256": "caa69c7e2be7d173a7602d85cc374cfadbc40573ccbaf3eec2c6a51d86037d88"
+        },
+        {
+          "name": "harness",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node --test tools/perf/acceptance.test.mjs tools/perf/browser.test.mjs tools/perf/build.test.mjs tools/perf/common.test.mjs tools/perf/diagnostics.test.mjs tools/perf/evaluate.test.mjs tools/perf/gates.test.mjs tools/perf/quiet.test.mjs tools/perf/report.test.mjs tools/perf/scheduler.test.mjs tools/perf/timing-worker.test.mjs",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "--test",
+            "tools/perf/acceptance.test.mjs",
+            "tools/perf/browser.test.mjs",
+            "tools/perf/build.test.mjs",
+            "tools/perf/common.test.mjs",
+            "tools/perf/diagnostics.test.mjs",
+            "tools/perf/evaluate.test.mjs",
+            "tools/perf/gates.test.mjs",
+            "tools/perf/quiet.test.mjs",
+            "tools/perf/report.test.mjs",
+            "tools/perf/scheduler.test.mjs",
+            "tools/perf/timing-worker.test.mjs"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-11T07:24:39.512Z",
+          "finishedAt": "2026-11-11T07:24:46.022Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-validation-round1-02/harness.log",
+          "logSha256": "2f2f5749a2a0a9f360739cfe2b8ed6c22e33b82beb972f0ae776d2be8e548910"
+        },
+        {
+          "name": "check",
+          "command": "pnpm check",
+          "argv": [
+            "pnpm",
+            "check"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-11T07:24:46.022Z",
+          "finishedAt": "2026-11-11T07:29:04.594Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-validation-round1-02/check.log",
+          "logSha256": "5afeb44070bc0e576109c22107a86c253eff3a84c0724ce7f4e7358d627edad0"
+        },
+        {
+          "name": "security",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node node_modules/vitest/vitest.mjs run packages/conformance/src/cynefin/render.spec.ts packages/conformance/src/feature-plugins.spec.ts packages/conformance/src/flowchart-behaviour.spec.ts packages/conformance/src/flowchart-render.spec.ts packages/conformance/src/gantt/render-behaviour.spec.ts packages/conformance/src/gantt/schedule-stress.spec.ts packages/conformance/src/journey/render.spec.ts packages/conformance/src/mindmap/stress.spec.ts packages/conformance/src/packet/render.spec.ts packages/conformance/src/pie/render.spec.ts packages/conformance/src/quadrant/render.spec.ts packages/conformance/src/radar/render.spec.ts packages/conformance/src/sequence/render.spec.ts packages/conformance/src/state/render.spec.ts packages/conformance/src/stress.spec.ts packages/conformance/src/treemap/render.spec.ts packages/conformance/src/wardley/render.spec.ts packages/core/src/config/resolveConfig.spec.ts packages/core/src/limits/limits.spec.ts packages/core/src/svg/gradient.spec.ts packages/core/src/svg/image-url.spec.ts packages/core/src/svg/security.spec.ts packages/core/src/svg/url.spec.ts packages/core/src/svg/user-gradient.spec.ts packages/diagram-er/src/v12-specs/erDiagram.spec.ts packages/diagram-er/src/v12-specs/subgraph.spec.ts packages/diagram-flowchart/src/v12-specs/flow-arrows.spec.ts packages/diagram-flowchart/src/v12-specs/flow-comments.spec.ts packages/diagram-flowchart/src/v12-specs/flow-direction.spec.ts packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts packages/diagram-flowchart/src/v12-specs/flow-interactions.spec.ts packages/diagram-flowchart/src/v12-specs/flow-lines.spec.ts packages/diagram-flowchart/src/v12-specs/flow-md-string.spec.ts packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts packages/diagram-flowchart/src/v12-specs/flow-singlenode.spec.ts packages/diagram-flowchart/src/v12-specs/flow-style.spec.ts packages/diagram-flowchart/src/v12-specs/flow-text.spec.ts packages/diagram-flowchart/src/v12-specs/flow-vertice-chaining.spec.ts packages/diagram-flowchart/src/v12-specs/flow.spec.ts packages/diagram-flowchart/src/v12-specs/subgraph.spec.ts packages/diagram-kanban/src/parser/parse.spec.ts packages/diagram-kanban/src/render/render.spec.ts packages/diagram-mindmap/src/parser/parse.spec.ts packages/diagram-pie/src/v12-specs/pie.spec.ts packages/diagram-state/src/v12-specs/state-parser.spec.ts packages/diagram-state/src/v12-specs/state-style.spec.ts packages/language-service/src/front-matter.spec.ts packages/mermaid/src/api.spec.ts packages/mermaid/src/config-fragments.spec.ts packages/mermaid/src/extensions.spec.ts packages/mermaid/src/icon-contract.spec.ts packages/mermaid/src/inline-boxes.spec.ts packages/mermaid/src/limits.spec.ts packages/mermaid/src/mindmap.spec.ts packages/mermaid/src/render-safety.spec.ts packages/mermaid/src/sankey.spec.ts packages/plugin-hand-drawn/src/corpus.spec.ts packages/plugin-icons/src/corpus.spec.ts packages/plugin-icons/src/security.spec.ts packages/plugin-interactions/src/class.spec.ts packages/plugin-interactions/src/gantt.spec.ts packages/plugin-interactions/src/index.spec.ts packages/plugin-interactions/src/menus.spec.ts packages/plugin-math/src/engine.spec.ts packages/plugin-math/src/index.spec.ts tools/gen-config/src/migration.spec.ts",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "node_modules/vitest/vitest.mjs",
+            "run",
+            "packages/conformance/src/cynefin/render.spec.ts",
+            "packages/conformance/src/feature-plugins.spec.ts",
+            "packages/conformance/src/flowchart-behaviour.spec.ts",
+            "packages/conformance/src/flowchart-render.spec.ts",
+            "packages/conformance/src/gantt/render-behaviour.spec.ts",
+            "packages/conformance/src/gantt/schedule-stress.spec.ts",
+            "packages/conformance/src/journey/render.spec.ts",
+            "packages/conformance/src/mindmap/stress.spec.ts",
+            "packages/conformance/src/packet/render.spec.ts",
+            "packages/conformance/src/pie/render.spec.ts",
+            "packages/conformance/src/quadrant/render.spec.ts",
+            "packages/conformance/src/radar/render.spec.ts",
+            "packages/conformance/src/sequence/render.spec.ts",
+            "packages/conformance/src/state/render.spec.ts",
+            "packages/conformance/src/stress.spec.ts",
+            "packages/conformance/src/treemap/render.spec.ts",
+            "packages/conformance/src/wardley/render.spec.ts",
+            "packages/core/src/config/resolveConfig.spec.ts",
+            "packages/core/src/limits/limits.spec.ts",
+            "packages/core/src/svg/gradient.spec.ts",
+            "packages/core/src/svg/image-url.spec.ts",
+            "packages/core/src/svg/security.spec.ts",
+            "packages/core/src/svg/url.spec.ts",
+            "packages/core/src/svg/user-gradient.spec.ts",
+            "packages/diagram-er/src/v12-specs/erDiagram.spec.ts",
+            "packages/diagram-er/src/v12-specs/subgraph.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-arrows.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-comments.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-direction.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-interactions.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-lines.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-md-string.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-singlenode.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-style.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-text.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-vertice-chaining.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/subgraph.spec.ts",
+            "packages/diagram-kanban/src/parser/parse.spec.ts",
+            "packages/diagram-kanban/src/render/render.spec.ts",
+            "packages/diagram-mindmap/src/parser/parse.spec.ts",
+            "packages/diagram-pie/src/v12-specs/pie.spec.ts",
+            "packages/diagram-state/src/v12-specs/state-parser.spec.ts",
+            "packages/diagram-state/src/v12-specs/state-style.spec.ts",
+            "packages/language-service/src/front-matter.spec.ts",
+            "packages/mermaid/src/api.spec.ts",
+            "packages/mermaid/src/config-fragments.spec.ts",
+            "packages/mermaid/src/extensions.spec.ts",
+            "packages/mermaid/src/icon-contract.spec.ts",
+            "packages/mermaid/src/inline-boxes.spec.ts",
+            "packages/mermaid/src/limits.spec.ts",
+            "packages/mermaid/src/mindmap.spec.ts",
+            "packages/mermaid/src/render-safety.spec.ts",
+            "packages/mermaid/src/sankey.spec.ts",
+            "packages/plugin-hand-drawn/src/corpus.spec.ts",
+            "packages/plugin-icons/src/corpus.spec.ts",
+            "packages/plugin-icons/src/security.spec.ts",
+            "packages/plugin-interactions/src/class.spec.ts",
+            "packages/plugin-interactions/src/gantt.spec.ts",
+            "packages/plugin-interactions/src/index.spec.ts",
+            "packages/plugin-interactions/src/menus.spec.ts",
+            "packages/plugin-math/src/engine.spec.ts",
+            "packages/plugin-math/src/index.spec.ts",
+            "tools/gen-config/src/migration.spec.ts"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-11T07:29:04.594Z",
+          "finishedAt": "2026-11-11T07:29:21.987Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-validation-round1-02/security.log",
+          "logSha256": "5a340e51a944181bb969278a983f687277f51d823ba8c4858616e4bf21760841"
+        },
+        {
+          "name": "size",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node --import tsx --conditions=mermaid-source tools/perf/size-check.mjs",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "--import",
+            "tsx",
+            "--conditions=mermaid-source",
+            "tools/perf/size-check.mjs"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-11T07:29:21.987Z",
+          "finishedAt": "2026-11-11T07:29:24.153Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-validation-round1-02/size.log",
+          "logSha256": "52e46f982da3a0d9d9babc5d89327daa79cfa81199e61ea8b7f989a3c8d9fece"
+        },
+        {
+          "name": "host",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node tools/perf/host-acceptance.mjs --out /Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-validation-round1-02/host",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "tools/perf/host-acceptance.mjs",
+            "--out",
+            "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-validation-round1-02/host"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-11T07:29:24.154Z",
+          "finishedAt": "2026-11-11T07:29:34.486Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-validation-round1-02/host.log",
+          "logSha256": "d480796160a289e33b609548b89fb7d68b4fbb43cfb5a21716bce35aa468e101"
+        },
+        {
+          "name": "browser",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "tools/perf/browser-acceptance.mjs",
+            "--out",
+            "/Users/knsv/repos/mermaid-v13-perf-round1-2c/.tmp/perf-validation-round1-02/browser"
+          ],
+          "status": "unverified",
+          "reason": "Deferred browser validation; not required for Node measurement readiness"
+        },
+        {
+          "name": "e2e",
+          "argv": [
+            "pnpm",
+            "e2e"
+          ],
+          "status": "unverified",
+          "reason": "Deferred browser validation; not required for Node measurement readiness"
+        }
+      ],
+      "diagnostics": {
+        "methods": {
+          "measurerCalls": "Actual width-method invocations, including any width-cache hits. Vertical metrics invocations are excluded and reported separately when supplied by the renderer.",
+          "metricsCalls": "Optional actual vertical-metrics method invocations; available for v13, absent for Pele.",
+          "allocations": "V8 HeapProfiler.startSampling with collected minor/major objects included; sum selfSize below named allocationRender frame; median independent child estimates. Timing artifacts avoid diagnostic-counter allocations.",
+          "scavenge": "Pinned --trace-gc-nvp pause= with gc=s, only between synchronous render markers. Other GC, setup/reset pauses and final forced-boundary pause reported separately.",
+          "traceAllocation": "Supplemental sum of V8 allocated= over GC intervals through final forced boundary; byte-precise occupancy deltas, NOT exact gross allocation.",
+          "markup": "UTF-8 Buffer.byteLength plus quote-aware XML start-tag and attribute counting.",
+          "features": "v13 preprocessing, parser/token model and actual label layout inspection; number of occurrences and number of diagrams containing each feature.",
+          "stages": "Diagnostic stage clock; layout includes nested measure and graphLayout. Unaccounted time = total minus parse/layout/serialise; instrumentation overhead remains."
+        },
+        "renderers": {
+          "v13": {
+            "totals": {
+              "outputBytes": 95296904,
+              "elements": 1043859,
+              "attributes": 3614479,
+              "measurerCalls": 1198406,
+              "parserCalls": 5000,
+              "metricsCalls": 220480
+            },
+            "allocatedBytesEstimate": 1044930088,
+            "allocationError": {
+              "maximumCalibrationRelativeError": 0.012430058617539586,
+              "replicateRelativeRange": 0.009837817972756088,
+              "interpretation": "Empirical calibration error and replicate spread, not a general confidence bound. Excludes native/external buffers and allocations outside sampled renderer stacks."
+            },
+            "gc": {
+              "scavengePauseMs": 825.7000000000029,
+              "scavengeEvents": 767,
+              "otherGcPauseMs": 53.699999999999996,
+              "otherGcEvents": 38,
+              "boundaryGcPauseMs": 3.7,
+              "outsideRenderGcPauseMs": 73.10000000000001,
+              "intervalOccupancyAllocatedBytes": 57582139744,
+              "intervalOccupancyEvents": 871,
+              "pauseRoundingErrorMs": 40.25,
+              "scavengePauseMsPerPass": 117.95714285714327,
+              "otherGcPauseMsPerPass": 7.671428571428571
+            }
+          },
+          "pele": {
+            "totals": {
+              "outputBytes": 81604595,
+              "elements": 962992,
+              "attributes": 3105130,
+              "measurerCalls": 828402,
+              "parserCalls": 5000
+            },
+            "allocatedBytesEstimate": 755318520,
+            "allocationError": {
+              "maximumCalibrationRelativeError": 0.012430058617539586,
+              "replicateRelativeRange": 0.015045085879795453,
+              "interpretation": "Empirical calibration error and replicate spread, not a general confidence bound. Excludes native/external buffers and allocations outside sampled renderer stacks."
+            },
+            "gc": {
+              "scavengePauseMs": 180.3000000000006,
+              "scavengeEvents": 543,
+              "otherGcPauseMs": 0,
+              "otherGcEvents": 0,
+              "boundaryGcPauseMs": 2.8,
+              "outsideRenderGcPauseMs": 0,
+              "intervalOccupancyAllocatedBytes": 36401081480,
+              "intervalOccupancyEvents": 544,
+              "pauseRoundingErrorMs": 27.150000000000002,
+              "scavengePauseMsPerPass": 25.757142857142945,
+              "otherGcPauseMsPerPass": 0
+            }
+          }
+        },
+        "features": {
+          "occurrences": {
+            "frontMatter": 1934,
+            "initDirectives": 162,
+            "themeVariables": 228,
+            "shapeData": 17172,
+            "subgraphs": 10653,
+            "comments": 12144,
+            "wideLabels": 66138,
+            "labelledEdges": 35013
+          },
+          "diagrams": {
+            "frontMatter": 1934,
+            "initDirectives": 162,
+            "themeVariables": 228,
+            "shapeData": 512,
+            "subgraphs": 2461,
+            "comments": 1297,
+            "wideLabels": 4796,
+            "labelledEdges": 3572
+          }
+        },
+        "emptyGraph": {
+          "repetitions": 1000,
+          "medianMs": {
+            "total": 0.03829199999999844,
+            "unaccounted": 0.009918000000013194,
+            "parse": 0.0071669999999954825,
+            "measure": 0.006666000000009831,
+            "graphLayout": 0.004249999999998977,
+            "layout": 0.011583000000001675,
+            "serialise": 0.00854199999999139
+          }
+        }
+      },
+      "evidence": [
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2c/header.json",
+          "sha256": "7c5f5215e46abf88c9836595ef8c8c0e737ce8529bef04245005398d54b040d3"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2c/queue.json",
+          "sha256": "344e973382074c90237d14fb675ddd18bd002e562497ebc8cde404c5c406b7be"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2c/completion.json",
+          "sha256": "6f8c86f08ea5834a1456ddb3d61f8960eccca9a16396a56473c737fd044224af"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2c/p12-verdict.json",
+          "sha256": "7abec05b3dcb74184f5930627a1d36f3e62ddbe341e75b5e269aab47b751f2b3"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2c/verdict.json",
+          "sha256": "5783db7e13fb4d2fc20169fa0101a4f81375729a6a710433447aa033175fc1bf"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2c/raw/timing/result.json",
+          "sha256": "875bc59bda75678d71ce5314b5e3a1af26c479b6ac705063b29fbc148fcdc8ba"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2c/raw/gates/result.json",
+          "sha256": "7db37f1969966178487741691d719e3544c165bcf50f9198536297c1d70cf287"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2c/raw/diagnostics/result.json",
+          "sha256": "c12a1401af6c6898dce9b34be9db63d015c94ca8396d7d76cf8cb8895b26eddb"
+        }
+      ]
+    },
+    {
+      "id": "2d",
+      "round": 1,
+      "batch": 4,
+      "baseSha": "094ec5283059b7a87c2c2745ea6dffcc5a4dcee7",
+      "headSha": "412e7f06a0ddf0a785841117573498e41f24375c",
+      "branch": "perf/round-1-2d-20261111",
+      "assignment": {
+        "role": "implementer",
+        "hypothesis": "2d",
+        "reason": "Front-matter parsing fast path must preserve full-reader behavior.",
+        "escalationReason": null,
+        "spawnOverrides": {
+          "model": "gpt-6-astra",
+          "reasoning_effort": "high",
+          "fork_turns": "none"
+        },
+        "agent": "/root/round1_2d",
+        "requestedModel": "gpt-6-astra",
+        "actualModel": "gpt-6-astra",
+        "requestedEffort": "high",
+        "actualEffort": "high"
+      },
+      "validationProfile": "node",
+      "browserValidation": "unverified",
+      "e2e": "unverified",
+      "pins": {
+        "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+        "browserSubsetSha256": "0dc6c1ab4205b16317ebc2129271ed0c03533cc22d270ff7d0e2d1cd2474aa99",
+        "baseArtifactSha256": "54c2879f56c867719fafb96e8f4359dcca471e323105ee0371afc5b1a8c4f612",
+        "headArtifactSha256": "8ce57bddd2ae2520a31b77f7d54c2f47cba31ae8102e18b915338311760a2cb8",
+        "baseSourceSha256": "579d554998695c7b14496f1428a844046960004cfe631a84b1f8025c60e410b9",
+        "headSourceSha256": "ef76fefdd0cbe8e6d9af63f688f9b3c37e6d81021772de7a671a96502362ec7e",
+        "policySha256": "82a788a9ce59dfaea7f0f207e1f2933426ee3c0c0e888128d9d18976151e77ee"
+      },
+      "verdict": "unfit",
+      "delivery": "not-deliverable",
+      "deliveryScope": "candidate Node fit only; integration and final browser comparison are separate",
+      "lane": "byte-identical",
+      "reasons": [
+        "Node gain/flat-time byte reduction threshold failed"
+      ],
+      "metrics": {
+        "ratio": 0.9807405618823962,
+        "buckets": {
+          "tiny": {
+            "count": 1426,
+            "ratio": 0.97816279352477
+          },
+          "small": {
+            "count": 3088,
+            "ratio": 0.980124908569451
+          },
+          "medium": {
+            "count": 459,
+            "ratio": 0.9913960325788912
+          },
+          "large": {
+            "count": 27,
+            "ratio": 1.0076965194258969
+          }
+        },
+        "gain": 0.019259438117603778,
+        "spread": 0.024674571224540278,
+        "threshold": 0.07402371367362083,
+        "flat": true,
+        "baseBytes": 95296904,
+        "headBytes": 95296904,
+        "byteReduction": 0
+      },
+      "timing": {
+        "count": 5000,
+        "geomeanHeadOverBase": 0.9807405618823962,
+        "sumBaseNs": 3811067508,
+        "sumHeadNs": 3756181235,
+        "summedHeadOverBase": 0.985598189251493,
+        "buckets": {
+          "tiny": {
+            "count": 1426,
+            "geomeanHeadOverBase": 0.97816279352477
+          },
+          "small": {
+            "count": 3088,
+            "geomeanHeadOverBase": 0.980124908569451
+          },
+          "medium": {
+            "count": 459,
+            "geomeanHeadOverBase": 0.9913960325788912
+          },
+          "large": {
+            "count": 27,
+            "geomeanHeadOverBase": 1.0076965194258969
+          }
+        }
+      },
+      "mechanism": {
+        "schemaVersion": 1,
+        "hypothesis": "2d",
+        "records": 5000,
+        "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+        "report": {
+          "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/summary.json",
+          "sha256": "9866d6fd293c268df6bf93850bdc363b543bf35ee930cae1ce32c9c050a98b3e"
+        },
+        "changes": [
+          {
+            "name": "frontMatterYamlCalls",
+            "before": 1934,
+            "after": 306
+          }
+        ],
+        "controls": [
+          {
+            "name": "outputBytes",
+            "before": 95296904,
+            "after": 95296904
+          },
+          {
+            "name": "elements",
+            "before": 1043859,
+            "after": 1043859
+          },
+          {
+            "name": "attributes",
+            "before": 3614479,
+            "after": 3614479
+          }
+        ],
+        "supplemental": {
+          "base-plain": {
+            "frontMatterYamlCalls": 0,
+            "fullReaderMs": 0,
+            "outputBytes": 95296904,
+            "elements": 1043859,
+            "attributes": 3614479
+          },
+          "base-counters": {
+            "frontMatterYamlCalls": 1934,
+            "fullReaderMs": 0,
+            "outputBytes": 95296904,
+            "elements": 1043859,
+            "attributes": 3614479
+          },
+          "base-timing": {
+            "frontMatterYamlCalls": 1934,
+            "fullReaderMs": 0,
+            "outputBytes": 95296904,
+            "elements": 1043859,
+            "attributes": 3614479
+          },
+          "head-plain": {
+            "frontMatterYamlCalls": 0,
+            "fullReaderMs": 0,
+            "outputBytes": 95296904,
+            "elements": 1043859,
+            "attributes": 3614479
+          },
+          "head-counters": {
+            "frontMatterYamlCalls": 306,
+            "fullReaderMs": 0,
+            "outputBytes": 95296904,
+            "elements": 1043859,
+            "attributes": 3614479
+          },
+          "head-timing": {
+            "frontMatterYamlCalls": 306,
+            "fullReaderMs": 0,
+            "outputBytes": 95296904,
+            "elements": 1043859,
+            "attributes": 3614479
+          }
+        },
+        "limitations": [
+          "Untimed executed invocation counts only; no performance verdict or timing claim.",
+          "All six artifacts render all 5000 records; clock-enabled builds are compared with clocks disabled.",
+          "Counters wrap only the front-matter parseYaml invocation; shape data and editor YAML are excluded.",
+          "Only plain config layout/theme/look word mappings are supported by the fast path.",
+          "Plain artifacts have no full-reader wrapper; timing artifacts and results are separate.",
+          "Hindsight tools unavailable."
+        ],
+        "sources": [
+          {
+            "path": "packages/core/src/preprocess/frontmatter.ts",
+            "sha256": "c53665ab620771e90e49352dc9c39f2e4d6f0bf63f89f8fe74842b70f9ed713c"
+          },
+          {
+            "path": "packages/core/src/preprocess/frontmatter-config.ts",
+            "sha256": "dd03c7ee79e64f19bcf1329e0330b59db80fdaa515378211ac3a2c1782ad640f"
+          }
+        ],
+        "declaredCondition": {
+          "counterNames": [
+            "frontMatterYamlCalls"
+          ],
+          "definition": "Actual full YAML reader calls attributable to front matter across one uncached render of each frozen record. Additional formal instrumented measurement reports full-reader elapsed time, including zero for bypass; separate from acceptance timing.",
+          "controls": [
+            "Exact preprocessor parse output/errors/config/title behavior",
+            "All 5000 SVGs identical; plain and instrumented identical",
+            "Conservative full-reader fallback; no production cache changes"
+          ],
+          "formalDiagnostic": "Compare sum of per-record median time in full YAML reader over 7 reset renders after 3 warmups, including zero-bypass records; retain all raw replicates, spread and clock overhead control. Named YAML-time reduction checked from formal evidence; no preparatory timing claim."
+        },
+        "evidence": [
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/mechanism-plan.json",
+            "sha256": "b8cdbed60c0c96d0f80aa7fbdc311fe6a7439fb671d0907f88918116912bbfd3"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/normalize-mechanisms.py",
+            "sha256": "9c1258ef322e5c42cbdfacde37737780776da677754ce09af0edc4f20242e43a"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/SHA256SUMS.json",
+            "sha256": "12078e1f07af755b5cbf0ba4ebe9e6c9ef31948b55f0e586d78c50973078370c"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/base-counters/index.mjs",
+            "sha256": "746886c5b1733ffa15c854360a24bb6b4dbe461d7a9c883c93a3d87de82ed1ce"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/base-counters/instrumented/packages/core/src/preprocess/frontmatter.ts",
+            "sha256": "6cbd097b019ff2f2fc9212b85e6ee7d5e485d9684fb48dc5288752dfb31654d3"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/base-counters/metafile.json",
+            "sha256": "f5949755863c9af8919ebf33859387e3c61edd77432dd1e01ab6843107941807"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/base-plain/index.mjs",
+            "sha256": "be9884584fdc5dd015074849bf3db4373a9122e1d2b1b05297a212365ababc02"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/base-plain/metafile.json",
+            "sha256": "e7f2c0f08fdc9647a9a32657d978e36aaf354f3c2f754c55b0c4bb03c7d614db"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/build-manifest.json",
+            "sha256": "36efca7b5465e38b1a1fb6378a0f328bb713d53b08d347112638e6259818937a"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/build.mjs",
+            "sha256": "0fdd272e0c0d1b91ca7e470184e867f5ff7c85606fccbfdc454b06fb2ca239e6"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/commit.log",
+            "sha256": "70e33fc441ecca41f128cd7ea78e19cc536ad70e83ba094de0d29909f6c6e8cd"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/compare.mjs",
+            "sha256": "543f9f7bf20dc69f897b6e1a87ef09ebeac0447a7a8c7e153989904722163142"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/comparison.log",
+            "sha256": "589a50109e571725ee45f6a1ff4d1e8f98c0399a49572161a7e2406d8f5add6a"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/counters.mjs",
+            "sha256": "e0910d1228e883e100c32168451162a8cc942d7a878dea21cd7dbb9c4a2126ce"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/entry.mjs",
+            "sha256": "c26f5b5de61badd9cd21c70a13db92f7f26b0f2c84737587f2920de1c3e1c074"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/format-evidence.log",
+            "sha256": "647da3088bb6eaf6603cab6a1c93318d3669c5c6fdfa20f4323389a79041ee52"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/format.log",
+            "sha256": "4e4e744d27b04f386add9a2856dec544541e2ca7e88325cc1f9a865fea8dbfac"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/head-counters/index.mjs",
+            "sha256": "1f7977fa70247c75c78770425a929ab46c99700d9cc7e5a4a979b4f8e0d0e7d7"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/head-counters/instrumented/packages/core/src/preprocess/frontmatter.ts",
+            "sha256": "53f88e1a4b1e94c160fc53b96b2b1b4b46bdb7893cc82e930ab54700568ce56d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/head-counters/metafile.json",
+            "sha256": "2de3329ef459a1fdea5fd21b211b395592877fd51eecefda830ab73cc31b6226"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/head-plain/index.mjs",
+            "sha256": "885af3ab5ed5e9dcf4992b8bf1f1c78f4a118a6d57ae9178dd2d4884115d71b8"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/head-plain/metafile.json",
+            "sha256": "76663b358b5672c0968523eb90e4b4127c4724fa521e4989f25ea67909be24bc"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/implementation.patch",
+            "sha256": "ef01b83ff4f9419e19922100eb528add9da2e868da5c36919cd4ce0b97a8ec18"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/lint.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/per-record.jsonl",
+            "sha256": "7030654b62351817b41c203613dcca42f07f9beb1e507e46b5d895352a812afd"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/spell.log",
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/summary.json",
+            "sha256": "9866d6fd293c268df6bf93850bdc363b543bf35ee930cae1ce32c9c050a98b3e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/tests.log",
+            "sha256": "640289e9ff03663d58a602ae0bae46363dea2d017bf2c9397a41b1a99b5355fe"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/typecheck.log",
+            "sha256": "6c9755e40e7cbc25af9c2efa80cea2caf5b727b79e11fc9a6b89e8639863dbf7"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/verify.log",
+            "sha256": "5419239f42e6a3ea56565a646f44d805b3e7bcc93959b572354d3b9a8ef768b8"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-counters/verify.mjs",
+            "sha256": "dd6a46878d7757e17ab9ca0e1c146db2d89708b5a42cf95bcf37fa1e796c0c74"
+          }
+        ],
+        "method": "Untimed instrumented executed operation counts; not physical allocation bytes. See preserved scripts for attribution.",
+        "normalization": {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/mechanism-2d.json",
+          "sha256": "9a8d144fb2cfba97deda62b40fb33ec3a901395415aa32a167e018d9d6f695d7"
+        },
+        "passed": true
+      },
+      "yamlReaderTiming": {
+        "hypothesis": "2d",
+        "diagnosticOnly": true,
+        "unit": "ms",
+        "records": 5000,
+        "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+        "sourceHashesSha256": "5b8e4074663579dd7122e302042b7c55f65dbb27d728802d091515f5953f7db2",
+        "policy": {
+          "schemaVersion": 1,
+          "sampleCount": 5000,
+          "browserCount": 500,
+          "timing": {
+            "warmups": 3,
+            "pairs": 7,
+            "renderTimeoutMs": 30000,
+            "aaBlocks": 10,
+            "retries": 0,
+            "estimator": "median per diagram then geomean of head/base ratios",
+            "order": "alternate AB/BA by diagram index plus repetition plus block",
+            "errors": "fail whole experiment; preserve raw evidence; never drop a record"
+          },
+          "noise": {
+            "estimator": "exp(nearest-rank p95(abs(log(whole-sample geomean A/A ratio)))) - 1",
+            "minimumBlocks": 10
+          },
+          "fit": {
+            "minimumGain": 0.005,
+            "noiseMultiplier": 3,
+            "minimumByteReduction": 0.05,
+            "maximumBucketRegression": 0.01,
+            "flat": "abs(log(timeRatio)) <= log1p(noiseSpread)"
+          },
+          "buckets": [
+            {
+              "name": "tiny",
+              "minBytes": 0,
+              "maxBytes": 1024
+            },
+            {
+              "name": "small",
+              "minBytes": 1024,
+              "maxBytes": 4096
+            },
+            {
+              "name": "medium",
+              "minBytes": 4096,
+              "maxBytes": 16384
+            },
+            {
+              "name": "large",
+              "minBytes": 16384,
+              "maxBytes": null
+            }
+          ],
+          "configuration": {
+            "maxTextSize": 10000000,
+            "maxEdges": 1000000,
+            "peleOutputLimit": 9007199254740991,
+            "theme": "renderer defaults plus original input directives",
+            "pele": "native default font/wrap settings; no matching of v13 appearance",
+            "renderId": "m<sample-index>",
+            "reset": "AnalysisCache and text widths outside timing; configuration and loaded modules stay warm"
+          },
+          "diagnostics": {
+            "warmups": 3,
+            "repetitions": 7,
+            "emptyGraphRepetitions": 1000
+          },
+          "quiet": {
+            "intervalMs": 1000,
+            "quietMs": 3000,
+            "maxCpuMs": 1536,
+            "maxTotalCpuMs": 1536
+          },
+          "browser": {
+            "viewport": {
+              "width": 1600,
+              "height": 1200
+            },
+            "deviceScaleFactor": 1,
+            "colorScheme": "light"
+          },
+          "backgroundLoad": {
+            "decision": "P27",
+            "measurementEnvironment": "observed background activity; not an idle-host baseline",
+            "method": "60 consecutive 1000 ms process-snapshot intervals; nearest-rank p95 of total CPU delta; total limit is ceil(p95 * 1.20); the per-process field equals the total limit and imposes no additional cap",
+            "startedAt": "2026-11-10T13:02:09.057Z",
+            "finishedAt": "2026-11-10T13:03:14.100Z",
+            "machine": "AI-Max",
+            "node": "v24.16.0",
+            "samples": 60,
+            "actualDurationMs": 65008.65083300001,
+            "bufferFraction": 0.2,
+            "totalCpuMsP95": 1280,
+            "busiestProcessCpuMsP95": 330,
+            "frozenQuiet": {
+              "intervalMs": 1000,
+              "quietMs": 3000,
+              "maxCpuMs": 1536,
+              "maxTotalCpuMs": 1536
+            },
+            "previousPolicySha256": "711c4bdbb4719ef8d0b6c92773d404f397ab9895f368fa402961f3ef3c096200",
+            "rawEvidence": {
+              "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-background-baseline-20261110/observations.json",
+              "sha256": "11bcbacaadb794298981c6f5bee1ce0916a9c1cc35547caf6fde231ab3046705"
+            },
+            "calibrationScriptSha256": "43e914e30880dd017ed3180c7e2a08ae028824ecd7046a397ae2e51f483ec531",
+            "monitorSha256": "0525ae0e5588a107546f72d91e82c77605556a8d4b9d929d95258296a89f188a",
+            "calibrationDecision": "P26",
+            "calibrationPreviousPolicySha256": "8555678d001d8d8ed3363907d62cbc6142c5084786fb69acd00be34b5794e9a3",
+            "supersededPerProcessLimitMs": 396
+          }
+        },
+        "policyObjectSha256": "82a788a9ce59dfaea7f0f207e1f2933426ee3c0c0e888128d9d18976151e77ee",
+        "definition": "Elapsed performance.now time around only the front-matter full parseYaml reader, including callback call overhead; bypass contributes exactly zero. No clock correction.",
+        "order": "AB/BA alternates by record index plus repetition; A=base, B=head",
+        "reset": "AnalysisCache reset and counter reset before every render, outside measured reader; production caches unchanged",
+        "sumOfPerRecordMedians": {
+          "base": 12.039053998829331,
+          "head": 3.5238360001822002
+        },
+        "ratio": 0.2927004065705541,
+        "reduction": 0.7072995934294459,
+        "summedReplicates": {
+          "base": [
+            13.039775000943337,
+            12.286883999768179,
+            12.367226998088881,
+            12.201478001952637,
+            12.268487000837922,
+            12.110510999104008,
+            12.039604999299627
+          ],
+          "head": [
+            3.762174000381492,
+            3.599757999763824,
+            3.586046999669634,
+            3.6693749996484257,
+            3.5794500003103167,
+            3.588117000355851,
+            3.5150840000715107
+          ]
+        },
+        "replicateSpread": {
+          "base": {
+            "min": 12.039604999299627,
+            "max": 13.039775000943337,
+            "range": 1.0001700016437098,
+            "median": 12.268487000837922,
+            "p05": 12.039604999299627,
+            "p95": 13.039775000943337
+          },
+          "head": {
+            "min": 3.5150840000715107,
+            "max": 3.762174000381492,
+            "range": 0.2470900003099814,
+            "median": 3.588117000355851,
+            "p05": 3.5150840000715107,
+            "p95": 3.762174000381492
+          }
+        },
+        "buckets": {
+          "small": {
+            "records": 3088,
+            "base": 7.887450998823624,
+            "head": 2.1710039997124113
+          },
+          "tiny": {
+            "records": 1426,
+            "base": 2.459366999915801,
+            "head": 0.5783730000839569
+          },
+          "medium": {
+            "records": 459,
+            "base": 1.4700710001634434,
+            "head": 0.5955840002861805
+          },
+          "large": {
+            "records": 27,
+            "base": 0.22216499992646277,
+            "head": 0.17887500009965152
+          }
+        },
+        "callsPerSweep": {
+          "base": 1934,
+          "head": 306
+        },
+        "clockOverhead": {
+          "file": "clock-overhead.json",
+          "samples": 10000,
+          "spread": {
+            "min": 0,
+            "max": 0.007625000027474016,
+            "range": 0.007625000027474016,
+            "median": 0.00008299999171867967,
+            "p05": 0.000041000021155923605,
+            "p95": 0.00012500002048909664
+          },
+          "subtracted": false
+        },
+        "artifacts": [
+          {
+            "variant": "base",
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-diagnostic/base-timing/index.mjs",
+            "sha256": "befa1cd8b867fd9482f35c2ab8f0b7b4b8ebbbb293e4c8fffec9e1addfb7cd2b"
+          },
+          {
+            "variant": "head",
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-2d-diagnostic/head-timing/index.mjs",
+            "sha256": "7cec9a4544e2cf2f9a1fa53e5257e9ba0fdb288c1778c652c8a74f5c36ad4beb"
+          }
+        ],
+        "collectorSha256": "935c9f71dacf214acddcc9d327cffc1cb4c14dba4c8da9a8fadbf2d39e5553a1",
+        "limitations": [
+          "Instrumented diagnostic only; not an acceptance render timing or fit verdict.",
+          "Callback boundary and clock cost are included; empty-clock control is reported without correction.",
+          "All 5000 records, including no-front-matter and bypass records, remain in the denominator.",
+          "Host exclusivity/load monitoring and interruption cleanup belong to the invoking scheduler."
+        ],
+        "passed": true,
+        "evidence": [
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2d/raw/diagnostics/yaml-reader/per-record.jsonl",
+            "sha256": "c42911086e9b39cddedbe9b37d811b70c1b5a214fef41446a47e7a6063d7cea8"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2d/raw/diagnostics/yaml-reader/clock-overhead.json",
+            "sha256": "d0069132c6f5626e373d6956491063aa3da133cb39e888e99b5854454d7cf6fd"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2d/raw/diagnostics/yaml-reader/summary.json",
+            "sha256": "7850e734ace6c8d799366c8ee40a3c272e4c797fda1d5ae678ce987bf01f5e30"
+          }
+        ]
+      },
+      "checks": [
+        {
+          "name": "environment",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node tools/perf/check-environment.mjs --node-only",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "tools/perf/check-environment.mjs",
+            "--node-only"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-11T07:29:35.802Z",
+          "finishedAt": "2026-11-11T07:29:36.012Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-validation-round1/environment.log",
+          "logSha256": "caa69c7e2be7d173a7602d85cc374cfadbc40573ccbaf3eec2c6a51d86037d88"
+        },
+        {
+          "name": "harness",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node --test tools/perf/acceptance.test.mjs tools/perf/browser.test.mjs tools/perf/build.test.mjs tools/perf/common.test.mjs tools/perf/diagnostics.test.mjs tools/perf/evaluate.test.mjs tools/perf/gates.test.mjs tools/perf/quiet.test.mjs tools/perf/report.test.mjs tools/perf/scheduler.test.mjs tools/perf/timing-worker.test.mjs",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "--test",
+            "tools/perf/acceptance.test.mjs",
+            "tools/perf/browser.test.mjs",
+            "tools/perf/build.test.mjs",
+            "tools/perf/common.test.mjs",
+            "tools/perf/diagnostics.test.mjs",
+            "tools/perf/evaluate.test.mjs",
+            "tools/perf/gates.test.mjs",
+            "tools/perf/quiet.test.mjs",
+            "tools/perf/report.test.mjs",
+            "tools/perf/scheduler.test.mjs",
+            "tools/perf/timing-worker.test.mjs"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-11T07:29:36.013Z",
+          "finishedAt": "2026-11-11T07:29:42.518Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-validation-round1/harness.log",
+          "logSha256": "1a4d3601275386336931f608ab2f246e0a1900b9218860efcade53197c1fdd5d"
+        },
+        {
+          "name": "check",
+          "command": "pnpm check",
+          "argv": [
+            "pnpm",
+            "check"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-11T07:29:42.519Z",
+          "finishedAt": "2026-11-11T07:34:02.509Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-validation-round1/check.log",
+          "logSha256": "07ca78b0d03ba5791d0e977487e74a2c7ad6c8eed6df73ec57a8fb15687c9f46"
+        },
+        {
+          "name": "security",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node node_modules/vitest/vitest.mjs run packages/conformance/src/cynefin/render.spec.ts packages/conformance/src/feature-plugins.spec.ts packages/conformance/src/flowchart-behaviour.spec.ts packages/conformance/src/flowchart-render.spec.ts packages/conformance/src/gantt/render-behaviour.spec.ts packages/conformance/src/gantt/schedule-stress.spec.ts packages/conformance/src/journey/render.spec.ts packages/conformance/src/mindmap/stress.spec.ts packages/conformance/src/packet/render.spec.ts packages/conformance/src/pie/render.spec.ts packages/conformance/src/quadrant/render.spec.ts packages/conformance/src/radar/render.spec.ts packages/conformance/src/sequence/render.spec.ts packages/conformance/src/state/render.spec.ts packages/conformance/src/stress.spec.ts packages/conformance/src/treemap/render.spec.ts packages/conformance/src/wardley/render.spec.ts packages/core/src/config/resolveConfig.spec.ts packages/core/src/limits/limits.spec.ts packages/core/src/svg/gradient.spec.ts packages/core/src/svg/image-url.spec.ts packages/core/src/svg/security.spec.ts packages/core/src/svg/url.spec.ts packages/core/src/svg/user-gradient.spec.ts packages/diagram-er/src/v12-specs/erDiagram.spec.ts packages/diagram-er/src/v12-specs/subgraph.spec.ts packages/diagram-flowchart/src/v12-specs/flow-arrows.spec.ts packages/diagram-flowchart/src/v12-specs/flow-comments.spec.ts packages/diagram-flowchart/src/v12-specs/flow-direction.spec.ts packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts packages/diagram-flowchart/src/v12-specs/flow-interactions.spec.ts packages/diagram-flowchart/src/v12-specs/flow-lines.spec.ts packages/diagram-flowchart/src/v12-specs/flow-md-string.spec.ts packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts packages/diagram-flowchart/src/v12-specs/flow-singlenode.spec.ts packages/diagram-flowchart/src/v12-specs/flow-style.spec.ts packages/diagram-flowchart/src/v12-specs/flow-text.spec.ts packages/diagram-flowchart/src/v12-specs/flow-vertice-chaining.spec.ts packages/diagram-flowchart/src/v12-specs/flow.spec.ts packages/diagram-flowchart/src/v12-specs/subgraph.spec.ts packages/diagram-kanban/src/parser/parse.spec.ts packages/diagram-kanban/src/render/render.spec.ts packages/diagram-mindmap/src/parser/parse.spec.ts packages/diagram-pie/src/v12-specs/pie.spec.ts packages/diagram-state/src/v12-specs/state-parser.spec.ts packages/diagram-state/src/v12-specs/state-style.spec.ts packages/language-service/src/front-matter.spec.ts packages/mermaid/src/api.spec.ts packages/mermaid/src/config-fragments.spec.ts packages/mermaid/src/extensions.spec.ts packages/mermaid/src/icon-contract.spec.ts packages/mermaid/src/inline-boxes.spec.ts packages/mermaid/src/limits.spec.ts packages/mermaid/src/mindmap.spec.ts packages/mermaid/src/render-safety.spec.ts packages/mermaid/src/sankey.spec.ts packages/plugin-hand-drawn/src/corpus.spec.ts packages/plugin-icons/src/corpus.spec.ts packages/plugin-icons/src/security.spec.ts packages/plugin-interactions/src/class.spec.ts packages/plugin-interactions/src/gantt.spec.ts packages/plugin-interactions/src/index.spec.ts packages/plugin-interactions/src/menus.spec.ts packages/plugin-math/src/engine.spec.ts packages/plugin-math/src/index.spec.ts tools/gen-config/src/migration.spec.ts",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "node_modules/vitest/vitest.mjs",
+            "run",
+            "packages/conformance/src/cynefin/render.spec.ts",
+            "packages/conformance/src/feature-plugins.spec.ts",
+            "packages/conformance/src/flowchart-behaviour.spec.ts",
+            "packages/conformance/src/flowchart-render.spec.ts",
+            "packages/conformance/src/gantt/render-behaviour.spec.ts",
+            "packages/conformance/src/gantt/schedule-stress.spec.ts",
+            "packages/conformance/src/journey/render.spec.ts",
+            "packages/conformance/src/mindmap/stress.spec.ts",
+            "packages/conformance/src/packet/render.spec.ts",
+            "packages/conformance/src/pie/render.spec.ts",
+            "packages/conformance/src/quadrant/render.spec.ts",
+            "packages/conformance/src/radar/render.spec.ts",
+            "packages/conformance/src/sequence/render.spec.ts",
+            "packages/conformance/src/state/render.spec.ts",
+            "packages/conformance/src/stress.spec.ts",
+            "packages/conformance/src/treemap/render.spec.ts",
+            "packages/conformance/src/wardley/render.spec.ts",
+            "packages/core/src/config/resolveConfig.spec.ts",
+            "packages/core/src/limits/limits.spec.ts",
+            "packages/core/src/svg/gradient.spec.ts",
+            "packages/core/src/svg/image-url.spec.ts",
+            "packages/core/src/svg/security.spec.ts",
+            "packages/core/src/svg/url.spec.ts",
+            "packages/core/src/svg/user-gradient.spec.ts",
+            "packages/diagram-er/src/v12-specs/erDiagram.spec.ts",
+            "packages/diagram-er/src/v12-specs/subgraph.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-arrows.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-comments.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-direction.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-interactions.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-lines.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-md-string.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-singlenode.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-style.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-text.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-vertice-chaining.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/subgraph.spec.ts",
+            "packages/diagram-kanban/src/parser/parse.spec.ts",
+            "packages/diagram-kanban/src/render/render.spec.ts",
+            "packages/diagram-mindmap/src/parser/parse.spec.ts",
+            "packages/diagram-pie/src/v12-specs/pie.spec.ts",
+            "packages/diagram-state/src/v12-specs/state-parser.spec.ts",
+            "packages/diagram-state/src/v12-specs/state-style.spec.ts",
+            "packages/language-service/src/front-matter.spec.ts",
+            "packages/mermaid/src/api.spec.ts",
+            "packages/mermaid/src/config-fragments.spec.ts",
+            "packages/mermaid/src/extensions.spec.ts",
+            "packages/mermaid/src/icon-contract.spec.ts",
+            "packages/mermaid/src/inline-boxes.spec.ts",
+            "packages/mermaid/src/limits.spec.ts",
+            "packages/mermaid/src/mindmap.spec.ts",
+            "packages/mermaid/src/render-safety.spec.ts",
+            "packages/mermaid/src/sankey.spec.ts",
+            "packages/plugin-hand-drawn/src/corpus.spec.ts",
+            "packages/plugin-icons/src/corpus.spec.ts",
+            "packages/plugin-icons/src/security.spec.ts",
+            "packages/plugin-interactions/src/class.spec.ts",
+            "packages/plugin-interactions/src/gantt.spec.ts",
+            "packages/plugin-interactions/src/index.spec.ts",
+            "packages/plugin-interactions/src/menus.spec.ts",
+            "packages/plugin-math/src/engine.spec.ts",
+            "packages/plugin-math/src/index.spec.ts",
+            "tools/gen-config/src/migration.spec.ts"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-11T07:34:02.510Z",
+          "finishedAt": "2026-11-11T07:34:20.402Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-validation-round1/security.log",
+          "logSha256": "81138594d989bf3978bfc16d107f8d47a870b467bfa3933cd87fda6face3d7cb"
+        },
+        {
+          "name": "size",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node --import tsx --conditions=mermaid-source tools/perf/size-check.mjs",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "--import",
+            "tsx",
+            "--conditions=mermaid-source",
+            "tools/perf/size-check.mjs"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-11T07:34:20.403Z",
+          "finishedAt": "2026-11-11T07:34:23.156Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-validation-round1/size.log",
+          "logSha256": "2fe9ca20633c8d3c4b214a29e0bc45c5eaa184ad3ed5e9ab28bc44c2608828f5"
+        },
+        {
+          "name": "host",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node tools/perf/host-acceptance.mjs --out /Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-validation-round1/host",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "tools/perf/host-acceptance.mjs",
+            "--out",
+            "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-validation-round1/host"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-11T07:34:23.157Z",
+          "finishedAt": "2026-11-11T07:34:33.517Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-validation-round1/host.log",
+          "logSha256": "d480796160a289e33b609548b89fb7d68b4fbb43cfb5a21716bce35aa468e101"
+        },
+        {
+          "name": "browser",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "tools/perf/browser-acceptance.mjs",
+            "--out",
+            "/Users/knsv/repos/mermaid-v13-perf-round1-2d/.tmp/perf-validation-round1/browser"
+          ],
+          "status": "unverified",
+          "reason": "Deferred browser validation; not required for Node measurement readiness"
+        },
+        {
+          "name": "e2e",
+          "argv": [
+            "pnpm",
+            "e2e"
+          ],
+          "status": "unverified",
+          "reason": "Deferred browser validation; not required for Node measurement readiness"
+        }
+      ],
+      "diagnostics": {
+        "methods": {
+          "measurerCalls": "Actual width-method invocations, including any width-cache hits. Vertical metrics invocations are excluded and reported separately when supplied by the renderer.",
+          "metricsCalls": "Optional actual vertical-metrics method invocations; available for v13, absent for Pele.",
+          "allocations": "V8 HeapProfiler.startSampling with collected minor/major objects included; sum selfSize below named allocationRender frame; median independent child estimates. Timing artifacts avoid diagnostic-counter allocations.",
+          "scavenge": "Pinned --trace-gc-nvp pause= with gc=s, only between synchronous render markers. Other GC, setup/reset pauses and final forced-boundary pause reported separately.",
+          "traceAllocation": "Supplemental sum of V8 allocated= over GC intervals through final forced boundary; byte-precise occupancy deltas, NOT exact gross allocation.",
+          "markup": "UTF-8 Buffer.byteLength plus quote-aware XML start-tag and attribute counting.",
+          "features": "v13 preprocessing, parser/token model and actual label layout inspection; number of occurrences and number of diagrams containing each feature.",
+          "stages": "Diagnostic stage clock; layout includes nested measure and graphLayout. Unaccounted time = total minus parse/layout/serialise; instrumentation overhead remains."
+        },
+        "renderers": {
+          "v13": {
+            "totals": {
+              "outputBytes": 95296904,
+              "elements": 1043859,
+              "attributes": 3614479,
+              "measurerCalls": 1198406,
+              "parserCalls": 5000,
+              "metricsCalls": 220480
+            },
+            "allocatedBytesEstimate": 1044502360,
+            "allocationError": {
+              "maximumCalibrationRelativeError": 0.006577820493300852,
+              "replicateRelativeRange": 0.013043968612957466,
+              "interpretation": "Empirical calibration error and replicate spread, not a general confidence bound. Excludes native/external buffers and allocations outside sampled renderer stacks."
+            },
+            "gc": {
+              "scavengePauseMs": 829.9000000000024,
+              "scavengeEvents": 775,
+              "otherGcPauseMs": 54.699999999999996,
+              "otherGcEvents": 39,
+              "boundaryGcPauseMs": 3,
+              "outsideRenderGcPauseMs": 58.1,
+              "intervalOccupancyAllocatedBytes": 57666706960,
+              "intervalOccupancyEvents": 870,
+              "pauseRoundingErrorMs": 40.7,
+              "scavengePauseMsPerPass": 118.55714285714319,
+              "otherGcPauseMsPerPass": 7.814285714285714
+            }
+          },
+          "pele": {
+            "totals": {
+              "outputBytes": 81604595,
+              "elements": 962992,
+              "attributes": 3105130,
+              "measurerCalls": 828402,
+              "parserCalls": 5000
+            },
+            "allocatedBytesEstimate": 755266176,
+            "allocationError": {
+              "maximumCalibrationRelativeError": 0.006577820493300852,
+              "replicateRelativeRange": 0.016283530748237823,
+              "interpretation": "Empirical calibration error and replicate spread, not a general confidence bound. Excludes native/external buffers and allocations outside sampled renderer stacks."
+            },
+            "gc": {
+              "scavengePauseMs": 180.7000000000007,
+              "scavengeEvents": 542,
+              "otherGcPauseMs": 0,
+              "otherGcEvents": 0,
+              "boundaryGcPauseMs": 3,
+              "outsideRenderGcPauseMs": 0.2,
+              "intervalOccupancyAllocatedBytes": 36397018256,
+              "intervalOccupancyEvents": 544,
+              "pauseRoundingErrorMs": 27.1,
+              "scavengePauseMsPerPass": 25.814285714285813,
+              "otherGcPauseMsPerPass": 0
+            }
+          }
+        },
+        "features": {
+          "occurrences": {
+            "frontMatter": 1934,
+            "initDirectives": 162,
+            "themeVariables": 228,
+            "shapeData": 17172,
+            "subgraphs": 10653,
+            "comments": 12144,
+            "wideLabels": 66138,
+            "labelledEdges": 35013
+          },
+          "diagrams": {
+            "frontMatter": 1934,
+            "initDirectives": 162,
+            "themeVariables": 228,
+            "shapeData": 512,
+            "subgraphs": 2461,
+            "comments": 1297,
+            "wideLabels": 4796,
+            "labelledEdges": 3572
+          }
+        },
+        "emptyGraph": {
+          "repetitions": 1000,
+          "medianMs": {
+            "total": 0.03941600000000278,
+            "unaccounted": 0.01025100000001089,
+            "parse": 0.007833000000005086,
+            "measure": 0.006957999999997355,
+            "graphLayout": 0.004582999999996673,
+            "layout": 0.012208000000001107,
+            "serialise": 0.008791999999999689
+          }
+        }
+      },
+      "evidence": [
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2d/header.json",
+          "sha256": "75c87d2102cd4fcde9309aef690613fb845958ef52631fe49be7ccf45a215f00"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2d/queue.json",
+          "sha256": "88232ab5d2118808de117dcc6de8b59fccc7c3324f019eea2ed7764838d78bf0"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2d/completion.json",
+          "sha256": "a5c196624c0c865cff787cb065c49df1bd079360c96357b46c86026b85f433ed"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2d/p12-verdict.json",
+          "sha256": "2ab4f017ee21d80d328e250049cd837d6d238e710b79369d2564879eeee8e82c"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2d/verdict.json",
+          "sha256": "275cb27d5088ba2c8edd048ce6450091c9b13740066b52904575b770f6ff1fc0"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2d/raw/timing/result.json",
+          "sha256": "37568bfac4ac4c6f77e034ceec5d8f20f522d88c76dfee876fcd5a054ed21079"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2d/raw/gates/result.json",
+          "sha256": "6cee3e7f251d664c7b8e39a896bf7497d3900cfbbb1579fa67ffef24d05030b6"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch4-20261111/2d/raw/diagnostics/result.json",
+          "sha256": "f1062e1ab9c3f7b457b14eaa372974262be2b83b1ca0f868a9e9fbf1df51075e"
+        }
+      ]
+    }
+  ],
+  "hop4": {
+    "id": "4c",
+    "round": 1,
+    "batch": 4,
+    "branch": "perf/round-1-4c-20261111",
+    "assignment": {
+      "role": "implementer",
+      "hypothesis": "4c",
+      "reason": "Diagnostic instrumentation must isolate conversion cost without misleading attribution.",
+      "escalationReason": null,
+      "spawnOverrides": {
+        "model": "gpt-6-astra",
+        "reasoning_effort": "high",
+        "fork_turns": "none"
+      },
+      "agent": "/root/round1_4c",
+      "requestedModel": "gpt-6-astra",
+      "actualModel": "gpt-6-astra",
+      "requestedEffort": "high",
+      "actualEffort": "high"
+    },
+    "lane": "byte-identical",
+    "delivery": "diagnostic evidence only",
+    "verdict": "diagnostic-only",
+    "purpose": "Measure conversion; no optimization fit verdict",
+    "baseSha": "094ec5283059b7a87c2c2745ea6dffcc5a4dcee7",
+    "headSha": "d51bcb7891e08a93739d01af100d32d82f89d204",
+    "validationProfile": "node",
+    "browserValidation": "unverified",
+    "e2e": "unverified",
+    "pins": {
+      "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+      "browserSubsetSha256": "0dc6c1ab4205b16317ebc2129271ed0c03533cc22d270ff7d0e2d1cd2474aa99",
+      "baseArtifactSha256": "54c2879f56c867719fafb96e8f4359dcca471e323105ee0371afc5b1a8c4f612",
+      "headArtifactSha256": "fc4f9ec1bd9c1b0d6780125ac871af3eef3df5a52f1b24013740c63b7716753e",
+      "baseSourceSha256": "579d554998695c7b14496f1428a844046960004cfe631a84b1f8025c60e410b9",
+      "headSourceSha256": "094187531824a9ee959fe5f9de1d590d908279830d04b713257143940b21fda8",
+      "policySha256": "82a788a9ce59dfaea7f0f207e1f2933426ee3c0c0e888128d9d18976151e77ee"
+    },
+    "boundary": {
+      "start": "run(): immediately after compoundLayout returns, before margin/pad computation",
+      "end": "run(): after the returned LayoutModel object is constructed, before return",
+      "includes": [
+        "margin/pad",
+        "node/group/edge maps and objects",
+        "group slice and projection",
+        "route points and ports",
+        "self-loop generation",
+        "bounds/direction"
+      ],
+      "excludes": [
+        "CNode/CEdge construction",
+        "compoundLayout",
+        "endLabels",
+        "outer width-fit/grid-growth work",
+        "capture and statistics recording"
+      ],
+      "passes": "All executed run() conversions, including discarded tight/turned/growth results",
+      "clock": "performance.now(), microseconds; two clock reads per conversion invocation"
+    },
+    "limitations": [
+      "Diagnostic attribution only; no acceptance speedup, fit verdict or interface decision.",
+      "Instrumentation changes JIT/code layout, allocation and GC scheduling; matching build settings cannot eliminate that bias.",
+      "Empty clock-pair controls estimate clock overhead, not all instrumentation bias. No overhead is subtracted.",
+      "Spread describes seven repetitions of this run, not a confidence interval or independent A/A blocks.",
+      "Hop/total proportion uses instrumented end-to-end time, whose denominator includes recording overhead.",
+      "A summed conversion cost is not an achievable optimization gain: required route, loop and port work is included."
+    ],
+    "aggregate": [
+      {
+        "bucket": "all",
+        "records": 5000,
+        "conversionPassesPerRenderSum": 5000,
+        "sumPerRecordMedianHopUs": 29002.74300021664,
+        "sumPerRecordMedianInstrumentedTotalUs": 3744113.390000103,
+        "sumPerRecordMedianPlainTotalUs": 3795154.3829997163,
+        "hopFractionOfInstrumented": 0.007746224534138866,
+        "instrumentedToPlainTotalRatio": 0.9865510100911178,
+        "perRecordMedianHopUs": {
+          "median": 4.207999998470768,
+          "min": 0.6670000002486631,
+          "max": 250.79099999857135,
+          "range": 250.1239999983227,
+          "relativeRange": 59.44011408964363
+        },
+        "perRecordHopRangeUs": {
+          "median": 1.0419999998703133,
+          "min": 0.04199999966658652,
+          "max": 5088.958000000275,
+          "range": 5088.916000000609,
+          "relativeRange": 4883.796545713984
+        },
+        "replicateHopSumsUs": [
+          30881.342000189194,
+          33875.56300035408,
+          35675.43599981895,
+          31484.24000002916,
+          37246.94500015744,
+          31007.881000503177,
+          33440.651000066566
+        ],
+        "replicateHopSumSpreadUs": {
+          "median": 33440.651000066566,
+          "min": 30881.342000189194,
+          "max": 37246.94500015744,
+          "range": 6365.602999968243,
+          "relativeRange": 0.19035523560697346
+        }
+      },
+      {
+        "bucket": "tiny",
+        "records": 1426,
+        "conversionPassesPerRenderSum": 1426,
+        "sumPerRecordMedianHopUs": 3725.216000027501,
+        "sumPerRecordMedianInstrumentedTotalUs": 366622.9269997932,
+        "sumPerRecordMedianPlainTotalUs": 374629.9049997453,
+        "hopFractionOfInstrumented": 0.010160892092898496,
+        "instrumentedToPlainTotalRatio": 0.9786269651912665,
+        "perRecordMedianHopUs": {
+          "median": 2.3339999988820637,
+          "min": 0.6670000002486631,
+          "max": 14.833999994152691,
+          "range": 14.166999993904028,
+          "relativeRange": 6.0698371896699745
+        },
+        "perRecordHopRangeUs": {
+          "median": 0.5410000012489036,
+          "min": 0.04199999966658652,
+          "max": 1196.9579999931739,
+          "range": 1196.9159999935073,
+          "relativeRange": 2212.41404293977
+        },
+        "replicateHopSumsUs": [
+          3795.995000198559,
+          5158.960000013735,
+          5109.189999679245,
+          3891.1909998797682,
+          3916.521999955421,
+          3881.0790001118107,
+          3848.5849999335073
+        ],
+        "replicateHopSumSpreadUs": {
+          "median": 3891.1909998797682,
+          "min": 3795.995000198559,
+          "max": 5158.960000013735,
+          "range": 1362.9649998151763,
+          "relativeRange": 0.3502693647927562
+        }
+      },
+      {
+        "bucket": "small",
+        "records": 3088,
+        "conversionPassesPerRenderSum": 3088,
+        "sumPerRecordMedianHopUs": 17300.9320000524,
+        "sumPerRecordMedianInstrumentedTotalUs": 2173866.11500014,
+        "sumPerRecordMedianPlainTotalUs": 2209873.767000068,
+        "hopFractionOfInstrumented": 0.007958600523128944,
+        "instrumentedToPlainTotalRatio": 0.9837060141001588,
+        "perRecordMedianHopUs": {
+          "median": 4.791999999724794,
+          "min": 0.8330000000569271,
+          "max": 76.12499999959255,
+          "range": 75.29199999953562,
+          "relativeRange": 15.712020034194419
+        },
+        "perRecordHopRangeUs": {
+          "median": 1.167000002169516,
+          "min": 0.08300000081362668,
+          "max": 5088.958000000275,
+          "range": 5088.874999999462,
+          "relativeRange": 4360.646949904857
+        },
+        "replicateHopSumsUs": [
+          17688.63600001157,
+          20549.177000251915,
+          19423.06000009296,
+          17939.914000166766,
+          25019.79700024924,
+          18868.008000309317,
+          20432.682000021374
+        ],
+        "replicateHopSumSpreadUs": {
+          "median": 19423.06000009296,
+          "min": 17688.63600001157,
+          "max": 25019.79700024924,
+          "range": 7331.161000237669,
+          "relativeRange": 0.3774462417457693
+        }
+      },
+      {
+        "bucket": "medium",
+        "records": 459,
+        "conversionPassesPerRenderSum": 459,
+        "sumPerRecordMedianHopUs": 6833.137000094439,
+        "sumPerRecordMedianInstrumentedTotalUs": 1024943.6780001692,
+        "sumPerRecordMedianPlainTotalUs": 1032538.9179999394,
+        "hopFractionOfInstrumented": 0.006666841453597717,
+        "instrumentedToPlainTotalRatio": 0.9926441126166146,
+        "perRecordMedianHopUs": {
+          "median": 12.542000004032161,
+          "min": 1.1249999952269718,
+          "max": 250.79099999857135,
+          "range": 249.66600000334438,
+          "relativeRange": 19.906394508298405
+        },
+        "perRecordHopRangeUs": {
+          "median": 2.916000004915986,
+          "min": 0.25100000129896216,
+          "max": 1675.4169999985606,
+          "range": 1675.1659999972617,
+          "relativeRange": 574.4739359304375
+        },
+        "replicateHopSumsUs": [
+          8173.131999999782,
+          6971.634000062295,
+          10015.516000040294,
+          8523.757999984467,
+          7148.1689999314995,
+          7100.290000101381,
+          8035.426000090183
+        ],
+        "replicateHopSumSpreadUs": {
+          "median": 8035.426000090183,
+          "min": 6971.634000062295,
+          "max": 10015.516000040294,
+          "range": 3043.881999977999,
+          "relativeRange": 0.3788077943775273
+        }
+      },
+      {
+        "bucket": "large",
+        "records": 27,
+        "conversionPassesPerRenderSum": 27,
+        "sumPerRecordMedianHopUs": 1143.4580000423011,
+        "sumPerRecordMedianInstrumentedTotalUs": 178680.66999998927,
+        "sumPerRecordMedianPlainTotalUs": 178111.79299996002,
+        "hopFractionOfInstrumented": 0.006399449923947396,
+        "instrumentedToPlainTotalRatio": 1.0031939322514674,
+        "perRecordMedianHopUs": {
+          "median": 35.45900000608526,
+          "min": 10.874999992665835,
+          "max": 112.87500000617001,
+          "range": 102.00000001350418,
+          "relativeRange": 2.8765616626526285
+        },
+        "perRecordHopRangeUs": {
+          "median": 5.126000003656372,
+          "min": 0.9169999975711107,
+          "max": 57.62499998672865,
+          "range": 56.70799998915754,
+          "relativeRange": 11.062817001308577
+        },
+        "replicateHopSumsUs": [
+          1223.5789999792814,
+          1195.792000026131,
+          1127.6700000064466,
+          1129.3769999981578,
+          1162.457000021277,
+          1158.5039999806668,
+          1123.9580000215028
+        ],
+        "replicateHopSumSpreadUs": {
+          "median": 1158.5039999806668,
+          "min": 1123.9580000215028,
+          "max": 1223.5789999792814,
+          "range": 99.62099995777862,
+          "relativeRange": 0.0859910712085941
+        }
+      }
+    ],
+    "clockControls": [
+      {
+        "phase": "before",
+        "pairs": 10000,
+        "summaryUs": {
+          "median": 0.04200000000764703,
+          "min": 0,
+          "max": 4.500000000007276,
+          "range": 4.500000000007276,
+          "relativeRange": 107.14285712352265
+        }
+      },
+      {
+        "phase": "after",
+        "pairs": 10000,
+        "summaryUs": {
+          "median": 0.04199999966658652,
+          "min": 0,
+          "max": 10.708000001613982,
+          "range": 10.708000001613982,
+          "relativeRange": 254.95238301472722
+        }
+      }
+    ],
+    "checks": [
+      {
+        "name": "environment",
+        "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node tools/perf/check-environment.mjs --node-only",
+        "argv": [
+          "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+          "tools/perf/check-environment.mjs",
+          "--node-only"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "status": "passed",
+        "startedAt": "2026-11-11T07:34:34.884Z",
+        "finishedAt": "2026-11-11T07:34:35.096Z",
+        "log": "/Users/knsv/repos/mermaid-v13-perf-round1-4c/.tmp/perf-validation-round1/environment.log",
+        "logSha256": "caa69c7e2be7d173a7602d85cc374cfadbc40573ccbaf3eec2c6a51d86037d88"
+      },
+      {
+        "name": "harness",
+        "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node --test tools/perf/acceptance.test.mjs tools/perf/browser.test.mjs tools/perf/build.test.mjs tools/perf/common.test.mjs tools/perf/diagnostics-hop4.test.mjs tools/perf/diagnostics.test.mjs tools/perf/evaluate.test.mjs tools/perf/gates.test.mjs tools/perf/quiet.test.mjs tools/perf/report.test.mjs tools/perf/scheduler.test.mjs tools/perf/timing-worker.test.mjs",
+        "argv": [
+          "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+          "--test",
+          "tools/perf/acceptance.test.mjs",
+          "tools/perf/browser.test.mjs",
+          "tools/perf/build.test.mjs",
+          "tools/perf/common.test.mjs",
+          "tools/perf/diagnostics-hop4.test.mjs",
+          "tools/perf/diagnostics.test.mjs",
+          "tools/perf/evaluate.test.mjs",
+          "tools/perf/gates.test.mjs",
+          "tools/perf/quiet.test.mjs",
+          "tools/perf/report.test.mjs",
+          "tools/perf/scheduler.test.mjs",
+          "tools/perf/timing-worker.test.mjs"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "status": "passed",
+        "startedAt": "2026-11-11T07:34:35.097Z",
+        "finishedAt": "2026-11-11T07:34:41.656Z",
+        "log": "/Users/knsv/repos/mermaid-v13-perf-round1-4c/.tmp/perf-validation-round1/harness.log",
+        "logSha256": "c95c610e1dd6782cf7584378aa3179bf93b2f4128c03e1fce0c9f5699048cf95"
+      },
+      {
+        "name": "check",
+        "command": "pnpm check",
+        "argv": [
+          "pnpm",
+          "check"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "status": "passed",
+        "startedAt": "2026-11-11T07:34:41.657Z",
+        "finishedAt": "2026-11-11T07:39:01.663Z",
+        "log": "/Users/knsv/repos/mermaid-v13-perf-round1-4c/.tmp/perf-validation-round1/check.log",
+        "logSha256": "6d8d97cbeb618ee2e6d8b693ece01e66e5914b614a9183c700f209639400fb87"
+      },
+      {
+        "name": "security",
+        "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node node_modules/vitest/vitest.mjs run packages/conformance/src/cynefin/render.spec.ts packages/conformance/src/feature-plugins.spec.ts packages/conformance/src/flowchart-behaviour.spec.ts packages/conformance/src/flowchart-render.spec.ts packages/conformance/src/gantt/render-behaviour.spec.ts packages/conformance/src/gantt/schedule-stress.spec.ts packages/conformance/src/journey/render.spec.ts packages/conformance/src/mindmap/stress.spec.ts packages/conformance/src/packet/render.spec.ts packages/conformance/src/pie/render.spec.ts packages/conformance/src/quadrant/render.spec.ts packages/conformance/src/radar/render.spec.ts packages/conformance/src/sequence/render.spec.ts packages/conformance/src/state/render.spec.ts packages/conformance/src/stress.spec.ts packages/conformance/src/treemap/render.spec.ts packages/conformance/src/wardley/render.spec.ts packages/core/src/config/resolveConfig.spec.ts packages/core/src/limits/limits.spec.ts packages/core/src/svg/gradient.spec.ts packages/core/src/svg/image-url.spec.ts packages/core/src/svg/security.spec.ts packages/core/src/svg/url.spec.ts packages/core/src/svg/user-gradient.spec.ts packages/diagram-er/src/v12-specs/erDiagram.spec.ts packages/diagram-er/src/v12-specs/subgraph.spec.ts packages/diagram-flowchart/src/v12-specs/flow-arrows.spec.ts packages/diagram-flowchart/src/v12-specs/flow-comments.spec.ts packages/diagram-flowchart/src/v12-specs/flow-direction.spec.ts packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts packages/diagram-flowchart/src/v12-specs/flow-interactions.spec.ts packages/diagram-flowchart/src/v12-specs/flow-lines.spec.ts packages/diagram-flowchart/src/v12-specs/flow-md-string.spec.ts packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts packages/diagram-flowchart/src/v12-specs/flow-singlenode.spec.ts packages/diagram-flowchart/src/v12-specs/flow-style.spec.ts packages/diagram-flowchart/src/v12-specs/flow-text.spec.ts packages/diagram-flowchart/src/v12-specs/flow-vertice-chaining.spec.ts packages/diagram-flowchart/src/v12-specs/flow.spec.ts packages/diagram-flowchart/src/v12-specs/subgraph.spec.ts packages/diagram-kanban/src/parser/parse.spec.ts packages/diagram-kanban/src/render/render.spec.ts packages/diagram-mindmap/src/parser/parse.spec.ts packages/diagram-pie/src/v12-specs/pie.spec.ts packages/diagram-state/src/v12-specs/state-parser.spec.ts packages/diagram-state/src/v12-specs/state-style.spec.ts packages/language-service/src/front-matter.spec.ts packages/mermaid/src/api.spec.ts packages/mermaid/src/config-fragments.spec.ts packages/mermaid/src/extensions.spec.ts packages/mermaid/src/icon-contract.spec.ts packages/mermaid/src/inline-boxes.spec.ts packages/mermaid/src/limits.spec.ts packages/mermaid/src/mindmap.spec.ts packages/mermaid/src/render-safety.spec.ts packages/mermaid/src/sankey.spec.ts packages/plugin-hand-drawn/src/corpus.spec.ts packages/plugin-icons/src/corpus.spec.ts packages/plugin-icons/src/security.spec.ts packages/plugin-interactions/src/class.spec.ts packages/plugin-interactions/src/gantt.spec.ts packages/plugin-interactions/src/index.spec.ts packages/plugin-interactions/src/menus.spec.ts packages/plugin-math/src/engine.spec.ts packages/plugin-math/src/index.spec.ts tools/gen-config/src/migration.spec.ts",
+        "argv": [
+          "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "packages/conformance/src/cynefin/render.spec.ts",
+          "packages/conformance/src/feature-plugins.spec.ts",
+          "packages/conformance/src/flowchart-behaviour.spec.ts",
+          "packages/conformance/src/flowchart-render.spec.ts",
+          "packages/conformance/src/gantt/render-behaviour.spec.ts",
+          "packages/conformance/src/gantt/schedule-stress.spec.ts",
+          "packages/conformance/src/journey/render.spec.ts",
+          "packages/conformance/src/mindmap/stress.spec.ts",
+          "packages/conformance/src/packet/render.spec.ts",
+          "packages/conformance/src/pie/render.spec.ts",
+          "packages/conformance/src/quadrant/render.spec.ts",
+          "packages/conformance/src/radar/render.spec.ts",
+          "packages/conformance/src/sequence/render.spec.ts",
+          "packages/conformance/src/state/render.spec.ts",
+          "packages/conformance/src/stress.spec.ts",
+          "packages/conformance/src/treemap/render.spec.ts",
+          "packages/conformance/src/wardley/render.spec.ts",
+          "packages/core/src/config/resolveConfig.spec.ts",
+          "packages/core/src/limits/limits.spec.ts",
+          "packages/core/src/svg/gradient.spec.ts",
+          "packages/core/src/svg/image-url.spec.ts",
+          "packages/core/src/svg/security.spec.ts",
+          "packages/core/src/svg/url.spec.ts",
+          "packages/core/src/svg/user-gradient.spec.ts",
+          "packages/diagram-er/src/v12-specs/erDiagram.spec.ts",
+          "packages/diagram-er/src/v12-specs/subgraph.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-arrows.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-comments.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-direction.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-interactions.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-lines.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-md-string.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-singlenode.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-style.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-text.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-vertice-chaining.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/subgraph.spec.ts",
+          "packages/diagram-kanban/src/parser/parse.spec.ts",
+          "packages/diagram-kanban/src/render/render.spec.ts",
+          "packages/diagram-mindmap/src/parser/parse.spec.ts",
+          "packages/diagram-pie/src/v12-specs/pie.spec.ts",
+          "packages/diagram-state/src/v12-specs/state-parser.spec.ts",
+          "packages/diagram-state/src/v12-specs/state-style.spec.ts",
+          "packages/language-service/src/front-matter.spec.ts",
+          "packages/mermaid/src/api.spec.ts",
+          "packages/mermaid/src/config-fragments.spec.ts",
+          "packages/mermaid/src/extensions.spec.ts",
+          "packages/mermaid/src/icon-contract.spec.ts",
+          "packages/mermaid/src/inline-boxes.spec.ts",
+          "packages/mermaid/src/limits.spec.ts",
+          "packages/mermaid/src/mindmap.spec.ts",
+          "packages/mermaid/src/render-safety.spec.ts",
+          "packages/mermaid/src/sankey.spec.ts",
+          "packages/plugin-hand-drawn/src/corpus.spec.ts",
+          "packages/plugin-icons/src/corpus.spec.ts",
+          "packages/plugin-icons/src/security.spec.ts",
+          "packages/plugin-interactions/src/class.spec.ts",
+          "packages/plugin-interactions/src/gantt.spec.ts",
+          "packages/plugin-interactions/src/index.spec.ts",
+          "packages/plugin-interactions/src/menus.spec.ts",
+          "packages/plugin-math/src/engine.spec.ts",
+          "packages/plugin-math/src/index.spec.ts",
+          "tools/gen-config/src/migration.spec.ts"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "status": "passed",
+        "startedAt": "2026-11-11T07:39:01.664Z",
+        "finishedAt": "2026-11-11T07:39:18.828Z",
+        "log": "/Users/knsv/repos/mermaid-v13-perf-round1-4c/.tmp/perf-validation-round1/security.log",
+        "logSha256": "1b4617821f97253e93c8cc8e8b9c62988c8b8771c62d4debdc8d8e754e55f189"
+      },
+      {
+        "name": "size",
+        "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node --import tsx --conditions=mermaid-source tools/perf/size-check.mjs",
+        "argv": [
+          "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+          "--import",
+          "tsx",
+          "--conditions=mermaid-source",
+          "tools/perf/size-check.mjs"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "status": "passed",
+        "startedAt": "2026-11-11T07:39:18.828Z",
+        "finishedAt": "2026-11-11T07:39:20.991Z",
+        "log": "/Users/knsv/repos/mermaid-v13-perf-round1-4c/.tmp/perf-validation-round1/size.log",
+        "logSha256": "c0cfcde3bb84e11dba26399816c4f9bbad42bddfcc201cbe06fef8a7a3aa2007"
+      },
+      {
+        "name": "host",
+        "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node tools/perf/host-acceptance.mjs --out /Users/knsv/repos/mermaid-v13-perf-round1-4c/.tmp/perf-validation-round1/host",
+        "argv": [
+          "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+          "tools/perf/host-acceptance.mjs",
+          "--out",
+          "/Users/knsv/repos/mermaid-v13-perf-round1-4c/.tmp/perf-validation-round1/host"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "status": "passed",
+        "startedAt": "2026-11-11T07:39:20.991Z",
+        "finishedAt": "2026-11-11T07:39:31.358Z",
+        "log": "/Users/knsv/repos/mermaid-v13-perf-round1-4c/.tmp/perf-validation-round1/host.log",
+        "logSha256": "d480796160a289e33b609548b89fb7d68b4fbb43cfb5a21716bce35aa468e101"
+      },
+      {
+        "name": "browser",
+        "argv": [
+          "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+          "tools/perf/browser-acceptance.mjs",
+          "--out",
+          "/Users/knsv/repos/mermaid-v13-perf-round1-4c/.tmp/perf-validation-round1/browser"
+        ],
+        "status": "unverified",
+        "reason": "Deferred browser validation; not required for Node measurement readiness"
+      },
+      {
+        "name": "e2e",
+        "argv": [
+          "pnpm",
+          "e2e"
+        ],
+        "status": "unverified",
+        "reason": "Deferred browser validation; not required for Node measurement readiness"
+      }
+    ],
+    "evidence": [
+      {
+        "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4c/.tmp/perf-round1-batch4-20261111/4c/header.json",
+        "sha256": "b5ceb5478ae7f43ea81f8a94acaea2bea5d0f12f5243f31510536746c47fcdbf"
+      },
+      {
+        "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4c/.tmp/perf-round1-batch4-20261111/4c/queue.json",
+        "sha256": "fdd12ee339b00d1dbd5725ac7f4d00bd81a8d5691704d88e4c4c06df139456af"
+      },
+      {
+        "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4c/.tmp/perf-round1-batch4-20261111/4c/completion.json",
+        "sha256": "5bf0d17e8e7bfc995203835d6fe1bfa4290ac2d0ab84d709b9162be8adc3e66c"
+      },
+      {
+        "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4c/.tmp/perf-round1-batch4-20261111/4c/raw/gates/result.json",
+        "sha256": "a1faf0e0cb4ee03921316b0e4ccd026f23d6527a6ccf8e91732c9d502a5c4dd1"
+      },
+      {
+        "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4c/.tmp/perf-round1-batch4-20261111/4c/raw/hop4/result.json",
+        "sha256": "f909c1346c939b854f11b134d52d0ff5c4d3e7a212f1b8fc841218a997007392"
+      }
+    ]
+  }
+}
