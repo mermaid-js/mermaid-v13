@@ -73,7 +73,7 @@ import {
   type Snapshot,
 } from './config-snapshot.ts';
 import { createDomAdapter } from './dom.ts';
-import { blockConfig, blockPass, lazyEmbed, type DrawBlocks } from './embeds.ts';
+import { blockConfig, blockPass, lazyEmbed, mounter, type DrawBlocks } from './embeds.ts';
 import { toMermaidError, toWarning } from './errors.ts';
 import { iconPackRegistry, packsUnsupported, type IconLoader } from './icon-packs.ts';
 import { selectMeasurer } from './measurer.ts';
@@ -385,12 +385,15 @@ export function createMermaid(
     resources: (a) => loadFor(a, false),
     draw: (text, s, options, a, id, inner) => {
       const { now, placeholders } = options ?? {};
-      const { drawn, ctx, warnings } = drawSvg(text, s, { id, now, placeholders }, a, inner);
+      const { drawn, ctx, warnings, mount } = drawSvg(text, s, { id, now, placeholders }, a, inner);
+      const own = warnings.slice(skipped.length);
       return {
         ...drawn,
         securityLevel: ctx.securityLevel,
         linkSchemes: ctx.linkSchemes,
-        warnings: warnings.slice(skipped.length),
+        warnings: own,
+        // A block binds in its own root, so its ids never meet the host's or another block's.
+        bind: mount({ ...drawn, diagramType: a.prepared.diagramType, warnings: own }),
       };
     },
   });
@@ -504,7 +507,10 @@ export function createMermaid(
     };
   }
 
-  /** The render context of one draw, and the warnings sink it writes to. */
+  /**
+   * The render context of one draw, the warnings sink it writes to, and the binders of the
+   * blocks it drew (#669).
+   */
   function contextFor(
     text: string,
     s: Snapshot,
@@ -512,7 +518,7 @@ export function createMermaid(
     analysis: Analysis,
     { units, measurer, width, text: textOnly }: Units,
     drawBlocks?: DrawBlocks
-  ): { ctx: RenderContext; warnings: Warning[] } {
+  ) {
     const { prepared, plugin } = analysis;
     const { config } = prepared;
     // A usage error, as a bad `limits` option is: `+now` of a bad Date or a string is NaN.
@@ -589,7 +595,7 @@ export function createMermaid(
     const inline = inlineSpans(hooks.inline(), warn, textOutput ? 'ascii' : 'svg', packs);
     const icon = textOutput ? undefined : hooks.icon(inline, packs);
     // The blocks (ADR-15) are drawn at the first lookup, with this draw's id prefix.
-    const embed = lazyEmbed(drawBlocks, () => ctx.idPrefix, warn);
+    const { embed, binds } = lazyEmbed(drawBlocks, () => ctx.idPrefix, warn);
     const ctx: RenderContext = {
       config,
       measurer:
@@ -637,7 +643,7 @@ export function createMermaid(
       // Spread into the literal, not over `ctx`: a spread would run the lazy idPrefix getter.
       ...textOnly,
     };
-    return { ctx, warnings };
+    return { ctx, warnings, binds };
   }
 
   /** Text output (DESIGN §6.3): cell layout, the ascii hook, columns and rows (D80, D84). */
@@ -723,10 +729,11 @@ export function createMermaid(
     if (!('prepared' in analysis)) return analysis;
     if (format === 'ascii') return drawAscii(text, s, options, analysis);
     const blockDraw = blocks.draw(text, 0, analysis, s, options);
-    const { drawn, warnings, run } = drawSvg(text, s, options, analysis, blockDraw);
+    const { drawn, warnings, mount } = drawSvg(text, s, options, analysis, blockDraw);
     const result: RenderResult = { ...drawn, diagramType: analysis.prepared.diagramType, warnings };
     // The DOM adapter's afterMount entry point (DESIGN §12.2, §12.3); `run`/`mount` call it.
-    if (run?.mounts) result.bindFunctions = (element) => run.afterMount(element, result);
+    const bind = mount(result, true);
+    if (bind) result.bindFunctions = bind;
     return result;
   }
 
@@ -739,14 +746,15 @@ export function createMermaid(
     blockDraw: DrawBlocks | undefined
   ) {
     const units = { units: pxProfile, width: options?.availableWidth };
-    const { ctx, warnings } = contextFor(text, s, options, a, units, blockDraw);
+    const { ctx, warnings, binds } = contextFor(text, s, options, a, units, blockDraw);
     const renderHooks = hooksFor(a);
     const run = renderHooks.size === 0 ? undefined : renderHooks.start(ctx, a.plugin.id);
     const { parse } = a.prepared;
     // D537: the line-hop step, when its chunk is loaded and decides that this render hops.
     const edges = registry.hops?.(a);
     const drawn = drawDiagram(a.plugin, parse.model, ctx, run && { run, ast: parse.ast }, edges);
-    return { drawn, ctx, warnings, run };
+    // Binds the run's interactions, then each block's in its own nested root (#669).
+    return { drawn, ctx, warnings, mount: mounter<RenderResult>(run, binds) };
   }
 
   /**

@@ -281,6 +281,63 @@ describe('a block as a node of the host', () => {
   });
 });
 
+describe('links and tooltips inside a block (#669)', () => {
+  /** A host whose block holds a flowchart with `click` lines for its node `X`. */
+  const linked = (...clicks: string[]) =>
+    [
+      'flowchart LR',
+      '  A --> blk',
+      '  mermaid blk["Inner"] {',
+      '    flowchart LR',
+      '      X --> Y',
+      ...clicks.map((c) => `      ${c}`),
+      '  }',
+    ].join('\n');
+
+  /** The markup of the nested root (the block's own `<svg>`). */
+  function nested(svg: string): string {
+    const start = svg.indexOf('<svg', 1);
+    const end = svg.indexOf('</svg>', start);
+    return svg.slice(start, end);
+  }
+
+  it('draws a link and a tooltip on a node inside the block, as a stand-alone diagram does', async () => {
+    const text = linked('click X href "https://example.com/docs" "Read the docs" _blank');
+    const { svg } = await createMermaid().render('host', text);
+    const inner = nested(svg);
+    expect(inner).toMatch(/<a [^>]*href="https:\/\/example\.com\/docs"[^>]*target="_blank"/);
+    expect(inner).toMatch(/<g class="node[^"]*" data-id="X"[^>]*><title>Read the docs<\/title>/);
+    assertInert(svg);
+  });
+
+  it("drops a block's javascript: link under the host's strict security level", async () => {
+    const text = linked('click X href "javascript:alert(1)" "tip"');
+    const m = createMermaid();
+    m.initialize({ securityLevel: 'strict' });
+    const { svg } = await m.render('host', text);
+    expect(svg).not.toContain('javascript:');
+    expect(nested(svg)).toContain('<title>tip</title>');
+  });
+
+  it("does not let the block's front matter loosen the host's security level", async () => {
+    const text = [
+      'flowchart LR',
+      '  mermaid blk {',
+      '    ---',
+      '    config:',
+      '      securityLevel: loose',
+      '    ---',
+      '    flowchart LR',
+      '      X --> Y',
+      '      click X href "javascript:alert(1)"',
+      '  }',
+    ].join('\n');
+    const { svg, warnings } = await createMermaid().render('host', text);
+    expect(svg).not.toContain('javascript:');
+    expect(warnings.map((w) => w.code)).toContain('CONFIG_SECURE_KEY');
+  });
+});
+
 describe('the flowchart block fixtures (e2e/diagrams/flowchart/baseline/embedded)', () => {
   const dir = new URL('../../../e2e/diagrams/flowchart/baseline/embedded/', import.meta.url);
   const files = readdirSync(dir).filter((f) => f.endsWith('.mmd'));
