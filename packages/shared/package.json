@@ -21,6 +21,11 @@
       "types": "./dist/parser/state.d.ts",
       "default": "./dist/parser/state.js"
     },
+    "./parser/tree": {
+      "mermaid-source": "./src/parser/tree.ts",
+      "types": "./dist/parser/tree.d.ts",
+      "default": "./dist/parser/tree.js"
+    },
     "./parser/table": {
       "mermaid-source": "./src/parser/table.ts",
       "types": "./dist/parser/table.d.ts",

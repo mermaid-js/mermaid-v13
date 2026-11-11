@@ -80,6 +80,7 @@ describe('workspace layout (DESIGN §2)', () => {
         './parser/rule',
         './parser/state',
         './parser/table',
+        './parser/tree',
         './parser/v12-text',
         './svg/edges',
       ].sort()

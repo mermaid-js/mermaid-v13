@@ -6,6 +6,7 @@ Code that several Mermaid v13 diagram packages share, kept out of `@mermaid-js/c
 | --- | --- |
 | `/parser/rule` | The lexer and parser base for diagrams ported from a v12 langium grammar |
 | `/parser/state` | The lexer base for diagrams ported from a v12 jison lexer |
+| `/parser/tree` | The lexer and parser base for the indentation-tree diagrams (mindmap, kanban) |
 | `/parser/table` | The rule-table lexer for diagrams that run a v12 jison lexer's rules as they are |
 | `/parser/v12-text` | The text a v12 jison lexer saw, with each character's source range |
 | `/parser/drop` | Offset helpers both lexer families use |
