@@ -8,6 +8,22 @@
     "since": "2026-11-11"
   },
   {
+    "id": "e2e/diagrams/flowchart/baseline/embedded/folded-in-subgraph.mmd",
+    "inputHash": "sha256:96e9363420bb27e1",
+    "kind": "accept",
+    "reason": "v12 rejects `mermaid <id> {` and `@{ view: collapsed }` on it; v13 parses a folded embedded diagram block (ADR-15, proof of concept).",
+    "owner": "#670",
+    "since": "2026-11-11"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/embedded/folded.mmd",
+    "inputHash": "sha256:cda70fd3bbd671e8",
+    "kind": "accept",
+    "reason": "v12 rejects `mermaid <id> {` and `@{ view: collapsed }` on it; v13 parses a folded embedded diagram block (ADR-15, proof of concept).",
+    "owner": "#670",
+    "since": "2026-11-11"
+  },
+  {
     "id": "e2e/diagrams/flowchart/baseline/embedded/in-subgraph.mmd",
     "inputHash": "sha256:3ce64f0f4d7f4d1d",
     "kind": "accept",

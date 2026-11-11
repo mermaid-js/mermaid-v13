@@ -77,7 +77,7 @@ flowchart or a state diagram, up to four levels deep.
 ## Folding
 
 A block can be shown folded, as a small box with its title and type, using the same statement
-that folds a subgraph:
+that folds a subgraph. In a state diagram, `@{ view: collapsed }` is accepted on a block id only:
 
 ```
 flowchart LR

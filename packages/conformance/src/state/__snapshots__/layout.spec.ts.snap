@@ -7,6 +7,8 @@ exports[`layered over parser-produced state graphs > lays out every corpus graph
   "e2e/diagrams/state-diagram-v2/baseline/composites/edges-to-composites.mmd": 0,
   "e2e/diagrams/state-diagram-v2/baseline/composites/nested.mmd": 0,
   "e2e/diagrams/state-diagram-v2/baseline/embedded/flowchart-nested.mmd": 0,
+  "e2e/diagrams/state-diagram-v2/baseline/embedded/folded-in-composite.mmd": 0,
+  "e2e/diagrams/state-diagram-v2/baseline/embedded/folded.mmd": 0,
   "e2e/diagrams/state-diagram-v2/baseline/embedded/in-composite.mmd": 0,
   "e2e/diagrams/state-diagram-v2/baseline/embedded/sequence-titled.mmd": 0,
   "e2e/diagrams/state-diagram-v2/baseline/handdrawn/default.mmd": 0,

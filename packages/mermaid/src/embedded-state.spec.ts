@@ -261,11 +261,13 @@ describe('the state block fixtures (e2e/diagrams/state-diagram-v2/baseline/embed
 
   it('has fixtures', () => expect(files.length).toBeGreaterThanOrEqual(3));
 
-  it.each(files)('%s renders every block as a nested <svg>', async (file) => {
+  it.each(files)('%s renders every open block as a nested <svg>', async (file) => {
     const text = readFileSync(new URL(file, dir), 'utf8');
-    const blocks = text.match(/^\s*mermaid \S+.*\{\s*$/gm)?.length ?? 0;
+    const opened = text.match(/^\s*mermaid \S+.*\{\s*$/gm)?.length ?? 0;
+    // A folded block (#670) draws no inner diagram.
+    const blocks = opened - (text.match(/@\{ view: collapsed \}/g)?.length ?? 0);
     const { svg } = await createMermaid().render('fixture', text);
-    expect(blocks).toBeGreaterThan(0);
+    expect(opened).toBeGreaterThan(0);
     expect(roots(svg)).toHaveLength(1 + blocks);
     assertInert(svg);
   });

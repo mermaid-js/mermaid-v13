@@ -121,9 +121,12 @@ the same allow-list as any other output.
 The state parser gains `@{ … }`, accepting only `view: collapsed` and only on block ids (other
 keys and targets are errors; folding composite states is a later change). A folded block is
 captured by the lexer and its type detected from the first line; it is never parsed, laid out,
-rendered or loaded, and its type need not be installed. It is drawn as a dedicated folded shape
-(a stacked-sheet mark, the title, and the type, for example *Login flow · sequence*) with the
-same border and background. Errors inside a folded body are not reported at render time; the
+rendered or loaded, and its type need not be installed. It is drawn as a dedicated folded shape,
+the same in every host and for every type (#665): the border with four corner brackets, the
+title, a divider, then a generic diagram icon and the type in small capitals (for example
+*Login flow* over *SEQUENCE*), with the same transparent background. `mermaid` hands the host
+the detected type by block id (`RenderContext.foldedType`); the shape lives in
+`@mermaid-js/core/svg/folded`, outside the core bundle. Errors inside a folded body are not reported at render time; the
 editor still reports them.
 
 **Text output.** A block whose type has text output is drawn inside a frame. A block whose type

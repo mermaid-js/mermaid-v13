@@ -387,7 +387,14 @@ function folded(
   const label = m.label(s.title || s.id, style, Infinity);
   const type = m.foldedType?.(s.id) ?? '';
   const fold = { type, label: m.typeLabel(type) };
-  const { width: w, height: h } = foldedSize(label, fold.label, type.length);
+  // In cells: the title rows, a divider and the type row, padded in a border (a text-form box).
+  const pad = m.units.builder.nodePad;
+  const { width: w, height: h } = m.cells
+    ? {
+        width: Math.max(label.width, fold.label.width) + 2 * (pad.x + 1),
+        height: label.lines.length + 2 + 2 * (pad.y + 1),
+      }
+    : foldedSize(label, fold.label, type.length);
   return { ...base, shape: 'embed', label, embed: null, fold, w, h };
 }
 

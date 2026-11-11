@@ -1,0 +1,14 @@
+---
+description: a folded block inside a subgraph, styled by a class, with an invalid body that is never parsed
+---
+flowchart TD
+  subgraph Backend
+    mermaid flow["Checkout flow"] {
+      sequenceDiagram
+        ->> not a message
+    }
+    flow@{ view: collapsed }
+  end
+  Client --> flow
+  classDef embedded stroke:#888,stroke-dasharray:4
+  class flow embedded

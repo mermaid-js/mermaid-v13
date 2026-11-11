@@ -1,0 +1,29 @@
+---
+description: folded blocks of three types, one titled, one untitled and one with an unknown type line, beside an open block
+---
+flowchart LR
+  Start --> login
+  mermaid login["Login flow"] {
+    sequenceDiagram
+      User->>Server: credentials
+      Server-->>User: token
+  }
+  login@{ view: collapsed }
+  login --> model
+  model@{ view: collapsed }
+  mermaid model {
+    classDiagram
+      class User
+  }
+  model --> ideas
+  mermaid ideas["Ideas"] {
+    mindmap
+      root
+        leaf
+  }
+  ideas --> later
+  mermaid later["Later"] {
+    notADiagramYet
+      anything at all
+  }
+  later@{ view: collapsed }
