@@ -500,7 +500,7 @@ export class StateBuilder {
   private blockMention(rec: GraphNode, item: StateItem): void {
     const { id } = rec;
     if (item.embed && !rec.embed) {
-      if (rec.content) this.duplicate(id, item.range);
+      if (rec.content) this.duplicate(id, item.range, false);
       else {
         rec.embed = item.embed;
         rec.ast = item.ast;
@@ -508,16 +508,18 @@ export class StateBuilder {
       }
       return;
     }
-    if (item.embed) this.duplicate(id, item.range);
+    if (item.embed) this.duplicate(id, item.range, true);
     else if (item.doc || (item.description && item.description !== '')) {
-      this.duplicate(id, item.range);
+      this.duplicate(id, item.range, false);
     }
   }
 
-  private duplicate(id: string, range: Range): void {
+  private duplicate(id: string, range: Range, block: boolean): void {
     this.ctx.error(
       'EMBED_DUPLICATE_ID',
-      `The id \`${id}\` names an embedded diagram block and another state with content: give one of them another id.`,
+      block
+        ? `Duplicate block id \`${id}\`: another \`mermaid ${id}\` block has it. Give each block its own id.`
+        : `Duplicate id \`${id}\`: it names the \`mermaid ${id}\` block, so it cannot also be a composite state or a state with a description. Rename the state, or drop its description and body to refer to the block.`,
       range
     );
   }
