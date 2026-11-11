@@ -1,0 +1,22 @@
+---
+description: blocks nested four deep, the limit, each level a titled flowchart block
+---
+flowchart LR
+  start([Start]) --> l1
+  mermaid l1["Level 1"] {
+    flowchart LR
+      a1 --> l2
+      mermaid l2["Level 2"] {
+        flowchart LR
+          a2 --> l3
+          mermaid l3["Level 3"] {
+            flowchart LR
+              a3 --> l4
+              mermaid l4["Level 4"] {
+                pie title Deepest
+                  "yes" : 3
+                  "no" : 1
+              }
+          }
+      }
+  }

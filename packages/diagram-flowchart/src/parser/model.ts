@@ -265,6 +265,10 @@ export class FlowBuilder {
   accDescr = '';
   /** Embedded diagram blocks (ADR-15) for `ParseResult.embeds`; each is a vertex too. */
   readonly embeds: EmbeddedBlock[] = [];
+  /** Each block id's range, the first per id: a block id names the block only (ADR-15). */
+  private readonly blockAt = new Map<string, Range>();
+  /** Where a statement other than a block gave a node a shape or label, the first per id. */
+  private readonly shapedAt = new Map<string, Range>();
   private readonly subgraphById = new Map<string, FlowModelSubgraph>();
   private readonly edgeById = new Map<string, FlowModelEdge>();
   /** Edges so far per start, then per end. */
@@ -336,6 +340,8 @@ export class FlowBuilder {
       vertex = { id, ast, text: id, labelType: 'text', styles: [], classes: [], props: own };
       this.vertices.set(id, vertex);
     }
+    if ((label !== undefined || type !== undefined) && type !== 'embed' && !this.shapedAt.has(id))
+      this.shapedAt.set(id, at);
     if (label !== undefined) {
       vertex.labelType = label.type;
       vertex.text = unquote(label.text.trim());
@@ -668,7 +674,36 @@ export class FlowBuilder {
   }
 
   /** Reports what needs the whole document: STYLE_UNKNOWN_NODE for ids that are not subgraphs. */
+  /** Embedded block `block`, its id at `at`; a second block with its id is an error. */
+  addEmbed(block: EmbeddedBlock, at: Range): void {
+    if (this.blockAt.has(block.id)) {
+      this.options.error(
+        'EMBED_DUPLICATE_ID',
+        `Duplicate block id \`${block.id}\`: another \`mermaid ${block.id}\` block has it. Give each block its own id.`,
+        at
+      );
+      return;
+    }
+    this.blockAt.set(block.id, at);
+    this.embeds.push(block);
+  }
+
   finish(): void {
+    for (const [id, at] of this.blockAt) {
+      if (this.subgraphById.has(id))
+        this.options.error(
+          'EMBED_DUPLICATE_ID',
+          `Duplicate id \`${id}\`: a subgraph has the id of the \`mermaid ${id}\` block. Give the block its own id.`,
+          at
+        );
+      const shaped = this.shapedAt.get(id);
+      if (shaped)
+        this.options.error(
+          'EMBED_DUPLICATE_ID',
+          `Duplicate id \`${id}\`: it names the \`mermaid ${id}\` block, so it cannot also be a node with its own shape or label. Rename the node, or drop its shape and label to connect to the block.`,
+          shaped
+        );
+    }
     for (const { id, at } of this.unknownStyles) {
       if (this.subgraphById.has(id)) continue;
       this.options.warn(

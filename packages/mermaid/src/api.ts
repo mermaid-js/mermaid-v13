@@ -75,7 +75,8 @@ import {
 } from './config-snapshot.ts';
 import { AnalysisCache } from './analysis-cache.ts';
 import { createDomAdapter } from './dom.ts';
-import { blockConfig, blockPass, lazyEmbed, type DrawBlocks } from './embeds.ts';
+import { blockConfig, blockLayers, blockPass, lazyEmbed, outsideBlocks } from './embeds.ts';
+import type { DrawBlocks } from './embeds.ts';
 import { toMermaidError, toWarning } from './errors.ts';
 import { iconPackRegistry, packsUnsupported, type IconLoader } from './icon-packs.ts';
 import { selectMeasurer } from './measurer.ts';
@@ -282,12 +283,14 @@ export function createMermaid(
     const warn = (w: Warning): void => void warnings.push(toWarning(w, registry.fragments()));
     for (const d of pre.diagnostics) if (d.severity === 'warning') warn(d);
     const section = sectionOf(detected, plugin);
-    const front = pre.frontMatter?.config;
-    const directives = directiveConfig(pre, section);
+    let front = pre.frontMatter?.config;
+    let directives = directiveConfig(pre, section);
     const hit = siteConfigs.get(snap, plugin, detected, section, registry.fragments());
     for (const w of hit.warnings) warn(w);
+    // An embedded diagram (ADR-15) sets only its own options, with one warning for the rest.
+    if (host) ({ front, directives } = blockLayers(front, directives, hit.site.secure, warn));
     let config: ResolvedConfig = resolveText(hit.site, front, directives, { warn });
-    // An embedded diagram (ADR-15) takes its host's theme and font, at its natural size.
+    // An embedded diagram takes its host's theme and font, at its natural size.
     if (host) config = blockConfig(config, host, [section ?? []].flat());
     const t = stageStart();
     const claims = hooks.claims();
@@ -298,6 +301,9 @@ export function createMermaid(
         : { config, preprocessed: pre, limits: snap.limits }
     );
     stageEnd('parse', t);
+    // A directive inside a block belongs to the block (ADR-15): parse again without it.
+    const outside = outsideBlocks(pre, parse);
+    if (outside !== pre) return analyse(text, snap, plugin, detected, outside, host);
     const error = errorFromDiagnostics(text, [...pre.diagnostics, ...parse.diagnostics]);
     if (error) throw error;
     for (const d of parse.diagnostics) if (d.severity === 'warning') warn(d);
@@ -351,10 +357,10 @@ export function createMermaid(
   const blocks = blockPass<Analysis, Detection, Snapshot, AnyPlugin, RenderOptions | undefined>({
     detect,
     idOf: (f) => f.detected.id,
-    analyse: (text, s, { detected, pre }, plugin, host) => {
-      if (!plugin) throw unsupported(detected);
-      return analyse(text, s, plugin, detected, pre, host.prepared.config);
-    },
+    typeOf: (f) => f.detected.type,
+    maxEdges: (s) => s.limits.maxEdges,
+    analyse: (text, s, { detected, pre }, plugin, host) =>
+      analyse(text, s, plugin, detected, pre, host.prepared.config),
     load: (id) => registry.load(id),
     loaded: (id) => registry.plugin(id),
     resources: async (a, format) => {
@@ -479,14 +485,13 @@ export function createMermaid(
     const hit = cache.get(text, s);
     if (hit) return hit;
     const f = detectSupported(text, s, ascii);
-    const { detected } = f;
-    const plugin = registry.plugin(detected.id);
+    const plugin = registry.plugin(f.detected.id);
     if (plugin) return analysisOf(text, s, f, plugin);
-    const missing = new NotLoadedError([{ kind: 'diagram', name: detected.id }]);
+    const missing = new NotLoadedError([{ kind: 'diagram', name: f.detected.id }]);
     if (ascii || !options?.placeholders) throw missing;
     return {
       svg: renderErrorSvg(missing, { version: VERSION }),
-      diagramType: detected.type,
+      diagramType: f.detected.type,
       width: 0,
       height: 0,
       warnings: [...skipped, { code: 'PLACEHOLDER', message: missing.message }],
@@ -811,7 +816,7 @@ export function createMermaid(
       const front = pre.frontMatter?.config;
       for (const c of [
         ...(front ? [front] : []),
-        ...directiveConfig(pre, sectionOf(detected, plugin)),
+        ...directiveConfig(outsideBlocks(pre, a.prepared.parse), sectionOf(detected, plugin)),
       ])
         mergeInto(config, c as Plain);
       for (const key of INTEGRATOR_ONLY_KEYS) delete config[key];
