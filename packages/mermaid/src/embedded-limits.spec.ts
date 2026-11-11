@@ -228,3 +228,62 @@ describe('block ids', () => {
     expect(roots((await createMermaid().render('host', text)).svg)).toHaveLength(4);
   });
 });
+
+describe('block config', () => {
+  /** A host holding one sequence block whose body starts with `head`. */
+  const withHead = (...head: string[]) =>
+    [
+      'flowchart LR',
+      '  A --> talk',
+      '  mermaid talk {',
+      ...head.map((l) => `    ${l}`),
+      '    sequenceDiagram',
+      '      Alice->>Bob: hi',
+      '  }',
+    ].join('\n');
+  const innerHeight = (svg: string) => Number(attr(roots(svg)[1]!, 'height'));
+
+  it('takes diagram-specific keys from the block front matter', async () => {
+    const plain = await createMermaid().render('host', withHead());
+    const tuned = await createMermaid().render(
+      'host',
+      withHead('---', 'config:', '  sequence:', '    mirrorActors: false', '---')
+    );
+    expect(innerHeight(tuned.svg)).toBeLessThan(innerHeight(plain.svg));
+    expect(tuned.warnings).toEqual(plain.warnings);
+  });
+
+  it('applies an init directive in a block to the block, not to the host', async () => {
+    const plain = await createMermaid().render('host', withHead());
+    const tuned = await createMermaid().render(
+      'host',
+      withHead(
+        '%%{init: {"sequence": {"mirrorActors": false}, "flowchart": {"useMaxWidth": false}}}%%'
+      )
+    );
+    expect(innerHeight(tuned.svg)).toBeLessThan(innerHeight(plain.svg));
+    // The host keeps its own config: still drawn at 100% width.
+    expect(attr(roots(tuned.svg)[0]!, 'width')).toBe('100%');
+  });
+
+  it('ignores theme, look and secure keys in a block with one warning', async () => {
+    const plain = await createMermaid().render('host', withHead());
+    const text = withHead(
+      '---',
+      'config:',
+      '  theme: dark',
+      '  look: handDrawn',
+      '  securityLevel: loose',
+      '  themeVariables:',
+      '    primaryColor: "#ff0000"',
+      '---',
+      '%%{init: {"theme": "forest", "fontFamily": "serif"}}%%'
+    );
+    const { svg, warnings } = await createMermaid().render('host', text);
+    expect(svg).toBe(plain.svg);
+    const added = warnings.filter((w) => !plain.warnings.some((p) => p.code === w.code));
+    expect(added.map((w) => w.code)).toEqual(['EMBED_CONFIG_IGNORED']);
+    for (const key of ['theme', 'look', 'securityLevel', 'themeVariables', 'fontFamily'])
+      expect(added[0]!.message).toContain(`\`${key}\``);
+  });
+});

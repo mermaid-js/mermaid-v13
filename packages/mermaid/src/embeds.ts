@@ -14,7 +14,7 @@ import {
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { Diagnostic, EmbeddedBlock, ParseResult } from '@mermaid-js/core/parser-kit';
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { embeddedSvg, type SecurityLevel } from '@mermaid-js/core/svg';
 
 /** The blocks a parse lists, none when the type hosts none. */
@@ -85,6 +85,75 @@ export function noDiagramType(source: string, block: EmbeddedBlock, from: number
     range: { start: at, end: at + line.trim().length },
   };
   return errorFromDiagnostics(source, [d])!;
+}
+
+/**
+ * `pre` without the directives (and their diagnostics) inside the bodies of `parse`'s blocks:
+ * a `%%{init}%%` in a block configures the block, not its host. `pre` itself when none is.
+ */
+export function outsideBlocks(
+  pre: PreprocessResult,
+  parse: ParseResult<unknown>
+): PreprocessResult {
+  const bodies = embedsOf(parse);
+  if (bodies.length === 0) return pre;
+  const inside = ({ range }: { range: { start: number } }) =>
+    bodies.some((b) => range.start >= b.offset && range.start < b.offset + b.text.length);
+  if (!pre.directives.some(inside)) return pre;
+  return {
+    ...pre,
+    directives: pre.directives.filter((d) => !inside(d)),
+    diagnostics: pre.diagnostics.filter((d) => !inside(d)),
+  };
+}
+
+/** Config keys a block cannot set: the look of the whole picture comes from the host. */
+const HOST_KEYS: ReadonlySet<string> = new Set([
+  'theme',
+  'themeVariables',
+  'themeCSS',
+  'look',
+  'darkMode',
+  'fontFamily',
+  'fontSize',
+  'handDrawnSeed',
+]);
+
+/** `layer` without the keys a block cannot set, each one dropped added to `dropped`. */
+function withoutHostKeys<T extends object>(
+  layer: T,
+  secure: ReadonlySet<string>,
+  dropped: Set<string>
+): T {
+  const kept: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(layer)) {
+    if (HOST_KEYS.has(k) || secure.has(k)) dropped.add(k);
+    else kept[k] = v;
+  }
+  return kept as T;
+}
+
+/**
+ * A block's config layers (front matter, directives) without the keys only the host or the
+ * integrator sets (`secure`); one warning names those it dropped.
+ */
+export function blockLayers<T extends object>(
+  front: T | undefined,
+  directives: readonly T[],
+  secure: ReadonlySet<string>,
+  warn: (w: Warning) => void
+): { front: T | undefined; directives: T[] } {
+  const dropped = new Set<string>();
+  const out = {
+    front: front && withoutHostKeys(front, secure, dropped),
+    directives: directives.map((d) => withoutHostKeys(d, secure, dropped)),
+  };
+  if (dropped.size > 0)
+    warn({
+      code: 'EMBED_CONFIG_IGNORED',
+      message: `An embedded diagram cannot set ${[...dropped].map((k) => `\`${k}\``).join(', ')}: it takes its theme, look and font from its host, and security settings from the page. Ignored.`,
+    });
+  return out;
 }
 
 /** What a block takes from its host's resolved config: the look of the whole picture. */
