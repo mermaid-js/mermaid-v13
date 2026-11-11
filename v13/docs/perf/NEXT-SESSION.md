@@ -1,12 +1,13 @@
 # Next session: validate Node execution access, then headless round 0
 
-> Current execution checkpoint: round 0 is complete. Round 1’s first three batches
-> (2b, 1c, 5b; 1a, 3c, 4b; 3b, 4a, 5a) have been measured and rejected. See [START.md](START.md)
-> and the reports for [batch 1](runs/1/batch-1/REPORT.md), [batch 2](runs/1/batch-2/REPORT.md),
-> and [batch 3](runs/1/batch-3/REPORT.md). No runner is active; the measurement window is closed.
+> Current execution checkpoint: round 0 and four round-1 batches are complete.
+> Eleven optimization hypotheses were measured and rejected; diagnostic-only 4c is complete.
+> See [START.md](START.md) and the reports for [batch 1](runs/1/batch-1/REPORT.md),
+> [batch 2](runs/1/batch-2/REPORT.md), [batch 3](runs/1/batch-3/REPORT.md), and
+> [batch 4](runs/1/batch-4/REPORT.md). No runner is active; the measurement window is closed.
 > Preserve all frozen evidence. Do not rerun round 0 or redispatch rejected candidates.
-> Remaining hypotheses await the next batch selection. Browser/e2e validation remains pending.
-> The round-0 launch instructions below are retained for provenance.
+> The remaining hypotheses are 1b, 1d, 1e and 2a; 3a is withdrawn. No next batch is underway.
+> Browser/e2e validation remains pending. The round-0 launch instructions below are historical.
 
 
 **Completed on 2026-11-10:** formal headless Node round 0 is published at

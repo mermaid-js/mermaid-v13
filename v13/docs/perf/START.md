@@ -1,6 +1,6 @@
 # Start here: flowchart performance
 
-## Execution status, 2026-11-10
+## Execution status, 2026-11-11
 
 **Formal headless Node round 0 is complete and published.** All 15 jobs completed under P27
 in `.tmp/perf-round-0-p27`. See [the generated report](runs/0/REPORT.md),
@@ -34,9 +34,19 @@ cached-error diagnostic regression in 3b and a warning-callback palette-order re
 4a before fresh acceptance and formal measurement. See [BATCH-3.md](runs/1/BATCH-3.md) and
 [the review](runs/1/batch-3/REVIEW.md).
 
-Nine hypotheses have now been measured; none qualifies for integration. No runner is active,
-and the measurement window is closed. Remaining hypotheses await the next batch selection.
-Three completed batches are still part of round 1, not three completed empty rounds under P2.
+**Round 1’s fourth batch is complete.** [The report](runs/1/batch-4/REPORT.md) records
+2c and 2d as unfit: observed gains of 1.875% and 1.926% remain below 7.402%.
+Both named conditions pass; all 5,000 SVGs are byte-identical. Front-matter full-reader time
+fell 70.730% in the separate diagnostic, which does not establish an accepted render gain.
+Diagnostic-only 4c attributes 0.775% of instrumented render time to internal conversion,
+including 0.640% in the 27-record large bucket. These costs are not achievable speedup claims.
+See [BATCH-4.md](runs/1/BATCH-4.md) and [the review](runs/1/batch-4/REVIEW.md).
+
+Eleven optimization hypotheses have now been measured; none qualifies for integration.
+The separate 4c diagnostic is complete. No runner is active, and the measurement window
+is closed. Other work and Docker may resume. The remaining hypotheses are 1b, 1d, 1e
+and 2a; 3a remains withdrawn. No further implementation is underway.
+Four completed batches are still part of round 1, not four completed empty rounds under P2.
 Browser validation and e2e remain pending/unverified. Results are published in
 [PR #658](https://github.com/mermaid-js/mermaid-v13/pull/658), targeting the frozen
 preparation/base branch; no renderer optimization is included.
