@@ -59,6 +59,7 @@ export type {
   GlyphOptions,
   IconLookup,
   IconOptions,
+  EmbeddedDiagram,
   RenderContext,
   TextRenderContext,
   Warning,

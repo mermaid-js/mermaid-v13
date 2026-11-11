@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { flowchartTokens, FlowTokenKind, JISON_NAMES } from '@mermaid-js/diagram-flowchart';
-import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
+import { corpusFromDir, isEmbeddedFixture, REPO_ROOT } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
 import { decodeEntities } from './v12.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
@@ -77,7 +77,7 @@ function cutEntityError(tokens: JisonToken[]): JisonToken[] {
 async function corpus(): Promise<CorpusItem[]> {
   const items: CorpusItem[] = [];
   for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/flowchart'), 'e2e')) {
-    items.push(item);
+    if (!isEmbeddedFixture(item)) items.push(item);
   }
   const specs = JSON.parse(
     readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/flowchart-v12-specs.json'), 'utf8')

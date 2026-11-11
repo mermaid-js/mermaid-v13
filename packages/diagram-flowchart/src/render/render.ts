@@ -25,6 +25,7 @@ import {
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
 import { drawIcon, drawImage } from './assets.ts';
+import { drawEmbed } from './embed.ts';
 import { arrowheads, marker, markerTrim, routePath, type Arrowheads } from './edges.ts';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
 import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
@@ -449,6 +450,12 @@ function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView): void {
   w.close();
 }
 
+/** A node's own classes: a collapsed subgraph's card, a block (ADR-15), or a plain node. */
+function nodeClass(view: NodeView): string {
+  if (view.shape === 'collapsedGroup') return 'node cluster collapsed';
+  return view.embed === undefined ? 'node default' : 'node embed';
+}
+
 function drawNode(
   { w, layout, flow, ctx, paint, warn }: Scene,
   view: NodeView,
@@ -459,14 +466,16 @@ function drawNode(
   const v = view.vertex;
   const slot = paint.slotOf(view);
   const securityLevel = ctx.securityLevel ?? 'default';
+  const block = view.embed !== undefined;
   w.open('g', {
-    class:
-      (view.shape === 'collapsedGroup' ? 'node cluster collapsed' : 'node default') +
-      cls(view.classes),
+    class: nodeClass(view) + cls(view.classes),
     'data-id': view.id,
     'data-ast': view.ast,
     'data-color-id': slot?.id,
     transform: translate(box.x, box.y),
+    // A block is one image to assistive technology, named by its title (ADR-15).
+    role: block ? 'img' : undefined,
+    'aria-label': block ? v?.text || view.id : undefined,
   });
   if (tip) textElement(w, 'title', tip);
   const href =
@@ -494,7 +503,15 @@ function drawNode(
   if (paint.node.plainStroke && lineAttrs.stroke === paint.node.stroke && usesPlain(view.shape)) {
     lineAttrs = { ...lineAttrs, stroke: paint.node.plainStroke };
   }
-  if (v?.img) drawImage(w, view, v.img, securityLevel, warn);
+  if (view.embed !== undefined) {
+    // A border and a transparent background, which set a block apart from a subgraph.
+    drawEmbed(w, view, view.embed, {
+      fill: 'none',
+      stroke: paint.node.stroke,
+      'stroke-width': paint.node.strokeWidth,
+      ...view.style.shape,
+    });
+  } else if (v?.img) drawImage(w, view, v.img, securityLevel, warn);
   else if (v?.icon) {
     // D298: the glyph takes the author's stroke, else nodeBorder (`node.stroke`, the gradient
     // under neo).
@@ -502,7 +519,10 @@ function drawNode(
   } else drawShape(view.shape, w, view.w, view.h, shapeAttrs, lineAttrs, flow.pads);
   const fill = view.style.shape.fill;
   w.label(view.label, 0, view.dy, {
-    fill: fill && shapeFilled(view.shape) && !v?.img && !v?.icon ? ctx.theme.ink(fill) : undefined,
+    fill:
+      fill && shapeFilled(view.shape) && !v?.img && !v?.icon && !block
+        ? ctx.theme.ink(fill)
+        : undefined,
     ...view.style.text,
   });
   if (href) w.close();

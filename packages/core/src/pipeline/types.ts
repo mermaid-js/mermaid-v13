@@ -8,7 +8,7 @@ import type { Limits } from '../limits/index.ts';
 import type { AstNode } from '../parser-kit/ast.ts';
 import type { ParseResult } from '../parser-kit/result.ts';
 import type { PreprocessResult } from '../preprocess/preprocess.ts';
-import type { OutlinePaint } from '../svg/types.ts';
+import type { EmbeddedSvg, OutlinePaint } from '../svg/types.ts';
 import type { SvgFragment, SvgWriter } from '../svg/writer.ts';
 import type { SecurityLevel } from '../svg/url.ts';
 import type { InlineSpans } from '../text/inline.ts';
@@ -104,7 +104,20 @@ export interface RenderContext {
    * absent for a stand-in engine, text output, or a layout with no part.
    */
   readonly layoutPart?: unknown;
+  /**
+   * The diagrams this one embeds (ADR-15), rendered before the draw: the block with this id
+   * (`ParseResult.embeds`), for `SvgWriter.embed()`. Absent when there are none, in text
+   * output, and when the plugin is called without `mermaid`: a host then draws a stand-in.
+   */
+  readonly embed?: (id: string) => EmbeddedDiagram | undefined;
   warn(warning: Warning): void;
+}
+
+/** A rendered embedded diagram (ADR-15): its root `<svg>` at its natural size, in px. */
+export interface EmbeddedDiagram {
+  readonly width: number;
+  readonly height: number;
+  readonly svg: EmbeddedSvg;
 }
 
 /** {@link RenderContext.icon}: `'pending'` (a placeholder) only for a caller that asks for it. */

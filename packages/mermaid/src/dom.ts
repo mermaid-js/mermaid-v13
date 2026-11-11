@@ -13,7 +13,8 @@
 import { renderErrorSvg, type MermaidError } from '@mermaid-js/core';
 import type { MermaidConfig } from '@mermaid-js/core/config';
 import { resolveFontFamily } from '@mermaid-js/core/text';
-import type { InitializeConfig, Prepared, RenderResult, SvgRenderOptions } from './api.ts';
+import type { Prepared, RenderResult, SvgRenderOptions } from './api-types.ts';
+import type { InitializeConfig } from './config-snapshot.ts';
 import { toMermaidError } from './errors.ts';
 import { VERSION } from './version.ts';
 

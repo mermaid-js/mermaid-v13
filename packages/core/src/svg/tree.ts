@@ -45,6 +45,8 @@ export interface SvgTree {
 const NONE = -1;
 const TEXT = '#text';
 const DOC = '#document';
+/** Checked markup kept as written: an embedded diagram's root (ADR-15). */
+const RAW = '#raw';
 
 export class CompactTree implements SvgTree {
   readonly root = 0 as SvgNode;
@@ -115,6 +117,11 @@ export class CompactTree implements SvgTree {
     this.link(n, TEXT, css);
   }
 
+  /** Appends an embedded diagram's checked root `<svg>`, written as is; used by the writer only. */
+  appendRaw(parent: number, markup: string): void {
+    this.link(parent, RAW, markup);
+  }
+
   /** Appends a text node unless the text escapes to nothing. */
   appendTextNode(parent: number, text: string): void {
     if (!TEXT_HOLDERS.has(this.tags[parent] as string)) {
@@ -164,7 +171,7 @@ export class CompactTree implements SvgTree {
 
   private isElement(n: number): boolean {
     const tag = this.tags[n];
-    return tag !== TEXT && tag !== DOC;
+    return tag !== TEXT && tag !== DOC && tag !== RAW;
   }
 
   find(match: SvgMatch): SvgNode[] {
@@ -221,7 +228,8 @@ export class CompactTree implements SvgTree {
 
   append(parent: SvgNode, tag: AllowedTag, attrs?: Attrs): SvgNode {
     const p = this.node(parent);
-    if (this.tags[p] === TEXT) throw new TypeError('Text nodes have no children');
+    if (this.tags[p] === TEXT || this.tags[p] === RAW)
+      throw new TypeError('Text nodes have no children');
     return this.appendElement(p, tag, attrs) as SvgNode;
   }
 
@@ -279,8 +287,8 @@ export class CompactTree implements SvgTree {
         continue;
       }
       const tag = this.tags[c] as string;
-      if (tag === TEXT) {
-        out += esc(this.texts[c] as string);
+      if (tag === TEXT || tag === RAW) {
+        out += tag === RAW ? (this.texts[c] as string) : esc(this.texts[c] as string);
         c = this.nextSibling[c] as number;
         continue;
       }

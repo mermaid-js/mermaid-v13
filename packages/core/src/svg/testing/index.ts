@@ -333,5 +333,6 @@ export function outliningEveryLeaf(w: SvgWriter, role: OutlineRole = 'node'): Sv
     path: () => w.path(),
     styleSheet: (css) => w.styleSheet(css),
     linearGradient: (g) => w.linearGradient(g),
+    embed: (svg) => w.embed(svg),
   };
 }

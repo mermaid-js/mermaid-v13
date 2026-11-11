@@ -30,6 +30,11 @@ export type StyleText = Brand<string, 'StyleText'>;
 export type ThemeStyleSheet = Brand<string, 'ThemeStyleSheet'>;
 /** A CSS `filter` value that passed `checkFilter()`: `none` or `drop-shadow(…)` only. */
 export type SafeFilter = Brand<string, 'SafeFilter'>;
+/**
+ * A finished diagram's root `<svg>`, checked by `embeddedSvg()`, for a host to splice in whole
+ * with `SvgWriter.embed()` (ADR-15).
+ */
+export type EmbeddedSvg = Brand<string, 'EmbeddedSvg'>;
 /** A free-form, plain value that passed a property validator (font-family, keywords). */
 export type SafeValue = Brand<string, 'SafeValue'>;
 

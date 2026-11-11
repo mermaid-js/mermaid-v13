@@ -12,6 +12,7 @@ import { CompactTree, type SvgTree } from './tree.ts';
 import type {
   AllowedTag,
   Attrs,
+  EmbeddedSvg,
   GradientRef,
   LinearGradient,
   SvgGradient,
@@ -151,6 +152,12 @@ export interface SvgWriter {
    * `<scope>-g-<hash of the ends and stops>`, once however often it is asked for in a render.
    */
   linearGradient(gradient: LinearGradient): GradientRef;
+  /**
+   * An embedded diagram's finished root `<svg>` (ADR-15), spliced in as one unit inside the
+   * open element. It keeps its own `<style>`, `<defs>` and ids: `assertInert` checks each
+   * nested root as a scope of its own.
+   */
+  embed(svg: EmbeddedSvg): void;
 }
 
 export interface WriterOptions {
@@ -515,6 +522,12 @@ class Stream implements StreamSvgWriter {
     this.out += '<style>' + esc(css) + '</style>';
   }
 
+  embed(svg: EmbeddedSvg): void {
+    if (this.stack.length === 0) throw new TypeError('An embedded <svg> must be inside the root');
+    this.flush();
+    this.out += svg;
+  }
+
   finish(): string {
     if (this.stack.length > 0)
       throw new Error(`SvgWriter.finish() with <${this.stack[this.stack.length - 1]}> still open`);
@@ -577,6 +590,11 @@ class Tree implements TreeSvgWriter {
   styleSheet(css: ThemeStyleSheet): void {
     checkSheetParent(this.compact.tagOf(this.current), this.stack.length - 1);
     this.compact.appendStyleSheet(this.current, css);
+  }
+
+  embed(svg: EmbeddedSvg): void {
+    if (this.stack.length === 1) throw new TypeError('An embedded <svg> must be inside the root');
+    this.compact.appendRaw(this.current, svg);
   }
 
   finish(): string {

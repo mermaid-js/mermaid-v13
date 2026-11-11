@@ -1,7 +1,7 @@
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { Limits } from '@mermaid-js/core/limits';
 import type { LayoutGraph, LayoutModel, UnitProfile } from '@mermaid-js/core/layout';
-import type { OutlinePaint, SecurityLevel } from '@mermaid-js/core/svg';
+import type { EmbeddedSvg, OutlinePaint, SecurityLevel } from '@mermaid-js/core/svg';
 import type { InlineSpans, Measurer, SvgFragment } from '@mermaid-js/core/text';
 import type { Theme } from '@mermaid-js/core/theme';
 
@@ -51,6 +51,13 @@ export interface FlowRenderContext {
   readonly linkSchemes?: readonly string[];
   /** The render's inline-box providers (D177), handed to every label; text output boxes none. */
   readonly inline?: InlineSpans;
+  /**
+   * The embedded diagram blocks (ADR-15), rendered by `mermaid` before the draw, by block id.
+   * Absent when the plugin is called directly: a block is then drawn as a stand-in frame.
+   */
+  readonly embed?: (
+    id: string
+  ) => { readonly width: number; readonly height: number; readonly svg: EmbeddedSvg } | undefined;
   /**
    * The extensions' glyphs (D293): an icon shape's glyph fitted into a `size` square at the
    * origin, its `currentColor` painted with `paint` (D298); `null` when an extension reported it

@@ -1,0 +1,16 @@
+---
+description: an untitled class diagram block, no title strip
+---
+flowchart TB
+  A[Request] --> model
+  mermaid model {
+    classDiagram
+      class User {
+        +String name
+        +login() bool
+      }
+      class Order {
+        +int total
+      }
+      User "1" --> "*" Order
+  }

@@ -296,7 +296,7 @@ AccDescr @AccDescr = acc_descr acc_descr_value
 
 The lexer works in modes (`INITIAL` and the ones below). In each mode it tries the rules in this order and takes the first that matches; a rule may push a mode or pop back to the previous one. Rules without a token emit nothing.
 
-Modes: `INITIAL`, `string`, `md_string`, `acc_title`, `acc_descr`, `acc_descr_multiline`, `dir`, `text`, `ellipseText`, `trapText`, `edgeText`, `thickEdgeText`, `dottedEdgeText`, `click`, `callbackname`, `callbackargs`, `shapeData`, `shapeDataStr`.
+Modes: `INITIAL`, `string`, `md_string`, `acc_title`, `acc_descr`, `acc_descr_multiline`, `dir`, `text`, `ellipseText`, `trapText`, `edgeText`, `thickEdgeText`, `dottedEdgeText`, `click`, `callbackname`, `callbackargs`, `shapeData`, `shapeDataStr`, `embed`.
 
 | Modes | Token | Pattern | Action | Doc |
 | --- | --- | --- | --- | --- |
@@ -313,6 +313,10 @@ Modes: `INITIAL`, `string`, `md_string`, `acc_title`, `acc_descr`, `acc_descr_mu
 | shapeDataStr | SHAPE_DATA | `[^"]+` | fold |  |
 | shapeData | SHAPE_DATA | `[^}^"]+` |  |  |
 | shapeData | — | `\}` | pop |  |
+| embed | EMBED | `mermaid` |  | Embedded diagram blocks (ADR-15, not in mermaid@12): `mermaid <id>["Title"] {` on a line of its own, the body (another diagram's text, as one token), then `}` first on its own line. The hand-written lexer enters this mode for `mermaid` and a blank at a statement start on a line ending in `{`, and finds the closing line by counting lines that end in `{` against lines that start with `}`; this file lists the tokens for their highlight categories only. |
+| embed | EMBED_OPEN | `\{` |  |  |
+| embed | EMBED_BODY | `[^}]+` |  |  |
+| embed | EMBED_END | `\}` |  |  |
 | INITIAL | — | `call\s+` | push(callbackname) | `call name(args)` after `click <id>`. |
 | callbackname | — | `\(\s*\)` | pop |  |
 | callbackname | — | `\(` | pop push(callbackargs) |  |

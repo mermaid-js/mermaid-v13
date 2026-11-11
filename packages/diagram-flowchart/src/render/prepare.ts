@@ -20,12 +20,14 @@ import { curveKind, type CurveKind } from './edges.ts';
 import { dirOf, nesting, type Nesting } from './nesting.ts';
 import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
 import { assetSize } from './assets.ts';
+import { embedSize, embedSlot, type EmbedSlot } from './embed.ts';
 import {
   canonicalShape,
   shapeHasLabel,
   shapeSize,
   shapeSpan,
   type PadXY,
+  type ShapeSize,
   type Pads,
 } from './shapes.ts';
 
@@ -44,6 +46,8 @@ export interface NodeView {
   classes: string[];
   parent?: string;
   vertex?: FlowVertex;
+  /** An embedded diagram block (ADR-15): what it holds, `null` for a stand-in frame. */
+  embed?: EmbedSlot;
   /** Nesting depth of a cluster (0 at the top). */
   depth: number;
   /**
@@ -260,6 +264,7 @@ function nodeViews(
     }
     const view = blank(v.id, v.ast, false, vertexShape(v));
     view.vertex = v;
+    if (v.type === 'embed') view.embed = embedSlot(m.ctx, v.id);
     view.classes = v.classes;
     view.style = m.styleOf(['default', 'node', ...v.classes], v.styles);
     views.set(v.id, view);
@@ -289,7 +294,9 @@ function measureNode(
 ): void {
   const [f, bits] = textStyle(view.style, m.font);
   const has = shapeHasLabel(view.shape);
-  view.label = m.label(has || v?.img || v?.icon ? text : '', markdown, f, m.wrap, bits);
+  // A block's title stays on one line: the strip is as wide as the inner diagram allows.
+  const wrap = view.embed === undefined ? m.wrap : Infinity;
+  view.label = m.label(has || v?.img || v?.icon ? text : '', markdown, f, wrap, bits);
   const lw = view.label.width;
   const lh = view.label.height;
   if (m.cells) {
@@ -303,15 +310,16 @@ function measureNode(
   // v12 widens vertex labels to minNodeWidth; round shapes and collapsed subgraphs keep theirs.
   const keepWidth =
     view.shape === 'circle' || view.shape === 'dbl-circ' || view.shape === 'collapsedGroup';
-  const s =
-    v?.img || v?.icon
-      ? assetSize(v, lw, lh)
-      : shapeSize(
-          view.shape,
-          lw > 0 && has && !keepWidth ? Math.max(lw, m.minWidth) : lw,
-          lh,
-          m.pads
-        );
+  let s: ShapeSize;
+  if (view.embed !== undefined) s = embedSize(view.embed, lw, lh);
+  else if (v?.img || v?.icon) s = assetSize(v, lw, lh);
+  else
+    s = shapeSize(
+      view.shape,
+      lw > 0 && has && !keepWidth ? Math.max(lw, m.minWidth) : lw,
+      lh,
+      m.pads
+    );
   view.w = s.w;
   view.h = s.h;
   view.dy = s.dy;

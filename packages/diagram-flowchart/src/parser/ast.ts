@@ -66,13 +66,27 @@ export interface FlowSimpleStmt extends AstNode<FlowSimpleKind> {
   callback?: AstCallback;
 }
 
+/** `mermaid id["Title"] { … }`: an embedded diagram block (ADR-15), a node of the host. */
+export interface FlowEmbedStmt extends AstNode<'Embed'> {
+  name: string;
+  nameRange: Range;
+  title?: FlowLabelNode;
+  /** The body: another diagram's text, as written. */
+  bodyRange: Range;
+}
+
 /** `graph TD` / `flowchart LR`. */
 export interface FlowHeader extends AstNode<'Header'> {
   keyword: string;
   direction: string;
 }
 
-export type FlowStatementNode = FlowHeader | FlowChainStmt | FlowSubgraph | FlowSimpleStmt;
+export type FlowStatementNode =
+  | FlowHeader
+  | FlowChainStmt
+  | FlowSubgraph
+  | FlowSimpleStmt
+  | FlowEmbedStmt;
 
 export interface FlowDocument extends AstNode<'Document'> {
   children: FlowStatementNode[];

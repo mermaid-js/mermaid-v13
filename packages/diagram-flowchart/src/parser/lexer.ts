@@ -180,6 +180,11 @@ const RE_ENTITY = /#\w+;/y;
 const LINK_TARGETS = ['_self', '_blank', '_parent', '_top'];
 
 const isNl = (c: number) => c === LF || c === CR;
+const LOWER_M = 0x6d;
+const TAB = 0x09;
+const SPACE = 0x20;
+/** A blank within a line. */
+const isBlank = (c: number) => c === SPACE || c === TAB;
 
 /**
  * Lex the flowchart body `src[from…]`. `view` comes from {@link sourceView}. With
@@ -227,6 +232,8 @@ class FlowLexer {
   private runAt = -1;
   private wsFrom = -1;
   private wsTo = -1;
+  /** The `{` ending an embedded block's opening line (ADR-15) while the opener is lexed. */
+  private embedBrace = -1;
 
   constructor(
     private readonly src: string,
@@ -578,6 +585,10 @@ class FlowLexer {
   }
 
   private initial(c: number): boolean {
+    if (this.embedBrace >= 0 && this.p >= this.embedBrace) {
+      if (this.p === this.embedBrace) return this.embedBody();
+      this.embedBrace = -1;
+    }
     return (
       this.keyword(c) ||
       this.direction() ||
@@ -666,6 +677,8 @@ class FlowLexer {
         if (!this.kw('end')) return false;
         this.emit(T.End, p, Math.max(p + 3, this.at(RE_END, p)));
         return true;
+      case LOWER_M:
+        return this.embedOpener();
       case UNDERSCORE:
         for (const target of LINK_TARGETS) {
           if (this.kw(target)) return this.token(T.LinkTarget, target.length);
@@ -673,6 +686,79 @@ class FlowLexer {
         return false;
     }
     return false;
+  }
+
+  // --- Embedded diagram blocks (ADR-15) ------------------------------------------------------
+
+  /**
+   * `mermaid` opening a block: first on its line (or after `;`), then a blank, and the line
+   * ends in `{`. Anything else (`mermaid`, `mermaid["T"]`, `mermaid --> B`) is a node id.
+   */
+  private embedOpener(): boolean {
+    const p = this.p;
+    const { text } = this;
+    if (!this.kw('mermaid') || !isBlank(text.charCodeAt(p + 7))) return false;
+    let b = p - 1;
+    while (b >= this.from && isBlank(text.charCodeAt(b))) b--;
+    if (b >= this.from && !isNl(text.charCodeAt(b)) && text.charCodeAt(b) !== SEMI) return false;
+    let e = p + 7;
+    while (e < this.n && !isNl(text.charCodeAt(e))) e++;
+    let last = e - 1;
+    while (last > p + 7 && isBlank(text.charCodeAt(last))) last--;
+    if (text.charCodeAt(last) !== LBRACE) return false;
+    let id = p + 7;
+    while (id < last && isBlank(text.charCodeAt(id))) id++;
+    if (id === last) return false;
+    this.embedBrace = last;
+    return this.token(T.Embed, 7);
+  }
+
+  /** Whether the line `text[a, e)` ends in a `{` outside a `"…"` string. */
+  private endsInBrace(a: number, e: number): boolean {
+    let quoted = false;
+    let last = -1;
+    let lastQuoted = false;
+    for (let j = a; j < e; j++) {
+      const c = this.text.charCodeAt(j);
+      if (c === DQUOTE) quoted = !quoted;
+      if (!isBlank(c)) {
+        last = c;
+        lastQuoted = quoted;
+      }
+    }
+    return last === LBRACE && !lastQuoted;
+  }
+
+  /**
+   * The opener's `{`, then the body as one token, then the `}` that closes it. The close is
+   * found by line: a line ending in `{` opens a level, a line starting with `}` closes one;
+   * braces in `"…"` strings never count, and `%%` comment lines are not in the text at all.
+   */
+  private embedBody(): true {
+    const { text } = this;
+    const p = this.p;
+    this.embedBrace = -1;
+    this.emit(T.EmbedOpen, p, p + 1);
+    let s = p + 1;
+    while (s < this.len && !isNl(text.charCodeAt(s))) s++;
+    if (text.charCodeAt(s) === CR && text.charCodeAt(s + 1) === LF) s++;
+    s = Math.min(s + 1, this.len);
+    let depth = 1;
+    for (let line = s; line < this.len; ) {
+      let e = line;
+      while (e < this.len && !isNl(text.charCodeAt(e))) e++;
+      let a = line;
+      while (a < e && isBlank(text.charCodeAt(a))) a++;
+      if (text.charCodeAt(a) === RBRACE && --depth === 0) {
+        this.emit(T.EmbedBody, s, line);
+        this.emit(T.EmbedEnd, a, a + 1);
+        return true;
+      }
+      if (this.endsInBrace(a, e)) depth++;
+      line = e + (text.charCodeAt(e) === CR && text.charCodeAt(e + 1) === LF ? 2 : 1);
+    }
+    this.emit(T.EmbedBody, s, this.len);
+    return true;
   }
 
   /** A token of `length` characters at p. */

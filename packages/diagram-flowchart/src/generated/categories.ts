@@ -88,4 +88,8 @@ export const flowchartCategories = /* @__PURE__ */ kindCategories(T, {
   Eof: 'Other',
   ShapeDataEnd: 'Meta',
   ClickKeyword: 'Keyword',
+  Embed: 'Keyword',
+  EmbedOpen: 'Punctuation',
+  EmbedBody: 'Meta',
+  EmbedEnd: 'Punctuation',
 });

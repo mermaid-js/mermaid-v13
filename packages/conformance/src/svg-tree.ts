@@ -76,3 +76,34 @@ export function parseSvg(svg: string): SvgView {
   };
   return view;
 }
+
+/**
+ * `svg` without the embedded diagrams' roots (ADR-15): every nested `<svg>…</svg>`, whose
+ * markup is the inner diagram's, not the host's.
+ */
+export function withoutEmbedded(svg: string): string {
+  const first = svg.indexOf('<svg', 1);
+  if (first < 0) return svg;
+  let out = svg.slice(0, first);
+  let depth = 0;
+  let i = first;
+  const tag = /<(\/?)svg\b[^>]*?(\/?)>/g;
+  for (;;) {
+    tag.lastIndex = i;
+    const m = tag.exec(svg);
+    if (!m) return out + svg.slice(i);
+    if (depth === 0) out += svg.slice(i, m.index);
+    if (m[1]) depth--;
+    else if (!m[2]) depth++;
+    i = m.index + m[0].length;
+    // The outer root's own `</svg>` closes the document.
+    if (depth < 0) return out + svg.slice(m.index);
+  }
+}
+
+/** Whether `node` is inside an embedded diagram's root (a nested `<svg>`, ADR-15). */
+export function inEmbedded(node: SvgElement): boolean {
+  let svgs = 0;
+  for (let p = node.parent; p; p = p.parent) if (p.tag === 'svg') svgs++;
+  return svgs > 1;
+}

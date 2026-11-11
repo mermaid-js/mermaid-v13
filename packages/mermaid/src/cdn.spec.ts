@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { createMermaid } from './index.ts';
 import { connectPluginQueue } from './plugin-queue.ts';
-import type { ExtensionPlugin } from './api.ts';
+import type { ExtensionPlugin } from './api-types.ts';
 import type { LazyDiagram } from './registry.ts';
 
 const FLOW = 'flowchart LR\n  A --> B';

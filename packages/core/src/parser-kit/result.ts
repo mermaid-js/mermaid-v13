@@ -35,6 +35,21 @@ export interface ParseOptions {
   probe?: number;
 }
 
+/**
+ * A diagram embedded in a host diagram (ADR-15): `mermaid <id>["Title"] { … }`. The host lists
+ * its blocks; `mermaid` renders each one and hands it back by id (`RenderContext.embed`).
+ */
+export interface EmbeddedBlock {
+  /** The block's node id in the host. */
+  readonly id: string;
+  /** The title as written inside `["…"]`, unquoted; absent for an untitled block. */
+  readonly title?: string;
+  /** The body as written: another diagram's whole text. */
+  readonly text: string;
+  /** Where {@link text} starts in the host's text, to place errors inside it. */
+  readonly offset: number;
+}
+
 export interface ParseResult<M, A extends AstNode = AstNode> {
   /** Plain, serialisable (structuredClone-able) diagram model. */
   model: M;
@@ -47,6 +62,8 @@ export interface ParseResult<M, A extends AstNode = AstNode> {
   tokens?: TokenStream;
   /** Only with {@link ParseOptions.probe}. */
   probe?: ProbeResult;
+  /** The diagrams embedded in this one, in source order (ADR-15); absent when there are none. */
+  embeds?: readonly EmbeddedBlock[];
 }
 
 /** Collects the side outputs of one parse. Create one per parse. */

@@ -10,7 +10,7 @@
  */
 // cspell:words kepano
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
-import type { AstId, Diagnostic, Range } from '@mermaid-js/core/parser-kit';
+import type { AstId, Diagnostic, EmbeddedBlock, Range } from '@mermaid-js/core/parser-kit';
 import { isYamlMap } from '@mermaid-js/core/preprocess';
 import type { YamlMap } from '@mermaid-js/core/preprocess';
 import { isValidShape } from './shapes.ts';
@@ -263,6 +263,8 @@ export class FlowBuilder {
   defaultStyle: string[] | undefined;
   accTitle = '';
   accDescr = '';
+  /** Embedded diagram blocks (ADR-15) for `ParseResult.embeds`; each is a vertex too. */
+  readonly embeds: EmbeddedBlock[] = [];
   private readonly subgraphById = new Map<string, FlowModelSubgraph>();
   private readonly edgeById = new Map<string, FlowModelEdge>();
   /** Edges so far per start, then per end. */

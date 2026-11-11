@@ -1,0 +1,42 @@
+[
+  {
+    "id": "e2e/diagrams/flowchart/baseline/embedded/class-untitled.mmd",
+    "inputHash": "sha256:4ab8c9a39cc32f8d",
+    "kind": "accept",
+    "reason": "v12 rejects `mermaid <id> {`; v13 parses an embedded diagram block (ADR-15, proof of concept).",
+    "owner": "#664",
+    "since": "2026-11-11"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/embedded/in-subgraph.mmd",
+    "inputHash": "sha256:3ce64f0f4d7f4d1d",
+    "kind": "accept",
+    "reason": "v12 rejects `mermaid <id> {`; v13 parses an embedded diagram block (ADR-15, proof of concept).",
+    "owner": "#664",
+    "since": "2026-11-11"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/embedded/mindmap-and-pie.mmd",
+    "inputHash": "sha256:a4f61d1863473bfa",
+    "kind": "accept",
+    "reason": "v12 rejects `mermaid <id> {`; v13 parses an embedded diagram block (ADR-15, proof of concept).",
+    "owner": "#664",
+    "since": "2026-11-11"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/embedded/sequence-titled.mmd",
+    "inputHash": "sha256:e7c613fbc29149ff",
+    "kind": "accept",
+    "reason": "v12 rejects `mermaid <id> {`; v13 parses an embedded diagram block (ADR-15, proof of concept).",
+    "owner": "#664",
+    "since": "2026-11-11"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/embedded/state-braces.mmd",
+    "inputHash": "sha256:7ea941628b212ad1",
+    "kind": "accept",
+    "reason": "v12 rejects `mermaid <id> {`; v13 parses an embedded diagram block (ADR-15, proof of concept).",
+    "owner": "#664",
+    "since": "2026-11-11"
+  }
+]
