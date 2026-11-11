@@ -21,7 +21,7 @@ import type { ExtensionPlugin } from '@mermaid-js/core';
 import { nodeId, type AstNode } from '@mermaid-js/core/parser-kit';
 import { defineFeature, isBag, type AnyFeature } from './feature.ts';
 import { menus } from './menus.ts';
-import { createScope, rootsFor } from './scope.ts';
+import { createScope, ownIds, rootsFor } from './scope.ts';
 
 /** One callback to bind: a node id, the function name and its arguments. */
 export interface Binding {
@@ -101,7 +101,7 @@ function drawsNode(g: Element, id: string): boolean {
  */
 function clickableElements(svg: Element, ids: ReadonlySet<string>): Map<string, Element[]> {
   const out = new Map<string, Element[]>();
-  for (const el of svg.querySelectorAll('[data-id]')) {
+  for (const el of ownIds(svg)) {
     const id = el.getAttribute('data-id') ?? '';
     if (ids.has(id) && (el.getAttribute('class') ?? '').split(' ').includes('clickable'))
       out.set(id, [...(out.get(id) ?? []), el]);

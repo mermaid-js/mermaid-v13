@@ -77,7 +77,7 @@ import { AnalysisCache } from './analysis-cache.ts';
 import { createDomAdapter } from './dom.ts';
 import { blockConfig, blockLayers, blockPass, lazyEmbed, outsideBlocks } from './embeds.ts';
 import type { DrawBlocks } from './embeds.ts';
-import { toMermaidError, toWarning } from './errors.ts';
+import { toMermaidError, toWarning, unsupportedDiagram } from './errors.ts';
 import { iconPackRegistry, packsUnsupported, type IconLoader } from './icon-packs.ts';
 import { selectMeasurer } from './measurer.ts';
 import {
@@ -335,7 +335,7 @@ export function createMermaid(
   /** `detect`, for a type with a plugin package that can draw `ascii` when that is asked for. */
   function detectSupported(text: string, s: Snapshot, ascii: boolean): Found {
     const { detected, pre } = detect(text, s);
-    if (detected.id === undefined) throw unsupported(detected);
+    if (detected.id === undefined) throw unsupportedDiagram(detected.type);
     if (ascii) checkText(detected);
     return { detected: { ...detected, id: detected.id }, pre };
   }
@@ -347,7 +347,7 @@ export function createMermaid(
     { detected, pre }: Found,
     plugin: AnyPlugin | undefined
   ): Analysis {
-    if (!plugin) throw unsupported(detected);
+    if (!plugin) throw unsupportedDiagram(detected.type);
     const analysis = analyse(text, s, plugin, detected, pre);
     cache.set(text, s, analysis);
     return analysis;
@@ -370,12 +370,15 @@ export function createMermaid(
     },
     draw: (text, s, options, a, id, inner) => {
       const { now, placeholders } = options ?? {};
-      const { drawn, ctx, warnings } = drawSvg(text, s, { id, now, placeholders }, a, inner);
+      const { drawn, ctx, warnings, mount } = drawSvg(text, s, { id, now, placeholders }, a, inner);
+      const own = warnings.slice(skipped.length);
       return {
         ...drawn,
         securityLevel: ctx.securityLevel,
         linkSchemes: ctx.linkSchemes,
-        warnings: warnings.slice(skipped.length),
+        warnings: own,
+        // A block binds in its own root, so its ids never meet the host's or another block's.
+        bind: mount({ ...drawn, diagramType: a.prepared.diagramType, warnings: own }),
       };
     },
     drawText: (b, s, options, a, id, inner) => {
@@ -386,13 +389,6 @@ export function createMermaid(
       return { ...drawn, warnings: warnings.slice(skipped.length) };
     },
   });
-
-  function unsupported(detected: Detected): MermaidError {
-    return new MermaidError(
-      'UNSUPPORTED_DIAGRAM',
-      `Diagram type "${detected.type}" is not supported by this version of mermaid.`
-    );
-  }
 
   function snapshotFor(options?: RenderOptions): Snapshot {
     const extra = options?.config;
@@ -498,7 +494,10 @@ export function createMermaid(
     };
   }
 
-  /** The render context of one draw, and the warnings sink it writes to. */
+  /**
+   * The render context of one draw, the warnings sink it writes to, and the binders of the
+   * blocks it drew (#669).
+   */
   function contextFor(
     text: string,
     s: Snapshot,
@@ -506,7 +505,7 @@ export function createMermaid(
     analysis: Analysis,
     { units, measurer, width, text: textOnly }: Units,
     drawBlocks?: DrawBlocks
-  ): { ctx: RenderContext; warnings: Warning[] } {
+  ) {
     const { prepared, plugin } = analysis;
     const { config } = prepared;
     // A usage error, as a bad `limits` option is: `+now` of a bad Date or a string is NaN.
@@ -583,7 +582,7 @@ export function createMermaid(
     const inline = inlineSpans(hooks.inline(), warn, textOutput ? 'ascii' : 'svg', packs);
     const icon = textOutput ? undefined : hooks.icon(inline, packs);
     // The blocks (ADR-15) are drawn at the first lookup, with this draw's id prefix.
-    const embed = lazyEmbed(drawBlocks, () => ctx.idPrefix, warn);
+    const { embed, mounter } = lazyEmbed(drawBlocks, () => ctx.idPrefix, warn);
     const ctx: RenderContext = {
       config,
       measurer:
@@ -631,7 +630,7 @@ export function createMermaid(
       // Spread into the literal, not over `ctx`: a spread would run the lazy idPrefix getter.
       ...textOnly,
     };
-    return { ctx, warnings };
+    return { ctx, warnings, mounter };
   }
 
   /**
@@ -663,7 +662,7 @@ export function createMermaid(
     });
     // The blocks (ADR-15), drawn in this charset and padding at the first lookup.
     const inner = blocksFor?.({ format: 'ascii', now: options?.now, ascii: { charset, padding } });
-    const embedText = lazyEmbed(
+    const { embed: embedText } = lazyEmbed(
       inner,
       () => ctx.idPrefix,
       (w) => ctx.warn(w)
@@ -731,10 +730,11 @@ export function createMermaid(
     if (format === 'ascii')
       return drawAscii(text, s, options, analysis, (o) => blocks.drawText(text, 0, analysis, s, o));
     const blockDraw = blocks.draw(text, 0, analysis, s, options);
-    const { drawn, warnings, run } = drawSvg(text, s, options, analysis, blockDraw);
+    const { drawn, warnings, mount } = drawSvg(text, s, options, analysis, blockDraw);
     const result: RenderResult = { ...drawn, diagramType: analysis.prepared.diagramType, warnings };
     // The DOM adapter's afterMount entry point (DESIGN §12.2, §12.3); `run`/`mount` call it.
-    if (run?.mounts) result.bindFunctions = (element) => run.afterMount(element, result);
+    const bind = mount(result, true);
+    if (bind) result.bindFunctions = bind;
     return result;
   }
 
@@ -747,14 +747,15 @@ export function createMermaid(
     blockDraw: DrawBlocks | undefined
   ) {
     const units = { units: pxProfile, width: options?.availableWidth };
-    const { ctx, warnings } = contextFor(text, s, options, a, units, blockDraw);
+    const { ctx, warnings, mounter } = contextFor(text, s, options, a, units, blockDraw);
     const renderHooks = hooksFor(a);
     const run = renderHooks.size === 0 ? undefined : renderHooks.start(ctx, a.plugin.id);
     const { parse } = a.prepared;
     // D537: the line-hop step, when its chunk is loaded and decides that this render hops.
     const edges = registry.hops?.(a);
     const drawn = drawDiagram(a.plugin, parse.model, ctx, run && { run, ast: parse.ast }, edges);
-    return { drawn, ctx, warnings, run };
+    // Binds the run's interactions, then each block's in its own nested root (#669).
+    return { drawn, ctx, warnings, mount: mounter<RenderResult>(run) };
   }
 
   /**

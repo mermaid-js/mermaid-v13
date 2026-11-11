@@ -184,24 +184,115 @@ export function blockConfig(
   return Object.freeze(out) as ResolvedConfig;
 }
 
+/** Binds a drawn diagram's interactions (#669), given its own root `<svg>` element. */
+export type Bind = (svg: Element) => void;
+
 /**
- * Draws the blocks of one host draw, by block id, with the host's id prefix: as SVG roots, or
- * as text (`EmbeddedText`) for text output.
+ * One block drawn for its host: what the host splices in (an SVG root, or `EmbeddedText` for
+ * text output), and how to bind it once mounted (SVG only).
  */
+export interface DrawnBlock<E = EmbeddedDiagram> {
+  readonly diagram: E;
+  readonly bind?: Bind;
+}
+
+/** Draws the blocks of one host draw, by block id, with the host's id prefix. */
 export type DrawBlocks<E = EmbeddedDiagram> = (
   prefix: string,
   warn: (w: Warning) => void
-) => ReadonlyMap<string, E>;
+) => ReadonlyMap<string, DrawnBlock<E>>;
+
+/** One draw's blocks: the render context's lookup, and the binders of the blocks it drew. */
+export interface LazyBlocks<E = EmbeddedDiagram> {
+  readonly embed: ((id: string) => E | undefined) | undefined;
+  /** The binder maker of the draw (`mounter`), with the binders of the blocks it drew. */
+  readonly mounter: <R extends { readonly svg: string }>(
+    run: Mounting<R> | undefined
+  ) => (result: R, host?: boolean) => Bind | undefined;
+}
 
 /** The render context's block lookup: the blocks are drawn at the first lookup. */
 export function lazyEmbed<E = EmbeddedDiagram>(
   blocks: DrawBlocks<E> | undefined,
   prefix: () => string,
   warn: (w: Warning) => void
-): ((id: string) => E | undefined) | undefined {
-  if (!blocks) return undefined;
-  let drawn: ReadonlyMap<string, E> | undefined;
-  return (id) => (drawn ??= blocks(prefix(), warn)).get(id);
+): LazyBlocks<E> {
+  let drawn: ReadonlyMap<string, DrawnBlock<E>> | undefined;
+  return {
+    embed: blocks && ((id) => (drawn ??= blocks(prefix(), warn)).get(id)?.diagram),
+    mounter: (run) =>
+      mounter(run, () => {
+        const out = new Map<string, Bind>();
+        for (const [id, b] of drawn ?? []) if (b.bind) out.set(id, b.bind);
+        return out;
+      }),
+  };
+}
+
+const isSvg = (n: Element): boolean => n.tagName.toLowerCase() === 'svg';
+
+/** The nearest `<svg>` above `n`. */
+function rootAbove(n: Element): Element | null {
+  let p = n.parentElement;
+  while (p && !isSvg(p)) p = p.parentElement;
+  return p;
+}
+
+/** The `<svg>`s one level down in `el`: a root's blocks, or the roots in a mount element. */
+function nested(el: Element): Element[] {
+  const top = isSvg(el) ? el : rootAbove(el);
+  return [...el.querySelectorAll('svg')].filter((s) => rootAbove(s) === top);
+}
+
+/**
+ * The binder of one drawn diagram (#669): `own` (its interactions run's afterMount) on the
+ * element, then each block's binder on that block's root, found by the `data-id` of the node
+ * that holds it. A host's binder takes the mount element and its `svgText` (several roots in
+ * one element: those with as many `data-id`s as the render); a block's, its own root.
+ * Undefined when nothing binds.
+ */
+function binder(
+  own: Bind | undefined,
+  blocks: ReadonlyMap<string, Bind>,
+  svgText?: string
+): Bind | undefined {
+  if (!own && blocks.size === 0) return undefined;
+  return (el) => {
+    own?.(el);
+    if (blocks.size === 0) return;
+    let roots = svgText === undefined || isSvg(el) ? [el] : nested(el);
+    if (roots.length > 1) {
+      const n = svgText!.split(' data-id="').length - 1;
+      roots = roots.filter((r) => r.querySelectorAll('[data-id]').length === n);
+    }
+    for (const s of roots.flatMap(nested)) {
+      let p = s.parentElement;
+      while (p && p.getAttribute('data-id') === null) p = p.parentElement;
+      blocks.get(p?.getAttribute('data-id') ?? '')?.(s);
+    }
+  };
+}
+
+/** What binding uses of a draw's interactions run. */
+interface Mounting<R> {
+  readonly mounts: boolean;
+  afterMount(el: Element, result: R): void;
+}
+
+/**
+ * The binder maker of one draw, from its interactions `run` and its blocks' binders: for a
+ * host (`host`), on the mount element; for a block, on its own root.
+ */
+function mounter<R extends { readonly svg: string }>(
+  run: Mounting<R> | undefined,
+  binds: () => ReadonlyMap<string, Bind>
+) {
+  return (result: R, host?: boolean): Bind | undefined =>
+    binder(
+      run?.mounts ? (el) => run.afterMount(el, result) : undefined,
+      binds(),
+      host ? result.svg : undefined
+    );
 }
 
 /** What the block pass needs from a parsed diagram. */
@@ -218,6 +309,8 @@ export interface BlockDrawn {
   readonly linkSchemes?: readonly string[];
   /** The draw's own warnings (not the API object's queued ones). */
   readonly warnings: readonly Warning[];
+  /** Binds the block's interactions and its own blocks' in its root (#669). */
+  readonly bind?: Bind;
 }
 
 /** One block drawn as text (ADR-14): the drawing, or a stand-in, and what the draw said. */
@@ -491,11 +584,11 @@ export function blockPass<A extends Parsed, F, S, P, O>(
     base: number,
     host: A,
     s: S,
-    one: (b: EmbeddedBlock, inner: A, at: number, prefix: string) => E & BlockWarnings
+    one: (b: EmbeddedBlock, inner: A, at: number, prefix: string) => DrawnBlock<E> & BlockWarnings
   ): DrawBlocks<E> | undefined {
     if (embedsOf(host.prepared.parse).length === 0) return undefined;
     return (prefix, warn) => {
-      const out = new Map<string, E>();
+      const out = new Map<string, DrawnBlock<E>>();
       for (const b of embedsOf(host.prepared.parse)) {
         const at = base + b.offset;
         const { warnings, ...drawn } = one(
@@ -505,7 +598,7 @@ export function blockPass<A extends Parsed, F, S, P, O>(
           blockPrefix(prefix, b.id)
         );
         for (const w of warnings) warn(w);
-        out.set(b.id, drawn as E);
+        out.set(b.id, drawn);
       }
       return out;
     };
@@ -529,12 +622,12 @@ export function blockPass<A extends Parsed, F, S, P, O>(
         drawLevel(root, at, inner, s, options)
       );
       const { securityLevel, linkSchemes } = drawn;
-      return {
+      const diagram: EmbeddedDiagram = {
         width: drawn.width,
         height: drawn.height,
         svg: embeddedSvg(drawn.svg, { securityLevel, linkSchemes }),
-        warnings: drawn.warnings,
       };
+      return { diagram, bind: drawn.bind, warnings: drawn.warnings };
     });
   }
 
@@ -546,9 +639,11 @@ export function blockPass<A extends Parsed, F, S, P, O>(
     s: S,
     options: O
   ): DrawBlocks<EmbeddedText> | undefined {
-    return drawAll<EmbeddedText>(root, base, host, s, (b, inner, at, id) =>
-      deps.drawText(b, s, options, inner, id, textLevel(root, at, inner, s, options))
-    );
+    return drawAll<EmbeddedText>(root, base, host, s, (b, inner, at, id) => {
+      const deeper = textLevel(root, at, inner, s, options);
+      const { warnings, ...diagram } = deps.drawText(b, s, options, inner, id, deeper);
+      return { diagram, warnings };
+    });
   }
 
   /** A top-level draw (SVG or text): the whole block tree checked first, then `level`. */
