@@ -101,17 +101,23 @@ one data field and one lookup; hosts stay simple and render nothing foreign. Rej
   other diagram packages, which diagrams must not do, and every host would differ.
 
 **Each block is drawn as a nested `<svg>`** at its natural size, never scaled. Its id prefix is
-the host's prefix plus the block id, so ids never clash, including two identical blocks. It
+the host's prefix, `-`, and the block id in a one-to-one encoding that never writes `-` (`_` is
+`__`, any other character but a letter or digit is `_<hex>_`), so ids never clash, including two
+identical blocks, `a.b` beside `a_b`, and a block `b` in `a` beside a block `a-b`. It
 carries its own theme aliases on its own root, so host and block styles never mix.
 
 **Look.** A border and a transparent background, which tells a block apart from a subgraph, and
-an optional title strip. Theme, look and font come from the host. Front matter at the top of a
-block may set diagram-specific keys only (for example `sequence.mirrorActors`); `theme`,
-`themeVariables`, `look`, `securityLevel` and the other secure keys are ignored with a warning.
+an optional title strip; every host draws it with `@mermaid-js/core/svg/framed`. A block inherits its host's resolved config, the host's front matter
+and directives included, so theme, look and font come from the host. Front matter and directives
+at the top of a block may then set diagram sections only (for example `sequence.mirrorActors`):
+every other key (`theme`, `themeVariables`, `look`, `securityLevel`, `wrap`, …) is ignored with
+one warning. `theme` and `layout` inside a section do not reach the block: the theme is the
+host's, and the layout resolves for the block's own type.
 
 **Errors fail the render.** A parse error inside a block, or a block whose type is unknown or
 not available (not ported, or not registered under `mermaid/slim`), fails the whole render. The
-position is reported in the outer text's lines and columns.
+position is reported in the outer text's lines and columns. Blocks whose types are not available
+are reported together: one error names each block and type, at the first of them.
 
 **Limits and security apply to the whole document.** `maxTextSize` and `maxEdges` count all
 blocks together, so splitting a diagram into blocks cannot get past them. Block SVG goes through

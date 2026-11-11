@@ -96,8 +96,11 @@ editor still shows them.
 ## Look and config
 
 - The box has a border and a transparent background, which sets it apart from a subgraph.
-- The diagram inside uses the host's theme, look and font, at its natural size.
-- Front matter at the top of a block can set that diagram type's own options, for example:
+- The diagram inside starts from the host's config, including the host's front matter and
+  directives: it uses the host's theme, look and font, at its natural size. Options for its type
+  set on the host (say `sequence.mirrorActors` in the host's front matter) apply to it too.
+- Front matter at the top of a block can set diagram options (a section such as `sequence`), for
+  example:
 
   ```
   mermaid login["Login flow"] {
@@ -111,16 +114,17 @@ editor still shows them.
   }
   ```
 
-  The theme, `themeVariables`, `look` and `securityLevel` cannot be changed from a block; they
-  are ignored with a warning.
+  Anything outside a diagram section, such as the theme, `themeVariables`, `look`,
+  `securityLevel` or `wrap`, cannot be changed from a block; it is ignored with a warning.
 - Links, `click` callbacks and tooltips inside a block work as in a stand-alone diagram.
 
 ## Errors and limits
 
 - A syntax error inside a block fails the whole diagram, and the error points to the line in your
   text.
-- A block whose type isn't available fails the same way. With `mermaid/slim`, register every
-  diagram type your blocks use.
+- A block whose type isn't available fails the same way. The error names every block whose type
+  is missing, so you can fix them all at once. With `mermaid/slim`, register every diagram type
+  your blocks use.
 - `maxTextSize` and `maxEdges` count the whole text, all blocks included.
 
 ## Text output

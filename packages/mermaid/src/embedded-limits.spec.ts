@@ -157,6 +157,35 @@ describe('block types that cannot be drawn', () => {
     expect(viaParse.line).toBe(5);
   });
 
+  it('names every unregistered block type in one error, at the first', async () => {
+    const more = [
+      text,
+      '  mermaid share {',
+      '    pie',
+      '      "a" : 1',
+      '  }',
+      '  mermaid again {',
+      '    sequenceDiagram',
+      '      B->>A: bye',
+      '  }',
+    ].join('\n');
+    const slim = () => createSlim({ diagrams: [flowchart] });
+    for (const e of [
+      await rejection(slim().render('host', more)),
+      await rejection(slim().parse(more)),
+    ]) {
+      expect(e.code).toBe('UNSUPPORTED_DIAGRAM');
+      expect(e.line).toBe(5);
+      for (const name of ['mermaid talk', 'mermaid share', 'mermaid again', '"sequence"', '"pie"'])
+        expect(e.message).toContain(name);
+      expect(e.diagnostics.map((d) => d.code)).toEqual([
+        'EMBED_UNAVAILABLE',
+        'EMBED_UNAVAILABLE',
+        'EMBED_UNAVAILABLE',
+      ]);
+    }
+  });
+
   it('names the type in renderSync too', async () => {
     const m = createSlim({ diagrams: [flowchart] });
     await m.prepare('flowchart LR\n  A');
@@ -264,6 +293,31 @@ describe('block config', () => {
     expect(innerHeight(tuned.svg)).toBeLessThan(innerHeight(plain.svg));
     // The host keeps its own config: still drawn at 100% width.
     expect(attr(roots(tuned.svg)[0]!, 'width')).toBe('100%');
+  });
+
+  it("starts from the host's resolved config, its front matter and directives included", async () => {
+    const plain = await createMermaid().render('host', withHead());
+    const front = ['---', 'config:', '  sequence:', '    mirrorActors: false', '---'];
+    const byFront = await createMermaid().render('host', [...front, withHead()].join('\n'));
+    expect(innerHeight(byFront.svg)).toBeLessThan(innerHeight(plain.svg));
+    const directive = '%%{init: {"sequence": {"mirrorActors": false}}}%%';
+    const byDirective = await createMermaid().render('host', `${directive}\n${withHead()}`);
+    expect(innerHeight(byDirective.svg)).toBe(innerHeight(byFront.svg));
+    // The block's own front matter comes last.
+    const back = withHead('---', 'config:', '  sequence:', '    mirrorActors: true', '---');
+    const own = await createMermaid().render('host', [...front, back].join('\n'));
+    expect(innerHeight(own.svg)).toBe(innerHeight(plain.svg));
+  });
+
+  it('takes only diagram sections from a block, ignoring every other key', async () => {
+    const plain = await createMermaid().render('host', withHead());
+    const text = withHead('---', 'config:', '  wrap: true', '  markdownAutoWrap: false', '---');
+    const { svg, warnings } = await createMermaid().render('host', text);
+    expect(svg).toBe(plain.svg);
+    const added = warnings.filter((w) => !plain.warnings.some((p) => p.code === w.code));
+    expect(added.map((w) => w.code)).toEqual(['EMBED_CONFIG_IGNORED']);
+    for (const key of ['wrap', 'markdownAutoWrap'])
+      expect(added[0]!.message).toContain(`\`${key}\``);
   });
 
   it('ignores theme, look and secure keys in a block with one warning', async () => {

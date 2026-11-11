@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   CORE_DEFAULTS,
   resolveConfig,
+  resolveSite,
+  resolveText,
   type ConfigInput,
   type ConfigWarning,
   type MermaidConfig,
@@ -133,6 +135,31 @@ describe('diagram-scoped theme and layout', () => {
       frontMatter: { theme: 'dark', flowchart: { theme: 'forest' } },
     });
     expect(config.theme).toBe('forest');
+  });
+});
+
+describe('text over a host config (ADR-15)', () => {
+  const sequence = { sequence: { mirrorActors: true, wrap: false } } satisfies MermaidConfig;
+  const host = resolveConfig(CORE_DEFAULTS, undefined, {
+    theme: 'dark',
+    layout: 'elk',
+    sequence: { mirrorActors: false },
+  });
+
+  it('takes what the host config sets over the site, the text over both', () => {
+    const site = resolveSite(CORE_DEFAULTS, undefined, sequence);
+    const own = resolveText(site, { sequence: { wrap: true } }, [], { under: host });
+    expect(own.sequence).toMatchObject({ mirrorActors: false, wrap: true });
+    const back = resolveText(site, { sequence: { mirrorActors: true } }, [], { under: host });
+    expect(back.sequence?.mirrorActors).toBe(true);
+  });
+
+  it('resolves theme and layout from the text and the site, not the host config', () => {
+    const site = resolveSite(CORE_DEFAULTS, undefined, sequence);
+    const config = resolveText(site, undefined, [], { under: host });
+    expect(config.sequence?.mirrorActors).toBe(false);
+    expect(config.theme).toBe(site.plain.theme);
+    expect(config.layout).toBe(site.plain.layout);
   });
 });
 

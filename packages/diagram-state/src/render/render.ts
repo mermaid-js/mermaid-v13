@@ -34,8 +34,8 @@ import { stateMetrics } from '../layout/index.ts';
 import { completeLayout, type CompleteStateLayout } from '../layout/layout.ts';
 import type { StateLink, StateModel } from '../parser/index.ts';
 import { arrowTrim, arrowhead, drawArrowhead, routePath, type Arrowhead } from './edges.ts';
-import { drawEmbed } from './embed.ts';
 import { drawFolded } from '@mermaid-js/core/svg/folded';
+import { drawFramed } from '@mermaid-js/core/svg/framed';
 import { drawDescribed, drawShape, type ShapePaint } from './shapes.ts';
 
 // v12 `.note-edge { stroke-dasharray: 5 }` and `.statediagram-state rect.divider
@@ -171,7 +171,8 @@ function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
   const edgeLabel = s.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
     : undefined;
-  const folded = s.nodes.some((v) => v.fold)
+  // Read here, not in core, so the theme inventory lists the diagrams that use them.
+  const folded = s.nodes.some((v) => v.block === 'folded')
     ? { ink: theme.color('nodeBorder'), muted: theme.color('mutedBorder') }
     : undefined;
   return { ...node, composite, note, folded, edgeLabel, slots: paletteSlots(theme, model, s) };
@@ -435,14 +436,17 @@ function nodeClass(view: StateNodeView): string {
   if (view.shape === 'note') return 'node statediagram-note';
   // v12 `stateStart` and `stateEnd` wrote `node default` and no state classes.
   if (view.shape === 'start' || view.shape === 'end') return 'node default';
-  if (view.shape === 'embed')
-    return (view.fold ? 'node embed folded' : 'node embed') + cls(view.state?.classes ?? []);
+  if (view.block)
+    return (
+      (view.block === 'folded' ? 'node embed folded' : 'node embed') +
+      cls(view.state?.classes ?? [])
+    );
   return 'node statediagram-state' + cls(view.state?.classes ?? []);
 }
 
 /** A block is one image to assistive technology, named by its title (ADR-15). */
 function blockAria(view: StateNodeView): Attrs {
-  if (view.shape !== 'embed') return {};
+  if (!view.block) return {};
   return { role: 'img', 'aria-label': view.state?.title || view.id };
 }
 
@@ -467,7 +471,7 @@ function drawNode(scene: Scene, view: StateNodeView, link: StateLink | undefined
     : undefined;
   // v12 opened every state link in a new window.
   if (href) w.open('a', { href, target: checkLinkTarget('_blank', warn) });
-  if (view.shape === 'embed') {
+  if (view.block) {
     // A border and a transparent background, which set a block apart from a composite.
     const frame: Attrs = {
       fill: 'none',
@@ -475,15 +479,18 @@ function drawNode(scene: Scene, view: StateNodeView, link: StateLink | undefined
       'stroke-width': paint.strokeWidth,
       ...view.style.shape,
     };
-    const { fold } = view;
-    if (fold) {
-      const size = { width: view.w, height: view.h };
+    const size = { width: view.w, height: view.h };
+    if (view.block === 'folded') {
+      const fold = view.fold!;
       const marks = { frame, mark: frame.stroke ?? paint.border, ...paint.folded! };
       drawFolded(w, size, view.label, fold.label, fold.type.length, {
         ...marks,
-        title: { ...view.style.text },
+        title: view.style.text,
       });
-    } else drawEmbed(w, view, frame, { ...view.style.text });
+    } else {
+      const y = drawFramed(w, size, view.label.height, view.embed ?? null, frame);
+      if (view.label.height > 0) w.label(view.label, 0, y, view.style.text);
+    }
   } else drawState(scene, view);
   if (href) w.close();
   w.close();

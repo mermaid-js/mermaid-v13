@@ -5,17 +5,24 @@
  */
 import {
   errorFromDiagnostics,
+  MAX_BLOCK_DEPTH,
   MermaidError,
   NotLoadedError,
+  openerRange,
+  tooDeep,
   type EmbeddedDiagram,
   type EmbeddedText,
   type Warning,
 } from '@mermaid-js/core';
-import type { ResolvedConfig } from '@mermaid-js/core/config';
+import type { ResolvedConfig, ResolvedSite } from '@mermaid-js/core/config';
 import type { Diagnostic, EmbeddedBlock, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { embeddedSvg, type SecurityLevel } from '@mermaid-js/core/svg';
+import type { Analysis, Detection } from './analysis-cache.ts';
+import type { RenderOptions } from './api-types.ts';
+import type { Snapshot } from './config-snapshot.ts';
+import type { AnyPlugin } from './registry.ts';
 
 /** The blocks a parse lists, none when the type hosts none. */
 export function embedsOf(parse: ParseResult<unknown>): readonly EmbeddedBlock[] {
@@ -27,9 +34,14 @@ function edgesOf(parse: ParseResult<unknown>): number {
   return parse.edgeCount ?? 0;
 }
 
-/** A block's id prefix: the host's, then the block id as an XML name part (ADR-15). */
+/**
+ * A block's id prefix: the host's, `-`, then the block id as an XML name part (ADR-15). The
+ * encoding is one-to-one and never writes `-`, so no two blocks share a prefix: `_` is `__`,
+ * and any other character but a letter or digit is `_<hex code>_`.
+ */
 export function blockPrefix(host: string, id: string): string {
-  return `${host}-${id.replace(/[^A-Za-z0-9_-]/g, '_')}`;
+  const part = (c: string) => (c === '_' ? '__' : `_${c.codePointAt(0)!.toString(16)}_`);
+  return `${host}-${id.replace(/[^A-Za-z0-9]/gu, part)}`;
 }
 
 /**
@@ -113,70 +125,66 @@ export function outsideBlocks(
   };
 }
 
-/** Config keys a block cannot set: the look of the whole picture comes from the host. */
-const HOST_KEYS: ReadonlySet<string> = new Set([
-  'theme',
-  'themeVariables',
-  'themeCSS',
-  'look',
-  'darkMode',
-  'fontFamily',
-  'fontSize',
-  'handDrawnSeed',
-]);
+/**
+ * Whether `key` is a diagram section: one of the block type's own `sections`, or one the schema
+ * `tree` gives the keys every diagram has (`useMaxWidth`). A block's front matter and
+ * directives may set these only (ADR-15).
+ */
+function isSection(
+  key: string,
+  { tree, sections }: Pick<ResolvedSite, 'tree' | 'sections'>
+): boolean {
+  const keys = tree[key];
+  return sections.includes(key) || (typeof keys === 'object' && 'useMaxWidth' in keys);
+}
 
-/** `layer` without the keys a block cannot set, each one dropped added to `dropped`. */
-function withoutHostKeys<T extends object>(
+/** `layer`'s diagram sections, each other key added to `dropped`. */
+function sectionsOf<T extends object>(
   layer: T,
-  secure: ReadonlySet<string>,
+  site: Pick<ResolvedSite, 'tree' | 'sections'>,
   dropped: Set<string>
 ): T {
   const kept: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(layer)) {
-    if (HOST_KEYS.has(k) || secure.has(k)) dropped.add(k);
-    else kept[k] = v;
+    if (isSection(k, site)) kept[k] = v;
+    else dropped.add(k);
   }
   return kept as T;
 }
 
 /**
- * A block's config layers (front matter, directives) without the keys only the host or the
- * integrator sets (`secure`); one warning names those it dropped.
+ * A block's config layers (front matter, directives) with their diagram sections only; one
+ * warning names the keys it dropped.
  */
 export function blockLayers<T extends object>(
   front: T | undefined,
   directives: readonly T[],
-  secure: ReadonlySet<string>,
+  site: Pick<ResolvedSite, 'tree' | 'sections'>,
   warn: (w: Warning) => void
 ): { front: T | undefined; directives: T[] } {
   const dropped = new Set<string>();
   const out = {
-    front: front && withoutHostKeys(front, secure, dropped),
-    directives: directives.map((d) => withoutHostKeys(d, secure, dropped)),
+    front: front && sectionsOf(front, site, dropped),
+    directives: directives.map((d) => sectionsOf(d, site, dropped)),
   };
   if (dropped.size > 0)
     warn({
       code: 'EMBED_CONFIG_IGNORED',
-      message: `An embedded diagram cannot set ${[...dropped].map((k) => `\`${k}\``).join(', ')}; ignored: theme, look and font come from the host.`,
+      message: `An embedded diagram can set only diagram sections (such as \`sequence\`), not ${[...dropped].map((k) => `\`${k}\``).join(', ')}; ignored: the rest, theme and font included, comes from the host.`,
     });
   return out;
 }
 
-/** What a block takes from its host's resolved config: the look of the whole picture. */
-const INHERITED = ['theme', 'themeVariables', 'fontFamily', 'fontSize', 'darkMode'] as const;
-
 /**
- * A block's config: its own (site, then its front matter and directives), with the host's
- * theme and font, and drawn at its natural size (`useMaxWidth: false` in its sections).
+ * A block's config, resolved over its host's (`config`): the host's theme, and drawn at its
+ * natural size (`useMaxWidth: false` in its sections).
  */
 export function blockConfig(
   config: ResolvedConfig,
   host: ResolvedConfig,
   sections: readonly string[]
 ): ResolvedConfig {
-  const out: Record<string, unknown> = { ...config };
-  const from = host as Readonly<Record<string, unknown>>;
-  for (const key of INHERITED) if (from[key] !== undefined) out[key] = from[key];
+  const out: Record<string, unknown> = { ...config, theme: host.theme };
   for (const s of sections) {
     const own = (config as Readonly<Record<string, unknown>>)[s];
     out[s] = Object.freeze({ ...(own as object | undefined), useMaxWidth: false });
@@ -196,11 +204,14 @@ export interface DrawnBlock<E = EmbeddedDiagram> {
   readonly bind?: Bind;
 }
 
-/** Draws the blocks of one host draw, by block id, with the host's id prefix. */
-export type DrawBlocks<E = EmbeddedDiagram> = (
-  prefix: string,
-  warn: (w: Warning) => void
-) => ReadonlyMap<string, DrawnBlock<E>>;
+/** What one host draw gives its blocks: its id prefix, and where their warnings go. */
+interface Into {
+  readonly prefix: string;
+  readonly warn: (w: Warning) => void;
+}
+
+/** Draws the blocks of one host draw, by block id. */
+export type DrawBlocks<E = EmbeddedDiagram> = (into: Into) => ReadonlyMap<string, DrawnBlock<E>>;
 
 /** One draw's blocks: the render context's lookup, and the binders of the blocks it drew. */
 export interface LazyBlocks<E = EmbeddedDiagram> {
@@ -219,7 +230,7 @@ export function lazyEmbed<E = EmbeddedDiagram>(
 ): LazyBlocks<E> {
   let drawn: ReadonlyMap<string, DrawnBlock<E>> | undefined;
   return {
-    embed: blocks && ((id) => (drawn ??= blocks(prefix(), warn)).get(id)?.diagram),
+    embed: blocks && ((id) => (drawn ??= blocks({ prefix: prefix(), warn })).get(id)?.diagram),
     mounter: (run) =>
       mounter(run, () => {
         const out = new Map<string, Bind>();
@@ -295,11 +306,6 @@ function mounter<R extends { readonly svg: string }>(
     );
 }
 
-/** What the block pass needs from a parsed diagram. */
-interface Parsed {
-  readonly prepared: { readonly config: ResolvedConfig; readonly parse: ParseResult<unknown> };
-}
-
 /** One block draw: the inner diagram's root and what the draw said about it. */
 export interface BlockDrawn {
   readonly svg: string;
@@ -322,31 +328,25 @@ export interface BlockText extends EmbeddedText {
 /** What a block pass loads resources for: an SVG draw or text output. */
 export type BlockFormat = 'svg' | 'ascii';
 
-/**
- * What the block pass uses of the API object. `A` is a parsed diagram, `F` what detection
- * found, `S` the config snapshot, `P` a plugin, `O` the render options.
- */
-export interface BlockDeps<A extends Parsed, F, S, P, O> {
+/** The render options a block draw passes on. */
+type Options = RenderOptions | undefined;
+
+/** What the block pass uses of the API object. */
+export interface BlockDeps {
   /** Detects `text`'s type (as `detect`, throwing `UNSUPPORTED_DIAGRAM` when none is found). */
-  detect(text: string, s: S): F;
-  /** The plugin id `found` names; undefined for a type without a package. */
-  idOf(found: F): string | undefined;
-  /** The diagram type `found` names, for errors. */
-  typeOf(found: F): string;
-  /** The integrator's edge limit for the whole text. */
-  maxEdges(s: S): number;
+  detect(text: string, s: Snapshot): Detection;
   /** Parses `text` with `plugin`, for a host parsed as `host`. */
-  analyse(text: string, s: S, found: F, plugin: P, host: A): A;
-  load(id: string): Promise<P | undefined>;
-  loaded(id: string): P | undefined;
+  analyse(text: string, s: Snapshot, found: Detection, plugin: AnyPlugin, host: Analysis): Analysis;
+  load(id: string): Promise<AnyPlugin | undefined>;
+  loaded(id: string): AnyPlugin | undefined;
   /** Loads what `a` draws with in `format` (layout, themes, extension resources, text entry). */
-  resources(a: A, format: BlockFormat): Promise<unknown>;
+  resources(a: Analysis, format: BlockFormat): Promise<unknown>;
   /** Draws `a`, its ids prefixed `id`, with `blocks` for its own blocks. */
   draw(
     text: string,
-    s: S,
-    options: O,
-    a: A,
+    s: Snapshot,
+    options: Options,
+    a: Analysis,
     id: string,
     blocks: DrawBlocks | undefined
   ): BlockDrawn;
@@ -356,9 +356,9 @@ export interface BlockDeps<A extends Parsed, F, S, P, O> {
    */
   drawText(
     b: EmbeddedBlock,
-    s: S,
-    options: O,
-    a: A,
+    s: Snapshot,
+    options: Options,
+    a: Analysis,
     id: string,
     blocks: DrawBlocks<EmbeddedText> | undefined
   ): BlockText;
@@ -376,20 +376,32 @@ interface Place {
 }
 
 /**
+ * A host whose blocks a walk reads: where its text starts in the whole text, its analysis and
+ * the config snapshot.
+ */
+export interface HostAt extends Place {
+  readonly a: Analysis;
+  readonly s: Snapshot;
+}
+
+/** Where the body of `h`'s block `b` is. */
+const placeOf = (h: Place, b: EmbeddedBlock): Place => ({ root: h.root, at: h.at + b.offset });
+
+/**
  * The types of `host`'s folded blocks by id (#670), each detected from its type line alone: the
  * rest of the body is never read. A line no detector knows is shown as its first word.
  */
 const folds =
-  <F, S>(deps: Pick<BlockDeps<Parsed, F, S, unknown, unknown>, 'detect' | 'idOf' | 'typeOf'>) =>
-  (host: Parsed, s: S): ((id: string) => string | undefined) | undefined => {
+  (deps: Pick<BlockDeps, 'detect'>) =>
+  (host: Analysis, s: Snapshot): ((id: string) => string | undefined) | undefined => {
     const folded = embedsOf(host.prepared.parse).filter((b) => b.folded);
     if (folded.length === 0) return undefined;
     const typeOf = (b: EmbeddedBlock): string => {
       const { start, end } = typeRange(b, 0);
       const line = b.text.slice(start, end);
       try {
-        const f = deps.detect(line, s);
-        return deps.idOf(f) ?? deps.typeOf(f);
+        const { detected } = deps.detect(line, s);
+        return detected.id ?? detected.type;
       } catch {
         return /^[^\s{[(;:]*/.exec(line)![0];
       }
@@ -399,35 +411,50 @@ const folds =
   };
 
 /** The blocks of `host` to parse and draw: a folded one never is (#670). */
-const unfolded = (host: Parsed): EmbeddedBlock[] =>
+const unfolded = (host: Analysis): EmbeddedBlock[] =>
   embedsOf(host.prepared.parse).filter((b) => !b.folded);
 
-/** How deep blocks may nest: a block in the host is level 1 (ADR-15). */
-export const MAX_BLOCK_DEPTH = 4;
-
-/** The `mermaid <id>["Title"] {` line of the block whose body starts at `at` in `root`. */
-function openerRange(root: string, at: number): Range {
-  const brace = root.lastIndexOf('{', at - 1);
-  let start = root.lastIndexOf('\n', brace) + 1;
-  while (root[start] === ' ' || root[start] === '\t') start++;
-  return { start, end: brace + 1 };
+/** A block whose type this `mermaid` cannot draw: its body at `at`, its type. */
+interface Missing {
+  readonly b: EmbeddedBlock;
+  readonly at: number;
+  readonly type: string;
 }
 
-/** The error for a block whose type this `mermaid` cannot draw (unported or unregistered). */
-function unavailable(root: string, b: EmbeddedBlock, at: number, type: string): MermaidError {
-  const e = blockError(
-    root,
-    'EMBED_UNAVAILABLE',
-    `The \`mermaid ${b.id}\` block is a "${type}" diagram, which this mermaid cannot draw: it is not in this build or not registered (\`mermaid/slim\` draws only the diagrams given to \`createMermaid\`).`,
-    typeRange(b, at)
+const WHY =
+  'not in this build or not registered (`mermaid/slim` draws only the diagrams given to `createMermaid`)';
+
+/**
+ * The error for the blocks whose types this `mermaid` cannot draw (unported or unregistered),
+ * at the first: its message names each block and type, with one diagnostic per block.
+ */
+function unavailable(root: string, missing: readonly Missing[]): MermaidError {
+  const one = ({ b, type }: Missing) => `\`mermaid ${b.id}\` block is a "${type}" diagram`;
+  const diagnostics = missing.map(
+    (m): Diagnostic => ({
+      severity: 'error',
+      code: 'EMBED_UNAVAILABLE',
+      message: `The ${one(m)}, which this mermaid cannot draw: it is ${WHY}.`,
+      range: typeRange(m.b, m.at),
+    })
   );
-  const { offset, length, diagnostics } = e;
-  return new MermaidError('UNSUPPORTED_DIAGRAM', e.message, {
+  if (missing.length > 1)
+    diagnostics[0] = {
+      ...diagnostics[0]!,
+      message: `The ${missing.map(one).join(', the ')}; this mermaid cannot draw them: each is ${WHY}.`,
+    };
+  const { message, offset, length } = errorFromDiagnostics(root, diagnostics)!;
+  return new MermaidError('UNSUPPORTED_DIAGRAM', message, {
     source: root,
     offset,
     length,
     diagnostics,
   });
+}
+
+/** Throws the error for the `missing` blocks of a walk, if there are any. */
+function checkMissing(root: string, missing: readonly Missing[]): void {
+  if (missing.length > 0) throw unavailable(root, missing);
 }
 
 /** Edges counted so far in the whole text, against the integrator's `maxEdges`. */
@@ -438,17 +465,11 @@ interface Count {
 
 /** Checks block `b` (body at `at`) at nesting level `depth`, before it is parsed. */
 function checkDepth({ root, at }: Place, b: EmbeddedBlock, depth: number): void {
-  if (depth <= MAX_BLOCK_DEPTH) return;
-  throw blockError(
-    root,
-    'EMBED_DEPTH',
-    `The \`mermaid ${b.id}\` block is nested more than ${MAX_BLOCK_DEPTH} deep.`,
-    openerRange(root, at)
-  );
+  if (depth > MAX_BLOCK_DEPTH) throw errorFromDiagnostics(root, [tooDeep(root, b.id, at)])!;
 }
 
 /** Adds parsed block `a`'s edges to the whole text's count. */
-function countEdges({ root, at }: Place, b: EmbeddedBlock, a: Parsed, count: Count): void {
+function countEdges({ root, at }: Place, b: EmbeddedBlock, a: Analysis, count: Count): void {
   count.used += edgesOf(a.prepared.parse);
   if (count.used <= count.max) return;
   throw blockError(
@@ -460,12 +481,12 @@ function countEdges({ root, at }: Place, b: EmbeddedBlock, a: Parsed, count: Cou
 }
 
 /** Detects block `b`, its body at `at` in `root` (the whole text), its errors placed there. */
-function detectBlock<F, S>(
-  deps: { detect(text: string, s: S): F },
+function detectBlock(
+  deps: Pick<BlockDeps, 'detect'>,
   { root, at }: Place,
   b: EmbeddedBlock,
-  s: S
-): F {
+  s: Snapshot
+): Detection {
   try {
     return deps.detect(b.text, s);
   } catch (e) {
@@ -475,36 +496,24 @@ function detectBlock<F, S>(
   }
 }
 
-/** The count for a walk from the top-level `host`, against `max`. */
-const countFrom = (host: Parsed, max: number): Count => ({
-  used: edgesOf(host.prepared.parse),
-  max,
+/** The count for a walk from the top-level host `h`, against the integrator's `maxEdges`. */
+const countFrom = ({ a, s }: HostAt): Count => ({
+  used: edgesOf(a.prepared.parse),
+  max: s.limits.maxEdges,
 });
 
-export interface BlockPass<A, S, O> {
+export interface BlockPass {
   /**
-   * Loads and parses `host`'s blocks and theirs, and with `resources` what each one draws
-   * with in that format. `base` is where `host`'s text starts in `root`.
+   * Loads and parses `h`'s blocks and theirs, and with `resources` what each one draws with in
+   * that format.
    */
-  prepare(
-    root: string,
-    base: number,
-    host: A,
-    s: S,
-    resources: BlockFormat | undefined
-  ): Promise<void>;
-  /** `host`'s blocks drawn for its lookup (undefined when it has none). */
-  draw(root: string, base: number, host: A, s: S, options: O): DrawBlocks | undefined;
+  prepare(h: HostAt, resources: BlockFormat | undefined): Promise<void>;
+  /** `h`'s blocks drawn for its lookup (undefined when it has none). */
+  draw(h: HostAt, options: Options): DrawBlocks | undefined;
   /** The types of `host`'s folded blocks by id (undefined when it has none), #670. */
-  foldedType(host: A, s: S): ((id: string) => string | undefined) | undefined;
-  /** `host`'s blocks drawn as text for its lookup (undefined when it has none). */
-  drawText(
-    root: string,
-    base: number,
-    host: A,
-    s: S,
-    options: O
-  ): DrawBlocks<EmbeddedText> | undefined;
+  foldedType(host: Analysis, s: Snapshot): ((id: string) => string | undefined) | undefined;
+  /** `h`'s blocks drawn as text for its lookup (undefined when it has none). */
+  drawText(h: HostAt, options: Options): DrawBlocks<EmbeddedText> | undefined;
 }
 
 /**
@@ -514,126 +523,141 @@ export interface BlockPass<A, S, O> {
  * the nesting depth and count the edges of the whole text against `maxEdges`. A folded
  * block is never walked: `foldedType` detects its type alone (#670).
  */
-export function blockPass<A extends Parsed, F, S, P, O>(
-  deps: BlockDeps<A, F, S, P, O>
-): BlockPass<A, S, O> {
+export function blockPass(deps: BlockDeps): BlockPass {
   return { ...walks(deps), foldedType: folds(deps) };
 }
 
-/** The walks of {@link blockPass}: prepare, draw and drawText. */
-function walks<A extends Parsed, F, S, P, O>(
-  deps: BlockDeps<A, F, S, P, O>
-): Omit<BlockPass<A, S, O>, 'foldedType'> {
-  const analyses = new WeakMap<A, Map<string, A>>();
+/**
+ * The block analyses of {@link blockPass}, kept with their host's, so a cached host keeps its
+ * blocks: `prepared` loads a block's plugin, `loaded` takes it as loaded. Each gives undefined,
+ * and adds the block to `missing`, when its type cannot be drawn.
+ */
+function analysesOf(deps: BlockDeps) {
+  const analyses = new WeakMap<Analysis, Map<string, Analysis>>();
 
-  const found = (place: Place, b: EmbeddedBlock, s: S): F => detectBlock(deps, place, b, s);
-
-  /** Block `b` of `host` (detected as `f`), parsed once, its errors placed in `root`. */
-  function blockOf(
-    { root, at }: Place,
-    host: A,
-    b: EmbeddedBlock,
-    s: S,
-    f: F,
-    plugin: P | undefined
-  ): A {
-    if (!plugin) throw unavailable(root, b, at, deps.typeOf(f));
-    let map = analyses.get(host);
-    let a: A;
+  /** Block `b` of `h` (detected as `f`), parsed once, its errors placed in the whole text. */
+  function blockOf(h: HostAt, b: EmbeddedBlock, f: Detection, plugin: AnyPlugin): Analysis {
+    let a: Analysis;
     try {
-      a = deps.analyse(b.text, s, f, plugin, host);
+      a = deps.analyse(b.text, h.s, f, plugin, h.a);
     } catch (e) {
+      const { root, at } = placeOf(h, b);
       throw inOuterText(e, root, at);
     }
-    if (!map) analyses.set(host, (map = new Map<string, A>()));
+    let map = analyses.get(h.a);
+    if (!map) analyses.set(h.a, (map = new Map<string, Analysis>()));
     map.set(b.id, a);
     return a;
   }
 
-  /** The analysis of block `b` whose plugin is already loaded (detected again when uncached). */
-  async function prepared(place: Place, host: A, b: EmbeddedBlock, s: S): Promise<A> {
-    const cached = analyses.get(host)?.get(b.id);
-    if (cached) return cached;
-    const f = found(place, b, s);
-    const id = deps.idOf(f);
-    return blockOf(place, host, b, s, f, id === undefined ? undefined : await deps.load(id));
+  /** Block `b` of `h`, cached or detected: the analysis, or what detection found. */
+  function lookup(h: HostAt, b: EmbeddedBlock): Analysis | Detection {
+    return analyses.get(h.a)?.get(b.id) ?? detectBlock(deps, placeOf(h, b), b, h.s);
   }
 
-  /** Prepares `host`'s blocks (its text at `base` in `root`), nested `depth` levels down. */
-  async function prepareLevel(
-    { root, at: base }: Place,
-    host: A,
-    s: S,
-    walk: { readonly resources: BlockFormat | undefined; readonly count: Count },
-    depth: number
-  ): Promise<void> {
-    for (const b of unfolded(host)) {
-      const place = { root, at: base + b.offset };
-      checkDepth(place, b, depth);
-      const inner = await prepared(place, host, b, s);
-      countEdges(place, b, inner, walk.count);
-      if (walk.resources) await deps.resources(inner, walk.resources);
-      await prepareLevel(place, inner, s, walk, depth + 1);
-    }
+  const miss = (h: HostAt, b: EmbeddedBlock, f: Detection, missing: Missing[]): undefined =>
+    void missing.push({ b, at: placeOf(h, b).at, type: f.detected.type });
+
+  async function prepared(
+    h: HostAt,
+    b: EmbeddedBlock,
+    missing: Missing[]
+  ): Promise<Analysis | undefined> {
+    const f = lookup(h, b);
+    if ('prepared' in f) return f;
+    const { id } = f.detected;
+    const plugin = id === undefined ? undefined : await deps.load(id);
+    return plugin ? blockOf(h, b, f, plugin) : miss(h, b, f, missing);
   }
 
-  function prepare(
-    root: string,
-    base: number,
-    host: A,
-    s: S,
-    resources: BlockFormat | undefined
-  ): Promise<void> {
-    const walk = { resources, count: countFrom(host, deps.maxEdges(s)) };
-    return prepareLevel({ root, at: base }, host, s, walk, 1);
-  }
-
-  /** The analysis of block `b`, for a draw: its plugin must be loaded. */
-  function loaded(place: Place, host: A, b: EmbeddedBlock, s: S): A {
-    const cached = analyses.get(host)?.get(b.id);
-    if (cached) return cached;
-    const f = found(place, b, s);
-    const id = deps.idOf(f);
-    if (id === undefined) throw unavailable(place.root, b, place.at, deps.typeOf(f));
+  function loaded(h: HostAt, b: EmbeddedBlock, missing: Missing[] = []): Analysis | undefined {
+    const f = lookup(h, b);
+    if ('prepared' in f) return f;
+    const { id } = f.detected;
+    if (id === undefined) return miss(h, b, f, missing);
     const plugin = deps.loaded(id);
     // renderSync draws only what prepare loaded (R-API-2).
     if (!plugin) throw new NotLoadedError([{ kind: 'diagram', name: id }]);
-    return blockOf(place, host, b, s, f, plugin);
+    return blockOf(h, b, f, plugin);
   }
 
-  /** Parses `host`'s blocks and theirs for a draw, checking depth and edges. */
-  function check(root: string, base: number, host: A, s: S, count: Count, depth: number): void {
-    for (const b of unfolded(host)) {
-      const place = { root, at: base + b.offset };
-      checkDepth(place, b, depth);
-      const inner = loaded(place, host, b, s);
-      countEdges(place, b, inner, count);
-      check(root, place.at, inner, s, count, depth + 1);
+  return { prepared, loaded };
+}
+
+/** One walk over the block tree: the whole text's edge count and the blocks it cannot draw. */
+interface Walk {
+  readonly count: Count;
+  readonly missing: Missing[];
+}
+
+/** A walk from the top-level host `h`. */
+const walkFrom = (h: HostAt): Walk => ({ count: countFrom(h), missing: [] });
+
+/** The walks of {@link blockPass}: prepare, draw and drawText. */
+function walks(deps: BlockDeps): Omit<BlockPass, 'foldedType'> {
+  const { prepared, loaded } = analysesOf(deps);
+
+  /**
+   * Block `b` of `h` as a host, its edges counted, given its analysis; undefined for a block
+   * whose type cannot be drawn.
+   */
+  function counted(
+    h: HostAt,
+    b: EmbeddedBlock,
+    walk: Walk,
+    inner: Analysis | undefined
+  ): HostAt | undefined {
+    if (!inner) return undefined;
+    const place = placeOf(h, b);
+    countEdges(place, b, inner, walk.count);
+    return { ...place, a: inner, s: h.s };
+  }
+
+  /** Prepares `h`'s blocks and theirs, nested `depth` levels down. */
+  async function prepareLevel(
+    h: HostAt,
+    walk: Walk & { readonly resources: BlockFormat | undefined },
+    depth: number
+  ): Promise<void> {
+    for (const b of unfolded(h.a)) {
+      checkDepth(placeOf(h, b), b, depth);
+      const inner = counted(h, b, walk, await prepared(h, b, walk.missing));
+      if (!inner) continue;
+      if (walk.resources) await deps.resources(inner.a, walk.resources);
+      await prepareLevel(inner, walk, depth + 1);
+    }
+  }
+
+  async function prepare(h: HostAt, resources: BlockFormat | undefined): Promise<void> {
+    const walk = { ...walkFrom(h), resources };
+    await prepareLevel(h, walk, 1);
+    checkMissing(h.root, walk.missing);
+  }
+
+  /** Parses `h`'s blocks and theirs for a draw, checking depth and edges. */
+  function check(h: HostAt, walk: Walk, depth: number): void {
+    for (const b of unfolded(h.a)) {
+      checkDepth(placeOf(h, b), b, depth);
+      const inner = counted(h, b, walk, loaded(h, b, walk.missing));
+      if (inner) check(inner, walk, depth + 1);
     }
   }
 
   /**
-   * `host`'s blocks drawn by `one` for its lookup, each with its own blocks drawn first (`one`
-   * gets the block's analysis and where its body starts in `root`). SVG and text share it.
+   * `h`'s blocks drawn by `one` for its lookup, each with its own blocks drawn first (`one`
+   * gets the block as a host and its id prefix). SVG and text share it.
    */
   function drawAll<E>(
-    root: string,
-    base: number,
-    host: A,
-    s: S,
-    one: (b: EmbeddedBlock, inner: A, at: number, prefix: string) => DrawnBlock<E> & BlockWarnings
+    h: HostAt,
+    one: (b: EmbeddedBlock, inner: HostAt, prefix: string) => DrawnBlock<E> & BlockWarnings
   ): DrawBlocks<E> | undefined {
-    if (embedsOf(host.prepared.parse).length === 0) return undefined;
-    return (prefix, warn) => {
+    if (embedsOf(h.a.prepared.parse).length === 0) return undefined;
+    return ({ prefix, warn }) => {
       const out = new Map<string, DrawnBlock<E>>();
-      for (const b of unfolded(host)) {
-        const at = base + b.offset;
-        const { warnings, ...drawn } = one(
-          b,
-          loaded({ root, at }, host, b, s),
-          at,
-          blockPrefix(prefix, b.id)
-        );
+      for (const b of unfolded(h.a)) {
+        // Checked before the draw: every block is loaded.
+        const inner = { ...placeOf(h, b), a: loaded(h, b)!, s: h.s };
+        const { warnings, ...drawn } = one(b, inner, blockPrefix(prefix, b.id));
         for (const w of warnings) warn(w);
         out.set(b.id, drawn);
       }
@@ -641,23 +665,11 @@ function walks<A extends Parsed, F, S, P, O>(
     };
   }
 
-  /** `host`'s blocks drawn as SVG for its lookup, each with its own blocks drawn first. */
-  function drawLevel(
-    root: string,
-    base: number,
-    host: A,
-    s: S,
-    options: O
-  ): DrawBlocks | undefined {
-    return drawAll<EmbeddedDiagram>(root, base, host, s, (b, inner, at, id) => {
-      const drawn = deps.draw(
-        b.text,
-        s,
-        options,
-        inner,
-        id,
-        drawLevel(root, at, inner, s, options)
-      );
+  /** `h`'s blocks drawn as SVG for its lookup, each with its own blocks drawn first. */
+  function drawLevel(h: HostAt, options: Options): DrawBlocks | undefined {
+    return drawAll<EmbeddedDiagram>(h, (b, inner, id) => {
+      const deeper = drawLevel(inner, options);
+      const drawn = deps.draw(b.text, h.s, options, inner.a, id, deeper);
       const { securityLevel, linkSchemes } = drawn;
       const diagram: EmbeddedDiagram = {
         width: drawn.width,
@@ -668,29 +680,23 @@ function walks<A extends Parsed, F, S, P, O>(
     });
   }
 
-  /** `host`'s blocks drawn as text for its lookup, each with its own blocks drawn first. */
-  function textLevel(
-    root: string,
-    base: number,
-    host: A,
-    s: S,
-    options: O
-  ): DrawBlocks<EmbeddedText> | undefined {
-    return drawAll<EmbeddedText>(root, base, host, s, (b, inner, at, id) => {
-      const deeper = textLevel(root, at, inner, s, options);
-      const { warnings, ...diagram } = deps.drawText(b, s, options, inner, id, deeper);
+  /** `h`'s blocks drawn as text for its lookup, each with its own blocks drawn first. */
+  function textLevel(h: HostAt, options: Options): DrawBlocks<EmbeddedText> | undefined {
+    return drawAll<EmbeddedText>(h, (b, inner, id) => {
+      const deeper = textLevel(inner, options);
+      const { warnings, ...diagram } = deps.drawText(b, h.s, options, inner.a, id, deeper);
       return { diagram, warnings };
     });
   }
 
   /** A top-level draw (SVG or text): the whole block tree checked first, then `level`. */
-  function checked<E>(
-    level: (root: string, base: number, host: A, s: S, options: O) => DrawBlocks<E> | undefined
-  ) {
-    return (root: string, base: number, host: A, s: S, options: O): DrawBlocks<E> | undefined => {
-      if (embedsOf(host.prepared.parse).length === 0) return undefined;
-      check(root, base, host, s, countFrom(host, deps.maxEdges(s)), 1);
-      return level(root, base, host, s, options);
+  function checked<E>(level: (h: HostAt, options: Options) => DrawBlocks<E> | undefined) {
+    return (h: HostAt, options: Options): DrawBlocks<E> | undefined => {
+      if (embedsOf(h.a.prepared.parse).length === 0) return undefined;
+      const walk = walkFrom(h);
+      check(h, walk, 1);
+      checkMissing(h.root, walk.missing);
+      return level(h, options);
     };
   }
 

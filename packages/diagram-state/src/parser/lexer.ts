@@ -14,6 +14,7 @@
  * line (`.*direction…`, `.*<<fork>>`, `end note`) keep the next match found as a memo.
  */
 import {
+  closingLine,
   codePointEnd,
   COLON,
   COMMA,
@@ -29,9 +30,11 @@ import {
   LBRACE,
   LBRACKET,
   LF,
+  openerBrace,
   PERCENT,
   RBRACE,
   RBRACKET,
+  scanWhile,
   SEMI,
   SPACE,
   TAB,
@@ -597,19 +600,14 @@ class StateLexer {
    */
   private embed(): boolean {
     const p = this.p;
-    if (!this.t.startsWith('mermaid', p) || !isBlank(this.code(p + 7))) return false;
     let b = p - 1;
     while (b >= 0 && isBlank(this.code(b))) b--;
     if (b >= 0 && this.code(b) !== LF) return false;
     const le = this.nextLf(p);
-    let last = le - 1;
-    while (last > p + 7 && isBlank(this.code(last))) last--;
-    if (this.code(last) !== LBRACE) return false;
-    let i = p + 7;
-    while (i < last && isBlank(this.code(i))) i++;
-    if (i === last) return false;
+    const last = openerBrace(this.t, p, le);
+    if (last < 0) return false;
     this.emit(T.Embed, p, p + 7);
-    this.embedHead(i, last);
+    this.embedHead(scanWhile(this.t, p + 7, isBlank), last);
     this.emit(T.EmbedOpen, last, last + 1);
     this.embedBody(le + 1);
     return true;
@@ -638,22 +636,6 @@ class StateLexer {
     if (i < last) this.emit(Kind.Error, i, last);
   }
 
-  /** Whether the view line `[a, e)` ends in a `{` outside a `"…"` string. */
-  private endsInBrace(a: number, e: number): boolean {
-    let quoted = false;
-    let last = -1;
-    let lastQuoted = false;
-    for (let j = a; j < e; j++) {
-      const c = this.code(j);
-      if (c === DQUOTE) quoted = !quoted;
-      if (!isSpace(c)) {
-        last = c;
-        lastQuoted = quoted;
-      }
-    }
-    return last === LBRACE && !lastQuoted;
-  }
-
   /**
    * The body from view offset `s` (the line after the opener) to the `}` that closes it,
    * found by line: a line ending in `{` opens a level, a line starting with `}` closes one;
@@ -662,22 +644,16 @@ class StateLexer {
    */
   private embedBody(s: number): void {
     const start = this.sourceEnd(s - 1, s);
-    let depth = 1;
-    for (let line = s; line < this.n; ) {
-      const e = this.nextLf(line);
-      let a = line;
-      while (a < e && isBlank(this.code(a))) a++;
-      if (this.code(a) === RBRACE && --depth === 0) {
-        this.emitBody(start, this.sourceStart(line), s, line);
-        this.emit(T.EmbedEnd, a, a + 1);
-        this.p = a + 1;
-        return;
-      }
-      if (this.endsInBrace(a, e)) depth++;
-      line = e + 1;
+    const line = closingLine(this.t, s, this.n, isSpace);
+    if (line < 0) {
+      this.emitBody(start, this.src.length, s, this.n);
+      this.p = this.n;
+      return;
     }
-    this.emitBody(start, this.src.length, s, this.n);
-    this.p = this.n;
+    const a = scanWhile(this.t, line, isBlank);
+    this.emitBody(start, this.sourceStart(line), s, line);
+    this.emit(T.EmbedEnd, a, a + 1);
+    this.p = a + 1;
   }
 
   /** The body token, from source offsets; the comment lines inside it are part of it. */

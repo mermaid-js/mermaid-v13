@@ -21,6 +21,7 @@ import {
   BACKTICK,
   CARET,
   charTable,
+  closingLine,
   codePointEnd,
   COLON,
   COMMA,
@@ -56,11 +57,13 @@ import {
   LOWER_X,
   LPAREN,
   LT,
+  openerBrace,
   PIPE,
   QUESTION,
   RBRACE,
   RBRACKET,
   RPAREN,
+  scanWhile,
   SEMI,
   SLASH,
   STAR,
@@ -697,36 +700,15 @@ class FlowLexer {
   private embedOpener(): boolean {
     const p = this.p;
     const { text } = this;
-    if (!this.kw('mermaid') || !isBlank(text.charCodeAt(p + 7))) return false;
     let b = p - 1;
     while (b >= this.from && isBlank(text.charCodeAt(b))) b--;
     if (b >= this.from && !isNl(text.charCodeAt(b)) && text.charCodeAt(b) !== SEMI) return false;
-    let e = p + 7;
+    let e = p;
     while (e < this.n && !isNl(text.charCodeAt(e))) e++;
-    let last = e - 1;
-    while (last > p + 7 && isBlank(text.charCodeAt(last))) last--;
-    if (text.charCodeAt(last) !== LBRACE) return false;
-    let id = p + 7;
-    while (id < last && isBlank(text.charCodeAt(id))) id++;
-    if (id === last) return false;
-    this.embedBrace = last;
+    const brace = openerBrace(text, p, e);
+    if (brace < 0) return false;
+    this.embedBrace = brace;
     return this.token(T.Embed, 7);
-  }
-
-  /** Whether the line `text[a, e)` ends in a `{` outside a `"…"` string. */
-  private endsInBrace(a: number, e: number): boolean {
-    let quoted = false;
-    let last = -1;
-    let lastQuoted = false;
-    for (let j = a; j < e; j++) {
-      const c = this.text.charCodeAt(j);
-      if (c === DQUOTE) quoted = !quoted;
-      if (!isBlank(c)) {
-        last = c;
-        lastQuoted = quoted;
-      }
-    }
-    return last === LBRACE && !lastQuoted;
   }
 
   /**
@@ -743,21 +725,11 @@ class FlowLexer {
     while (s < this.len && !isNl(text.charCodeAt(s))) s++;
     if (text.charCodeAt(s) === CR && text.charCodeAt(s + 1) === LF) s++;
     s = Math.min(s + 1, this.len);
-    let depth = 1;
-    for (let line = s; line < this.len; ) {
-      let e = line;
-      while (e < this.len && !isNl(text.charCodeAt(e))) e++;
-      let a = line;
-      while (a < e && isBlank(text.charCodeAt(a))) a++;
-      if (text.charCodeAt(a) === RBRACE && --depth === 0) {
-        this.emit(T.EmbedBody, s, line);
-        this.emit(T.EmbedEnd, a, a + 1);
-        return true;
-      }
-      if (this.endsInBrace(a, e)) depth++;
-      line = e + (text.charCodeAt(e) === CR && text.charCodeAt(e + 1) === LF ? 2 : 1);
-    }
-    this.emit(T.EmbedBody, s, this.len);
+    const line = closingLine(text, s, this.len);
+    this.emit(T.EmbedBody, s, line < 0 ? this.len : line);
+    if (line < 0) return true;
+    const a = scanWhile(text, line, isBlank);
+    this.emit(T.EmbedEnd, a, a + 1);
     return true;
   }
 

@@ -49,6 +49,21 @@ export function foldedSize(title: Measured, type: Measured, chars: number): Meas
   };
 }
 
+/**
+ * The folded box in cells (text output), a text-form box: the title rows, a divider and the
+ * type row, as wide as the wider label, with `pad` cells and a border cell round them.
+ */
+export function foldedCells(
+  title: { readonly width: number; readonly rows: number },
+  type: { readonly width: number },
+  pad: { readonly x: number; readonly y: number }
+): Measured {
+  return {
+    width: Math.max(title.width, type.width) + 2 * (pad.x + 1),
+    height: title.rows + 2 + 2 * (pad.y + 1),
+  };
+}
+
 /** How the folded box is painted: the host's frame, its title text and the muted type. */
 export interface FoldedPaint {
   /** The frame (fill none, the host's border and width, the author's style). */
