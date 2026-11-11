@@ -9,7 +9,7 @@
  * (rules and family entries) is the `theme` of the plugin `src/index.ts` exports.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import type {
   DiagramThemeTable,
@@ -139,6 +139,44 @@ function sources(dir: string): string[] {
   });
 }
 
+const SHARED = join(PACKAGES, 'shared');
+
+/** The `mermaid-source` file of each `@mermaid-js/shared` subpath, by subpath (`svg/edges`). */
+function sharedEntries(): Map<string, string> {
+  const manifest = join(SHARED, 'package.json');
+  if (!existsSync(manifest)) return new Map();
+  const { exports = {} } = JSON.parse(readFileSync(manifest, 'utf8')) as {
+    exports?: Record<string, { 'mermaid-source'?: string }>;
+  };
+  return new Map(
+    Object.entries(exports).flatMap(([key, target]) => {
+      const source = target['mermaid-source'];
+      return source === undefined ? [] : [[key.replace(/^\.\//, ''), join(SHARED, source)]];
+    })
+  );
+}
+
+/** The text of every `@mermaid-js/shared` file that `text` imports, directly or through one. */
+function sharedSources(text: string): string[] {
+  const entries = sharedEntries();
+  const seen = new Set<string>();
+  const queue = [...text.matchAll(/'@mermaid-js\/shared\/([\w/-]+)'/g)].flatMap((m) => {
+    const entry = entries.get(m[1]!);
+    return entry === undefined ? [] : [entry];
+  });
+  const out: string[] = [];
+  for (let file = queue.pop(); file !== undefined; file = queue.pop()) {
+    if (seen.has(file) || !existsSync(file)) continue;
+    seen.add(file);
+    const body = readFileSync(file, 'utf8');
+    out.push(body);
+    for (const m of body.matchAll(/from '(\.{1,2}\/[\w./-]+\.ts)'/g)) {
+      queue.push(join(dirname(file), m[1]!));
+    }
+  }
+  return out;
+}
+
 /**
  * The theme variables each package's sources read (#207), by type. A diagram reads a variable
  * by passing its name as a string literal to a call, either a `Theme` method
@@ -154,9 +192,9 @@ export function themeReads(
 ): Map<string, Set<string>> {
   const out = new Map<string, Set<string>>();
   for (const { type, dir, dynamicReads = [] } of packages) {
-    const text = sources(join(dir, 'src'))
-      .map((f) => readFileSync(f, 'utf8'))
-      .join('\n');
+    const own = sources(join(dir, 'src')).map((f) => readFileSync(f, 'utf8'));
+    // A read made on the package's behalf by `@mermaid-js/shared` code is the package's read.
+    const text = [...own, ...sharedSources(own.join('\n'))].join('\n');
     const names = [
       ...[...text.matchAll(/(?:\b\w+\(|\b(?!nested\b)\w+:)\s*'(\w+)'/g)].map((m) => m[1]!),
       // A table rule's `inline(name)` or `inline(name, fallback)`: a shared input read as the
