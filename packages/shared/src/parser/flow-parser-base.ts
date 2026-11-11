@@ -1,14 +1,18 @@
 /**
- * The agentflow parser's base (`parser.ts`): the parse state, the token helpers, error reporting
- * and recovery (R-PARSE-4), the token rules and `@{ … }` metadata.
+ * The flow family parser's base ({@link FlowParser} in `flow-parser.ts` has the grammar rules):
+ * the parse state, the token helpers, error reporting and recovery (R-PARSE-4), the token rules
+ * and the text of a `@{ … }` block.
  *
- * Split from the parser (a copy of v13 flowchart's, D467); flowchart's parser is ported from
- * Pele's `src/diagrams/flowchart/parser.ts` at 3a2f075 (https://github.com/obsidianmd/pele, MIT,
- * (c) 2026 kepano). Changed: split out of the parser class; agentflow's token kinds, error hints
- * and recovery points, the `maxTextSize` source view (`source.ts`) and v12's `@{ … }` reading
- * (its trailing commas, D464).
- * cspell:ignore kepano
+ * The grammar is v12's `flow.jison` (LALR); the descent follows Pele's port of it
+ * (`src/diagrams/flowchart/parser.ts` at 3a2f075, https://github.com/obsidianmd/pele, MIT,
+ * (c) 2026 kepano), so it accepts and rejects what jison does. Unlike jison it does not stop
+ * at the first error: it reports it, skips to the next statement boundary and carries on
+ * (R-PARSE-4). An unclosed label or string, which swallows the rest of the text, is reported
+ * at its opener and lexing restarts on the following line. Changed from Pele besides: one
+ * parser for flowchart and the grammars cut from it; each diagram gives it its token kinds,
+ * tables, lexer and model builder ({@link FlowParserDialect}) and writes its own block rules.
  */
+// cspell:words kepano LALR
 import {
   cook,
   inKindSet,
@@ -16,86 +20,185 @@ import {
   Kind,
   LBRACE,
   LineIndex,
-  localOffset,
   ParseState,
   Probe,
   RBRACE,
   significantTokens,
   skipTo,
-  SourceOffsets,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
+  AstId,
+  Diagnostic,
+  Diagnostics,
   KindSet,
   ParseOptions,
-  ParseResult,
   Range,
   SourceView,
   TokenStream,
   TokenView,
 } from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS } from '@mermaid-js/core/limits';
-import { isYamlMap, parseYaml, preprocess } from '@mermaid-js/core/preprocess';
-import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import {
-  ALPHANUM,
-  BOUNDARY,
-  EDGE_PART,
-  EXPECTED,
-  hintFor,
-  ID,
-  LEXER_MODE,
-  LINE_END,
-  LINE_END_SET,
-  NO_TAGS,
-  PARSER_TRIVIA,
-  PROBE_FOLLOWS,
-  SHAPE_DATA,
-  SHAPE_DATA_PARTS,
-  STOP,
-  TEXT_PART,
-} from './tables.ts';
-import type { Frame, Opener, ShapeData } from './tables.ts';
-import type { AgentflowDocument, AgentflowLabelNode, AgentflowStatementNode } from './ast.ts';
-import { lex } from './lexer.ts';
-import { AgentflowBuilder } from './model.ts';
-import type { AgentflowModel, DocItem, LabelType } from './model.ts';
-import { agentflowSourceView } from './source.ts';
-import { stripLineTrailingCommas } from './trailing-commas.ts';
-import { T } from './tokens.ts';
+import { parseYaml, preprocess } from '@mermaid-js/core/preprocess';
+import type { PreprocessResult, YamlMap } from '@mermaid-js/core/preprocess';
+import type { FlowLabelNode, FlowLabelText, FlowLabelType, FlowStatement } from './flow-ast.ts';
+import type { FlowKinds } from './flow-kinds.ts';
+import type { FlowTables } from './flow-tables.ts';
 
-export interface AgentflowParseOptions extends ParseOptions {
+/** The parse options every dialect has. */
+export interface FlowParseOptionsBase extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
-  /**
-   * v12's `maxTextSize` (the site config's): past it v12 parsed the text without its comments
-   * (`agentflowSourceView`).
-   */
-  maxTextSize?: number;
-  /** Edge cap (core `DEFAULT_LIMITS.maxEdges`; v12's `maxEdges` was 500). */
-  maxEdges?: number;
-  /** Vertex cap (core `DEFAULT_LIMITS.maxNodes`). */
-  maxNodes?: number;
-  /** Flow nesting cap (core `DEFAULT_LIMITS.maxDepth`). */
+  /** Block nesting cap (core `DEFAULT_LIMITS.maxDepth`). */
   maxDepth?: number;
-  /** v12 `flowchart.inheritDir`, which agentflow reads (D466). */
-  inheritDir?: boolean;
   /** Features claimed by extension plugins; `callbacks` silences `CALLBACK_IGNORED`. */
   claims?: readonly string[];
 }
 
-export type AgentflowParseResult = ParseResult<AgentflowModel, AgentflowDocument>;
+/** What a link's arrow says, as v12's `destructLink` read it. */
+export interface FlowLinkInfo {
+  type: string;
+  stroke: string;
+  length?: number;
+  text?: FlowLabelText;
+  id?: string;
+}
+
+/** Item of a block body as v12's grammar collects it. */
+export type FlowDocItem = string | readonly string[] | { stmt: 'dir'; value: string };
+
+/** What one mention of a vertex sets. */
+export interface FlowVertexParts {
+  label?: FlowLabelText;
+  /** The shape, from brackets or `@{ shape }`. */
+  type?: string;
+  styles?: string[];
+  props?: Record<string, string>;
+  /** The parsed `@{ … }` block; null when it did not parse. */
+  data?: YamlMap | null;
+}
+
+/** What one link statement asks for: every start to every end. */
+export interface FlowLinkParts {
+  starts: string[];
+  ends: string[];
+  info: FlowLinkInfo;
+  astFor: (start: string, end: string) => AstId;
+  /** The link, for the edge-limit diagnostic. */
+  at: Range;
+}
+
+/** An edge as the parser reads it back from the builder. */
+export interface FlowParserEdge {
+  readonly id: string;
+  readonly ast: AstId;
+  readonly isUserDefinedId: boolean;
+  readonly start: string;
+  readonly end: string;
+}
+
+/** What the parser asks of a diagram's model builder (v12's DB). */
+export interface FlowParserBuilder {
+  readonly direction: string;
+  readonly vertices: ReadonlyMap<string, { readonly ast: AstId }>;
+  readonly edges: readonly FlowParserEdge[];
+  hasEdge(id: string): boolean;
+  edgeNamed(id: string): FlowParserEdge | undefined;
+  addVertex(id: string, ast: AstId, at: Range, parts?: FlowVertexParts): void;
+  addLink(parts: FlowLinkParts): void;
+  updateLink(positions: string[], style: string[], at: Range): boolean;
+  updateLinkInterpolate(positions: string[], interpolate: string, at: Range): boolean;
+  addClass(ids: string, styles: string[]): void;
+  setClass(ids: string, className: string): void;
+  setTooltip(ids: string, tooltip: string): void;
+  setLink(ids: string, url: string, at: Range, target?: string): void;
+  setClickEvent(ids: string, name: string, at: Range, args?: string): void;
+  setAccTitle(text: string): void;
+  setAccDescription(text: string): void;
+  setDirection(dir: string): void;
+}
+
+/** What a diagram gives the family's parser. Built once a diagram, at module scope. */
+export interface FlowParserDialect<B extends FlowParserBuilder, O extends FlowParseOptionsBase> {
+  /** The diagram's token kinds. */
+  readonly kinds: FlowKinds;
+  /** Its tables (`flowTables`). */
+  readonly tables: FlowTables;
+  /** The text v12 lexed, from the body's start. */
+  view(src: string, pre: PreprocessResult, options: O): SourceView;
+  /** Its lexer. */
+  lex(
+    src: string,
+    from: number,
+    view: SourceView,
+    graphKeyword: boolean,
+    probe?: Probe
+  ): TokenStream;
+  /** A model builder for one parse, reporting to `diagnostics`. */
+  builder(options: O, diagnostics: Diagnostics): B;
+  /** v12's `destructLink`: an arrow's text, and the text that opened its label if any. */
+  destructLink(end: string, start?: string): FlowLinkInfo;
+}
+
+/** The `maxNodes`, `maxEdges` and `inheritDir` a builder is made with, from the parse options. */
+export function flowBuilderLimits(options: {
+  maxEdges?: number;
+  maxNodes?: number;
+  inheritDir?: boolean;
+}): { maxEdges: number; maxNodes: number; inheritDir: boolean } {
+  return {
+    maxEdges: options.maxEdges ?? DEFAULT_LIMITS.maxEdges,
+    maxNodes: options.maxNodes ?? DEFAULT_LIMITS.maxNodes,
+    inheritDir: options.inheritDir ?? false,
+  };
+}
+
+/** A bracket or label open around the current token. */
+export interface FlowOpener {
+  range: Range;
+  what: string;
+  closer: string;
+}
+
+/** A parsed `@{ … }` block. */
+export interface FlowShapeData {
+  value: YamlMap | null;
+  range: Range;
+}
+
+/** The text of a `@{ … }` block (of blocks back to back), before it is read as YAML. */
+export interface FlowDataBlock {
+  /** The text v12 read: the pieces joined, a line break inside a string as `<br/>`. */
+  built: string;
+  /** The first `@{`. */
+  opener: Range;
+  /** From the first `@{` to the last `}`. */
+  whole: Range;
+  /** Between them. */
+  inner: Range;
+  /** Whether `built` is the source text between them, so it can be read where it stands. */
+  inPlace: boolean;
+  multiline: boolean;
+}
 
 /**
  * One parse. Each grammar rule is a method; `i` indexes the significant tokens. A rule that
  * fails records a diagnostic and throws {@link STOP}; the statement loop catches it and
- * recovers.
+ * recovers. `X` is the dialect's own statement nodes, `F` what it keeps of an open block.
  */
-export abstract class ParserBase {
+export abstract class FlowParserBase<
+  B extends FlowParserBuilder,
+  O extends FlowParseOptionsBase,
+  X,
+  F,
+> {
+  protected readonly T: FlowKinds;
+  protected readonly tb: FlowTables;
   protected readonly pre: PreprocessResult;
   protected readonly view: SourceView;
   protected readonly st = new ParseState();
   protected readonly ids: ParseState['ids'];
-  protected readonly db: AgentflowBuilder;
+  protected readonly db: B;
   protected readonly fullTokens: TokenStream;
   protected tokens: TokenView;
   protected i = 0;
@@ -103,66 +206,46 @@ export abstract class ParserBase {
   protected readonly probe: Probe | undefined;
   /** Source offset {@link tokens} was lexed from (after a restart, mid-document). */
   protected viewFrom: number;
-  /** Text offsets to source offsets, for {@link keywordBefore}; made on first use. */
-  protected offsets: SourceOffsets | undefined;
-  /** Directive starts by their end, for ranges over the blanks around them. */
-  protected directiveAt: Map<number, number> | undefined;
   /** Line numbers, built for messages only. */
-  protected lines: LineIndex | undefined;
+  private lines: LineIndex | undefined;
   /** Brackets and labels open around the current token, innermost last. */
-  protected readonly opens: Opener[] = [];
+  protected readonly opens: FlowOpener[] = [];
   /** How the current statement is written, for errors inside it. */
   protected hint: string | undefined;
   // Lexing restarts in the initial state after an error inside a label or other lexer mode,
   // which would otherwise swallow the following lines.
-  protected restartFrom = -1;
-  protected lastRestart = -1;
-  protected restarts = 0;
+  private restartFrom = -1;
+  private lastRestart = -1;
+  private restarts = 0;
   // The document, and the blocks open around the current statement.
-  protected readonly children: AgentflowStatementNode[] = [];
-  protected readonly frames: Frame[] = [];
+  protected readonly children: FlowStatement<X>[] = [];
+  protected readonly frames: F[] = [];
   protected readonly maxDepth: number;
   /** What v12's grammar collects into the innermost open block. */
-  protected list: DocItem[] = [];
+  protected list: FlowDocItem[] = [];
   protected collect = false;
-  protected body: AgentflowStatementNode[];
+  protected body: FlowStatement<X>[];
 
   constructor(
     protected readonly src: string,
-    protected readonly options: AgentflowParseOptions
+    protected readonly options: O,
+    protected readonly dialect: FlowParserDialect<B, O>
   ) {
+    this.T = dialect.kinds;
+    const tb = (this.tb = dialect.tables);
     const pre = (this.pre = options.preprocessed ?? preprocess(src));
-    this.view = agentflowSourceView(
-      src,
-      pre.bodyStart,
-      pre.directives.map((d) => d.range),
-      options.maxTextSize
-    );
+    this.view = dialect.view(src, pre, options);
     if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
     this.ids = this.st.ids;
-    const diagnostics = this.st.diagnostics;
-    this.db = new AgentflowBuilder({
-      maxEdges: options.maxEdges ?? DEFAULT_LIMITS.maxEdges,
-      maxNodes: options.maxNodes ?? DEFAULT_LIMITS.maxNodes,
-      inheritDir: options.inheritDir ?? false,
-      error: (code, message, range) => {
-        diagnostics.error(code, message, range);
-      },
-      warn: (code, message, range, extra) => {
-        const { related, astIds } = extra ?? {};
-        const d = diagnostics.warning(code, message, range, related ? { related } : undefined);
-        // Core's render `Warning` keeps `astIds` (and drops `related`): `AgentflowParseWarning`.
-        if (astIds) Object.assign(d, { astIds });
-      },
-    });
+    this.db = dialect.builder(options, this.st.diagnostics);
     this.maxDepth = options.maxDepth ?? DEFAULT_LIMITS.maxDepth;
     this.body = this.children;
     const probe =
-      options.probe === undefined ? undefined : new Probe(src, options.probe, PROBE_FOLLOWS);
+      options.probe === undefined ? undefined : new Probe(src, options.probe, tb.PROBE_FOLLOWS);
     this.viewFrom = pre.bodyStart;
     this.probe = probe;
-    this.fullTokens = lex(src, pre.bodyStart, this.view, true, probe);
-    this.tokens = significantTokens(this.fullTokens, PARSER_TRIVIA);
+    this.fullTokens = dialect.lex(src, pre.bodyStart, this.view, true, probe);
+    this.tokens = significantTokens(this.fullTokens, tb.PARSER_TRIVIA);
     if (probe) {
       if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
       else probe.trivia(this.fullTokens);
@@ -199,13 +282,13 @@ export abstract class ParserBase {
 
   /** Source start of a token, with the quotes around a string (the lexer drops them). */
   protected tokStart(j: number): number {
-    const { src } = this;
+    const { src, T } = this;
     const s = this.start(j);
     const k = this.kind(j);
     if (k === T.Str && src[s - 1] === '"') return s - 1;
     if (k === T.MdStr && src.startsWith('"`', s - 2)) return s - 2;
     // `click` and its blanks, and `accDescr {` and the blanks around `{`, are consumed
-    // without a token (RE_CLICK, RE_ACC_DESCR_ML).
+    // without a token (the lexer's RE_CLICK and RE_ACC_DESCR_ML).
     if (k === T.Click) return this.keywordBefore(s, 'click', false) ?? s;
     if (k === T.AccDescrMultilineValue) return this.keywordBefore(s, 'accDescr', true) ?? s;
     return s;
@@ -213,47 +296,27 @@ export abstract class ParserBase {
 
   /**
    * The source start of `word`, then blanks (with `{` and more blanks when `brace`), that end
-   * at `at` in the text v12 lexed (a directive may stand anywhere in them), if they are there.
+   * at the source offset `at`, if they are there.
    */
   protected keywordBefore(at: number, word: string, brace: boolean): number | undefined {
-    const { view } = this;
-    const t = view.text;
-    let b = localOffset(view, at);
-    while (b > 0 && isSpace(t.charCodeAt(b - 1))) b--;
-    if (brace) {
-      if (t.charCodeAt(b - 1) !== LBRACE) return undefined;
-      b--;
-      while (b > 0 && isSpace(t.charCodeAt(b - 1))) b--;
-    }
-    const i = b - word.length;
-    if (i < 0 || !t.startsWith(word, i)) return undefined;
-    if (!view.runs) return i;
-    // One cursor per parse: the tokens come in source order, so its walks add up to one pass.
-    this.offsets ??= new SourceOffsets(view.runs);
-    return this.offsets.source(i);
-  }
-
-  /** The end of the text before the blanks (and directives) that end at `at`. */
-  protected blanksAfter(from: number, at: number): number {
     const { src } = this;
-    let e = at;
-    for (;;) {
-      while (e > from && (src[e - 1] === ' ' || src[e - 1] === '\t')) e--;
-      const d = (this.directiveAt ??= new Map(
-        this.pre.directives.map((x) => [x.range.end, x.range.start])
-      )).get(e);
-      if (d === undefined || d < from) return e;
-      e = d;
+    let b = at;
+    while (b > 0 && isSpace(src.charCodeAt(b - 1))) b--;
+    if (brace) {
+      if (src.charCodeAt(b - 1) !== LBRACE) return undefined;
+      b--;
+      while (b > 0 && isSpace(src.charCodeAt(b - 1))) b--;
     }
+    return src.startsWith(word, b - word.length) ? b - word.length : undefined;
   }
 
+  /** Source end of a token, with what the lexer consumed after it without a token. */
   protected tokEnd(j: number): number {
+    const { T } = this;
     const e = this.end(j);
     const k = this.kind(j);
     if (k === T.Str && this.src[e] === '"') return e + 1;
     if (k === T.MdStr && this.src.startsWith('`"', e)) return e + 2;
-    // `end` and `global` take the blanks after them (`[ \t]*`).
-    if (k === T.End || k === T.Global) return this.blanksAfter(this.start(j), e);
     // The closing `}` of `accDescr { … }` is consumed without a token.
     if (k === T.AccDescrMultilineValue && this.src.charCodeAt(e) === RBRACE) return e + 1;
     return e;
@@ -284,11 +347,11 @@ export abstract class ParserBase {
 
   /** How an error message names the token at `j`. */
   protected found(j = this.i): string {
+    const { T } = this;
     const k = this.kind(j);
     if (k === Kind.EOF || k === T.Eof) return 'the end of the text';
     if (k === Kind.Newline) return 'a line break';
     if (k === T.Space) return 'a space';
-    if (k === T.Comment) return 'a comment';
     if (k === Kind.Error) return `the character \`${this.raw(j)}\``;
     const { src } = this;
     const quoted = k === T.Str || k === T.MdStr;
@@ -311,23 +374,29 @@ export abstract class ParserBase {
   }
 
   /** The next statement boundary (`;` or line break) at or after `at`. */
-  protected boundaryAfter(at: number): number {
+  private boundaryAfter(at: number): number {
     const { src } = this;
     let e = at;
     while (e < src.length && src[e] !== '\n' && src[e] !== '\r' && src[e] !== ';') e++;
     return e;
   }
 
-  protected restartAt(at: number): void {
+  private restartAt(at: number): void {
     if (at > this.lastRestart && at <= this.src.length && this.restarts < 64) {
       this.restartFrom = at;
     }
   }
 
+  /** A fix hint for common slips, from the text found where the error is. */
+  private hintFor(text: string): string | undefined {
+    if (/^\s*[-=.<>ox~]+\s*$/.test(text) && /[-=.~]/.test(text)) return this.tb.linkHint;
+    return undefined;
+  }
+
   /** Report what was found where one of `want` was expected, then stop the statement. */
   protected fail(want: readonly number[], hint?: string): never {
     this.tested(want);
-    const { st, src, opens, i } = this;
+    const { st, src, opens, i, T, tb } = this;
     const k = this.kind();
     const where = this.range(i);
     const open = opens[opens.length - 1];
@@ -359,7 +428,7 @@ export abstract class ParserBase {
         `Unclosed ${open.what}: the \`${src.slice(open.range.start, open.range.end)}\` at line ${this.lineOf(open.range.start)} has no closing ${open.closer}${got}. Add ${open.closer} to close it.`,
         open.range,
         {
-          expected: EXPECTED.names(want),
+          expected: tb.EXPECTED.names(want),
           related: [
             { message: k === Kind.EOF ? 'The text ends here.' : 'Found here.', range: where },
           ],
@@ -372,7 +441,7 @@ export abstract class ParserBase {
     // The tokens after an error may come from a lexer mode the bad text opened (`>` starts a
     // label, for one): lex again from the next statement boundary.
     this.restartAt(
-      opens.length > 0 || inKindSet(LEXER_MODE, k) || (k === Kind.Error && this.raw() === '#')
+      opens.length > 0 || inKindSet(tb.LEXER_MODE, k) || (k === Kind.Error && this.raw() === '#')
         ? this.lineBreakAfter(where.start)
         : this.boundaryAfter(where.start)
     );
@@ -389,21 +458,29 @@ export abstract class ParserBase {
       throw STOP;
     }
     if (k === Kind.Error) {
-      const why = hint ?? hintFor(this.raw());
+      const why = hint ?? this.hintFor(this.raw());
       st.diagnostics.error(
         'UNEXPECTED_CHARACTER',
         `Unexpected character \`${this.raw()}\`${why ? `; ${why}` : ''}.`,
         where,
-        { expected: EXPECTED.names(want) }
+        { expected: tb.EXPECTED.names(want) }
       );
       throw STOP;
     }
-    st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found(), undefined, hint ?? this.explain(want, open !== undefined));
+    st.diagnostics.unexpected(
+      'UNEXPECTED',
+      where,
+      tb.EXPECTED.names(want),
+      this.found(),
+      undefined,
+      hint ?? this.explain(want, open !== undefined)
+    );
     throw STOP;
   }
 
   /** A fix for an unexpected token, from what it is and where. */
-  protected explain(want: readonly number[], inLabel: boolean): string | undefined {
+  private explain(want: readonly number[], inLabel: boolean): string | undefined {
+    const { T, tb } = this;
     const k = this.kind();
     const text = this.raw();
     if (inLabel && /^[[\](){}|]/.test(text)) {
@@ -412,13 +489,13 @@ export abstract class ParserBase {
     if (inLabel && (k === T.Str || k === T.MdStr)) {
       return 'to use quotes in a label, quote it all and write them as `#quot;`, e.g. `A["say #quot;hi#quot;"]`';
     }
-    const general = hintFor(text);
+    const general = this.hintFor(text);
     if (general) return general;
-    if (k === T.End || k === T.Graph || k === T.Flow || k === T.Global || k === T.Connector) {
+    if (inKindSet(tb.KEYWORDS, k)) {
       const word = text.trim();
       return `\`${word}\` is a keyword: use another node id, and \`${word}\` as its label if needed, e.g. \`X[${word}]\``;
     }
-    if (want === LINE_END && inKindSet(ID, k)) {
+    if (want === tb.LINE_END && inKindSet(tb.ID, k)) {
       return 'put each statement on its own line, or separate them with `;`';
     }
     return this.hint;
@@ -427,10 +504,10 @@ export abstract class ParserBase {
   /** Skip to the next statement boundary after an error (R-PARSE-4). */
   protected recover(): void {
     this.opens.length = 0;
-    const { probe } = this;
+    const { probe, tb } = this;
     if (this.restartFrom < 0) {
       probe?.freeze();
-      this.i = skipTo(this.tokens, this.i, BOUNDARY);
+      this.i = skipTo(this.tokens, this.i, tb.BOUNDARY);
       return;
     }
     const from = this.restartFrom;
@@ -443,8 +520,8 @@ export abstract class ParserBase {
     if (lexedAgain) lexedAgain.reset();
     else probe?.freeze(true);
     this.tokens = significantTokens(
-      lex(this.src, from, this.view, false, lexedAgain),
-      PARSER_TRIVIA
+      this.dialect.lex(this.src, from, this.view, false, lexedAgain),
+      tb.PARSER_TRIVIA
     );
     this.viewFrom = from;
     this.i = 0;
@@ -459,12 +536,13 @@ export abstract class ParserBase {
   }
 
   protected separator(): void {
-    this.tested(LINE_END);
-    if (!inKindSet(LINE_END_SET, this.kind())) this.fail(LINE_END);
+    const { tb } = this;
+    this.tested(tb.LINE_END);
+    if (!inKindSet(tb.LINE_END_SET, this.kind())) this.fail(tb.LINE_END);
     this.i++;
   }
 
-  protected run(table: KindSet, want: readonly number[]): [string, Range] {
+  private run(table: KindSet, want: readonly number[]): [string, Range] {
     this.tested(want);
     if (!inKindSet(table, this.kind())) this.fail(want);
     const from = this.i++;
@@ -477,11 +555,11 @@ export abstract class ParserBase {
   }
 
   protected idString(): [string, Range] {
-    return this.run(ID, [T.NodeString]);
+    return this.run(this.tb.ID, this.tb.STYLE_WANT);
   }
 
   protected alphaNum(): [string, Range] {
-    return this.run(ALPHANUM, [T.NodeString]);
+    return this.run(this.tb.ALPHANUM, this.tb.STYLE_WANT);
   }
 
   /**
@@ -490,16 +568,16 @@ export abstract class ParserBase {
    */
   protected labelRun(
     part: KindSet,
-    first: KindSet,
     want: readonly number[],
-    strType: LabelType
-  ): AgentflowLabelNode {
+    strType: FlowLabelType
+  ): FlowLabelNode {
+    const { T } = this;
     const from = this.i;
     this.tested(want);
     const k = this.kind();
-    let type: LabelType;
+    let type: FlowLabelType;
     if (k === T.Str || k === T.MdStr) type = k === T.Str ? strType : 'markdown';
-    else if (inKindSet(first, k)) type = 'text';
+    else if (inKindSet(part, k)) type = 'text';
     else return this.fail(want);
     this.i++;
     for (;;) {
@@ -510,16 +588,16 @@ export abstract class ParserBase {
     return { text: this.runText(from, this.i), type, range: this.span(from) };
   }
 
-  protected text(): AgentflowLabelNode {
-    return this.labelRun(TEXT_PART, TEXT_PART, [T.Text, T.Str], 'string');
+  protected text(): FlowLabelNode {
+    return this.labelRun(this.tb.TEXT_PART, [this.T.Text, this.T.Str], 'string');
   }
 
-  protected edgeText(): AgentflowLabelNode {
-    return this.labelRun(EDGE_PART, EDGE_PART, [T.EdgeText, T.Str], 'string');
+  protected edgeText(): FlowLabelNode {
+    return this.labelRun(this.tb.EDGE_PART, [this.T.EdgeText, this.T.Str], 'string');
   }
 
-  protected textNoTags(): AgentflowLabelNode {
-    return this.labelRun(NO_TAGS, NO_TAGS, [T.NodeString, T.Str], 'text');
+  protected textNoTags(): FlowLabelNode {
+    return this.labelRun(this.tb.NO_TAGS, [this.T.NodeString, this.T.Str], 'text');
   }
 
   /** Consume an opener, remembered for errors until {@link closer}. */
@@ -529,19 +607,21 @@ export abstract class ParserBase {
   }
 
   protected closer(k: number): void {
-    this.expect(k, T.Text);
+    this.expect(k, this.T.Text);
     this.opens.pop();
   }
 
-  // ---- metadata -----------------------------------------------------------------------
+  // ---- `@{ … }` -----------------------------------------------------------------------
+
+  /** The `@{ … }` block at the cursor, as the dialect reads it. */
+  protected abstract shapeData(): FlowShapeData;
 
   /**
-   * `@{ … }`, read as v12 read it: blocks back to back are one, a newline in a string is
-   * `<br/>`, one line is read as `{ … }`, several as block YAML, retried once without the
-   * commas that end a line when that fails (v12's trailing-comma retry, D464).
+   * The text of the `@{ … }` at the cursor, as v12 put it together: blocks back to back are
+   * one, a line break in a string is `<br/>`.
    */
-  protected shapeData(): ShapeData {
-    const { st, src } = this;
+  protected dataBlock(): FlowDataBlock {
+    const { src, T, tb } = this;
     const opener = this.range(this.i);
     this.i++;
     let built = '';
@@ -550,7 +630,7 @@ export abstract class ParserBase {
     let blockOpener = opener;
     for (;;) {
       for (;;) {
-        this.tested(SHAPE_DATA_PARTS);
+        this.tested(tb.SHAPE_DATA_PARTS);
         if (this.kind() !== T.ShapeData) break;
         const piece = this.raw();
         if (piece === '"' && this.end(this.i) === this.start(this.i) + 1) {
@@ -560,49 +640,52 @@ export abstract class ParserBase {
         this.i++;
       }
       if (this.kind() !== T.ShapeDataEnd) {
-        this.opens.push({ range: blockOpener, what: 'metadata', closer: '`}`' });
+        this.opens.push({ range: blockOpener, what: tb.dataName, closer: '`}`' });
         this.fail([T.ShapeDataEnd]);
       }
       close = this.start(this.i);
       this.i++;
       // Blocks back to back (`A@{…}@{…}`) are one: v12's `shapeData` rule joins their texts.
-      this.tested(SHAPE_DATA);
+      this.tested(tb.SHAPE_DATA);
       if (this.kind() !== T.ShapeData) break;
       blockOpener = this.range(this.i);
       this.i++;
     }
-    const whole: Range = { start: opener.start, end: close + 1 };
     const inner = { start: opener.end, end: close };
-    // v12 parsed `{\n<data>\n}`; a `#` comment reads differently without those newlines.
-    const inPlace = src.slice(inner.start, inner.end) === built && !built.includes('#');
-    const multiline = built.includes('\n');
-    // One line is read from the opener's `{` (a directive may stand between `@` and `{`).
-    let result = inPlace
-      ? parseYaml(src, multiline ? inner : { start: opener.end - 1, end: whole.end })
+    return {
+      built,
+      opener,
+      whole: { start: opener.start, end: close + 1 },
+      inner,
+      // v12 parsed `{\n<data>\n}`; a `#` comment reads differently without those newlines.
+      inPlace: src.slice(inner.start, inner.end) === built && !built.includes('#'),
+      multiline: built.includes('\n'),
+    };
+  }
+
+  /**
+   * `block` read as YAML: several lines as block YAML, one line as `{ … }`, from the source
+   * offset `braceAt` of its `{` when it is read where it stands.
+   */
+  protected readData(block: FlowDataBlock, braceAt: number): ReturnType<typeof parseYaml> {
+    const { built, whole, inner, inPlace, multiline } = block;
+    return inPlace
+      ? parseYaml(this.src, multiline ? inner : { start: braceAt, end: whole.end })
       : parseYaml(multiline ? built + '\n' : `{\n${built}\n}`);
-    let ranged = inPlace;
-    const failed = (r: typeof result) => r.diagnostics.some((d) => d.severity === 'error');
-    if (failed(result) && multiline) {
-      const stripped = stripLineTrailingCommas(built);
-      if (stripped !== built) {
-        const retry = parseYaml(stripped + '\n');
-        if (!failed(retry)) {
-          result = retry;
-          ranged = false;
-        }
-      }
-    }
-    for (const d of result.diagnostics) {
+  }
+
+  /**
+   * Report a block's YAML diagnostics, at their own ranges when `ranged`, else at `whole`. An
+   * error is semantic: the tokens are fine, so the parse goes on and reports later errors in
+   * the same statement too (R-PARSE-4).
+   */
+  protected reportData(diagnostics: readonly Diagnostic[], ranged: boolean, whole: Range): void {
+    const { st } = this;
+    for (const d of diagnostics) {
       const r = ranged ? d.range : whole;
       if (d.severity === 'error') {
         st.diagnostics.error('SHAPE_DATA', d.message, r);
       } else st.diagnostics.warning(d.code, d.message, r);
     }
-    // A semantic error: the tokens are fine, so parse on and report later errors in the same
-    // statement too (R-PARSE-4). The element keeps no data.
-    if (failed(result)) return { value: null, range: whole };
-    const value = result.value;
-    // v12 read an empty document as `{}`.
-    return { value: isYamlMap(value) ? value : {}, range: whole };
   }
 }

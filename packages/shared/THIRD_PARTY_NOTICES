@@ -8,6 +8,9 @@ The files below are ported from, or based on, Pele (https://github.com/obsidianm
 commit 3a2f075 (release 1.13.0). Each file's header says what it took and what changed. Pele is
 used under the MIT License:
 
+  src/parser/flow-lexer.ts
+  src/parser/flow-parser-base.ts
+  src/parser/flow-parser.ts
   src/svg/arrowheads.ts
   src/svg/route.ts
 

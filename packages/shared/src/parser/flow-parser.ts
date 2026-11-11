@@ -1,107 +1,135 @@
 /**
- * The agentflow parser's rules for vertices, links, chains and the one-line statements. Split
- * from the parser (a copy of v13 flowchart's, D467); flowchart's parser is ported from Pele's
- * `src/diagrams/flowchart/parser.ts` at 3a2f075 (https://github.com/obsidianmd/pele, MIT,
- * (c) 2026 kepano). Changed: agentflow's three links and `connector` statement, no `subgraph`
- * or thick and invisible links, AST ids for every mention (D468), and the reserved
- * `connectors` id (D464).
- * cspell:ignore kepano
+ * The flow family parser's grammar rules: vertices, links, chains, the one-line statements,
+ * the header and the document loop. A diagram's parser extends {@link FlowParser} with its
+ * block rules (flowchart's `subgraph`; agentflow's `flow`, `global` and `connector`), how it
+ * reads `@{ … }`, and its `parse()`.
+ *
+ * The descent follows Pele's port of v12's `flow.jison` (`src/diagrams/flowchart/parser.ts` at
+ * 3a2f075, https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano). Changes from Pele are
+ * listed in `flow-parser-base.ts`.
  */
-import { inKindSet, nodeId } from '@mermaid-js/core/parser-kit';
-import type { AstCallback, AstId, Range } from '@mermaid-js/core/parser-kit';
-import {
-  AFTER_EDGE_LABEL,
-  AFTER_FLOW_ID,
-  AFTER_TITLE,
-  AMP,
-  byName,
-  CALLBACK_ARGS,
-  CLICK_ACTION,
-  COMMA,
-  CONNECTOR_SPACE,
-  DIAMOND_ONLY,
-  DIRECTIONS,
-  ID,
-  INTERPOLATE_OR_STYLE,
-  LINE_END,
-  LINE_END_SET,
-  LINK_AFTER_ID,
-  LINK_KINDS,
-  LINK_STYLE_INDEX,
-  LINK_TARGET_OR_TOOLTIP,
-  NO_ITEMS,
-  NONE,
-  PIPE,
-  PS_ONLY,
-  SHAPE_DATA,
-  SHAPE_KINDS,
-  SHAPES,
-  SPACE,
-  STATEMENT_HINTS,
-  STATEMENT_KINDS,
-  STATEMENT_START,
-  STYLE_PART,
-  STYLE_SEPARATOR,
-  STYLE_WANT,
-  TRAP_ENDS,
-} from './tables.ts';
-import type { ShapeData } from './tables.ts';
-import { ParserBase } from './base.ts';
+// cspell:words kepano
+import { inKindSet, Kind, nodeId, STOP } from '@mermaid-js/core/parser-kit';
 import type {
-  AgentflowConnectorStmt,
-  AgentflowEdge,
-  AgentflowLabelNode,
-  AgentflowNodeStmt,
-  AgentflowSimpleKind,
-  AgentflowSimpleStmt,
-  AgentflowStatementNode,
-} from './ast.ts';
-import { destructLink } from './model.ts';
-import type { DocItem, LinkInfo, VertexParts } from './model.ts';
-import { RESERVED_ID } from './shapes.ts';
-import { T } from './tokens.ts';
+  AstCallback,
+  AstId,
+  AstNode,
+  Diagnostic,
+  ParseResult,
+  Range,
+} from '@mermaid-js/core/parser-kit';
+import type {
+  FlowChainStmt,
+  FlowEdge,
+  FlowHeader,
+  FlowLabelNode,
+  FlowNodeStmt,
+  FlowSimpleKind,
+  FlowSimpleStmt,
+  FlowStatement,
+} from './flow-ast.ts';
+import { FlowParserBase } from './flow-parser-base.ts';
+import type {
+  FlowDocItem,
+  FlowLinkInfo,
+  FlowParseOptionsBase,
+  FlowParserBuilder,
+  FlowShapeData,
+  FlowVertexParts,
+} from './flow-parser-base.ts';
+import { FLOW_DIRECTIONS, NO_ITEMS } from './flow-tables.ts';
 
-/** Vertices, chains and the statements other than blocks. */
-export abstract class StatementParser extends ParserBase {
+/**
+ * The first node statement of `list` with a name: a scan for short lists, a map for the long
+ * ones of `A & B & …` fan-out (each edge looks up both its ends).
+ */
+function byName(list: readonly FlowNodeStmt[]): (name: string) => FlowNodeStmt | undefined {
+  if (list.length < 8) return (name) => list.find((n) => n.name === name);
+  const map = new Map<string, FlowNodeStmt>();
+  for (const n of list) if (!map.has(n.name)) map.set(n.name, n);
+  return (name) => map.get(name);
+}
+
+/** What the family's `parse()` tail needs of a model. */
+interface FlowModelLike {
+  readonly callbacks: readonly { readonly range?: Range }[];
+  readonly warnings: Diagnostic[];
+}
+
+/** The rules every dialect has. */
+export abstract class FlowParser<
+  B extends FlowParserBuilder,
+  O extends FlowParseOptionsBase,
+  X extends AstNode<string>,
+  F,
+> extends FlowParserBase<B, O, X, F> {
+  // ---- what a dialect writes ----------------------------------------------------------
+
+  /**
+   * The dialect's own block or line at the cursor, whose first token has the kind `t`: whether
+   * it read one. A block header pushes a frame; a line that is no statement is skipped.
+   */
+  protected abstract block(t: number): boolean;
+
+  /** `end` at the cursor: close the innermost block, or report that none is open. */
+  protected abstract closeEnd(): void;
+
+  /** The text ended: close the blocks still open, each with its diagnostic. */
+  protected abstract closeOpenBlocks(): void;
+
+  /**
+   * A statement of the dialect's own that starts with the kind `t` (the cursor is on it): what
+   * v12's grammar adds to an enclosing block's list for it, or `undefined` when `t` starts
+   * none.
+   */
+  protected ownStatement(_t: number, _out: FlowStatement<X>[]): FlowDocItem | undefined {
+    return undefined;
+  }
+
+  /** Whether a mention of the unknown `name` makes a vertex: not a blank one. */
+  protected creates(name: string): boolean {
+    return name.trim() !== '';
+  }
+
+  /**
+   * What a mention `node` hands the builder: `parts`, to which a dialect may add where they
+   * were written (`shapeFrom` is the first token of the shape, when the mention may have one).
+   */
+  protected mentionParts(
+    _node: FlowNodeStmt,
+    parts: FlowVertexParts,
+    _shapeFrom?: number
+  ): FlowVertexParts {
+    return parts;
+  }
+
+  /** The word at the source offset `at`, after the header keyword, is no direction. */
+  protected notDirection(_at: number): void {
+    // Nothing more to say than `UNKNOWN_DIRECTION`.
+  }
+
   // ---- vertices and chains ------------------------------------------------------------
 
-  /** A vertex's AST id is its record's: `n:<name>`. */
+  /** A vertex's AST id is its first mention's: `n:<name>`. */
   protected nodeAst(name: string): AstId {
     return this.db.vertices.get(name)?.ast ?? nodeId(name);
   }
 
   /** A mention that may create the vertex: its definition when it does. */
   protected nodeSymbol(name: string, r: Range): void {
-    const { db } = this;
     // An edge id (`e1@{ … }`) names the edge: v12 never makes it a vertex.
     if (this.namesEdge(name)) return this.edgeSymbol(name, r);
-    const creates =
-      !db.vertices.has(name) && !db.flow(name) && name.trim() !== '' && name !== RESERVED_ID;
+    const creates = !this.db.vertices.has(name) && this.creates(name);
     this.st.symbol(name, 'node', r, creates ? 'def' : 'ref');
   }
 
-  /**
-   * Once the text is read: the mentions of the reserved `connectors` id leave the symbols when
-   * no `connector connectors` or `flow connectors` takes it (also one written after them). v12
-   * makes no node of it, so it is no symbol: renaming it would make one.
-   */
-  protected dropUnclaimedReserved(): void {
-    const { symbols } = this.st;
-    if (this.db.reservedClaimed() || !symbols.some((s) => s.name === RESERVED_ID)) return;
-    const kept = symbols.filter(
-      (s) => s.name !== RESERVED_ID || (s.kind !== 'node' && s.kind !== 'subgraph')
-    );
-    symbols.length = 0;
-    symbols.push(...kept);
-  }
-
   /** Whether `name` is an edge id and no vertex's (`e1` after `A e1@--> B`). */
-  protected namesEdge(name: string): boolean {
+  private namesEdge(name: string): boolean {
     return !this.db.vertices.has(name) && this.db.hasEdge(name);
   }
 
   /** A `class` statement target: an edge mention when it names an edge (v12 `setClass`). */
-  protected classTarget(name: string, r: Range): void {
+  private classTarget(name: string, r: Range): void {
     if (this.namesEdge(name)) this.edgeSymbol(name, r);
     else this.st.symbol(name, 'node', r, 'ref');
   }
@@ -111,7 +139,7 @@ export abstract class StatementParser extends ParserBase {
    * names, so each end also gets a node mention inside it: renaming the node then renames the
    * id with it, and the written id keeps naming the same edge (#170).
    */
-  protected edgeSymbol(name: string, r: Range): void {
+  private edgeSymbol(name: string, r: Range): void {
     this.st.symbol(name, 'edge', r, 'ref');
     const edge = this.db.edgeNamed(name);
     if (!edge || edge.isUserDefinedId || this.src.slice(r.start, r.end) !== name) return;
@@ -123,11 +151,11 @@ export abstract class StatementParser extends ParserBase {
     this.st.symbol(end, 'node', { start: to, end: to + end.length }, 'ref');
   }
 
-  protected vertex(): AgentflowNodeStmt {
+  private vertex(): FlowNodeStmt {
     const startTok = this.i;
     const [name, nameRange] = this.idString();
     this.nodeSymbol(name, nameRange);
-    const node: AgentflowNodeStmt = {
+    const node: FlowNodeStmt = {
       id: this.ids.node(name),
       type: 'Node',
       range: nameRange,
@@ -135,9 +163,13 @@ export abstract class StatementParser extends ParserBase {
       nameRange,
     };
     const shapeFrom = this.i;
-    const parts: VertexParts & { label?: AgentflowLabelNode } = this.shape();
-    if (parts.type !== undefined) parts.shapeAt = this.span(shapeFrom);
-    this.db.addVertex(name, this.nodeAst(name), nameRange, { ...parts, mention: node.id });
+    const parts = this.shape();
+    this.db.addVertex(
+      name,
+      this.nodeAst(name),
+      nameRange,
+      this.mentionParts(node, parts, shapeFrom)
+    );
     if (parts.type !== undefined) node.shape = parts.type;
     if (parts.label) node.label = parts.label;
     node.range = this.span(startTok);
@@ -145,10 +177,11 @@ export abstract class StatementParser extends ParserBase {
   }
 
   /** The bracketed shape and label after a node id, if any. */
-  protected shape(): VertexParts & { label?: AgentflowLabelNode } {
-    this.tested(SHAPE_KINDS);
+  private shape(): FlowVertexParts & { label?: FlowLabelNode } {
+    const { T, tb } = this;
+    this.tested(tb.SHAPE_KINDS);
     const k = this.kind();
-    const simple = SHAPES[k];
+    const simple = tb.SHAPES[k];
     if (simple) {
       this.open(simple[2], simple[3]);
       const label = this.text();
@@ -159,7 +192,7 @@ export abstract class StatementParser extends ParserBase {
       const round = k === T.PS;
       const close = round ? T.PE : T.DiamondStop;
       this.open('node label', round ? '`)`' : '`}`');
-      this.tested(round ? PS_ONLY : DIAMOND_ONLY);
+      this.tested(round ? tb.PS_ONLY : tb.DIAMOND_ONLY);
       if (this.kind() !== k) {
         const label = this.text();
         this.closer(close);
@@ -186,7 +219,7 @@ export abstract class StatementParser extends ParserBase {
       const trap = k === T.TrapStart;
       this.open('node label', trap ? '`\\]` or `/]`' : '`/]` or `\\]`');
       const label = this.text();
-      this.tested(TRAP_ENDS);
+      this.tested(tb.TRAP_ENDS);
       if (this.kind() === (trap ? T.InvTrapEnd : T.TrapEnd)) {
         this.i++;
         this.opens.pop();
@@ -198,10 +231,10 @@ export abstract class StatementParser extends ParserBase {
     return {};
   }
 
-  protected styledVertex(): AgentflowNodeStmt {
+  private styledVertex(): FlowNodeStmt {
     const node = this.vertex();
-    this.tested(STYLE_SEPARATOR);
-    if (this.kind() === T.StyleSeparator) {
+    this.tested(this.tb.STYLE_SEPARATOR);
+    if (this.kind() === this.T.StyleSeparator) {
       this.i++;
       const [cls, r] = this.idString();
       this.st.symbol(cls, 'class', r, 'ref');
@@ -212,44 +245,47 @@ export abstract class StatementParser extends ParserBase {
     return node;
   }
 
-  protected applyData(node: AgentflowNodeStmt, data: ShapeData): void {
-    this.db.addVertex(node.name, this.nodeAst(node.name), data.range, {
-      data: data.value,
-      mention: node.id,
-    });
+  private applyData(node: FlowNodeStmt, data: FlowShapeData): void {
+    this.db.addVertex(
+      node.name,
+      this.nodeAst(node.name),
+      data.range,
+      this.mentionParts(node, { data: data.value })
+    );
     node.dataRange = data.range;
     node.range = { start: node.range.start, end: data.range.end };
   }
 
   /** `A`, `A@{…}`, `A & B & …`: the nodes, each also pushed to `chain`. */
-  protected node(chain: (AgentflowNodeStmt | AgentflowEdge)[]): AgentflowNodeStmt[] {
+  private node(chain: (FlowNodeStmt | FlowEdge)[]): FlowNodeStmt[] {
+    const { T, tb } = this;
     const nodes = [this.styledVertex()];
-    chain.push(nodes[0] as AgentflowNodeStmt);
+    chain.push(nodes[0] as FlowNodeStmt);
     for (;;) {
-      const last = nodes[nodes.length - 1] as AgentflowNodeStmt;
-      this.tested(SHAPE_DATA);
+      const last = nodes[nodes.length - 1] as FlowNodeStmt;
+      this.tested(tb.SHAPE_DATA);
       const data = this.kind() === T.ShapeData ? this.shapeData() : undefined;
-      this.tested(SPACE);
+      this.tested(tb.SPACE);
       if (this.kind() !== T.Space) {
         if (data !== undefined) this.applyData(last, data);
         return nodes;
       }
       do {
         this.i++;
-        this.tested(SPACE);
+        this.tested(tb.SPACE);
       } while (this.kind() === T.Space);
-      this.tested(AMP);
+      this.tested(tb.AMP);
       if (this.kind() !== T.Amp) {
-        // Blanks after metadata must lead to `&` (v12 drops them before a line break).
+        // Blanks after `@{ … }` must lead to `&` (v12 drops them before a line break).
         if (data !== undefined)
           this.fail(
             [T.Amp],
-            'after metadata `@{ … }` only `&` and another node may follow on the line'
+            `after ${tb.dataName} \`@{ … }\` only \`&\` and another node may follow on the line`
           );
         return nodes;
       }
       this.i++;
-      this.tested(SPACE);
+      this.tested(tb.SPACE);
       if (this.kind() !== T.Space) this.fail([T.Space]);
       do this.i++;
       while (this.kind() === T.Space);
@@ -260,28 +296,29 @@ export abstract class StatementParser extends ParserBase {
     }
   }
 
-  protected link(): [LinkInfo, Range, AgentflowLabelNode | undefined] {
+  private link(): [FlowLinkInfo, Range, FlowLabelNode | undefined] {
+    const { T, tb } = this;
     const from = this.i;
     let id: string | undefined;
-    this.tested(LINK_KINDS);
+    this.tested(tb.LINK_KINDS);
     if (this.kind() === T.LinkId) {
       id = this.raw();
       const r = { start: this.start(this.i), end: this.end(this.i) - 1 };
       this.st.symbol(id.slice(0, -1), 'edge', r, 'def');
       this.i++;
     }
-    this.tested(LINK_AFTER_ID);
+    this.tested(tb.LINK_AFTER_ID);
     if (this.kind() === T.Link) {
-      const info = destructLink(this.raw(this.i++));
+      const info = this.dialect.destructLink(this.raw(this.i++));
       if (id !== undefined) info.id = id;
-      let label: AgentflowLabelNode | undefined;
-      this.tested(PIPE);
+      let label: FlowLabelNode | undefined;
+      this.tested(tb.PIPE);
       if (this.kind() === T.Pipe) {
         this.open('edge label', '`|`');
         label = this.text();
         info.text = { text: label.text, type: label.type };
         this.closer(T.Pipe);
-        this.tested(AFTER_EDGE_LABEL);
+        this.tested(tb.AFTER_EDGE_LABEL);
         if (this.kind() === T.Space) this.i++;
       }
       return [info, this.span(from), label];
@@ -297,7 +334,7 @@ export abstract class StatementParser extends ParserBase {
       const label = this.edgeText();
       const end = this.raw(this.expect(T.Link, T.EdgeText));
       this.opens.pop();
-      const info = destructLink(end, startText);
+      const info = this.dialect.destructLink(end, startText);
       info.text = { text: label.text, type: label.type };
       if (id !== undefined) info.id = id;
       return [info, this.span(from), label];
@@ -309,18 +346,15 @@ export abstract class StatementParser extends ParserBase {
    * Nodes joined by links, pushed to `chain` with an edge node per edge. Returns what v12
    * collected into an enclosing block.
    */
-  protected vertexStatement(
-    collect: boolean,
-    chain: (AgentflowNodeStmt | AgentflowEdge)[]
-  ): string[] {
-    const { db, ids } = this;
+  private vertexStatement(collect: boolean, chain: (FlowNodeStmt | FlowEdge)[]): string[] {
+    const { db, ids, T, tb } = this;
     let stmt = this.node(chain);
     let names = stmt.map((n) => n.name);
     const first = names;
     // v12 collected `$3.concat($1)` per link, newest first: kept as parts, joined once.
     const later: string[][] = [];
     for (;;) {
-      this.tested(LINK_KINDS);
+      this.tested(tb.LINK_KINDS);
       const t = this.kind();
       if (t !== T.Link && t !== T.StartLink && t !== T.LinkId) {
         return later.length === 0 ? first : [...later.reverse().flat(), ...first];
@@ -342,7 +376,7 @@ export abstract class StatementParser extends ParserBase {
         const edge = db.edges[k] as (typeof db.edges)[number];
         const from = fromOf(edge.start);
         const to = toOf(edge.end);
-        const ast: AgentflowEdge = {
+        const ast: FlowEdge = {
           id: edge.ast,
           type: 'Edge',
           range: {
@@ -365,23 +399,24 @@ export abstract class StatementParser extends ParserBase {
 
   // ---- other statements ---------------------------------------------------------------
 
-  protected style(): string {
-    this.tested(STYLE_WANT);
-    if (!inKindSet(STYLE_PART, this.kind())) this.fail([T.NodeString]);
+  private style(): string {
+    const { tb } = this;
+    this.tested(tb.STYLE_WANT);
+    if (!inKindSet(tb.STYLE_PART, this.kind())) this.fail([this.T.NodeString]);
     const from = this.i++;
     for (;;) {
-      this.tested(STYLE_WANT);
-      if (!inKindSet(STYLE_PART, this.kind())) break;
+      this.tested(tb.STYLE_WANT);
+      if (!inKindSet(tb.STYLE_PART, this.kind())) break;
       this.i++;
     }
     return this.runText(from, this.i);
   }
 
-  protected stylesOpt(): string[] {
+  private stylesOpt(): string[] {
     const out = [this.style()];
     for (;;) {
-      this.tested(COMMA);
-      if (this.kind() !== T.Comma) break;
+      this.tested(this.tb.COMMA);
+      if (this.kind() !== this.T.Comma) break;
       this.i++;
       out.push(this.style());
     }
@@ -392,7 +427,7 @@ export abstract class StatementParser extends ParserBase {
    * Each id of a comma list written at `r`, with its own range when the list is written as is
    * (else `r`): passed to `mention` and pushed to `out`.
    */
-  protected refs(
+  private refs(
     list: string,
     r: Range,
     out: string[],
@@ -407,13 +442,13 @@ export abstract class StatementParser extends ParserBase {
     }
   }
 
-  protected linkStyleStatement(): void {
-    const { db } = this;
+  private linkStyleStatement(): void {
+    const { db, T, tb } = this;
     const at = this.i;
     this.i++;
     this.expect(T.Space);
     const positions: string[] = [];
-    this.tested(LINK_STYLE_INDEX);
+    this.tested(tb.LINK_STYLE_INDEX);
     if (this.kind() === T.Default) positions.push(this.raw(this.i++));
     else {
       positions.push(this.raw(this.expect(T.Num, T.Default)));
@@ -423,7 +458,7 @@ export abstract class StatementParser extends ParserBase {
       }
     }
     this.expect(T.Space);
-    this.tested(INTERPOLATE_OR_STYLE);
+    this.tested(tb.INTERPOLATE_OR_STYLE);
     if (this.kind() !== T.Interpolate) {
       const styles = this.stylesOpt();
       // An index error is semantic: the statement parses on (R-PARSE-4).
@@ -442,26 +477,27 @@ export abstract class StatementParser extends ParserBase {
   }
 
   /** A `"…"` value in a click statement (one Str token, as jison requires). */
-  protected expectStr(...also: number[]): string {
+  private expectStr(...also: number[]): string {
+    const { T, tb } = this;
     if (this.probe !== undefined) this.tested([T.Str, ...also]);
     if (this.kind() !== T.Str) return this.fail([T.Str, ...also]);
-    return this.labelRun(NONE, NONE, [T.Str], 'string').text;
+    return this.labelRun(tb.NONE, [T.Str], 'string').text;
   }
 
   /** `click …` and `call …`; returns the callback, for the AST. */
-  protected clickStatement(out: string[]): AstCallback | undefined {
-    const { db } = this;
+  private clickStatement(out: string[]): AstCallback | undefined {
+    const { db, T, tb } = this;
     const at = this.i;
     const id = this.raw(this.i++);
     // The token's own range: `range` would widen it over `click`.
     this.refs(id, { start: this.start(at), end: this.end(at) }, out, (part, pr) =>
       this.st.symbol(part, 'node', pr, 'ref')
     );
-    this.tested(CLICK_ACTION);
+    this.tested(tb.CLICK_ACTION);
     const k = this.kind();
     if (k === T.CallbackName) {
       const name = this.raw(this.i++);
-      this.tested(CALLBACK_ARGS);
+      this.tested(tb.CALLBACK_ARGS);
       const args = this.kind() === T.CallbackArgs ? this.raw(this.i++) : undefined;
       return this.callback(id, at, name, args);
     }
@@ -471,13 +507,13 @@ export abstract class StatementParser extends ParserBase {
       url = this.expectStr();
     } else if (k === T.Str) url = this.expectStr();
     else return this.callback(id, at, this.alphaNum()[0]);
-    this.tested(SPACE);
+    this.tested(tb.SPACE);
     if (this.kind() !== T.Space) {
       db.setLink(id, url, this.span(at));
       return;
     }
     this.i++;
-    this.tested(LINK_TARGET_OR_TOOLTIP);
+    this.tested(tb.LINK_TARGET_OR_TOOLTIP);
     if (this.kind() === T.LinkTarget) {
       db.setLink(id, url, this.span(at), this.raw(this.i++));
       return;
@@ -492,7 +528,7 @@ export abstract class StatementParser extends ParserBase {
   }
 
   /** `click id name(args) "tooltip"`, from the name on: the callback, for the AST. */
-  protected callback(id: string, at: number, name: string, args?: string): AstCallback {
+  private callback(id: string, at: number, name: string, args?: string): AstCallback {
     const { db } = this;
     const tooltip = this.tooltip();
     db.setClickEvent(id, name, this.span(at), args);
@@ -503,59 +539,14 @@ export abstract class StatementParser extends ParserBase {
   }
 
   /** An optional ` "tooltip"` after a callback. */
-  protected tooltip(): string | undefined {
-    this.tested(SPACE);
-    if (this.kind() !== T.Space) return undefined;
+  private tooltip(): string | undefined {
+    this.tested(this.tb.SPACE);
+    if (this.kind() !== this.T.Space) return undefined;
     this.i++;
     return this.expectStr();
   }
 
-  /** `connector id`, `connector id[title]`, each with optional metadata: its id. */
-  protected connectorStatement(out: AgentflowStatementNode[]): DocItem {
-    const { db, st } = this;
-    const from = this.i;
-    this.i++;
-    this.tested(CONNECTOR_SPACE);
-    this.expect(T.Space);
-    const id = this.textNoTags();
-    let title: AgentflowLabelNode | undefined;
-    this.tested(AFTER_FLOW_ID);
-    if (this.kind() === T.SQS) {
-      this.open('connector title', '`]`');
-      title = this.text();
-      this.closer(T.SQE);
-    }
-    this.tested(AFTER_TITLE);
-    const data = this.kind() === T.ShapeData ? this.shapeData() : undefined;
-    this.tested(LINE_END);
-    if (!inKindSet(LINE_END_SET, this.kind()))
-      this.fail(data || title ? LINE_END : [...LINE_END, T.SQS, T.ShapeData]);
-    const name = id.text.trim();
-    const nameRange = this.trimmed(id.range);
-    const replacing = name !== '' && db.vertices.has(name) && !db.isConnector(name);
-    const ast = this.ids.node(name);
-    if (name !== '')
-      st.symbol(name, 'node', nameRange, db.vertices.has(name) && !replacing ? 'ref' : 'def');
-    const sid = db.addConnector(name, title?.text ?? '', ast, nameRange);
-    if (data !== undefined && sid !== '') db.addVertex(sid, ast, data.range, { data: data.value });
-    const r = this.span(from);
-    st.statement('connector', r);
-    const node: AgentflowConnectorStmt = { id: ast, type: 'Connector', range: r, name, nameRange };
-    if (title) node.title = title;
-    if (data) node.dataRange = data.range;
-    out.push(node);
-    this.separator();
-    return sid;
-  }
-
-  /** `range` without the blanks around its text. */
-  protected trimmed(r: Range): Range {
-    const written = this.src.slice(r.start, r.end);
-    const start = r.start + (written.length - written.trimStart().length);
-    return { start, end: start + written.trim().length };
-  }
-
-  protected simple(k: AgentflowSimpleKind, from: number, refsOut: string[]): AgentflowSimpleStmt {
+  private simple(k: FlowSimpleKind, from: number, refsOut: string[]): FlowSimpleStmt {
     const r = this.span(from);
     const name = k.charAt(0).toLowerCase() + k.slice(1);
     this.st.statement(name, r);
@@ -563,11 +554,11 @@ export abstract class StatementParser extends ParserBase {
   }
 
   /** One statement. Returns what v12's grammar adds to an enclosing block's list. */
-  protected statement(collect: boolean, out: AgentflowStatementNode[]): DocItem {
-    const { db, st } = this;
-    this.tested(STATEMENT_KINDS);
+  protected statement(collect: boolean, out: FlowStatement<X>[]): FlowDocItem {
+    const { db, st, T, tb } = this;
+    this.tested(tb.STATEMENT_KINDS);
     const t = this.kind();
-    this.hint = STATEMENT_HINTS[t];
+    this.hint = tb.STATEMENT_HINTS[t];
     const from = this.i;
     const refList: string[] = [];
     switch (t) {
@@ -623,48 +614,186 @@ export abstract class StatementParser extends ParserBase {
         this.separator();
         return NO_ITEMS;
       }
-      case T.Connector:
-        return this.connectorStatement(out);
       case T.DirectionTB:
       case T.DirectionBT:
       case T.DirectionRL:
       case T.DirectionLR:
       case T.DirectionTD:
-        // The token runs to the line end, a `%%` before `direction` included (jison's
-        // `.*direction` rules run before the comment rule).
+        // The token runs to the line end.
         this.i++;
         out.push(this.simple('Direction', from, refList));
-        return { stmt: 'dir', value: DIRECTIONS[t - T.DirectionTB] ?? 'TB' };
-      case T.AccTitle: {
-        this.i++;
-        const value = this.raw(this.expect(T.AccTitleValue)).trim();
-        db.setAccTitle(value);
-        out.push(this.simple('AccTitle', from, refList));
-        return value;
-      }
-      case T.AccDescr: {
-        this.i++;
-        const value = this.raw(this.expect(T.AccDescrValue)).trim();
-        db.setAccDescription(value);
-        out.push(this.simple('AccDescr', from, refList));
-        return value;
-      }
-      case T.AccDescrMultilineValue: {
-        const value = this.raw(this.i++).trim();
-        db.setAccDescription(value);
-        out.push(this.simple('AccDescr', from, refList));
-        return value;
-      }
-      default: {
-        if (!inKindSet(ID, t)) this.fail(STATEMENT_START);
-        const chain: (AgentflowNodeStmt | AgentflowEdge)[] = [];
-        const nodes = this.vertexStatement(collect, chain);
-        const r = this.span(from);
-        st.statement('chain', r);
-        out.push({ id: this.ids.statement('chain'), type: 'Chain', range: r, children: chain });
-        this.separator();
-        return nodes;
-      }
+        return { stmt: 'dir', value: FLOW_DIRECTIONS[t - T.DirectionTB] ?? 'TB' };
+      default:
+        return this.accStatement(t, out) ?? this.ownStatement(t, out) ?? this.chain(collect, out);
     }
   }
+
+  /** `accTitle`, `accDescr` and `accDescr { … }`: the value, or `undefined` for another kind. */
+  private accStatement(t: number, out: FlowStatement<X>[]): string | undefined {
+    const { db, T } = this;
+    const from = this.i;
+    let value: string;
+    if (t === T.AccTitle) {
+      this.i++;
+      value = this.raw(this.expect(T.AccTitleValue)).trim();
+      db.setAccTitle(value);
+    } else if (t === T.AccDescr) {
+      this.i++;
+      value = this.raw(this.expect(T.AccDescrValue)).trim();
+      db.setAccDescription(value);
+    } else if (t === T.AccDescrMultilineValue) {
+      value = this.raw(this.i++).trim();
+      db.setAccDescription(value);
+    } else return undefined;
+    out.push(this.simple(t === T.AccTitle ? 'AccTitle' : 'AccDescr', from, []));
+    return value;
+  }
+
+  /** A chain statement, when the cursor is on an id. */
+  private chain(collect: boolean, out: FlowStatement<X>[]): string[] {
+    const { tb } = this;
+    const from = this.i;
+    if (!inKindSet(tb.ID, this.kind())) this.fail(tb.STATEMENT_START);
+    const children: FlowChainStmt['children'] = [];
+    const nodes = this.vertexStatement(collect, children);
+    const r = this.span(from);
+    this.st.statement('chain', r);
+    out.push({ id: this.ids.statement('chain'), type: 'Chain', range: r, children });
+    this.separator();
+    return nodes;
+  }
+
+  // ---- the document and the header ----------------------------------------------------
+
+  protected document(): void {
+    const { frames, T, tb } = this;
+    for (;;) {
+      this.tested(frames.length > 0 ? tb.BLOCK_DOC_KINDS : tb.DOC_KINDS);
+      const t = this.kind();
+      if (t === Kind.EOF) break;
+      try {
+        if (t === T.End) this.closeEnd();
+        else if (t === T.Semi || t === Kind.Newline || t === T.Space || t === T.Eof) {
+          if (this.collect) this.list.push(this.raw());
+          this.i++;
+        } else if (!this.block(t)) {
+          const item = this.statement(this.collect, this.body);
+          if (this.collect && (typeof item !== 'object' || 'stmt' in item || item.length > 0))
+            this.list.push(item);
+        }
+      } catch (e) {
+        if (e !== STOP) throw e;
+        this.recover();
+      }
+    }
+    this.closeOpenBlocks();
+  }
+
+  /**
+   * The header: blanks, the keyword and a direction. `noKeyword` is the hint for a text that
+   * starts with something else.
+   */
+  protected header(noKeyword: string): void {
+    const { db, st, T, tb } = this;
+    for (;;) {
+      this.tested(tb.HEADER_START);
+      if (!inKindSet(tb.HEADER_SKIP, this.kind())) break;
+      this.i++;
+    }
+    const from = this.i;
+    try {
+      this.tested(tb.GRAPH);
+      if (this.kind() !== T.Graph) this.fail([T.Graph], noKeyword);
+      this.i++;
+      this.tested(tb.DIR_KINDS);
+      if (this.kind() === T.NoDir) {
+        this.i++;
+        db.setDirection('TB');
+      } else {
+        if (this.kind() === Kind.Error) this.unknownDirection();
+        const dir = this.raw(this.expect(T.Dir, T.NoDir));
+        this.tested(tb.AFTER_DIR);
+        let t = this.kind();
+        if (t === T.Space) {
+          do {
+            this.i++;
+            this.tested(tb.BLANKS);
+          } while (this.kind() === T.Space);
+          t = this.kind();
+          if (t !== Kind.Newline) this.fail([Kind.Newline]);
+        } else if (!inKindSet(tb.AFTER_DIR_END, t)) this.fail(tb.AFTER_DIR_WANT);
+        this.i++;
+        db.setDirection(dir);
+      }
+      const r = { start: this.start(from), end: this.end(from + 1) };
+      if (this.kind(from + 1) === T.NoDir) r.end = this.end(from);
+      st.statement('header', r);
+      const h: FlowHeader = {
+        id: this.ids.statement('header'),
+        type: 'Header',
+        range: r,
+        keyword: this.raw(from),
+        direction: db.direction,
+      };
+      this.children.push(h);
+    } catch (e) {
+      if (e !== STOP) throw e;
+      this.recover();
+    }
+  }
+
+  /** The word after the header keyword that is no direction. */
+  private unknownDirection(): never {
+    const { src, tb } = this;
+    let w = this.start(this.i);
+    while (w < src.length && /\s/.test(src[w] ?? '')) w++;
+    let e = w;
+    while (e < src.length && !/\s/.test(src[e] ?? '')) e++;
+    // A direction was expected across the word, which may lex as several tokens.
+    const { probe, tokens } = this;
+    if (probe !== undefined) {
+      for (let j = this.i; j < tokens.length && this.start(j) < e; j++) {
+        if (probe.isAt(tokens, j, this.viewFrom)) probe.tested(tb.DIR_KINDS, this.start(j));
+      }
+    }
+    this.notDirection(w);
+    this.st.diagnostics.error(
+      'UNKNOWN_DIRECTION',
+      `Unknown direction \`${src.slice(w, e)}\`: use TB, TD, BT, LR or RL (or \`>\`, \`<\`, \`^\`, \`v\`).`,
+      { start: w, end: e },
+      { expected: tb.EXPECTED.names([this.T.Dir]) }
+    );
+    throw STOP;
+  }
+
+  // ---- the result ---------------------------------------------------------------------
+
+  /**
+   * The parse result for `model`: `CALLBACK_IGNORED` when it has callbacks nothing claims,
+   * and the document node.
+   */
+  protected result<M extends FlowModelLike>(model: M): ParseResult<M, FlowDocumentNode<X>> {
+    const { st, src, options } = this;
+    if (model.callbacks.length > 0 && !options.claims?.includes('callbacks')) {
+      const first = model.callbacks[0];
+      const d = st.diagnostics.warning(
+        'CALLBACK_IGNORED',
+        '`click … callback` and `call` are ignored: install the interactions plugin to run callbacks.',
+        first?.range ?? { start: 0, end: 0 }
+      );
+      model.warnings.push(d);
+    }
+    const ast: FlowDocumentNode<X> = {
+      id: 'doc',
+      type: 'Document',
+      range: { start: this.pre.bodyStart, end: src.length },
+      children: this.children,
+    };
+    return st.result(model, ast, this.fullTokens, options, this.probe);
+  }
+}
+
+/** The document node of a dialect whose own statement nodes are `X`. */
+export interface FlowDocumentNode<X extends AstNode<string>> extends AstNode<'Document'> {
+  children: FlowStatement<X>[];
 }

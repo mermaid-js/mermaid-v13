@@ -11,11 +11,9 @@ says what it took and what changed. Pele is used under the MIT License:
 
   src/layout/prepare.ts
   src/layout/shapes.ts
-  src/parser/base.ts
   src/parser/lexer.ts
   src/parser/model.ts
   src/parser/parser.ts
-  src/parser/statements.ts
   src/render/shapes.ts
 
 MIT License

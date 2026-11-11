@@ -13,6 +13,7 @@ import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import type { AstId, Diagnostic, Range } from '@mermaid-js/core/parser-kit';
 import { isYamlMap } from '@mermaid-js/core/preprocess';
 import type { YamlMap } from '@mermaid-js/core/preprocess';
+import type { FlowDocItem, FlowLinkParts } from '@mermaid-js/shared/parser/flow';
 import { isValidShape } from './shapes.ts';
 
 export type LabelType = 'text' | 'string' | 'markdown';
@@ -138,7 +139,7 @@ export interface LinkInfo {
 }
 
 /** Item of a subgraph body as v12's grammar collects it. */
-export type DocItem = string | string[] | { stmt: 'dir'; value: string };
+export type DocItem = FlowDocItem;
 
 export interface BuilderOptions {
   maxEdges: number;
@@ -434,13 +435,8 @@ export class FlowBuilder {
   }
 
   /** v12 `addLink`: every start to every end; the user id goes to the last-start/first-end pair. */
-  addLink(
-    starts: string[],
-    ends: string[],
-    info: LinkInfo,
-    astFor: (start: string, end: string) => AstId,
-    at: Range
-  ): void {
+  addLink(parts: FlowLinkParts): void {
+    const { starts, ends, info, astFor, at } = parts;
     if (this.limitHit.has('edges')) return;
     // Checked before making any: `A & … --> B & …` multiplies, so one short line can ask
     // for millions of edges (v12 checked one edge at a time).
@@ -611,8 +607,8 @@ export class FlowBuilder {
     };
     for (const entry of list) {
       if (typeof entry === 'string') add(entry);
-      else if (Array.isArray(entry)) entry.forEach(add);
-      else dir = entry.value;
+      else if ('stmt' in entry) dir = entry.value;
+      else entry.forEach(add);
     }
     if (dir === undefined && this.options.inheritDir) dir = this.direction;
 

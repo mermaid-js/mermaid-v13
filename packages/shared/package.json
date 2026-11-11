@@ -31,6 +31,11 @@
       "types": "./dist/parser/facet.d.ts",
       "default": "./dist/parser/facet.js"
     },
+    "./parser/flow": {
+      "mermaid-source": "./src/parser/flow.ts",
+      "types": "./dist/parser/flow.d.ts",
+      "default": "./dist/parser/flow.js"
+    },
     "./svg/edges": {
       "mermaid-source": "./src/svg/edges.ts",
       "types": "./dist/svg/edges.d.ts",

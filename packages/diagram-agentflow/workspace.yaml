@@ -66,8 +66,6 @@ credits:
   files:
     src/parser/lexer.ts: ['Pele']
     src/parser/parser.ts: ['Pele']
-    src/parser/base.ts: ['Pele']
-    src/parser/statements.ts: ['Pele']
     src/parser/model.ts: ['Pele']
     src/layout/prepare.ts: ['Pele']
     src/layout/shapes.ts: ['Pele']
