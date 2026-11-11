@@ -57,6 +57,7 @@ Later milestones add the `core/ascii` subpath and a `mermaid` CLI bin (M2, §6.3
 - `@mermaid-js/core/parser-kit`
 - `/layout`
 - `/svg`
+- `/svg/framed` and `/svg/folded`: the open and folded block shapes of embedded diagrams (ADR-15), imported by host diagrams only, so they stay outside the core bundle
 - `/text`
 - `/theme`
 - `/config`

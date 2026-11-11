@@ -1,7 +1,7 @@
 # Embedded diagrams
 
 > [!NOTE]
-> Proposed for Mermaid v13 (ADR-15). Not implemented yet.
+> New in Mermaid v13 (ADR-15).
 
 A flowchart or state diagram can hold whole diagrams of any other type. Each one is drawn in a
 box that acts as a single node: edges can point at the box, and the diagram inside is drawn on
