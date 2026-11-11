@@ -11,6 +11,7 @@ import type {
   CompletionItem,
   Diagnostic,
   DocumentView,
+  EmbeddedBlock,
   Hover,
   LanguageFacet,
   Range,
@@ -19,7 +20,8 @@ import { astAt, astRanges } from './ast.ts';
 import { completions } from './completion.ts';
 import { configDiagnostics, frontMatterTree } from './config/front-matter.ts';
 import type { FrontMatterTree } from './config/front-matter.ts';
-import type { DocumentContext } from './context.ts';
+import { MAX_BLOCK_DEPTH } from './context.ts';
+import type { DocumentContext, EmbeddedDocument } from './context.ts';
 import { diagnostics } from './diagnostics.ts';
 import { foldingRanges } from './folding.ts';
 import { hover } from './hover.ts';
@@ -28,7 +30,7 @@ import type { FoldingRange } from './folding.ts';
 import { lineFoldingRanges, lineSemanticTokens } from './lines.ts';
 import type { LineFoldingRange, LineSemanticToken } from './lines.ts';
 import { LineIndex } from '@mermaid-js/core/parser-kit';
-import { semanticTokens } from './semantic-tokens.ts';
+import { semanticTokens, withBlockTokens } from './semantic-tokens.ts';
 import type { SemanticToken } from './semantic-tokens.ts';
 import { definition, occurrences, prepareRename, references, rename } from './symbols.ts';
 import type { Occurrence, PrepareRenameResult, RenameResult } from './symbols.ts';
@@ -51,6 +53,78 @@ function copyDiagnostic(d: Diagnostic): Diagnostic {
       range: { start: r.range.start, end: r.range.end },
     }));
   return out;
+}
+
+/** The `mermaid <id>["Title"] {` line of the block whose body starts at `at` in `text`. */
+function openerRange(text: string, at: number): Range {
+  const brace = text.lastIndexOf('{', at - 1);
+  let start = text.lastIndexOf('\n', brace) + 1;
+  while (text[start] === ' ' || text[start] === '\t') start++;
+  return { start, end: brace + 1 };
+}
+
+/**
+ * The render's error for a block whose body does not start with a diagram type, on the body's
+ * first diagram line (from `start` in the body `text`), moved to the outer text.
+ */
+function noDiagramType(block: EmbeddedBlock, text: string, start: number): Diagnostic {
+  const line = /^[^\r\n]*/.exec(text.slice(start))![0].trimEnd();
+  const word = /^[^\s{[(;:]*/.exec(line)![0];
+  return {
+    severity: 'error',
+    code: 'EMBED_NO_TYPE',
+    message: `The \`mermaid ${block.id}\` block must start with a diagram type, such as \`sequenceDiagram\` or \`classDiagram\`, after any blank lines, comments and front matter${word ? `; \`${word}\` is not a diagram type` : ''}.`,
+    range: shifted({ start, end: start + line.length }, block.offset),
+  };
+}
+
+/** `r` moved by `by`. */
+const shifted = (r: Range, by: number): Range => ({ start: r.start + by, end: r.end + by });
+
+/**
+ * `host`'s diagnostics with each block's own (ADR-15) moved to the outer text, in source
+ * order: a block's go after the host's that start at or before its body. A block nested too
+ * deep to read gets the render's `EMBED_DEPTH` error on its opening line.
+ */
+function withBlocks(
+  text: string,
+  host: Diagnostic[],
+  embeds: readonly EmbeddedDocument[]
+): Diagnostic[] {
+  if (embeds.length === 0) return host;
+  const out: Diagnostic[] = [];
+  let i = 0;
+  for (const { block, doc } of embeds) {
+    if (!doc) {
+      // Its opening line starts before the body: it goes before the host's at that line.
+      const range = openerRange(text, block.offset);
+      while (i < host.length && host[i]!.range.start < range.start) out.push(host[i++]!);
+      out.push({
+        severity: 'error',
+        code: 'EMBED_DEPTH',
+        message: `The \`mermaid ${block.id}\` block is nested more than ${MAX_BLOCK_DEPTH} deep.`,
+        range,
+      });
+      continue;
+    }
+    while (i < host.length && host[i]!.range.start <= block.offset) out.push(host[i++]!);
+    // The host reads the body as one token: what it reports inside is preprocess's (a
+    // directive), which the block reports as its own.
+    const end = block.offset + block.text.length;
+    while (i < host.length && host[i]!.range.start < end) i++;
+    const ctx = Snapshot.contextOf(doc);
+    for (const d of doc.diagnostics()) {
+      if (ctx.entry === undefined && d.code === 'UNSUPPORTED_DIAGRAM') {
+        out.push(noDiagramType(block, ctx.text, ctx.start));
+        continue;
+      }
+      const moved = copyDiagnostic(d);
+      moved.range = shifted(d.range, block.offset);
+      if (moved.related) for (const r of moved.related) r.range = shifted(r.range, block.offset);
+      out.push(moved);
+    }
+  }
+  return [...out, ...host.slice(i)];
 }
 
 /**
@@ -215,7 +289,7 @@ class Snapshot implements DocumentSnapshot {
         while (i < own.length && own[i]!.range.start <= w.range.start) out.push(own[i++]!);
         out.push(w);
       }
-      return [...out, ...own.slice(i)];
+      return withBlocks(this.text, [...out, ...own.slice(i)], this.#context.embeds);
     });
   }
 
@@ -273,7 +347,16 @@ class Snapshot implements DocumentSnapshot {
 
   /** Sorted, non-overlapping tokens; types and modifiers from {@link SEMANTIC_TOKEN_LEGEND}. */
   semanticTokens(): readonly SemanticToken[] {
-    return this.#memo('semanticTokens', () => semanticTokens(this.#context, this.#occurrences()));
+    return this.#memo('semanticTokens', () =>
+      withBlockTokens(
+        semanticTokens(this.#context, this.#occurrences()),
+        this.#context.embeds.flatMap(({ block, doc }) =>
+          doc
+            ? [{ offset: block.offset, length: block.text.length, tokens: doc.semanticTokens() }]
+            : []
+        )
+      )
+    );
   }
 
   /** The semantic tokens cut per line, as Monaco, LSP and CodeMirror show them. */
