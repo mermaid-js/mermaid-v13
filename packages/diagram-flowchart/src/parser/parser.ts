@@ -52,6 +52,7 @@ import type {
   FlowSubgraph,
 } from './ast.ts';
 import { flowSourceView, lex } from './lexer.ts';
+import { readFlatShapeData } from './flat-shape-data.ts';
 import { destructLink, FlowBuilder } from './model.ts';
 import type { DocItem, FlowModel, LabelType, LinkInfo, VertexParts } from './model.ts';
 import { T } from './tokens.ts';
@@ -861,6 +862,8 @@ class FlowParser {
       this.i++;
     }
     const whole: Range = { start: opener.start, end: close + 1 };
+    const flat = readFlatShapeData(built);
+    if (flat !== undefined) return { value: flat, range: whole };
     const inner = { start: opener.end, end: close };
     // v12 parsed `{\n<data>\n}`; a `#` comment reads differently without those newlines.
     const inPlace = src.slice(inner.start, inner.end) === built && !built.includes('#');
