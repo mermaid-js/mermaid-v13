@@ -27,7 +27,7 @@
     "packages/shared": {
       "entry": [
         "src/*/index.ts",
-        "src/parser/{rule,state,tree,table,v12-text,drop,facet}.ts",
+        "src/parser/{rule,state,tree,table,v12-text,drop,facet,flow,flow-facet}.ts",
         "src/svg/edges.ts"
       ],
       "project": ["src/**/*.ts"]

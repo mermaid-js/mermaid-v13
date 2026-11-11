@@ -11,6 +11,8 @@ Code that several Mermaid v13 diagram packages share, kept out of `@mermaid-js/c
 | `/parser/v12-text` | The text a v12 jison lexer saw, with each character's source range |
 | `/parser/drop` | Offset helpers both lexer families use |
 | `/parser/facet` | Completion and hover helpers for a diagram's `./language` entry |
+| `/parser/flow` | The lexer, parser and model builder base flowchart shares with the diagrams whose grammar was cut from its own (agentflow) |
+| `/parser/flow-facet` | Completion and hover for the same diagrams' `./language` entries |
 | `/shapes` | Node shapes: sizes from a label, outlines and drawers, one export per shape |
 | `/svg/edges` | Edge paths, arrowheads and edge labels for graph diagrams |
 | `/layout` | Spacing, group padding and bounds helpers for graph layouts |

@@ -15,8 +15,8 @@ import { agentflowCategories } from './generated/categories.ts';
 import { agentflowTokens, parseAgentflow, RESERVED_ID } from './parser/index.ts';
 import type { AgentflowDocument } from './parser/index.ts';
 import { T } from './parser/tokens.ts';
-import { shapeReason } from '@mermaid-js/shared/parser/facet';
-import { readsBack } from '@mermaid-js/shared/parser/facet';
+import { readsBack, shapeReason } from '@mermaid-js/shared/parser/facet';
+import { flowNameReason } from '@mermaid-js/shared/parser/flow-facet';
 
 export { agentflowCategories } from './generated/categories.ts';
 export { agentflowDocs } from './generated/docs.ts';
@@ -73,26 +73,8 @@ function invalidIdReason(name: string): string | undefined {
  * A flow id is checked as a node id: edges and `style` name it as one.
  */
 function invalidReason(name: string, kind = 'node'): string | undefined {
-  if (kind === 'class') {
-    const at = HEADER.length + 'classDef '.length;
-    const text = `${HEADER}classDef ${name} fill:#000\n`;
-    return (
-      shapeReason(name, 'An id') ??
-      (readsBack(parseAgentflow(text), at, name, 'class')
-        ? undefined
-        : `'${name}' is not a class name.`)
-    );
-  }
-  if (kind === 'edge') {
-    const at = HEADER.length + 'A '.length;
-    const text = `${HEADER}A ${name}@--> B\n`;
-    return (
-      shapeReason(name, 'An id') ??
-      (readsBack(parseAgentflow(text), at, name, 'edge')
-        ? undefined
-        : `'${name}' is not an edge id.`)
-    );
-  }
+  if (kind === 'class' || kind === 'edge')
+    return flowNameReason(name, kind, HEADER, parseAgentflow);
   return invalidIdReason(name);
 }
 

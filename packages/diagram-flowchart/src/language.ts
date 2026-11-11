@@ -12,7 +12,7 @@ import { flowchartTokens, parseFlowchart } from './parser/index.ts';
 import type { FlowDocument } from './parser/index.ts';
 import { T } from './parser/tokens.ts';
 import { shapeReason } from '@mermaid-js/shared/parser/facet';
-import { readsBack } from '@mermaid-js/shared/parser/facet';
+import { flowNameReason } from '@mermaid-js/shared/parser/flow-facet';
 
 export { flowchartCategories } from './generated/categories.ts';
 export { flowchartDocs } from './generated/docs.ts';
@@ -64,26 +64,8 @@ function invalidIdReason(name: string): string | undefined {
 
 /** Why `name` cannot be a symbol of `kind` (`node`/`subgraph`, `class`, `edge`), if it cannot. */
 function invalidReason(name: string, kind = 'node'): string | undefined {
-  if (kind === 'class') {
-    const at = HEADER.length + 'classDef '.length;
-    const text = `${HEADER}classDef ${name} fill:#000\n`;
-    return (
-      shapeReason(name, 'An id') ??
-      (readsBack(parseFlowchart(text), at, name, 'class')
-        ? undefined
-        : `'${name}' is not a class name.`)
-    );
-  }
-  if (kind === 'edge') {
-    const at = HEADER.length + 'A '.length;
-    const text = `${HEADER}A ${name}@--> B\n`;
-    return (
-      shapeReason(name, 'An id') ??
-      (readsBack(parseFlowchart(text), at, name, 'edge')
-        ? undefined
-        : `'${name}' is not an edge id.`)
-    );
-  }
+  if (kind === 'class' || kind === 'edge')
+    return flowNameReason(name, kind, HEADER, parseFlowchart);
   return invalidIdReason(name);
 }
 
