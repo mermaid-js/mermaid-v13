@@ -1,12 +1,14 @@
 # Round 1 hypotheses
 
-Status: four batches evaluated. Eleven optimization hypotheses were rejected:
-2b/1c/5b, 1a/3c/4b, 3b/4a/5a, and 2c/2d. Diagnostic-only 4c is complete.
+Status: five batches evaluated. Twelve optimization hypotheses were rejected:
+2b/1c/5b, 1a/3c/4b, 3b/4a/5a, 2c/2d, and 2a. Diagnostic-only 4c is complete.
 See [batch 1](batch-1/REPORT.md), [batch 2](batch-2/REPORT.md), [batch 3](batch-3/REPORT.md),
-and [batch 4](batch-4/REPORT.md). None is integrated. The untested hypotheses are
-1b, 1d, 1e and 2a; these await the next batch selection and their stated prerequisites.
-All measured candidates use the same frozen round base. These are four batches within
-round 1, not four completed empty rounds. Browser validation and e2e remain pending/unverified.
+[batch 4](batch-4/REPORT.md), and [batch 5](batch-5/REPORT.md). None is integrated.
+2a gained 2.459% and passed its named allocation conditions, but failed P12's unchanged
+7.40237% threshold. Its requirement amendments remain proposed and unapproved.
+The untested hypotheses are **1b, 1d and 1e**. No next batch is underway.
+All measured candidates use the same frozen round base. These are five batches within
+round 1, not five completed empty rounds. Browser validation and e2e remain pending/unverified.
 P28 withdraws 3a: cache reset is a measurement requirement already handled by the harness,
 not a production cache-removal task. Do not dispatch 3a.
 Read [the operating manual](../../LOOP.md) before implementation. Claimed lanes below are

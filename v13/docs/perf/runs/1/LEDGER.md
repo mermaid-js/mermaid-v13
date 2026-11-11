@@ -16,5 +16,6 @@ Generated from hypotheses.jsonl. Browser validation and e2e remain unverified.
 | 2c | 1.875% | pass | byte-identical | unfit |
 | 2d | 1.926% | pass | byte-identical | unfit |
 | 4c | — | diagnostic | byte-identical | diagnostic-only |
+| 2a | 2.459% | pass | byte-identical | unfit |
 
-See the [first-batch report](batch-1/REPORT.md), [second-batch report](batch-2/REPORT.md), [third-batch report](batch-3/REPORT.md), and [fourth-batch report](batch-4/REPORT.md) for reasons and evidence.
+See the [first-batch report](batch-1/REPORT.md), [second-batch report](batch-2/REPORT.md), [third-batch report](batch-3/REPORT.md), [fourth-batch report](batch-4/REPORT.md), and [fifth-batch report](batch-5/REPORT.md) for reasons and evidence.

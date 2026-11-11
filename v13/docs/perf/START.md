@@ -42,14 +42,24 @@ Diagnostic-only 4c attributes 0.775% of instrumented render time to internal con
 including 0.640% in the 27-record large bucket. These costs are not achievable speedup claims.
 See [BATCH-4.md](runs/1/BATCH-4.md) and [the review](runs/1/batch-4/REVIEW.md).
 
-Eleven optimization hypotheses have now been measured; none qualifies for integration.
-The separate 4c diagnostic is complete. No runner is active, and the measurement window
-is closed. Other work and Docker may resume. The remaining hypotheses are 1b, 1d, 1e
-and 2a; 3a remains withdrawn. No further implementation is underway.
-Four completed batches are still part of round 1, not four completed empty rounds under P2.
+The [fifth batch](runs/1/batch-5/REPORT.md) tested 2a, the parser-sink/lazy-AST proposal.
+Its observed Node gain is **2.459%**, below the unchanged **7.40237%** threshold, so it is
+unfit. Counted parser creations fall from 7,433,113 to 5,036,158; sampled whole-render
+allocation falls **2.852%**. All 5,000 SVGs remain byte-identical. Explicitly forcing deferred
+metadata adds 7,181,290 counted creations, making that combined path more expensive than
+the eager base. See [BATCH-5.md](runs/1/BATCH-5.md) and the
+[independent review](runs/1/batch-5/REVIEW.md) for scope and evidence.
+
+Twelve optimization hypotheses have now been measured; none qualifies for integration.
+The separate 4c diagnostic is complete. Five batches supply 40 accepted jobs; fourteen invalid
+measurement attempts remain preserved and excluded. Batch 5 completed all four jobs on the
+first attempt. No runner is active, and the measurement window is closed. Other work and
+Docker may resume. The remaining hypotheses are **1b, 1d and 1e**; 3a remains withdrawn.
+No next batch is underway. Five batches remain part of round 1, not five completed empty rounds.
 Browser validation and e2e remain pending/unverified. Results are published in
 [PR #658](https://github.com/mermaid-js/mermaid-v13/pull/658), targeting the frozen
-preparation/base branch; no renderer optimization is included.
+preparation/base branch; no renderer optimization is included. The 2a requirement amendments
+remain proposed and unapproved; the rejected experiment does not require a delivery decision.
 
 The exact freeze prerequisite was `.tmp/perf-validation-p27-20261110-02/acceptance.json`:
 `validationProfile: "node"`, `sourceStable: true`, `ready: true`. Node 24.16.0 and pnpm 10.30.3
