@@ -73,7 +73,7 @@ import {
   type Plain,
   type Snapshot,
 } from './config-snapshot.ts';
-import { AnalysisCache } from './analysis-cache.ts';
+import { AnalysisCache, type Analysis, type Detection } from './analysis-cache.ts';
 import { createDomAdapter } from './dom.ts';
 import { blockConfig, blockLayers, blockPass, lazyEmbed, outsideBlocks } from './embeds.ts';
 import type { DrawBlocks } from './embeds.ts';
@@ -106,22 +106,6 @@ function renderOptions(arg: unknown): RenderOptions | undefined {
 }
 
 type TextBackend = typeof TextModule;
-
-interface Analysis {
-  readonly detected: Detected;
-  readonly plugin: AnyPlugin;
-  readonly prepared: Prepared;
-  /** The front-matter title, for text output (D82). */
-  readonly title?: string;
-  /** The author's config layers (`initialize`, front matter, directives), for line hops (D537). */
-  readonly sources: readonly (Readonly<Record<string, unknown>> | undefined)[];
-}
-
-/** What `detect` found. */
-interface Detection {
-  readonly detected: Detected;
-  readonly pre: PreprocessResult;
-}
 
 /** What `detect` found, for a type with a plugin package. */
 interface Found {
@@ -354,11 +338,8 @@ export function createMermaid(
   }
 
   // Embedded diagrams (ADR-15): a host's blocks, parsed and drawn before the host draws.
-  const blocks = blockPass<Analysis, Detection, Snapshot, AnyPlugin, RenderOptions | undefined>({
+  const blocks = blockPass({
     detect,
-    idOf: (f) => f.detected.id,
-    typeOf: (f) => f.detected.type,
-    maxEdges: (s) => s.limits.maxEdges,
     analyse: (text, s, { detected, pre }, plugin, host) =>
       analyse(text, s, plugin, detected, pre, host.prepared.config),
     load: (id) => registry.load(id),
@@ -450,7 +431,7 @@ export function createMermaid(
       analysis = analysisOf(text, s, f, await registry.load(f.detected.id));
     }
     if (ascii) await loadText(analysis);
-    await blocks.prepare(text, 0, analysis, s, ascii ? 'ascii' : 'svg');
+    await blocks.prepare({ root: text, at: 0, a: analysis, s }, ascii ? 'ascii' : 'svg');
     await loadFor(analysis, ascii);
     return analysis;
   }
@@ -729,8 +710,10 @@ export function createMermaid(
     const analysis = analysisFor(text, s, options, format === 'ascii');
     if (!('prepared' in analysis)) return analysis;
     if (format === 'ascii')
-      return drawAscii(text, s, options, analysis, (o) => blocks.drawText(text, 0, analysis, s, o));
-    const blockDraw = blocks.draw(text, 0, analysis, s, options);
+      return drawAscii(text, s, options, analysis, (o) =>
+        blocks.drawText({ root: text, at: 0, a: analysis, s }, o)
+      );
+    const blockDraw = blocks.draw({ root: text, at: 0, a: analysis, s }, options);
     const { drawn, warnings, mount } = drawSvg(text, s, options, analysis, blockDraw);
     const result: RenderResult = { ...drawn, diagramType: analysis.prepared.diagramType, warnings };
     // The DOM adapter's afterMount entry point (DESIGN §12.2, §12.3); `run`/`mount` call it.
@@ -813,7 +796,7 @@ export function createMermaid(
       const { detected, pre } = f;
       const plugin = await registry.load(detected.id);
       const a = cache.get(text, s) ?? analysisOf(text, s, f, plugin);
-      await blocks.prepare(text, 0, a, s, undefined);
+      await blocks.prepare({ root: text, at: 0, a, s }, undefined);
       const config: Plain = {};
       const front = pre.frontMatter?.config;
       for (const c of [

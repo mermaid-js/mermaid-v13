@@ -1,4 +1,24 @@
+import type { PreprocessResult } from '@mermaid-js/core/preprocess';
+import type { Prepared } from './api-types.ts';
 import type { Snapshot } from './config-snapshot.ts';
+import type { AnyPlugin, Detected } from './registry.ts';
+
+/** What the API object keeps of one parsed text (DESIGN §3 steps 1–4). */
+export interface Analysis {
+  readonly detected: Detected;
+  readonly plugin: AnyPlugin;
+  readonly prepared: Prepared;
+  /** The front-matter title, for text output (D82). */
+  readonly title?: string;
+  /** The author's config layers (`initialize`, front matter, directives), for line hops (D537). */
+  readonly sources: readonly (Readonly<Record<string, unknown>> | undefined)[];
+}
+
+/** What `detect` found. */
+export interface Detection {
+  readonly detected: Detected;
+  readonly pre: PreprocessResult;
+}
 
 interface CacheEntry<A> {
   readonly snap: Snapshot;
