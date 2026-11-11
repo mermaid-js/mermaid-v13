@@ -57,6 +57,8 @@ import type { DocItem, FlowModel, LabelType, LinkInfo, VertexParts } from './mod
 import { T } from './tokens.ts';
 
 export interface FlowParseOptions extends ParseOptions {
+  /** @internal Defer editor metadata until it is read; the public default is eager. */
+  deferMetadata?: boolean;
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
   /** Edge cap (core `DEFAULT_LIMITS.maxEdges`, 5,000; v12's `maxEdges` was 500). */
@@ -340,7 +342,7 @@ interface Frame {
   collect: boolean;
   start: number;
   opener: Range;
-  span: ReturnType<ParseState['beginStatement']>;
+  span: ReturnType<ParseState['beginStatement']> | undefined;
   children: FlowStatementNode[];
   outer: FlowStatementNode[];
 }
@@ -368,16 +370,84 @@ const STATEMENT_HINTS: Record<number, string> = {
  * The first node statement of `list` with a name: a scan for short lists, a map for the long
  * ones of `A & B & …` fan-out (each edge looks up both its ends).
  */
-function byName(list: readonly FlowNodeStmt[]): (name: string) => FlowNodeStmt | undefined {
-  if (list.length < 8) return (name) => list.find((n) => n.name === name);
+function byName(list: readonly ParsedVertex[]): (name: string) => FlowNodeStmt | undefined {
+  if (list.length < 8)
+    return (name) => list.find((n): n is FlowNodeStmt => typeof n !== 'string' && n.name === name);
   const map = new Map<string, FlowNodeStmt>();
-  for (const n of list) if (!map.has(n.name)) map.set(n.name, n);
+  for (const n of list) if (typeof n !== 'string' && !map.has(n.name)) map.set(n.name, n);
   return (name) => map.get(name);
 }
 
+type ParsedVertex = string | FlowNodeStmt;
+const vertexName = (node: ParsedVertex): string => (typeof node === 'string' ? node : node.name);
+
 /** Parse a flowchart. Never throws: problems are error diagnostics. */
 export function parseFlowchart(src: string, options: FlowParseOptions = {}): FlowParseResult {
-  return new FlowParser(src, options).parse();
+  return new FlowParser(
+    src,
+    options,
+    !options.deferMetadata || options.probe !== undefined || !!options.keepTokens
+  ).parse();
+}
+
+/** The model sink exposes the same editor fields, materializing them together on demand. */
+function deferredResult(
+  model: FlowModel,
+  diagnostics: FlowParseResult['diagnostics'],
+  src: string,
+  options: FlowParseOptions
+): FlowParseResult {
+  // Only the preprocessing fields read by a non-probe parse need to be captured. Diagnostic
+  // inclusion depends on whether preprocessing was supplied, not on its diagnostic array.
+  const pre = options.preprocessed;
+  const captured: FlowParseOptions = {
+    ...options,
+    claims: options.claims?.slice(),
+    preprocessed: pre && {
+      bodyStart: pre.bodyStart,
+      directives: pre.directives.map((d) => ({ ...d, range: { ...d.range } })),
+      diagnostics: [],
+    },
+    deferMetadata: false,
+  };
+  let complete: Pick<FlowParseResult, 'ast' | 'symbols' | 'statements'> | undefined;
+  const metadata = (): NonNullable<typeof complete> => {
+    if (!complete) {
+      const parsed = new FlowParser(src, captured, true).parse();
+      // Release the replay's model, token buffers and diagnostics; keep only editor data.
+      complete = { ast: parsed.ast, symbols: parsed.symbols, statements: parsed.statements };
+    }
+    return complete;
+  };
+  const writable = (): void => {
+    if (Object.isFrozen(result)) throw new TypeError('Cannot assign to frozen parse metadata');
+  };
+  const result: FlowParseResult = {
+    model,
+    get ast() {
+      return metadata().ast;
+    },
+    set ast(value) {
+      writable();
+      metadata().ast = value;
+    },
+    diagnostics,
+    get symbols() {
+      return metadata().symbols;
+    },
+    set symbols(value) {
+      writable();
+      metadata().symbols = value;
+    },
+    get statements() {
+      return metadata().statements;
+    },
+    set statements(value) {
+      writable();
+      metadata().statements = value;
+    },
+  };
+  return result;
 }
 
 interface ShapeData {
@@ -425,7 +495,8 @@ class FlowParser {
 
   constructor(
     private readonly src: string,
-    private readonly options: FlowParseOptions
+    private readonly options: FlowParseOptions,
+    private readonly metadata: boolean
   ) {
     const pre = (this.pre = options.preprocessed ?? preprocess(src));
     this.view = flowSourceView(
@@ -477,6 +548,7 @@ class FlowParser {
       );
       model.warnings.push(d);
     }
+    if (!this.metadata) return deferredResult(model, st.diagnostics.list, src, options);
     const ast: FlowDocument = {
       id: 'doc',
       type: 'Document',
@@ -895,7 +967,7 @@ class FlowParser {
     // An edge id (`e1@{ … }`) names the edge: v12 never makes it a vertex.
     if (this.namesEdge(name)) return this.edgeSymbol(name, r);
     const creates = !db.vertices.has(name) && name.trim() !== '';
-    this.st.symbol(name, 'node', r, creates ? 'def' : 'ref');
+    if (this.metadata) this.st.symbol(name, 'node', r, creates ? 'def' : 'ref');
   }
 
   /** Whether `name` is an edge id and no vertex's (`e1` after `A e1@--> B`). */
@@ -906,7 +978,7 @@ class FlowParser {
   /** A `class` statement target: an edge mention when it names an edge (v12 `setClass`). */
   private classTarget(name: string, r: Range): void {
     if (this.namesEdge(name)) this.edgeSymbol(name, r);
-    else this.st.symbol(name, 'node', r, 'ref');
+    else if (this.metadata) this.st.symbol(name, 'node', r, 'ref');
   }
 
   /**
@@ -915,30 +987,35 @@ class FlowParser {
    * id with it, and the written id keeps naming the same edge (#170).
    */
   private edgeSymbol(name: string, r: Range): void {
-    this.st.symbol(name, 'edge', r, 'ref');
+    if (this.metadata) this.st.symbol(name, 'edge', r, 'ref');
     const edge = this.db.edgeNamed(name);
     if (!edge || edge.isUserDefinedId || this.src.slice(r.start, r.end) !== name) return;
     const { start, end } = edge;
     if (!name.startsWith(`L_${start}_${end}_`)) return;
     const from = r.start + 2;
     const to = from + start.length + 1;
-    this.st.symbol(start, 'node', { start: from, end: from + start.length }, 'ref');
-    this.st.symbol(end, 'node', { start: to, end: to + end.length }, 'ref');
+    if (this.metadata)
+      this.st.symbol(start, 'node', { start: from, end: from + start.length }, 'ref');
+    if (this.metadata) this.st.symbol(end, 'node', { start: to, end: to + end.length }, 'ref');
   }
 
-  private vertex(): FlowNodeStmt {
+  private vertex(): ParsedVertex {
     const startTok = this.i;
     const [name, nameRange] = this.idString();
     this.nodeSymbol(name, nameRange);
-    const node: FlowNodeStmt = {
-      id: this.ids.node(name),
-      type: 'Node',
-      range: nameRange,
-      name,
-      nameRange,
-    };
+    const id = this.ids.node(name);
+    const node: FlowNodeStmt | undefined = this.metadata
+      ? {
+          id,
+          type: 'Node',
+          range: nameRange,
+          name,
+          nameRange,
+        }
+      : undefined;
     const parts = this.shape();
     this.db.addVertex(name, this.nodeAst(name), nameRange, parts);
+    if (!node) return name;
     if (parts.type !== undefined) node.shape = parts.type;
     if (parts.label) node.label = parts.label;
     node.range = this.span(startTok);
@@ -999,32 +1076,37 @@ class FlowParser {
     return {};
   }
 
-  private styledVertex(): FlowNodeStmt {
+  private styledVertex(): ParsedVertex {
     const node = this.vertex();
     this.tested(STYLE_SEPARATOR);
     if (this.kind() === T.StyleSeparator) {
       this.i++;
       const [cls, r] = this.idString();
-      this.st.symbol(cls, 'class', r, 'ref');
-      this.db.setClass(node.name, cls);
-      node.className = cls;
-      node.range = { start: node.range.start, end: r.end };
+      if (this.metadata) this.st.symbol(cls, 'class', r, 'ref');
+      this.db.setClass(vertexName(node), cls);
+      if (typeof node !== 'string') {
+        node.className = cls;
+        node.range = { start: node.range.start, end: r.end };
+      }
     }
     return node;
   }
 
-  private applyData(node: FlowNodeStmt, data: ShapeData): void {
-    this.db.addVertex(node.name, this.nodeAst(node.name), data.range, { data: data.value });
-    node.dataRange = data.range;
-    node.range = { start: node.range.start, end: data.range.end };
+  private applyData(node: ParsedVertex, data: ShapeData): void {
+    const name = vertexName(node);
+    this.db.addVertex(name, this.nodeAst(name), data.range, { data: data.value });
+    if (typeof node !== 'string') {
+      node.dataRange = data.range;
+      node.range = { start: node.range.start, end: data.range.end };
+    }
   }
 
   /** `A`, `A@{…}`, `A & B & …`: the nodes, each also pushed to `chain`. */
-  private node(chain: (FlowNodeStmt | FlowEdge)[]): FlowNodeStmt[] {
+  private node(chain: (FlowNodeStmt | FlowEdge)[]): ParsedVertex[] {
     const nodes = [this.styledVertex()];
-    chain.push(nodes[0] as FlowNodeStmt);
+    if (this.metadata) chain.push(nodes[0] as FlowNodeStmt);
     while (true) {
-      const last = nodes[nodes.length - 1] as FlowNodeStmt;
+      const last = nodes[nodes.length - 1] as ParsedVertex;
       this.tested(SHAPE_DATA);
       const data = this.kind() === T.ShapeData ? this.shapeData() : undefined;
       this.tested(SPACE);
@@ -1054,7 +1136,7 @@ class FlowParser {
       const next = this.styledVertex();
       if (data !== undefined) this.applyData(last, data);
       nodes.push(next);
-      chain.push(next);
+      if (typeof next !== 'string') chain.push(next);
     }
   }
 
@@ -1065,7 +1147,7 @@ class FlowParser {
     if (this.kind() === T.LinkId) {
       id = this.raw();
       const r = { start: this.start(this.i), end: this.end(this.i) - 1 };
-      this.st.symbol(id.slice(0, -1), 'edge', r, 'def');
+      if (this.metadata) this.st.symbol(id.slice(0, -1), 'edge', r, 'def');
       this.i++;
     }
     this.tested(LINK_AFTER_ID);
@@ -1110,7 +1192,7 @@ class FlowParser {
   private vertexStatement(collect: boolean, chain: (FlowNodeStmt | FlowEdge)[]): string[] {
     const { db, ids } = this;
     let stmt = this.node(chain);
-    let names = stmt.map((n) => n.name);
+    let names = stmt.map(vertexName);
     const first = names;
     // v12 collected `$3.concat($1)` per link, newest first: kept as parts, joined once.
     const later: string[][] = [];
@@ -1122,29 +1204,31 @@ class FlowParser {
       }
       const [info, linkRange, label] = this.link();
       const next = this.node(chain);
-      const nextNames = next.map((n) => n.name);
+      const nextNames = next.map(vertexName);
       const before = db.edges.length;
       db.addLink(names, nextNames, info, (a, b) => ids.edge(a, b), linkRange);
-      const fromOf = byName(stmt);
-      const toOf = byName(next);
-      for (let k = before; k < db.edges.length; k++) {
-        const edge = db.edges[k] as (typeof db.edges)[number];
-        const from = fromOf(edge.start);
-        const to = toOf(edge.end);
-        const ast: FlowEdge = {
-          id: edge.ast,
-          type: 'Edge',
-          range: {
-            start: from?.range.start ?? linkRange.start,
-            end: to?.range.end ?? linkRange.end,
-          },
-          from: edge.start,
-          to: edge.end,
-          edgeId: edge.id,
-          linkRange,
-        };
-        if (label) ast.label = label;
-        chain.push(ast);
+      if (this.metadata) {
+        const fromOf = byName(stmt);
+        const toOf = byName(next);
+        for (let k = before; k < db.edges.length; k++) {
+          const edge = db.edges[k] as (typeof db.edges)[number];
+          const from = fromOf(edge.start);
+          const to = toOf(edge.end);
+          const ast: FlowEdge = {
+            id: edge.ast,
+            type: 'Edge',
+            range: {
+              start: from?.range.start ?? linkRange.start,
+              end: to?.range.end ?? linkRange.end,
+            },
+            from: edge.start,
+            to: edge.end,
+            edgeId: edge.id,
+            linkRange,
+          };
+          if (label) ast.label = label;
+          chain.push(ast);
+        }
       }
       if (collect) later.push(nextNames);
       stmt = next;
@@ -1243,9 +1327,9 @@ class FlowParser {
     const at = this.i;
     const id = this.raw(this.i++);
     // The token's own range: `range` would widen it over `click`.
-    this.refs(id, { start: this.start(at), end: this.end(at) }, out, (part, pr) =>
-      this.st.symbol(part, 'node', pr, 'ref')
-    );
+    this.refs(id, { start: this.start(at), end: this.end(at) }, out, (part, pr) => {
+      if (this.metadata) this.st.symbol(part, 'node', pr, 'ref');
+    });
     this.tested(CLICK_ACTION);
     const k = this.kind();
     if (k === T.CallbackName) {
@@ -1255,6 +1339,7 @@ class FlowParser {
       const tooltip = this.tooltip();
       db.setClickEvent(id, name, this.span(at), args);
       if (tooltip !== undefined) db.setTooltip(id, tooltip);
+      if (!this.metadata) return;
       return args === undefined
         ? { targets: id.split(','), name }
         : { targets: id.split(','), name, args };
@@ -1269,7 +1354,8 @@ class FlowParser {
       const tooltip = this.tooltip();
       db.setClickEvent(id, name, this.span(at));
       if (tooltip !== undefined) db.setTooltip(id, tooltip);
-      return { targets: id.split(','), name };
+      if (this.metadata) return { targets: id.split(','), name };
+      return;
     }
     this.tested(SPACE);
     if (this.kind() !== T.Space) {
@@ -1299,11 +1385,21 @@ class FlowParser {
     return this.expectStr();
   }
 
-  private simple(k: FlowSimpleKind, from: number, refsOut: string[]): FlowSimpleStmt {
+  /** The statement sink is inert for a model-only parse. */
+  private simple(
+    out: FlowStatementNode[],
+    k: FlowSimpleKind,
+    from: number,
+    refsOut: string[],
+    callback?: AstCallback
+  ): void {
+    if (!this.metadata) return;
     const r = this.span(from);
     const name = k.charAt(0).toLowerCase() + k.slice(1);
     this.st.statement(name, r);
-    return { id: this.ids.statement(name), type: k, range: r, refs: refsOut };
+    const stmt: FlowSimpleStmt = { id: this.ids.statement(name), type: k, range: r, refs: refsOut };
+    if (callback !== undefined) stmt.callback = callback;
+    out.push(stmt);
   }
 
   /** One statement. Returns what v12's grammar adds to an enclosing subgraph's list. */
@@ -1324,13 +1420,13 @@ class FlowParser {
         this.expect(T.Space);
         const styles = this.stylesOpt();
         db.addVertex(id, this.nodeAst(id), r, { styles });
-        out.push(this.simple('Style', from, refList));
+        this.simple(out, 'Style', from, refList);
         this.separator();
         return NO_ITEMS;
       }
       case T.LinkStyle:
         this.linkStyleStatement();
-        out.push(this.simple('LinkStyle', from, refList));
+        this.simple(out, 'LinkStyle', from, refList);
         this.separator();
         return NO_ITEMS;
       case T.ClassDef: {
@@ -1339,9 +1435,10 @@ class FlowParser {
         const [id, r] = this.idString();
         this.expect(T.Space);
         const styles = this.stylesOpt();
-        this.refs(id, r, refList, (part, pr) => st.symbol(part, 'class', pr, 'def'));
+        if (this.metadata)
+          this.refs(id, r, refList, (part, pr) => st.symbol(part, 'class', pr, 'def'));
         db.addClass(id, styles);
-        out.push(this.simple('ClassDef', from, refList));
+        this.simple(out, 'ClassDef', from, refList);
         this.separator();
         return NO_ITEMS;
       }
@@ -1352,18 +1449,16 @@ class FlowParser {
         this.expect(T.Space);
         const [cls, cr] = this.idString();
         this.refs(targets, r, refList, (part, pr) => this.classTarget(part, pr));
-        st.symbol(cls, 'class', cr, 'ref');
+        if (this.metadata) st.symbol(cls, 'class', cr, 'ref');
         refList.push(cls);
         db.setClass(targets, cls);
-        out.push(this.simple('Class', from, refList));
+        this.simple(out, 'Class', from, refList);
         this.separator();
         return NO_ITEMS;
       }
       case T.Click: {
         const callback = this.clickStatement(refList);
-        const stmt = this.simple('Click', from, refList);
-        if (callback !== undefined) stmt.callback = callback;
-        out.push(stmt);
+        this.simple(out, 'Click', from, refList, callback);
         this.separator();
         return NO_ITEMS;
       }
@@ -1373,35 +1468,37 @@ class FlowParser {
       case T.DirectionLR:
       case T.DirectionTD:
         this.i++;
-        out.push(this.simple('Direction', from, refList));
+        this.simple(out, 'Direction', from, refList);
         return { stmt: 'dir', value: DIRECTIONS[t - T.DirectionTB] ?? 'TB' };
       case T.AccTitle: {
         this.i++;
         const value = this.raw(this.expect(T.AccTitleValue)).trim();
         db.setAccTitle(value);
-        out.push(this.simple('AccTitle', from, refList));
+        this.simple(out, 'AccTitle', from, refList);
         return value;
       }
       case T.AccDescr: {
         this.i++;
         const value = this.raw(this.expect(T.AccDescrValue)).trim();
         db.setAccDescription(value);
-        out.push(this.simple('AccDescr', from, refList));
+        this.simple(out, 'AccDescr', from, refList);
         return value;
       }
       case T.AccDescrMultilineValue: {
         const value = this.raw(this.i++).trim();
         db.setAccDescription(value);
-        out.push(this.simple('AccDescr', from, refList));
+        this.simple(out, 'AccDescr', from, refList);
         return value;
       }
       default: {
         if (!inKindSet(ID, t)) this.fail(STATEMENT_START);
         const chain: (FlowNodeStmt | FlowEdge)[] = [];
         const nodes = this.vertexStatement(collect, chain);
-        const r = this.span(from);
-        st.statement('chain', r);
-        out.push({ id: this.ids.statement('chain'), type: 'Chain', range: r, children: chain });
+        if (this.metadata) {
+          const r = this.span(from);
+          st.statement('chain', r);
+          out.push({ id: this.ids.statement('chain'), type: 'Chain', range: r, children: chain });
+        }
         this.separator();
         return nodes;
       }
@@ -1452,7 +1549,7 @@ class FlowParser {
       collect: this.collect,
       start,
       opener,
-      span: this.st.beginStatement('subgraph', start),
+      span: this.metadata ? this.st.beginStatement('subgraph', start) : undefined,
       children: [],
       outer: this.body,
     };
@@ -1485,20 +1582,23 @@ class FlowParser {
       if (named) {
         const written = this.src.slice(named.range.start, named.range.end);
         const start = named.range.start + (written.length - written.trimStart().length);
-        st.symbol(sgId, 'subgraph', { start, end: start + written.trim().length }, 'def');
+        if (this.metadata)
+          st.symbol(sgId, 'subgraph', { start, end: start + written.trim().length }, 'def');
       }
     }
-    st.endStatement(frame.span, end);
-    const sg = db.subgraph(sgId);
-    const node: FlowSubgraph = {
-      id: opening ?? sg?.ast ?? ids.subgraph(sgId),
-      type: 'Subgraph',
-      range: { start: frame.start, end },
-      name: sgId,
-      children: frame.children,
-    };
-    if (frame.title) node.title = frame.title;
-    frame.outer.push(node);
+    if (frame.span) st.endStatement(frame.span, end);
+    if (this.metadata) {
+      const sg = db.subgraph(sgId);
+      const node: FlowSubgraph = {
+        id: opening ?? sg?.ast ?? ids.subgraph(sgId),
+        type: 'Subgraph',
+        range: { start: frame.start, end },
+        name: sgId,
+        children: frame.children,
+      };
+      if (frame.title) node.title = frame.title;
+      frame.outer.push(node);
+    }
     this.body = frame.outer;
     this.list = frame.list;
     this.collect = frame.collect;
@@ -1597,17 +1697,19 @@ class FlowParser {
         this.i++;
         db.setDirection(dir);
       }
-      const r = { start: this.start(from), end: this.end(from + 1) };
-      if (this.kind(from + 1) === T.NoDir) r.end = this.end(from);
-      st.statement('header', r);
-      const h: FlowHeader = {
-        id: this.ids.statement('header'),
-        type: 'Header',
-        range: r,
-        keyword: this.raw(from),
-        direction: db.direction,
-      };
-      this.children.push(h);
+      if (this.metadata) {
+        const r = { start: this.start(from), end: this.end(from + 1) };
+        if (this.kind(from + 1) === T.NoDir) r.end = this.end(from);
+        st.statement('header', r);
+        const h: FlowHeader = {
+          id: this.ids.statement('header'),
+          type: 'Header',
+          range: r,
+          keyword: this.raw(from),
+          direction: db.direction,
+        };
+        this.children.push(h);
+      }
     } catch (e) {
       if (e !== STOP) throw e;
       this.recover();

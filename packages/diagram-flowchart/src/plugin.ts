@@ -28,6 +28,7 @@ export const flowchart = {
   parse: (text: string, ctx: DiagramParseContext): FlowParseResult => {
     const caps = limits(ctx);
     return parseFlowchart(text, {
+      deferMetadata: ctx.deferMetadata,
       preprocessed: ctx.preprocessed,
       maxEdges: caps.maxEdges,
       maxNodes: caps.maxNodes,

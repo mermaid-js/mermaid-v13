@@ -36,6 +36,8 @@ export interface Warning {
 
 /** What `parse` gets: the frozen config and the source already preprocessed. */
 export interface DiagramParseContext {
+  /** @internal Permit lazy editor metadata; public fields must remain fully readable. */
+  readonly deferMetadata?: boolean;
   readonly config: ResolvedConfig;
   readonly preprocessed: PreprocessResult;
   /** Features extension plugins handle (e.g. `callbacks`). */

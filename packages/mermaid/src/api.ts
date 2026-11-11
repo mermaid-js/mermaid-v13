@@ -416,11 +416,12 @@ export function createMermaid(
     const config: ResolvedConfig = resolveText(hit.site, front, directives, { warn });
     const t = stageStart();
     const claims = hooks.claims();
+    const deferMetadata = hooks.size === 0 && registry.ascii(plugin.id) === undefined;
     const parse = plugin.parse(
       text,
       claims.length > 0
-        ? { config, preprocessed: pre, limits: snap.limits, claims }
-        : { config, preprocessed: pre, limits: snap.limits }
+        ? { config, preprocessed: pre, limits: snap.limits, claims, deferMetadata }
+        : { config, preprocessed: pre, limits: snap.limits, deferMetadata }
     );
     stageEnd('parse', t);
     const error = errorFromDiagnostics(text, [...pre.diagnostics, ...parse.diagnostics]);
