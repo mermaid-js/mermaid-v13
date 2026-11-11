@@ -1,5 +1,12 @@
 # @mermaid-js/bundler-plugin
 
+## 13.0.0-alpha.3
+
+### Patch Changes
+
+- Updated dependencies [[`6021e9a`](https://github.com/mermaid-js/mermaid-v13/commit/6021e9ab701bfd79fb7f318b918eaa758fd0a263), [`2a9ba2b`](https://github.com/mermaid-js/mermaid-v13/commit/2a9ba2b54c1b7a9ffe35fbbe84ec308fd03cf22e), [`6d17d9a`](https://github.com/mermaid-js/mermaid-v13/commit/6d17d9a38243d5054b5e408ee8619d3845b7c0ab), [`452f978`](https://github.com/mermaid-js/mermaid-v13/commit/452f978373474103ba08666aab60490ac2072225), [`6fb79db`](https://github.com/mermaid-js/mermaid-v13/commit/6fb79dbd3ae618976763ec4a7a495a316decb5a7), [`6965607`](https://github.com/mermaid-js/mermaid-v13/commit/6965607dd5aa508767aad55554190ffa7861e5b8), [`ed9df39`](https://github.com/mermaid-js/mermaid-v13/commit/ed9df393c1ae46a7e3c881a20c211ade188780da), [`6321135`](https://github.com/mermaid-js/mermaid-v13/commit/63211358df5a6a0797c3bce0aeeaf1f055eca49d), [`859febf`](https://github.com/mermaid-js/mermaid-v13/commit/859febf9644da52eda16eaf1178323d06f99de2c), [`81291ba`](https://github.com/mermaid-js/mermaid-v13/commit/81291ba5d2aa0aef408f2e9bf41608643cb4ee4a), [`d619a0d`](https://github.com/mermaid-js/mermaid-v13/commit/d619a0dc9b1724ab09cb673773e5f200e7d35146), [`c150b97`](https://github.com/mermaid-js/mermaid-v13/commit/c150b97652462bb387e75236d4baafa4a63c3f4a), [`0f94d6f`](https://github.com/mermaid-js/mermaid-v13/commit/0f94d6f53fd3ddabc9ae7eb419e0174e2fcbe2b7), [`a48db63`](https://github.com/mermaid-js/mermaid-v13/commit/a48db630fd6786d90e8af66af935211ea632fecc), [`8319249`](https://github.com/mermaid-js/mermaid-v13/commit/83192493c76383dcdc21012f85d78cc6bf364411), [`b777f42`](https://github.com/mermaid-js/mermaid-v13/commit/b777f421844007f258a0d4c576877389414865f1), [`48e737e`](https://github.com/mermaid-js/mermaid-v13/commit/48e737e54ec8134b65a16c6817a91c392207100a), [`49fc458`](https://github.com/mermaid-js/mermaid-v13/commit/49fc4588df3c6e1200e15540bd7576cc90c0a59c), [`593d01f`](https://github.com/mermaid-js/mermaid-v13/commit/593d01f29b3df65081ce17bbcf230fd7d74e1f63)]:
+  - mermaid@13.0.0-alpha.3
+
 ## 13.0.0-alpha.2
 
 ### Patch Changes

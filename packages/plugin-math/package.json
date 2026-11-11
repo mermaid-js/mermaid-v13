@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/plugin-math",
-  "version": "13.0.0-alpha.2",
+  "version": "13.0.0-alpha.3",
   "description": "TeX math in Mermaid v13 labels: $$…$$ typeset by MathJax into SVG paths, loaded only for diagrams with math (D175, D178).",
   "type": "module",
   "license": "MIT",

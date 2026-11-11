@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/layout-elk",
-  "version": "13.0.0-alpha.2",
+  "version": "13.0.0-alpha.3",
   "description": "ELK layouts for Mermaid v13: elk, elk.layered, elk.stress, elk.force, elk.mrtree, elk.sporeOverlap, elk.box, elk.rectpacking and elk.radial (D171).",
   "type": "module",
   "license": "MIT",

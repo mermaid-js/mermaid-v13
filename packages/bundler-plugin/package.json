@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/bundler-plugin",
-  "version": "13.0.0-alpha.2",
+  "version": "13.0.0-alpha.3",
   "description": "One-line Mermaid plugin discovery for Vite, webpack, Rollup and esbuild (D164).",
   "type": "module",
   "license": "MIT",
