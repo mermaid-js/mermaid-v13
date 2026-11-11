@@ -262,7 +262,11 @@ function drawEdge({ w, layout, paint }: Scene, e: AgentflowEdgeView): void {
 function drawEdgeLabel({ w, layout }: Scene, e: AgentflowEdgeView, paint: LabelPaint): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
-  edgeLabel(w, e.label, at, e.edge.id, paint.fill, { fill: paint.text, ...e.style.text }, 3);
+  edgeLabel(w, e.label, at, e.edge.id, {
+    fill: paint.fill,
+    text: { fill: paint.text, ...e.style.text },
+    rx: 3,
+  });
 }
 
 /** A vertex's kind tint or a card's flow tint, under a palette. */

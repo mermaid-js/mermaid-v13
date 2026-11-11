@@ -71,8 +71,8 @@ export function cellsOf(points: readonly Point[]): Point[] {
 }
 
 /**
- * Draws a line over `cells`, its ends reaching `intoSource` and `intoTarget`. `dotted` draws
- * its straight runs with those glyphs; `weight` 2 is a thick line.
+ * Draws a line over `cells`, its ends reaching `intoSource` and `intoTarget`. `line.dotted`
+ * draws its straight runs with those glyphs; `line.weight` 2 is a thick line.
  */
 export function drawLineCells(
   canvas: Canvas,
@@ -80,9 +80,9 @@ export function drawLineCells(
   cells: readonly Point[],
   intoSource: Dir,
   intoTarget: Dir,
-  dotted?: Stroke,
-  weight: 1 | 2 = 1
+  line: { readonly dotted?: Stroke | undefined; readonly weight?: 1 | 2 } = {}
 ): void {
+  const { dotted, weight = 1 } = line;
   const last = cells.length - 1;
   cells.forEach((c, i) => {
     let arms = 0;

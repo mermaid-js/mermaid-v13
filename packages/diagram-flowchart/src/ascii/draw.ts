@@ -54,7 +54,7 @@ function drawEdge(
   const last = cells.length - 1;
   const source = { at: e.source, cell: cells[0]!, into: INTO[ports.source], marker: e.start };
   const target = { at: e.target, cell: cells[last]!, into: INTO[ports.target], marker: e.end };
-  drawLineCells(canvas, glyphs, cells, source.into, target.into, dotted, weight);
+  drawLineCells(canvas, glyphs, cells, source.into, target.into, { dotted, weight });
   for (const end of [source, target])
     ends.push({ ...end, stroke: weight === 2 ? 'thick' : 'light' });
 }

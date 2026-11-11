@@ -290,7 +290,7 @@ function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView, i: number): voi
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
   const { fill, text } = paint.edgeLabel!;
-  edgeLabel(w, e.label, at, edgeDataId(e, i), fill, { fill: text });
+  edgeLabel(w, e.label, at, edgeDataId(e, i), { fill, text: { fill: text } });
 }
 
 function drawEntity(scene: Scene, view: EntityView): void {

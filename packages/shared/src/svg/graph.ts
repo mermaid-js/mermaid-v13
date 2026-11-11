@@ -9,18 +9,18 @@ import type { Attrs, CheckedStyle, LabelBox, SvgWriter } from '@mermaid-js/core/
 const LABEL_PAD = 4;
 
 /**
- * v12's edge label centred on `at`: a `g.edgeLabel` (`data-id`), the background box `fill`ed
- * (its corners rounded by `rx`), then the text with `text`'s attributes.
+ * v12's edge label centred on `at`: a `g.edgeLabel` (`data-id`), the background box filled
+ * with `paint.fill` (its corners rounded by `paint.rx`), then the text with `paint.text`'s
+ * attributes.
  */
 export function edgeLabel(
   w: SvgWriter,
   label: LabelBox & { readonly width: number },
   at: { readonly x: number; readonly y: number },
   id: string,
-  fill: Attrs['fill'],
-  text: Attrs,
-  rx?: number
+  paint: { readonly fill: Attrs['fill']; readonly text: Attrs; readonly rx?: number }
 ): void {
+  const { fill, text, rx } = paint;
   const lw = label.width + 2 * LABEL_PAD;
   w.open('g', { class: 'edgeLabel', 'data-id': id });
   w.leaf('rect', {

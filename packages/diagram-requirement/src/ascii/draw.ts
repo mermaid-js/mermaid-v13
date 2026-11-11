@@ -94,7 +94,7 @@ function drawLine(
   const dotted = r.dashed ? glyphs.dotted : undefined;
   const last = cells.length - 1;
   const into = { source: INTO[ports.source], target: INTO[ports.target] };
-  drawLineCells(canvas, glyphs, cells, into.source, into.target, dotted);
+  drawLineCells(canvas, glyphs, cells, into.source, into.target, { dotted });
   ends.push({ relation: r, cell: cells[0]!, into: into.source, source: true });
   ends.push({ relation: r, cell: cells[last]!, into: into.target, source: false });
 }

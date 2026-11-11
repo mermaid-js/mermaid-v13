@@ -53,7 +53,7 @@ function drawEdge(
   const last = cells.length - 1;
   const source = { at: e.source, cell: cells[0]!, into: INTO[ports.source], marker: e.start };
   const target = { at: e.target, cell: cells[last]!, into: INTO[ports.target], marker: e.end };
-  drawLineCells(canvas, glyphs, cells, source.into, target.into, dotted);
+  drawLineCells(canvas, glyphs, cells, source.into, target.into, { dotted });
   ends.push(source, target);
 }
 

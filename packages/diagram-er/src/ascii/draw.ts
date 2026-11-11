@@ -73,7 +73,7 @@ function drawLine(
   const dotted = e.relationship.identifying ? undefined : glyphs.dotted;
   const last = cells.length - 1;
   const into = { source: INTO[ports.source], target: INTO[ports.target] };
-  drawLineCells(canvas, glyphs, cells, into.source, into.target, dotted);
+  drawLineCells(canvas, glyphs, cells, into.source, into.target, { dotted });
   // The cell before the end, also where the line turns there: the outer mark says zero or one,
   // which a drawing must not lose. Not the other end's cell on a two-cell line.
   const before = (i: number, step: number): Point | undefined =>

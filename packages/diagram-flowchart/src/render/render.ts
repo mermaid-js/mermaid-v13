@@ -331,7 +331,7 @@ function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
   const { fill, text } = paint.edgeLabel!;
-  edgeLabel(w, e.label, at, e.edge.id, fill, { fill: text, ...e.style.text }, 3);
+  edgeLabel(w, e.label, at, e.edge.id, { fill, text: { fill: text, ...e.style.text }, rx: 3 });
 }
 
 function drawNode(

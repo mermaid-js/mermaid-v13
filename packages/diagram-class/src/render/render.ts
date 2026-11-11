@@ -317,7 +317,11 @@ function drawEdgeLabels({ w, layout, paint }: Scene, e: ClassEdgeView, id: strin
   const at = layout.edges.get(e.layoutId);
   if (!at) return;
   if (e.label && at.label && paint.edgeLabel)
-    edgeLabel(w, e.label, at.label, id, paint.edgeLabel, { fill: paint.text }, 3);
+    edgeLabel(w, e.label, at.label, id, {
+      fill: paint.edgeLabel,
+      text: { fill: paint.text },
+      rx: 3,
+    });
   const ends: [MeasuredLabel | undefined, { x: number; y: number } | undefined][] = [
     [e.startLabel, at.startLabel],
     [e.endLabel, at.endLabel],

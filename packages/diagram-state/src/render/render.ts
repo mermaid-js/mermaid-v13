@@ -395,7 +395,7 @@ function drawEdgeLabel({ w, layout, paint }: Scene, e: StateEdgeView): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
   const { fill, text } = paint.edgeLabel!;
-  edgeLabel(w, e.label, at, e.id, fill, { fill: text }, 3);
+  edgeLabel(w, e.label, at, e.id, { fill, text: { fill: text }, rx: 3 });
 }
 
 function nodeClass(view: StateNodeView): string {

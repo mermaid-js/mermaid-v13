@@ -94,7 +94,7 @@ function drawLine(
   const dotted = e.dotted ? glyphs.dotted : undefined;
   const last = cells.length - 1;
   const into = { source: INTO[ports.source], target: INTO[ports.target] };
-  drawLineCells(canvas, glyphs, cells, into.source, into.target, dotted);
+  drawLineCells(canvas, glyphs, cells, into.source, into.target, { dotted });
   // The cell before the end, where a two-cell head (`|>`) puts its bar: not the other end's.
   const end = (i: number, step: number, d: Dir, node: string, marker: MarkerType): End => {
     const b = cells[i + 2 * step] ? cells[i + step] : undefined;
