@@ -120,6 +120,30 @@ describe('block isolation', () => {
     expect(ids).toEqual(['host-one-title', 'host-two-title']);
   });
 
+  it('never gives two blocks the same ids, whatever their ids', async () => {
+    const seq = (id: string, pad = '  ') => [
+      `${pad}mermaid ${id} {`,
+      `${pad}  sequenceDiagram`,
+      `${pad}    accTitle: Same`,
+      `${pad}    A->>B: hi`,
+      `${pad}}`,
+    ];
+    const text = [
+      'flowchart LR',
+      ...seq('a.b'),
+      ...seq('a_b'),
+      ...seq('a-b'),
+      '  mermaid a {',
+      '    flowchart LR',
+      ...seq('b', '      '),
+      '  }',
+    ].join('\n');
+    const { svg } = await createMermaid().render('host', text);
+    const ids = [...svg.matchAll(/ id="([^"]*)"/g)].map((m) => m[1]);
+    expect(ids).toHaveLength(4);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
   it('declares each root its own theme aliases, so none leak either way', async () => {
     const { svg } = await createMermaid().render('host', twins);
     const [host, inner] = roots(svg).map((t) => attr(t, 'style') ?? '');

@@ -27,9 +27,13 @@ function edgesOf(parse: ParseResult<unknown>): number {
   return parse.edgeCount ?? 0;
 }
 
-/** A block's id prefix: the host's, then the block id as an XML name part (ADR-15). */
+/**
+ * A block's id prefix: the host's, `-`, then the block id as an XML name part (ADR-15). The
+ * encoding is one-to-one and never writes `-`, so no two blocks share a prefix: `_` is `__`,
+ * and any other character but a letter or digit is `_<hex code>_`.
+ */
 export function blockPrefix(host: string, id: string): string {
-  return `${host}-${id.replace(/[^A-Za-z0-9_-]/g, '_')}`;
+  return `${host}-${id.replace(/[^A-Za-z0-9]/gu, (c) => (c === '_' ? '__' : `_${c.codePointAt(0)!.toString(16)}_`))}`;
 }
 
 /**

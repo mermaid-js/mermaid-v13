@@ -101,7 +101,9 @@ one data field and one lookup; hosts stay simple and render nothing foreign. Rej
   other diagram packages, which diagrams must not do, and every host would differ.
 
 **Each block is drawn as a nested `<svg>`** at its natural size, never scaled. Its id prefix is
-the host's prefix plus the block id, so ids never clash, including two identical blocks. It
+the host's prefix, `-`, and the block id in a one-to-one encoding that never writes `-` (`_` is
+`__`, any other character but a letter or digit is `_<hex>_`), so ids never clash, including two
+identical blocks, `a.b` beside `a_b`, and a block `b` in `a` beside a block `a-b`. It
 carries its own theme aliases on its own root, so host and block styles never mix.
 
 **Look.** A border and a transparent background, which tells a block apart from a subgraph, and
