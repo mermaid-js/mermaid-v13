@@ -8,6 +8,7 @@ import { isSpace } from '../parser-kit/chars.ts';
 import type { Diagnostics } from '../parser-kit/diagnostics.ts';
 import type { Range } from '../parser-kit/positions.ts';
 import { lineEnd, newlineAt } from '../parser-kit/scanner.ts';
+import { simpleConfig } from './frontmatter-config.ts';
 import { isYamlMap, parseYaml } from './yaml.ts';
 import type { YamlMap, YamlValue } from './yaml.ts';
 
@@ -119,7 +120,10 @@ function interpret(
   if (end > yamlStart && src.charCodeAt(end - 1) === LF) end--;
   if (end > yamlStart && src.charCodeAt(end - 1) === CR) end--;
   const yamlRange = { start: yamlStart, end };
-  const yaml = parseYaml(src, { start: yamlStart, end, indent });
+  const simple = indent === '' ? simpleConfig(src, yamlStart, end) : undefined;
+  const yaml = simple
+    ? { value: simple, diagnostics: [] }
+    : parseYaml(src, { start: yamlStart, end, indent });
   for (const d of yaml.diagnostics) diagnostics.list.push(d);
 
   const fm: FrontMatter = { range, yamlRange, data: null };
