@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "model": "gpt-6-astra",
+  "forkTurns": "none",
+  "roles": {
+    "coordinator": { "effort": "high" },
+    "hypothesis-generator": { "effort": "high" },
+    "implementer": { "effort": "medium" },
+    "reviewer": { "effort": "high" },
+    "harness-engineer": { "effort": "high" }
+  },
+  "round1": {
+    "1a": { "effort": "high", "reason": "Escaping and validation fast paths preserve security semantics." },
+    "1b": { "effort": "high", "reason": "Changes the runtime security boundary and requires an amendment." },
+    "1c": { "effort": "medium", "reason": "Bounded writer allocation reduction with byte identity." },
+    "1d": { "effort": "high", "reason": "Changes CSS inheritance and paint placement across shapes." },
+    "1e": { "effort": "medium", "reason": "Bounded internal markup trimming; escalate if CSS semantics require redesign." },
+    "2a": { "effort": "high", "reason": "Parser sinks and lazy AST access change architecture and public behavior." },
+    "2b": { "effort": "high", "reason": "Lexer/source-view ownership and lazy error ranges have parser-wide invariants." },
+    "2c": { "effort": "high", "reason": "Shape-data parsing must preserve YAML semantics and fallback behavior." },
+    "2d": { "effort": "high", "reason": "Front-matter parsing fast path must preserve full-reader behavior." },
+    "3a": { "effort": "high", "reason": "Changes cache lifecycle and prepare-to-render handoff semantics." },
+    "3b": { "effort": "high", "reason": "Value-keyed theme caching requires correct identity and invalidation." },
+    "3c": { "effort": "high", "reason": "Analysis reuse and detection changes cross API lifecycle boundaries." },
+    "4a": { "effort": "high", "reason": "Removes a representation boundary in graph preparation." },
+    "4b": { "effort": "high", "reason": "Changes layout representations, ownership and algorithm internals." },
+    "4c": { "effort": "high", "reason": "Diagnostic instrumentation must isolate conversion cost without misleading attribution." },
+    "5a": { "effort": "medium", "reason": "Bounded blank-label and character-presence fast paths." },
+    "5b": { "effort": "high", "reason": "Wrapping and font metric changes must preserve text geometry exactly." }
+  },
+  "escalation": {
+    "from": "medium",
+    "to": "high",
+    "triggers": [
+      "An unplanned design decision or public/security invariant is encountered.",
+      "Correctness failures persist after a focused diagnosis and attempted fix.",
+      "The expected counter does not move and understanding the cause requires deeper investigation."
+    ]
+  },
+  "measurement": {
+    "runner": "script",
+    "fitEvaluator": "script",
+    "agentActivityAllowed": false
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "source": "Knut's normal-terminal output, supplied in this conversation on 2026-11-10",
+  "purpose": "environment preflight, not benchmark",
+  "checks": [
+    { "name": "node", "ok": false, "expected": "24.16.0", "actual": "v26.7.0" },
+    { "name": "pnpm", "ok": true, "expected": "10.30.3", "actual": "10.30.3", "error": null },
+    { "name": "process-inspection", "ok": true, "error": null },
+    { "name": "hardware-inventory", "ok": true, "actual": ["68719476736", "10", "10"], "error": null },
+    { "name": "chromium", "ok": true, "version": "151.0.7922.34", "box": { "width": 10, "height": 20 }, "screenshotBytes": 2820 }
+  ]
+}

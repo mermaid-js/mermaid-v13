@@ -1,0 +1,314 @@
+{
+  "schemaVersion": 1,
+  "purpose": "preparation only; no formal round 0 or optimizations",
+  "createdAt": "2026-11-10T11:43:43.744Z",
+  "ready": false,
+  "sourceSha256": "1abf1eedaf5fb291c50acacdea892fbffce59710da840fcf7bda62098c3d7638",
+  "sourceStable": true,
+  "acceptance": {
+    "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-preparation/acceptance-node-final/acceptance.json",
+    "sha256": "cc210a6e35e535cd19f4824fbb86e6b636a3ccd9506e772efad52cf934b20a04"
+  },
+  "checks": [
+    {
+      "name": "environment",
+      "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node tools/perf/check-environment.mjs --node-only",
+      "argv": [
+        "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+        "tools/perf/check-environment.mjs",
+        "--node-only"
+      ],
+      "exitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "status": "failed",
+      "startedAt": "2026-11-10T11:41:18.861Z",
+      "finishedAt": "2026-11-10T11:41:19.076Z",
+      "log": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-preparation/acceptance-node-final/environment.log",
+      "logSha256": "da4419a62d778580ca07959c4e8d6dca9a3ffacaad1f418bad929d7c64e126de"
+    },
+    {
+      "name": "harness",
+      "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node --test tools/perf/acceptance.test.mjs tools/perf/browser.test.mjs tools/perf/build.test.mjs tools/perf/common.test.mjs tools/perf/diagnostics.test.mjs tools/perf/evaluate.test.mjs tools/perf/gates.test.mjs tools/perf/quiet.test.mjs tools/perf/report.test.mjs tools/perf/scheduler.test.mjs tools/perf/timing-worker.test.mjs",
+      "argv": [
+        "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+        "--test",
+        "tools/perf/acceptance.test.mjs",
+        "tools/perf/browser.test.mjs",
+        "tools/perf/build.test.mjs",
+        "tools/perf/common.test.mjs",
+        "tools/perf/diagnostics.test.mjs",
+        "tools/perf/evaluate.test.mjs",
+        "tools/perf/gates.test.mjs",
+        "tools/perf/quiet.test.mjs",
+        "tools/perf/report.test.mjs",
+        "tools/perf/scheduler.test.mjs",
+        "tools/perf/timing-worker.test.mjs"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "status": "passed",
+      "startedAt": "2026-11-10T11:41:19.076Z",
+      "finishedAt": "2026-11-10T11:41:25.798Z",
+      "log": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-preparation/acceptance-node-final/harness.log",
+      "logSha256": "8e24b01351a9df56455349b2d2e3fd20aed114bdca9f45fe042b20fd685a1b6d"
+    },
+    {
+      "name": "check",
+      "command": "pnpm check",
+      "argv": [
+        "pnpm",
+        "check"
+      ],
+      "exitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "status": "failed",
+      "startedAt": "2026-11-10T11:41:25.799Z",
+      "finishedAt": "2026-11-10T11:43:22.073Z",
+      "log": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-preparation/acceptance-node-final/check.log",
+      "logSha256": "a7fb8c27326bb5a30055ae80e905fd837f3174f7cf1c13d4bd8b7da982709bd5"
+    },
+    {
+      "name": "security",
+      "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node node_modules/vitest/vitest.mjs run packages/conformance/src/cynefin/render.spec.ts packages/conformance/src/feature-plugins.spec.ts packages/conformance/src/flowchart-behaviour.spec.ts packages/conformance/src/flowchart-render.spec.ts packages/conformance/src/gantt/render-behaviour.spec.ts packages/conformance/src/gantt/schedule-stress.spec.ts packages/conformance/src/journey/render.spec.ts packages/conformance/src/mindmap/stress.spec.ts packages/conformance/src/packet/render.spec.ts packages/conformance/src/pie/render.spec.ts packages/conformance/src/quadrant/render.spec.ts packages/conformance/src/radar/render.spec.ts packages/conformance/src/sequence/render.spec.ts packages/conformance/src/state/render.spec.ts packages/conformance/src/stress.spec.ts packages/conformance/src/treemap/render.spec.ts packages/conformance/src/wardley/render.spec.ts packages/core/src/config/resolveConfig.spec.ts packages/core/src/limits/limits.spec.ts packages/core/src/svg/gradient.spec.ts packages/core/src/svg/image-url.spec.ts packages/core/src/svg/security.spec.ts packages/core/src/svg/url.spec.ts packages/core/src/svg/user-gradient.spec.ts packages/diagram-er/src/v12-specs/erDiagram.spec.ts packages/diagram-er/src/v12-specs/subgraph.spec.ts packages/diagram-flowchart/src/v12-specs/flow-arrows.spec.ts packages/diagram-flowchart/src/v12-specs/flow-comments.spec.ts packages/diagram-flowchart/src/v12-specs/flow-direction.spec.ts packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts packages/diagram-flowchart/src/v12-specs/flow-interactions.spec.ts packages/diagram-flowchart/src/v12-specs/flow-lines.spec.ts packages/diagram-flowchart/src/v12-specs/flow-md-string.spec.ts packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts packages/diagram-flowchart/src/v12-specs/flow-singlenode.spec.ts packages/diagram-flowchart/src/v12-specs/flow-style.spec.ts packages/diagram-flowchart/src/v12-specs/flow-text.spec.ts packages/diagram-flowchart/src/v12-specs/flow-vertice-chaining.spec.ts packages/diagram-flowchart/src/v12-specs/flow.spec.ts packages/diagram-flowchart/src/v12-specs/subgraph.spec.ts packages/diagram-kanban/src/parser/parse.spec.ts packages/diagram-kanban/src/render/render.spec.ts packages/diagram-mindmap/src/parser/parse.spec.ts packages/diagram-pie/src/v12-specs/pie.spec.ts packages/diagram-state/src/v12-specs/state-parser.spec.ts packages/diagram-state/src/v12-specs/state-style.spec.ts packages/language-service/src/front-matter.spec.ts packages/mermaid/src/api.spec.ts packages/mermaid/src/config-fragments.spec.ts packages/mermaid/src/extensions.spec.ts packages/mermaid/src/icon-contract.spec.ts packages/mermaid/src/inline-boxes.spec.ts packages/mermaid/src/limits.spec.ts packages/mermaid/src/mindmap.spec.ts packages/mermaid/src/render-safety.spec.ts packages/mermaid/src/sankey.spec.ts packages/plugin-hand-drawn/src/corpus.spec.ts packages/plugin-icons/src/corpus.spec.ts packages/plugin-icons/src/security.spec.ts packages/plugin-interactions/src/class.spec.ts packages/plugin-interactions/src/gantt.spec.ts packages/plugin-interactions/src/index.spec.ts packages/plugin-interactions/src/menus.spec.ts packages/plugin-math/src/engine.spec.ts packages/plugin-math/src/index.spec.ts tools/gen-config/src/migration.spec.ts",
+      "argv": [
+        "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "packages/conformance/src/cynefin/render.spec.ts",
+        "packages/conformance/src/feature-plugins.spec.ts",
+        "packages/conformance/src/flowchart-behaviour.spec.ts",
+        "packages/conformance/src/flowchart-render.spec.ts",
+        "packages/conformance/src/gantt/render-behaviour.spec.ts",
+        "packages/conformance/src/gantt/schedule-stress.spec.ts",
+        "packages/conformance/src/journey/render.spec.ts",
+        "packages/conformance/src/mindmap/stress.spec.ts",
+        "packages/conformance/src/packet/render.spec.ts",
+        "packages/conformance/src/pie/render.spec.ts",
+        "packages/conformance/src/quadrant/render.spec.ts",
+        "packages/conformance/src/radar/render.spec.ts",
+        "packages/conformance/src/sequence/render.spec.ts",
+        "packages/conformance/src/state/render.spec.ts",
+        "packages/conformance/src/stress.spec.ts",
+        "packages/conformance/src/treemap/render.spec.ts",
+        "packages/conformance/src/wardley/render.spec.ts",
+        "packages/core/src/config/resolveConfig.spec.ts",
+        "packages/core/src/limits/limits.spec.ts",
+        "packages/core/src/svg/gradient.spec.ts",
+        "packages/core/src/svg/image-url.spec.ts",
+        "packages/core/src/svg/security.spec.ts",
+        "packages/core/src/svg/url.spec.ts",
+        "packages/core/src/svg/user-gradient.spec.ts",
+        "packages/diagram-er/src/v12-specs/erDiagram.spec.ts",
+        "packages/diagram-er/src/v12-specs/subgraph.spec.ts",
+        "packages/diagram-flowchart/src/v12-specs/flow-arrows.spec.ts",
+        "packages/diagram-flowchart/src/v12-specs/flow-comments.spec.ts",
+        "packages/diagram-flowchart/src/v12-specs/flow-direction.spec.ts",
+        "packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts",
+        "packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts",
+        "packages/diagram-flowchart/src/v12-specs/flow-interactions.spec.ts",
+        "packages/diagram-flowchart/src/v12-specs/flow-lines.spec.ts",
+        "packages/diagram-flowchart/src/v12-specs/flow-md-string.spec.ts",
+        "packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts",
+        "packages/diagram-flowchart/src/v12-specs/flow-singlenode.spec.ts",
+        "packages/diagram-flowchart/src/v12-specs/flow-style.spec.ts",
+        "packages/diagram-flowchart/src/v12-specs/flow-text.spec.ts",
+        "packages/diagram-flowchart/src/v12-specs/flow-vertice-chaining.spec.ts",
+        "packages/diagram-flowchart/src/v12-specs/flow.spec.ts",
+        "packages/diagram-flowchart/src/v12-specs/subgraph.spec.ts",
+        "packages/diagram-kanban/src/parser/parse.spec.ts",
+        "packages/diagram-kanban/src/render/render.spec.ts",
+        "packages/diagram-mindmap/src/parser/parse.spec.ts",
+        "packages/diagram-pie/src/v12-specs/pie.spec.ts",
+        "packages/diagram-state/src/v12-specs/state-parser.spec.ts",
+        "packages/diagram-state/src/v12-specs/state-style.spec.ts",
+        "packages/language-service/src/front-matter.spec.ts",
+        "packages/mermaid/src/api.spec.ts",
+        "packages/mermaid/src/config-fragments.spec.ts",
+        "packages/mermaid/src/extensions.spec.ts",
+        "packages/mermaid/src/icon-contract.spec.ts",
+        "packages/mermaid/src/inline-boxes.spec.ts",
+        "packages/mermaid/src/limits.spec.ts",
+        "packages/mermaid/src/mindmap.spec.ts",
+        "packages/mermaid/src/render-safety.spec.ts",
+        "packages/mermaid/src/sankey.spec.ts",
+        "packages/plugin-hand-drawn/src/corpus.spec.ts",
+        "packages/plugin-icons/src/corpus.spec.ts",
+        "packages/plugin-icons/src/security.spec.ts",
+        "packages/plugin-interactions/src/class.spec.ts",
+        "packages/plugin-interactions/src/gantt.spec.ts",
+        "packages/plugin-interactions/src/index.spec.ts",
+        "packages/plugin-interactions/src/menus.spec.ts",
+        "packages/plugin-math/src/engine.spec.ts",
+        "packages/plugin-math/src/index.spec.ts",
+        "tools/gen-config/src/migration.spec.ts"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "status": "passed",
+      "startedAt": "2026-11-10T11:43:22.074Z",
+      "finishedAt": "2026-11-10T11:43:40.711Z",
+      "log": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-preparation/acceptance-node-final/security.log",
+      "logSha256": "75c840ab54e6fc9d5fd94e2198f10e8efbfa3027da1ad242c58a1692f0599352"
+    },
+    {
+      "name": "size",
+      "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node --import tsx --conditions=mermaid-source tools/perf/size-check.mjs",
+      "argv": [
+        "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+        "--import",
+        "tsx",
+        "--conditions=mermaid-source",
+        "tools/perf/size-check.mjs"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "status": "passed",
+      "startedAt": "2026-11-10T11:43:40.712Z",
+      "finishedAt": "2026-11-10T11:43:43.390Z",
+      "log": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-preparation/acceptance-node-final/size.log",
+      "logSha256": "c0cfcde3bb84e11dba26399816c4f9bbad42bddfcc201cbe06fef8a7a3aa2007"
+    },
+    {
+      "name": "host",
+      "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node tools/perf/host-acceptance.mjs --out /Users/knsv/repos/mermaid-v13-perf/.tmp/perf-preparation/acceptance-node-final/host",
+      "argv": [
+        "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+        "tools/perf/host-acceptance.mjs",
+        "--out",
+        "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-preparation/acceptance-node-final/host"
+      ],
+      "exitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "status": "failed",
+      "startedAt": "2026-11-10T11:43:43.391Z",
+      "finishedAt": "2026-11-10T11:43:43.425Z",
+      "log": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-preparation/acceptance-node-final/host.log",
+      "logSha256": "d55f4712b5f1501ca9d79441cc908005156b8853ce90acc44d933f15f7c77bfa"
+    },
+    {
+      "name": "browser",
+      "argv": [
+        "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+        "tools/perf/browser-acceptance.mjs",
+        "--out",
+        "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-preparation/acceptance-node-final/browser"
+      ],
+      "status": "unverified",
+      "reason": "Deferred browser validation; not required for Node measurement readiness"
+    },
+    {
+      "name": "e2e",
+      "argv": [
+        "pnpm",
+        "e2e"
+      ],
+      "status": "unverified",
+      "reason": "Deferred browser validation; not required for Node measurement readiness"
+    }
+  ],
+  "harnessTests": {
+    "passed": 57,
+    "failed": 0,
+    "skipped": 0
+  },
+  "securitySelection": {
+    "passed": 3136,
+    "skipped": 35,
+    "todo": 2
+  },
+  "sizeBudgets": {
+    "coreGzipBytes": 94360,
+    "coreLimit": 98304,
+    "loadedGzipBytes": 129675,
+    "loadedLimit": 131072
+  },
+  "rehearsal": {
+    "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-preparation/rehearsal-node-final/rehearsal-summary.json",
+    "sha256": "e342d7e0cfa7047ccb2469a37caf735785dabad48ff681f54d69933c4c12a433",
+    "sampleCount": 16,
+    "validationProfile": "node",
+    "browserValidation": "unverified",
+    "jobs": [
+      "aa-0",
+      "aa-1",
+      "pele",
+      "trailing-comment",
+      "cache",
+      "diagnostics",
+      "gates"
+    ],
+    "fixedSampleUnchanged": true,
+    "performanceClaims": false,
+    "resumedJournalSha256": "bac8645be1b180a855739e422a0af75ab3bc7aa531fabcb0d7e0df16fb92a5c4",
+    "reportRegenerationIdentical": true,
+    "maximumCalibrationRelativeError": 0.006577820493300852
+  },
+  "supplementalChecks": [
+    {
+      "name": "deps",
+      "exitCode": 0,
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-preparation/check-deps-direct.log",
+      "sha256": "c7f51d03e7d7b66e4b0e59c7b2b587418f92df1f41883f9ec95d2a5f930a9954",
+      "invocation": "node --import tsx; does not replace literal pnpm check"
+    },
+    {
+      "name": "licenses",
+      "exitCode": 0,
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-preparation/check-licenses-direct.log",
+      "sha256": "3fb49d20d4cb6d0f0b73dba9059423931da30e24c9a3435490d75179a3523269",
+      "invocation": "node --import tsx; does not replace literal pnpm check"
+    },
+    {
+      "name": "config",
+      "exitCode": 0,
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-preparation/check-config-direct.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "invocation": "node --import tsx; does not replace literal pnpm check"
+    },
+    {
+      "name": "grammar",
+      "exitCode": 0,
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-preparation/check-grammar-direct.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "invocation": "node --import tsx; does not replace literal pnpm check"
+    }
+  ],
+  "fullSuiteAttempt": {
+    "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-preparation/vitest-all.log",
+    "passedFiles": 886,
+    "failedFiles": 9,
+    "skippedFiles": 5,
+    "passedTests": 18462,
+    "failedTests": 4,
+    "skippedTests": 180,
+    "todo": 2,
+    "green": false
+  },
+  "targetedReruns": [
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-preparation/retry-orphan-directories.log",
+      "passedTests": 49
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-preparation/retry-local-failures.log",
+      "passedTests": 12
+    }
+  ],
+  "validationProfile": "node",
+  "fullReady": false,
+  "browserValidation": "unverified",
+  "previousAcceptance": {
+    "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-preparation/acceptance-frozen/acceptance.json",
+    "sha256": "50918f6fad128ae5698edb6fb62274e26cacf7c53d4cd7b09737ed4e31ca42b8",
+    "createdAt": "2026-11-10T11:29:38.912Z",
+    "sourceSha256": "de7c90a86edf0a1315c546c93efcafa816c7988685b29798ce3a7c501259aaa0",
+    "scope": "earlier full-profile attempt; predates Node profile changes"
+  },
+  "historicalEvidenceNote": "Supplemental checks, full-suite attempt and targeted reruns below are preserved earlier preparation evidence, not a passing current pnpm check."
+}

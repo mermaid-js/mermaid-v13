@@ -182,8 +182,13 @@ export default tseslint.config(
     ...tseslint.configs.disableTypeChecked,
   },
   {
+    files: ['tools/perf/**/*.mjs'],
+    // The standalone harness executes plain JavaScript without a TypeScript loader.
+    rules: { '@typescript-eslint/explicit-module-boundary-types': 'off' },
+  },
+  {
     // Test doubles: stubs, unbound spies and async callbacks without awaits are normal here.
-    files: ['**/*.spec.ts'],
+    files: ['**/*.spec.ts', 'tools/perf/**/*.test.mjs'],
     rules: {
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-empty-function': 'off',

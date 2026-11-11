@@ -1,5 +1,10 @@
 # Flowchart performance, round 2: handoff
 
+Historical handoff: its P18/3a production cache-removal interpretation is superseded by
+[P28 in DECISIONS.md](DECISIONS.md). Cache reset is required only in the measurement harness;
+production caching stays unchanged. Original handoff text is retained below for provenance.
+
+
 This file hands a grilling session (2026-11-09, with Knut) to the session that carries the work out. It is a temporary file. It is replaced by `DECISIONS.md` and `LOOP.md` in this folder, and deleted in the same docs PR.
 
 All source references are against the tip of `mermaid-v13` at `f71e9a58b` (2026-11-09). Pele is at 1.13.0 (`3a2f075`). The findings come from reading the source only. Nothing was run or measured in that session.

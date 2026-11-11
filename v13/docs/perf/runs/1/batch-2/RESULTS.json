@@ -1,0 +1,2646 @@
+{
+  "schemaVersion": 1,
+  "round": 1,
+  "batch": 2,
+  "scope": "formal",
+  "measurementEnvironment": {
+    "decision": "P27",
+    "limitsChanged": false,
+    "recordedAt": "2026-11-10T17:25:23.073864+00:00",
+    "dockerProcessMatches": [
+      "  555     1   0.0 /Library/PrivilegedHelperTools/com.docker.vmnetd"
+    ],
+    "processSnapshotSha256": "6e51b43de05661762342a780c6c174be5d6f66361d8168953bac183969187c8b",
+    "description": "Docker Desktop and its VM/backend were absent before the batch-2 window; only the idle privileged vmnetd helper remained. Existing editor/build-service background processes were present and remain subject to the unchanged P27 monitoring limits. All work dispatched for this effort was idle. The accepted round-1 Pelé reference is reused from batch 1, where Docker was off.",
+    "evidence": {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/measurement-environment.json",
+      "sha256": "50b49b6e56a7e22af7d26db5e275905bbba53c48539a4a23156bf3210457794b"
+    },
+    "invalidAttempts": [
+      {
+        "directory": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/1a-invalid-1",
+        "journal": {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/1a-invalid-1/scheduler.jsonl",
+          "sha256": "8b59723cd2fd90f2a7a837a066722f6bba2f4525202c3def4befc6a92b7e420d"
+        }
+      },
+      {
+        "directory": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/3c-invalid-1",
+        "journal": {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/3c-invalid-1/scheduler.jsonl",
+          "sha256": "44e021bf523f4804d6e89c5cfe86488a14d6086e1f4f5d965adea4919483adf8"
+        }
+      }
+    ]
+  },
+  "node": {
+    "version": "v24.16.0",
+    "execPath": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+    "sha256": "1ee75375e33b94fc34b3b19aede049e11dae90efb63b374dc96d6bdace70c4b8",
+    "versions": {
+      "node": "24.16.0",
+      "acorn": "8.16.0",
+      "ada": "3.4.4",
+      "amaro": "1.1.9",
+      "ares": "1.34.6",
+      "brotli": "1.2.0",
+      "cldr": "48.0",
+      "icu": "78.3",
+      "llhttp": "9.4.1",
+      "merve": "1.2.2",
+      "modules": "137",
+      "napi": "10",
+      "nbytes": "0.1.4",
+      "ncrypto": "0.0.1",
+      "nghttp2": "1.68.0",
+      "nghttp3": "",
+      "ngtcp2": "",
+      "openssl": "3.5.6",
+      "simdjson": "4.6.1",
+      "simdutf": "6.4.0",
+      "sqlite": "3.53.0",
+      "tz": "2026b",
+      "undici": "7.25.0",
+      "unicode": "17.0",
+      "uv": "1.52.1",
+      "uvwasi": "0.0.23",
+      "v8": "13.6.233.17-node.49",
+      "zlib": "1.3.1-e00f703",
+      "zstd": "1.5.7"
+    },
+    "execArgv": [],
+    "nodeOptions": ""
+  },
+  "machine": {
+    "hostname": "AI-Max",
+    "platform": "darwin",
+    "release": "25.5.0",
+    "arch": "arm64"
+  },
+  "validationProfile": "node",
+  "browserValidation": "unverified",
+  "e2e": "unverified",
+  "policy": {
+    "schemaVersion": 1,
+    "sampleCount": 5000,
+    "browserCount": 500,
+    "timing": {
+      "warmups": 3,
+      "pairs": 7,
+      "renderTimeoutMs": 30000,
+      "aaBlocks": 10,
+      "retries": 0,
+      "estimator": "median per diagram then geomean of head/base ratios",
+      "order": "alternate AB/BA by diagram index plus repetition plus block",
+      "errors": "fail whole experiment; preserve raw evidence; never drop a record"
+    },
+    "noise": {
+      "estimator": "exp(nearest-rank p95(abs(log(whole-sample geomean A/A ratio)))) - 1",
+      "minimumBlocks": 10
+    },
+    "fit": {
+      "minimumGain": 0.005,
+      "noiseMultiplier": 3,
+      "minimumByteReduction": 0.05,
+      "maximumBucketRegression": 0.01,
+      "flat": "abs(log(timeRatio)) <= log1p(noiseSpread)"
+    },
+    "buckets": [
+      {
+        "name": "tiny",
+        "minBytes": 0,
+        "maxBytes": 1024
+      },
+      {
+        "name": "small",
+        "minBytes": 1024,
+        "maxBytes": 4096
+      },
+      {
+        "name": "medium",
+        "minBytes": 4096,
+        "maxBytes": 16384
+      },
+      {
+        "name": "large",
+        "minBytes": 16384,
+        "maxBytes": null
+      }
+    ],
+    "configuration": {
+      "maxTextSize": 10000000,
+      "maxEdges": 1000000,
+      "peleOutputLimit": 9007199254740991,
+      "theme": "renderer defaults plus original input directives",
+      "pele": "native default font/wrap settings; no matching of v13 appearance",
+      "renderId": "m<sample-index>",
+      "reset": "AnalysisCache and text widths outside timing; configuration and loaded modules stay warm"
+    },
+    "diagnostics": {
+      "warmups": 3,
+      "repetitions": 7,
+      "emptyGraphRepetitions": 1000
+    },
+    "quiet": {
+      "intervalMs": 1000,
+      "quietMs": 3000,
+      "maxCpuMs": 1536,
+      "maxTotalCpuMs": 1536
+    },
+    "browser": {
+      "viewport": {
+        "width": 1600,
+        "height": 1200
+      },
+      "deviceScaleFactor": 1,
+      "colorScheme": "light"
+    },
+    "backgroundLoad": {
+      "decision": "P27",
+      "measurementEnvironment": "observed background activity; not an idle-host baseline",
+      "method": "60 consecutive 1000 ms process-snapshot intervals; nearest-rank p95 of total CPU delta; total limit is ceil(p95 * 1.20); the per-process field equals the total limit and imposes no additional cap",
+      "startedAt": "2026-11-10T13:02:09.057Z",
+      "finishedAt": "2026-11-10T13:03:14.100Z",
+      "machine": "AI-Max",
+      "node": "v24.16.0",
+      "samples": 60,
+      "actualDurationMs": 65008.65083300001,
+      "bufferFraction": 0.2,
+      "totalCpuMsP95": 1280,
+      "busiestProcessCpuMsP95": 330,
+      "frozenQuiet": {
+        "intervalMs": 1000,
+        "quietMs": 3000,
+        "maxCpuMs": 1536,
+        "maxTotalCpuMs": 1536
+      },
+      "previousPolicySha256": "711c4bdbb4719ef8d0b6c92773d404f397ab9895f368fa402961f3ef3c096200",
+      "rawEvidence": {
+        "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-background-baseline-20261110/observations.json",
+        "sha256": "11bcbacaadb794298981c6f5bee1ce0916a9c1cc35547caf6fde231ab3046705"
+      },
+      "calibrationScriptSha256": "43e914e30880dd017ed3180c7e2a08ae028824ecd7046a397ae2e51f483ec531",
+      "monitorSha256": "0525ae0e5588a107546f72d91e82c77605556a8d4b9d929d95258296a89f188a",
+      "calibrationDecision": "P26",
+      "calibrationPreviousPolicySha256": "8555678d001d8d8ed3363907d62cbc6142c5084786fb69acd00be34b5794e9a3",
+      "supersededPerProcessLimitMs": 396
+    }
+  },
+  "sample": {
+    "count": 5000,
+    "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+    "browserCount": 500,
+    "browserSubsetSha256": "0dc6c1ab4205b16317ebc2129271ed0c03533cc22d270ff7d0e2d1cd2474aa99"
+  },
+  "noiseReference": "../../0/RESULTS.json",
+  "pele": {
+    "count": 5000,
+    "geomeanHeadOverBase": 0.612500746370919,
+    "sumBaseNs": 3782524518,
+    "sumHeadNs": 2581545369,
+    "summedHeadOverBase": 0.6824926994432241,
+    "buckets": {
+      "tiny": {
+        "count": 1426,
+        "geomeanHeadOverBase": 0.5533594997405905
+      },
+      "small": {
+        "count": 3088,
+        "geomeanHeadOverBase": 0.6295906057959915
+      },
+      "medium": {
+        "count": 459,
+        "geomeanHeadOverBase": 0.6916049777079298
+      },
+      "large": {
+        "count": 27,
+        "geomeanHeadOverBase": 0.7120562485729249
+      }
+    },
+    "summedV13OverPele": 1.4652171383163477,
+    "evidence": [
+      {
+        "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch1-20261110/pele/header.json",
+        "sha256": "9a6bdf9fed473ec525e65bff4870741467c2a816ce155f6e9a27a7a8b72791e6"
+      },
+      {
+        "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch1-20261110/pele/queue.json",
+        "sha256": "e3e6b88f7e27663e98b71609d48f3d2a1d5093e628805d5bedf3b066e17f1444"
+      },
+      {
+        "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch1-20261110/pele/completion.json",
+        "sha256": "d985dca47a5856e271bef8416aca2a2f106c2495f6274a96f31d248f44a1ba6f"
+      },
+      {
+        "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch1-20261110/pele/raw/pele/result.json",
+        "sha256": "73a2d5a623b1ffac0db184c8e81cebbbe9cfbf748a1901561d1ad2a90551ceda"
+      }
+    ]
+  },
+  "candidates": [
+    {
+      "id": "1a",
+      "round": 1,
+      "batch": 2,
+      "baseSha": "094ec5283059b7a87c2c2745ea6dffcc5a4dcee7",
+      "headSha": "cc0a741ea151350a95473cbe7c63bcb89db87ab9",
+      "branch": "perf/round-1-1a-20261110",
+      "assignment": {
+        "hypothesis": "1a",
+        "role": "implementer",
+        "requestedModel": "gpt-6-astra",
+        "actualModel": "gpt-6-astra",
+        "reasoningEffort": "high",
+        "agent": "/root/round1_1a",
+        "worktree": "/Users/knsv/repos/mermaid-v13-perf-round1-1a",
+        "baseSha": "094ec5283059b7a87c2c2745ea6dffcc5a4dcee7"
+      },
+      "validationProfile": "node",
+      "browserValidation": "unverified",
+      "e2e": "unverified",
+      "pins": {
+        "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+        "browserSubsetSha256": "0dc6c1ab4205b16317ebc2129271ed0c03533cc22d270ff7d0e2d1cd2474aa99",
+        "baseArtifactSha256": "54c2879f56c867719fafb96e8f4359dcca471e323105ee0371afc5b1a8c4f612",
+        "headArtifactSha256": "e3ecc42e6c5089af6d574ba551fc7cf2e889881cb2ede311b94da68a275d10db",
+        "baseSourceSha256": "579d554998695c7b14496f1428a844046960004cfe631a84b1f8025c60e410b9",
+        "headSourceSha256": "691b1416c0b6e46eedffe1bde1415e22943ee9aa11366d32ac50168ec76bedd2",
+        "policySha256": "82a788a9ce59dfaea7f0f207e1f2933426ee3c0c0e888128d9d18976151e77ee"
+      },
+      "verdict": "unfit",
+      "delivery": "not-deliverable",
+      "deliveryScope": "candidate Node fit only; integration and final browser comparison are separate",
+      "lane": "byte-identical",
+      "reasons": [
+        "Node gain/flat-time byte reduction threshold failed"
+      ],
+      "metrics": {
+        "ratio": 0.9774918923849438,
+        "buckets": {
+          "tiny": {
+            "count": 1426,
+            "ratio": 0.9748885104002392
+          },
+          "small": {
+            "count": 3088,
+            "ratio": 0.9773433040818776
+          },
+          "medium": {
+            "count": 459,
+            "ratio": 0.9854025070672788
+          },
+          "large": {
+            "count": 27,
+            "ratio": 0.9984501591994324
+          }
+        },
+        "gain": 0.022508107615056172,
+        "spread": 0.024674571224540278,
+        "threshold": 0.07402371367362083,
+        "flat": true,
+        "baseBytes": 95296904,
+        "headBytes": 95296904,
+        "byteReduction": 0
+      },
+      "timing": {
+        "count": 5000,
+        "geomeanHeadOverBase": 0.9774918923849438,
+        "sumBaseNs": 3865554024,
+        "sumHeadNs": 3794623300,
+        "summedHeadOverBase": 0.9816505671477843,
+        "buckets": {
+          "tiny": {
+            "count": 1426,
+            "geomeanHeadOverBase": 0.9748885104002392
+          },
+          "small": {
+            "count": 3088,
+            "geomeanHeadOverBase": 0.9773433040818776
+          },
+          "medium": {
+            "count": 459,
+            "geomeanHeadOverBase": 0.9854025070672788
+          },
+          "large": {
+            "count": 27,
+            "geomeanHeadOverBase": 0.9984501591994324
+          }
+        }
+      },
+      "mechanism": {
+        "schemaVersion": 1,
+        "hypothesis": "1a",
+        "records": 5000,
+        "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+        "report": {
+          "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/summary.json",
+          "sha256": "4de043eff204684aabce0f4d15fdda0659d4e2d6dc2c685655aa5d6a6abeb4d7"
+        },
+        "changes": [
+          {
+            "name": "regexTests",
+            "before": 5055090,
+            "after": 2685108
+          },
+          {
+            "name": "allowListLookups",
+            "before": 13265906,
+            "after": 9651967
+          }
+        ],
+        "controls": [
+          {
+            "name": "measurerCalls",
+            "before": 1198406,
+            "after": 1198406
+          },
+          {
+            "name": "metricsCalls",
+            "before": 220480,
+            "after": 220480
+          },
+          {
+            "name": "outputBytes",
+            "before": 95296904,
+            "after": 95296904
+          },
+          {
+            "name": "elements",
+            "before": 1043859,
+            "after": 1043859
+          },
+          {
+            "name": "attributes",
+            "before": 3614479,
+            "after": 3614479
+          }
+        ],
+        "supplemental": {
+          "base": {
+            "metricsCalls": 220480,
+            "measurerCalls": 1198406,
+            "allowListLookups": 13265906,
+            "ALLOWED_TAGS.has": 1043643,
+            "GRADIENT_TAGS.has": 1043643,
+            "GRADIENT_ATTRS.has": 7227878,
+            "ALLOWED_ATTRS.has": 3613939,
+            "escAttrCalls": 2359157,
+            "escCalls": 2695933,
+            "regexTests": 5055090,
+            "replacementPasses": 119137,
+            "TEXT_HOLDERS.has": 336776,
+            "outputBytes": 95296904,
+            "elements": 1043859,
+            "attributes": 3614479,
+            "HREF_TAGS.has": 27
+          },
+          "head": {
+            "metricsCalls": 220480,
+            "measurerCalls": 1198406,
+            "allowListLookups": 9651967,
+            "ALLOWED_TAGS.has": 1043643,
+            "GRADIENT_TAGS.has": 1043643,
+            "GRADIENT_ATTRS.has": 3613939,
+            "ALLOWED_ATTRS.has": 3613939,
+            "escAttrCalls": 2359157,
+            "regexTests": 2685108,
+            "replacementPasses": 180210,
+            "TEXT_HOLDERS.has": 336776,
+            "escCalls": 336776,
+            "lastAttrHits": 10825,
+            "outputBytes": 95296904,
+            "elements": 1043859,
+            "attributes": 3614479,
+            "HREF_TAGS.has": 27
+          }
+        },
+        "limitations": [
+          "Untimed instrumented mechanism comparison; no P12 performance verdict.",
+          "Regex tests count explicit RegExp.test calls in SVG escaping only; replacementPasses separately count String.replace calls using a regex.",
+          "Allow-list lookups count executed has/get operations on ALLOWED_TAGS, ALLOWED_ATTRS, GRADIENT_TAGS, GRADIENT_ATTRS, HREF_TAGS and TEXT_HOLDERS in SVG utilities.",
+          "No physical allocation bytes or scavenge measurement; these remain coordinator diagnostics.",
+          "Hindsight tools unavailable during discovery."
+        ],
+        "sources": [
+          {
+            "path": "packages/core/src/svg/escape.ts",
+            "sha256": "dcb94ee4593cde0b08b2fdd7d2df33d363dac35779bd97ebafc05ef9d8e8c769"
+          },
+          {
+            "path": "packages/core/src/svg/encode.ts",
+            "sha256": "9ca14d9b78201fc61e7017f3cf541f44af8000b53295a61ea4f3f426d9b43205"
+          }
+        ],
+        "declaredCondition": {
+          "required": [
+            "SVG escaping regex tests decrease",
+            "Attribute allow-list lookups decrease"
+          ],
+          "controls": [
+            "Byte-identical SVG output",
+            "Security checks remain at runtime"
+          ],
+          "counterNames": [
+            "regexTests",
+            "allowListLookups"
+          ]
+        },
+        "evidence": [
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/mechanism-plan.json",
+            "sha256": "d23de30ab32c6afd2aecce7c7195d56d59db986faa3eb75bf0389a8438f5c02f"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/normalize-mechanisms.py",
+            "sha256": "ac30a6912d6a98dab8f84a975878035d75f1df469e97f3782bb29c2a331b26ad"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/REPORT.md",
+            "sha256": "01cb703fcc704b263b227c278e7382a88559ed2433e18e9d712ceebff1100115"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/SHA256SUMS.json",
+            "sha256": "6e5a71bd88066de5b721d26b44c9b8274114fceac0d8c5f5d4558613051178a6"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/base/index.mjs",
+            "sha256": "4d970afe9f18f5f6f99ad3a32c7c28c9357025b90068b4a3ee20a982cc333795"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/base/instrumented/packages/core/src/svg/allowlist.ts",
+            "sha256": "f86ae346832c1db02a69f573d09c5b0101c41bc24f301b8dd3ae934bce5f849a"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/base/instrumented/packages/core/src/svg/encode.ts",
+            "sha256": "e6ee099a272133e6ef6dfa55c51323792389439479d77c3d076a5261142c561a"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/base/instrumented/packages/core/src/svg/escape.ts",
+            "sha256": "b6e7e0f3c5d1224ed12ce77b3a9f5a7bb1dd3cf55b0ddb28dab48c191c8d972d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/base/instrumented/packages/core/src/svg/inert.ts",
+            "sha256": "d8f2a9ae8439b942978ce5d8ec4a98fd41168e1374fc0017c3da4ac4be0040e0"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/base/instrumented/packages/core/src/svg/writer.ts",
+            "sha256": "b48265716337cfed25f3264ed4058d80c99cb15f63ae813ab3e2489fca13f7fa"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/base/metafile.json",
+            "sha256": "27212e80005c7c599190cfd95a18d72a7afe07bd7913e159580f85153a4744b9"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/commit.log",
+            "sha256": "b66f04eaa45e728f6c70dcdecfe1bb2bde4f132e70b8c7f0ddecaa8742593ee0"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/compare.mjs",
+            "sha256": "0dfa5e192dba806b9bd4222b85eb2ed35aaf8bac1c6337fa8bf548cb5b87731a"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/comparison.log",
+            "sha256": "a7ced3c33826f5c32ca7b408c2210524def923635efce3bab04b515f261b5253"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/counters.mjs",
+            "sha256": "fa1908b69a6eff13f0c29e71daa33ffeb74521229e5d5f5c1dd28b182e6f12fa"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/entry.mjs",
+            "sha256": "4baeba07c2bd02409497426800a5dc817c99c4cbd494d0a0add6e9193327444b"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/head/index.mjs",
+            "sha256": "16431a26389345ba1fc13d7588beb2d134c53630c458778dbc3921e9dedd761c"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/head/instrumented/packages/core/src/svg/allowlist.ts",
+            "sha256": "f86ae346832c1db02a69f573d09c5b0101c41bc24f301b8dd3ae934bce5f849a"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/head/instrumented/packages/core/src/svg/encode.ts",
+            "sha256": "93835ad76b7d9af0887700f244eeac73147678fd448463fa9c3af6fcad0681ae"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/head/instrumented/packages/core/src/svg/escape.ts",
+            "sha256": "c4bc830bd605af1de52d65b00faaf1b7f370a7f6520d586c31eb817da3213b27"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/head/instrumented/packages/core/src/svg/inert.ts",
+            "sha256": "d8f2a9ae8439b942978ce5d8ec4a98fd41168e1374fc0017c3da4ac4be0040e0"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/head/instrumented/packages/core/src/svg/writer.ts",
+            "sha256": "b48265716337cfed25f3264ed4058d80c99cb15f63ae813ab3e2489fca13f7fa"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/head/metafile.json",
+            "sha256": "85d4d16479201be68d92443abce218521c290fb889ccee594755c2b291f12cae"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/implementation.patch",
+            "sha256": "3042f3a26ba253d8d4ace4f8d6de6220f58d3a0859b61073e396ec2e39c4f704"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/per-record.jsonl",
+            "sha256": "a0737db36fd972273039fad37e34592137e8d58912afeaef39140c484a75c1dc"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/source-manifest.json",
+            "sha256": "af733142abae5c09ed82e247c09c0b681015caf8455092b6470a940616401711"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/summary.json",
+            "sha256": "4de043eff204684aabce0f4d15fdda0659d4e2d6dc2c685655aa5d6a6abeb4d7"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/tests.log",
+            "sha256": "397230c181ddbd52c53cc426b5e4f7123df8ef841698e9eed0ce7a1475012fa7"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/verify.log",
+            "sha256": "f59d9a2dee3a1e4cb9e41aa91f1a8748075345434359f1f507e926ea2dc33e2c"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-1a-counters/verify.mjs",
+            "sha256": "58f2ffcbe53900d605de46e4871f2e16308dcde5597e5dc6cd183a29e23d2790"
+          }
+        ],
+        "method": "Untimed instrumented executed operation counts; not physical allocation bytes. See preserved scripts for attribution.",
+        "normalization": {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/mechanism-1a.json",
+          "sha256": "f9a4cfb3435d0e469ed2fd7536f296e83b025961388e815dabb34ee768ff2c27"
+        },
+        "passed": true
+      },
+      "checks": [
+        {
+          "name": "environment",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node tools/perf/check-environment.mjs --node-only",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "tools/perf/check-environment.mjs",
+            "--node-only"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-10T17:02:12.055Z",
+          "finishedAt": "2026-11-10T17:02:12.263Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-validation-round1-02/environment.log",
+          "logSha256": "caa69c7e2be7d173a7602d85cc374cfadbc40573ccbaf3eec2c6a51d86037d88"
+        },
+        {
+          "name": "harness",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node --test tools/perf/acceptance.test.mjs tools/perf/browser.test.mjs tools/perf/build.test.mjs tools/perf/common.test.mjs tools/perf/diagnostics.test.mjs tools/perf/evaluate.test.mjs tools/perf/gates.test.mjs tools/perf/quiet.test.mjs tools/perf/report.test.mjs tools/perf/scheduler.test.mjs tools/perf/timing-worker.test.mjs",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "--test",
+            "tools/perf/acceptance.test.mjs",
+            "tools/perf/browser.test.mjs",
+            "tools/perf/build.test.mjs",
+            "tools/perf/common.test.mjs",
+            "tools/perf/diagnostics.test.mjs",
+            "tools/perf/evaluate.test.mjs",
+            "tools/perf/gates.test.mjs",
+            "tools/perf/quiet.test.mjs",
+            "tools/perf/report.test.mjs",
+            "tools/perf/scheduler.test.mjs",
+            "tools/perf/timing-worker.test.mjs"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-10T17:02:12.264Z",
+          "finishedAt": "2026-11-10T17:02:18.740Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-validation-round1-02/harness.log",
+          "logSha256": "8c3b6bd16b97189c9c28aeac76918546d873cd6c4a697a2d40e991041a3d8b0a"
+        },
+        {
+          "name": "check",
+          "command": "pnpm check",
+          "argv": [
+            "pnpm",
+            "check"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-10T17:02:18.741Z",
+          "finishedAt": "2026-11-10T17:06:37.220Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-validation-round1-02/check.log",
+          "logSha256": "b4ec326b061ca6016fb6eb4a89d5582ddecec3eebc279b132fdd193bd460f987"
+        },
+        {
+          "name": "security",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node node_modules/vitest/vitest.mjs run packages/conformance/src/cynefin/render.spec.ts packages/conformance/src/feature-plugins.spec.ts packages/conformance/src/flowchart-behaviour.spec.ts packages/conformance/src/flowchart-render.spec.ts packages/conformance/src/gantt/render-behaviour.spec.ts packages/conformance/src/gantt/schedule-stress.spec.ts packages/conformance/src/journey/render.spec.ts packages/conformance/src/mindmap/stress.spec.ts packages/conformance/src/packet/render.spec.ts packages/conformance/src/pie/render.spec.ts packages/conformance/src/quadrant/render.spec.ts packages/conformance/src/radar/render.spec.ts packages/conformance/src/sequence/render.spec.ts packages/conformance/src/state/render.spec.ts packages/conformance/src/stress.spec.ts packages/conformance/src/treemap/render.spec.ts packages/conformance/src/wardley/render.spec.ts packages/core/src/config/resolveConfig.spec.ts packages/core/src/limits/limits.spec.ts packages/core/src/svg/gradient.spec.ts packages/core/src/svg/image-url.spec.ts packages/core/src/svg/security.spec.ts packages/core/src/svg/url.spec.ts packages/core/src/svg/user-gradient.spec.ts packages/diagram-er/src/v12-specs/erDiagram.spec.ts packages/diagram-er/src/v12-specs/subgraph.spec.ts packages/diagram-flowchart/src/v12-specs/flow-arrows.spec.ts packages/diagram-flowchart/src/v12-specs/flow-comments.spec.ts packages/diagram-flowchart/src/v12-specs/flow-direction.spec.ts packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts packages/diagram-flowchart/src/v12-specs/flow-interactions.spec.ts packages/diagram-flowchart/src/v12-specs/flow-lines.spec.ts packages/diagram-flowchart/src/v12-specs/flow-md-string.spec.ts packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts packages/diagram-flowchart/src/v12-specs/flow-singlenode.spec.ts packages/diagram-flowchart/src/v12-specs/flow-style.spec.ts packages/diagram-flowchart/src/v12-specs/flow-text.spec.ts packages/diagram-flowchart/src/v12-specs/flow-vertice-chaining.spec.ts packages/diagram-flowchart/src/v12-specs/flow.spec.ts packages/diagram-flowchart/src/v12-specs/subgraph.spec.ts packages/diagram-kanban/src/parser/parse.spec.ts packages/diagram-kanban/src/render/render.spec.ts packages/diagram-mindmap/src/parser/parse.spec.ts packages/diagram-pie/src/v12-specs/pie.spec.ts packages/diagram-state/src/v12-specs/state-parser.spec.ts packages/diagram-state/src/v12-specs/state-style.spec.ts packages/language-service/src/front-matter.spec.ts packages/mermaid/src/api.spec.ts packages/mermaid/src/config-fragments.spec.ts packages/mermaid/src/extensions.spec.ts packages/mermaid/src/icon-contract.spec.ts packages/mermaid/src/inline-boxes.spec.ts packages/mermaid/src/limits.spec.ts packages/mermaid/src/mindmap.spec.ts packages/mermaid/src/render-safety.spec.ts packages/mermaid/src/sankey.spec.ts packages/plugin-hand-drawn/src/corpus.spec.ts packages/plugin-icons/src/corpus.spec.ts packages/plugin-icons/src/security.spec.ts packages/plugin-interactions/src/class.spec.ts packages/plugin-interactions/src/gantt.spec.ts packages/plugin-interactions/src/index.spec.ts packages/plugin-interactions/src/menus.spec.ts packages/plugin-math/src/engine.spec.ts packages/plugin-math/src/index.spec.ts tools/gen-config/src/migration.spec.ts",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "node_modules/vitest/vitest.mjs",
+            "run",
+            "packages/conformance/src/cynefin/render.spec.ts",
+            "packages/conformance/src/feature-plugins.spec.ts",
+            "packages/conformance/src/flowchart-behaviour.spec.ts",
+            "packages/conformance/src/flowchart-render.spec.ts",
+            "packages/conformance/src/gantt/render-behaviour.spec.ts",
+            "packages/conformance/src/gantt/schedule-stress.spec.ts",
+            "packages/conformance/src/journey/render.spec.ts",
+            "packages/conformance/src/mindmap/stress.spec.ts",
+            "packages/conformance/src/packet/render.spec.ts",
+            "packages/conformance/src/pie/render.spec.ts",
+            "packages/conformance/src/quadrant/render.spec.ts",
+            "packages/conformance/src/radar/render.spec.ts",
+            "packages/conformance/src/sequence/render.spec.ts",
+            "packages/conformance/src/state/render.spec.ts",
+            "packages/conformance/src/stress.spec.ts",
+            "packages/conformance/src/treemap/render.spec.ts",
+            "packages/conformance/src/wardley/render.spec.ts",
+            "packages/core/src/config/resolveConfig.spec.ts",
+            "packages/core/src/limits/limits.spec.ts",
+            "packages/core/src/svg/gradient.spec.ts",
+            "packages/core/src/svg/image-url.spec.ts",
+            "packages/core/src/svg/security.spec.ts",
+            "packages/core/src/svg/url.spec.ts",
+            "packages/core/src/svg/user-gradient.spec.ts",
+            "packages/diagram-er/src/v12-specs/erDiagram.spec.ts",
+            "packages/diagram-er/src/v12-specs/subgraph.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-arrows.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-comments.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-direction.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-interactions.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-lines.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-md-string.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-singlenode.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-style.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-text.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-vertice-chaining.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/subgraph.spec.ts",
+            "packages/diagram-kanban/src/parser/parse.spec.ts",
+            "packages/diagram-kanban/src/render/render.spec.ts",
+            "packages/diagram-mindmap/src/parser/parse.spec.ts",
+            "packages/diagram-pie/src/v12-specs/pie.spec.ts",
+            "packages/diagram-state/src/v12-specs/state-parser.spec.ts",
+            "packages/diagram-state/src/v12-specs/state-style.spec.ts",
+            "packages/language-service/src/front-matter.spec.ts",
+            "packages/mermaid/src/api.spec.ts",
+            "packages/mermaid/src/config-fragments.spec.ts",
+            "packages/mermaid/src/extensions.spec.ts",
+            "packages/mermaid/src/icon-contract.spec.ts",
+            "packages/mermaid/src/inline-boxes.spec.ts",
+            "packages/mermaid/src/limits.spec.ts",
+            "packages/mermaid/src/mindmap.spec.ts",
+            "packages/mermaid/src/render-safety.spec.ts",
+            "packages/mermaid/src/sankey.spec.ts",
+            "packages/plugin-hand-drawn/src/corpus.spec.ts",
+            "packages/plugin-icons/src/corpus.spec.ts",
+            "packages/plugin-icons/src/security.spec.ts",
+            "packages/plugin-interactions/src/class.spec.ts",
+            "packages/plugin-interactions/src/gantt.spec.ts",
+            "packages/plugin-interactions/src/index.spec.ts",
+            "packages/plugin-interactions/src/menus.spec.ts",
+            "packages/plugin-math/src/engine.spec.ts",
+            "packages/plugin-math/src/index.spec.ts",
+            "tools/gen-config/src/migration.spec.ts"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-10T17:06:37.221Z",
+          "finishedAt": "2026-11-10T17:06:54.515Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-validation-round1-02/security.log",
+          "logSha256": "dd83108d13bbef827faa169fb22d55346fd666cafe7cc8223464c75e63368f19"
+        },
+        {
+          "name": "size",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node --import tsx --conditions=mermaid-source tools/perf/size-check.mjs",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "--import",
+            "tsx",
+            "--conditions=mermaid-source",
+            "tools/perf/size-check.mjs"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-10T17:06:54.516Z",
+          "finishedAt": "2026-11-10T17:06:56.668Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-validation-round1-02/size.log",
+          "logSha256": "46f540c386a2137bcd73e55e94ca8490be0825b8e22be1d488958e5d8f21c86a"
+        },
+        {
+          "name": "host",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node tools/perf/host-acceptance.mjs --out /Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-validation-round1-02/host",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "tools/perf/host-acceptance.mjs",
+            "--out",
+            "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-validation-round1-02/host"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-10T17:06:56.669Z",
+          "finishedAt": "2026-11-10T17:07:07.028Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-validation-round1-02/host.log",
+          "logSha256": "d480796160a289e33b609548b89fb7d68b4fbb43cfb5a21716bce35aa468e101"
+        },
+        {
+          "name": "browser",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "tools/perf/browser-acceptance.mjs",
+            "--out",
+            "/Users/knsv/repos/mermaid-v13-perf-round1-1a/.tmp/perf-validation-round1-02/browser"
+          ],
+          "status": "unverified",
+          "reason": "Deferred browser validation; not required for Node measurement readiness"
+        },
+        {
+          "name": "e2e",
+          "argv": [
+            "pnpm",
+            "e2e"
+          ],
+          "status": "unverified",
+          "reason": "Deferred browser validation; not required for Node measurement readiness"
+        }
+      ],
+      "diagnostics": {
+        "methods": {
+          "measurerCalls": "Actual width-method invocations, including any width-cache hits. Vertical metrics invocations are excluded and reported separately when supplied by the renderer.",
+          "metricsCalls": "Optional actual vertical-metrics method invocations; available for v13, absent for Pele.",
+          "allocations": "V8 HeapProfiler.startSampling with collected minor/major objects included; sum selfSize below named allocationRender frame; median independent child estimates. Timing artifacts avoid diagnostic-counter allocations.",
+          "scavenge": "Pinned --trace-gc-nvp pause= with gc=s, only between synchronous render markers. Other GC, setup/reset pauses and final forced-boundary pause reported separately.",
+          "traceAllocation": "Supplemental sum of V8 allocated= over GC intervals through final forced boundary; byte-precise occupancy deltas, NOT exact gross allocation.",
+          "markup": "UTF-8 Buffer.byteLength plus quote-aware XML start-tag and attribute counting.",
+          "features": "v13 preprocessing, parser/token model and actual label layout inspection; number of occurrences and number of diagrams containing each feature.",
+          "stages": "Diagnostic stage clock; layout includes nested measure and graphLayout. Unaccounted time = total minus parse/layout/serialise; instrumentation overhead remains."
+        },
+        "renderers": {
+          "v13": {
+            "totals": {
+              "outputBytes": 95296904,
+              "elements": 1043859,
+              "attributes": 3614479,
+              "measurerCalls": 1198406,
+              "parserCalls": 5000,
+              "metricsCalls": 220480
+            },
+            "allocatedBytesEstimate": 1045103472,
+            "allocationError": {
+              "maximumCalibrationRelativeError": 0.00880575180053711,
+              "replicateRelativeRange": 0.009960246309467815,
+              "interpretation": "Empirical calibration error and replicate spread, not a general confidence bound. Excludes native/external buffers and allocations outside sampled renderer stacks."
+            },
+            "gc": {
+              "scavengePauseMs": 824.3000000000038,
+              "scavengeEvents": 760,
+              "otherGcPauseMs": 53.9,
+              "otherGcEvents": 40,
+              "boundaryGcPauseMs": 3.5,
+              "outsideRenderGcPauseMs": 75.60000000000001,
+              "intervalOccupancyAllocatedBytes": 57675555704,
+              "intervalOccupancyEvents": 871,
+              "pauseRoundingErrorMs": 40,
+              "scavengePauseMsPerPass": 117.7571428571434,
+              "otherGcPauseMsPerPass": 7.7
+            }
+          },
+          "pele": {
+            "totals": {
+              "outputBytes": 81604595,
+              "elements": 962992,
+              "attributes": 3105130,
+              "measurerCalls": 828402,
+              "parserCalls": 5000
+            },
+            "allocatedBytesEstimate": 755154160,
+            "allocationError": {
+              "maximumCalibrationRelativeError": 0.00880575180053711,
+              "replicateRelativeRange": 0.007509724901733972,
+              "interpretation": "Empirical calibration error and replicate spread, not a general confidence bound. Excludes native/external buffers and allocations outside sampled renderer stacks."
+            },
+            "gc": {
+              "scavengePauseMs": 187.40000000000074,
+              "scavengeEvents": 543,
+              "otherGcPauseMs": 0,
+              "otherGcEvents": 0,
+              "boundaryGcPauseMs": 3,
+              "outsideRenderGcPauseMs": 0,
+              "intervalOccupancyAllocatedBytes": 36398537768,
+              "intervalOccupancyEvents": 544,
+              "pauseRoundingErrorMs": 27.150000000000002,
+              "scavengePauseMsPerPass": 26.77142857142868,
+              "otherGcPauseMsPerPass": 0
+            }
+          }
+        },
+        "features": {
+          "occurrences": {
+            "frontMatter": 1934,
+            "initDirectives": 162,
+            "themeVariables": 228,
+            "shapeData": 17172,
+            "subgraphs": 10653,
+            "comments": 12144,
+            "wideLabels": 66138,
+            "labelledEdges": 35013
+          },
+          "diagrams": {
+            "frontMatter": 1934,
+            "initDirectives": 162,
+            "themeVariables": 228,
+            "shapeData": 512,
+            "subgraphs": 2461,
+            "comments": 1297,
+            "wideLabels": 4796,
+            "labelledEdges": 3572
+          }
+        },
+        "emptyGraph": {
+          "repetitions": 1000,
+          "medianMs": {
+            "total": 0.036708000000004404,
+            "unaccounted": 0.009915999999989822,
+            "parse": 0.007125000000002046,
+            "measure": 0.006749999999996703,
+            "graphLayout": 0.004125000000001933,
+            "layout": 0.011415999999996984,
+            "serialise": 0.008209000000007904
+          }
+        }
+      },
+      "evidence": [
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/1a/header.json",
+          "sha256": "cdad50717f4107a8418d4eb2ee2d45457fe4c5cb88779f4d84dbc8f114299fc0"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/1a/queue.json",
+          "sha256": "7bced0e5dcac96a40ee0ded73bb2ba34ddee0baf05d8602d196c6452bb2298a4"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/1a/completion.json",
+          "sha256": "f995b1d570c0f8f0f26b1a1031484180a0eddab777cb938786c0fd6c3784aa27"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/1a/p12-verdict.json",
+          "sha256": "5dfe028d40f20ef5af4874369396112d824235fe02dda8af21d80a9e1d886bb1"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/1a/verdict.json",
+          "sha256": "9079f12a1c19afa39d7909913f6aa72b13325ba7a089b6bb12f1917321494fa7"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/1a/raw/timing/result.json",
+          "sha256": "eae6143eb075a40680d1ef8ce5585710b575a33f1defc8b97382709f80c4ecfd"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/1a/raw/gates/result.json",
+          "sha256": "f75b813768e887021e39e394a5ab579151493b9389c2bbc050507e93ead4f3a9"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/1a/raw/diagnostics/result.json",
+          "sha256": "82e6cef05a09bee207f583313adec0797bcb70260687e846fbf41101a91d2b9e"
+        }
+      ]
+    },
+    {
+      "id": "3c",
+      "round": 1,
+      "batch": 2,
+      "baseSha": "094ec5283059b7a87c2c2745ea6dffcc5a4dcee7",
+      "headSha": "852f2d101d48eb3fba01bba15df403a530b64d20",
+      "branch": "perf/round-1-3c-20261110",
+      "assignment": {
+        "hypothesis": "3c",
+        "role": "implementer",
+        "requestedModel": "gpt-6-astra",
+        "actualModel": "gpt-6-astra",
+        "reasoningEffort": "high",
+        "agent": "/root/round1_3c",
+        "worktree": "/Users/knsv/repos/mermaid-v13-perf-round1-3c",
+        "baseSha": "094ec5283059b7a87c2c2745ea6dffcc5a4dcee7"
+      },
+      "validationProfile": "node",
+      "browserValidation": "unverified",
+      "e2e": "unverified",
+      "pins": {
+        "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+        "browserSubsetSha256": "0dc6c1ab4205b16317ebc2129271ed0c03533cc22d270ff7d0e2d1cd2474aa99",
+        "baseArtifactSha256": "54c2879f56c867719fafb96e8f4359dcca471e323105ee0371afc5b1a8c4f612",
+        "headArtifactSha256": "bbf313b0caa470c5b0add392bd0a4385eb18b4f847107fed2631e69a0220989d",
+        "baseSourceSha256": "579d554998695c7b14496f1428a844046960004cfe631a84b1f8025c60e410b9",
+        "headSourceSha256": "ac8e73e638ad1b8a100ae1d72b1ec44b3320e004e2259c47fe235b381c2fed14",
+        "policySha256": "82a788a9ce59dfaea7f0f207e1f2933426ee3c0c0e888128d9d18976151e77ee"
+      },
+      "verdict": "unfit",
+      "delivery": "not-deliverable",
+      "deliveryScope": "candidate Node fit only; integration and final browser comparison are separate",
+      "lane": "byte-identical",
+      "reasons": [
+        "Node gain/flat-time byte reduction threshold failed"
+      ],
+      "metrics": {
+        "ratio": 0.9759465705333459,
+        "buckets": {
+          "tiny": {
+            "count": 1426,
+            "ratio": 0.9771032892631698
+          },
+          "small": {
+            "count": 3088,
+            "ratio": 0.9746258172072247
+          },
+          "medium": {
+            "count": 459,
+            "ratio": 0.9803696377871995
+          },
+          "large": {
+            "count": 27,
+            "ratio": 0.9911430416780064
+          }
+        },
+        "gain": 0.02405342946665412,
+        "spread": 0.024674571224540278,
+        "threshold": 0.07402371367362083,
+        "flat": true,
+        "baseBytes": 95296904,
+        "headBytes": 95296904,
+        "byteReduction": 0
+      },
+      "timing": {
+        "count": 5000,
+        "geomeanHeadOverBase": 0.9759465705333459,
+        "sumBaseNs": 3812144130,
+        "sumHeadNs": 3728793738,
+        "summedHeadOverBase": 0.9781355612071257,
+        "buckets": {
+          "tiny": {
+            "count": 1426,
+            "geomeanHeadOverBase": 0.9771032892631698
+          },
+          "small": {
+            "count": 3088,
+            "geomeanHeadOverBase": 0.9746258172072247
+          },
+          "medium": {
+            "count": 459,
+            "geomeanHeadOverBase": 0.9803696377871995
+          },
+          "large": {
+            "count": 27,
+            "geomeanHeadOverBase": 0.9911430416780064
+          }
+        }
+      },
+      "mechanism": {
+        "schemaVersion": 1,
+        "hypothesis": "3c",
+        "records": 5000,
+        "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+        "report": {
+          "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/summary.json",
+          "sha256": "96658cae78ac75a76b77ea287f140f1948878ab568d3d0655458e37ec69b32b7"
+        },
+        "changes": [
+          {
+            "name": "detectionLowercaseCalls",
+            "before": 10000,
+            "after": 0
+          },
+          {
+            "name": "detectionLowercaseCodeUnits",
+            "before": 20295416,
+            "after": 0
+          }
+        ],
+        "controls": [
+          {
+            "name": "parserCalls",
+            "before": 5000,
+            "after": 5000
+          },
+          {
+            "name": "detectCalls",
+            "before": 5000,
+            "after": 5000
+          }
+        ],
+        "supplemental": {},
+        "limitations": [],
+        "sources": [
+          {
+            "path": "packages/mermaid/src/registry.ts",
+            "sha256": "7384c4665d9c5c286a686675f9103e9da20e24b7d643cdba9b954db9ed8156f5"
+          }
+        ],
+        "declaredCondition": {
+          "required": [
+            "Detection whole-text lowercase calls decrease",
+            "Detection lowercase code units decrease"
+          ],
+          "controls": [
+            "One parser call per render",
+            "One detection call per render",
+            "Analysis and cache lifecycle unchanged"
+          ],
+          "counterNames": [
+            "detectionLowercaseCalls",
+            "detectionLowercaseCodeUnits"
+          ]
+        },
+        "evidence": [
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/mechanism-plan.json",
+            "sha256": "d23de30ab32c6afd2aecce7c7195d56d59db986faa3eb75bf0389a8438f5c02f"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/normalize-mechanisms.py",
+            "sha256": "ac30a6912d6a98dab8f84a975878035d75f1df469e97f3782bb29c2a331b26ad"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/ascii-AZFS2XCW.mjs",
+            "sha256": "ff7d96459e38887e464b54731e3e85f8e991ca447ed3a4aec2057bafc122f395"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/ascii-AZFS2XCW.mjs.map",
+            "sha256": "d0c49115737447e022353fe4f4579dc355c974e7f7746ea57336f7d1a2a1c0a8"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/base-FMC3SIHO.mjs",
+            "sha256": "5bf815f0b1497a438e0c6b84c91e5ce50402ee6ebdeb938db54ba30f8ed50b52"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/base-FMC3SIHO.mjs.map",
+            "sha256": "60e42f365bf47e8a9696f510dbe76670c652d0c6de0c86e066d65ef4caf030f9"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/chunk-KZG45FGQ.mjs",
+            "sha256": "7422ec4550579b88f37ca06179517d46747fdc491a10c15afc71258989b69856"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/chunk-KZG45FGQ.mjs.map",
+            "sha256": "61aedb943b440bb06340fa613a99fc0f29ca7c764e2cadc66e31b7c7e4c1c0a8"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/chunk-WTHFTAKF.mjs",
+            "sha256": "a4628db0261fc9bb66ad684db81c202c39b85c1cf03af1e0bad3c6f9020d0dd1"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/chunk-WTHFTAKF.mjs.map",
+            "sha256": "ce62a75d5cd38a8469a769d63381085bceb08fcb9b9d8ee227098b8ad5ea4992"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/chunk-ZWX3OTXF.mjs",
+            "sha256": "3b78e28e895035e71869086d7814e533ef9d0b84cb37034a5a85811d1827563d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/chunk-ZWX3OTXF.mjs.map",
+            "sha256": "e051ba39878b7846c595d4d26bf8c3dfea70e86d34d182932c1e64b68524cdce"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/dark-DZGS2O4C.mjs",
+            "sha256": "8bc520e8e18834f5771f6450b66053c976774bc955d401b78dffae6ca888e292"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/dark-DZGS2O4C.mjs.map",
+            "sha256": "6b92c5cc28c1729e0726dbb6f7cc38bbf3f54488fa74e2cec6d842e85f7ba917"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/default-RNA2FD2G.mjs",
+            "sha256": "27803bfb833ba2e06674ffd6c2676c6aacad51bbcf2a85df02bec5d878481d2e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/default-RNA2FD2G.mjs.map",
+            "sha256": "904f081497e8287b30285c66cb7f95526d3a868208182e67737e30fff4fd2cb3"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/entry.mjs",
+            "sha256": "3e07d870b290492226f27f5d842e1da60b9bd9931cc808ae57223aa23111a0a0"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/entry.mjs.map",
+            "sha256": "a3dca7950f55f087579d4db6f67a99c68d554b4b23ae0106362587d1bc333611"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/forest-QE7XY7HY.mjs",
+            "sha256": "52033aa8062ebca0f8a75c3b73724a5d4acc314ae7c46775375e8467dd400cc7"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/forest-QE7XY7HY.mjs.map",
+            "sha256": "b9704291b19ade24c03ca7112bd7ee0d8344b0bba96537635fb7045a50d50356"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/metafile.json",
+            "sha256": "9c21dd91b7fc1a735ee63d73611eb9822dd9bbd3ddabee6a9c653ff60106467e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/neo-CCKGBTRU.mjs",
+            "sha256": "153ff7437670730101089f91ae05210ac96533d2357e8fb2d2e32aba1566713b"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/neo-CCKGBTRU.mjs.map",
+            "sha256": "15169439ee9d6934a17e70c755f96e029c3d045bb6c1d33b6b751ca6975cfa23"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/neo-dark-SMT7PTC7.mjs",
+            "sha256": "4844c70849f2a10e49430f7abcb0a7d18018dc095e61d9a7941d8514e8887a1c"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/neo-dark-SMT7PTC7.mjs.map",
+            "sha256": "1ffc00b29ef865a762eb069a2da128bb5c01cbe3bac393dd7836a40c1ec1bba0"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/neutral-DN6WKZIL.mjs",
+            "sha256": "06857f291ecdca68957d12aaa3ddf1466a1694f8cb168f179ab5a7887194c64c"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/neutral-DN6WKZIL.mjs.map",
+            "sha256": "e5dd17e6901b15ddaa5595b57e7eafe85b61ff4df953b5a949366f0f5310b02d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/redux-dark-MIDFJ2D7.mjs",
+            "sha256": "40f3ace671815b2e192d9529245a770ee71be9c616eac39a991ffd5b855b85ba"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/redux-dark-MIDFJ2D7.mjs.map",
+            "sha256": "2ae7ff5ae3b9d12a1605e00bbb1f2a3a5c9b9b47ccf1e66e0999c6127d5d784e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/redux-dark-color-NXNRSCI5.mjs",
+            "sha256": "c8a10db6a5e57ff15b4e0c66c70e836babc670f88f0b050452a71e10c6060628"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/redux-dark-color-NXNRSCI5.mjs.map",
+            "sha256": "06c470c5522fe675cc1cc7bfcec069c92c6e2f350e21059dbfb4f76dfd02041d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/tree-HCOBLTLZ.mjs",
+            "sha256": "ea22adec3fbbdee1ff0ae0fee1546329f35245f2dcef95c9aa41a83a76b7bb4e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-counters/tree-HCOBLTLZ.mjs.map",
+            "sha256": "3183ef8a11e5428ff301ae88ba89f7f6be83188a252b9ac1e3c6c3e8c3d4326f"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/ascii-AZFS2XCW.mjs",
+            "sha256": "ff7d96459e38887e464b54731e3e85f8e991ca447ed3a4aec2057bafc122f395"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/ascii-AZFS2XCW.mjs.map",
+            "sha256": "d0c49115737447e022353fe4f4579dc355c974e7f7746ea57336f7d1a2a1c0a8"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/base-FMC3SIHO.mjs",
+            "sha256": "5bf815f0b1497a438e0c6b84c91e5ce50402ee6ebdeb938db54ba30f8ed50b52"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/base-FMC3SIHO.mjs.map",
+            "sha256": "60e42f365bf47e8a9696f510dbe76670c652d0c6de0c86e066d65ef4caf030f9"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/chunk-KZG45FGQ.mjs",
+            "sha256": "7422ec4550579b88f37ca06179517d46747fdc491a10c15afc71258989b69856"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/chunk-KZG45FGQ.mjs.map",
+            "sha256": "61aedb943b440bb06340fa613a99fc0f29ca7c764e2cadc66e31b7c7e4c1c0a8"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/chunk-WTHFTAKF.mjs",
+            "sha256": "a4628db0261fc9bb66ad684db81c202c39b85c1cf03af1e0bad3c6f9020d0dd1"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/chunk-WTHFTAKF.mjs.map",
+            "sha256": "ce62a75d5cd38a8469a769d63381085bceb08fcb9b9d8ee227098b8ad5ea4992"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/chunk-ZWX3OTXF.mjs",
+            "sha256": "3b78e28e895035e71869086d7814e533ef9d0b84cb37034a5a85811d1827563d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/chunk-ZWX3OTXF.mjs.map",
+            "sha256": "e051ba39878b7846c595d4d26bf8c3dfea70e86d34d182932c1e64b68524cdce"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/dark-DZGS2O4C.mjs",
+            "sha256": "8bc520e8e18834f5771f6450b66053c976774bc955d401b78dffae6ca888e292"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/dark-DZGS2O4C.mjs.map",
+            "sha256": "6b92c5cc28c1729e0726dbb6f7cc38bbf3f54488fa74e2cec6d842e85f7ba917"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/default-RNA2FD2G.mjs",
+            "sha256": "27803bfb833ba2e06674ffd6c2676c6aacad51bbcf2a85df02bec5d878481d2e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/default-RNA2FD2G.mjs.map",
+            "sha256": "904f081497e8287b30285c66cb7f95526d3a868208182e67737e30fff4fd2cb3"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/entry.mjs",
+            "sha256": "102d9a0f516db24016a08c907c040e0bd84e7cce223579b7c3920aee0532314e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/entry.mjs.map",
+            "sha256": "f900bc9634c92a4e668d0b25d9049e10347909af51a51109b7023b54cd15babd"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/forest-QE7XY7HY.mjs",
+            "sha256": "52033aa8062ebca0f8a75c3b73724a5d4acc314ae7c46775375e8467dd400cc7"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/forest-QE7XY7HY.mjs.map",
+            "sha256": "b9704291b19ade24c03ca7112bd7ee0d8344b0bba96537635fb7045a50d50356"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/metafile.json",
+            "sha256": "f0601b13165bdd46bbb68eb4893d76a9927517df012c693eda2ce60a291eceed"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/neo-CCKGBTRU.mjs",
+            "sha256": "153ff7437670730101089f91ae05210ac96533d2357e8fb2d2e32aba1566713b"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/neo-CCKGBTRU.mjs.map",
+            "sha256": "15169439ee9d6934a17e70c755f96e029c3d045bb6c1d33b6b751ca6975cfa23"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/neo-dark-SMT7PTC7.mjs",
+            "sha256": "4844c70849f2a10e49430f7abcb0a7d18018dc095e61d9a7941d8514e8887a1c"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/neo-dark-SMT7PTC7.mjs.map",
+            "sha256": "1ffc00b29ef865a762eb069a2da128bb5c01cbe3bac393dd7836a40c1ec1bba0"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/neutral-DN6WKZIL.mjs",
+            "sha256": "06857f291ecdca68957d12aaa3ddf1466a1694f8cb168f179ab5a7887194c64c"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/neutral-DN6WKZIL.mjs.map",
+            "sha256": "e5dd17e6901b15ddaa5595b57e7eafe85b61ff4df953b5a949366f0f5310b02d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/redux-dark-MIDFJ2D7.mjs",
+            "sha256": "40f3ace671815b2e192d9529245a770ee71be9c616eac39a991ffd5b855b85ba"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/redux-dark-MIDFJ2D7.mjs.map",
+            "sha256": "2ae7ff5ae3b9d12a1605e00bbb1f2a3a5c9b9b47ccf1e66e0999c6127d5d784e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/redux-dark-color-NXNRSCI5.mjs",
+            "sha256": "c8a10db6a5e57ff15b4e0c66c70e836babc670f88f0b050452a71e10c6060628"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/redux-dark-color-NXNRSCI5.mjs.map",
+            "sha256": "06c470c5522fe675cc1cc7bfcec069c92c6e2f350e21059dbfb4f76dfd02041d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/tree-HCOBLTLZ.mjs",
+            "sha256": "ea22adec3fbbdee1ff0ae0fee1546329f35245f2dcef95c9aa41a83a76b7bb4e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-plain/tree-HCOBLTLZ.mjs.map",
+            "sha256": "3183ef8a11e5428ff301ae88ba89f7f6be83188a252b9ac1e3c6c3e8c3d4326f"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/base-registry.ts",
+            "sha256": "bd2ea1589ef5c16af5f90359efa28fe13faf240b416170ce9835b7e80c7d5269"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/behavior-tests.log",
+            "sha256": "23955aaefe0704a2f6c2d85c184d997c428f9e31bd4cf4a2655f89e223888ae6"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/checks.json",
+            "sha256": "4a8fc7a04f694510f865d057f174619d9f4362858a86caadf366400952e142a2"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/commit.log",
+            "sha256": "91087e3d94910d613672a7d8d510b9ded2b04544ffd2063c8b46aff83a2dcd58"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/comparison.jsonl",
+            "sha256": "475b6c7c1ef4ab9f2cef2a17581b06a5db1da3279ffdbe13ccb6c1a3e1c4643e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/counters.mjs",
+            "sha256": "69ced0e7ee5b749ce330c92c35ebe76beb0c431ac21330f6c497118f87f248f6"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/entry.mjs",
+            "sha256": "1fc2ea8de706327fa4638417f4dc766113501a503e295829fedd4fd3f30e42e2"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/evidence-hashes.json",
+            "sha256": "b0f60ec4f050c900e9f98085d4068677185259e61a668645c360a3cb5539e102"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/finalize.mjs",
+            "sha256": "a2a678499d0bfd151d03140e142eb707f2988b08c59016c825683a7eac0d87e8"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/ascii-AZFS2XCW.mjs",
+            "sha256": "ff7d96459e38887e464b54731e3e85f8e991ca447ed3a4aec2057bafc122f395"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/ascii-AZFS2XCW.mjs.map",
+            "sha256": "d0c49115737447e022353fe4f4579dc355c974e7f7746ea57336f7d1a2a1c0a8"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/base-FMC3SIHO.mjs",
+            "sha256": "5bf815f0b1497a438e0c6b84c91e5ce50402ee6ebdeb938db54ba30f8ed50b52"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/base-FMC3SIHO.mjs.map",
+            "sha256": "60e42f365bf47e8a9696f510dbe76670c652d0c6de0c86e066d65ef4caf030f9"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/chunk-KZG45FGQ.mjs",
+            "sha256": "7422ec4550579b88f37ca06179517d46747fdc491a10c15afc71258989b69856"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/chunk-KZG45FGQ.mjs.map",
+            "sha256": "61aedb943b440bb06340fa613a99fc0f29ca7c764e2cadc66e31b7c7e4c1c0a8"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/chunk-WTHFTAKF.mjs",
+            "sha256": "a4628db0261fc9bb66ad684db81c202c39b85c1cf03af1e0bad3c6f9020d0dd1"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/chunk-WTHFTAKF.mjs.map",
+            "sha256": "ce62a75d5cd38a8469a769d63381085bceb08fcb9b9d8ee227098b8ad5ea4992"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/chunk-ZWX3OTXF.mjs",
+            "sha256": "3b78e28e895035e71869086d7814e533ef9d0b84cb37034a5a85811d1827563d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/chunk-ZWX3OTXF.mjs.map",
+            "sha256": "e051ba39878b7846c595d4d26bf8c3dfea70e86d34d182932c1e64b68524cdce"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/dark-DZGS2O4C.mjs",
+            "sha256": "8bc520e8e18834f5771f6450b66053c976774bc955d401b78dffae6ca888e292"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/dark-DZGS2O4C.mjs.map",
+            "sha256": "6b92c5cc28c1729e0726dbb6f7cc38bbf3f54488fa74e2cec6d842e85f7ba917"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/default-RNA2FD2G.mjs",
+            "sha256": "27803bfb833ba2e06674ffd6c2676c6aacad51bbcf2a85df02bec5d878481d2e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/default-RNA2FD2G.mjs.map",
+            "sha256": "904f081497e8287b30285c66cb7f95526d3a868208182e67737e30fff4fd2cb3"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/entry.mjs",
+            "sha256": "20c8499ec351d223e7d250394956aa5f9dd25893ea8482e0bcbe7edef8df1a28"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/entry.mjs.map",
+            "sha256": "2fb1a550c017673a950bf03bc25b61bf3dd4c02bf2db27fac2e903c7a63d3dd8"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/forest-QE7XY7HY.mjs",
+            "sha256": "52033aa8062ebca0f8a75c3b73724a5d4acc314ae7c46775375e8467dd400cc7"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/forest-QE7XY7HY.mjs.map",
+            "sha256": "b9704291b19ade24c03ca7112bd7ee0d8344b0bba96537635fb7045a50d50356"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/metafile.json",
+            "sha256": "9a91df3078fd981f3c785421b0d54407b32ccc941021374b7bdd319055c97eaa"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/neo-CCKGBTRU.mjs",
+            "sha256": "153ff7437670730101089f91ae05210ac96533d2357e8fb2d2e32aba1566713b"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/neo-CCKGBTRU.mjs.map",
+            "sha256": "15169439ee9d6934a17e70c755f96e029c3d045bb6c1d33b6b751ca6975cfa23"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/neo-dark-SMT7PTC7.mjs",
+            "sha256": "4844c70849f2a10e49430f7abcb0a7d18018dc095e61d9a7941d8514e8887a1c"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/neo-dark-SMT7PTC7.mjs.map",
+            "sha256": "1ffc00b29ef865a762eb069a2da128bb5c01cbe3bac393dd7836a40c1ec1bba0"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/neutral-DN6WKZIL.mjs",
+            "sha256": "06857f291ecdca68957d12aaa3ddf1466a1694f8cb168f179ab5a7887194c64c"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/neutral-DN6WKZIL.mjs.map",
+            "sha256": "e5dd17e6901b15ddaa5595b57e7eafe85b61ff4df953b5a949366f0f5310b02d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/redux-dark-MIDFJ2D7.mjs",
+            "sha256": "40f3ace671815b2e192d9529245a770ee71be9c616eac39a991ffd5b855b85ba"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/redux-dark-MIDFJ2D7.mjs.map",
+            "sha256": "2ae7ff5ae3b9d12a1605e00bbb1f2a3a5c9b9b47ccf1e66e0999c6127d5d784e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/redux-dark-color-NXNRSCI5.mjs",
+            "sha256": "c8a10db6a5e57ff15b4e0c66c70e836babc670f88f0b050452a71e10c6060628"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/redux-dark-color-NXNRSCI5.mjs.map",
+            "sha256": "06c470c5522fe675cc1cc7bfcec069c92c6e2f350e21059dbfb4f76dfd02041d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/tree-HCOBLTLZ.mjs",
+            "sha256": "ea22adec3fbbdee1ff0ae0fee1546329f35245f2dcef95c9aa41a83a76b7bb4e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-counters/tree-HCOBLTLZ.mjs.map",
+            "sha256": "3183ef8a11e5428ff301ae88ba89f7f6be83188a252b9ac1e3c6c3e8c3d4326f"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/ascii-AZFS2XCW.mjs",
+            "sha256": "ff7d96459e38887e464b54731e3e85f8e991ca447ed3a4aec2057bafc122f395"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/ascii-AZFS2XCW.mjs.map",
+            "sha256": "d0c49115737447e022353fe4f4579dc355c974e7f7746ea57336f7d1a2a1c0a8"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/base-FMC3SIHO.mjs",
+            "sha256": "5bf815f0b1497a438e0c6b84c91e5ce50402ee6ebdeb938db54ba30f8ed50b52"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/base-FMC3SIHO.mjs.map",
+            "sha256": "60e42f365bf47e8a9696f510dbe76670c652d0c6de0c86e066d65ef4caf030f9"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/chunk-KZG45FGQ.mjs",
+            "sha256": "7422ec4550579b88f37ca06179517d46747fdc491a10c15afc71258989b69856"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/chunk-KZG45FGQ.mjs.map",
+            "sha256": "61aedb943b440bb06340fa613a99fc0f29ca7c764e2cadc66e31b7c7e4c1c0a8"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/chunk-WTHFTAKF.mjs",
+            "sha256": "a4628db0261fc9bb66ad684db81c202c39b85c1cf03af1e0bad3c6f9020d0dd1"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/chunk-WTHFTAKF.mjs.map",
+            "sha256": "ce62a75d5cd38a8469a769d63381085bceb08fcb9b9d8ee227098b8ad5ea4992"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/chunk-ZWX3OTXF.mjs",
+            "sha256": "3b78e28e895035e71869086d7814e533ef9d0b84cb37034a5a85811d1827563d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/chunk-ZWX3OTXF.mjs.map",
+            "sha256": "e051ba39878b7846c595d4d26bf8c3dfea70e86d34d182932c1e64b68524cdce"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/dark-DZGS2O4C.mjs",
+            "sha256": "8bc520e8e18834f5771f6450b66053c976774bc955d401b78dffae6ca888e292"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/dark-DZGS2O4C.mjs.map",
+            "sha256": "6b92c5cc28c1729e0726dbb6f7cc38bbf3f54488fa74e2cec6d842e85f7ba917"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/default-RNA2FD2G.mjs",
+            "sha256": "27803bfb833ba2e06674ffd6c2676c6aacad51bbcf2a85df02bec5d878481d2e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/default-RNA2FD2G.mjs.map",
+            "sha256": "904f081497e8287b30285c66cb7f95526d3a868208182e67737e30fff4fd2cb3"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/entry.mjs",
+            "sha256": "9d36658ca622659180d8935352e8141f5d3a2ceba581f9df59bd6e24c1bddbfe"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/entry.mjs.map",
+            "sha256": "758fc972c3e98f7497f18d81db468145f0401c01570ff6e0a2821f192b006787"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/forest-QE7XY7HY.mjs",
+            "sha256": "52033aa8062ebca0f8a75c3b73724a5d4acc314ae7c46775375e8467dd400cc7"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/forest-QE7XY7HY.mjs.map",
+            "sha256": "b9704291b19ade24c03ca7112bd7ee0d8344b0bba96537635fb7045a50d50356"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/metafile.json",
+            "sha256": "39926d809f297cfbb8309cdee90b818cb383d9569652599eb2194681af89e8f0"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/neo-CCKGBTRU.mjs",
+            "sha256": "153ff7437670730101089f91ae05210ac96533d2357e8fb2d2e32aba1566713b"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/neo-CCKGBTRU.mjs.map",
+            "sha256": "15169439ee9d6934a17e70c755f96e029c3d045bb6c1d33b6b751ca6975cfa23"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/neo-dark-SMT7PTC7.mjs",
+            "sha256": "4844c70849f2a10e49430f7abcb0a7d18018dc095e61d9a7941d8514e8887a1c"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/neo-dark-SMT7PTC7.mjs.map",
+            "sha256": "1ffc00b29ef865a762eb069a2da128bb5c01cbe3bac393dd7836a40c1ec1bba0"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/neutral-DN6WKZIL.mjs",
+            "sha256": "06857f291ecdca68957d12aaa3ddf1466a1694f8cb168f179ab5a7887194c64c"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/neutral-DN6WKZIL.mjs.map",
+            "sha256": "e5dd17e6901b15ddaa5595b57e7eafe85b61ff4df953b5a949366f0f5310b02d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/redux-dark-MIDFJ2D7.mjs",
+            "sha256": "40f3ace671815b2e192d9529245a770ee71be9c616eac39a991ffd5b855b85ba"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/redux-dark-MIDFJ2D7.mjs.map",
+            "sha256": "2ae7ff5ae3b9d12a1605e00bbb1f2a3a5c9b9b47ccf1e66e0999c6127d5d784e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/redux-dark-color-NXNRSCI5.mjs",
+            "sha256": "c8a10db6a5e57ff15b4e0c66c70e836babc670f88f0b050452a71e10c6060628"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/redux-dark-color-NXNRSCI5.mjs.map",
+            "sha256": "06c470c5522fe675cc1cc7bfcec069c92c6e2f350e21059dbfb4f76dfd02041d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/tree-HCOBLTLZ.mjs",
+            "sha256": "ea22adec3fbbdee1ff0ae0fee1546329f35245f2dcef95c9aa41a83a76b7bb4e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/head-plain/tree-HCOBLTLZ.mjs.map",
+            "sha256": "3183ef8a11e5428ff301ae88ba89f7f6be83188a252b9ac1e3c6c3e8c3d4326f"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/lint.log",
+            "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/manifest.json",
+            "sha256": "77d22bd09bc8a2a8cebd55d629417f1fbe893b4a312211f3471e815e25fcc423"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/predeclared.json",
+            "sha256": "b501932d430a028fade9a5d3349ad6707be76cee8489fdf7cd8fd07afeab2d90"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/report.json",
+            "sha256": "f7e03a4ce0840beda921e3fb58b95233f64bf35356259789cce2a30e778b2a0b"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/summary.json",
+            "sha256": "96658cae78ac75a76b77ea287f140f1948878ab568d3d0655458e37ec69b32b7"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/tests.log",
+            "sha256": "67ef72692eeb59c0b62137e27f25741a40613666bcf4d25e652d631de693a673"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/typecheck.log",
+            "sha256": "a6132aa2ed362c92ef6af3c2a187f1b6400a22f3be821ff2299cbfd72902ace6"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/verification-initial-missing-theme.log",
+            "sha256": "83b92eb0df3ce9afd24e699885498677024c9feeb6d9e9c3929b5a36c7cd7feb"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/verification.log",
+            "sha256": "572e14f4372c2e9dc013837bdd9da030e349e36637cf3289992db8fa74429e58"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-3c-counters/verify.mjs",
+            "sha256": "2e4b384649b1c3ee36990f345dc5de730a2cd50bcc85dccbd9581accd470637b"
+          }
+        ],
+        "method": "Untimed instrumented executed operation counts; not physical allocation bytes. See preserved scripts for attribution.",
+        "normalization": {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/mechanism-3c.json",
+          "sha256": "d2bea736aea95c7f9749b1ba8445bd877c8aa2ceeeb6e7d9d8676237c97dabd5"
+        },
+        "passed": true
+      },
+      "checks": [
+        {
+          "name": "environment",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node tools/perf/check-environment.mjs --node-only",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "tools/perf/check-environment.mjs",
+            "--node-only"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-10T17:07:28.636Z",
+          "finishedAt": "2026-11-10T17:07:28.869Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-validation-round1/environment.log",
+          "logSha256": "caa69c7e2be7d173a7602d85cc374cfadbc40573ccbaf3eec2c6a51d86037d88"
+        },
+        {
+          "name": "harness",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node --test tools/perf/acceptance.test.mjs tools/perf/browser.test.mjs tools/perf/build.test.mjs tools/perf/common.test.mjs tools/perf/diagnostics.test.mjs tools/perf/evaluate.test.mjs tools/perf/gates.test.mjs tools/perf/quiet.test.mjs tools/perf/report.test.mjs tools/perf/scheduler.test.mjs tools/perf/timing-worker.test.mjs",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "--test",
+            "tools/perf/acceptance.test.mjs",
+            "tools/perf/browser.test.mjs",
+            "tools/perf/build.test.mjs",
+            "tools/perf/common.test.mjs",
+            "tools/perf/diagnostics.test.mjs",
+            "tools/perf/evaluate.test.mjs",
+            "tools/perf/gates.test.mjs",
+            "tools/perf/quiet.test.mjs",
+            "tools/perf/report.test.mjs",
+            "tools/perf/scheduler.test.mjs",
+            "tools/perf/timing-worker.test.mjs"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-10T17:07:28.870Z",
+          "finishedAt": "2026-11-10T17:07:35.412Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-validation-round1/harness.log",
+          "logSha256": "d7893825a065254d6dbb50a988fa32ffebb6390a83c83eaafdd140a4898d13d2"
+        },
+        {
+          "name": "check",
+          "command": "pnpm check",
+          "argv": [
+            "pnpm",
+            "check"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-10T17:07:35.412Z",
+          "finishedAt": "2026-11-10T17:13:27.494Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-validation-round1/check.log",
+          "logSha256": "4b8b90bbbc3ae48a7524b224218239325d32e97bff1b1dce1933410c8d2035c7"
+        },
+        {
+          "name": "security",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node node_modules/vitest/vitest.mjs run packages/conformance/src/cynefin/render.spec.ts packages/conformance/src/feature-plugins.spec.ts packages/conformance/src/flowchart-behaviour.spec.ts packages/conformance/src/flowchart-render.spec.ts packages/conformance/src/gantt/render-behaviour.spec.ts packages/conformance/src/gantt/schedule-stress.spec.ts packages/conformance/src/journey/render.spec.ts packages/conformance/src/mindmap/stress.spec.ts packages/conformance/src/packet/render.spec.ts packages/conformance/src/pie/render.spec.ts packages/conformance/src/quadrant/render.spec.ts packages/conformance/src/radar/render.spec.ts packages/conformance/src/sequence/render.spec.ts packages/conformance/src/state/render.spec.ts packages/conformance/src/stress.spec.ts packages/conformance/src/treemap/render.spec.ts packages/conformance/src/wardley/render.spec.ts packages/core/src/config/resolveConfig.spec.ts packages/core/src/limits/limits.spec.ts packages/core/src/svg/gradient.spec.ts packages/core/src/svg/image-url.spec.ts packages/core/src/svg/security.spec.ts packages/core/src/svg/url.spec.ts packages/core/src/svg/user-gradient.spec.ts packages/diagram-er/src/v12-specs/erDiagram.spec.ts packages/diagram-er/src/v12-specs/subgraph.spec.ts packages/diagram-flowchart/src/v12-specs/flow-arrows.spec.ts packages/diagram-flowchart/src/v12-specs/flow-comments.spec.ts packages/diagram-flowchart/src/v12-specs/flow-direction.spec.ts packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts packages/diagram-flowchart/src/v12-specs/flow-interactions.spec.ts packages/diagram-flowchart/src/v12-specs/flow-lines.spec.ts packages/diagram-flowchart/src/v12-specs/flow-md-string.spec.ts packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts packages/diagram-flowchart/src/v12-specs/flow-singlenode.spec.ts packages/diagram-flowchart/src/v12-specs/flow-style.spec.ts packages/diagram-flowchart/src/v12-specs/flow-text.spec.ts packages/diagram-flowchart/src/v12-specs/flow-vertice-chaining.spec.ts packages/diagram-flowchart/src/v12-specs/flow.spec.ts packages/diagram-flowchart/src/v12-specs/subgraph.spec.ts packages/diagram-kanban/src/parser/parse.spec.ts packages/diagram-kanban/src/render/render.spec.ts packages/diagram-mindmap/src/parser/parse.spec.ts packages/diagram-pie/src/v12-specs/pie.spec.ts packages/diagram-state/src/v12-specs/state-parser.spec.ts packages/diagram-state/src/v12-specs/state-style.spec.ts packages/language-service/src/front-matter.spec.ts packages/mermaid/src/api.spec.ts packages/mermaid/src/config-fragments.spec.ts packages/mermaid/src/extensions.spec.ts packages/mermaid/src/icon-contract.spec.ts packages/mermaid/src/inline-boxes.spec.ts packages/mermaid/src/limits.spec.ts packages/mermaid/src/mindmap.spec.ts packages/mermaid/src/render-safety.spec.ts packages/mermaid/src/sankey.spec.ts packages/plugin-hand-drawn/src/corpus.spec.ts packages/plugin-icons/src/corpus.spec.ts packages/plugin-icons/src/security.spec.ts packages/plugin-interactions/src/class.spec.ts packages/plugin-interactions/src/gantt.spec.ts packages/plugin-interactions/src/index.spec.ts packages/plugin-interactions/src/menus.spec.ts packages/plugin-math/src/engine.spec.ts packages/plugin-math/src/index.spec.ts tools/gen-config/src/migration.spec.ts",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "node_modules/vitest/vitest.mjs",
+            "run",
+            "packages/conformance/src/cynefin/render.spec.ts",
+            "packages/conformance/src/feature-plugins.spec.ts",
+            "packages/conformance/src/flowchart-behaviour.spec.ts",
+            "packages/conformance/src/flowchart-render.spec.ts",
+            "packages/conformance/src/gantt/render-behaviour.spec.ts",
+            "packages/conformance/src/gantt/schedule-stress.spec.ts",
+            "packages/conformance/src/journey/render.spec.ts",
+            "packages/conformance/src/mindmap/stress.spec.ts",
+            "packages/conformance/src/packet/render.spec.ts",
+            "packages/conformance/src/pie/render.spec.ts",
+            "packages/conformance/src/quadrant/render.spec.ts",
+            "packages/conformance/src/radar/render.spec.ts",
+            "packages/conformance/src/sequence/render.spec.ts",
+            "packages/conformance/src/state/render.spec.ts",
+            "packages/conformance/src/stress.spec.ts",
+            "packages/conformance/src/treemap/render.spec.ts",
+            "packages/conformance/src/wardley/render.spec.ts",
+            "packages/core/src/config/resolveConfig.spec.ts",
+            "packages/core/src/limits/limits.spec.ts",
+            "packages/core/src/svg/gradient.spec.ts",
+            "packages/core/src/svg/image-url.spec.ts",
+            "packages/core/src/svg/security.spec.ts",
+            "packages/core/src/svg/url.spec.ts",
+            "packages/core/src/svg/user-gradient.spec.ts",
+            "packages/diagram-er/src/v12-specs/erDiagram.spec.ts",
+            "packages/diagram-er/src/v12-specs/subgraph.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-arrows.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-comments.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-direction.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-interactions.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-lines.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-md-string.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-singlenode.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-style.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-text.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-vertice-chaining.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/subgraph.spec.ts",
+            "packages/diagram-kanban/src/parser/parse.spec.ts",
+            "packages/diagram-kanban/src/render/render.spec.ts",
+            "packages/diagram-mindmap/src/parser/parse.spec.ts",
+            "packages/diagram-pie/src/v12-specs/pie.spec.ts",
+            "packages/diagram-state/src/v12-specs/state-parser.spec.ts",
+            "packages/diagram-state/src/v12-specs/state-style.spec.ts",
+            "packages/language-service/src/front-matter.spec.ts",
+            "packages/mermaid/src/api.spec.ts",
+            "packages/mermaid/src/config-fragments.spec.ts",
+            "packages/mermaid/src/extensions.spec.ts",
+            "packages/mermaid/src/icon-contract.spec.ts",
+            "packages/mermaid/src/inline-boxes.spec.ts",
+            "packages/mermaid/src/limits.spec.ts",
+            "packages/mermaid/src/mindmap.spec.ts",
+            "packages/mermaid/src/render-safety.spec.ts",
+            "packages/mermaid/src/sankey.spec.ts",
+            "packages/plugin-hand-drawn/src/corpus.spec.ts",
+            "packages/plugin-icons/src/corpus.spec.ts",
+            "packages/plugin-icons/src/security.spec.ts",
+            "packages/plugin-interactions/src/class.spec.ts",
+            "packages/plugin-interactions/src/gantt.spec.ts",
+            "packages/plugin-interactions/src/index.spec.ts",
+            "packages/plugin-interactions/src/menus.spec.ts",
+            "packages/plugin-math/src/engine.spec.ts",
+            "packages/plugin-math/src/index.spec.ts",
+            "tools/gen-config/src/migration.spec.ts"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-10T17:13:27.495Z",
+          "finishedAt": "2026-11-10T17:13:45.126Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-validation-round1/security.log",
+          "logSha256": "2c0beb6abf6623651905989a898d11f5e59b5bc9cf8b596cc7a401fb566a7b68"
+        },
+        {
+          "name": "size",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node --import tsx --conditions=mermaid-source tools/perf/size-check.mjs",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "--import",
+            "tsx",
+            "--conditions=mermaid-source",
+            "tools/perf/size-check.mjs"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-10T17:13:45.127Z",
+          "finishedAt": "2026-11-10T17:13:47.290Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-validation-round1/size.log",
+          "logSha256": "4dc4dbd17abdde540807284cefbf69932ef4d808be2116db83e841f3f21ec2e2"
+        },
+        {
+          "name": "host",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node tools/perf/host-acceptance.mjs --out /Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-validation-round1/host",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "tools/perf/host-acceptance.mjs",
+            "--out",
+            "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-validation-round1/host"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-10T17:13:47.290Z",
+          "finishedAt": "2026-11-10T17:13:57.671Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-validation-round1/host.log",
+          "logSha256": "d480796160a289e33b609548b89fb7d68b4fbb43cfb5a21716bce35aa468e101"
+        },
+        {
+          "name": "browser",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "tools/perf/browser-acceptance.mjs",
+            "--out",
+            "/Users/knsv/repos/mermaid-v13-perf-round1-3c/.tmp/perf-validation-round1/browser"
+          ],
+          "status": "unverified",
+          "reason": "Deferred browser validation; not required for Node measurement readiness"
+        },
+        {
+          "name": "e2e",
+          "argv": [
+            "pnpm",
+            "e2e"
+          ],
+          "status": "unverified",
+          "reason": "Deferred browser validation; not required for Node measurement readiness"
+        }
+      ],
+      "diagnostics": {
+        "methods": {
+          "measurerCalls": "Actual width-method invocations, including any width-cache hits. Vertical metrics invocations are excluded and reported separately when supplied by the renderer.",
+          "metricsCalls": "Optional actual vertical-metrics method invocations; available for v13, absent for Pele.",
+          "allocations": "V8 HeapProfiler.startSampling with collected minor/major objects included; sum selfSize below named allocationRender frame; median independent child estimates. Timing artifacts avoid diagnostic-counter allocations.",
+          "scavenge": "Pinned --trace-gc-nvp pause= with gc=s, only between synchronous render markers. Other GC, setup/reset pauses and final forced-boundary pause reported separately.",
+          "traceAllocation": "Supplemental sum of V8 allocated= over GC intervals through final forced boundary; byte-precise occupancy deltas, NOT exact gross allocation.",
+          "markup": "UTF-8 Buffer.byteLength plus quote-aware XML start-tag and attribute counting.",
+          "features": "v13 preprocessing, parser/token model and actual label layout inspection; number of occurrences and number of diagrams containing each feature.",
+          "stages": "Diagnostic stage clock; layout includes nested measure and graphLayout. Unaccounted time = total minus parse/layout/serialise; instrumentation overhead remains."
+        },
+        "renderers": {
+          "v13": {
+            "totals": {
+              "outputBytes": 95296904,
+              "elements": 1043859,
+              "attributes": 3614479,
+              "measurerCalls": 1198406,
+              "parserCalls": 5000,
+              "metricsCalls": 220480
+            },
+            "allocatedBytesEstimate": 1037514256,
+            "allocationError": {
+              "maximumCalibrationRelativeError": 0.012715816497802734,
+              "replicateRelativeRange": 0.008883216733361204,
+              "interpretation": "Empirical calibration error and replicate spread, not a general confidence bound. Excludes native/external buffers and allocations outside sampled renderer stacks."
+            },
+            "gc": {
+              "scavengePauseMs": 803.2000000000033,
+              "scavengeEvents": 743,
+              "otherGcPauseMs": 58.69999999999999,
+              "otherGcEvents": 41,
+              "boundaryGcPauseMs": 3.3,
+              "outsideRenderGcPauseMs": 88,
+              "intervalOccupancyAllocatedBytes": 57271705248,
+              "intervalOccupancyEvents": 866,
+              "pauseRoundingErrorMs": 39.2,
+              "scavengePauseMsPerPass": 114.74285714285762,
+              "otherGcPauseMsPerPass": 8.385714285714284
+            }
+          },
+          "pele": {
+            "totals": {
+              "outputBytes": 81604595,
+              "elements": 962992,
+              "attributes": 3105130,
+              "measurerCalls": 828402,
+              "parserCalls": 5000
+            },
+            "allocatedBytesEstimate": 752817472,
+            "allocationError": {
+              "maximumCalibrationRelativeError": 0.012715816497802734,
+              "replicateRelativeRange": 0.008285195591209658,
+              "interpretation": "Empirical calibration error and replicate spread, not a general confidence bound. Excludes native/external buffers and allocations outside sampled renderer stacks."
+            },
+            "gc": {
+              "scavengePauseMs": 182.80000000000084,
+              "scavengeEvents": 542,
+              "otherGcPauseMs": 0,
+              "otherGcEvents": 0,
+              "boundaryGcPauseMs": 3.2,
+              "outsideRenderGcPauseMs": 0.2,
+              "intervalOccupancyAllocatedBytes": 36399735680,
+              "intervalOccupancyEvents": 544,
+              "pauseRoundingErrorMs": 27.1,
+              "scavengePauseMsPerPass": 26.114285714285835,
+              "otherGcPauseMsPerPass": 0
+            }
+          }
+        },
+        "features": {
+          "occurrences": {
+            "frontMatter": 1934,
+            "initDirectives": 162,
+            "themeVariables": 228,
+            "shapeData": 17172,
+            "subgraphs": 10653,
+            "comments": 12144,
+            "wideLabels": 66138,
+            "labelledEdges": 35013
+          },
+          "diagrams": {
+            "frontMatter": 1934,
+            "initDirectives": 162,
+            "themeVariables": 228,
+            "shapeData": 512,
+            "subgraphs": 2461,
+            "comments": 1297,
+            "wideLabels": 4796,
+            "labelledEdges": 3572
+          }
+        },
+        "emptyGraph": {
+          "repetitions": 1000,
+          "medianMs": {
+            "total": 0.040374999999997385,
+            "unaccounted": 0.010751000000013278,
+            "parse": 0.007874999999998522,
+            "measure": 0.007125000000002046,
+            "graphLayout": 0.004582999999996673,
+            "layout": 0.012291000000004715,
+            "serialise": 0.008958000000006905
+          }
+        }
+      },
+      "evidence": [
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/3c/header.json",
+          "sha256": "9861e4e9c0f622f682a5fb6f496b92b6b704bf296a07f0d0a06322163797473d"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/3c/queue.json",
+          "sha256": "2f5e8e43df6e35a3e77d0520dcd098977ea92b79d34c1befc758d6d5cf44d64d"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/3c/completion.json",
+          "sha256": "8249e0fc0ebc151f4dcd78c28494e7e10ceaadd6406730f3d0a0d978b8c3993f"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/3c/p12-verdict.json",
+          "sha256": "e9e9d10a5caf1a1cfd4fff6c678a4a903d99066d87cd9b7766f6ff249d59ba2d"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/3c/verdict.json",
+          "sha256": "e919848fc015d6f5796ff0fb7cbd640f33461d7832493652c74fb74c68661cc1"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/3c/raw/timing/result.json",
+          "sha256": "70de7d6b32c8e15b9af5f20361bac4a102b62e91d919aad4077fd6ee53598e14"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/3c/raw/gates/result.json",
+          "sha256": "ddcab91d1bacbc3f59c0eec7e90658bfb31402a945f34aeac9637b1da3eb5c1d"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/3c/raw/diagnostics/result.json",
+          "sha256": "4df582b35f6f2ed85a136ed6735060680ab8a12633d73969e12984c7fc8b79f3"
+        }
+      ]
+    },
+    {
+      "id": "4b",
+      "round": 1,
+      "batch": 2,
+      "baseSha": "094ec5283059b7a87c2c2745ea6dffcc5a4dcee7",
+      "headSha": "37937084a038e922820a58ebb9cc857ca13cec48",
+      "branch": "perf/round-1-4b-20261110",
+      "assignment": {
+        "hypothesis": "4b",
+        "role": "implementer",
+        "requestedModel": "gpt-6-astra",
+        "actualModel": "gpt-6-astra",
+        "reasoningEffort": "high",
+        "agent": "/root/round1_4b",
+        "worktree": "/Users/knsv/repos/mermaid-v13-perf-round1-4b",
+        "baseSha": "094ec5283059b7a87c2c2745ea6dffcc5a4dcee7"
+      },
+      "validationProfile": "node",
+      "browserValidation": "unverified",
+      "e2e": "unverified",
+      "pins": {
+        "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+        "browserSubsetSha256": "0dc6c1ab4205b16317ebc2129271ed0c03533cc22d270ff7d0e2d1cd2474aa99",
+        "baseArtifactSha256": "54c2879f56c867719fafb96e8f4359dcca471e323105ee0371afc5b1a8c4f612",
+        "headArtifactSha256": "f17c75e3712d81fcfe03506ee4a63a32d52fcab9bd6dd34f4852f26ac7d006d1",
+        "baseSourceSha256": "579d554998695c7b14496f1428a844046960004cfe631a84b1f8025c60e410b9",
+        "headSourceSha256": "04a65b3882ef0cf5fbb38c9ff3ce2a4eba35921f14997c2df68c0aba14917e4a",
+        "policySha256": "82a788a9ce59dfaea7f0f207e1f2933426ee3c0c0e888128d9d18976151e77ee"
+      },
+      "verdict": "unfit",
+      "delivery": "not-deliverable",
+      "deliveryScope": "candidate Node fit only; integration and final browser comparison are separate",
+      "lane": "byte-identical",
+      "reasons": [
+        "Node gain/flat-time byte reduction threshold failed"
+      ],
+      "metrics": {
+        "ratio": 0.9729812542088624,
+        "buckets": {
+          "tiny": {
+            "count": 1426,
+            "ratio": 0.9632956107248796
+          },
+          "small": {
+            "count": 3088,
+            "ratio": 0.9750859885635581
+          },
+          "medium": {
+            "count": 459,
+            "ratio": 0.9884574081523374
+          },
+          "large": {
+            "count": 27,
+            "ratio": 0.985688701754563
+          }
+        },
+        "gain": 0.02701874579113761,
+        "spread": 0.024674571224540278,
+        "threshold": 0.07402371367362083,
+        "flat": false,
+        "baseBytes": 95296904,
+        "headBytes": 95296904,
+        "byteReduction": 0
+      },
+      "timing": {
+        "count": 5000,
+        "geomeanHeadOverBase": 0.9729812542088624,
+        "sumBaseNs": 3808762953,
+        "sumHeadNs": 3733963446,
+        "summedHeadOverBase": 0.980361207057771,
+        "buckets": {
+          "tiny": {
+            "count": 1426,
+            "geomeanHeadOverBase": 0.9632956107248796
+          },
+          "small": {
+            "count": 3088,
+            "geomeanHeadOverBase": 0.9750859885635581
+          },
+          "medium": {
+            "count": 459,
+            "geomeanHeadOverBase": 0.9884574081523374
+          },
+          "large": {
+            "count": 27,
+            "geomeanHeadOverBase": 0.985688701754563
+          }
+        }
+      },
+      "mechanism": {
+        "schemaVersion": 1,
+        "hypothesis": "4b",
+        "records": 5000,
+        "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+        "report": {
+          "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/summary.json",
+          "sha256": "278e0b947e9861644700311a2bfa7f5c1cdb9e179164a98ee97f32df2f757785"
+        },
+        "changes": [
+          {
+            "name": "wrapperObjects",
+            "before": 790165,
+            "after": 693045
+          },
+          {
+            "name": "setClears",
+            "before": 114640,
+            "after": 0
+          }
+        ],
+        "controls": [
+          {
+            "name": "cnodeObjects",
+            "before": 108563,
+            "after": 62543
+          },
+          {
+            "name": "cedgeObjects",
+            "before": 106917,
+            "after": 55817
+          },
+          {
+            "name": "lnodeObjects",
+            "before": 275433,
+            "after": 275433
+          },
+          {
+            "name": "ledgeObjects",
+            "before": 299252,
+            "after": 299252
+          },
+          {
+            "name": "setClears",
+            "before": 114640,
+            "after": 0
+          }
+        ],
+        "supplemental": {},
+        "limitations": "Untimed exact constructor/clear operation counts, not physical allocation bytes or timing evidence.",
+        "sources": [
+          {
+            "path": "packages/core/src/layout/layered/index.ts",
+            "sha256": "d0959444d0d94f0caadec9c419ae67c5fc0e648e1d7260e5b1a4f5ef9b833c2c"
+          },
+          {
+            "path": "packages/core/src/layout/layered/layered.ts",
+            "sha256": "730c12fcc2e47b85bd261227fc534123aabf11d2186c782392f46252bb365605"
+          },
+          {
+            "path": "packages/core/src/layout/layered/flat.ts",
+            "sha256": "9d33e63a40895b03ff41a175da62556befea19cc09a79c11b8bf815956d9cca5"
+          },
+          {
+            "path": "packages/core/src/layout/layered/routes.ts",
+            "sha256": "1a85ae989174f877253812fd6655e404240d2e1b9c249b7709dcb8ae1507b734"
+          }
+        ],
+        "declaredCondition": {
+          "required": [
+            "Total CNode+CEdge+LNode+LEdge wrapper creations decrease",
+            "Layered-engine Set.clear calls decrease"
+          ],
+          "controls": [
+            "Grouped path preserves behavior",
+            "Input ownership and ordering unchanged",
+            "Byte-identical SVG output"
+          ],
+          "counterNames": [
+            "wrapperObjects",
+            "setClears"
+          ]
+        },
+        "evidence": [
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/mechanism-plan.json",
+            "sha256": "d23de30ab32c6afd2aecce7c7195d56d59db986faa3eb75bf0389a8438f5c02f"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/normalize-mechanisms.py",
+            "sha256": "ac30a6912d6a98dab8f84a975878035d75f1df469e97f3782bb29c2a331b26ad"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/DECLARATION.md",
+            "sha256": "70b55475793c431722a16c9ed875139eb814cce5fb5f050147bfa02c6b66dba7"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/SHA256SUMS.json",
+            "sha256": "4e86ebc3d0e828847389fe87ab54dc85b2d1d5b7241b4c35166433580cc261ae"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/base/packages/core/src/layout/layered/compound.ts",
+            "sha256": "3403b8a84df0a7de746a896a1889f7cf756747031d51414e44303720d6840b4e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/base/packages/core/src/layout/layered/compound.ts.original",
+            "sha256": "bb98071ff1db47d783c3fe5b3009da933e59b7aa569d093a2cf557c938e5ef36"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/base/packages/core/src/layout/layered/index.ts",
+            "sha256": "68dc2ffc76fb77ee915231f4c8fc595894f4f7bab16d2fd0798c781000e0990b"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/base/packages/core/src/layout/layered/index.ts.original",
+            "sha256": "d56e483c2b7c0d4482a83e3d20fbcfbf1fce8336c51047216363282ba78b4790"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/base/packages/core/src/layout/layered/layered.ts",
+            "sha256": "5cd5a58196b09817f47995d797d033c500051ff99e9d5828a8a607c4fe770a03"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/base/packages/core/src/layout/layered/layered.ts.original",
+            "sha256": "54f0df6982384d97e63f46a107603edd0119f7df3571a8a4f7035f04f5419491"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/base.mjs",
+            "sha256": "8897d3085973033fd860c9d42a68c7e51759062fc075aa5d8e5cfc3ab2e379ab"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/checks.json",
+            "sha256": "46c75ff2c5e04ef2d6c58823851d090000622cd539ae3a18fdd9456131f7deea"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/collect.log",
+            "sha256": "c17f3d84cd29c01cad52b6fba5ac8e1290ed1ea1e54841a4d4c44c10fff68b4d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/collect.mjs",
+            "sha256": "7bda1301c6385686bcc087b193e9153909afc962900dec6790cc8b3f12c587b4"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/commit.log",
+            "sha256": "7f239a64552d4d80cf58d2bef3baf48721edcd214ae797117bbf3081d4b39c29"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/differential.log",
+            "sha256": "963c55fd01d924136fc09e4681e63c9453ddb27792593698916785e7235911ba"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/differential.mjs",
+            "sha256": "726e9df0d1731b4a823b7d65de360d8a577bf3fe6771af27fc925f392c833161"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/head/packages/core/src/layout/layered/compound.ts",
+            "sha256": "3403b8a84df0a7de746a896a1889f7cf756747031d51414e44303720d6840b4e"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/head/packages/core/src/layout/layered/compound.ts.original",
+            "sha256": "bb98071ff1db47d783c3fe5b3009da933e59b7aa569d093a2cf557c938e5ef36"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/head/packages/core/src/layout/layered/index.ts",
+            "sha256": "037fcc5183aee3885275739597f72ee739e0503421a10cb337fce8c545daf721"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/head/packages/core/src/layout/layered/index.ts.original",
+            "sha256": "d0959444d0d94f0caadec9c419ae67c5fc0e648e1d7260e5b1a4f5ef9b833c2c"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/head/packages/core/src/layout/layered/layered.ts",
+            "sha256": "ce2d0ab5af83f2d1ceff13a6b8082d83544fd53c2aa08a7dedda5364f4fd1f13"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/head/packages/core/src/layout/layered/layered.ts.original",
+            "sha256": "730c12fcc2e47b85bd261227fc534123aabf11d2186c782392f46252bb365605"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/head.mjs",
+            "sha256": "f40884c924505481579543d140f1e86485ace2446802c51ca3b92e48ce893558"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/layout-base.mjs",
+            "sha256": "02ddf40a69577e87a935b5bce6da56f166d9daea2cc1e28610a62f8b934b92dc"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/layout-head.mjs",
+            "sha256": "c69ac87b62dead67abb899382da535f9b54f7a35184e74677426d794f422cafd"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/layout-records.jsonl",
+            "sha256": "67f5ab71fef73ef50ab5806effe80553ab4c66bf5104198d7b0e8548a57c97d9"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/layout-summary.json",
+            "sha256": "757150719a2aee7fafed444dd64a451d120191308eb9af92517bf2daf711ce0d"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/manifest.json",
+            "sha256": "59c66c56b281a10de59dbf7f381b154f9389a8683a0184ee74145d2563336c7c"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/records.jsonl",
+            "sha256": "515aef0ff5f4cc3dc1a7585cb21da7d73539177b520d619e6dd7bd2c21537633"
+          },
+          {
+            "path": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-4b-counters/summary.json",
+            "sha256": "278e0b947e9861644700311a2bfa7f5c1cdb9e179164a98ee97f32df2f757785"
+          }
+        ],
+        "method": "Untimed instrumented executed operation counts; not physical allocation bytes. See preserved scripts for attribution.",
+        "normalization": {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/mechanism-4b.json",
+          "sha256": "2b79b3f8c7f3b8c9b4257b71d7211b4c8e9bc3abb01b1ddb0c140bc15b3be1a8"
+        },
+        "passed": true
+      },
+      "checks": [
+        {
+          "name": "environment",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node tools/perf/check-environment.mjs --node-only",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "tools/perf/check-environment.mjs",
+            "--node-only"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-10T17:13:58.657Z",
+          "finishedAt": "2026-11-10T17:13:58.865Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-validation-round1/environment.log",
+          "logSha256": "caa69c7e2be7d173a7602d85cc374cfadbc40573ccbaf3eec2c6a51d86037d88"
+        },
+        {
+          "name": "harness",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node --test tools/perf/acceptance.test.mjs tools/perf/browser.test.mjs tools/perf/build.test.mjs tools/perf/common.test.mjs tools/perf/diagnostics.test.mjs tools/perf/evaluate.test.mjs tools/perf/gates.test.mjs tools/perf/quiet.test.mjs tools/perf/report.test.mjs tools/perf/scheduler.test.mjs tools/perf/timing-worker.test.mjs",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "--test",
+            "tools/perf/acceptance.test.mjs",
+            "tools/perf/browser.test.mjs",
+            "tools/perf/build.test.mjs",
+            "tools/perf/common.test.mjs",
+            "tools/perf/diagnostics.test.mjs",
+            "tools/perf/evaluate.test.mjs",
+            "tools/perf/gates.test.mjs",
+            "tools/perf/quiet.test.mjs",
+            "tools/perf/report.test.mjs",
+            "tools/perf/scheduler.test.mjs",
+            "tools/perf/timing-worker.test.mjs"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-10T17:13:58.865Z",
+          "finishedAt": "2026-11-10T17:14:05.389Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-validation-round1/harness.log",
+          "logSha256": "7307ed5106c492080c271ff380acfc92865ac11525511cccd0245282d84598fe"
+        },
+        {
+          "name": "check",
+          "command": "pnpm check",
+          "argv": [
+            "pnpm",
+            "check"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-10T17:14:05.390Z",
+          "finishedAt": "2026-11-10T17:19:56.600Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-validation-round1/check.log",
+          "logSha256": "22946ee6ec185fe711d3c8e7335de0d90f2bac51798e1b1aaed7af14f0acc1b2"
+        },
+        {
+          "name": "security",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node node_modules/vitest/vitest.mjs run packages/conformance/src/cynefin/render.spec.ts packages/conformance/src/feature-plugins.spec.ts packages/conformance/src/flowchart-behaviour.spec.ts packages/conformance/src/flowchart-render.spec.ts packages/conformance/src/gantt/render-behaviour.spec.ts packages/conformance/src/gantt/schedule-stress.spec.ts packages/conformance/src/journey/render.spec.ts packages/conformance/src/mindmap/stress.spec.ts packages/conformance/src/packet/render.spec.ts packages/conformance/src/pie/render.spec.ts packages/conformance/src/quadrant/render.spec.ts packages/conformance/src/radar/render.spec.ts packages/conformance/src/sequence/render.spec.ts packages/conformance/src/state/render.spec.ts packages/conformance/src/stress.spec.ts packages/conformance/src/treemap/render.spec.ts packages/conformance/src/wardley/render.spec.ts packages/core/src/config/resolveConfig.spec.ts packages/core/src/limits/limits.spec.ts packages/core/src/svg/gradient.spec.ts packages/core/src/svg/image-url.spec.ts packages/core/src/svg/security.spec.ts packages/core/src/svg/url.spec.ts packages/core/src/svg/user-gradient.spec.ts packages/diagram-er/src/v12-specs/erDiagram.spec.ts packages/diagram-er/src/v12-specs/subgraph.spec.ts packages/diagram-flowchart/src/v12-specs/flow-arrows.spec.ts packages/diagram-flowchart/src/v12-specs/flow-comments.spec.ts packages/diagram-flowchart/src/v12-specs/flow-direction.spec.ts packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts packages/diagram-flowchart/src/v12-specs/flow-interactions.spec.ts packages/diagram-flowchart/src/v12-specs/flow-lines.spec.ts packages/diagram-flowchart/src/v12-specs/flow-md-string.spec.ts packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts packages/diagram-flowchart/src/v12-specs/flow-singlenode.spec.ts packages/diagram-flowchart/src/v12-specs/flow-style.spec.ts packages/diagram-flowchart/src/v12-specs/flow-text.spec.ts packages/diagram-flowchart/src/v12-specs/flow-vertice-chaining.spec.ts packages/diagram-flowchart/src/v12-specs/flow.spec.ts packages/diagram-flowchart/src/v12-specs/subgraph.spec.ts packages/diagram-kanban/src/parser/parse.spec.ts packages/diagram-kanban/src/render/render.spec.ts packages/diagram-mindmap/src/parser/parse.spec.ts packages/diagram-pie/src/v12-specs/pie.spec.ts packages/diagram-state/src/v12-specs/state-parser.spec.ts packages/diagram-state/src/v12-specs/state-style.spec.ts packages/language-service/src/front-matter.spec.ts packages/mermaid/src/api.spec.ts packages/mermaid/src/config-fragments.spec.ts packages/mermaid/src/extensions.spec.ts packages/mermaid/src/icon-contract.spec.ts packages/mermaid/src/inline-boxes.spec.ts packages/mermaid/src/limits.spec.ts packages/mermaid/src/mindmap.spec.ts packages/mermaid/src/render-safety.spec.ts packages/mermaid/src/sankey.spec.ts packages/plugin-hand-drawn/src/corpus.spec.ts packages/plugin-icons/src/corpus.spec.ts packages/plugin-icons/src/security.spec.ts packages/plugin-interactions/src/class.spec.ts packages/plugin-interactions/src/gantt.spec.ts packages/plugin-interactions/src/index.spec.ts packages/plugin-interactions/src/menus.spec.ts packages/plugin-math/src/engine.spec.ts packages/plugin-math/src/index.spec.ts tools/gen-config/src/migration.spec.ts",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "node_modules/vitest/vitest.mjs",
+            "run",
+            "packages/conformance/src/cynefin/render.spec.ts",
+            "packages/conformance/src/feature-plugins.spec.ts",
+            "packages/conformance/src/flowchart-behaviour.spec.ts",
+            "packages/conformance/src/flowchart-render.spec.ts",
+            "packages/conformance/src/gantt/render-behaviour.spec.ts",
+            "packages/conformance/src/gantt/schedule-stress.spec.ts",
+            "packages/conformance/src/journey/render.spec.ts",
+            "packages/conformance/src/mindmap/stress.spec.ts",
+            "packages/conformance/src/packet/render.spec.ts",
+            "packages/conformance/src/pie/render.spec.ts",
+            "packages/conformance/src/quadrant/render.spec.ts",
+            "packages/conformance/src/radar/render.spec.ts",
+            "packages/conformance/src/sequence/render.spec.ts",
+            "packages/conformance/src/state/render.spec.ts",
+            "packages/conformance/src/stress.spec.ts",
+            "packages/conformance/src/treemap/render.spec.ts",
+            "packages/conformance/src/wardley/render.spec.ts",
+            "packages/core/src/config/resolveConfig.spec.ts",
+            "packages/core/src/limits/limits.spec.ts",
+            "packages/core/src/svg/gradient.spec.ts",
+            "packages/core/src/svg/image-url.spec.ts",
+            "packages/core/src/svg/security.spec.ts",
+            "packages/core/src/svg/url.spec.ts",
+            "packages/core/src/svg/user-gradient.spec.ts",
+            "packages/diagram-er/src/v12-specs/erDiagram.spec.ts",
+            "packages/diagram-er/src/v12-specs/subgraph.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-arrows.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-comments.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-direction.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-interactions.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-lines.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-md-string.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-singlenode.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-style.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-text.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow-vertice-chaining.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/flow.spec.ts",
+            "packages/diagram-flowchart/src/v12-specs/subgraph.spec.ts",
+            "packages/diagram-kanban/src/parser/parse.spec.ts",
+            "packages/diagram-kanban/src/render/render.spec.ts",
+            "packages/diagram-mindmap/src/parser/parse.spec.ts",
+            "packages/diagram-pie/src/v12-specs/pie.spec.ts",
+            "packages/diagram-state/src/v12-specs/state-parser.spec.ts",
+            "packages/diagram-state/src/v12-specs/state-style.spec.ts",
+            "packages/language-service/src/front-matter.spec.ts",
+            "packages/mermaid/src/api.spec.ts",
+            "packages/mermaid/src/config-fragments.spec.ts",
+            "packages/mermaid/src/extensions.spec.ts",
+            "packages/mermaid/src/icon-contract.spec.ts",
+            "packages/mermaid/src/inline-boxes.spec.ts",
+            "packages/mermaid/src/limits.spec.ts",
+            "packages/mermaid/src/mindmap.spec.ts",
+            "packages/mermaid/src/render-safety.spec.ts",
+            "packages/mermaid/src/sankey.spec.ts",
+            "packages/plugin-hand-drawn/src/corpus.spec.ts",
+            "packages/plugin-icons/src/corpus.spec.ts",
+            "packages/plugin-icons/src/security.spec.ts",
+            "packages/plugin-interactions/src/class.spec.ts",
+            "packages/plugin-interactions/src/gantt.spec.ts",
+            "packages/plugin-interactions/src/index.spec.ts",
+            "packages/plugin-interactions/src/menus.spec.ts",
+            "packages/plugin-math/src/engine.spec.ts",
+            "packages/plugin-math/src/index.spec.ts",
+            "tools/gen-config/src/migration.spec.ts"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-10T17:19:56.601Z",
+          "finishedAt": "2026-11-10T17:20:14.003Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-validation-round1/security.log",
+          "logSha256": "96c8f65f2931ef04f5ecc7d1d9aeedb35f600d2ce17c1283f9180a35f0996025"
+        },
+        {
+          "name": "size",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node --import tsx --conditions=mermaid-source tools/perf/size-check.mjs",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "--import",
+            "tsx",
+            "--conditions=mermaid-source",
+            "tools/perf/size-check.mjs"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-10T17:20:14.003Z",
+          "finishedAt": "2026-11-10T17:20:16.171Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-validation-round1/size.log",
+          "logSha256": "9b0deffeb92cba419b36fbb4ae5c76d681dbcfc1f1195261ebd61ca3a02b5073"
+        },
+        {
+          "name": "host",
+          "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node tools/perf/host-acceptance.mjs --out /Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-validation-round1/host",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "tools/perf/host-acceptance.mjs",
+            "--out",
+            "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-validation-round1/host"
+          ],
+          "exitCode": 0,
+          "signal": null,
+          "timedOut": false,
+          "status": "passed",
+          "startedAt": "2026-11-10T17:20:16.172Z",
+          "finishedAt": "2026-11-10T17:20:26.527Z",
+          "log": "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-validation-round1/host.log",
+          "logSha256": "d480796160a289e33b609548b89fb7d68b4fbb43cfb5a21716bce35aa468e101"
+        },
+        {
+          "name": "browser",
+          "argv": [
+            "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+            "tools/perf/browser-acceptance.mjs",
+            "--out",
+            "/Users/knsv/repos/mermaid-v13-perf-round1-4b/.tmp/perf-validation-round1/browser"
+          ],
+          "status": "unverified",
+          "reason": "Deferred browser validation; not required for Node measurement readiness"
+        },
+        {
+          "name": "e2e",
+          "argv": [
+            "pnpm",
+            "e2e"
+          ],
+          "status": "unverified",
+          "reason": "Deferred browser validation; not required for Node measurement readiness"
+        }
+      ],
+      "diagnostics": {
+        "methods": {
+          "measurerCalls": "Actual width-method invocations, including any width-cache hits. Vertical metrics invocations are excluded and reported separately when supplied by the renderer.",
+          "metricsCalls": "Optional actual vertical-metrics method invocations; available for v13, absent for Pele.",
+          "allocations": "V8 HeapProfiler.startSampling with collected minor/major objects included; sum selfSize below named allocationRender frame; median independent child estimates. Timing artifacts avoid diagnostic-counter allocations.",
+          "scavenge": "Pinned --trace-gc-nvp pause= with gc=s, only between synchronous render markers. Other GC, setup/reset pauses and final forced-boundary pause reported separately.",
+          "traceAllocation": "Supplemental sum of V8 allocated= over GC intervals through final forced boundary; byte-precise occupancy deltas, NOT exact gross allocation.",
+          "markup": "UTF-8 Buffer.byteLength plus quote-aware XML start-tag and attribute counting.",
+          "features": "v13 preprocessing, parser/token model and actual label layout inspection; number of occurrences and number of diagrams containing each feature.",
+          "stages": "Diagnostic stage clock; layout includes nested measure and graphLayout. Unaccounted time = total minus parse/layout/serialise; instrumentation overhead remains."
+        },
+        "renderers": {
+          "v13": {
+            "totals": {
+              "outputBytes": 95296904,
+              "elements": 1043859,
+              "attributes": 3614479,
+              "measurerCalls": 1198406,
+              "parserCalls": 5000,
+              "metricsCalls": 220480
+            },
+            "allocatedBytesEstimate": 1018679688,
+            "allocationError": {
+              "maximumCalibrationRelativeError": 0.006850719451904297,
+              "replicateRelativeRange": 0.010197136668538343,
+              "interpretation": "Empirical calibration error and replicate spread, not a general confidence bound. Excludes native/external buffers and allocations outside sampled renderer stacks."
+            },
+            "gc": {
+              "scavengePauseMs": 837.0000000000028,
+              "scavengeEvents": 763,
+              "otherGcPauseMs": 51.59999999999998,
+              "otherGcEvents": 38,
+              "boundaryGcPauseMs": 3,
+              "outsideRenderGcPauseMs": 57.000000000000014,
+              "intervalOccupancyAllocatedBytes": 56552049088,
+              "intervalOccupancyEvents": 854,
+              "pauseRoundingErrorMs": 40.050000000000004,
+              "scavengePauseMsPerPass": 119.57142857142898,
+              "otherGcPauseMsPerPass": 7.371428571428568
+            }
+          },
+          "pele": {
+            "totals": {
+              "outputBytes": 81604595,
+              "elements": 962992,
+              "attributes": 3105130,
+              "measurerCalls": 828402,
+              "parserCalls": 5000
+            },
+            "allocatedBytesEstimate": 754422496,
+            "allocationError": {
+              "maximumCalibrationRelativeError": 0.006850719451904297,
+              "replicateRelativeRange": 0.01701495391250899,
+              "interpretation": "Empirical calibration error and replicate spread, not a general confidence bound. Excludes native/external buffers and allocations outside sampled renderer stacks."
+            },
+            "gc": {
+              "scavengePauseMs": 194.3000000000008,
+              "scavengeEvents": 543,
+              "otherGcPauseMs": 0,
+              "otherGcEvents": 0,
+              "boundaryGcPauseMs": 2.8,
+              "outsideRenderGcPauseMs": 0,
+              "intervalOccupancyAllocatedBytes": 36396289312,
+              "intervalOccupancyEvents": 544,
+              "pauseRoundingErrorMs": 27.150000000000002,
+              "scavengePauseMsPerPass": 27.757142857142973,
+              "otherGcPauseMsPerPass": 0
+            }
+          }
+        },
+        "features": {
+          "occurrences": {
+            "frontMatter": 1934,
+            "initDirectives": 162,
+            "themeVariables": 228,
+            "shapeData": 17172,
+            "subgraphs": 10653,
+            "comments": 12144,
+            "wideLabels": 66138,
+            "labelledEdges": 35013
+          },
+          "diagrams": {
+            "frontMatter": 1934,
+            "initDirectives": 162,
+            "themeVariables": 228,
+            "shapeData": 512,
+            "subgraphs": 2461,
+            "comments": 1297,
+            "wideLabels": 4796,
+            "labelledEdges": 3572
+          }
+        },
+        "emptyGraph": {
+          "repetitions": 1000,
+          "medianMs": {
+            "total": 0.03570799999999963,
+            "unaccounted": 0.010083999999991988,
+            "parse": 0.006833000000000311,
+            "measure": 0.006874999999993747,
+            "graphLayout": 0.002208000000010202,
+            "layout": 0.009624999999999773,
+            "serialise": 0.008582999999994456
+          }
+        }
+      },
+      "evidence": [
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/4b/header.json",
+          "sha256": "df81a4c9af5f3cdfd19754063af24723935b3e46e50d3c13ec66fee20796406b"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/4b/queue.json",
+          "sha256": "259f4ff407793d8b7c6519f6498898cc16af65c0b49cb8e5608064aee07806de"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/4b/completion.json",
+          "sha256": "96acccc89c771c0c80eadc5841be83b3e17514fdc1b538ecc77cd5ab3b255451"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/4b/p12-verdict.json",
+          "sha256": "3d88007f0970d935beaf6f4a08cd79f761c5c898bef6d13539dfc074a6bc07f2"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/4b/verdict.json",
+          "sha256": "fd17ac86bbfe592f943aa05d39b1044c0bd16b1a55821c1f9c1be608530da1d0"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/4b/raw/timing/result.json",
+          "sha256": "695d418430563834d71466c608de89b41520822eae0a9c487a7936296f4ac98f"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/4b/raw/gates/result.json",
+          "sha256": "d8d54fe8c1345dface6c6bd93ef5d85318e57c0fc4a047bd170c1ab90c30fef9"
+        },
+        {
+          "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round1-batch2-20261110/4b/raw/diagnostics/result.json",
+          "sha256": "62141afdfa95463f6f449fb56120f9d93e64bdaa59f97f7d53e3fbd5da3a43fe"
+        }
+      ]
+    }
+  ]
+}

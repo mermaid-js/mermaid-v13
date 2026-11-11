@@ -65,6 +65,7 @@ import { createDomAdapter } from './dom.ts';
 import { toMermaidError, toWarning } from './errors.ts';
 import { iconPackRegistry, packsUnsupported, type IconLoader } from './icon-packs.ts';
 import { selectMeasurer } from './measurer.ts';
+import { registerAnalysisReset } from './analysis-reset.ts';
 import {
   builtIn,
   isElkName,
@@ -1009,6 +1010,7 @@ export function createMermaid(
     setParseErrorHandler,
   };
   registerSeam(api, discovery);
+  registerAnalysisReset(api, () => cache.clear());
   return api;
 }
 

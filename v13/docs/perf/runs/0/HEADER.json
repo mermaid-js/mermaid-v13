@@ -1,0 +1,443 @@
+{
+  "schemaVersion": 1,
+  "round": 0,
+  "mode": "formal",
+  "validationProfile": "node",
+  "purpose": "P10 baseline only; no optimization",
+  "createdAt": "2026-11-10T14:08:00.432Z",
+  "machine": {
+    "hostname": "AI-Max",
+    "platform": "darwin",
+    "release": "25.5.0",
+    "arch": "arm64"
+  },
+  "node": {
+    "version": "v24.16.0",
+    "execPath": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+    "sha256": "1ee75375e33b94fc34b3b19aede049e11dae90efb63b374dc96d6bdace70c4b8",
+    "versions": {
+      "node": "24.16.0",
+      "acorn": "8.16.0",
+      "ada": "3.4.4",
+      "amaro": "1.1.9",
+      "ares": "1.34.6",
+      "brotli": "1.2.0",
+      "cldr": "48.0",
+      "icu": "78.3",
+      "llhttp": "9.4.1",
+      "merve": "1.2.2",
+      "modules": "137",
+      "napi": "10",
+      "nbytes": "0.1.4",
+      "ncrypto": "0.0.1",
+      "nghttp2": "1.68.0",
+      "nghttp3": "",
+      "ngtcp2": "",
+      "openssl": "3.5.6",
+      "simdjson": "4.6.1",
+      "simdutf": "6.4.0",
+      "sqlite": "3.53.0",
+      "tz": "2026b",
+      "undici": "7.25.0",
+      "unicode": "17.0",
+      "uv": "1.52.1",
+      "uvwasi": "0.0.23",
+      "v8": "13.6.233.17-node.49",
+      "zlib": "1.3.1-e00f703",
+      "zstd": "1.5.7"
+    },
+    "execArgv": [],
+    "nodeOptions": ""
+  },
+  "source": {
+    "sha256": "ebd3148d9688e34698f0c7fad1f64a1f54d01f8893144663577b869d790e7c10"
+  },
+  "manifest": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/manifest.json",
+  "manifestSha256": "d9d14bc4d8bd31ec7c1d13e31469f3a5320cfa850f6800d05337d8f54969fdca",
+  "sample": {
+    "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+    "browserSubsetSha256": "0dc6c1ab4205b16317ebc2129271ed0c03533cc22d270ff7d0e2d1cd2474aa99",
+    "sourceHashesSha256": "5b8e4074663579dd7122e302042b7c55f65dbb27d728802d091515f5953f7db2",
+    "sample": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-prep/validated-node24-v1/sample.jsonl",
+    "subset": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-prep/validated-node24-v1/browser-indices.json"
+  },
+  "policy": {
+    "schemaVersion": 1,
+    "sampleCount": 5000,
+    "browserCount": 500,
+    "timing": {
+      "warmups": 3,
+      "pairs": 7,
+      "renderTimeoutMs": 30000,
+      "aaBlocks": 10,
+      "retries": 0,
+      "estimator": "median per diagram then geomean of head/base ratios",
+      "order": "alternate AB/BA by diagram index plus repetition plus block",
+      "errors": "fail whole experiment; preserve raw evidence; never drop a record"
+    },
+    "noise": {
+      "estimator": "exp(nearest-rank p95(abs(log(whole-sample geomean A/A ratio)))) - 1",
+      "minimumBlocks": 10
+    },
+    "fit": {
+      "minimumGain": 0.005,
+      "noiseMultiplier": 3,
+      "minimumByteReduction": 0.05,
+      "maximumBucketRegression": 0.01,
+      "flat": "abs(log(timeRatio)) <= log1p(noiseSpread)"
+    },
+    "buckets": [
+      {
+        "name": "tiny",
+        "minBytes": 0,
+        "maxBytes": 1024
+      },
+      {
+        "name": "small",
+        "minBytes": 1024,
+        "maxBytes": 4096
+      },
+      {
+        "name": "medium",
+        "minBytes": 4096,
+        "maxBytes": 16384
+      },
+      {
+        "name": "large",
+        "minBytes": 16384,
+        "maxBytes": null
+      }
+    ],
+    "configuration": {
+      "maxTextSize": 10000000,
+      "maxEdges": 1000000,
+      "peleOutputLimit": 9007199254740991,
+      "theme": "renderer defaults plus original input directives",
+      "pele": "native default font/wrap settings; no matching of v13 appearance",
+      "renderId": "m<sample-index>",
+      "reset": "AnalysisCache and text widths outside timing; configuration and loaded modules stay warm"
+    },
+    "diagnostics": {
+      "warmups": 3,
+      "repetitions": 7,
+      "emptyGraphRepetitions": 1000
+    },
+    "quiet": {
+      "intervalMs": 1000,
+      "quietMs": 3000,
+      "maxCpuMs": 1536,
+      "maxTotalCpuMs": 1536
+    },
+    "browser": {
+      "viewport": {
+        "width": 1600,
+        "height": 1200
+      },
+      "deviceScaleFactor": 1,
+      "colorScheme": "light"
+    },
+    "backgroundLoad": {
+      "decision": "P27",
+      "measurementEnvironment": "observed background activity; not an idle-host baseline",
+      "method": "60 consecutive 1000 ms process-snapshot intervals; nearest-rank p95 of total CPU delta; total limit is ceil(p95 * 1.20); the per-process field equals the total limit and imposes no additional cap",
+      "startedAt": "2026-11-10T13:02:09.057Z",
+      "finishedAt": "2026-11-10T13:03:14.100Z",
+      "machine": "AI-Max",
+      "node": "v24.16.0",
+      "samples": 60,
+      "actualDurationMs": 65008.65083300001,
+      "bufferFraction": 0.2,
+      "totalCpuMsP95": 1280,
+      "busiestProcessCpuMsP95": 330,
+      "frozenQuiet": {
+        "intervalMs": 1000,
+        "quietMs": 3000,
+        "maxCpuMs": 1536,
+        "maxTotalCpuMs": 1536
+      },
+      "previousPolicySha256": "711c4bdbb4719ef8d0b6c92773d404f397ab9895f368fa402961f3ef3c096200",
+      "rawEvidence": {
+        "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-background-baseline-20261110/observations.json",
+        "sha256": "11bcbacaadb794298981c6f5bee1ce0916a9c1cc35547caf6fde231ab3046705"
+      },
+      "calibrationScriptSha256": "43e914e30880dd017ed3180c7e2a08ae028824ecd7046a397ae2e51f483ec531",
+      "monitorSha256": "0525ae0e5588a107546f72d91e82c77605556a8d4b9d929d95258296a89f188a",
+      "calibrationDecision": "P26",
+      "calibrationPreviousPolicySha256": "8555678d001d8d8ed3363907d62cbc6142c5084786fb69acd00be34b5794e9a3",
+      "supersededPerProcessLimitMs": 396
+    }
+  },
+  "pins": {
+    "sampleSha256": "6d3dcb57cc8408a195df49a634cf08ae974cff6d6fd20b5edb2cc60a9fe651d8",
+    "browserSubsetSha256": "0dc6c1ab4205b16317ebc2129271ed0c03533cc22d270ff7d0e2d1cd2474aa99",
+    "baseArtifactSha256": "54c2879f56c867719fafb96e8f4359dcca471e323105ee0371afc5b1a8c4f612",
+    "headArtifactSha256": "54c2879f56c867719fafb96e8f4359dcca471e323105ee0371afc5b1a8c4f612",
+    "baseSourceSha256": "579d554998695c7b14496f1428a844046960004cfe631a84b1f8025c60e410b9",
+    "headSourceSha256": "579d554998695c7b14496f1428a844046960004cfe631a84b1f8025c60e410b9",
+    "policySha256": "82a788a9ce59dfaea7f0f207e1f2933426ee3c0c0e888128d9d18976151e77ee"
+  },
+  "resetProof": {
+    "v13": {
+      "fresh": 1,
+      "cached": 1,
+      "reparsed": 2,
+      "identical": true
+    },
+    "pele": {
+      "parserCalls": 2,
+      "measurerCalls": 4,
+      "identical": true
+    }
+  },
+  "environment": {
+    "purpose": "environment preflight, not benchmark",
+    "validationProfile": "node",
+    "browserValidation": "unverified",
+    "checks": [
+      {
+        "name": "node",
+        "ok": true,
+        "expected": "24.16.0",
+        "actual": "v24.16.0"
+      },
+      {
+        "name": "pnpm",
+        "ok": true,
+        "expected": "10.30.3",
+        "actual": "10.30.3",
+        "error": null
+      },
+      {
+        "name": "process-inspection",
+        "ok": true,
+        "error": null
+      },
+      {
+        "name": "hardware-inventory",
+        "ok": true,
+        "actual": [
+          "68719476736",
+          "10",
+          "10"
+        ],
+        "error": null
+      }
+    ]
+  },
+  "browserPin": null,
+  "acceptance": {
+    "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-validation-p27-20261110-02/acceptance.json",
+    "sha256": "bd6f316e636934f5f5046fde8f13ee1ad9c867794efab4d186d0bb32f9aeb2fb",
+    "results": [
+      {
+        "name": "environment",
+        "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node tools/perf/check-environment.mjs --node-only",
+        "argv": [
+          "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+          "tools/perf/check-environment.mjs",
+          "--node-only"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "status": "passed",
+        "startedAt": "2026-11-10T14:02:49.110Z",
+        "finishedAt": "2026-11-10T14:02:49.319Z",
+        "log": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-validation-p27-20261110-02/environment.log",
+        "logSha256": "caa69c7e2be7d173a7602d85cc374cfadbc40573ccbaf3eec2c6a51d86037d88"
+      },
+      {
+        "name": "harness",
+        "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node --test tools/perf/acceptance.test.mjs tools/perf/browser.test.mjs tools/perf/build.test.mjs tools/perf/common.test.mjs tools/perf/diagnostics.test.mjs tools/perf/evaluate.test.mjs tools/perf/gates.test.mjs tools/perf/quiet.test.mjs tools/perf/report.test.mjs tools/perf/scheduler.test.mjs tools/perf/timing-worker.test.mjs",
+        "argv": [
+          "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+          "--test",
+          "tools/perf/acceptance.test.mjs",
+          "tools/perf/browser.test.mjs",
+          "tools/perf/build.test.mjs",
+          "tools/perf/common.test.mjs",
+          "tools/perf/diagnostics.test.mjs",
+          "tools/perf/evaluate.test.mjs",
+          "tools/perf/gates.test.mjs",
+          "tools/perf/quiet.test.mjs",
+          "tools/perf/report.test.mjs",
+          "tools/perf/scheduler.test.mjs",
+          "tools/perf/timing-worker.test.mjs"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "status": "passed",
+        "startedAt": "2026-11-10T14:02:49.320Z",
+        "finishedAt": "2026-11-10T14:02:55.849Z",
+        "log": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-validation-p27-20261110-02/harness.log",
+        "logSha256": "9d56b3515c5f73f902f5187a48a1659384730f3eca35bbb0ccbb22ef807e7b26"
+      },
+      {
+        "name": "check",
+        "command": "pnpm check",
+        "argv": [
+          "pnpm",
+          "check"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "status": "passed",
+        "startedAt": "2026-11-10T14:02:55.850Z",
+        "finishedAt": "2026-11-10T14:07:15.762Z",
+        "log": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-validation-p27-20261110-02/check.log",
+        "logSha256": "b6399f3766c43e944d002138337599618559f40bd57d9acdf0f18c1a55be1b51"
+      },
+      {
+        "name": "security",
+        "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node node_modules/vitest/vitest.mjs run packages/conformance/src/cynefin/render.spec.ts packages/conformance/src/feature-plugins.spec.ts packages/conformance/src/flowchart-behaviour.spec.ts packages/conformance/src/flowchart-render.spec.ts packages/conformance/src/gantt/render-behaviour.spec.ts packages/conformance/src/gantt/schedule-stress.spec.ts packages/conformance/src/journey/render.spec.ts packages/conformance/src/mindmap/stress.spec.ts packages/conformance/src/packet/render.spec.ts packages/conformance/src/pie/render.spec.ts packages/conformance/src/quadrant/render.spec.ts packages/conformance/src/radar/render.spec.ts packages/conformance/src/sequence/render.spec.ts packages/conformance/src/state/render.spec.ts packages/conformance/src/stress.spec.ts packages/conformance/src/treemap/render.spec.ts packages/conformance/src/wardley/render.spec.ts packages/core/src/config/resolveConfig.spec.ts packages/core/src/limits/limits.spec.ts packages/core/src/svg/gradient.spec.ts packages/core/src/svg/image-url.spec.ts packages/core/src/svg/security.spec.ts packages/core/src/svg/url.spec.ts packages/core/src/svg/user-gradient.spec.ts packages/diagram-er/src/v12-specs/erDiagram.spec.ts packages/diagram-er/src/v12-specs/subgraph.spec.ts packages/diagram-flowchart/src/v12-specs/flow-arrows.spec.ts packages/diagram-flowchart/src/v12-specs/flow-comments.spec.ts packages/diagram-flowchart/src/v12-specs/flow-direction.spec.ts packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts packages/diagram-flowchart/src/v12-specs/flow-interactions.spec.ts packages/diagram-flowchart/src/v12-specs/flow-lines.spec.ts packages/diagram-flowchart/src/v12-specs/flow-md-string.spec.ts packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts packages/diagram-flowchart/src/v12-specs/flow-singlenode.spec.ts packages/diagram-flowchart/src/v12-specs/flow-style.spec.ts packages/diagram-flowchart/src/v12-specs/flow-text.spec.ts packages/diagram-flowchart/src/v12-specs/flow-vertice-chaining.spec.ts packages/diagram-flowchart/src/v12-specs/flow.spec.ts packages/diagram-flowchart/src/v12-specs/subgraph.spec.ts packages/diagram-kanban/src/parser/parse.spec.ts packages/diagram-kanban/src/render/render.spec.ts packages/diagram-mindmap/src/parser/parse.spec.ts packages/diagram-pie/src/v12-specs/pie.spec.ts packages/diagram-state/src/v12-specs/state-parser.spec.ts packages/diagram-state/src/v12-specs/state-style.spec.ts packages/language-service/src/front-matter.spec.ts packages/mermaid/src/api.spec.ts packages/mermaid/src/config-fragments.spec.ts packages/mermaid/src/extensions.spec.ts packages/mermaid/src/icon-contract.spec.ts packages/mermaid/src/inline-boxes.spec.ts packages/mermaid/src/limits.spec.ts packages/mermaid/src/mindmap.spec.ts packages/mermaid/src/render-safety.spec.ts packages/mermaid/src/sankey.spec.ts packages/plugin-hand-drawn/src/corpus.spec.ts packages/plugin-icons/src/corpus.spec.ts packages/plugin-icons/src/security.spec.ts packages/plugin-interactions/src/class.spec.ts packages/plugin-interactions/src/gantt.spec.ts packages/plugin-interactions/src/index.spec.ts packages/plugin-interactions/src/menus.spec.ts packages/plugin-math/src/engine.spec.ts packages/plugin-math/src/index.spec.ts tools/gen-config/src/migration.spec.ts",
+        "argv": [
+          "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+          "node_modules/vitest/vitest.mjs",
+          "run",
+          "packages/conformance/src/cynefin/render.spec.ts",
+          "packages/conformance/src/feature-plugins.spec.ts",
+          "packages/conformance/src/flowchart-behaviour.spec.ts",
+          "packages/conformance/src/flowchart-render.spec.ts",
+          "packages/conformance/src/gantt/render-behaviour.spec.ts",
+          "packages/conformance/src/gantt/schedule-stress.spec.ts",
+          "packages/conformance/src/journey/render.spec.ts",
+          "packages/conformance/src/mindmap/stress.spec.ts",
+          "packages/conformance/src/packet/render.spec.ts",
+          "packages/conformance/src/pie/render.spec.ts",
+          "packages/conformance/src/quadrant/render.spec.ts",
+          "packages/conformance/src/radar/render.spec.ts",
+          "packages/conformance/src/sequence/render.spec.ts",
+          "packages/conformance/src/state/render.spec.ts",
+          "packages/conformance/src/stress.spec.ts",
+          "packages/conformance/src/treemap/render.spec.ts",
+          "packages/conformance/src/wardley/render.spec.ts",
+          "packages/core/src/config/resolveConfig.spec.ts",
+          "packages/core/src/limits/limits.spec.ts",
+          "packages/core/src/svg/gradient.spec.ts",
+          "packages/core/src/svg/image-url.spec.ts",
+          "packages/core/src/svg/security.spec.ts",
+          "packages/core/src/svg/url.spec.ts",
+          "packages/core/src/svg/user-gradient.spec.ts",
+          "packages/diagram-er/src/v12-specs/erDiagram.spec.ts",
+          "packages/diagram-er/src/v12-specs/subgraph.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-arrows.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-comments.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-direction.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-interactions.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-lines.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-md-string.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-singlenode.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-style.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-text.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow-vertice-chaining.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/flow.spec.ts",
+          "packages/diagram-flowchart/src/v12-specs/subgraph.spec.ts",
+          "packages/diagram-kanban/src/parser/parse.spec.ts",
+          "packages/diagram-kanban/src/render/render.spec.ts",
+          "packages/diagram-mindmap/src/parser/parse.spec.ts",
+          "packages/diagram-pie/src/v12-specs/pie.spec.ts",
+          "packages/diagram-state/src/v12-specs/state-parser.spec.ts",
+          "packages/diagram-state/src/v12-specs/state-style.spec.ts",
+          "packages/language-service/src/front-matter.spec.ts",
+          "packages/mermaid/src/api.spec.ts",
+          "packages/mermaid/src/config-fragments.spec.ts",
+          "packages/mermaid/src/extensions.spec.ts",
+          "packages/mermaid/src/icon-contract.spec.ts",
+          "packages/mermaid/src/inline-boxes.spec.ts",
+          "packages/mermaid/src/limits.spec.ts",
+          "packages/mermaid/src/mindmap.spec.ts",
+          "packages/mermaid/src/render-safety.spec.ts",
+          "packages/mermaid/src/sankey.spec.ts",
+          "packages/plugin-hand-drawn/src/corpus.spec.ts",
+          "packages/plugin-icons/src/corpus.spec.ts",
+          "packages/plugin-icons/src/security.spec.ts",
+          "packages/plugin-interactions/src/class.spec.ts",
+          "packages/plugin-interactions/src/gantt.spec.ts",
+          "packages/plugin-interactions/src/index.spec.ts",
+          "packages/plugin-interactions/src/menus.spec.ts",
+          "packages/plugin-math/src/engine.spec.ts",
+          "packages/plugin-math/src/index.spec.ts",
+          "tools/gen-config/src/migration.spec.ts"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "status": "passed",
+        "startedAt": "2026-11-10T14:07:15.763Z",
+        "finishedAt": "2026-11-10T14:07:33.226Z",
+        "log": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-validation-p27-20261110-02/security.log",
+        "logSha256": "f7e4f95bbc390c763d452d5b4142ea8882b596b752c2ec953682c7a92c683a1d"
+      },
+      {
+        "name": "size",
+        "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node --import tsx --conditions=mermaid-source tools/perf/size-check.mjs",
+        "argv": [
+          "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+          "--import",
+          "tsx",
+          "--conditions=mermaid-source",
+          "tools/perf/size-check.mjs"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "status": "passed",
+        "startedAt": "2026-11-10T14:07:33.226Z",
+        "finishedAt": "2026-11-10T14:07:35.378Z",
+        "log": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-validation-p27-20261110-02/size.log",
+        "logSha256": "c0cfcde3bb84e11dba26399816c4f9bbad42bddfcc201cbe06fef8a7a3aa2007"
+      },
+      {
+        "name": "host",
+        "command": "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node tools/perf/host-acceptance.mjs --out /Users/knsv/repos/mermaid-v13-perf/.tmp/perf-validation-p27-20261110-02/host",
+        "argv": [
+          "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+          "tools/perf/host-acceptance.mjs",
+          "--out",
+          "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-validation-p27-20261110-02/host"
+        ],
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "status": "passed",
+        "startedAt": "2026-11-10T14:07:35.379Z",
+        "finishedAt": "2026-11-10T14:07:45.733Z",
+        "log": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-validation-p27-20261110-02/host.log",
+        "logSha256": "d480796160a289e33b609548b89fb7d68b4fbb43cfb5a21716bce35aa468e101"
+      },
+      {
+        "name": "browser",
+        "argv": [
+          "/Users/knsv/.volta/tools/image/node/24.16.0/bin/node",
+          "tools/perf/browser-acceptance.mjs",
+          "--out",
+          "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-validation-p27-20261110-02/browser"
+        ],
+        "status": "unverified",
+        "reason": "Deferred browser validation; not required for Node measurement readiness"
+      },
+      {
+        "name": "e2e",
+        "argv": [
+          "pnpm",
+          "e2e"
+        ],
+        "status": "unverified",
+        "reason": "Deferred browser validation; not required for Node measurement readiness"
+      }
+    ]
+  },
+  "instructions": {
+    "available": false,
+    "reason": "macOS/Apple Silicon: no Linux perf stat counter provider configured; optional diagnostic only"
+  },
+  "rawHeader": {
+    "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/header.json",
+    "sha256": "f803d26801f68d69e972e7f513b8a24d6fbd7051e5f97b94a72871097b4840c6"
+  }
+}

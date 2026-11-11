@@ -1,0 +1,1145 @@
+{
+  "schema": 1,
+  "builtAt": "2026-11-10T14:08:00.388Z",
+  "node": "v24.16.0",
+  "esbuildVersion": "0.25.12",
+  "source": {
+    "root": "/Users/knsv/repos/mermaid-v13-perf",
+    "commit": "9bee2019c2c14fccd2b9078d11c3b70c68ea66e2",
+    "dirty": true,
+    "status": "M eslint.config.js\n M packages/mermaid/src/api.ts\n M v13/docs/DECISIONS.md\n?? packages/mermaid/src/analysis-reset.spec.ts\n?? packages/mermaid/src/analysis-reset.ts\n?? tools/perf/\n?? v13/docs/perf/BACKGROUND-LOAD.json\n?? v13/docs/perf/DECISIONS.md\n?? v13/docs/perf/DIAGNOSTICS.md\n?? v13/docs/perf/ENVIRONMENT-REPORT.json\n?? v13/docs/perf/EVALUATOR.md\n?? v13/docs/perf/HARNESS.md\n?? v13/docs/perf/LAB-SOURCES.json\n?? v13/docs/perf/LOOP.md\n?? v13/docs/perf/NEXT-SESSION.md\n?? v13/docs/perf/ORCHESTRATION.md\n?? v13/docs/perf/POLICY.json\n?? v13/docs/perf/PREPARATION-RESULTS.json\n?? v13/docs/perf/PREPARATION.md\n?? v13/docs/perf/SAMPLE-REPORT.json\n?? v13/docs/perf/SAMPLE.md\n?? v13/docs/perf/SCHEDULER.md\n?? v13/docs/perf/START.md\n?? v13/docs/perf/orchestration.json\n?? v13/docs/perf/runs/"
+  },
+  "pele": {
+    "origin": "installed npm package",
+    "root": "/Users/knsv/repos/mermaid-v13-perf/node_modules/.pnpm/pele@1.13.0/node_modules/pele",
+    "version": "1.13.0",
+    "packageSha256": "e0e7c6735fc46842f06c19b2c371ce1817028ee39791f3e2b711431310687a1f"
+  },
+  "configuration": {
+    "maxTextSize": 10000000,
+    "maxEdges": 1000000,
+    "peleOutputLimit": 9007199254740991,
+    "otherSettings": "renderer defaults plus source directives/front matter",
+    "idPolicy": {
+      "v13": "m${index}",
+      "pele": "p${index}"
+    }
+  },
+  "build": {
+    "platform": "browser (also Node ESM compatible)",
+    "target": "es2022",
+    "conditions": [
+      "mermaid-source"
+    ],
+    "keepNames": false
+  },
+  "instrumentationPins": {
+    "schema": 1,
+    "peleVersion": "1.13.0",
+    "targets": [
+      {
+        "root": "v13",
+        "path": "packages/mermaid/src/api.ts",
+        "sha256": "0ea2df8ace903a45ae29ed1f86b65e986b6533c846851ec000e2563ccd33aab9"
+      },
+      {
+        "root": "v13",
+        "path": "packages/mermaid/src/analysis-reset.ts",
+        "sha256": "c1a88c42db197c6c858d85c519f9109a246c8627516d51217ed5fd78cfb2294a"
+      },
+      {
+        "root": "v13",
+        "path": "packages/mermaid/src/measurer.ts",
+        "sha256": "f890ee6e75ac3a0f22a2e8b2a69b25a67dea9c6ec16f65995df78173a88a1fde"
+      },
+      {
+        "root": "v13",
+        "path": "packages/core/src/text/label.ts",
+        "sha256": "d0bd7f0135836d6836b3081228454569d3771d907d6a8cab09aebc62bcad3de5"
+      },
+      {
+        "root": "v13",
+        "path": "packages/core/src/timing/index.ts",
+        "sha256": "1c149470adea130e7e76d335cc155f15b3ad6b380dfa8262fa9aa78cd84a6779"
+      },
+      {
+        "root": "v13",
+        "path": "packages/diagram-flowchart/src/plugin.ts",
+        "sha256": "78e92c84b959425899fcc790bcb4ead96ff1b390e7d83123564c13b4c723d6b1"
+      },
+      {
+        "root": "pele",
+        "path": "dist/esm/chunks/STHDNR4A.js",
+        "sha256": "e87941238268cfb54c88586ec7816615307504beb5a81ae61089c6114109064b"
+      },
+      {
+        "root": "v13",
+        "path": "packages/diagram-flowchart/src/render/render.ts",
+        "sha256": "be748855e4e1a6f04715914e31fbc41e1fd52faa4daf2e07a7f1c2edbe4010d5"
+      }
+    ],
+    "peleMeasurer": {
+      "path": "dist/esm/chunks/STHDNR4A.js",
+      "targets": [
+        "width(e,n,t){",
+        "width(o,l,a){"
+      ]
+    }
+  },
+  "instrumentationPinsFile": {
+    "path": "/Users/knsv/repos/mermaid-v13-perf/tools/perf/entries/targets.json",
+    "sha256": "08cfbb6dfc71c5edd6be613f4fd47c247c1afc5cb65b3f3e3ea1a62cac6332bf"
+  },
+  "entries": {
+    "v13": {
+      "timing": {
+        "entry": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/timing/index.mjs",
+        "instrumentation": false,
+        "minified": true
+      },
+      "diagnostic": {
+        "entry": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/index.mjs",
+        "instrumentation": true,
+        "minified": false
+      }
+    },
+    "pele": {
+      "timing": {
+        "entry": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/pele/timing/index.mjs",
+        "instrumentation": false,
+        "minified": true
+      },
+      "diagnostic": {
+        "entry": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/pele/diagnostic/index.mjs",
+        "instrumentation": true,
+        "minified": false
+      }
+    }
+  },
+  "sources": [
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/node_modules/.pnpm/pele@1.13.0/node_modules/pele/dist/esm/chunks/4LWW3ZNH.js",
+      "sha256": "711c65fca1ecc27538eb41ca3f2c97ea0dd941898e64ef2e0930bbb0db7fb55c"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/node_modules/.pnpm/pele@1.13.0/node_modules/pele/dist/esm/chunks/6PIGVMFT.js",
+      "sha256": "a92ce75df90aba7514ab37c4dbd1f639ac537e893129217f6b32ae42d03230e4"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/node_modules/.pnpm/pele@1.13.0/node_modules/pele/dist/esm/chunks/7WLXJQOR.js",
+      "sha256": "de9d710f8b23385f34ca8f5af3c508e087bb261eae602b593d7887849664d828"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/node_modules/.pnpm/pele@1.13.0/node_modules/pele/dist/esm/chunks/A4UD2L5Z.js",
+      "sha256": "d313ae4983471e60b2fc5c6eb81fb518b3944f5ab570cb6b72927955773a968a"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/node_modules/.pnpm/pele@1.13.0/node_modules/pele/dist/esm/chunks/BGW36YJW.js",
+      "sha256": "23149a915f2e102a73122ec9aabe9b161dfe13150233c83d9d64c087aabf4c7c"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/node_modules/.pnpm/pele@1.13.0/node_modules/pele/dist/esm/chunks/DKTLEL5E.js",
+      "sha256": "91864eed78a6a3cc9791d20fb9b61fd8f458c12101662883cd23e755fd2a4cb6"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/node_modules/.pnpm/pele@1.13.0/node_modules/pele/dist/esm/chunks/DKUZGKB3.js",
+      "sha256": "270946547e80238ea41637bab901f5e20d06476ef4d993b4eec61003288d77ea"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/node_modules/.pnpm/pele@1.13.0/node_modules/pele/dist/esm/chunks/EFYWJBJK.js",
+      "sha256": "e38d6bd20b44a98c3f37a518436fa2099c8d4699c77705647bfb550b24756a38"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/node_modules/.pnpm/pele@1.13.0/node_modules/pele/dist/esm/chunks/FTXIJQGB.js",
+      "sha256": "d5a635ff4d5134d1e6600fea35c3add7ab4b7167475733b1b093b0a3d34e795b"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/node_modules/.pnpm/pele@1.13.0/node_modules/pele/dist/esm/chunks/NT5JY5WP.js",
+      "sha256": "b7e298bdca93323d0ea453b40ba919f24fabd899e7e770d062452ee8b2d22769"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/node_modules/.pnpm/pele@1.13.0/node_modules/pele/dist/esm/chunks/QQW2P742.js",
+      "sha256": "d5e0a4cc58b90d40a5f8752064744e828876459053c6bc2c1ddd7ac3f3901438"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/node_modules/.pnpm/pele@1.13.0/node_modules/pele/dist/esm/chunks/STHDNR4A.js",
+      "sha256": "e87941238268cfb54c88586ec7816615307504beb5a81ae61089c6114109064b"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/node_modules/.pnpm/pele@1.13.0/node_modules/pele/dist/esm/chunks/VBUCM3YD.js",
+      "sha256": "8b90e0e028083ecbbfb40b0b9c0ffd46d2808b1ff50e38dd35d42797ad09839e"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/node_modules/.pnpm/pele@1.13.0/node_modules/pele/dist/esm/core.js",
+      "sha256": "6566c0ca9a713302114cc973f98fc34146d67d033a0b7a61679f606fffb9f084"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/node_modules/.pnpm/pele@1.13.0/node_modules/pele/dist/esm/diagrams/flowchart.js",
+      "sha256": "eecee05230d5e254f71a62b4c8a1597f15c13315c05c9b3d96d8880daa11e9e8"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/node_modules/.pnpm/pele@1.13.0/node_modules/pele/package.json",
+      "sha256": "e0e7c6735fc46842f06c19b2c371ce1817028ee39791f3e2b711431310687a1f"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/package.json",
+      "sha256": "4e19f5594d0175e64d32137596cc69d144e0aeaed5f705932d0c41e080720887"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/package.json",
+      "sha256": "0fdbbbfd848052edae29cb591d4824004a8a44b9307498379ecf972a73819f68"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/ascii/canvas.ts",
+      "sha256": "96cd456c7b2a1e0388977aaea96f01fa98c6c103432e1cf8605b8761160d300f"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/ascii/directions.ts",
+      "sha256": "1cfe076712f50334c5fe19e92fdee80a41f2b91568731d66ff0c75f9fcb25a5e"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/ascii/draw.ts",
+      "sha256": "42476f693c0816161531b946e3050e529bce2d7a45a0f23dc5fc50be89f3c9c1"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/ascii/glyphs.ts",
+      "sha256": "0409a5182f431457f277488ea116080b60c97b5c258a8fc196b65ffcfe22469e"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/ascii/index.ts",
+      "sha256": "7fdbebd45c6cb6c779952c819c890829bf8680c8080e19e3502f33d11a1e53b0"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/ascii/measurer.ts",
+      "sha256": "db0f2bc41a4c6ce0cbda7d92555b34e7f0ac909072631f3c886574231e91b4e0"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/ascii/options.ts",
+      "sha256": "5bfe2e1ea0b3085da9c8fe238a3a3d09de549ac8d496e55c4d3b1fca3d6668ac"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/ascii/repair.ts",
+      "sha256": "85fdba691d8418fabc0442898e0fbc2752ed2fe6b298af3e49f5e7465ce3de45"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/ascii/snap.ts",
+      "sha256": "c5b0850e41fb33f27273d69316ee4c052d357336e63f52e8ed28e23133026f44"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/config/fragment.ts",
+      "sha256": "b9521f5ba10201cb7163239218f386e44792eb469388d9f1a32de5fdca08afa8"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/config/freeze.ts",
+      "sha256": "e6ea84163eaad3a7e7401fb0f72bcea123f15eb42598d7189564cb0ac9702e11"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/config/generated/defaults.ts",
+      "sha256": "176f0a4ce1434d5cb9bbada830778bbe04843c9e651b6c6ca75480b44fae11e1"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/config/generated/keys.ts",
+      "sha256": "c85b7e5db15900f4539f02044e784d94d903b2726f043570ec4235af22a6e073"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/config/index.ts",
+      "sha256": "27d8fc25b66710822ee87135d838f75f8500f387ab6115999a6f5891e4259528"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/config/resolve.ts",
+      "sha256": "233c654cb9581adf861d54357660af28347803408b4136d91eceecdc56370308"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/config/secure.ts",
+      "sha256": "a544a4ce9fb90ef50beb50147a4cc155bf3227f42af2c4da6900f616e85d1815"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/index.ts",
+      "sha256": "8d38d72c1e8053a6b6fc575b806b7980c4a6f70595325a9086c3fc813618d76d"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/layout/index.ts",
+      "sha256": "aeec4cf2b11a9956f23876115cebf0f07b057b89e969134b1e76b01fb6f1f493"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/layout/layered/compound.ts",
+      "sha256": "bb98071ff1db47d783c3fe5b3009da933e59b7aa569d093a2cf557c938e5ef36"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/layout/layered/end-markers.ts",
+      "sha256": "29b2ce062c3032810d538a4bcea85d3712665c79b9fcf6e4246e2cc2b32082ed"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/layout/layered/grid-obstacles.ts",
+      "sha256": "fcb2315d830095956e51a60cc850441cdeb057c1b60d26a7d9a3b95858163136"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/layout/layered/index.ts",
+      "sha256": "d56e483c2b7c0d4482a83e3d20fbcfbf1fce8336c51047216363282ba78b4790"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/layout/layered/layered.ts",
+      "sha256": "54f0df6982384d97e63f46a107603edd0119f7df3571a8a4f7035f04f5419491"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/layout/tree/index.ts",
+      "sha256": "376ff6be5dbc05f1ee937742d820637f6cf7b81ba88b3dd7a793ab99187a6493"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/layout/tree/tree.ts",
+      "sha256": "a6e360196716d305c1b4f4e07dc563020bbc8e98f0d341f16de3f8f5f2632d75"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/layout/units.ts",
+      "sha256": "6e420a296b1e08be33c8e18a0635118405100de2bb3713578726892d1dabb022"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/layout/validate-grid.ts",
+      "sha256": "1a59d7acab7b9f8b7270e74ecfe121b1593b4b017de031be8b4d210773eed85c"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/layout/validate.ts",
+      "sha256": "6f411fcc5eb10ac39216d24e0e1c976733caa81334ec0017013906e5a4af7dae"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/limits/index.ts",
+      "sha256": "38f457bbc5a08fc6154ddd25b646c645383b54f9d8c841220495217509e66650"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/parser-kit/ast.ts",
+      "sha256": "91610727a80ca38c65223497375ffe42ecde5b002627810292c0030d84e7b360"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/parser-kit/categories.ts",
+      "sha256": "d80b02ae1b7582f16d0f30d9ba5e7ed1d5f9c462011c15ca962e9a926c494b0c"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/parser-kit/char-codes.ts",
+      "sha256": "1f59bd20c9d5d4b34c08af550f78c5eaf89f355f178726a2a8f0cb41c3a0c27e"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/parser-kit/chars.ts",
+      "sha256": "8b150f45ba8c81f47c2086646bef0fbd41c07e52969b004fdd3e9a74c367f85d"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/parser-kit/cursor.ts",
+      "sha256": "56c2dccd29f911bc432fd35db84f59245843a2ffb4aaf03d78dde38861cef3df"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/parser-kit/diagnostics.ts",
+      "sha256": "e2d4580ff30b9573c6496112171bd71a452b4c239b3040fe8d94467f6d315828"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/parser-kit/format.ts",
+      "sha256": "5eef4eb0fcbc37d2feba40d5049e0622c6177ada5251949c9432bdd33b1bb419"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/parser-kit/index.ts",
+      "sha256": "bd8910895810285c70ba1cd45544c752a976c4d14ab1d5ef6a74a586b70ec5a1"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/parser-kit/positions.ts",
+      "sha256": "eb719ad8a9d8345d3c666f7b0c5fbe07368c5012cfa223390146993ad96b185f"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/parser-kit/probe.ts",
+      "sha256": "d1836817274e9591c7f0421f5c141a486f56d92932525d5e0efc2bda87a2d525"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/parser-kit/recovery.ts",
+      "sha256": "e0e90d4226a2ef1b8a5676c4cf90157da0cdce0c81cc4823db3120bc27617001"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/parser-kit/result.ts",
+      "sha256": "c9302e7f7c9778d11c8fee08060a1e4ad510d4643065e5d9125d9824713d826c"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/parser-kit/scanner.ts",
+      "sha256": "cc4ca7e083481a539bc26253f11731a7d0238bdeccf84db840fc5d84a2268dc7"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/parser-kit/source-view.ts",
+      "sha256": "66fd95160a013ee111e6d62ed044da0f990e0c668a1abad9265dd17f086ffda4"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/parser-kit/tokens.ts",
+      "sha256": "099cfb5002f3317ba2924fc52027ce05611d3ff95de6ef5db7d67528c4f841a6"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/parser-kit/unicode-table.ts",
+      "sha256": "8b9ac3be71715474d333281c2b2142f194831aedaa8251e968a22628c515b578"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/parser-kit/view.ts",
+      "sha256": "3d7c7b2ec88c41816cc2ae9502197a13676d14082f0102991dc9c4bca7c98500"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/pipeline/draw.ts",
+      "sha256": "8d91211ed4e6ae1b68df1f3efb3533c45fe5c88e7a49c9164fa044194a18be73"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/pipeline/error-svg.ts",
+      "sha256": "0e1dbdba89ed00dd694f6ca0928f0abc113bc6f561869b4669d6a9405381ff2a"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/pipeline/errors.ts",
+      "sha256": "67e2630b199fc41bef3768dea11dc1a29cef4e95ab8ae6c16113f673baca30a0"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/pipeline/extensions.ts",
+      "sha256": "c68167b6decbaf6a7a4da65919f8d67a52d2e9993e1512a7333a4d12cfb2985b"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/pipeline/manifest.ts",
+      "sha256": "85fcfddfa5b3c8ca932aa81986be2abe6b6b0442e7f88f860088bf2d2dbaa90f"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/preprocess/detect-text.ts",
+      "sha256": "3834b077dfb78ebf86e49cf6f2ec6676d69af077d9fd9e6d48a37bdfffa52042"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/preprocess/diagram-start.ts",
+      "sha256": "735811a83fbf4eaf7c08eeb79ee8bf20565cb9ab985714eacbb38fb4e5a5c6e4"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/preprocess/directives.ts",
+      "sha256": "2660b4e5a7cb7dcbe27e7a5d75bdfe906c770d17aa4a6b7adb5b63fa3d947482"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/preprocess/frontmatter.ts",
+      "sha256": "90b7b5c818b7831c7556d1567f932265662d40144a59e15e84ee156f3c03f011"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/preprocess/index.ts",
+      "sha256": "485554d05f48955a3d1f52a1578596c76b2d3bd0dca430077dd41002c3e4d4f9"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/preprocess/preprocess.ts",
+      "sha256": "c83a29294e62426a79b8125a789cfc7bc461014eaaea6a685a9f49d4e8bc8c2c"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/preprocess/yaml-nodes.ts",
+      "sha256": "7f818c5f4b89aa5c2dd519a591863f433238ae3788e6048b92425905be434f0e"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/preprocess/yaml-scalar.ts",
+      "sha256": "fe74b98cf590349061fd7792f08ebb61cc0d7c2a000c4dd7acca54f672b5440d"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/preprocess/yaml-text.ts",
+      "sha256": "d68fac7d5abcc05efdbd13e9e609d2ebd40fe49636a50d177c23c1309af38049"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/preprocess/yaml.ts",
+      "sha256": "11164bc50a9301ee5970058baaf216f2b590874e4954703a055e7a423c6c4d13"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/svg/allowlist.ts",
+      "sha256": "e6bd0160f8e2ba2ff17c015e7596f6270c0ad055aeee34e82cb5db0bc05de93b"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/svg/encode.ts",
+      "sha256": "798378f05711c74a3b344d0f24cf029534b1ee6febde241c0e83e92ffaf9ac0a"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/svg/escape.ts",
+      "sha256": "fdeb242c5e34465efb0e8193537893296cae9f00a50e9a4a8b3e0fe2156760ce"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/svg/index.ts",
+      "sha256": "981d53faf5787a468864f0add8269bee4639334bcd5993f57e7b2154cb435c41"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/svg/inert.ts",
+      "sha256": "5b71e786661ca932dfa9fe06640f7e9e5520ba890752a7c9e3c065e602577918"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/svg/path.ts",
+      "sha256": "be8fe4d8b613b4af52180c212ed04d837d7cfce663d51f7110f98ac931a3be80"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/svg/style.ts",
+      "sha256": "57e18d029826a9b61aadd3aff8291c4490be8b40d6ac399ed742fe4dfbcc0a72"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/svg/tree.ts",
+      "sha256": "62c63103665525a0b79e439e8a9ce7eea988cbc5b070a3ac1431bb02d5896f10"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/svg/url.ts",
+      "sha256": "aac65df00e5041794863381c011ef49f1eb22e311bff8dc2e78c02e456ac7638"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/svg/writer.ts",
+      "sha256": "66fa6145cbb30e19fea667b5d74540f3debc23a89fa4f34a690232f780d9709f"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/text/entities.ts",
+      "sha256": "c34d385f6fefbce083828938994f11d36b61581ad6a588f18ab45b778ff3f249"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/text/fonts.ts",
+      "sha256": "ad3bd0905f18323197516ded371e6f145c8da58a7a82ab0f2bc218dc90e2db20"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/text/index.ts",
+      "sha256": "01c667bb869e4424c7ba44d66106b4b04194e0c66e5e0abc01c2941cc6b4f67a"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/text/inline.ts",
+      "sha256": "26d786f561c468446ed0e44abaecf5615d09782579aa8d8e6d081948a5328307"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/text/label.ts",
+      "sha256": "d0bd7f0135836d6836b3081228454569d3771d907d6a8cab09aebc62bcad3de5"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/text/measurer.ts",
+      "sha256": "ae29be368643d25698b3f9aa6a0b95550f73782767365327872809198c1b0645"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/text/metrics.ts",
+      "sha256": "17cf09d58c5344208ba3420bfdaaf7da65ea52d85fd8a80b0e82e3e630aedbe6"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/text/table.ts",
+      "sha256": "427e453492581c7459fcf31e7b93ab88eafbe15f24b1cdfdd16a6c176a3730e8"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/color.ts",
+      "sha256": "836cc02092c7b059d19fb24fbd6fe452e48ba9ea0b5fe631bba54b088f0763cf"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/contrast-css.ts",
+      "sha256": "81e0d587414f5bb6755b9d910fc885ce91dc6f549491fb4e4a95eaf938e32d3e"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/dsl.ts",
+      "sha256": "9c226c5b5af27e59a8e8dd21a0e7c28d8765921679f428b2f67d1e063eddf10e"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/generated/variables.ts",
+      "sha256": "1120c9e30487c9008623b2be5576f92474d531e3c29482d2cc8737c76a53248e"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/index.ts",
+      "sha256": "cabc6678933a26560c08a7ed6c8a8b8069acd4fdd7ff2a3e5daa9142bbbf4ad3"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/named.ts",
+      "sha256": "db58c6367cb8839882f29d8f5b9fe063f6c3df17854f3132be6662818fd22317"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/registry.ts",
+      "sha256": "2edb805a3f4e1bc6509e07c6b4028a5ce9deb85fc3f2e3243ed37c3e79a591cb"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/spec.ts",
+      "sha256": "0a315c5b343d79b193b7aab705f5dfd0262918354aef184124035d61326c57f3"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/specs/base.ts",
+      "sha256": "8253dd6edf03a8a5d681f7634674421f735280ac58fdadbd971c529f28ee6f42"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/specs/dark.ts",
+      "sha256": "ae1d32352a968e1389f26d40b25efd547a4600c266f5e25366a039c148015acf"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/specs/default.ts",
+      "sha256": "85ccf23db757a40ef87a0ddd6805937315e802cdac1a6f022a3de6cca5095561"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/specs/forest.ts",
+      "sha256": "86838020f0e5216bc9a940dad41740c8ac12ed1123a010a61bfa7cdb551140fb"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/specs/geometry.ts",
+      "sha256": "21a6e91271975549107620527c9da67c1dcc154d24ecf4a9fe855ca75ee48552"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/specs/neo-dark.ts",
+      "sha256": "3841a9b84cb6365e7c035d0d26381dff1e6c3551e224be03f779475f96f2bb4c"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/specs/neo.ts",
+      "sha256": "cef2128b30125e5594b55652caa176b6d303e9e3b5c6242c2ab01d9ace672652"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/specs/neutral.ts",
+      "sha256": "d4d2df802fc6aa8a096ee6e8829542ef887d7bdc8f575afd52440eb1f8c7ea89"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/specs/palettes.ts",
+      "sha256": "b662ac02db124890edffd54137acba97f5280b2869bc6c237d84440a6858ee71"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/specs/redux-color.ts",
+      "sha256": "3494c16130c934176c4835713608f7cc02bc66c40fe06d28248a33c59c1e3a59"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/specs/redux-dark-color.ts",
+      "sha256": "3d8d5ae1db23c0c871a07a422e8ce1e7de272b04855c150e0c26892f1154cf5c"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/specs/redux-dark-values.ts",
+      "sha256": "e9767dedee782267d2e27fac799c3f46ffe1472ecf7e12d11b9f30944de1fa45"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/specs/redux-dark.ts",
+      "sha256": "17599d9000c119942a567565615423e7b5a94df5b4183462489520116478d41c"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/specs/redux.ts",
+      "sha256": "75a3c01ca09f55cb524e1c22f5490af6517e469aae8b054a723c64aa9434f770"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/specs/scales.ts",
+      "sha256": "ae05bcfd56cbd00b38a5232d048057781d8694e578d3d417ce4e3435ec48e413"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/theme.ts",
+      "sha256": "9cdd8e92d73e6188c2cd01af22fbdc21675116e343c32456fddb85f4eb03fd8e"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/theme/vocabulary.ts",
+      "sha256": "5705e46edcd62fe27d775d1f2f0fdfa80de282c23417335f12009521775ecbd6"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/src/timing/index.ts",
+      "sha256": "1c149470adea130e7e76d335cc155f15b3ad6b380dfa8262fa9aa78cd84a6779"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/core/tsconfig.json",
+      "sha256": "639cd9738fe64eb0f069f295a3ca5d6a9ec123aff8d8e1c63d288d128865c87b"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/package.json",
+      "sha256": "8b42ad81393625eb0b11b313e12cf43e0f5d81bbeff87464d6eac854e32ba524"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/generated/config-defaults.ts",
+      "sha256": "ea31884211c73b19761dc98101b504749c2736e1452549d24c309d0e5e3ab798"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/index.ts",
+      "sha256": "c214c3ea3695262260611bff1e6a9ae2869447879bb11baeb4a1f59ff9fb3577"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/labels.ts",
+      "sha256": "d566b388447b3329023e6ef2a98fdf2c2e140d93a90b29f5fac9b4f38134b183"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/parser/detect.ts",
+      "sha256": "49c31622943b53a19b57ac9a8ccfb719a1b19bfa0af0bba2c18cf8ebbee8f8ed"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/parser/index.ts",
+      "sha256": "e8e497550c31e04f3e8961cabf6c4ae544b8eb694d5c418c6001f01a153db022"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/parser/jison-names.ts",
+      "sha256": "c6344fdae17a9602b0c7a8cf007f86e16975ede2df2011b0f164dbfe86572d67"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/parser/lexer.ts",
+      "sha256": "14a5a44c0df2a75fe03e517c0fca68672dd31dfc8c7cbb35d207ce221be1a816"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/parser/model.ts",
+      "sha256": "8c91247a37776ccce58b0c085749caf886f60a093aa85adcef7cda79fe9b732a"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/parser/parser.ts",
+      "sha256": "7761d086fc36db51f4b7f494a370234a946e357d7444c36a6ba53fe121a5c936"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/parser/shapes.ts",
+      "sha256": "a6e37691e8daf9e3719624db8bc8aac771277d4769e3681d8725b71429d95539"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/parser/tokens-api.ts",
+      "sha256": "2da1d53fbb1f5066418b596efd81353acc025436b7a1509306e38bfe176de290"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/parser/tokens.ts",
+      "sha256": "d0a027e9b21de9dab21d3a9944377f89f422bd83d0c33d824955a261e1223a94"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/plugin.ts",
+      "sha256": "78e92c84b959425899fcc790bcb4ead96ff1b390e7d83123564c13b4c723d6b1"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/render/assets.ts",
+      "sha256": "f0b994410eb6bffaf47a9ac0306639270a3966c987539e02f6075cb35cfd281d"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/render/config-length.ts",
+      "sha256": "4170b7f905106351b946b57656258171b2b31ec29450cd1859eda39e1dd17f99"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/render/edges.ts",
+      "sha256": "7be1affa0508563d88a4ba6d1669f0912f1194ce3a6273a0ecfba85461653094"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/render/nesting.ts",
+      "sha256": "4fc807377f97f70381c72b0912b7779a58045cfe2513724c06490f87644f9c61"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/render/prepare.ts",
+      "sha256": "b71b57238256425c7e025240f5c048d09d58978e2b39bb5bb785817ea480209e"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/render/render.ts",
+      "sha256": "be748855e4e1a6f04715914e31fbc41e1fd52faa4daf2e07a7f1c2edbe4010d5"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/src/render/shapes.ts",
+      "sha256": "f5ab7412d4d5e638f951702a2514c100e26c246d01f26dc5c8338667cf96ffe6"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/diagram-flowchart/tsconfig.json",
+      "sha256": "639cd9738fe64eb0f069f295a3ca5d6a9ec123aff8d8e1c63d288d128865c87b"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/mermaid/package.json",
+      "sha256": "a52dd77bf867947f5bc909f8a2b2d0b5dd810ea88b7e9bdb2ab20a383be83f75"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/mermaid/src/analysis-reset.ts",
+      "sha256": "c1a88c42db197c6c858d85c519f9109a246c8627516d51217ed5fd78cfb2294a"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/mermaid/src/api.ts",
+      "sha256": "0ea2df8ace903a45ae29ed1f86b65e986b6533c846851ec000e2563ccd33aab9"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/mermaid/src/ascii.ts",
+      "sha256": "853125cc2054a7acd9d9cb2f85f117861716840db12076d4b36ff2adc12b01ef"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/mermaid/src/config-snapshot.ts",
+      "sha256": "967353006d89724c87432b5bbbae5cd2e498423ec0ec9ce82e8b70ab6e270062"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/mermaid/src/dom.ts",
+      "sha256": "678f06245393ff13280df03472722316c1b3829b42f127cb520013ea860c8188"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/mermaid/src/errors.ts",
+      "sha256": "83048b8b9ba70239df265ded6bd6611cc79cd0899f5382107e1e5216c3a056df"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/mermaid/src/exports.ts",
+      "sha256": "393b18aa6e5b0adfa7b6497f683b1702f485b41d96f8c49b7a8db03e2257090c"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/mermaid/src/generated/detectors.gen.ts",
+      "sha256": "9e2957f9cdfa3774fde73d1d4728eefe82bb72483d7a5344f1f1a23672dbd34d"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/mermaid/src/icon-packs.ts",
+      "sha256": "c694f0a8fccefed1c5cc84cb7a19f92b03c91cbc23a2f294be8f3bd69df1f93e"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/mermaid/src/measurer.ts",
+      "sha256": "f890ee6e75ac3a0f22a2e8b2a69b25a67dea9c6ec16f65995df78173a88a1fde"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/mermaid/src/registry.ts",
+      "sha256": "bd2ea1589ef5c16af5f90359efa28fe13faf240b416170ce9835b7e80c7d5269"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/mermaid/src/seam.ts",
+      "sha256": "ffbabef0cebc27a9a5fb2790a11c80ae57a352cd2a22013e9f46e432a0c0e95a"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/mermaid/src/slim.ts",
+      "sha256": "c30bdf54f554127e96bb21be73c0f8c6171d63ef1574563c0b6191f455a30e9b"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/mermaid/src/version.ts",
+      "sha256": "f1f2bc7fbd76db4266993629da56eb85e5248405627f4cff9d8b9304296befaf"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/packages/mermaid/tsconfig.json",
+      "sha256": "c68c25e46cd71976d0a7bdabc36f760b2427cc1b2cf77a06cec9d101ef499060"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/pnpm-lock.yaml",
+      "sha256": "fd47f106ced08fb26317dd1162e2b531ee9cf392339caa05eba23b287c0bbe0d"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/tools/perf/build.mjs",
+      "sha256": "349d8fca609047c74cd1420f89e79d56ce4187afee0523f1b6e745134859a58b"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/tools/perf/entries/pele-common.mjs",
+      "sha256": "de3fe95e723beb385647526dc4b4760797cfb068344bce2009a81d965f739733"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/tools/perf/entries/pele-counters.mjs",
+      "sha256": "288a916c2f3f034ce31750bf31efd90a2b14dddfd15aca7e6d65b886a863ab07"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/tools/perf/entries/pele-diagnostic.mjs",
+      "sha256": "a2bd7e36dac8e747de970c15c944403de901dd50fcaf0a5aaaec1cc8e8254f5e"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/tools/perf/entries/pele.mjs",
+      "sha256": "4ac2dab49e6feccaeee46f31547d6208a1d23d8561f73020868eeaf8f60f1fa7"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/tools/perf/entries/targets.json",
+      "sha256": "08cfbb6dfc71c5edd6be613f4fd47c247c1afc5cb65b3f3e3ea1a62cac6332bf"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/tools/perf/entries/v13-common.mjs",
+      "sha256": "c5769a269674ea13eca96551cf1ce2d24451dd49facf3d4e134840aba0d3a534"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/tools/perf/entries/v13-counters.mjs",
+      "sha256": "eaccca3dae730f08ee15eeeb4480e7c41b7c7a8636de89525e1f7c102d41293b"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/tools/perf/entries/v13-diagnostic.mjs",
+      "sha256": "63b5059f859c3f2a9103173bd94e688962a91f534160eef0d76cd439b20a4c12"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/tools/perf/entries/v13.mjs",
+      "sha256": "43cba370b94f4768b3627beb91c36c4730d1158f6abac28e4f377425e9b82238"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/tools/tsconfig.json",
+      "sha256": "043c643c754a081069a22859b7d0361c687d0d8a21773ec744239650b794aaee"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/tsconfig.json",
+      "sha256": "b28ef339e93a297006f8c7fe16620ea5ca85fc3f9fbbf29f50284b308d7c8099"
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/v13/docs/perf/LAB-SOURCES.json",
+      "sha256": "7409ab7236dfe7558930ef7db31ca376cd7a81aae4b07f5d999a85eee9bddd95"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/timing/chunks/neo-MHSU72DT.mjs",
+      "relativePath": "v13/timing/chunks/neo-MHSU72DT.mjs",
+      "sha256": "b3734198ec9b8e56f6675713cc020f3a29c66230b3b89ee1333c8ee33363ac73",
+      "bytes": 1144
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/timing/chunks/neo-dark-25AO234D.mjs",
+      "relativePath": "v13/timing/chunks/neo-dark-25AO234D.mjs",
+      "sha256": "6e2182c2ba46c3f3deff8f7bf475b0d72fae7782665810cadc93211b2e18b9e7",
+      "bytes": 1243
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/timing/chunks/tree-FNQQ4QBQ.mjs",
+      "relativePath": "v13/timing/chunks/tree-FNQQ4QBQ.mjs",
+      "sha256": "ea42d29d71477cb6d97b3706e58b7d3a937beea132e0bf02732f76029c60d4b2",
+      "bytes": 8188
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/timing/chunks/ascii-NF3QVJBW.mjs",
+      "relativePath": "v13/timing/chunks/ascii-NF3QVJBW.mjs",
+      "sha256": "d52408bec6f64eaaa82709b9e395956c34b953fe4f1c13292b7b08b09638a60f",
+      "bytes": 968
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/timing/index.mjs",
+      "relativePath": "v13/timing/index.mjs",
+      "sha256": "3d2aa707f086bc09ff6c16fd5072ace3aea9a5188f8a860cc3dffb850a65efaf",
+      "bytes": 336502
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/timing/chunks/chunk-EDE6O7K5.mjs",
+      "relativePath": "v13/timing/chunks/chunk-EDE6O7K5.mjs",
+      "sha256": "f5e247861b54b6d28aaf37d1d8a841ec19dac19c67be909646da7ca9a9e0f587",
+      "bytes": 1844
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/timing/chunks/redux-dark-7D6FI5SC.mjs",
+      "relativePath": "v13/timing/chunks/redux-dark-7D6FI5SC.mjs",
+      "sha256": "5a27f49ec1c5db769e335eaeef9bea9cfbbdc1be752e1e580f1dcc4ad56bb946",
+      "bytes": 411
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/timing/chunks/redux-dark-color-4QU3UOKW.mjs",
+      "relativePath": "v13/timing/chunks/redux-dark-color-4QU3UOKW.mjs",
+      "sha256": "0eb807601d3a444ac424a42bd0240fe6878a0b8c1d3d5b01aabd8a2cab39f6b7",
+      "bytes": 623
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/timing/chunks/chunk-KYJLOGQ3.mjs",
+      "relativePath": "v13/timing/chunks/chunk-KYJLOGQ3.mjs",
+      "sha256": "150f2e29166dffa2fe5fc9b27c537868400b5c88bbe5182b60a5aae3b9f60ded",
+      "bytes": 1390
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/timing/chunks/default-LITKNUKL.mjs",
+      "relativePath": "v13/timing/chunks/default-LITKNUKL.mjs",
+      "sha256": "d75858038f959ee9b10168656b378b1e2523d5dfdef1f9efbe1fa34255360e41",
+      "bytes": 2076
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/timing/chunks/dark-PJORJIJA.mjs",
+      "relativePath": "v13/timing/chunks/dark-PJORJIJA.mjs",
+      "sha256": "34edf463bfd6d26c9837c35fff5edc6e3735e8a1dec895aabfbdb6c289619ec0",
+      "bytes": 1781
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/timing/chunks/forest-MROPTAVS.mjs",
+      "relativePath": "v13/timing/chunks/forest-MROPTAVS.mjs",
+      "sha256": "e8eae5fd27770feff01a576c05aadc5a5fb50480030a635820e5e8cded4d1b9d",
+      "bytes": 1768
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/timing/chunks/neutral-PVXMR6DD.mjs",
+      "relativePath": "v13/timing/chunks/neutral-PVXMR6DD.mjs",
+      "sha256": "9c85aaeed4b1e6c50c188d1d8814c5801b97f1d624e3e5329a6690163544db33",
+      "bytes": 1703
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/timing/chunks/base-RPWA6S33.mjs",
+      "relativePath": "v13/timing/chunks/base-RPWA6S33.mjs",
+      "sha256": "ecd7270b774ca53b79653547249a6d8144fc4941cf340013d57c814180bfd302",
+      "bytes": 1047
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/timing/chunks/chunk-IPI3NGGE.mjs",
+      "relativePath": "v13/timing/chunks/chunk-IPI3NGGE.mjs",
+      "sha256": "41201d06bbb8cb1b1de52498ae6046e9b2e6282f90d089494ef151be8f987292",
+      "bytes": 3883
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/timing/metafile.json",
+      "relativePath": "v13/timing/metafile.json",
+      "sha256": "9f046bba6f79935aadc39d2e8dc3a15f60619a027dbc0c2decdd8c7f491e6b9e",
+      "bytes": 88108
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/neo-7P6QNTG6.mjs.map",
+      "relativePath": "v13/diagnostic/chunks/neo-7P6QNTG6.mjs.map",
+      "sha256": "866ae58c0c1723cffe2c989095db3cb0bc1a2d0bfb6151b979ade005adb9acf5",
+      "bytes": 4322
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/neo-7P6QNTG6.mjs",
+      "relativePath": "v13/diagnostic/chunks/neo-7P6QNTG6.mjs",
+      "sha256": "daaf481b5564e03deb969252445da4fe3873e8f6304624b5f320fec689a8205c",
+      "bytes": 2561
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/neo-dark-OVIVEY4Z.mjs.map",
+      "relativePath": "v13/diagnostic/chunks/neo-dark-OVIVEY4Z.mjs.map",
+      "sha256": "8d2ac05ce77e87594aca33259a400067b07aea1f400f600dae2c9263c443d9ff",
+      "bytes": 4788
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/neo-dark-OVIVEY4Z.mjs",
+      "relativePath": "v13/diagnostic/chunks/neo-dark-OVIVEY4Z.mjs",
+      "sha256": "a4aae3d268d1d73492575ed5f02220f72b333cfc3556bbb2cf3023cf98588a05",
+      "bytes": 2592
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/tree-SSMENMV4.mjs.map",
+      "relativePath": "v13/diagnostic/chunks/tree-SSMENMV4.mjs.map",
+      "sha256": "2c7ebe18c6fb888494be271ddaf246b74fbb04e303fc5826f5e8612df41cf13d",
+      "bytes": 36975
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/tree-SSMENMV4.mjs",
+      "relativePath": "v13/diagnostic/chunks/tree-SSMENMV4.mjs",
+      "sha256": "18864f9ac6fe3f7f85b1bd11e672f1320c0c9211e5fb067986cf0466780538b4",
+      "bytes": 14853
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/ascii-GS2ZEIES.mjs.map",
+      "relativePath": "v13/diagnostic/chunks/ascii-GS2ZEIES.mjs.map",
+      "sha256": "c72b39a274b3a4a979aa42123bd934da84ba79f45c319013676b44070feff68e",
+      "bytes": 5548
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/ascii-GS2ZEIES.mjs",
+      "relativePath": "v13/diagnostic/chunks/ascii-GS2ZEIES.mjs",
+      "sha256": "25e680346b892d1e11c386a757642f6a2ac6a330f0f0947252eb51fea6078ec3",
+      "bytes": 1619
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/index.mjs.map",
+      "relativePath": "v13/diagnostic/index.mjs.map",
+      "sha256": "be50e9b2a64ca176d5ad2e570898f4b81d5eba5ca8f01cba33df8188cf04a7f9",
+      "bytes": 1543943
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/index.mjs",
+      "relativePath": "v13/diagnostic/index.mjs",
+      "sha256": "f7b463a896c9c0df350b12725638470ebd6ad382cdd382b603da122ef7b947c5",
+      "bytes": 631444
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/chunk-DUPRLXD6.mjs.map",
+      "relativePath": "v13/diagnostic/chunks/chunk-DUPRLXD6.mjs.map",
+      "sha256": "09c12dae3e4b58fa906f85691aca7288db49a287b7bbc72feff66c1903aa03a5",
+      "bytes": 6304
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/chunk-DUPRLXD6.mjs",
+      "relativePath": "v13/diagnostic/chunks/chunk-DUPRLXD6.mjs",
+      "sha256": "66573a099d3b7db48c1c39836aca53f16f569ca3caac501e11b68c59a2f7ef24",
+      "bytes": 3172
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/redux-dark-GH7MCJPM.mjs.map",
+      "relativePath": "v13/diagnostic/chunks/redux-dark-GH7MCJPM.mjs.map",
+      "sha256": "72cabad011a4d362f5d935e14f3c0fa0b9f8d8a026ff6b9fc235bcf96a184d97",
+      "bytes": 1982
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/redux-dark-GH7MCJPM.mjs",
+      "relativePath": "v13/diagnostic/chunks/redux-dark-GH7MCJPM.mjs",
+      "sha256": "eef8951ec181c7223d45f6f05f01ec8ceccba421b055a1576ab95b08d8a21b73",
+      "bytes": 1181
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/redux-dark-color-7XUOXRZ2.mjs.map",
+      "relativePath": "v13/diagnostic/chunks/redux-dark-color-7XUOXRZ2.mjs.map",
+      "sha256": "d55fe297b1db010f58a57c58f11e2e5c1cfd5477e7ce9413ffdaeb92d30c7ba8",
+      "bytes": 2466
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/redux-dark-color-7XUOXRZ2.mjs",
+      "relativePath": "v13/diagnostic/chunks/redux-dark-color-7XUOXRZ2.mjs",
+      "sha256": "83de52c83077dbef2e244984c31c2437927464a0d00010c0998fa3bbb19d172c",
+      "bytes": 1512
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/chunk-XTL57OR3.mjs.map",
+      "relativePath": "v13/diagnostic/chunks/chunk-XTL57OR3.mjs.map",
+      "sha256": "9939bb3084f4cab2ff7d6834774f3593d3a275b99e55d4f39174d2489348925a",
+      "bytes": 4331
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/chunk-XTL57OR3.mjs",
+      "relativePath": "v13/diagnostic/chunks/chunk-XTL57OR3.mjs",
+      "sha256": "4cfde8c3c0f6ea6d7b4059c372fb399a9cc1212f1ba27e188d81c0014a5fc922",
+      "bytes": 2397
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/default-W2EL5JQD.mjs.map",
+      "relativePath": "v13/diagnostic/chunks/default-W2EL5JQD.mjs.map",
+      "sha256": "931ee220e67e5d7de292df6355036d3e980f657b774fde6403dff287268a10af",
+      "bytes": 6538
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/default-W2EL5JQD.mjs",
+      "relativePath": "v13/diagnostic/chunks/default-W2EL5JQD.mjs",
+      "sha256": "f830d55bf36e89d2a9e73d56de49dca15316fa9b0665bcb15eac3c934cde26b7",
+      "bytes": 4135
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/dark-YLMZ2FBY.mjs.map",
+      "relativePath": "v13/diagnostic/chunks/dark-YLMZ2FBY.mjs.map",
+      "sha256": "480ee6feaa738465bb7066c5a25292aabb3230030992a2f9ff8655e47de42403",
+      "bytes": 5308
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/dark-YLMZ2FBY.mjs",
+      "relativePath": "v13/diagnostic/chunks/dark-YLMZ2FBY.mjs",
+      "sha256": "98855f8335e8c595b5c652fd82321c7603b353f312bd1ad7d6d39f0f2dce87d0",
+      "bytes": 3700
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/forest-GAQSVOCG.mjs.map",
+      "relativePath": "v13/diagnostic/chunks/forest-GAQSVOCG.mjs.map",
+      "sha256": "63914c3e8aa635f8a948c956a64b30723184a0bdd617632d7ff8f17b7237b46d",
+      "bytes": 5213
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/forest-GAQSVOCG.mjs",
+      "relativePath": "v13/diagnostic/chunks/forest-GAQSVOCG.mjs",
+      "sha256": "06444bcb1f89cfb99ae0ee4d2cd577d38501614d106d1defb02e5eec8b62cdd9",
+      "bytes": 3577
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/neutral-EUUWBDMB.mjs.map",
+      "relativePath": "v13/diagnostic/chunks/neutral-EUUWBDMB.mjs.map",
+      "sha256": "658dfab1752154cd0f1704d15c4952caa5d2358328662c7a6020de4244ac83ba",
+      "bytes": 5130
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/neutral-EUUWBDMB.mjs",
+      "relativePath": "v13/diagnostic/chunks/neutral-EUUWBDMB.mjs",
+      "sha256": "78c561c029f30b6d78b11edaf8a927efef1335a006d79464c81adeed7416c3f6",
+      "bytes": 3375
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/base-XCXGLIPJ.mjs.map",
+      "relativePath": "v13/diagnostic/chunks/base-XCXGLIPJ.mjs.map",
+      "sha256": "a2d4dcc75c0aa562ea1c6b03f0540abfb5a9344f8a31e21cd4d28274fb91be17",
+      "bytes": 3467
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/base-XCXGLIPJ.mjs",
+      "relativePath": "v13/diagnostic/chunks/base-XCXGLIPJ.mjs",
+      "sha256": "4849190bcbeb59e1958f209327c3e7468a73560151ca648c6e0c2db8bb119817",
+      "bytes": 2100
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/chunk-PNJNMW2H.mjs.map",
+      "relativePath": "v13/diagnostic/chunks/chunk-PNJNMW2H.mjs.map",
+      "sha256": "3ad822be37e5c0c711fa88e338208588fff86bcb42e68ed2302c91a9d7909060",
+      "bytes": 19709
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/chunks/chunk-PNJNMW2H.mjs",
+      "relativePath": "v13/diagnostic/chunks/chunk-PNJNMW2H.mjs",
+      "sha256": "99142f28ed31ac798cfdf59d3f0aca3b18176bccfe8d3ceabd555a7434ab4047",
+      "bytes": 6089
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/v13/diagnostic/metafile.json",
+      "relativePath": "v13/diagnostic/metafile.json",
+      "sha256": "b0d6baf79484cdd714b520399ecbb7ee80d2a6ca43d3a44e816182c8a815e68f",
+      "bytes": 92906
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/pele/timing/index.mjs",
+      "relativePath": "pele/timing/index.mjs",
+      "sha256": "910b005f611ac595731bf8c4ca28b6c0fa7c4eac1afe94b2f7fc4621b980e47b",
+      "bytes": 147148
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/pele/timing/metafile.json",
+      "relativePath": "pele/timing/metafile.json",
+      "sha256": "16595342ceae5d62fba0d19097007b8962faf9c2f3785c630d10bb9356bec660",
+      "bytes": 12377
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/pele/diagnostic/index.mjs.map",
+      "relativePath": "pele/diagnostic/index.mjs.map",
+      "sha256": "b9ee119837eafb7306a25033b437a9823e0e408e305303c9505626b425bf6c55",
+      "bytes": 423391
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/pele/diagnostic/index.mjs",
+      "relativePath": "pele/diagnostic/index.mjs",
+      "sha256": "aa56cb66e2dfc238d4a69e171b4c65eb729ef02d406614ec3aed155c2cda3162",
+      "bytes": 222178
+    },
+    {
+      "path": "/Users/knsv/repos/mermaid-v13-perf/.tmp/perf-round-0-p27/artifacts/pele/diagnostic/metafile.json",
+      "relativePath": "pele/diagnostic/metafile.json",
+      "sha256": "68ef0cba500ca2fbac2d3229ce0e8d0bee67046612a1b7b1e8ac3bc350e33c8f",
+      "bytes": 13175
+    }
+  ],
+  "sourceDigest": "579d554998695c7b14496f1428a844046960004cfe631a84b1f8025c60e410b9",
+  "artifactDigest": "54c2879f56c867719fafb96e8f4359dcca471e323105ee0371afc5b1a8c4f612",
+  "provenance": {
+    "labManifest": "/Users/knsv/repos/mermaid-v13-perf/v13/docs/perf/LAB-SOURCES.json",
+    "labManifestSha256": "7409ab7236dfe7558930ef7db31ca376cd7a81aae4b07f5d999a85eee9bddd95"
+  }
+}
