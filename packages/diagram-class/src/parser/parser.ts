@@ -115,7 +115,11 @@ class ClassParser extends ParserBase {
       range: { start: this.pre.bodyStart, end: this.src.length },
       children: this.children,
     };
-    return st.result(model, ast, this.fullTokens.tokens, options, this.probe);
+    // Edges counted across embedded diagrams (ADR-15).
+    return {
+      ...st.result(model, ast, this.fullTokens.tokens, options, this.probe),
+      edgeCount: db.relationCount,
+    };
   }
 
   // ---- statements ---------------------------------------------------------------------

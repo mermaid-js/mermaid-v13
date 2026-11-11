@@ -491,6 +491,7 @@ class FlowParser {
     };
     const result = st.result(model, ast, this.fullTokens, options, this.probe);
     if (db.embeds.length > 0) result.embeds = db.embeds;
+    result.edgeCount = model.edges.length;
     return result;
   }
 

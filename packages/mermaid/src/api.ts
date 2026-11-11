@@ -376,10 +376,10 @@ export function createMermaid(
   const blocks = blockPass<Analysis, Detection, Snapshot, AnyPlugin, RenderOptions | undefined>({
     detect,
     idOf: (f) => f.detected.id,
-    analyse: (text, s, { detected, pre }, plugin, host) => {
-      if (!plugin) throw unsupported(detected);
-      return analyse(text, s, plugin, detected, pre, host.prepared.config);
-    },
+    typeOf: (f) => f.detected.type,
+    maxEdges: (s) => s.limits.maxEdges,
+    analyse: (text, s, { detected, pre }, plugin, host) =>
+      analyse(text, s, plugin, detected, pre, host.prepared.config),
     load: (id) => registry.load(id),
     loaded: (id) => registry.plugin(id),
     resources: (a) => loadFor(a, false),

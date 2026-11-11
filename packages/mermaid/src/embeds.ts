@@ -13,12 +13,18 @@ import {
 } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { Diagnostic, EmbeddedBlock, ParseResult } from '@mermaid-js/core/parser-kit';
+import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { embeddedSvg, type SecurityLevel } from '@mermaid-js/core/svg';
 
 /** The blocks a parse lists, none when the type hosts none. */
 export function embedsOf(parse: ParseResult<unknown>): readonly EmbeddedBlock[] {
   return parse.embeds ?? [];
+}
+
+/** The edges a parse made, for a limit counted across blocks; 0 for a type that does not say. */
+function edgesOf(parse: ParseResult<unknown>): number {
+  return parse.edgeCount ?? 0;
 }
 
 /** A block's id prefix: the host's, then the block id as an XML name part (ADR-15). */
@@ -144,8 +150,12 @@ export interface BlockDeps<A extends Parsed, F, S, P, O> {
   detect(text: string, s: S): F;
   /** The plugin id `found` names; undefined for a type without a package. */
   idOf(found: F): string | undefined;
-  /** Parses `text` with `plugin` (throws when it is undefined), for a host parsed as `host`. */
-  analyse(text: string, s: S, found: F, plugin: P | undefined, host: A): A;
+  /** The diagram type `found` names, for errors. */
+  typeOf(found: F): string;
+  /** The integrator's edge limit for the whole text. */
+  maxEdges(s: S): number;
+  /** Parses `text` with `plugin`, for a host parsed as `host`. */
+  analyse(text: string, s: S, found: F, plugin: P, host: A): A;
   load(id: string): Promise<P | undefined>;
   loaded(id: string): P | undefined;
   /** Loads what `a` draws with (layout, themes, extension resources). */
@@ -167,6 +177,64 @@ interface Place {
   readonly at: number;
 }
 
+/** How deep blocks may nest: a block in the host is level 1 (ADR-15). */
+export const MAX_BLOCK_DEPTH = 4;
+
+/** The `mermaid <id>["Title"] {` line of the block whose body starts at `at` in `root`. */
+function openerRange(root: string, at: number): { start: number; end: number } {
+  const brace = root.lastIndexOf('{', at - 1);
+  let start = root.lastIndexOf('\n', brace) + 1;
+  while (root[start] === ' ' || root[start] === '\t') start++;
+  return { start, end: brace + 1 };
+}
+
+/** The block's first diagram line (its type), skipping what may come before it. */
+function typeRange(b: EmbeddedBlock, at: number): { start: number; end: number } {
+  const from = preprocess(b.text).bodyStart;
+  let start = from;
+  for (const l of b.text.slice(from).split('\n')) {
+    const t = l.trim();
+    if (t !== '' && !t.startsWith('%%')) {
+      start += l.length - l.trimStart().length;
+      return { start: at + start, end: at + start + t.length };
+    }
+    start += l.length + 1;
+  }
+  return { start: at + from, end: at + from };
+}
+
+function blockError(
+  root: string,
+  code: string,
+  message: string,
+  range: { start: number; end: number }
+): MermaidError {
+  return errorFromDiagnostics(root, [{ severity: 'error', code, message, range }])!;
+}
+
+/** The error for a block whose type this `mermaid` cannot draw (unported or unregistered). */
+function unavailable(root: string, b: EmbeddedBlock, at: number, type: string): MermaidError {
+  const range = typeRange(b, at);
+  const d: Diagnostic = {
+    severity: 'error',
+    code: 'EMBED_UNAVAILABLE',
+    message: `The \`mermaid ${b.id}\` block is a "${type}" diagram, which this mermaid cannot draw: the type is not in this build, or was not registered (with \`mermaid/slim\`, pass its plugin to \`createMermaid\`).`,
+    range,
+  };
+  return new MermaidError('UNSUPPORTED_DIAGRAM', errorFromDiagnostics(root, [d])!.message, {
+    source: root,
+    offset: range.start,
+    length: range.end - range.start,
+    diagnostics: [d],
+  });
+}
+
+/** Edges counted so far in the whole text, against the integrator's `maxEdges`. */
+interface Count {
+  used: number;
+  readonly max: number;
+}
+
 export interface BlockPass<A, S, O> {
   /**
    * Loads and parses `host`'s blocks and theirs, and with `resources` what each one draws
@@ -180,7 +248,8 @@ export interface BlockPass<A, S, O> {
 /**
  * The block pass of one API object: `prepare` walks the block tree before a draw, loading
  * each block's plugin; `draw` renders a host's blocks, deepest first, for its lookup. Block
- * analyses are kept with their host's, so a cached host keeps its blocks.
+ * analyses are kept with their host's, so a cached host keeps its blocks. Both walks check
+ * the nesting depth and count the edges of the whole text against `maxEdges`.
  */
 export function blockPass<A extends Parsed, F, S, P, O>(
   deps: BlockDeps<A, F, S, P, O>
@@ -207,6 +276,7 @@ export function blockPass<A extends Parsed, F, S, P, O>(
     f: F,
     plugin: P | undefined
   ): A {
+    if (!plugin) throw unavailable(root, b, at, deps.typeOf(f));
     let map = analyses.get(host);
     let a: A;
     try {
@@ -219,6 +289,35 @@ export function blockPass<A extends Parsed, F, S, P, O>(
     return a;
   }
 
+  /** Checks block `b` (body at `at`) at nesting level `depth`, before it is parsed. */
+  function checkDepth({ root, at }: Place, b: EmbeddedBlock, depth: number): void {
+    if (depth <= MAX_BLOCK_DEPTH) return;
+    throw blockError(
+      root,
+      'EMBED_DEPTH',
+      `The \`mermaid ${b.id}\` block is nested more than ${MAX_BLOCK_DEPTH} blocks deep. Move it out a level, or draw it as a separate diagram.`,
+      openerRange(root, at)
+    );
+  }
+
+  /** Adds parsed block `a`'s edges to the whole text's count. */
+  function countEdges({ root, at }: Place, b: EmbeddedBlock, a: A, count: Count): void {
+    count.used += edgesOf(a.prepared.parse);
+    if (count.used <= count.max) return;
+    throw blockError(
+      root,
+      LIMIT_CODES.maxEdges,
+      `Edge limit exceeded: with the \`mermaid ${b.id}\` block, the whole text asks for ${count.used} edges, but the limit is ${count.max}. Embedded blocks count towards it. The limit is set by the page or app that renders the diagram.`,
+      openerRange(root, at)
+    );
+  }
+
+  /** The count for a walk from the top-level `host`. */
+  const countFrom = (host: A, s: S): Count => ({
+    used: edgesOf(host.prepared.parse),
+    max: deps.maxEdges(s),
+  });
+
   /** The analysis of block `b` whose plugin is already loaded (detected again when uncached). */
   async function prepared(place: Place, host: A, b: EmbeddedBlock, s: S): Promise<A> {
     const cached = analyses.get(host)?.get(b.id);
@@ -228,23 +327,27 @@ export function blockPass<A extends Parsed, F, S, P, O>(
     return blockOf(place, host, b, s, f, id === undefined ? undefined : await deps.load(id));
   }
 
-  /**
-   * Loads and parses `host`'s blocks and theirs, and with `resources` what each one draws
-   * with. `base` is where `host`'s text starts in `root`.
-   */
-  async function prepare(
-    root: string,
-    base: number,
+  /** Prepares `host`'s blocks (its text at `base` in `root`), nested `depth` levels down. */
+  async function prepareLevel(
+    { root, at: base }: Place,
     host: A,
     s: S,
-    resources: boolean
+    walk: { readonly resources: boolean; readonly count: Count },
+    depth: number
   ): Promise<void> {
     for (const b of embedsOf(host.prepared.parse)) {
-      const at = base + b.offset;
-      const inner = await prepared({ root, at }, host, b, s);
-      if (resources) await deps.resources(inner);
-      await prepare(root, at, inner, s, resources);
+      const place = { root, at: base + b.offset };
+      checkDepth(place, b, depth);
+      const inner = await prepared(place, host, b, s);
+      countEdges(place, b, inner, walk.count);
+      if (walk.resources) await deps.resources(inner);
+      await prepareLevel(place, inner, s, walk, depth + 1);
     }
+  }
+
+  function prepare(root: string, base: number, host: A, s: S, resources: boolean): Promise<void> {
+    const walk = { resources, count: countFrom(host, s) };
+    return prepareLevel({ root, at: base }, host, s, walk, 1);
   }
 
   /** The analysis of block `b`, for a draw: its plugin must be loaded. */
@@ -253,14 +356,32 @@ export function blockPass<A extends Parsed, F, S, P, O>(
     if (cached) return cached;
     const f = found(place, b, s);
     const id = deps.idOf(f);
-    const plugin = id === undefined ? undefined : deps.loaded(id);
+    if (id === undefined) throw unavailable(place.root, b, place.at, deps.typeOf(f));
+    const plugin = deps.loaded(id);
     // renderSync draws only what prepare loaded (R-API-2).
-    if (id !== undefined && !plugin) throw new NotLoadedError([{ kind: 'diagram', name: id }]);
+    if (!plugin) throw new NotLoadedError([{ kind: 'diagram', name: id }]);
     return blockOf(place, host, b, s, f, plugin);
   }
 
+  /** Parses `host`'s blocks and theirs for a draw, checking depth and edges. */
+  function check(root: string, base: number, host: A, s: S, count: Count, depth: number): void {
+    for (const b of embedsOf(host.prepared.parse)) {
+      const place = { root, at: base + b.offset };
+      checkDepth(place, b, depth);
+      const inner = loaded(place, host, b, s);
+      countEdges(place, b, inner, count);
+      check(root, place.at, inner, s, count, depth + 1);
+    }
+  }
+
   /** `host`'s blocks drawn for its lookup, each with its own blocks drawn first. */
-  function draw(root: string, base: number, host: A, s: S, options: O): DrawBlocks | undefined {
+  function drawLevel(
+    root: string,
+    base: number,
+    host: A,
+    s: S,
+    options: O
+  ): DrawBlocks | undefined {
     if (embedsOf(host.prepared.parse).length === 0) return undefined;
     return (prefix, warn) => {
       const out = new Map<string, EmbeddedDiagram>();
@@ -273,7 +394,7 @@ export function blockPass<A extends Parsed, F, S, P, O>(
           options,
           inner,
           blockPrefix(prefix, b.id),
-          draw(root, at, inner, s, options)
+          drawLevel(root, at, inner, s, options)
         );
         for (const w of drawn.warnings) warn(w);
         const { securityLevel, linkSchemes } = drawn;
@@ -285,6 +406,12 @@ export function blockPass<A extends Parsed, F, S, P, O>(
       }
       return out;
     };
+  }
+
+  function draw(root: string, base: number, host: A, s: S, options: O): DrawBlocks | undefined {
+    if (embedsOf(host.prepared.parse).length === 0) return undefined;
+    check(root, base, host, s, countFrom(host, s), 1);
+    return drawLevel(root, base, host, s, options);
   }
 
   return { prepare, draw };
