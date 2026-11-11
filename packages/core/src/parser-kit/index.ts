@@ -22,6 +22,7 @@ export {
 } from './chars.ts';
 export * from './char-codes.ts';
 export { execAt, lineEnd, matchAt, newlineAt, scanWhile } from './scanner.ts';
+export { closingLine, endsInBrace, openerBrace } from './embed-block.ts';
 export { LineIndex } from './positions.ts';
 export type { Position, Range } from './positions.ts';
 export { Diagnostics, ExpectedTable, formatExpected, MAX_EXPECTED } from './diagnostics.ts';
