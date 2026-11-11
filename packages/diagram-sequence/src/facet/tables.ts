@@ -3,7 +3,6 @@
  * kind is offered as, and what each arrow draws. Keyword docs are not here: they come from the
  * grammar file (`generated/docs.ts`).
  */
-import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import { PARTICIPANT_KINDS, type ArrowKind, type ParticipantKind } from '../model.ts';
 import { ARROW_KINDS } from '../parser/arrows.ts';
 import { T } from '../parser/tokens.ts';

@@ -3,7 +3,6 @@
  * is offered, and small helpers. Keyword docs are not here: they come from the grammar file
  * (`generated/docs.ts`).
  */
-import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import type { RelationshipKind } from '../model.ts';
 import {
   DIRECTION_OF,

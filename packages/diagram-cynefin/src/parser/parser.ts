@@ -29,35 +29,37 @@
  * model leaves out (D365).
  */
 import {
+  type AstId,
   ExpectedTable,
   ID_CONTROL,
   ID_RESERVED,
   idEscaper,
   Kind,
   kindSet,
-  Probe,
+  type ParseOptions,
+  type ParseResult,
+  type Range,
   skipTo,
   STOP,
 } from '@mermaid-js/core/parser-kit';
 import {
+  type RuleGrammar,
   RuleParser,
   textProbeMode,
   textStatements,
   textValue,
+  type TextValues,
   unclosedLabel,
   unreadAccessibility,
   withoutIndent,
 } from '@mermaid-js/shared/parser/rule';
-import type { AstId, ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
-import type { RuleGrammar, TextValues } from '@mermaid-js/shared/parser/rule';
-import { preprocess } from '@mermaid-js/core/preprocess';
-import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import { CYNEFIN_DOMAIN_NAMES } from '../model.ts';
-import type {
-  CynefinDomain,
-  CynefinDomainName,
-  CynefinModel,
-  CynefinTransition,
+import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
+import {
+  CYNEFIN_DOMAIN_NAMES,
+  type CynefinDomain,
+  type CynefinDomainName,
+  type CynefinModel,
+  type CynefinTransition,
 } from '../model.ts';
 import type {
   CynefinDocument,

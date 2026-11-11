@@ -8,7 +8,6 @@ import type {
   DocumentView,
   Hover,
   HoverTarget,
-  Range,
   SymbolOccurrence,
 } from '@mermaid-js/core/parser-kit';
 import { requirementDocs } from '../generated/docs.ts';
@@ -16,7 +15,7 @@ import type { BoxOf, RequirementModel } from '../model.ts';
 import { boxesByName, boxNamed } from '../parser/boxes.ts';
 import type { RelationNode, RequirementDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { RELATIONSHIPS, code, plural, span, spelling } from './tables.ts';
+import { RELATIONSHIPS, code, plural, spelling } from './tables.ts';
 import { trimmed } from '@mermaid-js/shared/parser/facet';
 
 const fieldList = (fields: readonly (readonly [key: string, value: string])[]): string => {

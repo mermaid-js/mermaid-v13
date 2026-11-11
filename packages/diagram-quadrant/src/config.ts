@@ -8,8 +8,7 @@
 import type { Warning } from '@mermaid-js/core';
 import { quadrantChartConfigDefaults } from './generated/config-defaults.ts';
 import type { QuadrantLayoutConfig } from './layout/index.ts';
-import { configNumber } from '@mermaid-js/core/config';
-import { shownValue as shown } from '@mermaid-js/core/config';
+import { configNumber, shownValue as shown } from '@mermaid-js/core/config';
 
 type NumberKey = {
   [K in keyof QuadrantLayoutConfig]: QuadrantLayoutConfig[K] extends number ? K : never;

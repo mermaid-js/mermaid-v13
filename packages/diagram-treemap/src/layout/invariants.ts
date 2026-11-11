@@ -21,8 +21,7 @@ import {
   type TreemapLeafLayout,
   type TreemapSectionLayout,
 } from './types.ts';
-import { numbers } from '@mermaid-js/core/layout';
-import { rectInside as inside } from '@mermaid-js/core/layout';
+import { numbers, rectInside as inside } from '@mermaid-js/core/layout';
 
 const EPS = 1e-6;
 

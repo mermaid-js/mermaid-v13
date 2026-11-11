@@ -6,22 +6,14 @@
  * tables, ports and `stepped` routes on the grid (D77, D78); `ascii` repairs the routes and
  * draws tables, lines, crow's-foot ends and labels through core's text-grid kit.
  */
-import {
-  ascii as asciiGlyphs,
-  asciiOptions,
-  cellMeasurer,
-  repairRoutes,
-  unicode,
-  type GlyphSet,
-} from '@mermaid-js/core/ascii';
+import { asciiOptions, cellMeasurer, repairRoutes, type GlyphSet } from '@mermaid-js/core/ascii';
 import { cellProfile } from '@mermaid-js/core/layout';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import type { ErModel } from './parser/index.ts';
 import { layoutEr, type ErLayout, type ErRenderContext } from './layout/layout.ts';
 import { drawEr } from './ascii/draw.ts';
 import { asciiWarnings, type AsciiRouteWarning } from './ascii/warnings.ts';
-import { asciiRoute } from '@mermaid-js/shared/ascii';
-import { glyphSetOf } from '@mermaid-js/shared/ascii';
+import { asciiRoute, glyphSetOf } from '@mermaid-js/shared/ascii';
 
 export type {
   AsciiDroppedFeature,

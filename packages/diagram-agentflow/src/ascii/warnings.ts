@@ -9,12 +9,15 @@ import type { AstNode } from '@mermaid-js/core/parser-kit';
 import type { CheckedStyle } from '@mermaid-js/core/svg';
 import { Style, type MeasuredLabel } from '@mermaid-js/core/text';
 import { agentflowConfigDefaults } from '../generated/config-defaults.ts';
-import { emphasisBits, numericValue, TITLE_MARGIN_DEFAULTS } from '../layout/index.ts';
-import type { AgentflowPrepared, AgentflowWarning } from '../layout/index.ts';
+import {
+  type AgentflowPrepared,
+  type AgentflowWarning,
+  emphasisBits,
+  numericValue,
+  TITLE_MARGIN_DEFAULTS,
+} from '../layout/index.ts';
 import type { AgentflowModel } from '../parser/index.ts';
-import { styled } from '@mermaid-js/shared/ascii';
-import { statements } from '@mermaid-js/shared/ascii';
-import { asciiDropped } from '@mermaid-js/shared/ascii';
+import { asciiDropped, statements, styled } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature =

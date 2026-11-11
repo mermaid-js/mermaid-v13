@@ -1,6 +1,6 @@
 // The shapes a flowchart draws, by v12 name: the table from a shape's name to its definition,
 // the lookups the builder and the renderer ask it, and v12's aliases. The shapes themselves
-// (sizes, outlines, drawers) are `@mermaid-js/shared/shapes`.
+// (sizes, outlines, drawers) are `@mermaid-js/shared/shapes/*`.
 import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
 import {
   anchor,
@@ -13,18 +13,14 @@ import {
   browser,
   bucket,
   choice,
-  circle,
   cloud,
   collapsedGroup,
   crossedCircle,
   curvedTrapezoid,
-  cylinder,
   datastore,
   delay,
-  diamond,
   dividedRect,
   doc,
-  doubleCircle,
   ellipse,
   filledCircle,
   flag,
@@ -32,38 +28,42 @@ import {
   folder,
   fork,
   framedCircle,
-  framedRect,
-  hexagon,
   horizontalCylinder,
   hourglass,
-  leanLeft,
-  leanRight,
   linedCylinder,
   linedDocument,
   linedRect,
   notchedPentagon,
   notchedRect,
-  odd,
   person,
-  rect,
-  rounded,
   slopedRect,
   smallCircle,
   stackedDocument,
   stackedRect,
-  stadium,
   taggedDocument,
   taggedRect,
   terminal,
   text,
-  trapezoidBottom,
-  trapezoidTop,
   triangle,
   windowPane,
-  type Pads,
-  type Shape,
-  type ShapeSize,
-} from '@mermaid-js/shared/shapes';
+} from '@mermaid-js/shared/shapes/extended';
+import {
+  circle,
+  cylinder,
+  diamond,
+  doubleCircle,
+  framedRect,
+  hexagon,
+  leanLeft,
+  leanRight,
+  odd,
+  rect,
+  rounded,
+  stadium,
+  trapezoidBottom,
+  trapezoidTop,
+} from '@mermaid-js/shared/shapes/basic';
+import type { Pads, Shape, ShapeSize } from '@mermaid-js/shared/shapes/kit';
 import { SHAPE_GROUPS } from '../parser/shapes.ts';
 
 export type { Pads, ShapeSize };

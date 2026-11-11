@@ -2,13 +2,10 @@
 // kind. Each names the AST ids of what it dropped: the elements from the model, and the
 // statements when the AST is given.
 import type { AstNode } from '@mermaid-js/core/parser-kit';
-import type { CheckedStyle } from '@mermaid-js/core/svg';
 import type { ErModel } from '../parser/index.ts';
 import type { ErWarning } from '../layout/context.ts';
 import type { ErPrepared } from '../layout/prepare.ts';
-import { styled } from '@mermaid-js/shared/ascii';
-import { statements } from '@mermaid-js/shared/ascii';
-import { asciiDropped } from '@mermaid-js/shared/ascii';
+import { asciiDropped, statements, styled } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'accessibility';

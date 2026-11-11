@@ -6,14 +6,9 @@
 // variables only, never a theme name or a look (R-THEME-11, D152; checked by conformance
 // `state/render-theme-names.spec.ts`).
 import { pxProfile } from '@mermaid-js/core/layout';
-import {
-  arrowheads,
-  edgeLabel,
-  marker,
-  markerTrim,
-  routePath,
-  type Arrowheads,
-} from '@mermaid-js/shared/svg/edges';
+import { arrowheads, marker, markerTrim, type Arrowheads } from '@mermaid-js/shared/svg/arrowheads';
+import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
+import { routePath } from '@mermaid-js/shared/svg/route';
 import {
   checkLinkTarget,
   checkUrl,
@@ -395,7 +390,7 @@ function drawEdgeLabel({ w, layout, paint }: Scene, e: StateEdgeView): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
   const { fill, text } = paint.edgeLabel!;
-  edgeLabel(w, e.label, at, e.id, { fill, text: { fill: text }, rx: 3 });
+  labelOnBox(w, e.label, at, e.id, { fill, text: { fill: text }, rx: 3 });
 }
 
 function nodeClass(view: StateNodeView): string {

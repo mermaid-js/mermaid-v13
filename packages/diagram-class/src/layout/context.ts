@@ -1,8 +1,7 @@
-import type { ResolvedConfig } from '@mermaid-js/core/config';
+import type { ConfigLengthWarning, ResolvedConfig } from '@mermaid-js/core/config';
 import type { LayoutGraph, LayoutModel, UnitProfile } from '@mermaid-js/core/layout';
 import type { InlineSpans, Measurer } from '@mermaid-js/core/text';
 import type { Theme } from '@mermaid-js/core/theme';
-import type { ConfigLengthWarning } from '@mermaid-js/core/config';
 
 /**
  * What the class layout reads (DESIGN §3 `RenderContext`); the pipeline's `RenderContext`

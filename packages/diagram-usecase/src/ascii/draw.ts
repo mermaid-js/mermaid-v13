@@ -8,7 +8,6 @@
 import {
   armOf,
   Canvas,
-  cellWidth,
   DOWN,
   drawBox,
   drawText,
@@ -28,7 +27,6 @@ import {
   type Sides,
 } from '@mermaid-js/core/ascii';
 import type { LayoutModel, Point, Side } from '@mermaid-js/core/layout';
-import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   ActorView,
   JsonTableView,
@@ -38,14 +36,7 @@ import type {
   UsecasePrepared,
   UseCaseView,
 } from '../layout/prepare.ts';
-import type { Centred } from '@mermaid-js/shared/ascii';
-import { cellRect } from '@mermaid-js/shared/ascii';
-import { dirOf } from '@mermaid-js/shared/ascii';
-import { cellsOf } from '@mermaid-js/shared/ascii';
-import { wrapTitle } from '@mermaid-js/shared/ascii';
-import { finish } from '@mermaid-js/shared/ascii';
-import { writeLabel } from '@mermaid-js/shared/ascii';
-import { drawLineCells } from '@mermaid-js/shared/ascii';
+import { cellRect, cellsOf, drawLineCells, finish, writeLabel } from '@mermaid-js/shared/ascii';
 
 /** The actor's figure (D478), the same in both charsets. */
 const FIGURE = [' O ', '/|\\', '/ \\'] as const;

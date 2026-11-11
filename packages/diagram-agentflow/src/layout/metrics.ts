@@ -3,7 +3,7 @@
  * `layout/` writes a length. The builder's shared lengths (group padding, title room, edge label
  * wrap, spacing floors) come from the unit profile, the shapes' theme padding from the theme
  * (D152), node padding from `flowchart.padding` (D466), and the shapes' own sizes and ratios
- * from `@mermaid-js/shared/shapes`. The `agentflow` section's length defaults are the generated
+ * from `@mermaid-js/shared/shapes/*`. The `agentflow` section's length defaults are the generated
  * `config-defaults.ts` (the plugin's `configDefaults`).
  *
  * The px values are v12's (`fa796a943`: `agentflowDb.getData`, `collapsedGroup.ts`).

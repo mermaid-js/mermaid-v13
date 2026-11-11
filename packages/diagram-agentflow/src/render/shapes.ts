@@ -1,6 +1,6 @@
 /**
  * Draws agentflow's seven shapes through the SvgWriter: the shared drawers
- * (`@mermaid-js/shared/shapes`) for tool `fr-rect`, input `lean-r`, decision `diam` and action
+ * (`@mermaid-js/shared/shapes/*`) for tool `fr-rect`, input `lean-r`, decision `diam` and action
  * `hex`, and its own for task `rounded`, refdoc `lin-doc` and v12's collapsed-flow card, on the
  * geometry the layout sized and outlined them with (`layout/shapes.ts`, `layout/metrics.ts`), so
  * every edge end the layout put on an outline is on the drawn one. Every element goes through
@@ -14,7 +14,7 @@
  * cspell:ignore kepano
  */
 import type { Attrs, SafeValue, SvgWriter } from '@mermaid-js/core/svg';
-import { lines, RULE, wave, WAVE } from '@mermaid-js/shared/shapes';
+import { lines, RULE, wave, WAVE } from '@mermaid-js/shared/shapes/kit';
 import {
   cornerRadius,
   sharedShape,

@@ -19,14 +19,12 @@
  * Nothing in a quoted text, a stereotype, a JSON object, an accessible title or description,
  * a comment, a directive or front matter.
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
-import type {
-  CompletionItem,
-  CompletionKind,
-  DocumentView,
-  ProbeResult,
-  Range,
-  TokenStream,
+import {
+  type CompletionItem,
+  type DocumentView,
+  Kind,
+  type ProbeResult,
+  type TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { usecaseDocs } from '../generated/docs.ts';
 import type { UsecaseModel } from '../model.ts';
@@ -42,13 +40,10 @@ import {
   KEYWORD_ITEMS,
   KIND_NAMES,
   METADATA_KEYS,
-  span,
+  type MetadataKind,
   tokenBefore,
 } from './tables.ts';
-import type { MetadataKind } from './tables.ts';
-import { atLineStart } from '@mermaid-js/shared/parser/facet';
-import { CompletionList as Items } from '@mermaid-js/shared/parser/facet';
-import { wordRange } from '@mermaid-js/shared/parser/facet';
+import { atLineStart, CompletionList as Items, wordRange } from '@mermaid-js/shared/parser/facet';
 
 /** Where a statement ends. */
 const LINE_BREAK = new Set<number>([Kind.Newline, Kind.EOF]);

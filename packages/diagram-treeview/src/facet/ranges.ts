@@ -2,7 +2,6 @@
  * Ranges for the treeView facet (DESIGN §4.5): the statement at an offset, and making and testing
  * ranges.
  */
-import type { Range } from '@mermaid-js/core/parser-kit';
 import type { TreeViewDocument, TreeViewStatementNode } from '../parser/ast.ts';
 export { inside } from '@mermaid-js/shared/parser/facet';
 export { span } from '@mermaid-js/shared/parser/facet';

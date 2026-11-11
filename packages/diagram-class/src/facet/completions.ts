@@ -10,15 +10,14 @@
  * on a line lexes as a class name, so the line is checked by text; class bodies, strings,
  * generics and accessibility text get nothing.
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
-import type {
-  CompletionItem,
-  CompletionKind,
-  DocumentView,
-  ProbeResult,
-  Range,
-  SymbolOccurrence,
-  TokenStream,
+import {
+  type CompletionItem,
+  type CompletionKind,
+  type DocumentView,
+  Kind,
+  type ProbeResult,
+  type SymbolOccurrence,
+  type TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { classCategories } from '../generated/categories.ts';
 import { classDocs } from '../generated/docs.ts';
@@ -27,19 +26,21 @@ import type { ClassModel } from '../parser/model.ts';
 import { T } from '../parser/tokens.ts';
 import {
   ANNOTATIONS,
+  type Arrow,
   ARROW_PARTS,
   ARROWS,
-  DIRECTIONS,
   describeRelation,
+  DIRECTIONS,
   KEYWORDS,
   LINK_TARGETS,
   span,
   tokenBefore,
 } from './tables.ts';
-import type { Arrow } from './tables.ts';
-import { CompletionList as Items } from '@mermaid-js/shared/parser/facet';
-import { afterDirection } from '@mermaid-js/shared/parser/facet';
-import { wordRunRange } from '@mermaid-js/shared/parser/facet';
+import {
+  afterDirection,
+  CompletionList as Items,
+  wordRunRange,
+} from '@mermaid-js/shared/parser/facet';
 
 /** Modes in which a statement is being written (`class` is after the `class` keyword). */
 const CODE_MODES = new Set(['INITIAL', 'class', 'namespace', 'namespace-body']);

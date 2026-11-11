@@ -36,14 +36,15 @@ import {
   LT,
   PERCENT,
   PIPE,
+  type Probe,
   RBRACE,
   RPAREN,
   SEMI,
   SLASH,
+  type SourceView,
+  type TokenStream,
 } from '@mermaid-js/core/parser-kit';
-import { lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
-import type { Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
-import type { StateLexerOptions } from '@mermaid-js/shared/parser/state';
+import { lowerCode, StateLexer, type StateLexerOptions } from '@mermaid-js/shared/parser/state';
 import { T } from './tokens.ts';
 
 // Start conditions of sequenceDiagram.jison (`CONFIG_DATA` is declared there, never entered).
@@ -242,12 +243,12 @@ export function lex(src: string, from: number, view: SourceView, probe?: Probe):
  * Each start condition is a method named after it.
  */
 class SequenceLexer extends StateLexer {
-  protected override prepare(text: string, view: SourceView): string {
+  protected override prepare(text: string): string {
     return lexerText(text);
   }
 
   run(probe?: Probe): TokenStream {
-    const { text, n } = this;
+    const { n } = this;
     this.trim();
     // Two loops, so a plain lex does no probe work per step.
     if (probe === undefined) while (this.p < n) this.next();

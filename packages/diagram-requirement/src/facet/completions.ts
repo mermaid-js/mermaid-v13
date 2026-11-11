@@ -8,14 +8,13 @@
  * a value is written (after a kind keyword, after a field's `:`). Inside quotes and in the
  * `acc…` values nothing is offered.
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
-import type {
-  CompletionItem,
-  CompletionKind,
-  DocumentView,
-  ProbeResult,
-  Range,
-  TokenStream,
+import {
+  type CompletionItem,
+  type DocumentView,
+  Kind,
+  type ProbeResult,
+  type Range,
+  type TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { requirementCategories } from '../generated/categories.ts';
 import { requirementDocs } from '../generated/docs.ts';
@@ -24,7 +23,6 @@ import type { RequirementDocument } from '../parser/ast.ts';
 import { NAME, REQ_KINDS } from '../parser/syntax.ts';
 import { T } from '../parser/tokens.ts';
 import { nameAsWritten } from './names.ts';
-import type { KeywordItem } from './tables.ts';
 import {
   FIELDS,
   OPERATORS,

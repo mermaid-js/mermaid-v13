@@ -28,7 +28,6 @@ import type {
   RadarRing,
   RadarSpoke,
   RadarTextAnchor,
-  Rect,
 } from './types.ts';
 import { RectUnion } from '@mermaid-js/shared/layout';
 

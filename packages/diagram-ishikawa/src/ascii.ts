@@ -9,13 +9,12 @@
  * (D82); math and icons are shown as written, with core's own `ASCII_DROPPED` warnings.
  */
 import type { TextRenderContext, Warning } from '@mermaid-js/core';
-import { ascii as asciiGlyphs, asciiOptions, cellMeasurer, unicode } from '@mermaid-js/core/ascii';
-import { layoutLabel, Style, type LabelOptions, type MeasuredLabel } from '@mermaid-js/core/text';
+import { cellMeasurer } from '@mermaid-js/core/ascii';
+import { layoutLabel, type LabelOptions } from '@mermaid-js/core/text';
 import { drawOutline } from './ascii/outline.ts';
 import { plainLabel, plainTitle } from './labels.ts';
 import type { IshikawaCause, IshikawaModel } from './model.ts';
-import { emphasised } from '@mermaid-js/shared/ascii';
-import { glyphSetOf } from '@mermaid-js/shared/ascii';
+import { emphasised, glyphSetOf } from '@mermaid-js/shared/ascii';
 
 /** What the hook reads of core's `TextRenderContext`. */
 export type IshikawaAsciiContext = Pick<TextRenderContext, 'config' | 'warn'> &

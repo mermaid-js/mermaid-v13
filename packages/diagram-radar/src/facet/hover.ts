@@ -5,14 +5,17 @@
  * ignored, D356); a keyword the
  * one-line doc of the grammar file (`generated/docs.ts`). Never a preview.
  */
-import { LineIndex } from '@mermaid-js/core/parser-kit';
-import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
+import {
+  type DocumentView,
+  type Hover,
+  type HoverTarget,
+  LineIndex,
+} from '@mermaid-js/core/parser-kit';
 import { radarDocs } from '../generated/docs.ts';
 import type { RadarAxisNode, RadarDocument, RadarEntryNode } from '../parser/ast.ts';
 import { T, TEXT_STATEMENTS } from '../parser/tokens.ts';
-import { code, declaredAxes, span } from './tables.ts';
-import { inside } from '@mermaid-js/shared/parser/facet';
-import { keywordHover } from '@mermaid-js/shared/parser/facet';
+import { code, declaredAxes } from './tables.ts';
+import { inside, keywordHover } from '@mermaid-js/shared/parser/facet';
 
 /** Tokens with a doc that hover leaves alone: punctuation and values. */
 const NO_DOC = new Set<number>([T.String, T.Number, T.Id]);

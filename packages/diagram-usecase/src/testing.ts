@@ -18,5 +18,7 @@ export { usecaseLayoutProblems } from './layout/invariants.ts';
 export { renderUsecaseForTest } from './render/harness.ts';
 export type { RenderedUsecase, RenderUsecaseOptions } from './render/harness.ts';
 /** The palette slots as the renderer reads them (fill by slot). */
-export const usecasePaletteSlots = (theme: Parameters<typeof paletteSlots>[0]) =>
+export const usecasePaletteSlots = (
+  theme: Parameters<typeof paletteSlots>[0]
+): ReturnType<typeof paletteSlots> =>
   paletteSlots(theme, 'slot');

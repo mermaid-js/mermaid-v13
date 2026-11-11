@@ -16,9 +16,7 @@
 import type { KanbanLayoutInput } from './input.ts';
 import { drawnRects } from './extent.ts';
 import type { KanbanLayout, Rect } from './types.ts';
-import { nonFinite as numbers } from '@mermaid-js/core/layout';
-import { rectsOverlap as overlaps } from '@mermaid-js/core/layout';
-import { within } from '@mermaid-js/core/layout';
+import { nonFinite as numbers, rectsOverlap as overlaps, within } from '@mermaid-js/core/layout';
 
 const EPS = 1e-6;
 const contains = (outer: Rect, inner: Rect): boolean =>

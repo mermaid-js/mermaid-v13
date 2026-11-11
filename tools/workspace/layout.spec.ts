@@ -84,8 +84,12 @@ describe('workspace layout (DESIGN §2)', () => {
         './parser/table',
         './parser/tree',
         './parser/v12-text',
-        './shapes',
-        './svg/edges',
+        './shapes/basic',
+        './shapes/extended',
+        './shapes/kit',
+        './svg/arrowheads',
+        './svg/graph',
+        './svg/route',
       ].sort()
     );
   });

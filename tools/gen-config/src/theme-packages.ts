@@ -146,9 +146,9 @@ const SHARED = join(PACKAGES, 'shared');
  * an importer reads only those of the exports it uses, so it names them in its `workspace.yaml`
  * `theme.dynamicReads` and the scan does not follow the import.
  */
-const PER_EXPORT: ReadonlySet<string> = new Set(['shapes']);
+const PER_EXPORT: ReadonlySet<string> = new Set(['shapes/kit', 'shapes/basic', 'shapes/extended']);
 
-/** The `mermaid-source` file of each `@mermaid-js/shared` subpath, by subpath (`svg/edges`). */
+/** The `mermaid-source` file of each `@mermaid-js/shared` subpath, by subpath (`svg/route`). */
 function sharedEntries(): Map<string, string> {
   const manifest = join(SHARED, 'package.json');
   if (!existsSync(manifest)) return new Map();

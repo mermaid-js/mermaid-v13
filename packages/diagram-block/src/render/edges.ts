@@ -4,8 +4,8 @@
  * stopped short of the outlines for its arrowheads, which follow it inline. Edges are plain
  * leaves: v12 never sketched them (D447).
  */
-import { marker, markerTrim, type LineEnd } from '@mermaid-js/shared/svg/edges';
-import { type Attrs, type PathData, type SvgWriter } from '@mermaid-js/core/svg';
+import { marker, markerTrim, type LineEnd } from '@mermaid-js/shared/svg/arrowheads';
+import type { Attrs, PathData, SvgWriter } from '@mermaid-js/core/svg';
 import type { BlockEdgeLayout, PlacedLabel, Point } from '../layout/types.ts';
 import { BLOCK_RENDER } from './metrics.ts';
 import type { Scene } from './render.ts';

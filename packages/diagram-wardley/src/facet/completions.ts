@@ -11,13 +11,13 @@
  * statement's text (probe modes `string`, `title`, `accTitle`, `accDescr`) and outside code
  * nothing is offered.
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
-import type {
-  CompletionItem,
-  DocumentView,
-  ProbeResult,
-  Range,
-  TokenStream,
+import {
+  type CompletionItem,
+  type DocumentView,
+  Kind,
+  type ProbeResult,
+  type Range,
+  type TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { wardleyDocs } from '../generated/docs.ts';
 import type { WardleyDocument } from '../parser/ast.ts';
@@ -25,8 +25,7 @@ import { NAME_SET } from '../parser/tables.ts';
 import { T, WARDLEY_TRIVIA } from '../parser/tokens.ts';
 import { nameReason, quoteName } from './names.ts';
 import { declarationKind, declaredNodes, ITEMS, span, tokenBefore } from './tables.ts';
-import { atLineStart } from '@mermaid-js/shared/parser/facet';
-import { keywordItem } from '@mermaid-js/shared/parser/facet';
+import { atLineStart, keywordItem } from '@mermaid-js/shared/parser/facet';
 
 /** Tokens after which a node name is a reference: arrows, flows and the referring keywords. */
 const BEFORE_REFERENCE = new Set<number>([

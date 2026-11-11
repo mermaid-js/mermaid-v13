@@ -1,7 +1,7 @@
 /**
  * Block's shape drawers: each draws a block's laid-out `Outline` (`outline.ts`) in the block's
  * own frame, about its centre, so what is drawn is exactly what edges were clipped at. The
- * leaves' paths and inner lines are the shared shapes' (`@mermaid-js/shared/shapes`); the
+ * leaves' paths and inner lines are the shared shapes' (`@mermaid-js/shared/shapes/*`); the
  * composite and the block arrow are block's own. {@link drawShape} is the one table from a
  * block's shape to its drawer.
  *
@@ -17,7 +17,7 @@ import {
   frameLines,
   ring,
   type Barrel,
-} from '@mermaid-js/shared/shapes';
+} from '@mermaid-js/shared/shapes/kit';
 import type { BlockShape } from '../layout/types.ts';
 import type { Outline, Point } from './outline.ts';
 

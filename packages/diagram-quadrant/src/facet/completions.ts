@@ -6,23 +6,20 @@
  * a style's value), inserted with an example value since a key alone is an error. Inside text values (`title`, `accTitle:`, `accDescr`, strings) and
  * coordinates nothing is offered.
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
-import type {
-  CompletionItem,
-  CompletionKind,
-  DocumentView,
-  ProbeResult,
-  Range,
-  TokenStream,
+import {
+  type CompletionItem,
+  type DocumentView,
+  Kind,
+  type ProbeResult,
+  type TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { quadrantCategories } from '../generated/categories.ts';
 import { quadrantDocs } from '../generated/docs.ts';
 import type { QuadrantDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { readsAs } from './names.ts';
-import { KEYWORDS, span, STYLE_KEYS, tokenBefore } from './tables.ts';
-import { CompletionList as Items } from '@mermaid-js/shared/parser/facet';
-import { wordRange } from '@mermaid-js/shared/parser/facet';
+import { KEYWORDS, STYLE_KEYS, tokenBefore } from './tables.ts';
+import { CompletionList as Items, wordRange } from '@mermaid-js/shared/parser/facet';
 
 /** Modes whose text is a value, not code: nothing is offered there. */
 const VALUE_MODES = new Set([

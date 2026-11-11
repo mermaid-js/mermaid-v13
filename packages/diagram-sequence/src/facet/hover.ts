@@ -13,8 +13,7 @@ import type {
 } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { ARROWS, code, MESSAGE_DOC, span } from './tables.ts';
-import { trimmed } from '@mermaid-js/shared/parser/facet';
-import { plural } from '@mermaid-js/shared/parser/facet';
+import { plural, trimmed } from '@mermaid-js/shared/parser/facet';
 
 const ARROW_BY_TOKEN = new Map(ARROWS.map((a) => [a.token, a]));
 /** `title …` is one token: only the keyword is hovered. */

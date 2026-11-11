@@ -2,15 +2,10 @@
 // feature kind, as ER's. Each names the AST ids of what it dropped: the boxes from the views,
 // and the statements when the AST is given.
 import type { AstNode } from '@mermaid-js/core/parser-kit';
-import type { CheckedStyle } from '@mermaid-js/core/svg';
-import { Style, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { RequirementLayoutWarning } from '../layout/context.ts';
 import { requirementCurve, type RequirementPrepared } from '../layout/prepare.ts';
 import type { RequirementModel } from '../model.ts';
-import { styled } from '@mermaid-js/shared/ascii';
-import { statements } from '@mermaid-js/shared/ascii';
-import { emphasised } from '@mermaid-js/shared/ascii';
-import { asciiDropped } from '@mermaid-js/shared/ascii';
+import { asciiDropped, emphasised, statements, styled } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'curve' | 'emphasis' | 'accessibility';

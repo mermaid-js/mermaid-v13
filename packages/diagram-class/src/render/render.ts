@@ -20,7 +20,8 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { edgeLabel, routePath } from '@mermaid-js/shared/svg/edges';
+import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
+import { routePath } from '@mermaid-js/shared/svg/route';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   ClassBoxView,
@@ -317,7 +318,7 @@ function drawEdgeLabels({ w, layout, paint }: Scene, e: ClassEdgeView, id: strin
   const at = layout.edges.get(e.layoutId);
   if (!at) return;
   if (e.label && at.label && paint.edgeLabel)
-    edgeLabel(w, e.label, at.label, id, {
+    labelOnBox(w, e.label, at.label, id, {
       fill: paint.edgeLabel,
       text: { fill: paint.text },
       rx: 3,

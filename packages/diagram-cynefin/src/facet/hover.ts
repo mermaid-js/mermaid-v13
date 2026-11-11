@@ -5,15 +5,19 @@
  * one-line doc of the grammar file (`generated/docs.ts`). Items and labels have none. Never a
  * preview.
  */
-import { LineIndex } from '@mermaid-js/core/parser-kit';
-import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
+import {
+  type DocumentView,
+  type Hover,
+  type HoverTarget,
+  LineIndex,
+  type Range,
+} from '@mermaid-js/core/parser-kit';
 import { cynefinDocs } from '../generated/docs.ts';
 import { CYNEFIN_DOMAIN_NAMES } from '../model.ts';
 import type { CynefinDocument, CynefinDomainNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { code, DOMAIN_MEANING, domainLine, span } from './tables.ts';
-import { inside } from '@mermaid-js/shared/parser/facet';
-import { keywordHover } from '@mermaid-js/shared/parser/facet';
+import { code, DOMAIN_MEANING, domainLine } from './tables.ts';
+import { inside, keywordHover } from '@mermaid-js/shared/parser/facet';
 
 /** Statement tokens that hold their text too: only the keyword is hovered. */
 const VALUE_WORDS: Readonly<Partial<Record<number, string>>> = {

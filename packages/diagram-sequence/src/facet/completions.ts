@@ -8,20 +8,19 @@
  * from the text before the cursor; participant data `@{ … }` is one token, so its key or
  * `type` value is worked out from its text; message, note and block text gets nothing.
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
-import type {
-  CompletionItem,
-  CompletionKind,
-  DocumentView,
-  ProbeResult,
-  Range,
-  TokenStream,
+import {
+  type CompletionItem,
+  type DocumentView,
+  Kind,
+  type ProbeResult,
+  type TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { sequenceDocs } from '../generated/docs.ts';
 import type { SequenceModel } from '../model.ts';
 import type { SequenceDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import {
+  type Arrow,
   ARROWS,
   KEYWORDS,
   MESSAGE_DOC,
@@ -31,9 +30,7 @@ import {
   span,
   tokenBefore,
 } from './tables.ts';
-import type { Arrow } from './tables.ts';
-import { wordRangeOf } from '@mermaid-js/shared/parser/facet';
-import { CompletionList as Items } from '@mermaid-js/shared/parser/facet';
+import { CompletionList as Items, wordRangeOf } from '@mermaid-js/shared/parser/facet';
 
 const arrow = (items: Items, a: Arrow): void =>
   items.add(a.text, 'operator', { detail: a.draws, documentation: MESSAGE_DOC });

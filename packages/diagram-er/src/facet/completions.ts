@@ -8,15 +8,14 @@
  * already uses; in values (`accTitle:`, `accDescr`, a backtick name) there are none. `direction`
  * with no direction yet lexes as an entity name, so the line's text decides that one.
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
-import type {
-  CompletionItem,
-  CompletionKind,
-  DocumentView,
-  ProbeResult,
-  Range,
-  SymbolOccurrence,
-  TokenStream,
+import {
+  type CompletionItem,
+  type CompletionKind,
+  type DocumentView,
+  Kind,
+  type ProbeResult,
+  type SymbolOccurrence,
+  type TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { erCategories } from '../generated/categories.ts';
 import { erDocs } from '../generated/docs.ts';
@@ -33,13 +32,14 @@ import {
   LEFT_ENDS,
   LINES,
   RIGHT_ENDS,
-  span,
   tokenBefore,
 } from './tables.ts';
-import { CompletionList as Items } from '@mermaid-js/shared/parser/facet';
-import { afterDirection } from '@mermaid-js/shared/parser/facet';
-import { wordRange } from '@mermaid-js/shared/parser/facet';
-import { atStatementStart as atLineStart } from '@mermaid-js/shared/parser/facet';
+import {
+  afterDirection,
+  atStatementStart as atLineStart,
+  CompletionList as Items,
+  wordRange,
+} from '@mermaid-js/shared/parser/facet';
 
 /** Modes whose text is a value, not code: nothing is offered there. */
 const VALUE_MODES = new Set([

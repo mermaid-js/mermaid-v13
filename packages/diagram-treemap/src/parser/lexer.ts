@@ -45,11 +45,11 @@ import {
   newlineAt,
   PERCENT,
   SEMI,
+  type SourceView,
+  type TokenStream,
   UNDERSCORE,
 } from '@mermaid-js/core/parser-kit';
-import { isBreak, RuleLexer, SKIP } from '@mermaid-js/shared/parser/rule';
-import type { RuleLexerOptions } from '@mermaid-js/shared/parser/rule';
-import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import { isBreak, RuleLexer, type RuleLexerOptions } from '@mermaid-js/shared/parser/rule';
 import { T } from './tokens.ts';
 
 const HEADER = 'treemap';

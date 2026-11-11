@@ -6,7 +6,7 @@
  * (the cell measurer and the cell profile, D108), with core's text-grid kit.
  */
 import type { TextRenderContext } from '@mermaid-js/core';
-import { ascii as asciiGlyphs, asciiOptions, cellMeasurer, unicode } from '@mermaid-js/core/ascii';
+import { asciiOptions, cellMeasurer } from '@mermaid-js/core/ascii';
 import { cellProfile } from '@mermaid-js/core/layout';
 import type { SequenceModel } from './model.ts';
 import { layoutSequence, type SequenceLayout } from './layout/index.ts';

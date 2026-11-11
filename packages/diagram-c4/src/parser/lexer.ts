@@ -36,6 +36,7 @@
  * linear in the text it consumes (R-PARSE-7): the `direction` rules are looked up once per
  * line, and a keyword is read no further than one past the longest one.
  */
+import type { SourceOffsets } from '@mermaid-js/core/parser-kit';
 import {
   COLON,
   COMMA,
@@ -50,16 +51,16 @@ import {
   LOWER_A,
   LPAREN,
   PERCENT,
+  type Probe,
   QUOTE,
   RBRACE,
   RPAREN,
   SEMI,
-  SourceOffsets,
+  type SourceView,
   SPACE,
+  type TokenStream,
 } from '@mermaid-js/core/parser-kit';
-import { lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
-import type { Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
-import type { StateLexerOptions } from '@mermaid-js/shared/parser/state';
+import { StateLexer, type StateLexerOptions } from '@mermaid-js/shared/parser/state';
 import { HEADERS, KEYWORD_MAX, KEYWORDS, T } from './tokens.ts';
 
 const DOLLAR = 0x24;

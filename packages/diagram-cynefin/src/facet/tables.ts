@@ -3,10 +3,8 @@
  * not here: they come from the grammar file (`generated/docs.ts`); the domain texts come from
  * `domains.ts`, as v12 drew them.
  */
-import type { CompletionKind, Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import { DOMAIN_META } from '../domains.ts';
-import { CYNEFIN_DOMAIN_NAMES } from '../model.ts';
-import type { CynefinDomainName } from '../model.ts';
+import { CYNEFIN_DOMAIN_NAMES, type CynefinDomainName } from '../model.ts';
 import { T } from '../parser/tokens.ts';
 import type { KindedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
 export type { KindedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';

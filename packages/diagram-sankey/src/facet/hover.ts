@@ -4,7 +4,7 @@
  * from it (`parseFloat`, so the text after the number is dropped) and why the link counts as 0
  * when it does; `sankey` the one-line doc of the grammar file (`generated/docs.ts`).
  */
-import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
+import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-kit';
 import { sankeyDocs } from '../generated/docs.ts';
 import type { SankeyModel } from '../model.ts';
 import type { SankeyDocument, SankeyField } from '../parser/ast.ts';

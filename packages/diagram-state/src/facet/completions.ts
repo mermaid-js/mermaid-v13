@@ -12,7 +12,6 @@ import type {
   CompletionKind,
   DocumentView,
   ProbeResult,
-  Range,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { stateCategories } from '../generated/categories.ts';

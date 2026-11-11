@@ -21,8 +21,7 @@ import type { GitModel } from '../model.ts';
 import { apply, corners } from './env.ts';
 import { GIT_METRICS } from './metrics.ts';
 import type { GitLayout, Point, Rect, Transform } from './types.ts';
-import { nonFinite as numbers } from '@mermaid-js/core/layout';
-import { rectsOverlap as overlaps } from '@mermaid-js/core/layout';
+import { nonFinite as numbers, rectsOverlap as overlaps } from '@mermaid-js/core/layout';
 
 export interface ViolationOptions {
   /** Whether the layout ran with `parallelCommits`. */

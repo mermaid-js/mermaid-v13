@@ -2,7 +2,7 @@
  * The treemap facet's completion table and shared helpers (DESIGN §4.5, D95). Keyword docs are
  * not here: they come from the grammar file (`generated/docs.ts`).
  */
-import type { CompletionKind, Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { CompletionKind } from '@mermaid-js/core/parser-kit';
 import type { TreemapDocument, TreemapStatementNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 export { inside } from '@mermaid-js/shared/parser/facet';

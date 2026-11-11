@@ -3,8 +3,7 @@
  * completion offers, the style keys v12 reads with their docs, and token helpers. Keyword docs
  * are not here: they come from the grammar file (`generated/docs.ts`).
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
-import type { CompletionKind, Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import { type CompletionKind, Kind, type TokenStream } from '@mermaid-js/core/parser-kit';
 import type { VennDocument, VennSetNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { tokenBefore } from '@mermaid-js/shared/parser/facet';

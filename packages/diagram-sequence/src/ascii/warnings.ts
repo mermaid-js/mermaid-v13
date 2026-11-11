@@ -3,12 +3,10 @@
 // the AST ids of what it dropped.
 import type { Warning } from '@mermaid-js/core';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
-import { Style, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { SequenceLayout } from '../layout/index.ts';
 import type { ParticipantKind, SequenceModel, SequenceStatement } from '../model.ts';
 import { symbolForm } from './symbols.ts';
-import { emphasised } from '@mermaid-js/shared/ascii';
-import { asciiDropped } from '@mermaid-js/shared/ascii';
+import { asciiDropped, emphasised } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'emphasis' | 'link' | 'accessibility';

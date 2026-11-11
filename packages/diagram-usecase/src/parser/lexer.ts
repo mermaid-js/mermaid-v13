@@ -51,6 +51,7 @@ import {
   firstHole,
   GT,
   HASH,
+  type Hole,
   isBlank,
   isDigit,
   isHex,
@@ -77,15 +78,16 @@ import {
   SEMI,
   SLASH,
   SourceOffsets,
+  type SourceView,
   SPACE,
   STAR,
   TAB,
   TILDE,
+  type TokenStream,
   TokenWriter,
   UNDERSCORE,
 } from '@mermaid-js/core/parser-kit';
-import { dropAt, tagQuotes } from '@mermaid-js/shared/parser/drop';
-import type { Hole, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import { dropAt } from '@mermaid-js/shared/parser/drop';
 import { ANY_CASE, KEYWORDS, T } from './tokens.ts';
 
 /** `kind` of a rule that matched and writes no token (`HWS`). */

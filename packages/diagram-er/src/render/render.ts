@@ -15,7 +15,7 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { edgeLabel } from '@mermaid-js/shared/svg/edges';
+import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { ErLayout } from '../layout/layout.ts';
 import type { ErRenderContext } from '../layout/context.ts';
@@ -290,7 +290,7 @@ function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView, i: number): voi
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
   const { fill, text } = paint.edgeLabel!;
-  edgeLabel(w, e.label, at, edgeDataId(e, i), { fill, text: { fill: text } });
+  labelOnBox(w, e.label, at, edgeDataId(e, i), { fill, text: { fill: text } });
 }
 
 function drawEntity(scene: Scene, view: EntityView): void {

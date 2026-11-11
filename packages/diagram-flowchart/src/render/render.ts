@@ -17,17 +17,12 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { edgeLabel } from '@mermaid-js/shared/svg/edges';
+import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
 import { drawIcon, drawImage } from './assets.ts';
-import {
-  arrowheads,
-  marker,
-  markerTrim,
-  routePath,
-  type Arrowheads,
-} from '@mermaid-js/shared/svg/edges';
+import { arrowheads, marker, markerTrim, type Arrowheads } from '@mermaid-js/shared/svg/arrowheads';
+import { routePath } from '@mermaid-js/shared/svg/route';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
 import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
 
@@ -331,7 +326,7 @@ function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
   const { fill, text } = paint.edgeLabel!;
-  edgeLabel(w, e.label, at, e.edge.id, { fill, text: { fill: text, ...e.style.text }, rx: 3 });
+  labelOnBox(w, e.label, at, e.edge.id, { fill, text: { fill: text, ...e.style.text }, rx: 3 });
 }
 
 function drawNode(

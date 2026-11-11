@@ -2,7 +2,7 @@
  * The radar facet's completion table and shared helpers (DESIGN §4.5, D95). Keyword docs are
  * not here: they come from the grammar file (`generated/docs.ts`).
  */
-import type { CompletionKind, Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { CompletionKind } from '@mermaid-js/core/parser-kit';
 import type { RadarAxisNode, RadarDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 export { tokenBefore } from '@mermaid-js/shared/parser/facet';

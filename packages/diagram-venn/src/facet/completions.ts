@@ -16,30 +16,20 @@
  *
  * Nothing in a quoted id or value, a label, a title, a comment, a directive or front matter.
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
-import type {
-  CompletionItem,
-  DocumentView,
-  ProbeResult,
-  Range,
-  TokenStream,
+import {
+  type CompletionItem,
+  type DocumentView,
+  Kind,
+  type ProbeResult,
+  type TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { vennDocs } from '../generated/docs.ts';
 import type { VennDocument } from '../parser/ast.ts';
 import { normalizeText } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
 import { invalidReason, quotedId } from './names.ts';
-import {
-  KEYWORDS,
-  lineStartOf,
-  lineTokens,
-  setsByName,
-  span,
-  STYLE_KEYS,
-  tokenBefore,
-} from './tables.ts';
-import { wordRange } from '@mermaid-js/shared/parser/facet';
-import { keywordItem } from '@mermaid-js/shared/parser/facet';
+import { KEYWORDS, lineStartOf, lineTokens, setsByName, STYLE_KEYS } from './tables.ts';
+import { keywordItem, wordRange } from '@mermaid-js/shared/parser/facet';
 
 /** The lexer modes in which the cursor is in code (jison's start conditions). */
 const CODE_MODES = new Set(['INITIAL', 'bol']);

@@ -14,13 +14,15 @@
  * the schema's, generated into `generated/config-defaults.ts` (v12's, `wardleyRenderer.ts:52-65`).
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
-import type { WardleyDiagramConfig } from '@mermaid-js/core/config';
+import {
+  configNumber,
+  shownValue as shown,
+  useMaxWidth,
+  type WardleyDiagramConfig,
+} from '@mermaid-js/core/config';
 import { WARDLEY_CONFIG_INVALID } from './codes.ts';
 import { wardleyBetaConfigDefaults } from './generated/config-defaults.ts';
 import type { WardleyModel } from './model.ts';
-import { configNumber } from '@mermaid-js/core/config';
-import { shownValue as shown } from '@mermaid-js/core/config';
-import { useMaxWidth } from '@mermaid-js/core/config';
 
 /** The config section wardley reads: v12's name (D421). */
 export const WARDLEY_SECTION = 'wardley-beta';

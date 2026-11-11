@@ -17,9 +17,7 @@ import type {
   Rect,
   SequenceLayout,
 } from './types.ts';
-import { nonFinite as numbers } from '@mermaid-js/core/layout';
-import { rectsOverlap as overlaps } from '@mermaid-js/core/layout';
-import { within } from '@mermaid-js/core/layout';
+import { nonFinite as numbers, rectsOverlap as overlaps, within } from '@mermaid-js/core/layout';
 
 type Participants = ReadonlyMap<string, ParticipantLayout>;
 

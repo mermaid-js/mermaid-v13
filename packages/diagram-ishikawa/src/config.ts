@@ -5,10 +5,8 @@
  * `diagramPadding` a number, or a numeric string as its number, at or above the schema's
  * minimum; for `useMaxWidth` a boolean.
  */
-import type { IshikawaDiagramConfig } from '@mermaid-js/core/config';
+import { configNumber, type IshikawaDiagramConfig, useMaxWidth } from '@mermaid-js/core/config';
 import { ishikawaConfigDefaults } from './generated/config-defaults.ts';
-import { configNumber } from '@mermaid-js/core/config';
-import { useMaxWidth } from '@mermaid-js/core/config';
 
 /** The `ishikawa` options the layout reads, every one set. */
 export interface IshikawaLayoutConfig {

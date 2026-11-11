@@ -13,14 +13,16 @@
  * root `wrap` is set too, as v12.
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
-import type { C4DiagramConfig } from '@mermaid-js/core/config';
+import {
+  type C4DiagramConfig,
+  configNumber,
+  fontWeightOf as weightOf,
+} from '@mermaid-js/core/config';
 import { checkStyle } from '@mermaid-js/core/svg';
 import { fontSizePx, type FontKey } from '@mermaid-js/core/text';
 import { c4ConfigDefaults } from './generated/config-defaults.ts';
 import { FONT_WEIGHT } from './layout/metrics.ts';
 import { C4_ELEMENT_KINDS, type C4ElementKind } from './model.ts';
-import { configNumber } from '@mermaid-js/core/config';
-import { fontWeightOf as weightOf } from '@mermaid-js/core/config';
 
 /** The `c4` lengths, row counts and flags the layout reads, every one set. */
 export interface C4LayoutConfig {

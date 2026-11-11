@@ -12,18 +12,14 @@ import type {
   CompletionItem,
   DocumentView,
   ProbeResult,
-  Range,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { treemapDocs } from '../generated/docs.ts';
 import type { TreemapModel } from '../model.ts';
 import type { TreemapDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { ITEMS, span, tokenBefore } from './tables.ts';
-import type { ItemPlace } from './tables.ts';
-import { atLineStart } from '@mermaid-js/shared/parser/facet';
-import { wordRange } from '@mermaid-js/shared/parser/facet';
-import { keywordItem } from '@mermaid-js/shared/parser/facet';
+import { type ItemPlace, ITEMS, tokenBefore } from './tables.ts';
+import { atLineStart, keywordItem, wordRange } from '@mermaid-js/shared/parser/facet';
 
 /** The kind of the token that ends right at `at` (no blank between), if any. */
 function gluedBefore(tokens: TokenStream | undefined, at: number): number | undefined {

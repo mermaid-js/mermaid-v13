@@ -4,13 +4,11 @@
 // it draws. Column colours come from the theme, not the author, so they are not named; icons
 // are drawn by neither output (D376).
 import type { Warning } from '@mermaid-js/core';
-import { Style, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { KanbanLayout, PlacedLabel } from '../layout/index.ts';
 import { kanbanBoardOrder, type KanbanModel } from '../model.ts';
 import { userClasses } from '../render/classes.ts';
 import { ticketUrl, type LinkContext } from '../render/links.ts';
-import { emphasised } from '@mermaid-js/shared/ascii';
-import { asciiDropped } from '@mermaid-js/shared/ascii';
+import { asciiDropped, emphasised } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'emphasis' | 'link';

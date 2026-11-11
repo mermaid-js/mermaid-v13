@@ -5,15 +5,11 @@
 // honour is one more kind (pitfall 22): fonts, colours and the SVG's width and margin.
 import type { Warning } from '@mermaid-js/core';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
-import type { CheckedStyle } from '@mermaid-js/core/svg';
-import { Style, type MeasuredLabel } from '@mermaid-js/core/text';
+import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { UsecaseConfigKey, UsecaseLayoutConfig } from '../config.ts';
 import type { UsecaseModel } from '../model.ts';
 import type { UsecaseNodeView, UsecasePrepared } from '../layout/prepare.ts';
-import { styled } from '@mermaid-js/shared/ascii';
-import { statements } from '@mermaid-js/shared/ascii';
-import { emphasised } from '@mermaid-js/shared/ascii';
-import { asciiDropped } from '@mermaid-js/shared/ascii';
+import { asciiDropped, emphasised, statements, styled } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature =

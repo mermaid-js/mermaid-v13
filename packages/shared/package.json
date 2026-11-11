@@ -56,15 +56,35 @@
       "types": "./dist/parser/flow-facet.d.ts",
       "default": "./dist/parser/flow-facet.js"
     },
-    "./svg/edges": {
-      "mermaid-source": "./src/svg/edges.ts",
-      "types": "./dist/svg/edges.d.ts",
-      "default": "./dist/svg/edges.js"
+    "./svg/arrowheads": {
+      "mermaid-source": "./src/svg/arrowheads.ts",
+      "types": "./dist/svg/arrowheads.d.ts",
+      "default": "./dist/svg/arrowheads.js"
     },
-    "./shapes": {
-      "mermaid-source": "./src/shapes/index.ts",
-      "types": "./dist/shapes/index.d.ts",
-      "default": "./dist/shapes/index.js"
+    "./svg/graph": {
+      "mermaid-source": "./src/svg/graph.ts",
+      "types": "./dist/svg/graph.d.ts",
+      "default": "./dist/svg/graph.js"
+    },
+    "./svg/route": {
+      "mermaid-source": "./src/svg/route.ts",
+      "types": "./dist/svg/route.d.ts",
+      "default": "./dist/svg/route.js"
+    },
+    "./shapes/kit": {
+      "mermaid-source": "./src/shapes/kit.ts",
+      "types": "./dist/shapes/kit.d.ts",
+      "default": "./dist/shapes/kit.js"
+    },
+    "./shapes/basic": {
+      "mermaid-source": "./src/shapes/basic.ts",
+      "types": "./dist/shapes/basic.d.ts",
+      "default": "./dist/shapes/basic.js"
+    },
+    "./shapes/extended": {
+      "mermaid-source": "./src/shapes/extended.ts",
+      "types": "./dist/shapes/extended.d.ts",
+      "default": "./dist/shapes/extended.js"
     },
     "./layout": {
       "mermaid-source": "./src/layout/index.ts",

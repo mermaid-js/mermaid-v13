@@ -2,7 +2,6 @@
  * The mindmap facet's tables and shared helpers (DESIGN §4.5, D95). Keyword docs are not here:
  * they come from the grammar file (`generated/docs.ts`).
  */
-import type { Range } from '@mermaid-js/core/parser-kit';
 import type { MindmapShape } from '../model.ts';
 export { lineBefore } from '@mermaid-js/shared/parser/facet';
 export { span } from '@mermaid-js/shared/parser/facet';

@@ -24,7 +24,8 @@ import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { graphSpacing, groupPadding, labelledEdge, sideways } from '@mermaid-js/shared/layout';
 import type { AgentflowDiagramConfig } from '@mermaid-js/core/config';
 import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
-import { curveKind, curveRouting, textStyle, type CurveKind } from '@mermaid-js/shared/svg/edges';
+import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
+import { textStyle } from '@mermaid-js/shared/svg/graph';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   AgentflowFlowModel,
@@ -38,7 +39,7 @@ import type { AgentflowLayoutContext } from './context.ts';
 import { agentflowConfigDefaults } from '../generated/config-defaults.ts';
 import { AGENTFLOW_METRICS, FLOWCHART_LENGTH_DEFAULTS, TITLE_MARGIN_DEFAULTS } from './metrics.ts';
 import { shapeSize, shapeSpan, type LayoutShape, type ShapeGeometry } from './shapes.ts';
-import { themePads } from '@mermaid-js/shared/shapes';
+import { themePads } from '@mermaid-js/shared/shapes/kit';
 
 /** A vertex or a collapsed flow, drawn as a node. */
 export interface AgentflowNodeView {

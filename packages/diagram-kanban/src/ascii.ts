@@ -8,7 +8,7 @@
  * A board wider than `ascii.maxWidth` is not folded; the API adds `ASCII_TOO_WIDE` (D84).
  */
 import type { TextRenderContext } from '@mermaid-js/core';
-import { ascii as asciiGlyphs, asciiOptions, cellMeasurer, unicode } from '@mermaid-js/core/ascii';
+import { asciiOptions, cellMeasurer } from '@mermaid-js/core/ascii';
 import { cellProfile } from '@mermaid-js/core/layout';
 import { kanbanLayoutInput, layoutKanban, type KanbanLayout } from './layout/index.ts';
 import type { KanbanModel } from './model.ts';

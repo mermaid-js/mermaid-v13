@@ -7,17 +7,21 @@
  */
 import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-kit';
 import { treeviewDocs } from '../generated/docs.ts';
-import { BUILTIN_ICON_PACK, detectIcon, isBuiltinIcon, resolveIcon } from '../icons.ts';
-import type { TreeViewIconOptions } from '../icons.ts';
+import {
+  BUILTIN_ICON_PACK,
+  detectIcon,
+  isBuiltinIcon,
+  resolveIcon,
+  type TreeViewIconOptions,
+} from '../icons.ts';
 import type { TreeViewNode } from '../model.ts';
 import type { TreeViewDocument } from '../parser/ast.ts';
 import { writtenName } from '../parser/convert.ts';
 import { textKeyword } from '../parser/parser.ts';
 import { T } from '../parser/tokens.ts';
-import { inside, span, statementAt } from './ranges.ts';
+import { inside, statementAt } from './ranges.ts';
 import { iconOptionsOf, pathOf, treeOf } from './tree.ts';
-import { code } from '@mermaid-js/shared/parser/facet';
-import { keywordHover } from '@mermaid-js/shared/parser/facet';
+import { code, keywordHover } from '@mermaid-js/shared/parser/facet';
 export { code } from '@mermaid-js/shared/parser/facet';
 
 /** The keyword of a token that holds more than it (a text statement, `:::name`). */

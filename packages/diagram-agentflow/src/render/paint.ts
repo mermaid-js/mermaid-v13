@@ -10,7 +10,7 @@
 import type { OutlinePaint } from '@mermaid-js/core/svg';
 import type { AgentflowPrepared } from '../layout/index.ts';
 import type { AgentflowRenderContext } from './context.ts';
-import { arrowheads, type Arrowheads } from '@mermaid-js/shared/svg/edges';
+import { arrowheads, type Arrowheads } from '@mermaid-js/shared/svg/arrowheads';
 import { usesPlain } from './shapes.ts';
 import type { Palette } from './slots.ts';
 

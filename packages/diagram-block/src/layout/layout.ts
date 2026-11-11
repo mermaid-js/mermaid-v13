@@ -13,7 +13,7 @@ import { BLOCK_CONFIG_INVALID } from '../codes.ts';
 import { checkStyle } from '@mermaid-js/core/svg';
 import { fontSizePx, layoutLabel, Style, type FontKey } from '@mermaid-js/core/text';
 import { isComposite, type Block, type BlockEdge, type BlockModel } from '../model.ts';
-import { themePads, type Pads } from '@mermaid-js/shared/shapes';
+import { themePads, type Pads } from '@mermaid-js/shared/shapes/kit';
 import { clipOutline, outlineExtent, type Point } from '../shapes/outline.ts';
 import { placeGrid, sizeGrid, type GridNode } from './grid.ts';
 import { kindOf, SHAPE_OF, type Natural } from './kinds.ts';

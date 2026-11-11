@@ -23,12 +23,13 @@ import {
   LBRACE,
   LF,
   PERCENT,
+  type Probe,
   RBRACE,
   SEMI,
+  type SourceView,
+  type TokenStream,
 } from '@mermaid-js/core/parser-kit';
-import { lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
-import type { Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
-import type { StateLexerOptions } from '@mermaid-js/shared/parser/state';
+import { lowerCode, StateLexer, type StateLexerOptions } from '@mermaid-js/shared/parser/state';
 import { T } from './tokens.ts';
 
 // Start conditions of journey.jison (all exclusive).
@@ -86,7 +87,7 @@ export function lex(src: string, from: number, view: SourceView, probe?: Probe):
  * Each start condition is a method named after it.
  */
 class JourneyLexer extends StateLexer {
-  protected override prepare(text: string, view: SourceView): string {
+  protected override prepare(text: string): string {
     return lexerText(text);
   }
 

@@ -7,17 +7,17 @@ import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { graphSpacing, groupPadding, labelledEdge, sideways } from '@mermaid-js/shared/layout';
 import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
-import { textStyle } from '@mermaid-js/shared/svg/edges';
+import { textStyle } from '@mermaid-js/shared/svg/graph';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { FlowModel, FlowModelEdge, FlowVertex } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { FlowRenderContext } from './context.ts';
-import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/edges';
+import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
 import { dirOf, nesting, type Nesting } from './nesting.ts';
 import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
 import { assetSize } from './assets.ts';
 import { canonicalShape, shapeHasLabel, shapeSize, shapeSpan, type Pads } from './shapes.ts';
-import { themePads } from '@mermaid-js/shared/shapes';
+import { themePads } from '@mermaid-js/shared/shapes/kit';
 
 export interface NodeView {
   id: string;

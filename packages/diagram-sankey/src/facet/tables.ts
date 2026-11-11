@@ -2,8 +2,7 @@
  * Helpers the sankey completion and hover share: token lookup, the row a token is on, and
  * Markdown code spans.
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
-import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import { Kind, type TokenStream } from '@mermaid-js/core/parser-kit';
 import { fieldName } from '../parser/names.ts';
 import { SankeyKind as T } from '../parser/tokens.ts';
 import { tokenBefore } from '@mermaid-js/shared/parser/facet';

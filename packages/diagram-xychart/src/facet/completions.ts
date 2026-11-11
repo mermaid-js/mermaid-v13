@@ -6,24 +6,23 @@
  * axis or plot name. Inside text values (`accTitle:`, `accDescr`, strings), comments and front
  * matter nothing is offered, and neither are names: a chart has no ids to complete.
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
-import type {
-  CompletionItem,
-  CompletionKind,
-  DocumentView,
-  ProbeResult,
-  Range,
-  TokenStream,
+import {
+  type CompletionItem,
+  type DocumentView,
+  Kind,
+  type ProbeResult,
+  type TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { xychartCategories } from '../generated/categories.ts';
 import { xychartDocs } from '../generated/docs.ts';
 import type { XyChartDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import type { KeywordItem } from './tables.ts';
-import { HEADER, ORIENTATIONS, span, STATEMENTS, tokenBefore } from './tables.ts';
-import { wordRange } from '@mermaid-js/shared/parser/facet';
-import { atStatementStart as atLineStart } from '@mermaid-js/shared/parser/facet';
-import { CompletionList as Items } from '@mermaid-js/shared/parser/facet';
+import { HEADER, ORIENTATIONS, STATEMENTS, tokenBefore } from './tables.ts';
+import {
+  atStatementStart as atLineStart,
+  CompletionList as Items,
+  wordRange,
+} from '@mermaid-js/shared/parser/facet';
 
 /** Modes whose text is a value, not code: nothing is offered there. */
 const VALUE_MODES = new Set([

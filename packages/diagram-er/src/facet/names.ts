@@ -3,8 +3,7 @@
 import { parseEr } from '../parser/index.ts';
 import { erTokens } from '../parser/tokens-api.ts';
 import { T } from '../parser/tokens.ts';
-import { shapeReason } from '@mermaid-js/shared/parser/facet';
-import { readsBack } from '@mermaid-js/shared/parser/facet';
+import { readsBack, shapeReason } from '@mermaid-js/shared/parser/facet';
 export { readsBack } from '@mermaid-js/shared/parser/facet';
 export { shapeReason } from '@mermaid-js/shared/parser/facet';
 

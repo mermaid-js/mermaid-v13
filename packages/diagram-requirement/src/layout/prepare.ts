@@ -1,24 +1,18 @@
 // RequirementModel → LayoutGraph (DESIGN §6.1): every box and every relation label measured
 // before layout. The box is v12's `requirementBox.ts`; every length comes from the metrics
 // table (`metrics.ts`) or the px unit profile (pitfall 13).
-import type {
-  EdgeRouting,
-  LayoutEdge,
-  LayoutGraph,
-  LayoutMetrics,
-  LayoutNode,
-  UnitProfile,
-} from '@mermaid-js/core/layout';
-import { pxProfile } from '@mermaid-js/core/layout';
-import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
-import { curveKind, curveRouting, textStyle, type CurveKind } from '@mermaid-js/shared/svg/edges';
 import {
-  fontSizePx,
-  layoutLabel,
-  Style,
-  type FontKey,
-  type MeasuredLabel,
-} from '@mermaid-js/core/text';
+  type LayoutEdge,
+  type LayoutGraph,
+  type LayoutMetrics,
+  type LayoutNode,
+  pxProfile,
+  type UnitProfile,
+} from '@mermaid-js/core/layout';
+import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
+import { textStyle } from '@mermaid-js/shared/svg/graph';
+import { layoutLabel, Style, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { BoxOf, Relation, RequirementModel } from '../model.ts';
 import type { RequirementRenderContext } from './context.ts';
 import {
@@ -119,9 +113,6 @@ export interface RequirementPrepared {
 }
 
 export const requirementCurve = curveKind;
-
-/** The least bold font weight. */
-const BOLD = 600;
 
 type Measure = (text: string, font: FontKey, bits: number) => MeasuredLabel;
 

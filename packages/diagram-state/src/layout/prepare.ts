@@ -7,7 +7,7 @@ import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core
 import { fromPx, pxProfile, type UnitProfile } from '@mermaid-js/core/layout';
 import { graphSpacing, labelledEdge, sideways } from '@mermaid-js/shared/layout';
 import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
-import { textStyle } from '@mermaid-js/shared/svg/edges';
+import { textStyle } from '@mermaid-js/shared/svg/graph';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { StateModel, StateNode, StateNote, StateTransition } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from '@mermaid-js/core/config';

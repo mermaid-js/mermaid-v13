@@ -15,7 +15,7 @@ import { stateDocs } from '../generated/docs.ts';
 import type { StateDocument, StateRegionNode, StateStatementNode } from '../parser/ast.ts';
 import type { StateModel } from '../parser/model.ts';
 import { T } from '../parser/tokens.ts';
-import { code, DIRECTIONS, KIND_NAMES, plural, span } from './tables.ts';
+import { code, DIRECTIONS, KIND_NAMES, plural } from './tables.ts';
 import { trimmed } from '@mermaid-js/shared/parser/facet';
 
 /** Kinds with no grammar terminal, and the kind whose doc covers them. */

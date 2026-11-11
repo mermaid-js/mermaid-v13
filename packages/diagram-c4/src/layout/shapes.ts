@@ -14,7 +14,7 @@
  * `2·pad`, as the others.
  */
 // cspell:ignore kepano
-import { capRy, cylinderSize, queueRx } from '@mermaid-js/shared/shapes';
+import { capRy, cylinderSize, queueRx } from '@mermaid-js/shared/shapes/kit';
 import { kindParts, type C4Element } from '../model.ts';
 import { C4_METRICS as M } from './metrics.ts';
 import type { C4ShapeId, Point, Rect } from './types.ts';

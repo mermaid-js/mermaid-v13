@@ -1,6 +1,6 @@
 export { layoutAgentflow } from './layout.ts';
 export type { AgentflowLayout } from './layout.ts';
-export { emphasisBits } from '@mermaid-js/shared/svg/edges';
+export { emphasisBits } from '@mermaid-js/shared/svg/graph';
 export { prepareAgentflow } from './prepare.ts';
 export type {
   Arrowhead,

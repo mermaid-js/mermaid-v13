@@ -6,7 +6,7 @@ import { REPO_ROOT } from './index.ts';
 // The block layout takes every length from the `block` config, the theme and its metrics table
 // (spec #521 T3, pitfall 13): no file in `packages/diagram-block/src/{layout,shapes}/` but
 // `layout/metrics.ts` holds a length literal. The leaf shapes' own geometry is the shared
-// shapes' (`@mermaid-js/shared/shapes`), so `shapes/leaf.ts` holds none either. Any number must
+// shapes' (`@mermaid-js/shared/shapes/*`), so `shapes/leaf.ts` holds none either. Any number must
 // be one of the counts, factors and tolerances below.
 const ALLOWED: Readonly<Record<string, string>> = {
   '0': 'no size, no band, no corner; the top level; the first column and row',

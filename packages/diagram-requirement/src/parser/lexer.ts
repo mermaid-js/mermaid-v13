@@ -217,7 +217,7 @@ class RequirementLexer extends StateLexer {
   }
 
   run(probe?: Probe): TokenStream {
-    const { text, n } = this;
+    const { n } = this;
     this.trim();
     if (probe) {
       while (this.p < n) {

@@ -3,7 +3,6 @@
  * and the helpers completion and hover share. Keyword docs are not here: they come from the
  * grammar file (`generated/docs.ts`).
  */
-import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from '../parser/tokens.ts';
 import type { KeywordItem } from '@mermaid-js/shared/parser/facet';
 export type { KeywordItem } from '@mermaid-js/shared/parser/facet';

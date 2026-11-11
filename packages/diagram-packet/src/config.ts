@@ -11,8 +11,7 @@
  */
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { packetConfigDefaults } from './generated/config-defaults.ts';
-import { rawConfigNumber as configNumber } from '@mermaid-js/core/config';
-import { shownValue as shown } from '@mermaid-js/core/config';
+import { rawConfigNumber as configNumber, shownValue as shown } from '@mermaid-js/core/config';
 
 export interface PacketConfig {
   readonly rowHeight: number;

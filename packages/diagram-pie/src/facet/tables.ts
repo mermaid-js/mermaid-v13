@@ -2,7 +2,6 @@
  * The pie facet's completion table and shared helpers (DESIGN §4.5, D95). Keyword docs are not
  * here: they come from the grammar file (`generated/docs.ts`).
  */
-import type { CompletionKind, Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from '../parser/tokens.ts';
 import type { KindedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
 export type { KindedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';

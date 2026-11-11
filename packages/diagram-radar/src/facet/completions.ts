@@ -10,16 +10,13 @@ import type {
   CompletionItem,
   DocumentView,
   ProbeResult,
-  Range,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { radarDocs } from '../generated/docs.ts';
 import type { RadarDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { declaredAxes, ITEMS, span, tokenBefore } from './tables.ts';
-import { atLineStart } from '@mermaid-js/shared/parser/facet';
-import { wordRange } from '@mermaid-js/shared/parser/facet';
-import { keywordCompletions } from '@mermaid-js/shared/parser/facet';
+import { declaredAxes, ITEMS, tokenBefore } from './tables.ts';
+import { atLineStart, keywordCompletions, wordRange } from '@mermaid-js/shared/parser/facet';
 
 /** Whether `at` is inside a curve's `{ }`: the last brace before it is a `{`. */
 function inBraces(tokens: TokenStream | undefined, at: number): boolean {

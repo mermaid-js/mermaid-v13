@@ -2,7 +2,7 @@
  * The timeline facet's completion tables and shared helpers (DESIGN §4.5, D95). Keyword docs
  * are not here: they come from the grammar file (`generated/docs.ts`).
  */
-import type { CompletionKind, Range } from '@mermaid-js/core/parser-kit';
+import type { CompletionKind } from '@mermaid-js/core/parser-kit';
 import { T } from '../parser/tokens.ts';
 export { lineBefore } from '@mermaid-js/shared/parser/facet';
 export { span } from '@mermaid-js/shared/parser/facet';

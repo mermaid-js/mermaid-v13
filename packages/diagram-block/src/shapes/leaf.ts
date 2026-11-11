@@ -1,11 +1,17 @@
 /**
- * Block's leaf shapes: which of the shared shapes (`@mermaid-js/shared/shapes`: sizes from the
+ * Block's leaf shapes: which of the shared shapes (`@mermaid-js/shared/shapes/*`: sizes from the
  * label box and the theme's padding) each block shape is sized as, whether it fills its grid
  * cell, and the outline edges are clipped at (`outline.ts`). The drawing is `draw.ts`'s.
  * Which block type is which shape is `../layout/kinds.ts`'s table.
  */
 import {
   capRy,
+  type Pads,
+  type PolygonShape,
+  type Shape,
+  type ShapeSize,
+} from '@mermaid-js/shared/shapes/kit';
+import {
   circle,
   cylinder,
   diamond,
@@ -19,14 +25,10 @@ import {
   stadium,
   trapezoidBottom,
   trapezoidTop,
-  type Pads,
-  type PolygonShape,
-  type Shape,
-  type ShapeSize,
-} from '@mermaid-js/shared/shapes';
+} from '@mermaid-js/shared/shapes/basic';
 import type { Outline, Point } from './outline.ts';
 
-export type { Pads } from '@mermaid-js/shared/shapes';
+export type { Pads } from '@mermaid-js/shared/shapes/kit';
 
 /** The flowchart shape names block uses. */
 export type LeafShape =

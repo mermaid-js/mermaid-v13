@@ -58,7 +58,7 @@ languageBundle:
 # theme: what the theme specs need from this package (tools/gen-config/src/theme-packages.ts):
 # dynamicReads: names the usedBy scan for literals can't see.
 theme:
-  # `themePads` (`@mermaid-js/shared/shapes`, called in layout/layout.ts) reads the shapes'
+  # `themePads` (`@mermaid-js/shared/shapes/kit`, called in layout/layout.ts) reads the shapes'
   # padding and sizes for this package: the scan does not follow this subpath (one read set per shape).
   dynamicReads:
     [

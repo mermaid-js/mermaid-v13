@@ -16,8 +16,7 @@ import type { EventModel } from '../model.ts';
 import { eventModelStructure } from '../structure.ts';
 import { drawn } from './layout.ts';
 import type { EventModelLayout, Point, Rect } from './types.ts';
-import { numbers } from '@mermaid-js/core/layout';
-import { rectInside as inside } from '@mermaid-js/core/layout';
+import { numbers, rectInside as inside } from '@mermaid-js/core/layout';
 
 const EPS = 1e-6;
 
@@ -45,8 +44,7 @@ function onEdge(p: Point, r: Rect): boolean {
 
 export function eventModelLayoutViolations(model: EventModel, layout: EventModelLayout): string[] {
   const out: string[] = [];
-  const all: [string, number][] = [];
-  for (const n of numbers(layout, 'layout')) all.push(n);
+  const all: [string, number][] = [...numbers(layout, 'layout')];
   for (const [path, n] of all) if (!Number.isFinite(n)) out.push(`${path} is ${n}`);
   structureViolations(model, layout, out);
   placementViolations(layout, out);

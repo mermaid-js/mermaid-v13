@@ -21,7 +21,6 @@ import {
   inside,
   referencesOf,
   showPercent,
-  span,
 } from './tables.ts';
 import { keywordHover } from '@mermaid-js/shared/parser/facet';
 

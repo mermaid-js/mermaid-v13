@@ -51,15 +51,16 @@ import {
   LPAREN,
   LT,
   PIPE,
+  type Probe,
   QUOTE,
   RBRACE,
   RBRACKET,
   RPAREN,
   SLASH,
+  type SourceView,
+  type TokenStream,
 } from '@mermaid-js/core/parser-kit';
-import { lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
-import type { Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
-import type { StateLexerOptions } from '@mermaid-js/shared/parser/state';
+import { StateLexer, type StateLexerOptions } from '@mermaid-js/shared/parser/state';
 import { T } from './tokens.ts';
 
 // Start conditions of block.jison (all exclusive) that its rules use, under jison's names.

@@ -3,9 +3,7 @@
  * keyword kind is offered as, and the point style keys. Keyword docs are not here: they come
  * from the grammar file (`generated/docs.ts`).
  */
-import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from '../parser/tokens.ts';
-import { span } from '@mermaid-js/shared/parser/facet';
 import type { DetailedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
 export type { DetailedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
 export { plural } from '@mermaid-js/shared/parser/facet';

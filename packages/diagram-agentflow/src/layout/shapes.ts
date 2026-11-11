@@ -1,6 +1,6 @@
 /**
  * The shapes agentflow draws a vertex or a collapsed flow with: which of the shared shapes
- * (`@mermaid-js/shared/shapes`, v12 `fa796a943` names in brackets) each is sized and spread
+ * (`@mermaid-js/shared/shapes/*`, v12 `fa796a943` names in brackets) each is sized and spread
  * with, and its outline. The outline is the one geometry the layout ends edges on (`ends.ts`)
  * and the renderer (#548) draws, as a closed polygon in the shape's own frame (centre at 0, y
  * down), curves sampled.
@@ -11,24 +11,19 @@
  * cspell:ignore kepano
  */
 import type { Point } from '@mermaid-js/core/layout';
+import { collapsedGroup, linedDocument } from '@mermaid-js/shared/shapes/extended';
+import { diamond, framedRect, hexagon, leanRight, rounded } from '@mermaid-js/shared/shapes/basic';
 import {
-  collapsedGroup,
-  diamond,
-  framedRect,
-  hexagon,
-  leanRight,
-  linedDocument,
-  rounded,
   WAVE,
   type Pads,
   type PolygonShape,
   type Shape,
   type ShapeSize,
-} from '@mermaid-js/shared/shapes';
+} from '@mermaid-js/shared/shapes/kit';
 import type { AgentflowShape } from '../parser/index.ts';
 import type { AgentflowMetrics } from './metrics.ts';
 
-export type { Pads, PadXY } from '@mermaid-js/shared/shapes';
+export type { Pads, PadXY } from '@mermaid-js/shared/shapes/kit';
 
 /** Every shape the layout sizes: the vertex shapes and v12's collapsed-flow card. */
 export type LayoutShape = AgentflowShape | 'collapsedGroup';

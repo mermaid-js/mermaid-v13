@@ -7,7 +7,7 @@ import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { graphSpacing, groupPadding, labelledEdge } from '@mermaid-js/shared/layout';
 import { erConfigDefaults } from '../generated/config-defaults.ts';
 import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
-import { textStyle } from '@mermaid-js/shared/svg/edges';
+import { textStyle } from '@mermaid-js/shared/svg/graph';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   ErAttribute,

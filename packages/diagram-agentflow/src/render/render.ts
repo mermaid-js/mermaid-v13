@@ -13,7 +13,6 @@ import {
   checkUrl,
   cls,
   openSvgRoot,
-  px,
   textElement,
   translate,
   type Attrs,
@@ -21,7 +20,9 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { edgeLabel, marker, markerTrim, routePath } from '@mermaid-js/shared/svg/edges';
+import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
+import { marker, markerTrim } from '@mermaid-js/shared/svg/arrowheads';
+import { routePath } from '@mermaid-js/shared/svg/route';
 import { layoutLabel, type MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   AgentflowEdgeView,
@@ -262,7 +263,7 @@ function drawEdge({ w, layout, paint }: Scene, e: AgentflowEdgeView): void {
 function drawEdgeLabel({ w, layout }: Scene, e: AgentflowEdgeView, paint: LabelPaint): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
-  edgeLabel(w, e.label, at, e.edge.id, {
+  labelOnBox(w, e.label, at, e.edge.id, {
     fill: paint.fill,
     text: { fill: paint.text, ...e.style.text },
     rx: 3,

@@ -15,9 +15,8 @@ import { eventmodelingDocs } from '../generated/docs.ts';
 import type { EventModel, EventModelFrame } from '../model.ts';
 import type { EventModelDocument } from '../parser/ast.ts';
 import { T, TEXT_WORD } from '../parser/tokens.ts';
-import { eventModelStructure } from '../structure.ts';
-import type { EventModelRelation } from '../structure.ts';
-import { code, inside, list, span } from './tables.ts';
+import { type EventModelRelation, eventModelStructure } from '../structure.ts';
+import { code, inside, list } from './tables.ts';
 import { keywordHover } from '@mermaid-js/shared/parser/facet';
 
 /** Tokens with a doc that hover leaves alone: names, ids, data and punctuation. */

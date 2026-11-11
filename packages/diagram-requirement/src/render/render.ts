@@ -9,7 +9,6 @@ import {
   cls,
   openSvgRoot,
   paletteSlots,
-  px,
   translate,
   type Attrs,
   type OutlinePaint,
@@ -17,7 +16,7 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { routePath } from '@mermaid-js/shared/svg/edges';
+import { routePath } from '@mermaid-js/shared/svg/route';
 import type { RequirementRenderContext } from '../layout/context.ts';
 import type { RequirementLayout } from '../layout/layout.ts';
 import { REQUIREMENT_METRICS as M } from '../layout/metrics.ts';

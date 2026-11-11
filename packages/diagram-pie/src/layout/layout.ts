@@ -22,7 +22,7 @@ import {
   PIE_METRICS as m,
   PIE_OPTIONS,
 } from './metrics.ts';
-import type { PieLayout, PieLegendRow, PieSliceLayout, PlacedLabel, Point, Rect } from './types.ts';
+import type { PieLayout, PieLegendRow, PieSliceLayout, PlacedLabel, Point } from './types.ts';
 import { RectUnion } from '@mermaid-js/shared/layout';
 
 /** What the layout reads from the render context. */

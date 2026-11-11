@@ -11,17 +11,11 @@ import {
   DOWN,
   drawBox,
   drawText,
-  DX,
-  DY,
   glyphFor,
-  graphemes,
   INTO,
-  junction,
   LEFT,
-  opposite,
   RIGHT,
   sideOf,
-  unicode,
   UP,
   type CellRect,
   type Dir,
@@ -30,15 +24,7 @@ import {
 import type { LayoutModel, Point, Side } from '@mermaid-js/core/layout';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { BoxView, RelationView, RequirementPrepared } from '../layout/prepare.ts';
-import type { Centred } from '@mermaid-js/shared/ascii';
-import { cellRect } from '@mermaid-js/shared/ascii';
-import { dirOf } from '@mermaid-js/shared/ascii';
-import { cellsOf } from '@mermaid-js/shared/ascii';
-import { wrapTitle } from '@mermaid-js/shared/ascii';
-import { finish } from '@mermaid-js/shared/ascii';
-import { tee } from '@mermaid-js/shared/ascii';
-import { cut } from '@mermaid-js/shared/ascii';
-import { drawLineCells } from '@mermaid-js/shared/ascii';
+import { cellRect, cellsOf, cut, drawLineCells, finish, tee } from '@mermaid-js/shared/ascii';
 
 /** A charset's glyphs and requirement's own marks in it, picked once (`glyphsFor`, `../ascii.ts`). */
 export interface RequirementGlyphs {

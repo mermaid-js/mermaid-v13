@@ -3,7 +3,6 @@
  * the arrow forms, the metadata keys and values per kind (v12's model builder), and what each
  * marker means. Keyword docs are not here: they come from the grammar file (`generated/docs.ts`).
  */
-import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import type { UsecaseArrowType, UsecaseModel } from '../model.ts';
 import type { UsecaseElementKind } from '../parser/ast.ts';
 import { generatedId } from '../parser/text.ts';

@@ -4,7 +4,7 @@
 // cells, composites are frames around their own grid, and spaces take their cells and draw
 // nothing. Positions follow v12's grid (`columns`, spans, a block wider than the rest of its row
 // keeping its width), but a frame grows to hold its widest row, so no box crosses a frame.
-import { cellMeasurer, cellWidth, graphemes, type CellRect } from '@mermaid-js/core/ascii';
+import { cellMeasurer, cellWidth, type CellRect } from '@mermaid-js/core/ascii';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import { layoutLabel, Style, type InlineSpans, type MeasuredLabel } from '@mermaid-js/core/text';
 import { gridAdvance, gridPosition } from '../layout/grid.ts';

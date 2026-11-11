@@ -2,12 +2,10 @@
  * The journey facet's completion table and shared helpers (DESIGN §4.5, D95). Keyword docs are
  * not here: they come from the grammar file (`generated/docs.ts`).
  */
-import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import { drawnScore } from '../score.ts';
 import type { JourneyTask } from '../model.ts';
 import { T } from '../parser/tokens.ts';
-import { code } from '@mermaid-js/shared/parser/facet';
-import type { KeywordItem } from '@mermaid-js/shared/parser/facet';
+import { code, type KeywordItem } from '@mermaid-js/shared/parser/facet';
 export type { KeywordItem } from '@mermaid-js/shared/parser/facet';
 export { plural } from '@mermaid-js/shared/parser/facet';
 export { tokenBefore } from '@mermaid-js/shared/parser/facet';

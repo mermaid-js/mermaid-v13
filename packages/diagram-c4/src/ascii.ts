@@ -10,7 +10,6 @@
  * (D459); a drawing wider than `ascii.maxWidth` is not folded: the API adds `ASCII_TOO_WIDE`.
  */
 import type { TextRenderContext } from '@mermaid-js/core';
-import { ascii as asciiGlyphs, asciiOptions, unicode } from '@mermaid-js/core/ascii';
 import type { C4Layout } from './layout/index.ts';
 import type { C4Model } from './model.ts';
 import { drawC4, ROUTE_BUDGET } from './ascii/draw.ts';

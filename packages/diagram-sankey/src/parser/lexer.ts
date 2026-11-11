@@ -33,18 +33,21 @@ import {
   DQUOTE,
   firstHole,
   HASH,
+  type Hole,
   isSpace,
   isWord,
   Kind,
   LF,
   localOffset,
+  type Probe,
   QUOTE,
   SEMI,
   SourceOffsets,
+  type SourceView,
+  type TokenStream,
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
-import { dropAt, tagQuotes } from '@mermaid-js/shared/parser/drop';
-import type { Hole, Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import { dropAt } from '@mermaid-js/shared/parser/drop';
 import { SankeyKind } from './tokens.ts';
 
 // Start conditions of sankey.jison.

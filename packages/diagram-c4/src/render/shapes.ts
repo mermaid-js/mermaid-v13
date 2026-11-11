@@ -1,6 +1,6 @@
 /**
  * The five C4 shapes' drawers: flowchart's `person`, `rounded`, `cyl`, `h-cyl` and `fr-rect`
- * (`@mermaid-js/shared/shapes`, whose cylinder, queue and frame-line paths these write; ported
+ * (`@mermaid-js/shared/shapes/*`, whose cylinder, queue and frame-line paths these write; ported
  * from Pele's src/svg/shapes.ts at 3a2f075, https://github.com/obsidianmd/pele, MIT,
  * (c) 2026 kepano), with v12 C4's corners (`rx` 12 on `rounded` and the person's body,
  * `c4ShapeAdapter.ts`). Each draws an element's laid-out box, in the canvas frame, exactly as
@@ -21,7 +21,7 @@ import {
   queueRx,
   segments,
   type Barrel,
-} from '@mermaid-js/shared/shapes';
+} from '@mermaid-js/shared/shapes/kit';
 import { C4_METRICS as M } from '../layout/metrics.ts';
 import type { C4ShapeId, Rect } from '../layout/types.ts';
 

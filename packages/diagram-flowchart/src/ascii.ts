@@ -5,14 +5,7 @@
  * The pipeline lays out with the cell measurer and the cell profile (`ctx.units`), which gives
  * `stepped` routes on the grid (D77, D78); `ascii` snaps and repairs the routes and draws them.
  */
-import {
-  ascii as asciiGlyphs,
-  asciiOptions,
-  cellMeasurer,
-  repairRoutes,
-  unicode,
-  type GlyphSet,
-} from '@mermaid-js/core/ascii';
+import { asciiOptions, cellMeasurer, repairRoutes, type GlyphSet } from '@mermaid-js/core/ascii';
 import { cellProfile } from '@mermaid-js/core/layout';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import type { FlowModel } from './parser/index.ts';
@@ -20,8 +13,7 @@ import type { FlowRenderContext } from './render/context.ts';
 import { layoutFlowchart, type FlowLayout } from './render/render.ts';
 import { drawFlowchart } from './ascii/draw.ts';
 import { asciiWarnings, type AsciiRouteWarning } from './ascii/warnings.ts';
-import { asciiRoute } from '@mermaid-js/shared/ascii';
-import { glyphSetOf } from '@mermaid-js/shared/ascii';
+import { asciiRoute, glyphSetOf } from '@mermaid-js/shared/ascii';
 
 export type {
   AsciiDroppedFeature,

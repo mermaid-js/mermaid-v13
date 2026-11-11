@@ -7,20 +7,12 @@
  * block and after `:`. Inside an item, a label or a statement's text (probe modes `string`,
  * `title`, `accTitle`, `accDescr`) and outside code nothing is offered.
  */
-import type {
-  CompletionItem,
-  DocumentView,
-  ProbeResult,
-  Range,
-  TokenStream,
-} from '@mermaid-js/core/parser-kit';
+import type { CompletionItem, DocumentView, ProbeResult } from '@mermaid-js/core/parser-kit';
 import { cynefinDocs } from '../generated/docs.ts';
 import type { CynefinDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { ITEMS, LINE_START, span, tokenBefore } from './tables.ts';
-import { lineBefore } from '@mermaid-js/shared/parser/facet';
-import { wordRange } from '@mermaid-js/shared/parser/facet';
-import { keywordItem } from '@mermaid-js/shared/parser/facet';
+import { ITEMS, LINE_START } from './tables.ts';
+import { keywordItem, lineBefore, wordRange } from '@mermaid-js/shared/parser/facet';
 
 export function cynefinCompletions(
   probe: ProbeResult,

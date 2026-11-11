@@ -2,7 +2,6 @@
  * The ishikawa facet's shared helpers (DESIGN §4.5). The keywords are the parser's
  * (`parser/keywords.ts`); their docs come from the grammar file (`generated/docs.ts`).
  */
-import type { Range } from '@mermaid-js/core/parser-kit';
 export { lineBefore } from '@mermaid-js/shared/parser/facet';
 export { span } from '@mermaid-js/shared/parser/facet';
 export { code } from '@mermaid-js/shared/parser/facet';

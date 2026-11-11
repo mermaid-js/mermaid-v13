@@ -8,20 +8,17 @@ import {
   cellWidth,
   drawBox,
   drawText,
-  graphemes,
   type GlyphSet,
 } from '@mermaid-js/core/ascii';
 import type { CellPadding } from '@mermaid-js/core/layout';
 import {
   layoutLabel,
-  Style,
   type InlineSpans,
   type LabelOptions,
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
 import type { PacketModel, PacketPiece } from '../model.ts';
-import { cut } from '@mermaid-js/shared/ascii';
-import { emphasised } from '@mermaid-js/shared/ascii';
+import { cut, emphasised } from '@mermaid-js/shared/ascii';
 
 /** Columns a bit takes; a piece of `n` bits is `COLUMNS * n + 1` wide, borders included. */
 const COLUMNS = 2;

@@ -28,7 +28,8 @@
       "entry": [
         "src/*/index.ts",
         "src/parser/{rule,state,tree,table,v12-text,drop,facet,flow,flow-facet}.ts",
-        "src/svg/edges.ts"
+        "src/svg/{arrowheads,graph,route}.ts",
+        "src/shapes/{kit,basic,extended}.ts"
       ],
       "project": ["src/**/*.ts"]
     },

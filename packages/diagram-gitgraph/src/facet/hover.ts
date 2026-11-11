@@ -5,14 +5,13 @@
  * doc of the grammar file (`generated/docs.ts`). Only the keyword of a `title`, `accTitle` or
  * `accDescr` line. Nothing on a message, a tag or a number. Never a preview.
  */
-import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
+import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-kit';
 import { gitgraphDocs } from '../generated/docs.ts';
 import type { GitCommit, GitModel } from '../model.ts';
 import type { GitGraphDocument, GitStatementNode, GitValue } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { code, span, TEXT_WORDS } from './tables.ts';
-import { inside } from '@mermaid-js/shared/parser/facet';
-import { keywordHover } from '@mermaid-js/shared/parser/facet';
+import { code, TEXT_WORDS } from './tables.ts';
+import { inside, keywordHover } from '@mermaid-js/shared/parser/facet';
 const plural = (n: number, word: string) =>
   n === 0 ? `no ${word}s` : `${n} ${word}${n === 1 ? '' : 's'}`;
 /** Kinds whose docs describe values, not keywords: no hover. */

@@ -26,13 +26,14 @@ import {
   LBRACE,
   LF,
   PERCENT,
+  type Probe,
   RBRACE,
+  type SourceView,
   SPACE,
   TAB,
+  type TokenStream,
 } from '@mermaid-js/core/parser-kit';
-import { lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
-import type { Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
-import type { StateLexerOptions } from '@mermaid-js/shared/parser/state';
+import { lowerCode, StateLexer, type StateLexerOptions } from '@mermaid-js/shared/parser/state';
 import { T } from './tokens.ts';
 
 // Start conditions of timeline.jison.
@@ -84,7 +85,7 @@ class TimelineLexer extends StateLexer {
   /** Source offset where the last `acc…` keyword's value mode starts (after `:` or `{`). */
   private valueAt = 0;
 
-  protected override prepare(text: string, view: SourceView): string {
+  protected override prepare(text: string): string {
     return lexerText(text);
   }
 

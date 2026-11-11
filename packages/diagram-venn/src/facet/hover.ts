@@ -8,7 +8,7 @@
  * - any keyword: the one-line doc of the grammar file (`generated/docs.ts`).
  * Never a preview.
  */
-import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
+import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-kit';
 import { vennDocs } from '../generated/docs.ts';
 import { idsKey, setIdOf, type VennModel } from '../model.ts';
 import type { VennDocument } from '../parser/ast.ts';

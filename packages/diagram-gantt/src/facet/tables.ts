@@ -3,7 +3,7 @@
  * from the grammar file (`generated/docs.ts`); the words inside a task's data and a setting's
  * value, which no token of their own holds, are documented here.
  */
-import type { CompletionKind, Range } from '@mermaid-js/core/parser-kit';
+import type { CompletionKind } from '@mermaid-js/core/parser-kit';
 import type { GanttModel, GanttTag, GanttTask } from '../model.ts';
 import { clickTargets, lastById } from '../ids.ts';
 import { T } from '../parser/tokens.ts';

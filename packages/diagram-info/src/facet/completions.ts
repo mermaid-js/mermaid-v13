@@ -5,21 +5,15 @@
  * `accTitle:` and `accDescr` at the start of a line. Inside a statement's text (probe modes
  * `title`, `accTitle`, `accDescr`) and outside code nothing is offered.
  */
-import type {
-  CompletionItem,
-  CompletionKind,
-  DocumentView,
-  ProbeResult,
-  Range,
-  TokenStream,
-} from '@mermaid-js/core/parser-kit';
+import type { CompletionItem, DocumentView, ProbeResult } from '@mermaid-js/core/parser-kit';
 import { infoDocs } from '../generated/docs.ts';
 import type { InfoDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { tokenBefore } from '@mermaid-js/shared/parser/facet';
-import type { KindedKeywordItem } from '@mermaid-js/shared/parser/facet';
-import { wordRange } from '@mermaid-js/shared/parser/facet';
-import { keywordCompletions } from '@mermaid-js/shared/parser/facet';
+import {
+  keywordCompletions,
+  type KindedKeywordItem,
+  wordRange,
+} from '@mermaid-js/shared/parser/facet';
 
 /** Everything completion offers, in the order it is offered. */
 const ITEMS: readonly KindedKeywordItem[] = [

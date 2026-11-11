@@ -4,14 +4,13 @@
  * D341 error or the row cap, D342); a keyword the one-line doc of
  * the grammar file (`generated/docs.ts`). Never a preview.
  */
-import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
+import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-kit';
 import { packetDocs } from '../generated/docs.ts';
 import { MAX_PACKET_ROWS } from '../normalise.ts';
 import type { PacketDocument, PacketFieldNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { code, span } from './tables.ts';
-import { inside } from '@mermaid-js/shared/parser/facet';
-import { keywordHover } from '@mermaid-js/shared/parser/facet';
+import { code } from './tables.ts';
+import { inside, keywordHover } from '@mermaid-js/shared/parser/facet';
 
 /** Statement tokens that hold their text too: only the keyword is hovered. */
 const VALUE_WORDS: Readonly<Partial<Record<number, string>>> = {
