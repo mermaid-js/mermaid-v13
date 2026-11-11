@@ -45,7 +45,7 @@ release:
 # can't see; someThemes / authorOnly: table rows that may resolve to `currentColor` (#374).
 theme:
   # `themePads` (`@mermaid-js/shared/shapes`, called in render/prepare.ts) reads the shapes'
-  # padding and sizes for this package: the scan does not look into shared.
+  # padding and sizes for this package: the scan does not follow this subpath (one read set per shape).
   dynamicReads:
     [
       'nodePaddingX',

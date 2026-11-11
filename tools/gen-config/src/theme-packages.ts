@@ -141,6 +141,13 @@ function sources(dir: string): string[] {
 
 const SHARED = join(PACKAGES, 'shared');
 
+/**
+ * Shared subpaths whose exports each read their own variables (one shape, one set of paddings):
+ * an importer reads only those of the exports it uses, so it names them in its `workspace.yaml`
+ * `theme.dynamicReads` and the scan does not follow the import.
+ */
+const PER_EXPORT: ReadonlySet<string> = new Set(['shapes']);
+
 /** The `mermaid-source` file of each `@mermaid-js/shared` subpath, by subpath (`svg/edges`). */
 function sharedEntries(): Map<string, string> {
   const manifest = join(SHARED, 'package.json');
@@ -161,7 +168,7 @@ function sharedSources(text: string): string[] {
   const entries = sharedEntries();
   const seen = new Set<string>();
   const queue = [...text.matchAll(/'@mermaid-js\/shared\/([\w/-]+)'/g)].flatMap((m) => {
-    const entry = entries.get(m[1]!);
+    const entry = PER_EXPORT.has(m[1]!) ? undefined : entries.get(m[1]!);
     return entry === undefined ? [] : [entry];
   });
   const out: string[] = [];

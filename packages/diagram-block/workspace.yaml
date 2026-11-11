@@ -59,7 +59,7 @@ languageBundle:
 # dynamicReads: names the usedBy scan for literals can't see.
 theme:
   # `themePads` (`@mermaid-js/shared/shapes`, called in layout/layout.ts) reads the shapes'
-  # padding and sizes for this package: the scan does not look into shared.
+  # padding and sizes for this package: the scan does not follow this subpath (one read set per shape).
   dynamicReads:
     [
       'nodePaddingX',
