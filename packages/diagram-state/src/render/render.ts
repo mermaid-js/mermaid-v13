@@ -34,7 +34,7 @@ import { stateMetrics } from '../layout/index.ts';
 import { completeLayout, type CompleteStateLayout } from '../layout/layout.ts';
 import type { StateLink, StateModel } from '../parser/index.ts';
 import { arrowTrim, arrowhead, drawArrowhead, routePath, type Arrowhead } from './edges.ts';
-import { drawFolded, foldedInk } from '@mermaid-js/core/svg/folded';
+import { drawFolded } from '@mermaid-js/core/svg/folded';
 import { drawFramed } from '@mermaid-js/core/svg/framed';
 import { drawDescribed, drawShape, type ShapePaint } from './shapes.ts';
 
@@ -171,7 +171,10 @@ function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
   const edgeLabel = s.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
     : undefined;
-  const folded = s.nodes.some((v) => v.block === 'folded') ? foldedInk(theme) : undefined;
+  // Read here, not in core, so the theme inventory lists the diagrams that use them.
+  const folded = s.nodes.some((v) => v.block === 'folded')
+    ? { ink: theme.color('nodeBorder'), muted: theme.color('mutedBorder') }
+    : undefined;
   return { ...node, composite, note, folded, edgeLabel, slots: paletteSlots(theme, model, s) };
 }
 

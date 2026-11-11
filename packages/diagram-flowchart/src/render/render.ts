@@ -8,7 +8,7 @@ import type {
   RoutePoint,
 } from '@mermaid-js/core/layout';
 import { layered } from '@mermaid-js/core/layout';
-import { drawFolded, foldedInk } from '@mermaid-js/core/svg/folded';
+import { drawFolded } from '@mermaid-js/core/svg/folded';
 import { drawFramed } from '@mermaid-js/core/svg/framed';
 import {
   checkLinkTarget,
@@ -234,7 +234,10 @@ function paints(theme: ThemeOf, flow: Prepared, lanes: boolean): Paints {
     ? { stroke: theme.color('clusterBorder') }
     : undefined;
   const laneStroke = lanes ? theme.color('clusterBorder') : undefined;
-  const folded = flow.nodes.some((v) => v.block === 'folded') ? foldedInk(theme) : undefined;
+  // Read here, not in core, so the theme inventory lists the diagrams that use them.
+  const folded = flow.nodes.some((v) => v.block === 'folded')
+    ? { ink: theme.color('nodeBorder'), muted: theme.color('mutedBorder') }
+    : undefined;
   const slotOf = paletteSlots(theme);
   const edgeLabel = flow.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }

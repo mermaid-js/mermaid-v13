@@ -78,14 +78,6 @@ export interface FoldedPaint {
   readonly muted: Paint;
 }
 
-/** The folded box's own colours from the host's theme: the marks' ink and the muted type. */
-export const foldedInk = (theme: {
-  color(name: 'nodeBorder' | 'mutedBorder'): Paint;
-}): Pick<FoldedPaint, 'ink' | 'muted'> => ({
-  ink: theme.color('nodeBorder'),
-  muted: theme.color('mutedBorder'),
-});
-
 /**
  * Draws the folded box `size` centred on (0, 0): `title` and `type` are the measured labels
  * (`type` measured at {@link FOLDED_TYPE_SIZE}), `chars` the type's letters.
