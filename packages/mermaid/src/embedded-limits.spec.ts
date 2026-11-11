@@ -4,7 +4,9 @@
  */
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
+import { flowchart } from '@mermaid-js/diagram-flowchart';
 import { createMermaid, MermaidError } from './index.ts';
+import { createMermaid as createSlim } from './slim.ts';
 
 /** Start tags of every `<svg>` in the output, the outer root first. */
 function roots(svg: string): string[] {
@@ -130,5 +132,49 @@ describe('limits count the whole text', () => {
     const m = createMermaid();
     m.initialize({ maxTextSize: text.length - 1 });
     expect((await rejection(m.render('host', text))).code).toBe('LIMIT');
+  });
+});
+
+describe('block types that cannot be drawn', () => {
+  const text = [
+    'flowchart LR',
+    '  A --> talk',
+    '  mermaid talk["Talk"] {',
+    '    %% the conversation',
+    '    sequenceDiagram',
+    '      A->>B: hi',
+    '  }',
+  ].join('\n');
+
+  it('names an unregistered block type under mermaid/slim, at the type line', async () => {
+    const e = await rejection(createSlim({ diagrams: [flowchart] }).render('host', text));
+    expect(e.code).toBe('UNSUPPORTED_DIAGRAM');
+    expect(e.message).toContain('"sequence"');
+    expect(e.message).toContain('mermaid talk');
+    expect(e.line).toBe(5);
+    expect(e.column).toBe(5);
+    const viaParse = await rejection(createSlim({ diagrams: [flowchart] }).parse(text));
+    expect(viaParse.line).toBe(5);
+  });
+
+  it('names the type in renderSync too', async () => {
+    const m = createSlim({ diagrams: [flowchart] });
+    await m.prepare('flowchart LR\n  A');
+    let e: unknown;
+    try {
+      m.renderSync(text);
+    } catch (err) {
+      e = err;
+    }
+    expect(e).toBeInstanceOf(MermaidError);
+    expect((e as MermaidError).message).toContain('"sequence"');
+    expect((e as MermaidError).line).toBe(5);
+  });
+
+  it('names the word that is not a diagram type', async () => {
+    const bad = text.replace('sequenceDiagram', 'sequenceDiagrm');
+    const e = await rejection(createMermaid().render('host', bad));
+    expect(e.line).toBe(5);
+    expect(e.message).toContain('`sequenceDiagrm` is not a diagram type');
   });
 });

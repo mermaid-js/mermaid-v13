@@ -77,10 +77,11 @@ export function noDiagramType(source: string, block: EmbeddedBlock, from: number
   }
   const lead = line.length - line.trimStart().length;
   const at = block.offset + Math.min(start + lead, block.text.length);
+  const word = /^[^\s{[(;:]+/.exec(line.trim())?.[0];
   const d: Diagnostic = {
     severity: 'error',
     code: 'EMBED_NO_TYPE',
-    message: `The \`mermaid ${block.id}\` block must start with a diagram type, such as \`sequenceDiagram\` or \`classDiagram\`, after any blank lines, comments and front matter.`,
+    message: `The \`mermaid ${block.id}\` block must start with a diagram type, such as \`sequenceDiagram\` or \`classDiagram\`, after any blank lines, comments and front matter${word ? `; \`${word}\` is not a diagram type` : ''}.`,
     range: { start: at, end: at + line.trim().length },
   };
   return errorFromDiagnostics(source, [d])!;
