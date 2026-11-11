@@ -15,9 +15,9 @@
  * error: it reports it, skips to the next line break and carries on (R-PARSE-4).
  */
 import { ExpectedTable, Kind, STOP } from '@mermaid-js/core/parser-kit';
-import { RuleParser } from '@mermaid-js/core/parser-kit/rule';
+import { RuleParser } from '@mermaid-js/shared/parser/rule';
 import type { ParseOptions, ParseResult, Range, TokenStream } from '@mermaid-js/core/parser-kit';
-import type { RuleGrammar } from '@mermaid-js/core/parser-kit/rule';
+import type { RuleGrammar } from '@mermaid-js/shared/parser/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { InfoModel } from '../model.ts';
@@ -153,7 +153,14 @@ class InfoParser extends RuleParser<PreprocessResult> {
     const { st } = this;
     const where = this.range();
     if (this.kind() === Kind.Error) this.badCharacters(where);
-    st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found(), undefined, hint ?? this.explain());
+    st.diagnostics.unexpected(
+      'UNEXPECTED',
+      where,
+      EXPECTED.names(want),
+      this.found(),
+      undefined,
+      hint ?? this.explain()
+    );
     throw STOP;
   }
 

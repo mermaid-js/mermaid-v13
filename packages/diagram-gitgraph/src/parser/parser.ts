@@ -22,10 +22,26 @@
  * parser does not stop at the first error: it reports it, skips to the next line break and
  * carries on (R-PARSE-4). A statement with a syntax error changes nothing.
  */
-import { APOSTROPHE, DQUOTE, ExpectedTable, ID_CONTROL, ID_RESERVED, idEscaper, Kind, kindSet, STOP } from '@mermaid-js/core/parser-kit';
-import { RuleParser } from '@mermaid-js/core/parser-kit/rule';
-import type { AstId, ParseOptions, ParseResult, Range, TokenStream } from '@mermaid-js/core/parser-kit';
-import type { RuleGrammar } from '@mermaid-js/core/parser-kit/rule';
+import {
+  APOSTROPHE,
+  DQUOTE,
+  ExpectedTable,
+  ID_CONTROL,
+  ID_RESERVED,
+  idEscaper,
+  Kind,
+  kindSet,
+  STOP,
+} from '@mermaid-js/core/parser-kit';
+import { RuleParser } from '@mermaid-js/shared/parser/rule';
+import type {
+  AstId,
+  ParseOptions,
+  ParseResult,
+  Range,
+  TokenStream,
+} from '@mermaid-js/core/parser-kit';
+import type { RuleGrammar } from '@mermaid-js/shared/parser/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { GitDirection, GitModel, GitWrittenType } from '../model.ts';
@@ -301,7 +317,14 @@ class GitGraphParser extends RuleParser<PreprocessResult> {
     // `title` and the accessibility tokens take the blanks before them.
     while (where.start < where.end && /[\t ]/.test(this.src[where.start] ?? '')) where.start++;
     if (this.kind() === Kind.Error) this.badCharacters(where);
-    st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found(), undefined, hint ?? this.explain());
+    st.diagnostics.unexpected(
+      'UNEXPECTED',
+      where,
+      EXPECTED.names(want),
+      this.found(),
+      undefined,
+      hint ?? this.explain()
+    );
     throw STOP;
   }
 

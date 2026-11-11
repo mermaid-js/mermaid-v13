@@ -15,8 +15,8 @@ import type {
 import { pieDocs } from '../generated/docs.ts';
 import type { PieDocument } from '../parser/ast.ts';
 import { HEADER_LINE, ITEMS, span, tokenBefore } from './tables.ts';
-import { wordRange } from '@mermaid-js/core/parser-kit/facet';
-import { keywordCompletions } from '@mermaid-js/core/parser-kit/facet';
+import { wordRange } from '@mermaid-js/shared/parser/facet';
+import { keywordCompletions } from '@mermaid-js/shared/parser/facet';
 
 /** Whether `at` is on the `pie` line, after `pie` (and `showData`). */
 function onHeaderLine(text: string, at: number): boolean {

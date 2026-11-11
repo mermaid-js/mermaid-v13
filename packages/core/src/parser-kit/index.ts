@@ -58,5 +58,4 @@ export type {
   LanguageFacet,
   NameSyntax,
 } from './language.ts';
-export { dropAt, tagQuotes } from './drop.ts';
 export { foundText, ID_CONTROL, ID_RESERVED, idEscaper, STOP, Stop } from './parser-support.ts';

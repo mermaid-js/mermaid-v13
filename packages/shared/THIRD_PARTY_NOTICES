@@ -1,5 +1,5 @@
-Third-party notices for @mermaid-js/diagram-usecase
-===================================================
+Third-party notices for @mermaid-js/shared
+==========================================
 
 Pele
 ----
@@ -8,7 +8,8 @@ The files below are ported from, or based on, Pele (https://github.com/obsidianm
 commit 3a2f075 (release 1.13.0). Each file's header says what it took and what changed. Pele is
 used under the MIT License:
 
-  src/render/route.ts
+  src/svg/arrowheads.ts
+  src/svg/route.ts
 
 MIT License
 

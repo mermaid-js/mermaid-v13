@@ -28,14 +28,14 @@ import type { LayoutModel, Point, Side } from '@mermaid-js/core/layout';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { ErCardinality } from '../parser/index.ts';
 import type { EdgeView, EntityView, ErPrepared } from '../layout/prepare.ts';
-import type { Centred } from '@mermaid-js/core/ascii';
-import { cellRect } from '@mermaid-js/core/ascii';
-import { dirOf } from '@mermaid-js/core/ascii';
-import { cellsOf } from '@mermaid-js/core/ascii';
-import { wrapTitle } from '@mermaid-js/core/ascii';
-import { finish } from '@mermaid-js/core/ascii';
-import { tee } from '@mermaid-js/core/ascii';
-import { drawLineCells } from '@mermaid-js/core/ascii';
+import type { Centred } from '@mermaid-js/shared/ascii';
+import { cellRect } from '@mermaid-js/shared/ascii';
+import { dirOf } from '@mermaid-js/shared/ascii';
+import { cellsOf } from '@mermaid-js/shared/ascii';
+import { wrapTitle } from '@mermaid-js/shared/ascii';
+import { finish } from '@mermaid-js/shared/ascii';
+import { tee } from '@mermaid-js/shared/ascii';
+import { drawLineCells } from '@mermaid-js/shared/ascii';
 
 const textOf = (label: MeasuredLabel, line: number): string =>
   (label.lines[line] ?? []).map((r) => r.text).join('');

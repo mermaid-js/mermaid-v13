@@ -25,7 +25,7 @@ import { setTextSizing, type SizingFor } from './layout/sizing.ts';
 import { drawUsecase } from './ascii/draw.ts';
 import { cellSizing } from './ascii/sizing.ts';
 import { asciiWarnings, type AsciiRouteWarning } from './ascii/warnings.ts';
-import { asciiRoute } from '@mermaid-js/core/ascii';
+import { asciiRoute } from '@mermaid-js/shared/ascii';
 
 export type {
   AsciiDroppedFeature,
@@ -87,10 +87,14 @@ export function ascii(model: UsecaseModel, layout: UsecaseLayout, ctx: TextRende
   for (const w of asciiWarnings(model, prepared, ctx.ast)) ctx.warn(w);
   // D78: a stretch no lane was found for stays as snapped; say which lines cross or share.
   const views = new Map(prepared.edges.map((e) => [e.id, e]));
-  const routeWarning: AsciiRouteWarning | undefined = asciiRoute(unresolved, 'relationships', (id) => {
-        const view = views.get(id);
-        return view ? edgeAstId(view) : id;
-      });
+  const routeWarning: AsciiRouteWarning | undefined = asciiRoute(
+    unresolved,
+    'relationships',
+    (id) => {
+      const view = views.get(id);
+      return view ? edgeAstId(view) : id;
+    }
+  );
   if (routeWarning) ctx.warn(routeWarning);
   return drawUsecase(prepared, laid, routes, glyphs, {
     title: ctx.title ?? model.title,

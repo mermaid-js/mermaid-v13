@@ -25,9 +25,21 @@
  * `accDescr {…}`, YAML or directive scan that failed is not repeated for a start it covered.
  */
 // cspell:words accdescr acctitle
-import { APOSTROPHE, COLON, DASH, DIGIT_0, DOT, DQUOTE, isBlank, isDigit, Kind, newlineAt, PERCENT } from '@mermaid-js/core/parser-kit';
-import { isBreak, RuleLexer, SKIP } from '@mermaid-js/core/parser-kit/rule';
-import type { RuleLexerOptions } from '@mermaid-js/core/parser-kit/rule';
+import {
+  APOSTROPHE,
+  COLON,
+  DASH,
+  DIGIT_0,
+  DOT,
+  DQUOTE,
+  isBlank,
+  isDigit,
+  Kind,
+  newlineAt,
+  PERCENT,
+} from '@mermaid-js/core/parser-kit';
+import { isBreak, RuleLexer, SKIP } from '@mermaid-js/shared/parser/rule';
+import type { RuleLexerOptions } from '@mermaid-js/shared/parser/rule';
 import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
 
@@ -53,7 +65,6 @@ export function lex(src: string, from: number, view: SourceView): TokenStream {
 
 /** One lex. Offsets are into {@link text}; {@link emit} maps them to the source. */
 class PacketLexer extends RuleLexer {
-
   /** The end of the rule that matches at `p` (its kind in {@link kind}), or -1. */
   protected scan(p: number): number {
     const { text } = this;

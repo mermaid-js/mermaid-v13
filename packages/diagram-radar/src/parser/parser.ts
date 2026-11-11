@@ -24,10 +24,25 @@
  * does not stop at the first error: it reports it, skips to the next line break (past the `}`
  * of a curve it was in) and carries on.
  */
-import { APOSTROPHE, ASCII_MAX, DQUOTE, ExpectedTable, formatExpected, Kind, kindSet, STOP } from '@mermaid-js/core/parser-kit';
-import { RuleParser } from '@mermaid-js/core/parser-kit/rule';
-import type { AstId, ParseOptions, ParseResult, Range, TokenStream } from '@mermaid-js/core/parser-kit';
-import type { RuleGrammar } from '@mermaid-js/core/parser-kit/rule';
+import {
+  APOSTROPHE,
+  ASCII_MAX,
+  DQUOTE,
+  ExpectedTable,
+  formatExpected,
+  Kind,
+  kindSet,
+  STOP,
+} from '@mermaid-js/core/parser-kit';
+import { RuleParser } from '@mermaid-js/shared/parser/rule';
+import type {
+  AstId,
+  ParseOptions,
+  ParseResult,
+  Range,
+  TokenStream,
+} from '@mermaid-js/core/parser-kit';
+import type { RuleGrammar } from '@mermaid-js/shared/parser/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { RadarModel } from '../model.ts';

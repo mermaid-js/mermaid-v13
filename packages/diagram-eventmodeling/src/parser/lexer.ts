@@ -37,9 +37,30 @@
  * is found once.
  */
 // cspell:words accdescr acctitle eventmodeling
-import { APOSTROPHE, BACKTICK, DASH, DOT, DQUOTE, isBlank, isDigit, isLetter, isLineEnd, isSpace, isWord, Kind, LBRACE, LBRACKET, PERCENT, RBRACE, RBRACKET, SLASH, STAR, UNDERSCORE } from '@mermaid-js/core/parser-kit';
-import { isBreak, RuleLexer, SKIP, UNSET } from '@mermaid-js/core/parser-kit/rule';
-import type { RuleLexerOptions } from '@mermaid-js/core/parser-kit/rule';
+import {
+  APOSTROPHE,
+  BACKTICK,
+  DASH,
+  DOT,
+  DQUOTE,
+  isBlank,
+  isDigit,
+  isLetter,
+  isLineEnd,
+  isSpace,
+  isWord,
+  Kind,
+  LBRACE,
+  LBRACKET,
+  PERCENT,
+  RBRACE,
+  RBRACKET,
+  SLASH,
+  STAR,
+  UNDERSCORE,
+} from '@mermaid-js/core/parser-kit';
+import { isBreak, RuleLexer, SKIP, UNSET } from '@mermaid-js/shared/parser/rule';
+import type { RuleLexerOptions } from '@mermaid-js/shared/parser/rule';
 import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { KEYWORDS, T } from './tokens.ts';
 
@@ -82,7 +103,6 @@ export function lex(src: string, from: number, view: SourceView): TokenStream {
 
 /** One lex. Offsets are into {@link text}; {@link emit} maps them to the source. */
 class EventModelingLexer extends RuleLexer {
-
   // Memos that keep failed or repeated scans linear.
   private readonly lineEnds: Found = { from: -1, at: UNSET };
   /** By closer, as {@link CLOSERS}. */

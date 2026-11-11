@@ -18,8 +18,8 @@ import type { PacketDocument, PacketFieldNode } from '../parser/ast.ts';
 import { parsePacket } from '../parser/parser.ts';
 import { T } from '../parser/tokens.ts';
 import { HEADER_LINE, ITEMS, span, tokenBefore } from './tables.ts';
-import { wordRange } from '@mermaid-js/core/parser-kit/facet';
-import { keywordItem } from '@mermaid-js/core/parser-kit/facet';
+import { wordRange } from '@mermaid-js/shared/parser/facet';
+import { keywordItem } from '@mermaid-js/shared/parser/facet';
 
 /** Whether `at` is on the `packet` line, after `packet` (or `packet-beta`). */
 function onHeaderLine(text: string, at: number): boolean {

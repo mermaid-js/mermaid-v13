@@ -10,9 +10,9 @@ import type { FlowWarning } from '../render/context.ts';
 import type { NodeView, Prepared } from '../render/prepare.ts';
 import { textForm } from './shapes.ts';
 import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
-import { styled } from '@mermaid-js/core/ascii';
-import { statements } from '@mermaid-js/core/ascii';
-import { asciiDropped } from '@mermaid-js/core/ascii';
+import { styled } from '@mermaid-js/shared/ascii';
+import { statements } from '@mermaid-js/shared/ascii';
+import { asciiDropped } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature =

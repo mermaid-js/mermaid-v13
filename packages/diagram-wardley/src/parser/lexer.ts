@@ -32,9 +32,36 @@
  * and a string, `}`, YAML or directive scan that failed is not repeated for a start it covered.
  */
 // cspell:words accdescr acctitle über
-import { AMP, APOSTROPHE, AT, COMMA, DASH, DIGIT_0, DOT, DQUOTE, GT, isBlank, isDigit, isLetter, isSpace, isWord, Kind, LBRACE, LBRACKET, LPAREN, LT, PERCENT, RBRACE, RBRACKET, RPAREN, SEMI, SLASH, UNDERSCORE } from '@mermaid-js/core/parser-kit';
-import { isBreak, RuleLexer, SKIP } from '@mermaid-js/core/parser-kit/rule';
-import type { RuleLexerOptions } from '@mermaid-js/core/parser-kit/rule';
+import {
+  AMP,
+  APOSTROPHE,
+  AT,
+  COMMA,
+  DASH,
+  DIGIT_0,
+  DOT,
+  DQUOTE,
+  GT,
+  isBlank,
+  isDigit,
+  isLetter,
+  isSpace,
+  isWord,
+  Kind,
+  LBRACE,
+  LBRACKET,
+  LPAREN,
+  LT,
+  PERCENT,
+  RBRACE,
+  RBRACKET,
+  RPAREN,
+  SEMI,
+  SLASH,
+  UNDERSCORE,
+} from '@mermaid-js/core/parser-kit';
+import { isBreak, RuleLexer, SKIP } from '@mermaid-js/shared/parser/rule';
+import type { RuleLexerOptions } from '@mermaid-js/shared/parser/rule';
 import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { KEYWORDS, STRATEGIES, T } from './tokens.ts';
 
@@ -78,7 +105,6 @@ export function lex(src: string, from: number, view: SourceView): TokenStream {
 
 /** One lex. Offsets are into {@link text}; {@link emit} maps them to the source. */
 class WardleyLexer extends RuleLexer {
-
   /** The end of the rule that matches at `p` (its kind in {@link kind}), or -1. */
   protected scan(p: number): number {
     const c = this.text.charCodeAt(p);

@@ -4,10 +4,32 @@
  * character tests and memoised scans its rules share, each linear in the text it reads
  * (R-PARSE-7). Split from the lexer, as flowchart's is one file, only to keep each file short.
  */
-import { BACKSLASH, BACKTICK, charTable, CR, DASH, DOT, DQUOTE, GT, isBlank, isSpace, isWord, LBRACE, LBRACKET, LF, LOWER_X, LPAREN, PERCENT, PIPE, QUOTE, SEMI, SLASH } from '@mermaid-js/core/parser-kit';
-import { StateLexer } from '@mermaid-js/core/parser-kit/state';
+import {
+  BACKSLASH,
+  BACKTICK,
+  charTable,
+  CR,
+  DASH,
+  DOT,
+  DQUOTE,
+  GT,
+  isBlank,
+  isSpace,
+  isWord,
+  LBRACE,
+  LBRACKET,
+  LF,
+  LOWER_X,
+  LPAREN,
+  PERCENT,
+  PIPE,
+  QUOTE,
+  SEMI,
+  SLASH,
+} from '@mermaid-js/core/parser-kit';
+import { StateLexer } from '@mermaid-js/shared/parser/state';
 import type { SourceView } from '@mermaid-js/core/parser-kit';
-import type { StateLexerOptions } from '@mermaid-js/core/parser-kit/state';
+import type { StateLexerOptions } from '@mermaid-js/shared/parser/state';
 import { T } from './tokens.ts';
 
 const RE_ENTITY = /#\w+;/y;

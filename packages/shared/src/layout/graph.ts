@@ -2,8 +2,16 @@
  * The pieces of a `LayoutGraph` every graph diagram builds the same way from its unit profile:
  * the spacing along and across the flow, a group's padding and an edge with its label's room.
  */
-import type { Dir, LayoutEdge, LayoutGroup, LayoutSpacing, Size } from './types.ts';
-import { fromPx, type BuilderMetrics, type UnitProfile } from './units.ts';
+import {
+  type BuilderMetrics,
+  type Dir,
+  fromPx,
+  type LayoutEdge,
+  type LayoutGroup,
+  type LayoutSpacing,
+  type Size,
+  type UnitProfile,
+} from '@mermaid-js/core/layout';
 
 /** Whether the ranks of a drawing in this direction run across (`LR`, `RL`). */
 export const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';

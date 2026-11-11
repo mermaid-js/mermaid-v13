@@ -13,10 +13,65 @@
  * Every scan is linear in the text it consumes (R-PARSE-7).
  */
 // cspell:words kepano invis
-import { AMP, ASCII_MAX, AT, BACKSLASH, BACKTICK, CARET, charTable, codePointEnd, COLON, COMMA, CR, DASH, DOT, DQUOTE, EQUALS, GT, hasClass, HASH, isDigit, isLineEnd, isSpace, isUnicodeLetter, isWord, Kind, LBRACE, LBRACKET, LF, LOWER_A, LOWER_C, LOWER_D, LOWER_E, LOWER_F, LOWER_G, LOWER_H, LOWER_I, LOWER_L, LOWER_O, LOWER_S, LOWER_V, LOWER_X, LPAREN, LT, PIPE, QUESTION, QUOTE, RBRACE, RBRACKET, RPAREN, SEMI, SLASH, sourceView, STAR, TILDE, UNDERSCORE } from '@mermaid-js/core/parser-kit';
-import { StateLexer } from '@mermaid-js/core/parser-kit/state';
+import {
+  AMP,
+  ASCII_MAX,
+  AT,
+  BACKSLASH,
+  BACKTICK,
+  CARET,
+  charTable,
+  codePointEnd,
+  COLON,
+  COMMA,
+  CR,
+  DASH,
+  DOT,
+  DQUOTE,
+  EQUALS,
+  GT,
+  hasClass,
+  HASH,
+  isDigit,
+  isLineEnd,
+  isSpace,
+  isUnicodeLetter,
+  isWord,
+  Kind,
+  LBRACE,
+  LBRACKET,
+  LF,
+  LOWER_A,
+  LOWER_C,
+  LOWER_D,
+  LOWER_E,
+  LOWER_F,
+  LOWER_G,
+  LOWER_H,
+  LOWER_I,
+  LOWER_L,
+  LOWER_O,
+  LOWER_S,
+  LOWER_V,
+  LOWER_X,
+  LPAREN,
+  LT,
+  PIPE,
+  QUESTION,
+  QUOTE,
+  RBRACE,
+  RBRACKET,
+  RPAREN,
+  SEMI,
+  SLASH,
+  sourceView,
+  STAR,
+  TILDE,
+  UNDERSCORE,
+} from '@mermaid-js/core/parser-kit';
+import { StateLexer } from '@mermaid-js/shared/parser/state';
 import type { Probe, Range, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
-import type { StateLexerOptions } from '@mermaid-js/core/parser-kit/state';
+import type { StateLexerOptions } from '@mermaid-js/shared/parser/state';
 import { T } from './tokens.ts';
 
 /**

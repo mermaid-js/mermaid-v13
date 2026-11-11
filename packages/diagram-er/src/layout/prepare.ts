@@ -3,16 +3,11 @@
 // Every length comes from the unit profile (ADR-13); this file holds no length literal
 // (`packages/conformance/src/er-prepare-literals.spec.ts`).
 import type { LayoutGraph, LayoutGroup, LayoutNode, UnitProfile } from '@mermaid-js/core/layout';
-import {
-  fromPx,
-  graphSpacing,
-  groupPadding,
-  labelledEdge,
-  pxProfile,
-} from '@mermaid-js/core/layout';
+import { fromPx, pxProfile } from '@mermaid-js/core/layout';
+import { graphSpacing, groupPadding, labelledEdge } from '@mermaid-js/shared/layout';
 import { erConfigDefaults } from '../generated/config-defaults.ts';
 import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
-import { textStyle } from '@mermaid-js/core/svg/edges';
+import { textStyle } from '@mermaid-js/shared/svg/edges';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   ErAttribute,

@@ -7,10 +7,10 @@ import { Style, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { RequirementLayoutWarning } from '../layout/context.ts';
 import { requirementCurve, type RequirementPrepared } from '../layout/prepare.ts';
 import type { RequirementModel } from '../model.ts';
-import { styled } from '@mermaid-js/core/ascii';
-import { statements } from '@mermaid-js/core/ascii';
-import { emphasised } from '@mermaid-js/core/ascii';
-import { asciiDropped } from '@mermaid-js/core/ascii';
+import { styled } from '@mermaid-js/shared/ascii';
+import { statements } from '@mermaid-js/shared/ascii';
+import { emphasised } from '@mermaid-js/shared/ascii';
+import { asciiDropped } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'curve' | 'emphasis' | 'accessibility';

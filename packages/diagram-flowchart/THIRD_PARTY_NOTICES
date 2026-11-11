@@ -11,7 +11,6 @@ used under the MIT License:
   src/parser/lexer.ts
   src/parser/model.ts
   src/parser/parser.ts
-  src/render/edges.ts
   src/render/prepare.ts
   src/render/shapes.ts
 

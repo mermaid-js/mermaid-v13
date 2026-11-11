@@ -21,7 +21,7 @@ import type { StateDocument } from '../parser/ast.ts';
 import type { StateModel } from '../parser/model.ts';
 import { T } from '../parser/tokens.ts';
 import { DIRECTIONS, HEADERS, KEYWORDS, KIND_NAMES, MARKERS, span, tokenBefore } from './tables.ts';
-import { CompletionList as Items } from '@mermaid-js/core/parser-kit/facet';
+import { CompletionList as Items } from '@mermaid-js/shared/parser/facet';
 
 /** Lexer modes whose text is free text, not code. */
 const TEXT_MODES = new Set([

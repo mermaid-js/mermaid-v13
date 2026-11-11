@@ -17,7 +17,7 @@ import { boxesByName, boxNamed } from '../parser/boxes.ts';
 import type { RelationNode, RequirementDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { RELATIONSHIPS, code, plural, span, spelling } from './tables.ts';
-import { trimmed } from '@mermaid-js/core/parser-kit/facet';
+import { trimmed } from '@mermaid-js/shared/parser/facet';
 
 const fieldList = (fields: readonly (readonly [key: string, value: string])[]): string => {
   const set = fields.filter(([, v]) => v !== '');

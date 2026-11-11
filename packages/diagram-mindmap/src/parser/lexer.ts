@@ -20,10 +20,27 @@
  * scan is linear in the text it consumes (R-PARSE-7).
  */
 // cspell:words NSTR
-import { BACKTICK, COLON, DASH, DQUOTE, isLineEnd, isSpace, isWord, Kind, LBRACE, LBRACKET, LF, LPAREN, PERCENT, RBRACE, RBRACKET, RPAREN } from '@mermaid-js/core/parser-kit';
-import { lowerCode, StateLexer } from '@mermaid-js/core/parser-kit/state';
+import {
+  BACKTICK,
+  COLON,
+  DASH,
+  DQUOTE,
+  isLineEnd,
+  isSpace,
+  isWord,
+  Kind,
+  LBRACE,
+  LBRACKET,
+  LF,
+  LPAREN,
+  PERCENT,
+  RBRACE,
+  RBRACKET,
+  RPAREN,
+} from '@mermaid-js/core/parser-kit';
+import { lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
 import type { Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
-import type { StateLexerOptions } from '@mermaid-js/core/parser-kit/state';
+import type { StateLexerOptions } from '@mermaid-js/shared/parser/state';
 import { T } from './tokens.ts';
 
 // Start conditions of mindmap.jison.
@@ -56,7 +73,6 @@ export function lex(src: string, from: number, view: SourceView, probe?: Probe):
  * Each start condition is a method named after it.
  */
 class MindmapLexer extends StateLexer {
-
   run(probe?: Probe): TokenStream {
     this.trim();
     this.loop(probe, S_NAMES);

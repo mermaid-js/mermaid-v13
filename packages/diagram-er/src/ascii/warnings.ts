@@ -6,9 +6,9 @@ import type { CheckedStyle } from '@mermaid-js/core/svg';
 import type { ErModel } from '../parser/index.ts';
 import type { ErWarning } from '../layout/context.ts';
 import type { ErPrepared } from '../layout/prepare.ts';
-import { styled } from '@mermaid-js/core/ascii';
-import { statements } from '@mermaid-js/core/ascii';
-import { asciiDropped } from '@mermaid-js/core/ascii';
+import { styled } from '@mermaid-js/shared/ascii';
+import { statements } from '@mermaid-js/shared/ascii';
+import { asciiDropped } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'accessibility';

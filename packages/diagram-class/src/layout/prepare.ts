@@ -4,7 +4,6 @@
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import {
   fromPx,
-  graphSpacing,
   pxProfile,
   type Dir,
   type EndMarker,
@@ -14,7 +13,8 @@ import {
   type LayoutNode,
   type UnitProfile,
 } from '@mermaid-js/core/layout';
-import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/core/svg/edges';
+import { graphSpacing } from '@mermaid-js/shared/layout';
+import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/edges';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import {
   namespaceGroups,
@@ -222,7 +222,9 @@ export function prepare(model: ClassModel, ctx: ClassLayoutContext): ClassPrepar
     classIds: new Map(),
     interfaceIds: new Map(),
   };
-  const length = configLengths('class', 'CLASS_CONFIG_IGNORED', conf, configDefaults, (w) => ctx.warn?.(w));
+  const length = configLengths('class', 'CLASS_CONFIG_IGNORED', conf, configDefaults, (w) =>
+    ctx.warn?.(w)
+  );
   const padding = length('padding');
   const boxPad = padding ?? BOX_PAD;
   const metrics: BoxMetrics = {

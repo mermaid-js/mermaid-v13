@@ -9,14 +9,30 @@
  * failed is not repeated for a start it covered.
  */
 // cspell:words accdescr acctitle
-import { BACKSLASH, COLON, CR, DQUOTE, LBRACE, LF, PERCENT } from './char-codes.ts';
-import { codePointEnd, isBlank, isDigit, isLineEnd, isSpace } from './chars.ts';
+import {
+  BACKSLASH,
+  codePointEnd,
+  COLON,
+  CR,
+  DQUOTE,
+  firstHole,
+  type Hole,
+  isBlank,
+  isDigit,
+  isLineEnd,
+  isSpace,
+  Kind,
+  LBRACE,
+  LF,
+  localOffset,
+  newlineAt,
+  PERCENT,
+  SourceOffsets,
+  type SourceView,
+  type TokenStream,
+  TokenWriter,
+} from '@mermaid-js/core/parser-kit';
 import { dropAt, tagQuotes } from './drop.ts';
-import { newlineAt } from './scanner.ts';
-import { firstHole, localOffset, QUOTE, SourceOffsets } from './source-view.ts';
-import type { Hole, SourceView } from './source-view.ts';
-import { Kind, TokenWriter } from './tokens.ts';
-import type { TokenStream } from './tokens.ts';
 
 /** `kind` of a rule that matched and writes no token (WHITESPACE). */
 export const SKIP = -1;
@@ -73,7 +89,7 @@ export abstract class RuleLexer {
   private directiveFails = Infinity;
 
   /**
-   * @param verbatim Lex the view's text as given, as Chevrotain lexes a text handed to it
+   * @param verbatim - Lex the view's text as given, as Chevrotain lexes a text handed to it
    *   directly: no line break appended and no leading blanks trimmed.
    */
   constructor(
@@ -166,7 +182,8 @@ export abstract class RuleLexer {
     }
     if (text.startsWith('accTitle', q)) {
       const r = this.blanks(q + 8);
-      if (text.charCodeAt(r) === COLON) return this.match(this.kinds.accTitle, this.lineTail(r + 1));
+      if (text.charCodeAt(r) === COLON)
+        return this.match(this.kinds.accTitle, this.lineTail(r + 1));
     }
     if (text.startsWith('title', q)) {
       const r = q + 5;
@@ -364,4 +381,3 @@ export abstract class RuleLexer {
     this.w.push(kind, a, b);
   }
 }
-

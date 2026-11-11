@@ -11,8 +11,8 @@ import { gridAdvance, gridPosition } from '../layout/grid.ts';
 import { isComposite, type Block, type BlockModel, type BlockType } from '../model.ts';
 import { arrowSides, type ArrowSide } from '../shapes/block-arrow.ts';
 import { BLOCK_TEXT_METRICS, type TextSpacing } from './metrics.ts';
-import { cut } from '@mermaid-js/core/ascii';
-export { cut } from '@mermaid-js/core/ascii';
+import { cut } from '@mermaid-js/shared/ascii';
+export { cut } from '@mermaid-js/shared/ascii';
 
 /**
  * One drawn block: a leaf box or a composite's frame. A leaf that holds children (a composite a
@@ -303,7 +303,9 @@ function layout(model: BlockModel, t: ReturnType<typeof tree>, o: GridOptions, c
     const rect = node.frame || !node.grid ? cell : { ...cell, height: node.box };
     const lines = node.frame
       ? titleLines(node.label, Math.min(cap, rect.width - BLOCK_TEXT_METRICS.titleFrame), o.mark)
-      : node.label.lines.map((l) => cut(l, Math.min(cap, rect.width - 2 - 2 * s.padX), o.mark, true));
+      : node.label.lines.map((l) =>
+          cut(l, Math.min(cap, rect.width - 2 - 2 * s.padX), o.mark, true)
+        );
     const { block } = node;
     boxes.push({
       id: block.id,

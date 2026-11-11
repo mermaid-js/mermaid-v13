@@ -32,8 +32,8 @@ import {
   tokenBefore,
 } from './tables.ts';
 import type { Arrow } from './tables.ts';
-import { wordRangeOf } from '@mermaid-js/core/parser-kit/facet';
-import { CompletionList as Items } from '@mermaid-js/core/parser-kit/facet';
+import { wordRangeOf } from '@mermaid-js/shared/parser/facet';
+import { CompletionList as Items } from '@mermaid-js/shared/parser/facet';
 
 const arrow = (items: Items, a: Arrow): void =>
   items.add(a.text, 'operator', { detail: a.draws, documentation: MESSAGE_DOC });

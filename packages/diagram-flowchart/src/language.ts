@@ -11,8 +11,8 @@ import { flowchartCategories } from './generated/categories.ts';
 import { flowchartTokens, parseFlowchart } from './parser/index.ts';
 import type { FlowDocument } from './parser/index.ts';
 import { T } from './parser/tokens.ts';
-import { shapeReason } from '@mermaid-js/core/parser-kit/facet';
-import { readsBack } from '@mermaid-js/core/parser-kit/facet';
+import { shapeReason } from '@mermaid-js/shared/parser/facet';
+import { readsBack } from '@mermaid-js/shared/parser/facet';
 
 export { flowchartCategories } from './generated/categories.ts';
 export { flowchartDocs } from './generated/docs.ts';
@@ -69,7 +69,9 @@ function invalidReason(name: string, kind = 'node'): string | undefined {
     const text = `${HEADER}classDef ${name} fill:#000\n`;
     return (
       shapeReason(name, 'An id') ??
-      (readsBack(parseFlowchart(text), at, name, 'class') ? undefined : `'${name}' is not a class name.`)
+      (readsBack(parseFlowchart(text), at, name, 'class')
+        ? undefined
+        : `'${name}' is not a class name.`)
     );
   }
   if (kind === 'edge') {
@@ -77,7 +79,9 @@ function invalidReason(name: string, kind = 'node'): string | undefined {
     const text = `${HEADER}A ${name}@--> B\n`;
     return (
       shapeReason(name, 'An id') ??
-      (readsBack(parseFlowchart(text), at, name, 'edge') ? undefined : `'${name}' is not an edge id.`)
+      (readsBack(parseFlowchart(text), at, name, 'edge')
+        ? undefined
+        : `'${name}' is not an edge id.`)
     );
   }
   return invalidIdReason(name);

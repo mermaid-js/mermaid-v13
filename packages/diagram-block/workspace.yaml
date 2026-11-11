@@ -68,4 +68,3 @@ credits:
   files:
     src/shapes/leaf.ts: ['Pele']
     src/shapes/draw.ts: ['Pele']
-    src/render/arrowheads.ts: ['Pele']

@@ -18,10 +18,17 @@
  * messages (D341), and counting resumes after the field, so one misplaced field gives one error.
  * Fields are split into rows as v12 split them, up to its 10,000-row cap (D342).
  */
-import { APOSTROPHE, DQUOTE, ExpectedTable, Kind, kindSet, STOP } from '@mermaid-js/core/parser-kit';
-import { RuleParser } from '@mermaid-js/core/parser-kit/rule';
+import {
+  APOSTROPHE,
+  DQUOTE,
+  ExpectedTable,
+  Kind,
+  kindSet,
+  STOP,
+} from '@mermaid-js/core/parser-kit';
+import { RuleParser } from '@mermaid-js/shared/parser/rule';
 import type { ParseOptions, ParseResult, Range, TokenStream } from '@mermaid-js/core/parser-kit';
-import type { RuleGrammar } from '@mermaid-js/core/parser-kit/rule';
+import type { RuleGrammar } from '@mermaid-js/shared/parser/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { packetConfig } from '../config.ts';
@@ -235,7 +242,14 @@ class PacketParser extends RuleParser<PreprocessResult> {
     const { st } = this;
     const where = this.range();
     if (this.kind() === Kind.Error) this.badCharacters(where, want);
-    st.diagnostics.unexpected('UNEXPECTED', where, table.names(want), this.found(), undefined, hint ?? this.explain());
+    st.diagnostics.unexpected(
+      'UNEXPECTED',
+      where,
+      table.names(want),
+      this.found(),
+      undefined,
+      hint ?? this.explain()
+    );
     throw STOP;
   }
 

@@ -11,7 +11,7 @@ import type {
 } from '@mermaid-js/core/layout';
 import { pxProfile } from '@mermaid-js/core/layout';
 import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
-import { curveKind, curveRouting, textStyle, type CurveKind } from '@mermaid-js/core/svg/edges';
+import { curveKind, curveRouting, textStyle, type CurveKind } from '@mermaid-js/shared/svg/edges';
 import {
   fontSizePx,
   layoutLabel,
@@ -122,7 +122,6 @@ export const requirementCurve = curveKind;
 
 /** The least bold font weight. */
 const BOLD = 600;
-
 
 type Measure = (text: string, font: FontKey, bits: number) => MeasuredLabel;
 

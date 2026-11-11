@@ -16,5 +16,3 @@ export type { AsciiInput, AsciiOptions } from './options.ts';
 export { snapRoute } from './snap.ts';
 export { cellMeasurer, cellWidth, graphemes, graphemeWidth } from './measurer.ts';
 export type { Grapheme } from './measurer.ts';
-// Shared diagram text helpers.
-export * from './diagram.ts';

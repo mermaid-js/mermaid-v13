@@ -32,6 +32,7 @@ const CORE = 'packages/core/src/svg/fixture.ts';
 const DIAGRAM = 'packages/diagram-flowchart/src/fixture.ts';
 const OTHER_DIAGRAM = 'packages/diagram-sequence/src/fixture.ts';
 const MERMAID = 'packages/mermaid/src/fixture.ts';
+const SHARED = 'packages/shared/src/svg/fixture.ts';
 const CORE_ASCII = 'packages/core/src/ascii/fixture.ts';
 const DIAGRAM_ASCII = 'packages/diagram-flowchart/src/ascii/fixture.ts';
 const DIAGRAM_ASCII_ENTRY = 'packages/diagram-flowchart/src/ascii.ts';
@@ -54,6 +55,12 @@ describe('architecture lint rules fire', () => {
     ['import-npm-package.ts', MERMAID, 'mermaid/import-boundaries'],
     ['import-core.ts', CORE, 'mermaid/import-boundaries'],
     ['import-diagram.ts', CORE, 'mermaid/import-boundaries'],
+    ['import-diagram.ts', SHARED, 'mermaid/import-boundaries'],
+    ['import-shared.ts', CORE, 'mermaid/import-boundaries'],
+    ['import-shared.ts', MERMAID, 'mermaid/import-boundaries'],
+    ['import-shared-root.ts', DIAGRAM, 'mermaid/import-boundaries'],
+    ['import-npm-package.ts', SHARED, 'mermaid/import-boundaries'],
+    ['dom-globals.ts', SHARED, 'no-restricted-globals'],
     ['import-diagram.ts', OTHER_DIAGRAM, 'mermaid/import-boundaries'],
     ['import-mermaid.ts', CORE, 'mermaid/import-boundaries'],
     ['import-mermaid.ts', DIAGRAM, 'mermaid/import-boundaries'],
@@ -119,6 +126,8 @@ describe('architecture lint rules allow the intended directions', () => {
   it.each([
     ['import-core.ts', DIAGRAM],
     ['import-core.ts', MERMAID],
+    ['import-core.ts', SHARED],
+    ['import-shared.ts', DIAGRAM],
     ['import-diagram.ts', MERMAID],
     ['import-relative.ts', CORE],
     ['import-relative.ts', DIAGRAM],

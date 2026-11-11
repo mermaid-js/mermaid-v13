@@ -10,7 +10,7 @@ import { hasTextForm } from './draw.ts';
 import type { BlockText } from './grid.ts';
 import { textLabel } from './grid.ts';
 import type { InlineSpans } from '@mermaid-js/core/text';
-import { asciiDropped } from '@mermaid-js/core/ascii';
+import { asciiDropped } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'emphasis';

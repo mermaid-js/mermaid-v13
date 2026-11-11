@@ -5,12 +5,12 @@
 import type { FlowchartDiagramConfig } from '@mermaid-js/core/config';
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from '../parser/tokens.ts';
-import type { KeywordItem } from '@mermaid-js/core/parser-kit/facet';
-export type { KeywordItem } from '@mermaid-js/core/parser-kit/facet';
-export { LINK_TARGETS } from '@mermaid-js/core/parser-kit/facet';
-export { tokenBefore } from '@mermaid-js/core/parser-kit/facet';
-export { span } from '@mermaid-js/core/parser-kit/facet';
-export { code } from '@mermaid-js/core/parser-kit/facet';
+import type { KeywordItem } from '@mermaid-js/shared/parser/facet';
+export type { KeywordItem } from '@mermaid-js/shared/parser/facet';
+export { LINK_TARGETS } from '@mermaid-js/shared/parser/facet';
+export { tokenBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 /** Statement and clause keywords, in the order they are offered. */
 export const KEYWORDS: readonly KeywordItem[] = [

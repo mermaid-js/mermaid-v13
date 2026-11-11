@@ -18,7 +18,7 @@ import {
 } from '@mermaid-js/core/svg';
 import type { Theme } from '@mermaid-js/core/theme';
 import type { Block, BlockModel } from '../model.ts';
-import { arrowheads, type Arrowheads } from '@mermaid-js/core/svg/edges';
+import { arrowheads, type Arrowheads } from '@mermaid-js/shared/svg/edges';
 import { BLOCK_RENDER } from './metrics.ts';
 
 type Length = ReturnType<Theme['length']>;

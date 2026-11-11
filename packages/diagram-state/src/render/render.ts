@@ -6,8 +6,27 @@
 // variables only, never a theme name or a look (R-THEME-11, D152; checked by conformance
 // `state/render-theme-names.spec.ts`).
 import { pxProfile } from '@mermaid-js/core/layout';
-import { arrowheads, edgeLabel, marker, markerTrim, routePath, type Arrowheads } from '@mermaid-js/core/svg/edges';
-import { checkLinkTarget, checkUrl, cls, openSvgRoot, textElement, translate, type Attrs, type OutlinePaint, type Paint, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
+import {
+  arrowheads,
+  edgeLabel,
+  marker,
+  markerTrim,
+  routePath,
+  type Arrowheads,
+} from '@mermaid-js/shared/svg/edges';
+import {
+  checkLinkTarget,
+  checkUrl,
+  cls,
+  openSvgRoot,
+  textElement,
+  translate,
+  type Attrs,
+  type OutlinePaint,
+  type Paint,
+  type SafeValue,
+  type SvgWriter,
+} from '@mermaid-js/core/svg';
 import type {
   StateEdgeView,
   StateGroupView,

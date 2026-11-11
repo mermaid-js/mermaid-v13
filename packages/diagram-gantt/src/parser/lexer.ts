@@ -28,10 +28,32 @@
  */
 // cspell:words acctitle accdescr accdescription dateformat inclusiveenddates topaxis
 // cspell:words axisformat tickinterval todaymarker
-import { COLON, CR, DASH, DQUOTE, HASH, isSpace, Kind, LBRACE, LF, LOWER_A, LOWER_C, LOWER_G, LOWER_H, LOWER_S, LPAREN, PERCENT, QUOTE, RBRACE, RPAREN, SEMI, SourceOffsets } from '@mermaid-js/core/parser-kit';
-import { lowerCode, StateLexer } from '@mermaid-js/core/parser-kit/state';
+import {
+  COLON,
+  CR,
+  DASH,
+  DQUOTE,
+  HASH,
+  isSpace,
+  Kind,
+  LBRACE,
+  LF,
+  LOWER_A,
+  LOWER_C,
+  LOWER_G,
+  LOWER_H,
+  LOWER_S,
+  LPAREN,
+  PERCENT,
+  QUOTE,
+  RBRACE,
+  RPAREN,
+  SEMI,
+  SourceOffsets,
+} from '@mermaid-js/core/parser-kit';
+import { lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
 import type { Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
-import type { StateLexerOptions } from '@mermaid-js/core/parser-kit/state';
+import type { StateLexerOptions } from '@mermaid-js/shared/parser/state';
 import { T } from './tokens.ts';
 
 // Start conditions of gantt.jison.
@@ -148,7 +170,6 @@ export function lex(src: string, from: number, view: SourceView, probe?: Probe):
  * Each start condition is a method named after it.
  */
 class GanttLexer extends StateLexer {
-
   protected override prepare(text: string, view: SourceView): string {
     return lexerText(view);
   }

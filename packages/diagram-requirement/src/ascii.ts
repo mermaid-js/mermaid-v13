@@ -21,7 +21,7 @@ import { layoutRequirement, type RequirementLayout } from './layout/layout.ts';
 import type { RequirementModel } from './model.ts';
 import { drawRequirement, type RequirementGlyphs } from './ascii/draw.ts';
 import { asciiWarnings, type AsciiRouteWarning } from './ascii/warnings.ts';
-import { asciiRoute } from '@mermaid-js/core/ascii';
+import { asciiRoute } from '@mermaid-js/shared/ascii';
 
 export type {
   AsciiDroppedFeature,

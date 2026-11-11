@@ -43,10 +43,12 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "peerDependencies": {
-    "@mermaid-js/core": "workspace:*"
+    "@mermaid-js/core": "workspace:*",
+    "@mermaid-js/shared": "workspace:*"
   },
   "devDependencies": {
-    "@mermaid-js/core": "workspace:^"
+    "@mermaid-js/core": "workspace:^",
+    "@mermaid-js/shared": "workspace:^"
   },
   "mermaid": {
     "plugin": "diagram",

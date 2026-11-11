@@ -3,7 +3,7 @@
  * invariants' containment check both read.
  */
 import type { KanbanLayout, Rect } from './types.ts';
-import { unionRects } from '@mermaid-js/core/layout';
+import { unionRects } from '@mermaid-js/shared/layout';
 
 /** `rect` grown by `by` on every side. */
 export const inflate = (rect: Rect, by: number): Rect => ({

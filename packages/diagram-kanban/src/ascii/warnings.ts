@@ -9,8 +9,8 @@ import type { KanbanLayout, PlacedLabel } from '../layout/index.ts';
 import { kanbanBoardOrder, type KanbanModel } from '../model.ts';
 import { userClasses } from '../render/classes.ts';
 import { ticketUrl, type LinkContext } from '../render/links.ts';
-import { emphasised } from '@mermaid-js/core/ascii';
-import { asciiDropped } from '@mermaid-js/core/ascii';
+import { emphasised } from '@mermaid-js/shared/ascii';
+import { asciiDropped } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'emphasis' | 'link';
@@ -68,8 +68,7 @@ export function asciiWarnings(
   const out: AsciiWarning[] = [];
   for (const feature of Object.keys(found) as AsciiDroppedFeature[]) {
     const astIds = found[feature];
-    if (astIds.length > 0)
-      out.push(asciiDropped(feature, astIds, WHAT[feature]));
+    if (astIds.length > 0) out.push(asciiDropped(feature, astIds, WHAT[feature]));
   }
   return out;
 }

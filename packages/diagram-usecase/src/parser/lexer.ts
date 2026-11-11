@@ -47,7 +47,6 @@ import {
   DASH,
   DOT,
   DQUOTE,
-  dropAt,
   EQUALS,
   firstHole,
   GT,
@@ -81,11 +80,11 @@ import {
   SPACE,
   STAR,
   TAB,
-  tagQuotes,
   TILDE,
   TokenWriter,
   UNDERSCORE,
 } from '@mermaid-js/core/parser-kit';
+import { dropAt, tagQuotes } from '@mermaid-js/shared/parser/drop';
 import type { Hole, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { ANY_CASE, KEYWORDS, T } from './tokens.ts';
 

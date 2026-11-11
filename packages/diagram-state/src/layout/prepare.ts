@@ -4,16 +4,10 @@
 // joined to its state by an edge. Every length comes from the unit profile (ADR-13, D77): the
 // shared builder metrics, plus state's own shape table (D108, `metrics.ts`).
 import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
-import {
-  fromPx,
-  graphSpacing,
-  labelledEdge,
-  pxProfile,
-  sideways,
-  type UnitProfile,
-} from '@mermaid-js/core/layout';
+import { fromPx, pxProfile, type UnitProfile } from '@mermaid-js/core/layout';
+import { graphSpacing, labelledEdge, sideways } from '@mermaid-js/shared/layout';
 import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
-import { textStyle } from '@mermaid-js/core/svg/edges';
+import { textStyle } from '@mermaid-js/shared/svg/edges';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { StateModel, StateNode, StateNote, StateTransition } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from '@mermaid-js/core/config';

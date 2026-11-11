@@ -30,10 +30,36 @@
  * runs, rest-of-line states, `class` and `style` id lists) or stops after a fixed number of
  * characters (keywords, shape delimiters).
  */
-import { BACKSLASH, BACKTICK, codePointEnd, COLON, COMMA, cook, DASH, DOT, DQUOTE, EQUALS, GT, isDigit, isSpace, isWord, Kind, LBRACE, LBRACKET, LPAREN, LT, PIPE, QUOTE, RBRACE, RBRACKET, RPAREN, SLASH } from '@mermaid-js/core/parser-kit';
-import { lowerCode, StateLexer } from '@mermaid-js/core/parser-kit/state';
+import {
+  BACKSLASH,
+  BACKTICK,
+  codePointEnd,
+  COLON,
+  COMMA,
+  cook,
+  DASH,
+  DOT,
+  DQUOTE,
+  EQUALS,
+  GT,
+  isDigit,
+  isSpace,
+  isWord,
+  Kind,
+  LBRACE,
+  LBRACKET,
+  LPAREN,
+  LT,
+  PIPE,
+  QUOTE,
+  RBRACE,
+  RBRACKET,
+  RPAREN,
+  SLASH,
+} from '@mermaid-js/core/parser-kit';
+import { lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
 import type { Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
-import type { StateLexerOptions } from '@mermaid-js/core/parser-kit/state';
+import type { StateLexerOptions } from '@mermaid-js/shared/parser/state';
 import { T } from './tokens.ts';
 
 // Start conditions of block.jison (all exclusive) that its rules use, under jison's names.

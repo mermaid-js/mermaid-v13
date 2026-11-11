@@ -1,6 +1,5 @@
 // Hole-drop helpers shared by every lexer family.
-import { QUOTE, SourceOffsets } from './source-view.ts';
-import type { Hole, SourceView } from './source-view.ts';
+import { type Hole, QUOTE, SourceOffsets, type SourceView } from '@mermaid-js/core/parser-kit';
 
 /**
  * The end of the character v12 dropped at `b` (a `drop` hole at or after `holes[from]`), which

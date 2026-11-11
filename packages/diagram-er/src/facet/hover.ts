@@ -26,7 +26,7 @@ import {
   plural,
   span,
 } from './tables.ts';
-import { trimmed } from '@mermaid-js/core/parser-kit/facet';
+import { trimmed } from '@mermaid-js/shared/parser/facet';
 
 /** At most this many attributes are listed; the rest are counted. */
 const LISTED = 8;

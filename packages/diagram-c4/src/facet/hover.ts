@@ -16,7 +16,7 @@ import { KEYWORDS } from '../parser/tokens.ts';
 import { callAt } from './args.ts';
 import { code, span } from './markdown.ts';
 import { RELATION_TYPE_DOC, SLOT_DOCS } from './tables.ts';
-import { plural } from '@mermaid-js/core/parser-kit/facet';
+import { plural } from '@mermaid-js/shared/parser/facet';
 
 const IGNORED = 'This one is ignored.';
 const SET_AFTER =

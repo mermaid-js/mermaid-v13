@@ -11,8 +11,8 @@ import type { PieDocument, PieSliceNode } from '../parser/ast.ts';
 import { pieSum } from '../shares.ts';
 import { T } from '../parser/tokens.ts';
 import { code, span } from './tables.ts';
-import { inside } from '@mermaid-js/core/parser-kit/facet';
-import { keywordHover } from '@mermaid-js/core/parser-kit/facet';
+import { inside } from '@mermaid-js/shared/parser/facet';
+import { keywordHover } from '@mermaid-js/shared/parser/facet';
 
 /** Statement tokens that hold their text too: only the keyword is hovered. */
 const VALUE_WORDS: Readonly<Partial<Record<number, string>>> = {

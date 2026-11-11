@@ -34,7 +34,7 @@ import {
   tokenBefore,
   VALUES,
 } from './tables.ts';
-import { CompletionList as Items } from '@mermaid-js/core/parser-kit/facet';
+import { CompletionList as Items } from '@mermaid-js/shared/parser/facet';
 
 /** Modes whose text is a value, not code: nothing is offered there. */
 const VALUE_MODES = new Set([
@@ -166,16 +166,22 @@ export function requirementCompletions(
   if (!range) return [];
   const items = new Items(text.slice(range.start, probe.offset), range, true);
   const model = result.model as RequirementModel;
-  for (const k of STATEMENT_KEYWORDS) if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'keyword');
-  for (const k of FIELDS) if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'property');
-  for (const k of VALUES) if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'constant');
-  for (const k of RELATIONSHIPS) if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'keyword');
+  for (const k of STATEMENT_KEYWORDS)
+    if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'keyword');
+  for (const k of FIELDS)
+    if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'property');
+  for (const k of VALUES)
+    if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'constant');
+  for (const k of RELATIONSHIPS)
+    if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'keyword');
   const st = statementBefore(text, tokens, range.start);
   if (NAME.some((k) => expected.has(k)) || expected.has(T.Alpha)) {
     const context = nameContext(st);
     if (context === 'boxes') boxes(items, model);
     else if (context === 'classes') classes(items, model);
   }
-  if (st.head !== -1) for (const k of OPERATORS) if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'operator');
+  if (st.head !== -1)
+    for (const k of OPERATORS)
+      if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'operator');
   return items.list;
 }

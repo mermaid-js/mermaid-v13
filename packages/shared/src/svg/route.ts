@@ -2,9 +2,8 @@
 // Ported from Pele's src/svg/edges.ts @ 3a2f075 (https://github.com/obsidianmd/pele, MIT,
 // (c) 2026 kepano): `routePath`. The one route drawing every graph diagram shares.
 // cspell:ignore kepano
-import type { EdgeRouting, RoutePoint } from '../layout/types.ts';
-import type { PathData } from './types.ts';
-import type { SvgWriter } from './writer.ts';
+import type { EdgeRouting, RoutePoint } from '@mermaid-js/core/layout';
+import type { PathData, SvgWriter } from '@mermaid-js/core/svg';
 
 // How far an edge runs straight before a marker at its end, where it has the room.
 const LEAD = 6;
@@ -31,8 +30,10 @@ export function curveKind(curve: string | undefined): CurveKind {
 }
 
 /** How the layout engine routes edges drawn with this curve: right angles but for two. */
-export const curveRouting = (kind: CurveKind): EdgeRouting =>
-  kind === 'linear' ? 'straight' : kind === 'curved' ? 'curved' : 'stepped';
+export function curveRouting(kind: CurveKind): EdgeRouting {
+  if (kind === 'linear') return 'straight';
+  return kind === 'curved' ? 'curved' : 'stepped';
+}
 
 export interface EdgePath {
   d: PathData;

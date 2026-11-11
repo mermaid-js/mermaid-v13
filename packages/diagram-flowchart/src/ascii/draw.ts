@@ -28,16 +28,16 @@ import type { LayoutModel, Point, Side } from '@mermaid-js/core/layout';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { EdgeView, Prepared } from '../render/prepare.ts';
 import { textForm } from './shapes.ts';
-import type { Centred } from '@mermaid-js/core/ascii';
-import { cellRect } from '@mermaid-js/core/ascii';
-import { dirOf } from '@mermaid-js/core/ascii';
-import { cellsOf } from '@mermaid-js/core/ascii';
-import { wrapTitle } from '@mermaid-js/core/ascii';
-import { finish } from '@mermaid-js/core/ascii';
-import { tee } from '@mermaid-js/core/ascii';
-import { writeLabel } from '@mermaid-js/core/ascii';
-import { drawLineCells } from '@mermaid-js/core/ascii';
-export { cellRect } from '@mermaid-js/core/ascii';
+import type { Centred } from '@mermaid-js/shared/ascii';
+import { cellRect } from '@mermaid-js/shared/ascii';
+import { dirOf } from '@mermaid-js/shared/ascii';
+import { cellsOf } from '@mermaid-js/shared/ascii';
+import { wrapTitle } from '@mermaid-js/shared/ascii';
+import { finish } from '@mermaid-js/shared/ascii';
+import { tee } from '@mermaid-js/shared/ascii';
+import { writeLabel } from '@mermaid-js/shared/ascii';
+import { drawLineCells } from '@mermaid-js/shared/ascii';
+export { cellRect } from '@mermaid-js/shared/ascii';
 
 interface End {
   /** The node or group the edge ends at. */
@@ -177,9 +177,18 @@ export function drawFlowchart(
     // D140: a grown box keeps its label centred.
     const lines = n.label.lines.length;
     const top = r.y + Math.floor((r.height - lines) / 2);
-    writeLabel(canvas, n.label, r.x + 1, top, r.width - 2, glyphs.name === 'ascii' ? '-' : undefined);
+    writeLabel(
+      canvas,
+      n.label,
+      r.x + 1,
+      top,
+      r.width - 2,
+      glyphs.name === 'ascii' ? '-' : undefined
+    );
   }
-  for (const end of ends) if (!markerGlyph(glyphs, end) && !onFrame(end)) tee(canvas, glyphs.tee, glyphs.name === 'unicode', end, end.stroke === 'thick' ? 2 : 1);
+  for (const end of ends)
+    if (!markerGlyph(glyphs, end) && !onFrame(end))
+      tee(canvas, glyphs.tee, glyphs.name === 'unicode', end, end.stroke === 'thick' ? 2 : 1);
 
   return finish(canvas, options.title, options.maxWidth);
 }

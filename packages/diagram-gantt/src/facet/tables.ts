@@ -7,9 +7,9 @@ import type { CompletionKind, Range } from '@mermaid-js/core/parser-kit';
 import type { GanttModel, GanttTag, GanttTask } from '../model.ts';
 import { clickTargets, lastById } from '../ids.ts';
 import { T } from '../parser/tokens.ts';
-export { lineBefore } from '@mermaid-js/core/parser-kit/facet';
-export { span } from '@mermaid-js/core/parser-kit/facet';
-export { code } from '@mermaid-js/core/parser-kit/facet';
+export { lineBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 /** An item offered when the parser expects `kind`. */
 export interface KeywordItem {

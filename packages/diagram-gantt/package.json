@@ -36,10 +36,12 @@
     "bench:steps": "tsx --conditions=mermaid-source scripts/layout-steps.ts"
   },
   "peerDependencies": {
-    "@mermaid-js/core": "workspace:*"
+    "@mermaid-js/core": "workspace:*",
+    "@mermaid-js/shared": "workspace:*"
   },
   "devDependencies": {
-    "@mermaid-js/core": "workspace:^"
+    "@mermaid-js/core": "workspace:^",
+    "@mermaid-js/shared": "workspace:^"
   },
   "mermaid": {
     "plugin": "diagram",

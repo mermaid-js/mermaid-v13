@@ -1,0 +1,67 @@
+{
+  "name": "@mermaid-js/shared",
+  "version": "13.0.0-alpha.0",
+  "description": "Code shared by several Mermaid diagram packages: lexer and parser families, edge drawing, graph layout helpers and ASCII drawing. Each subpath loads only with the diagrams that use it.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/shared"
+  },
+  "sideEffects": false,
+  "exports": {
+    "./parser/rule": {
+      "mermaid-source": "./src/parser/rule.ts",
+      "types": "./dist/parser/rule.d.ts",
+      "default": "./dist/parser/rule.js"
+    },
+    "./parser/state": {
+      "mermaid-source": "./src/parser/state.ts",
+      "types": "./dist/parser/state.d.ts",
+      "default": "./dist/parser/state.js"
+    },
+    "./parser/drop": {
+      "mermaid-source": "./src/parser/drop.ts",
+      "types": "./dist/parser/drop.d.ts",
+      "default": "./dist/parser/drop.js"
+    },
+    "./parser/facet": {
+      "mermaid-source": "./src/parser/facet.ts",
+      "types": "./dist/parser/facet.d.ts",
+      "default": "./dist/parser/facet.js"
+    },
+    "./svg/edges": {
+      "mermaid-source": "./src/svg/edges.ts",
+      "types": "./dist/svg/edges.d.ts",
+      "default": "./dist/svg/edges.js"
+    },
+    "./layout": {
+      "mermaid-source": "./src/layout/index.ts",
+      "types": "./dist/layout/index.d.ts",
+      "default": "./dist/layout/index.js"
+    },
+    "./ascii": {
+      "mermaid-source": "./src/ascii/index.ts",
+      "types": "./dist/ascii/index.d.ts",
+      "default": "./dist/ascii/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "THIRD_PARTY_NOTICES"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@mermaid-js/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@mermaid-js/core": "workspace:^"
+  }
+}

@@ -20,8 +20,8 @@ import type { ErModel } from './parser/index.ts';
 import { layoutEr, type ErLayout, type ErRenderContext } from './layout/layout.ts';
 import { drawEr } from './ascii/draw.ts';
 import { asciiWarnings, type AsciiRouteWarning } from './ascii/warnings.ts';
-import { asciiRoute } from '@mermaid-js/core/ascii';
-import { glyphSetOf } from '@mermaid-js/core/ascii';
+import { asciiRoute } from '@mermaid-js/shared/ascii';
+import { glyphSetOf } from '@mermaid-js/shared/ascii';
 
 export type {
   AsciiDroppedFeature,
@@ -38,8 +38,7 @@ export interface ErAsciiContext extends ErRenderContext {
   readonly ast?: AstNode;
 }
 
-const glyphsFor = (ctx: ErRenderContext): GlyphSet =>
-  glyphSetOf(ctx.config);
+const glyphsFor = (ctx: ErRenderContext): GlyphSet => glyphSetOf(ctx.config);
 
 /** Lays an ER diagram out in cells: the cell measurer and the cell profile (`ascii.padding`). */
 export function layoutAscii(model: ErModel, ctx: ErRenderContext): ErLayout {

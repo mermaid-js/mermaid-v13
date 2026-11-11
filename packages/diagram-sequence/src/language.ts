@@ -10,7 +10,7 @@ import { sequenceHover } from './facet/hover.ts';
 import { sequenceCategories } from './generated/categories.ts';
 import { parseSequence } from './parser/index.ts';
 import type { SequenceDocument } from './parser/index.ts';
-import { shapeReason } from '@mermaid-js/core/parser-kit/facet';
+import { shapeReason } from '@mermaid-js/shared/parser/facet';
 
 export { sequenceCategories } from './generated/categories.ts';
 export { sequenceDocs } from './generated/docs.ts';
@@ -72,7 +72,10 @@ function readsBack(name: string): boolean {
 
 /** Why `name` cannot be a participant id, if it cannot. */
 function invalidReason(name: string): string | undefined {
-  return shapeReason(name, 'An id', 'ends') ?? (readsBack(name) ? undefined : `'${name}' is not a participant id.`);
+  return (
+    shapeReason(name, 'An id', 'ends') ??
+    (readsBack(name) ? undefined : `'${name}' is not a participant id.`)
+  );
 }
 
 /** The sequence facet. */

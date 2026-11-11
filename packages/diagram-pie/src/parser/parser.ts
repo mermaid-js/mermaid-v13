@@ -16,10 +16,20 @@
  * error: it reports it, skips to the next line break and carries on (R-PARSE-4). A negative
  * value is a semantic error with v12's message, and the statement goes on.
  */
-import { APOSTROPHE, DQUOTE, ExpectedTable, ID_CONTROL, ID_RESERVED, idEscaper, Kind, kindSet, STOP } from '@mermaid-js/core/parser-kit';
-import { RuleParser } from '@mermaid-js/core/parser-kit/rule';
+import {
+  APOSTROPHE,
+  DQUOTE,
+  ExpectedTable,
+  ID_CONTROL,
+  ID_RESERVED,
+  idEscaper,
+  Kind,
+  kindSet,
+  STOP,
+} from '@mermaid-js/core/parser-kit';
+import { RuleParser } from '@mermaid-js/shared/parser/rule';
 import type { ParseOptions, ParseResult, Range, TokenStream } from '@mermaid-js/core/parser-kit';
-import type { RuleGrammar } from '@mermaid-js/core/parser-kit/rule';
+import type { RuleGrammar } from '@mermaid-js/shared/parser/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { PieModel, PieSection } from '../model.ts';
@@ -189,7 +199,14 @@ class PieParser extends RuleParser<PreprocessResult> {
     const { st } = this;
     const where = this.range();
     if (this.kind() === Kind.Error) this.badCharacters(where);
-    st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found(), undefined, hint ?? this.explain());
+    st.diagnostics.unexpected(
+      'UNEXPECTED',
+      where,
+      EXPECTED.names(want),
+      this.found(),
+      undefined,
+      hint ?? this.explain()
+    );
     throw STOP;
   }
 

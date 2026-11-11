@@ -8,11 +8,11 @@ import { DOMAIN_META } from '../domains.ts';
 import { CYNEFIN_DOMAIN_NAMES } from '../model.ts';
 import type { CynefinDomainName } from '../model.ts';
 import { T } from '../parser/tokens.ts';
-import type { KindedKeywordItem as KeywordItem } from '@mermaid-js/core/parser-kit/facet';
-export type { KindedKeywordItem as KeywordItem } from '@mermaid-js/core/parser-kit/facet';
-export { tokenBefore } from '@mermaid-js/core/parser-kit/facet';
-export { span } from '@mermaid-js/core/parser-kit/facet';
-export { code } from '@mermaid-js/core/parser-kit/facet';
+import type { KindedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
+export type { KindedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
+export { tokenBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 /**
  * What each domain means, as v12's syntax page (`docs/syntax/cynefin.md` at `mermaid@12.2.0`,

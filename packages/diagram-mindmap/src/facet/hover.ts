@@ -9,7 +9,7 @@ import type { MindmapModel } from '../model.ts';
 import type { MindmapDocument, MindmapNodeNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { code, SHAPE_NAMES, span } from './tables.ts';
-import { plural } from '@mermaid-js/core/parser-kit/facet';
+import { plural } from '@mermaid-js/shared/parser/facet';
 
 /** The tokens of a node statement. */
 const NODE_TOKENS = new Set<number>([

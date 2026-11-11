@@ -4,13 +4,21 @@
  * source, the removed spans as trivia, the start-condition stack and the scans most of them
  * use. A diagram's lexer extends {@link StateLexer} and writes its start conditions.
  */
-import { CR, LF } from './char-codes.ts';
-import { isBlank, isSpace } from './chars.ts';
-import type { Probe } from './probe.ts';
+import {
+  CR,
+  firstHole,
+  type Hole,
+  isBlank,
+  isSpace,
+  Kind,
+  LF,
+  localOffset,
+  type Probe,
+  SourceOffsets,
+  type SourceView,
+  TokenWriter,
+} from '@mermaid-js/core/parser-kit';
 import { dropAt } from './drop.ts';
-import { firstHole, localOffset, SourceOffsets } from './source-view.ts';
-import type { Hole, SourceView } from './source-view.ts';
-import { Kind, TokenWriter } from './tokens.ts';
 
 /** How one diagram's jison lexer read its text. */
 export interface StateLexerOptions {

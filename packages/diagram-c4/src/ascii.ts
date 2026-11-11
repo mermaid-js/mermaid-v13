@@ -15,7 +15,7 @@ import type { C4Layout } from './layout/index.ts';
 import type { C4Model } from './model.ts';
 import { drawC4, ROUTE_BUDGET } from './ascii/draw.ts';
 import { asciiWarnings } from './ascii/warnings.ts';
-import { glyphSetOf } from '@mermaid-js/core/ascii';
+import { glyphSetOf } from '@mermaid-js/shared/ascii';
 
 export type { AsciiDroppedFeature, AsciiDroppedWarning, AsciiWarning } from './ascii/warnings.ts';
 

@@ -38,8 +38,8 @@ import {
   STYLE_KEYS,
   tokenBefore,
 } from './tables.ts';
-import { wordRange } from '@mermaid-js/core/parser-kit/facet';
-import { keywordItem } from '@mermaid-js/core/parser-kit/facet';
+import { wordRange } from '@mermaid-js/shared/parser/facet';
+import { keywordItem } from '@mermaid-js/shared/parser/facet';
 
 /** The lexer modes in which the cursor is in code (jison's start conditions). */
 const CODE_MODES = new Set(['INITIAL', 'bol']);

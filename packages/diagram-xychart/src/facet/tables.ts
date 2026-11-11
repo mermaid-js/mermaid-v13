@@ -5,14 +5,14 @@
  */
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from '../parser/tokens.ts';
-import { span } from '@mermaid-js/core/parser-kit/facet';
-import type { DetailedKeywordItem as KeywordItem } from '@mermaid-js/core/parser-kit/facet';
-export type { DetailedKeywordItem as KeywordItem } from '@mermaid-js/core/parser-kit/facet';
-export { plural } from '@mermaid-js/core/parser-kit/facet';
-export { trimmed } from '@mermaid-js/core/parser-kit/facet';
-export { tokenBefore } from '@mermaid-js/core/parser-kit/facet';
-export { span } from '@mermaid-js/core/parser-kit/facet';
-export { code } from '@mermaid-js/core/parser-kit/facet';
+import { span } from '@mermaid-js/shared/parser/facet';
+import type { DetailedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
+export type { DetailedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
+export { plural } from '@mermaid-js/shared/parser/facet';
+export { trimmed } from '@mermaid-js/shared/parser/facet';
+export { tokenBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 /** The header keyword (`xychart-beta` is still read, but not offered). */
 export const HEADER: KeywordItem = { kind: T.XyChart, label: 'xychart' };

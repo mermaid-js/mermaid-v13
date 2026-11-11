@@ -34,7 +34,7 @@ import type {
   SequenceLayout,
 } from '../layout/index.ts';
 import { symbolForm } from './symbols.ts';
-import { dirOf } from '@mermaid-js/core/ascii';
+import { dirOf } from '@mermaid-js/shared/ascii';
 
 /** A head drawn in one cell: v12's marker families, in text. */
 type Head = 'arrow' | 'open' | 'cross' | 'top' | 'bottom';

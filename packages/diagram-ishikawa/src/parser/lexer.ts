@@ -20,9 +20,9 @@
  * linear in the text it consumes (R-PARSE-7).
  */
 import { cook, isSpace, Kind, LF, PERCENT } from '@mermaid-js/core/parser-kit';
-import { StateLexer } from '@mermaid-js/core/parser-kit/state';
+import { StateLexer } from '@mermaid-js/shared/parser/state';
 import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
-import type { StateLexerOptions } from '@mermaid-js/core/parser-kit/state';
+import type { StateLexerOptions } from '@mermaid-js/shared/parser/state';
 import { keywordAt, lower } from './keywords.ts';
 import { T } from './tokens.ts';
 

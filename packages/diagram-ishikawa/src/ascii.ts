@@ -14,8 +14,8 @@ import { layoutLabel, Style, type LabelOptions, type MeasuredLabel } from '@merm
 import { drawOutline } from './ascii/outline.ts';
 import { plainLabel, plainTitle } from './labels.ts';
 import type { IshikawaCause, IshikawaModel } from './model.ts';
-import { emphasised } from '@mermaid-js/core/ascii';
-import { glyphSetOf } from '@mermaid-js/core/ascii';
+import { emphasised } from '@mermaid-js/shared/ascii';
+import { glyphSetOf } from '@mermaid-js/shared/ascii';
 
 /** What the hook reads of core's `TextRenderContext`. */
 export type IshikawaAsciiContext = Pick<TextRenderContext, 'config' | 'warn'> &

@@ -9,7 +9,7 @@ import { classHover } from './facet/hover.ts';
 import { classCategories } from './generated/categories.ts';
 import { classTokens, parseClass } from './parser/index.ts';
 import type { ClassDocument, ClassParseResult } from './parser/index.ts';
-import { shapeReason } from '@mermaid-js/core/parser-kit/facet';
+import { shapeReason } from '@mermaid-js/shared/parser/facet';
 
 export { classCategories } from './generated/categories.ts';
 export { classDocs } from './generated/docs.ts';

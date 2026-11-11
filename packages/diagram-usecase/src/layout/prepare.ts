@@ -6,12 +6,12 @@
 // profile's sizing (`sizing.ts`: in px the metrics table, the config or core's px profile,
 // pitfall 13: `usecase-layout-literals.spec.ts`; in cells, text output's D478 forms, T7).
 import {
-  labelledEdge,
   type LayoutEdge,
   type LayoutGraph,
   type LayoutGroup,
   type LayoutNode,
 } from '@mermaid-js/core/layout';
+import { labelledEdge } from '@mermaid-js/shared/layout';
 import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
 import {
   fontSizePx,

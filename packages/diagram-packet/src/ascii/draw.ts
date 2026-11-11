@@ -20,8 +20,8 @@ import {
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
 import type { PacketModel, PacketPiece } from '../model.ts';
-import { cut } from '@mermaid-js/core/ascii';
-import { emphasised } from '@mermaid-js/core/ascii';
+import { cut } from '@mermaid-js/shared/ascii';
+import { emphasised } from '@mermaid-js/shared/ascii';
 
 /** Columns a bit takes; a piece of `n` bits is `COLUMNS * n + 1` wide, borders included. */
 const COLUMNS = 2;

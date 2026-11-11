@@ -36,10 +36,10 @@ import {
   span,
   tokenBefore,
 } from './tables.ts';
-import { CompletionList as Items } from '@mermaid-js/core/parser-kit/facet';
-import { afterDirection } from '@mermaid-js/core/parser-kit/facet';
-import { wordRange } from '@mermaid-js/core/parser-kit/facet';
-import { atStatementStart as atLineStart } from '@mermaid-js/core/parser-kit/facet';
+import { CompletionList as Items } from '@mermaid-js/shared/parser/facet';
+import { afterDirection } from '@mermaid-js/shared/parser/facet';
+import { wordRange } from '@mermaid-js/shared/parser/facet';
+import { atStatementStart as atLineStart } from '@mermaid-js/shared/parser/facet';
 
 /** Modes whose text is a value, not code: nothing is offered there. */
 const VALUE_MODES = new Set([

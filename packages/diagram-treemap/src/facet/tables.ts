@@ -5,10 +5,10 @@
 import type { CompletionKind, Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import type { TreemapDocument, TreemapStatementNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-export { inside } from '@mermaid-js/core/parser-kit/facet';
-export { tokenBefore } from '@mermaid-js/core/parser-kit/facet';
-export { span } from '@mermaid-js/core/parser-kit/facet';
-export { code } from '@mermaid-js/core/parser-kit/facet';
+export { inside } from '@mermaid-js/shared/parser/facet';
+export { tokenBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 /** Where an item is offered, besides the parser expecting its kind. */
 export type ItemPlace = 'header' | 'lineStart' | 'afterName';

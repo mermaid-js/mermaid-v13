@@ -3,18 +3,33 @@
  * the line and its tees, labels, the title, and the `ASCII_DROPPED` warning. Every `diagram-*`
  * ASCII path used to carry a copy; where the copies differed, the difference is a parameter.
  */
-import type { Point } from '../layout/types.ts';
-import type { MeasuredLabel } from '../text/label.ts';
-import { Style } from '../text/measurer.ts';
-import { Canvas } from './canvas.ts';
-import { DOWN, DX, DY, LEFT, opposite, RIGHT, UP } from './directions.ts';
-import type { Dir } from './directions.ts';
-import { drawText } from './draw.ts';
-import type { CellRect } from './draw.ts';
-import { armOf, ascii as asciiSet, glyphFor, junction, sideOf, unicode } from './glyphs.ts';
-import { asciiOptions } from './options.ts';
-import type { GlyphSet, Sides, Stroke } from './glyphs.ts';
-import { cellWidth, graphemes } from './measurer.ts';
+import type { Point } from '@mermaid-js/core/layout';
+import { type MeasuredLabel, Style } from '@mermaid-js/core/text';
+import {
+  armOf,
+  ascii as asciiSet,
+  asciiOptions,
+  Canvas,
+  type CellRect,
+  cellWidth,
+  type Dir,
+  DOWN,
+  drawText,
+  DX,
+  DY,
+  glyphFor,
+  type GlyphSet,
+  graphemes,
+  junction,
+  LEFT,
+  opposite,
+  RIGHT,
+  sideOf,
+  type Sides,
+  type Stroke,
+  unicode,
+  UP,
+} from '@mermaid-js/core/ascii';
 
 /** A box by its centre and size. */
 export interface Centred {
@@ -193,14 +208,17 @@ export const styled = (s: { readonly shape: object; readonly text: object }): bo
 
 /** The ids of every node of an AST, by node type, in document order. */
 export function statements(
-  ast: { readonly type: string; readonly id: string; readonly children?: readonly unknown[] } | undefined,
+  ast:
+    | { readonly type: string; readonly id: string; readonly children?: readonly unknown[] }
+    | undefined,
   out: Map<string, string[]>
 ): void {
   if (!ast) return;
   const list = out.get(ast.type);
   if (list) list.push(ast.id);
   else out.set(ast.type, [ast.id]);
-  for (const child of ast.children ?? []) statements(child as Parameters<typeof statements>[0], out);
+  for (const child of ast.children ?? [])
+    statements(child as Parameters<typeof statements>[0], out);
 }
 
 /** One `ASCII_DROPPED` warning (D82): text output has no `what`. `keys` names what, in brackets. */

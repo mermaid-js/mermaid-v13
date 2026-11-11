@@ -28,10 +28,30 @@
  * consumes (R-PARSE-7).
  */
 // cspell:words NSTR
-import { AT, BACKTICK, CARET, COLON, cook, DASH, DQUOTE, isLineEnd, isSpace, isWord, Kind, LBRACE, LBRACKET, LF, LPAREN, PERCENT, RBRACE, RBRACKET, RPAREN } from '@mermaid-js/core/parser-kit';
-import { lowerCode, StateLexer } from '@mermaid-js/core/parser-kit/state';
+import {
+  AT,
+  BACKTICK,
+  CARET,
+  COLON,
+  cook,
+  DASH,
+  DQUOTE,
+  isLineEnd,
+  isSpace,
+  isWord,
+  Kind,
+  LBRACE,
+  LBRACKET,
+  LF,
+  LPAREN,
+  PERCENT,
+  RBRACE,
+  RBRACKET,
+  RPAREN,
+} from '@mermaid-js/core/parser-kit';
+import { lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
 import type { Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
-import type { StateLexerOptions } from '@mermaid-js/core/parser-kit/state';
+import type { StateLexerOptions } from '@mermaid-js/shared/parser/state';
 import { T } from './tokens.ts';
 
 // Start conditions of kanban.jison (its `shapeDataEndBracket` is declared and never entered).

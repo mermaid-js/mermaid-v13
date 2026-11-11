@@ -24,6 +24,10 @@
       ],
       "project": ["src/**/*.ts"]
     },
+    "packages/shared": {
+      "entry": ["src/*/index.ts", "src/parser/{rule,state,drop,facet}.ts", "src/svg/edges.ts"],
+      "project": ["src/**/*.ts"]
+    },
     "packages/mermaid": {
       "entry": [
         "src/index.ts",

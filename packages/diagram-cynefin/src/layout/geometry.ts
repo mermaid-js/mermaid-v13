@@ -4,7 +4,7 @@
  * only where something is drawn), and a box that unions them.
  */
 import type { CubicCurve, Point, Rect } from './types.ts';
-import { RectUnion } from '@mermaid-js/core/layout';
+import { RectUnion } from '@mermaid-js/shared/layout';
 
 /** The [min, max] of one coordinate of a cubic Bézier with these four values. */
 function cubicRange(p0: number, p1: number, p2: number, p3: number): [number, number] {

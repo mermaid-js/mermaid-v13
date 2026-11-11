@@ -20,17 +20,11 @@ import type {
   LayoutNode,
   UnitProfile,
 } from '@mermaid-js/core/layout';
-import {
-  fromPx,
-  graphSpacing,
-  groupPadding,
-  labelledEdge,
-  pxProfile,
-  sideways,
-} from '@mermaid-js/core/layout';
+import { fromPx, pxProfile } from '@mermaid-js/core/layout';
+import { graphSpacing, groupPadding, labelledEdge, sideways } from '@mermaid-js/shared/layout';
 import type { AgentflowDiagramConfig } from '@mermaid-js/core/config';
 import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
-import { curveKind, curveRouting, textStyle, type CurveKind } from '@mermaid-js/core/svg/edges';
+import { curveKind, curveRouting, textStyle, type CurveKind } from '@mermaid-js/shared/svg/edges';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   AgentflowFlowModel,

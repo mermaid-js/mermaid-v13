@@ -15,7 +15,7 @@ import type { KanbanModel } from './model.ts';
 import { priorityWarning } from './render/priority.ts';
 import { drawKanban } from './ascii/draw.ts';
 import { asciiWarnings } from './ascii/warnings.ts';
-import { glyphSetOf } from '@mermaid-js/core/ascii';
+import { glyphSetOf } from '@mermaid-js/shared/ascii';
 
 export type { AsciiDroppedFeature, AsciiDroppedWarning, AsciiWarning } from './ascii/warnings.ts';
 

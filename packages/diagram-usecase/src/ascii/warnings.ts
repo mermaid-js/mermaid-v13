@@ -10,10 +10,10 @@ import { Style, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { UsecaseConfigKey, UsecaseLayoutConfig } from '../config.ts';
 import type { UsecaseModel } from '../model.ts';
 import type { UsecaseNodeView, UsecasePrepared } from '../layout/prepare.ts';
-import { styled } from '@mermaid-js/core/ascii';
-import { statements } from '@mermaid-js/core/ascii';
-import { emphasised } from '@mermaid-js/core/ascii';
-import { asciiDropped } from '@mermaid-js/core/ascii';
+import { styled } from '@mermaid-js/shared/ascii';
+import { statements } from '@mermaid-js/shared/ascii';
+import { emphasised } from '@mermaid-js/shared/ascii';
+import { asciiDropped } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature =

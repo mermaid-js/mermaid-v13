@@ -12,7 +12,7 @@ import { ARROW_SET } from '../parser/tables.ts';
 import { generatedId } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
 import { ARROW_MEANING, code, DIRECTIONS, KIND_NAMES, plural, span } from './tables.ts';
-import { trimmed } from '@mermaid-js/core/parser-kit/facet';
+import { trimmed } from '@mermaid-js/shared/parser/facet';
 
 /** At most this many members or rows are listed; the rest are counted. */
 const LISTED = 8;

@@ -25,8 +25,8 @@ import { NAME_SET } from '../parser/tables.ts';
 import { T, WARDLEY_TRIVIA } from '../parser/tokens.ts';
 import { nameReason, quoteName } from './names.ts';
 import { declarationKind, declaredNodes, ITEMS, span, tokenBefore } from './tables.ts';
-import { atLineStart } from '@mermaid-js/core/parser-kit/facet';
-import { keywordItem } from '@mermaid-js/core/parser-kit/facet';
+import { atLineStart } from '@mermaid-js/shared/parser/facet';
+import { keywordItem } from '@mermaid-js/shared/parser/facet';
 
 /** Tokens after which a node name is a reference: arrows, flows and the referring keywords. */
 const BEFORE_REFERENCE = new Set<number>([

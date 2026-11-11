@@ -21,8 +21,8 @@ import type { QuadrantDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { readsAs } from './names.ts';
 import { KEYWORDS, span, STYLE_KEYS, tokenBefore } from './tables.ts';
-import { CompletionList as Items } from '@mermaid-js/core/parser-kit/facet';
-import { wordRange } from '@mermaid-js/core/parser-kit/facet';
+import { CompletionList as Items } from '@mermaid-js/shared/parser/facet';
+import { wordRange } from '@mermaid-js/shared/parser/facet';
 
 /** Modes whose text is a value, not code: nothing is offered there. */
 const VALUE_MODES = new Set([

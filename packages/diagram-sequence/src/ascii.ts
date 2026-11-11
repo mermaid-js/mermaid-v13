@@ -12,7 +12,7 @@ import type { SequenceModel } from './model.ts';
 import { layoutSequence, type SequenceLayout } from './layout/index.ts';
 import { drawSequence, type Align } from './ascii/draw.ts';
 import { asciiWarnings } from './ascii/warnings.ts';
-import { glyphSetOf } from '@mermaid-js/core/ascii';
+import { glyphSetOf } from '@mermaid-js/shared/ascii';
 
 export type {
   AsciiDroppedFeature,

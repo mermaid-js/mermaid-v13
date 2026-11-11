@@ -9,7 +9,6 @@ The files below are local copies of @mermaid-js/diagram-flowchart's shape and ar
 3a2f075 (release 1.13.0). Each file's header says what it took and what changed. Pele is used
 under the MIT License:
 
-  src/render/arrowheads.ts
   src/shapes/draw.ts
   src/shapes/leaf.ts
 

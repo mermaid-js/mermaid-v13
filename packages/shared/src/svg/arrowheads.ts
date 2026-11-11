@@ -2,9 +2,8 @@
 // Ported from Pele's src/svg/edges.ts @ 3a2f075 (https://github.com/obsidianmd/pele, MIT,
 // (c) 2026 kepano): `marker`, `markerTrim`. The fill-aware casings are left out.
 // cspell:ignore kepano
-import type { Theme } from '../theme/theme.ts';
-import type { Attrs } from './types.ts';
-import type { SvgWriter } from './writer.ts';
+import type { Theme } from '@mermaid-js/core/theme';
+import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
 
 /**
  * Arrowhead geometry for one render, from the theme (D152). A gap is the space between the

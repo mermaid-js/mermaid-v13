@@ -15,8 +15,8 @@ import { agentflowCategories } from './generated/categories.ts';
 import { agentflowTokens, parseAgentflow, RESERVED_ID } from './parser/index.ts';
 import type { AgentflowDocument } from './parser/index.ts';
 import { T } from './parser/tokens.ts';
-import { shapeReason } from '@mermaid-js/core/parser-kit/facet';
-import { readsBack } from '@mermaid-js/core/parser-kit/facet';
+import { shapeReason } from '@mermaid-js/shared/parser/facet';
+import { readsBack } from '@mermaid-js/shared/parser/facet';
 
 export { agentflowCategories } from './generated/categories.ts';
 export { agentflowDocs } from './generated/docs.ts';
@@ -63,7 +63,9 @@ function invalidIdReason(name: string): string | undefined {
   );
   if (tokens.some((t) => LINKS.has(t.kind))) return `'${name}' contains an arrow.`;
   if (tokens.length === 1 && KEYWORDS.has(tokens[0]!.kind)) return `'${name}' is a keyword.`;
-  return readsBack(parseAgentflow(text), HEADER.length, name, 'node') ? undefined : `'${name}' is not a node id.`;
+  return readsBack(parseAgentflow(text), HEADER.length, name, 'node')
+    ? undefined
+    : `'${name}' is not a node id.`;
 }
 
 /**
@@ -76,7 +78,9 @@ function invalidReason(name: string, kind = 'node'): string | undefined {
     const text = `${HEADER}classDef ${name} fill:#000\n`;
     return (
       shapeReason(name, 'An id') ??
-      (readsBack(parseAgentflow(text), at, name, 'class') ? undefined : `'${name}' is not a class name.`)
+      (readsBack(parseAgentflow(text), at, name, 'class')
+        ? undefined
+        : `'${name}' is not a class name.`)
     );
   }
   if (kind === 'edge') {
@@ -84,7 +88,9 @@ function invalidReason(name: string, kind = 'node'): string | undefined {
     const text = `${HEADER}A ${name}@--> B\n`;
     return (
       shapeReason(name, 'An id') ??
-      (readsBack(parseAgentflow(text), at, name, 'edge') ? undefined : `'${name}' is not an edge id.`)
+      (readsBack(parseAgentflow(text), at, name, 'edge')
+        ? undefined
+        : `'${name}' is not an edge id.`)
     );
   }
   return invalidIdReason(name);

@@ -38,14 +38,14 @@ import type {
   UsecasePrepared,
   UseCaseView,
 } from '../layout/prepare.ts';
-import type { Centred } from '@mermaid-js/core/ascii';
-import { cellRect } from '@mermaid-js/core/ascii';
-import { dirOf } from '@mermaid-js/core/ascii';
-import { cellsOf } from '@mermaid-js/core/ascii';
-import { wrapTitle } from '@mermaid-js/core/ascii';
-import { finish } from '@mermaid-js/core/ascii';
-import { writeLabel } from '@mermaid-js/core/ascii';
-import { drawLineCells } from '@mermaid-js/core/ascii';
+import type { Centred } from '@mermaid-js/shared/ascii';
+import { cellRect } from '@mermaid-js/shared/ascii';
+import { dirOf } from '@mermaid-js/shared/ascii';
+import { cellsOf } from '@mermaid-js/shared/ascii';
+import { wrapTitle } from '@mermaid-js/shared/ascii';
+import { finish } from '@mermaid-js/shared/ascii';
+import { writeLabel } from '@mermaid-js/shared/ascii';
+import { drawLineCells } from '@mermaid-js/shared/ascii';
 
 /** The actor's figure (D478), the same in both charsets. */
 const FIGURE = [' O ', '/|\\', '/ \\'] as const;
@@ -189,7 +189,15 @@ function drawActor(canvas: Canvas, glyphs: GlyphSet, v: ActorView, r: CellRect):
   // Rounded as the engine rounds a lone end on the box's middle.
   const figure = r.x + Math.round((r.width - FIGURE[0].length) / 2);
   FIGURE.forEach((row, i) => drawText(canvas, figure, at.y + v.glyphTop + i, row));
-  if (v.stereotype) writeLabel(canvas, v.stereotype, r.x, at.y + v.stereotypeTop, r.width, USECASE_GLYPHS[glyphs.name].bullet);
+  if (v.stereotype)
+    writeLabel(
+      canvas,
+      v.stereotype,
+      r.x,
+      at.y + v.stereotypeTop,
+      r.width,
+      USECASE_GLYPHS[glyphs.name].bullet
+    );
   writeLabel(canvas, v.label, r.x, at.y + v.labelTop, r.width, USECASE_GLYPHS[glyphs.name].bullet);
 }
 
@@ -271,7 +279,14 @@ function drawNode(
     case 'note': {
       drawBox(canvas, glyphs, r);
       const top = r.y + Math.floor((r.height - v.label.height) / 2);
-      return writeLabel(canvas, v.label, r.x + 1, top, r.width - 2, USECASE_GLYPHS[glyphs.name].bullet);
+      return writeLabel(
+        canvas,
+        v.label,
+        r.x + 1,
+        top,
+        r.width - 2,
+        USECASE_GLYPHS[glyphs.name].bullet
+      );
     }
   }
 }

@@ -4,7 +4,7 @@
  */
 import type { Circle, JourneyLayout, Rect } from './types.ts';
 import type { JourneyMetrics } from './metrics.ts';
-import { unionRects } from '@mermaid-js/core/layout';
+import { unionRects } from '@mermaid-js/shared/layout';
 
 const circle = (c: Circle, stroke: number): Rect => {
   const r = c.r + stroke / 2;

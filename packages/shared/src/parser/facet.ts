@@ -3,11 +3,15 @@
  * lookups and the keyword-table completer every `diagram-*` facet used to carry a copy of.
  * Pure functions; where the copies differed, the difference is a parameter.
  */
-import type { CompletionItem, CompletionKind, Hover } from './language.ts';
-import type { Range } from './positions.ts';
-import type { ProbeResult } from './probe.ts';
-import type { ParseResult } from './result.ts';
-import type { TokenStream } from './tokens.ts';
+import type {
+  CompletionItem,
+  CompletionKind,
+  Hover,
+  ParseResult,
+  ProbeResult,
+  Range,
+  TokenStream,
+} from '@mermaid-js/core/parser-kit';
 
 export const span = (start: number, end: number): Range => ({ start, end });
 
@@ -38,7 +42,7 @@ export const isPlain = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** The `click … href` link targets. */
-export const LINK_TARGETS = ['_self', '_blank', '_parent', '_top'];
+export const LINK_TARGETS: readonly string[] = ['_self', '_blank', '_parent', '_top'] as const;
 
 /** Index of the last token of `tokens` starting at or before `offset`, or -1. */
 export function tokenBefore(tokens: TokenStream, offset: number): number {
@@ -278,7 +282,11 @@ export class CompletionList {
   }
 
   /** A keyword table row, with its doc. */
-  keyword(k: KeywordRow, documentation: string | undefined, kind: CompletionKind = 'keyword'): void {
+  keyword(
+    k: KeywordRow,
+    documentation: string | undefined,
+    kind: CompletionKind = 'keyword'
+  ): void {
     this.add(k.label, kind, {
       insertText: k.insert ?? k.label,
       ...(k.detail === undefined ? {} : { detail: k.detail }),

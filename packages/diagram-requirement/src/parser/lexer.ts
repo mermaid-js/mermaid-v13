@@ -39,10 +39,34 @@
  * the line at every token, quadratic on a long line), and the scans to the next quote and the
  * next `}` are cached.
  */
-import { codePointEnd, COLON, COMMA, cook, CR, DASH, DQUOTE, EQUALS, GT, HASH, isLineEnd, isSpace, isWord, Kind, LBRACE, LF, LT, PERCENT, QUOTE, RBRACE, SEMI, sourceView, SPACE } from '@mermaid-js/core/parser-kit';
-import { lowerCode, StateLexer } from '@mermaid-js/core/parser-kit/state';
+import {
+  codePointEnd,
+  COLON,
+  COMMA,
+  cook,
+  CR,
+  DASH,
+  DQUOTE,
+  EQUALS,
+  GT,
+  HASH,
+  isLineEnd,
+  isSpace,
+  isWord,
+  Kind,
+  LBRACE,
+  LF,
+  LT,
+  PERCENT,
+  QUOTE,
+  RBRACE,
+  SEMI,
+  sourceView,
+  SPACE,
+} from '@mermaid-js/core/parser-kit';
+import { lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
 import type { Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
-import type { StateLexerOptions } from '@mermaid-js/core/parser-kit/state';
+import type { StateLexerOptions } from '@mermaid-js/shared/parser/state';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { KEYWORD_SPELLINGS, T } from './tokens.ts';
@@ -453,7 +477,10 @@ class RequirementLexer extends StateLexer {
     let w = p + 9;
     while (isLineBlank(text.charCodeAt(w))) w++;
     if (w === p + 9 || isWord(text.charCodeAt(w + 2))) return false;
-    const pair = String.fromCharCode(lowerCode(text.charCodeAt(w)), lowerCode(text.charCodeAt(w + 1)));
+    const pair = String.fromCharCode(
+      lowerCode(text.charCodeAt(w)),
+      lowerCode(text.charCodeAt(w + 1))
+    );
     const d = DIRECTIONS.indexOf(pair);
     if (d < 0) return false;
     this.emit(DIRECTION_KINDS[d] ?? T.DirectionTB, p, w + 2);

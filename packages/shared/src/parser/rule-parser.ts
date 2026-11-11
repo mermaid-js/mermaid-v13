@@ -4,21 +4,26 @@
  * base name, and statement-level error recovery. A diagram's parser extends {@link RuleParser}
  * and writes its rules and its `fail` (what it expected, with its own hints).
  */
-import { cook, sourceView } from './source-view.ts';
-import type { SourceView } from './source-view.ts';
-import type { AstId } from './ast.ts';
-import { kindSet } from './cursor.ts';
-import type { KindSet } from './cursor.ts';
-import type { Diagnostic } from './diagnostics.ts';
-import { foundText, STOP } from './parser-support.ts';
-import { LineIndex } from './positions.ts';
-import type { Range } from './positions.ts';
-import { Probe } from './probe.ts';
-import { ParseState } from './result.ts';
-import { Kind } from './tokens.ts';
-import type { TokenStream } from './tokens.ts';
-import { significantTokens, skipTo } from './view.ts';
-import type { TokenView } from './view.ts';
+import {
+  type AstId,
+  cook,
+  type Diagnostic,
+  foundText,
+  Kind,
+  type KindSet,
+  kindSet,
+  LineIndex,
+  ParseState,
+  Probe,
+  type Range,
+  significantTokens,
+  skipTo,
+  sourceView,
+  type SourceView,
+  STOP,
+  type TokenStream,
+  type TokenView,
+} from '@mermaid-js/core/parser-kit';
 
 /** What {@link RuleParser} reads of a preprocess result (core's `PreprocessResult` fits). */
 export interface RuleParserPre {
@@ -58,8 +63,8 @@ export abstract class RuleParser<Pre extends RuleParserPre = RuleParserPre> {
   private readonly boundary: KindSet;
 
   /**
-   * @param own `pre` was made for this parse (not handed in): its diagnostics are reported.
-   * @param probeAt The probe's offset, when the parse is probed.
+   * @param own - `pre` was made for this parse (not handed in): its diagnostics are reported.
+   * @param probeAt - The probe's offset, when the parse is probed.
    */
   constructor(
     protected readonly src: string,

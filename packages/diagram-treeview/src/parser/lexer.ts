@@ -35,7 +35,6 @@ import {
   CR,
   DASH,
   DQUOTE,
-  dropAt,
   firstHole,
   HASH,
   isBlank,
@@ -53,10 +52,10 @@ import {
   RPAREN,
   scanWhile,
   SourceOffsets,
-  tagQuotes,
   TokenWriter,
   UNDERSCORE,
 } from '@mermaid-js/core/parser-kit';
+import { dropAt, tagQuotes } from '@mermaid-js/shared/parser/drop';
 import type { Hole, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { boxDrawing } from './box.ts';
 import type { BoxPass, BoxRewrite } from './box.ts';

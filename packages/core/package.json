@@ -26,21 +26,6 @@
       "types": "./dist/parser-kit/index.d.ts",
       "default": "./dist/parser-kit/index.js"
     },
-    "./parser-kit/rule": {
-      "mermaid-source": "./src/parser-kit/rule.ts",
-      "types": "./dist/parser-kit/rule.d.ts",
-      "default": "./dist/parser-kit/rule.js"
-    },
-    "./parser-kit/state": {
-      "mermaid-source": "./src/parser-kit/state.ts",
-      "types": "./dist/parser-kit/state.d.ts",
-      "default": "./dist/parser-kit/state.js"
-    },
-    "./parser-kit/facet": {
-      "mermaid-source": "./src/parser-kit/facet.ts",
-      "types": "./dist/parser-kit/facet.d.ts",
-      "default": "./dist/parser-kit/facet.js"
-    },
     "./preprocess": {
       "mermaid-source": "./src/preprocess/index.ts",
       "types": "./dist/preprocess/index.d.ts",
@@ -75,11 +60,6 @@
       "mermaid-source": "./src/svg/index.ts",
       "types": "./dist/svg/index.d.ts",
       "default": "./dist/svg/index.js"
-    },
-    "./svg/edges": {
-      "mermaid-source": "./src/svg/edges.ts",
-      "types": "./dist/svg/edges.d.ts",
-      "default": "./dist/svg/edges.js"
     },
     "./svg/testing": {
       "mermaid-source": "./src/svg/testing/index.ts",

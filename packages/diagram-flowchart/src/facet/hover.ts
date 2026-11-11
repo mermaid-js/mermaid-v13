@@ -19,8 +19,8 @@ import { destructLink } from '../parser/model.ts';
 import { acceptedShape, SHAPE_GROUPS } from '../parser/shapes.ts';
 import { T } from '../parser/tokens.ts';
 import { code, describeLink, DIRECTIONS, span, tokenBefore } from './tables.ts';
-import { trimmed } from '@mermaid-js/core/parser-kit/facet';
-import { plural } from '@mermaid-js/core/parser-kit/facet';
+import { trimmed } from '@mermaid-js/shared/parser/facet';
+import { plural } from '@mermaid-js/shared/parser/facet';
 
 const LINK_TOKENS = new Set<number>([T.Link, T.StartLink]);
 

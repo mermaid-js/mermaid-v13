@@ -31,7 +31,6 @@ import {
   COMMA,
   CR,
   DQUOTE,
-  dropAt,
   firstHole,
   HASH,
   isSpace,
@@ -42,9 +41,9 @@ import {
   QUOTE,
   SEMI,
   SourceOffsets,
-  tagQuotes,
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
+import { dropAt, tagQuotes } from '@mermaid-js/shared/parser/drop';
 import type { Hole, Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { SankeyKind } from './tokens.ts';
 

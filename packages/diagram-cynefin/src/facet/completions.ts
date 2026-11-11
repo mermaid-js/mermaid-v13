@@ -18,9 +18,9 @@ import { cynefinDocs } from '../generated/docs.ts';
 import type { CynefinDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { ITEMS, LINE_START, span, tokenBefore } from './tables.ts';
-import { lineBefore } from '@mermaid-js/core/parser-kit/facet';
-import { wordRange } from '@mermaid-js/core/parser-kit/facet';
-import { keywordItem } from '@mermaid-js/core/parser-kit/facet';
+import { lineBefore } from '@mermaid-js/shared/parser/facet';
+import { wordRange } from '@mermaid-js/shared/parser/facet';
+import { keywordItem } from '@mermaid-js/shared/parser/facet';
 
 export function cynefinCompletions(
   probe: ProbeResult,

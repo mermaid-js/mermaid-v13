@@ -51,7 +51,7 @@ import type {
   Point,
   Rect,
 } from './types.ts';
-import { unionRects } from '@mermaid-js/core/layout';
+import { unionRects } from '@mermaid-js/shared/layout';
 
 /** What the layout reads from the render context (`warn` for `EVENTMODELING_CONFIG_INVALID`). */
 export type EventModelLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &

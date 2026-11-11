@@ -7,8 +7,7 @@
  * The scans are linear (R-PARSE-7, pitfall 5): v12's `/\s+$/gm` backtracks over a long blank
  * run inside a line, so it is written out by hand here.
  */
-import { BACKSLASH } from './char-codes.ts';
-import { isBlank, isLineEnd, isSpace } from './chars.ts';
+import { BACKSLASH, isBlank, isLineEnd, isSpace } from '@mermaid-js/core/parser-kit';
 
 /** Langium's `convertEscapeCharacter`: the control escapes, and any other `\x` as `x`. */
 const ESCAPES: Readonly<Record<string, string>> = {
@@ -19,7 +18,7 @@ const ESCAPES: Readonly<Record<string, string>> = {
   t: '\t',
   v: '\v',
   0: '\0',
-};
+} as const;
 
 /** A `"…"` or `'…'` string without its quotes, with `\x` unescaped. Not trimmed. */
 export function stringValue(image: string): string {

@@ -72,4 +72,3 @@ credits:
     src/layout/prepare.ts: ['Pele']
     src/layout/shapes.ts: ['Pele']
     src/render/shapes.ts: ['Pele']
-    src/render/edges.ts: ['Pele']

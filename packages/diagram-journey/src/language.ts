@@ -16,7 +16,7 @@ import { forService } from './facet/symbols.ts';
 import { journeyCategories } from './generated/categories.ts';
 import { parseJourney } from './parser/index.ts';
 import type { JourneyDocument, JourneyParseOptions, JourneyParseResult } from './parser/index.ts';
-import { shapeReason } from '@mermaid-js/core/parser-kit/facet';
+import { shapeReason } from '@mermaid-js/shared/parser/facet';
 
 export { journeyCategories } from './generated/categories.ts';
 export { journeyDocs } from './generated/docs.ts';

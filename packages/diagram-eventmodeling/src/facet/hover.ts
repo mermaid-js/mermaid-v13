@@ -18,7 +18,7 @@ import { T, TEXT_WORD } from '../parser/tokens.ts';
 import { eventModelStructure } from '../structure.ts';
 import type { EventModelRelation } from '../structure.ts';
 import { code, inside, list, span } from './tables.ts';
-import { keywordHover } from '@mermaid-js/core/parser-kit/facet';
+import { keywordHover } from '@mermaid-js/shared/parser/facet';
 
 /** Tokens with a doc that hover leaves alone: names, ids, data and punctuation. */
 const NO_DOC = new Set<number>([

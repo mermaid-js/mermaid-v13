@@ -2,11 +2,8 @@
  * Drawing glue the graph diagrams share: the edge label on its background box and the
  * text style a label is measured with.
  */
-import { fontSizePx } from '../text/fonts.ts';
-import { Style, type FontKey } from '../text/measurer.ts';
-import type { CheckedStyle } from './style.ts';
-import type { Attrs } from './types.ts';
-import type { LabelBox, SvgWriter } from './writer.ts';
+import { type FontKey, fontSizePx, Style } from '@mermaid-js/core/text';
+import type { Attrs, CheckedStyle, LabelBox, SvgWriter } from '@mermaid-js/core/svg';
 
 // Room each side of an edge label inside its background box.
 const LABEL_PAD = 4;

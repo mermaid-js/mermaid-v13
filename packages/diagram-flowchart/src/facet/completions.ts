@@ -45,9 +45,9 @@ import {
   span,
   tokenBefore,
 } from './tables.ts';
-import { CompletionList as Items } from '@mermaid-js/core/parser-kit/facet';
-import { afterDirection } from '@mermaid-js/core/parser-kit/facet';
-import { wordRunRange } from '@mermaid-js/core/parser-kit/facet';
+import { CompletionList as Items } from '@mermaid-js/shared/parser/facet';
+import { afterDirection } from '@mermaid-js/shared/parser/facet';
+import { wordRunRange } from '@mermaid-js/shared/parser/facet';
 
 /** Modes in which a statement, a header or a `click` target is being written. */
 const CODE_MODES = new Set(['INITIAL', 'dir', 'click']);

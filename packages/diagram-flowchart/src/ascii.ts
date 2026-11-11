@@ -20,8 +20,8 @@ import type { FlowRenderContext } from './render/context.ts';
 import { layoutFlowchart, type FlowLayout } from './render/render.ts';
 import { drawFlowchart } from './ascii/draw.ts';
 import { asciiWarnings, type AsciiRouteWarning } from './ascii/warnings.ts';
-import { asciiRoute } from '@mermaid-js/core/ascii';
-import { glyphSetOf } from '@mermaid-js/core/ascii';
+import { asciiRoute } from '@mermaid-js/shared/ascii';
+import { glyphSetOf } from '@mermaid-js/shared/ascii';
 
 export type {
   AsciiDroppedFeature,
@@ -40,8 +40,7 @@ export interface FlowAsciiContext extends FlowRenderContext {
 }
 
 // The `ascii` config section (DESIGN §6.3) through core's one resolver; unset keys default.
-const glyphsFor = (ctx: FlowRenderContext): GlyphSet =>
-  glyphSetOf(ctx.config);
+const glyphsFor = (ctx: FlowRenderContext): GlyphSet => glyphSetOf(ctx.config);
 
 /**
  * Lays a flowchart out in cells: the cell measurer, the cell profile (`ascii.padding`) and
@@ -66,7 +65,11 @@ export function ascii(model: FlowModel, layout: FlowLayout, ctx: FlowAsciiContex
   for (const w of asciiWarnings(model, flow, glyphs, ctx.ast, curve)) ctx.warn(w);
   // D78: a stretch no lane was found for stays as snapped; say which edges cross or share.
   const ast = new Map(flow.edges.map((e) => [e.id, e.edge.ast]));
-  const routeWarning: AsciiRouteWarning | undefined = asciiRoute(unresolved, 'edges', (id) => ast.get(id) ?? []);
+  const routeWarning: AsciiRouteWarning | undefined = asciiRoute(
+    unresolved,
+    'edges',
+    (id) => ast.get(id) ?? []
+  );
   if (routeWarning) ctx.warn(routeWarning);
   const maxWidth = ctx.config.ascii?.maxWidth;
   return drawFlowchart(flow, laid, routes, glyphs, {

@@ -21,9 +21,9 @@ import type { XyChartDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import type { KeywordItem } from './tables.ts';
 import { HEADER, ORIENTATIONS, span, STATEMENTS, tokenBefore } from './tables.ts';
-import { wordRange } from '@mermaid-js/core/parser-kit/facet';
-import { atStatementStart as atLineStart } from '@mermaid-js/core/parser-kit/facet';
-import { CompletionList as Items } from '@mermaid-js/core/parser-kit/facet';
+import { wordRange } from '@mermaid-js/shared/parser/facet';
+import { atStatementStart as atLineStart } from '@mermaid-js/shared/parser/facet';
+import { CompletionList as Items } from '@mermaid-js/shared/parser/facet';
 
 /** Modes whose text is a value, not code: nothing is offered there. */
 const VALUE_MODES = new Set([

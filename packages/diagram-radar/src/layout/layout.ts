@@ -30,7 +30,7 @@ import type {
   RadarTextAnchor,
   Rect,
 } from './types.ts';
-import { RectUnion } from '@mermaid-js/core/layout';
+import { RectUnion } from '@mermaid-js/shared/layout';
 
 /** What the layout reads from the render context. */
 export type RadarLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &

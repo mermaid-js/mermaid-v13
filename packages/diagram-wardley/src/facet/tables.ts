@@ -14,10 +14,10 @@ import type {
 } from '../parser/ast.ts';
 import { KEYWORD_STARTS } from '../parser/tables.ts';
 import { KEYWORDS, STRATEGIES, T, TEXT_STATEMENTS } from '../parser/tokens.ts';
-export { inside } from '@mermaid-js/core/parser-kit/facet';
-export { tokenBefore } from '@mermaid-js/core/parser-kit/facet';
-export { span } from '@mermaid-js/core/parser-kit/facet';
-export { code } from '@mermaid-js/core/parser-kit/facet';
+export { inside } from '@mermaid-js/shared/parser/facet';
+export { tokenBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 /** An item offered when the parser expects `kind`. */
 export interface KeywordItem {

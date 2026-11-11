@@ -7,7 +7,7 @@
  * The scans are linear (R-PARSE-7, pitfall 5): v12's `/\s+$/gm` backtracks over a long blank
  * run inside a line, so it is written out by hand here, as are the `classDef` and number checks.
  */
-export { accDescrValue, accTitleValue, titleValue } from '@mermaid-js/core/parser-kit/rule';
+export { accDescrValue, accTitleValue, titleValue } from '@mermaid-js/shared/parser/rule';
 import {
   BACKSLASH,
   COMMA,
