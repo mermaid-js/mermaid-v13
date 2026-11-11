@@ -14,7 +14,7 @@
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import type { AstId, Range } from '@mermaid-js/core/parser-kit';
 import type { FlowLabelType } from './flow-ast.ts';
-import type { FlowLinkInfo, FlowLinkParts } from './flow-parser-base.ts';
+import type { FlowDocItem, FlowLinkInfo, FlowLinkParts } from './flow-parser-base.ts';
 
 /** What the base reads and writes of a vertex. */
 export interface FlowVertexRecord {
@@ -154,6 +154,30 @@ export abstract class FlowBuilderBase<
       );
     }
     return true;
+  }
+
+  /**
+   * What a block's body lists, as v12's `addSubGraph` read what the grammar collected: its ids,
+   * each once and no blank one, and its direction (the diagram's with `inheritDir` when the
+   * body has no `direction` statement).
+   */
+  protected listed(list: readonly FlowDocItem[]): { nodeList: string[]; dir: string | undefined } {
+    const seen = new Set<string>();
+    const nodeList: string[] = [];
+    let dir: string | undefined;
+    const add = (item: string) => {
+      if (item.trim() !== '' && !seen.has(item)) {
+        seen.add(item);
+        nodeList.push(item);
+      }
+    };
+    for (const entry of list) {
+      if (typeof entry === 'string') add(entry);
+      else if ('stmt' in entry) dir = entry.value;
+      else entry.forEach(add);
+    }
+    if (dir === undefined && this.options.inheritDir) dir = this.direction;
+    return { nodeList, dir };
   }
 
   // ---- edges --------------------------------------------------------------------------

@@ -481,21 +481,7 @@ export class AgentflowBuilder extends FlowBuilderBase<
    */
   addFlow(parts: FlowParts): string {
     const { id: idText, list, title: titleText, opener, astFor } = parts;
-    const seen = new Set<string>();
-    const nodeList: string[] = [];
-    let dir: string | undefined;
-    const add = (item: string) => {
-      if (item.trim() !== '' && !seen.has(item)) {
-        seen.add(item);
-        nodeList.push(item);
-      }
-    };
-    for (const entry of list) {
-      if (typeof entry === 'string') add(entry);
-      else if ('stmt' in entry) dir = entry.value;
-      else entry.forEach(add);
-    }
-    if (dir === undefined && this.options.inheritDir) dir = this.direction;
+    const { nodeList, dir } = this.listed(list);
 
     const id = idText?.text.trim() ?? 'subGraph' + this.subCount;
     this.subCount++;
