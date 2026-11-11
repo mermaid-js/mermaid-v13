@@ -589,15 +589,15 @@ export abstract class FlowParserBase<
   }
 
   protected text(): FlowLabelNode {
-    return this.labelRun(this.tb.TEXT_PART, [this.T.Text, this.T.Str], 'string');
+    return this.labelRun(this.tb.TEXT_PART, this.tb.TEXT_WANT, 'string');
   }
 
   protected edgeText(): FlowLabelNode {
-    return this.labelRun(this.tb.EDGE_PART, [this.T.EdgeText, this.T.Str], 'string');
+    return this.labelRun(this.tb.EDGE_PART, this.tb.EDGE_WANT, 'string');
   }
 
   protected textNoTags(): FlowLabelNode {
-    return this.labelRun(this.tb.NO_TAGS, [this.T.NodeString, this.T.Str], 'text');
+    return this.labelRun(this.tb.NO_TAGS, this.tb.NO_TAGS_WANT, 'text');
   }
 
   /** Consume an opener, remembered for errors until {@link closer}. */

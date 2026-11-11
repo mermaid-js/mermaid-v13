@@ -3,7 +3,7 @@
  * character classes, the keyword table and the options a diagram hands the family's lexer
  * (`flow-lexer.ts`).
  */
-import { charTable, CR, LF } from '@mermaid-js/core/parser-kit';
+import { ASCII_MAX, charTable, CR, LF } from '@mermaid-js/core/parser-kit';
 import type { FlowKinds } from './flow-kinds.ts';
 
 /** Start conditions of flow.jison (the ones the lexer needs). */
@@ -74,7 +74,8 @@ export type FlowKeywords = readonly (readonly FlowKeyword[] | undefined)[];
 
 /** The table of a dialect's own keywords. `words` are in jison's rule order. */
 export function flowKeywords(words: readonly FlowKeyword[]): FlowKeywords {
-  const table: FlowKeyword[][] = [];
+  // One entry a character code, none a hole: the lexer reads it at every token start.
+  const table = new Array<FlowKeyword[] | undefined>(ASCII_MAX + 1).fill(undefined);
   for (const word of words) (table[word[0].charCodeAt(0)] ??= []).push(word);
   return table;
 }

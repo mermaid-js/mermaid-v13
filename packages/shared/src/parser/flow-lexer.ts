@@ -531,13 +531,15 @@ export abstract class FlowLexer extends StateLexer {
   private ownKeyword(c: number): boolean {
     const words = c <= ASCII_MAX ? this.keywords[c] : undefined;
     if (words === undefined) return false;
-    for (const [word, kind, tail] of words) {
+    for (const row of words) {
+      const word = row[0];
       if (!this.kw(word)) continue;
+      const tail = row[2];
       if (tail === 'graph') return this.graph(word.length);
       let e = this.p + word.length;
       if (tail === 'blanks') while (isBlank(this.text.charCodeAt(e))) e++;
       else if (tail === 'spaces') e = this.reAt(RE_SPACES, e);
-      this.emit(kind, this.p, e);
+      this.emit(row[1], this.p, e);
       return true;
     }
     return false;

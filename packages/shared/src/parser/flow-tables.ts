@@ -91,6 +91,11 @@ export interface FlowTables {
   readonly PIPE: readonly number[];
   readonly COMMA: readonly number[];
   readonly STYLE_WANT: readonly number[];
+  /** What a label, an edge label, an id with blanks and a quoted value start with. */
+  readonly TEXT_WANT: readonly number[];
+  readonly EDGE_WANT: readonly number[];
+  readonly NO_TAGS_WANT: readonly number[];
+  readonly STR_WANT: readonly number[];
   readonly LINK_STYLE_INDEX: readonly number[];
   readonly INTERPOLATE_OR_STYLE: readonly number[];
   readonly CLICK_ACTION: readonly number[];
@@ -398,6 +403,10 @@ export function flowTables(T: FlowKinds, dialect: FlowTablesDialect): FlowTables
     PIPE: [T.Pipe],
     COMMA: [T.Comma],
     STYLE_WANT: [T.NodeString],
+    TEXT_WANT: [T.Text, T.Str],
+    EDGE_WANT: [T.EdgeText, T.Str],
+    NO_TAGS_WANT: [T.NodeString, T.Str],
+    STR_WANT: [T.Str],
     LINK_STYLE_INDEX: [T.Default, T.Num],
     INTERPOLATE_OR_STYLE: [T.Interpolate, T.NodeString],
     CLICK_ACTION: [T.CallbackName, T.Href, T.Str, T.NodeString],

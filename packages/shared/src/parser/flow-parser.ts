@@ -481,7 +481,7 @@ export abstract class FlowParser<
     const { T, tb } = this;
     if (this.probe !== undefined) this.tested([T.Str, ...also]);
     if (this.kind() !== T.Str) return this.fail([T.Str, ...also]);
-    return this.labelRun(tb.NONE, [T.Str], 'string').text;
+    return this.labelRun(tb.NONE, tb.STR_WANT, 'string').text;
   }
 
   /** `click …` and `call …`; returns the callback, for the AST. */
@@ -624,7 +624,11 @@ export abstract class FlowParser<
         out.push(this.simple('Direction', from, refList));
         return { stmt: 'dir', value: FLOW_DIRECTIONS[t - T.DirectionTB] ?? 'TB' };
       default:
-        return this.accStatement(t, out) ?? this.ownStatement(t, out) ?? this.chain(collect, out);
+        // An id starts a chain; the kinds below are none of an id's.
+        if (inKindSet(tb.ID, t)) return this.chain(collect, out);
+        return (
+          this.accStatement(t, out) ?? this.ownStatement(t, out) ?? this.fail(tb.STATEMENT_START)
+        );
     }
   }
 
@@ -649,11 +653,9 @@ export abstract class FlowParser<
     return value;
   }
 
-  /** A chain statement, when the cursor is on an id. */
+  /** A chain statement; the cursor is on an id. */
   private chain(collect: boolean, out: FlowStatement<X>[]): string[] {
-    const { tb } = this;
     const from = this.i;
-    if (!inKindSet(tb.ID, this.kind())) this.fail(tb.STATEMENT_START);
     const children: FlowChainStmt['children'] = [];
     const nodes = this.vertexStatement(collect, children);
     const r = this.span(from);
