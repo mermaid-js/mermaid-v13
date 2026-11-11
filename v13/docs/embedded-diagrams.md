@@ -119,8 +119,9 @@ editor still shows them.
 
 - A syntax error inside a block fails the whole diagram, and the error points to the line in your
   text.
-- A block whose type isn't available fails the same way. With `mermaid/slim`, register every
-  diagram type your blocks use.
+- A block whose type isn't available fails the same way. The error names every block whose type
+  is missing, so you can fix them all at once. With `mermaid/slim`, register every diagram type
+  your blocks use.
 - `maxTextSize` and `maxEdges` count the whole text, all blocks included.
 
 ## Text output

@@ -157,6 +157,35 @@ describe('block types that cannot be drawn', () => {
     expect(viaParse.line).toBe(5);
   });
 
+  it('names every unregistered block type in one error, at the first', async () => {
+    const more = [
+      text,
+      '  mermaid share {',
+      '    pie',
+      '      "a" : 1',
+      '  }',
+      '  mermaid again {',
+      '    sequenceDiagram',
+      '      B->>A: bye',
+      '  }',
+    ].join('\n');
+    const slim = () => createSlim({ diagrams: [flowchart] });
+    for (const e of [
+      await rejection(slim().render('host', more)),
+      await rejection(slim().parse(more)),
+    ]) {
+      expect(e.code).toBe('UNSUPPORTED_DIAGRAM');
+      expect(e.line).toBe(5);
+      for (const name of ['mermaid talk', 'mermaid share', 'mermaid again', '"sequence"', '"pie"'])
+        expect(e.message).toContain(name);
+      expect(e.diagnostics.map((d) => d.code)).toEqual([
+        'EMBED_UNAVAILABLE',
+        'EMBED_UNAVAILABLE',
+        'EMBED_UNAVAILABLE',
+      ]);
+    }
+  });
+
   it('names the type in renderSync too', async () => {
     const m = createSlim({ diagrams: [flowchart] });
     await m.prepare('flowchart LR\n  A');

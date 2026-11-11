@@ -113,7 +113,8 @@ block may set diagram-specific keys only (for example `sequence.mirrorActors`); 
 
 **Errors fail the render.** A parse error inside a block, or a block whose type is unknown or
 not available (not ported, or not registered under `mermaid/slim`), fails the whole render. The
-position is reported in the outer text's lines and columns.
+position is reported in the outer text's lines and columns. Blocks whose types are not available
+are reported together: one error names each block and type, at the first of them.
 
 **Limits and security apply to the whole document.** `maxTextSize` and `maxEdges` count all
 blocks together, so splitting a diagram into blocks cannot get past them. Block SVG goes through
