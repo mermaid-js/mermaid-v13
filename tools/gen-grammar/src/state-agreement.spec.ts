@@ -43,6 +43,9 @@ describe('four-way highlighting agreement (state)', () => {
       BLANK_KINDS
     );
     expect(result.disagreements).toEqual({});
-    expect(result.missing, 'kinds with no sample').toEqual([]);
+    // Embedded diagram blocks (ADR-15) are left out of the corpus: the generated grammars list
+    // their tokens for the category table only and never enter the block mode (#671).
+    const missing = result.missing.filter((k) => !k.startsWith('Embed'));
+    expect(missing, 'kinds with no sample').toEqual([]);
   }, 120_000);
 });

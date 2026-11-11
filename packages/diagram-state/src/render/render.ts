@@ -34,6 +34,7 @@ import { stateMetrics } from '../layout/index.ts';
 import { completeLayout, type CompleteStateLayout } from '../layout/layout.ts';
 import type { StateLink, StateModel } from '../parser/index.ts';
 import { arrowTrim, arrowhead, drawArrowhead, routePath, type Arrowhead } from './edges.ts';
+import { drawEmbed } from './embed.ts';
 import { drawDescribed, drawShape, type ShapePaint } from './shapes.ts';
 
 // v12 `.note-edge { stroke-dasharray: 5 }` and `.statediagram-state rect.divider
@@ -428,14 +429,18 @@ function nodeClass(view: StateNodeView): string {
   if (view.shape === 'note') return 'node statediagram-note';
   // v12 `stateStart` and `stateEnd` wrote `node default` and no state classes.
   if (view.shape === 'start' || view.shape === 'end') return 'node default';
+  if (view.shape === 'embed') return 'node embed' + cls(view.state?.classes ?? []);
   return 'node statediagram-state' + cls(view.state?.classes ?? []);
 }
 
-function drawNode(
-  { w, layout, sm, ctx, paint, warn }: Scene,
-  view: StateNodeView,
-  link: StateLink | undefined
-): void {
+/** A block is one image to assistive technology, named by its title (ADR-15). */
+function blockAria(view: StateNodeView): Attrs {
+  if (view.shape !== 'embed') return {};
+  return { role: 'img', 'aria-label': view.state?.title || view.id };
+}
+
+function drawNode(scene: Scene, view: StateNodeView, link: StateLink | undefined): void {
+  const { w, layout, ctx, paint, warn } = scene;
   const box = layout.nodes.get(view.id);
   if (!box) return;
   w.open('g', {
@@ -443,6 +448,7 @@ function drawNode(
     'data-id': view.id,
     'data-ast': view.ast,
     transform: translate(box.x, box.y),
+    ...blockAria(view),
   });
   if (link?.tooltip) textElement(w, 'title', link.tooltip);
   const href = link
@@ -454,6 +460,22 @@ function drawNode(
     : undefined;
   // v12 opened every state link in a new window.
   if (href) w.open('a', { href, target: checkLinkTarget('_blank', warn) });
+  if (view.shape === 'embed') {
+    // A border and a transparent background, which set a block apart from a composite.
+    const frame: Attrs = {
+      fill: 'none',
+      stroke: paint.border,
+      'stroke-width': paint.strokeWidth,
+      ...view.style.shape,
+    };
+    drawEmbed(w, view, frame, { ...view.style.text });
+  } else drawState(scene, view);
+  if (href) w.close();
+  w.close();
+}
+
+/** A state's, pseudo-state's or note's shape and label. */
+function drawState({ w, sm, ctx, paint }: Scene, view: StateNodeView): void {
   const note = view.shape === 'note' ? paint.note : undefined;
   const shape: Attrs = {
     fill: note?.fill ?? paint.fill,
@@ -480,6 +502,4 @@ function drawNode(
   };
   if (view.shape === 'described') drawDescribed(w, view, sm, shapePaint, text);
   else w.label(view.label, 0, 0, text);
-  if (href) w.close();
-  w.close();
 }

@@ -76,6 +76,10 @@ export function drawShape(w: SvgWriter, view: StateNodeView, paint: ShapePaint):
     case 'state':
     case 'described':
       w.outline('node', 'rect', { x, y, width, height, rx: STATE_RADIUS, ...paint.shape });
+      break;
+    case 'embed':
+      // Drawn by `drawEmbed` (ADR-15): a frame round another diagram.
+      break;
   }
 }
 
