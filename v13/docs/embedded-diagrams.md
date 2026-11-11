@@ -127,4 +127,4 @@ editor still shows them.
 
 With `format: 'ascii'`, a block is drawn as a frame around the inner diagram's text output.
 If the inner type has no text output yet, the frame shows the title and the type, with a
-warning. A folded block is drawn as `[+] Login flow (sequence)`.
+warning. A folded block is drawn like a folded subgraph (a box with `+` in its top-left corner and the title), plus a dotted divider and the inner type on a second line.

@@ -103,7 +103,7 @@ export function withoutEmbedded(svg: string): string {
 
 /** Whether `node` is inside an embedded diagram's root (a nested `<svg>`, ADR-15). */
 export function inEmbedded(node: SvgElement): boolean {
-  let svgs = 0;
-  for (let p = node.parent; p; p = p.parent) if (p.tag === 'svg') svgs++;
-  return svgs > 1;
+  let svgRoots = 0;
+  for (let p = node.parent; p; p = p.parent) if (p.tag === 'svg') svgRoots++;
+  return svgRoots > 1;
 }

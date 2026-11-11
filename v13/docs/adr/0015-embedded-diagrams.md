@@ -128,7 +128,7 @@ editor still reports them.
 
 **Text output.** A block whose type has text output is drawn inside a frame. A block whose type
 has none is a frame with its title and `[classDiagram]` and one warning; the host's text output
-still succeeds. A folded block is `[+] Login flow (sequence)`, with no warning.
+still succeeds. A folded block is drawn like a folded subgraph (a box with `+` in its top-left corner and the title), plus a dotted divider and the inner type on a second line, with no warning.
 
 **Interaction and accessibility.** Links, `click` callbacks and tooltips inside a block work as
 in a stand-alone diagram (through `plugin-interactions` where they need it). The box has
