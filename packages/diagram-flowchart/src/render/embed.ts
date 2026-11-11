@@ -16,6 +16,27 @@ const STAND_IN = { width: 120, height: 60 };
 /** What a block node holds: the rendered inner diagram, or nothing (a stand-in box). */
 export type EmbedSlot = NonNullable<ReturnType<NonNullable<FlowRenderContext['embed']>>> | null;
 
+/** What a block node holds in text output: the inner diagram's text, or nothing. */
+export type EmbedText = NonNullable<ReturnType<NonNullable<FlowRenderContext['embedText']>>>;
+
+/**
+ * A block's box in cells (text output): a border, the title rows and a divider under them when
+ * there is a title, and the inner text with `pad` cells round it. A titled box is tall enough
+ * that its middle row, where a sideways edge meets it, is below the divider.
+ */
+export function embedTextSize(
+  inner: EmbedText,
+  title: { width: number; rows: number },
+  pad: { x: number; y: number }
+): { w: number; h: number } {
+  const strip = title.width > 0 ? title.rows + 1 : 0;
+  const h = strip + inner.rows + 2 * (pad.y + 1);
+  return {
+    w: Math.max(inner.columns, title.width) + 2 * (pad.x + 1),
+    h: strip > 0 ? Math.max(h, 2 * strip + 3) : h,
+  };
+}
+
 /** The rendered block for `id`, or `null` when there is none. */
 export function embedSlot(ctx: FlowRenderContext, id: string): EmbedSlot {
   return ctx.embed?.(id) ?? null;

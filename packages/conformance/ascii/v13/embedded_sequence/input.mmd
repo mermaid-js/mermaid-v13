@@ -1,0 +1,8 @@
+flowchart LR
+  Start --> login
+  mermaid login["Login flow"] {
+    sequenceDiagram
+      User->>Server: credentials
+      Server-->>User: token
+  }
+  login --> Dashboard

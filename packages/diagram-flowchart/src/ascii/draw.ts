@@ -26,7 +26,7 @@ import {
 } from '@mermaid-js/core/ascii';
 import type { LayoutModel, Point, Side } from '@mermaid-js/core/layout';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
-import type { EdgeView, Prepared } from '../render/prepare.ts';
+import type { EdgeView, NodeView, Prepared } from '../render/prepare.ts';
 import { textForm } from './shapes.ts';
 
 interface Centred {
@@ -186,6 +186,33 @@ function titleGaps(label: MeasuredLabel, at: { x: number; y: number; width: numb
   ];
 }
 
+/**
+ * An embedded diagram block (ADR-15) drawn as text: its frame, the title rows and a divider
+ * under them when it has a title, and the inner diagram's text centred in the rest (a grown
+ * box keeps it centred, D140). The inner text is copied as it is, not merged with the frame.
+ */
+function drawBlock(canvas: Canvas, glyphs: GlyphSet, n: NodeView, r: CellRect): void {
+  const inner = n.embedText!;
+  drawBox(canvas, glyphs, r);
+  let top = r.y + 1;
+  if (n.label.width > 0) {
+    writeLabel(canvas, n.label, r.x + 1, top, r.width - 2, glyphs);
+    top += n.label.lines.length;
+    const right = r.x + r.width - 1;
+    for (let x = r.x + 1; x < right; x++) canvas.set(x, top, glyphs.solid.h);
+    canvas.set(r.x, top, glyphFor(armOf(UP, 1) | armOf(DOWN, 1) | armOf(RIGHT, 1), glyphs)!);
+    canvas.set(right, top, glyphFor(armOf(UP, 1) | armOf(DOWN, 1) | armOf(LEFT, 1), glyphs)!);
+    top += 1;
+  }
+  const rows = r.y + r.height - 1 - top;
+  drawText(
+    canvas,
+    r.x + Math.floor((r.width - inner.columns) / 2),
+    top + Math.floor((rows - inner.rows) / 2),
+    inner.text
+  );
+}
+
 export interface DrawOptions {
   /** The front-matter title, printed centred on the first lines. */
   readonly title?: string;
@@ -263,6 +290,10 @@ export function drawFlowchart(
     const box = layout.nodes.get(n.id);
     if (!box) continue;
     const r = cellRect(box);
+    if (n.embedText) {
+      drawBlock(canvas, glyphs, n, r);
+      continue;
+    }
     drawBox(canvas, glyphs, r, textForm(n.shape, glyphs) ?? {});
     // D140: a grown box keeps its label centred.
     const lines = n.label.lines.length;

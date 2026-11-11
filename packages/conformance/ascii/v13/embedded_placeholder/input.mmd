@@ -1,0 +1,9 @@
+flowchart TB
+  Request --> model
+  mermaid model["Domain model"] {
+    classDiagram
+      class User {
+        +name: string
+      }
+  }
+  model --> Response

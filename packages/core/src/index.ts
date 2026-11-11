@@ -60,6 +60,7 @@ export type {
   IconLookup,
   IconOptions,
   EmbeddedDiagram,
+  EmbeddedText,
   RenderContext,
   TextRenderContext,
   Warning,

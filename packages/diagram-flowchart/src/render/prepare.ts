@@ -20,7 +20,7 @@ import { curveKind, type CurveKind } from './edges.ts';
 import { dirOf, nesting, type Nesting } from './nesting.ts';
 import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
 import { assetSize } from './assets.ts';
-import { embedSize, embedSlot, type EmbedSlot } from './embed.ts';
+import { embedSize, embedSlot, embedTextSize, type EmbedSlot, type EmbedText } from './embed.ts';
 import {
   canonicalShape,
   shapeHasLabel,
@@ -48,6 +48,8 @@ export interface NodeView {
   vertex?: FlowVertex;
   /** An embedded diagram block (ADR-15): what it holds, `null` for a stand-in frame. */
   embed?: EmbedSlot;
+  /** Text output: a block's inner diagram as text, absent when `mermaid` drew none. */
+  embedText?: EmbedText;
   /** Nesting depth of a cluster (0 at the top). */
   depth: number;
   /**
@@ -264,7 +266,11 @@ function nodeViews(
     }
     const view = blank(v.id, v.ast, false, vertexShape(v));
     view.vertex = v;
-    if (v.type === 'embed') view.embed = embedSlot(m.ctx, v.id);
+    if (v.type === 'embed') {
+      view.embed = embedSlot(m.ctx, v.id);
+      const text = m.cells ? m.ctx.embedText?.(v.id) : undefined;
+      if (text) view.embedText = text;
+    }
     view.classes = v.classes;
     view.style = m.styleOf(['default', 'node', ...v.classes], v.styles);
     views.set(v.id, view);
@@ -302,9 +308,14 @@ function measureNode(
   if (m.cells) {
     // A text-form box: the label, its padding and a border cell on each side.
     const pad = (m.ctx.units ?? pxProfile).builder.nodePad;
+    view.dy = 0;
+    if (view.embedText) {
+      const rows = lw > 0 ? view.label.lines.length : 0;
+      ({ w: view.w, h: view.h } = embedTextSize(view.embedText, { width: lw, rows }, pad));
+      return;
+    }
     view.w = lw + 2 * (pad.x + 1);
     view.h = view.label.lines.length + 2 * (pad.y + 1);
-    view.dy = 0;
     return;
   }
   // v12 widens vertex labels to minNodeWidth; round shapes and collapsed subgraphs keep theirs.
