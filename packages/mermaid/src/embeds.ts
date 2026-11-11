@@ -12,7 +12,7 @@ import {
   type Warning,
 } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
-import type { Diagnostic, EmbeddedBlock, ParseResult } from '@mermaid-js/core/parser-kit';
+import type { Diagnostic, EmbeddedBlock, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { embeddedSvg, type SecurityLevel } from '@mermaid-js/core/svg';
@@ -61,30 +61,36 @@ export function inOuterText(e: unknown, source: string, at: number): unknown {
   });
 }
 
-/** The error for a block whose body does not start with a diagram type. */
-export function noDiagramType(source: string, block: EmbeddedBlock, from: number): MermaidError {
-  // The first line that is not blank or a comment, where the type was expected.
-  const lines = block.text.slice(from).split('\n');
+/** The block's first diagram line (where its type is), after what may come before it. */
+function typeRange(b: EmbeddedBlock, at: number): Range {
+  const from = preprocess(b.text).bodyStart;
   let start = from;
-  let line = '';
-  for (const l of lines) {
+  for (const l of b.text.slice(from).split('\n')) {
     const t = l.trim();
     if (t !== '' && !t.startsWith('%%')) {
-      line = l;
-      break;
+      start += at + l.length - l.trimStart().length;
+      return { start, end: start + t.length };
     }
     start += l.length + 1;
   }
-  const lead = line.length - line.trimStart().length;
-  const at = block.offset + Math.min(start + lead, block.text.length);
-  const word = /^[^\s{[(;:]+/.exec(line.trim())?.[0];
-  const d: Diagnostic = {
-    severity: 'error',
-    code: 'EMBED_NO_TYPE',
-    message: `The \`mermaid ${block.id}\` block must start with a diagram type, such as \`sequenceDiagram\` or \`classDiagram\`, after any blank lines, comments and front matter${word ? `; \`${word}\` is not a diagram type` : ''}.`,
-    range: { start: at, end: at + line.trim().length },
-  };
-  return errorFromDiagnostics(source, [d])!;
+  return { start: at + b.text.length, end: at + b.text.length };
+}
+
+/** An error `code` at `range` in the whole text `root`. */
+function blockError(root: string, code: string, message: string, range: Range): MermaidError {
+  return errorFromDiagnostics(root, [{ severity: 'error', code, message, range }])!;
+}
+
+/** The error for a block whose body does not start with a diagram type. */
+export function noDiagramType(root: string, b: EmbeddedBlock): MermaidError {
+  const range = typeRange(b, b.offset);
+  const word = /^[^\s{[(;:]*/.exec(root.slice(range.start, range.end))![0];
+  return blockError(
+    root,
+    'EMBED_NO_TYPE',
+    `The \`mermaid ${b.id}\` block must start with a diagram type, such as \`sequenceDiagram\` or \`classDiagram\`, after any blank lines, comments and front matter${word ? `; \`${word}\` is not a diagram type` : ''}.`,
+    range
+  );
 }
 
 /**
@@ -151,7 +157,7 @@ export function blockLayers<T extends object>(
   if (dropped.size > 0)
     warn({
       code: 'EMBED_CONFIG_IGNORED',
-      message: `An embedded diagram cannot set ${[...dropped].map((k) => `\`${k}\``).join(', ')}: it takes its theme, look and font from its host, and security settings from the page. Ignored.`,
+      message: `An embedded diagram cannot set ${[...dropped].map((k) => `\`${k}\``).join(', ')}; ignored: theme, look and font come from the host.`,
     });
   return out;
 }
@@ -251,51 +257,27 @@ interface Place {
 export const MAX_BLOCK_DEPTH = 4;
 
 /** The `mermaid <id>["Title"] {` line of the block whose body starts at `at` in `root`. */
-function openerRange(root: string, at: number): { start: number; end: number } {
+function openerRange(root: string, at: number): Range {
   const brace = root.lastIndexOf('{', at - 1);
   let start = root.lastIndexOf('\n', brace) + 1;
   while (root[start] === ' ' || root[start] === '\t') start++;
   return { start, end: brace + 1 };
 }
 
-/** The block's first diagram line (its type), skipping what may come before it. */
-function typeRange(b: EmbeddedBlock, at: number): { start: number; end: number } {
-  const from = preprocess(b.text).bodyStart;
-  let start = from;
-  for (const l of b.text.slice(from).split('\n')) {
-    const t = l.trim();
-    if (t !== '' && !t.startsWith('%%')) {
-      start += l.length - l.trimStart().length;
-      return { start: at + start, end: at + start + t.length };
-    }
-    start += l.length + 1;
-  }
-  return { start: at + from, end: at + from };
-}
-
-function blockError(
-  root: string,
-  code: string,
-  message: string,
-  range: { start: number; end: number }
-): MermaidError {
-  return errorFromDiagnostics(root, [{ severity: 'error', code, message, range }])!;
-}
-
 /** The error for a block whose type this `mermaid` cannot draw (unported or unregistered). */
 function unavailable(root: string, b: EmbeddedBlock, at: number, type: string): MermaidError {
-  const range = typeRange(b, at);
-  const d: Diagnostic = {
-    severity: 'error',
-    code: 'EMBED_UNAVAILABLE',
-    message: `The \`mermaid ${b.id}\` block is a "${type}" diagram, which this mermaid cannot draw: the type is not in this build, or was not registered (with \`mermaid/slim\`, pass its plugin to \`createMermaid\`).`,
-    range,
-  };
-  return new MermaidError('UNSUPPORTED_DIAGRAM', errorFromDiagnostics(root, [d])!.message, {
+  const e = blockError(
+    root,
+    'EMBED_UNAVAILABLE',
+    `The \`mermaid ${b.id}\` block is a "${type}" diagram, which this mermaid cannot draw: it is not in this build or not registered (\`mermaid/slim\` draws only the diagrams given to \`createMermaid\`).`,
+    typeRange(b, at)
+  );
+  const { offset, length, diagnostics } = e;
+  return new MermaidError('UNSUPPORTED_DIAGRAM', e.message, {
     source: root,
-    offset: range.start,
-    length: range.end - range.start,
-    diagnostics: [d],
+    offset,
+    length,
+    diagnostics,
   });
 }
 
@@ -332,7 +314,7 @@ export function blockPass<A extends Parsed, F, S, P, O>(
       return deps.detect(b.text, s);
     } catch (e) {
       if (e instanceof MermaidError && e.code === 'UNSUPPORTED_DIAGRAM')
-        throw noDiagramType(root, { ...b, offset: at }, preprocess(b.text).bodyStart);
+        throw noDiagramType(root, { ...b, offset: at });
       throw inOuterText(e, root, at);
     }
   }
@@ -365,7 +347,7 @@ export function blockPass<A extends Parsed, F, S, P, O>(
     throw blockError(
       root,
       'EMBED_DEPTH',
-      `The \`mermaid ${b.id}\` block is nested more than ${MAX_BLOCK_DEPTH} blocks deep. Move it out a level, or draw it as a separate diagram.`,
+      `The \`mermaid ${b.id}\` block is nested more than ${MAX_BLOCK_DEPTH} deep.`,
       openerRange(root, at)
     );
   }
@@ -377,7 +359,7 @@ export function blockPass<A extends Parsed, F, S, P, O>(
     throw blockError(
       root,
       LIMIT_CODES.maxEdges,
-      `Edge limit exceeded: with the \`mermaid ${b.id}\` block, the whole text asks for ${count.used} edges, but the limit is ${count.max}. Embedded blocks count towards it. The limit is set by the page or app that renders the diagram.`,
+      `Edge limit exceeded: with the \`mermaid ${b.id}\` block, the text asks for ${count.used} edges, but the limit is ${count.max}.`,
       openerRange(root, at)
     );
   }
