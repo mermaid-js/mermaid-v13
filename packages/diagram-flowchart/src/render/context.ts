@@ -1,7 +1,8 @@
+import type { EmbeddedDiagram, EmbeddedText } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { Limits } from '@mermaid-js/core/limits';
 import type { LayoutGraph, LayoutModel, UnitProfile } from '@mermaid-js/core/layout';
-import type { EmbeddedSvg, OutlinePaint, SecurityLevel } from '@mermaid-js/core/svg';
+import type { OutlinePaint, SecurityLevel } from '@mermaid-js/core/svg';
 import type { InlineSpans, Measurer, SvgFragment } from '@mermaid-js/core/text';
 import type { Theme } from '@mermaid-js/core/theme';
 
@@ -55,9 +56,7 @@ export interface FlowRenderContext {
    * The embedded diagram blocks (ADR-15), rendered by `mermaid` before the draw, by block id.
    * Absent when the plugin is called directly: a block is then drawn as a stand-in frame.
    */
-  readonly embed?: (
-    id: string
-  ) => { readonly width: number; readonly height: number; readonly svg: EmbeddedSvg } | undefined;
+  readonly embed?: (id: string) => EmbeddedDiagram | undefined;
   /** A folded block's inner type, by block id (#670); absent when the plugin is called directly. */
   readonly foldedType?: (id: string) => string | undefined;
   /**
@@ -65,9 +64,7 @@ export interface FlowRenderContext {
    * `columns` × `rows` cells. Absent when the plugin is called directly: a block is then a box
    * with its title.
    */
-  readonly embedText?: (
-    id: string
-  ) => { readonly text: string; readonly columns: number; readonly rows: number } | undefined;
+  readonly embedText?: (id: string) => EmbeddedText | undefined;
   /**
    * The extensions' glyphs (D293): an icon shape's glyph fitted into a `size` square at the
    * origin, its `currentColor` painted with `paint` (D298); `null` when an extension reported it

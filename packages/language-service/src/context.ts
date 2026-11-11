@@ -14,9 +14,6 @@ import type { ConfigSchema } from './config/schema.ts';
 import type { FacetEntry } from './facets.ts';
 import type { DocumentSnapshot } from './snapshot.ts';
 
-/** How deep blocks may nest: a block in the host is level 1 (ADR-15), as the render counts. */
-export const MAX_BLOCK_DEPTH = 4;
-
 /**
  * A diagram embedded in this one (ADR-15): the host's block and its body read as a document of
  * its own type. The body's ranges are offsets into `block.text`; add `block.offset` for the

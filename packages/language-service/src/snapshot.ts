@@ -20,7 +20,6 @@ import { astAt, astRanges } from './ast.ts';
 import { completions } from './completion.ts';
 import { configDiagnostics, frontMatterTree } from './config/front-matter.ts';
 import type { FrontMatterTree } from './config/front-matter.ts';
-import { MAX_BLOCK_DEPTH } from './context.ts';
 import type { DocumentContext, EmbeddedDocument } from './context.ts';
 import { diagnostics } from './diagnostics.ts';
 import { foldingRanges } from './folding.ts';
@@ -29,7 +28,7 @@ import { deepFreeze } from './freeze.ts';
 import type { FoldingRange } from './folding.ts';
 import { lineFoldingRanges, lineSemanticTokens } from './lines.ts';
 import type { LineFoldingRange, LineSemanticToken } from './lines.ts';
-import { LineIndex } from '@mermaid-js/core/parser-kit';
+import { LineIndex, tooDeep } from '@mermaid-js/core/parser-kit';
 import { semanticTokens, withBlockTokens } from './semantic-tokens.ts';
 import type { SemanticToken } from './semantic-tokens.ts';
 import { definition, occurrences, prepareRename, references, rename } from './symbols.ts';
@@ -53,14 +52,6 @@ function copyDiagnostic(d: Diagnostic): Diagnostic {
       range: { start: r.range.start, end: r.range.end },
     }));
   return out;
-}
-
-/** The `mermaid <id>["Title"] {` line of the block whose body starts at `at` in `text`. */
-function openerRange(text: string, at: number): Range {
-  const brace = text.lastIndexOf('{', at - 1);
-  let start = text.lastIndexOf('\n', brace) + 1;
-  while (text[start] === ' ' || text[start] === '\t') start++;
-  return { start, end: brace + 1 };
 }
 
 /**
@@ -97,14 +88,9 @@ function withBlocks(
   for (const { block, doc } of embeds) {
     if (!doc) {
       // Its opening line starts before the body: it goes before the host's at that line.
-      const range = openerRange(text, block.offset);
-      while (i < host.length && host[i]!.range.start < range.start) out.push(host[i++]!);
-      out.push({
-        severity: 'error',
-        code: 'EMBED_DEPTH',
-        message: `The \`mermaid ${block.id}\` block is nested more than ${MAX_BLOCK_DEPTH} deep.`,
-        range,
-      });
+      const deep = tooDeep(text, block.id, block.offset);
+      while (i < host.length && host[i]!.range.start < deep.range.start) out.push(host[i++]!);
+      out.push(deep);
       continue;
     }
     while (i < host.length && host[i]!.range.start <= block.offset) out.push(host[i++]!);

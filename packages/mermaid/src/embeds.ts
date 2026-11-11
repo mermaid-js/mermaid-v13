@@ -5,8 +5,11 @@
  */
 import {
   errorFromDiagnostics,
+  MAX_BLOCK_DEPTH,
   MermaidError,
   NotLoadedError,
+  openerRange,
+  tooDeep,
   type EmbeddedDiagram,
   type EmbeddedText,
   type Warning,
@@ -402,17 +405,6 @@ const folds =
 const unfolded = (host: Parsed): EmbeddedBlock[] =>
   embedsOf(host.prepared.parse).filter((b) => !b.folded);
 
-/** How deep blocks may nest: a block in the host is level 1 (ADR-15). */
-export const MAX_BLOCK_DEPTH = 4;
-
-/** The `mermaid <id>["Title"] {` line of the block whose body starts at `at` in `root`. */
-function openerRange(root: string, at: number): Range {
-  const brace = root.lastIndexOf('{', at - 1);
-  let start = root.lastIndexOf('\n', brace) + 1;
-  while (root[start] === ' ' || root[start] === '\t') start++;
-  return { start, end: brace + 1 };
-}
-
 /** A block whose type this `mermaid` cannot draw: its body at `at`, its type. */
 interface Missing {
   readonly b: EmbeddedBlock;
@@ -464,13 +456,7 @@ interface Count {
 
 /** Checks block `b` (body at `at`) at nesting level `depth`, before it is parsed. */
 function checkDepth({ root, at }: Place, b: EmbeddedBlock, depth: number): void {
-  if (depth <= MAX_BLOCK_DEPTH) return;
-  throw blockError(
-    root,
-    'EMBED_DEPTH',
-    `The \`mermaid ${b.id}\` block is nested more than ${MAX_BLOCK_DEPTH} deep.`,
-    openerRange(root, at)
-  );
+  if (depth > MAX_BLOCK_DEPTH) throw errorFromDiagnostics(root, [tooDeep(root, b.id, at)])!;
 }
 
 /** Adds parsed block `a`'s edges to the whole text's count. */
