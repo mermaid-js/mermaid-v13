@@ -61,6 +61,7 @@ describe('workspace layout (DESIGN §2)', () => {
         './parser-kit',
         './preprocess',
         './svg',
+        './svg/folded',
         './svg/testing',
         './text',
         './theme',

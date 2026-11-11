@@ -375,6 +375,33 @@ interface Place {
   readonly at: number;
 }
 
+/**
+ * The types of `host`'s folded blocks by id (#670), each detected from its type line alone: the
+ * rest of the body is never read. A line no detector knows is shown as its first word.
+ */
+const folds =
+  <F, S>(deps: Pick<BlockDeps<Parsed, F, S, unknown, unknown>, 'detect' | 'idOf' | 'typeOf'>) =>
+  (host: Parsed, s: S): ((id: string) => string | undefined) | undefined => {
+    const folded = embedsOf(host.prepared.parse).filter((b) => b.folded);
+    if (folded.length === 0) return undefined;
+    const typeOf = (b: EmbeddedBlock): string => {
+      const { start, end } = typeRange(b, 0);
+      const line = b.text.slice(start, end);
+      try {
+        const f = deps.detect(line, s);
+        return deps.idOf(f) ?? deps.typeOf(f);
+      } catch {
+        return /^[^\s{[(;:]*/.exec(line)![0];
+      }
+    };
+    let types: Map<string, string> | undefined;
+    return (id) => (types ??= new Map(folded.map((b) => [b.id, typeOf(b)]))).get(id);
+  };
+
+/** The blocks of `host` to parse and draw: a folded one never is (#670). */
+const unfolded = (host: Parsed): EmbeddedBlock[] =>
+  embedsOf(host.prepared.parse).filter((b) => !b.folded);
+
 /** How deep blocks may nest: a block in the host is level 1 (ADR-15). */
 export const MAX_BLOCK_DEPTH = 4;
 
@@ -468,6 +495,8 @@ export interface BlockPass<A, S, O> {
   ): Promise<void>;
   /** `host`'s blocks drawn for its lookup (undefined when it has none). */
   draw(root: string, base: number, host: A, s: S, options: O): DrawBlocks | undefined;
+  /** The types of `host`'s folded blocks by id (undefined when it has none), #670. */
+  foldedType(host: A, s: S): ((id: string) => string | undefined) | undefined;
   /** `host`'s blocks drawn as text for its lookup (undefined when it has none). */
   drawText(
     root: string,
@@ -482,11 +511,19 @@ export interface BlockPass<A, S, O> {
  * The block pass of one API object: `prepare` walks the block tree before a draw, loading
  * each block's plugin; `draw` renders a host's blocks, deepest first, for its lookup. Block
  * analyses are kept with their host's, so a cached host keeps its blocks. Both walks check
- * the nesting depth and count the edges of the whole text against `maxEdges`.
+ * the nesting depth and count the edges of the whole text against `maxEdges`. A folded
+ * block is never walked: `foldedType` detects its type alone (#670).
  */
 export function blockPass<A extends Parsed, F, S, P, O>(
   deps: BlockDeps<A, F, S, P, O>
 ): BlockPass<A, S, O> {
+  return { ...walks(deps), foldedType: folds(deps) };
+}
+
+/** The walks of {@link blockPass}: prepare, draw and drawText. */
+function walks<A extends Parsed, F, S, P, O>(
+  deps: BlockDeps<A, F, S, P, O>
+): Omit<BlockPass<A, S, O>, 'foldedType'> {
   const analyses = new WeakMap<A, Map<string, A>>();
 
   const found = (place: Place, b: EmbeddedBlock, s: S): F => detectBlock(deps, place, b, s);
@@ -530,7 +567,7 @@ export function blockPass<A extends Parsed, F, S, P, O>(
     walk: { readonly resources: BlockFormat | undefined; readonly count: Count },
     depth: number
   ): Promise<void> {
-    for (const b of embedsOf(host.prepared.parse)) {
+    for (const b of unfolded(host)) {
       const place = { root, at: base + b.offset };
       checkDepth(place, b, depth);
       const inner = await prepared(place, host, b, s);
@@ -566,7 +603,7 @@ export function blockPass<A extends Parsed, F, S, P, O>(
 
   /** Parses `host`'s blocks and theirs for a draw, checking depth and edges. */
   function check(root: string, base: number, host: A, s: S, count: Count, depth: number): void {
-    for (const b of embedsOf(host.prepared.parse)) {
+    for (const b of unfolded(host)) {
       const place = { root, at: base + b.offset };
       checkDepth(place, b, depth);
       const inner = loaded(place, host, b, s);
@@ -589,7 +626,7 @@ export function blockPass<A extends Parsed, F, S, P, O>(
     if (embedsOf(host.prepared.parse).length === 0) return undefined;
     return (prefix, warn) => {
       const out = new Map<string, DrawnBlock<E>>();
-      for (const b of embedsOf(host.prepared.parse)) {
+      for (const b of unfolded(host)) {
         const at = base + b.offset;
         const { warnings, ...drawn } = one(
           b,

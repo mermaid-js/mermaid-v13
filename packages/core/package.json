@@ -61,6 +61,11 @@
       "types": "./dist/svg/index.d.ts",
       "default": "./dist/svg/index.js"
     },
+    "./svg/folded": {
+      "mermaid-source": "./src/svg/folded.ts",
+      "types": "./dist/svg/folded.d.ts",
+      "default": "./dist/svg/folded.js"
+    },
     "./svg/testing": {
       "mermaid-source": "./src/svg/testing/index.ts",
       "types": "./dist/svg/testing/index.d.ts",

@@ -58,6 +58,8 @@ export interface FlowRenderContext {
   readonly embed?: (
     id: string
   ) => { readonly width: number; readonly height: number; readonly svg: EmbeddedSvg } | undefined;
+  /** A folded block's inner type, by block id (#670); absent when the plugin is called directly. */
+  readonly foldedType?: (id: string) => string | undefined;
   /**
    * Text output: the blocks (ADR-15) drawn as text by `mermaid` before the draw, by block id,
    * `columns` × `rows` cells. Absent when the plugin is called directly: a block is then a box

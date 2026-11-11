@@ -111,6 +111,12 @@ export interface RenderContext {
    * `mermaid`: a host then draws a stand-in.
    */
   readonly embed?: (id: string) => EmbeddedDiagram | undefined;
+  /**
+   * The type of the folded block with this id (#670), detected from its type line only (its
+   * plugin id, or the type name for a type without one); the block is never drawn. Absent when
+   * there is none and when the plugin is called without `mermaid`.
+   */
+  readonly foldedType?: (id: string) => string | undefined;
   warn(warning: Warning): void;
 }
 

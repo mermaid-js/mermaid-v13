@@ -6,6 +6,7 @@
 import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import { FOLDED_TYPE_SIZE, foldedSize, foldedTypeText } from '@mermaid-js/core/svg/folded';
 import {
   fontSizePx,
   layoutLabel,
@@ -50,6 +51,8 @@ export interface NodeView {
   embed?: EmbedSlot;
   /** Text output: a block's inner diagram as text, absent when `mermaid` drew none. */
   embedText?: EmbedText;
+  /** A folded block (#670): its inner type (empty when unknown) and that type's label. */
+  fold?: { readonly type: string; label?: MeasuredLabel };
   /** Nesting depth of a cluster (0 at the top). */
   depth: number;
   /**
@@ -266,7 +269,10 @@ function nodeViews(
     }
     const view = blank(v.id, v.ast, false, vertexShape(v));
     view.vertex = v;
-    if (v.type === 'embed') {
+    if (v.folded) {
+      view.embed = null;
+      view.fold = { type: m.ctx.foldedType?.(v.id) ?? '' };
+    } else if (v.type === 'embed') {
       view.embed = embedSlot(m.ctx, v.id);
       const text = m.cells ? m.ctx.embedText?.(v.id) : undefined;
       if (text) view.embedText = text;
@@ -300,15 +306,25 @@ function measureNode(
 ): void {
   const [f, bits] = textStyle(view.style, m.font);
   const has = shapeHasLabel(view.shape);
+  const { fold } = view;
+  // A folded block without a title shows its id, as a collapsed subgraph does.
+  const title = fold && !text ? view.id : text;
   // A block's title stays on one line: the strip is as wide as the inner diagram allows.
   const wrap = view.embed === undefined ? m.wrap : Infinity;
-  view.label = m.label(has || v?.img || v?.icon ? text : '', markdown, f, wrap, bits);
+  view.label = m.label(has || v?.img || v?.icon ? title : '', markdown, f, wrap, bits);
   const lw = view.label.width;
   const lh = view.label.height;
   if (m.cells) {
     // A text-form box: the label, its padding and a border cell on each side.
     const pad = (m.ctx.units ?? pxProfile).builder.nodePad;
     view.dy = 0;
+    if (fold) {
+      // The title rows, a divider and the type, centred: as wide as the wider of the two.
+      fold.label = m.label(fold.type, false, f, Infinity);
+      view.w = Math.max(lw, fold.label.width) + 2 * (pad.x + 1);
+      view.h = view.label.lines.length + 2 + 2 * (pad.y + 1);
+      return;
+    }
     if (view.embedText) {
       const rows = lw > 0 ? view.label.lines.length : 0;
       ({ w: view.w, h: view.h } = embedTextSize(view.embedText, { width: lw, rows }, pad));
@@ -322,7 +338,16 @@ function measureNode(
   const keepWidth =
     view.shape === 'circle' || view.shape === 'dbl-circ' || view.shape === 'collapsedGroup';
   let s: ShapeSize;
-  if (view.embed !== undefined) s = embedSize(view.embed, lw, lh);
+  if (fold) {
+    fold.label = m.label(
+      foldedTypeText(fold.type),
+      false,
+      { ...f, size: FOLDED_TYPE_SIZE },
+      Infinity
+    );
+    const { width, height } = foldedSize(view.label, fold.label, fold.type.length);
+    s = { w: width, h: height, dy: 0 };
+  } else if (view.embed !== undefined) s = embedSize(view.embed, lw, lh);
   else if (v?.img || v?.icon) s = assetSize(v, lw, lh);
   else
     s = shapeSize(

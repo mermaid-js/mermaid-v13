@@ -48,6 +48,8 @@ export interface FlowVertex {
   constraint?: string;
   assetWidth?: number;
   assetHeight?: number;
+  /** A folded embedded block (`id@{ view: collapsed }`, #670): drawn without its diagram. */
+  folded?: boolean;
 }
 
 export interface FlowModelEdge {
@@ -269,6 +271,8 @@ export class FlowBuilder {
   private readonly blockAt = new Map<string, Range>();
   /** Where a statement other than a block gave a node a shape or label, the first per id. */
   private readonly shapedAt = new Map<string, Range>();
+  /** Ids given `@{ view: collapsed }`: a block among them is folded (#670). */
+  private readonly foldIds = new Set<string>();
   private readonly subgraphById = new Map<string, FlowModelSubgraph>();
   private readonly edgeById = new Map<string, FlowModelEdge>();
   /** Edges so far per start, then per end. */
@@ -319,6 +323,7 @@ export class FlowBuilder {
       return;
     }
 
+    if (doc?.view === 'collapsed') this.foldIds.add(id);
     let vertex = this.vertices.get(id);
     if (vertex === undefined) {
       // Reported in finish(): a subgraph with this id (defined before or after) takes the style.
@@ -689,6 +694,13 @@ export class FlowBuilder {
   }
 
   finish(): void {
+    // The fold may come before or after its block, as a subgraph's does.
+    this.embeds.forEach((b, i) => {
+      if (!this.foldIds.has(b.id)) return;
+      this.embeds[i] = { ...b, folded: true };
+      const v = this.vertices.get(b.id);
+      if (v) v.folded = true;
+    });
     for (const [id, at] of this.blockAt) {
       if (this.subgraphById.has(id))
         this.options.error(
