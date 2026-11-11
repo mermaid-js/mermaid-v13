@@ -154,3 +154,33 @@ export function semanticTokens(ctx: DocumentContext, list: readonly Occurrence[]
   while (j < symbols.length) out.push(symbols[j++]!);
   return out;
 }
+
+/** A block's body (ADR-15) and its own tokens, ranges inside the body. */
+export interface BlockTokens {
+  readonly offset: number;
+  readonly length: number;
+  readonly tokens: readonly SemanticToken[];
+}
+
+/**
+ * `host`'s tokens with each block body's (one opaque host token) replaced by the block's own
+ * tokens, moved to the outer text; still sorted and disjoint.
+ */
+export function withBlockTokens(
+  host: readonly SemanticToken[],
+  blocks: readonly BlockTokens[]
+): SemanticToken[] {
+  if (blocks.length === 0) return host as SemanticToken[];
+  const out: SemanticToken[] = [];
+  let i = 0;
+  for (const { offset, length, tokens } of blocks) {
+    while (i < host.length && host[i]!.range.start < offset) out.push(host[i++]!);
+    while (i < host.length && host[i]!.range.start < offset + length) i++;
+    for (const t of tokens) {
+      const range = { start: t.range.start + offset, end: t.range.end + offset };
+      out.push({ range, type: t.type, modifiers: t.modifiers });
+    }
+  }
+  while (i < host.length) out.push(host[i++]!);
+  return out;
+}

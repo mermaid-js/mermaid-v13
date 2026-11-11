@@ -11,6 +11,7 @@ import {
 } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { ConfigSchema } from './config/schema.ts';
+import { MAX_BLOCK_DEPTH } from './context.ts';
 import type { DocumentContext } from './context.ts';
 import type { FacetEntry } from './facets.ts';
 import { firstPartyFacets } from './generated/facets.gen.ts';
@@ -151,7 +152,13 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
     return out;
   };
 
-  const build = (uri: string, text: string): DocumentSnapshot => {
+  /**
+   * `text` as a snapshot. Each block it embeds (ADR-15) is read the same way, as a document of
+   * its own, `depth` counting the blocks around it; a block deeper than the render's limit is
+   * not read (its diagnostics say so).
+   */
+  const build = (uri: string, text: string, depth = 0): DocumentSnapshot => {
+    const at = depth === 0 ? ++version : version; // a block shares its host's version
     const pre = preprocess(text);
     const start = diagramStart(text, pre);
     const entry = detect(text, pre, start);
@@ -179,8 +186,13 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
       loadError: state !== undefined && 'failed' in state ? state.failed : undefined,
       notLoaded: entry?.load !== undefined && state === undefined,
       available: entry === undefined ? available() : [],
+      embeds: (result?.embeds ?? []).map((block) => ({
+        block,
+        doc:
+          depth < MAX_BLOCK_DEPTH ? build(`${uri}#${block.id}`, block.text, depth + 1) : undefined,
+      })),
     };
-    return createSnapshot(Object.freeze(context), ++version);
+    return createSnapshot(Object.freeze(context), at);
   };
 
   return {

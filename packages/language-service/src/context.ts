@@ -3,10 +3,30 @@
  * detected type and, when the type has a loaded facet, the parse with tokens. Feature modules
  * take this; later features (completion, hover, front-matter config) read the same fields.
  */
-import type { AstNode, LanguageFacet, ParseResult } from '@mermaid-js/core/parser-kit';
+import type {
+  AstNode,
+  EmbeddedBlock,
+  LanguageFacet,
+  ParseResult,
+} from '@mermaid-js/core/parser-kit';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { ConfigSchema } from './config/schema.ts';
 import type { FacetEntry } from './facets.ts';
+import type { DocumentSnapshot } from './snapshot.ts';
+
+/** How deep blocks may nest: a block in the host is level 1 (ADR-15), as the render counts. */
+export const MAX_BLOCK_DEPTH = 4;
+
+/**
+ * A diagram embedded in this one (ADR-15): the host's block and its body read as a document of
+ * its own type. The body's ranges are offsets into `block.text`; add `block.offset` for the
+ * host's text.
+ */
+export interface EmbeddedDocument {
+  readonly block: EmbeddedBlock;
+  /** Undefined for a block nested deeper than the render allows: it is not read. */
+  readonly doc: DocumentSnapshot | undefined;
+}
 
 export interface DocumentContext {
   readonly uri: string;
@@ -35,4 +55,9 @@ export interface DocumentContext {
    * generated one once `preload` has loaded it.
    */
   readonly schema: ConfigSchema | undefined;
+  /**
+   * The blocks the parse lists (ADR-15), each read as its own document, in source order;
+   * empty for a text without blocks.
+   */
+  readonly embeds: readonly EmbeddedDocument[];
 }
