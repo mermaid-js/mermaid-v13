@@ -12,7 +12,6 @@ used under the MIT License:
   src/parser/model.ts
   src/parser/parser.ts
   src/render/prepare.ts
-  src/render/shapes.ts
 
 MIT License
 

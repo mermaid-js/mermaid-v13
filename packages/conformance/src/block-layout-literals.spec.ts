@@ -5,9 +5,9 @@ import { REPO_ROOT } from './index.ts';
 
 // The block layout takes every length from the `block` config, the theme and its metrics table
 // (spec #521 T3, pitfall 13): no file in `packages/diagram-block/src/{layout,shapes}/` but
-// `layout/metrics.ts` holds a length literal. The shapes' own geometry (the flowchart copy's
-// constants, D446) is allowed by name only: a `const` of that name, at the top level of
-// `shapes/leaf.ts`. Any other number must be one of the counts, factors and tolerances below.
+// `layout/metrics.ts` holds a length literal. The leaf shapes' own geometry is the shared
+// shapes' (`@mermaid-js/shared/shapes`), so `shapes/leaf.ts` holds none either. Any number must
+// be one of the counts, factors and tolerances below.
 const ALLOWED: Readonly<Record<string, string>> = {
   '0': 'no size, no band, no corner; the top level; the first column and row',
   '1': 'one column; a span of one; the least scale of the float tolerance',
@@ -27,22 +27,6 @@ const ALLOWED_IN: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   },
 };
 
-/** flowchart's shape constants in `shapes/leaf.ts`, by name. */
-const NAMED: readonly string[] = [
-  'MIN_SLANT',
-  'MIN_LABEL_WIDTH',
-  'FRAMES_WIDTH',
-  'CYLINDER_MIN_WIDTH',
-  'CAP_RY_MIN',
-  'CAP_RY_MAX',
-  'CAP_RY_DIVISOR',
-  'CYLINDER_CAPS',
-  'STADIUM_MIN_RATIO',
-  'LEAN_SLANT',
-  'SLANT_DIVISOR',
-  'ODD_NOTCH',
-];
-
 /** The numeric literals in TypeScript source, outside comments and strings. */
 function numericLiterals(source: string): string[] {
   const code = source
@@ -50,15 +34,6 @@ function numericLiterals(source: string): string[] {
     .replace(/\/\/.*$/gm, ' ')
     .replace(/'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`|"(?:[^"\\\n]|\\.)*"/g, "''");
   return code.match(/(?<![\w$.])\d[\d_]*(?:\.\d+)?(?:e[-+]?\d+)?/gi) ?? [];
-}
-
-/** `source` without the top-level `const NAME = <number>;` of each name in `names`. */
-function withoutNamed(source: string, names: readonly string[]): string {
-  let out = source;
-  for (const name of names) {
-    out = out.replace(new RegExp(`^const ${name} = [\\d.]+;$`, 'm'), '');
-  }
-  return out;
 }
 
 const FOLDERS = ['layout', 'shapes'] as const;
@@ -83,13 +58,9 @@ describe('block layout and shapes', () => {
       '16',
       '1e4',
     ]);
-    // A named constant goes only where it is declared by an allowed name.
-    expect(numericLiterals(withoutNamed('const MIN_SLANT = 1;\nconst OTHER = 7;', NAMED))).toEqual([
-      '7',
-    ]);
   });
 
-  it('scans the layout and shape sources, and each allowed name is declared', () => {
+  it('scans the layout and shape sources', () => {
     expect(SOURCES).toEqual(
       expect.arrayContaining([
         'layout/grid.ts',
@@ -101,17 +72,14 @@ describe('block layout and shapes', () => {
         'shapes/outline.ts',
       ])
     );
-    const leaf = readFileSync(join(DIR, 'shapes/leaf.ts'), 'utf8');
-    for (const name of NAMED) expect(leaf).toMatch(new RegExp(`^const ${name} = [\\d.]+;$`, 'm'));
   });
 
   it.each(SOURCES)('%s holds no length literal outside the metrics table', (file) => {
     const folder = file.split('/')[0]!;
-    const named = file === 'shapes/leaf.ts' ? NAMED : [];
     const allowed = { ...ALLOWED, ...ALLOWED_IN[folder] };
-    const stray = numericLiterals(
-      withoutNamed(readFileSync(join(DIR, file), 'utf8'), named)
-    ).filter((n) => !(n in allowed));
+    const stray = numericLiterals(readFileSync(join(DIR, file), 'utf8')).filter(
+      (n) => !(n in allowed)
+    );
     expect(stray).toEqual([]);
   });
 });

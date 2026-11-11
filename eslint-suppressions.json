@@ -479,11 +479,8 @@
     }
   },
   "packages/diagram-flowchart/src/render/shapes.ts": {
-    "@typescript-eslint/no-empty-function": {
-      "count": 1
-    },
     "max-params": {
-      "count": 2
+      "count": 1
     }
   },
   "packages/diagram-flowchart/src/v12-specs/adapter.ts": {

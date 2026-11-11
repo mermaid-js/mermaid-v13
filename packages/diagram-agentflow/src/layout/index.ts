@@ -13,5 +13,5 @@ export type {
 export type { AgentflowLayoutContext, AgentflowWarning } from './context.ts';
 export { AGENTFLOW_CONFIG_INVALID, numericValue } from './config-length.ts';
 export { TITLE_MARGIN_DEFAULTS } from './metrics.ts';
-export { cornerRadius, shapeOutline } from './shapes.ts';
+export { cornerRadius, shapeOutline, sharedShape } from './shapes.ts';
 export type { LayoutShape, Pads, PadXY, ShapeGeometry } from './shapes.ts';

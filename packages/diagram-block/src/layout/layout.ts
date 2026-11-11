@@ -13,7 +13,7 @@ import { BLOCK_CONFIG_INVALID } from '../codes.ts';
 import { checkStyle } from '@mermaid-js/core/svg';
 import { fontSizePx, layoutLabel, Style, type FontKey } from '@mermaid-js/core/text';
 import { isComposite, type Block, type BlockEdge, type BlockModel } from '../model.ts';
-import { padsOf, type Pads } from '../shapes/leaf.ts';
+import { themePads, type Pads } from '@mermaid-js/shared/shapes';
 import { clipOutline, outlineExtent, type Point } from '../shapes/outline.ts';
 import { placeGrid, sizeGrid, type GridNode } from './grid.ts';
 import { kindOf, SHAPE_OF, type Natural } from './kinds.ts';
@@ -142,7 +142,7 @@ export function blockGrid(
 /** The measured grid and what drawing it needs. */
 function prepare(model: BlockModel, ctx: BlockLayoutContext) {
   const padding = blockPadding(ctx.config, ctx.warn);
-  const pads = padsOf(ctx.theme, padding);
+  const pads = themePads(ctx.theme, padding);
   const font = fonts(model, ctx);
   const inline = ctx.inline ? { inline: ctx.inline } : {};
   const measure: Measure = (text, f, style) => {

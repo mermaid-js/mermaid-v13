@@ -16,14 +16,8 @@ import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/
 import { dirOf, nesting, type Nesting } from './nesting.ts';
 import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
 import { assetSize } from './assets.ts';
-import {
-  canonicalShape,
-  shapeHasLabel,
-  shapeSize,
-  shapeSpan,
-  type PadXY,
-  type Pads,
-} from './shapes.ts';
+import { canonicalShape, shapeHasLabel, shapeSize, shapeSpan, type Pads } from './shapes.ts';
+import { themePads } from '@mermaid-js/shared/shapes';
 
 export interface NodeView {
   id: string;
@@ -73,10 +67,6 @@ export interface Prepared {
   views: ReadonlyMap<string, NodeView>;
   pads: Pads;
 }
-
-// The smallest hexagonSlant drawn (a ratio, not a length): each pointed end as deep as the
-// hexagon is tall.
-const MIN_SLANT = 1;
 
 function vertexShape(v: FlowVertex): string {
   if (v.img) return 'img';
@@ -131,7 +121,7 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
   const m: Measure = {
     ctx,
     font,
-    pads: padsOf(ctx.theme, pad),
+    pads: themePads(ctx.theme, pad),
     wrap: fromPx(units, length('wrappingWidth') ?? 0, 'x') || units.builder.wrapWidth,
     minWidth: length('minNodeWidth') ?? 0,
     // This is the only place the builder looks at which profile it has.
@@ -149,31 +139,6 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
   const edges = edgeViews(model, nest.collapsedInto, views, m);
   const graph = layoutGraph(model, rootDir, nest, { groups, nodes, edges }, m, length);
   return { graph, groups, nodes, edges, views, pads: m.pads };
-}
-
-function padsOf(theme: FlowRenderContext['theme'], pad: number): Pads {
-  const padOf = (name: string) => theme.padding(name, pad);
-  const xy = (shape: string): PadXY => ({
-    x: padOf(`${shape}PaddingX`),
-    y: padOf(`${shape}PaddingY`),
-  });
-  return {
-    node: xy('node'),
-    r: theme.number('radius'),
-    pad,
-    stadium: xy('stadium'),
-    hexagon: xy('hexagon'),
-    // A slant of 0 would put the hexagon's points at infinity.
-    hexagonSlant: Math.max(theme.number('hexagonSlant'), MIN_SLANT),
-    subroutine: xy('subroutine'),
-    cylinder: xy('cylinder'),
-    lean: xy('lean'),
-    odd: xy('odd'),
-    ringGap: theme.number('doubleCircleGap'),
-    ringPad: padOf('doubleCirclePadding'),
-    circlePad: padOf('circlePadding'),
-    circleMin: theme.number('circleMinDiameter'),
-  };
 }
 
 /** One view per drawn subgraph and vertex, measured; clusters sorted outermost first. */
