@@ -22,10 +22,8 @@
  * it reports it, skips to the next token that starts a line, and carries on (R-PARSE-4).
  */
 import {
-  APOSTROPHE,
   ASCII_MAX,
   cook,
-  DQUOTE,
   ExpectedTable,
   formatExpected,
   isSpace,
@@ -50,6 +48,14 @@ import type {
   StatementSpan,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
+import {
+  textProbeMode,
+  textStatements,
+  textValue,
+  TITLE_STATEMENT,
+  withoutIndent,
+} from '@mermaid-js/shared/parser/rule';
+import type { TextValues } from '@mermaid-js/shared/parser/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { TreemapModel } from '../model.ts';
@@ -61,16 +67,7 @@ import type {
   TreemapSectionNode,
   TreemapStatementNode,
 } from './ast.ts';
-import {
-  accDescrValue,
-  accTitleValue,
-  classDefParts,
-  decodeEntities,
-  nameValue,
-  numberValue,
-  splitStyles,
-  titleValue,
-} from './convert.ts';
+import { classDefParts, decodeEntities, nameValue, numberValue, splitStyles } from './convert.ts';
 import { lex } from './lexer.ts';
 import { normalise } from './normalise.ts';
 import type { ClassDefRead } from './normalise.ts';
@@ -117,47 +114,24 @@ const isTrivia = (k: number) =>
   k === Kind.Comment || k === Kind.Directive || k === Kind.Space || k === Kind.Newline;
 
 /** Each text statement's AST type and keyword. */
-const TEXT_STATEMENTS: Readonly<
-  Record<number, { type: 'Title' | 'AccTitle' | 'AccDescr'; word: string }>
-> = {
-  [T.Title]: { type: 'Title', word: 'title' },
-  [T.AccTitle]: { type: 'AccTitle', word: 'accTitle' },
-  [T.AccDescr]: { type: 'AccDescr', word: 'accDescr' },
-};
+const TEXT_STATEMENTS = /* @__PURE__ */ textStatements(T.Title, T.AccTitle, T.AccDescr);
 
 /**
- * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the
+ * The probe's mode at an offset (R-LANG-7). The lexer has no modes (Langium's has none), so the
  * mode names what the offset is in: `string` inside a name (closed or not), `title`,
  * `accTitle` or `accDescr` past the keyword of that statement, `classDef` past the keyword of
  * a `classDef` (its name and styles), else `INITIAL` (code).
  */
-function probeMode(src: string, tokens: TokenStream, o: number): string {
-  for (let j = 0; j < tokens.length; j++) {
-    const start = tokens.start[j] ?? 0;
-    const end = tokens.end[j] ?? 0;
-    if (start >= o) break;
-    if (end < o) continue;
-    const kind = tokens.kind[j] ?? Kind.EOF;
-    const c = src.charCodeAt(start);
-    if (kind === T.String && o < end) return 'string';
-    // An unclosed name is an error token from its quote on.
-    if (kind === Kind.Error && (c === DQUOTE || c === APOSTROPHE)) return 'string';
-    if (kind === T.ClassDef) {
-      const closed = src.charCodeAt(end - 1) === SEMI;
-      if (o > start + 'classDef'.length && (o < end || !closed)) return 'classDef';
-      continue;
-    }
-    const word = TEXT_STATEMENTS[kind]?.word;
-    if (!word) continue;
-    let k = start;
-    while (/[\t ]/.test(src.charAt(k))) k++;
-    k += word.length;
-    // A block `accDescr { … }` ends at its `}`; the other values run to the line end.
-    const block = kind === T.AccDescr && /^\s*\{/.test(src.slice(k, end));
-    if (o > k && (o < end || !block)) return word;
-  }
-  return 'INITIAL';
-}
+const probeMode = /* @__PURE__ */ textProbeMode({
+  texts: TEXT_STATEMENTS,
+  accDescr: T.AccDescr,
+  string: T.String,
+  other(src, kind, start, end, o) {
+    if (kind !== T.ClassDef) return undefined;
+    const closed = src.charCodeAt(end - 1) === SEMI;
+    return o > start + 'classDef'.length && (o < end || !closed) ? 'classDef' : undefined;
+  },
+});
 
 /** Human names for what the parser expects (R-ERR-2, R-ERR-5). */
 const EXPECTED = new ExpectedTable([
@@ -246,10 +220,8 @@ class TreemapParser {
   /** The `TREEMAP_ROWS_ON_ONE_LINE` warning of the current line, if any. */
   private oneLine: Diagnostic | undefined;
   /** The last in-text value of each (v12's Langium assignments: the last one wins). */
-  private title = '';
+  private readonly texts: TextValues = { title: '', accTitle: '', accDescr: '' };
   private titleAstId: AstId | undefined;
-  private accTitle = '';
-  private accDescr = '';
 
   constructor(
     private readonly src: string,
@@ -548,14 +520,9 @@ class TreemapParser {
   /** `(TITLE | ACC_TITLE | ACC_DESCR)`: the last of each wins. */
   private text(k: number): void {
     const j = this.i++;
-    const image = this.raw(j);
-    const { type, word } = TEXT_STATEMENTS[k] ?? { type: 'Title', word: 'title' };
-    const range = this.range(j);
-    while (range.start < range.end && /[\t ]/.test(this.src[range.start] ?? '')) range.start++;
-    let text: string;
-    if (type === 'Title') text = this.title = titleValue(image);
-    else if (type === 'AccTitle') text = this.accTitle = accTitleValue(image);
-    else text = this.accDescr = accDescrValue(image);
+    const { type, word } = TEXT_STATEMENTS[k] ?? TITLE_STATEMENT;
+    const range = withoutIndent(this.src, this.range(j));
+    const text = (this.texts[word] = textValue(type, this.raw(j)));
     const id = this.id(word);
     if (type === 'Title') this.titleAstId = id;
     this.children.push({ id, type, range, text });
@@ -796,10 +763,10 @@ class TreemapParser {
       {
         rows: this.rows,
         classDefs: this.classDefs,
-        title: this.title,
+        title: this.texts.title,
         titleAstId: this.titleAstId,
-        accTitle: this.accTitle,
-        accDescr: this.accDescr,
+        accTitle: this.texts.accTitle,
+        accDescr: this.texts.accDescr,
         frontMatterTitle: this.pre.frontMatter?.title,
       },
       diagnostics

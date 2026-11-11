@@ -25,24 +25,24 @@
  * of a curve it was in) and carries on.
  */
 import {
-  APOSTROPHE,
   ASCII_MAX,
-  DQUOTE,
   ExpectedTable,
   formatExpected,
   Kind,
   kindSet,
   STOP,
 } from '@mermaid-js/core/parser-kit';
-import { RuleParser } from '@mermaid-js/shared/parser/rule';
-import type {
-  AstId,
-  ParseOptions,
-  ParseResult,
-  Range,
-  TokenStream,
-} from '@mermaid-js/core/parser-kit';
-import type { RuleGrammar } from '@mermaid-js/shared/parser/rule';
+import {
+  accessibilityAsName,
+  RuleParser,
+  textProbeMode,
+  textValue,
+  TITLE_STATEMENT,
+  unclosedLabel,
+  withoutIndent,
+} from '@mermaid-js/shared/parser/rule';
+import type { AstId, ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
+import type { RuleGrammar, TextValues } from '@mermaid-js/shared/parser/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { RadarModel } from '../model.ts';
@@ -56,7 +56,7 @@ import type {
 } from './ast.ts';
 import { normalise } from './normalise.ts';
 import type { OptionName } from './normalise.ts';
-import { accDescrValue, accTitleValue, labelValue, titleValue } from './convert.ts';
+import { labelValue } from './convert.ts';
 import { lex } from './lexer.ts';
 import { PREFIX_KEYWORDS, RADAR_TRIVIA, T, TEXT_STATEMENTS } from './tokens.ts';
 
@@ -112,34 +112,6 @@ const OPTION_OF: Readonly<Record<number, { readonly name: OptionName; readonly v
   [T.Graticule]: { name: 'graticule', value: T.GraticuleValue },
 };
 
-/**
- * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the
- * mode names what the offset is in: `title`, `accTitle` or `accDescr` past the keyword of
- * that statement, `string` inside a label (closed or not), else `INITIAL` (code).
- */
-function probeMode(src: string, tokens: TokenStream, o: number): string {
-  for (let j = 0; j < tokens.length; j++) {
-    const start = tokens.start[j] ?? 0;
-    const end = tokens.end[j] ?? 0;
-    if (start >= o) break;
-    if (end < o) continue;
-    const kind = tokens.kind[j] ?? Kind.EOF;
-    const c = src.charCodeAt(start);
-    if (kind === T.String && o < end) return 'string';
-    // An unclosed label is an error token from its quote on.
-    if (kind === Kind.Error && (c === DQUOTE || c === APOSTROPHE)) return 'string';
-    const word = TEXT_STATEMENTS[kind]?.word;
-    if (!word) continue;
-    let k = start;
-    while (/[\t ]/.test(src.charAt(k))) k++;
-    k += word.length;
-    // A block `accDescr { … }` ends at its `}`; the other values run to the line end.
-    const block = kind === T.AccDescr && /^\s*\{/.test(src.slice(k, end));
-    if (o > k && (o < end || !block)) return word;
-  }
-  return 'INITIAL';
-}
-
 /** Human names for what the parser expects (R-ERR-2, R-ERR-5). */
 const EXPECTED = new ExpectedTable([
   ['`radar-beta`', [T.RadarBeta, T.RadarBetaColon]],
@@ -170,7 +142,11 @@ const GRAMMAR: RuleGrammar = {
   lex,
   trivia: RADAR_TRIVIA,
   probeFollows: PROBE_FOLLOWS,
-  probeMode,
+  probeMode: /* @__PURE__ */ textProbeMode({
+    texts: TEXT_STATEMENTS,
+    accDescr: T.AccDescr,
+    string: T.String,
+  }),
 };
 
 /**
@@ -186,11 +162,9 @@ class RadarParser extends RuleParser<PreprocessResult> {
   /** The last option of each name (v12 `setOptions`). */
   private readonly options = new Map<OptionName, RadarOptionNode>();
   /** The last in-text value of each (v12's Langium assignments: the last one wins). */
-  private title = '';
+  private readonly texts: TextValues = { title: '', accTitle: '', accDescr: '' };
   /** The AST id of the last `title` statement. */
   private titleAstId: AstId | undefined;
-  private accTitle = '';
-  private accDescr = '';
 
   constructor(
     src: string,
@@ -250,16 +224,7 @@ class RadarParser extends RuleParser<PreprocessResult> {
     const { st } = this;
     const text = this.raw();
     const line = this.lineOf(where.start);
-    if (text.startsWith('"') || text.startsWith("'")) {
-      const q = text[0] ?? '"';
-      st.diagnostics.error(
-        'UNCLOSED_STRING',
-        `Unclosed label: the \`${q}\` at line ${line} has no closing \`${q}\`. Add \`${q}\` after the label.`,
-        where,
-        { expected: [`\`${q}\``] }
-      );
-      throw STOP;
-    }
+    if (unclosedLabel(st.diagnostics, text, line, where)) throw STOP;
     const shown = text.length > 24 ? `${text.slice(0, 24)}…` : text;
     let why = '';
     if (text === ';') why = '; `;` does not end a statement in a radar chart: start a new line';
@@ -283,20 +248,8 @@ class RadarParser extends RuleParser<PreprocessResult> {
     if (word !== 'accDescr' && word !== 'accTitle') return;
     let j = this.i + 1;
     while (this.kind(j) === Kind.Newline) j++;
-    if (word === 'accDescr' && this.kind(j) === T.LBrace) {
-      this.st.diagnostics.error(
-        'UNCLOSED_ACC_DESCR',
-        `Unclosed accessible description: the \`accDescr {\` at line ${this.lineOf(where.start)} has no closing \`}\`. Write \`accDescr { … }\` or \`accDescr: …\`.`,
-        where
-      );
-      throw STOP;
-    }
-    this.st.diagnostics.error(
-      'UNEXPECTED',
-      `Expected \`:\` after \`${word}\`; write it as \`${word}: …\`${word === 'accDescr' ? ' or `accDescr { … }`' : ''}.`,
-      where,
-      { expected: ['`:`'] }
-    );
+    const line = this.lineOf(where.start);
+    accessibilityAsName(this.st.diagnostics, word, this.kind(j) === T.LBrace, line, where);
     throw STOP;
   }
 
@@ -592,14 +545,9 @@ class RadarParser extends RuleParser<PreprocessResult> {
   /** `(ACC_DESCR | ACC_TITLE | TITLE) EOL` */
   private text(k: number): void {
     const j = this.i++;
-    const image = this.raw(j);
-    const { type, word: kind } = TEXT_STATEMENTS[k] ?? TEXT_STATEMENTS[T.Title]!;
-    const range = this.range(j);
-    while (range.start < range.end && /[\t ]/.test(this.src[range.start] ?? '')) range.start++;
-    let text: string;
-    if (type === 'Title') text = this.title = titleValue(image);
-    else if (type === 'AccTitle') text = this.accTitle = accTitleValue(image);
-    else text = this.accDescr = accDescrValue(image);
+    const { type, word: kind } = TEXT_STATEMENTS[k] ?? TITLE_STATEMENT;
+    const range = withoutIndent(this.src, this.range(j));
+    const text = (this.texts[kind] = textValue(type, this.raw(j)));
     const id = this.id(kind);
     if (type === 'Title') this.titleAstId = id;
     this.children.push({ id, type, range, text });
@@ -630,10 +578,10 @@ class RadarParser extends RuleParser<PreprocessResult> {
         axes: this.axes,
         curves: this.curves,
         options: this.options,
-        title: this.title,
+        title: this.texts.title,
         titleAstId: this.titleAstId,
-        accTitle: this.accTitle,
-        accDescr: this.accDescr,
+        accTitle: this.texts.accTitle,
+        accDescr: this.texts.accDescr,
         frontMatterTitle: this.pre.frontMatter?.title,
       },
       diagnostics
