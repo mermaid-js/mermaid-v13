@@ -19,6 +19,7 @@ import type { StateRenderContext } from './context.ts';
 import { stateConfigDefaults } from '../generated/config-defaults.ts';
 import { stateMetrics, type StateMetrics } from './metrics.ts';
 import { embedSize, type EmbedSlot } from './embed.ts';
+import { FOLDED_TYPE_SIZE, foldedSize, foldedTypeText } from '@mermaid-js/core/svg/folded';
 
 /** What a node is drawn as. `described`: a state with several description lines (v12 `rectWithTitle`). */
 export type StateShape =
@@ -53,6 +54,8 @@ export interface StateNodeView {
   note?: StateNote;
   /** An embedded diagram block (ADR-15): what it holds, `null` for a stand-in frame. */
   embed?: EmbedSlot;
+  /** A folded block (#670): its inner type (empty when unknown) and that type's label. */
+  fold?: { readonly type: string; readonly label: MeasuredLabel };
 }
 
 export interface StateGroupView {
@@ -119,6 +122,9 @@ interface Measure {
   readonly label: (text: string, style: CheckedStyle, max: number) => MeasuredLabel;
   readonly styleOf: (classes: readonly string[], own?: readonly string[]) => CheckedStyle;
   readonly embed: StateRenderContext['embed'];
+  /** A folded block's type label (#670): small capitals, measured at their size. */
+  readonly typeLabel: (type: string) => MeasuredLabel;
+  readonly foldedType: StateRenderContext['foldedType'];
 }
 
 /**
@@ -154,6 +160,14 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
     },
     styleOf: styleCache(model, ctx),
     embed: ctx.embed,
+    typeLabel: (type) =>
+      layoutLabel(
+        foldedTypeText(type),
+        { ...m.font, size: FOLDED_TYPE_SIZE },
+        Infinity,
+        ctx.measurer
+      ),
+    foldedType: ctx.foldedType,
   };
 
   const sc = scopes(model);
@@ -363,6 +377,20 @@ function boxOf(
   return { w: Math.max(label.width, minWidth) + 2 * pad.x, h: label.height + 2 * pad.y };
 }
 
+/** A folded block (#670): its title (or its id) and its inner type, in the folded shape. */
+function folded(
+  base: Pick<StateNodeView, 'id' | 'ast' | 'parent' | 'flow' | 'style' | 'state'>,
+  s: StateNode,
+  style: CheckedStyle,
+  m: Measure
+): StateNodeView {
+  const label = m.label(s.title || s.id, style, Infinity);
+  const type = m.foldedType?.(s.id) ?? '';
+  const fold = { type, label: m.typeLabel(type) };
+  const { width: w, height: h } = foldedSize(label, fold.label, type.length);
+  return { ...base, shape: 'embed', label, embed: null, fold, w, h };
+}
+
 function measureState(
   s: StateNode,
   style: CheckedStyle,
@@ -384,6 +412,7 @@ function measureState(
       return { ...base, shape: s.kind, label: m.label('', style, 0), w, h };
     }
     case 'embed': {
+      if (s.folded) return folded(base, s, style, m);
       // The title stays on one line: the strip is as wide as the inner diagram allows.
       const label = m.label(s.title ?? '', style, Infinity);
       const embed = m.embed?.(s.id) ?? null;

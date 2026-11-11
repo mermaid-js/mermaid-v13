@@ -5,7 +5,8 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { flowchart } from '@mermaid-js/diagram-flowchart';
-import { createMermaid, NotLoadedError } from './index.ts';
+import { state } from '@mermaid-js/diagram-state';
+import { createMermaid, MermaidError, NotLoadedError } from './index.ts';
 import { createMermaid as createSlim } from './slim.ts';
 
 const FOLDED = [
@@ -36,6 +37,16 @@ function folded(svg: string, id: string): string {
     if (depth === 0) return svg.slice(start, start + m.index + m[0].length);
   }
   throw new Error('unclosed <g>');
+}
+
+async function rejection(p: Promise<unknown>): Promise<MermaidError> {
+  try {
+    await p;
+  } catch (e) {
+    expect(e).toBeInstanceOf(MermaidError);
+    return e as MermaidError;
+  }
+  throw new Error('expected a rejection');
 }
 
 describe('a folded block in a flowchart', () => {
@@ -136,5 +147,55 @@ describe('a folded block in text output', () => {
       '|  sequence  |',
       '+------------+',
     ]);
+  });
+});
+
+const STATE = [
+  'stateDiagram-v2',
+  '  [*] --> login',
+  '  mermaid login["Login flow"] {',
+  '    sequenceDiagram',
+  '      ->> ->> :: not a message',
+  '  }',
+  '  login@{ view: collapsed }',
+  '  login --> [*]',
+].join('\n');
+
+describe('a folded block in a state diagram', () => {
+  it('draws the same folded shape, without parsing or loading the inner diagram', async () => {
+    const m = createSlim({ diagrams: [state] });
+    const { svg } = await m.render('host', STATE);
+    expect(roots(svg)).toHaveLength(1);
+    const g = folded(svg, 'login');
+    expect(g).toMatch(/^<g class="node embed folded/);
+    expect(g).toContain('Login flow');
+    expect(g).toContain('>SEQUENCE<');
+    expect(g.match(/class="corner"/g)).toHaveLength(4);
+    expect(g).toContain('class="diagram-icon"');
+    assertInert(svg);
+  });
+
+  it('folds a block whose fold comes first', async () => {
+    const early = STATE.replace('  login@{ view: collapsed }\n', '').replace(
+      '  [*] --> login',
+      '  login@{ view: collapsed }\n  [*] --> login'
+    );
+    const { svg } = await createMermaid().render('host', early);
+    expect(folded(svg, 'login')).toContain('>SEQUENCE<');
+  });
+
+  it('accepts only view: collapsed', async () => {
+    const e = await rejection(
+      createMermaid().parse(STATE.replace('view: collapsed', 'shape: rect'))
+    );
+    expect(e.message).toContain('view: collapsed');
+    expect(e.line).toBe(7);
+  });
+
+  it('accepts it only on a block id', async () => {
+    const text = `stateDiagram-v2\n  A --> B\n  A@{ view: collapsed }\n`;
+    const e = await rejection(createMermaid().parse(text));
+    expect(e.message).toContain('`A` is not one');
+    expect(e.line).toBe(3);
   });
 });

@@ -36,10 +36,12 @@ import type {
   StateStmt,
   StateTransitionStmt,
 } from './ast.ts';
+import { applyFolds, foldData, type Fold } from './fold.ts';
 import { StateBuilder } from './model.ts';
 import type { Item, StateItem, StateModel } from './model.ts';
 import {
   AFTER_ID,
+  AFTER_STATE,
   AFTER_TARGET,
   AS,
   BOUNDARY,
@@ -124,6 +126,9 @@ class StateParser extends StateCursor {
   private readonly clicks: [string, Range][] = []; // top-level `click` targets
   /** Embedded diagram blocks (ADR-15), for `ParseResult.embeds`. */
   private readonly embeds: EmbeddedBlock[] = [];
+  /** Each block's model record by id, and the `id@{ view: collapsed }` folds (#670). */
+  private readonly blocks = new Map<string, { title?: string; folded?: boolean }>();
+  private readonly folds: Fold[] = [];
   private dividers = 0;
 
   constructor(
@@ -153,6 +158,7 @@ class StateParser extends StateCursor {
     const items: Item[] = [];
     this.header(children);
     this.document(undefined, { items, nodes: children });
+    applyFolds(this.folds, this.embeds, this.blocks, this.report);
     const warnings = () => st.diagnostics.list.filter((d) => d.severity === 'warning');
     const model = this.db.build(items, []);
     undrawnNotices(this.st.diagnostics, model, this.declared, this.clicks);
@@ -465,7 +471,8 @@ class StateParser extends StateCursor {
   private stateOrTransition(scope: Scope | undefined, doc: Doc): void {
     const from = this.i;
     const [item, node] = this.idStatement(scope);
-    this.tested(AFTER_ID);
+    this.tested(AFTER_STATE);
+    if (this.kind() === T.EmbedFold) return this.fold(from, item.range);
     if (this.kind() === T.Descr) {
       const d = this.i++;
       item.description = trimColon(this.text(d));
@@ -755,7 +762,7 @@ class StateParser extends StateCursor {
       description: '',
       ast: node.id,
       range: nameRange,
-      embed: title ? { title } : {},
+      embed: this.block(name, title),
     });
     this.embeds.push({
       id: name,
@@ -764,6 +771,24 @@ class StateParser extends StateCursor {
       offset: bodyRange.start,
     });
   }
+
+  /** A block's model record, kept by id for a fold (#670). */
+  private block(name: string, title: string | undefined): { title?: string } {
+    const rec = title ? { title } : {};
+    if (!this.blocks.has(name)) this.blocks.set(name, rec);
+    return rec;
+  }
+
+  /** `id@{ view: collapsed }` (#670): folds block `id` (at `at`), checked once all is read. */
+  private fold(from: number, at: Range): void {
+    const k = this.i++;
+    if (foldData(this.text(k), this.own(k), this.report))
+      this.folds.push({ id: this.text(from).trim(), range: at });
+    this.st.statement('fold', this.span(from));
+  }
+
+  private readonly report = (code: string, message: string, range: Range): void =>
+    void this.st.diagnostics.error(code, message, range);
 
   /** `click A "url" "tooltip"` / `click A href "url"`, then a line break. */
   private click(doc: Doc): void {

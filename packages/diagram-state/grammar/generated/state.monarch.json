@@ -992,6 +992,12 @@
         {
           "token": "delimiter"
         }
+      ],
+      [
+        "@\\{[^}\\n]*\\}",
+        {
+          "token": "annotation"
+        }
       ]
     ],
     "frontMatterStart": [

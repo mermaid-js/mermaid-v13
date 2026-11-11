@@ -522,42 +522,42 @@
         }
       }
     },
-    "rule-75": {
+    "rule-76": {
       "match": "(?i:stateDiagram)\\s+",
       "name": "keyword.control.mermaid-state"
     },
-    "rule-76": {
+    "rule-77": {
       "match": "(?i:stateDiagram-v2)\\s+",
       "name": "keyword.control.mermaid-state"
     },
-    "rule-77": {
+    "rule-78": {
       "match": "(?i:hide empty description)\\b",
       "name": "keyword.control.mermaid-state"
     },
-    "rule-78": {
+    "rule-79": {
       "match": "\\[\\*\\]",
       "name": "constant.language.mermaid-state"
     },
-    "rule-79": {
+    "rule-80": {
       "match": "%%[^:\\n\\s\\-{]*"
     },
-    "rule-80": {
+    "rule-81": {
       "match": "(?:[^:\\n\\s\\-{%]|%(?!%))+",
       "name": "variable.other.mermaid-state"
     },
-    "rule-81": {
+    "rule-82": {
       "match": "\\s*:(?:#\\w+;|[^:\\n;]|:[^:\\n;])+",
       "name": "string.quoted.mermaid-state"
     },
-    "rule-82": {
+    "rule-83": {
       "match": "-->",
       "name": "keyword.operator.mermaid-state"
     },
-    "rule-84": {
+    "rule-85": {
       "match": ":::",
       "name": "keyword.operator.mermaid-state"
     },
-    "rule-86": {
+    "rule-87": {
       "match": "."
     },
     "mode-INITIAL": {
@@ -635,9 +635,6 @@
           "include": "#rule-57"
         },
         {
-          "include": "#rule-75"
-        },
-        {
           "include": "#rule-76"
         },
         {
@@ -659,10 +656,13 @@
           "include": "#rule-82"
         },
         {
-          "include": "#rule-84"
+          "include": "#rule-83"
         },
         {
-          "include": "#rule-86"
+          "include": "#rule-85"
+        },
+        {
+          "include": "#rule-87"
         }
       ]
     },
@@ -1024,7 +1024,7 @@
     "rule-56": {
       "match": "\\n"
     },
-    "rule-83": {
+    "rule-84": {
       "match": "--",
       "name": "keyword.operator.mermaid-state"
     },
@@ -1076,9 +1076,6 @@
           "include": "#rule-57"
         },
         {
-          "include": "#rule-78"
-        },
-        {
           "include": "#rule-79"
         },
         {
@@ -1095,6 +1092,9 @@
         },
         {
           "include": "#rule-84"
+        },
+        {
+          "include": "#rule-85"
         }
       ]
     },
@@ -1122,6 +1122,10 @@
       "match": "\\}",
       "name": "punctuation.definition.mermaid-state"
     },
+    "rule-75": {
+      "match": "@\\{[^}\\n]*\\}",
+      "name": "meta.embedded.mermaid-state"
+    },
     "mode-embed": {
       "patterns": [
         {
@@ -1147,6 +1151,9 @@
         },
         {
           "include": "#rule-74"
+        },
+        {
+          "include": "#rule-75"
         }
       ]
     },

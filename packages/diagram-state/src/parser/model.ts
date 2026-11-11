@@ -47,6 +47,8 @@ export interface StateNode {
   dir?: StateDirection;
   /** An embedded diagram block's title (ADR-15); absent for an untitled block. */
   title?: string;
+  /** A folded block (`id@{ view: collapsed }`, #670): drawn without its diagram. */
+  folded?: boolean;
 }
 
 /** A concurrency region: the part of a composite between `--` separators. */
@@ -130,8 +132,8 @@ export interface StateItem {
   region?: number;
   /** A composite split by `--`: its last region's AST id and ordinal. */
   tail?: { ast: AstId; region: number };
-  /** An embedded diagram block (ADR-15), with its title. */
-  embed?: { title?: string };
+  /** An embedded diagram block (ADR-15), with its title; `folded` by `@{ view: collapsed }`. */
+  embed?: { title?: string; folded?: boolean };
   range: Range;
 }
 
@@ -174,8 +176,8 @@ interface GraphNode {
   parent?: string;
   classes: string[];
   styles: string[];
-  /** An embedded diagram block (ADR-15), with its title. */
-  embed?: { title?: string };
+  /** An embedded diagram block (ADR-15), with its title; `folded` by `@{ view: collapsed }`. */
+  embed?: { title?: string; folded?: boolean };
   /** Whether a mention gave it content of its own: a description or statements. */
   content?: boolean;
 }
@@ -274,6 +276,7 @@ export class StateBuilder {
       if (n.parent !== undefined) state.parent = n.parent;
       if (n.isGroup && n.dir !== undefined) state.dir = n.dir;
       if (n.embed?.title !== undefined) state.title = n.embed.title;
+      if (n.embed?.folded) state.folded = true;
       states.push(state);
     }
     return {

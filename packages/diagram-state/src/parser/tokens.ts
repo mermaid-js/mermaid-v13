@@ -87,4 +87,6 @@ export const T = {
   EmbedBody: F + 59,
   /** The `}` that closes a block, first on its line. */
   EmbedEnd: F + 60,
+  /** `@{ … }` after a block id, folding the block (#670): up to the first `}` on the line. */
+  EmbedFold: F + 61,
 } as const;

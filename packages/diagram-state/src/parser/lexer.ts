@@ -84,6 +84,7 @@ const RE_NOTE = /note\s+/iy;
 const RE_SD = /stateDiagram\s+/iy;
 const RE_SD2 = /stateDiagram-v2\s+/iy;
 const RE_HIDE = /hide empty description\b/iy;
+const RE_FOLD = /@\{[^}\n]*\}?/y;
 const RE_DEFAULT_ID = /default\s+/iy;
 const RE_WORD_SPACE = /\w+\s+/y;
 const RE_IDS_SPACE = /[\w,]+\s+/y;
@@ -444,6 +445,8 @@ class StateLexer {
     while (i < this.n) {
       const x = this.code(i);
       if (x === COLON || x === LF || x === DASH || x === LBRACE || isSpace(x)) break;
+      // `id@{ … }` (#670); `a@b` stays one id.
+      if (this.t.startsWith('@{', i)) break;
       i++;
     }
     if (i > p) {
@@ -459,6 +462,8 @@ class StateLexer {
     if (c === DASH && this.t.startsWith('-->', p)) this.token(T.Arrow, p + 3);
     else if (inStruct && c === DASH && this.code(p + 1) === DASH) this.token(T.Concurrent, p + 2);
     else if (this.t.startsWith(':::', p)) this.token(T.StyleSeparator, p + 3);
+    // `@{ … }` folding a block (#670): up to the first `}` on the line, or to its end.
+    else if (this.t.startsWith('@{', p)) this.token(T.EmbedFold, this.match(RE_FOLD));
     else return false;
     return true;
   }

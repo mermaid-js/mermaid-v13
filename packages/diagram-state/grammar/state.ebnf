@@ -126,6 +126,9 @@ hand-written lexer enters this mode for `mermaid` and a blank at the start of a 
 <embed> EMBED_OPEN        /\{/                             :punctuation ;
 <embed> EMBED_BODY        /[^}]+/                          :meta ;
 <embed> EMBED_END         /\}/                             :punctuation ;
+(** `id@{ view: collapsed }` folds the block `id` (#670): the only `@{ … }` a state diagram
+takes, lexed by the hand-written lexer after an id, up to the first `}` on its line. *)
+<embed> EMBED_FOLD        /@\{[^}\n]*\}/                    :meta ;
 
 (** The header: `stateDiagram` or `stateDiagram-v2`. *)
 SD                        /(?i:stateDiagram)\s+/           :keyword ;

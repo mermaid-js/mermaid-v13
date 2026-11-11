@@ -70,4 +70,5 @@ export const stateCategories = /* @__PURE__ */ kindCategories(T, {
   EmbedOpen: 'Punctuation',
   EmbedBody: 'Meta',
   EmbedEnd: 'Punctuation',
+  EmbedFold: 'Meta',
 });

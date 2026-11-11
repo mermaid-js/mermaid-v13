@@ -55,6 +55,8 @@ export const HEADER_START = [T.Sd, ...NL];
 export const ID_KINDS = [T.Id, T.EdgeState];
 export const ID_ONLY = [T.Id];
 export const AFTER_ID = [T.StyleSeparator, T.Descr, T.Arrow];
+/** After a statement's first id: `@{ view: collapsed }` too (#670). */
+export const AFTER_STATE = [...AFTER_ID, T.EmbedFold];
 export const AFTER_TARGET = [T.StyleSeparator, T.Descr];
 export const STRUCT_START = [T.StructStart];
 export const STRUCT_STOP = [T.StructStop];
@@ -112,6 +114,7 @@ export const EXPECTED = new ExpectedTable([
   ['a block title such as `["Title"]`', [T.EmbedTitle]],
   ['`{` at the end of the line', [T.EmbedOpen]],
   ['`}` on its own line, closing the block', [T.EmbedEnd]],
+  ['`@{ view: collapsed }`', [T.EmbedFold]],
   [
     'a statement such as `state`, `note`, `classDef`, `class` or `style`',
     [

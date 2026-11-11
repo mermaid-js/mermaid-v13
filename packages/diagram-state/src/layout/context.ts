@@ -45,4 +45,6 @@ export interface StateRenderContext {
   readonly embed?: (
     id: string
   ) => { readonly width: number; readonly height: number; readonly svg: EmbeddedSvg } | undefined;
+  /** A folded block's inner type, by block id (#670); absent when the plugin is called directly. */
+  readonly foldedType?: (id: string) => string | undefined;
 }
