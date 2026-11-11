@@ -5,7 +5,7 @@
     {
       "root": "v13",
       "path": "packages/mermaid/src/api.ts",
-      "sha256": "0ea2df8ace903a45ae29ed1f86b65e986b6533c846851ec000e2563ccd33aab9"
+      "sha256": "ed73eac94d34aaf8d360861943b48bc915ac7c49abfd747bf4722727d5c83a52"
     },
     {
       "root": "v13",
@@ -30,7 +30,7 @@
     {
       "root": "v13",
       "path": "packages/diagram-flowchart/src/plugin.ts",
-      "sha256": "78e92c84b959425899fcc790bcb4ead96ff1b390e7d83123564c13b4c723d6b1"
+      "sha256": "1ab1945992332f418e7993dbdf21f774e502cbf37226e1ddc17a753cd3a0c843"
     },
     {
       "root": "pele",
