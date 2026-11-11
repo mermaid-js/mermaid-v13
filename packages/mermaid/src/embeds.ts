@@ -8,7 +8,7 @@ import {
   MermaidError,
   NotLoadedError,
   type EmbeddedDiagram,
-  type RenderContext,
+  type EmbeddedText,
   type Warning,
 } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
@@ -102,20 +102,23 @@ export function blockConfig(
   return Object.freeze(out) as ResolvedConfig;
 }
 
-/** Draws the blocks of one host draw, by block id, with the host's id prefix. */
-export type DrawBlocks = (
+/**
+ * Draws the blocks of one host draw, by block id, with the host's id prefix: as SVG roots, or
+ * as text (`EmbeddedText`) for text output.
+ */
+export type DrawBlocks<E = EmbeddedDiagram> = (
   prefix: string,
   warn: (w: Warning) => void
-) => ReadonlyMap<string, EmbeddedDiagram>;
+) => ReadonlyMap<string, E>;
 
 /** The render context's block lookup: the blocks are drawn at the first lookup. */
-export function lazyEmbed(
-  blocks: DrawBlocks | undefined,
+export function lazyEmbed<E = EmbeddedDiagram>(
+  blocks: DrawBlocks<E> | undefined,
   prefix: () => string,
   warn: (w: Warning) => void
-): RenderContext['embed'] {
+): ((id: string) => E | undefined) | undefined {
   if (!blocks) return undefined;
-  let drawn: ReadonlyMap<string, EmbeddedDiagram> | undefined;
+  let drawn: ReadonlyMap<string, E> | undefined;
   return (id) => (drawn ??= blocks(prefix(), warn)).get(id);
 }
 
@@ -135,6 +138,15 @@ export interface BlockDrawn {
   readonly warnings: readonly Warning[];
 }
 
+/** One block drawn as text (ADR-14): the drawing, or a stand-in, and what the draw said. */
+export interface BlockText extends EmbeddedText {
+  /** The draw's own warnings (not the API object's queued ones). */
+  readonly warnings: readonly Warning[];
+}
+
+/** What a block pass loads resources for: an SVG draw or text output. */
+export type BlockFormat = 'svg' | 'ascii';
+
 /**
  * What the block pass uses of the API object. `A` is a parsed diagram, `F` what detection
  * found, `S` the config snapshot, `P` a plugin, `O` the render options.
@@ -148,8 +160,8 @@ export interface BlockDeps<A extends Parsed, F, S, P, O> {
   analyse(text: string, s: S, found: F, plugin: P | undefined, host: A): A;
   load(id: string): Promise<P | undefined>;
   loaded(id: string): P | undefined;
-  /** Loads what `a` draws with (layout, themes, extension resources). */
-  resources(a: A): Promise<unknown>;
+  /** Loads what `a` draws with in `format` (layout, themes, extension resources, text entry). */
+  resources(a: A, format: BlockFormat): Promise<unknown>;
   /** Draws `a`, its ids prefixed `id`, with `blocks` for its own blocks. */
   draw(
     text: string,
@@ -159,6 +171,23 @@ export interface BlockDeps<A extends Parsed, F, S, P, O> {
     id: string,
     blocks: DrawBlocks | undefined
   ): BlockDrawn;
+  /**
+   * Draws block `b` (parsed as `a`) as text, its ids prefixed `id`, with `blocks` for its own
+   * blocks; a type without text output is a stand-in and one warning.
+   */
+  drawText(
+    b: EmbeddedBlock,
+    s: S,
+    options: O,
+    a: A,
+    id: string,
+    blocks: DrawBlocks<EmbeddedText> | undefined
+  ): BlockText;
+}
+
+/** What a block draw said about it, besides what it drew. */
+interface BlockWarnings {
+  readonly warnings: readonly Warning[];
 }
 
 /** Where a block's body is: the whole text, and the offset of the body in it. */
@@ -170,11 +199,25 @@ interface Place {
 export interface BlockPass<A, S, O> {
   /**
    * Loads and parses `host`'s blocks and theirs, and with `resources` what each one draws
-   * with. `base` is where `host`'s text starts in `root`.
+   * with in that format. `base` is where `host`'s text starts in `root`.
    */
-  prepare(root: string, base: number, host: A, s: S, resources: boolean): Promise<void>;
+  prepare(
+    root: string,
+    base: number,
+    host: A,
+    s: S,
+    resources: BlockFormat | undefined
+  ): Promise<void>;
   /** `host`'s blocks drawn for its lookup (undefined when it has none). */
   draw(root: string, base: number, host: A, s: S, options: O): DrawBlocks | undefined;
+  /** `host`'s blocks drawn as text for its lookup (undefined when it has none). */
+  drawText(
+    root: string,
+    base: number,
+    host: A,
+    s: S,
+    options: O
+  ): DrawBlocks<EmbeddedText> | undefined;
 }
 
 /**
@@ -230,19 +273,19 @@ export function blockPass<A extends Parsed, F, S, P, O>(
 
   /**
    * Loads and parses `host`'s blocks and theirs, and with `resources` what each one draws
-   * with. `base` is where `host`'s text starts in `root`.
+   * with in that format. `base` is where `host`'s text starts in `root`.
    */
   async function prepare(
     root: string,
     base: number,
     host: A,
     s: S,
-    resources: boolean
+    resources: BlockFormat | undefined
   ): Promise<void> {
     for (const b of embedsOf(host.prepared.parse)) {
       const at = base + b.offset;
       const inner = await prepared({ root, at }, host, b, s);
-      if (resources) await deps.resources(inner);
+      if (resources) await deps.resources(inner, resources);
       await prepare(root, at, inner, s, resources);
     }
   }
@@ -259,33 +302,61 @@ export function blockPass<A extends Parsed, F, S, P, O>(
     return blockOf(place, host, b, s, f, plugin);
   }
 
-  /** `host`'s blocks drawn for its lookup, each with its own blocks drawn first. */
-  function draw(root: string, base: number, host: A, s: S, options: O): DrawBlocks | undefined {
+  /**
+   * `host`'s blocks drawn by `one` for its lookup, each with its own blocks drawn first (`one`
+   * gets the block's analysis and where its body starts in `root`).
+   */
+  function drawAll<E>(
+    root: string,
+    base: number,
+    host: A,
+    s: S,
+    one: (b: EmbeddedBlock, inner: A, at: number, prefix: string) => E & BlockWarnings
+  ): DrawBlocks<E> | undefined {
     if (embedsOf(host.prepared.parse).length === 0) return undefined;
     return (prefix, warn) => {
-      const out = new Map<string, EmbeddedDiagram>();
+      const out = new Map<string, E>();
       for (const b of embedsOf(host.prepared.parse)) {
         const at = base + b.offset;
-        const inner = loaded({ root, at }, host, b, s);
-        const drawn = deps.draw(
-          b.text,
-          s,
-          options,
-          inner,
-          blockPrefix(prefix, b.id),
-          draw(root, at, inner, s, options)
+        const { warnings, ...drawn } = one(
+          b,
+          loaded({ root, at }, host, b, s),
+          at,
+          blockPrefix(prefix, b.id)
         );
-        for (const w of drawn.warnings) warn(w);
-        const { securityLevel, linkSchemes } = drawn;
-        out.set(b.id, {
-          width: drawn.width,
-          height: drawn.height,
-          svg: embeddedSvg(drawn.svg, { securityLevel, linkSchemes }),
-        });
+        for (const w of warnings) warn(w);
+        out.set(b.id, drawn as E);
       }
       return out;
     };
   }
 
-  return { prepare, draw };
+  /** `host`'s blocks drawn for its lookup, each with its own blocks drawn first. */
+  function draw(root: string, base: number, host: A, s: S, options: O): DrawBlocks | undefined {
+    return drawAll<EmbeddedDiagram>(root, base, host, s, (b, inner, at, id) => {
+      const drawn = deps.draw(b.text, s, options, inner, id, draw(root, at, inner, s, options));
+      const { securityLevel, linkSchemes } = drawn;
+      return {
+        width: drawn.width,
+        height: drawn.height,
+        svg: embeddedSvg(drawn.svg, { securityLevel, linkSchemes }),
+        warnings: drawn.warnings,
+      };
+    });
+  }
+
+  /** `host`'s blocks drawn as text for its lookup, each with its own blocks drawn first. */
+  function drawText(
+    root: string,
+    base: number,
+    host: A,
+    s: S,
+    options: O
+  ): DrawBlocks<EmbeddedText> | undefined {
+    return drawAll<EmbeddedText>(root, base, host, s, (b, inner, at, id) => {
+      return deps.drawText(b, s, options, inner, id, drawText(root, at, inner, s, options));
+    });
+  }
+
+  return { prepare, draw, drawText };
 }

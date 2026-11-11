@@ -13,6 +13,7 @@ import {
   NotLoadedError,
   renderErrorSvg,
   UnsupportedFormatError,
+  type EmbeddedText,
   type RenderContext,
   type Resource,
   type TextRenderContext,
@@ -72,6 +73,7 @@ import {
   type Plain,
   type Snapshot,
 } from './config-snapshot.ts';
+import { AnalysisCache } from './analysis-cache.ts';
 import { createDomAdapter } from './dom.ts';
 import { blockConfig, blockPass, lazyEmbed, type DrawBlocks } from './embeds.ts';
 import { toMermaidError, toWarning } from './errors.ts';
@@ -126,13 +128,6 @@ interface Found {
   readonly pre: PreprocessResult;
 }
 
-interface CacheEntry {
-  readonly snap: Snapshot;
-  readonly analysis: Analysis;
-}
-
-const CACHE_SIZE = 32;
-
 /** How a render measures and sizes: px for SVG, cells for text (D77, D84). */
 interface Units {
   readonly units: UnitProfile;
@@ -140,27 +135,7 @@ interface Units {
   /** `availableWidth` in the profile's units. */
   readonly width?: number;
   /** Text output: the config with its `ascii` section, and what the text entry reads besides. */
-  readonly text?: Pick<TextRenderContext, 'config' | 'title' | 'ast'>;
-}
-
-/** The analyses of recent texts, each valid only for the snapshot it was made with. */
-class AnalysisCache {
-  private readonly entries = new Map<string, CacheEntry>();
-
-  get(text: string, snap: Snapshot): Analysis | undefined {
-    const hit = this.entries.get(text);
-    return hit && hit.snap === snap ? hit.analysis : undefined;
-  }
-
-  set(text: string, snap: Snapshot, analysis: Analysis): void {
-    this.entries.delete(text);
-    this.entries.set(text, { snap, analysis });
-    if (this.entries.size > CACHE_SIZE) this.entries.delete(this.entries.keys().next().value!);
-  }
-
-  clear(): void {
-    this.entries.clear();
-  }
+  readonly text?: Pick<TextRenderContext, 'config' | 'title' | 'ast' | 'embedText'>;
 }
 
 function themeNames(config: ResolvedConfig): ThemeName[] {
@@ -281,7 +256,7 @@ export function createMermaid(
   const [iconPacks, registerPacks] = iconPackRegistry();
   // What a draw reads: the packs without their loader, so a draw cannot start one (R-ARCH-6).
   const { load: _, ...packs } = iconPacks;
-  const cache = new AnalysisCache();
+  const cache = new AnalysisCache<Analysis>();
   const siteConfigs = new SiteConfigs();
   const overlays = new Overlays();
   // `core/ascii`'s cell measurer and width, loaded by the first text `prepare` (D87).
@@ -382,7 +357,11 @@ export function createMermaid(
     },
     load: (id) => registry.load(id),
     loaded: (id) => registry.plugin(id),
-    resources: (a) => loadFor(a, false),
+    resources: async (a, format) => {
+      if (format === 'svg') return loadFor(a, false);
+      // A block without text output is a stand-in, which needs nothing loaded.
+      if (textOf(a)) await Promise.all([loadText(a), loadFor(a, true)]);
+    },
     draw: (text, s, options, a, id, inner) => {
       const { now, placeholders } = options ?? {};
       const { drawn, ctx, warnings } = drawSvg(text, s, { id, now, placeholders }, a, inner);
@@ -392,6 +371,13 @@ export function createMermaid(
         linkSchemes: ctx.linkSchemes,
         warnings: warnings.slice(skipped.length),
       };
+    },
+    drawText: (b, s, options, a, id, inner) => {
+      if (!textOf(a)) return textBackend!.blockStandIn(a.detected.type, b.id);
+      const { now, ascii } = (options ?? {}) as Partial<TextRenderOptions>;
+      const call = { format: 'ascii', id, now, ascii } as const;
+      const { warnings, ...drawn } = drawAscii(b.text, s, call, a, () => inner);
+      return { ...drawn, warnings: warnings.slice(skipped.length) };
     },
   });
 
@@ -407,10 +393,13 @@ export function createMermaid(
     return extra ? overlays.get(site, extra) : site;
   }
 
+  /** Whether `a`'s type has text output (R-ASCII-5, D80). */
+  const textOf = (a: { detected: Detected }): boolean =>
+    a.detected.id !== undefined && registry.formats(a.detected.id).includes('ascii');
+
   /** Throws `UnsupportedFormatError` unless `detected` declares ascii (R-ASCII-5, D80). */
   function checkText(detected: Detected): void {
-    if (detected.id === undefined || !registry.formats(detected.id).includes('ascii'))
-      throw new UnsupportedFormatError(detected.type, 'ascii');
+    if (!textOf({ detected })) throw new UnsupportedFormatError(detected.type, 'ascii');
   }
 
   /** Loads the ascii entry and the text backend (D76, D80): only for `format: 'ascii'`. */
@@ -459,7 +448,7 @@ export function createMermaid(
       analysis = analysisOf(text, s, f, await registry.load(f.detected.id));
     }
     if (ascii) await loadText(analysis);
-    else await blocks.prepare(text, 0, analysis, s, true);
+    await blocks.prepare(text, 0, analysis, s, ascii ? 'ascii' : 'svg');
     await loadFor(analysis, ascii);
     return analysis;
   }
@@ -640,12 +629,17 @@ export function createMermaid(
     return { ctx, warnings };
   }
 
-  /** Text output (DESIGN §6.3): cell layout, the ascii hook, columns and rows (D80, D84). */
+  /**
+   * Text output (DESIGN §6.3): cell layout, the ascii hook, columns and rows (D80, D84).
+   * `blocksFor` draws the blocks (ADR-15) with the options it is given: this draw's charset and
+   * padding, never its width (only the outermost drawing is fitted to `maxWidth`).
+   */
   function drawAscii(
     text: string,
     s: Snapshot,
     options: RenderOptions | undefined,
-    analysis: Analysis
+    analysis: Analysis,
+    blocksFor?: (options: TextRenderOptions) => DrawBlocks<EmbeddedText> | undefined
   ): TextRenderResult {
     const { prepared, plugin } = analysis;
     checkText(analysis.detected);
@@ -662,6 +656,13 @@ export function createMermaid(
       padding,
       ...(maxWidth === undefined ? {} : { maxWidth }),
     });
+    // The blocks (ADR-15), drawn in this charset and padding at the first lookup.
+    const inner = blocksFor?.({ format: 'ascii', now: options?.now, ascii: { charset, padding } });
+    const embedText = lazyEmbed(
+      inner,
+      () => ctx.idPrefix,
+      (w) => ctx.warn(w)
+    );
     const { ctx, warnings } = contextFor(text, s, options, analysis, {
       units: cellProfile(padding),
       measurer: backend.cellMeasurer,
@@ -670,6 +671,7 @@ export function createMermaid(
         config: Object.freeze({ ...prepared.config, ascii }),
         ...(title !== undefined ? { title } : {}),
         ast: prepared.parse.ast,
+        ...(embedText ? { embedText } : {}),
       },
     });
     const textCtx = ctx as TextRenderContext;
@@ -721,7 +723,8 @@ export function createMermaid(
     const format = checkFormat(text, s, options?.format);
     const analysis = analysisFor(text, s, options, format === 'ascii');
     if (!('prepared' in analysis)) return analysis;
-    if (format === 'ascii') return drawAscii(text, s, options, analysis);
+    if (format === 'ascii')
+      return drawAscii(text, s, options, analysis, (o) => blocks.drawText(text, 0, analysis, s, o));
     const blockDraw = blocks.draw(text, 0, analysis, s, options);
     const { drawn, warnings, run } = drawSvg(text, s, options, analysis, blockDraw);
     const result: RenderResult = { ...drawn, diagramType: analysis.prepared.diagramType, warnings };
@@ -803,7 +806,7 @@ export function createMermaid(
       const { detected, pre } = f;
       const plugin = await registry.load(detected.id);
       const a = cache.get(text, s) ?? analysisOf(text, s, f, plugin);
-      await blocks.prepare(text, 0, a, s, false);
+      await blocks.prepare(text, 0, a, s, undefined);
       const config: Plain = {};
       const front = pre.frontMatter?.config;
       for (const c of [

@@ -59,6 +59,14 @@ export interface FlowRenderContext {
     id: string
   ) => { readonly width: number; readonly height: number; readonly svg: EmbeddedSvg } | undefined;
   /**
+   * Text output: the blocks (ADR-15) drawn as text by `mermaid` before the draw, by block id,
+   * `columns` × `rows` cells. Absent when the plugin is called directly: a block is then a box
+   * with its title.
+   */
+  readonly embedText?: (
+    id: string
+  ) => { readonly text: string; readonly columns: number; readonly rows: number } | undefined;
+  /**
    * The extensions' glyphs (D293): an icon shape's glyph fitted into a `size` square at the
    * origin, its `currentColor` painted with `paint` (D298); `null` when an extension reported it
    * unresolved (it warns `ICON_NOT_RENDERED`); `'pending'` for a placeholder (D299), as flowchart
