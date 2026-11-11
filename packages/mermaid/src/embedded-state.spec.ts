@@ -270,3 +270,27 @@ describe('the state block fixtures (e2e/diagrams/state-diagram-v2/baseline/embed
     assertInert(svg);
   });
 });
+
+describe('limits across a state host and its blocks', () => {
+  // Two transitions in the host, two in a state block inside it.
+  const text = [
+    'stateDiagram-v2',
+    '  [*] --> inner',
+    '  mermaid inner {',
+    '    stateDiagram-v2',
+    '      [*] --> A',
+    '      A --> [*]',
+    '  }',
+    '  inner --> [*]',
+  ].join('\n');
+
+  it('counts the host transitions and the block edges against maxEdges', async () => {
+    const m = createMermaid();
+    m.initialize({ maxEdges: 4 });
+    expect(roots((await m.render('host', text)).svg)).toHaveLength(2);
+    const over = createMermaid();
+    over.initialize({ maxEdges: 3 });
+    const e = await rejection(over.render('host', text));
+    expect(e.code).toBe('LIMIT');
+  });
+});

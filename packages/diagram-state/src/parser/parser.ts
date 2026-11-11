@@ -165,6 +165,8 @@ class StateParser extends StateCursor {
     };
     const result: StateParseResult = st.result(model, ast, this.all, this.options, this.probe);
     if (this.embeds.length > 0) result.embeds = this.embeds;
+    // Edges counted across embedded diagrams (ADR-15).
+    result.edgeCount = model.transitions.length;
     return result;
   }
 
