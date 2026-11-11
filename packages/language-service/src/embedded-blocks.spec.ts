@@ -76,6 +76,23 @@ describe('diagnostics inside a block', () => {
     expect(reported(doc)).toEqual([['INVALID_DIRECTIVE', '}']]);
     expect(doc.diagnostics()[0]!.range.start).toBe(doc.text.indexOf('}}%%'));
   });
+
+  it('reports errors inside a folded block, which the render skips', () => {
+    const doc = open(
+      [
+        'flowchart LR',
+        '  A --> login',
+        '  mermaid login["Login"] {',
+        '    sequenceDiagram',
+        '      User->>>Server',
+        '  }',
+        '  login@{ view: collapsed }',
+        '',
+      ].join('\n')
+    );
+    expect(reported(doc)).toEqual([['UNEXPECTED', '>']]);
+    expect(doc.diagnostics()[0]!.range.start).toBe(doc.text.indexOf('>>>') + 2);
+  });
 });
 
 describe('nested blocks', () => {
