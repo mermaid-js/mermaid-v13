@@ -1,4 +1,4 @@
-// Uhole-drop helpers shared by every lexer family.
+// Hole-drop helpers shared by every lexer family.
 import { QUOTE, SourceOffsets } from './source-view.ts';
 import type { Hole, SourceView } from './source-view.ts';
 
