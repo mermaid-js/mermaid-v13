@@ -55,16 +55,35 @@ languageBundle:
     - ascii/
     - ascii.ts
 
+# theme: what the theme specs need from this package (tools/gen-config/src/theme-packages.ts):
+# dynamicReads: names the usedBy scan for literals can't see.
+theme:
+  # `themePads` (`@mermaid-js/shared/shapes`, called in layout/layout.ts) reads the shapes'
+  # padding and sizes for this package: the scan does not look into shared.
+  dynamicReads:
+    [
+      'nodePaddingX',
+      'nodePaddingY',
+      'stadiumPaddingX',
+      'stadiumPaddingY',
+      'hexagonPaddingX',
+      'hexagonPaddingY',
+      'hexagonSlant',
+      'subroutinePaddingX',
+      'subroutinePaddingY',
+      'cylinderPaddingX',
+      'cylinderPaddingY',
+      'leanPaddingX',
+      'leanPaddingY',
+      'oddPaddingX',
+      'oddPaddingY',
+      'doubleCircleGap',
+      'doubleCirclePadding',
+      'circlePadding',
+      'circleMinDiameter',
+    ]
+
 # release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
 release:
   summary: 'The block diagram plugin (SVG, and text output from `/ascii`; `block`, `block-beta`).'
   install: 'with `mermaid/slim`'
-
-# credits: licence credits for pnpm check:licenses (tools/release/src/licenses.ts, R-REL-4):
-# the files that must credit an upstream. Pele is a shared upstream (`SHARED_UPSTREAMS`): these
-# files are local copies of flowchart's Pele-derived shapes and arrowheads (D446). mermaid's
-# notices carry them too (its CDN build bundles this package): notices/mermaid.txt.
-credits:
-  files:
-    src/shapes/leaf.ts: ['Pele']
-    src/shapes/draw.ts: ['Pele']

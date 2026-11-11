@@ -1,20 +1,24 @@
 /**
- * Block's shape drawers (D446): the drawing half of the local copy of flowchart's shapes
- * (`diagram-flowchart/src/render/shapes.ts`, itself ported from Pele's src/svg/shapes.ts at
- * 3a2f075, https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano), plus the composite and
- * block-arrow drawers v13 did not have. Each draws a block's laid-out `Outline` (`outline.ts`)
- * in the block's own frame, about its centre, so what is drawn is exactly what edges were
- * clipped at. {@link drawShape} is the one table from a block's shape to its drawer.
+ * Block's shape drawers: each draws a block's laid-out `Outline` (`outline.ts`) in the block's
+ * own frame, about its centre, so what is drawn is exactly what edges were clipped at. The
+ * leaves' paths and inner lines are the shared shapes' (`@mermaid-js/shared/shapes`); the
+ * composite and the block arrow are block's own. {@link drawShape} is the one table from a
+ * block's shape to its drawer.
  *
  * Leaves go through `w.outline` (D301, D302, D447): the outline as `node`, the subroutine's
  * frame lines, the cylinder's rim and the double circle's inner ring as `divider`, so the
  * hand-drawn extension sketches them as v12 did. The composite and the block arrow are plain
  * leaves (v12 never sketched them).
  */
-// cspell:ignore kepano
 import type { Attrs, OutlineTag, SvgWriter } from '@mermaid-js/core/svg';
+import {
+  cylinderPath,
+  cylinderRim,
+  frameLines,
+  ring,
+  type Barrel,
+} from '@mermaid-js/shared/shapes';
 import type { BlockShape } from '../layout/types.ts';
-import { FRAME_INSET } from './leaf.ts';
 import type { Outline, Point } from './outline.ts';
 
 /** The leaf's main outline, v12's `label-container` (its `g.label` is its sibling). */
@@ -59,25 +63,16 @@ function outlineElement(w: SvgWriter, o: Outline): [OutlineTag, Attrs] {
       return ['polygon', { points: flat(o.points) }];
     case 'ellipse':
       return ['circle', { r: o.rx }];
-    case 'cylinder': {
-      // Flowchart's cylinder: the body with both caps.
-      const { rx, ry, top, bottom } = cylinderParts(o);
-      const d = w
-        .path()
-        .moveTo(-rx, top)
-        .arcTo(rx, ry, 0, false, true, rx, top)
-        .lineTo(rx, bottom)
-        .arcTo(rx, ry, 0, false, true, -rx, bottom)
-        .close()
-        .done();
-      return ['path', { d }];
-    }
+    case 'cylinder':
+      return ['path', { d: cylinderPath(w, barrelOf(o)) }];
   }
 }
 
-function cylinderParts(o: Extract<Outline, { kind: 'cylinder' }>) {
+/** The cylinder's body between its caps, the caps no deeper than half its height. */
+function barrelOf(o: Extract<Outline, { kind: 'cylinder' }>): Barrel {
+  const rx = o.width / 2;
   const ry = Math.min(o.ry, o.height / 2);
-  return { rx: o.width / 2, ry, top: -o.height / 2 + ry, bottom: o.height / 2 - ry };
+  return { left: -rx, right: rx, top: -o.height / 2 + ry, bottom: o.height / 2 - ry, rx, ry };
 }
 
 /** A leaf's outline, through the hook as `node`. */
@@ -94,43 +89,25 @@ const plain =
     w.leaf(tag, { class: cls, ...geometry, ...paint.outline });
   };
 
-/** Line segments `[x0, y0, x1, y1, …]` as one `divider` path, each pair a separate stroke. */
-function lines(w: SvgWriter, coords: readonly number[], line: Attrs): void {
-  const b = w.path();
-  for (let i = 0; i + 3 < coords.length; i += 4)
-    b.moveTo(coords[i]!, coords[i + 1]!).lineTo(coords[i + 2]!, coords[i + 3]!);
-  w.outline('divider', 'path', { d: b.done(), ...line, fill: 'none' });
-}
-
 type Drawer = (w: SvgWriter, o: Outline, paint: ShapePaint) => void;
 
 /** The subroutine: its box and its two frame lines, one frame in from each side. */
 const subroutine: Drawer = (w, o, paint) => {
   leafOutline(w, o, paint);
-  if (o.kind !== 'rect') return;
-  const x = o.width / 2 - FRAME_INSET;
-  const y = o.height / 2;
-  lines(w, [-x, -y, -x, y, x, -y, x, y], paint.line);
+  if (o.kind === 'rect') frameLines(w, o.width, o.height, paint.line);
 };
 
 /** The cylinder: its body, then the front of the top cap as a rim. */
 const cylinder: Drawer = (w, o, paint) => {
   leafOutline(w, o, paint);
   if (o.kind !== 'cylinder') return;
-  const { rx, ry, top } = cylinderParts(o);
-  const rim = w.path().moveTo(-rx, top).arcTo(rx, ry, 0, false, false, rx, top).done();
-  w.outline('divider', 'path', { d: rim, ...paint.line, fill: 'none' });
+  w.outline('divider', 'path', { d: cylinderRim(w, barrelOf(o)), ...paint.line, fill: 'none' });
 };
 
 /** The double circle: its outer ring, then the inner ring `ringGap` inside it. */
 const doubleCircle: Drawer = (w, o, paint) => {
   leafOutline(w, o, paint);
-  if (o.kind !== 'ellipse') return;
-  w.outline('divider', 'circle', {
-    r: Math.max(0, o.rx - paint.ringGap),
-    ...paint.line,
-    fill: 'none',
-  });
+  if (o.kind === 'ellipse') ring(w, Math.max(0, o.rx - paint.ringGap), paint.line);
 };
 
 const DRAWERS: Readonly<Record<Exclude<BlockShape, 'space'>, Drawer>> = {

@@ -1,7 +1,7 @@
 {
   "name": "@mermaid-js/shared",
   "version": "13.0.0-alpha.0",
-  "description": "Code shared by several Mermaid diagram packages: lexer and parser families, edge drawing, graph layout helpers and ASCII drawing. Each subpath loads only with the diagrams that use it.",
+  "description": "Code shared by several Mermaid diagram packages: lexer and parser families, node shapes, edge drawing, graph layout helpers and ASCII drawing. Each subpath loads only with the diagrams that use it.",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -35,6 +35,11 @@
       "mermaid-source": "./src/svg/edges.ts",
       "types": "./dist/svg/edges.d.ts",
       "default": "./dist/svg/edges.js"
+    },
+    "./shapes": {
+      "mermaid-source": "./src/shapes/index.ts",
+      "types": "./dist/shapes/index.d.ts",
+      "default": "./dist/shapes/index.js"
     },
     "./layout": {
       "mermaid-source": "./src/layout/index.ts",

@@ -43,12 +43,6 @@ export const C4_METRICS = {
   personHeadCentre: 14,
   /** `fr-rect`: the frame lines stand this far inside each side. */
   frameInset: 8,
-  /** The cylinder's cap: `ry = min(capMax, max(capMin, w / capDivisor))`. */
-  capMax: 12,
-  capMin: 6,
-  capDivisor: 14,
-  /** The queue's cap: `rx = min(capMax, h / queueDivisor)`. */
-  queueDivisor: 4,
 
   // The router (Pele `route.ts`).
   /** A self-loop's reach to the right, its label's gap past it, and its label room. */

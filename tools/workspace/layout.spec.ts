@@ -79,6 +79,7 @@ describe('workspace layout (DESIGN §2)', () => {
         './parser/facet',
         './parser/rule',
         './parser/state',
+        './shapes',
         './svg/edges',
       ].sort()
     );

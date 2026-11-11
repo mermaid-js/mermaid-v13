@@ -36,20 +36,9 @@ import { layoutDir } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { AgentflowLayoutContext } from './context.ts';
 import { agentflowConfigDefaults } from '../generated/config-defaults.ts';
-import {
-  AGENTFLOW_METRICS,
-  FLOWCHART_LENGTH_DEFAULTS,
-  MIN_SLANT,
-  TITLE_MARGIN_DEFAULTS,
-} from './metrics.ts';
-import {
-  shapeSize,
-  shapeSpan,
-  type LayoutShape,
-  type Pads,
-  type PadXY,
-  type ShapeGeometry,
-} from './shapes.ts';
+import { AGENTFLOW_METRICS, FLOWCHART_LENGTH_DEFAULTS, TITLE_MARGIN_DEFAULTS } from './metrics.ts';
+import { shapeSize, shapeSpan, type LayoutShape, type ShapeGeometry } from './shapes.ts';
+import { themePads } from '@mermaid-js/shared/shapes';
 
 /** A vertex or a collapsed flow, drawn as a node. */
 export interface AgentflowNodeView {
@@ -186,7 +175,7 @@ export function prepareAgentflow(
     // This is the only place the builder looks at which profile it has (flowchart's rule).
     cells: units.id === 'cell',
     font,
-    geometry: { pads: padsOf(theme, flowchartLength('padding')), metrics: AGENTFLOW_METRICS },
+    geometry: { pads: themePads(theme, flowchartLength('padding')), metrics: AGENTFLOW_METRICS },
     curve: curveKind(model.defaultInterpolate ?? flowchart?.curve),
     wrap: fromPx(units, agentflowLength('wrappingWidth'), 'x') || units.builder.wrapWidth,
     minWidth: fromPx(units, agentflowLength('minNodeWidth'), 'x'),
@@ -208,23 +197,6 @@ export function prepareAgentflow(
     ? agentflowLength('titleTopMargin')
     : agentflowLength.fallback('titleTopMargin');
   return { graph, groups, nodes, edges, views, geometry: m.geometry, titleMargin, titleTopMargin };
-}
-
-function padsOf(theme: AgentflowLayoutContext['theme'], pad: number): Pads {
-  const padOf = (name: string) => theme.padding(name, pad);
-  const xy = (shape: string): PadXY => ({
-    x: padOf(`${shape}PaddingX`),
-    y: padOf(`${shape}PaddingY`),
-  });
-  return {
-    node: xy('node'),
-    r: theme.number('radius'),
-    pad,
-    hexagon: xy('hexagon'),
-    hexagonSlant: Math.max(theme.number('hexagonSlant'), MIN_SLANT),
-    subroutine: xy('subroutine'),
-    lean: xy('lean'),
-  };
 }
 
 interface Views {
@@ -433,8 +405,7 @@ function layoutGraph(
       const node: LayoutNode = { id: n.id, width: n.w, height: n.h, shape: n.shape };
       if (n.parent !== undefined) node.parent = n.parent;
       // A text-form box leaves the span to the engine's `corner` metric.
-      if (!m.cells)
-        node.span = shapeSpan(n.shape, n.w, n.h, sideways(flowDir(n.parent)), m.geometry);
+      if (!m.cells) node.span = shapeSpan(n.shape, n.w, n.h, sideways(flowDir(n.parent)));
       return node;
     }),
     groups: groups.map((g): LayoutGroup => {
