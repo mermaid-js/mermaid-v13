@@ -107,7 +107,7 @@ identical blocks, `a.b` beside `a_b`, and a block `b` in `a` beside a block `a-b
 carries its own theme aliases on its own root, so host and block styles never mix.
 
 **Look.** A border and a transparent background, which tells a block apart from a subgraph, and
-an optional title strip. A block inherits its host's resolved config, the host's front matter
+an optional title strip; every host draws it with `@mermaid-js/core/svg/framed`. A block inherits its host's resolved config, the host's front matter
 and directives included, so theme, look and font come from the host. Front matter and directives
 at the top of a block may then set diagram sections only (for example `sequence.mirrorActors`):
 every other key (`theme`, `themeVariables`, `look`, `securityLevel`, `wrap`, …) is ignored with
