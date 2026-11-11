@@ -32,25 +32,9 @@
  * (`null`), or names a `shape` that is not a lower-case string. Unlike jison the parser does
  * not stop at the first error: it reports it, skips to the next line and carries on.
  */
-import {
-  inKindSet,
-  Kind,
-  kindSet,
-  LineIndex,
-  ParseState,
-  Probe,
-  ProbeCursor,
-  sourceView,
-  STOP,
-  TokenCursor,
-} from '@mermaid-js/core/parser-kit';
-import type {
-  ParseOptions,
-  ParseResult,
-  Range,
-  SourceView,
-  StatementSpan,
-} from '@mermaid-js/core/parser-kit';
+import { inKindSet, Kind, kindSet, STOP } from '@mermaid-js/core/parser-kit';
+import type { ParseOptions, ParseResult, Range, StatementSpan } from '@mermaid-js/core/parser-kit';
+import { CLOSERS, treeGrammar, TreeParser } from '@mermaid-js/shared/parser/tree';
 import { isYamlMap, parseYaml, preprocess } from '@mermaid-js/core/preprocess';
 import type {
   PreprocessResult,
@@ -63,7 +47,7 @@ import type {
 import * as codes from '../codes.ts';
 import type { KanbanItem, KanbanModel } from '../model.ts';
 import type { KanbanData, KanbanDecoration, KanbanDocument, KanbanItemNode } from './ast.ts';
-import { lex } from './lexer.ts';
+import { KINDS, lex } from './lexer.ts';
 import { checkNodeLimit } from './limits.ts';
 import type { Lexed } from './lexer.ts';
 import { holesIn, sourceOffset, wordIn } from './symbols.ts';
@@ -99,14 +83,8 @@ const SKIPPED = kindSet(
   T.ShapeDataEnd
 );
 
-// What the parser accepts at its decision points, for the probe (R-LANG-7, D95). Constants,
-// so a parse without a probe allocates nothing for them.
-/** What may start a statement (an indent, an item, a decoration, a blank line). */
-const STATEMENT_KINDS = [T.SpaceList, T.NodeId, T.NodeDStart, T.Icon, T.Class, T.SpaceLine];
-/** What may follow an indent. */
-const AFTER_INDENT = [T.NodeId, T.NodeDStart, T.Icon, T.Class];
-/** What ends a statement. */
-const STOP_KINDS = [Kind.Newline, T.Eof, T.SpaceLine];
+// What the parser accepts after an id, for the probe (R-LANG-7, D95). A constant, so a parse
+// without a probe allocates nothing for it.
 /** What may follow an item's id. */
 const AFTER_ID = [T.NodeDStart, T.ShapeDataStart];
 /**
@@ -126,32 +104,25 @@ const PROBE_FOLLOWS = kindSet(
 /** The kinds jison names `SHAPE_DATA`. */
 const SHAPE_DATA = kindSet(T.ShapeDataStart, T.ShapeData, T.ShapeDataQuote, T.ShapeDataStr);
 
-/** What a closer the opener reads best with is, for messages (any closer parses, as in v12). */
-const CLOSERS: Readonly<Record<string, string>> = {
-  '[': ']',
-  '(': ')',
-  '((': '))',
-  ')': '(',
-  '))': '((',
-  '{{': '}}',
-  '-)': '(-',
-  '(-': '-)',
-};
-
-const HEADER = ['`kanban`'];
-const STATEMENT = ['an item such as `todo` or `id[text]`', 'a `::icon(…)` or `:::class` line'];
-const EXPECT_LINE_BREAK = ['a line break'];
 const TEXT = ['the text of the item'];
-const HEADER_HINT = 'a kanban board starts with `kanban`';
 const ONE_HEADER = '`kanban` starts the diagram and comes only once';
 const BRACE_HINT = 'a `{` starts a shape only as `{{text}}`, and shape data as `@{ … }`';
 const AT_HINT = 'an `@` starts shape data only as `@{ … }`';
-const DECORATION_HINT = 'an `::icon(…)` or `:::class` goes on a line of its own, after its item';
-const ONE_ITEM_HINT = 'each item goes on a line of its own';
 const DATA_HINT = 'shape data goes right after an item, as in `id@{ ticket: T-1 }`';
-const BARE_CLASS_HINT = 'a bare `:::` takes the line break after it';
-const AFTER_BLANK_HINT =
-  'remove a blank or comment line above it: a line may not follow two of them in a row, or one right after `kanban`';
+
+const GRAMMAR = /* @__PURE__ */ treeGrammar<Lexed>({
+  lex,
+  kinds: KINDS,
+  skipped: SKIPPED,
+  probeFollows: PROBE_FOLLOWS,
+  header: ['`kanban`'],
+  headerHint: 'a kanban board starts with `kanban`',
+  statement: ['an item such as `todo` or `id[text]`', 'a `::icon(…)` or `:::class` line'],
+  decorationHint: 'an `::icon(…)` or `:::class` goes on a line of its own, after its item',
+  oneNodeHint: 'each item goes on a line of its own',
+  afterBlankHint:
+    'remove a blank or comment line above it: a line may not follow two of them in a row, or one right after `kanban`',
+});
 
 /** v12 `encodeEntities` placeholders, kept in YAML text so `#35;` reads as text, not a comment. */
 const ENTITY = /&(#?)(\w+);/g;
@@ -202,17 +173,11 @@ interface ItemParts {
 }
 
 /**
- * One parse. Each grammar rule is a method; a rule that fails records a diagnostic and throws
+ * One parse: the shared rules down to a statement ({@link TreeParser}), and kanban's item,
+ * shape data and decoration rules. A rule that fails records a diagnostic and throws
  * {@link STOP}, and the statement loop recovers.
  */
-class KanbanParser {
-  private readonly pre: PreprocessResult;
-  private readonly view: SourceView;
-  private readonly lexed: Lexed;
-  private readonly st = new ParseState();
-  private readonly c: TokenCursor;
-  /** Probe mode only (R-LANG-7). */
-  private readonly probe: Probe | undefined;
+class KanbanParser extends TreeParser<Lexed, PreprocessResult> {
   /** How many `assigned` values of each name were read: the first is the definition. */
   private readonly assignees = new Map<string, number>();
   private readonly children: KanbanItemNode[] = [];
@@ -231,35 +196,13 @@ class KanbanParser {
   private last: OpenItem | undefined;
   /** The AST node of the last item statement. */
   private lastAst: KanbanItemNode | undefined;
-  /** The last statement was a blank or comment line (for the message after it). */
-  private afterBlank = false;
-  /** The statement reported a missing separator already: the next one starts here. */
-  private lineEnded = false;
-  /** `kanban` was read; a missing one was reported once, so a later one is the header. */
-  private headerSeen = false;
-  private lines: LineIndex | undefined;
 
   constructor(
-    private readonly src: string,
+    src: string,
     private readonly options: KanbanParseOptions
   ) {
-    const pre = (this.pre = options.preprocessed ?? preprocess(src));
-    if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
-    this.view = sourceView(
-      src,
-      pre.bodyStart,
-      pre.directives.map((d) => d.range)
-    );
-    if (options.probe === undefined) {
-      this.lexed = lex(src, pre.bodyStart, this.view);
-      this.c = new TokenCursor(this.lexed.tokens, SKIPPED);
-      return;
-    }
-    const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
-    if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
-    this.lexed = lex(src, pre.bodyStart, this.view, probe);
-    // The cursor marks an offset inside a comment or directive as outside code.
-    this.c = new ProbeCursor(this.lexed.tokens, probe, SKIPPED);
+    const given = options.preprocessed;
+    super(src, given ?? preprocess(src), !given, GRAMMAR, options.probe);
   }
 
   parse(): KanbanParseResult {
@@ -286,31 +229,8 @@ class KanbanParser {
   // ---- tokens -------------------------------------------------------------------------
 
   /** A token's text as v12's parser read it (`Lexed.text`). */
-  private raw(j = this.c.pos): string {
+  protected raw(j = this.c.pos): string {
     return this.lexed.text(j);
-  }
-
-  private range(j: number): Range {
-    const t = this.c.tokens;
-    return { start: t.start[j] ?? 0, end: t.end[j] ?? 0 };
-  }
-
-  /**
-   * `[start, end)` of token `j` without the blanks around `text` (its v12 text), when the
-   * source there reads as `text`; else the token's range (the service then drops the symbol).
-   */
-  private exact(j: number, text: string, from = 0, to = text.length): Range {
-    const r = this.range(j);
-    if (this.src.slice(r.start, r.end) !== text) return r;
-    return { start: r.start + from, end: r.start + to };
-  }
-
-  /** An item id: a definition of its own (D289), without the blanks around it. */
-  private idSymbol(id: string, j: number): void {
-    const name = id.trim();
-    if (name === '') return;
-    const from = id.length - id.trimStart().length;
-    this.st.symbol(name, 'node', this.exact(j, id, from, from + name.length), 'def');
   }
 
   /**
@@ -368,128 +288,24 @@ class KanbanParser {
     return start < 0 || last < 0 ? undefined : { start, end: last + 1 };
   }
 
-  /**
-   * Stop recording when the probed token is on the line at the cursor, or before it: an error
-   * was reported for that line, so the parser's later tests there are recovery, not
-   * expectations.
-   */
-  private probePassed(): void {
-    const { probe, c } = this;
-    if (!probe) return;
-    let end = c.pos;
-    while (end < c.tokens.length - 1 && !this.isStop(c.tokens.kind[end] ?? Kind.EOF)) end++;
-    if (probe.targetIn(c.tokens, 0, SKIPPED) <= end) probe.freeze(true);
-  }
-
-  /**
-   * The index of the token of `kind` next to `j` in direction `step` (±1), past comments and
-   * directives; -1 when the next other token is not of `kind`.
-   */
-  private beside(j: number, step: number, kind: number): number {
-    const t = this.c.tokens;
-    for (let i = j + step; i >= 0 && i < t.length; i += step) {
-      const k = t.kind[i];
-      if (k === kind) return i;
-      if (k !== Kind.Comment && k !== Kind.Directive) return -1;
-    }
-    return -1;
-  }
-
-  /** The whole decoration whose text is token `j`: `::icon(` or `:::` and an icon's `)` too. */
-  private decorationRange(j: number): Range {
-    const icon = this.c.tokens.kind[j] === T.Icon;
-    const inner = this.range(j);
-    const opener = this.beside(j, -1, icon ? T.IconStart : T.ClassStart);
-    const closer = icon ? this.beside(j, 1, T.IconEnd) : -1;
-    return {
-      start: opener < 0 ? inner.start : this.range(opener).start,
-      end: closer < 0 ? inner.end : this.range(closer).end,
-    };
-  }
-
-  /** The kind of the significant token after an indent at the cursor (else the cursor's). */
-  private afterIndent(): number {
-    const { c } = this;
-    if (c.kind !== T.SpaceList) return c.kind;
-    return this.c.tokens.kind[this.nextSignificant(c.pos)] ?? Kind.EOF;
-  }
-
-  private nextSignificant(j: number): number {
-    const t = this.c.tokens;
-    let next = j + 1;
-    while (next < t.length - 1 && inKindSet(SKIPPED, t.kind[next] ?? 0)) next++;
-    return next;
-  }
-
-  /** Whether nothing but line breaks and blank lines follows from token `j` on. */
-  private onlySeparatorsFrom(j: number): boolean {
-    const t = this.c.tokens;
-    for (let i = j; i < t.length; i = this.nextSignificant(i)) {
-      const k = t.kind[i] ?? Kind.EOF;
-      if (k === Kind.EOF) return true;
-      if (k !== Kind.Newline && k !== T.Eof && !(k === T.SpaceLine && !this.raw(i).includes('%%')))
-        return false;
-      if (i === t.length - 1) return true;
-    }
-    return true;
-  }
-
-  private isStop(k: number): boolean {
-    return k === Kind.Newline || k === T.Eof || k === T.SpaceLine;
-  }
-
-  private isNodeStart(k: number): boolean {
-    return k === T.NodeId || k === T.NodeDStart;
-  }
-
   private isData(k: number): boolean {
     return inKindSet(SHAPE_DATA, k);
   }
 
   // ---- errors and recovery ------------------------------------------------------------
 
-  private lineOf(at: number): number {
-    return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
-  }
-
-  /** The token an error message names: the current one (the one after it, for an indent). */
-  private namedToken(): number {
-    const { c } = this;
-    let j = c.pos;
-    if (c.kind === T.SpaceList) {
-      const next = this.nextSignificant(j);
-      const after = c.tokens.kind[next] ?? Kind.EOF;
-      if (!this.isStop(after) && after !== Kind.EOF) j = next;
-    }
-    return j;
-  }
-
-  /** What the message names of {@link namedToken}: the decoration or data run it starts. */
-  private namedRange(j: number): Range {
+  /** What a message about token `j` names: the decoration or data run it starts. */
+  protected override namedRange(j: number): Range {
     const k = this.c.tokens.kind[j] ?? Kind.EOF;
     if (k === T.Icon || k === T.Class) return this.decorationRange(j);
     if (this.isData(k)) return { start: this.range(j).start, end: this.dataEnd(j) };
     return this.range(j);
   }
 
-  /** How an error message names token `j` ({@link namedToken}). */
-  private found(j: number): string {
-    const { c } = this;
-    const k = c.tokens.kind[j] ?? Kind.EOF;
-    if (k === Kind.EOF || k === T.Eof || this.onlySeparatorsFrom(j)) return 'the end of the text';
-    if (k === Kind.Newline) return 'a line break';
-    let t = this.raw(j).trim();
-    if (k === T.Icon || k === T.Class) {
-      const r = this.decorationRange(j);
-      t = this.src.slice(r.start, r.end).trim();
-    } else if (this.isData(k)) {
-      t = this.src.slice(this.range(j).start, this.dataEnd(j)).trim();
-    }
-    if (k === T.SpaceLine) return t.includes('%%') ? 'a comment' : 'a blank line';
-    if (t === '') return 'blanks';
-    const line = FIRST_LINE.exec(t)?.[0] ?? '';
-    const cut = line.length > 24 ? line.slice(0, 24) : line;
-    return cut.length < t.length ? `\`${cut}…\`` : `\`${t}\``;
+  /** The source text of the shape data run token `j` starts. */
+  protected override runText(j: number, kind: number): string | undefined {
+    if (!this.isData(kind)) return undefined;
+    return this.src.slice(this.range(j).start, this.dataEnd(j));
   }
 
   /** The end of the shape data run from token `j`, past its closing `}`. */
@@ -505,45 +321,8 @@ class KanbanParser {
     return end;
   }
 
-  /** Report what was found where `names` were expected, then stop the statement. */
-  private fail(names: string[], hint?: string, at?: Range): never {
-    this.report(names, hint, at);
-    throw STOP;
-  }
-
-  /**
-   * Report what was found where `names` were expected, and go on. The range is what the message
-   * names, unless `at` is given.
-   */
-  private report(names: string[], hint?: string, at?: Range): void {
-    const j = this.namedToken();
-    this.st.diagnostics.unexpected(
-      'UNEXPECTED',
-      at ?? this.namedRange(j),
-      names,
-      this.found(j), undefined, hint);
-  }
-
-  /** Skip to the next separator after an error (R-PARSE-4), and past it. */
-  private recover(): void {
-    const { c } = this;
-    c.recovering();
-    while (c.kind !== Kind.EOF && !this.isStop(c.kind)) c.next();
-    this.separator();
-  }
-
-  /** Run one rule; on failure, skip to the next statement. */
-  private guarded(rule: () => void): void {
-    try {
-      rule();
-    } catch (error) {
-      if (error !== STOP) throw error;
-      this.recover();
-    }
-  }
-
   /** The hint for an unexpected token of kind `k` where a statement or line break was due. */
-  private hintFor(k: number): string | undefined {
+  protected hintFor(k: number): string | undefined {
     if (k === T.Kanban) return ONE_HEADER;
     if (this.isData(k)) return DATA_HINT;
     if (k === Kind.Error) return this.src.charAt(this.c.start) === '@' ? AT_HINT : BRACE_HINT;
@@ -552,170 +331,8 @@ class KanbanParser {
 
   // ---- grammar ------------------------------------------------------------------------
 
-  /**
-   * `start`: blank and comment lines, then `kanban` and an optional line break. Without the
-   * header the rest is still read, and a later `kanban` is taken as it.
-   */
-  private start(): void {
-    const { c } = this;
-    if (c.kind === T.SpaceLine) {
-      // `spaceLines`.
-      c.next();
-      while (c.kind === T.SpaceLine || c.kind === Kind.Newline) c.next();
-    }
-    c.tested(T.Kanban);
-    if (c.kind === T.Kanban) this.header();
-    else this.report(HEADER, HEADER_HINT);
-  }
-
-  private header(): void {
-    const { c } = this;
-    this.headerSeen = true;
-    this.st.statement('header', c.range);
-    c.next();
-    c.eat(Kind.Newline);
-  }
-
-  /** `document`: statements, each followed by a separator, to the end. */
-  private document(): void {
-    const { c } = this;
-    for (;;) {
-      if (this.headerSeen) c.tested(STATEMENT_KINDS);
-      if (c.kind === Kind.EOF) break;
-      // The missing header was reported; one error, one diagnostic.
-      if (!this.headerSeen && c.kind === T.Kanban) {
-        this.header();
-        continue;
-      }
-      // Blank lines and the end after a missing header: it was reported, nothing else is wrong.
-      if (!this.headerSeen && this.isStop(c.kind)) {
-        this.separator();
-        continue;
-      }
-      this.guarded(() => {
-        this.statement();
-        this.stop();
-      });
-    }
-  }
-
-  /** `stop`: a line break, the end, or a blank or comment line; then line breaks. */
-  private stop(): void {
-    const { c } = this;
-    if (this.lineEnded) {
-      this.lineEnded = false;
-      return;
-    }
-    c.tested(STOP_KINDS);
-    if (this.isStop(c.kind)) {
-      this.separator();
-      return;
-    }
-    if (c.kind === Kind.EOF) this.endsOpen();
-    const k = c.kind;
-    // The line ended (inside a blank run or after a bare `:::`) where jison wanted a separator:
-    // one error, and the line after it is still read.
-    const bareClass = this.beside(c.pos, -1, T.ClassEnd) >= 0;
-    if (this.afterBlank || bareClass) {
-      this.report(EXPECT_LINE_BREAK, this.afterBlank ? AFTER_BLANK_HINT : BARE_CLASS_HINT);
-      // What the next line starts with is an error here: not an expectation.
-      this.probePassed();
-      return;
-    }
-    let hint = this.hintFor(k);
-    const after = this.afterIndent();
-    if (after === T.Icon || after === T.Class) hint = DECORATION_HINT;
-    else if (this.isNodeStart(after)) hint = ONE_ITEM_HINT;
-    this.fail(EXPECT_LINE_BREAK, hint);
-  }
-
-  /** The separator tokens at the cursor: one of `stop`'s, then line breaks and the end. */
-  private separator(): void {
-    const { c } = this;
-    if (c.kind === Kind.EOF) return;
-    c.next();
-    // A statement may start after each of them.
-    while (c.kind === Kind.Newline || c.kind === T.Eof) {
-      if (this.headerSeen) c.tested(STATEMENT_KINDS);
-      c.next();
-    }
-  }
-
-  /**
-   * The text ended inside an icon, a shape, a string or shape data (jison's lexer returned no
-   * `EOF` there): report what was left open.
-   */
-  private endsOpen(): never {
-    const t = this.c.tokens;
-    for (let j = t.length - 1; j >= 0; j--) {
-      const k = t.kind[j] ?? 0;
-      if (k === T.IconStart) return this.unclosed('UNCLOSED_ICON', 'icon', '::icon(', ')', j);
-      if (k === T.StringStart) return this.unclosed('UNCLOSED_STRING', 'string', '"', '"', j);
-      if (k === T.MdStringStart) return this.unclosed('UNCLOSED_STRING', 'string', '"`', '`"', j);
-      if (k === T.ShapeDataStart)
-        return this.unclosed('UNCLOSED_SHAPE_DATA', 'shape data', '@{', '}', j);
-      if (k === T.NodeDStart) {
-        const open = this.raw(j);
-        return this.unclosed('UNCLOSED_SHAPE', 'shape', open, CLOSERS[open] ?? ')', j);
-      }
-      if (
-        k === T.IconEnd ||
-        k === T.StringEnd ||
-        k === T.MdStringEnd ||
-        k === T.NodeDEnd ||
-        k === T.ShapeDataEnd
-      )
-        break;
-    }
-    this.fail(EXPECT_LINE_BREAK);
-  }
-
-  private unclosed(code: string, what: string, open: string, close: string, j: number): never {
-    const at = this.range(j);
-    this.st.diagnostics.error(
-      code,
-      `Unclosed ${what}: the \`${open}\` at line ${this.lineOf(at.start)} has no closing \`${close}\`. Add \`${close}\` after its text.`,
-      at
-    );
-    throw STOP;
-  }
-
-  /** `statement`. */
-  private statement(): void {
-    const { c } = this;
-    c.tested(STATEMENT_KINDS);
-    const k = c.kind;
-    this.afterBlank = false;
-    if (k === T.SpaceList) {
-      const j = c.next();
-      const indent = this.raw(j).length;
-      c.tested(AFTER_INDENT);
-      const n = c.kind;
-      if (this.isNodeStart(n)) this.item(indent);
-      else if (n === T.Icon || n === T.Class) this.decoration();
-      else if (n === T.SpaceList && this.beside(c.pos, -1, T.ClassEnd) >= 0) {
-        // A bare `:::` took the line break: one error, and the next line is still read.
-        this.report(EXPECT_LINE_BREAK, BARE_CLASS_HINT);
-        this.lineEnded = true;
-      } else if (!this.isStop(n) && n !== Kind.EOF) this.badStatement();
-      return;
-    }
-    if (k === T.SpaceLine) {
-      c.next();
-      this.afterBlank = true;
-      return;
-    }
-    if (this.isNodeStart(k)) this.item(0);
-    else if (k === T.Icon || k === T.Class) this.decoration();
-    else this.badStatement();
-  }
-
-  private badStatement(): never {
-    this.fail(STATEMENT, this.hintFor(this.c.kind));
-  }
-
   /** `node [ shapeData ]`: `nodeWithId` (an id, then an optional shape) or `nodeWithoutId`. */
-  private item(indent: number): void {
+  protected node(indent: number): void {
     const { c } = this;
     let nodeId: string | undefined;
     const first = c.pos;
@@ -995,7 +612,7 @@ class KanbanParser {
   }
 
   /** `ICON` or `CLASS`: v12 `decorateNode`, on the last item in source order. */
-  private decoration(): void {
+  protected decoration(): void {
     const { c } = this;
     const icon = c.kind === T.Icon;
     const j = c.next();

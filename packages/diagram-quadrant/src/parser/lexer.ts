@@ -1,9 +1,9 @@
 /**
  * Quadrant lexer: v12's `quadrant.jison` lexer rules ({@link RULES}, one per jison rule, in
- * jison's order), run on exactly the text v12's lexer saw ({@link v12Text}), with every token
- * mapped back to its source range (DESIGN §4.3). The source is never rewritten. Comments and
- * directives v12 removed before lexing, and the `%%` comments jison's own rules skip, are trivia
- * tokens with their own ranges, in source order.
+ * jison's order), run by the shared table lexer on exactly the text v12's lexer saw
+ * (`v12Text`), with every token mapped back to its source range (DESIGN §4.3). The source is
+ * never rewritten. Comments and directives v12 removed before lexing, and the `%%` comments
+ * jison's own rules skip, are trivia tokens with their own ranges, in source order.
  *
  * jison semantics kept: per start condition (all exclusive, `%x`), the first rule that matches
  * wins (no longest match); the lexer is case-insensitive (ASCII letters only); bare word
@@ -21,7 +21,6 @@ import {
   AMP,
   BACKSLASH,
   BACKTICK,
-  codePointEnd,
   COLON,
   COMMA,
   DASH,
@@ -45,12 +44,30 @@ import {
   SLASH,
   SPACE,
   STAR,
-  TokenWriter,
   UNDERSCORE,
 } from '@mermaid-js/core/parser-kit';
-import type { Hole, Probe, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { Probe } from '@mermaid-js/core/parser-kit';
+import {
+  A,
+  anyComment,
+  blanks,
+  char,
+  code,
+  comment,
+  commentAfter,
+  keyword,
+  lexTable,
+  lineEnd,
+  literal,
+  rule,
+  run,
+  tableGrammar,
+  until,
+  wordThen,
+} from '@mermaid-js/shared/parser/table';
+import type { Rule, Scan } from '@mermaid-js/shared/parser/table';
+import type { V12Lex, V12Text } from '@mermaid-js/shared/parser/v12-text';
 import { T } from './tokens.ts';
-import type { V12Text } from './v12-text.ts';
 
 /** Start conditions of quadrant.jison (all exclusive). */
 const S = {
@@ -74,62 +91,12 @@ const S_NAMES: readonly string[] = Object.keys(S);
  * Word kinds: a cursor right after one extends it (`title¦`, `tit¦`), so the probe's mode there
  * is that of the step that lexed it, not of the next step (`title`'s value).
  */
-const WORD_KINDS = new Set<number>([
-  T.Title,
-  T.ClassDef,
-  T.Alpha,
-  T.Num,
-  T.UnicodeText,
-  T.ClassName,
-]);
-
-/** What a rule does to the start-condition stack. */
-const A = {
-  none: 0,
-  begin: 1,
-  pop: 2,
-  /** `this.popState(); this.begin(…)`. */
-  popBegin: 3,
-} as const;
-
-interface Rule {
-  /** End of the match at `p`, or -1. */
-  readonly match: (x: Scan, p: number) => number;
-  /** The token kind written for the match (a trivia kind for the skipped comments). */
-  readonly kind: number;
-  readonly action: number;
-  readonly state: number;
-  /**
-   * For a rule that starts with a blank run (`" "*` or `\s*`) and whose outcome depends only on
-   * the text after it: the end of that run from `p`.
-   */
-  readonly lead: ((x: Scan, p: number) => number) | undefined;
-}
-
-/** The text being lexed and its length (appended `\n` included). */
-interface Scan {
-  readonly text: string;
-  readonly n: number;
-}
+const WORD_KINDS = [T.Title, T.ClassDef, T.Alpha, T.Num, T.UnicodeText, T.ClassName];
 
 const PLUS = 0x2b;
 const EXCLAMATION = 0x21;
 const DOLLAR = 0x24;
 const APOSTROPHE = 0x27;
-
-const code = (x: Scan, p: number) => x.text.charCodeAt(p);
-
-/** ASCII lower case (jison's `case-insensitive` folds ASCII letters only). */
-const fold = (c: number) => (c >= 0x41 && c <= 0x5a ? c + 0x20 : c);
-
-/** End of the case-insensitive `word` (lower case) at `p`, or -1. */
-function literal(x: Scan, word: string, p: number): number {
-  if (p + word.length > x.n) return -1;
-  for (let k = 0; k < word.length; k++) {
-    if (fold(x.text.charCodeAt(p + k)) !== word.charCodeAt(k)) return -1;
-  }
-  return p + word.length;
-}
 
 /** End of the run of U+0020 from `p` (`" "*`). */
 function spaces(x: Scan, p: number): number {
@@ -137,33 +104,6 @@ function spaces(x: Scan, p: number): number {
   while (j < x.n && x.text.charCodeAt(j) === SPACE) j++;
   return j;
 }
-
-/** End of the run of `\s` from `p`. */
-function blanks(x: Scan, p: number): number {
-  let j = p;
-  while (j < x.n && isSpace(x.text.charCodeAt(j))) j++;
-  return j;
-}
-
-/** The first LF at or after `p` (`[^\n]*` ends there), else the end. */
-function lineEnd(x: Scan, p: number): number {
-  const e = x.text.indexOf('\n', p);
-  return e === -1 ? x.n : e;
-}
-
-/** `[^c]*`: up to the next `c`, else the end. */
-function until(x: Scan, c: string, p: number): number {
-  const e = x.text.indexOf(c, p);
-  return e === -1 ? x.n : e;
-}
-
-/** A word literal with jison's trailing `\b`. */
-const keyword =
-  (word: string) =>
-  (x: Scan, p: number): number => {
-    const e = literal(x, word, p);
-    return e < 0 || isWord(code(x, e)) ? -1 : e;
-  };
 
 /** `" "*"word"" "*`. */
 const padded =
@@ -173,36 +113,11 @@ const padded =
     return e < 0 ? -1 : spaces(x, e);
   };
 
-/** `word\s*"c"\s*` (`accTitle:`, `accDescr:`, `accDescr {`). */
-const wordThen =
-  (word: string, c: number) =>
-  (x: Scan, p: number): number => {
-    const e = literal(x, word, p);
-    if (e < 0) return -1;
-    const b = blanks(x, e);
-    return code(x, b) === c ? blanks(x, b + 1) : -1;
-  };
-
-/** One character. */
-const char =
-  (c: number) =>
-  (x: Scan, p: number): number =>
-    code(x, p) === c ? p + 1 : -1;
-
 /** Two characters. */
 const pair =
   (a: number, b: number) =>
   (x: Scan, p: number): number =>
     code(x, p) === a && code(x, p + 1) === b ? p + 2 : -1;
-
-/** A non-empty run of characters `test` accepts. */
-const run =
-  (test: (c: number) => boolean) =>
-  (x: Scan, p: number): number => {
-    let j = p;
-    while (j < x.n && test(x.text.charCodeAt(j))) j++;
-    return j > p ? j : -1;
-  };
 
 /** What a regex `.` matches: anything but a line terminator. */
 const isDotChar = (c: number) => c !== LF && c !== 0x0d && c !== 0x2028 && c !== 0x2029;
@@ -218,24 +133,6 @@ function coordinate(x: Scan, p: number): number {
     return j;
   }
   return p + 1;
-}
-
-/** `%%(?!\{)[^\n]*`. */
-function comment(x: Scan, p: number): number {
-  if (code(x, p) !== PERCENT || code(x, p + 1) !== PERCENT || code(x, p + 2) === LBRACE) return -1;
-  return lineEnd(x, p + 2);
-}
-
-/** `[^\}]\%\%[^\n]*`: a comment that takes the character before it (a line break too). */
-function commentAfter(x: Scan, p: number): number {
-  if (p >= x.n || code(x, p) === RBRACE) return -1;
-  if (code(x, p + 1) !== PERCENT || code(x, p + 2) !== PERCENT) return -1;
-  return lineEnd(x, p + 3);
-}
-
-/** `%%[^\n]*`. */
-function anyComment(x: Scan, p: number): number {
-  return code(x, p) === PERCENT && code(x, p + 1) === PERCENT ? lineEnd(x, p + 2) : -1;
 }
 
 /** `" "*\-\-+\>" "*`. */
@@ -301,14 +198,6 @@ function isPunctuation(c: number): boolean {
     c === SLASH
   );
 }
-
-const rule = (
-  match: Rule['match'],
-  kind: number,
-  action: number = A.none,
-  state: number = S.INITIAL,
-  lead?: (x: Scan, p: number) => number
-): Rule => ({ match, kind, action, state, lead });
 
 /** The rules of quadrant.jison; index = jison rule number (from 0). */
 const RULES: readonly Rule[] = [
@@ -397,15 +286,10 @@ const CONDITIONS: readonly (readonly number[])[] = [
   /* point_y */ [33],
 ];
 
+const GRAMMAR = /* @__PURE__ */ tableGrammar(RULES, CONDITIONS, S_NAMES, WORD_KINDS);
+
 /** A lex: the tokens (source offsets), and each token's range in v12's text. */
-export interface QuadrantLex {
-  tokens: TokenStream;
-  /** Start of token `i` in {@link V12Text.text}; trivia from removed spans get -1. */
-  textStart: Int32Array;
-  /** End of token `i` in {@link V12Text.text} (it may include the `\n` v12 appended). */
-  textEnd: Int32Array;
-  v12: V12Text;
-}
+export type QuadrantLex = V12Lex;
 
 /**
  * Lex a quadrant source as v12 saw it (`v12`), writing v12's removed spans as trivia. `onRule`
@@ -418,152 +302,5 @@ export function lex(
   onRule?: (rule: number) => void,
   probe?: Probe
 ): QuadrantLex {
-  return new QuadrantLexer(src, v12, onRule).run(probe);
-}
-
-class QuadrantLexer {
-  private readonly scan: Scan;
-  private readonly w: TokenWriter;
-  private readonly starts: number[] = [];
-  private readonly ends: number[] = [];
-  private readonly stack: number[] = [];
-  private state: number = S.INITIAL;
-  private hole = 0;
-  private readonly holes: readonly Hole[];
-  /** Per blank-led rule, the end of the blank run it last failed across (else -1). */
-  private readonly failedTo = new Int32Array(RULES.length).fill(-1);
-
-  constructor(
-    private readonly src: string,
-    private readonly v12: V12Text,
-    private readonly onRule: ((rule: number) => void) | undefined
-  ) {
-    this.scan = { text: v12.text, n: v12.text.length };
-    this.holes = v12.holes;
-    // About one token per three characters.
-    this.w = new TokenWriter(((v12.text.length / 3) | 0) + 8);
-  }
-
-  run(probe?: Probe): QuadrantLex {
-    const { n } = this.scan;
-    let p = 0;
-    for (let done = false; !done; ) {
-      if (p >= n) done = true;
-      const before = p;
-      const mode = probe ? (S_NAMES[this.state] ?? '') : '';
-      const at = this.step(p);
-      if (at >= 0) p = at;
-      else if (p < n) {
-        // Zero-width before a line break, so the initial state lexes it; else one code point,
-        // so the token never splits an emoji.
-        const c = this.scan.text.charCodeAt(p);
-        const end = c === LF ? p : codePointEnd(this.scan.text, p);
-        this.emit(Kind.Error, p, end);
-        this.stack.length = 0;
-        this.state = S.INITIAL;
-        p = end;
-      }
-      if (probe) {
-        const start = this.sourceStart(before);
-        let end = p > before ? this.sourceEnd(p - 1) : start;
-        // The step holds an offset right after its word (`Probe.lexed` takes `end` exclusive).
-        if (p > before && WORD_KINDS.has(this.lastKind)) end++;
-        probe.lexed(start, end, mode);
-      }
-    }
-    probe?.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
-    this.trivia(this.src.length + 1);
-    const tokens = this.w.finish(this.src);
-    this.starts.push(this.v12.length);
-    this.ends.push(this.v12.length);
-    return {
-      tokens,
-      textStart: Int32Array.from(this.starts),
-      textEnd: Int32Array.from(this.ends),
-      v12: this.v12,
-    };
-  }
-
-  /** Apply the first matching rule of the current state at `p`: the new offset, or -1. */
-  /** Kind of the token the last step wrote (`Kind.Error` when none matched). */
-  private lastKind: number = Kind.Error;
-
-  private step(p: number): number {
-    this.lastKind = Kind.Error;
-    for (const k of CONDITIONS[this.state] ?? []) {
-      const r = RULES[k] as Rule;
-      if (r.lead && p < (this.failedTo[k] ?? -1)) continue;
-      const e = r.match(this.scan, p);
-      if (e < 0) {
-        // Every later start before the end of the run fails the same way; at its end a new
-        // run may start (`- -->`: the space after the lone dash starts a delimiter).
-        if (r.lead) this.failedTo[k] = r.lead(this.scan, p);
-        continue;
-      }
-      this.onRule?.(k);
-      this.lastKind = r.kind;
-      this.act(r);
-      this.emit(r.kind, p, e);
-      return e;
-    }
-    return -1;
-  }
-
-  private act(r: Rule): void {
-    switch (r.action) {
-      case A.begin:
-        this.stack.push(this.state);
-        this.state = r.state;
-        break;
-      case A.pop:
-        this.state = this.stack.pop() ?? S.INITIAL;
-        break;
-      case A.popBegin:
-        this.state = r.state;
-        break;
-      default:
-        break;
-    }
-  }
-
-  // --- Offsets and output -------------------------------------------------------------------
-
-  /** Source offset where `text[i]` starts (the end of the source past v12's own text). */
-  private sourceStart(i: number): number {
-    const v = this.v12;
-    if (i >= v.length) return this.src.length;
-    return v.starts ? (v.starts[i] ?? 0) : v.from + i;
-  }
-
-  /** Source offset where `text[i]` ends. */
-  private sourceEnd(i: number): number {
-    const v = this.v12;
-    if (i >= v.length) return this.src.length;
-    return v.ends ? (v.ends[i] ?? 0) : v.from + i + 1;
-  }
-
-  /** Write the removed spans that start before `at` (a source offset) as trivia. */
-  private trivia(at: number): void {
-    const hs = this.holes;
-    for (let h = hs[this.hole]; h && h.start < at; h = hs[++this.hole]) {
-      this.w.push(h.kind === 'comment' ? Kind.Comment : Kind.Directive, h.start, h.end);
-      this.starts.push(-1);
-      this.ends.push(-1);
-    }
-  }
-
-  /**
-   * Write `text[s, e)` with its source range. The `\n` v12 appended is no source text: a token
-   * that ends with it ends at the source's last character it took (zero-width at the end when it
-   * took only that `\n`), so it never encloses a trailing comment.
-   */
-  private emit(kind: number, s: number, e: number): void {
-    const start = this.sourceStart(s);
-    const last = Math.min(e, this.v12.length);
-    const end = last > s ? Math.max(start, this.sourceEnd(last - 1)) : start;
-    this.trivia(start);
-    this.w.push(kind, start, end);
-    this.starts.push(s);
-    this.ends.push(e);
-  }
+  return lexTable(src, v12, GRAMMAR, onRule, probe);
 }

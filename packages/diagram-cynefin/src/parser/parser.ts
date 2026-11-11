@@ -29,8 +29,6 @@
  * model leaves out (D365).
  */
 import {
-  APOSTROPHE,
-  DQUOTE,
   ExpectedTable,
   ID_CONTROL,
   ID_RESERVED,
@@ -41,15 +39,17 @@ import {
   skipTo,
   STOP,
 } from '@mermaid-js/core/parser-kit';
-import { RuleParser } from '@mermaid-js/shared/parser/rule';
-import type {
-  AstId,
-  ParseOptions,
-  ParseResult,
-  Range,
-  TokenStream,
-} from '@mermaid-js/core/parser-kit';
-import type { RuleGrammar } from '@mermaid-js/shared/parser/rule';
+import {
+  RuleParser,
+  textProbeMode,
+  textStatements,
+  textValue,
+  unclosedLabel,
+  unreadAccessibility,
+  withoutIndent,
+} from '@mermaid-js/shared/parser/rule';
+import type { AstId, ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
+import type { RuleGrammar, TextValues } from '@mermaid-js/shared/parser/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { CYNEFIN_DOMAIN_NAMES } from '../model.ts';
@@ -63,10 +63,9 @@ import type {
   CynefinDocument,
   CynefinDomainNode,
   CynefinStatementNode,
-  CynefinTextNode,
   CynefinTransitionNode,
 } from './ast.ts';
-import { accDescrValue, accTitleValue, labelValue, titleValue } from './convert.ts';
+import { labelValue } from './convert.ts';
 import { lex } from './lexer.ts';
 import { CYNEFIN_TRIVIA, T } from './tokens.ts';
 
@@ -96,41 +95,8 @@ const BOUNDARY = kindSet(Kind.Newline, Kind.EOF);
  */
 const PROBE_FOLLOWS = kindSet(T.Colon, T.Arrow, T.String);
 
-/** The keyword of each statement-value token, also its probe mode ({@link probeMode}). */
-const VALUE_WORDS: Readonly<Record<number, string>> = {
-  [T.Title]: 'title',
-  [T.AccTitle]: 'accTitle',
-  [T.AccDescr]: 'accDescr',
-};
-
-/**
- * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the
- * mode names what the offset is in: `title`, `accTitle` or `accDescr` past the keyword of
- * that statement, `string` inside an item or label (closed or not), else `INITIAL` (code).
- * Pie's rule, over the same `common.langium` tokens.
- */
-function probeMode(src: string, tokens: TokenStream, o: number): string {
-  for (let j = 0; j < tokens.length; j++) {
-    const start = tokens.start[j] ?? 0;
-    const end = tokens.end[j] ?? 0;
-    if (start >= o) break;
-    if (end < o) continue;
-    const kind = tokens.kind[j] ?? Kind.EOF;
-    const c = src.charCodeAt(start);
-    if (kind === T.String && o < end) return 'string';
-    // An unclosed item is an error token from its quote to the line end.
-    if (kind === Kind.Error && (c === DQUOTE || c === APOSTROPHE)) return 'string';
-    const word = VALUE_WORDS[kind];
-    if (!word) continue;
-    let k = start;
-    while (/[\t ]/.test(src.charAt(k))) k++;
-    k += word.length;
-    // A block `accDescr { … }` ends at its `}`; the other values run to the line end.
-    const block = kind === T.AccDescr && /^\s*\{/.test(src.slice(k, end));
-    if (o > k && (o < end || !block)) return word;
-  }
-  return 'INITIAL';
-}
+/** `title`, `accTitle` and `accDescr` by token kind. */
+const TEXTS = /* @__PURE__ */ textStatements(T.Title, T.AccTitle, T.AccDescr);
 
 /** `a`, `a and b`, `a, b and c` (or `or`). */
 export function listOf(parts: readonly string[], conjunction = 'and'): string {
@@ -156,16 +122,6 @@ const EXPECTED = new ExpectedTable([
   ['the end of the text', [Kind.EOF]],
 ]);
 
-const KIND_OF: Record<number, CynefinTextNode['type']> = {
-  [T.Title]: 'Title',
-  [T.AccTitle]: 'AccTitle',
-  [T.AccDescr]: 'AccDescr',
-};
-const ID_OF: Record<CynefinTextNode['type'], string> = {
-  Title: 'title',
-  AccTitle: 'accTitle',
-  AccDescr: 'accDescr',
-};
 const ONE_PER_LINE = 'put each transition, title and accessibility statement on a line of its own';
 const QUOTE_LABEL = 'a transition label is quoted, as in `complex --> clear : "Pattern found"`';
 
@@ -189,7 +145,11 @@ const GRAMMAR: RuleGrammar = {
   lex,
   trivia: CYNEFIN_TRIVIA,
   probeFollows: PROBE_FOLLOWS,
-  probeMode,
+  probeMode: /* @__PURE__ */ textProbeMode({
+    texts: TEXTS,
+    accDescr: T.AccDescr,
+    string: T.String,
+  }),
 };
 
 /**
@@ -209,9 +169,7 @@ class CynefinParser extends RuleParser<PreprocessResult> {
    */
   private open: CynefinDomainNode | typeof STRAY | undefined;
   /** The last in-text value of each (v12's Langium assignments: the last one wins). */
-  private title = '';
-  private accTitle = '';
-  private accDescr = '';
+  private readonly texts: TextValues = { title: '', accTitle: '', accDescr: '' };
 
   constructor(
     src: string,
@@ -239,13 +197,13 @@ class CynefinParser extends RuleParser<PreprocessResult> {
       domains.push(Object.freeze({ name, ast: last.id, items: Object.freeze(items) }));
     }
     // D218: the in-text title if non-empty, else the front-matter one.
-    const title = this.title || this.pre.frontMatter?.title;
+    const title = this.texts.title || this.pre.frontMatter?.title;
     const model: CynefinModel = Object.freeze({
       domains: Object.freeze(domains),
       transitions: Object.freeze(this.transitions),
       ...(title ? { title } : {}),
-      accTitle: this.accTitle,
-      accDescr: this.accDescr,
+      accTitle: this.texts.accTitle,
+      accDescr: this.texts.accDescr,
       warnings: Object.freeze(warnings),
     });
     const ast: CynefinDocument = {
@@ -305,34 +263,8 @@ class CynefinParser extends RuleParser<PreprocessResult> {
     const where = this.range(j);
     const text = this.raw(j);
     const line = this.lineOf(where.start);
-    if (text.startsWith('"') || text.startsWith("'")) {
-      const q = text[0] ?? '"';
-      state.diagnostics.error(
-        'UNCLOSED_STRING',
-        `Unclosed label: the \`${q}\` at line ${line} has no closing \`${q}\`. Add \`${q}\` after the label.`,
-        where,
-        { expected: [`\`${q}\``] }
-      );
-      return;
-    }
-    const word = /^[\t ]*(accDescr|accTitle)/.exec(text)?.[1];
-    if (word === 'accDescr') {
-      state.diagnostics.error(
-        'UNCLOSED_ACC_DESCR',
-        `Unclosed accessible description: the \`accDescr {\` at line ${line} has no closing \`}\`, and \`accDescr\` without \`{\` takes a \`:\`. Write \`accDescr: …\` or \`accDescr { … }\`.`,
-        where
-      );
-      return;
-    }
-    if (word === 'accTitle') {
-      state.diagnostics.error(
-        'UNEXPECTED_CHARACTER',
-        'Expected `:` after `accTitle`; write it as `accTitle: …`.',
-        where,
-        { expected: ['`:`'] }
-      );
-      return;
-    }
+    if (unclosedLabel(state.diagnostics, text, line, where)) return;
+    if (unreadAccessibility(state.diagnostics, text, line, where)) return;
     const shown = text.length > 24 ? `${text.slice(0, 24)}…` : text;
     const why = hint ?? this.explainCharacters(text, j);
     state.diagnostics.error(
@@ -534,18 +466,13 @@ class CynefinParser extends RuleParser<PreprocessResult> {
   /** `(ACC_DESCR | ACC_TITLE | TITLE) EOL` */
   private text(k: number): void {
     const j = this.i++;
-    const image = this.raw(j);
-    const type = KIND_OF[k];
-    if (type === undefined) throw new Error(`cynefin parser: token kind ${k} is not a statement`);
-    const range = this.range(j);
-    while (range.start < range.end && /[\t ]/.test(this.src[range.start] ?? '')) range.start++;
-    let text: string;
-    if (type === 'Title') text = this.title = titleValue(image);
-    else if (type === 'AccTitle') text = this.accTitle = accTitleValue(image);
-    else text = this.accDescr = accDescrValue(image);
-    const kind = ID_OF[type];
-    this.children.push({ id: this.id(kind), type, range, text });
-    this.st.statement(kind, range);
+    const statement = TEXTS[k];
+    if (!statement) throw new Error(`cynefin parser: token kind ${k} is not a statement`);
+    const { type, word } = statement;
+    const range = withoutIndent(this.src, this.range(j));
+    const text = (this.texts[word] = textValue(type, this.raw(j)));
+    this.children.push({ id: this.id(word), type, range, text });
+    this.st.statement(word, range);
     this.eol();
   }
 

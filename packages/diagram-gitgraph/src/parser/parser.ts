@@ -33,7 +33,13 @@ import {
   kindSet,
   STOP,
 } from '@mermaid-js/core/parser-kit';
-import { RuleParser } from '@mermaid-js/shared/parser/rule';
+import {
+  RuleParser,
+  textStatements,
+  textValue,
+  TITLE_STATEMENT,
+  withoutIndent,
+} from '@mermaid-js/shared/parser/rule';
 import type {
   AstId,
   ParseOptions,
@@ -41,7 +47,7 @@ import type {
   Range,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
-import type { RuleGrammar } from '@mermaid-js/shared/parser/rule';
+import type { RuleGrammar, TextValues } from '@mermaid-js/shared/parser/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { GitDirection, GitModel, GitWrittenType } from '../model.ts';
@@ -50,11 +56,10 @@ import type {
   GitGraphDocument,
   GitMergeNode,
   GitStatementNode,
-  GitTextNode,
   GitValue,
 } from './ast.ts';
 import { GitBuilder, WRITTEN_TYPES } from './build.ts';
-import { accDescrValue, accTitleValue, stringValue, titleValue } from './convert.ts';
+import { stringValue } from './convert.ts';
 import { lex } from './lexer.ts';
 import { GITGRAPH_TRIVIA, T } from './tokens.ts';
 
@@ -103,12 +108,8 @@ const PROBE_FOLLOWS = kindSet(
   T.String
 );
 
-/** The keyword of each statement-value token, also its probe mode ({@link probeMode}). */
-const VALUE_WORDS: Readonly<Record<number, string>> = {
-  [T.Title]: 'title',
-  [T.AccTitle]: 'accTitle',
-  [T.AccDescr]: 'accDescr',
-};
+/** `title`, `accTitle` and `accDescr` by token kind; a keyword is also its probe mode. */
+const TEXTS = /* @__PURE__ */ textStatements(T.Title, T.AccTitle, T.AccDescr);
 
 /**
  * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the
@@ -130,7 +131,7 @@ function probeMode(src: string, tokens: TokenStream, o: number): string {
     }
     if (end < o) continue;
     if (kind === T.String && o < end) return 'string';
-    const word = VALUE_WORDS[kind];
+    const word = TEXTS[kind]?.word;
     if (!word) continue;
     let k = start;
     while (/[\t ]/.test(src.charAt(k))) k++;
@@ -158,16 +159,6 @@ const EXPECTED = new ExpectedTable([
   ['the end of the text', [Kind.EOF]],
 ]);
 
-const KIND_OF: Record<number, GitTextNode['type']> = {
-  [T.Title]: 'Title',
-  [T.AccTitle]: 'AccTitle',
-  [T.AccDescr]: 'AccDescr',
-};
-const SPAN_OF: Record<GitTextNode['type'], string> = {
-  Title: 'title',
-  AccTitle: 'accTitle',
-  AccDescr: 'accDescr',
-};
 const DIRECTION_OF: Record<number, GitDirection> = { [T.LR]: 'LR', [T.TB]: 'TB', [T.BT]: 'BT' };
 const ONE_PER_LINE = 'put each statement on a line of its own';
 /** The word keywords, for "case-sensitive" and "put a blank after" hints. */
@@ -215,9 +206,7 @@ class GitGraphParser extends RuleParser<PreprocessResult> {
   private readonly ordinals = new Map<string, number>();
   private direction: GitDirection = 'LR';
   /** The last in-text value of each (v12's Langium assignments: the last one wins). */
-  private title = '';
-  private accTitle = '';
-  private accDescr = '';
+  private readonly texts: TextValues = { title: '', accTitle: '', accDescr: '' };
 
   constructor(
     src: string,
@@ -239,7 +228,7 @@ class GitGraphParser extends RuleParser<PreprocessResult> {
     this.document();
     const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
     // D265 (as D218): the in-text title if non-empty, else the front-matter one.
-    const title = this.title || this.pre.frontMatter?.title;
+    const title = this.texts.title || this.pre.frontMatter?.title;
     const model: GitModel = Object.freeze({
       direction: this.direction,
       commits: Object.freeze(git.commitList()),
@@ -248,8 +237,8 @@ class GitGraphParser extends RuleParser<PreprocessResult> {
       currentBranch: git.currentBranch,
       head: git.headId,
       ...(title ? { title } : {}),
-      accTitle: this.accTitle,
-      accDescr: this.accDescr,
+      accTitle: this.texts.accTitle,
+      accDescr: this.texts.accDescr,
       warnings: Object.freeze(warnings),
     });
     const ast: GitGraphDocument = {
@@ -695,15 +684,11 @@ class GitGraphParser extends RuleParser<PreprocessResult> {
   private text(k: number): void {
     const j = this.i++;
     const image = this.raw(j);
-    const type = KIND_OF[k] ?? 'Title';
-    const range = this.range(j);
-    while (range.start < range.end && /[\t ]/.test(this.src[range.start] ?? '')) range.start++;
+    const { type, word } = TEXTS[k] ?? TITLE_STATEMENT;
+    const range = withoutIndent(this.src, this.range(j));
     this.eol(k, []);
-    let text: string;
-    if (type === 'Title') text = this.title = titleValue(image);
-    else if (type === 'AccTitle') text = this.accTitle = accTitleValue(image);
-    else text = this.accDescr = accDescrValue(image);
+    const text = (this.texts[word] = textValue(type, image));
     this.children.push({ id: this.line(), type, range, text });
-    this.st.statement(SPAN_OF[type], range);
+    this.st.statement(word, range);
   }
 }

@@ -1,11 +1,11 @@
 /**
- * The text v12's class lexer saw, from the shared v12 source view (D114, `sourceView` in the
- * parser kit): comments and directives cut, tag quotes converted, dropped `;` cut. Class lexes
- * that text with jison's rules as they are, so three more of v12's steps are applied here, on
- * a copy that keeps every character's source range: CR and CRLF read as LF, leading blanks
- * trimmed (`cleanupComments`), and `#name;` / `#123;` replaced by v12's entity placeholders
- * (`encodeEntities`; jison's `LABEL` rule, `[^:\n;]+`, runs on over the placeholder where it
- * would stop at the `;`). Then the `\n` v12 appended. Every step is a linear scan (R-PARSE-7).
+ * The text a v12 jison lexer saw, from the shared v12 source view (D114, `sourceView` in the
+ * parser kit): comments and directives cut, tag quotes converted, dropped `;` cut. The diagrams
+ * that run jison's rules as they are lex that text, so three more of v12's steps are applied
+ * here, on a copy that keeps every character's source range: CR and CRLF read as LF, leading
+ * blanks trimmed (`cleanupComments`), and `#name;` / `#123;` replaced by v12's entity
+ * placeholders (`encodeEntities`). Then the `\n` v12 appended. Every step is a linear scan
+ * (R-PARSE-7).
  */
 import {
   CR,
@@ -20,15 +20,18 @@ import {
   SourceOffsets,
   sourceView,
 } from '@mermaid-js/core/parser-kit';
-import type { Hole, Range } from '@mermaid-js/core/parser-kit';
+import type { Hole, Range, TokenStream } from '@mermaid-js/core/parser-kit';
 
-/** The text v12's class lexer saw, and where each of its characters came from. */
+/** The text v12's lexer saw, and where each of its characters came from. */
 export interface V12Text {
   /** v12's text, including the `\n` it appended (whose source range is empty, at the end). */
   text: string;
   /** Length of {@link text} without the appended `\n`. */
   length: number;
-  /** Source offset where `text[i]` starts, or undefined when it is `from + i` throughout. */
+  /**
+   * Source offset where `text[i]` starts, or undefined when it is `from + i` throughout. The
+   * appended `\n`, and the characters after the first of an entity placeholder, are zero-width.
+   */
   starts: Uint32Array | undefined;
   /** Source offset where `text[i]` ends; undefined with {@link starts}. */
   ends: Uint32Array | undefined;
@@ -91,8 +94,21 @@ class Builder {
   }
 }
 
-/** v12's text for the body `src[from…]`, given the directive ranges core's preprocess found. */
-export function v12Text(src: string, from: number, directives: readonly Range[]): V12Text {
+/**
+ * v12's text for the body `src[from…]`, given the directive ranges v12 removed (those core's
+ * preprocess found, unless the diagram reads them as v12's regex did).
+ *
+ * @param spread - How an entity placeholder maps to the `#` or `;` it stands for. False: its
+ * first character takes that character's range and the rest are zero-width at its end, so a
+ * token that splits the placeholder (after a lexical error) never shares a range with the token
+ * before it. True: every character of it takes the range (a lexer whose rules never split one).
+ */
+export function v12Text(
+  src: string,
+  from: number,
+  directives: readonly Range[],
+  spread = false
+): V12Text {
   const view = sourceView(src, from, directives);
   const holes = view.holes.filter((h) => h.kind !== 'drop' && h.start >= from);
   if (
@@ -124,7 +140,7 @@ export function v12Text(src: string, from: number, directives: readonly Range[])
     b.push(((mask?.[s] ?? 0) & QUOTE) !== 0 ? "'" : (text[i] ?? ''), s, s + 1);
     i++;
   }
-  const out = withEntities(b.done());
+  const out = withEntities(b.done(), spread);
   return {
     text: out.text + '\n',
     length: out.text.length,
@@ -142,8 +158,15 @@ function appendEnd(a: Uint32Array, end: number): Uint32Array {
   return c;
 }
 
+/** A placeholder for the source character `[start, end)` (`#` or `;`); see {@link v12Text}. */
+function placeholder(b: Builder, chars: string, start: number, end: number, spread: boolean): void {
+  for (let k = 0; k < chars.length; k++) {
+    b.push(chars[k] ?? '', spread || k === 0 ? start : end, end);
+  }
+}
+
 /** Step 3's placeholders: `#name;` → `ﬂ°name¶ß`, `#123;` → `ﬂ°°123¶ß`. */
-function withEntities(c: Chars): Chars {
+function withEntities(c: Chars, spread: boolean): Chars {
   const t = c.text;
   if (!t.includes('#')) return c;
   const b = new Builder(t.length + 8);
@@ -157,10 +180,34 @@ function withEntities(c: Chars): Chars {
     let digits = true;
     for (let k = i + 1; k < j; k++) digits &&= isDigit(t.charCodeAt(k));
     const open = digits ? PLACEHOLDER_OPEN + '°' : PLACEHOLDER_OPEN;
-    for (const o of open) b.push(o, c.starts[i] ?? 0, c.ends[i] ?? 0);
+    placeholder(b, open, c.starts[i] ?? 0, c.ends[i] ?? 0, spread);
     for (let k = i + 1; k < j; k++) b.keep(c, k);
-    for (const o of PLACEHOLDER_CLOSE) b.push(o, c.starts[j] ?? 0, c.ends[j] ?? 0);
+    placeholder(b, PLACEHOLDER_CLOSE, c.starts[j] ?? 0, c.ends[j] ?? 0, spread);
     i = j;
   }
   return b.done();
+}
+
+/** A lex of v12's text: the tokens (source offsets), and each token's range in that text. */
+export interface V12Lex {
+  tokens: TokenStream;
+  /** Start of token `i` in {@link V12Text.text}; trivia from removed spans get -1. */
+  textStart: Int32Array;
+  /** End of token `i` in {@link V12Text.text} (it may include the `\n` v12 appended). */
+  textEnd: Int32Array;
+  v12: V12Text;
+}
+
+/** Undo v12's `encodeEntities` placeholders, as v12's renderer did (`decodeEntities`). */
+const decodeEntities = (text: string): string =>
+  text.replace(/ﬂ°°/g, '&#').replace(/ﬂ°/g, '&').replace(/¶ß/g, ';');
+
+/**
+ * The text of token `i` as v12's parser read it (less the `\n` v12 appended), or the source
+ * text of a trivia token.
+ */
+export function tokenValue(l: V12Lex, i: number): string {
+  const s = l.textStart[i] ?? -1;
+  if (s < 0) return l.tokens.source.slice(l.tokens.start[i] ?? 0, l.tokens.end[i] ?? 0);
+  return decodeEntities(l.v12.text.slice(s, Math.min(l.textEnd[i] ?? s, l.v12.length)));
 }

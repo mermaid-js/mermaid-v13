@@ -31,9 +31,14 @@
     Name: STRING | ID | NAME_WITH_SPACES     WN: WARDLEY_NUMBER     C: WN | INT
 */
 import { formatExpected, Kind, STOP } from '@mermaid-js/core/parser-kit';
-import { RuleParser } from '@mermaid-js/shared/parser/rule';
+import {
+  accessibilityAsName,
+  RuleParser,
+  textValue,
+  TITLE_STATEMENT,
+} from '@mermaid-js/shared/parser/rule';
 import type { AstId, ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
-import type { RuleGrammar } from '@mermaid-js/shared/parser/rule';
+import type { RuleGrammar, TextValues } from '@mermaid-js/shared/parser/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { WardleyModel, WardleyStrategy } from '../model.ts';
@@ -49,14 +54,7 @@ import type {
   WardleyStage,
   WardleyStatementNode,
 } from './ast.ts';
-import {
-  accDescrValue,
-  accTitleValue,
-  displayText,
-  linkLabelValue,
-  stringValue,
-  titleValue,
-} from './convert.ts';
+import { displayText, linkLabelValue, stringValue } from './convert.ts';
 import { astName, childId, linkName } from './ids.ts';
 import { lex } from './lexer.ts';
 import {
@@ -146,10 +144,8 @@ class WardleyParser extends RuleParser<PreprocessResult> {
   /** Names that have a `node` definition so far (D427: the first one defines). */
   private readonly defined = new Set<string>();
   /** The last in-text value of each (v12's Langium assignments: the last one wins). */
-  private title = '';
+  private readonly texts: TextValues = { title: '', accTitle: '', accDescr: '' };
   private titleAstId: AstId | undefined;
-  private accTitle = '';
-  private accDescr = '';
 
   constructor(
     src: string,
@@ -308,21 +304,9 @@ class WardleyParser extends RuleParser<PreprocessResult> {
     const word = this.displayed(this.stmt);
     if (word !== 'accDescr' && word !== 'accTitle') return;
     const where = this.range(this.stmt);
-    if (word === 'accDescr' && this.kind(this.stmt + 1) === T.LBrace) {
-      this.description = true;
-      this.st.diagnostics.error(
-        'UNCLOSED_ACC_DESCR',
-        `Unclosed accessible description: the \`accDescr {\` at line ${this.lineOf(where.start)} has no closing \`}\`. Write \`accDescr { … }\` or \`accDescr: …\`.`,
-        where
-      );
-      throw STOP;
-    }
-    this.st.diagnostics.error(
-      'UNEXPECTED',
-      `Expected \`:\` after \`${word}\`; write it as \`${word}: …\`${word === 'accDescr' ? ' or `accDescr { … }`' : ''}.`,
-      where,
-      { expected: ['`:`'] }
-    );
+    const block = word === 'accDescr' && this.kind(this.stmt + 1) === T.LBrace;
+    if (block) this.description = true;
+    accessibilityAsName(this.st.diagnostics, word, block, this.lineOf(where.start), where);
     throw STOP;
   }
 
@@ -885,13 +869,9 @@ class WardleyParser extends RuleParser<PreprocessResult> {
   /** `(ACC_DESCR | ACC_TITLE | TITLE) EOL` */
   private text(k: number): void {
     const j = this.i++;
-    const image = this.displayed(j);
-    const { type, word } = TEXT_STATEMENTS[k] ?? { type: 'Title', word: 'title' };
+    const { type, word } = TEXT_STATEMENTS[k] ?? TITLE_STATEMENT;
     const range = this.range(j);
-    let text: string;
-    if (type === 'Title') text = this.title = titleValue(image);
-    else if (type === 'AccTitle') text = this.accTitle = accTitleValue(image);
-    else text = this.accDescr = accDescrValue(image);
+    const text = (this.texts[word] = textValue(type, this.displayed(j)));
     const id = this.id(word);
     if (type === 'Title') this.titleAstId = id;
     this.eol(LINE_END, '`title`, `accTitle` and `accDescr` end their line');
@@ -913,10 +893,10 @@ class WardleyParser extends RuleParser<PreprocessResult> {
       {
         statements: this.children,
         orphans: this.orphans,
-        title: this.title,
+        title: this.texts.title,
         titleAstId: this.titleAstId,
-        accTitle: this.accTitle,
-        accDescr: this.accDescr,
+        accTitle: this.texts.accTitle,
+        accDescr: this.texts.accDescr,
         frontMatterTitle: this.pre.frontMatter?.title,
       },
       diagnostics
