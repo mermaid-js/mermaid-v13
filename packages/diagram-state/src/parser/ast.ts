@@ -57,6 +57,19 @@ export interface StateCompositeStmt extends AstNode<'Composite'> {
   children: StateStatementNode[] | StateRegionNode[];
 }
 
+/**
+ * `mermaid id["Title"] { … }`: an embedded diagram block (ADR-15), a state of the host. Its id
+ * is a state mention's (`n:<id>`).
+ */
+export interface StateEmbedStmt extends AstNode<'Embed'> {
+  name: string;
+  nameRange: Range;
+  /** The title as written inside `["…"]`, unquoted. */
+  title?: string;
+  /** The body: another diagram's text, as written. */
+  bodyRange: Range;
+}
+
 /** `note left of A : …`, `note right of A … end note`, or a floating `note "…" as N`. */
 export interface StateNoteStmt extends AstNode<'Note'> {
   /** The state the note is attached to, or the floating note's own name. */
@@ -90,7 +103,8 @@ export type StateStatementNode =
   | StateTransitionStmt
   | StateCompositeStmt
   | StateNoteStmt
-  | StateSimpleStmt;
+  | StateSimpleStmt
+  | StateEmbedStmt;
 
 export interface StateDocument extends AstNode<'Document'> {
   children: StateStatementNode[];

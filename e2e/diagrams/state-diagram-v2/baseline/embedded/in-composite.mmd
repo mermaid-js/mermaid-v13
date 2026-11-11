@@ -1,0 +1,21 @@
+---
+description: an untitled class diagram block inside a composite state, styled with classDef
+---
+stateDiagram-v2
+  [*] --> Checkout
+  state Checkout {
+    [*] --> Cart
+    Cart --> order
+    mermaid order {
+      classDiagram
+        class Order {
+          +id: string
+          +total() number
+        }
+        Order --> LineItem
+    }
+    order --> [*]
+  }
+  Checkout --> [*]
+  classDef dashed stroke-dasharray:4
+  class order dashed

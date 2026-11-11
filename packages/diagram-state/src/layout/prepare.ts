@@ -18,6 +18,7 @@ import { configLengths, type ConfigLength } from './config-length.ts';
 import type { StateRenderContext } from './context.ts';
 import { stateConfigDefaults } from '../generated/config-defaults.ts';
 import { stateMetrics, type StateMetrics } from './metrics.ts';
+import { embedSize, type EmbedSlot } from './embed.ts';
 
 /** What a node is drawn as. `described`: a state with several description lines (v12 `rectWithTitle`). */
 export type StateShape =
@@ -28,7 +29,9 @@ export type StateShape =
   | 'choice'
   | 'fork'
   | 'join'
-  | 'note';
+  | 'note'
+  /** An embedded diagram block (ADR-15): a frame, a title strip, the inner diagram. */
+  | 'embed';
 
 export interface StateNodeView {
   /** Layout node id: the state id, or the note's AST id (`note:<k>`). */
@@ -48,6 +51,8 @@ export interface StateNodeView {
   style: CheckedStyle;
   state?: StateNode;
   note?: StateNote;
+  /** An embedded diagram block (ADR-15): what it holds, `null` for a stand-in frame. */
+  embed?: EmbedSlot;
 }
 
 export interface StateGroupView {
@@ -113,6 +118,7 @@ interface Measure {
   readonly minWidth: number;
   readonly label: (text: string, style: CheckedStyle, max: number) => MeasuredLabel;
   readonly styleOf: (classes: readonly string[], own?: readonly string[]) => CheckedStyle;
+  readonly embed: StateRenderContext['embed'];
 }
 
 /**
@@ -147,6 +153,7 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
       });
     },
     styleOf: styleCache(model, ctx),
+    embed: ctx.embed,
   };
 
   const sc = scopes(model);
@@ -375,6 +382,12 @@ function measureState(
     case 'join': {
       const [w, h] = sideways(flow) ? [sm.bar.short, sm.bar.long] : [sm.bar.long, sm.bar.short];
       return { ...base, shape: s.kind, label: m.label('', style, 0), w, h };
+    }
+    case 'embed': {
+      // The title stays on one line: the strip is as wide as the inner diagram allows.
+      const label = m.label(s.title ?? '', style, Infinity);
+      const embed = m.embed?.(s.id) ?? null;
+      return { ...base, shape: 'embed', label, embed, ...embedSize(embed, label) };
     }
     case 'plain':
     case 'composite':

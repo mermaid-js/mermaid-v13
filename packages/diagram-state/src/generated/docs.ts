@@ -32,4 +32,5 @@ export const stateDocs: Readonly<Partial<Record<number, string>>> = {
   [T.Arrow]: "`A --> B`: a transition.",
   [T.Concurrent]: "`--` splits a composite state into concurrent regions.",
   [T.StyleSeparator]: "`A:::name`: gives the state a class, as `class A name` does.",
+  [T.Embed]: "Embedded diagram blocks (ADR-15, not in mermaid@12): `mermaid <id>[\"Title\"] {` on a line of its own, the body (another diagram's text, as one token), then `}` first on its own line. The hand-written lexer enters this mode for `mermaid` and a blank at the start of a line ending in `{`, and finds the closing line by counting lines that end in `{` against lines that start with `}`; this file lists the tokens for their highlight categories only.",
 };

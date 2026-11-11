@@ -17,7 +17,16 @@ import type { AstId, Diagnostic, Range } from '@mermaid-js/core/parser-kit';
 
 export type StateDirection = 'TB' | 'BT' | 'RL' | 'LR';
 
-export type StateKind = 'plain' | 'choice' | 'fork' | 'join' | 'start' | 'end' | 'composite';
+export type StateKind =
+  | 'plain'
+  | 'choice'
+  | 'fork'
+  | 'join'
+  | 'start'
+  | 'end'
+  | 'composite'
+  /** An embedded diagram block (ADR-15): `mermaid id["Title"] { … }`. */
+  | 'embed';
 
 /** One state: a node of the diagram. */
 export interface StateNode {
@@ -36,6 +45,8 @@ export interface StateNode {
   styles: string[];
   /** A composite's `direction`, when it sets one. */
   dir?: StateDirection;
+  /** An embedded diagram block's title (ADR-15); absent for an untitled block. */
+  title?: string;
 }
 
 /** A concurrency region: the part of a composite between `--` separators. */
@@ -119,6 +130,8 @@ export interface StateItem {
   region?: number;
   /** A composite split by `--`: its last region's AST id and ordinal. */
   tail?: { ast: AstId; region: number };
+  /** An embedded diagram block (ADR-15), with its title. */
+  embed?: { title?: string };
   range: Range;
 }
 
@@ -161,6 +174,10 @@ interface GraphNode {
   parent?: string;
   classes: string[];
   styles: string[];
+  /** An embedded diagram block (ADR-15), with its title. */
+  embed?: { title?: string };
+  /** Whether a mention gave it content of its own: a description or statements. */
+  content?: boolean;
 }
 
 const START = '[*]';
@@ -244,7 +261,8 @@ export class StateBuilder {
           n.range
         );
       }
-      const kind: StateKind = n.isGroup ? 'composite' : (KINDS[n.shape ?? ''] ?? 'plain');
+      let kind: StateKind = n.isGroup ? 'composite' : (KINDS[n.shape ?? ''] ?? 'plain');
+      if (n.embed) kind = 'embed';
       const state: StateNode = {
         id: n.id,
         ast: n.ast,
@@ -255,6 +273,7 @@ export class StateBuilder {
       };
       if (n.parent !== undefined) state.parent = n.parent;
       if (n.isGroup && n.dir !== undefined) state.dir = n.dir;
+      if (n.embed?.title !== undefined) state.title = n.embed.title;
       states.push(state);
     }
     return {
@@ -461,14 +480,46 @@ export class StateBuilder {
       this.records.set(id, rec);
       if (id !== '' && id !== '</join></fork>' && id !== '</choice>') this.nodes.push(rec);
     }
+    if (item.embed || rec.embed) this.blockMention(rec, item);
     this.describe(rec, item.description);
     if (!rec.isGroup && item.doc) this.group(rec, item, parent);
+    if (item.doc || (item.description && item.description !== '')) rec.content = true;
     if (parent && parent.id !== 'root') rec.parent = parent.id;
     if (item.note) {
       const side = item.note.position === 'left of' ? 'left' : 'right';
       this.notes.push({ ast: item.note.ast, target: id, side, text: item.note.text });
       this.edgeCount++;
     }
+  }
+
+  /**
+   * A mention of an embedded diagram block's id (ADR-15). Repeating a state id is legal, so a
+   * plain mention (a transition, a note, `class`) refers to the block; a second block, or a
+   * description or statements for the same id, is an error: the id names two things.
+   */
+  private blockMention(rec: GraphNode, item: StateItem): void {
+    const { id } = rec;
+    if (item.embed && !rec.embed) {
+      if (rec.content) this.duplicate(id, item.range);
+      else {
+        rec.embed = item.embed;
+        rec.ast = item.ast;
+        rec.range = item.range;
+      }
+      return;
+    }
+    if (item.embed) this.duplicate(id, item.range);
+    else if (item.doc || (item.description && item.description !== '')) {
+      this.duplicate(id, item.range);
+    }
+  }
+
+  private duplicate(id: string, range: Range): void {
+    this.ctx.error(
+      'EMBED_DUPLICATE_ID',
+      `The id \`${id}\` names an embedded diagram block and another state with content: give one of them another id.`,
+      range
+    );
   }
 
   /** The description of one mention, as `dataFetcher` adds it to the node. */

@@ -186,7 +186,7 @@ Scale @Scale = scale WIDTH ;
 
 The lexer works in modes (`INITIAL` and the ones below). In each mode it tries the rules in this order and takes the first that matches; a rule may push a mode or pop back to the previous one. Rules without a token emit nothing.
 
-Modes: `INITIAL`, `STATE`, `STATE_STRING`, `STATE_ID`, `SCALE`, `acc_title`, `acc_descr`, `acc_descr_multiline`, `CLASSDEF`, `CLASSDEFID`, `CLASS`, `CLASS_STYLE`, `STYLE`, `STYLEDEF_STYLES`, `NOTE`, `NOTE_ID`, `NOTE_TEXT`, `FLOATING_NOTE`, `FLOATING_NOTE_ID`, `struct`.
+Modes: `INITIAL`, `STATE`, `STATE_STRING`, `STATE_ID`, `SCALE`, `acc_title`, `acc_descr`, `acc_descr_multiline`, `CLASSDEF`, `CLASSDEFID`, `CLASS`, `CLASS_STYLE`, `STYLE`, `STYLEDEF_STYLES`, `NOTE`, `NOTE_ID`, `NOTE_TEXT`, `FLOATING_NOTE`, `FLOATING_NOTE_ID`, `struct`, `embed`.
 
 | Modes | Token | Pattern | Action | Doc |
 | --- | --- | --- | --- | --- |
@@ -259,6 +259,12 @@ Modes: `INITIAL`, `STATE`, `STATE_STRING`, `STATE_ID`, `SCALE`, `acc_title`, `ac
 | NOTE_TEXT | NOTE_TEXT | `\s*:[^:\n;]+` | pop |  |
 | NOTE_TEXT | — | `\n\s*(?i:end note)\b` | pop |  |
 | NOTE_TEXT | NOTE_TEXT | `[\s\S]*?(?=\n\s*(?i:end note)\b)` |  |  |
+| embed | EMBED | `mermaid` |  | Embedded diagram blocks (ADR-15, not in mermaid@12): `mermaid <id>["Title"] {` on a line of its own, the body (another diagram's text, as one token), then `}` first on its own line. The hand-written lexer enters this mode for `mermaid` and a blank at the start of a line ending in `{`, and finds the closing line by counting lines that end in `{` against lines that start with `}`; this file lists the tokens for their highlight categories only. |
+| embed | EMBED_ID | `[^\s\[{]+` |  |  |
+| embed | EMBED_TITLE | `\[[^\]]*\]` |  |  |
+| embed | EMBED_OPEN | `\{` |  |  |
+| embed | EMBED_BODY | `[^}]+` |  |  |
+| embed | EMBED_END | `\}` |  |  |
 | INITIAL | SD | `(?i:stateDiagram)\s+` |  | The header: `stateDiagram` or `stateDiagram-v2`. |
 | INITIAL | SD | `(?i:stateDiagram-v2)\s+` |  |  |
 | INITIAL | HIDE_EMPTY | `(?i:hide empty description)\b` |  | `hide empty description`: accepted and ignored. |
