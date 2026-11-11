@@ -24,6 +24,22 @@
     "since": "2026-11-11"
   },
   {
+    "id": "e2e/diagrams/flowchart/baseline/embedded/nested-four-deep.mmd",
+    "inputHash": "sha256:75b12a580da241fb",
+    "kind": "accept",
+    "reason": "v12 rejects `mermaid <id> {`; v13 parses an embedded diagram block, here nested (ADR-15, proof of concept).",
+    "owner": "#666",
+    "since": "2026-11-11"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/embedded/nested-three-levels.mmd",
+    "inputHash": "sha256:a6d93deaf36aef50",
+    "kind": "accept",
+    "reason": "v12 rejects `mermaid <id> {`; v13 parses an embedded diagram block, here nested (ADR-15, proof of concept).",
+    "owner": "#666",
+    "since": "2026-11-11"
+  },
+  {
     "id": "e2e/diagrams/flowchart/baseline/embedded/sequence-titled.mmd",
     "inputHash": "sha256:e7c613fbc29149ff",
     "kind": "accept",

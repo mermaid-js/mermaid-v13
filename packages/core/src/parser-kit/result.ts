@@ -64,6 +64,11 @@ export interface ParseResult<M, A extends AstNode = AstNode> {
   probe?: ProbeResult;
   /** The diagrams embedded in this one, in source order (ADR-15); absent when there are none. */
   embeds?: readonly EmbeddedBlock[];
+  /**
+   * The edges the parse made, for `maxEdges` counted across a text with embedded diagrams
+   * (ADR-15); absent for a type that does not count them.
+   */
+  edgeCount?: number;
 }
 
 /** Collects the side outputs of one parse. Create one per parse. */

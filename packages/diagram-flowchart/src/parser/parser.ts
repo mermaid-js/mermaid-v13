@@ -491,6 +491,7 @@ class FlowParser {
     };
     const result = st.result(model, ast, this.fullTokens, options, this.probe);
     if (db.embeds.length > 0) result.embeds = db.embeds;
+    result.edgeCount = model.edges.length;
     return result;
   }
 
@@ -1459,12 +1460,15 @@ class FlowParser {
       label: label ?? { text: '', type: 'text' },
     });
     const text = title ? (db.vertices.get(name)?.text ?? '') : undefined;
-    db.embeds.push({
-      id: name,
-      ...(text ? { title: text } : {}),
-      text: this.src.slice(bodyRange.start, bodyRange.end),
-      offset: bodyRange.start,
-    });
+    db.addEmbed(
+      {
+        id: name,
+        ...(text ? { title: text } : {}),
+        text: this.src.slice(bodyRange.start, bodyRange.end),
+        offset: bodyRange.start,
+      },
+      nameRange
+    );
     const r = this.span(from);
     st.statement('embed', r);
     const stmt: FlowEmbedStmt = {
