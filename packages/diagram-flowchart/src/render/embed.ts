@@ -35,9 +35,9 @@ export function embedSlot(ctx: FlowRenderContext, id: string): EmbedSlot {
   return ctx.embed?.(id) ?? null;
 }
 
-/** The box of a block: the inner diagram, the padding and the title strip. */
-export function embedSize(slot: EmbedSlot, tw: number, th: number): ShapeSize {
-  const { width: w, height: h } = framedSize(slot, { width: tw, height: th });
+/** The box of a block: the inner diagram (none: a stand-in), the padding and the title strip. */
+export function embedSize(slot: EmbedSlot | undefined, tw: number, th: number): ShapeSize {
+  const { width: w, height: h } = framedSize(slot ?? null, { width: tw, height: th });
   // The title is centred in its strip.
   return { w, h, dy: th > 0 ? -h / 2 + titleStrip(th) / 2 : 0 };
 }

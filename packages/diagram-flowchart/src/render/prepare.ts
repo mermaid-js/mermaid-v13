@@ -52,7 +52,9 @@ export interface NodeView {
   classes: string[];
   parent?: string;
   vertex?: FlowVertex;
-  /** An embedded diagram block (ADR-15): what it holds, `null` for a stand-in frame. */
+  /** An embedded diagram block (ADR-15), drawn in its frame or folded (#670); absent otherwise. */
+  block?: 'embed' | 'folded';
+  /** An unfolded block: what it holds, `null` for a stand-in frame. */
   embed?: EmbedSlot;
   /** Text output: a block's inner diagram as text, absent when `mermaid` drew none. */
   embedText?: EmbedText;
@@ -275,9 +277,10 @@ function nodeViews(
     const view = blank(v.id, v.ast, false, vertexShape(v));
     view.vertex = v;
     if (v.folded) {
-      view.embed = null;
+      view.block = 'folded';
       view.fold = { type: m.ctx.foldedType?.(v.id) ?? '' };
     } else if (v.type === 'embed') {
+      view.block = 'embed';
       view.embed = embedSlot(m.ctx, v.id);
       const text = m.cells ? m.ctx.embedText?.(v.id) : undefined;
       if (text) view.embedText = text;
@@ -311,11 +314,11 @@ function measureNode(
 ): void {
   const [f, bits] = textStyle(view.style, m.font);
   const has = shapeHasLabel(view.shape);
-  const { fold } = view;
+  const { block, fold } = view;
   // A folded block without a title shows its id, as a collapsed subgraph does.
   const title = fold && !text ? view.id : text;
   // A block's title stays on one line: the strip is as wide as the inner diagram allows.
-  const wrap = view.embed === undefined ? m.wrap : Infinity;
+  const wrap = block ? Infinity : m.wrap;
   view.label = m.label(has || v?.img || v?.icon ? title : '', markdown, f, wrap, bits);
   const lw = view.label.width;
   const lh = view.label.height;
@@ -352,7 +355,7 @@ function measureNode(
     );
     const { width, height } = foldedSize(view.label, fold.label, fold.type.length);
     s = { w: width, h: height, dy: 0 };
-  } else if (view.embed !== undefined) s = embedSize(view.embed, lw, lh);
+  } else if (block) s = embedSize(view.embed, lw, lh);
   else if (v?.img || v?.icon) s = assetSize(v, lw, lh);
   else
     s = shapeSize(

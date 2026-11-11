@@ -234,7 +234,7 @@ function drawFolded(canvas: Canvas, glyphs: GlyphSet, n: NodeView, r: CellRect):
 
 /** A node's box and label: a block (ADR-15), a folded one (#670), or a text-form shape. */
 function drawNode(canvas: Canvas, glyphs: GlyphSet, n: NodeView, r: CellRect): void {
-  if (n.fold) return drawFolded(canvas, glyphs, n, r);
+  if (n.block === 'folded') return drawFolded(canvas, glyphs, n, r);
   if (n.embedText) return drawBlock(canvas, glyphs, n, r);
   drawBox(canvas, glyphs, r, textForm(n.shape, glyphs) ?? {});
   // D140: a grown box keeps its label centred.

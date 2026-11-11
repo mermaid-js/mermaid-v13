@@ -58,7 +58,9 @@ export interface StateNodeView {
   style: CheckedStyle;
   state?: StateNode;
   note?: StateNote;
-  /** An embedded diagram block (ADR-15): what it holds, `null` for a stand-in frame. */
+  /** An embedded diagram block (ADR-15), drawn in its frame or folded (#670); absent otherwise. */
+  block?: 'embed' | 'folded';
+  /** An unfolded block: what it holds, `null` for a stand-in frame. */
   embed?: EmbeddedDiagram | null;
   /** A folded block (#670): its inner type (empty when unknown) and that type's label. */
   fold?: { readonly type: string; readonly label: MeasuredLabel };
@@ -398,7 +400,7 @@ function folded(
   const { width: w, height: h } = m.cells
     ? foldedCells({ width: label.width, rows: label.lines.length }, fold.label, pad)
     : foldedSize(label, fold.label, type.length);
-  return { ...base, shape: 'embed', label, embed: null, fold, w, h };
+  return { ...base, shape: 'embed', block: 'folded', label, fold, w, h };
 }
 
 function measureState(
@@ -427,7 +429,7 @@ function measureState(
       const label = m.label(s.title ?? '', style, Infinity);
       const embed = m.embed?.(s.id) ?? null;
       const { width: w, height: h } = framedSize(embed, label);
-      return { ...base, shape: 'embed', label, embed, w, h };
+      return { ...base, shape: 'embed', block: 'embed', label, embed, w, h };
     }
     case 'plain':
     case 'composite':

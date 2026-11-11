@@ -234,7 +234,7 @@ function paints(theme: ThemeOf, flow: Prepared, lanes: boolean): Paints {
     ? { stroke: theme.color('clusterBorder') }
     : undefined;
   const laneStroke = lanes ? theme.color('clusterBorder') : undefined;
-  const folded = flow.nodes.some((v) => v.fold) ? foldedInk(theme) : undefined;
+  const folded = flow.nodes.some((v) => v.block === 'folded') ? foldedInk(theme) : undefined;
   const slotOf = paletteSlots(theme);
   const edgeLabel = flow.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
@@ -457,8 +457,8 @@ function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView): void {
 /** A node's own classes: a collapsed subgraph's card, a block (ADR-15), or a plain node. */
 function nodeClass(view: NodeView): string {
   if (view.shape === 'collapsedGroup') return 'node cluster collapsed';
-  if (view.embed === undefined) return 'node default';
-  return view.fold ? 'node embed folded' : 'node embed';
+  if (!view.block) return 'node default';
+  return view.block === 'folded' ? 'node embed folded' : 'node embed';
 }
 
 function drawNode(
@@ -471,7 +471,7 @@ function drawNode(
   const v = view.vertex;
   const slot = paint.slotOf(view);
   const securityLevel = ctx.securityLevel ?? 'default';
-  const block = view.embed !== undefined;
+  const { block } = view;
   w.open('g', {
     class: nodeClass(view) + cls(view.classes),
     'data-id': view.id,
@@ -508,7 +508,7 @@ function drawNode(
   if (paint.node.plainStroke && lineAttrs.stroke === paint.node.stroke && usesPlain(view.shape)) {
     lineAttrs = { ...lineAttrs, stroke: paint.node.plainStroke };
   }
-  if (view.embed !== undefined) {
+  if (block) {
     // A border and a transparent background, which set a block apart from a subgraph.
     const frame: Attrs = {
       fill: 'none',
@@ -516,8 +516,8 @@ function drawNode(
       'stroke-width': paint.node.strokeWidth,
       ...view.style.shape,
     };
-    if (view.fold) {
-      const { type, label } = view.fold;
+    if (block === 'folded') {
+      const { type, label } = view.fold!;
       drawFolded(w, { width: view.w, height: view.h }, view.label, label!, type.length, {
         frame,
         mark: frame.stroke ?? paint.node.stroke,
@@ -528,7 +528,7 @@ function drawNode(
       w.close();
       return;
     }
-    drawFramed(w, { width: view.w, height: view.h }, view.label.height, view.embed, frame);
+    drawFramed(w, { width: view.w, height: view.h }, view.label.height, view.embed ?? null, frame);
   } else if (v?.img) drawImage(w, view, v.img, securityLevel, warn);
   else if (v?.icon) {
     // D298: the glyph takes the author's stroke, else nodeBorder (`node.stroke`, the gradient
