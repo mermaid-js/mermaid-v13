@@ -1,6 +1,6 @@
 // The flow family (flowchart and the diagrams whose v12 grammar was cut from `flow.jison`), its
-// own chunk: the token kinds, the lexer's shared start conditions, and the parser's tables,
-// token rules and statement rules.
+// own chunk: the token kinds, the lexer's shared start conditions, the parser's tables, token
+// rules and statement rules, and the model builder's base.
 export type { FlowKinds } from './flow-kinds.ts';
 export { ELLIPSE_STOP, FLOW_STATE, flowChars, flowKeywords, isNl } from './flow-dialect.ts';
 export type { FlowKeyword, FlowKeywords, FlowLexerDialect } from './flow-dialect.ts';
@@ -22,6 +22,15 @@ export type {
   FlowShapeData,
   FlowVertexParts,
 } from './flow-parser-base.ts';
+export { countChar, FlowBuilderBase, flowLabelType, unquoteLabel } from './flow-model.ts';
+export type {
+  FlowBuilderOptions,
+  FlowCallbackRecord,
+  FlowClassRecord,
+  FlowEdgeRecord,
+  FlowLinkRecord,
+  FlowVertexRecord,
+} from './flow-model.ts';
 export { FlowParser } from './flow-parser.ts';
 export type { FlowDocumentNode } from './flow-parser.ts';
 export type {

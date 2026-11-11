@@ -19,22 +19,36 @@
  * (flows, connectors, `global`, kinds from shapes) and the D461 and D464 diagnostics, as above.
  * cspell:ignore kepano
  */
-import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import type { AstId, Diagnostic, Range, RelatedInfo } from '@mermaid-js/core/parser-kit';
 import type { YamlMap } from '@mermaid-js/core/preprocess';
+import {
+  countChar,
+  FlowBuilderBase,
+  flowLabelType,
+  unquoteLabel,
+} from '@mermaid-js/shared/parser/flow';
+import type {
+  FlowBuilderOptions,
+  FlowCallbackRecord,
+  FlowClassRecord,
+  FlowDocItem,
+  FlowEdgeRecord,
+  FlowLabelText,
+  FlowLabelType,
+  FlowLinkInfo,
+  FlowLinkRecord,
+  FlowVertexParts,
+} from '@mermaid-js/shared/parser/flow';
 import { collapsedInto, containment, FlowOpenings, type Mark } from './containment.ts';
 import { drawnShape, isValidShape, RESERVED_ID, resolveShape, vertexKind } from './shapes.ts';
 import type { AgentflowShape, VertexKind } from './shapes.ts';
 
-export type LabelType = 'text' | 'string' | 'markdown';
+export type LabelType = FlowLabelType;
 
 /** An edge's meaning: `-->` sequence, `--x` failure, `-.-` reference. */
 export type EdgeSemantic = 'sequence' | 'failure' | 'reference';
 
-export interface AgentflowLabel {
-  text: string;
-  type: LabelType;
-}
+export type AgentflowLabel = FlowLabelText;
 
 export interface AgentflowVertex {
   id: string;
@@ -68,35 +82,17 @@ export interface AgentflowVertex {
   linkTarget?: string;
 }
 
-export interface AgentflowModelEdge {
-  /** Model id: the user's `id@` or `L_<start>_<end>_<n>`. */
-  id: string;
-  ast: AstId;
-  isUserDefinedId: boolean;
-  start: string;
-  end: string;
+export interface AgentflowModelEdge extends FlowEdgeRecord {
   /** `arrow_point`, `arrow_cross` or `arrow_open`. */
   type: string;
   /** `normal` or `dotted`. */
   stroke: string;
-  length?: number;
   semantic?: EdgeSemantic;
-  text: string;
-  labelType: LabelType;
-  classes: string[];
-  style?: string[];
-  interpolate?: string;
-  animate?: boolean;
-  animation?: string;
   /** Every `@{ … }` key as written. */
   metadata?: YamlMap;
 }
 
-export interface AgentflowClass {
-  id: string;
-  styles: string[];
-  textStyles: string[];
-}
+export type AgentflowClass = FlowClassRecord;
 
 /** A `flow … end` container. */
 export interface AgentflowFlowModel {
@@ -120,21 +116,10 @@ export interface AgentflowFlowModel {
   collapsedInto?: string;
 }
 
-export interface AgentflowLink {
-  /** Vertex id. */
-  id: string;
-  url: string;
-  target?: string;
-  range: Range;
-}
-
-export interface AgentflowCallback {
-  /** Vertex id. */
-  id: string;
-  name: string;
-  args?: string;
-  range: Range;
-}
+/** A `click … href`/URL statement. */
+export type AgentflowLink = FlowLinkRecord;
+/** A `click … callback` or `call` statement. */
+export type AgentflowCallback = FlowCallbackRecord;
 
 /** One of the diagnostics v12 emitted, with the node it named (for `semanticModel`). */
 export interface AgentflowFinding {
@@ -181,17 +166,12 @@ export interface AgentflowModel {
   warnings: Diagnostic[];
 }
 
-export interface LinkInfo {
-  type: string;
-  stroke: string;
-  length?: number;
+export interface LinkInfo extends FlowLinkInfo {
   semantic?: EdgeSemantic;
-  text?: AgentflowLabel;
-  id?: string;
 }
 
 /** Item of a block body as v12's grammar collects it. */
-export type DocItem = string | readonly string[] | { stmt: 'dir'; value: string };
+export type DocItem = FlowDocItem;
 
 /**
  * What a warning names besides its range: the other places (`related`) and, for the render
@@ -211,16 +191,8 @@ export interface AgentflowParseWarning extends Diagnostic {
   readonly astIds?: readonly AstId[];
 }
 
-export interface BuilderOptions {
-  maxEdges: number;
-  maxNodes: number;
-  inheritDir: boolean;
-  error(code: string, message: string, range: Range): void;
+export interface BuilderOptions extends FlowBuilderOptions {
   warn(code: string, message: string, range: Range, extra?: WarningExtra): void;
-}
-
-function labelType(type: unknown): LabelType {
-  return type === 'markdown' || type === 'string' || type === 'text' ? type : 'markdown';
 }
 
 /** A YAML value as JavaScript's `toString` writes it, which v12's sanitiser used. */
@@ -228,16 +200,6 @@ function v12Text(value: unknown): string {
   if (Array.isArray(value)) return value.map((v) => (v === null ? '' : v12Text(v))).join(',');
   if (typeof value === 'object' && value !== null) return '[object Object]';
   return typeof value === 'string' ? value : JSON.stringify(value);
-}
-
-function unquote(text: string): string {
-  return text.startsWith('"') && text.endsWith('"') ? text.substring(1, text.length - 1) : text;
-}
-
-function countChar(ch: string, str: string): number {
-  let count = 0;
-  for (const c of str) if (c === ch) count++;
-  return count;
 }
 
 /** v12 `computeEdgeSemantic`. */
@@ -274,28 +236,12 @@ export function destructLink(end: string, start?: string): LinkInfo {
   return info;
 }
 
-/** What one mention of a vertex sets. */
-export interface VertexParts {
-  label?: AgentflowLabel;
-  /** The bracket shape, and where it is written. */
-  type?: string;
+/** What one mention of a vertex sets, and where. */
+export interface VertexParts extends FlowVertexParts {
+  /** Where the bracket shape is written. */
   shapeAt?: Range;
-  styles?: string[];
-  props?: Record<string, string>;
-  /** The parsed `@{ … }` block; null when it did not parse. */
-  data?: YamlMap | null;
   /** The AST id of the statement that wrote these parts (`n:A@2`); the vertex's when absent. */
   mention?: AstId;
-}
-
-/** What one link statement asks for: every start to every end. */
-export interface LinkParts {
-  starts: string[];
-  ends: string[];
-  info: LinkInfo;
-  astFor: (start: string, end: string) => AstId;
-  /** The link, for the edge-limit diagnostic. */
-  at: Range;
 }
 
 /** One closed `flow … end`, as v12's `addSubGraph` received it. */
@@ -331,49 +277,42 @@ const NO_RANGE: Range = { start: 0, end: 0 };
 type Occurrences = (Mark & { message: string })[];
 
 /** Collects one parse's model, in v12 AgentFlowDB order. Create one per parse. */
-export class AgentflowBuilder {
-  direction = 'TB';
-  readonly vertices = new Map<string, AgentflowVertex>();
-  readonly edges: AgentflowModelEdge[] = [];
-  readonly classes = new Map<string, AgentflowClass>();
+export class AgentflowBuilder extends FlowBuilderBase<
+  AgentflowVertex,
+  AgentflowModelEdge,
+  LinkInfo,
+  BuilderOptions
+> {
   readonly flows: AgentflowFlowModel[] = [];
-  readonly tooltips = new Map<string, string>();
-  readonly links: AgentflowLink[] = [];
-  readonly callbacks: AgentflowCallback[] = [];
-  defaultInterpolate: string | undefined;
-  defaultStyle: string[] | undefined;
-  accTitle = '';
-  accDescr = '';
   private readonly flowById = new Map<string, AgentflowFlowModel>();
   /** Where each flow is opened and lists its members, for `CONTAINMENT_VIOLATION`. */
   private readonly openings = new FlowOpenings();
-  private readonly edgeById = new Map<string, AgentflowModelEdge>();
   private readonly connectorIds: string[] = [];
   private readonly globalNodes = new Set<string>();
-  /** Edges so far per start, then per end. */
-  private readonly pairCount = new Map<string, Map<string, number>>();
   /** Ids some flow lists (v12's `makeUniq` scan, as a set). */
   private readonly members = new Set<string>();
   private readonly marks = new Map<string, VertexMarks>();
   /** First mention of each vertex. */
   private readonly firstAt = new Map<string, Range>();
   private subCount = 0;
-  /** Limits already reported, so a breach is one diagnostic, not one per item. */
-  private readonly limitHit = new Set<'edges' | 'nodes'>();
   private readonly reservedAt: Mark[] = [];
   private readonly replaced: (Mark & { id: string; first: Range })[] = [];
   private readonly findings: AgentflowFinding[] = [];
 
-  constructor(private readonly options: BuilderOptions) {}
-
-  /** Whether `id` names an edge (`id@`), which v12 never turns into a vertex. */
-  hasEdge(id: string): boolean {
-    return this.edgeById.has(id);
+  /** An edge has the meaning its link has (`destructLink`). */
+  protected edgeOf(record: FlowEdgeRecord, info: LinkInfo): AgentflowModelEdge {
+    const edge: AgentflowModelEdge = record;
+    if (info.semantic !== undefined) edge.semantic = info.semantic;
+    return edge;
   }
 
-  /** The edge `id` names (the first one given it), if any. */
-  edgeNamed(id: string): AgentflowModelEdge | undefined {
-    return this.edgeById.get(id);
+  protected container(id: string): AgentflowFlowModel | undefined {
+    return this.flowById.get(id);
+  }
+
+  /** v12 threw a TypeError for an index with no edge; v13 reports its bounds message (D461). */
+  protected noEdgeAt(pos: string): string {
+    return `The index ${pos} for linkStyle is out of bounds. Valid indices for linkStyle are between 0 and ${this.edges.length - 1}. (Help: Ensure that the index is within the range of existing edges.)`;
   }
 
   /** Whether `id` is a connector. */
@@ -408,17 +347,7 @@ export class AgentflowBuilder {
     if (this.routed(id, doc, { at, ast: mention })) return;
     let vertex = this.vertices.get(id);
     if (vertex === undefined) {
-      if (this.vertices.size >= this.options.maxNodes) {
-        if (!this.limitHit.has('nodes')) {
-          this.limitHit.add('nodes');
-          this.options.error(
-            LIMIT_CODES.maxNodes,
-            `Node limit exceeded: the diagram has more than ${this.options.maxNodes} nodes. The limit is set by the page or app that renders the diagram.`,
-            at
-          );
-        }
-        return;
-      }
+      if (this.atNodeLimit(at)) return;
       // `props` keys are the author's: no prototype, so `__proto__` is a key like any other.
       const own = Object.create(null) as Record<string, string>;
       vertex = {
@@ -438,7 +367,7 @@ export class AgentflowBuilder {
     }
     if (label !== undefined) {
       vertex.labelType = label.type;
-      vertex.text = unquote(label.text.trim());
+      vertex.text = unquoteLabel(label.text.trim());
     }
     if (type !== undefined) {
       vertex.type = type;
@@ -473,7 +402,7 @@ export class AgentflowBuilder {
       );
     vertex.text = v12Text(label);
     if (typeof label !== 'string') warn('label', label, JSON.stringify(vertex.text));
-    vertex.labelType = labelType(type);
+    vertex.labelType = flowLabelType(type);
     if (type !== undefined && type !== vertex.labelType) warn('labelType', type, '`markdown`');
   }
 
@@ -541,217 +470,9 @@ export class AgentflowBuilder {
 
   // An edge's `@{…}` keys: all kept as metadata; the presentation ones typed, anything else
   // in them dropped with a warning rather than reaching the model as the wrong type.
-  private edgeData(edge: AgentflowModelEdge, doc: YamlMap, at: Range): void {
+  protected override edgeData(edge: AgentflowModelEdge, doc: YamlMap, at: Range): void {
     edge.metadata = { ...edge.metadata, ...doc };
-    const drop = (key: string, want: string) =>
-      this.options.warn(
-        'EDGE_DATA_DROPPED',
-        `Edge ${JSON.stringify(edge.id)}: ${key} must be ${want}; ${JSON.stringify(doc[key])} was ignored.`,
-        at
-      );
-    const { animate, animation, curve } = doc;
-    if (animate !== undefined) {
-      if (typeof animate === 'boolean') edge.animate = animate;
-      else if (animate === 'true' || animate === 'false') edge.animate = animate === 'true';
-      else drop('animate', 'true or false');
-    }
-    if (animation !== undefined) {
-      if (animation === 'fast' || animation === 'slow') edge.animation = animation;
-      else drop('animation', 'fast or slow');
-    }
-    if (curve !== undefined) {
-      if (typeof curve === 'string') edge.interpolate = curve;
-      else drop('curve', 'a curve name');
-    }
-  }
-
-  private addSingleLink(parts: {
-    start: string;
-    end: string;
-    info: LinkInfo;
-    /** The user's id, when this edge takes it. */
-    id: string | undefined;
-    ast: AstId;
-  }): void {
-    const { start, end, info, id, ast } = parts;
-    const edge: AgentflowModelEdge = {
-      id: '',
-      ast,
-      isUserDefinedId: false,
-      start,
-      end,
-      type: info.type,
-      stroke: info.stroke,
-      text: '',
-      labelType: 'text',
-      classes: [],
-    };
-    if (info.length !== undefined) edge.length = info.length > 10 ? 10 : info.length;
-    if (info.semantic !== undefined) edge.semantic = info.semantic;
-    if (this.defaultInterpolate !== undefined) edge.interpolate = this.defaultInterpolate;
-    if (info.text !== undefined) {
-      edge.text = unquote(info.text.text.trim());
-      edge.labelType = labelType(info.text.type);
-    }
-    let ends = this.pairCount.get(start);
-    if (!ends) this.pairCount.set(start, (ends = new Map<string, number>()));
-    const count = ends.get(end) ?? 0;
-    if (id && !this.edgeById.has(id)) {
-      edge.id = id;
-      edge.isUserDefinedId = true;
-    } else edge.id = `L_${start}_${end}_${count === 0 ? 0 : count + 1}`;
-    this.edges.push(edge);
-    ends.set(end, count + 1);
-    if (!this.edgeById.has(edge.id)) this.edgeById.set(edge.id, edge);
-  }
-
-  /** v12 `addLink`: every start to every end; the user id goes to the last-start/first-end pair. */
-  addLink(parts: LinkParts): void {
-    const { starts, ends, info, astFor, at } = parts;
-    if (this.limitHit.has('edges')) return;
-    // Checked before making any: `A & … --> B & …` multiplies, so one short line can ask for
-    // millions of edges (v12 checked one edge at a time).
-    const max = this.options.maxEdges;
-    const wanted = this.edges.length + starts.length * ends.length;
-    if (wanted > max) {
-      this.limitHit.add('edges');
-      this.options.error(
-        LIMIT_CODES.maxEdges,
-        `Edge limit exceeded: the diagram asks for ${wanted} edges, but the limit is ${max}. The limit is set by the page or app that renders the diagram.`,
-        at
-      );
-      return;
-    }
-    const id = info.id?.replace('@', '');
-    const lastStart = starts[starts.length - 1];
-    const firstEnd = ends[0];
-    for (const start of starts) {
-      for (const end of ends) {
-        const own = start === lastStart && end === firstEnd ? id : undefined;
-        this.addSingleLink({ start, end, info, id: own, ast: astFor(start, end) });
-      }
-    }
-  }
-
-  /**
-   * The edge `pos` names. v12 indexed `edges[pos]` with the index text and threw a TypeError
-   * for any other; v13 reports its bounds message (D461).
-   */
-  private edgeAt(pos: string, at: Range): AgentflowModelEdge | undefined {
-    const edge = /^(?:0|[1-9]\d*)$/.test(pos) ? this.edges[Number(pos)] : undefined;
-    if (!edge) {
-      this.options.error(
-        'LINK_STYLE_INDEX',
-        `The index ${pos} for linkStyle is out of bounds. Valid indices for linkStyle are between 0 and ${this.edges.length - 1}. (Help: Ensure that the index is within the range of existing edges.)`,
-        at
-      );
-    }
-    return edge;
-  }
-
-  /** v12 `updateLinkInterpolate`; returns false (after reporting) for a missing edge. */
-  updateLinkInterpolate(positions: string[], interpolate: string, at: Range): boolean {
-    for (const pos of positions) {
-      if (pos === 'default') this.defaultInterpolate = interpolate;
-      else {
-        const edge = this.edgeAt(pos, at);
-        if (!edge) return false;
-        edge.interpolate = interpolate;
-      }
-    }
-    return true;
-  }
-
-  /** v12 `updateLink`; returns false (after reporting) for a missing edge. */
-  updateLink(positions: string[], style: string[], at: Range): boolean {
-    for (const pos of positions) {
-      if (pos === 'default') {
-        this.defaultStyle = style;
-        continue;
-      }
-      const edge = this.edgeAt(pos, at);
-      if (!edge) return false;
-      edge.style = style;
-      if (style.length > 0 && !style.some((s) => s.startsWith('fill'))) style.push('fill:none');
-    }
-    return true;
-  }
-
-  addClass(ids: string, styles: string[]): void {
-    const style = styles
-      .join()
-      .replace(/\\,/g, '§§§')
-      .replace(/,/g, ';')
-      .replace(/§§§/g, ',')
-      .split(';');
-    for (const id of ids.split(',')) {
-      let def = this.classes.get(id);
-      if (def === undefined) {
-        def = { id, styles: [], textStyles: [] };
-        this.classes.set(id, def);
-      }
-      for (const s of style) {
-        if (s.includes('color')) def.textStyles.push(s.replace('fill', 'bgFill'));
-        def.styles.push(s);
-      }
-    }
-  }
-
-  setDirection(dir: string): void {
-    let d = dir.trim();
-    if (d.includes('<')) d = 'RL';
-    if (d.includes('^')) d = 'BT';
-    if (d.includes('>')) d = 'LR';
-    if (d.includes('v')) d = 'TB';
-    if (d === 'TD') d = 'TB';
-    this.direction = d;
-  }
-
-  setClass(ids: string, className: string): void {
-    for (const id of ids.split(',')) {
-      this.vertices.get(id)?.classes.push(className);
-      this.edgeById.get(id)?.classes.push(className);
-      this.flowById.get(id)?.classes.push(className);
-    }
-  }
-
-  setTooltip(ids: string, tooltip: string): void {
-    for (const id of ids.split(',')) this.tooltips.set(id, tooltip);
-  }
-
-  setLink(ids: string, url: string, at: Range, target?: string): void {
-    const trimmed = url.trim();
-    for (const id of ids.split(',')) {
-      this.links.push(
-        target === undefined
-          ? { id, url: trimmed, range: at }
-          : { id, url: trimmed, target, range: at }
-      );
-      const vertex = this.vertices.get(id);
-      if (vertex !== undefined) {
-        vertex.link = trimmed;
-        if (target === undefined) delete vertex.linkTarget;
-        else vertex.linkTarget = target;
-      }
-    }
-    this.setClass(ids, 'clickable');
-  }
-
-  setClickEvent(ids: string, name: string, at: Range, args?: string): void {
-    for (const id of ids.split(',')) {
-      this.callbacks.push(
-        args === undefined ? { id, name, range: at } : { id, name, args, range: at }
-      );
-    }
-    this.setClass(ids, 'clickable');
-  }
-
-  setAccTitle(text: string): void {
-    this.accTitle = text.replace(/^\s+/g, '');
-  }
-
-  setAccDescription(text: string): void {
-    this.accDescr = text.replace(/\n\s+/g, '\n');
+    super.edgeData(edge, doc, at);
   }
 
   /**
@@ -798,7 +519,7 @@ export class AgentflowBuilder {
       id,
       ast,
       title,
-      labelType: labelType(titleText?.type),
+      labelType: flowLabelType(titleText?.type),
       nodes,
       classes: [],
       styles: [],

@@ -79,10 +79,10 @@ export interface FlowVertexParts {
 }
 
 /** What one link statement asks for: every start to every end. */
-export interface FlowLinkParts {
+export interface FlowLinkParts<L extends FlowLinkInfo = FlowLinkInfo> {
   starts: string[];
   ends: string[];
-  info: FlowLinkInfo;
+  info: L;
   astFor: (start: string, end: string) => AstId;
   /** The link, for the edge-limit diagnostic. */
   at: Range;

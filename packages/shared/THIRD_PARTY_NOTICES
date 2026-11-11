@@ -9,6 +9,7 @@ commit 3a2f075 (release 1.13.0). Each file's header says what it took and what c
 used under the MIT License:
 
   src/parser/flow-lexer.ts
+  src/parser/flow-model.ts
   src/parser/flow-parser-base.ts
   src/parser/flow-parser.ts
   src/svg/arrowheads.ts

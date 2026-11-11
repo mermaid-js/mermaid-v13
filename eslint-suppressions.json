@@ -425,9 +425,6 @@
     "@typescript-eslint/no-base-to-string": {
       "count": 7
     },
-    "@typescript-eslint/prefer-for-of": {
-      "count": 1
-    },
     "complexity": {
       "count": 1
     },
