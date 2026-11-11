@@ -78,6 +78,7 @@ describe('workspace layout (DESIGN §2)', () => {
         './parser/drop',
         './parser/facet',
         './parser/flow',
+        './parser/flow-facet',
         './parser/rule',
         './parser/state',
         './svg/edges',
