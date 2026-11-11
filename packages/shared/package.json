@@ -21,6 +21,16 @@
       "types": "./dist/parser/state.d.ts",
       "default": "./dist/parser/state.js"
     },
+    "./parser/table": {
+      "mermaid-source": "./src/parser/table.ts",
+      "types": "./dist/parser/table.d.ts",
+      "default": "./dist/parser/table.js"
+    },
+    "./parser/v12-text": {
+      "mermaid-source": "./src/parser/v12-text.ts",
+      "types": "./dist/parser/v12-text.d.ts",
+      "default": "./dist/parser/v12-text.js"
+    },
     "./parser/drop": {
       "mermaid-source": "./src/parser/drop.ts",
       "types": "./dist/parser/drop.d.ts",

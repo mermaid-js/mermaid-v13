@@ -32,6 +32,8 @@ import type {
   SymbolOccurrence,
 } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
+import { outerRanges } from '@mermaid-js/shared/parser/table';
+import { tokenValue, v12Text } from '@mermaid-js/shared/parser/v12-text';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type {
   QuadrantAxis,
@@ -59,8 +61,6 @@ import { lex } from './lexer.ts';
 import type { QuadrantLex } from './lexer.ts';
 import { applyStyle } from './styles.ts';
 import { T } from './tokens.ts';
-import { tokenValue } from './value.ts';
-import { v12Text } from './v12-text.ts';
 
 export interface QuadrantParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
@@ -231,7 +231,7 @@ class QuadrantParser {
       if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
       this.c = new ProbeCursor(this.lexed.tokens, probe, SKIPPED);
     }
-    [this.outerStart, this.outerEnd] = outerRanges(this.lexed);
+    [this.outerStart, this.outerEnd] = outerRanges(this.lexed, OPENS, CLOSES, SKIPPED);
   }
 
   parse(): QuadrantParseResult {
@@ -349,7 +349,14 @@ class QuadrantParser {
       });
       throw STOP;
     }
-    st.diagnostics.unexpected('UNEXPECTED', where, names, this.found(), undefined, this.explain() ?? this.hint);
+    st.diagnostics.unexpected(
+      'UNEXPECTED',
+      where,
+      names,
+      this.found(),
+      undefined,
+      this.explain() ?? this.hint
+    );
     throw STOP;
   }
 
@@ -662,36 +669,6 @@ class QuadrantParser {
     );
     return true;
   }
-}
-
-/**
- * Each token's source range with the quotes and `]` jison matched next to it, as the grammar's
- * `attach-next` / `attach-prev` rules count them: an opening quote counts towards the next token,
- * a closing quote or `]` towards the token right before it (adjacent in the text v12 lexed).
- */
-function outerRanges(l: QuadrantLex): [Uint32Array, Uint32Array] {
-  const { kind, start, end, length } = l.tokens;
-  const os = Uint32Array.from(start);
-  const oe = Uint32Array.from(end);
-  let pending = -1;
-  let prev = -1;
-  for (let i = 0; i < length; i++) {
-    const k = kind[i] ?? 0;
-    if (COMMENTS[k] === 1) continue;
-    if (OPENS[k] === 1) {
-      if (pending < 0) pending = start[i] ?? 0;
-    } else if (CLOSES[k] === 1) {
-      // Adjacent in the text v12 lexed: comment lines may lie between them in the source.
-      const touches = prev >= 0 && l.textEnd[prev] === l.textStart[i];
-      if (touches && pending < 0) oe[prev] = end[i] ?? 0;
-      pending = -1;
-    } else if (SKIPPED[k] !== 1) {
-      if (pending >= 0) os[i] = pending;
-      pending = -1;
-      prev = i;
-    }
-  }
-  return [os, oe];
 }
 
 // ---- model ----------------------------------------------------------------------------

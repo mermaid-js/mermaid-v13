@@ -51,11 +51,11 @@ import {
   significantIndex,
 } from './tables.ts';
 import type { Frame, Name } from './tables.ts';
+import { v12Text } from '@mermaid-js/shared/parser/v12-text';
+import type { V12Text } from '@mermaid-js/shared/parser/v12-text';
 import { lex } from './lexer.ts';
 import type { ClassLex } from './lexer.ts';
 import { S } from './rules.ts';
-import { v12Text } from './v12-text.ts';
-import type { V12Text } from './v12-text.ts';
 import { tokenValue } from './tokens-api.ts';
 import type { ClassParseOptions } from './parser.ts';
 
@@ -122,10 +122,13 @@ export abstract class ParserBase {
     this.maxEdges = options.maxEdges ?? DEFAULT_LIMITS.maxEdges;
     this.maxNodes = options.maxNodes ?? DEFAULT_LIMITS.maxNodes;
     this.maxDepth = options.maxDepth ?? DEFAULT_LIMITS.maxDepth;
+    // Class's `LABEL` rule never splits an entity placeholder: each of its characters takes
+    // the range of the `#` or `;` it stands for.
     this.v12 = v12Text(
       src,
       pre.bodyStart,
-      pre.directives.map((d) => d.range)
+      pre.directives.map((d) => d.range),
+      true
     );
     const probe =
       options.probe === undefined ? undefined : new Probe(src, options.probe, PROBE_FOLLOWS);
@@ -320,7 +323,14 @@ export abstract class ParserBase {
       );
       return;
     }
-    st.diagnostics.unexpected('UNEXPECTED', where, table.names(want), this.found(), undefined, hint ?? this.hint);
+    st.diagnostics.unexpected(
+      'UNEXPECTED',
+      where,
+      table.names(want),
+      this.found(),
+      undefined,
+      hint ?? this.hint
+    );
   }
 
   /** Report what was found where one of `want` was expected, then stop the statement. */
