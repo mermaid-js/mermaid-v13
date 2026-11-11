@@ -9,7 +9,7 @@
   },
   {
     "id": "e2e/diagrams/flowchart/baseline/embedded/folded-in-subgraph.mmd",
-    "inputHash": "sha256:96e9363420bb27e1",
+    "inputHash": "sha256:79ab3db4ba92093c",
     "kind": "accept",
     "reason": "v12 rejects `mermaid <id> {` and `@{ view: collapsed }` on it; v13 parses a folded embedded diagram block (ADR-15, proof of concept).",
     "owner": "#670",
