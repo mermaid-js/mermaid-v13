@@ -288,9 +288,9 @@ export function createMermaid(
     const hit = siteConfigs.get(snap, plugin, detected, section, registry.fragments());
     for (const w of hit.warnings) warn(w);
     // An embedded diagram (ADR-15) sets only its own options, with one warning for the rest.
-    if (host) ({ front, directives } = blockLayers(front, directives, hit.site.secure, warn));
-    let config: ResolvedConfig = resolveText(hit.site, front, directives, { warn });
-    // An embedded diagram takes its host's theme and font, at its natural size.
+    if (host) ({ front, directives } = blockLayers(front, directives, hit.site, warn));
+    // An embedded diagram starts from its host's config, and takes its theme.
+    let config: ResolvedConfig = resolveText(hit.site, front, directives, { warn, under: host });
     if (host) config = blockConfig(config, host, [section ?? []].flat());
     const t = stageStart();
     const claims = hooks.claims();

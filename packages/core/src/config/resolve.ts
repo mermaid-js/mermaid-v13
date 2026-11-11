@@ -209,14 +209,19 @@ export function resolveSite(
   };
 }
 
-/** Merges diagram text (front matter, then directives) over a resolved site. */
+/**
+ * Merges diagram text (front matter, then directives) over a resolved site. With `under` (an
+ * embedded diagram's host config, ADR-15), the text goes over that, and that over the site.
+ * `theme` and `layout` still resolve from the text and the site.
+ */
 export function resolveText(
   site: ResolvedSite,
   frontMatter?: ConfigInput,
   directives: readonly ConfigInput[] = [],
-  options: Pick<ResolveConfigOptions, 'warn'> = {}
+  options: Pick<ResolveConfigOptions, 'warn'> & { readonly under?: ResolvedConfig } = {}
 ): ResolvedConfig {
-  if (frontMatter === undefined && directives.length === 0) return site.plain;
+  const { under } = options;
+  if (frontMatter === undefined && directives.length === 0 && !under) return site.plain;
   const warn = options.warn ?? ignore;
   const looks = lookStripper(warn, site.lookWarned);
   // v12 fed front matter and directives through one `addDirective` layer.
@@ -251,16 +256,18 @@ export function resolveText(
       text.themeVariables = { ...vars, fontFamily: text.fontFamily };
     }
   }
-  return layered(site, text);
+  return layered(site, text, under);
 }
 
-// The site's base with `text` merged over it, appearance resolved, frozen. Parts `text` does
-// not touch stay shared with the (frozen) site.
+// The site's base with `under` and `text` merged over it, appearance resolved, frozen. Parts
+// they do not touch stay shared with the (frozen) site.
 function layered(
   layers: Pick<ResolvedSite, 'base' | 'site' | 'plugin' | 'defaults' | 'keys' | 'sections'>,
-  text: Plain
+  text: Plain,
+  under?: Plain
 ): ResolvedConfig {
   const config: Plain = { ...layers.base };
+  if (under) merge(config, under);
   merge(config, text);
   resolveAppearance(config, [text, layers.site, layers.plugin, layers.defaults], layers);
   return deepFreeze(config) as ResolvedConfig;

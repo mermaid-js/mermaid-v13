@@ -11,7 +11,7 @@ import {
   type EmbeddedText,
   type Warning,
 } from '@mermaid-js/core';
-import type { ResolvedConfig } from '@mermaid-js/core/config';
+import type { ResolvedConfig, ResolvedSite } from '@mermaid-js/core/config';
 import type { Diagnostic, EmbeddedBlock, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
@@ -117,70 +117,66 @@ export function outsideBlocks(
   };
 }
 
-/** Config keys a block cannot set: the look of the whole picture comes from the host. */
-const HOST_KEYS: ReadonlySet<string> = new Set([
-  'theme',
-  'themeVariables',
-  'themeCSS',
-  'look',
-  'darkMode',
-  'fontFamily',
-  'fontSize',
-  'handDrawnSeed',
-]);
+/**
+ * Whether `key` is a diagram section: one of the block type's own `sections`, or one the schema
+ * `tree` gives the keys every diagram has (`useMaxWidth`). A block's front matter and
+ * directives may set these only (ADR-15).
+ */
+function isSection(
+  key: string,
+  { tree, sections }: Pick<ResolvedSite, 'tree' | 'sections'>
+): boolean {
+  const keys = tree[key];
+  return sections.includes(key) || (typeof keys === 'object' && 'useMaxWidth' in keys);
+}
 
-/** `layer` without the keys a block cannot set, each one dropped added to `dropped`. */
-function withoutHostKeys<T extends object>(
+/** `layer`'s diagram sections, each other key added to `dropped`. */
+function sectionsOf<T extends object>(
   layer: T,
-  secure: ReadonlySet<string>,
+  site: Pick<ResolvedSite, 'tree' | 'sections'>,
   dropped: Set<string>
 ): T {
   const kept: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(layer)) {
-    if (HOST_KEYS.has(k) || secure.has(k)) dropped.add(k);
-    else kept[k] = v;
+    if (isSection(k, site)) kept[k] = v;
+    else dropped.add(k);
   }
   return kept as T;
 }
 
 /**
- * A block's config layers (front matter, directives) without the keys only the host or the
- * integrator sets (`secure`); one warning names those it dropped.
+ * A block's config layers (front matter, directives) with their diagram sections only; one
+ * warning names the keys it dropped.
  */
 export function blockLayers<T extends object>(
   front: T | undefined,
   directives: readonly T[],
-  secure: ReadonlySet<string>,
+  site: Pick<ResolvedSite, 'tree' | 'sections'>,
   warn: (w: Warning) => void
 ): { front: T | undefined; directives: T[] } {
   const dropped = new Set<string>();
   const out = {
-    front: front && withoutHostKeys(front, secure, dropped),
-    directives: directives.map((d) => withoutHostKeys(d, secure, dropped)),
+    front: front && sectionsOf(front, site, dropped),
+    directives: directives.map((d) => sectionsOf(d, site, dropped)),
   };
   if (dropped.size > 0)
     warn({
       code: 'EMBED_CONFIG_IGNORED',
-      message: `An embedded diagram cannot set ${[...dropped].map((k) => `\`${k}\``).join(', ')}; ignored: theme, look and font come from the host.`,
+      message: `An embedded diagram can set only diagram sections (such as \`sequence\`), not ${[...dropped].map((k) => `\`${k}\``).join(', ')}; ignored: the rest, theme and font included, comes from the host.`,
     });
   return out;
 }
 
-/** What a block takes from its host's resolved config: the look of the whole picture. */
-const INHERITED = ['theme', 'themeVariables', 'fontFamily', 'fontSize', 'darkMode'] as const;
-
 /**
- * A block's config: its own (site, then its front matter and directives), with the host's
- * theme and font, and drawn at its natural size (`useMaxWidth: false` in its sections).
+ * A block's config, resolved over its host's (`config`): the host's theme, and drawn at its
+ * natural size (`useMaxWidth: false` in its sections).
  */
 export function blockConfig(
   config: ResolvedConfig,
   host: ResolvedConfig,
   sections: readonly string[]
 ): ResolvedConfig {
-  const out: Record<string, unknown> = { ...config };
-  const from = host as Readonly<Record<string, unknown>>;
-  for (const key of INHERITED) if (from[key] !== undefined) out[key] = from[key];
+  const out: Record<string, unknown> = { ...config, theme: host.theme };
   for (const s of sections) {
     const own = (config as Readonly<Record<string, unknown>>)[s];
     out[s] = Object.freeze({ ...(own as object | undefined), useMaxWidth: false });

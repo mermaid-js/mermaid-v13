@@ -107,9 +107,12 @@ identical blocks, `a.b` beside `a_b`, and a block `b` in `a` beside a block `a-b
 carries its own theme aliases on its own root, so host and block styles never mix.
 
 **Look.** A border and a transparent background, which tells a block apart from a subgraph, and
-an optional title strip. Theme, look and font come from the host. Front matter at the top of a
-block may set diagram-specific keys only (for example `sequence.mirrorActors`); `theme`,
-`themeVariables`, `look`, `securityLevel` and the other secure keys are ignored with a warning.
+an optional title strip. A block inherits its host's resolved config, the host's front matter
+and directives included, so theme, look and font come from the host. Front matter and directives
+at the top of a block may then set diagram sections only (for example `sequence.mirrorActors`):
+every other key (`theme`, `themeVariables`, `look`, `securityLevel`, `wrap`, …) is ignored with
+one warning. `theme` and `layout` inside a section do not reach the block: the theme is the
+host's, and the layout resolves for the block's own type.
 
 **Errors fail the render.** A parse error inside a block, or a block whose type is unknown or
 not available (not ported, or not registered under `mermaid/slim`), fails the whole render. The
