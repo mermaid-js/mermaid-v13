@@ -178,3 +178,53 @@ describe('block types that cannot be drawn', () => {
     expect(e.message).toContain('`sequenceDiagrm` is not a diagram type');
   });
 });
+
+describe('block ids', () => {
+  const block = (id: string) => [`  mermaid ${id} {`, '    pie', '      "a" : 1', '  }'];
+
+  it('rejects a second block with the same id, at the second', async () => {
+    const text = ['flowchart LR', ...block('x'), ...block('x')].join('\n');
+    const e = await rejection(createMermaid().render('host', text));
+    expect(e.code).toBe('SEMANTIC');
+    expect(e.line).toBe(6);
+    expect(e.column).toBe(11);
+    expect(e.message).toContain('`x`');
+  });
+
+  it('rejects a node with its own shape or label under a block id, either order', async () => {
+    const before = ['flowchart LR', '  x[Box] --> y', ...block('x')].join('\n');
+    expect((await rejection(createMermaid().render('host', before))).line).toBe(2);
+    const after = ['flowchart LR', ...block('x'), '  y --> x(Round)'].join('\n');
+    const e = await rejection(createMermaid().render('host', after));
+    expect(e.line).toBe(6);
+    expect(e.column).toBe(9);
+  });
+
+  it('rejects a subgraph with a block id', async () => {
+    const text = ['flowchart LR', '  subgraph x', '    a', '  end', ...block('x')].join('\n');
+    expect((await rejection(createMermaid().render('host', text))).line).toBe(5);
+  });
+
+  it('accepts edges, class and style on a block id, and the same id in another block', async () => {
+    const text = [
+      'flowchart LR',
+      '  a --> x',
+      '  mermaid x {',
+      '    flowchart LR',
+      '      x --> a',
+      '      mermaid y {',
+      '        pie',
+      '          "a" : 1',
+      '      }',
+      '  }',
+      '  x --> b',
+      '  class x c',
+      '  style x stroke:red',
+      '  mermaid y {',
+      '    pie',
+      '      "b" : 1',
+      '  }',
+    ].join('\n');
+    expect(roots((await createMermaid().render('host', text)).svg)).toHaveLength(4);
+  });
+});
