@@ -35,6 +35,7 @@ import { completeLayout, type CompleteStateLayout } from '../layout/layout.ts';
 import type { StateLink, StateModel } from '../parser/index.ts';
 import { arrowTrim, arrowhead, drawArrowhead, routePath, type Arrowhead } from './edges.ts';
 import { drawEmbed } from './embed.ts';
+import { drawFolded } from '@mermaid-js/core/svg/folded';
 import { drawDescribed, drawShape, type ShapePaint } from './shapes.ts';
 
 // v12 `.note-edge { stroke-dasharray: 5 }` and `.statediagram-state rect.divider
@@ -95,6 +96,8 @@ interface Paints {
     readonly radius: number;
   };
   readonly note?: { fill: Color; stroke: OutlinePaint; text: Color };
+  /** Folded blocks (#670): the icon's filled nodes and the type's muted grey. */
+  readonly folded?: { readonly ink: Color; readonly muted: Color };
   readonly edgeLabel?: { fill: Color; text: Color };
   /** The palette slot of each composite and region; empty when the theme has no palette. */
   readonly slots: ReadonlyMap<string, Tint>;
@@ -168,7 +171,10 @@ function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
   const edgeLabel = s.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
     : undefined;
-  return { ...node, composite, note, edgeLabel, slots: paletteSlots(theme, model, s) };
+  const folded = s.nodes.some((v) => v.fold)
+    ? { ink: theme.color('nodeBorder'), muted: theme.color('mutedBorder') }
+    : undefined;
+  return { ...node, composite, note, folded, edgeLabel, slots: paletteSlots(theme, model, s) };
 }
 
 /** What every section of one render draws from. */
@@ -429,7 +435,8 @@ function nodeClass(view: StateNodeView): string {
   if (view.shape === 'note') return 'node statediagram-note';
   // v12 `stateStart` and `stateEnd` wrote `node default` and no state classes.
   if (view.shape === 'start' || view.shape === 'end') return 'node default';
-  if (view.shape === 'embed') return 'node embed' + cls(view.state?.classes ?? []);
+  if (view.shape === 'embed')
+    return (view.fold ? 'node embed folded' : 'node embed') + cls(view.state?.classes ?? []);
   return 'node statediagram-state' + cls(view.state?.classes ?? []);
 }
 
@@ -468,7 +475,15 @@ function drawNode(scene: Scene, view: StateNodeView, link: StateLink | undefined
       'stroke-width': paint.strokeWidth,
       ...view.style.shape,
     };
-    drawEmbed(w, view, frame, { ...view.style.text });
+    const { fold } = view;
+    if (fold) {
+      const size = { width: view.w, height: view.h };
+      const marks = { frame, mark: frame.stroke ?? paint.border, ...paint.folded! };
+      drawFolded(w, size, view.label, fold.label, fold.type.length, {
+        ...marks,
+        title: { ...view.style.text },
+      });
+    } else drawEmbed(w, view, frame, { ...view.style.text });
   } else drawState(scene, view);
   if (href) w.close();
   w.close();

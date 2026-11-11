@@ -1,0 +1,19 @@
+---
+description: a folded flowchart block inside a composite state, next to an open one
+---
+stateDiagram-v2
+  [*] --> Checkout
+  state Checkout {
+    [*] --> cart
+    mermaid cart["Cart"] {
+      flowchart LR
+        Add --> Review
+    }
+    cart@{ view: collapsed }
+    cart --> pay
+    mermaid pay["Payment"] {
+      flowchart LR
+        Card --> Done
+    }
+  }
+  Checkout --> [*]

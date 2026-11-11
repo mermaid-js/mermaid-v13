@@ -8,6 +8,7 @@ import type {
   RoutePoint,
 } from '@mermaid-js/core/layout';
 import { layered } from '@mermaid-js/core/layout';
+import { drawFolded } from '@mermaid-js/core/svg/folded';
 import {
   checkLinkTarget,
   checkUrl,
@@ -190,6 +191,8 @@ export interface Paints {
   readonly laneStroke?: Color;
   /** A collapsed subgraph's separator and dots take clusterBorder (v12 `.collapsed-*` rules). */
   readonly collapsedLine?: Attrs;
+  /** Folded blocks (#670): the icon's filled nodes and the type's muted grey. */
+  readonly folded?: { readonly ink: Color; readonly muted: Color };
   /** A subgraph's palette slot from its source order (a lane's too, the default lane's included). */
   readonly slotOf: (view: Pick<NodeView, 'order'>) => Tint | undefined;
   readonly edgeLabel?: { fill: Color; text: Color };
@@ -231,11 +234,14 @@ function paints(theme: ThemeOf, flow: Prepared, lanes: boolean): Paints {
     ? { stroke: theme.color('clusterBorder') }
     : undefined;
   const laneStroke = lanes ? theme.color('clusterBorder') : undefined;
+  const folded = flow.nodes.some((v) => v.fold)
+    ? { ink: theme.color('nodeBorder'), muted: theme.color('mutedBorder') }
+    : undefined;
   const slotOf = paletteSlots(theme);
   const edgeLabel = flow.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
     : undefined;
-  return { heads, node, cluster, laneStroke, collapsedLine, slotOf, edgeLabel };
+  return { heads, node, cluster, laneStroke, collapsedLine, folded, slotOf, edgeLabel };
 }
 
 /** What every section of one render draws from. */
@@ -453,7 +459,8 @@ function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView): void {
 /** A node's own classes: a collapsed subgraph's card, a block (ADR-15), or a plain node. */
 function nodeClass(view: NodeView): string {
   if (view.shape === 'collapsedGroup') return 'node cluster collapsed';
-  return view.embed === undefined ? 'node default' : 'node embed';
+  if (view.embed === undefined) return 'node default';
+  return view.fold ? 'node embed folded' : 'node embed';
 }
 
 function drawNode(
@@ -505,12 +512,25 @@ function drawNode(
   }
   if (view.embed !== undefined) {
     // A border and a transparent background, which set a block apart from a subgraph.
-    drawEmbed(w, view, view.embed, {
+    const frame: Attrs = {
       fill: 'none',
       stroke: paint.node.stroke,
       'stroke-width': paint.node.strokeWidth,
       ...view.style.shape,
-    });
+    };
+    if (view.fold) {
+      const { type, label } = view.fold;
+      drawFolded(w, { width: view.w, height: view.h }, view.label, label!, type.length, {
+        frame,
+        mark: frame.stroke ?? paint.node.stroke,
+        ...paint.folded!,
+        title: view.style.text,
+      });
+      if (href) w.close();
+      w.close();
+      return;
+    }
+    drawEmbed(w, view, view.embed, frame);
   } else if (v?.img) drawImage(w, view, v.img, securityLevel, warn);
   else if (v?.icon) {
     // D298: the glyph takes the author's stroke, else nodeBorder (`node.stroke`, the gradient

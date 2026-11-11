@@ -48,6 +48,11 @@ export interface EmbeddedBlock {
   readonly text: string;
   /** Where {@link text} starts in the host's text, to place errors inside it. */
   readonly offset: number;
+  /**
+   * Folded (`id@{ view: collapsed }`, #670): never parsed, laid out or drawn; `mermaid` detects
+   * only its type, from its type line (`RenderContext.foldedType`).
+   */
+  readonly folded?: boolean;
 }
 
 export interface ParseResult<M, A extends AstNode = AstNode> {

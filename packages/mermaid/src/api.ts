@@ -626,6 +626,7 @@ export function createMermaid(
       inline,
       icon,
       embed,
+      foldedType: blocks.foldedType(analysis, s),
       warn,
       // Spread into the literal, not over `ctx`: a spread would run the lazy idPrefix getter.
       ...textOnly,

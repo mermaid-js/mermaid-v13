@@ -1,0 +1,14 @@
+---
+description: a folded sequence block as a state, the fold before the block, with transitions to and from it
+---
+stateDiagram-v2
+  login@{ view: collapsed }
+  [*] --> Idle
+  Idle --> login : sign in
+  mermaid login["Login flow"] {
+    sequenceDiagram
+      User->>Server: credentials
+      Server-->>User: token
+  }
+  login --> Ready : token
+  Ready --> [*]

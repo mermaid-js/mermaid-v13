@@ -265,6 +265,7 @@ Modes: `INITIAL`, `STATE`, `STATE_STRING`, `STATE_ID`, `SCALE`, `acc_title`, `ac
 | embed | EMBED_OPEN | `\{` |  |  |
 | embed | EMBED_BODY | `[^}]+` |  |  |
 | embed | EMBED_END | `\}` |  |  |
+| embed | EMBED_FOLD | `@\{[^}\n]*\}` |  | `id@{ view: collapsed }` folds the block `id` (#670): the only `@{ … }` a state diagram takes, lexed by the hand-written lexer after an id, up to the first `}` on its line. |
 | INITIAL | SD | `(?i:stateDiagram)\s+` |  | The header: `stateDiagram` or `stateDiagram-v2`. |
 | INITIAL | SD | `(?i:stateDiagram-v2)\s+` |  |  |
 | INITIAL | HIDE_EMPTY | `(?i:hide empty description)\b` |  | `hide empty description`: accepted and ignored. |

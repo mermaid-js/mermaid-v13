@@ -994,6 +994,12 @@ export default {
         {
           "token": "delimiter"
         }
+      ],
+      [
+        "@\\{[^}\\n]*\\}",
+        {
+          "token": "annotation"
+        }
       ]
     ],
     "frontMatterStart": [
