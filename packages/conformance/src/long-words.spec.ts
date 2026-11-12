@@ -39,7 +39,7 @@ describe('a word wider than its wrap width stays whole, as in v12 (#649)', () =>
     ['state-diagram-v2/pr-check/long-word-stays-whole.mmd', WORD],
     ['mindmap/pr-check/long-word-stays-whole.mmd', WORD],
     ['agentflow/pr-check/long-word-stays-whole.mmd', 'translate_to_swedish'],
-    // D557: journey and timeline widen the box to the word instead of overflowing it.
+    // D558: journey and timeline widen the box to the word instead of overflowing it.
     ['journey/pr-check/long-word-stays-whole.mmd', WORD],
     ['timeline/pr-check/long-word-stays-whole.mmd', WORD],
     ['timeline/pr-check/long-word-stays-whole-td.mmd', WORD],

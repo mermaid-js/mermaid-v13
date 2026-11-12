@@ -7,7 +7,7 @@
  * no higher than `eventAxisGap` below the axis (D252); the axis reaches at least the right edge
  * of the last column (v12's `width + 3 × leftMargin` fell short below a `leftMargin` of 25); a
  * column whose period, event or section holds a word wider than the wrap width is that much
- * wider, and the columns after it move along (D557, #649).
+ * wider, and the columns after it move along (D558, #649).
  */
 import type { TimelineModel } from '../model.ts';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
@@ -42,7 +42,7 @@ interface SectionBox {
 }
 
 /**
- * Where each column starts and what it adds to `pitch` and to its boxes' width (D557): as much
+ * Where each column starts and what it adds to `pitch` and to its boxes' width (D558): as much
  * as a word kept whole in its period or an event passes the wrap width, plus an even share of
  * what its section's word passes the section's. A section with no periods still takes one
  * column. Without long words every column is `pitch` apart, as in v12.

@@ -9,7 +9,7 @@
  * subtracted `2 × rowGap` from the section's height, so the next section began 30 px above the
  * end of a full last row), it starts at least `rowGap` below what that row holds; the axis
  * starts below a title it would cross (GAPS #337). A box whose label holds a word wider than
- * its wrap width is that much wider (D557, #649): a period to the left, so it still ends
+ * its wrap width is that much wider (D558, #649): a period to the left, so it still ends
  * `taskAxisGap` before the axis, an event and a section to the right; a section spans its
  * periods and events. The axis and every other box stay where they were.
  */
@@ -121,7 +121,7 @@ export function layoutTD(env: Env, model: TimelineModel): TimelineLayout {
       band.rect(period);
       periods[i] = period;
       if (header) {
-        // The section spans a period or an event widened past it (D557).
+        // The section spans a period or an event widened past it (D558).
         const x1 = Math.min(header.x, period.x);
         let x2 = header.x + header.width;
         for (const e of events) x2 = Math.max(x2, e.x + e.width);

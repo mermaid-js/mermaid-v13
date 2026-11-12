@@ -351,7 +351,7 @@ describe('journey layout: labels (D225)', () => {
   });
 });
 
-describe('journey layout: long words stay whole (#649, D557)', () => {
+describe('journey layout: long words stay whole (#649, D558)', () => {
   const lines = (l: { text: { lines: readonly { text: string }[][] } }): string[] =>
     l.text.lines.map((line) => line.map((r) => r.text).join(''));
 

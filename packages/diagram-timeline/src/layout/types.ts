@@ -38,7 +38,7 @@ export interface TimelineBox extends Rect {
   readonly slot: number;
   /**
    * The label, measured and wrapped to the box's width less its padding. A word wider than the
-   * wrap width stays whole and the box is widened to hold it (D557).
+   * wrap width stays whole and the box is widened to hold it (D558).
    */
   readonly label: MeasuredLabel;
   /** The box's padding (v12 `node.padding`): LR 20, TD 5. */

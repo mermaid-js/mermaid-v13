@@ -9,7 +9,7 @@
  * bands gap by `taskMargin`, the margin grows past a legend wider than it with no threshold
  * jump, a label taller than its box grows the box downward, and the bounds are what is drawn
  * (D224). A task or section name keeps a word wider than its box whole and the box widens to
- * hold it, moving the tasks after it along (D557).
+ * hold it, moving the tasks after it along (D558).
  */
 import { pathBuilder } from '@mermaid-js/core/svg';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
@@ -108,7 +108,7 @@ function sectionOf(model: JourneyModel, t: JourneyTask): number | undefined {
 }
 
 /**
- * Task widths and section labels (D557, #649): names wrap at `width` but keep a word wider than
+ * Task widths and section labels (D558, #649): names wrap at `width` but keep a word wider than
  * that whole, and a task box grows to its widest line. A section name wider than its run of
  * tasks shares the extra width out evenly among them. Names that fit keep v12's `width`.
  */

@@ -69,7 +69,7 @@ export interface Env {
   readonly titleReferenceFont: FontKey;
   /**
    * `text` laid out to `wrap` px (D225). A word wider than `wrap` stays whole, as v12 kept it
-   * (#649), and the layouts widen its box to hold it (D557).
+   * (#649), and the layouts widen its box to hold it (D558).
    */
   measure(text: string, wrap: number, font?: FontKey): MeasuredLabel;
   /** v12 `drawNode`'s height: the label, `heightEm` font sizes and the padding once. */
@@ -209,7 +209,7 @@ export function line(
   return { x1, y1, x2, y2, width, arrow: arrowAt(env, x1, y1, x2, y2, width) };
 }
 
-/** How far `label` is wider than `wrap`: what a word kept whole adds to its box (D557). */
+/** How far `label` is wider than `wrap`: what a word kept whole adds to its box (D558). */
 export const overflow = (label: MeasuredLabel, wrap: number): number =>
   Math.max(0, label.width - wrap);
 
