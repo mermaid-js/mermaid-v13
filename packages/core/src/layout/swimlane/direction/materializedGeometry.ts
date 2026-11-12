@@ -1764,11 +1764,11 @@ export function reassignCrossingExternalRailChannels(
       places.push(place);
       railsOf.set(rail.edge, places);
     }
-    const edges = [...railsOf.keys()];
+    const members = [...railsOf.keys()];
     const context: ComponentContext = {
       rails,
-      edges,
-      members: new Set(edges),
+      edges: members,
+      members: new Set(members),
       railsOf,
       drafts: new Map(),
       kept: new Map(),
@@ -1780,7 +1780,7 @@ export function reassignCrossingExternalRailChannels(
       bends: round.totalBends,
     };
 
-    for (const edge of edges) {
+    for (const edge of members) {
       const kept = draftFor(context, edge, (place) => rails[place]!.coord);
       context.kept.set(edge, kept);
       context.bends += (kept?.bends ?? 0) - (round.bends.get(edge) ?? 0);
@@ -1792,14 +1792,14 @@ export function reassignCrossingExternalRailChannels(
       }
     }
     context.lines = buildSegmentLineIndex(
-      edges.flatMap((owner) =>
+      members.flatMap((owner) =>
         (context.kept.get(owner)?.segments ?? []).map((segment) => ({ owner, segment }))
       )
     );
 
     let outside = 0;
     let inside = 0;
-    for (const edge of edges) {
+    for (const edge of members) {
       const sharing = new Set<MaterializedEdge>();
       for (const segment of context.kept.get(edge)?.segments ?? []) {
         for (const other of round.lines.sameAxisNear(segment, 1)) {
