@@ -20,7 +20,7 @@
  * message that names its cause, and box-drawing errors are reported at their source line and
  * column (D486).
  */
-import { checkLimit } from '@mermaid-js/core/limits';
+import { checkDepth, checkLimit } from '@mermaid-js/core/limits';
 import {
   APOSTROPHE,
   DQUOTE,
@@ -67,7 +67,6 @@ import {
   TITLE,
 } from './convert.ts';
 import { lex } from './lexer.ts';
-import { checkDepth } from './limits.ts';
 import type { TreeViewLex } from './lexer.ts';
 import { normalise } from './normalise.ts';
 import { HEADER, T } from './tokens.ts';
@@ -804,7 +803,7 @@ class TreeViewParser {
       accDescr: this.texts.AccDescr,
       frontMatterTitle: this.pre.frontMatter?.title,
     });
-    checkDepth(this.st, this.nodes, this.opts.maxDepth);
+    checkDepth(this.st.diagnostics, this.nodes, this.opts.maxDepth);
     const warnings = diagnostics.list.filter((d) => d.severity === 'warning').sort(bySource);
     return Object.freeze({ ...resolved, warnings: Object.freeze(warnings) });
   }

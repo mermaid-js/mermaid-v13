@@ -173,6 +173,8 @@ export function asLimitError(error: unknown): LimitError | undefined {
   return undefined;
 }
 
+const SET_BY = 'The limit is set by the page or app that renders the diagram.';
+
 /**
  * A parser's node or edge cap (#721): call it after each one is added, with `count` those so
  * far, and it reports the cap once, at the first one over it (a fractional cap included). `cap`
@@ -192,8 +194,29 @@ export function checkLimit<R>(
   if (count > max && count - 1 <= max) {
     diagnostics.error(
       LIMIT_CODES[limit],
-      `The diagram has more than ${max} ${what}, the limit. The limit is set by the page or app that renders the diagram.`,
+      `The diagram has more than ${max} ${what}, the limit. ${SET_BY}`,
       range
+    );
+  }
+}
+
+/**
+ * A parser's nesting cap (#721), once the tree is built: reports the first of `rows` (in source
+ * order) that sits deeper than `cap`, the default `maxDepth` when absent. Each diagram type says
+ * what depth 0 is.
+ */
+export function checkDepth<R>(
+  diagnostics: { error(code: string, message: string, range: R): unknown },
+  rows: readonly { readonly depth: number; readonly range: R }[],
+  cap: number | undefined
+): void {
+  const max = cap ?? DEFAULT_LIMITS.maxDepth;
+  const deep = rows.find((row) => row.depth > max);
+  if (deep) {
+    diagnostics.error(
+      LIMIT_CODES.maxDepth,
+      `The diagram is nested ${deep.depth} deep here, over the limit of ${max}. ${SET_BY}`,
+      deep.range
     );
   }
 }

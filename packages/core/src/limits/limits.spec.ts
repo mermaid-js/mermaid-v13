@@ -5,6 +5,7 @@ import {
   LimitError,
   MAX_STEPS,
   asLimitError,
+  checkDepth,
   checkLimit,
   checkOutput,
   checkSource,
@@ -157,5 +158,32 @@ describe('checkLimit (#721)', () => {
     expect(out).toEqual([
       'EDGE_LIMIT: The diagram has more than 5000 links, the limit. The limit is set by the page or app that renders the diagram.',
     ]);
+  });
+});
+
+describe('checkDepth (#721)', () => {
+  const run = (cap: number | undefined, depths: number[]): string[] => {
+    const out: string[] = [];
+    const sink = {
+      error: (code: string, message: string, at: number) => out.push(`${code} @${at}: ${message}`),
+    };
+    checkDepth(
+      sink,
+      depths.map((depth, range) => ({ depth, range })),
+      cap
+    );
+    return out;
+  };
+
+  it('reports the first row deeper than the cap, once', () => {
+    expect(run(2, [0, 1, 2, 1])).toEqual([]);
+    expect(run(2, [0, 1, 2, 3, 4, 3])).toEqual([
+      'DEPTH_LIMIT @3: The diagram is nested 3 deep here, over the limit of 2. The limit is set by the page or app that renders the diagram.',
+    ]);
+  });
+
+  it("defaults to core's maxDepth", () => {
+    expect(run(undefined, [DEFAULT_LIMITS.maxDepth])).toEqual([]);
+    expect(run(undefined, [DEFAULT_LIMITS.maxDepth + 1])).toHaveLength(1);
   });
 });
