@@ -2,7 +2,7 @@
 
 One diagram type per spec. Flowchart (M1) is the worked example: copy its shapes, not its history. Why the recipe looks like this: `v13/docs/retros/M1.md`.
 
-Implementing a whole spec with agents (`/implement-spec`)? Also read [orchestration.md](orchestration.md). This folder is the source of truth; the local `port-diagram-v13` skill only points here.
+Implementing a whole spec with one agent per ticket? Also read [orchestration.md](orchestration.md). This folder is the source of truth; the `port-diagram-v13` skill in `.claude/skills/` only points here. The rules for every change on this branch are in the root `AGENTS.md`.
 
 ## Ground truth (look it up, don't restate it)
 
