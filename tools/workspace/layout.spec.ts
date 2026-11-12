@@ -51,6 +51,7 @@ describe('workspace layout (DESIGN §2)', () => {
       [
         '.',
         './ascii',
+        './blocks',
         './config',
         './layout',
         './layout/compass',
@@ -61,8 +62,6 @@ describe('workspace layout (DESIGN §2)', () => {
         './parser-kit',
         './preprocess',
         './svg',
-        './svg/folded',
-        './svg/framed',
         './svg/testing',
         './text',
         './theme',

@@ -18,14 +18,7 @@ import { configLengths, type ConfigLength } from './config-length.ts';
 import type { StateRenderContext } from './context.ts';
 import { stateConfigDefaults } from '../generated/config-defaults.ts';
 import { stateMetrics, type StateMetrics } from './metrics.ts';
-import type { EmbeddedDiagram } from '@mermaid-js/core';
-import { framedSize } from '@mermaid-js/core/svg/framed';
-import {
-  FOLDED_TYPE_SIZE,
-  foldedCells,
-  foldedSize,
-  foldedTypeText,
-} from '@mermaid-js/core/svg/folded';
+import type { BlockShapes, EmbeddedDiagram } from '@mermaid-js/core';
 
 /** What a node is drawn as. `described`: a state with several description lines (v12 `rectWithTitle`). */
 export type StateShape =
@@ -130,9 +123,11 @@ interface Measure {
   readonly label: (text: string, style: CheckedStyle, max: number) => MeasuredLabel;
   readonly styleOf: (classes: readonly string[], own?: readonly string[]) => CheckedStyle;
   readonly embed: StateRenderContext['embed'];
-  /** A folded block's type label (#670): small capitals, measured at their size. */
-  readonly typeLabel: (type: string) => MeasuredLabel;
+  /** A folded block's type label (#670): one line, `size` px. */
+  readonly typeLabel: (text: string, size: number) => MeasuredLabel;
   readonly foldedType: StateRenderContext['foldedType'];
+  /** Core's block shapes (D554); without them a block is a plain state. */
+  readonly shapes: BlockShapes | undefined;
 }
 
 /**
@@ -168,14 +163,9 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
     },
     styleOf: styleCache(model, ctx),
     embed: ctx.embed,
-    typeLabel: (type) =>
-      layoutLabel(
-        foldedTypeText(type),
-        { ...m.font, size: FOLDED_TYPE_SIZE },
-        Infinity,
-        ctx.measurer
-      ),
+    typeLabel: (text, size) => layoutLabel(text, { ...m.font, size }, Infinity, ctx.measurer),
     foldedType: ctx.foldedType,
+    shapes: ctx.blockShapes,
   };
 
   const sc = scopes(model);
@@ -390,16 +380,21 @@ function folded(
   base: Pick<StateNodeView, 'id' | 'ast' | 'parent' | 'flow' | 'style' | 'state'>,
   s: StateNode,
   style: CheckedStyle,
-  m: Measure
+  m: Measure,
+  shapes: BlockShapes
 ): StateNodeView {
   const label = m.label(s.title || s.id, style, Infinity);
   const type = m.foldedType?.(s.id) ?? '';
-  const fold = { type, label: m.typeLabel(type) };
+  // The type in small capitals, measured at their size.
+  const fold = {
+    type,
+    label: m.typeLabel(shapes.foldedTypeText(type), shapes.foldedTypeSize),
+  };
   // In cells: the title rows, a divider and the type row, padded in a border (a text-form box).
   const pad = m.units.builder.nodePad;
   const { width: w, height: h } = m.cells
-    ? foldedCells({ width: label.width, rows: label.lines.length }, fold.label, pad)
-    : foldedSize(label, fold.label, type.length);
+    ? shapes.foldedCells({ width: label.width, rows: label.lines.length }, fold.label, pad)
+    : shapes.foldedSize(label, fold.label, type.length);
   return { ...base, shape: 'embed', block: 'folded', label, fold, w, h };
 }
 
@@ -424,11 +419,14 @@ function measureState(
       return { ...base, shape: s.kind, label: m.label('', style, 0), w, h };
     }
     case 'embed': {
-      if (s.folded) return folded(base, s, style, m);
+      const { shapes } = m;
+      // Without core's block shapes (the plugin called without `mermaid`): a plain state.
+      if (!shapes) break;
+      if (s.folded) return folded(base, s, style, m, shapes);
       // The title stays on one line: the strip is as wide as the inner diagram allows.
       const label = m.label(s.title ?? '', style, Infinity);
       const embed = m.embed?.(s.id) ?? null;
-      const { width: w, height: h } = framedSize(embed, label);
+      const { width: w, height: h } = shapes.framedSize(embed, label);
       return { ...base, shape: 'embed', block: 'embed', label, embed, w, h };
     }
     case 'plain':

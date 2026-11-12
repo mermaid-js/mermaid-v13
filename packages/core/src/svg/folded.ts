@@ -2,7 +2,8 @@
  * A folded embedded diagram (ADR-15, #670), the same in every host and for every inner type:
  * a frame with four corner brackets, the title, a divider, then a generic diagram icon and the
  * inner type in small capitals on one row. Hosts measure the two labels and lay the box out as
- * a fixed-size node; only the type text changes between types.
+ * a fixed-size node; only the type text changes between types. Hosts get it as
+ * `RenderContext.blockShapes` from `mermaid`'s block pass (D554).
  */
 import { pathBuilder, translate } from './path.ts';
 import type { Attrs, Length, OutlinePaint, Paint } from './types.ts';

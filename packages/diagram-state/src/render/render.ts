@@ -34,8 +34,6 @@ import { stateMetrics } from '../layout/index.ts';
 import { completeLayout, type CompleteStateLayout } from '../layout/layout.ts';
 import type { StateLink, StateModel } from '../parser/index.ts';
 import { arrowTrim, arrowhead, drawArrowhead, routePath, type Arrowhead } from './edges.ts';
-import { drawFolded } from '@mermaid-js/core/svg/folded';
-import { drawFramed } from '@mermaid-js/core/svg/framed';
 import { drawDescribed, drawShape, type ShapePaint } from './shapes.ts';
 
 // v12 `.note-edge { stroke-dasharray: 5 }` and `.statediagram-state rect.divider
@@ -480,15 +478,17 @@ function drawNode(scene: Scene, view: StateNodeView, link: StateLink | undefined
       ...view.style.shape,
     };
     const size = { width: view.w, height: view.h };
+    // Set with `block` only: core's block shapes, which `mermaid` hands over with the blocks.
+    const shapes = ctx.blockShapes!;
     if (view.block === 'folded') {
       const fold = view.fold!;
       const marks = { frame, mark: frame.stroke ?? paint.border, ...paint.folded! };
-      drawFolded(w, size, view.label, fold.label, fold.type.length, {
+      shapes.drawFolded(w, size, view.label, fold.label, fold.type.length, {
         ...marks,
         title: view.style.text,
       });
     } else {
-      const y = drawFramed(w, size, view.label.height, view.embed ?? null, frame);
+      const y = shapes.drawFramed(w, size, view.label.height, view.embed ?? null, frame);
       if (view.label.height > 0) w.label(view.label, 0, y, view.style.text);
     }
   } else drawState(scene, view);

@@ -61,20 +61,15 @@
       "types": "./dist/svg/index.d.ts",
       "default": "./dist/svg/index.js"
     },
-    "./svg/folded": {
-      "mermaid-source": "./src/svg/folded.ts",
-      "types": "./dist/svg/folded.d.ts",
-      "default": "./dist/svg/folded.js"
-    },
-    "./svg/framed": {
-      "mermaid-source": "./src/svg/framed.ts",
-      "types": "./dist/svg/framed.d.ts",
-      "default": "./dist/svg/framed.js"
-    },
     "./svg/testing": {
       "mermaid-source": "./src/svg/testing/index.ts",
       "types": "./dist/svg/testing/index.d.ts",
       "default": "./dist/svg/testing/index.js"
+    },
+    "./blocks": {
+      "mermaid-source": "./src/blocks/index.ts",
+      "types": "./dist/blocks/index.d.ts",
+      "default": "./dist/blocks/index.js"
     },
     "./text": {
       "mermaid-source": "./src/text/index.ts",

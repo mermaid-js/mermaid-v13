@@ -6,20 +6,25 @@
  */
 import {
   errorFromDiagnostics,
-  MAX_BLOCK_DEPTH,
   MermaidError,
   NotLoadedError,
-  openerRange,
-  tooDeep,
+  type BlockShapes,
   type EmbeddedDiagram,
   type EmbeddedText,
   type Warning,
 } from '@mermaid-js/core';
+import {
+  blockShapes,
+  embeddedSvg,
+  MAX_BLOCK_DEPTH,
+  openerRange,
+  tooDeep,
+} from '@mermaid-js/core/blocks';
 import type { ResolvedConfig, ResolvedSite } from '@mermaid-js/core/config';
 import type { Diagnostic, EmbeddedBlock, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
-import { embeddedSvg, type SecurityLevel } from '@mermaid-js/core/svg';
+import type { SecurityLevel } from '@mermaid-js/core/svg';
 import type { Analysis, Detection } from './analysis-cache.ts';
 import type { RenderOptions } from './api-types.ts';
 import type { Snapshot } from './config-snapshot.ts';
@@ -508,6 +513,8 @@ export interface BlockPass {
   drawText(h: HostAt, options: Options): DrawBlocks<EmbeddedText> | undefined;
   /** The render context's block lookup and binder maker of one draw ({@link lazyEmbed}). */
   readonly lazy: typeof lazyEmbed;
+  /** Core's block shapes, for the render context of a host with blocks (D554). */
+  readonly shapes: BlockShapes;
 }
 
 /**
@@ -518,7 +525,7 @@ export interface BlockPass {
  * block is never walked: `foldedType` detects its type alone (#670).
  */
 export function blockPass(deps: BlockDeps): BlockPass {
-  return { ...walks(deps), foldedType: folds(deps), lazy: lazyEmbed };
+  return { ...walks(deps), foldedType: folds(deps), lazy: lazyEmbed, shapes: blockShapes };
 }
 
 /**
@@ -588,7 +595,7 @@ interface Walk {
 const walkFrom = (h: HostAt): Walk => ({ count: countFrom(h), missing: [] });
 
 /** The walks of {@link blockPass}: prepare, draw and drawText. */
-function walks(deps: BlockDeps): Omit<BlockPass, 'foldedType' | 'lazy'> {
+function walks(deps: BlockDeps): Omit<BlockPass, 'foldedType' | 'lazy' | 'shapes'> {
   const { prepared, loaded } = analysesOf(deps);
 
   /**
