@@ -174,6 +174,8 @@ const STATEMENT_KINDS = [
 ];
 /** What may start a statement in a boundary: those and its `}`. */
 const BOUNDARY_STATEMENT_KINDS = [...STATEMENT_KINDS, T.RBrace];
+/** What may start a boundary's first statement: no title or accessibility line goes there. */
+const BOUNDARY_FIRST_KINDS = [...MACROS.keys(), T.RBrace];
 /** What may come next in the arguments. */
 const ARGUMENT_KINDS = [T.ArgsClose, T.Str, T.AttributeEmpty, T.QuoteOpen, T.KeyStart];
 /**
@@ -545,7 +547,9 @@ class C4Parser {
 
   /** What may start a statement here. */
   private statementKinds(): number[] {
-    return this.frames.length > 0 ? BOUNDARY_STATEMENT_KINDS : STATEMENT_KINDS;
+    const frame = this.frames[this.frames.length - 1];
+    if (!frame) return STATEMENT_KINDS;
+    return frame.count === 0 ? BOUNDARY_FIRST_KINDS : BOUNDARY_STATEMENT_KINDS;
   }
 
   /** One statement; what may come after it. */
