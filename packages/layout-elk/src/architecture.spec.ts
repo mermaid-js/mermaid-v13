@@ -127,10 +127,13 @@ const FIXTURES = walk(join(REPO, 'e2e/diagrams/architecture'))
   .map((f) => f.slice(REPO.length))
   .sort();
 
-/** `text` with `layout: elk` in its front matter's config. */
+/** `text` with `layout: elk` in its front matter's config, in place of any `layout` it sets. */
 function withElk(text: string): string {
   if (!text.startsWith('---\n')) return `---\nconfig:\n  layout: elk\n---\n${text}`;
   const end = text.indexOf('\n---', 3);
+  const own = /^ {2}layout:.*$/m.exec(text.slice(0, end));
+  if (own)
+    return `${text.slice(0, own.index)}  layout: elk${text.slice(own.index + own[0].length)}`;
   const config = text.slice(0, end).search(/^config:\n/m);
   return config < 0
     ? `---\nconfig:\n  layout: elk\n${text.slice(4)}`
