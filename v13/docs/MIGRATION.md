@@ -888,6 +888,7 @@ the passes (D174). Parity is with v12's ELK options, not its pixels.
 | Class `nodeSpacing` and `rankSpacing` were read from the `state` section (falling back to 50), and `class.diagramPadding` was ignored (8 px) | `class.nodeSpacing`, `class.rankSpacing` and `class.diagramPadding` are honoured, with v12's effective defaults (50, 50, 8) | spec #126 |
 | Class edges followed `flowchart.curve` (a d3 curve factory) | Still follow `flowchart.curve`, read as for flowcharts: `rounded` (the default) and `step`/`stepBefore`/`stepAfter` are right-angle routes, `linear` straight segments, every other value S-curves | spec #126 |
 | A lollipop interface was a top-level node, outside its class's namespace | It sits in the namespace of its class | spec #126 |
+| `lineHops` on crossing relations | Core's shared edge-path step draws them, under `layered` and `layout: elk` alike: where a straight run crosses another relation, the run that gives way draws a 6px hop (`gap`: a break). The relations leaving one side of a class are about 5px apart (3px under ELK), so a run that crosses two of them crosses at points too close to carry a hop each, and neither hops, by the same rule as for every diagram (`hopPaths`). The shared key defaults to `false` | D537, #655 |
 
 ### Class diagram config
 
@@ -2631,6 +2632,7 @@ why (spec #525). The layout itself is `compass` (D326).
 | `base` drew edges and arrowheads `#777` and group borders `#000`, literals no other theme had | `base` takes the rule every other theme follows: edges in `lineColor`, borders in v12's group border (below) | D541 |
 | In `dark`, an author's `lineColor` did not reach the edges (the theme reset it to `lightgrey` before setting them) | Edges and arrowheads follow an author's `lineColor` in every theme | No D-id: it follows from architecture's one theme rule (edges read `lineColor`, T4), which `dark` no longer overrides |
 | Group borders (`archGroupBorderColor`) took the theme's `primaryBorderColor` as each theme's constructor first set it, before the theme recomputed it, so an author's `primaryColor` or `primaryBorderColor` never reached them | The same colour in every theme but `base` (the D332 input `calloutBorder`), and an author's `primaryBorderColor` now recolours them | D541, D332 |
+| v12 drew no line hops in architecture diagrams | `lineHops: true` (or `'arc'`, `'gap'`): where two edges cross, the straight run that gives way draws a 6px hop (`gap`: a break), through core's shared edge-path step. The edges stay plain under `look: handDrawn`. The shared key defaults to `false`, so existing documents draw as before | D537, #655 |
 
 ## Architecture SVG structure
 
@@ -2701,6 +2703,11 @@ then `g.architecture-groups` with each group's `rect.node-bkg`; labels in
   renderer never read them (block lays out its own grid). `look` is removed (D153): ignored with one
   `LOOK_REMOVED` warning; the redux and `neo` families carry the gradient, shadow and neo
   paddings.
+- **Line hops** (new, D537, #655): with `lineHops: true` (or `'arc'`, `'gap'`), where two
+  straight edges cross, the later one draws a 6px hop (`gap`: a break), through core's shared
+  edge-path step. A self-loop's curve neither hops nor is hopped over. Edges stay plain under
+  `look: handDrawn` (D447). The shared key defaults to `false`, so existing documents draw as
+  before.
 - **Text output** (new, D449): `format: 'ascii'` draws block diagrams as text from the lazily
   loaded `@mermaid-js/diagram-block/ascii` entry: boxes on a character grid, composites as
   frames, edges as stepped lines. `block.padding` is ignored there, with no warning. See
@@ -2765,6 +2772,7 @@ D455). What changes (spec #522):
 | Each relation one fixed curve, with no work to limit | The router and label placement count their comparisons against `min(2,000,000, limits.maxLayoutWork)` (1,500,000 by default, R-SEC-5); once spent, the remaining relations are drawn straight with their labels at the middle, never an error | D455, for the maintainer |
 | Every `*FontFamily` defaulted to `"Open Sans", sans-serif` | Unset, the theme's `fontFamily` ([Changed defaults](#changed-defaults)); a set family the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning | Sequence's precedent |
 | `format: 'ascii'`: no text output | Text output (`@mermaid-js/diagram-c4/ascii`, loaded only for text): the SVG's grid on a character grid, laid out with every text measured in cells of 8 × 16 px. Elements are boxes with the name, `[Kind]` and description (rounded corners, a cylinder's caps, `fr-rect`'s double sides; a line wider than its box cut with `…`, `...` in the ascii charset); boundaries dashed frames, deployment nodes solid ones, with the label in the top border; relations stepped lines routed on the grid round elements and header text, following the routed points, with the label at or beside the middle (with both `wrap` flags set, wrapped narrower where the gap is small; else on one line, cut with `…` where it does not fit) and arrowheads. Config colours and fonts are ignored without a warning; `UpdateElementStyle`/`UpdateRelStyle` colours and offsets, a relation's description and `accTitle`/`accDescr` give one `ASCII_DROPPED` each; a `c4ShapePadding` under 16 or a `c4ShapeMargin` under 32 is raised with `C4_CONFIG_IGNORED`; `ascii.padding: roomy` adds a row round each element's text. Never cropped and never reflowed (the grid is the SVG's): `ASCII_TOO_WIDE` past `ascii.maxWidth`; see [ASCII output](./ascii.md#c4-diagrams) | D459, D320, R-ASCII-5 |
+| v12 drew no line hops in C4 diagrams | `lineHops: true` (or `'arc'`, `'gap'`): where two relation lines cross on straight runs, the later one draws a 6px hop (`gap`: a break), through core's shared edge-path step; a relation the router draws as a curve neither hops nor is hopped over there. Relation lines stay plain under `look: handDrawn`. The shared key defaults to `false`, so existing documents draw as before | D537, #655 |
 
 ## C4 SVG structure
 

@@ -1,11 +1,13 @@
 /**
  * The shared edge-path step for line hops (D537): every edge-drawing diagram draws its edge lines
- * through `SvgWriter.outline('edge', 'path', …)` (D302), so hops are found there, for every
- * diagram, on either writer backing. A hop on an early edge can depend on a later one, so the
- * step writes everything through at once and only notes each edge line's path data; `finish`
- * then puts the hopped path data in the finished markup, in place of the lines that give way.
+ * through `SvgWriter.outline('edge', 'path', …)` (D302), or `SvgWriter.plainEdge` where they are
+ * never sketched (#655), so hops are found there, for every diagram, on either writer backing. A
+ * hop on an early edge can depend on a later one, so the step writes everything through at once
+ * and only notes each edge line's path data; `finish` then puts the hopped path data in the
+ * finished markup, in place of the lines that give way.
  * Hops never need the tree writer: a render without hops never gets here.
  */
+import type { Attrs } from '../../svg/types.ts';
 import type { StreamSvgWriter, TreeSvgWriter } from '../../svg/writer.ts';
 import { hopPaths, type HopStyle } from './hops.ts';
 
@@ -28,6 +30,10 @@ export function hopWriter<W extends StreamSvgWriter | TreeSvgWriter>(w: W, style
   const frames = [0];
   let next = 0;
   const top = (): number => frames[frames.length - 1]!;
+  const note = (attrs: Attrs | undefined): void => {
+    if (typeof attrs?.d === 'string')
+      lines.push({ d: attrs.d, frame: attrs.transform === undefined ? top() : ++next });
+  };
   const done = (svg: string): string => {
     if (lines.length < 2) return svg;
     const hopped = new Map<Line, string>();
@@ -71,9 +77,12 @@ export function hopWriter<W extends StreamSvgWriter | TreeSvgWriter>(w: W, style
     },
     leaf: (tag, attrs) => w.leaf(tag, attrs),
     outline(role, tag, attrs) {
-      if (role === 'edge' && tag === 'path' && typeof attrs?.d === 'string')
-        lines.push({ d: attrs.d, frame: attrs.transform === undefined ? top() : ++next });
+      if (role === 'edge' && tag === 'path') note(attrs);
       w.outline(role, tag, attrs);
+    },
+    plainEdge(attrs) {
+      note(attrs);
+      w.plainEdge(attrs);
     },
     text: (content) => w.text(content),
     label: (box, x, y, attrs) => w.label(box, x, y, attrs),

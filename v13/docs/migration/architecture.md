@@ -23,6 +23,7 @@ why (spec #525). The layout itself is `compass` (D326).
 | `base` drew edges and arrowheads `#777` and group borders `#000`, literals no other theme had | `base` takes the rule every other theme follows: edges in `lineColor`, borders in v12's group border (below) | D541 |
 | In `dark`, an author's `lineColor` did not reach the edges (the theme reset it to `lightgrey` before setting them) | Edges and arrowheads follow an author's `lineColor` in every theme | No D-id: it follows from architecture's one theme rule (edges read `lineColor`, T4), which `dark` no longer overrides |
 | Group borders (`archGroupBorderColor`) took the theme's `primaryBorderColor` as each theme's constructor first set it, before the theme recomputed it, so an author's `primaryColor` or `primaryBorderColor` never reached them | The same colour in every theme but `base` (the D332 input `calloutBorder`), and an author's `primaryBorderColor` now recolours them | D541, D332 |
+| v12 drew no line hops in architecture diagrams | `lineHops: true` (or `'arc'`, `'gap'`): where two edges cross, the straight run that gives way draws a 6px hop (`gap`: a break), through core's shared edge-path step. The edges stay plain under `look: handDrawn`. The shared key defaults to `false`, so existing documents draw as before | D537, #655 |
 
 ## Architecture SVG structure
 

@@ -227,6 +227,7 @@ describe('an outline drawer that breaks the sink rules', () => {
       close: () => w.close(),
       leaf: (tag, attrs) => w.leaf(tag, attrs),
       outline: (_r, tag, attrs) => w.leaf(tag, { ...attrs, style }),
+      plainEdge: (attrs) => w.plainEdge(attrs),
       text: (content) => w.text(content),
       label: (box, x, y, attrs) => w.label(box, x, y, attrs),
       path: () => w.path(),
