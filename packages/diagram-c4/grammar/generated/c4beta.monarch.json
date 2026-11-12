@@ -1,0 +1,337 @@
+{
+  "tokenPostfix": ".mermaid-c4beta",
+  "defaultToken": "",
+  "includeLF": true,
+  "start": "frontMatterStart",
+  "tokenizer": {
+    "spanTrivia0": [
+      [
+        "\\}%%",
+        {
+          "token": "annotation",
+          "next": "@pop"
+        }
+      ],
+      [
+        "(?:(?!\\}%%)[\\s\\S])+",
+        {
+          "token": "annotation"
+        }
+      ]
+    ],
+    "spanRule24": [
+      [
+        "\\}",
+        {
+          "token": "keyword",
+          "next": "@pop"
+        }
+      ],
+      [
+        "(?:(?!\\})[\\s\\S])+",
+        {
+          "token": "keyword"
+        }
+      ]
+    ],
+    "root": [
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia0"
+        }
+      ],
+      [
+        "c4-beta(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "context(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "container(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "component(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "dynamic(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "deployment(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "person(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "softwareSystem(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "group(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "deploymentNode(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "infrastructureNode(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "instances(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "on(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "off(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "TB(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "BT(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "LR(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "RL(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "direction(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "legend(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "style(?!\\w|-\\w)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "title(?!\\w|-\\w)[^\\n\\r]*?(?=%%|[\\r\\n]|$)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "accTitle(?!\\w|-\\w)[\\t ]*:[^\\n\\r]*?(?=%%|[\\r\\n]|$)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "accDescr(?!\\w|-\\w)[\\t ]*:[^\\n\\r]*?(?=%%|[\\r\\n]|$)",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "accDescr(?!\\w|-\\w)\\s*\\{",
+        {
+          "token": "keyword",
+          "next": "@spanRule24"
+        }
+      ],
+      [
+        "-->",
+        {
+          "token": "operator"
+        }
+      ],
+      [
+        "<--(?!>)",
+        {
+          "token": "operator"
+        }
+      ],
+      [
+        "<-->",
+        {
+          "token": "operator"
+        }
+      ],
+      [
+        ":::[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        ":",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        ",",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "\\{",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "\\}",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "(?<=(?:^|[\\n\\r])[\\t ]*)[0-9]+(?=[\\t ]*:)",
+        {
+          "token": "constant"
+        }
+      ],
+      [
+        "#(?:[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})(?!\\w)",
+        {
+          "token": "constant"
+        }
+      ],
+      [
+        "\"(?:[^\"\\\\\\r\\n]|\\\\.)*\"|'(?:[^'\\\\\\r\\n]|\\\\.)*'",
+        {
+          "token": "string"
+        }
+      ],
+      [
+        "(?!(?:accTitle|accDescr)(?!\\w|-\\w))[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "\\r\\n|\\n|\\r",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "[\\t ]+",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "%%[^\\n\\r]*",
+        {
+          "token": "comment"
+        }
+      ]
+    ],
+    "frontMatterStart": [
+      [
+        "^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": "annotation",
+          "switchTo": "@frontMatter"
+        }
+      ],
+      [
+        "[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "",
+        {
+          "token": "",
+          "switchTo": "@root"
+        }
+      ]
+    ],
+    "frontMatter": [
+      [
+        "^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": "annotation",
+          "switchTo": "@root"
+        }
+      ],
+      [
+        "[^\\S\\n]*#.*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "[^#]+",
+        {
+          "token": ""
+        }
+      ]
+    ]
+  }
+}

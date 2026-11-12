@@ -81,6 +81,13 @@ grammars:
           pattern: 'UpdateElementStyle\b'
           terminal: UPDATE_EL_STYLE
           docOf: UPDATE_EL_STYLE
+  # The c4-beta syntax (spec #730, D512): a second grammar of the same package.
+  - type: c4beta
+    grammar: c4beta
+    title: C4 beta diagram syntax
+    kinds:
+      module: beta/tokens.ts
+      object: T
 
 # credits: licence credits for pnpm check:licenses (tools/release/src/licenses.ts, R-REL-4): the
 # files ported from Pele's C4 layout, router and label placement (#540) and its shapes (#541,
