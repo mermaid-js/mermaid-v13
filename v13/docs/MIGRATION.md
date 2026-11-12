@@ -691,6 +691,11 @@ so it counts twice towards the diameter compared with the per-side node padding.
   shapes keep v13's outlines (cap height, slant), so sizes are close to v12, not equal.
 - **Diamonds** are the v12 square rhombus in every theme, with side = label width + label
   height + 2 × padding. Being the same everywhere, the diamond has no theme variable.
+- **Person shapes** (`@{ shape: person }`) keep c4model.com's proportions, as v12's fix
+  mermaid-js/mermaid#8322 does (#683): the head's radius is 0.23 × the body's width (16 to 80),
+  the body is at least 0.6 × its width tall, and the label is centred on the part of the body
+  the head does not cover. A one-line label no longer draws a small head on a flat bar. C4's
+  persons follow the same rule.
 - **Collapsed subgraphs** are drawn as in v12 in every theme: a rounded card, a dashed separator
   and three dots. The dots are flat: filled with the separator colour at 0.6 opacity, with no
   stroke and no shadow, which is what v12's stylesheet asks for. v12 neo draws them with a dark
@@ -2751,6 +2756,7 @@ D455). What changes (spec #522):
 | --- | --- | --- |
 | The detector matched `C4Context` where the diagram starts but `C4Container`, `C4Component`, `C4Dynamic` and `C4Deployment` anywhere in the text, so a flowchart or sequence diagram that named one was taken for C4 and failed | All five headers only where the diagram starts, as a whole word (`/^\s*C4(Context\|Container\|Component\|Dynamic\|Deployment)\b/`), still fifth in v12's detector order | D451 |
 | An unquoted argument ran on past `)` and across the line end; a trailing `%%` comment took its line break, joining the next statement to it; a lone `title` took the next line as the title | An unquoted argument stops at `)` and at the line end; a comment keeps its line break; a lone `title` is an empty title | D452 |
+| A person was a 13 px head in a 26 px row over a box as tall as its text, so a one-line person was a small head on a flat box | A head over a body in c4model.com's proportions: head radius 0.23 × the width (16 to 80), the body at least 0.6 × the width tall, the text centred below the head. The text output (`format: 'ascii'`) still draws a person as a box with a head row | #683, as v12's fix mermaid-js/mermaid#8322 |
 | The top-level `wrap: false` did not stop element text from wrapping (only `c4.wrap: false` did), so an element stayed 216 px wide | The top-level `wrap`, when set, wins over `c4.wrap` for every text: `false` keeps element text on one line, `true` wraps it and relation labels and boundary headers too | #683, as v12's fix mermaid-js/mermaid#8342 |
 | A `#` in a `title` or `accDescription` (`title Order #42`) was a syntax error: the text stopped at the `#` | A `#` is text; `;` and the line end still end the line's text | #683, as v12's fix mermaid-js/mermaid#8039 |
 | A `direction TB` line (even inside a quoted label), and a `$__proto__` argument, crashed the parse | `direction` is a syntax error with a `C4_DIRECTION` diagnostic saying C4 has no `direction`; `$__proto__` sets nothing, with one `C4_NAME_RESERVED` warning | D452 |

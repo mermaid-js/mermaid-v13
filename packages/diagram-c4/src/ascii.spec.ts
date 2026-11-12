@@ -112,6 +112,16 @@ describe('the C4 ascii hook (#545)', () => {
     expect(text).toContain('│ Takes t… │');
   });
 
+  it('sizes a person as a box with a head row, not as the SVG figure (#683)', () => {
+    // The text output draws a person as a box: the figure's proportions would only add rows.
+    const src = 'C4Context\nPerson(a, "Alice", "A customer")\nSystem(b, "Alice", "A customer")';
+    const { parsed, ctx } = context(src);
+    const laid = layoutC4(parsed.model, { ...ctx, measurer: cellMeasurer, units: cellProfile() });
+    const [a, b] = laid.elements;
+    expect(a!.box.height).toBe(b!.box.height + 26);
+    expect(a!.box.width).toBe(b!.box.width);
+  });
+
   it('wraps a relation label narrower only when the root `wrap` is true', () => {
     // Two shapes side by side: the label is wider than the gap between them.
     const src = [

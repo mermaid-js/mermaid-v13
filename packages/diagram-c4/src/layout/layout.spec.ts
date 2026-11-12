@@ -77,14 +77,12 @@ const CROSSING_EXCEPTIONS = [
  * before labels kept off other lines. In `rows-and-fixed-width`, `b -> p`'s upright lane runs
  * down the middle of the gap between `c` and `d`, past both rows: `Moves to` fills too much of
  * that gap to clear it on its line, and beside it clears the lane only below `c`, three label
- * depths out, which costs more than the crossing. In the docs' container example the author's
- * `UpdateRelStyle` offsets put `backend_api -> banking_system`'s label on the SPA; on its own
- * line, `web_app -> spa`'s level stretch runs 11 px from it through every spot.
+ * depths out, which costs more than the crossing. (The docs' container example's
+ * `backend_api -> banking_system` was listed too, until the person figure, #683, moved its rows.)
  */
 const CROWDED_EXCEPTIONS = [
   'baseline/config/rows-and-fixed-width table: c -> d',
   'baseline/config/rows-and-fixed-width grid: c -> d',
-  'nightly-check/docs/2-container table: backend_api -> banking_system',
 ];
 
 describe('c4 layout invariants on the e2e fixtures', () => {
@@ -468,6 +466,55 @@ describe('c4 wrapping (the root wrap wins over c4.wrap; relations and boundaries
     expect(unwrapped.descr!.text.lines).toHaveLength(1);
     expect(unwrapped.box.width).toBe(unwrapped.descr!.width + 40);
     expect(unwrapped.box.width).toBeGreaterThan(216);
+  });
+});
+
+/**
+ * The person keeps c4model.com's proportions (#683, as v12's fix mermaid-js/mermaid#8322):
+ * 12.2.0's head was a fixed 13 px in a 26 px row over a body as tall as its text, so a one-line
+ * person was a small head on a wide flat box.
+ */
+describe('c4 person figure (#683)', () => {
+  const person = (src: string, alias = 'p') => {
+    const layout = sound(src, { measurer: grid });
+    const e = el(layout, alias);
+    const r = Math.min(80, Math.max(16, e.box.width * 0.23));
+    const neck = 2 * r - 0.27 * r;
+    return { layout, e, r, body: { top: e.box.y + neck, height: e.box.height - neck } };
+  };
+
+  it('keeps the body at least 0.6 times as tall as it is wide for a one-line label', () => {
+    const { e, r, body } = person('C4Context\nPerson(p, "P")');
+    expect(e.box.width).toBe(216);
+    expect(r).toBeCloseTo(49.68, 9);
+    expect(body.height).toBeGreaterThanOrEqual(0.6 * e.box.width - 1e-9);
+  });
+
+  it('centres the text on the part of the body the head does not cover', () => {
+    const { e, r, body } = person('C4Context\nPerson(p, "P", "A customer")');
+    const top = e.name!.y;
+    const end = bottom(e.descr!);
+    expect(top).toBeGreaterThanOrEqual(e.box.y + 2 * r - 1e-9);
+    expect(top - (e.box.y + 2 * r)).toBeCloseTo(body.top + body.height - end, 6);
+  });
+
+  it('grows the body to fit a long text below the head', () => {
+    const long = 'word '.repeat(80).trim();
+    const { e, r, body } = person(`C4Context\nPerson(p, "P", "${long}")`);
+    expect(e.descr!.text.lines.length).toBeGreaterThan(5);
+    expect(e.name!.y).toBeGreaterThanOrEqual(e.box.y + 2 * r - 1e-9);
+    expect(bottom(e.descr!)).toBeLessThanOrEqual(body.top + body.height + 1e-9);
+  });
+
+  it('scales the head with the width, up to 80', () => {
+    const wide = person(`C4Context\nPerson(p, "${'x'.repeat(60)}")`, 'p');
+    expect(wide.e.box.width).toBeGreaterThan(400);
+    expect(wide.r).toBe(80);
+  });
+
+  it('keeps a relation end on the head and body outline', () => {
+    // `sound` runs the invariants: every end on its outline.
+    person('C4Context\nPerson(p, "P")\nSystem(s, "S")\nRel(s, p, "uses")\nRel(p, s, "pays")');
   });
 });
 

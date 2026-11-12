@@ -30,7 +30,14 @@ import {
 import { cellConfig, cellPxMeasurer, cellRoom, type CellSize } from './cells.ts';
 import { C4_METRICS as M, FONT_WEIGHT } from './metrics.ts';
 import { Lanes, lineOf, pointsOf, route, Work, type Route } from './route.ts';
-import { hitRect, shapeOf, shapeSize, type Outline, type ShapeRoom } from './shapes.ts';
+import {
+  hitRect,
+  outlineForm,
+  shapeOf,
+  shapeSize,
+  type Outline,
+  type ShapeRoom,
+} from './shapes.ts';
 import type {
   C4BoundaryLayout,
   C4ElementLayout,
@@ -209,7 +216,7 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
   const elementBoxes = new Map<string, Outline>();
   const shapes: Outline[] = [];
   for (const node of nodes) {
-    const box = outlineOf(node, node.form);
+    const box = outlineOf(node, outlineForm(node.form, units !== undefined));
     shapes.push(box);
     if (!elementBoxes.has(node.element.alias)) elementBoxes.set(node.element.alias, box);
   }
@@ -288,6 +295,7 @@ function shapeRoom(config: C4LayoutConfig, theme: C4LayoutContext['theme']): Sha
   return {
     pad: config.c4ShapePadding,
     least: config.width,
+    figure: true,
     cylinder: { x: pad('cylinderPaddingX'), y: pad('cylinderPaddingY') },
     // The queue has no row of its own: it reads half the cylinder's token, as v12's tilted
     // cylinder padded half what its cylinder did in both looks. Under neo that is 12 (half of
