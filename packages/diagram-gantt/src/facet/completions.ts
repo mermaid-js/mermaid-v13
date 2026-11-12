@@ -85,6 +85,13 @@ function wordEnd(text: string, at: number, chars: RegExp): number {
   return end;
 }
 
+/** The run of `chars` which ends `text`. Scanned: `/[…]*$/` is quadratic in a run (R-PARSE-7). */
+function lastWord(text: string, chars: RegExp): string {
+  let start = text.length;
+  while (start > 0 && chars.test(text.charAt(start - 1))) start--;
+  return text.slice(start);
+}
+
 /**
  * The text `item` inserts before `rest` (what follows the replaced word): its separator only
  * when `rest` does not already hold one.
@@ -204,7 +211,7 @@ function taskData(doc: DocumentView<GanttDocument>, tok: Tok, offset: number): C
   // The field's index among the fields after the tags.
   const field = parts.filter((p, i) => !parts.slice(0, i + 1).every(isTag)).length;
   if (/^(after|until)\s+[\d\w- ]*$/.test(typed)) {
-    const word = /[\d\w-]*$/.exec(typed)?.[0] ?? '';
+    const word = lastWord(typed, /[\d\w-]/);
     const ids = taskIds(doc, tok, REFERENCE_ID).map(({ name, detail }) => [name, detail] as const);
     return words(ids, word, offset - word.length, wordEnd(text, offset, /[\d\w-]/), 'node');
   }
@@ -234,7 +241,7 @@ function taskData(doc: DocumentView<GanttDocument>, tok: Tok, offset: number): C
 
 /** The day word being typed: from a blank or `,` to the cursor. */
 function days(text: string, offset: number, list: readonly string[]) {
-  const word = /[^\s,]*$/.exec(lineBefore(text, offset))?.[0] ?? '';
+  const word = lastWord(lineBefore(text, offset), /[^\s,]/);
   const end = wordEnd(text, offset, /[^\s,#;]/);
   return words(
     list.map((d) => [d] as const),
@@ -257,7 +264,7 @@ export function ganttCompletions(
   // In the ids, or in the blanks `click` took (the ids may be on the next line).
   const inKeyword = tok?.kind === T.ClickKeyword && offset >= tok.start + 'click '.length;
   if (probe.mode === 'click' || inKeyword) {
-    const word = inKeyword ? '' : (/[^\s,]*$/.exec(lineBefore(text, offset))?.[0] ?? '');
+    const word = inKeyword ? '' : lastWord(lineBefore(text, offset), /[^\s,]/);
     const ids = taskIds(doc, undefined, CLICK_ID, offset).map(
       ({ name, detail }) => [name, detail] as const
     );

@@ -9,10 +9,12 @@
  *   renderer, plugin, main entry or ASCII code (R-LANG-8, D89).
  * - `mermaid/no-global-config`: no getConfig-style global config lookup.
  * - `mermaid/no-magic-char-code`: char codes are compared with named constants, not numbers.
- * - `mermaid/no-nested-quantifier`: no quantifier nested in an unbounded/variable quantifier.
+ * - `mermaid/no-nested-quantifier`: no quantifier nested in an unbounded/variable quantifier,
+ *   and no unbounded quantifier before `$` which nothing anchors.
  */
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { RegExpParser, visitRegExpAST } from '@eslint-community/regexpp';
+import type { AST } from '@eslint-community/regexpp';
 import type { ESLint, Rule, Scope } from 'eslint';
 import type { CallExpression, Expression, NewExpression, Node as EsNode } from 'estree';
 
@@ -299,11 +301,73 @@ const noMagicCharCode: Rule.RuleModule = {
 
 const parser = new RegExpParser({ ecmaVersion: 2025 });
 
+type Finding = 'nested' | 'trailing';
+
+/** Whether a match of `element` can end in an unbounded quantifier. */
+function endsUnbounded(element: AST.Element): boolean {
+  if (element.type === 'Quantifier') {
+    return element.max === Infinity || endsUnbounded(element.element);
+  }
+  if (element.type === 'Group' || element.type === 'CapturingGroup') {
+    return element.alternatives.some((a) => {
+      const last = a.elements.at(-1);
+      return last !== undefined && endsUnbounded(last);
+    });
+  }
+  return false;
+}
+
 /**
- * Whether a quantifier sits inside another quantifier which can repeat (max > 1). The
- * inner one must itself be variable (min !== max); `(?:x{3})+` is linear and allowed.
+ * Whether `element` pins where a match starts: a `^`, or a character every match must take
+ * (`/\{\s*$/` is tried once per `{`, not once per blank).
  */
-function hasNestedQuantifier(pattern: string, flags: string): boolean {
+function pins(element: AST.Element): boolean {
+  switch (element.type) {
+    case 'Assertion':
+      return element.kind === 'start';
+    case 'Backreference':
+      return false;
+    case 'Quantifier':
+      return element.min > 0 && pins(element.element);
+    case 'Group':
+    case 'CapturingGroup':
+      return element.alternatives.every((a) => a.elements.some(pins));
+    case 'Character':
+    case 'CharacterClass':
+    case 'CharacterSet':
+    case 'ExpressionCharacterClass':
+      return true;
+  }
+}
+
+/** Whether something before `node`, on the way from the start of the pattern, pins it. */
+function isAnchored(node: AST.Node): boolean {
+  const parent = node.parent;
+  if (!parent) {
+    return false;
+  }
+  if (parent.type === 'Alternative') {
+    const before = parent.elements.slice(0, parent.elements.indexOf(node as AST.Element));
+    if (before.some(pins)) {
+      return true;
+    }
+  }
+  return isAnchored(parent);
+}
+
+/**
+ * What makes a pattern backtrack, if anything.
+ *
+ * `nested`: a quantifier sits inside another quantifier which can repeat (max > 1). The
+ * inner one must itself be variable (min !== max); `(?:x{3})+` is linear and allowed.
+ *
+ * `trailing`: an unbounded quantifier comes right before `$` and nothing before it pins the
+ * start of the match, as in `/;+$/`. On a run which does not end the text the engine retries
+ * from each position of the run: quadratic. A sticky pattern starts in one place only and is
+ * allowed. A required character before the quantifier counts as a pin, so `/;;+$/` and
+ * `/a[a-z]*$/`, where that character can itself be part of the run, are not caught.
+ */
+function backtracking(pattern: string, flags: string): Finding | undefined {
   let ast;
   try {
     ast = parser.parsePattern(pattern, 0, pattern.length, {
@@ -311,14 +375,15 @@ function hasNestedQuantifier(pattern: string, flags: string): boolean {
       unicodeSets: flags.includes('v'),
     });
   } catch {
-    return false;
+    return undefined;
   }
+  const sticky = flags.includes('y');
   let repeatingDepth = 0;
-  let found = false;
+  let finding: Finding | undefined;
   visitRegExpAST(ast, {
     onQuantifierEnter(q) {
       if (repeatingDepth > 0 && q.min !== q.max) {
-        found = true;
+        finding = 'nested';
       }
       if (q.max > 1) {
         repeatingDepth++;
@@ -329,24 +394,39 @@ function hasNestedQuantifier(pattern: string, flags: string): boolean {
         repeatingDepth--;
       }
     },
+    onAssertionEnter(a) {
+      if (a.kind !== 'end' || sticky || a.parent.type !== 'Alternative') {
+        return;
+      }
+      const before = a.parent.elements[a.parent.elements.indexOf(a) - 1];
+      if (before && endsUnbounded(before) && !isAnchored(before)) {
+        finding ??= 'trailing';
+      }
+    },
   });
-  return found;
+  return finding;
 }
 
 const noNestedQuantifier: Rule.RuleModule = {
   meta: {
     type: 'problem',
-    docs: { description: 'Ban nested quantifiers, which backtrack on user input (R-PARSE-7).' },
+    docs: {
+      description:
+        'Ban nested quantifiers and unanchored quantifiers before `$`, which backtrack on user input (R-PARSE-7).',
+    },
     messages: {
       nested:
         'Nested quantifier in /{{pattern}}/ can backtrack exponentially. Use a linear scanner or flatten the pattern.',
+      trailing:
+        'Unanchored quantifier before `$` in /{{pattern}}/ is retried from every position of a run: quadratic. Scan from the end, or anchor the pattern with `^`.',
     },
     schema: [],
   },
   create(context) {
     function check(node: EsNode, pattern: string, flags: string): void {
-      if (hasNestedQuantifier(pattern, flags)) {
-        context.report({ node, messageId: 'nested', data: { pattern } });
+      const messageId = backtracking(pattern, flags);
+      if (messageId) {
+        context.report({ node, messageId, data: { pattern } });
       }
     }
 

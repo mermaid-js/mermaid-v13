@@ -24,6 +24,7 @@ export const RE_UNSAFE_STYLE =
 const RE_HEX = /^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 const RE_NAMED = /^[a-z]{3,30}$/i;
 const RE_COLOR_CHARS = /^[a-z0-9_#.,%()\s+\-/]+$/i;
+// eslint-disable-next-line mermaid/no-nested-quantifier -- only run on a colour of at most 200 characters (checkColor)
 const RE_FUNC_NAME = /[a-z-]*$/i;
 const COLOR_FUNCS: ReadonlySet<string> = new Set([
   'rgb',
