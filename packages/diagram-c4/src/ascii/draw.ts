@@ -44,6 +44,7 @@ import type {
   PlacedLabel,
   Rect,
 } from '../layout/index.ts';
+import { BlockCounts } from './counts.ts';
 import { CellSet, clamp, Grid, type Cell } from './grid.ts';
 import { routeLine, RouteBudget, type RouteField, type RouteRequest } from './route.ts';
 
@@ -214,7 +215,11 @@ function titleText(pen: Pen, title: PlacedLabel | undefined): Written[] {
 
 /** Marks every cell a text covers. */
 function cover(set: CellSet, texts: readonly Written[]): void {
-  for (const t of texts) for (let i = 0; i < cellWidth(t.text); i++) set.add(t.x + i, t.y);
+  for (const t of texts) {
+    // Measured once: `cellWidth` reads the whole text (#689).
+    const width = cellWidth(t.text);
+    for (let i = 0; i < width; i++) set.add(t.x + i, t.y);
+  }
 }
 
 /** The way from `a` to the neighbouring cell `b`. */
@@ -379,19 +384,59 @@ function labelWidths(natural: number, least: number): number[] {
   return out;
 }
 
-/** The first place for a `w` × `h` block over or beside a cell of `near` that `fits`, nearer first. */
+/**
+ * The first place for a block over or beside a cell of `near` that `fits`, nearer first.
+ * `places` is the block's places `gap` cells from the cell (0, 0), in `blocksAt`'s order: the
+ * same from every cell, so they are listed and sorted once for all of `near`.
+ */
 function firstPlace(
   near: readonly Cell[],
-  w: number,
-  h: number,
+  places: (gap: number) => readonly Cell[],
   fits: (at: Cell) => boolean
 ): Cell | undefined {
   for (let gap = 0; gap <= LABEL_BESIDE; gap++)
-    for (const c of near) {
-      const at = blocksAt(c, w, h, gap).find(fits);
-      if (at) return at;
-    }
+    for (const c of near)
+      for (const p of places(gap)) {
+        const at = { x: c.x + p.x, y: c.y + p.y };
+        if (fits(at)) return at;
+      }
   return undefined;
+}
+
+/** What a label must stay clear of, by tier: 2 label blocks; 1 frames too; 0 other lines too. */
+type Marked = (x: number, y: number) => boolean;
+
+/**
+ * Whether a `w` × `h` block at a place by a cell of `near` is clear of `marked[t]` for every
+ * tier `t` from `tier` up, and on the canvas. Each tier's cells are counted once (`BlockCounts`)
+ * over every cell such a block can cover, when a place first asks: a place is then a few reads,
+ * not a scan of its cells, which every other place of the block would scan again (#689).
+ */
+function clearance(
+  near: readonly Cell[],
+  w: number,
+  h: number,
+  marked: readonly Marked[]
+): (at: Cell, tier: number) => boolean {
+  const xs = near.map((c) => c.x);
+  const ys = near.map((c) => c.y);
+  const x = Math.max(0, Math.min(...xs) - w + 1 - LABEL_BESIDE);
+  const y = Math.max(0, Math.min(...ys) - h + 1 - LABEL_BESIDE);
+  const region = {
+    x,
+    y,
+    width: Math.max(0, Math.max(...xs) + LABEL_BESIDE + w - x),
+    height: Math.max(0, Math.max(...ys) + LABEL_BESIDE + h - y),
+  };
+  const counts: BlockCounts[] = [];
+  return (at, tier) => {
+    if (at.x < 0 || at.y < 0) return false;
+    for (let t = marked.length - 1; t >= tier; t--) {
+      counts[t] ??= new BlockCounts(region, marked[t]!);
+      if (counts[t]!.count(at.x, at.y, w, h) > 0) return false;
+    }
+    return true;
+  };
 }
 
 /**
@@ -419,16 +464,11 @@ function placeLabel(
     for (const i of k === 0 ? [mid] : [mid - k, mid + k])
       if (i >= 0 && i < cells.length) near.push(cells[i]!);
   /** 0: clear of frames and other lines; 1: of frames; 2: of label blocks only. */
-  const fits = (at: Cell, w: number, h: number, tier: number): boolean => {
-    pen.budget.charge(w * h);
-    if (!pen.labelBlocks.free(at.x, at.y, w, h)) return false;
-    if (tier === 2) return true;
-    if (!pen.frameCells.free(at.x, at.y, w, h)) return false;
-    if (tier === 1) return true;
-    for (let j = at.y; j < at.y + h; j++)
-      for (let i = at.x; i < at.x + w; i++) if (others.has(i, j) && !own.has(i, j)) return false;
-    return true;
-  };
+  const marked: Marked[] = [
+    (x, y) => others.has(x, y) && !own.has(x, y),
+    (x, y) => pen.frameCells.has(x, y),
+    (x, y) => pen.labelBlocks.has(x, y),
+  ];
   const natural = Math.max(...text.map(cellWidth));
   const word = Math.max(...text.flatMap((t) => t.split(/\s+/)).map(cellWidth));
   // Wrapped narrower only when the layout's text may wrap (root `wrap` and `c4.wrap`); else
@@ -454,8 +494,14 @@ function placeLabel(
       const lines = linesAt(width);
       const w = Math.max(...lines.map(cellWidth)) + 2;
       const h = lines.length;
+      const clear = clearance(near, w, h, marked);
+      const sorted: Cell[][] = [];
+      const places = (gap: number): Cell[] => (sorted[gap] ??= blocksAt({ x: 0, y: 0 }, w, h, gap));
       for (const tier of tiers) {
-        const at = firstPlace(near, w, h, (p) => fits(p, w, h, tier));
+        const at = firstPlace(near, places, (p) => {
+          pen.budget.charge(w * h);
+          return clear(p, tier);
+        });
         if (at) return { at, lines, crowded: tier === 2 };
       }
     }
