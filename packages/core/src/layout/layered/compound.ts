@@ -485,9 +485,9 @@ interface OwnEdge {
   // Whether the group is the edge's source.
   fromGroup: boolean;
   // Whether it runs down from the group's top into the member's top: on the grid every one, in
-  // px the labelled ones (an unlabelled one keeps its straight line).
+  // px the labelled ones. An unlabelled one in px runs in from the group's side (#416).
   fromTop: boolean;
-  // In px, the line's across-flow offset from its member's middle: a member's lines spread.
+  // In px, the line's offset from its member's middle, across the line: a member's lines spread.
   offset: number;
 }
 
@@ -514,15 +514,65 @@ function ownEdgesOf(
       offset: 0,
     };
     out.push(own);
-    if (!grid && own.fromTop) {
-      let lines = byMember.get(member);
-      if (!lines) byMember.set(member, (lines = []));
+    if (!grid) {
+      // The lines from the top spread across the member. The loops from the side nest, those
+      // from the group apart from those to it.
+      const key = own.fromTop ? member * 3 : member * 3 + (fromGroup ? 1 : 2);
+      let lines = byMember.get(key);
+      if (!lines) byMember.set(key, (lines = []));
       lines.push(own);
     }
   }
   for (const lines of byMember.values())
-    lines.forEach((own, k) => (own.offset = (k - (lines.length - 1) / 2) * pitch));
+    lines.forEach(
+      (own, k) => (own.offset = (own.fromTop ? k - (lines.length - 1) / 2 : k) * pitch)
+    );
   return out;
+}
+
+// An unlabelled edge between a group and its own member, in px (#416): a loop from the group's
+// side border, across the gap before the member's row and round into the member near its corner.
+// One from the group comes in at the member's top, one to the group leaves at its bottom, on the
+// nearer side no other node stands in. A line between the two middles would lie under the
+// member. Undefined where both sides are taken.
+function sideRoute(
+  nodes: readonly CNode[],
+  { group: g, member: m, fromGroup, offset }: OwnEdge,
+  pitch: number
+): number[] | undefined {
+  const group = nodes[g]!;
+  const member = nodes[m]!;
+  const out = fromGroup ? -1 : 1;
+  // The member's top for a line from the group, its bottom for a line to it.
+  const edge = member.y + (out * member.h) / 2;
+  // The loop's lane: inside the group's frame, however little room it has before the member.
+  const room = group.h / 2 - pitch / 4;
+  const lane = Math.max(
+    group.y - room,
+    Math.min(group.y + room, edge + out * (1.5 * pitch + offset))
+  );
+  const inset = Math.min(member.w / 4, pitch + offset);
+  let best: number[] | undefined;
+  let shortest = Infinity;
+  for (const sign of [-1, 1]) {
+    const border = group.x + (sign * group.w) / 2;
+    const turn = member.x + sign * (member.w / 2 - inset);
+    const run = Math.abs(border - turn);
+    // Another node in the way of this side's loop.
+    const taken = nodes.some(
+      (n, i) =>
+        i !== m &&
+        !n.isGroup &&
+        Math.abs(n.x - (border + turn) / 2) < (n.w + run) / 2 &&
+        Math.abs(n.y - (lane + edge) / 2) < (n.h + Math.abs(lane - edge)) / 2
+    );
+    if (taken || run >= shortest) continue;
+    shortest = run;
+    best = fromGroup
+      ? [border, lane, 0, turn, lane, 1, turn, edge, 0]
+      : [turn, edge, 0, turn, lane, 0, border, lane, 1];
+  }
+  return best;
 }
 
 // What the band sizing of a level reads: its laid-out items, and `boxX`, an item's x in the
@@ -1301,14 +1351,18 @@ export function compoundLayout(
     }
   }
 
-  for (const { ei, group: g, member: m, fromGroup, fromTop, offset } of ownEdges) {
+  for (const own of ownEdges) {
+    const { ei, group: g, member: m, fromGroup, fromTop, offset } = own;
     const e = edges[ei]!;
     const a = nodes[e.src]!;
     const b = nodes[e.dst]!;
     e.route = [a.x, a.y, 0, b.x, b.y, 0];
     e.labelX = (a.x + b.x) / 2;
     e.labelY = (a.y + b.y) / 2;
-    if (!fromTop) continue;
+    if (!fromTop) {
+      e.route = sideRoute(nodes, own, M.portPitch) ?? e.route;
+      continue;
+    }
     // Between a group and its own member, either way: down from the group's top to the member's
     // top. On the grid it starts on the group's top border row (half a cell inside it, so the
     // route stays in the drawing), in a cell of the member's side no other edge ends in (D140);

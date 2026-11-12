@@ -148,6 +148,7 @@ exports[`layered over parser-produced state graphs > lays out every corpus graph
   "e2e/diagrams/state-diagram-v2/pr-check/v2-should-render-composite-states.mmd": 0,
   "e2e/diagrams/state-diagram-v2/pr-check/v2-should-render-concurrency-states.mmd": 0,
   "e2e/diagrams/state-diagram-v2/pr-check/v2-states-can-have-a-class-applied.mmd": 0,
+  "e2e/diagrams/state-diagram-v2/visual-check/transition-between-composite-and-own-child.mmd": 0,
   "e2e/diagrams/state-diagram/nightly-check/a-simple-state-diagram-neo-look-neo-dark-theme.mmd": 0,
   "e2e/diagrams/state-diagram/nightly-check/a-simple-state-diagram-neo-look-neo-theme.mmd": 0,
   "e2e/diagrams/state-diagram/nightly-check/a-simple-state-diagram-neo-look-redux-dark-theme.mmd": 0,

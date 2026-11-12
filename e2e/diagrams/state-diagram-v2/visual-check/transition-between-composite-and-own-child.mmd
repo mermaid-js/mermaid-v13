@@ -1,0 +1,18 @@
+---
+description:
+  Checks that a transition between a composite state and a state inside it is
+  drawn as a visible loop from the composite's side border, in both directions
+  and for a state nested two levels down (#416).
+---
+stateDiagram-v2
+  [*] --> Outer
+  state Outer {
+    state Mid {
+      Deep --> Deeper
+    }
+    Deep --> Outer
+  }
+  Start --> Deep
+  Deeper --> End
+  Outer --> Deeper
+  Mid --> Deep
