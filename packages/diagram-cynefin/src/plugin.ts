@@ -1,4 +1,5 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
+import { resolveLimits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { layoutCynefin, type CynefinLayout } from './layout/index.ts';
 import type { CynefinModel } from './model.ts';
@@ -22,8 +23,10 @@ export const cynefin = {
   layoutKind: 'custom' as const,
   configDefaults: cynefinConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectCynefin(text),
-  parse: (text: string, ctx: DiagramParseContext): CynefinParseResult =>
-    parseCynefin(text, { preprocessed: ctx.preprocessed }),
+  parse: (text: string, ctx: DiagramParseContext): CynefinParseResult => {
+    const { maxNodes, maxEdges } = ctx.limits ?? resolveLimits(ctx.config);
+    return parseCynefin(text, { preprocessed: ctx.preprocessed, maxNodes, maxEdges });
+  },
   labels: cynefinLabels,
   layout: (model: CynefinModel, ctx: RenderContext): CynefinLayout => layoutCynefin(model, ctx),
   render: (model: CynefinModel, layout: CynefinLayout, ctx: RenderContext, w: SvgWriter): void =>
