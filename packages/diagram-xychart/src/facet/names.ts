@@ -1,10 +1,11 @@
 /**
  * XY chart names (D389): what `isValidId` accepts as a category or plot name, and how a rename
- * writes one. Both are text, bare (a run of letters, digits and `+ = * # _ . & -`, joined
- * without blanks) or quoted (`"Q1 2024"`). The parser decides: a name is valid when, written
- * bare or else in quotes where `kind` goes, it reads back as exactly one occurrence of that name
- * over exactly that text. A bare occurrence renamed to a name bare text cannot hold (a blank,
- * punctuation, a keyword such as `bar`) is written quoted; a quoted one keeps its quotes (D191).
+ * writes one. Both are text, bare (a run of letters, digits and `+ = * # _ . & -`, a blank
+ * between two words read as one space, #683) or quoted (`"Q1  2024"`). The parser decides: a
+ * name is valid when, written bare or else in quotes where `kind` goes, it reads back as exactly
+ * one occurrence of that name over exactly that text. A bare occurrence renamed to a name with a
+ * blank, or one bare text cannot hold (punctuation, a keyword such as `bar`), is written quoted;
+ * a quoted one keeps its quotes (D191).
  */
 import { parseXyChart } from '../parser/parser.ts';
 
@@ -31,9 +32,13 @@ function readsAs(name: string, kind: string | undefined, written: string): boole
   );
 }
 
-/** How `name` is written where a bare `kind` occurrence stands: bare if it reads back so. */
+/**
+ * How `name` is written where a bare `kind` occurrence stands: bare if it reads back so and has
+ * no blank. A name with a blank is quoted although one blank between words reads back bare
+ * (#683): mermaid 12.2.0 joined unquoted words, and quoted it reads the name as written.
+ */
 export function writtenName(name: string, kind: string): string {
-  return readsAs(name, kind, name) ? name : `"${name}"`;
+  return !/\s/.test(name) && readsAs(name, kind, name) ? name : `"${name}"`;
 }
 
 /**

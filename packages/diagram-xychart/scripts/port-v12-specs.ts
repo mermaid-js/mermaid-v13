@@ -8,13 +8,13 @@
  * reads v12's drawables back from the SVG. The spec bodies are copied unchanged from the last
  * v12 commit; only imports
  * are rewritten, v12's own error texts are dropped from `toThrowError` (v13 messages name
- * constructs in Mermaid terms, R-ERR-5), and tests listed in `SKIP` (with a reason) are turned
- * into `it.skip`.
+ * constructs in Mermaid terms, R-ERR-5), the expectations listed in `REWRITE` (with a reason)
+ * are replaced, and tests listed in `SKIP` (with a reason) are turned into `it.skip`.
  *
  * Usage: `pnpm --filter @mermaid-js/diagram-xychart port:v12-specs` (also runs prettier).
  */
 import { execFileSync } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -36,6 +36,20 @@ const FILES: readonly (readonly [file: string, imports: string])[] = [
 
 /** `file: { test title (or its unique start): reason }`. Reasons are written into the file. */
 const SKIP: Record<string, Record<string, string>> = {};
+
+/**
+ * `file: [v12's text, v13's, reason]`: an expectation v13 changes on purpose, each text found
+ * exactly once. Reasons are written into the file.
+ */
+const REWRITE: Record<string, readonly (readonly [string, string, string])[]> = {
+  'xychart.jison.spec.ts': [
+    [
+      "{ text: 'cat2asdf', type: 'text' }",
+      "{ text: 'cat2 asdf', type: 'text' }",
+      "12.2.0 joined unquoted words (`cat2asdf`); v13 keeps one space between them, as v12's fix mermaid-js/mermaid#8575 does (#683)",
+    ],
+  ],
+};
 
 /** v12's error text in a `toThrowError` check: v13 has its own messages (R-ERR-5). */
 const V12_MESSAGE = /\.toThrowError\(\s*(["'`])(?:(?!\1)[^\\]|\\.)*\1\s*\)/g;
@@ -86,5 +100,16 @@ for (const [file, imports] of FILES) {
     '',
   ].join('\n');
   writeFileSync(join(OUT, name), header + body);
+}
+// The expectations v13 changes on purpose, each with its note under the imports.
+for (const [name, edits] of Object.entries(REWRITE)) {
+  const path = join(OUT, name);
+  let text = readFileSync(path, 'utf8');
+  for (const [from, to, reason] of edits) {
+    if (text.split(from).length !== 2) throw new Error(`${name}: ${from} is not there once`);
+    const note = `// rewritten: ${from} as ${to}, ${reason}`;
+    text = text.replace(from, to).replace('\n\n', `\n${note}\n\n`);
+  }
+  writeFileSync(path, text);
 }
 process.stdout.write(`${FILES.length} files, ${total} tests (${skipped} skipped)\n`);

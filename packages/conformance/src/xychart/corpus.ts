@@ -8,6 +8,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseXyChart, xyChartTokens, XyChartTokenKind as T } from '@mermaid-js/diagram-xychart';
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
 import { crCut } from '../timeline/corpus.ts';
 import type { CorpusItem } from '../types.ts';
@@ -157,10 +158,54 @@ export async function xyChartGateCorpus(): Promise<CorpusItem[]> {
 const unclosedDirective = (source: string): boolean =>
   preprocess(source).diagnostics.some((d) => d.code === 'UNCLOSED_DIRECTIVE');
 
+/** jison's `alphaNumToken`s: the words of unquoted text. */
+const WORDS = new Set<number>([
+  T.Alpha,
+  T.Num,
+  T.Plus,
+  T.Equals,
+  T.Mult,
+  T.Dot,
+  T.Brkt,
+  T.Minus,
+  T.Underscore,
+  T.Amp,
+]);
+/**
+ * What may lie between two words of one unquoted text: blanks, an empty string's quotes and the
+ * dead markdown rule's text (jison returns no token for either).
+ */
+const BETWEEN_WORDS = new Set<number>([T.Blanks, T.StringStart, T.StringEnd, T.DeadMdRule]);
+
+/**
+ * Whether v13 accepts `source` and it has unquoted text whose words blanks separate: v13 reads
+ * one space there where mermaid 12.2.0 read none (#683, v12's fix mermaid-js/mermaid#8575), so
+ * `title Sales Report` is `Sales Report` to v13 and `SalesReport` to v12. The sources with such
+ * text are listed divergences (`divergences/xychart.json`); their generated variants and
+ * statement orders are left out of the parity corpus, and the sources out of the gates that
+ * compare v12's texts (layout parity, the service's symbols), since they only repeat that
+ * divergence.
+ */
+export function spacedWords(source: string): boolean {
+  if (parseXyChart(source).diagnostics.some((d) => d.severity === 'error')) return false;
+  let word = false;
+  let blank = false;
+  for (const t of xyChartTokens(source)) {
+    if (WORDS.has(t.kind)) {
+      if (word && blank) return true;
+      word = true;
+      blank = false;
+    } else if (BETWEEN_WORDS.has(t.kind)) blank ||= t.kind === T.Blanks;
+    else word = blank = false;
+  }
+  return false;
+}
+
 /**
  * The generated variants for model parity (#508): every item of {@link xyChartGateCorpus} the
  * parity suite's corpus dirs and files do not list already, with ids `xychart-gate/<id>`, and
- * the statement orders of {@link xyChartOrderCorpus}; none with an unclosed directive.
+ * the statement orders of {@link xyChartOrderCorpus}; none with an unclosed directive, nor with
+ * {@link spacedWords}.
  */
 export async function xyChartParityCorpus(): Promise<CorpusItem[]> {
   const listed = new Set([...(await xyChartCorpus()), ...xyChartCases()].map((c) => c.id));
@@ -168,7 +213,7 @@ export async function xyChartParityCorpus(): Promise<CorpusItem[]> {
     .filter((item) => !listed.has(item.id))
     .map((item) => ({ id: `xychart-gate/${item.id}`, source: item.source }));
   return [...gate, ...(await xyChartOrderCorpus())].filter(
-    (item) => !unclosedDirective(item.source)
+    (item) => !unclosedDirective(item.source) && !spacedWords(item.source)
   );
 }
 

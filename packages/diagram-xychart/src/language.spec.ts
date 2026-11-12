@@ -134,6 +134,7 @@ describe('xychart language facet', () => {
       expect(isValidId('Q1 2024', kind)).toBeUndefined();
       expect(isValidId('bar', kind)).toBeUndefined();
       expect(writtenName!('Sales', kind)).toBe('Sales');
+      // One blank between words reads back bare (#683), but 12.2.0 joined such words.
       expect(writtenName!('Q1 2024', kind)).toBe('"Q1 2024"');
       expect(writtenName!('a, b', kind)).toBe('"a, b"');
       // A keyword lexes as itself bare (`bar` starts a plot), so it is quoted.

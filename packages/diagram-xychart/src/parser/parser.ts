@@ -593,7 +593,11 @@ class XyChartParser {
     return point;
   }
 
-  /** jison's `text`: a run of `alphaNumToken`s joined without blanks, or a string. */
+  /**
+   * jison's `text`: a run of `alphaNumToken`s, or a string. Blanks between two of the tokens are
+   * one space (#683, v12's fix mermaid-js/mermaid#8575; 12.2.0 joined them with none), so
+   * `title Sales Report` reads `Sales Report`; a line break after a blank is one of the blanks.
+   */
   private text(names: string[]): XyChartTextNode {
     const first = this.c.pos;
     if (!this.in(TEXT_START)) this.fail(names);
@@ -603,8 +607,18 @@ class XyChartParser {
       return { text, quoted: true, range: this.span(first) };
     }
     let text = this.take();
-    while (this.in(ALPHA_NUM)) text += this.take();
+    while (this.in(ALPHA_NUM)) {
+      const gap = this.blanksBefore(this.c.pos);
+      text += (gap ? ' ' : '') + this.take();
+    }
     return { text, quoted: false, range: this.span(first) };
+  }
+
+  /** Whether blanks lie between the last token consumed and token `i`. */
+  private blanksBefore(i: number): boolean {
+    const { kind } = this.lexed.tokens;
+    for (let j = this.last + 1; j < i; j++) if (kind[j] === T.Blanks) return true;
+    return false;
   }
 
   /** The string at the cursor must be closed. */
