@@ -11,7 +11,14 @@ import {
   VIEWER_SIZES_QUERY_PROCESS,
   VIEWER_SIZES_SALES_PROCESS,
 } from './viewerMeasuredSizes.ts';
+import unresolvedTouches from './unresolvedTouches.json' with { type: 'json' };
 import { layOutFixture, layOutMeasured, type NodeSizes } from './viewerSizedLayout.ts';
+
+interface UnresolvedTouch {
+  touch: string;
+  /** `#<issue>` or `D<n>`. */
+  ref: string;
+}
 
 // Fixtures the dev viewer measures differently from their captured sizes files.
 const MEASURED_IN_VIEWER: Record<string, NodeSizes> = {
@@ -25,17 +32,12 @@ const MEASURED_IN_VIEWER: Record<string, NodeSizes> = {
 // LR/RL routed on drawn sizes, `turnedRouting.ts`): v12 listed `14-messy-layout` (L_33a_39_0 on
 // L_33b_39_0), which v13 resolves; v12's `6-legal-constr-sales` pair (L_D_E_0 on L_D_H_0) still
 // touches, and the same pair touches in `5-car-fun-sales-wide-tb`. The others were not in
-// v12's list (v12 swept only fixtures with sizes files); reported on #595.
-const UNRESOLVED_TOUCHES: Record<string, string[]> = {
-  '5-car-fun-sales-wide-tb': ['L_D_E_0 turns at (242.6, 150.2) on L_D_H_0'],
-  '6-legal-constr-sales': ['L_D_E_0 turns at (570.0, 756.0) on L_D_H_0'],
-  'mermaid-work': ['L_R2_G3_0 turns at (635.8, 252.0) on L_G1_G3_0'],
-  'pebr-2-edge-intrudes-lane-label': [
-    'L_Dep1.Proc2_Dep2.Proc1_0 turns at (1082.3, 258.7) on L_Dep1.Proc3_Dep2.Proc2_0',
-    'L_Dep1.Proc3_Dep2.Proc2_0 turns at (1102.3, 262.0) on L_Dep1.Proc2_Dep2.Proc1_0',
-  ],
-  'regressions/title-band-rails': ['L_HE_CA_HE_Inv_0 turns at (619.1, 460.0) on L_HE_CA_HE_Ans_0'],
-};
+// v12's list (v12 swept only fixtures with sizes files).
+//
+// The list is `unresolvedTouches.json`: each touch names the issue or decision that covers it
+// (`ref`), and the allowlist ratchet (conformance `allowlists.spec.ts`, #695) fails a touch
+// whose issue is closed. A new touch takes a reference of its own.
+const UNRESOLVED_TOUCHES: Record<string, UnresolvedTouch[] | undefined> = unresolvedTouches;
 
 describe('route touches in the swimlane fixtures', () => {
   it('treats a bend closer than the visible gap as touching in the router too', () => {
@@ -46,9 +48,17 @@ describe('route touches in the swimlane fixtures', () => {
     'lets the corner of one route touch another route only where none resolves it, in %s',
     (id) => {
       const layout = layOutFixture(id, MEASURED_IN_VIEWER[id]);
-      expect(routeTouches(layout)).toEqual(UNRESOLVED_TOUCHES[id] ?? []);
+      expect(routeTouches(layout)).toEqual((UNRESOLVED_TOUCHES[id] ?? []).map((t) => t.touch));
     }
   );
+
+  it('lists unresolved touches only for fixtures in the sweep, each with a reference', () => {
+    for (const [id, touches] of Object.entries(unresolvedTouches)) {
+      expect(Object.keys(DDLT_FIXTURES)).toContain(id);
+      expect(touches.length).toBeGreaterThan(0);
+      for (const t of touches) expect(t.ref, `${id}: ${t.touch}`).toMatch(/^(#\d+|D\d+)$/);
+    }
+  });
 
   it('never lets the corner of one route touch another route in sales-process', () => {
     const layout = layOutMeasured('sales-process', VIEWER_SIZES_SALES_PROCESS);

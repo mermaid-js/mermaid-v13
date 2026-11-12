@@ -1,0 +1,124 @@
+{
+  "packages/core/src/layout/swimlane/__tests__/terminalGeometry.spec.ts": {
+    "8-query-process-2: \"No\" leaves the diamond vertex and enters the middle of Investigate": "#677",
+    "8-query-process-2: \"No\" from \"Knows which team?\" runs straight down into the diamond below it": "#677"
+  },
+  "packages/diagram-agentflow/src/v12-specs/agentflow-attachment-mapping.spec.ts": {
+    "issue #75: standalone `id@{ ... }` attachment mappings": "D465",
+    "a standalone task attachment maps as `attachment`, not a second `vertex`": "D465",
+    "a flow attachment maps as `attachment`, so the flow id owns no vertex mapping": "D465",
+    "a connector attachment maps as `attachment`": "D465",
+    "an edge-metadata attachment (`e1@{ ... }` after `a e1@--> b`) maps as `attachment`": "D465",
+    "a multiline standalone block spans through the closing brace and is hit-testable": "D465",
+    "inline id[\"...\"]@{ ... } keeps its single widened `vertex` mapping (issue #60)": "D465",
+    "a bare reference without a block stays a `vertex` mapping": "D465",
+    "getMappingStats counts attachments separately": "D465"
+  },
+  "packages/diagram-agentflow/src/v12-specs/agentflow-diagnostics-lifecycle.spec.ts": {
+    "reports a removed shape as an error after getData()": "D461"
+  },
+  "packages/diagram-agentflow/src/v12-specs/agentflow-diagnostics.spec.ts": {
+    "DB surface": "D465",
+    "emitWarning": "D465",
+    "emitError": "D465",
+    "SHAPE_UNSUPPORTED migration (transformData)": "D465",
+    "reset": "D465"
+  },
+  "packages/diagram-agentflow/src/v12-specs/agentflow-inline-metadata-mapping.spec.ts": {
+    "issue #60: inline metadata block mapping": "D465",
+    "inline id[\"...\"]@{ ... } spans the block, so cursors inside resolve to the node": "D465",
+    "inline block on an edge destination (a --> b[\"...\"]@{ ... }) spans the block": "D465",
+    "single-line inline metadata keeps the node on its declaration line": "D465",
+    "a node without inline metadata is unaffected (decl-only span)": "D465"
+  },
+  "packages/diagram-agentflow/src/v12-specs/agentflow-link-style.spec.ts": {
+    "still applies interpolate at a valid index": "D465",
+    "still applies the default interpolate": "D465"
+  },
+  "packages/diagram-agentflow/src/v12-specs/agentflow-mappings.spec.ts": {
+    "agentflow element mappings": "D465",
+    "DB surface": "D465",
+    "opts into source-faithful parsing so Diagram.ts keeps comments and offsets": "D465",
+    "starts with an empty element-mappings list": "D465",
+    "vertex positions": "D465",
+    "captures a position for a plain labelled vertex": "D465",
+    "captures vertices for inline shapes": "D465",
+    "edge positions": "D465",
+    "captures a position for an edge statement": "D465",
+    "captures separate mappings for sequential edge statements": "D465",
+    "container positions": "D465",
+    "captures a position spanning from keyword to end for a flow container": "D465",
+    "captures positions for nested flow containers": "D465",
+    "frontmatter offset": "D465",
+    "shifts positions by the frontmatter line offset": "D465",
+    "reports un-shifted positions when no frontmatter offset is set": "D465",
+    "lookup helpers": "D465",
+    "getElementsOnLine returns all mappings that intersect a given line": "D465",
+    "getElementAtPosition prefers the innermost span": "D465",
+    "getMappingStats reports counts per statement type": "D465",
+    "reset": "D465",
+    "clear() drops element mappings and the frontmatter offset": "D465"
+  },
+  "packages/diagram-agentflow/src/v12-specs/agentflow-semantic-model.spec.ts": {
+    "includes diagnostics emitted during the render pipeline": "D465"
+  },
+  "packages/diagram-agentflow/src/v12-specs/agentflow-subgraph-span.spec.ts": {
+    "issue #59: sibling subgraph span overlap": "D465",
+    "innermost-match ranking": "D465"
+  },
+  "packages/diagram-architecture/src/v12-specs/architecture.spec.ts": {
+    "cytoscape stylesheet warnings": "D326, D328",
+    "randomize config": "D326, D328",
+    "fcose layout config": "D326, D328",
+    "should block proto pollution via service id": "D326, D328"
+  },
+  "packages/diagram-architecture/src/v12-specs/architectureSeed.spec.ts": {
+    "withSeededRandom": "D326, D328"
+  },
+  "packages/diagram-c4/src/v12-specs/c4Boundary.spec.ts": {
+    "should parse a link": "D452",
+    "should parse tags": "D452"
+  },
+  "packages/diagram-c4/src/v12-specs/c4Container.spec.ts": {
+    "should parse a sprite": "D452",
+    "should parse a link": "D452",
+    "should parse tags": "D452"
+  },
+  "packages/diagram-c4/src/v12-specs/c4Person.spec.ts": {
+    "should parse a sprite": "D452",
+    "should parse a link": "D452",
+    "should parse tags": "D452"
+  },
+  "packages/diagram-c4/src/v12-specs/c4PersonExt.spec.ts": {
+    "should parse a sprite": "D452",
+    "should parse a link": "D452",
+    "should parse tags": "D452"
+  },
+  "packages/diagram-c4/src/v12-specs/c4System.spec.ts": {
+    "should parse a sprite": "D452",
+    "should parse a link": "D452",
+    "should parse tags": "D452"
+  },
+  "packages/diagram-eventmodeling/src/v12-specs/langium-eventmodeling.spec.ts": {
+    "registers checks against the validation registry": "D525"
+  },
+  "packages/diagram-sankey/src/v12-specs/sankey.spec.ts": {
+    "allows __proto__ as id with sankey-beta syntax": "D393, #496",
+    "allows __proto__ as id with sankey syntax": "D393, #496"
+  },
+  "packages/diagram-sequence/src/v12-specs/keywordActors.spec.ts": {
+    "parses a details statement": "D105"
+  },
+  "packages/diagram-treeview/src/v12-specs/boxDrawingPreprocessor.spec.ts": {
+    "remapErrorLines": "D486"
+  },
+  "packages/diagram-treeview/src/v12-specs/icons.spec.ts": {
+    "treeViewIcons pack": "D485"
+  },
+  "packages/diagram-usecase/src/v12-specs/usecase.grammar.spec.ts": {
+    "defines the stable canonical CST rule names": "D14"
+  },
+  "packages/diagram-usecase/src/v12-specs/usecase.parser.spec.ts": {
+    "publishes a complete serializable AST v1 with ordered statements and exact spans": "D476"
+  }
+}
