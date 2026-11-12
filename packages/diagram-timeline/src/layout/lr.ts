@@ -5,10 +5,23 @@
  *
  * Changes from v12, each decided: periods are grouped by section position (D251); events start
  * no higher than `eventAxisGap` below the axis (D252); the axis reaches at least the right edge
- * of the last column (v12's `width + 3 × leftMargin` fell short below a `leftMargin` of 25).
+ * of the last column (v12's `width + 3 × leftMargin` fell short below a `leftMargin` of 25); a
+ * column whose period, event or section holds a word wider than the wrap width is that much
+ * wider, and the columns after it move along (D557, #649).
  */
 import type { TimelineModel } from '../model.ts';
-import { Bounds, groupsOf, line, slotOf, titleAt, titleBlock, type Env } from './env.ts';
+import type { MeasuredLabel } from '@mermaid-js/core/text';
+import {
+  Bounds,
+  groupsOf,
+  line,
+  overflow,
+  slotOf,
+  titleAt,
+  titleBlock,
+  type Env,
+  type Group,
+} from './env.ts';
 import { finish } from './finish.ts';
 import type {
   TimelineBox,
@@ -17,6 +30,72 @@ import type {
   TimelinePeriodLayout,
   TimelineSectionLayout,
 } from './types.ts';
+
+/** A section's box across its columns, with its label. */
+interface SectionBox {
+  readonly s: number;
+  readonly x: number;
+  /** Its columns' pitches together. */
+  readonly span: number;
+  readonly periods: readonly number[];
+  readonly label: MeasuredLabel;
+}
+
+/**
+ * Where each column starts and what it adds to `pitch` and to its boxes' width (D557): as much
+ * as a word kept whole in its period or an event passes the wrap width, plus an even share of
+ * what its section's word passes the section's. A section with no periods still takes one
+ * column. Without long words every column is `pitch` apart, as in v12.
+ */
+function columnsOf(
+  env: Env,
+  model: TimelineModel,
+  groups: readonly Group[],
+  periodLabels: readonly MeasuredLabel[],
+  eventLabels: readonly (readonly MeasuredLabel[])[],
+  left: number
+): { extra: number[]; columnX: Map<number, number>; sectionBoxes: SectionBox[] } {
+  const { lr } = env.m;
+  const extra = model.periods.map((_, i) => {
+    let w = overflow(periodLabels[i]!, lr.wrap);
+    for (const label of eventLabels[i]!) w = Math.max(w, overflow(label, lr.wrap));
+    return w;
+  });
+  const emptyExtra = new Map<number, number>();
+  const sectionText = new Map<number, MeasuredLabel>();
+  for (const g of groups) {
+    if (g.section === undefined) continue;
+    const columns = Math.max(g.periods.length, 1);
+    let wrap = lr.pitch * columns - lr.sectionTrim;
+    for (const i of g.periods) wrap += extra[i]!;
+    const label = env.measure(model.sections[g.section]!.text, wrap);
+    sectionText.set(g.section, label);
+    const share = overflow(label, wrap) / columns;
+    if (share === 0) continue;
+    if (g.periods.length === 0) emptyExtra.set(g.section, share);
+    for (const i of g.periods) extra[i] = extra[i]! + share;
+  }
+  const sectionBoxes: SectionBox[] = [];
+  const columnX = new Map<number, number>();
+  let x = left;
+  for (const g of groups) {
+    const start = x;
+    if (g.periods.length === 0) x += lr.pitch + (emptyExtra.get(g.section ?? -1) ?? 0);
+    for (const i of g.periods) {
+      columnX.set(i, x);
+      x += lr.pitch + extra[i]!;
+    }
+    if (g.section !== undefined)
+      sectionBoxes.push({
+        s: g.section,
+        x: start,
+        span: x - start,
+        periods: g.periods,
+        label: sectionText.get(g.section)!,
+      });
+  }
+  return { extra, columnX, sectionBoxes };
+}
 
 export function layoutLR(env: Env, model: TimelineModel): TimelineLayout {
   const { lr, common } = env.m;
@@ -49,18 +128,15 @@ export function layoutLR(env: Env, model: TimelineModel): TimelineLayout {
     stackLength = Math.max(stackLength, sum);
   }
 
-  // Section boxes, drawn `pitch × columns − sectionTrim` wide and at least `sectionFloor` tall.
-  const sectionBoxes: { s: number; x: number; columns: number; periods: readonly number[] }[] = [];
-  let x = left;
-  for (const g of groups) {
-    const columns = Math.max(g.periods.length, 1);
-    if (g.section !== undefined)
-      sectionBoxes.push({ s: g.section, x, columns, periods: g.periods });
-    x += lr.pitch * columns;
-  }
-  const sectionLabels = sectionBoxes.map(({ s, columns }) =>
-    env.measure(model.sections[s]!.text, lr.pitch * columns - lr.sectionTrim)
+  const { extra, columnX, sectionBoxes } = columnsOf(
+    env,
+    model,
+    groups,
+    periodLabels,
+    eventLabels,
+    left
   );
+  const sectionLabels = sectionBoxes.map((b) => b.label);
   let sectionRow = 0;
   const sectionHeights = sectionLabels.map((label) => {
     const h = Math.max(env.boxHeight(label, lr.padding), sectionFloor);
@@ -76,14 +152,9 @@ export function layoutLR(env: Env, model: TimelineModel): TimelineLayout {
 
   const periods: TimelinePeriodLayout[] = [];
   const connectors: TimelineConnector[] = [];
-  const columnX = new Map<number, number>();
-  x = left;
-  for (const g of groups) {
-    g.periods.forEach((i, j) => columnX.set(i, x + j * lr.pitch));
-    x += lr.pitch * Math.max(g.periods.length, 1);
-  }
   model.periods.forEach((p, i) => {
     const px = columnX.get(i)!;
+    const width = boxWidth + extra[i]!;
     const slot = slotOf(env, model, p, i);
     let y = eventsTop;
     const events = p.events.map((e, k): TimelineBox => {
@@ -96,7 +167,7 @@ export function layoutLR(env: Env, model: TimelineModel): TimelineLayout {
         padding: lr.padding,
         x: px,
         y,
-        width: boxWidth,
+        width,
         height,
       };
       y += height + lr.eventGap;
@@ -111,11 +182,11 @@ export function layoutLR(env: Env, model: TimelineModel): TimelineLayout {
       padding: lr.padding,
       x: px,
       y: periodTop,
-      width: boxWidth,
+      width,
       height: taskHeight,
       events,
     });
-    const cx = px + boxWidth / 2;
+    const cx = px + width / 2;
     connectors.push({
       ...line(env, cx, periodBottom, cx, connectorEnd, env.connectorWidth),
       period: i,
@@ -124,12 +195,12 @@ export function layoutLR(env: Env, model: TimelineModel): TimelineLayout {
   });
 
   const sections: TimelineSectionLayout[] = sectionBoxes.map(
-    ({ s, x: sx, columns, periods: own }, k) => {
+    ({ s, x: sx, span, periods: own }, k) => {
       const label = sectionLabels[k]!;
       const box = {
         x: sx,
         y: top,
-        width: lr.pitch * columns - lr.sectionTrim + 2 * lr.padding,
+        width: span - lr.sectionTrim + 2 * lr.padding,
         height: sectionHeights[k]!,
       };
       const band = new Bounds().rect(box);

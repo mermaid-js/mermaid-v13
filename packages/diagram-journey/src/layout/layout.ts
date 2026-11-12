@@ -8,7 +8,8 @@
  * r 7 every 10 px, the title at (`left`, 25), the activity line at `4 × height`. Changed (D242):
  * bands gap by `taskMargin`, the margin grows past a legend wider than it with no threshold
  * jump, a label taller than its box grows the box downward, and the bounds are what is drawn
- * (D224).
+ * (D224). A task or section name keeps a word wider than its box whole and the box widens to
+ * hold it, moving the tasks after it along (D557).
  */
 import { pathBuilder } from '@mermaid-js/core/svg';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
@@ -106,6 +107,36 @@ function sectionOf(model: JourneyModel, t: JourneyTask): number | undefined {
   return undefined;
 }
 
+/**
+ * Task widths and section labels (D557, #649): names wrap at `width` but keep a word wider than
+ * that whole, and a task box grows to its widest line. A section name wider than its run of
+ * tasks shares the extra width out evenly among them. Names that fit keep v12's `width`.
+ */
+function widthsOf(
+  model: JourneyModel,
+  env: Env
+): { names: MeasuredLabel[]; widths: number[]; runs: Map<number, MeasuredLabel> } {
+  const { m } = env;
+  const all = model.tasks;
+  const names = all.map((t) => env.measure(t.name, env.fonts.task, m.width, true));
+  const widths = names.map((n) => Math.max(m.width, n.width));
+  const runs = new Map<number, MeasuredLabel>();
+  let last = '';
+  all.forEach((t, i) => {
+    if (t.section === last) return;
+    last = t.section;
+    let end = i + 1;
+    while (all[end]?.section === t.section) end++;
+    let width = (end - i - 1) * m.taskMargin;
+    for (let k = i; k < end; k++) width += widths[k]!;
+    const text = env.measure(t.section, env.fonts.task, width, true);
+    const extra = (text.width - width) / (end - i);
+    if (extra > 0) for (let k = i; k < end; k++) widths[k] = widths[k]! + extra;
+    runs.set(i, text);
+  });
+  return { names, widths, runs };
+}
+
 /** v12 `drawTasks`: a band per run of tasks under one section name, a box per task. */
 function tasksOf(
   model: JourneyModel,
@@ -114,24 +145,24 @@ function tasksOf(
   slots: ReadonlyMap<string, number>
 ): { bands: BandLayout[]; tasks: TaskLayout[] } {
   const { m } = env;
-  const pitch = m.width + m.taskMargin;
   const taskY = m.taskRows * m.height + m.diagramMarginY;
   const bands: BandLayout[] = [];
   const tasks: TaskLayout[] = [];
   const all = model.tasks;
-  let last = '';
+  const { names, widths, runs } = widthsOf(model, env);
   let band: number | undefined;
   let slot = 0;
+  let x = left;
   all.forEach((t, i) => {
-    const x = left + i * pitch;
-    if (t.section !== last) {
+    const text = runs.get(i);
+    if (text) {
       let count = 1;
       while (all[i + count]?.section === t.section) count++;
       const at = sectionOf(model, t);
       band = bands.length;
       slot = band % SECTION_SLOTS;
-      const width = count * m.width + (count - 1) * m.taskMargin;
-      const text = env.measure(t.section, env.fonts.task, width);
+      let width = (count - 1) * m.taskMargin;
+      for (let k = i; k < i + count; k++) width += widths[k]!;
       // A label taller than the band grows it downward; its top stays at v12's.
       const box = { x, y: m.bandTop, width, height: Math.max(m.height, text.height) };
       const label = centred(text, box);
@@ -143,13 +174,13 @@ function tasksOf(
         slot,
         ...(label ? { label } : {}),
       });
-      last = t.section;
     }
-    const text = env.measure(t.name, env.fonts.task, m.width);
+    const name = names[i]!;
+    const width = widths[i]!;
     // A label taller than the box grows it downward; the top edge, its dots and the face stay.
-    const box = { x, y: taskY, width: m.width, height: Math.max(m.height, text.height) };
-    const cx = x + m.width / 2;
-    const label = centred(text, box);
+    const box = { x, y: taskY, width, height: Math.max(m.height, name.height) };
+    const cx = x + width / 2;
+    const label = centred(name, box);
     const dots: ActorDot[] = [];
     for (const actor of t.people) {
       const s = slots.get(actor);
@@ -177,6 +208,7 @@ function tasksOf(
       face: faceOf(m, cx, t.score),
       dots,
     });
+    x += width + m.taskMargin;
   });
   return { bands, tasks };
 }

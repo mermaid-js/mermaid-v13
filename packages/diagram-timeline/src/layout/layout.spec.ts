@@ -367,6 +367,62 @@ describe('timeline bounds hold every stroke (D224)', () => {
   });
 });
 
+describe('timeline long words stay whole and widen only their box (#649)', () => {
+  const lines = (b: { label: { lines: readonly { text: string }[][] } }): string[] =>
+    b.label.lines.map((l) => l.map((r) => r.text).join(''));
+
+  it('LR: widens the column of a long period or event and a long section, nothing else', () => {
+    const l = lay(fx.wholeWords);
+    const [one, event, period, sectioned] = l.periods;
+    const ev = event!.events[0]!;
+    expect(lines(ev)).toEqual([fx.WHOLE_WORD]);
+    expect(lines(period!)).toEqual([fx.WHOLE_WORD]);
+    expect(lines(l.sections[0]!)).toEqual([fx.WHOLE_WORD]);
+    // A column of short words keeps v12's 190 px at x 200.
+    expect([one!.x, one!.width]).toEqual([200, 190]);
+    expect(one!.events[0]!.width).toBe(190);
+    // A long word's column is the word plus the 20 px padding a side, its events with it.
+    expect(event!.width).toBeCloseTo(ev.label.width + 40);
+    expect(ev.width).toBe(event!.width);
+    expect(period!.width).toBeCloseTo(period!.label.width + 40);
+    // Columns stay 10 px apart.
+    expect(event!.x).toBe(400);
+    expect(period!.x).toBeCloseTo(event!.x + event!.width + 10);
+    expect(sectioned!.x).toBeCloseTo(period!.x + period!.width + 10);
+    // A section wider than its column widens the column, and the box covers the word.
+    const s = l.sections[0]!;
+    expect(s.width).toBeCloseTo(s.label.width + 40);
+    expect(s.x).toBe(sectioned!.x);
+    expect(s.width).toBeCloseTo(sectioned!.width);
+    expect(timelineLayoutViolations(fx.wholeWords, l)).toEqual([]);
+  });
+
+  it('TD: widens a long period to the left and a long event to the right; the axis stays', () => {
+    const m = fx.turned(fx.wholeWords);
+    const l = lay(m);
+    const [one, event, period] = l.periods;
+    const ev = event!.events[0]!;
+    expect(lines(ev)).toEqual([fx.WHOLE_WORD]);
+    expect(lines(period!)).toEqual([fx.WHOLE_WORD]);
+    expect([l.axis.x1, l.axis.x2]).toEqual([430, 430]);
+    expect([one!.x, one!.width]).toEqual([200, 210]);
+    expect([one!.events[0]!.x, one!.events[0]!.width]).toEqual([480, 310]);
+    expect(period!.width).toBeCloseTo(Math.max(210, period!.label.width + 10));
+    expect(period!.x + period!.width).toBe(410);
+    expect(ev.x).toBe(480);
+    expect(ev.width).toBeCloseTo(Math.max(310, ev.label.width + 10));
+    expect(timelineLayoutViolations(m, l)).toEqual([]);
+  });
+
+  it('lays out a diagram without long words as before', () => {
+    const l = lay(fx.sections);
+    expect(l.sections.map((s) => [s.x, s.width])).toEqual([
+      [200, 590],
+      [800, 390],
+    ]);
+  });
+});
+
 describe('timelineLayoutViolations', () => {
   it('catches a broken layout', () => {
     const good = lay(fx.sections);

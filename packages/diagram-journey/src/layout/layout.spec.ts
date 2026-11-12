@@ -5,7 +5,7 @@ import { num } from '@mermaid-js/core/svg';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { JourneyModel } from '../model.ts';
-import { FIXTURES, journey, section, task } from './fixtures.ts';
+import { FIXTURES, WHOLE_WORD, journey, section, task } from './fixtures.ts';
 import { journeyLayoutViolations, layoutJourney, type JourneyLayout } from './index.ts';
 import { journey as diagramPlugin } from '../plugin.ts';
 
@@ -348,6 +348,54 @@ describe('journey layout: labels (D225)', () => {
     expect(layout.bands[0]!.label).toBeUndefined();
     expect(layout.tasks[0]!.label).toBeUndefined();
     expect(layout.tasks[1]!.label).toBeDefined();
+  });
+});
+
+describe('journey layout: long words stay whole (#649, D557)', () => {
+  const lines = (l: { text: { lines: readonly { text: string }[][] } }): string[] =>
+    l.text.lines.map((line) => line.map((r) => r.text).join(''));
+
+  it('widens only the box of a task or section name wider than it, as much as the word', () => {
+    const model = fixture('long-words');
+    const layout = lay(model);
+    const [one, long, three, four, five, six] = layout.tasks;
+    const [first, wide, last] = layout.bands;
+    expect(lines(long!.label!)).toEqual([WHOLE_WORD]);
+    expect(lines(wide!.label!)).toEqual([WHOLE_WORD + WHOLE_WORD]);
+    // Short names keep v12's 150 px boxes; the long one is as wide as its word.
+    for (const t of [one, three, six]) expect(t!.width).toBe(150);
+    expect(long!.width).toBeCloseTo(long!.label!.width);
+    expect(long!.width).toBeGreaterThan(150);
+    // Tasks stay taskMargin (50) apart; the line and face stay on the box's centre.
+    expect(long!.x).toBe(one!.x + 200);
+    expect(three!.x).toBeCloseTo(long!.x + long!.width + 50);
+    expect(long!.line.x).toBeCloseTo(long!.x + long!.width / 2);
+    // A section wider than its tasks shares the extra width out among them.
+    expect(wide!.width).toBeCloseTo(wide!.label!.width);
+    expect(four!.width).toBeCloseTo(five!.width);
+    expect(four!.width + 50 + five!.width).toBeCloseTo(wide!.width);
+    expect([four!.x, five!.x + five!.width]).toEqual([wide!.x, wide!.x + wide!.width]);
+    expect(first!.width).toBeCloseTo(one!.width + long!.width + three!.width + 100);
+    expect(last!.x).toBeCloseTo(wide!.x + wide!.width + 50);
+    expect(journeyLayoutViolations(model, layout)).toEqual([]);
+  });
+
+  it('lays out names that fit exactly as before', () => {
+    const layout = lay(fixture('working-day'));
+    expect(layout.tasks.map((t) => [t.x, t.width])).toEqual([
+      [150, 150],
+      [350, 150],
+      [550, 150],
+      [750, 150],
+      [950, 150],
+    ]);
+  });
+
+  it('still wraps legend names to maxLabelWidth (D225)', () => {
+    const layout = lay(journey(undefined, section('S'), task('T', 3, WHOLE_WORD)), {
+      maxLabelWidth: 100,
+    });
+    expect(layout.legend[0]!.label.text.lines.length).toBeGreaterThan(1);
   });
 });
 

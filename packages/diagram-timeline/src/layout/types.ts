@@ -36,7 +36,10 @@ export interface TimelineBox extends Rect {
    * index, or 0 under `disableMulticolor`. Unbounded: the renderer wraps it to the palette.
    */
   readonly slot: number;
-  /** The label, measured and wrapped to the box's width less its padding. */
+  /**
+   * The label, measured and wrapped to the box's width less its padding. A word wider than the
+   * wrap width stays whole and the box is widened to hold it (D557).
+   */
   readonly label: MeasuredLabel;
   /** The box's padding (v12 `node.padding`): LR 20, TD 5. */
   readonly padding: number;

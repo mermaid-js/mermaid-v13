@@ -25,7 +25,8 @@ export interface Env {
   readonly fonts: Fonts;
   readonly warn: JourneyLayoutContext['warn'];
   /** Lays out a label wrapped at `max` (`Infinity` breaks at explicit breaks only). */
-  measure(text: string, font: FontKey, max: number): MeasuredLabel;
+  /** A label wrapped at `max`; with `keepWords`, a word wider than `max` stays whole (#649). */
+  measure(text: string, font: FontKey, max: number, keepWords?: boolean): MeasuredLabel;
 }
 
 /**
@@ -77,7 +78,7 @@ export function envOf(ctx: JourneyLayoutContext): Env {
     m: journeyMetrics(ctx.config.journey ?? {}, (w) => ctx.warn(w)),
     fonts: fontsOf(ctx, (w) => ctx.warn(w)),
     warn: (w) => ctx.warn(w),
-    measure: (text, font, max) =>
-      layoutLabel(text, font, max > 0 ? max : 1, ctx.measurer, { inline: ctx.inline }),
+    measure: (text, font, max, keepWords = false) =>
+      layoutLabel(text, font, max > 0 ? max : 1, ctx.measurer, { inline: ctx.inline, keepWords }),
   };
 }
