@@ -7,3 +7,5 @@ export { c4LayoutViolations } from './layout/invariants.ts';
 export { c4CellRect, drawC4 as c4AsciiDrawing, type C4Drawing } from './ascii/draw.ts';
 export { c4TestContext, parsedC4, type ParsedC4 } from './test-context.ts';
 export { renderC4ForTest, type RenderC4Options, type RenderedC4 } from './render/harness.ts';
+// The c4-beta lexer, reachable from specs only until its parser and plugin land (spec #730).
+export { lexC4Beta, C4BetaTokenKind } from './beta/index.ts';
