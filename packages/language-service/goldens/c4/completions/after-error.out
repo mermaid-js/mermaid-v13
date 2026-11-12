@@ -44,3 +44,6 @@
   UpdateElementStyle keyword (UpdateElementStyle(elementName, bgColor?, fontColor?, borderColor?, shadowing?, shape?, sprite?, techn?, legendText?, legendSprite?)) 5:1-5:1 "" -> "UpdateElementStyle("
   UpdateRelStyle keyword (UpdateRelStyle(from, to, textColor?, lineColor?, offsetX?, offsetY?)) 5:1-5:1 "" -> "UpdateRelStyle("
   UpdateLayoutConfig keyword (UpdateLayoutConfig(c4ShapeInRow?, c4BoundaryInRow?)) 5:1-5:1 "" -> "UpdateLayoutConfig("
+  title keyword 5:1-5:1 "" -> "title"
+  accTitle keyword 5:1-5:1 "" -> "accTitle: "
+  accDescr keyword 5:1-5:1 "" -> "accDescr: "
