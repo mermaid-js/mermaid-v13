@@ -606,7 +606,7 @@ The vocabulary is split by owner (D331). Core's `packages/core/src/theme/vocabul
 | CSS injection via `style`/`classDef`/`linkStyle` | Property allow-list; values matching `url( expression( javascript: @import image-set /* [<>{};\\]` are dropped; output as presentation attrs (`SafeColor`, `SafeLength`) | `core/svg/style.ts` |
 | Malicious links | `checkUrl`: control-char/entity stripping (port of the `sanitize-url` logic), scheme allow-list on raw + decoded form, `//host` blocked; `_blank` gets `rel="noopener noreferrer"`. Default `securityLevel`: http, https, mailto, relative. `strict`: relative only. `loose`/`antiscript`/`sandbox` map to default with a warning (R-SEC-4, R-SEC-6) | `core/svg/url.ts` |
 | Extension plugins (`postRender`) | The `SvgTree` view only accepts allowed tags, attributes and branded values, and the allow-list check runs after all hooks (R-PLUG-2) | `core/svg/tree.ts` |
-| Click callbacks | Not in core output. The interactions plugin binds them in the DOM after mount, only when the integrator installed it; diagram text cannot turn it on (R-PLUG-9) | `plugin-interactions` |
+| Click callbacks | Not in core output. The interactions plugin binds them in the DOM after mount, only when the integrator installed it and set `securityLevel: 'loose'` (D554); diagram text cannot do either (R-PLUG-9) | `plugin-interactions` |
 | Theme-variable injection | `safeColor`: charset + function allow-list (`rgb hsl lab oklch color-mix light-dark var(--mermaid-*)`) | `core/theme` |
 | DoS: input size, edges, nesting, output size, layout work | Limits in `RenderContext`, integrator-only; `RangeError` → `LIMIT` error. `maxLayoutWork` (default `MAX_STEPS`) caps the steps of a layout loop the text can make long, counted, never timed (D542; gantt's scheduling day walk) | `core/limits.ts` |
 | DoS: ReDoS | Linear scanners; regex lint; stress suite (50k runs, 1000-deep nesting, unclosed constructs) | parser kit |
@@ -734,12 +734,12 @@ type InlineBox = { width: number; height: number; baseline: number; node: SvgFra
 `@mermaid-js/plugin-interactions` restores v12 `click X callback` / `call` from M1. Core keeps callbacks in the model and emits `data-id`/`data-ast` on every node. The plugin:
 
 - reads the callbacks from the parse result through `postParse` (and claims `callbacks`, so core doesn't warn);
-- binds click handlers in `afterMount`, resolving function names the way v12 did. This includes looking names up on `window`, which is why it is opt-in by installation only and diagram text can't enable it;
+- binds click handlers in `afterMount`, resolving function names the way v12 did. This includes looking names up on `window`, which is why it is opt-in by installation only and diagram text can't enable it, and why callbacks are bound only under `securityLevel: 'loose'`, as in v12 (D554, #697). Under any other level the plugin collects no callback and warns `CALLBACK_IGNORED` once per render;
 - provides `RenderResult.bindFunctions`, so v12 call sites that call `bindFunctions(el)` after `render()` keep working.
 
 Its config keys (moved from the core schema) live in its own schema section.
 
-As built in M1: hooks see the AST, not the model, so the AST node of a `click … callback` / `call` statement carries `callback: AstCallback` (`{ targets, name, args? }`, from `@mermaid-js/core/parser-kit`); the plugin collects every such node in `postParse` into its `state` and binds `g.node[data-id]` elements in `afterMount`, once per element. v12 had no click-callback config keys (`securityLevel: loose` gated them), so the plugin has no schema section, and callbacks do not depend on `securityLevel`.
+As built in M1: hooks see the AST, not the model, so the AST node of a `click … callback` / `call` statement carries `callback: AstCallback` (`{ targets, name, args? }`, from `@mermaid-js/core/parser-kit`); the plugin collects every such node in `postParse` into its `state` and binds `g.node[data-id]` elements in `afterMount`, once per element. v12 had no click-callback config keys (`securityLevel: loose` gated them), so the plugin has no schema section. Since D554 (#697) callbacks again need `securityLevel: 'loose'`: the plugin reads the configured value (`ctx.config.securityLevel`), because `ctx.securityLevel` is the resolved level, where `loose` is `default` (D75).
 
 ### 12.4 Discovery
 
@@ -914,5 +914,5 @@ The parallel tracks after item 1:
 4. **§3 / §12.3:** `RenderResult.bindFunctions` is set only by the interactions plugin. The field is already optional in v12's RenderResult type, so v12 call sites written as bindFunctions?.(el) keep working either way: without the plugin the call is a no-op, and with it click callbacks work as before. Call sites that call it unguarded need the plugin installed. Confirmed 2026-11-02.
 5. **§7.2:** keep v12 class names (`nodes`, `edgePaths`, `node`, …) rather than new ones. Confirmed 2026-11-02.
 6. **§4.2:** AST ids are semantic (`n:A`, `e:A>B#2`, `s:id`, `st:3`), not offset-based, so they survive edits and editors keep UI state across re-parses. Decided 2026-11-02.
-7. **§12.3:** the interactions plugin resolves callback names on `window`, as v12 did. Decided 2026-11-02: keep resolving callback names as v12 does, for compatibility. The safeguard stays as §12.3 describes it: the lookup only exists when the integrator installs the plugin.
+7. **§12.3:** the interactions plugin resolves callback names on `window`, as v12 did. Decided 2026-11-02: keep resolving callback names as v12 does, for compatibility. The safeguard stays as §12.3 describes it: the lookup only exists when the integrator installs the plugin. Amended 2026-11-12 (D554): the integrator must also set `securityLevel: 'loose'`, as in v12.
 8. **§6.1 / §12.1 / §12.2:** layout output is generic per plugin (`L`). `LayoutModel` is the contract for graph diagrams only. `postLayout` hooks get `{ kind, diagram, layout }`, and M1 item 23 keeps a non-graph stub in CI. Confirmed 2026-11-02.

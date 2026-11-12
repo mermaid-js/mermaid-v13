@@ -28,6 +28,7 @@ const HEAD =
 /** A mermaid (gantt from its registry entry, #385) with, unless `bare`, the plugin. */
 async function mermaid(bare = false) {
   const m = createMermaid();
+  m.initialize({ securityLevel: 'loose' });
   if (!bare) await m.registerExternalDiagrams([interactions]);
   return m;
 }

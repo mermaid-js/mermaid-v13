@@ -31,6 +31,7 @@ describe('interactions plugin (R-PLUG-9, R-SVG-5, D47)', () => {
 
   it('with the plugin, bindFunctions runs the callback named on window with the node id', async () => {
     const m = createMermaid();
+    m.initialize({ securityLevel: 'loose' });
     await m.registerExternalDiagrams([interactions]);
     const result = await m.render('d', CLICK);
     expect(result.warnings.map((w) => w.code)).not.toContain('CALLBACK_IGNORED');
@@ -47,6 +48,7 @@ describe('interactions plugin (R-PLUG-9, R-SVG-5, D47)', () => {
 
   it('passes `call fn(…)` arguments as v12 did: split outside quotes, one quote pair dropped', async () => {
     const m = createMermaid();
+    m.initialize({ securityLevel: 'loose' });
     await m.registerExternalDiagrams([interactions]);
     const result = await m.render(
       'd',
@@ -64,6 +66,7 @@ describe('interactions plugin (R-PLUG-9, R-SVG-5, D47)', () => {
 
   it('binds once however often bindFunctions is called, and ignores missing names', async () => {
     const m = createMermaid();
+    m.initialize({ securityLevel: 'loose' });
     await m.registerExternalDiagrams([interactions]);
     const result = await m.render('d', `${CLICK}  click B nowhere.fn\n`);
     let n = 0;
@@ -78,6 +81,7 @@ describe('interactions plugin (R-PLUG-9, R-SVG-5, D47)', () => {
 
   it('binds once when another render with the same callbacks binds the same svg', async () => {
     const m = createMermaid();
+    m.initialize({ securityLevel: 'loose' });
     await m.registerExternalDiagrams([interactions]);
     const result = await m.render('d', CLICK);
     const again = await m.render('d', CLICK);
@@ -93,6 +97,7 @@ describe('interactions plugin (R-PLUG-9, R-SVG-5, D47)', () => {
   it('leaves the svg unchanged and inside the allow-list (R-SEC-2)', async () => {
     const plain = createMermaid();
     const m = createMermaid();
+    m.initialize({ securityLevel: 'loose' });
     await m.registerExternalDiagrams([interactions]);
     const sources = [
       ...V12_XSS_CASES.flatMap((c) => (c.source === undefined ? [] : [c.source])),

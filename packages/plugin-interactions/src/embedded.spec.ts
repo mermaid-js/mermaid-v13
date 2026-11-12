@@ -60,6 +60,7 @@ describe('click callbacks inside a block (#669)', () => {
 
   it('with the plugin, binds the block callback to the inner node only', async () => {
     const m = createMermaid();
+    m.initialize({ securityLevel: 'loose' });
     await m.registerExternalDiagrams([interactions]);
     const result = await m.render('d', BLOCK);
     expect(result.warnings.map((w) => w.code)).not.toContain('CALLBACK_IGNORED');
@@ -77,6 +78,7 @@ describe('click callbacks inside a block (#669)', () => {
 
   it('keeps a host callback off a block node with the same id', async () => {
     const m = createMermaid();
+    m.initialize({ securityLevel: 'loose' });
     await m.registerExternalDiagrams([interactions]);
     const result = await m.render('d', `${BLOCK}\n  click A hostFn`);
     const calls = spies('hostFn', 'innerFn');
@@ -111,6 +113,7 @@ describe('click callbacks inside a block (#669)', () => {
       '  one --> two',
     ].join('\n');
     const m = createMermaid();
+    m.initialize({ securityLevel: 'loose' });
     await m.registerExternalDiagrams([interactions]);
     const result = await m.render('d', text);
     const calls = spies('innerFn', 'otherFn');
@@ -127,6 +130,7 @@ describe('click callbacks inside a block (#669)', () => {
 
   it('binds once however often bindFunctions is called', async () => {
     const m = createMermaid();
+    m.initialize({ securityLevel: 'loose' });
     await m.registerExternalDiagrams([interactions]);
     const result = await m.render('d', BLOCK);
     const calls = spies('innerFn');

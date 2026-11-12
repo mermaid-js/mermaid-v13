@@ -19,7 +19,7 @@ afterEach(() => {
 
 async function mermaid(config?: Parameters<ReturnType<typeof createMermaid>['initialize']>[0]) {
   const m = createMermaid();
-  if (config) m.initialize(config);
+  m.initialize({ securityLevel: 'loose', ...config });
   await m.registerExternalDiagrams([interactions]);
   return m;
 }
