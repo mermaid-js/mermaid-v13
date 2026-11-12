@@ -1,8 +1,27 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+/**
+ * `pnpm --filter @mermaid-js/language-service-monaco gen` writes the Monarch files and their
+ * map; with `--check` it lists the stale ones and fails instead (`pnpm check:static`, #694).
+ */
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { GRAMMARS_MODULE, grammarsModule, monarchFiles, OUT_DIR } from './monarch.ts';
 
-mkdirSync(OUT_DIR, { recursive: true });
-for (const [name, text] of monarchFiles()) writeFileSync(join(OUT_DIR, name), text);
-writeFileSync(GRAMMARS_MODULE, grammarsModule());
-process.stdout.write(`Wrote the Monarch files to ${OUT_DIR} and their map to ${GRAMMARS_MODULE}\n`);
+const files = new Map([...monarchFiles()].map(([name, text]) => [join(OUT_DIR, name), text]));
+files.set(GRAMMARS_MODULE, grammarsModule());
+const stale = [...files]
+  .filter(([path, text]) => !existsSync(path) || readFileSync(path, 'utf8') !== text)
+  .map(([path]) => path);
+if (process.argv.includes('--check')) {
+  if (stale.length > 0) {
+    process.stderr.write(
+      `Stale generated files (run \`pnpm --filter @mermaid-js/language-service-monaco gen\`):\n  ${stale.join('\n  ')}\n`
+    );
+    process.exitCode = 1;
+  }
+} else {
+  for (const path of stale) {
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, files.get(path)!);
+    process.stdout.write(`wrote ${path}\n`);
+  }
+}
