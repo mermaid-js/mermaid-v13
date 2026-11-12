@@ -63,11 +63,14 @@ import { normalise } from './normalise.ts';
 import type { OptionName } from './normalise.ts';
 import { accDescrValue, accTitleValue, labelValue, titleValue } from './convert.ts';
 import { lex } from './lexer.ts';
+import { checkLimit } from './limits.ts';
 import { PREFIX_KEYWORDS, RADAR_TRIVIA, T, TEXT_STATEMENTS } from './tokens.ts';
 
 export interface RadarParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
+  /** The integrator's cap on axes and curves (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
+  maxNodes?: number;
 }
 
 export type RadarParseResult = ParseResult<RadarModel, RadarDocument>;
@@ -555,6 +558,12 @@ class RadarParser {
     return labelValue(this.raw(s));
   }
 
+  /** One more axis or curve, against the node cap. */
+  private counted(range: Range): void {
+    const count = this.axes.length + this.curves.length;
+    checkLimit(this.st, 'maxNodes', count, this.opts.maxNodes, range);
+  }
+
   /** `Axis: ID ("[" STRING "]")?` */
   private axis(): Range {
     const n = this.expect(T.Id);
@@ -568,6 +577,7 @@ class RadarParser {
     if (label !== undefined) node.label = label;
     this.children.push(node);
     this.axes.push(node);
+    this.counted(range);
     // D358: each axis name is an `axis` symbol; a repeat refers to the first.
     this.st.symbol(name, 'axis', nameRange, id === base ? 'def' : 'ref');
     return range;
@@ -590,6 +600,7 @@ class RadarParser {
     if (label !== undefined) node.label = label;
     this.children.push(node);
     this.curves.push(node);
+    this.counted(range);
     // D358: curve names are definitions only, in their own namespace.
     this.st.symbol(name, 'curve', nameRange, 'def');
     return range;

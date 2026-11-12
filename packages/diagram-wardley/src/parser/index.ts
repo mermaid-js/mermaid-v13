@@ -9,7 +9,8 @@ import { lex } from './lexer.ts';
 
 export { LANGIUM_NAMES, T as WardleyTokenKind, WARDLEY_TRIVIA } from './tokens.ts';
 export { parseWardley } from './parser.ts';
-export type { WardleyParseOptions, WardleyParseResult } from './parser.ts';
+export type { WardleyParseOptions } from './options.ts';
+export type { WardleyParseResult } from './parser.ts';
 export { detectWardley } from './detect.ts';
 export type * from './ast.ts';
 

@@ -96,7 +96,9 @@ function keyAt(text: string, start: number, end: number, at: number) {
   if (KEY_DOCS[key] === undefined) return undefined;
   if (!/^[\t ]*:/.test(text.slice(to, end))) return undefined;
   // Where a key goes: after `@{`, a line break or a `,`.
-  const before = text.slice(start, from).replace(/[\t ]+$/, '');
+  let blank = from;
+  while (blank > start && /[\t ]/.test(text.charAt(blank - 1))) blank--;
+  const before = text.slice(start, blank);
   if (before !== '' && !/[\n\r,]$/.test(before)) return undefined;
   return { key, range: span(from, to) };
 }

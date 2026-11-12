@@ -5,6 +5,7 @@ import type {
   RenderContext,
 } from '@mermaid-js/core';
 import type { TreeViewDiagramConfig } from '@mermaid-js/core/config';
+import { resolveLimits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { treeViewOptions } from './config.ts';
 import { treeViewConfigDefaults } from './generated/config-defaults.ts';
@@ -53,7 +54,8 @@ export const treeView = {
   configDefaults: treeViewConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectTreeView(text),
   parse: (text: string, ctx: DiagramParseContext): TreeViewParseResult => {
-    const result = parseTreeView(text, { preprocessed: ctx.preprocessed });
+    const { maxNodes, maxDepth } = ctx.limits ?? resolveLimits(ctx.config);
+    const result = parseTreeView(text, { preprocessed: ctx.preprocessed, maxNodes, maxDepth });
     const icons = glyphIcons(result.model, ctx.config.treeView);
     return { ...result, model: Object.freeze({ ...result.model, glyphIcons: icons }) };
   },

@@ -4,7 +4,9 @@
  *
  * - The five headers where the parser expects the header (the first line).
  * - The macros at a statement start (nothing but blanks before the word on its line), each
- *   with its signature; the `(` is inserted too unless one follows.
+ *   with its signature; the `(` is inserted too unless one follows. After them `title`,
+ *   `accTitle` and `accDescr`, where the parser takes them (not as a boundary's first
+ *   statement), each with what separates it from its text unless that follows.
  * - In a macro's arguments: after `$`, the names of the macro's slots not given yet (by name
  *   or by position); in a relation end or an `Update…Style` target, the aliases of the
  *   elements and boundaries (an element where both have the alias, as v12 looks them up).
@@ -34,14 +36,42 @@ const LINE_BREAK = /[\n\r]/;
 const KEYWORD_LIST = [...KEYWORDS];
 const HEADER_NAMES = KEYWORD_LIST.filter(([, k]) => HEADERS.has(k));
 const MACRO_NAMES = KEYWORD_LIST.filter(([, k]) => !HEADERS.has(k));
+/**
+ * The title and accessibility statements, in the order offered, each with what follows the
+ * keyword before its text. `accDescr {` is the same keyword with a `{` typed after it.
+ */
+const STATEMENTS: readonly (readonly [label: string, kind: number, separator: string])[] = [
+  ['title', T.Title, ' '],
+  ['accTitle', T.AccTitle, ': '],
+  ['accDescr', T.AccDescr, ': '],
+];
 /** Slots a `$name` is not offered for: the ones a statement writes by position. */
 const POSITIONAL = new Set(['label', 'index']);
 
 const matches = (label: string, typed: string) =>
   label.toLowerCase().startsWith(typed.toLowerCase());
 
-/** The headers or the macros for the word at the probe, at a line start. */
-function keywordItems(probe: ProbeResult, text: string, headers: boolean): CompletionItem[] {
+/**
+ * What a title or accessibility keyword inserts before `after` (the text following the word
+ * replaced): its separator, unless one is there already. A `title` at its line's end stands
+ * alone: that is a title with no text (D452), and `title ` with none is an error.
+ */
+function statementText(label: string, separator: string, after: string): string {
+  if (separator === ' ') return /^[^\t \n\r]/.test(after) ? `${label} ` : label;
+  if (/^[\t ]*[:{]/.test(after)) return label;
+  return /^[\t ]/.test(after) ? label + separator.trimEnd() : label + separator;
+}
+
+/**
+ * The headers, or the macros and the other statements the parser expects, for the word at the
+ * probe, at a line start.
+ */
+function keywordItems(
+  probe: ProbeResult,
+  text: string,
+  headers: boolean,
+  expected: ReadonlySet<number>
+): CompletionItem[] {
   const { offset } = probe;
   const start = probe.prefix.start;
   const typed = text.slice(start, offset);
@@ -60,6 +90,19 @@ function keywordItems(probe: ProbeResult, text: string, headers: boolean): Compl
       insertText: headers || paren ? name : `${name}(`,
       range,
       ...(table === undefined ? {} : { detail: signature(name, table) }),
+      ...(documentation === undefined ? {} : { documentation }),
+    });
+  }
+  if (headers) return out;
+  const after = text.slice(range.end);
+  for (const [label, kind, separator] of STATEMENTS) {
+    if (!expected.has(kind) || !matches(label, typed)) continue;
+    const documentation = c4Docs[kind];
+    out.push({
+      label,
+      kind: 'keyword',
+      insertText: statementText(label, separator, after),
+      range,
       ...(documentation === undefined ? {} : { documentation }),
     });
   }
@@ -180,7 +223,9 @@ export function c4Completions(probe: ProbeResult, doc: DocumentView<C4Document>)
     return items.filter((i) => !LINE_BREAK.test(text.slice(i.range.start, i.range.end)));
   }
   const expected = new Set(probe.expected);
-  if (HEADER_NAMES.some(([, k]) => expected.has(k))) return keywordItems(probe, text, true);
-  if (expected.has(T.Person)) return keywordItems(probe, text, false);
+  if (HEADER_NAMES.some(([, k]) => expected.has(k))) {
+    return keywordItems(probe, text, true, expected);
+  }
+  if (expected.has(T.Person)) return keywordItems(probe, text, false, expected);
   return [];
 }

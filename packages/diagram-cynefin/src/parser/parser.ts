@@ -69,11 +69,16 @@ import type {
 } from './ast.ts';
 import { accDescrValue, accTitleValue, labelValue, titleValue } from './convert.ts';
 import { lex } from './lexer.ts';
+import { checkLimit } from './limits.ts';
 import { CYNEFIN_TRIVIA, T } from './tokens.ts';
 
 export interface CynefinParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
+  /** The integrator's cap on items (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
+  maxNodes?: number;
+  /** The integrator's cap on transitions (core `DEFAULT_LIMITS.maxEdges` when absent). */
+  maxEdges?: number;
 }
 
 export type CynefinParseResult = ParseResult<CynefinModel, CynefinDocument>;
@@ -228,6 +233,9 @@ class CynefinParser {
   private readonly blocks = new Map<CynefinDomainName, CynefinDomainNode[]>();
   private readonly transitions: CynefinTransition[] = [];
   private readonly selfLoops: CynefinTransitionNode[] = [];
+  /** The items and transitions read so far, in every block (the caps count them). */
+  private itemCount = 0;
+  private transitionCount = 0;
   /**
    * What items after the last statement belong to: the block it left open, or `STRAY` after a
    * line that failed outside a block. A failed line keeps it, so the items after it still join
@@ -578,6 +586,7 @@ class CynefinParser {
       const label = labelValue(this.raw(j));
       const id = this.id(`i:${node.name}/${esc(label)}`);
       node.children.push({ id, type: 'Item', range, label });
+      checkLimit(this.state, 'maxNodes', ++this.itemCount, this.options.maxNodes, range);
       node.range.end = range.end;
       this.state.statement('item', range);
     }
@@ -615,6 +624,7 @@ class CynefinParser {
     };
     this.children.push(node);
     this.state.statement('transition', range);
+    checkLimit(this.state, 'maxEdges', ++this.transitionCount, this.options.maxEdges, range);
     this.state.symbol(from, 'domain', fromRange, 'ref');
     this.state.symbol(to, 'domain', toRange, 'ref');
     if (from === to) this.selfLoops.push(node);

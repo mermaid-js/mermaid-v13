@@ -1,4 +1,5 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
+import { resolveLimits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { layoutTreemap, type TreemapLayout } from './layout/index.ts';
 import type { TreemapModel } from './model.ts';
@@ -23,8 +24,10 @@ export const treemap = {
   layoutKind: 'custom' as const,
   configDefaults: treemapConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectTreemap(text),
-  parse: (text: string, ctx: DiagramParseContext): TreemapParseResult =>
-    parseTreemap(text, { preprocessed: ctx.preprocessed }),
+  parse: (text: string, ctx: DiagramParseContext): TreemapParseResult => {
+    const { maxNodes, maxDepth } = ctx.limits ?? resolveLimits(ctx.config);
+    return parseTreemap(text, { preprocessed: ctx.preprocessed, maxNodes, maxDepth });
+  },
   layout: (model: TreemapModel, ctx: RenderContext): TreemapLayout => layoutTreemap(model, ctx),
   render: (model: TreemapModel, layout: TreemapLayout, ctx: RenderContext, w: SvgWriter): void =>
     renderTreemap(model, layout, ctx, w),

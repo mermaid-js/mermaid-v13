@@ -214,7 +214,14 @@ function dirOf(doc: readonly Item[] | undefined): StateDirection | undefined {
   return dir;
 }
 
-const unquote = (s: string) => s.replace(/^"+|"+$/g, '');
+/** `s` without the `"` runs at its ends: `/^"+|"+$/g`, scanned (R-PARSE-7). */
+function unquote(s: string): string {
+  let from = 0;
+  let to = s.length;
+  while (from < to && s[from] === '"') from++;
+  while (to > from && s[to - 1] === '"') to--;
+  return s.slice(from, to);
+}
 
 /** Builds the {@link StateModel} from the top-level statements. One per parse. */
 export class StateBuilder {
