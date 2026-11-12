@@ -64,4 +64,11 @@ export const stateCategories = /* @__PURE__ */ kindCategories(T, {
   Concurrent: 'Operator',
   StyleSeparator: 'Operator',
   Invalid: 'Other',
+  Embed: 'Keyword',
+  EmbedId: 'Variable',
+  EmbedTitle: 'String',
+  EmbedOpen: 'Punctuation',
+  EmbedBody: 'Meta',
+  EmbedEnd: 'Punctuation',
+  EmbedFold: 'Meta',
 });

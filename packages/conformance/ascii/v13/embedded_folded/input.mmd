@@ -1,0 +1,13 @@
+flowchart LR
+  Request --> login
+  mermaid login["Login flow"] {
+    sequenceDiagram
+      User->>Server: credentials
+  }
+  login@{ view: collapsed }
+  login --> model
+  mermaid model {
+    classDiagram
+      class User
+  }
+  model@{ view: collapsed }

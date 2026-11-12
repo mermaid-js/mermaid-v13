@@ -19,7 +19,7 @@ states. Inside a composite state line breaks are not tokens at all. *)
 
 @modes STATE STATE_STRING STATE_ID SCALE acc_title acc_descr acc_descr_multiline CLASSDEF
   CLASSDEFID CLASS CLASS_STYLE STYLE STYLEDEF_STYLES NOTE NOTE_ID NOTE_TEXT FLOATING_NOTE
-  FLOATING_NOTE_ID struct ;
+  FLOATING_NOTE_ID struct embed ;
 
 (** `click <state> "url" "tooltip"` or `click <state> href "url"`: makes the state a link. *)
 CLICK                     /(?i:click)\b/                   :keyword ;
@@ -114,6 +114,21 @@ name here. *)
 <NOTE_TEXT> NOTE_TEXT     /\s*:[^:\n;]+/                   pop :string ;
 <NOTE_TEXT> -             /\n\s*(?i:end note)\b/           pop attach-prev :keyword ;
 <NOTE_TEXT> NOTE_TEXT     /[\s\S]*?(?=\n\s*(?i:end note)\b)/ :string ;
+
+(** Embedded diagram blocks (ADR-15, not in mermaid@12): `mermaid <id>["Title"] {` on a line of
+its own, the body (another diagram's text, as one token), then `}` first on its own line. The
+hand-written lexer enters this mode for `mermaid` and a blank at the start of a line ending in
+`{`, and finds the closing line by counting lines that end in `{` against lines that start with
+`}`; this file lists the tokens for their highlight categories only. *)
+<embed> EMBED             /mermaid/                        :keyword ;
+<embed> EMBED_ID          /[^\s\[{]+/                      :variable ;
+<embed> EMBED_TITLE       /\[[^\]]*\]/                     :string ;
+<embed> EMBED_OPEN        /\{/                             :punctuation ;
+<embed> EMBED_BODY        /[^}]+/                          :meta ;
+<embed> EMBED_END         /\}/                             :punctuation ;
+(** `id@{ view: collapsed }` folds the block `id` (#670): the only `@{ … }` a state diagram
+takes, lexed by the hand-written lexer after an id, up to the first `}` on its line. *)
+<embed> EMBED_FOLD        /@\{[^}\n]*\}/                    :meta ;
 
 (** The header: `stateDiagram` or `stateDiagram-v2`. *)
 SD                        /(?i:stateDiagram)\s+/           :keyword ;

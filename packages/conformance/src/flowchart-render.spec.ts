@@ -7,7 +7,12 @@ import { V12_XSS_CASES } from '@mermaid-js/core/svg/testing';
 import type { FlowModel } from '@mermaid-js/diagram-flowchart';
 import { createMermaid, MermaidError, type Prepared, type RenderResult } from 'mermaid';
 import { REPO_ROOT, corpusFromDir } from './index.ts';
-import { parseSvg, type SvgElement as SvgNode, type SvgView as SvgTree } from './svg-tree.ts';
+import {
+  inEmbedded,
+  parseSvg,
+  type SvgElement as SvgNode,
+  type SvgView as SvgTree,
+} from './svg-tree.ts';
 
 /**
  * Render properties (DESIGN §13.2, §13.4) over the e2e flowchart fixtures, through the public
@@ -68,6 +73,8 @@ function extents(tree: SvgTree): { x: number; y: number }[] {
   const walk = (node: SvgNode, dx: number, dy: number): void => {
     const tag = tree.tag(node);
     if (tag === undefined && node !== tree.root) return;
+    // An embedded diagram (ADR-15) has its own viewBox: its box is what the host drew.
+    if (tag === 'svg' && node.parent?.tag !== undefined) return;
     const at = (name: Parameters<SvgTree['getAttr']>[1]): number =>
       Number(tree.getAttr(node, name) ?? 0);
     const t = tree.getAttr(node, 'transform');
@@ -114,8 +121,9 @@ function astIndex(ast: AstNode): Map<string, AstNode> {
   return index;
 }
 
+// An embedded diagram's elements (ADR-15) carry its own AST ids.
 const astElements = (tree: SvgTree): SvgNode[] =>
-  tree.find((n, t) => t.getAttr(n, 'data-ast') !== undefined);
+  tree.find((n, t) => t.getAttr(n, 'data-ast') !== undefined && !inEmbedded(n));
 
 describe('flowchart render properties over the e2e corpus', () => {
   it('renders the corpus', () => {

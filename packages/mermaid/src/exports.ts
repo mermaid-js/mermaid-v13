@@ -21,22 +21,20 @@ export {
   type Warning,
 } from '@mermaid-js/core';
 export type { MermaidConfig } from '@mermaid-js/core/config';
-export {
-  type ExtensionPlugin,
-  type InitializeConfig,
-  type IntegratorOptions,
-  type Mermaid,
-  type ParseErrorHandler,
-  type ParseOptions,
-  type ParseResult12 as ParseResult,
-  type Prepared,
-  type PreloadRequest,
-  type RenderOptions,
-  type RenderResult,
-  type SvgRenderOptions,
-  type TextRenderOptions,
-  type TextRenderResult,
-} from './api.ts';
+export type { InitializeConfig, IntegratorOptions, Mermaid } from './api.ts';
+export type {
+  ExtensionPlugin,
+  ParseErrorHandler,
+  ParseOptions,
+  ParseResult12 as ParseResult,
+  Prepared,
+  PreloadRequest,
+  RenderOptions,
+  RenderResult,
+  SvgRenderOptions,
+  TextRenderOptions,
+  TextRenderResult,
+} from './api-types.ts';
 export type { Mounted, MountOptions, RunOptions } from './dom.ts';
 export type { AsyncIconLoader, IconLoader, SyncIconLoader } from './icon-packs.ts';
 export type { ExternalDiagram, LayoutLoader, LazyDiagram, ManifestPlugin } from './registry.ts';

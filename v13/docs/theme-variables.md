@@ -81,7 +81,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `seriesTextColor` | `--mermaid-seriesTextColor` | derived | color | `textColor` | `textColor` | redux-dark-color | pie |
 | `scaleLabelColor` | `--mermaid-scaleLabelColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default, dark, forest, neutral | core, sequence |
 | `mutedBkg` | `--mermaid-mutedBkg` | derived | color | `secondaryColor` | `secondaryColor` | default, forest, neutral | sequence |
-| `mutedBorder` | `--mermaid-mutedBorder` | derived | color | `mix(secondaryColor, black, 12.5%)` | `mix(secondaryColor, black, 12.5%)` | default, dark, forest, neutral, neo-dark | sequence |
+| `mutedBorder` | `--mermaid-mutedBorder` | derived | color | `mix(secondaryColor, black, 12.5%)` | `mix(secondaryColor, black, 12.5%)` | default, dark, forest, neutral, neo-dark | sequence, flowchart, state |
 | `linkInkColor` | `--mermaid-linkInkColor` | derived | color | `textColor` | `textColor` | dark, forest, neutral | sequence |
 | `lineTextColor` | `--mermaid-lineTextColor` | derived | color | `invert(lineColor)` | `invert(lineColor)` | default, dark, forest, neutral | sequence |
 | `softBorder` | `--mermaid-softBorder` | derived | color | `nodeBorder` | `nodeBorder` | forest, neutral, neo | core |

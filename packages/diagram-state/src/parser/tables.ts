@@ -46,6 +46,7 @@ export const STATEMENT_KINDS = [
   T.Click,
   T.HideEmpty,
   T.Scale,
+  T.Embed,
 ];
 export const DOC_KINDS = [...STATEMENT_KINDS, ...NL, Kind.EOF];
 export const COMPOSITE_DOC_KINDS = [...STATEMENT_KINDS, T.Concurrent, ...NL, T.StructStop];
@@ -54,6 +55,8 @@ export const HEADER_START = [T.Sd, ...NL];
 export const ID_KINDS = [T.Id, T.EdgeState];
 export const ID_ONLY = [T.Id];
 export const AFTER_ID = [T.StyleSeparator, T.Descr, T.Arrow];
+/** After a statement's first id: `@{ view: collapsed }` too (#670). */
+export const AFTER_STATE = [...AFTER_ID, T.EmbedFold];
 export const AFTER_TARGET = [T.StyleSeparator, T.Descr];
 export const STRUCT_START = [T.StructStart];
 export const STRUCT_STOP = [T.StructStop];
@@ -71,6 +74,11 @@ export const TITLE = [T.AccTitleValue];
 export const DESCR_VALUE = [T.AccDescrValue];
 export const CLICK_ACTION = [T.String, T.Href];
 export const STRING = [T.String];
+export const EMBED_ID = [T.EmbedId];
+export const EMBED_AFTER_ID = [T.EmbedTitle, T.EmbedOpen];
+export const EMBED_OPEN = [T.EmbedOpen];
+export const EMBED_BODY = [T.EmbedBody];
+export const EMBED_END = [T.EmbedEnd];
 
 /** Kinds a probe's cursor follows rather than extends: punctuation. */
 export const PROBE_FOLLOWS = kindSet(
@@ -102,6 +110,11 @@ export const EXPECTED = new ExpectedTable([
   ['a title', [T.AccTitleValue]],
   ['a description', [T.AccDescrValue]],
   ['`--` between regions', [T.Concurrent]],
+  ['a block id', [T.EmbedId]],
+  ['a block title such as `["Title"]`', [T.EmbedTitle]],
+  ['`{` at the end of the line', [T.EmbedOpen]],
+  ['`}` on its own line, closing the block', [T.EmbedEnd]],
+  ['`@{ view: collapsed }`', [T.EmbedFold]],
   [
     'a statement such as `state`, `note`, `classDef`, `class` or `style`',
     [
@@ -124,6 +137,7 @@ export const EXPECTED = new ExpectedTable([
       T.Click,
       T.HideEmpty,
       T.Scale,
+      T.Embed,
     ],
   ],
   ['a line break', [Kind.Newline, T.EndOfInput]],
@@ -140,6 +154,7 @@ export const HINTS: Readonly<Record<number, string>> = {
   [T.Click]: 'write it as `click <state> "<url>" "<tooltip>"` or `click <state> href "<url>"`',
   [T.StateDescr]: 'write it as `state "<description>" as <id>`',
   [T.Scale]: 'write it as `scale <number> width`',
+  [T.Embed]: 'write it as `mermaid <id>["Title"] {`, then the diagram, then `}` on its own line',
 };
 
 /** Why a token cannot start a statement, for the ones authors put there. */

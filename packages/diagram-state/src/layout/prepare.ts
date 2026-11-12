@@ -18,6 +18,14 @@ import { configLengths, type ConfigLength } from './config-length.ts';
 import type { StateRenderContext } from './context.ts';
 import { stateConfigDefaults } from '../generated/config-defaults.ts';
 import { stateMetrics, type StateMetrics } from './metrics.ts';
+import type { EmbeddedDiagram } from '@mermaid-js/core';
+import { framedSize } from '@mermaid-js/core/svg/framed';
+import {
+  FOLDED_TYPE_SIZE,
+  foldedCells,
+  foldedSize,
+  foldedTypeText,
+} from '@mermaid-js/core/svg/folded';
 
 /** What a node is drawn as. `described`: a state with several description lines (v12 `rectWithTitle`). */
 export type StateShape =
@@ -28,7 +36,9 @@ export type StateShape =
   | 'choice'
   | 'fork'
   | 'join'
-  | 'note';
+  | 'note'
+  /** An embedded diagram block (ADR-15): a frame, a title strip, the inner diagram. */
+  | 'embed';
 
 export interface StateNodeView {
   /** Layout node id: the state id, or the note's AST id (`note:<k>`). */
@@ -48,6 +58,12 @@ export interface StateNodeView {
   style: CheckedStyle;
   state?: StateNode;
   note?: StateNote;
+  /** An embedded diagram block (ADR-15), drawn in its frame or folded (#670); absent otherwise. */
+  block?: 'embed' | 'folded';
+  /** An unfolded block: what it holds, `null` for a stand-in frame. */
+  embed?: EmbeddedDiagram | null;
+  /** A folded block (#670): its inner type (empty when unknown) and that type's label. */
+  fold?: { readonly type: string; readonly label: MeasuredLabel };
 }
 
 export interface StateGroupView {
@@ -113,6 +129,10 @@ interface Measure {
   readonly minWidth: number;
   readonly label: (text: string, style: CheckedStyle, max: number) => MeasuredLabel;
   readonly styleOf: (classes: readonly string[], own?: readonly string[]) => CheckedStyle;
+  readonly embed: StateRenderContext['embed'];
+  /** A folded block's type label (#670): small capitals, measured at their size. */
+  readonly typeLabel: (type: string) => MeasuredLabel;
+  readonly foldedType: StateRenderContext['foldedType'];
 }
 
 /**
@@ -147,6 +167,15 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
       });
     },
     styleOf: styleCache(model, ctx),
+    embed: ctx.embed,
+    typeLabel: (type) =>
+      layoutLabel(
+        foldedTypeText(type),
+        { ...m.font, size: FOLDED_TYPE_SIZE },
+        Infinity,
+        ctx.measurer
+      ),
+    foldedType: ctx.foldedType,
   };
 
   const sc = scopes(model);
@@ -356,6 +385,24 @@ function boxOf(
   return { w: Math.max(label.width, minWidth) + 2 * pad.x, h: label.height + 2 * pad.y };
 }
 
+/** A folded block (#670): its title (or its id) and its inner type, in the folded shape. */
+function folded(
+  base: Pick<StateNodeView, 'id' | 'ast' | 'parent' | 'flow' | 'style' | 'state'>,
+  s: StateNode,
+  style: CheckedStyle,
+  m: Measure
+): StateNodeView {
+  const label = m.label(s.title || s.id, style, Infinity);
+  const type = m.foldedType?.(s.id) ?? '';
+  const fold = { type, label: m.typeLabel(type) };
+  // In cells: the title rows, a divider and the type row, padded in a border (a text-form box).
+  const pad = m.units.builder.nodePad;
+  const { width: w, height: h } = m.cells
+    ? foldedCells({ width: label.width, rows: label.lines.length }, fold.label, pad)
+    : foldedSize(label, fold.label, type.length);
+  return { ...base, shape: 'embed', block: 'folded', label, fold, w, h };
+}
+
 function measureState(
   s: StateNode,
   style: CheckedStyle,
@@ -375,6 +422,14 @@ function measureState(
     case 'join': {
       const [w, h] = sideways(flow) ? [sm.bar.short, sm.bar.long] : [sm.bar.long, sm.bar.short];
       return { ...base, shape: s.kind, label: m.label('', style, 0), w, h };
+    }
+    case 'embed': {
+      if (s.folded) return folded(base, s, style, m);
+      // The title stays on one line: the strip is as wide as the inner diagram allows.
+      const label = m.label(s.title ?? '', style, Infinity);
+      const embed = m.embed?.(s.id) ?? null;
+      const { width: w, height: h } = framedSize(embed, label);
+      return { ...base, shape: 'embed', block: 'embed', label, embed, w, h };
     }
     case 'plain':
     case 'composite':

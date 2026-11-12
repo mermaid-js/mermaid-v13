@@ -1,0 +1,16 @@
+---
+description: a flowchart block holding a flowchart block holding a sequence block, with edges at every level
+---
+flowchart LR
+  user[User] --> checkout
+  mermaid checkout["Checkout"] {
+    flowchart TB
+      cart[Cart] --> pay
+      mermaid pay["Payment"] {
+        sequenceDiagram
+          Shop->>Bank: charge
+          Bank-->>Shop: approved
+      }
+      pay --> done([Done])
+  }
+  checkout --> receipt[Receipt]

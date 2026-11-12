@@ -13,6 +13,14 @@ export function toMermaidError(e: unknown): MermaidError {
   return new MermaidError('INTERNAL', e instanceof Error ? e.message : String(e), { cause: e });
 }
 
+/** The error for a diagram type this mermaid has no package for. */
+export function unsupportedDiagram(type: string): MermaidError {
+  return new MermaidError(
+    'UNSUPPORTED_DIAGRAM',
+    `Diagram type "${type}" is not supported by this version of mermaid.`
+  );
+}
+
 const WARNING_KEYS = ['path', 'source', 'feature', 'shapes', 'astIds'] as const;
 
 /**

@@ -1,0 +1,15 @@
+---
+description: an ER block inside a subgraph, with an edge from outside
+---
+flowchart TB
+  client[Client] --> model
+  subgraph Backend
+    api[API] --> model
+    mermaid model["Data model"] {
+      erDiagram
+        USER ||--o{ ORDER : places
+        USER {
+          string name
+        }
+    }
+  end

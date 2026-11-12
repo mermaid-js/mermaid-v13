@@ -1,0 +1,21 @@
+---
+description: a mind map and a pie block side by side, styled with classDef and style
+---
+flowchart LR
+  mermaid ideas["Ideas"] {
+    mindmap
+      root((Launch))
+        Docs
+        Demo
+        Blog
+  }
+  mermaid share["Share"] {
+    pie
+      "Docs" : 40
+      "Demo" : 35
+      "Blog" : 25
+  }
+  ideas --> share
+  classDef dashed stroke-dasharray:4
+  class ideas dashed
+  style share stroke:#2563eb

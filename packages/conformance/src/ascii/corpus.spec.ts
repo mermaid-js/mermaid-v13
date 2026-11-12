@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { repairRoutes, routeCollisions } from '@mermaid-js/core/ascii';
 import { createMermaid, MermaidError } from 'mermaid';
-import { REPO_ROOT, corpusFromDir } from '../corpus.ts';
+import { REPO_ROOT, corpusFromDir, isEmbeddedFixture } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
 import { expectedOf } from './expected.ts';
 import { overlaps, sizeFaults } from './flow-checks.ts';
@@ -20,6 +20,8 @@ const CHARSETS: Charset[] = ['unicode', 'ascii'];
 
 interface Case {
   id: string;
+  /** An embedded-diagram fixture (ADR-15): its blocks frame other diagrams' drawings. */
+  embedded: boolean;
   layout: CellLayout;
   out: Record<Charset, AsciiResult>;
   again: Record<Charset, string>;
@@ -53,7 +55,13 @@ beforeAll(async () => {
         out[charset] = await renderAscii(item.source, { charset });
         again[charset] = (await renderAscii(item.source, { charset })).text;
       }
-      cases.push({ id: item.id, layout: out.unicode.layout, out, again });
+      cases.push({
+        id: item.id,
+        embedded: isEmbeddedFixture(item),
+        layout: out.unicode.layout,
+        out,
+        again,
+      });
     } catch (e) {
       failed[item.id] = String(e);
     }
@@ -85,9 +93,13 @@ describe('ascii corpus properties (D87, R-ASCII-9)', () => {
     expect(perCharset((c, cs) => (c.out[cs].text === c.again[cs] ? [] : ['differs']))).toEqual({});
   });
 
+  // The flowchart reader cannot read the other diagrams' drawings inside a block's frame (ADR-15):
+  // the embedded fixtures' structure is checked by the mermaid package's embedded-ascii spec
+  // and the v13 goldens (`ascii/v13/embedded_*`) instead.
   it('draws every visible node label inside a box, and every edge label', () => {
     expect(
       perCharset((c, cs) => {
+        if (c.embedded) return [];
         const s = readStructure(c.out[cs].text, cs, expectedOf(c.layout, c.layout.title));
         return [
           ...s.missingNodes.map((l) => `node label in no box: ${JSON.stringify(l)}`),
@@ -100,6 +112,7 @@ describe('ascii corpus properties (D87, R-ASCII-9)', () => {
   it('connects every edge line box to box (no free end, none ending on a title)', () => {
     expect(
       perCharset((c, cs) => {
+        if (c.embedded) return [];
         const s = readStructure(c.out[cs].text, cs, expectedOf(c.layout, c.layout.title));
         return s.dangling.map((at) => `edge line with a free end at ${at}`);
       })

@@ -61,9 +61,14 @@ function mmdFiles(dir: string): string[] {
 
 /** Every corpus file `detect` accepts, as [repo path, text]. */
 export function corpus(detect: (text: string) => unknown): [string, string][] {
-  return mmdFiles(join(ROOT, 'e2e/diagrams'))
-    .map((f) => [f.slice(ROOT.length), readFileSync(f, 'utf8')] as [string, string])
-    .filter(([, src]) => Boolean(detect(src)));
+  return (
+    mmdFiles(join(ROOT, 'e2e/diagrams'))
+      // Embedded diagram blocks (ADR-15) are highlighted by the language service's regions, not
+      // by the generated grammars, which never enter the block mode (#671).
+      .filter((f) => !f.includes('/embedded/'))
+      .map((f) => [f.slice(ROOT.length), readFileSync(f, 'utf8')] as [string, string])
+      .filter(([, src]) => Boolean(detect(src)))
+  );
 }
 
 export interface AgreementType {

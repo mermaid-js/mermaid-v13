@@ -8,7 +8,7 @@ import type { Limits } from '../limits/index.ts';
 import type { AstNode } from '../parser-kit/ast.ts';
 import type { ParseResult } from '../parser-kit/result.ts';
 import type { PreprocessResult } from '../preprocess/preprocess.ts';
-import type { OutlinePaint } from '../svg/types.ts';
+import type { EmbeddedSvg, OutlinePaint } from '../svg/types.ts';
 import type { SvgFragment, SvgWriter } from '../svg/writer.ts';
 import type { SecurityLevel } from '../svg/url.ts';
 import type { InlineSpans } from '../text/inline.ts';
@@ -104,7 +104,38 @@ export interface RenderContext {
    * absent for a stand-in engine, text output, or a layout with no part.
    */
   readonly layoutPart?: unknown;
+  /**
+   * The diagrams this one embeds (ADR-15), rendered before the draw: the block with this id
+   * (`ParseResult.embeds`), for `SvgWriter.embed()`. Absent when there are none, in text
+   * output ({@link TextRenderContext.embedText} instead), and when the plugin is called without
+   * `mermaid`: a host then draws a stand-in.
+   */
+  readonly embed?: (id: string) => EmbeddedDiagram | undefined;
+  /**
+   * The type of the folded block with this id (#670), detected from its type line only (its
+   * plugin id, or the type name for a type without one); the block is never drawn. Absent when
+   * there is none and when the plugin is called without `mermaid`.
+   */
+  readonly foldedType?: (id: string) => string | undefined;
   warn(warning: Warning): void;
+}
+
+/** A rendered embedded diagram (ADR-15): its root `<svg>` at its natural size, in px. */
+export interface EmbeddedDiagram {
+  readonly width: number;
+  readonly height: number;
+  readonly svg: EmbeddedSvg;
+}
+
+/**
+ * An embedded diagram in text output (ADR-15, ADR-14): its drawing, `\n` line ends, `columns`
+ * cells wide and `rows` lines high. A type without text output is its type in brackets
+ * (`[classDiagram]`), and `mermaid` warns for it.
+ */
+export interface EmbeddedText {
+  readonly text: string;
+  readonly columns: number;
+  readonly rows: number;
 }
 
 /** {@link RenderContext.icon}: `'pending'` (a placeholder) only for a caller that asks for it. */
@@ -148,6 +179,11 @@ export interface TextRenderContext extends RenderContext {
   readonly title?: string;
   /** The parse's AST, for the AST ids of drop warnings. */
   readonly ast?: AstNode;
+  /**
+   * The diagrams this one embeds (ADR-15), drawn as text before the draw, by block id. Absent
+   * when there are none and when the plugin is called without `mermaid`.
+   */
+  readonly embedText?: (id: string) => EmbeddedText | undefined;
 }
 
 /** A diagram plugin (DESIGN §12.1). `M` is its model, `L` its layout. */

@@ -90,4 +90,12 @@ export const T = {
    * the node id after it). The parser skips it as trivia.
    */
   ClickKeyword: F + 75,
+  /** `mermaid` opening an embedded diagram block (ADR-15): only on a line ending in `{`. */
+  Embed: F + 76,
+  /** The `{` ending a block's opening line. */
+  EmbedOpen: F + 77,
+  /** A block's body, verbatim: from the line after the opener to its closing line. */
+  EmbedBody: F + 78,
+  /** The `}` that closes a block, first on its line. */
+  EmbedEnd: F + 79,
 } as const;

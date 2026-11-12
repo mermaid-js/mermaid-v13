@@ -8,6 +8,8 @@ import type {
   RoutePoint,
 } from '@mermaid-js/core/layout';
 import { layered } from '@mermaid-js/core/layout';
+import { drawFolded } from '@mermaid-js/core/svg/folded';
+import { drawFramed } from '@mermaid-js/core/svg/framed';
 import {
   checkLinkTarget,
   checkUrl,
@@ -189,6 +191,8 @@ export interface Paints {
   readonly laneStroke?: Color;
   /** A collapsed subgraph's separator and dots take clusterBorder (v12 `.collapsed-*` rules). */
   readonly collapsedLine?: Attrs;
+  /** Folded blocks (#670): the icon's filled nodes and the type's muted grey. */
+  readonly folded?: { readonly ink: Color; readonly muted: Color };
   /** A subgraph's palette slot from its source order (a lane's too, the default lane's included). */
   readonly slotOf: (view: Pick<NodeView, 'order'>) => Tint | undefined;
   readonly edgeLabel?: { fill: Color; text: Color };
@@ -230,11 +234,15 @@ function paints(theme: ThemeOf, flow: Prepared, lanes: boolean): Paints {
     ? { stroke: theme.color('clusterBorder') }
     : undefined;
   const laneStroke = lanes ? theme.color('clusterBorder') : undefined;
+  // Read here, not in core, so the theme inventory lists the diagrams that use them.
+  const folded = flow.nodes.some((v) => v.block === 'folded')
+    ? { ink: theme.color('nodeBorder'), muted: theme.color('mutedBorder') }
+    : undefined;
   const slotOf = paletteSlots(theme);
   const edgeLabel = flow.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
     : undefined;
-  return { heads, node, cluster, laneStroke, collapsedLine, slotOf, edgeLabel };
+  return { heads, node, cluster, laneStroke, collapsedLine, folded, slotOf, edgeLabel };
 }
 
 /** What every section of one render draws from. */
@@ -449,6 +457,13 @@ function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView): void {
   w.close();
 }
 
+/** A node's own classes: a collapsed subgraph's card, a block (ADR-15), or a plain node. */
+function nodeClass(view: NodeView): string {
+  if (view.shape === 'collapsedGroup') return 'node cluster collapsed';
+  if (!view.block) return 'node default';
+  return view.block === 'folded' ? 'node embed folded' : 'node embed';
+}
+
 function drawNode(
   { w, layout, flow, ctx, paint, warn }: Scene,
   view: NodeView,
@@ -459,14 +474,16 @@ function drawNode(
   const v = view.vertex;
   const slot = paint.slotOf(view);
   const securityLevel = ctx.securityLevel ?? 'default';
+  const { block } = view;
   w.open('g', {
-    class:
-      (view.shape === 'collapsedGroup' ? 'node cluster collapsed' : 'node default') +
-      cls(view.classes),
+    class: nodeClass(view) + cls(view.classes),
     'data-id': view.id,
     'data-ast': view.ast,
     'data-color-id': slot?.id,
     transform: translate(box.x, box.y),
+    // A block is one image to assistive technology, named by its title (ADR-15).
+    role: block ? 'img' : undefined,
+    'aria-label': block ? v?.text || view.id : undefined,
   });
   if (tip) textElement(w, 'title', tip);
   const href =
@@ -494,7 +511,28 @@ function drawNode(
   if (paint.node.plainStroke && lineAttrs.stroke === paint.node.stroke && usesPlain(view.shape)) {
     lineAttrs = { ...lineAttrs, stroke: paint.node.plainStroke };
   }
-  if (v?.img) drawImage(w, view, v.img, securityLevel, warn);
+  if (block) {
+    // A border and a transparent background, which set a block apart from a subgraph.
+    const frame: Attrs = {
+      fill: 'none',
+      stroke: paint.node.stroke,
+      'stroke-width': paint.node.strokeWidth,
+      ...view.style.shape,
+    };
+    if (block === 'folded') {
+      const { type, label } = view.fold!;
+      drawFolded(w, { width: view.w, height: view.h }, view.label, label!, type.length, {
+        frame,
+        mark: frame.stroke ?? paint.node.stroke,
+        ...paint.folded!,
+        title: view.style.text,
+      });
+      if (href) w.close();
+      w.close();
+      return;
+    }
+    drawFramed(w, { width: view.w, height: view.h }, view.label.height, view.embed ?? null, frame);
+  } else if (v?.img) drawImage(w, view, v.img, securityLevel, warn);
   else if (v?.icon) {
     // D298: the glyph takes the author's stroke, else nodeBorder (`node.stroke`, the gradient
     // under neo).
@@ -502,7 +540,10 @@ function drawNode(
   } else drawShape(view.shape, w, view.w, view.h, shapeAttrs, lineAttrs, flow.pads);
   const fill = view.style.shape.fill;
   w.label(view.label, 0, view.dy, {
-    fill: fill && shapeFilled(view.shape) && !v?.img && !v?.icon ? ctx.theme.ink(fill) : undefined,
+    fill:
+      fill && shapeFilled(view.shape) && !v?.img && !v?.icon && !block
+        ? ctx.theme.ink(fill)
+        : undefined,
     ...view.style.text,
   });
   if (href) w.close();

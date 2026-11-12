@@ -1,0 +1,14 @@
+---
+description: a titled sequence diagram block as a state, with transitions to and from it
+---
+stateDiagram-v2
+  [*] --> Idle
+  Idle --> login : sign in
+  mermaid login["Login flow"] {
+    sequenceDiagram
+      User->>Server: credentials
+      Server-->>User: token
+  }
+  login --> Ready : token
+  login --> Idle : rejected
+  Ready --> [*]

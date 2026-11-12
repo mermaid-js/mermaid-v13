@@ -5,6 +5,7 @@ import { outlineFixture } from '@mermaid-js/core/svg/testing';
 import { createMermaid, MermaidError, type ExtensionPlugin } from 'mermaid';
 import { REPO_ROOT, corpusFromDir } from './index.ts';
 import { OUTLINE_CASES } from './outline-cases.ts';
+import { withoutEmbedded } from './svg-tree.ts';
 
 /**
  * Flowchart, class, state and ER draw their outlines through `w.outline` with a role (D302,
@@ -83,13 +84,14 @@ describe('the outlining types draw through the hook (D302, #340, #459, #501)', (
           let expected: string;
           try {
             await plain.prepare(item.source, { id: 'm' });
-            expected = plain.renderSync(item.source, { id: 'm' }).svg;
+            // An embedded diagram (ADR-15) draws in its own type's way.
+            expected = withoutEmbedded(plain.renderSync(item.source, { id: 'm' }).svg);
           } catch (e) {
             if (e instanceof MermaidError) continue;
             throw e;
           }
           await drawn.prepare(item.source, { id: 'm' });
-          const svg = drawn.renderSync(item.source, { id: 'm' }).svg;
+          const svg = withoutEmbedded(drawn.renderSync(item.source, { id: 'm' }).svg);
           // Arrowheads, label backgrounds and text are written as before.
           for (const re of [...PLAIN, ...own, /<text\b/g, /<tspan\b/g])
             expect(count(svg, re), `${item.id}: ${String(re)}`).toBe(count(expected, re));

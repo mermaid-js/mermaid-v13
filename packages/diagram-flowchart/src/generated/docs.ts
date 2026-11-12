@@ -31,4 +31,5 @@ export const flowchartDocs: Readonly<Partial<Record<number, string>>> = {
   [T.Link]: "A link: `-->`, `---`, `-.->`, `==>`, `~~~`; `>`, `o` or `x` heads (`<`, `o`, `x` at the start too for both ends). `--`, `==` and `-.` followed by text open an edge-text mode, closed by the arrow.",
   [T.StartLink]: "A link, with an optional id, and text either between pipes or inside the arrow.",
   [T.ClickKeyword]: "`click id callback`, `click id call fn(args)`, `click id \"url\"`, `click id href \"url\"`, each with an optional tooltip; urls take an optional target.",
+  [T.Embed]: "Embedded diagram blocks (ADR-15, not in mermaid@12): `mermaid <id>[\"Title\"] {` on a line of its own, the body (another diagram's text, as one token), then `}` first on its own line. The hand-written lexer enters this mode for `mermaid` and a blank at a statement start on a line ending in `{`, and finds the closing line by counting lines that end in `{` against lines that start with `}`; this file lists the tokens for their highlight categories only.",
 };

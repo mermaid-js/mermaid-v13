@@ -47,6 +47,7 @@ import type {
   FlowLabelNode,
   FlowNodeStmt,
   FlowSimpleKind,
+  FlowEmbedStmt,
   FlowSimpleStmt,
   FlowStatementNode,
   FlowSubgraph,
@@ -162,6 +163,7 @@ const PARSER_TRIVIA = kindSet(...READ_PAST_KINDS, Kind.Space);
 /** Where recovery resumes (R-PARSE-4). */
 const BOUNDARY = kindSet(Kind.EOF, T.Eof, Kind.Newline, T.Semi);
 const STATEMENT_START = [
+  T.Embed,
   T.Style,
   T.LinkStyle,
   T.ClassDef,
@@ -213,6 +215,8 @@ const STYLE_SEPARATOR = [T.StyleSeparator];
 const SHAPE_DATA = [T.ShapeData];
 const SHAPE_DATA_PARTS = [T.ShapeData, T.ShapeDataEnd];
 const SPACE = [T.Space];
+const SQS_ONLY = [T.SQS];
+const EMBED_END = [T.EmbedEnd];
 const AMP = [T.Amp];
 const LINK_KINDS = [T.Link, T.StartLink, T.LinkId];
 const LINK_AFTER_ID = [T.Link, T.StartLink];
@@ -322,6 +326,8 @@ const EXPECTED = new ExpectedTable([
   ['`href`', [T.Href]],
   ['a link target such as `_blank`', [T.LinkTarget]],
   ['shape data `@{ … }`', [T.ShapeData]],
+  ['`{` at the end of the line', [T.EmbedOpen]],
+  ['`}` on its own line, closing the block', [T.EmbedEnd]],
   ['`}`', [T.ShapeDataEnd]],
   ['the end of the text', [Kind.EOF, T.Eof]],
 ]);
@@ -483,7 +489,10 @@ class FlowParser {
       range: { start: this.pre.bodyStart, end: src.length },
       children: this.children,
     };
-    return st.result(model, ast, this.fullTokens, options, this.probe);
+    const result = st.result(model, ast, this.fullTokens, options, this.probe);
+    if (db.embeds.length > 0) result.embeds = db.embeds;
+    result.edgeCount = model.edges.length;
+    return result;
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -1315,6 +1324,8 @@ class FlowParser {
     const from = this.i;
     const refList: string[] = [];
     switch (t) {
+      case T.Embed:
+        return this.embedStatement(out);
       case T.Style: {
         this.i++;
         this.expect(T.Space);
@@ -1406,6 +1417,72 @@ class FlowParser {
         return nodes;
       }
     }
+  }
+
+  /**
+   * `mermaid id["Title"] {` body `}` (ADR-15): a vertex with the block's id, and the block in
+   * the parse result. The body is one token; the host never reads it.
+   */
+  private embedStatement(out: FlowStatementNode[]): DocItem {
+    const { db, st } = this;
+    const from = this.i;
+    this.hint = 'write it as `mermaid <id>["Title"] {`, then the diagram, then `}` on its own line';
+    this.i++;
+    this.expect(T.Space);
+    const [name, nameRange] = this.idString();
+    this.nodeSymbol(name, nameRange);
+    let title: FlowLabelNode | undefined;
+    this.tested(SQS_ONLY);
+    if (this.kind() === T.SQS) {
+      this.open('block title', '`]`');
+      title = this.text();
+      this.closer(T.SQE);
+    }
+    this.tested(SPACE);
+    while (this.kind() === T.Space) this.i++;
+    const opener = this.range(from, this.i);
+    this.expect(T.EmbedOpen);
+    const body = this.expect(T.EmbedBody);
+    const bodyRange = { start: this.start(body), end: this.end(body) };
+    this.tested(EMBED_END);
+    if (this.kind() !== T.EmbedEnd) {
+      st.diagnostics.error(
+        'UNCLOSED',
+        `Unclosed block: the \`mermaid ${name}\` block at line ${this.lineOf(opener.start)} has no closing \`}\`. Add \`}\` on its own line to close it.`,
+        opener
+      );
+      throw STOP;
+    }
+    this.i++;
+    const label = title && { text: title.text, type: title.type };
+    db.addVertex(name, this.nodeAst(name), nameRange, {
+      type: 'embed',
+      label: label ?? { text: '', type: 'text' },
+    });
+    const text = title ? (db.vertices.get(name)?.text ?? '') : undefined;
+    db.addEmbed(
+      {
+        id: name,
+        ...(text ? { title: text } : {}),
+        text: this.src.slice(bodyRange.start, bodyRange.end),
+        offset: bodyRange.start,
+      },
+      nameRange
+    );
+    const r = this.span(from);
+    st.statement('embed', r);
+    const stmt: FlowEmbedStmt = {
+      id: this.ids.statement('embed'),
+      type: 'Embed',
+      range: r,
+      name,
+      nameRange,
+      bodyRange,
+    };
+    if (title) stmt.title = title;
+    out.push(stmt);
+    this.separator();
+    return [name];
   }
 
   // ---- subgraphs and the document -----------------------------------------------------

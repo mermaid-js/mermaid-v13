@@ -34,6 +34,7 @@ const plainLeaves = (w: SvgWriter): SvgWriter => ({
   path: () => w.path(),
   styleSheet: (css) => w.styleSheet(css),
   linearGradient: (g) => w.linearGradient(g),
+  embed: (svg) => w.embed(svg),
 });
 
 /** `plugin`, as it drew before adopting the hook. */

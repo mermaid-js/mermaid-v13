@@ -21,6 +21,7 @@ import {
   BACKTICK,
   CARET,
   charTable,
+  closingLine,
   codePointEnd,
   COLON,
   COMMA,
@@ -56,11 +57,13 @@ import {
   LOWER_X,
   LPAREN,
   LT,
+  openerBrace,
   PIPE,
   QUESTION,
   RBRACE,
   RBRACKET,
   RPAREN,
+  scanWhile,
   SEMI,
   SLASH,
   STAR,
@@ -180,6 +183,11 @@ const RE_ENTITY = /#\w+;/y;
 const LINK_TARGETS = ['_self', '_blank', '_parent', '_top'];
 
 const isNl = (c: number) => c === LF || c === CR;
+const LOWER_M = 0x6d;
+const TAB = 0x09;
+const SPACE = 0x20;
+/** A blank within a line. */
+const isBlank = (c: number) => c === SPACE || c === TAB;
 
 /**
  * Lex the flowchart body `src[from…]`. `view` comes from {@link sourceView}. With
@@ -227,6 +235,8 @@ class FlowLexer {
   private runAt = -1;
   private wsFrom = -1;
   private wsTo = -1;
+  /** The `{` ending an embedded block's opening line (ADR-15) while the opener is lexed. */
+  private embedBrace = -1;
 
   constructor(
     private readonly src: string,
@@ -578,6 +588,10 @@ class FlowLexer {
   }
 
   private initial(c: number): boolean {
+    if (this.embedBrace >= 0 && this.p >= this.embedBrace) {
+      if (this.p === this.embedBrace) return this.embedBody();
+      this.embedBrace = -1;
+    }
     return (
       this.keyword(c) ||
       this.direction() ||
@@ -666,6 +680,8 @@ class FlowLexer {
         if (!this.kw('end')) return false;
         this.emit(T.End, p, Math.max(p + 3, this.at(RE_END, p)));
         return true;
+      case LOWER_M:
+        return this.embedOpener();
       case UNDERSCORE:
         for (const target of LINK_TARGETS) {
           if (this.kw(target)) return this.token(T.LinkTarget, target.length);
@@ -673,6 +689,48 @@ class FlowLexer {
         return false;
     }
     return false;
+  }
+
+  // --- Embedded diagram blocks (ADR-15) ------------------------------------------------------
+
+  /**
+   * `mermaid` opening a block: first on its line (or after `;`), then a blank, and the line
+   * ends in `{`. Anything else (`mermaid`, `mermaid["T"]`, `mermaid --> B`) is a node id.
+   */
+  private embedOpener(): boolean {
+    const p = this.p;
+    const { text } = this;
+    let b = p - 1;
+    while (b >= this.from && isBlank(text.charCodeAt(b))) b--;
+    if (b >= this.from && !isNl(text.charCodeAt(b)) && text.charCodeAt(b) !== SEMI) return false;
+    let e = p;
+    while (e < this.n && !isNl(text.charCodeAt(e))) e++;
+    const brace = openerBrace(text, p, e);
+    if (brace < 0) return false;
+    this.embedBrace = brace;
+    return this.token(T.Embed, 7);
+  }
+
+  /**
+   * The opener's `{`, then the body as one token, then the `}` that closes it. The close is
+   * found by line: a line ending in `{` opens a level, a line starting with `}` closes one;
+   * braces in `"…"` strings never count, and `%%` comment lines are not in the text at all.
+   */
+  private embedBody(): true {
+    const { text } = this;
+    const p = this.p;
+    this.embedBrace = -1;
+    this.emit(T.EmbedOpen, p, p + 1);
+    let s = p + 1;
+    while (s < this.len && !isNl(text.charCodeAt(s))) s++;
+    if (text.charCodeAt(s) === CR && text.charCodeAt(s + 1) === LF) s++;
+    s = Math.min(s + 1, this.len);
+    const line = closingLine(text, s, this.len);
+    this.emit(T.EmbedBody, s, line < 0 ? this.len : line);
+    if (line < 0) return true;
+    const a = scanWhile(text, line, isBlank);
+    this.emit(T.EmbedEnd, a, a + 1);
+    return true;
   }
 
   /** A token of `length` characters at p. */

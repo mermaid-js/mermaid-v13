@@ -1,0 +1,11 @@
+---
+description: a titled sequence block between two nodes, edges to and from its border
+---
+flowchart LR
+  Start --> login
+  mermaid login["Login flow"] {
+    sequenceDiagram
+      User->>Server: credentials
+      Server-->>User: token
+  }
+  login --> Dashboard

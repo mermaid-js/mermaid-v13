@@ -945,6 +945,63 @@ export default {
         }
       ]
     ],
+    "embed": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "mermaid",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "[^\\s\\[{]+",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "\\[[^\\]]*\\]",
+        {
+          "token": "string"
+        }
+      ],
+      [
+        "\\{",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "[^}]+",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "\\}",
+        {
+          "token": "delimiter"
+        }
+      ],
+      [
+        "@\\{[^}\\n]*\\}",
+        {
+          "token": "annotation"
+        }
+      ]
+    ],
     "frontMatterStart": [
       [
         "^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)",

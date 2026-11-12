@@ -115,6 +115,7 @@ const SEMANTIC: ReadonlySet<string> = new Set([
   'SHAPE_DATA',
   'LINK_STYLE_INDEX',
   'UNKNOWN_DIRECTION',
+  'EMBED_DUPLICATE_ID',
 ]);
 
 /**
