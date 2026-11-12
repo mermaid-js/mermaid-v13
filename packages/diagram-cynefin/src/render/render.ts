@@ -9,7 +9,8 @@
 // rect or ellipse, each item's `g` and each transition's line. Labels, subtitles, arrowheads and
 // arrow labels carry `data-id` only.
 import type { RenderContext } from '@mermaid-js/core';
-import { openSvgRoot, translate, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
+import { translate, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { CynefinBadge, CynefinFont, CynefinLayout, PlacedLabel } from '../layout/index.ts';
 import { FONTS } from '../layout/metrics.ts';
 import type { CynefinModel } from '../model.ts';

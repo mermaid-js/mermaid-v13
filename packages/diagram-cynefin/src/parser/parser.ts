@@ -32,17 +32,14 @@ import { checkLimit } from '@mermaid-js/core/limits';
 import {
   type AstId,
   ExpectedTable,
-  ID_CONTROL,
-  ID_RESERVED,
-  idEscaper,
   Kind,
   kindSet,
   type ParseOptions,
   type ParseResult,
   type Range,
   skipTo,
-  STOP,
 } from '@mermaid-js/core/parser-kit';
+import { ID_CONTROL, ID_RESERVED, idEscaper, STOP } from '@mermaid-js/shared/parser/support';
 import {
   type RuleGrammar,
   RuleParser,

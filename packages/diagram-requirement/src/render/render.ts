@@ -6,9 +6,6 @@
 // from the package's theme table (D152, D435); outlines and lines go through `w.outline`
 // (D301, D302), the markers are plain.
 import {
-  cls,
-  openSvgRoot,
-  paletteSlots,
   translate,
   type Attrs,
   type OutlinePaint,
@@ -16,6 +13,7 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { cls, openSvgRoot, paletteSlots } from '@mermaid-js/shared/svg/document';
 import { routePath } from '@mermaid-js/shared/svg/route';
 import type { RequirementRenderContext } from '../layout/context.ts';
 import type { RequirementLayout } from '../layout/layout.ts';

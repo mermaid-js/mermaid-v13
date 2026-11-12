@@ -11,7 +11,7 @@ import type { Warning } from '@mermaid-js/core';
 import type { KanbanDiagramConfig } from '@mermaid-js/core/config';
 import { KANBAN_CONFIG_IGNORED } from '../codes.ts';
 import { kanbanConfigDefaults } from '../generated/config-defaults.ts';
-import { NUMERIC } from '@mermaid-js/core/config';
+import { NUMERIC } from '@mermaid-js/shared/config/readers';
 
 /**
  * The generated `kanban` section defaults, with every key set: the schema gives each of

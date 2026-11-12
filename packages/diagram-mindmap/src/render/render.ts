@@ -6,7 +6,8 @@
 // v12's classes stay: `section-<n>` (`section-root section--1` for the root) and the author's
 // `:::` classes on nodes, `edge section-edge-<n> edge-depth-<d>` on edges (`d` from the raw
 // indent, GAPS #388). Coordinates are absolute; nothing has a transform.
-import { openSvgRoot, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
+import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { MindmapLayout } from '../layout/layout.ts';
 import type { MindmapNodeView } from '../layout/prepare.ts';
 import type { MindmapModel } from '../model.ts';

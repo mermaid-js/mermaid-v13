@@ -18,7 +18,8 @@
  * text carries `data-id` only. The viewBox is the layout's canvas: everything drawn and the
  * config margins round it (D224). Only elements are sketched by a hand-drawn drawer (D301).
  */
-import { openSvgRoot, type SvgWriter } from '@mermaid-js/core/svg';
+import type { SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import { c4Section } from '../config.ts';
 import { C4_METRICS as M } from '../layout/metrics.ts';
 import type { C4BoundaryLayout, C4ElementLayout, C4Layout } from '../layout/types.ts';

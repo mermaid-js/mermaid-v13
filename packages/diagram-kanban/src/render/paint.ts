@@ -9,7 +9,8 @@
  * - the priority bar: v12's four literal colours in every theme (D375).
  */
 import type { RenderContext } from '@mermaid-js/core';
-import { fixedPaint, type Paint } from '@mermaid-js/core/svg';
+import type { Paint } from '@mermaid-js/core/svg';
+import { fixedPaint } from '@mermaid-js/shared/svg/document';
 import type { KanbanLayout } from '../layout/index.ts';
 import type { KanbanPriority } from '../priority.ts';
 import { columnSlot, columnVar } from '../theme/columns.ts';

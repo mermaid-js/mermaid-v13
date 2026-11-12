@@ -1,10 +1,24 @@
 /**
  * The `<svg>` document root and small renderer helpers every diagram shares.
  */
-import { checkColor, checkStyle, px, styleScope, styleText, themeStyleSheet } from './style.ts';
-import type { CheckedStyle } from './style.ts';
-import type { Attrs, Paint, SafeColor, StyleText, ThemeRef, Warn } from './types.ts';
-import type { SvgWriter } from './writer.ts';
+import {
+  checkColor,
+  checkStyle,
+  px,
+  styleScope,
+  styleText,
+  themeStyleSheet,
+} from '@mermaid-js/core/svg';
+import type {
+  Attrs,
+  CheckedStyle,
+  Paint,
+  SafeColor,
+  StyleText,
+  SvgWriter,
+  ThemeRef,
+  Warn,
+} from '@mermaid-js/core/svg';
 
 /** The part of a render context the root reads. `idPrefix` is read only when an id is written. */
 export interface RootContext {

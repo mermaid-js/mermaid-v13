@@ -37,8 +37,8 @@ import {
   Probe,
   SEMI,
   sourceView,
-  STOP,
 } from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type {
   AstId,
   Diagnostic,

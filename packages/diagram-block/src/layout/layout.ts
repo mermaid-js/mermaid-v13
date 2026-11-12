@@ -26,7 +26,7 @@ import type {
   PlacedLabel,
   Rect,
 } from './types.ts';
-import { shownValue as shown } from '@mermaid-js/core/config';
+import { shownValue as shown } from '@mermaid-js/shared/config/readers';
 
 /** What the layout reads from the render context (`warn` for `BLOCK_CONFIG_INVALID`). */
 export type BlockLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &

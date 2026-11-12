@@ -210,7 +210,7 @@ export interface DetailedKeywordItem extends KeywordItem {
 }
 
 /** A {@link KeywordItem} that says which completion kind it is. */
-export interface KindedKeywordItem extends DetailedKeywordItem {
+export interface TypedKeywordItem extends DetailedKeywordItem {
   readonly item: CompletionKind;
 }
 

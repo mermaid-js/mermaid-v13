@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { cls, openSvgRoot, paletteSlots, streamWriter, styleCache } from './index.ts';
-import type { RootContext, SafeColor, StyleText } from './index.ts';
+import { streamWriter } from '@mermaid-js/core/svg';
+import type { SafeColor, StyleText } from '@mermaid-js/core/svg';
+import { cls, openSvgRoot, paletteSlots, styleCache } from './document.ts';
+import type { RootContext } from './document.ts';
 
 const ctx = (idPrefix?: () => string): RootContext => ({
   theme: { rootStyleText: () => '' as StyleText, autoDeclarations: () => undefined },

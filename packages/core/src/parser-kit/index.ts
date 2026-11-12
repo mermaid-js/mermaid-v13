@@ -66,4 +66,3 @@ export type {
   LanguageFacet,
   NameSyntax,
 } from './language.ts';
-export { foundText, ID_CONTROL, ID_RESERVED, idEscaper, STOP, Stop } from './parser-support.ts';

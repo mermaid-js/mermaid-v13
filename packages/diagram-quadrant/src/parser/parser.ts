@@ -22,10 +22,10 @@ import {
   ParseState,
   Probe,
   ProbeCursor,
-  STOP,
   syncTo,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type {
   ParseOptions,
   ParseResult,

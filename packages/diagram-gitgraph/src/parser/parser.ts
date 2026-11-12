@@ -22,17 +22,8 @@
  * parser does not stop at the first error: it reports it, skips to the next line break and
  * carries on (R-PARSE-4). A statement with a syntax error changes nothing.
  */
-import {
-  APOSTROPHE,
-  DQUOTE,
-  ExpectedTable,
-  ID_CONTROL,
-  ID_RESERVED,
-  idEscaper,
-  Kind,
-  kindSet,
-  STOP,
-} from '@mermaid-js/core/parser-kit';
+import { APOSTROPHE, DQUOTE, ExpectedTable, Kind, kindSet } from '@mermaid-js/core/parser-kit';
+import { ID_CONTROL, ID_RESERVED, idEscaper, STOP } from '@mermaid-js/shared/parser/support';
 import {
   RuleParser,
   textStatements,

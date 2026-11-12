@@ -9,7 +9,7 @@ import { cubicBox, grow, pointsBox, quadBox } from './geometry.ts';
 import { drawnItems } from './layout.ts';
 import { ARROWS, BADGES } from './metrics.ts';
 import type { CynefinBadge, CynefinLayout, Point, Rect } from './types.ts';
-import { nonFinite as finite } from '@mermaid-js/core/layout';
+import { nonFinite as finite } from '@mermaid-js/shared/layout/invariants';
 
 /** Float tolerance of the checks. */
 const EPS = 1e-6;

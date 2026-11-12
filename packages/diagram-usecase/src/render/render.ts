@@ -6,7 +6,8 @@
  * No `<style>` but `theme: 'auto'`'s, no `foreignObject` and no ids but the root's title and
  * description (R-SEC-2, R-ARCH-6, D475).
  */
-import { openSvgRoot, translate, type SvgWriter } from '@mermaid-js/core/svg';
+import { translate, type SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { UsecaseLayout } from '../layout/layout.ts';
 import { prepareUsecase, type UsecasePrepared } from '../layout/prepare.ts';
 import type { UsecaseModel } from '../model.ts';

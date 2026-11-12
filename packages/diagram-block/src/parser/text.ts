@@ -2,7 +2,7 @@
  * Value conversion for the block parser (parser-method §3): v12 `blockDB.ts`'s shape and edge
  * decoding and `addStyleClass`, and AST id escaping (D448).
  */
-import { ID_CONTROL, ID_RESERVED, idEscaper } from '@mermaid-js/core/parser-kit';
+import { ID_CONTROL, ID_RESERVED, idEscaper } from '@mermaid-js/shared/parser/support';
 import type { BlockArrowType, BlockType } from '../model.ts';
 
 const SHAPES: Readonly<Record<string, BlockType>> = {

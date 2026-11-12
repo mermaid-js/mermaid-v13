@@ -4,7 +4,8 @@
  * recovering at the next statement boundary (R-PARSE-4). The grammar rules are in
  * `parser.ts`.
  */
-import { Kind, LineIndex, ParseState, STOP } from '@mermaid-js/core/parser-kit';
+import { Kind, LineIndex, ParseState } from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type { Probe, Range } from '@mermaid-js/core/parser-kit';
 import type { lex } from './lexer.ts';
 import { BOUNDARY, BOUNDARY_IN_COMPOSITE, EXPECTED } from './tables.ts';

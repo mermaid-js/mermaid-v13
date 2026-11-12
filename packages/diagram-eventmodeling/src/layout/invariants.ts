@@ -16,7 +16,7 @@ import type { EventModel } from '../model.ts';
 import { eventModelStructure } from '../structure.ts';
 import { drawn } from './layout.ts';
 import type { EventModelLayout, Point, Rect } from './types.ts';
-import { numbers, rectInside as inside } from '@mermaid-js/core/layout';
+import { numbers, rectInside as inside } from '@mermaid-js/shared/layout/invariants';
 
 const EPS = 1e-6;
 

@@ -12,12 +12,12 @@
  * `showValues` and `valueFormat` are read by `options.ts`, which hover shares.
  */
 import type { Warning } from '@mermaid-js/core';
+import type { TreemapDiagramConfig } from '@mermaid-js/core/config';
 import {
   rawConfigNumber as configNumber,
   shownValue as shown,
-  type TreemapDiagramConfig,
   useMaxWidth,
-} from '@mermaid-js/core/config';
+} from '@mermaid-js/shared/config/readers';
 import { TREEMAP_DEFAULTS, treemapValueOptions } from './options.ts';
 
 export const TREEMAP_CONFIG_INVALID = 'TREEMAP_CONFIG_INVALID';

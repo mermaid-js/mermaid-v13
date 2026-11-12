@@ -10,7 +10,6 @@ import type { RenderContext } from '@mermaid-js/core';
 import {
   checkStyle,
   checkUrl,
-  openSvgRoot,
   rotate,
   scale,
   transforms,
@@ -19,6 +18,7 @@ import {
   type SafeUrl,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import { GANTT_METRICS } from '../layout/metrics.ts';
 import type {
   GanttAxis,

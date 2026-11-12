@@ -6,15 +6,8 @@
  * absolute (v12's: columns from `−1.5 W`), and the viewBox is the layout's bounds (D224, D378).
  * Columns and cards go through `w.outline` (hand-drawn, D379); the priority bar does not.
  */
-import {
-  centreX,
-  centreY,
-  checkStyle,
-  openSvgRoot,
-  type Attrs,
-  type SafeValue,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import { checkStyle, type Attrs, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
+import { centreX, centreY, openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { FontKey, Run } from '@mermaid-js/core/text';
 import type { CardLayout, ColumnLayout, KanbanLayout, PlacedLabel } from '../layout/index.ts';
 import type { KanbanItem, KanbanModel } from '../model.ts';

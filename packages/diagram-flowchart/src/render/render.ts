@@ -13,10 +13,6 @@ import { drawFramed } from '@mermaid-js/core/svg/framed';
 import {
   checkLinkTarget,
   checkUrl,
-  cls,
-  openSvgRoot,
-  paletteSlots,
-  textElement,
   translate,
   type Attrs,
   type OutlinePaint,
@@ -24,6 +20,7 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { cls, openSvgRoot, paletteSlots, textElement } from '@mermaid-js/shared/svg/document';
 import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';

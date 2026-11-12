@@ -16,7 +16,6 @@
 import type { RenderContext } from '@mermaid-js/core';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import {
-  openSvgRoot,
   rotate,
   transforms,
   translate,
@@ -24,6 +23,7 @@ import {
   type PathData,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   Segment,

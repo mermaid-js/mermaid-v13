@@ -6,14 +6,8 @@
 // one element that carries its `data-ast` (every section has a row, shown or not); the slice
 // and its percentage carry `data-id` only (pitfall 12).
 import type { RenderContext } from '@mermaid-js/core';
-import {
-  centreX,
-  centreY,
-  openSvgRoot,
-  scale,
-  translate,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import { scale, translate, type SvgWriter } from '@mermaid-js/core/svg';
+import { centreX, centreY, openSvgRoot } from '@mermaid-js/shared/svg/document';
 import { slicePath } from '../layout/index.ts';
 import type { PieLayout } from '../layout/index.ts';
 import type { PieModel } from '../model.ts';

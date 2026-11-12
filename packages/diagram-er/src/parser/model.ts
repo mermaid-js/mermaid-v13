@@ -6,7 +6,7 @@
  * `addAttributes`, `addRelationship`, `setClass`, `addCssStyles`, `addClass`, `addSubGraph`,
  * …), with v12's ordering and lookup rules, so the conformance suite can compare the two.
  */
-import { ID_RESERVED, idEscaper } from '@mermaid-js/core/parser-kit';
+import { ID_RESERVED, idEscaper } from '@mermaid-js/shared/parser/support';
 import type { AstId, Diagnostic, Range } from '@mermaid-js/core/parser-kit';
 
 /** How many of an entity one end of a relationship allows. */

@@ -5,9 +5,9 @@
  * default too, with one `AGENTFLOW_CONFIG_INVALID` warning per key, however often it is read.
  */
 import { MAX_CONFIG_LENGTH } from './metrics.ts';
-import { type ConfigLengthWarning, numericValue } from '@mermaid-js/core/config';
-export type { ConfigLengthWarning } from '@mermaid-js/core/config';
-export { numericValue } from '@mermaid-js/core/config';
+import { type ConfigLengthWarning, numericValue } from '@mermaid-js/shared/config/readers';
+export type { ConfigLengthWarning } from '@mermaid-js/shared/config/readers';
+export { numericValue } from '@mermaid-js/shared/config/readers';
 
 /** A config length the layout can't honour (pitfall 22): it draws with the default instead. */
 export const AGENTFLOW_CONFIG_INVALID = 'AGENTFLOW_CONFIG_INVALID';

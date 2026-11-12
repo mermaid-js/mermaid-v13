@@ -6,7 +6,7 @@
 import type { PacketModel } from '../model.ts';
 import { PACKET_METRICS as m } from './metrics.ts';
 import type { PacketLayout, PacketPieceLayout, Rect } from './types.ts';
-import { nonFinite as finite } from '@mermaid-js/core/layout';
+import { nonFinite as finite } from '@mermaid-js/shared/layout/invariants';
 
 /** Float tolerance of the checks. */
 const EPS = 1e-6;

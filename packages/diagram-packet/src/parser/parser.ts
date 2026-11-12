@@ -19,7 +19,8 @@
  * Fields are split into rows as v12 split them, up to its 10,000-row cap (D342).
  */
 import { checkLimit } from '@mermaid-js/core/limits';
-import { ExpectedTable, Kind, kindSet, STOP } from '@mermaid-js/core/parser-kit';
+import { ExpectedTable, Kind, kindSet } from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import {
   RuleParser,
   textProbeMode,

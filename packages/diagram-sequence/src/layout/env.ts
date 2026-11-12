@@ -17,7 +17,7 @@ import {
 } from '../model.ts';
 import { FONT_WEIGHT, sequenceMetrics, type SequenceMetrics } from './metrics.ts';
 import type { PlacedLabel } from './types.ts';
-import { fontWeightOf as weightOf } from '@mermaid-js/core/config';
+import { fontWeightOf as weightOf } from '@mermaid-js/shared/config/readers';
 
 /** What the layout reads from the render context. */
 export type SequenceLayoutContext = Pick<

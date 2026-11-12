@@ -8,13 +8,8 @@
  * (leaves, block arrows and composites), not on edges or labels (D227).
  */
 import type { Warning } from '@mermaid-js/core';
-import {
-  paletteSlots,
-  styleCache,
-  type CheckedStyle,
-  type OutlinePaint,
-  type Paint,
-} from '@mermaid-js/core/svg';
+import type { CheckedStyle, OutlinePaint, Paint } from '@mermaid-js/core/svg';
+import { paletteSlots, styleCache } from '@mermaid-js/shared/svg/document';
 import type { Theme } from '@mermaid-js/core/theme';
 import type { Block, BlockModel } from '../model.ts';
 import { arrowheads, type Arrowheads } from '@mermaid-js/shared/svg/arrowheads';

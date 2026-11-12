@@ -8,10 +8,6 @@ import {
   checkLinkTarget,
   checkStyle,
   checkUrl,
-  cls,
-  openSvgRoot,
-  paletteSlots,
-  textElement,
   translate,
   type Attrs,
   type CheckedStyle,
@@ -20,6 +16,7 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { cls, openSvgRoot, paletteSlots, textElement } from '@mermaid-js/shared/svg/document';
 import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
 import { routePath } from '@mermaid-js/shared/svg/route';
 import type { MeasuredLabel } from '@mermaid-js/core/text';

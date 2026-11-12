@@ -4,13 +4,8 @@
 // palette (`borderColorArray`, `bkgColorArray`), the participant corner (`actorRadius`) and the
 // shadow (`dropShadow`).
 import type { RenderContext } from '@mermaid-js/core';
-import {
-  checkStyle,
-  paletteSlots,
-  type Attrs,
-  type Paint,
-  type SafeValue,
-} from '@mermaid-js/core/svg';
+import { checkStyle, type Attrs, type Paint, type SafeValue } from '@mermaid-js/core/svg';
+import { paletteSlots } from '@mermaid-js/shared/svg/document';
 import type { FontKey } from '@mermaid-js/core/text';
 import { fontsOf } from '../layout/env.ts';
 import type { SequenceLayout } from '../layout/index.ts';

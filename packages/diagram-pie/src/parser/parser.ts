@@ -17,15 +17,8 @@
  * value is a semantic error with v12's message, and the statement goes on.
  */
 import { checkLimit } from '@mermaid-js/core/limits';
-import {
-  ExpectedTable,
-  ID_CONTROL,
-  ID_RESERVED,
-  idEscaper,
-  Kind,
-  kindSet,
-  STOP,
-} from '@mermaid-js/core/parser-kit';
+import { ExpectedTable, Kind, kindSet } from '@mermaid-js/core/parser-kit';
+import { ID_CONTROL, ID_RESERVED, idEscaper, STOP } from '@mermaid-js/shared/parser/support';
 import {
   RuleParser,
   textProbeMode,

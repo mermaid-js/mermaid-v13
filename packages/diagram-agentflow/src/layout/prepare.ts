@@ -23,7 +23,8 @@ import type {
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { graphSpacing, groupPadding, labelledEdge, sideways } from '@mermaid-js/shared/layout';
 import type { AgentflowDiagramConfig } from '@mermaid-js/core/config';
-import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
+import type { CheckedStyle } from '@mermaid-js/core/svg';
+import { styleCache } from '@mermaid-js/shared/svg/document';
 import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';

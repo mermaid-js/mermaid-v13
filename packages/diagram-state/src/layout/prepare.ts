@@ -6,11 +6,12 @@
 import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
 import { fromPx, pxProfile, type UnitProfile } from '@mermaid-js/core/layout';
 import { graphSpacing, labelledEdge, sideways } from '@mermaid-js/shared/layout';
-import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
+import type { CheckedStyle } from '@mermaid-js/core/svg';
+import { styleCache } from '@mermaid-js/shared/svg/document';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { StateModel, StateNode, StateNote, StateTransition } from '../parser/index.ts';
-import { configLengths, type ConfigLength } from '@mermaid-js/core/config';
+import { configLengths, type ConfigLength } from '@mermaid-js/shared/config/readers';
 import type { StateRenderContext } from './context.ts';
 import { stateConfigDefaults } from '../generated/config-defaults.ts';
 import { stateMetrics, type StateMetrics } from './metrics.ts';

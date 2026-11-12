@@ -13,7 +13,7 @@
  */
 
 /** The `venn` options the layout reads, every one set. */
-import { configNumber } from '@mermaid-js/core/config';
+import { configNumber } from '@mermaid-js/shared/config/readers';
 export interface VennLayoutConfig {
   readonly width: number;
   readonly height: number;

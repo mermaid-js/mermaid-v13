@@ -6,14 +6,8 @@
 // `<g>`, each drawn curve and the in-text title carry `data-ast`; legend rows and swatches
 // carry `data-id` only (pitfall 12). A skipped curve draws nothing, as pie's dropped slices.
 import type { RenderContext } from '@mermaid-js/core';
-import {
-  centreX,
-  centreY,
-  openSvgRoot,
-  type PathBuilder,
-  type PathData,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import type { PathBuilder, PathData, SvgWriter } from '@mermaid-js/core/svg';
+import { centreX, centreY, openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { CubicSegment, Point, RadarLayout } from '../layout/index.ts';
 import type { RadarModel } from '../model.ts';
 import { radarUseMaxWidth } from '../config.ts';

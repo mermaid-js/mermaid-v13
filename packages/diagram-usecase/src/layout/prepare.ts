@@ -7,7 +7,8 @@
 // pitfall 13: `usecase-layout-literals.spec.ts`; in cells, text output's D478 forms, T7).
 import type { LayoutEdge, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
 import { labelledEdge } from '@mermaid-js/shared/layout';
-import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
+import type { CheckedStyle } from '@mermaid-js/core/svg';
+import { styleCache } from '@mermaid-js/shared/svg/document';
 import {
   fontSizePx,
   layoutLabel,

@@ -27,8 +27,8 @@ import {
   LBRACE,
   localOffset,
   SourceOffsets,
-  STOP,
 } from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type { AstId, ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import { isYamlMap, parseYaml } from '@mermaid-js/core/preprocess';

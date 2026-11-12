@@ -11,15 +11,13 @@ import { pxProfile } from '@mermaid-js/core/layout';
 import {
   checkLinkTarget,
   checkUrl,
-  cls,
-  openSvgRoot,
-  textElement,
   translate,
   type Attrs,
   type SafeUrl,
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { cls, openSvgRoot, textElement } from '@mermaid-js/shared/svg/document';
 import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
 import { marker, markerTrim } from '@mermaid-js/shared/svg/arrowheads';
 import { routePath } from '@mermaid-js/shared/svg/route';

@@ -5,7 +5,7 @@
  * came before it (R-PARSE-7). The parser hands each macro's arguments here and places the AST
  * nodes; this module holds no grammar.
  */
-import { idEscaper } from '@mermaid-js/core/parser-kit';
+import { idEscaper } from '@mermaid-js/shared/parser/support';
 import type { AstId, ParseState, Range } from '@mermaid-js/core/parser-kit';
 import * as codes from '../codes.ts';
 import {

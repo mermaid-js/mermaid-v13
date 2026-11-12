@@ -27,8 +27,10 @@
     "packages/shared": {
       "entry": [
         "src/*/index.ts",
-        "src/parser/{rule,state,tree,table,v12-text,drop,facet,flow,flow-facet}.ts",
-        "src/svg/{arrowheads,graph,route}.ts",
+        "src/parser/{rule,state,support,tree,table,v12-text,drop,facet,flow,flow-facet}.ts",
+        "src/svg/{arrowheads,document,graph,route}.ts",
+        "src/config/readers.ts",
+        "src/layout/invariants.ts",
         "src/shapes/{kit,basic,extended}.ts"
       ],
       "project": ["src/**/*.ts"]

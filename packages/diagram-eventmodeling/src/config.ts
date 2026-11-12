@@ -16,7 +16,7 @@ import type { EventModelingDiagramConfig } from '@mermaid-js/core/config';
 import { EVENTMODELING_CONFIG_INVALID } from './codes.ts';
 import { eventmodelingConfigDefaults } from './generated/config-defaults.ts';
 import { PADDING_HEADROOM } from './layout/metrics.ts';
-import { useMaxWidth } from '@mermaid-js/core/config';
+import { useMaxWidth } from '@mermaid-js/shared/config/readers';
 
 export interface EventModelingConfig {
   /** The margin around what is drawn, px. */
@@ -55,9 +55,9 @@ export function eventModelingUseMaxWidth(
 ): boolean {
   return useMaxWidth(section?.useMaxWidth, 'boolean', true, (given) =>
     warn({
-    code: EVENTMODELING_CONFIG_INVALID,
-    message: `Ignored eventmodeling.useMaxWidth: ${JSON.stringify(given)} is not true or false; using true`,
-    path: 'eventmodeling.useMaxWidth',
-  })
+      code: EVENTMODELING_CONFIG_INVALID,
+      message: `Ignored eventmodeling.useMaxWidth: ${JSON.stringify(given)} is not true or false; using true`,
+      path: 'eventmodeling.useMaxWidth',
+    })
   );
 }

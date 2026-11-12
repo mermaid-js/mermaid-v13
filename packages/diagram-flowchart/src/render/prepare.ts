@@ -6,7 +6,8 @@
 import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { graphSpacing, groupPadding, labelledEdge, sideways } from '@mermaid-js/shared/layout';
-import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
+import type { CheckedStyle } from '@mermaid-js/core/svg';
+import { styleCache } from '@mermaid-js/shared/svg/document';
 import {
   FOLDED_TYPE_SIZE,
   foldedCells,

@@ -14,7 +14,8 @@
  *   only under `colorScheme: rotate`. The fill is `bkgColorArray`'s entry when that is not empty
  *   (redux-dark-color's is: it colours outlines only). An author's `classDef` / `style` wins.
  */
-import { paletteSlots, type Paint } from '@mermaid-js/core/svg';
+import type { Paint } from '@mermaid-js/core/svg';
+import { paletteSlots } from '@mermaid-js/shared/svg/document';
 import type { UsecasePrepared } from '../layout/prepare.ts';
 import type { UsecaseModel } from '../model.ts';
 import type { UsecaseRenderContext } from './context.ts';

@@ -28,10 +28,10 @@ import {
   Probe,
   ProbeCursor,
   sourceView,
-  STOP,
   syncTo,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type {
   AstId,
   ParseOptions,

@@ -7,7 +7,7 @@ import { fontSizePx, layoutLabel, type FontKey, type MeasuredLabel } from '@merm
 import type { TimelineModel, TimelinePeriod } from '../model.ts';
 import { TIMELINE_METRICS, type TimelineMetrics } from './metrics.ts';
 import type { Arrowhead, PlacedLabel, Point, Rect, TimelineLine } from './types.ts';
-import { fontWeightOf as weightOf } from '@mermaid-js/core/config';
+import { fontWeightOf as weightOf } from '@mermaid-js/shared/config/readers';
 
 /** What the layout reads from the render context. */
 export type TimelineLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
@@ -106,7 +106,11 @@ export function envOf(ctx: TimelineLayoutContext): Env {
   const fontSize = ctx.theme.number('fontSize');
   const formulaSize = lengthOf(ctx.config.fontSize, m.common.fontSize, 'fontSize', ctx.warn);
   const family = ctx.theme.value('fontFamily');
-  const font: FontKey = { family, size: fontSize, weight: weightOf(ctx.theme.value('fontWeight'), WEIGHT_BOLD, WEIGHT_NORMAL) };
+  const font: FontKey = {
+    family,
+    size: fontSize,
+    weight: weightOf(ctx.theme.value('fontWeight'), WEIGHT_BOLD, WEIGHT_NORMAL),
+  };
   const titleSize = fontSizePx(m.common.titleFontSize, fontSize) ?? fontSize;
   const refSize = m.common.titleReferenceFontSize;
   const titleRefSize = fontSizePx(m.common.titleFontSize, refSize) ?? refSize;

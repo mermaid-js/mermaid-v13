@@ -12,9 +12,6 @@ import { routePath } from '@mermaid-js/shared/svg/route';
 import {
   checkLinkTarget,
   checkUrl,
-  cls,
-  openSvgRoot,
-  textElement,
   translate,
   type Attrs,
   type OutlinePaint,
@@ -22,6 +19,7 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { cls, openSvgRoot, textElement } from '@mermaid-js/shared/svg/document';
 import type {
   StateEdgeView,
   StateGroupView,

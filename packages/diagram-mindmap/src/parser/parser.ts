@@ -31,17 +31,8 @@
  * Unlike jison the parser does not stop at the first error: it reports it, skips to the next
  * line and carries on.
  */
-import {
-  cook,
-  CR,
-  isSpace,
-  Kind,
-  kindSet,
-  LF,
-  SPACE,
-  STOP,
-  TAB,
-} from '@mermaid-js/core/parser-kit';
+import { cook, CR, isSpace, Kind, kindSet, LF, SPACE, TAB } from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type {
   ParseOptions,
   ParseResult,

@@ -1,12 +1,5 @@
-import {
-  ExpectedTable,
-  isSpace,
-  Kind,
-  kindSet,
-  Stop,
-  STOP,
-  TRIVIA,
-} from '@mermaid-js/core/parser-kit';
+import { ExpectedTable, isSpace, Kind, kindSet, TRIVIA } from '@mermaid-js/core/parser-kit';
+import { Stop, STOP } from '@mermaid-js/shared/parser/support';
 import type { KindSet, ParseState, Range } from '@mermaid-js/core/parser-kit';
 import type { ClassNamespaceStmt } from './ast.ts';
 import type { ClassLex } from './lexer.ts';

@@ -13,7 +13,8 @@
 // `->>`'s id) and `data-id`; an inferred relation's path, the lanes (`lane:<index>`), the heads,
 // rects and texts carry `data-id` only (pitfall 12).
 import type { RenderContext } from '@mermaid-js/core';
-import { openSvgRoot, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
+import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import { eventModelingUseMaxWidth } from '../config.ts';
 import type {
   EventModelBoxLayout,

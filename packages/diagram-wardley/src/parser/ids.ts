@@ -2,7 +2,7 @@
  * AST id stems from names (D427, `ast.ts`): `%`, `>`, `@` and `#` percent-encoded as core's
  * ids are, so the `->` of a link id and the `@n` of a repeat are never part of a name.
  */
-import { idEscaper } from '@mermaid-js/core/parser-kit';
+import { idEscaper } from '@mermaid-js/shared/parser/support';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 
 const esc = /* @__PURE__ */ idEscaper();

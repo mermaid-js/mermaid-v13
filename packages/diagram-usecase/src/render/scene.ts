@@ -24,7 +24,7 @@ export interface Scene {
   readonly spokenOf: ReadonlyMap<string, string>;
 }
 
-export { cls } from '@mermaid-js/core/svg';
+export { cls } from '@mermaid-js/shared/svg/document';
 
 /**
  * The font attributes for a part drawn in `font`: its size always (parts differ from the root's

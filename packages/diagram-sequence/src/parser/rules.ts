@@ -101,7 +101,14 @@ export abstract class TokenRules {
       );
       throw STOP;
     }
-    st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found(), undefined, this.explain() ?? hint);
+    st.diagnostics.unexpected(
+      'UNEXPECTED',
+      where,
+      EXPECTED.names(want),
+      this.found(),
+      undefined,
+      this.explain() ?? hint
+    );
     throw STOP;
   }
 

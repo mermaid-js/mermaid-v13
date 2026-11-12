@@ -13,11 +13,8 @@
  * root `wrap` is set too, as v12.
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
-import {
-  type C4DiagramConfig,
-  configNumber,
-  fontWeightOf as weightOf,
-} from '@mermaid-js/core/config';
+import type { C4DiagramConfig } from '@mermaid-js/core/config';
+import { configNumber, fontWeightOf as weightOf } from '@mermaid-js/shared/config/readers';
 import { checkStyle } from '@mermaid-js/core/svg';
 import { fontSizePx, type FontKey } from '@mermaid-js/core/text';
 import { c4ConfigDefaults } from './generated/config-defaults.ts';

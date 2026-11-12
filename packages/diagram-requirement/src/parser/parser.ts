@@ -33,10 +33,10 @@ import {
   ParseState,
   Probe,
   ProbeCursor,
-  STOP,
   syncTo,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type { KindSet, ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';

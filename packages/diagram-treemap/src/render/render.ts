@@ -11,13 +11,8 @@
 // (R-SEC-2) and written as attributes after v12's own, so they win as v12's `!important` did:
 // the shape's on the rect, the text's (`color` as `fill`) on the label and value.
 import type { RenderContext } from '@mermaid-js/core';
-import {
-  checkStyle,
-  openSvgRoot,
-  type Attrs,
-  type CheckedStyle,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import { checkStyle, type Attrs, type CheckedStyle, type SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import { treemapUseMaxWidth } from '../config.ts';
 import {
   TREEMAP_METRICS as M,

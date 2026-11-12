@@ -29,14 +29,8 @@
  * (D302).
  */
 import type { RenderContext } from '@mermaid-js/core';
-import {
-  openSvgRoot,
-  type Attrs,
-  type LabelBox,
-  type Paint,
-  type SafeValue,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import type { Attrs, LabelBox, Paint, SafeValue, SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type {
   IshikawaBone,
   IshikawaCauseLayout,

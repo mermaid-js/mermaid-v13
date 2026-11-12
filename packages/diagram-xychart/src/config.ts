@@ -15,8 +15,8 @@
 import type { Warning } from '@mermaid-js/core';
 import type { XYChartAxisConfig, XYChartConfig } from '@mermaid-js/core/config';
 import { xyChartConfigDefaults } from './generated/config-defaults.ts';
-import { configNumber } from '@mermaid-js/core/config';
-export { configNumber } from '@mermaid-js/core/config';
+import { configNumber } from '@mermaid-js/shared/config/readers';
+export { configNumber } from '@mermaid-js/shared/config/readers';
 
 export const XYCHART_CONFIG_INVALID = 'XYCHART_CONFIG_INVALID';
 

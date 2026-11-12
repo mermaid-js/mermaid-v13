@@ -35,9 +35,9 @@ import {
   Probe,
   ProbeCursor,
   sourceView,
-  STOP,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type { ParseOptions, ParseResult, Range, StatementSpan } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
@@ -293,7 +293,10 @@ class SankeyParser {
       'UNEXPECTED',
       at?.range ?? here,
       names,
-      at?.found ?? this.found(), undefined, this.hint(hint));
+      at?.found ?? this.found(),
+      undefined,
+      this.hint(hint)
+    );
     throw STOP;
   }
 

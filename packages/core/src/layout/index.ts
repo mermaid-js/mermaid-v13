@@ -40,5 +40,3 @@ export {
   type LayoutMetrics,
   type UnitProfile,
 } from './units.ts';
-// Shared layout invariant helpers.
-export * from './invariants.ts';

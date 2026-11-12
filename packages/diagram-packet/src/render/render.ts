@@ -11,7 +11,8 @@
 // characters. The 10,000-row cap (about 4.3 MB) still exceeds the default `maxOutputLength`
 // (4,000,000), so at the default limits it is a `LIMIT` error (GAPS, for the maintainer).
 import type { RenderContext } from '@mermaid-js/core';
-import { centreX, centreY, openSvgRoot, type SvgWriter } from '@mermaid-js/core/svg';
+import type { SvgWriter } from '@mermaid-js/core/svg';
+import { centreX, centreY, openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { PacketLayout, PacketPieceLayout } from '../layout/index.ts';
 import type { PacketModel } from '../model.ts';
 import { paints, type Paints } from './paint.ts';

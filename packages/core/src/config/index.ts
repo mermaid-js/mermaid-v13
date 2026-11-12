@@ -29,6 +29,3 @@ export {
 
 /** Top-level defaults from the schema, frozen. Diagram sections come from their packages. */
 export const CORE_DEFAULTS: DeepReadonly<MermaidConfig> = deepFreeze(GENERATED_DEFAULTS);
-
-// Shared config readers.
-export * from './readers.ts';

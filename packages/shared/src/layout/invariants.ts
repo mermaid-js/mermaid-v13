@@ -16,11 +16,7 @@ interface Rect {
 const EPS = 1e-6;
 
 /** Every number in `value`, with its path (`layout.nodes[2].x`), depth first; `skip` is a key not entered. */
-export function* numbers(
-  value: unknown,
-  path: string,
-  skip?: string
-): Generator<[string, number]> {
+export function* numbers(value: unknown, path: string, skip?: string): Generator<[string, number]> {
   if (typeof value === 'number') yield [path, value];
   else if (Array.isArray(value)) {
     for (let i = 0; i < value.length; i++) yield* numbers(value[i], `${path}[${i}]`, skip);

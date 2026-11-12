@@ -11,12 +11,12 @@ import type { InfoDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import {
   keywordCompletions,
-  type KindedKeywordItem,
+  type TypedKeywordItem,
   wordRange,
 } from '@mermaid-js/shared/parser/facet';
 
 /** Everything completion offers, in the order it is offered. */
-const ITEMS: readonly KindedKeywordItem[] = [
+const ITEMS: readonly TypedKeywordItem[] = [
   { kind: T.Info, label: 'info', item: 'keyword' },
   { kind: T.ShowInfo, label: 'showInfo', item: 'keyword' },
   { kind: T.Title, label: 'title', item: 'keyword', insert: 'title ' },

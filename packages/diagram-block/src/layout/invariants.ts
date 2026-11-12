@@ -20,7 +20,7 @@ import { isComposite } from '../model.ts';
 import { outlineDistance } from '../shapes/outline.ts';
 import { blockIndex, drawnBoxes } from './layout.ts';
 import type { BlockLayout, BlockNodeLayout, Rect } from './types.ts';
-import { numbers, rectInside as inside } from '@mermaid-js/core/layout';
+import { numbers, rectInside as inside } from '@mermaid-js/shared/layout/invariants';
 
 const EPS = 1e-6;
 

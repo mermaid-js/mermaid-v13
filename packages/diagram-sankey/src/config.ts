@@ -29,7 +29,7 @@ import { checkColor, type SafeColor } from '@mermaid-js/core/svg';
 import { SANKEY_COLOR_INVALID, SANKEY_CONFIG_INVALID } from './codes.ts';
 import { sankeyConfigDefaults } from './generated/config-defaults.ts';
 import type { LinkPaint } from './layout/types.ts';
-import { shownValue as shown } from '@mermaid-js/core/config';
+import { shownValue as shown } from '@mermaid-js/shared/config/readers';
 
 export interface SankeyLayoutConfig {
   readonly width: number;

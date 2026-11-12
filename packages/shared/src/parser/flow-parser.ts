@@ -9,7 +9,8 @@
  * listed in `flow-parser-base.ts`.
  */
 // cspell:words kepano
-import { inKindSet, Kind, nodeId, STOP } from '@mermaid-js/core/parser-kit';
+import { inKindSet, Kind, nodeId } from '@mermaid-js/core/parser-kit';
+import { STOP } from './support.ts';
 import type {
   AstCallback,
   AstId,

@@ -4,7 +4,8 @@
 // `accTitle` and `accDescr` name the SVG (D133). Its colour is the shared `textColor`, which
 // v12's root style gave the text; info has no theme variable of its own.
 import type { RenderContext } from '@mermaid-js/core';
-import { openSvgRoot, type SvgWriter } from '@mermaid-js/core/svg';
+import type { SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { InfoLayout } from './layout.ts';
 import type { InfoModel } from './model.ts';
 

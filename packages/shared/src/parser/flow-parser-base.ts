@@ -25,8 +25,8 @@ import {
   RBRACE,
   significantTokens,
   skipTo,
-  STOP,
 } from '@mermaid-js/core/parser-kit';
+import { STOP } from './support.ts';
 import type {
   AstId,
   Diagnostic,

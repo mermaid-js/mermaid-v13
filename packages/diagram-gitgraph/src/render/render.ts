@@ -9,7 +9,6 @@
 // `branch-label<n>`, `commit-label`, `tag-label`, …), with `<n>` the branch's slot (D267).
 import type { RenderContext } from '@mermaid-js/core';
 import {
-  openSvgRoot,
   rotate,
   transforms,
   translate,
@@ -17,6 +16,7 @@ import {
   type SvgWriter,
   type Transform as SvgTransform,
 } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type {
   GitCommitLayout,
   GitLane,

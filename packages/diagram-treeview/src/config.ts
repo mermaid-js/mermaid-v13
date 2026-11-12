@@ -15,12 +15,12 @@
  * quietly, so a render warns once).
  */
 import type { Warning } from '@mermaid-js/core';
+import type { TreeViewDiagramConfig } from '@mermaid-js/core/config';
 import {
   rawConfigNumber as configNumber,
   shownValue as shown,
-  type TreeViewDiagramConfig,
   useMaxWidth,
-} from '@mermaid-js/core/config';
+} from '@mermaid-js/shared/config/readers';
 import { treeViewConfigDefaults } from './generated/config-defaults.ts';
 import type { TreeViewIconOptions } from './icons.ts';
 

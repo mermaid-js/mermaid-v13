@@ -4,15 +4,8 @@
 // their lifelines, activations, fragment frames, notes and messages. Every element drawn from
 // an AST node carries `data-id` and `data-ast` (R-PARSE-8); labels carry `data-id` only.
 import type { RenderContext } from '@mermaid-js/core';
-import {
-  centreX,
-  centreY,
-  checkColor,
-  openSvgRoot,
-  type Paint,
-  type SafeValue,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import { checkColor, type Paint, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
+import { centreX, centreY, openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { SequenceModel } from '../model.ts';
 import { sequenceMetrics, type SequenceMetrics } from '../layout/index.ts';
 import type {

@@ -16,7 +16,7 @@ import { C4_METRICS as M } from './metrics.ts';
 import { crosses, lineOf } from './route.ts';
 import { onOutline, type Outline } from './shapes.ts';
 import type { C4Layout, C4RelationLayout, Point, Rect } from './types.ts';
-import { nonFinite as finite } from '@mermaid-js/core/layout';
+import { nonFinite as finite } from '@mermaid-js/shared/layout/invariants';
 
 /** Float tolerance of the checks, in px. */
 const EPS = 1e-6;

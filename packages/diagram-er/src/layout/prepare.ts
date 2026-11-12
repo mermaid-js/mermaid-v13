@@ -6,7 +6,8 @@ import type { LayoutGraph, LayoutGroup, LayoutNode, UnitProfile } from '@mermaid
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { graphSpacing, groupPadding, labelledEdge } from '@mermaid-js/shared/layout';
 import { erConfigDefaults } from '../generated/config-defaults.ts';
-import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
+import type { CheckedStyle } from '@mermaid-js/core/svg';
+import { styleCache } from '@mermaid-js/shared/svg/document';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type {
@@ -16,7 +17,7 @@ import type {
   ErRelationship,
   ErSubgraph,
 } from '../parser/index.ts';
-import { configLengths, type ConfigLength } from '@mermaid-js/core/config';
+import { configLengths, type ConfigLength } from '@mermaid-js/shared/config/readers';
 import type { ErRenderContext } from './context.ts';
 import { END_CELLS, erMetrics } from './ends.ts';
 

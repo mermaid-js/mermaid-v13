@@ -15,14 +15,13 @@
  * chart (venn.js's `disjoint`) is not drawn.
  */
 import {
-  fixedPaint,
-  openSvgRoot,
   translate,
   type Attrs,
   type Paint,
   type PathData,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { fixedPaint, openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type {
   PlacedLabel,
   RegionPath,

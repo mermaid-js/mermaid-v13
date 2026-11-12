@@ -2,7 +2,8 @@
  * The sequence parser's tables: token sets for its decisions and the probe, the human names
  * of what it expects (R-ERR-2, R-ERR-5) and the statement hints. Built once at module load.
  */
-import { ExpectedTable, idEscaper, Kind, kindSet, STOP, TRIVIA } from '@mermaid-js/core/parser-kit';
+import { ExpectedTable, Kind, kindSet, TRIVIA } from '@mermaid-js/core/parser-kit';
+import { idEscaper, STOP } from '@mermaid-js/shared/parser/support';
 import type { FragmentKind } from '../model.ts';
 import { ARROW_TOKENS } from './arrows.ts';
 import type { SequenceMenuStmt } from './ast.ts';

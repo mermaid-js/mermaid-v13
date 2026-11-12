@@ -6,7 +6,7 @@
  * names and the `@` before a count are the only ones in an id, and two rows get the same id
  * only when they link the same two names.
  */
-import { idEscaper } from '@mermaid-js/core/parser-kit';
+import { idEscaper } from '@mermaid-js/shared/parser/support';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 
 /** A name with `%`, `>`, `@` and `#` percent-encoded (core `ast.ts` `esc`, copied). */

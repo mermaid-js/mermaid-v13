@@ -5,13 +5,8 @@
 // `data-ast` (R-PARSE-8), exactly one per node; labels and legend entries carry `data-id` only.
 // A task dot's `data-id` is its legend entry's (`a:<name>`), its `data-ast` the mention's.
 import type { RenderContext } from '@mermaid-js/core';
-import {
-  centreX,
-  centreY,
-  openSvgRoot,
-  type SafeValue,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import type { SafeValue, SvgWriter } from '@mermaid-js/core/svg';
+import { centreX, centreY, openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { JourneyModel } from '../model.ts';
 import { journeyMetrics, type JourneyMetrics } from '../layout/metrics.ts';

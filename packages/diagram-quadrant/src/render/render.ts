@@ -5,7 +5,6 @@
 // Every element drawn from an AST node carries `data-ast`, exactly one per node (R-PARSE-8).
 import type { RenderContext } from '@mermaid-js/core';
 import {
-  openSvgRoot,
   rotate,
   transforms,
   translate,
@@ -13,6 +12,7 @@ import {
   type Paint,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { QuadrantModel } from '../model.ts';
 import type { QuadrantLayout, QuadrantTextAnchor } from '../layout/types.ts';

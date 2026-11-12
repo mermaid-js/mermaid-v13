@@ -31,10 +31,10 @@ import {
   type Range,
   sourceView,
   type SourceView,
-  STOP,
   TokenCursor,
   type TokenStream,
 } from '@mermaid-js/core/parser-kit';
+import { STOP } from './support.ts';
 import type { TreeKinds } from './tree-lexer.ts';
 
 /** What {@link TreeParser} reads of a preprocess result (core's `PreprocessResult` fits). */

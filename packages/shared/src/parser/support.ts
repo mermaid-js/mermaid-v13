@@ -2,7 +2,7 @@
  * Small pieces every hand-written parser repeats: the statement-level stop sentinel, the
  * "got …" text of an unexpected token, and the escaping of names inside AST ids.
  */
-import { Kind } from './tokens.ts';
+import { Kind } from '@mermaid-js/core/parser-kit';
 
 /**
  * Thrown inside a parser after a diagnostic is recorded; caught at statement level. One

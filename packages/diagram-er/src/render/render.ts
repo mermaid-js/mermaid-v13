@@ -5,9 +5,6 @@
 // `data-ast` (R-SVG-2, R-PARSE-8). Colours and sizes come from theme variables only (D152).
 import type { LayoutModelNode } from '@mermaid-js/core/layout';
 import {
-  cls,
-  openSvgRoot,
-  paletteSlots,
   translate,
   type Attrs,
   type OutlinePaint,
@@ -15,6 +12,7 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { cls, openSvgRoot, paletteSlots } from '@mermaid-js/shared/svg/document';
 import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { ErLayout } from '../layout/layout.ts';

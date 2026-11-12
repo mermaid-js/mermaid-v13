@@ -12,7 +12,8 @@
 //
 // Each node's `g` carries `data-ast` (and `data-id`); its parts and its connectors `data-id`
 // only (pitfall 12, D487). The root row is not an AST node: it carries neither.
-import { openSvgRoot, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
+import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import { Style } from '@mermaid-js/core/text';
 import { treeViewUseMaxWidth } from '../config.ts';
 import {

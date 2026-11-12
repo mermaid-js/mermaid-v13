@@ -30,7 +30,8 @@
     TitleAndAccessibilities: ((ACC_DESCR | ACC_TITLE | TITLE) EOL)+     EOL: NEWLINE+ | EOF
     Name: STRING | ID | NAME_WITH_SPACES     WN: WARDLEY_NUMBER     C: WN | INT
 */
-import { formatExpected, Kind, STOP } from '@mermaid-js/core/parser-kit';
+import { formatExpected, Kind } from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import {
   accessibilityAsName,
   RuleParser,

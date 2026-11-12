@@ -19,11 +19,11 @@ import {
   ParseState,
   Probe,
   ProbeCursor,
-  STOP,
   syncTo,
   TokenCursor,
   TRIVIA,
 } from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type { ParseOptions, ParseResult, Range, StatementSpan } from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
@@ -359,7 +359,14 @@ class ErParser {
       );
       throw STOP;
     }
-    st.diagnostics.unexpected('UNEXPECTED', where, names, this.found(), undefined, this.hint ?? this.explain());
+    st.diagnostics.unexpected(
+      'UNEXPECTED',
+      where,
+      names,
+      this.found(),
+      undefined,
+      this.hint ?? this.explain()
+    );
     throw STOP;
   }
 

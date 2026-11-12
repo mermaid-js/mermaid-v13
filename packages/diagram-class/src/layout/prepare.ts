@@ -30,7 +30,7 @@ import {
 import { MARKER_ACROSS } from '../render/markers.ts';
 import { measureBox, type BoxMetrics, type ClassBoxGeometry } from './box.ts';
 import { configDefaults } from '../config-defaults.ts';
-import { configLengths, type ConfigLength } from '@mermaid-js/core/config';
+import { configLengths, type ConfigLength } from '@mermaid-js/shared/config/readers';
 import type { ClassLayoutContext } from './context.ts';
 
 /** A class, as laid out. */

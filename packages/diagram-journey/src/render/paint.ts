@@ -6,11 +6,11 @@ import type { RenderContext, Warning } from '@mermaid-js/core';
 import {
   checkColor,
   checkStyle,
-  fixedPaint,
   type Attrs,
   type Paint,
   type SafeValue,
 } from '@mermaid-js/core/svg';
+import { fixedPaint } from '@mermaid-js/shared/svg/document';
 import type { FontKey } from '@mermaid-js/core/text';
 import { fontsOf } from '../layout/env.ts';
 import { FONT_WEIGHT, SECTION_SLOTS } from '../layout/metrics.ts';

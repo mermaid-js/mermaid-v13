@@ -27,7 +27,7 @@ import {
   type Size,
 } from '@mermaid-js/core/layout';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
-import { configLengths } from '@mermaid-js/core/config';
+import { configLengths } from '@mermaid-js/shared/config/readers';
 import { ARCHITECTURE_CONFIG_IGNORED } from '../codes.ts';
 import { architectureConfigDefaults } from '../generated/config-defaults.ts';
 import type { ArchitectureModel, ArchitectureSide } from '../model.ts';

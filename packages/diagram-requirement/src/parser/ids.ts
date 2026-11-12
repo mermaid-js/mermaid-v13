@@ -6,7 +6,7 @@
  * not export its escape): `%`, `>`, `@` and `#` are percent-encoded, so the `->` between two
  * names and the `@` before a count are the only ones in an id.
  */
-import { idEscaper } from '@mermaid-js/core/parser-kit';
+import { idEscaper } from '@mermaid-js/shared/parser/support';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 
 /** A name with `%`, `>`, `@` and `#` percent-encoded (core `ast.ts` `esc`, copied). */

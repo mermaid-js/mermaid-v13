@@ -11,7 +11,7 @@ import type { MindmapModel, MindmapShape } from '../model.ts';
 import type { MindmapLayoutContext } from './context.ts';
 import { MINDMAP_METRICS, type ShapeMetrics } from './metrics.ts';
 import { bangOutline, cloudOutline, outlineBox, type Outline, type Point } from './outline.ts';
-import { NUMERIC } from '@mermaid-js/core/config';
+import { NUMERIC } from '@mermaid-js/shared/config/readers';
 
 /** A config value the layout can't honour (pitfall 22): it lays out with the default instead. */
 export const MINDMAP_CONFIG_IGNORED = 'MINDMAP_CONFIG_IGNORED';

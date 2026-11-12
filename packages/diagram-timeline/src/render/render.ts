@@ -6,7 +6,8 @@
 // labels and connectors `data-id` only. v12's class names stay where they still apply
 // (`timeline-node`, `section-<n>`, `taskWrapper`, `eventWrapper`, `lineWrapper`).
 import type { RenderContext } from '@mermaid-js/core';
-import { openSvgRoot, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
+import type { SafeValue, SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import { fontSizePx } from '@mermaid-js/core/text';
 import { TIMELINE_METRICS } from '../layout/metrics.ts';
 import type {

@@ -18,7 +18,8 @@
  * `data-ast` marks one element per drawn AST node (pitfall 12): each block's `g.node` and each
  * edge's `path`; labels carry `data-id` only.
  */
-import { openSvgRoot, translate, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
+import { translate, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { BlockLayout, BlockNodeLayout, PlacedLabel } from '../layout/types.ts';
 import { isComposite, type Block, type BlockModel } from '../model.ts';
 import { drawShape } from '../shapes/draw.ts';

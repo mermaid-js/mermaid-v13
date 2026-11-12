@@ -22,7 +22,6 @@
 import {
   cook,
   CR,
-  idEscaper,
   Kind,
   kindSet,
   LF,
@@ -32,8 +31,8 @@ import {
   significantTokens,
   skipTo,
   sourceView,
-  STOP,
 } from '@mermaid-js/core/parser-kit';
+import { idEscaper, STOP } from '@mermaid-js/shared/parser/support';
 import type {
   AstId,
   Range,
@@ -940,7 +939,14 @@ class GanttParser {
     const word = k === T.AccTitle ? 'accTitle' : 'accDescr';
     const at = this.lineEndIn(keyword);
     const hint = `write it as \`${word}: <text>\``;
-    this.st.diagnostics.unexpected('UNEXPECTED', at, ['text'], 'the end of the text', undefined, hint);
+    this.st.diagnostics.unexpected(
+      'UNEXPECTED',
+      at,
+      ['text'],
+      'the end of the text',
+      undefined,
+      hint
+    );
   }
 }
 

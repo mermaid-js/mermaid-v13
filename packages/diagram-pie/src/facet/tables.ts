@@ -3,8 +3,8 @@
  * here: they come from the grammar file (`generated/docs.ts`).
  */
 import { T } from '../parser/tokens.ts';
-import type { KindedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
-export type { KindedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
+import type { TypedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
+export type { TypedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
 export { tokenBefore } from '@mermaid-js/shared/parser/facet';
 export { span } from '@mermaid-js/shared/parser/facet';
 export { code } from '@mermaid-js/shared/parser/facet';

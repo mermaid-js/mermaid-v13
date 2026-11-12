@@ -17,7 +17,7 @@
 import { checkStyle } from '@mermaid-js/core/svg';
 import { USECASE_CONFIG_IGNORED } from './codes.ts';
 import { usecaseConfigDefaults } from './generated/config-defaults.ts';
-import { NUMERIC } from '@mermaid-js/core/config';
+import { NUMERIC } from '@mermaid-js/shared/config/readers';
 
 /** The CSS weights a font key takes, as numbers. */
 export const FONT_WEIGHT = Object.freeze({ normal: 400, bold: 700 });

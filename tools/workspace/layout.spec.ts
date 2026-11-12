@@ -76,13 +76,16 @@ describe('workspace layout (DESIGN §2)', () => {
     expect(Object.keys(readPackage('packages/shared').exports ?? {}).sort()).toEqual(
       [
         './ascii',
+        './config/readers',
         './layout',
+        './layout/invariants',
         './parser/drop',
         './parser/facet',
         './parser/flow',
         './parser/flow-facet',
         './parser/rule',
         './parser/state',
+        './parser/support',
         './parser/table',
         './parser/tree',
         './parser/v12-text',
@@ -90,6 +93,7 @@ describe('workspace layout (DESIGN §2)', () => {
         './shapes/extended',
         './shapes/kit',
         './svg/arrowheads',
+        './svg/document',
         './svg/graph',
         './svg/route',
       ].sort()

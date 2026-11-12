@@ -3,7 +3,8 @@
 // keeps them. Each name is written as a literal, so the vocabulary `usedBy` scan
 // (`theme-used-by.spec.ts`) sees it. Wardley has no theme-name or `look` branch (D227).
 import type { RenderContext } from '@mermaid-js/core';
-import { fixedPaint, type Paint } from '@mermaid-js/core/svg';
+import type { Paint } from '@mermaid-js/core/svg';
+import { fixedPaint } from '@mermaid-js/shared/svg/document';
 import type { WardleyLayout } from '../layout/index.ts';
 
 type Theme = RenderContext['theme'];

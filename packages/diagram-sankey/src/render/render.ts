@@ -9,7 +9,6 @@
  */
 import type { RenderContext } from '@mermaid-js/core';
 import {
-  openSvgRoot,
   styleText,
   translate,
   type Attrs,
@@ -17,6 +16,7 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { SankeyLabel, SankeyLayout, SankeyLinkLayout } from '../layout/index.ts';
 import { SANKEY_METRICS } from '../layout/metrics.ts';
 import type { SankeyModel } from '../model.ts';

@@ -8,7 +8,6 @@ import {
   type AstId,
   cook,
   type Diagnostic,
-  foundText,
   Kind,
   type KindSet,
   kindSet,
@@ -20,10 +19,10 @@ import {
   skipTo,
   sourceView,
   type SourceView,
-  STOP,
   type TokenStream,
   type TokenView,
 } from '@mermaid-js/core/parser-kit';
+import { foundText, STOP } from './support.ts';
 
 /** What {@link RuleParser} reads of a preprocess result (core's `PreprocessResult` fits). */
 export interface RuleParserPre {

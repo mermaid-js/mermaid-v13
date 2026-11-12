@@ -6,12 +6,8 @@
  * falls back to the schema default with one `RADAR_CONFIG_INVALID` warning per key.
  */
 import type { Warning } from '@mermaid-js/core';
-import {
-  configNumber,
-  type RadarDiagramConfig,
-  shownValue as shown,
-  useMaxWidth,
-} from '@mermaid-js/core/config';
+import type { RadarDiagramConfig } from '@mermaid-js/core/config';
+import { configNumber, shownValue as shown, useMaxWidth } from '@mermaid-js/shared/config/readers';
 import { radarConfigDefaults } from './generated/config-defaults.ts';
 
 export const RADAR_CONFIG_INVALID = 'RADAR_CONFIG_INVALID';
