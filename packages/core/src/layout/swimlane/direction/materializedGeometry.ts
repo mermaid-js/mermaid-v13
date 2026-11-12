@@ -1798,10 +1798,7 @@ export function shortcutRedundantOrthogonalJogs(
     const points = new Map(
       visibleEdges.map(
         (edge) =>
-          [
-            edge,
-            dedupeConsecutivePoints((edge as { points?: PointLite[] }).points ?? []),
-          ] as const
+          [edge, dedupeConsecutivePoints((edge as { points?: PointLite[] }).points ?? [])] as const
       )
     );
     const segments = new Map(
