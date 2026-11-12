@@ -81,31 +81,34 @@ class Legs {
   ) {
     this.linear = kind === 'linear';
     const stepped = kind === 'step' || kind === 'stepBefore' || kind === 'stepAfter';
-    const { xs, ys, axes } = this;
     for (const p of route) {
       const axis = p.axis === 'h' ? 1 : 0;
-      const last = xs.length - 1;
-      if (
-        stepped &&
-        last >= 0 &&
-        Math.abs(p.x - xs[last]!) >= 0.01 &&
-        Math.abs(p.y - ys[last]!) >= 0.01
-      ) {
-        const px = xs[last]!;
-        const py = ys[last]!;
-        // The turn: across then along, or along then across.
-        const tx = axis === 0 ? px : stepCorner(kind, px, p.x);
-        const ty = axis === 0 ? stepCorner(kind, py, p.y) : py;
-        const ux = axis === 0 ? p.x : tx;
-        const uy = axis === 0 ? ty : p.y;
-        this.turn(tx, ty, px, py, p, axis);
-        this.turn(ux, uy, px, py, p, axis);
-      }
-      xs.push(p.x);
-      ys.push(p.y);
-      axes.push(axis);
+      if (stepped) this.step(p, axis);
+      this.xs.push(p.x);
+      this.ys.push(p.y);
+      this.axes.push(axis);
     }
-    this.last = xs.length - 1;
+    this.last = this.xs.length - 1;
+  }
+
+  /** Adds the turn of a stepped route between the last point and p, where they are not in line. */
+  private step(p: RoutePoint, axis: number): void {
+    const last = this.xs.length - 1;
+    if (last < 0) return;
+    const px = this.xs[last]!;
+    const py = this.ys[last]!;
+    const offset = Math.abs(p.x - px) >= 0.01 && Math.abs(p.y - py) >= 0.01;
+    if (!offset) return;
+    // The turn: along then across, or across then along.
+    if (axis === 0) {
+      const ty = stepCorner(this.kind, py, p.y);
+      this.turn(px, ty, px, py, p, axis);
+      this.turn(p.x, ty, px, py, p, axis);
+      return;
+    }
+    const tx = stepCorner(this.kind, px, p.x);
+    this.turn(tx, py, px, py, p, axis);
+    this.turn(tx, p.y, px, py, p, axis);
   }
 
   private turn(x: number, y: number, px: number, py: number, p: RoutePoint, axis: number): void {
@@ -160,6 +163,16 @@ class Legs {
       this.length(i) >= 0.01 &&
       this.length(i + 1) >= 0.01 &&
       Math.abs(this.x(i) - this.x(i - 1)) < 0.01 !== Math.abs(this.x(i + 1) - this.x(i)) < 0.01
+    );
+  }
+
+  /** Whether point i lies part of the way along one straight run, where it adds nothing. */
+  midRun(i: number): boolean {
+    if (i >= this.last || !this.aligned(i) || !this.aligned(i + 1)) return false;
+    const x = this.x(i);
+    const y = this.y(i);
+    return (
+      (x - this.x(i - 1)) * (this.x(i + 1) - x) + (y - this.y(i - 1)) * (this.y(i + 1) - y) > 0
     );
   }
 
@@ -225,49 +238,55 @@ export function routePath(
   return { d: draw(w, r, kind), sx, sy, sdx: -sdx, sdy: -sdy, ex, ey, edx, edy };
 }
 
-/** The path data through a route's points: S-curves between offset points, corners rounded. */
-function draw(w: SvgWriter, r: Legs, kind: CurveKind): PathData {
-  const cornered =
-    kind === 'step' || kind === 'stepBefore' || kind === 'stepAfter' || kind === 'rounded';
-  const last = r.last;
-  const b = w.path().moveTo(r.x(0), r.y(0));
-  let atX = r.x(0);
-  let atY = r.y(0);
-  const lineTo = (x: number, y: number): void => {
-    if (near(x, y, atX, atY)) return;
-    b.lineTo(x, y);
-    atX = x;
-    atY = y;
-  };
-  for (let i = 1; i <= last; i++) {
+/** The pen drawing a route: the path so far and where it has reached. */
+class Pen {
+  private readonly b: ReturnType<SvgWriter['path']>;
+  private readonly cornered: boolean;
+  private atX: number;
+  private atY: number;
+
+  constructor(
+    w: SvgWriter,
+    private readonly r: Legs,
+    private readonly kind: CurveKind
+  ) {
+    this.cornered =
+      kind === 'step' || kind === 'stepBefore' || kind === 'stepAfter' || kind === 'rounded';
+    this.atX = r.x(0);
+    this.atY = r.y(0);
+    this.b = w.path().moveTo(this.atX, this.atY);
+  }
+
+  lineTo(x: number, y: number): void {
+    if (near(x, y, this.atX, this.atY)) return;
+    this.b.lineTo(x, y);
+    this.atX = x;
+    this.atY = y;
+  }
+
+  /** One S along the flow to point i, which is not in line with the point before it. */
+  sweep(i: number): void {
+    const { atX, atY } = this;
+    const x = this.r.x(i);
+    const y = this.r.y(i);
+    const down = this.r.axes[i] === 0;
+    const run = down ? y - atY : x - atX;
+    const k = Math.abs(run) * ease(down ? x - atX : y - atY, run);
+    const ux = down ? 0 : Math.sign(run) * k;
+    const uy = down ? Math.sign(run) * k : 0;
+    this.b.curveTo(atX + ux, atY + uy, x - ux, y - uy, x, y);
+    this.atX = x;
+    this.atY = y;
+  }
+
+  /** The rounded right-angle turn at point i. */
+  corner(i: number): void {
+    const { r, kind } = this;
     const x = r.x(i);
     const y = r.y(i);
-    if (!r.straight(i)) {
-      const down = r.axes[i] === 0;
-      const run = down ? y - atY : x - atX;
-      const k = Math.abs(run) * ease(down ? x - atX : y - atY, run);
-      const ux = down ? 0 : Math.sign(run) * k;
-      const uy = down ? Math.sign(run) * k : 0;
-      b.curveTo(atX + ux, atY + uy, x - ux, y - uy, x, y);
-      atX = x;
-      atY = y;
-      continue;
-    }
-    if (!r.turns(i)) {
-      // A point part of the way along one straight run adds nothing.
-      if (
-        i < last &&
-        r.aligned(i) &&
-        r.aligned(i + 1) &&
-        (x - r.x(i - 1)) * (r.x(i + 1) - x) + (y - r.y(i - 1)) * (r.y(i + 1) - y) > 0
-      )
-        continue;
-      lineTo(x, y);
-      continue;
-    }
     let before = r.turns(i - 1) ? r.length(i) / 2 : r.length(i);
     let after = r.turns(i + 1) ? r.length(i + 1) / 2 : r.length(i + 1);
-    if (cornered) {
+    if (this.cornered) {
       before = after = Math.min(kind === 'rounded' ? RADIUS : STEP_CORNER, before, after);
     }
     r.unit(i - 1, i, r.axes[i]!);
@@ -276,14 +295,18 @@ function draw(w: SvgWriter, r: Legs, kind: CurveKind): PathData {
     r.unit(i, i + 1, r.axes[i + 1]!);
     const vx = r.ux;
     const vy = r.uy;
-    lineTo(x - ux * before, y - uy * before);
-    atX = x + vx * after;
-    atY = y + vy * after;
+    this.lineTo(x - ux * before, y - uy * before);
+    const atX = x + vx * after;
+    const atY = y + vy * after;
+    this.atX = atX;
+    this.atY = atY;
     // A right-angle turn, so the arc's radius is its leg; the sweep follows the turn (y down).
-    if (kind === 'rounded') b.arcTo(before, before, 0, false, ux * vy - uy * vx > 0, atX, atY);
-    else if (cornered) b.quadTo(x, y, atX, atY);
-    else {
-      b.curveTo(
+    if (kind === 'rounded') {
+      this.b.arcTo(before, before, 0, false, ux * vy - uy * vx > 0, atX, atY);
+    } else if (this.cornered) {
+      this.b.quadTo(x, y, atX, atY);
+    } else {
+      this.b.curveTo(
         x - ux * before * (1 - HANDLE),
         y - uy * before * (1 - HANDLE),
         x + vx * after * (1 - HANDLE),
@@ -293,5 +316,19 @@ function draw(w: SvgWriter, r: Legs, kind: CurveKind): PathData {
       );
     }
   }
-  return b.done();
+
+  done(): PathData {
+    return this.b.done();
+  }
+}
+
+/** The path data through a route's points: S-curves between offset points, corners rounded. */
+function draw(w: SvgWriter, r: Legs, kind: CurveKind): PathData {
+  const pen = new Pen(w, r, kind);
+  for (let i = 1; i <= r.last; i++) {
+    if (!r.straight(i)) pen.sweep(i);
+    else if (r.turns(i)) pen.corner(i);
+    else if (!r.midRun(i)) pen.lineTo(r.x(i), r.y(i));
+  }
+  return pen.done();
 }
