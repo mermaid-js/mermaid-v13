@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   buildRectHitIndex,
   buildSegmentCrossingIndex,
+  buildSegmentLineIndex,
   buildTrackConflictIndex,
+  countCrossingsPerRoute,
   countSegmentCrossings,
   shapesTouchAtBend,
 } from '../direction/crossingIndex.ts';
@@ -143,6 +145,57 @@ describe('the crossing cleanup indexes (#687)', () => {
     }
     expect(touching).toBeGreaterThan(0);
     expect(touching).toBeLessThan(all.length / 2);
+  });
+
+  it("counts each route's crossings with the others, and every crossing pair once", () => {
+    for (const seed of [41, 42, 43]) {
+      const segmentsOf = new Map(
+        routes(seed, 50).map(
+          (points, owner) =>
+            [owner, orthogonalSegmentsForPoints(dedupeConsecutivePoints(points))] as const
+        )
+      );
+      const index = buildSegmentCrossingIndex([...segmentsOf.values()].flat(), EPSILON);
+      const { byRoute, total } = countCrossingsPerRoute(segmentsOf, index, EPSILON);
+      let pairs = 0;
+      for (const [owner, segments] of segmentsOf) {
+        let walked = 0;
+        for (const [other, otherSegments] of segmentsOf) {
+          if (other !== owner) {
+            walked += countSegmentCrossings(segments, otherSegments, EPSILON);
+          }
+          if (other > owner) {
+            pairs += countSegmentCrossings(segments, otherSegments, EPSILON);
+          }
+        }
+        expect(byRoute.get(owner)).toBe(walked);
+      }
+      expect(total).toBe(pairs);
+      expect(pairs).toBeGreaterThan(100);
+    }
+  });
+
+  it('finds every segment on the same axis within reach of a line', () => {
+    const all = routes(51, 60).flatMap((points, owner) =>
+      orthogonalSegmentsForPoints(points).map((segment) => ({ owner, segment }))
+    );
+    const index = buildSegmentLineIndex(all);
+    const lineOf = (s: (typeof all)[number]['segment']): number => (s.horizontal ? s.a.y : s.a.x);
+    let found = 0;
+    for (const { segment } of all.slice(0, 80)) {
+      for (const reach of [0, 1, 8]) {
+        const walked = all.filter(
+          (other) =>
+            other.segment.horizontal === segment.horizontal &&
+            Math.abs(lineOf(other.segment) - lineOf(segment)) <= reach
+        );
+        const near = [...index.sameAxisNear(segment, reach)];
+        expect(new Set(near)).toEqual(new Set(walked));
+        expect(near).toHaveLength(walked.length);
+        found += walked.length;
+      }
+    }
+    expect(found).toBeGreaterThan(240);
   });
 
   it('finds a node box hit where a walk over every box finds one', () => {
