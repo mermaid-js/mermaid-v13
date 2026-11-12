@@ -1,0 +1,13 @@
+---
+description: >-
+  A transition from a composite state to its own child, written inside the
+  composite, under the ELK layout; guards against the render never returning
+  (#688).
+config:
+  layout: elk
+---
+stateDiagram-v2
+  state Boot {
+    Running
+    Boot --> Running
+  }

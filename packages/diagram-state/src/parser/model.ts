@@ -9,7 +9,8 @@
  * 2. `extract`, over the top-level statements only: the state table that `classDef`, `class`,
  *    `style` and `click` act on (v12 ignores them inside composites);
  * 3. `dataFetcher`: the walk over the tree that makes v12's graph, with one node per state id
- *    across all composites, its descriptions in order and its last parent.
+ *    across all composites, its descriptions in order and its last parent (never itself or a
+ *    state inside it, #688).
  *
  * Every collection keeps insertion order.
  */
@@ -487,12 +488,25 @@ export class StateBuilder {
     this.describe(rec, item.description);
     if (!rec.isGroup && item.doc) this.group(rec, item, parent);
     if (item.doc || (item.description && item.description !== '')) rec.content = true;
-    if (parent && parent.id !== 'root') rec.parent = parent.id;
+    if (parent && parent.id !== 'root' && !this.holds(id, parent.id)) rec.parent = parent.id;
     if (item.note) {
       const side = item.note.position === 'left of' ? 'left' : 'right';
       this.notes.push({ ast: item.note.ast, target: id, side, text: item.note.text });
       this.edgeCount++;
     }
+  }
+
+  /**
+   * Whether the scope `scope` is the state `id` or sits inside it, by the parents filed so far.
+   * v12 files a state under every scope that mentions it, so `Boot --> Running` written inside
+   * `Boot` made `Boot` its own parent, and no layout survives a loop in the tree (#688). Such a
+   * mention moves nothing: the state stays where it was. The parents therefore always form a
+   * tree, which is also why this walk ends.
+   */
+  private holds(id: string, scope: string): boolean {
+    for (let at: string | undefined = scope; at !== undefined; at = this.records.get(at)?.parent)
+      if (at === id) return true;
+    return false;
   }
 
   /**

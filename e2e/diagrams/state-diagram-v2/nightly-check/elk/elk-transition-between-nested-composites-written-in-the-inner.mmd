@@ -1,0 +1,15 @@
+---
+description: >-
+  A transition from an outer composite to the composite nested in it, written
+  inside the nested one, under the ELK layout; guards against the render
+  failing with `Invalid array length` after seconds (#688).
+config:
+  layout: elk
+---
+stateDiagram-v2
+  state Outer {
+    state Inner {
+      X
+      Outer --> Inner
+    }
+  }
