@@ -337,12 +337,21 @@ function checkDiagram(def: AnyPlugin | LazyDiagram, eager: boolean): void {
       throw new TypeError(`Diagram "${p.id}": ${m} must be a function`);
 }
 
+/** A loaded diagram plugin: it has `parse` and `render`, and it may have a `layout` method. */
+const isDiagramPlugin = (m: object): boolean =>
+  typeof (m as { parse?: unknown }).parse === 'function' &&
+  typeof (m as { render?: unknown }).render === 'function';
+
+/** What a loader resolved to: the plugin or engine itself, or the module that exports it. */
 const unwrap = <T>(m: T | { diagram: T } | { layout: T } | { default: T }): T =>
-  typeof m === 'object' && m !== null && ('diagram' in m || 'layout' in m || 'default' in m)
+  typeof m === 'object' &&
+  m !== null &&
+  !isDiagramPlugin(m) &&
+  ('diagram' in m || 'layout' in m || 'default' in m)
     ? ((m as { diagram?: T }).diagram ??
       (m as { layout?: T }).layout ??
       (m as { default: T }).default)
-    : m;
+    : (m as T);
 
 /** Theme variables core defines: a fragment's own must not reuse them. */
 const THEME_NAMES: ReadonlySet<string> = new Set(Object.keys(THEME_VARIABLE_TABLE));
