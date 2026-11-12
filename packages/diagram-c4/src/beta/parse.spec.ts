@@ -112,12 +112,31 @@ describe('c4-beta model', () => {
     expect(errors('a --> b\nperson a "A"\nperson b "B"')).toEqual([]);
   });
 
+  it('keeps a step in a dynamic diagram and drops it, with a warning, elsewhere', () => {
+    const body = 'person a "A"\nperson b "B"\n2: a --> b';
+    expect(parse(body, 'c4-beta dynamic').model.relations[0]?.step).toBe(2);
+    const { model, diagnostics } = parse(body);
+    expect(model.relations[0]?.step).toBeUndefined();
+    expect(diagnostics.map((d) => d.code)).toEqual(['C4BETA_STEP_IGNORED']);
+  });
+
   it('reads a digit as an id after an arrow and a step at the start of a line', () => {
     const { model } = parse(
       'container 3 "Three"\nperson a "A"\n  4: a --> 3\na --> 3 : "x"',
       'c4-beta dynamic'
     );
     expect(model.relations.map((r) => r.step)).toEqual([4, undefined]);
+  });
+
+  it('names every place of a dropped field in one warning', () => {
+    const { diagnostics } = parse(
+      'person p "P" "d" "tech"\nsoftwareSystem s "S" "d" "tech"\ncontainer c "C" "" "JS" instances "3"'
+    );
+    expect(diagnostics.map((d) => d.code)).toEqual([
+      'C4BETA_TECHNOLOGY_DROPPED',
+      'C4BETA_INSTANCES_DROPPED',
+    ]);
+    expect(diagnostics[0]?.message).toMatch(/`p` at line 2, `s` at line 3/);
   });
 
   it('keeps instances on a deployment node, and makes it a boundary', () => {
@@ -169,6 +188,25 @@ describe('c4-beta model', () => {
     expect(diagnostics).toEqual([]);
     // A group is a boundary with or without children; a software system needs them.
     expect(model.elements.map((e) => e.boundary)).toEqual([true, false]);
+  });
+
+  it('keeps the first of a duplicate id and moves its children to it', () => {
+    const { model, diagnostics } = parse(
+      'softwareSystem s "First"\nsoftwareSystem s "Second" {\n  container c "C"\n}'
+    );
+    expect(diagnostics.map((d) => d.code)).toEqual(['C4BETA_DUPLICATE_ID']);
+    expect(diagnostics[0]?.message).toMatch(/line 2 and at line 3/);
+    expect(model.elements.map((e) => [e.id, e.name, e.parent])).toEqual([
+      ['s', 'First', undefined],
+      ['c', 'C', 's'],
+    ]);
+  });
+
+  it('drops the style entries the renderer has no use for, with one warning', () => {
+    const { model, diagnostics } = parse('style a foo:bar, line:wavy, fill:red, shape:cylinder');
+    expect(model.styles[0]?.entries.map((e) => e.key)).toEqual(['fill', 'shape']);
+    expect(diagnostics.map((d) => d.code)).toEqual(['C4BETA_STYLE_IGNORED']);
+    expect(diagnostics[0]?.message).toMatch(/foo:bar.*line:wavy/);
   });
 
   it('lets the last title, direction and legend win', () => {
