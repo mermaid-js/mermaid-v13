@@ -116,6 +116,7 @@ function byLine(c: Context): CompletionItem[] | undefined {
   // A statement line is short; the patterns below are not run on a long one (pitfall 5).
   if (line.length > 512) return undefined;
   // The word being typed: what the line ends with.
+  // eslint-disable-next-line mermaid/no-nested-quantifier -- run on the last 256 characters of a line at most
   const typed = /[^\s:;,{}"-]*$/.exec(line.slice(-256))?.[0] ?? '';
   const from = o - typed.length;
   const head = line.slice(0, line.length - typed.length);

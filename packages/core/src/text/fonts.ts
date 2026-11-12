@@ -3,7 +3,15 @@
 /** v12's default `fontFamily` (P1). The final v13 default is settled before 13.0 (D73). */
 export const DEFAULT_FONT_FAMILY = '"trebuchet ms", verdana, arial, sans-serif';
 
-const clean = (stack: string | undefined): string => stack?.trim().replace(/;+$/, '').trim() ?? '';
+/** `text` without its trailing semicolons. A scan, as `/;+$/` retries a run from each position. */
+function trimSemicolons(text: string): string {
+  let end = text.length;
+  while (text[end - 1] === ';') end--;
+  return text.slice(0, end);
+}
+
+const clean = (stack: string | undefined): string =>
+  stack === undefined ? '' : trimSemicolons(stack.trim()).trim();
 
 /**
  * The font family to draw and measure with. The `--mermaid-fontFamily` CSS variable comes
@@ -19,9 +27,7 @@ export function familyNames(stack: string): string[] {
   return stack
     .split(',')
     .map((name) =>
-      name
-        .trim()
-        .replace(/;+$/, '')
+      trimSemicolons(name.trim())
         .replace(/^(['"])(.*)\1$/, '$2')
         .trim()
         .toLowerCase()

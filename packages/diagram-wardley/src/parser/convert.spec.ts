@@ -19,11 +19,14 @@ const v12 = {
   accDescr: (image: string) => {
     const m = /accDescr(?:[\t ]*:([^\n\r]*)|\s*{([^}]*)})/.exec(image);
     if (m?.[1] !== undefined) return v12.oneLine(m[1]);
-    return (m?.[2] ?? '')
-      .replace(/^\s*/gm, '')
-      .replace(/\s+$/gm, '')
-      .replace(/[\t ]{2,}/gm, ' ')
-      .replace(/[\n\r]{2,}/gm, '\n');
+    return (
+      (m?.[2] ?? '')
+        .replace(/^\s*/gm, '')
+        // eslint-disable-next-line mermaid/no-nested-quantifier -- v12's released regex is the oracle; small inputs only
+        .replace(/\s+$/gm, '')
+        .replace(/[\t ]{2,}/gm, ' ')
+        .replace(/[\n\r]{2,}/gm, '\n')
+    );
   },
   /** `wardley/valueConverter.ts`: LINK_LABEL. */
   linkLabel: (image: string) => image.substring(1).trim(),

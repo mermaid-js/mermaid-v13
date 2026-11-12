@@ -155,11 +155,14 @@ export function converted(raw: string, regex: RegExp): string {
   if (!match) return raw;
   if (match[1] !== undefined) return match[1].trim().replace(/[\t ]{2,}/gm, ' ');
   if (match[2] !== undefined) {
-    return match[2]
-      .replace(/^\s*/gm, '')
-      .replace(/\s+$/gm, '')
-      .replace(/[\t ]{2,}/gm, ' ')
-      .replace(/[\n\r]{2,}/gm, '\n');
+    return (
+      match[2]
+        .replace(/^\s*/gm, '')
+        // eslint-disable-next-line mermaid/no-nested-quantifier -- v12's regex byte for byte (dev-only reference)
+        .replace(/\s+$/gm, '')
+        .replace(/[\t ]{2,}/gm, ' ')
+        .replace(/[\n\r]{2,}/gm, '\n')
+    );
   }
   return raw;
 }

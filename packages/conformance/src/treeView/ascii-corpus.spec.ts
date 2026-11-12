@@ -108,6 +108,12 @@ function cells(line: string): string[] {
 const textLines = (r: TextRenderResult): string[] => (r.text === '' ? [] : r.text.split('\n'));
 /** Controls and line separators are drawn as blanks (one row a node). */
 const blanked = (s: string): string => s.replace(/[\p{Cc}\u2028\u2029]/gu, ' ');
+/** `s` without the spaces which end it. */
+function unpadded(s: string): string {
+  let end = s.length;
+  while (s[end - 1] === ' ') end--;
+  return s.slice(0, end);
+}
 const highlighted = (n: TreeViewNode): boolean => n.cssClass === 'highlight';
 const written = (n: TreeViewNode): string => blanked(n.directory ? `${n.name}/` : n.name);
 
@@ -219,11 +225,11 @@ describe('treeView ascii corpus properties (D488, R-ASCII-9)', { timeout: 120_00
           const line = lines[i] ?? '';
           if (n.description === undefined)
             return void (longest = Math.max(longest, cells(line).length));
-          const d = blanked(n.description).replace(/ +$/, '');
+          const d = unpadded(blanked(n.description));
           if (!line.endsWith(d)) return void found.push(`line ${i}: no ${JSON.stringify(d)}`);
           const before = line.slice(0, line.length - d.length);
           if (!before.endsWith('  ')) found.push(`line ${i}: description not apart`);
-          longest = Math.max(longest, cellWidth(before.replace(/ +$/, '')));
+          longest = Math.max(longest, cellWidth(unpadded(before)));
           starts.add(cellWidth(before));
         });
         if (starts.size > 1) found.push(`description columns ${[...starts].join(', ')}`);
@@ -294,8 +300,8 @@ describe('treeView ascii corpus properties (D488, R-ASCII-9)', { timeout: 120_00
       const lines = c.model.nodes.map((n, i) => {
         const { rest } = split(c, 'unicode', i);
         if (n.description === undefined) return rest;
-        const d = blanked(n.description).replace(/ +$/, '');
-        return rest.slice(0, rest.length - d.length).replace(/ +$/, '');
+        const d = unpadded(blanked(n.description));
+        return unpadded(rest.slice(0, rest.length - d.length));
       });
       // `roomy` too: its lines between rows, gutter cut, are decoration the box pass drops.
       const gutter = c.model.nodes.some(highlighted) ? 1 : 0;
