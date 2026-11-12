@@ -1,0 +1,180 @@
+{
+  "$schema": "./node_modules/fallow/schema.json",
+  "entry": [
+    "tools/check-deps/cli.ts",
+    "e2e/dom/server.ts",
+    "e2e/dom/page.ts",
+    "packages/*/src/*/index.ts",
+    "packages/*/src/cli/*.ts",
+    "packages/*/src/theme/vocabulary.ts",
+    "packages/*/src/*/suite.ts",
+    "packages/*/src/*/tables.ts",
+    "packages/*/src/*/outline.ts",
+    "packages/mermaid/src/cdn.ts",
+    "packages/mermaid/src/cdn-loader.ts",
+    "packages/bench/src/runner/harness.ts",
+    "packages/bench/src/runner/*-entry.ts",
+    "packages/dev/src/smoke/*.ts",
+    "packages/dev/src/browser/*.ts",
+    "packages/dev/src/browser/explorer/app.ts",
+    "packages/language-service-codemirror/scripts/generate.ts",
+    "packages/language-service-monaco/scripts/generate.ts",
+    "packages/language-service/examples/*/vite.config.ts",
+    "tools/*/src/cli.ts",
+    "tools/*/src/*-cli.ts",
+    "tools/*/src/gen-unicode.ts",
+    "packages/*/scripts/**/*.ts"
+  ],
+  "ignorePatterns": [
+    "packages/*/grammar/generated/**",
+    "v13/docs/**",
+    "**/*.html",
+    "packages/dev/www/**",
+    "e2e/platform/**/*.js",
+    "e2e/platform/**/*.mjs"
+  ],
+  "ignoreFindings": [
+    "tools/**/fixtures/**",
+    "e2e/global-teardown.ts",
+    "e2e/helpers/coverage.ts",
+    "e2e/rendering/common-tests/**"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "workspaces": {
+    "settings": {
+      "packages/bench": {
+        "ignoreDependencies": ["mermaid-v12", "mermaid-v12-frozen", "pele", "@mermaid-js/diagram-*"]
+      },
+      "packages/dev": {
+        "ignoreDependencies": ["@fontsource/noto-sans-sc"]
+      },
+      "packages/language-server": {
+        "ignoreDependencies": ["@mermaid-js/*"]
+      },
+      "packages/language-service-codemirror": {
+        "ignoreDependencies": ["@mermaid-js/diagram-flowchart"]
+      },
+      "packages/language-service-monaco": {
+        "ignoreDependencies": ["@mermaid-js/diagram-flowchart"]
+      },
+      "packages/language-service/examples/codemirror": {
+        "ignoreDependencies": ["@lezer/*", "@mermaid-js/*"]
+      },
+      "packages/language-service/examples/monaco": {
+        "ignoreDependencies": ["@lezer/*", "@mermaid-js/*"]
+      }
+    }
+  },
+  "boundaries": {
+    "zones": [
+      {
+        "name": "core",
+        "patterns": ["packages/core/**"]
+      },
+      {
+        "name": "tooling",
+        "patterns": [
+          "packages/bench/**",
+          "packages/conformance/**",
+          "packages/dev/**",
+          "packages/mermaid/scripts/**",
+          "packages/language-service/examples/**",
+          "packages/mermaid/src/cdn-build.spec.ts"
+        ]
+      },
+      {
+        "name": "mermaid",
+        "patterns": ["packages/mermaid/src/**"]
+      },
+      {
+        "name": "extension-spec",
+        "patterns": ["packages/plugin-*/src/**/*.spec.ts", "packages/layout-elk/src/**/*.spec.ts"]
+      },
+      {
+        "name": "bundler",
+        "patterns": ["packages/bundler-plugin/**"]
+      },
+      {
+        "name": "language",
+        "patterns": ["packages/language-*/**"]
+      },
+      {
+        "name": "package",
+        "autoDiscover": ["packages"]
+      }
+    ],
+    "rules": [
+      {
+        "from": "core",
+        "allow": []
+      },
+      {
+        "from": "package",
+        "allow": ["core"]
+      },
+      {
+        "from": "mermaid",
+        "allow": ["core", "package"]
+      },
+      {
+        "from": "extension-spec",
+        "allow": ["core", "package", "mermaid"]
+      },
+      {
+        "from": "bundler",
+        "allow": ["core", "mermaid"]
+      },
+      {
+        "from": "language",
+        "allow": ["core", "package", "language"]
+      }
+    ]
+  },
+  "rules": {
+    "unused-exports": "error",
+    "unused-types": "error",
+    "unused-enum-members": "error",
+    "unused-class-members": "off",
+    "duplicate-exports": "warn",
+    "duplicate-export-aliases": "off",
+    "dev-dependencies-in-production": "off",
+    "private-type-leaks": "warn"
+  },
+  "duplicates": {
+    "ignore": [
+      "**/generated/**",
+      "**/*.spec.ts",
+      "**/*.spec.js",
+      "packages/conformance/**",
+      "**/v12-specs/**",
+      "**/testing/**",
+      "e2e/**",
+      "tools/**/fixtures/**"
+    ]
+  },
+  "health": {
+    "ignore": [
+      "**/generated/**",
+      "**/*.spec.ts",
+      "**/*.spec.js",
+      "**/v12-specs/**",
+      "**/testing/**",
+      "tools/**/fixtures/**"
+    ],
+    "thresholdOverrides": [
+      {
+        "files": ["packages/core/src/layout/layered/**", "packages/core/src/layout/swimlane/**"],
+        "maxCyclomatic": 40,
+        "maxCognitive": 60,
+        "maxUnitSize": 200,
+        "reason": "Layout algorithms (the layered layout ported from dagre, the swimlane router) are long by nature. Raised ceilings, not suppressions: a function that grows past them is reported."
+      }
+    ]
+  },
+  "audit": {
+    "gate": "new-only",
+    "deadCodeBaseline": ".fallow-baseline/dead-code.json",
+    "healthBaseline": ".fallow-baseline/health.json",
+    "dupesBaseline": ".fallow-baseline/dupes.json"
+  }
+}

@@ -40,6 +40,9 @@ export default defineConfig({
   ssr,
   test: {
     environment: 'node',
+    // Off unless asked for (`--coverage`). fallow reads the Istanbul JSON for its CRAP scores
+    // (#722): the PR's structural audit and the nightly run. A failed test still writes it.
+    coverage: { provider: 'v8', reporter: ['json'], reportOnFailure: true },
     projects: [
       {
         resolve,

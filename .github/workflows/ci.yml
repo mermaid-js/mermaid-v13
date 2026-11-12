@@ -92,19 +92,56 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
 
+  structure:
+    # #722: `fallow audit` on the files this change touches, against the base (HEAD^1: the base
+    # branch on a PR, whose checkout is the merge commit; the previous tip on a push). It fails
+    # on findings the change introduces: dead code, import cycles, boundary violations (the
+    # zones in .fallowrc.json), complexity above the thresholds and new duplication. Findings
+    # the base already has are reported, not failed. The tests the change reaches run first with
+    # coverage, so CRAP scores use real coverage (their verdict is the `tests` jobs' business).
+    name: Structural audit
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version-file: '.node-version'
+      - run: pnpm install --frozen-lockfile
+      # The timing projects stay out: coverage slows code unevenly and their ratios mean nothing.
+      - name: Coverage of the tests the change reaches
+        continue-on-error: true
+        run: >-
+          pnpm vitest run --changed HEAD^1 --passWithNoTests --coverage
+          --project workspace --project gantt-utc --project gantt-la
+      - name: fallow audit
+        run: |
+          if [ -f coverage/coverage-final.json ]; then export FALLOW_COVERAGE=coverage/coverage-final.json; fi
+          pnpm exec fallow audit --base HEAD^1 --quiet --format github-annotations
+      - name: Job summary
+        if: ${{ !cancelled() }}
+        run: |
+          if [ -f coverage/coverage-final.json ]; then export FALLOW_COVERAGE=coverage/coverage-final.json; fi
+          pnpm exec fallow audit --base HEAD^1 --quiet --format github-summary >> "$GITHUB_STEP_SUMMARY" || true
+
   checks:
-    # The one check to require on the branch: green only when lint, typecheck, build and every
-    # unit test shard passed. It keeps the name the single job had before it was split.
+    # The one check to require on the branch: green only when lint, typecheck, build, the
+    # structural audit and every unit test shard passed. It keeps the name the single job had
+    # before it was split.
     name: Check and build
     if: ${{ always() }}
-    needs: [lint, typecheck, build, tests]
+    needs: [lint, typecheck, build, structure, tests]
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 5
     steps:
       - env:
           RESULTS: ${{ join(needs.*.result, ' ') }}
         run: |
-          echo "lint, typecheck, build, tests: $RESULTS"
+          echo "lint, typecheck, build, structure, tests: $RESULTS"
           for result in $RESULTS; do
             if [ "$result" != "success" ]; then exit 1; fi
           done
