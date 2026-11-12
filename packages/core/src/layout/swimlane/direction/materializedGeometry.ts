@@ -31,7 +31,9 @@ import type { Edge, Node } from '../layoutData.ts';
 import {
   buildRectHitIndex,
   buildSegmentCrossingIndex,
+  buildSegmentLineIndex,
   buildTrackConflictIndex,
+  countCrossingsPerRoute,
   countSegmentCrossings,
   shapesTouchAtBend,
 } from './crossingIndex.ts';
@@ -1787,16 +1789,38 @@ export function shortcutRedundantOrthogonalJogs(
   );
   const visibleEdges = edges.filter((edge) => !(edge as { isLayoutOnly?: boolean }).isLayoutOnly);
 
-  const pointsFor = (
-    edge: MaterializedEdge,
-    replacementEdge?: MaterializedEdge,
-    replacement?: PointLite[]
-  ): PointLite[] =>
-    dedupeConsecutivePoints(
-      edge === replacementEdge
-        ? (replacement ?? [])
-        : ((edge as { points?: PointLite[] }).points ?? [])
+  const nodeHits = buildRectHitIndex(realNodeRects, BUFFER);
+  const labelHits = buildRectHitIndex(labelRects, BUFFER);
+
+  // v13 (#726): the routes are read once per round and indexed. v12 recounted the crossings
+  // of every pair of edges for each candidate, and walked every edge for a shared track.
+  const startRound = () => {
+    const points = new Map(
+      visibleEdges.map(
+        (edge) =>
+          [
+            edge,
+            dedupeConsecutivePoints((edge as { points?: PointLite[] }).points ?? []),
+          ] as const
+      )
     );
+    const segments = new Map(
+      visibleEdges.map((edge) => [edge, segmentsFor(points.get(edge)!)] as const)
+    );
+    const crossings = buildSegmentCrossingIndex([...segments.values()].flat(), EPS_LOCAL);
+    return {
+      points,
+      segments,
+      crossings,
+      lines: buildSegmentLineIndex(
+        visibleEdges.flatMap((owner) => segments.get(owner)!.map((segment) => ({ owner, segment })))
+      ),
+      ...countCrossingsPerRoute(segments, crossings, EPS_LOCAL),
+    };
+  };
+  let round = startRound();
+
+  const pointsFor = (edge: MaterializedEdge): PointLite[] => round.points.get(edge) ?? [];
 
   const pathLength = (points: PointLite[]): number =>
     segmentsFor(points).reduce((sum, segment) => {
@@ -1805,35 +1829,21 @@ export function shortcutRedundantOrthogonalJogs(
       return sum + Math.hypot(dx, dy);
     }, 0);
 
+  /** Every crossing between two visible edges, with `replacementEdge` rerouted if given. */
   const strictCrossingCount = (
     replacementEdge?: MaterializedEdge,
     replacement?: PointLite[]
   ): number => {
-    let count = 0;
-    for (let i = 0; i < visibleEdges.length; i++) {
-      const firstSegments = segmentsFor(pointsFor(visibleEdges[i]!, replacementEdge, replacement));
-      for (let j = i + 1; j < visibleEdges.length; j++) {
-        const secondSegments = segmentsFor(
-          pointsFor(visibleEdges[j]!, replacementEdge, replacement)
-        );
-        for (const firstSegment of firstSegments) {
-          for (const secondSegment of secondSegments) {
-            if (
-              orthogonalSegmentsStrictlyCross(
-                firstSegment.a,
-                firstSegment.b,
-                secondSegment.a,
-                secondSegment.b,
-                EPS_LOCAL
-              )
-            ) {
-              count++;
-            }
-          }
-        }
-      }
+    if (!replacementEdge) {
+      return round.total;
     }
-    return count;
+    const rerouted = segmentsFor(dedupeConsecutivePoints(replacement ?? []));
+    return (
+      round.total -
+      (round.byRoute.get(replacementEdge) ?? 0) +
+      round.crossings.count(rerouted) -
+      countSegmentCrossings(rerouted, round.segments.get(replacementEdge) ?? [], EPS_LOCAL)
+    );
   };
 
   const segmentRunsAlongRectBorder = (segment: SegmentLite, rect: RectLite): boolean => {
@@ -1945,11 +1955,12 @@ export function shortcutRedundantOrthogonalJogs(
     );
     const endpointRects = endpointRectsFor(edge);
 
-    for (const segment of segmentsFor(candidate)) {
-      if (segmentHitsAnyRect(segment.a, segment.b, realNodeRects, endpointIds, -BUFFER)) {
+    const candidateSegments = segmentsFor(candidate);
+    for (const segment of candidateSegments) {
+      if (nodeHits.hits(segment.a, segment.b, endpointIds)) {
         return false;
       }
-      if (segmentHitsAnyRect(segment.a, segment.b, labelRects, [], -BUFFER)) {
+      if (labelHits.hits(segment.a, segment.b, [])) {
         return false;
       }
       if (endpointRects.some((rect) => segmentRunsAlongRectBorder(segment, rect))) {
@@ -1957,15 +1968,13 @@ export function shortcutRedundantOrthogonalJogs(
       }
     }
 
-    for (const other of visibleEdges) {
-      if (other === edge) {
-        continue;
-      }
-      for (const candidateSegment of segmentsFor(candidate)) {
-        for (const otherSegment of segmentsFor(pointsFor(other))) {
-          if (sameAxisSegmentOverlapLength(candidateSegment, otherSegment, 0.5) >= MIN_SHARED) {
-            return false;
-          }
+    for (const candidateSegment of candidateSegments) {
+      for (const other of round.lines.sameAxisNear(candidateSegment, 1)) {
+        if (
+          other.owner !== edge &&
+          sameAxisSegmentOverlapLength(candidateSegment, other.segment, 0.5) >= MIN_SHARED
+        ) {
+          return false;
         }
       }
     }
@@ -1974,6 +1983,7 @@ export function shortcutRedundantOrthogonalJogs(
   };
 
   for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
+    round = startRound();
     const currentCrossings = strictCrossingCount();
     let bestEdge: { points?: PointLite[] } | undefined;
     let bestPath: PointLite[] | undefined;

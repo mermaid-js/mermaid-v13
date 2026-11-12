@@ -338,3 +338,55 @@ export function buildRectHitIndex(rects: readonly RectEntry[], buffer: number): 
     },
   };
 }
+
+/** An indexed segment and whose it is. */
+export interface OwnedSegment<T> {
+  owner: T;
+  segment: OrthogonalSegment;
+}
+
+export interface SegmentLineIndex<T> {
+  /**
+   * The indexed segments on the axis of `segment` whose line is within `reach` of its line,
+   * both ends included: the only ones that can share or crowd its track.
+   */
+  sameAxisNear(segment: OrthogonalSegment, reach: number): Iterable<OwnedSegment<T>>;
+}
+
+/** Indexes segments by the line they run on, for the "same track" tests of the passes. */
+export function buildSegmentLineIndex<T>(segments: Iterable<OwnedSegment<T>>): SegmentLineIndex<T> {
+  const all = [...segments];
+  const horizontals = new Sorted(
+    all.filter((entry) => entry.segment.horizontal),
+    (entry) => entry.segment.a.y
+  );
+  const verticals = new Sorted(
+    all.filter((entry) => !entry.segment.horizontal),
+    (entry) => entry.segment.a.x
+  );
+  return {
+    sameAxisNear(segment, reach) {
+      const line = lineOf(segment);
+      return (segment.horizontal ? horizontals : verticals).within(line - reach, line + reach);
+    },
+  };
+}
+
+/**
+ * The crossings of each route with all the others, and their sum: every crossing pair once.
+ * `segmentsOf` are the routes' segments, and `index` holds all of them.
+ */
+export function countCrossingsPerRoute<T>(
+  segmentsOf: ReadonlyMap<T, readonly OrthogonalSegment[]>,
+  index: SegmentCrossingIndex,
+  epsilon: number
+): { byRoute: Map<T, number>; total: number } {
+  const byRoute = new Map<T, number>();
+  let twice = 0;
+  for (const [route, segments] of segmentsOf) {
+    const count = index.count(segments) - countSegmentCrossings(segments, segments, epsilon);
+    byRoute.set(route, count);
+    twice += count;
+  }
+  return { byRoute, total: twice / 2 };
+}
