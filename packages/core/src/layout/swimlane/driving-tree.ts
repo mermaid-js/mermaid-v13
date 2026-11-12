@@ -1,4 +1,5 @@
 // Ported from v12 `swimlanes/driving-tree.ts` at upstream `c9b12739f` (D532).
+import { byCodeUnit } from './compare.ts';
 import type { Graph, NodeId } from './helpers.ts';
 import {
   buildPredecessorSuccessorMaps,
@@ -39,10 +40,10 @@ export function buildDrivingTree(graph: Graph, opts?: DrivingTreeBuildOptions): 
 
   const { preds } = buildPredecessorSuccessorMaps(g);
   for (const arr of preds.values()) {
-    arr.sort((a, b) => a.localeCompare(b));
+    arr.sort(byCodeUnit);
   }
 
-  const topoOrder = topoSortIfAcyclic(g) ?? [...g.nodes].sort((a, b) => a.localeCompare(b));
+  const topoOrder = topoSortIfAcyclic(g) ?? [...g.nodes].sort(byCodeUnit);
   const topoIndex = new Map<NodeId, number>();
   for (const [idx, id] of topoOrder.entries()) {
     topoIndex.set(id, idx);
@@ -85,7 +86,7 @@ export function buildDrivingTree(graph: Graph, opts?: DrivingTreeBuildOptions): 
     const ta = topoIndex.get(a) ?? 0;
     const tb = topoIndex.get(b) ?? 0;
     if (ta === tb) {
-      return a.localeCompare(b);
+      return byCodeUnit(a, b);
     }
     return ta - tb;
   });
@@ -93,10 +94,7 @@ export function buildDrivingTree(graph: Graph, opts?: DrivingTreeBuildOptions): 
   const adjacency = buildAdjacency(g);
   const adjacencyList = new Map<NodeId, NodeId[]>();
   for (const [node, set] of adjacency.entries()) {
-    adjacencyList.set(
-      node,
-      [...set].sort((a, b) => a.localeCompare(b))
-    );
+    adjacencyList.set(node, [...set].sort(byCodeUnit));
   }
 
   const componentOf = assignComponents(adjacencyList);
@@ -182,7 +180,7 @@ function chooseParent(node: NodeId, candidates: NodeId[], ctx: ParentSelectionCo
       return idxA - idxB;
     }
 
-    return a.localeCompare(b);
+    return byCodeUnit(a, b);
   });
   return sorted[0]!;
 }

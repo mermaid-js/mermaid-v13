@@ -8,6 +8,7 @@
  * Vite's `import.meta.glob` (Vitest runs it) reads the files, so core needs no Node types; this
  * file is a spec helper and is not built (`tsconfig.build.json`).
  */
+import { byCodeUnit } from '../compare.ts';
 import type { LayoutGraph } from '../../types.ts';
 import type { SwimlaneTuning } from '../layoutData.ts';
 
@@ -30,7 +31,7 @@ const FILES = (import.meta as ImportMeta & { glob: JsonGlob }).glob('./ddlt/**/*
 export const DDLT_FIXTURES: Readonly<Record<string, DdltFixture>> = Object.fromEntries(
   Object.entries(FILES)
     .map(([path, f]): [string, DdltFixture] => [path.slice('./ddlt/'.length, -'.json'.length), f])
-    .sort(([a], [b]) => a.localeCompare(b))
+    .sort(([a], [b]) => byCodeUnit(a, b))
 );
 
 /** A fresh copy of a fixture's graph, so a spec may change it. */

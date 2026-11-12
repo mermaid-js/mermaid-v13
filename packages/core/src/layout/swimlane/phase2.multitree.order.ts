@@ -1,4 +1,5 @@
 // Ported from v12 `swimlanes/phase2.multitree.order.ts` at upstream `c9b12739f` (D532).
+import { byCodeUnit } from './compare.ts';
 import type { Graph, NodeId } from './helpers.ts';
 import { buildDrivingTree } from './driving-tree.ts';
 import { computeSubtreeCrossCounts } from './phase2.crossCounts.ts';
@@ -43,7 +44,7 @@ function createChildOrderer(
 
     future.sort((a, b) => {
       if (a.min === b.min) {
-        return a.child.localeCompare(b.child);
+        return byCodeUnit(a.child, b.child);
       }
       return a.min - b.min;
     });
@@ -59,7 +60,7 @@ function createChildOrderer(
       if (ma !== mb) {
         return ma - mb;
       }
-      return a.localeCompare(b);
+      return byCodeUnit(a, b);
     });
 
     return [...future.map((item) => item.child), ...present];

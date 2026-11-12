@@ -1,4 +1,5 @@
 // Ported from v12 `swimlanes/phase2.multitree.core.ts` at upstream `c9b12739f` (D532).
+import { byCodeUnit } from './compare.ts';
 import type { NodeId } from './helpers.ts';
 
 // cspell:ignore multitree
@@ -39,7 +40,7 @@ export function compareByRankThenId(
   return (a: NodeId, b: NodeId) => {
     const ra = rankOf[a] ?? 0;
     const rb = rankOf[b] ?? 0;
-    return ra === rb ? a.localeCompare(b) : ra - rb;
+    return ra === rb ? byCodeUnit(a, b) : ra - rb;
   };
 }
 

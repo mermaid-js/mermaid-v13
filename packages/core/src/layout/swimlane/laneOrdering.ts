@@ -1,4 +1,5 @@
 // Ported from v12 `swimlanes/laneOrdering.ts` at upstream `c9b12739f` (D532).
+import { byCodeUnit } from './compare.ts';
 import type { Graph } from './helpers.ts';
 import { buildTopLaneOrder, createTopLaneResolver } from './phase2.options.ts';
 
@@ -163,7 +164,7 @@ function seedForRestart(
   restartIndex: number
 ): number {
   const weightSignature = [...weights]
-    .sort((a, b) => (a.a === b.a ? a.b.localeCompare(b.b) : a.a.localeCompare(b.a)))
+    .sort((a, b) => (a.a === b.a ? byCodeUnit(a.b, b.b) : byCodeUnit(a.a, b.a)))
     .map(({ a, b, weight }) => `${a}:${b}:${weight}`)
     .join('|');
   return hashString(`${sourceOrder.join('|')}#${weightSignature}#${restartIndex}`);
