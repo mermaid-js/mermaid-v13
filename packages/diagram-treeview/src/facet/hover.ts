@@ -22,7 +22,6 @@ import { T } from '../parser/tokens.ts';
 import { inside, statementAt } from './ranges.ts';
 import { iconOptionsOf, pathOf, treeOf } from './tree.ts';
 import { code, keywordHover } from '@mermaid-js/shared/parser/facet';
-export { code } from '@mermaid-js/shared/parser/facet';
 
 /** The keyword of a token that holds more than it (a text statement, `:::name`). */
 const keywordOf = (kind: number): string | undefined =>

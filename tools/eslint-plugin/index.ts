@@ -107,26 +107,36 @@ function bareImportViolation(
     return isCore(specifier) ? undefined : `shared imports only ${CORE}`;
   }
   if (pkg.startsWith('diagram-')) {
-    if (isCore(specifier) || isShared(specifier)) {
-      return undefined;
-    }
-    if (isDiagram(specifier)) {
-      return 'a diagram package never imports another diagram package';
-    }
-    if (specifier === SHARED) {
-      return `${SHARED} has no root entry; import a subpath`;
-    }
-    return `diagram packages import only ${CORE} and ${SHARED} subpaths`;
+    return diagramImportViolation(specifier);
   }
   if (pkg === 'mermaid') {
-    if (specifier === SHARED || isShared(specifier)) {
-      return `mermaid never imports ${SHARED}: it loads with the diagrams that use it`;
-    }
-    return isCore(specifier) || isDiagram(specifier)
-      ? undefined
-      : `mermaid imports only ${CORE} and @mermaid-js/diagram-*`;
+    return mermaidImportViolation(specifier);
   }
   return undefined;
+}
+
+/** Why a diagram package may not import `specifier`, or undefined when it may. */
+function diagramImportViolation(specifier: string): string | undefined {
+  if (isCore(specifier) || isShared(specifier)) {
+    return undefined;
+  }
+  if (isDiagram(specifier)) {
+    return 'a diagram package never imports another diagram package';
+  }
+  if (specifier === SHARED) {
+    return `${SHARED} has no root entry; import a subpath`;
+  }
+  return `diagram packages import only ${CORE} and ${SHARED} subpaths`;
+}
+
+/** Why `mermaid` may not import `specifier`, or undefined when it may. */
+function mermaidImportViolation(specifier: string): string | undefined {
+  if (specifier === SHARED || isShared(specifier)) {
+    return `mermaid never imports ${SHARED}: it loads with the diagrams that use it`;
+  }
+  return isCore(specifier) || isDiagram(specifier)
+    ? undefined
+    : `mermaid imports only ${CORE} and @mermaid-js/diagram-*`;
 }
 
 const importBoundaries: Rule.RuleModule = {

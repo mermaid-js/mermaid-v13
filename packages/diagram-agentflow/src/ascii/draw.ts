@@ -27,7 +27,6 @@ import {
   tee,
   writeBoxLabel,
 } from '@mermaid-js/shared/ascii';
-export { cellRect } from '@mermaid-js/shared/ascii';
 
 interface End {
   /** The node or flow the edge ends at. */

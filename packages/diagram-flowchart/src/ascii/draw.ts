@@ -37,7 +37,6 @@ import {
   writeBoxLabel,
   type LabelWriter,
 } from '@mermaid-js/shared/ascii';
-export { cellRect } from '@mermaid-js/shared/ascii';
 
 interface End {
   /** The node or group the edge ends at. */
