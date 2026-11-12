@@ -112,7 +112,7 @@ describe('the C4 ascii hook (#545)', () => {
     expect(text).toContain('│ Takes t… │');
   });
 
-  it('wraps a relation label narrower only when root `wrap` and `c4.wrap` are both set', () => {
+  it('wraps a relation label narrower only when the root `wrap` is true', () => {
     // Two shapes side by side: the label is wider than the gap between them.
     const src = [
       'C4Context',
@@ -125,12 +125,13 @@ describe('the C4 ascii hook (#545)', () => {
       const laid = layoutC4(parsed.model, { ...ctx, measurer: cellMeasurer, units: cellProfile() });
       return drawC4(laid, unicode).labels[0]!;
     };
-    // Either flag off: one line, as the SVG keeps it.
+    // The root `wrap` unset or false: one line, as the SVG keeps it.
     expect(label({}).height).toBe(1);
-    expect(label({ wrap: true, c4: { wrap: false } }).height).toBe(1);
+    expect(label({ c4: { wrap: true } }).height).toBe(1);
     expect(label({ wrap: false, c4: { wrap: true } }).height).toBe(1);
-    // Both on: wrapped narrower to stay by its line.
+    // The root `wrap` true, which wins over `c4.wrap` (#683): wrapped narrower to stay by its line.
     expect(label({ wrap: true }).height).toBeGreaterThan(1);
+    expect(label({ wrap: true, c4: { wrap: false } }).height).toBeGreaterThan(1);
   });
 
   it('charges label places to the drawing budget: with none left, a label sits at its middle', () => {

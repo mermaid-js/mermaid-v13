@@ -1,0 +1,14 @@
+---
+description: >-
+  The root wrap option set to false wins over c4.wrap (left at its default
+  true), so element text stays on one line and each element is as wide as its
+  longest line (#683, v12's fix mermaid-js/mermaid#8342). mermaid 12.2.0
+  wrapped the element text and kept the boxes 216 px wide.
+config:
+  wrap: false
+---
+C4Context
+  title Root wrap set to false
+  Person(customer, "Personal Banking Customer", "A customer of the bank, with personal bank accounts")
+  System(banking, "Internet Banking System", "Allows customers to view their accounts and make payments")
+  Rel(customer, banking, "Views account balances and makes payments")

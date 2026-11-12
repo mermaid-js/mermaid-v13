@@ -424,7 +424,12 @@ describe('c4 relations (D455)', () => {
   });
 });
 
-describe('c4 wrapping (v12: relations and boundaries need the root wrap and c4.wrap)', () => {
+/**
+ * The root `wrap`, when set, wins over `c4.wrap` (#683, as v12's fix mermaid-js/mermaid#8342;
+ * 12.2.0's elements followed `c4.wrap` alone). Relation and boundary text wraps only when the
+ * root `wrap` is `true`, as v12.
+ */
+describe('c4 wrapping (the root wrap wins over c4.wrap; relations and boundaries need it)', () => {
   const long = 'word '.repeat(30).trim();
   const src = [
     'C4Context',
@@ -436,17 +441,33 @@ describe('c4 wrapping (v12: relations and boundaries need the root wrap and c4.w
   ].join('\n');
 
   it.each([
-    [false, false, false],
-    [false, true, false],
-    [true, false, false],
-    [true, true, true],
-  ])('root wrap %s, c4.wrap %s: relation and boundary text wrap %s', (root, c4, both) => {
-    const layout = sound(src, { measurer: grid, integrator: { wrap: root, c4: { wrap: c4 } } });
-    const lines = (l: PlacedLabel | undefined): number => l!.text.lines.length;
-    expect(lines(rel(layout, 's', 't').label) > 1).toBe(both);
-    expect(lines(frame(layout, 'b').label) > 1).toBe(both);
-    // Element text follows c4.wrap alone.
-    expect(lines(el(layout, 's').descr) > 1).toBe(c4);
+    [false, false, false, false],
+    [false, true, false, false],
+    [true, false, true, true],
+    [true, true, true, true],
+    [undefined, false, false, false],
+    [undefined, true, false, true],
+  ])(
+    'root wrap %s, c4.wrap %s: relation and boundary text wrap %s, element text %s',
+    (root, c4, both, element) => {
+      const integrator =
+        root === undefined ? { c4: { wrap: c4 } } : { wrap: root, c4: { wrap: c4 } };
+      const layout = sound(src, { measurer: grid, integrator });
+      const lines = (l: PlacedLabel | undefined): number => l!.text.lines.length;
+      expect(lines(rel(layout, 's', 't').label) > 1).toBe(both);
+      expect(lines(frame(layout, 'b').label) > 1).toBe(both);
+      expect(lines(el(layout, 's').descr) > 1).toBe(element);
+    }
+  );
+
+  it('keeps an element at its natural width under the root wrap: false (#683)', () => {
+    const one = 'C4Context\nSystem(s, "S", "' + 'word '.repeat(12).trim() + '")';
+    const wrapped = el(sound(one, { measurer: grid }), 's');
+    expect(wrapped.box.width).toBe(216);
+    const unwrapped = el(sound(one, { measurer: grid, integrator: { wrap: false } }), 's');
+    expect(unwrapped.descr!.text.lines).toHaveLength(1);
+    expect(unwrapped.box.width).toBe(unwrapped.descr!.width + 40);
+    expect(unwrapped.box.width).toBeGreaterThan(216);
   });
 });
 

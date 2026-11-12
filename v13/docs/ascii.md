@@ -379,7 +379,7 @@ Rel(web, db, "Reads")
 - Relations are stepped lines routed on the grid round elements and header text, following the
   SVG's routed points where the grid allows; arrowheads at the ends that have them, a tee where
   one has none. The label and `[techn]` sit at or beside the middle of the line. With the root
-  `wrap` and `c4.wrap` both set, as for the SVG, a label is wrapped narrower when the gap between
+  `wrap` true, as for the SVG, a label is wrapped narrower when the gap between
   two shapes is smaller than it; otherwise it stays on one line, cut with `…` where it still does
   not fit.
 - The layout is the SVG's: a diagram wider than `ascii.maxWidth` is not folded, only warned about
