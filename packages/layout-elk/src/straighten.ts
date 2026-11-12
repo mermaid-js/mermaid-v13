@@ -22,7 +22,7 @@ const TERMINAL_RUN_MAX = 30;
 const JOG_EPS = 0.01;
 
 /** Axis of an axis-aligned segment: `h`, `v`, or undefined when diagonal. */
-function axisOf(a: P, b: P): 'h' | 'v' | undefined {
+export function axisOf(a: P, b: P): 'h' | 'v' | undefined {
   const dx = Math.abs(b.x - a.x);
   const dy = Math.abs(b.y - a.y);
   if (dx > JOG_EPS && dy <= JOG_EPS) return 'h';
@@ -116,7 +116,7 @@ function segmentsCrossStrict(a1: P, a2: P, b1: P, b2: P): boolean {
   return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
 }
 
-function crossingCount(a: P[], b: P[]): number {
+export function crossingCount(a: P[], b: P[]): number {
   let n = 0;
   for (let i = 0; i < a.length - 1; i++)
     for (let j = 0; j < b.length - 1; j++)
@@ -154,7 +154,7 @@ export function projectLabelOntoStraightenedRun(label: P, runs: StraightenedRun[
   return best?.point ?? null;
 }
 
-interface Box {
+export interface Box {
   x1: number;
   y1: number;
   x2: number;
@@ -162,7 +162,7 @@ interface Box {
 }
 
 /** Whether segment a–b passes through the box (Liang-Barsky). */
-function segmentHitsBox(a: P, b: P, box: Box): boolean {
+export function segmentHitsBox(a: P, b: P, box: Box): boolean {
   let t0 = 0;
   let t1 = 1;
   const dx = b.x - a.x;
@@ -181,7 +181,7 @@ function segmentHitsBox(a: P, b: P, box: Box): boolean {
   return t0 < t1;
 }
 
-const labelBox = (c: P, size: { width: number; height: number }): Box => ({
+export const labelBox = (c: P, size: { width: number; height: number }): Box => ({
   x1: c.x - size.width / 2,
   y1: c.y - size.height / 2,
   x2: c.x + size.width / 2,
