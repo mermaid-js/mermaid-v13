@@ -32,7 +32,7 @@ const layout = () => layOutFixture('8-query-process-2', VIEWER_SIZES_8_QUERY_PRO
 
 /**
  * Expected failures with v13's capture (v13 label sizes and 20px group padding under v12's viewer
- * sizes), reported on #595. A2, E and B share one rank, one column, and A2 to E lands beside
+ * sizes), tracked by #677 (first reported on #595). A2, E and B share one rank, one column, and A2 to E lands beside
  * E's vertex; E to G leaves beside E's bottom vertex, and A2 to E detours round A2's right.
  */
 const KNOWN_TERMINAL_VIOLATIONS = ['L_A2_E_0 ends off the boundary of E'];
@@ -42,7 +42,7 @@ describe('where an edge ends on the node it points at', () => {
     expect(terminalViolations(layout())).toEqual(KNOWN_TERMINAL_VIOLATIONS);
   });
 
-  // Expected failure (see KNOWN_TERMINAL_VIOLATIONS): E -> G leaves beside the vertex.
+  // Expected failure (#677, see KNOWN_TERMINAL_VIOLATIONS): E -> G leaves beside the vertex.
   it.fails(
     '8-query-process-2: "No" leaves the diamond vertex and enters the middle of Investigate',
     () => {
@@ -74,7 +74,7 @@ describe('where an edge ends on the node it points at', () => {
     expect(points.at(-2)).toEqual(points.at(-1));
   });
 
-  // Expected failure (see KNOWN_TERMINAL_VIOLATIONS): A2 -> E detours round A2's right.
+  // Expected failure (#677, see KNOWN_TERMINAL_VIOLATIONS): A2 -> E detours round A2's right.
   it.fails(
     '8-query-process-2: "No" from "Knows which team?" runs straight down into the diamond below it',
     () => {

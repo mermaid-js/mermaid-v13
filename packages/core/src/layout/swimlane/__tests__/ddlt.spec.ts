@@ -8,6 +8,7 @@ import { validateSwimlanesLayout } from '../direction/validation.ts';
 import { runSwimlane, swimlaneLayout } from '../swimlane.ts';
 import { DDLT_FIXTURES, fixtureGraph } from './ddlt.fixtures.ts';
 import { swimlaneGateIssues } from './ddltGates.ts';
+import v12Fixtures from './v12Fixtures.json' with { type: 'json' };
 
 /**
  * v12's allowed level-1 failures (`ddlt-manifest.json` `allowLevel1Failure`). D538 allows them
@@ -39,11 +40,18 @@ function gateIssues(id: string): string[] {
 
 const ids = Object.keys(DDLT_FIXTURES);
 
+/** Fixtures added in v13, not in v12's folder at the port baseline. */
+const V13_ONLY: readonly string[] = [];
+
 describe('swimlane DDLT fixtures', () => {
   it('cover every fixture, the regressions included', () => {
-    expect(ids.length).toBeGreaterThanOrEqual(40);
-    expect(ids).toContain('10-node-placement');
-    expect(ids).toContain('regressions/title-band-rails');
+    // Compared with v12's list, not with a floor (#678, #695): a v12 fixture is in the sweep
+    // unless `v12Fixtures.json` lists it under `notPorted` with the issue that tracks it, and
+    // a fixture v12 does not have is named in `V13_ONLY`.
+    const notPorted = Object.keys(v12Fixtures.notPorted);
+    for (const id of notPorted) expect(v12Fixtures.fixtures).toContain(id);
+    const expected = [...v12Fixtures.fixtures.filter((id) => !notPorted.includes(id)), ...V13_ONLY];
+    expect([...ids].sort()).toEqual(expected.sort());
     for (const id of [...ALLOWED_LEVEL1_FAILURES, ...Object.keys(KNOWN_FAILURES)])
       expect(ids).toContain(id);
   });
