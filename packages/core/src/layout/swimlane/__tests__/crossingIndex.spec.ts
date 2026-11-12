@@ -1,0 +1,171 @@
+import { describe, expect, it } from 'vitest';
+import {
+  buildRectHitIndex,
+  buildSegmentCrossingIndex,
+  buildTrackConflictIndex,
+  countSegmentCrossings,
+  shapesTouchAtBend,
+} from '../direction/crossingIndex.ts';
+import type { RouteShape } from '../direction/crossingIndex.ts';
+import {
+  bendPoints,
+  dedupeConsecutivePoints,
+  orthogonalSegmentsForPoints,
+  routesTouchAtBend,
+  sameAxisSegmentOverlapLength,
+  segmentHitsAnyRect,
+} from '../direction/geometry.ts';
+import type { Point, RectEntry } from '../direction/geometry.ts';
+
+/**
+ * The indexes of the crossing cleanup (#687) answer what the walks they replace answer. Each
+ * is checked against that walk on routes drawn from a small grid, so that routes share lines,
+ * end on each other and lie within the tolerances of each other often.
+ */
+
+/** A fixed pseudo-random sequence (a 32-bit LCG). */
+function sequence(seed: number): (below: number) => number {
+  let state = seed;
+  return (below) => {
+    state = (Math.imul(state, 1_664_525) + 1_013_904_223) >>> 0;
+    return Math.floor((state / 2 ** 32) * below);
+  };
+}
+
+const EPSILON = 1e-3;
+/** Offsets from a grid line: on it, inside each tolerance the indexes use, and outside. */
+const OFFSETS = [0, 0, 0, 0, 0.0004, 0.002, 0.4, 0.6, 2.5, 3.5];
+
+/** A route of `turns` right-angle turns between grid points, some a little off the grid. */
+function route(next: (below: number) => number, turns: number): Point[] {
+  const at = (): number => 10 * next(9) + OFFSETS[next(OFFSETS.length)]!;
+  const points: Point[] = [{ x: at(), y: at() }];
+  let horizontal = next(2) === 0;
+  for (let i = 0; i <= turns; i++) {
+    const last = points[points.length - 1]!;
+    points.push(horizontal ? { x: at(), y: last.y } : { x: last.x, y: at() });
+    // Now and then the same point twice, as the routes in the engine have.
+    if (next(8) === 0) {
+      points.push({ ...points[points.length - 1]! });
+    }
+    horizontal = !horizontal;
+  }
+  return points;
+}
+
+const routes = (seed: number, count: number): Point[][] => {
+  const next = sequence(seed);
+  return Array.from({ length: count }, () => route(next, 1 + next(5)));
+};
+
+const shapeOf = (points: Point[]): RouteShape => ({
+  segments: orthogonalSegmentsForPoints(points),
+  touchSegments: orthogonalSegmentsForPoints(dedupeConsecutivePoints(points)),
+  bends: bendPoints(points),
+});
+
+describe('the crossing cleanup indexes (#687)', () => {
+  it('counts the crossings a walk over every segment counts', () => {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      const indexed = routes(seed, 60).map((points) =>
+        orthogonalSegmentsForPoints(dedupeConsecutivePoints(points))
+      );
+      const index = buildSegmentCrossingIndex(indexed.flat(), EPSILON);
+      let crossings = 0;
+      for (const points of routes(seed + 100, 60)) {
+        const segments = orthogonalSegmentsForPoints(points);
+        const walked = indexed.reduce(
+          (sum, other) => sum + countSegmentCrossings(segments, other, EPSILON),
+          0
+        );
+        expect(index.count(segments)).toBe(walked);
+        crossings += walked;
+      }
+      // The routes do cross: the comparison is not of zeros.
+      expect(crossings).toBeGreaterThan(100);
+    }
+  });
+
+  it('counts nothing against an empty index, and nothing for an empty route', () => {
+    const [points] = routes(9, 1) as [Point[]];
+    const segments = orthogonalSegmentsForPoints(points);
+    expect(buildSegmentCrossingIndex([], EPSILON).count(segments)).toBe(0);
+    expect(buildSegmentCrossingIndex(segments, EPSILON).count([])).toBe(0);
+  });
+
+  it('finds the routes a walk over every route finds in conflict', () => {
+    const options = { lineTolerance: 0.5, minShared: 8, touchTolerance: 3 };
+    for (const seed of [11, 12, 13, 14, 15, 16]) {
+      const indexed = routes(seed, 40).map((points) => dedupeConsecutivePoints(points));
+      const index = buildTrackConflictIndex(
+        indexed.map((points, owner) => [owner, shapeOf(points)] as const),
+        options
+      );
+      let conflicts = 0;
+      for (const points of routes(seed + 100, 40)) {
+        const shape = shapeOf(points);
+        const walked = new Set<number>();
+        for (const [owner, other] of indexed.entries()) {
+          const otherSegments = orthogonalSegmentsForPoints(other);
+          const sharesTrack = shape.segments.some((segment) =>
+            otherSegments.some(
+              (otherSegment) =>
+                sameAxisSegmentOverlapLength(segment, otherSegment, options.lineTolerance) >=
+                options.minShared
+            )
+          );
+          if (sharesTrack || routesTouchAtBend(points, other, options.touchTolerance)) {
+            walked.add(owner);
+          }
+        }
+        const except = indexed.length - 1;
+        walked.delete(except);
+        const found = index.conflicts(shape, except, Infinity);
+        expect([...found].sort((a, b) => a - b)).toEqual([...walked].sort((a, b) => a - b));
+        // A limit stops the search; what it has found by then is in conflict.
+        const limited = index.conflicts(shape, except, 2);
+        expect(limited.size).toBe(Math.min(2, walked.size));
+        expect([...limited].every((owner) => walked.has(owner))).toBe(true);
+        conflicts += walked.size;
+      }
+      expect(conflicts).toBeGreaterThan(40);
+    }
+  });
+
+  it('reads two shapes as touching where routesTouchAtBend reads their routes so', () => {
+    const all = routes(21, 80);
+    let touching = 0;
+    for (let i = 0; i + 1 < all.length; i += 2) {
+      const [first, second] = [all[i]!, all[i + 1]!];
+      const touch = routesTouchAtBend(first, second, 3);
+      expect(shapesTouchAtBend(shapeOf(first), shapeOf(second), 3)).toBe(touch);
+      touching += touch ? 1 : 0;
+    }
+    expect(touching).toBeGreaterThan(0);
+    expect(touching).toBeLessThan(all.length / 2);
+  });
+
+  it('finds a node box hit where a walk over every box finds one', () => {
+    const next = sequence(31);
+    const rects: RectEntry[] = Array.from({ length: 50 }, (_, i) => {
+      const left = 10 * next(9) + next(3);
+      const top = 10 * next(9) + next(3);
+      return {
+        id: `n${i}`,
+        rect: { left, top, right: left + 1 + next(12), bottom: top + 1 + next(6) },
+      };
+    });
+    const index = buildRectHitIndex(rects, 2);
+    let hits = 0;
+    for (const points of routes(32, 200)) {
+      const exclude = [`n${next(50)}`, `n${next(50)}`];
+      for (const { a, b } of orthogonalSegmentsForPoints(points)) {
+        const walked = segmentHitsAnyRect(a, b, rects, exclude, -2);
+        expect(index.hits(a, b, exclude)).toBe(walked);
+        hits += walked ? 1 : 0;
+      }
+    }
+    expect(hits).toBeGreaterThan(50);
+    expect(buildRectHitIndex([], 2).hits({ x: 0, y: 0 }, { x: 9, y: 0 }, [])).toBe(false);
+  });
+});
