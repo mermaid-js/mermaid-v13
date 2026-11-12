@@ -47,3 +47,8 @@ export const C4_COLOR_INVALID = 'C4_COLOR_INVALID';
  * character grid (under two cells across or a row down); the least that does is used.
  */
 export const C4_CONFIG_IGNORED = 'C4_CONFIG_IGNORED';
+
+/** c4-beta: a word after `c4-beta` that is not a diagram kind. */
+export const C4BETA_UNKNOWN_DIAGRAM_KIND = 'C4BETA_UNKNOWN_DIAGRAM_KIND';
+/** c4-beta: a line that opens like an element but names no element kind. */
+export const C4BETA_UNKNOWN_ELEMENT_KIND = 'C4BETA_UNKNOWN_ELEMENT_KIND';
