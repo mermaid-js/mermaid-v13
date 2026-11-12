@@ -10,6 +10,7 @@ import { createTheme, loadTheme, type Theme, type ThemeName } from '@mermaid-js/
 import type { ArchitectureModel } from '../model.ts';
 import { parseArchitecture } from '../parser/index.ts';
 import type { ArchitectureLayoutContext } from './context.ts';
+import { architectureLayoutEngine } from './engine.ts';
 
 /** Every character is 10 px wide; a line is 20 px high. */
 export const gridMeasurer: Measurer = {
@@ -31,7 +32,11 @@ export function contextFor(
   measurer: Measurer = gridMeasurer
 ): ArchitectureLayoutContext & { warnings: { code: string; path?: string }[] } {
   const warnings: { code: string; path?: string }[] = [];
-  const resolved = resolveConfig(CORE_DEFAULTS, {}, config);
+  // The plugin's engine under the user's config, as `mermaid` resolves it (D284).
+  const plugin = { layout: architectureLayoutEngine.default };
+  const resolved = resolveConfig(CORE_DEFAULTS, {}, config, [], plugin, {
+    section: 'architecture',
+  });
   return {
     config: resolved,
     measurer,

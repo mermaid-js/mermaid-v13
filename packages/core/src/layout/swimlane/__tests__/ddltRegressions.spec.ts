@@ -1,7 +1,9 @@
-// v13-only: the two DDLT fixtures that failed D538's gates with v13's sizes (#595), each reduced
-// to the edge that failed, so a fix in the engine shows here before `ddlt.spec.ts` gates the lot.
+// v13-only: the two DDLT fixtures that failed D538's gates with v13's sizes (#595), and the v12
+// fixes that come over as fixtures (#683), each reduced to the edge that failed, so a fix in the
+// engine shows here before `ddlt.spec.ts` gates the lot.
 import { describe, expect, it } from 'vitest';
 import type { Point } from '../../types.ts';
+import { EDGE_ROUTING } from '../config.ts';
 import { swimlaneLayout } from '../swimlane.ts';
 import { DDLT_FIXTURES, fixtureGraph } from './ddlt.fixtures.ts';
 import { swimlaneGateIssues } from './ddltGates.ts';
@@ -57,5 +59,37 @@ describe('swimlane DDLT regressions', () => {
     // With the swap refused, the edge and its forward twin run straight, side by side.
     expect(points).toHaveLength(2);
     expect(model.edges.get('L_Dep1.Proc2_Dep2.Proc2_0')!.points).toHaveLength(2);
+  });
+
+  // mermaid-js/mermaid#8698: each edge has both ends in one lane, and was routed round a rail
+  // outside it. The LR one stays in its lane in v13 already (LR is routed on drawn sizes).
+  it.each([
+    ['regressions/same-lane-detour-tb', 'L_d_e_0', 'Qa'],
+    ['regressions/same-lane-back-edge-lr', 'L_c_a_0', 'Ops'],
+    ['4-car-fun-sales-tb', 'L_I_K_0', 'Legal'],
+    ['7-car-sales-constr', 'L_I_K_0', 'Legal'],
+  ])('#683: %s keeps %s inside lane %s', (id, edge, lane) => {
+    const { model, issues } = layOut(id);
+    expect(issues.filter((i) => i.edgeId === edge).map((i) => i.message)).toEqual([]);
+    const band = box(model.groups.get(lane)!);
+    for (const p of model.edges.get(edge)!.points) {
+      expect(p.x).toBeGreaterThanOrEqual(band.left);
+      expect(p.x).toBeLessThanOrEqual(band.right);
+      expect(p.y).toBeGreaterThanOrEqual(band.top);
+      expect(p.y).toBeLessThanOrEqual(band.bottom);
+    }
+  });
+
+  it('#683: two opposite edges between stacked nodes run an arrowhead spacing apart', () => {
+    // mermaid-js/mermaid#8407: the back edge, straightened beside its opposite, ran 4px from it.
+    const { model, issues } = layOut('regressions/opposite-edges-gap');
+    expect(issues.map((i) => i.message)).toEqual([]);
+    const down = model.edges.get('L_assess_reply_0')!.points;
+    const back = model.edges.get('L_reply_assess_0')!.points;
+    expect(down).toHaveLength(2);
+    expect(back).toHaveLength(2);
+    expect(Math.abs(back[0]!.x - down[0]!.x)).toBeCloseTo(EDGE_ROUTING.MIN_ARROWHEAD_SPACING, 6);
+    expect(back[0]!.x).toBeCloseTo(back[1]!.x, 6);
+    expect(down[0]!.x).toBeCloseTo(down[1]!.x, 6);
   });
 });

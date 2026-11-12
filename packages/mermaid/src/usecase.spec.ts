@@ -135,7 +135,8 @@ describe('usecase diagrams through the public API (#567)', () => {
     expect(size(await set({ rankSpacing: 150 }))).toEqual([width! + 200, height]);
     expect(size(await set({ nodeSpacing: 120 }))).toEqual([width, height! + 70]);
     expect(size(await set({ diagramPadding: 60 }))).toEqual([width! + 80, height! + 80]);
-    // Pay's label in lines of at most 30px: one word (or part of one) a line.
+    // Pay's label in lines of at most 30px: one word a line, a word wider than that kept whole
+    // as v12's HTML label kept it (#649).
     const lines = (svg: string): string[] =>
       [
         ...(/data-id="Pay"[^>]*>(.*?)<\/text>/.exec(svg)?.[1] ?? '').matchAll(
@@ -147,7 +148,7 @@ describe('usecase diagrams through the public API (#567)', () => {
       'Pay',
       'for',
       'the',
-      'whol',
+      'whole',
     ]);
     expect(textOf(await set({ actorFontSize: 22 }), 'usecase-actor-label')).toContain(
       'font-size="22"'

@@ -208,8 +208,9 @@ describe('usecase lexer parity with mermaid@12.2.0 (Chevrotain)', () => {
     expect(accepted).toEqual([]);
     expect(unreached.sort()).toEqual([...notReached].sort());
     // Every e2e fixture reaches the usecase lexer: 31 in `nightly-check/` (8 of them the
-    // parser's, `parser-*.mmd`, #563), 10 in `pr-check/`, 12 in `baseline/` (#567).
-    expect(e2e).toBe(53);
+    // parser's, `parser-*.mmd`, #563), 11 in `pr-check/` (one from #649), 12 in `baseline/`
+    // (#567).
+    expect(e2e).toBe(54);
     expect(errors).toBeGreaterThan(20);
     expect(compared).toBe(items.length - notReached.size);
   }, 300_000);

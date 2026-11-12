@@ -314,6 +314,8 @@ function measureFor(model: UsecaseModel, ctx: UsecaseLayoutContext): Measure {
         markdown: type === 'markdown',
         style: styleBits(style),
         inline: ctx.inline,
+        // v12's HTML labels kept a long word whole (#649); in cells it is split to fit its box.
+        keepWords: ctx.units?.id !== 'cell',
       }),
     styleOf: styleCache(model, ctx),
   };
