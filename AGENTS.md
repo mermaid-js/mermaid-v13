@@ -109,7 +109,6 @@ The per-package check does not replace the full gate. Specs that cover every typ
 - Open the PR as a draft while the work is in progress. Mark it ready when it is finished and CI is green. Do not merge it; the maintainer merges.
 - A PR that changes a published package adds a changeset: `pnpm changeset`, bump type `patch`, a one-line summary written for users (RELEASING §3). Never edit a `version` field or a CHANGELOG by hand.
 - Do not edit `.github/workflows` unless the ticket is about them.
-- Commit messages and PR text carry no AI attribution: no `Co-Authored-By` line for a tool and no "Generated with" line.
 
 ## Skills
 
