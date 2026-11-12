@@ -51,6 +51,9 @@ function byName(list: readonly FlowNodeStmt[]): (name: string) => FlowNodeStmt |
   return (name) => map.get(name);
 }
 
+/** A vertex's bracketed shape and label. */
+type FlowShapeParts = FlowVertexParts & { label?: FlowLabelNode };
+
 /** What the family's `parse()` tail needs of a model. */
 interface FlowModelLike {
   readonly callbacks: readonly { readonly range?: Range }[];
@@ -178,7 +181,7 @@ export abstract class FlowParser<
   }
 
   /** The bracketed shape and label after a node id, if any. */
-  private shape(): FlowVertexParts & { label?: FlowLabelNode } {
+  private shape(): FlowShapeParts {
     const { T, tb } = this;
     this.tested(tb.SHAPE_KINDS);
     const k = this.kind();
@@ -189,47 +192,60 @@ export abstract class FlowParser<
       this.closer(simple[1]);
       return { label, type: simple[0] };
     }
-    if (k === T.PS || k === T.DiamondStart) {
-      const round = k === T.PS;
-      const close = round ? T.PE : T.DiamondStop;
-      this.open('node label', round ? '`)`' : '`}`');
-      this.tested(round ? tb.PS_ONLY : tb.DIAMOND_ONLY);
-      if (this.kind() !== k) {
-        const label = this.text();
-        this.closer(close);
-        return { label, type: round ? 'round' : 'diamond' };
-      }
-      this.open('node label', round ? '`)`' : '`}`');
+    if (k === T.PS || k === T.DiamondStart) return this.nestedShape(k);
+    if (k === T.VertexWithPropsStart) return this.propsShape();
+    if (k === T.TrapStart || k === T.InvTrapStart) return this.trapShape(k);
+    return {};
+  }
+
+  /** `(…)` and `{…}`, or doubled: `((…))` and `{{…}}`. The cursor is on the opener `k`. */
+  private nestedShape(k: number): FlowShapeParts {
+    const { T, tb } = this;
+    const round = k === T.PS;
+    const close = round ? T.PE : T.DiamondStop;
+    const closeText = round ? '`)`' : '`}`';
+    this.open('node label', closeText);
+    this.tested(round ? tb.PS_ONLY : tb.DIAMOND_ONLY);
+    if (this.kind() !== k) {
       const label = this.text();
       this.closer(close);
-      this.closer(close);
-      return { label, type: round ? 'circle' : 'hexagon' };
+      return { label, type: round ? 'round' : 'diamond' };
     }
-    if (k === T.VertexWithPropsStart) {
-      this.open('node label', '`]`');
-      const field = this.raw(this.expect(T.NodeString));
-      this.expect(T.Colon);
-      const value = this.raw(this.expect(T.NodeString));
-      this.expect(T.Pipe);
-      const label = this.text();
-      this.closer(T.SQE);
-      const props = Object.fromEntries([[field, value]]) as Record<string, string>;
-      return { label, type: 'rect', props };
-    }
-    if (k === T.TrapStart || k === T.InvTrapStart) {
-      const trap = k === T.TrapStart;
-      this.open('node label', trap ? '`\\]` or `/]`' : '`/]` or `\\]`');
-      const label = this.text();
-      this.tested(tb.TRAP_ENDS);
-      if (this.kind() === (trap ? T.InvTrapEnd : T.TrapEnd)) {
-        this.i++;
-        this.opens.pop();
-        return { label, type: trap ? 'lean_right' : 'lean_left' };
-      }
+    this.open('node label', closeText);
+    const label = this.text();
+    this.closer(close);
+    this.closer(close);
+    return { label, type: round ? 'circle' : 'hexagon' };
+  }
+
+  /** `[field:value|label]`; the cursor is on its opener. */
+  private propsShape(): FlowShapeParts {
+    const { T } = this;
+    this.open('node label', '`]`');
+    const field = this.raw(this.expect(T.NodeString));
+    this.expect(T.Colon);
+    const value = this.raw(this.expect(T.NodeString));
+    this.expect(T.Pipe);
+    const label = this.text();
+    this.closer(T.SQE);
+    const props = Object.fromEntries([[field, value]]) as Record<string, string>;
+    return { label, type: 'rect', props };
+  }
+
+  /** `[/…\]`, `[\…/]`, `[/…/]` and `[\…\]`; the cursor is on the opener `k`. */
+  private trapShape(k: number): FlowShapeParts {
+    const { T, tb } = this;
+    const trap = k === T.TrapStart;
+    this.open('node label', trap ? '`\\]` or `/]`' : '`/]` or `\\]`');
+    const label = this.text();
+    this.tested(tb.TRAP_ENDS);
+    if (this.kind() !== (trap ? T.InvTrapEnd : T.TrapEnd)) {
       this.closer(trap ? T.TrapEnd : T.InvTrapEnd);
       return { label, type: trap ? 'trapezoid' : 'inv_trapezoid' };
     }
-    return {};
+    this.i++;
+    this.opens.pop();
+    return { label, type: trap ? 'lean_right' : 'lean_left' };
   }
 
   private styledVertex(): FlowNodeStmt {
@@ -264,37 +280,48 @@ export abstract class FlowParser<
     chain.push(nodes[0] as FlowNodeStmt);
     for (;;) {
       const last = nodes[nodes.length - 1] as FlowNodeStmt;
-      this.tested(tb.SHAPE_DATA);
-      const data = this.kind() === T.ShapeData ? this.shapeData() : undefined;
+      const data = this.shapeDataOpt();
       this.tested(tb.SPACE);
-      if (this.kind() !== T.Space) {
-        if (data !== undefined) this.applyData(last, data);
-        return nodes;
-      }
-      do {
-        this.i++;
-        this.tested(tb.SPACE);
-      } while (this.kind() === T.Space);
-      this.tested(tb.AMP);
-      if (this.kind() !== T.Amp) {
-        // Blanks after `@{ … }` must lead to `&` (v12 drops them before a line break).
-        if (data !== undefined)
-          this.fail(
-            [T.Amp],
-            `after ${tb.dataName} \`@{ … }\` only \`&\` and another node may follow on the line`
-          );
-        return nodes;
-      }
-      this.i++;
-      this.tested(tb.SPACE);
-      if (this.kind() !== T.Space) this.fail([T.Space]);
-      do this.i++;
-      while (this.kind() === T.Space);
-      const next = this.styledVertex();
+      const more = this.kind() === T.Space && this.ampersand(data !== undefined);
+      const next = more ? this.styledVertex() : undefined;
       if (data !== undefined) this.applyData(last, data);
+      if (next === undefined) return nodes;
       nodes.push(next);
       chain.push(next);
     }
+  }
+
+  private shapeDataOpt(): FlowShapeData | undefined {
+    this.tested(this.tb.SHAPE_DATA);
+    return this.kind() === this.T.ShapeData ? this.shapeData() : undefined;
+  }
+
+  /**
+   * The blanks at the cursor and a ` & ` after them: whether another node follows. `afterData`
+   * is whether the node before had `@{ … }`, which only `&` may follow on its line.
+   */
+  private ampersand(afterData: boolean): boolean {
+    const { T, tb } = this;
+    do {
+      this.i++;
+      this.tested(tb.SPACE);
+    } while (this.kind() === T.Space);
+    this.tested(tb.AMP);
+    if (this.kind() !== T.Amp) {
+      // Blanks after `@{ … }` must lead to `&` (v12 drops them before a line break).
+      if (afterData)
+        this.fail(
+          [T.Amp],
+          `after ${tb.dataName} \`@{ … }\` only \`&\` and another node may follow on the line`
+        );
+      return false;
+    }
+    this.i++;
+    this.tested(tb.SPACE);
+    if (this.kind() !== T.Space) this.fail([T.Space]);
+    do this.i++;
+    while (this.kind() === T.Space);
+    return true;
   }
 
   private link(): [FlowLinkInfo, Range, FlowLabelNode | undefined] {
@@ -371,30 +398,43 @@ export abstract class FlowParser<
         astFor: (a, b) => ids.edge(a, b),
         at: linkRange,
       });
-      const fromOf = byName(stmt);
-      const toOf = byName(next);
-      for (let k = before; k < db.edges.length; k++) {
-        const edge = db.edges[k] as (typeof db.edges)[number];
-        const from = fromOf(edge.start);
-        const to = toOf(edge.end);
-        const ast: FlowEdge = {
-          id: edge.ast,
-          type: 'Edge',
-          range: {
-            start: from?.range.start ?? linkRange.start,
-            end: to?.range.end ?? linkRange.end,
-          },
-          from: edge.start,
-          to: edge.end,
-          edgeId: edge.id,
-          linkRange,
-        };
-        if (label) ast.label = label;
-        chain.push(ast);
-      }
+      this.edgeNodes(before, stmt, next, linkRange, label, chain);
       if (collect) later.push(nextNames);
       stmt = next;
       names = nextNames;
+    }
+  }
+
+  /** An edge node on `chain` for each edge the model has from index `before` on. */
+  private edgeNodes(
+    before: number,
+    starts: readonly FlowNodeStmt[],
+    ends: readonly FlowNodeStmt[],
+    linkRange: Range,
+    label: FlowLabelNode | undefined,
+    chain: (FlowNodeStmt | FlowEdge)[]
+  ): void {
+    const { db } = this;
+    const fromOf = byName(starts);
+    const toOf = byName(ends);
+    for (let k = before; k < db.edges.length; k++) {
+      const edge = db.edges[k] as (typeof db.edges)[number];
+      const from = fromOf(edge.start);
+      const to = toOf(edge.end);
+      const ast: FlowEdge = {
+        id: edge.ast,
+        type: 'Edge',
+        range: {
+          start: from?.range.start ?? linkRange.start,
+          end: to?.range.end ?? linkRange.end,
+        },
+        from: edge.start,
+        to: edge.end,
+        edgeId: edge.id,
+        linkRange,
+      };
+      if (label) ast.label = label;
+      chain.push(ast);
     }
   }
 
@@ -669,27 +709,40 @@ export abstract class FlowParser<
   // ---- the document and the header ----------------------------------------------------
 
   protected document(): void {
-    const { frames, T, tb } = this;
+    const { frames, tb } = this;
     for (;;) {
       this.tested(frames.length > 0 ? tb.BLOCK_DOC_KINDS : tb.DOC_KINDS);
       const t = this.kind();
       if (t === Kind.EOF) break;
       try {
-        if (t === T.End) this.closeEnd();
-        else if (t === T.Semi || t === Kind.Newline || t === T.Space || t === T.Eof) {
-          if (this.collect) this.list.push(this.raw());
-          this.i++;
-        } else if (!this.block(t)) {
-          const item = this.statement(this.collect, this.body);
-          if (this.collect && (typeof item !== 'object' || 'stmt' in item || item.length > 0))
-            this.list.push(item);
-        }
+        this.documentItem(t);
       } catch (e) {
         if (e !== STOP) throw e;
         this.recover();
       }
     }
     this.closeOpenBlocks();
+  }
+
+  /** What starts with the token kind `t` at the cursor: an `end`, a blank, a block or a statement. */
+  private documentItem(t: number): void {
+    if (t === this.T.End) {
+      this.closeEnd();
+      return;
+    }
+    if (this.blankItem(t) || this.block(t)) return;
+    const item = this.statement(this.collect, this.body);
+    if (this.collect && (typeof item !== 'object' || 'stmt' in item || item.length > 0))
+      this.list.push(item);
+  }
+
+  /** Consume a separator or blank of kind `t` between statements; false for another kind. */
+  private blankItem(t: number): boolean {
+    const { T } = this;
+    if (t !== T.Semi && t !== Kind.Newline && t !== T.Space && t !== T.Eof) return false;
+    if (this.collect) this.list.push(this.raw());
+    this.i++;
+    return true;
   }
 
   /**
@@ -712,22 +765,7 @@ export abstract class FlowParser<
       if (this.kind() === T.NoDir) {
         this.i++;
         db.setDirection('TB');
-      } else {
-        if (this.kind() === Kind.Error) this.unknownDirection();
-        const dir = this.raw(this.expect(T.Dir, T.NoDir));
-        this.tested(tb.AFTER_DIR);
-        let t = this.kind();
-        if (t === T.Space) {
-          do {
-            this.i++;
-            this.tested(tb.BLANKS);
-          } while (this.kind() === T.Space);
-          t = this.kind();
-          if (t !== Kind.Newline) this.fail([Kind.Newline]);
-        } else if (!inKindSet(tb.AFTER_DIR_END, t)) this.fail(tb.AFTER_DIR_WANT);
-        this.i++;
-        db.setDirection(dir);
-      }
+      } else db.setDirection(this.headerDirection());
       const r = { start: this.start(from), end: this.end(from + 1) };
       if (this.kind(from + 1) === T.NoDir) r.end = this.end(from);
       st.statement('header', r);
@@ -743,6 +781,25 @@ export abstract class FlowParser<
       if (e !== STOP) throw e;
       this.recover();
     }
+  }
+
+  /** The header's direction and the end of its line. */
+  private headerDirection(): string {
+    const { T, tb } = this;
+    if (this.kind() === Kind.Error) this.unknownDirection();
+    const dir = this.raw(this.expect(T.Dir, T.NoDir));
+    this.tested(tb.AFTER_DIR);
+    let t = this.kind();
+    if (t === T.Space) {
+      do {
+        this.i++;
+        this.tested(tb.BLANKS);
+      } while (this.kind() === T.Space);
+      t = this.kind();
+      if (t !== Kind.Newline) this.fail([Kind.Newline]);
+    } else if (!inKindSet(tb.AFTER_DIR_END, t)) this.fail(tb.AFTER_DIR_WANT);
+    this.i++;
+    return dir;
   }
 
   /** The word after the header keyword that is no direction. */
