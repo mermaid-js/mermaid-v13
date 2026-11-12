@@ -396,48 +396,12 @@ export abstract class FlowParserBase<
   /** Report what was found where one of `want` was expected, then stop the statement. */
   protected fail(want: readonly number[], hint?: string): never {
     this.tested(want);
-    const { st, src, opens, i, T, tb } = this;
+    const { st, opens, tb } = this;
     const k = this.kind();
-    const where = this.range(i);
+    const where = this.range(this.i);
+    this.unclosedString(k, where);
     const open = opens[opens.length - 1];
-    const prev = i - 1;
-    const prevKind = this.kind(prev);
-    if (
-      k === Kind.EOF &&
-      (prevKind === T.Str || prevKind === T.MdStr) &&
-      this.end(prev) >= src.length
-    ) {
-      // A string ran to the end of the text.
-      const q = { start: this.tokStart(prev), end: this.start(prev) };
-      st.diagnostics.error(
-        'UNCLOSED_STRING',
-        prevKind === T.MdStr
-          ? `Unclosed markdown string: the string opened at line ${this.lineOf(q.start)} has no closing backtick and quote.`
-          : `Unclosed string: the string opened at line ${this.lineOf(q.start)} has no closing quote.`,
-        q,
-        { related: [{ message: 'The text ends here.', range: where }] }
-      );
-      this.restartAt(this.lineBreakAfter(q.end));
-      throw STOP;
-    }
-    if (open && (k === Kind.EOF || this.lineOf(where.start) > this.lineOf(open.range.start))) {
-      const got =
-        k === Kind.EOF ? '' : ` before ${this.found()} at line ${this.lineOf(where.start)}`;
-      st.diagnostics.error(
-        'UNCLOSED',
-        `Unclosed ${open.what}: the \`${src.slice(open.range.start, open.range.end)}\` at line ${this.lineOf(open.range.start)} has no closing ${open.closer}${got}. Add ${open.closer} to close it.`,
-        open.range,
-        {
-          expected: tb.EXPECTED.names(want),
-          related: [
-            { message: k === Kind.EOF ? 'The text ends here.' : 'Found here.', range: where },
-          ],
-        }
-      );
-      // The label swallowed the lines after it: carry on from the line after its opener.
-      this.restartAt(this.lineBreakAfter(open.range.end));
-      throw STOP;
-    }
+    if (open) this.unclosed(open, k, where, want);
     // The tokens after an error may come from a lexer mode the bad text opened (`>` starts a
     // label, for one): lex again from the next statement boundary.
     this.restartAt(
@@ -445,28 +409,7 @@ export abstract class FlowParserBase<
         ? this.lineBreakAfter(where.start)
         : this.boundaryAfter(where.start)
     );
-    if (
-      k === Kind.Error &&
-      this.raw() === '#' &&
-      /^#\w+;/.test(src.slice(where.start, where.start + 40))
-    ) {
-      st.diagnostics.error(
-        'ENTITY_OUTSIDE_LABEL',
-        'Entities such as `#quot;` work only inside labels: put the text in a label, e.g. `A["#quot;"]`.',
-        where
-      );
-      throw STOP;
-    }
-    if (k === Kind.Error) {
-      const why = hint ?? this.hintFor(this.raw());
-      st.diagnostics.error(
-        'UNEXPECTED_CHARACTER',
-        `Unexpected character \`${this.raw()}\`${why ? `; ${why}` : ''}.`,
-        where,
-        { expected: tb.EXPECTED.names(want) }
-      );
-      throw STOP;
-    }
+    if (k === Kind.Error) this.badCharacter(want, hint, where);
     st.diagnostics.unexpected(
       'UNEXPECTED',
       where,
@@ -474,6 +417,71 @@ export abstract class FlowParserBase<
       this.found(),
       undefined,
       hint ?? this.explain(want, open !== undefined)
+    );
+    throw STOP;
+  }
+
+  /** {@link fail} for a string that ran to the end of the text; returns when that is not it. */
+  private unclosedString(k: number, where: Range): void {
+    const { st, src, T } = this;
+    if (k !== Kind.EOF) return;
+    const prev = this.i - 1;
+    const prevKind = this.kind(prev);
+    if ((prevKind !== T.Str && prevKind !== T.MdStr) || this.end(prev) < src.length) return;
+    const q = { start: this.tokStart(prev), end: this.start(prev) };
+    st.diagnostics.error(
+      'UNCLOSED_STRING',
+      prevKind === T.MdStr
+        ? `Unclosed markdown string: the string opened at line ${this.lineOf(q.start)} has no closing backtick and quote.`
+        : `Unclosed string: the string opened at line ${this.lineOf(q.start)} has no closing quote.`,
+      q,
+      { related: [{ message: 'The text ends here.', range: where }] }
+    );
+    this.restartAt(this.lineBreakAfter(q.end));
+    throw STOP;
+  }
+
+  /**
+   * {@link fail} inside `open`, when the text ends or the error is on a later line than the
+   * opener; returns when it is on the opener's line.
+   */
+  private unclosed(open: FlowOpener, k: number, where: Range, want: readonly number[]): void {
+    const { st, src, tb } = this;
+    const atEnd = k === Kind.EOF;
+    if (!atEnd && this.lineOf(where.start) <= this.lineOf(open.range.start)) return;
+    const got = atEnd ? '' : ` before ${this.found()} at line ${this.lineOf(where.start)}`;
+    st.diagnostics.error(
+      'UNCLOSED',
+      `Unclosed ${open.what}: the \`${src.slice(open.range.start, open.range.end)}\` at line ${this.lineOf(open.range.start)} has no closing ${open.closer}${got}. Add ${open.closer} to close it.`,
+      open.range,
+      {
+        expected: tb.EXPECTED.names(want),
+        related: [{ message: atEnd ? 'The text ends here.' : 'Found here.', range: where }],
+      }
+    );
+    // The label swallowed the lines after it: carry on from the line after its opener.
+    this.restartAt(this.lineBreakAfter(open.range.end));
+    throw STOP;
+  }
+
+  /** {@link fail} at a character the lexer has no token for. */
+  private badCharacter(want: readonly number[], hint: string | undefined, where: Range): never {
+    const { st, src, tb } = this;
+    const text = this.raw();
+    if (text === '#' && /^#\w+;/.test(src.slice(where.start, where.start + 40))) {
+      st.diagnostics.error(
+        'ENTITY_OUTSIDE_LABEL',
+        'Entities such as `#quot;` work only inside labels: put the text in a label, e.g. `A["#quot;"]`.',
+        where
+      );
+      throw STOP;
+    }
+    const why = hint ?? this.hintFor(text);
+    st.diagnostics.error(
+      'UNEXPECTED_CHARACTER',
+      `Unexpected character \`${text}\`${why ? `; ${why}` : ''}.`,
+      where,
+      { expected: tb.EXPECTED.names(want) }
     );
     throw STOP;
   }
@@ -624,21 +632,11 @@ export abstract class FlowParserBase<
     const { src, T, tb } = this;
     const opener = this.range(this.i);
     this.i++;
-    let built = '';
-    let inString = false;
+    const text = { built: '', inString: false };
     let close: number;
     let blockOpener = opener;
     for (;;) {
-      for (;;) {
-        this.tested(tb.SHAPE_DATA_PARTS);
-        if (this.kind() !== T.ShapeData) break;
-        const piece = this.raw();
-        if (piece === '"' && this.end(this.i) === this.start(this.i) + 1) {
-          inString = !inString;
-          built += piece;
-        } else built += inString ? piece.replace(/\n\s*/g, '<br/>') : piece;
-        this.i++;
-      }
+      this.dataPieces(text);
       if (this.kind() !== T.ShapeDataEnd) {
         this.opens.push({ range: blockOpener, what: tb.dataName, closer: '`}`' });
         this.fail([T.ShapeDataEnd]);
@@ -651,6 +649,7 @@ export abstract class FlowParserBase<
       blockOpener = this.range(this.i);
       this.i++;
     }
+    const { built } = text;
     const inner = { start: opener.end, end: close };
     return {
       built,
@@ -661,6 +660,24 @@ export abstract class FlowParserBase<
       inPlace: src.slice(inner.start, inner.end) === built && !built.includes('#'),
       multiline: built.includes('\n'),
     };
+  }
+
+  /**
+   * The text tokens of one `@{ … }` added to `text.built`. A string may run from one block
+   * into the next, so `text.inString` carries on.
+   */
+  private dataPieces(text: { built: string; inString: boolean }): void {
+    const { T, tb } = this;
+    for (;;) {
+      this.tested(tb.SHAPE_DATA_PARTS);
+      if (this.kind() !== T.ShapeData) return;
+      const piece = this.raw();
+      if (piece === '"' && this.end(this.i) === this.start(this.i) + 1) {
+        text.inString = !text.inString;
+        text.built += piece;
+      } else text.built += text.inString ? piece.replace(/\n\s*/g, '<br/>') : piece;
+      this.i++;
+    }
   }
 
   /**
