@@ -72,11 +72,13 @@ import {
   titleValue,
 } from './convert.ts';
 import { lex } from './lexer.ts';
+import { checkLimits } from './limits.ts';
+import type { ArchitectureLimitOptions } from './limits.ts';
 import { normalise } from './normalise.ts';
 import type { Registered } from './normalise.ts';
 import { ARCHITECTURE_TRIVIA, T } from './tokens.ts';
 
-export interface ArchitectureParseOptions extends ParseOptions {
+export interface ArchitectureParseOptions extends ParseOptions, ArchitectureLimitOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
 }
@@ -872,6 +874,7 @@ class ArchitectureParser {
       diagnostics
     );
     this.symbols(registered);
+    checkLimits(this.children, model, this.opts, diagnostics);
     // The model's diagnostics are found after the parse: keep the list in source order.
     diagnostics.list.sort((x, y) => x.range.start - y.range.start);
     const warnings = diagnostics.list.filter((d) => d.severity === 'warning');

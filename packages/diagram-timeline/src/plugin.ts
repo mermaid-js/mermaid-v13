@@ -1,4 +1,5 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
+import { resolveLimits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { layoutTimeline, type TimelineLayout } from './layout/index.ts';
 import type { TimelineModel } from './model.ts';
@@ -20,7 +21,10 @@ export const timeline = {
   layoutKind: 'custom' as const,
   detector: (text: string): boolean => detectTimeline(text),
   parse: (text: string, ctx: DiagramParseContext): TimelineParseResult =>
-    parseTimeline(text, { preprocessed: ctx.preprocessed }),
+    parseTimeline(text, {
+      preprocessed: ctx.preprocessed,
+      maxNodes: (ctx.limits ?? resolveLimits(ctx.config)).maxNodes,
+    }),
   labels: timelineLabels,
   theme,
   layout: (model: TimelineModel, ctx: RenderContext): TimelineLayout => layoutTimeline(model, ctx),

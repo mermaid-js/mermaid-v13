@@ -1,4 +1,5 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext, Warning } from '@mermaid-js/core';
+import { resolveLimits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import type { QuadrantModel } from './model.ts';
 import { quadrantChartConfigDefaults } from './generated/config-defaults.ts';
@@ -23,7 +24,10 @@ export const quadrant = {
   configDefaults: quadrantChartConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectQuadrant(text),
   parse: (text: string, ctx: DiagramParseContext): QuadrantParseResult =>
-    parseQuadrant(text, { preprocessed: ctx.preprocessed }),
+    parseQuadrant(text, {
+      preprocessed: ctx.preprocessed,
+      maxNodes: (ctx.limits ?? resolveLimits(ctx.config)).maxNodes,
+    }),
   labels: quadrantLabels,
   theme,
   layout: (model: QuadrantModel, ctx: RenderContext): QuadrantLayout => {

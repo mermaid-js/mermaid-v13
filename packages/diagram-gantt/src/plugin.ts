@@ -1,4 +1,5 @@
 import type { DiagramParseContext, RenderContext } from '@mermaid-js/core';
+import { resolveLimits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import type { GanttPlugin } from './index.ts';
 import { layoutGantt, type GanttLayout } from './layout/index.ts';
@@ -22,7 +23,13 @@ export const gantt = {
   layoutKind: 'custom' as const,
   detector: (text: string): boolean => detectGantt(text),
   parse: (text: string, ctx: DiagramParseContext) =>
-    withCallbackClaims(parseGantt(text, { preprocessed: ctx.preprocessed }), ctx.claims),
+    withCallbackClaims(
+      parseGantt(text, {
+        preprocessed: ctx.preprocessed,
+        maxNodes: (ctx.limits ?? resolveLimits(ctx.config)).maxNodes,
+      }),
+      ctx.claims
+    ),
   labels: ganttLabels,
   layout: (model: GanttModel, ctx: RenderContext): GanttLayout => layoutGantt(model, ctx),
   render: (model: GanttModel, layout: GanttLayout, ctx: RenderContext, w: SvgWriter): void =>

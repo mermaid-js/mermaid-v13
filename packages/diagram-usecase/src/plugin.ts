@@ -1,3 +1,4 @@
+import { resolveLimits } from '@mermaid-js/core/limits';
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { usecaseConfigDefaults } from './generated/config-defaults.ts';
@@ -24,8 +25,10 @@ export const usecase = {
   layoutKind: 'graph' as const,
   configDefaults: usecaseConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectUsecase(text),
-  parse: (text: string, ctx: DiagramParseContext): UsecaseParseResult =>
-    parseUsecase(text, { preprocessed: ctx.preprocessed }),
+  parse: (text: string, ctx: DiagramParseContext): UsecaseParseResult => {
+    const { maxNodes, maxEdges } = ctx.limits ?? resolveLimits(ctx.config);
+    return parseUsecase(text, { preprocessed: ctx.preprocessed, maxNodes, maxEdges });
+  },
   labels: pluginLabels,
   icons: usecaseIcons,
   layout: (model: UsecaseModel, ctx: RenderContext): UsecaseLayout => layoutUsecase(model, ctx),

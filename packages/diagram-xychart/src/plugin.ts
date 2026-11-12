@@ -1,4 +1,5 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
+import { resolveLimits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { xyChartLabels } from './labels.ts';
 import { layoutXyChart, type XyChartLayout } from './layout/index.ts';
@@ -28,7 +29,10 @@ export const xychart = {
   configDefaults: xyChartConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectXyChart(text),
   parse: (text: string, ctx: DiagramParseContext): XyChartParseResult =>
-    parseXyChart(text, { preprocessed: ctx.preprocessed }),
+    parseXyChart(text, {
+      preprocessed: ctx.preprocessed,
+      maxNodes: (ctx.limits ?? resolveLimits(ctx.config)).maxNodes,
+    }),
   labels: xyChartLabels,
   layout: (model: XyChartModel, ctx: RenderContext): XyChartLayout => layoutXyChart(model, ctx),
   render: (model: XyChartModel, layout: XyChartLayout, ctx: RenderContext, w: SvgWriter): void =>
