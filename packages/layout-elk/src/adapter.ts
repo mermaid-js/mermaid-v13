@@ -34,6 +34,9 @@
  * that is too narrow for its title is laid out again with room for it (`titleRoom`), so its ports
  * move with its sides. The other algorithms ignore ports, so they get none.
  *
+ * The group tree must be a tree: a group inside itself is refused (`checkTree`, #688), since the
+ * walks up the tree would never end.
+ *
  * Coordinates: every shape and edge is read in root coordinates (`elk.json.*Coords: ROOT`).
  * Only `x`, `y`, `width`, `height`, sections and labels are read back, never GWT's `$H` hash
  * counters, which differ from run to run.
@@ -150,6 +153,20 @@ function containers(tree: Tree): (id: string) => string[] {
     chain.push(ROOT);
     return chain;
   };
+}
+
+/**
+ * Refuses a group that sits inside itself. The builder walks up the group tree for every edge,
+ * and on a loop those walks never end: a hang no caller can interrupt (#688).
+ */
+function checkTree(tree: Tree): void {
+  for (const start of tree.keys()) {
+    const seen = new Set<string>([start]);
+    for (let at = tree.get(start); at !== undefined; at = tree.get(at)) {
+      if (seen.has(at)) throw new RangeError(`layout: group '${at}' is inside itself`);
+      seen.add(at);
+    }
+  }
 }
 
 type Handling = 'SEPARATE_CHILDREN' | 'INCLUDE_CHILDREN';
@@ -327,6 +344,7 @@ export function toElkGraph(
   checkAnchors(graph);
   const layered = algorithm === 'layered';
   const tree = treeOf(graph);
+  checkTree(tree);
   const spacing: LayoutOptions = {
     'elk.algorithm': algorithm,
     'elk.spacing.nodeNode': String(graph.spacing.node),

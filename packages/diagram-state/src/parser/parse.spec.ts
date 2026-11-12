@@ -254,6 +254,42 @@ describe('state model', () => {
     ]);
   });
 
+  // #688: v12's walk files each mention under the scope it is written in, which made a composite
+  // its own parent. Every layout assumes a tree, so the composite stays where it was declared.
+  it('never files a composite under itself or under a state inside it (#688)', () => {
+    const parents = (src: string) => parseState(src).model.states.map((s) => [s.id, s.parent]);
+    const boot = [
+      ['Boot', undefined],
+      ['Running', 'Boot'],
+    ];
+    expect(
+      parents('stateDiagram-v2\n  state Boot {\n    Running\n    Boot --> Running\n  }\n')
+    ).toEqual(boot);
+    expect(
+      parents('stateDiagram-v2\n  state Boot {\n    Running\n    Running --> Boot\n  }\n')
+    ).toEqual(boot);
+    expect(
+      parents(
+        'stateDiagram-v2\n  state Outer {\n    state Inner {\n      X\n      Outer --> Inner\n    }\n  }\n'
+      )
+    ).toEqual([
+      ['Outer', undefined],
+      ['Inner', 'Outer'],
+      ['X', 'Inner'],
+    ]);
+    // Through a region: `X` holds the region the transition is written in.
+    expect(
+      parents('stateDiagram-v2\n  state X {\n    A\n    --\n    X --> B\n  }\n').slice(0, 1)
+    ).toEqual([['X', undefined]]);
+  });
+
+  it('still moves a state to the last composite that mentions it, as v12 does', () => {
+    const { model } = parseState(
+      'stateDiagram-v2\n  state X {\n    A\n  }\n  state Y {\n    A --> B\n  }\n'
+    );
+    expect(model.states.find((s) => s.id === 'A')?.parent).toBe('Y');
+  });
+
   it('is plain data', () => {
     const { model } = parseState('stateDiagram-v2\n  [*] --> A\n  note left of A : n\n');
     expect(JSON.parse(JSON.stringify(model))).toEqual(model);

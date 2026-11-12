@@ -1,0 +1,13 @@
+---
+description: >-
+  A transition from a state to the composite it sits in, written inside that
+  composite, under the ELK layout; guards against the render failing with
+  `Invalid array length` after seconds (#688).
+config:
+  layout: elk
+---
+stateDiagram-v2
+  state Boot {
+    Running
+    Running --> Boot
+  }
