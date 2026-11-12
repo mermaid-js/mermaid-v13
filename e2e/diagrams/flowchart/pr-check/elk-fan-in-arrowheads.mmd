@@ -1,0 +1,14 @@
+---
+description:
+  Under the ELK layout four edges end on one side of a one-line node; their
+  arrowheads stay apart instead of stacking (mermaid-js/mermaid-v13#683 row 5,
+  v12 fix mermaid-js/mermaid#8621).
+config:
+  layout: elk
+---
+flowchart LR
+  A["Web shop"] --> M["Order queue"]
+  B["Mobile app"] --> M
+  C["Phone desk"] --> M
+  D["Partner feed"] --> M
+  M --> X["Fulfil"]

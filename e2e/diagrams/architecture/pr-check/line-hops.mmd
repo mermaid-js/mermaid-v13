@@ -1,0 +1,19 @@
+---
+description: >-
+  Line hops (`lineHops: true`, D537, #655): the edge from d to c runs across the vertical edge
+  from a to e, and its horizontal run draws a 6px arc over it. Edges stay plain in every look
+  (D301).
+config:
+  lineHops: true
+---
+architecture-beta
+  service a(server)[A]
+  service b(server)[B]
+  service c(server)[C]
+  service d(server)[D]
+  service e(server)[E]
+  a:R --> L:b
+  b:R --> L:c
+  d:R --> L:e
+  a:B --> T:e
+  d:T --> B:c

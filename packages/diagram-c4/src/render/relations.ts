@@ -34,7 +34,8 @@ export function drawRelation(scene: Scene, rel: C4RelationLayout): void {
     w.text(descr);
     w.close();
   }
-  w.leaf('path', {
+  // Plain in every look (D301), and where line hops find it (D537, #655).
+  w.plainEdge({
     class: `c4-rel c4-rel-${kindOf(rel.kind)}`,
     'data-id': dataId,
     'data-ast': rel.ast,

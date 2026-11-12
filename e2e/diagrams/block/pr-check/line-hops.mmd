@@ -1,0 +1,14 @@
+---
+description: >-
+  Line hops (`lineHops: true`, D537, #655): two diagonal edges cross in an X, and the later one
+  (b to c) draws a 6px arc over the other. Block edges stay plain in every look (D447).
+config:
+  lineHops: true
+---
+block-beta
+  columns 3
+  a space b
+  space space space
+  c space d
+  a --> d
+  b --> c

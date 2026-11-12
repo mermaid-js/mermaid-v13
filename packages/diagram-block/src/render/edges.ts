@@ -78,7 +78,8 @@ export function drawEdge({ w, paint }: Scene, e: BlockEdgeLayout): void {
     markerTrim(e.arrowTypeEnd, heads)
   );
   const dotted = e.pattern === 'dotted';
-  w.leaf('path', {
+  // Plain in every look (D447), and where line hops find it (D537, #655).
+  w.plainEdge({
     class: edgeClass(e),
     'data-id': e.id,
     'data-ast': e.ast,
