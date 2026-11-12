@@ -28,6 +28,7 @@
  * block of the same domain replaced (D364), `CYNEFIN_SELF_LOOP` the `x --> x` transitions the
  * model leaves out (D365).
  */
+import { checkLimit } from '@mermaid-js/core/limits';
 import {
   type AstId,
   ExpectedTable,
@@ -74,6 +75,10 @@ import { CYNEFIN_TRIVIA, T } from './tokens.ts';
 export interface CynefinParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
+  /** The integrator's cap on items (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
+  maxNodes?: number;
+  /** The integrator's cap on transitions (core `DEFAULT_LIMITS.maxEdges` when absent). */
+  maxEdges?: number;
 }
 
 export type CynefinParseResult = ParseResult<CynefinModel, CynefinDocument>;
@@ -164,6 +169,9 @@ class CynefinParser extends RuleParser<PreprocessResult> {
   private readonly blocks = new Map<CynefinDomainName, CynefinDomainNode[]>();
   private readonly transitions: CynefinTransition[] = [];
   private readonly selfLoops: CynefinTransitionNode[] = [];
+  /** The items and transitions read so far, in every block (the caps count them). */
+  private itemCount = 0;
+  private transitionCount = 0;
   /**
    * What items after the last statement belong to: the block it left open, or `STRAY` after a
    * line that failed outside a block. A failed line keeps it, so the items after it still join
@@ -417,6 +425,14 @@ class CynefinParser extends RuleParser<PreprocessResult> {
       const label = labelValue(this.raw(j));
       const id = this.id(`i:${node.name}/${esc(label)}`);
       node.children.push({ id, type: 'Item', range, label });
+      checkLimit(
+        this.st.diagnostics,
+        'maxNodes',
+        ++this.itemCount,
+        this.options.maxNodes,
+        'items',
+        range
+      );
       node.range.end = range.end;
       this.st.statement('item', range);
     }
@@ -454,6 +470,14 @@ class CynefinParser extends RuleParser<PreprocessResult> {
     };
     this.children.push(node);
     this.st.statement('transition', range);
+    checkLimit(
+      this.st.diagnostics,
+      'maxEdges',
+      ++this.transitionCount,
+      this.options.maxEdges,
+      'transitions',
+      range
+    );
     this.st.symbol(from, 'domain', fromRange, 'ref');
     this.st.symbol(to, 'domain', toRange, 'ref');
     if (from === to) this.selfLoops.push(node);

@@ -2,7 +2,10 @@
 // bundler config, the installed fixture diagram, fixture extension and plugin-interactions are
 // discovered at build time. `window.draw(id, text)` renders one diagram into `#<id>` and binds
 // its callbacks; `click … callback` calls `window.callback`, which records into `window.calls`.
-import { render } from 'mermaid';
+// Callbacks run only under `securityLevel: 'loose'` (#697, D554), which `window.loose()` sets.
+import { initialize, render } from 'mermaid';
+
+window.loose = () => initialize({ securityLevel: 'loose' });
 
 window.calls = [];
 window.callback = (...args) => window.calls.push(args);

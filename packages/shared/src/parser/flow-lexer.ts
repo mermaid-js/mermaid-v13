@@ -432,7 +432,8 @@ export abstract class FlowLexer extends StateLexer {
     return false;
   }
 
-  private initial(c: number): boolean {
+  /** The INITIAL rules, in jison's order. A dialect may put rules of its own before them. */
+  protected initial(c: number): boolean {
     return (
       this.keyword(c) ||
       this.direction() ||

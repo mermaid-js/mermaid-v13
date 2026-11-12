@@ -31,6 +31,9 @@ export interface MonarchHighlighter {
 
 export const MONARCH_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, MonarchHighlighter>> = {
   agentflow: { load: () => import('./generated/agentflow.monarch.js').then((m) => m.default) },
+  architecture: {
+    load: () => import('./generated/architecture.monarch.js').then((m) => m.default),
+  },
   block: { load: () => import('./generated/block.monarch.js').then((m) => m.default) },
   c4: { load: () => import('./generated/c4.monarch.js').then((m) => m.default) },
   class: { load: () => import('./generated/class.monarch.js').then((m) => m.default) },
@@ -53,6 +56,7 @@ export const MONARCH_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, MonarchHig
     load: () => import('./generated/quadrantChart.monarch.js').then((m) => m.default),
   },
   radar: { load: () => import('./generated/radar.monarch.js').then((m) => m.default) },
+  railroad: { load: () => import('./generated/railroad.monarch.js').then((m) => m.default) },
   requirement: { load: () => import('./generated/requirement.monarch.js').then((m) => m.default) },
   sankey: { load: () => import('./generated/sankey.monarch.js').then((m) => m.default) },
   sequence: { load: () => import('./generated/sequence.monarch.js').then((m) => m.default) },

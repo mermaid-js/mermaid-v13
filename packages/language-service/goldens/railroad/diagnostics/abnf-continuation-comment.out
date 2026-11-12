@@ -1,0 +1,4 @@
+3:8-3:8 "" error UNEXPECTED: Expected `;` at the end of the rule, got `b`; in ABNF a `;` followed by more text on its line starts a comment, so end each rule with `;` at the end of its line.
+3:9-3:10 ";" info RAILROAD_SEMI_COMMENT: In ABNF, as in v12, a `;` with more text after it on its line starts a comment that runs to the line end, so it does not end the rule. End the rule with `;` at the end of its line.
+4:8-4:8 "" error UNEXPECTED: Expected `;` at the end of the rule, got `c`; in ABNF a `;` followed by more text on its line starts a comment, so end each rule with `;` at the end of its line.
+4:9-4:10 ";" info RAILROAD_SEMI_COMMENT: In ABNF, as in v12, a `;` with more text after it on its line starts a comment that runs to the line end, so it does not end the rule. End the rule with `;` at the end of its line.

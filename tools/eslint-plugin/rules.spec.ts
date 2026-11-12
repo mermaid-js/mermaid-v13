@@ -80,6 +80,8 @@ describe('architecture lint rules fire', () => {
     ['global-config.ts', DIAGRAM, 'mermaid/no-global-config'],
     ['nested-quantifier.ts', CORE, 'mermaid/no-nested-quantifier'],
     ['nested-quantifier.ts', DIAGRAM, 'mermaid/no-nested-quantifier'],
+    ['trailing-quantifier.ts', CORE, 'mermaid/no-nested-quantifier'],
+    ['trailing-quantifier.ts', DIAGRAM, 'mermaid/no-nested-quantifier'],
     ['magic-char-code.ts', CORE, 'mermaid/no-magic-char-code'],
     ['magic-char-code.ts', DIAGRAM, 'mermaid/no-magic-char-code'],
   ])('%s in %s reports %s', async (name, asFile, ruleId) => {
@@ -91,6 +93,10 @@ describe('architecture lint rules fire', () => {
       filePath: join(root, CORE),
     });
     expect(result?.messages).toHaveLength(2);
+    const [trailing] = await eslint.lintText(fixture('trailing-quantifier.ts'), {
+      filePath: join(root, CORE),
+    });
+    expect(trailing?.messages.map((m) => m.messageId)).toEqual(Array(5).fill('trailing'));
     const [config] = await eslint.lintText(fixture('global-config.ts'), {
       filePath: join(root, CORE),
     });

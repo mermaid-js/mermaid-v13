@@ -52,6 +52,8 @@ import type {
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import * as codes from '../codes.ts';
+import { checkLimits } from './limits.ts';
+import type { C4LimitOptions } from './limits.ts';
 import type { C4ElementKind, C4Model, C4NodeKind, C4RelationKind, C4Type } from '../model.ts';
 import type {
   C4BoundaryNode,
@@ -67,7 +69,7 @@ import { SLOT_TABLES } from './slots.ts';
 import type { SlotTable } from './slots.ts';
 import { HEADERS, T } from './tokens.ts';
 
-export interface C4ParseOptions extends ParseOptions {
+export interface C4ParseOptions extends ParseOptions, C4LimitOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
 }
@@ -175,6 +177,8 @@ const STATEMENT_KINDS = [
 ];
 /** What may start a statement in a boundary: those and its `}`. */
 const BOUNDARY_STATEMENT_KINDS = [...STATEMENT_KINDS, T.RBrace];
+/** What may start a boundary's first statement: no title or accessibility line goes there. */
+const BOUNDARY_FIRST_KINDS = [...MACROS.keys(), T.RBrace];
 /** What may come next in the arguments. */
 const ARGUMENT_KINDS = [T.ArgsClose, T.Str, T.AttributeEmpty, T.QuoteOpen, T.KeyStart];
 /**
@@ -311,12 +315,14 @@ class C4Parser {
     this.body();
     this.endChecks();
     const { st } = this;
+    const built = this.builder.model();
+    checkLimits(this.doc.children, built, this.options, st.diagnostics);
     st.diagnostics.list.sort((a, b) => a.range.start - b.range.start);
     // D453: the in-text title, else the front-matter one (D218).
     const title = this.title ?? this.pre.frontMatter?.title;
     const model: C4Model = {
       ...(this.c4Type !== undefined && { c4Type: this.c4Type }),
-      ...this.builder.model(),
+      ...built,
       ...(title !== undefined && { title }),
       accTitle: this.accTitle,
       accDescr: this.accDescr,
@@ -542,7 +548,9 @@ class C4Parser {
 
   /** What may start a statement here. */
   private statementKinds(): number[] {
-    return this.frames.length > 0 ? BOUNDARY_STATEMENT_KINDS : STATEMENT_KINDS;
+    const frame = this.frames[this.frames.length - 1];
+    if (!frame) return STATEMENT_KINDS;
+    return frame.count === 0 ? BOUNDARY_FIRST_KINDS : BOUNDARY_STATEMENT_KINDS;
   }
 
   /** One statement; what may come after it. */

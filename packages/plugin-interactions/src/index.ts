@@ -1,6 +1,6 @@
 /**
  * Interactions extension plugin: v12 click callbacks, `bindFunctions` and element menus
- * (DESIGN §12.3, R-PLUG-9, R-SVG-5, D47, D74, D105).
+ * (DESIGN §12.3, R-PLUG-9, R-SVG-5, D47, D74, D105, D554).
  *
  * The plugin is a table of features (`FEATURES`), each owning one AST field from collection
  * to binding (`feature.ts`): `callback` (`AstCallback`: `click … callback` / `call`) and `menu`
@@ -14,14 +14,15 @@
  * different ones (a re-render whose svg did not change) replace what was bound before.
  *
  * Nothing in the diagram text can turn this on: only registering the plugin does
- * (`registerExternalDiagrams([interactions])`). The svg itself is unchanged, so it still
- * passes the allow-list (R-SEC-2).
+ * (`registerExternalDiagrams([interactions])`), and callbacks also need
+ * `initialize({ securityLevel: 'loose' })`, as in v12 (D554). The svg itself is unchanged, so
+ * it still passes the allow-list (R-SEC-2).
  */
 import type { ExtensionPlugin } from '@mermaid-js/core';
 import { nodeId, type AstNode } from '@mermaid-js/core/parser-kit';
 import { defineFeature, isBag, type AnyFeature } from './feature.ts';
 import { menus } from './menus.ts';
-import { createScope, rootsFor } from './scope.ts';
+import { createScope, ownIds, rootsFor } from './scope.ts';
 
 /** One callback to bind: a node id, the function name and its arguments. */
 export interface Binding {
@@ -67,7 +68,8 @@ export function callbackArgs(id: string, args: string | undefined): string[] {
 
 /**
  * Looks `name` up on `window` (`fn`, `app.handlers.fn`) as v12's `runFunc` did and calls it.
- * A missing name does nothing (v12 logged an error).
+ * A missing name does nothing (v12 logged an error). Reached only from a listener bound under
+ * `securityLevel: 'loose'` (see `callbacks`).
  */
 export function runFunction(name: string, args: readonly string[]): void {
   const path = name.split('.');
@@ -101,7 +103,7 @@ function drawsNode(g: Element, id: string): boolean {
  */
 function clickableElements(svg: Element, ids: ReadonlySet<string>): Map<string, Element[]> {
   const out = new Map<string, Element[]>();
-  for (const el of svg.querySelectorAll('[data-id]')) {
+  for (const el of ownIds(svg)) {
     const id = el.getAttribute('data-id') ?? '';
     if (ids.has(id) && (el.getAttribute('class') ?? '').split(' ').includes('clickable'))
       out.set(id, [...(out.get(id) ?? []), el]);
@@ -109,23 +111,56 @@ function clickableElements(svg: Element, ids: ReadonlySet<string>): Map<string, 
   return out;
 }
 
+/** One render's callbacks: what to bind, and whether the level lets them run. */
+interface Callbacks {
+  readonly bindings: Binding[];
+  /** `securityLevel: 'loose'` as `initialize()` set it; diagram text cannot (a secure key). */
+  readonly loose: boolean;
+  /** Warns `CALLBACK_IGNORED` once, at the first callback the level leaves unbound. */
+  refuse(): void;
+}
+
+const NOT_LOOSE =
+  "Click callbacks are ignored: they run only with `initialize({ securityLevel: 'loose' })`.";
+
 /**
  * `click … callback` / `call` (`AstCallback`), bound to the nodes' `g.node[data-id]`: flowchart
  * nodes and class boxes alike (the class parser emits the same field). An id with no such node
  * binds its `clickable` elements instead (gantt's bar and label).
+ *
+ * As in v12, where each diagram's `setClickFun` returned early unless the level was `loose`
+ * (#697, D554): under any other level nothing is collected, so nothing is bound, and the
+ * render warns `CALLBACK_IGNORED` once. Core maps `loose` to its `default` level for URLs
+ * (D75), so the configured value is read here.
  */
-const callbacks = defineFeature<Binding[]>({
+const callbacks = defineFeature<Callbacks>({
   field: 'callback',
   claim: 'callbacks',
-  start: () => [],
+  start(ctx) {
+    let warned = false;
+    return {
+      bindings: [],
+      loose: (ctx.config as { securityLevel?: unknown }).securityLevel === 'loose',
+      refuse() {
+        if (warned) return;
+        warned = true;
+        ctx.warn({ code: 'CALLBACK_IGNORED', message: NOT_LOOSE });
+      },
+    };
+  },
   collect(value, acc) {
     if (!isBag(value) || typeof value.name !== 'string' || !Array.isArray(value.targets)) return;
+    if (!acc.loose) return acc.refuse();
     const { name, args } = value;
     for (const id of value.targets)
       if (typeof id === 'string')
-        acc.push({ id, name, args: callbackArgs(id, typeof args === 'string' ? args : undefined) });
+        acc.bindings.push({
+          id,
+          name,
+          args: callbackArgs(id, typeof args === 'string' ? args : undefined),
+        });
   },
-  plan: (bindings) => ({
+  plan: ({ bindings }) => ({
     key: JSON.stringify(bindings),
     bind(scope) {
       if (bindings.length === 0) return;

@@ -1,3 +1,4 @@
+import { resolveLimits } from '@mermaid-js/core/limits';
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { ishikawaConfigDefaults } from './generated/config-defaults.ts';
@@ -22,8 +23,10 @@ export const ishikawa = {
   layoutKind: 'custom' as const,
   configDefaults: ishikawaConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectIshikawa(text),
-  parse: (text: string, ctx: DiagramParseContext): IshikawaParseResult =>
-    parseIshikawa(text, { preprocessed: ctx.preprocessed }),
+  parse: (text: string, ctx: DiagramParseContext): IshikawaParseResult => {
+    const { maxNodes, maxDepth } = ctx.limits ?? resolveLimits(ctx.config);
+    return parseIshikawa(text, { preprocessed: ctx.preprocessed, maxNodes, maxDepth });
+  },
   labels: ishikawaLabels,
   layout: (model: IshikawaModel, ctx: RenderContext): IshikawaLayout => layoutIshikawa(model, ctx),
   render: (model: IshikawaModel, layout: IshikawaLayout, ctx: RenderContext, w: SvgWriter): void =>

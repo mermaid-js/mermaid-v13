@@ -60,9 +60,12 @@ export interface ResolveConfigOptions {
   /**
    * The config section of the diagram being rendered (e.g. `flowchart`), for the
    * diagram-scoped `theme` and `layout`. Defaults to the single top-level key
-   * of `pluginDefaults`, when it has exactly one.
+   * of `pluginDefaults`, when it has exactly one. A type that reads its own section on top of
+   * its plugin's gives both, highest first (`['swimlane', 'flowchart']`, D534): in each source
+   * the first section's key wins over the second's, over the top-level one, and a key both
+   * sections have takes that value in both.
    */
-  readonly section?: string;
+  readonly section?: string | readonly string[];
   /**
    * The config fragments of the registered plugins (D153): their keys are known, their
    * defaults merged over `defaults`, their aliases applied to every source.
@@ -73,7 +76,7 @@ export interface ResolveConfigOptions {
 /** Never copied from any source: they would reach `Object.prototype` on assignment. */
 const POLLUTION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
-const APPEARANCE_KEYS = ['theme', 'layout'] as const;
+const APPEARANCE_KEYS = ['theme', 'layout'];
 
 const ignore = (): void => undefined;
 
@@ -129,8 +132,15 @@ export interface ResolvedSite {
   readonly plugin: Readonly<Plain>;
   readonly defaults: Readonly<Plain>;
   readonly tree: Readonly<Record<string, KeyTree>>;
+  /**
+   * The keys `theme`/`layout` resolution covers: those two, or for a chained type (D534) every
+   * key all its sections' schemas have. Worked out once per site, not per diagram text.
+   */
+  readonly keys: readonly string[];
+  /** `section` as a list, highest first. */
+  readonly sections: readonly string[];
   readonly secure: ReadonlySet<string>;
-  readonly section: string | undefined;
+  readonly section: string | readonly string[] | undefined;
   /** Whether `initialize()` already earned the one `LOOK_REMOVED` warning. */
   readonly lookWarned: boolean;
   /** The fragments' legacy aliases, applied to diagram text too. */
@@ -172,14 +182,24 @@ export function resolveSite(
   // so `initialize({ secure })` can extend the list but not shrink it.
   const secure = new Set<string>([...INTEGRATOR_ONLY_KEYS, ...stringList(base.secure)]);
   const section = options.section ?? soleKey(plugin);
+  // A chained type (D534) resolves every key all its sections' schemas have (`theme`, `layout`,
+  // `useMaxWidth`, `useWidth`), each written into every section, so only where the schema has it.
+  const sections = [section ?? []].flat();
+  const keys = sections[1]
+    ? Object.keys(Object(tree[sections[0]!]) as object).filter((k) =>
+        sections.every((s) => k in Object(tree[s]))
+      )
+    : APPEARANCE_KEYS;
   const layers = {
     base: deepFreeze(base),
     site: deepFreeze(site),
     plugin: deepFreeze(plugin),
     defaults: deepFreeze(looks.strip(coreDefaults)),
+    keys,
+    sections,
   };
   return {
-    plain: layered(layers, section, {}),
+    plain: layered(layers, {}),
     ...layers,
     tree,
     secure,
@@ -189,14 +209,19 @@ export function resolveSite(
   };
 }
 
-/** Merges diagram text (front matter, then directives) over a resolved site. */
+/**
+ * Merges diagram text (front matter, then directives) over a resolved site. With `under` (an
+ * embedded diagram's host config, ADR-15), the text goes over that, and that over the site.
+ * `theme` and `layout` still resolve from the text and the site.
+ */
 export function resolveText(
   site: ResolvedSite,
   frontMatter?: ConfigInput,
   directives: readonly ConfigInput[] = [],
-  options: Pick<ResolveConfigOptions, 'warn'> = {}
+  options: Pick<ResolveConfigOptions, 'warn'> & { readonly under?: ResolvedConfig } = {}
 ): ResolvedConfig {
-  if (frontMatter === undefined && directives.length === 0) return site.plain;
+  const { under } = options;
+  if (frontMatter === undefined && directives.length === 0 && !under) return site.plain;
   const warn = options.warn ?? ignore;
   const looks = lookStripper(warn, site.lookWarned);
   // v12 fed front matter and directives through one `addDirective` layer.
@@ -231,19 +256,20 @@ export function resolveText(
       text.themeVariables = { ...vars, fontFamily: text.fontFamily };
     }
   }
-  return layered(site, site.section, text);
+  return layered(site, text, under);
 }
 
-// The site's base with `text` merged over it, appearance resolved, frozen. Parts `text` does
-// not touch stay shared with the (frozen) site.
+// The site's base with `under` and `text` merged over it, appearance resolved, frozen. Parts
+// they do not touch stay shared with the (frozen) site.
 function layered(
-  layers: Pick<ResolvedSite, 'base' | 'site' | 'plugin' | 'defaults'>,
-  section: string | undefined,
-  text: Plain
+  layers: Pick<ResolvedSite, 'base' | 'site' | 'plugin' | 'defaults' | 'keys' | 'sections'>,
+  text: Plain,
+  under?: Plain
 ): ResolvedConfig {
   const config: Plain = { ...layers.base };
+  if (under) merge(config, under);
   merge(config, text);
-  resolveAppearance(config, section, [text, layers.site, layers.plugin, layers.defaults]);
+  resolveAppearance(config, [text, layers.site, layers.plugin, layers.defaults], layers);
   return deepFreeze(config) as ResolvedConfig;
 }
 
@@ -299,24 +325,30 @@ function lookStripper(warn: (w: ConfigWarning) => void, already = false) {
  * the diagram-scoped value beats the global one. (v12 also passed over unknown theme names;
  * that check belongs with the theme registry, core/theme.)
  */
-function resolveAppearance(config: Plain, section: string | undefined, layers: Plain[]) {
-  const scopedOf = (layer: Plain): Plain | undefined => {
-    const value = section === undefined ? undefined : layer[section];
+function resolveAppearance(
+  config: Plain,
+  layers: Plain[],
+  { sections, keys }: Pick<ResolvedSite, 'keys' | 'sections'>
+) {
+  const scopedOf = (layer: Plain, s: string): Plain | undefined => {
+    const value = layer[s];
     return isPlainObject(value) ? value : undefined;
   };
-  let scoped = scopedOf(config);
-  for (const key of APPEARANCE_KEYS) {
-    for (const layer of layers) {
-      const value = [scopedOf(layer)?.[key], layer[key]].find((v) => typeof v === 'string');
-      if (value === undefined) {
-        continue;
-      }
-      config[key] = value;
-      if (scoped?.[key] !== undefined && scoped[key] !== value) {
-        if (Object.isFrozen(scoped)) config[section as string] = scoped = { ...scoped };
-        scoped[key] = value;
-      }
-      break;
+  for (const key of keys) {
+    const top = APPEARANCE_KEYS.includes(key);
+    const value = layers
+      .flatMap((layer) => [
+        ...sections.map((s) => scopedOf(layer, s)?.[key]),
+        top ? layer[key] : undefined,
+      ])
+      .find((v) => (top ? typeof v === 'string' : v !== undefined));
+    if (value === undefined) continue;
+    if (top) config[key] = value;
+    // A chained type's keys (`ResolvedSite.keys`) are written into every section.
+    for (const s of sections) {
+      const scoped = scopedOf(config, s);
+      if ((sections[1] || scoped?.[key] !== undefined) && scoped?.[key] !== value)
+        config[s] = { ...scoped, [key]: value };
     }
   }
 }

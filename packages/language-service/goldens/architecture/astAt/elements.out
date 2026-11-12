@@ -1,0 +1,22 @@
+@ 1:16  architecture-be|ta
+  architecture 1:1-1:18 "architecture-beta"
+@ 2:5  ti|tle Shop
+  title 2:3-2:13 "title Shop"
+@ 3:10  group a|pi(cloud)[API]
+  group:api 3:3-3:24 "group api(cloud)[API]"
+@ 4:18  service db(data|base)[Database] in api
+  service:db 4:3-4:40 "service db(database)[Database] in api"
+@ 5:24  service db(server)[Ag|ain]
+  service:db@2 5:3-5:28 "service db(server)[Again]"
+@ 6:13  junction h|ub in api
+  junction:hub 6:3-6:22 "junction hub in api"
+@ 7:9  db:L -|- R:hub
+  edge:db->hub 7:3-7:16 "db:L -- R:hub"
+@ 8:16  db:L -- R:hub|
+  edge:db->hub@2 8:3-8:16 "db:L -- R:hub"
+@ 9:11  align ro|w db hub
+  align:1 9:3-9:19 "align row db hub"
+@ 10:17  align column d|b hub
+  align:2 10:3-10:22 "align column db hub"
+@ 12:10  long |text
+  accDescr 11:3-13:4 "accDescr {\n    long text\n  }"

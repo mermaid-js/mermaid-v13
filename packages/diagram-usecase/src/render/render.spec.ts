@@ -178,6 +178,7 @@ describe('the front-matter title (D472)', () => {
     const title = texts(svg).find((t) => t.cls === 'usecaseDiagramTitleText')!;
     expect(title).toMatchObject({ text: 'Shop', id: 'title' });
     const band = layout.usecase!.title!.height + layout.usecase!.config.diagramPadding;
+    // eslint-disable-next-line mermaid/no-nested-quantifier -- run on one formatted number
     expect(svg).toContain(`<g transform="translate(0,${band.toFixed(2).replace(/\.?0+$/, '')})">`);
     const height = Math.ceil(layout.height + band);
     expect(svg).toMatch(new RegExp(`viewBox="0 0 \\d+ ${height}"`));

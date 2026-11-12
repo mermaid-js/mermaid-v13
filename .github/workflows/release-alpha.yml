@@ -47,6 +47,7 @@ jobs:
     permissions:
       contents: write
       actions: read # the newest nightly bench report, shown when the gate is skipped
+      pull-requests: read # `changeset version` finds each changeset's PR for the changelog
     env:
       # `changeset version` looks up each changeset's PR for the changelog; preflight checks it.
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

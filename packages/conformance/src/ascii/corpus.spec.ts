@@ -1,12 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cellWidth, repairRoutes, routeCollisions } from '@mermaid-js/core/ascii';
-import type { LayoutModel } from '@mermaid-js/core/layout';
+import { repairRoutes, routeCollisions } from '@mermaid-js/core/ascii';
 import { createMermaid, MermaidError } from 'mermaid';
-import { REPO_ROOT, corpusFromDir } from '../corpus.ts';
+import { REPO_ROOT, corpusFromDir, isEmbeddedFixture } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
 import { expectedOf } from './expected.ts';
+import { overlaps, sizeFaults } from './flow-checks.ts';
 import { renderAscii, type AsciiResult, type CellLayout } from './render.ts';
 import { readStructure, type Charset } from './structure.ts';
 
@@ -20,6 +20,8 @@ const CHARSETS: Charset[] = ['unicode', 'ascii'];
 
 interface Case {
   id: string;
+  /** An embedded-diagram fixture (ADR-15): its blocks frame other diagrams' drawings. */
+  embedded: boolean;
   layout: CellLayout;
   out: Record<Charset, AsciiResult>;
   again: Record<Charset, string>;
@@ -53,7 +55,13 @@ beforeAll(async () => {
         out[charset] = await renderAscii(item.source, { charset });
         again[charset] = (await renderAscii(item.source, { charset })).text;
       }
-      cases.push({ id: item.id, layout: out.unicode.layout, out, again });
+      cases.push({
+        id: item.id,
+        embedded: isEmbeddedFixture(item),
+        layout: out.unicode.layout,
+        out,
+        again,
+      });
     } catch (e) {
       failed[item.id] = String(e);
     }
@@ -85,9 +93,13 @@ describe('ascii corpus properties (D87, R-ASCII-9)', () => {
     expect(perCharset((c, cs) => (c.out[cs].text === c.again[cs] ? [] : ['differs']))).toEqual({});
   });
 
+  // The flowchart reader cannot read the other diagrams' drawings inside a block's frame (ADR-15):
+  // the embedded fixtures' structure is checked by the mermaid package's embedded-ascii spec
+  // and the v13 goldens (`ascii/v13/embedded_*`) instead.
   it('draws every visible node label inside a box, and every edge label', () => {
     expect(
       perCharset((c, cs) => {
+        if (c.embedded) return [];
         const s = readStructure(c.out[cs].text, cs, expectedOf(c.layout, c.layout.title));
         return [
           ...s.missingNodes.map((l) => `node label in no box: ${JSON.stringify(l)}`),
@@ -100,6 +112,7 @@ describe('ascii corpus properties (D87, R-ASCII-9)', () => {
   it('connects every edge line box to box (no free end, none ending on a title)', () => {
     expect(
       perCharset((c, cs) => {
+        if (c.embedded) return [];
         const s = readStructure(c.out[cs].text, cs, expectedOf(c.layout, c.layout.title));
         return s.dangling.map((at) => `edge line with a free end at ${at}`);
       })
@@ -107,29 +120,7 @@ describe('ascii corpus properties (D87, R-ASCII-9)', () => {
   });
 
   it('has `rows` lines, none wider than `columns` and one exactly that wide, no trailing spaces', () => {
-    expect(
-      perCharset((c, cs) => {
-        const { text, rows, columns } = c.out[cs];
-        // An empty diagram (`graph TD;`) is no lines: rows 0, columns 0.
-        const lines = text === '' ? [] : text.split('\n');
-        // Measured apart from the API's `cellWidth` where that is possible: a line of printable
-        // ASCII, box drawing and the arrowhead/marker shapes is one column per code point.
-        // Lines with other text (CJK, emoji, combining marks) fall back to `cellWidth`; there
-        // the check is a contract check of `columns` against the kit's own measure, whose
-        // widths have table tests in core/ascii (measurer.spec.ts, R-ASCII-3).
-        const narrow = /^[\x20-\x7e\u2500-\u25ff\u2715]*$/u;
-        const width = (l: string) => (narrow.test(l) ? [...l].length : cellWidth(l));
-        const widest = Math.max(0, ...lines.map(width));
-        const found: string[] = [];
-        if (lines.length !== rows) found.push(`${lines.length} lines, rows ${rows}`);
-        if (widest !== columns) found.push(`widest ${widest}, columns ${columns}`);
-        lines.forEach((l, i) => {
-          if (/\s$/u.test(l)) found.push(`trailing space on line ${i + 1}`);
-        });
-        if (text.includes('\r')) found.push('\\r in text');
-        return found;
-      })
-    ).toEqual({});
+    expect(perCharset((c, cs) => sizeFaults(c.out[cs]))).toEqual({});
   });
 
   it('has no overlapping boxes (nodes apart; a node or group inside a group or apart)', () => {
@@ -149,43 +140,3 @@ describe('ascii corpus properties (D87, R-ASCII-9)', () => {
     ).toEqual({});
   });
 });
-
-interface Rect {
-  id: string;
-  group: boolean;
-  x0: number;
-  y0: number;
-  x1: number;
-  y1: number;
-}
-
-/** Cells a centred box covers, the grid model's convention (`LayoutGraph.grid`). */
-const rect = (
-  id: string,
-  group: boolean,
-  b: { x: number; y: number; width: number; height: number }
-): Rect => ({
-  id,
-  group,
-  x0: Math.round(b.x - b.width / 2 + 0.5),
-  y0: Math.round(b.y - b.height / 2 + 0.5),
-  x1: Math.round(b.x + b.width / 2 - 0.5),
-  y1: Math.round(b.y + b.height / 2 - 0.5),
-});
-
-function overlaps(model: LayoutModel): string[] {
-  const rects = [
-    ...[...model.nodes].map(([id, n]) => rect(id, false, n)),
-    ...[...model.groups].map(([id, g]) => rect(id, true, g)),
-  ];
-  const apart = (a: Rect, b: Rect) => a.x1 < b.x0 || b.x1 < a.x0 || a.y1 < b.y0 || b.y1 < a.y0;
-  const within = (a: Rect, b: Rect) =>
-    b.group && a.x0 > b.x0 && a.x1 < b.x1 && a.y0 > b.y0 && a.y1 < b.y1;
-  const found: string[] = [];
-  rects.forEach((a, i) => {
-    for (const b of rects.slice(i + 1)) {
-      if (!apart(a, b) && !within(a, b) && !within(b, a)) found.push(`${a.id} × ${b.id}`);
-    }
-  });
-  return found;
-}

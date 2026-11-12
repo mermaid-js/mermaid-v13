@@ -1,0 +1,9 @@
+---
+description: IR special(), single-quoted strings, escapes and both comment forms.
+---
+railroad-beta
+/* A block comment
+   over two lines. */
+text = sequence(terminal('"'), zeroOrMore(special("any character but \"")), terminal("\"")) ; %% in-line comment
+escaped = terminal('it\'s a \\ backslash') ;
+tab = terminal("\t") ;

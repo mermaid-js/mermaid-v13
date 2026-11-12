@@ -50,8 +50,47 @@ const SHAPES: [string, (n: number) => string, number][] = [
   ],
 ];
 
-describe('stress: the C4 text drawing is linear in diagram size past its budget', () => {
-  it.each(SHAPES)(
+/**
+ * #689: the drawing is linear in the length of one text too. n and 8n characters in a relation's
+ * label (one word, short words, and wrapped by the layout with root `wrap` and `c4.wrap`), an
+ * element's name, a boundary's label and the title, between two elements; the same measure and
+ * bar as above.
+ */
+const WRAP = '%%{init: {"wrap": true, "c4": {"wrap": true}}}%%\n';
+const two = (rest: string, head = ''): string =>
+  `${head}${C}System(a, "A")\nSystem(b, "B")\n${rest}\n`;
+const TEXTS: [string, (n: number) => string, number][] = [
+  ['a relation label of one long word', (n) => two(`Rel(a, b, "${'x'.repeat(n)}")`), 2_000],
+  ['a relation label of short words', (n) => two(`Rel(a, b, "${'xxxx '.repeat(n / 5)}")`), 2_000],
+  [
+    'a wrapped relation label of short words',
+    (n) => two(`Rel(a, b, "${'xxxx '.repeat(n / 5)}")`, WRAP),
+    2_000,
+  ],
+  [
+    'a wrapped relation label of one long word',
+    (n) => two(`Rel(a, b, "${'x'.repeat(n)}")`, WRAP),
+    2_000,
+  ],
+  [
+    'a long relation label and technology',
+    (n) => two(`Rel(a, b, "${'x'.repeat(n / 2)}", "${'y'.repeat(n / 2)}")`),
+    2_000,
+  ],
+  ['a long element name', (n) => two(`System(c, "${'x'.repeat(n)}")\nRel(a, c, "r")`), 2_000],
+  [
+    'a long boundary label',
+    (n) => `${C}Boundary(g, "${'x'.repeat(n)}") {\nSystem(a, "A")\n}\n`,
+    2_000,
+  ],
+  ['a long title', (n) => two(`Rel(a, b, "r")\ntitle ${'x'.repeat(n)}`), 2_000],
+];
+
+describe.each([
+  ['diagram size past its budget', SHAPES],
+  ['the length of one text (#689)', TEXTS],
+])('stress: the C4 text drawing is linear in %s', (_what, shapes) => {
+  it.each(shapes)(
     '%s',
     async (_name, build, n) => {
       const small = (await renderC4Ascii(build(n), 'unicode')).layout;

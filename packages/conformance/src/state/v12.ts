@@ -72,6 +72,7 @@ export function userClasses(css: string): string[] {
   return css.split(' ').filter((c) => c !== '' && !c.startsWith('statediagram-'));
 }
 
+// eslint-disable-next-line mermaid/no-nested-quantifier -- v12's regex byte for byte (dev-only reference)
 const unquote = (s: string) => s.replace(/^"+|"+$/g, '');
 
 /** Regions renamed `<composite>:region<k>`, and the `[*]` states in them with them. */

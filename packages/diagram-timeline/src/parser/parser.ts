@@ -16,6 +16,7 @@
  * DB adds a fifth: an event before any period (a `TypeError`). Unlike jison the parser does not
  * stop at the first error: it reports it, skips to the next line and carries on (R-PARSE-4).
  */
+import { checkLimit } from '@mermaid-js/core/limits';
 import {
   cook,
   CR,
@@ -58,6 +59,8 @@ import { T } from './tokens.ts';
 export interface TimelineParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
+  /** The integrator's cap on sections, periods and events (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
+  maxNodes?: number;
 }
 
 export type TimelineParseResult = ParseResult<TimelineModel, TimelineDocument>;
@@ -140,6 +143,8 @@ class TimelineParser {
   private readonly children: TimelineStatementNode[] = [];
   private readonly sections: TimelineSection[] = [];
   private readonly periods: OpenPeriod[] = [];
+  /** The sections, periods and events so far (`maxNodes`). */
+  private items = 0;
   private direction: TimelineDirection = 'LR';
   private title: string | undefined;
   private accTitle = '';
@@ -385,6 +390,12 @@ class TimelineParser {
     } else this.fail(STATEMENT, k === T.Invalid ? EVENT_HINT : undefined);
   }
 
+  /** The integrator's cap on sections, periods and events together, after one is added (#721). */
+  private checkNodes(range: Range): void {
+    const what = 'sections, periods and events';
+    checkLimit(this.st.diagnostics, 'maxNodes', ++this.items, this.options.maxNodes, what, range);
+  }
+
   /** `period`: v12 `addTask($1, 0, '')`. */
   private period(): void {
     const j = this.c.next();
@@ -398,7 +409,9 @@ class TimelineParser {
       events: [],
     };
     this.periods.push(period);
-    this.add({ id: period.ast, type: 'Period', range: this.range(j), text }, 'period');
+    const range = this.range(j);
+    this.checkNodes(range);
+    this.add({ id: period.ast, type: 'Period', range, text }, 'period');
   }
 
   /** `event`: v12 `addEvent($1.substr(2))`, to the last period. */
@@ -413,6 +426,7 @@ class TimelineParser {
       node.id = `ev:${p + 1}.${period.events.length + 1}`;
       node.period = p;
       period.events.push({ ast: node.id, text });
+      this.checkNodes(range);
     } else {
       // v12's DB threw a TypeError here; the statement still stands in the AST.
       node.id = this.statementId();
@@ -440,6 +454,7 @@ class TimelineParser {
     const range = this.range(j);
     this.closeSection(range.start, true);
     this.sections.push({ ast: `sec:${n}`, text });
+    this.checkNodes(range);
     this.children.push({ id: `sec:${n}`, type: 'Section', range, text });
     this.openSection = this.st.beginStatement('section', range.start);
     this.openSection.range.end = range.end;

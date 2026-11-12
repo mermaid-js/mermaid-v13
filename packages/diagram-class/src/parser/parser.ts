@@ -12,7 +12,7 @@
 // cspell:words LALR
 import { Kind, inKindSet, isLineEnd, isSpace, nodeId } from '@mermaid-js/core/parser-kit';
 import type { ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
-import { LIMIT_CODES } from '@mermaid-js/core/limits';
+import { LIMIT_CODES, checkLimit } from '@mermaid-js/core/limits';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type {
   ClassAnnotationStmt,
@@ -115,7 +115,11 @@ class ClassParser extends ParserBase {
       range: { start: this.pre.bodyStart, end: this.src.length },
       children: this.children,
     };
-    return st.result(model, ast, this.fullTokens.tokens, options, this.probe);
+    // Edges counted across embedded diagrams (ADR-15).
+    return {
+      ...st.result(model, ast, this.fullTokens.tokens, options, this.probe),
+      edgeCount: db.relationCount,
+    };
   }
 
   // ---- statements ---------------------------------------------------------------------
@@ -198,13 +202,14 @@ class ClassParser extends ParserBase {
     });
     if (!had[0] && db.has(first.id)) this.checkNodes(first.range);
     if (!had[1] && db.has(second.id)) this.checkNodes(second.range);
-    if (db.relationCount === this.maxEdges + 1) {
-      st.diagnostics.error(
-        LIMIT_CODES.maxEdges,
-        `The diagram has more than ${this.maxEdges} relationships, the limit. The limit is set by the page or app that renders the diagram.`,
-        this.span(from)
-      );
-    }
+    checkLimit(
+      st.diagnostics,
+      'maxEdges',
+      db.relationCount,
+      this.maxEdges,
+      'relationships',
+      this.span(from)
+    );
     const r = this.span(from);
     const node: ClassRelationStmt = {
       id: ast,

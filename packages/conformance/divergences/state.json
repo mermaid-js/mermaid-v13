@@ -1,0 +1,66 @@
+[
+  {
+    "id": "e2e/diagrams/state-diagram-v2/baseline/embedded/flowchart-nested.mmd",
+    "inputHash": "sha256:92659a6b50f1b400",
+    "kind": "accept",
+    "reason": "v12 rejects `mermaid <id> {`; v13 parses an embedded diagram block (ADR-15, proof of concept).",
+    "owner": "#667",
+    "since": "2026-11-11"
+  },
+  {
+    "id": "e2e/diagrams/state-diagram-v2/baseline/embedded/folded-in-composite.mmd",
+    "inputHash": "sha256:0976bcd787fedca0",
+    "kind": "accept",
+    "reason": "v12 rejects `mermaid <id> {` and `@{ view: collapsed }` on it; v13 parses a folded embedded diagram block (ADR-15, proof of concept).",
+    "owner": "#670",
+    "since": "2026-11-11"
+  },
+  {
+    "id": "e2e/diagrams/state-diagram-v2/baseline/embedded/folded.mmd",
+    "inputHash": "sha256:1f3196db1ea52dee",
+    "kind": "accept",
+    "reason": "v12 rejects `mermaid <id> {` and `@{ view: collapsed }` on it; v13 parses a folded embedded diagram block (ADR-15, proof of concept).",
+    "owner": "#670",
+    "since": "2026-11-11"
+  },
+  {
+    "id": "e2e/diagrams/state-diagram-v2/baseline/embedded/in-composite.mmd",
+    "inputHash": "sha256:880dfc838b812a58",
+    "kind": "accept",
+    "reason": "v12 rejects `mermaid <id> {`; v13 parses an embedded diagram block (ADR-15, proof of concept).",
+    "owner": "#667",
+    "since": "2026-11-11"
+  },
+  {
+    "id": "e2e/diagrams/state-diagram-v2/baseline/embedded/sequence-titled.mmd",
+    "inputHash": "sha256:db421ddc893671ba",
+    "kind": "accept",
+    "reason": "v12 rejects `mermaid <id> {`; v13 parses an embedded diagram block (ADR-15, proof of concept).",
+    "owner": "#667",
+    "since": "2026-11-11"
+  },
+  {
+    "id": "e2e/diagrams/state-diagram-v2/nightly-check/elk/elk-transition-between-nested-composites-written-in-the-inner.mmd",
+    "inputHash": "sha256:a24e7c4e5629944e",
+    "kind": "model",
+    "reason": "v12 files a composite under itself (or under a state inside it) when a transition written inside it names it, then hangs or throws at layout; v13 keeps the composite where it was declared, so `parent` differs (D555).",
+    "owner": "D555",
+    "since": "2026-11-12"
+  },
+  {
+    "id": "e2e/diagrams/state-diagram-v2/nightly-check/elk/elk-transition-from-a-child-to-its-own-composite.mmd",
+    "inputHash": "sha256:9a906f42f894ea21",
+    "kind": "model",
+    "reason": "v12 files a composite under itself (or under a state inside it) when a transition written inside it names it, then hangs or throws at layout; v13 keeps the composite where it was declared, so `parent` differs (D555).",
+    "owner": "D555",
+    "since": "2026-11-12"
+  },
+  {
+    "id": "e2e/diagrams/state-diagram-v2/nightly-check/elk/elk-transition-from-a-composite-to-its-own-child.mmd",
+    "inputHash": "sha256:11cd202c8b3b0199",
+    "kind": "model",
+    "reason": "v12 files a composite under itself (or under a state inside it) when a transition written inside it names it, then hangs or throws at layout; v13 keeps the composite where it was declared, so `parent` differs (D555).",
+    "owner": "D555",
+    "since": "2026-11-12"
+  }
+]

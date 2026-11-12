@@ -11,7 +11,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { CORE_DEFAULTS, resolveConfig } from '@mermaid-js/core/config';
 import type { ConfigWarning } from '@mermaid-js/core/config';
 import { parseYaml, preprocess } from '@mermaid-js/core/preprocess';
-import { configSection } from './config/front-matter.ts';
+import { configSections } from './config/front-matter.ts';
 import { createLanguageService } from './index.ts';
 import { contextOf } from './snapshot.ts';
 import type { DocumentSnapshot } from './index.ts';
@@ -35,11 +35,11 @@ const isConfigWarning = (code: string) => code.startsWith('CONFIG_') || code ===
 function rendered(doc: DocumentSnapshot): string[] {
   const config = preprocess(doc.text).frontMatter?.config;
   if (config === undefined) return [];
-  const section = configSection(contextOf(doc));
+  const sections = configSections(contextOf(doc));
   const out: ConfigWarning[] = [];
-  resolveConfig(CORE_DEFAULTS, {}, config, [], section ? { [section]: {} } : {}, {
+  resolveConfig(CORE_DEFAULTS, {}, config, [], Object.fromEntries(sections.map((s) => [s, {}])), {
     warn: (w) => out.push(w),
-    section,
+    ...(sections.length > 0 ? { section: sections } : {}),
   });
   return out.map((w) => `${w.code} ${w.message}`).sort();
 }
@@ -256,6 +256,29 @@ describe('completion scoping (D96)', () => {
       expect(keys, head).not.toContain('sequence');
       expect(keys, head).toContain('theme');
     }
+  });
+
+  it('offers both sections swimlane-beta reads, its own and flowchart’s (D534)', () => {
+    const lanes = keysAt('---\nconfig:\n  |\n---\nswimlane-beta LR\n  A\n');
+    expect(lanes).toContain('swimlane');
+    expect(lanes).toContain('flowchart');
+    expect(lanes).not.toContain('sequence');
+    expect(keysAt('---\nconfig:\n  |\n---\nflowchart TD\n  A\n')).not.toContain('swimlane');
+    expect(keysAt('---\nconfig:\n  swimlane:\n    |\n---\nswimlane-beta LR\n')).toContain(
+      'automaticLaneOrdering'
+    );
+    expect(keysAt('---\nconfig:\n  flowchart:\n    |\n---\nswimlane-beta LR\n')).toContain(
+      'nodeSpacing'
+    );
+    const [ok] = open(
+      '---\nconfig:\n  flowchart:\n    nodeSpacing: 9\n  swimlane:\n    automaticLaneOrdering: true\n---\nswimlane-beta LR\n  A\n'
+    );
+    expect(ours(ok)).toEqual([]);
+    const [bad] = open(
+      '---\nconfig:\n  swimlane:\n    nodeSpacing: 9\n---\nswimlane-beta LR\n  A\n'
+    );
+    expect(ours(bad)).toEqual(rendered(bad));
+    expect(ours(bad)[0]).toMatch(/^CONFIG_UNKNOWN_KEY .*swimlane\.nodeSpacing/);
   });
 
   it('offers nothing inside another type’s section', () => {

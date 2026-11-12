@@ -1,0 +1,26 @@
+---
+description: >-
+  `swimlane.ignoreCrossLaneEdges: false`: cross-lane edges count when ranks
+  are assigned (gravity layering, then `optimizeRanksByCrossings`, which
+  acts only then, as in v12), so Shop's and Courier's steps line up after
+  the Customer steps that lead to them. With the default (`true`) each lane
+  is ranked on its own edges and compacted.
+config:
+  swimlane:
+    ignoreCrossLaneEdges: false
+---
+swimlane-beta TB
+  subgraph Customer
+    A[Order] --> B[Pay]
+    B --> C[Receive]
+  end
+  subgraph Shop
+    D[Pick] --> E[Pack]
+  end
+  subgraph Courier
+    F[Collect] --> G[Deliver]
+  end
+  A --> D
+  E --> F
+  G --> C
+  B --> E

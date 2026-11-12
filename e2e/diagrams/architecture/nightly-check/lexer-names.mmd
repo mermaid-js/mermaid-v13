@@ -1,0 +1,13 @@
+architecture-beta
+    group groups(cloud)[Groups]
+    service rows(server)[rows] in groups
+    service columnar(server)[columnar] in groups
+    service services(server)[services]
+    service inx(server)[inx]
+    service 1node(server)[1node]
+    service a-b_c(server)[a-b_c]
+    service aligned(server)[aligned]
+    rows:R -- L:columnar
+    services:R -- L:inx
+    1node:R -- L:a-b_c
+    align row services inx aligned

@@ -19,7 +19,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     detector: (text) => /^\s*mindmap/.test(text),
     load: () => import('@mermaid-js/diagram-mindmap/language').then((m) => m.language),
   },
-  { type: 'architecture', id: 'architecture', pattern: /^\s*architecture/, detector: (text) => /^\s*architecture/.test(text) },
+  {
+    type: 'architecture',
+    id: 'architecture',
+    section: 'architecture',
+    pattern: /^\s*architecture/,
+    detector: (text) => /^\s*architecture/.test(text),
+    load: () => import('@mermaid-js/diagram-architecture/language').then((m) => m.language),
+  },
   {
     type: 'agentflow',
     id: 'agentflow',
@@ -100,7 +107,15 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     detector: (text) => /^\s*sequenceDiagram/.test(text),
     load: () => import('@mermaid-js/diagram-sequence/language').then((m) => m.language),
   },
-  { type: 'swimlane', id: 'swimlane', pattern: /^\s*swimlane-beta\b/, detector: (text) => /^\s*swimlane-beta\b/.test(text) },
+  {
+    type: 'swimlane',
+    id: 'flowchart',
+    section: 'swimlane',
+    baseSection: 'flowchart',
+    pattern: /^\s*swimlane-beta\b/,
+    detector: (text) => /^\s*swimlane-beta\b/.test(text),
+    load: () => import('@mermaid-js/diagram-flowchart/language').then((m) => m.language),
+  },
   {
     type: 'flowchart-v2',
     id: 'flowchart',
@@ -221,10 +236,38 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     detector: (text) => /^\s*treemap/.test(text),
     load: () => import('@mermaid-js/diagram-treemap/language').then((m) => m.language),
   },
-  { type: 'railroad', id: 'railroad', pattern: /^\s*railroad-beta/i, detector: (text) => /^\s*railroad-beta/i.test(text) },
-  { type: 'railroadEbnf', id: 'railroadEbnf', pattern: /^\s*railroad-ebnf-beta/i, detector: (text) => /^\s*railroad-ebnf-beta/i.test(text) },
-  { type: 'railroadAbnf', id: 'railroadAbnf', pattern: /^\s*railroad-abnf-beta/i, detector: (text) => /^\s*railroad-abnf-beta/i.test(text) },
-  { type: 'railroadPeg', id: 'railroadPeg', pattern: /^\s*railroad-peg-beta/i, detector: (text) => /^\s*railroad-peg-beta/i.test(text) },
+  {
+    type: 'railroad',
+    id: 'railroad',
+    section: 'railroad',
+    pattern: /^\s*railroad-beta/i,
+    detector: (text) => /^\s*railroad-beta/i.test(text),
+    load: () => import('@mermaid-js/diagram-railroad/language').then((m) => m.language),
+  },
+  {
+    type: 'railroadEbnf',
+    id: 'railroad',
+    section: 'railroad',
+    pattern: /^\s*railroad-ebnf-beta/i,
+    detector: (text) => /^\s*railroad-ebnf-beta/i.test(text),
+    load: () => import('@mermaid-js/diagram-railroad/language').then((m) => m.language),
+  },
+  {
+    type: 'railroadAbnf',
+    id: 'railroad',
+    section: 'railroad',
+    pattern: /^\s*railroad-abnf-beta/i,
+    detector: (text) => /^\s*railroad-abnf-beta/i.test(text),
+    load: () => import('@mermaid-js/diagram-railroad/language').then((m) => m.language),
+  },
+  {
+    type: 'railroadPeg',
+    id: 'railroad',
+    section: 'railroad',
+    pattern: /^\s*railroad-peg-beta/i,
+    detector: (text) => /^\s*railroad-peg-beta/i.test(text),
+    load: () => import('@mermaid-js/diagram-railroad/language').then((m) => m.language),
+  },
   {
     type: 'venn',
     id: 'venn',
@@ -263,4 +306,4 @@ export const firstPartyFacets: readonly FacetEntry[] = [
  * The ids of the first-party types with a language facet, in detector order. Each editor
  * adapter's highlighter map has one row per id (D134), so a new facet fails to compile there.
  */
-export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'agentflow' | 'c4' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'requirement' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'xychart' | 'block' | 'eventmodeling' | 'treeView' | 'radar' | 'ishikawa' | 'treemap' | 'venn' | 'wardley' | 'cynefin' | 'usecase';
+export type FirstPartyFacetId = 'flowchart' | 'mindmap' | 'architecture' | 'agentflow' | 'c4' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'requirement' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'xychart' | 'block' | 'eventmodeling' | 'treeView' | 'radar' | 'ishikawa' | 'treemap' | 'railroad' | 'venn' | 'wardley' | 'cynefin' | 'usecase';

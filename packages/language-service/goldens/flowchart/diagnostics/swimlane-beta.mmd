@@ -1,0 +1,10 @@
+%% swimlane-beta is flowchart syntax with the swimlane layout (D534): flowchart's diagnostics apply
+swimlane-beta LR
+  subgraph Sales
+    a[Order] --> b{Paid?}
+  end
+  subgraph Ops
+    c[Ship]
+  end
+  b -- yes --> c
+  b --> 

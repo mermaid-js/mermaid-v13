@@ -1,0 +1,8 @@
+architecture-beta
+  group api(cloud)[API]
+  service db(database)[Database] in api
+  service web "WWW"[Web]
+  junction hub in api
+  db:L -- R:hub
+  hub:B --> T:web
+  align row db hub

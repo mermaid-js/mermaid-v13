@@ -1,0 +1,16 @@
+@ 3:19  group inner in a|pi
+  -> 2:9-2:12 "api"
+@ 4:27  service db(database) in |inner
+  -> 3:9-3:14 "inner"
+@ 7:3  |db:L -- R:hub
+  -> 4:11-4:13 "db"
+@ 7:14  db:L -- R:h|ub
+  -> 5:12-5:15 "hub"
+@ 8:22  web{group}:T -- B:d|b
+  -> 4:11-4:13 "db"
+@ 9:13  align row |web hub
+  -> 6:11-6:14 "web"
+@ 10:16  ghost:R -- L:|db
+  -> 4:11-4:13 "db"
+@ 11:15  db:R -- L:gh|ost
+  -> none

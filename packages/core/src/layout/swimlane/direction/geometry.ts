@@ -182,14 +182,15 @@ export function countOrthogonalBends(points: Point[], epsilon = EPS): number {
   return bends;
 }
 
-function bendPoints(points: Point[]): Point[] {
+/** The points where a route turns, after `dedupeConsecutivePoints`. */
+export function bendPoints(points: Point[]): Point[] {
   const segments = orthogonalSegmentsForPoints(dedupeConsecutivePoints(points));
   return segments.slice(1).flatMap((segment, i) => {
     return segments[i]!.horizontal === segment.horizontal ? [] : [segment.a];
   });
 }
 
-function distanceToSegment(p: Point, segment: OrthogonalSegment): number {
+export function distanceToSegment(p: Point, segment: OrthogonalSegment): number {
   const dx = Math.max(
     Math.min(segment.a.x, segment.b.x) - p.x,
     0,

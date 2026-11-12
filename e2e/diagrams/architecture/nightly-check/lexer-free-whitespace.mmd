@@ -1,0 +1,7 @@
+architecture-beta
+    group g (cloud) [Group]
+    service a (server) [A] in g
+    service b   (database)   [B]   in   g
+    service c(disk)[C]
+    a : R -- L : b
+    b{group} : B -- T : c

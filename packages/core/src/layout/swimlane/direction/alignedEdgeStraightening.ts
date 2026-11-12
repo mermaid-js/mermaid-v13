@@ -1,7 +1,8 @@
 // Ported from v12 `swimlanes/direction/alignedEdgeStraightening.ts` at upstream `c9b12739f` (D532).
 // Changed: types tightened for `noUncheckedIndexedAccess`; v12 `Edge`/`Node` are the engine's
-// `layoutData.ts` types.
+// `layoutData.ts` types; `straightenOpposedPair` (#636).
 import type { Edge, Node } from '../layoutData.ts';
+import { EDGE_ROUTING, hasVertexFaces } from '../config.ts';
 import { collectNodeRectEntries, dedupeConsecutivePoints, rectOfNodeBounds } from './geometry.ts';
 import type { Point, RectBounds, RectSide } from './geometry.ts';
 import { EPS, clearOfNodes, clearOfOtherEdges, faceIsOwn } from './terminalGeometry.ts';
@@ -129,6 +130,69 @@ function straighten(
 }
 
 /**
+ * v13 (#636): two edges joining the same two aligned nodes in opposite directions, the only
+ * edges through the faces those nodes turn to each other. `straighten` keeps both routes (each
+ * face holds the other edge), and the router can leave them doubling back across each other.
+ * They become two straight lines side by side, `MIN_ARROWHEAD_SPACING` apart about the line
+ * `straighten` would draw, when both stay clear of every node and every other edge.
+ */
+function straightenOpposedPair(
+  edge: Edge,
+  edges: Edge[],
+  nodeByIdMap: Map<string, Node>,
+  obstacles: Obstacles
+): boolean {
+  const twins = edges.filter(
+    (o) => o !== edge && !o.isLayoutOnly && o.start === edge.end && o.end === edge.start
+  );
+  const twin = twins[0];
+  const line = straightLineFor(edge, nodeByIdMap);
+  const current = dedupeConsecutivePoints(edge.points ?? [], EPS);
+  const twinCurrent = dedupeConsecutivePoints(twin?.points ?? [], EPS);
+  if (
+    !twin ||
+    twins.length > 1 ||
+    !line ||
+    current.length < 3 ||
+    twinCurrent.length < 2 ||
+    [line.from, line.to].some((f) => hasVertexFaces(f.node.shape))
+  ) {
+    return false;
+  }
+  const others = edges.filter((o) => o !== edge && o !== twin);
+  if (!faceIsOwn(line.from, edge, others) || !faceIsOwn(line.to, edge, others)) {
+    return false;
+  }
+  const axis = line.points[0].x === line.points[1].x ? 'x' : 'y';
+  const half = EDGE_ROUTING.MIN_ARROWHEAD_SPACING / 2;
+  const centre = line.points[0][axis];
+  // Both lines keep `half` inside both faces, clear of their corners.
+  const fits = [line.from.rect, line.to.rect].every((r) => {
+    const [lo, hi] = axis === 'x' ? [r.left, r.right] : [r.top, r.bottom];
+    return centre - 2 * half >= lo && centre + 2 * half <= hi;
+  });
+  if (!fits) {
+    return false;
+  }
+  const shifted = (d: number): Point[] => line.points.map((p) => ({ ...p, [axis]: p[axis] + d }));
+  for (const sign of [-1, 1]) {
+    const mine = shifted(sign * half);
+    const theirs = shifted(-sign * half).reverse();
+    if (
+      clearOfNodes(edge, mine, obstacles) &&
+      clearOfNodes(twin, theirs, obstacles) &&
+      clearOfOtherEdges(edge, current, mine, others) &&
+      clearOfOtherEdges(twin, twinCurrent, theirs, others)
+    ) {
+      edge.points = mine;
+      twin.points = theirs;
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
  * Replaces the route of an edge between two nodes in different groups (lanes, or subgraphs inside them) whose centres are
  * aligned within {@link ALIGNED_CENTRE_TOLERANCE} by one straight segment between their facing
  * faces: a diamond's vertex, a rectangle's face centre. An edge keeps its route when another edge
@@ -143,7 +207,12 @@ export function straightenAlignedCrossLaneEdges(
   const obstacles = collectNodeRectEntries(nodeByIdMap.values());
   let changed = false;
   for (const edge of edges) {
-    if (!edge.isLayoutOnly && straighten(edge, edges, nodeByIdMap, obstacles)) {
+    if (
+      !edge.isLayoutOnly &&
+      (straighten(edge, edges, nodeByIdMap, obstacles) ||
+        // v13 (#636): or with its opposed twin, side by side.
+        straightenOpposedPair(edge, edges, nodeByIdMap, obstacles))
+    ) {
       changed = true;
     }
   }

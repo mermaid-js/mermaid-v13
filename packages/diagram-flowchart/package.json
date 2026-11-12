@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/diagram-flowchart",
-  "version": "13.0.0-alpha.2",
+  "version": "13.0.0-alpha.3",
   "description": "Flowchart diagram plugin for Mermaid: parser, model, graph builder, shapes and renderer.",
   "type": "module",
   "license": "MIT",
@@ -25,6 +25,11 @@
       "mermaid-source": "./src/ascii.ts",
       "types": "./dist/ascii.d.ts",
       "default": "./dist/ascii.js"
+    },
+    "./lanes": {
+      "mermaid-source": "./src/lanes.ts",
+      "types": "./dist/lanes.d.ts",
+      "default": "./dist/lanes.js"
     },
     "./language": {
       "mermaid-source": "./src/language.ts",
@@ -57,8 +62,18 @@
     "id": "flowchart",
     "types": [
       "flowchart-elk",
-      "flowchart-v2"
+      "flowchart-v2",
+      "swimlane"
     ],
+    "typeOptions": {
+      "flowchart-elk": {
+        "layout": "elk"
+      },
+      "swimlane": {
+        "section": "swimlane",
+        "layout": "swimlane"
+      }
+    },
     "formats": [
       "svg",
       "ascii"

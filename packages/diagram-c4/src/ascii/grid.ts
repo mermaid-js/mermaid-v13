@@ -86,12 +86,4 @@ export class CellSet {
       this.add(right, j);
     }
   }
-
-  /** Whether none of the `w` × `h` cells from (x, y) is in the set, and all are on the canvas. */
-  free(x: number, y: number, w: number, h: number): boolean {
-    if (x < 0 || y < 0) return false;
-    for (let j = y; j < y + h; j++)
-      for (let i = x; i < x + w; i++) if (this.has(i, j)) return false;
-    return true;
-  }
 }

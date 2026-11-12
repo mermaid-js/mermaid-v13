@@ -15,12 +15,16 @@ permissions:
   contents: read
 
 jobs:
-  checks:
-    # `pnpm check`: lint, typecheck, unit tests, runtime dependencies (R-PERF-2), licenses
-    # (R-REL-4), generated config (R-CONF-4) and generated grammar files (R-PARSE-9).
-    name: Check and build
+  # `pnpm check:static` runs as two parallel jobs, `lint` and `typecheck`, with `build` beside
+  # them; the unit tests (the rest of `pnpm check`) run sharded in `tests`. Keep the commands
+  # of `lint` and `typecheck` in step with the `check:static` script in package.json: between
+  # them they run every part of it.
+  lint:
+    # ESLint, Prettier, cspell, knip, runtime dependencies (R-PERF-2), licenses (R-REL-4),
+    # generated config (R-CONF-4) and generated grammar files (R-PARSE-9).
+    name: Lint and static checks
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    timeout-minutes: 40
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
@@ -29,8 +33,139 @@ jobs:
           cache: pnpm
           node-version-file: '.node-version'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm check
+      # ESLint's and Prettier's caches (both keyed on file content). A push to mermaid-v13
+      # lints every file from scratch and saves the result; a pull request restores the newest
+      # one and lints only the files whose content differs. ESLint does not re-lint an unchanged
+      # file when a type it uses changed elsewhere, so a type-aware finding in such a file shows
+      # on the push after the merge, not on the pull request; `typecheck` still checks every
+      # file on every run.
+      - name: Restore the lint caches
+        if: github.event_name == 'pull_request'
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            .eslintcache
+            node_modules/.cache/prettier
+          key: lint-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'eslint.config.js') }}-${{ github.event.pull_request.base.sha }}
+          restore-keys: |
+            lint-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'eslint.config.js') }}-
+      - run: pnpm lint
+      - name: Save the lint caches
+        if: github.event_name == 'push'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            .eslintcache
+            node_modules/.cache/prettier
+          key: lint-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'eslint.config.js') }}-${{ github.sha }}
+      - run: pnpm lint:knip
+      - run: pnpm check:deps
+      - run: pnpm check:licenses
+      - run: pnpm check:config
+      - run: pnpm check:grammar
+
+  typecheck:
+    name: Typecheck
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version-file: '.node-version'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+
+  build:
+    name: Build
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version-file: '.node-version'
+      - run: pnpm install --frozen-lockfile
       - run: pnpm build
+
+  structure:
+    # #722: `fallow audit` on the files this change touches, against the base (HEAD^1: the base
+    # branch on a PR, whose checkout is the merge commit; the previous tip on a push). It fails
+    # on findings the change introduces: dead code, import cycles, boundary violations (the
+    # zones in .fallowrc.json), complexity above the thresholds and new duplication. Findings
+    # the base already has are reported, not failed. The tests the change reaches run first with
+    # coverage, so CRAP scores use real coverage (their verdict is the `tests` jobs' business).
+    name: Structural audit
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version-file: '.node-version'
+      - run: pnpm install --frozen-lockfile
+      # The timing projects stay out: coverage slows code unevenly and their ratios mean nothing.
+      - name: Coverage of the tests the change reaches
+        continue-on-error: true
+        run: >-
+          pnpm vitest run --changed HEAD^1 --passWithNoTests --coverage
+          --project workspace --project gantt-utc --project gantt-la
+      - name: fallow audit
+        run: |
+          if [ -f coverage/coverage-final.json ]; then export FALLOW_COVERAGE=coverage/coverage-final.json; fi
+          pnpm exec fallow audit --base HEAD^1 --quiet --format github-annotations
+      - name: Job summary
+        if: ${{ !cancelled() }}
+        run: |
+          if [ -f coverage/coverage-final.json ]; then export FALLOW_COVERAGE=coverage/coverage-final.json; fi
+          pnpm exec fallow audit --base HEAD^1 --quiet --format github-summary >> "$GITHUB_STEP_SUMMARY" || true
+
+  checks:
+    # The one check to require on the branch: green only when lint, typecheck, build, the
+    # structural audit and every unit test shard passed. It keeps the name the single job had
+    # before it was split.
+    name: Check and build
+    if: ${{ always() }}
+    needs: [lint, typecheck, build, structure, tests]
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 5
+    steps:
+      - env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "lint, typecheck, build, structure, tests: $RESULTS"
+          for result in $RESULTS; do
+            if [ "$result" != "success" ]; then exit 1; fi
+          done
+
+  tests:
+    # `pnpm test` (the rest of `pnpm check`) split across runners: about 13 minutes on one 4-vCPU runner, CPU-bound,
+    # four-fifths of it packages/conformance. Vitest shards by file; each shard runs every
+    # project's share, gantt's two zones and the serial language-budget group included.
+    name: Unit tests (${{ matrix.shard }}/3)
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version-file: '.node-version'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test --shard=${{ matrix.shard }}/3
 
   bench:
     # R-TEST-7, the PR check (packages/bench/src/pr-check.ts), about two minutes:

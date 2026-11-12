@@ -90,7 +90,7 @@ import {
   hintFor,
   IDS,
   LABEL,
-  limitMessage,
+  depthLimitMessage,
   MARKDOWN_HINT,
   OPEN_ARROW,
   OPEN_MD_STRING,
@@ -906,7 +906,7 @@ class BlockParser {
     this.frames.push(frame);
     if (this.frames.length - 1 > this.maxDepth && !this.depthReported) {
       this.depthReported = true;
-      const message = limitMessage('depth', this.maxDepth);
+      const message = depthLimitMessage(this.maxDepth);
       this.st.diagnostics.error(LIMIT_CODES.maxDepth, message, frame.opener ?? this.c.range);
     }
   }

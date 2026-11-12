@@ -13,14 +13,21 @@
  * `<<fork>>`-style markers, `end note`, …) only widen the ranges of the terminals around them.
  */
 // cspell:words LALR
-import { Kind, LineIndex, ParseState, Probe, skipTo, STOP } from '@mermaid-js/core/parser-kit';
-import type { ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
+import { Kind, Probe, skipTo } from '@mermaid-js/core/parser-kit';
+import type {
+  EmbeddedBlock,
+  ParseOptions,
+  ParseResult,
+  ParseState,
+  Range,
+} from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type {
   StateCompositeStmt,
   StateDocument,
+  StateEmbedStmt,
   StateHeader,
   StateNoteStmt,
   StateSimpleKind,
@@ -29,15 +36,15 @@ import type {
   StateStmt,
   StateTransitionStmt,
 } from './ast.ts';
-import type { lex } from './lexer.ts';
+import { applyFolds, foldData, type Fold } from './fold.ts';
 import { StateBuilder } from './model.ts';
 import type { Item, StateItem, StateModel } from './model.ts';
 import {
   AFTER_ID,
+  AFTER_STATE,
   AFTER_TARGET,
   AS,
   BOUNDARY,
-  BOUNDARY_IN_COMPOSITE,
   CLASS_IDS,
   CLASS_NAME,
   CLASSDEF_ID,
@@ -47,6 +54,11 @@ import {
   DESCR_VALUE,
   DIRECTIONS,
   DOC_KINDS,
+  EMBED_AFTER_ID,
+  EMBED_BODY,
+  EMBED_END,
+  EMBED_ID,
+  EMBED_OPEN,
   EXPECTED,
   HEADER,
   HEADER_START,
@@ -67,12 +79,12 @@ import {
   TITLE,
   WIDTH,
 } from './tables.ts';
-import { blankAt, keyOf, multiWordMessage, trimColon } from './names.ts';
+import { keyOf, trimColon } from './names.ts';
 import type { Scope } from './names.ts';
 import { clickInComposite, ignoredInComposite, scaleIgnored, undrawnNotices } from './notices.ts';
 import { splitRegions } from './regions.ts';
+import { StateCursor, STOP } from './cursor.ts';
 import { terminals } from './terminals.ts';
-import type { Tokens } from './terminals.ts';
 import { T } from './tokens.ts';
 
 export interface StateParseOptions extends ParseOptions {
@@ -102,39 +114,33 @@ interface Doc {
  * One parse. Each grammar rule is a method; `i` indexes the parser tokens. A rule that fails
  * records a diagnostic and throws {@link STOP}; the statement loop catches it and recovers.
  */
-class StateParser {
+class StateParser extends StateCursor {
   private readonly pre: PreprocessResult;
-  private readonly st = new ParseState();
   private readonly ids: ParseState['ids'];
   private readonly db: StateBuilder;
-  private readonly tokens: Tokens;
-  private readonly all: ReturnType<typeof lex>['tokens'];
-  private readonly probe: Probe | undefined;
   private readonly maxDepth: number;
-  private readonly seen = new Set<string>();
-  /**
-   * Symbols of the statements being parsed: recorded when a statement completes, dropped when
-   * it fails, so a failed `A -->` does not define `A`.
-   */
-  private readonly pending: [name: string, kind: string, range: Range, role?: 'def' | 'ref'][] = [];
   /** Region ordinals handed out per composite name. */
   private readonly regionCount = new Map<string, number>();
   /** `state X` lines on their own, which v12 does not draw unless X is mentioned elsewhere. */
   private readonly declared: [string, Range][] = [];
   private readonly clicks: [string, Range][] = []; // top-level `click` targets
-  private lines: LineIndex | undefined;
+  /** Embedded diagram blocks (ADR-15), for `ParseResult.embeds`. */
+  private readonly embeds: EmbeddedBlock[] = [];
+  /** Each block's model record by id, and the `id@{ view: collapsed }` folds (#670). */
+  private readonly blocks = new Map<string, { title?: string; folded?: boolean }>();
+  private readonly folds: Fold[] = [];
   private dividers = 0;
-  private hint: string | undefined;
-  /** The hint of the statement before the current one, and where the current one starts. */
-  private prevHint: string | undefined;
-  private stmtFrom = 0;
-  private i = 0;
 
   constructor(
-    private readonly src: string,
+    src: string,
     private readonly options: StateParseOptions
   ) {
-    const pre = (this.pre = options.preprocessed ?? preprocess(src));
+    const pre = options.preprocessed ?? preprocess(src);
+    const probe =
+      options.probe === undefined ? undefined : new Probe(src, options.probe, PROBE_FOLLOWS);
+    if (probe && pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+    super(src, terminals(src, pre, probe), probe);
+    this.pre = pre;
     if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
     this.ids = this.st.ids;
     const diagnostics = this.st.diagnostics;
@@ -143,14 +149,7 @@ class StateParser {
       warn: (code, message, range) => void diagnostics.warning(code, message, range),
     });
     this.maxDepth = options.maxDepth ?? DEFAULT_LIMITS.maxDepth;
-    const probe =
-      options.probe === undefined ? undefined : new Probe(src, options.probe, PROBE_FOLLOWS);
-    this.probe = probe;
-    if (probe && pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
-    const { tokens, all } = terminals(src, pre, probe);
-    this.tokens = tokens;
-    this.all = all;
-    probe?.trivia(all);
+    probe?.trivia(this.all);
   }
 
   parse(): StateParseResult {
@@ -159,6 +158,7 @@ class StateParser {
     const items: Item[] = [];
     this.header(children);
     this.document(undefined, { items, nodes: children });
+    applyFolds(this.folds, this.embeds, this.blocks, this.report);
     const warnings = () => st.diagnostics.list.filter((d) => d.severity === 'warning');
     const model = this.db.build(items, []);
     undrawnNotices(this.st.diagnostics, model, this.declared, this.clicks);
@@ -169,192 +169,11 @@ class StateParser {
       range: { start: this.pre.bodyStart, end: src.length },
       children,
     };
-    return st.result(model, ast, this.all, this.options, this.probe);
-  }
-
-  // ---- tokens -------------------------------------------------------------------------
-
-  private kind(j = this.i): number {
-    return this.tokens.kind[j] ?? Kind.EOF;
-  }
-
-  private text(j = this.i): string {
-    return this.tokens.text[j] ?? '';
-  }
-
-  /** Source range of token `j` (with the text jison consumed around it). */
-  private range(j = this.i): Range {
-    const t = this.tokens;
-    if (j >= t.length) return { start: this.src.length, end: this.src.length };
-    return { start: t.from[j] ?? 0, end: t.to[j] ?? 0 };
-  }
-
-  /** From token `from` to the last one consumed, blanks trimmed off the end. */
-  private span(from: number): Range {
-    const start = this.range(from).start;
-    if (this.i <= from) return { start, end: start };
-    let end = this.range(this.i - 1).end;
-    while (end > start && /\s/.test(this.src[end - 1] ?? '')) end--;
-    return { start, end };
-  }
-
-  /** A token's own range, blanks trimmed. */
-  private own(j: number): Range {
-    let s = this.tokens.start[j] ?? 0;
-    let e = this.tokens.end[j] ?? 0;
-    while (s < e && /\s/.test(this.src[s] ?? '')) s++;
-    while (e > s && /\s/.test(this.src[e - 1] ?? '')) e--;
-    return { start: s, end: e };
-  }
-
-  /** Probe hook: the parser tests the current token for `kinds` (a constant list). */
-  private tested(kinds: readonly number[]): void {
-    const p = this.probe;
-    if (p?.isAt(this.tokens, this.i)) p.tested(kinds, this.tokens.start[this.i] ?? 0);
-  }
-
-  private at(kinds: readonly number[], k: number): boolean {
-    this.tested(kinds);
-    return this.kind() === k;
-  }
-
-  private expect(want: readonly number[]): number {
-    this.tested(want);
-    if (!want.includes(this.kind())) this.fail(want);
-    return this.i++;
-  }
-
-  // ---- errors and recovery ------------------------------------------------------------
-
-  private lineOf(at: number): number {
-    return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
-  }
-
-  /** How an error message names the token at `j`. */
-  private found(j = this.i): string {
-    const k = this.kind(j);
-    if (k === Kind.EOF || (k === T.EndOfInput && this.text(j) === '')) return 'the end of the text';
-    if (k === Kind.Newline || k === T.EndOfInput) return 'a line break';
-    const r = this.own(j);
-    const t = this.src.slice(r.start, r.end).trim();
-    if (t === '') return 'nothing';
-    return t.length > 24 ? `\`${t.slice(0, 24)}…\`` : `\`${t}\``;
-  }
-
-  /** Report what was found where one of `want` was expected, then stop the statement. */
-  private fail(want: readonly number[], hint?: string): never {
-    this.tested(want);
-    const { st } = this;
-    const k = this.kind();
-    const where = this.where();
-    if (k === T.MultiWordState) {
-      this.multiWord(where);
-      throw STOP;
-    }
-    if (k === T.DefaultClassDefId) {
-      st.diagnostics.error(
-        'CLASSDEF_DEFAULT',
-        '`classDef default` is not supported in state diagrams: give the class another name and apply it with `class`.',
-        where
-      );
-      throw STOP;
-    }
-    // A lexical error at the start of a statement comes from the text before it (`scale 3`
-    // with no `width`): explain that statement.
-    const zeroWidth = k === Kind.Error && where.end === where.start;
-    const why = this.why(
-      hint ?? (zeroWidth && this.i === this.stmtFrom ? this.prevHint : undefined)
-    );
-    if ((k === Kind.Error || k === T.Invalid) && !this.crossesLine()) {
-      const ch = this.src.slice(where.start, Math.max(where.end, where.start + 1)).trim();
-      const what = ch ? `character \`${ch}\`` : blankAt(this.src, where.start);
-      const arrow = ch === '-' && !why ? '; a transition is written `A --> B`' : '';
-      st.diagnostics.error('UNEXPECTED_CHARACTER', `Unexpected ${what}${why || arrow}.`, where, {
-        expected: EXPECTED.names(want),
-      });
-      throw STOP;
-    }
-    const found = this.crossesLine() ? 'the end of the line' : this.found();
-    const d = st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), found);
-    if (why) d.message = `${d.message.slice(0, -1)}${why}.`;
-    throw STOP;
-  }
-
-  /** Whether the current token is on a later line than the statement's previous token. */
-  private crossesLine(): boolean {
-    const { i, tokens } = this;
-    if (i <= this.stmtFrom || i >= tokens.length) return false;
-    const k = this.kind();
-    if (k === Kind.Newline || k === T.EndOfInput) return false;
-    return /[\n\r]/.test(this.src.slice(tokens.end[i - 1] ?? 0, tokens.start[i] ?? 0));
-  }
-
-  /**
-   * Where an error is reported: the current token, or, at a line break or on a later line, the
-   * end of the statement's line.
-   */
-  private where(): Range {
-    const { i, tokens } = this;
-    if (i >= tokens.length) return { start: this.src.length, end: this.src.length };
-    const k = this.kind();
-    if (k === Kind.Newline || k === T.EndOfInput) {
-      const s = tokens.start[i] ?? 0;
-      return { start: s, end: s };
-    }
-    if (this.crossesLine()) {
-      const e = this.own(i - 1).end;
-      return { start: e, end: e };
-    }
-    return this.own(i);
-  }
-
-  /** Queue a symbol; a state's role is decided when it is recorded (its first is the def). */
-  private symbol(name: string, kind: string, range: Range, role?: 'def' | 'ref'): void {
-    this.pending.push([name, kind, range, role]);
-  }
-
-  /** Record the queued symbols of the statements that completed. */
-  private flushSymbols(): void {
-    for (const [name, kind, range, role] of this.pending) {
-      const r = role ?? (this.seen.has(name) ? 'ref' : 'def');
-      if (role === undefined) this.seen.add(name);
-      this.st.symbol(name, kind, range, r);
-    }
-    this.pending.length = 0;
-  }
-
-  /** `state a b {`: one error for the name, which is returned (v12's lexer threw here). */
-  private multiWord(where: Range): string {
-    const name = this.text()
-      .replace(/\s*\{$/, '')
-      .trim();
-    this.st.diagnostics.error('MULTI_WORD_STATE', multiWordMessage(name), where);
-    return name;
-  }
-
-  private why(hint: string | undefined): string {
-    const h = hint ?? this.hint;
-    return h ? `; ${h}` : '';
-  }
-
-  /**
-   * Skip to the next statement boundary after an error in the statement that starts at token
-   * `from` (R-PARSE-4): a line break, or the `}` of the composite state it is in. Some line
-   * breaks are no tokens (all of them inside a composite, as in jison), so the first token on
-   * a later line is a boundary too.
-   */
-  private recover(inComposite: boolean, from: number): void {
-    this.prevHint = this.hint;
-    this.hint = undefined;
-    this.probe?.freeze();
-    const { tokens, src } = this;
-    const boundary = inComposite ? BOUNDARY_IN_COMPOSITE : BOUNDARY;
-    let j = this.i;
-    while (j < tokens.length && boundary[tokens.kind[j] ?? Kind.EOF] !== 1) {
-      if (j > from && /[\n\r]/.test(src.slice(tokens.end[j - 1] ?? 0, tokens.start[j] ?? 0))) break;
-      j++;
-    }
-    this.i = j;
+    const result: StateParseResult = st.result(model, ast, this.all, this.options, this.probe);
+    if (this.embeds.length > 0) result.embeds = this.embeds;
+    // Edges counted across embedded diagrams (ADR-15).
+    result.edgeCount = model.transitions.length;
+    return result;
   }
 
   // ---- document -----------------------------------------------------------------------
@@ -502,6 +321,8 @@ class StateParser {
       }
       case T.Click:
         return this.click(doc);
+      case T.Embed:
+        return this.embed(doc);
       default:
         if (this.simpleStatement(k, scope, doc)) return;
         return this.fail(scope ? COMPOSITE_DOC_KINDS : DOC_KINDS, MISPLACED[k]);
@@ -650,7 +471,8 @@ class StateParser {
   private stateOrTransition(scope: Scope | undefined, doc: Doc): void {
     const from = this.i;
     const [item, node] = this.idStatement(scope);
-    this.tested(AFTER_ID);
+    this.tested(AFTER_STATE);
+    if (this.kind() === T.EmbedFold) return this.fold(from, item.range);
     if (this.kind() === T.Descr) {
       const d = this.i++;
       item.description = trimColon(this.text(d));
@@ -879,6 +701,94 @@ class StateParser {
       range: mention.range,
     });
   }
+
+  /**
+   * `mermaid id["Title"] {` body `}` (ADR-15): a state with the block's id, and the block in
+   * the parse result. The body is one token; the host never reads it.
+   */
+  private embed(doc: Doc): void {
+    const from = this.i++;
+    const j = this.expect(EMBED_ID);
+    const name = this.text(j).trim();
+    const nameRange = this.own(j);
+    let title: string | undefined;
+    this.tested(EMBED_AFTER_ID);
+    if (this.kind() === T.EmbedTitle) {
+      title = this.text(this.i++)
+        .slice(1, -1)
+        .trim()
+        .replace(/^"(.*)"$/s, '$1');
+    }
+    const open = this.expect(EMBED_OPEN);
+    const body = this.expect(EMBED_BODY);
+    const bodyRange = { start: this.tokens.start[body] ?? 0, end: this.tokens.end[body] ?? 0 };
+    this.tested(EMBED_END);
+    if (this.kind() !== T.EmbedEnd) {
+      const opener = { start: this.range(from).start, end: this.own(open).end };
+      this.st.diagnostics.error(
+        'UNCLOSED',
+        `Unclosed block: the \`mermaid ${name}\` block at line ${this.lineOf(opener.start)} has no closing \`}\`. Add \`}\` on its own line to close it.`,
+        opener,
+        {
+          expected: EXPECTED.names(EMBED_END),
+          related: [
+            {
+              message: 'The text ends here.',
+              range: { start: this.src.length, end: this.src.length },
+            },
+          ],
+        }
+      );
+      throw STOP;
+    }
+    this.i++;
+    this.symbol(name, 'state', nameRange);
+    const range = this.span(from);
+    const node: StateEmbedStmt = {
+      id: this.ids.node(name),
+      type: 'Embed',
+      range,
+      name,
+      nameRange,
+      bodyRange,
+    };
+    if (title) node.title = title;
+    doc.nodes.push(node);
+    this.st.statement('embed', range);
+    doc.items.push({
+      stmt: 'state',
+      id: name,
+      type: 'default',
+      description: '',
+      ast: node.id,
+      range: nameRange,
+      embed: this.block(name, title),
+    });
+    this.embeds.push({
+      id: name,
+      ...(title ? { title } : {}),
+      text: this.src.slice(bodyRange.start, bodyRange.end),
+      offset: bodyRange.start,
+    });
+  }
+
+  /** A block's model record, kept by id for a fold (#670). */
+  private block(name: string, title: string | undefined): { title?: string } {
+    const rec = title ? { title } : {};
+    if (!this.blocks.has(name)) this.blocks.set(name, rec);
+    return rec;
+  }
+
+  /** `id@{ view: collapsed }` (#670): folds block `id` (at `at`), checked once all is read. */
+  private fold(from: number, at: Range): void {
+    const k = this.i++;
+    if (foldData(this.text(k), this.own(k), this.report))
+      this.folds.push({ id: this.text(from).trim(), range: at });
+    this.st.statement('fold', this.span(from));
+  }
+
+  private readonly report = (code: string, message: string, range: Range): void =>
+    void this.st.diagnostics.error(code, message, range);
 
   /** `click A "url" "tooltip"` / `click A href "url"`, then a line break. */
   private click(doc: Doc): void {

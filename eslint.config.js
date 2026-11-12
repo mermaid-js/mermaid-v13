@@ -258,7 +258,8 @@ export default tseslint.config(
   },
   {
     // Core and diagram code never read the clock (DESIGN §1, D270): `now` is on the render
-    // context. Specs may time themselves.
+    // context. Specs may time themselves. Nor does it order strings by the host locale
+    // (R-ARCH-6, DESIGN §12.4, #676).
     files: [
       'packages/core/src/**/*.{ts,js}',
       'packages/shared/src/**/*.{ts,js}',
@@ -277,6 +278,11 @@ export default tseslint.config(
           selector,
           message: 'Core and diagram code never read the clock (D270); use `ctx.now`.',
         })),
+        {
+          selector: "CallExpression[callee.property.name='localeCompare']",
+          message:
+            'The output must not depend on the host locale (R-ARCH-6, DESIGN §12.4); compare by code unit (`byCodeUnit`).',
+        },
       ],
     },
   },

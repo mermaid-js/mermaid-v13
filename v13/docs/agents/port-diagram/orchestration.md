@@ -1,6 +1,6 @@
 # Orchestrating a port spec with agents
 
-This file is for `/implement-spec` runs on a v13 spec. It supplements the skill's steps with what M1 taught (`v13/docs/retros/M1.md`).
+This file is for runs where one orchestrating session implements a whole v13 spec with one agent per ticket. It records what M1 taught about such runs (`v13/docs/retros/M1.md`).
 
 ## Where things live
 
@@ -21,7 +21,7 @@ This file is for `/implement-spec` runs on a v13 spec. It supplements the skill'
 - When a handoff arrives:
   1. Check for AI attribution: `git log --format=%b <integration>..<branch> | grep -ciE 'co-authored|generated with'` must print 0.
   2. Spot-check one or two claimed acceptance criteria yourself, against the code or a test run. Handoff claims are unverified until checked.
-  3. Run `/code-review` on the ticket's diff if it is non-trivial. Send any findings back to the same agent.
+  3. Review the ticket's diff if it is non-trivial. Send any findings back to the same agent.
   4. Merge with `--ff-only` if the branch has the integration tip. Otherwise use a merger agent (`--no-ff`, `pnpm check` after the merge, fix only merge breakage).
   5. Move the ticket's unmet criteria into `GAPS.md` under the ticket that owns each one.
   6. Push the integration branch.
@@ -37,10 +37,10 @@ This file is for `/implement-spec` runs on a v13 spec. It supplements the skill'
 ## Finish
 
 1. Read GitHub CI on the draft PR. It covers WebKit, Argos and the full matrix, none of which run locally. A red job is a ticket that isn't done.
-2. Run a final `/code-review` over the integration branch, focused on how the tickets fit together. Fix the findings with a single implementer agent.
+2. Review the whole integration branch once more, focused on how the tickets fit together. Fix the findings with a single implementer agent.
 3. Remove the worktrees after checking that each one is clean and merged.
 4. Closing issues is usually denied in agent sessions. Give the maintainer the `gh issue close` commands instead.
-5. Commit messages and PR bodies carry no AI attribution (CLAUDE.md).
+5. Commit messages and PR bodies carry no AI attribution (`AGENTS.md`).
 
 ## IMPLEMENTER.md template
 
@@ -49,7 +49,7 @@ This file is for `/implement-spec` runs on a v13 spec. It supplements the skill'
 - Notes: this folder. Read INDEX.md, GAPS.md (close the items listed for your ticket) and tickets/<dep>.md for each blocker.
 - Worktree: .claude/worktrees/t<N> on feature/<N>_<short>. Use absolute paths, and stay out of the main checkout and other worktrees. Run `pnpm install` first.
 1. Confirm your base: `git merge-base --is-ancestor <integration> HEAD`. If that fails, reset onto <integration>.
-2. Use the Skill tool with `tdd`. Test through `createMermaid().render()`, except where the recipe step names another seam.
+2. Work test-first: write a failing test, then the code that makes it pass. Test through `createMermaid().render()`, except where the recipe step names another seam.
 3. Stay in the ticket's scope. Touch shared files minimally and additively. Escalate decisions instead of making them.
 4. Run `pnpm check` until it is green. Commit with no AI attribution. Don't push, open PRs, or comment on or close issues.
 5. Before reporting, merge <integration> and run `pnpm check` again.

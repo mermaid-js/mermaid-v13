@@ -66,6 +66,8 @@ generated/
 # The theme's runtime alias and kind table, from vocabulary.ts by `pnpm gen:theme`
 !packages/core/src/theme/generated/
 !packages/diagram-*/src/generated/
+# A diagram's grammar artifacts, from its grammar files by `pnpm gen:grammar` (#694)
+!packages/diagram-*/grammar/generated/
 # A diagram's theme alias and kind table, from its src/theme/vocabulary.ts by `pnpm gen:theme`
 !packages/diagram-*/src/theme/generated/
 !packages/mermaid/src/generated/
@@ -77,8 +79,6 @@ generated/
 !packages/language-service-monaco/src/generated/
 
 
-/CLAUDE.md
-/AGENTS.md
 /assistant/
 # Project skills are shared (v13/docs/RELEASING.md uses release-alpha); the rest of .claude stays
 # local. `!/.claude/` first, so a global `.claude` ignore can't hide the skills.

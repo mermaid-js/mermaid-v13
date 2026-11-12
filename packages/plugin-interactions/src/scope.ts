@@ -22,6 +22,18 @@ export interface Scope {
 
 const isSvg = (n: Element): boolean => n.tagName.toLowerCase() === 'svg';
 
+/**
+ * The `[data-id]` elements of the diagram root `svg` itself: not those of a diagram embedded in
+ * it (ADR-15), whose nested `<svg>` is its own scope with ids of its own.
+ */
+export function ownIds(svg: Element): Element[] {
+  return [...svg.querySelectorAll('[data-id]')].filter((n) => {
+    for (let p = n.parentElement; p !== null && p !== svg; p = p.parentElement)
+      if (isSvg(p)) return false;
+    return true;
+  });
+}
+
 /** True when an ancestor of `n` below `top` is in `pool`. */
 function inside(n: Element, pool: ReadonlySet<Element>, top: Element): boolean {
   for (let p = n.parentElement; p !== null && p !== top; p = p.parentElement)
@@ -79,7 +91,7 @@ export function createScope(svg: Element): { scope: Scope; teardown: () => void 
     doc: svg.ownerDocument,
     anchors(ids, accept) {
       const found = new Map<string, Element[]>();
-      for (const node of svg.querySelectorAll('[data-id]')) {
+      for (const node of ownIds(svg)) {
         const id = node.getAttribute('data-id') ?? '';
         if (ids.has(id)) found.set(id, [...(found.get(id) ?? []), node]);
       }

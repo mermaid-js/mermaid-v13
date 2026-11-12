@@ -1,0 +1,21 @@
+---
+config:
+  theme: redux
+description: >-
+  one representative swimlane diagram in the redux theme (redux family, D227): three lanes with their title bands, a loose node in the engine's default lane, a labelled cross-lane edge and a back edge
+---
+swimlane-beta LR
+  subgraph Sales
+    A[Quote] --> B{Accepted?}
+  end
+  subgraph Ops[Operations]
+    C[Plan] --> D[(Stock)]
+    D --> E[Ship]
+  end
+  subgraph Billing
+    F[Invoice]
+  end
+  Start([New lead]) --> A
+  B -- yes --> C
+  B -. no .-> A
+  E --> F

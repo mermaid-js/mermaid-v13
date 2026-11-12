@@ -16,6 +16,7 @@
  * error: it reports it, skips to the next line break and carries on (R-PARSE-4). A negative
  * value is a semantic error with v12's message, and the statement goes on.
  */
+import { checkLimit } from '@mermaid-js/core/limits';
 import {
   ExpectedTable,
   ID_CONTROL,
@@ -48,6 +49,8 @@ import { PIE_TRIVIA, T } from './tokens.ts';
 export interface PieParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
+  /** The integrator's cap on sections (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
+  maxNodes?: number;
 }
 
 export type PieParseResult = ParseResult<PieModel, PieDocument>;
@@ -117,6 +120,8 @@ class PieParser extends RuleParser<PreprocessResult> {
   private readonly byLabel = new Map<string, PieSection>();
   private readonly sections: PieSection[] = [];
   private showData = false;
+  /** The sections read so far, repeats included (the node cap counts them). */
+  private slices = 0;
   /** The last in-text value of each (v12's Langium assignments: the last one wins). */
   private readonly texts: TextValues = { title: '', accTitle: '', accDescr: '' };
 
@@ -265,6 +270,14 @@ class PieParser extends RuleParser<PreprocessResult> {
     const node: PieSliceNode = { id, type: 'Slice', range, label, labelRange, value, valueRange };
     this.children.push(node);
     this.st.statement('slice', range);
+    checkLimit(
+      this.st.diagnostics,
+      'maxNodes',
+      ++this.slices,
+      this.options.maxNodes,
+      'sections',
+      range
+    );
     // D229: each label is a `slice` symbol; a repeat refers to the first.
     this.st.symbol(label, 'slice', labelRange, this.repeated(base) ? 'ref' : 'def');
     const { diagnostics } = this.st;

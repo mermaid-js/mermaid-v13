@@ -8,6 +8,7 @@ import { validateSwimlanesLayout } from '../direction/validation.ts';
 import { runSwimlane, swimlaneLayout } from '../swimlane.ts';
 import { DDLT_FIXTURES, fixtureGraph } from './ddlt.fixtures.ts';
 import { swimlaneGateIssues } from './ddltGates.ts';
+import v12Fixtures from './v12Fixtures.json' with { type: 'json' };
 
 /**
  * v12's allowed level-1 failures (`ddlt-manifest.json` `allowLevel1Failure`). D538 allows them
@@ -21,24 +22,11 @@ const ALLOWED_LEVEL1_FAILURES = new Set([
 ]);
 
 /**
- * Fixtures that fail the gates with v13's sizes, reported on #595 with their reasons. Each must
- * fail with exactly these issues, so a fix or a change shows here.
+ * Fixtures that fail the gates with v13's sizes, each with its issue and exactly the issues it
+ * fails with, so a fix or a change shows here. None since #634 and #636 were fixed in the engine
+ * (`ddltRegressions.spec.ts`); D538 has no other allowance.
  */
-const KNOWN_FAILURES: Readonly<Record<string, readonly string[]>> = {
-  // A labelled and an unlabelled edge leave I together; the second runs along the first's
-  // label (v13's label is wider than v12's capture).
-  '5-car-fun-sales-wide-tb': [
-    'edge-border-hugging: Edge "L_I_K_0" hugs border of node "edge-label-L_I_J_0" for 36.2 units',
-  ],
-  // Never in v12's sweep (no sizes). Every node of one lane joins every node of the other.
-  // Since LR routes on drawn sizes (`turnedRouting.ts`) only Dep2.Proc2's same-rank back edge
-  // fails: `swapDestinationTerminalTailsToReduceCrossings` swaps its tail onto a rail along
-  // Dep1.Proc2's top, through the node.
-  'pebr-2-edge-intrudes-lane-label': [
-    'edge-intersects-obstacle: Edge "L_Dep2.Proc2_Dep1.Proc2_0" intersects obstacle "Dep1.Proc2"',
-    'edge-border-hugging: Edge "L_Dep2.Proc2_Dep1.Proc2_0" hugs border of node "Dep1.Proc2" for 92.0 units',
-  ],
-};
+const KNOWN_FAILURES: Readonly<Record<string, readonly string[]>> = {};
 
 /** Every gate issue for a fixture, core's first. */
 function gateIssues(id: string): string[] {
@@ -52,11 +40,18 @@ function gateIssues(id: string): string[] {
 
 const ids = Object.keys(DDLT_FIXTURES);
 
+/** Fixtures added in v13, not in v12's folder at the port baseline. */
+const V13_ONLY: readonly string[] = [];
+
 describe('swimlane DDLT fixtures', () => {
   it('cover every fixture, the regressions included', () => {
-    expect(ids.length).toBeGreaterThanOrEqual(40);
-    expect(ids).toContain('10-node-placement');
-    expect(ids).toContain('regressions/title-band-rails');
+    // Compared with v12's list, not with a floor (#678, #695): a v12 fixture is in the sweep
+    // unless `v12Fixtures.json` lists it under `notPorted` with the issue that tracks it, and
+    // a fixture v12 does not have is named in `V13_ONLY`.
+    const notPorted = Object.keys(v12Fixtures.notPorted);
+    for (const id of notPorted) expect(v12Fixtures.fixtures).toContain(id);
+    const expected = [...v12Fixtures.fixtures.filter((id) => !notPorted.includes(id)), ...V13_ONLY];
+    expect([...ids].sort()).toEqual(expected.sort());
     for (const id of [...ALLOWED_LEVEL1_FAILURES, ...Object.keys(KNOWN_FAILURES)])
       expect(ids).toContain(id);
   });

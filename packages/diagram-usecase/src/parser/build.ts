@@ -28,6 +28,7 @@ import type {
   UsecaseShape,
 } from '../model.ts';
 import type { UsecaseElementKind } from './ast.ts';
+import { checkLimits, type UsecaseLimitOptions } from './limits.ts';
 import { shown } from './text.ts';
 import type {
   BoundaryDraft,
@@ -151,7 +152,10 @@ export class UsecaseBuilder {
 
   private readonly unique = new UniqueLists();
 
-  constructor(private readonly report: BuildReport) {}
+  constructor(
+    private readonly report: BuildReport,
+    private readonly limits: UsecaseLimitOptions = {}
+  ) {}
 
   addElement(draft: ElementDraft): void {
     this.elements.push(draft);
@@ -264,6 +268,22 @@ export class UsecaseBuilder {
     for (const j of jsonTables) add(j.id, 'json', j);
     for (const r of relationships) if (r.explicitId) add(r.id, 'edge', r);
     this.classesAndStyles(stylables);
+    const noted = new Set(notes.map((n) => n.astId));
+    const noteAt = this.noteDrafts.filter((d) => noted.has(d.astId));
+    checkLimits(
+      [
+        ...elements.values(),
+        ...boundaries.values(),
+        ...this.jsonDrafts,
+        ...noteAt.map((d) => ({ range: d.targetRange })),
+      ],
+      // From the source's name: a draft's own range starts at its arrow.
+      this.relationDrafts.map((r) => ({
+        range: { start: r.source.range.start, end: r.range.end },
+      })),
+      this.limits,
+      this.report
+    );
 
     return {
       actors,

@@ -20,6 +20,7 @@
  * message that names its cause, and box-drawing errors are reported at their source line and
  * column (D486).
  */
+import { checkDepth, checkLimit } from '@mermaid-js/core/limits';
 import {
   APOSTROPHE,
   DQUOTE,
@@ -74,6 +75,10 @@ import { HEADER, T } from './tokens.ts';
 export interface TreeViewParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
+  /** The integrator's cap on nodes (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
+  maxNodes?: number;
+  /** How deep a node may sit under a top one (core `DEFAULT_LIMITS.maxDepth` when absent). */
+  maxDepth?: number;
 }
 
 export type TreeViewParseResult = ParseResult<TreeViewModel, TreeViewDocument>;
@@ -617,6 +622,14 @@ class TreeViewParser {
     }
     this.nodes.push(node);
     this.children.push(node);
+    checkLimit(
+      this.st.diagnostics,
+      'maxNodes',
+      this.nodes.length,
+      this.opts.maxNodes,
+      'nodes',
+      node.range
+    );
     this.nodeSpans.push(this.st.statement('node', { ...node.range }));
     // D487: each node is a `node` symbol of its own, over its name as written (its quotes and
     // a directory's `/` included); the facet's name syntax reads the name inside them.
@@ -784,6 +797,7 @@ class TreeViewParser {
       accDescr: this.texts.AccDescr,
       frontMatterTitle: this.pre.frontMatter?.title,
     });
+    checkDepth(this.st.diagnostics, this.nodes, this.opts.maxDepth);
     const warnings = diagnostics.list.filter((d) => d.severity === 'warning').sort(bySource);
     return Object.freeze({ ...resolved, warnings: Object.freeze(warnings) });
   }

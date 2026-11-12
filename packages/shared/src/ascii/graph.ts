@@ -31,14 +31,16 @@ interface Labelled {
 
 /**
  * Draws each group's frame, in the order given (outermost first), its title on the top border.
- * Returns the cell either side of each title, for {@link clearGaps}.
+ * Returns the cell either side of each title, for {@link clearGaps}: `gapsOf` says which cells
+ * those are, the ones beside the title's block when absent.
  */
 export function drawFrames(
   canvas: Canvas,
   glyphs: GlyphSet,
   groups: readonly Labelled[],
   layout: LayoutModel,
-  write: LabelWriter
+  write: LabelWriter,
+  gapsOf: (label: MeasuredLabel, at: CellRect) => readonly Point[] = blockGaps
 ): Point[] {
   const gaps: Point[] = [];
   for (const g of groups) {
@@ -53,9 +55,17 @@ export function drawFrames(
       height: Math.max(g.label.height, 1),
     });
     write(canvas, g.label, at.x, at.y, at.width);
-    gaps.push({ x: at.x - 1, y: at.y }, { x: at.x + at.width, y: at.y });
+    gaps.push(...gapsOf(g.label, at));
   }
   return gaps;
+}
+
+/** The cell either side of a title's whole block. */
+function blockGaps(_label: MeasuredLabel, at: CellRect): Point[] {
+  return [
+    { x: at.x - 1, y: at.y },
+    { x: at.x + at.width, y: at.y },
+  ];
 }
 
 /** A space either side of a title, where the border is still plain (`┌─ one ───┐`). */

@@ -1,0 +1,30 @@
+---
+config:
+  theme: base
+description: >-
+  one representative architecture diagram in the base theme (classic family),
+  the one theme with a listed difference (D541): v12 drew #777 edges and #000
+  group borders; v13 takes the family rule (edges in lineColor, borders in
+  v12's group border), as every other theme
+---
+architecture-beta
+  title Order platform
+  group cloud(cloud)[Cloud]
+  group api(server)[API] in cloud
+  group data(database)[Data] in cloud
+
+  service gateway(internet)[Gateway]
+  service web(server)[Web server] in api
+  service worker(server)[Worker] in api
+  service db(database)[Orders DB] in data
+  service disk1(disk)[Backups] in data
+  service ops "Ops console"
+  junction hub in cloud
+
+  gateway:R --> L:web
+  web:B -[enqueue]- T:worker
+  web:R -- L:hub
+  hub:B -- T:db
+  db:R <--> L:disk1
+  worker{group}:R -[reads]-> L:db{group}
+  ops:T -- B:gateway

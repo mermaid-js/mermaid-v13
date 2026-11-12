@@ -9,7 +9,7 @@ import { layered, type LayoutGraph, type LayoutModel } from '@mermaid-js/core/la
 import { compass } from '@mermaid-js/core/layout/compass';
 import { swimlane } from '@mermaid-js/core/layout/swimlane';
 import { tree } from '@mermaid-js/core/layout/tree';
-import type { DiagramPlugin } from '@mermaid-js/core';
+import type { DiagramPlugin, RenderContext } from '@mermaid-js/core';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { describe, expect, it } from 'vitest';
 import { createMermaid, NotLoadedError, type MermaidError } from './index.ts';
@@ -216,5 +216,39 @@ describe('the swimlane engine, a peer of layered (D535)', () => {
     const gated = await m.render('f', flow('tree'));
     expect(gated.warnings.map((w) => w.code)).toEqual(['LAYOUT_UNKNOWN']);
     expect(gated.svg).toBe(byLayered.svg);
+  });
+});
+
+// `layoutParts` is first-party only (#651): mermaid loads only its own part chunks, so any other
+// entry is ignored, never reported missing, and never hands an engine over as the part.
+describe('layout parts are first-party only (#651)', () => {
+  async function withParts(parts: [string, string][]) {
+    const seen: unknown[] = [];
+    const plugin = probe();
+    const m = createMermaid();
+    await m.registerExternalDiagrams([
+      {
+        ...plugin,
+        layoutParts: new Map(parts),
+        render: (model: string[], layout: LayoutModel, ctx: RenderContext, w: SvgWriter) => {
+          seen.push(ctx.layoutPart);
+          plugin.render(model, layout, ctx, w);
+        },
+      },
+    ]);
+    return { m, seen };
+  }
+
+  it('ignores a part that is not one of mermaid’s own: nothing to load, no part', async () => {
+    const { m, seen } = await withParts([['layered', 'myPart']]);
+    expect(m.renderSync(TEXT).warnings).toEqual([]);
+    expect(seen).toEqual([undefined]);
+  });
+
+  it('never hands an engine over as the part', async () => {
+    const { m, seen } = await withParts([['layered', 'compass']]);
+    await m.preload({ layouts: ['compass'] });
+    m.renderSync(TEXT);
+    expect(seen).toEqual([undefined]);
   });
 });

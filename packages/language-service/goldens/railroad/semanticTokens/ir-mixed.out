@@ -1,0 +1,26 @@
+1:1-1:14 "railroad-beta" keyword
+2:1-2:13 "title Tokens" keyword
+3:1-3:14 "/* comment */" comment
+4:1-4:5 "expr" variable [declaration, definition]
+4:6-4:7 "=" operator
+4:8-4:16 "sequence" keyword
+4:16-4:17 "(" operator
+4:17-4:28 "nonterminal" keyword
+4:28-4:29 "(" operator
+4:29-4:30 "\"" string
+4:30-4:34 "term" variable
+4:34-4:35 "\"" string
+4:35-4:36 ")" operator
+4:36-4:37 "," operator
+4:38-4:46 "terminal" keyword
+4:46-4:47 "(" operator
+4:47-4:50 "\"+\"" string
+4:50-4:51 ")" operator
+4:51-4:52 "," operator
+4:53-4:60 "special" keyword
+4:60-4:61 "(" operator
+4:61-4:64 "\"s\"" string
+4:64-4:65 ")" operator
+4:65-4:66 ")" operator
+4:67-4:68 ";" operator
+4:69-4:84 "%% line comment" comment

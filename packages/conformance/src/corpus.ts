@@ -17,6 +17,14 @@ export interface ParitySuite {
   corpus?: () => Promise<CorpusItem[]>;
 }
 
+/**
+ * Whether a corpus item is an embedded-diagram fixture (ADR-15): `mermaid <id> { … }` blocks,
+ * kept in an `embedded/` folder. v12 rejects them and has no tokens for them, so the specs that
+ * compare tokens or parses with v12 leave them out; the parity check lists them as
+ * divergences instead.
+ */
+export const isEmbeddedFixture = (item: CorpusItem): boolean => item.id.includes('/embedded/');
+
 /** Every `.mmd` file under `dir`, sorted by path, with ids `<idPrefix>/<path relative to dir>`. */
 export async function* corpusFromDir(dir: string, idPrefix: string): AsyncGenerator<CorpusItem> {
   for (const file of await mmdFiles(dir)) {

@@ -10,6 +10,7 @@ import type { FirstPartyFacetId } from '@mermaid-js/language-service';
 
 export const LEZER_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, () => Promise<LRParser>>> = {
   agentflow: () => import('./generated/agentflow.parser.js').then((m) => m.parser),
+  architecture: () => import('./generated/architecture.parser.js').then((m) => m.parser),
   block: () => import('./generated/block.parser.js').then((m) => m.parser),
   c4: () => import('./generated/c4.parser.js').then((m) => m.parser),
   class: () => import('./generated/class.parser.js').then((m) => m.parser),
@@ -28,6 +29,7 @@ export const LEZER_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, () => Promis
   pie: () => import('./generated/pie.parser.js').then((m) => m.parser),
   quadrantChart: () => import('./generated/quadrantChart.parser.js').then((m) => m.parser),
   radar: () => import('./generated/radar.parser.js').then((m) => m.parser),
+  railroad: () => import('./generated/railroad.parser.js').then((m) => m.parser),
   requirement: () => import('./generated/requirement.parser.js').then((m) => m.parser),
   sankey: () => import('./generated/sankey.parser.js').then((m) => m.parser),
   sequence: () => import('./generated/sequence.parser.js').then((m) => m.parser),

@@ -1,0 +1,11 @@
+architecture-beta
+  group api[API]
+  group inner in a|pi
+  service db(database) in |inner
+  junction hub in api
+  service web
+  |db:L -- R:h|ub
+  web{group}:T -- B:d|b
+  align row |web hub
+  ghost:R -- L:|db
+  db:R -- L:gh|ost

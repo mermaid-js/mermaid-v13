@@ -24,6 +24,7 @@
  * does not stop at the first error: it reports it, skips to the next line break (past the `}`
  * of a curve it was in) and carries on.
  */
+import { checkLimit } from '@mermaid-js/core/limits';
 import {
   ASCII_MAX,
   ExpectedTable,
@@ -63,6 +64,8 @@ import { PREFIX_KEYWORDS, RADAR_TRIVIA, T, TEXT_STATEMENTS } from './tokens.ts';
 export interface RadarParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
+  /** The integrator's cap on axes and curves (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
+  maxNodes?: number;
 }
 
 export type RadarParseResult = ParseResult<RadarModel, RadarDocument>;
@@ -418,6 +421,19 @@ class RadarParser extends RuleParser<PreprocessResult> {
     return labelValue(this.raw(s));
   }
 
+  /** One more axis or curve, against the node cap. */
+  private counted(range: Range): void {
+    const count = this.axes.length + this.curves.length;
+    checkLimit(
+      this.st.diagnostics,
+      'maxNodes',
+      count,
+      this.opts.maxNodes,
+      'axes and curves',
+      range
+    );
+  }
+
   /** `Axis: ID ("[" STRING "]")?` */
   private axis(): Range {
     const n = this.expect(T.Id);
@@ -431,6 +447,7 @@ class RadarParser extends RuleParser<PreprocessResult> {
     if (label !== undefined) node.label = label;
     this.children.push(node);
     this.axes.push(node);
+    this.counted(range);
     // D358: each axis name is an `axis` symbol; a repeat refers to the first.
     this.st.symbol(name, 'axis', nameRange, id === base ? 'def' : 'ref');
     return range;
@@ -453,6 +470,7 @@ class RadarParser extends RuleParser<PreprocessResult> {
     if (label !== undefined) node.label = label;
     this.children.push(node);
     this.curves.push(node);
+    this.counted(range);
     // D358: curve names are definitions only, in their own namespace.
     this.st.symbol(name, 'curve', nameRange, 'def');
     return range;

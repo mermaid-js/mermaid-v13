@@ -9,7 +9,8 @@
  * 2. `extract`, over the top-level statements only: the state table that `classDef`, `class`,
  *    `style` and `click` act on (v12 ignores them inside composites);
  * 3. `dataFetcher`: the walk over the tree that makes v12's graph, with one node per state id
- *    across all composites, its descriptions in order and its last parent.
+ *    across all composites, its descriptions in order and its last parent (never itself or a
+ *    state inside it, #688).
  *
  * Every collection keeps insertion order.
  */
@@ -17,7 +18,16 @@ import type { AstId, Diagnostic, Range } from '@mermaid-js/core/parser-kit';
 
 export type StateDirection = 'TB' | 'BT' | 'RL' | 'LR';
 
-export type StateKind = 'plain' | 'choice' | 'fork' | 'join' | 'start' | 'end' | 'composite';
+export type StateKind =
+  | 'plain'
+  | 'choice'
+  | 'fork'
+  | 'join'
+  | 'start'
+  | 'end'
+  | 'composite'
+  /** An embedded diagram block (ADR-15): `mermaid id["Title"] { … }`. */
+  | 'embed';
 
 /** One state: a node of the diagram. */
 export interface StateNode {
@@ -36,6 +46,10 @@ export interface StateNode {
   styles: string[];
   /** A composite's `direction`, when it sets one. */
   dir?: StateDirection;
+  /** An embedded diagram block's title (ADR-15); absent for an untitled block. */
+  title?: string;
+  /** A folded block (`id@{ view: collapsed }`, #670): drawn without its diagram. */
+  folded?: boolean;
 }
 
 /** A concurrency region: the part of a composite between `--` separators. */
@@ -119,6 +133,8 @@ export interface StateItem {
   region?: number;
   /** A composite split by `--`: its last region's AST id and ordinal. */
   tail?: { ast: AstId; region: number };
+  /** An embedded diagram block (ADR-15), with its title; `folded` by `@{ view: collapsed }`. */
+  embed?: { title?: string; folded?: boolean };
   range: Range;
 }
 
@@ -161,6 +177,10 @@ interface GraphNode {
   parent?: string;
   classes: string[];
   styles: string[];
+  /** An embedded diagram block (ADR-15), with its title; `folded` by `@{ view: collapsed }`. */
+  embed?: { title?: string; folded?: boolean };
+  /** Whether a mention gave it content of its own: a description or statements. */
+  content?: boolean;
 }
 
 const START = '[*]';
@@ -194,7 +214,14 @@ function dirOf(doc: readonly Item[] | undefined): StateDirection | undefined {
   return dir;
 }
 
-const unquote = (s: string) => s.replace(/^"+|"+$/g, '');
+/** `s` without the `"` runs at its ends: `/^"+|"+$/g`, scanned (R-PARSE-7). */
+function unquote(s: string): string {
+  let from = 0;
+  let to = s.length;
+  while (from < to && s[from] === '"') from++;
+  while (to > from && s[to - 1] === '"') to--;
+  return s.slice(from, to);
+}
 
 /** Builds the {@link StateModel} from the top-level statements. One per parse. */
 export class StateBuilder {
@@ -244,7 +271,8 @@ export class StateBuilder {
           n.range
         );
       }
-      const kind: StateKind = n.isGroup ? 'composite' : (KINDS[n.shape ?? ''] ?? 'plain');
+      let kind: StateKind = n.isGroup ? 'composite' : (KINDS[n.shape ?? ''] ?? 'plain');
+      if (n.embed) kind = 'embed';
       const state: StateNode = {
         id: n.id,
         ast: n.ast,
@@ -255,6 +283,8 @@ export class StateBuilder {
       };
       if (n.parent !== undefined) state.parent = n.parent;
       if (n.isGroup && n.dir !== undefined) state.dir = n.dir;
+      if (n.embed?.title !== undefined) state.title = n.embed.title;
+      if (n.embed?.folded) state.folded = true;
       states.push(state);
     }
     return {
@@ -461,14 +491,61 @@ export class StateBuilder {
       this.records.set(id, rec);
       if (id !== '' && id !== '</join></fork>' && id !== '</choice>') this.nodes.push(rec);
     }
+    if (item.embed || rec.embed) this.blockMention(rec, item);
     this.describe(rec, item.description);
     if (!rec.isGroup && item.doc) this.group(rec, item, parent);
-    if (parent && parent.id !== 'root') rec.parent = parent.id;
+    if (item.doc || (item.description && item.description !== '')) rec.content = true;
+    if (parent && parent.id !== 'root' && !this.holds(id, parent.id)) rec.parent = parent.id;
     if (item.note) {
       const side = item.note.position === 'left of' ? 'left' : 'right';
       this.notes.push({ ast: item.note.ast, target: id, side, text: item.note.text });
       this.edgeCount++;
     }
+  }
+
+  /**
+   * Whether the scope `scope` is the state `id` or sits inside it, by the parents filed so far.
+   * v12 files a state under every scope that mentions it, so `Boot --> Running` written inside
+   * `Boot` made `Boot` its own parent, and no layout survives a loop in the tree (#688). Such a
+   * mention moves nothing: the state stays where it was. The parents therefore always form a
+   * tree, which is also why this walk ends.
+   */
+  private holds(id: string, scope: string): boolean {
+    for (let at: string | undefined = scope; at !== undefined; at = this.records.get(at)?.parent)
+      if (at === id) return true;
+    return false;
+  }
+
+  /**
+   * A mention of an embedded diagram block's id (ADR-15). Repeating a state id is legal, so a
+   * plain mention (a transition, a note, `class`) refers to the block; a second block, or a
+   * description or statements for the same id, is an error: the id names two things.
+   */
+  private blockMention(rec: GraphNode, item: StateItem): void {
+    const { id } = rec;
+    if (item.embed && !rec.embed) {
+      if (rec.content) this.duplicate(id, item.range, false);
+      else {
+        rec.embed = item.embed;
+        rec.ast = item.ast;
+        rec.range = item.range;
+      }
+      return;
+    }
+    if (item.embed) this.duplicate(id, item.range, true);
+    else if (item.doc || (item.description && item.description !== '')) {
+      this.duplicate(id, item.range, false);
+    }
+  }
+
+  private duplicate(id: string, range: Range, block: boolean): void {
+    this.ctx.error(
+      'EMBED_DUPLICATE_ID',
+      block
+        ? `Duplicate block id \`${id}\`: another \`mermaid ${id}\` block has it. Give each block its own id.`
+        : `Duplicate id \`${id}\`: it names the \`mermaid ${id}\` block, so it cannot also be a composite state or a state with a description. Rename the state, or drop its description and body to refer to the block.`,
+      range
+    );
   }
 
   /** The description of one mention, as `dataFetcher` adds it to the node. */

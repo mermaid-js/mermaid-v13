@@ -25,6 +25,7 @@ describe('mermaid/slim', () => {
   it('rejects a first-party type that was not passed with UNSUPPORTED_DIAGRAM', async () => {
     const e = await rejection(createMermaid().render('s', FLOW));
     expect(e.code).toBe('UNSUPPORTED_DIAGRAM');
+    expect(e.message).toContain('"flowchart-v2"');
   });
 
   it('still detects every v12 type, in v12 order', () => {

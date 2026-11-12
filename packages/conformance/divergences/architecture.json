@@ -1,0 +1,98 @@
+[
+  {
+    "id": "architecture-cases/directive-unclosed-in-line",
+    "inputHash": "sha256:b8124f6e845c9172",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the diagram is rejected rather than silently cut (core preprocess behaviour, as for pie, radar and wardley; GAPS #300, #301).",
+    "owner": "#599",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "architecture-cases/unclosed-directive",
+    "inputHash": "sha256:65e2f4e7325d9e38",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the diagram is rejected rather than silently cut (core preprocess behaviour, as for pie, radar and wardley; GAPS #300, #301).",
+    "owner": "#599",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "architecture-cases/unclosed-directive-init",
+    "inputHash": "sha256:f3d662b358ed103e",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the diagram is rejected rather than silently cut (core preprocess behaviour, as for pie, radar and wardley; GAPS #300, #301).",
+    "owner": "#599",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "architecture-cases/edges-group-no-group",
+    "inputHash": "sha256:b0b39d8d5e750925",
+    "kind": "model",
+    "reason": "D504: `{group}` on an edge end whose service is in no group is ignored (`lhsGroup` false) with one ARCHITECTURE_GROUP_EDGE_UNGROUPED warning, where v12 kept the flag and still moved the end by a group's padding.",
+    "owner": "#599",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "architecture-cases/directive-unclosed-in-line (CRLF)",
+    "inputHash": "sha256:010a25c24bffaf24",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the diagram is rejected rather than silently cut (core preprocess behaviour, as for pie, radar and wardley; GAPS #300, #301).",
+    "owner": "#599",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "architecture-cases/unclosed-directive (CRLF)",
+    "inputHash": "sha256:e21c80c2a0b453d1",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the diagram is rejected rather than silently cut (core preprocess behaviour, as for pie, radar and wardley; GAPS #300, #301).",
+    "owner": "#599",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "architecture-cases/unclosed-directive-init (CRLF)",
+    "inputHash": "sha256:0b7e93c0af4739e1",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the diagram is rejected rather than silently cut (core preprocess behaviour, as for pie, radar and wardley; GAPS #300, #301).",
+    "owner": "#599",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "architecture-cases/edges-group-no-group (CRLF)",
+    "inputHash": "sha256:b1eb278e0ffc3324",
+    "kind": "model",
+    "reason": "D504: `{group}` on an edge end whose service is in no group is ignored (`lhsGroup` false) with one ARCHITECTURE_GROUP_EDGE_UNGROUPED warning, where v12 kept the flag and still moved the end by a group's padding.",
+    "owner": "#599",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "architecture-cases/directive-unclosed-in-line (commented)",
+    "inputHash": "sha256:f06c39a5fbc68c13",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the diagram is rejected rather than silently cut (core preprocess behaviour, as for pie, radar and wardley; GAPS #300, #301).",
+    "owner": "#599",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "architecture-cases/unclosed-directive (commented)",
+    "inputHash": "sha256:a69aef9e9f030730",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the diagram is rejected rather than silently cut (core preprocess behaviour, as for pie, radar and wardley; GAPS #300, #301).",
+    "owner": "#599",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "architecture-cases/unclosed-directive-init (commented)",
+    "inputHash": "sha256:38ff03891a2951c6",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the diagram is rejected rather than silently cut (core preprocess behaviour, as for pie, radar and wardley; GAPS #300, #301).",
+    "owner": "#599",
+    "since": "2026-11-09"
+  },
+  {
+    "id": "architecture-cases/edges-group-no-group (commented)",
+    "inputHash": "sha256:d8ee6c7e37cc2821",
+    "kind": "model",
+    "reason": "D504: `{group}` on an edge end whose service is in no group is ignored (`lhsGroup` false) with one ARCHITECTURE_GROUP_EDGE_UNGROUPED warning, where v12 kept the flag and still moved the end by a group's padding.",
+    "owner": "#599",
+    "since": "2026-11-09"
+  }
+]

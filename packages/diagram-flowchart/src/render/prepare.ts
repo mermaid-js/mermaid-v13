@@ -7,6 +7,12 @@ import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { graphSpacing, groupPadding, labelledEdge, sideways } from '@mermaid-js/shared/layout';
 import { styleCache, type CheckedStyle } from '@mermaid-js/core/svg';
+import {
+  FOLDED_TYPE_SIZE,
+  foldedCells,
+  foldedSize,
+  foldedTypeText,
+} from '@mermaid-js/core/svg/folded';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { FlowModel, FlowModelEdge, FlowVertex } from '../parser/index.ts';
@@ -16,7 +22,15 @@ import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/
 import { dirOf, nesting, type Nesting } from './nesting.ts';
 import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
 import { assetSize } from './assets.ts';
-import { canonicalShape, shapeHasLabel, shapeSize, shapeSpan, type Pads } from './shapes.ts';
+import { embedSize, embedSlot, embedTextSize, type EmbedSlot, type EmbedText } from './embed.ts';
+import {
+  canonicalShape,
+  shapeHasLabel,
+  shapeSize,
+  shapeSpan,
+  type ShapeSize,
+  type Pads,
+} from './shapes.ts';
 import { themePads } from '@mermaid-js/shared/shapes/kit';
 
 export interface NodeView {
@@ -34,6 +48,14 @@ export interface NodeView {
   classes: string[];
   parent?: string;
   vertex?: FlowVertex;
+  /** An embedded diagram block (ADR-15), drawn in its frame or folded (#670); absent otherwise. */
+  block?: 'embed' | 'folded';
+  /** An unfolded block: what it holds, `null` for a stand-in frame. */
+  embed?: EmbedSlot;
+  /** Text output: a block's inner diagram as text, absent when `mermaid` drew none. */
+  embedText?: EmbedText;
+  /** A folded block (#670): its inner type (empty when unknown) and that type's label. */
+  fold?: { readonly type: string; label?: MeasuredLabel };
   /** Nesting depth of a cluster (0 at the top). */
   depth: number;
   /**
@@ -190,6 +212,15 @@ function nodeViews(
     }
     const view = blank(v.id, v.ast, false, vertexShape(v));
     view.vertex = v;
+    if (v.folded) {
+      view.block = 'folded';
+      view.fold = { type: m.ctx.foldedType?.(v.id) ?? '' };
+    } else if (v.type === 'embed') {
+      view.block = 'embed';
+      view.embed = embedSlot(m.ctx, v.id);
+      const text = m.cells ? m.ctx.embedText?.(v.id) : undefined;
+      if (text) view.embedText = text;
+    }
     view.classes = v.classes;
     view.style = m.styleOf(['default', 'node', ...v.classes], v.styles);
     views.set(v.id, view);
@@ -219,29 +250,56 @@ function measureNode(
 ): void {
   const [f, bits] = textStyle(view.style, m.font);
   const has = shapeHasLabel(view.shape);
-  view.label = m.label(has || v?.img || v?.icon ? text : '', markdown, f, m.wrap, bits);
+  const { block, fold } = view;
+  // A folded block without a title shows its id, as a collapsed subgraph does.
+  const title = fold && !text ? view.id : text;
+  // A block's title stays on one line: the strip is as wide as the inner diagram allows.
+  const wrap = block ? Infinity : m.wrap;
+  view.label = m.label(has || v?.img || v?.icon ? title : '', markdown, f, wrap, bits);
   const lw = view.label.width;
   const lh = view.label.height;
   if (m.cells) {
     // A text-form box: the label, its padding and a border cell on each side.
     const pad = (m.ctx.units ?? pxProfile).builder.nodePad;
+    view.dy = 0;
+    if (fold) {
+      // The title rows, a divider and the type, centred: as wide as the wider of the two.
+      fold.label = m.label(fold.type, false, f, Infinity);
+      const rows = view.label.lines.length;
+      ({ width: view.w, height: view.h } = foldedCells({ width: lw, rows }, fold.label, pad));
+      return;
+    }
+    if (view.embedText) {
+      const rows = lw > 0 ? view.label.lines.length : 0;
+      ({ w: view.w, h: view.h } = embedTextSize(view.embedText, { width: lw, rows }, pad));
+      return;
+    }
     view.w = lw + 2 * (pad.x + 1);
     view.h = view.label.lines.length + 2 * (pad.y + 1);
-    view.dy = 0;
     return;
   }
   // v12 widens vertex labels to minNodeWidth; round shapes and collapsed subgraphs keep theirs.
   const keepWidth =
     view.shape === 'circle' || view.shape === 'dbl-circ' || view.shape === 'collapsedGroup';
-  const s =
-    v?.img || v?.icon
-      ? assetSize(v, lw, lh)
-      : shapeSize(
-          view.shape,
-          lw > 0 && has && !keepWidth ? Math.max(lw, m.minWidth) : lw,
-          lh,
-          m.pads
-        );
+  let s: ShapeSize;
+  if (fold) {
+    fold.label = m.label(
+      foldedTypeText(fold.type),
+      false,
+      { ...f, size: FOLDED_TYPE_SIZE },
+      Infinity
+    );
+    const { width, height } = foldedSize(view.label, fold.label, fold.type.length);
+    s = { w: width, h: height, dy: 0 };
+  } else if (block) s = embedSize(view.embed, lw, lh);
+  else if (v?.img || v?.icon) s = assetSize(v, lw, lh);
+  else
+    s = shapeSize(
+      view.shape,
+      lw > 0 && has && !keepWidth ? Math.max(lw, m.minWidth) : lw,
+      lh,
+      m.pads
+    );
   view.w = s.w;
   view.h = s.h;
   view.dy = s.dy;

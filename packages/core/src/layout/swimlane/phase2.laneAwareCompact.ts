@@ -1,4 +1,5 @@
 // Ported from v12 `swimlanes/phase2.laneAwareCompact.ts` at upstream `c9b12739f` (D532).
+import { byCodeUnit } from './compare.ts';
 import type { Graph, Layering, NodeId } from './helpers.ts';
 import {
   buildInDegreeMap,
@@ -31,7 +32,7 @@ function topoSortByGenerationIfAcyclic(g: Graph): NodeId[] | null {
         }
       }
     }
-    frontier = nextFrontier.sort((a, b) => a.localeCompare(b));
+    frontier = nextFrontier.sort(byCodeUnit);
   }
 
   return order.length === g.nodes.length ? order : null;

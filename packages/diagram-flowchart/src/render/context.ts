@@ -1,3 +1,4 @@
+import type { EmbeddedDiagram, EmbeddedText } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { Limits } from '@mermaid-js/core/limits';
 import type { LayoutGraph, LayoutModel, UnitProfile } from '@mermaid-js/core/layout';
@@ -35,6 +36,12 @@ export interface FlowRenderContext {
   readonly limits?: Limits;
   /** The layout engine named by `layout` config. Defaults to core's `layered`. */
   layout?(graph: LayoutGraph): LayoutModel;
+  /**
+   * The part of the drawing this render's layout brings (`layoutParts`): swimlane lanes, a
+   * `LaneDrawerFactory`. `unknown`, as core's `RenderContext` has it; anything but a function
+   * draws plain subgraphs.
+   */
+  readonly layoutPart?: unknown;
   /** Prefix of the root's only ids, `${idPrefix}-title` and `${idPrefix}-desc` (R-A11Y-1). */
   readonly idPrefix?: string;
   /** Written as `data-mermaid-version`. */
@@ -45,6 +52,19 @@ export interface FlowRenderContext {
   readonly linkSchemes?: readonly string[];
   /** The render's inline-box providers (D177), handed to every label; text output boxes none. */
   readonly inline?: InlineSpans;
+  /**
+   * The embedded diagram blocks (ADR-15), rendered by `mermaid` before the draw, by block id.
+   * Absent when the plugin is called directly: a block is then drawn as a stand-in frame.
+   */
+  readonly embed?: (id: string) => EmbeddedDiagram | undefined;
+  /** A folded block's inner type, by block id (#670); absent when the plugin is called directly. */
+  readonly foldedType?: (id: string) => string | undefined;
+  /**
+   * Text output: the blocks (ADR-15) drawn as text by `mermaid` before the draw, by block id,
+   * `columns` × `rows` cells. Absent when the plugin is called directly: a block is then a box
+   * with its title.
+   */
+  readonly embedText?: (id: string) => EmbeddedText | undefined;
   /**
    * The extensions' glyphs (D293): an icon shape's glyph fitted into a `size` square at the
    * origin, its `currentColor` painted with `paint` (D298); `null` when an extension reported it

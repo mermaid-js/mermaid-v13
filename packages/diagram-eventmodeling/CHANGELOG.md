@@ -1,0 +1,10 @@
+# @mermaid-js/diagram-eventmodeling
+
+## 13.0.0-alpha.1
+
+### Patch Changes
+
+- [#625](https://github.com/mermaid-js/mermaid-v13/pull/625) [`a48db63`](https://github.com/mermaid-js/mermaid-v13/commit/a48db630fd6786d90e8af66af935211ea632fecc) Thanks [@ashishjain0512](https://github.com/ashishjain0512)! - feat: first release of `@mermaid-js/diagram-eventmodeling`, the event modeling diagram (`eventmodeling`): parser, layout, SVG renderer and language facet.
+
+- Updated dependencies [[`6d4f97b`](https://github.com/mermaid-js/mermaid-v13/commit/6d4f97b0709968a0ab7527ede04dcc7f52a03784), [`6021e9a`](https://github.com/mermaid-js/mermaid-v13/commit/6021e9ab701bfd79fb7f318b918eaa758fd0a263), [`2a9ba2b`](https://github.com/mermaid-js/mermaid-v13/commit/2a9ba2b54c1b7a9ffe35fbbe84ec308fd03cf22e), [`6d17d9a`](https://github.com/mermaid-js/mermaid-v13/commit/6d17d9a38243d5054b5e408ee8619d3845b7c0ab), [`dfd194b`](https://github.com/mermaid-js/mermaid-v13/commit/dfd194b90c6b68d5a0d800b6d46858d1168dd987), [`81291ba`](https://github.com/mermaid-js/mermaid-v13/commit/81291ba5d2aa0aef408f2e9bf41608643cb4ee4a), [`d619a0d`](https://github.com/mermaid-js/mermaid-v13/commit/d619a0dc9b1724ab09cb673773e5f200e7d35146), [`c150b97`](https://github.com/mermaid-js/mermaid-v13/commit/c150b97652462bb387e75236d4baafa4a63c3f4a), [`0f94d6f`](https://github.com/mermaid-js/mermaid-v13/commit/0f94d6f53fd3ddabc9ae7eb419e0174e2fcbe2b7), [`a48db63`](https://github.com/mermaid-js/mermaid-v13/commit/a48db630fd6786d90e8af66af935211ea632fecc), [`8319249`](https://github.com/mermaid-js/mermaid-v13/commit/83192493c76383dcdc21012f85d78cc6bf364411), [`b777f42`](https://github.com/mermaid-js/mermaid-v13/commit/b777f421844007f258a0d4c576877389414865f1), [`48e737e`](https://github.com/mermaid-js/mermaid-v13/commit/48e737e54ec8134b65a16c6817a91c392207100a), [`49fc458`](https://github.com/mermaid-js/mermaid-v13/commit/49fc4588df3c6e1200e15540bd7576cc90c0a59c), [`593d01f`](https://github.com/mermaid-js/mermaid-v13/commit/593d01f29b3df65081ce17bbcf230fd7d74e1f63)]:
+  - @mermaid-js/core@13.0.0-alpha.3

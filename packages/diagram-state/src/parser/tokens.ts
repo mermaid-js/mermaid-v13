@@ -75,4 +75,18 @@ export const T = {
   StyleSeparator: F + 53,
   /** A character jison's catch-all `.` rule returns as `INVALID`. */
   Invalid: F + 54,
+  /** `mermaid` opening an embedded diagram block (ADR-15): only on a line ending in `{`. */
+  Embed: F + 55,
+  /** A block's id, after `mermaid`. */
+  EmbedId: F + 56,
+  /** A block's `["Title"]`, brackets and quotes included. */
+  EmbedTitle: F + 57,
+  /** The `{` ending a block's opening line. */
+  EmbedOpen: F + 58,
+  /** A block's body, verbatim: from the line after the opener to its closing line. */
+  EmbedBody: F + 59,
+  /** The `}` that closes a block, first on its line. */
+  EmbedEnd: F + 60,
+  /** `@{ … }` after a block id, folding the block (#670): up to the first `}` on the line. */
+  EmbedFold: F + 61,
 } as const;

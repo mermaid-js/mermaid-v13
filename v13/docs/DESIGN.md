@@ -57,6 +57,7 @@ Later milestones add the `core/ascii` subpath and a `mermaid` CLI bin (M2, §6.3
 - `@mermaid-js/core/parser-kit`
 - `/layout`
 - `/svg`
+- `/svg/framed` and `/svg/folded`: the open and folded block shapes of embedded diagrams (ADR-15), imported by host diagrams only, so they stay outside the core bundle
 - `/text`
 - `/theme`
 - `/config`
@@ -605,7 +606,7 @@ The vocabulary is split by owner (D331). Core's `packages/core/src/theme/vocabul
 | CSS injection via `style`/`classDef`/`linkStyle` | Property allow-list; values matching `url( expression( javascript: @import image-set /* [<>{};\\]` are dropped; output as presentation attrs (`SafeColor`, `SafeLength`) | `core/svg/style.ts` |
 | Malicious links | `checkUrl`: control-char/entity stripping (port of the `sanitize-url` logic), scheme allow-list on raw + decoded form, `//host` blocked; `_blank` gets `rel="noopener noreferrer"`. Default `securityLevel`: http, https, mailto, relative. `strict`: relative only. `loose`/`antiscript`/`sandbox` map to default with a warning (R-SEC-4, R-SEC-6) | `core/svg/url.ts` |
 | Extension plugins (`postRender`) | The `SvgTree` view only accepts allowed tags, attributes and branded values, and the allow-list check runs after all hooks (R-PLUG-2) | `core/svg/tree.ts` |
-| Click callbacks | Not in core output. The interactions plugin binds them in the DOM after mount, only when the integrator installed it; diagram text cannot turn it on (R-PLUG-9) | `plugin-interactions` |
+| Click callbacks | Not in core output. The interactions plugin binds them in the DOM after mount, only when the integrator installed it and set `securityLevel: 'loose'` (D554); diagram text cannot do either (R-PLUG-9) | `plugin-interactions` |
 | Theme-variable injection | `safeColor`: charset + function allow-list (`rgb hsl lab oklch color-mix light-dark var(--mermaid-*)`) | `core/theme` |
 | DoS: input size, edges, nesting, output size, layout work | Limits in `RenderContext`, integrator-only; `RangeError` → `LIMIT` error. `maxLayoutWork` (default `MAX_STEPS`) caps the steps of a layout loop the text can make long, counted, never timed (D542; gantt's scheduling day walk) | `core/limits.ts` |
 | DoS: ReDoS | Linear scanners; regex lint; stress suite (50k runs, 1000-deep nesting, unclosed constructs) | parser kit |
@@ -733,12 +734,12 @@ type InlineBox = { width: number; height: number; baseline: number; node: SvgFra
 `@mermaid-js/plugin-interactions` restores v12 `click X callback` / `call` from M1. Core keeps callbacks in the model and emits `data-id`/`data-ast` on every node. The plugin:
 
 - reads the callbacks from the parse result through `postParse` (and claims `callbacks`, so core doesn't warn);
-- binds click handlers in `afterMount`, resolving function names the way v12 did. This includes looking names up on `window`, which is why it is opt-in by installation only and diagram text can't enable it;
+- binds click handlers in `afterMount`, resolving function names the way v12 did. This includes looking names up on `window`, which is why it is opt-in by installation only and diagram text can't enable it, and why callbacks are bound only under `securityLevel: 'loose'`, as in v12 (D554, #697). Under any other level the plugin collects no callback and warns `CALLBACK_IGNORED` once per render;
 - provides `RenderResult.bindFunctions`, so v12 call sites that call `bindFunctions(el)` after `render()` keep working.
 
 Its config keys (moved from the core schema) live in its own schema section.
 
-As built in M1: hooks see the AST, not the model, so the AST node of a `click … callback` / `call` statement carries `callback: AstCallback` (`{ targets, name, args? }`, from `@mermaid-js/core/parser-kit`); the plugin collects every such node in `postParse` into its `state` and binds `g.node[data-id]` elements in `afterMount`, once per element. v12 had no click-callback config keys (`securityLevel: loose` gated them), so the plugin has no schema section, and callbacks do not depend on `securityLevel`.
+As built in M1: hooks see the AST, not the model, so the AST node of a `click … callback` / `call` statement carries `callback: AstCallback` (`{ targets, name, args? }`, from `@mermaid-js/core/parser-kit`); the plugin collects every such node in `postParse` into its `state` and binds `g.node[data-id]` elements in `afterMount`, once per element. v12 had no click-callback config keys (`securityLevel: loose` gated them), so the plugin has no schema section. Since D554 (#697) callbacks again need `securityLevel: 'loose'`: the plugin reads the configured value (`ctx.config.securityLevel`), because `ctx.securityLevel` is the resolved level, where `loose` is `default` (D75).
 
 ### 12.4 Discovery
 
@@ -812,7 +813,7 @@ A Playwright/Argos baseline on a curated subset: per shape, per edge type, per t
 
 | Budget | What is measured | Limit (gz) | Enforced by |
 | --- | --- | --- | --- |
-| `loaded`, R-PERF-1 (D160, D311, D312, amends D10) | Core + flowchart as a browser page loads them for one flowchart render: the bench runner renders a two-node flowchart after `initialize` and then reads the fetched resources (report `source: 'loaded'`; the static entry + flowchart-chunk closure is only a fallback) | 128 KB | bench gate `size` |
+| `loaded`, R-PERF-1 (D160, D311, D312, D553, amends D10) | Core + flowchart as a browser page loads them for one flowchart render: the bench runner renders a two-node flowchart after `initialize` and then reads the fetched resources (report `source: 'loaded'`; the static entry + flowchart-chunk closure is only a fallback) | 133 KB | bench gate `size` |
 | `core`, R-PERF-8 (D161, D310, D546) | Everything loaded before any diagram: the static import closure of `core.entry` (the CDN ESM entry `src/cdn.ts`, which is `src/index.ts` plus the queue and `cdnBase`), bundled with the bench's production esbuild options. No diagram, `ascii`, `language` or theme chunk | 96 KB | `packages/bench/src/core-size.spec.ts` in `pnpm check` (no browser, ~1 s); the bench reports it too (gate `core-size`). `core-chunks.spec.ts` checks that one more lazy diagram adds only its registry row (D313) |
 
 Measured at the M3.5 close-out (2026-11-05, #232): loaded 110.9 KB (113550 B, 10 files), core 78.0 KB (79871 B, 7 files), CDN loader `mermaid.min.js` 0.9 KB (917 B). Diagram packages still have no budget of their own (D59). M3.5 had no size-reduction pass; the 80 KB below was the M1 target.
@@ -913,5 +914,5 @@ The parallel tracks after item 1:
 4. **§3 / §12.3:** `RenderResult.bindFunctions` is set only by the interactions plugin. The field is already optional in v12's RenderResult type, so v12 call sites written as bindFunctions?.(el) keep working either way: without the plugin the call is a no-op, and with it click callbacks work as before. Call sites that call it unguarded need the plugin installed. Confirmed 2026-11-02.
 5. **§7.2:** keep v12 class names (`nodes`, `edgePaths`, `node`, …) rather than new ones. Confirmed 2026-11-02.
 6. **§4.2:** AST ids are semantic (`n:A`, `e:A>B#2`, `s:id`, `st:3`), not offset-based, so they survive edits and editors keep UI state across re-parses. Decided 2026-11-02.
-7. **§12.3:** the interactions plugin resolves callback names on `window`, as v12 did. Decided 2026-11-02: keep resolving callback names as v12 does, for compatibility. The safeguard stays as §12.3 describes it: the lookup only exists when the integrator installs the plugin.
+7. **§12.3:** the interactions plugin resolves callback names on `window`, as v12 did. Decided 2026-11-02: keep resolving callback names as v12 does, for compatibility. The safeguard stays as §12.3 describes it: the lookup only exists when the integrator installs the plugin. Amended 2026-11-12 (D554): the integrator must also set `securityLevel: 'loose'`, as in v12.
 8. **§6.1 / §12.1 / §12.2:** layout output is generic per plugin (`L`). `LayoutModel` is the contract for graph diagrams only. `postLayout` hooks get `{ kind, diagram, layout }`, and M1 item 23 keeps a non-graph stub in CI. Confirmed 2026-11-02.

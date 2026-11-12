@@ -1,0 +1,10 @@
+@ 3:32  expr = sequence(nonterminal("te|rm"), terminal("+")) ;
+  prepare: 3:30-3:34 "term"; rename to "choice":
+  refused: 'choice' would not read as the same rule id everywhere it is used.
+@ 5:26  loose = nonterminal("nowh|ere") ;
+  prepare: 5:22-5:29 "nowhere"; rename to "choice":
+  %% rename-to: choice
+  railroad-beta
+  expr = sequence(nonterminal("term"), terminal("+")) ;
+  term = terminal("1") ;
+  loose = nonterminal("choice") ;

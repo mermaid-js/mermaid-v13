@@ -37,7 +37,7 @@ import {
   textValue,
   TITLE_STATEMENT,
 } from '@mermaid-js/shared/parser/rule';
-import type { AstId, ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
+import type { AstId, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import type { RuleGrammar, TextValues } from '@mermaid-js/shared/parser/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
@@ -67,6 +67,7 @@ import {
   SIZE_HINT,
 } from './messages.ts';
 import { normalise } from './normalise.ts';
+import type { WardleyParseOptions } from './options.ts';
 import { resolveSymbols } from './symbols.ts';
 import {
   AFTER_BOUNDARY,
@@ -100,11 +101,6 @@ import {
   TEXT,
 } from './tables.ts';
 import { T, TEXT_STATEMENTS, WARDLEY_TRIVIA } from './tokens.ts';
-
-export interface WardleyParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-}
 
 export type WardleyParseResult = ParseResult<WardleyModel, WardleyDocument>;
 
@@ -898,6 +894,7 @@ class WardleyParser extends RuleParser<PreprocessResult> {
         accTitle: this.texts.accTitle,
         accDescr: this.texts.accDescr,
         frontMatterTitle: this.pre.frontMatter?.title,
+        limits: this.opts,
       },
       diagnostics
     );

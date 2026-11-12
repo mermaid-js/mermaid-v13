@@ -13,6 +13,8 @@
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SCHEMA_PATH } from './generate.ts';
+import { loadSchema } from './schema.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 export const REGISTRY_PATH = join(ROOT, 'packages/mermaid/src/generated/registry.gen.ts');
@@ -84,6 +86,27 @@ export interface DiagramManifest {
    * `wardley-beta`, D421).
    */
   readonly section?: string;
+  /**
+   * Per-type options, by v12 type (D534): `section`, the config section the type reads on top of
+   * the package's own (`swimlane` for `swimlane-beta`), and `layout`, the type's default layout
+   * (`elk` for `flowchart-elk`), below every config layer.
+   */
+  readonly typeOptions?: Readonly<Record<string, TypeOptions>>;
+}
+
+/** A manifest's {@link DiagramManifest.typeOptions} entry. */
+export interface TypeOptions {
+  readonly section?: string;
+  readonly layout?: string;
+}
+
+/** A row's `section` and `layout` fields, from the manifest's options for `type`. */
+function typeFields(m: ManifestSource, type: string): string[] {
+  const o = m.manifest.typeOptions?.[type];
+  return [
+    ...(o?.section === undefined ? [] : [`section: '${o.section}'`]),
+    ...(o?.layout === undefined ? [] : [`layout: '${o.layout}'`]),
+  ];
 }
 
 /** A package.json `exports` map: subpath → conditions → file. */
@@ -124,6 +147,56 @@ export function readManifests(root = ROOT): ManifestSource[] {
   return out;
 }
 
+let sections: ReadonlySet<string> | undefined;
+/** The top-level config sections of core's schema (objects with a `$ref`). */
+function schemaSections(): ReadonlySet<string> {
+  sections ??= new Set(
+    Object.entries(loadSchema(readFileSync(join(ROOT, SCHEMA_PATH), 'utf8')).properties ?? {})
+      .filter(([, node]) => typeof node.$ref === 'string')
+      .map(([key]) => key)
+  );
+  return sections;
+}
+
+/**
+ * The lazy first-party engines in mermaid's `registry.ts` source: its `LAZY_LAYOUTS` rows keyed
+ * by a string literal, less the chunks that are no engine (`NOT_ENGINES`: the line-hop step and
+ * drawing parts such as `flowchartLanes`). Comments and layout whitespace do not matter; a
+ * source it cannot read throws rather than accept nothing.
+ */
+export function lazyEngines(source: string): ReadonlySet<string> {
+  const code = source.replaceAll(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '');
+  const block = (name: string, ctor: string): string => {
+    const found = new RegExp(String.raw`\bconst\s+${name}\b[^=]*=\s*new\s+${ctor}\b`).exec(code);
+    if (!found) throw new Error(`registry.ts: no ${name} table`);
+    // The table's literal: from the constructor's `(` to its matching `)`.
+    let depth = 0;
+    const start = code.indexOf('(', found.index + found[0].length);
+    for (let i = start; i < code.length; i++) {
+      if (code[i] === '(') depth++;
+      else if (code[i] === ')' && --depth === 0) return code.slice(start, i + 1);
+    }
+    throw new Error(`registry.ts: unterminated ${name} table`);
+  };
+  const strings = (text: string, re: RegExp) => [...text.matchAll(re)].map((m) => m[2]!);
+  const notEngines = new Set(strings(block('NOT_ENGINES', 'Set'), /(['"])([\w.-]+)\1/g));
+  const rows = strings(block('LAZY_LAYOUTS', 'Map'), /\[\s*(['"])([\w.-]+)\1\s*,/g);
+  const engines = new Set(rows.filter((name) => !notEngines.has(name)));
+  if (engines.size === 0) throw new Error('registry.ts: no lazy engine in LAZY_LAYOUTS');
+  return engines;
+}
+
+let engines: ReadonlySet<string> | undefined;
+/**
+ * A layout name a type may default to: `layered` and v12's `dagre`, a lazy first-party engine
+ * (`lazyEngines`, read once), or the ELK family (`elk`, `elk.*`).
+ */
+function knownLayout(name: string): boolean {
+  if (name === 'layered' || name === 'dagre' || /^elk(\.[\w-]+)?$/.test(name)) return true;
+  engines ??= lazyEngines(readFileSync(join(ROOT, 'packages/mermaid/src/registry.ts'), 'utf8'));
+  return engines.has(name);
+}
+
 /** The manifest serving each v12 type; throws on a type v12 does not have. */
 function manifestsByType(manifests: readonly ManifestSource[]): Map<string, ManifestSource> {
   const byType = new Map<string, ManifestSource>();
@@ -133,6 +206,18 @@ function manifestsByType(manifests: readonly ManifestSource[]): Map<string, Mani
         throw new Error(`${m.name}: type "${type}" is not a v12 diagram type`);
       }
       byType.set(type, m);
+    }
+    for (const [type, o] of Object.entries(m.manifest.typeOptions ?? {})) {
+      if (!m.manifest.types.includes(type))
+        throw new Error(`${m.name}: typeOptions names "${type}", which is not one of its types`);
+      if (o.section !== undefined && !schemaSections().has(o.section))
+        throw new Error(
+          `${m.name}: typeOptions.${type}.section "${o.section}" is not a config section`
+        );
+      if (o.layout !== undefined && !knownLayout(o.layout))
+        throw new Error(
+          `${m.name}: typeOptions.${type}.layout "${o.layout}" is not a known layout`
+        );
     }
   }
   return byType;
@@ -161,6 +246,7 @@ export function generateRegistry(manifests: readonly ManifestSource[]): string {
       `    pattern: ${pattern},`,
       `    id: '${m.manifest.id}',`,
       `    formats: [${formats}],`,
+      ...typeFields(m, type).map((f) => `    ${f},`),
       `    load: () => import('${m.name}').then((m) => m.${m.manifest.export}),`
     );
     if (m.manifest.ascii !== undefined) {
@@ -173,14 +259,23 @@ export function generateRegistry(manifests: readonly ManifestSource[]): string {
   return lines.join('\n');
 }
 
+/** The sections a type reads, highest first (see {@link generateFacets}). */
+function sectionsOf(m: ManifestSource, type: string): string[] {
+  const own = m.manifest.section ?? m.manifest.id;
+  const typed = m.manifest.typeOptions?.[type]?.section;
+  return typed === undefined || typed === own ? [own] : [typed, own];
+}
+
 /**
  * `firstPartyFacets` of `@mermaid-js/language-service` (DESIGN §4.5, D89): every v12 type in
  * detector order, so the service tells a type with no facet yet (an info diagnostic) from an
  * unknown one (`UNSUPPORTED_DIAGRAM`). A package whose manifest has a `language` entry gets a
  * lazy `load` of that subpath's `language` export (a fixed name, as `ascii` is for the text hook).
- * `section` is the config section the renderer reads for the type: the manifest's `section`, else
- * the package id, as the plugin's `configSection` else its `id` (`sectionOf` in mermaid's api.ts);
- * a type with no package has none.
+ * `section` is the config section the renderer reads for the type: the type's own
+ * (`typeOptions[type].section`), else the package's (the manifest's `section`, else its id, as the
+ * plugin's `configSection` else its `id`; `sectionOf` in mermaid's api.ts). A type with its own
+ * section also gets `baseSection`, the package's, which it reads under its own (D534). A type
+ * with no package has neither.
  */
 export function generateFacets(manifests: readonly ManifestSource[]): string {
   const byType = manifestsByType(manifests);
@@ -206,7 +301,7 @@ export function generateFacets(manifests: readonly ManifestSource[]): string {
       `  {`,
       `    type: '${type}',`,
       `    id: '${m.manifest.id}',`,
-      `    section: '${m.manifest.section ?? m.manifest.id}',`,
+      ...sectionsOf(m, type).map((x, i) => `    ${i === 0 ? 'section' : 'baseSection'}: '${x}',`),
       `    pattern: ${pattern},`,
       `    detector: ${detector},`
     );
@@ -249,8 +344,11 @@ export function generateDetectors(manifests: readonly ManifestSource[]): string 
       continue;
     }
     const formats = m.manifest.formats.map((f) => `'${f}'`).join(', ');
+    const extra = typeFields(m, type)
+      .map((f) => `, ${f}`)
+      .join('');
     lines.push(
-      `  { type: '${type}', pattern: ${pattern}, id: '${m.manifest.id}', formats: [${formats}] },`
+      `  { type: '${type}', pattern: ${pattern}, id: '${m.manifest.id}', formats: [${formats}]${extra} },`
     );
   }
   lines.push('];', '');

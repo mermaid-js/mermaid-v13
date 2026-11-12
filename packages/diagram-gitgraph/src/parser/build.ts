@@ -10,6 +10,7 @@
  * gitGraph's terms and how to fix it; none names a token or a rule (R-ERR-5). The ported v12
  * specs map the codes back to v12's wording (`src/v12-specs/adapter.ts`).
  */
+import { checkLimit } from '@mermaid-js/core/limits';
 import type { AstId, Diagnostics, Range } from '@mermaid-js/core/parser-kit';
 import type { GitBranch, GitCommit, GitWrittenType } from '../model.ts';
 import type { GitValue } from './ast.ts';
@@ -40,6 +41,8 @@ export class GitBuilder {
   private head: GitCommit | null = null;
   private current: string;
   private seq = 0;
+  /** Commits and branches so far, the main branch included (`maxNodes`). */
+  private items = 1;
 
   /**
    * @param written - every `id:` value in the text, so that a derived id never takes one that a
@@ -49,7 +52,9 @@ export class GitBuilder {
     private readonly diagnostics: Diagnostics,
     readonly mainBranch: string,
     mainBranchOrder: number,
-    private readonly written: ReadonlySet<string> = new Set()
+    private readonly written: ReadonlySet<string> = new Set(),
+    /** The integrator's cap on commits and branches (`maxNodes`, R-SEC-5). */
+    private readonly maxNodes?: number
   ) {
     this.current = mainBranch;
     this.heads.set(mainBranch, null);
@@ -75,6 +80,19 @@ export class GitBuilder {
     // D264: a repeated id's warning points at its first use.
     if (!this.idAt.has(commit.id)) this.idAt.set(commit.id, at);
     this.heads.set(this.current, commit.id);
+    this.checkNodes(at);
+  }
+
+  /** The integrator's cap, after a commit or a branch is added (#721). */
+  private checkNodes(at: Range): void {
+    checkLimit(
+      this.diagnostics,
+      'maxNodes',
+      ++this.items,
+      this.maxNodes,
+      'commits and branches',
+      at
+    );
   }
 
   private headOf(branch: string): GitCommit | undefined {
@@ -130,6 +148,7 @@ export class GitBuilder {
     }
     this.heads.set(name.value, this.head ? this.head.id : null);
     this.config.set(name.value, { order, astId });
+    this.checkNodes(name.range);
     this.switchTo(name.value);
   }
 

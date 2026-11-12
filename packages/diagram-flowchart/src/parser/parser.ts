@@ -28,7 +28,14 @@ import { isYamlMap } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { flowBuilderLimits, FlowParser, flowTables } from '@mermaid-js/shared/parser/flow';
 import type { FlowDocItem, FlowParserDialect, FlowShapeData } from '@mermaid-js/shared/parser/flow';
-import type { FlowDocument, FlowLabelNode, FlowStatementNode, FlowSubgraph } from './ast.ts';
+import type {
+  FlowDocument,
+  FlowEmbedStmt,
+  FlowLabelNode,
+  FlowOwnStmt,
+  FlowStatementNode,
+  FlowSubgraph,
+} from './ast.ts';
 import { flowSourceView, lex } from './lexer.ts';
 import { destructLink, FlowBuilder } from './model.ts';
 import type { FlowModel } from './model.ts';
@@ -54,6 +61,11 @@ export type FlowParseResult = ParseResult<FlowModel, FlowDocument>;
 const TABLES = /* @__PURE__ */ flowTables(T, {
   keywords: [T.Subgraph],
   separators: [],
+  starts: [T.Embed],
+  expected: [
+    ['`{` at the end of the line', [T.EmbedOpen]],
+    ['`}` on its own line, closing the block', [T.EmbedEnd]],
+  ],
   names: {
     separator: 'a line break or `;`',
     header: '`graph` or `flowchart`',
@@ -65,6 +77,9 @@ const TABLES = /* @__PURE__ */ flowTables(T, {
 });
 const { LINE_END } = TABLES;
 const SUBGRAPH_TITLE = [T.SQS, ...LINE_END];
+const SPACE = [T.Space];
+const SQS_ONLY = [T.SQS];
+const EMBED_END = [T.EmbedEnd];
 
 /**
  * What the parser reads past besides spaces: comments, directives and the `click` keyword
@@ -115,7 +130,7 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
 }
 
 /** One parse: flowchart's own rules. */
-class FlowchartParser extends FlowParser<FlowBuilder, FlowParseOptions, FlowSubgraph, Frame> {
+class FlowchartParser extends FlowParser<FlowBuilder, FlowParseOptions, FlowOwnStmt, Frame> {
   constructor(src: string, options: FlowParseOptions) {
     super(src, options, DIALECT);
   }
@@ -126,7 +141,10 @@ class FlowchartParser extends FlowParser<FlowBuilder, FlowParseOptions, FlowSubg
     this.document();
     db.finish();
     const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
-    return this.result(db.model(warnings));
+    const result = this.result(db.model(warnings));
+    if (db.embeds.length > 0) result.embeds = db.embeds;
+    result.edgeCount = result.model.edges.length;
+    return result;
   }
 
   /** `end` takes the blanks and line breaks after it: its range is the word. */
@@ -145,6 +163,78 @@ class FlowchartParser extends FlowParser<FlowBuilder, FlowParseOptions, FlowSubg
       return { value: null, range: whole };
     const value = result.value;
     return { value: isYamlMap(value) ? value : null, range: whole };
+  }
+
+  // ---- embedded blocks ----------------------------------------------------------------
+
+  protected override ownStatement(t: number, out: FlowStatementNode[]): FlowDocItem | undefined {
+    return t === T.Embed ? this.embedStatement(out) : undefined;
+  }
+
+  /**
+   * `mermaid id["Title"] {` body `}` (ADR-15): a vertex with the block's id, and the block in
+   * the parse result. The body is one token; the host never reads it.
+   */
+  private embedStatement(out: FlowStatementNode[]): FlowDocItem {
+    const { db, st } = this;
+    const from = this.i;
+    this.hint = 'write it as `mermaid <id>["Title"] {`, then the diagram, then `}` on its own line';
+    this.i++;
+    this.expect(T.Space);
+    const [name, nameRange] = this.idString();
+    this.nodeSymbol(name, nameRange);
+    let title: FlowLabelNode | undefined;
+    this.tested(SQS_ONLY);
+    if (this.kind() === T.SQS) {
+      this.open('block title', '`]`');
+      title = this.text();
+      this.closer(T.SQE);
+    }
+    this.tested(SPACE);
+    while (this.kind() === T.Space) this.i++;
+    const opener = this.range(from, this.i);
+    this.expect(T.EmbedOpen);
+    const body = this.expect(T.EmbedBody);
+    const bodyRange = { start: this.start(body), end: this.end(body) };
+    this.tested(EMBED_END);
+    if (this.kind() !== T.EmbedEnd) {
+      st.diagnostics.error(
+        'UNCLOSED',
+        `Unclosed block: the \`mermaid ${name}\` block at line ${this.lineOf(opener.start)} has no closing \`}\`. Add \`}\` on its own line to close it.`,
+        opener
+      );
+      throw STOP;
+    }
+    this.i++;
+    const label = title && { text: title.text, type: title.type };
+    db.addVertex(name, this.nodeAst(name), nameRange, {
+      type: 'embed',
+      label: label ?? { text: '', type: 'text' },
+    });
+    const text = title ? (db.vertices.get(name)?.text ?? '') : undefined;
+    db.addEmbed(
+      {
+        id: name,
+        ...(text ? { title: text } : {}),
+        text: this.src.slice(bodyRange.start, bodyRange.end),
+        offset: bodyRange.start,
+      },
+      nameRange
+    );
+    const r = this.span(from);
+    st.statement('embed', r);
+    const stmt: FlowEmbedStmt = {
+      id: this.ids.statement('embed'),
+      type: 'Embed',
+      range: r,
+      name,
+      nameRange,
+      bodyRange,
+    };
+    if (title) stmt.title = title;
+    out.push(stmt);
+    this.separator();
+    return [name];
   }
 
   // ---- subgraphs ----------------------------------------------------------------------

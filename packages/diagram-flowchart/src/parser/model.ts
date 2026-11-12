@@ -9,7 +9,7 @@
  * recorded instead of bound, and errors are diagnostics instead of exceptions.
  */
 // cspell:words kepano
-import type { AstId, Diagnostic, Range } from '@mermaid-js/core/parser-kit';
+import type { AstId, Diagnostic, EmbeddedBlock, Range } from '@mermaid-js/core/parser-kit';
 import { isYamlMap } from '@mermaid-js/core/preprocess';
 import type { YamlMap } from '@mermaid-js/core/preprocess';
 import {
@@ -61,6 +61,8 @@ export interface FlowVertex {
   constraint?: string;
   assetWidth?: number;
   assetHeight?: number;
+  /** A folded embedded block (`id@{ view: collapsed }`, #670): drawn without its diagram. */
+  folded?: boolean;
 }
 
 export interface FlowModelEdge extends FlowEdgeRecord {
@@ -83,6 +85,13 @@ export interface FlowModelSubgraph {
   classes: string[];
   dir?: string;
   metadata?: YamlMap;
+  /**
+   * What a declaration of the subgraph listed, in order, when another subgraph declared earlier
+   * kept one of those members (v12 `droppedSubGraphMembers`); a redeclaration that loses one
+   * adds its own list. Absent when no declaration lost a member: a member it lists again
+   * itself, one a subgraph nested in it keeps, or its own id, is no loss. Swimlane's `SWIMLANE_SHARED_NODE` reads it (D536).
+   */
+  listed?: string[];
 }
 
 /** A `click … href`/URL statement. */
@@ -200,8 +209,17 @@ export class FlowBuilder extends FlowBuilderBase<
   BuilderOptions
 > {
   readonly subgraphs: FlowModelSubgraph[] = [];
+  /** Embedded diagram blocks (ADR-15) for `ParseResult.embeds`; each is a vertex too. */
+  readonly embeds: EmbeddedBlock[] = [];
+  /** Each block id's range, the first per id: a block id names the block only (ADR-15). */
+  private readonly blockAt = new Map<string, Range>();
+  /** Where a statement other than a block gave a node a shape or label, the first per id. */
+  private readonly shapedAt = new Map<string, Range>();
+  /** Ids given `@{ view: collapsed }`: a block among them is folded (#670). */
+  private readonly foldIds = new Set<string>();
   private readonly subgraphById = new Map<string, FlowModelSubgraph>();
-  private readonly members = new Set<string>();
+  /** Each subgraph member (node or subgraph id) and the subgraph that keeps it. */
+  private readonly members = new Map<string, string>();
   private subCount = 0;
   /** `style X` on an id nothing defined yet; warned at the end unless X is a subgraph. */
   private readonly unknownStyles: { id: string; at: Range }[] = [];
@@ -250,6 +268,7 @@ export class FlowBuilder extends FlowBuilderBase<
       return;
     }
 
+    if (doc?.view === 'collapsed') this.foldIds.add(id);
     let vertex = this.vertices.get(id);
     if (vertex === undefined) {
       // Reported in finish(): a subgraph with this id (defined before or after) takes the style.
@@ -261,6 +280,8 @@ export class FlowBuilder extends FlowBuilderBase<
       vertex = { id, ast, text: id, labelType: 'text', styles: [], classes: [], props: own };
       this.vertices.set(id, vertex);
     }
+    if ((label !== undefined || type !== undefined) && type !== 'embed' && !this.shapedAt.has(id))
+      this.shapedAt.set(id, at);
     if (label !== undefined) {
       vertex.labelType = label.type;
       vertex.text = unquoteLabel(label.text.trim());
@@ -317,6 +338,7 @@ export class FlowBuilder extends FlowBuilderBase<
     if (idText !== undefined && idText === titleText && /\s/.test(titleText.text)) id = undefined;
 
     const { nodeList, dir } = this.listed(list);
+    const seen = new Set(nodeList);
 
     id ??= 'subGraph' + this.subCount;
     this.subCount++;
@@ -331,8 +353,23 @@ export class FlowBuilder extends FlowBuilderBase<
       classes: [],
     };
     if (dir !== undefined) subgraph.dir = dir;
-    for (const nodeId of subgraph.nodes) members.add(nodeId);
+    for (const nodeId of subgraph.nodes) members.set(nodeId, id);
     const existing = this.subgraphById.get(id);
+    // A member another, earlier subgraph kept, for swimlane's shared-node warning (D536): not
+    // this one, nor one nested in it (its keeper's chain reaches this subgraph or its list).
+    const inside = (k: string | undefined): boolean => {
+      for (
+        const walked = new Set<string>();
+        k !== undefined && !walked.has(k);
+        k = members.get(k)
+      ) {
+        if (k === id || seen.has(k)) return true;
+        walked.add(k);
+      }
+      return false;
+    };
+    if (nodeList.some((n) => n !== id && !inside(members.get(n))))
+      ((existing ?? subgraph).listed ??= []).push(...nodeList);
     if (existing) existing.nodes.push(...subgraph.nodes);
     else this.subgraphs.push(subgraph);
     this.subgraphById.set(id, existing ?? subgraph);
@@ -345,7 +382,43 @@ export class FlowBuilder extends FlowBuilderBase<
   }
 
   /** Reports what needs the whole document: STYLE_UNKNOWN_NODE for ids that are not subgraphs. */
+  /** Embedded block `block`, its id at `at`; a second block with its id is an error. */
+  addEmbed(block: EmbeddedBlock, at: Range): void {
+    if (this.blockAt.has(block.id)) {
+      this.options.error(
+        'EMBED_DUPLICATE_ID',
+        `Duplicate block id \`${block.id}\`: another \`mermaid ${block.id}\` block has it. Give each block its own id.`,
+        at
+      );
+      return;
+    }
+    this.blockAt.set(block.id, at);
+    this.embeds.push(block);
+  }
+
   finish(): void {
+    // The fold may come before or after its block, as a subgraph's does.
+    this.embeds.forEach((b, i) => {
+      if (!this.foldIds.has(b.id)) return;
+      this.embeds[i] = { ...b, folded: true };
+      const v = this.vertices.get(b.id);
+      if (v) v.folded = true;
+    });
+    for (const [id, at] of this.blockAt) {
+      if (this.subgraphById.has(id))
+        this.options.error(
+          'EMBED_DUPLICATE_ID',
+          `Duplicate id \`${id}\`: a subgraph has the id of the \`mermaid ${id}\` block. Give the block its own id.`,
+          at
+        );
+      const shaped = this.shapedAt.get(id);
+      if (shaped)
+        this.options.error(
+          'EMBED_DUPLICATE_ID',
+          `Duplicate id \`${id}\`: it names the \`mermaid ${id}\` block, so it cannot also be a node with its own shape or label. Rename the node, or drop its shape and label to connect to the block.`,
+          shaped
+        );
+    }
     for (const { id, at } of this.unknownStyles) {
       if (this.subgraphById.has(id)) continue;
       this.options.warn(

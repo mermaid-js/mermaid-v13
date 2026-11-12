@@ -9,7 +9,6 @@ import { diagramStart, preprocess } from '@mermaid-js/core/preprocess';
 import { firstPartyFacets } from '@mermaid-js/language-service';
 import type * as Monaco from 'monaco-editor';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { noFacetType } from './testing/no-facet.ts';
 import { combineMonarch } from './highlighters.ts';
 import type { MonarchDefinition } from './highlighters.ts';
 import { fakeMonaco } from './testing/fake-monaco.ts';
@@ -127,8 +126,8 @@ describe('the per-type Monarch highlighters (D134)', () => {
   });
 
   it.each([
-    // The first generated row with no package, so no facet and no highlighter.
-    ['a type with no v13 highlighter', noFacetType().source],
+    // ZenUML: a v12 diagram (external there) with no v13 package, so no highlighter.
+    ['a type with no v13 highlighter', 'zenuml\n  A.method()\n'],
     ['a type v12 does not know', 'notADiagram\n  A --> B\n'],
     ['a header being typed', 'flo'],
   ])('colours nothing for %s, not as flowchart', async (_label, text) => {

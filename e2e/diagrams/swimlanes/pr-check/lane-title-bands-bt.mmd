@@ -1,0 +1,22 @@
+---
+description: >-
+  Bottom-to-top lanes: the title band stays on top of each lane, as for TB
+  (D536). Three lanes, a group nested in the first, a loose node in the
+  default lane, and a lane title longer than its one node is wide, which
+  the lane grows to hold.
+---
+swimlane-beta BT
+  subgraph L1[Sales]
+    subgraph G1[Intake]
+      A[Receive order] --> B[Check stock]
+    end
+    C[Confirm]
+  end
+  subgraph L2[Warehouse and dispatch, second shift]
+    D[Pick]
+  end
+  subgraph L3[Billing]
+    E[Invoice] --> F[Collect]
+  end
+  B --> C --> D --> E
+  Start --> A

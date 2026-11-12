@@ -1,0 +1,24 @@
+---
+description: >-
+  architecture.iconSize and architecture.padding set in front matter: service icons, junction
+  boxes and group padding follow them, a long service label wraps at iconSize x 1.5, and group
+  titles carry their icon (padding x 0.75) beside the label.
+config:
+  architecture:
+    iconSize: 120
+    padding: 20
+---
+architecture-beta
+    group outer(cloud)[Outer group with a long title]
+    group inner(server)[Inner] in outer
+    group bare in outer
+
+    service web(internet)[A service label long enough to wrap] in inner
+    service api(server)[API] in inner
+    junction hub in bare
+    service db(database)[DB]
+
+    web:R --> L:api
+    api:B -- T:hub
+    hub:R -[stores]- L:db
+    align row web api

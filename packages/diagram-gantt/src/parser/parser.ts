@@ -36,8 +36,6 @@ import {
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
-  ParseOptions,
-  ParseResult,
   Range,
   SourceView,
   StatementSpan,
@@ -63,15 +61,12 @@ import type {
   GanttTextStatementNode,
 } from './ast.ts';
 import { lex } from './lexer.ts';
+import { checkNodes } from './limits.ts';
+import type { GanttParseOptions, GanttParseResult } from './options.ts';
 import { TaskIds } from './task-ids.ts';
 import { T } from './tokens.ts';
 
-export interface GanttParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-}
-
-export type GanttParseResult = ParseResult<GanttModel, GanttDocument>;
+export type { GanttParseOptions, GanttParseResult } from './options.ts';
 
 /** Comments, directives and dropped `;`: trivia here. */
 const SKIPPED = kindSet(Kind.Comment, Kind.Directive, Kind.Space);
@@ -685,6 +680,7 @@ class GanttParser {
     this.closeSection(range.start, true);
     const ast = this.st.ids.subgraph(text.trim());
     this.sections.push({ ast, text });
+    checkNodes(this.st, this.sections.length + this.tasks.length, this.options.maxNodes, range);
     this.children.push({ id: ast, type: 'Section', range, text });
     this.openSection = this.st.beginStatement('section', range.start);
     this.openSection.range.end = range.end;
@@ -767,6 +763,7 @@ class GanttParser {
     if (fields.length > 1) task.start = fields[many ? 1 : 0] ?? '';
     if (prev && prev.fields.length <= 3) task.prevId = prev.id;
     this.tasks.push(task);
+    checkNodes(this.st, this.sections.length + this.tasks.length, this.options.maxNodes, range);
     node.id = ast;
     if (!tooMany) node.task = id;
     this.add(node, 'task');

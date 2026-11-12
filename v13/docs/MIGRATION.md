@@ -24,7 +24,8 @@ What most integrators have to change:
 2. Stop relying on `htmlLabels`, `<foreignObject>` labels and `dompurifyConfig`: labels are SVG
    text ([Labels](#labels-and-text)).
 3. Click callbacks (`click A callback`, `call fn()`) and `bindFunctions` need
-   `@mermaid-js/plugin-interactions` ([Click callbacks](#click-callbacks-and-bindfunctions)).
+   `@mermaid-js/plugin-interactions`, and callbacks still need `securityLevel: 'loose'`
+   ([Click callbacks](#click-callbacks-and-bindfunctions)).
 4. `securityLevel: 'loose'` (and `antiscript`, `sandbox`) now means `default`; `strict` now
    allows relative links only ([securityLevel](#securitylevel)).
 5. CSS that targets element ids, `<marker>`, `.label-container` or the `<style>` element inside
@@ -164,8 +165,9 @@ links and gets a `URL_REFUSED` warning per dropped link. Set `securityLevel: 'de
 leave it unset) to keep them. `loose`, `antiscript` and `sandbox` act as `default` with a
 `SECURITY_LEVEL` warning; there is no sandbox iframe mode and no HTML in labels.
 
-In v12, `loose` was also what allowed click callbacks and HTML labels. In v13 neither depends on
-`securityLevel`: HTML labels are gone, and callbacks depend on the interactions plugin. Only
+In v12, `loose` was also what allowed click callbacks and HTML labels. In v13 HTML labels are
+gone. Callbacks need the interactions plugin and, as in v12, `securityLevel: 'loose'` (D554):
+that is the one thing `loose` still turns on, and for link URLs it acts as `default`. Only
 `initialize()` can set `securityLevel`; front matter and directives cannot (as in v12, where it
 was in `secure`). `initialize({ linkSchemes: [...] })` replaces the scheme list of `default`.
 
@@ -222,14 +224,17 @@ attributes. Without the plugin:
 - `click A "url"` and `click A href "url"` still draw links (they are SVG `<a>` elements, not
   script) and tooltips become SVG `<title>` elements.
 
-With the plugin, callbacks work as in v12. In Node, or in a bundle built with
-`@mermaid-js/bundler-plugin`, installing it is enough ([Plugins](#plugins-installed-is-enabled-r-plug-5),
-D169). Otherwise register it once; diagram text alone can never turn it on:
+With the plugin and `securityLevel: 'loose'`, callbacks work as in v12. In Node, or in a bundle
+built with `@mermaid-js/bundler-plugin`, installing the plugin registers it
+([Plugins](#plugins-installed-is-enabled-r-plug-5), D169). Otherwise register it once. Diagram
+text alone can never turn callbacks on: it can neither register the plugin nor set
+`securityLevel`.
 
 ```js
 import mermaid from 'mermaid';
 import interactions from '@mermaid-js/plugin-interactions';
 
+mermaid.initialize({ securityLevel: 'loose' });
 await mermaid.registerExternalDiagrams([interactions]);
 await mermaid.run(); // binds the callbacks of every diagram it draws
 
@@ -244,13 +249,18 @@ bindFunctions?.(element);
   pass the node id.
 - `run()` and `mount()` call `bindFunctions` for you. Calling it again on the same element binds
   nothing twice.
-- Unlike v12, callbacks do not depend on `securityLevel` (v12 ran them only with `loose`):
-  installing the plugin is the opt-in.
+- As in v12, callbacks run only with `securityLevel: 'loose'` (D554, amends D74). Under
+  `default`, `strict`, `antiscript`, `sandbox` or no level, the plugin binds no callback and the
+  render adds one `CALLBACK_IGNORED` warning. A callback calls a function on `window` that the
+  diagram text names, with arguments the text gives, so set `loose` only for text you trust.
+  Links, tooltips and sequence actor menus work under every level.
+- `loose` still adds core's `SECURITY_LEVEL` warning, because for link URLs it is treated as
+  `default`.
 - The plugin does not change the SVG; it adds click listeners to the rendered `g.node[data-id]`
   elements inside the element you pass.
 
-v12 had no click-callback config keys (only `securityLevel` gated them), so no schema key is
-`moved` to the plugin and it has no config section.
+v12 had no click-callback config keys (only `securityLevel` gated them, as it does in v13), so
+no schema key is `moved` to the plugin and it has no config section.
 
 <!-- BEGIN GENERATED CONFIG SECTION: pnpm gen:config -->
 
@@ -367,7 +377,15 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `requirement.fontSize` | ignored | v12.2.0's requirement renderer never read it: the text takes the theme's `fontSize`, or a box's `font-size` style. |  |
 | `requirement.rect_padding` | ignored | v12.2.0's requirement renderer never read it: boxes are padded 20, as v12 drew them (D436). |  |
 | `requirement.line_height` | ignored | v12.2.0's requirement renderer never read it: each line is as tall as its measured text (D436). |  |
+| `architecture.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the architecture renderer never did. |  |
 | `architecture.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `architecture.fontSize` | ignored | In v12 it sized only cytoscape's own label style and moved a group's title by half of it; the text was drawn in the global font size. v13 draws every architecture label in the theme's `fontSize`, as v12 drew the text (D507). | `themeVariables.fontSize` |
+| `architecture.randomize` | ignored | An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune. | none |
+| `architecture.nodeSeparation` | ignored | An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune. | none |
+| `architecture.idealEdgeLengthMultiplier` | ignored | An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune. | none |
+| `architecture.edgeElasticity` | ignored | An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune. | none |
+| `architecture.numIter` | ignored | An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune. | none |
+| `architecture.seed` | ignored | An fcose setting (D328): v13 lays architecture out with the `compass` grid engine (D326), which is deterministic and has no solver to tune. | none |
 | `mindmap.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the mindmap renderer never did. |  |
 | `mindmap.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `mindmap.layoutAlgorithm` | ignored | v12 never read it. Mindmap lays out with core's `tree` engine (D284); `mindmap.layout` or the top-level `layout` chooses another engine, and `cose-bilkent` and `tidy-tree` there map to `tree`. | `mindmap.layout` or `layout` |
@@ -416,7 +434,13 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `wardley-beta.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `cynefin.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the cynefin renderer never did. |  |
 | `cynefin.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `railroad.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the railroad renderer never did. |  |
 | `railroad.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `railroad.compactMode` | ignored | v12 read it and drew nothing different (D515). |  |
+| `railroad.commentFill` | ignored | v12 read it into a style rule for `.railroad-comment`, which matched nothing: no comment element is drawn (D515). |  |
+| `railroad.commentStroke` | ignored | v12 read it into a style rule for `.railroad-comment`, which matched nothing: no comment element is drawn (D515). |  |
+| `railroad.commentTextColor` | ignored | v12 read it into a style rule for `.railroad-comment`, which matched nothing: no comment element is drawn (D515). |  |
+| `railroad.showMarkers` | ignored | v12 read it and drew the start and end markers either way (D515). |  |
 | `dompurifyConfig` | removed | v13 has no HTML sanitizer: output is safe by construction (R-SEC-1). | none |
 
 ### Changed defaults
@@ -466,6 +490,19 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `usecase.actorFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type (D132), not v12's `"Open Sans", sans-serif`. A set value takes effect; one the style check refuses draws in the theme's font and adds one `USECASE_CONFIG_IGNORED` warning. |
 | `usecase.usecaseFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type (D132), not v12's `"Open Sans", sans-serif`. A set value takes effect; one the style check refuses draws in the theme's font and adds one `USECASE_CONFIG_IGNORED` warning. |
 | `venn.padding` | `15` | The documented default changes from 8 to 15, the padding v12 drew its circles with (D412): v12 solved the layout twice, its circles at 15 and its text nodes and hand-drawn circles at `padding` (8), so text sat on circles of another size. v13 solves once, at an author's `padding`, else 15. A negative or non-numeric value lays out at 15, and one that leaves no room at 0, with no warning. |
+| `railroad.fontSize` |  | The documented default changes from 14 to none (D515): unset, the theme's `fontSize` is used, as v12 drew (its runtime config reset the 14), so fonts stay uniform across diagrams. A number, or a string read with `parseFloat`, from 0 up to 10000; anything else is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently (and drew 10000 or more). |
+| `railroad.fontFamily` |  | The documented default changes from `monospace` to none (D515): unset, the theme's `fontFamily` is used, as v12 drew (its runtime config reset `monospace`), so fonts stay uniform across diagrams. A value that fails core's style check is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.terminalFill` |  | The documented default changes from `#FFFFC0` to none (D515): unset, the theme's `railroadTerminalFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.terminalStroke` |  | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadTerminalStroke` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.terminalTextColor` |  | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadTerminalTextColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.nonTerminalFill` |  | The documented default changes from `#FFFFFF` to none (D515): unset, the theme's `railroadNonTerminalFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.nonTerminalStroke` |  | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadNonTerminalStroke` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.nonTerminalTextColor` |  | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadNonTerminalTextColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.lineColor` |  | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadLineColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.markerFill` |  | The documented default changes from `#000000` to none (D515): unset, the theme's `railroadMarkerFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.specialFill` |  | The documented default changes from `#F0E0FF` to none (D515): unset, the theme's `railroadSpecialFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.specialStroke` |  | The documented default changes from `#8800CC` to none (D515): unset, the theme's `railroadSpecialStroke` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `railroad.ruleNameColor` |  | The documented default changes from `#000066` to none (D515): unset, the theme's `railroadRuleNameColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
 
 <!-- END GENERATED CONFIG SECTION -->
 
@@ -778,8 +815,8 @@ npm install @mermaid-js/plugin-hand-drawn
 - **Not sketched:** sequence, gantt, pie, timeline, journey, quadrant and gitGraph draw themselves
   and draw exactly as without the plugin, with no warning, as in v12 (D301, D305); they can opt in
   later. Treemap, which v12 never sketched either, draws the same way. Types v12 sketched that
-  v13 has not ported yet (block, swimlanes) are
-  sketched once their ports adopt it.
+  v13 has not ported yet (block) are sketched once their ports adopt it.
+  `swimlane-beta` is sketched as flowchart is, since flowchart draws it.
 - **Text output** (`format: 'ascii'`) is never sketched: it draws as before, with one
   `ASCII_DROPPED` warning (`feature: 'handDrawn'`) for every type with `handDrawn` on, sequence
   included (D305).
@@ -2569,6 +2606,54 @@ so selectors that use them keep working: `clusters`, `cluster`, `flow-cluster`, 
 | `click A "url"` wrapped the node in `<a xlink:href>`; tooltips were an HTML hover div; `click … callback` bound through the DB | `<a href>` inside the node group (only URLs that pass `securityLevel` and `linkSchemes`; a refused one warns `URL_REFUSED`); a tooltip is an SVG `<title>` in the node group; `click … callback` draws nothing and is bound by `@mermaid-js/plugin-interactions` | No script in output (R-SVG-4, R-SVG-5, D105) |
 | `look: handDrawn` sketched vertices, frames and the card's frame with roughjs; a sketched frame or card is a `<path>`, which the stylesheet's `.flow-cluster rect` and neo `.cluster rect` rules missed, so both kept the `flowContainerStroke` attribute, unfilled and without the shadow (only a palette slot recoloured a frame) | With `@mermaid-js/plugin-hand-drawn`, every outline goes through `w.outline`: shapes and the card (`node`), frames (`group`), the rails, the rule and the separator (`divider`), the dots (`mark`) and edges (`edge`). A sketched frame and card keep the paint they have without the plugin (`nodeBorder` or their slot, the card filled, the shadow where the theme has one): the renderer never branches on the plugin, and a drawer gets only the role and the paint | D152, D301, D302 |
 
+## Architecture diagram
+
+What changes in how an architecture diagram is drawn, against v12 12.2.0
+(`architectureRenderer.ts`, `svgDraw.ts`, `architectureIcons.ts`, `architectureStyles.ts`), and
+why (spec #525). The layout itself is `compass` (D326).
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| The seven built-in icons (`database`, `server`, `disk`, `internet`, `cloud`, `blank`, `unknown`) were an icon pack, `mermaid-architecture`, registered globally when the diagram loaded | The package draws them itself, in v12's look (80 × 80 `#087ebf` squares with white strokes, scaled to `architecture.iconSize`), the same in every theme, with no extension | D505, D152 |
+| An icon name that resolved nowhere drew a blue square with a white `?` and logged an error | The same `?` square, and one `ICON_NOT_RENDERED` warning per render naming each such icon once | D505, D291 |
+| Any other icon came from a pack registered with `registerIconPacks`, its name split by Iconify's `stringToIcon` with `mermaid-architecture` as the fallback pack: `logos:aws` and `logos-aws` are both the `logos` pack's `aws`, `a:b:c` is `b:c` | The same names from the same packs, through the icons extension (`@mermaid-js/plugin-icons`), which splits them as v12 did; the diagram lists each with that fallback pack (`icons()`) so the extension loads it. Without the extension or the pack: the `?` square and `ICON_NOT_RENDERED`. Gradients and other parts an icon body may not hold are simplified, with `ICON_SIMPLIFIED`. While the pack is still loading the icon's square is left empty | D505, D293, D295, D299 |
+| A text icon (`service a "text"`) was an HTML `<div>` in a `foreignObject`, left-aligned, cut to `(iconSize − 2) / fontSize` lines by `-webkit-line-clamp` | SVG text from core's label layout, in white, centred in the `blank` square, wrapped to the square less v12's 1 px margin, cut to the lines that fit, the last ending in `…` where text was cut | D506, R-SEC-2 |
+| Every edge was a straight line or one bend through cytoscape's midpoint | The same wherever the route has at most one bend. A route that needs more (two ends on one side, an edge from a node to itself, a detour round another node) is `compass`'s orthogonal route, with square corners | D507 |
+| Edge labels: along a level line under its midpoint, wrapped to its length; turned −90° beside a vertical line, wrapped to two thirds of it; turned ±45° inside a bend, wrapped to half its width | The same placement. On a route with more than one bend the label is flat, unwrapped, where `compass` left room for it | D507 |
+| `architecture.fontSize` sized cytoscape's own label style and moved a group's title by half of it | `ignored`: every label is drawn in the theme's `fontSize` (as v12 drew the text), and the group title sits in the title band `compass` placed | D507 |
+| The `architecture` settings `randomize`, `nodeSeparation`, `idealEdgeLengthMultiplier`, `edgeElasticity`, `numIter` and `seed` tuned cytoscape's fcose solver, which placed nodes from random starting points (made repeatable by `seed`) | All six are `ignored`, with no warning: `compass` places nodes on a grid from the sides each edge names, the same layout on every render, with nothing to tune | D328, D326 |
+| `architecture.useWidth` was in the schema but never read | `ignored`, with no warning; `useMaxWidth` is honoured as before | v12 never read it |
+| `look: handDrawn` (top level or `architecture.look`): v12 never sketched an architecture diagram | Without `@mermaid-js/plugin-hand-drawn`, `look` is ignored with one `LOOK_REMOVED` warning, as in every section. With the plugin, `look: handDrawn` turns `handDrawn` on with no warning, and the diagram draws exactly as without it: not sketched | D301, D303 |
+| `architecture.padding` and `iconSize` took any value | A number, or a numeric string, from 0 to under 10,000; anything else draws with the default (40, 80) and one `ARCHITECTURE_CONFIG_IGNORED` per key. The gap between grid cells stays 60 px whatever they are | Pitfall 22 |
+| A service's label hung from the icon's bottom, its first line's middle 1em below it | The label's box starts at the icon's bottom, as `compass` sized the service (the icon with its label under it), a few px higher | D501 |
+| An arrowhead longer than its end of the line ran past the line's corner, and two heads on a short line (`<-->`) were drawn over each other (a large `iconSize`: the heads are `iconSize / 6`) | A head shrinks until its base stays on its own end segment (with two heads on one segment, until the bases meet), with one `ARCHITECTURE_ARROW_SHRUNK` warning. Never at the default sizes | GAPS #525 T3, T4 |
+| Edges were always drawn from the sides as written | They meet their nodes where the layout engine says (its ports): the same sides under `compass`; under `layout: elk` or another engine that ignores them, the heads and labels follow the line it drew. An edge the engine routes no line for keeps its `path.edge`, with no line, and one `ARCHITECTURE_EDGE_NOT_DRAWN` | D507, D508 |
+| `base` drew edges and arrowheads `#777` and group borders `#000`, literals no other theme had | `base` takes the rule every other theme follows: edges in `lineColor`, borders in v12's group border (below) | D541 |
+| In `dark`, an author's `lineColor` did not reach the edges (the theme reset it to `lightgrey` before setting them) | Edges and arrowheads follow an author's `lineColor` in every theme | No D-id: it follows from architecture's one theme rule (edges read `lineColor`, T4), which `dark` no longer overrides |
+| Group borders (`archGroupBorderColor`) took the theme's `primaryBorderColor` as each theme's constructor first set it, before the theme recomputed it, so an author's `primaryColor` or `primaryBorderColor` never reached them | The same colour in every theme but `base` (the D332 input `calloutBorder`), and an author's `primaryBorderColor` now recolours them | D541, D332 |
+
+## Architecture SVG structure
+
+What changed in the architecture diagram's SVG compared with v12 12.2.0, and why (DESIGN §7.2,
+spec #525). v12's sections, their order and its class names are kept: `g.architecture-edges`
+(per edge a `g` with `path.edge`, `polygon.arrow` heads and its label), then
+`g.architecture-services` (each `g.architecture-service`, then each `g.architecture-junction`),
+then `g.architecture-groups` with each group's `rect.node-bkg`; labels in
+`architecture-service-label`, a service with no icon `path.node-bkg`, text icons `node-icon-text`.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, `aria-roledescription="architecture"`, a `<style>` with `.edge`, `.arrow`, `.node-bkg` and `.node-icon-text` rules | No root `id`; `class="mermaid mermaid-architecture"`, `role="img"`, `aria-roledescription="architecture"` (kept), `data-mermaid-version`, `<title id="<id>-title">` / `<desc id="<id>-desc">` from `accTitle` / `accDescr`. No `<style>` (except `theme: 'auto'`'s variables-only sheet): strokes, fills, widths and the dash are presentation attributes reading `var(--_x)` aliases of the five `arch*` variables | R-SEC-2, R-A11Y-1, D133 |
+| Element ids `<id>-service-<name>`, `<id>-group-<name>`, `<id>-node-<name>` (a junction's box, a service's outline) and `<id>-L_<a>_<b>_0` on edges, which parallel edges shared | No element ids. `data-id` and `data-ast` carry the AST ids (`service:<id>`, `junction:<id>`, `group:<id>`, `edge:<a>-><b>`, `@2` on a repeat) on each service's, junction's and group's `g` and each edge's `path.edge`; labels and arrowheads carry `data-id` only | D508, R-PARSE-8 |
+| A service's `g` was translated to cytoscape's node centre and drawn from there, so the icon sat half an icon right of and below its node, and groups and edges were offset to match | The service's `g` is translated to its icon's corner; everything is placed by `compass` in one frame | D326 |
+| A service held its label `g` (`createText`: a `g > g` with `dy`, `alignment-baseline` and `dominant-baseline` attributes, an empty `rect.background`, `text > tspan.text-outer-tspan > tspan.text-inner-tspan`) and then its icon as `g > g > svg` | The label is `g.architecture-service-label > text`, a `tspan` per line from core's label layout with absolute positions; the icon follows as one `g` holding v12's elements (each `style` written as presentation attributes, the `id`s `b` … `e` dropped, a `scale()` when `iconSize` is not 80), with no nested `<svg>`. A pack icon is the extension's glyph in a `g` | R-SEC-2, D505 |
+| A text icon's square, then a `foreignObject > div.node-icon-text > div` | The `blank` square, then `text.node-icon-text` | D506 |
+| A junction was `g.architecture-junction > g > rect` with `fill-opacity="0"` | `g.architecture-junction > rect fill-opacity="0"`, translated to its corner | One element less |
+| Each group was a `rect.node-bkg` and a separate `g` (its icon `g`, its label `g`) directly in `g.architecture-groups` | Each group is one `g.architecture-group` (a new class) holding its `rect.node-bkg`, its icon and its start-anchored `g.architecture-service-label`, so `data-ast` has one element per group | D508, R-PARSE-8 |
+| `path.edge` was `M start L mid L end` through cytoscape's midpoint; a head was `polygon.arrow` with `points` from the origin and a `transform` | `path.edge` holds the route's corners only (a straight edge has no middle point); `polygon.arrow` has absolute `points`, v12's triangle `iconSize / 6` across with its tip 2 px into the node, as before | Plain geometry |
+| An edge label was a `g` with `translate()` (and `rotate()`, or a `translate()`/`translate()`/`rotate()` list on a bend) holding `createText`'s output | `g.architecture-service-label` with `rotate(angle, x, y)` when turned, holding a `text` at absolute coordinates | R-SEC-2 |
+| The viewBox was the drawing's `getBBox()` plus `architecture.padding` | The layout's box (with `padding` round it), grown to hold any edge label or arrowhead past it | No DOM measuring |
+
 ## Block diagram
 
 - **Syntax** is v12's (the grammar is in [syntax/block.md](./syntax/block.md)): line breaks
@@ -2736,7 +2821,8 @@ placement constants are kept (spec #527). What changes:
 | Notes, `gwt` blocks and entities were parsed and not drawn | The same: in the model and the language service, not drawn | D526 |
 | An `eventmodeling.padding` that was not a number was used as given | A number of 0 or more, or a numeric string as its number; anything else (or a value so large the drawing would not stay finite) draws with 30 and one `EVENTMODELING_CONFIG_INVALID` warning. A `useMaxWidth` that is not `true` or `false` draws as `true`, with the same warning | D226 |
 | `eventmodeling.rowHeight` (default 32) and `eventmodeling.useWidth` were never read | Accepted and ignored, with no warning ([Config](#config)) | |
-| `look: handDrawn` (top level or `eventmodeling.look`): v12 never sketched an event model | Without `@mermaid-js/plugin-hand-drawn`, `look` is ignored with one `LOOK_REMOVED` warning, as in every section. With the plugin, `look: handDrawn` turns `handDrawn` on with no warning, and the event model draws exactly as without it: not sketched | D301, D303 |
+| `look: handDrawn` (top level or `eventmodeling.look`): v12 never sketched an event model | Without `@mermaid-js/plugin-hand-drawn`, `look` is ignored with one `LOOK_REMOVED` warning, as in every section. With the plugin, `look: handDrawn` sketches the event model: lanes, boxes and relations are drawn with roughjs, as other edge diagrams are; the arrowheads and the text are drawn as before. A visible change from v12, which drew it plainly (option A, decided by the maintainer on 2026-11-10, with D537's line hops; the D-id is the maintainer's to number) | D301, D303, D537 |
+| `lineHops: true` (or `'arc'`, `'gap'`) on crossing relations | New in v13 (D537): event modeling relations go through core's shared edge-path step, so where two cross the later one draws a 6px hop. The shared key defaults to `false`, so existing documents draw as before. v12 had no hops for event models | D537 |
 | `format: 'ascii'`: no text output | Throws `UnsupportedFormatError` | D320, R-ASCII-5 |
 
 ### Event modeling theme colours
@@ -2775,6 +2861,95 @@ relations) are kept.
 | No source mapping | `data-id` on every element; `data-ast` on each `g.em-box` (`frame:<id>`) and each `path.em-relation` drawn for a `->>` (`relation:<source>-><target>`, the first `->>` of that source). A source repeated in one frame (`->> 01 ->> 01`) draws one path; the AST nodes of its repeats (`relation:01->02@2`, …) are not drawn. Lanes (`lane:<index>`) and inferred relations carry `data-id` only | R-PARSE-8, D528 |
 | `rgb(250,250,250)`, `rgb(240,240,240)` and `white` paints | The same colours as hex | |
 | `look: neo` and the redux themes: the same model as the classic themes | The same: event modeling differs between families by colour only | D227 |
+
+## Swimlane diagrams
+
+`swimlane-beta` renders again, through the flowchart plugin with the `swimlane` layout engine
+(D534). It is flowchart's syntax, parser, AST and language support with another layout; each
+top-level subgraph is a lane, and nodes outside every subgraph go to one default lane.
+
+- **Detection and type.** v12's detector, `swimlane-beta` at a word boundary, in v12's place
+  (after `sequenceDiagram`, before `graph`/`flowchart`). `detectType` and `diagramType` report
+  `swimlane`, as in v12. `@mermaid-js/diagram-flowchart` draws it; nothing else needs installing.
+- **Layout.** The default layout is `swimlane`, a default below every config layer: `layout:
+  dagre` (or `layered`) at the top level, in `swimlane.layout`, in front matter or in a
+  directive moves a swimlane diagram onto layered, as v12's `swimlanesDiagram.spec.ts` asserts.
+  `swimlane-beta` may also take `elk` (D535). Any graph diagram may select `layout: swimlane`
+  too (D535).
+- **Config.** `swimlane` is the diagram's section on top of flowchart's. Lowest first:
+  flowchart's defaults, swimlane's defaults, the author's `flowchart.*`, the author's
+  `swimlane.*` (in each source; a later source, front matter or a directive, still outranks
+  `initialize()`). So `flowchart.layout: elk` or `flowchart.theme` moves a swimlane diagram
+  unless `swimlane.layout` / `swimlane.theme` is set too, and a key both sections have
+  (`theme`, `layout`, `useMaxWidth`, `useWidth`) resolves the same way in both. An
+  `%%{init: {"config": …}}%%` key goes to `swimlane` when it is one of swimlane's own keys
+  (`theme`, `layout`, `useMaxWidth`, `lineHops` and the three below), else to `flowchart` (v12
+  sent all of it to `swimlane`). `flowchart.*` keys (spacing, curve, labels, padding) apply as
+  in v12. `swimlane.look` is ignored, as `look` is everywhere (D153).
+- **Engine keys**, all honoured as in v12: `swimlane.ignoreCrossLaneEdges` (default `true`:
+  each lane is ranked on its own edges), `optimizeRanksByCrossings` (default `true`; as in v12
+  it acts only when `ignoreCrossLaneEdges` is `false`) and `automaticLaneOrdering` (default
+  `false`: lanes keep their source order; `true` reorders them so busy lanes sit together).
+- **Curve.** Edges draw `rounded` unless the author sets a curve. v12's engine forced `rounded`
+  when the curve was unset or `basis`; in v13 an author's `flowchart.curve` (`basis` included)
+  or `linkStyle default interpolate` wins.
+- **Lanes** draw as v12's swimlane cluster: `g.cluster.swimlane` holding `rect.swimlane-body`
+  (unfilled) and `rect.swimlane-title` (filled `clusterBkg`), both stroked `clusterBorder`,
+  then the label. The title band is on top for `TB` and `BT`, and on the left, its label turned
+  to read upward, for `LR` and `RL`. **Fixed:** v12 turned only `LR`, so `RL` lanes got a top
+  band over a left-reserved layout; in v13 `RL` matches `LR` (D536). The default lane (nodes
+  outside every subgraph) has no label, `data-id="__swimlane_default__"` and the palette slot
+  after every subgraph's, as in v12. A subgraph inside a lane is a plain subgraph box. The
+  same lanes draw for any flowchart with `layout: swimlane` (D535).
+- **Lane colours.** In the colour themes (`redux-color`, `redux-dark-color`) each lane takes
+  flowchart's per-subgraph palette slot (`data-color-id`) on both halves, stroke and, where the
+  theme has a background palette, fill: what v12's `[data-color-id]` lane rules drew, now as
+  attributes. An author's `style` or `classDef` still wins. Lanes have no drop shadow (v12
+  turned it off), and a lane without a slot is stroked `clusterBorder`, never the neo gradient.
+  No new theme variables. With the hand-drawn plugin both halves are sketched (D301).
+- **Long lane titles.** v12 let a lane title wider than its lane run past it; v13 widens the
+  lane across the flow to the title plus 20px each side.
+- **Warnings** (D226, D536), raised at layout and only when the `swimlane` engine lays the
+  diagram out, where v12 only logged: `SWIMLANE_SHARED_NODE` for a node (or subgraph) listed in two lanes, directly or in a
+  subgraph nested in one (it stays in the first;
+  `astIds` names both lanes) and `SWIMLANE_NESTED_LANE` for each subgraph nested in a lane
+  (`astIds` names it). **Changed:** v12 removed a lane that a shared node left empty; v13 draws
+  it as an empty lane, so every subgraph stays in the SVG with its `data-ast`.
+- **Line hops** (D537). Crossing edges hop by default under the swimlane engine
+  (`swimlane.lineHops`, default `arc`; `gap` cuts the run that gives way instead, `false` draws
+  it unbroken), as in v12. The shared top-level `lineHops` is new: `lineHops: false` turns hops
+  off everywhere, swimlane included, and an author's `swimlane.lineHops` beats the top-level
+  key under this engine. Crossings are found on straight runs only, as in v12: a rounded corner
+  or a smoothed curve is never hopped, and unlike v12 the corners of an edge that hops keep
+  their rounding.
+- **Layout differences from v12's engine** (D532: the engine is v12's, ported; these are the
+  places it differs):
+  - An empty lane, or one a shared node left empty, gets a band of its own (its title's width
+    plus padding across, the other lanes' length along); v12 shrank it to nothing.
+  - A subgraph inside a lane grows by its own padding on each side; v12 split one padding
+    between the two sides, so nested boxes are a little larger.
+  - Lanes grow so that routes and edge labels stay 10px inside them; with flowchart's 20px
+    subgraph padding, v12's outer routes ran along the lane border.
+  - `LR` and `RL` route on the drawn (turned) sizes; v12 routed `RL` with `TB` widths, so its
+    detours could miss boxes or cut through them.
+  - Labelled self-loops are routed through their label, and unlabelled ones take a free side;
+    v12's router skipped self-loops. A route end v12 left off its box is put back on it.
+  - A labelled edge to or from a subgraph puts its label in the row of its ranked end, beside
+    that lane's nodes; v12 put it on top of the other end.
+- **Integrators.** Lane drawing is flowchart's own lazily loaded part, `flowchartLanes`
+  (`@mermaid-js/diagram-flowchart/lanes`), loaded alongside the `swimlane` engine for
+  flowcharts only, so a plain flowchart, or a class diagram with `layout: swimlane`, loads none
+  of it. `render()`, `prepare()` and `preload({ types: ['swimlane'] })` load both; for a
+  `flowchart` with `layout: swimlane`, `preload({ layouts: ['swimlane', 'flowchartLanes'] })`.
+  Lanes are drawn only on a render mermaid's own `swimlane` engine laid out: an engine
+  registered under another name, or a loader registered under `swimlane` itself, draws the
+  groups as plain subgraphs, and a placeholder render that lacks the part says so in its
+  `PLACEHOLDER` warning. A plugin's `layoutParts` is first-party only: any other entry is
+  ignored.
+- **`format: 'ascii'`** (new; v12 had no text output) draws the flowchart with `layered`, lanes
+  as plain subgraph frames with no title band or default lane, in both charsets, with one
+  `ASCII_DROPPED` warning (`feature: 'layout'`) and no `SWIMLANE_*` warning, as for any engine
+  text output does not use (D179, D534); a flowchart with `layout: swimlane` draws the same.
 
 ## Ishikawa diagram
 
@@ -2828,6 +3003,55 @@ and bones as `edge` outlines at the drawer's defaults for those roles (node roug
 hachure fill weight 1.5, gap 1.5; edge roughness 0.3), since the outline hook takes no per-call
 options and D304 keeps roughness below 1. This awaits a maintainer decision (D499). Arrowheads
 are drawn plain, as without the look (D302); text is never sketched, as in v12.
+
+## Railroad diagram
+
+The four railroad parsers accept v12's four languages (`railroad-beta`, `railroad-ebnf-beta`,
+`railroad-abnf-beta`, `railroad-peg-beta`; oracle parity per notation over the corpus, grammars
+in [syntax/railroad.md](./syntax/railroad.md), [syntax/railroad-ebnf.md](./syntax/railroad-ebnf.md),
+[syntax/railroad-abnf.md](./syntax/railroad-abnf.md) and
+[syntax/railroad-peg.md](./syntax/railroad-peg.md)), v12's lexer quirks included (D513), and
+the layout is v12's (D514). One package draws all four, with one `railroad` config section
+(D511). What changes (spec #526):
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| A rule name was measured at normal weight and drawn bold, so a long bold name ran into its start marker | The name is measured bold: the start marker, the definition and the end marker move right by the difference between the bold and normal widths (a few px for a short name), and the diagram widens by as much | D514 |
+| A choice branch closer than `2 × arcRadius` to the main line (a small font, or a large `arcRadius`) was drawn with arcs that overshot it, the vertical piece running backwards | That branch, and every branch beyond it on the same side, moves out to `2 × arcRadius` from the main line, so the arcs meet it; the main line is then no longer at half the choice's height. An optional's bypass and a repetition's loop sit `max(2 × arcRadius, verticalSeparation)` from the element (v12: `2 × arcRadius`). With v12's defaults, only choices v12 overshot change | D514 |
+| The schema documented defaults for `railroad.fontSize` (14), `railroad.fontFamily` (`monospace`) and the colour keys, which v12's runtime config reset, so the theme's were drawn | No documented default: unset, the theme's font and the theme's railroad variables are drawn, as v12 drew them. Set, each wins over the theme, as in v12 | D515 |
+| The `railroad` keys `compactMode`, `showMarkers`, `commentFill`, `commentStroke` and `commentTextColor` were read and drew nothing different | Ignored (listed under [Config](#config)) | D515 |
+| `themeVariables.railroad.<key>` reached v12's style sheet; the terminal fill was `secondBkg ?? secondaryColor` | Railroad's own theme variables (`railroadTerminalFill` … `railroadRuleNameColor`), each also read as `themeVariables.railroad.<v12 key>`; every theme draws 12.2.0's colours (see [Railroad SVG structure](#railroad-svg-structure)) | D516 |
+| A rule defined twice: both drawn, with a `log.warn` | Both drawn, with one `RAILROAD_DUPLICATE_RULE` warning | D517 |
+| `format: 'ascii'`: no text output | Text output from the lazily loaded `@mermaid-js/diagram-railroad/ascii` entry: the SVG geometry at cell scale (`─` track, `╭╮╰╯` corners, `┬┴├┤` where branches leave and join, rounded terminals, square nonterminals, dotted specials, `●` markers; `/` `\` terminal corners, `+` and `o` in the `ascii` charset), choices centred, the bypass above and the loop below, no repeat count and no title, as in SVG. A diagram wider than `ascii.maxWidth` is drawn whole with `ASCII_TOO_WIDE`. The `railroad` colours, font and px lengths are not read: one `ASCII_DROPPED` each for the colours and font, and for the lengths, set; one for `accTitle`/`accDescr` | D320, D518 |
+
+## Railroad SVG structure
+
+What changed in the railroad diagram's SVG compared with v12 (spec #526, DESIGN §7.2), for all
+four notations (`railroad-beta`, `railroad-ebnf-beta`, `railroad-abnf-beta`,
+`railroad-peg-beta`). v12's structure, class names and order are kept: per rule a
+`g.railroad-rule` translated to its place, holding the definition's `g` (translated to where the
+definition starts) with the expression groups `g.railroad-terminal`, `g.railroad-nonterminal`,
+`g.railroad-special`, `g.railroad-sequence`, `g.railroad-choice`, `g.railroad-optional` and
+`g.railroad-repetition` nested inside it (each child translated within its parent, written in
+v12's order: a sequence's elements each followed by the connector to the next, a choice's
+branches each followed by its left and right `path.railroad-line`, an optional's or a
+repetition's element followed by its paths), then `g.railroad-rule-name-group >
+text.railroad-rule-name`, `g.railroad-start > circle`, `g.railroad-end > circle` and the lead-in
+and lead-out `path.railroad-line`, so selectors that use them keep working. Every position is
+v12's, apart from the two layout fixes of D514.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `class="railroad-diagram"`, `role="graphics-document document"`, a `<style>` scoped by the id that coloured and sized `.railroad-terminal`, `.railroad-nonterminal`, `.railroad-special`, `.railroad-line`, `.railroad-start`/`.railroad-end` and `.railroad-rule-name` | No root `id`; `class="mermaid mermaid-railroad railroad-diagram"`, `role="img"`, `aria-roledescription` the diagram type (`railroad`, `railroadEbnf`, `railroadAbnf`, `railroadPeg`), `data-mermaid-version`. Paints are presentation attributes: each `rect` carries its `fill` and `stroke` (and a special's `stroke-dasharray="5,3"`, a terminal's `rx`/`ry`), each `text` its `fill`, each `circle` its `fill`, each `path.railroad-line` `fill="none"` and its `stroke`; a colour the `railroad` config sets is written as it is, any other reads a `var(--_x)` alias on the root `style`, which a host can re-theme with `--mermaid-railroadTerminalFill` and the other ten railroad variables. What every element shares is written once on the root and inherited: `font-family`, `font-size` and `stroke-width`; the font family and size are the theme's `var(--_x)` aliases (so `--mermaid-fontFamily` and `--mermaid-fontSize` reach them) unless the `railroad` config sets them. No `<style>`, except under `theme: 'auto'`: core's light/dark sheet, scoped by `data-p` on the root, as for every type | Inert output (R-SEC-2), no colliding ids (R-A11Y-1), host re-theming with `--mermaid-*` (R-THEME-3) |
+| A box's text centred by the CSS (`text-anchor: middle`, `dominant-baseline: middle`); the rule name bold by the CSS (`font-weight: bold`) | The same values as attributes on each `text`: `text-anchor="middle"` and `dominant-baseline="middle"` on a box's text, `font-weight="bold"` on `text.railroad-rule-name` | No style sheet (R-SEC-2) |
+| The CSS rules `.railroad-comment` and `.railroad-group` (which matched nothing: v12 drew no comment or group element) | Gone | Nothing drawn |
+| No source mapping | Each `g.railroad-rule` carries `data-id` and `data-ast` `"rule:<name>"` (`rule:<name>@2` for a rule defined again) and each expression `g` both as `"<rule id>/<path>"` (the definition is `rule:a/0`, its second child `rule:a/0/1`); each `text` carries only the `data-id` of the rule or expression it labels (`text.railroad-rule-name` its rule's, `rule:<name>`). The definition's wrapping `g`, `g.railroad-rule-name-group`, the markers and the lines carry nothing | One `data-ast` element per AST node (R-PARSE-8, D517, pitfall 12) |
+| Path data and transforms as v12's `PathBuilder` and d3 wrote them: `M 0 40 A 10 10 0 0 0 10 30 L 10 28`, `translate(74, 0)`, numbers in full | The same commands and points in core's writer format: `M0,40A10,10 0 0,0 10,30L10,28`, `translate(74,0)`, numbers rounded to two decimals; the root `style` as `max-width:<w>px` | Core's SVG writer (R-SEC-2) |
+| `viewBox="0 0 <width> <height>"`: v12's canvas, which clipped a rule name in a font taller than its rule | The same unless something runs past it: the `viewBox` (and `max-width`, or `width`/`height` with `useMaxWidth: false`) grows to cover everything drawn, half the stroke included, and may start above 0 | D224 |
+| The `title` statement and front-matter `title` stored, never drawn; `accTitle`/`accDescr` as `<title>`/`<desc>` with ids from the render id | The `title` still not drawn (D218); `accTitle` and `accDescr` as `<title id="<id>-title">` and `<desc id="<id>-desc">`, the only ids in the SVG, named by `aria-labelledby`/`aria-describedby` | R-A11Y-1 |
+| A `railroad` colour, font family or font size that failed v12's checks fell back to the theme's silently; a length that was no number of 0 or more fell back to its default silently; a length or font size of any finite size was drawn (`1e308` broke the drawing) | The same fallbacks, and a length or font size of 10000 or more falls back too, with one `RAILROAD_CONFIG_INVALID` warning naming every dropped key. A string length is still read with `parseFloat`, as v12 read it (`"12px"` is 12) | D515 |
+| Colours from `buildThemeDefaults`: each from a shared theme variable, the terminal fill from `secondBkg` over theme-default's variables (`#ffffde` in base, neo, redux and redux-color, which have none) | The same sources through railroad's own variables (`railroadTerminalFill` … `railroadRuleNameColor`, nested as `themeVariables.railroad.<v12 key>`, which now reach the drawing too); the terminal fill is 12.2.0's in all eleven themes. Where v13 core resolves a shared variable (`secondaryBorderColor`, `secondaryTextColor`, `primaryBorderColor`, `tertiaryBorderColor`, `titleColor`) differently from v12, railroad follows core's value, as v12 followed its own | D516, D541 |
+| `neo` and the redux themes: the same railroad as the classic themes | The same: railroad differs between families by colour and font only, with no gradient, shadow or hand-drawn outline | D227, D301 |
 
 ## Requirement diagram
 
@@ -2912,6 +3136,14 @@ label-container outer-path`, `divider`, `relationshipLine`, `edge-thickness-norm
 | Palette colours by CSS `[data-color-id].node path` rules | `data-color-id` kept; the colours are attributes on the outline and divider; an author `style` still wins | D152 |
 | Front-matter `title` as `<text class="requirementDiagramTitleText" y="-25">` | `<text class="requirementDiagramTitleText">` centred over the drawing, its baseline 25px above the layout's top, in `textColor`; the viewBox grows to hold it | D218 |
 | Five documented theme variables (`requirementBackground`, `…BorderColor`, `…BorderSize`, `…TextColor`, `relationLabelBackground`) drew nothing | They, `relationColor` and `relationLabelColor` paint the boxes, text, lines, markers and label chips, with v12's drawn values by default | D435 |
+
+## State diagram
+
+- **A transition written inside a composite that names the composite** (D555):
+  `state Boot { Running; Boot --> Running }`, the reverse, and `Outer --> Inner` written inside
+  `Inner`. v12 filed the composite under itself (or under a state inside it) and then never
+  returned under the ELK layouts, or threw. v13 keeps the composite where it was declared and
+  draws the transition, with every layout.
 
 ## Tree view
 

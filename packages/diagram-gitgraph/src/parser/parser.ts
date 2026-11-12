@@ -70,6 +70,8 @@ export interface GitGraphParseOptions extends ParseOptions {
   mainBranchName?: string;
   /** `gitGraph.mainBranchOrder`: its place among the branches. */
   mainBranchOrder?: number;
+  /** The integrator's cap on commits and branches, the main branch included (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
+  maxNodes?: number;
 }
 
 export type GitGraphParseResult = ParseResult<GitModel, GitGraphDocument>;
@@ -218,7 +220,8 @@ class GitGraphParser extends RuleParser<PreprocessResult> {
       this.st.diagnostics,
       options.mainBranchName ?? MAIN_BRANCH,
       options.mainBranchOrder ?? MAIN_ORDER,
-      this.writtenIds()
+      this.writtenIds(),
+      options.maxNodes
     );
   }
 

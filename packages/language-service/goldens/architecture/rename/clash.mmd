@@ -1,0 +1,7 @@
+%% rename-to: hub
+architecture-beta
+  group api[API]
+  service |db in api
+  junction hub
+  db:R -- L:hub
+  service x in |api

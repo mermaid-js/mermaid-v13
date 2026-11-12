@@ -17,7 +17,7 @@
 import { lineEnd } from '@mermaid-js/core/parser-kit';
 import type { CompletionItem, Range } from '@mermaid-js/core/parser-kit';
 import type { DocumentContext } from '../context.ts';
-import { configSection, liveKeys, mapAt, secureKeys } from './front-matter.ts';
+import { configSections, liveKeys, mapAt, secureKeys } from './front-matter.ts';
 import type { FrontMatterTree } from './front-matter.ts';
 import { FRONT_MATTER_KEYS } from './hover.ts';
 import { SchemaView } from './schema.ts';
@@ -102,7 +102,7 @@ function yamlString(s: string): string {
 function offered(ctx: DocumentContext, schema: SchemaView, key: string): boolean {
   if (key === 'look' || secureKeys().has(key)) return false;
   if (!schema.isDiagramSection(key) || ctx.entry === undefined) return true;
-  return key === configSection(ctx);
+  return configSections(ctx).includes(key);
 }
 
 /** Whether a config path is somewhere completion offers nothing (`sequence.*` in a flowchart). */

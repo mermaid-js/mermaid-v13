@@ -13,6 +13,7 @@
  * break, `;` or the end of the text) and carries on (R-PARSE-4). With `probe`, a
  * {@link ProbeCursor} records what the parser tests at the probed offset (R-LANG-7, D95).
  */
+import { checkLimit } from '@mermaid-js/core/limits';
 import {
   Kind,
   kindSet,
@@ -65,6 +66,8 @@ import { T } from './tokens.ts';
 export interface QuadrantParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
+  /** The integrator's cap on points (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
+  maxNodes?: number;
 }
 
 export type QuadrantParseResult = ParseResult<QuadrantModel, QuadrantDocument>;
@@ -233,6 +236,9 @@ class QuadrantParser {
     }
     [this.outerStart, this.outerEnd] = outerRanges(this.lexed, OPENS, CLOSES, SKIPPED);
   }
+
+  /** The points so far, for the integrator's cap. */
+  private points = 0;
 
   parse(): QuadrantParseResult {
     this.header();
@@ -582,6 +588,14 @@ class QuadrantParser {
       node.className = className;
       node.classRange = classRange;
     }
+    checkLimit(
+      this.st.diagnostics,
+      'maxNodes',
+      ++this.points,
+      this.options.maxNodes,
+      'points',
+      node.range
+    );
     this.add(node, 'point');
   }
 

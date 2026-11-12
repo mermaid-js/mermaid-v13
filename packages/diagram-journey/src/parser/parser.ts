@@ -16,6 +16,7 @@
  * `accDescr {` at the end) is rejected, as v12 rejected it: jison's lexer gave no `EOF` after the
  * value there (GAPS #310, #302).
  */
+import { checkLimit } from '@mermaid-js/core/limits';
 import {
   cook,
   firstHole,
@@ -56,6 +57,8 @@ import { T } from './tokens.ts';
 export interface JourneyParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
+  /** The integrator's cap on sections and tasks (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
+  maxNodes?: number;
 }
 
 export type JourneyParseResult = ParseResult<JourneyModel, JourneyDocument>;
@@ -104,6 +107,8 @@ class JourneyParser {
   /** Mentions per actor name, for `a:<name>@<n>`. */
   private readonly mentions = new Map<string, number>();
   private lines: LineIndex | undefined;
+  /** The sections and tasks read so far (the node cap counts them). */
+  private items = 0;
 
   constructor(
     private readonly src: string,
@@ -222,6 +227,18 @@ class JourneyParser {
   private add(node: JourneyStatementNode, kind: string): void {
     this.st.statement(kind, node.range);
     this.children.push(node);
+  }
+
+  /** One more section or task, against the node cap. */
+  private counted(range: Range): void {
+    checkLimit(
+      this.st.diagnostics,
+      'maxNodes',
+      ++this.items,
+      this.options.maxNodes,
+      'sections and tasks',
+      range
+    );
   }
 
   // ---- document -----------------------------------------------------------------------
@@ -351,6 +368,7 @@ class JourneyParser {
       name,
     };
     this.add(node, 'section');
+    this.counted(node.range);
   }
 
   /** `<name> :<data>`: the score and actors as v12's `addTask` read them. */
@@ -374,6 +392,7 @@ class JourneyParser {
       children: this.actors(j, people),
     };
     this.add(node, 'task');
+    this.counted(node.range);
   }
 
   /** Why the task name at token `first` has no data after it. */

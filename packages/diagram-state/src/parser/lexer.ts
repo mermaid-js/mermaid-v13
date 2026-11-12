@@ -14,6 +14,7 @@
  * line (`.*direction…`, `.*<<fork>>`, `end note`) keep the next match found as a memo.
  */
 import {
+  closingLine,
   codePointEnd,
   COLON,
   COMMA,
@@ -27,10 +28,16 @@ import {
   isWord,
   Kind,
   LBRACE,
+  LBRACKET,
   LF,
+  openerBrace,
   PERCENT,
   RBRACE,
+  RBRACKET,
+  scanWhile,
   SEMI,
+  SPACE,
+  TAB,
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
 import type { Probe, TokenStream } from '@mermaid-js/core/parser-kit';
@@ -80,6 +87,7 @@ const RE_NOTE = /note\s+/iy;
 const RE_SD = /stateDiagram\s+/iy;
 const RE_SD2 = /stateDiagram-v2\s+/iy;
 const RE_HIDE = /hide empty description\b/iy;
+const RE_FOLD = /@\{[^}\n]*\}?/y;
 const RE_DEFAULT_ID = /default\s+/iy;
 const RE_WORD_SPACE = /\w+\s+/y;
 const RE_IDS_SPACE = /[\w,]+\s+/y;
@@ -111,6 +119,10 @@ export interface Lexed {
 }
 
 export const NO_VIEW = 0xffffffff;
+
+/** A blank within a line. */
+const isBlank = (c: number): boolean => c === SPACE || c === TAB;
+const LOWER_M = 0x6d;
 
 /**
  * Lex the state source `src` whose v12 text is `view`. With a `probe`, the start condition at
@@ -436,6 +448,8 @@ class StateLexer {
     while (i < this.n) {
       const x = this.code(i);
       if (x === COLON || x === LF || x === DASH || x === LBRACE || isSpace(x)) break;
+      // `id@{ … }` (#670); `a@b` stays one id.
+      if (this.t.startsWith('@{', i)) break;
       i++;
     }
     if (i > p) {
@@ -451,6 +465,8 @@ class StateLexer {
     if (c === DASH && this.t.startsWith('-->', p)) this.token(T.Arrow, p + 3);
     else if (inStruct && c === DASH && this.code(p + 1) === DASH) this.token(T.Concurrent, p + 2);
     else if (this.t.startsWith(':::', p)) this.token(T.StyleSeparator, p + 3);
+    // `@{ … }` folding a block (#670): up to the first `}` on the line, or to its end.
+    else if (this.t.startsWith('@{', p)) this.token(T.EmbedFold, this.match(RE_FOLD));
     else return false;
     return true;
   }
@@ -505,6 +521,7 @@ class StateLexer {
     const p = this.p;
     const c = this.code(p);
     let e: number;
+    if (c === LOWER_M && this.embed()) return;
     if (this.initialHead()) return;
     if (c === LF) {
       let i = p;
@@ -557,6 +574,7 @@ class StateLexer {
       return;
     }
     if ((e = this.comment()) >= 0) return this.token(Kind.Comment, e);
+    if (c === LOWER_M && this.embed()) return;
     if (this.statements() || this.stateKeyword()) return;
     const dir = this.direction();
     if (dir) return this.token(dir[0], dir[1]);
@@ -570,6 +588,82 @@ class StateLexer {
     }
     if (this.note() || this.edges(true)) return;
     this.error();
+  }
+
+  // --- embedded diagram blocks (ADR-15) ---
+
+  /**
+   * `mermaid <id>["Title"] {` opening a block: `mermaid` first on its line, a blank, and the
+   * line ends in `{`. Anything else (`mermaid`, `mermaid --> B`, `mermaid sub["T"]`) is lexed
+   * as before. The opener's parts, the body as one token and the closing `}` are written in
+   * one step; the body is never lexed as state syntax.
+   */
+  private embed(): boolean {
+    const p = this.p;
+    let b = p - 1;
+    while (b >= 0 && isBlank(this.code(b))) b--;
+    if (b >= 0 && this.code(b) !== LF) return false;
+    const le = this.nextLf(p);
+    const last = openerBrace(this.t, p, le);
+    if (last < 0) return false;
+    this.emit(T.Embed, p, p + 7);
+    this.embedHead(scanWhile(this.t, p + 7, isBlank), last);
+    this.emit(T.EmbedOpen, last, last + 1);
+    this.embedBody(le + 1);
+    return true;
+  }
+
+  /** The opener between `mermaid` and its `{` at `last`: the id, then `["Title"]`. */
+  private embedHead(from: number, last: number): void {
+    let i = from;
+    while (i < last && this.code(i) !== LBRACKET && !isBlank(this.code(i))) i++;
+    if (i > from) this.emit(T.EmbedId, from, i);
+    if (this.code(i) === LBRACKET) {
+      // `["…"]`: the `]` after the closing quote; `[…]`: the first `]`.
+      let k = i + 1;
+      if (this.code(k) === DQUOTE) {
+        k++;
+        while (k < last && this.code(k) !== DQUOTE) k++;
+        k++;
+      }
+      while (k < last && this.code(k) !== RBRACKET) k++;
+      if (k < last) {
+        this.emit(T.EmbedTitle, i, k + 1);
+        i = k + 1;
+      }
+    }
+    while (i < last && isBlank(this.code(i))) i++;
+    if (i < last) this.emit(Kind.Error, i, last);
+  }
+
+  /**
+   * The body from view offset `s` (the line after the opener) to the `}` that closes it,
+   * found by line: a line ending in `{` opens a level, a line starting with `}` closes one;
+   * braces in `"…"` strings never count, and `%%` comment lines are not in the view at all.
+   * The body's range is the source's, comment lines included.
+   */
+  private embedBody(s: number): void {
+    const start = this.sourceEnd(s - 1, s);
+    const line = closingLine(this.t, s, this.n, isSpace);
+    if (line < 0) {
+      this.emitBody(start, this.src.length, s, this.n);
+      this.p = this.n;
+      return;
+    }
+    const a = scanWhile(this.t, line, isBlank);
+    this.emitBody(start, this.sourceStart(line), s, line);
+    this.emit(T.EmbedEnd, a, a + 1);
+    this.p = a + 1;
+  }
+
+  /** The body token, from source offsets; the comment lines inside it are part of it. */
+  private emitBody(start: number, end: number, a: number, b: number): void {
+    this.flushRemoved(start);
+    this.w.push(T.EmbedBody, start, Math.max(start, end));
+    this.vs.push(a);
+    this.ve.push(b);
+    const r = this.view.removed;
+    while (this.removed < r.length && (r[this.removed]?.start ?? 0) < end) this.removed++;
   }
 
   private stateRules(): void {

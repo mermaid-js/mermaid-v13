@@ -1,0 +1,21 @@
+---
+description: a flowchart block inside a state, holding a state diagram block of its own
+---
+stateDiagram-v2
+  [*] --> review
+  mermaid review["Review process"] {
+    flowchart LR
+      submit[Submit] --> check{OK?}
+      check -- yes --> publish
+      check -- no --> submit
+      mermaid publish["Publishing"] {
+        stateDiagram-v2
+          state Publishing {
+            [*] --> Queued
+            Queued --> Live
+          }
+      }
+  }
+  review --> Done
+  note right of review : the flowchart is drawn at its natural size
+  Done --> [*]

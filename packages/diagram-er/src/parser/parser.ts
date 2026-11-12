@@ -261,7 +261,9 @@ class ErParser {
       range: { start: this.pre.bodyStart, end: src.length },
       children: this.children,
     };
-    return st.result(model, ast, this.lexed.tokens, this.options, this.probe);
+    // Edges counted across embedded diagrams (ADR-15).
+    const result = st.result(model, ast, this.lexed.tokens, this.options, this.probe);
+    return { ...result, edgeCount: model.relationships.length };
   }
 
   // ---- tokens -------------------------------------------------------------------------

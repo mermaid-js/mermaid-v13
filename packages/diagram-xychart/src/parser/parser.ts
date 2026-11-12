@@ -14,6 +14,7 @@
  * With `probe`, a {@link ProbeCursor} records what the parser tests at the probed offset
  * (R-LANG-7, D95), and the lexer the start condition there.
  */
+import { checkLimit } from '@mermaid-js/core/limits';
 import {
   Kind,
   kindSet,
@@ -53,6 +54,8 @@ import { v12Text } from './v12-text.ts';
 export interface XyChartParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
+  /** The integrator's cap on data points, every plot's together (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
+  maxNodes?: number;
 }
 
 export type XyChartParseResult = ParseResult<XyChartModel, XyChartDocument>;
@@ -209,6 +212,9 @@ class XyChartParser {
     }
     [this.outerStart, this.outerEnd] = outerRanges(this.lexed, OPENS, CLOSES, SKIPPED);
   }
+
+  /** The data points so far, every plot's together, for the integrator's cap. */
+  private points = 0;
 
   parse(): XyChartParseResult {
     this.header();
@@ -582,6 +588,8 @@ class XyChartParser {
       point.label = this.take();
       point.range = this.span(first);
     }
+    const cap = this.options.maxNodes;
+    checkLimit(this.st.diagnostics, 'maxNodes', ++this.points, cap, 'data points', point.range);
     return point;
   }
 

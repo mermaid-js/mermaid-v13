@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/diagram-c4",
-  "version": "13.0.0-alpha.0",
+  "version": "13.0.0-alpha.1",
   "description": "C4 diagram plugin for Mermaid: lexer, parser, model, layout, SVG renderer and language facet.",
   "type": "module",
   "license": "MIT",

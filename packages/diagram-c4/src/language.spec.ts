@@ -119,6 +119,35 @@ describe('the c4 facet', () => {
     expect(complete(`${DOC}Person(a, "A") Rel¦`)).toEqual([]);
   });
 
+  it('completes the title and accessibility statements at a line start (#700)', () => {
+    const all = complete(`${DOC}¦`);
+    // After the macros, in the order the parser takes them.
+    expect(all.slice(-3)).toEqual([
+      'title -> title @ ',
+      'accTitle -> accTitle:  @ ',
+      'accDescr -> accDescr:  @ ',
+    ]);
+    // A `title` at its line's end stands alone (D452): `title ` with no text is an error.
+    expect(complete(`${DOC}ti¦`)).toEqual(['title -> title @ ti']);
+    expect(complete(`${DOC}acc¦`)).toEqual([
+      'accTitle -> accTitle:  @ acc',
+      'accDescr -> accDescr:  @ acc',
+    ]);
+    // In a boundary too, but not as its first statement: the parser takes none there.
+    expect(complete(`${DOC}Boundary(b, "B") {\n  Person(p, "P")\n  accT¦\n}`)).toEqual([
+      'accTitle -> accTitle:  @ accT',
+    ]);
+    expect(complete(`${DOC}Boundary(b, "B") {\n  accT¦\n}`)).toEqual([]);
+    expect(complete(`${DOC}Boundary(b, "B") {\n  Per¦\n}`)).toHaveLength(2);
+    // What follows the word already is kept: a blank, a `:`, the `{` of a block.
+    expect(complete(`${DOC}ti¦ Plan`)).toEqual(['title -> title @ ti']);
+    expect(complete(`${DOC}accD¦: text`)).toEqual(['accDescr -> accDescr @ accD']);
+    expect(complete(`${DOC}accD¦ {\n  text\n}`)).toEqual(['accDescr -> accDescr @ accD']);
+    // Not where the header goes, and not after other text on the line.
+    expect(complete('ti¦')).toEqual([]);
+    expect(complete(`${DOC}Person(a, "A") ti¦`)).toEqual([]);
+  });
+
   it('completes aliases in the reference slots only', () => {
     expect(complete(`${DOC}Rel(¦`)).toEqual([
       'customerA -> customerA @ ',

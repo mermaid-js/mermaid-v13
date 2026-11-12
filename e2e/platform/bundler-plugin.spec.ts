@@ -32,6 +32,7 @@ interface Drawn {
 declare global {
   interface Window {
     draw(id: string, text: string): Promise<Drawn>;
+    loose(): void;
     calls: unknown[][];
   }
 }
@@ -98,7 +99,10 @@ for (const bundler of BUNDLERS) {
     test('activates the discovered extensions: marks and click callbacks', async ({ page }) => {
       await page.goto(on!.url('/plugin.html'));
       await expect(page.locator('#status')).toHaveText('ready');
-      expect((await draw(page, 'flow', FLOWCHART)).warnings).toEqual([]);
+      // Callbacks need `securityLevel: 'loose'` (#697, D554); core still reports that level,
+      // as it treats it as `default` for URLs (D75).
+      await page.evaluate(() => window.loose());
+      expect((await draw(page, 'flow', FLOWCHART)).warnings).toEqual(['SECURITY_LEVEL']);
       // mermaid-fixture-extension's postRender hook.
       await expect(page.locator('#flow svg.fixture-mark')).toHaveCount(1);
       // plugin-interactions (D169): `click A callback` calls window.callback('A').

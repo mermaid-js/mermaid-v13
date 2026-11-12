@@ -20,9 +20,11 @@ const limits = (ctx: DiagramParseContext): Readonly<Limits> =>
  */
 export const flowchart = {
   id: 'flowchart',
-  aliases: ['graph', 'flowchart-v2', 'flowchart-elk'] as readonly string[],
+  aliases: ['graph', 'flowchart-v2', 'flowchart-elk', 'swimlane'] as readonly string[],
   formats: ['svg', 'ascii'] as const,
   layoutKind: 'graph' as const,
+  // Lane drawing loads with the swimlane engine, for flowcharts only (spec #528, R-PERF-1).
+  layoutParts: new Map([['swimlane', 'flowchartLanes']]) as ReadonlyMap<string, string>,
   configDefaults: flowchartConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectFlowchart(text) !== undefined,
   parse: (text: string, ctx: DiagramParseContext): FlowParseResult => {

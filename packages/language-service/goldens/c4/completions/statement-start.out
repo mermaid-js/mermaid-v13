@@ -42,6 +42,9 @@
   UpdateElementStyle keyword (UpdateElementStyle(elementName, bgColor?, fontColor?, borderColor?, shadowing?, shape?, sprite?, techn?, legendText?, legendSprite?)) 3:1-3:1 "" -> "UpdateElementStyle("
   UpdateRelStyle keyword (UpdateRelStyle(from, to, textColor?, lineColor?, offsetX?, offsetY?)) 3:1-3:1 "" -> "UpdateRelStyle("
   UpdateLayoutConfig keyword (UpdateLayoutConfig(c4ShapeInRow?, c4BoundaryInRow?)) 3:1-3:1 "" -> "UpdateLayoutConfig("
+  title keyword 3:1-3:1 "" -> "title"
+  accTitle keyword 3:1-3:1 "" -> "accTitle: "
+  accDescr keyword 3:1-3:1 "" -> "accDescr: "
 @ 4:5  Rel_|
   Rel_Up keyword (Rel_Up(from, to, label, techn?, descr?, sprite?, tags?, link?)) 4:1-4:5 "Rel_" -> "Rel_Up("
   Rel_U keyword (Rel_U(from, to, label, techn?, descr?, sprite?, tags?, link?)) 4:1-4:5 "Rel_" -> "Rel_U("
@@ -104,7 +107,17 @@
   UpdateElementStyle keyword (UpdateElementStyle(elementName, bgColor?, fontColor?, borderColor?, shadowing?, shape?, sprite?, techn?, legendText?, legendSprite?)) 7:3-7:3 "" -> "UpdateElementStyle("
   UpdateRelStyle keyword (UpdateRelStyle(from, to, textColor?, lineColor?, offsetX?, offsetY?)) 7:3-7:3 "" -> "UpdateRelStyle("
   UpdateLayoutConfig keyword (UpdateLayoutConfig(c4ShapeInRow?, c4BoundaryInRow?)) 7:3-7:3 "" -> "UpdateLayoutConfig("
+  title keyword 7:3-7:3 "" -> "title"
+  accTitle keyword 7:3-7:3 "" -> "accTitle: "
+  accDescr keyword 7:3-7:3 "" -> "accDescr: "
 @ 9:6  Upd|
   UpdateElementStyle keyword (UpdateElementStyle(elementName, bgColor?, fontColor?, borderColor?, shadowing?, shape?, sprite?, techn?, legendText?, legendSprite?)) 9:3-9:6 "Upd" -> "UpdateElementStyle("
   UpdateRelStyle keyword (UpdateRelStyle(from, to, textColor?, lineColor?, offsetX?, offsetY?)) 9:3-9:6 "Upd" -> "UpdateRelStyle("
   UpdateLayoutConfig keyword (UpdateLayoutConfig(c4ShapeInRow?, c4BoundaryInRow?)) 9:3-9:6 "Upd" -> "UpdateLayoutConfig("
+@ 10:3  ti|
+  title keyword 10:1-10:3 "ti" -> "title"
+@ 11:4  acc|
+  accTitle keyword 11:1-11:4 "acc" -> "accTitle: "
+  accDescr keyword 11:1-11:4 "acc" -> "accDescr: "
+@ 12:5  accD|: text
+  accDescr keyword 12:1-12:5 "accD" -> "accDescr"

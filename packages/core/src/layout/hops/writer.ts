@@ -80,6 +80,7 @@ export function hopWriter<W extends StreamSvgWriter | TreeSvgWriter>(w: W, style
     path: () => w.path(),
     styleSheet: (css) => w.styleSheet(css),
     linearGradient: (g) => w.linearGradient(g),
+    embed: (svg) => w.embed(svg),
     finish: () => done(w.finish()),
     get tree() {
       return (w as Partial<TreeSvgWriter>).tree!;

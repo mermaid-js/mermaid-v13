@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/diagram-journey",
-  "version": "13.0.0-alpha.2",
+  "version": "13.0.0-alpha.3",
   "description": "User journey diagram plugin for Mermaid: model, layout and renderer.",
   "type": "module",
   "license": "MIT",

@@ -1,0 +1,67 @@
+name: Nightly structure
+
+# #722: the full fallow run on mermaid-v13 every night, where the PR's structural audit (ci.yml)
+# looks only at the files a change touches. Dead code, import cycles and boundaries, duplication
+# and complexity over the whole tree, against the committed baselines in .fallow-baseline/, with
+# CRAP scores from the full unit suite's coverage; then a type-aware dead-code pass. The report
+# is the job summary and a SARIF artifact. (Code scanning upload needs GitHub Advanced Security
+# on this private repository, so the SARIF stays an artifact.) Also runs on demand.
+on:
+  schedule:
+    - cron: '41 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fallow-nightly
+  cancel-in-progress: true
+
+jobs:
+  fallow:
+    name: Full fallow run
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          # Hotspots and ownership read the history.
+          fetch-depth: 0
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version-file: '.node-version'
+      - run: pnpm install --frozen-lockfile
+      # Coverage for the CRAP scores. The timing projects stay out (coverage slows code
+      # unevenly); test verdicts belong to CI, so a failure here does not stop the run.
+      - name: Unit tests with coverage
+        continue-on-error: true
+        run: pnpm vitest run --coverage --project workspace --project gantt-utc --project gantt-la
+      - name: fallow (dead code, architecture, duplication, complexity)
+        run: >-
+          pnpm exec fallow --quiet
+          --baseline .fallow-baseline/dead-code.json
+          --dupes-baseline .fallow-baseline/dupes.json
+          --health-baseline .fallow-baseline/health.json
+          --coverage coverage/coverage-final.json
+          --sarif-file fallow.sarif --fail-on-issues
+          --format github-summary --output-file fallow-summary.md
+      # Reported, not gated: it cross-checks the syntactic pass above, which gates. (A type-aware
+      # baseline is tied to the config's hash, so it would go stale on every config change.)
+      - name: Type-aware dead code
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: >-
+          pnpm exec fallow dead-code --quiet --type-aware
+          --format markdown >> "$GITHUB_STEP_SUMMARY"
+      - name: Job summary
+        if: ${{ !cancelled() }}
+        run: if [ -f fallow-summary.md ]; then cat fallow-summary.md >> "$GITHUB_STEP_SUMMARY"; fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: ${{ !cancelled() }}
+        with:
+          name: fallow-sarif
+          path: fallow.sarif
+          if-no-files-found: ignore

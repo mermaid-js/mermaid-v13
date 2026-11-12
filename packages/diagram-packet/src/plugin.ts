@@ -1,4 +1,5 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
+import { resolveLimits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { layoutPacket, type PacketLayout } from './layout/index.ts';
 import type { PacketModel } from './model.ts';
@@ -24,7 +25,11 @@ export const packet = {
   theme,
   detector: (text: string): boolean => detectPacket(text),
   parse: (text: string, ctx: DiagramParseContext): PacketParseResult =>
-    parsePacket(text, { preprocessed: ctx.preprocessed, config: ctx.config.packet }),
+    parsePacket(text, {
+      preprocessed: ctx.preprocessed,
+      config: ctx.config.packet,
+      maxNodes: (ctx.limits ?? resolveLimits(ctx.config)).maxNodes,
+    }),
   labels: packetLabels,
   layout: (model: PacketModel, ctx: RenderContext): PacketLayout => layoutPacket(model, ctx),
   render: (model: PacketModel, layout: PacketLayout, ctx: RenderContext, w: SvgWriter): void =>

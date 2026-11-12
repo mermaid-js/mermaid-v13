@@ -161,14 +161,9 @@ export const unfinishedEdgeMessage = (link: string, line: number): string =>
 export const unclosedBlockMessage = (line: number): string =>
   `Unclosed composite: the \`block\` at line ${line} has no \`end\`. Add \`end\` after its last statement.`;
 
-/** A breached limit (R-SEC-5): what there is too much of, and the limit. */
-export function limitMessage(what: 'blocks' | 'edges' | 'depth', max: number): string {
-  const head =
-    what === 'depth'
-      ? `Composites nest more than ${max} deep`
-      : `The diagram has more than ${max} ${what}`;
-  return `${head}, the limit. The limit is set by the page or app that renders the diagram.`;
-}
+/** The breached depth limit (R-SEC-5); the node and edge caps are core's `checkLimit`. */
+export const depthLimitMessage = (max: number): string =>
+  `Composites nest more than ${max} deep, the limit. The limit is set by the page or app that renders the diagram.`;
 
 /** D443: `style` naming ids no statement declares (each in backticks). */
 export function styleUnknownMessage(ids: readonly string[]): string {

@@ -1,0 +1,35 @@
+# How this package plugs into the shared workspace tools (tools/workspace/diagrams.ts). Not published.
+# configDefaults: tools/gen-config writes src/generated/config-defaults.ts for the config section.
+configDefaults: true
+
+# grammars: tools/gen-grammar's targets, one per grammar file (`grammar/<grammar>.ebnf`): the
+# type names the generated tables, `title` the syntax page, `kinds` the token kinds (D94).
+grammars:
+  - type: architecture
+    title: Architecture diagram syntax
+    kinds:
+      module: parser/tokens.ts
+      object: T
+
+# languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
+# icons.ts reads the renderer's built-in table; the facet keeps its own list of the names.
+languageBundle:
+  renderer:
+    - render/
+    - layout/
+    - plugin.ts
+    - icons.ts
+    - theme/
+    - index.ts
+    - testing.ts
+    - v12-specs/
+
+# release: the package's row in v13/docs/RELEASING.md (`pnpm regen`).
+release:
+  summary: 'The architecture diagram plugin (SVG; `architecture-beta`), laid out by `compass`.'
+  install: 'with `mermaid/slim`'
+# credits: none. The ported Pele grid placement is core's `compass` engine (D326), which carries
+# its credit; this package ports only v12's own code.
+
+# theme: none. The layout (#607) reads the core font rows (`fontFamily`, `fontSize`), the renderer
+# (#614) `textColor` and its own table (`src/theme/vocabulary.ts`, the five `arch*` variables).

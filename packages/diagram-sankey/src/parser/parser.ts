@@ -26,6 +26,7 @@
  * Unlike jison the parser does not stop at the first syntax error: it reports it, skips to
  * the next line and carries on (R-PARSE-4). A row with an error adds nothing to the model.
  */
+import { checkLimit } from '@mermaid-js/core/limits';
 import {
   Kind,
   kindSet,
@@ -45,7 +46,6 @@ import type { SankeyLink, SankeyModel, SankeyNode, SankeyWarning } from '../mode
 import type { SankeyDocument, SankeyField, SankeyLinkNode, SankeyNodeNode } from './ast.ts';
 import { cycleLinks } from './cycles.ts';
 import { LinkIds, nodeAstId } from './ids.ts';
-import { checkLimit } from './limits.ts';
 import { fieldName } from './names.ts';
 import { lex } from './lexer.ts';
 import type { Lexed } from './lexer.ts';
@@ -486,7 +486,14 @@ class SankeyParser {
     const ast = nodeAstId(name);
     this.byName.set(name, this.nodes.length);
     this.nodes.push({ id: name, ast, range: field.range });
-    checkLimit(this.st, 'maxNodes', this.nodes.length, this.options.maxNodes, field.range);
+    checkLimit(
+      this.st.diagnostics,
+      'maxNodes',
+      this.nodes.length,
+      this.options.maxNodes ?? Infinity,
+      'nodes',
+      field.range
+    );
     into.push({ id: ast, type: 'Node', range: field.range, name });
     return this.nodes.length - 1;
   }
@@ -511,7 +518,14 @@ class SankeyParser {
       to,
       valueField: value,
     });
-    checkLimit(this.st, 'maxEdges', this.links.length, this.options.maxEdges, range);
+    checkLimit(
+      this.st.diagnostics,
+      'maxEdges',
+      this.links.length,
+      this.options.maxEdges ?? Infinity,
+      'links',
+      range
+    );
     const link: SankeyLinkNode = {
       id: ast,
       type: 'Link',

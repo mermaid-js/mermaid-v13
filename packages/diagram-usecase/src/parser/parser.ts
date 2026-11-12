@@ -129,9 +129,10 @@ const STYLE_VALUE_NAMES = ['a CSS value such as `red`, `#f96` or `2px`'];
  * mentions and name occurrences the AST ids and symbols are made from after the model.
  */
 class UsecaseParser extends ItemReader {
-  private readonly builder = new UsecaseBuilder({
-    error: (code, message, range, related) => this.modelError(code, message, range, related),
-  });
+  private readonly builder = new UsecaseBuilder(
+    { error: (code, message, range, related) => this.modelError(code, message, range, related) },
+    this.opts
+  );
   /** Element, boundary and JSON nodes in source order: their ids wait for the model's kinds. */
   private readonly mentions: Mention[] = [];
   private readonly occurrences: Occurrence[] = [];

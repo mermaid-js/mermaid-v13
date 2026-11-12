@@ -1,4 +1,5 @@
 // Ported from v12 `swimlanes/phase2.crossLaneAdjust.ts` at upstream `c9b12739f` (D532).
+import { byCodeUnit } from './compare.ts';
 import type { Graph, NodeId } from './helpers.ts';
 import { createTopLaneResolver } from './phase2.options.ts';
 
@@ -10,7 +11,7 @@ export function adjustCrossLaneSources(g: Graph, rankOf: Record<NodeId, number>)
   const topLaneOf = createTopLaneResolver(g);
 
   const nodesByRank = [...g.nodes].sort(
-    (a, b) => (rankOf[a] ?? 0) - (rankOf[b] ?? 0) || a.localeCompare(b)
+    (a, b) => (rankOf[a] ?? 0) - (rankOf[b] ?? 0) || byCodeUnit(a, b)
   );
   for (const v of nodesByRank) {
     const laneV = topLaneOf(v);

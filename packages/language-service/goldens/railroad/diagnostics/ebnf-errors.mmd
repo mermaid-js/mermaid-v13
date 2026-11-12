@@ -1,0 +1,7 @@
+railroad-ebnf-beta
+title = "x" ;
+expr ::= term { ("+" \| "-") term } ;
+term = factor , factor - ;
+factor = number \| "(" expr ")"
+number = ? digit ? + ;
+# not a comment ;

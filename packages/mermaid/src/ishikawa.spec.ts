@@ -249,7 +249,8 @@ describe('ishikawa diagrams through the public API (#585)', () => {
   it('draws a 1,000-deep chain one cause a line, the last 4 columns a level in (a loop, no recursion)', async () => {
     const chain = Array.from({ length: 1_000 }, (_, i) => `${' '.repeat(i + 2)}c${i}\n`).join('');
     const m = createMermaid();
-    m.initialize({ maxTextSize: 1_000_000 });
+    // 1,000 deep is over core's default `maxDepth` (#721), which this test is not about.
+    m.initialize({ maxTextSize: 1_000_000, limits: { maxDepth: 1_000 } });
     const result = await m.render('i14', `ishikawa\n  E\n${chain}`, { format: 'ascii' });
     const lines = result.text.split('\n');
     expect(lines).toHaveLength(3 + 1_000);

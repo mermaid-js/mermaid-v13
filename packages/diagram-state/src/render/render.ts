@@ -35,6 +35,8 @@ import type {
 import { stateMetrics } from '../layout/index.ts';
 import { completeLayout, type CompleteStateLayout } from '../layout/layout.ts';
 import type { StateLink, StateModel } from '../parser/index.ts';
+import { drawFolded } from '@mermaid-js/core/svg/folded';
+import { drawFramed } from '@mermaid-js/core/svg/framed';
 import { drawDescribed, drawShape, type ShapePaint } from './shapes.ts';
 
 // v12 `.note-edge { stroke-dasharray: 5 }` and `.statediagram-state rect.divider
@@ -84,6 +86,8 @@ interface Paints {
     readonly radius: number;
   };
   readonly note?: { fill: Color; stroke: OutlinePaint; text: Color };
+  /** Folded blocks (#670): the icon's filled nodes and the type's muted grey. */
+  readonly folded?: { readonly ink: Color; readonly muted: Color };
   readonly edgeLabel?: { fill: Color; text: Color };
   /** The palette slot of each composite and region; empty when the theme has no palette. */
   readonly slots: ReadonlyMap<string, Tint>;
@@ -157,7 +161,11 @@ function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
   const edgeLabel = s.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
     : undefined;
-  return { ...node, composite, note, edgeLabel, slots: paletteSlots(theme, model, s) };
+  // Read here, not in core, so the theme inventory lists the diagrams that use them.
+  const folded = s.nodes.some((v) => v.block === 'folded')
+    ? { ink: theme.color('nodeBorder'), muted: theme.color('mutedBorder') }
+    : undefined;
+  return { ...node, composite, note, folded, edgeLabel, slots: paletteSlots(theme, model, s) };
 }
 
 /** What every section of one render draws from. */
@@ -397,14 +405,22 @@ function nodeClass(view: StateNodeView): string {
   if (view.shape === 'note') return 'node statediagram-note';
   // v12 `stateStart` and `stateEnd` wrote `node default` and no state classes.
   if (view.shape === 'start' || view.shape === 'end') return 'node default';
+  if (view.block)
+    return (
+      (view.block === 'folded' ? 'node embed folded' : 'node embed') +
+      cls(view.state?.classes ?? [])
+    );
   return 'node statediagram-state' + cls(view.state?.classes ?? []);
 }
 
-function drawNode(
-  { w, layout, sm, ctx, paint, warn }: Scene,
-  view: StateNodeView,
-  link: StateLink | undefined
-): void {
+/** A block is one image to assistive technology, named by its title (ADR-15). */
+function blockAria(view: StateNodeView): Attrs {
+  if (!view.block) return {};
+  return { role: 'img', 'aria-label': view.state?.title || view.id };
+}
+
+function drawNode(scene: Scene, view: StateNodeView, link: StateLink | undefined): void {
+  const { w, layout, ctx, paint, warn } = scene;
   const box = layout.nodes.get(view.id);
   if (!box) return;
   w.open('g', {
@@ -412,6 +428,7 @@ function drawNode(
     'data-id': view.id,
     'data-ast': view.ast,
     transform: translate(box.x, box.y),
+    ...blockAria(view),
   });
   if (link?.tooltip) textElement(w, 'title', link.tooltip);
   const href = link
@@ -423,6 +440,33 @@ function drawNode(
     : undefined;
   // v12 opened every state link in a new window.
   if (href) w.open('a', { href, target: checkLinkTarget('_blank', warn) });
+  if (view.block) {
+    // A border and a transparent background, which set a block apart from a composite.
+    const frame: Attrs = {
+      fill: 'none',
+      stroke: paint.border,
+      'stroke-width': paint.strokeWidth,
+      ...view.style.shape,
+    };
+    const size = { width: view.w, height: view.h };
+    if (view.block === 'folded') {
+      const fold = view.fold!;
+      const marks = { frame, mark: frame.stroke ?? paint.border, ...paint.folded! };
+      drawFolded(w, size, view.label, fold.label, fold.type.length, {
+        ...marks,
+        title: view.style.text,
+      });
+    } else {
+      const y = drawFramed(w, size, view.label.height, view.embed ?? null, frame);
+      if (view.label.height > 0) w.label(view.label, 0, y, view.style.text);
+    }
+  } else drawState(scene, view);
+  if (href) w.close();
+  w.close();
+}
+
+/** A state's, pseudo-state's or note's shape and label. */
+function drawState({ w, sm, ctx, paint }: Scene, view: StateNodeView): void {
   const note = view.shape === 'note' ? paint.note : undefined;
   const shape: Attrs = {
     fill: note?.fill ?? paint.fill,
@@ -449,6 +493,4 @@ function drawNode(
   };
   if (view.shape === 'described') drawDescribed(w, view, sm, shapePaint, text);
   else w.label(view.label, 0, 0, text);
-  if (href) w.close();
-  w.close();
 }

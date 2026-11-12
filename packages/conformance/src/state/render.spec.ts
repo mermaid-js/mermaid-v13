@@ -44,8 +44,11 @@ function recorder(into: Seen): ExtensionPlugin {
   return {
     id: 'record',
     postParse(ast, ctx) {
-      into.ast = ast;
-      into.theme = ctx.config.theme;
+      // The host's parse comes first; an embedded diagram's (ADR-15) runs the hook after it.
+      if (into.ast === undefined) {
+        into.ast = ast;
+        into.theme = ctx.config.theme;
+      }
       return ast;
     },
     postLayout(l) {
@@ -78,6 +81,7 @@ async function renderForTest(
   const parsed = parseState(source);
   const error = parsed.diagnostics.find((d) => d.severity === 'error');
   if (error) throw new Error(`parse failed: ${error.message}`);
+  hooked.ast = undefined;
   const { svg } = await recorded.render(id, source);
   return {
     svg,

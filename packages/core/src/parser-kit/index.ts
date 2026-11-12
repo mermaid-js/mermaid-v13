@@ -22,6 +22,8 @@ export {
 } from './chars.ts';
 export * from './char-codes.ts';
 export { execAt, lineEnd, matchAt, newlineAt, scanWhile } from './scanner.ts';
+export { closingLine, endsInBrace, openerBrace } from './embed-block.ts';
+export { MAX_BLOCK_DEPTH, openerRange, tooDeep } from './embed-depth.ts';
 export { LineIndex } from './positions.ts';
 export type { Position, Range } from './positions.ts';
 export { Diagnostics, ExpectedTable, formatExpected, MAX_EXPECTED } from './diagnostics.ts';
@@ -37,7 +39,13 @@ export type { TokenView } from './view.ts';
 export { AstIds, nodeId } from './ast.ts';
 export type { AstCallback, AstId, AstMenu, AstNode } from './ast.ts';
 export { ParseState } from './result.ts';
-export type { ParseOptions, ParseResult, StatementSpan, SymbolOccurrence } from './result.ts';
+export type {
+  EmbeddedBlock,
+  ParseOptions,
+  ParseResult,
+  StatementSpan,
+  SymbolOccurrence,
+} from './result.ts';
 export {
   cook,
   DROP,

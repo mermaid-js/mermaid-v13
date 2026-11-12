@@ -1,0 +1,12 @@
+railroad-beta
+accDescr {
+  A grammar
+  over lines
+}
+/* a comment
+   over lines */
+expr = sequence(
+  nonterminal("term"),
+  terminal("+")
+) ;
+term = terminal("1") ;

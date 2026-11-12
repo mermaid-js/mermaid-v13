@@ -1,6 +1,7 @@
 // Ported from v12 `swimlanes/orthogonalRouter/router.ts` at upstream `c9b12739f` (D532). Changed:
-// no anchored nodes (D531); diamond and hexagon checks also take flowchart v13's canonical names
-// (`diam`, `hex`); types tightened for `noUncheckedIndexedAccess`.
+// no anchored nodes (D531); diamond and hexagon checks use the shared classification in
+// `config.ts` (#636), which also takes flowchart v13's canonical names (`diam`, `hex`); types
+// tightened for `noUncheckedIndexedAccess`.
 /* eslint-disable complexity, max-depth, max-lines, max-lines-per-function, no-nested-ternary -- v12's file kept whole so upstream fixes port by hand (D532) */
 // cspell:ignore raykov Raykov Wybrow Marriott Stuckey
 
@@ -17,7 +18,7 @@
 
 import type { LayoutData, Node as MermaidNode } from '../layoutData.ts';
 import { buildLaneModel } from '../lanes.ts';
-import { PRECISION } from '../config.ts';
+import { PRECISION, isDiamondShape, isHexagonShape } from '../config.ts';
 
 const EPS = PRECISION.EPSILON;
 
@@ -610,10 +611,8 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
   // (validateLayout: edge-shared-projected-port). Move the out-edge to its
   // free secondary side to restore bimodality. Scoped to diamonds so
   // rectangles — whose long sides hold multiple distinct pins — are untouched.
-  const isDiamondNode = (node: MermaidNode | undefined): boolean => {
-    const shape = node?.shape;
-    return shape === 'question' || shape === 'diamond' || shape === 'diam';
-  };
+  // v13 (#636): the shared classification (`config.ts`).
+  const isDiamondNode = (node: MermaidNode | undefined): boolean => isDiamondShape(node?.shape);
   const inSidesByNode = new Map<string, Set<SideT>>();
   for (const info of sideInfoByIdx.values()) {
     if (!inSidesByNode.has(info.dstId)) {
@@ -648,10 +647,7 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
   // the departing edge's first stretch. Port groups are keyed by role, so
   // nothing separates them. Move the in-edge to its secondary face when no
   // out-edge uses it and it carries no committed load.
-  const hasVertexFaces = (node: MermaidNode | undefined): boolean => {
-    const shape = node?.shape;
-    return shape === 'hexagon' || shape === 'hex' || shape === 'notch-pent';
-  };
+  const hasVertexFaces = (node: MermaidNode | undefined): boolean => isHexagonShape(node?.shape);
   const outSidesByNode = new Map<string, Set<SideT>>();
   for (const info of sideInfoByIdx.values()) {
     if (!outSidesByNode.has(info.srcId)) {
@@ -747,8 +743,7 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
     const isVerticalSide = side === 'left' || side === 'right';
     const drawnBox = drawnSize(node, 10);
     const sideLength = isVerticalSide ? drawnBox.h : drawnBox.w;
-    const shape = node.shape;
-    const isDiamond = shape === 'question' || shape === 'diamond' || shape === 'diam';
+    const isDiamond = isDiamondShape(node.shape);
     const effectiveLength = isDiamond ? sideLength * 0.3 : sideLength;
     const MAX_PORT_SPACING = 20; // cap spacing to avoid large detours
 

@@ -17,6 +17,14 @@ export interface FlowTablesDialect {
   readonly keywords: readonly number[];
   /** Kinds that end a statement besides a line break, `;` and the end (a comment token). */
   readonly separators: readonly number[];
+  /**
+   * Kinds that start a statement of the dialect's own and are no keyword: the lexer writes one
+   * only where the statement stands, so the word stays an id elsewhere (`mermaid` opening an
+   * embedded block).
+   */
+  readonly starts?: readonly number[];
+  /** How a message names the kinds only the dialect's own statements have. */
+  readonly expected?: readonly (readonly [string, readonly number[]])[];
   /** How a message names a statement end, the header keyword, a statement and `@{ … }`. */
   readonly names: {
     readonly separator: string;
@@ -289,6 +297,7 @@ function expected(
     ['`href`', [T.Href]],
     ['a link target such as `_blank`', [T.LinkTarget]],
     [`${names.data} \`@{ … }\``, [T.ShapeData]],
+    ...(dialect.expected ?? []).map(([name, kinds]): [string, number[]] => [name, [...kinds]]),
     ['`}`', [T.ShapeDataEnd]],
     ['the end of the text', [Kind.EOF, T.Eof]],
   ]);
@@ -313,6 +322,7 @@ export function flowTables(T: FlowKinds, dialect: FlowTablesDialect): FlowTables
   const LINE_END = [Kind.Newline, T.Semi, T.Eof, ...separators];
   const READ_PAST_KINDS = [Kind.Comment, Kind.Directive, T.ClickKeyword];
   const STATEMENT_START = [
+    ...(dialect.starts ?? []),
     T.Style,
     T.LinkStyle,
     T.ClassDef,

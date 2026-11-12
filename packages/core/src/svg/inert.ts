@@ -31,6 +31,7 @@ import {
   checkFilter,
   styleSheetProblem,
 } from './style.ts';
+import type { EmbeddedSvg } from './types.ts';
 import { isImageDataUrl, type SecurityLevel } from './url.ts';
 
 export interface InertOptions {
@@ -83,12 +84,18 @@ const RE_FRACTION = /^(?:0|1|0?\.\d{1,6})$/;
 const RE_PERCENT_STOP = /^(?:\d{1,2}(?:\.\d{1,6})?|100)%$/;
 
 /** Why element `tag` cannot stand under `parent` here, as far as the gradient goes. */
-function gradientPlace(tag: string, stack: readonly string[], g: GradientScan): string | undefined {
+function gradientPlace(
+  tag: string,
+  stack: readonly string[],
+  base: number,
+  g: GradientScan
+): string | undefined {
   const parent = stack[stack.length - 1];
-  if (stack.length === 1) g.rootChildren++;
+  const depth = stack.length - base;
+  if (depth === 1) g.rootChildren++;
   switch (tag) {
     case 'defs':
-      if (stack.length !== 1 || parent !== 'svg' || g.rootChildren !== 1 || ++g.defs > 1)
+      if (depth !== 1 || parent !== 'svg' || g.rootChildren !== 1 || ++g.defs > 1)
         return '<defs> that is not the first child of <svg>';
       return undefined;
     case 'linearGradient':
@@ -345,14 +352,16 @@ function attrProblem(
   return undefined;
 }
 
-/** The first thing about the markup that is not inert, or undefined when there is none. */
-export function inertProblem(svg: string, options: InertOptions = {}): string | undefined {
-  const bad = RE_INVALID_XML.exec(svg);
-  if (bad) return `character U+${bad[0].charCodeAt(0).toString(16).toUpperCase()} at ${bad.index}`;
-  const stack: string[] = [];
-  let i = 0;
-  const n = svg.length;
-  let sheets = 0;
+/** One root `<svg>`'s scope: the outer root's, or an embedded diagram's (ADR-15). */
+interface Scope {
+  /** Where the root sits in the element stack. */
+  readonly base: number;
+  readonly options: InertOptions;
+  readonly g: GradientScan;
+  sheets: number;
+}
+
+function scopeOf(base: number, options: InertOptions): Scope {
   const g: GradientScan = {
     id: typeof options.gradient === 'string' ? options.gradient : undefined,
     scope:
@@ -366,6 +375,24 @@ export function inertProblem(svg: string, options: InertOptions = {}): string | 
     user: false,
     stops: 0,
   };
+  return { base, options, g, sheets: 0 };
+}
+
+/**
+ * The first thing about the markup that is not inert, or undefined when there is none. A
+ * nested `<svg>` (an embedded diagram, ADR-15) is checked as a root of its own: one `<style>`
+ * and one `<defs>` directly under it, its own gradient scope.
+ */
+export function inertProblem(svg: string, options: InertOptions = {}): string | undefined {
+  const bad = RE_INVALID_XML.exec(svg);
+  if (bad) return `character U+${bad[0].charCodeAt(0).toString(16).toUpperCase()} at ${bad.index}`;
+  const stack: string[] = [];
+  let i = 0;
+  const n = svg.length;
+  // The outer root, then each embedded diagram's root (ADR-15) open around the scan: each has
+  // its own style sheet, gradients and scope.
+  const frames: Scope[] = [scopeOf(0, options)];
+  let f = frames[0] as Scope;
   while (i < n) {
     const lt = svg.indexOf('<', i);
     const text = svg.slice(i, lt === -1 ? n : lt);
@@ -383,9 +410,10 @@ export function inertProblem(svg: string, options: InertOptions = {}): string | 
       return `markup ${JSON.stringify(svg.slice(lt, lt + 20))}`;
     if (tag === 'style' && options.themeStyle && !closing) {
       if (svg.slice(lt, lt + STYLE_OPEN.length) !== STYLE_OPEN) return '<style> with attributes';
-      if (stack.length !== 1 || stack[0] !== 'svg') return '<style> that is not a child of <svg>';
-      if (++sheets > 1) return 'a second <style>';
-      g.rootChildren++;
+      if (stack.length !== f.base + 1 || stack[f.base] !== 'svg')
+        return '<style> that is not a child of <svg>';
+      if (++f.sheets > 1) return 'a second <style>';
+      f.g.rootChildren++;
       const end = svg.indexOf(STYLE_CLOSE, lt);
       if (end === -1) return 'unclosed <style>';
       const css = svg.slice(lt + STYLE_OPEN.length, end);
@@ -402,11 +430,16 @@ export function inertProblem(svg: string, options: InertOptions = {}): string | 
       i++;
       const open = stack.pop();
       if (open !== tag) return `</${tag}> closes <${open ?? 'nothing'}>`;
-      if (tag === 'linearGradient' && g.stops !== 2) return '<linearGradient> without two stops';
-      if (tag === 'defs' && g.ids.size === 0) return '<defs> without a gradient';
+      if (tag === 'linearGradient' && f.g.stops !== 2) return '<linearGradient> without two stops';
+      if (tag === 'defs' && f.g.ids.size === 0) return '<defs> without a gradient';
+      if (tag === 'svg' && frames.length > 1 && stack.length === f.base) {
+        frames.pop();
+        f = frames[frames.length - 1] as Scope;
+      }
       continue;
     }
-    const place = gradientPlace(tag, stack, g);
+    const g = f.g;
+    const place = gradientPlace(tag, stack, f.base, g);
     if (place !== undefined) return place;
     const seen = new Set<string>();
     let target: string | undefined;
@@ -450,12 +483,19 @@ export function inertProblem(svg: string, options: InertOptions = {}): string | 
     if (target === '_blank' && rel !== BLANK_REL)
       return `<${tag} target="_blank"> without rel="${BLANK_REL}"`;
     if (tag === 'linearGradient') {
-      const shape = gradientShape(g, options);
+      const shape = gradientShape(g, f.options);
       if (shape !== undefined) return shape;
     }
     if (selfClosing && (tag === 'defs' || tag === 'linearGradient')) return `an empty <${tag}>`;
     if (tag === 'stop' && !seen.has('offset')) return '<stop> without an offset';
-    if (!selfClosing) stack.push(tag);
+    if (!selfClosing) {
+      // A nested root opens an embedded diagram's scope.
+      if (tag === 'svg' && stack.length > 0) {
+        f = scopeOf(stack.length, { ...options, gradient: undefined, scope: undefined });
+        frames.push(f);
+      }
+      stack.push(tag);
+    }
   }
   if (stack.length > 0) return `unclosed <${stack[stack.length - 1]}>`;
   return undefined;
@@ -465,4 +505,17 @@ export function inertProblem(svg: string, options: InertOptions = {}): string | 
 export function assertInert(svg: string, options?: InertOptions): void {
   const problem = inertProblem(svg, options);
   if (problem !== undefined) throw new Error(`SVG output is not inert: ${problem}`);
+}
+
+/**
+ * `svg`, a finished diagram's root `<svg>`, as markup a host may splice in with
+ * `SvgWriter.embed()` (ADR-15). Throws unless it is one root element and inert under `options`
+ * (its `theme: 'auto'` sheet allowed).
+ */
+export function embeddedSvg(svg: string, options: InertOptions = {}): EmbeddedSvg {
+  if (!svg.startsWith('<svg') || !svg.endsWith('</svg>'))
+    throw new Error('An embedded diagram must be one root <svg>');
+  const problem = inertProblem(svg, { ...options, themeStyle: true });
+  if (problem !== undefined) throw new Error(`Embedded SVG is not inert: ${problem}`);
+  return svg as EmbeddedSvg;
 }

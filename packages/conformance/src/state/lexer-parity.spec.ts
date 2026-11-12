@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { JISON_NAMES, stateTokens } from '@mermaid-js/diagram-state';
-import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
+import { corpusFromDir, isEmbeddedFixture, REPO_ROOT } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
@@ -53,7 +53,8 @@ async function corpus(): Promise<CorpusItem[]> {
   const items: CorpusItem[] = [];
   for (const dir of ['state-diagram', 'state-diagram-v2']) {
     for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams', dir), dir)) {
-      items.push(item);
+      // Embedded-diagram fixtures (ADR-15): v12 rejects them.
+      if (!isEmbeddedFixture(item)) items.push(item);
     }
   }
   const specs = JSON.parse(

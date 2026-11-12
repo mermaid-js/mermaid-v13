@@ -18,6 +18,7 @@
  * messages (D341), and counting resumes after the field, so one misplaced field gives one error.
  * Fields are split into rows as v12 split them, up to its 10,000-row cap (D342).
  */
+import { checkLimit } from '@mermaid-js/core/limits';
 import { ExpectedTable, Kind, kindSet, STOP } from '@mermaid-js/core/parser-kit';
 import {
   RuleParser,
@@ -49,6 +50,8 @@ export interface PacketParseOptions extends ParseOptions {
    * `bitsPerRow`, and invalid lengths fall back with a warning (D342). Defaults when absent.
    */
   config?: Readonly<Record<string, unknown>>;
+  /** The integrator's cap on fields (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
+  maxNodes?: number;
 }
 
 export type PacketParseResult = ParseResult<PacketModel, PacketDocument>;
@@ -160,6 +163,9 @@ class PacketParser extends RuleParser<PreprocessResult> {
     const at = { start: this.pre.bodyStart, end: this.pre.bodyStart };
     for (const p of problems) this.st.diagnostics.warning('PACKET_CONFIG_INVALID', p.message, at);
   }
+
+  /** The field statements so far, for the integrator's cap. */
+  private fieldCount = 0;
 
   parse(): PacketParseResult {
     const { st, src } = this;
@@ -362,6 +368,14 @@ class PacketParser extends RuleParser<PreprocessResult> {
       ...(dropped ? { dropped } : {}),
     });
     this.st.statement('field', range);
+    checkLimit(
+      this.st.diagnostics,
+      'maxNodes',
+      ++this.fieldCount,
+      this.options.maxNodes,
+      'fields',
+      range
+    );
     // D346: each label is a `field` symbol of its own; repeated labels are separate fields.
     this.st.symbol(label, 'field', labelRange, 'def');
     this.eol();

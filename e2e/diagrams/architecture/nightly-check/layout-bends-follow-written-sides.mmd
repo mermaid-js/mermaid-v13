@@ -1,0 +1,19 @@
+---
+description: >-
+  Bends whose left-hand side is L or R and right-hand side T or B, each next to a straight edge
+  from the same side (research Q5, architectureTypes.ts:141). v12 put the bent-to service on the
+  wrong side vertically (b above the row for a:R -- T:b); compass follows the sides as written,
+  so b sits below the row and e above it.
+---
+architecture-beta
+    service a(server)[A]
+    service b(database)[B]
+    service c(server)[C]
+    service d(server)[D]
+    service e(database)[E]
+    service f(server)[F]
+
+    a:R -- L:c
+    a:R -- T:b
+    d:L -- R:f
+    d:L -- B:e

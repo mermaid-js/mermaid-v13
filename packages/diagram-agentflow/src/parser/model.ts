@@ -456,7 +456,9 @@ export class AgentflowBuilder extends FlowBuilderBase<
     const resolved = String(shape);
     if (!isValidShape(resolved)) {
       // v12 kept a plain scalar's trailing comma (`shape: tool,`) in the name (D464).
-      const bare = authored.replace(/[\s,]+$/, '');
+      let end = authored.length;
+      while (end > 0 && /[\s,]/.test(authored.charAt(end - 1))) end--;
+      const bare = authored.slice(0, end);
       const comma =
         bare !== authored && isValidShape(resolveShape(bare) ?? bare)
           ? ` The comma is part of the name: remove it (\`shape: ${bare}\`), or quote the name (\`shape: "${bare}",\`).`

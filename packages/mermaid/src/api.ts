@@ -13,7 +13,7 @@ import {
   NotLoadedError,
   renderErrorSvg,
   UnsupportedFormatError,
-  type ExtensionPlugin as CoreExtensionPlugin,
+  type EmbeddedText,
   type RenderContext,
   type Resource,
   type TextRenderContext,
@@ -33,7 +33,6 @@ import {
   type UnitProfile,
 } from '@mermaid-js/core/layout';
 import { checkSource } from '@mermaid-js/core/limits';
-import type { ParseResult } from '@mermaid-js/core/parser-kit';
 import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { resolveSecurityLevel } from '@mermaid-js/core/svg';
 import { inlineSpans, type Measurer } from '@mermaid-js/core/text';
@@ -47,6 +46,19 @@ import {
   type ThemeOptions,
 } from '@mermaid-js/core/theme';
 import { stageEnd, stageStart } from '@mermaid-js/core/timing';
+import type {
+  ExtensionPlugin,
+  ParseErrorHandler,
+  ParseOptions,
+  ParseResult12,
+  PreloadRequest,
+  Prepared,
+  RenderOptions,
+  RenderResult,
+  SvgRenderOptions,
+  TextRenderOptions,
+  TextRenderResult,
+} from './api-types.ts';
 import type * as TextModule from './ascii.ts';
 import {
   defaultIdPrefix,
@@ -61,8 +73,11 @@ import {
   type Plain,
   type Snapshot,
 } from './config-snapshot.ts';
+import { AnalysisCache, type Analysis, type Detection } from './analysis-cache.ts';
 import { createDomAdapter } from './dom.ts';
-import { toMermaidError, toWarning } from './errors.ts';
+import type { DrawBlocks } from './block-pass.ts';
+import { blockLoader, outsideBlocks, type BlockHost } from './embeds.ts';
+import { toMermaidError, toWarning, unsupportedDiagram } from './errors.ts';
 import { iconPackRegistry, packsUnsupported, type IconLoader } from './icon-packs.ts';
 import { selectMeasurer } from './measurer.ts';
 import {
@@ -84,138 +99,6 @@ import { VERSION } from './version.ts';
 export type { InitializeConfig, IntegratorOptions } from './config-snapshot.ts';
 export { defaultIdPrefix } from './config-snapshot.ts';
 
-export interface RenderOptions {
-  /**
-   * Prefix of the ids in the output (`render(id)` passes its id). Without one, the prefix is
-   * `mermaid-<hash>`, a stable hash of the source text and the resolved config, so different
-   * diagrams on one page get distinct ids and the same input stays byte-identical (R-SVG-3,
-   * R-ARCH-6). Pass an `id` to render the same text twice on one page.
-   */
-  id?: string;
-  /** Per-call integrator config, merged over `initialize()`'s. */
-  config?: InitializeConfig;
-  /** Draw placeholders for missing resources, with a warning, instead of throwing. */
-  placeholders?: boolean;
-  /**
-   * Output format (R-ASCII-4, D80): `svg` (default) or `ascii`, text drawn in character cells
-   * for the types whose manifest lists it (`supportsFormat`).
-   */
-  format?: 'svg' | 'ascii';
-  /**
-   * Width in px the drawing should fit (R-LAYOUT-5): graph layouts tighten their spacing and
-   * may turn LR into TB. Off by default; `mount(…, { availableWidth: true })` passes the
-   * element's width. SVG only: text output fits `ascii.maxWidth` columns instead (D84).
-   */
-  availableWidth?: number;
-  /**
-   * The instant the diagram treats as now (D270): gantt's `today` line and `today`-relative
-   * dates. Defaults to `Date.now()` at each call (D275). Not a config key: diagram text
-   * cannot set it.
-   */
-  now?: number | Date;
-}
-
-/** Options of an SVG render (`format` absent or `svg`). */
-export interface SvgRenderOptions extends RenderOptions {
-  format?: 'svg';
-}
-
-/** Options of a text render (R-ASCII-4, D80). */
-export interface TextRenderOptions extends RenderOptions {
-  format: 'ascii';
-  /**
-   * Explicit text options for this call (the CLI's `--charset` and `--width`). Each key set here
-   * wins over the same `ascii` key from any config, the diagram's front matter and directives
-   * included; unset keys fall back to the config as usual.
-   */
-  ascii?: { charset?: 'unicode' | 'ascii'; padding?: 'compact' | 'roomy'; maxWidth?: number };
-}
-
-/**
- * A text render (R-ASCII-4, D80): `\n` line ends, no trailing spaces, byte-deterministic.
- * `columns` is the widest line in cells (a wide character takes 2), `rows` the line count.
- */
-export interface TextRenderResult {
-  format: 'ascii';
-  text: string;
-  columns: number;
-  rows: number;
-  diagramType: string;
-  warnings: Warning[];
-}
-
-export interface RenderResult {
-  svg: string;
-  diagramType: string;
-  width: number;
-  height: number;
-  warnings: Warning[];
-  /**
-   * Set only when a registered extension has an `afterMount` hook (the interactions plugin,
-   * DESIGN §12.3): runs those hooks on the element the svg was mounted in. The DOM adapter
-   * (`run`/`mount`, #16) calls it after inserting the svg.
-   */
-  bindFunctions?: (element: Element) => void;
-}
-
-/**
- * An extension plugin (DESIGN §12.2): hooks for every diagram type, registered through
- * `registerExternalDiagrams`. `afterMount` runs only in the DOM adapter (`bindFunctions`).
- */
-export type ExtensionPlugin = CoreExtensionPlugin<Element, RenderResult>;
-
-/**
- * What `prepare` found: cached so `renderSync` right after does not parse again. The object is the
- * cached one, shared with later renders of the same text: read it, never change it. Only the
- * config is frozen (by `resolveText`).
- */
-export interface Prepared {
-  readonly diagramType: string;
-  readonly config: ResolvedConfig;
-  /** The diagram plugin's parse result (model, AST, diagnostics, symbols). */
-  readonly parse: ParseResult<unknown>;
-  readonly warnings: readonly Warning[];
-}
-
-export interface ParseOptions {
-  /** Resolve to `false` instead of rejecting when the diagram is invalid. */
-  suppressErrors?: boolean;
-}
-
-export interface ParseResult12 {
-  /** The v12 diagram type, e.g. `flowchart-v2`. */
-  diagramType: string;
-  /**
-   * The config given in front matter and directives, without the integrator-only keys.
-   * `theme` keeps v12's type so v12 callers still compile (R-COMPAT-5); a diagram that asks
-   * for v13's `theme: 'auto'` reports it as the string `'auto'` all the same.
-   */
-  config: Omit<MermaidConfig, 'securityLevel' | 'theme'> & { theme?: V12Theme };
-  warnings: Warning[];
-}
-
-/** The `theme` names v12 declared: every v13 name except `auto`. */
-type V12Theme = Exclude<MermaidConfig['theme'], 'auto'>;
-
-export interface PreloadRequest {
-  /** Diagram types or plugin ids. */
-  types?: readonly string[];
-  layouts?: readonly string[];
-  themes?: readonly string[];
-  /** `'ascii'` also loads each type's text entry, for `renderSync(…, { format: 'ascii' })`. */
-  formats?: readonly ('svg' | 'ascii')[];
-  /**
-   * Runs these packs' loaders (`registerIconPacks`), for `renderSync` with their icons (D294).
-   * An unregistered name is ignored; a rejecting loader does not reject (D299).
-   */
-  iconPacks?: readonly string[];
-  /** Loads what a registered math extension provides, for `renderSync` with `$$…$$` (D178). */
-  math?: boolean;
-}
-
-/** @deprecated v12 compatibility: receives the `MermaidError` of a failed `parse`. */
-export type ParseErrorHandler = (error: MermaidError) => void;
-
 /** `render`'s third argument: v12's container element, or an options object (D80). */
 function renderOptions(arg: unknown): RenderOptions | undefined {
   if (!isPlain(arg) || typeof arg.nodeType === 'number') return undefined;
@@ -224,28 +107,11 @@ function renderOptions(arg: unknown): RenderOptions | undefined {
 
 type TextBackend = typeof TextModule;
 
-interface Analysis {
-  readonly detected: Detected;
-  readonly plugin: AnyPlugin;
-  readonly prepared: Prepared;
-  /** The front-matter title, for text output (D82). */
-  readonly title?: string;
-  /** The author's config layers (`initialize`, front matter, directives), for line hops (D537). */
-  readonly sources: readonly (Readonly<Record<string, unknown>> | undefined)[];
-}
-
 /** What `detect` found, for a type with a plugin package. */
 interface Found {
   readonly detected: Detected & { readonly id: string };
   readonly pre: PreprocessResult;
 }
-
-interface CacheEntry {
-  readonly snap: Snapshot;
-  readonly analysis: Analysis;
-}
-
-const CACHE_SIZE = 32;
 
 /** How a render measures and sizes: px for SVG, cells for text (D77, D84). */
 interface Units {
@@ -254,27 +120,7 @@ interface Units {
   /** `availableWidth` in the profile's units. */
   readonly width?: number;
   /** Text output: the config with its `ascii` section, and what the text entry reads besides. */
-  readonly text?: Pick<TextRenderContext, 'config' | 'title' | 'ast'>;
-}
-
-/** The analyses of recent texts, each valid only for the snapshot it was made with. */
-class AnalysisCache {
-  private readonly entries = new Map<string, CacheEntry>();
-
-  get(text: string, snap: Snapshot): Analysis | undefined {
-    const hit = this.entries.get(text);
-    return hit && hit.snap === snap ? hit.analysis : undefined;
-  }
-
-  set(text: string, snap: Snapshot, analysis: Analysis): void {
-    this.entries.delete(text);
-    this.entries.set(text, { snap, analysis });
-    if (this.entries.size > CACHE_SIZE) this.entries.delete(this.entries.keys().next().value!);
-  }
-
-  clear(): void {
-    this.entries.clear();
-  }
+  readonly text?: Pick<TextRenderContext, 'config' | 'title' | 'ast' | 'embedText'>;
 }
 
 function themeNames(config: ResolvedConfig): ThemeName[] {
@@ -288,8 +134,11 @@ function missingFor(registry: Registry, a: Analysis, text = false): Resource[] {
   const { config } = a.prepared;
   // Text output lays out with core's own `layered`, never a registered engine (D179).
   if (a.plugin.layoutKind === 'graph' && !text) {
-    const { need } = registry.layout(layoutName(config, a.plugin), a.plugin.layoutEngine);
+    const name = layoutName(config, a.plugin);
+    const { need } = registry.layout(name, a.plugin.layoutEngine);
     if (need !== undefined) missing.push({ kind: 'layout', name: need });
+    const [part, loaded] = registry.layoutPart(a.plugin, name);
+    if (part && !loaded) missing.push({ kind: 'layout', name: part });
   }
   // D537: the line-hop chunk when the shared key turns hops on. An engine whose own `lineHops`
   // defaults on (`swimlane`, ELK) carries the step, so loading it loads them.
@@ -392,14 +241,17 @@ export function createMermaid(
   const [iconPacks, registerPacks] = iconPackRegistry();
   // What a draw reads: the packs without their loader, so a draw cannot start one (R-ARCH-6).
   const { load: _, ...packs } = iconPacks;
-  const cache = new AnalysisCache();
+  const cache = new AnalysisCache<Analysis>();
   const siteConfigs = new SiteConfigs();
   const overlays = new Overlays();
   // `core/ascii`'s cell measurer and width, loaded by the first text `prepare` (D87).
   let textBackend: TextBackend | undefined;
 
-  function sectionOf(detected: Detected, plugin?: AnyPlugin): string | undefined {
-    return plugin?.configSection ?? plugin?.id ?? detected.id;
+  // A type may read its own section on top of its plugin's (`swimlane` over `flowchart`,
+  // D534): both are given, highest first.
+  function sectionOf(detected: Detected, plugin?: AnyPlugin) {
+    const own = plugin?.configSection ?? plugin?.id ?? detected.id;
+    return detected.section && detected.section !== own ? [detected.section, own!] : own;
   }
 
   // Detect, resolve config and parse with a loaded plugin (DESIGN §3 steps 1–4).
@@ -408,17 +260,25 @@ export function createMermaid(
     snap: Snapshot,
     plugin: AnyPlugin,
     detected: Detected,
-    pre: PreprocessResult
+    pre: PreprocessResult,
+    host?: BlockHost
   ): Analysis {
     const warnings: Warning[] = [];
     const warn = (w: Warning): void => void warnings.push(toWarning(w, registry.fragments()));
     for (const d of pre.diagnostics) if (d.severity === 'warning') warn(d);
     const section = sectionOf(detected, plugin);
-    const front = pre.frontMatter?.config;
-    const directives = directiveConfig(pre, section);
+    let front = pre.frontMatter?.config;
+    let directives = directiveConfig(pre, section);
     const hit = siteConfigs.get(snap, plugin, detected, section, registry.fragments());
     for (const w of hit.warnings) warn(w);
-    const config: ResolvedConfig = resolveText(hit.site, front, directives, { warn });
+    // An embedded diagram (ADR-15) sets only its own options, with one warning for the rest.
+    if (host) ({ front, directives } = host.layers(front, directives, hit.site, warn));
+    // An embedded diagram starts from its host's config, and takes its theme.
+    let config: ResolvedConfig = resolveText(hit.site, front, directives, {
+      warn,
+      under: host?.config,
+    });
+    if (host) config = host.resolve(config, [section ?? []].flat());
     const t = stageStart();
     const claims = hooks.claims();
     const parse = plugin.parse(
@@ -428,6 +288,9 @@ export function createMermaid(
         : { config, preprocessed: pre, limits: snap.limits }
     );
     stageEnd('parse', t);
+    // A directive inside a block belongs to the block (ADR-15): parse again without it.
+    const outside = outsideBlocks(pre, parse);
+    if (outside !== pre) return analyse(text, snap, plugin, detected, outside, host);
     const error = errorFromDiagnostics(text, [...pre.diagnostics, ...parse.diagnostics]);
     if (error) throw error;
     for (const d of parse.diagnostics) if (d.severity === 'warning') warn(d);
@@ -441,7 +304,7 @@ export function createMermaid(
     };
   }
 
-  function detect(text: string, s: Snapshot): { detected: Detected; pre: PreprocessResult } {
+  function detect(text: string, s: Snapshot): Detection {
     // DESIGN §3 step 1: the source limit, before the text is read at all.
     checkSource(text, s.limits);
     const pre = preprocess(text);
@@ -459,7 +322,7 @@ export function createMermaid(
   /** `detect`, for a type with a plugin package that can draw `ascii` when that is asked for. */
   function detectSupported(text: string, s: Snapshot, ascii: boolean): Found {
     const { detected, pre } = detect(text, s);
-    if (detected.id === undefined) throw unsupported(detected);
+    if (detected.id === undefined) throw unsupportedDiagram(detected.type);
     if (ascii) checkText(detected);
     return { detected: { ...detected, id: detected.id }, pre };
   }
@@ -471,28 +334,59 @@ export function createMermaid(
     { detected, pre }: Found,
     plugin: AnyPlugin | undefined
   ): Analysis {
-    if (!plugin) throw unsupported(detected);
+    if (!plugin) throw unsupportedDiagram(detected.type);
     const analysis = analyse(text, s, plugin, detected, pre);
     cache.set(text, s, analysis);
     return analysis;
   }
 
-  function unsupported(detected: Detected): MermaidError {
-    return new MermaidError(
-      'UNSUPPORTED_DIAGRAM',
-      `Diagram type "${detected.type}" is not supported by this version of mermaid.`
-    );
-  }
+  // Embedded diagrams (ADR-15): a host's blocks, parsed and drawn before the host draws. The
+  // pass is a chunk of its own, loaded for the first text with a block (D553).
+  const blocks = blockLoader({
+    detect,
+    analyse: (text, s, { detected, pre }, plugin, host) =>
+      analyse(text, s, plugin, detected, pre, host),
+    load: (id) => registry.load(id),
+    loaded: (id) => registry.plugin(id),
+    resources: async (a, format) => {
+      if (format === 'svg') return loadFor(a, false);
+      // A block without text output is a stand-in, which needs nothing loaded.
+      if (textOf(a)) await Promise.all([loadText(a), loadFor(a, true)]);
+    },
+    draw: (text, s, options, a, id, inner) => {
+      const { now, placeholders } = options ?? {};
+      const { drawn, ctx, warnings, mount } = drawSvg(text, s, { id, now, placeholders }, a, inner);
+      const own = warnings.slice(skipped.length);
+      return {
+        ...drawn,
+        securityLevel: ctx.securityLevel,
+        linkSchemes: ctx.linkSchemes,
+        warnings: own,
+        // A block binds in its own root, so its ids never meet the host's or another block's.
+        bind: mount({ ...drawn, diagramType: a.prepared.diagramType, warnings: own }),
+      };
+    },
+    drawText: (b, s, options, a, id, inner) => {
+      if (!textOf(a)) return textBackend!.blockStandIn(a.detected.type, b.id);
+      const { now, ascii } = (options ?? {}) as Partial<TextRenderOptions>;
+      const call = { format: 'ascii', id, now, ascii } as const;
+      const { warnings, ...drawn } = drawAscii(b.text, s, call, a, () => inner);
+      return { ...drawn, warnings: warnings.slice(skipped.length) };
+    },
+  });
 
   function snapshotFor(options?: RenderOptions): Snapshot {
     const extra = options?.config;
     return extra ? overlays.get(site, extra) : site;
   }
 
+  /** Whether `a`'s type has text output (R-ASCII-5, D80). */
+  const textOf = (a: { detected: Detected }): boolean =>
+    a.detected.id !== undefined && registry.formats(a.detected.id).includes('ascii');
+
   /** Throws `UnsupportedFormatError` unless `detected` declares ascii (R-ASCII-5, D80). */
   function checkText(detected: Detected): void {
-    if (detected.id === undefined || !registry.formats(detected.id).includes('ascii'))
-      throw new UnsupportedFormatError(detected.type, 'ascii');
+    if (!textOf({ detected })) throw new UnsupportedFormatError(detected.type, 'ascii');
   }
 
   /** Loads the ascii entry and the text backend (D76, D80): only for `format: 'ascii'`. */
@@ -541,11 +435,19 @@ export function createMermaid(
       analysis = analysisOf(text, s, f, await registry.load(f.detected.id));
     }
     if (ascii) await loadText(analysis);
-    await Promise.all([
-      loadResources(registry, missingFor(registry, analysis, ascii)),
-      ...extensionNeeds(analysis, ascii).map((n) => n.load()),
-    ]);
+    await (
+      await blocks.load(analysis)
+    )?.prepare({ root: text, at: 0, a: analysis, s }, ascii ? 'ascii' : 'svg');
+    await loadFor(analysis, ascii);
     return analysis;
+  }
+
+  /** Loads what `a` draws with: layout, themes, plugin and extension resources. */
+  function loadFor(a: Analysis, ascii: boolean): Promise<unknown> {
+    return Promise.all([
+      loadResources(registry, missingFor(registry, a, ascii)),
+      ...extensionNeeds(a, ascii).map((n) => n.load()),
+    ]);
   }
 
   async function prepare(text: string, options?: RenderOptions): Promise<Prepared> {
@@ -566,28 +468,31 @@ export function createMermaid(
     const hit = cache.get(text, s);
     if (hit) return hit;
     const f = detectSupported(text, s, ascii);
-    const { detected } = f;
-    const plugin = registry.plugin(detected.id);
+    const plugin = registry.plugin(f.detected.id);
     if (plugin) return analysisOf(text, s, f, plugin);
-    const missing = new NotLoadedError([{ kind: 'diagram', name: detected.id }]);
+    const missing = new NotLoadedError([{ kind: 'diagram', name: f.detected.id }]);
     if (ascii || !options?.placeholders) throw missing;
     return {
       svg: renderErrorSvg(missing, { version: VERSION }),
-      diagramType: detected.type,
+      diagramType: f.detected.type,
       width: 0,
       height: 0,
       warnings: [...skipped, { code: 'PLACEHOLDER', message: missing.message }],
     };
   }
 
-  /** The render context of one draw, and the warnings sink it writes to. */
+  /**
+   * The render context of one draw, the warnings sink it writes to, and the binders of the
+   * blocks it drew (#669).
+   */
   function contextFor(
     text: string,
     s: Snapshot,
     options: RenderOptions | undefined,
     analysis: Analysis,
-    { units, measurer, width, text: textOnly }: Units
-  ): { ctx: RenderContext; warnings: Warning[] } {
+    { units, measurer, width, text: textOnly }: Units,
+    drawBlocks?: DrawBlocks
+  ) {
     const { prepared, plugin } = analysis;
     const { config } = prepared;
     // A usage error, as a bad `limits` option is: `+now` of a bad Date or a string is NaN.
@@ -615,7 +520,7 @@ export function createMermaid(
       });
     }
     for (const w of packsUnsupported(iconPacks, hooks.claims())) warn(w);
-    let engine: LayoutEngine | undefined;
+    let engine: LayoutEngine | undefined, part: unknown;
     let elkName: string | undefined;
     if (plugin.layoutKind === 'graph') {
       const asked = layoutName(config, plugin);
@@ -650,6 +555,9 @@ export function createMermaid(
         });
       }
       engine = found.engine;
+      // The layout's part of the drawing (`layoutParts`), only when that layout lays it out:
+      // ready (a stand-in engine never is).
+      if (found.state === 'ready') part = registry.layoutPart(plugin, name)[1];
     }
     // The theme reads the id prefix only for the gradient (D182), after ctx exists.
     const tables = { rules: registry.themeRules(), diagram: plugin.theme };
@@ -660,6 +568,8 @@ export function createMermaid(
     // extension that has them, and share the inline spans' once-per-render warnings (D291).
     const inline = inlineSpans(hooks.inline(), warn, textOutput ? 'ascii' : 'svg', packs);
     const icon = textOutput ? undefined : hooks.icon(inline, packs);
+    // The blocks (ADR-15) are drawn at the first lookup, with this draw's id prefix.
+    const { embed, mounter } = blocks.lookup(drawBlocks, () => ctx.idPrefix, warn);
     const ctx: RenderContext = {
       config,
       measurer:
@@ -678,6 +588,7 @@ export function createMermaid(
       now,
       availableWidth: width,
       iconPacks: packs,
+      layoutPart: part,
       layout: (graph) => {
         if (!engine) throw new TypeError(`${plugin.id} has no graph layout`);
         // D174: `@{ algorithm }` is parsed but not applied yet. `mermaid` says so, not the engine
@@ -701,19 +612,26 @@ export function createMermaid(
       },
       inline,
       icon,
+      embed,
+      foldedType: blocks.foldedType(analysis, s),
       warn,
       // Spread into the literal, not over `ctx`: a spread would run the lazy idPrefix getter.
       ...textOnly,
     };
-    return { ctx, warnings };
+    return { ctx, warnings, mounter };
   }
 
-  /** Text output (DESIGN §6.3): cell layout, the ascii hook, columns and rows (D80, D84). */
+  /**
+   * Text output (DESIGN §6.3): cell layout, the ascii hook, columns and rows (D80, D84).
+   * `blocksFor` draws the blocks (ADR-15) with the options it is given: this draw's charset and
+   * padding, never its width (only the outermost drawing is fitted to `maxWidth`).
+   */
   function drawAscii(
     text: string,
     s: Snapshot,
     options: RenderOptions | undefined,
-    analysis: Analysis
+    analysis: Analysis,
+    blocksFor?: (options: TextRenderOptions) => DrawBlocks<EmbeddedText> | undefined
   ): TextRenderResult {
     const { prepared, plugin } = analysis;
     checkText(analysis.detected);
@@ -730,6 +648,13 @@ export function createMermaid(
       padding,
       ...(maxWidth === undefined ? {} : { maxWidth }),
     });
+    // The blocks (ADR-15), drawn in this charset and padding at the first lookup.
+    const inner = blocksFor?.({ format: 'ascii', now: options?.now, ascii: { charset, padding } });
+    const { embed: embedText } = blocks.lookup(
+      inner,
+      () => ctx.idPrefix,
+      (w) => ctx.warn(w)
+    );
     const { ctx, warnings } = contextFor(text, s, options, analysis, {
       units: cellProfile(padding),
       measurer: backend.cellMeasurer,
@@ -738,6 +663,7 @@ export function createMermaid(
         config: Object.freeze({ ...prepared.config, ascii }),
         ...(title !== undefined ? { title } : {}),
         ast: prepared.parse.ast,
+        ...(embedText ? { embedText } : {}),
       },
     });
     const textCtx = ctx as TextRenderContext;
@@ -789,26 +715,37 @@ export function createMermaid(
     const format = checkFormat(text, s, options?.format);
     const analysis = analysisFor(text, s, options, format === 'ascii');
     if (!('prepared' in analysis)) return analysis;
-    if (format === 'ascii') return drawAscii(text, s, options, analysis);
-    const { prepared, plugin } = analysis;
-    const { ctx, warnings } = contextFor(text, s, options, analysis, {
-      units: pxProfile,
-      width: options?.availableWidth,
-    });
-    // D537: the line-hop step, when its chunk is loaded and decides that this render hops.
-    const edges = registry.hops?.(analysis);
-    const renderHooks = hooksFor(analysis);
-    if (renderHooks.size === 0) {
-      const drawn = drawDiagram(plugin, prepared.parse.model, ctx, undefined, edges);
-      return { ...drawn, diagramType: prepared.diagramType, warnings };
-    }
-    const run = renderHooks.start(ctx, plugin.id);
-    const hooked = { run, ast: prepared.parse.ast };
-    const drawn = drawDiagram(plugin, prepared.parse.model, ctx, hooked, edges);
-    const result: RenderResult = { ...drawn, diagramType: prepared.diagramType, warnings };
+    if (format === 'ascii')
+      return drawAscii(text, s, options, analysis, (o) =>
+        blocks.of(analysis)?.drawText({ root: text, at: 0, a: analysis, s }, o)
+      );
+    const blockDraw = blocks.of(analysis)?.draw({ root: text, at: 0, a: analysis, s }, options);
+    const { drawn, warnings, mount } = drawSvg(text, s, options, analysis, blockDraw);
+    const result: RenderResult = { ...drawn, diagramType: analysis.prepared.diagramType, warnings };
     // The DOM adapter's afterMount entry point (DESIGN §12.2, §12.3); `run`/`mount` call it.
-    if (run.mounts) result.bindFunctions = (element) => run.afterMount(element, result);
+    const bind = mount(result, true);
+    if (bind) result.bindFunctions = bind;
     return result;
+  }
+
+  /** One SVG draw of `a`, with its blocks (ADR-15) drawn at the first lookup. */
+  function drawSvg(
+    text: string,
+    s: Snapshot,
+    options: RenderOptions | undefined,
+    a: Analysis,
+    blockDraw: DrawBlocks | undefined
+  ) {
+    const units = { units: pxProfile, width: options?.availableWidth };
+    const { ctx, warnings, mounter } = contextFor(text, s, options, a, units, blockDraw);
+    const renderHooks = hooksFor(a);
+    const run = renderHooks.size === 0 ? undefined : renderHooks.start(ctx, a.plugin.id);
+    const { parse } = a.prepared;
+    // D537: the line-hop step, when its chunk is loaded and decides that this render hops.
+    const edges = registry.hops?.(a);
+    const drawn = drawDiagram(a.plugin, parse.model, ctx, run && { run, ast: parse.ast }, edges);
+    // Binds the run's interactions, then each block's in its own nested root (#669).
+    return { drawn, ctx, warnings, mount: mounter<RenderResult>(run) };
   }
 
   /**
@@ -865,11 +802,12 @@ export function createMermaid(
       const { detected, pre } = f;
       const plugin = await registry.load(detected.id);
       const a = cache.get(text, s) ?? analysisOf(text, s, f, plugin);
+      await (await blocks.load(a))?.prepare({ root: text, at: 0, a, s }, undefined);
       const config: Plain = {};
       const front = pre.frontMatter?.config;
       for (const c of [
         ...(front ? [front] : []),
-        ...directiveConfig(pre, sectionOf(detected, plugin)),
+        ...directiveConfig(outsideBlocks(pre, a.prepared.parse), sectionOf(detected, plugin)),
       ])
         mergeInto(config, c as Plain);
       for (const key of INTEGRATOR_ONLY_KEYS) delete config[key];
@@ -914,8 +852,11 @@ export function createMermaid(
         registry.load(t).then((p) => {
           if (!p)
             throw new MermaidError('UNSUPPORTED_DIAGRAM', `Diagram type "${t}" is not supported.`);
-          // The plugin's own default engine (D284) comes with it, as `layered` does.
-          if (p.layoutEngine) return registry.loadLayout(p.layoutEngine.default);
+          // The plugin's own default engine (D284), or the type's (D534), comes with it.
+          const layout = registry.layoutOf(t) ?? p.layoutEngine?.default;
+          return Promise.all(
+            [layout, registry.layoutPart(p, layout!)[0]].map((n) => n && registry.loadLayout(n))
+          );
         })
       );
       if (ascii)
