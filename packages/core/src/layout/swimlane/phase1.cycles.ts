@@ -1,4 +1,5 @@
 // Ported from v12 `swimlanes/phase1.cycles.ts` at upstream `c9b12739f` (D532).
+import { byCodeUnit } from './compare.ts';
 import type { Graph, Edge, EdgeRef, NodeId } from './helpers.ts';
 import { buildInDegreeMap, normalizeGraph } from './phase0.helpers.ts';
 // cspell:ignore Graphviz acyc Eades Gansner
@@ -21,7 +22,7 @@ export function removeCycles_DFS(g: Graph): CycleRemovalResult {
     adj.get(e.src)!.push(e);
   }
   for (const arr of adj.values()) {
-    arr.sort((a, b) => (a.dst === b.dst ? a.id.localeCompare(b.id) : a.dst.localeCompare(b.dst)));
+    arr.sort((a, b) => (a.dst === b.dst ? byCodeUnit(a.id, b.id) : byCodeUnit(a.dst, b.dst)));
   }
 
   const color = Object.create(null) as Record<NodeId, 0 | 1 | 2>;

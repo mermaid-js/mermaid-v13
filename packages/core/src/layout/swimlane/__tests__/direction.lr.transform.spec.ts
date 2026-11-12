@@ -1,6 +1,7 @@
 // Ported from v12 `swimlanes/__tests__/direction.lr.transform.spec.ts` (c9b12739f), on the
 // engine's internal data (`internalData`). The lane title band sides (D536) and anchored nodes
 // (D531) are not asserted here; `laneTitleBands.spec.ts` covers the bands.
+import { byCodeUnit } from '../compare.ts';
 import { describe, it, expect } from 'vitest';
 import type { LayoutData, Node } from '../layoutData.ts';
 import type { Graph, NodeId, OrderedLayers, Coordinates } from '../helpers.ts';
@@ -47,7 +48,7 @@ function mkGraphWithLanesAndNodes(): { g: Graph; ordered: OrderedLayers; coords:
   return { g, ordered, coords };
 }
 
-const byId = (nodes: Node[]): Node[] => [...nodes].sort((a, b) => a.id.localeCompare(b.id));
+const byId = (nodes: Node[]): Node[] => [...nodes].sort((a, b) => byCodeUnit(a.id, b.id));
 
 describe('applySwimlaneDirectionTransform', () => {
   it('leaves layout unchanged for TB direction', () => {

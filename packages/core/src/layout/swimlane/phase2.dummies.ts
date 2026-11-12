@@ -1,4 +1,5 @@
 // Ported from v12 `swimlanes/phase2.dummies.ts` at upstream `c9b12739f` (D532).
+import { byCodeUnit } from './compare.ts';
 import type { Graph, Layering, Node, NodeId, EdgeRef } from './helpers.ts';
 import { normalizeGraph } from './phase0.helpers.ts';
 
@@ -32,9 +33,9 @@ export function makeProperLayering(
   // Sort edges deterministically to stabilize dummy creation order
   const edgesSorted = [...g.edges].sort((a, b) => {
     if (a.id !== b.id) {
-      return a.id.localeCompare(b.id);
+      return byCodeUnit(a.id, b.id);
     }
-    return a.src === b.src ? a.dst.localeCompare(b.dst) : a.src.localeCompare(b.src);
+    return a.src === b.src ? byCodeUnit(a.dst, b.dst) : byCodeUnit(a.src, b.src);
   });
 
   const newEdges: EdgeRef[] = [];
