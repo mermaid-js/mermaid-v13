@@ -763,6 +763,41 @@ describe('repairRoutes (D78, R-ASCII-1)', () => {
     expect(result.unresolved.map((c) => c.with)).toContain('T0');
   });
 
+  // #710: the per-search bound grows with the number of edges that cannot be repaired, so the
+  // whole repair has a bound of its own. Past it the snapped stretches are kept and reported.
+  it('stops searching once the budget of the whole repair is spent (#710)', () => {
+    const nodes: Spec['nodes'] = {};
+    const edges: Spec['edges'] = [];
+    let k = 0;
+    for (let y = 20; y < 180; y += 4)
+      for (let x = 2; x < 258; x += 4) nodes[`w${k++}`] = [x, y, 1, 1];
+    for (let i = 0; i < 10; i++) {
+      const x = 11 + i * 24;
+      nodes[`A${i}`] = [x - 2, 0, 5, 3];
+      nodes[`B${i}`] = [x - 2, 195, 5, 3];
+      nodes[`L${i}`] = [x - 1, 193, 1, 2];
+      nodes[`R${i}`] = [x + 1, 193, 1, 2];
+      nodes[`T${i}`] = [x, 192, 1, 1];
+      edges.push([
+        `e${i}`,
+        `A${i}`,
+        `B${i}`,
+        ['bottom', 'top'],
+        [
+          [x, 3],
+          [x, 194],
+        ],
+      ]);
+    }
+    const { graph, model } = build({ width: 260, height: 200, nodes, edges });
+    const maxExpanded = 5_000;
+    const result = repairRoutes(graph, model, { maxSearch: 2_000, maxExpanded });
+    expect(result.expanded).toBe(maxExpanded);
+    // Every walled-in end is still reported, searched or not.
+    expect(result.unresolved.map((c) => c.with)).toEqual(expect.arrayContaining(['T0', 'T9']));
+    expect(result.routes.size).toBe(10);
+  });
+
   it('keeps the snapped stretch and reports it when there is no lane', () => {
     const { graph, model } = build({
       width: 5,
