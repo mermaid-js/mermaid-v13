@@ -1,8 +1,9 @@
 /**
  * The interactions plugin in a real browser (#23, R-PLUG-9, D47): with
- * `@mermaid-js/plugin-interactions` registered, `click X callback` / `call` run the function
- * named on `window` when the node is clicked, through `run()` and through a v12-style
- * `render()` + `bindFunctions(el)` call site. Without it nothing is bound.
+ * `@mermaid-js/plugin-interactions` registered and `securityLevel: 'loose'` (#697, D554),
+ * `click X callback` / `call` run the function named on `window` when the node is clicked,
+ * through `run()` and through a v12-style `render()` + `bindFunctions(el)` call site. Without
+ * the plugin, or under any other level, nothing is bound.
  */
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
@@ -32,6 +33,7 @@ const node = (page: Page, id: string) => page.locator(`#d g.node[data-id="${id}"
 test('with the plugin, run() binds callbacks that fire on click', async ({ page }) => {
   await open(page);
   await page.evaluate(async (src) => {
+    window.mermaid.initialize({ securityLevel: 'loose' });
     await window.mermaid.registerExternalDiagrams([window.mermaidInteractions]);
     const pre = document.createElement('pre');
     pre.className = 'mermaid';
@@ -54,6 +56,7 @@ test('with the plugin, a v12 render() + bindFunctions(el) call site binds once',
 }) => {
   await open(page);
   const warnings = await page.evaluate(async (src) => {
+    window.mermaid.initialize({ securityLevel: 'loose' });
     await window.mermaid.registerExternalDiagrams([window.mermaidInteractions]);
     const { svg, bindFunctions, warnings } = await window.mermaid.render('d1', src);
     const el = document.createElement('div');
@@ -67,6 +70,27 @@ test('with the plugin, a v12 render() + bindFunctions(el) call site binds once',
   expect(warnings).not.toContain('CALLBACK_IGNORED');
   await node(page, 'A').click();
   expect(await page.evaluate(() => window.calls)).toEqual([['callback', 'A']]);
+});
+
+test('with the plugin but not securityLevel loose, nothing is bound and the warning is returned', async ({
+  page,
+}) => {
+  await open(page);
+  const warnings = await page.evaluate(async (src) => {
+    window.mermaid.initialize({ securityLevel: 'strict' });
+    await window.mermaid.registerExternalDiagrams([window.mermaidInteractions]);
+    const result = await window.mermaid.render('d1', src);
+    const el = document.createElement('div');
+    el.id = 'd';
+    el.innerHTML = result.svg;
+    document.body.appendChild(el);
+    result.bindFunctions?.(el);
+    return result.warnings.map((w) => w.code);
+  }, SOURCE);
+  expect(warnings).toEqual(['CALLBACK_IGNORED']);
+  await node(page, 'A').click();
+  await node(page, 'B').click();
+  expect(await page.evaluate(() => window.calls)).toEqual([]);
 });
 
 test('without the plugin, nothing is bound and the warning is returned', async ({ page }) => {

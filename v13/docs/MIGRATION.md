@@ -24,7 +24,8 @@ What most integrators have to change:
 2. Stop relying on `htmlLabels`, `<foreignObject>` labels and `dompurifyConfig`: labels are SVG
    text ([Labels](#labels-and-text)).
 3. Click callbacks (`click A callback`, `call fn()`) and `bindFunctions` need
-   `@mermaid-js/plugin-interactions` ([Click callbacks](#click-callbacks-and-bindfunctions)).
+   `@mermaid-js/plugin-interactions`, and callbacks still need `securityLevel: 'loose'`
+   ([Click callbacks](#click-callbacks-and-bindfunctions)).
 4. `securityLevel: 'loose'` (and `antiscript`, `sandbox`) now means `default`; `strict` now
    allows relative links only ([securityLevel](#securitylevel)).
 5. CSS that targets element ids, `<marker>`, `.label-container` or the `<style>` element inside
@@ -164,8 +165,9 @@ links and gets a `URL_REFUSED` warning per dropped link. Set `securityLevel: 'de
 leave it unset) to keep them. `loose`, `antiscript` and `sandbox` act as `default` with a
 `SECURITY_LEVEL` warning; there is no sandbox iframe mode and no HTML in labels.
 
-In v12, `loose` was also what allowed click callbacks and HTML labels. In v13 neither depends on
-`securityLevel`: HTML labels are gone, and callbacks depend on the interactions plugin. Only
+In v12, `loose` was also what allowed click callbacks and HTML labels. In v13 HTML labels are
+gone. Callbacks need the interactions plugin and, as in v12, `securityLevel: 'loose'` (D554):
+that is the one thing `loose` still turns on, and for link URLs it acts as `default`. Only
 `initialize()` can set `securityLevel`; front matter and directives cannot (as in v12, where it
 was in `secure`). `initialize({ linkSchemes: [...] })` replaces the scheme list of `default`.
 
@@ -222,14 +224,17 @@ attributes. Without the plugin:
 - `click A "url"` and `click A href "url"` still draw links (they are SVG `<a>` elements, not
   script) and tooltips become SVG `<title>` elements.
 
-With the plugin, callbacks work as in v12. In Node, or in a bundle built with
-`@mermaid-js/bundler-plugin`, installing it is enough ([Plugins](#plugins-installed-is-enabled-r-plug-5),
-D169). Otherwise register it once; diagram text alone can never turn it on:
+With the plugin and `securityLevel: 'loose'`, callbacks work as in v12. In Node, or in a bundle
+built with `@mermaid-js/bundler-plugin`, installing the plugin registers it
+([Plugins](#plugins-installed-is-enabled-r-plug-5), D169). Otherwise register it once. Diagram
+text alone can never turn callbacks on: it can neither register the plugin nor set
+`securityLevel`.
 
 ```js
 import mermaid from 'mermaid';
 import interactions from '@mermaid-js/plugin-interactions';
 
+mermaid.initialize({ securityLevel: 'loose' });
 await mermaid.registerExternalDiagrams([interactions]);
 await mermaid.run(); // binds the callbacks of every diagram it draws
 
@@ -244,13 +249,18 @@ bindFunctions?.(element);
   pass the node id.
 - `run()` and `mount()` call `bindFunctions` for you. Calling it again on the same element binds
   nothing twice.
-- Unlike v12, callbacks do not depend on `securityLevel` (v12 ran them only with `loose`):
-  installing the plugin is the opt-in.
+- As in v12, callbacks run only with `securityLevel: 'loose'` (D554, amends D74). Under
+  `default`, `strict`, `antiscript`, `sandbox` or no level, the plugin binds no callback and the
+  render adds one `CALLBACK_IGNORED` warning. A callback calls a function on `window` that the
+  diagram text names, with arguments the text gives, so set `loose` only for text you trust.
+  Links, tooltips and sequence actor menus work under every level.
+- `loose` still adds core's `SECURITY_LEVEL` warning, because for link URLs it is treated as
+  `default`.
 - The plugin does not change the SVG; it adds click listeners to the rendered `g.node[data-id]`
   elements inside the element you pass.
 
-v12 had no click-callback config keys (only `securityLevel` gated them), so no schema key is
-`moved` to the plugin and it has no config section.
+v12 had no click-callback config keys (only `securityLevel` gated them, as it does in v13), so
+no schema key is `moved` to the plugin and it has no config section.
 
 <!-- BEGIN GENERATED CONFIG SECTION: pnpm gen:config -->
 

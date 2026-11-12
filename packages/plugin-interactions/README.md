@@ -6,8 +6,22 @@ Brings back the v12 click callbacks (flowchart `click A callback`, `call fn()`; 
 import mermaid from 'mermaid';
 import { interactions } from '@mermaid-js/plugin-interactions';
 
+mermaid.initialize({ securityLevel: 'loose' }); // callbacks only; see the warning below
 await mermaid.registerExternalDiagrams([interactions]);
 ```
+
+> [!WARNING]
+> A callback is a function on `window` that the diagram text names and passes arguments to
+> (`click A call app.handlers.go("x")` calls `window.app.handlers.go("x")`). Whoever writes the
+> diagram chooses which function runs and with what. Turn callbacks on only for diagram text you
+> trust.
+
+Callbacks run only when the plugin is registered **and** `initialize({ securityLevel: 'loose' })`
+is set, as in Mermaid v12. Under any other level (`default`, `strict`, `antiscript`, `sandbox`, or
+unset) no callback is bound, and the render adds one `CALLBACK_IGNORED` warning. Diagram text
+cannot set `securityLevel` (front matter and directives are refused), so only the page can turn
+callbacks on. Links, tooltips and actor menus do not need `loose`. For link URLs `loose` acts as
+`default`, and core still adds its `SECURITY_LEVEL` warning for it.
 
 An actor menu is an HTML `div.actorPopupMenu` (with `data-menu-for="<id>"`) that the plugin puts right after the diagram's `<svg>`, never inside it. It holds a `div.actorPopupMenuPanel` (plus the actor's `properties.class`) with one `a` per link, which opens in a new tab. A click on the actor's top or bottom symbol toggles it, and it opens below the top symbol. With `sequence.forceMenus: true`, every menu is shown all the time. Menu links get the same URL checks as flowchart links (`securityLevel`, `linkSchemes`). A refused link becomes `about:blank`, as in v12.
 
