@@ -1,4 +1,5 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
+import { resolveLimits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { eventmodelingConfigDefaults } from './generated/config-defaults.ts';
 import { layoutEventModel, type EventModelLayout } from './layout/index.ts';
@@ -28,8 +29,10 @@ export const eventmodeling = {
   configDefaults: eventmodelingConfigDefaults as Readonly<Record<string, unknown>>,
   labels: (): readonly string[] => [],
   detector: (text: string): boolean => detectEventModeling(text),
-  parse: (text: string, ctx: DiagramParseContext): EventModelParseResult =>
-    parseEventModel(text, { preprocessed: ctx.preprocessed }),
+  parse: (text: string, ctx: DiagramParseContext): EventModelParseResult => {
+    const { maxNodes, maxEdges } = ctx.limits ?? resolveLimits(ctx.config);
+    return parseEventModel(text, { preprocessed: ctx.preprocessed, maxNodes, maxEdges });
+  },
   layout: (model: EventModel, ctx: RenderContext): EventModelLayout => layoutEventModel(model, ctx),
   render: (model: EventModel, layout: EventModelLayout, ctx: RenderContext, w: SvgWriter): void =>
     renderEventModel(model, layout, ctx, w),

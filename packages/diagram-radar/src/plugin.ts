@@ -1,4 +1,5 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
+import { resolveLimits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { layoutRadar, type RadarLayout } from './layout/index.ts';
 import type { RadarModel } from './model.ts';
@@ -24,7 +25,10 @@ export const radar = {
   configDefaults: radarConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectRadar(text),
   parse: (text: string, ctx: DiagramParseContext): RadarParseResult =>
-    parseRadar(text, { preprocessed: ctx.preprocessed }),
+    parseRadar(text, {
+      preprocessed: ctx.preprocessed,
+      maxNodes: (ctx.limits ?? resolveLimits(ctx.config)).maxNodes,
+    }),
   labels: radarLabels,
   layout: (model: RadarModel, ctx: RenderContext): RadarLayout => layoutRadar(model, ctx),
   render: (model: RadarModel, layout: RadarLayout, ctx: RenderContext, w: SvgWriter): void =>

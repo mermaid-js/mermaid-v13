@@ -58,6 +58,7 @@ import type {
 } from './ast.ts';
 import { accDescrValue, accTitleValue, dataText, displayText, titleValue } from './convert.ts';
 import { lex } from './lexer.ts';
+import { checkLimit } from './limits.ts';
 import { normalise } from './normalise.ts';
 import {
   DATA_TYPES,
@@ -73,6 +74,10 @@ import { eventModelingView } from './view.ts';
 export interface EventModelParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
+  /** The integrator's cap on frames (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
+  maxNodes?: number;
+  /** The integrator's cap on relations (a frame's sources) (core `DEFAULT_LIMITS.maxEdges` when absent). */
+  maxEdges?: number;
 }
 
 export type EventModelParseResult = ParseResult<EventModel, EventModelDocument>;
@@ -232,6 +237,8 @@ class EventModelParser {
   private readonly probe: Probe | undefined;
   private readonly children: EventModelStatementNode[] = [];
   private readonly frames: ParsedFrame[] = [];
+  /** The relations (`->>` sources) read so far (the edge cap counts them). */
+  private relations = 0;
   private readonly stepKinds = new Map<EventModelGwtStepNode, EventModelKind>();
   private lines: LineIndex | undefined;
   /** Mentions per id base (`frame:01`, `title`, …), for the `@n` suffixes. */
@@ -589,6 +596,8 @@ class EventModelParser {
         range: { start: arrow, end: source.range.end },
         frame: source,
       });
+      const relation = { start: arrow, end: source.range.end };
+      checkLimit(this.st, 'maxEdges', ++this.relations, this.opts.maxEdges, relation);
     }
     this.tested(OPEN_REF);
     if (this.kind() === T.OpenRef) {
@@ -605,6 +614,7 @@ class EventModelParser {
     this.frameIds.add(frame.value);
     this.pending = undefined;
     this.frames.push({ node, kind });
+    checkLimit(this.st, 'maxNodes', this.frames.length, this.opts.maxNodes, node.range);
     this.done(node, 'frame');
   }
 

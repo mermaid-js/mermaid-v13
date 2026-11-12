@@ -12,6 +12,7 @@
  * it. v12's silent drops warn (D425), and so do coordinates in (1, 2) (D428).
  */
 import type { AstId, Diagnostics, Range, RelatedInfo } from '@mermaid-js/core/parser-kit';
+import { checkLimits, type WardleyLimitOptions } from './limits.ts';
 import {
   WARDLEY_COORDINATE_AMBIGUOUS,
   WARDLEY_LINK_DROPPED,
@@ -62,6 +63,8 @@ export interface Parsed {
   accTitle: string;
   accDescr: string;
   frontMatterTitle: string | undefined;
+  /** The integrator's node and link caps (R-SEC-5). */
+  limits: WardleyLimitOptions;
 }
 
 /** One node while the builder runs: v12's `WardleyNode`, keys set to `undefined` included. */
@@ -578,5 +581,6 @@ export function normalise(
   parsed: Parsed,
   diagnostics: Diagnostics
 ): Omit<WardleyModel, 'warnings'> {
+  checkLimits(parsed.statements, parsed.limits, diagnostics);
   return new Populate(parsed, diagnostics).run();
 }

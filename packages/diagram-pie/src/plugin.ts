@@ -1,4 +1,5 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
+import { resolveLimits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { layoutPie, type PieLayout } from './layout/index.ts';
 import type { PieModel } from './model.ts';
@@ -22,7 +23,10 @@ export const pie = {
   configDefaults: pieConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectPie(text),
   parse: (text: string, ctx: DiagramParseContext): PieParseResult =>
-    parsePie(text, { preprocessed: ctx.preprocessed }),
+    parsePie(text, {
+      preprocessed: ctx.preprocessed,
+      maxNodes: (ctx.limits ?? resolveLimits(ctx.config)).maxNodes,
+    }),
   labels: pieLabels,
   theme,
   layout: (model: PieModel, ctx: RenderContext): PieLayout => layoutPie(model, ctx),

@@ -1,4 +1,5 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
+import { resolveLimits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { layoutWardley, type WardleyLayout } from './layout/index.ts';
 import type { WardleyModel } from './model.ts';
@@ -27,8 +28,10 @@ export const wardley = {
   configSection: WARDLEY_SECTION,
   configDefaults: wardleyBetaConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectWardley(text),
-  parse: (text: string, ctx: DiagramParseContext): WardleyParseResult =>
-    parseWardley(text, { preprocessed: ctx.preprocessed }),
+  parse: (text: string, ctx: DiagramParseContext): WardleyParseResult => {
+    const { maxNodes, maxEdges } = ctx.limits ?? resolveLimits(ctx.config);
+    return parseWardley(text, { preprocessed: ctx.preprocessed, maxNodes, maxEdges });
+  },
   layout: (model: WardleyModel, ctx: RenderContext): WardleyLayout => layoutWardley(model, ctx),
   render: (model: WardleyModel, layout: WardleyLayout, ctx: RenderContext, w: SvgWriter): void =>
     renderWardley(model, layout, ctx, w),

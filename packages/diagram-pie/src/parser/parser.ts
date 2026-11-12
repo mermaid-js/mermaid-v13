@@ -45,11 +45,14 @@ import type { PieModel, PieSection } from '../model.ts';
 import type { PieDocument, PieSliceNode, PieStatementNode, PieTextNode } from './ast.ts';
 import { accDescrValue, accTitleValue, labelValue, titleValue } from './convert.ts';
 import { lex } from './lexer.ts';
+import { checkLimit } from './limits.ts';
 import { PIE_TRIVIA, T } from './tokens.ts';
 
 export interface PieParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
+  /** The integrator's cap on sections (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
+  maxNodes?: number;
 }
 
 export type PieParseResult = ParseResult<PieModel, PieDocument>;
@@ -184,6 +187,8 @@ class PieParser {
   private readonly byLabel = new Map<string, PieSection>();
   private readonly sections: PieSection[] = [];
   private showData = false;
+  /** The sections read so far, repeats included (the node cap counts them). */
+  private slices = 0;
   /** The last in-text value of each (v12's Langium assignments: the last one wins). */
   private title = '';
   private accTitle = '';
@@ -436,6 +441,7 @@ class PieParser {
     const node: PieSliceNode = { id, type: 'Slice', range, label, labelRange, value, valueRange };
     this.children.push(node);
     this.st.statement('slice', range);
+    checkLimit(this.st, 'maxNodes', ++this.slices, this.options.maxNodes, range);
     // D229: each label is a `slice` symbol; a repeat refers to the first.
     this.st.symbol(label, 'slice', labelRange, this.repeated(base) ? 'ref' : 'def');
     const { diagnostics } = this.st;

@@ -41,7 +41,6 @@ import {
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
-  ParseOptions,
   ParseResult,
   Range,
   SourceView,
@@ -83,6 +82,7 @@ import {
   SIZE_HINT,
 } from './messages.ts';
 import { normalise } from './normalise.ts';
+import type { WardleyParseOptions } from './options.ts';
 import { resolveSymbols } from './symbols.ts';
 import {
   AFTER_BOUNDARY,
@@ -116,11 +116,6 @@ import {
   TEXT,
 } from './tables.ts';
 import { T, TEXT_STATEMENTS, WARDLEY_TRIVIA } from './tokens.ts';
-
-export interface WardleyParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-}
 
 export type WardleyParseResult = ParseResult<WardleyModel, WardleyDocument>;
 
@@ -996,6 +991,7 @@ class WardleyParser {
         accTitle: this.accTitle,
         accDescr: this.accDescr,
         frontMatterTitle: this.pre.frontMatter?.title,
+        limits: this.opts,
       },
       diagnostics
     );
