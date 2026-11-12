@@ -18,6 +18,7 @@ import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { C4DiagramConfig } from '@mermaid-js/core/config';
 import { checkStyle } from '@mermaid-js/core/svg';
 import { fontSizePx, type FontKey } from '@mermaid-js/core/text';
+import { configNumber } from '@mermaid-js/core/config/readers';
 import { c4ConfigDefaults } from './generated/config-defaults.ts';
 import { FONT_WEIGHT } from './layout/metrics.ts';
 import { C4_ELEMENT_KINDS, type C4ElementKind } from './model.ts';
@@ -77,14 +78,6 @@ const LENGTHS = [
   'width',
 ] as const;
 const LENGTH_MIN = 0;
-
-/** A finite number, or a string that reads as one; else undefined. */
-function configNumber(value: unknown): number | undefined {
-  let n = Number.NaN;
-  if (typeof value === 'number') n = value;
-  else if (typeof value === 'string' && value.trim() !== '') n = Number(value);
-  return Number.isFinite(n) ? n : undefined;
-}
 
 /** The section the layout reads from the resolved config. */
 export function c4Section(config: RenderContext['config']): Readonly<Record<string, unknown>> {

@@ -16,7 +16,8 @@ import type {
 import { radarDocs } from '../generated/docs.ts';
 import type { RadarDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { declaredAxes, ITEMS, span, tokenBefore } from './tables.ts';
+import { declaredAxes, ITEMS } from './tables.ts';
+import { span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
 
 /** The probed word's range: the prefix, plus the rest of the word after the cursor. */
 function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeResult): Range {

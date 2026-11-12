@@ -17,7 +17,7 @@
  * `statements.ts`, the token helpers to `base.ts`.
  * cspell:ignore kepano
  */
-import { inKindSet, Kind } from '@mermaid-js/core/parser-kit';
+import { inKindSet, Kind, STOP } from '@mermaid-js/core/parser-kit';
 import type { AstId, Range } from '@mermaid-js/core/parser-kit';
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import {
@@ -34,7 +34,6 @@ import {
   HEADER_START,
   LINE_END,
   LINE_END_SET,
-  STOP,
 } from './tables.ts';
 import type { Frame, ShapeData } from './tables.ts';
 import { StatementParser } from './statements.ts';

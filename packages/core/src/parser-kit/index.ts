@@ -37,6 +37,7 @@ export { syncTo } from './recovery.ts';
 export { significantTokens, skipTo } from './view.ts';
 export type { TokenView } from './view.ts';
 export { AstIds, nodeId } from './ast.ts';
+export { ID_CONTROL, ID_RESERVED, idEscaper, Stop, STOP } from './support.ts';
 export type { AstCallback, AstId, AstMenu, AstNode } from './ast.ts';
 export { ParseState } from './result.ts';
 export type {

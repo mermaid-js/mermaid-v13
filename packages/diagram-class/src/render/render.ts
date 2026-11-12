@@ -8,10 +8,6 @@ import {
   checkLinkTarget,
   checkStyle,
   checkUrl,
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
   translate,
   type Attrs,
   type CheckedStyle,
@@ -21,6 +17,8 @@ import {
   type SvgWriter,
 } from '@mermaid-js/core/svg';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
+import { openSvgRoot, textElement } from '@mermaid-js/core/svg/document';
+import { useMaxWidth } from '@mermaid-js/core/config/readers';
 import type {
   ClassBoxView,
   ClassEdgeView,
@@ -206,39 +204,15 @@ export function renderClass(
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, paint }: Scene, model: ClassModel): void {
-  const { theme, config } = ctx;
-  const prefix = (): string => ctx.idPrefix ?? 'mermaid';
-  const width = Math.max(1, Math.ceil(layout.width));
-  const height = Math.max(1, Math.ceil(layout.height));
-  const maxWidth = config.class?.useMaxWidth !== false;
-  const auto = theme.autoDeclarations();
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-class',
-    viewBox: [0, 0, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'classDiagram',
-    'aria-labelledby': title ? `${prefix()}-title` : undefined,
-    'aria-describedby': desc ? `${prefix()}-desc` : undefined,
-    'data-mermaid-version': ctx.version ?? '13',
-    'data-p': auto ? styleScope(prefix()) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': paint.font,
-    'font-size': paint.fontSize,
+  openSvgRoot(w, ctx, {
+    name: 'class',
+    roleDescription: 'classDiagram',
+    viewBox: [0, 0, Math.max(1, Math.ceil(layout.width)), Math.max(1, Math.ceil(layout.height))],
+    maxWidth: useMaxWidth(ctx.config.class?.useMaxWidth),
+    title: model.accTitle.trim(),
+    desc: model.accDescr.trim(),
+    attrs: { 'font-family': paint.font, 'font-size': paint.fontSize },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix()), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix()}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix()}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id?: string): void {
-  w.open(tag, id === undefined ? undefined : { id });
-  w.text(text);
-  w.close();
 }
 
 /**

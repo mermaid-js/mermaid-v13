@@ -26,6 +26,7 @@ import type {
   SankeyNodeAlignment,
 } from '@mermaid-js/core/config';
 import { checkColor, type SafeColor } from '@mermaid-js/core/svg';
+import { configNumber } from '@mermaid-js/core/config/readers';
 import { SANKEY_COLOR_INVALID, SANKEY_CONFIG_INVALID } from './codes.ts';
 import { sankeyConfigDefaults } from './generated/config-defaults.ts';
 import type { LinkPaint } from './layout/types.ts';
@@ -81,12 +82,7 @@ const shown = (value: unknown): string =>
 type Reader = (value: unknown) => unknown;
 
 /** A finite number of 0 or more, or a string that reads as one; else undefined. */
-const length: Reader = (value) => {
-  let n = Number.NaN;
-  if (typeof value === 'number') n = value;
-  else if (typeof value === 'string' && value.trim() !== '') n = Number(value);
-  return Number.isFinite(n) && n >= 0 ? n : undefined;
-};
+const length: Reader = (value) => configNumber(value, 0);
 const oneOf =
   (values: readonly string[]): Reader =>
   (value) =>

@@ -7,6 +7,7 @@
  */
 import type { Warning } from '@mermaid-js/core';
 import type { RadarDiagramConfig } from '@mermaid-js/core/config';
+import { configNumber, useMaxWidth } from '@mermaid-js/core/config/readers';
 import { radarConfigDefaults } from './generated/config-defaults.ts';
 
 export const RADAR_CONFIG_INVALID = 'RADAR_CONFIG_INVALID';
@@ -52,14 +53,6 @@ const RANGES: Readonly<Record<keyof RadarLayoutConfig, Range>> = {
 
 const DEFAULTS = radarConfigDefaults as RadarLayoutConfig;
 
-/** A finite number, or a string that reads as one; else undefined. */
-function configNumber(value: unknown): number | undefined {
-  let n = Number.NaN;
-  if (typeof value === 'number') n = value;
-  else if (typeof value === 'string' && value.trim() !== '') n = Number(value);
-  return Number.isFinite(n) ? n : undefined;
-}
-
 const shown = (value: unknown): string =>
   typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
 
@@ -88,5 +81,5 @@ export function radarLayoutConfig(
 export function radarUseMaxWidth(
   section: Readonly<Pick<RadarDiagramConfig, 'useMaxWidth'>> | undefined
 ): boolean {
-  return section?.useMaxWidth !== false;
+  return useMaxWidth(section?.useMaxWidth);
 }

@@ -3,7 +3,6 @@
  * kind is offered as, and how relationships read. Keyword docs are not here: they come from
  * the grammar file (`generated/docs.ts`).
  */
-import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import type { RelationType } from '../parser/model.ts';
 import { T } from '../parser/tokens.ts';
 
@@ -136,31 +135,6 @@ export function describeRelation(
   const drawn = `${dotted ? 'dashed' : 'solid'} line${ends.length > 0 ? ` with ${ends.join(' and ')}` : ''}`;
   return `${what}: ${drawn}`;
 }
-
-/** Index of the last token of `tokens` starting at or before `offset`, or -1. */
-export function tokenBefore(tokens: TokenStream, offset: number): number {
-  let lo = 0;
-  let hi = tokens.length - 1;
-  let found = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if ((tokens.start[mid] ?? 0) <= offset) {
-      found = mid;
-      lo = mid + 1;
-    } else hi = mid - 1;
-  }
-  return found;
-}
-
-/** Markdown inline code holding `text` as written, whatever backticks it has. */
-export function code(text: string): string {
-  const runs = text.match(/`+/g) ?? [];
-  const fence = '`'.repeat(Math.max(0, ...runs.map((r) => r.length)) + 1);
-  const pad = text.startsWith('`') || text.endsWith('`') || text === '' ? ' ' : '';
-  return `${fence}${pad}${text}${pad}${fence}`;
-}
-
-export const span = (start: number, end: number): Range => ({ start, end });
 
 /** `n` and the noun, plural when `n` is not 1. */
 export const plural = (n: number, one: string, many = `${one}s`): string =>

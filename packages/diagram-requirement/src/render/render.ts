@@ -6,10 +6,6 @@
 // from the package's theme table (D152, D435); outlines and lines go through `w.outline`
 // (D301, D302), the markers are plain.
 import {
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
   translate,
   type Attrs,
   type OutlinePaint,
@@ -17,6 +13,7 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/core/svg/document';
 import type { RequirementRenderContext } from '../layout/context.ts';
 import type { RequirementLayout } from '../layout/layout.ts';
 import { REQUIREMENT_METRICS as M } from '../layout/metrics.ts';
@@ -29,6 +26,7 @@ import {
 import type { RequirementModel } from '../model.ts';
 import { drawMarker } from './markers.ts';
 import { routePath } from './route.ts';
+import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 // The dash of every relation but `contains` (v12 `stroke-dasharray: 10,7`).
 const DASH = M.dash.join(',') as SafeValue;
@@ -199,41 +197,25 @@ export function renderRequirement(
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, ctx, paint }: Scene, model: RequirementModel, frame: Frame): void {
-  const { theme, config } = ctx;
-  const prefix = (): string => ctx.idPrefix ?? 'mermaid';
+  const { config } = ctx;
   const x = Math.floor(frame.x);
   const y = Math.floor(frame.y);
   const width = Math.max(1, Math.ceil(frame.x + frame.width) - x);
   const height = Math.max(1, Math.ceil(frame.y + frame.height) - y);
-  const maxWidth = config.requirement?.useMaxWidth !== false;
-  const auto = theme.autoDeclarations();
+  const maxWidth = useMaxWidth(config.requirement?.useMaxWidth);
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-requirement requirementDiagram',
+  openSvgRoot(w, ctx, {
+    name: 'requirement requirementDiagram',
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'requirement',
-    'aria-labelledby': title ? `${prefix()}-title` : undefined,
-    'aria-describedby': desc ? `${prefix()}-desc` : undefined,
-    'data-mermaid-version': ctx.version ?? '13',
-    'data-p': auto ? styleScope(prefix()) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': paint.font,
-    'font-size': paint.fontSize,
+    maxWidth,
+    title,
+    desc,
+    attrs: {
+      'font-family': paint.font,
+      'font-size': paint.fontSize,
+    },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix()), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix()}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix()}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: string): void {
-  w.open(tag, { id });
-  w.text(text);
-  w.close();
 }
 
 function drawRelation({ w, layout, p, paint }: Scene, r: RelationView): void {

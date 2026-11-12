@@ -9,17 +9,14 @@
 // `branch-label<n>`, `commit-label`, `tag-label`, …), with `<n>` the branch's slot (D267).
 import type { RenderContext } from '@mermaid-js/core';
 import {
-  px,
   rotate,
-  styleScope,
-  styleText,
-  themeStyleSheet,
   transforms,
   translate,
   type Attrs,
   type SvgWriter,
   type Transform as SvgTransform,
 } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/core/svg/document';
 import type {
   GitCommitLayout,
   GitLane,
@@ -30,6 +27,7 @@ import type {
 } from '../layout/types.ts';
 import type { GitModel } from '../model.ts';
 import { paints, type Paints } from './paint.ts';
+import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 /** What the renderer reads from the render context. */
 export type GitRenderContext = Pick<RenderContext, 'config' | 'theme' | 'idPrefix' | 'version'>;
@@ -78,42 +76,26 @@ export function renderGitGraph(
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot(model: GitModel, layout: GitLayout, ctx: GitRenderContext, w: SvgWriter): void {
   const { theme, config } = ctx;
-  const prefix = ctx.idPrefix;
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = config.gitGraph?.useMaxWidth !== false;
+  const maxWidth = useMaxWidth(config.gitGraph?.useMaxWidth);
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
   const font = theme.font();
   const fontSize = theme.length('fontSize');
-  const auto = theme.autoDeclarations();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-gitGraph',
+  openSvgRoot(w, ctx, {
+    name: 'gitGraph',
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'gitGraph',
-    'aria-labelledby': title ? `${prefix}-title` : undefined,
-    'aria-describedby': desc ? `${prefix}-desc` : undefined,
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(prefix) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': font,
-    'font-size': fontSize,
+    maxWidth,
+    title,
+    desc,
+    attrs: {
+      'font-family': font,
+      'font-size': fontSize,
+    },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: string): void {
-  w.open(tag, { id });
-  w.text(text);
-  w.close();
 }
 
 /** SVG `translate(dx, dy) rotate(angle, cx, cy)`, as v12 wrote it. */

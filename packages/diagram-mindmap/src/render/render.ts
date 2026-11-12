@@ -6,14 +6,8 @@
 // v12's classes stay: `section-<n>` (`section-root section--1` for the root) and the author's
 // `:::` classes on nodes, `edge section-edge-<n> edge-depth-<d>` on edges (`d` from the raw
 // indent, GAPS #388). Coordinates are absolute; nothing has a transform.
-import {
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
-  type Attrs,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/core/svg/document';
 import type { MindmapLayout } from '../layout/layout.ts';
 import type { MindmapNodeView } from '../layout/prepare.ts';
 import type { MindmapModel } from '../model.ts';
@@ -22,6 +16,7 @@ import type { MindmapRenderContext } from './context.ts';
 import { drawEdge } from './edges.ts';
 import { paints, type Paints } from './paint.ts';
 import { nodeOutline } from './shapes.ts';
+import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 interface Scene {
   readonly w: SvgWriter;
@@ -61,25 +56,18 @@ function openRoot({ w, layout, ctx }: Scene): void {
   const { theme, config } = ctx;
   const width = Math.max(1, Math.ceil(layout.width));
   const height = Math.max(1, Math.ceil(layout.height));
-  const maxWidth = config.mindmap?.useMaxWidth !== false;
-  const auto = theme.autoDeclarations();
+  const maxWidth = useMaxWidth(config.mindmap?.useMaxWidth);
   const font = theme.font();
   const fontSize = theme.length('fontSize');
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-mindmap',
+  openSvgRoot(w, ctx, {
+    name: 'mindmap',
     viewBox: [0, 0, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'mindmap',
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(ctx.idPrefix) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': font,
-    'font-size': fontSize,
+    maxWidth,
+    attrs: {
+      'font-family': font,
+      'font-size': fontSize,
+    },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(ctx.idPrefix), auto.light, auto.dark));
 }
 
 function drawEdges({ w, model, layout, paint }: Scene): void {

@@ -6,14 +6,8 @@
  * No `<style>` but `theme: 'auto'`'s, no `foreignObject` and no ids but the root's title and
  * description (R-SEC-2, R-ARCH-6, D475).
  */
-import {
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
-  translate,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import { translate, type SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/core/svg/document';
 import type { UsecaseLayout } from '../layout/layout.ts';
 import { prepareUsecase, type UsecasePrepared } from '../layout/prepare.ts';
 import type { UsecaseModel } from '../model.ts';
@@ -75,47 +69,24 @@ function spokenLabels(p: UsecasePrepared): Map<string, string> {
  * with the front-matter title's band above it (D472, D224), at least as wide as the title.
  */
 function openRoot({ w, layout, p, ctx, paint, model }: Scene): { width: number; band: number } {
-  const { theme } = ctx;
-  const prefix = ctx.idPrefix;
   const padding = p.config.diagramPadding;
   const band = p.title ? p.title.height + padding : 0;
   const width = Math.max(1, Math.ceil(Math.max(layout.width, titleWidth(p))));
   const height = Math.max(1, Math.ceil(layout.height + band));
-  const maxWidth = p.config.useMaxWidth;
-  const auto = theme.autoDeclarations();
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-usecase',
+  openSvgRoot(w, ctx, {
+    name: 'usecase',
     viewBox: [0, 0, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'usecase',
-    'aria-labelledby': title ? `${prefix}-title` : undefined,
-    'aria-describedby': desc ? `${prefix}-desc` : undefined,
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(prefix) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': paint.font,
-    'font-size': paint.fontSize,
+    maxWidth: p.config.useMaxWidth,
+    title: model.accTitle.trim(),
+    desc: model.accDescr.trim(),
+    attrs: { 'font-family': paint.font, 'font-size': paint.fontSize },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix}-desc`);
   return { width, band };
 }
 
 /** The front-matter title's width with the diagram's padding on each side, or 0. */
 const titleWidth = (p: UsecasePrepared): number =>
   p.title ? p.title.width + 2 * p.config.diagramPadding : 0;
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: string): void {
-  w.open(tag, { id });
-  w.text(text);
-  w.close();
-}
 
 /** The front-matter title (D472): v12's `insertTitle` class, centred over the drawing. */
 function drawTitle({ w, p, paint }: Scene, width: number): void {

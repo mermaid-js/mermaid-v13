@@ -13,15 +13,8 @@ import type { RailroadDocument } from '../parser/ast.ts';
 import { RULE_SYMBOL } from '../parser/parser.ts';
 import { repeatBounds } from '../parser/convert.ts';
 import { T } from '../parser/tokens.ts';
-import {
-  block,
-  code,
-  NOTATION_DOCS,
-  notationOf,
-  ruleDefinitions,
-  ruleFirstLine,
-  span,
-} from './tables.ts';
+import { block, NOTATION_DOCS, notationOf, ruleDefinitions, ruleFirstLine } from './tables.ts';
+import { code, span } from '@mermaid-js/core/parser-kit/facet';
 
 /** The header statement tokens: only their keyword is hovered. */
 const STATEMENT_WORDS: Readonly<Record<number, string>> = {

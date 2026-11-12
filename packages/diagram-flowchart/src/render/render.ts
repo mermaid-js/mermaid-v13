@@ -13,10 +13,6 @@ import { drawFramed } from '@mermaid-js/core/svg/framed';
 import {
   checkLinkTarget,
   checkUrl,
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
   translate,
   type Attrs,
   type OutlinePaint,
@@ -24,12 +20,14 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { openSvgRoot, textElement } from '@mermaid-js/core/svg/document';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
 import { drawIcon, drawImage } from './assets.ts';
 import { arrowheads, marker, markerTrim, routePath, type Arrowheads } from './edges.ts';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
 import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
+import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 /** The flowchart's layout: the engine's LayoutModel, plus the measured views when they are fresh. */
 export interface FlowLayout extends LayoutModel {
@@ -299,40 +297,23 @@ export function renderFlowchart(
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, paint }: Scene, model: FlowModel): void {
-  const { theme, config } = ctx;
-  // The id prefix hashes the text and config, and most diagrams never write an id.
-  const prefix = (): string => ctx.idPrefix ?? 'mermaid';
+  const { config } = ctx;
   const width = Math.max(1, Math.ceil(layout.width));
   const height = Math.max(1, Math.ceil(layout.height));
-  const maxWidth = config.flowchart?.useMaxWidth !== false;
-  const auto = theme.autoDeclarations();
+  const maxWidth = useMaxWidth(config.flowchart?.useMaxWidth);
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-flowchart',
+  openSvgRoot(w, ctx, {
+    name: 'flowchart',
     viewBox: [0, 0, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'flowchart',
-    'aria-labelledby': title ? `${prefix()}-title` : undefined,
-    'aria-describedby': desc ? `${prefix()}-desc` : undefined,
-    'data-mermaid-version': ctx.version ?? '13',
-    'data-p': auto ? styleScope(prefix()) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': paint.node.font,
-    'font-size': paint.node.fontSize,
+    maxWidth,
+    title,
+    desc,
+    attrs: {
+      'font-family': paint.node.font,
+      'font-size': paint.node.fontSize,
+    },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix()), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix()}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix()}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id?: string): void {
-  w.open(tag, id === undefined ? undefined : { id });
-  w.text(text);
-  w.close();
 }
 
 function drawClusters(scene: Scene): void {

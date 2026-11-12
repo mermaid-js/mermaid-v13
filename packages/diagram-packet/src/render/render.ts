@@ -11,11 +11,12 @@
 // characters. The 10,000-row cap (about 4.3 MB) still exceeds the default `maxOutputLength`
 // (4,000,000), so at the default limits it is a `LIMIT` error (GAPS, for the maintainer).
 import type { RenderContext } from '@mermaid-js/core';
-import { px, styleScope, styleText, themeStyleSheet } from '@mermaid-js/core/svg';
 import type { SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/core/svg/document';
 import type { PacketLayout, PacketPieceLayout, PlacedLabel } from '../layout/index.ts';
 import type { PacketModel } from '../model.ts';
 import { paints, type Paints } from './paint.ts';
+import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 /** What the renderer reads from the render context. */
 export type PacketRenderContext = Pick<RenderContext, 'config' | 'theme' | 'idPrefix' | 'version'>;
@@ -94,42 +95,26 @@ function openRoot(
   w: SvgWriter
 ): void {
   const { theme, config } = ctx;
-  const prefix = ctx.idPrefix;
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = config.packet?.useMaxWidth !== false;
+  const maxWidth = useMaxWidth(config.packet?.useMaxWidth);
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
-  const auto = theme.autoDeclarations();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-packet',
+  openSvgRoot(w, ctx, {
+    name: 'packet',
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'packet',
-    'aria-labelledby': title ? `${prefix}-title` : undefined,
-    'aria-describedby': desc ? `${prefix}-desc` : undefined,
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(prefix) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': font,
-    // Inherited by every piece.
-    fill: paint.label,
-    'font-size': layout.fonts.byte.size,
-    'stroke-width': layout.strokeWidth,
+    maxWidth,
+    title,
+    desc,
+    attrs: {
+      'font-family': font,
+      // Inherited by every piece.
+      fill: paint.label,
+      'font-size': layout.fonts.byte.size,
+      'stroke-width': layout.strokeWidth,
+    },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: string): void {
-  w.open(tag, { id });
-  w.text(text);
-  w.close();
 }

@@ -9,10 +9,6 @@ import { pxProfile } from '@mermaid-js/core/layout';
 import {
   checkLinkTarget,
   checkUrl,
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
   translate,
   type Attrs,
   type OutlinePaint,
@@ -20,6 +16,7 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { openSvgRoot, textElement } from '@mermaid-js/core/svg/document';
 import type {
   StateEdgeView,
   StateGroupView,
@@ -37,6 +34,7 @@ import { arrowTrim, arrowhead, drawArrowhead, routePath, type Arrowhead } from '
 import { drawFolded } from '@mermaid-js/core/svg/folded';
 import { drawFramed } from '@mermaid-js/core/svg/framed';
 import { drawDescribed, drawShape, type ShapePaint } from './shapes.ts';
+import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 // v12 `.note-edge { stroke-dasharray: 5 }` and `.statediagram-state rect.divider
 // { stroke-dasharray: 10,10 }`: the same in every look, so constants (D152).
@@ -235,39 +233,17 @@ export function renderState(
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, paint }: Scene, model: StateModel): void {
-  const { theme, config } = ctx;
-  const prefix = (): string => ctx.idPrefix ?? 'mermaid';
   const width = Math.max(1, Math.ceil(layout.width));
   const height = Math.max(1, Math.ceil(layout.height));
-  const maxWidth = config.state?.useMaxWidth !== false;
-  const auto = theme.autoDeclarations();
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-state statediagram',
+  openSvgRoot(w, ctx, {
+    name: 'state statediagram',
+    roleDescription: 'stateDiagram',
     viewBox: [0, 0, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'stateDiagram',
-    'aria-labelledby': title ? `${prefix()}-title` : undefined,
-    'aria-describedby': desc ? `${prefix()}-desc` : undefined,
-    'data-mermaid-version': ctx.version ?? '13',
-    'data-p': auto ? styleScope(prefix()) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': paint.font,
-    'font-size': paint.fontSize,
+    maxWidth: useMaxWidth(ctx.config.state?.useMaxWidth),
+    title: model.accTitle.trim(),
+    desc: model.accDescr.trim(),
+    attrs: { 'font-family': paint.font, 'font-size': paint.fontSize },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix()), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix()}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix()}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id?: string): void {
-  w.open(tag, id === undefined ? undefined : { id });
-  w.text(text);
-  w.close();
 }
 
 /** Composites and their regions, outermost first, then the dividers between regions. */

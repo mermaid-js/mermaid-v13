@@ -5,21 +5,19 @@
 // Every element drawn from an AST node carries `data-ast`, exactly one per node (R-PARSE-8).
 import type { RenderContext } from '@mermaid-js/core';
 import {
-  px,
   rotate,
-  styleScope,
-  styleText,
-  themeStyleSheet,
   transforms,
   translate,
   type Attrs,
   type Paint,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/core/svg/document';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { QuadrantModel } from '../model.ts';
 import type { QuadrantLayout, QuadrantTextAnchor } from '../layout/types.ts';
 import { paints, type Paints } from './paint.ts';
+import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 /** What the renderer reads from the render context. */
 export type QuadrantRenderContext = Pick<
@@ -176,41 +174,26 @@ function bounds(scene: Scene): Box {
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, ctx, model }: Scene, box: Box): void {
   const { theme, config } = ctx;
-  const prefix = (): string => ctx.idPrefix;
   const width = Math.max(1, box.maxX - box.minX);
   const height = Math.max(1, box.maxY - box.minY);
-  const maxWidth = config.quadrantChart?.useMaxWidth !== false;
-  const auto = theme.autoDeclarations();
+  const maxWidth = useMaxWidth(config.quadrantChart?.useMaxWidth);
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
   const font = theme.font();
   const fontSize = theme.length('fontSize');
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-quadrant',
+  openSvgRoot(w, ctx, {
+    name: 'quadrant',
+    roleDescription: 'quadrantChart',
     viewBox: [box.minX, box.minY, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'quadrantChart',
-    'aria-labelledby': title ? `${prefix()}-title` : undefined,
-    'aria-describedby': desc ? `${prefix()}-desc` : undefined,
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(prefix()) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': font,
-    'font-size': fontSize,
+    maxWidth,
+    title,
+    desc,
+    attrs: {
+      'font-family': font,
+      'font-size': fontSize,
+    },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix()), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix()}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix()}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: string): void {
-  w.open(tag, { id });
-  w.text(text);
-  w.close();
 }
 
 /** The text of a label that is one plain run, or undefined. */

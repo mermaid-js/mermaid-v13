@@ -35,6 +35,7 @@ import {
   ProbeCursor,
   syncTo,
   TokenCursor,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type { KindSet, ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
@@ -127,13 +128,6 @@ export type RequirementParseResult = ParseResult<RequirementModel, RequirementDo
 
 /** The first line of a text, for messages. */
 const FIRST_LINE = /^[^\n]*/;
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse a requirement diagram. Never throws: problems are error diagnostics. */
 export function parseRequirement(

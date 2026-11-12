@@ -28,10 +28,9 @@ import {
   notationOf,
   ruleDefinitions,
   ruleFirstLine,
-  span,
   isTrivia,
-  tokenBefore,
 } from './tables.ts';
+import { span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
 
 /** An item offered when the parser expects `kind`. */
 interface Item {

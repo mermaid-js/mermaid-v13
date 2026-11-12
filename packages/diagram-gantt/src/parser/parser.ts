@@ -31,6 +31,8 @@ import {
   significantTokens,
   skipTo,
   sourceView,
+  idEscaper,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
@@ -210,13 +212,6 @@ const DIRECTIVE_HINT = 'a directive is written `%%{init: {…}}%%`';
 const CLICK_HINT = 'write `click <ids> href "<url>"` or `click <ids> call <function>()`';
 const LINK_HINT = 'a link is written `href "<url>"` after `click <ids>`';
 const CALL_HINT = 'a callback is written `call <function>()` after `click <ids>`';
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse a gantt diagram. Never throws: problems are error diagnostics. */
 export function parseGantt(src: string, options: GanttParseOptions = {}): GanttParseResult {
@@ -1010,8 +1005,4 @@ function splitData(data: string): SplitData | undefined {
 }
 
 /** `%`, `>`, `@` and `#` in an id, percent-encoded as core's AST ids are. */
-function esc(name: string): string {
-  return /[%>@#]/.test(name)
-    ? name.replace(/[%>@#]/g, (ch) => `%${ch.charCodeAt(0).toString(16).toUpperCase()}`)
-    : name;
-}
+const esc = /* @__PURE__ */ idEscaper();
