@@ -29,6 +29,7 @@ const plainLeaves = (w: SvgWriter): SvgWriter => ({
   close: () => w.close(),
   leaf: (tag, attrs) => w.leaf(tag, attrs),
   outline: (_role, tag, attrs) => w.leaf(tag, attrs),
+  plainEdge: (attrs) => w.leaf('path', attrs),
   text: (content) => w.text(content),
   label: (box, x, y, attrs) => w.label(box, x, y, attrs),
   path: () => w.path(),

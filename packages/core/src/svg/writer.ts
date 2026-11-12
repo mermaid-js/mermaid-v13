@@ -135,6 +135,12 @@ export interface SvgWriter {
    * outlines.
    */
   outline(role: OutlineRole, tag: OutlineTag, attrs?: Attrs): void;
+  /**
+   * An edge line drawn plain in every look, for the types v12 never sketched (D301, D447):
+   * exactly `leaf('path', attrs)`, never given to an outline drawer, yet found by the shared
+   * edge-path step as `outline('edge', 'path', …)` is, so line hops apply to it (D537, #655).
+   */
+  plainEdge(attrs: Attrs): void;
   /** Character data, always escaped. Only `text`, `tspan`, `title` and `desc` hold text. */
   text(content: string): void;
   /** A measured label centred on (x, y), as `<text>`/`<tspan>`. */
@@ -498,6 +504,10 @@ class Stream implements StreamSvgWriter {
     writeOutline(this, this.draw, role, tag, attrs);
   }
 
+  plainEdge(attrs: Attrs): void {
+    this.leaf('path', attrs);
+  }
+
   text(content: string): void {
     const top = this.stack[this.stack.length - 1];
     if (top === undefined || !TEXT_HOLDERS.has(top))
@@ -569,6 +579,10 @@ class Tree implements TreeSvgWriter {
 
   leaf(tag: AllowedTag, attrs?: Attrs): void {
     this.compact.appendElement(this.current, tag, attrs);
+  }
+
+  plainEdge(attrs: Attrs): void {
+    this.leaf('path', attrs);
   }
 
   outline(role: OutlineRole, tag: OutlineTag, attrs?: Attrs): void {

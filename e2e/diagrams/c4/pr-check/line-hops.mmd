@@ -1,0 +1,20 @@
+---
+description: >-
+  Line hops (`lineHops: true`, D537, #655): the relations a to f and b to e cross in an X, and
+  the later one (b to e) draws a 6px arc over the other. Relation lines stay plain in every look
+  (D301).
+config:
+  lineHops: true
+---
+C4Context
+  System(a,"A")
+  System(b,"B")
+  System(c,"C")
+  System(d,"D")
+  System(e,"E")
+  System(f,"F")
+  Rel(a,f,"x")
+  Rel(c,d,"x")
+  Rel(b,e,"x")
+  Rel(a,e,"x")
+  Rel(c,f,"x")
