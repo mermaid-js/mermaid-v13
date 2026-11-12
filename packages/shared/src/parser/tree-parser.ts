@@ -475,16 +475,21 @@ export abstract class TreeParser<
         const open = this.raw(j);
         return this.unclosed('UNCLOSED_SHAPE', 'shape', open, CLOSERS[open] ?? ')', j);
       }
-      if (
-        kind === k.IconEnd ||
-        kind === k.StringEnd ||
-        kind === k.MdStringEnd ||
-        kind === k.NodeDEnd ||
-        kind === k.ShapeDataEnd
-      )
-        break;
+      if (this.closes(kind)) break;
     }
     this.fail(lineBreak());
+  }
+
+  /** `kind` closes an icon, a string, a shape or shape data: nothing before it is still open. */
+  private closes(kind: number): boolean {
+    const { k } = this;
+    return (
+      kind === k.IconEnd ||
+      kind === k.StringEnd ||
+      kind === k.MdStringEnd ||
+      kind === k.NodeDEnd ||
+      kind === k.ShapeDataEnd
+    );
   }
 
   private unclosed(code: string, what: string, open: string, close: string, j: number): never {

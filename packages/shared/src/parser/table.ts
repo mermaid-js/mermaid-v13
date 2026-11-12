@@ -280,30 +280,9 @@ class TableLexer {
   }
 
   run(probe?: Probe): V12Lex {
-    const { n } = this.scan;
-    const { states, rules, words } = this.g;
-    let p = 0;
     // Two loops, so a plain lex does no probe work per step.
-    if (probe === undefined) {
-      for (let done = false; !done; ) {
-        if (p >= n) done = true;
-        p = this.advance(p, this.step(p));
-      }
-    } else {
-      for (let done = false; !done; ) {
-        if (p >= n) done = true;
-        const before = p;
-        const mode = states[this.state] ?? '';
-        const k = this.step(p);
-        p = this.advance(p, k);
-        const start = this.sourceStart(before);
-        let end = p > before ? this.sourceEnd(p - 1) : start;
-        // The step holds an offset right after its word (`Probe.lexed` takes `end` exclusive).
-        if (p > before && k >= 0 && words[(rules[k] as Rule).kind] === 1) end++;
-        probe.lexed(start, end, mode);
-      }
-      probe.lexed(this.src.length, this.src.length, states[this.state] ?? '');
-    }
+    if (probe === undefined) this.lex();
+    else this.lexProbed(probe);
     this.trivia(this.src.length + 1);
     const tokens = this.w.finish(this.src);
     this.starts.push(this.v12.length);
@@ -314,6 +293,40 @@ class TableLexer {
       textEnd: Int32Array.from(this.ends),
       v12: this.v12,
     };
+  }
+
+  /** Every step, to the one at the end of the text. */
+  private lex(): void {
+    const { n } = this.scan;
+    let p = 0;
+    for (let done = false; !done; ) {
+      if (p >= n) done = true;
+      p = this.advance(p, this.step(p));
+    }
+  }
+
+  /** {@link lex}, telling `probe` each step's source range and start condition. */
+  private lexProbed(probe: Probe): void {
+    const { n } = this.scan;
+    const { states } = this.g;
+    let p = 0;
+    for (let done = false; !done; ) {
+      if (p >= n) done = true;
+      const before = p;
+      const mode = states[this.state] ?? '';
+      const k = this.step(p);
+      p = this.advance(p, k);
+      const start = this.sourceStart(before);
+      probe.lexed(start, p > before ? this.stepEnd(p, k) : start, mode);
+    }
+    probe.lexed(this.src.length, this.src.length, states[this.state] ?? '');
+  }
+
+  /** The source end, for the probe, of the step that applied rule `k` and ended at `p`. */
+  private stepEnd(p: number, k: number): number {
+    const end = this.sourceEnd(p - 1);
+    // The step holds an offset right after its word (`Probe.lexed` takes `end` exclusive).
+    return k >= 0 && this.g.words[(this.g.rules[k] as Rule).kind] === 1 ? end + 1 : end;
   }
 
   /**
@@ -352,17 +365,22 @@ class TableLexer {
         if (lead !== undefined) failedTo[k] = lead(scan, p);
         continue;
       }
-      this.onRule?.(k);
-      if (r.action === A.begin) {
-        this.stack.push(this.state);
-        this.state = r.state;
-      } else if (r.action === A.pop) this.state = this.stack.pop() ?? 0;
-      else if (r.action === A.popBegin) this.state = r.state;
-      this.emit(r.kind, p, e);
-      this.matchEnd = e;
+      this.apply(k, r, p, e);
       return k;
     }
     return -1;
+  }
+
+  /** Rule `k` (`r`) matched `text[p, e)`: its action and its token. */
+  private apply(k: number, r: Rule, p: number, e: number): void {
+    this.onRule?.(k);
+    if (r.action === A.begin) {
+      this.stack.push(this.state);
+      this.state = r.state;
+    } else if (r.action === A.pop) this.state = this.stack.pop() ?? 0;
+    else if (r.action === A.popBegin) this.state = r.state;
+    this.emit(r.kind, p, e);
+    this.matchEnd = e;
   }
 
   // --- Offsets and output -------------------------------------------------------------------
@@ -424,26 +442,50 @@ export function outerRanges(
   closes: KindSet,
   skipped: KindSet
 ): [Uint32Array, Uint32Array] {
-  const { kind, start, end, length } = l.tokens;
-  const os = Uint32Array.from(start);
-  const oe = Uint32Array.from(end);
-  let pending = -1;
-  let prev = -1;
+  const { kind, length } = l.tokens;
+  const glue = new Glue(l);
   for (let i = 0; i < length; i++) {
     const k = kind[i] ?? 0;
     if (COMMENTS[k] === 1) continue;
-    if (opens[k] === 1) {
-      if (pending < 0) pending = start[i] ?? 0;
-    } else if (closes[k] === 1) {
-      // Adjacent in the text v12 lexed: comment lines may lie between them in the source.
-      const touches = prev >= 0 && l.textEnd[prev] === l.textStart[i];
-      if (touches && pending < 0) oe[prev] = end[i] ?? 0;
-      pending = -1;
-    } else if (skipped[k] !== 1) {
-      if (pending >= 0) os[i] = pending;
-      pending = -1;
-      prev = i;
-    }
+    if (opens[k] === 1) glue.open(i);
+    else if (closes[k] === 1) glue.close(i);
+    else if (skipped[k] !== 1) glue.token(i);
   }
-  return [os, oe];
+  return [glue.os, glue.oe];
+}
+
+/** The outer ranges of one lex, as {@link outerRanges} builds them token by token. */
+class Glue {
+  readonly os: Uint32Array;
+  readonly oe: Uint32Array;
+  /** Where the opening glue before the next token starts, or -1. */
+  private pending = -1;
+  /** The last token the parser sees, or -1. */
+  private prev = -1;
+
+  constructor(private readonly l: V12Lex) {
+    this.os = Uint32Array.from(l.tokens.start);
+    this.oe = Uint32Array.from(l.tokens.end);
+  }
+
+  /** Token `i` is opening glue: the first of a run starts the next token. */
+  open(i: number): void {
+    if (this.pending < 0) this.pending = this.l.tokens.start[i] ?? 0;
+  }
+
+  /** Token `i` is closing glue: it ends the token before it, when it has one. */
+  close(i: number): void {
+    const { l, prev } = this;
+    // Adjacent in the text v12 lexed: comment lines may lie between them in the source.
+    const touches = prev >= 0 && l.textEnd[prev] === l.textStart[i];
+    if (touches && this.pending < 0) this.oe[prev] = l.tokens.end[i] ?? 0;
+    this.pending = -1;
+  }
+
+  /** Token `i` is one the parser sees. */
+  token(i: number): void {
+    if (this.pending >= 0) this.os[i] = this.pending;
+    this.pending = -1;
+    this.prev = i;
+  }
 }

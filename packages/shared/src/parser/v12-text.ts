@@ -20,7 +20,7 @@ import {
   SourceOffsets,
   sourceView,
 } from '@mermaid-js/core/parser-kit';
-import type { Hole, Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { Hole, Range, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 
 /** The text v12's lexer saw, and where each of its characters came from. */
 export interface V12Text {
@@ -42,6 +42,7 @@ export interface V12Text {
 }
 
 const PLACEHOLDER_OPEN = 'ﬂ°';
+const PLACEHOLDER_OPEN_DIGITS = PLACEHOLDER_OPEN + '°';
 const PLACEHOLDER_CLOSE = '¶ß';
 
 /** Characters with their source ranges. */
@@ -111,36 +112,11 @@ export function v12Text(
 ): V12Text {
   const view = sourceView(src, from, directives);
   const holes = view.holes.filter((h) => h.kind !== 'drop' && h.start >= from);
-  if (
-    view.holes.length === 0 &&
-    view.mask === undefined &&
-    !src.includes('\r', from) &&
-    !src.includes('#', from) &&
-    !isSpace(src.charCodeAt(from))
-  ) {
+  if (view.holes.length === 0 && view.mask === undefined && isPlain(src, from)) {
     const text = src.slice(from) + '\n';
     return { text, length: text.length - 1, starts: undefined, ends: undefined, from, holes };
   }
-  const { text, mask } = view;
-  const offsets = view.runs ? new SourceOffsets(view.runs) : undefined;
-  const at = (i: number) => (offsets ? offsets.source(i) : i);
-  const b = new Builder(text.length);
-  let i = localOffset(view, from);
-  // `trimStart()`, then each character with its source range.
-  while (i < text.length && isSpace(text.charCodeAt(i))) i++;
-  while (i < text.length) {
-    const s = at(i);
-    const c = text.charCodeAt(i);
-    if (c === CR) {
-      const crlf = text.charCodeAt(i + 1) === LF && at(i + 1) === s + 1;
-      b.push('\n', s, crlf ? s + 2 : s + 1);
-      i += crlf ? 2 : 1;
-      continue;
-    }
-    b.push(((mask?.[s] ?? 0) & QUOTE) !== 0 ? "'" : (text[i] ?? ''), s, s + 1);
-    i++;
-  }
-  const out = withEntities(b.done(), spread);
+  const out = withEntities(trimmed(view, from), spread);
   return {
     text: out.text + '\n',
     length: out.text.length,
@@ -149,6 +125,40 @@ export function v12Text(
     from: 0,
     holes,
   };
+}
+
+/** No step changes `src[from…]`: no CR, no entity, no leading blank. */
+function isPlain(src: string, from: number): boolean {
+  return !src.includes('\r', from) && !src.includes('#', from) && !isSpace(src.charCodeAt(from));
+}
+
+/** The source offset of the view's `text[i]`. */
+function sourceAt(offsets: SourceOffsets | undefined, i: number): number {
+  return offsets ? offsets.source(i) : i;
+}
+
+/** Steps 1 and 2 on the view's text from the source offset `from`, tag quotes converted. */
+function trimmed(view: SourceView, from: number): Chars {
+  const { text, mask } = view;
+  const offsets = view.runs ? new SourceOffsets(view.runs) : undefined;
+  const b = new Builder(text.length);
+  let i = localOffset(view, from);
+  // `trimStart()`, then each character with its source range.
+  while (i < text.length && isSpace(text.charCodeAt(i))) i++;
+  while (i < text.length) {
+    const s = sourceAt(offsets, i);
+    if (text.charCodeAt(i) === CR) {
+      // CR LF, when the two are adjacent in the source too.
+      const crlf = text.charCodeAt(i + 1) === LF && sourceAt(offsets, i + 1) === s + 1;
+      const width = crlf ? 2 : 1;
+      b.push('\n', s, s + width);
+      i += width;
+      continue;
+    }
+    b.push(((mask?.[s] ?? 0) & QUOTE) !== 0 ? "'" : (text[i] ?? ''), s, s + 1);
+    i++;
+  }
+  return b.done();
 }
 
 function appendEnd(a: Uint32Array, end: number): Uint32Array {
@@ -171,21 +181,31 @@ function withEntities(c: Chars, spread: boolean): Chars {
   if (!t.includes('#')) return c;
   const b = new Builder(t.length + 8);
   for (let i = 0; i < t.length; i++) {
-    let j = i + 1;
-    if (t.charCodeAt(i) === HASH) while (j < t.length && isWord(t.charCodeAt(j))) j++;
-    if (t.charCodeAt(i) !== HASH || j === i + 1 || t.charCodeAt(j) !== SEMI) {
+    const j = t.charCodeAt(i) === HASH ? entityEnd(t, i) : -1;
+    if (j < 0) {
       b.keep(c, i);
       continue;
     }
-    let digits = true;
-    for (let k = i + 1; k < j; k++) digits &&= isDigit(t.charCodeAt(k));
-    const open = digits ? PLACEHOLDER_OPEN + '°' : PLACEHOLDER_OPEN;
+    const open = allDigits(t, i + 1, j) ? PLACEHOLDER_OPEN_DIGITS : PLACEHOLDER_OPEN;
     placeholder(b, open, c.starts[i] ?? 0, c.ends[i] ?? 0, spread);
     for (let k = i + 1; k < j; k++) b.keep(c, k);
     placeholder(b, PLACEHOLDER_CLOSE, c.starts[j] ?? 0, c.ends[j] ?? 0, spread);
     i = j;
   }
   return b.done();
+}
+
+/** The offset of the `;` that ends the entity `#\w+;` whose `#` is at `i`, or -1. */
+function entityEnd(t: string, i: number): number {
+  let j = i + 1;
+  while (j < t.length && isWord(t.charCodeAt(j))) j++;
+  return j > i + 1 && t.charCodeAt(j) === SEMI ? j : -1;
+}
+
+/** `t[s, e)` is digits only. */
+function allDigits(t: string, s: number, e: number): boolean {
+  for (let k = s; k < e; k++) if (!isDigit(t.charCodeAt(k))) return false;
+  return true;
 }
 
 /** A lex of v12's text: the tokens (source offsets), and each token's range in that text. */

@@ -242,9 +242,8 @@ class TreeLexer extends StateLexer {
 
   private initial(c: number): void {
     const { text, p, k } = this;
-    const { data } = k;
     // `\@\{`, tried before every other rule.
-    if (data && c === AT && text.charCodeAt(p + 1) === LBRACE) {
+    if (k.data && c === AT && text.charCodeAt(p + 1) === LBRACE) {
       this.begin(k.ShapeDataStart, p + 2, S.SHAPE_DATA);
       return;
     }
@@ -254,49 +253,16 @@ class TreeLexer extends StateLexer {
       this.emit(k.SpaceLine, p, this.dotEnd(b + 2));
       return;
     }
-    // The keyword (`\b` after it).
-    if (lowerCode(c) === this.wordStart) {
-      const e = p + this.word.length;
-      if (this.literal(this.word, p) && !isWord(text.charCodeAt(e))) {
-        this.emit(k.Keyword, p, e);
-        return;
-      }
-    }
-    if (c === COLON) {
-      // `:::` and `::icon(`.
-      if (this.pair(p + 1, COLON, COLON)) {
-        this.begin(k.ClassStart, p + 3, S.CLASS);
-        return;
-      }
-      if (this.literal('::icon(', p)) {
-        this.begin(k.IconStart, p + 7, S.ICON);
-        return;
-      }
-    }
+    if (lowerCode(c) === this.wordStart && this.keyword()) return;
+    if (c === COLON && this.colons()) return;
+    // No shape opener is a blank, so the blank rules below the openers apply here too.
     if (isSpace(c)) {
-      // `[\s]+[\n]`: back from the end of the blank run to its last LF (not the first blank).
-      let l = b - 1;
-      while (l > p && text.charCodeAt(l) !== LF) l--;
-      if (l > p) {
-        this.emit(k.SpaceLine, p, l + 1);
-        return;
-      }
-      // `[\n]+`.
-      if (c === LF) {
-        let e = p + 1;
-        while (text.charCodeAt(e) === LF) e++;
-        this.emit(Kind.Newline, p, e);
-        return;
-      }
+      this.blankRun(c, b);
+      return;
     }
     const open = opener(c, text.charCodeAt(p + 1));
     if (open > 0) {
       this.begin(k.NodeDStart, p + open, S.NODE);
-      return;
-    }
-    // `[\s]+` (no LF in the run, or a rule above took it).
-    if (isSpace(c)) {
-      this.emit(k.SpaceList, p, b);
       return;
     }
     const e = this.idEnd(p);
@@ -304,6 +270,50 @@ class TreeLexer extends StateLexer {
     // A `{` that starts no `{{`, a `}`, or (with shape data) an `@` that starts no `@{`: no
     // rule matches, jison throws.
     else this.emit(Kind.Error, p, p + 1);
+  }
+
+  /** The keyword at the cursor (`\b` after it): whether it was there, and so lexed. */
+  private keyword(): boolean {
+    const { p } = this;
+    const e = p + this.word.length;
+    if (!this.literal(this.word, p) || isWord(this.text.charCodeAt(e))) return false;
+    this.emit(this.k.Keyword, p, e);
+    return true;
+  }
+
+  /** `:::` or `::icon(` at the cursor: whether one was there, and so lexed. */
+  private colons(): boolean {
+    const { p } = this;
+    if (this.pair(p + 1, COLON, COLON)) {
+      this.begin(this.k.ClassStart, p + 3, S.CLASS);
+      return true;
+    }
+    if (this.literal('::icon(', p)) {
+      this.begin(this.k.IconStart, p + 7, S.ICON);
+      return true;
+    }
+    return false;
+  }
+
+  /** The blank run from the cursor (its first character `c`) to `b`, which no comment follows. */
+  private blankRun(c: number, b: number): void {
+    const { text, p } = this;
+    // `[\s]+[\n]`: back from the end of the blank run to its last LF (not the first blank).
+    let l = b - 1;
+    while (l > p && text.charCodeAt(l) !== LF) l--;
+    if (l > p) {
+      this.emit(this.k.SpaceLine, p, l + 1);
+      return;
+    }
+    // `[\n]+`.
+    if (c === LF) {
+      let e = p + 1;
+      while (text.charCodeAt(e) === LF) e++;
+      this.emit(Kind.Newline, p, e);
+      return;
+    }
+    // `[\s]+` (no LF in the run, or a rule above took it).
+    this.emit(this.k.SpaceList, p, b);
   }
 
   /** The end of `[^\(\[\n\)\{\}]+` at `p`, or with shape data of `[^\(\[\n\)\{\}@]+`. */
