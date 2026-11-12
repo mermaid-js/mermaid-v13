@@ -6,8 +6,10 @@ name: Nightly fuzz
 #   FUZZ_SEED=<seed> FUZZ_CASE=<case> pnpm --filter @mermaid-js/conformance fuzz
 # The mermaid@12 differential is informational: its clusters go to the job summary.
 
-# Manual only while v13 is a POC; restore the daily schedule (cron '41 2 * * *') after it.
+# Runs daily at 02:41 UTC and can be started by hand (workflow_dispatch) to replay a seed.
 on:
+  schedule:
+    - cron: '41 2 * * *'
   workflow_dispatch:
     inputs:
       seed:
