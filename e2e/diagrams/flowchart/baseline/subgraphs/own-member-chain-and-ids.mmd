@@ -1,0 +1,14 @@
+---
+description: an & chain into a subgraph's own children, and edges with ids between a subgraph and its child, are visible arrows (#415)
+---
+flowchart TB
+  subgraph S
+    C
+    D
+  end
+  S --> C & D
+  subgraph T
+    A
+  end
+  T e1@--> A
+  A e2@--> T

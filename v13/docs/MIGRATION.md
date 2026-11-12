@@ -855,6 +855,7 @@ classes works the same with the look on.
 | `nodeSpacing`, `rankSpacing`, `diagramPadding` | Honoured with v12's defaults (50, 50, 8) | |
 | `curve` picks a d3 curve factory | The engine routes edges: `linear` draws straight segments, `step`/`stepBefore`/`stepAfter` stepped ones, `rounded` (the default) straight segments joined by arcs of radius 5, every other value S-curves | |
 | dagre adds 25 px of rank spacing inside subgraphs | Not reproduced: subgraphs are slightly more compact | |
+| An unlabelled edge between a subgraph and one of its own nodes or nested subgraphs, drawn by dagre to a stand-in node | Laid out inside the subgraph from its border, where its flow starts (entering, below the title when that is the top) or ends (leaving). A labelled one runs down from the subgraph's top, its label in a band below the title | #405, #415, #198 |
 
 Node positions differ from v12's dagre and ELK output; layouts are deterministic for the same
 input.

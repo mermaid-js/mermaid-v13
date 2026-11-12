@@ -1,0 +1,15 @@
+---
+description: a subgraph linked to several of its own nodes gets an arrowhead into each child, not sideways lines (#415)
+---
+flowchart TB
+  subgraph P
+    a
+    b
+    c
+    d
+  end
+  P --> a
+  P --> b
+  P --> c
+  P --> d
+  x --> P
