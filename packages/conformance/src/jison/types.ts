@@ -94,6 +94,12 @@ export interface JisonTypeDescriptor {
    * as rejection fixtures: the smoke spec checks each stays unlexed, so the list cannot go stale.
    */
   notLexed?: readonly string[];
+  /**
+   * Fixture ids of `e2e` that v12's lexer stops on with an error where v13 accepts the text on
+   * purpose, each with the issue or decision that says so (and a listed divergence): the smoke
+   * spec checks each still fails in v12, so the list cannot go stale.
+   */
+  lexErrors?: Readonly<Record<string, string>>;
   harvest: {
     /** v12's source directory for the type, relative to the repo root. */
     dir: string;

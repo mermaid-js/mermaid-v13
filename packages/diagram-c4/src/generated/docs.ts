@@ -11,7 +11,7 @@ export const c4Docs: Readonly<Partial<Record<number, string>>> = {
   [T.DirectionBT]: "`direction BT`: an error, as `direction TB`.",
   [T.DirectionRL]: "`direction RL`: an error, as `direction TB`.",
   [T.DirectionLR]: "`direction LR`: an error, as `direction TB`.",
-  [T.Title]: "`title <text>`: the diagram title, the rest of the line up to a `#` or `;`, trimmed. A lone `title` is a title with no text (D452).",
+  [T.Title]: "`title <text>`: the diagram title, the rest of the line up to a `;`, trimmed (a `#` is text, #683; 12.2.0 stopped there). A lone `title` is a title with no text (D452).",
   [T.AccDescription]: "`accDescription <text>`: the accessible description, the rest of the line.",
   [T.AccTitle]: "`accTitle: …` and `accDescr: …` take the rest of the line; `accDescr { … }` runs to `}`.",
   [T.AccDescr]: "`title`, `accDescription`, `accTitle:`, `accDescr:` or `accDescr { … }`: the title and the accessible title and description; the last of each wins.",

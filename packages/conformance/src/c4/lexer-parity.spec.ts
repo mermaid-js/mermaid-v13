@@ -44,6 +44,9 @@ import type { Exclusion } from './d452.ts';
  *   (`[^,)\n]+`), or a line break leaves the arguments (the parser reports the macro open);
  * - `comment`: v13 has a `NEWLINE` right after a `%%` comment, whose line breaks v12 ate;
  * - `title`: v12's `title` took a line break and the next line, v13's is a lone `title`.
+ * #683's change is listed the same way:
+ * - `hash`: v13's `title` or `accDescription` runs over a `#`, where v12's stopped at it (v12's
+ *   fix mermaid-js/mermaid#8039).
  * The rest of D452 (`direction` lines and `$__proto__` as diagnostics, named arguments in the
  * alias or label slot) is parser work. A quoted label holding `direction LR` stays one
  * `direction_lr` token, so the parser reports it as D452's `direction` diagnostic.
@@ -52,10 +55,10 @@ import type { Exclusion } from './d452.ts';
  * them: five commented copies of a short body, where `%% cut` goes through the header.
  */
 /**
- * The e2e fixtures under `e2e/diagrams/c4` (the 32 of 12.2.0's corpus, #538's 12, #539's 2 and
- * #542's 14 baselines).
+ * The e2e fixtures under `e2e/diagrams/c4` (the 32 of 12.2.0's corpus, #538's 12, #539's 2,
+ * #542's 14 baselines and #683's 1).
  */
-const E2E_FIXTURES = 60;
+const E2E_FIXTURES = 61;
 
 /** The sources each D452 exclusion covers as they are (not in a variant), in corpus order. */
 const D452_EXCLUDED: Record<Exclusion, string[]> = {
@@ -90,9 +93,14 @@ const D452_EXCLUDED: Record<Exclusion, string[]> = {
     'c4-cases/title-alone',
     'c4-cases/title-alone-then-statement',
   ],
+  hash: [
+    'e2e/pr-check/title-with-hash.mmd',
+    'c4-cases/title-hash',
+    'c4-cases/title-style-semicolon',
+  ],
 };
-/** How many sources, variants included, each D452 exclusion covers: unquoted, comment, title. */
-const D452_COUNTS = [386, 43, 23];
+/** How many sources, variants included, each exclusion covers: unquoted, comment, title, hash. */
+const D452_COUNTS = [386, 43, 23, 22];
 
 /** A C4 header at the start of a text, as v12's detector and lexer read it. */
 const HEADER = /^\s*C4(?:Context|Container|Component|Dynamic|Deployment)\b/;
@@ -104,7 +112,12 @@ describe('c4 lexer parity with mermaid@12 (jison)', () => {
     const oracle = await loadJisonLexerOracle('c4');
     const items = await c4GateCorpus();
     const diffs: { id: string; at: number; v12: JisonToken[]; v13: JisonToken[] }[] = [];
-    const excluded: Record<Exclusion, string[]> = { unquoted: [], comment: [], title: [] };
+    const excluded: Record<Exclusion, string[]> = {
+      unquoted: [],
+      comment: [],
+      title: [],
+      hash: [],
+    };
     const skipped: string[] = [];
     let compared = 0;
     let e2e = 0;
@@ -143,7 +156,8 @@ describe('c4 lexer parity with mermaid@12 (jison)', () => {
     const count = (k: Exclusion) => excluded[k].length;
     process.stdout.write(
       `lexer parity: ${compared} of ${items.length} sources lexed by v12 (${e2e} e2e, ${specs} specs, ${cases} cases); ` +
-        `D452 exclusions: ${count('unquoted')} unquoted, ${count('comment')} comment, ${count('title')} title\n`
+        `D452 exclusions: ${count('unquoted')} unquoted, ${count('comment')} comment, ${count('title')} title; ` +
+        `#683: ${count('hash')} hash\n`
     );
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
     expect(
@@ -157,8 +171,11 @@ describe('c4 lexer parity with mermaid@12 (jison)', () => {
       unquoted: plain('unquoted'),
       comment: plain('comment'),
       title: plain('title'),
+      hash: plain('hash'),
     }).toEqual(D452_EXCLUDED);
-    expect([count('unquoted'), count('comment'), count('title')]).toEqual(D452_COUNTS);
+    expect([count('unquoted'), count('comment'), count('title'), count('hash')]).toEqual(
+      D452_COUNTS
+    );
     // Every e2e fixture, every harvested spec and syntax-page string and every case reaches
     // the lexer.
     expect(e2e).toBe(E2E_FIXTURES);

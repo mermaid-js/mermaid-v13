@@ -45,11 +45,11 @@
       "name": "keyword.control.mermaid-c4"
     },
     "rule-5": {
-      "match": "title\\s[^#\\n;]+",
+      "match": "title\\s[^\\n;]+",
       "name": "keyword.control.mermaid-c4"
     },
     "rule-6": {
-      "match": "accDescription\\s[^#\\n;]+",
+      "match": "accDescription\\s[^\\n;]+",
       "name": "keyword.control.mermaid-c4"
     },
     "rule-7": {

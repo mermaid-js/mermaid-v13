@@ -66,13 +66,13 @@ export default {
         }
       ],
       [
-        "title\\s[^#\\n;]+",
+        "title\\s[^\\n;]+",
         {
           "token": "keyword"
         }
       ],
       [
-        "accDescription\\s[^#\\n;]+",
+        "accDescription\\s[^\\n;]+",
         {
           "token": "keyword"
         }

@@ -21,9 +21,9 @@ export const T = {
   DirectionRL: F + 2,
   /** `.*direction\s+LR[^\n]*`. */
   DirectionLR: F + 3,
-  /** `title\s[^#\n;]+` (the `\s` is not a line break), or `title` right before one (D452). */
+  /** `title\s[^\n;]+` (the `\s` is not a line break, #683 the `#`), or `title` right before one (D452). */
   Title: F + 4,
-  /** `accDescription\s[^#\n;]+`. */
+  /** `accDescription\s[^\n;]+` (#683: v12's stopped at a `#`). */
   AccDescription: F + 5,
   /** `accTitle\s*:\s*` (the blanks may span line breaks). */
   AccTitle: F + 6,
