@@ -16,6 +16,7 @@
  * `accDescr {` at the end) is rejected, as v12 rejected it: jison's lexer gave no `EOF` after the
  * value there (GAPS #310, #302).
  */
+import { checkLimit } from '@mermaid-js/core/limits';
 import {
   cook,
   firstHole,
@@ -50,7 +51,6 @@ import type {
   JourneyTextStatementNode,
 } from './ast.ts';
 import { lex } from './lexer.ts';
-import { checkLimit } from './limits.ts';
 import { T } from './tokens.ts';
 
 export interface JourneyParseOptions extends ParseOptions {
@@ -238,7 +238,14 @@ class JourneyParser {
 
   /** One more section or task, against the node cap. */
   private counted(range: Range): void {
-    checkLimit(this.st, 'maxNodes', ++this.items, this.options.maxNodes, range);
+    checkLimit(
+      this.st.diagnostics,
+      'maxNodes',
+      ++this.items,
+      this.options.maxNodes,
+      'sections and tasks',
+      range
+    );
   }
 
   // ---- document -----------------------------------------------------------------------

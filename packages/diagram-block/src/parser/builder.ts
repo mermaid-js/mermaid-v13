@@ -3,14 +3,13 @@
  * with D442's, D443's and D445's fixes: the parser reads the syntax and hands each statement
  * here. Block lookups go through one map, so building is linear (pitfall 11).
  */
-import { LIMIT_CODES } from '@mermaid-js/core/limits';
+import { checkLimit } from '@mermaid-js/core/limits';
 import type { Diagnostic, ParseState, Range } from '@mermaid-js/core/parser-kit';
 import * as codes from '../codes.ts';
 import type { Block, BlockEdge, BlockModel, BlockType } from '../model.ts';
 import type { BlockTarget } from './ast.ts';
 import {
   ALSO_HERE,
-  limitMessage,
   SIZE_INVALID_MESSAGE,
   styledHere,
   styleUnknownMessage,
@@ -203,12 +202,14 @@ export class ModelBuilder {
     this.pendingClasses.delete(m.id);
     into.push(block);
     this.byId.set(m.id, block);
-    if (++this.nodes === this.limits.maxNodes + 1)
-      this.st.diagnostics.error(
-        LIMIT_CODES.maxNodes,
-        limitMessage('blocks', this.limits.maxNodes),
-        range
-      );
+    checkLimit(
+      this.st.diagnostics,
+      'maxNodes',
+      ++this.nodes,
+      this.limits.maxNodes,
+      'blocks',
+      range
+    );
     return block;
   }
 
@@ -225,12 +226,14 @@ export class ModelBuilder {
       thickness: thickness(e.link),
       pattern: pattern(e.link),
     });
-    if (this.edges.length === this.limits.maxEdges + 1)
-      this.st.diagnostics.error(
-        LIMIT_CODES.maxEdges,
-        limitMessage('edges', this.limits.maxEdges),
-        e.range
-      );
+    checkLimit(
+      this.st.diagnostics,
+      'maxEdges',
+      this.edges.length,
+      this.limits.maxEdges,
+      'edges',
+      e.range
+    );
   }
 
   /**

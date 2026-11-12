@@ -23,6 +23,7 @@
     Gwt        : 'gwt' FID 'given' Step+ ('when' Step+)? 'then' Step+       Step: Kind ID
     QualifiedName : ID ('.' ID)*
 */
+import { checkLimit } from '@mermaid-js/core/limits';
 import {
   ExpectedTable,
   formatExpected,
@@ -58,7 +59,6 @@ import type {
 } from './ast.ts';
 import { accDescrValue, accTitleValue, dataText, displayText, titleValue } from './convert.ts';
 import { lex } from './lexer.ts';
-import { checkLimit } from './limits.ts';
 import { normalise } from './normalise.ts';
 import {
   DATA_TYPES,
@@ -597,7 +597,14 @@ class EventModelParser {
         frame: source,
       });
       const relation = { start: arrow, end: source.range.end };
-      checkLimit(this.st, 'maxEdges', ++this.relations, this.opts.maxEdges, relation);
+      checkLimit(
+        this.st.diagnostics,
+        'maxEdges',
+        ++this.relations,
+        this.opts.maxEdges,
+        'relations',
+        relation
+      );
     }
     this.tested(OPEN_REF);
     if (this.kind() === T.OpenRef) {
@@ -614,7 +621,14 @@ class EventModelParser {
     this.frameIds.add(frame.value);
     this.pending = undefined;
     this.frames.push({ node, kind });
-    checkLimit(this.st, 'maxNodes', this.frames.length, this.opts.maxNodes, node.range);
+    checkLimit(
+      this.st.diagnostics,
+      'maxNodes',
+      this.frames.length,
+      this.opts.maxNodes,
+      'frames',
+      node.range
+    );
     this.done(node, 'frame');
   }
 

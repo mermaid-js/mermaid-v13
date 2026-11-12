@@ -5,6 +5,7 @@ import {
   LimitError,
   MAX_STEPS,
   asLimitError,
+  checkLimit,
   checkOutput,
   checkSource,
   isLimitCode,
@@ -124,5 +125,37 @@ describe('limit diagnostics and thrown errors', () => {
     expect(asLimitError(new RangeError('NaN is not a coordinate'))).toBeUndefined();
     expect(asLimitError(new TypeError('x'))).toBeUndefined();
     expect(asLimitError('text')).toBeUndefined();
+  });
+});
+
+describe('checkLimit (#721)', () => {
+  const run = (cap: number | undefined, upTo: number): string[] => {
+    const out: string[] = [];
+    const sink = {
+      error: (code: string, message: string, at: number) => out.push(`${code} @${at}: ${message}`),
+    };
+    for (let n = 1; n <= upTo; n++) checkLimit(sink, 'maxNodes', n, cap, 'boxes', n);
+    return out;
+  };
+
+  it('reports nothing up to the cap, and the cap once, at the first one over it', () => {
+    expect(run(3, 3)).toEqual([]);
+    expect(run(3, 9)).toEqual([
+      'NODE_LIMIT @4: The diagram has more than 3 boxes, the limit. The limit is set by the page or app that renders the diagram.',
+    ]);
+    // A fractional cap still reports once.
+    expect(run(2.5, 9)).toHaveLength(1);
+    expect(run(Infinity, 9)).toEqual([]);
+  });
+
+  it("defaults to core's limit of that name, and uses that limit's code", () => {
+    const out: string[] = [];
+    const sink = { error: (code: string, message: string) => out.push(`${code}: ${message}`) };
+    checkLimit(sink, 'maxEdges', DEFAULT_LIMITS.maxEdges, undefined, 'links', 0);
+    expect(out).toEqual([]);
+    checkLimit(sink, 'maxEdges', DEFAULT_LIMITS.maxEdges + 1, undefined, 'links', 0);
+    expect(out).toEqual([
+      'EDGE_LIMIT: The diagram has more than 5000 links, the limit. The limit is set by the page or app that renders the diagram.',
+    ]);
   });
 });

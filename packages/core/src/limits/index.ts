@@ -172,3 +172,28 @@ export function asLimitError(error: unknown): LimitError | undefined {
   }
   return undefined;
 }
+
+/**
+ * A parser's node or edge cap (#721): call it after each one is added, with `count` those so
+ * far, and it reports the cap once, at the first one over it (a fractional cap included). `cap`
+ * defaults to the default limit of that name (a parse outside a render); `what` names what the
+ * limit counts in that diagram type ("sections"), and `diagnostics` is the parser kit's.
+ */
+export function checkLimit<R>(
+  diagnostics: { error(code: string, message: string, range: R): unknown },
+  limit: 'maxNodes' | 'maxEdges',
+  count: number,
+  cap: number | undefined,
+  what: string,
+  range: R
+): void {
+  const max = cap ?? DEFAULT_LIMITS[limit];
+  // Called once per item, so the first over the cap is the one whose predecessor was not.
+  if (count > max && count - 1 <= max) {
+    diagnostics.error(
+      LIMIT_CODES[limit],
+      `The diagram has more than ${max} ${what}, the limit. The limit is set by the page or app that renders the diagram.`,
+      range
+    );
+  }
+}
