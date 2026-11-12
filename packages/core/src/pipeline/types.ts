@@ -8,6 +8,8 @@ import type { Limits } from '../limits/index.ts';
 import type { AstNode } from '../parser-kit/ast.ts';
 import type { ParseResult } from '../parser-kit/result.ts';
 import type { PreprocessResult } from '../preprocess/preprocess.ts';
+import type { drawFolded, foldedCells, foldedSize, foldedTypeText } from '../svg/folded.ts';
+import type { drawFramed, framedSize, titleStrip } from '../svg/framed.ts';
 import type { EmbeddedSvg, OutlinePaint } from '../svg/types.ts';
 import type { SvgFragment, SvgWriter } from '../svg/writer.ts';
 import type { SecurityLevel } from '../svg/url.ts';
@@ -117,7 +119,30 @@ export interface RenderContext {
    * there is none and when the plugin is called without `mermaid`.
    */
   readonly foldedType?: (id: string) => string | undefined;
+  /**
+   * Core's block shapes (ADR-15, D554), for a host's block nodes: the open frame and the folded
+   * box. `mermaid` hands them over with its block pass, so only a render of a text with a block
+   * (a folded one too) loads them. Absent otherwise, and when the plugin is called without
+   * `mermaid`: a host then draws its blocks as plain nodes.
+   */
+  readonly blockShapes?: BlockShapes;
   warn(warning: Warning): void;
+}
+
+/**
+ * {@link RenderContext.blockShapes}: the open block shape (`@mermaid-js/core/svg/framed`) and
+ * the folded one (`/svg/folded`), the same in every host (ADR-15, #670).
+ */
+export interface BlockShapes {
+  readonly framedSize: typeof framedSize;
+  readonly titleStrip: typeof titleStrip;
+  readonly drawFramed: typeof drawFramed;
+  readonly foldedSize: typeof foldedSize;
+  readonly foldedCells: typeof foldedCells;
+  readonly foldedTypeText: typeof foldedTypeText;
+  /** The folded type's font size (`FOLDED_TYPE_SIZE`). */
+  readonly foldedTypeSize: number;
+  readonly drawFolded: typeof drawFolded;
 }
 
 /** A rendered embedded diagram (ADR-15): its root `<svg>` at its natural size, in px. */

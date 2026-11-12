@@ -107,7 +107,7 @@ identical blocks, `a.b` beside `a_b`, and a block `b` in `a` beside a block `a-b
 carries its own theme aliases on its own root, so host and block styles never mix.
 
 **Look.** A border and a transparent background, which tells a block apart from a subgraph, and
-an optional title strip; every host draws it with `@mermaid-js/core/svg/framed`. A block inherits its host's resolved config, the host's front matter
+an optional title strip; every host draws it with core's shape, which `mermaid` hands it as `RenderContext.blockShapes` (D554). A block inherits its host's resolved config, the host's front matter
 and directives included, so theme, look and font come from the host. Front matter and directives
 at the top of a block may then set diagram sections only (for example `sequence.mirrorActors`):
 every other key (`theme`, `themeVariables`, `look`, `securityLevel`, `wrap`, …) is ignored with
@@ -131,8 +131,8 @@ rendered or loaded, and its type need not be installed. It is drawn as a dedicat
 the same in every host and for every type (#665): the border with four corner brackets, the
 title, a divider, then a generic diagram icon and the type in small capitals (for example
 *Login flow* over *SEQUENCE*), with the same transparent background. `mermaid` hands the host
-the detected type by block id (`RenderContext.foldedType`); the shape lives in
-`@mermaid-js/core/svg/folded`, outside the core bundle. Errors inside a folded body are not reported at render time; the
+the detected type by block id (`RenderContext.foldedType`) and the shape with the open one
+(`RenderContext.blockShapes`, D554), outside the core bundle. Errors inside a folded body are not reported at render time; the
 editor still reports them.
 
 **Text output.** A block whose type has text output is drawn inside a frame. A block whose type

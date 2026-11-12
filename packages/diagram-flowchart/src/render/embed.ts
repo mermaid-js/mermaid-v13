@@ -1,8 +1,7 @@
 // Embedded diagram blocks (ADR-15): a node that holds another diagram, rendered before the
-// draw and looked up by id. Its frame is core's (`@mermaid-js/core/svg/framed`): a border, a
-// transparent background, an optional title strip, and the inner diagram's own <svg>.
-import type { EmbeddedDiagram, EmbeddedText } from '@mermaid-js/core';
-import { framedSize, titleStrip } from '@mermaid-js/core/svg/framed';
+// draw and looked up by id. Its frame is core's (`RenderContext.blockShapes`, D554): a border,
+// a transparent background, an optional title strip, and the inner diagram's own <svg>.
+import type { BlockShapes, EmbeddedDiagram, EmbeddedText } from '@mermaid-js/core';
 import type { FlowRenderContext } from './context.ts';
 import type { ShapeSize } from './shapes.ts';
 
@@ -36,8 +35,13 @@ export function embedSlot(ctx: FlowRenderContext, id: string): EmbedSlot {
 }
 
 /** The box of a block: the inner diagram (none: a stand-in), the padding and the title strip. */
-export function embedSize(slot: EmbedSlot | undefined, tw: number, th: number): ShapeSize {
-  const { width: w, height: h } = framedSize(slot ?? null, { width: tw, height: th });
+export function embedSize(
+  shapes: BlockShapes,
+  slot: EmbedSlot | undefined,
+  tw: number,
+  th: number
+): ShapeSize {
+  const { width: w, height: h } = shapes.framedSize(slot ?? null, { width: tw, height: th });
   // The title is centred in its strip.
-  return { w, h, dy: th > 0 ? -h / 2 + titleStrip(th) / 2 : 0 };
+  return { w, h, dy: th > 0 ? -h / 2 + shapes.titleStrip(th) / 2 : 0 };
 }

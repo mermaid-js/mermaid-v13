@@ -1,6 +1,7 @@
 /**
- * Embedded diagram blocks (ADR-15): the nesting limit, which the render (through the core
- * entry) and the editor (through the parser kit) both report.
+ * Embedded diagram blocks (ADR-15): the nesting limit, which the render and the editor both
+ * report. Both import it from `@mermaid-js/core/blocks`, never through the parser kit's index,
+ * which every host's parser loads (D554).
  */
 import type { Diagnostic } from './diagnostics.ts';
 import type { Range } from './positions.ts';

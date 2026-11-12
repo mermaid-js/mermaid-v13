@@ -3,7 +3,7 @@
  * (`block-pass.ts`) is a chunk of its own, loaded by the first prepare, render or parse of a
  * text with a block, so a document without one never fetches it.
  */
-import { NotLoadedError, type Warning } from '@mermaid-js/core';
+import { NotLoadedError, type BlockShapes, type Warning } from '@mermaid-js/core';
 import type { ResolvedConfig, ResolvedSite } from '@mermaid-js/core/config';
 import type { EmbeddedBlock, ParseResult } from '@mermaid-js/core/parser-kit';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
@@ -75,6 +75,8 @@ export interface BlockLoader {
   of(a: Analysis): BlockPass | undefined;
   /** The types of `a`'s folded blocks by id (#670), as {@link of} finds the pass. */
   foldedType(a: Analysis, s: Snapshot): ((id: string) => string | undefined) | undefined;
+  /** Core's block shapes for a draw of `a` (D554), as {@link of} finds the pass. */
+  shapes(a: Analysis): BlockShapes | undefined;
   /** One draw's block lookup and binder maker; without blocks, no lookup and the run's binder. */
   lookup<E>(
     blocks: DrawBlocks<E> | undefined,
@@ -100,6 +102,7 @@ export function blockLoader(deps: BlockDeps): BlockLoader {
     },
     of,
     foldedType: (a, s) => of(a)?.foldedType(a, s),
+    shapes: (a) => of(a)?.shapes,
     lookup: (blocks, prefix, warn) =>
       (blocks && pass?.lazy(blocks, prefix, warn)) ?? { embed: undefined, mounter: plainMounter },
   };

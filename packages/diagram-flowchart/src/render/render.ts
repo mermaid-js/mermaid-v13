@@ -8,8 +8,6 @@ import type {
   RoutePoint,
 } from '@mermaid-js/core/layout';
 import { layered } from '@mermaid-js/core/layout';
-import { drawFolded } from '@mermaid-js/core/svg/folded';
-import { drawFramed } from '@mermaid-js/core/svg/framed';
 import {
   checkLinkTarget,
   checkUrl,
@@ -519,9 +517,11 @@ function drawNode(
       'stroke-width': paint.node.strokeWidth,
       ...view.style.shape,
     };
+    // Set with `block` only: core's block shapes, which `mermaid` hands over with the blocks.
+    const shapes = ctx.blockShapes!;
     if (block === 'folded') {
       const { type, label } = view.fold!;
-      drawFolded(w, { width: view.w, height: view.h }, view.label, label!, type.length, {
+      shapes.drawFolded(w, { width: view.w, height: view.h }, view.label, label!, type.length, {
         frame,
         mark: frame.stroke ?? paint.node.stroke,
         ...paint.folded!,
@@ -531,7 +531,13 @@ function drawNode(
       w.close();
       return;
     }
-    drawFramed(w, { width: view.w, height: view.h }, view.label.height, view.embed ?? null, frame);
+    shapes.drawFramed(
+      w,
+      { width: view.w, height: view.h },
+      view.label.height,
+      view.embed ?? null,
+      frame
+    );
   } else if (v?.img) drawImage(w, view, v.img, securityLevel, warn);
   else if (v?.icon) {
     // D298: the glyph takes the author's stroke, else nodeBorder (`node.stroke`, the gradient

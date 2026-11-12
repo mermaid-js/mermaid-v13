@@ -7,12 +7,6 @@ import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
 import {
-  FOLDED_TYPE_SIZE,
-  foldedCells,
-  foldedSize,
-  foldedTypeText,
-} from '@mermaid-js/core/svg/folded';
-import {
   fontSizePx,
   layoutLabel,
   Style,
@@ -276,10 +270,12 @@ function nodeViews(
     }
     const view = blank(v.id, v.ast, false, vertexShape(v));
     view.vertex = v;
-    if (v.folded) {
+    // Without core's block shapes (the plugin called without `mermaid`), a block is a plain node.
+    const hasShapes = m.ctx.blockShapes !== undefined;
+    if (hasShapes && v.folded) {
       view.block = 'folded';
       view.fold = { type: m.ctx.foldedType?.(v.id) ?? '' };
-    } else if (v.type === 'embed') {
+    } else if (hasShapes && v.type === 'embed') {
       view.block = 'embed';
       view.embed = embedSlot(m.ctx, v.id);
       const text = m.cells ? m.ctx.embedText?.(v.id) : undefined;
@@ -315,6 +311,8 @@ function measureNode(
   const [f, bits] = textStyle(view.style, m.font);
   const has = shapeHasLabel(view.shape);
   const { block, fold } = view;
+  // Set with `block` only: core's block shapes, which `mermaid` hands over with the blocks.
+  const shapes = m.ctx.blockShapes!;
   // A folded block without a title shows its id, as a collapsed subgraph does.
   const title = fold && !text ? view.id : text;
   // A block's title stays on one line: the strip is as wide as the inner diagram allows.
@@ -330,7 +328,11 @@ function measureNode(
       // The title rows, a divider and the type, centred: as wide as the wider of the two.
       fold.label = m.label(fold.type, false, f, Infinity);
       const rows = view.label.lines.length;
-      ({ width: view.w, height: view.h } = foldedCells({ width: lw, rows }, fold.label, pad));
+      ({ width: view.w, height: view.h } = shapes.foldedCells(
+        { width: lw, rows },
+        fold.label,
+        pad
+      ));
       return;
     }
     if (view.embedText) {
@@ -348,14 +350,14 @@ function measureNode(
   let s: ShapeSize;
   if (fold) {
     fold.label = m.label(
-      foldedTypeText(fold.type),
+      shapes.foldedTypeText(fold.type),
       false,
-      { ...f, size: FOLDED_TYPE_SIZE },
+      { ...f, size: shapes.foldedTypeSize },
       Infinity
     );
-    const { width, height } = foldedSize(view.label, fold.label, fold.type.length);
+    const { width, height } = shapes.foldedSize(view.label, fold.label, fold.type.length);
     s = { w: width, h: height, dy: 0 };
-  } else if (block) s = embedSize(view.embed, lw, lh);
+  } else if (block) s = embedSize(shapes, view.embed, lw, lh);
   else if (v?.img || v?.icon) s = assetSize(v, lw, lh);
   else
     s = shapeSize(

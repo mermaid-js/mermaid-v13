@@ -1,4 +1,4 @@
-import type { EmbeddedDiagram } from '@mermaid-js/core';
+import type { BlockShapes, EmbeddedDiagram } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { LayoutGraph, LayoutModel, UnitProfile } from '@mermaid-js/core/layout';
 import type { SecurityLevel } from '@mermaid-js/core/svg';
@@ -41,9 +41,14 @@ export interface StateRenderContext {
   readonly inline?: InlineSpans;
   /**
    * The embedded diagram blocks (ADR-15), rendered by `mermaid` before the draw, by block id.
-   * Absent when the plugin is called directly: a block is then drawn as a stand-in frame.
+   * Absent when the plugin is called directly.
    */
   readonly embed?: (id: string) => EmbeddedDiagram | undefined;
   /** A folded block's inner type, by block id (#670); absent when the plugin is called directly. */
   readonly foldedType?: (id: string) => string | undefined;
+  /**
+   * Core's block shapes (D554), given by `mermaid` for a text with blocks. Absent when the plugin
+   * is called directly: a block is then drawn as a plain state.
+   */
+  readonly blockShapes?: BlockShapes;
 }

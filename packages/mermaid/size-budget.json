@@ -5,7 +5,7 @@
     "gzipBytes": 98304
   },
   "loaded": {
-    "description": "R-PERF-1 / D160, D311, D312, D553: core + flowchart as a browser page loads them for one flowchart render, gzip level 9. Gated by the bench (packages/bench/src/gates.ts, gate `size`).",
-    "gzipBytes": 136192
+    "description": "R-PERF-1 / D160, D311, D312, D553, D554: core + flowchart as a browser page loads them for one flowchart render, gzip level 9. Gated by the bench (packages/bench/src/gates.ts, gate `size`).",
+    "gzipBytes": 135168
   }
 }

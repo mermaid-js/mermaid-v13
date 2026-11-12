@@ -31,7 +31,6 @@ import {
   checkFilter,
   styleSheetProblem,
 } from './style.ts';
-import type { EmbeddedSvg } from './types.ts';
 import { isImageDataUrl, type SecurityLevel } from './url.ts';
 
 export interface InertOptions {
@@ -505,17 +504,4 @@ export function inertProblem(svg: string, options: InertOptions = {}): string | 
 export function assertInert(svg: string, options?: InertOptions): void {
   const problem = inertProblem(svg, options);
   if (problem !== undefined) throw new Error(`SVG output is not inert: ${problem}`);
-}
-
-/**
- * `svg`, a finished diagram's root `<svg>`, as markup a host may splice in with
- * `SvgWriter.embed()` (ADR-15). Throws unless it is one root element and inert under `options`
- * (its `theme: 'auto'` sheet allowed).
- */
-export function embeddedSvg(svg: string, options: InertOptions = {}): EmbeddedSvg {
-  if (!svg.startsWith('<svg') || !svg.endsWith('</svg>'))
-    throw new Error('An embedded diagram must be one root <svg>');
-  const problem = inertProblem(svg, { ...options, themeStyle: true });
-  if (problem !== undefined) throw new Error(`Embedded SVG is not inert: ${problem}`);
-  return svg as EmbeddedSvg;
 }

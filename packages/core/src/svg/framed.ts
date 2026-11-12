@@ -2,10 +2,13 @@
  * An embedded diagram's frame (ADR-15), the same in every host: a border, a transparent
  * background, an optional title strip with a line under it, and the inner diagram's own `<svg>`
  * at its natural size. Hosts measure the title, lay the box out as a node and draw the title.
+ * `embeddedSvg` checks the inner diagram's root. `mermaid`'s block pass loads this module and
+ * hands the shapes to hosts as `RenderContext.blockShapes` (D554).
  */
 import type { EmbeddedDiagram } from '../pipeline/types.ts';
+import { inertProblem, type InertOptions } from './inert.ts';
 import { translate } from './path.ts';
-import type { Attrs } from './types.ts';
+import type { Attrs, EmbeddedSvg } from './types.ts';
 import type { SvgWriter } from './writer.ts';
 
 /** Space between the border (or the title strip) and the inner diagram. */
@@ -63,4 +66,17 @@ export function drawFramed(
     w.close();
   }
   return top + s / 2;
+}
+
+/**
+ * `svg`, a finished diagram's root `<svg>`, as markup a host may splice in with
+ * `SvgWriter.embed()` (ADR-15). Throws unless it is one root element and inert under `options`
+ * (its `theme: 'auto'` sheet allowed).
+ */
+export function embeddedSvg(svg: string, options: InertOptions = {}): EmbeddedSvg {
+  if (!svg.startsWith('<svg') || !svg.endsWith('</svg>'))
+    throw new Error('An embedded diagram must be one root <svg>');
+  const problem = inertProblem(svg, { ...options, themeStyle: true });
+  if (problem !== undefined) throw new Error(`Embedded SVG is not inert: ${problem}`);
+  return svg as EmbeddedSvg;
 }
