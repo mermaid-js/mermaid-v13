@@ -97,7 +97,7 @@ The per-package check does not replace the full gate. Specs that cover every typ
 - Test through the public seam, `createMermaid().render()` or `renderSync()`, unless the area has its own seam (lexer parity, layout invariants).
 - Specs are `*.spec.ts` files beside the source. Do not commit `.only`.
 - A change to rendered output needs a `.mmd` fixture under `e2e/diagrams/<type>/`. The corpus and the visual baseline find it there. Put test sources in fixtures, not in string lists inside a spec.
-- A change that differs from v12 on purpose is listed, with its reason, in the type's divergences and in `v13/docs/migration/<type>.md`.
+- A change that differs from v12 on purpose is listed, with its reason, in the type's divergences (`packages/conformance/divergences/`) and in the type's fragment under `v13/docs/migration/`.
 
 ## Issues, branches and pull requests
 
