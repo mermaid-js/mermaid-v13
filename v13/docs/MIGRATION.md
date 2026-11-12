@@ -273,7 +273,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | Key | Status | Reason | Replacement |
 | --- | --- | --- | --- |
 | `themeVariables.THEME_COLOR_LIMIT` | ignored | The numbered `cScale` palettes always have twelve slots and the git palettes eight, and a diagram cycles through them (D258, D267). |  |
-| `themeCSS` | ignored | v13 output carries no author stylesheet (R-SEC-2). | `themeVariables`, or `--mermaid-*` CSS variables set by the host page |
+| `themeCSS` | removed | v13 output carries no author stylesheet (R-SEC-2). | `themeVariables`, or `--mermaid-*` CSS variables set by the host page |
 | `look` | ignored | `look` is removed (D153): the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. The v12 neo and classic geometry is theme data instead: the redux themes, `neo` and `neo-dark` carry neo geometry and the classic themes carry classic geometry (D152, D181). | `theme`, or the geometry and `dropShadow` theme variables; `handDrawn` comes from the hand-drawn plugin (R-PLUG-8) |
 | `htmlLabels` | removed | Labels are SVG text only; there is no HTML label mode (D5). | none; labels support a markdown subset rendered as SVG text |
 | `altFontFamily` | ignored | Unused by every renderer, also in v12. |  |
@@ -544,7 +544,7 @@ Removed and ignored keys, with what to use instead:
   (D5); markdown strings cover bold, italic, code and lists ([Labels](#labels-and-text)).
 - `dompurifyConfig`: removed. There is no HTML sanitizer to configure; the SVG writer only
   emits allow-listed elements and attributes, and `assertInert` checks the output (R-SEC-1).
-- `themeCSS`: ignored. The output carries no author stylesheet (R-SEC-2). Use `themeVariables`,
+- `themeCSS`: removed, with a `CONFIG_REMOVED_KEY` warning. The output carries no author stylesheet (R-SEC-2). Use `themeVariables`,
   `classDef`, or CSS on the host page (`--mermaid-*` variables and the kept class names).
 - `logLevel`: ignored. Nothing is logged; read `RenderResult.warnings`.
 - `altFontFamily`: ignored; no v12 renderer used it either.
@@ -581,7 +581,7 @@ Sequence diagrams (`sequence` section, #145):
 | `themeVariables` from diagram text checked against a character set only | Values are checked by kind (colour, length, font, weight) and a bad one is dropped with `THEME_VARIABLE_DROPPED`. Names v13 does not use are ignored | R-SEC-3 |
 | Nested `themeVariables` sections (`themeVariables.packet.startByteColor`), read by v12 packet, radar, cynefin, wardley and xychart | Each nested key maps onto one flat theme variable of the diagram (`packetStartByteColor`), listed beside it in the [theme variable inventory](theme-variables.md); the flat name is the CSS variable's. When both are set, the flat name wins, with no warning. An unknown nested key is ignored | D335, D540 |
 | A plugin's config fragment declaring a theme variable | Unchanged (colour-only, global), but when a diagram's own theme table defines the same name, the diagram's table wins in that diagram's renders | D336, D337 |
-| `themeCSS` | Ignored; see [Config behaviour](#config-behaviour) | R-SEC-2 |
+| `themeCSS` | Removed, with a warning; see [Config behaviour](#config-behaviour) | R-SEC-2 |
 | Label text colour fixed by the theme | When a `style`/`classDef` fill makes the theme's text colour unreadable, the label switches to black or white | R-THEME-12 |
 | `look: neo` / `look: classic` | `look` is removed: the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. What `look` switched in v12 is theme data: the redux themes, `neo` and `neo-dark` carry v12's neo geometry and the classic themes (`default`, `dark`, `forest`, `neutral`, `base`) carry v12's classic geometry. For a mix, override the variables ([Theme geometry](#theme-geometry)) | D152, D153 |
 | `look: handDrawn` | Drawn by the optional `@mermaid-js/plugin-hand-drawn`, whose config fragment takes `look: handDrawn` as an alias of its `handDrawn` key. Without the plugin it is ignored like any other `look`, with one `LOOK_REMOVED` warning that names the plugin. See [Hand-drawn look](#hand-drawn-look) | D7, D153, D300, D303, R-PLUG-8 |
