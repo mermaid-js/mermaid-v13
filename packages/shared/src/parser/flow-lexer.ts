@@ -321,26 +321,32 @@ export abstract class FlowLexer extends StateLexer {
 
   /** The shape openers; `c` is `(`, `[`, `|` or `{`. */
   private opener(c: number): boolean {
-    const { T } = this;
-    const d = this.text.charCodeAt(this.p + 1);
-    if (c === LPAREN) {
-      if (d === DASH) return this.open(S.ellipseText, T.EllipseStart, 2);
-      if (d === LBRACKET) return this.open(S.text, T.StadiumStart, 2);
-      if (d === LPAREN && this.text.charCodeAt(this.p + 2) === LPAREN) {
-        return this.open(S.text, T.DoubleCircleStart, 3);
-      }
-      return this.open(S.text, T.PS, 1);
-    }
-    if (c === LBRACKET) {
-      if (d === LBRACKET) return this.open(S.text, T.SubroutineStart, 2);
-      if (d === LPAREN) return this.open(S.text, T.CylinderStart, 2);
-      if (d === SLASH) return this.open(S.trapText, T.TrapStart, 2);
-      if (d === BACKSLASH) return this.open(S.trapText, T.InvTrapStart, 2);
-      return this.open(S.text, T.SQS, 1);
-    }
-    if (c === PIPE) return this.open(S.text, T.Pipe, 1);
-    if (c === LBRACE) return this.open(S.text, T.DiamondStart, 1);
+    if (c === LPAREN) return this.parenOpener(this.text.charCodeAt(this.p + 1));
+    if (c === LBRACKET) return this.bracketOpener(this.text.charCodeAt(this.p + 1));
+    if (c === PIPE) return this.open(S.text, this.T.Pipe, 1);
+    if (c === LBRACE) return this.open(S.text, this.T.DiamondStart, 1);
     return false;
+  }
+
+  /** The openers that start with `(`; `d` is the character after it. */
+  private parenOpener(d: number): true {
+    const { T } = this;
+    if (d === DASH) return this.open(S.ellipseText, T.EllipseStart, 2);
+    if (d === LBRACKET) return this.open(S.text, T.StadiumStart, 2);
+    if (d === LPAREN && this.text.charCodeAt(this.p + 2) === LPAREN) {
+      return this.open(S.text, T.DoubleCircleStart, 3);
+    }
+    return this.open(S.text, T.PS, 1);
+  }
+
+  /** The openers that start with `[`; `d` is the character after it. */
+  private bracketOpener(d: number): true {
+    const { T } = this;
+    if (d === LBRACKET) return this.open(S.text, T.SubroutineStart, 2);
+    if (d === LPAREN) return this.open(S.text, T.CylinderStart, 2);
+    if (d === SLASH) return this.open(S.trapText, T.TrapStart, 2);
+    if (d === BACKSLASH) return this.open(S.trapText, T.InvTrapStart, 2);
+    return this.open(S.text, T.SQS, 1);
   }
 
   private open(state: number, kind: number, length: number): true {
@@ -446,40 +452,53 @@ export abstract class FlowLexer extends StateLexer {
 
   /** The keyword rules, picked by their first character: the family's, then the dialect's. */
   private keyword(c: number): boolean {
-    const { T } = this;
-    const p = this.p;
     switch (c) {
       case LOWER_A:
-        if (this.accKeyword()) return true;
-        break;
+        return this.accKeyword() || this.ownKeyword(c);
       case AT:
-        if (this.text.charCodeAt(p + 1) !== LBRACE) return false;
-        this.pushState(S.shapeData);
-        this.emit(T.ShapeData, p, p + 2);
-        return true;
+        return this.shapeDataStart();
       case LOWER_C:
-        if (this.cKeyword()) return true;
-        break;
+        return this.cKeyword() || this.ownKeyword(c);
       case DQUOTE:
-        if (!this.isQuote(p)) return false;
-        this.quote();
-        return true;
+        return this.quoteStart();
       case LOWER_H:
-        if (!this.text.startsWith('href', p) || !isSpace(this.text.charCodeAt(p + 4))) return false;
-        // v12 saw CRLF as one LF: `href[\s]` took the whole line break.
-        this.emit(
-          T.Href,
-          p,
-          p + (this.text.charCodeAt(p + 4) === CR && this.text.charCodeAt(p + 5) === LF ? 6 : 5)
-        );
-        return true;
+        return this.href();
       case UNDERSCORE:
-        for (const target of LINK_TARGETS) {
-          if (this.kw(target)) return this.token(T.LinkTarget, target.length);
-        }
-        return false;
+        return this.linkTarget();
     }
     return this.ownKeyword(c);
+  }
+
+  /** `@{`, which opens shape data. */
+  private shapeDataStart(): boolean {
+    if (this.text.charCodeAt(this.p + 1) !== LBRACE) return false;
+    this.pushState(S.shapeData);
+    return this.token(this.T.ShapeData, 2);
+  }
+
+  /** A `"` at p that v12 had kept, which opens a string. */
+  private quoteStart(): boolean {
+    if (!this.isQuote(this.p)) return false;
+    this.quote();
+    return true;
+  }
+
+  /** `href` and the blank after it. */
+  private href(): boolean {
+    const p = this.p;
+    if (!this.text.startsWith('href', p) || !isSpace(this.text.charCodeAt(p + 4))) return false;
+    // v12 saw CRLF as one LF: `href[\s]` took the whole line break.
+    const crlf = this.text.charCodeAt(p + 4) === CR && this.text.charCodeAt(p + 5) === LF;
+    this.emit(this.T.Href, p, p + (crlf ? 6 : 5));
+    return true;
+  }
+
+  /** `_self`, `_blank`, `_parent` and `_top`. */
+  private linkTarget(): boolean {
+    for (const target of LINK_TARGETS) {
+      if (this.kw(target)) return this.token(this.T.LinkTarget, target.length);
+    }
+    return false;
   }
 
   /** `accTitle:`, `accDescr:` and `accDescr {`. */
@@ -576,26 +595,29 @@ export abstract class FlowLexer extends StateLexer {
   private linkId(c: number): boolean {
     const p = this.p;
     if (this.atNext === -1 || this.isRunBreak(c, p)) return false;
-    if (p >= this.runEnd) {
-      if (this.atNext < p) this.atNext = this.text.indexOf('@', p);
-      let q = p;
-      while (q < this.n && !this.isRunBreak(this.text.charCodeAt(q), q)) q++;
-      this.runEnd = q;
-      this.runAt = -1;
-      if (this.atNext !== -1 && this.atNext < q) {
-        for (let k = Math.min(q, this.n - 1) - 1; k >= this.atNext; k--) {
-          if (this.text.charCodeAt(k) !== AT) continue;
-          const after = this.text.charCodeAt(k + 1);
-          if (after !== LBRACE && !(after === DQUOTE && this.isQuote(k + 1))) {
-            this.runAt = k;
-            break;
-          }
-        }
-      }
-    }
+    if (p >= this.runEnd) this.scanRun(p);
     if (this.runAt <= p) return false;
     this.emit(this.T.LinkId, p, this.runAt + 1);
     return true;
+  }
+
+  /** Memoise the run of id characters at `p`: its end, and the `@` that ends its link id. */
+  private scanRun(p: number): void {
+    if (this.atNext < p) this.atNext = this.text.indexOf('@', p);
+    let q = p;
+    while (q < this.n && !this.isRunBreak(this.text.charCodeAt(q), q)) q++;
+    this.runEnd = q;
+    this.runAt = this.atNext !== -1 && this.atNext < q ? this.lastLinkAt(q) : -1;
+  }
+
+  /** The last `@` of the run ending at `q` that `{` or `"` does not follow, or -1. */
+  private lastLinkAt(q: number): number {
+    for (let k = Math.min(q, this.n - 1) - 1; k >= this.atNext; k--) {
+      if (this.text.charCodeAt(k) !== AT) continue;
+      const after = this.text.charCodeAt(k + 1);
+      if (after !== LBRACE && !(after === DQUOTE && this.isQuote(k + 1))) return k;
+    }
+    return -1;
   }
 
   /** Numbers, punctuation and the links and shapes they open. */
@@ -634,22 +656,29 @@ export abstract class FlowLexer extends StateLexer {
 
   /** The links, shapes and the other characters an id may start with. */
   private shapeOrLink(c: number): boolean {
-    const { T } = this;
-    const p = this.p;
     switch (c) {
       case LOWER_X:
       case LOWER_O:
       case DOT:
         return this.link(c) || this.nodeString();
       case LT:
-        return this.link(c) || this.token(T.TagStart, 1);
+        return this.link(c) || this.token(this.T.TagStart, 1);
       case DASH:
-        return this.link(c) || this.nodeString() || this.token(T.Minus, 1);
+        return this.link(c) || this.nodeString() || this.token(this.T.Minus, 1);
       case EQUALS:
       case TILDE:
         // The jison grammars' `=(?!=)` in NODE_STRING compiles to `(?!)` in mermaid@12: `=`
         // never joins an id.
         return this.link(c);
+    }
+    return this.shape(c);
+  }
+
+  /** The shapes, and the characters an id may start with that open no link. */
+  private shape(c: number): boolean {
+    const { T } = this;
+    const p = this.p;
+    switch (c) {
       case LBRACKET:
         if (this.text.charCodeAt(p + 1) === PIPE) return this.token(T.VertexWithPropsStart, 2);
         return this.opener(c);
