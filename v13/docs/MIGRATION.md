@@ -3137,6 +3137,14 @@ label-container outer-path`, `divider`, `relationshipLine`, `edge-thickness-norm
 | Front-matter `title` as `<text class="requirementDiagramTitleText" y="-25">` | `<text class="requirementDiagramTitleText">` centred over the drawing, its baseline 25px above the layout's top, in `textColor`; the viewBox grows to hold it | D218 |
 | Five documented theme variables (`requirementBackground`, `…BorderColor`, `…BorderSize`, `…TextColor`, `relationLabelBackground`) drew nothing | They, `relationColor` and `relationLabelColor` paint the boxes, text, lines, markers and label chips, with v12's drawn values by default | D435 |
 
+## State diagram
+
+- **A transition written inside a composite that names the composite** (D555):
+  `state Boot { Running; Boot --> Running }`, the reverse, and `Outer --> Inner` written inside
+  `Inner`. v12 filed the composite under itself (or under a state inside it) and then never
+  returned under the ELK layouts, or threw. v13 keeps the composite where it was declared and
+  draws the transition, with every layout.
+
 ## Tree view
 
 The tree view parser accepts the v12 language, `treeView-beta`, box-drawn input (`├──`, `└──`,
