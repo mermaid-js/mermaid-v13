@@ -1,8 +1,41 @@
 {
   "kind": "health",
   "finding_counts": {
+    "e2e/helpers/argos-metadata.ts": {
+      "crap_moderate": {
+        "count": 1
+      }
+    },
+    "e2e/helpers/mmd-snapshots.ts": {
+      "crap_critical": {
+        "count": 1
+      }
+    },
     "e2e/helpers/util.ts": {
       "complexity_moderate": {
+        "count": 1
+      },
+      "crap_moderate": {
+        "count": 1
+      }
+    },
+    "e2e/platform/harness/app.ts": {
+      "crap_high": {
+        "count": 2
+      }
+    },
+    "e2e/platform/harness/cache.ts": {
+      "crap_high": {
+        "count": 1
+      }
+    },
+    "e2e/platform/harness/chunks.ts": {
+      "crap_moderate": {
+        "count": 2
+      }
+    },
+    "e2e/platform/harness/pack.ts": {
+      "crap_moderate": {
         "count": 1
       }
     },
@@ -27,7 +60,23 @@
         "count": 1
       }
     },
+    "packages/bench/src/driver.ts": {
+      "crap_high": {
+        "count": 1
+      },
+      "crap_moderate": {
+        "count": 4
+      }
+    },
     "packages/bench/src/gates.ts": {
+      "complexity_critical": {
+        "count": 1
+      },
+      "crap_critical": {
+        "count": 1
+      }
+    },
+    "packages/bench/src/instruction-counts.ts": {
       "complexity_critical": {
         "count": 1
       },
@@ -38,16 +87,23 @@
         "count": 1
       }
     },
-    "packages/bench/src/identity.ts": {
-      "crap_moderate": {
+    "packages/bench/src/language-agentflow.ts": {
+      "crap_high": {
         "count": 1
       }
     },
-    "packages/bench/src/instruction-counts.ts": {
-      "complexity_moderate": {
+    "packages/bench/src/language-block.ts": {
+      "crap_high": {
         "count": 1
-      },
-      "crap_moderate": {
+      }
+    },
+    "packages/bench/src/language-c4.ts": {
+      "crap_high": {
+        "count": 1
+      }
+    },
+    "packages/bench/src/language-cynefin.ts": {
+      "crap_high": {
         "count": 1
       }
     },
@@ -56,17 +112,29 @@
         "count": 1
       }
     },
-    "packages/bench/src/markdown.ts": {
+    "packages/bench/src/language-sequence.ts": {
       "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
-    "packages/bench/src/pr-markdown.ts": {
-      "crap_moderate": {
-        "count": 2
+    "packages/bench/src/language-venn.ts": {
+      "crap_high": {
+        "count": 1
+      }
+    },
+    "packages/bench/src/language.ts": {
+      "crap_high": {
+        "count": 1
+      }
+    },
+    "packages/bench/src/pr-check.ts": {
+      "crap_high": {
+        "count": 1
+      }
+    },
+    "packages/bench/src/report.ts": {
+      "crap_high": {
+        "count": 1
       }
     },
     "packages/bench/src/runner/adapters.ts": {
@@ -95,17 +163,6 @@
       },
       "complexity_moderate": {
         "count": 3
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 4
-      }
-    },
-    "packages/conformance/src/agentflow/grammar/reference.ts": {
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/conformance/src/allowlists/allowlists.ts": {
@@ -113,42 +170,18 @@
         "count": 1
       }
     },
-    "packages/conformance/src/architecture/grammar/reference.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
     "packages/conformance/src/ascii/block-fuzz.ts": {
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
     "packages/conformance/src/ascii/er-structure.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/conformance/src/ascii/flow-checks.ts": {
       "complexity_high": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/ascii/requirement-structure.ts": {
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/conformance/src/ascii/sequence-structure.ts": {
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -158,12 +191,6 @@
       },
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 3
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/conformance/src/ascii/usecase-structure.ts": {
@@ -172,20 +199,6 @@
       },
       "complexity_high": {
         "count": 2
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 3
-      },
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/conformance/src/block/grammar/reference.ts": {
-      "crap_high": {
-        "count": 1
       }
     },
     "packages/conformance/src/block/v12-layout.ts": {
@@ -193,21 +206,6 @@
         "count": 2
       },
       "crap_critical": {
-        "count": 2
-      }
-    },
-    "packages/conformance/src/c4/d452.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/c4/grammar/reference.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/class/grammar/reference.ts": {
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -216,36 +214,8 @@
         "count": 1
       }
     },
-    "packages/conformance/src/cynefin/grammar/reference.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/er/grammar/reference.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/eventmodeling/grammar/reference.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/eventmodeling/v12.ts": {
-      "crap_high": {
-        "count": 1
-      }
-    },
     "packages/conformance/src/fixtures/sankey-stub.ts": {
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/flowchart/grammar/reference.ts": {
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -254,34 +224,8 @@
         "count": 1
       }
     },
-    "packages/conformance/src/gantt/fuzz.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/gantt/grammar/reference.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
     "packages/conformance/src/gantt/v13.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/gitgraph/grammar/reference.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/info/grammar/reference.ts": {
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
@@ -291,65 +235,7 @@
       }
     },
     "packages/conformance/src/jison/oracle.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/journey/grammar/reference.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/kanban/grammar/reference.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/kanban/v13.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/langium-lexer.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/mindmap/grammar/reference.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/mindmap/v13.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/packet/grammar/reference.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/pie/grammar/reference.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/quadrant/grammar/reference.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/radar/grammar/reference.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/railroad/grammar/reference.ts": {
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
@@ -361,16 +247,10 @@
     "packages/conformance/src/requirement/grammar/reference.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/conformance/src/runner.ts": {
-      "complexity_high": {
-        "count": 2
-      },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 2
       }
     },
@@ -379,90 +259,26 @@
         "count": 1
       }
     },
-    "packages/conformance/src/sankey/grammar/reference.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/sequence/grammar/reference.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
     "packages/conformance/src/sequence/path-bounds.ts": {
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/sequence/v12.ts": {
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/conformance/src/sequence/v13.ts": {
-      "crap_critical": {
-        "count": 2
-      }
-    },
-    "packages/conformance/src/state/grammar/reference.ts": {
-      "crap_moderate": {
         "count": 1
       }
     },
     "packages/conformance/src/state/v12.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 2
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/conformance/src/svg-props.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_high": {
         "count": 1
       },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/timeline/grammar/reference.ts": {
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/conformance/src/treeView/grammar/box-reference.ts": {
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/treemap/grammar/reference.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/venn/grammar/reference.ts": {
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -471,24 +287,8 @@
         "count": 1
       }
     },
-    "packages/conformance/src/wardley/grammar/reference.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
     "packages/conformance/src/xychart/grammar/reference.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/conformance/src/xychart/v13.ts": {
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
@@ -499,13 +299,13 @@
     },
     "packages/core/src/ascii/repair.ts": {
       "complexity_critical": {
-        "count": 3
+        "count": 1
       },
-      "crap_critical": {
-        "count": 3
+      "complexity_high": {
+        "count": 1
       },
-      "crap_moderate": {
-        "count": 2
+      "complexity_moderate": {
+        "count": 1
       }
     },
     "packages/core/src/config/fragment.ts": {
@@ -514,66 +314,30 @@
       }
     },
     "packages/core/src/config/resolve.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_high": {
         "count": 2
       },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
         "count": 2
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/core/src/layout/compass/compass.ts": {
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
         "count": 2
-      },
-      "crap_moderate": {
-        "count": 3
       }
     },
     "packages/core/src/layout/compass/grid.ts": {
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 2
       }
     },
     "packages/core/src/layout/compass/route.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/core/src/layout/hops/hops.ts": {
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -583,23 +347,6 @@
       },
       "crap_critical": {
         "count": 4
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/core/src/layout/layered/index.ts": {
-      "crap_critical": {
-        "count": 2
-      },
-      "crap_high": {
-        "count": 4
-      },
-      "crap_moderate": {
-        "count": 5
       }
     },
     "packages/core/src/layout/layered/layered.ts": {
@@ -607,42 +354,7 @@
         "count": 8
       },
       "crap_critical": {
-        "count": 11
-      },
-      "crap_high": {
-        "count": 6
-      },
-      "crap_moderate": {
-        "count": 4
-      }
-    },
-    "packages/core/src/layout/layered/sides.ts": {
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/core/src/layout/swimlane/__tests__/ddltGates.ts": {
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/core/src/layout/swimlane/adapter.ts": {
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/core/src/layout/swimlane/direction/alignedEdgeStraightening.ts": {
-      "crap_high": {
-        "count": 1
+        "count": 7
       }
     },
     "packages/core/src/layout/swimlane/direction/detourSimplification.ts": {
@@ -651,17 +363,6 @@
       },
       "crap_critical": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      }
-    },
-    "packages/core/src/layout/swimlane/direction/endpointClip.ts": {
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 4
       }
     },
     "packages/core/src/layout/swimlane/direction/geometry.ts": {
@@ -678,25 +379,11 @@
       },
       "crap_critical": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/core/src/layout/swimlane/direction/lrTransform.ts": {
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/core/src/layout/swimlane/direction/materializedGeometry.ts": {
-      "crap_critical": {
-        "count": 1
-      },
       "crap_high": {
-        "count": 5
-      },
-      "crap_moderate": {
-        "count": 13
+        "count": 1
       }
     },
     "packages/core/src/layout/swimlane/direction/portSwap.ts": {
@@ -707,22 +394,11 @@
         "count": 1
       }
     },
-    "packages/core/src/layout/swimlane/direction/sharedTrackNudging.ts": {
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
     "packages/core/src/layout/swimlane/direction/siblingSharedFaceRouting.ts": {
       "complexity_critical": {
         "count": 1
       },
       "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -732,34 +408,13 @@
       },
       "crap_critical": {
         "count": 1
-      }
-    },
-    "packages/core/src/layout/swimlane/driving-tree.ts": {
-      "crap_high": {
-        "count": 1
       },
       "crap_moderate": {
         "count": 1
       }
     },
-    "packages/core/src/layout/swimlane/endLabels.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/core/src/layout/swimlane/helpers.ts": {
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/core/src/layout/swimlane/laneFit.ts": {
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
+    "packages/core/src/layout/swimlane/direction/validation.ts": {
+      "crap_critical": {
         "count": 1
       }
     },
@@ -768,31 +423,12 @@
         "count": 1
       },
       "crap_critical": {
-        "count": 2
-      },
-      "crap_high": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 6
       }
     },
     "packages/core/src/layout/swimlane/phase2.crossCounts.ts": {
       "crap_critical": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/core/src/layout/swimlane/phase2.gravity.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/core/src/layout/swimlane/phase3.ordering.ts": {
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/core/src/layout/swimlane/phase4.coordinates.ts": {
@@ -803,17 +439,9 @@
         "count": 1
       }
     },
-    "packages/core/src/layout/swimlane/selfLoops.ts": {
-      "crap_high": {
-        "count": 1
-      },
+    "packages/core/src/layout/swimlane/placeholderRoutes.ts": {
       "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/core/src/layout/swimlane/terminalReattach.ts": {
-      "crap_high": {
-        "count": 1
+        "count": 2
       }
     },
     "packages/core/src/layout/tree/tree.ts": {
@@ -821,12 +449,6 @@
         "count": 1
       },
       "complexity_moderate": {
-        "count": 2
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 2
       }
     },
@@ -847,31 +469,25 @@
       }
     },
     "packages/core/src/parser-kit/probe.ts": {
-      "complexity_critical": {
+      "complexity_high": {
         "count": 1
       },
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/core/src/parser-kit/source-view.ts": {
       "complexity_critical": {
-        "count": 3
+        "count": 2
+      },
+      "complexity_high": {
+        "count": 1
       },
       "complexity_moderate": {
         "count": 2
       },
       "crap_critical": {
-        "count": 3
-      },
-      "crap_moderate": {
-        "count": 2
+        "count": 1
       }
     },
     "packages/core/src/pipeline/draw.ts": {
@@ -879,49 +495,26 @@
         "count": 1
       }
     },
-    "packages/core/src/pipeline/errors.ts": {
-      "crap_high": {
-        "count": 1
-      }
-    },
     "packages/core/src/pipeline/extensions.ts": {
-      "complexity_high": {
+      "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/core/src/pipeline/manifest.ts": {
       "complexity_high": {
-        "count": 2
+        "count": 1
       },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/core/src/preprocess/directives.ts": {
-      "complexity_high": {
-        "count": 3
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
         "count": 4
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/core/src/preprocess/frontmatter.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
@@ -946,22 +539,16 @@
     },
     "packages/core/src/preprocess/yaml.ts": {
       "complexity_critical": {
-        "count": 6
+        "count": 4
       },
       "complexity_high": {
         "count": 1
       },
       "complexity_moderate": {
-        "count": 1
+        "count": 3
       },
       "crap_critical": {
-        "count": 6
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 2
+        "count": 3
       }
     },
     "packages/core/src/svg/encode.ts": {
@@ -971,35 +558,23 @@
     },
     "packages/core/src/svg/inert.ts": {
       "complexity_critical": {
-        "count": 3
-      },
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 3
-      },
-      "crap_high": {
         "count": 2
       },
-      "crap_moderate": {
-        "count": 1
+      "complexity_high": {
+        "count": 2
+      },
+      "crap_critical": {
+        "count": 2
       }
     },
     "packages/core/src/svg/style.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_high": {
-        "count": 1
+        "count": 2
       },
       "complexity_moderate": {
         "count": 2
       },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "crap_high": {
         "count": 1
       }
     },
@@ -1009,81 +584,48 @@
       }
     },
     "packages/core/src/svg/writer.ts": {
-      "complexity_critical": {
-        "count": 2
-      },
       "complexity_high": {
-        "count": 1
-      },
-      "crap_critical": {
         "count": 2
       },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/core/src/text/inline.ts": {
       "complexity_high": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
       }
     },
     "packages/core/src/text/label.ts": {
       "complexity_critical": {
-        "count": 2
+        "count": 1
       },
       "complexity_high": {
         "count": 1
       },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_critical": {
         "count": 2
       },
-      "crap_high": {
+      "crap_critical": {
         "count": 1
       }
     },
     "packages/core/src/text/table.ts": {
       "complexity_high": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/core/src/theme/dsl.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/core/src/theme/theme.ts": {
-      "complexity_critical": {
-        "count": 4
-      },
       "complexity_high": {
-        "count": 1
+        "count": 2
       },
-      "crap_critical": {
-        "count": 4
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 7
+      "complexity_moderate": {
+        "count": 3
       }
     },
     "packages/dev/src/browser/compare-pane.ts": {
@@ -1100,7 +642,7 @@
       }
     },
     "packages/dev/src/browser/explorer/compare-model.ts": {
-      "crap_moderate": {
+      "crap_high": {
         "count": 1
       }
     },
@@ -1112,6 +654,11 @@
         "count": 1
       },
       "crap_moderate": {
+        "count": 1
+      }
+    },
+    "packages/dev/src/browser/explorer/settings.ts": {
+      "crap_high": {
         "count": 1
       }
     },
@@ -1188,28 +735,19 @@
     "packages/diagram-agentflow/src/ascii/draw.ts": {
       "complexity_high": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-agentflow/src/ascii/warnings.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "crap_critical": {
+      "complexity_high": {
         "count": 1
       }
     },
     "packages/diagram-agentflow/src/facet/completions.ts": {
       "complexity_high": {
-        "count": 3
+        "count": 1
       },
-      "crap_high": {
-        "count": 4
-      },
-      "crap_moderate": {
-        "count": 3
+      "complexity_moderate": {
+        "count": 2
       }
     },
     "packages/diagram-agentflow/src/facet/hover.ts": {
@@ -1218,47 +756,27 @@
       },
       "crap_high": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-agentflow/src/layout/invariants.ts": {
       "complexity_high": {
-        "count": 2
+        "count": 1
       },
-      "crap_high": {
-        "count": 2
-      }
-    },
-    "packages/diagram-agentflow/src/layout/layout.ts": {
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-agentflow/src/layout/prepare.ts": {
-      "complexity_high": {
-        "count": 2
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 2
       }
     },
     "packages/diagram-agentflow/src/parser/base.ts": {
       "complexity_critical": {
-        "count": 2
-      },
-      "crap_critical": {
-        "count": 2
-      },
-      "crap_high": {
         "count": 1
       },
-      "crap_moderate": {
-        "count": 3
+      "complexity_moderate": {
+        "count": 1
       }
     },
     "packages/diagram-agentflow/src/parser/containment.ts": {
@@ -1267,131 +785,63 @@
       }
     },
     "packages/diagram-agentflow/src/parser/lexer.ts": {
-      "complexity_critical": {
-        "count": 4
+      "complexity_high": {
+        "count": 1
       },
+      "complexity_moderate": {
+        "count": 5
+      },
+      "crap_high": {
+        "count": 1
+      }
+    },
+    "packages/diagram-agentflow/src/parser/model.ts": {
+      "complexity_high": {
+        "count": 2
+      },
+      "complexity_moderate": {
+        "count": 1
+      }
+    },
+    "packages/diagram-agentflow/src/parser/parser.ts": {
       "complexity_high": {
         "count": 1
       },
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_critical": {
-        "count": 4
-      },
-      "crap_high": {
-        "count": 4
-      },
-      "crap_moderate": {
-        "count": 3
-      }
-    },
-    "packages/diagram-agentflow/src/parser/model.ts": {
-      "complexity_critical": {
-        "count": 2
-      },
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 2
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 3
-      }
-    },
-    "packages/diagram-agentflow/src/parser/parser.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 3
       }
     },
     "packages/diagram-agentflow/src/parser/scanner.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-agentflow/src/parser/source.ts": {
-      "complexity_critical": {
+      "complexity_high": {
         "count": 1
       },
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 3
       }
     },
     "packages/diagram-agentflow/src/parser/statements.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_high": {
         "count": 1
       },
       "complexity_moderate": {
-        "count": 2
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 2
+        "count": 3
       }
     },
     "packages/diagram-agentflow/src/parser/trailing-commas.ts": {
+      "complexity_moderate": {
+        "count": 2
+      }
+    },
+    "packages/diagram-agentflow/src/render/edges.ts": {
       "complexity_high": {
         "count": 1
       },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      }
-    },
-    "packages/diagram-agentflow/src/render/edges.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "complexity_moderate": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-agentflow/src/render/render.ts": {
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -1401,22 +851,8 @@
       }
     },
     "packages/diagram-architecture/src/facet/completions.ts": {
-      "complexity_high": {
-        "count": 2
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-architecture/src/layout/config-length.ts": {
-      "crap_high": {
-        "count": 1
+        "count": 3
       }
     },
     "packages/diagram-architecture/src/layout/invariants.ts": {
@@ -1435,17 +871,6 @@
     "packages/diagram-architecture/src/parser/convert.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-architecture/src/parser/lexer.ts": {
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-architecture/src/parser/normalise.ts": {
@@ -1453,43 +878,21 @@
         "count": 1
       },
       "crap_moderate": {
-        "count": 3
+        "count": 1
       }
     },
     "packages/diagram-architecture/src/parser/parser.ts": {
-      "complexity_high": {
+      "complexity_moderate": {
         "count": 3
-      },
-      "crap_high": {
-        "count": 3
-      },
-      "crap_moderate": {
-        "count": 3
-      }
-    },
-    "packages/diagram-architecture/src/render/edges.ts": {
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-architecture/src/render/render.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-block/src/ascii/draw.ts": {
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-block/src/ascii/grid.ts": {
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -1497,96 +900,40 @@
       "complexity_critical": {
         "count": 1
       },
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 2
+        "count": 3
       },
       "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
     "packages/diagram-block/src/facet/completions.ts": {
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
         "count": 2
       }
     },
     "packages/diagram-block/src/facet/hover.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-block/src/layout/grid.ts": {
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
     "packages/diagram-block/src/layout/layout.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 4
       }
     },
     "packages/diagram-block/src/parser/lexer.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 5
+        "count": 3
       }
     },
     "packages/diagram-block/src/parser/parser.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-block/src/render/render.ts": {
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
@@ -1597,22 +944,13 @@
       "complexity_moderate": {
         "count": 1
       },
-      "crap_high": {
+      "crap_moderate": {
         "count": 1
       }
     },
     "packages/diagram-c4/src/ascii/route.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_high": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
+        "count": 2
       }
     },
     "packages/diagram-c4/src/ascii/warnings.ts": {
@@ -1621,66 +959,34 @@
       }
     },
     "packages/diagram-c4/src/facet/args.ts": {
-      "complexity_critical": {
+      "complexity_high": {
         "count": 1
       },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_critical": {
         "count": 1
       }
     },
     "packages/diagram-c4/src/facet/completions.ts": {
-      "complexity_high": {
+      "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-c4/src/facet/hover.ts": {
-      "crap_high": {
-        "count": 2
       }
     },
     "packages/diagram-c4/src/layout/invariants.ts": {
       "complexity_high": {
-        "count": 2
+        "count": 1
       },
       "complexity_moderate": {
-        "count": 3
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 2
+        "count": 4
       }
     },
     "packages/diagram-c4/src/layout/layout.ts": {
       "complexity_high": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 4
       }
     },
     "packages/diagram-c4/src/layout/route.ts": {
-      "complexity_high": {
-        "count": 2
-      },
       "complexity_moderate": {
-        "count": 4
-      },
-      "crap_high": {
-        "count": 3
-      },
-      "crap_moderate": {
-        "count": 4
+        "count": 6
       }
     },
     "packages/diagram-c4/src/parser/build.ts": {
@@ -1688,40 +994,20 @@
         "count": 1
       },
       "crap_high": {
-        "count": 3
+        "count": 2
       },
       "crap_moderate": {
-        "count": 2
+        "count": 1
       }
     },
     "packages/diagram-c4/src/parser/lexer.ts": {
-      "complexity_critical": {
+      "complexity_high": {
         "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-c4/src/parser/parser.ts": {
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
         "count": 2
-      },
-      "crap_moderate": {
-        "count": 3
-      }
-    },
-    "packages/diagram-c4/src/render/render.ts": {
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-class/scripts/port-v12-specs.ts": {
@@ -1730,14 +1016,8 @@
       }
     },
     "packages/diagram-class/src/facet/completions.ts": {
-      "complexity_high": {
+      "complexity_moderate": {
         "count": 3
-      },
-      "crap_high": {
-        "count": 4
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-class/src/facet/hover.ts": {
@@ -1750,36 +1030,14 @@
         "count": 1
       }
     },
-    "packages/diagram-class/src/layout/config-length.ts": {
-      "crap_high": {
-        "count": 1
-      }
-    },
     "packages/diagram-class/src/layout/prepare.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-class/src/parser/base.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 2
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 4
-      }
-    },
-    "packages/diagram-class/src/parser/lexer.ts": {
-      "crap_high": {
-        "count": 1
+        "count": 3
       }
     },
     "packages/diagram-class/src/parser/member.ts": {
@@ -1787,9 +1045,6 @@
         "count": 1
       },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -1799,30 +1054,18 @@
       },
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
       }
     },
     "packages/diagram-class/src/parser/parser.ts": {
-      "complexity_critical": {
-        "count": 4
+      "complexity_high": {
+        "count": 1
       },
       "complexity_moderate": {
-        "count": 2
-      },
-      "crap_critical": {
-        "count": 4
-      },
-      "crap_moderate": {
-        "count": 3
+        "count": 5
       }
     },
     "packages/diagram-class/src/parser/rules.ts": {
       "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
         "count": 1
       }
     },
@@ -1832,87 +1075,43 @@
       },
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
       }
     },
     "packages/diagram-class/src/render/render.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 2
       }
     },
     "packages/diagram-class/src/render/route.ts": {
-      "complexity_critical": {
+      "complexity_high": {
         "count": 1
       },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
     "packages/diagram-cynefin/src/facet/completions.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-cynefin/src/layout/invariants.ts": {
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
     "packages/diagram-cynefin/src/parser/convert.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-cynefin/src/parser/lexer.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-cynefin/src/parser/parser.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-cynefin/src/render/render.ts": {
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
@@ -1920,19 +1119,13 @@
       "complexity_high": {
         "count": 1
       },
-      "crap_moderate": {
+      "crap_high": {
         "count": 1
       }
     },
     "packages/diagram-er/src/facet/completions.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 3
       }
     },
     "packages/diagram-er/src/facet/hover.ts": {
@@ -1940,16 +1133,8 @@
         "count": 1
       }
     },
-    "packages/diagram-er/src/layout/config-length.ts": {
-      "crap_high": {
-        "count": 1
-      }
-    },
     "packages/diagram-er/src/layout/prepare.ts": {
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -1962,135 +1147,58 @@
       },
       "crap_high": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 3
       }
     },
     "packages/diagram-er/src/parser/parser.ts": {
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 2
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 4
+        "count": 3
       }
     },
     "packages/diagram-er/src/parser/view.ts": {
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-er/src/render/render.ts": {
-      "crap_moderate": {
-        "count": 4
+        "count": 2
       }
     },
     "packages/diagram-eventmodeling/src/facet/completions.ts": {
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
+        "count": 2
       }
     },
     "packages/diagram-eventmodeling/src/facet/hover.ts": {
       "complexity_high": {
-        "count": 2
+        "count": 1
       },
-      "crap_high": {
-        "count": 2
-      }
-    },
-    "packages/diagram-eventmodeling/src/facet/names.ts": {
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-eventmodeling/src/layout/invariants.ts": {
-      "complexity_high": {
+      "complexity_moderate": {
         "count": 2
-      },
-      "crap_high": {
-        "count": 2
-      }
-    },
-    "packages/diagram-eventmodeling/src/layout/layout.ts": {
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-eventmodeling/src/parser/convert.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-eventmodeling/src/parser/lexer.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-eventmodeling/src/parser/normalise.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-eventmodeling/src/parser/parser.ts": {
-      "complexity_critical": {
+      "complexity_high": {
         "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-eventmodeling/src/parser/view.ts": {
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-eventmodeling/src/render/render.ts": {
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -2099,9 +1207,6 @@
         "count": 1
       },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
         "count": 1
       }
     },
@@ -2113,276 +1218,130 @@
     "packages/diagram-flowchart/src/ascii/draw.ts": {
       "complexity_high": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-flowchart/src/ascii/warnings.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "crap_critical": {
+      "complexity_high": {
         "count": 1
       }
     },
     "packages/diagram-flowchart/src/facet/completions.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_high": {
         "count": 2
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 3
-      }
-    },
-    "packages/diagram-flowchart/src/facet/hover.ts": {
-      "complexity_high": {
-        "count": 1
       },
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 2
       }
     },
-    "packages/diagram-flowchart/src/language.ts": {
-      "crap_moderate": {
-        "count": 1
+    "packages/diagram-flowchart/src/facet/hover.ts": {
+      "complexity_moderate": {
+        "count": 2
       }
     },
     "packages/diagram-flowchart/src/parser/lexer.ts": {
       "complexity_critical": {
-        "count": 6
+        "count": 1
       },
       "complexity_high": {
-        "count": 2
-      },
-      "complexity_moderate": {
-        "count": 2
-      },
-      "crap_critical": {
-        "count": 6
-      },
-      "crap_high": {
         "count": 3
       },
+      "complexity_moderate": {
+        "count": 6
+      },
+      "crap_critical": {
+        "count": 1
+      },
+      "crap_high": {
+        "count": 1
+      },
       "crap_moderate": {
-        "count": 4
+        "count": 1
       }
     },
     "packages/diagram-flowchart/src/parser/model.ts": {
       "complexity_critical": {
-        "count": 2
+        "count": 1
+      },
+      "complexity_moderate": {
+        "count": 1
       },
       "crap_critical": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 2
+        "count": 1
       }
     },
     "packages/diagram-flowchart/src/parser/parser.ts": {
-      "complexity_critical": {
-        "count": 2
-      },
       "complexity_high": {
-        "count": 4
-      },
-      "complexity_moderate": {
         "count": 3
       },
-      "crap_critical": {
-        "count": 2
-      },
-      "crap_high": {
-        "count": 5
-      },
-      "crap_moderate": {
-        "count": 9
-      }
-    },
-    "packages/diagram-flowchart/src/render/config-length.ts": {
-      "crap_high": {
-        "count": 1
+      "complexity_moderate": {
+        "count": 6
       }
     },
     "packages/diagram-flowchart/src/render/edges.ts": {
-      "complexity_critical": {
+      "complexity_high": {
         "count": 1
       },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
     "packages/diagram-flowchart/src/render/lanes.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-flowchart/src/render/prepare.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_high": {
-        "count": 2
-      },
-      "crap_critical": {
         "count": 1
       },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 2
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-flowchart/src/render/render.ts": {
-      "complexity_critical": {
+      "complexity_high": {
         "count": 1
       },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 4
-      }
-    },
-    "packages/diagram-gantt/src/dates/dates.ts": {
       "crap_high": {
         "count": 1
       }
     },
     "packages/diagram-gantt/src/facet/completions.ts": {
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
+        "count": 2
       }
     },
     "packages/diagram-gantt/src/facet/hover.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-gantt/src/layout/bars.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-gantt/src/layout/invariants.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/diagram-gantt/src/layout/parts.ts": {
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-gantt/src/parser/lexer.ts": {
-      "complexity_high": {
+      "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-gantt/src/parser/parser.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_high": {
-        "count": 2
+        "count": 1
       },
       "complexity_moderate": {
-        "count": 2
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/diagram-gantt/src/parser/task-ids.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-gantt/src/render/paint.ts": {
-      "crap_high": {
-        "count": 1
-      }
-    },
-    "packages/diagram-gantt/src/render/render.ts": {
-      "crap_moderate": {
-        "count": 3
-      }
-    },
-    "packages/diagram-gantt/src/schedule/fixtures.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-gantt/src/schedule/schedule.ts": {
-      "crap_moderate": {
-        "count": 3
+        "count": 4
       }
     },
     "packages/diagram-gitgraph/src/facet/completions.ts": {
-      "complexity_high": {
+      "complexity_moderate": {
         "count": 2
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/diagram-gitgraph/src/facet/hover.ts": {
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-gitgraph/src/layout/arrows.ts": {
@@ -2391,33 +1350,15 @@
       },
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-gitgraph/src/layout/invariants.ts": {
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
+        "count": 2
       }
     },
     "packages/diagram-gitgraph/src/layout/layout.ts": {
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -2427,108 +1368,45 @@
       }
     },
     "packages/diagram-gitgraph/src/parser/build.ts": {
-      "complexity_critical": {
+      "complexity_moderate": {
         "count": 2
-      },
-      "crap_critical": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-gitgraph/src/parser/convert.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-gitgraph/src/parser/lexer.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-gitgraph/src/parser/parser.ts": {
       "complexity_high": {
-        "count": 2
-      },
-      "crap_high": {
-        "count": 3
-      },
-      "crap_moderate": {
-        "count": 5
-      }
-    },
-    "packages/diagram-gitgraph/src/render/render.ts": {
-      "crap_moderate": {
         "count": 1
-      }
-    },
-    "packages/diagram-info/src/facet/completions.ts": {
-      "crap_moderate": {
+      },
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-info/src/parser/convert.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-info/src/parser/lexer.ts": {
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-info/src/parser/parser.ts": {
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
     "packages/diagram-ishikawa/src/layout/invariants.ts": {
       "complexity_moderate": {
         "count": 2
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-ishikawa/src/parser/lexer.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-ishikawa/src/parser/parser.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-ishikawa/src/render/render.ts": {
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-journey/src/facet/completions.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
@@ -2538,44 +1416,27 @@
       }
     },
     "packages/diagram-journey/src/layout/invariants.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "crap_critical": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-journey/src/layout/layout.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-journey/src/parser/lexer.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "crap_critical": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-journey/src/parser/parser.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-journey/src/render/paint.ts": {
       "complexity_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-journey/src/render/render.ts": {
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -2590,24 +1451,12 @@
       }
     },
     "packages/diagram-kanban/src/facet/completions.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-kanban/src/facet/hover.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
@@ -2617,106 +1466,44 @@
       }
     },
     "packages/diagram-kanban/src/layout/invariants.ts": {
-      "complexity_critical": {
+      "complexity_high": {
         "count": 1
       },
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-kanban/src/layout/layout.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-kanban/src/layout/metrics.ts": {
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-kanban/src/parser/lexer.ts": {
-      "complexity_critical": {
+      "complexity_high": {
         "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-kanban/src/parser/parser.ts": {
-      "complexity_high": {
+      "complexity_moderate": {
         "count": 2
-      },
-      "crap_high": {
-        "count": 3
-      },
-      "crap_moderate": {
-        "count": 3
       }
     },
     "packages/diagram-mindmap/src/facet/completions.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-mindmap/src/facet/hover.ts": {
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/diagram-mindmap/src/language.ts": {
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-mindmap/src/layout/invariants.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "complexity_moderate": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      }
-    },
-    "packages/diagram-mindmap/src/parser/lexer.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/diagram-mindmap/src/parser/parser.ts": {
       "complexity_high": {
         "count": 1
       },
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
+      }
+    },
+    "packages/diagram-mindmap/src/parser/lexer.ts": {
+      "complexity_high": {
+        "count": 1
+      }
+    },
+    "packages/diagram-mindmap/src/parser/parser.ts": {
+      "complexity_moderate": {
         "count": 2
-      },
-      "crap_moderate": {
-        "count": 4
       }
     },
     "packages/diagram-mindmap/src/render/harness.ts": {
@@ -2724,64 +1511,23 @@
         "count": 1
       }
     },
-    "packages/diagram-mindmap/src/render/paint.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-packet/src/facet/completions.ts": {
-      "crap_moderate": {
-        "count": 2
-      }
-    },
     "packages/diagram-packet/src/layout/invariants.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-packet/src/parser/convert.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-packet/src/parser/lexer.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-packet/src/parser/parser.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/diagram-packet/src/render/render.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-pie/src/facet/completions.ts": {
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
@@ -2796,43 +1542,20 @@
       },
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-pie/src/parser/convert.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-pie/src/parser/lexer.ts": {
-      "complexity_critical": {
+      "complexity_moderate": {
         "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-pie/src/parser/parser.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-pie/src/render/render.ts": {
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
@@ -2841,54 +1564,26 @@
         "count": 1
       }
     },
-    "packages/diagram-quadrant/src/layout/layout.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
     "packages/diagram-quadrant/src/parser/lexer.ts": {
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
     "packages/diagram-quadrant/src/parser/parser.ts": {
       "complexity_high": {
-        "count": 3
-      },
-      "crap_high": {
-        "count": 3
-      },
-      "crap_moderate": {
-        "count": 3
-      }
-    },
-    "packages/diagram-quadrant/src/parser/v12-text.ts": {
-      "complexity_high": {
         "count": 1
       },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
+        "count": 2
       }
     },
-    "packages/diagram-quadrant/src/render/render.ts": {
-      "crap_moderate": {
-        "count": 1
+    "packages/diagram-quadrant/src/parser/v12-text.ts": {
+      "complexity_moderate": {
+        "count": 2
       }
     },
     "packages/diagram-radar/src/facet/completions.ts": {
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -2910,47 +1605,21 @@
     "packages/diagram-radar/src/parser/convert.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-radar/src/parser/lexer.ts": {
-      "complexity_critical": {
+      "complexity_moderate": {
         "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-radar/src/parser/normalise.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-radar/src/parser/parser.ts": {
-      "complexity_high": {
+      "complexity_moderate": {
         "count": 2
-      },
-      "crap_high": {
-        "count": 3
-      },
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/diagram-radar/src/render/render.ts": {
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-railroad/src/config.ts": {
@@ -2958,110 +1627,49 @@
         "count": 1
       }
     },
-    "packages/diagram-railroad/src/facet/completions.ts": {
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
     "packages/diagram-railroad/src/facet/parse.ts": {
-      "complexity_high": {
+      "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-railroad/src/layout/invariants.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_high": {
-        "count": 3
+        "count": 2
       },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 3
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 2
       }
     },
     "packages/diagram-railroad/src/parser/abnf/lexer.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-railroad/src/parser/convert.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-railroad/src/parser/ebnf/lexer.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-railroad/src/parser/ir/lexer.ts": {
-      "complexity_high": {
+      "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      }
-    },
-    "packages/diagram-railroad/src/parser/ir/parser.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-railroad/src/parser/lexer.ts": {
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-railroad/src/parser/parser.ts": {
-      "complexity_high": {
+      "complexity_moderate": {
         "count": 2
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 3
-      }
-    },
-    "packages/diagram-railroad/src/parser/peg/lexer.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-railroad/src/render/render.ts": {
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-requirement/src/ascii/draw.ts": {
       "complexity_moderate": {
         "count": 1
       },
-      "crap_moderate": {
+      "crap_high": {
         "count": 1
       }
     },
@@ -3071,41 +1679,18 @@
       }
     },
     "packages/diagram-requirement/src/facet/completions.ts": {
-      "complexity_high": {
+      "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-requirement/src/parser/builder.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-requirement/src/parser/lexer.ts": {
-      "complexity_high": {
+      "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 3
-      }
-    },
-    "packages/diagram-requirement/src/parser/parser.ts": {
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 5
       }
     },
     "packages/diagram-requirement/src/parser/symbols.ts": {
@@ -3113,22 +1698,11 @@
         "count": 1
       }
     },
-    "packages/diagram-requirement/src/render/render.ts": {
-      "crap_moderate": {
-        "count": 2
-      }
-    },
     "packages/diagram-requirement/src/render/route.ts": {
-      "complexity_critical": {
+      "complexity_high": {
         "count": 1
       },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -3140,205 +1714,95 @@
     "packages/diagram-sankey/src/facet/completions.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-sankey/src/layout/invariants.ts": {
-      "complexity_high": {
+      "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 2
       }
     },
     "packages/diagram-sankey/src/parser/cycles.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-sankey/src/parser/lexer.ts": {
-      "complexity_high": {
-        "count": 2
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-sankey/src/parser/parser.ts": {
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/diagram-sequence/src/ascii/draw.ts": {
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 2
       }
     },
     "packages/diagram-sequence/src/ascii/warnings.ts": {
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
+        "count": 2
       }
     },
     "packages/diagram-sequence/src/facet/completions.ts": {
       "complexity_high": {
-        "count": 2
+        "count": 1
       },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
         "count": 2
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-sequence/src/facet/hover.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-sequence/src/layout/columns.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
       }
     },
     "packages/diagram-sequence/src/layout/geometry.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_high": {
         "count": 1
       },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-sequence/src/layout/invariants.ts": {
       "complexity_high": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
       }
     },
     "packages/diagram-sequence/src/layout/layout.ts": {
       "complexity_moderate": {
         "count": 2
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 3
       }
     },
     "packages/diagram-sequence/src/layout/rows.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-sequence/src/parser/builder.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-sequence/src/parser/lexer.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 2
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 5
+        "count": 3
       }
     },
     "packages/diagram-sequence/src/parser/normalise.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_high": {
         "count": 1
       },
-      "crap_critical": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-sequence/src/parser/parser.ts": {
-      "complexity_critical": {
-        "count": 2
-      },
-      "complexity_high": {
-        "count": 3
-      },
-      "crap_critical": {
-        "count": 2
-      },
-      "crap_high": {
-        "count": 3
-      },
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/diagram-sequence/src/parser/rules.ts": {
-      "crap_moderate": {
-        "count": 1
+      "complexity_moderate": {
+        "count": 5
       }
     },
     "packages/diagram-sequence/src/render/arrows.ts": {
       "complexity_moderate": {
         "count": 3
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-sequence/src/render/render.ts": {
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-state/scripts/port-v12-specs.ts": {
@@ -3347,105 +1811,49 @@
       }
     },
     "packages/diagram-state/src/facet/completions.ts": {
-      "complexity_critical": {
+      "complexity_moderate": {
         "count": 2
-      },
-      "crap_critical": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-state/src/facet/hover.ts": {
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-state/src/layout/config-length.ts": {
-      "crap_high": {
-        "count": 1
+        "count": 2
       }
     },
     "packages/diagram-state/src/layout/layout.ts": {
       "complexity_high": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
       }
     },
     "packages/diagram-state/src/layout/prepare.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_high": {
         "count": 1
       },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-state/src/parser/cursor.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-state/src/parser/lexer.ts": {
-      "complexity_critical": {
-        "count": 3
-      },
-      "complexity_high": {
-        "count": 2
-      },
-      "crap_critical": {
-        "count": 3
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 3
+      "complexity_moderate": {
+        "count": 5
       }
     },
     "packages/diagram-state/src/parser/model.ts": {
-      "complexity_critical": {
-        "count": 3
+      "complexity_high": {
+        "count": 2
       },
-      "crap_critical": {
-        "count": 3
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-state/src/parser/parser.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 2
       },
       "crap_moderate": {
         "count": 1
@@ -3464,20 +1872,11 @@
     "packages/diagram-state/src/render/edges.ts": {
       "complexity_high": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
       }
     },
     "packages/diagram-state/src/render/render.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 5
       }
     },
     "packages/diagram-timeline/src/facet/completions.ts": {
@@ -3486,20 +1885,8 @@
       }
     },
     "packages/diagram-timeline/src/layout/invariants.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_high": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
+        "count": 2
       }
     },
     "packages/diagram-timeline/src/layout/lr.ts": {
@@ -3513,24 +1900,12 @@
       }
     },
     "packages/diagram-timeline/src/parser/lexer.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 2
       }
     },
     "packages/diagram-timeline/src/parser/parser.ts": {
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -3542,21 +1917,10 @@
     "packages/diagram-timeline/src/render/properties.fixtures.ts": {
       "complexity_high": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-timeline/src/render/render.ts": {
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-treemap/src/facet/completions.ts": {
       "complexity_high": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -3566,29 +1930,23 @@
       }
     },
     "packages/diagram-treemap/src/format/d3-format.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-treemap/src/layout/invariants.ts": {
       "complexity_high": {
-        "count": 2
+        "count": 1
       },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-treemap/src/layout/layout.ts": {
       "complexity_high": {
-        "count": 2
+        "count": 1
       },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
@@ -3598,9 +1956,6 @@
       },
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
       }
     },
     "packages/diagram-treemap/src/parser/convert.ts": {
@@ -3609,19 +1964,10 @@
       },
       "complexity_moderate": {
         "count": 2
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-treemap/src/parser/lexer.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
@@ -3631,21 +1977,7 @@
       }
     },
     "packages/diagram-treemap/src/parser/parser.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 5
-      }
-    },
-    "packages/diagram-treemap/src/render/render.ts": {
-      "crap_moderate": {
+      "complexity_high": {
         "count": 1
       }
     },
@@ -3664,57 +1996,29 @@
         "count": 1
       }
     },
-    "packages/diagram-treeview/src/facet/names.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-treeview/src/facet/tree.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
     "packages/diagram-treeview/src/layout/invariants.ts": {
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
         "count": 1
       }
     },
     "packages/diagram-treeview/src/layout/layout.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-treeview/src/parser/box.ts": {
       "complexity_moderate": {
-        "count": 2
-      },
-      "crap_moderate": {
         "count": 2
       }
     },
     "packages/diagram-treeview/src/parser/convert.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-treeview/src/parser/lexer.ts": {
-      "complexity_critical": {
+      "complexity_moderate": {
         "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-treeview/src/parser/normalise.ts": {
@@ -3723,22 +2027,8 @@
       }
     },
     "packages/diagram-treeview/src/parser/parser.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 5
-      }
-    },
-    "packages/diagram-treeview/src/render/render.ts": {
-      "crap_moderate": {
-        "count": 1
+        "count": 2
       }
     },
     "packages/diagram-usecase/scripts/port-v12-specs.ts": {
@@ -3756,7 +2046,7 @@
       "complexity_high": {
         "count": 1
       },
-      "crap_moderate": {
+      "crap_high": {
         "count": 1
       }
     },
@@ -3766,32 +2056,15 @@
       }
     },
     "packages/diagram-usecase/src/facet/completions.ts": {
-      "complexity_critical": {
-        "count": 2
-      },
       "complexity_high": {
-        "count": 3
+        "count": 1
       },
-      "crap_critical": {
-        "count": 2
-      },
-      "crap_high": {
-        "count": 3
+      "complexity_moderate": {
+        "count": 4
       }
     },
     "packages/diagram-usecase/src/facet/hover.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-usecase/src/layout/clip.ts": {
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
@@ -3802,23 +2075,14 @@
     },
     "packages/diagram-usecase/src/parser/build.ts": {
       "complexity_high": {
-        "count": 3
-      },
-      "complexity_moderate": {
         "count": 1
       },
-      "crap_high": {
-        "count": 5
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 3
       }
     },
     "packages/diagram-usecase/src/parser/items.ts": {
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -3826,45 +2090,21 @@
       "complexity_critical": {
         "count": 1
       },
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
+        "count": 2
       }
     },
     "packages/diagram-usecase/src/parser/lexer.ts": {
-      "complexity_critical": {
-        "count": 2
-      },
       "complexity_high": {
-        "count": 1
-      },
-      "crap_critical": {
         "count": 2
       },
-      "crap_moderate": {
-        "count": 5
+      "complexity_moderate": {
+        "count": 1
       }
     },
     "packages/diagram-usecase/src/parser/parser.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 4
       }
     },
     "packages/diagram-usecase/src/parser/reader.ts": {
@@ -3876,97 +2116,41 @@
       },
       "crap_critical": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/diagram-usecase/src/render/boundaries.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-usecase/src/render/render.ts": {
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-usecase/src/render/route.ts": {
-      "complexity_critical": {
+      "complexity_high": {
         "count": 1
       },
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-venn/src/facet/completions.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_high": {
         "count": 1
       },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-venn/src/facet/hover.ts": {
       "complexity_moderate": {
         "count": 2
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-venn/src/layout/invariants.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-venn/src/layout/layout.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/diagram-venn/src/parser/lexer.ts": {
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-venn/src/parser/parser.ts": {
       "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/diagram-venn/src/parser/warnings.ts": {
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -3983,120 +2167,44 @@
     "packages/diagram-venn/src/solver/normalize.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-venn/src/solver/regions.ts": {
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-venn/src/solver/solve.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-wardley/src/facet/completions.ts": {
       "complexity_high": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/diagram-wardley/src/facet/names.ts": {
-      "crap_high": {
-        "count": 1
       }
     },
     "packages/diagram-wardley/src/layout/invariants.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_high": {
-        "count": 2
-      },
-      "crap_critical": {
         "count": 1
       },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 2
       }
     },
     "packages/diagram-wardley/src/layout/layout.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_high": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
+        "count": 2
       }
     },
     "packages/diagram-wardley/src/parser/convert.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-wardley/src/parser/lexer.ts": {
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/diagram-wardley/src/parser/normalise.ts": {
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-wardley/src/parser/parser.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
         "count": 3
       }
     },
     "packages/diagram-wardley/src/parser/tables.ts": {
       "complexity_moderate": {
         "count": 1
-      }
-    },
-    "packages/diagram-wardley/src/render/render.ts": {
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-xychart/src/facet/completions.ts": {
@@ -4110,29 +2218,12 @@
       }
     },
     "packages/diagram-xychart/src/layout/axis.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-xychart/src/layout/invariants.ts": {
       "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-xychart/src/layout/scale.ts": {
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -4144,52 +2235,28 @@
     "packages/diagram-xychart/src/parser/lexer.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/diagram-xychart/src/parser/parser.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/diagram-xychart/src/parser/v12-text.ts": {
       "complexity_high": {
         "count": 1
       },
       "complexity_moderate": {
-        "count": 2
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
-    "packages/diagram-xychart/src/render/render.ts": {
-      "crap_moderate": {
+    "packages/diagram-xychart/src/parser/v12-text.ts": {
+      "complexity_moderate": {
         "count": 3
       }
     },
     "packages/language-server/src/discover.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
+      }
+    },
+    "packages/language-server/src/server.ts": {
+      "crap_moderate": {
         "count": 1
       }
     },
@@ -4200,33 +2267,14 @@
     },
     "packages/language-service/src/config/completion.ts": {
       "complexity_high": {
-        "count": 3
+        "count": 1
       },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 4
-      },
-      "crap_moderate": {
-        "count": 1
+        "count": 3
       }
     },
     "packages/language-service/src/config/front-matter.ts": {
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/language-service/src/config/schema.ts": {
-      "crap_moderate": {
-        "count": 2
-      }
-    },
-    "packages/language-service/src/hover.ts": {
-      "crap_high": {
         "count": 1
       }
     },
@@ -4236,44 +2284,21 @@
       }
     },
     "packages/language-service/src/semantic-tokens.ts": {
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      }
-    },
-    "packages/language-service/src/service.ts": {
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
+        "count": 2
       }
     },
     "packages/language-service/src/snapshot.ts": {
       "complexity_high": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
       }
     },
     "packages/language-service/src/symbols.ts": {
       "complexity_high": {
-        "count": 2
+        "count": 1
       },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
         "count": 2
-      },
-      "crap_moderate": {
-        "count": 1
       }
     },
     "packages/layout-elk/scripts/capture-v12-corpus.ts": {
@@ -4294,15 +2319,12 @@
     },
     "packages/layout-elk/src/adapter.ts": {
       "complexity_critical": {
-        "count": 2
+        "count": 1
+      },
+      "complexity_high": {
+        "count": 1
       },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -4312,35 +2334,15 @@
       }
     },
     "packages/layout-elk/src/straighten.ts": {
+      "complexity_moderate": {
+        "count": 2
+      }
+    },
+    "packages/mermaid/src/api.ts": {
       "complexity_high": {
         "count": 1
       },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      }
-    },
-    "packages/mermaid/src/api.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 4
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/mermaid/src/block-pass.ts": {
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -4364,76 +2366,36 @@
       }
     },
     "packages/mermaid/src/dom.ts": {
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "crap_critical": {
         "count": 1
       }
     },
     "packages/mermaid/src/node-scan.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/mermaid/src/node.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      }
-    },
-    "packages/mermaid/src/plugin-queue.ts": {
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/mermaid/src/registry.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_high": {
-        "count": 1
+        "count": 2
       },
       "complexity_moderate": {
         "count": 3
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 5
-      }
-    },
-    "packages/plugin-icons/src/attrs.ts": {
-      "crap_high": {
-        "count": 1
       }
     },
     "packages/plugin-icons/src/body.ts": {
       "complexity_high": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 2
       }
     },
     "packages/plugin-icons/src/index.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/plugin-icons/src/name.ts": {
@@ -4444,9 +2406,6 @@
     "packages/plugin-interactions/src/menus.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_moderate": {
-        "count": 2
       }
     },
     "packages/plugin-math/scripts/spike-evidence.ts": {
@@ -4458,24 +2417,12 @@
       }
     },
     "packages/plugin-math/src/engine.ts": {
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 2
-      },
-      "crap_high": {
         "count": 3
-      },
-      "crap_moderate": {
-        "count": 5
       }
     },
     "packages/plugin-math/src/index.ts": {
       "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
         "count": 1
       }
     },
@@ -4490,44 +2437,17 @@
       }
     },
     "tools/eslint-plugin/index.ts": {
-      "complexity_critical": {
+      "complexity_moderate": {
         "count": 1
-      },
-      "crap_critical": {
-        "count": 3
-      },
-      "crap_high": {
-        "count": 3
-      },
-      "crap_moderate": {
-        "count": 3
       }
     },
     "tools/gen-config/src/generate.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 4
+        "count": 3
       }
     },
     "tools/gen-config/src/registry.ts": {
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -4538,13 +2458,10 @@
     },
     "tools/gen-config/src/theme-direction.ts": {
       "complexity_high": {
-        "count": 2
-      },
-      "crap_high": {
         "count": 1
       },
-      "crap_moderate": {
-        "count": 2
+      "complexity_moderate": {
+        "count": 1
       }
     },
     "tools/gen-config/src/theme-packages.ts": {
@@ -4557,51 +2474,40 @@
         "count": 1
       }
     },
-    "tools/gen-grammar/src/categories.ts": {
-      "crap_moderate": {
-        "count": 1
-      }
-    },
     "tools/gen-grammar/src/docs.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 2
       }
     },
     "tools/gen-grammar/src/earley.ts": {
       "complexity_high": {
-        "count": 2
+        "count": 1
       },
-      "crap_high": {
-        "count": 2
-      },
-      "crap_moderate": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "tools/gen-grammar/src/ebnf.ts": {
       "complexity_critical": {
-        "count": 3
+        "count": 2
       },
-      "crap_critical": {
-        "count": 3
-      }
-    },
-    "tools/gen-grammar/src/generate.ts": {
-      "complexity_critical": {
+      "complexity_high": {
         "count": 1
       },
       "crap_critical": {
+        "count": 2
+      }
+    },
+    "tools/gen-grammar/src/generate.ts": {
+      "complexity_high": {
+        "count": 1
+      },
+      "crap_high": {
         "count": 1
       }
     },
     "tools/gen-grammar/src/highlight-testing.ts": {
       "complexity_critical": {
-        "count": 1
-      },
-      "crap_critical": {
         "count": 1
       }
     },
@@ -4610,9 +2516,6 @@
         "count": 1
       },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_moderate": {
         "count": 1
       }
     },
@@ -4648,10 +2551,7 @@
       }
     },
     "tools/release/src/public-gate.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
@@ -4678,76 +2578,47 @@
     "packages/plugin-interactions/src/index.ts:high impact",
     "packages/core/src/parser-kit/chars.ts:high impact",
     "packages/mermaid/src/registry.ts:high impact",
-    "packages/diagram-c4/src/facet/hover.ts:untested risk",
     "packages/language-service/src/config/front-matter.ts:high impact",
     "packages/bench/src/gates.ts:complexity",
-    "packages/diagram-usecase/src/facet/hover.ts:untested risk",
     "tools/gen-grammar/src/ebnf.ts:high impact",
-    "packages/bench/src/pr-markdown.ts:untested risk",
     "packages/bench/src/markdown.ts:high impact",
     "packages/core/src/svg/style.ts:high impact",
-    "packages/diagram-c4/src/layout/invariants.ts:untested risk",
+    "packages/diagram-c4/src/layout/invariants.ts:hidden coupling",
     "packages/conformance/src/svg-props.ts:high impact",
     "packages/diagram-usecase/src/facet/completions.ts:complexity",
     "packages/core/src/parser-kit/probe.ts:high impact",
     "packages/core/src/layout/layered/index.ts:high impact",
-    "packages/diagram-flowchart/src/facet/hover.ts:untested risk",
-    "packages/diagram-block/src/facet/hover.ts:untested risk",
     "packages/conformance/src/jison/harvest.ts:high impact",
-    "packages/diagram-class/src/facet/completions.ts:untested risk",
     "packages/diagram-class/src/language.ts:high impact",
     "packages/language-service/src/config/schema.ts:high impact",
-    "packages/diagram-c4/src/facet/completions.ts:untested risk",
-    "packages/diagram-kanban/src/facet/hover.ts:untested risk",
-    "packages/diagram-er/src/facet/completions.ts:untested risk",
     "packages/bench/src/pipeline.ts:high impact",
     "packages/diagram-venn/src/facet/completions.ts:complexity",
     "packages/diagram-xychart/src/layout/invariants.ts:high impact",
     "packages/language-service/src/symbols.ts:high impact",
     "packages/core/src/layout/swimlane/__tests__/graphs.ts:high impact",
-    "packages/diagram-eventmodeling/src/facet/hover.ts:untested risk",
     "packages/diagram-wardley/src/facet/completions.ts:complexity",
     "packages/conformance/src/c4/d452.ts:high impact",
-    "packages/diagram-requirement/src/facet/completions.ts:untested risk",
-    "packages/diagram-gitgraph/src/facet/completions.ts:untested risk",
     "packages/diagram-railroad/src/parser/convert.ts:high impact",
-    "packages/diagram-kanban/src/facet/completions.ts:untested risk",
     "packages/core/src/layout/swimlane/swimlane.ts:high impact",
-    "packages/diagram-gitgraph/src/layout/invariants.ts:untested risk",
     "packages/core/src/layout/swimlane/phase4.coordinates.ts:high impact",
     "packages/core/src/preprocess/yaml-text.ts:complexity",
-    "packages/diagram-sankey/src/layout/invariants.ts:untested risk",
     "packages/conformance/src/ascii/flow-checks.ts:complexity",
     "packages/diagram-sequence/src/facet/completions.ts:complexity",
-    "packages/diagram-agentflow/src/facet/hover.ts:untested risk",
-    "packages/language-service/src/service.ts:untested risk",
     "packages/core/src/layout/validate.ts:high impact",
     "packages/core/src/layout/swimlane/__tests__/ddltGates.ts:high impact",
-    "packages/diagram-kanban/src/layout/invariants.ts:untested risk",
     "packages/conformance/src/eventmodeling/v13.ts:high impact",
-    "packages/core/src/text/table.ts:untested risk",
-    "packages/diagram-state/src/facet/hover.ts:untested risk",
     "packages/conformance/src/agentflow/ascii/structure.ts:high impact",
-    "packages/diagram-gantt/src/layout/invariants.ts:untested risk",
     "packages/conformance/src/runner.ts:high impact",
-    "packages/diagram-architecture/src/facet/completions.ts:untested risk",
-    "packages/diagram-block/src/facet/completions.ts:untested risk",
-    "packages/diagram-mindmap/src/facet/completions.ts:untested risk",
-    "packages/diagram-state/src/facet/completions.ts:untested risk",
     "packages/core/src/layout/validate-grid.ts:high impact",
-    "packages/diagram-eventmodeling/src/facet/completions.ts:untested risk",
     "packages/conformance/src/ascii/structure.ts:high impact",
-    "packages/diagram-wardley/src/layout/invariants.ts:untested risk",
     "packages/conformance/src/ascii/usecase-structure.ts:complexity",
     "packages/core/src/theme/theme.ts:high impact",
     "packages/diagram-quadrant/src/layout/invariants.ts:high impact",
     "packages/diagram-agentflow/src/parser/source.ts:high impact",
-    "packages/conformance/src/xychart/grammar/reference.ts:untested risk",
     "packages/diagram-usecase/src/ascii/warnings.ts:complexity",
     "packages/language-service/src/config/completion.ts:complexity",
     "packages/conformance/src/cli/harvest-v12.ts:hidden coupling",
     "packages/core/src/layout/swimlane/phase0.helpers.ts:high impact",
-    "packages/core/src/preprocess/directives.ts:untested risk",
     "packages/diagram-block/src/facet/text.ts:high impact",
     "packages/conformance/src/ascii/er-structure.ts:high impact",
     "packages/diagram-class/src/parser/member.ts:high impact",
@@ -4758,13 +2629,9 @@
     "packages/diagram-architecture/src/parser/lexer.ts:high impact",
     "packages/diagram-gitgraph/src/layout/place.ts:high impact",
     "packages/core/src/config/fragment.ts:high impact",
-    "packages/core/src/layout/layered/sides.ts:untested risk",
-    "packages/diagram-packet/src/facet/completions.ts:untested risk",
     "tools/gen-grammar/src/docs.ts:high impact",
-    "packages/diagram-journey/src/facet/completions.ts:untested risk",
     "packages/plugin-hand-drawn/src/sketch.ts:high impact",
     "packages/diagram-requirement/src/facet/names.ts:high impact",
-    "packages/diagram-mindmap/src/facet/hover.ts:untested risk",
     "packages/diagram-timeline/src/parser/lexer.ts:high impact",
     "packages/conformance/src/sequence/path-bounds.ts:high impact",
     "packages/diagram-flowchart/src/render/render.ts:complexity",
@@ -4782,41 +2649,31 @@
     "packages/core/src/parser-kit/positions.ts:high impact",
     "packages/core/src/svg/url.ts:high impact",
     "packages/conformance/src/svg-tree.ts:high impact",
-    "packages/diagram-agentflow/src/layout/invariants.ts:untested risk",
     "e2e/helpers/stepAnimation.ts:high impact",
     "packages/diagram-packet/src/parser/lexer.ts:high impact",
     "packages/diagram-pie/src/parser/lexer.ts:high impact",
-    "packages/diagram-treeview/src/parser/lexer.ts:untested risk",
-    "packages/diagram-sequence/src/ascii/draw.ts:untested risk",
     "packages/diagram-usecase/src/parser/json.ts:high impact",
     "packages/core/src/layout/swimlane/direction/geometry.ts:high impact",
-    "packages/diagram-packet/src/layout/invariants.ts:untested risk",
     "packages/diagram-timeline/src/render/properties.fixtures.ts:complexity",
     "packages/diagram-treemap/src/layout/invariants.ts:complexity",
-    "packages/core/src/layout/swimlane/selfLoops.ts:untested risk",
     "packages/bench/src/cli/args.ts:high impact",
     "packages/bench/src/cli/bench.ts:hidden coupling",
     "tools/check-deps/check-deps.ts:high impact",
     "packages/core/src/layout/swimlane/__tests__/faceGeometry.ts:high impact",
-    "packages/diagram-cynefin/src/parser/lexer.ts:untested risk",
     "packages/diagram-gantt/src/dates/dates.ts:high impact",
     "packages/diagram-agentflow/src/ascii/draw.ts:complexity",
     "packages/diagram-er/src/ascii/draw.ts:complexity",
     "packages/diagram-gitgraph/src/parser/lexer.ts:high impact",
     "packages/diagram-journey/src/parser/lexer.ts:high impact",
     "packages/diagram-treemap/src/parser/lexer.ts:high impact",
-    "packages/diagram-flowchart/src/facet/completions.ts:untested risk",
-    "packages/conformance/src/ascii/requirement-structure.ts:untested risk",
     "packages/core/src/ascii/canvas.ts:high impact",
     "packages/diagram-treemap/src/parser/convert.ts:high impact",
     "packages/diagram-mindmap/src/parser/lexer.ts:high impact",
     "packages/diagram-eventmodeling/src/layout/invariants.ts:high impact",
     "packages/diagram-c4/src/facet/args.ts:complexity",
     "packages/layout-elk/src/adapter.ts:complexity",
-    "packages/diagram-sequence/src/layout/geometry.ts:untested risk",
     "packages/core/src/config/resolve.ts:complexity",
     "packages/core/src/layout/swimlane/laneFit.ts:high impact",
-    "packages/diagram-agentflow/src/facet/completions.ts:untested risk",
     "packages/diagram-gitgraph/src/layout/arrows.ts:complexity",
     "packages/diagram-sankey/src/parser/values.ts:high impact",
     "packages/dev/src/browser/explorer/compare-model.ts:high impact",
@@ -4824,7 +2681,6 @@
     "packages/diagram-agentflow/src/parser/base.ts:complexity",
     "packages/conformance/src/langium-lexer.ts:hidden coupling",
     "packages/core/src/svg/inert.ts:high impact",
-    "packages/diagram-info/src/parser/lexer.ts:untested risk",
     "packages/diagram-flowchart/src/parser/lexer.ts:high impact",
     "packages/diagram-class/src/parser/v12-text.ts:high impact",
     "packages/diagram-class/src/render/route.ts:complexity",
@@ -4856,7 +2712,6 @@
     "packages/diagram-usecase/src/render/route.ts:complexity",
     "packages/diagram-state/src/parser/lexer.ts:high impact",
     "packages/conformance/src/agentflow/ascii/fuzz.ts:complexity",
-    "tools/eslint-plugin/index.ts:untested risk",
     "tools/gen-grammar/src/highlight-testing.ts:complexity",
     "packages/core/src/layout/swimlane/direction/labelAnchoring.ts:complexity",
     "packages/core/src/layout/swimlane/direction/siblingSharedFaceRouting.ts:complexity",
@@ -4868,7 +2723,6 @@
     "packages/core/src/parser-kit/source-view.ts:complexity",
     "packages/diagram-sequence/src/parser/lexer.ts:high impact",
     "packages/core/src/layout/swimlane/direction/terminalStub.ts:complexity",
-    "packages/diagram-treemap/src/format/d3-format.ts:untested risk",
     "packages/diagram-gantt/src/parser/lexer.ts:high impact",
     "packages/core/src/layout/layered/layered.ts:high impact",
     "packages/diagram-sequence/src/layout/metrics.ts:hidden coupling",
@@ -4877,7 +2731,6 @@
     "packages/diagram-venn/src/parser/lexer.ts:high impact",
     "packages/diagram-block/src/parser/lexer.ts:high impact",
     "packages/diagram-wardley/src/layout/layout.ts:complexity",
-    "packages/diagram-c4/src/layout/route.ts:untested risk",
     "packages/diagram-usecase/src/parser/lexer.ts:complexity",
     "packages/core/src/layout/swimlane/direction/detourSimplification.ts:complexity",
     "packages/diagram-treemap/src/layout/tiles.ts:complexity",
