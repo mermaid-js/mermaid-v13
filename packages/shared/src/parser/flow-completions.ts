@@ -128,6 +128,24 @@ function writtenKeys(text: string, from: number, to: number, except: number): Se
   return keys;
 }
 
+/** The last of `kinds` that is not in `blank`, or -1. */
+function lastOutside(kinds: readonly number[], blank: ReadonlySet<number>): number {
+  for (let i = kinds.length - 1; i >= 0; i--) {
+    const k = kinds[i] ?? -1;
+    if (!blank.has(k)) return k;
+  }
+  return -1;
+}
+
+/** How many blank-separated groups `kinds` holds after the one at `first`. */
+function groupsAfter(kinds: readonly number[], first: number, blank: ReadonlySet<number>): number {
+  let groups = 0;
+  for (let i = first + 1; i < kinds.length; i++) {
+    if (!blank.has(kinds[i] ?? -1) && blank.has(kinds[i - 1] ?? -1)) groups++;
+  }
+  return groups;
+}
+
 /** One dialect's completion. */
 class FlowCompletions<M> {
   private readonly T: FlowKinds;
@@ -157,8 +175,8 @@ class FlowCompletions<M> {
   private readonly isWord = (kind: number): boolean =>
     this.idPart.has(kind) || ['Keyword', 'Constant'].includes(this.d.categories[kind] ?? '');
 
-  private statementBefore(tokens: TokenStream, at: number): Statement {
-    const { blank } = this;
+  /** The kinds of the statement's tokens that end at or before `at`, blanks included. */
+  private statementKinds(tokens: TokenStream, at: number): number[] {
     const kinds: number[] = [];
     for (let i = tokenBefore(tokens, at - 1); i >= 0; i--) {
       const k = tokens.kind[i] ?? Kind.EOF;
@@ -168,18 +186,19 @@ class FlowCompletions<M> {
       if (inKindSet(this.d.readPast, k)) continue;
       kinds.push(k);
     }
-    kinds.reverse();
+    return kinds.reverse();
+  }
+
+  private statementBefore(tokens: TokenStream, at: number): Statement {
+    const { blank } = this;
+    const kinds = this.statementKinds(tokens, at);
     const first = kinds.findIndex((k) => !blank.has(k));
-    let groups = 0;
-    for (let i = first + 1; first >= 0 && i < kinds.length; i++) {
-      if (!blank.has(kinds[i] ?? -1) && blank.has(kinds[i - 1] ?? -1)) groups++;
-    }
-    let prev = -1;
-    for (let i = kinds.length - 1; i >= 0 && prev < 0; i--) {
-      const k = kinds[i] ?? -1;
-      if (!blank.has(k)) prev = k;
-    }
-    return { head: first < 0 ? -1 : (kinds[first] ?? -1), prev, groups };
+    if (first < 0) return { head: -1, prev: -1, groups: 0 };
+    return {
+      head: kinds[first] ?? -1,
+      prev: lastOutside(kinds, blank),
+      groups: groupsAfter(kinds, first, blank),
+    };
   }
 
   /** Whether `[from, to)` is blanks on the header line, right after the header keyword. */
@@ -243,6 +262,17 @@ class FlowCompletions<M> {
     return j;
   }
 
+  /** The link start token that is still open at `o` (no link or statement end after it), or -1. */
+  private openLink(tokens: TokenStream, o: number): number {
+    const { T } = this;
+    for (let i = tokenBefore(tokens, o - 1); i >= 0; i--) {
+      const k = tokens.kind[i] ?? Kind.EOF;
+      if (k === T.StartLink) return i;
+      if (k === T.Link || this.statementEnd.has(k)) return -1;
+    }
+    return -1;
+  }
+
   /**
    * `A -- text --|`, `A -. text .|`, `A -- text |`: the arrow that closes edge text, by how the
    * link was opened. Offered after a blank or a typed part of the closer, once some edge text
@@ -253,16 +283,7 @@ class FlowCompletions<M> {
     tokens: TokenStream,
     o: number
   ): CompletionItem[] | undefined {
-    const { T } = this;
-    let open = -1;
-    for (let i = tokenBefore(tokens, o - 1); i >= 0; i--) {
-      const k = tokens.kind[i] ?? Kind.EOF;
-      if (k === T.StartLink) {
-        open = i;
-        break;
-      }
-      if (k === T.Link || this.statementEnd.has(k)) return undefined;
-    }
+    const open = this.openLink(tokens, o);
     if (open < 0) return undefined;
     const opened = text.slice(tokens.start[open], tokens.end[open]).trim();
     const closers = this.d.closers[opened.slice(-2)];
@@ -430,65 +451,116 @@ class FlowCompletions<M> {
     this.d.idForms(items, word);
   }
 
-  complete(probe: ProbeResult, doc: DocumentView<AstNode>): CompletionItem[] {
-    const { T, d } = this;
-    const { text, result } = doc;
-    const tokens = result.tokens;
-    if (!tokens) return [];
-    const model = result.model as M;
-    if (probe.mode === 'shapeData') return this.shapeData(text, tokens, model, probe);
+  /**
+   * Inside or right after a link start: the arrow that closes edge text, else the rest of the
+   * arrow after `--`, `==` or `-.`, whichever mode the probe ended in (the link start token takes
+   * the line break after it, so the probe may be past it). Undefined when the cursor is in neither.
+   */
+  private linkRest(
+    text: string,
+    tokens: TokenStream,
+    probe: ProbeResult
+  ): CompletionItem[] | undefined {
     const close = this.edgeTextClose(text, tokens, probe.offset);
     if (close) return close;
-    // Right after `--`, `==` or `-.`: the rest of the arrow, whichever mode the probe ended in
-    // (the link start token takes the line break after it, so the probe may be past it).
     const rest = this.arrowRest(text, tokens, probe.offset);
-    if (rest.length > 0 || d.edgeTextModes.includes(probe.mode)) return rest;
-    if (!CODE_MODES.includes(probe.mode)) return [];
+    return rest.length > 0 || this.d.edgeTextModes.includes(probe.mode) ? rest : undefined;
+  }
 
+  /** The header's direction: by kind, or by position at the end of the text (see above). */
+  private atDirection(
+    text: string,
+    tokens: TokenStream,
+    expected: ReadonlySet<number>,
+    from: number
+  ): boolean {
+    return (
+      expected.has(this.T.Dir) ||
+      this.onHeaderLine(text, tokens, from) ||
+      afterDirection(text, from)
+    );
+  }
+
+  /** The ids an expected id may be at this point of the statement. */
+  private idItems(
+    items: Items,
+    doc: DocumentView<AstNode>,
+    tokens: TokenStream,
+    at: { st: Statement; range: Range; typedAt: number },
+    nodeKind: (s: SymbolOccurrence) => CompletionKind
+  ): void {
+    const { text, result } = doc;
+    const { st, range, typedAt } = at;
+    const context = this.idContext(st);
+    if (context === 'classes') ids(items, result.symbols, CLASS_KINDS, typedAt, () => 'class');
+    if (context !== 'nodes') return;
+    const word = this.isId(tokens, range) ? text.slice(range.start, range.end) : '';
+    this.nodes(items, result.symbols, result.model as M, { st, word, typedAt }, nodeKind);
+  }
+
+  /** An arrow glued to the id (`A-`, `B <-`): the lexer reads it as part of the id or a tag. */
+  private gluedArrows(
+    items: Items,
+    text: string,
+    o: number,
+    st: Statement,
+    expected: ReadonlySet<number>
+  ): void {
+    const { T } = this;
+    if (expected.has(T.Graph) || st.head === T.Graph || this.idContext(st) !== 'nodes') return;
+    for (const item of this.gluedArrow(text, o)) {
+      if (!items.list.some((x) => x.label === item.label)) items.list.push(item);
+    }
+  }
+
+  /** In a statement, a header or a `click` target: what the parser expects at the cursor. */
+  private code(probe: ProbeResult, doc: DocumentView<AstNode>, tokens: TokenStream): Items {
+    const { T, d } = this;
+    const { text, result } = doc;
     const word = wordRunRange(text, tokens, probe, this.isWord);
     // `A,B` is one word to the lexer: only what follows the last comma is replaced.
     const comma = text.slice(word.start, probe.offset).lastIndexOf(',');
     const range = comma >= 0 ? span(word.start + comma + 1, word.end) : word;
     const items = new Items(text.slice(range.start, probe.offset), range);
     const expected = new Set(probe.expected);
-    // The header's direction: by kind, or by position at the end of the text (see above).
-    if (
-      expected.has(T.Dir) ||
-      this.onHeaderLine(text, tokens, range.start) ||
-      afterDirection(text, range.start)
-    ) {
+    if (this.atDirection(text, tokens, expected, range.start)) {
       for (const [dir, meaning] of FLOW_DIRECTION_DOCS) {
         items.add(dir, 'constant', { detail: meaning });
       }
-      return items.list;
+      return items;
     }
-    const containers = new Set(d.containers(model));
+    const containers = new Set(d.containers(result.model as M));
     const nodeKind = (s: SymbolOccurrence): CompletionKind =>
       containers.has(s.name) ? 'subgraph' : 'node';
     if (probe.mode === 'click') {
       ids(items, result.symbols, NODE_KINDS, word.start, nodeKind);
-      return items.list;
+      return items;
     }
     const st = this.statementBefore(tokens, word.start);
     if (st.prev === T.Interpolate) {
       for (const curve of FLOW_CURVES) items.add(curve, 'constant');
-      return items.list;
+      return items;
     }
     this.byKind(items, expected);
-    const context = expected.has(T.NodeString) ? this.idContext(st) : 'none';
-    if (context === 'classes') ids(items, result.symbols, CLASS_KINDS, word.start, () => 'class');
-    else if (context === 'nodes') {
-      const id = this.isId(tokens, range) ? text.slice(range.start, range.end) : '';
-      this.nodes(items, result.symbols, model, { st, word: id, typedAt: word.start }, nodeKind);
+    if (expected.has(T.NodeString)) {
+      this.idItems(items, doc, tokens, { st, range, typedAt: word.start }, nodeKind);
     }
     this.operators(items, expected);
-    // An arrow glued to the id (`A-`, `B <-`): the lexer reads it as part of the id or a tag.
-    if (!expected.has(T.Graph) && st.head !== T.Graph && this.idContext(st) === 'nodes') {
-      for (const item of this.gluedArrow(text, probe.offset)) {
-        if (!items.list.some((x) => x.label === item.label)) items.list.push(item);
-      }
+    this.gluedArrows(items, text, probe.offset, st, expected);
+    return items;
+  }
+
+  complete(probe: ProbeResult, doc: DocumentView<AstNode>): CompletionItem[] {
+    const { text, result } = doc;
+    const tokens = result.tokens;
+    if (!tokens) return [];
+    if (probe.mode === 'shapeData') {
+      return this.shapeData(text, tokens, result.model as M, probe);
     }
-    return items.list;
+    const link = this.linkRest(text, tokens, probe);
+    if (link) return link;
+    if (!CODE_MODES.includes(probe.mode)) return [];
+    return this.code(probe, doc, tokens).list;
   }
 }
 
