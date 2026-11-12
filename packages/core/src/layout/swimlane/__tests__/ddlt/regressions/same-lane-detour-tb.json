@@ -1,0 +1,177 @@
+{
+  "tuning": {
+    "ignoreCrossLaneEdges": true,
+    "optimizeRanksByCrossings": true,
+    "automaticLaneOrdering": false
+  },
+  "graph": {
+    "direction": "TB",
+    "nodes": [
+      {
+        "id": "a",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Ops",
+        "span": 128
+      },
+      {
+        "id": "b",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Ops",
+        "span": 128
+      },
+      {
+        "id": "c",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Ops",
+        "span": 128
+      },
+      {
+        "id": "d",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Qa",
+        "span": 128
+      },
+      {
+        "id": "e",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Qa",
+        "span": 128
+      },
+      {
+        "id": "f",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Legal",
+        "span": 128
+      }
+    ],
+    "groups": [
+      {
+        "id": "Ops",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 25.676,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Qa",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 18.676,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Legal",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 34.244,
+          "height": 16.1
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "L_a_b_0",
+        "source": "a",
+        "target": "b",
+        "minLen": 1
+      },
+      {
+        "id": "L_b_c_0",
+        "source": "b",
+        "target": "c",
+        "minLen": 1
+      },
+      {
+        "id": "L_c_a_0",
+        "source": "c",
+        "target": "a",
+        "minLen": 1
+      },
+      {
+        "id": "L_a_d_0",
+        "source": "a",
+        "target": "d",
+        "minLen": 1
+      },
+      {
+        "id": "L_d_e_0",
+        "source": "d",
+        "target": "e",
+        "minLen": 1
+      },
+      {
+        "id": "L_b_f_0",
+        "source": "b",
+        "target": "f",
+        "minLen": 1
+      },
+      {
+        "id": "L_f_e_0",
+        "source": "f",
+        "target": "e",
+        "minLen": 1
+      }
+    ],
+    "spacing": {
+      "node": 50,
+      "rank": 50,
+      "edge": 20
+    },
+    "diagramPadding": 8,
+    "routing": "stepped",
+    "headRoom": 7,
+    "metrics": {
+      "portPitch": 16,
+      "minPitch": 8,
+      "portSep": 20,
+      "trackMargin": 18,
+      "trackPitch": 10,
+      "trackSpread": 14,
+      "levelMargin": 28,
+      "levelPitch": 12,
+      "levelLead": 12,
+      "levelClear": 8,
+      "levelTouch": 4,
+      "snap": 12,
+      "bendSnap": 24,
+      "leanClear": 40,
+      "fan": 24,
+      "loop": 26,
+      "loopGap": 6,
+      "loopLabel": 28,
+      "corner": 12,
+      "turnBreakpoint": 640,
+      "endLabelAlong": 4,
+      "endLabelAcross": 6
+    }
+  }
+}

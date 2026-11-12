@@ -40,8 +40,17 @@ function gateIssues(id: string): string[] {
 
 const ids = Object.keys(DDLT_FIXTURES);
 
-/** Fixtures added in v13, not in v12's folder at the port baseline. */
-const V13_ONLY: readonly string[] = [];
+/**
+ * Fixtures not in v12's folder at the port baseline: the fixtures of v12 fixes merged or opened
+ * after it, which come over as fixtures (#683, #709).
+ */
+const V13_ONLY: readonly string[] = [
+  // mermaid-js/mermaid#8407
+  'regressions/opposite-edges-gap',
+  // mermaid-js/mermaid#8698
+  'regressions/same-lane-back-edge-lr',
+  'regressions/same-lane-detour-tb',
+];
 
 describe('swimlane DDLT fixtures', () => {
   it('cover every fixture, the regressions included', () => {

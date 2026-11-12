@@ -56,5 +56,12 @@ export const ARCHITECTURE_ARROW_SHRUNK = 'ARCHITECTURE_ARROW_SHRUNK';
  */
 export const ARCHITECTURE_EDGE_NOT_DRAWN = 'ARCHITECTURE_EDGE_NOT_DRAWN';
 
+/**
+ * Warning (#673, D556): `layout` (or `architecture.layout`) names `layered` or `dagre`, which
+ * ignore the edge sides for placement; the diagram is laid out with `compass`, as v12 always laid
+ * architecture out with its own engine. One per render, with the config `path`.
+ */
+export const ARCHITECTURE_LAYOUT_IGNORED = 'ARCHITECTURE_LAYOUT_IGNORED';
+
 /** How many names a warning lists, and how long each may be, before it says "and n more". */
 export const WARNING_NAMES = { listed: 8, longest: 60 } as const;
