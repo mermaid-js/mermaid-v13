@@ -75,8 +75,8 @@ import {
 } from './config-snapshot.ts';
 import { AnalysisCache, type Analysis, type Detection } from './analysis-cache.ts';
 import { createDomAdapter } from './dom.ts';
-import { blockConfig, blockLayers, blockPass, lazyEmbed, outsideBlocks } from './embeds.ts';
-import type { DrawBlocks } from './embeds.ts';
+import type { DrawBlocks } from './block-pass.ts';
+import { blockLoader, outsideBlocks, type BlockHost } from './embeds.ts';
 import { toMermaidError, toWarning, unsupportedDiagram } from './errors.ts';
 import { iconPackRegistry, packsUnsupported, type IconLoader } from './icon-packs.ts';
 import { selectMeasurer } from './measurer.ts';
@@ -261,7 +261,7 @@ export function createMermaid(
     plugin: AnyPlugin,
     detected: Detected,
     pre: PreprocessResult,
-    host?: ResolvedConfig
+    host?: BlockHost
   ): Analysis {
     const warnings: Warning[] = [];
     const warn = (w: Warning): void => void warnings.push(toWarning(w, registry.fragments()));
@@ -272,10 +272,13 @@ export function createMermaid(
     const hit = siteConfigs.get(snap, plugin, detected, section, registry.fragments());
     for (const w of hit.warnings) warn(w);
     // An embedded diagram (ADR-15) sets only its own options, with one warning for the rest.
-    if (host) ({ front, directives } = blockLayers(front, directives, hit.site, warn));
+    if (host) ({ front, directives } = host.layers(front, directives, hit.site, warn));
     // An embedded diagram starts from its host's config, and takes its theme.
-    let config: ResolvedConfig = resolveText(hit.site, front, directives, { warn, under: host });
-    if (host) config = blockConfig(config, host, [section ?? []].flat());
+    let config: ResolvedConfig = resolveText(hit.site, front, directives, {
+      warn,
+      under: host?.config,
+    });
+    if (host) config = host.resolve(config, [section ?? []].flat());
     const t = stageStart();
     const claims = hooks.claims();
     const parse = plugin.parse(
@@ -337,11 +340,12 @@ export function createMermaid(
     return analysis;
   }
 
-  // Embedded diagrams (ADR-15): a host's blocks, parsed and drawn before the host draws.
-  const blocks = blockPass({
+  // Embedded diagrams (ADR-15): a host's blocks, parsed and drawn before the host draws. The
+  // pass is a chunk of its own, loaded for the first text with a block (D553).
+  const blocks = blockLoader({
     detect,
     analyse: (text, s, { detected, pre }, plugin, host) =>
-      analyse(text, s, plugin, detected, pre, host.prepared.config),
+      analyse(text, s, plugin, detected, pre, host),
     load: (id) => registry.load(id),
     loaded: (id) => registry.plugin(id),
     resources: async (a, format) => {
@@ -431,7 +435,9 @@ export function createMermaid(
       analysis = analysisOf(text, s, f, await registry.load(f.detected.id));
     }
     if (ascii) await loadText(analysis);
-    await blocks.prepare({ root: text, at: 0, a: analysis, s }, ascii ? 'ascii' : 'svg');
+    await (
+      await blocks.load(analysis)
+    )?.prepare({ root: text, at: 0, a: analysis, s }, ascii ? 'ascii' : 'svg');
     await loadFor(analysis, ascii);
     return analysis;
   }
@@ -563,7 +569,7 @@ export function createMermaid(
     const inline = inlineSpans(hooks.inline(), warn, textOutput ? 'ascii' : 'svg', packs);
     const icon = textOutput ? undefined : hooks.icon(inline, packs);
     // The blocks (ADR-15) are drawn at the first lookup, with this draw's id prefix.
-    const { embed, mounter } = lazyEmbed(drawBlocks, () => ctx.idPrefix, warn);
+    const { embed, mounter } = blocks.lookup(drawBlocks, () => ctx.idPrefix, warn);
     const ctx: RenderContext = {
       config,
       measurer:
@@ -644,7 +650,7 @@ export function createMermaid(
     });
     // The blocks (ADR-15), drawn in this charset and padding at the first lookup.
     const inner = blocksFor?.({ format: 'ascii', now: options?.now, ascii: { charset, padding } });
-    const { embed: embedText } = lazyEmbed(
+    const { embed: embedText } = blocks.lookup(
       inner,
       () => ctx.idPrefix,
       (w) => ctx.warn(w)
@@ -711,9 +717,9 @@ export function createMermaid(
     if (!('prepared' in analysis)) return analysis;
     if (format === 'ascii')
       return drawAscii(text, s, options, analysis, (o) =>
-        blocks.drawText({ root: text, at: 0, a: analysis, s }, o)
+        blocks.of(analysis)?.drawText({ root: text, at: 0, a: analysis, s }, o)
       );
-    const blockDraw = blocks.draw({ root: text, at: 0, a: analysis, s }, options);
+    const blockDraw = blocks.of(analysis)?.draw({ root: text, at: 0, a: analysis, s }, options);
     const { drawn, warnings, mount } = drawSvg(text, s, options, analysis, blockDraw);
     const result: RenderResult = { ...drawn, diagramType: analysis.prepared.diagramType, warnings };
     // The DOM adapter's afterMount entry point (DESIGN §12.2, §12.3); `run`/`mount` call it.
@@ -796,7 +802,7 @@ export function createMermaid(
       const { detected, pre } = f;
       const plugin = await registry.load(detected.id);
       const a = cache.get(text, s) ?? analysisOf(text, s, f, plugin);
-      await blocks.prepare({ root: text, at: 0, a, s }, undefined);
+      await (await blocks.load(a))?.prepare({ root: text, at: 0, a, s }, undefined);
       const config: Plain = {};
       const front = pre.frontMatter?.config;
       for (const c of [

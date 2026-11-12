@@ -186,9 +186,17 @@ describe('block types that cannot be drawn', () => {
     }
   });
 
-  it('names the type in renderSync too', async () => {
+  it('needs the block pass loaded for renderSync (D553)', async () => {
     const m = createSlim({ diagrams: [flowchart] });
     await m.prepare('flowchart LR\n  A');
+    // No text with a block was prepared: the block pass is not loaded yet.
+    expect(() => m.renderSync(text)).toThrow(/Not loaded: diagram "mermaid blocks"/);
+  });
+
+  it('names the type in renderSync too', async () => {
+    const m = createSlim({ diagrams: [flowchart] });
+    // A text with a block that can be drawn loads the block pass.
+    await m.prepare('flowchart LR\n  mermaid f {\n    flowchart LR\n      A\n  }');
     let e: unknown;
     try {
       m.renderSync(text);

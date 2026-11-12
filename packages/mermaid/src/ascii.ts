@@ -4,7 +4,7 @@
  * lazily, only for `format: 'ascii'`, so an SVG render never loads the kit (R-ASCII-9, D87).
  */
 import { cellWidth } from '@mermaid-js/core/ascii';
-import type { BlockText } from './embeds.ts';
+import type { BlockText } from './block-pass.ts';
 
 export { asciiOptions, cellMeasurer, cellWidth } from '@mermaid-js/core/ascii';
 
