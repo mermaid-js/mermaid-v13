@@ -1,0 +1,20 @@
+---
+description: >-
+  Issue #673: `layout: dagre` (v12's name for `layered`) ignores the edge sides for placement,
+  so architecture keeps `compass` (D556) and warns ARCHITECTURE_LAYOUT_IGNORED. Each `x:R --> L:y`
+  puts y right of x: A, B, C on one row in G0, D and E on one row in G1 below C.
+config:
+  layout: dagre
+---
+architecture-beta
+ group g0(cloud)[G0]
+ service a(server)[A] in g0
+ service b(server)[B] in g0
+ service c(server)[C] in g0
+ a:R --> L:b
+ b:R --> L:c
+ group g1(cloud)[G1]
+ service d(server)[D] in g1
+ service e(server)[E] in g1
+ d:R --> L:e
+ c:B --> T:d

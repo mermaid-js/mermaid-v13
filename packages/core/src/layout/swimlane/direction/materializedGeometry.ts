@@ -1,7 +1,8 @@
 // Ported from v12 `swimlanes/direction/materializedGeometry.ts` at upstream `c9b12739f` (D532).
 // Changed: the title-band passes follow D536 (BT lifts a top band, RL shifts a left band); types
 // tightened for `noUncheckedIndexedAccess`; v12 `Edge`/`Node` are the engine's `layoutData.ts` types;
-// the tail swap keeps legs off the destination's box (#636); `liftRailsOffForeignEdgeLabels` (#634).
+// the tail swap keeps legs off the destination's box (#636); `liftRailsOffForeignEdgeLabels` (#634);
+// the crossing cleanup keeps an edge whose ends share a lane inside it (#683).
 /* eslint-disable complexity, max-depth, max-lines, max-lines-per-function, no-nested-ternary, sonarjs/no-identical-functions -- v12's file kept whole so upstream fixes port by hand (D532) */
 // cspell:ignore Wybrow sonarjs
 
@@ -23,6 +24,7 @@ import {
   portForRectSide,
   rectOfNodeBounds,
   sameAxisSegmentOverlapLength,
+  segmentBoundsOverlapRect,
   segmentHitsAnyRect,
   simplifyPolyline,
 } from './geometry.ts';
@@ -45,6 +47,12 @@ import type {
 } from './crossingIndex.ts';
 import { EDGE_ROUTING } from '../config.ts';
 import { buildLaneModel } from '../lanes.ts';
+import {
+  crossingPointsBetween,
+  hopsStayInsideBand,
+  sharedLaneBand,
+  staysInsideBand,
+} from './laneContainment.ts';
 
 const EPS_LOCAL = 1e-3;
 const MIN_SHARED = 8;
@@ -2215,6 +2223,18 @@ export function shortcutRedundantOrthogonalJogs(
     return strictCrossingCount(edge, candidate) <= currentCrossings;
   };
 
+  // v13 (#683): whether a route runs through `rect`, the box of its own start or end, not only
+  // touching it. A shortcut must not make a route run through either box it did not already run
+  // through; the cause v12 found in mermaid-js/mermaid#8698.
+  const entersRect = (points: PointLite[], rect: RectLite): boolean =>
+    segmentsFor(points).some((segment) =>
+      segmentBoundsOverlapRect(segment.a, segment.b, rect, -BUFFER)
+    );
+  const entersAnotherEndBox = (edge: MaterializedEdge, candidate: PointLite[]): boolean =>
+    endpointRectsFor(edge).some(
+      (rect) => !entersRect(pointsFor(edge), rect) && entersRect(candidate, rect)
+    );
+
   for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
     round = startRound();
     const currentCrossings = strictCrossingCount();
@@ -2235,7 +2255,11 @@ export function shortcutRedundantOrthogonalJogs(
           const improvesShape =
             candidateBends < currentBends ||
             (candidateBends === currentBends && candidateLength < currentLength - EPS_LOCAL);
-          if (!improvesShape || !candidateIsSafe(edge, candidate, currentCrossings)) {
+          if (
+            !improvesShape ||
+            entersAnotherEndBox(edge, candidate) ||
+            !candidateIsSafe(edge, candidate, currentCrossings)
+          ) {
             continue;
           }
 
@@ -2386,12 +2410,19 @@ export function resolveRenderedOrthogonalCrossings(
 
   const visibleEdges = edges.filter((edge) => !(edge as { isLayoutOnly?: boolean }).isLayoutOnly);
   const edgeIndex = new Map(visibleEdges.map((edge, index) => [edge, index]));
+  // v13 (#683): the routes as they came in, for `keepSameLaneEdgesInside`.
+  const routedBefore = new Map(
+    visibleEdges.map((edge) => [edge, dedupeConsecutivePoints(edge.points ?? [])] as const)
+  );
 
+  // The outer tracks candidates are built on: the diagram's, or while an edge is brought back
+  // into its lane, that lane's own (#683).
+  let activeTracks: Record<RectSide, number> = outsideTracks;
   const outwardTracksForSide = (side: RectSide): number[] => {
     const outward = side === 'left' || side === 'top' ? -1 : 1;
     const tracks: number[] = [];
     for (let channel = 0; channel <= EXTRA_CHANNEL_COUNT; channel++) {
-      tracks.push(outsideTracks[side] + outward * ANCHOR * channel);
+      tracks.push(activeTracks[side] + outward * ANCHOR * channel);
     }
     return tracks;
   };
@@ -2612,7 +2643,7 @@ export function resolveRenderedOrthogonalCrossings(
     dst: PointLite
   ): void => {
     const outward = srcSide === 'left' || srcSide === 'top' ? -1 : 1;
-    const trackSeeds = [localTrackForSameSide(src, srcSide, dst), outsideTracks[srcSide]];
+    const trackSeeds = [localTrackForSameSide(src, srcSide, dst), activeTracks[srcSide]];
     for (const seed of trackSeeds) {
       for (let channel = 0; channel <= EXTRA_CHANNEL_COUNT; channel++) {
         pushOrthogonalCandidate(
@@ -3189,12 +3220,153 @@ export function resolveRenderedOrthogonalCrossings(
     return best.replacements.size > 0 ? best.replacements : undefined;
   };
 
+  // v13 (#683): the reroutes below save crossings without asking whether a route leaves its
+  // lane. An edge whose ends share a lane, and whose route then leaves it, is put back on its best
+  // route inside the lane: the cause and the rules v12 found in mermaid-js/mermaid#8698.
+  const laneModel = buildLaneModel([...nodeByIdMap.values()]);
+
+  // A lane's own outer tracks run just outside the nodes it holds, inside its box. A lane that
+  // holds no node has none.
+  const laneTracks = (band: RectLite): Record<RectSide, number> | undefined => {
+    const inside = realNodes.filter((node) => staysInsideBand([{ x: node.cx, y: node.cy }], band));
+    if (inside.length === 0) {
+      return undefined;
+    }
+    return {
+      top: Math.min(...inside.map((node) => node.rect.top)) - ANCHOR,
+      bottom: Math.max(...inside.map((node) => node.rect.bottom)) + ANCHOR,
+      left: Math.min(...inside.map((node) => node.rect.left)) - ANCHOR,
+      right: Math.max(...inside.map((node) => node.rect.right)) + ANCHOR,
+    };
+  };
+
+  /** An edge's candidates on `tracks`, built afresh: `sideCandidatesFor` keeps the outer ones. */
+  const candidatePathsOnTracks = (
+    edge: MaterializedEdge,
+    tracks: Record<RectSide, number>
+  ): PointLite[][] => {
+    const srcNode = edge.start ? nodeInfoById.get(edge.start) : undefined;
+    const dstNode = edge.end ? nodeInfoById.get(edge.end) : undefined;
+    if (!srcNode || !dstNode) {
+      return [];
+    }
+    activeTracks = tracks;
+    try {
+      const paths = sides.flatMap((srcSide) =>
+        sides.flatMap((dstSide) =>
+          buildCandidatesForSides(
+            portForRectSide(srcNode, srcSide),
+            srcSide,
+            portForRectSide(dstNode, dstSide),
+            dstSide
+          )
+        )
+      );
+      return [...paths, ...terminalPreservingOuterTrackCandidates(edge)];
+    } finally {
+      activeTracks = outsideTracks;
+    }
+  };
+
+  // Whether a route runs through the box it starts or ends at, instead of only touching it.
+  const pathEntersItsEnds = (edge: MaterializedEdge, pathSegments: SegmentLite[]): boolean => {
+    const ends = endpointIdsFor(edge);
+    const rects = realNodeRects.filter((entry) => ends.includes(entry.id));
+    return pathSegments.some((segment) => segmentHitsAnyRect(segment.a, segment.b, rects, [], 2));
+  };
+
+  // How many crossings of `path` with the other edges sit so close to an end of either route
+  // that the hop drawn there would run into the arrowhead.
+  const crossingsNearTips = (edge: MaterializedEdge, path: PointLite[]): number => {
+    let count = 0;
+    for (const other of visibleEdges) {
+      if (other === edge) {
+        continue;
+      }
+      const otherPath = basePointsFor(other);
+      const tips = [path[0], path.at(-1), otherPath[0], otherPath.at(-1)];
+      count += crossingPointsBetween(path, otherPath).filter((point) =>
+        tips.some(
+          (tip) =>
+            tip !== undefined &&
+            Math.hypot(tip.x - point.x, tip.y - point.y) < EDGE_ROUTING.TERMINAL_HOP_CLEARANCE
+        )
+      ).length;
+    }
+    return count;
+  };
+
+  // The routes of `edge` that stay in `band`, hops included, and are clear: those on the
+  // diagram's outer tracks, those on the lane's own, and the route the edge had before this pass.
+  const inLaneCandidatesFor = (edge: MaterializedEdge, band: RectLite): PointLite[][] => {
+    const tracks = laneTracks(band);
+    const paths = [
+      ...candidatesFor(edge).map((candidate) => candidate.path),
+      ...(tracks ? candidatePathsOnTracks(edge, tracks) : []),
+      routedBefore.get(edge) ?? [],
+    ];
+    const others = visibleEdges.filter((other) => other !== edge).map(basePointsFor);
+    return paths
+      .map((path) => simplifyPolyline(dedupeConsecutivePoints(path)))
+      .filter(
+        (path) =>
+          path.length >= 2 &&
+          staysInsideBand(path, band) &&
+          hopsStayInsideBand(path, others, band, EDGE_ROUTING.LINE_HOP_RADIUS)
+      )
+      .filter((path) => {
+        const pathSegments = segmentsFor(path);
+        return (
+          !pathHitsNode(edge, pathSegments) &&
+          !pathEntersItsEnds(edge, pathSegments) &&
+          sharedTrackConflictsFor(edge, path, pathSegments, 1).size === 0
+        );
+      });
+  };
+
+  // Of the in-lane routes with no hop under an arrowhead, the one with the fewest crossings, then
+  // the fewest bends, then the shortest. None when every one has such a hop.
+  const bestInLaneCandidate = (edge: MaterializedEdge, band: RectLite): PointLite[] | undefined => {
+    let best: { path: PointLite[]; score: number[] } | undefined;
+    for (const path of inLaneCandidatesFor(edge, band)) {
+      if (crossingsNearTips(edge, path) > 0) {
+        continue;
+      }
+      const score = [
+        crossingsWithOtherEdges(edge, segmentsFor(path)),
+        countOrthogonalBends(path, EPS_LOCAL),
+        pathLength(path),
+      ];
+      const differs = best ? score.findIndex((value, i) => value !== best!.score[i]) : -1;
+      if (!best || (differs >= 0 && score[differs]! < best.score[differs]!)) {
+        best = { path, score };
+      }
+    }
+    return best?.path;
+  };
+
+  // An edge whose ends share a lane, routed out of it, goes back on its best in-lane route. An
+  // edge with none keeps the route it has; no other edge moves.
+  const keepSameLaneEdgesInside = (): void => {
+    for (const edge of visibleEdges) {
+      const band = sharedLaneBand(edge, laneModel, nodeByIdMap);
+      if (!band || staysInsideBand(edge.points ?? [], band)) {
+        continue;
+      }
+      round = startRound();
+      const best = bestInLaneCandidate(edge, band);
+      if (best) {
+        edge.points = best.map((point) => ({ ...point }));
+      }
+    }
+  };
+
   for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
     round = startRound();
     const current = crossingSnapshot();
     const currentCrossings = current.count;
     if (currentCrossings === 0) {
-      return;
+      break;
     }
     const crossingCountByEdge = currentCrossingsByEdge(current);
 
@@ -3244,10 +3416,12 @@ export function resolveRenderedOrthogonalCrossings(
 
     const pairedReplacement = bestPairedReplacement(current);
     if (!pairedReplacement) {
-      return;
+      break;
     }
     for (const [edge, points] of pairedReplacement) {
       (edge as { points: PointLite[] }).points = points;
     }
   }
+
+  keepSameLaneEdgesInside();
 }
