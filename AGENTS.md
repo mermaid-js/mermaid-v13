@@ -28,6 +28,7 @@ Use the names these documents use (parser kit, `SvgWriter`, `LayoutModel`, exten
 ```
 packages/core              @mermaid-js/core: pipeline, parser kit, measurer, layout, SvgWriter, theme, config
 packages/diagram-<type>    one package per diagram type: parser, model, layout, renderer, ./language facet
+packages/shared            @mermaid-js/shared: code that several diagram types use and core does not need
 packages/mermaid           the public API, the Registry, the DOM adapter, plugin discovery, bundles
 packages/conformance       (private) parity against v12, corpus runners, per-type suites in src/<type>/
 packages/bench             (private) size and speed gates
@@ -39,9 +40,9 @@ v13/docs/                  requirements, design, decisions, migration notes, ref
 
 ## Rules that eslint and the checks enforce
 
-- **Dependency directions** (DESIGN §2, rule `mermaid/import-boundaries`): `core` imports nothing outside itself. A `diagram-*` package imports only `@mermaid-js/core` subpaths and never another `diagram-*` package. `mermaid` imports only `core` and `diagram-*`. Relative imports stay inside their package.
-- **No DOM** (R-ARCH-1): `core` and `diagram-*` use no browser global and no `node:` module. Take what you need as a parameter. Tests run in plain Node with no DOM shim.
-- **No clock** (D270): `core` and `diagram-*` never call `Date.now()` or `new Date()` without arguments. Use `ctx.now`.
+- **Dependency directions** (DESIGN §2, rule `mermaid/import-boundaries`): `core` imports nothing outside itself. `shared` imports only `core`. A `diagram-*` package imports only `@mermaid-js/core` and `@mermaid-js/shared` subpaths and never another `diagram-*` package. `mermaid` imports only `core` and `diagram-*`, never `shared`. Relative imports stay inside their package.
+- **No DOM** (R-ARCH-1): `core`, `shared` and `diagram-*` use no browser global and no `node:` module. Take what you need as a parameter. Tests run in plain Node with no DOM shim.
+- **No clock** (D270): `core`, `shared` and `diagram-*` never call `Date.now()` or `new Date()` without arguments. Use `ctx.now`.
 - **No global config, no `console`** (R-ARCH-5, R-ERR-4): the config arrives as an argument. Problems are reported as diagnostics.
 - **No enums.** Use a union type. Type imports use `import type`.
 - **Code in the `./language` facet** of a diagram package never imports rendering code (R-LANG-8).
@@ -54,6 +55,7 @@ v13/docs/                  requirements, design, decisions, migration notes, ref
 - **A diagram package never checks a theme name or `look`.** Every difference between themes is a theme variable (D152).
 - **v12 decides syntax.** What v12 accepts, v13 accepts, with the same meaning. When a v12 spec and the v12 runtime disagree, the runtime wins.
 - **Generated files are never edited by hand.** They live in `generated/` folders and in generated documents such as `v13/docs/config-reference.md`. Change the source, then run `pnpm regen`. On a merge conflict in a generated file, take either side and run `pnpm regen`.
+- **Do not copy code between diagram packages.** A helper that a second diagram type needs moves to `packages/shared` (or to `core` when every type needs it), and both import it. Where the copies would differ, the difference is a parameter. A shared subpath is one file, or one family of files that always load together: the CDN build splits by file, so a barrel makes every importer load everything behind it. See [packages/shared/README.md](packages/shared/README.md).
 - **Add files instead of editing shared lists.** A diagram type is found from its own files; see [shared-files.md](v13/docs/agents/port-diagram/shared-files.md).
 - **Timing tests assert ratios**, never absolute times.
 - **Escalate decisions.** If your change contradicts DESIGN, REQUIREMENTS or a D-id, or changes a v12 default or v12 semantics, stop and ask the maintainer. An answer becomes a new D-id row in DECISIONS.md.
