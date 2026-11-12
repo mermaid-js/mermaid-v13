@@ -1,7 +1,6 @@
 @ 3:3  |
   theme property (string) 3:3-3:3 "" -> "theme: "
   themeVariables property (object) 3:3-3:3 "" -> "themeVariables:\n    "
-  themeCSS property (string) 3:3-3:3 "" -> "themeCSS: "
   lineHops property (boolean | string) 3:3-3:3 "" -> "lineHops: "
   ascii property (object) 3:3-3:3 "" -> "ascii:\n    "
   darkMode property (boolean) 3:3-3:3 "" -> "darkMode: "

@@ -1,7 +1,6 @@
 @ 2:13  config: { th|, flowchart: { cu }, darkMode: , fontSize: 1 }
   theme property (string) 2:11-2:13 "th" -> "theme: "
   themeVariables property (object) 2:11-2:13 "th" -> "themeVariables: "
-  themeCSS property (string) 2:11-2:13 "th" -> "themeCSS: "
   layout property (string) 2:11-2:13 "th" -> "layout: "
   lineHops property (boolean | string) 2:11-2:13 "th" -> "lineHops: "
   ascii property (object) 2:11-2:13 "th" -> "ascii: "

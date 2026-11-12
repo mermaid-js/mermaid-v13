@@ -64,7 +64,6 @@ export interface MermaidConfig {
  */
 theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "auto" | "null")
 themeVariables?: any
-themeCSS?: string
 /**
  * @deprecated
  * Defines which main look to use for the diagram.
