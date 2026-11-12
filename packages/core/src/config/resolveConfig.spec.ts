@@ -369,15 +369,24 @@ describe('diagram text is sanitised as in v12', () => {
     const { config, warnings } = resolve({
       frontMatter: {
         fontFamily: '<script>alert(1)</script>',
-        themeCSS: '.x { background: url(data:image/svg+xml;base64,AAA) }',
+        altFontFamily: 'url(data:image/svg+xml;base64,AAA)',
       },
     });
     expect(config.fontFamily).toBe(CORE_DEFAULTS.fontFamily);
-    expect(config).not.toHaveProperty('themeCSS');
+    expect(config).not.toHaveProperty('altFontFamily');
     expect(codes(warnings)).toEqual([
       'CONFIG_UNSAFE_VALUE fontFamily',
-      'CONFIG_UNSAFE_VALUE themeCSS',
+      'CONFIG_UNSAFE_VALUE altFontFamily',
     ]);
+  });
+
+  it('warns that themeCSS was removed and names its replacement (#711)', () => {
+    const { config, warnings } = resolve({
+      directives: [{ themeCSS: '.node rect { fill: #ff0000 !important; }' }],
+    });
+    expect(config).not.toHaveProperty('themeCSS');
+    expect(codes(warnings)).toEqual(['CONFIG_REMOVED_KEY themeCSS']);
+    expect(warnings[0]?.message).toMatch(/themeCSS.*removed.*themeVariables/);
   });
 
   it('blanks theme variables outside the v12 character set', () => {

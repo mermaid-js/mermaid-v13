@@ -150,6 +150,56 @@ describe('wrapping (R-TEXT-8)', () => {
     // 'x aaaa' = 30.02 fits 31 but 'x aa-' = 22.23 would fit too: the word stays whole
     expect(texts(layout('x aa\u00adaa', 31))).toEqual(['x aaaa']);
   });
+
+  // #394: a hyphen in the text is a break opportunity (UAX #14 HY), as in v12's HTML labels.
+  it('breaks after a hyphen between letters before splitting a word (#394)', () => {
+    // 'aaaa-' = 25.57 fits 35, 'aaaa-a' = 31.13 would too: the break is at the hyphen
+    expect(texts(layout('aaaa-aaaa', 35))).toEqual(['aaaa-', 'aaaa']);
+    // 'aa aaa-' = 33.91 fits 35
+    expect(texts(layout('aa aaa-aaa', 35))).toEqual(['aa aaa-', 'aaa']);
+    // Every hyphen is a break; no line starts with one.
+    // 'one-to-zero-' = 54.46 and 'or-one-non-' = 52.24 fit 60.
+    expect(texts(layout('one-to-zero-or-one-non-identifying', 60))).toEqual([
+      'one-to-zero-',
+      'or-one-non-',
+      'identifying',
+    ]);
+    // A label that fits, and the slow path, are unchanged.
+    expect(texts(layout('aaaa-aaaa'))).toEqual(['aaaa-aaaa']);
+    expect(texts(layout('**aaaa-aaaa**', 35, true))).toEqual(['aaaa-', 'aaaa']);
+  });
+
+  it('splits the part before a hyphen only when that part alone is too wide (#394)', () => {
+    // 'aaaaaaaa-' = 47.81 does not fit 40: it is split, then 'a' follows the hyphen
+    expect(texts(layout('aaaaaaaa-a', 40))).toEqual(['aaaaaaa', 'a-a']);
+    const keep = layoutLabel('aaaaaaaaaa-aaaaaaaaaa', arial, 40, tableMeasurer, {
+      keepWords: true,
+    });
+    expect(texts(keep)).toEqual(['aaaaaaaaaa-', 'aaaaaaaaaa']);
+  });
+
+  it('does not break at a hyphen before a digit, after a leading hyphen or in a run (#394)', () => {
+    const keep = (raw: string): string[] =>
+      texts(layoutLabel(raw, arial, 20, tableMeasurer, { keepWords: true }));
+    expect(keep('2020-01-15')).toEqual(['2020-01-15']);
+    expect(keep('aaaa-1')).toEqual(['aaaa-1']);
+    expect(keep('-aaaa')).toEqual(['-aaaa']);
+    expect(keep('aa--aa')).toEqual(['aa--aa']);
+    expect(keep('aa-)')).toEqual(['aa-)']);
+    expect(keep('a1-2b-cd')).toEqual(['a1-2b-', 'cd']);
+  });
+
+  it('wraps a long hyphenated word with one measure per piece', () => {
+    let calls = 0;
+    const counting = {
+      ...tableMeasurer,
+      width: (...a: Parameters<typeof tableMeasurer.width>) => (calls++, tableMeasurer.width(...a)),
+    };
+    const box = layoutLabel('ab-'.repeat(2000) + 'ab', arial, 40, counting);
+    expect(box.lines.length).toBeGreaterThan(100);
+    // One measure per piece (2001), one per drawn line, the fast-path try and a few small widths.
+    expect(calls).toBeLessThan(2001 + box.lines.length + 10);
+  });
 });
 
 describe('HTML subset (R-TEXT-3)', () => {

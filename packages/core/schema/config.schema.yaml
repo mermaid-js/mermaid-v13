@@ -804,7 +804,7 @@ properties:
   themeCSS:
     type: string
     x-mermaid:
-      status: ignored
+      status: removed
       since: 13.0.0
       reason: v13 output carries no author stylesheet (R-SEC-2).
       replacement: '`themeVariables`, or `--mermaid-*` CSS variables set by the host page'

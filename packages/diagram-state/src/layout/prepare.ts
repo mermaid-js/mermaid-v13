@@ -152,6 +152,8 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
         markdown: true,
         style: bits,
         inline: ctx.inline,
+        // v12's HTML labels kept a long word whole (#649); in cells it is split to fit its box.
+        keepWords: units.id !== 'cell',
       });
     },
     styleOf: styleCache(new Map(model.classes.map((c) => [c.id, c.styles])), (w) => ctx.warn(w)),

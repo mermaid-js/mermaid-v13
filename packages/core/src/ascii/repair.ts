@@ -42,6 +42,11 @@ export interface RepairOptions {
   windows?: readonly number[];
   /** Most cells one search may expand before it gives up. */
   maxSearch?: number;
+  /**
+   * Most cells all the searches of one repair may expand together (#710). Once they are spent,
+   * the stretches still colliding keep their snapped route and are reported as `unresolved`.
+   */
+  maxExpanded?: number;
 }
 
 export interface RepairResult {
@@ -53,7 +58,7 @@ export interface RepairResult {
   unresolved: Collision[];
   /**
    * Cells the searches expanded, all edges together: the work the repair did, bounded by
-   * `maxSearch` per search (timing is the bench's, R-PERF-5).
+   * `maxSearch` per search and `maxExpanded` in all (timing is the bench's, R-PERF-5).
    */
   expanded: number;
 }
@@ -64,6 +69,7 @@ const HORIZONTAL = (1 << LEFT) | (1 << RIGHT);
 const END = 0xf;
 const DEFAULT_WINDOWS = [4, 16, 64] as const;
 const DEFAULT_MAX_SEARCH = 400_000;
+const DEFAULT_MAX_EXPANDED = 1_000_000;
 
 const straight = (arms: number): boolean => arms === VERTICAL || arms === HORIZONTAL;
 
@@ -347,11 +353,39 @@ class Heap {
   }
 
   private swap(a: number, b: number): void {
-    for (const list of [this.keys, this.order, this.items]) {
-      const t = list[a]!;
-      list[a] = list[b]!;
-      list[b] = t;
+    const { keys, order, items } = this;
+    const k = keys[a]!;
+    keys[a] = keys[b]!;
+    keys[b] = k;
+    const o = order[a]!;
+    order[a] = order[b]!;
+    order[b] = o;
+    const t = items[a]!;
+    items[a] = items[b]!;
+    items[b] = t;
+  }
+}
+
+/**
+ * The per-state tables of the searches of one repair, shared so that a search pays for the
+ * states it reaches and not for its whole window (#710). A state belongs to the current search
+ * when its `stamp` is that search's number; any other state is unreached.
+ */
+class Scratch {
+  cost = new Float64Array(0);
+  from = new Int32Array(0);
+  stamp = new Uint32Array(0);
+  private searches = 0;
+
+  /** Starts a search over `states` states; returns its number. */
+  begin(states: number): number {
+    if (this.stamp.length < states) {
+      this.cost = new Float64Array(states);
+      this.from = new Int32Array(states);
+      this.stamp = new Uint32Array(states);
+      this.searches = 0;
     }
+    return ++this.searches;
   }
 }
 
@@ -360,8 +394,10 @@ interface Search {
   edge: EdgeInfo;
   turnPenalty: number;
   maxSearch: number;
+  maxExpanded: number;
   /** Where the expanded cells are counted. */
   result: RepairResult;
+  scratch: Scratch;
 }
 
 /**
@@ -378,7 +414,7 @@ interface Goal {
 }
 
 function search(
-  { field, edge, turnPenalty, maxSearch, result }: Search,
+  { field, edge, turnPenalty, maxSearch, maxExpanded, result, scratch }: Search,
   s: [number, number],
   inDir: number,
   { t, tOut, window, own }: Goal
@@ -387,20 +423,26 @@ function search(
   const wh = window.bottom - window.top + 1;
   const states = ww * wh * 4;
   const goal = states;
-  const cost = new Float64Array(states + 1).fill(Infinity);
-  const from = new Int32Array(states + 1).fill(-1);
+  const run = scratch.begin(states + 1);
+  const { cost, from, stamp } = scratch;
+  const costOf = (i: number): number => (stamp[i] === run ? cost[i]! : Infinity);
+  const reach = (i: number, g: number, prev: number): void => {
+    stamp[i] = run;
+    cost[i] = g;
+    from[i] = prev;
+  };
   const state = (x: number, y: number, d: number): number =>
     ((y - window.top) * ww + (x - window.left)) * 4 + d;
   const heap = new Heap();
   const h = (x: number, y: number): number => Math.abs(x - t[0]) + Math.abs(y - t[1]);
   const start = state(s[0], s[1], inDir);
-  cost[start] = 0;
+  reach(start, 0, -1);
   heap.push(h(s[0], s[1]), start);
   let expanded = 0;
   while (heap.size > 0) {
     const cur = heap.pop();
     if (cur === goal) break;
-    if (++expanded > maxSearch) return undefined;
+    if (++expanded > maxSearch || result.expanded >= maxExpanded) return undefined;
     result.expanded++;
     const d = cur % 4;
     const local = (cur - d) / 4;
@@ -419,9 +461,8 @@ function search(
         if (d2 === opposite(tOut)) continue;
         if (field.check(edge, nx, ny, (1 << opposite(d2)) | (1 << tOut))) continue;
         const total = g2 + (d2 === tOut ? 0 : turnPenalty);
-        if (total < cost[goal]!) {
-          cost[goal] = total;
-          from[goal] = cur;
+        if (total < costOf(goal)) {
+          reach(goal, total, cur);
           heap.push(total, goal);
         }
         continue;
@@ -429,14 +470,13 @@ function search(
       // The edge's own route before `s` and after `t` is not crossed or doubled back over.
       if (own.has(field.index(nx, ny))) continue;
       const next = state(nx, ny, d2);
-      if (g2 < cost[next]!) {
-        cost[next] = g2;
-        from[next] = cur;
+      if (g2 < costOf(next)) {
+        reach(next, g2, cur);
         heap.push(g2 + h(nx, ny), next);
       }
     }
   }
-  if (from[goal] === -1) return undefined;
+  if (stamp[goal] !== run) return undefined;
   const out: [number, number][] = [[t[0], t[1]]];
   for (let cur = from[goal]!; cur !== start; cur = from[cur]!) {
     const local = (cur - (cur % 4)) / 4;
@@ -503,6 +543,7 @@ export function repairRoutes(
   reserveEnds(field, edges, paths);
   const windows = options.windows ?? DEFAULT_WINDOWS;
   const result: RepairResult = { routes: new Map(), repaired: [], unresolved: [], expanded: 0 };
+  const scratch = new Scratch();
   for (const edge of edges) {
     const path = paths.get(edge.id)!;
     const ctx: Search = {
@@ -510,7 +551,9 @@ export function repairRoutes(
       edge,
       turnPenalty: options.turnPenalty ?? 3,
       maxSearch: options.maxSearch ?? DEFAULT_MAX_SEARCH,
+      maxExpanded: options.maxExpanded ?? DEFAULT_MAX_EXPANDED,
       result,
+      scratch,
     };
     const fixed = edge.loop ? path : repair(ctx, path, windows, result);
     if (fixed !== path) result.repaired.push(edge.id);

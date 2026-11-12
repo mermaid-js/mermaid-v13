@@ -183,7 +183,13 @@ export function prepareAgentflow(
     minWidth: fromPx(units, agentflowLength('minNodeWidth'), 'x'),
     edgeWrap: units.builder.edgeWrap,
     label: (text, markdown, f, max, bits = 0) =>
-      layoutLabel(text, f, max, measurer, { markdown, style: bits, inline }),
+      // v12's HTML labels kept a long word whole (#649); in cells it is split to fit its box.
+      layoutLabel(text, f, max, measurer, {
+        markdown,
+        style: bits,
+        inline,
+        keepWords: units.id !== 'cell',
+      }),
     styleOf: styleCache(
       new Map(model.classes.map((c) => [c.id, [...c.styles, ...c.textStyles]])),
       (w) => ctx.warn(w)

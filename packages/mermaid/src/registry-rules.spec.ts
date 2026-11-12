@@ -84,6 +84,29 @@ describe('detection order (D166)', () => {
     expect((await m.render('h', 'hello')).svg).toContain('explicit: hello');
   });
 
+  it('loads a lazy diagram plugin that has its own layout method (#682)', async () => {
+    const withLayout = (id: string): LazyDiagram => {
+      const lazy = textDiagram(id, id);
+      return {
+        ...lazy,
+        loader: async () => ({ ...(await lazy.loader()), layout: (model: unknown) => model }),
+      };
+    };
+    const m = createMermaid();
+    await m.registerExternalDiagrams([withLayout('own')]);
+    expect((await m.render('o', 'own')).svg).toContain('own: own');
+    // The manifest path of package discovery reaches the same loader.
+    const plugin = await withLayout('pkg').loader();
+    await addDiscovered(m, [
+      found('pkg-own', {
+        manifest: { plugin: 'diagram', id: 'pkg', entry: './index.js', export: 'p' },
+        detector: (text: string) => text.trimStart().startsWith('pkg'),
+        load: async () => ({ p: plugin }),
+      } as ExternalDiagram),
+    ]);
+    expect((await m.render('p', 'pkg')).svg).toContain('pkg: pkg');
+  });
+
   it('gives a later batch that sorts earlier the id (the CDN queue)', async () => {
     const m = createMermaid();
     await addDiscovered(m, [found('pkg-b', textDiagram('same', 'same', 'b'))]);
