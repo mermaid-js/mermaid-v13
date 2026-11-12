@@ -1,7 +1,7 @@
 # ADR-15: Embedded diagrams
 
 Status: accepted (maintainer, 2026-11-11), after a proof of concept on branch
-`poc/embedded-diagrams`. Decision log rows D547 to D552.
+`poc/embedded-diagrams`. Decision log rows D547 to D553.
 Builds on ADR-6 (plugin discovery), ADR-14 (text output) and D177 (inline boxes). User docs:
 [embedded-diagrams.md](../embedded-diagrams.md).
 
