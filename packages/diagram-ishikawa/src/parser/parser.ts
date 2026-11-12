@@ -34,6 +34,7 @@
  * statement, the text after an indent, and what ends a statement. The lexer has no start
  * conditions, so the probe's mode is `INITIAL` in code.
  */
+import { checkDepth, checkLimit } from '@mermaid-js/core/limits';
 import {
   Kind,
   kindSet,
@@ -71,6 +72,13 @@ export interface IshikawaParseOptions extends ParseOptions {
    * listing them all (D496): what an editor shows (spec #519 "Language facet").
    */
   clampPerCause?: boolean;
+  /** The integrator's cap on causes (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
+  maxNodes?: number;
+  /**
+   * The integrator's cap on how deep a cause may sit in the tree, a top-level cause at depth 1
+   * (core `DEFAULT_LIMITS.maxDepth` when absent).
+   */
+  maxDepth?: number;
 }
 
 export type IshikawaParseResult = ParseResult<IshikawaModel, IshikawaDocument>;
@@ -176,6 +184,8 @@ class IshikawaParser {
   private baseline: number | undefined;
   /** Causes indented less than the baseline (`ISHIKAWA_INDENT_CLAMPED`). */
   private readonly clamped: OpenCause[] = [];
+  /** Each cause's depth in the tree (1 for a top-level one), for the depth cap (R-SEC-5). */
+  private readonly depths: { depth: number; range: Range }[] = [];
   /** The end of the last line of text read, where the open causes' spans end. */
   private lastEnd = 0;
   private lines: LineIndex | undefined;
@@ -211,6 +221,7 @@ class IshikawaParser {
     if (open?.span) this.st.endStatement(open.span, this.lastEnd);
     this.warnings();
     const { st, pre, src } = this;
+    checkDepth(st.diagnostics, this.depths, this.options.maxDepth);
     st.diagnostics.list.sort((a, b) => a.range.start - b.range.start);
     const title = pre.frontMatter?.title;
     const model: IshikawaModel = {
@@ -431,6 +442,16 @@ class IshikawaParser {
     parent.causes.push(cause);
     if (indent < this.baseline) this.clamped.push(cause);
     this.children.push({ id: ast, type: 'Cause', range, text, indent, level });
+    // The tree depth, not `level`: the effect and the open causes above this one.
+    this.depths.push({ depth: stack.length, range });
+    checkLimit(
+      st.diagnostics,
+      'maxNodes',
+      this.depths.length,
+      this.options.maxNodes,
+      'causes',
+      range
+    );
     st.symbol(text, 'cause', range, 'def');
     const span = st.beginStatement('cause', range.start);
     stack.push({ level, causes: cause.causes, ast, span });

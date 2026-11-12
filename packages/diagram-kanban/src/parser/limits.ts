@@ -1,10 +1,12 @@
 /** The integrator's limits on a kanban board (R-SEC-5). */
-import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
+import { checkLimit } from '@mermaid-js/core/limits';
 import type { ParseState, Range } from '@mermaid-js/core/parser-kit';
 
 /**
  * The item cap, columns and cards together: called after each item is added, it reports the
- * cap once, at the first item over it (`count` the items so far; `cap` defaults to core's `maxNodes`).
+ * cap once, at the first item over it (`count` the items so far; `cap` defaults to core's
+ * `maxNodes`). Core's `checkLimit` (#721), with kanban's own subject: the message has always
+ * said "The board", where core's says "The diagram".
  */
 export function checkNodeLimit(
   st: ParseState,
@@ -12,14 +14,9 @@ export function checkNodeLimit(
   cap: number | undefined,
   range: Range
 ): void {
-  const max = cap ?? DEFAULT_LIMITS.maxNodes;
-  const overCap = count > max;
-  // Called once per item, so the first item over the cap is the one whose predecessor wasn't.
-  const wasOverBefore = count - 1 > max;
-  if (!overCap || wasOverBefore) return;
-  st.diagnostics.error(
-    LIMIT_CODES.maxNodes,
-    `The board has more than ${max} items (columns and cards), the limit. The limit is set by the page or app that renders the diagram.`,
-    range
-  );
+  const board = {
+    error: (code: string, message: string, at: Range) =>
+      st.diagnostics.error(code, message.replace('The diagram has', 'The board has'), at),
+  };
+  checkLimit(board, 'maxNodes', count, cap, 'items (columns and cards)', range);
 }

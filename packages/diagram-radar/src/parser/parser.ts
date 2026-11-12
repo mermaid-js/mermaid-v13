@@ -24,6 +24,7 @@
  * does not stop at the first error: it reports it, skips to the next line break (past the `}`
  * of a curve it was in) and carries on.
  */
+import { checkLimit } from '@mermaid-js/core/limits';
 import {
   APOSTROPHE,
   ASCII_MAX,
@@ -63,7 +64,6 @@ import { normalise } from './normalise.ts';
 import type { OptionName } from './normalise.ts';
 import { accDescrValue, accTitleValue, labelValue, titleValue } from './convert.ts';
 import { lex } from './lexer.ts';
-import { checkLimit } from './limits.ts';
 import { PREFIX_KEYWORDS, RADAR_TRIVIA, T, TEXT_STATEMENTS } from './tokens.ts';
 
 export interface RadarParseOptions extends ParseOptions {
@@ -561,7 +561,14 @@ class RadarParser {
   /** One more axis or curve, against the node cap. */
   private counted(range: Range): void {
     const count = this.axes.length + this.curves.length;
-    checkLimit(this.st, 'maxNodes', count, this.opts.maxNodes, range);
+    checkLimit(
+      this.st.diagnostics,
+      'maxNodes',
+      count,
+      this.opts.maxNodes,
+      'axes and curves',
+      range
+    );
   }
 
   /** `Axis: ID ("[" STRING "]")?` */

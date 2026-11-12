@@ -20,6 +20,7 @@
  * message that names its cause, and box-drawing errors are reported at their source line and
  * column (D486).
  */
+import { checkDepth, checkLimit } from '@mermaid-js/core/limits';
 import {
   APOSTROPHE,
   DQUOTE,
@@ -66,7 +67,6 @@ import {
   TITLE,
 } from './convert.ts';
 import { lex } from './lexer.ts';
-import { checkDepth, checkLimit } from './limits.ts';
 import type { TreeViewLex } from './lexer.ts';
 import { normalise } from './normalise.ts';
 import { HEADER, T } from './tokens.ts';
@@ -628,7 +628,14 @@ class TreeViewParser {
     }
     this.nodes.push(node);
     this.children.push(node);
-    checkLimit(this.st, 'maxNodes', this.nodes.length, this.opts.maxNodes, node.range);
+    checkLimit(
+      this.st.diagnostics,
+      'maxNodes',
+      this.nodes.length,
+      this.opts.maxNodes,
+      'nodes',
+      node.range
+    );
     this.nodeSpans.push(this.st.statement('node', { ...node.range }));
     // D487: each node is a `node` symbol of its own, over its name as written (its quotes and
     // a directory's `/` included); the facet's name syntax reads the name inside them.
@@ -796,7 +803,7 @@ class TreeViewParser {
       accDescr: this.texts.AccDescr,
       frontMatterTitle: this.pre.frontMatter?.title,
     });
-    checkDepth(this.st, this.nodes, this.opts.maxDepth);
+    checkDepth(this.st.diagnostics, this.nodes, this.opts.maxDepth);
     const warnings = diagnostics.list.filter((d) => d.severity === 'warning').sort(bySource);
     return Object.freeze({ ...resolved, warnings: Object.freeze(warnings) });
   }

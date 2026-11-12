@@ -21,6 +21,7 @@
  * gets a message that names its cause. Unlike v12 the parser does not stop at the first error:
  * it reports it, skips to the next token that starts a line, and carries on (R-PARSE-4).
  */
+import { checkDepth, checkLimit } from '@mermaid-js/core/limits';
 import {
   APOSTROPHE,
   ASCII_MAX,
@@ -71,7 +72,6 @@ import {
   titleValue,
 } from './convert.ts';
 import { lex } from './lexer.ts';
-import { checkDepth, checkLimit } from './limits.ts';
 import { normalise } from './normalise.ts';
 import type { ClassDefRead } from './normalise.ts';
 import { T } from './tokens.ts';
@@ -710,7 +710,14 @@ class TreemapParser {
     }
     this.rows.push(node);
     this.children.push(node);
-    checkLimit(this.st, 'maxNodes', this.rows.length, this.opts.maxNodes, node.range);
+    checkLimit(
+      this.st.diagnostics,
+      'maxNodes',
+      this.rows.length,
+      this.opts.maxNodes,
+      'sections and leaves',
+      node.range
+    );
     this.rowSpans.push(this.st.statement(leaf ? 'leaf' : 'section', { ...node.range }));
     // D408: every name is a `node` symbol of its own.
     this.st.symbol(name, 'node', nameRange, 'def');
@@ -816,7 +823,7 @@ class TreemapParser {
       },
       diagnostics
     );
-    checkDepth(this.st, this.rows, this.opts.maxDepth);
+    checkDepth(this.st.diagnostics, this.rows, this.opts.maxDepth);
     // The model's diagnostics are found after the parse: keep the list in source order.
     diagnostics.list.sort((x, y) => x.range.start - y.range.start);
     const warnings = diagnostics.list.filter((d) => d.severity === 'warning');

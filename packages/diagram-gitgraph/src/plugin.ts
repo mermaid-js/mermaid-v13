@@ -1,4 +1,5 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
+import { resolveLimits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { layoutGitGraph, type GitLayout } from './layout/index.ts';
 import type { GitModel } from './model.ts';
@@ -33,6 +34,7 @@ export const gitGraph = {
       preprocessed: ctx.preprocessed,
       mainBranchName: option(ctx, 'mainBranchName', 'string'),
       mainBranchOrder: option(ctx, 'mainBranchOrder', 'number'),
+      maxNodes: (ctx.limits ?? resolveLimits(ctx.config)).maxNodes,
     }),
   layout: (model: GitModel, ctx: RenderContext): GitLayout => layoutGitGraph(model, ctx),
   render: (model: GitModel, layout: GitLayout, ctx: RenderContext, w: SvgWriter): void =>

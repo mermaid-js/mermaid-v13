@@ -1,5 +1,5 @@
 /** The integrator's limits on a Wardley map (R-SEC-5, #698). */
-import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
+import { checkLimit } from '@mermaid-js/core/limits';
 import type { Diagnostics, Range } from '@mermaid-js/core/parser-kit';
 import type { WardleyStatementNode } from './ast.ts';
 
@@ -25,15 +25,7 @@ export function checkLimits(
 ): void {
   const count = { maxNodes: 0, maxEdges: 0 };
   const add = (limit: keyof typeof WHAT, range: Range): void => {
-    const max = limits[limit] ?? DEFAULT_LIMITS[limit];
-    const n = ++count[limit];
-    // Called once per item, so the first over the cap is the one whose predecessor was not.
-    if (n <= max || n - 1 > max) return;
-    diagnostics.error(
-      LIMIT_CODES[limit],
-      `The diagram has more than ${max} ${WHAT[limit]}, the limit. The limit is set by the page or app that renders the diagram.`,
-      range
-    );
+    checkLimit(diagnostics, limit, ++count[limit], limits[limit], WHAT[limit], range);
   };
   for (const s of statements) {
     if (s.type === 'Anchor' || s.type === 'Component') add('maxNodes', s.range);

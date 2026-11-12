@@ -11,7 +11,7 @@ import {
   skipTo,
 } from '@mermaid-js/core/parser-kit';
 import type { AstId, Range, TokenView } from '@mermaid-js/core/parser-kit';
-import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
+import { DEFAULT_LIMITS, checkLimit } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type {
@@ -543,13 +543,7 @@ export abstract class ParserBase {
   }
 
   protected checkNodes(r: Range): void {
-    if (this.db.classCount === this.maxNodes + 1) {
-      this.st.diagnostics.error(
-        LIMIT_CODES.maxNodes,
-        `The diagram has more than ${this.maxNodes} classes, the limit. The limit is set by the page or app that renders the diagram.`,
-        r
-      );
-    }
+    checkLimit(this.st.diagnostics, 'maxNodes', this.db.classCount, this.maxNodes, 'classes', r);
   }
 
   /** The interface end of a lollipop relationship: its AST node and symbol. */

@@ -300,6 +300,12 @@ describe('kanban parser: the node limit (R-SEC-5, #459)', () => {
     );
   });
 
+  it("keeps its own subject in core's message (#721)", () => {
+    expect(parseKanban(board, { maxNodes: 3 }).diagnostics[0]?.message).toBe(
+      'The board has more than 3 items (columns and cards), the limit. The limit is set by the page or app that renders the diagram.'
+    );
+  });
+
   it("defaults to core's maxNodes", () => {
     const many = 'kanban\n' + Array.from({ length: 10_001 }, (_, i) => `  c${i}`).join('\n');
     expect(limitErrors(many)).toEqual([`NODE_LIMIT ${many.indexOf('c10000')}`]);

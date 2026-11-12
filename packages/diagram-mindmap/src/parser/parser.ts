@@ -55,7 +55,7 @@ import type {
   SourceView,
   StatementSpan,
 } from '@mermaid-js/core/parser-kit';
-import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
+import { DEFAULT_LIMITS, LIMIT_CODES, checkLimit } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { mindmapSections } from '../model.ts';
@@ -212,7 +212,6 @@ class MindmapParser {
   private readonly maxNodes: number;
   private readonly maxDepth: number;
   /** The node and depth limits were reported (each once per parse). */
-  private tooMany = false;
   private tooDeep = false;
 
   constructor(
@@ -778,14 +777,7 @@ class MindmapParser {
   /** The integrator's node and depth caps (R-SEC-5): each reported once, at the first breach. */
   private checkLimits(node: OpenNode, range: Range): void {
     const { maxNodes, maxDepth } = this;
-    if (this.nodes.length > maxNodes && !this.tooMany) {
-      this.tooMany = true;
-      this.st.diagnostics.error(
-        LIMIT_CODES.maxNodes,
-        `The diagram has more than ${maxNodes} nodes, the limit. The limit is set by the page or app that renders the diagram.`,
-        range
-      );
-    }
+    checkLimit(this.st.diagnostics, 'maxNodes', this.nodes.length, maxNodes, 'nodes', range);
     if (node.depth > maxDepth && !this.tooDeep) {
       this.tooDeep = true;
       this.st.diagnostics.error(

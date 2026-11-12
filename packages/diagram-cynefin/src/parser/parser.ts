@@ -28,6 +28,7 @@
  * block of the same domain replaced (D364), `CYNEFIN_SELF_LOOP` the `x --> x` transitions the
  * model leaves out (D365).
  */
+import { checkLimit } from '@mermaid-js/core/limits';
 import {
   APOSTROPHE,
   cook,
@@ -69,7 +70,6 @@ import type {
 } from './ast.ts';
 import { accDescrValue, accTitleValue, labelValue, titleValue } from './convert.ts';
 import { lex } from './lexer.ts';
-import { checkLimit } from './limits.ts';
 import { CYNEFIN_TRIVIA, T } from './tokens.ts';
 
 export interface CynefinParseOptions extends ParseOptions {
@@ -586,7 +586,14 @@ class CynefinParser {
       const label = labelValue(this.raw(j));
       const id = this.id(`i:${node.name}/${esc(label)}`);
       node.children.push({ id, type: 'Item', range, label });
-      checkLimit(this.state, 'maxNodes', ++this.itemCount, this.options.maxNodes, range);
+      checkLimit(
+        this.state.diagnostics,
+        'maxNodes',
+        ++this.itemCount,
+        this.options.maxNodes,
+        'items',
+        range
+      );
       node.range.end = range.end;
       this.state.statement('item', range);
     }
@@ -624,7 +631,14 @@ class CynefinParser {
     };
     this.children.push(node);
     this.state.statement('transition', range);
-    checkLimit(this.state, 'maxEdges', ++this.transitionCount, this.options.maxEdges, range);
+    checkLimit(
+      this.state.diagnostics,
+      'maxEdges',
+      ++this.transitionCount,
+      this.options.maxEdges,
+      'transitions',
+      range
+    );
     this.state.symbol(from, 'domain', fromRange, 'ref');
     this.state.symbol(to, 'domain', toRange, 'ref');
     if (from === to) this.selfLoops.push(node);

@@ -1,3 +1,4 @@
+import { resolveLimits } from '@mermaid-js/core/limits';
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { vennPluginDefaults } from './config.ts';
@@ -26,7 +27,10 @@ export const venn = {
   configDefaults: vennPluginDefaults(vennConfigDefaults as Readonly<Record<string, unknown>>),
   detector: (text: string): boolean => detectVenn(text),
   parse: (text: string, ctx: DiagramParseContext): VennParseResult =>
-    parseVenn(text, { preprocessed: ctx.preprocessed }),
+    parseVenn(text, {
+      preprocessed: ctx.preprocessed,
+      maxNodes: (ctx.limits ?? resolveLimits(ctx.config)).maxNodes,
+    }),
   labels: vennLabels,
   layout: (model: VennModel, ctx: RenderContext): VennLayout => layoutVenn(model, ctx),
   render: (model: VennModel, layout: VennLayout, ctx: RenderContext, w: SvgWriter): void =>

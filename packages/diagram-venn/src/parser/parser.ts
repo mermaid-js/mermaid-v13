@@ -45,6 +45,7 @@
  * text reference when a text node has it, else a set reference. Ranges are the id tokens,
  * quotes included (D191).
  */
+import { checkLimit } from '@mermaid-js/core/limits';
 import {
   DQUOTE,
   Kind,
@@ -96,6 +97,11 @@ export interface VennParseOptions extends ParseOptions {
    * overlap), at that id, instead of D417's one warning per parse for a render.
    */
   perOccurrence?: boolean;
+  /**
+   * The integrator's cap on sets, unions and text nodes together (core
+   * `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5).
+   */
+  maxNodes?: number;
 }
 
 export type VennParseResult = ParseResult<VennModel, VennDocument>;
@@ -717,6 +723,7 @@ class VennParser {
       ...(label !== undefined ? { label } : {}),
     };
     this.textNodes.push({ value, range, what: 'the text node', quote: name.range, ids: members });
+    this.counted(range);
     return node;
   }
 
@@ -795,6 +802,21 @@ class VennParser {
       ...(tail.label !== undefined ? { label: tail.label } : {}),
     };
     this.subsets.push({ value, range, quote: range });
+    this.counted(range);
+  }
+
+  /** The integrator's cap on what the chart draws (R-SEC-5, #721): one more, at `range`. */
+  private counted(range: Range): void {
+    const count = this.subsets.length + this.textNodes.length;
+    const { maxNodes } = this.options;
+    checkLimit(
+      this.st.diagnostics,
+      'maxNodes',
+      count,
+      maxNodes,
+      'sets, unions and text nodes',
+      range
+    );
   }
 
   /** A `set` or `text` id occurrence; without a role, the first of a name defines it (D418). */

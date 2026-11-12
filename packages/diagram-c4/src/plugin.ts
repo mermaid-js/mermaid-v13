@@ -1,4 +1,5 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
+import { resolveLimits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { c4ConfigDefaults } from './generated/config-defaults.ts';
 import {
@@ -46,8 +47,10 @@ export const c4 = {
   configDefaults: c4ConfigDefaults as Readonly<Record<string, unknown>>,
   // D451: one of the five headers, word-bounded, where the diagram starts.
   detector: (text: string): boolean => detectC4(text),
-  parse: (text: string, ctx: DiagramParseContext): C4ParseResult =>
-    parseC4(text, { preprocessed: ctx.preprocessed }),
+  parse: (text: string, ctx: DiagramParseContext): C4ParseResult => {
+    const { maxNodes, maxEdges, maxDepth } = ctx.limits ?? resolveLimits(ctx.config);
+    return parseC4(text, { preprocessed: ctx.preprocessed, maxNodes, maxEdges, maxDepth });
+  },
   labels: c4Labels,
   layout: (model: C4Model, ctx: RenderContext): C4Layout => layoutC4(model, ctx),
   render: (model: C4Model, layout: C4Layout, ctx: RenderContext, w: SvgWriter): void =>

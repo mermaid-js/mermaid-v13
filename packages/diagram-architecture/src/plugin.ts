@@ -1,4 +1,5 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
+import { resolveLimits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { architectureConfigDefaults } from './generated/config-defaults.ts';
 import { architectureIcons, architectureLabels } from './icons.ts';
@@ -29,8 +30,15 @@ export const architecture = {
   layoutEngine: { default: 'compass' },
   configDefaults: architectureConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectArchitecture(text),
-  parse: (text: string, ctx: DiagramParseContext): ArchitectureParseResult =>
-    parseArchitecture(text, { preprocessed: ctx.preprocessed }),
+  parse: (text: string, ctx: DiagramParseContext): ArchitectureParseResult => {
+    const { maxNodes, maxEdges, maxDepth } = ctx.limits ?? resolveLimits(ctx.config);
+    return parseArchitecture(text, {
+      preprocessed: ctx.preprocessed,
+      maxNodes,
+      maxEdges,
+      maxDepth,
+    });
+  },
   labels: architectureLabels,
   icons: architectureIcons,
   layout: (model: ArchitectureModel, ctx: RenderContext): ArchitectureLayout =>

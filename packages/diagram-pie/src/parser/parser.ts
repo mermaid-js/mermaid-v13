@@ -16,6 +16,7 @@
  * error: it reports it, skips to the next line break and carries on (R-PARSE-4). A negative
  * value is a semantic error with v12's message, and the statement goes on.
  */
+import { checkLimit } from '@mermaid-js/core/limits';
 import {
   APOSTROPHE,
   cook,
@@ -45,7 +46,6 @@ import type { PieModel, PieSection } from '../model.ts';
 import type { PieDocument, PieSliceNode, PieStatementNode, PieTextNode } from './ast.ts';
 import { accDescrValue, accTitleValue, labelValue, titleValue } from './convert.ts';
 import { lex } from './lexer.ts';
-import { checkLimit } from './limits.ts';
 import { PIE_TRIVIA, T } from './tokens.ts';
 
 export interface PieParseOptions extends ParseOptions {
@@ -441,7 +441,14 @@ class PieParser {
     const node: PieSliceNode = { id, type: 'Slice', range, label, labelRange, value, valueRange };
     this.children.push(node);
     this.st.statement('slice', range);
-    checkLimit(this.st, 'maxNodes', ++this.slices, this.options.maxNodes, range);
+    checkLimit(
+      this.st.diagnostics,
+      'maxNodes',
+      ++this.slices,
+      this.options.maxNodes,
+      'sections',
+      range
+    );
     // D229: each label is a `slice` symbol; a repeat refers to the first.
     this.st.symbol(label, 'slice', labelRange, this.repeated(base) ? 'ref' : 'def');
     const { diagnostics } = this.st;

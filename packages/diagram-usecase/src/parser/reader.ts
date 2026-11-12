@@ -38,11 +38,12 @@ import {
 } from '../codes.ts';
 import { lex } from './lexer.ts';
 import type { Lexed } from './lexer.ts';
+import type { UsecaseLimitOptions } from './limits.ts';
 import { EXPECTED, KEYWORD_LINE, LINE_END, PROBE_FOLLOWS, WORD_KINDS } from './tables.ts';
 import { shown } from './text.ts';
 import { LABEL_TEXT, T } from './tokens.ts';
 
-export interface UsecaseParseOptions extends ParseOptions {
+export interface UsecaseParseOptions extends ParseOptions, UsecaseLimitOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
 }

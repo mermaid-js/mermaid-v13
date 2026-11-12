@@ -110,7 +110,8 @@ describe('stress: the C4 parser is linear in the number of statements', () => {
   );
 
   it('parses 16,000 statements into the model', () => {
-    const r = parseC4(C + lines(16_000, (k) => `Person(p${k}, "P ${k}")`));
+    // 16,000 elements are over core's default `maxNodes` (#721), which this test is not about.
+    const r = parseC4(C + lines(16_000, (k) => `Person(p${k}, "P ${k}")`), { maxNodes: 20_000 });
     expect(r.diagnostics).toEqual([]);
     expect(r.model.elements).toHaveLength(16_000);
     expect(r.ast.children).toHaveLength(16_000);
