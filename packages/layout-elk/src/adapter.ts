@@ -71,6 +71,7 @@ import type {
   ElkPort,
   LayoutOptions,
 } from 'elkjs/lib/elk-api.js';
+import { sideOf, type Rect } from './geometry.ts';
 import { elkConfigOf, groupOptions, rootOptions, type ElkConfig } from './options.ts';
 import { findCyclicEntryNodes, findSubgraphFeedbackEdges } from './passes.ts';
 import { crowdedEnds, type Pinned } from './spread.ts';
@@ -357,7 +358,7 @@ function sidePorts(
 }
 
 /** What a first layout found for the second (`elkEngine`). */
-interface Again {
+export interface Again {
   /** Room each titled group with ports needs on either side (`titleRoom`). */
   grow: ReadonlyMap<string, number>;
   /** The nodes whose ends are pinned (`crowding`). */
@@ -520,25 +521,7 @@ export function toElkGraph(
   return { root, nodes, edges, layered, reversed };
 }
 
-interface Rect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 const centre = (r: Rect): Point => ({ x: r.x + r.width / 2, y: r.y + r.height / 2 });
-
-/** The side of `r` that `p` lies on (or is nearest to). */
-function sideOf(r: Rect, p: Point): Side {
-  const d: [Side, number][] = [
-    ['top', Math.abs(p.y - r.y)],
-    ['bottom', Math.abs(p.y - (r.y + r.height))],
-    ['left', Math.abs(p.x - r.x)],
-    ['right', Math.abs(p.x - (r.x + r.width))],
-  ];
-  return d.reduce((best, cur) => (cur[1] < best[1] ? cur : best))[0];
-}
 
 /** Where the segment from the centre of `r` towards `to` leaves `r`. */
 function border(r: Rect, to: Point): Point {
@@ -591,6 +574,19 @@ const near = (r: Rect, p: Point, slack = 1): boolean =>
   p.x <= r.x + r.width + slack &&
   p.y >= r.y - slack &&
   p.y <= r.y + r.height + slack;
+
+/** The route ELK gave edge `id`, every section joined, source to target. */
+function elkRoute(built: Built, id: string): Point[] {
+  const points = (built.edges.get(id)!.sections ?? []).flatMap((s, i) =>
+    sectionPoints(s).slice(i === 0 ? 0 : 1)
+  );
+  if (built.reversed.has(id)) points.reverse();
+  return points;
+}
+
+/** Whether `points` is a route from the box `from` to the box `to` (either unknown: any). */
+const joins = (points: readonly Point[], from?: Rect, to?: Rect): boolean =>
+  points.length >= 2 && (!from || near(from, points[0]!)) && (!to || near(to, points.at(-1)!));
 
 /** Group ids, innermost first. */
 function innermostFirst(graph: LayoutGraph, chainOf: (id: string) => string[]): string[] {
@@ -780,6 +776,16 @@ function portsOf(
   };
 }
 
+/** The boxes of the main labels that moved with their runs (`labelMoved`). */
+function movedLabels(graph: LayoutGraph, labelMoved: ReadonlyMap<string, Point>): Rect[] {
+  return graph.edges.flatMap((e): Rect[] => {
+    const c = labelMoved.get(e.id);
+    return c && e.label
+      ? [{ x: c.x - e.label.width / 2, y: c.y - e.label.height / 2, ...e.label }]
+      : [];
+  });
+}
+
 function readModel(graph: LayoutGraph, built: Built, elk: ElkConfig): LayoutModel {
   const chainOf = containers(treeOf(graph));
   const rects = new Map<string, Rect>();
@@ -791,19 +797,12 @@ function readModel(graph: LayoutGraph, built: Built, elk: ElkConfig): LayoutMode
 
   const routes: Routes = new Map();
   for (const e of graph.edges) {
-    const laid = built.edges.get(e.id)!;
     const from = elkRects.get(e.source)!;
     const to = elkRects.get(e.target)!;
-    const elkPoints = (laid.sections ?? []).flatMap((s, i) =>
-      sectionPoints(s).slice(i === 0 ? 0 : 1)
-    );
-    if (built.reversed.has(e.id)) elkPoints.reverse();
+    const elkPoints = elkRoute(built, e.id);
     // Some algorithms leave an edge unrouted, or route a nested one from somewhere else: then
     // the edge runs straight between the two boxes.
-    const routed =
-      elkPoints.length >= 2 &&
-      near(from, elkPoints[0]!) &&
-      near(to, elkPoints[elkPoints.length - 1]!);
+    const routed = joins(elkPoints, from, to);
     const points = routed ? elkPoints : [border(from, centre(to)), border(to, centre(from))];
     extendEnd(points, 'start', widened.get(e.source), rects.get(e.source)!);
     extendEnd(points, 'end', widened.get(e.target), rects.get(e.target)!);
@@ -814,16 +813,10 @@ function readModel(graph: LayoutGraph, built: Built, elk: ElkConfig): LayoutMode
     elk.straightenEdges === false ? new Map<string, Point>() : straighten(graph, built, routes);
   offTitles(graph, built, rects, routes, labelMoved);
 
-  const moved = graph.edges.flatMap((e): Rect[] => {
-    const c = labelMoved.get(e.id);
-    return c && e.label
-      ? [{ x: c.x - e.label.width / 2, y: c.y - e.label.height / 2, ...e.label }]
-      : [];
-  });
   const { dx, dy, width, height } = extent(
     graph.diagramPadding ?? 0,
     built.root,
-    [...rects.values(), ...moved],
+    [...rects.values(), ...movedLabels(graph, labelMoved)],
     routes
   );
   const at = (p: Point): Point => ({ x: p.x + dx, y: p.y + dy });
@@ -902,14 +895,8 @@ function crowding(graph: LayoutGraph, built: Built): Pinned {
   }
   const routes = new Map<string, Point[]>();
   for (const e of graph.edges) {
-    const points = (built.edges.get(e.id)!.sections ?? []).flatMap((s, i) =>
-      sectionPoints(s).slice(i === 0 ? 0 : 1)
-    );
-    if (built.reversed.has(e.id)) points.reverse();
-    const [from, to] = [boxes.get(e.source), boxes.get(e.target)];
-    if (points.length < 2 || (from && !near(from, points[0]!)) || (to && !near(to, points.at(-1)!)))
-      continue;
-    routes.set(e.id, points);
+    const points = elkRoute(built, e.id);
+    if (joins(points, boxes.get(e.source), boxes.get(e.target))) routes.set(e.id, points);
   }
   return crowdedEnds(graph.edges, boxes, routes, skip);
 }

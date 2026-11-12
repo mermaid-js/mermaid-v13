@@ -172,47 +172,58 @@ function crowds(a: P, b: P, edge: SlideEdge, ctx: Context): boolean {
 const withoutRepeats = (route: P[]): P[] =>
   route.filter((p, i) => i === 0 || p.x !== route[i - 1]!.x || p.y !== route[i - 1]!.y);
 
+/** The first vertical run of `points` that crosses a title, and that title. */
+function runOnTitle(
+  points: readonly P[],
+  titles: readonly Box[]
+): { run: Run; title: Box } | undefined {
+  for (const run of verticalRuns(points)) {
+    const title = titles.find((t) => segmentHitsBox(points[run.first]!, points[run.last]!, t));
+    if (title) return { run, title };
+  }
+  return undefined;
+}
+
+/** Whether a label centred at `label` rides on the vertical run from `a` to `b`. */
+const ridesOn = (label: P, { a, b }: { a: P; b: P }): boolean =>
+  Math.abs(label.x - a.x) < 1 && label.y >= Math.min(a.y, b.y) && label.y <= Math.max(a.y, b.y);
+
+/** `edge` with `run` moved to column `x`: the route, the run before and after, the label. */
+function movedTo(edge: SlideEdge, run: Run, x: number) {
+  const { points } = edge;
+  const moved = points.map((p, i) => (i >= run.first && i <= run.last ? { x, y: p.y } : p));
+  const runs = [
+    {
+      old: { a: points[run.first]!, b: points[run.last]! },
+      new: { a: moved[run.first]!, b: moved[run.last]! },
+    },
+  ];
+  // The label goes along only when it rides on the run.
+  const centre =
+    edge.label && ridesOn(edge.label, runs[0]!.old)
+      ? projectLabelOntoStraightenedRun(edge.label, runs)
+      : undefined;
+  const label = edge.label && centre ? { ...edge.label, ...centre } : edge.label;
+  return { route: withoutRepeats(moved), column: runs[0]!.new, centre, label };
+}
+
 /** The route and label of `edge` with its run off the title, or undefined when it cannot move. */
 function slide(edge: SlideEdge, ctx: Context): { points: P[]; label?: P } | undefined {
   const { points } = edge;
   const crossed = (route: readonly P[]) => ctx.titles.filter((t) => hits(route, t)).length;
   const titlesBefore = crossed(points);
-  if (titlesBefore === 0) return undefined;
-  let found: { run: Run; title: Box } | undefined;
-  for (const run of verticalRuns(points)) {
-    const title = ctx.titles.find((t) => segmentHitsBox(points[run.first]!, points[run.last]!, t));
-    if (title) {
-      found = { run, title };
-      break;
-    }
-  }
+  const found = titlesBefore > 0 ? runOnTitle(points, ctx.titles) : undefined;
   if (!found) return undefined;
   const { run, title } = found;
   const before = contactsOf(edge, points, boxOf(edge.label), ctx);
   const neighbours = legsOf(points, run).map(({ far }) => far.x);
   for (const x of columns(title, points[run.first]!.x, neighbours)) {
-    const moved = points.map((p, i) => (i >= run.first && i <= run.last ? { x, y: p.y } : p));
-    const runs = [
-      {
-        old: { a: points[run.first]!, b: points[run.last]! },
-        new: { a: moved[run.first]!, b: moved[run.last]! },
-      },
-    ];
-    // The label goes along only when it rides on the run.
-    const old = runs[0]!.old;
-    const rides =
-      !!edge.label &&
-      Math.abs(edge.label.x - old.a.x) < 1 &&
-      edge.label.y >= Math.min(old.a.y, old.b.y) &&
-      edge.label.y <= Math.max(old.a.y, old.b.y);
-    const centre = rides ? projectLabelOntoStraightenedRun(edge.label!, runs) : undefined;
-    const label = edge.label && centre ? { ...edge.label, ...centre } : edge.label;
-    const route = withoutRepeats(moved);
+    const { route, column, centre, label } = movedTo(edge, run, x);
     if (
       endsFit(edge, run, points.length - 1, x, ctx) &&
       legsFit(points, run, x) &&
       crossed(route) < titlesBefore &&
-      !crowds(runs[0]!.new.a, runs[0]!.new.b, edge, ctx) &&
+      !crowds(column.a, column.b, edge, ctx) &&
       !addsContact(before, contactsOf(edge, route, boxOf(label), ctx))
     )
       return { points: route, ...(centre ? { label: centre } : {}) };
