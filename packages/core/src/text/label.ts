@@ -385,10 +385,38 @@ function lineWidth(runs: Run[]): number {
   return w;
 }
 
+// A hyphen between a letter or digit and a letter is a break opportunity (UAX #14 class HY,
+// #394): 'well-known' may break after 'well-'. Not before a digit ('2020-01-15', '-1'), after a
+// leading hyphen ('-flag') or inside a run of hyphens.
+const RE_BEFORE_HYPHEN = /[\p{L}\p{N}]/u;
+const RE_AFTER_HYPHEN = /\p{L}/u;
+
+/** Splits pieces after each hyphen that is a break opportunity, in one scan of the text. */
+function hyphenBreaks(parts: string[]): string[] {
+  let out: string[] | undefined;
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i] as string;
+    let from = 0;
+    for (let at = part.indexOf('-', 1); at !== -1; at = part.indexOf('-', at + 1)) {
+      if (
+        RE_BEFORE_HYPHEN.test(part[at - 1] as string) &&
+        RE_AFTER_HYPHEN.test(part[at + 1] ?? '')
+      ) {
+        out ??= parts.slice(0, i);
+        out.push(part.slice(from, at + 1));
+        from = at + 1;
+      }
+    }
+    if (out) out.push(from === 0 ? part : part.slice(from));
+  }
+  return out ?? parts;
+}
+
 /**
- * Greedy word wrap. Returns lines of pieces whose trimmed width fits `max` where possible. Each
- * word is measured once; the white space around it and single characters come from `small`. A
- * word wider than `max` is split between characters, or with `keep` left whole on its line.
+ * Greedy word wrap. Returns lines of pieces whose trimmed width fits `max` where possible. A word
+ * breaks at white space, CJK characters, break hints and hyphens. Each piece is measured once;
+ * the white space around it and single characters come from `small`. A piece wider than `max` is
+ * split between characters, or with `keep` left whole on its line.
  */
 function wrap(
   pieces: Piece[],
@@ -416,7 +444,7 @@ function wrap(
       continue;
     }
     const style = piece.style;
-    const parts = piece.text.match(RE_PIECE) ?? [];
+    const parts = hyphenBreaks(piece.text.match(RE_PIECE) ?? []);
     for (let p = 0; p < parts.length; p++) {
       let part = parts[p] as string;
       const core = part.trim();

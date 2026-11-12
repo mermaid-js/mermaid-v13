@@ -218,9 +218,11 @@ function iconText(b: Build, raw: string): IconText {
 
 function nodeView(b: Build, model: MindmapModel, index: number): MindmapNodeView {
   const node = model.nodes[index]!;
+  // v12's HTML labels kept a long word whole and widened the node (#649).
   const label = layoutLabel(node.label, b.font, b.wrap, b.ctx.measurer, {
     markdown: true,
     inline: b.ctx.inline,
+    keepWords: b.ctx.units.id !== 'cell',
   });
   const shape = node.shape === 'default' && b.rounded ? 'rounded' : node.shape;
   const f = frameOf(b, shape, label, node.icon && iconText(b, node.icon.text));
