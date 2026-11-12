@@ -41,7 +41,8 @@
   over the top-level `layout`, with the same names and fallbacks.
 - **Labels** are SVG text, measured in the theme's font, with every label markdown as in v12
   (bold, italic, `<br>` line breaks), instead of HTML in `<foreignObject>`
-  ([Mindmap SVG structure](#mindmap-svg-structure)).
+  ([Mindmap SVG structure](#mindmap-svg-structure)). A word wider than `maxNodeWidth` stays
+  whole and the node grows to hold it, as v12's HTML labels did (#649).
 - **The default shape per theme family** is a theme flag, not a theme-name check (D288): plain
   nodes are rounded in the redux family and drawn as v12's `defaultMindmapNode` elsewhere, flat
   at the bottom in `neo` and `neo-dark` ([Theme geometry](#theme-geometry)).
