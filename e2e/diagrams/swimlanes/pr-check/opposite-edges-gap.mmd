@@ -1,0 +1,19 @@
+---
+description: >-
+  Copy of the layout-tests regression `opposite-edges-gap` (mermaid-js/mermaid#8407, #683):
+  "Assess -> Send reply" runs straight down the middle of both boxes and the
+  dotted "Send reply -> Assess" runs beside it, 12 px away, so neither
+  arrowhead touches the other line.
+config:
+  flowchart:
+    htmlLabels: false
+    useMaxWidth: false
+---
+swimlane-beta TB
+  subgraph support [Support]
+    triage["Triage"]
+    assess["Assess"]
+    reply["Send reply"]
+  end
+  triage --> assess --> reply
+  reply -.-> assess

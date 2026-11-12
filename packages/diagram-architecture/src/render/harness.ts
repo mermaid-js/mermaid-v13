@@ -16,6 +16,7 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { streamWriter } from '@mermaid-js/core/svg';
 import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, resolveThemeName } from '@mermaid-js/core/theme';
+import { architectureLayoutEngine } from '../layout/engine.ts';
 import { layoutArchitecture, type ArchitectureLayout } from '../layout/layout.ts';
 import type { ArchitectureModel } from '../model.ts';
 import { parseArchitecture } from '../parser/index.ts';
@@ -67,7 +68,8 @@ export async function renderArchitectureForTest(
     options.config,
     pre.frontMatter?.config,
     directives,
-    undefined,
+    // The plugin's engine sits below the user's config, as `mermaid` puts it (D284).
+    { layout: architectureLayoutEngine.default },
     { warn, section: 'architecture' }
   );
   const parse = parseArchitecture(source, { preprocessed: pre });

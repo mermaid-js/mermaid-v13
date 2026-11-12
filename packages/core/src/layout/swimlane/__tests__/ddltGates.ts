@@ -5,7 +5,13 @@
 // `LayoutGraph` where v12 read its `LayoutData`: nodes and groups are the model's boxes, and each
 // edge label is an obstacle the size the graph gives it, at the centre the model places it (v12's
 // label node). The default lane counts as a lane.
+//
+// v13 adds two gates for v12 fixes that come over as fixtures (#683, #709): `edge-leaves-lane`
+// (mermaid-js/mermaid#8698), an edge whose two ends sit in one lane stays inside that lane's box;
+// and `arrowhead-covers-edge` (mermaid-js/mermaid#8407), the arrowhead of an edge does not cover
+// the line of another edge between the same two nodes.
 import type { LayoutGraph, LayoutModel, Point } from '../../types.ts';
+import { EDGE_ROUTING } from '../config.ts';
 
 /** Distance threshold for corner connection check */
 const EPS_CORNER = 3;
@@ -26,7 +32,9 @@ type GateIssueType =
   | 'edge-intersects-obstacle'
   | 'edge-corner-connection'
   | 'edge-border-hugging'
-  | 'node-border-hugging';
+  | 'node-border-hugging'
+  | 'edge-leaves-lane'
+  | 'arrowhead-covers-edge';
 
 interface GateIssue {
   type: GateIssueType;
@@ -283,7 +291,112 @@ function edgeIssues(
   return issues;
 }
 
-/** Every D538 gate issue in `model`, in v12's order: node hugging, then each edge's. */
+/** How far a route may stray past its lane's border and still count as inside it (px). */
+const LANE_TOLERANCE = 0.5;
+
+/** The lane (top-level group) `id` sits in, however deep; a loose node is in the default lane. */
+function laneOf(graph: LayoutGraph): (id: string) => string {
+  const parent = new Map<string, string | undefined>();
+  for (const n of graph.nodes) parent.set(n.id, n.parent ?? DEFAULT_LANE);
+  for (const g of graph.groups) parent.set(g.id, g.parent);
+  return (id) => {
+    let lane = id;
+    const seen = new Set<string>();
+    for (let p = parent.get(id); p !== undefined && !seen.has(p); p = parent.get(p)) {
+      lane = p;
+      seen.add(p);
+    }
+    return lane;
+  };
+}
+
+/** An edge whose two ends sit in one lane leaves that lane's box (mermaid-js/mermaid#8698). */
+function laneContainmentIssues(graph: LayoutGraph, model: LayoutModel): GateIssue[] {
+  const lane = laneOf(graph);
+  const issues: GateIssue[] = [];
+  for (const e of graph.edges) {
+    const id = lane(e.source);
+    const box = model.groups.get(id);
+    const points = model.edges.get(e.id)?.points ?? [];
+    if (id !== lane(e.target) || !box || points.length < 2) continue;
+    const r = rectOf(box);
+    const outside = points.find(
+      (p) =>
+        p.x < r.left - LANE_TOLERANCE ||
+        p.x > r.right + LANE_TOLERANCE ||
+        p.y < r.top - LANE_TOLERANCE ||
+        p.y > r.bottom + LANE_TOLERANCE
+    );
+    if (outside) {
+      issues.push({
+        type: 'edge-leaves-lane',
+        message: `Edge "${e.id}" leaves lane "${id}" at (${outside.x.toFixed(1)}, ${outside.y.toFixed(1)})`,
+        edgeId: e.id,
+        nodeIds: [id],
+      });
+    }
+  }
+  return issues;
+}
+
+/**
+ * Lateral distance under which an arrowhead covers a parallel line: half the arrowhead's width
+ * plus half the line's stroke.
+ */
+const ARROWHEAD_COVER = EDGE_ROUTING.ARROWHEAD_SIZE / 2 + EDGE_ROUTING.EDGE_STROKE_WIDTH / 2;
+
+/** The arrowhead at the end of `points`: its tip, its axis, and where along it its base sits. */
+function arrowheadOf(points: readonly Point[]) {
+  const [tip, before] = [points.at(-1)!, points.at(-2)!];
+  const upright = Math.abs(tip.x - before.x) <= PIXEL_EPSILON;
+  const along = (p: Point) => (upright ? p.y : p.x);
+  const across = (p: Point) => (upright ? p.x : p.y);
+  const back = along(tip) - Math.sign(along(tip) - along(before)) * EDGE_ROUTING.ARROWHEAD_SIZE;
+  return { tip, orientation: upright ? 'V' : 'H', along, across, back };
+}
+
+/** Whether a segment of `points` runs under `arrow`: parallel, closer than `ARROWHEAD_COVER`. */
+function coversLine(arrow: ReturnType<typeof arrowheadOf>, points: readonly Point[]): boolean {
+  const { tip, orientation, along, across, back } = arrow;
+  return normalizedSegments(points).some(
+    (seg) =>
+      seg.orientation === orientation &&
+      Math.abs(across(seg.a) - across(tip)) < ARROWHEAD_COVER &&
+      rangeOverlap(along(seg.a), along(seg.b), back, along(tip)) > PIXEL_EPSILON
+  );
+}
+
+const pairOf = ({ source, target }: { source: string; target: string }): string =>
+  source < target ? `${source}\u0000${target}` : `${target}\u0000${source}`;
+
+/**
+ * The arrowhead at an edge's target covers the line of another edge between the same two nodes
+ * (mermaid-js/mermaid#8407): a segment of it runs parallel to the last segment, closer than
+ * `ARROWHEAD_COVER`, along the `ARROWHEAD_SIZE` before the tip.
+ */
+function pairArrowheadIssues(graph: LayoutGraph, model: LayoutModel): GateIssue[] {
+  const pointsOf = (id: string) => model.edges.get(id)?.points ?? [];
+  const issues: GateIssue[] = [];
+  for (const e of graph.edges.filter((edge) => pointsOf(edge.id).length >= 2)) {
+    const arrow = arrowheadOf(pointsOf(e.id));
+    const covered = graph.edges.filter(
+      (other) => other !== e && pairOf(other) === pairOf(e) && coversLine(arrow, pointsOf(other.id))
+    );
+    for (const other of covered) {
+      issues.push({
+        type: 'arrowhead-covers-edge',
+        message: `Arrowhead of edge "${e.id}" covers edge "${other.id}"`,
+        edgeId: e.id,
+      });
+    }
+  }
+  return issues;
+}
+
+/**
+ * Every gate issue in `model`, in v12's order (node hugging, then each edge's), then v13's:
+ * lane containment and arrowheads over a pair's other edge.
+ */
 export function swimlaneGateIssues(graph: LayoutGraph, model: LayoutModel): GateIssue[] {
   const b = boxes(graph, model);
   const issues = nodeBorderHugging(graph, model, b.groups, ancestry(graph));
@@ -292,5 +405,6 @@ export function swimlaneGateIssues(graph: LayoutGraph, model: LayoutModel): Gate
     if (points.length < 2) continue;
     issues.push(...edgeIssues(e.id, e, points, { boxes: b, model }));
   }
+  issues.push(...laneContainmentIssues(graph, model), ...pairArrowheadIssues(graph, model));
   return issues;
 }
