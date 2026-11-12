@@ -90,33 +90,65 @@ export interface ProbeModes {
 export function textProbeMode(
   modes: ProbeModes
 ): (src: string, tokens: TokenStream, o: number) => string {
-  const { texts, accDescr, string, other } = modes;
   return (src, tokens, o) => {
     for (let j = 0; j < tokens.length; j++) {
       const start = tokens.start[j] ?? 0;
       const end = tokens.end[j] ?? 0;
       if (start >= o) break;
       if (end < o) continue;
-      const kind = tokens.kind[j] ?? Kind.EOF;
-      if (string !== undefined) {
-        if (kind === string && o < end) return 'string';
-        // An unclosed string is an error token from its quote on.
-        const c = src.charCodeAt(start);
-        if (kind === Kind.Error && (c === DQUOTE || c === APOSTROPHE)) return 'string';
-      }
-      const own = other?.(src, kind, start, end, o);
-      if (own !== undefined) return own;
-      const word = texts[kind]?.word;
-      if (!word) continue;
-      let k = start;
-      while (isIndent(src.charCodeAt(k))) k++;
-      k += word.length;
-      // A block `accDescr { … }` ends at its `}`; the other values run to the line end.
-      const block = kind === accDescr && /^\s*\{/.test(src.slice(k, end));
-      if (o > k && (o < end || !block)) return word;
+      const mode = tokenProbeMode(modes, src, { kind: tokens.kind[j] ?? Kind.EOF, start, end }, o);
+      if (mode !== undefined) return mode;
     }
     return 'INITIAL';
   };
+}
+
+/** A token that holds the probed offset: `start < o <= end`. */
+interface ProbedToken {
+  readonly kind: number;
+  readonly start: number;
+  readonly end: number;
+}
+
+/** The mode the offset `o` is in by the token `t` that holds it; undefined when `t` says none. */
+function tokenProbeMode(
+  modes: ProbeModes,
+  src: string,
+  t: ProbedToken,
+  o: number
+): string | undefined {
+  if (modes.string !== undefined && inString(src, modes.string, t, o)) return 'string';
+  const own = modes.other?.(src, t.kind, t.start, t.end, o);
+  if (own !== undefined) return own;
+  const word = modes.texts[t.kind]?.word;
+  if (!word) return undefined;
+  return inTextValue(src, word, t, o, t.kind === modes.accDescr) ? word : undefined;
+}
+
+/** Whether `o` is inside the string `t` (of kind `string`), closed or not. */
+function inString(src: string, string: number, t: ProbedToken, o: number): boolean {
+  if (t.kind === string && o < t.end) return true;
+  // An unclosed string is an error token from its quote on.
+  const c = src.charCodeAt(t.start);
+  return t.kind === Kind.Error && (c === DQUOTE || c === APOSTROPHE);
+}
+
+/**
+ * Whether `o` is past the keyword `word` of the text statement `t`. A block `accDescr { … }`
+ * (`mayBlock`) ends at its `}`; the other values run to the line end.
+ */
+function inTextValue(
+  src: string,
+  word: string,
+  t: ProbedToken,
+  o: number,
+  mayBlock: boolean
+): boolean {
+  let k = t.start;
+  while (isIndent(src.charCodeAt(k))) k++;
+  k += word.length;
+  if (o <= k) return false;
+  return o < t.end || !(mayBlock && /^\s*\{/.test(src.slice(k, t.end)));
 }
 
 /**

@@ -10,6 +10,7 @@
  */
 import {
   type CompletionItem,
+  type CompletionKind,
   type DocumentView,
   Kind,
   type ProbeResult,
@@ -25,6 +26,7 @@ import { T } from '../parser/tokens.ts';
 import { nameAsWritten } from './names.ts';
 import {
   FIELDS,
+  type KeywordItem,
   OPERATORS,
   RELATIONSHIPS,
   span,
@@ -69,8 +71,15 @@ interface Statement {
   groups: number;
 }
 
+/** A significant token of the statement. */
+interface FoundToken {
+  kind: number;
+  start: number;
+  end: number;
+}
+
 function statementBefore(text: string, tokens: TokenStream, at: number): Statement {
-  const found: { kind: number; start: number; end: number }[] = [];
+  const found: FoundToken[] = [];
   for (let i = tokenBefore(tokens, at - 1); i >= 0; i--) {
     const k = tokens.kind[i]!;
     const end = tokens.end[i] ?? 0;
@@ -80,14 +89,24 @@ function statementBefore(text: string, tokens: TokenStream, at: number): Stateme
     found.push({ kind: k, start: tokens.start[i] ?? 0, end });
   }
   found.reverse();
-  // Blanks are no token, so groups are told apart by the text between tokens; a quoted name
-  // (`"`, text, `"`) is one group.
+  return {
+    head: found[0]?.kind ?? -1,
+    prev: found[found.length - 1]?.kind ?? -1,
+    groups: groupsAfterHead(text, found),
+  };
+}
+
+/**
+ * Blanks are no token, so groups are told apart by the text between tokens; a quoted name
+ * (`"`, text, `"`) is one group.
+ */
+function groupsAfterHead(text: string, found: readonly FoundToken[]): number {
   let groups = 0;
   for (let i = 1; i < found.length; i++) {
     if (/\s/.test(text.slice(found[i - 1]!.end, found[i]!.start)) && found[i]!.kind !== T.QString)
       groups++;
   }
-  return { head: found[0]?.kind ?? -1, prev: found[found.length - 1]?.kind ?? -1, groups };
+  return groups;
 }
 
 /** Tokens that take the `:` or `{` and the blanks after their keyword. */
@@ -151,6 +170,14 @@ function classes(items: Items, model: RequirementModel): void {
   }
 }
 
+/** The word tables offered by expected kind anywhere, in the order they are offered. */
+const WORD_GROUPS: readonly (readonly [readonly KeywordItem[], CompletionKind])[] = [
+  [STATEMENT_KEYWORDS, 'keyword'],
+  [FIELDS, 'property'],
+  [VALUES, 'constant'],
+  [RELATIONSHIPS, 'keyword'],
+];
+
 export function requirementCompletions(
   probe: ProbeResult,
   doc: DocumentView<RequirementDocument>
@@ -163,23 +190,29 @@ export function requirementCompletions(
   const range = wordRange(text, tokens, probe);
   if (!range) return [];
   const items = new Items(text.slice(range.start, probe.offset), range, true);
-  const model = result.model as RequirementModel;
-  for (const k of STATEMENT_KEYWORDS)
-    if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'keyword');
-  for (const k of FIELDS)
-    if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'property');
-  for (const k of VALUES)
-    if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'constant');
-  for (const k of RELATIONSHIPS)
-    if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'keyword');
+  for (const [rows, kind] of WORD_GROUPS) expectedWords(items, expected, rows, kind);
   const st = statementBefore(text, tokens, range.start);
   if (NAME.some((k) => expected.has(k)) || expected.has(T.Alpha)) {
-    const context = nameContext(st);
-    if (context === 'boxes') boxes(items, model);
-    else if (context === 'classes') classes(items, model);
+    names(items, nameContext(st), result.model as RequirementModel);
   }
-  if (st.head !== -1)
-    for (const k of OPERATORS)
-      if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], 'operator');
+  if (st.head !== -1) expectedWords(items, expected, OPERATORS, 'operator');
   return items.list;
+}
+
+/** The words of `rows` whose kind the parser tests at the cursor, as items of `kind`. */
+function expectedWords(
+  items: Items,
+  expected: ReadonlySet<number>,
+  rows: readonly KeywordItem[],
+  kind: CompletionKind
+): void {
+  for (const k of rows) {
+    if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], kind);
+  }
+}
+
+/** The names an expected name may be, by its context. */
+function names(items: Items, context: NameContext, model: RequirementModel): void {
+  if (context === 'boxes') boxes(items, model);
+  else if (context === 'classes') classes(items, model);
 }

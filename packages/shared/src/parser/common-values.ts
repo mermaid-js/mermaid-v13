@@ -96,14 +96,21 @@ function dropLineEnds(text: string): string {
     const from = i;
     while (i < n && !isSpace(text.charCodeAt(i))) i++;
     out += text.slice(from, i);
-    if (i >= n) break;
     const a = i;
-    let last = -1;
-    for (; i < n && isSpace(text.charCodeAt(i)); i++) {
-      if (i > a && isLineEnd(text.charCodeAt(i))) last = i;
-    }
+    while (i < n && isSpace(text.charCodeAt(i))) i++;
     if (i === n) break;
-    out += text.slice(last < 0 ? a : last, i);
+    out += text.slice(lastLineEnd(text, a, i), i);
   }
   return out;
+}
+
+/**
+ * The last line end of the whitespace run `text[a, end)` after its first character, or `a` when
+ * it has none. One pass back over the run, so {@link dropLineEnds} stays linear.
+ */
+function lastLineEnd(text: string, a: number, end: number): number {
+  for (let i = end - 1; i > a; i--) {
+    if (isLineEnd(text.charCodeAt(i))) return i;
+  }
+  return a;
 }
