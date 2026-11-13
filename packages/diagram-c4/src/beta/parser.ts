@@ -31,7 +31,7 @@ import type {
 } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import { C4BETA_UNKNOWN_DIAGRAM_KIND, C4BETA_UNKNOWN_ELEMENT_KIND } from '../codes.ts';
+import * as codes from '../codes.ts';
 import type {
   C4BetaDocument,
   C4BetaElementNode,
@@ -169,7 +169,7 @@ class C4BetaParser {
       range: { start: this.pre.bodyStart, end: src.length },
       children: this.children,
     };
-    const built = buildModel(ast);
+    const built = buildModel(ast, state.diagnostics, (at) => this.lineOf(at));
     // In source order (the facet contract, R-LANG-3): the semantic checks run after the parse.
     state.diagnostics.list.sort((a, b) => a.range.start - b.range.start);
     const warnings = state.diagnostics.list.filter((d) => d.severity === 'warning');
@@ -342,7 +342,7 @@ class C4BetaParser {
     const kind = KIND_NAMES.get(word);
     if (DIAGRAM_KINDS[word] !== 1 && ID_KINDS[word] === 1) {
       this.reject(
-        C4BETA_UNKNOWN_DIAGRAM_KIND,
+        codes.C4BETA_UNKNOWN_DIAGRAM_KIND,
         `Unknown diagram kind \`${this.raw()}\`: use \`context\`, \`container\`, \`component\`, \`dynamic\` or \`deployment\`.`
       );
     }
@@ -380,7 +380,7 @@ class C4BetaParser {
       this.fail(STATEMENT_START, 'a body starts with `{` at the end of its element line');
     else if (ID_KINDS[k] === 1 && ID_KINDS[this.kind(this.i + 1)] === 1) {
       this.reject(
-        C4BETA_UNKNOWN_ELEMENT_KIND,
+        codes.C4BETA_UNKNOWN_ELEMENT_KIND,
         `Unknown element kind \`${this.raw()}\`: use \`person\`, \`softwareSystem\`, \`container\`, \`component\`, \`group\`, \`deploymentNode\` or \`infrastructureNode\`.`
       );
     } else if (ID_KINDS[k] === 1) {
