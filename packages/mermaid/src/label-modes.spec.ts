@@ -3,45 +3,11 @@
 // as written. Bullets and inline code in a mindmap markdown string are v13's own (D56).
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { createMermaid } from './index.ts';
+import { corpusLabels, drawnRuns } from './testing/labels.ts';
 
-const fixture = (path: string): string =>
-  readFileSync(new URL(`../../../e2e/diagrams/${path}`, import.meta.url), 'utf8');
+const { drawnBy, textOf } = corpusLabels(readFileSync);
 
-const attr = (tag: string, name: string): string | undefined =>
-  new RegExp(`\\b${name}="([^"]*)"`).exec(tag)?.[1];
-
-/** One run: its text inside `<b>`, `<i>` and `<code>` for bold, italic and monospace. */
-function run(tag: string, text: string): string {
-  let out = text.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-  if (attr(tag, 'font-family') === 'monospace') out = `<code>${out}</code>`;
-  if (attr(tag, 'font-style') === 'italic') out = `<i>${out}</i>`;
-  if (attr(tag, 'font-weight') === 'bold') out = `<b>${out}</b>`;
-  return out;
-}
-
-/** Every `<text>` element: its runs marked by style, its lines joined by ` / `. */
-function drawn(svg: string): string[] {
-  return [...svg.matchAll(/<text\b[^>]*>(.*?)<\/text>/gs)].map((m) => {
-    const body = m[1] ?? '';
-    if (!body.includes('<tspan')) return run('', body);
-    let out = '';
-    for (const t of body.matchAll(/(<tspan\b[^>]*>)(.*?)<\/tspan>/gs)) {
-      const tag = t[1] ?? '';
-      if (out !== '' && attr(tag, 'y') !== undefined) out += ' / ';
-      out += run(tag, t[2] ?? '');
-    }
-    return out;
-  });
-}
-
-async function render(path: string): Promise<string[]> {
-  const m = createMermaid();
-  m.initialize({ deterministic: true });
-  const r = await m.render('x', fixture(path));
-  expect(r.warnings).toEqual([]);
-  return drawn(r.svg);
-}
+const render = (path: string): Promise<string[]> => drawnBy(path, drawnRuns);
 
 describe('label modes per diagram type (#763, D562)', () => {
   it('mindmap: list markers and unquoted backticks are drawn as written', async () => {
@@ -135,19 +101,13 @@ describe('label modes per diagram type (#763, D562)', () => {
   });
 
   it('sequence: text output keeps the written backslash-n', async () => {
-    const m = createMermaid();
-    const r = await m.render('x', fixture('sequence/baseline/text/written-backslash-n.mmd'), {
-      format: 'ascii',
-    });
+    const r = await textOf('sequence/baseline/text/written-backslash-n.mmd');
     for (const text of ['Al\\nice', 'm\\nx', 'n\\nx', 'l\\nx', 'C:\\new\\path'])
       expect(r.text).toContain(text);
   });
 
   it('requirement: text output draws the backticks', async () => {
-    const m = createMermaid();
-    const r = await m.render('x', fixture('requirement/baseline/text/backticks-and-emphasis.mmd'), {
-      format: 'ascii',
-    });
+    const r = await textOf('requirement/baseline/text/backticks-and-emphasis.mmd');
     for (const text of ['`**bold**`', 'Text: `*it*`', 'Type: `sim`', 'Text: - not a bullet'])
       expect(r.text).toContain(text);
   });

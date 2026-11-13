@@ -14,7 +14,7 @@ import {
 } from '@mermaid-js/core/text';
 import type { ClassMember, ClassNode } from '../parser/model.ts';
 import { memberDisplay } from '../parser/member.ts';
-import { v12Options, v12Text } from '@mermaid-js/core/text/v12-label';
+import { v12Label } from '@mermaid-js/core/text/v12-label';
 
 /** One line of text in a class box. */
 export interface ClassRow {
@@ -99,12 +99,10 @@ export function measureBox(
   m: BoxMetrics,
   inline?: InlineSpans
 ): ClassBoxGeometry {
-  const measure = (text: string, style: StyleBits): MeasuredLabel =>
-    layoutLabel(v12Text(text), font, Infinity, measurer, {
-      ...v12Options(text),
-      style,
-      inline,
-    });
+  const measure = (text: string, style: StyleBits): MeasuredLabel => {
+    const [shown, mode] = v12Label(text);
+    return layoutLabel(shown, font, Infinity, measurer, { ...mode, style, inline });
+  };
   // A blank row (`class A[" "]`) still takes a line.
   const { lineHeight } = measurer.metrics(font);
   const tall = (label: MeasuredLabel): number => Math.max(label.height, lineHeight);

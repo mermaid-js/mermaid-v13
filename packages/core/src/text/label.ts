@@ -79,7 +79,6 @@ interface Piece {
 // Anything that needs more than measuring once: markup, entities, escapes, explicit breaks,
 // runs of white space and break hints.
 const RE_SLOW = /[<&*_`\\\n\r\t\u00ad\u200b]| {2}/;
-const RE_PLAIN_BREAK = /\\n|\r\n?|\n|<br\s*\/?>/i;
 const RE_SPACES = /[ \t]+/g;
 const SHY = '\u00ad';
 const ZWJ = '\u200d';
@@ -133,9 +132,8 @@ export function layoutLabel(
   const text = src.trim();
   if (text === '') return box([], [], []);
 
-  const markdown = !!options.markdown || options.markup === 'markdown';
-  // What `inline` reads: 0 plain, 1 emphasis, 2 markdown.
-  const level = markdown ? 2 : +(options.markup === 'emphasis');
+  const markup = options.markdown ? 'markdown' : options.markup;
+  const markdown = markup === 'markdown';
   if (!spans && !RE_SLOW.test(text) && !(markdown && RE_BULLET.test(text))) {
     const width = measurer.width(text, font, base);
     if (width <= maxWidth) return box([[run(text, base, width)]], [0], [width]);
@@ -150,7 +148,7 @@ export function layoutLabel(
   for (const { source, bullet } of markdown
     ? markdownLines(shown)
     : plainLines(shown, options.backslashBreak)) {
-    const pieces = tidy(inline(source, base, tags, level, spans?.boxes));
+    const pieces = tidy(inline(source, base, tags, markup, spans?.boxes));
     let indent = 0;
     let hang = 0;
     if (bullet !== undefined) {
@@ -211,13 +209,15 @@ interface SourceLine {
 const BULLETS = ['\u2022 ', '\u25e6 '] as const;
 const RE_BULLET = /^([ \t]*)[-*] +(?=\S)/;
 const RE_MD_BREAK = /<br\s*\/?>|\r\n?/gi;
+// After `RE_MD_BREAK` has made every `<br>` and line end a `\n`.
+const RE_PLAIN_BREAK = /\\n|\n/i;
 
 /** Lines of a plain or emphasis label. Without `backslashBreak` a written `\n` stays text. */
 function plainLines(text: string, backslashBreak = true): SourceLine[] {
-  const lines = backslashBreak
-    ? text.split(RE_PLAIN_BREAK)
-    : text.replace(RE_MD_BREAK, '\n').split('\n');
-  return lines.map((source) => ({ source }));
+  return text
+    .replace(RE_MD_BREAK, '\n')
+    .split(backslashBreak ? RE_PLAIN_BREAK : '\n')
+    .map((source) => ({ source }));
 }
 
 /**
@@ -254,8 +254,6 @@ const RE_TAG = /<(\/?)([a-zA-Z][\w-]*)(?:\s[^<>]*)?\/?>/y;
 // and the rest of the label is matched as group 2, so that it is kept and scanned once.
 const RE_SCRIPT = /(<script(?:\s[^<>]*)?\/?>)(?:[^]*?(?=<\/script(?:\s[^<>]*)?\/?>)|([^]*))/gi;
 const RE_STYLE = /(<style(?:\s[^<>]*)?\/?>)(?:[^]*?(?=<\/style(?:\s[^<>]*)?\/?>)|([^]*))/gi;
-const BOLD_TAGS = new Set(['b', 'strong']);
-const ITALIC_TAGS = new Set(['i', 'em']);
 // HTML elements whose tags are dropped, text kept (R-TEXT-3), and reported as `HTML_DROPPED`
 // unless they are bold or italic (D564). Anything else shaped like a tag, such as the type in
 // List<T>, is text.
@@ -282,17 +280,19 @@ const RE_ESCAPABLE = /[!-/:-@[-`{-~]/;
 const RE_WORD = /\w/;
 
 /**
- * Splits one line of source into styled pieces: HTML subset tags and character references, from
- * `level` 1 (`emphasis`) emphasis, and at 2 (`markdown`) inline code and backslash escapes.
- * Emphasis stays in its line.
+ * Splits one line of source into styled pieces: HTML subset tags and character references, in
+ * the `emphasis` and `markdown` modes emphasis, and in `markdown` inline code and backslash
+ * escapes. Emphasis stays in its line.
  */
 function inline(
   source: string,
   base: StyleBits,
   tags: Tags,
-  level: number,
+  markup: LabelMarkup | undefined,
   boxes?: readonly LabelBoxSpan[]
 ): Piece[] {
+  const markdown = markup === 'markdown';
+  const emphasis = markdown || markup === 'emphasis';
   const out: Piece[] = [];
   const boxAt = (ch: string): LabelBoxSpan | undefined => boxes?.[ch.charCodeAt(0) - PLACEHOLDER];
   // Pushes source text in one style, its box placeholders as box pieces. Only placeholders in
@@ -340,8 +340,8 @@ function inline(
       const tag = m?.[2]?.toLowerCase();
       if (m && tag !== undefined && HTML_TAGS.has(tag)) {
         const step = m[1] === '/' ? -1 : 1;
-        if (BOLD_TAGS.has(tag)) tags.bold = Math.max(0, tags.bold + step);
-        else if (ITALIC_TAGS.has(tag)) tags.italic = Math.max(0, tags.italic + step);
+        if (tag === 'b' || tag === 'strong') tags.bold = Math.max(0, tags.bold + step);
+        else if (tag === 'i' || tag === 'em') tags.italic = Math.max(0, tags.italic + step);
         else tags.dropped?.add(tag);
         restyle();
         i += m[0].length;
@@ -354,11 +354,11 @@ function inline(
         i += entity[1];
         continue;
       }
-    } else if (level > 1 && ch === '\\' && RE_ESCAPABLE.test(source[i + 1] ?? '')) {
+    } else if (markdown && ch === '\\' && RE_ESCAPABLE.test(source[i + 1] ?? '')) {
       text += source[i + 1];
       i += 2;
       continue;
-    } else if (level > 1 && ch === '`') {
+    } else if (markdown && ch === '`') {
       const end = source.indexOf('`', i + 1);
       if (end > i + 1) {
         if (text !== '') out.push({ text, style });
@@ -367,7 +367,7 @@ function inline(
         i = end + 1;
         continue;
       }
-    } else if (level && (ch === '*' || ch === '_')) {
+    } else if (emphasis && (ch === '*' || ch === '_')) {
       const double = source[i + 1] === ch;
       const bit = double ? Style.Bold : Style.Italic;
       const len = double ? 2 : 1;

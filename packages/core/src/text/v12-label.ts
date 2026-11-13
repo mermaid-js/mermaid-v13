@@ -22,15 +22,19 @@ function withoutEndBreaks(text: string): string {
   return end === text.length ? text : text.slice(0, end);
 }
 
-/** The text to lay out: blank lines between written lines and breaks at the end dropped. */
-export const v12Text = (text: string): string =>
-  withoutEndBreaks(text.includes('\n') ? text.replace(RE_BLANK_LINES, '\n') : text);
+/** The `layoutLabel` options of a v12 Markdown label. */
+export interface V12LabelMode {
+  readonly markup: LabelMarkup;
+  readonly backslashBreak: false;
+}
 
 /**
- * The `layoutLabel` options: `emphasis`, or `plain` for a label that starts with a list marker
- * or holds a code span, so that it is drawn as written. A written `\n` is text in both.
+ * A v12 Markdown label for `layoutLabel`, as `[text, options]`. The text has the blank lines
+ * between written lines and the breaks at its end dropped. The mode is `emphasis`, or `plain` for
+ * a label that starts with a list marker or holds a code span, so that it is drawn as written. A
+ * written `\n` is text in both.
  */
-export const v12Options = (text: string): { markup: LabelMarkup; backslashBreak: false } => ({
-  markup: RE_AS_WRITTEN.test(text) ? 'plain' : 'emphasis',
-  backslashBreak: false,
-});
+export const v12Label = (text: string): [text: string, mode: V12LabelMode] => [
+  withoutEndBreaks(text.includes('\n') ? text.replace(RE_BLANK_LINES, '\n') : text),
+  { markup: RE_AS_WRITTEN.test(text) ? 'plain' : 'emphasis', backslashBreak: false },
+];

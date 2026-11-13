@@ -30,7 +30,7 @@ import { measureBox, type BoxMetrics, type ClassBoxGeometry } from './box.ts';
 import { configDefaults } from '../config-defaults.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { ClassLayoutContext } from './context.ts';
-import { v12Options, v12Text } from '@mermaid-js/core/text/v12-label';
+import { v12Label } from '@mermaid-js/core/text/v12-label';
 
 /** A class, as laid out. */
 export interface ClassBoxView extends ClassBoxGeometry {
@@ -223,11 +223,10 @@ export function prepare(model: ClassModel, ctx: ClassLayoutContext): ClassPrepar
     model,
     ctx,
     units,
-    label: (text, max = Infinity) =>
-      layoutLabel(v12Text(text), font, max, ctx.measurer, {
-        ...v12Options(text),
-        inline: ctx.inline,
-      }),
+    label: (text, max = Infinity) => {
+      const [shown, mode] = v12Label(text);
+      return layoutLabel(shown, font, max, ctx.measurer, { ...mode, inline: ctx.inline });
+    },
     plain: (text) => layoutLabel(text, font, Infinity, ctx.measurer, { inline: ctx.inline }),
     terminal: (text) =>
       layoutLabel(text, { ...font, size: terminalSize(ctx, font.size) }, Infinity, ctx.measurer, {

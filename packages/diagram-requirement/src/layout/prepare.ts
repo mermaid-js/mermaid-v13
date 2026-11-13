@@ -21,7 +21,7 @@ import {
 import { tagsOnly } from '@mermaid-js/core/text/tags-only';
 import type { BoxOf, Relation, RequirementModel } from '../model.ts';
 import type { RequirementRenderContext } from './context.ts';
-import { v12Options, v12Text } from '@mermaid-js/core/text/v12-label';
+import { v12Label } from '@mermaid-js/core/text/v12-label';
 import {
   markerGeometry,
   markerRoom,
@@ -405,12 +405,10 @@ export function prepareRequirement(
     size: theme.number('fontSize'),
     weight: 400,
   };
-  const measure: Measure = (text, f, bits) =>
-    layoutLabel(v12Text(text), f, Infinity, measurer, {
-      ...v12Options(text),
-      style: bits,
-      inline: ctx.inline,
-    });
+  const measure: Measure = (text, f, bits) => {
+    const [shown, mode] = v12Label(text);
+    return layoutLabel(shown, f, Infinity, measurer, { ...mode, style: bits, inline: ctx.inline });
+  };
   const styles = new Map<string, CheckedStyle>();
   const styleOf = (decls: readonly string[]): CheckedStyle => {
     const key = decls.join(';');

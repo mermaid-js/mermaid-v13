@@ -18,7 +18,7 @@ import { configLengths, type ConfigLength } from './config-length.ts';
 import type { StateRenderContext } from './context.ts';
 import { stateConfigDefaults } from '../generated/config-defaults.ts';
 import { stateMetrics, type StateMetrics } from './metrics.ts';
-import { v12Options, v12Text } from '@mermaid-js/core/text/v12-label';
+import { v12Label, type V12LabelMode } from '@mermaid-js/core/text/v12-label';
 import type { EmbeddedDiagram } from '@mermaid-js/core';
 import { framedSize } from '@mermaid-js/core/svg/framed';
 import {
@@ -128,16 +128,13 @@ interface Measure {
   /** State label wrap width and least label width, in units. */
   readonly wrap: number;
   readonly minWidth: number;
+  /** A measured label, read as v12's Markdown reader did (D562). */
+  readonly label: (text: string, style: CheckedStyle, max: number) => MeasuredLabel;
   /**
-   * A measured label. `plain` is for the title and the rows of a state with several
-   * description lines, which v12 drew without its Markdown reader.
+   * The measured title or rows of a state with several description lines, which v12 drew
+   * without its Markdown reader.
    */
-  readonly label: (
-    text: string,
-    style: CheckedStyle,
-    max: number,
-    plain?: boolean
-  ) => MeasuredLabel;
+  readonly plain: (text: string, style: CheckedStyle, max: number) => MeasuredLabel;
   readonly styleOf: (classes: readonly string[], own?: readonly string[]) => CheckedStyle;
   readonly embed: StateRenderContext['embed'];
   /** A folded block's type label (#670): small capitals, measured at their size. */
@@ -156,6 +153,21 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
   const b = units.builder;
   const cfg = ctx.config.state ?? {};
   const length = configLengths(cfg, stateConfigDefaults, (w) => ctx.warn(w));
+  const measure = (
+    text: string,
+    mode: V12LabelMode | undefined,
+    style: CheckedStyle,
+    max: number
+  ): MeasuredLabel => {
+    const [f, bits] = textStyle(style, m.font);
+    return layoutLabel(text, f, max, ctx.measurer, {
+      ...mode,
+      style: bits,
+      inline: ctx.inline,
+      // v12's HTML labels kept a long word whole (#649); in cells it is split to fit its box.
+      keepWords: units.id !== 'cell',
+    });
+  };
   const m: Measure = {
     units,
     sm: stateMetrics(units),
@@ -167,16 +179,8 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
     },
     wrap: fromPx(units, length('wrappingWidth') ?? stateConfigDefaults.wrappingWidth!, 'x'),
     minWidth: fromPx(units, length('minNodeWidth') ?? stateConfigDefaults.minNodeWidth!, 'x'),
-    label: (text, style, max, plain = false) => {
-      const [f, bits] = textStyle(style, m.font);
-      return layoutLabel(plain ? text : v12Text(text), f, max, ctx.measurer, {
-        ...(plain ? {} : v12Options(text)),
-        style: bits,
-        inline: ctx.inline,
-        // v12's HTML labels kept a long word whole (#649); in cells it is split to fit its box.
-        keepWords: units.id !== 'cell',
-      });
-    },
+    label: (text, style, max) => measure(...v12Label(text), style, max),
+    plain: (text, style, max) => measure(text, undefined, style, max),
     styleOf: styleCache(model, ctx),
     embed: ctx.embed,
     typeLabel: (type) =>
@@ -448,8 +452,8 @@ function measureState(
   }
   if (s.descriptions.length > 1) {
     // v12 `rectWithTitle`: the id as a title, a divider, then the description lines.
-    const label = m.label(s.id, style, m.wrap, true);
-    const rows = m.label(s.descriptions.join('\n'), style, m.wrap, true);
+    const label = m.plain(s.id, style, m.wrap);
+    const rows = m.plain(s.descriptions.join('\n'), style, m.wrap);
     const wide = label.width > rows.width ? label : rows;
     const box = boxOf(wide, sm.statePad, m, m.cells ? 0 : m.minWidth);
     const tall = m.cells ? label.lines.length + rows.lines.length : label.height + rows.height;

@@ -11,7 +11,7 @@ import { tagsOnly } from '@mermaid-js/core/text/tags-only';
 import type { MindmapModel, MindmapShape } from '../model.ts';
 import type { MindmapLayoutContext } from './context.ts';
 import { MINDMAP_METRICS, type ShapeMetrics } from './metrics.ts';
-import { v12Options, v12Text } from '@mermaid-js/core/text/v12-label';
+import { v12Label } from '@mermaid-js/core/text/v12-label';
 import { bangOutline, cloudOutline, outlineBox, type Outline, type Point } from './outline.ts';
 
 /** A config value the layout can't honour (pitfall 22): it lays out with the default instead. */
@@ -224,9 +224,10 @@ function nodeView(b: Build, model: MindmapModel, index: number): MindmapNodeView
   const node = model.nodes[index]!;
   // v12's HTML labels kept a long word whole and widened the node (#649).
   // Bullets and inline code are read in a markdown string only (D562).
-  const md = node.markdown === true;
-  const label = layoutLabel(md ? node.label : v12Text(node.label), b.font, b.wrap, b.ctx.measurer, {
-    ...(md ? { markup: 'markdown' } : v12Options(node.label)),
+  const [shown, mode] =
+    node.markdown === true ? [node.label, { markup: 'markdown' as const }] : v12Label(node.label);
+  const label = layoutLabel(shown, b.font, b.wrap, b.ctx.measurer, {
+    ...mode,
     inline: b.ctx.inline,
     keepWords: b.ctx.units.id !== 'cell',
   });

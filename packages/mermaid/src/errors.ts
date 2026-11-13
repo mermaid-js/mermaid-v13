@@ -43,9 +43,12 @@ export const toWarning = (w: Warning, fragments: readonly ConfigFragment[]): War
   return out as unknown as Warning;
 };
 
-/** One `HTML_DROPPED` warning for the tags the labels of `ctx`'s draw lost (D564). */
-export function htmlDropped(ctx: RenderContext): void {
-  const tags = [...ctx.inline!.dropped];
+/** A draw's context as the API builds it: the render's inline spans are always there. */
+export type DrawContext = RenderContext & Required<Pick<RenderContext, 'inline'>>;
+
+/** Warns once, as `HTML_DROPPED`, of the tags the labels of `ctx`'s draw lost (D564). */
+export function warnHtmlDropped(ctx: DrawContext): void {
+  const tags = [...ctx.inline.dropped];
   if (tags[0])
     ctx.warn({
       code: 'HTML_DROPPED',
