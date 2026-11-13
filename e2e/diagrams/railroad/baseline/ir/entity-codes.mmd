@@ -1,0 +1,8 @@
+---
+description: >-
+  entity codes in an IR terminal draw as their characters (#656), and a name
+  core does not know draws as written (D559)
+---
+railroad-beta
+r = terminal("a #lt;b#gt; #35; #quot;q#quot; #amp; c") ;
+u = terminal("unknown #bogus; stays") ;

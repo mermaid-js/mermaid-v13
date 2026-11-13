@@ -16,7 +16,7 @@
  * stack and the layout is linear in the rows and the text.
  */
 import type { RenderContext } from '@mermaid-js/core';
-import { Style, type FontKey, type StyleBits } from '@mermaid-js/core/text';
+import { decodeEntities, Style, type FontKey, type StyleBits } from '@mermaid-js/core/text';
 import { treeViewOptions, type TreeViewOptions } from '../config.ts';
 import { resolveIcon } from '../icons.ts';
 import { highlighted, type TreeViewModel, type TreeViewNode } from '../model.ts';
@@ -77,15 +77,19 @@ function frameOf(ctx: TreeViewLayoutContext): Frame {
   const { ascent, descent } = ctx.measurer.metrics(font);
   const lineHeight = ascent + descent;
   // v12 measured with `getBBox`, which is 0 × 0 for an empty text.
-  const measure = (text: string, f: FontKey, style: StyleBits): TreeViewText => ({
-    text,
-    font: f,
-    style,
-    x: 0,
-    y: 0,
-    width: text === '' ? 0 : ctx.measurer.width(text, f, style),
-    height: text === '' ? 0 : lineHeight,
-  });
+  // Entity codes are decoded here (D561): a name is measured and drawn as its characters.
+  const measure = (written: string, f: FontKey, style: StyleBits): TreeViewText => {
+    const text = decodeEntities(written);
+    return {
+      text,
+      font: f,
+      style,
+      x: 0,
+      y: 0,
+      width: text === '' ? 0 : ctx.measurer.width(text, f, style),
+      height: text === '' ? 0 : lineHeight,
+    };
+  };
   return {
     config: treeViewOptions(ctx.config.treeView, ctx.warn),
     measure,
