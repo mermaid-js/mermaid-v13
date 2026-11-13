@@ -23,13 +23,19 @@ import { usecaseAdapter } from './v13.ts';
  * removed it with the line break after it (so v13 rejects what v12 accepted, or rejects it at the
  * directive, or, cut by a later `%%{…}%%` after a CR, reads the two as one directive and accepts
  * what v12 rejected); and core's entity table, smaller than the HTML table a browser drew v12's
- * `#name;` codes from, so a name outside it keeps its `&name;`.
+ * `#name;` codes from, so a name outside it is not decoded, and stays `#name;` as written (D561),
+ * also where no browser knew the name and v12 drew `&name;`.
  */
 const LISTED: ReadonlyMap<string, { kind: string; detail: RegExp }> = new Map([
   // Before its prefix `directive-unclosed`: the first prefix that matches is used.
   ['usecase-cases/directive-unclosed-in-line', { kind: 'accept', detail: /^Error parsing/ }],
   ['usecase-cases/directive-unclosed', { kind: 'reject', detail: /^UNCLOSED_DIRECTIVE/ }],
   ['usecase-cases/entities-outside-core', { kind: 'model', detail: /^useCases\[2\]\.label$/ }],
+  ['usecase-cases/entities-edge', { kind: 'model', detail: /^useCases\[0\]\.label$/ }],
+  [
+    'e2e/baseline/text/entity-names.mmd',
+    { kind: 'model', detail: /^useCases\[1\]\.label, useCases\[2\]\.label$/ },
+  ],
 ]);
 
 /**

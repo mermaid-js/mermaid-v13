@@ -1,0 +1,9 @@
+---
+description: >-
+  punctuation entity names draw as their characters (#396), and a name core
+  does not know draws as written, `#name;` or `&name;` (D561)
+---
+flowchart LR
+  A["x #colon; y #semi; #dollar;5 #vert; ok"] --> B["#lpar;a#rpar; #lsqb;b#rsqb; #lcub;c#rcub;"]
+  B -->|"50#percnt; #plus; tax"| C["unknown #bogus; stays"]
+  C --> D["typed &bogus; stays"]

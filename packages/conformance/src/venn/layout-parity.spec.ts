@@ -15,7 +15,7 @@ import {
   vennTestTheme,
 } from '@mermaid-js/diagram-venn/testing';
 import { loadOracle } from '../oracle.ts';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12DecodeEntities } from '../v12-entities.ts';
 import { UNCLOSED, vennCases, vennCorpus } from './corpus.ts';
 import { v12Drawn, type V12Drawn, type V12Subset } from './v12-layout.ts';
 
@@ -322,7 +322,7 @@ describe('venn layout parity with venn.js 2.0.0 (D411, D412)', () => {
       const v12 = await oracle.parse(item.source);
       if (!v12.accepted) continue;
       const db = v12.db as { getSubsetData(): V12Subset[] };
-      const data = db.getSubsetData().map((s) => ({ ...s, sets: s.sets.map(decodeEntities) }));
+      const data = db.getSubsetData().map((s) => ({ ...s, sets: s.sets.map(v12DecodeEntities) }));
       const ids = new Set(data.flatMap((s) => s.sets));
       // Four sets or more: D413; negative sizes: D417 lays them out as 0, v12 drew NaN.
       const invalid = (n: number): boolean => n < 0 || !Number.isFinite(n * n);

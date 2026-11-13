@@ -469,14 +469,15 @@ describe('wardley AST, symbols and statements', () => {
     ]);
   });
 
+  // An unknown `#y;` stays as written, where v12 drew `&y;` (D561).
   it("decodes v12's #name; codes as v12 drew them and keeps a literal &name; (GAPS #493)", () => {
     const { model } = parse(nightly('parser-entity-codes'));
     expect(model.title).toBe('A & B &amp; C');
-    expect(model.nodes.map((n) => n.label)).toEqual(['Tea & &amp; "Cups"', 'X &y; ♥ &x41;']);
+    expect(model.nodes.map((n) => n.label)).toEqual(['Tea & &amp; "Cups"', 'X #y; ♥ #x41;']);
     expect(model.notes[0]!.text).toBe('♥ love &lt;3');
     expect(model.links[0]).toMatchObject({
       source: 'Tea & &amp; "Cups"',
-      target: 'X &y; ♥ &x41;',
+      target: 'X #y; ♥ #x41;',
       label: 'a < b &gt; c',
     });
     // An `&` in a comment inside the range is dropped with the comment.

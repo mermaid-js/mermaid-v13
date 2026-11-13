@@ -69,6 +69,8 @@ describe('workspace layout (DESIGN §2)', () => {
         './svg/framed',
         './svg/testing',
         './text',
+        './text/tags-only',
+        './text/v12-label',
         './theme',
         './timing',
       ].sort()

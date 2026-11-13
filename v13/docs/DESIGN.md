@@ -62,7 +62,7 @@ Later milestones add the `core/ascii` subpath and a `mermaid` CLI bin (M2, §6.3
 - `/theme`
 - `/config`
 - `/ascii` (M2): the text-grid kit (§6.3), never imported by an SVG render
-- `/svg/document`, `/parser-kit/support`, `/parser-kit/facet` and `/config/readers`: helpers that every diagram package used to copy (the `<svg>` root and its title and description; AST id escaping; facet ranges and Markdown code; the config number and `useMaxWidth` readers). Only diagram chunks import them, so they stay outside the core bundle (D557)
+- `/svg/document`, `/parser-kit/support`, `/parser-kit/facet`, `/config/readers`, `/text/v12-label` and `/text/tags-only`: helpers that every diagram package used to copy (the `<svg>` root and its title and description; AST id escaping and v12's entity placeholders; facet ranges and Markdown code; the config number and `useMaxWidth` readers; the label mode of a v12 Markdown label, D564; the inline spans of a label that draws no inline boxes, D566). Only diagram chunks import them, so they stay outside the core bundle (D557)
 
 `mermaid` exports (M3.5, §12.4):
 
@@ -344,11 +344,23 @@ Open question: Trebuchet MS isn't installed on most Linux systems, so browser ou
 
 ### 5.3 Labels
 
-`layoutLabel(raw, font, maxWidth, measurer) → LabelBox { lines: Run[][], width, height }`:
+`layoutLabel(raw, font, maxWidth, measurer, options?) → LabelBox { lines: Run[][], width, height }`:
 
+- **Modes (D562):** `options.markup` says what a label's source may hold besides text. The diagram chooses it per label kind, from what v12 does with that label.
+
+  | `markup` | Handles | v12 equivalent |
+  | --- | --- | --- |
+  | `plain` (default) | character references, `<br>`, the `<b>`/`<i>` HTML subset | text drawn without `createText` Markdown |
+  | `emphasis` | plain, plus `**`, `*`, `__`, `_` | a label without backticks passed through `createText` |
+  | `markdown` | emphasis, plus inline code, bullet lists and backslash escapes | a Markdown string (`` "`…`" ``) |
+
+  `emphasis` splits lines as `plain` does and never reads `- ` as a bullet or a backtick as code. `markdown: true` is still read as `markup: 'markdown'` until every caller has moved, then goes.
+
+- **Written `\n` (D562):** in `plain` and `emphasis`, a backslash and an `n` written as two characters break the line, as `<br>` and a newline do. `options.backslashBreak: false` keeps them as text (v12 sequence draws them). A `markdown` label never breaks there.
 - **Fast path:** a plain label without `<`, `&`, `*`, `_` or `` ` `` is measured once and wrapped only if it overflows (from Pele).
 - **Markdown strings:** bold, italic, inline code and line breaks (R-TEXT-2), plus bullet lists (R-TEXT-11): a line starting with `- ` or `* ` inside a markdown string becomes a list run, with one nesting level from leading indentation. It is drawn as a `•` (or `◦` when nested) followed by a hanging indent of the bullet width plus one space; wrapped continuation lines align to the text, not the bullet. Plain labels never treat `- ` as a bullet.
-- **HTML subset:** `<br>`, `<b>`, `<strong>`, `<i>`, `<em>` become style bits. Other known tags are dropped and their text kept. Anything else stays as literal text (R-TEXT-3). The final list waits on O-5.
+- **HTML subset:** `<br>`, `<b>`, `<strong>`, `<i>`, `<em>` become style bits. Other known tags are dropped and their text kept; a `<script>` or `<style>` element goes with its content, up to its end tag, and one with no end tag loses only its tag, so that the text after it stays (D566). Anything else stays as literal text (R-TEXT-3). The list is final (O-5, D566).
+- **`HTML_DROPPED` (D566):** label layout adds the name of each tag it drops to the render's `InlineSpans.dropped`, and the API gives one warning per render that lists them, in SVG and in text output. When `<a>` is among them the message points to `click id "url"`. A `layoutLabel` call without `inline` drops the same tags and reports nothing.
 - **Wrapping:** greedy, word-based, CJK-aware with kinsoku rules, and handles soft hyphen and ZWSP (R-TEXT-8). A hyphen between a letter or digit and a letter is a break opportunity too (UAX #14 HY, #394), so `well-known` can break after `well-`; not before a digit, after a leading hyphen or inside a run of hyphens. A word wider than the line is split between characters, unless the caller passes `keepWords`, which keeps it whole on a line of its own (#515, #649).
 - **Emitted** as one `<text>`, with `<tspan>` only for multi-run or multi-line labels.
 - **Inline boxes (D177, M3.5):** an extension registers a provider for a delimiter pair (`ExtensionPlugin.inline`, §12.2). Before anything else, label layout hands each delimited span (the text between the delimiters, untouched by line breaks, markdown or HTML) to its provider with the label's font, `measurer.metrics(font)` and `ex` (half the font size: the tables carry no x-height). The provider returns a measured box `{ width, height, baseline, node }`, where `node` is an `SvgFragment` (a detached `{ tag, attrs, children }` tree), or `undefined` to keep the span as written (for example while its engine has not loaded). The box becomes a run `{ kind: 'box', text, width, height, baseline, node }` whose `text` is its source as written, so text output and other text readers see the TeX. Line breaking treats a box as one unbreakable piece: it moves to a new line when it does not fit and is never split. A box taller than the font grows its line (above and below the baseline), recorded as `LabelBox.baselines`. `SvgWriter.label()` draws a label that holds a box with `text-anchor: start` and every line placed from its measured widths; each box follows the `<text>` as a `<g transform="translate(…)">` at its top-left corner, its baseline on the line's, carrying the label's `class`, `fill` and `style`. The writer replays the fragment through `open`/`leaf`/`text`/`close`, so the allow-list holds (R-SEC-2). Boxes reach a label through `layoutLabel`'s `inline` option, set from `RenderContext.inline` (SVG only; text output shows every span as written). A label boxes at most 32 spans, each marked by a placeholder in U+FDD0–U+FDEF, so a label that already holds one of those boxes none; either case shows the spans as written with one `INLINE_LIMIT` warning per render.
@@ -814,8 +826,8 @@ A Playwright/Argos baseline on a curated subset: per shape, per edge type, per t
 
 | Budget | What is measured | Limit (gz) | Enforced by |
 | --- | --- | --- | --- |
-| `loaded`, R-PERF-1 (D160, D311, D312, D553, amends D10) | Core + flowchart as a browser page loads them for one flowchart render: the bench runner renders a two-node flowchart after `initialize` and then reads the fetched resources (report `source: 'loaded'`; the static entry + flowchart-chunk closure is only a fallback) | 133 KB | bench gate `size` |
-| `core`, R-PERF-8 (D161, D310, D546) | Everything loaded before any diagram: the static import closure of `core.entry` (the CDN ESM entry `src/cdn.ts`, which is `src/index.ts` plus the queue and `cdnBase`), bundled with the bench's production esbuild options. No diagram, `ascii`, `language` or theme chunk | 96 KB | `packages/bench/src/core-size.spec.ts` in `pnpm check` (no browser, ~1 s); the bench reports it too (gate `core-size`). `core-chunks.spec.ts` checks that one more lazy diagram adds only its registry row (D313) |
+| `loaded`, R-PERF-1 (D160, D311, D312, D553, D567, amends D10) | Core + flowchart as a browser page loads them for one flowchart render: the bench runner renders a two-node flowchart after `initialize` and then reads the fetched resources (report `source: 'loaded'`; the static entry + flowchart-chunk closure is only a fallback) | 134 KB | bench gate `size` |
+| `core`, R-PERF-8 (D161, D310, D546, D567) | Everything loaded before any diagram: the static import closure of `core.entry` (the CDN ESM entry `src/cdn.ts`, which is `src/index.ts` plus the queue and `cdnBase`), bundled with the bench's production esbuild options. No diagram, `ascii`, `language` or theme chunk | 97 KB | `packages/bench/src/core-size.spec.ts` in `pnpm check` (no browser, ~1 s); the bench reports it too (gate `core-size`). `core-chunks.spec.ts` checks that one more lazy diagram adds only its registry row (D313) |
 
 Measured at the M3.5 close-out (2026-11-05, #232): loaded 110.9 KB (113550 B, 10 files), core 78.0 KB (79871 B, 7 files), CDN loader `mermaid.min.js` 0.9 KB (917 B). Diagram packages still have no budget of their own (D59). M3.5 had no size-reduction pass; the 80 KB below was the M1 target.
 

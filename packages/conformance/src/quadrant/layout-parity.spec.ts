@@ -1,4 +1,5 @@
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { Warning } from '@mermaid-js/core';
 import {
@@ -10,6 +11,8 @@ import {
   type QuadrantTextAnchor,
 } from '@mermaid-js/diagram-quadrant';
 import { REPO_ROOT, corpusFromDir } from '../corpus.ts';
+import { modelDivergenceIds } from '../divergences.ts';
+import { DIVERGENCES_DIR } from '../registry.ts';
 import type { CorpusItem } from '../types.ts';
 import {
   v12Quadrant,
@@ -150,10 +153,13 @@ function differences(a: unknown, b: unknown): string[] {
 describe('quadrant layout parity with v12 getQuadrantData()', () => {
   it('equals v12 on the corpus, to 0.01 px', async () => {
     const items = await corpus();
-    // v12's 14 e2e fixtures and the 12 baselines (#317).
-    expect(items.length).toBe(14 + 17);
+    // v12's 14 e2e fixtures and the 18 baselines (#317 and later).
+    expect(items.length).toBe(14 + 18);
     const problems: string[] = [];
+    // A source with a listed model divergence draws other text than v12 by design (D561).
+    const divergent = modelDivergenceIds(fileURLToPath(DIVERGENCES_DIR));
     for (const item of items) {
+      if (divergent.has(item.id)) continue;
       // The oracle's getDiagramFromText skips front matter, so v12 here never sees a front-matter
       // title (D218); quadrant.spec.ts in mermaid checks that one through the public API.
       const front = item.source.startsWith('---\n')

@@ -14,5 +14,149 @@
     "reason": "An empty front matter block (`---` then `---`) before the header: v12's front-matter check rejected the text before any railroad parser ran (\"Diagrams beginning with --- are not valid\"); core's preprocess reads it as front matter with nothing in it, and v13 parses the diagram after it. Core preprocess behaviour shared by every type, not the railroad parser's (spec #526 T1 #608, GAPS.md).",
     "owner": "#610",
     "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/railroad/baseline/abnf/entity-codes.mmd",
+    "inputHash": "sha256:b3ca9fb16a03e3ec",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/diagrams/railroad/baseline/ebnf/entity-codes.mmd",
+    "inputHash": "sha256:32bff9af0b6d46a1",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/diagrams/railroad/baseline/ir/entity-codes.mmd",
+    "inputHash": "sha256:d41289873b9f5f9c",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/diagrams/railroad/baseline/peg/entity-codes.mmd",
+    "inputHash": "sha256:fb9496655e792431",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/abnf/entity-codes.mmd",
+    "inputHash": "sha256:b3ca9fb16a03e3ec",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/ebnf/entity-codes.mmd",
+    "inputHash": "sha256:32bff9af0b6d46a1",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/ir/entity-codes.mmd",
+    "inputHash": "sha256:d41289873b9f5f9c",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/peg/entity-codes.mmd",
+    "inputHash": "sha256:fb9496655e792431",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "railroad-cases/string-entities",
+    "inputHash": "sha256:2f5d33430a7a1960",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/abnf/entity-codes.mmd (CRLF)",
+    "inputHash": "sha256:252b0a3db12448fe",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/ebnf/entity-codes.mmd (CRLF)",
+    "inputHash": "sha256:d37bc1d45555d2bb",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/ir/entity-codes.mmd (CRLF)",
+    "inputHash": "sha256:c10b1e78d792c217",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/peg/entity-codes.mmd (CRLF)",
+    "inputHash": "sha256:bc1c6770100fb4fc",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "railroad-cases/string-entities (CRLF)",
+    "inputHash": "sha256:17cb5a65a4ae9cd5",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/abnf/entity-codes.mmd (commented)",
+    "inputHash": "sha256:fe4c033aff6ecd1e",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/ebnf/entity-codes.mmd (commented)",
+    "inputHash": "sha256:0f58cd76b7db5ca6",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/ir/entity-codes.mmd (commented)",
+    "inputHash": "sha256:8374cc2b7c626b4b",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/peg/entity-codes.mmd (commented)",
+    "inputHash": "sha256:5e991620d2445411",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
   }
 ]

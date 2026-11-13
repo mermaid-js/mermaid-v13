@@ -23,7 +23,7 @@ import {
   railroadView,
 } from '@mermaid-js/diagram-railroad/testing';
 import type { RailroadNotation } from '@mermaid-js/diagram-railroad/testing';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12TokenText } from '../v12-entities.ts';
 import { loadLangiumLexerOracle } from '../langium-lexer.ts';
 import type { LangiumLex, LangiumToken } from '../langium-lexer.ts';
 import { notationOf, railroadGateCorpus } from './corpus.ts';
@@ -36,10 +36,10 @@ interface Streams {
 }
 
 function v12Streams(lexed: LangiumLex): Streams {
-  const decode = ([n, i]: LangiumToken): LangiumToken => [n, decodeEntities(i)];
+  const decode = ([n, i]: LangiumToken): LangiumToken => [n, v12TokenText(i)];
   const tokens = lexed.tokens.map(decode);
   if (lexed.errorAt !== undefined) {
-    const before = decodeEntities(lexed.input.slice(0, lexed.errorAt));
+    const before = v12TokenText(lexed.input.slice(0, lexed.errorAt));
     tokens.push([ERROR, `@${before.length}`]);
   }
   return { tokens, hidden: lexed.hidden.map(decode) };

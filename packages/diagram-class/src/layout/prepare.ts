@@ -30,6 +30,7 @@ import { measureBox, type BoxMetrics, type ClassBoxGeometry } from './box.ts';
 import { configDefaults } from '../config-defaults.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { ClassLayoutContext } from './context.ts';
+import { v12Label } from '@mermaid-js/core/text/v12-label';
 
 /** A class, as laid out. */
 export interface ClassBoxView extends ClassBoxGeometry {
@@ -177,9 +178,11 @@ interface Build {
   readonly model: ClassModel;
   readonly ctx: ClassLayoutContext;
   readonly units: UnitProfile;
-  /** Every label is markdown, as v12's `createText` read it. */
+  /** A note or a relation label: bold and italic are read, as in a class box (D564). */
   readonly label: (text: string, max?: number) => MeasuredLabel;
-  /** A multiplicity, in `classTerminalFontSize` (v12 `.edgeTerminals`, 11px). */
+  /** A namespace title or a lollipop interface's name: v12 drew them without its Markdown reader. */
+  readonly plain: (text: string) => MeasuredLabel;
+  /** A multiplicity, in `classTerminalFontSize` (v12 `.edgeTerminals`, 11px). Plain, as in v12. */
   readonly terminal: (text: string) => MeasuredLabel;
   readonly px: (value: number, axis: 'x' | 'y') => number;
   /** Layout id of the group a class's or note's `parent` namespace is drawn as. */
@@ -220,11 +223,13 @@ export function prepare(model: ClassModel, ctx: ClassLayoutContext): ClassPrepar
     model,
     ctx,
     units,
-    label: (text, max = Infinity) =>
-      layoutLabel(text, font, max, ctx.measurer, { markdown: true, inline: ctx.inline }),
+    label: (text, max = Infinity) => {
+      const [shown, mode] = v12Label(text);
+      return layoutLabel(shown, font, max, ctx.measurer, { ...mode, inline: ctx.inline });
+    },
+    plain: (text) => layoutLabel(text, font, Infinity, ctx.measurer, { inline: ctx.inline }),
     terminal: (text) =>
       layoutLabel(text, { ...font, size: terminalSize(ctx, font.size) }, Infinity, ctx.measurer, {
-        markdown: true,
         inline: ctx.inline,
       }),
     px: (value, axis) => fromPx(units, value, axis),
@@ -271,7 +276,7 @@ function groupViews(nsGroups: readonly NamespaceGroup[], build: Build): Namespac
       layoutId: `s:${g.id}`,
       id: g.id,
       ...(g.ast !== undefined ? { ast: g.ast } : {}),
-      label: build.label(g.label),
+      label: build.plain(g.label),
       ...withParent(g.parent === undefined ? undefined : `s:${g.parent}`),
       depth,
     };
@@ -333,7 +338,7 @@ function noteViews(pad: number, build: Build, edges: ClassEdgeView[]): NoteView[
 
 function interfaceView(iface: ClassInterface, build: Build): InterfaceView {
   const patch = build.units.builder.labelPatch;
-  const text = build.label(iface.label);
+  const text = build.plain(iface.label);
   const owner = build.classIds.get(iface.classId);
   const view: InterfaceView = {
     kind: 'interface',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decodeEntities } from '../../flowchart/v12.ts';
+import { v12TokenText } from '../../v12-entities.ts';
 import { loadJisonLexerOracle } from '../../jison/oracle.ts';
 import type { JisonToken } from '../../jison/oracle.ts';
 import { c4GateCorpus } from '../corpus.ts';
@@ -48,9 +48,9 @@ describe('c4 grammar lexer', () => {
       against[why ?? 'jison']++;
       const expected = why
         ? v13Tokens(item.source).tokens
-        : v12.map(([n, i]): JisonToken => [n, decodeEntities(i)]);
+        : v12.map(([n, i]): JisonToken => [n, v12TokenText(i)]);
       const ours = asJison(grammarTokens(item.source)).map(
-        ([n, i]): JisonToken => [n, decodeEntities(i)]
+        ([n, i]): JisonToken => [n, v12TokenText(i)]
       );
       if (JSON.stringify(ours) === JSON.stringify(expected)) continue;
       let at = 0;

@@ -12,7 +12,7 @@
  *   lexical error) or, with the `#` first, did not match at all.
  */
 import { c4Tokens, JISON_NAMES } from '@mermaid-js/diagram-c4';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR } from '../jison/oracle.ts';
 import type { JisonLexerOracle, JisonToken } from '../jison/oracle.ts';
 
@@ -101,7 +101,7 @@ export async function lexingExclusion(
 ): Promise<Exclusion | undefined> {
   const v12 = await oracle.tokens(source);
   if (!v12) return undefined;
-  const expected = v12.map(([n, i]): JisonToken => [n, decodeEntities(i)]);
+  const expected = v12.map(([n, i]): JisonToken => [n, v12TokenText(i)]);
   const { tokens: actual, ranges } = v13Tokens(source);
   if (JSON.stringify(expected) === JSON.stringify(actual)) return undefined;
   let at = 0;

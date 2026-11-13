@@ -1,0 +1,10 @@
+---
+description: >-
+  punctuation entity names in ER labels draw as their characters (#396); a name
+  core does not know draws as written (D561)
+---
+erDiagram
+  A["x #colon; y #semi; #num;1"] {
+    string name "unknown #bogus; stays"
+  }
+  A ||--o{ B : "50#percnt; #plus; tax"

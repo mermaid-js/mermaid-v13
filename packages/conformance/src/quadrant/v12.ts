@@ -24,7 +24,7 @@ import {
   type QuadrantStyles,
   type QuadrantText,
 } from '@mermaid-js/diagram-quadrant';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12DecodeEntities } from '../v12-entities.ts';
 import { loadOracle } from '../oracle.ts';
 import { quadrantCalls } from './oracle-env.ts';
 
@@ -140,7 +140,7 @@ export interface QuadrantSnapshot {
 }
 
 const text = (t: LexText): QuadrantText => ({
-  text: decodeEntities(t.text.trim()),
+  text: v12DecodeEntities(t.text.trim()),
   markdown: t.type === 'markdown',
 });
 
@@ -181,22 +181,22 @@ export function quadrantV12Snapshot(_db: unknown): QuadrantSnapshot {
     else if (name === 'setXAxisRightText') axis('xAxis', 'end', a);
     else if (name === 'setYAxisBottomText') axis('yAxis', 'start', a);
     else if (name === 'setYAxisTopText') axis('yAxis', 'end', a);
-    else if (name === 'setDiagramTitle') out.title = decodeEntities(args[0] as string);
-    else if (name === 'setAccTitle') out.accTitle = decodeEntities(args[0] as string);
+    else if (name === 'setDiagramTitle') out.title = v12DecodeEntities(args[0] as string);
+    else if (name === 'setAccTitle') out.accTitle = v12DecodeEntities(args[0] as string);
     else if (name === 'setAccDescription')
-      out.accDescr = decodeEntities((args[0] as string).replace(/\n\s+/g, '\n'));
+      out.accDescr = v12DecodeEntities((args[0] as string).replace(/\n\s+/g, '\n'));
     else if (name === 'addPoint') {
       const [label, className, x, y, list] = args as [LexText, string, string, string, string[]];
       out.points.push({
         label: text(label),
         className,
-        x: decodeEntities(String(x)),
-        y: decodeEntities(String(y)),
+        x: v12DecodeEntities(String(x)),
+        y: v12DecodeEntities(String(y)),
         styles: styles(list),
       });
     } else if (name === 'addClass') {
       const [className, list] = args as [string, string[]];
-      classes.set(decodeEntities(className), styles(list));
+      classes.set(v12DecodeEntities(className), styles(list));
     }
   }
   out.classes = [...classes];

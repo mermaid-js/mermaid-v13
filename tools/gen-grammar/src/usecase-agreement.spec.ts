@@ -44,18 +44,20 @@ function cases(): [string, string][] {
 }
 
 const E2E = '/e2e/diagrams/usecase/nightly-check/';
+const ENTITY_NAMES = '/e2e/diagrams/usecase/baseline/text/entity-names.mmd';
 
 /**
- * `#amp;` and `#9829;` (only in this fixture): v12's `encodeEntities` turned each code into a
- * placeholder before lexing (`ﬂ°amp¶ß`, a `LABEL_SYMBOL`, a word and a `LABEL_SYMBOL`), which is
- * what the lexer reads (pitfall 1). The highlighters see the source, `#amp;`: a colour `#am…`
+ * Entity codes such as `#colon;` and `#amp;` (first in this fixture, also in
+ * `nightly-check/parser-entities.mmd`): v12's `encodeEntities` turned each code into a
+ * placeholder before lexing (`ﬂ°colon¶ß`, a `LABEL_SYMBOL`, a word and a `LABEL_SYMBOL`), which is
+ * what the lexer reads (pitfall 1). The highlighters see the source, `#colon;`: a colour `#co…`
  * and punctuation, in all three.
  */
 const ENTITIES = Object.fromEntries(
   ['Lezer', 'Monarch', 'TextMate'].flatMap((h) => [
-    [`${h}: Identifier is Variable, highlighted Constant`, `${E2E}parser-entities.mmd at 18`],
-    [`${h}: LabelSymbol is Other, highlighted Constant`, `${E2E}parser-entities.mmd at 17`],
-    [`${h}: LabelSymbol is Other, highlighted Punctuation`, `${E2E}parser-entities.mmd at 21`],
+    [`${h}: Identifier is Variable, highlighted Constant`, `${ENTITY_NAMES} at 195`],
+    [`${h}: LabelSymbol is Other, highlighted Constant`, `${ENTITY_NAMES} at 194`],
+    [`${h}: LabelSymbol is Other, highlighted Punctuation`, `${ENTITY_NAMES} at 200`],
   ])
 );
 

@@ -13,7 +13,7 @@
  * - a relation's offsets as v12's renderer read them (`offsetX ? parseInt(String(offsetX)) : 0`);
  * - the root boundary `global` left out: v13 has none (D454).
  */
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12DecodeEntities } from '../v12-entities.ts';
 
 /** `diagram.type` values mermaid\@12 reports for C4 sources. */
 export const C4_V12_TYPES = ['c4'];
@@ -73,9 +73,9 @@ interface C4DbV12 {
 function asText(v: unknown): string {
   if (typeof v === 'object' && v !== null && 'text' in v) {
     const text = (v as { text: unknown }).text;
-    return typeof text === 'string' ? decodeEntities(text) : JSON.stringify(text);
+    return typeof text === 'string' ? v12DecodeEntities(text) : JSON.stringify(text);
   }
-  if (typeof v === 'string') return decodeEntities(v);
+  if (typeof v === 'string') return v12DecodeEntities(v);
   if (typeof v === 'number') return String(v);
   return JSON.stringify(v);
 }
@@ -105,9 +105,9 @@ export function c4V12Snapshot(dbValue: unknown): C4Snapshot {
   const db = dbValue as C4DbV12;
   return {
     type: db.getC4Type() ?? '',
-    title: decodeEntities(db.getTitle()),
-    accTitle: decodeEntities(db.getAccTitle()),
-    accDescr: decodeEntities(db.getAccDescription()),
+    title: v12DecodeEntities(db.getTitle()),
+    accTitle: v12DecodeEntities(db.getAccTitle()),
+    accDescr: v12DecodeEntities(db.getAccDescription()),
     shapeInRow: db.getC4ShapeInRow(),
     boundaryInRow: db.getC4BoundaryInRow(),
     shapes: db.getC4ShapeArray().map((s) => ({

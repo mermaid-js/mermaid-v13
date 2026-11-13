@@ -27,6 +27,7 @@ import {
   RBRACE,
   SEMI,
 } from './char-codes.ts';
+import { entityAt } from '../text/entities.ts';
 import { isSpace, isWord } from './chars.ts';
 import type { Range } from './positions.ts';
 
@@ -387,7 +388,8 @@ function holes(src: string, from: number, directives: readonly Range[]): Hole[] 
 
 /**
  * The text v12's parser saw for the source range `[start, end)` (one label or value), with
- * entity placeholders already decoded back to `&name;` / `&#123;` as v12's renderer did.
+ * entity placeholders already decoded back to `&name;` / `&#123;` as v12's renderer did. A
+ * `#name;` whose name core's entity table does not hold stays `#name;` (D561).
  * Removed spans inside the range are skipped, and `}\s*\n` collapses when the view asks for it.
  */
 export function cook(src: string, start: number, end: number, view: SourceView): string {
@@ -429,7 +431,9 @@ export function cook(src: string, start: number, end: number, view: SourceView):
       while (j < to && isWord(text.charCodeAt(j))) j++;
       if (j > i + 1 && j < to && text.charCodeAt(j) === SEMI) {
         const name = text.slice(i + 1, j);
-        out += /^\d+$/.test(name) ? `&#${name};` : `&${name};`;
+        // A name core cannot decode stays `#name;`, as the author wrote it (D561); v12 drew `&name;`.
+        const ref = /^\d+$/.test(name) ? `&#${name};` : `&${name};`;
+        out += ref[1] === '#' || entityAt(ref, 0) ? ref : `#${name};`;
         i = j;
         continue;
       }

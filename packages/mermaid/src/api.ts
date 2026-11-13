@@ -14,7 +14,6 @@ import {
   renderErrorSvg,
   UnsupportedFormatError,
   type EmbeddedText,
-  type RenderContext,
   type Resource,
   type TextRenderContext,
   type Warning,
@@ -77,7 +76,13 @@ import { AnalysisCache, type Analysis, type Detection } from './analysis-cache.t
 import { createDomAdapter } from './dom.ts';
 import type { DrawBlocks } from './block-pass.ts';
 import { blockLoader, outsideBlocks, type BlockHost } from './embeds.ts';
-import { toMermaidError, toWarning, unsupportedDiagram } from './errors.ts';
+import {
+  toMermaidError,
+  toWarning,
+  unsupportedDiagram,
+  warnHtmlDropped,
+  type DrawContext,
+} from './errors.ts';
 import { iconPackRegistry, packsUnsupported, type IconLoader } from './icon-packs.ts';
 import { selectMeasurer } from './measurer.ts';
 import {
@@ -570,7 +575,7 @@ export function createMermaid(
     const icon = textOutput ? undefined : hooks.icon(inline, packs);
     // The blocks (ADR-15) are drawn at the first lookup, with this draw's id prefix.
     const { embed, mounter } = blocks.lookup(drawBlocks, () => ctx.idPrefix, warn);
-    const ctx: RenderContext = {
+    const ctx: DrawContext = {
       config,
       measurer:
         measurer ??
@@ -677,6 +682,7 @@ export function createMermaid(
       textCtx,
       run ? { run, ast: prepared.parse.ast } : undefined
     );
+    warnHtmlDropped(ctx);
     const lines = out === '' ? [] : out.split('\n');
     const columns = lines.reduce((m, l) => Math.max(m, backend.cellWidth(l)), 0);
     // D84: never cropped; say so when it still does not fit.
@@ -744,6 +750,7 @@ export function createMermaid(
     // D537: the line-hop step, when its chunk is loaded and decides that this render hops.
     const edges = registry.hops?.(a);
     const drawn = drawDiagram(a.plugin, parse.model, ctx, run && { run, ast: parse.ast }, edges);
+    warnHtmlDropped(ctx);
     // Binds the run's interactions, then each block's in its own nested root (#669).
     return { drawn, ctx, warnings, mount: mounter<RenderResult>(run) };
   }

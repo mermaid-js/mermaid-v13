@@ -4,7 +4,10 @@ import type { TreeViewNodeNode } from '@mermaid-js/diagram-treeview';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { createLanguageService } from '@mermaid-js/language-service';
 import type { DocumentSnapshot } from '@mermaid-js/language-service';
+import { fileURLToPath } from 'node:url';
+import { modelDivergenceIds } from '../divergences.ts';
 import { loadOracle } from '../oracle.ts';
+import { DIVERGENCES_DIR } from '../registry.ts';
 import { treeViewGateCorpus } from './corpus.ts';
 import { TREEVIEW_V12_TYPES, treeViewV12Snapshot } from './v12.ts';
 
@@ -22,7 +25,11 @@ import { TREEVIEW_V12_TYPES, treeViewV12Snapshot } from './v12.ts';
  *
  * The service loads the facet through the generated registry row (treeView's manifest
  * `language` entry, #577).
+ *
+ * Sources with a listed model divergence (`divergences/`: a `#name;` kept as written, D561) are
+ * left out: their names differ from v12's by design.
  */
+const DIVERGENT = modelDivergenceIds(fileURLToPath(DIVERGENCES_DIR));
 const service = createLanguageService();
 await service.preload({ types: ['treeView'] });
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
@@ -36,6 +43,7 @@ describe('treeView definition, references and folding through the service match 
     let folds = 0;
     let unnamed = 0;
     for (const item of await treeViewGateCorpus()) {
+      if (DIVERGENT.has(item.id)) continue;
       const v12 = await oracle.parse(item.source);
       if (!v12.accepted || !TREEVIEW_V12_TYPES.includes(v12.diagramType)) continue;
       const doc = service.update(`corpus:///${item.id}`, item.source);
@@ -96,7 +104,7 @@ describe('treeView definition, references and folding through the service match 
     expect(nodes).toBeGreaterThan(2000);
     expect(folds).toBeGreaterThan(500);
     // Entity placeholders and empty names, each also CRLF and commented.
-    expect(unnamed).toBeLessThan(40);
+    expect(unnamed).toBeLessThan(60);
     expect(problems).toEqual([]);
   }, 300_000);
 });

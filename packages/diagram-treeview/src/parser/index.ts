@@ -9,7 +9,6 @@ import { lex } from './lexer.ts';
 import type { BoxPass } from './box.ts';
 
 export { LANGIUM_NAMES, T as TreeViewTokenKind, TREEVIEW_TRIVIA } from './tokens.ts';
-export { ampEntities } from './text.ts';
 export type { BoxError, BoxPass, BoxRewrite } from './box.ts';
 export {
   parseTreeView,

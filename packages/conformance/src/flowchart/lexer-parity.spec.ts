@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { flowchartTokens, FlowTokenKind, JISON_NAMES } from '@mermaid-js/diagram-flowchart';
 import { corpusFromDir, isEmbeddedFixture, REPO_ROOT } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
-import { decodeEntities } from './v12.ts';
+import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
 
@@ -119,7 +119,7 @@ describe('flowchart lexer parity with mermaid@12 (jison)', () => {
       compared++;
       // Merged first: a placeholder split over per-character tokens decodes only when whole.
       const expected = normalise(cutEntityError(v12)).map(
-        ([n, i]): JisonToken => [n, decodeEntities(i)]
+        ([n, i]): JisonToken => [n, v12TokenText(i)]
       );
       const actual = v13Tokens(item.source);
       if (JSON.stringify(expected) === JSON.stringify(actual)) continue;
