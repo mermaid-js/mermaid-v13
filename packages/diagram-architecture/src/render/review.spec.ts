@@ -152,6 +152,7 @@ describe('6: a text icon keeps lines grown by an inline box inside its square', 
     notRendered: () => false,
     warn: () => undefined,
     scratch: {},
+    dropped: new Set(),
   };
 
   it('cuts to the lines whose real height fits', async () => {

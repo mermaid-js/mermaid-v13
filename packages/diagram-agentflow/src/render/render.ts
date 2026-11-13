@@ -125,7 +125,9 @@ function titleOf(
   const text = model.title?.trim();
   if (!text) return undefined;
   const font = { family: ctx.theme.value('fontFamily'), size: TITLE_SIZE, weight: 400 };
-  const label = layoutLabel(text, font, Infinity, ctx.measurer);
+  // No inline boxes in the title: `inline` only collects the tags for `HTML_DROPPED` (D564).
+  const inline = ctx.inline && { inline: { ...ctx.inline, extract: () => undefined } };
+  const label = layoutLabel(text, font, Infinity, ctx.measurer, inline);
   const top = -layout.agentflow.titleTopMargin - label.baseline;
   return { label, x: layout.width / 2, y: top + label.height / 2 };
 }

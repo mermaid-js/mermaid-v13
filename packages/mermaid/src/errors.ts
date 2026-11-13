@@ -1,4 +1,4 @@
-import { MermaidError, type Warning } from '@mermaid-js/core';
+import { MermaidError, type RenderContext, type Warning } from '@mermaid-js/core';
 import type { ConfigFragment } from '@mermaid-js/core/config';
 import { asLimitError } from '@mermaid-js/core/limits';
 import type { Plain } from './config-snapshot.ts';
@@ -42,3 +42,13 @@ export const toWarning = (w: Warning, fragments: readonly ConfigFragment[]): War
   }
   return out as unknown as Warning;
 };
+
+/** One `HTML_DROPPED` warning for the tags the labels of `ctx`'s draw lost (D564). */
+export function htmlDropped(ctx: RenderContext): void {
+  const tags = [...ctx.inline!.dropped];
+  if (tags[0])
+    ctx.warn({
+      code: 'HTML_DROPPED',
+      message: `Labels do not draw <${tags.join('>, <')}>.${tags.includes('a') ? ' For a link, use click id "url".' : ''}`,
+    });
+}
