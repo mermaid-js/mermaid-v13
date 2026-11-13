@@ -66,6 +66,16 @@ interface Env {
   monoWidth(text: string): number;
 }
 
+/** The label and width measurements of one layout, in its font. */
+function environment(font: FontKey, { measurer, inline }: EventModelLayoutContext): Env {
+  // No inline boxes here: `inline` only collects the tags for `HTML_DROPPED` (D564).
+  const options = inline && { inline: { ...inline, extract: () => undefined } };
+  return {
+    label: (text, wrap, style) => layoutLabel(text, font, wrap, measurer, { ...options, style }),
+    monoWidth: (text) => measurer.width(text, font, Style.Mono),
+  };
+}
+
 /** Lays out an event model in px. */
 export function layoutEventModel(
   model: EventModel,
@@ -76,13 +86,7 @@ export function layoutEventModel(
     size: ctx.theme.number('fontSize'),
     weight: FONT_WEIGHT,
   };
-  const { measurer } = ctx;
-  // No inline boxes here: `inline` only collects the tags for `HTML_DROPPED` (D564).
-  const inline = ctx.inline && { inline: { ...ctx.inline, extract: () => undefined } };
-  const env: Env = {
-    label: (text, wrap, style) => layoutLabel(text, font, wrap, measurer, { ...inline, style }),
-    monoWidth: (text) => measurer.width(text, font, Style.Mono),
-  };
+  const env = environment(font, ctx);
   const { padding } = eventModelingConfig(ctx.config.eventmodeling, ctx.warn ?? ignore);
   const structure = eventModelStructure(model);
 
