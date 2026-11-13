@@ -79,8 +79,8 @@ function corners(tree: SvgView): { x: number; y: number }[] {
 describe('mindmap render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, with every shape and icon references', () => {
     // 85 fixtures, #328's 4 icon baselines, the corpus cleanup's 14, #649's long word and
-    // #781's 2 label-mode baselines.
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(106);
+    // #781's 2 label-mode baselines and #783's icon text.
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(107);
     expect(cases.length).toBeGreaterThan(100 * THEMES.length);
     const shapes = new Set(cases.flatMap((c) => c.r.layout.mindmap.nodes.map((n) => n.shape)));
     expect([...shapes].sort()).toEqual(
@@ -154,20 +154,23 @@ describe('mindmap render properties over the parsed corpus', () => {
   });
 });
 
+/** The e2e fixture whose `::icon()` is no glyph name (D564). */
+const WRITTEN_ICON = 'nightly-check/html-dropped-icon-text.mmd';
+
 describe('mindmap ::icon() glyphs over the parsed corpus (#328, D297)', () => {
   /** An extension's glyph: a `size` square at the origin, as `RenderContext.icon` gives one. */
   const icon = (_: string, size: number) =>
     ({ tag: 'rect', attrs: { class: 'fixture-glyph', width: size, height: size } }) as const;
 
   it('draws each D297 icon as one 40 px glyph inside its node, and any other as written', async () => {
-    // Every parsed source with an icon (v12's 5 e2e fixtures and the 4 baselines among them), in
-    // the four families. A reference in no D297 form (`bomb`) is never asked for: it is shown
+    // Every parsed source with an icon (v12's 5 e2e fixtures, #783's icon text with a tag and the
+    // 4 baselines among them), in the four families. A reference in no D297 form (`bomb`) is never asked for: it is shown
     // as written, with the render's one ICON_NOT_RENDERED.
     const withIcons = cases.filter(
       (c) => c.theme === 'default' && c.r.model.nodes.some((n) => n.icon)
     );
     const e2e = withIcons.filter((c) => c.id.startsWith('e2e/'));
-    expect(e2e.filter((c) => !c.id.includes('/baseline/')).length).toBe(5);
+    expect(e2e.filter((c) => !c.id.includes('/baseline/')).length).toBe(6);
     expect(e2e.filter((c) => c.id.includes('/baseline/icons/')).length).toBe(4);
     expect(
       withIcons.some((c) => c.r.model.nodes.some((n) => n.icon && !mindmapIconName(n.icon.text)))
@@ -184,7 +187,8 @@ describe('mindmap ::icon() glyphs over the parsed corpus (#328, D297)', () => {
           r.warnings.filter((w) => w.code.startsWith('ICON')).map((w) => w.code),
           id
         ).toEqual(others > 0 ? ['ICON_NOT_RENDERED'] : []);
-        if (e2e.includes(item)) expect(others, id).toBe(0);
+        // v12's fixtures name glyphs; #783's holds a tag, so its reference is shown as written.
+        if (e2e.includes(item)) expect(others, id).toBe(item.id.includes(WRITTEN_ICON) ? 1 : 0);
         const tree = parseSvg(r.svg);
         expect(tree.find({ tag: 'text', class: 'mindmap-icon' }).length, id).toBe(others);
         const glyphs = tree.find({ tag: 'g', class: 'mindmap-icon' });

@@ -96,6 +96,11 @@
       "types": "./dist/text/index.d.ts",
       "default": "./dist/text/index.js"
     },
+    "./text/tags-only": {
+      "mermaid-source": "./src/text/tags-only.ts",
+      "types": "./dist/text/tags-only.d.ts",
+      "default": "./dist/text/tags-only.js"
+    },
     "./text/v12-label": {
       "mermaid-source": "./src/text/v12-label.ts",
       "types": "./dist/text/v12-label.d.ts",

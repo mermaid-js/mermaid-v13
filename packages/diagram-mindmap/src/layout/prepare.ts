@@ -7,6 +7,7 @@
 import type { LayoutEdge, LayoutGraph, LayoutNode } from '@mermaid-js/core/layout';
 import { fromPx } from '@mermaid-js/core/layout';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { tagsOnly } from '@mermaid-js/core/text/tags-only';
 import type { MindmapModel, MindmapShape } from '../model.ts';
 import type { MindmapLayoutContext } from './context.ts';
 import { MINDMAP_METRICS, type ShapeMetrics } from './metrics.ts';
@@ -209,7 +210,9 @@ function iconText(b: Build, raw: string): IconText {
   const side = b.px(MINDMAP_METRICS.icon.glyph, 'x');
   const text = raw.trim();
   const at = (size: number): MeasuredLabel =>
-    layoutLabel(text, { ...b.font, size }, Number.MAX_SAFE_INTEGER, b.ctx.measurer);
+    layoutLabel(text, { ...b.font, size }, Number.MAX_SAFE_INTEGER, b.ctx.measurer, {
+      inline: tagsOnly(b.ctx.inline),
+    });
   const full = at(b.font.size);
   const fit = Math.min(1, side / Math.max(full.width, 1), side / Math.max(full.height, 1));
   if (fit >= 1) return { text: full, size: b.font.size };

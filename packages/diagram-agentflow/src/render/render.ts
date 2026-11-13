@@ -19,6 +19,7 @@ import {
 } from '@mermaid-js/core/svg';
 import { openSvgRoot, textElement } from '@mermaid-js/core/svg/document';
 import { layoutLabel, type MeasuredLabel } from '@mermaid-js/core/text';
+import { tagsOnly } from '@mermaid-js/core/text/tags-only';
 import type {
   AgentflowEdgeView,
   AgentflowGroupView,
@@ -122,9 +123,8 @@ function titleOf(
   const text = model.title?.trim();
   if (!text) return undefined;
   const font = { family: ctx.theme.value('fontFamily'), size: TITLE_SIZE, weight: 400 };
-  // No inline boxes in the title: `inline` only collects the tags for `HTML_DROPPED` (D564).
-  const inline = ctx.inline && { inline: { ...ctx.inline, extract: () => undefined } };
-  const label = layoutLabel(text, font, Infinity, ctx.measurer, inline);
+  // No inline boxes in the title.
+  const label = layoutLabel(text, font, Infinity, ctx.measurer, { inline: tagsOnly(ctx.inline) });
   const top = -layout.agentflow.titleTopMargin - label.baseline;
   return { label, x: layout.width / 2, y: top + label.height / 2 };
 }

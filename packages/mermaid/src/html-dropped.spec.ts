@@ -56,6 +56,18 @@ describe('HTML_DROPPED (R-TEXT-3, D564)', () => {
     ]);
   });
 
+  it('names the tags a requirement title loses', async () => {
+    const { svg, warnings } = await svgOf('requirement/nightly-check/html-dropped-title.mmd');
+    expect(drawn(svg)).toContain('A styled title');
+    expect(dropped(warnings)).toEqual(['Labels do not draw <span>.']);
+  });
+
+  it('names the tags the text of a mindmap ::icon() loses', async () => {
+    const { svg, warnings } = await svgOf('mindmap/nightly-check/html-dropped-icon-text.mmd');
+    expect(drawn(svg)).toContain('fa fa-book');
+    expect(dropped(warnings)).toEqual(['Labels do not draw <u>.']);
+  });
+
   it('keeps what follows a <script> or <style> with no end tag, and drops the tag', async () => {
     const out = await draw('flowchart/nightly-check/html-dropped-unclosed.mmd');
     expect(out.labels).toEqual(['before after', 'a b c', 'x y z']);

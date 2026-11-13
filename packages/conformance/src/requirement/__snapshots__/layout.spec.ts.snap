@@ -106,6 +106,7 @@ exports[`requirement layout over parser-produced fixtures > records the crossing
   "e2e/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-default.mmd": 0,
   "e2e/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-elk-layout.mmd": 0,
   "e2e/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-handdrawn-look.mmd": 0,
+  "e2e/nightly-check/html-dropped-title.mmd": 0,
   "e2e/nightly-check/multi-line-text.mmd": 0,
   "e2e/nightly-check/relationship-using-reverse-arrow-direction-neo-look-neo-dark-theme.mmd": 0,
   "e2e/nightly-check/relationship-using-reverse-arrow-direction-neo-look-neo-theme.mmd": 0,

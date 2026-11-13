@@ -30,6 +30,7 @@ import {
   type MeasuredLabel,
   type Run,
 } from '@mermaid-js/core/text';
+import { tagsOnly } from '@mermaid-js/core/text/tags-only';
 import { eventModelingConfig } from '../config.ts';
 import type { EventModel, EventModelFrame } from '../model.ts';
 import { eventModelStructure, type EventModelRelation } from '../structure.ts';
@@ -68,8 +69,8 @@ interface Env {
 
 /** The label and width measurements of one layout, in its font. */
 function environment(font: FontKey, { measurer, inline }: EventModelLayoutContext): Env {
-  // No inline boxes here: `inline` only collects the tags for `HTML_DROPPED` (D564).
-  const options = inline && { inline: { ...inline, extract: () => undefined } };
+  // No inline boxes here.
+  const options = { inline: tagsOnly(inline) };
   return {
     label: (text, wrap, style) => layoutLabel(text, font, wrap, measurer, { ...options, style }),
     monoWidth: (text) => measurer.width(text, font, Style.Mono),
