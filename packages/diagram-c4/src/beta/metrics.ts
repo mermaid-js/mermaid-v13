@@ -1,0 +1,22 @@
+/**
+ * The lengths the c4-beta layout adds to the C4 metrics table (spec #730 §Layout, pitfall 13).
+ * Everything else it measures with: `../layout/metrics.ts` (shapes, text sections, headers) and
+ * the `c4` config (shape padding and margin, least width, wrapping).
+ */
+import { V12_SPACING } from '@mermaid-js/core/layout';
+
+export const C4_BETA_METRICS = {
+  /** The prototype's spacing: between elements in one rank, and between ranks. */
+  nodeSpacing: 80,
+  rankSpacing: 60,
+  /** Between relations that run side by side: v12's. */
+  edgeSpacing: V12_SPACING.edgeSpacing,
+  /** Room kept past an arrowhead's length (`C4_METRICS.arrow`) before a label may start. */
+  arrowGap: 2,
+  /** Room between a boundary's header and what it holds. */
+  headGap: 16,
+  /** Room kept between a boundary's header and a relation that passes along it. */
+  headClear: 4,
+  /** The margin round the drawing until the `c4beta` section sets `diagramPadding` (T1). */
+  diagramPadding: 10,
+} as const;
