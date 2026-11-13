@@ -9,7 +9,13 @@
  */
 // cspell:ignore kepano
 import type { RenderContext } from '@mermaid-js/core';
-import { layoutLabel, Style, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import {
+  layoutLabel,
+  Style,
+  type FontKey,
+  type Measurer,
+  type MeasuredLabel,
+} from '@mermaid-js/core/text';
 import { C4_BOUNDARY_CYCLE } from '../codes.ts';
 import { c4Fonts, c4LayoutConfig, type C4Fonts, type C4LayoutConfig } from '../config.ts';
 import {
@@ -93,14 +99,14 @@ export function relationTechnText(rel: Pick<C4Relation, 'techn'>): string | unde
 }
 
 /** A text measured, before it is placed. */
-interface Measured {
+export interface Measured {
   readonly text: MeasuredLabel;
   readonly font: FontKey;
   readonly style: number;
 }
 
 /** A label `m` with its box's top-left corner at (x, y). */
-function placed(m: Measured, x: number, y: number): PlacedLabel {
+export function placed(m: Measured, x: number, y: number): PlacedLabel {
   return {
     x,
     y,
@@ -111,6 +117,27 @@ function placed(m: Measured, x: number, y: number): PlacedLabel {
     ...(m.style & Style.Bold ? { bold: true as const } : {}),
     ...(m.style & Style.Italic ? { italic: true as const } : {}),
   };
+}
+
+/** Measures a text in a font, wrapped at `maxWidth`; none for an empty text. */
+export type Measure = (
+  text: string | undefined,
+  font: FontKey,
+  maxWidth: number,
+  style?: number
+) => Measured | undefined;
+
+/** The one way C4 text is measured, for both syntaxes: whole words kept, inline spans boxed. */
+export function textMeasure(measurer: Measurer, inlineSpans?: C4LayoutContext['inline']): Measure {
+  const inline = inlineSpans ? { inline: inlineSpans } : {};
+  return (text, font, maxWidth, style = 0) =>
+    text === undefined || text.trim() === ''
+      ? undefined
+      : {
+          text: layoutLabel(text, font, maxWidth, measurer, { ...inline, keepWords: true, style }),
+          font,
+          style,
+        };
 }
 
 /** An element as the grid places it, with its outline and text. */
@@ -150,24 +177,7 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
   const measurer = units ? cellPxMeasurer(ctx.measurer, units.pxPerUnit) : ctx.measurer;
   const family = ctx.theme.value('fontFamily');
   const fonts = c4Fonts(ctx.config, family, warn);
-  const inline = ctx.inline ? { inline: ctx.inline } : {};
-  const measure = (
-    text: string | undefined,
-    font: FontKey,
-    maxWidth: number,
-    style = 0
-  ): Measured | undefined =>
-    text === undefined || text.trim() === ''
-      ? undefined
-      : {
-          text: layoutLabel(text, font, maxWidth, measurer, {
-            ...inline,
-            keepWords: true,
-            style,
-          }),
-          font,
-          style,
-        };
+  const measure = textMeasure(measurer, ctx.inline);
 
   // Measure first: elements.
   const room = units
@@ -271,13 +281,6 @@ function group(index: number, boundary: GridGroup['boundary'], parent: number): 
   };
 }
 
-type Measure = (
-  text: string | undefined,
-  font: FontKey,
-  maxWidth: number,
-  style?: number
-) => Measured | undefined;
-
 /** What measuring an element's or a boundary's text reads. */
 interface Measuring {
   readonly config: C4LayoutConfig;
@@ -289,7 +292,7 @@ interface Measuring {
  * The shapes' padding: `c4ShapePadding` all round, and the cylinder's, the queue's and
  * `fr-rect`'s totals from the theme's shape rows (D152), `2·pad` in the classic themes.
  */
-function shapeRoom(config: C4LayoutConfig, theme: C4LayoutContext['theme']): ShapeRoom {
+export function shapeRoom(config: C4LayoutConfig, theme: C4LayoutContext['theme']): ShapeRoom {
   const total = 2 * config.c4ShapePadding;
   const pad = (name: string, base = total): number => theme.padding(name, base);
   return {
