@@ -17,7 +17,7 @@
   },
   {
     "id": "e2e/diagrams/quadrant-chart/baseline/text/entity-names.mmd",
-    "inputHash": "sha256:1a4e71536251cfb0",
+    "inputHash": "sha256:85c533e67ab65704",
     "kind": "model",
     "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
     "owner": "D561",
@@ -33,7 +33,7 @@
   },
   {
     "id": "quadrant-gate/e2e/baseline/text/entity-names.mmd (commented)",
-    "inputHash": "sha256:e4aa768e6edf2f2b",
+    "inputHash": "sha256:12c24aa696204cef",
     "kind": "model",
     "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
     "owner": "D561",

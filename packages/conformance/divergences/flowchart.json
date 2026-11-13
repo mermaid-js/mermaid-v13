@@ -73,7 +73,7 @@
   },
   {
     "id": "e2e/diagrams/flowchart/baseline/text/entity-names.mmd",
-    "inputHash": "sha256:354b82fb71bc19cb",
+    "inputHash": "sha256:cefbf67d0b1c8942",
     "kind": "model",
     "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
     "owner": "D561",
