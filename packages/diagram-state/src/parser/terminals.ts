@@ -7,6 +7,7 @@
 import { Kind, kindSet } from '@mermaid-js/core/parser-kit';
 import type { Probe, TokenView } from '@mermaid-js/core/parser-kit';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
+import { entityAt } from '@mermaid-js/core/text';
 import { lex, NO_VIEW } from './lexer.ts';
 import { T } from './tokens.ts';
 import { stateView } from './view.ts';
@@ -26,11 +27,15 @@ const LEADING = kindSet(T.State, T.AccDescrOpen);
 
 /**
  * `#name;` and `#123;` as v12's renderer read them: v12 turned them into placeholders before
- * lexing and back into `&name;` / `&#123;` after.
+ * lexing and back into `&name;` / `&#123;` after. A name core cannot decode stays `#name;`
+ * (D559), as in the parser kit's `cook`.
  */
 function decodeEntities(text: string): string {
   if (!text.includes('#')) return text;
-  return text.replace(/#(\w+);/g, (_, w: string) => (/^\+?\d+$/.test(w) ? `&#${w};` : `&${w};`));
+  return text.replace(/#(\w+);/g, (all, w: string) => {
+    if (/^\d+$/.test(w)) return `&#${w};`;
+    return entityAt(`&${w};`, 0) ? `&${w};` : all;
+  });
 }
 
 /** Parser tokens: the terminals, each with its own range and the range it covers. */

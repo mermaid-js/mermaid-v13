@@ -7,7 +7,7 @@ export { DEFAULT_FONT_FAMILY, familyNames, fontSizePx, resolveFontFamily } from 
 export { tableMeasurer } from './table.ts';
 export { layoutLabel } from './label.ts';
 export type { BoxRun, LabelOptions, MeasuredLabel, Run } from './label.ts';
-export { entityAt } from './entities.ts';
+export { decodeEntities, entityAt } from './entities.ts';
 export { inlineSpans } from './inline.ts';
 export type {
   InlinePairProvider,

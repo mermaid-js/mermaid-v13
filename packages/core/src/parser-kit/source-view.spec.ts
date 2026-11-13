@@ -94,10 +94,10 @@ describe('sourceView: directives that start mid-line', () => {
   });
 
   it.each([
-    ['classDiagram\nA : x %%{init: {"a":"style"}}%% :#y;\nB', 'classDiagram\nA : x  :&y;\nB', {}],
+    ['classDiagram\nA : x %%{init: {"a":"style"}}%% :#y;\nB', 'classDiagram\nA : x  :#y;\nB', {}],
     [
       'flowchart LR\nA["x %%{init: {"a":"style"}}%% :#y; z"]\nB',
-      'flowchart LR\nA["x  :&y; z"]\nB',
+      'flowchart LR\nA["x  :#y; z"]\nB',
       { braceNewline: true },
     ],
   ])('text inside one does not drop a `;`: %j', (src, cooked, options) => {
@@ -119,6 +119,13 @@ describe('cook', () => {
   it('decodes entity placeholders and turns CRLF into LF', () => {
     const src = 'x #amp; #35; #a\r\ny';
     expect(cook(src, 0, src.length, sourceView(src, 0, []))).toBe('x &amp; &#35; #a\ny');
+  });
+
+  it('keeps a `#name;` core cannot decode as written, and a typed `&name;` too (#777)', () => {
+    const src = 'a #colon; #bogus; #fff; &bogus; #1a; #999;';
+    expect(cook(src, 0, src.length, sourceView(src, 0, []))).toBe(
+      'a &colon; #bogus; #fff; &bogus; #1a; &#999;'
+    );
   });
 
   it('skips a removed span inside the range', () => {

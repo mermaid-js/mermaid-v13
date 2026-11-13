@@ -149,6 +149,18 @@ describe('label layout over the e2e flowchart labels', () => {
       lt: '<',
       gt: '>',
       nbsp: '\u00a0',
+      colon: ':',
+      semi: ';',
+      dollar: '$',
+      vert: '|',
+      lpar: '(',
+      rpar: ')',
+      lsqb: '[',
+      rsqb: ']',
+      lcub: '{',
+      rcub: '}',
+      percnt: '%',
+      plus: '+',
     };
     const changed: string[] = [];
     for (const label of labels) {

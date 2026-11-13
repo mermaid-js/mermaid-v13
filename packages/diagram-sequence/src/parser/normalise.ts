@@ -7,6 +7,7 @@
 // cspell:words currentcolor accentcolor accentcolortext activetext buttonborder canvastext linktext marktext selecteditem selecteditemtext visitedtext threeddarkshadow threedface threedhighlight threedlightshadow threedshadow
 import { isSpace, LPAREN } from '@mermaid-js/core/parser-kit';
 import { isYamlMap, parseYaml } from '@mermaid-js/core/preprocess';
+import { entityAt } from '@mermaid-js/core/text';
 import { isNamedColor } from './colors.ts';
 import { PARTICIPANT_KINDS, type ParticipantKind } from '../model.ts';
 
@@ -149,8 +150,18 @@ const encode = (text: string) =>
   text.replace(/#(\w+);/g, (_, name: string) =>
     /^\+?\d+$/.test(name) ? `ﬂ°°${name}¶ß` : `ﬂ°${name}¶ß`
   );
-/** The placeholders back to `&name;` / `&#123;`, as v12's output had them. */
-const decode = (text: string) => text.replace(/ﬂ°°/g, '&#').replace(/ﬂ°/g, '&').replace(/¶ß/g, ';');
+/**
+ * The placeholders back to `&name;` / `&#123;`, as v12's output had them. A name core cannot
+ * decode goes back to `#name;`, as written (D559).
+ */
+const decode = (text: string) =>
+  text
+    .replace(/ﬂ°(?!°)(\w+)¶ß/g, (all, name: string) =>
+      entityAt(`&${name};`, 0) ? all : `#${name};`
+    )
+    .replace(/ﬂ°°/g, '&#')
+    .replace(/ﬂ°/g, '&')
+    .replace(/¶ß/g, ';');
 const decoded = (v: unknown): unknown => {
   if (typeof v === 'string') return decode(v);
   if (Array.isArray(v)) return v.map(decoded);

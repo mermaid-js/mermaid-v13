@@ -7,6 +7,7 @@
  * `encodeEntities` placeholders decoded back to what the author wrote. The v13 normaliser
  * (ticket #8) must produce a `FlowSnapshot` from a FlowModel.
  */
+import { entityAt } from '@mermaid-js/core/text';
 
 /** `diagram.type` values mermaid@12 reports for flowchart sources. */
 export const FLOWCHART_V12_TYPES = ['flowchart-v2', 'flowchart', 'flowchart-elk'];
@@ -68,9 +69,19 @@ interface FlowDbV12 {
   getTooltip(id: string): string | undefined;
 }
 
-/** Undo v12's `encodeEntities` placeholders (v12 `utils.ts` `decodeEntities`). */
+/**
+ * Undo v12's `encodeEntities` placeholders (v12 `utils.ts` `decodeEntities`), with v13's one
+ * recorded difference (D559): a `#name;` whose name core cannot decode is compared as written,
+ * where v12 made it `&name;`.
+ */
 export function decodeEntities(text: string): string {
-  return text.replace(/ﬂ°°/g, '&#').replace(/ﬂ°/g, '&').replace(/¶ß/g, ';');
+  return text
+    .replace(/ﬂ°(?!°)(\w+)¶ß/g, (all, name: string) =>
+      entityAt(`&${name};`, 0) ? all : `#${name};`
+    )
+    .replace(/ﬂ°°/g, '&#')
+    .replace(/ﬂ°/g, '&')
+    .replace(/¶ß/g, ';');
 }
 
 const text = (v: unknown): string | undefined =>

@@ -47,6 +47,32 @@ const NAMED: Readonly<Record<string, string>> = {
   infin: '∞',
   check: '✓',
   hearts: '♥',
+  // ASCII punctuation, which authors write as `#name;` to keep it away from the syntax (#396).
+  colon: ':',
+  semi: ';',
+  vert: '|',
+  verbar: '|',
+  lpar: '(',
+  rpar: ')',
+  lsqb: '[',
+  rsqb: ']',
+  lcub: '{',
+  rcub: '}',
+  num: '#',
+  excl: '!',
+  quest: '?',
+  commat: '@',
+  equals: '=',
+  plus: '+',
+  comma: ',',
+  period: '.',
+  sol: '/',
+  bsol: '\\',
+  grave: '`',
+  lowbar: '_',
+  percnt: '%',
+  dollar: '$',
+  ast: '*',
 };
 
 const RE_ENTITY = /&(?:#(\d{1,7})|#[xX]([\da-fA-F]{1,6})|([A-Za-z][A-Za-z\d]{1,31}));/y;
@@ -67,4 +93,12 @@ export function entityAt(source: string, at: number): [string, number] | undefin
   // NUL, surrogates and out-of-range code points become U+FFFD, as in HTML.
   const valid = code > 0 && code <= 0x10ffff && (code < 0xd800 || code > 0xdfff);
   return [String.fromCodePoint(valid ? code : 0xfffd), all.length];
+}
+
+/**
+ * `text` with every character reference decoded, for text that is drawn without `layoutLabel`.
+ * A reference `entityAt` does not know stays as written.
+ */
+export function decodeEntities(text: string): string {
+  return text.replace(/&[#\w]+;/g, (all) => entityAt(all, 0)?.[0] ?? all);
 }

@@ -118,6 +118,7 @@ exports[`layered over parser-produced flowchart graphs > lays out every corpus g
   "flowchart/baseline/subgraphs/own-member-three-levels.mmd": 0,
   "flowchart/baseline/subgraphs/titles-and-styles.mmd": 0,
   "flowchart/baseline/text/cjk.mmd": 0,
+  "flowchart/baseline/text/entity-names.mmd": 0,
   "flowchart/baseline/text/unicode.mmd": 0,
   "flowchart/baseline/text/wrapping-markdown.mmd": 0,
   "flowchart/baseline/text/wrapping.mmd": 0,

@@ -21,9 +21,12 @@ const RE_PLACEHOLDER = /ﬂ°(°?)(\w+)¶ß/g;
 
 /** v12's text as a browser drew it: its placeholders as their characters. */
 const d = (text: string): string =>
-  text.replace(RE_PLACEHOLDER, (_, hash: string, name: string) =>
-    decodeHTMLStrict(`&${hash ? '#' : ''}${name};`)
-  );
+  text.replace(RE_PLACEHOLDER, (_, hash: string, name: string) => {
+    const ref = `&${hash ? '#' : ''}${name};`;
+    const drawn = decodeHTMLStrict(ref);
+    // A name no browser knows: v12 drew `&name;`, v13 keeps `#name;` as written (D559).
+    return drawn === ref && !hash ? `#${name};` : drawn;
+  });
 
 /** `diagram.type` values mermaid\@12 reports for wardley sources. */
 export const WARDLEY_V12_TYPES = ['wardley'];
