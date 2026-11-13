@@ -25,15 +25,8 @@ import { NAME, REQ_KINDS } from '../parser/syntax.ts';
 import { T } from '../parser/tokens.ts';
 import { nameAsWritten } from './names.ts';
 import type { KeywordItem } from './tables.ts';
-import {
-  FIELDS,
-  OPERATORS,
-  RELATIONSHIPS,
-  span,
-  STATEMENT_KEYWORDS,
-  tokenBefore,
-  VALUES,
-} from './tables.ts';
+import { FIELDS, OPERATORS, RELATIONSHIPS, STATEMENT_KEYWORDS, VALUES } from './tables.ts';
+import { span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
 
 /** Modes whose text is a value, not code: nothing is offered there. */
 const VALUE_MODES = new Set([

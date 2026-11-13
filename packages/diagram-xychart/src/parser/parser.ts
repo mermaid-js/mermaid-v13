@@ -25,6 +25,7 @@ import {
   ProbeCursor,
   syncTo,
   TokenCursor,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type { ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
@@ -163,13 +164,6 @@ const DIGITS_HINT =
 
 /** v12's message for a chart without plots (R-PARSE-4: reported at parse). */
 const NO_PLOT = 'No Plot to render, please provide a plot with some data';
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse an XY chart. Never throws: problems are error diagnostics. */
 export function parseXyChart(src: string, options: XyChartParseOptions = {}): XyChartParseResult {

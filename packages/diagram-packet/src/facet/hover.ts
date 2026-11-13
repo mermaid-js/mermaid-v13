@@ -9,7 +9,7 @@ import { packetDocs } from '../generated/docs.ts';
 import { MAX_PACKET_ROWS } from '../normalise.ts';
 import type { PacketDocument, PacketFieldNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { code, span } from './tables.ts';
+import { code, span } from '@mermaid-js/core/parser-kit/facet';
 
 /** Statement tokens that hold their text too: only the keyword is hovered. */
 const VALUE_WORDS: Readonly<Partial<Record<number, string>>> = {

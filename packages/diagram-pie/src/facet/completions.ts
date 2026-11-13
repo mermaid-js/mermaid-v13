@@ -14,7 +14,8 @@ import type {
 } from '@mermaid-js/core/parser-kit';
 import { pieDocs } from '../generated/docs.ts';
 import type { PieDocument } from '../parser/ast.ts';
-import { HEADER_LINE, ITEMS, span, tokenBefore } from './tables.ts';
+import { HEADER_LINE, ITEMS } from './tables.ts';
+import { span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
 
 /** The probed word's range: the prefix, plus the rest of the word after the cursor. */
 function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeResult): Range {

@@ -25,6 +25,7 @@ import {
   significantTokens,
   skipTo,
   sourceView,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
@@ -111,13 +112,6 @@ const ID_OF: Record<InfoTextNode['type'], string> = {
 const ONE_PER_LINE = 'put each statement on a line of its own';
 const ONLY =
   'an info diagram holds `info`, an optional `showInfo`, and `title`, `accTitle:` or `accDescr` statements';
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse an info diagram. Never throws: problems are error diagnostics. */
 export function parseInfo(src: string, options: InfoParseOptions = {}): InfoParseResult {

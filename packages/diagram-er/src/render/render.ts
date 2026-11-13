@@ -5,10 +5,6 @@
 // `data-ast` (R-SVG-2, R-PARSE-8). Colours and sizes come from theme variables only (D152).
 import type { LayoutModelNode } from '@mermaid-js/core/layout';
 import {
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
   translate,
   type Attrs,
   type OutlinePaint,
@@ -17,6 +13,7 @@ import {
   type SvgWriter,
 } from '@mermaid-js/core/svg';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
+import { openSvgRoot } from '@mermaid-js/core/svg/document';
 import type { ErLayout } from '../layout/layout.ts';
 import type { ErRenderContext } from '../layout/context.ts';
 import type { EdgeView, EntityView, ErPrepared, GroupView } from '../layout/prepare.ts';
@@ -222,39 +219,14 @@ export function renderEr(
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, paint }: Scene, model: ErModel): void {
-  const { theme, config } = ctx;
-  const prefix = (): string => ctx.idPrefix ?? 'mermaid';
-  const width = Math.max(1, Math.ceil(layout.width));
-  const height = Math.max(1, Math.ceil(layout.height));
-  const maxWidth = config.er?.useMaxWidth !== false;
-  const auto = theme.autoDeclarations();
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-er erDiagram',
-    viewBox: [0, 0, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'er',
-    'aria-labelledby': title ? `${prefix()}-title` : undefined,
-    'aria-describedby': desc ? `${prefix()}-desc` : undefined,
-    'data-mermaid-version': ctx.version ?? '13',
-    'data-p': auto ? styleScope(prefix()) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': paint.font,
-    'font-size': paint.fontSize,
+  openSvgRoot(w, ctx, {
+    name: 'er erDiagram',
+    viewBox: [0, 0, Math.max(1, Math.ceil(layout.width)), Math.max(1, Math.ceil(layout.height))],
+    maxWidth: ctx.config.er?.useMaxWidth,
+    title: model.accTitle.trim(),
+    desc: model.accDescr.trim(),
+    attrs: { 'font-family': paint.font, 'font-size': paint.fontSize },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix()), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix()}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix()}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: string): void {
-  w.open(tag, { id });
-  w.text(text);
-  w.close();
 }
 
 function drawClusters({ w, layout, er, ctx, paint }: Scene): void {

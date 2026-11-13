@@ -23,6 +23,7 @@ import {
   significantTokens,
   skipTo,
   SourceOffsets,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   KindSet,
@@ -51,7 +52,6 @@ import {
   PROBE_FOLLOWS,
   SHAPE_DATA,
   SHAPE_DATA_PARTS,
-  STOP,
   TEXT_PART,
 } from './tables.ts';
 import type { Frame, Opener, ShapeData } from './tables.ts';

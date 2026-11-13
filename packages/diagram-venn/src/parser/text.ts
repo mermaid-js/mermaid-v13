@@ -2,29 +2,14 @@
  * Value conversion for the venn parser (parser-method §4): v12's `normalizeText`, D416's title
  * quotes, AST id escaping (D418), and how messages write ids and lists.
  */
+import { ID_CONTROL, ID_RESERVED, idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 /**
  * `%`, `>`, `@`, `#` and `+` percent-encoded (the separators of venn ids), and so are the
  * characters XML 1.0 cannot hold (C0 controls but tab, LF and CR; DEL; lone surrogates; U+FFFE,
  * U+FFFF). Two hex digits up to U+007F, four above, so the encoding stays one-to-one.
  */
-const ESCAPED = '%>@#+\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f\\ud800-\\udfff\\ufffe\\uffff';
-const RE_NEEDS_ESC = new RegExp(`[${ESCAPED}]`, 'u');
-const RE_ESC = new RegExp(`[${ESCAPED}]`, 'gu');
-const TWO_DIGITS = 0x80;
-
-/** An id as it goes into an AST id. */
-export function esc(name: string): string {
-  return RE_NEEDS_ESC.test(name)
-    ? name.replace(RE_ESC, (c) => {
-        const n = c.charCodeAt(0);
-        return `%${n
-          .toString(16)
-          .toUpperCase()
-          .padStart(n < TWO_DIGITS ? 2 : 4, '0')}`;
-      })
-    : name;
-}
+export const esc = /* @__PURE__ */ idEscaper(`${ID_RESERVED}+${ID_CONTROL}`);
 
 /** Whether `trimmed` is wrapped in one pair of `"`. */
 function quoted(trimmed: string): boolean {

@@ -14,10 +14,11 @@ import type {
   Range,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
+import { span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
 import { cynefinDocs } from '../generated/docs.ts';
 import type { CynefinDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { ITEMS, LINE_START, span, tokenBefore } from './tables.ts';
+import { ITEMS, LINE_START } from './tables.ts';
 
 /** The probed word's range: the prefix, plus the rest of the word after the cursor. */
 function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeResult): Range {

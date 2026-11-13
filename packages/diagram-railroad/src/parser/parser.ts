@@ -27,6 +27,7 @@ import {
   Probe,
   significantTokens,
   sourceView,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   ExpectedTable,
@@ -77,13 +78,6 @@ export type RailroadParseResult = ParseResult<RailroadModel, RailroadDocument>;
 
 /** `rule` symbols' kind (D517). */
 export const RULE_SYMBOL = 'rule';
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at rule level. One instance,
- * so its stack is captured once.
- */
-class Stop extends Error {}
-export const STOP = new Stop();
 
 const TEXT = [T.Title, T.AccTitle, T.AccDescr];
 /** What ends an alternative: found where an element should start, the alternative is empty. */

@@ -11,16 +11,13 @@ import { pxProfile } from '@mermaid-js/core/layout';
 import {
   checkLinkTarget,
   checkUrl,
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
   translate,
   type Attrs,
   type SafeUrl,
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { openSvgRoot, textElement } from '@mermaid-js/core/svg/document';
 import { layoutLabel, type MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   AgentflowEdgeView,
@@ -150,38 +147,14 @@ function viewBox(
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, paint }: Scene, model: AgentflowModel, title?: Title): void {
-  const { theme, config } = ctx;
-  const prefix = (): string => ctx.idPrefix ?? 'mermaid';
-  const box = viewBox(layout, title);
-  const maxWidth = config.agentflow?.useMaxWidth !== false;
-  const auto = theme.autoDeclarations();
-  const acc = model.accTitle.trim();
-  const desc = model.accDescr.trim();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-agentflow',
-    viewBox: box,
-    width: maxWidth ? '100%' : box[2],
-    height: maxWidth ? undefined : box[3],
-    role: 'img',
-    'aria-roledescription': 'agentflow',
-    'aria-labelledby': acc ? `${prefix()}-title` : undefined,
-    'aria-describedby': desc ? `${prefix()}-desc` : undefined,
-    'data-mermaid-version': ctx.version ?? '13',
-    'data-p': auto ? styleScope(prefix()) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(box[2]) } : {}, theme.rootStyleText()),
-    'font-family': paint.node.font,
-    'font-size': paint.node.fontSize,
+  openSvgRoot(w, ctx, {
+    name: 'agentflow',
+    viewBox: viewBox(layout, title),
+    maxWidth: ctx.config.agentflow?.useMaxWidth,
+    title: model.accTitle.trim(),
+    desc: model.accDescr.trim(),
+    attrs: { 'font-family': paint.node.font, 'font-size': paint.node.fontSize },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix()), auto.light, auto.dark));
-  if (acc) textElement(w, 'title', acc, `${prefix()}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix()}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id?: string): void {
-  w.open(tag, id === undefined ? undefined : { id });
-  w.text(text);
-  w.close();
 }
 
 /** A flow's tint, or a collapsed card's (its flow's), under a palette. */

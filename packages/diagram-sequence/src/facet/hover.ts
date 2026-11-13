@@ -12,7 +12,8 @@ import type {
   SequenceStatementNode,
 } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { ARROWS, code, MESSAGE_DOC, span } from './tables.ts';
+import { ARROWS, MESSAGE_DOC } from './tables.ts';
+import { code, span } from '@mermaid-js/core/parser-kit/facet';
 
 const ARROW_BY_TOKEN = new Map(ARROWS.map((a) => [a.token, a]));
 /** `title …` is one token: only the keyword is hovered. */

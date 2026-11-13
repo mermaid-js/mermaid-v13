@@ -32,6 +32,7 @@ import {
   significantTokens,
   skipTo,
   sourceView,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
@@ -165,13 +166,6 @@ const ID_OF: Record<PacketTextNode['type'], string> = {
 };
 const ONE_PER_LINE = 'put each field and statement on a line of its own';
 const FIELD_FORM = 'write a field as `0-15: "label"`, `16: "label"` or `+8: "label"`';
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** A field's bits as written: `start-end`, `start` or `+bits`, and where. */
 interface WrittenBits {

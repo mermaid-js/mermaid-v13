@@ -40,6 +40,7 @@ import {
   ProbeCursor,
   sourceView,
   TokenCursor,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   ParseOptions,
@@ -223,10 +224,6 @@ const ONE_LINE_HINT = 'each statement goes on a line of its own';
 const NO_SEMICOLON_HINT = 'C4 has no `;`: each statement goes on a line of its own';
 const BLANK_BEFORE_PAREN_HINT = 'write the `(` right after the macro name, with no blank';
 const NAMED_HINT = 'a named argument is written `$name="value"`';
-
-/** Thrown after a diagnostic is recorded; caught at statement level. */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** An open boundary: its model index (-1 when its statement failed) and AST node. */
 interface Frame {

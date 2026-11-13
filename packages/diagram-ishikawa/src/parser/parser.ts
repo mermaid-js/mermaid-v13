@@ -45,6 +45,7 @@ import {
   sourceView,
   syncTo,
   TokenCursor,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   ParseOptions,
@@ -120,13 +121,6 @@ const PAIRS_HINT =
   'remove a blank or comment line above it, or add one: mermaid@12 reads the blank and comment lines between two lines in pairs (blank lines in a row count as one), and rejects a line here';
 const SEPARATOR_HINT =
   'a comment ends at a line separator (U+2028 or U+2029), and the text after it may not follow on that line; start it on a line of its own';
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** How many clamped causes the render's one `ISHIKAWA_INDENT_CLAMPED` names; `related` has all. */
 const CLAMP_NAMED = 10;

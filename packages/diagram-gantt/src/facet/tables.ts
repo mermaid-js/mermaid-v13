@@ -3,10 +3,12 @@
  * from the grammar file (`generated/docs.ts`); the words inside a task's data and a setting's
  * value, which no token of their own holds, are documented here.
  */
-import type { CompletionKind, Range } from '@mermaid-js/core/parser-kit';
+import type { CompletionKind } from '@mermaid-js/core/parser-kit';
 import type { GanttModel, GanttTag, GanttTask } from '../model.ts';
 import { clickTargets, lastById } from '../ids.ts';
 import { T } from '../parser/tokens.ts';
+
+export { code, span } from '@mermaid-js/core/parser-kit/facet';
 
 /** An item offered when the parser expects `kind`. */
 export interface KeywordItem {
@@ -140,16 +142,6 @@ export const TEXT_WORDS: Readonly<Partial<Record<number, string>>> = {
   [T.TodayMarker]: 'todayMarker',
   [T.HrefKeyword]: 'href',
 };
-
-/** Markdown inline code holding `text` as written, whatever backticks it has. */
-export function code(text: string): string {
-  const runs = text.match(/`+/g) ?? [];
-  const fence = '`'.repeat(Math.max(0, ...runs.map((r) => r.length)) + 1);
-  const pad = text.startsWith('`') || text.endsWith('`') || text === '' ? ' ' : '';
-  return `${fence}${pad}${text}${pad}${fence}`;
-}
-
-export const span = (start: number, end: number): Range => ({ start, end });
 
 /** The text of `at`'s line before `at`. */
 export function lineBefore(text: string, at: number): string {

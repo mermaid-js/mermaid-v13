@@ -10,6 +10,7 @@
  * `bitOrder === 'descending'`), with no warning.
  */
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
+import { rawConfigNumber } from '@mermaid-js/core/config/readers';
 import { packetConfigDefaults } from './generated/config-defaults.ts';
 
 export interface PacketConfig {
@@ -69,12 +70,6 @@ const LENGTHS: readonly (readonly [LengthKey, number, boolean, string])[] = [
   ['paddingY', 0, false, 'a number of 0 or more'],
 ];
 
-function configNumber(value: unknown): number {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string' && value.trim() !== '') return Number(value);
-  return Number.NaN;
-}
-
 const shown = (value: unknown): string =>
   typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
 
@@ -89,7 +84,7 @@ export function packetConfig(section: Readonly<Record<string, unknown>> | undefi
   for (const [key, min, whole, wants] of LENGTHS) {
     const value = given[key];
     if (value === undefined) continue;
-    const n = configNumber(value);
+    const n = rawConfigNumber(value);
     if (Number.isFinite(n) && n >= min && (!whole || Number.isInteger(n))) {
       out[key] = n;
       continue;

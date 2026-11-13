@@ -9,6 +9,7 @@ import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { TreeViewModel, TreeViewNode } from '../model.ts';
 import type { TreeViewNodeNode } from './ast.ts';
 import { nodeIcon } from './convert.ts';
+import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 /** What the parser read, for {@link normalise}. */
 export interface TreeViewParts {
@@ -23,10 +24,7 @@ export interface TreeViewParts {
 }
 
 /** `%`, `/` and `@` percent-encoded, so a name path reads back one way. */
-const escapeName = (name: string): string =>
-  /[%/@]/.test(name)
-    ? name.replace(/[%/@]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
-    : name;
+const escapeName = /* @__PURE__ */ idEscaper('%/@');
 
 type Mutable = { -readonly [K in keyof TreeViewNode]: TreeViewNode[K] } & {
   children: TreeViewNode[];
