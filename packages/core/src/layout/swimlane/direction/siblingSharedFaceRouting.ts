@@ -10,6 +10,7 @@ import {
   classifyThreeSegmentRoute,
   collectRealNodeBounds,
   getNodePairGeometry,
+  routesTouchAtBend,
   segmentConflictsWithAnyEdge,
   segmentHitsAnyRect,
 } from './geometry.ts';
@@ -24,6 +25,12 @@ const PORT_SHIFT = MIN_PORT_SPACING / 2;
  */
 const PAIR_SIBLING_SHIFT = EDGE_ROUTING.MIN_ARROWHEAD_SPACING;
 const LABEL_CLEARANCE_BUFFER = 3;
+/**
+ * The shifts that clear what a rescued line can sit beside, which `PORT_SHIFT` alone is under: a
+ * corner of another route (the gap a reader can see between two strokes), then an arrowhead on
+ * the same face.
+ */
+const CLEAR_SHIFTS = [EDGE_ROUTING.ROUTE_TOUCH_TOLERANCE, EDGE_ROUTING.MIN_ARROWHEAD_SPACING];
 
 interface PointLite {
   x: number;
@@ -69,6 +76,17 @@ function crowdsFaceNeighbour(
     }
   }
   return false;
+}
+
+/** True when a corner of another edge's route lies within the visible gap of `line`. */
+function touchesCornerOfAnotherRoute(edges: Edge[], edge: Edge, line: PointLite[]): boolean {
+  return edges.some(
+    (other) =>
+      other !== edge &&
+      !other.isLayoutOnly &&
+      Boolean(other.points?.length) &&
+      routesTouchAtBend(line, other.points!, EDGE_ROUTING.ROUTE_TOUCH_TOLERANCE)
+  );
 }
 
 function pairKey(a: string, b: string): string {
@@ -191,8 +209,15 @@ export function straightenCollinearSiblingDetours(edges: Edge[], nodes: Node[]):
       labelShift,
       siblings.length > 0 ? PAIR_SIBLING_SHIFT : PORT_SHIFT
     );
-    const deltas = [0, effectiveShift, -effectiveShift];
-    // A line that would sit too close to a sibling's arrowhead is the last resort.
+    // A shift under the visible gap leaves the line touching a corner of a route that leaves the
+    // same face, and one under an arrowhead spacing leaves it beside that route's arrowhead; the
+    // next shifts out clear them, where the face has room.
+    const shifts = [
+      ...new Set([effectiveShift, ...CLEAR_SHIFTS.map((s) => Math.max(s, effectiveShift))]),
+    ];
+    const deltas = [0, ...shifts.flatMap((shift) => [shift, -shift])];
+    // A line that would sit too close to a sibling's arrowhead, or to a corner of another route,
+    // is the last resort.
     let crowded: PointLite[] | undefined;
     for (const delta of deltas) {
       const shiftedSrc = { ...targetSrc };
@@ -228,7 +253,8 @@ export function straightenCollinearSiblingDetours(edges: Edge[], nodes: Node[]):
       const rescued = [shiftedSrc, shiftedDst];
       if (
         crowdsFaceNeighbour(edges, edge, srcId, srcInfo, shiftedSrc, shiftAxis) ||
-        crowdsFaceNeighbour(edges, edge, dstId, dstInfo, shiftedDst, shiftAxis)
+        crowdsFaceNeighbour(edges, edge, dstId, dstInfo, shiftedDst, shiftAxis) ||
+        touchesCornerOfAnotherRoute(edges, edge, rescued)
       ) {
         crowded ??= rescued;
         continue;
