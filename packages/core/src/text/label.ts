@@ -146,7 +146,7 @@ export function layoutLabel(
   const widths: number[] = [];
   const tags: Tags = { bold: 0, italic: 0, dropped: options.inline?.dropped };
   // `<script>` and `<style>` lose what they hold, as in v12 (D564); `inline` drops the tags.
-  const shown = (markdown ? src : text).replace(RE_RAW, '$1$3');
+  const shown = (markdown ? src : text).replace(RE_SCRIPT, '$1$2').replace(RE_STYLE, '$1$2');
   for (const { source, bullet } of markdown
     ? markdownLines(shown)
     : plainLines(shown, options.backslashBreak)) {
@@ -249,8 +249,11 @@ function markdownLines(text: string): SourceLine[] {
 }
 
 const RE_TAG = /<(\/?)([a-zA-Z][\w-]*)(?:\s[^<>]*)?\/?>/y;
-// What a `<script>` or `<style>` element holds, up to its end tag or the end of the label.
-const RE_RAW = /(<(script|style)\b[^>]*>)[^]*?(<\/\2|$)/gi;
+// A `<script>` or `<style>` start tag, recognised as `RE_TAG` does, with what the element holds:
+// up to its end tag, which stays for `inline` to drop. With no end tag the element holds nothing
+// and the rest of the label is matched as group 2, so that it is kept and scanned once.
+const RE_SCRIPT = /(<script(?:\s[^<>]*)?\/?>)(?:[^]*?(?=<\/script(?:\s[^<>]*)?\/?>)|([^]*))/gi;
+const RE_STYLE = /(<style(?:\s[^<>]*)?\/?>)(?:[^]*?(?=<\/style(?:\s[^<>]*)?\/?>)|([^]*))/gi;
 const BOLD_TAGS = new Set(['b', 'strong']);
 const ITALIC_TAGS = new Set(['i', 'em']);
 // HTML elements whose tags are dropped, text kept (R-TEXT-3), and reported as `HTML_DROPPED`

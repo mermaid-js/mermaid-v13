@@ -293,14 +293,36 @@ describe('HTML subset (R-TEXT-3)', () => {
     (markup) => {
       expect(droppedBy('<script>alert(1)</script>', { markup })).toEqual([[''], ['script']]);
       expect(
-        droppedBy('a <SCRIPT type="x">1<br>2\n3</Script > b<style>.x{}</style>c <script>rest', {
-          markup,
-        })
+        droppedBy('a <SCRIPT type="x">1<br>2\n3</Script > b<style>.x{}</style>c', { markup })
       ).toEqual([['a bc'], ['script', 'style']]);
       // Not a longer name that starts the same.
       expect(droppedBy('<scripts>x</scripts>', { markup })).toEqual([['<scripts>x</scripts>'], []]);
     }
   );
+
+  it('keeps the text after text that only starts like <script> or <style>', () => {
+    expect(droppedBy('edit <style.css> then reload')).toEqual([
+      ['edit <style.css> then reload'],
+      [],
+    ]);
+    expect(droppedBy('open <script-x> now')).toEqual([['open <script-x> now'], []]);
+    expect(droppedBy('a <scripty> b </scripty> c')).toEqual([['a <scripty> b </scripty> c'], []]);
+  });
+
+  it('drops only the tag of a <script> or <style> with no end tag, and keeps what follows', () => {
+    // A class generic reaches the label as a tag: `List~Style~ items` is `List<Style> items`.
+    expect(droppedBy('+List<Style> items')).toEqual([['+List items'], ['style']]);
+    expect(droppedBy('+run(Map<Script> m) void')).toEqual([['+run(Map m) void'], ['script']]);
+    // The end tag of another element, or one before the start tag, closes nothing.
+    expect(droppedBy('a</style> <script>b</style> c')).toEqual([['a b c'], ['style', 'script']]);
+  });
+
+  it('removes each closed element, also after one with no end tag', () => {
+    expect(droppedBy('a <style>b <script>c</script> d <script>e</script> f')[0]).toEqual([
+      'a b d f',
+    ]);
+    expect(droppedBy('<script>1</script>a<script>2</SCRIPT >b<script>c')[0]).toEqual(['abc']);
+  });
 
   it('drops script content without a sink too', () => {
     expect(texts(layout('a<script>alert(1)</script>b'))).toEqual(['ab']);
@@ -512,6 +534,8 @@ describe('backslashBreak (D560)', () => {
   it('breaks at a written \\n by default', () => {
     expect(written('a\\nb', {})).toEqual(['a', 'b']);
     expect(written('a\\nb', { backslashBreak: true })).toEqual(['a', 'b']);
+    // In either case, as the break pattern always read it: `\\Nu` in a formula breaks too.
+    expect(written('a\\Nb\rc\r\nd', {})).toEqual(['a', 'b', 'c', 'd']);
   });
 
   it('keeps a written \\n when false, in plain and emphasis labels', () => {
