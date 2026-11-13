@@ -733,9 +733,7 @@ class C4Parser {
         return out;
       }
       if (k === T.Str) {
-        const arg = { value: this.text(c.pos).trim(), range: this.trimmed(c.range) };
-        if (arg.value.includes('"')) this.quoteInArgument(arg.range);
-        out.push(arg);
+        out.push(this.unquoted());
         c.next();
       } else if (k === T.AttributeEmpty) {
         out.push({ value: '', range: this.trimmed(c.range) });
@@ -746,6 +744,14 @@ class C4Parser {
         this.unclosed('UNCLOSED_ARGUMENTS', `\`${name}(\``, open, ')');
       } else this.fail(['an argument', '`)`'], this.hint());
     }
+  }
+
+  /** An unquoted argument (the current token); a `"` in it is warned about (#681). */
+  private unquoted(): Arg {
+    const { cursor: c } = this;
+    const arg = { value: this.text(c.pos).trim(), range: this.trimmed(c.range) };
+    if (arg.value.includes('"')) this.quoteInArgument(arg.range);
+    return arg;
   }
 
   /** #681: a `"` inside an unquoted argument, which C4 text does not escape. */
