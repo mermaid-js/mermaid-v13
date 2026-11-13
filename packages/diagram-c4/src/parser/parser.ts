@@ -733,7 +733,9 @@ class C4Parser {
         return out;
       }
       if (k === T.Str) {
-        out.push({ value: this.text(c.pos).trim(), range: this.trimmed(c.range) });
+        const arg = { value: this.text(c.pos).trim(), range: this.trimmed(c.range) };
+        if (arg.value.includes('"')) this.quoteInArgument(arg.range);
+        out.push(arg);
         c.next();
       } else if (k === T.AttributeEmpty) {
         out.push({ value: '', range: this.trimmed(c.range) });
@@ -744,6 +746,15 @@ class C4Parser {
         this.unclosed('UNCLOSED_ARGUMENTS', `\`${name}(\``, open, ')');
       } else this.fail(['an argument', '`)`'], this.hint());
     }
+  }
+
+  /** #681: a `"` inside an unquoted argument, which C4 text does not escape. */
+  private quoteInArgument(at: Range): void {
+    this.st.diagnostics.warning(
+      codes.C4_QUOTE_IN_ARGUMENT,
+      `The argument at line ${this.lineOf(at.start)} holds a \`"\`, which does not escape a quote: a quoted text ends at the next \`"\`. Write \`'\` or \`#quot;\` for a quote inside the text.`,
+      at
+    );
   }
 
   /** `"text"`: no escapes, line breaks included. */

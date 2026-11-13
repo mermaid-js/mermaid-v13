@@ -28,7 +28,7 @@ grammars:
           pattern: ','
         QuoteOpen:
           mode: attribute
-          pattern: '[ ]*"'
+          pattern: '[ \t]*"'
         QuoteClose:
           mode: string
           pattern: '"'
