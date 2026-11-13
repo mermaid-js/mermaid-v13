@@ -2,8 +2,9 @@
  * The mindmap facet's tables and shared helpers (DESIGN §4.5, D95). Keyword docs are not here:
  * they come from the grammar file (`generated/docs.ts`).
  */
-import type { Range } from '@mermaid-js/core/parser-kit';
 import type { MindmapShape } from '../model.ts';
+
+export { code, span } from '@mermaid-js/core/parser-kit/facet';
 
 /** A shape written with delimiters: its opener, the closer it reads best with, its name. */
 export interface ShapeForm {
@@ -46,16 +47,6 @@ export const SHAPE_NAMES: Readonly<Record<MindmapShape, string>> = {
   bang: 'bang',
   hexagon: 'hexagon',
 };
-
-/** Markdown inline code holding `text` as written, whatever backticks it has. */
-export function code(text: string): string {
-  const runs = text.match(/`+/g) ?? [];
-  const fence = '`'.repeat(Math.max(0, ...runs.map((r) => r.length)) + 1);
-  const pad = text.startsWith('`') || text.endsWith('`') || text === '' ? ' ' : '';
-  return `${fence}${pad}${text}${pad}${fence}`;
-}
-
-export const span = (start: number, end: number): Range => ({ start, end });
 
 const LINE_END = /[\n\r\u2028\u2029]/;
 

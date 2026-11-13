@@ -24,6 +24,7 @@ import {
   ProbeCursor,
   syncTo,
   TokenCursor,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   ParseOptions,
@@ -186,13 +187,6 @@ const CLASS_DEF_HINT =
   'write it as `classDef <name> <styles>` with one blank after `classDef`, e.g. `classDef hot radius: 10, color: #ff0000`';
 const STYLES_HINT =
   'styles are `radius: 10`, `color: #ff0000`, `stroke-color: #ff0000` and `stroke-width: 2px`, separated by `,`';
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse a quadrant chart. Never throws: problems are error diagnostics. */
 export function parseQuadrant(

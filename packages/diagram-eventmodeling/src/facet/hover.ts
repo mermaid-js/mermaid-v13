@@ -10,6 +10,7 @@
  * of the grammar file (`generated/docs.ts`). Never a preview.
  */
 import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
+import { code, span } from '@mermaid-js/core/parser-kit/facet';
 import { firstFrameAt } from '../frames.ts';
 import { eventmodelingDocs } from '../generated/docs.ts';
 import type { EventModel, EventModelFrame } from '../model.ts';
@@ -17,7 +18,7 @@ import type { EventModelDocument } from '../parser/ast.ts';
 import { T, TEXT_WORD } from '../parser/tokens.ts';
 import { eventModelStructure } from '../structure.ts';
 import type { EventModelRelation } from '../structure.ts';
-import { code, inside, list, span } from './tables.ts';
+import { inside, list } from './tables.ts';
 
 /** Tokens with a doc that hover leaves alone: names, ids, data and punctuation. */
 const NO_DOC = new Set<number>([

@@ -28,10 +28,9 @@ import {
   PARTICIPANT_DATA_KEYS,
   PARTICIPANT_TYPES,
   PLACEMENTS,
-  span,
-  tokenBefore,
 } from './tables.ts';
 import type { Arrow } from './tables.ts';
+import { span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
 
 /** Lexer modes in which code (not free text) is written. */
 const CODE_MODES = new Set(['INITIAL', 'ID', 'ALIAS', 'LINE']);

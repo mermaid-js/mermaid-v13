@@ -18,6 +18,7 @@ import type {
   SymbolOccurrence,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
+import { span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
 import { erCategories } from '../generated/categories.ts';
 import { erDocs } from '../generated/docs.ts';
 import type { ErDocument } from '../parser/ast.ts';
@@ -33,8 +34,6 @@ import {
   LEFT_ENDS,
   LINES,
   RIGHT_ENDS,
-  span,
-  tokenBefore,
 } from './tables.ts';
 
 /** Modes whose text is a value, not code: nothing is offered there. */

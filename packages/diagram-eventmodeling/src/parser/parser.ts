@@ -34,6 +34,7 @@ import {
   Probe,
   significantTokens,
   skipTo,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
@@ -185,13 +186,6 @@ function probeMode(src: string, tokens: TokenStream, o: number): string {
 
 /** v12's text-statement words, which v12 lexes as a name at a line start. */
 const TEXT_WORDS = Object.values(TEXT_WORD);
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** The parts of a frame the model reads, by statement. */
 export interface ParsedFrame {

@@ -9,6 +9,7 @@ import {
   nodeId,
   significantTokens,
   skipTo,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type { AstId, Range, TokenView } from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS, checkLimit } from '@mermaid-js/core/limits';
@@ -42,7 +43,6 @@ import {
   NS_NEXT,
   PROBE_FOLLOWS,
   SQE,
-  STOP,
   STR,
   STYLE_EXPECTED,
   STYLE_PART,

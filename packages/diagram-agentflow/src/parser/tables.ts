@@ -282,13 +282,6 @@ export const EXPECTED = new ExpectedTable([
   ['the end of the text', [Kind.EOF, T.Eof]],
 ]);
 
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-export const STOP = new Stop();
-
 /** An open `flow` or `global` block. */
 export interface Frame {
   kind: 'flow' | 'global';

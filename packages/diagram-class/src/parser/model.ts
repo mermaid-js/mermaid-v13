@@ -12,6 +12,7 @@
 import type { AstId, Diagnostic, Range } from '@mermaid-js/core/parser-kit';
 import { readMember } from './member.ts';
 import type { MemberParts } from './member.ts';
+import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 export type { Classifier, MemberParts, Visibility } from './member.ts';
 
@@ -219,8 +220,7 @@ export function callbackArgs(args: string | undefined, id: string): string[] {
   });
 }
 
-const escMember = (cls: string): string =>
-  cls.replace(/[%>@#]/g, (ch) => `%${ch.charCodeAt(0).toString(16).toUpperCase()}`);
+const escMember = /* @__PURE__ */ idEscaper();
 
 /**
  * v12's `ClassDB`, driven by the parser. Method names follow ClassDB's; arguments are what

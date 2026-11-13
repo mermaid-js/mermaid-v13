@@ -16,6 +16,7 @@
  */
 import type { Warning } from '@mermaid-js/core';
 import type { TreeViewDiagramConfig } from '@mermaid-js/core/config';
+import { rawConfigNumber as configNumber, useMaxWidth } from '@mermaid-js/core/config/readers';
 import { treeViewConfigDefaults } from './generated/config-defaults.ts';
 import type { TreeViewIconOptions } from './icons.ts';
 
@@ -60,13 +61,6 @@ const DEFAULT_ICON_PACK = schemaDefault('defaultIconPack');
 
 const LENGTHS: readonly LengthKey[] = ['rowIndent', 'paddingX', 'paddingY', 'lineThickness'];
 const MAPS = ['filenameIcons', 'extensionIcons'] as const;
-
-/** A number, or a string that reads as one; else NaN. */
-function configNumber(value: unknown): number {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string' && value.trim() !== '') return Number(value);
-  return Number.NaN;
-}
 
 /** `value` when it is a plain object (the icon maps), its string entries; else undefined. */
 function iconMap(value: unknown): Readonly<Record<string, string>> | undefined {
@@ -127,6 +121,5 @@ export function treeViewOptions(
 export function treeViewUseMaxWidth(
   section: Readonly<Pick<TreeViewDiagramConfig, 'useMaxWidth'>> | undefined
 ): boolean {
-  const value: unknown = section?.useMaxWidth;
-  return value === undefined || Boolean(value);
+  return useMaxWidth(section?.useMaxWidth, 'truthy');
 }

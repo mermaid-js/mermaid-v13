@@ -10,7 +10,7 @@ import type { SankeyModel } from '../model.ts';
 import type { SankeyDocument, SankeyField } from '../parser/ast.ts';
 import { SankeyKind as T } from '../parser/tokens.ts';
 import { invalidity, readValue, trailingTextMessage } from '../parser/values.ts';
-import { code } from './tables.ts';
+import { code } from '@mermaid-js/core/parser-kit/facet';
 
 const inside = (offset: number, r: Range) => r.start <= offset && offset <= r.end;
 

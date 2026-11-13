@@ -47,6 +47,7 @@ import {
   SPACE,
   TAB,
   TokenCursor,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   ParseOptions,
@@ -144,13 +145,6 @@ const ONE_NODE_HINT = 'each node goes on a line of its own';
 const BARE_CLASS_HINT = 'a bare `:::` takes the line break after it';
 const AFTER_BLANK_HINT =
   'remove a blank or comment line above it: a line may not follow two of them in a row, or one right after `mindmap`';
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse a mindmap diagram. Never throws: problems are error diagnostics. */
 export function parseMindmap(src: string, options: MindmapParseOptions = {}): MindmapParseResult {

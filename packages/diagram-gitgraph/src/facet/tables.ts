@@ -2,8 +2,10 @@
  * The gitGraph facet's completion tables and shared helpers (DESIGN §4.5, D95). Keyword docs
  * are not here: they come from the grammar file (`generated/docs.ts`).
  */
-import type { CompletionKind, Range } from '@mermaid-js/core/parser-kit';
+import type { CompletionKind } from '@mermaid-js/core/parser-kit';
 import { T } from '../parser/tokens.ts';
+
+export { code, span } from '@mermaid-js/core/parser-kit/facet';
 
 /** An item offered when the parser expects `kind`. */
 export interface KeywordItem {
@@ -85,16 +87,6 @@ export function quoted(value: string, prefer = '"'): string {
   if (plain && !value.includes(other)) return `${other}${value}${other}`;
   return `${prefer}${value.replace(/[\\"']/g, (c) => `\\${c}`)}${prefer}`;
 }
-
-/** Markdown inline code holding `text` as written, whatever backticks it has. */
-export function code(text: string): string {
-  const runs = text.match(/`+/g) ?? [];
-  const fence = '`'.repeat(Math.max(0, ...runs.map((r) => r.length)) + 1);
-  const pad = text.startsWith('`') || text.endsWith('`') || text === '' ? ' ' : '';
-  return `${fence}${pad}${text}${pad}${fence}`;
-}
-
-export const span = (start: number, end: number): Range => ({ start, end });
 
 /** The text of `at`'s line before `at`. */
 export function lineBefore(text: string, at: number): string {

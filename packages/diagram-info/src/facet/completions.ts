@@ -13,6 +13,7 @@ import type {
   Range,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
+import { tokenBefore } from '@mermaid-js/core/parser-kit/facet';
 import { infoDocs } from '../generated/docs.ts';
 import type { InfoDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
@@ -33,21 +34,6 @@ const ITEMS: readonly KeywordItem[] = [
   { kind: T.AccTitle, label: 'accTitle', item: 'keyword', insert: 'accTitle: ' },
   { kind: T.AccDescr, label: 'accDescr', item: 'keyword', insert: 'accDescr: ' },
 ];
-
-/** Index of the last token of `tokens` starting at or before `offset`, or -1. */
-function tokenBefore(tokens: TokenStream, offset: number): number {
-  let lo = 0;
-  let hi = tokens.length - 1;
-  let found = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if ((tokens.start[mid] ?? 0) <= offset) {
-      found = mid;
-      lo = mid + 1;
-    } else hi = mid - 1;
-  }
-  return found;
-}
 
 /** The probed word's range: the prefix, plus the rest of the word after the cursor. */
 function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeResult): Range {

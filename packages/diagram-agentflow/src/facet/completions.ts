@@ -23,6 +23,7 @@ import type {
   SymbolOccurrence,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
+import { span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
 import { agentflowCategories } from '../generated/categories.ts';
 import { agentflowDocs } from '../generated/docs.ts';
 import type { AgentflowDocument } from '../parser/ast.ts';
@@ -43,8 +44,6 @@ import {
   LINK_TARGETS,
   NODE_DATA,
   SHAPE_VALUES,
-  span,
-  tokenBefore,
 } from './tables.ts';
 
 /** Modes in which a statement, a header or a `click` target is being written. */

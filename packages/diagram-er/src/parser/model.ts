@@ -7,6 +7,7 @@
  * …), with v12's ordering and lookup rules, so the conformance suite can compare the two.
  */
 import type { AstId, Diagnostic, Range } from '@mermaid-js/core/parser-kit';
+import { ID_RESERVED, idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 /** How many of an entity one end of a relationship allows. */
 export type ErCardinality = 'zeroOrOne' | 'zeroOrMore' | 'oneOrMore' | 'onlyOne' | 'mdParent';
@@ -111,10 +112,10 @@ export interface ErBuilderOptions {
   error(code: string, message: string, range: Range): void;
 }
 
+const esc = /* @__PURE__ */ idEscaper(`${ID_RESERVED}.`);
+
 /** Percent-encodes what AST ids reserve, plus `.` (it separates entity and attribute). */
 export function attributeId(entity: string, name: string, n: number): AstId {
-  const esc = (s: string) =>
-    s.replace(/[%>@#.]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
   const id = `a:${esc(entity)}.${esc(name)}`;
   return n === 1 ? id : `${id}#${n}`;
 }

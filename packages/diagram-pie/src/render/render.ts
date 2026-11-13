@@ -6,8 +6,9 @@
 // one element that carries its `data-ast` (every section has a row, shown or not); the slice
 // and its percentage carry `data-id` only (pitfall 12).
 import type { RenderContext } from '@mermaid-js/core';
-import { px, scale, styleScope, styleText, themeStyleSheet, translate } from '@mermaid-js/core/svg';
+import { scale, translate } from '@mermaid-js/core/svg';
 import type { SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/core/svg/document';
 import { slicePath } from '../layout/index.ts';
 import type { PieLayout, PlacedLabel } from '../layout/index.ts';
 import type { PieModel } from '../model.ts';
@@ -110,38 +111,21 @@ function drawPie(layout: PieLayout, paint: Paints, w: SvgWriter): void {
 /** The `<svg>` root with its title and description (R-A11Y-1, D133). */
 function openRoot(model: PieModel, layout: PieLayout, ctx: PieRenderContext, w: SvgWriter): void {
   const { theme, config } = ctx;
-  const prefix = ctx.idPrefix;
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = config.pie?.useMaxWidth !== false;
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
-  const auto = theme.autoDeclarations();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-pie',
+  openSvgRoot(w, ctx, {
+    name: 'pie',
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'pie',
-    'aria-labelledby': title ? `${prefix}-title` : undefined,
-    'aria-describedby': desc ? `${prefix}-desc` : undefined,
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(prefix) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': font,
+    maxWidth: config.pie?.useMaxWidth,
+    title,
+    desc,
+    attrs: {
+      'font-family': font,
+    },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: string): void {
-  w.open(tag, { id });
-  w.text(text);
-  w.close();
 }

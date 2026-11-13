@@ -10,7 +10,8 @@ import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/p
 import { radarDocs } from '../generated/docs.ts';
 import type { RadarAxisNode, RadarDocument, RadarEntryNode } from '../parser/ast.ts';
 import { T, TEXT_STATEMENTS } from '../parser/tokens.ts';
-import { code, declaredAxes, span } from './tables.ts';
+import { declaredAxes } from './tables.ts';
+import { code, span } from '@mermaid-js/core/parser-kit/facet';
 
 /** Tokens with a doc that hover leaves alone: punctuation and values. */
 const NO_DOC = new Set<number>([T.String, T.Number, T.Id]);

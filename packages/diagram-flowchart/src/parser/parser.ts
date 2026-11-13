@@ -25,6 +25,7 @@ import {
   Probe,
   significantTokens,
   skipTo,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstCallback,
@@ -331,13 +332,6 @@ const EXPECTED = new ExpectedTable([
   ['`}`', [T.ShapeDataEnd]],
   ['the end of the text', [Kind.EOF, T.Eof]],
 ]);
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 interface Frame {
   id: FlowLabelNode | undefined;

@@ -42,6 +42,7 @@ import {
   ProbeCursor,
   sourceView,
   TokenCursor,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   ParseOptions,
@@ -156,13 +157,6 @@ const AFTER_BLANK_HINT =
 const ENTITY = /&(#?)(\w+);/g;
 const PLACEHOLDER = /ﬂ°°|ﬂ°|¶ß/g;
 const PLACEHOLDER_TEXT: Readonly<Record<string, string>> = { 'ﬂ°°': '&#', 'ﬂ°': '&', '¶ß': ';' };
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse a kanban diagram. Never throws: problems are error diagnostics. */
 export function parseKanban(src: string, options: KanbanParseOptions = {}): KanbanParseResult {

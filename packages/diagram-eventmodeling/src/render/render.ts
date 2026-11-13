@@ -13,8 +13,8 @@
 // `->>`'s id) and `data-id`; an inferred relation's path, the lanes (`lane:<index>`), the heads,
 // rects and texts carry `data-id` only (pitfall 12).
 import type { RenderContext } from '@mermaid-js/core';
-import { px, styleScope, styleText, themeStyleSheet } from '@mermaid-js/core/svg';
 import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/core/svg/document';
 import { eventModelingUseMaxWidth } from '../config.ts';
 import type {
   EventModelBoxLayout,
@@ -152,39 +152,17 @@ function openRoot(
   ctx: EventModelRenderContext,
   w: SvgWriter
 ): void {
-  const { theme, config } = ctx;
-  const prefix = ctx.idPrefix;
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = eventModelingUseMaxWidth(config.eventmodeling, ctx.warn);
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
-  // Read before the root style is written, so it declares its alias.
-  const font = theme.font();
-  const auto = theme.autoDeclarations();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-eventmodeling',
+  const maxWidth = eventModelingUseMaxWidth(ctx.config.eventmodeling, ctx.warn);
+  openSvgRoot(w, ctx, {
+    name: 'eventmodeling',
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'eventmodeling',
-    'aria-labelledby': title ? `${prefix}-title` : undefined,
-    'aria-describedby': desc ? `${prefix}-desc` : undefined,
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(prefix) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': font,
+    maxWidth,
+    title: model.accTitle.trim(),
+    desc: model.accDescr.trim(),
+    // Read before the root style is written, so it declares its alias.
+    attrs: { 'font-family': ctx.theme.font() },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', content: string, id: string): void {
-  w.open(tag, { id });
-  w.text(content);
-  w.close();
 }
