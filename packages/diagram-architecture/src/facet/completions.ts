@@ -28,11 +28,12 @@ import type {
   Range,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
+import { span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
 import { architectureDocs } from '../generated/docs.ts';
 import type { ArchitectureModel } from '../model.ts';
 import type { ArchitectureDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { BUILTIN_ICON_NAMES, ITEMS, lineTokens, span, tokenBefore } from './tables.ts';
+import { BUILTIN_ICON_NAMES, ITEMS, lineTokens } from './tables.ts';
 
 /** The probed word's range: the prefix, plus the rest of the token after the cursor. */
 function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeResult): Range {

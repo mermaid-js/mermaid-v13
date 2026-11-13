@@ -11,6 +11,7 @@ import type {
   Range,
   SymbolOccurrence,
 } from '@mermaid-js/core/parser-kit';
+import { code, span } from '@mermaid-js/core/parser-kit/facet';
 import { erDocs } from '../generated/docs.ts';
 import type { ErDocument, ErRelationshipNode, ErStatementNode } from '../parser/ast.ts';
 import type { ErModel } from '../parser/model.ts';
@@ -18,13 +19,11 @@ import { T } from '../parser/tokens.ts';
 import {
   CARDINALITY_KINDS,
   CARDINALITY_MEANING,
-  code,
   describeLine,
   DIRECTION_KINDS,
   DIRECTIONS,
   KEYS,
   plural,
-  span,
 } from './tables.ts';
 
 /** At most this many attributes are listed; the rest are counted. */

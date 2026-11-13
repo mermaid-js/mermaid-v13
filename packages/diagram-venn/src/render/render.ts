@@ -16,16 +16,13 @@
  */
 import {
   checkColor,
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
   translate,
   type Attrs,
   type Paint,
   type PathData,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/core/svg/document';
 import type {
   PlacedLabel,
   RegionPath,
@@ -199,33 +196,16 @@ function label(w: SvgWriter, p: PlacedLabel, attrs: Attrs): void {
 /** The `<svg>` root with its title (R-A11Y-1, D133). */
 function openRoot(model: VennModel, { w, layout }: Scene, ctx: VennRenderContext): void {
   const { theme, config } = ctx;
-  const prefix = ctx.idPrefix;
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = (config.venn as { useMaxWidth?: unknown } | undefined)?.useMaxWidth !== false;
-  const title = model.title?.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
-  const auto = theme.autoDeclarations();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-venn',
+  openSvgRoot(w, ctx, {
+    name: 'venn',
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'venn',
-    'aria-labelledby': title ? `${prefix}-title` : undefined,
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(prefix) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': font,
+    maxWidth: (config.venn as { useMaxWidth?: unknown } | undefined)?.useMaxWidth,
+    title: model.title?.trim(),
+    attrs: { 'font-family': font },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));
-  if (title) {
-    w.open('title', { id: `${prefix}-title` });
-    w.text(title);
-    w.close();
-  }
 }

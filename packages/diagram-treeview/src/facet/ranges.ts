@@ -5,6 +5,8 @@
 import type { Range } from '@mermaid-js/core/parser-kit';
 import type { TreeViewDocument, TreeViewStatementNode } from '../parser/ast.ts';
 
+export { span } from '@mermaid-js/core/parser-kit/facet';
+
 /** The statement of `doc` whose range holds `offset` (its ends included), if any. */
 export function statementAt(
   doc: TreeViewDocument,
@@ -24,7 +26,5 @@ export function statementAt(
   const n = list[found];
   return n && offset <= n.range.end ? n : undefined;
 }
-
-export const span = (start: number, end: number): Range => ({ start, end });
 
 export const inside = (offset: number, r: Range): boolean => r.start <= offset && offset <= r.end;

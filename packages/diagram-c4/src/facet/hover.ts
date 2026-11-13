@@ -7,6 +7,7 @@
  * node: its argument is read from the tokens, as completion reads it. Never a preview.
  */
 import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
+import { code, span } from '@mermaid-js/core/parser-kit/facet';
 import { c4Docs } from '../generated/docs.ts';
 import { kindWords, type C4Boundary, type C4Element, type C4Model } from '../model.ts';
 import type { C4Document, C4StatementNode } from '../parser/ast.ts';
@@ -14,7 +15,6 @@ import { nameRoute, SLOT_TABLES } from '../parser/slots.ts';
 import type { SlotTable } from '../parser/slots.ts';
 import { KEYWORDS } from '../parser/tokens.ts';
 import { callAt } from './args.ts';
-import { code, span } from './markdown.ts';
 import { RELATION_TYPE_DOC, SLOT_DOCS } from './tables.ts';
 
 const IGNORED = 'This one is ignored.';

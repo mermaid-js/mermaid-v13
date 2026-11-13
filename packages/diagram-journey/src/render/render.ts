@@ -5,14 +5,8 @@
 // `data-ast` (R-PARSE-8), exactly one per node; labels and legend entries carry `data-id` only.
 // A task dot's `data-id` is its legend entry's (`a:<name>`), its `data-ast` the mention's.
 import type { RenderContext } from '@mermaid-js/core';
-import {
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
-  type SafeValue,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import type { SafeValue, SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot, textElement } from '@mermaid-js/core/svg/document';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { JourneyModel } from '../model.ts';
 import { journeyMetrics, type JourneyMetrics } from '../layout/metrics.ts';
@@ -73,42 +67,25 @@ const leftAligned = (text: MeasuredLabel): MeasuredLabel => ({ ...text, left: tr
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, model }: Scene): void {
   const { theme, config } = ctx;
-  const prefix = (): string => ctx.idPrefix;
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = config.journey?.useMaxWidth !== false;
-  const auto = theme.autoDeclarations();
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
   const font = theme.font();
   const fontSize = theme.length('fontSize');
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-journey',
+  openSvgRoot(w, ctx, {
+    name: 'journey',
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'journey',
-    'aria-labelledby': title ? `${prefix()}-title` : undefined,
-    'aria-describedby': desc ? `${prefix()}-desc` : undefined,
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(prefix()) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': font,
-    'font-size': fontSize,
+    maxWidth: config.journey?.useMaxWidth,
+    title,
+    desc,
+    attrs: {
+      'font-family': font,
+      'font-size': fontSize,
+    },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix()), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix()}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix()}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: string): void {
-  w.open(tag, { id });
-  w.text(text);
-  w.close();
 }
 
 /** The actor legend (v12 `drawActorLegend`): a dot and a name per named actor (D244). */
@@ -240,9 +217,7 @@ function drawTask(scene: Scene, t: TaskLayout, names: ReadonlyMap<string, string
       'stroke-width': m.dotStroke,
     });
     // v12's tooltip naming the actor, as the legend shows it.
-    w.open('title');
-    w.text(names.get(d.actor) ?? d.actor);
-    w.close();
+    textElement(w, 'title', names.get(d.actor) ?? d.actor);
     w.close();
   }
   if (t.label) drawName(w, t.label, t.ast, 'task-label', paint.labelOf(t.band));

@@ -29,6 +29,7 @@ import {
   ProbeCursor,
   sourceView,
   TokenCursor,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   ParseOptions,
@@ -114,13 +115,6 @@ const BARE_SECTION = '; a bare `section` takes the next line as its name';
 const TITLE_PREFIX = 'title '.length;
 const SECTION_PREFIX = 'section '.length;
 const EVENT_PREFIX = ': '.length;
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse a timeline diagram. Never throws: problems are error diagnostics. */
 export function parseTimeline(

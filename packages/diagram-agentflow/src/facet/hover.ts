@@ -14,6 +14,7 @@ import type {
   SymbolOccurrence,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
+import { code, span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
 import { agentflowDocs } from '../generated/docs.ts';
 import type {
   AgentflowDocument,
@@ -24,7 +25,7 @@ import type {
 import type { AgentflowFlowModel, AgentflowModel } from '../parser/model.ts';
 import { destructLink } from '../parser/model.ts';
 import { T } from '../parser/tokens.ts';
-import { code, describeLink, DIRECTION_DOCS, shapeText, span, tokenBefore } from './tables.ts';
+import { describeLink, DIRECTION_DOCS, shapeText } from './tables.ts';
 
 const LINK_TOKENS = new Set<number>([T.Link, T.StartLink]);
 

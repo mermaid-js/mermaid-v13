@@ -6,6 +6,7 @@
  * file (`generated/docs.ts`). Never a preview.
  */
 import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-kit';
+import { code } from '@mermaid-js/core/parser-kit/facet';
 import { treeviewDocs } from '../generated/docs.ts';
 import { BUILTIN_ICON_PACK, detectIcon, isBuiltinIcon, resolveIcon } from '../icons.ts';
 import type { TreeViewIconOptions } from '../icons.ts';
@@ -16,14 +17,6 @@ import { textKeyword } from '../parser/parser.ts';
 import { T } from '../parser/tokens.ts';
 import { inside, span, statementAt } from './ranges.ts';
 import { iconOptionsOf, pathOf, treeOf } from './tree.ts';
-
-/** Markdown inline code holding `text` as written, whatever backticks it has. */
-export function code(text: string): string {
-  const runs = text.match(/`+/g) ?? [];
-  const fence = '`'.repeat(Math.max(0, ...runs.map((r) => r.length)) + 1);
-  const pad = text.startsWith('`') || text.endsWith('`') || text === '' ? ' ' : '';
-  return `${fence}${pad}${text}${pad}${fence}`;
-}
 
 /** The keyword of a token that holds more than it (a text statement, `:::name`). */
 const keywordOf = (kind: number): string | undefined =>

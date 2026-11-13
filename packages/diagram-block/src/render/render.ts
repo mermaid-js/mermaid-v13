@@ -18,15 +18,8 @@
  * `data-ast` marks one element per drawn AST node (pitfall 12): each block's `g.node` and each
  * edge's `path`; labels carry `data-id` only.
  */
-import {
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
-  translate,
-  type Attrs,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import { translate, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/core/svg/document';
 import type { BlockLayout, BlockNodeLayout, PlacedLabel } from '../layout/types.ts';
 import { isComposite, type Block, type BlockModel } from '../model.ts';
 import { drawShape } from '../shapes/draw.ts';
@@ -78,28 +71,16 @@ function modelBlocks(model: BlockModel): ReadonlyMap<string, Block> {
 
 /** The `<svg>` root: the layout's bounds as the viewBox (D224), the theme's aliases. */
 function openRoot({ w, ctx, layout, paint }: Scene): void {
-  const { theme, config } = ctx;
-  const prefix = ctx.idPrefix;
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = (config as { block?: { useMaxWidth?: unknown } }).block?.useMaxWidth !== false;
-  const auto = theme.autoDeclarations();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-block',
+  const config = ctx.config as { block?: { useMaxWidth?: unknown } };
+  openSvgRoot(w, ctx, {
+    name: 'block',
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'block',
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(prefix) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': paint.font,
-    'font-size': paint.fontSize,
+    maxWidth: config.block?.useMaxWidth,
+    attrs: { 'font-family': paint.font, 'font-size': paint.fontSize },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));
 }
 
 /** v12's class names on a block's group: its classes, else `default`, then `flowchart-label`. */

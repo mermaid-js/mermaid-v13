@@ -30,6 +30,7 @@ import {
   sourceView,
   syncTo,
   TokenCursor,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
@@ -84,13 +85,6 @@ const STATEMENT = [
   'a task such as `Make tea: 5: Me`',
 ];
 const TASK_DATA = ['`:` and a score, e.g. `Make tea: 5`'];
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse a user journey. Never throws: problems are error diagnostics. */
 export function parseJourney(src: string, options: JourneyParseOptions = {}): JourneyParseResult {

@@ -6,16 +6,8 @@
  * absolute (v12's: columns from `−1.5 W`), and the viewBox is the layout's bounds (D224, D378).
  * Columns and cards go through `w.outline` (hand-drawn, D379); the priority bar does not.
  */
-import {
-  checkStyle,
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
-  type Attrs,
-  type SafeValue,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
+import { checkStyle, type Attrs, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/core/svg/document';
 import type { FontKey, Run } from '@mermaid-js/core/text';
 import type { CardLayout, ColumnLayout, KanbanLayout, PlacedLabel } from '../layout/index.ts';
 import type { KanbanItem, KanbanModel } from '../model.ts';
@@ -70,24 +62,14 @@ function openRoot({ w, layout, ctx }: Scene): void {
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = config.kanban?.useMaxWidth !== false;
   // Read before the root style and the auto sheet are written, so they declare its aliases.
   const font = fontAttrs(layout.font, theme);
-  const auto = theme.autoDeclarations();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-kanban',
+  openSvgRoot(w, ctx, {
+    name: 'kanban',
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': 'kanban',
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(ctx.idPrefix) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    ...font,
+    maxWidth: config.kanban?.useMaxWidth,
+    attrs: { ...font },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(ctx.idPrefix), auto.light, auto.dark));
 }
 
 /**

@@ -4,6 +4,7 @@
  */
 import { Kind } from '@mermaid-js/core/parser-kit';
 import type { CompletionKind, Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import { tokenBefore } from '@mermaid-js/core/parser-kit/facet';
 import type { EventModelDocument, EventModelFrameNode } from '../parser/ast.ts';
 import {
   DATA_TYPES,
@@ -87,21 +88,6 @@ export const KIND_KINDS: ReadonlySet<number> = new Set(KIND_LIST);
 export const frameNodes = (doc: EventModelDocument): EventModelFrameNode[] =>
   doc.children.filter((n): n is EventModelFrameNode => n.type === 'Frame');
 
-/** Index of the last token of `tokens` starting at or before `offset`, or -1. */
-export function tokenBefore(tokens: TokenStream, offset: number): number {
-  let lo = 0;
-  let hi = tokens.length - 1;
-  let found = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if ((tokens.start[mid] ?? 0) <= offset) {
-      found = mid;
-      lo = mid + 1;
-    } else hi = mid - 1;
-  }
-  return found;
-}
-
 /** The kinds of the significant tokens ending at or before `at`, last first (at most `n`). */
 export function kindsBefore(tokens: TokenStream | undefined, at: number, n: number): number[] {
   const out: number[] = [];
@@ -114,16 +100,6 @@ export function kindsBefore(tokens: TokenStream | undefined, at: number, n: numb
   }
   return out;
 }
-
-/** Markdown inline code holding `text` as written, whatever backticks it has. */
-export function code(text: string): string {
-  const runs = text.match(/`+/g) ?? [];
-  const fence = '`'.repeat(Math.max(0, ...runs.map((r) => r.length)) + 1);
-  const pad = text.startsWith('`') || text.endsWith('`') || text === '' ? ' ' : '';
-  return `${fence}${pad}${text}${pad}${fence}`;
-}
-
-export const span = (start: number, end: number): Range => ({ start, end });
 
 /** Whether `offset` is in `r`, its ends included. */
 export const inside = (offset: number, r: Range): boolean => r.start <= offset && offset <= r.end;

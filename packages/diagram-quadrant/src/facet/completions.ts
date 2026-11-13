@@ -20,7 +20,8 @@ import { quadrantDocs } from '../generated/docs.ts';
 import type { QuadrantDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { readsAs } from './names.ts';
-import { KEYWORDS, span, STYLE_KEYS, tokenBefore } from './tables.ts';
+import { KEYWORDS, STYLE_KEYS } from './tables.ts';
+import { span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
 
 /** Modes whose text is a value, not code: nothing is offered there. */
 const VALUE_MODES = new Set([

@@ -15,6 +15,7 @@
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { WardleyDiagramConfig } from '@mermaid-js/core/config';
+import { configNumber, useMaxWidth } from '@mermaid-js/core/config/readers';
 import { WARDLEY_CONFIG_INVALID } from './codes.ts';
 import { wardleyBetaConfigDefaults } from './generated/config-defaults.ts';
 import type { WardleyModel } from './model.ts';
@@ -73,14 +74,6 @@ const RANGES: Readonly<Record<LengthKey, Range>> = {
 
 const inRange = (n: number, range: Range): boolean =>
   range.exclusive ? n > range.min : n >= range.min;
-
-/** A finite number, or a string that reads as one; else undefined. */
-function configNumber(value: unknown): number | undefined {
-  let n = Number.NaN;
-  if (typeof value === 'number') n = value;
-  else if (typeof value === 'string' && value.trim() !== '') n = Number(value);
-  return Number.isFinite(n) ? n : undefined;
-}
 
 const shown = (value: unknown): string =>
   typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
@@ -157,6 +150,5 @@ function paddingFor(
  * unset or truthy scales to the container.
  */
 export function wardleyUseMaxWidth(section: Section | undefined): boolean {
-  const value = section?.useMaxWidth;
-  return value === undefined ? true : Boolean(value);
+  return useMaxWidth(section?.useMaxWidth, 'truthy');
 }

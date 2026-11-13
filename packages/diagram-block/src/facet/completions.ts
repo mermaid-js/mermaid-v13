@@ -28,12 +28,13 @@ import type {
   Range,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
+import { span } from '@mermaid-js/core/parser-kit/facet';
 import { blockDocs } from '../generated/docs.ts';
 import type { BlockModel } from '../model.ts';
 import type { BlockDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { DIRECTIONS, LINKS, SHAPES } from './tables.ts';
-import { LINE_BREAK, lineBefore, runAround, span, tokenAt } from './text.ts';
+import { LINE_BREAK, lineBefore, runAround, tokenAt } from './text.ts';
 
 const BLANK = /^[\t ]*$/;
 /** An id character (the id rule's class). */

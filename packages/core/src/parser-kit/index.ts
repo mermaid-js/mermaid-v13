@@ -66,3 +66,4 @@ export type {
   LanguageFacet,
   NameSyntax,
 } from './language.ts';
+export { Stop, STOP } from './stop.ts';

@@ -20,6 +20,7 @@ import type {
   SymbolOccurrence,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
+import { span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
 import { classCategories } from '../generated/categories.ts';
 import { classDocs } from '../generated/docs.ts';
 import type { ClassDocument } from '../parser/ast.ts';
@@ -33,8 +34,6 @@ import {
   describeRelation,
   KEYWORDS,
   LINK_TARGETS,
-  span,
-  tokenBefore,
 } from './tables.ts';
 import type { Arrow } from './tables.ts';
 

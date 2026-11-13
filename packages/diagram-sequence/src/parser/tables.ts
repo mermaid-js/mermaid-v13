@@ -7,6 +7,7 @@ import type { FragmentKind } from '../model.ts';
 import { ARROW_TOKENS } from './arrows.ts';
 import type { SequenceMenuStmt } from './ast.ts';
 import { T } from './tokens.ts';
+import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 /** jison's `NEWLINE`: a line break, `;`, the alias state's empty match, the end of the text. */
 export const LINE_END = [Kind.Newline, T.Semi, T.AliasEnd, T.Eof];
@@ -163,18 +164,8 @@ export const HINTS: Readonly<Record<number, string>> = {
   [T.Details]: 'write it as `details <id>: <element id>`',
 };
 
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-export const STOP = new Stop();
-
 /** `%`, `>`, `@` and `#` in names are percent-encoded in AST ids (as core's `AstIds`). */
-export const esc = (name: string): string =>
-  /[%>@#]/.test(name)
-    ? name.replace(/[%>@#]/g, (ch) => `%${ch.charCodeAt(0).toString(16).toUpperCase()}`)
-    : name;
+export const esc = /* @__PURE__ */ idEscaper();
 
 export const KEYWORD_NAMES: Readonly<Record<number, 'participant' | 'actor' | 'destroy'>> = {
   [T.Participant]: 'participant',

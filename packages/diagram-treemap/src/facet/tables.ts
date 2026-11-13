@@ -2,9 +2,11 @@
  * The treemap facet's completion table and shared helpers (DESIGN §4.5, D95). Keyword docs are
  * not here: they come from the grammar file (`generated/docs.ts`).
  */
-import type { CompletionKind, Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { CompletionKind, Range } from '@mermaid-js/core/parser-kit';
 import type { TreemapDocument, TreemapStatementNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
+
+export { code, span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
 
 /** Where an item is offered, besides the parser expecting its kind. */
 export type ItemPlace = 'header' | 'lineStart' | 'afterName';
@@ -62,21 +64,6 @@ export const ITEMS: readonly KeywordItem[] = [
   },
 ];
 
-/** Index of the last token of `tokens` starting at or before `offset`, or -1. */
-export function tokenBefore(tokens: TokenStream, offset: number): number {
-  let lo = 0;
-  let hi = tokens.length - 1;
-  let found = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if ((tokens.start[mid] ?? 0) <= offset) {
-      found = mid;
-      lo = mid + 1;
-    } else hi = mid - 1;
-  }
-  return found;
-}
-
 /** The statement of `doc` whose range holds `offset` (its ends included), if any. */
 export function statementAt(
   doc: TreemapDocument,
@@ -96,15 +83,5 @@ export function statementAt(
   const n = list[found];
   return n && offset <= n.range.end ? n : undefined;
 }
-
-/** Markdown inline code holding `text` as written, whatever backticks it has. */
-export function code(text: string): string {
-  const runs = text.match(/`+/g) ?? [];
-  const fence = '`'.repeat(Math.max(0, ...runs.map((r) => r.length)) + 1);
-  const pad = text.startsWith('`') || text.endsWith('`') || text === '' ? ' ' : '';
-  return `${fence}${pad}${text}${pad}${fence}`;
-}
-
-export const span = (start: number, end: number): Range => ({ start, end });
 
 export const inside = (offset: number, r: Range): boolean => r.start <= offset && offset <= r.end;

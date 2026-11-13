@@ -1,0 +1,146 @@
+(** C4 beta syntax (R-PARSE-9, spec #730): the normative grammar of `c4-beta` diagrams.
+
+The hand-written parser in `src/beta/` implements it; `tools/gen-grammar` builds a reference
+parser, a sentence generator, highlighters and the syntax reference page from it. There is no
+v12 release to follow (`c4-beta` is in open v12 pull requests only), so this file and spec #730
+decide the syntax, and the parser must match this file (DESIGN §4.4). Where the v12 prototype
+differs, the spec lists why.
+
+**Lexer input.** The lexer reads the diagram body: front matter removed, `%%{…}%%` directives
+blanked out. A statement ends at a line break; `%%` starts a comment outside strings. Words are
+case-sensitive. An id is words of letters, digits and `_` joined by single `-`, so `a-->b`
+reads as `a`, `-->`, `b`. Only `title`, `accTitle`, `accDescr`, `direction`, `legend` and
+`style` are reserved: every other word, element kinds included, may be an id. A step (`2:`) is
+digits and a colon at the start of a line.
+
+A statement stands on one line; an element's body is its `{` at the end of its line, element
+lines, and a `}` on a line of its own. *)
+
+@lexer
+
+(** `c4-beta`: starts a c4-beta diagram. An id of the same spelling is read as the header too,
+and is allowed as an id. *)
+HEADER                /c4-beta(?!\w|-\w)/                 :keyword ;
+(** `context`: the diagram kind, system context. The default. *)
+CONTEXT               /context(?!\w|-\w)/                 :keyword ;
+(** `container`: a diagram kind after `c4-beta`, and the element kind of a container. *)
+CONTAINER             /container(?!\w|-\w)/               :keyword ;
+(** `component`: a diagram kind after `c4-beta`, and the element kind of a component. *)
+COMPONENT             /component(?!\w|-\w)/               :keyword ;
+(** `dynamic`: the diagram kind whose relations carry a step number, `2: a --> b`. *)
+DYNAMIC               /dynamic(?!\w|-\w)/                 :keyword ;
+(** `deployment`: the diagram kind of deployment nodes and infrastructure nodes. *)
+DEPLOYMENT            /deployment(?!\w|-\w)/              :keyword ;
+(** `person`: an element for a user of the system. *)
+PERSON                /person(?!\w|-\w)/                  :keyword ;
+(** `softwareSystem`: an element for a software system. *)
+SOFTWARE_SYSTEM       /softwareSystem(?!\w|-\w)/          :keyword ;
+(** `group`: a frame around elements, with no meaning of its own. *)
+GROUP                 /group(?!\w|-\w)/                   :keyword ;
+(** `deploymentNode`: a node of a deployment, with a technology and a number of instances. *)
+DEPLOYMENT_NODE       /deploymentNode(?!\w|-\w)/          :keyword ;
+(** `infrastructureNode`: infrastructure such as a load balancer, inside a deployment node. *)
+INFRASTRUCTURE_NODE   /infrastructureNode(?!\w|-\w)/      :keyword ;
+(** `instances "2..4"`: how many instances of a deployment node run. *)
+INSTANCES             /instances(?!\w|-\w)/               :keyword ;
+(** `on`: `legend on` shows the legend. *)
+ON                    /on(?!\w|-\w)/                      :keyword ;
+(** `off`: `legend off` hides the legend. *)
+OFF                   /off(?!\w|-\w)/                     :keyword ;
+(** `TB`: top to bottom, the default direction. *)
+TB                    /TB(?!\w|-\w)/                      :keyword ;
+(** `BT`: bottom to top. *)
+BT                    /BT(?!\w|-\w)/                      :keyword ;
+(** `LR`: left to right. *)
+LR                    /LR(?!\w|-\w)/                      :keyword ;
+(** `RL`: right to left. *)
+RL                    /RL(?!\w|-\w)/                      :keyword ;
+(** `direction LR`: the direction of the layout, once, at the top level. *)
+DIRECTION             /direction(?!\w|-\w)/               :keyword ;
+(** `legend off`: shows or hides the legend. *)
+LEGEND                /legend(?!\w|-\w)/                  :keyword ;
+(** `style store shape:cylinder, fill:#1f2937`: how elements of a tag or a kind are drawn. *)
+STYLE                 /style(?!\w|-\w)/                   :keyword ;
+(** `title <text>`: the diagram title, the rest of the line up to a `%%` comment. *)
+TITLE                 /title(?!\w|-\w)[^\n\r]*?(?=%%|[\r\n]|$)/ :keyword ;
+(** `accTitle: <text>`: the accessible title, the rest of the line up to a `%%` comment. *)
+ACC_TITLE             /accTitle(?!\w|-\w)[\t ]*:[^\n\r]*?(?=%%|[\r\n]|$)/ :keyword ;
+(** `accDescr: <text>` (the rest of the line) or `accDescr { … }` (over lines, to `}`): the
+accessible description. *)
+ACC_DESCR             /accDescr(?!\w|-\w)[\t ]*:[^\n\r]*?(?=%%|[\r\n]|$)/ :keyword ;
+ACC_DESCR             /accDescr(?!\w|-\w)\s*\{[\s\S]*?\}/ :keyword ;
+(** `-->`: a relation from the first element to the second. *)
+ARROW_RIGHT           /-->/                               :operator ;
+(** `<--`: a relation read right to left: the second element is its source. *)
+ARROW_LEFT            /<--(?!>)/                          :operator ;
+(** `<-->`: a relation that points both ways. *)
+ARROW_BOTH            /<-->/                              :operator ;
+(** `:::team`: a tag on an element or a relation. *)
+TAG                   /:::[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*/ :variable ;
+COLON                 /:/                                 :punctuation ;
+COMMA                 /,/                                 :punctuation ;
+LBRACE                /\{/                                :punctuation ;
+RBRACE                /\}/                                :punctuation ;
+(** `2:`: the step of a relation in a dynamic diagram: digits and a colon, at the start of a
+line. The colon is a token of its own. *)
+STEP                  /(?<=(?:^|[\n\r])[\t ]*)[0-9]+(?=[\t ]*:)/ :constant ;
+(** `#1f2937`: a colour of a style, three or six hex digits. *)
+HEX                   /#(?:[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})(?!\w)/ :constant ;
+(** `"Ledger"` or `'Ledger'`: text. `\` escapes the next character. A string ends on its line. *)
+STRING                /"(?:[^"\\\r\n]|\\.)*"|'(?:[^'\\\r\n]|\\.)*'/ :string ;
+(** An id: words of letters, digits and `_` joined by single `-`. The reserved words `title`,
+`accTitle`, `accDescr`, `direction`, `legend` and `style` are not ids. *)
+ID                    /(?!(?:accTitle|accDescr)(?!\w|-\w))[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*/ :variable ;
+NEWLINE               /\r\n|\n|\r/ ;
+-                     /[\t ]+/ ;
+(** `%%` to the end of the line: a comment. *)
+COMMENT               /%%[^\n\r]*/                        :comment ;
+(** The end of the text. *)
+EOF                   /$/ ;
+
+@trivia
+
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE             /[^\S\n]*%%\{[\s\S]*?\}%%/          :meta ;
+
+@grammar
+
+(** A diagram is `c4-beta`, an optional kind, then statements, one per line. *)
+c4beta = { NEWLINE } Header { NEWLINE [ statement ] } EOF ;
+(** `c4-beta container`: the header and the kind, `context` when it is left out. *)
+Header @Header = HEADER [ kind ] ;
+kind = CONTEXT | CONTAINER | COMPONENT | DYNAMIC | DEPLOYMENT ;
+
+statement = Title | AccTitle | AccDescr | Direction | Legend | Style | Element | Relation ;
+
+(** `title Payments`: the title drawn above the diagram (the last one wins). *)
+Title @Title = TITLE ;
+(** `accTitle: Payments view`: the accessible title. *)
+AccTitle @AccTitle = ACC_TITLE ;
+(** `accDescr: …` or `accDescr { … }`: the accessible description. *)
+AccDescr @AccDescr = ACC_DESCR ;
+(** `direction LR`: the layout direction, at the top level only. *)
+Direction @Direction = DIRECTION ( TB | BT | LR | RL ) ;
+(** `legend off`: shows or hides the legend. *)
+Legend @Legend = LEGEND ( ON | OFF ) ;
+(** `style store shape:cylinder, fill:#1f2937`: the target is a tag or an element kind. *)
+Style @Style = STYLE id entry { COMMA entry } ;
+entry = id COLON ( HEX | id ) ;
+
+(** `container api "API" "Serves orders." "Kotlin" :::team`: an element with a name, a
+description and a technology, `instances` for a deployment node, tags, and a body of elements
+in braces. *)
+Element @Element = elemKind id STRING [ STRING [ STRING ] ] [ INSTANCES STRING ] { TAG } [ body ] ;
+elemKind = PERSON | SOFTWARE_SYSTEM | CONTAINER | COMPONENT | GROUP | DEPLOYMENT_NODE
+         | INFRASTRUCTURE_NODE ;
+body = LBRACE ( RBRACE | NEWLINE { NEWLINE | Element NEWLINE } RBRACE ) ;
+
+(** `2: api --> db : "Reads" "SQL" :::async`: a relation, its step (dynamic diagrams), its
+description and technology, and tags. *)
+Relation @Relation = [ STEP COLON ] id arrow id [ COLON STRING [ STRING ] ] { TAG } ;
+arrow = ARROW_RIGHT | ARROW_LEFT | ARROW_BOTH ;
+
+(** Any word but the six reserved ones. *)
+id = ID | HEADER | CONTEXT | CONTAINER | COMPONENT | DYNAMIC | DEPLOYMENT | PERSON
+   | SOFTWARE_SYSTEM | GROUP | DEPLOYMENT_NODE | INFRASTRUCTURE_NODE | INSTANCES | ON | OFF
+   | TB | BT | LR | RL ;

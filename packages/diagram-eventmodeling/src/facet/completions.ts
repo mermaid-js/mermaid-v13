@@ -17,10 +17,11 @@ import type {
   Range,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
+import { span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
 import { eventmodelingDocs } from '../generated/docs.ts';
 import type { EventModelDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { frameNodes, ITEMS, KIND_KINDS, kindsBefore, span, tokenBefore } from './tables.ts';
+import { frameNodes, ITEMS, KIND_KINDS, kindsBefore } from './tables.ts';
 
 /** The probed word's range: the prefix, plus the rest of the word token the cursor is in. */
 function wordRange(tokens: TokenStream | undefined, probe: ProbeResult): Range {

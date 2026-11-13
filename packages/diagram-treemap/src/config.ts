@@ -13,6 +13,7 @@
  */
 import type { Warning } from '@mermaid-js/core';
 import type { TreemapDiagramConfig } from '@mermaid-js/core/config';
+import { rawConfigNumber as configNumber, useMaxWidth } from '@mermaid-js/core/config/readers';
 import { TREEMAP_DEFAULTS, treemapValueOptions } from './options.ts';
 
 export const TREEMAP_CONFIG_INVALID = 'TREEMAP_CONFIG_INVALID';
@@ -31,13 +32,6 @@ type LengthKey = 'nodeWidth' | 'nodeHeight' | 'padding' | 'diagramPadding';
 
 /** The length keys: each a number of 0 or more (`minimum: 0` in the schema). */
 const LENGTHS: readonly LengthKey[] = ['nodeWidth', 'nodeHeight', 'padding', 'diagramPadding'];
-
-/** A number, or a string that reads as one; else NaN. */
-function configNumber(value: unknown): number {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string' && value.trim() !== '') return Number(value);
-  return Number.NaN;
-}
 
 const shown = (value: unknown): string =>
   typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
@@ -73,6 +67,5 @@ export function treemapLayoutConfig(
 export function treemapUseMaxWidth(
   section: Readonly<Pick<TreemapDiagramConfig, 'useMaxWidth'>> | undefined
 ): boolean {
-  const value: unknown = section?.useMaxWidth;
-  return value === undefined || Boolean(value);
+  return useMaxWidth(section?.useMaxWidth, 'truthy');
 }

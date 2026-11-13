@@ -3,19 +3,10 @@
  * and the token at one.
  */
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import { span } from '@mermaid-js/core/parser-kit/facet';
 
 /** A line break as the lexer reads one (`\s` takes the line separators). */
 export const LINE_BREAK = /[\n\r\u2028\u2029]/;
-
-/** Markdown inline code holding `text` as written, whatever backticks it has. */
-export function code(text: string): string {
-  const runs = text.match(/`+/g) ?? [];
-  const fence = '`'.repeat(Math.max(0, ...runs.map((r) => r.length)) + 1);
-  const pad = text.startsWith('`') || text.endsWith('`') || text === '' ? ' ' : '';
-  return `${fence}${pad}${text}${pad}${fence}`;
-}
-
-export const span = (start: number, end: number): Range => ({ start, end });
 
 /** `1 block`, `2 blocks`. */
 export const plural = (n: number, one: string, many = `${one}s`): string =>

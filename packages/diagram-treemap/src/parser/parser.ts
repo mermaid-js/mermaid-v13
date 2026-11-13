@@ -39,6 +39,7 @@ import {
   Probe,
   SEMI,
   sourceView,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
@@ -184,13 +185,6 @@ function excerpt(text: string): string {
   const line = text.split('\n', 1)[0] ?? '';
   return line.length > EXCERPT || line !== text ? `${line.slice(0, EXCERPT)}…` : line;
 }
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 /** Parse a treemap. Never throws: problems are error diagnostics. */
 export function parseTreemap(src: string, options: TreemapParseOptions = {}): TreemapParseResult {

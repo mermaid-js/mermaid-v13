@@ -184,13 +184,6 @@ export const STATEMENT_HINTS: Readonly<Record<number, string>> = {
     'write it as `click Class call fn()` or `click Class href "url"`, e.g. `click Shape href "https://example.com"`',
 };
 
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-export class Stop extends Error {}
-export const STOP = new Stop();
-
 /** One open namespace body. */
 export interface Frame {
   /** Qualified id. */

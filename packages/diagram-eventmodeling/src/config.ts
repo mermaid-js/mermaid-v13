@@ -13,6 +13,7 @@
  */
 import type { Warning } from '@mermaid-js/core';
 import type { EventModelingDiagramConfig } from '@mermaid-js/core/config';
+import { rawConfigNumber, useMaxWidth } from '@mermaid-js/core/config/readers';
 import { EVENTMODELING_CONFIG_INVALID } from './codes.ts';
 import { eventmodelingConfigDefaults } from './generated/config-defaults.ts';
 import { PADDING_HEADROOM } from './layout/metrics.ts';
@@ -31,9 +32,7 @@ export function eventModelingConfig(
   // Typed as a number, but a directive can write anything.
   const given: unknown = section?.padding;
   if (given === undefined) return { padding: fallback };
-  let n = Number.NaN;
-  if (typeof given === 'number') n = given;
-  else if (typeof given === 'string' && given.trim() !== '') n = Number(given);
+  const n = rawConfigNumber(given);
   if (n >= 0 && Number.isFinite(n * PADDING_HEADROOM)) return { padding: n };
   warn({
     code: EVENTMODELING_CONFIG_INVALID,
@@ -52,12 +51,11 @@ export function eventModelingUseMaxWidth(
   section: Readonly<Pick<EventModelingDiagramConfig, 'useMaxWidth'>> | undefined,
   warn: (w: Warning) => void
 ): boolean {
-  const given: unknown = section?.useMaxWidth;
-  if (given === undefined || typeof given === 'boolean') return given ?? true;
-  warn({
-    code: EVENTMODELING_CONFIG_INVALID,
-    message: `Ignored eventmodeling.useMaxWidth: ${JSON.stringify(given)} is not true or false; using true`,
-    path: 'eventmodeling.useMaxWidth',
-  });
-  return true;
+  return useMaxWidth(section?.useMaxWidth, 'boolean', true, (given) =>
+    warn({
+      code: EVENTMODELING_CONFIG_INVALID,
+      message: `Ignored eventmodeling.useMaxWidth: ${JSON.stringify(given)} is not true or false; using true`,
+      path: 'eventmodeling.useMaxWidth',
+    })
+  );
 }

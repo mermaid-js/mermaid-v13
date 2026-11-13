@@ -29,6 +29,7 @@ T0 core contract (only if the type needs new core primitives)
 ```
 
 - T0 lands before any other ticket of any type that depends on it. It is the only place a port edits shared core.
+- A helper found copied in three diagram packages is promoted to core by a T0 ticket of its own, at a core subpath outside the core bundle (D557).
 - Different types run in parallel. Within a type, T3 may start on hand-built fixtures while T2 runs.
 
 ## Steps

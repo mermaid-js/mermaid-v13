@@ -30,6 +30,7 @@ import {
   REL_STYLE,
 } from './slots.ts';
 import type { SlotTable } from './slots.ts';
+import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 /**
  * Where an alias a named argument gives belongs: an element's or a boundary's own, or a
@@ -87,11 +88,7 @@ interface Setting {
 const toInt = (text: string): number => parseInt(text);
 
 /** `%`, `>`, `@` and `#` percent-encoded. */
-function esc(name: string): string {
-  return /[%>@#]/.test(name)
-    ? name.replace(/[%>@#]/g, (ch) => `%${ch.charCodeAt(0).toString(16).toUpperCase()}`)
-    : name;
-}
+const esc = /* @__PURE__ */ idEscaper();
 
 /** D458's AST ids. */
 class Ids {

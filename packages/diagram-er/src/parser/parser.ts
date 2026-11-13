@@ -22,6 +22,7 @@ import {
   syncTo,
   TokenCursor,
   TRIVIA,
+  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type { ParseOptions, ParseResult, Range, StatementSpan } from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
@@ -173,13 +174,6 @@ const NAME = ['a name'];
 const KEY_COMMA = ['`,` between keys, e.g. `PK, FK`'];
 const LABEL = ['a label such as `places` or `"places order"`'];
 const STYLE_NAMES = ['a style such as `fill:#f9f`'];
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
 
 interface Frame {
   node: ErSubgraphNode;

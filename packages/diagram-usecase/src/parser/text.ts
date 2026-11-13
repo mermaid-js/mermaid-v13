@@ -6,6 +6,7 @@
  * conflicts compare it) and the model shows it with {@link shown}.
  */
 import { entityAt } from '@mermaid-js/core/text';
+import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 const OPEN = 'ﬂ°';
 /** `°`: a second one marks a numeric code (`ﬂ°°123¶ß`). */
@@ -43,8 +44,4 @@ export function generatedId(label: string): string {
 }
 
 /** `%`, `>`, `@` and `#` in a name, percent-encoded (core's AST id rule). */
-export function esc(name: string): string {
-  return /[%>@#]/.test(name)
-    ? name.replace(/[%>@#]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
-    : name;
-}
+export const esc = /* @__PURE__ */ idEscaper();

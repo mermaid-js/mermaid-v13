@@ -17,7 +17,8 @@ import { sankeyDocs } from '../generated/docs.ts';
 import type { SankeyDocument } from '../parser/ast.ts';
 import { SankeyKind as T } from '../parser/tokens.ts';
 import { fieldText, isFieldBlank, withFieldBlanks } from './names.ts';
-import { fieldAt, sourceName, span, tokenBefore } from './tables.ts';
+import { fieldAt, sourceName } from './tables.ts';
+import { span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
 
 /**
  * The probed word's range: the prefix, plus the rest of the field's text after the cursor on
