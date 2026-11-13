@@ -81,6 +81,9 @@ interface PortEdge {
   inner: number;
   out: boolean;
   side: Side;
+  // 1 for the top port of an edge between this level's group and its own member (#415): its end
+  // sits below the title, as a labelled one's may (#198), with a band there for its run; else 0.
+  below: number;
   // Cross-flow position outside the group from a previous layout; NaN if unknown.
   hint: number;
   px: number;
@@ -102,6 +105,9 @@ interface Level {
   ports: PortEdge[];
   portOf: Map<number, PortEdge>;
   routes: Map<number, number[]>;
+  // Edges between the level's group and its own member (#405, #415): laid out only through
+  // their ports, the one in this level in place of a route across it.
+  own: LevelEdge[];
   x: number;
   y: number;
 }
@@ -477,16 +483,15 @@ function endpointBelow(item: number, e: CEdge, out: boolean): boolean {
   return (out ? e.src : e.dst) !== item;
 }
 
-// An edge between a group and one of its own members (#198).
+// An edge between a group and one of its own members that runs down from the group's top into
+// the member's top (#198): on the grid every one, in px the labelled ones (an unlabelled one is
+// laid out through a port on the group's border, #415).
 interface OwnEdge {
   ei: number;
   group: number;
   member: number;
   // Whether the group is the edge's source.
   fromGroup: boolean;
-  // Whether it runs down from the group's top into the member's top: on the grid every one, in
-  // px the labelled ones (an unlabelled one keeps its straight line).
-  fromTop: boolean;
   // In px, the line's across-flow offset from its member's middle: a member's lines spread.
   offset: number;
 }
@@ -505,16 +510,9 @@ function ownEdgesOf(
     const e = edges[ei]!;
     const fromGroup = depth[e.src]! < depth[e.dst]!;
     const [group, member] = fromGroup ? [e.src, e.dst] : [e.dst, e.src];
-    const own: OwnEdge = {
-      ei,
-      group,
-      member,
-      fromGroup,
-      fromTop: grid > 0 || e.labelW > 0,
-      offset: 0,
-    };
+    const own: OwnEdge = { ei, group, member, fromGroup, offset: 0 };
     out.push(own);
-    if (!grid && own.fromTop) {
+    if (!grid) {
       let lines = byMember.get(member);
       if (!lines) byMember.set(member, (lines = []));
       lines.push(own);
@@ -553,8 +551,7 @@ function ownBandHeight(
 // the grid).
 function rightmostOwnLine({ nodes, level, lnodes, boxX, grid }: BandLevel, own: OwnEdge[]): number {
   let rightmost = -Infinity;
-  for (const { member: m, fromTop, offset } of own) {
-    if (!fromTop) continue;
+  for (const { member: m, offset } of own) {
     // The member's middle in the box: through the item of this level that holds it.
     let d = m;
     let x = 0;
@@ -609,6 +606,32 @@ function widenedForOwnLabels(
   let w = boxW;
   while (floorTo((w - contentW) / 2, grid) + right > w - inset + 1e-9) w += 2 * grid;
   return w;
+}
+
+// Appends `part`, offset by (`ox`, `oy`), to `route`, without repeating the point it ends at.
+function appendRoute(route: number[], part: number[], ox: number, oy: number): void {
+  for (let i = 0; i < part.length; i += 3) {
+    const x = part[i]! + ox;
+    const y = part[i + 1]! + oy;
+    const len = route.length;
+    if (len >= 3 && Math.abs(route[len - 3]! - x) < 0.01 && Math.abs(route[len - 2]! - y) < 0.01)
+      continue;
+    route.push(x, y, part[i + 2]!);
+  }
+}
+
+// A port in `level` where edge `e` crosses the border of `inner`, leaving it (`out`) or entering,
+// on its way between `a` and `b`. A crossing edge's side is set once the parents are ranked. An
+// edge between a group and its own member (`a` = `b`, the group; #405, #415) has a port in every
+// level from the group down to the member, so it is laid out inside the group like an edge that
+// crosses it: in through the side the levels start at, or out through the side they end at.
+function addPort(level: Level, e: number, inner: number, out: boolean, a: number, b: number): void {
+  let side: Side = Side.Top;
+  if (a === b) side = out ? opposite(startSide(level.dir)) : startSide(level.dir);
+  const below = +(a === b && level.id === a && side === Side.Top);
+  const port: PortEdge = { e, inner, out, side, below, hint: NaN, px: 0, py: 0, route: [] };
+  level.ports.push(port);
+  level.portOf.set(e * 2 + (out ? 0 : 1), port);
 }
 
 export function shiftLayout(nodes: CNode[], edges: CEdge[], ox: number, oy: number): void {
@@ -681,6 +704,7 @@ export function compoundLayout(
       dir,
       items: [],
       edges: [],
+      own: [],
       ports: [],
       portOf: new Map(),
       routes: new Map(),
@@ -772,6 +796,7 @@ export function compoundLayout(
 
   const loops: number[] = [];
   const stray: number[] = [];
+  // Unlabelled edges between a group and its own member, in px (#405, #415).
   for (let ei = 0; ei < edges.length; ei++) {
     const e = edges[ei]!;
     e.route = [];
@@ -792,42 +817,32 @@ export function compoundLayout(
       b = nodes[b]!.parent;
     }
     if (a === b) {
-      stray.push(ei);
-      continue;
+      if (grid || e.labelW > 0) {
+        stray.push(ei);
+        continue;
+      }
+      levelOf.get(a)!.own.push({ e: ei, a, b });
+    } else {
+      while (nodes[a]!.parent !== nodes[b]!.parent) {
+        aPath.push(a);
+        bPath.push(b);
+        a = nodes[a]!.parent;
+        b = nodes[b]!.parent;
+      }
+      levelOf.get(nodes[a]!.parent)!.edges.push({ e: ei, a, b });
     }
-    while (nodes[a]!.parent !== nodes[b]!.parent) {
-      aPath.push(a);
-      bPath.push(b);
-      a = nodes[a]!.parent;
-      b = nodes[b]!.parent;
-    }
-    levelOf.get(nodes[a]!.parent)!.edges.push({ e: ei, a, b });
     for (const [path, out] of [
       [aPath, true],
       [bPath, false],
     ] as const) {
-      for (const inner of path) {
-        const level = levelOf.get(nodes[inner]!.parent)!;
-        const port: PortEdge = {
-          e: ei,
-          inner,
-          out,
-          side: Side.Top,
-          hint: NaN,
-          px: 0,
-          py: 0,
-          route: [],
-        };
-        level.ports.push(port);
-        level.portOf.set(ei * 2 + (out ? 0 : 1), port);
-      }
+      for (const inner of path) addPort(levelOf.get(nodes[inner]!.parent)!, ei, inner, out, a, b);
     }
   }
 
   // Edges between a group and its own member (#198), by group. Each runs down from the group's
   // top into the member's top; their labels sit in a band of rows at the top of the group, below
   // its title and above its content, right of every such line, one label a row. On the grid every
-  // such edge runs so; in px the labelled ones do (an unlabelled one keeps its straight line).
+  // such edge runs so; in px the labelled ones do (an unlabelled one is in `Level.own`, #415).
   const ownEdges = ownEdgesOf(stray, edges, depth, grid, M.portPitch);
   const ownByGroup = new Map<number, OwnEdge[]>();
   for (const own of ownEdges) {
@@ -1101,6 +1116,7 @@ export function compoundLayout(
         const right = clearOf(lines + ownGapX, widest, crossing, ownGapX) + widest;
         boxW = widenedForOwnLabels(boxW, contentW, right, grid ? grid : padX, grid);
       }
+      bandH += opt.portSep * +level.ports.some((p) => p.below);
       const boxH = contentH + padTop + bandH + (group ? group.padBottom : 0);
       const offX = grid ? floorTo((boxW - contentW) / 2, grid) : (boxW - contentW) / 2;
       const offY = padTop + bandH;
@@ -1135,7 +1151,7 @@ export function compoundLayout(
           const at = port.out ? route.length - 3 : 0;
           let bx = route[at]!;
           let by = route[at + 1]!;
-          if (port.side === Side.Top) by = 0;
+          if (port.side === Side.Top) by = port.below * padTop;
           else if (port.side === Side.Bottom) by = boxH;
           else if (port.side === Side.Left) bx = 0;
           else bx = boxW;
@@ -1196,37 +1212,36 @@ export function compoundLayout(
       }
     }
 
-    const append = (route: number[], part: number[], ox: number, oy: number): void => {
-      for (let i = 0; i < part.length; i += 3) {
-        const x = part[i]! + ox;
-        const y = part[i + 1]! + oy;
-        const len = route.length;
-        if (
-          len >= 3 &&
-          Math.abs(route[len - 3]! - x) < 0.01 &&
-          Math.abs(route[len - 2]! - y) < 0.01
-        )
-          continue;
-        route.push(x, y, part[i + 2]!);
-      }
-    };
-
     for (const level of order) {
-      for (const le of level.edges) {
+      for (const le of [...level.edges, ...level.own]) {
         const e = edges[le.e]!;
         const route: number[] = [];
         const outward: Level[] = [];
-        for (let item = e.src; nodes[item]!.parent !== level.id; item = nodes[item]!.parent) {
+        for (
+          let item = e.src;
+          item !== level.id && nodes[item]!.parent !== level.id;
+          item = nodes[item]!.parent
+        ) {
           outward.push(levelOf.get(nodes[item]!.parent)!);
         }
-        for (const lv of outward) append(route, lv.portOf.get(le.e * 2)!.route, lv.x, lv.y);
-        append(route, level.routes.get(le.e)!, level.x, level.y);
+        for (const lv of outward) appendRoute(route, lv.portOf.get(le.e * 2)!.route, lv.x, lv.y);
+        const own = level.portOf.get(le.e * 2 + +(e.src === level.id));
+        appendRoute(route, level.routes.get(le.e) ?? own!.route, level.x, level.y);
         const inward: Level[] = [];
-        for (let item = e.dst; nodes[item]!.parent !== level.id; item = nodes[item]!.parent) {
+        for (
+          let item = e.dst;
+          item !== level.id && nodes[item]!.parent !== level.id;
+          item = nodes[item]!.parent
+        ) {
           inward.push(levelOf.get(nodes[item]!.parent)!);
         }
         for (let i = inward.length - 1; i >= 0; i--) {
-          append(route, inward[i]!.portOf.get(le.e * 2 + 1)!.route, inward[i]!.x, inward[i]!.y);
+          appendRoute(
+            route,
+            inward[i]!.portOf.get(le.e * 2 + 1)!.route,
+            inward[i]!.x,
+            inward[i]!.y
+          );
         }
         e.route = route;
         if (e.labelW > 0) {
@@ -1235,6 +1250,8 @@ export function compoundLayout(
         }
       }
     }
+    // An edge between a group and its own member runs only through its ports: from the group's
+    // border inwards, level by level (outermost first in `order`), or outwards to it (#415).
   };
   // The flat layout ignores group boxes, so independent ordering may yield fewer crossings.
   const style = styleOf(opt);
@@ -1301,14 +1318,8 @@ export function compoundLayout(
     }
   }
 
-  for (const { ei, group: g, member: m, fromGroup, fromTop, offset } of ownEdges) {
+  for (const { ei, group: g, member: m, fromGroup, offset } of ownEdges) {
     const e = edges[ei]!;
-    const a = nodes[e.src]!;
-    const b = nodes[e.dst]!;
-    e.route = [a.x, a.y, 0, b.x, b.y, 0];
-    e.labelX = (a.x + b.x) / 2;
-    e.labelY = (a.y + b.y) / 2;
-    if (!fromTop) continue;
     // Between a group and its own member, either way: down from the group's top to the member's
     // top. On the grid it starts on the group's top border row (half a cell inside it, so the
     // route stays in the drawing), in a cell of the member's side no other edge ends in (D140);
@@ -1335,8 +1346,7 @@ export function compoundLayout(
   for (const [g, own] of ownByGroup) {
     const group = nodes[g]!;
     let rightmostLine = -Infinity;
-    for (const o of own)
-      if (o.fromTop) rightmostLine = Math.max(rightmostLine, edges[o.ei]!.route[0]!);
+    for (const o of own) rightmostLine = Math.max(rightmostLine, edges[o.ei]!.route[0]!);
     let y = group.y - group.h / 2 + bandTop(group);
     for (const { ei } of own) {
       const e = edges[ei]!;

@@ -1,0 +1,13 @@
+---
+description: an edge from a middle subgraph to the outer one, three levels deep, is a visible arrow (#415)
+---
+flowchart TB
+  subgraph O
+    subgraph I
+      subgraph J
+        z
+      end
+    end
+  end
+  I --> O
+  J --> z

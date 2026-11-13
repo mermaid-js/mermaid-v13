@@ -487,7 +487,7 @@ This is a port of Pele's `layout/layered.ts` and `layout/compound.ts`, with attr
 - barycenter sweeps run both ways, keeping the order closest to the declaration;
 - Brandes-Köpf placement;
 - post-passes: spread, settle, snap, straighten, track assignment;
-- compound layout: each group is laid out in its own direction and placed as a box with border ports; a crossed group inherits its parent's direction, as in v12;
+- compound layout: each group is laid out in its own direction and placed as a box with border ports; a crossed group inherits its parent's direction, as in v12; an edge between a group and its own member is laid out inside the group through a port on the group's own border (labelled ones, and all on the grid, run down from the group's top as #198 placed them);
 - typed arrays and CSR adjacency throughout.
 
 What changes in the port:

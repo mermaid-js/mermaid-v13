@@ -8,10 +8,13 @@
  * are drawn (D253); a section never starts over the previous one's last row (GAPS #337: v12
  * subtracted `2 × rowGap` from the section's height, so the next section began 30 px above the
  * end of a full last row), it starts at least `rowGap` below what that row holds; the axis
- * starts below a title it would cross (GAPS #337).
+ * starts below a title it would cross (GAPS #337). A box whose label holds a word wider than
+ * its wrap width is that much wider (D558, #649): a period to the left, so it still ends
+ * `taskAxisGap` before the axis, an event and a section to the right; a section spans its
+ * periods and events. The axis and every other box stay where they were.
  */
 import type { TimelineModel } from '../model.ts';
-import { Bounds, groupsOf, line, slotOf, titleAt, titleBlock, type Env } from './env.ts';
+import { Bounds, groupsOf, line, overflow, slotOf, titleAt, titleBlock, type Env } from './env.ts';
 import { finish } from './finish.ts';
 import type {
   TimelineBox,
@@ -65,8 +68,10 @@ export function layoutTD(env: Env, model: TimelineModel): TimelineLayout {
     let rowsTop = y;
     let header: { x: number; y: number; width: number; height: number } | undefined;
     if (g.section !== undefined) {
-      const height = Math.max(env.boxHeight(sectionLabels[g.section]!, td.padding), sectionHeight);
-      header = { x: axisX - leftWidth, y, width: sectionWrap + pad2, height };
+      const label = sectionLabels[g.section]!;
+      const height = Math.max(env.boxHeight(label, td.padding), sectionHeight);
+      const width = sectionWrap + overflow(label, sectionWrap) + pad2;
+      header = { x: axisX - leftWidth, y, width, height };
       band.rect(header);
       rowsTop = y + height + td.sectionTaskGap;
     }
@@ -85,7 +90,7 @@ export function layoutTD(env: Env, model: TimelineModel): TimelineLayout {
           padding: td.padding,
           x: eventX,
           y: ey,
-          width: eventWidth,
+          width: eventWidth + overflow(label, td.eventWrap),
           height,
         };
         const cy = ey + height / 2;
@@ -99,6 +104,7 @@ export function layoutTD(env: Env, model: TimelineModel): TimelineLayout {
         ey += height + td.eventGap;
         return box;
       });
+      const width = periodWidth + overflow(periodLabels[i]!, td.periodWrap);
       const period: TimelinePeriodLayout = {
         ast: p.ast,
         period: i,
@@ -106,14 +112,21 @@ export function layoutTD(env: Env, model: TimelineModel): TimelineLayout {
         slot,
         label: periodLabels[i]!,
         padding: td.padding,
-        x: axisX - td.taskAxisGap - periodWidth,
+        x: axisX - td.taskAxisGap - width,
         y: rowTop,
-        width: periodWidth,
+        width,
         height: taskHeight,
         events,
       };
       band.rect(period);
       periods[i] = period;
+      if (header) {
+        // The section spans a period or an event widened past it (D558).
+        const x1 = Math.min(header.x, period.x);
+        let x2 = header.x + header.width;
+        for (const e of events) x2 = Math.max(x2, e.x + e.width);
+        header = { ...header, x: x1, width: x2 - x1 };
+      }
     });
     const n = g.periods.length;
     // v12's advance, then no higher than `rowGap` below what the group holds.

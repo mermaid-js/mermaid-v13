@@ -64,4 +64,32 @@ describe('layered: groups', () => {
     expect(points[0]!.y).toBeLessThan(outer.y - outer.height / 2);
     expect(m.edges.get('a-b')!.ports).toEqual({ source: 'bottom', target: 'top' });
   });
+
+  // #405, #415: an unlabelled edge between a group and its own member is laid out inside the
+  // group, from its border (on top, below its title), not drawn between the two middles.
+  it.each([
+    ['into the member, from the top', 'g', 'b'],
+    ['out of the member, to the bottom border', 'b', 'g'],
+  ])('routes an edge %s', (_, source, target) => {
+    const g: LayoutGraph = {
+      direction: 'TB',
+      nodes: [box('b', 'g'), box('c', 'g')],
+      edges: [link('b', 'c'), link(source, target)],
+      groups: [{ id: 'g', padding: pad, title: { width: 20, height: 16 } }],
+      spacing: { node: 50, rank: 50, edge: 20 },
+    };
+    const m = layered(g);
+    expect(validateLayout(g, m)).toEqual([]);
+    const group = m.groups.get('g')!;
+    const b = m.nodes.get('b')!;
+    const points = m.edges.get(`${source}-${target}`)!.points;
+    const [border, member] =
+      source === 'g' ? [points[0]!, points.at(-1)!] : [points.at(-1)!, points[0]!];
+    expect(member.y).toBeCloseTo(source === 'g' ? b.y - b.height / 2 : b.y + b.height / 2);
+    // From below the title band (top padding and title), or to the bottom border round c,
+    // which b → c puts below b.
+    const top = group.y - group.height / 2;
+    expect(border.y).toBeCloseTo(source === 'g' ? top + pad.top + 16 : group.y + group.height / 2);
+    expect(Math.abs(border.y - member.y)).toBeGreaterThanOrEqual(20);
+  });
 });

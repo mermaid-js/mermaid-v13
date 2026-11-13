@@ -244,7 +244,9 @@ export const brTitle = timeline(
   { title: 'A title<br>on three<br/>lines' }
 );
 
-/** Not in the corpus: words longer than any box, which the label layout splits. */
+/**
+ * Not in the corpus: words longer than any box, which stay whole and widen their box (#649).
+ */
 export const longWords = timeline(
   [
     `Supercalifragilisticexpialidocious${'x'.repeat(40)}`,
@@ -252,6 +254,19 @@ export const longWords = timeline(
   ],
   { title: 'Long words' }
 );
+
+/**
+ * #649: a word wider than its box in an event, a period and a section, between columns with
+ * short words. Each stays whole; only its own box (LR: its column) grows.
+ */
+export const WHOLE_WORD = 'Supercalifragilisticexpialidociousness';
+export const wholeWords = timeline([
+  ['2001 ', 'One'],
+  ['2002 ', WHOLE_WORD],
+  [`${WHOLE_WORD} `, 'Three'],
+  WHOLE_WORD,
+  ['2004 ', 'Four'],
+]);
 
 /** `timeline` and nothing else. */
 export const empty = timeline([]);
@@ -272,5 +287,6 @@ export const FIXTURES: Readonly<Record<string, TimelineModel>> = {
   verticalFullRows,
   brTitle,
   longWords,
+  wholeWords,
   empty,
 };

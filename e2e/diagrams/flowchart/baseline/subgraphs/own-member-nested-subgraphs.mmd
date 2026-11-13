@@ -1,0 +1,16 @@
+---
+description: unlabelled edges between a subgraph and a subgraph nested in it, both ways, are visible arrows (#415)
+---
+flowchart TB
+  subgraph Outer
+    subgraph Inner
+      X
+    end
+  end
+  subgraph Back
+    subgraph Front
+      Y
+    end
+  end
+  Outer --> Inner
+  Front --> Back
