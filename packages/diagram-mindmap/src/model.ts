@@ -6,8 +6,9 @@
  *   and each node hangs under the chain of nodes still open above it);
  * - ids and labels as v12's grammar handed them to its DB, entities decoded and line breaks
  *   kept (`root(\n  The root\n)` has the label `"\n  The root\n"`). v12 passed them through
- *   `sanitizeText`; v13 writes text escaped instead, so nothing is removed here. Every label is
- *   markdown (v12 set `labelType: 'markdown'` for all), so `**x**` is bold without backticks;
+ *   `sanitizeText`; v13 writes text escaped instead, so nothing is removed here. v12 set
+ *   `labelType: 'markdown'` for all, so `**x**` is bold without backticks; a markdown string
+ *   is marked (`markdown`), since v13 reads bullets and inline code there only (D562);
  * - `level` is v12's: the raw indent width less the first node's (tabs count 1), not the tree
  *   depth. v12's `edge-depth-<d>` class comes from it; `depth` is the depth in the tree.
  *
@@ -45,6 +46,11 @@ export interface MindmapNode {
   readonly id: string;
   /** v12's `descr`: the text in the shape (the inside of a string), or the id when shapeless. */
   readonly label: string;
+  /**
+   * The label was written as a markdown string (`"`…`"`), whose backticks are not in `label`.
+   * v12 kept no trace of it; v13 reads bullets and inline code in such a label only (D562).
+   */
+  readonly markdown?: true;
   readonly shape: MindmapShape;
   /** v12's `level`: the indent width less the root's; 0 for the root. */
   readonly level: number;

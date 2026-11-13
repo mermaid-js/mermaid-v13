@@ -1,0 +1,36 @@
+// A label v12 drew through `createText` with Markdown on (`labelType: 'markdown'`), as core's
+// label layout reads it (D562). v12's Markdown reader read bold and italic, and handed a list
+// item and a code span back as written, with what they hold. Its HTML label then showed blank
+// lines between written lines and a break at the end as nothing.
+import type { LabelMarkup } from '@mermaid-js/core/text';
+
+const RE_AS_WRITTEN = /^\s*[-*+] |`[^`]+`/;
+const RE_BLANK_LINES = /\n\s*\n/g;
+const RE_BR = /^<br\s*\/?>$/i;
+const SPACE = 32;
+
+/** `text` without the blanks and `<br>`s at its end. */
+function withoutEndBreaks(text: string): string {
+  let end = text.length;
+  for (;;) {
+    while (end > 0 && text.charCodeAt(end - 1) <= SPACE) end--;
+    if (text[end - 1] !== '>') break;
+    const open = text.lastIndexOf('<', end - 1);
+    if (open < 0 || !RE_BR.test(text.slice(open, end))) break;
+    end = open;
+  }
+  return end === text.length ? text : text.slice(0, end);
+}
+
+/** The text to lay out: blank lines between written lines and breaks at the end dropped. */
+export const v12Text = (text: string): string =>
+  withoutEndBreaks(text.includes('\n') ? text.replace(RE_BLANK_LINES, '\n') : text);
+
+/**
+ * The `layoutLabel` options: `emphasis`, or `plain` for a label that starts with a list marker
+ * or holds a code span, so that it is drawn as written. A written `\n` is text in both.
+ */
+export const v12Options = (text: string): { markup: LabelMarkup; backslashBreak: false } => ({
+  markup: RE_AS_WRITTEN.test(text) ? 'plain' : 'emphasis',
+  backslashBreak: false,
+});
