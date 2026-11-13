@@ -5,8 +5,8 @@
  * are percent-encoded, so the `->` between the two names and the `@` before a count are the only
  * ones in an id, and two rows get the same id only when they link the same two names.
  */
-import { idEscaper } from '@mermaid-js/core/parser-kit';
 import type { AstId } from '@mermaid-js/core/parser-kit';
+import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 /** A name with `%`, `>`, `@` and `#` percent-encoded. */
 const escapeName = /* @__PURE__ */ idEscaper();

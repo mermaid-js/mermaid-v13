@@ -7,7 +7,7 @@
  * …), with v12's ordering and lookup rules, so the conformance suite can compare the two.
  */
 import type { AstId, Diagnostic, Range } from '@mermaid-js/core/parser-kit';
-import { ID_RESERVED, idEscaper } from '@mermaid-js/core/parser-kit';
+import { ID_RESERVED, idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 /** How many of an entity one end of a relationship allows. */
 export type ErCardinality = 'zeroOrOne' | 'zeroOrMore' | 'oneOrMore' | 'onlyOne' | 'mdParent';

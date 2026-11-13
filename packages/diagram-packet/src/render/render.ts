@@ -16,7 +16,6 @@ import { openSvgRoot } from '@mermaid-js/core/svg/document';
 import type { PacketLayout, PacketPieceLayout, PlacedLabel } from '../layout/index.ts';
 import type { PacketModel } from '../model.ts';
 import { paints, type Paints } from './paint.ts';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 /** What the renderer reads from the render context. */
 export type PacketRenderContext = Pick<RenderContext, 'config' | 'theme' | 'idPrefix' | 'version'>;
@@ -98,7 +97,6 @@ function openRoot(
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = useMaxWidth(config.packet?.useMaxWidth);
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.
@@ -106,7 +104,7 @@ function openRoot(
   openSvgRoot(w, ctx, {
     name: 'packet',
     viewBox: [x, y, width, height],
-    maxWidth,
+    maxWidth: config.packet?.useMaxWidth,
     title,
     desc,
     attrs: {

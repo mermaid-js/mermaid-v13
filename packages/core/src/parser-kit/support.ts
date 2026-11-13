@@ -1,14 +1,7 @@
 /**
- * Small pieces every hand-written diagram parser repeats: the statement-level stop sentinel and
- * the escaping of names inside AST ids.
+ * The escaping of names inside AST ids, which most hand-written diagram parsers repeat. A
+ * subpath of its own, so that only the diagrams that escape ids load it (DESIGN §2).
  */
-
-/**
- * Thrown inside a parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-export class Stop extends Error {}
-export const STOP: Stop = /* @__PURE__ */ new Stop();
 
 /** The characters every AST id escapes: the id grammar's own (`%`, `>`, `@`, `#`). */
 export const ID_RESERVED = '%>@#';

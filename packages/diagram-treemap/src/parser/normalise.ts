@@ -7,10 +7,10 @@
  * semantic errors; D402's one warning lists the values v12 read as `NaN` or not as written.
  */
 import type { AstId, Diagnostics } from '@mermaid-js/core/parser-kit';
-import { idEscaper } from '@mermaid-js/core/parser-kit';
 import type { TreemapClass, TreemapModel, TreemapNode } from '../model.ts';
 import type { TreemapClassDefNode, TreemapLeafNode, TreemapRowNode } from './ast.ts';
 import { isPlainNumber } from './convert.ts';
+import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 /** D402: a value v12 read as `NaN`, or not as written (`1_000`, `1,2,3`, `1.2.3`). */
 export const TREEMAP_INVALID_VALUE = 'TREEMAP_INVALID_VALUE';

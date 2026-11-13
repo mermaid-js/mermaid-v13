@@ -17,7 +17,6 @@ import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/
 import type { QuadrantModel } from '../model.ts';
 import type { QuadrantLayout, QuadrantTextAnchor } from '../layout/types.ts';
 import { paints, type Paints } from './paint.ts';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 /** What the renderer reads from the render context. */
 export type QuadrantRenderContext = Pick<
@@ -176,7 +175,6 @@ function openRoot({ w, ctx, model }: Scene, box: Box): void {
   const { theme, config } = ctx;
   const width = Math.max(1, box.maxX - box.minX);
   const height = Math.max(1, box.maxY - box.minY);
-  const maxWidth = useMaxWidth(config.quadrantChart?.useMaxWidth);
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
@@ -186,7 +184,7 @@ function openRoot({ w, ctx, model }: Scene, box: Box): void {
     name: 'quadrant',
     roleDescription: 'quadrantChart',
     viewBox: [box.minX, box.minY, width, height],
-    maxWidth,
+    maxWidth: config.quadrantChart?.useMaxWidth,
     title,
     desc,
     attrs: {

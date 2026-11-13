@@ -27,7 +27,6 @@ import { drawIcon, drawImage } from './assets.ts';
 import { arrowheads, marker, markerTrim, routePath, type Arrowheads } from './edges.ts';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
 import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 /** The flowchart's layout: the engine's LayoutModel, plus the measured views when they are fresh. */
 export interface FlowLayout extends LayoutModel {
@@ -300,13 +299,12 @@ function openRoot({ w, layout, ctx, paint }: Scene, model: FlowModel): void {
   const { config } = ctx;
   const width = Math.max(1, Math.ceil(layout.width));
   const height = Math.max(1, Math.ceil(layout.height));
-  const maxWidth = useMaxWidth(config.flowchart?.useMaxWidth);
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   openSvgRoot(w, ctx, {
     name: 'flowchart',
     viewBox: [0, 0, width, height],
-    maxWidth,
+    maxWidth: config.flowchart?.useMaxWidth,
     title,
     desc,
     attrs: {

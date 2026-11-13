@@ -18,7 +18,6 @@ import type {
 import { drawCentral, drawMessageLine, drawNumber, type MessagePaint } from './arrows.ts';
 import { paints, type Paints } from './paint.ts';
 import { drawSymbol } from './symbols.ts';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 /** What the renderer reads from the render context. */
 export type SequenceRenderContext = Pick<
@@ -92,7 +91,6 @@ function openRoot({ w, layout, ctx, model }: Scene): void {
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = useMaxWidth(config.sequence?.useMaxWidth);
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
@@ -101,7 +99,7 @@ function openRoot({ w, layout, ctx, model }: Scene): void {
   openSvgRoot(w, ctx, {
     name: 'sequence',
     viewBox: [x, y, width, height],
-    maxWidth,
+    maxWidth: config.sequence?.useMaxWidth,
     title,
     desc,
     attrs: {

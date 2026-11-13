@@ -29,7 +29,6 @@ import type {
 } from '../layout/types.ts';
 import type { GanttModel } from '../model.ts';
 import { paints, stateOf, type Paints } from './paint.ts';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 /** What the renderer reads from the render context. */
 export type GanttRenderContext = Pick<
@@ -74,9 +73,6 @@ function openRoot({ w, layout, ctx, model }: Scene): void {
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = useMaxWidth(
-    (config.gantt as { useMaxWidth?: unknown } | undefined)?.useMaxWidth
-  );
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
@@ -85,7 +81,7 @@ function openRoot({ w, layout, ctx, model }: Scene): void {
   openSvgRoot(w, ctx, {
     name: 'gantt',
     viewBox: [x, y, width, height],
-    maxWidth,
+    maxWidth: (config.gantt as { useMaxWidth?: unknown } | undefined)?.useMaxWidth,
     title,
     desc,
     attrs: {

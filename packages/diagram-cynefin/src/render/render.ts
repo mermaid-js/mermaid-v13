@@ -12,7 +12,6 @@ import type { RenderContext } from '@mermaid-js/core';
 import { translate } from '@mermaid-js/core/svg';
 import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
 import { openSvgRoot } from '@mermaid-js/core/svg/document';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 import type { CynefinBadge, CynefinFont, CynefinLayout, PlacedLabel } from '../layout/index.ts';
 import { FONTS } from '../layout/metrics.ts';
 import type { CynefinModel } from '../model.ts';
@@ -240,7 +239,7 @@ function openRoot(
       Math.max(1, Math.ceil(layout.viewBox.width)),
       Math.max(1, Math.ceil(layout.viewBox.height)),
     ],
-    maxWidth: useMaxWidth(ctx.config.cynefin?.useMaxWidth),
+    maxWidth: ctx.config.cynefin?.useMaxWidth,
     title: model.accTitle.trim(),
     desc: model.accDescr.trim(),
     // Read before the root style is written, so it declares its alias.

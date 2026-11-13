@@ -62,7 +62,7 @@ Later milestones add the `core/ascii` subpath and a `mermaid` CLI bin (M2, §6.3
 - `/theme`
 - `/config`
 - `/ascii` (M2): the text-grid kit (§6.3), never imported by an SVG render
-- `/svg/document`, `/parser-kit/facet` and `/config/readers`: helpers that every diagram package used to copy (the `<svg>` root and its title and description, facet ranges and Markdown code, the config number and `useMaxWidth` readers). Only diagram chunks import them, so they stay outside the core bundle (D557)
+- `/svg/document`, `/parser-kit/support`, `/parser-kit/facet` and `/config/readers`: helpers that every diagram package used to copy (the `<svg>` root and its title and description; AST id escaping; facet ranges and Markdown code; the config number and `useMaxWidth` readers). Only diagram chunks import them, so they stay outside the core bundle (D557)
 
 `mermaid` exports (M3.5, §12.4):
 

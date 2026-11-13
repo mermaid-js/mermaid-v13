@@ -2,11 +2,12 @@
  * The sequence parser's tables: token sets for its decisions and the probe, the human names
  * of what it expects (R-ERR-2, R-ERR-5) and the statement hints. Built once at module load.
  */
-import { ExpectedTable, Kind, kindSet, TRIVIA, idEscaper } from '@mermaid-js/core/parser-kit';
+import { ExpectedTable, Kind, kindSet, TRIVIA } from '@mermaid-js/core/parser-kit';
 import type { FragmentKind } from '../model.ts';
 import { ARROW_TOKENS } from './arrows.ts';
 import type { SequenceMenuStmt } from './ast.ts';
 import { T } from './tokens.ts';
+import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 /** jison's `NEWLINE`: a line break, `;`, the alias state's empty match, the end of the text. */
 export const LINE_END = [Kind.Newline, T.Semi, T.AliasEnd, T.Eof];

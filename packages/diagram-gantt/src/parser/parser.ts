@@ -31,7 +31,6 @@ import {
   significantTokens,
   skipTo,
   sourceView,
-  idEscaper,
   STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
@@ -65,6 +64,7 @@ import { checkNodes } from './limits.ts';
 import type { GanttParseOptions, GanttParseResult } from './options.ts';
 import { TaskIds } from './task-ids.ts';
 import { T } from './tokens.ts';
+import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 export type { GanttParseOptions, GanttParseResult } from './options.ts';
 

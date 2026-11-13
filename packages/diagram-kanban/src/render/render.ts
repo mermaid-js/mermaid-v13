@@ -16,7 +16,6 @@ import { userClasses } from './classes.ts';
 import { ticketUrl } from './links.ts';
 import { paints, PRIORITY_COLORS, type CardPaint, type Paints } from './paint.ts';
 import { priorityWarning } from './priority.ts';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 interface Scene {
   readonly w: SvgWriter;
@@ -63,13 +62,12 @@ function openRoot({ w, layout, ctx }: Scene): void {
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = useMaxWidth(config.kanban?.useMaxWidth);
   // Read before the root style and the auto sheet are written, so they declare its aliases.
   const font = fontAttrs(layout.font, theme);
   openSvgRoot(w, ctx, {
     name: 'kanban',
     viewBox: [x, y, width, height],
-    maxWidth,
+    maxWidth: config.kanban?.useMaxWidth,
     attrs: { ...font },
   });
 }

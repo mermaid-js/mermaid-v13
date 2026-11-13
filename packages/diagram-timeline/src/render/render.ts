@@ -18,7 +18,6 @@ import type {
 } from '../layout/types.ts';
 import type { TimelineModel } from '../model.ts';
 import { paints, PALETTE_SLOTS, type BoxPaint, type Paints } from './paint.ts';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 /** What the renderer reads from the render context. */
 export type TimelineRenderContext = Pick<
@@ -68,7 +67,7 @@ function openRoot({ w, layout, ctx, model }: Scene): void {
   openSvgRoot(w, ctx, {
     name: 'timeline',
     viewBox: [x, y, width, height],
-    maxWidth: useMaxWidth(config.timeline?.useMaxWidth),
+    maxWidth: config.timeline?.useMaxWidth,
     title: model.accTitle.trim(),
     desc: model.accDescr.trim(),
     attrs: { 'font-family': font, 'font-size': fontSize },

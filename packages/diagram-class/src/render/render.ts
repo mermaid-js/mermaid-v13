@@ -18,7 +18,6 @@ import {
 } from '@mermaid-js/core/svg';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import { openSvgRoot, textElement } from '@mermaid-js/core/svg/document';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 import type {
   ClassBoxView,
   ClassEdgeView,
@@ -208,7 +207,7 @@ function openRoot({ w, layout, ctx, paint }: Scene, model: ClassModel): void {
     name: 'class',
     roleDescription: 'classDiagram',
     viewBox: [0, 0, Math.max(1, Math.ceil(layout.width)), Math.max(1, Math.ceil(layout.height))],
-    maxWidth: useMaxWidth(ctx.config.class?.useMaxWidth),
+    maxWidth: ctx.config.class?.useMaxWidth,
     title: model.accTitle.trim(),
     desc: model.accDescr.trim(),
     attrs: { 'font-family': paint.font, 'font-size': paint.fontSize },

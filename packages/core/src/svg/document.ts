@@ -28,8 +28,11 @@ export interface RootOptions {
   readonly roleDescription?: string;
   /** `[x, y, width, height]`, already rounded. */
   readonly viewBox: readonly [number, number, number, number];
-  /** `useMaxWidth`: full width up to the drawing's, else the drawing's own size. */
-  readonly maxWidth: boolean;
+  /**
+   * The diagram's `useMaxWidth` as set: anything but `false` fills the width up to the
+   * drawing's, `false` keeps the drawing's own size.
+   */
+  readonly maxWidth: unknown;
   /** The accessible title and description, trimmed; an empty one is not written. */
   readonly title?: string | undefined;
   readonly desc?: string | undefined;
@@ -54,7 +57,8 @@ export function openSvgRoot(w: SvgWriter, ctx: RootContext, o: RootOptions): voi
   const prefix = (): string => ctx.idPrefix ?? 'mermaid';
   const width = o.viewBox[2];
   const auto = theme.autoDeclarations();
-  const { title, desc, maxWidth } = o;
+  const { title, desc } = o;
+  const maxWidth = o.maxWidth !== false;
   const space = o.name.indexOf(' ');
   w.open('svg', {
     xmlns: 'http://www.w3.org/2000/svg',

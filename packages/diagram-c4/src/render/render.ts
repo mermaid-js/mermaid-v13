@@ -20,7 +20,6 @@
  */
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { openSvgRoot } from '@mermaid-js/core/svg/document';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 import { c4Section } from '../config.ts';
 import { C4_METRICS as M } from '../layout/metrics.ts';
 import type { C4BoundaryLayout, C4ElementLayout, C4Layout } from '../layout/types.ts';
@@ -74,7 +73,7 @@ function openRoot({ w, ctx, model, layout }: Scene): void {
   openSvgRoot(w, ctx, {
     name: 'c4',
     viewBox: [0, 0, Math.max(1, Math.ceil(layout.width)), Math.max(1, Math.ceil(layout.height))],
-    maxWidth: useMaxWidth(c4Section(ctx.config).useMaxWidth),
+    maxWidth: c4Section(ctx.config).useMaxWidth,
     title: model.accTitle.trim(),
     desc: model.accDescr.trim(),
     // Read before the root style is written, so it declares its alias.

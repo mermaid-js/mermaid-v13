@@ -26,6 +26,11 @@
       "types": "./dist/parser-kit/index.d.ts",
       "default": "./dist/parser-kit/index.js"
     },
+    "./parser-kit/support": {
+      "mermaid-source": "./src/parser-kit/support.ts",
+      "types": "./dist/parser-kit/support.d.ts",
+      "default": "./dist/parser-kit/support.js"
+    },
     "./parser-kit/facet": {
       "mermaid-source": "./src/parser-kit/facet.ts",
       "types": "./dist/parser-kit/facet.d.ts",

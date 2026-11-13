@@ -26,7 +26,6 @@ import {
 import type { RequirementModel } from '../model.ts';
 import { drawMarker } from './markers.ts';
 import { routePath } from './route.ts';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 // The dash of every relation but `contains` (v12 `stroke-dasharray: 10,7`).
 const DASH = M.dash.join(',') as SafeValue;
@@ -202,13 +201,12 @@ function openRoot({ w, ctx, paint }: Scene, model: RequirementModel, frame: Fram
   const y = Math.floor(frame.y);
   const width = Math.max(1, Math.ceil(frame.x + frame.width) - x);
   const height = Math.max(1, Math.ceil(frame.y + frame.height) - y);
-  const maxWidth = useMaxWidth(config.requirement?.useMaxWidth);
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   openSvgRoot(w, ctx, {
     name: 'requirement requirementDiagram',
     viewBox: [x, y, width, height],
-    maxWidth,
+    maxWidth: config.requirement?.useMaxWidth,
     title,
     desc,
     attrs: {

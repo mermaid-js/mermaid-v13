@@ -14,7 +14,6 @@ import {
 } from '@mermaid-js/core/svg';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import { openSvgRoot } from '@mermaid-js/core/svg/document';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 import type { ErLayout } from '../layout/layout.ts';
 import type { ErRenderContext } from '../layout/context.ts';
 import type { EdgeView, EntityView, ErPrepared, GroupView } from '../layout/prepare.ts';
@@ -223,7 +222,7 @@ function openRoot({ w, layout, ctx, paint }: Scene, model: ErModel): void {
   openSvgRoot(w, ctx, {
     name: 'er erDiagram',
     viewBox: [0, 0, Math.max(1, Math.ceil(layout.width)), Math.max(1, Math.ceil(layout.height))],
-    maxWidth: useMaxWidth(ctx.config.er?.useMaxWidth),
+    maxWidth: ctx.config.er?.useMaxWidth,
     title: model.accTitle.trim(),
     desc: model.accDescr.trim(),
     attrs: { 'font-family': paint.font, 'font-size': paint.fontSize },

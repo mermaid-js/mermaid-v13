@@ -20,7 +20,6 @@
  */
 import { translate, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
 import { openSvgRoot } from '@mermaid-js/core/svg/document';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 import type { BlockLayout, BlockNodeLayout, PlacedLabel } from '../layout/types.ts';
 import { isComposite, type Block, type BlockModel } from '../model.ts';
 import { drawShape } from '../shapes/draw.ts';
@@ -79,7 +78,7 @@ function openRoot({ w, ctx, layout, paint }: Scene): void {
   openSvgRoot(w, ctx, {
     name: 'block',
     viewBox: [x, y, width, height],
-    maxWidth: useMaxWidth(config.block?.useMaxWidth),
+    maxWidth: config.block?.useMaxWidth,
     attrs: { 'font-family': paint.font, 'font-size': paint.fontSize },
   });
 }

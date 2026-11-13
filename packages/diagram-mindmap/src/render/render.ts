@@ -16,7 +16,6 @@ import type { MindmapRenderContext } from './context.ts';
 import { drawEdge } from './edges.ts';
 import { paints, type Paints } from './paint.ts';
 import { nodeOutline } from './shapes.ts';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 interface Scene {
   readonly w: SvgWriter;
@@ -56,13 +55,12 @@ function openRoot({ w, layout, ctx }: Scene): void {
   const { theme, config } = ctx;
   const width = Math.max(1, Math.ceil(layout.width));
   const height = Math.max(1, Math.ceil(layout.height));
-  const maxWidth = useMaxWidth(config.mindmap?.useMaxWidth);
   const font = theme.font();
   const fontSize = theme.length('fontSize');
   openSvgRoot(w, ctx, {
     name: 'mindmap',
     viewBox: [0, 0, width, height],
-    maxWidth,
+    maxWidth: config.mindmap?.useMaxWidth,
     attrs: {
       'font-family': font,
       'font-size': fontSize,

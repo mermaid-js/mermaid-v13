@@ -13,7 +13,6 @@ import { slicePath } from '../layout/index.ts';
 import type { PieLayout, PlacedLabel } from '../layout/index.ts';
 import type { PieModel } from '../model.ts';
 import { paints, type Paints } from './paint.ts';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 /** What the renderer reads from the render context. */
 export type PieRenderContext = Pick<
@@ -115,7 +114,6 @@ function openRoot(model: PieModel, layout: PieLayout, ctx: PieRenderContext, w: 
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = useMaxWidth(config.pie?.useMaxWidth);
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.
@@ -123,7 +121,7 @@ function openRoot(model: PieModel, layout: PieLayout, ctx: PieRenderContext, w: 
   openSvgRoot(w, ctx, {
     name: 'pie',
     viewBox: [x, y, width, height],
-    maxWidth,
+    maxWidth: config.pie?.useMaxWidth,
     title,
     desc,
     attrs: {

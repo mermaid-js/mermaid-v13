@@ -18,7 +18,6 @@ import {
   type SvgWriter,
 } from '@mermaid-js/core/svg';
 import { openSvgRoot, textElement } from '@mermaid-js/core/svg/document';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 import { layoutLabel, type MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   AgentflowEdgeView,
@@ -149,7 +148,7 @@ function openRoot({ w, layout, ctx, paint }: Scene, model: AgentflowModel, title
   openSvgRoot(w, ctx, {
     name: 'agentflow',
     viewBox: viewBox(layout, title),
-    maxWidth: useMaxWidth(ctx.config.agentflow?.useMaxWidth),
+    maxWidth: ctx.config.agentflow?.useMaxWidth,
     title: model.accTitle.trim(),
     desc: model.accDescr.trim(),
     attrs: { 'font-family': paint.node.font, 'font-size': paint.node.fontSize },

@@ -27,7 +27,6 @@ import type {
 } from '../layout/types.ts';
 import type { GitModel } from '../model.ts';
 import { paints, type Paints } from './paint.ts';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 /** What the renderer reads from the render context. */
 export type GitRenderContext = Pick<RenderContext, 'config' | 'theme' | 'idPrefix' | 'version'>;
@@ -79,7 +78,6 @@ function openRoot(model: GitModel, layout: GitLayout, ctx: GitRenderContext, w: 
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = useMaxWidth(config.gitGraph?.useMaxWidth);
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
@@ -88,7 +86,7 @@ function openRoot(model: GitModel, layout: GitLayout, ctx: GitRenderContext, w: 
   openSvgRoot(w, ctx, {
     name: 'gitGraph',
     viewBox: [x, y, width, height],
-    maxWidth,
+    maxWidth: config.gitGraph?.useMaxWidth,
     title,
     desc,
     attrs: {

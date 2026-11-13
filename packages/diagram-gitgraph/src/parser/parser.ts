@@ -35,9 +35,6 @@ import {
   significantTokens,
   skipTo,
   sourceView,
-  ID_CONTROL,
-  ID_RESERVED,
-  idEscaper,
   STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
@@ -64,6 +61,7 @@ import { GitBuilder, WRITTEN_TYPES } from './build.ts';
 import { accDescrValue, accTitleValue, stringValue, titleValue } from './convert.ts';
 import { lex } from './lexer.ts';
 import { GITGRAPH_TRIVIA, T } from './tokens.ts';
+import { ID_CONTROL, ID_RESERVED, idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 export interface GitGraphParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */

@@ -6,10 +6,10 @@
  * indents are fine. There are no semantic errors.
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
-import { idEscaper } from '@mermaid-js/core/parser-kit';
 import type { TreeViewModel, TreeViewNode } from '../model.ts';
 import type { TreeViewNodeNode } from './ast.ts';
 import { nodeIcon } from './convert.ts';
+import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 /** What the parser read, for {@link normalise}. */
 export interface TreeViewParts {

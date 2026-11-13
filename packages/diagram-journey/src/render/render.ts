@@ -18,7 +18,6 @@ import type {
   TaskLayout,
 } from '../layout/types.ts';
 import { FIXED_COLORS, paints, type Paints } from './paint.ts';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 /** What the renderer reads from the render context. */
 export type JourneyRenderContext = Pick<
@@ -71,7 +70,6 @@ function openRoot({ w, layout, ctx, model }: Scene): void {
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = useMaxWidth(config.journey?.useMaxWidth);
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
@@ -80,7 +78,7 @@ function openRoot({ w, layout, ctx, model }: Scene): void {
   openSvgRoot(w, ctx, {
     name: 'journey',
     viewBox: [x, y, width, height],
-    maxWidth,
+    maxWidth: config.journey?.useMaxWidth,
     title,
     desc,
     attrs: {

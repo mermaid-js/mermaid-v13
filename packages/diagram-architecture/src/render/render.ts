@@ -17,7 +17,6 @@
 import { translate, rotate, type SvgWriter } from '@mermaid-js/core/svg';
 import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
 import { openSvgRoot } from '@mermaid-js/core/svg/document';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 import { ARCHITECTURE_ARROW_SHRUNK, ARCHITECTURE_EDGE_NOT_DRAWN } from '../codes.ts';
 import type { ArchitectureLayout } from '../layout/layout.ts';
 import type { ArchitectureSizes } from '../layout/metrics.ts';
@@ -156,7 +155,7 @@ function openRoot({ w, model, ctx, bounds }: Scene): void {
   openSvgRoot(w, ctx, {
     name: 'architecture',
     viewBox: [bounds.x0, bounds.y0, width, height],
-    maxWidth: useMaxWidth(section.useMaxWidth),
+    maxWidth: section.useMaxWidth,
     title: model.accTitle.trim(),
     desc: model.accDescr.trim(),
     attrs: { 'font-family': theme.font(), 'font-size': theme.length('fontSize') },

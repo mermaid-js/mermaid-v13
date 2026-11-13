@@ -34,7 +34,6 @@ import { arrowTrim, arrowhead, drawArrowhead, routePath, type Arrowhead } from '
 import { drawFolded } from '@mermaid-js/core/svg/folded';
 import { drawFramed } from '@mermaid-js/core/svg/framed';
 import { drawDescribed, drawShape, type ShapePaint } from './shapes.ts';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 // v12 `.note-edge { stroke-dasharray: 5 }` and `.statediagram-state rect.divider
 // { stroke-dasharray: 10,10 }`: the same in every look, so constants (D152).
@@ -239,7 +238,7 @@ function openRoot({ w, layout, ctx, paint }: Scene, model: StateModel): void {
     name: 'state statediagram',
     roleDescription: 'stateDiagram',
     viewBox: [0, 0, width, height],
-    maxWidth: useMaxWidth(ctx.config.state?.useMaxWidth),
+    maxWidth: ctx.config.state?.useMaxWidth,
     title: model.accTitle.trim(),
     desc: model.accDescr.trim(),
     attrs: { 'font-family': paint.font, 'font-size': paint.fontSize },

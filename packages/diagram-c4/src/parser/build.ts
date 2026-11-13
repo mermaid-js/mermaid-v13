@@ -6,7 +6,6 @@
  * nodes; this module holds no grammar.
  */
 import type { AstId, ParseState, Range } from '@mermaid-js/core/parser-kit';
-import { idEscaper } from '@mermaid-js/core/parser-kit';
 import * as codes from '../codes.ts';
 import {
   C4_ELEMENT_KINDS,
@@ -31,6 +30,7 @@ import {
   REL_STYLE,
 } from './slots.ts';
 import type { SlotTable } from './slots.ts';
+import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 /**
  * Where an alias a named argument gives belongs: an element's or a boundary's own, or a

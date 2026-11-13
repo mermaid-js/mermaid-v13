@@ -35,7 +35,6 @@ import type {
 import type { VennModel } from '../model.ts';
 import type { VennRenderContext } from './context.ts';
 import { VENN_PAINT, vennPaints, type CirclePaint, type OverlapPaint } from './paint.ts';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 /** An area with an outline: one the solver placed on the chart. */
 type Outlined<A extends VennAreaLayout = VennAreaLayout> = A & { readonly path: RegionPath };
@@ -205,7 +204,7 @@ function openRoot(model: VennModel, { w, layout }: Scene, ctx: VennRenderContext
   openSvgRoot(w, ctx, {
     name: 'venn',
     viewBox: [x, y, width, height],
-    maxWidth: useMaxWidth((config.venn as { useMaxWidth?: unknown } | undefined)?.useMaxWidth),
+    maxWidth: (config.venn as { useMaxWidth?: unknown } | undefined)?.useMaxWidth,
     title: model.title?.trim(),
     attrs: { 'font-family': font },
   });

@@ -10,9 +10,9 @@
  * could not read) the builder reports an error instead.
  */
 import type { AstId, Diagnostic, Range } from '@mermaid-js/core/parser-kit';
-import { idEscaper } from '@mermaid-js/core/parser-kit';
 import { readMember } from './member.ts';
 import type { MemberParts } from './member.ts';
+import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 export type { Classifier, MemberParts, Visibility } from './member.ts';
 

@@ -42,9 +42,6 @@ import {
   significantTokens,
   skipTo,
   sourceView,
-  ID_CONTROL,
-  ID_RESERVED,
-  idEscaper,
   STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
@@ -75,6 +72,7 @@ import type {
 import { accDescrValue, accTitleValue, labelValue, titleValue } from './convert.ts';
 import { lex } from './lexer.ts';
 import { CYNEFIN_TRIVIA, T } from './tokens.ts';
+import { ID_CONTROL, ID_RESERVED, idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 export interface CynefinParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ID_CONTROL, ID_RESERVED, idEscaper, Stop, STOP } from './support.ts';
+import { ID_CONTROL, ID_RESERVED, idEscaper } from './support.ts';
+import { Stop, STOP } from './stop.ts';
 
 describe('STOP', () => {
   it('is one Stop instance', () => {
