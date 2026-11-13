@@ -7,6 +7,10 @@ export const jison = {
   c4: {
     probe: 'C4Context\nPerson(a, "A")',
     e2e: ['c4'],
+    lexErrors: {
+      'c4/pr-check/title-with-hash.mmd':
+        "#683: 12.2.0's `title` stopped at a `#`; v13 reads it as text (v12's fix mermaid-js/mermaid#8039)",
+    },
     harvest: {
       dir: `${V12_DIAGRAMS}/c4`,
       docs: 'c4.md',

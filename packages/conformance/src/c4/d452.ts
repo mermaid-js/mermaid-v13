@@ -1,12 +1,15 @@
 /**
- * D452's three lexing changes (#539), as the C4 gates exclude them: the lexer-parity gate
- * (`lexer-parity.spec.ts`), the gate-variant parity (`parity.spec.ts`) and the grammar specs
- * (`grammar/`). A source is excluded when the first token where v12's jison stream and v13's
- * differ is one of them:
+ * D452's three lexing changes (#539) and #683's one, as the C4 gates exclude them: the
+ * lexer-parity gate (`lexer-parity.spec.ts`), the gate-variant parity (`parity.spec.ts`) and the
+ * grammar specs (`grammar/`). A source is excluded when the first token where v12's jison stream
+ * and v13's differ is one of them:
  * - `unquoted`: v12's `STR` runs over a `)` or a line break, where v13's unquoted argument stops
  *   (`[^,)\n]+`), or a line break leaves the arguments (the parser reports the macro open);
  * - `comment`: v13 has a `NEWLINE` right after a `%%` comment, whose line breaks v12 ate;
- * - `title`: v12's `title` took a line break (and the next line), v13's is a lone `title`.
+ * - `title`: v12's `title` took a line break (and the next line), v13's is a lone `title`;
+ * - `hash` (#683, v12's fix mermaid-js/mermaid#8039): v13's `title` or `accDescription` runs
+ *   over a `#` (`[^\n;]+`), where 12.2.0's stopped (`[^#\n;]+`, and the rest of the line was a
+ *   lexical error) or, with the `#` first, did not match at all.
  */
 import { c4Tokens, JISON_NAMES } from '@mermaid-js/diagram-c4';
 import { decodeEntities } from '../flowchart/v12.ts';
@@ -34,8 +37,21 @@ export function v13Tokens(source: string): { tokens: JisonToken[]; ranges: [numb
   return { tokens, ranges };
 }
 
-/** D452's lexing changes, by the gate exclusion they are listed under. */
-export type Exclusion = 'unquoted' | 'comment' | 'title';
+/** D452's and #683's lexing changes, by the gate exclusion they are listed under. */
+export type Exclusion = 'unquoted' | 'comment' | 'title' | 'hash';
+
+/** The terminals whose text #683 lets run over a `#`. */
+const HASH_RUNS = new Set(['title', 'accDescription']);
+
+/**
+ * Whether v13's `b` is a `title` or `accDescription` that runs over a `#` where v12's `a`
+ * stopped at it, or where v12 matched none (a lexical error at the keyword).
+ */
+function runsOverHash(a: JisonToken | undefined, b: JisonToken | undefined): boolean {
+  if (!b || !HASH_RUNS.has(b[0])) return false;
+  if (a?.[0] === b[0]) return b[1].startsWith(a[1]) && b[1][a[1].length] === '#';
+  return a?.[0] === LEXICAL_ERROR && /^\S+\s#/.test(b[1]);
+}
 
 /**
  * The D452 exclusion that explains the first difference, at token `at`, between v12's stream
@@ -49,6 +65,7 @@ export function exclusion(
 ): Exclusion | undefined {
   const [a, b] = [v12[at], v13[at]];
   if (stopsUnquoted(a, b, v12[at - 1])) return 'unquoted';
+  if (runsOverHash(a, b)) return 'hash';
   if (b?.[0] === 'NEWLINE' && a?.[0] !== 'NEWLINE' && gap.includes('%%')) return 'comment';
   // v12's `title\s` took the line break (and the next line, or failed at a blank line).
   const loneTitle = b?.[0] === 'title' && b[1] === 'title';
@@ -74,7 +91,7 @@ function stopsUnquoted(
 }
 
 /**
- * The D452 exclusion that makes v12's and v13's token streams for `source` differ, or
+ * The D452 or #683 exclusion that makes v12's and v13's token streams for `source` differ, or
  * undefined when they agree (or v12 never lexed it as C4). Throws when they differ otherwise:
  * the lexer-parity gate fails on that source.
  */

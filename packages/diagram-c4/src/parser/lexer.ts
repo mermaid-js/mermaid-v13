@@ -13,7 +13,7 @@
  * case-sensitive and every keyword ends in `\b`; the four `.*direction\s+(TB|BT|RL|LR)[^\n]*`
  * rules come first, so a line holding `direction LR` anywhere after the token start is one
  * token (the last such `direction` on the line; a `.` stops at LF, U+2028 and U+2029, its
- * `\s+` does not); `title\s[^#\n;]+` takes a blank other than a line break;
+ * `\s+` does not); `title\s[^\n;]+` takes a blank other than a line break;
  * `\s*(\r?\n)+` (`NEWLINE`) takes the blanks before the last line break of a blank run; the
  * macro states have no blank rule, so `Person (a)` is an error at the blank; a quoted value has
  * no escapes; `$name` reads `[^=]*`.
@@ -22,7 +22,10 @@
  * is `[^,)\n]+` (v12's `[^,]+` ran over `)` and line breaks to the next comma), and a line break
  * in the arguments leaves them, the macro open; a `%%` comment leaves the line breaks after it
  * to `NEWLINE` (v12's ate them); a `title` right before a line break is a title with no text
- * (v12's `\s` took the line break, so the next line was the title). The rules that return no
+ * (v12's `\s` took the line break, so the next line was the title). #683 changes one more:
+ * `title` and `accDescription` run over a `#` (`[^\n;]+`, as v12's fix mermaid-js/mermaid#8039;
+ * 12.2.0's `[^#\n;]+` stopped there, and the rest of the line was a lexical error), also a listed
+ * exclusion of the gate. The rules that return no
  * token (`(`, `)`, `,`, the quotes, `$`, `="`, `accDescr {` and its `}`) are kinds of their
  * own with no jison name. At the end jison tries the current state's rules once more on the
  * empty text: `EOF` in INITIAL, `EOF_IN_STRUCT` right after a macro keyword (never reached:
@@ -44,7 +47,6 @@ import {
   DQUOTE,
   EQUALS,
   firstHole,
-  HASH,
   isSpace,
   isWord,
   Kind,
@@ -104,7 +106,7 @@ const DIRECTIONS: readonly (readonly [string, number])[] = [
 ];
 const DIRECTION = 'direction';
 
-/** `title\s[^#\n;]+` and `accDescription\s[^#\n;]+`, in order. */
+/** `title\s[^\n;]+` and `accDescription\s[^\n;]+`, in order (#683: v12's had `#` in the class). */
 const TITLES: readonly (readonly [string, number])[] = [
   ['title', T.Title],
   ['accDescription', T.AccDescription],
@@ -149,7 +151,7 @@ export function lex(src: string, from: number, view: SourceView, probe?: Probe):
  * The view's text as v12's lexer read it, of the same length: tag quotes v12 turned into `'`
  * are `'`, and the `#` and `;` of each `#name;` entity are {@link ENTITY} and
  * {@link ENTITY_END} (v12's placeholder holds neither, and `title` and `accDescription` stop
- * at both).
+ * at a `;`).
  */
 function rewritten(view: SourceView, offsets: SourceOffsets | undefined): string {
   const { text, mask } = view;
@@ -435,11 +437,11 @@ class C4Lexer {
     return this.text.startsWith(word, q);
   }
 
-  /** The end of `[^#\n;]+` from `q` (`q` when it matches nothing). */
+  /** The end of `[^\n;]+` from `q` (`q` when it matches nothing). */
   private titleText(q: number): number {
     let j = q;
     for (let c = this.text.charCodeAt(j); j < this.n; c = this.text.charCodeAt(++j)) {
-      if (c === HASH || c === LF || c === SEMI) break;
+      if (c === LF || c === SEMI) break;
     }
     return j;
   }
@@ -488,7 +490,7 @@ class C4Lexer {
       this.emit(DIRECTIONS[d]?.[1] ?? T.DirectionTB, p, this.directionEnd[d] ?? this.n);
       return;
     }
-    // `title\s[^#\n;]+` and `accDescription\s[^#\n;]+`.
+    // `title\s[^\n;]+` and `accDescription\s[^\n;]+`.
     if ((c === LOWER_T || c === LOWER_A) && this.title(p)) return;
     // `accTitle\s*:\s*`, `accDescr\s*:\s*`, `accDescr\s*\{\s*`.
     if (this.startsWith('acc', p) && this.accessibility(p)) return;

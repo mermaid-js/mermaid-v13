@@ -154,12 +154,12 @@ describe('xychart parser: model', () => {
     expect(model('xychart\nbar [1]').orientation).toBeUndefined();
   });
 
-  it('joins unquoted text without blanks and trims what v12 trimmed', () => {
+  it('joins unquoted words with one space (#683) and trims what v12 trimmed', () => {
     const m = model(
       'xychart\ntitle Sales 2024 & co\nx-axis Month name [jan feb, " mar "]\nline " n " [1 " p ", 2]\nbar b [3 "x"]'
     );
-    expect(m.title).toBe('Sales2024&co');
-    expect(m.xAxis).toMatchObject({ title: 'Monthname', categories: ['janfeb', 'mar'] });
+    expect(m.title).toBe('Sales 2024 & co');
+    expect(m.xAxis).toMatchObject({ title: 'Month name', categories: ['jan feb', 'mar'] });
     expect(m.plots.map((p) => [p.name, p.pointLabels])).toEqual([
       ['n', ['p', '']],
       ['b', undefined],
@@ -194,6 +194,71 @@ describe('xychart parser: model', () => {
       const pre = preprocess(src);
       expect(parseXyChart(src, { preprocessed: pre }).diagnostics).toEqual([]);
     }
+  });
+
+  /**
+   * #683 row 1, v12's fix mermaid-js/mermaid#8575: a blank between two words of unquoted text is
+   * one space (12.2.0 joined the words, `SalesReport`). The ends are trimmed, quoted text is
+   * kept as written, and a line break still ends the statement unless blanks come before it.
+   */
+  describe('unquoted text keeps the spaces between its words (#683)', () => {
+    const title = (body: string) => model(`xychart\n${body}\nbar [1]`).title;
+
+    it('in the title', () => {
+      expect(title('title Sales Report')).toBe('Sales Report');
+    });
+
+    it('in axis titles and categories', () => {
+      const m = model('xychart\nx-axis Big Months [jan feb, mar]\ny-axis Total Sales\nbar [3, 7]');
+      expect(m.xAxis).toMatchObject({
+        kind: 'band',
+        title: 'Big Months',
+        categories: ['jan feb', 'mar'],
+      });
+      expect(m.yAxis.title).toBe('Total Sales');
+    });
+
+    it('in plot names', () => {
+      const m = model('xychart\nline Net Profit [1, 2]\nbar Gross Sales [3]');
+      expect(m.plots.map((p) => p.name)).toEqual(['Net Profit', 'Gross Sales']);
+    });
+
+    it('keeps the punctuation and digits between the words', () => {
+      expect(title('title Q1 2024 - R&D + Ops = Total_Cost')).toBe(
+        'Q1 2024 - R&D + Ops = Total_Cost'
+      );
+    });
+
+    it('adds no space where the text had none', () => {
+      expect(title('title R&D-2024 plan')).toBe('R&D-2024 plan');
+    });
+
+    it('makes a run of blanks one space and trims the ends', () => {
+      expect(title('title Sales   \t  Report')).toBe('Sales Report');
+      expect(model('xychart\ny-axis   Total   Sales   \nbar [1]').yAxis.title).toBe('Total Sales');
+    });
+
+    it('reads a line break after a blank as one space', () => {
+      expect(title('title Sales \nReport')).toBe('Sales Report');
+    });
+
+    it('still ends the statement at a line break with no blank before it', () => {
+      const r = parseXyChart('xychart\ntitle Sales\nReport\nbar [1]');
+      expect(r.diagnostics.some((d) => d.severity === 'error')).toBe(true);
+    });
+
+    it('brings back no empty quoted string between two words', () => {
+      expect(title('title a "" b')).toBe('a b');
+    });
+
+    it('leaves quoted text as written', () => {
+      expect(title('title "Sales   Report"')).toBe('Sales   Report');
+    });
+
+    it('names the symbols with the spaces', () => {
+      const r = parseXyChart('xychart\nx-axis [jan feb, mar]\nbar Net Profit [1, 2]');
+      expect(r.symbols.map((s) => s.name)).toEqual(['jan feb', 'mar', 'Net Profit']);
+    });
   });
 
   it('rejects a chart without a plot with v12 message (R-PARSE-4)', () => {

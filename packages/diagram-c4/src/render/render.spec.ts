@@ -149,15 +149,19 @@ Container(f, "F", $tags="component")`;
     const [body] = elements(person, 'rect');
     const close = (got: number[], want: number[]): void =>
       got.forEach((v, i) => expect(v).toBeCloseTo(want[i]!, 1));
+    // The figure (#683): head radius 0.23 × the width (16 to 80), overlapping the body by 0.27
+    // of itself.
+    const radius = Math.min(80, Math.max(16, p.width * 0.23));
+    const neck = 2 * radius - 0.27 * radius;
     close([body!.x, body!.y, body!.width, body!.height, body!.rx].map(num), [
       p.x,
-      p.y + 26,
+      p.y + neck,
       p.width,
-      p.height - 26,
+      p.height - neck,
       12,
     ]);
     const [head] = elements(person, 'circle');
-    close([head!.cx, head!.cy, head!.r].map(num), [p.x + p.width / 2, p.y + 14, 13]);
+    close([head!.cx, head!.cy, head!.r].map(num), [p.x + p.width / 2, p.y + radius, radius]);
 
     const r = box('r');
     const [rounded] = elements(at('container'), 'rect');

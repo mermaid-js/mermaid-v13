@@ -46,5 +46,69 @@
     "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the rest of the text after it (or, with a word argument, up to that word's end), so later statements vanish; v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for quadrant and radar; GAPS #507, #508). The generated variants are left out of the parity corpus (`xychart/corpus.ts`).",
     "owner": "#508",
     "since": "2026-11-08"
+  },
+  {
+    "id": "xychart-cases/title-unquoted-joins",
+    "inputHash": "sha256:f5c5626140deb503",
+    "kind": "model",
+    "reason": "v12 12.2.0 joined the words of unquoted text without blanks (`title Sales Report` read `SalesReport`); v13 reads one space between them, as v12's fix mermaid-js/mermaid#8575 does (#683, MIGRATION.md). The generated variants and statement orders are left out of the parity corpus (`spacedWords`, `xychart/corpus.ts`).",
+    "owner": "#683",
+    "since": "2026-11-12"
+  },
+  {
+    "id": "xychart-cases/md-string-dead-rule-text",
+    "inputHash": "sha256:76072df18f177e10",
+    "kind": "model",
+    "reason": "v12 12.2.0 joined the words of unquoted text without blanks (`title Sales Report` read `SalesReport`); v13 reads one space between them, as v12's fix mermaid-js/mermaid#8575 does (#683, MIGRATION.md). The generated variants and statement orders are left out of the parity corpus (`spacedWords`, `xychart/corpus.ts`).",
+    "owner": "#683",
+    "since": "2026-11-12"
+  },
+  {
+    "id": "xychart-cases/number-in-plot-title",
+    "inputHash": "sha256:ad3876eb38a2d7d0",
+    "kind": "model",
+    "reason": "v12 12.2.0 joined the words of unquoted text without blanks (`title Sales Report` read `SalesReport`); v13 reads one space between them, as v12's fix mermaid-js/mermaid#8575 does (#683, MIGRATION.md). The generated variants and statement orders are left out of the parity corpus (`spacedWords`, `xychart/corpus.ts`).",
+    "owner": "#683",
+    "since": "2026-11-12"
+  },
+  {
+    "id": "xychart-cases/number-outside-states",
+    "inputHash": "sha256:32767cd8896277f1",
+    "kind": "model",
+    "reason": "v12 12.2.0 joined the words of unquoted text without blanks (`title Sales Report` read `SalesReport`); v13 reads one space between them, as v12's fix mermaid-js/mermaid#8575 does (#683, MIGRATION.md). The generated variants and statement orders are left out of the parity corpus (`spacedWords`, `xychart/corpus.ts`).",
+    "owner": "#683",
+    "since": "2026-11-12"
+  },
+  {
+    "id": "xychart-cases/line-separator-in-title",
+    "inputHash": "sha256:ab2a1f7dbfb28576",
+    "kind": "model",
+    "reason": "v12 12.2.0 joined the words of unquoted text without blanks (`title Sales Report` read `SalesReport`); v13 reads one space between them, as v12's fix mermaid-js/mermaid#8575 does (#683, MIGRATION.md). The generated variants and statement orders are left out of the parity corpus (`spacedWords`, `xychart/corpus.ts`).",
+    "owner": "#683",
+    "since": "2026-11-12"
+  },
+  {
+    "id": "xychart-cases/line-separator-in-band",
+    "inputHash": "sha256:284c677586e2f073",
+    "kind": "model",
+    "reason": "v12 12.2.0 joined the words of unquoted text without blanks (`title Sales Report` read `SalesReport`); v13 reads one space between them, as v12's fix mermaid-js/mermaid#8575 does (#683, MIGRATION.md). The generated variants and statement orders are left out of the parity corpus (`spacedWords`, `xychart/corpus.ts`).",
+    "owner": "#683",
+    "since": "2026-11-12"
+  },
+  {
+    "id": "xychart-cases/paragraph-separator-in-band",
+    "inputHash": "sha256:b3d341dae57c10e0",
+    "kind": "model",
+    "reason": "v12 12.2.0 joined the words of unquoted text without blanks (`title Sales Report` read `SalesReport`); v13 reads one space between them, as v12's fix mermaid-js/mermaid#8575 does (#683, MIGRATION.md). The generated variants and statement orders are left out of the parity corpus (`spacedWords`, `xychart/corpus.ts`).",
+    "owner": "#683",
+    "since": "2026-11-12"
+  },
+  {
+    "id": "e2e/diagrams/xychart/pr-check/unquoted-text-keeps-spaces.mmd",
+    "inputHash": "sha256:f36facc9ff5ba911",
+    "kind": "model",
+    "reason": "v12 12.2.0 joined the words of unquoted text without blanks (`title Sales Report` read `SalesReport`); v13 reads one space between them, as v12's fix mermaid-js/mermaid#8575 does (#683, MIGRATION.md). The fixture shows it in the title, an axis title, a category and a plot name.",
+    "owner": "#683",
+    "since": "2026-11-12"
   }
 ]

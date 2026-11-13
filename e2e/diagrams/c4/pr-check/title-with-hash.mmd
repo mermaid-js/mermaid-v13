@@ -1,0 +1,12 @@
+---
+description: >-
+  A `#` in the title and in `accDescription` is text (#683, v12's fix
+  mermaid-js/mermaid#8039): the title reads "Order #42 (issue #4864)". mermaid
+  12.2.0 stopped the title at the `#` and failed with a lexical error.
+---
+C4Context
+  title Order #42 (issue #4864)
+  accDescription Context diagram for order #42
+  Person(customer, "Customer", "Places order #42")
+  System(shop, "Web shop", "Takes the order")
+  Rel(customer, shop, "Orders from")

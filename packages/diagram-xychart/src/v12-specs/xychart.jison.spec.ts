@@ -6,6 +6,7 @@
 // cspell:disable
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db, parser } from './adapter.ts';
+// rewritten: { text: 'cat2asdf', type: 'text' } as { text: 'cat2 asdf', type: 'text' }, 12.2.0 joined unquoted words (`cat2asdf`); v13 keeps one space between them, as v12's fix mermaid-js/mermaid#8575 does (#683)
 
 const parserFnConstructor = (str: string) => {
   return () => {
@@ -217,7 +218,7 @@ describe('Testing xychart jison file', () => {
     expect(mockDB.setXAxisTitle).toHaveBeenCalledWith({ text: 'xAxisName', type: 'text' });
     expect(mockDB.setXAxisBand).toHaveBeenCalledWith([
       { text: 'cat1  with space', type: 'text' },
-      { text: 'cat2asdf', type: 'text' },
+      { text: 'cat2 asdf', type: 'text' },
       { text: 'cat3', type: 'text' },
     ]);
   });

@@ -8,6 +8,7 @@
 import { translate, type Attrs, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
 import type { OutlineRole } from '@mermaid-js/core/svg';
 import { SHAPE_GROUPS } from '../parser/shapes.ts';
+import { personFigure, personSize } from './person.ts';
 
 /** Padding added across (`x`) and down (`y`). */
 export interface PadXY {
@@ -747,15 +748,16 @@ const S: Record<string, ShapeDef> = {
         circle(w, 1.5, { ...line, fill: 'none' }, 'mark', -W / 2 + 8 + i * 7, -H / 2 + 6);
     },
   },
+  // A head over a body in c4model.com's proportions (#683, `person.ts`).
   person: {
-    size: (tw, th, p) => ({
-      w: Math.max(tw + 2 * p.node.x, 56),
-      h: th + 2 * p.node.y + 26,
-      dy: 13,
-    }),
+    size: (tw, th, p) => {
+      const w = Math.max(tw + 2 * p.node.x, 56);
+      return { w, ...personSize(w, th + 2 * p.node.y) };
+    },
     draw: (w, W, H, a) => {
-      rect(w, -W / 2, -H / 2 + 26, W, H - 26, a, 12);
-      circle(w, 13, a, 'node', undefined, -H / 2 + 14);
+      const { r, bodyTop } = personFigure(W, H);
+      rect(w, -W / 2, bodyTop, W, H / 2 - bodyTop, a, CORNER);
+      circle(w, r, a, 'node', undefined, -H / 2 + r);
     },
   },
   bang: {

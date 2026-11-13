@@ -12,8 +12,8 @@
 // 5. text: a boundary's label in its top border (`┌╌ Label ╌┐`), its `[type]` and description
 //    on the rows below; an element's name, `[Kind]` and description centred inside; the title;
 // 6. each relation's label and `[techn]`, a space either side, at or beside the middle of its
-//    line, wrapped narrower where it does not fit there when the layout's text may wrap (root
-//    `wrap` and `c4.wrap`), else kept on one line and cut (`placeLabel`).
+//    line, wrapped narrower where it does not fit there when the layout's text may wrap (the root
+//    `wrap` true, #683), else kept on one line and cut (`placeLabel`).
 //
 // A line wider than its room is cut with `…` (`...` in the ascii charset). Glyphs come from core
 // (`armOf`, `glyphFor`, `sideOf`, pitfall 21). The empty margin round the drawing is trimmed.
@@ -445,8 +445,8 @@ function clearance(
  * first, covering no label block (boxes, arrowheads, header text, labels), no frame and no other
  * line, only its own straight cells; else the same over other lines; else wrapped narrower (a
  * label wider than the gap between two shapes stays by its line), each width tried both ways,
- * its words whole first, then its longest cut. Wrapped only with `pen.wrap` (root `wrap` and
- * `c4.wrap`, the spec's rule); without it each line stays one line, cut narrower instead. Each
+ * its words whole first, then its longest cut. Wrapped only with `pen.wrap` (the root `wrap`
+ * true, #683); without it each line stays one line, cut narrower instead. Each
  * place tried is charged to the drawing's budget; once spent, a label sits over the middle. With no such place it is `crowded`: the same
  * places over frames too, else over the middle cell, whatever is there.
  */
@@ -471,7 +471,7 @@ function placeLabel(
   ];
   const natural = Math.max(...text.map(cellWidth));
   const word = Math.max(...text.flatMap((t) => t.split(/\s+/)).map(cellWidth));
-  // Wrapped narrower only when the layout's text may wrap (root `wrap` and `c4.wrap`); else
+  // Wrapped narrower only when the layout's text may wrap (the root `wrap` true); else
   // each line stays one line, cut with the ellipsis as the last way to stay clear by its line.
   const whole = pen.wrap ? labelWidths(natural, Math.max(LABEL_LEAST, word)) : [natural];
   const least = pen.wrap ? word : natural;

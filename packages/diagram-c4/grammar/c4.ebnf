@@ -34,12 +34,12 @@ direction_bt              /.*direction\s+BT[^\n]*/         :keyword ;
 direction_rl              /.*direction\s+RL[^\n]*/         :keyword ;
 (** `direction LR`: an error, as `direction TB`. *)
 direction_lr              /.*direction\s+LR[^\n]*/         :keyword ;
-(** `title <text>`: the diagram title, the rest of the line up to a `#` or `;`, trimmed. A
-lone `title` is a title with no text (D452). *)
+(** `title <text>`: the diagram title, the rest of the line up to a `;`, trimmed (a `#` is
+text, #683; 12.2.0 stopped there). A lone `title` is a title with no text (D452). *)
 title                     /title(?=\n)/                    :keyword ;
-title                     /title\s[^#\n;]+/                :keyword ;
+title                     /title\s[^\n;]+/                 :keyword ;
 (** `accDescription <text>`: the accessible description, the rest of the line. *)
-accDescription            /accDescription\s[^#\n;]+/       :keyword ;
+accDescription            /accDescription\s[^\n;]+/        :keyword ;
 (** `accTitle: …` and `accDescr: …` take the rest of the line; `accDescr { … }` runs to `}`. *)
 acc_title                 /accTitle\s*:\s*/                push(acc_title) :keyword ;
 <acc_title> acc_title_value /[^\n]*/                       pop :string ;

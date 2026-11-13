@@ -1,0 +1,12 @@
+---
+description: >-
+  Person shapes keep c4model.com's proportions (#683, v12's fix
+  mermaid-js/mermaid#8322): with a one-line label the body is at least 0.6 times
+  as tall as it is wide and the head scales with it, where the shape used to be
+  a 13 px head on a flat 152 x 40 bar.
+---
+flowchart LR
+  A@{ shape: person, label: "Customer" }
+  B@{ shape: person, label: "Back office" }
+  A --> S[Shop]
+  B --> S
