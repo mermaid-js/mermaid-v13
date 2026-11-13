@@ -43,7 +43,5 @@
     "sales-process",
     "simple-2"
   ],
-  "notPorted": {
-    "regressions/diamond-edge-leaves-vertex": "#678"
-  }
+  "notPorted": {}
 }
