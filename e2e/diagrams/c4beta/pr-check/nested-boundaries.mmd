@@ -1,0 +1,16 @@
+c4-beta container
+title Internet Banking - Containers
+person customer "Personal Customer" "A customer of the bank."
+softwareSystem banking "Internet Banking" {
+    group web "Web tier" {
+        container spa "Single-Page App" "Shows the accounts." "TypeScript"
+        container api "API Application" "Serves account data." "Kotlin"
+    }
+    container db "Database" "Stores accounts." "PostgreSQL" :::store
+}
+softwareSystem mainframe "Mainframe Banking" "Holds the core data." :::external
+style store shape:cylinder
+customer --> spa : "Uses" "HTTPS"
+spa --> api : "Calls" "JSON/HTTPS"
+api --> db : "Reads and writes" "SQL"
+api --> mainframe : "Reads accounts from" "XML/HTTPS"

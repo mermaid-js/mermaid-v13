@@ -1,0 +1,11 @@
+c4-beta dynamic
+title Sign in
+person customer "Personal Customer"
+container spa "Single-Page App" "" "TypeScript"
+container api "API Application" "" "Kotlin"
+container db "Database" "" "PostgreSQL"
+1: customer --> spa : "Enters credentials"
+2: spa --> api : "Submits the sign-in request" "JSON/HTTPS"
+3: api --> db : "Looks up the user" "SQL"
+4: db --> api : "Returns the user"
+5: api --> spa : "Returns a session token"
