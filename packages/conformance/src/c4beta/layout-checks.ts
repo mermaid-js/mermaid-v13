@@ -3,13 +3,8 @@
  * layout returns: the geometric rules the engine's own `validateLayout` does not state in C4's
  * terms. Each check returns one message per violation; an empty list means it holds.
  */
-import type {
-  C4BetaModel,
-  C4BetaLayoutContext,
-  C4BetaLaidOut,
-} from '@mermaid-js/diagram-c4/testing';
+import type { C4BetaModel, C4BetaLaidOut } from '@mermaid-js/diagram-c4/testing';
 import type { C4Layout, PlacedLabel, Point, Rect } from '@mermaid-js/diagram-c4';
-import { layoutC4BetaFull } from '@mermaid-js/diagram-c4/testing';
 import { validateLayout } from '@mermaid-js/core/layout';
 
 /** How far boxes may overlap, or a line may enter a box, and still count as clear (px). */
@@ -86,28 +81,44 @@ export function crossingViolations(scene: C4Layout): string[] {
   return out;
 }
 
-/** A relation label that overlaps an element, a boundary header or another label. */
-export function labelViolations(scene: C4Layout): string[] {
-  const out: string[] = [];
-  const labelled = scene.relations.filter((r) => r.labelBox !== undefined);
-  for (const r of labelled) {
-    const name = `${r.from} -> ${r.to}`;
-    for (const e of scene.elements)
-      if (overlap(r.labelBox!, e.box)) out.push(`label of ${name} overlaps element ${e.alias}`);
-    for (const b of scene.boundaries) {
-      const h = headerBox(b);
-      if (h && overlap(r.labelBox!, h)) out.push(`label of ${name} overlaps header of ${b.alias}`);
-    }
-  }
-  for (let i = 0; i < labelled.length; i++)
-    for (let j = i + 1; j < labelled.length; j++)
-      if (overlap(labelled[i]!.labelBox!, labelled[j]!.labelBox!))
-        out.push(
-          `label of ${labelled[i]!.from} -> ${labelled[i]!.to} overlaps label of ` +
-            `${labelled[j]!.from} -> ${labelled[j]!.to}`
-        );
-  return out;
+const nameOf = (r: C4Layout['relations'][number]): string => `${r.from} -> ${r.to}`;
+
+/** Labels that overlap an element or a boundary header. */
+function labelOverObstacles(scene: C4Layout): string[] {
+  const headers = scene.boundaries.flatMap((b) => {
+    const box = headerBox(b);
+    return box ? [{ alias: b.alias, box }] : [];
+  });
+  return scene.relations.flatMap((r) => {
+    const label = r.labelBox;
+    if (!label) return [];
+    return [
+      ...scene.elements
+        .filter((e) => overlap(label, e.box))
+        .map((e) => `label of ${nameOf(r)} overlaps element ${e.alias}`),
+      ...headers
+        .filter((h) => overlap(label, h.box))
+        .map((h) => `label of ${nameOf(r)} overlaps header of ${h.alias}`),
+    ];
+  });
 }
+
+/** Labels that overlap each other. */
+function labelOverLabels(scene: C4Layout): string[] {
+  const labelled = scene.relations.filter((r) => r.labelBox !== undefined);
+  return labelled.flatMap((a, i) =>
+    labelled
+      .slice(i + 1)
+      .filter((b) => overlap(a.labelBox!, b.labelBox!))
+      .map((b) => `label of ${nameOf(a)} overlaps label of ${nameOf(b)}`)
+  );
+}
+
+/** A relation label that overlaps an element, a boundary header or another label. */
+export const labelViolations = (scene: C4Layout): string[] => [
+  ...labelOverObstacles(scene),
+  ...labelOverLabels(scene),
+];
 
 /** A relation that passes through the title text of a boundary. */
 export function titleViolations(scene: C4Layout): string[] {
@@ -171,6 +182,3 @@ export function allViolations(model: C4BetaModel, run: C4BetaLaidOut): string[] 
     ...containmentViolations(model, run.scene),
   ];
 }
-
-export type { C4BetaLayoutContext };
-export { layoutC4BetaFull };

@@ -10,7 +10,7 @@
  * order (-1 at the top level).
  */
 import type { LayoutModel, RoutePoint } from '@mermaid-js/core/layout';
-import { placed, type Measured } from '../layout/layout.ts';
+import { placed, stackSections, type Measured } from '../layout/layout.ts';
 import { C4_METRICS as M } from '../layout/metrics.ts';
 import type {
   C4BoundaryLayout,
@@ -66,13 +66,8 @@ function leafOut(p: C4BetaPrepared, laid: LayoutModel, s: Shift): C4ElementLayou
     if (!leaf || !node) return [];
     const box = moved(rectOf(node), s);
     const centreX = box.x + box.width / 2 + leaf.dx;
-    let y = box.y + box.height / 2 + leaf.dy - leaf.textH / 2;
-    const [name, type, descr] = leaf.sections.map((m) => {
-      if (!m) return undefined;
-      const out = placed(m, centreX - m.text.width / 2, y);
-      y += m.text.height + M.sectionGap;
-      return out;
-    });
+    const top = box.y + box.height / 2 + leaf.dy - leaf.textH / 2;
+    const [name, type, descr] = stackSections(leaf.sections, centreX, top);
     return [
       {
         ast: element.ast,
