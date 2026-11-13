@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { streamWriter } from '../svg/index.ts';
 import {
   Style,
@@ -9,6 +9,7 @@ import {
   type LabelMarkup,
   type LabelOptions,
   type MeasuredLabel,
+  type Measurer,
 } from './index.ts';
 
 // Arial at 10px: a 5.56, space 2.78, x 5, - 3.33; characters outside Latin-1 (•, ◦) take the
@@ -550,6 +551,209 @@ describe('backslashBreak (D562)', () => {
       'd',
       'e',
     ]);
+  });
+});
+
+describe('plain-label wrapper', () => {
+  // Wrapped plain labels take a one-pass wrapper; `<span>` is dropped as markup but sends the
+  // same text down the general path, which is the reference. Labels that fit never reach either.
+  const random = (seed: number) => (): number => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const CHARS = [
+    ...'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+    ...'aeiou etn', // common letters, more often
+    ...'-+=/|~^%$#@\'"?!.,:;()[]{}', // ASCII punctuation, kinsoku opening and closing included
+    ...'漢字中文日本語かなカナ', // CJK
+    ...'「」『』（）［］【】《》〈〉', // CJK brackets: opening, closing
+    ...'。、，．：；！？ー…‥・っャ', // closing punctuation, CJK and not
+    ...'한국어éüßñ', // Hangul (no CJK breaks) and Latin-1
+    '\u0301', // combining mark: zero width
+    '\u200d', // ZWJ
+    '\u0001', // control: zero width
+    '😀',
+    '👩\u200d💻',
+    '\ufdd0', // the inline-box placeholder, plain text without boxes
+  ];
+  const word = (rnd: () => number): string => {
+    const long = rnd() < 0.1;
+    const n = long ? 10 + Math.floor(rnd() * 40) : 1 + Math.floor(rnd() * 8);
+    let w = '';
+    for (let i = 0; i < n; i++) w += CHARS[Math.floor(rnd() * CHARS.length)];
+    return w;
+  };
+  const sentence = (rnd: () => number): string => {
+    const words: string[] = [];
+    const n = 1 + Math.floor(rnd() * 12);
+    for (let i = 0; i < n; i++) words.push(word(rnd));
+    return words.join(' ').trim();
+  };
+  // Hyphenated words (#394): letters, digits and hyphens, hyphens leading, trailing, in runs and
+  // before digits, CJK and closing punctuation, and words longer than the line.
+  const HYPHENATED = [...'aeioustnrlAZ', ...'019', ...'---', ...'漢かー)。.é😀', '́'];
+  const hyphenated = (rnd: () => number): string => {
+    const words: string[] = [];
+    const n = 1 + Math.floor(rnd() * 8);
+    for (let i = 0; i < n; i++) {
+      const m = rnd() < 0.15 ? 15 + Math.floor(rnd() * 40) : 1 + Math.floor(rnd() * 12);
+      let w = '';
+      for (let j = 0; j < m; j++) w += HYPHENATED[Math.floor(rnd() * HYPHENATED.length)];
+      words.push(w);
+    }
+    return words.join(' ').trim();
+  };
+  const FONTS: FontKey[] = [
+    arial,
+    { family: '"trebuchet ms", verdana, arial, sans-serif', size: 14, weight: 400 },
+    { family: 'verdana', size: 18.666666666666664, weight: 700 },
+    { family: 'Unknown Sans', size: 13, weight: 400 },
+    { family: 'arial', size: 0, weight: 400 },
+  ];
+  const STYLES = [
+    0,
+    Style.Bold,
+    Style.Mono,
+    Style.Sub,
+    Style.Bold | Style.Italic | Style.Underline,
+  ];
+  const PLAIN = /^[^<&*_`\\\n\r\t\u00ad\u200b]*$/;
+  const MODES: readonly LabelMarkup[] = ['plain', 'emphasis', 'markdown'];
+  const BULLET = /^[-*] +(?=\S)/;
+
+  // Deep equality with Object.is on numbers (-0, NaN), cheaper than `expect` per case.
+  const same = (a: unknown, b: unknown): boolean => {
+    if (typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) {
+      return Object.is(a, b);
+    }
+    const ka = Object.keys(a);
+    if (ka.length !== Object.keys(b).length) return false;
+    return ka.every(
+      (k) =>
+        Object.hasOwn(b, k) &&
+        same((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k])
+    );
+  };
+
+  const differential = (
+    measurer: Measurer,
+    seed: number,
+    count: number,
+    generate = sentence
+  ): number => {
+    const rnd = random(seed);
+    let compared = 0;
+    for (let k = 0; k < count; k++) {
+      const text = generate(rnd);
+      if (text === '' || !PLAIN.test(text) || text.includes('  ')) continue;
+      const font = FONTS[Math.floor(rnd() * FONTS.length)] as FontKey;
+      const style = STYLES[Math.floor(rnd() * STYLES.length)] as number;
+      const maxes = [-1, 0, rnd() * 20, 5 + rnd() * 60, 20 + rnd() * 200, NaN];
+      for (const max of maxes) {
+        if (measurer.width(text, font, style) <= max) continue;
+        for (const keepWords of [false, true]) {
+          for (const markup of MODES) {
+            // A markdown bullet item is not plain (and `<span>` would hide its marker).
+            if (markup === 'markdown' && BULLET.test(text)) continue;
+            const options: LabelOptions = { style, keepWords, markup };
+            const plain = layoutLabel(text, font, max, measurer, options);
+            const general = layoutLabel(`<span>${text}</span>`, font, max, measurer, options);
+            if (!same(plain, general)) {
+              const at = JSON.stringify({ text, font, style, max, keepWords, markup });
+              expect(plain, at).toStrictEqual(general);
+            }
+            compared++;
+          }
+        }
+      }
+    }
+    return compared;
+  };
+
+  it('lays out generated plain labels exactly as the general path, with the table measurer', () => {
+    expect(differential(tableMeasurer, 1, 3000)).toBeGreaterThan(40000);
+  }, 60_000);
+
+  it('lays out generated plain labels exactly as the general path, with any other measurer', () => {
+    // Not additive, so a line's width is not the sum of its words': it must be measured.
+    const lumpy: Measurer = {
+      id: 'lumpy',
+      width: (text, font, style) => {
+        let h = style * 7;
+        for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) % 1009;
+        return text.length ** 1.1 * font.size * 0.47 + h / 997;
+      },
+      metrics: (font) => tableMeasurer.metrics(font),
+    };
+    expect(differential(lumpy, 2, 1500)).toBeGreaterThan(20000);
+  }, 60_000);
+
+  it('breaks generated hyphenated labels exactly as the general path (#394)', () => {
+    const lumpy: Measurer = {
+      id: 'lumpy',
+      width: (text, font, style) => text.length ** 1.1 * font.size * 0.47 + (style % 3) / 7,
+      metrics: (font) => tableMeasurer.metrics(font),
+    };
+    expect(differential(tableMeasurer, 3, 3000, hyphenated)).toBeGreaterThan(40000);
+    expect(differential(lumpy, 4, 1500, hyphenated)).toBeGreaterThan(20000);
+  }, 60_000);
+
+  it('breaks hyphenated plain labels at several widths as the general path (#394)', () => {
+    const labels = [
+      'subcontainer-sibling',
+      'one-to-zero-or-one-non-identifying relationship',
+      'aaaa-aaaa aa aaa-aaa aaaaaaaa-a',
+      '2020-01-15 a1-2b-cd -aaaa aa--aa aa-) aaaa-1',
+      'state-of-the-art e-mail re-enter co-op x-ray',
+      'ab-'.repeat(60) + 'ab',
+      'Pneumonoultramicroscopicsilicovolcanoconiosis-is-a-very-long-word ok',
+      'well-known 漢字-かな ab-ー cd-。ef',
+    ];
+    for (const text of labels) {
+      for (let max = 0; max <= 160; max += 4) {
+        for (const keepWords of [false, true]) {
+          const options = { keepWords };
+          expect(
+            layoutLabel(text, arial, max, tableMeasurer, options),
+            JSON.stringify({ text, max, keepWords })
+          ).toStrictEqual(layoutLabel(`<span>${text}</span>`, arial, max, tableMeasurer, options));
+        }
+      }
+    }
+  });
+
+  it('measures a wrapped hyphenated plain label once through the table measurer', () => {
+    const width = vi.spyOn(tableMeasurer, 'width');
+    try {
+      const box = layoutLabel('one-to-zero-or-one-non-identifying', arial, 60, tableMeasurer);
+      expect(box.lines.map((l) => l.map((r) => r.text).join(''))).toEqual([
+        'one-to-zero-',
+        'or-one-non-',
+        'identifying',
+      ]);
+      expect(width).toHaveBeenCalledTimes(1);
+    } finally {
+      width.mockRestore();
+    }
+  });
+
+  it('measures a wrapped plain label once through the table measurer', () => {
+    const width = vi.spyOn(tableMeasurer, 'width');
+    try {
+      const long = 'abcdefghij'.repeat(30);
+      const box = layoutLabel(`one two three ${long} four 漢字。漢字`, arial, 40, tableMeasurer);
+      expect(box.lines.length).toBeGreaterThan(5);
+      expect(width).toHaveBeenCalledTimes(1);
+    } finally {
+      width.mockRestore();
+    }
+  });
+
+  it('leaves labels with other white space to the general path', () => {
+    const box = layout('aaa\u00a0aaa aaa\u3000aaa aaa', 40);
+    expect(box).toStrictEqual(layout('<span>aaa\u00a0aaa aaa\u3000aaa aaa</span>', 40));
   });
 });
 
