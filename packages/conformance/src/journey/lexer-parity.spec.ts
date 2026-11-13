@@ -61,8 +61,9 @@ describe('journey lexer parity with mermaid@12 (jison)', () => {
       `journey lexer parity: ${compared} of ${items.length} sources lexed by v12 ` +
         `(${excluded} with the acc-state EOF exclusion); not: ${skipped.join(', ')}\n`
     );
-    // Every e2e fixture reaches the journey lexer: the 18 v12 fixtures and the 17 #327 baselines.
-    expect(e2e).toBe(35);
+    // Every e2e fixture reaches the journey lexer: the 18 v12 fixtures, the 17 #327 baselines
+    // and #649's long word.
+    expect(e2e).toBe(36);
     expect(skipped).toEqual([]);
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
     expect(

@@ -328,6 +328,7 @@ export function outliningEveryLeaf(w: SvgWriter, role: OutlineRole = 'node'): Sv
     leaf: (tag, attrs) =>
       OUTLINE_TAGS.has(tag) ? w.outline(role, tag as OutlineTag, attrs) : w.leaf(tag, attrs),
     outline: (r, tag, attrs) => w.outline(r, tag, attrs),
+    plainEdge: (attrs) => w.plainEdge(attrs),
     text: (content) => w.text(content),
     label: (box, x, y, attrs) => w.label(box, x, y, attrs),
     path: () => w.path(),

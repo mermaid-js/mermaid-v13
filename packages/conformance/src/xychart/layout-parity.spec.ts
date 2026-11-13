@@ -21,7 +21,7 @@ import { REPO_ROOT, corpusFromDir } from '../corpus.ts';
 import { decodeEntities } from '../flowchart/v12.ts';
 import { loadOracle } from '../oracle.ts';
 import type { CorpusItem } from '../types.ts';
-import { xyChartCases, xyChartCorpus, xyChartOrderCorpus } from './corpus.ts';
+import { spacedWords, xyChartCases, xyChartCorpus, xyChartOrderCorpus } from './corpus.ts';
 import { v12DataLabels, type V12Rect } from './v12-data-labels.ts';
 
 /**
@@ -42,6 +42,8 @@ import { v12DataLabels, type V12Rect } from './v12-data-labels.ts';
  * - `D383 label too small`: v12 wrote labels at a size of 0 or less; v13 draws none.
  * - `D383 missing value`, `D385 line break`: the source is not compared (v12 wrote NaN; v12
  *   printed `<br>` and line breaks in one line).
+ * - `#683 spaced words`: the source is not compared (v12 joined the words of unquoted text,
+ *   v13 keeps one space between them, `spacedWords`).
  * - `v12: a negative titlePadding …`: a value outside the schema, taken as v12 takes it; v12
  *   itself then draws the title over the plot, which the invariant reports.
  * Data labels use each bar plot's own values (D382; v12 used plot 0's), and legend swatches get
@@ -394,7 +396,7 @@ async function compare(
     const drawn = await v12Drawn(item.source, xyChart);
     // Acceptance is the parser gates' (listed divergences, detection); compare what both draw.
     if (!m || !drawn) continue;
-    const skip = notCompared(m);
+    const skip = spacedWords(item.source) ? '#683 spaced words' : notCompared(m);
     if (skip) {
       list(skip, item.id);
       continue;
@@ -442,12 +444,13 @@ const VARIANTS: readonly Record<string, unknown>[] = [
 
 describe('xychart layout parity with v12', () => {
   it('equals v12 on the e2e corpus, to 0.01 px', async () => {
-    expect(corpus.length).toBe(59);
+    expect(corpus.length).toBe(60);
     const { problems, listed, compared } = await compare(corpus, {});
     expect(problems.slice(0, 30)).toEqual([]);
-    // The text baseline's `<br>` labels (D385) are not compared.
+    // The text baseline's `<br>` labels (D385) and #683's fixture are not compared.
     expect([...listed]).toEqual([
       ['D385 line break', ['e2e/diagrams/xychart/baseline/text/labels.mmd']],
+      ['#683 spaced words', ['e2e/diagrams/xychart/pr-check/unquoted-text-keeps-spaces.mmd']],
     ]);
     expect(compared).toBe(58);
   });
@@ -457,6 +460,7 @@ describe('xychart layout parity with v12', () => {
     expect(problems.slice(0, 30)).toEqual([]);
     const allowed = [
       'D385 line break',
+      '#683 spaced words',
       'D383 label too small',
       'v12: a negative titlePadding overlaps the title and the plot',
     ];
@@ -469,6 +473,7 @@ describe('xychart layout parity with v12', () => {
     expect(compared).toBeGreaterThan(1200);
     expect(problems.slice(0, 30)).toEqual([]);
     expect([...listed.keys()].sort()).toEqual([
+      '#683 spaced words',
       'D383 label too small',
       'D383 missing value',
       'D385 line break',

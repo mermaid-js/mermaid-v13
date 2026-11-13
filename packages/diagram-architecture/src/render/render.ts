@@ -227,7 +227,8 @@ function drawEdges(scene: Scene): void {
     }
     const d = w.path();
     e.points.forEach((p, k) => (k === 0 ? d.moveTo(p.x, p.y) : d.lineTo(p.x, p.y)));
-    w.leaf('path', {
+    // Plain in every look (D301), and where line hops find it (D537, #655).
+    w.plainEdge({
       class: 'edge',
       'data-id': ast,
       'data-ast': ast,

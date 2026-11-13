@@ -5,6 +5,7 @@
 // cspell:ignore kepano
 import { translate, type Attrs, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
 import { drawCylinder, rhombusInset, rhombusPoints } from './basic.ts';
+import { personFigure, personSize } from './person.ts';
 import {
   box,
   capInset,
@@ -517,15 +518,16 @@ export const browser: Shape = {
   },
 };
 
+// A head over a body in c4model.com's proportions (#683, `person.ts`).
 export const person: Shape = {
-  size: (tw, th, p) => ({
-    w: Math.max(tw + 2 * p.node.x, 56),
-    h: th + 2 * p.node.y + 26,
-    dy: 13,
-  }),
+  size: (tw, th, p) => {
+    const w = Math.max(tw + 2 * p.node.x, 56);
+    return { w, ...personSize(w, th + 2 * p.node.y) };
+  },
   draw: (w, W, H, a) => {
-    drawRect(w, { x: -W / 2, y: -H / 2 + 26, width: W, height: H - 26, rx: 12 }, a);
-    drawCircle(w, 13, a, 'node', undefined, -H / 2 + 14);
+    const { r, bodyTop } = personFigure(W, H);
+    drawRect(w, { x: -W / 2, y: bodyTop, width: W, height: H / 2 - bodyTop, rx: CORNER }, a);
+    drawCircle(w, r, a, 'node', undefined, -H / 2 + r);
   },
 };
 

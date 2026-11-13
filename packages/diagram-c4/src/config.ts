@@ -9,8 +9,10 @@
  * v12's DB hard-coded 4 and 2). `height`, `boxMargin` and `wrapPadding` are not read (v12 never
  * read them, D454). Font families take the theme's `fontFamily` unless set (sequence's
  * precedent); a family the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning.
- * Element text wraps when `c4.wrap` (default true); relation and boundary text only when the
- * root `wrap` is set too, as v12.
+ * Element text wraps when the root `wrap` is true, or when it is unset and `c4.wrap` (default
+ * true) is: the root `wrap`, when set, wins (#683, as v12's fix mermaid-js/mermaid#8342; 12.2.0's
+ * elements followed `c4.wrap` alone). Relation and boundary text wraps only when the root `wrap`
+ * is true, as v12.
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { C4DiagramConfig } from '@mermaid-js/core/config';
@@ -32,9 +34,9 @@ export interface C4LayoutConfig {
   readonly nextLinePaddingX: number;
   readonly c4ShapeInRow: number;
   readonly c4BoundaryInRow: number;
-  /** `c4.wrap`: element text wraps. */
+  /** Element text wraps: the root `wrap` when set, else `c4.wrap`. */
   readonly wrap: boolean;
-  /** `c4.wrap` and the root `wrap`: relation and boundary text wraps too. */
+  /** The root `wrap` is true: relation and boundary text wraps too. */
   readonly wrapAll: boolean;
 }
 
@@ -99,11 +101,14 @@ export function c4LayoutConfig(config: RenderContext['config']): C4LayoutConfig 
     const n = configNumber(given[key]);
     if (n !== undefined && Number.isInteger(n) && n >= 1) out[key] = n;
   }
-  const wrap = typeof given.wrap === 'boolean' ? given.wrap : C4_CONFIG_DEFAULTS.wrap;
+  // The root `wrap`, when set, wins over `c4.wrap` (#683, as v12's fix mermaid-js/mermaid#8342).
+  const root = (config as { wrap?: unknown }).wrap;
+  const section = typeof given.wrap === 'boolean' ? given.wrap : C4_CONFIG_DEFAULTS.wrap;
+  const wrap = typeof root === 'boolean' ? root : section;
   return {
     ...(out as unknown as Omit<C4LayoutConfig, 'wrap' | 'wrapAll'>),
     wrap,
-    wrapAll: wrap && (config as { wrap?: unknown }).wrap === true,
+    wrapAll: root === true,
   };
 }
 

@@ -64,6 +64,17 @@ const KNOWN_BACK_REFUSALS = [
 ];
 
 /**
+ * Renames whose way back writes the original name quoted: an XY chart name written bare with a
+ * blank between its words (#683: v13 reads `jan feb` as one name with the space). The facet
+ * writes a name with a blank in quotes (`writtenName`), which mermaid 12.2.0 also reads with its
+ * blanks, so the text comes back as `"jan feb"`, the same model.
+ */
+const KNOWN_BACK_QUOTED = [
+  'xychart/pr-check/unquoted-text-keeps-spaces.mmd jan feb@385: back differs',
+  'xychart/pr-check/unquoted-text-keeps-spaces.mmd Gross Sales@435: back differs',
+];
+
+/**
  * Model lists a facet keeps in name order, sorted again once the name is written back: a rename
  * moves the name in them, which is no model change. Journey's `actors` are sorted by code unit
  * (its legend order, D244), so renaming `Cat` to `renamedZq7` puts it after `Me` (#331).
@@ -279,7 +290,11 @@ describe('rename, re-parse, same model modulo the name', () => {
     expect(renamed).toBeGreaterThan(2000);
     expect(otherwise).toBeGreaterThanOrEqual(MIN_OTHERWISE);
     expect(fixed).toBeGreaterThan(0);
-    expect(problems).toEqual([...KNOWN_MODEL_CHANGES, ...KNOWN_BACK_REFUSALS]);
+    expect(problems).toEqual([
+      ...KNOWN_MODEL_CHANGES,
+      ...KNOWN_BACK_REFUSALS,
+      ...KNOWN_BACK_QUOTED,
+    ]);
     expect(refused).toEqual(KNOWN_REFUSALS);
   }, 120_000);
 });

@@ -76,6 +76,8 @@ export function cellRoom(room: ShapeRoom, size: CellSize): ShapeRoom {
   const least = (p: ShapeRoom['cylinder']) => ({ x: Math.max(p.x, x), y: Math.max(p.y, y) });
   return {
     ...room,
+    // The text output draws a person as a box: sized with a head row, not as the figure.
+    figure: false,
     cylinder: least(room.cylinder),
     queue: least(room.queue),
     subroutine: least(room.subroutine),

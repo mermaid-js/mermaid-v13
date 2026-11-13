@@ -1,0 +1,13 @@
+---
+description: >-
+  A C4 person with a one-line label keeps c4model.com's proportions (#683, v12's
+  fix mermaid-js/mermaid#8322): the body is at least 0.6 times as tall as it is
+  wide and the head scales with the width, where the shape used to be a 13 px
+  head over a flat box. The text sits below the head.
+---
+C4Context
+  Person(customer, "Customer")
+  Person_Ext(auditor, "Auditor", "Checks the books once a year")
+  System(shop, "Web shop", "Takes the orders")
+  Rel(customer, shop, "Orders from")
+  Rel(auditor, shop, "Audits")

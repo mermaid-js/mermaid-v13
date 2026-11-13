@@ -2381,7 +2381,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "Element text wraps at the element's width. Relation labels and boundary headers wrap only when the top-level `wrap` is set too, as v12."
+            "reason": "Element text wraps at the element's width. The top-level `wrap`, when set, wins over it (#683, as v12's fix mermaid-js/mermaid#8342). Relation labels and boundary headers wrap only when the top-level `wrap` is true, as v12."
           }
         },
         "wrapPadding": {

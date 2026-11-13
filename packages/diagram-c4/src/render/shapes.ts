@@ -23,6 +23,7 @@ import {
   type Barrel,
 } from '@mermaid-js/shared/shapes/kit';
 import { C4_METRICS as M } from '../layout/metrics.ts';
+import { personParts } from '../layout/shapes.ts';
 import type { C4ShapeId, Rect } from '../layout/types.ts';
 
 /** The main outline's class (v12's shapes write `label-container`; its `g.label` is a sibling). */
@@ -49,21 +50,9 @@ export function drawShape(w: SvgWriter, { shape, box, paint, line }: ShapeParts)
       w.outline('node', 'rect', { ...outline, x, y, width: W, height: H, rx: M.shapeRadius });
       return;
     case 'person': {
-      const head = M.personHead;
-      w.outline('node', 'rect', {
-        ...outline,
-        x,
-        y: y + head,
-        width: W,
-        height: H - head,
-        rx: M.shapeRadius,
-      });
-      w.outline('node', 'circle', {
-        ...outline,
-        cx: x + W / 2,
-        cy: y + M.personHeadCentre,
-        r: M.personHeadRadius,
-      });
+      const { head, body } = personParts(box);
+      w.outline('node', 'rect', { ...outline, ...body, rx: M.shapeRadius });
+      w.outline('node', 'circle', { ...outline, cx: head.cx, cy: head.cy, r: head.r });
       return;
     }
     case 'cyl': {

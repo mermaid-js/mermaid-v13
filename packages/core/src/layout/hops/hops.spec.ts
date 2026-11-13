@@ -134,6 +134,41 @@ describe('hopWriter (the shared edge-path step)', () => {
     };
     expect(hopped([H, V], 'arc', draw)).not.toContain('A6,6');
   });
+
+  it('hops a plain edge line (#655), which no outline drawer is given, with or without one', () => {
+    const asked: string[] = [];
+    const draw: OutlineDraw = (role, _tag, _attrs, sink) => {
+      asked.push(role);
+      sink.leaf('path', { d: 'M1,1L2,2' as never });
+      return true;
+    };
+    const plainEdges = (w: SvgWriter): void => {
+      w.open('svg', {});
+      w.plainEdge({ class: 'edge', d: H as never, fill: 'none' });
+      w.plainEdge({ class: 'edge', d: V as never, fill: 'none' });
+      w.close();
+    };
+    const plain = streamWriter();
+    plainEdges(plain);
+    const leaves = streamWriter();
+    leaves.open('svg', {});
+    leaves.leaf('path', { class: 'edge', d: H as never, fill: 'none' });
+    leaves.leaf('path', { class: 'edge', d: V as never, fill: 'none' });
+    leaves.close();
+    // Exactly the leaves, on either backing, without the step.
+    expect(plain.finish()).toBe(leaves.finish());
+    const tree = treeWriter();
+    plainEdges(tree);
+    expect(tree.finish()).toBe(plain.finish());
+    for (const options of [undefined, { outline: draw }]) {
+      const w = hopWriter(streamWriter(options), 'arc');
+      plainEdges(w);
+      expect(w.finish()).toBe(
+        plain.finish().replace(`d="${H}"`, 'd="M0,50L44,50A6,6 0 0,1 56,50L100,50"')
+      );
+    }
+    expect(asked).toEqual([]);
+  });
 });
 
 describe('hopStyle: the shared key and an engine section (D537)', () => {

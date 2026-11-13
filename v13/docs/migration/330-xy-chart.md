@@ -7,6 +7,7 @@ v12's chart builder to 0.01 px. What changes in config and drawing (spec #426):
 
 | v12 | v13 | Why |
 | --- | --- | --- |
+| Unquoted text lost the blanks between its words: `title Sales Report` drew `SalesReport`, `x-axis [jan feb, mar]` a first category `janfeb` | One space wherever blanks separate the words (`Sales Report`, `jan feb`); the ends are trimmed and quoted text is kept as written. A line break after a blank is one of the blanks; without one it still ends the statement | #683, as v12's fix mermaid-js/mermaid#8575 |
 | `xyChart.useMaxWidth: false` was ignored: the chart always scaled to its container | Honoured: `false` writes the canvas's `width` and `height`; the default (`true`) is unchanged | D387 |
 | A `%%{init: {"config": …}}` key went under the detected type, `xychart`, which nothing read | It goes to the `xyChart` section, as `initialize()`, front matter and `%%{init: {"xyChart": …}}` do (the plugin's `configSection`) | Choice, for the maintainer (#513) |
 | A config value of the wrong type was used as it was: `width: "wide"` drew `NaN` sizes, `showDataLabel: "no"` counted as true | A number, or a numeric string as its number, for a number key, and a boolean for a boolean key; anything else draws with the default and one `XYCHART_CONFIG_INVALID` warning per key. Numbers outside the schema's range are still taken, as v12 took them (`plotReservedSpacePercent: 20`, a negative padding) | Choice, for the maintainer (#513), as radar's config row (D356) |

@@ -1,0 +1,9 @@
+---
+description: an unlabelled edge from a subgraph to its own child is a visible arrow (#405)
+---
+flowchart TB
+  Out --> In
+  subgraph Sub
+    In
+  end
+  Sub --> In

@@ -34,6 +34,12 @@
  * that is too narrow for its title is laid out again with room for it (`titleRoom`), so its ports
  * move with its sides. The other algorithms ignore ports, so they get none.
  *
+ * Arrowheads (#683): where ELK ends three or more arrowheads on one side of a node closer together
+ * than an arrowhead is wide, the graph is laid out again with that node's ends pinned an arrowhead
+ * apart (`spread.ts`).
+ *
+ * Titles (#683): a run ELK routes through a group's title moves beside it (`titles.ts`).
+ *
  * The group tree must be a tree: a group inside itself is refused (`checkTree`, #688), since the
  * walks up the tree would never end.
  *
@@ -65,9 +71,12 @@ import type {
   ElkPort,
   LayoutOptions,
 } from 'elkjs/lib/elk-api.js';
+import { sideOf, type Rect } from './geometry.ts';
 import { elkConfigOf, groupOptions, rootOptions, type ElkConfig } from './options.ts';
 import { findCyclicEntryNodes, findSubgraphFeedbackEdges } from './passes.ts';
+import { crowdedEnds, type Pinned } from './spread.ts';
 import { projectLabelOntoStraightenedRun, straightenEdgeTerminals } from './straighten.ts';
+import { slideOffTitles, type SlideEdge, type SlideNode } from './titles.ts';
 import { layoutSync } from './sync.ts';
 import { ROOT, findCommonAncestor, orderNestedEdgeEnds, type Tree } from './tree.ts';
 
@@ -285,11 +294,28 @@ function sidePorts(
   graph: LayoutGraph,
   nodes: Map<string, ElkNode>,
   { sides, fixed }: ReturnType<typeof endSides>,
-  turned: readonly boolean[]
+  turned: readonly boolean[],
+  pins: Pinned
 ): { source: string; target: string }[] {
   const onSide = new Map<ElkNode, Side[]>();
   const portFor = (index: number, end: End): string => {
     const e = graph.edges[index]!;
+    // An end a first layout crowded (`crowdedEnds`): a port where that pass put it.
+    const pin = pins.get(e[end])?.find((p) => p.edge === e.id && p.end === end);
+    if (pin) {
+      const n = nodes.get(e[end])!;
+      const port: ElkPort = {
+        id: portId(e.id, end),
+        width: 0,
+        height: 0,
+        x: pin.x,
+        y: pin.y,
+        layoutOptions: { 'elk.port.side': PORT_SIDE[pin.side] },
+      };
+      (n.ports ??= []).push(port);
+      n.layoutOptions = { ...n.layoutOptions, 'elk.portConstraints': 'FIXED_POS' };
+      return port.id;
+    }
     const side = sides[index]![end === 'source' ? 0 : 1];
     if (!side) return e[end];
     const n = nodes.get(e[end])!;
@@ -331,15 +357,26 @@ function sidePorts(
   return ends;
 }
 
+/** What a first layout found for the second (`elkEngine`). */
+export interface Again {
+  /** Room each titled group with ports needs on either side (`titleRoom`). */
+  grow: ReadonlyMap<string, number>;
+  /** The nodes whose ends are pinned (`crowding`). */
+  pins: Pinned;
+}
+
+const FIRST_PASS: Again = { grow: new Map(), pins: new Map() };
+
 /**
  * Builds the ELK graph for `graph` with the `elk` config section `elk` (none: every key unset,
- * the `default` preset). Each edge sits in its ends' innermost common container.
+ * the `default` preset). Each edge sits in its ends' innermost common container. A second pass
+ * gets what the first found (`again`).
  */
 export function toElkGraph(
   graph: LayoutGraph,
   algorithm: ElkAlgorithm,
   elk: ElkConfig = {},
-  grow: ReadonlyMap<string, number> = new Map()
+  { grow, pins }: Again = FIRST_PASS
 ): Built {
   checkAnchors(graph);
   const layered = algorithm === 'layered';
@@ -444,7 +481,7 @@ export function toElkGraph(
   const reversed = new Set(graph.edges.filter((_, i) => flags[i]).map((e) => e.id));
 
   // Sides (D503): what each ELK edge leaves from and enters, a port where the end names a side.
-  const elkEnds = sidePorts(graph, nodes, endSides(graph, tree, layered, flowOf), flags);
+  const elkEnds = sidePorts(graph, nodes, endSides(graph, tree, layered, flowOf), flags, pins);
 
   const edges = new Map<string, ElkExtendedEdge>();
   for (const index of orderNestedEdgeEnds(ends, tree)) {
@@ -484,25 +521,7 @@ export function toElkGraph(
   return { root, nodes, edges, layered, reversed };
 }
 
-interface Rect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 const centre = (r: Rect): Point => ({ x: r.x + r.width / 2, y: r.y + r.height / 2 });
-
-/** The side of `r` that `p` lies on (or is nearest to). */
-function sideOf(r: Rect, p: Point): Side {
-  const d: [Side, number][] = [
-    ['top', Math.abs(p.y - r.y)],
-    ['bottom', Math.abs(p.y - (r.y + r.height))],
-    ['left', Math.abs(p.x - r.x)],
-    ['right', Math.abs(p.x - (r.x + r.width))],
-  ];
-  return d.reduce((best, cur) => (cur[1] < best[1] ? cur : best))[0];
-}
 
 /** Where the segment from the centre of `r` towards `to` leaves `r`. */
 function border(r: Rect, to: Point): Point {
@@ -555,6 +574,19 @@ const near = (r: Rect, p: Point, slack = 1): boolean =>
   p.x <= r.x + r.width + slack &&
   p.y >= r.y - slack &&
   p.y <= r.y + r.height + slack;
+
+/** The route ELK gave edge `id`, every section joined, source to target. */
+function elkRoute(built: Built, id: string): Point[] {
+  const points = (built.edges.get(id)!.sections ?? []).flatMap((s, i) =>
+    sectionPoints(s).slice(i === 0 ? 0 : 1)
+  );
+  if (built.reversed.has(id)) points.reverse();
+  return points;
+}
+
+/** Whether `points` is a route from the box `from` to the box `to` (either unknown: any). */
+const joins = (points: readonly Point[], from?: Rect, to?: Rect): boolean =>
+  points.length >= 2 && (!from || near(from, points[0]!)) && (!to || near(to, points.at(-1)!));
 
 /** Group ids, innermost first. */
 function innermostFirst(graph: LayoutGraph, chainOf: (id: string) => string[]): string[] {
@@ -645,17 +677,73 @@ function straighten(graph: LayoutGraph, built: Built, routes: Routes): Map<strin
   return labelMoved;
 }
 
+/** Where a group's title is drawn: centred on the frame, in the middle of the top padding. */
+function titleCentre(g: LayoutGraph['groups'][number], r: Rect): Point {
+  return { x: r.x + r.width / 2, y: r.y + g.padding.top / 2 + (g.title?.height ?? 0) / 2 };
+}
+
+/** Node shapes whose top and bottom are straight, so a run end may slide along them. */
+const FLAT = new Set([undefined, 'rect', 'rounded']);
+
 /**
- * The drawing is what it holds plus the padding: frames may have grown, and some algorithms
- * (mrtree) size the root before its groups. Returns the shift that puts it at the padding.
+ * Moves each ELK-routed run that crosses a group's title beside it (`slideOffTitles`), with the
+ * main label riding on it. Rewrites `routes` and `labelMoved`.
+ */
+function offTitles(
+  graph: LayoutGraph,
+  built: Built,
+  rects: Map<string, Rect>,
+  routes: Routes,
+  labelMoved: Map<string, Point>
+): void {
+  if (!built.layered) return;
+  const titles = graph.groups.flatMap((g) => {
+    if (!g.title?.width || !g.title.height) return [];
+    const c = titleCentre(g, rects.get(g.id)!);
+    const [w, h] = [g.title.width / 2, g.title.height / 2];
+    return [{ x1: c.x - w, y1: c.y - h, x2: c.x + w, y2: c.y + h }];
+  });
+  if (titles.length === 0) return;
+  const nodes: SlideNode[] = graph.nodes.map((n) => {
+    const r = rects.get(n.id)!;
+    return {
+      id: n.id,
+      box: { x1: r.x, y1: r.y, x2: r.x + r.width, y2: r.y + r.height },
+      flat: FLAT.has(n.shape),
+    };
+  });
+  const edges: SlideEdge[] = graph.edges.flatMap((e) => {
+    const { points, placedByElk } = routes.get(e.id)!;
+    if (!placedByElk) return [];
+    const c = e.label ? (labelMoved.get(e.id) ?? elkLabel(built, e.id, 'label')) : undefined;
+    return [
+      {
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        points,
+        ...(c && e.label ? { label: { ...c, ...e.label } } : {}),
+      },
+    ];
+  });
+  for (const id of slideOffTitles(edges, titles, nodes)) {
+    const edge = edges.find((e) => e.id === id)!;
+    routes.get(id)!.points = edge.points;
+    if (edge.label) labelMoved.set(id, { x: edge.label.x, y: edge.label.y });
+  }
+}
+
+/**
+ * The drawing is what it holds plus the padding: frames may have grown, labels may have moved
+ * with their runs, and some algorithms (mrtree) size the root before its groups. Returns the
+ * shift that puts it at the padding.
  */
 function extent(
   pad: number,
   root: ElkNode,
-  rects: Map<string, Rect>,
+  all: readonly Rect[],
   routes: Routes
 ): { dx: number; dy: number; width: number; height: number } {
-  const all = [...rects.values()];
   const xs = [
     ...all.flatMap((r) => [r.x, r.x + r.width]),
     ...[...routes.values()].flatMap((r) => r.points.map((p) => p.x)),
@@ -688,6 +776,16 @@ function portsOf(
   };
 }
 
+/** The boxes of the main labels that moved with their runs (`labelMoved`). */
+function movedLabels(graph: LayoutGraph, labelMoved: ReadonlyMap<string, Point>): Rect[] {
+  return graph.edges.flatMap((e): Rect[] => {
+    const c = labelMoved.get(e.id);
+    return c && e.label
+      ? [{ x: c.x - e.label.width / 2, y: c.y - e.label.height / 2, ...e.label }]
+      : [];
+  });
+}
+
 function readModel(graph: LayoutGraph, built: Built, elk: ElkConfig): LayoutModel {
   const chainOf = containers(treeOf(graph));
   const rects = new Map<string, Rect>();
@@ -699,19 +797,12 @@ function readModel(graph: LayoutGraph, built: Built, elk: ElkConfig): LayoutMode
 
   const routes: Routes = new Map();
   for (const e of graph.edges) {
-    const laid = built.edges.get(e.id)!;
     const from = elkRects.get(e.source)!;
     const to = elkRects.get(e.target)!;
-    const elkPoints = (laid.sections ?? []).flatMap((s, i) =>
-      sectionPoints(s).slice(i === 0 ? 0 : 1)
-    );
-    if (built.reversed.has(e.id)) elkPoints.reverse();
+    const elkPoints = elkRoute(built, e.id);
     // Some algorithms leave an edge unrouted, or route a nested one from somewhere else: then
     // the edge runs straight between the two boxes.
-    const routed =
-      elkPoints.length >= 2 &&
-      near(from, elkPoints[0]!) &&
-      near(to, elkPoints[elkPoints.length - 1]!);
+    const routed = joins(elkPoints, from, to);
     const points = routed ? elkPoints : [border(from, centre(to)), border(to, centre(from))];
     extendEnd(points, 'start', widened.get(e.source), rects.get(e.source)!);
     extendEnd(points, 'end', widened.get(e.target), rects.get(e.target)!);
@@ -720,8 +811,14 @@ function readModel(graph: LayoutGraph, built: Built, elk: ElkConfig): LayoutMode
 
   const labelMoved =
     elk.straightenEdges === false ? new Map<string, Point>() : straighten(graph, built, routes);
+  offTitles(graph, built, rects, routes, labelMoved);
 
-  const { dx, dy, width, height } = extent(graph.diagramPadding ?? 0, built.root, rects, routes);
+  const { dx, dy, width, height } = extent(
+    graph.diagramPadding ?? 0,
+    built.root,
+    [...rects.values(), ...movedLabels(graph, labelMoved)],
+    routes
+  );
   const at = (p: Point): Point => ({ x: p.x + dx, y: p.y + dy });
 
   const nodes = new Map<string, LayoutModelNode>();
@@ -733,8 +830,7 @@ function readModel(graph: LayoutGraph, built: Built, elk: ElkConfig): LayoutMode
   for (const g of graph.groups) {
     const r = rects.get(g.id)!;
     const c = at(centre(r));
-    const titleY = r.y + dy + g.padding.top / 2 + (g.title?.height ?? 0) / 2;
-    groups.set(g.id, { ...c, width: r.width, height: r.height, title: { x: c.x, y: titleY } });
+    groups.set(g.id, { ...c, width: r.width, height: r.height, title: at(titleCentre(g, r)) });
   }
   const edges = new Map<string, LayoutModelEdge>();
   for (const e of graph.edges) {
@@ -781,6 +877,28 @@ function titleRoom(graph: LayoutGraph, built: Built): Map<string, number> {
     if (n.ports?.length && need > 0) grow.set(g.id, need / 2);
   }
   return grow;
+}
+
+/**
+ * The nodes whose ends ELK laid out too close for their arrowheads (`crowdedEnds`), for the
+ * engine to lay the graph out again with those ends pinned. Only ELK layered places ports; groups
+ * and nodes that already have ports (named sides) are left as they are.
+ */
+function crowding(graph: LayoutGraph, built: Built): Pinned {
+  if (!built.layered) return new Map();
+  const skip = new Set(graph.groups.map((g) => g.id));
+  const boxes = new Map<string, Rect>();
+  for (const n of graph.nodes) {
+    const laid = built.nodes.get(n.id)!;
+    if (laid.ports?.length) skip.add(n.id);
+    boxes.set(n.id, { x: laid.x ?? 0, y: laid.y ?? 0, width: n.width, height: n.height });
+  }
+  const routes = new Map<string, Point[]>();
+  for (const e of graph.edges) {
+    const points = elkRoute(built, e.id);
+    if (joins(points, boxes.get(e.source), boxes.get(e.target))) routes.set(e.id, points);
+  }
+  return crowdedEnds(graph.edges, boxes, routes, skip);
 }
 
 /** Something the engine did instead of what was asked, for the package's hook to warn about. */
@@ -857,9 +975,12 @@ export function elkEngine(algorithm: ElkAlgorithm): LayoutEngine {
       if (algorithm !== 'radial' || !notATree(e)) throw e;
       return notTree();
     }
+    // A second pass only when the first left a titled group with ports too narrow, or arrowheads
+    // on top of each other (#683).
     const grow = titleRoom(graph, built);
-    if (grow.size) {
-      built = toElkGraph(graph, algorithm, elk, grow);
+    const pins = crowding(graph, built);
+    if (grow.size || pins.size) {
+      built = toElkGraph(graph, algorithm, elk, { grow, pins });
       layoutSync(built.root);
     }
     return readModel(graph, built, elk);

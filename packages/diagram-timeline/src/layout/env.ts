@@ -62,7 +62,10 @@ export interface Env {
   readonly titleFont: FontKey;
   /** The title's font in v12's one-line title box (`titleReferenceFontSize`). */
   readonly titleReferenceFont: FontKey;
-  /** `text` laid out to `wrap` px (D225). */
+  /**
+   * `text` laid out to `wrap` px (D225). A word wider than `wrap` stays whole, as v12 kept it
+   * (#649), and the layouts widen its box to hold it (D558).
+   */
   measure(text: string, wrap: number, font?: FontKey): MeasuredLabel;
   /** v12 `drawNode`'s height: the label, `heightEm` font sizes and the padding once. */
   boxHeight(label: MeasuredLabel, padding: number): number;
@@ -130,6 +133,7 @@ export function envOf(ctx: TimelineLayoutContext): Env {
     measure: (text, wrap, f = font) =>
       layoutLabel(plain(text), f, Math.max(wrap, m.common.minWrap), ctx.measurer, {
         inline: ctx.inline,
+        keepWords: true,
       }),
     boxHeight: (label, padding) => label.height + formulaSize * m.common.heightEm + padding,
   };
@@ -203,6 +207,10 @@ export function line(
 ): TimelineLine {
   return { x1, y1, x2, y2, width, arrow: arrowAt(env, x1, y1, x2, y2, width) };
 }
+
+/** How far `label` is wider than `wrap`: what a word kept whole adds to its box (D558). */
+export const overflow = (label: MeasuredLabel, wrap: number): number =>
+  Math.max(0, label.width - wrap);
 
 /** A growing bounding box. */
 export class Bounds {

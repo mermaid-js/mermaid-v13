@@ -1,0 +1,13 @@
+---
+description: edges from a subgraph to its descendants three levels deep are visible arrows (#415)
+---
+flowchart TB
+  subgraph O
+    subgraph I
+      subgraph J
+        z
+      end
+    end
+  end
+  O --> J
+  J --> z

@@ -18,9 +18,10 @@ comment lines removed and leading blanks trimmed; on a line with `style…:…#�
 outside ASCII); and a line break appended. Keywords are matched without regard to case.
 
 Statements may end at a line break, `;` or the end of the text, but need not: `bar [1] line [2]`
-is two plots. Text outside quotes is a run of letters, digits and `+ = * # _ . & -`, joined
-without the blanks between them (`title Sales 2024` is `Sales2024`); quote it to keep blanks or
-to use other characters. After `x-axis` and `y-axis` digits read as numbers (`x-axis Year2024
+is two plots. Text outside quotes is a run of letters, digits and `+ = * # _ . & -`, with one
+space wherever blanks separate them (`title Sales  2024` is `Sales 2024`; #683, as v12's fix
+mermaid-js/mermaid#8575; 12.2.0 read `Sales2024`), and a line break after a blank is one of the
+blanks; quote it to keep a run of blanks or to use other characters. After `x-axis` and `y-axis` digits read as numbers (`x-axis Year2024
 [a]` is a title and the start of a range), and inside a plot's brackets only numbers and quoted
 labels are allowed. A `%%` right after a character other than `}` is a comment that takes that
 character with it (`bar [1]%% c` loses its `]`).
@@ -117,8 +118,8 @@ AccDescr @AccDescr = acc_descr acc_descr_value
                    | acc_descr_multiline_value ;
 ```
 
-Text: a run of words, digits and `+ = * # _ . & -`, joined without blanks, or a quoted
-string.
+Text: a run of words, digits and `+ = * # _ . & -`, one space where blanks separate them,
+or a quoted string.
 
 ```ebnf
 text = alphaNumToken { alphaNumToken }
