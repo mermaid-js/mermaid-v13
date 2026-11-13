@@ -32,6 +32,9 @@ export const V12_DETECTORS: readonly (readonly [string, string, string])[] = [
   ['mindmap', '^\\s*mindmap', ''],
   ['architecture', '^\\s*architecture', ''],
   ['agentflow', '^\\s*agentflow-beta\\b', ''],
+  // c4-beta (spec #730): a type v12 12.2.0 lacks, so `detection.spec.ts` has no oracle for it. It
+  // sits before `c4`, as the prototype orders them. The pattern and D451's are disjoint.
+  ['c4beta', '^\\s*c4-beta(?![\\w-])', ''],
   // D451: all five headers anchored and word-bounded (v12 anchored only `C4Context`).
   ['c4', '^\\s*C4(Context|Container|Component|Dynamic|Deployment)\\b', ''],
   ['kanban', '^\\s*kanban', ''],

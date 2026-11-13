@@ -13,14 +13,19 @@ import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { pxProfile } from '@mermaid-js/core/layout';
 import { resolveLimits } from '@mermaid-js/core/limits';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import type { Limits } from '@mermaid-js/core/limits';
+import type { AstNode, ParseResult } from '@mermaid-js/core/parser-kit';
+import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { streamWriter, type OutlineDraw } from '@mermaid-js/core/svg';
 import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, resolveThemeName } from '@mermaid-js/core/theme';
+import type { C4BetaDocument } from '../beta/ast.ts';
+import type { C4BetaModel } from '../beta/model.ts';
+import { parseC4Beta } from '../beta/parser.ts';
 import type { C4Layout } from '../layout/types.ts';
 import type { C4Model } from '../model.ts';
-import type { C4Document } from '../parser/index.ts';
-import { c4 } from '../plugin.ts';
+import { parseC4, type C4Document } from '../parser/index.ts';
+import { c4, type C4AnyModel } from '../plugin.ts';
 import { c4TestConfig } from '../test-context.ts';
 
 export interface RenderC4Options {
@@ -53,17 +58,79 @@ export interface RenderedC4 {
  */
 const TEST_VERSION = '13.0.0-alpha.0';
 
+/** The seam both kinds share: the drawn document and what the public API does not return. */
+interface Drawn<M extends C4AnyModel, A extends AstNode> {
+  readonly svg: string;
+  readonly parse: ParseResult<M, A>;
+  readonly layout: C4Layout;
+  readonly config: ResolvedConfig;
+  readonly warnings: readonly Warning[];
+  readonly gradient: string | false;
+  readonly themeStyle: boolean;
+}
+
 /** Renders `source`, parsed with its front matter and directives. */
 export async function renderC4ForTest(
   source: string,
   options: RenderC4Options = {}
 ): Promise<RenderedC4> {
+  const d = await drawParsed(source, options, (pre, limits) =>
+    parseC4(source, { preprocessed: pre, ...limits })
+  );
+  return {
+    svg: d.svg,
+    model: d.parse.model,
+    ast: d.parse.ast,
+    layout: d.layout,
+    config: d.config,
+    warnings: d.warnings,
+    rejected: d.parse.diagnostics.some((x) => x.severity === 'error'),
+    gradient: d.gradient,
+    themeStyle: d.themeStyle,
+  };
+}
+
+/** What {@link renderC4BetaForTest} gives back: {@link RenderedC4}'s, for a c4-beta source. */
+export interface RenderedC4Beta extends Omit<RenderedC4, 'model' | 'ast'> {
+  readonly model: C4BetaModel;
+  readonly ast: C4BetaDocument;
+}
+
+/** Renders a `c4-beta` `source` through the plugin's seam, as {@link renderC4ForTest}. */
+export async function renderC4BetaForTest(
+  source: string,
+  options: RenderC4Options = {}
+): Promise<RenderedC4Beta> {
+  const d = await drawParsed(source, options, (pre, limits) =>
+    parseC4Beta(source, { preprocessed: pre, ...limits })
+  );
+  return {
+    svg: d.svg,
+    model: d.parse.model,
+    ast: d.parse.ast,
+    layout: d.layout,
+    config: d.config,
+    warnings: d.warnings,
+    rejected: d.parse.diagnostics.some((x) => x.severity === 'error'),
+    gradient: d.gradient,
+    themeStyle: d.themeStyle,
+  };
+}
+
+/** The limits `parse` takes: the three caps. */
+type ParseLimits = Pick<Limits, 'maxNodes' | 'maxEdges' | 'maxDepth'>;
+
+async function drawParsed<M extends C4AnyModel, A extends AstNode>(
+  source: string,
+  options: RenderC4Options,
+  parseWith: (pre: PreprocessResult, limits: ParseLimits) => ParseResult<M, A>
+): Promise<Drawn<M, A>> {
   const warnings: Warning[] = [];
   const warn = (w: Warning): void => void warnings.push(w);
   const pre = preprocess(source);
   const config = c4TestConfig(pre, options.config);
   const limits = resolveLimits(config);
-  const parse = c4.parse(source, { config, preprocessed: pre, limits });
+  const parse = parseWith(pre, limits);
   const idPrefix = options.idPrefix ?? 'mermaid-0';
   const choice = resolveThemeName(config.theme, warn);
   const theme = createTheme(await loadTheme(choice.name), {
@@ -93,12 +160,10 @@ export async function renderC4ForTest(
   c4.render(parse.model, layout, ctx, w);
   return {
     svg: w.finish(),
-    model: parse.model,
-    ast: parse.ast,
+    parse,
     layout,
     config,
     warnings,
-    rejected: parse.diagnostics.some((d) => d.severity === 'error'),
     gradient: gradient?.id ?? false,
     themeStyle: theme.autoDeclarations() !== undefined,
   };

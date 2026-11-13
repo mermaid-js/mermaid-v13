@@ -72,11 +72,12 @@ describe('agentflow diagrams through the public API (#550)', () => {
     expect(m.renderSync(TEXT).diagramType).toBe('agentflow');
   });
 
-  it('keeps v12’s detector pattern and place, fourth, after architecture and before c4', () => {
+  it('keeps v12’s detector pattern and place, fourth, after architecture and before c4beta and c4', () => {
     const types = DETECTORS.map((d) => d.type);
     expect(types.indexOf('agentflow')).toBe(3);
     expect(types.indexOf('agentflow')).toBe(types.indexOf('architecture') + 1);
-    expect(types.indexOf('c4')).toBe(types.indexOf('agentflow') + 1);
+    // c4-beta (spec #730) sits right after it, before c4.
+    expect(types.indexOf('c4beta')).toBe(types.indexOf('agentflow') + 1);
     expect(DETECTORS.find((d) => d.type === 'agentflow')?.pattern.source).toBe(
       '^\\s*agentflow-beta\\b'
     );

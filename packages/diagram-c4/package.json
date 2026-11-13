@@ -54,7 +54,8 @@
     "plugin": "diagram",
     "id": "c4",
     "types": [
-      "c4"
+      "c4",
+      "c4beta"
     ],
     "formats": [
       "svg",

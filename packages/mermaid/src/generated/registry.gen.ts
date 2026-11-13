@@ -35,6 +35,14 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     loadAscii: () => import('@mermaid-js/diagram-agentflow/ascii').then((m) => m.ascii),
   },
   {
+    type: 'c4beta',
+    pattern: /^\s*c4-beta(?![\w-])/,
+    id: 'c4',
+    formats: ['svg', 'ascii'],
+    load: () => import('@mermaid-js/diagram-c4').then((m) => m.c4),
+    loadAscii: () => import('@mermaid-js/diagram-c4/ascii').then((m) => m.ascii),
+  },
+  {
     type: 'c4',
     pattern: /^\s*C4(Context|Container|Component|Dynamic|Deployment)\b/,
     id: 'c4',

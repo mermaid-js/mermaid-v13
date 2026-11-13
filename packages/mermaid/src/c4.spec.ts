@@ -76,8 +76,10 @@ describe('C4 diagrams through the public API (#542)', () => {
 
   it('keeps v12’s place, after agentflow and before kanban, with D451’s anchored detector', () => {
     const types = DETECTORS.map((d) => d.type);
-    expect(types.indexOf('c4')).toBe(4);
-    expect(types.indexOf('c4')).toBe(types.indexOf('agentflow') + 1);
+    // c4-beta (spec #730) sits between agentflow and c4.
+    expect(types.indexOf('c4')).toBe(5);
+    expect(types.indexOf('c4')).toBe(types.indexOf('c4beta') + 1);
+    expect(types.indexOf('c4beta')).toBe(types.indexOf('agentflow') + 1);
     expect(types.indexOf('kanban')).toBe(types.indexOf('c4') + 1);
     expect(DETECTORS.find((d) => d.type === 'c4')?.pattern.source).toBe(
       '^\\s*C4(Context|Container|Component|Dynamic|Deployment)\\b'
