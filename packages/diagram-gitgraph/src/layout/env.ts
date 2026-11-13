@@ -74,7 +74,7 @@ export interface Env {
   };
   /**
    * Plain text at (x, y) top-left, one line per entry of `lines` as the model holds them. Entity
-   * codes are decoded here (D560), so the text is measured and drawn as its characters.
+   * codes are decoded here (D561), so the text is measured and drawn as its characters.
    */
   text(lines: readonly string[], font: FontKey, x?: number, y?: number): GitText;
 }

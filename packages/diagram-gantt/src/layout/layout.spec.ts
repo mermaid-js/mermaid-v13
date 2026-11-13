@@ -105,7 +105,7 @@ describe('gantt layout follows ganttRenderer.js', () => {
   });
 
   it('shows markup in task labels as written, decodes entities, and breaks section titles on <br>', () => {
-    // The model holds an entity code as `&name;` (`#amp;` and a typed `&amp;` alike, D560).
+    // The model holds an entity code as `&name;` (`#amp;` and a typed `&amp;` alike, D561).
     const { layout } = lay(
       fixture()
         .addSection('One<br>Two</br>Three')

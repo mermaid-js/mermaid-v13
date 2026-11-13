@@ -27,7 +27,7 @@ export function numericEntity(text: string, i: number, end: number): boolean {
  * read the placeholders its parser saw. A name core cannot decode stays `#name;` (D559). This is
  * the parser kit's `cook` for the box pass's rewritten lines, which are not a source range. It
  * is not core's `decodeEntities` and stays: the model keeps v12's `&name;` text, and the layout
- * and the text output decode that (D560).
+ * and the text output decode that (D561).
  */
 export function ampEntities(text: string): string {
   if (!text.includes('#')) return text;

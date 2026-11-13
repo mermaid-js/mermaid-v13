@@ -42,7 +42,7 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
 
 ### Text
 
-- **Entity codes are decoded (D560):** `#35;`, `#quot;`, `#lt;` and `#9829;` in the title, a
+- **Entity codes are decoded (D561):** `#35;`, `#quot;`, `#lt;` and `#9829;` in the title, a
   section name or a task label draw `#`, `"`, `<` and `♥`, as in v12. Markup and `\n` are still
   shown as written, as v12 drew them with `.text()`. A reference typed with `&` (`&amp;`) is
   decoded too; v12 showed it as written. A `#name;` Mermaid does not know stays as written

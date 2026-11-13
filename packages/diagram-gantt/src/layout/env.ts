@@ -86,7 +86,7 @@ const textOf = (value: unknown): string | undefined =>
 
 // Task labels are plain text, as v12 drew them with `.text()`: markup and `\n` are shown as
 // written, so they are escaped before core's label layout reads them. Entity codes are decoded
-// first (D560): the parser hands `#35;` on as `&#35;`, which draws `#`, and the `<` of a `#lt;`
+// first (D561): the parser hands `#35;` on as `&#35;`, which draws `#`, and the `<` of a `#lt;`
 // is plain text like a typed one. A math span (`$$…$$`, D176) an inline-box provider takes is
 // passed through untouched; one none takes is shown as written too. Icons (D292) contain none
 // of the escaped characters.

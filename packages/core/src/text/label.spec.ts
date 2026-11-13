@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { streamWriter } from '../svg/index.ts';
-import { Style, layoutLabel, tableMeasurer, type FontKey, type MeasuredLabel } from './index.ts';
+import {
+  Style,
+  layoutLabel,
+  tableMeasurer,
+  type FontKey,
+  type LabelMarkup,
+  type LabelOptions,
+  type MeasuredLabel,
+} from './index.ts';
 
 // Arial at 10px: a 5.56, space 2.78, x 5, - 3.33; characters outside Latin-1 (•, ◦) take the
 // mean a–z advance, 4.89; CJK and emoji take one em, 10. Bold a is also 5.56.
@@ -398,6 +406,89 @@ describe('markdown bullet lists (R-TEXT-11)', () => {
 
   it('needs a space after the marker', () => {
     expect(texts(md('-one\n*two*'))).toEqual(['-one', 'two']);
+  });
+});
+
+describe('label modes (D560)', () => {
+  const SOURCE = '- **b** _i_ `c` \\*';
+  const mode = (markup?: LabelMarkup, raw = SOURCE): MeasuredLabel =>
+    layoutLabel(raw, arial, Infinity, tableMeasurer, { markup });
+
+  it('plain, the default, draws emphasis markers, backticks and a leading dash as written', () => {
+    expect(runs(mode())).toEqual([[[SOURCE, 0]]]);
+    expect(runs(mode('plain'))).toEqual([[[SOURCE, 0]]]);
+    expect(mode('plain').left).toBeUndefined();
+  });
+
+  it('emphasis styles ** * __ _ and leaves bullets, inline code and escapes as written', () => {
+    const box = mode('emphasis');
+    expect(runs(box)).toEqual([
+      [
+        ['- ', 0],
+        ['b', Style.Bold],
+        [' ', 0],
+        ['i', Style.Italic],
+        [' `c` \\*', 0],
+      ],
+    ]);
+    expect(box.left).toBeUndefined();
+    expect(runs(mode('emphasis', '__b__ *i*'))).toEqual([
+      [
+        ['b', Style.Bold],
+        [' ', 0],
+        ['i', Style.Italic],
+      ],
+    ]);
+  });
+
+  it('emphasis breaks lines as a plain label does', () => {
+    expect(texts(mode('emphasis', 'a\\n*b*<br>c'))).toEqual(['a', 'b', 'c']);
+  });
+
+  it('markdown adds bullets, inline code and backslash escapes', () => {
+    const box = mode('markdown');
+    expect(runs(box)).toEqual([
+      [
+        ['• ', 0],
+        ['b', Style.Bold],
+        [' ', 0],
+        ['i', Style.Italic],
+        [' ', 0],
+        ['c', Style.Mono],
+        [' *', 0],
+      ],
+    ]);
+    expect(box.left).toBe(true);
+  });
+
+  it('reads markdown: true as markup markdown', () => {
+    expect(layoutLabel(SOURCE, arial, Infinity, tableMeasurer, { markdown: true })).toEqual(
+      mode('markdown')
+    );
+  });
+});
+
+describe('backslashBreak (D560)', () => {
+  const written = (raw: string, options: LabelOptions): string[] =>
+    texts(layoutLabel(raw, arial, Infinity, tableMeasurer, options));
+
+  it('breaks at a written \\n by default', () => {
+    expect(written('a\\nb', {})).toEqual(['a', 'b']);
+    expect(written('a\\nb', { backslashBreak: true })).toEqual(['a', 'b']);
+  });
+
+  it('keeps a written \\n when false, in plain and emphasis labels', () => {
+    expect(written('a\\nb', { backslashBreak: false })).toEqual(['a\\nb']);
+    expect(written('*a*\\nb', { backslashBreak: false, markup: 'emphasis' })).toEqual(['a\\nb']);
+  });
+
+  it('still breaks at <br> and at a newline when false', () => {
+    expect(written('a\\nb<br/>c\nd\r\ne', { backslashBreak: false })).toEqual([
+      'a\\nb',
+      'c',
+      'd',
+      'e',
+    ]);
   });
 });
 

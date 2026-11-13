@@ -131,7 +131,7 @@ describe('treeView render: structure', () => {
       assertInert(svg);
       const model = (await api.prepare(source)).parse.model as TreeViewModel;
       const labels = byClass(tree, 'treeView-node-label');
-      // Entity codes are drawn as their characters (D560).
+      // Entity codes are drawn as their characters (D561).
       expect(labels.map((l) => textOf(tree, l))).toEqual([
         '/',
         ...model.nodes.map((n) => decodeEntities(n.name)),

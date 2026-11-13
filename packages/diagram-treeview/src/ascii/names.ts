@@ -4,7 +4,7 @@
 // either end, an annotation mark, a `%%`, a quote at its start, a leading keyword) is put in
 // `"…"`, else `'…'`, as its author had to write it; the parser decides (`parser/written.ts`, as
 // the facet's rename). A name holding a line break or another control is written bare with a
-// blank for each: no form reads back. Entity codes are decoded first (D560), as the SVG draws
+// blank for each: no form reads back. Entity codes are decoded first (D561), as the SVG draws
 // them: `#35;` is written `#`, and the form is chosen for the decoded name.
 import { decodeEntities } from '@mermaid-js/core/text';
 import type { TreeViewNode } from '../model.ts';
