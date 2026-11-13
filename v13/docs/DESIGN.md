@@ -343,8 +343,19 @@ Open question: Trebuchet MS isn't installed on most Linux systems, so browser ou
 
 ### 5.3 Labels
 
-`layoutLabel(raw, font, maxWidth, measurer) → LabelBox { lines: Run[][], width, height }`:
+`layoutLabel(raw, font, maxWidth, measurer, options?) → LabelBox { lines: Run[][], width, height }`:
 
+- **Modes (D560):** `options.markup` says what a label's source may hold besides text. The diagram chooses it per label kind, from what v12 does with that label.
+
+  | `markup` | Handles | v12 equivalent |
+  | --- | --- | --- |
+  | `plain` (default) | character references, `<br>`, the `<b>`/`<i>` HTML subset | text drawn without `createText` Markdown |
+  | `emphasis` | plain, plus `**`, `*`, `__`, `_` | a label without backticks passed through `createText` |
+  | `markdown` | emphasis, plus inline code, bullet lists and backslash escapes | a Markdown string (`` "`…`" ``) |
+
+  `emphasis` splits lines as `plain` does and never reads `- ` as a bullet or a backtick as code. `markdown: true` is still read as `markup: 'markdown'` until every caller has moved, then goes.
+
+- **Written `\n` (D560):** in `plain` and `emphasis`, a backslash and an `n` written as two characters break the line, as `<br>` and a newline do. `options.backslashBreak: false` keeps them as text (v12 sequence draws them). A `markdown` label never breaks there.
 - **Fast path:** a plain label without `<`, `&`, `*`, `_` or `` ` `` is measured once and wrapped only if it overflows (from Pele).
 - **Markdown strings:** bold, italic, inline code and line breaks (R-TEXT-2), plus bullet lists (R-TEXT-11): a line starting with `- ` or `* ` inside a markdown string becomes a list run, with one nesting level from leading indentation. It is drawn as a `•` (or `◦` when nested) followed by a hanging indent of the bullet width plus one space; wrapped continuation lines align to the text, not the bullet. Plain labels never treat `- ` as a bullet.
 - **HTML subset:** `<br>`, `<b>`, `<strong>`, `<i>`, `<em>` become style bits. Other known tags are dropped and their text kept. Anything else stays as literal text (R-TEXT-3). The final list waits on O-5.

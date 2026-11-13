@@ -38,9 +38,23 @@ export interface MeasuredLabel extends LabelBox {
   readonly left?: boolean;
 }
 
+/**
+ * What a label's source may hold besides text (D560). `plain`: character references, `<br>` and
+ * the `<b>`/`<i>` HTML subset. `emphasis`: plain, plus `**`, `*`, `__` and `_`. `markdown`:
+ * emphasis, plus inline code, bullet items and backslash escapes.
+ */
+export type LabelMarkup = 'plain' | 'emphasis' | 'markdown';
+
 export interface LabelOptions {
-  /** The label is a markdown string (`"`…`"` in flowcharts). Default false. */
+  /** The label's mode. Default `plain`. A markdown string (`"`…`"`) is `markdown`. */
+  readonly markup?: LabelMarkup;
+  /** @deprecated Use `markup: 'markdown'`. Goes when every caller has moved (D560). */
   readonly markdown?: boolean;
+  /**
+   * Whether a backslash and an `n`, written as two characters, break the line in the `plain` and
+   * `emphasis` modes. Default true. A `markdown` label never breaks there.
+   */
+  readonly backslashBreak?: boolean;
   /** Style bits every run starts from. Default 0. */
   readonly style?: StyleBits;
   /**
@@ -119,7 +133,9 @@ export function layoutLabel(
   const text = src.trim();
   if (text === '') return box([], [], []);
 
-  const markdown = options.markdown === true;
+  const markdown = !!options.markdown || options.markup === 'markdown';
+  // What `inline` reads: 0 plain, 1 emphasis, 2 markdown.
+  const level = markdown ? 2 : +(options.markup === 'emphasis');
   if (!spans && !RE_SLOW.test(text) && !(markdown && RE_BULLET.test(text))) {
     const width = measurer.width(text, font, base);
     if (width <= maxWidth) return box([[run(text, base, width)]], [0], [width]);
@@ -129,8 +145,10 @@ export function layoutLabel(
   const indents: number[] = [];
   const widths: number[] = [];
   const tags: Tags = { bold: 0, italic: 0 };
-  for (const { source, bullet } of markdown ? markdownLines(src) : plainLines(text)) {
-    const pieces = tidy(inline(source, base, tags, markdown, spans?.boxes));
+  for (const { source, bullet } of markdown
+    ? markdownLines(src)
+    : plainLines(text, options.backslashBreak)) {
+    const pieces = tidy(inline(source, base, tags, level, spans?.boxes));
     let indent = 0;
     let hang = 0;
     if (bullet !== undefined) {
@@ -192,8 +210,12 @@ const BULLETS = ['\u2022 ', '\u25e6 '] as const;
 const RE_BULLET = /^([ \t]*)[-*] +(?=\S)/;
 const RE_MD_BREAK = /<br\s*\/?>|\r\n?/gi;
 
-function plainLines(text: string): SourceLine[] {
-  return text.split(RE_PLAIN_BREAK).map((source) => ({ source }));
+/** Lines of a plain or emphasis label. Without `backslashBreak` a written `\n` stays text. */
+function plainLines(text: string, backslashBreak = true): SourceLine[] {
+  const lines = backslashBreak
+    ? text.split(RE_PLAIN_BREAK)
+    : text.replace(RE_MD_BREAK, '\n').split('\n');
+  return lines.map((source) => ({ source }));
 }
 
 /**
@@ -250,14 +272,15 @@ const RE_ESCAPABLE = /[!-/:-@[-`{-~]/;
 const RE_WORD = /\w/;
 
 /**
- * Splits one line of source into styled pieces: HTML subset tags and character references, and
- * in markdown strings emphasis, inline code and backslash escapes. Emphasis stays in its line.
+ * Splits one line of source into styled pieces: HTML subset tags and character references, from
+ * `level` 1 (`emphasis`) emphasis, and at 2 (`markdown`) inline code and backslash escapes.
+ * Emphasis stays in its line.
  */
 function inline(
   source: string,
   base: StyleBits,
   tags: Tags,
-  markdown: boolean,
+  level: number,
   boxes?: readonly LabelBoxSpan[]
 ): Piece[] {
   const out: Piece[] = [];
@@ -320,11 +343,11 @@ function inline(
         i += entity[1];
         continue;
       }
-    } else if (markdown && ch === '\\' && RE_ESCAPABLE.test(source[i + 1] ?? '')) {
+    } else if (level > 1 && ch === '\\' && RE_ESCAPABLE.test(source[i + 1] ?? '')) {
       text += source[i + 1];
       i += 2;
       continue;
-    } else if (markdown && ch === '`') {
+    } else if (level > 1 && ch === '`') {
       const end = source.indexOf('`', i + 1);
       if (end > i + 1) {
         if (text !== '') out.push({ text, style });
@@ -333,7 +356,7 @@ function inline(
         i = end + 1;
         continue;
       }
-    } else if (markdown && (ch === '*' || ch === '_')) {
+    } else if (level && (ch === '*' || ch === '_')) {
       const double = source[i + 1] === ch;
       const bit = double ? Style.Bold : Style.Italic;
       const len = double ? 2 : 1;
