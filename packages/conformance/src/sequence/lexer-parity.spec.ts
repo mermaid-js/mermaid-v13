@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { JISON_NAMES, sequenceTokens } from '@mermaid-js/diagram-sequence';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
 import { sequenceGateCorpus } from './corpus.ts';
@@ -53,7 +53,7 @@ describe('sequence lexer parity with mermaid@12 (jison)', () => {
       if (!v12) continue;
       compared++;
       if (item.id.startsWith('e2e') && !item.id.endsWith('(commented)')) e2e++;
-      const expected = v12.map(([n, i]): JisonToken => [n, decodeEntities(i)]);
+      const expected = v12.map(([n, i]): JisonToken => [n, v12TokenText(i)]);
       const actual = v13Tokens(item.source);
       if (JSON.stringify(expected) === JSON.stringify(actual)) continue;
       let at = 0;

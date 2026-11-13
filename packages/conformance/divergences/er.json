@@ -1,0 +1,10 @@
+[
+  {
+    "id": "e2e/diagrams/er-diagram/baseline/text/entity-names.mmd",
+    "inputHash": "sha256:5b9ad1dc6289d89f",
+    "kind": "model",
+    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D559",
+    "since": "2026-11-13"
+  }
+]

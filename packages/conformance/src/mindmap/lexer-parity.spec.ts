@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { JISON_NAMES, mindmapTokens } from '@mermaid-js/diagram-mindmap';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
 import { mindmapGateCorpus } from './corpus.ts';
@@ -69,7 +69,7 @@ describe('mindmap lexer parity with mermaid@12 (jison)', () => {
         if (item.id.startsWith('e2e')) e2e++;
         if (item.id.startsWith('v12-')) specs++;
       }
-      const expected = v12.map(([n, i]): JisonToken => [n, decodeEntities(i)]);
+      const expected = v12.map(([n, i]): JisonToken => [n, v12TokenText(i)]);
       const actual = v13Tokens(item.source);
       if (JSON.stringify(expected) === JSON.stringify(actual)) continue;
       let at = 0;
@@ -83,8 +83,9 @@ describe('mindmap lexer parity with mermaid@12 (jison)', () => {
     }
     process.stdout.write(`lexer parity: ${compared} of ${items.length} sources lexed by v12\n`);
     // Every e2e fixture and every harvested spec and syntax-page string reaches the lexer.
-    // 85, #328's 4 icon baselines, 14 from the corpus cleanup, #649's long word and #781's 2.
-    expect(e2e).toBe(106);
+    // 85, #328's 4 icon baselines, 14 from the corpus cleanup, #649's long word, #781's 2 and
+    // #783's icon text.
+    expect(e2e).toBe(107);
     expect(specs).toBe(46);
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
     expect(

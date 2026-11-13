@@ -15,7 +15,7 @@
  * - the front matter `title` is left out: core reads it, and the oracle never passes it on;
  * - rendering fields (`look`, `shape`, `labelType`, colour indexes) are left out.
  */
-import { decodeEntities as d } from '../flowchart/v12.ts';
+import { v12DecodeEntities as d } from '../v12-entities.ts';
 
 /** `diagram.type` values mermaid\@12 reports for ER sources. */
 export const ER_V12_TYPES = ['er'];

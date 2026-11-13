@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { JISON_NAMES, lexClass } from '@mermaid-js/diagram-class';
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
 
@@ -41,7 +41,7 @@ function v13Tokens(source: string): JisonToken[] {
     const name = JISON_NAMES[l.tokens.kind[i] ?? -1];
     const s = l.textStart[i] ?? -1;
     if (!name || s < 0) continue;
-    out.push([name, decodeEntities(l.v12.text.slice(s, l.textEnd[i] ?? s))]);
+    out.push([name, v12TokenText(l.v12.text.slice(s, l.textEnd[i] ?? s))]);
   }
   return cut(out);
 }
@@ -105,7 +105,7 @@ describe('class lexer parity with mermaid@12 (jison)', () => {
         diffs.push({ id: `${item.id} (lexed text)`, at: 0, v12: [['TEXT', input ?? '']], v13: [] });
         continue;
       }
-      const expected = cut(v12.map(([n, i]): JisonToken => [n, decodeEntities(i)]));
+      const expected = cut(v12.map(([n, i]): JisonToken => [n, v12TokenText(i)]));
       const actual = v13Tokens(item.source);
       if (JSON.stringify(expected) === JSON.stringify(actual)) continue;
       let at = 0;

@@ -22,5 +22,69 @@
     "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the treeView is rejected rather than silently cut (core preprocess behaviour, as for pie, radar, treemap and wardley; the lexer gate excludes the same cases, #571).",
     "owner": "#572",
     "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/tree-view/baseline/text/entity-codes-box.mmd",
+    "inputHash": "sha256:fe1b116749943bfa",
+    "kind": "model",
+    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D559",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/diagrams/tree-view/baseline/text/entity-codes.mmd",
+    "inputHash": "sha256:045fa56cf28b0daa",
+    "kind": "model",
+    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D559",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/text/entity-codes-box.mmd",
+    "inputHash": "sha256:fe1b116749943bfa",
+    "kind": "model",
+    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D559",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/text/entity-codes.mmd",
+    "inputHash": "sha256:045fa56cf28b0daa",
+    "kind": "model",
+    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D559",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/text/entity-codes-box.mmd (CRLF)",
+    "inputHash": "sha256:f7e6b869dfdb383a",
+    "kind": "model",
+    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D559",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/text/entity-codes.mmd (CRLF)",
+    "inputHash": "sha256:378ac793084321ef",
+    "kind": "model",
+    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D559",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/text/entity-codes-box.mmd (commented)",
+    "inputHash": "sha256:7e15dae96a93949a",
+    "kind": "model",
+    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D559",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/text/entity-codes.mmd (commented)",
+    "inputHash": "sha256:36123359c734d3a0",
+    "kind": "model",
+    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D559",
+    "since": "2026-11-13"
   }
 ]

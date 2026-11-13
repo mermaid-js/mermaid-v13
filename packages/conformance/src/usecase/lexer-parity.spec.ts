@@ -8,7 +8,7 @@ import {
   usecaseTokens,
   usecaseView,
 } from '@mermaid-js/diagram-usecase/testing';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12TokenText } from '../v12-entities.ts';
 import type { CorpusItem } from '../types.ts';
 import { loadOracle } from '../oracle.ts';
 import { usecaseCases, usecaseCorpus, usecaseGateCorpus } from './corpus.ts';
@@ -83,7 +83,7 @@ const ERROR = 'LEXICAL_ERROR';
 const bodyOf = (src: string) => src.slice(/^---[\s\S]*?\n---[^\S\n]*\n/.exec(src)?.[0].length ?? 0);
 
 function v12Stream(lexed: UsecaseLex): ChevrotainPair[] {
-  const tokens = lexed.tokens.map(([n, i]): ChevrotainPair => [n, decodeEntities(i)]);
+  const tokens = lexed.tokens.map(([n, i]): ChevrotainPair => [n, v12TokenText(i)]);
   if (lexed.errorAt !== undefined) tokens.push([ERROR, `@${lexed.errorAt}`]);
   return tokens;
 }
@@ -208,9 +208,9 @@ describe('usecase lexer parity with mermaid@12.2.0 (Chevrotain)', () => {
     expect(accepted).toEqual([]);
     expect(unreached.sort()).toEqual([...notReached].sort());
     // Every e2e fixture reaches the usecase lexer: 31 in `nightly-check/` (8 of them the
-    // parser's, `parser-*.mmd`, #563), 11 in `pr-check/` (one from #649), 12 in `baseline/`
-    // (#567).
-    expect(e2e).toBe(54);
+    // parser's, `parser-*.mmd`, #563), 11 in `pr-check/` (one from #649), 13 in `baseline/`
+    // (#567, and the entity names of #778).
+    expect(e2e).toBe(55);
     expect(errors).toBeGreaterThan(20);
     expect(compared).toBe(items.length - notReached.size);
   }, 300_000);

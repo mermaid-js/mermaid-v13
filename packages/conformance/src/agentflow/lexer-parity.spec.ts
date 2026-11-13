@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { agentflowTokens, AgentflowTokenKind, JISON_NAMES } from '@mermaid-js/diagram-agentflow';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonLexerOracle, JisonToken } from '../jison/oracle.ts';
 import { agentflowGateCorpus, VARIANTS } from './corpus.ts';
@@ -102,7 +102,7 @@ async function v12Tokens(
   if (!v12) return undefined;
   const named = v12.map(([n, i]): JisonToken => [n === LEXICAL_ERROR ? 'INVALID' : n, i]);
   // Merged first: a placeholder split over per-character tokens decodes only when whole.
-  return normalise(cutEntityError(named)).map(([n, i]): JisonToken => [n, decodeEntities(i)]);
+  return normalise(cutEntityError(named)).map(([n, i]): JisonToken => [n, v12TokenText(i)]);
 }
 
 /**

@@ -3,36 +3,11 @@
 // text output, and a name core does not know as the author wrote it (D559).
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { createMermaid } from './index.ts';
+import { corpusLabels } from './testing/labels.ts';
 
-const fixture = (path: string): string =>
-  readFileSync(new URL(`../../../e2e/diagrams/${path}`, import.meta.url), 'utf8');
+const { drawnBy: svgTexts, textOf } = corpusLabels(readFileSync);
 
-/** The text of every `<text>` element as a reader sees it, its lines joined by a blank. */
-function drawn(svg: string): string[] {
-  return [...svg.matchAll(/<text\b[^>]*>(.*?)<\/text>/gs)].map((m) =>
-    (m[1] ?? '')
-      .replace(/<\/tspan>\s*<tspan\b[^>]*>/g, ' ')
-      .replace(/<[^>]+>/g, '')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&amp;/g, '&')
-  );
-}
-
-async function svgTexts(path: string): Promise<string[]> {
-  const m = createMermaid();
-  m.initialize({ deterministic: true });
-  const r = await m.render('x', fixture(path));
-  expect(r.warnings).toEqual([]);
-  return drawn(r.svg);
-}
-
-async function textOutput(path: string): Promise<string> {
-  const r = await createMermaid().render('x', fixture(path), { format: 'ascii' });
-  return r.text;
-}
+const textOutput = async (path: string): Promise<string> => (await textOf(path)).text;
 
 describe('entity codes in plain-text diagrams (#760, #656, D559)', () => {
   it('a gantt chart draws them in the title, a section name and task labels', async () => {
@@ -48,7 +23,7 @@ describe('entity codes in plain-text diagrams (#760, #656, D559)', () => {
   });
 
   it('a gitGraph draws them in commit ids, tags and branch names', async () => {
-    expect(await svgTexts('git/baseline/text/entity-codes.mmd')).toEqual(
+    expect(await svgTexts('git/baseline/text/entity-codes-in-ids-and-tags.mmd')).toEqual(
       expect.arrayContaining([
         'a#b/c',
         'heart ♥',

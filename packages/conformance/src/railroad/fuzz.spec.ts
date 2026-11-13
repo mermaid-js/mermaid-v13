@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { runParity } from '../runner.ts';
+import { hasUnknownEntityName } from '../v12-entities.ts';
 import type { CorpusItem } from '../types.ts';
 import { railroadCorpus } from './corpus.ts';
 import { FUZZ_NOTATIONS, fuzzCorpus, fuzzInputs } from './fuzz.ts';
@@ -20,7 +21,8 @@ const DIRECTIVE = /%{2}{\s*(?:(\w+)\s*:|(\w+))\s*(?:(\w+)|((?:(?!}%{2}).|\r?\n)*
  * and core read differently (unclosed, over lines, or cut short by v12), or a front matter
  * block that v12 and core read differently (an empty one, listed in `divergences/railroad.json`; an
  * indented one, which core reads and v12 did not, as radar's divergences list; YAML that core's
- * reader refuses).
+ * reader refuses). So does a `#name;` core cannot decode, which v13 keeps as written and v12 made
+ * `&name;` (D559).
  */
 function coreDifference(source: string): boolean {
   // Core's own errors: an unclosed front matter or directive, front matter its YAML reader
@@ -34,7 +36,7 @@ function coreDifference(source: string): boolean {
     const close = source.indexOf('}%%', m.index + 3);
     if (m.index + m[0].length !== close + 3) return true;
   }
-  return /^\s*---\s*\r?\n---/.test(source);
+  return /^\s*---\s*\r?\n---/.test(source) || hasUnknownEntityName(source);
 }
 
 /**
@@ -62,7 +64,7 @@ describe.each(FUZZ_NOTATIONS)('railroad fuzz parity ($notation)', (n) => {
     const show = (id: string) => JSON.stringify(items.find((i) => i.id === id)?.source);
     const diverging = report.unlisted.map((d) => `${d.id} ${d.kind}: ${show(d.id)} (${d.detail})`);
     process.stdout.write(
-      `railroad ${n.notation} fuzz: ${items.length} inputs, ${accepted} accepted by v12, ${core} left out (core's preprocess)\n`
+      `railroad ${n.notation} fuzz: ${items.length} inputs, ${accepted} accepted by v12, ${core} left out (core's preprocess and entity names)\n`
     );
     expect(diverging.slice(0, 10)).toEqual([]);
     expect(core).toBeLessThan(COUNT / 10);

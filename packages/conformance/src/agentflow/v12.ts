@@ -10,7 +10,7 @@
  * - what the renderer reads besides (`styling`): the class definitions, the accessibility
  *   texts, and each vertex's and edge's styles and classes, from the DB's getters.
  */
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12DecodeEntities } from '../v12-entities.ts';
 
 /** `diagram.type` values mermaid\@12 reports for agentflow sources. */
 export const AGENTFLOW_V12_TYPES = ['agentflow'];
@@ -46,11 +46,11 @@ interface AgentflowDbV12 {
 
 /** `value` with every string in it (keys included) decoded. */
 export function decoded(value: unknown): unknown {
-  if (typeof value === 'string') return decodeEntities(value);
+  if (typeof value === 'string') return v12DecodeEntities(value);
   if (Array.isArray(value)) return value.map(decoded);
   if (value === null || typeof value !== 'object') return value;
   const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(value)) out[decodeEntities(k)] = decoded(v);
+  for (const [k, v] of Object.entries(value)) out[v12DecodeEntities(k)] = decoded(v);
   return out;
 }
 
@@ -72,8 +72,8 @@ export function agentflowV12Snapshot(dbValue: unknown): AgentflowSnapshot {
     id: d.id,
     // D461: v12 reported SHAPE_REMOVED as an error yet drew the diagram; v13 warns.
     severity: d.id === 'SHAPE_REMOVED' ? 'warning' : d.severity,
-    message: decodeEntities(d.message),
-    nodeId: d.nodeId === undefined ? null : decodeEntities(d.nodeId),
+    message: v12DecodeEntities(d.message),
+    nodeId: d.nodeId === undefined ? null : v12DecodeEntities(d.nodeId),
   }));
   return {
     direction: m.direction ?? null,

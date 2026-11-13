@@ -16,7 +16,7 @@ import {
   type ParsedAgentflow,
 } from '@mermaid-js/diagram-agentflow/testing';
 import elkLayouts from '@mermaid-js/layout-elk';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12DecodeEntities } from '../v12-entities.ts';
 import { loadOracle } from '../oracle.ts';
 import { agentflowCases, agentflowCorpus } from './corpus.ts';
 
@@ -109,8 +109,10 @@ describe('agentflow layout over parser-produced fixtures', () => {
           getData(): { nodes: { id: string }[]; edges: { start: string; end: string }[] };
         }
       ).getData();
-      const drawn = new Set(data.nodes.map((n) => decodeEntities(n.id)));
-      const old = data.edges.map((e) => [decodeEntities(e.start), decodeEntities(e.end)] as const);
+      const drawn = new Set(data.nodes.map((n) => v12DecodeEntities(n.id)));
+      const old = data.edges.map(
+        (e) => [v12DecodeEntities(e.start), v12DecodeEntities(e.end)] as const
+      );
       const { layout } = await laidOut(f, layered);
       const now = layout.agentflow.edges.map((e) => `${e.source}>${e.target}`);
       // The one difference (GAPS #547): v12 kept an edge whose end it drew no node for (the

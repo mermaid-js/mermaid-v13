@@ -86,5 +86,37 @@
     "reason": "v12 turned a `#name;` code into `&name;` in its SVG, which a browser draws from the full HTML table (`#alpha;` as α, `#frac12;` as ½); v13 decodes the names core's entity table knows (`entityAt`: about 50, and every numeric reference) and draws any other as written, `&alpha;` (GAPS #493, MIGRATION.md).",
     "owner": "#493",
     "since": "2026-11-08"
+  },
+  {
+    "id": "e2e/diagrams/wardley/nightly-check/parser-entity-codes.mmd",
+    "inputHash": "sha256:c48141eb021fadaf",
+    "kind": "model",
+    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D559",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/nightly-check/parser-entity-codes.mmd",
+    "inputHash": "sha256:c48141eb021fadaf",
+    "kind": "model",
+    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D559",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/nightly-check/parser-entity-codes.mmd (CRLF)",
+    "inputHash": "sha256:a4ca77d37b4fe779",
+    "kind": "model",
+    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D559",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/nightly-check/parser-entity-codes.mmd (commented)",
+    "inputHash": "sha256:e98c7aa5af4572d4",
+    "kind": "model",
+    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D559",
+    "since": "2026-11-13"
   }
 ]

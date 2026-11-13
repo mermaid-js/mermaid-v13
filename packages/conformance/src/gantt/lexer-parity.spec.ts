@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ganttTokens, JISON_NAMES } from '@mermaid-js/diagram-gantt';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
 import { ganttGateCorpus } from './corpus.ts';
@@ -84,7 +84,7 @@ describe('gantt lexer parity with mermaid@12 (jison)', () => {
         if (item.id.startsWith('e2e')) e2e++;
         if (item.id.startsWith('v12-')) specs++;
       }
-      const expected = v12.map(([n, i]): JisonToken => [n, decodeEntities(i)]);
+      const expected = v12.map(([n, i]): JisonToken => [n, v12TokenText(i)]);
       const actual = v13Tokens(item.source);
       if (JSON.stringify(expected) === JSON.stringify(actual)) continue;
       let at = 0;

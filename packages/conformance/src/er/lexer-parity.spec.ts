@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { erTokens, jisonName } from '@mermaid-js/diagram-er';
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
-import { decodeEntities as decode } from '../flowchart/v12.ts';
+import { v12TokenText as decode } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
 

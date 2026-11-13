@@ -12,7 +12,7 @@
  *   `getDiagramTitle()` holds no front-matter title (the v13 side leaves it out too). v13 strips
  *   one pair of surrounding quotes from it (D416), so a quoted title is a listed divergence.
  */
-import { decodeEntities as d } from '../flowchart/v12.ts';
+import { v12DecodeEntities as d } from '../v12-entities.ts';
 
 /** `diagram.type` values mermaid\@12 reports for venn sources (`vennDetector.ts`). */
 export const VENN_V12_TYPES = ['venn'];

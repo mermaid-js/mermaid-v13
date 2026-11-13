@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { Kind } from '@mermaid-js/core/parser-kit';
 import { JISON_NAMES, lexXyChart, tokenValue } from '@mermaid-js/diagram-xychart';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
 import { VARIANTS, xyChartGateCorpus } from './corpus.ts';
@@ -88,7 +88,7 @@ describe('xychart lexer parity with mermaid@12 (jison)', () => {
         diffs.push(`${item.id} (lexed text)\n  v12 ${JSON.stringify(input)}`);
         continue;
       }
-      const expected = cut(v12.map(([n, i]): JisonToken => [n, decodeEntities(i)]));
+      const expected = cut(v12.map(([n, i]): JisonToken => [n, v12TokenText(i)]));
       const actual = v13Tokens(item.source);
       if (JSON.stringify(expected) === JSON.stringify(actual)) continue;
       let at = 0;

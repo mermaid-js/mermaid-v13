@@ -70,5 +70,13 @@
     "reason": "v12 rejects `mermaid <id> {`; v13 parses an embedded diagram block (ADR-15, proof of concept).",
     "owner": "#664",
     "since": "2026-11-11"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/text/entity-names.mmd",
+    "inputHash": "sha256:354b82fb71bc19cb",
+    "kind": "model",
+    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D559",
+    "since": "2026-11-13"
   }
 ]

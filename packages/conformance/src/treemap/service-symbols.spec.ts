@@ -4,7 +4,10 @@ import type { TreemapRowNode } from '@mermaid-js/diagram-treemap';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
 import type { DocumentSnapshot } from '@mermaid-js/language-service';
+import { fileURLToPath } from 'node:url';
+import { modelDivergenceIds } from '../divergences.ts';
 import { loadOracle } from '../oracle.ts';
+import { DIVERGENCES_DIR } from '../registry.ts';
 import { treemapGateCorpus } from './corpus.ts';
 import { treemapV12Snapshot } from './v12.ts';
 import type { TreemapNodeSnapshot } from './v12.ts';
@@ -26,7 +29,11 @@ import type { TreemapNodeSnapshot } from './v12.ts';
  *
  * The service loads the facet through the generated registry row (treemap's manifest
  * `language` entry, #514).
+ *
+ * Sources with a listed model divergence (`divergences/`: a `#name;` kept as written, D559) are
+ * left out: their names differ from v12's by design.
  */
+const DIVERGENT = modelDivergenceIds(fileURLToPath(DIVERGENCES_DIR));
 const service = createLanguageService();
 await service.preload({ types: ['treemap'] });
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
@@ -48,6 +55,7 @@ describe('treemap definition, references and folding through the service match v
     let folds = 0;
     let unnamed = 0;
     for (const item of await treemapGateCorpus()) {
+      if (DIVERGENT.has(item.id)) continue;
       const v12 = await oracle.parse(item.source);
       if (!v12.accepted || v12.diagramType !== 'treemap') continue;
       const doc = service.update(`corpus:///${item.id}`, item.source);

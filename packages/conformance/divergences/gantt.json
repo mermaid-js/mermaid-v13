@@ -14,5 +14,13 @@
     "reason": "The `topAxis` statement (D273): v12's grammar calls `yy.TopAxis()`, which its DB does not define, so the text fails; v13 accepts it and draws the top axis.",
     "owner": "#385",
     "since": "2026-11-06"
+  },
+  {
+    "id": "e2e/diagrams/gantt/baseline/text/entity-codes.mmd",
+    "inputHash": "sha256:d61922069fdda307",
+    "kind": "model",
+    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D559",
+    "since": "2026-11-13"
   }
 ]

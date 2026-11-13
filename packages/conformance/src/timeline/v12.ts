@@ -9,7 +9,7 @@
  * - title and accessibility values from the common DB (`getCommonDb()`); the DB has no
  *   `setDiagramTitle`, so a front-matter title never reaches it.
  */
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12DecodeEntities } from '../v12-entities.ts';
 
 /** `diagram.type` values mermaid\@12 reports for timeline sources. */
 export const TIMELINE_V12_TYPES = ['timeline'];
@@ -47,14 +47,14 @@ export function timelineV12Snapshot(dbValue: unknown): TimelineSnapshot {
   const common = db.getCommonDb();
   return {
     direction: db.getDirection(),
-    title: decodeEntities(common.getDiagramTitle()),
-    accTitle: decodeEntities(common.getAccTitle()),
-    accDescr: decodeEntities(common.getAccDescription()),
-    sections: db.getSections().map(decodeEntities),
+    title: v12DecodeEntities(common.getDiagramTitle()),
+    accTitle: v12DecodeEntities(common.getAccTitle()),
+    accDescr: v12DecodeEntities(common.getAccDescription()),
+    sections: db.getSections().map(v12DecodeEntities),
     periods: db.getTasks().map((t) => ({
-      text: decodeEntities(t.task),
-      section: decodeEntities(t.section),
-      events: t.events.map(decodeEntities),
+      text: v12DecodeEntities(t.task),
+      section: v12DecodeEntities(t.section),
+      events: t.events.map(v12DecodeEntities),
     })),
   };
 }

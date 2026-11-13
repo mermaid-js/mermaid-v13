@@ -94,5 +94,29 @@
     "reason": "D504: `{group}` on an edge end whose service is in no group is ignored (`lhsGroup` false) with one ARCHITECTURE_GROUP_EDGE_UNGROUPED warning, where v12 kept the flag and still moved the end by a group's padding.",
     "owner": "#599",
     "since": "2026-11-09"
+  },
+  {
+    "id": "architecture-cases/entities-outside-core",
+    "inputHash": "sha256:040d0ddb2b7c51c1",
+    "kind": "model",
+    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D559",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "architecture-cases/entities-outside-core (CRLF)",
+    "inputHash": "sha256:255432e0d0393bca",
+    "kind": "model",
+    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D559",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "architecture-cases/entities-outside-core (commented)",
+    "inputHash": "sha256:bd2aba4c57d37c32",
+    "kind": "model",
+    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D559",
+    "since": "2026-11-13"
   }
 ]

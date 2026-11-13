@@ -18,7 +18,7 @@ import {
   xyChartTestTheme,
 } from '@mermaid-js/diagram-xychart/testing';
 import { REPO_ROOT, corpusFromDir } from '../corpus.ts';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12DecodeEntities } from '../v12-entities.ts';
 import { loadOracle } from '../oracle.ts';
 import type { CorpusItem } from '../types.ts';
 import { spacedWords, xyChartCases, xyChartCorpus, xyChartOrderCorpus } from './corpus.ts';
@@ -202,7 +202,7 @@ const BASELINE = { top: 'top', middle: 'middle', hanging: 'hanging', auto: 'alph
 // v12's renderer decoded its `encodeEntities` placeholders before drawing; v13 keeps the text
 // as written and core label layout decodes it.
 const v12Text = (t: V12Text) => ({
-  text: decodeEntities(t.text),
+  text: v12DecodeEntities(t.text),
   x: t.x,
   y: t.y,
   size: t.fontSize,
