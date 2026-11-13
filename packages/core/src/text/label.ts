@@ -144,10 +144,12 @@ export function layoutLabel(
   const lines: Run[][] = [];
   const indents: number[] = [];
   const widths: number[] = [];
-  const tags: Tags = { bold: 0, italic: 0 };
+  const tags: Tags = { bold: 0, italic: 0, dropped: options.inline?.dropped };
+  // `<script>` and `<style>` lose what they hold, as in v12 (D564); `inline` drops the tags.
+  const shown = (markdown ? src : text).replace(RE_RAW, '$1$3');
   for (const { source, bullet } of markdown
-    ? markdownLines(src)
-    : plainLines(text, options.backslashBreak)) {
+    ? markdownLines(shown)
+    : plainLines(shown, options.backslashBreak)) {
     const pieces = tidy(inline(source, base, tags, level, spans?.boxes));
     let indent = 0;
     let hang = 0;
@@ -247,10 +249,13 @@ function markdownLines(text: string): SourceLine[] {
 }
 
 const RE_TAG = /<(\/?)([a-zA-Z][\w-]*)(?:\s[^<>]*)?\/?>/y;
+// What a `<script>` or `<style>` element holds, up to its end tag or the end of the label.
+const RE_RAW = /(<(script|style)\b[^>]*>)[^]*?(<\/\2|$)/gi;
 const BOLD_TAGS = new Set(['b', 'strong']);
 const ITALIC_TAGS = new Set(['i', 'em']);
-// HTML elements whose tags are dropped, text kept (R-TEXT-3). Anything else shaped like a tag,
-// such as the type in List<T>, is text.
+// HTML elements whose tags are dropped, text kept (R-TEXT-3), and reported as `HTML_DROPPED`
+// unless they are bold or italic (D564). Anything else shaped like a tag, such as the type in
+// List<T>, is text.
 const HTML_TAGS = new Set(
   (
     'a abbr address article aside audio b bdi bdo big blockquote body br button caption center cite code col ' +
@@ -266,6 +271,8 @@ const HTML_TAGS = new Set(
 interface Tags {
   bold: number;
   italic: number;
+  /** Where the names of the other tags go: the render's `InlineSpans.dropped`. */
+  dropped: Set<string> | undefined;
 }
 
 const RE_ESCAPABLE = /[!-/:-@[-`{-~]/;
@@ -332,6 +339,7 @@ function inline(
         const step = m[1] === '/' ? -1 : 1;
         if (BOLD_TAGS.has(tag)) tags.bold = Math.max(0, tags.bold + step);
         else if (ITALIC_TAGS.has(tag)) tags.italic = Math.max(0, tags.italic + step);
+        else tags.dropped?.add(tag);
         restyle();
         i += m[0].length;
         continue;

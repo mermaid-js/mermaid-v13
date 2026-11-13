@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { streamWriter } from '../svg/index.ts';
 import {
   Style,
+  inlineSpans,
   layoutLabel,
   tableMeasurer,
   type FontKey,
@@ -267,6 +268,42 @@ describe('HTML subset (R-TEXT-3)', () => {
     expect(runs(layout('<span class="x">a</span> <u>b</u> <a href="x">c</a>'))).toEqual([
       [['a b c', 0]],
     ]);
+  });
+
+  // D564: the render's `InlineSpans.dropped` gets the names; the API warns `HTML_DROPPED`.
+  const droppedBy = (raw: string, options: LabelOptions = {}): [string[], string[]] => {
+    const inline = inlineSpans([], () => undefined);
+    const box = layoutLabel(raw, arial, Infinity, tableMeasurer, { ...options, inline });
+    return [texts(box), [...inline.dropped]];
+  };
+
+  it('names the tags it drops, lower case and once each, but not the formatting subset', () => {
+    expect(
+      droppedBy('<IMG src="a.png"/> Logo <sub>2</sub> <a href=x>l</a><br><b>b</b><em>e</em>')
+    ).toEqual([
+      ['Logo 2 l', 'be'],
+      ['img', 'sub', 'a'],
+    ]);
+    expect(droppedBy('<b>a</b><br/><i>b</i> List<T> <foo> a < b')[1]).toEqual([]);
+    expect(droppedBy('plain')[1]).toEqual([]);
+  });
+
+  it.each<LabelMarkup>(['plain', 'emphasis', 'markdown'])(
+    'drops <script> and <style> with what they hold (%s)',
+    (markup) => {
+      expect(droppedBy('<script>alert(1)</script>', { markup })).toEqual([[''], ['script']]);
+      expect(
+        droppedBy('a <SCRIPT type="x">1<br>2\n3</Script > b<style>.x{}</style>c <script>rest', {
+          markup,
+        })
+      ).toEqual([['a bc'], ['script', 'style']]);
+      // Not a longer name that starts the same.
+      expect(droppedBy('<scripts>x</scripts>', { markup })).toEqual([['<scripts>x</scripts>'], []]);
+    }
+  );
+
+  it('drops script content without a sink too', () => {
+    expect(texts(layout('a<script>alert(1)</script>b'))).toEqual(['ab']);
   });
 
   it('shows unknown tags and stray brackets as literal text', () => {

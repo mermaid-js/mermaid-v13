@@ -52,9 +52,12 @@ import type {
   Rect,
 } from './types.ts';
 
-/** What the layout reads from the render context (`warn` for `EVENTMODELING_CONFIG_INVALID`). */
+/**
+ * What the layout reads from the render context (`warn` for `EVENTMODELING_CONFIG_INVALID`,
+ * `inline` for the HTML tags its labels lose).
+ */
 export type EventModelLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
-  Partial<Pick<RenderContext, 'warn'>>;
+  Partial<Pick<RenderContext, 'warn' | 'inline'>>;
 
 interface Env {
   /** `text` through core's label layout in the layout's font, wrapped at `wrap`. */
@@ -74,8 +77,10 @@ export function layoutEventModel(
     weight: FONT_WEIGHT,
   };
   const { measurer } = ctx;
+  // No inline boxes here: `inline` only collects the tags for `HTML_DROPPED` (D564).
+  const inline = ctx.inline && { inline: { ...ctx.inline, extract: () => undefined } };
   const env: Env = {
-    label: (text, wrap, style) => layoutLabel(text, font, wrap, measurer, { style }),
+    label: (text, wrap, style) => layoutLabel(text, font, wrap, measurer, { ...inline, style }),
     monoWidth: (text) => measurer.width(text, font, Style.Mono),
   };
   const { padding } = eventModelingConfig(ctx.config.eventmodeling, ctx.warn ?? ignore);

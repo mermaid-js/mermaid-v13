@@ -87,6 +87,11 @@ export interface InlineSpans {
    */
   readonly warn: Warn;
   /**
+   * Names of the HTML tags this render's labels lost, other than `<br>` and the bold and italic
+   * subset (D564). Label layout adds to it; the API gives one `HTML_DROPPED` warning for them.
+   */
+  readonly dropped: Set<string>;
+  /**
    * One render's scratch object, the same in every `InlineRequest` and `GlyphRequest` of the
    * render and in its hooks (`ctx.inline.scratch`): what providers note for a `postRender` hook,
    * so an extension keeps no module state. Every extension shares it: key it by extension id.
@@ -233,6 +238,7 @@ export function inlineSpans(
   return {
     warn: once,
     scratch,
+    dropped: new Set(),
     notRendered: (feature) => notDrawn.has(feature),
     extract(raw, font, measurer) {
       // The spans that may be boxed: a label holding a placeholder character boxes none.
