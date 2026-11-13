@@ -1,0 +1,13 @@
+---
+description: >-
+  punctuation entity names draw as their characters in bare and quoted labels
+  (#396); a name core does not know draws as written (D559)
+---
+usecase-beta
+  actor User
+  A[x #colon; y #semi; z]
+  B["unknown #bogus; stays"]
+  C[bare #bogus; stays]
+  User --> A
+  User --> B
+  User --> C

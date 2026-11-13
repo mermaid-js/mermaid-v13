@@ -2,30 +2,9 @@
 // name core does not know draws as the author wrote it.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { createMermaid } from './index.ts';
+import { corpusLabels } from './testing/labels.ts';
 
-const fixture = (path: string): string =>
-  readFileSync(new URL(`../../../e2e/diagrams/${path}`, import.meta.url), 'utf8');
-
-/** The text of every `<text>` element, its lines joined by a blank. */
-function drawn(svg: string): string[] {
-  return [...svg.matchAll(/<text\b[^>]*>(.*?)<\/text>/gs)].map((m) =>
-    (m[1] ?? '')
-      .replace(/<\/tspan>\s*<tspan\b[^>]*>/g, ' ')
-      .replace(/<[^>]+>/g, '')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&')
-  );
-}
-
-async function render(path: string): Promise<string[]> {
-  const m = createMermaid();
-  m.initialize({ deterministic: true });
-  const r = await m.render('x', fixture(path));
-  expect(r.warnings).toEqual([]);
-  return drawn(r.svg);
-}
+const { drawnBy: render, textOf } = corpusLabels(readFileSync);
 
 describe('entity names in labels (#396, D559)', () => {
   it('a flowchart draws the punctuation names, and unknown names as written', async () => {
@@ -52,11 +31,34 @@ describe('entity names in labels (#396, D559)', () => {
     );
   });
 
+  it('a quadrant chart draws them in bare and quoted text', async () => {
+    expect(await render('quadrant-chart/baseline/text/entity-names.mmd')).toEqual(
+      expect.arrayContaining([
+        'unknown #bogus; title',
+        'Low : a',
+        'High #bogus; b',
+        'bare #bogus; stays',
+        'quoted #bogus; stays',
+        'Point #bogus; p',
+        'Q ; r',
+      ])
+    );
+  });
+
+  it('a usecase diagram draws them in bare and quoted labels', async () => {
+    expect(await render('usecase/baseline/text/entity-names.mmd')).toEqual(
+      expect.arrayContaining(['x : y ; z', 'unknown #bogus; stays', 'bare #bogus; stays'])
+    );
+  });
+
+  it('a usecase diagram draws the same characters in text output', async () => {
+    const r = await textOf('usecase/baseline/text/entity-names.mmd');
+    for (const text of ['x : y ; z', 'unknown #bogus; stays', 'bare #bogus; stays'])
+      expect(r.text).toContain(text);
+  });
+
   it('text output draws the same characters', async () => {
-    const m = createMermaid();
-    const r = await m.render('x', fixture('flowchart/baseline/text/entity-names.mmd'), {
-      format: 'ascii',
-    });
+    const r = await textOf('flowchart/baseline/text/entity-names.mmd');
     for (const text of ['x : y ; $5 | ok', '(a) [b] {c}', '50% + tax', 'unknown #bogus;'])
       expect(r.text).toContain(text);
     expect(r.text).toContain('typed &bogus;');
