@@ -69,6 +69,21 @@ interface Drawn<M extends C4AnyModel, A extends AstNode> {
   readonly themeStyle: boolean;
 }
 
+/** What a render gives back besides the model and AST. */
+function summary<M extends C4AnyModel, A extends AstNode>(
+  d: Drawn<M, A>
+): Omit<RenderedC4, 'model' | 'ast'> {
+  return {
+    svg: d.svg,
+    layout: d.layout,
+    config: d.config,
+    warnings: d.warnings,
+    rejected: d.parse.diagnostics.some((x) => x.severity === 'error'),
+    gradient: d.gradient,
+    themeStyle: d.themeStyle,
+  };
+}
+
 /** Renders `source`, parsed with its front matter and directives. */
 export async function renderC4ForTest(
   source: string,
@@ -77,17 +92,7 @@ export async function renderC4ForTest(
   const d = await drawParsed(source, options, (pre, limits) =>
     parseC4(source, { preprocessed: pre, ...limits })
   );
-  return {
-    svg: d.svg,
-    model: d.parse.model,
-    ast: d.parse.ast,
-    layout: d.layout,
-    config: d.config,
-    warnings: d.warnings,
-    rejected: d.parse.diagnostics.some((x) => x.severity === 'error'),
-    gradient: d.gradient,
-    themeStyle: d.themeStyle,
-  };
+  return { ...summary(d), model: d.parse.model, ast: d.parse.ast };
 }
 
 /** What {@link renderC4BetaForTest} gives back: {@link RenderedC4}'s, for a c4-beta source. */
@@ -104,17 +109,7 @@ export async function renderC4BetaForTest(
   const d = await drawParsed(source, options, (pre, limits) =>
     parseC4Beta(source, { preprocessed: pre, ...limits })
   );
-  return {
-    svg: d.svg,
-    model: d.parse.model,
-    ast: d.parse.ast,
-    layout: d.layout,
-    config: d.config,
-    warnings: d.warnings,
-    rejected: d.parse.diagnostics.some((x) => x.severity === 'error'),
-    gradient: d.gradient,
-    themeStyle: d.themeStyle,
-  };
+  return { ...summary(d), model: d.parse.model, ast: d.parse.ast };
 }
 
 /** The limits `parse` takes: the three caps. */
