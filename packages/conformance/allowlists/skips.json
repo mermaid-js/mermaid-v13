@@ -1,4 +1,7 @@
 {
+  "packages/conformance/src/c4beta/layout.spec.ts": {
+    "TB: a long title is not crossed either": "#730"
+  },
   "packages/core/src/layout/swimlane/__tests__/terminalGeometry.spec.ts": {
     "8-query-process-2: \"No\" leaves the diamond vertex and enters the middle of Investigate": "#677",
     "8-query-process-2: \"No\" from \"Knows which team?\" runs straight down into the diamond below it": "#677"

@@ -16,8 +16,8 @@ import { theme } from './theme/table.ts';
 
 /**
  * The architecture plugin (DESIGN §12.1, spec #525): `layoutKind: 'graph'`, laid out by the
- * engine `layout` names, `compass` unless a config layer sets another (D284, D326), and `compass`
- * for `layered` and `dagre`, which ignore the sides (D556, `layout/engine.ts`). `parse` takes
+ * engine `layout` names, `compass` unless a config layer sets another (D284, D326, D560;
+ * `layered` and `dagre` warn what they leave out, `layout/engine.ts`). `parse` takes
  * the whole source; `layout` measures and calls `ctx.layout()` only, so no engine is bundled
  * here; `render` writes the whole `<svg>` document. SVG only (D320). `icons` lists the pack icons
  * an icons extension should load (D505); `labels` every text label layout sees. `theme` is the
