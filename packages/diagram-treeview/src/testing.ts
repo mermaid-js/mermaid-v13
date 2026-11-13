@@ -6,7 +6,6 @@
  * (D217).
  */
 export {
-  ampEntities,
   LANGIUM_NAMES,
   TREEVIEW_TRIVIA,
   TreeViewTokenKind,
