@@ -14,7 +14,7 @@ import {
 } from '@mermaid-js/core/text';
 import type { ClassMember, ClassNode } from '../parser/model.ts';
 import { memberDisplay } from '../parser/member.ts';
-import { v12Options, v12Text } from './v12-label.ts';
+import { v12Options, v12Text } from '@mermaid-js/core/text/v12-label';
 
 /** One line of text in a class box. */
 export interface ClassRow {

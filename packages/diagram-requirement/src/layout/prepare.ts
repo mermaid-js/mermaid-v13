@@ -20,7 +20,7 @@ import {
 } from '@mermaid-js/core/text';
 import type { BoxOf, Relation, RequirementModel } from '../model.ts';
 import type { RequirementRenderContext } from './context.ts';
-import { v12Options, v12Text } from './v12-label.ts';
+import { v12Options, v12Text } from '@mermaid-js/core/text/v12-label';
 import {
   markerGeometry,
   markerRoom,

@@ -10,7 +10,7 @@ import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/
 import type { MindmapModel, MindmapShape } from '../model.ts';
 import type { MindmapLayoutContext } from './context.ts';
 import { MINDMAP_METRICS, type ShapeMetrics } from './metrics.ts';
-import { v12Options, v12Text } from './v12-label.ts';
+import { v12Options, v12Text } from '@mermaid-js/core/text/v12-label';
 import { bangOutline, cloudOutline, outlineBox, type Outline, type Point } from './outline.ts';
 
 /** A config value the layout can't honour (pitfall 22): it lays out with the default instead. */

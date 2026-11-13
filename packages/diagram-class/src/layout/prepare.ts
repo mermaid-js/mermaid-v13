@@ -30,7 +30,7 @@ import { measureBox, type BoxMetrics, type ClassBoxGeometry } from './box.ts';
 import { configDefaults } from '../config-defaults.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { ClassLayoutContext } from './context.ts';
-import { v12Options, v12Text } from './v12-label.ts';
+import { v12Options, v12Text } from '@mermaid-js/core/text/v12-label';
 
 /** A class, as laid out. */
 export interface ClassBoxView extends ClassBoxGeometry {

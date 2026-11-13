@@ -18,7 +18,7 @@ import { configLengths, type ConfigLength } from './config-length.ts';
 import type { StateRenderContext } from './context.ts';
 import { stateConfigDefaults } from '../generated/config-defaults.ts';
 import { stateMetrics, type StateMetrics } from './metrics.ts';
-import { v12Options, v12Text } from './v12-label.ts';
+import { v12Options, v12Text } from '@mermaid-js/core/text/v12-label';
 import type { EmbeddedDiagram } from '@mermaid-js/core';
 import { framedSize } from '@mermaid-js/core/svg/framed';
 import {

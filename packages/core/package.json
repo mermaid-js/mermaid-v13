@@ -96,6 +96,11 @@
       "types": "./dist/text/index.d.ts",
       "default": "./dist/text/index.js"
     },
+    "./text/v12-label": {
+      "mermaid-source": "./src/text/v12-label.ts",
+      "types": "./dist/text/v12-label.d.ts",
+      "default": "./dist/text/v12-label.js"
+    },
     "./theme": {
       "mermaid-source": "./src/theme/index.ts",
       "types": "./dist/theme/index.d.ts",
