@@ -98,6 +98,7 @@ describe('c4 oracle parity with mermaid@12 over the generated variants', () => {
       unquoted: 0,
       comment: 0,
       title: 0,
+      hash: 0,
       'as-listed': 0,
       'title trimmed': 0,
     };
@@ -119,7 +120,7 @@ describe('c4 oracle parity with mermaid@12 over the generated variants', () => {
     const rejected = agree.filter((r) => !r.oracleAccepted).length;
     process.stdout.write(
       `c4 variant parity: ${report.results.length} sources, ${agree.length} agree (${rejected} rejected by both), ` +
-        `${report.unlisted.length} differ: ${by.unquoted} unquoted, ${by.comment} comment, ${by.title} title, ${by['as-listed']} as their source, ${by['title trimmed']} title trimmed\n`
+        `${report.unlisted.length} differ: ${by.unquoted} unquoted, ${by.comment} comment, ${by.title} title, ${by.hash} hash, ${by['as-listed']} as their source, ${by['title trimmed']} title trimmed\n`
     );
     expect(unexplained).toEqual([]);
     expect(by).toEqual(DIFFERING);
@@ -133,6 +134,7 @@ const DIFFERING = {
   unquoted: 322,
   comment: 21,
   title: 19,
+  hash: 19,
   'as-listed': 315,
-  'title trimmed': 53,
+  'title trimmed': 54,
 };

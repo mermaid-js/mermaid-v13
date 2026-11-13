@@ -710,5 +710,29 @@
     "reason": "v12's C4 DB ignored the front-matter `title` (it has no `setDiagramTitle`); v13 takes it when the text has no `title` (D453, D218, #539, MIGRATION.md).",
     "owner": "#539",
     "since": "2026-11-09"
+  },
+  {
+    "id": "e2e/diagrams/c4/pr-check/title-with-hash.mmd",
+    "inputHash": "sha256:b8870c5785aa4275",
+    "kind": "accept",
+    "reason": "12.2.0's `title` and `accDescription` (`[^#\\n;]+`) stopped at a `#`, and the rest of the line was a lexical error; v13 runs them over it (`[^\\n;]+`), as v12's fix mermaid-js/mermaid#8039 does (#683; a lexer-parity exclusion, MIGRATION.md).",
+    "owner": "#683",
+    "since": "2026-11-12"
+  },
+  {
+    "id": "c4-cases/title-hash",
+    "inputHash": "sha256:9cd233627e985a01",
+    "kind": "accept",
+    "reason": "12.2.0's `title` and `accDescription` (`[^#\\n;]+`) stopped at a `#`, and the rest of the line was a lexical error; v13 runs them over it (`[^\\n;]+`), as v12's fix mermaid-js/mermaid#8039 does (#683; a lexer-parity exclusion, MIGRATION.md).",
+    "owner": "#683",
+    "since": "2026-11-12"
+  },
+  {
+    "id": "c4-cases/title-style-semicolon",
+    "inputHash": "sha256:2c8148773bdd1796",
+    "kind": "accept",
+    "reason": "12.2.0's `title` and `accDescription` (`[^#\\n;]+`) stopped at a `#`, and the rest of the line was a lexical error; v13 runs them over it (`[^\\n;]+`), as v12's fix mermaid-js/mermaid#8039 does (#683; a lexer-parity exclusion, MIGRATION.md). The `;` after `#f` is the one v12's preprocess drops on a `style…:…#…;` line, so the title is `style x:#f`.",
+    "owner": "#683",
+    "since": "2026-11-12"
   }
 ]

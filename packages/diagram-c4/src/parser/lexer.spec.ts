@@ -175,7 +175,7 @@ describe('c4Diagram.jison quirks', () => {
     ]);
   });
 
-  it('reads `title\\s[^#\\n;]+` (blanks kept), and a lone `title` as a title (D452)', () => {
+  it('reads `title\\s[^\\n;]+` (blanks kept), and a lone `title` as a title (D452)', () => {
     // v12's `\\s` took the line break, and the next line was the title.
     expect(jison('C4Context\ntitle\nPerson(a, "A")')).toEqual([
       ...H,
@@ -194,6 +194,24 @@ describe('c4Diagram.jison quirks', () => {
     ]);
     // An entity's `#` and `;` were a placeholder to v12, so the title runs over it.
     expect(jison('C4Context\ntitle Caf#233; A')).toEqual([...H, 'title:title Caf&#233; A', ...END]);
+  });
+
+  it('runs `title` and `accDescription` over a `#` (#683, v12 fix mermaid-js/mermaid#8039)', () => {
+    // 12.2.0's `[^#\n;]+` stopped at the `#` and the rest of the line was a lexical error.
+    expect(jison('C4Context\ntitle Order #42')).toEqual([...H, 'title:title Order #42', ...END]);
+    expect(jison('C4Context\naccDescription Covers #4864 (#1)')).toEqual([
+      ...H,
+      'accDescription:accDescription Covers #4864 (#1)',
+      ...END,
+    ]);
+    // `;` and the line break still end them.
+    expect(untilError('C4Context\ntitle #1 ;x')).toEqual([
+      ...H,
+      'title:title #1 ',
+      'LEXICAL_ERROR:',
+    ]);
+    // A title that is only a `#` is one too.
+    expect(jison('C4Context\ntitle #')).toEqual([...H, 'title:title #', ...END]);
   });
 
   it('has no blank rule after a macro keyword', () => {

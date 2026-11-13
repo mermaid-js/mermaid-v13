@@ -14,7 +14,7 @@
 import type { C4Model } from '../model.ts';
 import { C4_METRICS as M } from './metrics.ts';
 import { crosses, lineOf } from './route.ts';
-import { onOutline, type Outline } from './shapes.ts';
+import { onOutline, outlineForm, type Outline } from './shapes.ts';
 import type { C4Layout, C4RelationLayout, Point, Rect } from './types.ts';
 
 /** Float tolerance of the checks, in px. */
@@ -62,8 +62,10 @@ function overlapping<T>(items: readonly T[], box: (t: T) => Rect): [T, T][] {
 /** The outline a relation end names: an element first, then a boundary (v12 `getC4Shape`). */
 function endBoxes(layout: C4Layout): (alias: string) => Outline | undefined {
   const elements = new Map<string, Outline>();
+  const cell = layout.cell !== undefined;
   for (const e of layout.elements)
-    if (!elements.has(e.alias)) elements.set(e.alias, { ...e.box, form: e.shape });
+    if (!elements.has(e.alias))
+      elements.set(e.alias, { ...e.box, form: outlineForm(e.shape, cell) });
   const frames = new Map<string, Outline>();
   for (const b of layout.boundaries)
     if (!frames.has(b.alias)) frames.set(b.alias, { ...b.box, form: 'frame' });

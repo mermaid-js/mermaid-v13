@@ -351,6 +351,16 @@ describe('D453: titles', () => {
     );
   });
 
+  it('keeps a `#` in the title and in `accDescription` (#683, v12 fix mermaid-js/mermaid#8039)', () => {
+    expect(model('C4Context\ntitle Order #42\nPerson(a, "A")').title).toBe('Order #42');
+    expect(model('C4Context\ntitle Relationship to a boundary (#4864)\nPerson(a, "A")').title).toBe(
+      'Relationship to a boundary (#4864)'
+    );
+    expect(
+      model('C4Context\naccDescription Context diagram for issue #4864\nPerson(a, "A")').accDescr
+    ).toBe('Context diagram for issue #4864');
+  });
+
   it('reads the accessible description of each parse on its own', () => {
     expect(model('C4Context\naccDescr {\n  one\n  two\n}\nPerson(a, "A")').accDescr).toBe(
       'one\ntwo'

@@ -15,7 +15,7 @@
 import type { AstNode, Range } from '@mermaid-js/core/parser-kit';
 import type { XyChartPlotKind } from '../model.ts';
 
-/** A text as the grammar read it: words joined without blanks, or a string's contents. */
+/** A text as the grammar read it: words with one space where blanks separate them, or a string's contents. */
 export interface XyChartTextNode {
   /** Untrimmed, as jison built it (v12's DB trims it). */
   text: string;

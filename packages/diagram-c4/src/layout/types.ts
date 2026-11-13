@@ -143,8 +143,8 @@ export interface C4Layout {
    */
   readonly careful: boolean;
   /**
-   * Set when relation and boundary text may wrap: root `wrap` and `c4.wrap` both set (the
-   * spec's rule). The text output wraps a relation's label narrower only then.
+   * Set when relation and boundary text may wrap: the root `wrap` is true (it wins over
+   * `c4.wrap`, #683). The text output wraps a relation's label narrower only then.
    */
   readonly labelsWrap?: true;
   /**

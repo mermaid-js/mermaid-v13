@@ -6,7 +6,8 @@
  *
  * Sizes follow v12's shapes with `c4.c4ShapePadding` as their padding and `c4.width` as their
  * least width (`c4ShapeAdapter.ts`, `drawRect`): a rounded box `max(width, text + 2·pad)` by
- * `text + 2·pad`; the person 26 taller for its head; the cylinder `3·ry` taller for its caps; the
+ * `text + 2·pad`; the person a head over a body in c4model.com's proportions (#683; on the cell
+ * profile 26 taller for its head); the cylinder `3·ry` taller for its caps; the
  * queue `2·rx` wider; `fr-rect` 16 wider for its frame lines. The cylinder, the queue and
  * `fr-rect` take their padding from the theme's shape rows instead (v12 `look: neo`, D152): the
  * cylinder `cylinderPadding*`, the queue half of it (v12's tilted cylinder padded half what its
@@ -54,6 +55,36 @@ export const capRy = (w: number): number =>
   Math.min(M.capMax, Math.max(M.capMin, w / M.capDivisor));
 export const queueRx = (h: number): number => Math.min(M.capMax, h / M.queueDivisor);
 
+/** The person figure's head radius for a width `w` (#683). */
+export const personHead = (w: number): number =>
+  Math.min(M.personHeadMax, Math.max(M.personHeadMin, w * M.personHeadRatio));
+
+/** A person's head (a circle) and body (a box the head overlaps), in its laid-out box. */
+export interface PersonParts {
+  readonly head: { readonly cx: number; readonly cy: number; readonly r: number };
+  readonly body: Rect;
+}
+
+/**
+ * The person's head and body in `box`. As a figure (the SVG, #683): the head's radius from the
+ * width ({@link personHead}), at the top, overlapping the body by `personOverlap` of itself. As a
+ * box (`figure` false, the text output's cell layout): 12.2.0's head of radius 13 in a 26 px row.
+ */
+export function personParts({ x, y, width: w, height: h }: Rect, figure = true): PersonParts {
+  if (!figure) {
+    return {
+      head: { cx: x + w / 2, cy: y + M.personHeadCentre, r: M.personHeadRadius },
+      body: { x, y: y + M.personHead, width: w, height: h - M.personHead },
+    };
+  }
+  const r = personHead(w);
+  const neck = 2 * r - r * M.personOverlap;
+  return {
+    head: { cx: x + w / 2, cy: y + r, r },
+    body: { x, y: y + neck, width: w, height: h - neck },
+  };
+}
+
 /** A shape's size around a text block `tw` × `th`, and where the text's centre sits from the box's. */
 export interface ShapeSize {
   readonly w: number;
@@ -70,11 +101,13 @@ export interface PadXY {
 
 /**
  * How a shape is sized: its padding all round and its least width (`c4ShapePadding`,
- * `c4.width`), and the totals the cylinder, the queue and `fr-rect` take from the theme.
+ * `c4.width`), the totals the cylinder, the queue and `fr-rect` take from the theme, and whether
+ * the person is a figure (the SVG) or a box with a head row (the text output's cell layout).
  */
 export interface ShapeRoom {
   readonly pad: number;
   readonly least: number;
+  readonly figure: boolean;
   readonly cylinder: PadXY;
   readonly queue: PadXY;
   readonly subroutine: PadXY;
@@ -84,13 +117,20 @@ export function shapeSize(
   shape: C4ShapeId,
   tw: number,
   th: number,
-  { pad, least, cylinder, queue, subroutine }: ShapeRoom
+  { pad, least, figure, cylinder, queue, subroutine }: ShapeRoom
 ): ShapeSize {
   const w = Math.max(least, tw + 2 * pad);
   const h = th + 2 * pad;
   switch (shape) {
-    case 'person':
-      return { w, h: h + M.personHead, dx: 0, dy: M.personHead / 2 };
+    case 'person': {
+      if (!figure) return { w, h: h + M.personHead, dx: 0, dy: M.personHead / 2 };
+      // The body holds the text below the head, and is at least `personBodyRatio` × w tall; the
+      // text is centred on the part the head does not cover, one head radius below the centre.
+      const r = personHead(w);
+      const overlap = r * M.personOverlap;
+      const body = Math.max(overlap + h, w * M.personBodyRatio);
+      return { w, h: body + 2 * r - overlap, dx: 0, dy: r };
+    }
     case 'cyl': {
       const cw = Math.max(least, tw + cylinder.x);
       const ry = capRy(cw);
@@ -161,22 +201,29 @@ function roundedPieces({ x, y, width: w, height: h }: Rect, radius: number): Pie
 
 /** What the router knows of a box: where it is and how its outline runs. */
 export interface Outline extends Rect {
-  /** The shape it is drawn as; a boundary's frame is `frame`. */
-  readonly form: C4ShapeId | 'frame';
+  /**
+   * The shape it is drawn as; a boundary's frame is `frame`, and a person on the cell profile,
+   * sized as a box with a head row, `person-box`.
+   */
+  readonly form: C4ShapeId | 'frame' | 'person-box';
 }
+
+/**
+ * The outline form of an element drawn as `shape`: on the cell profile (`cell`) a person is
+ * sized as a box with a head row (`cellRoom`), so its outline is `person-box`.
+ */
+export const outlineForm = (shape: C4ShapeId, cell: boolean): Outline['form'] =>
+  cell && shape === 'person' ? 'person-box' : shape;
 
 /** The pieces of `box`'s outline. */
 export function piecesOf(box: Outline): Piece[] {
   const { x, y, width: w, height: h } = box;
   switch (box.form) {
     case 'person':
-      return [
-        ...roundedPieces(
-          { x, y: y + M.personHead, width: w, height: h - M.personHead },
-          M.shapeRadius
-        ),
-        ellipse(x + w / 2, y + M.personHeadCentre, M.personHeadRadius, M.personHeadRadius),
-      ];
+    case 'person-box': {
+      const { head, body } = personParts(box, box.form === 'person');
+      return [...roundedPieces(body, M.shapeRadius), ellipse(head.cx, head.cy, head.r, head.r)];
+    }
     case 'cyl': {
       const ry = capRy(w);
       return [
