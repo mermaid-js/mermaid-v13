@@ -214,8 +214,9 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
     pad: cellPad(units, length),
     // This is the only place the builder looks at which profile it has.
     rule: units.id === 'cell' ? 1 : 0,
+    // v12 passes every ER label through `createText` with Markdown on (D563).
     label: (text, f, max, bits = 0) =>
-      layoutLabel(text, f, max, measurer, { style: bits, inline: ctx.inline }),
+      layoutLabel(text, f, max, measurer, { style: bits, inline: ctx.inline, markup: 'emphasis' }),
     styleOf: styleCache(model, ctx),
   };
   const minWidth = sizeKey(units, length, 'minEntityWidth');
