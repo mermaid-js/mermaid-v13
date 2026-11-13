@@ -26,6 +26,7 @@ exports[`layered over parser-produced class graphs > lays out every corpus graph
   "class/baseline/styles/classdef-and-style.mmd": 0,
   "class/baseline/styles/hide-empty-members.mmd": 0,
   "class/baseline/text/labels-and-markdown.mmd": 0,
+  "class/baseline/text/list-markers-backticks-and-entities.mmd": 0,
   "class/baseline/text/unicode.mmd": 0,
   "class/baseline/themes/base.mmd": 1,
   "class/baseline/themes/dark.mmd": 1,
