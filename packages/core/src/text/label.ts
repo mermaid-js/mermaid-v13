@@ -323,6 +323,13 @@ function inline(
     style = next;
   };
   restyle();
+  // Counts one HTML tag: `step` is 1 for a start tag and -1 for an end tag.
+  const count = (tag: string, step: number): void => {
+    if (tag === 'b' || tag === 'strong') tags.bold = Math.max(0, tags.bold + step);
+    else if (tag === 'i' || tag === 'em') tags.italic = Math.max(0, tags.italic + step);
+    else tags.dropped?.add(tag);
+    restyle();
+  };
   let i = 0;
   while (i < source.length) {
     const ch = source[i] as string;
@@ -339,11 +346,7 @@ function inline(
       const m = RE_TAG.exec(source);
       const tag = m?.[2]?.toLowerCase();
       if (m && tag !== undefined && HTML_TAGS.has(tag)) {
-        const step = m[1] === '/' ? -1 : 1;
-        if (tag === 'b' || tag === 'strong') tags.bold = Math.max(0, tags.bold + step);
-        else if (tag === 'i' || tag === 'em') tags.italic = Math.max(0, tags.italic + step);
-        else tags.dropped?.add(tag);
-        restyle();
+        count(tag, m[1] === '/' ? -1 : 1);
         i += m[0].length;
         continue;
       }

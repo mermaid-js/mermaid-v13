@@ -288,13 +288,6 @@ class QuadrantParser {
     return text;
   }
 
-  /** Consume the current token; its text as v12's lexer read it, placeholders kept. */
-  private raw(): string {
-    const text = tokenText(this.lexed, this.c.pos);
-    this.last = this.c.next();
-    return text;
-  }
-
   /** Consume a token of one of `kinds` and return its text, or fail. */
   private expect(kinds: readonly number[], names: string[]): string {
     if (!this.in(kinds)) this.fail(names);
@@ -668,6 +661,13 @@ class QuadrantParser {
       markdown: k === T.MdStr,
       range: this.span(first),
     };
+  }
+
+  /** Consume the current token; its text as v12's lexer read it, placeholders kept. */
+  private raw(): string {
+    const text = tokenText(this.lexed, this.c.pos);
+    this.last = this.c.next();
+    return text;
   }
 
   /** A string or markdown string at the cursor must be closed. */

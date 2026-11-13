@@ -14,8 +14,19 @@ const DEGREE = 0xb0;
 const CLOSE = '¶ß';
 
 /**
- * `raw` with each placeholder as the character its code stands for. A name core does not know
- * goes back to `#name;`, as written (D559); v12 drew `&name;`. One scan (R-PARSE-7).
+ * The character the code `name` stands for. A code core cannot decode is as the author wrote it:
+ * `#name;` for a name (D559; v12 drew `&name;`), and v12's `&#…;` for a number.
+ */
+function decoded(name: string, numeric: boolean): string {
+  const ref = `${numeric ? '&#' : '&'}${name};`;
+  const hit = entityAt(ref, 0);
+  if (hit && hit[1] === ref.length) return hit[0];
+  return numeric ? ref : `#${name};`;
+}
+
+/**
+ * `raw` with each placeholder as the character its code stands for ({@link decoded}). One scan
+ * (R-PARSE-7).
  */
 export function shown(raw: string): string {
   let i = raw.indexOf(OPEN);
@@ -28,13 +39,7 @@ export function shown(raw: string): string {
     let close = nameAt;
     while (close < raw.length && /\w/.test(raw.charAt(close))) close++;
     if (close === nameAt || !raw.startsWith(CLOSE, close)) continue;
-    const name = raw.slice(nameAt, close);
-    const ref = `${numeric ? '&#' : '&'}${name};`;
-    const hit = entityAt(ref, 0);
-    // As written when core cannot decode it: `&#…;` for a number, `#name;` for a name (D559).
-    let text = numeric ? ref : `#${name};`;
-    if (hit && hit[1] === ref.length) text = hit[0];
-    out += raw.slice(from, i) + text;
+    out += raw.slice(from, i) + decoded(raw.slice(nameAt, close), numeric);
     from = close + CLOSE.length;
     i = from - 1;
   }
