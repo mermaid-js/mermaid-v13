@@ -200,6 +200,20 @@ function knownLayout(name: string): boolean {
   return engines.has(name);
 }
 
+/** Throws when a manifest's `typeOptions` name a type it lacks, an unknown section or an unknown layout. */
+function checkTypeOptions(m: ManifestSource): void {
+  for (const [type, o] of Object.entries(m.manifest.typeOptions ?? {})) {
+    if (!m.manifest.types.includes(type))
+      throw new Error(`${m.name}: typeOptions names "${type}", which is not one of its types`);
+    if (o.section !== undefined && !schemaSections().has(o.section))
+      throw new Error(
+        `${m.name}: typeOptions.${type}.section "${o.section}" is not a config section`
+      );
+    if (o.layout !== undefined && !knownLayout(o.layout))
+      throw new Error(`${m.name}: typeOptions.${type}.layout "${o.layout}" is not a known layout`);
+  }
+}
+
 /** The manifest serving each v12 type; throws on a type v12 does not have. */
 function manifestsByType(manifests: readonly ManifestSource[]): Map<string, ManifestSource> {
   const byType = new Map<string, ManifestSource>();
@@ -210,18 +224,7 @@ function manifestsByType(manifests: readonly ManifestSource[]): Map<string, Mani
       }
       byType.set(type, m);
     }
-    for (const [type, o] of Object.entries(m.manifest.typeOptions ?? {})) {
-      if (!m.manifest.types.includes(type))
-        throw new Error(`${m.name}: typeOptions names "${type}", which is not one of its types`);
-      if (o.section !== undefined && !schemaSections().has(o.section))
-        throw new Error(
-          `${m.name}: typeOptions.${type}.section "${o.section}" is not a config section`
-        );
-      if (o.layout !== undefined && !knownLayout(o.layout))
-        throw new Error(
-          `${m.name}: typeOptions.${type}.layout "${o.layout}" is not a known layout`
-        );
-    }
+    checkTypeOptions(m);
   }
   return byType;
 }
