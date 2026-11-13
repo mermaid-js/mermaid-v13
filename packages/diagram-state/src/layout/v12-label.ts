@@ -7,13 +7,12 @@ import type { LabelMarkup } from '@mermaid-js/core/text';
 const RE_AS_WRITTEN = /^\s*[-*+] |`[^`]+`/;
 const RE_BLANK_LINES = /\n\s*\n/g;
 const RE_BR = /^<br\s*\/?>$/i;
-const SPACE = 32;
 
 /** `text` without the blanks and `<br>`s at its end. */
 function withoutEndBreaks(text: string): string {
   let end = text.length;
   for (;;) {
-    while (end > 0 && text.charCodeAt(end - 1) <= SPACE) end--;
+    while (end > 0 && (text[end - 1] as string) <= ' ') end--;
     if (text[end - 1] !== '>') break;
     const open = text.lastIndexOf('<', end - 1);
     if (open < 0 || !RE_BR.test(text.slice(open, end))) break;
