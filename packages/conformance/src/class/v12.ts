@@ -83,9 +83,6 @@ export interface ClassSnapshot {
   styleClasses: { id: string; styles: string[]; textStyles: string[] }[];
 }
 
-// v12's placeholders undone under D559: an unknown `#name;` is compared as written.
-export { decodeEntities };
-
 const text = (v: unknown): string | undefined =>
   typeof v === 'string' ? decodeEntities(v) : undefined;
 const strings = (v: unknown): string[] =>

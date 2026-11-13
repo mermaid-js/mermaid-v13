@@ -1,7 +1,9 @@
 /**
- * The escaping of names inside AST ids, which most hand-written diagram parsers repeat. A
- * subpath of its own, so that only the diagrams that escape ids load it (DESIGN §2).
+ * The escaping of names inside AST ids and the decoding of v12's entity placeholders, which
+ * hand-written diagram parsers repeat. A subpath of its own, so that only the diagrams that use
+ * them load it (DESIGN §2).
  */
+import { entityAt } from '../text/entities.ts';
 
 /** The characters every AST id escapes: the id grammar's own (`%`, `>`, `@`, `#`). */
 export const ID_RESERVED = '%>@#';
@@ -27,3 +29,16 @@ export function idEscaper(set: string = ID_RESERVED): (name: string) => string {
   };
   return (name) => (needs.test(name) ? name.replace(all, hex) : name);
 }
+
+/**
+ * Undoes v12's `encodeEntities` placeholders, as v12's renderer did (`decodeEntities`): `&name;`
+ * and `&#123;`. A name core cannot decode goes back to `#name;`, as written (D559).
+ */
+export const decodePlaceholders = (text: string): string =>
+  text
+    .replace(/ﬂ°(?!°)(\w+)¶ß/g, (all, name: string) =>
+      entityAt(`&${name};`, 0) ? all : `#${name};`
+    )
+    .replace(/ﬂ°°/g, '&#')
+    .replace(/ﬂ°/g, '&')
+    .replace(/¶ß/g, ';');
