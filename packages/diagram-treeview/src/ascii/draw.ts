@@ -9,6 +9,7 @@
 // decoration, so the drawing reads back the same.
 import { cellWidth } from '@mermaid-js/core/ascii';
 import type { CellPadding } from '@mermaid-js/core/layout';
+import { decodeEntities } from '@mermaid-js/core/text';
 import { highlighted, type TreeViewModel, type TreeViewNode } from '../model.ts';
 import { plain, written } from './names.ts';
 
@@ -103,7 +104,9 @@ export function drawTreeView(
       const above = roomy && i > 0 ? `${trimSpaces(gutter() + r.above)}\n` : '';
       const { description } = r.node;
       const tail =
-        description === undefined ? '' : ' '.repeat(column - widths[i]!) + plain(description);
+        description === undefined
+          ? ''
+          : ' '.repeat(column - widths[i]!) + plain(decodeEntities(description));
       return above + trimSpaces(gutter(r.node) + r.text + tail);
     })
     .join('\n');

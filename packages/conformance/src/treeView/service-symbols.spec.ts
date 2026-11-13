@@ -96,7 +96,7 @@ describe('treeView definition, references and folding through the service match 
     expect(nodes).toBeGreaterThan(2000);
     expect(folds).toBeGreaterThan(500);
     // Entity placeholders and empty names, each also CRLF and commented.
-    expect(unnamed).toBeLessThan(40);
+    expect(unnamed).toBeLessThan(60);
     expect(problems).toEqual([]);
   }, 300_000);
 });

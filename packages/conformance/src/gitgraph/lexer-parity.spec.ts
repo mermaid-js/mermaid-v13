@@ -149,7 +149,7 @@ describe('gitGraph lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () 
       `gitGraph lexer parity: ${compared} of ${items.length} sources lexed by v12, ${errors} with a lexer error\n`
     );
     // Every e2e fixture reaches the gitGraph lexer.
-    expect(e2e).toBe(197);
+    expect(e2e).toBe(198);
     expect(compared).toBeGreaterThan(1000);
     expect(diffs).toEqual([]);
   }, 300_000);

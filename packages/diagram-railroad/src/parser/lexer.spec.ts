@@ -103,9 +103,10 @@ describe('the text v12 lexed', () => {
       [T.Id, 'c'],
     ]);
     // Anywhere else in a comment it is comment text (images write entities as `&name;`).
-    expect(lexed('railroadPeg', 'railroad-peg-beta\n# see #x;')[1]).toEqual([
+    // A name core cannot decode stays as written (D559).
+    expect(lexed('railroadPeg', 'railroad-peg-beta\n# see #lt; #x;')[1]).toEqual([
       T.HashComment,
-      '# see &x;',
+      '# see &lt; #x;',
     ]);
     expect(lexed('railroad', 'railroad-beta\na = terminal("#amp;") ;')[5]).toEqual([
       T.String,
