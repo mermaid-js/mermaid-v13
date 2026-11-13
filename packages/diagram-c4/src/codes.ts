@@ -47,3 +47,18 @@ export const C4_COLOR_INVALID = 'C4_COLOR_INVALID';
  * character grid (under two cells across or a row down); the least that does is used.
  */
 export const C4_CONFIG_IGNORED = 'C4_CONFIG_IGNORED';
+
+/** c4-beta: a word after `c4-beta` that is not a diagram kind. */
+export const C4BETA_UNKNOWN_DIAGRAM_KIND = 'C4BETA_UNKNOWN_DIAGRAM_KIND';
+/** c4-beta: a line that opens like an element but names no element kind. */
+export const C4BETA_UNKNOWN_ELEMENT_KIND = 'C4BETA_UNKNOWN_ELEMENT_KIND';
+/** c4-beta: an id declared twice; the second declaration is left out. */
+export const C4BETA_DUPLICATE_ID = 'C4BETA_DUPLICATE_ID';
+/** c4-beta: a technology a person or a software system has no place for (dropped). */
+export const C4BETA_TECHNOLOGY_DROPPED = 'C4BETA_TECHNOLOGY_DROPPED';
+/** c4-beta: `instances` on an element that is not a deployment node (dropped). */
+export const C4BETA_INSTANCES_DROPPED = 'C4BETA_INSTANCES_DROPPED';
+/** c4-beta: a step number outside a `dynamic` diagram (not drawn). */
+export const C4BETA_STEP_IGNORED = 'C4BETA_STEP_IGNORED';
+/** c4-beta: a `style` entry with an unknown key or a value its key does not take (dropped). */
+export const C4BETA_STYLE_IGNORED = 'C4BETA_STYLE_IGNORED';

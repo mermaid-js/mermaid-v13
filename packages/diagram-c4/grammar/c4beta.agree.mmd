@@ -1,0 +1,20 @@
+c4-beta dynamic
+title Sign in
+accTitle: Sign in view
+accDescr {
+  Who talks to whom
+}
+direction LR
+legend off
+style store shape:cylinder, fill:#1f2937, stroke:red
+person user "User" :::external
+softwareSystem shop "Shop" "Sells things." {
+  container api "API" "Serves orders." "Kotlin" :::team
+  container db "Store" :::store
+}
+deploymentNode dc "Data centre" "" "Linux" instances "2..4" {
+  infrastructureNode lb "Load balancer" "" "nginx"
+}
+1: user --> api : "Signs in" "HTTPS"
+2: api <-- db : "Is read by" :::async
+api <--> db
