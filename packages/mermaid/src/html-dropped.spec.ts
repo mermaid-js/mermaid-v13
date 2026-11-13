@@ -1,4 +1,4 @@
-// HTML a label loses (R-TEXT-3, D564): one HTML_DROPPED warning per render, naming the tags.
+// HTML a label loses (R-TEXT-3, D566): one HTML_DROPPED warning per render, naming the tags.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { Warning } from './index.ts';
@@ -22,7 +22,7 @@ async function draw(
   };
 }
 
-describe('HTML_DROPPED (R-TEXT-3, D564)', () => {
+describe('HTML_DROPPED (R-TEXT-3, D566)', () => {
   it('names the tags of #691 once, in SVG and in text output', async () => {
     const out = await draw('flowchart/nightly-check/html-dropped-img.mmd');
     expect(out.labels).toContain('Logo 2');

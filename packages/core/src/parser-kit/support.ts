@@ -32,7 +32,7 @@ export function idEscaper(set: string = ID_RESERVED): (name: string) => string {
 
 /**
  * Undoes v12's `encodeEntities` placeholders, as v12's renderer did (`decodeEntities`): `&name;`
- * and `&#123;`. A name core cannot decode goes back to `#name;`, as written (D559).
+ * and `&#123;`. A name core cannot decode goes back to `#name;`, as written (D561).
  */
 export function decodePlaceholders(text: string): string {
   // Most text holds none: a parser calls this once per token.
@@ -49,7 +49,7 @@ export function decodePlaceholders(text: string): string {
 /**
  * The entity step of the parser kit's `cook`, for text that is not a source range: each `#name;`
  * as `&name;` and each `#123;` as `&#123;`, which is how v12's renderer read the placeholders its
- * parser saw. A name core cannot decode stays `#name;`, as written (D559).
+ * parser saw. A name core cannot decode stays `#name;`, as written (D561).
  */
 export const ampEntities = (text: string): string =>
   text.includes('#')

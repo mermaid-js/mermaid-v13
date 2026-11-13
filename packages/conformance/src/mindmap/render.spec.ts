@@ -154,7 +154,7 @@ describe('mindmap render properties over the parsed corpus', () => {
   });
 });
 
-/** The e2e fixture whose `::icon()` is no glyph name (D564). */
+/** The e2e fixture whose `::icon()` is no glyph name (D566). */
 const WRITTEN_ICON = 'nightly-check/html-dropped-icon-text.mmd';
 
 describe('mindmap ::icon() glyphs over the parsed corpus (#328, D297)', () => {

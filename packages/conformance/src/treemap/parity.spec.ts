@@ -21,13 +21,13 @@ import { treemapAdapter } from './v13.ts';
  * - `treemap-cases/unclosed-directive*`: core ends an unclosed `%%{` at its line end and reports
  *   `UNCLOSED_DIRECTIVE`, so v13 rejects what v12 accepted with the rest removed.
  * - `treemap-cases/entities-semicolon`: a `#name;` whose name core's entity table does not hold stays as written, where
- *   v12 made it `&name;` (D559).
+ *   v12 made it `&name;` (D561).
  */
 const CORE: ReadonlyMap<string, RegExp> = new Map([
   ['treemap-cases/unclosed-directive', /^UNCLOSED_DIRECTIVE/],
 ]);
 
-/** The model paths that differ under D559, by source. */
+/** The model paths that differ under D561, by source. */
 const ENTITY_NAMES: ReadonlyMap<string, RegExp> = new Map([
   ['treemap-cases/entities-semicolon', /^roots\[0\]\.name$/],
 ]);

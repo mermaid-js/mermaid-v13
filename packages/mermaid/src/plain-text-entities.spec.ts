@@ -1,6 +1,6 @@
 // Entity codes in the types that draw plain text (#760, #656, spec #777): gantt, gitGraph,
 // treeView and railroad draw `#35;`, `#quot;` and `#9829;` as their characters, in SVG and in
-// text output, and a name core does not know as the author wrote it (D559).
+// text output, and a name core does not know as the author wrote it (D561).
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { corpusLabels } from './testing/labels.ts';
@@ -9,7 +9,7 @@ const { drawnBy: svgTexts, textOf } = corpusLabels(readFileSync);
 
 const textOutput = async (path: string): Promise<string> => (await textOf(path)).text;
 
-describe('entity codes in plain-text diagrams (#760, #656, D559)', () => {
+describe('entity codes in plain-text diagrams (#760, #656, D561)', () => {
   it('a gantt chart draws them in the title, a section name and task labels', async () => {
     expect(await svgTexts('gantt/baseline/text/entity-codes.mmd')).toEqual(
       expect.arrayContaining([

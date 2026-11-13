@@ -23,7 +23,7 @@ import { usecaseAdapter } from './v13.ts';
  * removed it with the line break after it (so v13 rejects what v12 accepted, or rejects it at the
  * directive, or, cut by a later `%%{…}%%` after a CR, reads the two as one directive and accepts
  * what v12 rejected); and core's entity table, smaller than the HTML table a browser drew v12's
- * `#name;` codes from, so a name outside it is not decoded, and stays `#name;` as written (D559),
+ * `#name;` codes from, so a name outside it is not decoded, and stays `#name;` as written (D561),
  * also where no browser knew the name and v12 drew `&name;`.
  */
 const LISTED: ReadonlyMap<string, { kind: string; detail: RegExp }> = new Map([

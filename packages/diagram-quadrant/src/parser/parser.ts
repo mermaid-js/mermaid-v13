@@ -653,7 +653,7 @@ class QuadrantParser {
     if (!this.in(LABEL_START)) this.fail(LABEL);
     if (k === T.Str || k === T.MdStr) this.closed(k);
     // v12's lexer split a placeholder over several tokens (`#name;` is `ﬂ°`, `name`, `¶ß`), so
-    // the text is decoded whole: a name core cannot decode is then seen and kept (D559).
+    // the text is decoded whole: a name core cannot decode is then seen and kept (D561).
     let text = this.raw();
     while (this.in(TEXT_MORE)) text += this.raw();
     return {

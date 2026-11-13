@@ -270,7 +270,7 @@ describe('HTML subset (R-TEXT-3)', () => {
     ]);
   });
 
-  // D564: the render's `InlineSpans.dropped` gets the names; the API warns `HTML_DROPPED`.
+  // D566: the render's `InlineSpans.dropped` gets the names; the API warns `HTML_DROPPED`.
   const droppedBy = (raw: string, options: LabelOptions = {}): [string[], string[]] => {
     const inline = inlineSpans([], () => undefined);
     const box = layoutLabel(raw, arial, Infinity, tableMeasurer, { ...options, inline });
@@ -468,7 +468,7 @@ describe('markdown bullet lists (R-TEXT-11)', () => {
   });
 });
 
-describe('label modes (D560)', () => {
+describe('label modes (D562)', () => {
   const SOURCE = '- **b** _i_ `c` \\*';
   const mode = (markup?: LabelMarkup, raw = SOURCE): MeasuredLabel =>
     layoutLabel(raw, arial, Infinity, tableMeasurer, { markup });
@@ -527,7 +527,7 @@ describe('label modes (D560)', () => {
   });
 });
 
-describe('backslashBreak (D560)', () => {
+describe('backslashBreak (D562)', () => {
   const written = (raw: string, options: LabelOptions): string[] =>
     texts(layoutLabel(raw, arial, Infinity, tableMeasurer, options));
 

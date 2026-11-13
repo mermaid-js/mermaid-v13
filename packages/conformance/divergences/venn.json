@@ -267,56 +267,56 @@
     "id": "venn-cases/label-punctuation",
     "inputHash": "sha256:6336a1950727ee05",
     "kind": "model",
-    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
-    "owner": "D559",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
     "since": "2026-11-13"
   },
   {
     "id": "venn-gate/venn-cases/label-punctuation (CR cut)",
     "inputHash": "sha256:80bb7cd340e03f5e",
     "kind": "model",
-    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
-    "owner": "D559",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
     "since": "2026-11-13"
   },
   {
     "id": "venn-gate/venn-cases/label-punctuation (CR cut by a directive)",
     "inputHash": "sha256:75622428dd7bca3c",
     "kind": "model",
-    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
-    "owner": "D559",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
     "since": "2026-11-13"
   },
   {
     "id": "venn-gate/venn-cases/label-punctuation (CRLF)",
     "inputHash": "sha256:93a2aab294250118",
     "kind": "model",
-    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
-    "owner": "D559",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
     "since": "2026-11-13"
   },
   {
     "id": "venn-gate/venn-cases/label-punctuation (tabs)",
     "inputHash": "sha256:cd23fc3a27e08d52",
     "kind": "model",
-    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
-    "owner": "D559",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
     "since": "2026-11-13"
   },
   {
     "id": "venn-gate/venn-cases/label-punctuation (dedented)",
     "inputHash": "sha256:6a737670d94522e9",
     "kind": "model",
-    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
-    "owner": "D559",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
     "since": "2026-11-13"
   },
   {
     "id": "venn-gate/venn-cases/label-punctuation (mid-line directive)",
     "inputHash": "sha256:b5918521ad2e3ff7",
     "kind": "model",
-    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
-    "owner": "D559",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
     "since": "2026-11-13"
   }
 ]

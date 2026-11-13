@@ -166,7 +166,7 @@ export function splitStyles(styleText: string): { styles: string[]; textStyles: 
  * A node's style text as v12 kept it: `#name;` as `&name;` and `#123;` as `&#123;`, whatever the
  * name. v12 quirk, kept for parity: a colour before a `;` (`fill:#f9f;`) reads `fill:&f9f;` and
  * styles nothing, so this is not the parser kit's `ampEntities`, which leaves a name core cannot
- * decode as written (D559).
+ * decode as written (D561).
  */
 export function v12StyleEntities(text: string): string {
   return text.replace(/#(\w+);/g, (_, name: string) =>

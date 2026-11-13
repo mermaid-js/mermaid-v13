@@ -178,7 +178,7 @@ interface Build {
   readonly model: ClassModel;
   readonly ctx: ClassLayoutContext;
   readonly units: UnitProfile;
-  /** A note or a relation label: bold and italic are read, as in a class box (D562). */
+  /** A note or a relation label: bold and italic are read, as in a class box (D564). */
   readonly label: (text: string, max?: number) => MeasuredLabel;
   /** A namespace title or a lollipop interface's name: v12 drew them without its Markdown reader. */
   readonly plain: (text: string) => MeasuredLabel;

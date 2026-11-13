@@ -1,4 +1,4 @@
-// Entity names in labels (#396, D559): the punctuation names draw as their characters, and a
+// Entity names in labels (#396, D561): the punctuation names draw as their characters, and a
 // name core does not know draws as the author wrote it.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -6,7 +6,7 @@ import { corpusLabels } from './testing/labels.ts';
 
 const { drawnBy: render, textOf } = corpusLabels(readFileSync);
 
-describe('entity names in labels (#396, D559)', () => {
+describe('entity names in labels (#396, D561)', () => {
   it('a flowchart draws the punctuation names, and unknown names as written', async () => {
     expect(await render('flowchart/baseline/text/entity-names.mmd')).toEqual(
       expect.arrayContaining([

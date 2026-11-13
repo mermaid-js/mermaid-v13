@@ -108,7 +108,7 @@ function cells(line: string): string[] {
 
 const textLines = (r: TextRenderResult): string[] => (r.text === '' ? [] : r.text.split('\n'));
 /**
- * Entity codes are drawn as their characters (D561), controls and line separators as blanks (one
+ * Entity codes are drawn as their characters (D563), controls and line separators as blanks (one
  * row a node).
  */
 const blanked = (s: string): string => decodeEntities(s).replace(/[\p{Cc}\u2028\u2029]/gu, ' ');
@@ -291,7 +291,7 @@ describe('treeView ascii corpus properties (D488, R-ASCII-9)', { timeout: 120_00
   // the top is an indent with no box glyph; GAPS T7, D489), so the gutter is cut here. A name
   // holding a control or a line separator (drawn as a blank), a box-drawing branch glyph (which
   // the box pass reads as a prefix) or an entity (v12's `#35;` is the name `&#35;`, drawn `#`
-  // (D561), which reads back as the name `#`) does not read back to its name, so its diagram is
+  // (D563), which reads back as the name `#`) does not read back to its name, so its diagram is
   // left out.
   it('parses its unicode drawing, without the descriptions and the gutter, back to the same tree', () => {
     const shape = (m: TreeViewModel) => m.nodes.map((n) => [n.depth, n.name, n.directory]);

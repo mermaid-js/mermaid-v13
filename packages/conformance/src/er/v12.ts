@@ -4,7 +4,7 @@
  *
  * Normalisation, chosen so the snapshot holds what v12 drew and nothing else:
  * - text has v12's `encodeEntities` placeholders decoded back to what the author wrote, a name
- *   core cannot decode as `#name;` (D559);
+ *   core cannot decode as `#name;` (D561);
  * - entities whose name is a subgraph id are left out (v12's `getData` draws none);
  * - entity ids (`entity-A-0`) are read back as names; a relationship end that is not an
  *   entity id named a subgraph;

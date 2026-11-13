@@ -27,48 +27,48 @@
     "id": "sequence-cases/edge case 5",
     "inputHash": "sha256:68ddc001af3a4382",
     "kind": "model",
-    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
-    "owner": "D559",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
     "since": "2026-11-13"
   },
   {
     "id": "sequence-cases/edge case 6",
     "inputHash": "sha256:f1a0659c21e77c14",
     "kind": "model",
-    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
-    "owner": "D559",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
     "since": "2026-11-13"
   },
   {
     "id": "sequence-cases/mid-line directive 1",
     "inputHash": "sha256:29bb73c3653cef10",
     "kind": "model",
-    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
-    "owner": "D559",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
     "since": "2026-11-13"
   },
   {
     "id": "sequence-cases/mid-line directive 2",
     "inputHash": "sha256:55e9ebef0ffede03",
     "kind": "model",
-    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
-    "owner": "D559",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
     "since": "2026-11-13"
   },
   {
     "id": "sequence-cases/entity 0",
     "inputHash": "sha256:ff6c0a4eb2eb6850",
     "kind": "model",
-    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
-    "owner": "D559",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
     "since": "2026-11-13"
   },
   {
     "id": "sequence-cases/entity 1",
     "inputHash": "sha256:c02b45e7e08c1cbd",
     "kind": "model",
-    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
-    "owner": "D559",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
     "since": "2026-11-13"
   }
 ]

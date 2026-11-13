@@ -15,7 +15,7 @@ import type { JisonToken } from '../jison/oracle.ts';
  *
  * Normalisation, both sides:
  * - images are compared with v12's entity placeholders decoded (`ﬂ°amp¶ß` is `&amp;`), as
- *   v12's renderer read them, a name core cannot decode as `#name;` (D559);
+ *   v12's renderer read them, a name core cannot decode as `#name;` (D561);
  * - after a lexical error jison stops, so both streams are cut at the first `INVALID`.
  *
  * Exclusions (left out of the v13 stream, which keeps them as tokens):

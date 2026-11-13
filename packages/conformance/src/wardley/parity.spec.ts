@@ -22,7 +22,7 @@ import { wardleyAdapter } from './v13.ts';
  * reports `UNCLOSED_DIRECTIVE`, so v13 rejects what v12 accepted with the rest removed (or, after
  * a statement, read as a comment); and core's entity table, smaller than the HTML table a browser
  * drew v12's `#name;` codes from, so a name outside it is not decoded (GAPS #493), and stays
- * `#name;` as written (D559), also where no browser knew the name and v12 drew `&name;`.
+ * `#name;` as written (D561), also where no browser knew the name and v12 drew `&name;`.
  */
 const LISTED: ReadonlyMap<string, { kind: string; detail: RegExp }> = new Map([
   ['wardley-cases/unclosed-directive', { kind: 'reject', detail: /^UNCLOSED_DIRECTIVE/ }],

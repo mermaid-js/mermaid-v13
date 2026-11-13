@@ -77,7 +77,7 @@ function frameOf(ctx: TreeViewLayoutContext): Frame {
   const { ascent, descent } = ctx.measurer.metrics(font);
   const lineHeight = ascent + descent;
   // v12 measured with `getBBox`, which is 0 × 0 for an empty text.
-  // Entity codes are decoded here (D561): a name is measured and drawn as its characters.
+  // Entity codes are decoded here (D563): a name is measured and drawn as its characters.
   const measure = (written: string, f: FontKey, style: StyleBits): TreeViewText => {
     const text = decodeEntities(written);
     return {

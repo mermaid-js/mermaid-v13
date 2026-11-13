@@ -3,24 +3,24 @@
     "id": "cynefin-cases/entity-classdef",
     "inputHash": "sha256:e0cffe9436860df1",
     "kind": "model",
-    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
-    "owner": "D559",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
     "since": "2026-11-13"
   },
   {
     "id": "cynefin-cases/entity-classdef (CRLF)",
     "inputHash": "sha256:901db08d93723495",
     "kind": "model",
-    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
-    "owner": "D559",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
     "since": "2026-11-13"
   },
   {
     "id": "cynefin-cases/entity-classdef (commented)",
     "inputHash": "sha256:b55ee47fd75a7856",
     "kind": "model",
-    "reason": "D559: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
-    "owner": "D559",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
     "since": "2026-11-13"
   }
 ]

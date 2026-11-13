@@ -4,7 +4,7 @@ import type { InlineSpans } from './inline.ts';
 
 /**
  * `inline` for a label that draws no inline boxes, such as a title: it finds no span, and only
- * carries the names of the tags the label loses to the render's `HTML_DROPPED` warning (D564).
+ * carries the names of the tags the label loses to the render's `HTML_DROPPED` warning (D566).
  */
 export const tagsOnly = (inline: InlineSpans | undefined): InlineSpans | undefined =>
   inline && { ...inline, extract: () => undefined };

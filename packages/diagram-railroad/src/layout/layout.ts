@@ -259,7 +259,7 @@ class Placer {
 
   /**
    * A terminal, nonterminal or special: its text padded on every side (L98-162, L473-499).
-   * Entity codes in `written` are decoded (D561), so the box is sized for, and the SVG and the
+   * Entity codes in `written` are decoded (D563), so the box is sized for, and the SVG and the
    * text output draw, the characters.
    */
   private leaf(

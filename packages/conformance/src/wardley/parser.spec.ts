@@ -469,7 +469,7 @@ describe('wardley AST, symbols and statements', () => {
     ]);
   });
 
-  // An unknown `#y;` stays as written, where v12 drew `&y;` (D559).
+  // An unknown `#y;` stays as written, where v12 drew `&y;` (D561).
   it("decodes v12's #name; codes as v12 drew them and keeps a literal &name; (GAPS #493)", () => {
     const { model } = parse(nightly('parser-entity-codes'));
     expect(model.title).toBe('A & B &amp; C');

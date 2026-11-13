@@ -27,7 +27,7 @@ import { architectureV12Snapshot } from './v12.ts';
  *
  * Those are {@link LISTED}: core's reading of an unclosed `%%{` (shared by every type: v13
  * rejects with `UNCLOSED_DIRECTIVE` what v12 accepted with the rest removed), D504's ignored
- * `{group}`, and D559's `#name;` kept as written when core's entity table does not hold the name
+ * `{group}`, and D561's `#name;` kept as written when core's entity table does not hold the name
  * (v12 made it `&name;`). {@link DIFFERENCES} lists each of D504's four cases with what v12 and
  * v13 do.
  */
@@ -197,7 +197,7 @@ describe('architecture oracle parity with mermaid@12', () => {
     });
   }, 300_000);
 
-  it('differs only where the list says (unclosed directives, D504, D559)', async () => {
+  it('differs only where the list says (unclosed directives, D504, D561)', async () => {
     const report = await run();
     const prefixes = [...LISTED.keys()];
     for (const prefix of prefixes) {

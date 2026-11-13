@@ -1,6 +1,6 @@
 ## State diagram
 
-- **Label text** (D562, #763): state text, composite titles, transition text and notes read
+- **Label text** (D564, #763): state text, composite titles, transition text and notes read
   bold and italic, as in v12. A label that starts with `- `, `* ` or `+ ` or holds backticks is
   drawn as written: no bullet, no monospace. The title and rows of a state with several
   description lines are plain text, as v12 drew them: `**x**` stays as written there and a

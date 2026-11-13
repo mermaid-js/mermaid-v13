@@ -156,7 +156,7 @@ describe('quadrant layout parity with v12 getQuadrantData()', () => {
     // v12's 14 e2e fixtures and the 18 baselines (#317 and later).
     expect(items.length).toBe(14 + 18);
     const problems: string[] = [];
-    // A source with a listed model divergence draws other text than v12 by design (D559).
+    // A source with a listed model divergence draws other text than v12 by design (D561).
     const divergent = modelDivergenceIds(fileURLToPath(DIVERGENCES_DIR));
     for (const item of items) {
       if (divergent.has(item.id)) continue;

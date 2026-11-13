@@ -1,5 +1,5 @@
 // A label v12 drew through `createText` with Markdown on (`labelType: 'markdown'`), as core's
-// label layout reads it (D562). v12's Markdown reader read bold and italic, and handed a list
+// label layout reads it (D564). v12's Markdown reader read bold and italic, and handed a list
 // item and a code span back as written, with what they hold. Its HTML label then showed blank
 // lines between written lines and a break at the end as nothing. A subpath of its own, which only
 // the diagrams with such labels load (D557).

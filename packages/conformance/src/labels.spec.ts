@@ -44,7 +44,7 @@ const FONT: FontKey = { family: DEFAULT_FONT_FAMILY, size: 16, weight: 400 };
 const WRAPPING_WIDTH = 200;
 const RE_BULLET_LINE = /^[ \t]*[-*] +\S/m;
 // An HTML tag other than `<br>`: v12's markdownToLines keeps it as words, and its HTML label
-// then draws it. What v13 does with it (R-TEXT-3, D564) is in core's label.spec.ts.
+// then draws it. What v13 does with it (R-TEXT-3, D566) is in core's label.spec.ts.
 const RE_HTML = /<\/?(?!br\b)[a-zA-Z][^<>]*>/i;
 // v12's sanitiser removes these with what they hold, to the end of the label with no end tag.
 const RE_RAW = /<(script|style)(?=[\s/>])[^>]*>[^]*?(<\/\1\s*>|$)/gi;
@@ -55,7 +55,7 @@ const BY_DESIGN = [
   'flowchart/baseline/text/html-kept.mmd node A',
   'flowchart/baseline/text/tag-shaped-script-style.mmd',
   // v12 lost the rest of a label after a `<script>` or `<style>` with no end tag; v13 drops the
-  // tag and keeps the text (D564).
+  // tag and keeps the text (D566).
   'flowchart/nightly-check/html-dropped-unclosed.mmd',
 ];
 

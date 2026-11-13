@@ -30,7 +30,7 @@ import type { TreemapNodeSnapshot } from './v12.ts';
  * The service loads the facet through the generated registry row (treemap's manifest
  * `language` entry, #514).
  *
- * Sources with a listed model divergence (`divergences/`: a `#name;` kept as written, D559) are
+ * Sources with a listed model divergence (`divergences/`: a `#name;` kept as written, D561) are
  * left out: their names differ from v12's by design.
  */
 const DIVERGENT = modelDivergenceIds(fileURLToPath(DIVERGENCES_DIR));

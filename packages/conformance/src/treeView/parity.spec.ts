@@ -20,7 +20,7 @@ import { treeViewAdapter } from './v13.ts';
  * - `treeView-cases/unclosed-directive*`: core ends an unclosed `%%{` at its line end and reports
  *   `UNCLOSED_DIRECTIVE`, so v13 rejects what v12 accepted with the rest removed.
  * - `e2e/baseline/text/entity-codes-box.mmd`, `e2e/baseline/text/entity-codes.mmd`: a `#name;` whose name core's entity table does not hold stays as written, where
- *   v12 made it `&name;` (D559).
+ *   v12 made it `&name;` (D561).
  *
  * The lexer gate's other exclusion, `treeView-cases/cypress-custom-config-raw` (core reads front
  * matter after leading blank lines), agrees here: both reject it, v12 for its `---` lines, v13
@@ -30,7 +30,7 @@ const CORE: ReadonlyMap<string, RegExp> = new Map([
   ['treeView-cases/unclosed-directive', /^UNCLOSED_DIRECTIVE/],
 ]);
 
-/** The model paths that differ under D559, by source. */
+/** The model paths that differ under D561, by source. */
 const ENTITY_NAMES: ReadonlyMap<string, RegExp> = new Map([
   ['e2e/baseline/text/entity-codes-box.mmd', /^rows\[3\]\[1\]$/],
   ['e2e/baseline/text/entity-codes.mmd', /^rows\[4\]\[5\]$/],

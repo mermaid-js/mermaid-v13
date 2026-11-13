@@ -88,7 +88,7 @@ export interface InlineSpans {
   readonly warn: Warn;
   /**
    * Names of the HTML tags this render's labels lost, other than `<br>` and the bold and italic
-   * subset (D564). Label layout adds to it; the API gives one `HTML_DROPPED` warning for them.
+   * subset (D566). Label layout adds to it; the API gives one `HTML_DROPPED` warning for them.
    */
   readonly dropped: Set<string>;
   /**

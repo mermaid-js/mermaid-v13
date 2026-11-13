@@ -32,7 +32,7 @@ import { sanitizeLikeV12 } from './v13.ts';
  * The service loads the facet through the generated registry row (gitGraph's manifest
  * `language` entry, #374).
  *
- * Sources with a listed model divergence (`divergences/`: a `#name;` kept as written, D559) are
+ * Sources with a listed model divergence (`divergences/`: a `#name;` kept as written, D561) are
  * left out: their names differ from v12's by design.
  */
 

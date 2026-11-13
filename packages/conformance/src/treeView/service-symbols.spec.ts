@@ -26,7 +26,7 @@ import { TREEVIEW_V12_TYPES, treeViewV12Snapshot } from './v12.ts';
  * The service loads the facet through the generated registry row (treeView's manifest
  * `language` entry, #577).
  *
- * Sources with a listed model divergence (`divergences/`: a `#name;` kept as written, D559) are
+ * Sources with a listed model divergence (`divergences/`: a `#name;` kept as written, D561) are
  * left out: their names differ from v12's by design.
  */
 const DIVERGENT = modelDivergenceIds(fileURLToPath(DIVERGENCES_DIR));

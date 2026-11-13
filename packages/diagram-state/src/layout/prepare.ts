@@ -128,7 +128,7 @@ interface Measure {
   /** State label wrap width and least label width, in units. */
   readonly wrap: number;
   readonly minWidth: number;
-  /** A measured label, read as v12's Markdown reader did (D562). */
+  /** A measured label, read as v12's Markdown reader did (D564). */
   readonly label: (text: string, style: CheckedStyle, max: number) => MeasuredLabel;
   /**
    * The measured title or rows of a state with several description lines, which v12 drew

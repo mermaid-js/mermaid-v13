@@ -22,7 +22,7 @@ const DIRECTIVE = /%{2}{\s*(?:(\w+)\s*:|(\w+))\s*(?:(\w+)|((?:(?!}%{2}).|\r?\n)*
  * block that v12 and core read differently (an empty one, listed in `divergences/railroad.json`; an
  * indented one, which core reads and v12 did not, as radar's divergences list; YAML that core's
  * reader refuses). So does a `#name;` core cannot decode, which v13 keeps as written and v12 made
- * `&name;` (D559).
+ * `&name;` (D561).
  */
 function coreDifference(source: string): boolean {
   // Core's own errors: an unclosed front matter or directive, front matter its YAML reader

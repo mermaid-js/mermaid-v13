@@ -103,7 +103,7 @@ describe('the text v12 lexed', () => {
       [T.Id, 'c'],
     ]);
     // Anywhere else in a comment it is comment text (images write entities as `&name;`).
-    // A name core cannot decode stays as written (D559).
+    // A name core cannot decode stays as written (D561).
     expect(lexed('railroadPeg', 'railroad-peg-beta\n# see #lt; #x;')[1]).toEqual([
       T.HashComment,
       '# see &lt; #x;',

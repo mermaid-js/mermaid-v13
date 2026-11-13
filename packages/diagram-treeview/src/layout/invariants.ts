@@ -247,7 +247,7 @@ export function treeViewLayoutViolations(
     if (!near(d.x, column))
       out.push(`the description of row ${i} is at x ${d.x}, the column at ${column}`);
     if (!near(d.y, centre(r))) out.push(`the description of row ${i} is off its centre`);
-    // Entity codes are drawn as their characters (D561).
+    // Entity codes are drawn as their characters (D563).
     if (d.text !== decodeEntities(r.node?.description ?? ''))
       out.push(`the description of row ${i} is not the model's`);
   });

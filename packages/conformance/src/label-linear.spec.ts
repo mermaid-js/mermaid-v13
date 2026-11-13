@@ -1,5 +1,5 @@
 /**
- * D564: label layout reads `<script>` and `<style>` in time linear in the label's length. A
+ * D566: label layout reads `<script>` and `<style>` in time linear in the label's length. A
  * ratio test on CPU time, not an absolute time: 8 times the text should cost about 8 times as
  * much; the pass that scanned to the end of the label from every start tag cost about 64 times.
  */

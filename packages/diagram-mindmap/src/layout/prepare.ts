@@ -1,6 +1,6 @@
 /**
  * MindmapModel → LayoutGraph (DESIGN §6.1, spec #294 T3): measures every label with core's
- * label layout (D225; modes as in v12, D562) in the font it is drawn in, sizes each shape with v12's
+ * label layout (D225; modes as in v12, D564) in the font it is drawn in, sizes each shape with v12's
  * formulas (D287), reserves the `::icon()` slot (D297), and joins each node to its parent.
  * Every length comes from the metrics table through the render's unit profile (pitfall 13).
  */
@@ -223,7 +223,7 @@ function iconText(b: Build, raw: string): IconText {
 function nodeView(b: Build, model: MindmapModel, index: number): MindmapNodeView {
   const node = model.nodes[index]!;
   // v12's HTML labels kept a long word whole and widened the node (#649).
-  // Bullets and inline code are read in a markdown string only (D562).
+  // Bullets and inline code are read in a markdown string only (D564).
   const [shown, mode] =
     node.markdown === true ? [node.label, { markup: 'markdown' as const }] : v12Label(node.label);
   const label = layoutLabel(shown, b.font, b.wrap, b.ctx.measurer, {

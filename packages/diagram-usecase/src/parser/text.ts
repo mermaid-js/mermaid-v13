@@ -15,7 +15,7 @@ const CLOSE = '¶ß';
 
 /**
  * The character the code `name` stands for. A code core cannot decode is as the author wrote it:
- * `#name;` for a name (D559; v12 drew `&name;`), and v12's `&#…;` for a number.
+ * `#name;` for a name (D561; v12 drew `&name;`), and v12's `&#…;` for a number.
  */
 function decoded(name: string, numeric: boolean): string {
   const ref = `${numeric ? '&#' : '&'}${name};`;

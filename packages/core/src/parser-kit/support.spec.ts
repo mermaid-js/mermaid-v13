@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ID_CONTROL, ID_RESERVED, ampEntities, decodePlaceholders, idEscaper } from './support.ts';
 import { Stop, STOP } from './stop.ts';
 
-describe('decodePlaceholders (D559)', () => {
+describe('decodePlaceholders (D561)', () => {
   it('undoes the placeholders of v12 as its renderer did', () => {
     expect(decodePlaceholders('a ﬂ°amp¶ß b ﬂ°°35¶ß c ﬂ°colon¶ß')).toBe('a &amp; b &#35; c &colon;');
     expect(decodePlaceholders('no placeholder; &amp; #35;')).toBe('no placeholder; &amp; #35;');
@@ -18,7 +18,7 @@ describe('decodePlaceholders (D559)', () => {
   });
 });
 
-describe('ampEntities (D559)', () => {
+describe('ampEntities (D561)', () => {
   it('writes each entity code as the reference v12 drew', () => {
     expect(ampEntities('a #amp; b #35; c #colon;')).toBe('a &amp; b &#35; c &colon;');
     expect(ampEntities('#9829;#lt;')).toBe('&#9829;&lt;');

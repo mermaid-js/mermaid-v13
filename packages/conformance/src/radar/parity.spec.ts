@@ -23,14 +23,14 @@ import { radarAdapter } from './v13.ts';
  *   and reports `UNCLOSED_FRONT_MATTER`, where v12 saw no front matter. Its dedented copy
  *   (`radar-cases/dev-diagram-dedented`) agrees.
  * - `radar-cases/entities-semicolon`: a `#name;` whose name core's entity table does not hold stays as written, where
- *   v12 made it `&name;` (D559).
+ *   v12 made it `&name;` (D561).
  */
 const CORE: ReadonlyMap<string, RegExp> = new Map([
   ['radar-cases/unclosed-directive', /^UNCLOSED_DIRECTIVE/],
   ['dev-diagrams/knsv/knsv2-03-radar.mmd', /^UNCLOSED_FRONT_MATTER/],
 ]);
 
-/** The model paths that differ under D559, by source. */
+/** The model paths that differ under D561, by source. */
 const ENTITY_NAMES: ReadonlyMap<string, RegExp> = new Map([
   ['radar-cases/entities-semicolon', /^axes\[0\]\.label$/],
 ]);

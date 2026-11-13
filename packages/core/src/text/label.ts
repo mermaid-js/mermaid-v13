@@ -39,7 +39,7 @@ export interface MeasuredLabel extends LabelBox {
 }
 
 /**
- * What a label's source may hold besides text (D560). `plain`: character references, `<br>` and
+ * What a label's source may hold besides text (D562). `plain`: character references, `<br>` and
  * the `<b>`/`<i>` HTML subset. `emphasis`: plain, plus `**`, `*`, `__` and `_`. `markdown`:
  * emphasis, plus inline code, bullet items and backslash escapes.
  */
@@ -48,7 +48,7 @@ export type LabelMarkup = 'plain' | 'emphasis' | 'markdown';
 export interface LabelOptions {
   /** The label's mode. Default `plain`. A markdown string (`"`…`"`) is `markdown`. */
   readonly markup?: LabelMarkup;
-  /** @deprecated Use `markup: 'markdown'`. Goes when every caller has moved (D560). */
+  /** @deprecated Use `markup: 'markdown'`. Goes when every caller has moved (D562). */
   readonly markdown?: boolean;
   /**
    * Whether a backslash and an `n`, written as two characters, break the line in the `plain` and
@@ -143,7 +143,7 @@ export function layoutLabel(
   const indents: number[] = [];
   const widths: number[] = [];
   const tags: Tags = { bold: 0, italic: 0, dropped: options.inline?.dropped };
-  // `<script>` and `<style>` lose what they hold, as in v12 (D564); `inline` drops the tags.
+  // `<script>` and `<style>` lose what they hold, as in v12 (D566); `inline` drops the tags.
   const shown = (markdown ? src : text).replace(RE_SCRIPT, '$1$2').replace(RE_STYLE, '$1$2');
   for (const { source, bullet } of markdown
     ? markdownLines(shown)
@@ -255,7 +255,7 @@ const RE_TAG = /<(\/?)([a-zA-Z][\w-]*)(?:\s[^<>]*)?\/?>/y;
 const RE_SCRIPT = /(<script(?:\s[^<>]*)?\/?>)(?:[^]*?(?=<\/script(?:\s[^<>]*)?\/?>)|([^]*))/gi;
 const RE_STYLE = /(<style(?:\s[^<>]*)?\/?>)(?:[^]*?(?=<\/style(?:\s[^<>]*)?\/?>)|([^]*))/gi;
 // HTML elements whose tags are dropped, text kept (R-TEXT-3), and reported as `HTML_DROPPED`
-// unless they are bold or italic (D564). Anything else shaped like a tag, such as the type in
+// unless they are bold or italic (D566). Anything else shaped like a tag, such as the type in
 // List<T>, is text.
 const HTML_TAGS = new Set(
   (

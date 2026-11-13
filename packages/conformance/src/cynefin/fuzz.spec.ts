@@ -34,7 +34,7 @@ import { cynefinAdapter } from './v13.ts';
  * newline" quirk), is compared.
  *
  * A mutant that holds a `#name;` core cannot decode is exempt too: v13 keeps the name as written
- * where v12 made it `&name;` (D559, `hasUnknownEntityName`).
+ * where v12 made it `&name;` (D561, `hasUnknownEntityName`).
  */
 /** v12's `directiveRegex` (`mermaid@12.2.0` `diagram-api/regexes.ts`), which `removeDirectives` cut. */
 // eslint-disable-next-line mermaid/no-nested-quantifier -- v12's released directiveRegex is the oracle; small inputs only

@@ -1,4 +1,4 @@
-// ER labels read Markdown emphasis, as v12 does for every ER label (#754, D563).
+// ER labels read Markdown emphasis, as v12 does for every ER label (#754, D565).
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { corpusLabels, drawnRuns } from './testing/labels.ts';
@@ -7,7 +7,7 @@ const { drawnBy, textOf } = corpusLabels(readFileSync);
 
 const FIXTURE = 'er-diagram/baseline/text/markdown-emphasis.mmd';
 
-describe('Markdown emphasis in ER labels (#754, D563)', () => {
+describe('Markdown emphasis in ER labels (#754, D565)', () => {
   it('draws bold and italic runs without the markers in every label kind', async () => {
     expect(await drawnBy(FIXTURE, drawnRuns)).toEqual(
       expect.arrayContaining([
