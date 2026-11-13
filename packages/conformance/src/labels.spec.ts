@@ -43,6 +43,14 @@ const FONT: FontKey = { family: DEFAULT_FONT_FAMILY, size: 16, weight: 400 };
 // v12's flowchart `wrappingWidth` default.
 const WRAPPING_WIDTH = 200;
 const RE_BULLET_LINE = /^[ \t]*[-*] +\S/m;
+// An HTML tag other than `<br>`: v12's markdownToLines keeps it as words, and its HTML label
+// then draws it. What v13 does with it (R-TEXT-3, D564) is in core's label.spec.ts.
+const RE_HTML = /<\/?(?!br\b)[a-zA-Z][^<>]*>/i;
+// v12's sanitiser removes these with what they hold.
+const RE_RAW = /<(script|style)\b[^>]*>[^]*?(<\/\1\s*>|$)/gi;
+// v12's browser drops an element it does not know; v13 shows `List<T>` and `<foo>` as written
+// (R-TEXT-3, MIGRATION "Labels and text").
+const LITERAL_TAGS = 'flowchart/baseline/text/html-kept.mmd node A';
 
 const labels: CorpusLabel[] = [];
 let v12: V12Text;
@@ -114,7 +122,7 @@ describe('label layout over the e2e flowchart labels', () => {
     const STYLE = { normal: 0, strong: Style.Bold, em: Style.Italic };
     const changed: string[] = [];
     for (const label of labels) {
-      if (!label.markdown || RE_BULLET_LINE.test(label.text)) continue;
+      if (!label.markdown || RE_BULLET_LINE.test(label.text) || RE_HTML.test(label.text)) continue;
       // v12's createText turns the first <br> into <br/> before splitting markdown.
       const expected = v12
         .markdownToLines(label.text.replace('<br>', '<br/>'))
@@ -164,17 +172,20 @@ describe('label layout over the e2e flowchart labels', () => {
     };
     const changed: string[] = [];
     for (const label of labels) {
-      if (label.markdown) continue;
-      const expected = label.text.split(/\\n|\n|<br\s*\/?>/gi).map((line) =>
-        line
-          .replace(/<\/?[a-zA-Z][^<>]*>/g, '')
-          .replace(/&(\w+);/g, (all, name: string) => ENTITIES[name] ?? all)
-          .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
-          .trim()
-          .split(/\s+/)
-          .filter(Boolean)
-          .join(' ')
-      );
+      if (label.markdown || label.id === LITERAL_TAGS) continue;
+      const expected = label.text
+        .replace(RE_RAW, '')
+        .split(/\\n|\n|<br\s*\/?>/gi)
+        .map((line) =>
+          line
+            .replace(/<\/?[a-zA-Z][^<>]*>/g, '')
+            .replace(/&(\w+);/g, (all, name: string) => ENTITIES[name] ?? all)
+            .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean)
+            .join(' ')
+        );
       const actual = layout(label, Infinity).lines.map((line) => line.map((r) => r.text).join(''));
       if (JSON.stringify(actual) !== JSON.stringify(expected)) {
         changed.push(

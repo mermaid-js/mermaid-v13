@@ -20,6 +20,7 @@
  * - everything drawn (labels, icons, descriptions, highlight boxes with their stroke, lines
  *   with their thickness) lies inside `bounds`.
  */
+import { decodeEntities } from '@mermaid-js/core/text';
 import { treeViewOptions } from '../config.ts';
 import { highlighted, type TreeViewModel, type TreeViewNode } from '../model.ts';
 import { TREEVIEW_METRICS as M } from './metrics.ts';
@@ -246,7 +247,9 @@ export function treeViewLayoutViolations(
     if (!near(d.x, column))
       out.push(`the description of row ${i} is at x ${d.x}, the column at ${column}`);
     if (!near(d.y, centre(r))) out.push(`the description of row ${i} is off its centre`);
-    if (d.text !== r.node?.description) out.push(`the description of row ${i} is not the model's`);
+    // Entity codes are drawn as their characters (D561).
+    if (d.text !== decodeEntities(r.node?.description ?? ''))
+      out.push(`the description of row ${i} is not the model's`);
   });
 
   // Highlight boxes.

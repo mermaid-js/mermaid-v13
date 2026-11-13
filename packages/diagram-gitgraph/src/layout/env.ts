@@ -3,7 +3,7 @@
  * in, plain-text measuring (D268), the geometry theme variables (D152), and bounding boxes.
  */
 import type { RenderContext } from '@mermaid-js/core';
-import type { FontKey } from '@mermaid-js/core/text';
+import { decodeEntities, type FontKey } from '@mermaid-js/core/text';
 import { GIT_GEOMETRY, GIT_METRICS, type GitGeometry, type GitMetrics } from './metrics.ts';
 import type { GitText, Point, Rect, Transform } from './types.ts';
 
@@ -72,7 +72,10 @@ export interface Env {
     readonly tag: FontKey;
     readonly title: FontKey;
   };
-  /** Plain text at (x, y) top-left, one line per entry of `lines`. */
+  /**
+   * Plain text at (x, y) top-left, one line per entry of `lines` as the model holds them. Entity
+   * codes are decoded here (D561), so the text is measured and drawn as its characters.
+   */
   text(lines: readonly string[], font: FontKey, x?: number, y?: number): GitText;
 }
 
@@ -112,7 +115,8 @@ export function envOf(ctx: GitLayoutContext): Env {
       tag: { family, size: size('tagLabelFontSize'), weight: m.common.tagFontWeight },
       title: { family, size: m.common.titleFontSize, weight: m.common.titleFontWeight },
     },
-    text(lines, font, x = 0, y = 0) {
+    text(written, font, x = 0, y = 0) {
+      const lines = written.map(decodeEntities);
       const { ascent, lineHeight } = measurer.metrics(font);
       let width = 0;
       for (const line of lines) width = Math.max(width, measurer.width(line, font, 0));

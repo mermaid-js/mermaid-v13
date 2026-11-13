@@ -2,6 +2,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cellWidth, graphemes } from '@mermaid-js/core/ascii';
 import { preprocess } from '@mermaid-js/core/preprocess';
+import { decodeEntities } from '@mermaid-js/core/text';
 import {
   detectTreeView,
   parseTreeView,
@@ -106,8 +107,11 @@ function cells(line: string): string[] {
 }
 
 const textLines = (r: TextRenderResult): string[] => (r.text === '' ? [] : r.text.split('\n'));
-/** Controls and line separators are drawn as blanks (one row a node). */
-const blanked = (s: string): string => s.replace(/[\p{Cc}\u2028\u2029]/gu, ' ');
+/**
+ * Entity codes are drawn as their characters (D561), controls and line separators as blanks (one
+ * row a node).
+ */
+const blanked = (s: string): string => decodeEntities(s).replace(/[\p{Cc}\u2028\u2029]/gu, ' ');
 /** `s` without the spaces which end it. */
 function unpadded(s: string): string {
   let end = s.length;
@@ -286,8 +290,9 @@ describe('treeView ascii corpus properties (D488, R-ASCII-9)', { timeout: 120_00
   // highlighted row that holds only once the gutter is removed too (its blank before a row at
   // the top is an indent with no box glyph; GAPS T7, D489), so the gutter is cut here. A name
   // holding a control or a line separator (drawn as a blank), a box-drawing branch glyph (which
-  // the box pass reads as a prefix) or an entity (v12's `#35;` is the name `&#35;`, which reads
-  // back as `&&#35;`) has no written form that shows it as SVG does, so its diagram is left out.
+  // the box pass reads as a prefix) or an entity (v12's `#35;` is the name `&#35;`, drawn `#`
+  // (D561), which reads back as the name `#`) does not read back to its name, so its diagram is
+  // left out.
   it('parses its unicode drawing, without the descriptions and the gutter, back to the same tree', () => {
     const shape = (m: TreeViewModel) => m.nodes.map((n) => [n.depth, n.name, n.directory]);
     const unwritable = (m: TreeViewModel) =>

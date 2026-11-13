@@ -3,7 +3,8 @@
  * v13's `ErModel` without AST ids and warnings.
  *
  * Normalisation, chosen so the snapshot holds what v12 drew and nothing else:
- * - text has v12's `encodeEntities` placeholders decoded back to what the author wrote;
+ * - text has v12's `encodeEntities` placeholders decoded back to what the author wrote, a name
+ *   core cannot decode as `#name;` (D559);
  * - entities whose name is a subgraph id are left out (v12's `getData` draws none);
  * - entity ids (`entity-A-0`) are read back as names; a relationship end that is not an
  *   entity id named a subgraph;
@@ -14,6 +15,7 @@
  * - the front matter `title` is left out: core reads it, and the oracle never passes it on;
  * - rendering fields (`look`, `shape`, `labelType`, colour indexes) are left out.
  */
+import { decodeEntities as d } from '../flowchart/v12.ts';
 
 /** `diagram.type` values mermaid\@12 reports for ER sources. */
 export const ER_V12_TYPES = ['er'];
@@ -75,11 +77,6 @@ interface ErDbV12 {
   getClasses(): Map<string, { id: string; styles: string[]; textStyles: string[] }>;
 }
 
-/** Undo v12's `encodeEntities` placeholders (v12 `utils.ts` `decodeEntities`). */
-export function decodeEntities(text: string): string {
-  return text.replace(/ﬂ°°/g, '&#').replace(/ﬂ°/g, '&').replace(/¶ß/g, ';');
-}
-
 /** v12 cardinality constant → v13 `ErCardinality`. */
 const CARDINALITY: Record<string, string> = {
   ZERO_OR_ONE: 'zeroOrOne',
@@ -88,8 +85,6 @@ const CARDINALITY: Record<string, string> = {
   ONLY_ONE: 'onlyOne',
   MD_PARENT: 'mdParent',
 };
-
-const d = decodeEntities;
 
 export function erV12Snapshot(dbValue: unknown): ErSnapshot {
   const db = dbValue as ErDbV12;

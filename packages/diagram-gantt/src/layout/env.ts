@@ -5,6 +5,7 @@
  */
 import type { RenderContext } from '@mermaid-js/core';
 import {
+  decodeEntities,
   fontSizePx,
   layoutLabel,
   Style,
@@ -83,14 +84,17 @@ function sizeOf(value: unknown, fallback: number, base: number, path: string, wa
 const textOf = (value: unknown): string | undefined =>
   typeof value === 'string' && value !== '' ? value : undefined;
 
-// Task labels are plain text, as v12 drew them with `.text()`: markup, character references and
-// `\n` are shown as written, so they are escaped before core's label layout reads them. A math
-// span (`$$…$$`, D176) an inline-box provider takes is passed through untouched; one none takes
-// is shown as written too. Icons (D292) contain none of the escaped characters.
+// Task labels are plain text, as v12 drew them with `.text()`: markup and `\n` are shown as
+// written, so they are escaped before core's label layout reads them. Entity codes are decoded
+// first (D561): the parser hands `#35;` on as `&#35;`, which draws `#`, and the `<` of a `#lt;`
+// is plain text like a typed one. A math span (`$$…$$`, D176) an inline-box provider takes is
+// passed through untouched; one none takes is shown as written too. Icons (D292) contain none
+// of the escaped characters.
 const RE_MATH = /(\$\$[\s\S]*?\$\$)/;
 const RE_ESCAPED = /[&<]|\\(?=n)/g;
 const ESCAPES: Readonly<Record<string, string>> = { '&': '&amp;', '<': '&lt;', '\\': '&#92;' };
-const escaped = (part: string): string => part.replace(RE_ESCAPED, (c) => ESCAPES[c]!);
+const escaped = (part: string): string =>
+  decodeEntities(part).replace(RE_ESCAPED, (c) => ESCAPES[c]!);
 /** `text` shown as written, but the math spans `boxed` says a provider takes. */
 export const literal = (text: string, boxed: (span: string) => boolean = () => false): string =>
   text

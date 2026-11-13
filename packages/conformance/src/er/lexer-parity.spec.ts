@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { erTokens, jisonName } from '@mermaid-js/diagram-er';
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
+import { decodeEntities as decode } from '../flowchart/v12.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
 
@@ -14,7 +15,7 @@ import type { JisonToken } from '../jison/oracle.ts';
  *
  * Normalisation, both sides:
  * - images are compared with v12's entity placeholders decoded (`ﬂ°amp¶ß` is `&amp;`), as
- *   v12's renderer read them;
+ *   v12's renderer read them, a name core cannot decode as `#name;` (D559);
  * - after a lexical error jison stops, so both streams are cut at the first `INVALID`.
  *
  * Exclusions (left out of the v13 stream, which keeps them as tokens):
@@ -31,8 +32,6 @@ import type { JisonToken } from '../jison/oracle.ts';
  * Every source is also lexed with comment lines added, which v12 removed before lexing, and
  * with CRLF line breaks, which v12 turned into LF.
  */
-const decode = (s: string) => s.replace(/ﬂ°°/g, '&#').replace(/ﬂ°/g, '&').replace(/¶ß/g, ';');
-
 function cut(tokens: JisonToken[]): JisonToken[] {
   const i = tokens.findIndex(([n]) => n === 'INVALID');
   return i < 0 ? tokens : [...tokens.slice(0, i), ['INVALID', '']];

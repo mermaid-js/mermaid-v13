@@ -1,0 +1,8 @@
+---
+description: >-
+  entity codes in an EBNF terminal draw as their characters (#656), beside
+  markup typed as it is, which prints as written
+---
+railroad-ebnf-beta
+rule = "<b>bold</b> & #lt;tag#gt; #35; #quot;q#quot;" , [ b ] ;
+b = "x #9829; y" | "unknown #bogus; stays" ;

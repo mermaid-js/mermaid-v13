@@ -23,6 +23,7 @@ import {
   sourceView,
 } from '@mermaid-js/core/parser-kit';
 import type { Hole, Range, SourceView } from '@mermaid-js/core/parser-kit';
+import { entityAt } from '@mermaid-js/core/text';
 
 export interface Trivia extends Range {
   kind: 'comment' | 'directive';
@@ -211,10 +212,17 @@ class Layer {
   }
 }
 
-/** Undo the placeholders of v12's `encodeEntities`, as v12's renderer read the text. */
+const RE_NAMED = /ﬂ°(?!°)(\w+)¶ß/g;
+
+/**
+ * Undo the placeholders of v12's `encodeEntities`, as v12's renderer read the text: `&name;`
+ * and `&#123;`. A name core cannot decode goes back to `#name;` (D559), as in the parser kit's
+ * `cook`.
+ */
 export function decodeEntities(text: string): string {
   if (!text.includes('ﬂ') && !text.includes(ENTITY_CLOSE)) return text;
   return text
+    .replace(RE_NAMED, (all, name: string) => (entityAt(`&${name};`, 0) ? all : `#${name};`))
     .split(ENTITY_OPEN_NUM)
     .join('&#')
     .split(ENTITY_OPEN)
