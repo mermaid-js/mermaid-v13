@@ -61,21 +61,73 @@ describe('the model, as v12 built it', () => {
     expect(c.elements[0]).toMatchObject({ label: 'C2', techn: 'Java', descr: 'x' });
   });
 
-  it('merges a repeated relation: kind and label replaced, techn kept', () => {
+  it('keeps every relation statement, also one that repeats a pair (#680)', () => {
     const m = model(
-      'C4Context\nPerson(a, "A")\nPerson(b, "B")\nRel(a, b, "x", "T")\nRel_Back(a, b, "y")'
+      'C4Context\nPerson(a, "A")\nPerson(b, "B")\nRel(a, b, "x", "T")\nRel_Back(a, b, "y")\nBiRel(b, a, "z")'
     );
     expect(m.relations).toEqual([
       {
         ast: 'rel:a->b',
-        kind: 'rel_b',
+        kind: 'rel',
         from: 'a',
         to: 'b',
-        label: 'y',
+        label: 'x',
         techn: 'T',
         descr: '',
         extra: [],
       },
+      {
+        ast: 'rel:a->b@2',
+        kind: 'rel_b',
+        from: 'a',
+        to: 'b',
+        label: 'y',
+        techn: '',
+        descr: '',
+        extra: [],
+      },
+      {
+        ast: 'rel:b->a',
+        kind: 'birel',
+        from: 'b',
+        to: 'a',
+        label: 'z',
+        techn: '',
+        descr: '',
+        extra: [],
+      },
+    ]);
+  });
+
+  it('shows the issue: no technology or label is carried from an earlier statement (#680)', () => {
+    const m = model(
+      'C4Context\nSystem(a, "Ledger")\nSystem(b, "Billing")\nRel(a, b, "Pushes balances", "AMQP")\nBiRel(a, b, "Reconciles nightly")'
+    );
+    expect(m.relations.map((r) => [r.kind, r.label, r.techn])).toEqual([
+      ['rel', 'Pushes balances', 'AMQP'],
+      ['birel', 'Reconciles nightly', ''],
+    ]);
+  });
+
+  it('applies UpdateRelStyle to every relation of the pair so far, in that direction only (#680)', () => {
+    const m = model(
+      'C4Context\nPerson(a, "A")\nPerson(b, "B")\nRel(a, b, "1")\nRel(b, a, "back")\nRel(a, b, "2")\nUpdateRelStyle(a, b, "red", "blue", "5")\nRel(a, b, "3")'
+    );
+    expect(m.relations.map((r) => [r.label, r.textColor, r.lineColor, r.offsetX])).toEqual([
+      ['1', 'red', 'blue', 5],
+      ['back', undefined, undefined, undefined],
+      ['2', 'red', 'blue', 5],
+      ['3', undefined, undefined, undefined],
+    ]);
+  });
+
+  it('finds a relation moved by `$from` and `$to` under its new pair (#680)', () => {
+    const m = model(
+      'C4Context\nPerson(a, "A")\nPerson(b, "B")\nRel(a, b, "1")\nRel(a, a, "2", $to="b")\nUpdateRelStyle(a, b, "red")'
+    );
+    expect(m.relations.map((r) => [r.label, r.to, r.textColor])).toEqual([
+      ['1', 'b', 'red'],
+      ['2', 'b', 'red'],
     ]);
   });
 
@@ -384,8 +436,15 @@ describe('D457: degenerate input', () => {
 
   it('reports a relation to an unknown alias with v12’s message, at parse', () => {
     const r = parse('C4Context\nPerson(a, "A")\nRel(a, nobody, "x")\nRel(a, nobody, "y")');
+    // One for each statement (#680).
+    const unknown = [
+      codes.C4_UNKNOWN_END,
+      'C4 rel "a" -> "nobody" references an unknown shape or boundary',
+      2,
+    ];
     expect(r.diagnostics.map((d) => [d.code, d.message, r.model.relations.length])).toEqual([
-      [codes.C4_UNKNOWN_END, 'C4 rel "a" -> "nobody" references an unknown shape or boundary', 1],
+      unknown,
+      unknown,
     ]);
     // A boundary end, and an alias defined further down, are known.
     expect(codesOf('C4Context\nRel(a, b, "x")\nBoundary(b, "B") {\nPerson(a, "A")\n}')).toEqual([]);
@@ -427,7 +486,7 @@ describe('D458: AST ids, symbols and statements', () => {
       'element:s',
       'element:x%40y%3Ez',
     ]);
-    expect(r.model.relations.map((x) => x.ast)).toEqual(['rel:a->s']);
+    expect(r.model.relations.map((x) => x.ast)).toEqual(['rel:a->s', 'rel:a->s@2']);
   });
 
   it('defines aliases at their first statement and refers to them after, per namespace', () => {

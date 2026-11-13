@@ -734,5 +734,53 @@
     "reason": "12.2.0's `title` and `accDescription` (`[^#\\n;]+`) stopped at a `#`, and the rest of the line was a lexical error; v13 runs them over it (`[^\\n;]+`), as v12's fix mermaid-js/mermaid#8039 does (#683; a lexer-parity exclusion, MIGRATION.md). The `;` after `#f` is the one v12's preprocess drops on a `style…:…#…;` line, so the title is `style x:#f`.",
     "owner": "#683",
     "since": "2026-11-12"
+  },
+  {
+    "id": "c4-cases/every-rel",
+    "inputHash": "sha256:01588a564e566eb4",
+    "kind": "model",
+    "reason": "v12 merged a relation that repeats a from/to pair into the first (the last label and kind won, an earlier technology stayed, and C4Dynamic lost the step); v13 keeps every relation statement as a relation of its own (D458 amended, #680, MIGRATION.md).",
+    "owner": "#680",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "c4-cases/named-type",
+    "inputHash": "sha256:e0ab74bf8e986275",
+    "kind": "model",
+    "reason": "v12 merged a relation that repeats a from/to pair into the first (the last label and kind won, an earlier technology stayed, and C4Dynamic lost the step); v13 keeps every relation statement as a relation of its own (D458 amended, #680, MIGRATION.md).",
+    "owner": "#680",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "c4-cases/duplicate-rel",
+    "inputHash": "sha256:79dea916fc3e9f62",
+    "kind": "model",
+    "reason": "v12 merged a relation that repeats a from/to pair into the first (the last label and kind won, an earlier technology stayed, and C4Dynamic lost the step); v13 keeps every relation statement as a relation of its own (D458 amended, #680, MIGRATION.md).",
+    "owner": "#680",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/diagrams/c4/nightly-check/duplicates.mmd",
+    "inputHash": "sha256:dc51e0235e08b482",
+    "kind": "model",
+    "reason": "v12 merged a relation that repeats a from/to pair into the first (the last label and kind won, an earlier technology stayed, and C4Dynamic lost the step); v13 keeps every relation statement as a relation of its own (D458 amended, #680, MIGRATION.md).",
+    "owner": "#680",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/diagrams/c4/pr-check/repeated-relations.mmd",
+    "inputHash": "sha256:bdd19cd4c2d4b878",
+    "kind": "model",
+    "reason": "v12 merged a relation that repeats a from/to pair into the first (the last label and kind won, an earlier technology stayed, and C4Dynamic lost the step); v13 keeps every relation statement as a relation of its own (D458 amended, #680, MIGRATION.md).",
+    "owner": "#680",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/diagrams/c4/pr-check/repeated-steps.mmd",
+    "inputHash": "sha256:47bb161c089244d8",
+    "kind": "model",
+    "reason": "v12 merged a relation that repeats a from/to pair into the first (the last label and kind won, an earlier technology stayed, and C4Dynamic lost the step); v13 keeps every relation statement as a relation of its own (D458 amended, #680, MIGRATION.md).",
+    "owner": "#680",
+    "since": "2026-11-13"
   }
 ]

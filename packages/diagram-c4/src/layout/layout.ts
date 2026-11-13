@@ -477,19 +477,48 @@ class Lines {
 }
 
 /** Routes every relation with known ends in model order, then places their labels (Pele `render.ts`). */
+/**
+ * How far each relation moves sideways (along its own normal) to keep off the others between the
+ * same two shapes, in either direction: none for the only one, else the group spread across
+ * `2 * pairShift` steps, the first statement's side first. A pair with one relation each way keeps
+ * `pairShift` to either side of the middle, as before repeated relations were kept (#680).
+ */
+function pairShifts(drawn: readonly { a: Outline; b: Outline }[]): number[] {
+  interface Between {
+    a: Outline;
+    ks: number[];
+  }
+  const groups = new Map<Outline, Map<Outline, Between>>();
+  const groupOf = drawn.map(({ a, b }, k): Between | undefined => {
+    if (a === b) return undefined;
+    let g = groups.get(a)?.get(b) ?? groups.get(b)?.get(a);
+    if (!g) {
+      g = { a, ks: [] };
+      let ends = groups.get(a);
+      if (!ends) groups.set(a, (ends = new Map<Outline, Between>()));
+      ends.set(b, g);
+    }
+    g.ks.push(k);
+    return g;
+  });
+  return drawn.map(({ a }, k) => {
+    const g = groupOf[k];
+    if (!g || g.ks.length < 2) return 0;
+    const side = ((g.ks.length - 1) / 2 - g.ks.indexOf(k)) * 2 * M.pairShift;
+    return a === g.a ? side : -side;
+  });
+}
+
 function routeAll(input: RouteInput): RoutedAll {
   const { model, endOf, shapes, frames, order } = input;
   const drawn: { rel: C4Relation; index: number; a: Outline; b: Outline }[] = [];
-  const pairs = new Map<Outline, Set<Outline>>();
   model.relations.forEach((rel, index) => {
     const a = endOf(rel.from);
     const b = endOf(rel.to);
     if (!a || !b) return;
     drawn.push({ rel, index, a, b });
-    let targets = pairs.get(a);
-    if (!targets) pairs.set(a, (targets = new Set()));
-    targets.add(b);
   });
+  const shifts = pairShifts(drawn);
   // The comparisons are counted as they are made: once the budget is spent, the relations still
   // to route go straight and the labels still to place sit at their middle, in model order.
   const work = new Work(input.budget);
@@ -508,11 +537,10 @@ function routeAll(input: RouteInput): RoutedAll {
   // Every line is routed before any label is placed, so that labels can keep off the arrowheads.
   const lanes = new Lanes(work);
   for (const f of frames) lanes.frame(f);
-  const routes = drawn.map(({ rel, a, b }) => {
-    const reverse = a !== b && pairs.get(b)?.has(a) === true;
+  const routes = drawn.map(({ rel, a, b }, k) => {
     if (work.done) careful = false;
     const r = route(a, b, {
-      shift: reverse ? M.pairShift : 0,
+      shift: shifts[k] ?? 0,
       ...(work.done ? {} : { others: shapes }),
       lanes,
     });

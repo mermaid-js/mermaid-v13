@@ -135,6 +135,6 @@ const DIFFERING = {
   comment: 21,
   title: 19,
   hash: 19,
-  'as-listed': 315,
+  'as-listed': 349,
   'title trimmed': 54,
 };

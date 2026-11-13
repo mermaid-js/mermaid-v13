@@ -159,11 +159,12 @@ export class C4Builder {
   readonly relations: OpenRelation[] = [];
   shapeInRow: number | undefined;
   boundaryInRow: number | undefined;
-  /** Each relation's first statement, for the unknown-end check. */
+  /** Each relation's statement, for the unknown-end check. */
   private readonly relationAt: Range[] = [];
   private readonly elementIndex = new Map<string, number>();
   private readonly boundaryIndex = new Map<string, number>();
-  private readonly relationIndex = new Map<string, Map<string, number>>();
+  /** The relations between each pair of ends, by statement order (a pair can have several). */
+  private readonly relationIndex = new Map<string, Map<string, number[]>>();
   /** Relation ends and style targets, resolved to a namespace at the end. */
   private readonly refs: { name: string; range: Range }[] = [];
   /** Each item's `extra` names, by name: where in `extra` each is. */
@@ -282,17 +283,25 @@ export class C4Builder {
     bag.parent = parent;
   }
 
-  /** A relation's ends, re-indexed: a later statement with them merges into it. */
+  /** The relations between `from` and `to` written so far, in statement order. */
+  private between(from: string, to: string): number[] {
+    let ends = this.relationIndex.get(from);
+    if (!ends) this.relationIndex.set(from, (ends = new Map<string, number[]>()));
+    let list = ends.get(to);
+    if (!list) ends.set(to, (list = []));
+    return list;
+  }
+
+  /** A relation's ends, re-indexed: it is found by the new pair from now on. */
   private relationEnds(i: number, from: string, to: string): void {
     const r = this.relations[i] as OpenRelation;
-    const ends = this.relationIndex.get(r.from);
-    if (ends?.get(r.to) === i) ends.delete(r.to);
+    const old = this.between(r.from, r.to);
+    old.splice(old.indexOf(i), 1);
     r.from = from;
     r.to = to;
-    let next = this.relationIndex.get(from);
-    if (!next) this.relationIndex.set(from, (next = new Map<string, number>()));
-    const other = next.get(to);
-    if (other === undefined || other > i) next.set(to, i);
+    const next = this.between(from, to);
+    const at = next.findIndex((other) => other > i);
+    next.splice(at === -1 ? next.length : at, 0, i);
   }
 
   /** A named argument: on a relation an offset is a number; any other name sets its field. */
@@ -505,22 +514,13 @@ export class C4Builder {
     const from = fromWritten ?? '';
     const to = toWritten ?? '';
     const known = fromWritten !== undefined && toWritten !== undefined;
-    let i = known ? this.relationIndex.get(from)?.get(to) : undefined;
-    const first = i === undefined;
-    if (i === undefined) {
-      i = this.relations.length;
-      this.relations.push({ ast: '', kind: parts.kind, from, to, label: '', extra: [] });
-      this.relationAt.push(parts.at);
-      if (known) {
-        let ends = this.relationIndex.get(from);
-        if (!ends) this.relationIndex.set(from, (ends = new Map<string, number>()));
-        ends.set(to, i);
-      }
-    }
-    const item: Item = { type: 'relation', bag: this.relations[i] as OpenRelation, index: i };
+    // Each statement is a relation of its own (#680).
+    const i = this.relations.length;
     const ast = this.ids.relation(from, to);
-    if (first) item.bag.ast = ast;
-    item.bag.kind = parts.kind;
+    this.relations.push({ ast, kind: parts.kind, from, to, label: '', extra: [] });
+    this.relationAt.push(parts.at);
+    if (known) this.between(from, to).push(i);
+    const item: Item = { type: 'relation', bag: this.relations[i] as OpenRelation, index: i };
     if (fromWritten === undefined) this.named(item, args[0], REL.setAfter);
     if (toWritten === undefined) this.named(item, args[1], REL.setAfter);
     this.ref(from, args[0]);
@@ -551,7 +551,7 @@ export class C4Builder {
   }
 
   /**
-   * `UpdateRelStyle(from, to, textColor?, lineColor?, offsetX?, offsetY?)`: on the relation
+   * `UpdateRelStyle(from, to, textColor?, lineColor?, offsetX?, offsetY?)`: on every relation
    * between them, nothing when there is none yet (as v12). The offset slots read a number,
    * whatever a named argument there names (v12 `parseInt`ed both).
    */
@@ -560,10 +560,16 @@ export class C4Builder {
     if (!from || !to || from.name !== undefined || to.name !== undefined) return;
     this.ref(from.value, from);
     this.ref(to.value, to);
-    const i = this.relationIndex.get(from.value)?.get(to.value);
-    if (i === undefined) return;
-    const item: Item = { type: 'relation', bag: this.relations[i] as OpenRelation, index: i };
-    this.rest(item, args, { table: REL_STYLE, from: 2, to: 4 });
+    // Every relation between the pair written so far (#680).
+    for (const i of this.relationIndex.get(from.value)?.get(to.value) ?? []) {
+      const item: Item = { type: 'relation', bag: this.relations[i] as OpenRelation, index: i };
+      this.rest(item, args, { table: REL_STYLE, from: 2, to: 4 });
+      this.relStyleOffsets(item, args);
+    }
+  }
+
+  /** The offset slots of `UpdateRelStyle` on `item`. */
+  private relStyleOffsets(item: Item & { type: 'relation' }, args: readonly Arg[]): void {
     for (let k = 4; k < REL_STYLE.slots.length; k++) {
       const arg = args[k];
       if (arg === undefined) continue;

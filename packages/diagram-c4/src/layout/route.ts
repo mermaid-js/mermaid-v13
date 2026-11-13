@@ -471,8 +471,8 @@ export function route(a: Outline, b: Outline, { shift, others, lanes }: RouteOpt
     y0: sy,
     x1: ex,
     y1: ey,
-    nx: shift ? -dy : 0,
-    ny: shift ? dx : 0,
+    nx: Math.sign(shift) * -dy,
+    ny: Math.sign(shift) * dx,
     lean: 0,
     room: Math.abs(dx) > Math.abs(dy) ? M.narrow : M.wide,
   };
