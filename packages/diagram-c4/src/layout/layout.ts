@@ -9,7 +9,13 @@
  */
 // cspell:ignore kepano
 import type { RenderContext } from '@mermaid-js/core';
-import { layoutLabel, Style, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import {
+  layoutLabel,
+  Style,
+  type FontKey,
+  type Measurer,
+  type MeasuredLabel,
+} from '@mermaid-js/core/text';
 import { C4_BOUNDARY_CYCLE } from '../codes.ts';
 import { c4Fonts, c4LayoutConfig, type C4Fonts, type C4LayoutConfig } from '../config.ts';
 import {
@@ -93,14 +99,14 @@ export function relationTechnText(rel: Pick<C4Relation, 'techn'>): string | unde
 }
 
 /** A text measured, before it is placed. */
-interface Measured {
+export interface Measured {
   readonly text: MeasuredLabel;
   readonly font: FontKey;
   readonly style: number;
 }
 
 /** A label `m` with its box's top-left corner at (x, y). */
-function placed(m: Measured, x: number, y: number): PlacedLabel {
+export function placed(m: Measured, x: number, y: number): PlacedLabel {
   return {
     x,
     y,
@@ -111,6 +117,27 @@ function placed(m: Measured, x: number, y: number): PlacedLabel {
     ...(m.style & Style.Bold ? { bold: true as const } : {}),
     ...(m.style & Style.Italic ? { italic: true as const } : {}),
   };
+}
+
+/** Measures a text in a font, wrapped at `maxWidth`; none for an empty text. */
+export type Measure = (
+  text: string | undefined,
+  font: FontKey,
+  maxWidth: number,
+  style?: number
+) => Measured | undefined;
+
+/** The one way C4 text is measured, for both syntaxes: whole words kept, inline spans boxed. */
+export function textMeasure(measurer: Measurer, inlineSpans?: C4LayoutContext['inline']): Measure {
+  const inline = inlineSpans ? { inline: inlineSpans } : {};
+  return (text, font, maxWidth, style = 0) =>
+    text === undefined || text.trim() === ''
+      ? undefined
+      : {
+          text: layoutLabel(text, font, maxWidth, measurer, { ...inline, keepWords: true, style }),
+          font,
+          style,
+        };
 }
 
 /** An element as the grid places it, with its outline and text. */
@@ -150,24 +177,7 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
   const measurer = units ? cellPxMeasurer(ctx.measurer, units.pxPerUnit) : ctx.measurer;
   const family = ctx.theme.value('fontFamily');
   const fonts = c4Fonts(ctx.config, family, warn);
-  const inline = ctx.inline ? { inline: ctx.inline } : {};
-  const measure = (
-    text: string | undefined,
-    font: FontKey,
-    maxWidth: number,
-    style = 0
-  ): Measured | undefined =>
-    text === undefined || text.trim() === ''
-      ? undefined
-      : {
-          text: layoutLabel(text, font, maxWidth, measurer, {
-            ...inline,
-            keepWords: true,
-            style,
-          }),
-          font,
-          style,
-        };
+  const measure = textMeasure(measurer, ctx.inline);
 
   // Measure first: elements.
   const room = units
@@ -271,13 +281,6 @@ function group(index: number, boundary: GridGroup['boundary'], parent: number): 
   };
 }
 
-type Measure = (
-  text: string | undefined,
-  font: FontKey,
-  maxWidth: number,
-  style?: number
-) => Measured | undefined;
-
 /** What measuring an element's or a boundary's text reads. */
 interface Measuring {
   readonly config: C4LayoutConfig;
@@ -289,7 +292,7 @@ interface Measuring {
  * The shapes' padding: `c4ShapePadding` all round, and the cylinder's, the queue's and
  * `fr-rect`'s totals from the theme's shape rows (D152), `2·pad` in the classic themes.
  */
-function shapeRoom(config: C4LayoutConfig, theme: C4LayoutContext['theme']): ShapeRoom {
+export function shapeRoom(config: C4LayoutConfig, theme: C4LayoutContext['theme']): ShapeRoom {
   const total = 2 * config.c4ShapePadding;
   const pad = (name: string, base = total): number => theme.padding(name, base);
   return {
@@ -309,6 +312,44 @@ function shapeRoom(config: C4LayoutConfig, theme: C4LayoutContext['theme']): Sha
   };
 }
 
+/** What measuring an element's three text sections reads. */
+export interface SectionRoom {
+  readonly font: FontKey;
+  readonly config: C4LayoutConfig;
+  readonly measure: Measure;
+}
+
+/** An element's name (bold), type line and description, measured in its kind's font. */
+export function measureSections(
+  texts: { readonly name: string; readonly type: string; readonly descr?: string },
+  { font, config, measure }: SectionRoom
+): (Measured | undefined)[] {
+  const wrapW = config.wrap
+    ? Math.max(config.width - 2 * config.c4ShapePadding, M.minWrapWidth)
+    : Infinity;
+  const sized = (scale: number): FontKey => ({ ...font, size: font.size * scale });
+  return [
+    measure(texts.name, font, wrapW, Style.Bold),
+    measure(texts.type, sized(M.typeScale), wrapW),
+    measure(texts.descr, sized(M.descrScale), wrapW),
+  ];
+}
+
+/** The sections placed one under another, centred on `centreX`, the first at `top`. */
+export function stackSections(
+  sections: readonly (Measured | undefined)[],
+  centreX: number,
+  top: number
+): (PlacedLabel | undefined)[] {
+  let y = top;
+  return sections.map((m) => {
+    if (!m) return undefined;
+    const out = placed(m, centreX - m.text.width / 2, y);
+    y += m.text.height + M.sectionGap;
+    return out;
+  });
+}
+
 /** An element's three sections, measured in its kind's font, and its shape's size around them. */
 function elementNode(
   element: C4Element,
@@ -316,16 +357,10 @@ function elementNode(
   { config, fonts, measure }: Measuring,
   room: ShapeRoom
 ): Node {
-  const font = fonts.element(element.kind);
-  const wrapW = config.wrap
-    ? Math.max(config.width - 2 * config.c4ShapePadding, M.minWrapWidth)
-    : Infinity;
-  const sized = (scale: number): FontKey => ({ ...font, size: font.size * scale });
-  const sections = [
-    measure(element.label, font, wrapW, Style.Bold),
-    measure(stereotypeText(element), sized(M.typeScale), wrapW),
-    measure(element.descr, sized(M.descrScale), wrapW),
-  ];
+  const sections = measureSections(
+    { name: element.label, type: stereotypeText(element), descr: element.descr },
+    { font: fonts.element(element.kind), config, measure }
+  );
   let tw = 0;
   let textH = 0;
   let count = 0;
@@ -783,13 +818,8 @@ const boxAt = ({ ox, oy }: Shift, b: { x: number; y: number; w: number; h: numbe
 /** An element's layout, its sections stacked and centred on its text's centre (v12 `c4LabelHelper`). */
 function elementOut(n: Node, s: Shift): C4ElementLayout {
   const centreX = n.x + s.ox + n.w / 2 + n.dx;
-  let y = n.y + s.oy + n.h / 2 + n.dy - n.textH / 2;
-  const [name, type, descr] = n.sections.map((m) => {
-    if (!m) return undefined;
-    const out = placed(m, centreX - m.text.width / 2, y);
-    y += m.text.height + M.sectionGap;
-    return out;
-  });
+  const y = n.y + s.oy + n.h / 2 + n.dy - n.textH / 2;
+  const [name, type, descr] = stackSections(n.sections, centreX, y);
   return {
     ast: n.element.ast,
     alias: n.element.alias,

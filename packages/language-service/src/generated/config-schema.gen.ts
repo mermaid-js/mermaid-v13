@@ -3239,7 +3239,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "Set here, it wins over the top-level `layout` for architecture diagrams. Unset in both, they lay out with `compass`, the grid engine from edge sides (D284, D326). `layered` and `dagre` place nodes without reading the sides, so architecture keeps `compass` for them and warns `ARCHITECTURE_LAYOUT_IGNORED` once, as v12 always used its own engine (D556); `compass`, an installed `elk.*` and a registered engine are honoured, and an unknown or uninstalled name draws with `compass` and warns `LAYOUT_UNKNOWN` or `ELK_NOT_INSTALLED`."
+            "reason": "Set here, it wins over the top-level `layout` for architecture diagrams. Unset in both, they lay out with `compass`, the grid engine from edge sides (D284, D326). Any other engine is honoured (D560). `layered` and `dagre` rank services down the flow, use the sides only for where lines attach and ignore `{group}` ends and `align`, and warn `ARCHITECTURE_PLACEMENT_IGNORED` once; v12 always used its own engine. An unknown or uninstalled name draws with `compass` and warns `LAYOUT_UNKNOWN` or `ELK_NOT_INSTALLED`."
           }
         },
         "padding": {
