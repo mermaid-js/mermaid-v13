@@ -10,7 +10,9 @@
 - **Text is drawn as written** (D263). v12 stored `<`, `>` and `=` in ids, messages, tags and
   branch names as `&lt;`, `&gt;` and `&equals;` and broke branch names on `<br>`; v13 keeps the
   source text, escapes it in the SVG, and breaks a branch name only on a newline. Labels are
-  plain text (D268): `$$…$$` and `fa:` stay as written, as in v12.
+  plain text (D268): `$$…$$` and `fa:` stay as written, as in v12. Entity codes are decoded
+  (D560): `#35;`, `#quot;` and `#9829;` in an id, a tag or a branch name draw `#`, `"` and `♥`,
+  as in v12. A reference typed with `&` (`&amp;`) is decoded too; v12 showed it as written.
 - **A repeated commit id** keeps v12's model (D264): the later commit replaces the earlier and
   lists itself as a parent. v13 warns `GIT_DUPLICATE_ID` on the second id, with the first as a
   related location, and draws no arrow for the self-parent. Where the repeat makes a parent

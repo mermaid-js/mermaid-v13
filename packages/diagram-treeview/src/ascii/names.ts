@@ -4,7 +4,9 @@
 // either end, an annotation mark, a `%%`, a quote at its start, a leading keyword) is put in
 // `"…"`, else `'…'`, as its author had to write it; the parser decides (`parser/written.ts`, as
 // the facet's rename). A name holding a line break or another control is written bare with a
-// blank for each: no form reads back.
+// blank for each: no form reads back. Entity codes are decoded first (D560), as the SVG draws
+// them: `#35;` is written `#`, and the form is chosen for the decoded name.
+import { decodeEntities } from '@mermaid-js/core/text';
 import type { TreeViewNode } from '../model.ts';
 import { writtenName } from '../parser/convert.ts';
 import { nameForm, type NameLine, type NameQuote } from '../parser/written.ts';
@@ -22,7 +24,8 @@ const FORMS: readonly NameQuote[] = ['', '"', "'"];
  * by line and name, so a repeated name is read back once.
  */
 export function written(node: TreeViewNode, seen: Map<string, string>): string {
-  const bare = writtenName(node.name, node.directory);
+  const name = decodeEntities(node.name);
+  const bare = writtenName(name, node.directory);
   const shown = plain(bare);
   if (shown !== bare) return shown;
   const line: NameLine = node.depth === 0 ? 'box-top' : 'box-branch';
@@ -31,7 +34,7 @@ export function written(node: TreeViewNode, seen: Map<string, string>): string {
   if (w === undefined) {
     w = bare;
     for (const q of FORMS) {
-      const form = nameForm(node.name, node.directory, q, line);
+      const form = nameForm(name, node.directory, q, line);
       if (form !== undefined) {
         w = form;
         break;
