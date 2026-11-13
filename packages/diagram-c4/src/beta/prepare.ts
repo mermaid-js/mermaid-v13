@@ -11,6 +11,7 @@ import { c4Fonts, c4LayoutConfig, type C4Fonts, type C4LayoutConfig } from '../c
 import { C4_METRICS as M, FONT_WEIGHT } from '../layout/metrics.ts';
 import { shapeSize, type ShapeRoom } from '../layout/shapes.ts';
 import {
+  measureSections,
   shapeRoom,
   textMeasure,
   type C4LayoutContext,
@@ -133,16 +134,10 @@ interface Measuring {
 
 function measureLeaf(model: C4BetaModel, element: C4BetaElement, m: Measuring): BetaLeaf {
   const { config, fonts, measure } = m;
-  const font = fonts.element(legacyKind(element));
-  const wrapW = config.wrap
-    ? Math.max(config.width - 2 * config.c4ShapePadding, M.minWrapWidth)
-    : Infinity;
-  const sized = (scale: number): FontKey => ({ ...font, size: font.size * scale });
-  const sections = [
-    measure(element.name, font, wrapW, Style.Bold),
-    measure(stereotypeOf(element), sized(M.typeScale), wrapW),
-    measure(element.description, sized(M.descrScale), wrapW),
-  ];
+  const sections = measureSections(
+    { name: element.name, type: stereotypeOf(element), descr: element.description },
+    { font: fonts.element(legacyKind(element)), config, measure }
+  );
   const present = sections.filter((s): s is Measured => s !== undefined);
   const tw = Math.max(0, ...present.map((s) => s.text.width));
   const textH =

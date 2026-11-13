@@ -312,6 +312,44 @@ export function shapeRoom(config: C4LayoutConfig, theme: C4LayoutContext['theme'
   };
 }
 
+/** What measuring an element's three text sections reads. */
+export interface SectionRoom {
+  readonly font: FontKey;
+  readonly config: C4LayoutConfig;
+  readonly measure: Measure;
+}
+
+/** An element's name (bold), type line and description, measured in its kind's font. */
+export function measureSections(
+  texts: { readonly name: string; readonly type: string; readonly descr?: string },
+  { font, config, measure }: SectionRoom
+): (Measured | undefined)[] {
+  const wrapW = config.wrap
+    ? Math.max(config.width - 2 * config.c4ShapePadding, M.minWrapWidth)
+    : Infinity;
+  const sized = (scale: number): FontKey => ({ ...font, size: font.size * scale });
+  return [
+    measure(texts.name, font, wrapW, Style.Bold),
+    measure(texts.type, sized(M.typeScale), wrapW),
+    measure(texts.descr, sized(M.descrScale), wrapW),
+  ];
+}
+
+/** The sections placed one under another, centred on `centreX`, the first at `top`. */
+export function stackSections(
+  sections: readonly (Measured | undefined)[],
+  centreX: number,
+  top: number
+): (PlacedLabel | undefined)[] {
+  let y = top;
+  return sections.map((m) => {
+    if (!m) return undefined;
+    const out = placed(m, centreX - m.text.width / 2, y);
+    y += m.text.height + M.sectionGap;
+    return out;
+  });
+}
+
 /** An element's three sections, measured in its kind's font, and its shape's size around them. */
 function elementNode(
   element: C4Element,
@@ -319,16 +357,10 @@ function elementNode(
   { config, fonts, measure }: Measuring,
   room: ShapeRoom
 ): Node {
-  const font = fonts.element(element.kind);
-  const wrapW = config.wrap
-    ? Math.max(config.width - 2 * config.c4ShapePadding, M.minWrapWidth)
-    : Infinity;
-  const sized = (scale: number): FontKey => ({ ...font, size: font.size * scale });
-  const sections = [
-    measure(element.label, font, wrapW, Style.Bold),
-    measure(stereotypeText(element), sized(M.typeScale), wrapW),
-    measure(element.descr, sized(M.descrScale), wrapW),
-  ];
+  const sections = measureSections(
+    { name: element.label, type: stereotypeText(element), descr: element.descr },
+    { font: fonts.element(element.kind), config, measure }
+  );
   let tw = 0;
   let textH = 0;
   let count = 0;
@@ -786,13 +818,8 @@ const boxAt = ({ ox, oy }: Shift, b: { x: number; y: number; w: number; h: numbe
 /** An element's layout, its sections stacked and centred on its text's centre (v12 `c4LabelHelper`). */
 function elementOut(n: Node, s: Shift): C4ElementLayout {
   const centreX = n.x + s.ox + n.w / 2 + n.dx;
-  let y = n.y + s.oy + n.h / 2 + n.dy - n.textH / 2;
-  const [name, type, descr] = n.sections.map((m) => {
-    if (!m) return undefined;
-    const out = placed(m, centreX - m.text.width / 2, y);
-    y += m.text.height + M.sectionGap;
-    return out;
-  });
+  const y = n.y + s.oy + n.h / 2 + n.dy - n.textH / 2;
+  const [name, type, descr] = stackSections(n.sections, centreX, y);
   return {
     ast: n.element.ast,
     alias: n.element.alias,
