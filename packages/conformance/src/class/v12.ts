@@ -11,6 +11,7 @@
  * The bindings are closures: {@link clickBindings} runs each against stub `document` and
  * `window` objects and records the function name and arguments it would call.
  */
+import { decodeEntities } from '../flowchart/v12.ts';
 
 /** `diagram.type` values mermaid 12 reports for class sources (`classDiagram-v2` too). */
 export const CLASS_V12_TYPES = ['classDiagram'];
@@ -82,10 +83,8 @@ export interface ClassSnapshot {
   styleClasses: { id: string; styles: string[]; textStyles: string[] }[];
 }
 
-/** Undo v12's `encodeEntities` placeholders (v12 `utils.ts` `decodeEntities`). */
-export function decodeEntities(text: string): string {
-  return text.replace(/ﬂ°°/g, '&#').replace(/ﬂ°/g, '&').replace(/¶ß/g, ';');
-}
+// v12's placeholders undone under D559: an unknown `#name;` is compared as written.
+export { decodeEntities };
 
 const text = (v: unknown): string | undefined =>
   typeof v === 'string' ? decodeEntities(v) : undefined;

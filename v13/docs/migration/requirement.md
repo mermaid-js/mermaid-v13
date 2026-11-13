@@ -9,6 +9,10 @@
   spec strings and docs examples, and the grammar is in
   [syntax/requirement.md](./syntax/requirement.md). Every error is reported, not only the first,
   with a range at the token (R-PARSE-4).
+- **Label text** (D562, #763): names, the `text:`, `type:` and `docref:` rows and the other
+  box rows read bold and italic, as in v12. A value that starts with `- `, `* ` or `+ ` or
+  holds backticks is drawn as written, backticks included: `` "`**bold**`" `` draws
+  `` `**bold**` ``. A requirement diagram has no markdown strings.
 - **Trailing blanks** (D431): blanks before a line end are dropped, so the five places where
   v12 rejected them (after the header, after `{`, after a keyword value, after a quoted value)
   now accept. The six forms v12 accepted only because a blank swallowed the next line break

@@ -1,0 +1,16 @@
+---
+description: >-
+  a label starting with "- " or "* " and an unquoted backtick label draw as
+  written; emphasis is read without backticks; only a markdown string has
+  bullets and inline code (#763, D562)
+---
+mindmap
+  root
+    - 5 degrees
+    * starred
+    a["- quoted item"]
+    id2[`The dog in **the** hog`]
+    id3["`The dog in **the** hog`"]
+    b[plain **bold** and *italic*]
+    c["`- one item
+    - two items`"]

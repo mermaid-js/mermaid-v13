@@ -940,9 +940,11 @@ variables instead.
 | HTML labels in `<foreignObject>` (`htmlLabels: true`) or SVG text | SVG `<text>`/`<tspan>` only | D5 |
 | Any HTML in labels, sanitised by DOMPurify | `<b>`/`<strong>` and `<i>`/`<em>` are drawn bold and italic, `<br>` breaks the line. Other HTML element tags are dropped and their text kept (`<img>` draws nothing, `<a>` is not a link, `<sub>`/`<sup>`/`<u>` draw plain text), with one `HTML_DROPPED` warning per render that names the tags. For a link, use `click id "url"`; the warning says so when `<a>` is among them. `<script>` and `<style>` are dropped with their content. Text that only looks like a tag, such as `List<T>`, is shown as written | R-TEXT-3, D564 |
 | Markdown strings (`` "`**bold**`" ``) | Same subset: `**`/`__` bold, `*`/`_` italic, `` `code` `` (monospace), `- ` and `* ` bullet lists (one nesting level), backslash escapes, `<br>` and newlines | R-TEXT-2 |
+| Mindmap, state, requirement and class labels were read as Markdown without backticks: `**bold**` and `_italic_` were formatted, and a label starting with `- `, `* ` or `+ ` or holding backticks was shown as written | The same: bold and italic are read, list markers and backticks are drawn as written. Only a mindmap markdown string (`` "`…`" ``) has bullets and inline code. Not Markdown: the rows of a state with several description lines, class multiplicities, namespace titles and lollipop interface names. In a label that holds a code span, bold and italic outside it are not read | D562, #763 |
+| Sequence labels broke at `<br>` only; `\n` written as two characters was drawn | The same: a written `\n` is text in participant, message, note and block labels. In the other types a plain label still breaks there | D562, #763 |
 | Markdown emphasis in a label written without backticks, in the types that pass every label through Markdown: ER (`"This **is** _Markdown_"`) | ER reads `**`/`__` as bold and `*`/`_` as italic in entity names, aliases, attribute cells, relationship labels and subgraph titles, and nothing else of Markdown: backticks and a leading `- ` are drawn as written. An underscore inside a word (`order_item`) is text. Text output drops the markers | #754, D560, D563 |
 | Entities: Mermaid's `#quot;`/`#35;` and HTML `&…;`, decoded by the browser, so every HTML5 name worked | Both decoded; about 70 named HTML entities plus numeric ones. The names include the ASCII punctuation used to escape syntax: `colon`, `semi`, `vert`, `verbar`, `lpar`, `rpar`, `lsqb`, `rsqb`, `lcub`, `rcub`, `num`, `excl`, `quest`, `commat`, `equals`, `plus`, `comma`, `period`, `sol`, `bsol`, `grave`, `lowbar`, `percnt`, `dollar`, `ast` | #396, D559 |
-| A `#name;` with a name the browser did not know was drawn `&name;` (`#bogus;` drew `&bogus;`) | Drawn as written, `#bogus;`. A literal `&bogus;` also stays as written. Class labels still draw `&bogus;` | D559, D563 |
+| A `#name;` with a name the browser did not know was drawn `&name;` (`#bogus;` drew `&bogus;`) | Drawn as written, `#bogus;`. A literal `&bogus;` also stays as written | D559, D562, D563 |
 | Gantt, gitGraph, treeView and railroad set their text with `.text()`: a `#35;` code drew `#`, a typed `&amp;` drew `&amp;` | Both are decoded, in the SVG and in text output; markup, `$$` and `fa:` still print as written in these types | D561 |
 | KaTeX math (`$$…$$`) | Rendered by the optional `@mermaid-js/plugin-math` (`registerExternalDiagrams([math])`): MathJax typesets the TeX into SVG paths, so glyph shapes differ from KaTeX's. MathJax loads only for a diagram with math; `renderSync` needs `prepare()` or `preload({ math: true })` first. TeX that does not parse is shown as written with a `MATH_ERROR` warning. Every label core lays out takes math: flowchart nodes, edges and subgraph titles; class, state and ER labels; sequence messages, notes, participants, fragment and box labels. Without the plugin the TeX is shown as written, with one `MATH_NOT_RENDERED` warning per render. Text output always shows the TeX as written, with one `ASCII_DROPPED` warning (`feature: 'math'`). `legacyMathML` and `forceLegacyMathML` are ignored. See [Math](#math) | D5, D175, D176, D178, D179 |
 | `fa:fa-car` in HTML labels: an icon from a registered pack, else `<i class="fa fa-car">` for Font Awesome's CSS to draw | An icon from a registered Iconify pack, drawn as SVG paths by the optional `@mermaid-js/plugin-icons`, in every label core lays out (sequence too); page CSS draws nothing. An icon that does not resolve is shown as written, with one `ICON_NOT_RENDERED` warning per render. See [Icons](#icons) | D290, D291, D292, D296 |
@@ -1304,6 +1306,7 @@ v12 element classes (`actor`, `actor-top`, `actor-bottom`, `actor-man`, `actor-b
 | v12's `look: neo` geometry: the band model of `actorBands.ts` (rows as tall as glyph band 44 + 6 + label + 6, one lifeline start per row, the symbols on the band, the stick figure scaled to it, the database cylinder as tall as it, a `collections` stack 6 shorter), messages 3 px shorter, label tabs 15 px taller, 30 px more below the drawing | The same geometry in the redux themes and v12 classic geometry in the classic themes, from the `actorGlyphBand`, `messageEndGap`, `labelBoxExtraHeight` and `actorFooterPadding` theme variables (see "Theme geometry"), so any theme can take either. Text output draws every symbol as a box and ignores them (#194) | D152 |
 | A front-matter `title` was drawn above the diagram like a `title` statement | The SVG draws only the `title` statement; a front-matter `title` is not drawn, as in flowchart and state (D122), and does not feed the accessible name: only `accTitle` does (D133). Text output prints it on top when there is no `title` statement | One cross-type decision on front-matter titles (D122, D133) |
 | `actor`/`link` popup menus (`actorPopupMenu`, `onclick`) | Not drawn by the renderer; the interactions plugin adds them | No script in output (R-SVG-4) |
+| Labels broke at `<br>` only; a `\n` written as two characters was drawn | The same: a written `\n` is text in participant, message, note and block labels (it broke the line in earlier v13 alphas) | D562, #763 |
 
 The `data-ast` ids are built from the names as written (R-PARSE-8): `p:<id>` for a participant
 (its later mentions `p:<id>@2`, `@3`, …), `m:<from>><to>` for the first message between two
@@ -1344,6 +1347,7 @@ rows below are class-specific. Group class names (`clusters`, `edgePaths`, `edge
 | Class ids, labels and member text passed through `sanitizeText` (DOMPurify), so `A : +List<T> items` lost `<T>` | Text is escaped when written, never sanitised: `+List<T> items` is shown as written, and known HTML tags are read as the label subset ([Labels and text](#labels-and-text)) | R-SEC-1; the flowchart's rule |
 | `link` / `click … href` as `<a xlink:href>`; tooltip as an HTML hover div; `callback` / `click … call` bound with `bindFunctions` | `<a href target>` inside the node group (URLs that pass `securityLevel`); the tooltip is an SVG `<title>`; callbacks draw nothing (interactions plugin) | R-SVG-4, R-SVG-5 |
 | Front-matter `title` drawn above the diagram (`classDiagramTitleText`) | Not drawn, as for flowcharts | v13 renderers draw no title yet |
+| Names, annotations, members, notes and relation labels read as Markdown without backticks; multiplicities and namespace titles drawn as plain text | The same: bold and italic are read in box rows, notes and relation labels; a text that starts with `- `, `* ` or `+ ` or holds backticks is drawn as written; multiplicities, namespace titles and lollipop interface names are plain. An unknown `#name;` is drawn as written, where v12 drew `&name;` | D562, D559, #763 |
 
 ## ER SVG structure
 
@@ -1537,9 +1541,12 @@ Legend entries carry `data-id="a:<name>"` only.
   the mindmap when `@mermaid-js/plugin-hand-drawn` is installed
   ([Hand-drawn look](#hand-drawn-look)). `mindmap.layout` picks the engine for mindmaps and wins
   over the top-level `layout`, with the same names and fallbacks.
-- **Labels** are SVG text, measured in the theme's font, with every label markdown as in v12
-  (bold, italic, `<br>` line breaks), instead of HTML in `<foreignObject>`
-  ([Mindmap SVG structure](#mindmap-svg-structure)). A word wider than `maxNodeWidth` stays
+- **Labels** are SVG text, measured in the theme's font, instead of HTML in `<foreignObject>`
+  ([Mindmap SVG structure](#mindmap-svg-structure)). As in v12, every label reads bold, italic
+  and `<br>` line breaks without backticks, and a label that starts with `- `, `* ` or `+ ` or
+  holds backticks (``[`a **b**`]``) is drawn as written (D562, #763). Only a markdown string
+  (`` "`…`" ``) has bullet lists and inline code, which v12 did not draw (D56). A written `\n`
+  is text. A word wider than `maxNodeWidth` stays
   whole and the node grows to hold it, as v12's HTML labels did (#649).
 - **The default shape per theme family** is a theme flag, not a theme-name check (D288): plain
   nodes are rounded in the redux family and drawn as v12's `defaultMindmapNode` elsewhere, flat
@@ -3101,6 +3108,10 @@ v12's, apart from the two layout fixes of D514.
   spec strings and docs examples, and the grammar is in
   [syntax/requirement.md](./syntax/requirement.md). Every error is reported, not only the first,
   with a range at the token (R-PARSE-4).
+- **Label text** (D562, #763): names, the `text:`, `type:` and `docref:` rows and the other
+  box rows read bold and italic, as in v12. A value that starts with `- `, `* ` or `+ ` or
+  holds backticks is drawn as written, backticks included: `` "`**bold**`" `` draws
+  `` `**bold**` ``. A requirement diagram has no markdown strings.
 - **Trailing blanks** (D431): blanks before a line end are dropped, so the five places where
   v12 rejected them (after the header, after `{`, after a keyword value, after a quoted value)
   now accept. The six forms v12 accepted only because a blank swallowed the next line break
@@ -3176,6 +3187,11 @@ label-container outer-path`, `divider`, `relationshipLine`, `edge-thickness-norm
 
 ## State diagram
 
+- **Label text** (D562, #763): state text, composite titles, transition text and notes read
+  bold and italic, as in v12. A label that starts with `- `, `* ` or `+ ` or holds backticks is
+  drawn as written: no bullet, no monospace. The title and rows of a state with several
+  description lines are plain text, as v12 drew them: `**x**` stays as written there and a
+  written `\n` breaks the line.
 - **A transition written inside a composite that names the composite** (D555):
   `state Boot { Running; Boot --> Running }`, the reverse, and `Outer --> Inner` written inside
   `Inner`. v12 filed the composite under itself (or under a state inside it) and then never

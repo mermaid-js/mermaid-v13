@@ -27,6 +27,7 @@ exports[`layered over parser-produced state graphs > lays out every corpus graph
   "e2e/diagrams/state-diagram-v2/baseline/states/simple.mmd": 0,
   "e2e/diagrams/state-diagram-v2/baseline/states/stateDiagram-v1-keyword.mmd": 0,
   "e2e/diagrams/state-diagram-v2/baseline/text/entity-names.mmd": 0,
+  "e2e/diagrams/state-diagram-v2/baseline/text/list-markers-and-backticks.mmd": 0,
   "e2e/diagrams/state-diagram-v2/baseline/text/unicode.mmd": 0,
   "e2e/diagrams/state-diagram-v2/baseline/text/wrapping.mmd": 0,
   "e2e/diagrams/state-diagram-v2/baseline/themes/base.mmd": 0,

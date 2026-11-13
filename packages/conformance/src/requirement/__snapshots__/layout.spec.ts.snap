@@ -8,6 +8,7 @@ exports[`requirement layout over parser-produced fixtures > records the crossing
   "e2e/baseline/handdrawn/redux.mmd": 0,
   "e2e/baseline/relations/all-kinds-lr.mmd": 0,
   "e2e/baseline/styles/classes-and-title.mmd": 0,
+  "e2e/baseline/text/backticks-and-emphasis.mmd": 0,
   "e2e/baseline/themes/default.mmd": 0,
   "e2e/baseline/themes/neo-dark.mmd": 0,
   "e2e/baseline/themes/neo.mmd": 0,
