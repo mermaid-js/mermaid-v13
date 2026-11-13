@@ -534,6 +534,9 @@ function parsed(text: string): Fixture {
   return config ? { model: result.model, config } : { model: result.model };
 }
 
+/** A word wider than a task box at the default font (#649). */
+export const WHOLE_WORD = 'Supercalifragilisticexpialidociousness';
+
 export const FIXTURES: Readonly<Record<string, Fixture>> = {
   ...Object.fromEntries(Object.entries(CORPUS).map(([name, [, text]]) => [name, parsed(text)])),
   // Edge cases no corpus file has.
@@ -604,6 +607,22 @@ export const FIXTURES: Readonly<Record<string, Fixture>> = {
         { ast: 't:2', name: 'Two', score: 3, people: [], section: 'Gone' },
       ],
     },
+  },
+  // #649: a task name and a section name wider than their boxes, between short ones.
+  'long-words': {
+    model: journey(
+      undefined,
+      section('Short'),
+      task('One', 3, 'A'),
+      task(WHOLE_WORD, 5, 'A'),
+      task('Three', 4, 'A'),
+      // Wider than its two tasks together.
+      section(WHOLE_WORD + WHOLE_WORD),
+      task('Four', 2, 'A'),
+      task('Five', 2, 'A'),
+      section('Last'),
+      task('Six', 1, 'A')
+    ),
   },
   empty: { model: journey(undefined) },
   'blank-names': {
