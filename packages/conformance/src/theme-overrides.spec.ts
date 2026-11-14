@@ -72,7 +72,7 @@ const keys = (theme: Classic, cases: readonly string[], names: readonly string[]
 
 /**
  * Each difference from v12, keyed `theme / override / variable`, grouped by the open issue or
- * decision that accounts for it. Groups naming #795 have no ticket yet (tickets/796.md).
+ * decision that accounts for it. Groups naming #795 wait on a maintainer decision (tickets/796.md).
  */
 const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
   '#761 (T1): v12 base derives secondaryColor and tertiaryColor from primaryColor, and lineColor and arrowheadColor from background; v13 base holds literals':
@@ -172,9 +172,9 @@ const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
     [...keys('base', ALL, ['secondaryTextColor', 'tertiaryTextColor', 'titleColor'])],
   'D71: under darkMode v13 mixes 30% black into secondaryColor for the edge label where v12 base darkens its HSL lightness by 30':
     [...keys('base', ['darkMode'], ['edgeLabelBackground'])],
-  '#795 (new ticket): v12 base derives errorBkgColor from tertiaryColor and errorTextColor from tertiaryTextColor; v13 uses the shared #552222 rules':
+  '#825 (T8): v12 base derives errorBkgColor from tertiaryColor and errorTextColor from tertiaryTextColor; v13 uses the shared #552222 rules':
     [...keys('base', ALL, ['errorBkgColor', 'errorTextColor'])],
-  "#795 (new ticket): v12's darkMode turns base's primaryTextColor (and the text that follows it) to #eee and dark's and neutral's scaleLabelColor to black; v13's darkMode switches only the derivation rules":
+  "#795 (maintainer question): v12's darkMode turns base's primaryTextColor (and the text that follows it) to #eee and dark's and neutral's scaleLabelColor to black; v13's darkMode switches only the derivation rules":
     [
       ...keys(
         'base',
@@ -184,7 +184,7 @@ const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
       ...keys('dark', ['darkMode'], ['scaleLabelColor']),
       ...keys('neutral', ['darkMode'], ['scaleLabelColor']),
     ],
-  '#795 (new ticket): v12 base sets noteBkgColor (#fff5ad) and noteTextColor (#333) in the constructor; v13 derives them (T2 leaves base out)':
+  '#825 (T8): v12 base sets noteBkgColor (#fff5ad) and noteTextColor (#333) in the constructor; v13 derives them':
     [
       ...keys('base', ['darkMode'], ['noteBkgColor']),
       ...keys('base', both('primaryTextColor'), ['noteTextColor']),
