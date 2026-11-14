@@ -1,22 +1,4 @@
 {
-  "5-car-fun-sales-wide-tb": [
-    {
-      "touch": "L_D_E_0 turns at (242.6, 150.2) on L_D_H_0",
-      "ref": "#678"
-    }
-  ],
-  "6-legal-constr-sales": [
-    {
-      "touch": "L_D_E_0 turns at (570.0, 756.0) on L_D_H_0",
-      "ref": "#678"
-    }
-  ],
-  "mermaid-work": [
-    {
-      "touch": "L_R2_G3_0 turns at (635.8, 252.0) on L_G1_G3_0",
-      "ref": "#678"
-    }
-  ],
   "pebr-2-edge-intrudes-lane-label": [
     {
       "touch": "L_Dep1.Proc2_Dep2.Proc1_0 turns at (1082.3, 258.7) on L_Dep1.Proc3_Dep2.Proc2_0",
@@ -24,12 +6,6 @@
     },
     {
       "touch": "L_Dep1.Proc3_Dep2.Proc2_0 turns at (1102.3, 262.0) on L_Dep1.Proc2_Dep2.Proc1_0",
-      "ref": "#678"
-    }
-  ],
-  "regressions/title-band-rails": [
-    {
-      "touch": "L_HE_CA_HE_Inv_0 turns at (619.1, 460.0) on L_HE_CA_HE_Ans_0",
       "ref": "#678"
     }
   ]

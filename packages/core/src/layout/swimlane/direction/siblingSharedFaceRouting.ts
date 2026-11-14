@@ -2,7 +2,6 @@
 // Changed: types tightened for `noUncheckedIndexedAccess`; v12 `Edge`/`Node` are the engine's
 // `layoutData.ts` types; a line rescued beside another edge between the same two nodes keeps an
 // arrowhead spacing from it (#683, the cause mermaid-js/mermaid#8407 found).
-/* eslint-disable complexity -- v12's file kept whole so upstream fixes port by hand (D532) */
 // cspell:ignore Hegemann Kandinsky Siebenhaller
 import type { Edge, Node } from '../layoutData.ts';
 import { EDGE_ROUTING } from '../config.ts';
@@ -10,6 +9,7 @@ import {
   classifyThreeSegmentRoute,
   collectRealNodeBounds,
   getNodePairGeometry,
+  routesTouchAtBend,
   segmentConflictsWithAnyEdge,
   segmentHitsAnyRect,
 } from './geometry.ts';
@@ -24,6 +24,12 @@ const PORT_SHIFT = MIN_PORT_SPACING / 2;
  */
 const PAIR_SIBLING_SHIFT = EDGE_ROUTING.MIN_ARROWHEAD_SPACING;
 const LABEL_CLEARANCE_BUFFER = 3;
+/**
+ * The shifts that clear what a rescued line can sit beside, which `PORT_SHIFT` alone is under: a
+ * corner of another route (the gap a reader can see between two strokes), then an arrowhead on
+ * the same face.
+ */
+const CLEAR_SHIFTS = [EDGE_ROUTING.ROUTE_TOUCH_TOLERANCE, EDGE_ROUTING.MIN_ARROWHEAD_SPACING];
 
 interface PointLite {
   x: number;
@@ -71,8 +77,80 @@ function crowdsFaceNeighbour(
   return false;
 }
 
+/** True when a corner of another edge's route lies within the visible gap of `line`. */
+function touchesCornerOfAnotherRoute(edges: Edge[], edge: Edge, line: PointLite[]): boolean {
+  return edges.some(
+    (other) =>
+      other !== edge &&
+      !other.isLayoutOnly &&
+      Boolean(other.points?.length) &&
+      routesTouchAtBend(line, other.points!, EDGE_ROUTING.ROUTE_TOUCH_TOLERANCE)
+  );
+}
+
 function pairKey(a: string, b: string): string {
   return a < b ? `${a}::${b}` : `${b}::${a}`;
+}
+
+interface RescueContext {
+  nodePair: NonNullable<ReturnType<typeof getNodePairGeometry>>;
+  targetSrc: PointLite;
+  targetDst: PointLite;
+  deltas: number[];
+  shiftAxis: 'x' | 'y';
+  realNodeRects: Parameters<typeof segmentHitsAnyRect>[2];
+}
+
+/**
+ * The shifts to try, in order. A shift under the visible gap leaves the line touching a corner of
+ * a route that leaves the same face, and one under an arrowhead spacing leaves it beside that
+ * route's arrowhead; the next shifts out clear them, where the face has room.
+ */
+function shiftDeltas(effectiveShift: number): number[] {
+  const shifts = new Set([effectiveShift, ...CLEAR_SHIFTS.map((s) => Math.max(s, effectiveShift))]);
+  return [0, ...[...shifts].flatMap((shift) => [shift, -shift])];
+}
+
+/** True when a line shifted along `axis` stays inside the span of both end faces. */
+function staysOnFaces(ctx: RescueContext, src: PointLite, dst: PointLite): boolean {
+  const { srcInfo, dstInfo } = ctx.nodePair;
+  const [lo, hi] =
+    ctx.shiftAxis === 'x' ? (['left', 'right'] as const) : (['top', 'bottom'] as const);
+  const on = (p: PointLite, r: typeof srcInfo.rect): boolean =>
+    p[ctx.shiftAxis] > r[lo] && p[ctx.shiftAxis] < r[hi];
+  return on(src, srcInfo.rect) && on(dst, dstInfo.rect);
+}
+
+/**
+ * The straight line for the first shift that clears every node and edge, preferring one that
+ * keeps clear of a sibling's arrowhead and of a corner of another route; a line that does not is
+ * the last resort.
+ */
+function rescueLine(edges: Edge[], edge: Edge, ctx: RescueContext): PointLite[] | undefined {
+  const { srcId, dstId, srcInfo, dstInfo } = ctx.nodePair;
+  let crowded: PointLite[] | undefined;
+  for (const delta of ctx.deltas) {
+    const src = { ...ctx.targetSrc, [ctx.shiftAxis]: ctx.targetSrc[ctx.shiftAxis] + delta };
+    const dst = { ...ctx.targetDst, [ctx.shiftAxis]: ctx.targetDst[ctx.shiftAxis] + delta };
+    if (
+      !staysOnFaces(ctx, src, dst) ||
+      segmentHitsAnyRect(src, dst, ctx.realNodeRects, [srcId, dstId], 1) ||
+      segmentConflictsWithAnyEdge(src, dst, edges, edge, { epsilon: EPS })
+    ) {
+      continue;
+    }
+    const rescued = [src, dst];
+    if (
+      crowdsFaceNeighbour(edges, edge, srcId, srcInfo, src, ctx.shiftAxis) ||
+      crowdsFaceNeighbour(edges, edge, dstId, dstInfo, dst, ctx.shiftAxis) ||
+      touchesCornerOfAnotherRoute(edges, edge, rescued)
+    ) {
+      crowded ??= rescued;
+      continue;
+    }
+    return rescued;
+  }
+  return crowded;
 }
 
 /**
@@ -191,55 +269,16 @@ export function straightenCollinearSiblingDetours(edges: Edge[], nodes: Node[]):
       labelShift,
       siblings.length > 0 ? PAIR_SIBLING_SHIFT : PORT_SHIFT
     );
-    const deltas = [0, effectiveShift, -effectiveShift];
-    // A line that would sit too close to a sibling's arrowhead is the last resort.
-    let crowded: PointLite[] | undefined;
-    for (const delta of deltas) {
-      const shiftedSrc = { ...targetSrc };
-      const shiftedDst = { ...targetDst };
-      if (collinearX) {
-        shiftedSrc.x += delta;
-        shiftedDst.x += delta;
-        if (shiftedSrc.x <= srcInfo.rect.left || shiftedSrc.x >= srcInfo.rect.right) {
-          continue;
-        }
-        if (shiftedDst.x <= dstInfo.rect.left || shiftedDst.x >= dstInfo.rect.right) {
-          continue;
-        }
-      } else {
-        shiftedSrc.y += delta;
-        shiftedDst.y += delta;
-        if (shiftedSrc.y <= srcInfo.rect.top || shiftedSrc.y >= srcInfo.rect.bottom) {
-          continue;
-        }
-        if (shiftedDst.y <= dstInfo.rect.top || shiftedDst.y >= dstInfo.rect.bottom) {
-          continue;
-        }
-      }
-
-      if (segmentHitsAnyRect(shiftedSrc, shiftedDst, realNodeRects, [srcId, dstId], 1)) {
-        continue;
-      }
-
-      if (segmentConflictsWithAnyEdge(shiftedSrc, shiftedDst, edges, edge, { epsilon: EPS })) {
-        continue;
-      }
-
-      const rescued = [shiftedSrc, shiftedDst];
-      if (
-        crowdsFaceNeighbour(edges, edge, srcId, srcInfo, shiftedSrc, shiftAxis) ||
-        crowdsFaceNeighbour(edges, edge, dstId, dstInfo, shiftedDst, shiftAxis)
-      ) {
-        crowded ??= rescued;
-        continue;
-      }
-
+    const rescued = rescueLine(edges, edge, {
+      nodePair,
+      targetSrc,
+      targetDst,
+      deltas: shiftDeltas(effectiveShift),
+      shiftAxis,
+      realNodeRects,
+    });
+    if (rescued) {
       edge.points = rescued;
-      crowded = undefined;
-      break;
-    }
-    if (crowded) {
-      edge.points = crowded;
     }
   }
 }
