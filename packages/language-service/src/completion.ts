@@ -15,10 +15,17 @@ export function inFrontMatter(fm: FrontMatterTree, offset: number): boolean {
   return fm.range.start <= offset && (offset < fm.range.end || fm.unclosed);
 }
 
-/** `facet`'s items for `text` at `offset`. */
+/**
+ * `facet`'s items for `text` at `offset`; none when its probe parse or `completions` throws (a
+ * third-party facet): no query throws (R-LANG-4).
+ */
 function facetItems(facet: LanguageFacet, text: string, offset: number): CompletionItem[] {
-  const result = facet.parse(text, { keepTokens: true, probe: offset });
-  return result.probe ? facet.completions(result.probe, { text, result }) : [];
+  try {
+    const result = facet.parse(text, { keepTokens: true, probe: offset });
+    return result.probe ? facet.completions(result.probe, { text, result }) : [];
+  } catch {
+    return [];
+  }
 }
 
 /** The header keywords of every loaded facet, on the first line of an undetected text. */

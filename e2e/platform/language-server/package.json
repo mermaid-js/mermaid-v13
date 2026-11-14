@@ -1,0 +1,10 @@
+{
+  "name": "platform-language-server",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Language server smoke (#812): the mermaid-language-server bin as npm installs it, from packed tarballs.",
+  "type": "module",
+  "dependencies": {
+    "@mermaid-js/language-server": "13.0.0-alpha.0"
+  }
+}

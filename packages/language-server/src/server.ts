@@ -1,9 +1,10 @@
 /**
  * The Mermaid language server (R-LANG-2, D98): a thin LSP wrapper over
  * `@mermaid-js/language-service` for `.mmd` and `.mermaid` documents, and any document opened
- * with language id `mermaid` (an untitled buffer). Full sync is advertised; ranged changes are
- * applied too, and a change older than the stored version is ignored. Each change re-parses
- * (`service.update`) and pushes the diagnostics.
+ * with language id `mermaid` (an untitled buffer). Incremental sync is advertised: ranged
+ * changes are applied in order, a change without a range replaces the text, and a change older
+ * than the stored version is ignored. Each change re-parses (`service.update`) and pushes the
+ * diagnostics with the version of the text they were made from; the push on close has none.
  *
  * Facets load during `initialize` (D155): the server answers it only after
  * `service.preload()`, so no snapshot is ever made before its facet is there. Third-party
@@ -30,7 +31,7 @@ import { LSPErrorCodes, ResponseError, TextDocumentSyncKind } from 'vscode-langu
 import {
   semanticTokenData,
   takesMarkdown,
-  toCompletionItem,
+  toCompletionItems,
   toDiagnostic,
   toFoldingRange,
   toMarkup,
@@ -38,6 +39,7 @@ import {
   toRange,
 } from './convert.ts';
 import { discoverFacets } from './discover.ts';
+import { VERSION } from './version.ts';
 
 /** Documents the server serves by URI: `.mmd` and `.mermaid` (any case). */
 export function isMermaidUri(uri: string): boolean {
@@ -109,6 +111,7 @@ export function startServer(connection: Connection, options: ServerOptions = {})
     open.set(uri, { text, version, index, doc });
     void connection.sendDiagnostics({
       uri,
+      version,
       diagnostics: doc.diagnostics().map((d) => toDiagnostic(index, uri, d)),
     });
   };
@@ -137,10 +140,10 @@ export function startServer(connection: Connection, options: ServerOptions = {})
     service = createLanguageService({ facets });
     await service.preload();
     return {
-      serverInfo: { name: 'mermaid-language-server' },
+      serverInfo: { name: 'mermaid-language-server', version: VERSION },
       capabilities: {
         positionEncoding: 'utf-16',
-        textDocumentSync: { openClose: true, change: TextDocumentSyncKind.Full },
+        textDocumentSync: { openClose: true, change: TextDocumentSyncKind.Incremental },
         definitionProvider: true,
         referencesProvider: true,
         renameProvider: { prepareProvider: true },
@@ -236,7 +239,7 @@ export function startServer(connection: Connection, options: ServerOptions = {})
   connection.onCompletion(({ textDocument, position }) => {
     const o = at(textDocument, position);
     if (!o) return null;
-    return o.doc.completions(o.offset).map((item) => toCompletionItem(o.index, item, docMarkdown));
+    return toCompletionItems(o.index, o.doc.completions(o.offset), docMarkdown);
   });
 
   connection.listen();

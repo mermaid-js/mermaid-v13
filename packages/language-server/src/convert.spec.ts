@@ -11,9 +11,12 @@ import {
   lineSemanticTokens,
   SEMANTIC_TOKEN_LEGEND,
 } from '@mermaid-js/language-service';
-import type { SemanticToken } from '@mermaid-js/language-service';
+import type {
+  CompletionItem as ServiceCompletionItem,
+  SemanticToken,
+} from '@mermaid-js/language-service';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { toFoldingRange, toMarkup, toRange } from './convert.ts';
+import { toCompletionItems, toFoldingRange, toMarkup, toRange } from './convert.ts';
 import { decodeTokens } from './testing/lsp-client.ts';
 
 const CORPUS = join(import.meta.dirname, '..', '..', '..', 'e2e', 'diagrams');
@@ -170,5 +173,29 @@ describe('plain-text markup', () => {
     expect(toMarkup('``` `` ```', false).value).toBe('``');
     expect(toMarkup('**x** `**y**`', false).value).toBe('x **y**');
     expect(toMarkup('**node** `B`', true)).toEqual({ kind: 'markdown', value: '**node** `B`' });
+  });
+});
+
+describe('completion items (#807)', () => {
+  const item = (label: string): ServiceCompletionItem => ({
+    label,
+    kind: 'keyword',
+    insertText: label,
+    range: { start: 0, end: 0 },
+  });
+
+  it('give every item a sortText that keeps the service order past item 10', () => {
+    // Labels in reverse alphabetical order, so a client sorting by label would reverse them.
+    const labels = Array.from({ length: 12 }, (_, i) => `k${String.fromCharCode(122 - i)}`);
+    const items = toCompletionItems(new LineIndex(''), labels.map(item));
+    expect(items.map((i) => i.label)).toEqual(labels);
+    const sorted = [...items].sort((a, b) => (a.sortText! < b.sortText! ? -1 : 1));
+    expect(sorted.map((i) => i.label)).toEqual(labels);
+    expect(items[2]!.sortText! < items[10]!.sortText!).toBe(true);
+    // Neither filterText nor preselect: the client filters and selects as it does.
+    for (const i of items) {
+      expect(i).not.toHaveProperty('filterText');
+      expect(i).not.toHaveProperty('preselect');
+    }
   });
 });
