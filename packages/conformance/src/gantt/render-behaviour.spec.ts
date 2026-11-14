@@ -1,6 +1,16 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type { Warning } from '@mermaid-js/core';
+import {
+  contrastRatio,
+  createTheme,
+  loadTheme,
+  parseColor,
+  type Rgba,
+} from '@mermaid-js/core/theme';
 import { createMermaid } from 'mermaid';
+import { REPO_ROOT } from '../index.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 
 /**
@@ -259,6 +269,36 @@ describe('gantt theme variables (D152, D278)', () => {
     expect(attr(tree, bar, 'class')).toBe('task task5');
     expect(attr(tree, bar, 'fill')).toBe('var(--_tx)');
     expect(attr(tree, bar, 'stroke')).toBeUndefined();
+  });
+});
+
+describe('gantt contrast under default (#772, #801, R-THEME-9)', () => {
+  const source = readFileSync(
+    join(REPO_ROOT, 'e2e/diagrams/gantt/baseline/themes/default-active-crit-vert.mmd'),
+    'utf8'
+  );
+
+  it('draws the active border and the vert label at 3:1 or better, the critical-bar text at AA', async () => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true, output: { cssVariables: false } });
+    const { svg } = await m.render('g', source, { now: NOW });
+    const tree = parseSvg(svg);
+    const theme = createTheme(await loadTheme('default'), { cssVariables: false });
+    const background = theme.rgba('background')!;
+    const rgba = (el: SvgElement | undefined, name: string): Rgba => {
+      const v = attr(tree, el, name);
+      const c = v === undefined ? undefined : parseColor(v);
+      if (!c) throw new Error(`${name}=${String(v)}`);
+      return c;
+    };
+    const [active] = byClass(tree, 'rect', 'active0');
+    const [crit] = byClass(tree, 'rect', 'crit0');
+    const [critText] = byClass(tree, 'text', 'critText0');
+    const [vertText] = byClass(tree, 'text', 'vertText');
+    expect(contrastRatio(rgba(active, 'stroke'), rgba(active, 'fill'))).toBeGreaterThanOrEqual(3);
+    expect(contrastRatio(rgba(active, 'stroke'), background)).toBeGreaterThanOrEqual(3);
+    expect(contrastRatio(rgba(vertText, 'fill'), background)).toBeGreaterThanOrEqual(3);
+    expect(contrastRatio(rgba(critText, 'fill'), rgba(crit, 'fill'))).toBeGreaterThanOrEqual(4.5);
   });
 });
 

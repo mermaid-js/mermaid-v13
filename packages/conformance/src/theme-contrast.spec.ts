@@ -1,9 +1,10 @@
 /**
- * R-THEME-9 for ER's own fills (spec #795 T3): what the ER renderer draws on its rows and
- * relationship labels reads in each classic theme. Core's `themes.spec.ts` checks the shared
- * variables; ER's resolve only with its table (D331). Pairs are `[ink, fill, min]`, as in T5's
- * `theme-contrast.spec.ts` (`PAIRS`), so they can move there under an `er:` key. A fill with
- * alpha is judged composited over `background`, as drawn.
+ * R-THEME-9 for the diagram tables (D29, spec #795): what a renderer draws on a diagram's own
+ * fills reads in each classic theme. Core's `themes.spec.ts` checks the shared variables; a
+ * diagram's variables resolve only with its table (D331), so its rows live here, each type's
+ * resolved with its own table. Text needs WCAG AA (4.5:1); a mark that only has to be seen, a
+ * border or a line, needs 3:1 (WCAG 1.4.11). A fill with alpha is judged composited over
+ * `background`, as drawn. Rows are per diagram type and additive: a ticket adds its type's.
  */
 import {
   composite,
@@ -18,6 +19,7 @@ import { DIAGRAM_TABLES } from './diagram-themes.ts';
 const CLASSIC = ['default', 'dark', 'forest', 'neutral', 'base'] as const;
 
 const TEXT = 4.5;
+const MARK = 3;
 
 /** An ink drawn on a fill, and the ratio it needs. */
 type Pair = readonly [ink: string, fill: string, min: number];
@@ -29,6 +31,18 @@ const PAIRS: Readonly<Record<string, readonly Pair[]>> = {
     ['erRowOddTextColor', 'rowOdd', TEXT],
     ['erRowEvenTextColor', 'rowEven', TEXT],
     ['textColor', 'erEdgeLabelBackground', TEXT],
+  ],
+  // #801 (#772): bar labels by state (`paint.ts` `labelColour`), the active bar's outline, and
+  // the `vert` marker's label on the chart.
+  gantt: [
+    ['taskTextColor', 'taskBkgColor', TEXT],
+    ['taskTextColor', 'critBkgColor', TEXT],
+    ['taskTextDarkColor', 'activeTaskBkgColor', TEXT],
+    ['taskTextDarkColor', 'doneTaskBkgColor', TEXT],
+    ['taskTextOutsideColor', 'background', TEXT],
+    ['activeTaskBorderColor', 'activeTaskBkgColor', MARK],
+    ['activeTaskBorderColor', 'background', MARK],
+    ['vertLineColor', 'background', TEXT],
   ],
 };
 
@@ -55,7 +69,7 @@ const PROBED: Readonly<
 
 const specs = await Promise.all(CLASSIC.map((n) => loadTheme(n)));
 
-describe('ER inks on ER fills in the classic themes (R-THEME-9, spec #795)', () => {
+describe('diagram inks on diagram fills in the classic themes (R-THEME-9, spec #795)', () => {
   it.each(specs.map((s) => [s.name, s] as const))('%s', (_name, spec) => {
     const failures: string[] = [];
     const check = (type: string, pairs: readonly Pair[], themeVariables = {}) => {

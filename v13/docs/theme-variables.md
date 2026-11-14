@@ -17,7 +17,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt, railroad |
 | `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban, wardley, xychart, venn, c4 |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, packet, cynefin, wardley, xychart, railroad, usecase |
-| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley, agentflow, architecture, block, c4, eventmodeling, ishikawa, railroad, requirement, treeview, usecase |
+| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley, agentflow, architecture, block, c4, eventmodeling, gantt, ishikawa, railroad, requirement, treeview, usecase |
 | `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info, sankey, treemap, wardley, xychart, venn, agentflow, architecture, block, c4, eventmodeling, ishikawa, railroad, requirement, treeview, usecase |
 | `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, agentflow, architecture, block, eventmodeling, ishikawa, railroad, requirement, usecase |
 | `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | core, quadrant, gantt, railroad |
@@ -37,11 +37,11 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `defaultLinkColor` | `--mermaid-defaultLinkColor` | derived | color | `lineColor` | `lineColor` | dark |  |
 | `border1` | `--mermaid-border1` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral |  |
 | `border2` | `--mermaid-border2` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark |  |
-| `noteBkgColor` | `--mermaid-noteBkgColor` | derived | color | `#fff5ad` | `secondaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, sequence, class, state, usecase |
-| `noteTextColor` | `--mermaid-noteTextColor` | derived | color | `contrast(noteBkgColor, textColor, background)` | `contrast(noteBkgColor, textColor, background)` | redux-color, redux, redux-dark, redux-dark-color, default, forest, neutral | core, sequence, class, state, usecase |
+| `noteBkgColor` | `--mermaid-noteBkgColor` | derived | color | `#fff5ad` | `secondaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, base, neo-dark | core, sequence, class, state, usecase |
+| `noteTextColor` | `--mermaid-noteTextColor` | derived | color | `contrast(noteBkgColor, textColor, background)` | `contrast(noteBkgColor, textColor, background)` | redux-color, redux, redux-dark, redux-dark-color, default, forest, neutral, base | core, sequence, class, state, usecase |
 | `noteBorderColor` | `--mermaid-noteBorderColor` | derived | color | `mix(noteBkgColor, black, 30%)` | `mix(noteBkgColor, white, 30%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo | core, sequence, class, state, usecase |
-| `errorBkgColor` | `--mermaid-errorBkgColor` | derived | color | `#552222` | `#a44141` | redux-color, redux, redux-dark, redux-dark-color, default, forest, neutral, neo, neo-dark | core |
-| `errorTextColor` | `--mermaid-errorTextColor` | derived | color | `contrast(background, #552222, #ffdddd)` | `contrast(background, #dddddd, #552222)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | core |
+| `errorBkgColor` | `--mermaid-errorBkgColor` | derived | color | `#552222` | `#a44141` | redux-color, redux, redux-dark, redux-dark-color, default, forest, neutral, base, neo, neo-dark | core |
+| `errorTextColor` | `--mermaid-errorTextColor` | derived | color | `contrast(background, #552222, #ffdddd)` | `contrast(background, #dddddd, #552222)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, base, neo, neo-dark | core |
 | `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, agentflow, block, requirement, usecase |
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
 | `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state, mindmap, agentflow |
@@ -231,18 +231,18 @@ flags and opacities, which are read literally.
 | `excludeBkgColor` | | color | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` | `#eeeeee` |
 | `gridColor` | | color | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` |
 | `todayLineColor` | | color | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` |
-| `vertLineColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#c7c7f1` | `#cccccc` | `#abb594` | `#d4d4d4` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `vertLineColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#b3b3b3` | `#cccccc` |
 | `taskBkgColor` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#cccccc` | `#1f2020` |
 | `taskBorderColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#c7c7f1` | `#cccccc` | `#abb594` | `#d4d4d4` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
 | `activeTaskBkgColor` | | color | `#ffffff` | `#ffffff` | `#595c5c` | `#595c5c` | `#ffffff` | `#595c5c` | `#fafcf5` | `#ffffff` | `#ffffff` | `#ffffff` | `#595c5c` |
-| `activeTaskBorderColor` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#cccccc` | `#1f2020` |
+| `activeTaskBorderColor` | | color | `#cccccc` | `#cccccc` | `#1f2020` | `#1f2020` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#cccccc` | `#1f2020` |
 | `doneTaskBkgColor` | | color | `lightgrey` | `lightgrey` | `#38383e` | `#38383e` | `lightgrey` | `#474949` | `lightgrey` | `lightgrey` | `lightgrey` | `lightgrey` | `#584343` |
 | `doneTaskBorderColor` | | color | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` |
-| `critBkgColor` | | color | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` | `red` |
+| `critBkgColor` | | color | `red` | `red` | `red` | `red` | `red` | `#990000` | `red` | `red` | `red` | `red` | `red` |
 | `critBorderColor` | | color | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` |
-| `taskTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+| `taskTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `black` | `#cccccc` | `#000000` | `#000000` | `black` | `#333333` | `#cccccc` |
 | `taskTextOutsideColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
-| `taskTextDarkColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+| `taskTextDarkColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `white` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 
 ### gitgraph
 
