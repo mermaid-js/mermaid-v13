@@ -16,6 +16,7 @@ import type {
   SemanticTokens,
   WorkspaceEdit,
 } from 'vscode-languageserver-protocol';
+import { TextDocumentSyncKind } from 'vscode-languageserver-protocol';
 import { decodeTokens, startClient } from './testing/lsp-client.ts';
 import type { Client } from './testing/lsp-client.ts';
 import { detectorSource, FAKE_FACET, facetPackage, workspace } from './testing/workspace.ts';
@@ -424,7 +425,10 @@ describe('review fixes (#38)', () => {
           context: { includeDeclaration: true },
         });
         expect(refs.map((r) => r.range)).toEqual([range(2, 2, 5)]);
-        expect(client.published.filter((p) => p.uri === uri)).toHaveLength(3);
+        // Version 3 made no push: the pushes answer versions 1, 5 and 6 (#806).
+        expect(client.published.filter((p) => p.uri === uri).map((p) => p.version)).toEqual([
+          1, 5, 6,
+        ]);
       } finally {
         await client.stop();
       }
@@ -584,6 +588,89 @@ describe('review fixes (#38)', () => {
           position: pos(1, 2),
         });
         expect((hover.contents as { value: string }).value).toContain('node');
+      } finally {
+        await client.stop();
+      }
+    },
+    T
+  );
+});
+
+describe('versioned diagnostics and incremental sync (#806)', () => {
+  it(
+    'advertises incremental sync',
+    async () => {
+      const client = await startClient();
+      try {
+        expect(client.init.capabilities.textDocumentSync).toEqual({
+          openClose: true,
+          change: TextDocumentSyncKind.Incremental,
+        });
+      } finally {
+        await client.stop();
+      }
+    },
+    T
+  );
+
+  it(
+    'sends the version each push answers; the push on close has none',
+    async () => {
+      const client = await startClient();
+      const uri = 'file:///w/versions.mmd';
+      try {
+        client.open(uri, FLOW);
+        expect(await client.diagnostics(uri)).toMatchObject({ version: 1 });
+        client.change(uri, VALID, 2);
+        expect(await client.diagnostics(uri)).toMatchObject({ version: 2, diagnostics: [] });
+        client.edit(uri, 7, [{ range: range(8, 0, 0), text: '  C --> D[unclosed' }]);
+        const ranged = await client.diagnostics(uri);
+        expect(ranged.version).toBe(7);
+        expect(ranged.diagnostics).toHaveLength(1);
+        client.close(uri);
+        const closed = await client.diagnostics(uri);
+        expect(closed.diagnostics).toEqual([]);
+        expect(closed.version).toBeUndefined();
+      } finally {
+        await client.stop();
+      }
+    },
+    T
+  );
+
+  it(
+    'applies several ranged changes of one notification in order, on CRLF and astral text',
+    async () => {
+      const client = await startClient();
+      const uri = 'file:///w/crlf.mmd';
+      // Line 1: the emoji takes columns 5–6 (two UTF-16 units), so `B` is at column 16.
+      const text = 'flowchart LR\r\n  A["😀 x"] --> B\r\n  B --> C\r\n';
+      const references = async (line: number, character: number) =>
+        (
+          await client.connection.sendRequest<Location[]>('textDocument/references', {
+            textDocument: { uri },
+            position: pos(line, character),
+            context: { includeDeclaration: true },
+          })
+        ).map((r) => r.range);
+      try {
+        client.open(uri, text);
+        await client.diagnostics(uri);
+        client.edit(uri, 2, [
+          { range: range(1, 16, 17), text: 'Bee' },
+          // Applies to the text after the first change.
+          { range: range(2, 2, 3), text: 'Bee' },
+          // Across the CRLF at the end of line 2.
+          { range: range(2, 11, 0, 3), text: ' & D\r\n' },
+        ]);
+        expect(await client.diagnostics(uri)).toMatchObject({ version: 2, diagnostics: [] });
+        // flowchart LR\r\n  A["😀 x"] --> Bee\r\n  Bee --> C & D\r\n
+        expect(await references(2, 2)).toEqual([range(1, 16, 19), range(2, 2, 5)]);
+        expect(await references(2, 14)).toEqual([range(2, 14, 15)]);
+        // A full-text change still replaces the whole text.
+        client.edit(uri, 3, [{ text: 'flowchart LR\n  Q --> R\n' }]);
+        expect(await client.diagnostics(uri)).toMatchObject({ version: 3, diagnostics: [] });
+        expect(await references(1, 2)).toEqual([range(1, 2, 3)]);
       } finally {
         await client.stop();
       }

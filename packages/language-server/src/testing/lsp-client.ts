@@ -15,6 +15,7 @@ import type {
   InitializeResult,
   ProtocolConnection,
   PublishDiagnosticsParams,
+  TextDocumentContentChangeEvent,
 } from 'vscode-languageserver-protocol';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
@@ -41,6 +42,8 @@ export interface Client {
   open(uri: string, text: string, languageId?: string): void;
   /** Replace the whole text of `uri`. */
   change(uri: string, text: string, version: number): void;
+  /** Send `changes` (ranged or full) for `uri` in one `didChange`, applied in order. */
+  edit(uri: string, version: number, changes: TextDocumentContentChangeEvent[]): void;
   close(uri: string): void;
   /** `shutdown` + `exit`; resolves with the server's exit code. */
   stop(): Promise<number | null>;
@@ -143,6 +146,12 @@ export async function startClient(options: ClientOptions = {}): Promise<Client> 
       void connection.sendNotification('textDocument/didChange', {
         textDocument: { uri, version },
         contentChanges: [{ text }],
+      });
+    },
+    edit(uri, version, contentChanges) {
+      void connection.sendNotification('textDocument/didChange', {
+        textDocument: { uri, version },
+        contentChanges,
       });
     },
     close(uri) {
