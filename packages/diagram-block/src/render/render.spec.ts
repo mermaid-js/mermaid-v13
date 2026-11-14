@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert, type OutlineRole } from '@mermaid-js/core/svg';
 import { outlineFixture } from '@mermaid-js/core/svg/testing';
+import { fixtureSource } from '../layout/mmd.fixtures.ts';
 import { renderBlockForTest } from './harness.ts';
 
 /**
@@ -263,6 +264,89 @@ describe('the composite palette (v12 blockColorIndex stylesheet cases)', () => {
     const rect = tags(svg).find((t) => t.includes('composite label-container'))!;
     expect(attr(rect, 'stroke')).toMatch(/^#|^rgb/);
     expect(attr(rect, 'fill')).toBe('var(--_mb)');
+  });
+});
+
+// v12's `.node .cluster` rule: a composite is filled `fade(clusterBkg, 0.5)` and stroked
+// `fade(clusterBorder, 0.2)` (#771). Here that is the variable with `fill-opacity` and
+// `stroke-opacity`, wherever the theme carries no composite palette (D152).
+describe('a composite without a palette (#771)', () => {
+  /** The `--_x` alias `paint` names, as `[variable, fallback]` from the root's style. */
+  const alias = (svg: string, paint = ''): [string, string] | undefined => {
+    const name = /^var\((--_[\w-]+)\)$/.exec(paint)?.[1];
+    const style = attr(tags(svg)[0]!, 'style') ?? '';
+    const m = name && new RegExp(`${name}:var\\(--mermaid-(\\w+),([^;]*)\\)(;|$)`).exec(style);
+    return m ? [m[1]!, m[2]!] : undefined;
+  };
+  const rectOf = (svg: string, id: string): string => {
+    const all = tags(svg);
+    const at = all.findIndex((t) => t.startsWith('<g class="node ') && attr(t, 'data-id') === id);
+    return all[at + 1]!;
+  };
+
+  it("draws #771's composite yellow at half opacity with a faint black border, its leaves red", async () => {
+    const { svg } = await render(fixtureSource('baseline/themes/base-cluster-overrides'));
+    const g = rectOf(svg, 'g');
+    expect(g).toContain('class="basic cluster composite label-container"');
+    expect(alias(svg, attr(g, 'fill'))).toEqual(['clusterBkg', '#ffff00']);
+    expect(attr(g, 'fill-opacity')).toBe('0.5');
+    expect(alias(svg, attr(g, 'stroke'))).toEqual(['clusterBorder', '#000000']);
+    expect(attr(g, 'stroke-opacity')).toBe('0.2');
+    for (const id of ['a', 'd', 'e']) {
+      const leaf = rectOf(svg, id);
+      expect(alias(svg, attr(leaf, 'fill')), id).toEqual(['mainBkg', '#ff0000']);
+      expect(attr(leaf, 'fill-opacity'), id).toBeUndefined();
+      expect(attr(leaf, 'stroke-opacity'), id).toBeUndefined();
+    }
+  });
+
+  it('reads the cluster variables in every theme without a palette', async () => {
+    const src = 'block\n  a\n  block:g\n    b\n  end\n';
+    for (const theme of ['default', 'dark', 'forest', 'neutral', 'base', 'redux', 'redux-dark']) {
+      const { svg } = await render(src, { theme });
+      const g = rectOf(svg, 'g');
+      expect(alias(svg, attr(g, 'fill'))?.[0], theme).toBe('clusterBkg');
+      expect(alias(svg, attr(g, 'stroke'))?.[0], theme).toBe('clusterBorder');
+      expect(alias(svg, attr(rectOf(svg, 'b'), 'fill'))?.[0], theme).toBe('mainBkg');
+    }
+  });
+
+  it("keeps the label on nodeTextColor, as v12's g.label sibling of the rect", async () => {
+    const { svg } = await render('block\n  block:g["Group"]\n    b\n  end\n', { theme: 'dark' });
+    const texts = tags(svg).filter((t) => t.startsWith('<text'));
+    expect(texts.map((t) => alias(svg, attr(t, 'fill'))?.[0])).toEqual([
+      'nodeTextColor',
+      'nodeTextColor',
+    ]);
+  });
+
+  it("lets a block's style beat the cluster paint, opaque as v12's inline style", async () => {
+    const { svg } = await render(
+      'block\n  block:g\n    b\n  end\n  style g fill:#0f0,stroke:#00f\n'
+    );
+    const g = rectOf(svg, 'g');
+    expect([attr(g, 'fill'), attr(g, 'stroke')]).toEqual(['#0f0', '#00f']);
+    expect(attr(g, 'fill-opacity')).toBeUndefined();
+    expect(attr(g, 'stroke-opacity')).toBeUndefined();
+  });
+
+  it('keeps the gradient on the outline, unfaded, where useGradient is on (D182)', async () => {
+    const r = await render('block\n  block:g\n    b\n  end\n', { theme: 'neo' });
+    const g = rectOf(r.svg, 'g');
+    expect(attr(g, 'stroke')).toBe(`url(#${r.gradient})`);
+    expect(attr(g, 'stroke-opacity')).toBeUndefined();
+    expect(alias(r.svg, attr(g, 'fill'))?.[0]).toBe('clusterBkg');
+    expect(attr(g, 'fill-opacity')).toBe('0.5');
+  });
+
+  it('reads no cluster variable without a composite, nor under a composite palette', async () => {
+    const flat = await render('block\n  a b\n', { theme: 'default' });
+    expect(flat.svg).not.toContain('clusterBkg');
+    expect(flat.svg).not.toContain('clusterBorder');
+    for (const theme of ['redux-color', 'redux-dark-color']) {
+      const { svg } = await render('block\n  block:g\n    b\n  end\n', { theme });
+      expect(svg, theme).not.toMatch(/clusterBkg|clusterBorder|-opacity=/);
+    }
   });
 });
 

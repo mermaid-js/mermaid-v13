@@ -7,7 +7,9 @@
  *   as v12 inserted them), each a `g.node` translated to its centre with `data-id`, `data-ast`
  *   and v12's classes (`node <classes or default> flowchart-label`): its shape (`label-container`;
  *   a composite's is `rect.basic.cluster.composite.label-container` and its `g.node` carries
- *   the palette slot's `data-color-id`; a block arrow's `polygon.label-container.block-arrow`),
+ *   the palette slot's `data-color-id`, or without a palette the rect is filled `clusterBkg`
+ *   at 0.5 and stroked `clusterBorder` at 0.2 (#771); a block arrow's
+ *   `polygon.label-container.block-arrow`),
  *   then its label in a `g.label`. Spaces draw nothing;
  * - after every block, each edge as a `path.flowchart-link` (`edge-thickness-*`,
  *   `edge-pattern-*`) with `data-id` and `data-ast`, its arrowheads inline after it;
@@ -104,6 +106,8 @@ function drawNode({ w, ctx, paint }: Scene, b: BlockNodeLayout, block: Block): v
   if (shape === 'space' || !outline) return;
   const style = paint.styleOf(block);
   const slot = isComposite(block) ? paint.slotOf(b.colorIndex) : undefined;
+  // Without a palette slot, a composite takes the cluster paint (#771).
+  const frame = isComposite(block) && !slot ? paint.composite : undefined;
   w.open('g', {
     class: nodeClass(block),
     'data-id': b.id,
@@ -111,10 +115,13 @@ function drawNode({ w, ctx, paint }: Scene, b: BlockNodeLayout, block: Block): v
     'data-color-id': slot?.id,
     transform: translate(b.centre.x, b.centre.y),
   });
-  // The author's `style` and `classDef` win over the palette and the theme (spread after).
+  // The author's `style` and `classDef` win over the palette and the theme (spread after); an
+  // author's fill or stroke is opaque, as v12's inline style replaced the faded colour.
   const outlineAttrs: Attrs = {
-    fill: slot?.fill ?? paint.node.fill,
-    stroke: slot?.stroke ?? paint.node.stroke,
+    fill: slot?.fill ?? frame?.fill ?? paint.node.fill,
+    'fill-opacity': style.shape.fill === undefined ? frame?.fillOpacity : undefined,
+    stroke: slot?.stroke ?? frame?.stroke ?? paint.node.stroke,
+    'stroke-opacity': style.shape.stroke === undefined ? frame?.strokeOpacity : undefined,
     'stroke-width': paint.node.strokeWidth,
     filter: paint.node.shadow,
     ...style.shape,

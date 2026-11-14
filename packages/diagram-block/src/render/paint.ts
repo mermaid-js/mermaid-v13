@@ -10,7 +10,7 @@
 import type { Warning } from '@mermaid-js/core';
 import { checkStyle, type CheckedStyle, type OutlinePaint, type Paint } from '@mermaid-js/core/svg';
 import type { Theme } from '@mermaid-js/core/theme';
-import type { Block, BlockModel } from '../model.ts';
+import { isComposite, type Block, type BlockModel } from '../model.ts';
 import { arrowheads, type Arrowheads } from './arrowheads.ts';
 import { BLOCK_RENDER } from './metrics.ts';
 
@@ -55,6 +55,21 @@ export interface EdgePaint {
   readonly labelText: Paint;
 }
 
+/**
+ * A composite's paint where the theme carries no composite palette: v12's `.node .cluster`
+ * rule, `fade(clusterBkg, 0.5)` and `fade(clusterBorder, 0.2)`, as the variable and an opacity
+ * (#771). Its label keeps `nodeTextColor`: v12's label is a `g.label` beside the rect, which
+ * the `.cluster text` rule does not reach.
+ */
+export interface CompositePaint {
+  readonly fill: Paint;
+  readonly fillOpacity: number;
+  /** `clusterBorder`, or the theme's gradient where `useGradient` is on (D182). */
+  readonly stroke: OutlinePaint;
+  /** Undefined on the gradient, which v12 neo drew unfaded. */
+  readonly strokeOpacity: number | undefined;
+}
+
 export interface Paints {
   readonly font: Font;
   readonly fontSize: Length;
@@ -62,6 +77,11 @@ export interface Paints {
   readonly edge: EdgePaint;
   /** A composite's palette slot from its `colorIndex`, or undefined with no palette. */
   readonly slotOf: (colorIndex: number | undefined) => Tint | undefined;
+  /**
+   * The paint of a composite without a palette slot; undefined where the theme carries a
+   * palette or the diagram has no composite, so no cluster variable reaches the root's style.
+   */
+  readonly composite: CompositePaint | undefined;
   /** A block's checked `classDef` and `style` declarations (R-SEC-3), one check per list. */
   readonly styleOf: (block: Block) => CheckedStyle;
 }
@@ -85,6 +105,31 @@ function paletteSlots(theme: Theme): Paints['slotOf'] {
       // v12 `genColor`: the fill is the slot's, not the order's, when the arrays differ.
       fill: bkg.length > 0 ? bkg[slot % bkg.length] : undefined,
     };
+  };
+}
+
+/** Whether `model` has a composite, without recursion (composites nest thousands deep). */
+function hasComposite(model: BlockModel): boolean {
+  const stack: Block[] = [...model.blocks];
+  while (stack.length > 0) {
+    const b = stack.pop()!;
+    if (isComposite(b)) return true;
+    for (const c of b.children) stack.push(c);
+  }
+  return false;
+}
+
+/**
+ * The composites' paint where the theme has no composite palette (#771): decided by the
+ * `borderColorArray` variable, as {@link paletteSlots} is, never by theme name (D152).
+ */
+function compositePaint(theme: Theme, model: BlockModel): CompositePaint | undefined {
+  if (theme.palette('borderColorArray').length > 0 || !hasComposite(model)) return undefined;
+  return {
+    fill: theme.color('clusterBkg'),
+    fillOpacity: BLOCK_RENDER.compositeFillOpacity,
+    stroke: theme.outline('clusterBorder'),
+    strokeOpacity: theme.gradient() ? undefined : BLOCK_RENDER.compositeStrokeOpacity,
   };
 }
 
@@ -139,6 +184,7 @@ export function paints(theme: Theme, model: BlockModel, warn: (w: Warning) => vo
     node,
     edge,
     slotOf: paletteSlots(theme),
+    composite: compositePaint(theme, model),
     styleOf: styleCache(model, warn),
   };
 }
