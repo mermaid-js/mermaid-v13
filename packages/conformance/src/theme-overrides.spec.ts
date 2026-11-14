@@ -75,17 +75,6 @@ const keys = (theme: Classic, cases: readonly string[], names: readonly string[]
  * decision that accounts for it. Groups naming #795 wait on a maintainer decision (tickets/796.md).
  */
 const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
-  '#761 (T1): v12 base derives secondaryColor and tertiaryColor from primaryColor, and lineColor and arrowheadColor from background; v13 base holds literals':
-    [
-      ...keys('base', both('primaryColor'), [
-        'clusterBkg',
-        'edgeLabelBackground',
-        'secondaryColor',
-        'tertiaryColor',
-      ]),
-      ...keys('base', both('background'), ['defaultLinkColor', 'lineColor']),
-      ...keys('base', both('background', 'lineColor'), ['arrowheadColor']),
-    ],
   "#773 (T2): v12's named themes set mainBkg in the constructor; v13 derives it from primaryColor":
     [
       ...keys('default', both('primaryColor'), ['actorBkg', 'mainBkg']),

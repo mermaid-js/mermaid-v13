@@ -88,7 +88,8 @@ describe('built-in themes', () => {
     expect(BASE_VARIABLES.length).toBeLessThanOrEqual(8);
     const base = await loadTheme('base');
     expect(base.values).toBeUndefined();
-    expect(base.rules).toBeUndefined();
+    // v12 theme-base derives arrowheadColor from background, not from lineColor (#797).
+    expect(base.rules).toEqual({ arrowheadColor: 'invert(background)' });
     const vars = {
       primaryColor: '#1d3557',
       secondaryColor: '#a8dadc',
@@ -104,7 +105,8 @@ describe('built-in themes', () => {
     // Dark primary: node text flips to the light ink and stays readable.
     expect(t.value('nodeTextColor')).toBe('#ffffff');
     expect(t.value('clusterBkg')).toBe('#f1faee');
-    expect(t.value('arrowheadColor')).toBe('#457b9d');
+    expect(t.value('defaultLinkColor')).toBe('#457b9d');
+    expect(t.value('arrowheadColor')).toBe('#000000');
     expect(t.number('fontSize')).toBe(15);
     expect(t.font()).toBe('Georgia, serif');
   });

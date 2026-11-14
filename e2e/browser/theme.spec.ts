@@ -32,6 +32,32 @@ test('setting --mermaid-primaryColor on the host re-themes without re-rendering'
   expect(await page.locator('.diagram').innerHTML()).toBe(markup);
 });
 
+test('under base, --mermaid-primaryColor on the host turns the cluster fill without re-rendering (#797)', async ({
+  page,
+}) => {
+  await openHarness(page);
+  const code = 'flowchart LR\n  subgraph group [Group]\n    A[Start] -- label --> B[End]\n  end';
+  await page.evaluate((c) => window.v13.mount(c, { config: { theme: 'base' } }), code);
+  const markup = await page.locator('.diagram').innerHTML();
+  const clusterFill = `getComputedStyle(document.querySelector('.diagram svg .cluster rect')).fill`;
+  const near = (got: unknown, want: number[]) => {
+    const c = channels(String(got));
+    return typeof c !== 'string' && want.every((v, i) => Math.abs(v - c[i]) <= 1);
+  };
+  // base tertiaryColor: v12 adjust('#fff4dd', { h: 180, l: 5 }) = #f6f9ff.
+  expect(near(await page.evaluate(clusterFill), [246, 249, 255])).toBe(true);
+
+  await page.evaluate(() =>
+    document
+      .querySelector<HTMLElement>('.diagram')!
+      .style.setProperty('--mermaid-primaryColor', '#3366cc')
+  );
+  // v12 adjust('#3366cc', { h: 180, l: 5 }) = hsl(40, 60%, 55%) = #d1a347.
+  const after = String(await page.evaluate(clusterFill));
+  expect(near(after, [209, 163, 71]), after).toBe(true);
+  expect(await page.locator('.diagram').innerHTML()).toBe(markup);
+});
+
 test('contrast text follows a host override of the base colour it sits on (R-THEME-4)', async ({
   page,
 }) => {

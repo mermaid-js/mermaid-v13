@@ -124,6 +124,8 @@ exports[`layered over parser-produced flowchart graphs > lays out every corpus g
   "flowchart/baseline/text/unicode.mmd": 0,
   "flowchart/baseline/text/wrapping-markdown.mmd": 0,
   "flowchart/baseline/text/wrapping.mmd": 0,
+  "flowchart/baseline/themes/base-dark-background.mmd": 0,
+  "flowchart/baseline/themes/base-primary-only.mmd": 0,
   "flowchart/baseline/themes/base.mmd": 0,
   "flowchart/baseline/themes/dark.mmd": 0,
   "flowchart/baseline/themes/default.mmd": 0,

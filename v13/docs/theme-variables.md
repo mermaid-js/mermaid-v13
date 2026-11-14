@@ -33,7 +33,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er, usecase |
 | `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | flowchart, class, state, er, gantt, treemap, venn, agentflow, railroad, usecase |
 | `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `secondaryColor` | `mix(secondaryColor, black, 30%)` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, state, agentflow, block, usecase |
-| `arrowheadColor` | `--mermaid-arrowheadColor` | derived | color | `lineColor` | `lineColor` | forest, neutral | flowchart, state, agentflow, block |
+| `arrowheadColor` | `--mermaid-arrowheadColor` | derived | color | `lineColor` | `lineColor` | forest, neutral, base | flowchart, state, agentflow, block |
 | `defaultLinkColor` | `--mermaid-defaultLinkColor` | derived | color | `lineColor` | `lineColor` | |  |
 | `border1` | `--mermaid-border1` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color |  |
 | `border2` | `--mermaid-border2` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark |  |
@@ -407,7 +407,7 @@ flags and opacities, which are read literally.
 | `railroadLineColor` | `railroad.lineColor` | color | `#000000` | `#000000` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
 | `railroadMarkerFill` | `railroad.markerFill` | color | `#000000` | `#000000` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
 | `railroadSpecialFill` | `railroad.specialFill` | color | `#ffffff` | `#ffffff` | `#201f1f` | `#201f1f` | `#f9ffec` | `#201f1f` | `#e1efc0` | `#eeeeee` | `#f6f9ff` | `#ffffff` | `#201f1f` |
-| `railroadSpecialStroke` | `railroad.specialStroke` | color | `#d9d9d9` | `#d9d9d9` | `#060606` | `#060606` | `#d4d9c9` | `#4d4c4c` | `#bfcba3` | `#cacaca` | `#d1d4d9` | `#e6e6e6` | `#4d4c4c` |
+| `railroadSpecialStroke` | `railroad.specialStroke` | color | `#d9d9d9` | `#d9d9d9` | `#060606` | `#060606` | `#d4d9c9` | `#4d4c4c` | `#bfcba3` | `#cacaca` | `#d2d4d9` | `#e6e6e6` | `#4d4c4c` |
 | `railroadRuleNameColor` | `railroad.ruleNameColor` | color | `#28253d` | `#28253d` | `#dfe0e0` | `#dfe0e0` | `#333333` | `#f9fffe` | `#333333` | `#333333` | `#333333` | `#000000` | `#dfe0e0` |
 
 ### requirement
@@ -437,7 +437,7 @@ flags and opacities, which are read literally.
 | `labelTextColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#000000` | `#d3d3d3` | `#000000` | `#333333` | `#333333` | `#333333` | `#e0dfdf` |
 | `loopTextColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#000000` | `#d3d3d3` | `#000000` | `#333333` | `#333333` | `#333333` | `#e0dfdf` |
 | `activationBkgColor` | | color | `#cccccc` | `#cccccc` | `#474949` | `#474949` | `#f4f4f4` | `#474949` | `#f4f4f4` | `#f4f4f4` | `#f4ddff` | `#cccccc` | `#474949` |
-| `activationBorderColor` | | color | `#b3b3b3` | `#b3b3b3` | `#3e4040` | `#3e4040` | `#666666` | `#cccccc` | `#666666` | `#666666` | `#d6c1df` | `#b3b3b3` | `#2e3030` |
+| `activationBorderColor` | | color | `#b3b3b3` | `#b3b3b3` | `#3e4040` | `#3e4040` | `#666666` | `#cccccc` | `#666666` | `#666666` | `#d5c1df` | `#b3b3b3` | `#2e3030` |
 | `sequenceNumberColor` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#000000` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
 | `actorRadius` | | length | `6` | `6` | `6` | `6` | `3` | `3` | `3` | `3` | `3` | `6` | `6` |
 | `actorGlyphBand` | | length | `44` | `44` | `44` | `44` | `0` | `0` | `0` | `0` | `0` | `44` | `44` |
@@ -504,7 +504,7 @@ With a palette (a non-empty `borderColorArray`: redux-color, redux-dark-color, o
 | `usecaseBkg` | | color | `#f0fdfa` | `#ffffff` | `#111113` | `#111113` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#ffffff` | `#2a2020` |
 | `usecaseBorder` | | color | `#2dd4bf` | `#28253d` | `#ffffff` | `#2dd4bf` | `#9370db` | `#cccccc` | `#13540c` | `#999999` | `#d9cfbc` | `#000000` | `#cccccc` |
 | `usecaseBoundaryBkg` | | color | `#f9f9fb` | `#f9f9fb` | `#1e1a2e` | `#1e1a2e` | `#ffffde` | `#474949` | `#cdffb2` | `#fcfcfc` | `#f6f9ff` | `#ffffff` | `#201f1f` |
-| `usecaseBoundaryBorder` | | color | `#bdbccc` | `#bdbccc` | `#bdbccc` | `#bdbccc` | `#aaaa33` | `#ffffff40` | `#6eaa49` | `#707070` | `#d1d4d9` | `#e6e6e6` | `#4d4c4c` |
+| `usecaseBoundaryBorder` | | color | `#bdbccc` | `#bdbccc` | `#bdbccc` | `#bdbccc` | `#aaaa33` | `#ffffff40` | `#6eaa49` | `#707070` | `#d2d4d9` | `#e6e6e6` | `#4d4c4c` |
 | `usecaseIncludeLine` | | color | `#38bdf8` | `#000000` | `#cccccc` | `#38bdf8` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
 | `usecaseExtendLine` | | color | `#fb923c` | `#000000` | `#cccccc` | `#fb923c` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
 
@@ -516,7 +516,7 @@ A theme with a palette (a non-empty `borderColorArray`: redux-color, redux-dark-
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `venn1` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `#5353ff` | `#6a6e6e` | `#8cb42f` | `#a1a1a1` | `#ffc244` | `currentColor` | `currentColor` |
 | `venn2` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `#ffff45` | `#a40000` | `#6aff19` | `#b0b0b0` | `#c244ff` | `currentColor` | `currentColor` |
-| `venn3` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `#b9ff20` | `#cc2a91` | `#8db52e` | `#888888` | `#2a71ff` | `currentColor` | `currentColor` |
+| `venn3` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `#b9ff20` | `#cc2a91` | `#8db52e` | `#888888` | `#2a6fff` | `currentColor` | `currentColor` |
 | `venn4` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `#ff53ff` | `#87a1a9` | `#2fb457` | `#a1a1a1` | `#80ff44` | `currentColor` | `currentColor` |
 | `venn5` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `#53ffff` | `#bf7344` | `#b4572f` | `#a1a1a1` | `#ff4480` | `currentColor` | `currentColor` |
 | `venn6` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `#45ff45` | `#eb2626` | `#19ffae` | `#b0b0b0` | `#ff4480` | `currentColor` | `currentColor` |

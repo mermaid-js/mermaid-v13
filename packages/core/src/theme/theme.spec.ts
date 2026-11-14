@@ -66,6 +66,58 @@ describe('createTheme: CSS variables (R-THEME-2, -4)', () => {
   });
 });
 
+describe('createTheme: base derives by rule (#797, v12 theme-base)', () => {
+  const lit = (themeVariables?: Record<string, unknown>) =>
+    createTheme(base, { cssVariables: false, themeVariables });
+
+  it('keeps the stock values with no override', () => {
+    const t = lit();
+    expect(['secondaryColor', 'tertiaryColor', 'lineColor', 'arrowheadColor'].map(t.value)).toEqual(
+      ['#f4ddff', '#f6f9ff', '#0b0b0b', '#0b0b0b']
+    );
+  });
+
+  it('turns secondaryColor and tertiaryColor with primaryColor, as v12 adjust does', () => {
+    // khroma: adjust('#3366cc', { h: -120 }) = hsl(100, 60%, 50%); { h: 180, l: 5 } = hsl(40, 60%, 55%).
+    const t = lit({ primaryColor: '#3366cc' });
+    expect(t.value('secondaryColor')).toBe('#66cc33');
+    expect(t.value('tertiaryColor')).toBe('#d1a347');
+    expect(t.value('clusterBkg')).toBe('#d1a347');
+    expect(t.value('edgeLabelBackground')).toBe('#66cc33');
+  });
+
+  it('inverts background for lineColor and arrowheadColor', () => {
+    const t = lit({ background: '#222222' });
+    expect(t.value('lineColor')).toBe('#dddddd');
+    expect(t.value('arrowheadColor')).toBe('#dddddd');
+    expect(t.value('defaultLinkColor')).toBe('#dddddd');
+  });
+
+  it("keeps the author's value, and an author's lineColor leaves arrowheads on background", () => {
+    const t = lit({ primaryColor: '#3366cc', secondaryColor: '#123456', lineColor: '#ff0000' });
+    expect(t.value('secondaryColor')).toBe('#123456');
+    expect(t.value('tertiaryColor')).toBe('#d1a347');
+    expect(t.value('lineColor')).toBe('#ff0000');
+    expect(t.value('arrowheadColor')).toBe('#0b0b0b');
+  });
+
+  it('writes the fallbacks as CSS over the primaryColor and background aliases (R-THEME-4)', () => {
+    const t = createTheme(base);
+    t.color('secondaryColor');
+    t.color('tertiaryColor');
+    t.color('lineColor');
+    expect(t.rootStyle()).toEqual({
+      '--_s': 'var(--mermaid-secondaryColor,hsl(from var(--_p) calc(h - 120) s l / alpha))',
+      '--_t':
+        'var(--mermaid-tertiaryColor,hsl(from hsl(from var(--_p) calc(h + 180) s l / alpha) h s clamp(0, l + 5, 100) / alpha))',
+      '--_l':
+        'var(--mermaid-lineColor,color(from var(--_bg) srgb calc(1 - r) calc(1 - g) calc(1 - b) / alpha))',
+      '--_p': 'var(--mermaid-primaryColor,#fff4dd)',
+      '--_bg': 'var(--mermaid-background,#f4f4f4)',
+    });
+  });
+});
+
 describe('createTheme: output.cssVariables false (ADR-4)', () => {
   it('writes literal colours and no root aliases', () => {
     const t = createTheme(base, { cssVariables: false });

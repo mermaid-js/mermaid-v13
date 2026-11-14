@@ -25,8 +25,8 @@
  *
  * Under author overrides of shared variables, `OVERRIDE_DIFFERENCES` lists, as exactly, where
  * core's own derivations (not wardley's table) give another colour than v12's (GAPS, the T4
- * review): base's `lineColor` and `primaryTextColor` are fixed where v12 derived them from
- * `background` and `darkMode`; dark's `mainBkg` follows `primaryColor` where v12 fixed it; and
+ * review): base's `primaryTextColor` is fixed where v12 derived it from `darkMode` (base's
+ * `lineColor` follows `background` as in v12 since #797); dark's `mainBkg` follows `primaryColor` where v12 fixed it; and
  * v12's `default` built its `wardley` block in its constructor, before an author's `background`
  * or `wardleyEvolutionColor` was applied, so it ignored both.
  */
@@ -189,10 +189,8 @@ const OVERRIDES: readonly Override[] = [
     label: 'base + background',
     theme: 'base',
     vars: { background: '#abcdef' },
-    differs: each(
-      STROKES,
-      'core: base’s lineColor is its own #0b0b0b, where v12 derived it as invert(background) (#543210)'
-    ),
+    // base derives lineColor as invert(background), as v12 does (#797).
+    differs: {},
   },
   {
     label: 'base + darkMode',
