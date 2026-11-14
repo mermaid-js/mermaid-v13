@@ -23,13 +23,19 @@ const CLI = join(import.meta.dirname, '..', 'cli.ts');
 /** The built bin, as npm installs it (`pnpm --filter @mermaid-js/language-server build`). */
 export const BUILT_CLI = join(import.meta.dirname, '..', '..', 'dist', 'cli.js');
 
-/** Which bin to run: the source through tsx, or the built `dist/cli.js` with plain node. */
-export type Bin = 'source' | 'built';
+/**
+ * Which bin to run: the source through tsx, the built `dist/cli.js` with plain node, or an
+ * installed bin (`node_modules/.bin/mermaid-language-server`) run as it is, through its
+ * shebang, as an editor runs it.
+ */
+export type Bin = 'source' | 'built' | { readonly path: string };
 
-const command = (bin: Bin, args: readonly string[]): string[] =>
-  bin === 'built'
-    ? [BUILT_CLI, ...args]
-    : ['--import', 'tsx', '--conditions=mermaid-source', CLI, ...args];
+/** The executable and its arguments for `bin`. */
+function command(bin: Bin, args: readonly string[]): [string, string[]] {
+  if (typeof bin === 'object') return [bin.path, [...args]];
+  if (bin === 'built') return [process.execPath, [BUILT_CLI, ...args]];
+  return [process.execPath, ['--import', 'tsx', '--conditions=mermaid-source', CLI, ...args]];
+}
 
 export interface Client {
   readonly connection: ProtocolConnection;
@@ -77,10 +83,7 @@ export interface CliRun {
 
 /** Run the bin with `args` and stdin closed at once; resolves when it exits. */
 export function runCli(args: readonly string[], bin: Bin = 'source'): Promise<CliRun> {
-  const child = spawn(process.execPath, command(bin, args), {
-    cwd: ROOT,
-    stdio: ['pipe', 'pipe', 'pipe'],
-  });
+  const child = spawn(...command(bin, args), { cwd: ROOT, stdio: ['pipe', 'pipe', 'pipe'] });
   let stdout = '';
   let stderr = '';
   child.stdout.setEncoding('utf8').on('data', (c: string) => (stdout += c));
@@ -90,11 +93,10 @@ export function runCli(args: readonly string[], bin: Bin = 'source'): Promise<Cl
 }
 
 export async function startClient(options: ClientOptions = {}): Promise<Client> {
-  const child = spawn(
-    process.execPath,
-    command(options.bin ?? 'source', options.args ?? ['--stdio']),
-    { cwd: ROOT, stdio: ['pipe', 'pipe', 'pipe'] }
-  );
+  const child = spawn(...command(options.bin ?? 'source', options.args ?? ['--stdio']), {
+    cwd: ROOT,
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
   let stderr = '';
   child.stderr.setEncoding('utf8').on('data', (c: string) => (stderr += c));
   const exited = new Promise<number | null>((done) => child.on('exit', (code) => done(code)));
