@@ -57,13 +57,10 @@ describe('quadrant theme variables against v12 12.2.0', () => {
   /**
    * The borders are `primaryBorderColor`, as for every other type (R-THEME-11). Core derives it
    * with its own rules, so where v12's khroma value differs the border does too: v12 → v13, as
-   * MIGRATION.md lists them. Every other theme keeps v12's border.
+   * MIGRATION.md lists them. Every other theme keeps v12's border (the named classic themes pin
+   * v12's constructor value, #798).
    */
   const BORDER_CHANGES: Readonly<Record<string, readonly [string, string]>> = {
-    default: ['#c7c7f1', '#c9c9d9'],
-    dark: ['#cccccc', '#4c4d4d'],
-    forest: ['#abb594', '#aec281'],
-    neutral: ['#d4d4d4', '#cacaca'],
     base: ['#eeddbb', '#d9cfbc'],
     redux: ['#171717', '#28253d'],
     'redux-color': ['#171717', '#28253d'],

@@ -36,6 +36,18 @@ const theme: ThemeSpec = {
     ...gitLabelRules('invert(lightenHsl(#1f2020, 16%))', '#cccccc'),
   },
   values: {
+    // v12 theme-dark.js sets these in its constructor and never recomputes them, so no base
+    // colour moves them (#773, #798): the node fill, the borders, the tertiary ink, the link and
+    // arrowhead (its lightgrey), and the note fill (its secondaryColor).
+    mainBkg: '#1f2020',
+    border1: '#cccccc',
+    primaryBorderColor: '#cccccc',
+    secondaryBorderColor: '#2f2f2f',
+    tertiaryBorderColor: '#060606',
+    tertiaryTextColor: '#dfe0e0',
+    arrowheadColor: '#d3d3d3',
+    defaultLinkColor: '#d3d3d3',
+    noteBkgColor: '#474949',
     // v12 titles and legends: `mainContrastColor`.
     headingTextColor: 'lightgrey',
     nestedBkg: '#555555', // v12 `altBackground` (#192)

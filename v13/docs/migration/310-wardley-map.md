@@ -33,5 +33,4 @@ in `default`, `forest`, `base` and `dark`, and in `neutral` but its grid, are v1
 | `base` | Anchor labels and stage dividers `#000`, annotation markers and box white | Anchor labels `#333333`, dividers `#0b0b0b` (the axis colours), markers and box `#f4f4f4` (`wardleyAnnotationFill`, the background) | D426 |
 | `dark` | Anchor labels and stage dividers `#000` on the `#333` page, annotation markers and box white | Anchor labels `#e0dfdf`, dividers `lightgrey`, markers and box `#1f2020` (`mainBkg`) | D426 |
 | `base` with `darkMode: true` | Labels and annotation text `#eeeeee` | The theme's `primaryTextColor`, `#333333` (core keeps text colours under `darkMode`) | Core |
-| `dark` with an author `primaryColor` | Component and annotation fills stayed `#1f2020` | They follow `mainBkg`, which follows `primaryColor` | Core |
 | `default` with an author `background` or `wardleyEvolutionColor` | Ignored: `default` built its `wardley` block before the author's values were applied | The background, fills and trends follow them, as in the other themes | R-THEME-4 |

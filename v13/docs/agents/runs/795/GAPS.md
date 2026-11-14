@@ -18,5 +18,11 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ## #801 (T5)
 
 - **Choice:** the contrast rules sit in gantt's `families.classic` entry, not the shared `rules.light`, so redux and neo are unchanged (spec "Out of Scope"). **For the maintainer:** redux and neo crit text still misses AA (3.69:1, 3.16:1), and neo's active outline is #cccccc on white.
-- **Choice:** `activeTaskBorderColor` is `contrast(activeTaskBkgColor, primaryBorderColor, lineColor)`: `primaryBorderColor` alone is 1.6:1 under default, short of the ticket's 3:1, so every classic theme draws `lineColor`.
-- **Choice:** under `dark`, the critical fill is #990000 and text on active and done bars is white where `textColor` misses AA: `taskTextColor` is the text on both the dark bars and red, and no single ink reads on both.
+- **Choice:** `activeTaskBorderColor` is `contrast(activeTaskBkgColor, primaryBorderColor, lineColor)`: `primaryBorderColor` alone is 1.6:1 under default (T2's pinned #c7c7f1 too), short of the ticket's 3:1, so every classic theme draws `lineColor`.
+- **Choice:** under `dark`, the critical fill is #990000 and text on active and done bars is white where `textColor` misses AA: `taskTextColor` is the text on both the dark bars and red, and no single ink reads on both. Approved by the maintainer (T7 records the D-id).
+
+## #799 (T3)
+
+- **Choice:** ER relationship label text stays `textColor`; an author's `tertiaryColor` can take it below AA (as v12). Only the row inks are new (spec scope).
+- **For T7:** `config.schema.yaml` (core) still lists the classic `erEdgeLabelBackground` as `edgeLabelBackground` and lacks `erRowOddTextColor` / `erRowEvenTextColor`; regenerate `config-reference.md` after. D-id for restoring the `tertiaryColor` label fill (decision 3).
+- ER's contrast rows and `PROBED` override probes moved into `packages/conformance/src/theme-contrast.spec.ts` at T5's merge (`er-contrast.spec.ts` is gone).
