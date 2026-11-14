@@ -1,6 +1,6 @@
 /**
  * A scripted LSP client for the specs (D99 suite 5): spawns `mermaid-language-server --stdio`
- * from source (node + tsx, the `mermaid-source` condition), or the built `dist/cli.js` that npm
+ * from source (node + tsx, the `mermaid-source` condition), or a built bin such as the one npm
  * installs, and talks JSON-RPC over its stdio.
  */
 import { spawn } from 'node:child_process';
@@ -20,20 +20,17 @@ import type {
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 const CLI = join(import.meta.dirname, '..', 'cli.ts');
-/** The built bin, as npm installs it (`pnpm --filter @mermaid-js/language-server build`). */
-export const BUILT_CLI = join(import.meta.dirname, '..', '..', 'dist', 'cli.js');
-
 /**
- * Which bin to run: the source through tsx, the built `dist/cli.js` with plain node, or an
- * installed bin (`node_modules/.bin/mermaid-language-server`) run as it is, through its
- * shebang, as an editor runs it.
+ * Which bin to run: the source through tsx, or a built one, such as the installed
+ * `node_modules/.bin/mermaid-language-server` of the pack smoke spec
+ * (`e2e/platform/language-server.spec.ts`), run as it is, through its shebang, as an editor
+ * runs it.
  */
-export type Bin = 'source' | 'built' | { readonly path: string };
+export type Bin = 'source' | { readonly path: string };
 
 /** The executable and its arguments for `bin`. */
 function command(bin: Bin, args: readonly string[]): [string, string[]] {
   if (typeof bin === 'object') return [bin.path, [...args]];
-  if (bin === 'built') return [process.execPath, [BUILT_CLI, ...args]];
   return [process.execPath, ['--import', 'tsx', '--conditions=mermaid-source', CLI, ...args]];
 }
 
