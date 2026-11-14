@@ -269,7 +269,8 @@ describe('the composite palette (v12 blockColorIndex stylesheet cases)', () => {
 
 // v12's `.node .cluster` rule: a composite is filled `fade(clusterBkg, 0.5)` and stroked
 // `fade(clusterBorder, 0.2)` (#771). Here that is the variable with `fill-opacity` and
-// `stroke-opacity`, wherever the theme carries no composite palette (D152).
+// `stroke-opacity`, wherever the theme carries no composite palette and turns
+// `blockCompositeClusterPaint` on: the classic family (D152).
 describe('a composite without a palette (#771)', () => {
   /** The `--_x` alias `paint` names, as `[variable, fallback]` from the root's style. */
   const alias = (svg: string, paint = ''): [string, string] | undefined => {
@@ -300,15 +301,31 @@ describe('a composite without a palette (#771)', () => {
     }
   });
 
-  it('reads the cluster variables in every theme without a palette', async () => {
+  it('reads the cluster variables in every classic theme', async () => {
     const src = 'block\n  a\n  block:g\n    b\n  end\n';
-    for (const theme of ['default', 'dark', 'forest', 'neutral', 'base', 'redux', 'redux-dark']) {
+    for (const theme of ['default', 'dark', 'forest', 'neutral', 'base']) {
       const { svg } = await render(src, { theme });
       const g = rectOf(svg, 'g');
       expect(alias(svg, attr(g, 'fill'))?.[0], theme).toBe('clusterBkg');
       expect(alias(svg, attr(g, 'stroke'))?.[0], theme).toBe('clusterBorder');
       expect(alias(svg, attr(rectOf(svg, 'b'), 'fill'))?.[0], theme).toBe('mainBkg');
     }
+  });
+
+  it('keeps the leaf paint in the redux and neo families (blockCompositeClusterPaint off)', async () => {
+    const src = 'block\n  a\n  block:g\n    b\n  end\n';
+    for (const theme of ['redux', 'redux-dark', 'neo', 'neo-dark']) {
+      const { svg } = await render(src, { theme });
+      expect(svg, theme).not.toMatch(/clusterBkg|clusterBorder|-opacity=/);
+      expect(attr(rectOf(svg, 'g'), 'fill'), theme).toBe(attr(rectOf(svg, 'b'), 'fill'));
+      expect(attr(rectOf(svg, 'g'), 'stroke'), theme).toBe(attr(rectOf(svg, 'b'), 'stroke'));
+    }
+    // The flag is a theme variable: an author turns the cluster paint on in redux.
+    const { svg } = await render(src, {
+      theme: 'redux',
+      themeVariables: { blockCompositeClusterPaint: true },
+    });
+    expect(alias(svg, attr(rectOf(svg, 'g'), 'fill'))?.[0]).toBe('clusterBkg');
   });
 
   it("keeps the label on nodeTextColor, as v12's g.label sibling of the rect", async () => {
@@ -331,7 +348,10 @@ describe('a composite without a palette (#771)', () => {
   });
 
   it('keeps the gradient on the outline, unfaded, where useGradient is on (D182)', async () => {
-    const r = await render('block\n  block:g\n    b\n  end\n', { theme: 'neo' });
+    const r = await render('block\n  block:g\n    b\n  end\n', {
+      theme: 'default',
+      themeVariables: { useGradient: true },
+    });
     const g = rectOf(r.svg, 'g');
     expect(attr(g, 'stroke')).toBe(`url(#${r.gradient})`);
     expect(attr(g, 'stroke-opacity')).toBeUndefined();

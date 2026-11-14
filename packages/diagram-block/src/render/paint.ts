@@ -2,8 +2,8 @@
  * Every paint a block render uses, read from the theme before the root is written, so the
  * root's `style` declares exactly the aliases the body refers to (`theme.rootStyleText()`).
  *
- * Block has no theme table (spec #521, "No theme table"): it reads the shared rows v12's
- * `styles.ts` read, by name, and never a theme name or `look` (D152, D153). The redux and `neo`
+ * Block's theme table holds one flag (`blockCompositeClusterPaint`, #771); every colour is a
+ * shared row v12's `styles.ts` read, by name, and never a theme name or `look` (D152, D153). The redux and `neo`
  * families carry v12 neo's gradient (D182) and drop shadow, which go on every block's outline
  * (leaves, block arrows and composites), not on edges or labels (D227).
  */
@@ -79,7 +79,8 @@ export interface Paints {
   readonly slotOf: (colorIndex: number | undefined) => Tint | undefined;
   /**
    * The paint of a composite without a palette slot; undefined where the theme carries a
-   * palette or the diagram has no composite, so no cluster variable reaches the root's style.
+   * palette or turns `blockCompositeClusterPaint` off, or the diagram has no composite, so no
+   * cluster variable reaches the root's style.
    */
   readonly composite: CompositePaint | undefined;
   /** A block's checked `classDef` and `style` declarations (R-SEC-3), one check per list. */
@@ -120,10 +121,13 @@ function hasComposite(model: BlockModel): boolean {
 }
 
 /**
- * The composites' paint where the theme has no composite palette (#771): decided by the
- * `borderColorArray` variable, as {@link paletteSlots} is, never by theme name (D152).
+ * The composites' paint where the theme has no composite palette and turns
+ * `blockCompositeClusterPaint` on (#771, the classic family): decided by the variables, as
+ * {@link paletteSlots} is, never by theme name (D152). Off (the redux and neo families), a
+ * composite keeps the leaves' paint, as v12 `look: neo` drew it.
  */
 function compositePaint(theme: Theme, model: BlockModel): CompositePaint | undefined {
+  if (theme.value('blockCompositeClusterPaint') !== 'true') return undefined;
   if (theme.palette('borderColorArray').length > 0 || !hasComposite(model)) return undefined;
   return {
     fill: theme.color('clusterBkg'),
