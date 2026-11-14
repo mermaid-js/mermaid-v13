@@ -108,6 +108,12 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   rowOdd: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
   rowEven: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
   erMarkerFill: 'D152: v12 `zero_or_one_neo` fills the zero circle with the node fill',
+  ...Object.fromEntries(
+    ['erRowOddTextColor', 'erRowEvenTextColor'].map((n) => [
+      n,
+      '#799 (spec #795): v13 ink for ER attribute text on its own row; neo rows show the entity fill, so the renderer keeps nodeTextColor',
+    ])
+  ),
   erEdgeLabelBackground:
     'D152, D183: v12 ER labels use edgeLabelBackground outside its COLOR_THEMES; it is dark-derived',
   ...Object.fromEntries(LOOK_GEOMETRY.map((n) => [n, LOOK_GEOMETRY_WHY])),

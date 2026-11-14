@@ -195,8 +195,10 @@ flags and opacities, which are read literally.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `rowOdd` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ffffff` | `#2c2d2d` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#2a2020` |
 | `rowEven` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#f1f1ff` | `#060606` | `#f4f9e9` | `#f4f4f4` | `#fffcf6` | `#ffffff` | `#2a2020` |
-| `erEdgeLabelBackground` | | color | `#ffffff` | `#cccccc` | `#474949` | `#16141f` | `#e8e8e8cc` | `#555555` | `#e8e8e8` | `#ffffff` | `#f4ddff` | `#cccccc` | `#323333` |
+| `erEdgeLabelBackground` | | color | `#ffffff` | `#cccccc` | `#474949` | `#16141f` | `#f9ffec80` | `#201f1f80` | `#e1efc080` | `#eeeeee80` | `#f6f9ff80` | `#cccccc` | `#323333` |
 | `erMarkerFill` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#2a2020` |
+| `erRowOddTextColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#e0dfdf` |
+| `erRowEvenTextColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#e0dfdf` |
 | `erZeroOrMoreCircleOffset` | | length | `28` | `28` | `28` | `28` | `30` | `30` | `30` | `30` | `30` | `28` | `28` |
 
 ### eventmodeling
