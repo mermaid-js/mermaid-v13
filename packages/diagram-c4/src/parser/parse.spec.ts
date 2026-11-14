@@ -454,3 +454,47 @@ describe('D458: AST ids, symbols and statements', () => {
     expect(src.slice(boundary?.range.start, boundary?.range.end)).toMatch(/^Boundary\(b[\s\S]*\}$/);
   });
 });
+
+describe('#681: quotes that do not close', () => {
+  const lineOf = (src: string, code: string) =>
+    parseC4(src).diagnostics.filter((d) => d.code === code).length;
+
+  it('stops an unclosed string at the line before a statement, and parses the rest', () => {
+    const r = parse('C4Context\nPerson(a, "A)\nPerson(b, "B")\nPerson(c, "C")');
+    expect(r.diagnostics.map((d) => [d.severity, d.code])).toEqual([['error', 'UNCLOSED_STRING']]);
+    expect(r.diagnostics[0]?.message).toContain('line 2');
+    expect(r.model.elements.map((e) => [e.alias, e.label])).toEqual([
+      ['b', 'B'],
+      ['c', 'C'],
+    ]);
+  });
+
+  it('stops an unclosed named value the same way', () => {
+    const r = parse('C4Context\nPerson(a, "A", $descr="d)\nPerson(b, "B")');
+    expect(r.diagnostics.map((d) => [d.severity, d.code])).toEqual([['error', 'UNCLOSED_STRING']]);
+    expect(r.model.elements.map((e) => e.alias)).toEqual(['b']);
+  });
+
+  it('keeps a string over several lines, also one whose line starts like a macro without `(`', () => {
+    const m = model('C4Context\nPerson(a, "A\n  Person is a word\nBoundary of text", "d")');
+    expect(m.elements[0]).toMatchObject({
+      label: 'A\n  Person is a word\nBoundary of text',
+      descr: 'd',
+    });
+  });
+
+  it('reads a tab before an opening quote as a blank, not as text', () => {
+    const m = model('C4Context\nPerson(a,\t"A",\t\t"D", \t"")');
+    expect(m.elements[0]).toMatchObject({ label: 'A', descr: 'D' });
+  });
+
+  it('warns at a quote inside an unquoted argument, and keeps the text as written', () => {
+    const r = parse('C4Context\nPerson(a, "A \\"q\\" B")');
+    expect(r.diagnostics.map((d) => [d.severity, d.code])).toEqual([
+      ['warning', codes.C4_QUOTE_IN_ARGUMENT],
+    ]);
+    expect(r.diagnostics[0]?.message).toContain('line 2');
+    expect(r.model.elements[0]).toMatchObject({ label: 'A \\', descr: 'q\\" B"' });
+    expect(lineOf('C4Context\nPerson(a, "A")', codes.C4_QUOTE_IN_ARGUMENT)).toBe(0);
+  });
+});

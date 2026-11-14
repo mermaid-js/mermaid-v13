@@ -1,5 +1,5 @@
 /**
- * D452's three lexing changes (#539) and #683's one, as the C4 gates exclude them: the
+ * D452's three lexing changes (#539), #683's one and #681's, as the C4 gates exclude them: the
  * lexer-parity gate (`lexer-parity.spec.ts`), the gate-variant parity (`parity.spec.ts`) and the
  * grammar specs (`grammar/`). A source is excluded when the first token where v12's jison stream
  * and v13's differ is one of them:
@@ -9,7 +9,10 @@
  * - `title`: v12's `title` took a line break (and the next line), v13's is a lone `title`;
  * - `hash` (#683, v12's fix mermaid-js/mermaid#8039): v13's `title` or `accDescription` runs
  *   over a `#` (`[^\n;]+`), where 12.2.0's stopped (`[^#\n;]+`, and the rest of the line was a
- *   lexical error) or, with the `#` first, did not match at all.
+ *   lexical error) or, with the `#` first, did not match at all;
+ * - `quote` (#681): v13's quoted value opens after a tab (`[ \t]*"`, where v12's `[ ]*"` left the
+ *   quotes in an unquoted argument), and an unclosed one stops at the line break before a line
+ *   that starts a statement, where v12's ran on to the next quote.
  */
 import { c4Tokens, JISON_NAMES } from '@mermaid-js/diagram-c4';
 import { v12TokenText } from '../v12-entities.ts';
@@ -37,8 +40,8 @@ export function v13Tokens(source: string): { tokens: JisonToken[]; ranges: [numb
   return { tokens, ranges };
 }
 
-/** D452's and #683's lexing changes, by the gate exclusion they are listed under. */
-export type Exclusion = 'unquoted' | 'comment' | 'title' | 'hash';
+/** D452's, #683's and #681's lexing changes, by the gate exclusion they are listed under. */
+export type Exclusion = 'unquoted' | 'comment' | 'title' | 'hash' | 'quote';
 
 /** The terminals whose text #683 lets run over a `#`. */
 const HASH_RUNS = new Set(['title', 'accDescription']);
@@ -66,11 +69,24 @@ export function exclusion(
   const [a, b] = [v12[at], v13[at]];
   if (stopsUnquoted(a, b, v12[at - 1])) return 'unquoted';
   if (runsOverHash(a, b)) return 'hash';
+  if (quoteChange(a, b)) return 'quote';
   if (b?.[0] === 'NEWLINE' && a?.[0] !== 'NEWLINE' && gap.includes('%%')) return 'comment';
   // v12's `title\s` took the line break (and the next line, or failed at a blank line).
   const loneTitle = b?.[0] === 'title' && b[1] === 'title';
   const tookLine = a?.[0] === 'title' && a[1].startsWith('title\n');
   return loneTitle && (a?.[0] === LEXICAL_ERROR || tookLine) ? 'title' : undefined;
+}
+
+/**
+ * #681: whether v13's `b` is the text of a quoted value (also a named argument's) where v12's `a`
+ * is an unquoted argument that starts with a tab and a quote, or is a quoted value that ran on past the line break
+ * before a line starting like a statement (`Name(`), where v13's `b` stopped.
+ */
+function quoteChange(a: JisonToken | undefined, b: JisonToken | undefined): boolean {
+  if (!a || !b || a[0] !== b[0] || (a[0] !== 'STR' && a[0] !== 'STR_VALUE')) return false;
+  if (a[0] === 'STR' && /^ *\t[ \t]*"/.test(a[1])) return true;
+  const start = /\n[ \t]*\w+\(/.exec(a[1]);
+  return start !== null && b[1] === a[1].slice(0, start.index);
 }
 
 /** Whether v12's `a` ran over a `)` or line break where v13's `b` stopped (`before`: v12's). */
