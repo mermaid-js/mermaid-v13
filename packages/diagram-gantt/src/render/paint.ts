@@ -49,6 +49,7 @@ const V = {
   today: 'todayLineColor',
   vert: 'vertLineColor',
   inside: 'taskTextColor',
+  crit: 'critTextColor',
   outside: 'taskTextOutsideColor',
   dark: 'taskTextDarkColor',
 } as const;
@@ -85,7 +86,13 @@ function labelColour(bar: GanttBar): string {
   if (bar.kind === 'vert') return V.vert;
   if (own && (bar.active || bar.done)) return V.dark;
   if (outside) return own ? V.outside : V.dark;
-  return own ? V.inside : V.text;
+  return insideColour(own, bar.crit);
+}
+
+/** An inside label of a bar in no other state: `.critText0` on a critical bar, else `.taskText0`. */
+function insideColour(own: boolean, crit: boolean): string {
+  if (!own) return V.text;
+  return crit ? V.crit : V.inside;
 }
 
 export interface BarPaint {

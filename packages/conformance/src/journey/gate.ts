@@ -4,7 +4,7 @@
  * with it. The exclusions are listed in `lexer-parity.spec.ts`.
  */
 import { JISON_NAMES, journeyTokens } from '@mermaid-js/diagram-journey';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR } from '../jison/oracle.ts';
 import type { JisonLexerOracle, JisonToken } from '../jison/oracle.ts';
 
@@ -30,7 +30,7 @@ export async function v12Tokens(
   oracle: JisonLexerOracle,
   source: string
 ): Promise<JisonToken[] | undefined> {
-  return (await oracle.tokens(source))?.map(([n, i]): JisonToken => [n, decodeEntities(i)]);
+  return (await oracle.tokens(source))?.map(([n, i]): JisonToken => [n, v12TokenText(i)]);
 }
 
 /**

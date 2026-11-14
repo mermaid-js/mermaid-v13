@@ -3,7 +3,10 @@ import { gitGraphLanguage } from '@mermaid-js/diagram-gitgraph/language';
 import type { Range, SymbolOccurrence } from '@mermaid-js/core/parser-kit';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
 import type { DocumentSnapshot } from '@mermaid-js/language-service';
+import { fileURLToPath } from 'node:url';
+import { modelDivergenceIds } from '../divergences.ts';
 import { loadOracle } from '../oracle.ts';
+import { DIVERGENCES_DIR } from '../registry.ts';
 import { gitGraphGateCorpus } from './corpus.ts';
 import { gitGraphV12Snapshot } from './v12.ts';
 import { sanitizeLikeV12 } from './v13.ts';
@@ -28,11 +31,15 @@ import { sanitizeLikeV12 } from './v13.ts';
  *
  * The service loads the facet through the generated registry row (gitGraph's manifest
  * `language` entry, #374).
+ *
+ * Sources with a listed model divergence (`divergences/`: a `#name;` kept as written, D561) are
+ * left out: their names differ from v12's by design.
  */
 
 /** v12 names written otherwise than their name in the corpus (skipped above). */
 const ESCAPED = 4;
 
+const DIVERGENT = modelDivergenceIds(fileURLToPath(DIVERGENCES_DIR));
 const service = createLanguageService();
 await service.preload({ types: ['gitGraph'] });
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
@@ -46,6 +53,7 @@ describe('gitGraph definition, references and folding through the service match 
     let names = 0;
     let escaped = 0;
     for (const item of await gitGraphGateCorpus()) {
+      if (DIVERGENT.has(item.id)) continue;
       const v12 = await oracle.parse(item.source);
       if (!v12.accepted || v12.diagramType !== 'gitGraph') continue;
       const model = gitGraphV12Snapshot(v12.db);

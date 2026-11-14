@@ -10,7 +10,7 @@
  * - the title: v12 made the effect the diagram title, and the oracle never passes the front
  *   matter on, so `getDiagramTitle()` is the effect's text or empty.
  */
-import { decodeEntities as d } from '../flowchart/v12.ts';
+import { v12DecodeEntities as d } from '../v12-entities.ts';
 
 /** `diagram.type` values mermaid\@12 reports for ishikawa sources (`ishikawaDetector.ts`). */
 export const ISHIKAWA_V12_TYPES = ['ishikawa'];

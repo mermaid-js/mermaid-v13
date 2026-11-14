@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { JISON_NAMES, requirementTokens } from '@mermaid-js/diagram-requirement';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonRule, JisonToken } from '../jison/oracle.ts';
 import type { CorpusItem } from '../types.ts';
@@ -192,7 +192,7 @@ describe('requirement lexer parity with mermaid@12 (jison)', () => {
           else changed.D432.push(item.id);
         }
       }
-      const expected = v12.map(([n, i]): JisonToken => [n, decodeEntities(i)]);
+      const expected = v12.map(([n, i]): JisonToken => [n, v12TokenText(i)]);
       const cut = expected.findIndex(([n]) => n === LEXICAL_ERROR);
       if (cut >= 0) expected.length = cut + 1;
       const actual = v13Tokens(item.source);
@@ -213,7 +213,7 @@ describe('requirement lexer parity with mermaid@12 (jison)', () => {
     // Every e2e fixture, harvested spec and syntax-page string and case reaches the lexer, but
     // the unclosed-front-matter title case (v12 rejects its front matter), the upper-case
     // header case and the excluded sources.
-    expect(e2e).toBe(189);
+    expect(e2e).toBe(191);
     expect(specs).toBe(48);
     expect(cases).toBe(203);
     // No e2e fixture, harvested string or syntax-page example depends on either decision, but

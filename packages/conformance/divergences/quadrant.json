@@ -14,5 +14,37 @@
     "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the rest of the text after it (so later statements vanish); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour; GAPS #300, #301).",
     "owner": "#301",
     "since": "2026-11-05"
+  },
+  {
+    "id": "e2e/diagrams/quadrant-chart/baseline/text/entity-names.mmd",
+    "inputHash": "sha256:85c533e67ab65704",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "quadrant-cases/lexer case 38",
+    "inputHash": "sha256:4573015fdf753653",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "quadrant-gate/e2e/baseline/text/entity-names.mmd (commented)",
+    "inputHash": "sha256:12c24aa696204cef",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "quadrant-gate/quadrant-cases/lexer case 38 (commented)",
+    "inputHash": "sha256:51ed1295a825e34c",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
   }
 ]

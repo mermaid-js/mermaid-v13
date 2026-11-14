@@ -1,0 +1,4 @@
+flowchart LR
+  A["before <script>alert(1)</script> after"] --> B["<style>.x { color: red }</style>styled"]
+  B --> C["<SCRIPT type='text/javascript'>alert(2)<br>alert(3)</SCRIPT>"]
+  C --> D["<script>alert(4)</script>"]

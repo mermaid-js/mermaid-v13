@@ -5,7 +5,13 @@
  */
 export { c4LayoutViolations } from './layout/invariants.ts';
 export { c4CellRect, drawC4 as c4AsciiDrawing, type C4Drawing } from './ascii/draw.ts';
-export { c4TestConfig, c4TestContext, parsedC4, type ParsedC4 } from './test-context.ts';
+export {
+  c4TestConfig,
+  c4TestContext,
+  c4TestTheme,
+  parsedC4,
+  type ParsedC4,
+} from './test-context.ts';
 export {
   renderC4BetaForTest,
   renderC4ForTest,

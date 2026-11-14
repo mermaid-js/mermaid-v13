@@ -1,8 +1,13 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Warning } from '@mermaid-js/core';
-import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
+import type { Theme } from '@mermaid-js/core/theme';
 import { layoutC4 } from '@mermaid-js/diagram-c4';
-import { c4LayoutViolations, c4TestContext, parsedC4 } from '@mermaid-js/diagram-c4/testing';
+import {
+  c4LayoutViolations,
+  c4TestContext,
+  c4TestTheme,
+  parsedC4,
+} from '@mermaid-js/diagram-c4/testing';
 import type { CorpusItem } from '../types.ts';
 import { c4GateCorpus } from './corpus.ts';
 
@@ -35,10 +40,17 @@ const CONFIGS: readonly Record<string, unknown>[] = [
   },
 ];
 
-let theme: Theme;
+/**
+ * The themes the corpus is laid out in (#679): the product default, which a document with no
+ * `theme` draws in, and the classic `default`.
+ */
+let themes: [string, Theme][];
 let corpus: CorpusItem[];
 beforeAll(async () => {
-  theme = createTheme(await loadTheme('default'));
+  themes = [
+    ['the product default theme', await c4TestTheme()],
+    ['theme default', await c4TestTheme('default')],
+  ];
   corpus = await c4GateCorpus();
 });
 
@@ -48,19 +60,22 @@ describe('c4 layout invariants on parser-produced fixtures', () => {
     let elements = 0;
     let relations = 0;
     for (const { id, source } of corpus)
-      for (const c4 of CONFIGS)
-        for (const wrap of c4 === CONFIGS[0] ? [false, true] : [false]) {
-          const { model, config } = parsedC4(source, { c4, wrap });
-          const warnings: Warning[] = [];
-          const layout = layoutC4(model, c4TestContext(config, theme, warnings));
-          if (c4 === CONFIGS[0] && !wrap) {
-            elements += layout.elements.length;
-            relations += layout.relations.length;
+      for (const [themeName, theme] of themes)
+        for (const c4 of CONFIGS)
+          for (const wrap of c4 === CONFIGS[0] ? [false, true] : [false]) {
+            const { model, config } = parsedC4(source, { c4, wrap });
+            const warnings: Warning[] = [];
+            const layout = layoutC4(model, c4TestContext(config, theme, warnings));
+            if (c4 === CONFIGS[0] && !wrap && theme === themes[0]?.[1]) {
+              elements += layout.elements.length;
+              relations += layout.relations.length;
+            }
+            const v = c4LayoutViolations(model, layout);
+            if (v.length > 0)
+              failures.push(
+                `${id} ${themeName} ${JSON.stringify(c4)} wrap ${wrap}: ${v.slice(0, 3).join('; ')}`
+              );
           }
-          const v = c4LayoutViolations(model, layout);
-          if (v.length > 0)
-            failures.push(`${id} ${JSON.stringify(c4)} wrap ${wrap}: ${v.slice(0, 3).join('; ')}`);
-        }
     expect(corpus.length).toBeGreaterThan(2000);
     expect(elements).toBeGreaterThan(4000);
     expect(relations).toBeGreaterThan(1400);

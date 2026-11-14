@@ -21,24 +21,6 @@ export function numericEntity(text: string, i: number, end: number): boolean {
   return /^\d+$/.test(text.slice(i + 1, end - 1));
 }
 
-/**
- * `text` with each entity `#name;` / `#123;` written `&name;` / `&#123;`: how v12's renderer
- * read the placeholders its parser saw (what `cook` does for a source range).
- */
-export function ampEntities(text: string): string {
-  if (!text.includes('#')) return text;
-  let out = '';
-  let from = 0;
-  for (let i = text.indexOf('#'); i !== -1; i = text.indexOf('#', Math.max(i + 1, from))) {
-    const end = entityAt(text, i);
-    if (end < 0) continue;
-    out +=
-      text.slice(from, i) + (numericEntity(text, i, end) ? '&#' : '&') + text.slice(i + 1, end);
-    from = end;
-  }
-  return out + text.slice(from);
-}
-
 /** The parallel arrays `a` and `b`, each copied into a new one of `size`. */
 export function grow<A extends Int32Array | Uint32Array>(a: A, b: A, size: number): [A, A] {
   const copy = (x: A) => {

@@ -57,9 +57,10 @@ import {
   UNDERSCORE,
 } from '@mermaid-js/core/parser-kit';
 import type { Hole, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import { ampEntities } from '@mermaid-js/core/parser-kit/support';
 import { boxDrawing } from './box.ts';
 import type { BoxPass, BoxRewrite } from './box.ts';
-import { ampEntities, grow } from './text.ts';
+import { grow } from './text.ts';
 import { HEADER, T } from './tokens.ts';
 
 /** A memo not set yet. */

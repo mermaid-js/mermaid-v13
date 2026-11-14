@@ -11,7 +11,7 @@
  * - clicks are the grammar's `setClickEvent`/`setLink` calls in order, one entry per id;
  * - texts with v12's `encodeEntities` placeholders decoded, as v13 reads them.
  */
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12DecodeEntities } from '../v12-entities.ts';
 import { ganttOracleCalls, ganttOracleTasks } from './oracle-env.ts';
 
 /** `diagram.type` values mermaid\@12 reports for gantt sources. */
@@ -78,7 +78,7 @@ interface GanttDbV12 {
   getSections(): string[];
 }
 
-const text = (v: unknown): unknown => (typeof v === 'string' ? decodeEntities(v) : v);
+const text = (v: unknown): unknown => (typeof v === 'string' ? v12DecodeEntities(v) : v);
 
 export function ganttV12Snapshot(dbValue: unknown): GanttSnapshot {
   const db = dbValue as GanttDbV12;
@@ -98,24 +98,24 @@ export function ganttV12Snapshot(dbValue: unknown): GanttSnapshot {
     }
   }
   return {
-    title: decodeEntities(db.getDiagramTitle()),
-    accTitle: decodeEntities(db.getAccTitle()),
-    accDescr: decodeEntities(db.getAccDescription()),
-    dateFormat: decodeEntities(db.getDateFormat()),
-    axisFormat: decodeEntities(db.getAxisFormat()),
+    title: v12DecodeEntities(db.getDiagramTitle()),
+    accTitle: v12DecodeEntities(db.getAccTitle()),
+    accDescr: v12DecodeEntities(db.getAccDescription()),
+    dateFormat: v12DecodeEntities(db.getDateFormat()),
+    axisFormat: v12DecodeEntities(db.getAxisFormat()),
     tickInterval:
-      db.getTickInterval() === undefined ? null : decodeEntities(db.getTickInterval() ?? ''),
-    todayMarker: decodeEntities(db.getTodayMarker()),
-    includes: db.getIncludes().map(decodeEntities),
-    excludes: db.getExcludes().map(decodeEntities),
+      db.getTickInterval() === undefined ? null : v12DecodeEntities(db.getTickInterval() ?? ''),
+    todayMarker: v12DecodeEntities(db.getTodayMarker()),
+    includes: db.getIncludes().map(v12DecodeEntities),
+    excludes: db.getExcludes().map(v12DecodeEntities),
     inclusiveEndDates: db.endDatesAreInclusive(),
     topAxis: db.topAxisEnabled(),
     weekday,
     weekend,
-    sections: db.getSections().map(decodeEntities),
+    sections: db.getSections().map(v12DecodeEntities),
     tasks: (ganttOracleTasks() as RawTaskV12[]).map((t, i) => ({
-      id: decodeEntities(t.id),
-      text: decodeEntities(t.task),
+      id: v12DecodeEntities(t.id),
+      text: v12DecodeEntities(t.task),
       section: sectionOf[i] ?? null,
       tags: {
         active: !!t.active,
@@ -127,9 +127,9 @@ export function ganttV12Snapshot(dbValue: unknown): GanttSnapshot {
       start:
         t.raw.startTime.type === 'prevTaskEnd'
           ? null
-          : decodeEntities(t.raw.startTime.startData ?? ''),
-      end: decodeEntities(t.raw.endTime.data),
-      prevId: t.prevTaskId === undefined ? null : decodeEntities(t.prevTaskId),
+          : v12DecodeEntities(t.raw.startTime.startData ?? ''),
+      end: v12DecodeEntities(t.raw.endTime.data),
+      prevId: t.prevTaskId === undefined ? null : v12DecodeEntities(t.prevTaskId),
       order: t.order,
     })),
     clicks,

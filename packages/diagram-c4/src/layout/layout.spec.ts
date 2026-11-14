@@ -4,7 +4,7 @@ import { DEFAULT_LIMITS } from '@mermaid-js/core/limits';
 import type { Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import { C4_BOUNDARY_CYCLE } from '../codes.ts';
-import { c4TestContext, parsedC4 } from '../test-context.ts';
+import { c4TestContext, c4TestTheme, parsedC4 } from '../test-context.ts';
 import { c4LayoutViolations, c4RelationCrossings } from './invariants.ts';
 import { layoutC4 } from './layout.ts';
 import { c4RelationPath } from './path.ts';
@@ -17,8 +17,17 @@ import type { C4Layout, C4RelationLayout, PlacedLabel, Rect } from './types.ts';
  * grid (D454), the router (D455), the text and the title do what the spec asks.
  */
 let theme: Theme;
+/**
+ * The themes the invariants are checked in (#679): the product default, which a document with no
+ * `theme` draws in, and the classic `default` the numbers below are pinned in.
+ */
+let themes: [string, Theme][];
 beforeAll(async () => {
   theme = createTheme(await loadTheme('default'));
+  themes = [
+    ['the product default theme', await c4TestTheme()],
+    ['theme default', await c4TestTheme('default')],
+  ];
 });
 
 /** Every character 10 px wide at any size, lines 1.2 em high: round numbers for wrapping. */
@@ -93,12 +102,13 @@ describe('c4 layout invariants on the e2e fixtures', () => {
 
   it.each(FIXTURES)('hold on %s', (path) => {
     const { model, config } = fixture(path);
-    for (const [name, measurer] of [
-      ['table', undefined],
-      ['grid', grid],
-    ] as const) {
-      const layout = layoutC4(model, c4TestContext(config, theme, [], measurer));
-      expect(c4LayoutViolations(model, layout)).toEqual([]);
+    const runs = themes.flatMap(([themeName, drawn]) => [
+      { name: 'table', measurer: undefined, themeName, drawn },
+      { name: 'grid', measurer: grid, themeName, drawn },
+    ]);
+    for (const { name, measurer, themeName, drawn } of runs) {
+      const layout = layoutC4(model, c4TestContext(config, drawn, [], measurer));
+      expect(c4LayoutViolations(model, layout), themeName).toEqual([]);
       // Every label found a spot off its own arrowheads, the elements, the headers (#542) and
       // the other relations' lines, so the label invariant held for each, none excused as
       // crowded but the listed ones.
@@ -109,16 +119,18 @@ describe('c4 layout invariants on the e2e fixtures', () => {
     }
   });
 
-  it('cross no element but the listed relations', () => {
-    let relations = 0;
-    const crossings = FIXTURES.flatMap((path) => {
-      const { model, config } = fixture(path);
-      const layout = layoutC4(model, c4TestContext(config, theme));
-      relations += layout.relations.length;
-      return c4RelationCrossings(layout).map((c) => `${path}: ${c}`);
-    });
-    expect(relations).toBeGreaterThan(130);
-    expect(crossings).toEqual(CROSSING_EXCEPTIONS);
+  it('cross no element but the listed relations, in the product default theme and a classic one', () => {
+    for (const [themeName, drawn] of themes) {
+      let relations = 0;
+      const crossings = FIXTURES.flatMap((path) => {
+        const { model, config } = fixture(path);
+        const layout = layoutC4(model, c4TestContext(config, drawn));
+        relations += layout.relations.length;
+        return c4RelationCrossings(layout).map((c) => `${path}: ${c}`);
+      });
+      expect(relations, themeName).toBeGreaterThan(130);
+      expect(crossings, themeName).toEqual(CROSSING_EXCEPTIONS);
+    }
   });
 });
 

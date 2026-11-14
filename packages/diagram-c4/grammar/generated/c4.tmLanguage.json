@@ -155,7 +155,7 @@
     },
     "switch-66": {
       "begin": "\\([ ]*,",
-      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(\\))|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|,,|,|[ ]*\"\"|[ ]*\"|[ ]*\\$)((?=\\n))",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(\\))|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|,,|,|[ \\t]*\"\"|[ \\t]*\"|[ ]*\\$)((?=\\n))",
       "patterns": [
         {
           "include": "#mode-attribute"
@@ -174,7 +174,7 @@
     },
     "switch-67": {
       "begin": "\\(",
-      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(\\))|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|,,|,|[ ]*\"\"|[ ]*\"|[ ]*\\$)((?=\\n))",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)(\\))|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|,,|,|[ \\t]*\"\"|[ \\t]*\"|[ ]*\\$)((?=\\n))",
       "patterns": [
         {
           "include": "#mode-attribute"
@@ -1094,11 +1094,11 @@
         }
       }
     },
-    "rule-82": {
+    "rule-84": {
       "match": "\\{",
       "name": "punctuation.definition.mermaid-c4"
     },
-    "rule-83": {
+    "rule-85": {
       "match": "\\}",
       "name": "punctuation.definition.mermaid-c4"
     },
@@ -1294,10 +1294,10 @@
           "include": "#rule-64"
         },
         {
-          "include": "#rule-82"
+          "include": "#rule-84"
         },
         {
-          "include": "#rule-83"
+          "include": "#rule-85"
         }
       ]
     },
@@ -1320,12 +1320,12 @@
       "name": "punctuation.definition.mermaid-c4"
     },
     "rule-71": {
-      "match": "[ ]*\"\"",
+      "match": "[ \\t]*\"\"",
       "name": "punctuation.definition.mermaid-c4"
     },
     "rule-72": {
-      "begin": "[ ]*\"",
-      "end": "(\")",
+      "begin": "[ \\t]*\"",
+      "end": "(\")|((?=\\n[ \\t]*(?:Enterprise_Boundary|ComponentQueue_Ext|ContainerQueue_Ext|Container_Boundary|UpdateElementStyle|UpdateLayoutConfig|ComponentDb_Ext|ContainerDb_Ext|Deployment_Node|SystemQueue_Ext|System_Boundary|ComponentQueue|ContainerQueue|UpdateRelStyle|Component_Ext|Container_Ext|SystemDb_Ext|ComponentDb|ContainerDb|SystemQueue|Person_Ext|System_Ext|Component|Container|Rel_Right|Boundary|RelIndex|Rel_Back|Rel_Down|Rel_Left|SystemDb|Node_L|Node_R|Person|Rel_Up|System|BiRel|Rel_D|Rel_L|Rel_R|Rel_U|Node|Rel)\\())",
       "patterns": [
         {
           "include": "#mode-string"
@@ -1351,7 +1351,7 @@
         }
       ]
     },
-    "switch-76": {
+    "switch-77": {
       "begin": "[^=]*",
       "end": "(?!\\G)",
       "applyEndPatternLast": 1,
@@ -1360,7 +1360,7 @@
           "include": "#phase-string_kv_key"
         },
         {
-          "include": "#switch-77"
+          "include": "#switch-78"
         }
       ],
       "beginCaptures": {
@@ -1378,9 +1378,9 @@
         }
       ]
     },
-    "switch-77": {
+    "switch-78": {
       "begin": "=[ ]*\"",
-      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|[^\"]+)(\")",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{)((?=\\n[ \\t]*(?:Enterprise_Boundary|ComponentQueue_Ext|ContainerQueue_Ext|Container_Boundary|UpdateElementStyle|UpdateLayoutConfig|ComponentDb_Ext|ContainerDb_Ext|Deployment_Node|SystemQueue_Ext|System_Boundary|ComponentQueue|ContainerQueue|UpdateRelStyle|Component_Ext|Container_Ext|SystemDb_Ext|ComponentDb|ContainerDb|SystemQueue|Person_Ext|System_Ext|Component|Container|Rel_Right|Boundary|RelIndex|Rel_Back|Rel_Down|Rel_Left|SystemDb|Node_L|Node_R|Person|Rel_Up|System|BiRel|Rel_D|Rel_L|Rel_R|Rel_U|Node|Rel)\\())|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|[^\"]+)(\")",
       "patterns": [
         {
           "include": "#mode-string_kv_value"
@@ -1392,12 +1392,12 @@
         }
       },
       "endCaptures": {
-        "1": {
+        "2": {
           "name": "string.quoted.mermaid-c4"
         }
       }
     },
-    "rule-75": {
+    "rule-76": {
       "begin": "[ ]*\\$",
       "end": "(?!\\G)",
       "applyEndPatternLast": 1,
@@ -1406,7 +1406,7 @@
           "include": "#phase-string_kv"
         },
         {
-          "include": "#switch-76"
+          "include": "#switch-77"
         }
       ],
       "beginCaptures": {
@@ -1415,7 +1415,7 @@
         }
       }
     },
-    "rule-81": {
+    "rule-83": {
       "match": "[^,)\\n]+",
       "name": "string.quoted.mermaid-c4"
     },
@@ -1440,14 +1440,14 @@
           "include": "#rule-72"
         },
         {
-          "include": "#rule-75"
+          "include": "#rule-76"
         },
         {
-          "include": "#rule-81"
+          "include": "#rule-83"
         }
       ]
     },
-    "rule-74": {
+    "rule-75": {
       "match": "[^\"]+",
       "name": "string.quoted.mermaid-c4"
     },
@@ -1460,7 +1460,7 @@
           "include": "#trivia-1"
         },
         {
-          "include": "#rule-74"
+          "include": "#rule-75"
         }
       ]
     },
@@ -1484,7 +1484,7 @@
         }
       ]
     },
-    "rule-78": {
+    "rule-80": {
       "match": "[^\"]+",
       "name": "string.quoted.mermaid-c4"
     },
@@ -1497,7 +1497,7 @@
           "include": "#trivia-1"
         },
         {
-          "include": "#rule-78"
+          "include": "#rule-80"
         }
       ]
     },

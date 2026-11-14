@@ -112,7 +112,8 @@ properties:
         ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2;
         `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and
         `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground`
-        white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`;
+        white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground` /
+        `tertiaryColor` at half opacity (v12's `.labelBkg`, D572);
         `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding;
         `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding;
         `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding;
@@ -157,7 +158,12 @@ properties:
         (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the
         same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time,
         because they feed layout, so overriding their CSS variables has no effect;
-        `dropShadow` is a CSS value.
+        `dropShadow` is a CSS value. As in v12, `base` derives `secondaryColor` and
+        `tertiaryColor` from `primaryColor` and `lineColor` from `background` unless they are set
+        (D569), arrowheads follow `lineColor` in `default`, `dark` and `base` (D575), and
+        `default`, `dark`, `forest` and `neutral` pin v12's `mainBkg` and other constructor
+        colours, so `primaryColor` (or `--mermaid-primaryColor`) does not repaint their nodes:
+        set `mainBkg` (D570).
     # Named variables are documented here; any other name is still accepted (R-CONF-5).
     type: object
     additionalProperties: true
@@ -424,12 +430,26 @@ properties:
         x-mermaid: *erColor
       erEdgeLabelBackground:
         description: |
-          ER diagrams: background of relationship labels.
+          ER diagrams: background of relationship labels. In the classic themes `tertiaryColor`
+          at half opacity, as v12 (D572).
         type: string
         x-mermaid: *erColor
       erMarkerFill:
         description: |
           ER diagrams: fill of the circle of a zero-or-one and zero-or-more end.
+        type: string
+        x-mermaid: *erColor
+      erRowOddTextColor:
+        description: |
+          ER diagrams: attribute text on the odd rows. By default an author's `nodeTextColor`
+          where it meets WCAG AA on `rowOdd`, else `textColor`, else `background` where that reads
+          better (D572).
+        type: string
+        x-mermaid: *erColor
+      erRowEvenTextColor:
+        description: |
+          ER diagrams: attribute text on the even rows, chosen as `erRowOddTextColor` on
+          `rowEven` (D572).
         type: string
         x-mermaid: *erColor
       nodePaddingX:
@@ -2371,10 +2391,10 @@ $defs:
           reason: >-
             Set here, it wins over the top-level `layout` for architecture diagrams. Unset in
             both, they lay out with `compass`, the grid engine from edge sides (D284, D326).
-            `layered` and `dagre` place nodes without reading the sides, so architecture keeps
-            `compass` for them and warns `ARCHITECTURE_LAYOUT_IGNORED` once, as v12 always used
-            its own engine (D556); `compass`, an installed `elk.*` and a registered engine are
-            honoured, and an unknown or uninstalled name draws with `compass` and warns
+            Any other engine is honoured (D560). `layered` and `dagre` rank services down the
+            flow, use the sides only for where lines attach and ignore `{group}` ends and
+            `align`, and warn `ARCHITECTURE_PLACEMENT_IGNORED` once; v12 always used its own
+            engine. An unknown or uninstalled name draws with `compass` and warns
             `LAYOUT_UNKNOWN` or `ELK_NOT_INSTALLED`.
       padding:
         description: The space inside a group's border, and round the diagram, in pixels.

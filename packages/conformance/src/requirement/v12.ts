@@ -14,7 +14,7 @@
  * Text is as stored with v12's `encodeEntities` placeholders decoded, as v13 reads it (the
  * oracle's DOMPurify is the identity, so `sanitizeText` changes nothing).
  */
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12DecodeEntities } from '../v12-entities.ts';
 
 /** `diagram.type` values mermaid\@12 reports for requirement sources. */
 export const REQUIREMENT_V12_TYPES = ['requirement'];
@@ -73,7 +73,7 @@ interface RequirementDbV12 {
   getAccDescription(): string;
 }
 
-const text = (v: unknown): string => (typeof v === 'string' ? decodeEntities(v) : String(v));
+const text = (v: unknown): string => (typeof v === 'string' ? v12DecodeEntities(v) : String(v));
 const texts = (v: readonly unknown[]): string[] => v.map(text);
 
 export function requirementV12Snapshot(dbValue: unknown): RequirementSnapshot {

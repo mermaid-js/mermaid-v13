@@ -26,6 +26,7 @@ export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   critBkgColor: { alias: 'gcb', kind: 'color', usedBy: GANTT },
   critBorderColor: { alias: 'gco', kind: 'color', usedBy: GANTT },
   taskTextColor: { alias: 'gtt', kind: 'color', usedBy: GANTT },
+  critTextColor: { alias: 'gct', kind: 'color', usedBy: GANTT },
   taskTextOutsideColor: { alias: 'gtx', kind: 'color', usedBy: GANTT },
   taskTextDarkColor: { alias: 'gtd', kind: 'color', usedBy: GANTT },
 };

@@ -11,6 +11,7 @@
  * The bindings are closures: {@link clickBindings} runs each against stub `document` and
  * `window` objects and records the function name and arguments it would call.
  */
+import { v12DecodeEntities } from '../v12-entities.ts';
 
 /** `diagram.type` values mermaid 12 reports for class sources (`classDiagram-v2` too). */
 export const CLASS_V12_TYPES = ['classDiagram'];
@@ -82,15 +83,10 @@ export interface ClassSnapshot {
   styleClasses: { id: string; styles: string[]; textStyles: string[] }[];
 }
 
-/** Undo v12's `encodeEntities` placeholders (v12 `utils.ts` `decodeEntities`). */
-export function decodeEntities(text: string): string {
-  return text.replace(/ﬂ°°/g, '&#').replace(/ﬂ°/g, '&').replace(/¶ß/g, ';');
-}
-
 const text = (v: unknown): string | undefined =>
-  typeof v === 'string' ? decodeEntities(v) : undefined;
+  typeof v === 'string' ? v12DecodeEntities(v) : undefined;
 const strings = (v: unknown): string[] =>
-  Array.isArray(v) ? v.map((s) => decodeEntities(String(s))) : [];
+  Array.isArray(v) ? v.map((s) => v12DecodeEntities(String(s))) : [];
 
 /** v12's relation type numbers (`ClassDB.relationType`) by name. */
 const RELATION = ['aggregation', 'extension', 'composition', 'dependency', 'lollipop'];
@@ -166,9 +162,9 @@ function clickBindings(db: ClassDbV12, dbValue: unknown): ClassCallbackSnapshot[
       const cls = byDomId.get(domId);
       for (const c of calls) {
         out.push({
-          id: decodeEntities(typeof cls?.id === 'string' ? cls.id : domId),
-          name: decodeEntities(c.name),
-          args: c.args.map((a) => decodeEntities(String(a))),
+          id: v12DecodeEntities(typeof cls?.id === 'string' ? cls.id : domId),
+          name: v12DecodeEntities(c.name),
+          args: c.args.map((a) => v12DecodeEntities(String(a))),
         });
       }
     }
@@ -185,13 +181,13 @@ export function classV12Snapshot(dbValue: unknown): ClassSnapshot {
   return {
     direction: db.getDirection(),
     callbacks: clickBindings(db, dbValue),
-    accTitle: decodeEntities(db.getAccTitle()),
-    accDescr: decodeEntities(db.getAccDescription()),
+    accTitle: v12DecodeEntities(db.getAccTitle()),
+    accDescr: v12DecodeEntities(db.getAccDescription()),
     classes: [...db.getClasses().values()].map((c) => ({
-      id: decodeEntities(String(c.id)),
+      id: v12DecodeEntities(String(c.id)),
       type: text(c.type) ?? '',
       label: text(c.label) ?? '',
-      cssClasses: decodeEntities(String(c.cssClasses)),
+      cssClasses: v12DecodeEntities(String(c.cssClasses)),
       styles: strings(c.styles),
       annotations: strings(c.annotations),
       members: (c.members as Rec[]).map(member),
@@ -205,8 +201,8 @@ export function classV12Snapshot(dbValue: unknown): ClassSnapshot {
     relations: db.getRelations().map((r) => {
       const rel = r.relation as Rec;
       return {
-        id1: decodeEntities(String(r.id1)),
-        id2: decodeEntities(String(r.id2)),
+        id1: v12DecodeEntities(String(r.id1)),
+        id2: v12DecodeEntities(String(r.id2)),
         type1: relationName(rel.type1),
         type2: relationName(rel.type2),
         lineType: rel.lineType === 1 ? 'dotted' : 'solid',
@@ -222,13 +218,13 @@ export function classV12Snapshot(dbValue: unknown): ClassSnapshot {
       parent: text(n.parent),
     })),
     namespaces: [...db.getNamespaces().values()].map((ns) => ({
-      id: decodeEntities(String(ns.id)),
+      id: v12DecodeEntities(String(ns.id)),
       label: text(ns.label) ?? '',
       parent: text(ns.parent),
       explicit: ns.explicit === true,
-      classes: [...(ns.classes as Map<string, unknown>).keys()].map(decodeEntities),
+      classes: [...(ns.classes as Map<string, unknown>).keys()].map(v12DecodeEntities),
       notes: [...(ns.notes as Map<string, unknown>).keys()],
-      children: [...(ns.children as Map<string, unknown>).keys()].map(decodeEntities),
+      children: [...(ns.children as Map<string, unknown>).keys()].map(v12DecodeEntities),
     })),
     interfaces: (raw.interfaces ?? []).map((f) => ({
       id: String(f.id),

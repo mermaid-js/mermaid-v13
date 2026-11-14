@@ -10,7 +10,7 @@
  * - the sections `assignSections` gives with `colorBy` branch and depth (called on the DB here:
  *   v12 ran it in `getData`).
  */
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12DecodeEntities } from '../v12-entities.ts';
 
 /** `diagram.type` values mermaid\@12 reports for mindmap sources. */
 export const MINDMAP_V12_TYPES = ['mindmap'];
@@ -66,8 +66,8 @@ export function mindmapV12Snapshot(dbValue: unknown): MindmapSnapshot {
     const index = order.length;
     order.push(n);
     nodes.push({
-      id: decodeEntities(n.nodeId),
-      label: decodeEntities(n.descr),
+      id: v12DecodeEntities(n.nodeId),
+      label: v12DecodeEntities(n.descr),
       shape: SHAPES[n.type] ?? `type ${n.type}`,
       level: n.level,
       parent,

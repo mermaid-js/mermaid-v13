@@ -61,6 +61,13 @@ export const FUZZ_DECISIONS: readonly DecidedDivergence[] = [
       'v12 encoded entities as `ﬂ°…¶ß` placeholders and decoded them after parsing, which corrupts text that contains those characters. v13 has no placeholders.',
   },
   {
+    id: 'unknown-entity-name',
+    kind: 'model',
+    source: 'flowchart TD\n  A["a #bogus; b"]\n',
+    reason:
+      'An entity code whose name core cannot decode is kept as the author wrote it, `#bogus;`; v12 turned every `#name;` into `&name;` and drew that (D561). The corpus sources with such a name are listed in `divergences/`; a mutant with one is this family.',
+  },
+  {
     id: 'bare-subgraph',
     kind: 'accept',
     source: 'flowchart LR\nsubgraph S\n  x\nend\nsubgraph\n  y\nend\n',

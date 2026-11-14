@@ -14,4 +14,8 @@ export const BLOCK_RENDER = {
   edgeLabelPad: 4,
   /** The corner radius of an edge label's background. */
   edgeLabelRadius: 3,
+  /** A composite's `clusterBkg` opacity without a palette (v12 `fade(clusterBkg, 0.5)`). */
+  compositeFillOpacity: 0.5,
+  /** A composite's `clusterBorder` opacity (v12 `fade(clusterBorder, 0.2)`). */
+  compositeStrokeOpacity: 0.2,
 } as const;

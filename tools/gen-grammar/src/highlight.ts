@@ -99,6 +99,12 @@ function spanOf(r: LexRule): { begin: string; end: string } | undefined {
 }
 
 /**
+ * `(?:[^"\n]|\n(?!…))*`, or with `+`: the characters of a negated class, and a line break not
+ * followed by something. Group 1 is the class without its `\n`, group 2 the quantifier.
+ */
+const LINE_BREAK_UNLESS = /^\(\?:(\[\^(?:\\.|[^\]\\])*?)\\n\]\|\\n\(\?!.*\)\)([*+])$/s;
+
+/**
  * A pattern as a line-based highlighter (TextMate, Monarch) runs it: one that starts with a
  * line break and blanks (`\n\s*end note`) cannot match there, as the line break ends the line
  * before; it matches at the start of the next line instead (`^\s*end note`). Text up to such
@@ -107,6 +113,10 @@ function spanOf(r: LexRule): { begin: string; end: string } | undefined {
 function lineBased(pattern: string): string {
   // Text up to a line break before something (`[\s\S]*?(?=\n\s*end note)`): whole lines.
   if (pattern.startsWith(`${ANY_LAZY}(?=\\n`)) return '.+';
+  // Text that goes on over a line break unless something follows it (`(?:[^"\n]|\n(?!end))*`):
+  // a line never holds the break, so it is the class without it (`[^"]*`).
+  const unlessFollowed = LINE_BREAK_UNLESS.exec(pattern);
+  if (unlessFollowed) return `${unlessFollowed[1]}]${unlessFollowed[2]}`;
   const lead = '\\n\\s*';
   return pattern.startsWith(lead) && pattern.length > lead.length
     ? `^\\s*${pattern.slice(lead.length)}`

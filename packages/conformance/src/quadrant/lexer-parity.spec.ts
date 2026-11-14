@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { Kind } from '@mermaid-js/core/parser-kit';
 import { JISON_NAMES, lexQuadrant } from '@mermaid-js/diagram-quadrant';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
 import { NOT_DETECTED, QUIRKS, quadrantGateCorpus } from './corpus.ts';
@@ -47,7 +47,7 @@ function v13Tokens(source: string): JisonToken[] {
     const name = JISON_NAMES[l.tokens.kind[i] ?? -1];
     const s = l.textStart[i] ?? -1;
     if (!name || s < 0) continue;
-    out.push([name, decodeEntities(l.v12.text.slice(s, l.textEnd[i] ?? s))]);
+    out.push([name, v12TokenText(l.v12.text.slice(s, l.textEnd[i] ?? s))]);
   }
   return cut(out);
 }
@@ -81,7 +81,7 @@ describe('quadrant lexer parity with mermaid@12 (jison)', () => {
         diffs.push(`${item.id} (lexed text)\n  v12 ${JSON.stringify(input)}`);
         continue;
       }
-      const expected = cut(v12.map(([n, i]): JisonToken => [n, decodeEntities(i)]));
+      const expected = cut(v12.map(([n, i]): JisonToken => [n, v12TokenText(i)]));
       const actual = v13Tokens(item.source);
       if (JSON.stringify(expected) === JSON.stringify(actual)) continue;
       let at = 0;
@@ -90,8 +90,8 @@ describe('quadrant lexer parity with mermaid@12 (jison)', () => {
       diffs.push(`${item.id} @${at}\n  v12 ${around(expected)}\n  v13 ${around(actual)}`);
     }
     process.stdout.write(`quadrant lexer parity: ${compared} of ${items.length} sources lexed\n`);
-    // Every e2e fixture reaches the quadrant lexer: v12's 14 and the 12 baselines (#317).
-    expect(e2e).toBe(14 + 17);
+    // Every e2e fixture reaches the quadrant lexer: v12's 14 and the 18 baselines (#317 and later).
+    expect(e2e).toBe(14 + 18);
     // Every source is compared, but the listed ones v12 does not detect.
     expect(undetected.sort()).toEqual([...NOT_DETECTED.keys()].sort());
     expect(compared).toBe(items.length - NOT_DETECTED.size);
@@ -102,7 +102,7 @@ describe('quadrant lexer parity with mermaid@12 (jison)', () => {
     const oracle = await loadJisonLexerOracle('quadrant');
     const v12 = cut(
       ((await oracle.tokens(source, { keepAppendedNewline: true })) ?? []).map(
-        ([n, i]): JisonToken => [n, decodeEntities(i)]
+        ([n, i]): JisonToken => [n, v12TokenText(i)]
       )
     );
     expect(contains(v12, has), show(v12)).toBe(true);

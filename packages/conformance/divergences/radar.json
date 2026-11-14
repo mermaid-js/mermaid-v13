@@ -70,5 +70,21 @@
     "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the line break after it (or, with a `{` argument, the rest of the text); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour, as for pie and quadrant; GAPS #300, #301).",
     "owner": "#446",
     "since": "2026-11-06"
+  },
+  {
+    "id": "radar-cases/entities-semicolon",
+    "inputHash": "sha256:305fc05f43fa9fa1",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "radar-cases/entities-semicolon (CRLF)",
+    "inputHash": "sha256:333f2a9c0033dad1",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
   }
 ]

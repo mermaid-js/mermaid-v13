@@ -386,7 +386,11 @@ class Resolver {
 
   private fromSpec(name: string): Resolved | undefined {
     const text = this.source(name);
-    if (text !== undefined) return this.literal(name, text);
+    // A base colour that is not a CSS colour is a rule (`invert(background)`, #797).
+    if (text !== undefined)
+      return own(this.spec.base, name) && this.defs[name]?.kind === 'color' && !checkColor(text)
+        ? this.evaluate(rule(text))
+        : this.literal(name, text);
     const r = own(this.rules, name) ? this.rules[name] : undefined;
     return r === undefined ? undefined : this.evaluate(rule(r));
   }

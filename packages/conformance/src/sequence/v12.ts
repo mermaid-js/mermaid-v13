@@ -14,7 +14,7 @@
  * nothing for it; v13 warns and draws a participant, so an unknown v12 type reads as
  * `participant`.
  */
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12DecodeEntities } from '../v12-entities.ts';
 
 /** `diagram.type` values mermaid\@12 reports for sequence sources. */
 export const SEQUENCE_V12_TYPES = ['sequence'];
@@ -158,7 +158,7 @@ interface SequenceDbV12 {
   getAccDescription(): string;
 }
 
-const str = (v: unknown): string | null => (typeof v === 'string' ? decodeEntities(v) : null);
+const str = (v: unknown): string | null => (typeof v === 'string' ? v12DecodeEntities(v) : null);
 const num = (v: unknown): number | null => (typeof v === 'number' ? v : null);
 
 /**
@@ -180,10 +180,10 @@ export function drawnAt(
 /** A menu record as plain data, with v12's entity placeholders decoded in keys and strings. */
 const plain = (v: unknown): Record<string, unknown> => {
   const walk = (x: unknown): unknown => {
-    if (typeof x === 'string') return decodeEntities(x);
+    if (typeof x === 'string') return v12DecodeEntities(x);
     if (Array.isArray(x)) return x.map(walk);
     if (x && typeof x === 'object')
-      return Object.fromEntries(Object.entries(x).map(([k, y]) => [decodeEntities(k), walk(y)]));
+      return Object.fromEntries(Object.entries(x).map(([k, y]) => [v12DecodeEntities(k), walk(y)]));
     return x;
   };
   return v && typeof v === 'object' ? (walk(v) as Record<string, unknown>) : {};
@@ -224,13 +224,13 @@ export function sequenceV12Snapshot(dbValue: unknown): SequenceSnapshot {
     actors
       .filter(([id]) => m.has(id))
       .map(([id]) => {
-        const name = decodeEntities(id);
+        const name = v12DecodeEntities(id);
         return [name, drawnAt(rows, m.get(id) ?? 0, name, either)];
       });
   return {
     participants: actors.map(([id, a]) => ({
-      id: decodeEntities(id),
-      label: decodeEntities(a.description),
+      id: v12DecodeEntities(id),
+      label: v12DecodeEntities(a.description),
       kind: KINDS.has(a.type) ? a.type : 'participant',
       wrap: a.wrap,
       box: a.box ? boxes.indexOf(a.box as BoxV12) : null,
@@ -241,13 +241,13 @@ export function sequenceV12Snapshot(dbValue: unknown): SequenceSnapshot {
       label: str(b.name) ?? '',
       color: b.fill,
       wrap: b.wrap,
-      members: b.actorKeys.map(decodeEntities),
+      members: b.actorKeys.map(v12DecodeEntities),
     })),
     rows,
     created: ids(db.getCreatedActors(), false),
     destroyed: ids(db.getDestroyedActors(), true),
-    title: decodeEntities(db.getDiagramTitle()),
-    accTitle: decodeEntities(db.getAccTitle()),
-    accDescr: decodeEntities(db.getAccDescription()),
+    title: v12DecodeEntities(db.getDiagramTitle()),
+    accTitle: v12DecodeEntities(db.getAccTitle()),
+    accDescr: v12DecodeEntities(db.getAccDescription()),
   };
 }

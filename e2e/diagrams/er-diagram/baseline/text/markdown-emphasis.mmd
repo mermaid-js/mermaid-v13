@@ -1,0 +1,18 @@
+---
+description: >-
+  Markdown emphasis in every ER label kind, as v12 formats it (#754, D565):
+  entity name, alias, attribute type, name and comment, relationship label and
+  subgraph title; an underscore inside a word stays
+---
+erDiagram
+  "This **is** _Markdown_" {
+    string name
+  }
+  P["*Alias*"] {
+    **bold** _it_ PK "a __comment__"
+    int order_item
+  }
+  subgraph Sales ["Sales **domain**"]
+    order_item
+  end
+  P ||--o{ order_item : "__rel__"

@@ -6,7 +6,6 @@
  */
 export {
   CHEVROTAIN_NAMES,
-  decodePlaceholders,
   lexText,
   UsecaseTokenKind,
   usecaseTokens,

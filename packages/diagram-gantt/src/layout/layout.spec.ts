@@ -104,14 +104,17 @@ describe('gantt layout follows ganttRenderer.js', () => {
     expect(plain.label.text.lines[0]![0]!.style).toBe(0);
   });
 
-  it('shows markup in task labels as written, and breaks section titles on <br>', () => {
+  it('shows markup in task labels as written, decodes entities, and breaks section titles on <br>', () => {
+    // The model holds an entity code as `&name;` (`#amp;` and a typed `&amp;` alike, D563).
     const { layout } = lay(
       fixture()
         .addSection('One<br>Two</br>Three')
-        .addTask('a <b>b</b> &amp; c\\n', 'a,2014-01-01,1d')
+        .addTask('a <b>b</b> &amp; &#35;c &lt;i&gt;\\n', 'a,2014-01-01,1d')
     );
     const text = layout.bars[0]!.label.text;
-    expect(text.lines.map((l) => l.map((r) => r.text).join(''))).toEqual(['a <b>b</b> &amp; c\\n']);
+    expect(text.lines.map((l) => l.map((r) => r.text).join(''))).toEqual([
+      'a <b>b</b> & #c <i>\\n',
+    ]);
     const section = layout.sections[0]!;
     expect(section.text.lines.map((l) => l.map((r) => r.text).join(''))).toEqual([
       'One',

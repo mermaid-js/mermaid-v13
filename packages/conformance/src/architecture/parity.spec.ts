@@ -26,8 +26,10 @@ import { architectureV12Snapshot } from './v12.ts';
  * agree, except the divergences listed in `divergences/architecture.json`.
  *
  * Those are {@link LISTED}: core's reading of an unclosed `%%{` (shared by every type: v13
- * rejects with `UNCLOSED_DIRECTIVE` what v12 accepted with the rest removed), and D504's ignored
- * `{group}`. {@link DIFFERENCES} lists each of D504's four cases with what v12 and v13 do.
+ * rejects with `UNCLOSED_DIRECTIVE` what v12 accepted with the rest removed), D504's ignored
+ * `{group}`, and D561's `#name;` kept as written when core's entity table does not hold the name
+ * (v12 made it `&name;`). {@link DIFFERENCES} lists each of D504's four cases with what v12 and
+ * v13 do.
  */
 const LISTED: ReadonlyMap<string, { kind: string; detail: RegExp }> = new Map([
   ['architecture-cases/unclosed-directive', { kind: 'reject', detail: /^UNCLOSED_DIRECTIVE/ }],
@@ -36,6 +38,10 @@ const LISTED: ReadonlyMap<string, { kind: string; detail: RegExp }> = new Map([
     { kind: 'reject', detail: /^UNCLOSED_DIRECTIVE/ },
   ],
   ['architecture-cases/edges-group-no-group', { kind: 'model', detail: /^edges\[0\]\.lhsGroup$/ }],
+  [
+    'architecture-cases/entities-outside-core',
+    { kind: 'model', detail: /^services\[0\]\.title, services\[1\]\.title$/ },
+  ],
 ]);
 
 /** v12's syntax errors (Langium) and detection failures, which carry no DB message. */
@@ -191,7 +197,7 @@ describe('architecture oracle parity with mermaid@12', () => {
     });
   }, 300_000);
 
-  it('differs only where the list says (unclosed directives, D504)', async () => {
+  it('differs only where the list says (unclosed directives, D504, D561)', async () => {
     const report = await run();
     const prefixes = [...LISTED.keys()];
     for (const prefix of prefixes) {

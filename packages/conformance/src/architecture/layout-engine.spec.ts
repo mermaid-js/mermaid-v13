@@ -2,16 +2,17 @@ import { describe, expect, it } from 'vitest';
 import type { MermaidConfig } from '@mermaid-js/core/config';
 import { layered, type LayoutEngine, type LayoutModel } from '@mermaid-js/core/layout';
 import { compass } from '@mermaid-js/core/layout/compass';
-import { ARCHITECTURE_LAYOUT_IGNORED } from '@mermaid-js/diagram-architecture';
+import { ARCHITECTURE_PLACEMENT_IGNORED } from '@mermaid-js/diagram-architecture';
 import elkLayouts from '@mermaid-js/layout-elk';
 import { createMermaid } from 'mermaid';
 
-// The engine an architecture diagram is laid out with (#673, D556), through
-// `createMermaid().render()`. `layered` and v12's `dagre` ignore the sides for placement, so
-// architecture keeps `compass` for them, from front matter, `initialize()` or the `architecture`
-// section, with one ARCHITECTURE_LAYOUT_IGNORED warning; `compass` and an installed ELK stay
-// selectable by name (D327, D503). Each engine is registered under its own name with a recorder,
-// so the spec sees which one laid the graph out and where it put each node.
+// The engine an architecture diagram is laid out with (#673, D560), through
+// `createMermaid().render()`: the one `layout` names, from front matter, `initialize()` or the
+// `architecture` section, `compass` when none does (D327). `layered` and v12's `dagre` lay it out
+// down the flow, with the sides only where lines attach (D503), and say what they leave out with
+// one ARCHITECTURE_PLACEMENT_IGNORED warning; `compass` and an installed ELK warn nothing. Each
+// engine is registered under its own name with a recorder, so the spec sees which one laid the
+// graph out and where it put each node.
 
 /** The issue's chains: every `a:R --> L:b` puts `b` right of `a` under `compass`. */
 const CHAINS = `architecture-beta
@@ -41,6 +42,18 @@ const JUNCTION = `architecture-beta
     j1:R -- L:r
     j1:B -- T:j2
     j2:B -- T:bot
+`;
+
+/** A group, a junction in it, an edge label and a `{group}` end. */
+const GROUPED = `architecture-beta
+ group api(cloud)[API]
+ service db(database)[Database] in api
+ service server(server)[Server] in api
+ junction j in api
+ service web(internet)[Web]
+ db:L -[reads]-> R:server
+ server:B -- T:j
+ server{group}:R --> L:web
 `;
 
 const withFrontMatter = (layout: string, source: string): string =>
@@ -106,9 +119,22 @@ function expectJunction(model: LayoutModel): void {
   expect(at(model, 'bot').y).toBeGreaterThan(at(model, 'j2').y);
 }
 
+/** `b` is ranked below `a`: layered's flow, whatever side the edge names. */
+function expectBelow(model: LayoutModel, a: string, b: string): void {
+  expect(at(model, b).y, `${b} below ${a}`).toBeGreaterThan(at(model, a).y);
+}
+
+/** Each edge leaves and enters by the sides it names: where its line attaches. */
+function expectPorts(model: LayoutModel, ports: Readonly<Record<string, object>>): void {
+  for (const [id, p] of Object.entries(ports)) expect(model.edges.get(id)?.ports, id).toEqual(p);
+}
+
 const codes = (warnings: readonly { code: string }[]) => warnings.map((w) => w.code);
 
-describe('architecture keeps compass for engines that ignore the sides (#673)', () => {
+const SIDES = (engine: string): string =>
+  `Layout "${engine}" does not place services on the sides their edges name (L, R, T, B); the sides only set where lines attach.`;
+
+describe('architecture is laid out by the engine `layout` names (#673, D560)', () => {
   it('lays out with compass by default, with no warning', async () => {
     const r = await render(CHAINS);
     expect(r.engine).toBe('compass');
@@ -117,41 +143,70 @@ describe('architecture keeps compass for engines that ignore the sides (#673)', 
   });
 
   it.each([
-    ['front matter `layout: layered`', withFrontMatter('layered', CHAINS), {}, 'layout'],
-    ['front matter `layout: dagre`', withFrontMatter('dagre', CHAINS), {}, 'layout'],
-    ['site-wide `layout: dagre`', CHAINS, { layout: 'dagre' }, 'layout'],
-    ['site-wide `layout: layered`', CHAINS, { layout: 'layered' }, 'layout'],
+    ['front matter `layout: layered`', withFrontMatter('layered', CHAINS), {}, 'layered', 'layout'],
+    ['front matter `layout: dagre`', withFrontMatter('dagre', CHAINS), {}, 'dagre', 'layout'],
+    ['site-wide `layout: dagre`', CHAINS, { layout: 'dagre' }, 'dagre', 'layout'],
+    ['site-wide `layout: layered`', CHAINS, { layout: 'layered' }, 'layered', 'layout'],
     [
       '`architecture.layout: layered`',
       CHAINS,
       { architecture: { layout: 'layered' } },
+      'layered',
       'architecture.layout',
     ],
-  ] as const)('%s: compass, with one warning', async (_, source, config, path) => {
+  ] as const)('%s: that engine, with one warning', async (_, source, config, engine, path) => {
     const r = await render(source, config as MermaidConfig);
-    expect(r.engine).toBe('compass');
-    expectChains(r.model);
-    expect(codes(r.warnings)).toEqual([ARCHITECTURE_LAYOUT_IGNORED]);
+    expect(r.engine).toBe(engine);
+    // Ranked down the flow: `a:R --> L:b` puts `b` under `a`, its line on the named sides.
+    expectBelow(r.model, 'a', 'b');
+    expectBelow(r.model, 'b', 'c');
+    expectPorts(r.model, {
+      'edge:a->b': { source: 'right', target: 'left' },
+      'edge:c->d': { source: 'bottom', target: 'top' },
+    });
+    expect(codes(r.warnings)).toEqual([ARCHITECTURE_PLACEMENT_IGNORED]);
     const [w] = r.warnings;
     expect(w!.path).toBe(path);
-    expect(w!.message).toMatch(/^Ignored layout "(layered|dagre)" for this architecture diagram/);
-    expect(w!.message).toContain('laid out with "compass"');
+    expect(w!.message).toBe(SIDES(engine));
   });
 
-  it('draws the same SVG as the default under `layout: dagre`, warning aside', async () => {
-    const plain = await createMermaid().render('arch', JUNCTION);
-    const m = createMermaid();
-    m.initialize({ layout: 'dagre' });
-    const dagre = await m.render('arch', JUNCTION);
-    expect(dagre.svg).toBe(plain.svg);
-    expect(codes(dagre.warnings)).toEqual([ARCHITECTURE_LAYOUT_IGNORED]);
+  it('draws `dagre` as `layered`, only the name in the warning changed', async () => {
+    const draw = async (layout: string) => {
+      const m = createMermaid();
+      m.initialize({ layout });
+      return m.render('arch', JUNCTION);
+    };
+    const [byLayered, byDagre] = [await draw('layered'), await draw('dagre')];
+    expect(byDagre.svg).toBe(byLayered.svg);
+    expect(byDagre.svg).not.toBe((await createMermaid().render('arch', JUNCTION)).svg);
+    expect(byDagre.warnings.map((w) => w.message)).toEqual([SIDES('dagre')]);
+    expect(byLayered.warnings.map((w) => w.message)).toEqual([SIDES('layered')]);
   });
 
-  it('keeps the junction a cross under `layout: layered`', async () => {
+  it('draws a junction under `layout: layered`, each line on its named sides', async () => {
     const r = await render(withFrontMatter('layered', JUNCTION));
-    expect(r.engine).toBe('compass');
-    expectJunction(r.model);
-    expect(codes(r.warnings)).toEqual([ARCHITECTURE_LAYOUT_IGNORED]);
+    expect(r.engine).toBe('layered');
+    expectBelow(r.model, 'top', 'j1');
+    expectBelow(r.model, 'j1', 'j2');
+    expectPorts(r.model, {
+      'edge:top->j1': { source: 'bottom', target: 'top' },
+      'edge:j1->l': { source: 'left', target: 'right' },
+      'edge:j1->r': { source: 'right', target: 'left' },
+      'edge:j1->j2': { source: 'bottom', target: 'top' },
+    });
+    expect(codes(r.warnings)).toEqual([ARCHITECTURE_PLACEMENT_IGNORED]);
+  });
+
+  it('draws a group, a `{group}` end and an edge label under `layout: layered`', async () => {
+    const r = await render(withFrontMatter('layered', GROUPED));
+    expect(r.engine).toBe('layered');
+    expect([...r.model.groups.keys()]).toEqual(['api']);
+    expect(r.model.edges.size).toBe(3);
+    expect(r.svg).toContain('>reads<');
+    expect(codes(r.warnings)).toEqual([ARCHITECTURE_PLACEMENT_IGNORED]);
+    expect(r.warnings[0]!.message).toBe(
+      `${SIDES('layered')} It also ignores \`{group}\` on an edge end (the line meets the service, not the group border).`
+    );
   });
 
   it('takes an explicit `compass` with no warning', async () => {
@@ -164,7 +219,7 @@ describe('architecture keeps compass for engines that ignore the sides (#673)', 
   it('takes an installed `elk` by name, its ports on the named sides, with no warning', async () => {
     const r = await render(withFrontMatter('elk', CHAINS), {}, true);
     expect(r.engine).toBe('elk');
-    expect(codes(r.warnings)).not.toContain(ARCHITECTURE_LAYOUT_IGNORED);
+    expect(codes(r.warnings)).not.toContain(ARCHITECTURE_PLACEMENT_IGNORED);
     const ports = [...r.model.edges.values()].map((e) => e.ports);
     expect(ports).toContainEqual({ source: 'right', target: 'left' });
     expect(ports).toContainEqual({ source: 'bottom', target: 'top' });

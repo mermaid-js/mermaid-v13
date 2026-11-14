@@ -6,6 +6,7 @@ import { blockLabels } from './labels.ts';
 import type { BlockModel } from './model.ts';
 import { parseBlock, type BlockParseResult } from './parser/index.ts';
 import { renderBlock } from './render/index.ts';
+import { theme } from './theme/table.ts';
 
 const ignore = (): undefined => undefined;
 
@@ -15,8 +16,8 @@ const DETECTOR = /^\s*block(-beta)?/;
 /**
  * The block plugin (DESIGN §12.1, spec #521): `layoutKind: 'custom'` with its own `BlockLayout`.
  * `parse` takes the whole source and the limits; `layout` measures every label and lays the grid
- * out; `render` writes the whole `<svg>` document (#556). Block has no theme table (spec #521):
- * it reads core's shared rows. The registry loads it from the package's `mermaid` manifest
+ * out; `render` writes the whole `<svg>` document (#556). Its theme table holds one flag (#771);
+ * every colour is core's shared rows. The registry loads it from the package's `mermaid` manifest
  * (#558); `configDefaults` are the `block` section's generated defaults. Text output is
  * the lazily loaded `./ascii` entry (manifest key `ascii`, #559).
  */
@@ -25,6 +26,7 @@ export const block = {
   formats: ['svg', 'ascii'] as const,
   layoutKind: 'custom' as const,
   configDefaults: blockConfigDefaults as Readonly<Record<string, unknown>>,
+  theme,
   detector: (text: string): boolean => DETECTOR.test(text),
   parse: (text: string, ctx: DiagramParseContext): BlockParseResult =>
     parseBlock(text, {

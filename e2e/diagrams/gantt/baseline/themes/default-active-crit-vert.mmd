@@ -1,0 +1,11 @@
+---
+config:
+  theme: default
+description: '#772: an active bar, a critical bar and a vert marker under default; the active border and the vert label read at 3:1 or better, the critical-bar text at AA'
+---
+gantt
+  dateFormat YYYY-MM-DD
+  section Plan
+  Active task :active, a1, 2024-01-02, 4d
+  Crit task :crit, c1, after a1, 4d
+  Gate :vert, g1, 2024-01-04, 1d

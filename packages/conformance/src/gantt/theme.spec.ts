@@ -1,7 +1,9 @@
 /**
  * #385: the gantt theme variables against v12 12.2.0's resolved `getThemeVariables()` (D151:
  * v12 is the oracle). Every value comes from the shared derivation (`LIGHT_RULES`,
- * `DARK_RULES`) over shared variables; no theme spec names a gantt variable (D331). Where v12
+ * `DARK_RULES`) over shared variables; no theme spec names a gantt variable (D331). The classic
+ * family's entries repair the contrast of the active outline, the `vert` marker and text on a
+ * critical bar from the same shared variables (#801, spec #795 decision 2). Where v12
  * gave a theme its own gantt colour that no shared variable carries, v13 differs: those are
  * listed here as `[v12, v13]` and under "For the maintainer" in the spec #293 notes (GAPS
  * #385), so a change in either direction fails until the list is updated.
@@ -13,6 +15,7 @@ import {
   formatColor,
   loadTheme,
   parseColor,
+  type ThemeName,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
 import { gantt } from '@mermaid-js/diagram-gantt';
@@ -88,11 +91,11 @@ const DIFFERS: Readonly<Record<string, Readonly<Record<string, readonly [string,
   default: {
     sectionBkgColor: ['#6666ff7d', '#f9ffec'],
     sectionBkgColor2: ['#fff400', '#ececff'],
-    vertLineColor: ['#000080', '#c9c9d9'],
+    vertLineColor: ['#000080', '#333333'],
     taskBkgColor: ['#8a90dd', '#ececff'],
-    taskBorderColor: ['#534fbc', '#c9c9d9'],
+    taskBorderColor: ['#534fbc', '#c7c7f1'],
     activeTaskBkgColor: ['#bfc7ff', '#ffffff'],
-    activeTaskBorderColor: ['#534fbc', '#ececff'],
+    activeTaskBorderColor: ['#534fbc', '#333333'],
     taskTextColor: ['#ffffff', '#333333'],
     taskTextOutsideColor: ['#000000', '#333333'],
     taskTextDarkColor: ['#000000', '#333333'],
@@ -103,26 +106,26 @@ const DIFFERS: Readonly<Record<string, Readonly<Record<string, readonly [string,
     sectionBkgColor2: ['#eae8d9', '#1f2020'],
     excludeBkgColor: ['#9f9758', '#eeeeee'],
     todayLineColor: ['#db5757', '#ff0000'],
-    vertLineColor: ['#00bfff', '#4c4d4d'],
+    vertLineColor: ['#00bfff', '#d3d3d3'],
     taskBkgColor: ['#595c5c', '#1f2020'],
-    taskBorderColor: ['#ffffff', '#4c4d4d'],
+    taskBorderColor: ['#ffffff', '#cccccc'],
     activeTaskBkgColor: ['#81b1db', '#595c5c'],
-    activeTaskBorderColor: ['#ffffff', '#1f2020'],
+    activeTaskBorderColor: ['#ffffff', '#d3d3d3'],
     doneTaskBkgColor: ['#d3d3d3', '#474949'],
-    critBkgColor: ['#e83737', '#ff0000'],
+    critBkgColor: ['#e83737', '#990000'],
     critBorderColor: ['#e83737', '#ff8888'],
     taskTextColor: ['#e2dcd6', '#cccccc'],
     taskTextOutsideColor: ['#d3d3d3', '#cccccc'],
-    taskTextDarkColor: ['#2c2c2c', '#cccccc'],
+    taskTextDarkColor: ['#2c2c2c', '#ffffff'],
   },
   forest: {
     sectionBkgColor: ['#6eaa49', '#e1efc0'],
     sectionBkgColor2: ['#6eaa49', '#cde498'],
-    vertLineColor: ['#00bfff', '#aec281'],
+    vertLineColor: ['#00bfff', '#000000'],
     taskBkgColor: ['#487e3a', '#cde498'],
-    taskBorderColor: ['#13540c', '#aec281'],
+    taskBorderColor: ['#13540c', '#abb594'],
     activeTaskBkgColor: ['#cde498', '#fafcf5'],
-    activeTaskBorderColor: ['#13540c', '#cde498'],
+    activeTaskBorderColor: ['#13540c', '#000000'],
     taskTextColor: ['#ffffff', '#000000'],
   },
   neutral: {
@@ -130,11 +133,11 @@ const DIFFERS: Readonly<Record<string, Readonly<Record<string, readonly [string,
     sectionBkgColor2: ['#bdbdbd', '#eeeeee'],
     gridColor: ['#e6e6e6', '#d3d3d3'],
     todayLineColor: ['#dd4422', '#ff0000'],
-    vertLineColor: ['#dd4422', '#cacaca'],
+    vertLineColor: ['#dd4422', '#666666'],
     taskBkgColor: ['#707070', '#eeeeee'],
-    taskBorderColor: ['#575757', '#cacaca'],
+    taskBorderColor: ['#575757', '#d4d4d4'],
     activeTaskBkgColor: ['#eeeeee', '#ffffff'],
-    activeTaskBorderColor: ['#575757', '#eeeeee'],
+    activeTaskBorderColor: ['#575757', '#666666'],
     doneTaskBkgColor: ['#bbbbbb', '#d3d3d3'],
     doneTaskBorderColor: ['#666666', '#808080'],
     critBkgColor: ['#dd4422', '#ff0000'],
@@ -143,7 +146,11 @@ const DIFFERS: Readonly<Record<string, Readonly<Record<string, readonly [string,
     taskTextOutsideColor: ['#333333', '#000000'],
     taskTextDarkColor: ['#333333', '#000000'],
   },
-  base: { vertLineColor: ['#000080', '#d9cfbc'], taskBorderColor: ['#eeddbb', '#d9cfbc'] },
+  base: {
+    vertLineColor: ['#000080', '#0b0b0b'],
+    taskBorderColor: ['#eeddbb', '#d9cfbc'],
+    activeTaskBorderColor: ['#fff4dd', '#0b0b0b'],
+  },
   neo: {
     sectionBkgColor2: ['#ececfe', '#cccccc'],
     taskBkgColor: ['#ececfe', '#cccccc'],
@@ -162,6 +169,28 @@ describe('gantt theme variables against v12 12.2.0 (#385, D151, D331)', () => {
       if (pair[0] !== pair[1]) differs[v] = pair;
     }
     expect(differs).toEqual(DIFFERS[name]);
+  });
+
+  /** The CSS a classic theme writes for one gantt variable. */
+  const css = async (name: ThemeName, variable: string): Promise<string | undefined> => {
+    const theme = createTheme(await loadTheme(name), { diagram: gantt.theme });
+    theme.color(variable);
+    return theme.rootStyle()[`--_${gantt.theme.vars[variable]!.alias}`];
+  };
+  const CLASSIC = ['default', 'dark', 'forest', 'neutral', 'base'] as const;
+
+  it("keeps bar text on the theme's text, so a host's --mermaid-textColor reaches it (D574)", async () => {
+    for (const name of CLASSIC)
+      expect(await css(name, 'taskTextColor'), name).toBe(
+        'var(--mermaid-taskTextColor,var(--_tx))'
+      );
+  });
+
+  it('outlines the active bar in lineColor in the classic themes (D574)', async () => {
+    for (const name of CLASSIC)
+      expect(await css(name, 'activeTaskBorderColor'), name).toBe(
+        'var(--mermaid-activeTaskBorderColor,var(--_l))'
+      );
   });
 
   it('v12 draws a clickable label #003163 in every theme: a renderer constant, no variable', () => {
