@@ -14,3 +14,9 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - **For the maintainer:** v12 base derives `arrowheadColor` from `background`, not from `lineColor` (the spec assumed it followed `lineColor`). base now has `rules.arrowheadColor: invert(background)`, so under `base` an author's or host's `lineColor` no longer recolours arrowheads; `background` does (v12 parity).
 - Derived values now start from the rule's unrounded channels: three base cells in `theme-variables.md` move by one unit (`railroadSpecialStroke`, `usecaseBoundaryBorder`, `activationBorderColor`).
 - Argos holds the screenshot baselines: the `base` screenshots and the four new #761 fixtures are approved in CI, not in the repo.
+
+## #801 (T5)
+
+- **Choice:** the contrast rules sit in gantt's `families.classic` entry, not the shared `rules.light`, so redux and neo are unchanged (spec "Out of Scope"). **For the maintainer:** redux and neo crit text still misses AA (3.69:1, 3.16:1), and neo's active outline is #cccccc on white.
+- **Choice:** `activeTaskBorderColor` is `contrast(activeTaskBkgColor, primaryBorderColor, lineColor)`: `primaryBorderColor` alone is 1.6:1 under default, short of the ticket's 3:1, so every classic theme draws `lineColor`.
+- **Choice:** under `dark`, the critical fill is #990000 and text on active and done bars is white where `textColor` misses AA: `taskTextColor` is the text on both the dark bars and red, and no single ink reads on both.
