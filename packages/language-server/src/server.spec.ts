@@ -22,7 +22,7 @@ import type {
   SemanticTokens,
   WorkspaceEdit,
 } from 'vscode-languageserver-protocol';
-import { TextDocumentSyncKind } from 'vscode-languageserver-protocol';
+import { LSPErrorCodes, TextDocumentSyncKind } from 'vscode-languageserver-protocol';
 import { decodeTokens, startClient } from './testing/lsp-client.ts';
 import type { Client } from './testing/lsp-client.ts';
 import { detectorSource, FAKE_FACET, facetPackage, workspace } from './testing/workspace.ts';
@@ -726,6 +726,57 @@ describe('completion order (#807)', () => {
         }
         // The fixtures hold lists long enough that ordering by label would differ.
         expect(lists).toBeGreaterThan(0);
+      } finally {
+        await client.stop();
+      }
+    },
+    T
+  );
+});
+
+describe('a third-party facet whose queries throw (#809)', () => {
+  /** FAKE_FACET with one `thing` symbol over `fake`, and a hover and isValidId that throw. */
+  const THROWING = FAKE_FACET.replace(
+    'symbols: [],',
+    "symbols: [{ name: 'fake', kind: 'thing', role: 'def', range: { start: 0, end: 4 } }],"
+  )
+    .replace('isValidId: () => undefined,', "isValidId: () => { throw new Error('boom id'); },")
+    .replace('hover: () => undefined,', "hover: () => { throw new Error('boom hover'); },");
+
+  it(
+    'answers hover with null and rename with a -32803 refusal, not an internal error',
+    async () => {
+      expect(THROWING).toContain('boom id');
+      expect(THROWING).toContain('boom hover');
+      expect(THROWING).toContain("name: 'fake'");
+      const root = workspace({
+        'mermaid-fake': { ...facetPackage('mermaid-fake', 'fake'), 'language.js': THROWING },
+      });
+      const client = await startClient({
+        rootUri: pathToFileURL(root).href,
+        initializationOptions: PLUGINS,
+      });
+      const uri = 'file:///w/throwing.mmd';
+      const at = { textDocument: { uri }, position: pos(0, 1) };
+      try {
+        client.open(uri, 'fake\n');
+        expect((await client.diagnostics(uri)).diagnostics.map((d) => d.code)).toEqual([
+          'FAKE_WARNING',
+        ]);
+        expect(await client.connection.sendRequest('textDocument/hover', at)).toBeNull();
+        // The facet was reached: prepareRename finds the symbol, rename asks isValidId.
+        expect(await client.connection.sendRequest('textDocument/prepareRename', at)).toEqual({
+          range: range(0, 0, 4),
+          placeholder: 'fake',
+        });
+        const refused = await client.connection
+          .sendRequest('textDocument/rename', { ...at, newName: 'zed' })
+          .then(
+            () => undefined,
+            (error: unknown) => error as { code: number; message: string }
+          );
+        expect(refused).toMatchObject({ code: LSPErrorCodes.RequestFailed });
+        expect(refused?.message).toBe('The fake language support failed on this rename (boom id).');
       } finally {
         await client.stop();
       }
