@@ -1,0 +1,13 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: "#ffaa00"
+description: >-
+  base with only primaryColor set: set B follows the derived secondaryColor and
+  its label stays legible, as in v12 (#761)
+---
+venn-beta
+  set A["Alpha"]:5
+  set B["Beta"]:5
+  union A,B["Both"]:2

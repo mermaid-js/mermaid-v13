@@ -4,7 +4,13 @@
  * through `createTheme` as in v12.
  */
 import type { DiagramPlugin } from '@mermaid-js/core';
-import { THEME_VARIABLES, createTheme, loadTheme } from '@mermaid-js/core/theme';
+import {
+  THEME_VARIABLES,
+  contrastRatio,
+  createTheme,
+  loadTheme,
+  type Rgba,
+} from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
 import { er } from '../plugin.ts';
 
@@ -15,7 +21,10 @@ const OWN = [
   'erEdgeLabelBackground',
   'erMarkerFill',
   'erZeroOrMoreCircleOffset',
+  'erRowOddTextColor',
+  'erRowEvenTextColor',
 ];
+const CLASSIC = ['default', 'dark', 'forest', 'neutral', 'base'];
 
 const themed = async (name: string, themeVariables?: Record<string, unknown>) =>
   createTheme(await loadTheme(name as 'default'), {
@@ -53,7 +62,7 @@ describe('the ER theme table (#414 T3)', () => {
   it('draws edge labels on a plain fill in the colour themes, on edgeLabelBackground elsewhere', async () => {
     expect((await themed('redux-color')).value('erEdgeLabelBackground')).toBe('#ffffff');
     expect((await themed('redux-dark-color')).value('erEdgeLabelBackground')).toBe('#16141f');
-    for (const name of ['redux', 'redux-dark', 'default', 'neo']) {
+    for (const name of ['redux', 'redux-dark', 'neo', 'neo-dark']) {
       const t = await themed(name, { edgeLabelBackground: '#abcdef' });
       expect(t.value('erEdgeLabelBackground'), name).toBe('#abcdef');
     }
@@ -70,5 +79,46 @@ describe('the ER theme table (#414 T3)', () => {
     expect((await themed('default', { mainBkg: '#000000' })).value('rowEven')).toBe(own);
     expect((await themed('base', { mainBkg: '#000000' })).value('rowEven')).toBe('#0d0d0d');
     expect((await themed('forest', { mainBkg: '#000000' })).value('rowEven')).toBe('#333333');
+  });
+
+  it('fills the classic relationship label with tertiaryColor at half opacity, as v12 (#761)', async () => {
+    for (const name of CLASSIC) {
+      const t = await themed(name, { tertiaryColor: '#ff00ff', edgeLabelBackground: '#abcdef' });
+      expect(t.value('erEdgeLabelBackground'), name).toBe('#ff00ff80');
+    }
+  });
+
+  it('inks attribute text against its own row, the header against the entity (#758)', async () => {
+    const t = await themed('base', { primaryColor: '#335577' });
+    const rgba = (name: string) => t.rgba(name) as Rgba;
+    // The header ink is base's light background, which misses AA on the lightened odd row.
+    expect(t.value('nodeTextColor')).toBe('#f4f4f4');
+    expect(contrastRatio(rgba('nodeTextColor'), rgba('rowOdd'))).toBeLessThan(4.5);
+    for (const [ink, row] of [
+      ['erRowOddTextColor', 'rowOdd'],
+      ['erRowEvenTextColor', 'rowEven'],
+    ] as const)
+      expect(contrastRatio(rgba(ink), rgba(row)), ink).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('picks the row ink live over the row fill in CSS, so a host primaryColor reaches it (#758)', async () => {
+    for (const name of CLASSIC) {
+      const t = createTheme(await loadTheme(name as 'default'), { diagram: table });
+      t.color('erRowOddTextColor');
+      t.color('erRowEvenTextColor');
+      const root = t.rootStyle();
+      expect(root['--_eot'], name).toContain('var(--_ro)');
+      expect(root['--_eet'], name).toContain('var(--_re)');
+    }
+  });
+
+  it("keeps an author's nodeTextColor on the rows where it reads", async () => {
+    for (const name of CLASSIC) {
+      const t = await themed(name, { nodeTextColor: name === 'dark' ? '#ffcc00' : '#002200' });
+      expect([t.value('erRowOddTextColor'), t.value('erRowEvenTextColor')], name).toEqual([
+        t.value('nodeTextColor'),
+        t.value('nodeTextColor'),
+      ]);
+    }
   });
 });

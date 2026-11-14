@@ -2,15 +2,15 @@
  * Every paint a block render uses, read from the theme before the root is written, so the
  * root's `style` declares exactly the aliases the body refers to (`theme.rootStyleText()`).
  *
- * Block has no theme table (spec #521, "No theme table"): it reads the shared rows v12's
- * `styles.ts` read, by name, and never a theme name or `look` (D152, D153). The redux and `neo`
+ * Block's theme table holds one flag (`blockCompositeClusterPaint`, #771); every colour is a
+ * shared row v12's `styles.ts` read, by name, and never a theme name or `look` (D152, D153). The redux and `neo`
  * families carry v12 neo's gradient (D182) and drop shadow, which go on every block's outline
  * (leaves, block arrows and composites), not on edges or labels (D227).
  */
 import type { Warning } from '@mermaid-js/core';
 import { checkStyle, type CheckedStyle, type OutlinePaint, type Paint } from '@mermaid-js/core/svg';
 import type { Theme } from '@mermaid-js/core/theme';
-import type { Block, BlockModel } from '../model.ts';
+import { isComposite, type Block, type BlockModel } from '../model.ts';
 import { arrowheads, type Arrowheads } from './arrowheads.ts';
 import { BLOCK_RENDER } from './metrics.ts';
 
@@ -55,6 +55,21 @@ export interface EdgePaint {
   readonly labelText: Paint;
 }
 
+/**
+ * A composite's paint where the theme carries no composite palette: v12's `.node .cluster`
+ * rule, `fade(clusterBkg, 0.5)` and `fade(clusterBorder, 0.2)`, as the variable and an opacity
+ * (#771). Its label keeps `nodeTextColor`: v12's label is a `g.label` beside the rect, which
+ * the `.cluster text` rule does not reach.
+ */
+export interface CompositePaint {
+  readonly fill: Paint;
+  readonly fillOpacity: number;
+  /** `clusterBorder`, or the theme's gradient where `useGradient` is on (D182). */
+  readonly stroke: OutlinePaint;
+  /** Undefined on the gradient, which v12 neo drew unfaded. */
+  readonly strokeOpacity: number | undefined;
+}
+
 export interface Paints {
   readonly font: Font;
   readonly fontSize: Length;
@@ -62,6 +77,12 @@ export interface Paints {
   readonly edge: EdgePaint;
   /** A composite's palette slot from its `colorIndex`, or undefined with no palette. */
   readonly slotOf: (colorIndex: number | undefined) => Tint | undefined;
+  /**
+   * The paint of a composite without a palette slot; undefined where the theme carries a
+   * palette or turns `blockCompositeClusterPaint` off, or the diagram has no composite, so no
+   * cluster variable reaches the root's style.
+   */
+  readonly composite: CompositePaint | undefined;
   /** A block's checked `classDef` and `style` declarations (R-SEC-3), one check per list. */
   readonly styleOf: (block: Block) => CheckedStyle;
 }
@@ -85,6 +106,34 @@ function paletteSlots(theme: Theme): Paints['slotOf'] {
       // v12 `genColor`: the fill is the slot's, not the order's, when the arrays differ.
       fill: bkg.length > 0 ? bkg[slot % bkg.length] : undefined,
     };
+  };
+}
+
+/** Whether `model` has a composite, without recursion (composites nest thousands deep). */
+function hasComposite(model: BlockModel): boolean {
+  const stack: Block[] = [...model.blocks];
+  while (stack.length > 0) {
+    const b = stack.pop()!;
+    if (isComposite(b)) return true;
+    for (const c of b.children) stack.push(c);
+  }
+  return false;
+}
+
+/**
+ * The composites' paint where the theme has no composite palette and turns
+ * `blockCompositeClusterPaint` on (#771, the classic family): decided by the variables, as
+ * {@link paletteSlots} is, never by theme name (D152). Off (the redux and neo families), a
+ * composite keeps the leaves' paint, as v12 `look: neo` drew it.
+ */
+function compositePaint(theme: Theme, model: BlockModel): CompositePaint | undefined {
+  if (theme.value('blockCompositeClusterPaint') !== 'true') return undefined;
+  if (theme.palette('borderColorArray').length > 0 || !hasComposite(model)) return undefined;
+  return {
+    fill: theme.color('clusterBkg'),
+    fillOpacity: BLOCK_RENDER.compositeFillOpacity,
+    stroke: theme.outline('clusterBorder'),
+    strokeOpacity: theme.gradient() ? undefined : BLOCK_RENDER.compositeStrokeOpacity,
   };
 }
 
@@ -139,6 +188,7 @@ export function paints(theme: Theme, model: BlockModel, warn: (w: Warning) => vo
     node,
     edge,
     slotOf: paletteSlots(theme),
+    composite: compositePaint(theme, model),
     styleOf: styleCache(model, warn),
   };
 }
