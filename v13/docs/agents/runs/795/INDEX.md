@@ -1,6 +1,6 @@
 # Run notes, spec #795 (classic-theme parity under `themeVariables` overrides)
 
-Integration branch `feature/795_classic-theme-parity` (from `mermaid-v13` at 10fc67ba3). Draft PR: opened after the first merge.
+Integration branch `feature/795_classic-theme-parity` (from `mermaid-v13` at 10fc67ba3). Draft PR: #826.
 
 Covers #761, #758, #771, #772, #773, #407, #434. The five maintainer decisions are settled on the recommended option (comment on #795, 2026-11-14): pin v12's literals; gantt option (a); restore ER's `tertiaryColor` label fill; regenerate the `base` baselines; D-ids from the next free block after D567. T7 records them.
 
