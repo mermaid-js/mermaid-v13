@@ -75,68 +75,6 @@ const keys = (theme: Classic, cases: readonly string[], names: readonly string[]
  * decision that accounts for it. Groups naming #795 wait on a maintainer decision (tickets/796.md).
  */
 const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
-  "#773 (T2): v12's named themes set mainBkg in the constructor; v13 derives it from primaryColor":
-    [
-      ...keys('default', both('primaryColor'), ['actorBkg', 'mainBkg']),
-      ...keys('dark', both('primaryColor'), ['actorBkg', 'mainBkg']),
-      ...keys('forest', both('primaryColor'), ['actorBkg', 'mainBkg']),
-      ...keys('neutral', both('primaryColor'), ['actorBkg', 'mainBkg']),
-    ],
-  '#798 (T2): another v12 constructor value, which no override moves; v13 derives it by a shared rule':
-    [
-      ...keys('default', ALL, [
-        'border1',
-        'gradientStart',
-        'gradientStop',
-        'primaryBorderColor',
-        'secondaryBorderColor',
-        'secondaryTextColor',
-        'tertiaryBorderColor',
-        'tertiaryTextColor',
-      ]),
-      ...keys('default', both('lineColor'), ['arrowheadColor']),
-      ...keys('default', ['background:dark'], ['errorTextColor']),
-      ...keys('default', ['darkMode'], ['errorBkgColor', 'noteBkgColor']),
-      ...keys('dark', ALL, [
-        'border1',
-        'gradientStart',
-        'gradientStop',
-        'primaryBorderColor',
-        'secondaryBorderColor',
-        'tertiaryBorderColor',
-        'tertiaryTextColor',
-      ]),
-      ...keys('dark', both('lineColor'), ['arrowheadColor', 'defaultLinkColor']),
-      ...keys('dark', both('secondaryColor'), ['noteBkgColor']),
-      ...keys('forest', ALL, [
-        'border1',
-        'gradientStart',
-        'gradientStop',
-        'primaryBorderColor',
-        'secondaryBorderColor',
-        'secondaryTextColor',
-        'tertiaryBorderColor',
-      ]),
-      ...keys('forest', ['tertiaryColor:dark', ...both('primaryTextColor')], ['tertiaryTextColor']),
-      ...keys('forest', ['background:dark'], ['errorTextColor']),
-      ...keys('forest', ['darkMode'], ['errorBkgColor', 'noteBkgColor']),
-      ...keys('neutral', ALL, [
-        'border1',
-        'gradientStart',
-        'gradientStop',
-        'primaryBorderColor',
-        'secondaryBorderColor',
-        'secondaryTextColor',
-        'tertiaryBorderColor',
-      ]),
-      ...keys(
-        'neutral',
-        ['tertiaryColor:dark', ...both('primaryTextColor')],
-        ['tertiaryTextColor']
-      ),
-      ...keys('neutral', ['background:dark'], ['errorTextColor']),
-      ...keys('neutral', ['darkMode'], ['errorBkgColor']),
-    ],
   "D29 (R-THEME-9): v13 meets AA where v12 does not: dark's #b8b6b6 text on #474949 (4.49:1) and #585858 label fill under #ccc text (4.43:1); base's #333 node text on a dark primaryColor":
     [
       ...keys('dark', ALL, ['edgeLabelBackground', 'noteTextColor', 'secondaryTextColor']),

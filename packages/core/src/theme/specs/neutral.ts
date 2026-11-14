@@ -34,6 +34,18 @@ const theme: ThemeSpec = {
   },
   rules: gitLabelRules('#030303', '#d4d4d4'),
   values: {
+    // v12 theme-neutral.js sets these in its constructor and never recomputes them, so no base
+    // colour moves them (#773, #798): the node fill, the borders, the inverted text inks, and
+    // the error colours, which darkMode leaves alone.
+    mainBkg: '#eeeeee',
+    border1: '#999999',
+    primaryBorderColor: '#d4d4d4',
+    secondaryBorderColor: '#e3e3e3',
+    tertiaryBorderColor: '#d4d4d4',
+    secondaryTextColor: '#030303',
+    tertiaryTextColor: '#111111',
+    errorBkgColor: '#552222',
+    errorTextColor: '#552222',
     // v12 titles and legends: `taskTextDarkColor`.
     headingTextColor: '#333333',
     nestedBkg: '#f4f4f4', // v12 `altBackground` (#192)

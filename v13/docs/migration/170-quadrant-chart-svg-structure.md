@@ -28,9 +28,5 @@ where v12 and v13 differ; the other themes keep v12's colour.
 
 | Theme | v12 | v13 |
 | --- | --- | --- |
-| `default` | `#c7c7f1` | `#c9c9d9` |
-| `dark` | `#cccccc` | `#4c4d4d` |
-| `forest` | `#abb594` | `#aec281` |
-| `neutral` | `#d4d4d4` | `#cacaca` |
 | `base` | `#eeddbb` | `#d9cfbc` |
 | `redux`, `redux-color` | `#171717` | `#28253d` |

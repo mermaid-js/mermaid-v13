@@ -201,15 +201,8 @@ const OVERRIDES: readonly Override[] = [
       'core: base’s primaryTextColor is its own #333333, where v12 switched it to #eeeeee under darkMode (core behaviour for every type, as quadrant’s MIGRATION row says)'
     ),
   },
-  {
-    label: 'dark + primaryColor',
-    theme: 'dark',
-    vars: { primaryColor: '#123456' },
-    differs: each(
-      ['wardleyComponentFill', 'wardleyAnnotationFill'],
-      'core: mainBkg follows primaryColor, where v12 dark fixed it at #1f2020'
-    ),
-  },
+  // dark pins v12's mainBkg #1f2020 (#798), so primaryColor leaves the fills as v12 did.
+  { label: 'dark + primaryColor', theme: 'dark', vars: { primaryColor: '#123456' }, differs: {} },
   {
     label: 'default + background',
     theme: 'default',
