@@ -530,13 +530,13 @@ export default {
         }
       ],
       [
-        "[ ]*\"\"",
+        "[ \\t]*\"\"",
         {
           "token": "delimiter"
         }
       ],
       [
-        "[ ]*\"",
+        "[ \\t]*\"",
         {
           "token": "string",
           "next": "@string"
@@ -581,6 +581,13 @@ export default {
         "\"",
         {
           "token": "string",
+          "next": "@pop"
+        }
+      ],
+      [
+        "(?=\\n[ \\t]*(?:Enterprise_Boundary|ComponentQueue_Ext|ContainerQueue_Ext|Container_Boundary|UpdateElementStyle|UpdateLayoutConfig|ComponentDb_Ext|ContainerDb_Ext|Deployment_Node|SystemQueue_Ext|System_Boundary|ComponentQueue|ContainerQueue|UpdateRelStyle|Component_Ext|Container_Ext|SystemDb_Ext|ComponentDb|ContainerDb|SystemQueue|Person_Ext|System_Ext|Component|Container|Rel_Right|Boundary|RelIndex|Rel_Back|Rel_Down|Rel_Left|SystemDb|Node_L|Node_R|Person|Rel_Up|System|BiRel|Rel_D|Rel_L|Rel_R|Rel_U|Node|Rel)\\()",
+        {
+          "token": "",
           "next": "@pop"
         }
       ],
@@ -647,6 +654,13 @@ export default {
         {
           "token": "annotation",
           "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "(?=\\n[ \\t]*(?:Enterprise_Boundary|ComponentQueue_Ext|ContainerQueue_Ext|Container_Boundary|UpdateElementStyle|UpdateLayoutConfig|ComponentDb_Ext|ContainerDb_Ext|Deployment_Node|SystemQueue_Ext|System_Boundary|ComponentQueue|ContainerQueue|UpdateRelStyle|Component_Ext|Container_Ext|SystemDb_Ext|ComponentDb|ContainerDb|SystemQueue|Person_Ext|System_Ext|Component|Container|Rel_Right|Boundary|RelIndex|Rel_Back|Rel_Down|Rel_Left|SystemDb|Node_L|Node_R|Person|Rel_Up|System|BiRel|Rel_D|Rel_L|Rel_R|Rel_U|Node|Rel)\\()",
+        {
+          "token": "",
+          "next": "@pop"
         }
       ],
       [

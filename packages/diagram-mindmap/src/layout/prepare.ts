@@ -1,15 +1,17 @@
 /**
  * MindmapModel → LayoutGraph (DESIGN §6.1, spec #294 T3): measures every label with core's
- * label layout (markdown on, D225) in the font it is drawn in, sizes each shape with v12's
+ * label layout (D225; modes as in v12, D564) in the font it is drawn in, sizes each shape with v12's
  * formulas (D287), reserves the `::icon()` slot (D297), and joins each node to its parent.
  * Every length comes from the metrics table through the render's unit profile (pitfall 13).
  */
 import type { LayoutEdge, LayoutGraph, LayoutNode } from '@mermaid-js/core/layout';
 import { fromPx } from '@mermaid-js/core/layout';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { tagsOnly } from '@mermaid-js/core/text/tags-only';
 import type { MindmapModel, MindmapShape } from '../model.ts';
 import type { MindmapLayoutContext } from './context.ts';
 import { MINDMAP_METRICS, type ShapeMetrics } from './metrics.ts';
+import { v12Label } from '@mermaid-js/core/text/v12-label';
 import { bangOutline, cloudOutline, outlineBox, type Outline, type Point } from './outline.ts';
 
 /** A config value the layout can't honour (pitfall 22): it lays out with the default instead. */
@@ -208,7 +210,9 @@ function iconText(b: Build, raw: string): IconText {
   const side = b.px(MINDMAP_METRICS.icon.glyph, 'x');
   const text = raw.trim();
   const at = (size: number): MeasuredLabel =>
-    layoutLabel(text, { ...b.font, size }, Number.MAX_SAFE_INTEGER, b.ctx.measurer);
+    layoutLabel(text, { ...b.font, size }, Number.MAX_SAFE_INTEGER, b.ctx.measurer, {
+      inline: tagsOnly(b.ctx.inline),
+    });
   const full = at(b.font.size);
   const fit = Math.min(1, side / Math.max(full.width, 1), side / Math.max(full.height, 1));
   if (fit >= 1) return { text: full, size: b.font.size };
@@ -219,8 +223,11 @@ function iconText(b: Build, raw: string): IconText {
 function nodeView(b: Build, model: MindmapModel, index: number): MindmapNodeView {
   const node = model.nodes[index]!;
   // v12's HTML labels kept a long word whole and widened the node (#649).
-  const label = layoutLabel(node.label, b.font, b.wrap, b.ctx.measurer, {
-    markdown: true,
+  // Bullets and inline code are read in a markdown string only (D564).
+  const [shown, mode] =
+    node.markdown === true ? [node.label, { markup: 'markdown' as const }] : v12Label(node.label);
+  const label = layoutLabel(shown, b.font, b.wrap, b.ctx.measurer, {
+    ...mode,
     inline: b.ctx.inline,
     keepWords: b.ctx.units.id !== 'cell',
   });

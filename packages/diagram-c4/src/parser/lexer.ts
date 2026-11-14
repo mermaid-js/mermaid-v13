@@ -61,6 +61,7 @@ import {
   SEMI,
   SourceOffsets,
   SPACE,
+  TAB,
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
 import type { Hole, Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
@@ -391,6 +392,40 @@ class C4Lexer {
     return j;
   }
 
+  /** The end of the run of U+0020 and U+0009 (`[ \t]*`) from `q`. */
+  private blanksAndTabs(q: number): number {
+    let j = q;
+    for (let c = this.text.charCodeAt(j); c === SPACE || c === TAB; c = this.text.charCodeAt(++j));
+    return j;
+  }
+
+  /**
+   * #681: the end of the text a quoted value takes, `[^"]*` from `q` (`end`, the next quote or
+   * the end of the text), unless a line in it starts a statement: that is where an unclosed
+   * string stops, at the line break before it. v12 read on to the next quote, so a quote left
+   * open swallowed the statements after it, up to the quote of one of them.
+   */
+  private stringEnd(q: number, end: number): number {
+    for (
+      let l = this.text.indexOf('\n', q);
+      l !== -1 && l < end;
+      l = this.text.indexOf('\n', l + 1)
+    ) {
+      if (this.startsMacro(l + 1)) return l;
+    }
+    return end;
+  }
+
+  /** Whether a macro's name and its `(` follow the blanks at `q`. */
+  private startsMacro(q: number): boolean {
+    const { text } = this;
+    const s = this.blanksAndTabs(q);
+    let e = s;
+    while (e <= s + KEYWORD_MAX && isWord(text.charCodeAt(e))) e++;
+    const kind = KEYWORDS.get(text.slice(s, e));
+    return kind !== undefined && !HEADERS.has(kind) && text.charCodeAt(e) === LPAREN;
+  }
+
   /** The first `c` at or after `q`, or the end of the text. */
   private find(c: string, q: number): number {
     const e = this.text.indexOf(c, q);
@@ -614,23 +649,23 @@ class C4Lexer {
       else this.emit(T.Comma, p, p + 1);
       return;
     }
-    // `[ ]*""`, `[ ]*"`, `[ ]*\$`.
-    const e = this.spaces(p);
-    const d = text.charCodeAt(e);
-    if (d === DQUOTE) {
-      if (text.charCodeAt(e + 1) === DQUOTE) this.emit(T.AttributeEmpty, p, e + 2);
-      else this.begin(T.QuoteOpen, e + 1, S.STRING);
+    // `[ \t]*""`, `[ \t]*"` (#681: v12's `[ ]*` left the quotes in the text after a tab),
+    // `[ ]*\$`.
+    const q = this.blanksAndTabs(p);
+    if (text.charCodeAt(q) === DQUOTE) {
+      if (text.charCodeAt(q + 1) === DQUOTE) this.emit(T.AttributeEmpty, p, q + 2);
+      else this.begin(T.QuoteOpen, q + 1, S.STRING);
       return;
     }
-    if (d === DOLLAR) {
+    const e = this.spaces(p);
+    if (text.charCodeAt(e) === DOLLAR) {
       this.begin(T.KeyStart, e + 1, S.STRING_KV);
       return;
     }
     // D452: a line break ends the arguments (the macro is left open, for the parser to
     // report); it lexes in INITIAL.
     if (c === LF) {
-      this.stack.length = 0;
-      this.state = S.INITIAL;
+      this.leaveArguments();
       return;
     }
     // `[^,)\n]+` (D452; v12's `[^,]+` ran over `)` and line breaks to the next comma).
@@ -647,10 +682,24 @@ class C4Lexer {
     return j;
   }
 
-  /** `"` closes; `[^"]*` is the text, line breaks included. */
+  /**
+   * `"` closes; `[^"]*` is the text, line breaks included, up to the line break before a line
+   * that starts a statement (#681); the arguments end there, open.
+   */
   private string(c: number): void {
-    if (c === DQUOTE) this.pop(T.QuoteClose, this.p + 1);
-    else this.emit(T.Str, this.p, this.find('"', this.p));
+    if (c === DQUOTE) {
+      this.pop(T.QuoteClose, this.p + 1);
+      return;
+    }
+    const end = this.stringEnd(this.p, this.find('"', this.p));
+    if (end > this.p) this.emit(T.Str, this.p, end);
+    if (this.text.charCodeAt(end) === LF) this.leaveArguments();
+  }
+
+  /** A line break ended the arguments: the macro stays open, for the parser to report. */
+  private leaveArguments(): void {
+    this.stack.length = 0;
+    this.state = S.INITIAL;
   }
 
   /** `=[ ]*"` opens the value (jison pops `string_kv_key` and begins `string_kv_value`). */
@@ -670,7 +719,11 @@ class C4Lexer {
     if (c === DQUOTE) {
       this.pop(T.ValueClose, this.p + 1);
       this.popState();
-    } else this.emit(T.StrValue, this.p, this.find('"', this.p));
+    } else {
+      const end = this.stringEnd(this.p, this.find('"', this.p));
+      if (end > this.p) this.emit(T.StrValue, this.p, end);
+      if (this.text.charCodeAt(end) === LF) this.leaveArguments();
+    }
   }
 
   /** `}` closes; `[^\}]*` is the text, line breaks included. */

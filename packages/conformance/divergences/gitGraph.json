@@ -1,0 +1,58 @@
+[
+  {
+    "id": "e2e/diagrams/git/baseline/text/entity-codes-in-ids-and-tags.mmd",
+    "inputHash": "sha256:7a663dcda4479c5b",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "quirk 92",
+    "inputHash": "sha256:cfa3c9fb63e0fb00",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "quirk 92 (CRLF)",
+    "inputHash": "sha256:fd04a4529b222e18",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "quirk 92 (commented)",
+    "inputHash": "sha256:8003776ac637d7de",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/text/entity-codes-in-ids-and-tags.mmd",
+    "inputHash": "sha256:7a663dcda4479c5b",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/text/entity-codes-in-ids-and-tags.mmd (CRLF)",
+    "inputHash": "sha256:eb82a4dde78aee14",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/baseline/text/entity-codes-in-ids-and-tags.mmd (commented)",
+    "inputHash": "sha256:235c9fa46a1791e1",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  }
+]

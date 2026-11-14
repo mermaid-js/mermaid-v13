@@ -62,5 +62,13 @@
     "reason": "v12 files a composite under itself (or under a state inside it) when a transition written inside it names it, then hangs or throws at layout; v13 keeps the composite where it was declared, so `parent` differs (D555).",
     "owner": "D555",
     "since": "2026-11-12"
+  },
+  {
+    "id": "e2e/diagrams/state-diagram-v2/baseline/text/entity-names.mmd",
+    "inputHash": "sha256:d24696768619defe",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
   }
 ]

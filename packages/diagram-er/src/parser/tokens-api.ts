@@ -1,7 +1,7 @@
 import { Kind } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
+import { decodePlaceholders } from '@mermaid-js/core/parser-kit/support';
 import { lex } from './lexer.ts';
-import { decodeEntities } from './view.ts';
 
 export interface ErToken {
   /** A `T` kind or a shared `Kind`. */
@@ -28,7 +28,7 @@ export function erTokens(src: string): ErToken[] {
     const text = view.text.slice(textStart[j], textEnd[j]);
     out.push({
       kind,
-      text: decodeEntities(text),
+      text: decodePlaceholders(text),
       range: { start: tokens.start[j] ?? 0, end: tokens.end[j] ?? 0 },
     });
   }

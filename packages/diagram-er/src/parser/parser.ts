@@ -38,11 +38,11 @@ import type {
   ErStatementNode,
   ErSubgraphNode,
 } from './ast.ts';
+import { decodePlaceholders } from '@mermaid-js/core/parser-kit/support';
 import { lex } from './lexer.ts';
 import type { LexResult } from './lexer.ts';
 import { attributeId, ErBuilder } from './model.ts';
 import type { ErAttribute, ErCardinality, ErDirection, ErDocItem, ErModel } from './model.ts';
-import { decodeEntities } from './view.ts';
 import { T } from './tokens.ts';
 
 export interface ErParseOptions extends ParseOptions {
@@ -272,7 +272,7 @@ class ErParser {
   private text(): string {
     const { textStart, textEnd, view } = this.lexed;
     const p = this.c.pos;
-    return decodeEntities(view.text.slice(textStart[p] ?? 0, textEnd[p] ?? 0));
+    return decodePlaceholders(view.text.slice(textStart[p] ?? 0, textEnd[p] ?? 0));
   }
 
   /** The current token's source range, without the blanks a token such as `end` takes. */

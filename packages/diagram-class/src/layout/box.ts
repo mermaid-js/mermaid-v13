@@ -14,6 +14,7 @@ import {
 } from '@mermaid-js/core/text';
 import type { ClassMember, ClassNode } from '../parser/model.ts';
 import { memberDisplay } from '../parser/member.ts';
+import { v12Label } from '@mermaid-js/core/text/v12-label';
 
 /** One line of text in a class box. */
 export interface ClassRow {
@@ -80,9 +81,9 @@ export const classTitle = (node: ClassNode): string =>
   node.type ? `${node.label}<${node.type}>` : node.label;
 
 /**
- * Measures one class box. Text goes through core's label layout as markdown, as v12's
- * `addText` passed it to `createText` with markdown on: `**bold**`, `_italic_`, `<br>` and
- * the HTML subset are read, and `List<T>` stays text (only known tags are tags).
+ * Measures one class box. Text goes through core's label layout in the `emphasis` mode, as
+ * v12's `addText` passed it to `createText` with markdown on: `**bold**`, `_italic_`, `<br>`
+ * and the HTML subset are read, and `List<T>` stays text (only known tags are tags).
  *
  * Heights follow v12's `classBox` (P = padding, rows = the compartment's text):
  * - header: P, the annotation and the name, P;
@@ -98,8 +99,10 @@ export function measureBox(
   m: BoxMetrics,
   inline?: InlineSpans
 ): ClassBoxGeometry {
-  const measure = (text: string, style: StyleBits): MeasuredLabel =>
-    layoutLabel(text, font, Infinity, measurer, { markdown: true, style, inline });
+  const measure = (text: string, style: StyleBits): MeasuredLabel => {
+    const [shown, mode] = v12Label(text);
+    return layoutLabel(shown, font, Infinity, measurer, { ...mode, style, inline });
+  };
   // A blank row (`class A[" "]`) still takes a line.
   const { lineHeight } = measurer.metrics(font);
   const tall = (label: MeasuredLabel): number => Math.max(label.height, lineHeight);

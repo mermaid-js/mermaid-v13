@@ -1,0 +1,9 @@
+---
+description: >-
+  punctuation entity names in transition and state text draw as their
+  characters (#396); a name core does not know draws as written (D561)
+---
+stateDiagram-v2
+  A --> B: foo#colon; bar
+  B --> C: unknown #bogus; stays
+  C: a #semi; b #num;1

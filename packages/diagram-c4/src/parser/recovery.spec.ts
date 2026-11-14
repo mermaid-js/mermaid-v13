@@ -198,6 +198,18 @@ const CASES: Case[] = [
     keeps: ['a', 'b'],
   },
   {
+    name: 'an unclosed string, then statements (#681): it stops before the next one',
+    lines: ['C4Context', 'Person(a, "A)', P('b'), P('c')],
+    errors: [['UNCLOSED_STRING', 2]],
+    keeps: ['b', 'c'],
+  },
+  {
+    name: 'an unclosed named value, then a boundary (#681)',
+    lines: ['C4Context', 'Person(a, "A", $descr="d)', '  Boundary(b, "B") {', P('c'), '}'],
+    errors: [['UNCLOSED_STRING', 2]],
+    keeps: ['b', 'c'],
+  },
+  {
     name: 'an open named value runs to the end',
     lines: ['C4Context', P('a'), 'Person(b, "B", $k="v'],
     errors: [['UNCLOSED_STRING', 3]],

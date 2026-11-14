@@ -40,6 +40,14 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   text with the `topAxis` statement failed. v13 accepts it and draws the top axis, as
   `gantt.topAxis` does. A listed parity divergence; nothing that rendered in v12 changes.
 
+### Text
+
+- **Entity codes are decoded (D563):** `#35;`, `#quot;`, `#lt;` and `#9829;` in the title, a
+  section name or a task label draw `#`, `"`, `<` and `♥`, as in v12. Markup and `\n` are still
+  shown as written, as v12 drew them with `.text()`. A reference typed with `&` (`&amp;`) is
+  decoded too; v12 showed it as written. A `#name;` Mermaid does not know stays as written
+  (D561).
+
 ### Config
 
 - **Honoured:** `titleTopMargin`, `barHeight`, `barGap`, `topPadding`, `rightPadding`,
@@ -75,6 +83,13 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   the bands from `cScale0`/`cScale1`; those are not carried, so gantt colours differ from v12
   most in `default`, `dark`, `forest` and `neutral` (bars are the theme's `primaryColor`, text
   `textColor`). Set the variables in `themeVariables` for v12's look.
+- **Contrast in the classic themes (D574):** with bars in the pale `primaryColor`, the classic
+  family (`default`, `dark`, `forest`, `neutral`, `base`) draws the `vert` marker and its label
+  and the active bar's outline in `lineColor`. Text on a critical bar has its own variable,
+  `critTextColor` (new in v13; `taskTextColor` in every theme), which the classic family turns
+  black where `taskTextColor` misses WCAG AA on red; text on the other bars stays
+  `taskTextColor`. Under `dark`, the critical fill is `#990000`, so the light text reads on it,
+  and text on active and done bars is white where `textColor` misses AA (R-THEME-9).
 - **`taskTextClickableColor` is gone:** a clickable label is v12's `#003163` in every theme, a
   constant. The variable is ignored (R-CONF-5).
 - **No gradient or shadow (D278):** `neo` and `neo-dark` take neo colours only, as v12.

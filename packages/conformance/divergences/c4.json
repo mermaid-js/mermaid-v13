@@ -467,23 +467,15 @@
     "id": "c4-cases/tab-after-comma",
     "inputHash": "sha256:ecc3fc3cdb8a1663",
     "kind": "model",
-    "reason": "v12's unquoted argument (`[^,]+`) ran over `)` and line breaks to the next comma, taking in what followed; v13 stops it at `)` and at the line end (D452, #539; a lexer-parity exclusion).",
-    "owner": "#539",
+    "reason": "v12's `[ ]*\"` took no tab, so a quote after one stayed in the unquoted argument (`\"A\"` with its quotes); v13's quoted value opens after a tab or a blank, so the label is `A` (#681; a lexer-parity exclusion).",
+    "owner": "#681",
     "since": "2026-11-09"
   },
   {
     "id": "c4-cases/no-escapes",
     "inputHash": "sha256:d02a8155e757f9fa",
     "kind": "accept",
-    "reason": "v12's unquoted argument (`[^,]+`) ran over `)` and line breaks to the next comma, taking in what followed; v13 stops it at `)` and at the line end (D452, #539; a lexer-parity exclusion).",
-    "owner": "#539",
-    "since": "2026-11-09"
-  },
-  {
-    "id": "c4-cases/unclosed-quote-runs-to-end",
-    "inputHash": "sha256:848913f613f5416a",
-    "kind": "accept",
-    "reason": "v12's unquoted argument (`[^,]+`) ran over `)` and line breaks to the next comma, taking in what followed; v13 stops it at `)` and at the line end (D452, #539; a lexer-parity exclusion).",
+    "reason": "v12 rejected `\"A \\\"q\\\" B\"` (its unquoted `q\\\" B\"` ran to the end); v13 stops the unquoted argument at `)`, accepts the text as written (a backslash does not escape a quote) and warns with `C4_QUOTE_IN_ARGUMENT` (D452, #681).",
     "owner": "#539",
     "since": "2026-11-09"
   },
@@ -515,7 +507,7 @@
     "id": "c4-cases/dollar-in-quotes",
     "inputHash": "sha256:2ebc2346be04d4f2",
     "kind": "accept",
-    "reason": "v12's unquoted argument (`[^,]+`) ran over `)` and line breaks to the next comma, taking in what followed; v13 stops it at `)` and at the line end (D452, #539; a lexer-parity exclusion).",
+    "reason": "v12 rejected `\"$k=\\\"v\\\"\"` (its unquoted `v\\\"\"` ran to the end); v13 stops the unquoted argument at `)`, accepts the text as written and warns with `C4_QUOTE_IN_ARGUMENT` (D452, #681).",
     "owner": "#539",
     "since": "2026-11-09"
   },
@@ -781,6 +773,14 @@
     "kind": "model",
     "reason": "v12 merged a relation that repeats a from/to pair into the first (the last label and kind won, an earlier technology stayed, and C4Dynamic lost the step); v13 keeps every relation statement as a relation of its own (D458 amended, #680, MIGRATION.md).",
     "owner": "#680",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "e2e/diagrams/c4/pr-check/quotes.mmd",
+    "inputHash": "sha256:57e53432affdcd9b",
+    "kind": "model",
+    "reason": "12.2.0 read `\"Web \\\"shop\\\"\"` as a quoted `Web \\` and an unquoted `shop\\\"\"` that ran on over the line break to the next comma, so the statements after it were swallowed; v13 stops the unquoted argument at `)`, keeps the text as written and warns with `C4_QUOTE_IN_ARGUMENT`; a tab before an opening quote is a blank where v12 left the quotes in the text (#681, D452; a lexer-parity exclusion, MIGRATION.md).",
+    "owner": "#681",
     "since": "2026-11-13"
   }
 ]

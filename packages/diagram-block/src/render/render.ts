@@ -7,7 +7,9 @@
  *   as v12 inserted them), each a `g.node` translated to its centre with `data-id`, `data-ast`
  *   and v12's classes (`node <classes or default> flowchart-label`): its shape (`label-container`;
  *   a composite's is `rect.basic.cluster.composite.label-container` and its `g.node` carries
- *   the palette slot's `data-color-id`; a block arrow's `polygon.label-container.block-arrow`),
+ *   the palette slot's `data-color-id`, or without a palette the rect is filled `clusterBkg`
+ *   at 0.5 and stroked `clusterBorder` at 0.2 (#771); a block arrow's
+ *   `polygon.label-container.block-arrow`),
  *   then its label in a `g.label`. Spaces draw nothing;
  * - after every block, each edge as a `path.flowchart-link` (`edge-thickness-*`,
  *   `edge-pattern-*`) with `data-id` and `data-ast`, its arrowheads inline after it;
@@ -18,14 +20,14 @@
  * `data-ast` marks one element per drawn AST node (pitfall 12): each block's `g.node` and each
  * edge's `path`; labels carry `data-id` only.
  */
-import { translate, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
+import { translate, type Attrs, type CheckedStyle, type SvgWriter } from '@mermaid-js/core/svg';
 import { openSvgRoot } from '@mermaid-js/core/svg/document';
 import type { BlockLayout, BlockNodeLayout, PlacedLabel } from '../layout/types.ts';
 import { isComposite, type Block, type BlockModel } from '../model.ts';
 import { drawShape } from '../shapes/draw.ts';
 import type { BlockRenderContext } from './context.ts';
 import { drawEdge, drawEdgeLabel } from './edges.ts';
-import { paints, type Paints } from './paint.ts';
+import { paints, type Paints, type Tint } from './paint.ts';
 
 /** What every section of one render draws from. */
 export interface Scene {
@@ -98,12 +100,36 @@ function nodeClass(block: Block): string {
   return out + (any ? '' : ' default') + ' flowchart-label';
 }
 
+/**
+ * A block's outline paint: a composite's palette slot, else (without one) the cluster paint
+ * (#771), else the leaves'. The author's `style` and `classDef` win over all of them (spread
+ * after); an author's fill or stroke is opaque, as v12's inline style replaced the faded colour.
+ */
+function outlinePaint(
+  paint: Paints,
+  style: CheckedStyle,
+  slot: Tint | undefined,
+  composite: boolean
+): Attrs {
+  const frame = composite && !slot ? paint.composite : undefined;
+  return {
+    fill: slot?.fill ?? frame?.fill ?? paint.node.fill,
+    'fill-opacity': style.shape.fill === undefined ? frame?.fillOpacity : undefined,
+    stroke: slot?.stroke ?? frame?.stroke ?? paint.node.stroke,
+    'stroke-opacity': style.shape.stroke === undefined ? frame?.strokeOpacity : undefined,
+    'stroke-width': paint.node.strokeWidth,
+    filter: paint.node.shadow,
+    ...style.shape,
+  };
+}
+
 /** One block: its `g.node`, its shape, then its label. A space draws nothing. */
 function drawNode({ w, ctx, paint }: Scene, b: BlockNodeLayout, block: Block): void {
   const { shape, outline } = b;
   if (shape === 'space' || !outline) return;
   const style = paint.styleOf(block);
-  const slot = isComposite(block) ? paint.slotOf(b.colorIndex) : undefined;
+  const composite = isComposite(block);
+  const slot = composite ? paint.slotOf(b.colorIndex) : undefined;
   w.open('g', {
     class: nodeClass(block),
     'data-id': b.id,
@@ -111,14 +137,7 @@ function drawNode({ w, ctx, paint }: Scene, b: BlockNodeLayout, block: Block): v
     'data-color-id': slot?.id,
     transform: translate(b.centre.x, b.centre.y),
   });
-  // The author's `style` and `classDef` win over the palette and the theme (spread after).
-  const outlineAttrs: Attrs = {
-    fill: slot?.fill ?? paint.node.fill,
-    stroke: slot?.stroke ?? paint.node.stroke,
-    'stroke-width': paint.node.strokeWidth,
-    filter: paint.node.shadow,
-    ...style.shape,
-  };
+  const outlineAttrs = outlinePaint(paint, style, slot, composite);
   drawShape(w, shape, outline, {
     outline: outlineAttrs,
     line: { stroke: outlineAttrs.stroke, 'stroke-width': outlineAttrs['stroke-width'] },

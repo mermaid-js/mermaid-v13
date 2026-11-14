@@ -25,6 +25,9 @@ export const FIXTURES: readonly string[] = Object.keys(SOURCES)
   .map((k) => k.slice(ROOT.length, -'.mmd'.length))
   .sort();
 
+/** The raw text of the fixture at `path` (front matter included), or undefined. */
+export const fixtureSource = (path: string): string | undefined => SOURCES[`${ROOT}${path}.mmd`];
+
 /** The fixture at `path`, parsed; it must parse. */
 export function fixture(path: string): ParsedBlock {
   const source = SOURCES[`${ROOT}${path}.mmd`];

@@ -63,5 +63,10 @@ export function hover(
     ...(o ? { symbol: { name: o.name, kind: o.kind, role: o.role, range: o.range } } : {}),
   };
   // Even with no token: a keyword the lexer emits no token for (`call`) is the facet's to find.
-  return facet.hover(target, doc);
+  // A facet whose hover throws (a third-party one) gives no hover: no query throws (R-LANG-4).
+  try {
+    return facet.hover(target, doc);
+  } catch {
+    return undefined;
+  }
 }

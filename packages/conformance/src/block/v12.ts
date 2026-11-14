@@ -10,7 +10,7 @@
  *   renumbered by first appearance in a pre-order walk, as v13's `id-<n>` are, so the two
  *   compare by position; a space cell keeps its `-<j>` suffix and its label (the space's id).
  */
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12DecodeEntities } from '../v12-entities.ts';
 
 /** `diagram.type` values mermaid\@12 reports for block sources. */
 export const BLOCK_V12_TYPES = ['block'];
@@ -99,7 +99,7 @@ export function renumber(blocks: BlockSnapshotNode[], ids: IdNumbering): BlockSn
   });
 }
 
-const text = (v: unknown): string => (typeof v === 'string' ? decodeEntities(v) : '');
+const text = (v: unknown): string => (typeof v === 'string' ? v12DecodeEntities(v) : '');
 
 function node(b: BlockV12): BlockSnapshotNode {
   return {

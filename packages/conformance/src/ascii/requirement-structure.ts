@@ -134,8 +134,14 @@ type Label = RequirementCellLayout['requirement']['boxes'][number]['lines'][numb
 const linesOf = (label: Label): string[] =>
   label.lines.map((line) => line.map((run) => run.text).join(''));
 
-/** What the drawing of `layout` should show: its views' measured text. */
-export function requirementExpectedOf(layout: RequirementCellLayout): RequirementExpected {
+/**
+ * What the drawing of `layout` should show: its views' measured text, and `title` as written,
+ * which is how text output prints it (D82).
+ */
+export function requirementExpectedOf(
+  layout: RequirementCellLayout,
+  title?: string
+): RequirementExpected {
   const r = layout.requirement;
   return {
     boxes: r.boxes.map((b) => ({
@@ -143,6 +149,6 @@ export function requirementExpectedOf(layout: RequirementCellLayout): Requiremen
       body: b.lines.filter((l) => l.align === 'start').flatMap((l) => linesOf(l.label)),
     })),
     edgeLabels: r.relations.flatMap((e) => linesOf(e.label)).filter((s) => s.trim() !== ''),
-    texts: r.title ? [linesOf(r.title).join(' ')] : [],
+    texts: title?.trim() ? [title.trim()] : [],
   };
 }

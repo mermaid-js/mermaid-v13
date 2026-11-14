@@ -7,6 +7,7 @@
 import { Kind, kindSet } from '@mermaid-js/core/parser-kit';
 import type { Probe, TokenView } from '@mermaid-js/core/parser-kit';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
+import { ampEntities } from '@mermaid-js/core/parser-kit/support';
 import { lex, NO_VIEW } from './lexer.ts';
 import { T } from './tokens.ts';
 import { stateView } from './view.ts';
@@ -23,15 +24,6 @@ const NO_TERMINAL = kindSet(
 );
 /** Of those, the kinds that belong to the terminal after them. */
 const LEADING = kindSet(T.State, T.AccDescrOpen);
-
-/**
- * `#name;` and `#123;` as v12's renderer read them: v12 turned them into placeholders before
- * lexing and back into `&name;` / `&#123;` after.
- */
-function decodeEntities(text: string): string {
-  if (!text.includes('#')) return text;
-  return text.replace(/#(\w+);/g, (_, w: string) => (/^\+?\d+$/.test(w) ? `&#${w};` : `&${w};`));
-}
 
 /** Parser tokens: the terminals, each with its own range and the range it covers. */
 export interface Tokens extends TokenView {
@@ -85,7 +77,7 @@ export function terminals(
     from.push(lead >= 0 ? lead : s);
     // A `;` right after a token is one v12 dropped: it belongs to the statement.
     to.push(view.drops.has(e) ? e + 1 : e);
-    text.push(decodeEntities(view.text.slice(Math.min(a, b), b)));
+    text.push(ampEntities(view.text.slice(Math.min(a, b), b)));
     lead = -1;
     prevKind = k;
   }

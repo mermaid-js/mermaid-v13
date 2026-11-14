@@ -18,9 +18,10 @@ import { agreement, corpus, highlighters, ROOT } from './agreement-testing.ts';
  * Where the highlighters, which read the source, cannot follow the box-drawing pass (D486): on a
  * box-drawn line the lexer's INDENTATION covers the whole `├── ` prefix the pass rewrote into an
  * indent, while the grammars read its glyphs as a name. INDENTATION has no other non-blank
- * character, so these are the box prefixes alone.
+ * character, so these are the box prefixes alone. The sample named is the corpus's first
+ * box-drawn line in path order: the `├` of `entity-codes-box.mmd` (#779).
  */
-const BOX = '/e2e/diagrams/tree-view/nightly-check/box-convert-a-simple-tree.mmd at 20';
+const BOX = '/e2e/diagrams/tree-view/baseline/text/entity-codes-box.mmd at 176';
 const BOX_PREFIX = Object.fromEntries(
   ['Lezer', 'Monarch', 'TextMate'].map((h) => [
     `${h}: Indentation is Other, highlighted Variable`,

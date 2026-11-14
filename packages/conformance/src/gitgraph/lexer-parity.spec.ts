@@ -6,7 +6,7 @@ import {
   gitGraphTokens,
   LANGIUM_NAMES,
 } from '@mermaid-js/diagram-gitgraph/testing';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12TokenText } from '../v12-entities.ts';
 import { LANGIUM_LEXERS, loadLangiumLexerOracle } from '../langium-lexer.ts';
 import { rowOf } from '../tables.ts';
 import type { LangiumLex, LangiumToken } from '../langium-lexer.ts';
@@ -51,10 +51,10 @@ interface Streams {
 }
 
 function v12Streams(lexed: LangiumLex): Streams {
-  const decode = ([n, i]: LangiumToken): LangiumToken => [n, decodeEntities(i)];
+  const decode = ([n, i]: LangiumToken): LangiumToken => [n, v12TokenText(i)];
   const tokens = lexed.tokens.map(decode);
   if (lexed.errorAt !== undefined) {
-    const before = decodeEntities(lexed.input.slice(0, lexed.errorAt));
+    const before = v12TokenText(lexed.input.slice(0, lexed.errorAt));
     tokens.push([ERROR, `@${before.length}`]);
   }
   return { tokens, hidden: lexed.hidden.map(decode) };
@@ -149,7 +149,7 @@ describe('gitGraph lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () 
       `gitGraph lexer parity: ${compared} of ${items.length} sources lexed by v12, ${errors} with a lexer error\n`
     );
     // Every e2e fixture reaches the gitGraph lexer.
-    expect(e2e).toBe(197);
+    expect(e2e).toBe(198);
     expect(compared).toBeGreaterThan(1000);
     expect(diffs).toEqual([]);
   }, 300_000);

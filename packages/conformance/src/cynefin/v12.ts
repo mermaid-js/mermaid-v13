@@ -13,7 +13,7 @@
  *
  * `getConfig()` is compared on its own, in `config.spec.ts` (#469).
  */
-import { decodeEntities as d } from '../flowchart/v12.ts';
+import { v12DecodeEntities as d } from '../v12-entities.ts';
 
 /** `diagram.type` values mermaid\@12 reports for cynefin sources (`cynefinDetector.ts`). */
 export const CYNEFIN_V12_TYPES = ['cynefin'];

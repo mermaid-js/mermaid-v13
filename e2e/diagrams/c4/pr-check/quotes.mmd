@@ -1,0 +1,12 @@
+---
+description: >-
+  Quotes that do not close (#681): a tab before an opening quote is a blank, and a
+  quote inside an unquoted argument is kept as written, with a warning. mermaid
+  12.2.0 read the second line below across the line break to the next comma. An
+  unclosed quote is an error (see the recovery specs), so it has no fixture.
+---
+C4Context
+  title Quotes
+  Person(customer, "Customer",	"Orders by phone")
+  System(shop, "Web \"shop\"")
+  Rel(customer, shop, "Orders from")

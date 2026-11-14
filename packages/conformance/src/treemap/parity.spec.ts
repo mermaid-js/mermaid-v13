@@ -17,12 +17,19 @@ import { treemapAdapter } from './v13.ts';
  * in `divergences/`.
  *
  * The listed treemap divergences are core's reading, shared by every type, and the second test
- * checks they differ only there ({@link CORE}):
+ * checks they differ only there ({@link CORE}, {@link ENTITY_NAMES}):
  * - `treemap-cases/unclosed-directive*`: core ends an unclosed `%%{` at its line end and reports
  *   `UNCLOSED_DIRECTIVE`, so v13 rejects what v12 accepted with the rest removed.
+ * - `treemap-cases/entities-semicolon`: a `#name;` whose name core's entity table does not hold stays as written, where
+ *   v12 made it `&name;` (D561).
  */
 const CORE: ReadonlyMap<string, RegExp> = new Map([
   ['treemap-cases/unclosed-directive', /^UNCLOSED_DIRECTIVE/],
+]);
+
+/** The model paths that differ under D561, by source. */
+const ENTITY_NAMES: ReadonlyMap<string, RegExp> = new Map([
+  ['treemap-cases/entities-semicolon', /^roots\[0\]\.name$/],
 ]);
 
 async function* each(items: CorpusItem[]): AsyncGenerator<CorpusItem> {
@@ -52,9 +59,9 @@ describe('treemap oracle parity with mermaid@12', () => {
     });
   }, 300_000);
 
-  it('differs only in core, where the list says (unclosed directives)', async () => {
+  it('differs only in core, where the list says (unclosed directives, unknown entity names)', async () => {
     const report = await run();
-    const prefixes = [...CORE.keys()];
+    const prefixes = [...CORE.keys(), ...ENTITY_NAMES.keys()];
     for (const prefix of prefixes) {
       expect(
         report.expected.some((d) => d.id.startsWith(prefix)),
@@ -64,8 +71,9 @@ describe('treemap oracle parity with mermaid@12', () => {
     for (const d of report.expected) {
       const prefix = prefixes.find((p) => d.id.startsWith(p));
       expect(prefix, d.id).toBeDefined();
-      expect(d.kind, d.id).toBe('reject');
-      expect(d.detail, d.id).toMatch(CORE.get(prefix ?? '') ?? /^$/);
+      const core = CORE.get(prefix ?? '');
+      expect(d.kind, d.id).toBe(core ? 'reject' : 'model');
+      expect(d.detail, d.id).toMatch(core ?? ENTITY_NAMES.get(prefix ?? '') ?? /^$/);
     }
   }, 300_000);
 });

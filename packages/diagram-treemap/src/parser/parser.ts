@@ -66,7 +66,7 @@ import {
   accDescrValue,
   accTitleValue,
   classDefParts,
-  decodeEntities,
+  v12StyleEntities,
   nameValue,
   numberValue,
   splitStyles,
@@ -737,7 +737,7 @@ class TreemapParser {
     const nameRange = this.classNameRange(range.start, parts.name.length);
     const id = this.id(`classDef:${parts.name}`);
     const node: TreemapClassDefNode = { id, type: 'ClassDef', range, name: parts.name, nameRange };
-    if (parts.styleText !== undefined) node.styleText = decodeEntities(parts.styleText);
+    if (parts.styleText !== undefined) node.styleText = v12StyleEntities(parts.styleText);
     this.classDefs.push({ node, ...splitStyles(parts.styleText ?? '') });
     this.children.push(node);
     this.st.statement('classDef', range);

@@ -5,7 +5,7 @@ import type { WardleyLinkNode, WardleyPipelineNode } from '@mermaid-js/diagram-w
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
 import type { DocumentSnapshot } from '@mermaid-js/language-service';
-import { loadDivergences } from '../divergences.ts';
+import { modelDivergenceIds } from '../divergences.ts';
 import { loadOracle } from '../oracle.ts';
 import { DIVERGENCES_DIR } from '../registry.ts';
 import { wardleyGateCorpus } from './corpus.ts';
@@ -36,11 +36,7 @@ import { wardleyV12Snapshot } from './v12.ts';
 const service = createLanguageService();
 await service.preload({ types: ['wardley'] });
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
-const DIVERGENT = new Set(
-  loadDivergences(fileURLToPath(DIVERGENCES_DIR))
-    .filter((d) => d.kind === 'model')
-    .map((d) => d.id)
-);
+const DIVERGENT = modelDivergenceIds(fileURLToPath(DIVERGENCES_DIR));
 
 describe('wardley definition, references and folding through the service match v12', () => {
   it('over the gate corpus', async () => {

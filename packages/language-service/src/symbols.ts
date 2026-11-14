@@ -447,6 +447,8 @@ function renameEdits(
   return edits;
 }
 
+const refuse = (refused: string): RenameResult => deepFreeze({ refused });
+
 export function rename(
   ctx: DocumentContext,
   list: readonly Occurrence[],
@@ -457,7 +459,26 @@ export function rename(
   if ('refused' in prepared) return prepared;
   const o = occurrenceAt(list, offset)!;
   const facet = ctx.facet!;
-  const refuse = (refused: string): RenameResult => deepFreeze({ refused });
+  // The facet's `isValidId`, `quoteId`, `writtenName`, name syntax and parse may throw (a
+  // third-party facet): a refusal that says so, not a thrown query (R-LANG-4).
+  try {
+    return renameOccurrence(ctx, facet, list, o, newName);
+  } catch (error) {
+    const why = error instanceof Error ? error.message : String(error);
+    return refuse(
+      `The ${ctx.entry?.id ?? facet.id} language support failed on this rename (${why}).`
+    );
+  }
+}
+
+/** {@link rename} of the occurrence `o`, which the facet may refuse (or throw on). */
+function renameOccurrence(
+  ctx: DocumentContext,
+  facet: LanguageFacet,
+  list: readonly Occurrence[],
+  o: Occurrence,
+  newName: string
+): RenameResult {
   const all = sameSymbol(list, o);
   const syntax = facet.nameSyntax;
   let edits: TextEdit[];

@@ -27,12 +27,13 @@ const MEASURED_IN_VIEWER: Record<string, NodeSizes> = {
   'query-process': VIEWER_SIZES_QUERY_PROCESS,
 };
 
-// Touches no stage resolves yet: two parallel tracks on one node, side by side, with a corner
-// of one beside the other and no crossing between them. Updated for v13's geometry (v13 sizes,
-// LR/RL routed on drawn sizes, `turnedRouting.ts`): v12 listed `14-messy-layout` (L_33a_39_0 on
-// L_33b_39_0), which v13 resolves; v12's `6-legal-constr-sales` pair (L_D_E_0 on L_D_H_0) still
-// touches, and the same pair touches in `5-car-fun-sales-wide-tb`. The others were not in
-// v12's list (v12 swept only fixtures with sizes files).
+// Touches no stage resolves yet. The router leaves two of them in `pebr-2-edge-intrudes-lane-label`:
+// two tracks in one channel end 3.3px apart, and no later stage moves a corner. v12 listed
+// `14-messy-layout` and `6-legal-constr-sales`; v13 resolves the first, and a detour rescued into
+// a straight line now keeps the visible gap from a corner of the route beside it
+// (`siblingRescueTouch.spec.ts`), which clears the second, `5-car-fun-sales-wide-tb`,
+// `mermaid-work` and `regressions/title-band-rails` (#678). The others were not in v12's list
+// (v12 swept only fixtures with sizes files).
 //
 // The list is `unresolvedTouches.json`: each touch names the issue or decision that covers it
 // (`ref`), and the allowlist ratchet (conformance `allowlists.spec.ts`, #695) fails a touch

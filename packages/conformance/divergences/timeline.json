@@ -14,5 +14,13 @@
     "reason": "The front-matter `title` baseline (D218): v12's timeline DB has no `setDiagramTitle`, so v12 dropped it; v13 draws it where an in-text `title` goes, as in timeline-cases/front-matter-title.",
     "owner": "#315",
     "since": "2026-11-05"
+  },
+  {
+    "id": "timeline-cases/edge case 29",
+    "inputHash": "sha256:4ff0ba59658b420a",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
   }
 ]

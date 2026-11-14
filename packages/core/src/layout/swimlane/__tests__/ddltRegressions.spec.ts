@@ -92,4 +92,25 @@ describe('swimlane DDLT regressions', () => {
     expect(back[0]!.x).toBeCloseTo(back[1]!.x, 6);
     expect(down[0]!.x).toBeCloseTo(down[1]!.x, 6);
   });
+
+  // mermaid-js/mermaid#8693: three tracks meet on the right face of Triage: its straight
+  // connector to Resolve and two arrivals. The connector stays one straight line through both
+  // centres, and the arrivals are moved off it.
+  it('#678: a straight connector between aligned lanes stays straight when the face is shared', () => {
+    const { model, issues } = layOut('regressions/terminal-lanes-keep-straight-connector');
+    expect(issues.map((i) => i.message)).toEqual([]);
+    const triage = model.nodes.get('b')!;
+    const straight = model.edges.get('L_b_c_0')!.points;
+    expect(straight).toHaveLength(2);
+    expect(straight[0]!.y).toBeCloseTo(triage.y, 6);
+    expect(straight[1]!.y).toBeCloseTo(model.nodes.get('c')!.y, 6);
+    const arrivals = ['L_d_b_0', 'L_c_b_0'].map((id) => model.edges.get(id)!.points.at(-1)!.y);
+    for (const y of arrivals)
+      expect(Math.abs(y - straight[0]!.y)).toBeGreaterThanOrEqual(
+        EDGE_ROUTING.ROUTE_TOUCH_TOLERANCE
+      );
+    expect(Math.abs(arrivals[0]! - arrivals[1]!)).toBeGreaterThanOrEqual(
+      EDGE_ROUTING.ROUTE_TOUCH_TOLERANCE
+    );
+  });
 });

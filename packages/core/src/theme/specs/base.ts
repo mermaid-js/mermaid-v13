@@ -1,18 +1,18 @@
 /**
  * `base`: the theme meant for customising (v12 `theme-base.js`). It sets only the base
- * variables and tokens; every other colour comes from the shared rules (R-THEME-5).
+ * variables and tokens; every other colour comes from the shared rules (R-THEME-5). Like v12, it
+ * derives `secondaryColor` and `tertiaryColor` from `primaryColor`, and `lineColor` from
+ * `background`, unless the author sets them (#797); arrowheads follow `lineColor`, as v12's
+ * `.marker` draws them (D575). Its error colours follow the tertiary ones, and its note colours
+ * are v12's constructor literals (#825).
  */
 import type { ThemeSpec } from '../spec.ts';
-import { BASE_PLOT, BASE_SECONDARY, LABEL_SCALE, series } from './palettes.ts';
+import { BASE_PLOT, LABEL_SCALE, series } from './palettes.ts';
 import { darkenedScale, gitPalettes, gitSources, hueSources } from './scales.ts';
 import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
 
-// v12 derives secondaryColor and tertiaryColor from primaryColor in HSL; the palette keeps
-// that derivation, where the base variables are its hex.
-const SECONDARY = BASE_SECONDARY;
-const TERTIARY = 'ifSet(tertiaryColor, lightenHsl(adjustHue(primaryColor, 180), 5%))';
-const SOURCES = hueSources(true, 'primaryColor', SECONDARY, TERTIARY);
-const GIT = gitSources('primaryColor', SECONDARY, TERTIARY);
+const SOURCES = hueSources(true);
+const GIT = gitSources('primaryColor', 'secondaryColor', 'tertiaryColor');
 
 const base: ThemeSpec = {
   name: 'base',
@@ -20,11 +20,13 @@ const base: ThemeSpec = {
   family: 'classic',
   base: {
     primaryColor: '#fff4dd',
-    secondaryColor: '#f4ddff',
-    tertiaryColor: '#f6f9ff',
+    // v12 adjust(primaryColor, { h: -120 }) and { h: 180, l: 5 }: #f4ddff and #f6f9ff.
+    secondaryColor: 'adjustHue(primaryColor, -120)',
+    tertiaryColor: 'lightenHsl(adjustHue(primaryColor, 180), 5%)',
     background: '#f4f4f4',
     primaryTextColor: '#333333',
-    lineColor: '#0b0b0b',
+    // v12 invert(background): #0b0b0b.
+    lineColor: 'invert(background)',
     fontFamily: '"trebuchet ms", verdana, arial, sans-serif',
     fontSize: '16px',
   },
@@ -39,6 +41,14 @@ const base: ThemeSpec = {
     ...CLASSIC_ARROWHEADS,
     ...CLASSIC_PADDING,
     useGradient: false,
+  },
+  // v12 theme-base.js sets the note colours in its constructor, so neither darkMode nor
+  // primaryTextColor moves them (#825).
+  values: { noteBkgColor: '#fff5ad', noteTextColor: '#333333' },
+  rules: {
+    // v12 theme-base.js draws errors in the tertiary colours (#825).
+    errorBkgColor: 'tertiaryColor',
+    errorTextColor: 'tertiaryTextColor',
   },
   // v12 theme-base.js: hue steps darkened by 25 (75 under darkMode); git darkened by 25
   // (lightened under darkMode, with black branch labels).

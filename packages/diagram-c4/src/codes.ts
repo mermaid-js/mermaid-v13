@@ -16,6 +16,11 @@ export const C4_DIRECTION = 'C4_DIRECTION';
  * it (a warning: Pele accepts it).
  */
 export const C4_NAME_RESERVED = 'C4_NAME_RESERVED';
+/**
+ * #681: an unquoted argument that holds a `"`, as `"A \"q\" B"` splits into a quoted `A \` and an
+ * unquoted `q\" B"`. C4 text has no escape for a quote; the argument is kept as written.
+ */
+export const C4_QUOTE_IN_ARGUMENT = 'C4_QUOTE_IN_ARGUMENT';
 /** D457: an `offsetX` or `offsetY` that is not a number; it counts as 0. */
 export const C4_OFFSET_INVALID = 'C4_OFFSET_INVALID';
 /**

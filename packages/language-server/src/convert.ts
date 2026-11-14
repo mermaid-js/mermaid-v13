@@ -90,19 +90,29 @@ export function toMarkup(value: string, markdown: boolean): MarkupContent {
 export const takesMarkdown = (formats: readonly string[] | undefined): boolean =>
   formats === undefined || formats.includes('markdown');
 
-export function toCompletionItem(
+/**
+ * The service's completion list as LSP items. Each item's `sortText` is its place in the list,
+ * zero-padded, so a client that sorts by `sortText` (every LSP client; by `label` without it)
+ * keeps the service's order, as the Monaco adapter does. No `filterText` or `preselect`.
+ */
+export function toCompletionItems(
   index: LineIndex,
-  item: ServiceCompletionItem,
+  items: readonly ServiceCompletionItem[],
   markdown = true
-): CompletionItem {
-  const out: CompletionItem = {
-    label: item.label,
-    kind: COMPLETION_KIND[item.kind],
-    textEdit: { range: toRange(index, item.range), newText: item.insertText },
-  };
-  if (item.detail !== undefined) out.detail = item.detail;
-  if (item.documentation !== undefined) out.documentation = toMarkup(item.documentation, markdown);
-  return out;
+): CompletionItem[] {
+  const width = Math.max(5, String(items.length).length);
+  return items.map((item, i) => {
+    const out: CompletionItem = {
+      label: item.label,
+      kind: COMPLETION_KIND[item.kind],
+      sortText: String(i).padStart(width, '0'),
+      textEdit: { range: toRange(index, item.range), newText: item.insertText },
+    };
+    if (item.detail !== undefined) out.detail = item.detail;
+    if (item.documentation !== undefined)
+      out.documentation = toMarkup(item.documentation, markdown);
+    return out;
+  });
 }
 
 /** A service fold by line as an LSP folding range. */

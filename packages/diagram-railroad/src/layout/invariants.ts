@@ -27,7 +27,7 @@
  * - with a measurer: every text measures what it says, the rule name at the bold weight (D514),
  *   and each box is its text plus `padding` on every side.
  */
-import type { Measurer } from '@mermaid-js/core/text';
+import { decodeEntities, type Measurer } from '@mermaid-js/core/text';
 import type { RailroadLayoutConfig } from '../config.ts';
 import type { RailroadModel, RailroadNode } from '../model.ts';
 import { visitExpressions } from './geometry.ts';
@@ -300,7 +300,8 @@ function expressionViolations(
 function ruleViolations(rule: RailroadRuleLayout, m: RailroadMetrics, out: string[]): void {
   const { start, end, leadIn, leadOut, definition: d, baseline } = rule;
   const at = rule.ast;
-  if (rule.label.text !== `${rule.name} =`) out.push(`${at}: the label is not \`name =\``);
+  if (rule.label.text !== `${decodeEntities(rule.name)} =`)
+    out.push(`${at}: the label is not \`name =\``);
   if (!near(start.cy, baseline) || !near(end.cy, baseline)) {
     out.push(`${at}: a marker is off the track`);
   }

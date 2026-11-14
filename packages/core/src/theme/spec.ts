@@ -19,6 +19,10 @@ export interface ThemeSpec {
    * (`DiagramThemeTable.families`). A new theme declares one and every diagram is themed.
    */
   readonly family: ThemeFamily;
+  /**
+   * The base variables: a value each, or for a colour a rule (`dsl.ts`) over the others, as
+   * `base` derives `secondaryColor` from `primaryColor` (#797). The author's value still wins.
+   */
   readonly base: Readonly<Record<BaseVariable, string>>;
   readonly tokens: Readonly<Record<TokenVariable, number | string | boolean>>;
   /** Literal values for derived variables, where v12 hard-codes them for this theme. */

@@ -1,0 +1,13 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#3366cc'
+description: >-
+  base with only primaryColor set: the cluster (tertiaryColor) and the edge label
+  chip (secondaryColor) turn with it, as v12 theme-base derives them (#761)
+---
+flowchart LR
+  subgraph group [Group]
+    A[Start] -- label --> B[End]
+  end

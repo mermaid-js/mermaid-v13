@@ -1,0 +1,8 @@
+---
+description: >-
+  entity codes in a PEG terminal draw as their characters (#656), and a name
+  core does not know draws as written (D561)
+---
+railroad-peg-beta
+Rule <- "a #lt;b#gt; #35; #quot;q#quot; #amp; c" / B ;
+B <- "x #9829; y" / "unknown #bogus; stays" ;
