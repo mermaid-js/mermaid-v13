@@ -50,6 +50,11 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 
 - #407: fixed by T1; comment posted. #434: split; comment posted; the classic state inks filed as #827 (needs state theme variables or a D-id; out of this spec's scope). Not filed: `redux-color` state start-dot stroke `#000` vs v12 `#28253d` (minor).
 
+## #803 (T7)
+
+- D568–D574 record the spec (block D568–D577, decision 5; D575–D577 unused): D568 oracle and its rule, D569 `base` rules (T1 `arrowheadColor` from `background`, T8 errors and notes, decision 4), D570 pins (decision 1, R-THEME-3 effect, T2's unpinned gradient), D571 `darkMode` text inks (Knut), D572 ER (decision 3, row inks, label text choice), D573 block (flag, `nodeTextColor` label), D574 gantt (decision 2, dark `#990000`, T5's choices). The oracle's `#795` group is now D571, and its test requires a D-id per group.
+- **Not done (no code change allowed):** `theme-variables.md` shows a base colour as "set by all" and does not say that `base` writes three of them as rules; that prose lives in `tools/gen-config/src/theme-inventory.ts`. The pinned `mainBkg` already shows in its "Set by themes" column. The config reference (`themeVariables` notes in `config.schema.yaml`) says both.
+
 ## Follow-ups after the spec
 
 - #827 (state inks, filed). Error image contrast (T8 finding). Redux/neo gantt critical-bar text below AA (T5 finding).

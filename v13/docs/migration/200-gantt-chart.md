@@ -83,7 +83,7 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   the bands from `cScale0`/`cScale1`; those are not carried, so gantt colours differ from v12
   most in `default`, `dark`, `forest` and `neutral` (bars are the theme's `primaryColor`, text
   `textColor`). Set the variables in `themeVariables` for v12's look.
-- **Contrast in the classic themes (#801):** with bars in the pale `primaryColor`, the classic
+- **Contrast in the classic themes (D574):** with bars in the pale `primaryColor`, the classic
   family (`default`, `dark`, `forest`, `neutral`, `base`) draws the `vert` marker and its label
   in `lineColor`, outlines the active bar in `primaryBorderColor` where that reads on the bar
   and in `lineColor` otherwise, and writes text on a critical bar in black where `textColor`

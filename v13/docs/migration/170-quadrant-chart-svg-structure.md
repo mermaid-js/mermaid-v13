@@ -21,7 +21,7 @@ and `transform="translate(x,y) rotate(r)"` placement.
 | A point whose coordinate lexed but was not a number in [0, 1] (`0x5`, `0a5`) was drawn off the chart or at `NaN` | Left out, with one `QUADRANT_POINT_INVALID` warning per point | D226 |
 | `look: neo` changed nothing in a quadrant chart | Every theme family draws it plain, without gradient, shadow or palette; families differ by colour only | D227 |
 | Border lines in v12's khroma `primaryBorderColor` | Core's `primaryBorderColor`, the border colour of every other type, so some themes change (table below) | R-THEME-11 |
-| `themeVariables.darkMode: true` switched `primaryTextColor` and `textColor` to `#eee` in `redux`, `redux-color`, `base` and `neo`, and so every quadrant text | Core's theme specs keep their text colours under `darkMode`, so quadrant text does too. This is core behaviour for every type, not a quadrant change | Core |
+| `themeVariables.darkMode: true` switched `primaryTextColor` and `textColor` to `#eee` in `redux`, `redux-color`, `base` and `neo`, and so every quadrant text | Core's theme specs keep their text colours under `darkMode`, so quadrant text does too. This is core behaviour for every type, not a quadrant change | D571 |
 
 Quadrant border colours (`quadrantExternalBorderStrokeFill` and `quadrantInternalBorderStrokeFill`)
 where v12 and v13 differ; the other themes keep v12's colour.

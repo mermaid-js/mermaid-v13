@@ -1,12 +1,12 @@
 /**
- * #796 (spec #795 T0): core's shared colour variables in the five classic themes against v12
+ * #796 (spec #795 T0, D568): core's shared colour variables in the five classic themes against v12
  * 12.2.0's resolved `getThemeVariables()` (D151: v12 is the oracle), at the theme values and
  * under one `themeVariables` override at a time: each base colour set alone to a light and to a
  * dark probe, and `darkMode`. Every colour variable of core's vocabulary that v12 also resolves
  * is compared. Each difference is listed in `DIFFERENCES` as `theme / override / variable`,
- * under the open issue or decision that accounts for it, and the list has to match the
- * differences found exactly: an unlisted difference fails, and so does a listed one that has
- * gone. A ticket that fixes a difference deletes its entries. Built like
+ * under the decision that accounts for it (a D-id with a MIGRATION.md row), and the list has to
+ * match the differences found exactly: an unlisted difference fails, and so does a listed one
+ * that has gone. A ticket that fixes a difference deletes its entries. Built like
  * `theme-palettes.spec.ts`, which covers the palettes.
  */
 import {
@@ -68,8 +68,8 @@ const keys = (theme: Classic, cases: readonly string[], names: readonly string[]
   cases.flatMap((c) => names.map((n) => `${theme} / ${c} / ${n}`));
 
 /**
- * Each difference from v12, keyed `theme / override / variable`, grouped by the open issue or
- * decision that accounts for it. Groups naming #795 wait on a maintainer decision (tickets/796.md).
+ * Each difference from v12, keyed `theme / override / variable`, grouped by the decision that
+ * accounts for it (D568): every group names a D-id, and each has a MIGRATION.md row.
  */
 const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
   "D29 (R-THEME-9): v13 meets AA where v12 does not: dark's #b8b6b6 text on #474949 (4.49:1) and #585858 label fill under #ccc text (4.43:1); base's #333 node text on a dark primaryColor":
@@ -103,7 +103,7 @@ const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
     ],
   'D71: under darkMode v13 mixes 30% black into secondaryColor for the edge label where v12 base darkens its HSL lightness by 30':
     [...keys('base', ['darkMode'], ['edgeLabelBackground'])],
-  "#795 (maintainer question): v12's darkMode turns base's primaryTextColor (and the text that follows it) to #eee and dark's and neutral's scaleLabelColor to black; v13's darkMode switches only the derivation rules":
+  "D571: v12's darkMode turns base's primaryTextColor (and the text that follows it) to #eee and dark's and neutral's scaleLabelColor to black; v13's darkMode switches only the derivation rules":
     [
       ...keys(
         'base',
@@ -171,8 +171,8 @@ describe('shared colour variables under one override, against v12 12.2.0 (#796, 
     }
   });
 
-  it('names an open issue or a decision for each group', () => {
-    for (const why of Object.keys(DIFFERENCES)) expect(why).toMatch(/^(#\d+|D\d+)\b/);
+  it('names a decision for each group (D568)', () => {
+    for (const why of Object.keys(DIFFERENCES)) expect(why).toMatch(/^D\d+\b/);
   });
 
   describe.each(THEMES)('%s', (theme) => {
