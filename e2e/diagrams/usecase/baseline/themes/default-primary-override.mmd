@@ -1,0 +1,13 @@
+---
+config:
+  theme: default
+  themeVariables:
+    primaryColor: '#ffcc00'
+description: >-
+  default with a primaryColor override: the use case ellipse and the actor head keep
+  default's mainBkg (#ececff), which v12 theme-default sets in its constructor (#773)
+---
+usecase-beta
+actor A
+Login("Login")
+A --> Login

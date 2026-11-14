@@ -78,6 +78,13 @@ interface TablePaint {
   readonly text: Color;
   readonly rowOdd?: Color;
   readonly rowEven?: Color;
+  /**
+   * Attribute text on a theme-filled row, the ink against that row's fill (#758); undefined
+   * where the row shows the entity fill (`rowOdd` is `mainBkg`, as in redux and neo), so the
+   * text keeps {@link text}, the ink against that same fill.
+   */
+  readonly rowOddText?: Color;
+  readonly rowEvenText?: Color;
   /** The theme's drop shadow on entity outlines and subgraph rects; none in classic themes. */
   readonly shadow: ReturnType<ThemeOf['filter']> | undefined;
 }
@@ -99,6 +106,9 @@ interface Paints {
  */
 function paints(theme: ThemeOf, er: ErPrepared): Paints {
   const rows = er.entities.some((e) => e.rows.length > 0);
+  const evens = er.entities.some((e) => e.rows.length > 1);
+  // A row with a fill of its own (the classic rows, D117) takes its own ink.
+  const ownFill = (row: string): boolean => theme.value(row) !== theme.value('mainBkg');
   const table: TablePaint = {
     fill: theme.color('mainBkg'),
     stroke: theme.outline('nodeBorder'),
@@ -106,7 +116,9 @@ function paints(theme: ThemeOf, er: ErPrepared): Paints {
     strokeWidth: theme.length('strokeWidth'),
     text: theme.color('nodeTextColor'),
     rowOdd: rows ? theme.color('rowOdd') : undefined,
-    rowEven: er.entities.some((e) => e.rows.length > 1) ? theme.color('rowEven') : undefined,
+    rowEven: evens ? theme.color('rowEven') : undefined,
+    rowOddText: rows && ownFill('rowOdd') ? theme.color('erRowOddTextColor') : undefined,
+    rowEvenText: evens && ownFill('rowEven') ? theme.color('erRowEvenTextColor') : undefined,
     shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
   };
   const line =
@@ -375,23 +387,26 @@ function drawRows(
   text: Attrs
 ): void {
   const t = paint.table;
-  // An author's fill fills every row, in every theme (D117).
-  const authorFill = view.style.shape.fill;
+  // An author's fill fills every row, in every theme (D117), before a palette slot's.
+  const own = view.style.shape.fill ?? slot?.fill;
   for (let i = 0; i < view.rows.length; i++) {
     const row = view.rows[i]!;
     // v12 counts the name row as row 0, so the first attribute row is odd.
     const even = (i + 1) % 2 === 0;
+    // The cells inherit the row's ink; an author's or palette fill keeps the entity's.
+    const ink = even ? t.rowEvenText : t.rowOddText;
     w.open('g', {
       class: even ? 'row-rect-even' : 'row-rect-odd',
       'data-id': row.attribute.name,
       'data-ast': row.attribute.id,
+      fill: own ? undefined : ink,
     });
     w.outline('part', 'rect', {
       x: left,
       y: top + row.band.at,
       width: view.width,
       height: row.band.size,
-      fill: authorFill ?? slot?.fill ?? (even ? t.rowEven : t.rowOdd),
+      fill: own ?? (even ? t.rowEven : t.rowOdd),
       stroke: 'none',
     });
     const cy = top + row.band.at + row.band.size / 2;

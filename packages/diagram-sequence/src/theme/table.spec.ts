@@ -57,9 +57,10 @@ describe('the sequence theme table (#414 T2)', () => {
   });
 
   it('derives the participant and label colours as v12 theme-base does', async () => {
+    // forest pins v12's mainBkg (#798), so its participants follow mainBkg, not primaryColor.
     const t = createTheme(await loadTheme('forest'), {
       diagram: table,
-      themeVariables: { primaryColor: '#123456', actorTextColor: '#654321' },
+      themeVariables: { mainBkg: '#123456', actorTextColor: '#654321' },
       cssVariables: false,
     });
     expect(t.value('actorBkg')).toBe('#123456');

@@ -653,8 +653,9 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `compositionMarkerGap` / `dependencyMarkerGap` | 2.75 / 4 | 0.25 / 1 |
 | `erZeroOrMoreCircleOffset` (ER, centre of a zero-or-more circle from the outline) | 28 | 30 |
 | `rowOdd` / `rowEven` (ER attribute rows) | the entity fill (`mainBkg`): v12 neo leaves rows unfilled | v12's `rowOdd` / `rowEven`, the same colours (khroma's HSL lightening, D117) |
-| `erEdgeLabelBackground` (ER relationship labels) | white (`redux-color`), `#16141f` (`redux-dark-color`); `edgeLabelBackground` in `redux`, `redux-dark`, `neo` and `neo-dark` | `edgeLabelBackground` |
+| `erEdgeLabelBackground` (ER relationship labels) | white (`redux-color`), `#16141f` (`redux-dark-color`); `edgeLabelBackground` in `redux`, `redux-dark`, `neo` and `neo-dark` | `tertiaryColor` at half opacity, as v12's `.labelBkg` |
 | `erMarkerFill` (ER zero circles) | `mainBkg` | white |
+| `erRowOddTextColor` / `erRowEvenTextColor` (colour: ER attribute text, new in v13) | `nodeTextColor`: the rows show the entity fill, so the text keeps the header ink | the ink against each row's own fill: `nodeTextColor` where it meets AA on the row, else the better of `textColor` and `background` |
 | `compositeBackground` (state) | `background`; `#16141f` on `redux-dark` and `redux-dark-color` | `background` |
 | `compositeTitleBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color`; `mainBkg` on `neo` and `neo-dark` | `mainBkg` |
 | `altBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color`; `#f0f0f0` on `neo`; `#404040` on `neo-dark` (D189) | `#f0f0f0` (`default`, `forest`); `#555555` (`dark`); `#f4f4f4` (`neutral`); `tertiaryColor` (`base`) |
@@ -1803,10 +1804,6 @@ where v12 and v13 differ; the other themes keep v12's colour.
 
 | Theme | v12 | v13 |
 | --- | --- | --- |
-| `default` | `#c7c7f1` | `#c9c9d9` |
-| `dark` | `#cccccc` | `#4c4d4d` |
-| `forest` | `#abb594` | `#aec281` |
-| `neutral` | `#d4d4d4` | `#cacaca` |
 | `base` | `#eeddbb` | `#d9cfbc` |
 | `redux`, `redux-color` | `#171717` | `#28253d` |
 
@@ -2348,7 +2345,6 @@ in `default`, `forest`, `base` and `dark`, and in `neutral` but its grid, are v1
 | `base` | Anchor labels and stage dividers `#000`, annotation markers and box white | Anchor labels `#333333`, dividers `#0b0b0b` (the axis colours), markers and box `#f4f4f4` (`wardleyAnnotationFill`, the background) | D426 |
 | `dark` | Anchor labels and stage dividers `#000` on the `#333` page, annotation markers and box white | Anchor labels `#e0dfdf`, dividers `lightgrey`, markers and box `#1f2020` (`mainBkg`) | D426 |
 | `base` with `darkMode: true` | Labels and annotation text `#eeeeee` | The theme's `primaryTextColor`, `#333333` (core keeps text colours under `darkMode`) | Core |
-| `dark` with an author `primaryColor` | Component and annotation fills stayed `#1f2020` | They follow `mainBkg`, which follows `primaryColor` | Core |
 | `default` with an author `background` or `wardleyEvolutionColor` | Ignored: `default` built its `wardley` block before the author's values were applied | The background, fills and trends follow them, as in the other themes | R-THEME-4 |
 
 ## Wardley SVG structure

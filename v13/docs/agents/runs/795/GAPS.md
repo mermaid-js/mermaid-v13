@@ -15,8 +15,13 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Derived values now start from the rule's unrounded channels: three base cells in `theme-variables.md` move by one unit (`railroadSpecialStroke`, `usecaseBoundaryBorder`, `activationBorderColor`).
 - Argos holds the screenshot baselines: the `base` screenshots and the four new #761 fixtures are approved in CI, not in the repo.
 
+## #799 (T3)
+
+- **Choice:** ER relationship label text stays `textColor`; an author's `tertiaryColor` can take it below AA (as v12). Only the row inks are new (spec scope).
+- **For T7:** `config.schema.yaml` (core) still lists the classic `erEdgeLabelBackground` as `edgeLabelBackground` and lacks `erRowOddTextColor` / `erRowEvenTextColor`; regenerate `config-reference.md` after. D-id for restoring the `tertiaryColor` label fill (decision 3).
+- **For T5's merge:** ER contrast rows are in `packages/conformance/src/er-contrast.spec.ts` in `[ink, fill, min]` shape; move `PAIRS.er` into `theme-contrast.spec.ts`, with `PROBED` (override probes) as its own loop.
+
 ## #800 (T4)
 
-- **For the maintainer:** the ticket asks for a `titleColor` composite label, but v12 draws it `nodeTextColor` (the label `g.label` is outside `rect.cluster`, so `.cluster text` misses it). Kept `nodeTextColor` (v12 parity); `titleColor` would differ from v12 in dark, forest, neutral and neo.
-- **Choice:** without a palette or gradient (`redux`, `redux-dark`) a composite strokes `clusterBorder` at 0.2; v12 `look: neo` drew `nodeBorder`. No theme variable tells the families apart without a core change. Recorded in `migration/block.md`.
-- Argos holds the block screenshots: the new fixture and the classic, redux and neo composites move.
+- **Settled (orchestrator):** the composite label keeps `nodeTextColor`, v12's actual colour (its `g.label` is outside `rect.cluster`, so `.cluster text` misses it); the ticket's `titleColor` came from a misread of v12's CSS. T7 notes it.
+- Argos holds the block screenshots: the new fixture and the classic themes' composites move; redux, neo and the palette themes do not.
