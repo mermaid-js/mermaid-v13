@@ -400,13 +400,13 @@ function rowPaint<F>(
   t: TablePaint,
   own: F | undefined,
   i: number
-): { klass: string; fill: F | Color | undefined; ink: Color | undefined } {
+): { rowClass: string; fill: F | Color | undefined; ink: Color | undefined } {
   const even = (i + 1) % 2 === 0;
-  const klass = even ? 'row-rect-even' : 'row-rect-odd';
-  if (own) return { klass, fill: own, ink: undefined };
+  const rowClass = even ? 'row-rect-even' : 'row-rect-odd';
+  if (own) return { rowClass, fill: own, ink: undefined };
   return even
-    ? { klass, fill: t.rowEven, ink: t.rowEvenText }
-    : { klass, fill: t.rowOdd, ink: t.rowOddText };
+    ? { rowClass, fill: t.rowEven, ink: t.rowEvenText }
+    : { rowClass, fill: t.rowOdd, ink: t.rowOddText };
 }
 
 function drawRows(
@@ -421,9 +421,9 @@ function drawRows(
   const own = view.style.shape.fill ?? slot?.fill;
   for (let i = 0; i < view.rows.length; i++) {
     const row = view.rows[i]!;
-    const { klass, fill, ink } = rowPaint(paint.table, own, i);
+    const { rowClass, fill, ink } = rowPaint(paint.table, own, i);
     w.open('g', {
-      class: klass,
+      class: rowClass,
       'data-id': row.attribute.name,
       'data-ast': row.attribute.id,
       fill: ink,
