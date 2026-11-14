@@ -8,12 +8,12 @@ Covers #761, #758, #771, #772, #773, #407, #434. The five maintainer decisions a
 | --- | --- | --- | --- | --- |
 | T0 override oracle | #796 | `feature/796_theme-override-oracle` | — | merged (ff 5b00902b2); 723 listed differences; core 98,706 B gz, untouched |
 | T1 `base` derives by rule | #797 | `feature/797_base-derived-rules` | #796 | merged (ff 3e84d8ae7); core 98,706 → 98,739 B gz |
-| T2 named themes pin `mainBkg` | #798 | `feature/798_classic-pin-mainbkg` | #796, #797 | in progress |
-| T3 ER row ink, label fill | #799 | `feature/799_er-row-ink` | #797 | in progress |
-| T4 block composite colours | #800 | `feature/800_block-composite` | #797 | in progress |
-| T5 gantt contrast | #801 | `feature/801_gantt-contrast` | #797 | in progress |
-| T6 reproduce #407, #434 | #802 | `feature/802_theme-qa-repro` | #797, #798 | blocked |
-| T8 `base` error and note colours | #825 | `feature/825_base-error-note` | #797, #798 | blocked |
+| T2 named themes pin `mainBkg` | #798 | `feature/798_classic-pin-mainbkg` | #796, #797 | merged (ff 519aaf0be); core 98,739 → 98,740 B gz |
+| T3 ER row ink, label fill | #799 | `feature/799_er-row-ink` | #797 | merged (ff 2e9f4349b); core untouched |
+| T4 block composite colours | #800 | `feature/800_block-composite` | #797 | review: sent back (redux/neo must not change) |
+| T5 gantt contrast | #801 | `feature/801_gantt-contrast` | #797 | review: re-merge after T2/T3, fold ER contrast rows |
+| T6 reproduce #407, #434 | #802 | `feature/802_theme-qa-repro` | #797, #798 | in progress |
+| T8 `base` error and note colours | #825 | `feature/825_base-error-note` | #797, #798 | in progress |
 | T7 decisions, MIGRATION, docs | #803 | `feature/803_theme-parity-records` | all | blocked |
 
 T1, T2 and T8 (filed from T0's list) are the core tickets; they merge one at a time. T3, T4, T5 run in parallel after T1. T3 and T5 both extend the R-THEME-9 contrast spec: additive rows only; the second to merge takes the first's.
