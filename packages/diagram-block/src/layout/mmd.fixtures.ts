@@ -25,16 +25,14 @@ export const FIXTURES: readonly string[] = Object.keys(SOURCES)
   .map((k) => k.slice(ROOT.length, -'.mmd'.length))
   .sort();
 
-/** The source of the fixture at `path`, front matter included. */
-export function fixtureSource(path: string): string {
-  const source = SOURCES[`${ROOT}${path}.mmd`];
-  if (source === undefined) throw new Error(`no fixture e2e/diagrams/block/${path}.mmd`);
-  return source;
-}
+/** The raw text of the fixture at `path` (front matter included), or undefined. */
+export const fixtureSource = (path: string): string | undefined => SOURCES[`${ROOT}${path}.mmd`];
 
 /** The fixture at `path`, parsed; it must parse. */
 export function fixture(path: string): ParsedBlock {
-  const parsed = parsedBlock(fixtureSource(path));
+  const source = SOURCES[`${ROOT}${path}.mmd`];
+  if (source === undefined) throw new Error(`no fixture e2e/diagrams/block/${path}.mmd`);
+  const parsed = parsedBlock(source);
   const errors = parsed.diagnostics.filter((d) => d.severity === 'error');
   if (errors.length > 0) throw new Error(`${path}: ${errors.map((d) => d.message).join('; ')}`);
   return parsed;

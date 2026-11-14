@@ -286,7 +286,7 @@ describe('a composite without a palette (#771)', () => {
   };
 
   it("draws #771's composite yellow at half opacity with a faint black border, its leaves red", async () => {
-    const { svg } = await render(fixtureSource('baseline/themes/base-cluster-overrides'));
+    const { svg } = await render(fixtureSource('baseline/themes/base-cluster-overrides')!);
     const g = rectOf(svg, 'g');
     expect(g).toContain('class="basic cluster composite label-container"');
     expect(alias(svg, attr(g, 'fill'))).toEqual(['clusterBkg', '#ffff00']);
