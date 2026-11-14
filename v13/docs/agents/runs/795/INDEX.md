@@ -1,0 +1,27 @@
+# Run notes, spec #795 (classic-theme parity under `themeVariables` overrides)
+
+Integration branch `feature/795_classic-theme-parity` (from `mermaid-v13` at 10fc67ba3). Draft PR: opened after the first merge.
+
+Covers #761, #758, #771, #772, #773, #407, #434. The five maintainer decisions are settled on the recommended option (comment on #795, 2026-11-14): pin v12's literals; gantt option (a); restore ER's `tertiaryColor` label fill; regenerate the `base` baselines; D-ids from the next free block after D567. T7 records them.
+
+| Ticket | Issue | Branch | Blocked by | State |
+| --- | --- | --- | --- | --- |
+| T0 override oracle | #796 | `feature/796_theme-override-oracle` | — | in progress |
+| T1 `base` derives by rule | #797 | `feature/797_base-derived-rules` | #796 | blocked |
+| T2 named themes pin `mainBkg` | #798 | `feature/798_classic-pin-mainbkg` | #796, #797 | blocked |
+| T3 ER row ink, label fill | #799 | `feature/799_er-row-ink` | #797 | blocked |
+| T4 block composite colours | #800 | `feature/800_block-composite` | #797 | blocked |
+| T5 gantt contrast | #801 | `feature/801_gantt-contrast` | #797 | blocked |
+| T6 reproduce #407, #434 | #802 | `feature/802_theme-qa-repro` | #797, #798 | blocked |
+| T7 decisions, MIGRATION, docs | #803 | `feature/803_theme-parity-records` | all | blocked |
+
+T1 and T2 are the only core tickets; they merge one at a time. T3, T4, T5 run in parallel after T1.
+
+## Pointers
+
+- Theme engine: `packages/core/src/theme/spec.ts` (`ThemeSpec`), `theme.ts` (`createTheme`, `source()` treats `spec.base` as literals), `dsl.ts` (rule DSL), `vocabulary.ts` (shared rules, `mainBkg: primaryColor`), `specs/*.ts` (one per theme; `specs/palettes.ts` holds `BASE_SECONDARY`).
+- v12 oracle: `packages/conformance/src/oracle.ts` (`loadOracle()`), the model spec `packages/conformance/src/theme-palettes.spec.ts`. v12 source: `git show fa796a943:packages/mermaid/src/themes/theme-{base,default,dark,forest,neutral}.js`.
+- Diagram tables: `packages/diagram-{er,block,gantt}/src/theme/table.ts`; `packages/conformance/src/diagram-themes.ts` (`DIAGRAM_TABLES`); gantt's v12 comparison `packages/conformance/src/gantt/theme.spec.ts`.
+- Contrast check (R-THEME-9): `grep -rln "R-THEME-9" packages/*/src`.
+- Recipe: `v13/docs/agents/port-diagram/theming.md`, `shared-files.md` (generated files: run `pnpm regen`, never hand-edit `theme-variables.md`, `MIGRATION.md`).
+- Core size: `packages/bench/src/core-size.spec.ts`, limit in `packages/mermaid/size-budget.json` (99,328 B gz). Plan B: a core ticket may raise it up to 102,400 B rather than block, and must flag it.
