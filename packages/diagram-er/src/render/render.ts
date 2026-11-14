@@ -78,6 +78,13 @@ interface TablePaint {
   readonly text: Color;
   readonly rowOdd?: Color;
   readonly rowEven?: Color;
+  /**
+   * Attribute text on a theme-filled row, the ink against that row's fill (#758); undefined
+   * where the row shows the entity fill (`rowOdd` is `mainBkg`, as in redux and neo), so the
+   * text keeps {@link text}, the ink against that same fill.
+   */
+  readonly rowOddText?: Color;
+  readonly rowEvenText?: Color;
   /** The theme's drop shadow on entity outlines and subgraph rects; none in classic themes. */
   readonly shadow: ReturnType<ThemeOf['filter']> | undefined;
 }
@@ -94,19 +101,37 @@ interface Paints {
 }
 
 /**
+ * The row fills and inks, looked up only when some entity draws such a row. A row with a fill of
+ * its own (the classic rows, D117) takes its own ink; one showing the entity fill keeps `text`.
+ */
+function rowPaints(
+  theme: ThemeOf,
+  er: ErPrepared
+): Pick<TablePaint, 'rowOdd' | 'rowEven' | 'rowOddText' | 'rowEvenText'> {
+  const rows = er.entities.some((e) => e.rows.length > 0);
+  const evens = er.entities.some((e) => e.rows.length > 1);
+  const ownFill = (row: string): boolean => theme.value(row) !== theme.value('mainBkg');
+  return {
+    rowOdd: rows ? theme.color('rowOdd') : undefined,
+    rowEven: evens ? theme.color('rowEven') : undefined,
+    rowOddText: rows && ownFill('rowOdd') ? theme.color('erRowOddTextColor') : undefined,
+    rowEvenText: evens && ownFill('rowEven') ? theme.color('erRowEvenTextColor') : undefined,
+  };
+}
+
+/**
  * Every theme variable the body uses, looked up before the root is written, so the root
  * `style` declares exactly the aliases used (theme.rootStyle()).
  */
 function paints(theme: ThemeOf, er: ErPrepared): Paints {
-  const rows = er.entities.some((e) => e.rows.length > 0);
   const table: TablePaint = {
     fill: theme.color('mainBkg'),
     stroke: theme.outline('nodeBorder'),
     // The shared token for outline and rules, not v12 classic's 1.3px (D117).
     strokeWidth: theme.length('strokeWidth'),
     text: theme.color('nodeTextColor'),
-    rowOdd: rows ? theme.color('rowOdd') : undefined,
-    rowEven: er.entities.some((e) => e.rows.length > 1) ? theme.color('rowEven') : undefined,
+    // After `text`: the order of first use is the order of the root style's aliases.
+    ...rowPaints(theme, er),
     shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
   };
   const line =
@@ -366,6 +391,24 @@ function drawEntity(scene: Scene, view: EntityView): void {
   w.close();
 }
 
+/**
+ * One attribute row's class, fill and ink. v12 counts the name row as row 0, so the first
+ * attribute row is odd. An author's or palette fill (`own`) fills the row and keeps the entity's
+ * ink; otherwise the row takes the theme's fill and its cells inherit the row's ink.
+ */
+function rowPaint<F>(
+  t: TablePaint,
+  own: F | undefined,
+  i: number
+): { rowClass: string; fill: F | Color | undefined; ink: Color | undefined } {
+  const even = (i + 1) % 2 === 0;
+  const rowClass = even ? 'row-rect-even' : 'row-rect-odd';
+  if (own) return { rowClass, fill: own, ink: undefined };
+  return even
+    ? { rowClass, fill: t.rowEven, ink: t.rowEvenText }
+    : { rowClass, fill: t.rowOdd, ink: t.rowOddText };
+}
+
 function drawRows(
   { w, paint, padX }: Scene,
   view: EntityView,
@@ -374,36 +417,43 @@ function drawRows(
   top: number,
   text: Attrs
 ): void {
-  const t = paint.table;
-  // An author's fill fills every row, in every theme (D117).
-  const authorFill = view.style.shape.fill;
+  // An author's fill fills every row, in every theme (D117), before a palette slot's.
+  const own = view.style.shape.fill ?? slot?.fill;
   for (let i = 0; i < view.rows.length; i++) {
     const row = view.rows[i]!;
-    // v12 counts the name row as row 0, so the first attribute row is odd.
-    const even = (i + 1) % 2 === 0;
+    const { rowClass, fill, ink } = rowPaint(paint.table, own, i);
     w.open('g', {
-      class: even ? 'row-rect-even' : 'row-rect-odd',
+      class: rowClass,
       'data-id': row.attribute.name,
       'data-ast': row.attribute.id,
+      fill: ink,
     });
     w.outline('part', 'rect', {
       x: left,
       y: top + row.band.at,
       width: view.width,
       height: row.band.size,
-      fill: authorFill ?? slot?.fill ?? (even ? t.rowEven : t.rowOdd),
+      fill,
       stroke: 'none',
     });
-    const cy = top + row.band.at + row.band.size / 2;
-    for (let c = 0; c < 4; c++) {
-      const col = view.columns[c]!;
-      const cell: MeasuredLabel = row.cells[c]!;
-      if (col.size === 0 || cell.width === 0) continue;
-      // Cells are left-aligned in their column (v12 erBox).
-      const cx = left + col.at + padX + cell.width / 2;
-      w.label(cell, cx, cy, { class: CELL_CLASSES[c], ...text });
-    }
+    drawCells(w, view, row, { left, padX, cy: top + row.band.at + row.band.size / 2 }, text);
     w.close();
+  }
+}
+
+/** A row's cells, each left-aligned in its column (v12 erBox); empty columns are skipped. */
+function drawCells(
+  w: SvgWriter,
+  view: EntityView,
+  row: EntityView['rows'][number],
+  { left, padX, cy }: { left: number; padX: number; cy: number },
+  text: Attrs
+): void {
+  for (let c = 0; c < 4; c++) {
+    const col = view.columns[c]!;
+    const cell: MeasuredLabel = row.cells[c]!;
+    if (col.size === 0 || cell.width === 0) continue;
+    w.label(cell, left + col.at + padX + cell.width / 2, cy, { class: CELL_CLASSES[c], ...text });
   }
 }
 

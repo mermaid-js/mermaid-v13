@@ -14,21 +14,50 @@ import { channels, computedPaints, openHarness } from './page.ts';
 const SIMPLE = 'flowchart LR\n  A[Start] --> B{Choice}\n  B -- yes --> C[(Store)]';
 const firstRectFill = `getComputedStyle(document.querySelector('.diagram svg .node rect, .diagram svg .node path')).fill`;
 
-test('setting --mermaid-primaryColor on the host re-themes without re-rendering', async ({
-  page,
-}) => {
+// D570: `default` pins v12's `mainBkg`, so the host's `--mermaid-mainBkg` repaints nodes and
+// `--mermaid-primaryColor` does not.
+test('setting --mermaid-mainBkg on the host re-themes without re-rendering', async ({ page }) => {
   await openHarness(page);
   await page.evaluate((code) => window.v13.mount(code, { config: { theme: 'default' } }), SIMPLE);
   const markup = await page.locator('.diagram').innerHTML();
   const before = await page.evaluate(firstRectFill);
-  expect(before).toBe('rgb(236, 236, 255)'); // default theme primaryColor #ececff
+  expect(before).toBe('rgb(236, 236, 255)'); // default theme mainBkg #ececff
+
+  const setHost = (name: string, value: string) =>
+    page.evaluate(
+      ([n, v]) => document.querySelector<HTMLElement>('.diagram')!.style.setProperty(n, v),
+      [name, value]
+    );
+  await setHost('--mermaid-primaryColor', '#00ff00');
+  expect(await page.evaluate(firstRectFill)).toBe(before);
+  await setHost('--mermaid-mainBkg', '#ff0000');
+  expect(await page.evaluate(firstRectFill)).toBe('rgb(255, 0, 0)');
+  expect(await page.locator('.diagram').innerHTML()).toBe(markup);
+});
+
+test('under base, --mermaid-primaryColor on the host turns the cluster fill without re-rendering (#797)', async ({
+  page,
+}) => {
+  await openHarness(page);
+  const code = 'flowchart LR\n  subgraph group [Group]\n    A[Start] -- label --> B[End]\n  end';
+  await page.evaluate((c) => window.v13.mount(c, { config: { theme: 'base' } }), code);
+  const markup = await page.locator('.diagram').innerHTML();
+  const clusterFill = `getComputedStyle(document.querySelector('.diagram svg .cluster rect')).fill`;
+  const near = (got: unknown, want: number[]) => {
+    const c = channels(String(got));
+    return typeof c !== 'string' && want.every((v, i) => Math.abs(v - c[i]) <= 1);
+  };
+  // base tertiaryColor: v12 adjust('#fff4dd', { h: 180, l: 5 }) = #f6f9ff.
+  expect(near(await page.evaluate(clusterFill), [246, 249, 255])).toBe(true);
 
   await page.evaluate(() =>
     document
       .querySelector<HTMLElement>('.diagram')!
-      .style.setProperty('--mermaid-primaryColor', '#ff0000')
+      .style.setProperty('--mermaid-primaryColor', '#3366cc')
   );
-  expect(await page.evaluate(firstRectFill)).toBe('rgb(255, 0, 0)');
+  // v12 adjust('#3366cc', { h: 180, l: 5 }) = hsl(40, 60%, 55%) = #d1a347.
+  const after = String(await page.evaluate(clusterFill));
+  expect(near(after, [209, 163, 71]), after).toBe(true);
   expect(await page.locator('.diagram').innerHTML()).toBe(markup);
 });
 
@@ -42,9 +71,10 @@ test('contrast text follows a host override of the base colour it sits on (R-THE
   await page.evaluate(() =>
     document
       .querySelector<HTMLElement>('.diagram')!
-      .style.setProperty('--mermaid-primaryColor', '#000000')
+      .style.setProperty('--mermaid-mainBkg', '#000000')
   );
-  // #333 on black fails AA, so the ink flips to the background colour (white).
+  // #333 on black fails AA, so the ink flips to the background colour (white). Nodes sit on
+  // `mainBkg`, which `default` pins (D570), so the host overrides that, not `primaryColor`.
   expect(channels(await page.evaluate(label))).toEqual([255, 255, 255, 1]);
 });
 

@@ -278,6 +278,25 @@ describe('flowchart render: nodes, edges and clusters', () => {
     }
   });
 
+  // v12's `.marker` rule fills arrowheads with `lineColor`; its `arrowheadColor` reached only
+  // the legacy `.arrowheadPath` (D575).
+  it.each(['default', 'dark', 'base'] as const)(
+    "paints arrowheads in an author's lineColor under %s, as v12's .marker",
+    async (theme) => {
+      const { tree } = await draw('flowchart LR\n  A --> B', {
+        config: {
+          theme,
+          themeVariables: { lineColor: '#ff0000' },
+          output: { cssVariables: false },
+        },
+      });
+      const edge = byAst(tree, 'e:A>B')[0]!;
+      // The line takes its stroke from the edges group.
+      expect(tree.getAttr(edge.parent!, 'stroke')).toBe('#ff0000');
+      expect(tree.getAttr(tree.children(edge)[1]!, 'fill')).toBe('#ff0000');
+    }
+  );
+
   it('applies classDef and style through the allow-list, with ink that reads on the fill', async () => {
     const { tree, warnings } = await draw(
       'flowchart TD\n  A[x]\n  style A fill:#000000,stroke:#ff0000,cursor:pointer'

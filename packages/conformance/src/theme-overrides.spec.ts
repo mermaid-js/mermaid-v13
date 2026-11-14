@@ -1,0 +1,200 @@
+/**
+ * #796 (spec #795 T0, D568): core's shared colour variables in the five classic themes against v12
+ * 12.2.0's resolved `getThemeVariables()` (D151: v12 is the oracle), at the theme values and
+ * under one `themeVariables` override at a time: each base colour and `mainBkg` set alone to a
+ * light and to a dark probe, and `darkMode`. Every colour variable of core's vocabulary that v12
+ * also resolves is compared. Each difference is listed in `DIFFERENCES` as
+ * `theme / override / variable`, under the decision that accounts for it (a D-id with a
+ * MIGRATION.md row), and the list has to match the differences found exactly: an unlisted
+ * difference fails, and so does a listed one that has gone. A ticket that fixes a difference
+ * deletes its entries. Built like `theme-palettes.spec.ts`, which covers the palettes.
+ */
+import {
+  THEME_VARIABLES,
+  createTheme,
+  formatColor,
+  loadTheme,
+  parseColor,
+  type ThemeName,
+} from '@mermaid-js/core/theme';
+import { describe, expect, it } from 'vitest';
+import { D332_INPUTS } from './diagram-themes.ts';
+import { loadOracle } from './oracle.ts';
+
+interface V12 {
+  mermaidAPI: {
+    reset(): void;
+    initialize(config: object): void;
+    getConfig(): { themeVariables: Record<string, unknown> };
+  };
+}
+
+await loadOracle();
+const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
+
+const THEMES = ['default', 'dark', 'forest', 'neutral', 'base'] as const satisfies ThemeName[];
+type Classic = (typeof THEMES)[number];
+
+/**
+ * The base colours an author overrides one at a time, each to a light and a dark probe, and
+ * `mainBkg`, which the named classic themes pin (D570) and v12 derives some fills from.
+ */
+const OVERRIDDEN = [
+  'primaryColor',
+  'secondaryColor',
+  'tertiaryColor',
+  'background',
+  'primaryTextColor',
+  'lineColor',
+  'mainBkg',
+] as const;
+const PROBES = { light: '#ffd966', dark: '#2a4d69' } as const;
+
+/** The overrides by label: `none`, `<variable>:light`, `<variable>:dark` and `darkMode`. */
+const CASES: Readonly<Record<string, Readonly<Record<string, unknown>>>> = {
+  none: {},
+  ...Object.fromEntries(
+    OVERRIDDEN.flatMap((name) =>
+      Object.entries(PROBES).map(([probe, value]) => [`${name}:${probe}`, { [name]: value }])
+    )
+  ),
+  darkMode: { darkMode: true },
+};
+
+/** Every colour variable in core's vocabulary. */
+const COLOURS = Object.entries(THEME_VARIABLES)
+  .filter(([, d]) => d.kind === 'color')
+  .map(([name]) => name);
+
+const ALL = Object.keys(CASES);
+/** One entry per theme / override / variable: `keys('base', ['primaryColor:dark'], ['mainBkg'])`. */
+const keys = (theme: Classic, cases: readonly string[], names: readonly string[]): string[] =>
+  cases.flatMap((c) => names.map((n) => `${theme} / ${c} / ${n}`));
+
+/**
+ * Each difference from v12, keyed `theme / override / variable`, grouped by the decision that
+ * accounts for it (D568): every group names a D-id, and each has a MIGRATION.md row.
+ */
+const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
+  "D29 (R-THEME-9): v13 meets AA where v12 does not: dark's #b8b6b6 text on #474949 (4.49:1) and #585858 label fill under #ccc text (4.43:1); base's #333 node text on a dark primaryColor or mainBkg":
+    [
+      ...keys('dark', ALL, ['edgeLabelBackground', 'noteTextColor', 'secondaryTextColor']),
+      ...keys('base', ['primaryColor:dark', 'mainBkg:dark'], ['nodeTextColor']),
+    ],
+  "D71: v13's shared border rule (15% black, 20% white under darkMode) approximates v12's mkBorder (saturation -40, lightness ∓10)":
+    [
+      ...keys('base', ALL, [
+        'actorBorder',
+        'border2',
+        'clusterBorder',
+        'gradientStart',
+        'gradientStop',
+        'nodeBorder',
+        'noteBorderColor',
+        'primaryBorderColor',
+        'secondaryBorderColor',
+        'tertiaryBorderColor',
+      ]),
+    ],
+  "D71: v13 picks text ink by contrast (primaryTextColor or background) where v12 base inverts the fill's colour; base's errorTextColor follows tertiaryTextColor, as v12 (#825)":
+    [
+      ...keys('base', ALL, [
+        'errorTextColor',
+        'secondaryTextColor',
+        'tertiaryTextColor',
+        'titleColor',
+      ]),
+    ],
+  'D71: under darkMode v13 mixes 30% black into secondaryColor for the edge label where v12 base darkens its HSL lightness by 30':
+    [...keys('base', ['darkMode'], ['edgeLabelBackground'])],
+  "D571: v12's darkMode turns base's primaryTextColor (and the text that follows it) to #eee and dark's and neutral's scaleLabelColor to black; v13's darkMode switches only the derivation rules":
+    [
+      ...keys(
+        'base',
+        ['darkMode'],
+        ['nodeTextColor', 'primaryTextColor', 'scaleLabelColor', 'textColor']
+      ),
+      ...keys('dark', ['darkMode'], ['scaleLabelColor']),
+      ...keys('neutral', ['darkMode'], ['scaleLabelColor']),
+    ],
+  "D575: arrowheadColor follows lineColor, as v12's .marker paints arrowheads; v12's getThemeVariables() keeps default's and dark's constructor value and base's invert(background), which reached only the legacy .arrowheadPath, so the variable differs and the render matches":
+    [
+      ...(['default', 'dark', 'base'] as const).flatMap((theme) =>
+        keys(theme, ['lineColor:light', 'lineColor:dark'], ['arrowheadColor'])
+      ),
+    ],
+  "D576: forest's sequence participant border stays v12's darken(#cde498, 20) (softBorder, pinned); v12 recomputes it from an author's mainBkg":
+    [...keys('forest', ['mainBkg:light', 'mainBkg:dark'], ['actorBorder'])],
+};
+
+const LISTED = Object.values(DIFFERENCES).flat();
+
+const hex = (v: unknown): string | undefined => {
+  const rgba = typeof v === 'string' ? parseColor(v) : undefined;
+  return rgba ? formatColor(rgba) : undefined;
+};
+
+function v12Vars(theme: Classic, themeVariables: object): Record<string, unknown> {
+  v12.mermaidAPI.reset();
+  v12.mermaidAPI.initialize({ theme, themeVariables });
+  const vars = { ...v12.mermaidAPI.getConfig().themeVariables };
+  v12.mermaidAPI.reset();
+  return vars;
+}
+
+interface Compared {
+  /** Colour variables v12 resolves to no colour, so they are not compared. */
+  readonly skipped: string[];
+  /** `theme / override / variable` for each compared variable that differs. */
+  readonly differences: string[];
+}
+
+async function compare(theme: Classic, label: string): Promise<Compared> {
+  const themeVariables = CASES[label]!;
+  const old = v12Vars(theme, themeVariables);
+  const now = createTheme(await loadTheme(theme), { cssVariables: false, themeVariables });
+  const skipped: string[] = [];
+  const differences: string[] = [];
+  for (const name of COLOURS) {
+    const was = hex(old[name]);
+    if (was === undefined) skipped.push(name);
+    else if (hex(now.value(name)) !== was) differences.push(`${theme} / ${label} / ${name}`);
+  }
+  return { skipped, differences };
+}
+
+/**
+ * The colour variables v12 does not resolve: v13's shared inputs (D332), `nodeTextColor`, which
+ * only v12 base sets, and `border1`, which v12 base leaves unset.
+ */
+function notInV12(theme: Classic): string[] {
+  const own = COLOURS.filter((n) => D332_INPUTS.includes(n));
+  return [...own, theme === 'base' ? 'border1' : 'nodeTextColor'];
+}
+
+describe('shared colour variables under one override, against v12 12.2.0 (#796, D151)', () => {
+  it('lists each difference once, keyed by a theme, an override and a compared variable', () => {
+    expect(new Set(LISTED).size).toBe(LISTED.length);
+    for (const key of LISTED) {
+      const [theme, label, name] = key.split(' / ');
+      expect(THEMES, key).toContain(theme);
+      expect(ALL, key).toContain(label);
+      expect(COLOURS, key).toContain(name);
+    }
+  });
+
+  it('names a decision for each group (D568)', () => {
+    for (const why of Object.keys(DIFFERENCES)) expect(why).toMatch(/^D\d+\b/);
+  });
+
+  describe.each(THEMES)('%s', (theme) => {
+    it.each(ALL)('%s: compares every colour v12 resolves', async (label) => {
+      expect((await compare(theme, label)).skipped.sort()).toEqual(notInV12(theme).sort());
+    });
+
+    it.each(ALL)('%s: differs from v12 only where DIFFERENCES says', async (label) => {
+      const listed = LISTED.filter((k) => k.startsWith(`${theme} / ${label} / `));
+      expect((await compare(theme, label)).differences.sort()).toEqual(listed.sort());
+    });
+  });
+});

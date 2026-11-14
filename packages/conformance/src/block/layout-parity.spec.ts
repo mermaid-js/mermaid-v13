@@ -123,7 +123,9 @@ describe('block grid parity with v12', () => {
         'config/padding-and-fixed-width',
         ...['default', 'neo-dark', 'neo', 'redux'].map((t) => `handdrawn/${t}`),
         ...['off', 'on-dark', 'on', 'style-beats-the-palette'].map((p) => `palette/${p}`),
-        ...['default', 'neo-dark', 'neo', 'redux'].map((t) => `themes/${t}`),
+        ...['base-cluster-overrides', 'default', 'neo-dark', 'neo', 'redux'].map(
+          (t) => `themes/${t}`
+        ),
       ].map((f) => `e2e/baseline/${f}.mmd`),
       'e2e/nightly-check/composite-with-a-label.mmd',
     ]);

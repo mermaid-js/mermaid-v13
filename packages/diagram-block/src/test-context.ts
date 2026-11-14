@@ -21,6 +21,7 @@ import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, resolveThemeName, type Theme } from '@mermaid-js/core/theme';
 import type { BlockModel } from './model.ts';
 import { parseBlock } from './parser/index.ts';
+import { theme as table } from './theme/table.ts';
 
 /** The `data-mermaid-version` the test renders write. */
 export const TEST_VERSION = '13.0.0-alpha.0';
@@ -57,6 +58,7 @@ export async function blockTestTheme(
 ): Promise<Theme> {
   const choice = resolveThemeName(config.theme, warn);
   return createTheme(await loadTheme(choice.name), {
+    diagram: table,
     themeVariables: config.themeVariables as Record<string, unknown> | undefined,
     dark: choice.dark ? await loadTheme(choice.dark) : undefined,
     ...(warn ? { warn } : {}),

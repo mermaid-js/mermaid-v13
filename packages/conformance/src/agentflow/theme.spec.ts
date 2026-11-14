@@ -190,8 +190,11 @@ const V12_HAND_DRAWN: Readonly<Record<ThemeName, string>> = {
 };
 
 const CLASSIC = ['default', 'dark', 'forest', 'neutral', 'base'];
-/** Themes whose border colours v13 derives with core's rule, where v12 used khroma's `mkBorder`. */
-const DERIVED = ['default', 'dark', 'forest', 'neutral', 'base', 'redux', 'redux-color'];
+/**
+ * Themes whose border colours v13 derives with core's rule, where v12 used khroma's `mkBorder`;
+ * the named classic themes pin v12's (#798).
+ */
+const DERIVED = ['base', 'redux', 'redux-color'];
 
 /**
  * Each difference from 12.2.0, by `<theme>.<paint>`, with the decision that makes it. The first
