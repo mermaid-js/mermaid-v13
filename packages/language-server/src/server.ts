@@ -38,6 +38,7 @@ import {
   toRange,
 } from './convert.ts';
 import { discoverFacets } from './discover.ts';
+import { VERSION } from './version.ts';
 
 /** Documents the server serves by URI: `.mmd` and `.mermaid` (any case). */
 export function isMermaidUri(uri: string): boolean {
@@ -137,7 +138,7 @@ export function startServer(connection: Connection, options: ServerOptions = {})
     service = createLanguageService({ facets });
     await service.preload();
     return {
-      serverInfo: { name: 'mermaid-language-server' },
+      serverInfo: { name: 'mermaid-language-server', version: VERSION },
       capabilities: {
         positionEncoding: 'utf-16',
         textDocumentSync: { openClose: true, change: TextDocumentSyncKind.Full },

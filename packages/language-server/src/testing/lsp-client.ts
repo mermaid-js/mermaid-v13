@@ -1,6 +1,7 @@
 /**
  * A scripted LSP client for the specs (D99 suite 5): spawns `mermaid-language-server --stdio`
- * from source (node + tsx, the `mermaid-source` condition) and talks JSON-RPC over its stdio.
+ * from source (node + tsx, the `mermaid-source` condition), or the built `dist/cli.js` that npm
+ * installs, and talks JSON-RPC over its stdio.
  */
 import { spawn } from 'node:child_process';
 import { join } from 'node:path';
@@ -18,6 +19,16 @@ import type {
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 const CLI = join(import.meta.dirname, '..', 'cli.ts');
+/** The built bin, as npm installs it (`pnpm --filter @mermaid-js/language-server build`). */
+export const BUILT_CLI = join(import.meta.dirname, '..', '..', 'dist', 'cli.js');
+
+/** Which bin to run: the source through tsx, or the built `dist/cli.js` with plain node. */
+export type Bin = 'source' | 'built';
+
+const command = (bin: Bin, args: readonly string[]): string[] =>
+  bin === 'built'
+    ? [BUILT_CLI, ...args]
+    : ['--import', 'tsx', '--conditions=mermaid-source', CLI, ...args];
 
 export interface Client {
   readonly connection: ProtocolConnection;
@@ -33,6 +44,10 @@ export interface Client {
   close(uri: string): void;
   /** `shutdown` + `exit`; resolves with the server's exit code. */
   stop(): Promise<number | null>;
+  /** Close the server's stdin without `exit` (as a client that goes away does). */
+  endInput(): void;
+  /** Resolves with the server's exit code once its process has exited. */
+  readonly exited: Promise<number | null>;
   /** What the server wrote to stderr. */
   stderr(): string;
 }
@@ -42,12 +57,39 @@ export interface ClientOptions {
   workspaceFolders?: { uri: string; name: string }[];
   initializationOptions?: unknown;
   capabilities?: ClientCapabilities;
+  /** The bin to start (default `source`). */
+  bin?: Bin;
+  /** Arguments for the bin (default `['--stdio']`). */
+  args?: readonly string[];
+  /** The `processId` sent in `initialize` (default this process, which stays alive). */
+  processId?: number | null;
+}
+
+/** What a run of the bin that is not an LSP session wrote, and its exit code. */
+export interface CliRun {
+  readonly code: number | null;
+  readonly stdout: string;
+  readonly stderr: string;
+}
+
+/** Run the bin with `args` and stdin closed at once; resolves when it exits. */
+export function runCli(args: readonly string[], bin: Bin = 'source'): Promise<CliRun> {
+  const child = spawn(process.execPath, command(bin, args), {
+    cwd: ROOT,
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+  let stdout = '';
+  let stderr = '';
+  child.stdout.setEncoding('utf8').on('data', (c: string) => (stdout += c));
+  child.stderr.setEncoding('utf8').on('data', (c: string) => (stderr += c));
+  child.stdin.end();
+  return new Promise((done) => child.on('close', (code) => done({ code, stdout, stderr })));
 }
 
 export async function startClient(options: ClientOptions = {}): Promise<Client> {
   const child = spawn(
     process.execPath,
-    ['--import', 'tsx', '--conditions=mermaid-source', CLI, '--stdio'],
+    command(options.bin ?? 'source', options.args ?? ['--stdio']),
     { cwd: ROOT, stdio: ['pipe', 'pipe', 'pipe'] }
   );
   let stderr = '';
@@ -70,7 +112,7 @@ export async function startClient(options: ClientOptions = {}): Promise<Client> 
   // A server that dies before answering fails the spec with its stderr, not a timeout.
   const init = await Promise.race([
     connection.sendRequest<InitializeResult>('initialize', {
-      processId: process.pid,
+      processId: options.processId === undefined ? process.pid : options.processId,
       rootUri: options.rootUri ?? null,
       capabilities: options.capabilities ?? {},
       ...(options.workspaceFolders ? { workspaceFolders: options.workspaceFolders } : {}),
@@ -113,6 +155,10 @@ export async function startClient(options: ClientOptions = {}): Promise<Client> 
       connection.dispose();
       return code;
     },
+    endInput() {
+      child.stdin.end();
+    },
+    exited,
     stderr: () => stderr,
   };
 }
