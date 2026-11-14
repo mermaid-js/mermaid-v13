@@ -37,11 +37,11 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `defaultLinkColor` | `--mermaid-defaultLinkColor` | derived | color | `lineColor` | `lineColor` | dark |  |
 | `border1` | `--mermaid-border1` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral |  |
 | `border2` | `--mermaid-border2` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark |  |
-| `noteBkgColor` | `--mermaid-noteBkgColor` | derived | color | `#fff5ad` | `secondaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, sequence, class, state, usecase |
-| `noteTextColor` | `--mermaid-noteTextColor` | derived | color | `contrast(noteBkgColor, textColor, background)` | `contrast(noteBkgColor, textColor, background)` | redux-color, redux, redux-dark, redux-dark-color, default, forest, neutral | core, sequence, class, state, usecase |
+| `noteBkgColor` | `--mermaid-noteBkgColor` | derived | color | `#fff5ad` | `secondaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, base, neo-dark | core, sequence, class, state, usecase |
+| `noteTextColor` | `--mermaid-noteTextColor` | derived | color | `contrast(noteBkgColor, textColor, background)` | `contrast(noteBkgColor, textColor, background)` | redux-color, redux, redux-dark, redux-dark-color, default, forest, neutral, base | core, sequence, class, state, usecase |
 | `noteBorderColor` | `--mermaid-noteBorderColor` | derived | color | `mix(noteBkgColor, black, 30%)` | `mix(noteBkgColor, white, 30%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo | core, sequence, class, state, usecase |
-| `errorBkgColor` | `--mermaid-errorBkgColor` | derived | color | `#552222` | `#a44141` | redux-color, redux, redux-dark, redux-dark-color, default, forest, neutral, neo, neo-dark | core |
-| `errorTextColor` | `--mermaid-errorTextColor` | derived | color | `contrast(background, #552222, #ffdddd)` | `contrast(background, #dddddd, #552222)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | core |
+| `errorBkgColor` | `--mermaid-errorBkgColor` | derived | color | `#552222` | `#a44141` | redux-color, redux, redux-dark, redux-dark-color, default, forest, neutral, base, neo, neo-dark | core |
+| `errorTextColor` | `--mermaid-errorTextColor` | derived | color | `contrast(background, #552222, #ffdddd)` | `contrast(background, #dddddd, #552222)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, base, neo, neo-dark | core |
 | `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline, mindmap, gitgraph, agentflow, block, requirement, usecase |
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
 | `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state, mindmap, agentflow |

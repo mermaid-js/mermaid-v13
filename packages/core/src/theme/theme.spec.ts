@@ -107,6 +107,22 @@ describe('createTheme: base derives by rule (#797, v12 theme-base)', () => {
     expect(t.value('arrowheadColor')).toBe('#0b0b0b');
   });
 
+  it('draws errors in the tertiary colours, as v12 theme-base (#825)', () => {
+    expect(['errorBkgColor', 'errorTextColor'].map(lit().value)).toEqual(['#f6f9ff', '#333333']);
+    const t = lit({ primaryColor: '#3366cc', darkMode: true });
+    expect(t.value('errorBkgColor')).toBe(t.value('tertiaryColor'));
+    expect(t.value('errorTextColor')).toBe(t.value('tertiaryTextColor'));
+    const own = lit({ tertiaryColor: '#123456', tertiaryTextColor: '#fedcba' });
+    expect(['errorBkgColor', 'errorTextColor'].map(own.value)).toEqual(['#123456', '#fedcba']);
+  });
+
+  it("keeps v12's note colours, which neither darkMode nor primaryTextColor moves (#825)", () => {
+    for (const themeVariables of [{ darkMode: true }, { primaryTextColor: '#2a4d69' }]) {
+      const t = lit(themeVariables);
+      expect(['noteBkgColor', 'noteTextColor'].map(t.value)).toEqual(['#fff5ad', '#333333']);
+    }
+  });
+
   it('writes the fallbacks as CSS over the primaryColor and background aliases (R-THEME-4)', () => {
     const t = createTheme(base);
     t.color('secondaryColor');
