@@ -87,9 +87,15 @@ describe('built-in themes', () => {
   it('renders fully from at most 8 base variables (R-THEME-5)', async () => {
     expect(BASE_VARIABLES.length).toBeLessThanOrEqual(8);
     const base = await loadTheme('base');
-    expect(base.values).toBeUndefined();
-    // v12 theme-base derives arrowheadColor from background, not from lineColor (#797).
-    expect(base.rules).toEqual({ arrowheadColor: 'invert(background)' });
+    // v12 theme-base's constructor literals: the note colours, which no base variable moves (#825).
+    expect(base.values).toEqual({ noteBkgColor: '#fff5ad', noteTextColor: '#333333' });
+    // v12 theme-base derives arrowheadColor from background, not from lineColor (#797), and the
+    // error colours from the tertiary ones (#825).
+    expect(base.rules).toEqual({
+      arrowheadColor: 'invert(background)',
+      errorBkgColor: 'tertiaryColor',
+      errorTextColor: 'tertiaryTextColor',
+    });
     const vars = {
       primaryColor: '#1d3557',
       secondaryColor: '#a8dadc',

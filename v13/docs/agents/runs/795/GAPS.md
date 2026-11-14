@@ -40,3 +40,16 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 
 - **Decided (orchestrator, v12 parity):** the composite label stays `nodeTextColor`, as v12 draws it (its `g.label` sits beside `rect.cluster`, so `.cluster text` never reaches it); the ticket's `titleColor` came from a misread. T7 notes it.
 - Redux and neo stay byte-identical: block's table carries `blockCompositeClusterPaint` (`families.classic` true, redux/neo false). Argos: the new fixture and the classic themes' composites move; redux, neo and the palette themes do not.
+
+## #825 (T8)
+
+- **Choice (accepted):** base `errorTextColor` follows `tertiaryTextColor` (ticket), so it still differs from v12 (`invert(tertiaryColor)`); the 14 entries sit in the oracle's D71 group with the other text-ink approximations.
+- **Found, outside scope (follow-up):** default, forest and neutral draw the error image as `#552222` text on a `#552222` rect (1:1): `packages/core/src/pipeline/error-svg.ts` fills a rect with `errorBkgColor` where v12 drew the text on the background. Predates this spec.
+
+## #802 (T6)
+
+- #407: fixed by T1; comment posted. #434: split; comment posted; the classic state inks filed as #827 (needs state theme variables or a D-id; out of this spec's scope). Not filed: `redux-color` state start-dot stroke `#000` vs v12 `#28253d` (minor).
+
+## Follow-ups after the spec
+
+- #827 (state inks, filed). Error image contrast (T8 finding). Redux/neo gantt critical-bar text below AA (T5 finding).
