@@ -63,10 +63,7 @@ const COLOURS = Object.entries(THEME_VARIABLES)
   .map(([name]) => name);
 
 const ALL = Object.keys(CASES);
-/** The light and dark probe of each named override. */
-const both = (...names: (typeof OVERRIDDEN)[number][]): string[] =>
-  names.flatMap((n) => [`${n}:light`, `${n}:dark`]);
-/** One entry per theme / override / variable: `keys('base', both('primaryColor'), ['mainBkg'])`. */
+/** One entry per theme / override / variable: `keys('base', ['primaryColor:dark'], ['mainBkg'])`. */
 const keys = (theme: Classic, cases: readonly string[], names: readonly string[]): string[] =>
   cases.flatMap((c) => names.map((n) => `${theme} / ${c} / ${n}`));
 
@@ -95,12 +92,17 @@ const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
         'tertiaryBorderColor',
       ]),
     ],
-  "D71: v13 picks text ink by contrast (primaryTextColor or background) where v12 base inverts the fill's colour":
-    [...keys('base', ALL, ['secondaryTextColor', 'tertiaryTextColor', 'titleColor'])],
+  "D71: v13 picks text ink by contrast (primaryTextColor or background) where v12 base inverts the fill's colour; base's errorTextColor follows tertiaryTextColor, as v12 (#825)":
+    [
+      ...keys('base', ALL, [
+        'errorTextColor',
+        'secondaryTextColor',
+        'tertiaryTextColor',
+        'titleColor',
+      ]),
+    ],
   'D71: under darkMode v13 mixes 30% black into secondaryColor for the edge label where v12 base darkens its HSL lightness by 30':
     [...keys('base', ['darkMode'], ['edgeLabelBackground'])],
-  '#825 (T8): v12 base derives errorBkgColor from tertiaryColor and errorTextColor from tertiaryTextColor; v13 uses the shared #552222 rules':
-    [...keys('base', ALL, ['errorBkgColor', 'errorTextColor'])],
   "#795 (maintainer question): v12's darkMode turns base's primaryTextColor (and the text that follows it) to #eee and dark's and neutral's scaleLabelColor to black; v13's darkMode switches only the derivation rules":
     [
       ...keys(
@@ -110,11 +112,6 @@ const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
       ),
       ...keys('dark', ['darkMode'], ['scaleLabelColor']),
       ...keys('neutral', ['darkMode'], ['scaleLabelColor']),
-    ],
-  '#825 (T8): v12 base sets noteBkgColor (#fff5ad) and noteTextColor (#333) in the constructor; v13 derives them':
-    [
-      ...keys('base', ['darkMode'], ['noteBkgColor']),
-      ...keys('base', both('primaryTextColor'), ['noteTextColor']),
     ],
 };
 
