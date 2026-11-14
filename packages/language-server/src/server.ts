@@ -31,7 +31,7 @@ import { LSPErrorCodes, ResponseError, TextDocumentSyncKind } from 'vscode-langu
 import {
   semanticTokenData,
   takesMarkdown,
-  toCompletionItem,
+  toCompletionItems,
   toDiagnostic,
   toFoldingRange,
   toMarkup,
@@ -239,7 +239,7 @@ export function startServer(connection: Connection, options: ServerOptions = {})
   connection.onCompletion(({ textDocument, position }) => {
     const o = at(textDocument, position);
     if (!o) return null;
-    return o.doc.completions(o.offset).map((item) => toCompletionItem(o.index, item, docMarkdown));
+    return toCompletionItems(o.index, o.doc.completions(o.offset), docMarkdown);
   });
 
   connection.listen();

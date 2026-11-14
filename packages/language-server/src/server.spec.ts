@@ -3,8 +3,14 @@
  * `mermaid-language-server` bin and exercises every method it offers on flowchart fixtures.
  * Positions are 0-based lines and UTF-16 columns, written out by hand from the fixtures.
  */
-import { COMPLETION_TRIGGERS, SEMANTIC_TOKEN_LEGEND } from '@mermaid-js/language-service';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import {
+  COMPLETION_TRIGGERS,
+  createLanguageService,
+  LineIndex,
+  SEMANTIC_TOKEN_LEGEND,
+} from '@mermaid-js/language-service';
+import { goldenCases, readFixture } from '@mermaid-js/language-service/testing';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -671,6 +677,55 @@ describe('versioned diagnostics and incremental sync (#806)', () => {
         client.edit(uri, 3, [{ text: 'flowchart LR\n  Q --> R\n' }]);
         expect(await client.diagnostics(uri)).toMatchObject({ version: 3, diagnostics: [] });
         expect(await references(1, 2)).toEqual([range(1, 2, 3)]);
+      } finally {
+        await client.stop();
+      }
+    },
+    T
+  );
+});
+
+describe('completion order (#807)', () => {
+  const GOLDENS = join(import.meta.dirname, '..', '..', 'language-service', 'goldens');
+  /** How an LSP client orders a list: by `sortText`, else by `label`. */
+  const clientOrder = (items: readonly CompletionItem[]) =>
+    items
+      .map((i) => ({ key: i.sortText ?? i.label, label: i.label }))
+      .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
+      .map((i) => i.label);
+
+  it.each(['flowchart', 'sequence'])(
+    'sorted by sortText, the items of every %s completion golden are in the service order',
+    async (diagram) => {
+      const service = createLanguageService();
+      await service.preload();
+      const client = await startClient();
+      let lists = 0;
+      try {
+        const cases = goldenCases(GOLDENS).filter(
+          (c) => c.diagram === diagram && c.feature === 'completions'
+        );
+        expect(cases.length).toBeGreaterThan(5);
+        for (const c of cases) {
+          const { text, markers } = readFixture(readFileSync(c.input, 'utf8'));
+          const uri = `file:///w/${diagram}-${c.name}.mmd`;
+          client.open(uri, text);
+          await client.diagnostics(uri);
+          const doc = service.update(uri, text);
+          const index = new LineIndex(text);
+          for (const offset of markers) {
+            const { line, column } = index.position(offset);
+            const items = await client.connection.sendRequest<CompletionItem[]>(
+              'textDocument/completion',
+              { textDocument: { uri }, position: pos(line, column) }
+            );
+            const expected = doc.completions(offset).map((i) => i.label);
+            expect(clientOrder(items), `${c.name} at ${line}:${column}`).toEqual(expected);
+            if (expected.length > 10) lists++;
+          }
+        }
+        // The fixtures hold lists long enough that ordering by label would differ.
+        expect(lists).toBeGreaterThan(0);
       } finally {
         await client.stop();
       }
