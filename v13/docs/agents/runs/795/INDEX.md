@@ -18,6 +18,8 @@ Covers #761, #758, #771, #772, #773, #407, #434. The five maintainer decisions a
 
 T1, T2 and T8 (filed from T0's list) are the core tickets; they merge one at a time. T3, T4, T5 run in parallel after T1. T3 and T5 both extend the R-THEME-9 contrast spec: additive rows only; the second to merge takes the first's.
 
+Whole-branch review (finish step 2): fixes on `feature/795_review-fixes`, merged; D575 (markers follow `lineColor`), D576 (forest `actorBorder`, listed) added; notes in `tickets/review.md`.
+
 ## Pointers
 
 - Theme engine: `packages/core/src/theme/spec.ts` (`ThemeSpec`), `theme.ts` (`createTheme`, `source()` treats `spec.base` as literals), `dsl.ts` (rule DSL), `vocabulary.ts` (shared rules, `mainBkg: primaryColor`), `specs/*.ts` (one per theme; `specs/palettes.ts` holds `BASE_SECONDARY`).
