@@ -10,11 +10,11 @@ Covers #761, #758, #771, #772, #773, #407, #434. The five maintainer decisions a
 | T1 `base` derives by rule | #797 | `feature/797_base-derived-rules` | #796 | merged (ff 3e84d8ae7); core 98,706 → 98,739 B gz |
 | T2 named themes pin `mainBkg` | #798 | `feature/798_classic-pin-mainbkg` | #796, #797 | merged (ff 519aaf0be); core 98,739 → 98,740 B gz |
 | T3 ER row ink, label fill | #799 | `feature/799_er-row-ink` | #797 | merged (ff 2e9f4349b); core untouched; follow-up: fallow complexity in `drawRows` |
-| T4 block composite colours | #800 | `feature/800_block-composite` | #797 | review: sent back (redux/neo must not change) |
+| T4 block composite colours | #800 | `feature/800_block-composite` | #797 | merged (ff); `blockCompositeClusterPaint` flag, classic only; redux/neo byte-identical |
 | T5 gantt contrast | #801 | `feature/801_gantt-contrast` | #797 | merged (ff b9bb3aea7); core untouched; ER contrast rows folded into `theme-contrast.spec.ts` |
 | T6 reproduce #407, #434 | #802 | `feature/802_theme-qa-repro` | #797, #798 | merged (ff 7ba9d4371); #407 fixed by T1; #434 split (#391, by-design, #827); comments posted |
 | T8 `base` error and note colours | #825 | `feature/825_base-error-note` | #797, #798 | merged (ff); core 98,740 → 98,731 B gz |
-| T7 decisions, MIGRATION, docs | #803 | `feature/803_theme-parity-records` | all | blocked |
+| T7 decisions, MIGRATION, docs | #803 | `feature/803_theme-parity-records` | all | in progress |
 
 T1, T2 and T8 (filed from T0's list) are the core tickets; they merge one at a time. T3, T4, T5 run in parallel after T1. T3 and T5 both extend the R-THEME-9 contrast spec: additive rows only; the second to merge takes the first's.
 
