@@ -11,7 +11,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 
 ## #797 (T1)
 
-- **For the maintainer:** v12 base derives `arrowheadColor` from `background`, not from `lineColor` (the spec assumed it followed `lineColor`). base now has `rules.arrowheadColor: invert(background)`, so under `base` an author's or host's `lineColor` no longer recolours arrowheads; `background` does (v12 parity).
+- **Reversed by the review (D575):** T1 gave base `rules.arrowheadColor: invert(background)`, v12's `getThemeVariables()` value; v12 drew markers in `lineColor`, so base (and default, dark) now leave `arrowheadColor` to `lineColor`.
 - Derived values now start from the rule's unrounded channels: three base cells in `theme-variables.md` move by one unit (`railroadSpecialStroke`, `usecaseBoundaryBorder`, `activationBorderColor`).
 - Argos holds the screenshot baselines: the `base` screenshots and the four new #761 fixtures are approved in CI, not in the repo.
 
@@ -33,7 +33,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 
 - **Choice:** `gradientStart`, `gradientStop` and `actorBkg` are not pinned: their rules already give v12's values, but an author's `primaryBorderColor` still moves the gradient where v12 kept the constructor value.
 - **Choice:** under a dark `background` override, error text in default/forest/neutral is v12's pinned `#552222` (was `#ffdddd` by contrast); R-THEME-9 checks only the themes' own values.
-- `lineColor` no longer recolours arrowheads under `default` and `dark` (v12 parity). Default renders move where the pinned borders/inks differ from the old derivation (gantt outlines and `vert`, quadrant borders, railroad strokes and terminal text, agentflow separator): Argos.
+- ~~`lineColor` no longer recolours arrowheads under `default` and `dark`~~: reversed by the review (D575); it does again, as v12 drew them. Default renders move where the pinned borders/inks differ from the old derivation (gantt outlines and `vert`, quadrant borders, railroad strokes and terminal text, agentflow separator): Argos.
 - Missed `tools/gen-config` theme-inventory spec (the `primaryBorderColor` row); fixed on the integration branch.
 
 ## #800 (T4)
@@ -54,6 +54,12 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 
 - D568–D574 record the spec (block D568–D577, decision 5; D575–D577 unused): D568 oracle and its rule, D569 `base` rules (T1 `arrowheadColor` from `background`, T8 errors and notes, decision 4), D570 pins (decision 1, R-THEME-3 effect, T2's unpinned gradient), D571 `darkMode` text inks (Knut), D572 ER (decision 3, row inks, label text choice), D573 block (flag, `nodeTextColor` label), D574 gantt (decision 2, dark `#990000`, T5's choices). The oracle's `#795` group is now D571, and its test requires a D-id per group.
 - **Not done (no code change allowed):** `theme-variables.md` shows a base colour as "set by all" and does not say that `base` writes three of them as rules; that prose lives in `tools/gen-config/src/theme-inventory.ts`. The pinned `mainBkg` already shows in its "Set by themes" column. The config reference (`themeVariables` notes in `config.schema.yaml`) says both.
+
+## Whole-branch review
+
+- **Choice:** ER row ink is `contrast(rowX, contrast(rowX, ifSet(nodeTextColor, textColor), textColor), background)`, not the review's `contrast(rowX, ifSet(nodeTextColor, textColor), background)`: the latter moved 31 JS values under an author's `nodeTextColor` that misses on the row (base + `#ffffff` gave `#f4f4f4` on white). This one keeps every old JS value (classic themes × all probes) and stays live in CSS.
+- **Choice:** gantt's crit-bar ink is a new variable `critTextColor` (alias `gct`, D574). Redux/neo values are unchanged, but their crit labels now read `var(--_gct)` (bytes move, colours do not).
+- **For the maintainer:** `mainBkg` in the oracle found forest's `actorBorder` (pinned `softBorder`, v12 recomputes `darken(mainBkg, 20)`): listed as D576, not fixed. `forest`/`neutral` keep their pre-spec `arrowheadColor` pins (`neutral` heads `#333333` on `#666666` lines, v12 drew `#666`).
 
 ## Follow-ups after the spec
 

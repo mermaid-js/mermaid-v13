@@ -36,7 +36,7 @@ const PAIRS: Readonly<Record<string, readonly Pair[]>> = {
   // the `vert` marker's label on the chart.
   gantt: [
     ['taskTextColor', 'taskBkgColor', TEXT],
-    ['taskTextColor', 'critBkgColor', TEXT],
+    ['critTextColor', 'critBkgColor', TEXT],
     ['taskTextDarkColor', 'activeTaskBkgColor', TEXT],
     ['taskTextDarkColor', 'doneTaskBkgColor', TEXT],
     ['taskTextOutsideColor', 'background', TEXT],
@@ -56,14 +56,21 @@ const PROBED: Readonly<
 > = {
   er: {
     pairs: PAIRS.er!.slice(0, 2),
+    // #758's own probe (#335577) is checked in `diagram-er` `table.spec.ts` and rendered in
+    // `er-row-ink.spec.ts`.
     probes: [
-      { primaryColor: '#335577' },
       { primaryColor: '#000000' },
       { primaryColor: '#ffffff' },
       // A dark primaryColor under a pinned light entity fill: dark rows, light header.
       { primaryColor: '#000000', mainBkg: '#ececff' },
       { tertiaryColor: '#ff00ff' },
     ],
+  },
+  // Text on normal and critical bars (D574): a dark primaryColor with light text, where an ink
+  // chosen against red alone would land on the navy bar.
+  gantt: {
+    pairs: PAIRS.gantt!.slice(0, 2),
+    probes: [{ primaryColor: '#1a237e', textColor: '#ffffff' }],
   },
 };
 

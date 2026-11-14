@@ -34,20 +34,22 @@ const theme: ThemeSpec = {
   },
   rules: {
     ...gitLabelRules('invert(lightenHsl(#1f2020, 16%))', '#cccccc'),
+    // v12 theme-dark.js updateColors: secondBkg = lighten(mainBkg, 16), the note and cluster
+    // fill, so an author's mainBkg moves them (#474949 from its own).
+    noteBkgColor: 'lightenHsl(mainBkg, 16%)',
+    clusterBkg: 'lightenHsl(mainBkg, 16%)',
   },
   values: {
     // v12 theme-dark.js sets these in its constructor and never recomputes them, so no base
-    // colour moves them (#773, #798): the node fill, the borders, the tertiary ink, the link and
-    // arrowhead (its lightgrey), and the note fill (its secondaryColor).
+    // colour moves them (#773, #798): the node fill, the borders, the tertiary ink and the link
+    // (its lightgrey). Not the arrowhead: v12's `.marker` draws it in lineColor (D575).
     mainBkg: '#1f2020',
     border1: '#cccccc',
     primaryBorderColor: '#cccccc',
     secondaryBorderColor: '#2f2f2f',
     tertiaryBorderColor: '#060606',
     tertiaryTextColor: '#dfe0e0',
-    arrowheadColor: '#d3d3d3',
     defaultLinkColor: '#d3d3d3',
-    noteBkgColor: '#474949',
     // v12 titles and legends: `mainContrastColor`.
     headingTextColor: 'lightgrey',
     nestedBkg: '#555555', // v12 `altBackground` (#192)
@@ -58,7 +60,6 @@ const theme: ThemeSpec = {
     lineTextColor: '#000000',
     textColor: '#cccccc',
     nodeBorder: '#cccccc',
-    clusterBkg: '#474949',
     clusterBorder: '#ffffff40',
     titleColor: '#f9fffe',
     // v12 has #585858, which is 4.45:1 under #ccc text; a shade darker meets AA.

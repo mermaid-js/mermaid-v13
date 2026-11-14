@@ -91,6 +91,8 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
       '#799 (spec #795): v13 ink for ER attribute text on its own row; neo rows show the entity fill, so the renderer keeps nodeTextColor',
     ])
   ),
+  critTextColor:
+    'D574: v13 ink for text on a critical gantt bar (v12 `.critText0` took taskTextColor); taskTextColor here',
   erEdgeLabelBackground:
     'D152: v12 ER labels use edgeLabelBackground outside its COLOR_THEMES (redux-color, redux-dark-color)',
   border1: 'D152: v12 neo leaves it unset; no ported diagram reads it (usedBy is empty)',

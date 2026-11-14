@@ -159,10 +159,11 @@ properties:
         same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time,
         because they feed layout, so overriding their CSS variables has no effect;
         `dropShadow` is a CSS value. As in v12, `base` derives `secondaryColor` and
-        `tertiaryColor` from `primaryColor` and `lineColor` and `arrowheadColor` from `background`
-        unless they are set (D569), and `default`, `dark`, `forest` and `neutral` pin v12's
-        `mainBkg` and other constructor colours, so `primaryColor` (or `--mermaid-primaryColor`)
-        does not repaint their nodes: set `mainBkg` (D570).
+        `tertiaryColor` from `primaryColor` and `lineColor` from `background` unless they are set
+        (D569), arrowheads follow `lineColor` in `default`, `dark` and `base` (D575), and
+        `default`, `dark`, `forest` and `neutral` pin v12's `mainBkg` and other constructor
+        colours, so `primaryColor` (or `--mermaid-primaryColor`) does not repaint their nodes:
+        set `mainBkg` (D570).
     # Named variables are documented here; any other name is still accepted (R-CONF-5).
     type: object
     additionalProperties: true
@@ -440,8 +441,9 @@ properties:
         x-mermaid: *erColor
       erRowOddTextColor:
         description: |
-          ER diagrams: attribute text on the odd rows. By default `nodeTextColor` where it meets
-          WCAG AA on `rowOdd`, else the better of `textColor` and `background` (D572).
+          ER diagrams: attribute text on the odd rows. By default an author's `nodeTextColor`
+          where it meets WCAG AA on `rowOdd`, else `textColor`, else `background` where that reads
+          better (D572).
         type: string
         x-mermaid: *erColor
       erRowEvenTextColor:

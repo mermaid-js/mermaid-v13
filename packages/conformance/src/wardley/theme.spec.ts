@@ -23,12 +23,12 @@
  *   `lightgrey` in every theme, v12's own in default, base, dark and forest; neutral's v12 grid is
  *   its `gridColor`, `lighten(border1, 30)`.
  *
- * Under author overrides of shared variables, `OVERRIDE_DIFFERENCES` lists, as exactly, where
- * core's own derivations (not wardley's table) give another colour than v12's (GAPS, the T4
- * review): base's `primaryTextColor` is fixed where v12 derived it from `darkMode` (base's
- * `lineColor` follows `background` as in v12 since #797); dark's `mainBkg` follows `primaryColor` where v12 fixed it; and
+ * Under author overrides of shared variables, each of `OVERRIDES` lists in `differs`, as exactly,
+ * where core's own derivations (not wardley's table) give another colour than v12's (GAPS, the T4
+ * review): base's `primaryTextColor` is fixed where v12 derived it from `darkMode` (D571), and
  * v12's `default` built its `wardley` block in its constructor, before an author's `background`
- * or `wardleyEvolutionColor` was applied, so it ignored both.
+ * or `wardleyEvolutionColor` was applied, so it ignored both. Base's `lineColor` follows
+ * `background` (#797) and dark's `mainBkg` is pinned (#798), both as in v12.
  */
 import { wardley } from '@mermaid-js/diagram-wardley';
 import {

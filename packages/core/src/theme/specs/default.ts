@@ -45,8 +45,8 @@ const theme: ThemeSpec = {
   values: {
     // v12 theme-default.js sets these in its constructor and never recomputes them, so no base
     // colour moves them (#773, #798): the node fill, the borders (khroma mkBorder of its own
-    // colours), the inverted text inks, the arrowhead, and the note and error colours, which
-    // darkMode leaves alone.
+    // colours), the inverted text inks, and the note and error colours, which darkMode leaves
+    // alone. Not the arrowhead: v12's `.marker` draws it in lineColor (D575).
     mainBkg: '#ececff',
     border1: '#9370db',
     primaryBorderColor: '#c7c7f1',
@@ -54,7 +54,6 @@ const theme: ThemeSpec = {
     tertiaryBorderColor: '#e3f1c7',
     secondaryTextColor: '#000021',
     tertiaryTextColor: '#060013',
-    arrowheadColor: '#333333',
     noteBkgColor: '#fff5ad',
     errorBkgColor: '#552222',
     errorTextColor: '#552222',

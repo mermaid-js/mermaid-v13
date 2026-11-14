@@ -33,7 +33,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er, block, usecase |
 | `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | flowchart, class, state, er, gantt, treemap, venn, agentflow, railroad, usecase |
 | `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `secondaryColor` | `mix(secondaryColor, black, 30%)` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, state, agentflow, block, usecase |
-| `arrowheadColor` | `--mermaid-arrowheadColor` | derived | color | `lineColor` | `lineColor` | default, dark, forest, neutral, base | flowchart, state, agentflow, block |
+| `arrowheadColor` | `--mermaid-arrowheadColor` | derived | color | `lineColor` | `lineColor` | forest, neutral | flowchart, state, agentflow, block |
 | `defaultLinkColor` | `--mermaid-defaultLinkColor` | derived | color | `lineColor` | `lineColor` | dark |  |
 | `border1` | `--mermaid-border1` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral |  |
 | `border2` | `--mermaid-border2` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark |  |
@@ -203,8 +203,8 @@ flags and opacities, which are read literally.
 | `rowEven` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#f1f1ff` | `#060606` | `#f4f9e9` | `#f4f4f4` | `#fffcf6` | `#ffffff` | `#2a2020` |
 | `erEdgeLabelBackground` | | color | `#ffffff` | `#cccccc` | `#474949` | `#16141f` | `#f9ffec80` | `#201f1f80` | `#e1efc080` | `#eeeeee80` | `#f6f9ff80` | `#cccccc` | `#323333` |
 | `erMarkerFill` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#2a2020` |
-| `erRowOddTextColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#e0dfdf` |
-| `erRowEvenTextColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#e0dfdf` |
+| `erRowOddTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+| `erRowEvenTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 | `erZeroOrMoreCircleOffset` | | length | `28` | `28` | `28` | `28` | `30` | `30` | `30` | `30` | `30` | `28` | `28` |
 
 ### eventmodeling
@@ -246,7 +246,8 @@ flags and opacities, which are read literally.
 | `doneTaskBorderColor` | | color | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` | `grey` |
 | `critBkgColor` | | color | `red` | `red` | `red` | `red` | `red` | `#990000` | `red` | `red` | `red` | `red` | `red` |
 | `critBorderColor` | | color | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` | `#ff8888` |
-| `taskTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `black` | `#cccccc` | `#000000` | `#000000` | `black` | `#333333` | `#cccccc` |
+| `taskTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+| `critTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `black` | `#cccccc` | `#000000` | `#000000` | `black` | `#333333` | `#cccccc` |
 | `taskTextOutsideColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 | `taskTextDarkColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `white` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 

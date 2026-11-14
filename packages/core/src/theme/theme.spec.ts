@@ -99,12 +99,12 @@ describe('createTheme: base derives by rule (#797, v12 theme-base)', () => {
     expect(t.value('defaultLinkColor')).toBe('#dddddd');
   });
 
-  it("keeps the author's value, and an author's lineColor leaves arrowheads on background", () => {
+  it("keeps the author's value; arrowheads follow an author's lineColor, as v12's .marker (D575)", () => {
     const t = lit({ primaryColor: '#3366cc', secondaryColor: '#123456', lineColor: '#ff0000' });
     expect(t.value('secondaryColor')).toBe('#123456');
     expect(t.value('tertiaryColor')).toBe('#d1a347');
     expect(t.value('lineColor')).toBe('#ff0000');
-    expect(t.value('arrowheadColor')).toBe('#0b0b0b');
+    expect(t.value('arrowheadColor')).toBe('#ff0000');
   });
 
   it('draws errors in the tertiary colours, as v12 theme-base (#825)', () => {
@@ -173,7 +173,7 @@ describe('createTheme: the named classic themes pin v12 constructor values (#798
     }
   );
 
-  it("keeps v12's borders and text inks, which no base colour moves", async () => {
+  it("keeps v12's borders and text inks, which no base colour moves; arrowheads follow lineColor", async () => {
     const t = createTheme(await loadTheme('default'), {
       cssVariables: false,
       themeVariables: { primaryColor: '#2a4d69', secondaryColor: '#2a4d69', lineColor: '#ff0000' },
@@ -192,8 +192,19 @@ describe('createTheme: the named classic themes pin v12 constructor values (#798
       '#e3f1c7',
       '#000021',
       '#060013',
-      '#333333',
+      '#ff0000',
     ]);
+  });
+
+  it("derives dark's note and cluster fills from mainBkg, as v12's secondBkg", async () => {
+    const t = createTheme(await loadTheme('dark'), {
+      cssVariables: false,
+      themeVariables: { mainBkg: '#ff0000' },
+    });
+    // v12 theme-dark updateColors: secondBkg = lighten(mainBkg, 16), hsl(0, 100%, 66%).
+    expect(['noteBkgColor', 'clusterBkg'].map(t.value)).toEqual(['#ff5252', '#ff5252']);
+    const own = createTheme(await loadTheme('dark'), { cssVariables: false });
+    expect(['noteBkgColor', 'clusterBkg'].map(own.value)).toEqual(['#474949', '#474949']);
   });
 
   it('keeps the error and note colours under darkMode, as v12', async () => {

@@ -15,6 +15,7 @@ import {
   formatColor,
   loadTheme,
   parseColor,
+  type ThemeName,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
 import { gantt } from '@mermaid-js/diagram-gantt';
@@ -95,7 +96,7 @@ const DIFFERS: Readonly<Record<string, Readonly<Record<string, readonly [string,
     taskBorderColor: ['#534fbc', '#c7c7f1'],
     activeTaskBkgColor: ['#bfc7ff', '#ffffff'],
     activeTaskBorderColor: ['#534fbc', '#333333'],
-    taskTextColor: ['#ffffff', '#000000'],
+    taskTextColor: ['#ffffff', '#333333'],
     taskTextOutsideColor: ['#000000', '#333333'],
     taskTextDarkColor: ['#000000', '#333333'],
   },
@@ -149,7 +150,6 @@ const DIFFERS: Readonly<Record<string, Readonly<Record<string, readonly [string,
     vertLineColor: ['#000080', '#0b0b0b'],
     taskBorderColor: ['#eeddbb', '#d9cfbc'],
     activeTaskBorderColor: ['#fff4dd', '#0b0b0b'],
-    taskTextColor: ['#333333', '#000000'],
   },
   neo: {
     sectionBkgColor2: ['#ececfe', '#cccccc'],
@@ -169,6 +169,28 @@ describe('gantt theme variables against v12 12.2.0 (#385, D151, D331)', () => {
       if (pair[0] !== pair[1]) differs[v] = pair;
     }
     expect(differs).toEqual(DIFFERS[name]);
+  });
+
+  /** The CSS a classic theme writes for one gantt variable. */
+  const css = async (name: ThemeName, variable: string): Promise<string | undefined> => {
+    const theme = createTheme(await loadTheme(name), { diagram: gantt.theme });
+    theme.color(variable);
+    return theme.rootStyle()[`--_${gantt.theme.vars[variable]!.alias}`];
+  };
+  const CLASSIC = ['default', 'dark', 'forest', 'neutral', 'base'] as const;
+
+  it("keeps bar text on the theme's text, so a host's --mermaid-textColor reaches it (D574)", async () => {
+    for (const name of CLASSIC)
+      expect(await css(name, 'taskTextColor'), name).toBe(
+        'var(--mermaid-taskTextColor,var(--_tx))'
+      );
+  });
+
+  it('outlines the active bar in lineColor in the classic themes (D574)', async () => {
+    for (const name of CLASSIC)
+      expect(await css(name, 'activeTaskBorderColor'), name).toBe(
+        'var(--mermaid-activeTaskBorderColor,var(--_l))'
+      );
   });
 
   it('v12 draws a clickable label #003163 in every theme: a renderer constant, no variable', () => {

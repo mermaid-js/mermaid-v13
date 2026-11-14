@@ -17,11 +17,14 @@ export const theme: DiagramThemeTable = {
       erEdgeLabelBackground: 'inline(linkLabelBkg)',
       // v12 classic draws the zero circle white.
       erMarkerFill: '#ffffff',
-      // Attribute text (#758): the node ink where it reads on the row, else the better of the
-      // two inks nodeTextColor itself picks between, judged on the row.
-      erRowOddTextColor: 'contrast(rowOdd, nodeTextColor, contrast(rowOdd, textColor, background))',
+      // Attribute text (#758, D572): an author's nodeTextColor where it reads on the row, else
+      // textColor, else background where that reads better. The outer contrast() picks between
+      // two different inks, so in CSS it follows a host's row fill live; two equal ones (the
+      // theme's text, twice) would collapse to a constant.
+      erRowOddTextColor:
+        'contrast(rowOdd, contrast(rowOdd, ifSet(nodeTextColor, textColor), textColor), background)',
       erRowEvenTextColor:
-        'contrast(rowEven, nodeTextColor, contrast(rowEven, textColor, background))',
+        'contrast(rowEven, contrast(rowEven, ifSet(nodeTextColor, textColor), textColor), background)',
     },
   },
   families: {

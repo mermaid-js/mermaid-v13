@@ -89,10 +89,9 @@ describe('built-in themes', () => {
     const base = await loadTheme('base');
     // v12 theme-base's constructor literals: the note colours, which no base variable moves (#825).
     expect(base.values).toEqual({ noteBkgColor: '#fff5ad', noteTextColor: '#333333' });
-    // v12 theme-base derives arrowheadColor from background, not from lineColor (#797), and the
-    // error colours from the tertiary ones (#825).
+    // v12 theme-base derives the error colours from the tertiary ones (#825). Arrowheads follow
+    // lineColor, as v12's `.marker` draws them (D575).
     expect(base.rules).toEqual({
-      arrowheadColor: 'invert(background)',
       errorBkgColor: 'tertiaryColor',
       errorTextColor: 'tertiaryTextColor',
     });
@@ -112,7 +111,7 @@ describe('built-in themes', () => {
     expect(t.value('nodeTextColor')).toBe('#ffffff');
     expect(t.value('clusterBkg')).toBe('#f1faee');
     expect(t.value('defaultLinkColor')).toBe('#457b9d');
-    expect(t.value('arrowheadColor')).toBe('#000000');
+    expect(t.value('arrowheadColor')).toBe('#457b9d');
     expect(t.number('fontSize')).toBe(15);
     expect(t.font()).toBe('Georgia, serif');
   });

@@ -1,13 +1,13 @@
 /**
  * #796 (spec #795 T0, D568): core's shared colour variables in the five classic themes against v12
  * 12.2.0's resolved `getThemeVariables()` (D151: v12 is the oracle), at the theme values and
- * under one `themeVariables` override at a time: each base colour set alone to a light and to a
- * dark probe, and `darkMode`. Every colour variable of core's vocabulary that v12 also resolves
- * is compared. Each difference is listed in `DIFFERENCES` as `theme / override / variable`,
- * under the decision that accounts for it (a D-id with a MIGRATION.md row), and the list has to
- * match the differences found exactly: an unlisted difference fails, and so does a listed one
- * that has gone. A ticket that fixes a difference deletes its entries. Built like
- * `theme-palettes.spec.ts`, which covers the palettes.
+ * under one `themeVariables` override at a time: each base colour and `mainBkg` set alone to a
+ * light and to a dark probe, and `darkMode`. Every colour variable of core's vocabulary that v12
+ * also resolves is compared. Each difference is listed in `DIFFERENCES` as
+ * `theme / override / variable`, under the decision that accounts for it (a D-id with a
+ * MIGRATION.md row), and the list has to match the differences found exactly: an unlisted
+ * difference fails, and so does a listed one that has gone. A ticket that fixes a difference
+ * deletes its entries. Built like `theme-palettes.spec.ts`, which covers the palettes.
  */
 import {
   THEME_VARIABLES,
@@ -35,7 +35,10 @@ const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).defau
 const THEMES = ['default', 'dark', 'forest', 'neutral', 'base'] as const satisfies ThemeName[];
 type Classic = (typeof THEMES)[number];
 
-/** The base colours an author overrides one at a time, each to a light and a dark probe. */
+/**
+ * The base colours an author overrides one at a time, each to a light and a dark probe, and
+ * `mainBkg`, which the named classic themes pin (D570) and v12 derives some fills from.
+ */
 const OVERRIDDEN = [
   'primaryColor',
   'secondaryColor',
@@ -43,6 +46,7 @@ const OVERRIDDEN = [
   'background',
   'primaryTextColor',
   'lineColor',
+  'mainBkg',
 ] as const;
 const PROBES = { light: '#ffd966', dark: '#2a4d69' } as const;
 
@@ -72,10 +76,10 @@ const keys = (theme: Classic, cases: readonly string[], names: readonly string[]
  * accounts for it (D568): every group names a D-id, and each has a MIGRATION.md row.
  */
 const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
-  "D29 (R-THEME-9): v13 meets AA where v12 does not: dark's #b8b6b6 text on #474949 (4.49:1) and #585858 label fill under #ccc text (4.43:1); base's #333 node text on a dark primaryColor":
+  "D29 (R-THEME-9): v13 meets AA where v12 does not: dark's #b8b6b6 text on #474949 (4.49:1) and #585858 label fill under #ccc text (4.43:1); base's #333 node text on a dark primaryColor or mainBkg":
     [
       ...keys('dark', ALL, ['edgeLabelBackground', 'noteTextColor', 'secondaryTextColor']),
-      ...keys('base', ['primaryColor:dark'], ['nodeTextColor']),
+      ...keys('base', ['primaryColor:dark', 'mainBkg:dark'], ['nodeTextColor']),
     ],
   "D71: v13's shared border rule (15% black, 20% white under darkMode) approximates v12's mkBorder (saturation -40, lightness ∓10)":
     [
@@ -113,6 +117,14 @@ const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
       ...keys('dark', ['darkMode'], ['scaleLabelColor']),
       ...keys('neutral', ['darkMode'], ['scaleLabelColor']),
     ],
+  "D575: arrowheadColor follows lineColor, as v12's .marker paints arrowheads; v12's getThemeVariables() keeps default's and dark's constructor value and base's invert(background), which reached only the legacy .arrowheadPath, so the variable differs and the render matches":
+    [
+      ...(['default', 'dark', 'base'] as const).flatMap((theme) =>
+        keys(theme, ['lineColor:light', 'lineColor:dark'], ['arrowheadColor'])
+      ),
+    ],
+  "D576: forest's sequence participant border stays v12's darken(#cde498, 20) (softBorder, pinned); v12 recomputes it from an author's mainBkg":
+    [...keys('forest', ['mainBkg:light', 'mainBkg:dark'], ['actorBorder'])],
 };
 
 const LISTED = Object.values(DIFFERENCES).flat();

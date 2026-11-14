@@ -101,6 +101,17 @@ describe('the ER theme table (#414 T3)', () => {
       expect(contrastRatio(rgba(ink), rgba(row)), ink).toBeGreaterThanOrEqual(4.5);
   });
 
+  it('picks the row ink live over the row fill in CSS, so a host primaryColor reaches it (#758)', async () => {
+    for (const name of CLASSIC) {
+      const t = createTheme(await loadTheme(name as 'default'), { diagram: table });
+      t.color('erRowOddTextColor');
+      t.color('erRowEvenTextColor');
+      const root = t.rootStyle();
+      expect(root['--_eot'], name).toContain('var(--_ro)');
+      expect(root['--_eet'], name).toContain('var(--_re)');
+    }
+  });
+
   it("keeps an author's nodeTextColor on the rows where it reads", async () => {
     for (const name of CLASSIC) {
       const t = await themed(name, { nodeTextColor: name === 'dark' ? '#ffcc00' : '#002200' });

@@ -1,9 +1,10 @@
 /**
  * `base`: the theme meant for customising (v12 `theme-base.js`). It sets only the base
  * variables and tokens; every other colour comes from the shared rules (R-THEME-5). Like v12, it
- * derives `secondaryColor` and `tertiaryColor` from `primaryColor`, and `lineColor` and
- * `arrowheadColor` from `background`, unless the author sets them (#797); its error colours follow
- * the tertiary ones, and its note colours are v12's constructor literals (#825).
+ * derives `secondaryColor` and `tertiaryColor` from `primaryColor`, and `lineColor` from
+ * `background`, unless the author sets them (#797); arrowheads follow `lineColor`, as v12's
+ * `.marker` draws them (D575). Its error colours follow the tertiary ones, and its note colours
+ * are v12's constructor literals (#825).
  */
 import type { ThemeSpec } from '../spec.ts';
 import { BASE_PLOT, LABEL_SCALE, series } from './palettes.ts';
@@ -45,8 +46,6 @@ const base: ThemeSpec = {
   // primaryTextColor moves them (#825).
   values: { noteBkgColor: '#fff5ad', noteTextColor: '#333333' },
   rules: {
-    // v12 derives arrowheadColor from background too, so an author's lineColor leaves it (#797).
-    arrowheadColor: 'invert(background)',
     // v12 theme-base.js draws errors in the tertiary colours (#825).
     errorBkgColor: 'tertiaryColor',
     errorTextColor: 'tertiaryTextColor',

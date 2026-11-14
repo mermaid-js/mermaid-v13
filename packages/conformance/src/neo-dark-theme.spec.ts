@@ -114,6 +114,8 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
       '#799 (spec #795): v13 ink for ER attribute text on its own row; neo rows show the entity fill, so the renderer keeps nodeTextColor',
     ])
   ),
+  critTextColor:
+    'D574: v13 ink for text on a critical gantt bar (v12 `.critText0` took taskTextColor); taskTextColor here',
   erEdgeLabelBackground:
     'D152, D183: v12 ER labels use edgeLabelBackground outside its COLOR_THEMES; it is dark-derived',
   ...Object.fromEntries(LOOK_GEOMETRY.map((n) => [n, LOOK_GEOMETRY_WHY])),
