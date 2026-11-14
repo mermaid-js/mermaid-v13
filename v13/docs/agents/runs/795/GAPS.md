@@ -15,11 +15,19 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Derived values now start from the rule's unrounded channels: three base cells in `theme-variables.md` move by one unit (`railroadSpecialStroke`, `usecaseBoundaryBorder`, `activationBorderColor`).
 - Argos holds the screenshot baselines: the `base` screenshots and the four new #761 fixtures are approved in CI, not in the repo.
 
+## #801 (T5)
+
+- **Choice:** the contrast rules sit in gantt's `families.classic` entry, not the shared `rules.light`, so redux and neo are unchanged (spec "Out of Scope"). **For the maintainer:** redux and neo crit text still misses AA (3.69:1, 3.16:1), and neo's active outline is #cccccc on white.
+- **Choice:** `activeTaskBorderColor` is `contrast(activeTaskBkgColor, primaryBorderColor, lineColor)`: `primaryBorderColor` alone is 1.6:1 under default (T2's pinned #c7c7f1 too), short of the ticket's 3:1, so every classic theme draws `lineColor`.
+- **Choice:** under `dark`, the critical fill is #990000 and text on active and done bars is white where `textColor` misses AA: `taskTextColor` is the text on both the dark bars and red, and no single ink reads on both. Approved by the maintainer (T7 records the D-id).
+- **Decided (Knut, 2026-11-14): accept** dark's critical fill `#990000` with light text (v12: red; light text failed AA). T7: a D-id and MIGRATION row.
+- Redux and neo gantt critical-bar text still misses AA (3.69:1, 3.16:1); out of this spec's scope (redux/neo unchanged). Follow-up after the spec.
+
 ## #799 (T3)
 
 - **Choice:** ER relationship label text stays `textColor`; an author's `tertiaryColor` can take it below AA (as v12). Only the row inks are new (spec scope).
 - **For T7:** `config.schema.yaml` (core) still lists the classic `erEdgeLabelBackground` as `edgeLabelBackground` and lacks `erRowOddTextColor` / `erRowEvenTextColor`; regenerate `config-reference.md` after. D-id for restoring the `tertiaryColor` label fill (decision 3).
-- **For T5's merge:** ER contrast rows are in `packages/conformance/src/er-contrast.spec.ts` in `[ink, fill, min]` shape; move `PAIRS.er` into `theme-contrast.spec.ts`, with `PROBED` (override probes) as its own loop.
+- ER's contrast rows and `PROBED` override probes moved into `packages/conformance/src/theme-contrast.spec.ts` at T5's merge (`er-contrast.spec.ts` is gone).
 
 ## #798 (T2)
 
@@ -32,8 +40,3 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 
 - **Decided (orchestrator, v12 parity):** the composite label stays `nodeTextColor`, as v12 draws it (its `g.label` sits beside `rect.cluster`, so `.cluster text` never reaches it); the ticket's `titleColor` came from a misread. T7 notes it.
 - Sent back: redux and neo composites must stay byte-identical (spec scope); use a `families.classic` entry in block's table.
-
-## #801 (T5)
-
-- **Decided (Knut, 2026-11-14): accept** dark's critical fill `#990000` with light text (v12: red; light text failed AA). T7: a D-id and MIGRATION row.
-- Redux and neo gantt critical-bar text still misses AA (3.69:1, 3.16:1); out of this spec's scope (redux/neo unchanged). Follow-up after the spec.
