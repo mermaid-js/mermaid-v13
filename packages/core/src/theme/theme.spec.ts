@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert, streamWriter, styleText } from '../svg/index.ts';
-import { createTheme, loadTheme, type DiagramThemeTable, type ThemeWarning } from './index.ts';
+import {
+  createTheme,
+  loadTheme,
+  type DiagramThemeTable,
+  type ThemeName,
+  type ThemeWarning,
+} from './index.ts';
 
 const base = await loadTheme('base');
 
@@ -115,6 +121,75 @@ describe('createTheme: base derives by rule (#797, v12 theme-base)', () => {
       '--_p': 'var(--mermaid-primaryColor,#fff4dd)',
       '--_bg': 'var(--mermaid-background,#f4f4f4)',
     });
+  });
+});
+
+describe('createTheme: the named classic themes pin v12 constructor values (#798, #773)', () => {
+  // v12 sets mainBkg as a literal in each constructor and never recomputes it from primaryColor.
+  const MAIN_BKG: readonly [ThemeName, string][] = [
+    ['default', '#ececff'],
+    ['dark', '#1f2020'],
+    ['forest', '#cde498'],
+    ['neutral', '#eeeeee'],
+  ];
+
+  it.each(MAIN_BKG)(
+    '%s keeps mainBkg and actorBkg %s under a primaryColor override',
+    async (name, fill) => {
+      const t = createTheme(await loadTheme(name), {
+        cssVariables: false,
+        themeVariables: { primaryColor: '#ffcc00' },
+      });
+      expect([t.value('primaryColor'), t.value('mainBkg'), t.value('actorBkg')]).toEqual([
+        '#ffcc00',
+        fill,
+        fill,
+      ]);
+    }
+  );
+
+  it.each(MAIN_BKG)(
+    '%s: --mermaid-mainBkg repaints nodes, --mermaid-primaryColor does not (R-THEME-3)',
+    async (name, fill) => {
+      const t = createTheme(await loadTheme(name));
+      expect(t.color('mainBkg')).toBe('var(--_mb)');
+      expect(t.rootStyle()).toEqual({ '--_mb': `var(--mermaid-mainBkg,${fill})` });
+    }
+  );
+
+  it("keeps v12's borders and text inks, which no base colour moves", async () => {
+    const t = createTheme(await loadTheme('default'), {
+      cssVariables: false,
+      themeVariables: { primaryColor: '#2a4d69', secondaryColor: '#2a4d69', lineColor: '#ff0000' },
+    });
+    const names = [
+      'primaryBorderColor',
+      'secondaryBorderColor',
+      'tertiaryBorderColor',
+      'secondaryTextColor',
+      'tertiaryTextColor',
+      'arrowheadColor',
+    ];
+    expect(names.map(t.value)).toEqual([
+      '#c7c7f1',
+      '#eeeebc',
+      '#e3f1c7',
+      '#000021',
+      '#060013',
+      '#333333',
+    ]);
+  });
+
+  it('keeps the error and note colours under darkMode, as v12', async () => {
+    const t = createTheme(await loadTheme('forest'), {
+      cssVariables: false,
+      themeVariables: { darkMode: true },
+    });
+    expect(['errorBkgColor', 'errorTextColor', 'noteBkgColor'].map(t.value)).toEqual([
+      '#552222',
+      '#552222',
+      '#fff5ad',
+    ]);
   });
 });
 

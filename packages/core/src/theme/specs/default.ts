@@ -43,6 +43,21 @@ const theme: ThemeSpec = {
     useGradient: false,
   },
   values: {
+    // v12 theme-default.js sets these in its constructor and never recomputes them, so no base
+    // colour moves them (#773, #798): the node fill, the borders (khroma mkBorder of its own
+    // colours), the inverted text inks, the arrowhead, and the note and error colours, which
+    // darkMode leaves alone.
+    mainBkg: '#ececff',
+    border1: '#9370db',
+    primaryBorderColor: '#c7c7f1',
+    secondaryBorderColor: '#eeeebc',
+    tertiaryBorderColor: '#e3f1c7',
+    secondaryTextColor: '#000021',
+    tertiaryTextColor: '#060013',
+    arrowheadColor: '#333333',
+    noteBkgColor: '#fff5ad',
+    errorBkgColor: '#552222',
+    errorTextColor: '#552222',
     // v12 titles and legends: `taskTextDarkColor`.
     headingTextColor: 'black',
     nestedBkg: '#f0f0f0', // v12 `altBackground` (#192)

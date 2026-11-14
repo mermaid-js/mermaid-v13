@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { usecase } from '@mermaid-js/diagram-usecase';
@@ -300,5 +301,30 @@ describe('usecase diagrams through the public API (#567)', () => {
     ]);
     expect(r.warnings[1]!.message).toContain('actorFontSize, useMaxWidth');
     expect(r.text).toBe((await m.render('u14', TEXT, { format: 'ascii' })).text);
+  });
+});
+
+describe('usecase under a classic theme with a primaryColor override (#773)', () => {
+  const text = readFileSync(
+    new URL(
+      '../../../e2e/diagrams/usecase/baseline/themes/default-primary-override.mmd',
+      import.meta.url
+    ),
+    'utf8'
+  );
+
+  it("fills the ellipse and the actor head with default's mainBkg #ececff, as v12", async () => {
+    const m = createMermaid();
+    m.initialize({ output: { cssVariables: false } });
+    const { svg } = await m.render('u773', text);
+    expect(/<ellipse [^>]*fill="([^"]*)"/.exec(svg)?.[1]).toBe('#ececff');
+    expect(/class="usecase-actor-stick"[^>]*fill="([^"]*)"/.exec(svg)?.[1]).toBe('#ececff');
+    expect(svg).not.toContain('#ffcc00');
+  });
+
+  it('reads mainBkg, so --mermaid-mainBkg repaints them and --mermaid-primaryColor does not (R-THEME-3)', async () => {
+    const { svg } = await createMermaid().render('u773', text);
+    expect(rootVar(svg, '_mb')).toBe('#ececff');
+    expect(svg).not.toContain('--mermaid-primaryColor');
   });
 });
