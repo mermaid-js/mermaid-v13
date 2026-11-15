@@ -108,11 +108,16 @@ describe('which rows the legend has', () => {
     expect(hot?.tag).toMatchObject({ name: 'hot', fill: '#333333', stroke: '#222222' });
   });
 
-  it('has no row at all for `legend off`, for an empty diagram, or when the source is silent', () => {
+  it('has no row at all for `legend off`, or for an empty diagram', () => {
     expect(entries(`c4-beta\nlegend off\n${LEDGER}`)).toEqual([]);
-    expect(entries(`c4-beta\n${LEDGER}`)).toEqual([]);
     expect(entries('c4-beta\nlegend on')).toEqual([]);
     expect(entries('c4-beta\nlegend on\ngroup g "G"')).toEqual([]);
+  });
+
+  it('is on when the source says nothing, and the last statement wins', () => {
+    expect(entries(`c4-beta\n${LEDGER}`)).toEqual(['Person', 'Container']);
+    expect(entries(`c4-beta\nlegend off\nlegend on\n${LEDGER}`)).toHaveLength(2);
+    expect(entries(`c4-beta\nlegend on\nlegend off\n${LEDGER}`)).toEqual([]);
   });
 });
 

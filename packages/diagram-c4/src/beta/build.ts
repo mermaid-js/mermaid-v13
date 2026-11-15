@@ -57,7 +57,7 @@ export function buildModel(
 class Builder {
   private kind: C4BetaKind = 'context';
   private direction: C4BetaDirection = 'TB';
-  private legend = false;
+  private legend = true;
   private title: string | undefined;
   private accTitle = '';
   private accDescr = '';

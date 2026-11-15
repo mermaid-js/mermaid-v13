@@ -82,9 +82,9 @@ describe('c4-beta model', () => {
     ]);
   });
 
-  it('defaults the kind to context, the direction to TB and the legend to off', () => {
+  it('defaults the kind to context, the direction to TB and the legend to on', () => {
     const { model } = parseC4Beta('c4-beta\n');
-    expect(model).toMatchObject({ kind: 'context', direction: 'TB', legend: false, elements: [] });
+    expect(model).toMatchObject({ kind: 'context', direction: 'TB', legend: true, elements: [] });
   });
 
   it('stores `<--` as the relation from its source, and `<-->` with two heads', () => {

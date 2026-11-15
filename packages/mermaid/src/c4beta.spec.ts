@@ -242,6 +242,13 @@ describe('c4-beta through the public API (spec #730)', () => {
         expect(heightOn!).toBeGreaterThan(heightOff!);
       });
 
+      it('is shown when the source says nothing about it', async () => {
+        const r = await createMermaid().render('c1', fixture('b02-basic-context.mmd'));
+        expect(legendRows(r.svg)[0]).toBe('Legend');
+        const off = await createMermaid().render('c1', fixture('b10-direction-legend-acc.mmd'));
+        expect(off.svg).not.toContain('c4-legend');
+      });
+
       it('lies inside the viewBox', async () => {
         const r = await createMermaid().render('c1', fixture('legend-tag-styles.mmd'));
         const [, , width, height] = viewBox(r.svg);
