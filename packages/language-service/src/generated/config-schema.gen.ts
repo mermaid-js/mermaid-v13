@@ -6482,6 +6482,46 @@ export const configSchema: ConfigSchema = {
             "since": "13.0.0",
             "reason": "The canvas grows by twice the change on each axis. A value that is not a finite number of at least 0 draws the default 10."
           }
+        },
+        "showStereotypes": {
+          "description": "Whether an element shows its type line (`[Person]`, `[Software System]`, `[Container: Rust]`)\nabove its name. `false` hides it on every element; use `hideStereotypes` to hide it on some\nkinds only.\n",
+          "type": "boolean",
+          "default": true,
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A hidden line takes no room: the element is shorter by the line and the gap under it. A technology stays, as `[Rust]`. A value that is not a boolean shows the line."
+          }
+        },
+        "hideStereotypes": {
+          "description": "The element kinds whose type line is hidden while `showStereotypes` is on, for example\n`[person]`. Unset hides none.\n",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "person",
+              "softwareSystem",
+              "container",
+              "component",
+              "infrastructureNode"
+            ]
+          },
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A kind not in the list keeps its line. An entry that is not a kind of element that has a type line is ignored; a value that is not a list hides none. A boundary (`group`, `deploymentNode`, or an element with children) has no type line to hide. Lists from `initialize()`, front matter and directives are joined, as v12 joined arrays (R-CONF), so a diagram can hide more kinds than the integrator did but cannot show one again, and an empty list changes nothing."
+          }
+        },
+        "personWrappingWidth": {
+          "description": "The width in pixels at which a person's name, type line and description wrap. Unset, a\nperson wraps at the width every c4-beta element wraps at, `c4.width` less twice\n`c4.c4ShapePadding` (176 px by default).\n",
+          "type": "number",
+          "minimum": 0,
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's 120 px suits its narrower person shape; here a person's box is as wide as the other elements', so 120 would wrap text inside a box that fits it. Unset keeps the width of every other kind, so existing diagrams do not change. A smaller value wraps sooner; a larger one lets the text run wider and the shape grows to hold it. Read when the text wraps (`wrap`, default on); at least 32 px is used. A value that is not a finite number of at least 0 is treated as unset."
+          }
         }
       }
     },

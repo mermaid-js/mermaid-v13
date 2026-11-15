@@ -106,5 +106,6 @@ export const c4ConfigDefaults: C4DiagramConfig = {
 /** Defaults of the `c4beta` config section. */
 export const c4betaConfigDefaults: C4BetaDiagramConfig = {
   "useMaxWidth": true,
-  "diagramPadding": 10
+  "diagramPadding": 10,
+  "showStereotypes": true
 };

@@ -22,7 +22,11 @@ const beta = (c4beta: Record<string, unknown>) => c4TestConfig(undefined, { c4be
 
 describe('c4betaDiagramPadding', () => {
   it('is the schema default, 10, when the section is silent', () => {
-    expect(c4betaConfigDefaults).toEqual({ useMaxWidth: true, diagramPadding: 10 });
+    expect(c4betaConfigDefaults).toEqual({
+      useMaxWidth: true,
+      diagramPadding: 10,
+      showStereotypes: true,
+    });
     expect(c4betaDiagramPadding(c4TestConfig(undefined, undefined, true))).toBe(10);
     expect(c4betaDiagramPadding({} as never)).toBe(10);
   });
