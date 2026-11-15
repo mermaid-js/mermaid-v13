@@ -1,0 +1,42 @@
+@ 5:14  container a|pi "API" "Serves orders." "Kotlin"
+  prepare: 5:13-5:16 "api"; rename to "gateway":
+  c4-beta container
+  %% rename-to: gateway
+  person user "User"
+  softwareSystem shop "Shop" {
+    container gateway "API" "Serves orders." "Kotlin"
+    container store "Store"
+  }
+  user --> gateway : "Calls"
+  gateway --> store
+  store <-- gateway
+  shop --> gateway
+  1: gateway --- store
+@ 11:12  shop --> ap|i
+  prepare: 11:10-11:13 "api"; rename to "gateway":
+  c4-beta container
+  %% rename-to: gateway
+  person user "User"
+  softwareSystem shop "Shop" {
+    container gateway "API" "Serves orders." "Kotlin"
+    container store "Store"
+  }
+  user --> gateway : "Calls"
+  gateway --> store
+  store <-- gateway
+  shop --> gateway
+  1: gateway --- store
+@ 12:6  1: ap|i --- store
+  prepare: 12:4-12:7 "api"; rename to "gateway":
+  c4-beta container
+  %% rename-to: gateway
+  person user "User"
+  softwareSystem shop "Shop" {
+    container gateway "API" "Serves orders." "Kotlin"
+    container store "Store"
+  }
+  user --> gateway : "Calls"
+  gateway --> store
+  store <-- gateway
+  shop --> gateway
+  1: gateway --- store
