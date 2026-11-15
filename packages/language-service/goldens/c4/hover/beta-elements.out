@@ -1,0 +1,97 @@
+@ 2:10  person us|er "User" "Pays for orders." :::external
+  2:8-2:12 "user"
+  | **person** `user`
+  |
+  | Name: `User`
+  |
+  | Description: `Pays for orders.`
+  |
+  | Tags: `:::external`
+  |
+  | 2 relations out, 0 in
+@ 3:18  softwareSystem sh|op "Shop" "Sells things." {
+  3:16-3:20 "shop"
+  | **softwareSystem** `shop`
+  |
+  | Name: `Shop`
+  |
+  | Description: `Sells things.`
+  |
+  | Holds 2 elements
+  |
+  | 1 relation out, 0 in
+@ 4:15  container ap|i "API" "Serves orders." "Kotlin" :::team :::sync
+  4:13-4:16 "api"
+  | **container** `api`
+  |
+  | Name: `API`
+  |
+  | Description: `Serves orders.`
+  |
+  | Technology: `Kotlin`
+  |
+  | Tags: `:::team` `:::sync`
+  |
+  | In `shop`
+  |
+  | 0 relations out, 2 in
+@ 6:17  component ha|ndler "Handler"
+  6:15-6:22 "handler"
+  | **component** `handler`
+  |
+  | Name: `Handler`
+  |
+  | In `inner`
+  |
+  | 0 relations out, 1 in
+@ 12:3  us|er --> api : "Signs in" "HTTPS"
+  12:1-12:5 "user"
+  | **person** `user`
+  |
+  | Name: `User`
+  |
+  | Description: `Pays for orders.`
+  |
+  | Tags: `:::external`
+  |
+  | 2 relations out, 0 in
+@ 12:12  user --> ap|i : "Signs in" "HTTPS"
+  12:10-12:13 "api"
+  | **container** `api`
+  |
+  | Name: `API`
+  |
+  | Description: `Serves orders.`
+  |
+  | Technology: `Kotlin`
+  |
+  | Tags: `:::team` `:::sync`
+  |
+  | In `shop`
+  |
+  | 0 relations out, 2 in
+@ 13:3  sh|op --> handler
+  13:1-13:5 "shop"
+  | **softwareSystem** `shop`
+  |
+  | Name: `Shop`
+  |
+  | Description: `Sells things.`
+  |
+  | Holds 2 elements
+  |
+  | 1 relation out, 0 in
+@ 13:12  shop --> ha|ndler
+  13:10-13:17 "handler"
+  | **component** `handler`
+  |
+  | Name: `Handler`
+  |
+  | In `inner`
+  |
+  | 0 relations out, 1 in
+@ 14:13  user --> mis|sing
+  14:10-14:17 "missing"
+  | No element has the id `missing`.
+@ 15:34  user --> api : "Signs in" "HTTPS"|
+  none

@@ -18,6 +18,7 @@ import type { C4BetaDocument } from './beta/ast.ts';
 import { detectC4Beta } from './beta/detect.ts';
 import { parseC4Beta } from './beta/parser.ts';
 import { c4betaCompletions } from './facet/beta-completions.ts';
+import { c4betaHover } from './facet/beta-hover.ts';
 import { c4Completions } from './facet/completions.ts';
 import { c4Hover } from './facet/hover.ts';
 import { invalidReason } from './facet/names.ts';
@@ -59,8 +60,8 @@ export const c4Language: LanguageFacet<C4Document | C4BetaDocument> = {
     isBeta(doc)
       ? c4betaCompletions(probe, doc)
       : c4Completions(probe, doc as DocumentView<C4Document>),
-  // c4-beta has no hover yet: the facet answers legacy C4 documents only.
-  hover: (at, doc) => (isBeta(doc) ? undefined : c4Hover(at, doc as DocumentView<C4Document>)),
+  hover: (at, doc) =>
+    isBeta(doc) ? c4betaHover(at, doc) : c4Hover(at, doc as DocumentView<C4Document>),
 };
 
 /** The facet under the fixed name the language service imports (manifest `language`, D89). */

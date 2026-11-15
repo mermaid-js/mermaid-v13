@@ -103,7 +103,7 @@ function fromTokens(doc: DocumentView<C4Document>, at: number): ArgAt | undefine
 }
 
 /** One line, cut at 40 characters. */
-function short(text: string): string {
+export function short(text: string): string {
   const line = /^[^\n\r]*/.exec(text.trim())?.[0] ?? '';
   return line.length > 40 || line.length < text.trim().length ? `${line.slice(0, 40)}…` : line;
 }

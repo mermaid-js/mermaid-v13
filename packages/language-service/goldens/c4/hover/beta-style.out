@@ -1,0 +1,46 @@
+@ 6:9  style te|am fill:#fff, shape:cylinder
+  6:7-6:11 "team"
+  | **`team`**
+  |
+  | The tag `team`: 2 elements, 1 relation.
+  |
+  | Styled by `style team` at line 6, line 9.
+@ 6:26  style team fill:#fff, sha|pe:cylinder
+  6:23-6:28 "shape"
+  | **`shape`**
+  |
+  | The shape: `cylinder` for a data store.
+@ 7:11  style cont|ainer stroke:red
+  7:7-7:16 "container"
+  | **`container`**
+  |
+  | Every `container`: 2 elements.
+  |
+  | Styled by `style container` at line 7.
+@ 7:21  style container stro|ke:red
+  7:17-7:23 "stroke"
+  | **`stroke`**
+  |
+  | The outline colour: `#` and three or six hex digits, or a colour name.
+@ 8:11  style miss|ing fill:#eee
+  8:7-8:14 "missing"
+  | **`missing`**
+  |
+  | The tag `missing`: 0 elements, 0 relations.
+  |
+  | Styled by `style missing` at line 8.
+@ 9:14  style team fi|ll:#000, color:#fff, line:dashed
+  9:12-9:16 "fill"
+  | **`fill`**
+  |
+  | The fill colour: `#` and three or six hex digits, or a colour name.
+@ 9:26  style team fill:#000, col|or:#fff, line:dashed
+  9:23-9:28 "color"
+  | **`color`**
+  |
+  | The text colour: `#` and three or six hex digits, or a colour name.
+@ 9:37  style team fill:#000, color:#fff, li|ne:dashed
+  9:35-9:39 "line"
+  | **`line`**
+  |
+  | The line of an outline: `solid`, `dashed` or `dotted`.
