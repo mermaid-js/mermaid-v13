@@ -29,7 +29,7 @@ import type {
 } from './model.ts';
 
 /** The keys of a `style` entry, and the values the ones with a fixed set take. */
-const STYLE_KEYS: Readonly<Record<string, readonly string[] | undefined>> = {
+export const STYLE_KEYS: Readonly<Record<string, readonly string[] | undefined>> = {
   fill: undefined,
   stroke: undefined,
   color: undefined,

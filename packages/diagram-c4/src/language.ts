@@ -17,6 +17,7 @@ import type { DocumentView, LanguageFacet } from '@mermaid-js/core/parser-kit';
 import type { C4BetaDocument } from './beta/ast.ts';
 import { detectC4Beta } from './beta/detect.ts';
 import { parseC4Beta } from './beta/parser.ts';
+import { c4betaCompletions } from './facet/beta-completions.ts';
 import { c4Completions } from './facet/completions.ts';
 import { c4Hover } from './facet/hover.ts';
 import { invalidReason } from './facet/names.ts';
@@ -36,10 +37,10 @@ export type * from './parser/index.ts';
  */
 const categories = Object.freeze({ ...c4Categories, ...c4betaCategories });
 
-/** The view of a legacy C4 document: completion and hover are legacy C4's only (spec #730 T6). */
-const isLegacy = (
+/** Whether the document is c4-beta: its header decides, as it does for the parse. */
+const isBeta = (
   doc: DocumentView<C4Document | C4BetaDocument>
-): doc is DocumentView<C4Document> => !detectC4Beta(doc.text);
+): doc is DocumentView<C4BetaDocument> => detectC4Beta(doc.text);
 
 /**
  * The C4 facet. It parses a `c4-beta` header with the c4-beta parser (spec #730); the rest of its
@@ -54,8 +55,12 @@ export const c4Language: LanguageFacet<C4Document | C4BetaDocument> = {
   // An alias no macro defines (an unknown relation end, D457) has no definition.
   declaredOnly: true,
   isValidId: invalidReason,
-  completions: (probe, doc) => (isLegacy(doc) ? c4Completions(probe, doc) : []),
-  hover: (at, doc) => (isLegacy(doc) ? c4Hover(at, doc) : undefined),
+  completions: (probe, doc) =>
+    isBeta(doc)
+      ? c4betaCompletions(probe, doc)
+      : c4Completions(probe, doc as DocumentView<C4Document>),
+  // c4-beta has no hover yet: the facet answers legacy C4 documents only.
+  hover: (at, doc) => (isBeta(doc) ? undefined : c4Hover(at, doc as DocumentView<C4Document>)),
 };
 
 /** The facet under the fixed name the language service imports (manifest `language`, D89). */

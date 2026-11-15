@@ -1,0 +1,11 @@
+@ 3:8  person |
+  none
+@ 4:11  container |
+  none
+@ 5:17  softwareSystem s|
+  none
+@ 7:9  group |
+  none
+@ 9:10  user --> |
+  user node (person "User") 9:10-9:10 "" -> "user"
+  c node (component "C") 9:10-9:10 "" -> "c"

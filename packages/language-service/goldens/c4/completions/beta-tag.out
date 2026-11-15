@@ -1,0 +1,4 @@
+@ 6:17  person r "R" :::|
+  none
+@ 7:19  person p "P" :::te|
+  :::team class (tag) 7:14-7:19 ":::te" -> ":::team"
