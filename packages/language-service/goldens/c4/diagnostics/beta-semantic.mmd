@@ -1,0 +1,10 @@
+c4-beta
+person user "User" "Pays." "Browser"
+person user "Again"
+softwareSystem shop "Shop" instances "2"
+container api "API" {
+  container user "Clash"
+}
+user --> missing
+3: user --> api
+style api fill:red, weight:bold, shape:triangle

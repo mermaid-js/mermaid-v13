@@ -1,0 +1,12 @@
+c4-beta container
+title Payments
+direction LR
+legend on
+style store shape:cylinder, fill:#1f2937
+person user "User" :::external
+softwareSystem shop "Shop" {
+  container api "API" "Serves orders." "Kotlin"
+  container store "Store" :::store
+}
+user --> api : "Signs in" "HTTPS"
+api --- store
