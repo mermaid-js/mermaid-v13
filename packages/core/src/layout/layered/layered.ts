@@ -2166,6 +2166,76 @@ function pastLabels(
   }
 }
 
+// Keep groups contiguous, ordering each by its mean key. Exported for tests.
+export function groupArranger(
+  n: number,
+  layerStart: Int32Array,
+  order: Int32Array,
+  pos: Int32Array,
+  GRP: Int32Array | undefined,
+  groupParent: Int32Array | undefined
+): (r: number, key: Float64Array) => void {
+  const groups = groupParent ? groupParent.length : 0;
+  const depth = new Int32Array(groups);
+  for (let gr = 0; gr < groups; gr++) for (let p = gr; p >= 0; p = groupParent![p]!) depth[gr]!++;
+  const groupSum = new Float64Array(groups);
+  const groupCount = new Int32Array(groups);
+  const groupFirst = new Int32Array(groups);
+  return (r: number, key: Float64Array): void => {
+    const s = layerStart[r]!;
+    const e = layerStart[r + 1]!;
+    let odd = false;
+    for (let i = s; i < e; i++) {
+      for (let gr = GRP![order[i]!]!; gr >= 0; gr = groupParent![gr]!) {
+        groupSum[gr] = 0;
+        groupCount[gr] = 0;
+      }
+    }
+    for (let i = s; i < e; i++) {
+      const v = order[i]!;
+      if (key[v]! - key[v]! !== 0) odd = true;
+      for (let gr = GRP![v]!; gr >= 0; gr = groupParent![gr]!) {
+        if (groupCount[gr]! === 0) groupFirst[gr] = i;
+        groupSum[gr]! += key[v]!;
+        groupCount[gr]!++;
+      }
+    }
+    // Compare siblings in their nearest common group; group items use n + group ID.
+    const value = (item: number): number =>
+      item >= n ? groupSum[item - n]! / groupCount[item - n]! : key[item]!;
+    const first = (item: number): number => (item >= n ? groupFirst[item - n]! : s + pos[item]!);
+    const compare = (a: number, b: number): number => {
+      let ia = a;
+      let ib = b;
+      let ca = GRP![a]!;
+      let cb = GRP![b]!;
+      let da = ca < 0 ? 0 : depth[ca]!;
+      let db = cb < 0 ? 0 : depth[cb]!;
+      for (; da > db; da--) {
+        ia = n + ca;
+        ca = groupParent![ca]!;
+      }
+      for (; db > da; db--) {
+        ib = n + cb;
+        cb = groupParent![cb]!;
+      }
+      while (ca !== cb) {
+        ia = n + ca;
+        ca = groupParent![ca]!;
+        ib = n + cb;
+        cb = groupParent![cb]!;
+      }
+      return value(ia) - value(ib) || first(ia) - first(ib);
+    };
+    // A row that is one wide, or already in the order the sort would give, is left as it is.
+    // Non-finite keys always take the sort.
+    let k = s + 1;
+    while (k < e && compare(order[k - 1]!, order[k]!) < 0) k++;
+    if (k < e || odd) order.set(Array.from(order.subarray(s, e)).sort(compare), s);
+    for (let i = s; i < e; i++) pos[order[i]!] = i - s;
+  };
+}
+
 // Returns [final crossings, crossings before grouping or reordering].
 function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
   const {
@@ -2298,61 +2368,7 @@ function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
   const moving = new Int32Array(widest);
   const spare = new Int32Array(widest);
 
-  // Keep groups contiguous, ordering each by its mean key.
-  const groups = groupParent ? groupParent.length : 0;
-  const depth = new Int32Array(groups);
-  for (let gr = 0; gr < groups; gr++) for (let p = gr; p >= 0; p = groupParent![p]!) depth[gr]!++;
-  const groupSum = new Float64Array(groups);
-  const groupCount = new Int32Array(groups);
-  const groupFirst = new Int32Array(groups);
-  const arrange = (r: number, key: Float64Array): void => {
-    const s = layerStart[r]!;
-    const e = layerStart[r + 1]!;
-    for (let i = s; i < e; i++) {
-      for (let gr = GRP![order[i]!]!; gr >= 0; gr = groupParent![gr]!) {
-        groupSum[gr] = 0;
-        groupCount[gr] = 0;
-      }
-    }
-    for (let i = s; i < e; i++) {
-      const v = order[i]!;
-      for (let gr = GRP![v]!; gr >= 0; gr = groupParent![gr]!) {
-        if (groupCount[gr]! === 0) groupFirst[gr] = i;
-        groupSum[gr]! += key[v]!;
-        groupCount[gr]!++;
-      }
-    }
-    // Compare siblings in their nearest common group; group items use n + group ID.
-    const value = (item: number): number =>
-      item >= n ? groupSum[item - n]! / groupCount[item - n]! : key[item]!;
-    const first = (item: number): number => (item >= n ? groupFirst[item - n]! : s + pos[item]!);
-    const compare = (a: number, b: number): number => {
-      let ia = a;
-      let ib = b;
-      let ca = GRP![a]!;
-      let cb = GRP![b]!;
-      let da = ca < 0 ? 0 : depth[ca]!;
-      let db = cb < 0 ? 0 : depth[cb]!;
-      for (; da > db; da--) {
-        ia = n + ca;
-        ca = groupParent![ca]!;
-      }
-      for (; db > da; db--) {
-        ib = n + cb;
-        cb = groupParent![cb]!;
-      }
-      while (ca !== cb) {
-        ia = n + ca;
-        ca = groupParent![ca]!;
-        ib = n + cb;
-        cb = groupParent![cb]!;
-      }
-      return value(ia) - value(ib) || first(ia) - first(ib);
-    };
-    const row = Array.from(order.subarray(s, e)).sort(compare);
-    order.set(row, s);
-    for (let i = s; i < e; i++) pos[order[i]!] = i - s;
-  };
+  const arrange = groupArranger(n, layerStart, order, pos, GRP, groupParent);
   if (GRP) {
     const at = new Float64Array(n);
     for (let r = 0; r <= maxRank; r++) {
