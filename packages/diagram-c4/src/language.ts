@@ -20,6 +20,7 @@ import { parseC4Beta } from './beta/parser.ts';
 import { c4Completions } from './facet/completions.ts';
 import { c4Hover } from './facet/hover.ts';
 import { invalidReason } from './facet/names.ts';
+import { c4betaCategories } from './generated/c4beta.categories.ts';
 import { c4Categories } from './generated/categories.ts';
 import { parseC4 } from './parser/index.ts';
 import type { C4Document } from './parser/index.ts';
@@ -28,6 +29,12 @@ export { c4Categories } from './generated/categories.ts';
 export { c4Docs } from './generated/docs.ts';
 export { C4TokenKind, c4Tokens, detectC4, parseC4 } from './parser/index.ts';
 export type * from './parser/index.ts';
+
+/**
+ * The facet's one kind to category table: legacy C4's and c4-beta's. The two sets of kinds do
+ * not overlap (`FIRST_BETA_KIND`) and the shared kinds agree, so the union is each table.
+ */
+const categories = Object.freeze({ ...c4Categories, ...c4betaCategories });
 
 /** The view of a legacy C4 document: completion and hover are legacy C4's only (spec #730 T6). */
 const isLegacy = (
@@ -42,7 +49,7 @@ export const c4Language: LanguageFacet<C4Document | C4BetaDocument> = {
   id: 'c4',
   parse: (text, options) =>
     detectC4Beta(text) ? parseC4Beta(text, options) : parseC4(text, options),
-  categories: c4Categories,
+  categories,
   namespaces: [['element'], ['boundary']],
   // An alias no macro defines (an unknown relation end, D457) has no definition.
   declaredOnly: true,

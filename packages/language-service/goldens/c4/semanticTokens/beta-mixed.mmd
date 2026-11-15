@@ -1,0 +1,21 @@
+c4-beta container
+title Payments %% a comment
+accTitle: Payments view
+accDescr {
+  Who talks to whom
+}
+direction LR
+legend off
+style store shape:cylinder, fill:#1f2937, line:dashed
+person user "User" "Pays." :::external
+softwareSystem shop "Shop" {
+  container api "API" "Serves orders." "Kotlin" :::team
+  container store "Store" :::store
+}
+deploymentNode dc "Data centre" "" "Linux" instances "2..4" {
+  infrastructureNode lb "Load balancer"
+}
+1: user --> api : "Signs in" "HTTPS" :::sync
+api <-- store
+api <--> store
+api --- store : 'Shares'

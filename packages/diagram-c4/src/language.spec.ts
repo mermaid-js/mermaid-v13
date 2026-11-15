@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { T as BETA } from './beta/tokens.ts';
 import { c4Language, language } from './language.ts';
+import { T as LEGACY } from './parser/tokens.ts';
 
 /**
  * The C4 language facet (#543) at its own seam: the parse the service reads, completions at a
@@ -205,5 +207,21 @@ describe('the c4 facet', () => {
   it('hovers the keyword alone, not the text a token takes after it', () => {
     expect(hover('C4Context\nti¦tle A title\nPerson(a, "A")')?.[0]).toBe('title');
     expect(hover('C4Context\naccDescr {\n  x\n¦}\nPerson(a, "A")')?.[0]).toBe('}');
+  });
+});
+
+describe("the c4 facet's kind to category table", () => {
+  it("holds legacy C4's kinds and c4-beta's apart, so one table serves both", () => {
+    const legacy = new Set<number>(Object.values(LEGACY));
+    expect(Object.values(BETA).filter((k) => legacy.has(k))).toEqual([]);
+  });
+
+  it('categorises a c4-beta kind as its grammar says, and a legacy kind as before', () => {
+    expect(c4Language.categories[BETA.SoftwareSystem]).toBe('Keyword');
+    expect(c4Language.categories[BETA.String]).toBe('String');
+    expect(c4Language.categories[BETA.Tag]).toBe('Variable');
+    expect(c4Language.categories[BETA.ArrowRight]).toBe('Operator');
+    expect(c4Language.categories[LEGACY.Person]).toBe('Keyword');
+    expect(c4Language.categories[LEGACY.Str]).toBe('String');
   });
 });
