@@ -268,11 +268,6 @@
       "count": 1
     }
   },
-  "packages/core/src/pipeline/draw.ts": {
-    "@typescript-eslint/no-unnecessary-condition": {
-      "count": 1
-    }
-  },
   "packages/core/src/pipeline/extensions.ts": {
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 2

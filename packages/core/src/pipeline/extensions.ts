@@ -536,6 +536,14 @@ export class HookRunner<El = unknown, R = unknown> {
     return this.list.length;
   }
 
+  /**
+   * Whether an extension reads the AST (DESIGN §4.2): a `postParse` hook needs the full parse,
+   * and the drawn elements' `data-ast` to find the AST nodes' elements again.
+   */
+  get readsAst(): boolean {
+    return this.list.some((p) => typeof p.postParse === 'function');
+  }
+
   /** Every claim of every extension, for `DiagramParseContext.claims`. */
   claims(): readonly string[] {
     return [...new Set(this.list.flatMap((p) => p.claims ?? []))];
