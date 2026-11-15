@@ -40,6 +40,7 @@ export function renderC4(
 ): void {
   const view: SceneView = {
     name: 'c4',
+    maxWidth: c4Section(ctx.config).useMaxWidth,
     accTitle: model.accTitle.trim(),
     accDescr: model.accDescr.trim(),
     relationTitle: (index) => model.relations[index]!.descr?.trim(),
@@ -86,7 +87,7 @@ function openRoot({ w, ctx, view, layout }: Scene): void {
   openSvgRoot(w, ctx, {
     name: view.name,
     viewBox: [0, 0, Math.max(1, Math.ceil(layout.width)), Math.max(1, Math.ceil(layout.height))],
-    maxWidth: c4Section(ctx.config).useMaxWidth,
+    maxWidth: view.maxWidth,
     title: view.accTitle,
     desc: view.accDescr,
     // Read before the root style is written, so it declares its alias.

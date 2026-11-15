@@ -5,6 +5,7 @@
  */
 import type { C4Layout } from '../layout/types.ts';
 import type { C4RenderContext } from '../render/context.ts';
+import { c4betaSection } from '../config.ts';
 import { drawScene } from '../render/render.ts';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { betaPaints } from './paint.ts';
@@ -18,6 +19,7 @@ export function renderC4Beta(
 ): void {
   const view = {
     name: 'c4beta',
+    maxWidth: c4betaSection(ctx.config).useMaxWidth,
     accTitle: model.accTitle.trim(),
     accDescr: model.accDescr.trim(),
     relationTitle: () => undefined,

@@ -106,8 +106,11 @@ export async function renderC4BetaForTest(
   source: string,
   options: RenderC4Options = {}
 ): Promise<RenderedC4Beta> {
-  const d = await drawParsed(source, options, (pre, limits) =>
-    parseC4Beta(source, { preprocessed: pre, ...limits })
+  const d = await drawParsed(
+    source,
+    options,
+    (pre, limits) => parseC4Beta(source, { preprocessed: pre, ...limits }),
+    true
   );
   return { ...summary(d), model: d.parse.model, ast: d.parse.ast };
 }
@@ -118,12 +121,13 @@ type ParseLimits = Pick<Limits, 'maxNodes' | 'maxEdges' | 'maxDepth'>;
 async function drawParsed<M extends C4AnyModel, A extends AstNode>(
   source: string,
   options: RenderC4Options,
-  parseWith: (pre: PreprocessResult, limits: ParseLimits) => ParseResult<M, A>
+  parseWith: (pre: PreprocessResult, limits: ParseLimits) => ParseResult<M, A>,
+  beta = false
 ): Promise<Drawn<M, A>> {
   const warnings: Warning[] = [];
   const warn = (w: Warning): void => void warnings.push(w);
   const pre = preprocess(source);
-  const config = c4TestConfig(pre, options.config);
+  const config = c4TestConfig(pre, options.config, beta);
   const limits = resolveLimits(config);
   const parse = parseWith(pre, limits);
   const idPrefix = options.idPrefix ?? 'mermaid-0';
