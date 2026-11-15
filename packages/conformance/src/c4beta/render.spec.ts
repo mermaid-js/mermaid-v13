@@ -154,3 +154,16 @@ describe('c4-beta AST round-trip (R-PARSE-8)', () => {
     expect(drawn).toBeGreaterThan(100);
   });
 });
+
+describe('c4-beta undirected relation', () => {
+  const HEADS = /<path class="marker"/g;
+  const heads = async (arrow: string): Promise<number> => {
+    const r = await renderC4BetaForTest(`c4-beta\nperson a "A"\nperson b "B"\na${arrow}b : "Uses"`);
+    expect(r.rejected, arrow).toBeFalsy();
+    return r.svg.match(HEADS)?.length ?? 0;
+  };
+
+  it('draws `---` with no arrowhead, and `-->` with one', async () => {
+    expect([await heads('---'), await heads(' --> '), await heads(' <--> ')]).toEqual([0, 1, 2]);
+  });
+});

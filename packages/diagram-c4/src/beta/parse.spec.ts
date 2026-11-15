@@ -97,6 +97,23 @@ describe('c4-beta model', () => {
     ]);
   });
 
+  it('stores `---` as a relation with no head, split from the ids round it', () => {
+    const { model } = parse(
+      'person a-b "A"\nperson c "C"\nperson d "D"\na-b---c : "Linked"\nc --- d\nd---a-b'
+    );
+    expect(model.relations.map((r) => [r.from, r.to, r.start, r.end])).toEqual([
+      ['a-b', 'c', 'none', 'none'],
+      ['c', 'd', 'none', 'none'],
+      ['d', 'a-b', 'none', 'none'],
+    ]);
+    expect(model.relations[0]?.description).toBe('Linked');
+  });
+
+  it('does not read `----` or `--->` as an undirected arrow', () => {
+    for (const arrow of ['----', '--->'])
+      expect(errors(`person a "A"\nperson b "B"\na ${arrow} b`).length, arrow).toBeGreaterThan(0);
+  });
+
   it('numbers the repeats of an id and of a relation', () => {
     const { ast } = parse('person a "A"\nperson b "B"\na --> b\na --> b\nperson a "again"');
     expect(ast.children.map((n) => n.id).slice(1)).toEqual([
