@@ -254,6 +254,24 @@ describe('the c4beta stereotype keys (spec #730 T5)', () => {
     expect(size(hidden.svg)[1]).toBeLessThan(h0);
   });
 
+  /** The lines the person's description is drawn in. */
+  const personLines = (svg: string): number => {
+    const person = /<g class="node c4-shape c4-person"[\s\S]*?<\/g><\/g>/.exec(svg)![0];
+    return /<text class="c4-descr"[\s\S]*?<\/text>/.exec(person)![0].split('<tspan').length - 1;
+  };
+
+  it('personWrappingWidth from front matter wraps a person alone', async () => {
+    const source = fixture('config-person-wrapping-width.mmd');
+    const unset = await createMermaid().render(
+      'c1',
+      source.replace('    personWrappingWidth: 120\n', '')
+    );
+    const narrow = await createMermaid().render('c1', source);
+    // 120 px breaks the description into more lines than the width every element wraps at.
+    expect(personLines(narrow.svg)).toBeGreaterThan(personLines(unset.svg));
+    expect(narrow.warnings).toEqual([]);
+  });
+
   describe('each key arrives intact from front matter, a directive and initialize', () => {
     const hasPerson = (all: string[]): boolean => all.includes(PERSON);
     const hasSystem = (all: string[]): boolean => all.includes(SYSTEM);
@@ -324,6 +342,22 @@ describe('the c4beta stereotype keys (spec #730 T5)', () => {
       expect(hasPerson(viaInit) || hasSystem(viaInit)).toBe(false);
       const back = await lines(withConfig(BODY, '  c4beta:\n    showStereotypes: true'), m);
       expect(hasPerson(back) && hasSystem(back)).toBe(true);
+    });
+
+    it('personWrappingWidth from a directive and from initialize, and front matter wins over initialize', async () => {
+      const viaDirective = await createMermaid().render(
+        'c1',
+        '%%{init: {"c4beta": {"personWrappingWidth": 120}}}%%\n' + BODY
+      );
+      const m = createMermaid();
+      m.initialize({ c4beta: { personWrappingWidth: 120 } });
+      const viaInit = await m.render('c1', BODY);
+      expect(personLines(viaDirective.svg)).toBeGreaterThan(
+        personLines((await createMermaid().render('c1', BODY)).svg)
+      );
+      expect(viaInit.svg).toBe(viaDirective.svg);
+      const over = await m.render('c1', withConfig(BODY, '  c4beta:\n    personWrappingWidth: 60'));
+      expect(personLines(over.svg)).toBeGreaterThan(personLines(viaInit.svg));
     });
 
     it('the resolved config carries the three keys, and core holds no default for them', async () => {

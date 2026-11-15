@@ -119,6 +119,15 @@ export function c4betaStereotypeShown(
   return (kind) => showStereotypes !== false && !hidden.includes(kind);
 }
 
+/**
+ * The width a person's text wraps at when `c4beta.personWrappingWidth` is a number of at least 0;
+ * undefined otherwise, and the person wraps at the width of every other element (`c4.width` less
+ * twice `c4.c4ShapePadding`, in `measureSections`).
+ */
+export function c4betaPersonWrappingWidth(config: RenderContext['config']): number | undefined {
+  return configNumber(c4betaSection(config).personWrappingWidth, 0);
+}
+
 /** The layout's options from the resolved config. */
 export function c4LayoutConfig(config: RenderContext['config']): C4LayoutConfig {
   const given = c4Section(config);

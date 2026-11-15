@@ -9,6 +9,7 @@ import type { LayoutEdge, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-
 import { Style, type FontKey } from '@mermaid-js/core/text';
 import {
   c4betaDiagramPadding,
+  c4betaPersonWrappingWidth,
   c4betaStereotypeShown,
   c4Fonts,
   c4LayoutConfig,
@@ -140,6 +141,7 @@ interface Measuring {
   readonly measure: Measure;
   readonly room: ShapeRoom;
   readonly stereotypeShown: (kind: C4BetaElement['kind']) => boolean;
+  readonly personWrapWidth: number | undefined;
 }
 
 function measureLeaf(model: C4BetaModel, element: C4BetaElement, m: Measuring): BetaLeaf {
@@ -150,7 +152,14 @@ function measureLeaf(model: C4BetaModel, element: C4BetaElement, m: Measuring): 
       type: stereotypeOf(element, m.stereotypeShown(element.kind)),
       descr: element.description,
     },
-    { font: fonts.element(legacyKind(element)), config, measure }
+    {
+      font: fonts.element(legacyKind(element)),
+      config,
+      measure,
+      ...(element.kind === 'person' && m.personWrapWidth !== undefined
+        ? { wrapWidth: m.personWrapWidth }
+        : {}),
+    }
   );
   const present = sections.filter((s): s is Measured => s !== undefined);
   const tw = Math.max(0, ...present.map((s) => s.text.width));
@@ -227,6 +236,7 @@ export function prepareC4Beta(model: C4BetaModel, ctx: C4BetaLayoutContext): C4B
     measure: textMeasure(ctx.measurer, ctx.inline),
     room: shapeRoom(config, ctx.theme),
     stereotypeShown: c4betaStereotypeShown(ctx.config),
+    personWrapWidth: c4betaPersonWrappingWidth(ctx.config),
   };
   const leaves = new Map<string, BetaLeaf>();
   const frames = new Map<string, BetaFrame>();

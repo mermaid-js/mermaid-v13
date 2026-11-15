@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { c4betaDiagramPadding, c4betaStereotypeShown } from '../config.ts';
+import {
+  c4betaDiagramPadding,
+  c4Default,
+  c4betaPersonWrappingWidth,
+  c4betaStereotypeShown,
+} from '../config.ts';
 import { c4betaConfigDefaults } from '../generated/config-defaults.ts';
 import { layoutC4Beta } from './layout.ts';
 import { prepareC4Beta } from './prepare.ts';
@@ -74,13 +79,18 @@ describe('the c4-beta root follows c4beta.useMaxWidth', () => {
   it('scales by default and draws at its own size when false', async () => {
     const scaled = await renderC4BetaForTest(SOURCE);
     expect(scaled.svg).toMatch(/ width="100%"/);
-    const fixed = await renderC4BetaForTest(SOURCE, { config: { c4beta: { useMaxWidth: false } } });
+    const fixed = await renderC4BetaForTest(SOURCE, {
+      config: { c4beta: { useMaxWidth: false } },
+    });
     expect(fixed.svg).not.toMatch(/ width="100%"|max-width/);
     expect(fixed.svg).toMatch(/ width="\d+" height="\d+"/);
   });
 
   it('reads c4beta, not c4, when both are set', async () => {
-    const config = { c4: { useMaxWidth: false }, c4beta: { useMaxWidth: true } };
+    const config = {
+      c4: { useMaxWidth: false },
+      c4beta: { useMaxWidth: true },
+    };
     expect((await renderC4BetaForTest(SOURCE, { config })).svg).toMatch(/ width="100%"/);
   });
 });
@@ -124,6 +134,27 @@ describe('c4betaStereotypeShown', () => {
   );
 });
 
+describe('c4betaPersonWrappingWidth', () => {
+  it('is unset when the section is silent: the person wraps as every other element does', () => {
+    expect(c4betaPersonWrappingWidth(c4TestConfig(undefined, undefined, true))).toBeUndefined();
+    expect(c4betaPersonWrappingWidth({} as never)).toBeUndefined();
+    expect(c4betaConfigDefaults).not.toHaveProperty('personWrappingWidth');
+  });
+
+  it('takes a number of at least 0, or a numeric string as its number', () => {
+    expect(c4betaPersonWrappingWidth(beta({ personWrappingWidth: 200 }))).toBe(200);
+    expect(c4betaPersonWrappingWidth(beta({ personWrappingWidth: 0 }))).toBe(0);
+    expect(c4betaPersonWrappingWidth(beta({ personWrappingWidth: '90' }))).toBe(90);
+  });
+
+  it.each([-1, 'wide', '', true, null, Number.NaN, Infinity])(
+    'is unset for %s, which is not a length',
+    (personWrappingWidth) => {
+      expect(c4betaPersonWrappingWidth(beta({ personWrappingWidth }))).toBeUndefined();
+    }
+  );
+});
+
 describe('the c4-beta element shapes follow the stereotype keys', () => {
   const TEXT = [
     'c4-beta container',
@@ -142,7 +173,11 @@ describe('the c4-beta element shapes follow the stereotype keys', () => {
     return prepareC4Beta(model, ctx).leaves;
   }
   const typeLine = (
-    l: { sections: readonly ({ text: { lines: readonly unknown[] } } | undefined)[] } | undefined
+    l:
+      | {
+          sections: readonly ({ text: { lines: readonly unknown[] } } | undefined)[];
+        }
+      | undefined
   ) => l?.sections[1];
 
   it('hides the person type line and the line takes no room', async () => {
@@ -157,7 +192,9 @@ describe('the c4-beta element shapes follow the stereotype keys', () => {
 
   it('a shape shrinks by the line, and a person keeps the height its width asks for', async () => {
     const base = await leaves();
-    const hidden = await leaves({ hideStereotypes: ['softwareSystem', 'person'] });
+    const hidden = await leaves({
+      hideStereotypes: ['softwareSystem', 'person'],
+    });
     expect(hidden.get('ledger')!.textH).toBeLessThan(base.get('ledger')!.textH);
     expect(hidden.get('ledger')!.h).toBeLessThan(base.get('ledger')!.h);
     // A person's body is at least as tall as its width asks for, so a short label loses the line
@@ -170,5 +207,48 @@ describe('the c4-beta element shapes follow the stereotype keys', () => {
     for (const id of ['clerk', 'ledger']) expect(typeLine(off.get(id))).toBeUndefined();
     const api = (await leaves({ showStereotypes: false })).get('api');
     expect(typeLine(api)?.text).toBeDefined();
+  });
+
+  it('personWrappingWidth wraps a person alone: narrower figure, other shapes unchanged', async () => {
+    const narrow = await leaves({ personWrappingWidth: 60 });
+    const wide = await leaves({ personWrappingWidth: 400 });
+    expect(narrow.get('clerk')!.textH).toBeGreaterThan(wide.get('clerk')!.textH);
+    expect(narrow.get('clerk')!.w).toBeLessThan(wide.get('clerk')!.w);
+    expect(narrow.get('ledger')).toEqual(wide.get('ledger'));
+    expect(narrow.get('api')).toEqual(wide.get('api'));
+  });
+
+  it('wraps a person like any element by default: at c4.width less twice c4.c4ShapePadding', async () => {
+    const same = async (c4?: Record<string, unknown>) => {
+      const theme = await c4TestTheme('default');
+      const { model } = parseC4Beta(TEXT);
+      const ctx = (extra: Record<string, unknown>) =>
+        c4TestContext(c4TestConfig(undefined, { ...(c4 ? { c4 } : {}), ...extra }, true), theme);
+      const width = (c4?.width as number | undefined) ?? c4Default('width');
+      const padding = (c4?.c4ShapePadding as number | undefined) ?? c4Default('c4ShapePadding');
+      const unset = prepareC4Beta(model, ctx({})).leaves.get('clerk');
+      const explicit = prepareC4Beta(
+        model,
+        ctx({ c4beta: { personWrappingWidth: width - 2 * padding } })
+      ).leaves.get('clerk');
+      expect(unset).toEqual(explicit);
+    };
+    await same();
+    await same({ width: 300 });
+    await same({ c4ShapePadding: 40 });
+    expect(c4Default('width') - 2 * c4Default('c4ShapePadding')).toBe(176);
+  });
+
+  it('keeps the text inside a person shape when personWrappingWidth is wider than the shape', async () => {
+    const wide = (await leaves({ personWrappingWidth: 1000 })).get('clerk')!;
+    const widest = Math.max(...wide.sections.map((s) => s?.text.width ?? 0));
+    expect(wide.w).toBeGreaterThanOrEqual(widest);
+    expect(wide.w).toBeGreaterThan((await leaves()).get('clerk')!.w);
+  });
+
+  it('wraps a person at the least width, 32, however narrow it is set', async () => {
+    const zero = await leaves({ personWrappingWidth: 0 });
+    const least = await leaves({ personWrappingWidth: 32 });
+    expect(zero.get('clerk')).toEqual(least.get('clerk'));
   });
 });

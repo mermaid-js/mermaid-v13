@@ -65,6 +65,9 @@ describe('the invariants hold with the type lines hidden (T5)', () => {
   const configs = {
     'hideStereotypes: [person]': { hideStereotypes: ['person'] },
     'showStereotypes: false': { showStereotypes: false },
+    'personWrappingWidth: 40': { personWrappingWidth: 40 },
+    'personWrappingWidth: 120': { personWrappingWidth: 120 },
+    'personWrappingWidth: 1000 (wider than the shape)': { personWrappingWidth: 1000 },
   } as const;
 
   it.each(Object.entries(configs))(

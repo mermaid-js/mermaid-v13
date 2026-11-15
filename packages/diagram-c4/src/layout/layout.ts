@@ -317,15 +317,17 @@ export interface SectionRoom {
   readonly font: FontKey;
   readonly config: C4LayoutConfig;
   readonly measure: Measure;
+  /** The width the text wraps at when `config.wrap` is on, in place of the `c4` width's. */
+  readonly wrapWidth?: number;
 }
 
 /** An element's name (bold), type line and description, measured in its kind's font. */
 export function measureSections(
   texts: { readonly name: string; readonly type: string; readonly descr?: string },
-  { font, config, measure }: SectionRoom
+  { font, config, measure, wrapWidth }: SectionRoom
 ): (Measured | undefined)[] {
   const wrapW = config.wrap
-    ? Math.max(config.width - 2 * config.c4ShapePadding, M.minWrapWidth)
+    ? Math.max(wrapWidth ?? config.width - 2 * config.c4ShapePadding, M.minWrapWidth)
     : Infinity;
   const sized = (scale: number): FontKey => ({ ...font, size: font.size * scale });
   return [
