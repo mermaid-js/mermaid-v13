@@ -78,9 +78,11 @@ export function drawDiagram<M, L>(
     const outline = run?.outline();
     // Read only when a renderer asks for a user-space gradient (D391).
     const idPrefix = () => ctx.idPrefix;
+    // `ctx.dataAst: false` drops `data-ast` from what the plugin writes (R-PARSE-8).
+    const dataAst = ctx.dataAst !== false;
     const options = outline
-      ? { gradient, idPrefix, outline: outline.draw }
-      : { gradient, idPrefix };
+      ? { gradient, idPrefix, dataAst, outline: outline.draw }
+      : { gradient, idPrefix, dataAst };
     if (run?.editsTree) {
       const w = edges(treeWriter(options));
       plugin.render(model, layout, ctx, w);

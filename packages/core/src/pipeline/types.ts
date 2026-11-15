@@ -78,6 +78,11 @@ export interface RenderContext {
   /** Integrator-only limits (R-SEC-5): `resolveLimits(initialize config, limits option)`. */
   readonly limits: Limits;
   /**
+   * `false`: the draw writes no `data-ast` attribute (R-PARSE-8); the writer drops it. Absent or
+   * `true`: it is written as the plugin gives it.
+   */
+  readonly dataAst?: boolean;
+  /**
    * The API object's icon packs (D294), for an icons extension's hooks: a view without the
    * loader `ResourceRequest.iconPacks` has, so a draw cannot start one (R-ARCH-6).
    */

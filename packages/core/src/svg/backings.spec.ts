@@ -187,6 +187,36 @@ describe('streaming and tree backings', () => {
   });
 });
 
+describe('data-ast off (R-PARSE-8)', () => {
+  // `data-ast` on groups, leaves, a label's text and an edge, as a renderer writes it.
+  const program: Program = (w) => {
+    w.open('g', { class: 'node', 'data-id': 'A', 'data-ast': 'n:A' });
+    w.leaf('rect', { width: 1, 'data-ast': 'n:A@2' });
+    w.label(label([[{ text: 'A' }]]), 0, 0, { 'data-ast': 'n:A' });
+    w.close();
+    w.leaf('path', { class: 'edge', 'data-id': 'L_A_B_0', 'data-ast': 'e:A>B' });
+  };
+  const run = (w: ReturnType<typeof streamWriter> | ReturnType<typeof treeWriter>) => {
+    program(w);
+    return w.finish();
+  };
+
+  it('drops every data-ast on both backings and keeps the rest byte for byte', () => {
+    const on = run(streamWriter());
+    const off = run(streamWriter({ dataAst: false }));
+    expect(on.match(/ data-ast=/g)).toHaveLength(4);
+    expect(off).toBe(on.replace(/ data-ast="[^"]*"/g, ''));
+    expect(run(treeWriter({ dataAst: false }))).toBe(off);
+  });
+
+  it('writes data-ast when the option is true or absent', () => {
+    const on = run(streamWriter());
+    expect(run(streamWriter({ dataAst: true }))).toBe(on);
+    expect(run(treeWriter({ dataAst: true }))).toBe(on);
+    expect(run(treeWriter())).toBe(on);
+  });
+});
+
 describe('SvgTree view', () => {
   function sample() {
     const w = treeWriter();
