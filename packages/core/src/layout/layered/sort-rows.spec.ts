@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupArranger } from './layered.ts';
+import { groupArranger, sortLayer } from './layered.ts';
 
 // The row sorts in crossing reduction skip rows that are already in order. These tests compare
 // them with the implementations they replaced, kept here as the reference, over generated rows.
@@ -66,6 +66,23 @@ function oldGroupArranger(
     order.set(row, s);
     for (let i = s; i < e; i++) pos[order[i]!] = i - s;
   };
+}
+
+// Reference: `sortRank` in `layered` before layers in order were skipped.
+function oldSortLayer(
+  order: Int32Array,
+  s: number,
+  e: number,
+  key: (v: number) => number
+): boolean {
+  if (e - s < 2) return false;
+  for (let i = s; i < e; i++) if (Number.isNaN(key(order[i]!))) return false;
+  const layer = [...order.subarray(s, e)];
+  const index = new Map<number, number>();
+  layer.forEach((v, i) => index.set(v, i));
+  layer.sort((a, b) => key(a) - key(b) || index.get(a)! - index.get(b)!);
+  order.set(layer, s);
+  return true;
 }
 
 // Small deterministic generator (mulberry32).
@@ -162,5 +179,67 @@ describe('groupArranger', () => {
     expect(oneWide).toBeGreaterThan(1000);
     expect(inOrder).toBeGreaterThan(1000);
     expect(rows - oneWide - inOrder).toBeGreaterThan(1000);
+  });
+});
+
+describe('sortLayer', () => {
+  it('orders layers exactly as the sort it replaced', () => {
+    let sorted = 0;
+    let inOrder = 0;
+    let skipped = 0;
+    for (let seed = 1; seed <= 6000; seed++) {
+      const rand = rng(seed);
+      const n =
+        rand() < 0.1 ? Math.floor(rand() * 2) : Math.floor(rand() * (rand() < 0.1 ? 300 : 20));
+      const mode = Math.floor(rand() * 7);
+      const values = new Float64Array(n);
+      for (let v = 0; v < n; v++) {
+        const x = rand();
+        if (mode === 0)
+          values[v] = Math.floor(x * 3); // many ties
+        else if (mode === 1) values[v] = x * 10;
+        else if (mode === 2)
+          values[v] = 2; // all equal
+        else if (mode === 3)
+          values[v] = rand() < 0.2 ? ODD[Math.floor(x * ODD.length)]! : Math.floor(x * 4);
+        else if (mode === 4)
+          values[v] = v; // in vertex order
+        else if (mode === 5)
+          values[v] = n - v; // reversed
+        else values[v] = rand() < 0.2 ? [Infinity, -Infinity, -0, 0][Math.floor(x * 4)]! : x;
+      }
+      const key = (v: number): number => values[v]!;
+      const order = new Int32Array(n);
+      for (let v = 0; v < n; v++) order[v] = v;
+      if (rand() < 0.5) {
+        for (let i = n - 1; i > 0; i--) {
+          const j = Math.floor(rand() * (i + 1));
+          [order[i], order[j]] = [order[j]!, order[i]!];
+        }
+      }
+      // Sort a slice so that items outside it must stay put.
+      const s = n > 2 && rand() < 0.3 ? 1 : 0;
+      const e = n > 2 && rand() < 0.3 ? n - 1 : n;
+      const oldOrder = order.slice();
+      const before = order.slice();
+      const done = sortLayer(order, s, e, key);
+      expect(done).toBe(oldSortLayer(oldOrder, s, e, key));
+      expect([...order]).toEqual([...oldOrder]);
+      if (!done) skipped++;
+      else if (before.every((v, i) => v === oldOrder[i])) inOrder++;
+      else sorted++;
+      // A second pass meets the layer in order.
+      expect(sortLayer(order, s, e, key)).toBe(oldSortLayer(oldOrder, s, e, key));
+      expect([...order]).toEqual([...oldOrder]);
+    }
+    expect(Math.min(sorted, inOrder, skipped)).toBeGreaterThan(300);
+  });
+
+  it('keeps the given order between keys that compare as equal', () => {
+    const order = Int32Array.from([5, 4, 3, 2, 1, 0]);
+    const values = [1, Infinity, 0, Infinity, -0, 1];
+    expect(sortLayer(order, 0, 6, (v) => values[v]!)).toBe(true);
+    expect([...order]).toEqual([4, 2, 5, 0, 3, 1]);
+    expect(sortLayer(order, 0, 6, (v) => (v === 3 ? NaN : 0))).toBe(false);
   });
 });

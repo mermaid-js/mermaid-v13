@@ -293,6 +293,31 @@ function sortByBary(
   if (from !== list) for (let i = 0; i < count; i++) list[i] = from[i]!;
 }
 
+// Sorts `order[s..e)` by key, keeping the given order between equal keys (the sort is stable),
+// and leaves a layer already in that order as it is. Does nothing and returns false for a layer
+// of fewer than two nodes or with a NaN key. Exported for tests.
+export function sortLayer(
+  order: Int32Array,
+  s: number,
+  e: number,
+  key: (v: number) => number
+): boolean {
+  if (e - s < 2) return false;
+  let sorted = true;
+  for (let i = s, last = -Infinity; i < e; i++) {
+    const k = key(order[i]!);
+    if (Number.isNaN(k)) return false;
+    if (k < last) sorted = false;
+    last = k;
+  }
+  if (!sorted)
+    order.set(
+      Array.from(order.subarray(s, e)).sort((a, b) => key(a) - key(b)),
+      s
+    );
+  return true;
+}
+
 export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredResult {
   const M = opt.metrics ?? pxProfile.engine;
   const real = nodes.length;
@@ -527,18 +552,8 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
     }
   }
 
-  const sortRank = (r: number, key: (v: number) => number): boolean => {
-    const s = layerStart[r]!;
-    const e = layerStart[r + 1]!;
-    if (e - s < 2) return false;
-    for (let i = s; i < e; i++) if (Number.isNaN(key(order[i]!))) return false;
-    const layer = Array.from(order.subarray(s, e));
-    const index = new Map<number, number>();
-    layer.forEach((v, i) => index.set(v, i));
-    layer.sort((a, b) => key(a) - key(b) || index.get(a)! - index.get(b)!);
-    order.set(layer, s);
-    return true;
-  };
+  const sortRank = (r: number, key: (v: number) => number): boolean =>
+    sortLayer(order, layerStart[r]!, layerStart[r + 1]!, key);
   for (let r = 0; r <= maxRank; r++) sortRank(r, (v) => KEY[v]!);
 
   let pinned = false;
