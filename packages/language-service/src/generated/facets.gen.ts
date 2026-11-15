@@ -38,7 +38,8 @@ export const firstPartyFacets: readonly FacetEntry[] = [
   {
     type: 'c4beta',
     id: 'c4',
-    section: 'c4',
+    section: 'c4beta',
+    baseSection: 'c4',
     pattern: /^\s*c4-beta(?![\w-])/,
     detector: (text) => /^\s*c4-beta(?![\w-])/.test(text),
     load: () => import('@mermaid-js/diagram-c4/language').then((m) => m.language),

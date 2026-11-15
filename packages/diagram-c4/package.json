@@ -57,6 +57,11 @@
       "c4",
       "c4beta"
     ],
+    "typeOptions": {
+      "c4beta": {
+        "section": "c4beta"
+      }
+    },
     "formats": [
       "svg",
       "ascii"

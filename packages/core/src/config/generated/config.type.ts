@@ -249,6 +249,7 @@ treemap?: TreemapDiagramConfig
 kanban?: KanbanDiagramConfig
 gitGraph?: GitGraphDiagramConfig
 c4?: C4DiagramConfig
+c4beta?: C4BetaDiagramConfig
 sankey?: SankeyDiagramConfig
 packet?: PacketDiagramConfig
 block?: BlockDiagramConfig
@@ -2227,6 +2228,43 @@ component_queueFont?: FontCalculator
 external_component_queueFont?: FontCalculator
 boundaryFont?: FontCalculator
 messageFont?: FontCalculator
+}
+/**
+ * The object containing configurations specific for c4-beta diagrams (spec #730). The type
+ * reads this section over the `c4` section (D534): a key both have (`theme`, `useMaxWidth`)
+ * takes the `c4` value unless this section sets it. `diagramPadding` is c4-beta's own. Shape
+ * metrics and fonts are still read from `c4`.
+ * 
+ * 
+ * This interface was referenced by `MermaidConfig`'s JSON-Schema
+ * via the `definition` "C4BetaDiagramConfig".
+ */
+export interface C4BetaDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * Theme, the CSS style sheet.
+ * You may also use `themeCSS` to override this value.
+ * 
+ */
+theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
+/**
+ * Defines which layout algorithm to use for rendering the diagram.
+ * 
+ */
+layout?: string
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
+/**
+ * The margin round the drawing, on all four sides, in pixels. It is the room between
+ * the canvas edge and the nearest element, boundary, relation or title.
+ * 
+ */
+diagramPadding?: number
 }
 /**
  * The object containing configurations specific for sankey diagrams.

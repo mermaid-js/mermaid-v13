@@ -765,6 +765,18 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `c4.boundaryFont` | object |  | pending |  | JavaScript function that returns a `FontConfig`. By default, these return the appropriate `*FontSize`, `*FontFamily`, `*FontWeight` values. For example, the font calculator called `boundaryFont` might be defined as: ```javascript boundaryFont: function () { return { fontFamily: this.boundaryFontFamily, fontSize: this.boundaryFontSize, fontWeight: this.boundaryFontWeight, }; } ``` |
 | `c4.messageFont` | object |  | pending |  | JavaScript function that returns a `FontConfig`. By default, these return the appropriate `*FontSize`, `*FontFamily`, `*FontWeight` values. For example, the font calculator called `boundaryFont` might be defined as: ```javascript boundaryFont: function () { return { fontFamily: this.boundaryFontFamily, fontSize: this.boundaryFontSize, fontWeight: this.boundaryFontWeight, }; } ``` |
 
+## `c4beta`
+
+| Key | Type | Default | Status | Notes | Description |
+| --- | --- | --- | --- | --- | --- |
+| `c4beta` | object |  | honoured (13.0.0) |  | The object containing configurations specific for c4-beta diagrams (spec #730). The type reads this section over the `c4` section (D534): a key both have (`theme`, `useMaxWidth`) takes the `c4` value unless this section sets it. `diagramPadding` is c4-beta's own. Shape metrics and fonts are still read from `c4`. |
+| `c4beta.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the C4 renderer never did. |  |
+| `c4beta.useMaxWidth` | boolean | `true` | honoured (13.0.0) | As `c4.useMaxWidth`: true draws `width="100%"` and a `max-width`; false draws the diagram at its own `width` and `height`. A `c4.useMaxWidth` applies to c4-beta when this key is not set. | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `c4beta.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | honoured (13.0.0) | Set here, it wins over the top-level `theme` for c4-beta diagrams (a diagram section beats the top level within a config layer). | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
+| `c4beta.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
+| `c4beta.layout` | string |  | ignored (13.0.0) | c4-beta lays out with core's `layered` engine, called directly (`layoutKind: 'custom'`); neither the top-level nor a c4-beta-scoped `layout` changes it. | Defines which layout algorithm to use for rendering the diagram. |
+| `c4beta.diagramPadding` | number | `10` | honoured (13.0.0) | The canvas grows by twice the change on each axis. A value that is not a finite number of at least 0 draws the default 10. | The margin round the drawing, on all four sides, in pixels. It is the room between the canvas edge and the nearest element, boundary, relation or title. |
+
 ## `sankey`
 
 | Key | Type | Default | Status | Notes | Description |
@@ -1024,6 +1036,7 @@ Legacy alias: `treemap.look: "handDrawn"` sets `handDrawn`.
 Legacy alias: `kanban.look: "handDrawn"` sets `handDrawn`.
 Legacy alias: `gitGraph.look: "handDrawn"` sets `handDrawn`.
 Legacy alias: `c4.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `c4beta.look: "handDrawn"` sets `handDrawn`.
 Legacy alias: `sankey.look: "handDrawn"` sets `handDrawn`.
 Legacy alias: `packet.look: "handDrawn"` sets `handDrawn`.
 Legacy alias: `block.look: "handDrawn"` sets `handDrawn`.
