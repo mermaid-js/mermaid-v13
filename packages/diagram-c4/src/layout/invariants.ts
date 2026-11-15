@@ -92,6 +92,7 @@ export function c4LayoutViolations(model: C4Model, layout: C4Layout): string[] {
   checkRelations(model, layout, out);
   if (layout.careful) checkLabels(layout, out);
   checkBounds(layout, out);
+  out.push(...legendViolations(layout));
   return out;
 }
 
@@ -253,6 +254,35 @@ function checkBounds(layout: C4Layout, out: string[]): void {
     if (!inside(bounds, box)) out.push(`${name} is outside the bounds`);
   if (!inside({ x: 0, y: 0, width: layout.width, height: layout.height }, bounds))
     out.push('the bounds are outside the canvas');
+}
+
+/**
+ * c4-beta's legend: inside the bounds, holding its heading and every swatch and label, and
+ * clear of everything else drawn: elements, boundaries, relation lines and labels, the title.
+ */
+export function legendViolations(layout: C4Layout): string[] {
+  const { legend } = layout;
+  if (!legend) return [];
+  const out: string[] = [];
+  if (!inside(layout.bounds, legend.box)) out.push('the legend is outside the bounds');
+  const parts = [legend.title, ...legend.rows.flatMap((r) => [r.swatch, r.label])];
+  if (parts.some((part) => !inside(legend.box, part)))
+    out.push('the legend holds less than it draws');
+  const { x, y, width, height } = legend.box;
+  const area = { x0: x, y0: y, x1: x + width, y1: y + height };
+  const others: [string, Rect][] = [
+    ...layout.elements.map((e): [string, Rect] => [`element ${e.alias}`, e.box]),
+    ...layout.boundaries.map((b): [string, Rect] => [`boundary ${b.alias}`, b.box]),
+    ...layout.relations.flatMap((r): [string, Rect][] =>
+      r.labelBox ? [[`the label of ${r.from} -> ${r.to}`, r.labelBox]] : []
+    ),
+    ...(layout.title ? [['the title', layout.title] as [string, Rect]] : []),
+  ];
+  for (const [name, box] of others)
+    if (overlap(legend.box, box)) out.push(`the legend overlaps ${name}`);
+  for (const r of layout.relations)
+    if (crosses(lineOfLayout(r), area)) out.push(`the legend covers relation ${r.from} -> ${r.to}`);
+  return out;
 }
 
 /**

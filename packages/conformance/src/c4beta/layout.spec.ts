@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import {
+  legendViolations,
   c4TestConfig,
   c4TestContext,
   layoutC4BetaFull,
@@ -84,6 +85,57 @@ describe('the invariants hold with the type lines hidden (T5)', () => {
       expect(failures).toEqual([]);
     }
   );
+});
+
+describe('the legend (T3) lies inside the bounds and over nothing, on every accepted source', () => {
+  it.each(DIRECTIONS)('direction %s, with the legend on', (d) => {
+    const failures: string[] = [];
+    let legends = 0;
+    for (const { id, source } of accepted) {
+      const { model: parsed } = laidOut(source, d);
+      const model: C4BetaModel = { ...parsed, legend: true };
+      const run = layoutC4BetaFull(model, c4TestContext(c4TestConfig(), theme));
+      if (run.scene.legend) legends++;
+      failures.push(...allViolations(model, run).map((v) => `${id}: ${v}`));
+    }
+    expect(legends).toBeGreaterThanOrEqual(20);
+    expect(failures).toEqual([]);
+  });
+
+  it('draws no legend, and the same scene, with `legend off`', () => {
+    for (const { id, source } of accepted) {
+      const { model } = laidOut(source);
+      const off = layoutC4BetaFull(
+        { ...model, legend: false },
+        c4TestContext(c4TestConfig(), theme)
+      );
+      expect(off.scene.legend, id).toBeUndefined();
+    }
+  });
+
+  it('is found overlapping an element, a relation, a label, or outside the bounds', () => {
+    const { model: parsed } = laidOut(
+      'c4-beta container\nperson a "A"\nsoftwareSystem s "S" {\n  container c "C"\n}\na --> c : "Uses"\n',
+      'TB'
+    );
+    const { scene } = layoutC4BetaFull(
+      { ...parsed, legend: true },
+      c4TestContext(c4TestConfig(), theme)
+    );
+    const legend = scene.legend!;
+    expect(legendViolations(scene)).toEqual([]);
+    const at = (box: Rect) => ({ ...scene, legend: { ...legend, box } });
+    const element = scene.elements[0]!.box;
+    const label = scene.relations[0]!.labelBox!;
+    const line = scene.relations[0]!.points[0]!;
+    const inLine = { ...legend.box, x: line.x - 1, y: line.y - 1, width: 2, height: 2 };
+    expect(legendViolations(at({ ...legend.box, ...element }))).not.toEqual([]);
+    expect(legendViolations(at({ ...legend.box, ...label }))).not.toEqual([]);
+    expect(legendViolations(at(inLine))).not.toEqual([]);
+    expect(
+      legendViolations(at({ ...legend.box, y: scene.bounds.y + scene.bounds.height }))
+    ).toContain('the legend is outside the bounds');
+  });
 });
 
 describe('the checks fail on a layout that breaks the rule they state', () => {

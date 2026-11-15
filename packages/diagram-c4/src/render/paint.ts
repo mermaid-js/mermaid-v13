@@ -60,6 +60,12 @@ export interface RelationPaint {
   readonly labelBkg?: Paint;
 }
 
+/** The legend's text, and each row's swatch by its place in the layout's rows. */
+export interface LegendPaint {
+  readonly text: Paint;
+  readonly rows: readonly { readonly fill: Paint; readonly stroke: Paint }[];
+}
+
 export interface Paints {
   /** By the element's index in `C4Model.elements`. */
   readonly elements: ReadonlyMap<number, ElementPaint>;
@@ -68,6 +74,8 @@ export interface Paints {
   /** By the relation's index in `C4Model.relations`. */
   readonly relations: ReadonlyMap<number, RelationPaint>;
   readonly title?: Paint;
+  /** Set with the layout's legend. */
+  readonly legend?: LegendPaint;
 }
 
 /** A dropped colour: where it was given (a `$name` of an item, or a config key) and its value. */

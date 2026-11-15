@@ -1,0 +1,21 @@
+---
+config:
+  theme: default
+description: >-
+  legend on with tag styles: a row for each style whose tag an element or relation carries (fill
+  and stroke on its swatch), none for the unused tag `legacy` or for the style of a kind
+---
+c4-beta container
+legend on
+style critical fill:#b91c1c, stroke:#7f1d1d
+style async stroke:#0a7a3d, line:dashed
+style store shape:cylinder
+style legacy fill:#999999
+style container fill:#0b5cab
+person clerk "Ledger Clerk" "Posts journal entries."
+softwareSystem ledger "Ledger" {
+  container api "Ledger API" "Keeps the books." "Rust" :::critical
+  container books "Books" "Stores the entries." "PostgreSQL" :::store
+}
+clerk --> api : "Posts entries using" "HTTPS"
+api --> books : "Writes to" :::async

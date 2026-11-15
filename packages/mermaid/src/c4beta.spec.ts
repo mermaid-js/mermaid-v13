@@ -198,6 +198,64 @@ describe('c4-beta through the public API (spec #730)', () => {
       expect(both.svg).toBe(fit);
     });
 
+    describe('the legend (T3)', () => {
+      const legendRows = (svg: string): string[] => {
+        const legend = /<g class="c4-legend">([\s\S]*?)<\/g>/.exec(svg)?.[1] ?? '';
+        return texts(legend);
+      };
+      const viewBox = (svg: string): number[] =>
+        /viewBox="([^"]*)"/.exec(svg)![1]!.split(' ').map(Number);
+
+      it('draws a heading and one row per kind in use, and none for a kind the diagram lacks', async () => {
+        const r = await createMermaid().render('c1', fixture('legend-kinds.mmd'));
+        expect(legendRows(r.svg)).toEqual([
+          'Legend',
+          'Person',
+          'External Software System',
+          'Software System',
+          'Container',
+          'Component',
+        ]);
+        expect(r.warnings).toEqual([]);
+        assertInert(r.svg);
+      });
+
+      it('adds a row for each tag style an element or relation uses, and for no other', async () => {
+        const r = await createMermaid().render('c1', fixture('legend-tag-styles.mmd'));
+        expect(legendRows(r.svg)).toEqual([
+          'Legend',
+          'Person',
+          'Container',
+          'critical',
+          'async',
+          'store',
+        ]);
+        expect(r.warnings.map((w) => w.code)).toEqual([]);
+      });
+
+      it('is gone with `legend off`, and the canvas shrinks by what it held', async () => {
+        const on = await createMermaid().render('c1', fixture('legend-kinds.mmd'));
+        const off = await createMermaid().render('c1', fixture('legend-off.mmd'));
+        expect(off.svg).not.toContain('c4-legend');
+        const [, , , heightOn] = viewBox(on.svg);
+        const [, , , heightOff] = viewBox(off.svg);
+        expect(heightOn!).toBeGreaterThan(heightOff!);
+      });
+
+      it('lies inside the viewBox', async () => {
+        const r = await createMermaid().render('c1', fixture('legend-tag-styles.mmd'));
+        const [, , width, height] = viewBox(r.svg);
+        const legend = /<g class="c4-legend">([\s\S]*?)<\/g>/.exec(r.svg)![1]!;
+        for (const m of legend.matchAll(
+          /<rect [^>]*x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/g
+        )) {
+          const [x, y, w, h] = m.slice(1).map(Number);
+          expect(x! + w!).toBeLessThanOrEqual(width!);
+          expect(y! + h!).toBeLessThanOrEqual(height!);
+        }
+      });
+    });
+
     it('leaves legacy C4 to its own section', async () => {
       const legacy = 'C4Context\nPerson(a, "A")\n';
       const plain = (await createMermaid().render('c1', legacy)).svg;

@@ -5,7 +5,7 @@
  * `c4BoundaryColor`, `c4RelationColor` and `c4TitleColor`. Every theme colour is read before the
  * root is written, in drawing order, as `render/paint.ts` does.
  */
-import type { C4Layout } from '../layout/types.ts';
+import type { C4Layout, C4LegendLayout } from '../layout/types.ts';
 import type { C4RenderContext } from '../render/context.ts';
 import {
   Colours,
@@ -14,6 +14,7 @@ import {
   kindPalette,
   type BoundaryPaint,
   type ElementPaint,
+  type LegendPaint,
   type Paints,
   type RelationPaint,
 } from '../render/paint.ts';
@@ -46,6 +47,37 @@ export function betaPaints(layout: C4Layout, ctx: C4RenderContext): Paints {
     });
   }
   const title = layout.title ? colours.theme('c4TitleColor') : undefined;
+  const legend = layout.legend && legendPaints(layout.legend, palette, colours);
   if (colours.dropped.length > 0) ctx.warn(colourWarning(colours.dropped));
-  return { elements, boundaries, relations, ...(title ? { title } : {}) };
+  return {
+    elements,
+    boundaries,
+    relations,
+    ...(title ? { title } : {}),
+    ...(legend ? { legend } : {}),
+  };
+}
+
+/**
+ * The legend's paints: a kind row takes its kind's palette, as the elements do; a tag row the
+ * style's own colours through the colour check (`stroke` falls back to `fill`, and with neither
+ * the swatch is an outline in the text colour).
+ */
+function legendPaints(
+  legend: C4LegendLayout,
+  palette: ReturnType<typeof kindPalette>,
+  colours: Colours
+): LegendPaint {
+  const text = colours.theme('textColor');
+  const rows = legend.rows.map((row) => {
+    if (row.kind) {
+      const [fill, stroke] = palette(row.kind);
+      return { fill, stroke };
+    }
+    const where = (key: string): string => `style ${row.tag?.name} ${key}`;
+    const fill = colours.checked(row.tag?.fill, where('fill'), row.tag?.ast);
+    const stroke = colours.checked(row.tag?.stroke, where('stroke'), row.tag?.ast);
+    return { fill: fill ?? 'none', stroke: stroke ?? fill ?? text };
+  });
+  return { text, rows };
 }
