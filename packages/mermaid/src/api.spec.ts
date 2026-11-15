@@ -473,7 +473,8 @@ describe('layout engines (R-LAYOUT-2)', () => {
     const options = { config: { theme: 'default' as const } };
     const first = await m.prepare(FLOW, options);
     m.renderSync(FLOW, options);
-    expect(await m.prepare(FLOW, options)).toBe(first);
+    // Each prepare() hands out its own full parse; the cached analysis it comes from is shared.
+    expect((await m.prepare(FLOW, options)).config).toBe(first.config);
   });
 
   it('falls back to the built-in engine with a warning for an unknown name', async () => {

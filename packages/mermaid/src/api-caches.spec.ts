@@ -22,10 +22,11 @@ describe('per-call config snapshots', () => {
     expect(changed).toBe(m.renderSync(FLOW, { config: { theme: 'forest' } }).svg);
   });
 
-  it('lets an equal fresh config object reuse the parse from prepare()', async () => {
+  it('lets an equal fresh config object reuse the analysis from prepare()', async () => {
     const m = createMermaid();
     const prepared = await m.prepare(FLOW, { config: { theme: 'dark' } });
-    expect(await m.prepare(FLOW, { config: { theme: 'dark' } })).toBe(prepared);
+    // Each prepare() hands out its own full parse; the cached analysis it comes from is shared.
+    expect((await m.prepare(FLOW, { config: { theme: 'dark' } })).config).toBe(prepared.config);
   });
 });
 
@@ -108,7 +109,7 @@ describe('text output context', () => {
 });
 
 describe('the parse cache', () => {
-  it('keeps what parse() found, so prepare() right after does not parse again', async () => {
+  it('keeps what parse() found, so render() right after does not parse again', async () => {
     let parses = 0;
     const counted: DiagramPlugin = {
       id: 'counted',
@@ -123,7 +124,7 @@ describe('the parse cache', () => {
     const m = createMermaid();
     await m.registerExternalDiagrams([counted]);
     await m.parse('counted\n  a');
-    await m.prepare('counted\n  a');
+    await m.render('c', 'counted\n  a');
     expect(parses).toBe(1);
   });
 });

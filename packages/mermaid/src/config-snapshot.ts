@@ -27,7 +27,15 @@ export interface IntegratorOptions {
   deterministic?: boolean;
   /** Replaces the default link schemes (http, https, mailto). */
   linkSchemes?: readonly string[];
-  output?: { cssVariables?: boolean };
+  output?: {
+    cssVariables?: boolean;
+    /**
+     * Provisional name. Whether drawn elements carry `data-ast` (R-PARSE-8), for editors that
+     * map the diagram to its source. Unset: only when a registered extension reads the AST
+     * (`postParse`), for the types that parse lean.
+     */
+    dataAst?: boolean;
+  };
   /**
    * Resource limits (R-SEC-5); each wins over v12's `maxTextSize`/`maxEdges`. Over a limit,
    * render rejects with `MermaidError { code: 'LIMIT' }`. Diagram text cannot change them.

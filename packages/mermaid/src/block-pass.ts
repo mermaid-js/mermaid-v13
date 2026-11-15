@@ -16,7 +16,7 @@ import {
   type Warning,
 } from '@mermaid-js/core';
 import type { ResolvedConfig, ResolvedSite } from '@mermaid-js/core/config';
-import type { Diagnostic, EmbeddedBlock, ParseResult, Range } from '@mermaid-js/core/parser-kit';
+import type { Diagnostic, EmbeddedBlock, ParseOutput, Range } from '@mermaid-js/core/parser-kit';
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { embeddedSvg, type SecurityLevel } from '@mermaid-js/core/svg';
@@ -27,7 +27,7 @@ import { embedsOf, type BlockHost } from './embeds.ts';
 import type { AnyPlugin } from './registry.ts';
 
 /** The edges a parse made, for a limit counted across blocks; 0 for a type that does not say. */
-function edgesOf(parse: ParseResult<unknown>): number {
+function edgesOf(parse: ParseOutput<unknown>): number {
   return parse.edgeCount ?? 0;
 }
 

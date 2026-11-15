@@ -500,7 +500,9 @@ describe('extension resources (R-API-2, D178)', () => {
       resources: {
         provides: [pack],
         missing: (parse, { format }) =>
-          !loaded && format === 'svg' && JSON.stringify(parse.ast).includes('logos') ? [pack] : [],
+          !loaded && format === 'svg' && JSON.stringify(parse.model).includes('logos')
+            ? [pack]
+            : [],
         load: async (r) => {
           log.push(`load:${r.kind}:${r.name}`);
           if (fail) throw new Error('offline');

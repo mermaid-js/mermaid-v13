@@ -5,14 +5,14 @@
  */
 import { NotLoadedError, type Warning } from '@mermaid-js/core';
 import type { ResolvedConfig, ResolvedSite } from '@mermaid-js/core/config';
-import type { EmbeddedBlock, ParseResult } from '@mermaid-js/core/parser-kit';
+import type { EmbeddedBlock, ParseOutput } from '@mermaid-js/core/parser-kit';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { Analysis } from './analysis-cache.ts';
 import type { BlockDeps, BlockPass, DrawBlocks, LazyBlocks } from './block-pass.ts';
 import type { Snapshot } from './config-snapshot.ts';
 
 /** The blocks a parse lists, none when the type hosts none. */
-export function embedsOf(parse: ParseResult<unknown>): readonly EmbeddedBlock[] {
+export function embedsOf(parse: ParseOutput<unknown>): readonly EmbeddedBlock[] {
   return parse.embeds ?? [];
 }
 
@@ -22,7 +22,7 @@ export function embedsOf(parse: ParseResult<unknown>): readonly EmbeddedBlock[] 
  */
 export function outsideBlocks(
   pre: PreprocessResult,
-  parse: ParseResult<unknown>
+  parse: ParseOutput<unknown>
 ): PreprocessResult {
   const bodies = embedsOf(parse);
   if (bodies.length === 0) return pre;
