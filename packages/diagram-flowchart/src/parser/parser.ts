@@ -20,6 +20,7 @@ import {
   Kind,
   kindSet,
   LineIndex,
+  NO_AST_ID,
   nodeId,
   ParseState,
   Probe,
@@ -31,6 +32,8 @@ import type {
   AstCallback,
   AstId,
   KindSet,
+  LeanParseOptions,
+  LeanParseResult,
   ParseOptions,
   ParseResult,
   Range,
@@ -74,6 +77,18 @@ export interface FlowParseOptions extends ParseOptions {
 }
 
 export type FlowParseResult = ParseResult<FlowModel, FlowDocument>;
+
+/** The options of a lean parse (`LeanParseOptions`): no token stream, no probe. */
+export type FlowLeanOptions = Omit<FlowParseOptions, keyof ParseOptions> & LeanParseOptions;
+
+/** A lean parse's result: the model and the diagnostics, for drawing only. */
+export type LeanFlowParseResult = LeanParseResult<FlowModel>;
+
+/** What the parser reads of either kind of options. */
+type AnyFlowOptions = Omit<FlowParseOptions, 'lean'> & {
+  readonly lean?: boolean;
+  readonly astIds?: boolean;
+};
 
 const ID_KINDS = [
   T.Num,
@@ -375,8 +390,16 @@ function byName(list: readonly FlowNodeStmt[]): (name: string) => FlowNodeStmt |
   return (name) => map.get(name);
 }
 
-/** Parse a flowchart. Never throws: problems are error diagnostics. */
-export function parseFlowchart(src: string, options: FlowParseOptions = {}): FlowParseResult {
+/**
+ * Parse a flowchart. Never throws: problems are error diagnostics. Lean options (DESIGN §4.2)
+ * give a lean result: it accepts and rejects as the full parse and has its warnings.
+ */
+export function parseFlowchart(src: string, options: FlowLeanOptions): LeanFlowParseResult;
+export function parseFlowchart(src: string, options?: FlowParseOptions): FlowParseResult;
+export function parseFlowchart(
+  src: string,
+  options: FlowParseOptions | FlowLeanOptions = {}
+): FlowParseResult | LeanFlowParseResult {
   return new FlowParser(src, options).parse();
 }
 
@@ -393,8 +416,10 @@ interface ShapeData {
 class FlowParser {
   private readonly pre: PreprocessResult;
   private readonly view: SourceView;
-  private readonly st = new ParseState();
+  private readonly st: ParseState;
   private readonly ids: ParseState['ids'];
+  /** An edge's AST id, for the model: `NO_AST_ID` in a lean parse without ids. */
+  private readonly edgeAst: (start: string, end: string) => AstId;
   private readonly db: FlowBuilder;
   private readonly fullTokens: TokenStream;
   private tokens: TokenView;
@@ -425,8 +450,9 @@ class FlowParser {
 
   constructor(
     private readonly src: string,
-    private readonly options: FlowParseOptions
+    private readonly options: AnyFlowOptions
   ) {
+    this.st = new ParseState(options);
     const pre = (this.pre = options.preprocessed ?? preprocess(src));
     this.view = flowSourceView(
       src,
@@ -434,7 +460,8 @@ class FlowParser {
       pre.directives.map((d) => d.range)
     );
     if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
-    this.ids = this.st.ids;
+    const ids = (this.ids = this.st.ids);
+    this.edgeAst = this.st.astIds ? (a, b) => ids.edge(a, b) : () => NO_AST_ID;
     const diagnostics = this.st.diagnostics;
     this.db = new FlowBuilder({
       maxEdges: options.maxEdges ?? DEFAULT_LIMITS.maxEdges,
@@ -461,8 +488,8 @@ class FlowParser {
     }
   }
 
-  parse(): FlowParseResult {
-    const { st, db, src, options } = this;
+  parse(): FlowParseResult | LeanFlowParseResult {
+    const { st, db, options } = this;
     this.header();
     this.document();
     db.finish();
@@ -477,16 +504,17 @@ class FlowParser {
       );
       model.warnings.push(d);
     }
-    const ast: FlowDocument = {
-      id: 'doc',
-      type: 'Document',
-      range: { start: this.pre.bodyStart, end: src.length },
-      children: this.children,
-    };
-    const result = st.result(model, ast, this.fullTokens, options, this.probe);
+    const result = st.lean
+      ? st.leanResult(model)
+      : st.result(model, this.documentNode(), this.fullTokens, options, this.probe);
     if (db.embeds.length > 0) result.embeds = db.embeds;
     result.edgeCount = model.edges.length;
     return result;
+  }
+
+  private documentNode(): FlowDocument {
+    const range = { start: this.pre.bodyStart, end: this.src.length };
+    return { id: 'doc', type: 'Document', range, children: this.children };
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -889,11 +917,13 @@ class FlowParser {
 
   /** A vertex's AST id is its first mention's: `n:<name>`. */
   private nodeAst(name: string): AstId {
+    if (!this.st.astIds) return NO_AST_ID;
     return this.db.vertices.get(name)?.ast ?? nodeId(name);
   }
 
   /** A mention that may create the vertex: its definition when it does. */
   private nodeSymbol(name: string, r: Range): void {
+    if (this.st.lean) return;
     const { db } = this;
     // An edge id (`e1@{ … }`) names the edge: v12 never makes it a vertex.
     if (this.namesEdge(name)) return this.edgeSymbol(name, r);
@@ -908,6 +938,7 @@ class FlowParser {
 
   /** A `class` statement target: an edge mention when it names an edge (v12 `setClass`). */
   private classTarget(name: string, r: Range): void {
+    if (this.st.lean) return;
     if (this.namesEdge(name)) this.edgeSymbol(name, r);
     else this.st.symbol(name, 'node', r, 'ref');
   }
@@ -934,7 +965,7 @@ class FlowParser {
     const [name, nameRange] = this.idString();
     this.nodeSymbol(name, nameRange);
     const node: FlowNodeStmt = {
-      id: this.ids.node(name),
+      id: this.st.lean ? NO_AST_ID : this.ids.node(name),
       type: 'Node',
       range: nameRange,
       name,
@@ -1111,7 +1142,7 @@ class FlowParser {
    * collected into an enclosing subgraph.
    */
   private vertexStatement(collect: boolean, chain: (FlowNodeStmt | FlowEdge)[]): string[] {
-    const { db, ids } = this;
+    const { db } = this;
     let stmt = this.node(chain);
     let names = stmt.map((n) => n.name);
     const first = names;
@@ -1127,31 +1158,43 @@ class FlowParser {
       const next = this.node(chain);
       const nextNames = next.map((n) => n.name);
       const before = db.edges.length;
-      db.addLink(names, nextNames, info, (a, b) => ids.edge(a, b), linkRange);
-      const fromOf = byName(stmt);
-      const toOf = byName(next);
-      for (let k = before; k < db.edges.length; k++) {
-        const edge = db.edges[k] as (typeof db.edges)[number];
-        const from = fromOf(edge.start);
-        const to = toOf(edge.end);
-        const ast: FlowEdge = {
-          id: edge.ast,
-          type: 'Edge',
-          range: {
-            start: from?.range.start ?? linkRange.start,
-            end: to?.range.end ?? linkRange.end,
-          },
-          from: edge.start,
-          to: edge.end,
-          edgeId: edge.id,
-          linkRange,
-        };
-        if (label) ast.label = label;
-        chain.push(ast);
-      }
+      db.addLink(names, nextNames, info, this.edgeAst, linkRange);
+      if (!this.st.lean) this.edgeNodes(chain, [stmt, next], before, linkRange, label);
       if (collect) later.push(nextNames);
       stmt = next;
       names = nextNames;
+    }
+  }
+
+  /** The AST edge of each model edge from `before` on, between the nodes of `ends`. */
+  private edgeNodes(
+    chain: (FlowNodeStmt | FlowEdge)[],
+    [stmt, next]: [FlowNodeStmt[], FlowNodeStmt[]],
+    before: number,
+    linkRange: Range,
+    label: FlowLabelNode | undefined
+  ): void {
+    const { edges } = this.db;
+    const fromOf = byName(stmt);
+    const toOf = byName(next);
+    for (let k = before; k < edges.length; k++) {
+      const edge = edges[k] as (typeof edges)[number];
+      const from = fromOf(edge.start);
+      const to = toOf(edge.end);
+      const ast: FlowEdge = {
+        id: edge.ast,
+        type: 'Edge',
+        range: {
+          start: from?.range.start ?? linkRange.start,
+          end: to?.range.end ?? linkRange.end,
+        },
+        from: edge.start,
+        to: edge.end,
+        edgeId: edge.id,
+        linkRange,
+      };
+      if (label) ast.label = label;
+      chain.push(ast);
     }
   }
 
@@ -1190,6 +1233,7 @@ class FlowParser {
     out: string[],
     mention: (part: string, r: Range) => void
   ): void {
+    if (this.st.lean) return;
     let at = r.start;
     const exact = this.src.slice(r.start, r.end) === list;
     for (const part of list.split(',')) {
@@ -1302,11 +1346,29 @@ class FlowParser {
     return this.expectStr();
   }
 
-  private simple(k: FlowSimpleKind, from: number, refsOut: string[]): FlowSimpleStmt {
+  /** A statement with no name of its own, as an AST node in `out`; nothing in a lean parse. */
+  private simple(
+    k: FlowSimpleKind,
+    from: number,
+    refsOut: string[],
+    out: FlowStatementNode[],
+    callback?: AstCallback
+  ): void {
+    if (this.st.lean) return;
     const r = this.span(from);
     const name = k.charAt(0).toLowerCase() + k.slice(1);
     this.st.statement(name, r);
-    return { id: this.ids.statement(name), type: k, range: r, refs: refsOut };
+    const stmt: FlowSimpleStmt = { id: this.ids.statement(name), type: k, range: r, refs: refsOut };
+    if (callback !== undefined) stmt.callback = callback;
+    out.push(stmt);
+  }
+
+  /** A chain of nodes and links, as an AST node in `out`; nothing in a lean parse. */
+  private chainNode(from: number, chain: (FlowNodeStmt | FlowEdge)[], out: FlowStatementNode[]) {
+    if (this.st.lean) return;
+    const r = this.span(from);
+    this.st.statement('chain', r);
+    out.push({ id: this.ids.statement('chain'), type: 'Chain', range: r, children: chain });
   }
 
   /** One statement. Returns what v12's grammar adds to an enclosing subgraph's list. */
@@ -1329,13 +1391,13 @@ class FlowParser {
         this.expect(T.Space);
         const styles = this.stylesOpt();
         db.addVertex(id, this.nodeAst(id), r, { styles });
-        out.push(this.simple('Style', from, refList));
+        this.simple('Style', from, refList, out);
         this.separator();
         return NO_ITEMS;
       }
       case T.LinkStyle:
         this.linkStyleStatement();
-        out.push(this.simple('LinkStyle', from, refList));
+        this.simple('LinkStyle', from, refList, out);
         this.separator();
         return NO_ITEMS;
       case T.ClassDef: {
@@ -1346,7 +1408,7 @@ class FlowParser {
         const styles = this.stylesOpt();
         this.refs(id, r, refList, (part, pr) => st.symbol(part, 'class', pr, 'def'));
         db.addClass(id, styles);
-        out.push(this.simple('ClassDef', from, refList));
+        this.simple('ClassDef', from, refList, out);
         this.separator();
         return NO_ITEMS;
       }
@@ -1360,15 +1422,12 @@ class FlowParser {
         st.symbol(cls, 'class', cr, 'ref');
         refList.push(cls);
         db.setClass(targets, cls);
-        out.push(this.simple('Class', from, refList));
+        this.simple('Class', from, refList, out);
         this.separator();
         return NO_ITEMS;
       }
       case T.Click: {
-        const callback = this.clickStatement(refList);
-        const stmt = this.simple('Click', from, refList);
-        if (callback !== undefined) stmt.callback = callback;
-        out.push(stmt);
+        this.simple('Click', from, refList, out, this.clickStatement(refList));
         this.separator();
         return NO_ITEMS;
       }
@@ -1378,35 +1437,33 @@ class FlowParser {
       case T.DirectionLR:
       case T.DirectionTD:
         this.i++;
-        out.push(this.simple('Direction', from, refList));
+        this.simple('Direction', from, refList, out);
         return { stmt: 'dir', value: DIRECTIONS[t - T.DirectionTB] ?? 'TB' };
       case T.AccTitle: {
         this.i++;
         const value = this.raw(this.expect(T.AccTitleValue)).trim();
         db.setAccTitle(value);
-        out.push(this.simple('AccTitle', from, refList));
+        this.simple('AccTitle', from, refList, out);
         return value;
       }
       case T.AccDescr: {
         this.i++;
         const value = this.raw(this.expect(T.AccDescrValue)).trim();
         db.setAccDescription(value);
-        out.push(this.simple('AccDescr', from, refList));
+        this.simple('AccDescr', from, refList, out);
         return value;
       }
       case T.AccDescrMultilineValue: {
         const value = this.raw(this.i++).trim();
         db.setAccDescription(value);
-        out.push(this.simple('AccDescr', from, refList));
+        this.simple('AccDescr', from, refList, out);
         return value;
       }
       default: {
         if (!inKindSet(ID, t)) this.fail(STATEMENT_START);
         const chain: (FlowNodeStmt | FlowEdge)[] = [];
         const nodes = this.vertexStatement(collect, chain);
-        const r = this.span(from);
-        st.statement('chain', r);
-        out.push({ id: this.ids.statement('chain'), type: 'Chain', range: r, children: chain });
+        this.chainNode(from, chain, out);
         this.separator();
         return nodes;
       }

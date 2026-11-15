@@ -65,9 +65,10 @@ const hooked: Seen = {};
 const recorded = createMermaid();
 recorded.initialize({ deterministic: true });
 await recorded.registerExternalDiagrams([recorder(hooked)]);
-// No hooks: the pipeline writes through the streaming writer.
+// No hooks: the pipeline writes through the streaming writer. The recorder reads the AST, which
+// draws an embedded flowchart's `data-ast`: here the integrator asks for it.
 const streaming = createMermaid();
-streaming.initialize({ deterministic: true });
+streaming.initialize({ deterministic: true, output: { dataAst: true } });
 
 async function renderForTest(
   source: string,

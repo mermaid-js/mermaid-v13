@@ -19,7 +19,8 @@ const fixture = (name: string): string =>
 
 async function draw(text: string, config: InitializeConfig = {}) {
   const m = createMermaid();
-  m.initialize({ deterministic: true, ...config });
+  // Elements are found by their AST ids: `data-ast`, which a flowchart draws only when asked.
+  m.initialize({ deterministic: true, output: { dataAst: true }, ...config });
   const r = await m.render('s', text);
   return { ...r, tree: parseSvg(r.svg) };
 }
