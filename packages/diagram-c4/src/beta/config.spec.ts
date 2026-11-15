@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { c4betaDiagramPadding } from '../config.ts';
+import { c4betaDiagramPadding, c4betaStereotypeShown } from '../config.ts';
 import { c4betaConfigDefaults } from '../generated/config-defaults.ts';
 import { layoutC4Beta } from './layout.ts';
+import { prepareC4Beta } from './prepare.ts';
 import { parseC4Beta } from './parser.ts';
 import { c4TestConfig, c4TestContext, c4TestTheme } from '../test-context.ts';
 import { renderC4BetaForTest } from '../render/harness.ts';
@@ -81,5 +82,93 @@ describe('the c4-beta root follows c4beta.useMaxWidth', () => {
   it('reads c4beta, not c4, when both are set', async () => {
     const config = { c4: { useMaxWidth: false }, c4beta: { useMaxWidth: true } };
     expect((await renderC4BetaForTest(SOURCE, { config })).svg).toMatch(/ width="100%"/);
+  });
+});
+
+describe('c4betaStereotypeShown', () => {
+  const shown = (
+    c4beta: Record<string, unknown>,
+    kind: Parameters<ReturnType<typeof c4betaStereotypeShown>>[0]
+  ) => c4betaStereotypeShown(beta(c4beta))(kind);
+
+  it('shows every kind when the section is silent', () => {
+    expect(shown({}, 'person')).toBe(true);
+    expect(c4betaStereotypeShown({} as never)('container')).toBe(true);
+  });
+
+  it('showStereotypes: false hides every kind, and wins over a list', () => {
+    expect(shown({ showStereotypes: false }, 'softwareSystem')).toBe(false);
+    expect(shown({ showStereotypes: false, hideStereotypes: [] }, 'person')).toBe(false);
+  });
+
+  it('hideStereotypes hides the kinds it names and no other', () => {
+    const c4beta = { hideStereotypes: ['person', 'component'] };
+    expect(shown(c4beta, 'person')).toBe(false);
+    expect(shown(c4beta, 'component')).toBe(false);
+    expect(shown(c4beta, 'softwareSystem')).toBe(true);
+    expect(shown(c4beta, 'container')).toBe(true);
+  });
+
+  it.each([[[]], ['person'], [null], [{ person: true }], [['nothing']]])(
+    'hides nothing for %j, which is not a list of kinds it knows',
+    (hideStereotypes) => {
+      expect(shown({ hideStereotypes }, 'person')).toBe(true);
+    }
+  );
+
+  it.each(['no', 0, null, 'false'])(
+    'shows the line for showStereotypes %j, which is not false',
+    (v) => {
+      expect(shown({ showStereotypes: v }, 'person')).toBe(true);
+    }
+  );
+});
+
+describe('the c4-beta element shapes follow the stereotype keys', () => {
+  const TEXT = [
+    'c4-beta container',
+    'person clerk "Clerk" "Posts journal entries and closes the month for every branch office."',
+    'softwareSystem ledger "Ledger"',
+    'softwareSystem books "Books" {',
+    '  container api "API" "Keeps the books." "Rust"',
+    '}',
+    'clerk --> ledger : "Posts"',
+  ].join('\n');
+
+  async function leaves(c4beta?: Record<string, unknown>) {
+    const theme = await c4TestTheme('default');
+    const { model } = parseC4Beta(TEXT);
+    const ctx = c4TestContext(c4TestConfig(undefined, c4beta ? { c4beta } : {}, true), theme);
+    return prepareC4Beta(model, ctx).leaves;
+  }
+  const typeLine = (
+    l: { sections: readonly ({ text: { lines: readonly unknown[] } } | undefined)[] } | undefined
+  ) => l?.sections[1];
+
+  it('hides the person type line and the line takes no room', async () => {
+    const base = await leaves();
+    const hidden = await leaves({ hideStereotypes: ['person'] });
+    expect(typeLine(base.get('clerk'))).toBeDefined();
+    expect(typeLine(hidden.get('clerk'))).toBeUndefined();
+    expect(hidden.get('clerk')!.textH).toBeLessThan(base.get('clerk')!.textH);
+    expect(typeLine(hidden.get('ledger'))).toBeDefined();
+    expect(hidden.get('ledger')!.h).toBe(base.get('ledger')!.h);
+  });
+
+  it('a shape shrinks by the line, and a person keeps the height its width asks for', async () => {
+    const base = await leaves();
+    const hidden = await leaves({ hideStereotypes: ['softwareSystem', 'person'] });
+    expect(hidden.get('ledger')!.textH).toBeLessThan(base.get('ledger')!.textH);
+    expect(hidden.get('ledger')!.h).toBeLessThan(base.get('ledger')!.h);
+    // A person's body is at least as tall as its width asks for, so a short label loses the line
+    // from its text but not from its shape.
+    expect(hidden.get('clerk')!.h).toBeLessThanOrEqual(base.get('clerk')!.h);
+  });
+
+  it('showStereotypes: false hides the line on every element, a technology staying', async () => {
+    const off = await leaves({ showStereotypes: false });
+    for (const id of ['clerk', 'ledger']) expect(typeLine(off.get(id))).toBeUndefined();
+    const api = (await leaves({ showStereotypes: false })).get('api');
+    expect(typeLine(api)?.text).toBeDefined();
   });
 });

@@ -22,6 +22,7 @@ import { configNumber } from '@mermaid-js/core/config/readers';
 import { c4betaConfigDefaults, c4ConfigDefaults } from './generated/config-defaults.ts';
 import { FONT_WEIGHT } from './layout/metrics.ts';
 import { C4_ELEMENT_KINDS, type C4ElementKind } from './model.ts';
+import type { C4BetaElementKind } from './beta/model.ts';
 
 /** The `c4` lengths, row counts and flags the layout reads, every one set. */
 export interface C4LayoutConfig {
@@ -103,6 +104,19 @@ export function c4betaDiagramPadding(config: RenderContext['config']): number {
   const fallback = c4betaConfigDefaults.diagramPadding;
   if (fallback === undefined) throw new Error('The c4beta config section has no diagramPadding');
   return configNumber(c4betaSection(config).diagramPadding, 0) ?? fallback;
+}
+
+/**
+ * Whether an element of `kind` shows its type line: `c4beta.showStereotypes` is not `false` and
+ * `c4beta.hideStereotypes`, when it is a list, does not name the kind. A value of another type
+ * hides nothing (spec #730 T5).
+ */
+export function c4betaStereotypeShown(
+  config: RenderContext['config']
+): (kind: C4BetaElementKind) => boolean {
+  const { showStereotypes, hideStereotypes } = c4betaSection(config);
+  const hidden: readonly unknown[] = Array.isArray(hideStereotypes) ? hideStereotypes : [];
+  return (kind) => showStereotypes !== false && !hidden.includes(kind);
 }
 
 /** The layout's options from the resolved config. */

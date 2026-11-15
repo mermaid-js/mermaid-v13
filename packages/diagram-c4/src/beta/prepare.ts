@@ -9,6 +9,7 @@ import type { LayoutEdge, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-
 import { Style, type FontKey } from '@mermaid-js/core/text';
 import {
   c4betaDiagramPadding,
+  c4betaStereotypeShown,
   c4Fonts,
   c4LayoutConfig,
   type C4Fonts,
@@ -100,9 +101,16 @@ const BASE_KINDS: Readonly<Record<C4BetaElement['kind'], C4BaseKind>> = {
   deploymentNode: 'container',
 };
 
-/** `[Container: techn]`, `[Person]`: the type line of a leaf. */
-export function stereotypeOf(element: Pick<C4BetaElement, 'kind' | 'technology'>): string {
-  const name = STEREOTYPES[element.kind];
+/**
+ * `[Container: techn]`, `[Person]`: the type line of a leaf. Without the stereotype (`shown`
+ * false) it is the technology alone, `[techn]`, or nothing.
+ */
+export function stereotypeOf(
+  element: Pick<C4BetaElement, 'kind' | 'technology'>,
+  shown = true
+): string {
+  const name = shown ? STEREOTYPES[element.kind] : undefined;
+  if (name === undefined) return element.technology ? `[${element.technology}]` : '';
   return element.technology ? `[${name}: ${element.technology}]` : `[${name}]`;
 }
 
@@ -131,12 +139,17 @@ interface Measuring {
   readonly fonts: C4Fonts;
   readonly measure: Measure;
   readonly room: ShapeRoom;
+  readonly stereotypeShown: (kind: C4BetaElement['kind']) => boolean;
 }
 
 function measureLeaf(model: C4BetaModel, element: C4BetaElement, m: Measuring): BetaLeaf {
   const { config, fonts, measure } = m;
   const sections = measureSections(
-    { name: element.name, type: stereotypeOf(element), descr: element.description },
+    {
+      name: element.name,
+      type: stereotypeOf(element, m.stereotypeShown(element.kind)),
+      descr: element.description,
+    },
     { font: fonts.element(legacyKind(element)), config, measure }
   );
   const present = sections.filter((s): s is Measured => s !== undefined);
@@ -213,6 +226,7 @@ export function prepareC4Beta(model: C4BetaModel, ctx: C4BetaLayoutContext): C4B
     fonts,
     measure: textMeasure(ctx.measurer, ctx.inline),
     room: shapeRoom(config, ctx.theme),
+    stereotypeShown: c4betaStereotypeShown(ctx.config),
   };
   const leaves = new Map<string, BetaLeaf>();
   const frames = new Map<string, BetaFrame>();

@@ -61,6 +61,28 @@ describe('the invariants hold on every accepted source in every direction', () =
   });
 });
 
+describe('the invariants hold with the type lines hidden (T5)', () => {
+  const configs = {
+    'hideStereotypes: [person]': { hideStereotypes: ['person'] },
+    'showStereotypes: false': { showStereotypes: false },
+  } as const;
+
+  it.each(Object.entries(configs))(
+    '%s: engine, crossings, labels, headers, containment',
+    (_, c4beta) => {
+      const failures: string[] = [];
+      for (const { id, source } of accepted) {
+        const { model } = laidOut(source);
+        const config = c4TestConfig(undefined, { c4beta }, true);
+        const run = layoutC4BetaFull(model, c4TestContext(config, theme));
+        const all = [...allViolations(model, run), ...titleViolations(run.scene)];
+        failures.push(...all.map((v) => `${id}: ${v}`));
+      }
+      expect(failures).toEqual([]);
+    }
+  );
+});
+
 describe('the checks fail on a layout that breaks the rule they state', () => {
   const base = () => laidOut(source('relation passing the box between'), 'TB');
   const source = (_: string): string =>
