@@ -14,7 +14,6 @@ import {
   renderErrorSvg,
   UnsupportedFormatError,
   type EmbeddedText,
-  type Resource,
   type TextRenderContext,
   type Warning,
 } from '@mermaid-js/core';
@@ -35,15 +34,7 @@ import { checkSource } from '@mermaid-js/core/limits';
 import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { resolveSecurityLevel } from '@mermaid-js/core/svg';
 import { inlineSpans, type Measurer } from '@mermaid-js/core/text';
-import {
-  createTheme,
-  DEFAULT_THEME,
-  loadedTheme,
-  loadTheme,
-  resolveThemeName,
-  type ThemeName,
-  type ThemeOptions,
-} from '@mermaid-js/core/theme';
+import { loadTheme, resolveThemeName } from '@mermaid-js/core/theme';
 import { stageEnd, stageStart } from '@mermaid-js/core/timing';
 import type {
   ExtensionPlugin,
@@ -88,7 +79,6 @@ import { selectMeasurer } from './measurer.ts';
 import {
   builtIn,
   isElkName,
-  LINE_HOPS,
   Registry,
   type AnyPlugin,
   layoutName,
@@ -98,6 +88,7 @@ import {
   type FirstPartyEntry,
   type LayoutLoader,
 } from './registry.ts';
+import { loadResources, missingFor, themeFor } from './draw-resources.ts';
 import { DiscoveryQueue, registerSeam } from './seam.ts';
 import { VERSION } from './version.ts';
 
@@ -126,64 +117,6 @@ interface Units {
   readonly width?: number;
   /** Text output: the config with its `ascii` section, and what the text entry reads besides. */
   readonly text?: Pick<TextRenderContext, 'config' | 'title' | 'ast' | 'embedText'>;
-}
-
-function themeNames(config: ResolvedConfig): ThemeName[] {
-  const choice = resolveThemeName(config.theme);
-  return choice.dark ? [choice.name, choice.dark] : [choice.name];
-}
-
-/** The layout, themes and plugin resources `a` needs that are not loaded yet. */
-function missingFor(registry: Registry, a: Analysis, text = false): Resource[] {
-  const missing: Resource[] = [];
-  const { config } = a.prepared;
-  // Text output lays out with core's own `layered`, never a registered engine (D179).
-  if (a.plugin.layoutKind === 'graph' && !text) {
-    const name = layoutName(config, a.plugin);
-    const { need } = registry.layout(name, a.plugin.layoutEngine);
-    if (need !== undefined) missing.push({ kind: 'layout', name: need });
-    const [part, loaded] = registry.layoutPart(a.plugin, name);
-    if (part && !loaded) missing.push({ kind: 'layout', name: part });
-  }
-  // D537: the line-hop chunk when the shared key turns hops on. An engine whose own `lineHops`
-  // defaults on (`swimlane`, ELK) carries the step, so loading it loads them.
-  if (!text && !registry.hops && config.lineHops) missing.push({ kind: 'layout', name: LINE_HOPS });
-  // Text output draws no colours, so it needs no theme (D82).
-  for (const name of text ? [] : themeNames(config)) {
-    if (!loadedTheme(name)) missing.push({ kind: 'theme', name });
-  }
-  for (const r of a.plugin.resources?.(a.prepared.parse, config) ?? []) missing.push(r);
-  return missing;
-}
-
-async function loadResources(registry: Registry, missing: readonly Resource[]): Promise<void> {
-  await Promise.all(
-    missing.map(async (r) => {
-      if (r.kind === 'layout') await registry.loadLayout(r.name);
-      else if (r.kind === 'theme') await loadTheme(r.name as ThemeName);
-      else if (r.kind === 'diagram') await registry.load(r.name);
-    })
-  );
-}
-
-/** The theme a draw paints with: the config's choice, or the default when it is not loaded. */
-function themeFor(
-  config: ResolvedConfig,
-  s: Snapshot,
-  warn: (w: Warning) => void,
-  tables: Pick<ThemeOptions, 'rules' | 'diagram'>,
-  idPrefix: () => string
-) {
-  const choice = resolveThemeName(config.theme, warn);
-  const spec = loadedTheme(choice.name) ?? loadedTheme(DEFAULT_THEME)!;
-  return createTheme(spec, {
-    themeVariables: config.themeVariables as Record<string, unknown> | undefined,
-    dark: choice.dark ? loadedTheme(choice.dark) : undefined,
-    ...tables,
-    cssVariables: s.options.output?.cssVariables,
-    warn,
-    idPrefix,
-  });
 }
 
 /**
