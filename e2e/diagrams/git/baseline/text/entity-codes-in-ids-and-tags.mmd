@@ -1,0 +1,13 @@
+---
+description: >-
+  entity codes in commit ids, tags and a branch name draw as their characters
+  (#760), and a name core does not know draws as written (D561)
+---
+gitGraph
+  commit id: "a#35;b#47;c"
+  commit id: "heart #9829;" tag: "t#35;1 #9731;"
+  branch "fe#47;x"
+  commit id: "#lt;tag#gt; #amp; #quot;q#quot;"
+  commit id: "unknown #bogus; stays"
+  checkout main
+  merge "fe#47;x" id: "merged"

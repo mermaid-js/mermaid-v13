@@ -68,7 +68,7 @@ import type {
   TreemapSectionNode,
   TreemapStatementNode,
 } from './ast.ts';
-import { classDefParts, decodeEntities, nameValue, numberValue, splitStyles } from './convert.ts';
+import { classDefParts, nameValue, numberValue, splitStyles, v12StyleEntities } from './convert.ts';
 import { lex } from './lexer.ts';
 import { normalise } from './normalise.ts';
 import type { ClassDefRead } from './normalise.ts';
@@ -704,7 +704,7 @@ class TreemapParser {
     const nameRange = this.classNameRange(range.start, parts.name.length);
     const id = this.id(`classDef:${parts.name}`);
     const node: TreemapClassDefNode = { id, type: 'ClassDef', range, name: parts.name, nameRange };
-    if (parts.styleText !== undefined) node.styleText = decodeEntities(parts.styleText);
+    if (parts.styleText !== undefined) node.styleText = v12StyleEntities(parts.styleText);
     this.classDefs.push({ node, ...splitStyles(parts.styleText ?? '') });
     this.children.push(node);
     this.st.statement('classDef', range);

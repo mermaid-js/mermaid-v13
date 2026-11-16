@@ -7,6 +7,7 @@
  * `encodeEntities` placeholders decoded back to what the author wrote. The v13 normaliser
  * (ticket #8) must produce a `FlowSnapshot` from a FlowModel.
  */
+import { v12DecodeEntities } from '../v12-entities.ts';
 
 /** `diagram.type` values mermaid@12 reports for flowchart sources. */
 export const FLOWCHART_V12_TYPES = ['flowchart-v2', 'flowchart', 'flowchart-elk'];
@@ -68,13 +69,8 @@ interface FlowDbV12 {
   getTooltip(id: string): string | undefined;
 }
 
-/** Undo v12's `encodeEntities` placeholders (v12 `utils.ts` `decodeEntities`). */
-export function decodeEntities(text: string): string {
-  return text.replace(/ﬂ°°/g, '&#').replace(/ﬂ°/g, '&').replace(/¶ß/g, ';');
-}
-
 const text = (v: unknown): string | undefined =>
-  typeof v === 'string' ? decodeEntities(v) : undefined;
+  typeof v === 'string' ? v12DecodeEntities(v) : undefined;
 const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
 const strings = (v: unknown): string[] => (Array.isArray(v) ? v.map(String) : []);
 
@@ -112,12 +108,12 @@ export function flowchartV12Snapshot(dbValue: unknown): FlowSnapshot {
   const tooltips: [string, string][] = [];
   for (const v of vertices) {
     const tip = db.getTooltip(v.id);
-    if (tip !== undefined) tooltips.push([v.id, decodeEntities(tip)]);
+    if (tip !== undefined) tooltips.push([v.id, v12DecodeEntities(tip)]);
   }
   return {
     direction: db.getDirection(),
-    accTitle: decodeEntities(db.getAccTitle()),
-    accDescr: decodeEntities(db.getAccDescription()),
+    accTitle: v12DecodeEntities(db.getAccTitle()),
+    accDescr: v12DecodeEntities(db.getAccDescription()),
     vertices,
     edges,
     classes: [...db.getClasses().values()].map((c) => ({
@@ -127,7 +123,7 @@ export function flowchartV12Snapshot(dbValue: unknown): FlowSnapshot {
     })),
     subGraphs: db.getSubGraphs().map((s) => ({
       id: s.id,
-      title: decodeEntities(s.title),
+      title: v12DecodeEntities(s.title),
       nodes: [...s.nodes].sort(),
       dir: s.dir,
       classes: [...s.classes],

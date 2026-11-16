@@ -1,0 +1,26 @@
+[
+  {
+    "id": "pie-cases/quirk 70",
+    "inputHash": "sha256:2a916dbb219954d0",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "pie-cases/quirk 70 (CRLF)",
+    "inputHash": "sha256:ed8775d52fd62c8d",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  },
+  {
+    "id": "pie-cases/quirk 70 (commented)",
+    "inputHash": "sha256:5bd0b7f4acabca1e",
+    "kind": "model",
+    "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
+    "owner": "D561",
+    "since": "2026-11-13"
+  }
+]

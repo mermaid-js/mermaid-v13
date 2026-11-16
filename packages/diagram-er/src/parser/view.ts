@@ -210,15 +210,3 @@ class Layer {
     return s[k + 3] ? (s[k + 1] ?? 0) + i - (s[k] ?? 0) : (s[k + 2] ?? 0);
   }
 }
-
-/** Undo the placeholders of v12's `encodeEntities`, as v12's renderer read the text. */
-export function decodeEntities(text: string): string {
-  if (!text.includes('ﬂ') && !text.includes(ENTITY_CLOSE)) return text;
-  return text
-    .split(ENTITY_OPEN_NUM)
-    .join('&#')
-    .split(ENTITY_OPEN)
-    .join('&')
-    .split(ENTITY_CLOSE)
-    .join(';');
-}

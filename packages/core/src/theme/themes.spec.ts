@@ -87,8 +87,14 @@ describe('built-in themes', () => {
   it('renders fully from at most 8 base variables (R-THEME-5)', async () => {
     expect(BASE_VARIABLES.length).toBeLessThanOrEqual(8);
     const base = await loadTheme('base');
-    expect(base.values).toBeUndefined();
-    expect(base.rules).toBeUndefined();
+    // v12 theme-base's constructor literals: the note colours, which no base variable moves (#825).
+    expect(base.values).toEqual({ noteBkgColor: '#fff5ad', noteTextColor: '#333333' });
+    // v12 theme-base derives the error colours from the tertiary ones (#825). Arrowheads follow
+    // lineColor, as v12's `.marker` draws them (D575).
+    expect(base.rules).toEqual({
+      errorBkgColor: 'tertiaryColor',
+      errorTextColor: 'tertiaryTextColor',
+    });
     const vars = {
       primaryColor: '#1d3557',
       secondaryColor: '#a8dadc',
@@ -104,6 +110,7 @@ describe('built-in themes', () => {
     // Dark primary: node text flips to the light ink and stays readable.
     expect(t.value('nodeTextColor')).toBe('#ffffff');
     expect(t.value('clusterBkg')).toBe('#f1faee');
+    expect(t.value('defaultLinkColor')).toBe('#457b9d');
     expect(t.value('arrowheadColor')).toBe('#457b9d');
     expect(t.number('fontSize')).toBe(15);
     expect(t.font()).toBe('Georgia, serif');

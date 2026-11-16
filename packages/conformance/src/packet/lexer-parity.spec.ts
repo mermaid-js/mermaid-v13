@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { LANGIUM_NAMES, packetTokens } from '@mermaid-js/diagram-packet/testing';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12TokenText } from '../v12-entities.ts';
 import { loadLangiumLexerOracle } from '../langium-lexer.ts';
 import type { LangiumLex, LangiumToken } from '../langium-lexer.ts';
 import { packetGateCorpus } from './corpus.ts';
@@ -73,10 +73,10 @@ interface Streams {
 }
 
 function v12Streams(lexed: LangiumLex): Streams {
-  const decode = ([n, i]: LangiumToken): LangiumToken => [n, decodeEntities(i)];
+  const decode = ([n, i]: LangiumToken): LangiumToken => [n, v12TokenText(i)];
   const tokens = lexed.tokens.map(decode);
   if (lexed.errorAt !== undefined) {
-    const before = decodeEntities(lexed.input.slice(0, lexed.errorAt));
+    const before = v12TokenText(lexed.input.slice(0, lexed.errorAt));
     tokens.push([ERROR, `@${before.length}`]);
   }
   return { tokens, hidden: lexed.hidden.map(decode) };

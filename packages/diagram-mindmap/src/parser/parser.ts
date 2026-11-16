@@ -131,6 +131,7 @@ interface OpenNode {
   ast: string;
   id: string;
   label: string;
+  markdown?: true;
   shape: MindmapShape;
   level: number;
   depth: number;
@@ -334,6 +335,7 @@ class MindmapParser extends TreeParser<Lexed, PreprocessResult> {
     }
     const text = c.next();
     parts.label = this.raw(text);
+    if (c.tokens.kind[text - 1] === T.MdStringStart) parts.markdown = true;
     parts.range = { start: parts.range.start, end: this.range(text).end };
     c.tested(T.NodeDEnd);
     if (c.kind !== T.NodeDEnd) {
@@ -347,7 +349,7 @@ class MindmapParser extends TreeParser<Lexed, PreprocessResult> {
 
   /** v12 `addNode`: the node's place in the tree, or the second-root error. */
   private addNode(parts: NodeParts): void {
-    const { nodeId, label, shape, indent, range } = parts;
+    const { nodeId, label, shape, indent, range, markdown } = parts;
     const id = nodeId ?? label;
     const node: MindmapNodeNode = {
       id: this.st.ids.node(id.trim()),
@@ -395,6 +397,7 @@ class MindmapParser extends TreeParser<Lexed, PreprocessResult> {
       children: [],
       classes: [],
     };
+    if (markdown) model.markdown = true;
     if (parent && parentOpen) {
       model.parent = parentOpen.index;
       parent.children.push(index);
@@ -508,6 +511,8 @@ interface NodeParts {
   /** The indent width as written. */
   indent: number;
   range: Range;
+  /** The label is a markdown string. */
+  markdown?: true;
 }
 
 /** v12 `getType`: the shape from the opener, `(` by its closer too. */

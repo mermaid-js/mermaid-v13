@@ -12,6 +12,10 @@ export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   rowEven: { alias: 're', kind: 'color', usedBy: ['er'] },
   erEdgeLabelBackground: { alias: 'eel', kind: 'color', usedBy: ['er'] },
   erMarkerFill: { alias: 'emf', kind: 'color', usedBy: ['er'] },
+  // Attribute text on each row (#758): the ink against that row's own fill, as nodeTextColor is
+  // against the entity's; the header keeps nodeTextColor.
+  erRowOddTextColor: { alias: 'eot', kind: 'color', usedBy: ['er'] },
+  erRowEvenTextColor: { alias: 'eet', kind: 'color', usedBy: ['er'] },
   // Crow's-foot ends (D152): where the zero-or-more circle sits, out from the outline, read as
   // a number at render time.
   erZeroOrMoreCircleOffset: { alias: 'ezc', kind: 'length', usedBy: ['er'] },

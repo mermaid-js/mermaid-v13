@@ -65,3 +65,15 @@ export function parseDivergences(data: unknown, origin = 'divergences'): Diverge
     };
   });
 }
+
+/**
+ * The ids of the sources with a listed `model` divergence. A spec that compares names or labels
+ * with v12's leaves them out: there the two differ by design.
+ */
+export function modelDivergenceIds(path: string): Set<string> {
+  return new Set(
+    loadDivergences(path)
+      .filter((d) => d.kind === 'model')
+      .map((d) => d.id)
+  );
+}

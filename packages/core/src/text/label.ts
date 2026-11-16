@@ -38,9 +38,23 @@ export interface MeasuredLabel extends LabelBox {
   readonly left?: boolean;
 }
 
+/**
+ * What a label's source may hold besides text (D562). `plain`: character references, `<br>` and
+ * the `<b>`/`<i>` HTML subset. `emphasis`: plain, plus `**`, `*`, `__` and `_`. `markdown`:
+ * emphasis, plus inline code, bullet items and backslash escapes.
+ */
+export type LabelMarkup = 'plain' | 'emphasis' | 'markdown';
+
 export interface LabelOptions {
-  /** The label is a markdown string (`"`…`"` in flowcharts). Default false. */
+  /** The label's mode. Default `plain`. A markdown string (`"`…`"`) is `markdown`. */
+  readonly markup?: LabelMarkup;
+  /** @deprecated Use `markup: 'markdown'`. Goes when every caller has moved (D562). */
   readonly markdown?: boolean;
+  /**
+   * Whether a backslash and an `n`, written as two characters, break the line in the `plain` and
+   * `emphasis` modes. Default true. A `markdown` label never breaks there.
+   */
+  readonly backslashBreak?: boolean;
   /** Style bits every run starts from. Default 0. */
   readonly style?: StyleBits;
   /**
@@ -65,7 +79,6 @@ interface Piece {
 // Anything that needs more than measuring once: markup, entities, escapes, explicit breaks,
 // runs of white space and break hints.
 const RE_SLOW = /[<&*_`\\\n\r\t\u00ad\u200b]| {2}/;
-const RE_PLAIN_BREAK = /\\n|\r\n?|\n|<br\s*\/?>/i;
 const RE_SPACES = /[ \t]+/g;
 const SHY = '\u00ad';
 const ZWJ = '\u200d';
@@ -119,7 +132,8 @@ export function layoutLabel(
   const text = src.trim();
   if (text === '') return box([], [], []);
 
-  const markdown = options.markdown === true;
+  const markup = options.markdown ? 'markdown' : options.markup;
+  const markdown = markup === 'markdown';
   if (!spans && !RE_SLOW.test(text) && !(markdown && RE_BULLET.test(text))) {
     const width = measurer.width(text, font, base);
     if (width <= maxWidth) return box([[run(text, base, width)]], [0], [width]);
@@ -128,9 +142,13 @@ export function layoutLabel(
   const lines: Run[][] = [];
   const indents: number[] = [];
   const widths: number[] = [];
-  const tags: Tags = { bold: 0, italic: 0 };
-  for (const { source, bullet } of markdown ? markdownLines(src) : plainLines(text)) {
-    const pieces = tidy(inline(source, base, tags, markdown, spans?.boxes));
+  const tags: Tags = { bold: 0, italic: 0, dropped: options.inline?.dropped };
+  // `<script>` and `<style>` lose what they hold, as in v12 (D566); `inline` drops the tags.
+  const shown = (markdown ? src : text).replace(RE_SCRIPT, '$1$2').replace(RE_STYLE, '$1$2');
+  for (const { source, bullet } of markdown
+    ? markdownLines(shown)
+    : plainLines(shown, options.backslashBreak)) {
+    const pieces = tidy(inline(source, base, tags, markup, spans?.boxes));
     let indent = 0;
     let hang = 0;
     if (bullet !== undefined) {
@@ -191,9 +209,15 @@ interface SourceLine {
 const BULLETS = ['\u2022 ', '\u25e6 '] as const;
 const RE_BULLET = /^([ \t]*)[-*] +(?=\S)/;
 const RE_MD_BREAK = /<br\s*\/?>|\r\n?/gi;
+// After `RE_MD_BREAK` has made every `<br>` and line end a `\n`.
+const RE_PLAIN_BREAK = /\\n|\n/i;
 
-function plainLines(text: string): SourceLine[] {
-  return text.split(RE_PLAIN_BREAK).map((source) => ({ source }));
+/** Lines of a plain or emphasis label. Without `backslashBreak` a written `\n` stays text. */
+function plainLines(text: string, backslashBreak = true): SourceLine[] {
+  return text
+    .replace(RE_MD_BREAK, '\n')
+    .split(backslashBreak ? RE_PLAIN_BREAK : '\n')
+    .map((source) => ({ source }));
 }
 
 /**
@@ -225,10 +249,14 @@ function markdownLines(text: string): SourceLine[] {
 }
 
 const RE_TAG = /<(\/?)([a-zA-Z][\w-]*)(?:\s[^<>]*)?\/?>/y;
-const BOLD_TAGS = new Set(['b', 'strong']);
-const ITALIC_TAGS = new Set(['i', 'em']);
-// HTML elements whose tags are dropped, text kept (R-TEXT-3). Anything else shaped like a tag,
-// such as the type in List<T>, is text.
+// A `<script>` or `<style>` start tag, recognised as `RE_TAG` does, with what the element holds:
+// up to its end tag, which stays for `inline` to drop. With no end tag the element holds nothing
+// and the rest of the label is matched as group 2, so that it is kept and scanned once.
+const RE_SCRIPT = /(<script(?:\s[^<>]*)?\/?>)(?:[^]*?(?=<\/script(?:\s[^<>]*)?\/?>)|([^]*))/gi;
+const RE_STYLE = /(<style(?:\s[^<>]*)?\/?>)(?:[^]*?(?=<\/style(?:\s[^<>]*)?\/?>)|([^]*))/gi;
+// HTML elements whose tags are dropped, text kept (R-TEXT-3), and reported as `HTML_DROPPED`
+// unless they are bold or italic (D566). Anything else shaped like a tag, such as the type in
+// List<T>, is text.
 const HTML_TAGS = new Set(
   (
     'a abbr address article aside audio b bdi bdo big blockquote body br button caption center cite code col ' +
@@ -244,22 +272,27 @@ const HTML_TAGS = new Set(
 interface Tags {
   bold: number;
   italic: number;
+  /** Where the names of the other tags go: the render's `InlineSpans.dropped`. */
+  dropped: Set<string> | undefined;
 }
 
 const RE_ESCAPABLE = /[!-/:-@[-`{-~]/;
 const RE_WORD = /\w/;
 
 /**
- * Splits one line of source into styled pieces: HTML subset tags and character references, and
- * in markdown strings emphasis, inline code and backslash escapes. Emphasis stays in its line.
+ * Splits one line of source into styled pieces: HTML subset tags and character references, in
+ * the `emphasis` and `markdown` modes emphasis, and in `markdown` inline code and backslash
+ * escapes. Emphasis stays in its line.
  */
 function inline(
   source: string,
   base: StyleBits,
   tags: Tags,
-  markdown: boolean,
+  markup: LabelMarkup | undefined,
   boxes?: readonly LabelBoxSpan[]
 ): Piece[] {
+  const markdown = markup === 'markdown';
+  const emphasis = markdown || markup === 'emphasis';
   const out: Piece[] = [];
   const boxAt = (ch: string): LabelBoxSpan | undefined => boxes?.[ch.charCodeAt(0) - PLACEHOLDER];
   // Pushes source text in one style, its box placeholders as box pieces. Only placeholders in
@@ -290,6 +323,13 @@ function inline(
     style = next;
   };
   restyle();
+  // Counts one HTML tag: `step` is 1 for a start tag and -1 for an end tag.
+  const count = (tag: string, step: number): void => {
+    if (tag === 'b' || tag === 'strong') tags.bold = Math.max(0, tags.bold + step);
+    else if (tag === 'i' || tag === 'em') tags.italic = Math.max(0, tags.italic + step);
+    else tags.dropped?.add(tag);
+    restyle();
+  };
   let i = 0;
   while (i < source.length) {
     const ch = source[i] as string;
@@ -306,10 +346,7 @@ function inline(
       const m = RE_TAG.exec(source);
       const tag = m?.[2]?.toLowerCase();
       if (m && tag !== undefined && HTML_TAGS.has(tag)) {
-        const step = m[1] === '/' ? -1 : 1;
-        if (BOLD_TAGS.has(tag)) tags.bold = Math.max(0, tags.bold + step);
-        else if (ITALIC_TAGS.has(tag)) tags.italic = Math.max(0, tags.italic + step);
-        restyle();
+        count(tag, m[1] === '/' ? -1 : 1);
         i += m[0].length;
         continue;
       }
@@ -333,7 +370,7 @@ function inline(
         i = end + 1;
         continue;
       }
-    } else if (markdown && (ch === '*' || ch === '_')) {
+    } else if (emphasis && (ch === '*' || ch === '_')) {
       const double = source[i + 1] === ch;
       const bit = double ? Style.Bold : Style.Italic;
       const len = double ? 2 : 1;

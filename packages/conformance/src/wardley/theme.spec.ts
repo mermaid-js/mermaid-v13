@@ -23,12 +23,12 @@
  *   `lightgrey` in every theme, v12's own in default, base, dark and forest; neutral's v12 grid is
  *   its `gridColor`, `lighten(border1, 30)`.
  *
- * Under author overrides of shared variables, `OVERRIDE_DIFFERENCES` lists, as exactly, where
- * core's own derivations (not wardley's table) give another colour than v12's (GAPS, the T4
- * review): base's `lineColor` and `primaryTextColor` are fixed where v12 derived them from
- * `background` and `darkMode`; dark's `mainBkg` follows `primaryColor` where v12 fixed it; and
+ * Under author overrides of shared variables, each of `OVERRIDES` lists in `differs`, as exactly,
+ * where core's own derivations (not wardley's table) give another colour than v12's (GAPS, the T4
+ * review): base's `primaryTextColor` is fixed where v12 derived it from `darkMode` (D571), and
  * v12's `default` built its `wardley` block in its constructor, before an author's `background`
- * or `wardleyEvolutionColor` was applied, so it ignored both.
+ * or `wardleyEvolutionColor` was applied, so it ignored both. Base's `lineColor` follows
+ * `background` (#797) and dark's `mainBkg` is pinned (#798), both as in v12.
  */
 import { wardley } from '@mermaid-js/diagram-wardley';
 import {
@@ -189,10 +189,8 @@ const OVERRIDES: readonly Override[] = [
     label: 'base + background',
     theme: 'base',
     vars: { background: '#abcdef' },
-    differs: each(
-      STROKES,
-      'core: base’s lineColor is its own #0b0b0b, where v12 derived it as invert(background) (#543210)'
-    ),
+    // base derives lineColor as invert(background), as v12 does (#797).
+    differs: {},
   },
   {
     label: 'base + darkMode',
@@ -203,15 +201,8 @@ const OVERRIDES: readonly Override[] = [
       'core: base’s primaryTextColor is its own #333333, where v12 switched it to #eeeeee under darkMode (core behaviour for every type, as quadrant’s MIGRATION row says)'
     ),
   },
-  {
-    label: 'dark + primaryColor',
-    theme: 'dark',
-    vars: { primaryColor: '#123456' },
-    differs: each(
-      ['wardleyComponentFill', 'wardleyAnnotationFill'],
-      'core: mainBkg follows primaryColor, where v12 dark fixed it at #1f2020'
-    ),
-  },
+  // dark pins v12's mainBkg #1f2020 (#798), so primaryColor leaves the fills as v12 did.
+  { label: 'dark + primaryColor', theme: 'dark', vars: { primaryColor: '#123456' }, differs: {} },
   {
     label: 'default + background',
     theme: 'default',

@@ -21,7 +21,8 @@ import { wardleyAdapter } from './v13.ts';
  * checks they differ only there ({@link LISTED}): core ends an unclosed `%%{` at its line end and
  * reports `UNCLOSED_DIRECTIVE`, so v13 rejects what v12 accepted with the rest removed (or, after
  * a statement, read as a comment); and core's entity table, smaller than the HTML table a browser
- * drew v12's `#name;` codes from, so a name outside it keeps its `&name;` (GAPS #493).
+ * drew v12's `#name;` codes from, so a name outside it is not decoded (GAPS #493), and stays
+ * `#name;` as written (D561), also where no browser knew the name and v12 drew `&name;`.
  */
 const LISTED: ReadonlyMap<string, { kind: string; detail: RegExp }> = new Map([
   ['wardley-cases/unclosed-directive', { kind: 'reject', detail: /^UNCLOSED_DIRECTIVE/ }],
@@ -29,6 +30,10 @@ const LISTED: ReadonlyMap<string, { kind: string; detail: RegExp }> = new Map([
   [
     'wardley-cases/entities-outside-core',
     { kind: 'model', detail: /^nodes\[0\]\.id, nodes\[0\]\.label, notes\[0\]\.text$/ },
+  ],
+  [
+    'e2e/nightly-check/parser-entity-codes.mmd',
+    { kind: 'model', detail: /^links\[0\]\.target, nodes\[1\]\.id, nodes\[1\]\.label$/ },
   ],
 ]);
 

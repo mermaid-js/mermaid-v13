@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { loadOracle } from '../oracle.ts';
 import { runParity } from '../runner.ts';
+import { hasUnknownEntityName } from '../v12-entities.ts';
 import type { CorpusItem } from '../types.ts';
 import { cynefinCases, cynefinCorpus } from './corpus.ts';
 import { cynefinAdapter } from './v13.ts';
@@ -31,6 +32,9 @@ import { cynefinAdapter } from './v13.ts';
  *   whole `%%{…}%%`.
  * Any other directive, a closed one on one line included (the "mid-line directive eats its
  * newline" quirk), is compared.
+ *
+ * A mutant that holds a `#name;` core cannot decode is exempt too: v13 keeps the name as written
+ * where v12 made it `&name;` (D561, `hasUnknownEntityName`).
  */
 /** v12's `directiveRegex` (`mermaid@12.2.0` `diagram-api/regexes.ts`), which `removeDirectives` cut. */
 // eslint-disable-next-line mermaid/no-nested-quantifier -- v12's released directiveRegex is the oracle; small inputs only
@@ -162,12 +166,15 @@ describe('cynefin fuzzing against mermaid@12', () => {
     const items = mutants(sources);
     const report = await runParity({ adapters: [cynefinAdapter], corpus: items, divergences: [] });
     const byId = new Map(items.map((i) => [i.id, i]));
-    const core = (id: string) => coreDirective(byId.get(id)?.source ?? '');
+    const core = (id: string) => {
+      const source = byId.get(id)?.source ?? '';
+      return coreDirective(source) || hasUnknownEntityName(source);
+    };
     const unexpected = report.unlisted.filter((d) => !core(d.id));
     const compared = report.results.filter((r) => r.status !== 'skipped');
     const accepted = compared.filter((r) => r.oracleAccepted).length;
     process.stdout.write(
-      `cynefin fuzz: ${items.length} mutants, ${compared.length} compared, ${accepted} accepted by v12, ${report.unlisted.length - unexpected.length} exempt (core directive reading)\n`
+      `cynefin fuzz: ${items.length} mutants, ${compared.length} compared, ${accepted} accepted by v12, ${report.unlisted.length - unexpected.length} exempt (core: directive reading, unknown entity names)\n`
     );
     // A source no adapter claims is skipped: v12 and v13 must agree it is not cynefin. A body
     // that starts with `---` is a front-matter error in v12 before any detector runs.

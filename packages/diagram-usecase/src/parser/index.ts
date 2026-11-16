@@ -4,6 +4,7 @@
  */
 import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Range, SourceView } from '@mermaid-js/core/parser-kit';
+import { decodePlaceholders } from '@mermaid-js/core/parser-kit/support';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
@@ -56,12 +57,6 @@ export function usecaseView(src: string): UsecaseView {
     pre.directives.map((d) => d.range)
   );
   return { bodyStart: pre.bodyStart, view };
-}
-
-/** `encodeEntities`'s placeholders back to `&#`, `&` and `;`, as v12's `decodeEntities`. */
-export function decodePlaceholders(text: string): string {
-  if (!text.includes('ﬂ') && !text.includes('¶')) return text;
-  return text.replace(/ﬂ°°/g, '&#').replace(/ﬂ°/g, '&').replace(/¶ß/g, ';');
 }
 
 /**

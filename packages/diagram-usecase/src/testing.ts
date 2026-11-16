@@ -7,7 +7,6 @@
 import { paletteSlots } from '@mermaid-js/shared/svg/document';
 export {
   CHEVROTAIN_NAMES,
-  decodePlaceholders,
   lexText,
   UsecaseTokenKind,
   usecaseTokens,

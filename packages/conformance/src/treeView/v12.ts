@@ -10,7 +10,7 @@
  * front matter on, so `getDiagramTitle()` holds no front-matter title (the v13 side leaves it
  * out too). Descriptions are the raw text: v12's `sanitizeText` is identity in the oracle.
  */
-import { decodeEntities as d } from '../flowchart/v12.ts';
+import { v12DecodeEntities as d } from '../v12-entities.ts';
 
 /** `diagram.type` values mermaid\@12 reports for treeView sources. */
 export const TREEVIEW_V12_TYPES = ['treeView'];

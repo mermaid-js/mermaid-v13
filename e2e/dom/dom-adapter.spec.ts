@@ -200,7 +200,7 @@ test.describe('mount()', () => {
       const markup = el.innerHTML;
       const rect = () => getComputedStyle(el.querySelector('svg .node rect, svg .node path')!).fill;
       const before = rect();
-      el.style.setProperty('--mermaid-primaryColor', '#ff0000');
+      el.style.setProperty('--mermaid-mainBkg', '#ff0000');
       await new Promise((r) => setTimeout(r, 200));
       return {
         before,
@@ -208,7 +208,7 @@ test.describe('mount()', () => {
         same: el.firstElementChild === svg && el.innerHTML === markup,
       };
     }, VALID);
-    expect(out.before).toBe('rgb(236, 236, 255)'); // default theme primaryColor #ececff
+    expect(out.before).toBe('rgb(236, 236, 255)'); // default theme mainBkg #ececff (D570)
     expect(out.after).toBe('rgb(255, 0, 0)');
     expect(out.same).toBe(true);
   });

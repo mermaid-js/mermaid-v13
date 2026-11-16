@@ -36,7 +36,7 @@ describe("theme: 'auto' (R-THEME-8)", () => {
     expect(svg).toBe(
       '<svg xmlns="http://www.w3.org/2000/svg" data-p="m1" style="--_sw:var(--mermaid-strokeWidth,2px)">' +
         '<style>svg[data-p=m1]{--_mb:var(--mermaid-mainBkg,#ffffff)}' +
-        '@media (prefers-color-scheme:dark){svg[data-p=m1]{--_mb:var(--mermaid-mainBkg,var(--_p));--_p:var(--mermaid-primaryColor,#1f2020)}}</style>' +
+        '@media (prefers-color-scheme:dark){svg[data-p=m1]{--_mb:var(--mermaid-mainBkg,#1f2020)}}</style>' +
         '<rect width="10" height="10" fill="var(--_mb)" stroke-width="var(--_sw)"/></svg>'
     );
   });

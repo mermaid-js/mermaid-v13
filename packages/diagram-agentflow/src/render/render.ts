@@ -22,6 +22,7 @@ import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
 import { marker, markerTrim } from '@mermaid-js/shared/svg/arrowheads';
 import { routePath } from '@mermaid-js/shared/svg/route';
 import { layoutLabel, type MeasuredLabel } from '@mermaid-js/core/text';
+import { tagsOnly } from '@mermaid-js/core/text/tags-only';
 import type {
   AgentflowEdgeView,
   AgentflowGroupView,
@@ -113,7 +114,8 @@ function titleOf(
   const text = model.title?.trim();
   if (!text) return undefined;
   const font = { family: ctx.theme.value('fontFamily'), size: TITLE_SIZE, weight: 400 };
-  const label = layoutLabel(text, font, Infinity, ctx.measurer);
+  // No inline boxes in the title.
+  const label = layoutLabel(text, font, Infinity, ctx.measurer, { inline: tagsOnly(ctx.inline) });
   const top = -layout.agentflow.titleTopMargin - label.baseline;
   return { label, x: layout.width / 2, y: top + label.height / 2 };
 }

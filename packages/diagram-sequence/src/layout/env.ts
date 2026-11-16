@@ -205,7 +205,9 @@ export function envOf(ctx: SequenceLayoutContext, model: SequenceModel): Omit<En
     index: new Map(participants.map((p, i) => [p.id, i])),
     warn: (w) => ctx.warn(w),
     measure: (text, font, max) => {
+      // v12 sequence broke a label at `<br>` only: a written `\n` is text (#763, D564).
       const label = layoutLabel(text, font, max > 0 ? max : 1, ctx.measurer, {
+        backslashBreak: false,
         inline: ctx.inline,
       });
       if (!mathShown && showsMath(label) && ctx.inline?.notRendered('math') === true) {

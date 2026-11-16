@@ -7,7 +7,7 @@
  * v12's `encodeEntities` placeholders decoded back to what the author wrote (as for flowchart).
  * The oracle's DOMPurify is the identity, so `sanitizeText` changes nothing.
  */
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12DecodeEntities } from '../v12-entities.ts';
 
 /** `diagram.type` values mermaid\@12 reports for journey sources. */
 export const JOURNEY_V12_TYPES = ['journey'];
@@ -34,17 +34,17 @@ interface JourneyDbV12 {
 export function journeyV12Snapshot(dbValue: unknown): JourneySnapshot {
   const db = dbValue as JourneyDbV12;
   const tasks = db.getTasks().map((t) => ({
-    name: decodeEntities(t.task),
+    name: v12DecodeEntities(t.task),
     score: t.score,
-    people: t.people.map(decodeEntities),
-    section: decodeEntities(t.section),
+    people: t.people.map(v12DecodeEntities),
+    section: v12DecodeEntities(t.section),
   }));
   return {
-    title: decodeEntities(db.getDiagramTitle()),
-    accTitle: decodeEntities(db.getAccTitle()),
-    accDescr: decodeEntities(db.getAccDescription()),
-    sections: db.getSections().map(decodeEntities),
+    title: v12DecodeEntities(db.getDiagramTitle()),
+    accTitle: v12DecodeEntities(db.getAccTitle()),
+    accDescr: v12DecodeEntities(db.getAccDescription()),
+    sections: db.getSections().map(v12DecodeEntities),
     tasks,
-    actors: db.getActors().map(decodeEntities),
+    actors: db.getActors().map(v12DecodeEntities),
   };
 }

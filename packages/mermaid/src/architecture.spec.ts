@@ -68,24 +68,26 @@ describe('architecture diagrams through the public API (#618)', () => {
     expect(named.warnings).toEqual([]);
   });
 
-  it('keeps compass for layered and dagre, which ignore the sides, with one warning (D556)', async () => {
+  it('lays out with layered for layered and dagre, with one warning on what they ignore (D560)', async () => {
     const plain = await createMermaid().render('a3', TEXT);
+    const svgs: string[] = [];
     for (const layout of ['layered', 'dagre']) {
       const m = createMermaid();
       m.initialize({ layout });
       const r = await m.render('a3', TEXT);
-      expect(r.svg, layout).toBe(plain.svg);
+      expect(r.svg, layout).not.toBe(plain.svg);
+      svgs.push(r.svg);
       expect(
         r.warnings.map((w) => w.code),
         layout
-      ).toEqual(['ARCHITECTURE_LAYOUT_IGNORED']);
+      ).toEqual(['ARCHITECTURE_PLACEMENT_IGNORED']);
     }
+    expect(svgs[1]).toBe(svgs[0]);
   });
 
   it('honours architecture.layout and architecture.theme over the top level', async () => {
     const m = createMermaid();
     const plain = await m.render('a9', TEXT);
-    // `layered` and `dagre` are laid out with compass (D556), so another engine shows the scope.
     const swimlane = await m.render('a9', withInit({ layout: 'swimlane' }));
     expect(swimlane.svg).not.toBe(plain.svg);
     const scopedLayout = await m.render('a9', withInit({ architecture: { layout: 'swimlane' } }));

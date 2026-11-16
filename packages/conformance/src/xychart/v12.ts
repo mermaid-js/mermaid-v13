@@ -10,7 +10,7 @@
  * orientation is the text's or the default `vertical`, and every plot's colour comes from the
  * default theme's palette: its position there is the plot's palette slot.
  */
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12DecodeEntities } from '../v12-entities.ts';
 
 /** `diagram.type` values mermaid\@12 reports for XY chart sources. */
 export const XYCHART_V12_TYPES = ['xychart'];
@@ -73,28 +73,28 @@ export function xyChartV12Snapshot(raw: unknown): XyChartSnapshot {
   const x = data.xAxis;
   return {
     orientation: db.getChartConfig().chartOrientation,
-    title: decodeEntities(db.getDiagramTitle()),
-    accTitle: decodeEntities(db.getAccTitle()),
-    accDescr: decodeEntities(db.getAccDescription()),
+    title: v12DecodeEntities(db.getDiagramTitle()),
+    accTitle: v12DecodeEntities(db.getAccTitle()),
+    accDescr: v12DecodeEntities(db.getAccDescription()),
     xAxis:
       x.type === 'band'
         ? {
             type: 'band',
-            title: decodeEntities(x.title),
-            categories: (x.categories ?? []).map(decodeEntities),
+            title: v12DecodeEntities(x.title),
+            categories: (x.categories ?? []).map(v12DecodeEntities),
           }
-        : { type: 'linear', title: decodeEntities(x.title), min: x.min ?? 0, max: x.max ?? 0 },
+        : { type: 'linear', title: v12DecodeEntities(x.title), min: x.min ?? 0, max: x.max ?? 0 },
     yAxis: {
-      title: decodeEntities(data.yAxis.title),
+      title: v12DecodeEntities(data.yAxis.title),
       min: data.yAxis.min ?? 0,
       max: data.yAxis.max ?? 0,
     },
     plots: data.plots.map((p) => ({
       type: p.type,
-      title: decodeEntities(p.title),
+      title: v12DecodeEntities(p.title),
       slot: DEFAULT_PALETTE.indexOf(p.fill ?? p.strokeFill ?? ''),
-      data: p.data.map(([dx, dy]): [string, number | null] => [decodeEntities(dx), dy ?? null]),
-      pointLabels: p.pointLabels ? p.pointLabels.map(decodeEntities) : null,
+      data: p.data.map(([dx, dy]): [string, number | null] => [v12DecodeEntities(dx), dy ?? null]),
+      pointLabels: p.pointLabels ? p.pointLabels.map(v12DecodeEntities) : null,
     })),
   };
 }

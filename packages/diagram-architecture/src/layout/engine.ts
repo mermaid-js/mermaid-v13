@@ -1,39 +1,56 @@
 /**
- * The engine architecture is laid out with (#673, D556). `compass` places every node on the side
- * its edges name; `layered` (v12's `dagre`) ranks nodes down the flow and reads the sides only for
- * where a line leaves and enters a node, so `a:R --> L:b` puts `b` under `a` and the drawing
- * contradicts the source. v12 always laid architecture out with its own engine whatever `layout`
- * said, and integrations still set `layout: 'dagre'` site-wide, so those names map to `compass`
- * through the plugin's aliases (D284), with one {@link ARCHITECTURE_LAYOUT_IGNORED} warning. Every
- * other name is taken as D327 says: `compass`, an installed ELK (its ports are the named sides,
- * D503) or a registered engine.
+ * The engine architecture is laid out with (#673, D560): the one the `layout` config names,
+ * `compass` when no config layer names one (D284, D326), as for any graph diagram (D327).
+ * `compass` places every node on the side its edges name. `layered` (v12's `dagre`) ranks nodes
+ * down the flow instead: it reads a side only for where a line leaves and enters its node (D503)
+ * and reads neither `{group}` ends nor `align` (core `LayoutGraph`: only `compass` does). It
+ * still draws the diagram, and the layout says what it left out with one
+ * {@link ARCHITECTURE_PLACEMENT_IGNORED} warning. ELK maps the sides to fixed ports (D503).
  */
-import { ARCHITECTURE_LAYOUT_IGNORED } from '../codes.ts';
+import type { LayoutGraph } from '@mermaid-js/core/layout';
+import { ARCHITECTURE_PLACEMENT_IGNORED } from '../codes.ts';
 import type { ArchitectureLayoutContext } from './context.ts';
 
-/** The engine architecture lays out with when no config layer names one. */
-const DEFAULT_ENGINE = 'compass';
+/** The plugin's `layoutEngine` (D284): `compass` unless a config layer names another. */
+export const architectureLayoutEngine = { default: 'compass' } as const satisfies {
+  default: string;
+};
 
-/** Graph engines that ignore the sides for placement: `layered` and its v12 name. */
-const SIDE_BLIND_ENGINES = ['layered', 'dagre'] as const;
+/** The first-party engines that rank nodes down the flow: `layered` and its v12 name. */
+const FLOW_ENGINES: ReadonlySet<unknown> = new Set(['layered', 'dagre']);
 
-/** The plugin's `layoutEngine` (D284): `compass`, which also stands in for those names. */
-export const architectureLayoutEngine = {
-  default: DEFAULT_ENGINE,
-  aliases: Object.fromEntries(SIDE_BLIND_ENGINES.map((name) => [name, DEFAULT_ENGINE])),
-} as const satisfies { default: string; aliases: Readonly<Record<string, string>> };
+/** What `graph` asks of placement that a flow engine leaves out, as clauses of the warning. */
+function ignoredBy(graph: LayoutGraph): string[] {
+  const clauses: string[] = [];
+  if (graph.edges.some((e) => e.border?.source === true || e.border?.target === true))
+    clauses.push('`{group}` on an edge end (the line meets the service, not the group border)');
+  if ((graph.align?.length ?? 0) > 0) clauses.push('`align` rows and columns');
+  return clauses;
+}
 
 /**
- * One {@link ARCHITECTURE_LAYOUT_IGNORED} warning when `config.layout` names an engine the
- * aliases replaced with `compass`. `path` is `architecture.layout` when the section set it.
+ * One {@link ARCHITECTURE_PLACEMENT_IGNORED} warning when `config.layout` names `layered` or
+ * `dagre` and `graph` has an edge or an `align`: what that engine does not honour. `path` is
+ * `architecture.layout` when the section set it.
  */
-export function warnIgnoredLayout({ config, warn }: ArchitectureLayoutContext): void {
-  const name = config.layout;
-  if (!(SIDE_BLIND_ENGINES as readonly unknown[]).includes(name)) return;
-  const scoped = (config as { architecture?: { layout?: unknown } }).architecture?.layout;
-  warn({
-    code: ARCHITECTURE_LAYOUT_IGNORED,
-    message: `Ignored layout "${String(name)}" for this architecture diagram: it does not place services on the sides their edges name (L, R, T, B); laid out with "${DEFAULT_ENGINE}".`,
+export function warnPlacementIgnored(graph: LayoutGraph, ctx: ArchitectureLayoutContext): void {
+  const name = ctx.config.layout;
+  if (!FLOW_ENGINES.has(name)) return;
+  const layout = `Layout "${String(name)}"`;
+  const parts =
+    graph.edges.length === 0
+      ? []
+      : [
+          `${layout} does not place services on the sides their edges name (L, R, T, B); the sides only set where lines attach.`,
+        ];
+  const also = ignoredBy(graph);
+  if (also.length > 0)
+    parts.push(`${parts.length > 0 ? 'It also' : layout} ignores ${also.join(' and ')}.`);
+  if (parts.length === 0) return;
+  const scoped = (ctx.config as { architecture?: { layout?: unknown } }).architecture?.layout;
+  ctx.warn({
+    code: ARCHITECTURE_PLACEMENT_IGNORED,
+    message: parts.join(' '),
     path: scoped === name ? 'architecture.layout' : 'layout',
   });
 }

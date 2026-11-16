@@ -16,16 +16,23 @@ import { radarAdapter } from './v13.ts';
  * listed in `divergences/`.
  *
  * The listed radar divergences are core's reading, shared by every type, and the second test
- * checks they differ only there ({@link CORE}):
+ * checks they differ only there ({@link CORE}, {@link ENTITY_NAMES}):
  * - `radar-cases/unclosed-directive*`: core ends an unclosed `%%{` at its line end and reports
  *   `UNCLOSED_DIRECTIVE`, so v13 rejects what v12 accepted with the rest removed.
  * - `dev-diagrams/knsv/knsv2-03-radar.mmd`: its front matter is indented; core reads it (#7613)
  *   and reports `UNCLOSED_FRONT_MATTER`, where v12 saw no front matter. Its dedented copy
  *   (`radar-cases/dev-diagram-dedented`) agrees.
+ * - `radar-cases/entities-semicolon`: a `#name;` whose name core's entity table does not hold stays as written, where
+ *   v12 made it `&name;` (D561).
  */
 const CORE: ReadonlyMap<string, RegExp> = new Map([
   ['radar-cases/unclosed-directive', /^UNCLOSED_DIRECTIVE/],
   ['dev-diagrams/knsv/knsv2-03-radar.mmd', /^UNCLOSED_FRONT_MATTER/],
+]);
+
+/** The model paths that differ under D561, by source. */
+const ENTITY_NAMES: ReadonlyMap<string, RegExp> = new Map([
+  ['radar-cases/entities-semicolon', /^axes\[0\]\.label$/],
 ]);
 
 async function* each(items: CorpusItem[]): AsyncGenerator<CorpusItem> {
@@ -55,9 +62,9 @@ describe('radar oracle parity with mermaid@12', () => {
     });
   }, 300_000);
 
-  it('differs only in core, where the list says (unclosed directives, indented front matter)', async () => {
+  it('differs only in core, where the list says (unclosed directives, indented front matter, unknown entity names)', async () => {
     const report = await run();
-    const prefixes = [...CORE.keys()];
+    const prefixes = [...CORE.keys(), ...ENTITY_NAMES.keys()];
     for (const prefix of prefixes) {
       expect(
         report.expected.some((d) => d.id.startsWith(prefix)),
@@ -67,8 +74,9 @@ describe('radar oracle parity with mermaid@12', () => {
     for (const d of report.expected) {
       const prefix = prefixes.find((p) => d.id.startsWith(p));
       expect(prefix, d.id).toBeDefined();
-      expect(d.kind, d.id).toBe('reject');
-      expect(d.detail, d.id).toMatch(CORE.get(prefix ?? '') ?? /^$/);
+      const core = CORE.get(prefix ?? '');
+      expect(d.kind, d.id).toBe(core ? 'reject' : 'model');
+      expect(d.detail, d.id).toMatch(core ?? ENTITY_NAMES.get(prefix ?? '') ?? /^$/);
     }
   }, 300_000);
 });

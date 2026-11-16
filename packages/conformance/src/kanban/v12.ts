@@ -14,7 +14,7 @@
  * share an id each list the cards of all of them; v13 groups cards by position (D373), and those
  * sources are listed divergences.
  */
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12DecodeEntities } from '../v12-entities.ts';
 
 /** `diagram.type` values mermaid\@12 reports for kanban sources. */
 export const KANBAN_V12_TYPES = ['kanban'];
@@ -59,12 +59,12 @@ interface KanbanDbV12 {
 /** HTML class-attribute words. */
 const classWords = (text = ''): string[] => text.split(/[\t\n\f\r ]+/).filter((w) => w !== '');
 
-const text = (v: unknown): string | null => (typeof v === 'string' ? decodeEntities(v) : null);
+const text = (v: unknown): string | null => (typeof v === 'string' ? v12DecodeEntities(v) : null);
 
 /** A priority by value: a string as it is (placeholders decoded), any other value as JSON. */
 export function priorityText(v: unknown): string | null {
   if (v === undefined || v === null) return null;
-  return typeof v === 'string' ? decodeEntities(v) : JSON.stringify(v);
+  return typeof v === 'string' ? v12DecodeEntities(v) : JSON.stringify(v);
 }
 
 export function kanbanV12Snapshot(dbValue: unknown): KanbanSnapshot {
@@ -76,7 +76,7 @@ export function kanbanV12Snapshot(dbValue: unknown): KanbanSnapshot {
     const from = section ?? n;
     return {
       column: n.isGroup,
-      id: decodeEntities(n.id),
+      id: v12DecodeEntities(n.id),
       label: text(n.label) ?? '',
       level: n.level,
       parentId: text(n.parentId),

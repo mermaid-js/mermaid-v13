@@ -19,7 +19,7 @@
  * choices v12 overshot change.
  */
 import type { RenderContext } from '@mermaid-js/core';
-import type { FontKey, Measurer } from '@mermaid-js/core/text';
+import { decodeEntities, type FontKey, type Measurer } from '@mermaid-js/core/text';
 import {
   railroadConfig,
   railroadConfigWarning,
@@ -190,7 +190,7 @@ class Placer {
   /** v12's `renderRule` (L535-604): the rule's parts in its own coordinates. */
   rule(rule: RailroadRule, y: number): RailroadRuleLayout {
     const { padding, markerRadius: mR } = this.o;
-    const name = `${rule.name} =`;
+    const name = `${decodeEntities(rule.name)} =`;
     const nameWidth = this.measurer.width(name, this.ruleFont, 0);
     const markerX = nameWidth + this.m.nameGap;
     const defX = markerX + this.m.definitionGap;
@@ -257,13 +257,18 @@ class Placer {
     }
   }
 
-  /** A terminal, nonterminal or special: its text padded on every side (L98-162, L473-499). */
+  /**
+   * A terminal, nonterminal or special: its text padded on every side (L98-162, L473-499).
+   * Entity codes in `written` are decoded (D563), so the box is sized for, and the SVG and the
+   * text output draw, the characters.
+   */
   private leaf(
     node: RailroadNode,
-    text: string,
+    written: string,
     cornerRadius: number,
     dash?: readonly [number, number]
   ): Sized {
+    const text = decodeEntities(written);
     const { padding } = this.o;
     const tw = this.width(text);
     const th = this.lineHeight;

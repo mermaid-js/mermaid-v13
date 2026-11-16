@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { JISON_NAMES, vennTokens } from '@mermaid-js/diagram-venn';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
 import { vennGateCorpus, VARIANTS } from './corpus.ts';
@@ -94,7 +94,7 @@ describe('venn lexer parity with mermaid@12 (jison)', () => {
         if (item.id.startsWith('v12-')) specs++;
         if (item.id.startsWith('venn-cases/')) cases++;
       }
-      const expected = v12.map(([n, i]): JisonToken => [n, decodeEntities(i)]);
+      const expected = v12.map(([n, i]): JisonToken => [n, v12TokenText(i)]);
       const actual = v13Tokens(item.source);
       if (JSON.stringify(expected) === JSON.stringify(actual)) continue;
       let at = 0;
@@ -108,8 +108,8 @@ describe('venn lexer parity with mermaid@12 (jison)', () => {
     // Every e2e fixture, harvested spec and syntax-page string and case reaches the lexer (the
     // three cases v12 does not detect and the two excluded ones aside; #488 added 27 recovery
     // cases, one of them without the header, and `union-entity-sort`; #491 15 layout fixtures; #501
-    // 22 baselines).
-    expect(e2e).toBe(80);
+    // 22 baselines; #797 one).
+    expect(e2e).toBe(81);
     expect(specs).toBe(25);
     expect(cases).toBe(222);
     expect(diffs).toEqual([]);

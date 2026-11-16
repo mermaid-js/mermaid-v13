@@ -13,8 +13,10 @@ import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
 import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
 import { layoutLabel, Style, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { tagsOnly } from '@mermaid-js/core/text/tags-only';
 import type { BoxOf, Relation, RequirementModel } from '../model.ts';
 import type { RequirementRenderContext } from './context.ts';
+import { v12Label } from '@mermaid-js/core/text/v12-label';
 import {
   markerGeometry,
   markerRoom,
@@ -365,8 +367,10 @@ export function prepareRequirement(
     size: theme.number('fontSize'),
     weight: 400,
   };
-  const measure: Measure = (text, f, bits) =>
-    layoutLabel(text, f, Infinity, measurer, { markdown: true, style: bits, inline: ctx.inline });
+  const measure: Measure = (text, f, bits) => {
+    const [shown, mode] = v12Label(text);
+    return layoutLabel(shown, f, Infinity, measurer, { ...mode, style: bits, inline: ctx.inline });
+  };
   const styles = new Map<string, CheckedStyle>();
   const styleOf = (decls: readonly string[]): CheckedStyle => {
     const key = decls.join(';');
@@ -408,14 +412,16 @@ export function prepareRequirement(
     markers = markerGeometry(theme);
     graph = pxGraph(model, boxes, relations, curve, markerRoom(markers));
   }
-  // v12 `insertTitle` writes the title as plain text in the diagram's font.
+  // v12 `insertTitle` writes the title as plain text in the diagram's font: no inline boxes.
+  // Text output prints it as written (D82), so only the px drawing reports the tags it loses.
   const title = model.title?.trim();
+  const inline = cells ? undefined : tagsOnly(ctx.inline);
   return {
     graph,
     boxes,
     relations,
     curve,
     ...(markers ? { markers } : {}),
-    ...(title ? { title: layoutLabel(title, font, Infinity, measurer) } : {}),
+    ...(title ? { title: layoutLabel(title, font, Infinity, measurer, { inline }) } : {}),
   };
 }

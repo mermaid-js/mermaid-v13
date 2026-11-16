@@ -24,7 +24,7 @@ doc.lineFoldingRanges(); // folds by line, as editors show them
 doc.lineSemanticTokens(); // tokens cut per line
 ```
 
-Call `preload()` (or `preload({ types: ['flowchart'] })`) once, before the first `update`. A type whose facet is not loaded gets a `LANGUAGE_NOT_LOADED` diagnostic and generic features only; a facet that fails to load gets `LANGUAGE_LOAD_FAILED`, and one whose parser throws gets `LANGUAGE_FACET_FAILED`. `preload` never rejects.
+Call `preload()` (or `preload({ types: ['flowchart'] })`) once, before the first `update`. A type whose facet is not loaded gets a `LANGUAGE_NOT_LOADED` diagnostic and generic features only; a facet that fails to load gets `LANGUAGE_LOAD_FAILED`, and one whose parser throws gets `LANGUAGE_FACET_FAILED`. A facet whose `hover`, `completions` or `isValidId` throws gives no hover, no items and a rename refusal that names the failure: no query throws. `preload` never rejects.
 
 Positions are UTF-16 offsets into the whole text (front matter included). `doc.lines()` converts to 0-based line and column.
 

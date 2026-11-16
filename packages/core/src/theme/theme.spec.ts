@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert, streamWriter, styleText } from '../svg/index.ts';
-import { createTheme, loadTheme, type DiagramThemeTable, type ThemeWarning } from './index.ts';
+import {
+  createTheme,
+  loadTheme,
+  type DiagramThemeTable,
+  type ThemeName,
+  type ThemeWarning,
+} from './index.ts';
 
 const base = await loadTheme('base');
 
@@ -63,6 +69,154 @@ describe('createTheme: CSS variables (R-THEME-2, -4)', () => {
     const t = createTheme(base, { themeVariables: { primaryColor: 'oklch(70% 0.1 200)' } });
     t.color('mainBkg');
     expect(t.rootStyle()['--_p']).toBe('var(--mermaid-primaryColor,oklch(70% 0.1 200))');
+  });
+});
+
+describe('createTheme: base derives by rule (#797, v12 theme-base)', () => {
+  const lit = (themeVariables?: Record<string, unknown>) =>
+    createTheme(base, { cssVariables: false, themeVariables });
+
+  it('keeps the stock values with no override', () => {
+    const t = lit();
+    expect(['secondaryColor', 'tertiaryColor', 'lineColor', 'arrowheadColor'].map(t.value)).toEqual(
+      ['#f4ddff', '#f6f9ff', '#0b0b0b', '#0b0b0b']
+    );
+  });
+
+  it('turns secondaryColor and tertiaryColor with primaryColor, as v12 adjust does', () => {
+    // khroma: adjust('#3366cc', { h: -120 }) = hsl(100, 60%, 50%); { h: 180, l: 5 } = hsl(40, 60%, 55%).
+    const t = lit({ primaryColor: '#3366cc' });
+    expect(t.value('secondaryColor')).toBe('#66cc33');
+    expect(t.value('tertiaryColor')).toBe('#d1a347');
+    expect(t.value('clusterBkg')).toBe('#d1a347');
+    expect(t.value('edgeLabelBackground')).toBe('#66cc33');
+  });
+
+  it('inverts background for lineColor and arrowheadColor', () => {
+    const t = lit({ background: '#222222' });
+    expect(t.value('lineColor')).toBe('#dddddd');
+    expect(t.value('arrowheadColor')).toBe('#dddddd');
+    expect(t.value('defaultLinkColor')).toBe('#dddddd');
+  });
+
+  it("keeps the author's value; arrowheads follow an author's lineColor, as v12's .marker (D575)", () => {
+    const t = lit({ primaryColor: '#3366cc', secondaryColor: '#123456', lineColor: '#ff0000' });
+    expect(t.value('secondaryColor')).toBe('#123456');
+    expect(t.value('tertiaryColor')).toBe('#d1a347');
+    expect(t.value('lineColor')).toBe('#ff0000');
+    expect(t.value('arrowheadColor')).toBe('#ff0000');
+  });
+
+  it('draws errors in the tertiary colours, as v12 theme-base (#825)', () => {
+    expect(['errorBkgColor', 'errorTextColor'].map(lit().value)).toEqual(['#f6f9ff', '#333333']);
+    const t = lit({ primaryColor: '#3366cc', darkMode: true });
+    expect(t.value('errorBkgColor')).toBe(t.value('tertiaryColor'));
+    expect(t.value('errorTextColor')).toBe(t.value('tertiaryTextColor'));
+    const own = lit({ tertiaryColor: '#123456', tertiaryTextColor: '#fedcba' });
+    expect(['errorBkgColor', 'errorTextColor'].map(own.value)).toEqual(['#123456', '#fedcba']);
+  });
+
+  it("keeps v12's note colours, which neither darkMode nor primaryTextColor moves (#825)", () => {
+    for (const themeVariables of [{ darkMode: true }, { primaryTextColor: '#2a4d69' }]) {
+      const t = lit(themeVariables);
+      expect(['noteBkgColor', 'noteTextColor'].map(t.value)).toEqual(['#fff5ad', '#333333']);
+    }
+  });
+
+  it('writes the fallbacks as CSS over the primaryColor and background aliases (R-THEME-4)', () => {
+    const t = createTheme(base);
+    t.color('secondaryColor');
+    t.color('tertiaryColor');
+    t.color('lineColor');
+    expect(t.rootStyle()).toEqual({
+      '--_s': 'var(--mermaid-secondaryColor,hsl(from var(--_p) calc(h - 120) s l / alpha))',
+      '--_t':
+        'var(--mermaid-tertiaryColor,hsl(from hsl(from var(--_p) calc(h + 180) s l / alpha) h s clamp(0, l + 5, 100) / alpha))',
+      '--_l':
+        'var(--mermaid-lineColor,color(from var(--_bg) srgb calc(1 - r) calc(1 - g) calc(1 - b) / alpha))',
+      '--_p': 'var(--mermaid-primaryColor,#fff4dd)',
+      '--_bg': 'var(--mermaid-background,#f4f4f4)',
+    });
+  });
+});
+
+describe('createTheme: the named classic themes pin v12 constructor values (#798, #773)', () => {
+  // v12 sets mainBkg as a literal in each constructor and never recomputes it from primaryColor.
+  const MAIN_BKG: readonly [ThemeName, string][] = [
+    ['default', '#ececff'],
+    ['dark', '#1f2020'],
+    ['forest', '#cde498'],
+    ['neutral', '#eeeeee'],
+  ];
+
+  it.each(MAIN_BKG)(
+    '%s keeps mainBkg and actorBkg %s under a primaryColor override',
+    async (name, fill) => {
+      const t = createTheme(await loadTheme(name), {
+        cssVariables: false,
+        themeVariables: { primaryColor: '#ffcc00' },
+      });
+      expect([t.value('primaryColor'), t.value('mainBkg'), t.value('actorBkg')]).toEqual([
+        '#ffcc00',
+        fill,
+        fill,
+      ]);
+    }
+  );
+
+  it.each(MAIN_BKG)(
+    '%s: --mermaid-mainBkg repaints nodes, --mermaid-primaryColor does not (R-THEME-3)',
+    async (name, fill) => {
+      const t = createTheme(await loadTheme(name));
+      expect(t.color('mainBkg')).toBe('var(--_mb)');
+      expect(t.rootStyle()).toEqual({ '--_mb': `var(--mermaid-mainBkg,${fill})` });
+    }
+  );
+
+  it("keeps v12's borders and text inks, which no base colour moves; arrowheads follow lineColor", async () => {
+    const t = createTheme(await loadTheme('default'), {
+      cssVariables: false,
+      themeVariables: { primaryColor: '#2a4d69', secondaryColor: '#2a4d69', lineColor: '#ff0000' },
+    });
+    const names = [
+      'primaryBorderColor',
+      'secondaryBorderColor',
+      'tertiaryBorderColor',
+      'secondaryTextColor',
+      'tertiaryTextColor',
+      'arrowheadColor',
+    ];
+    expect(names.map(t.value)).toEqual([
+      '#c7c7f1',
+      '#eeeebc',
+      '#e3f1c7',
+      '#000021',
+      '#060013',
+      '#ff0000',
+    ]);
+  });
+
+  it("derives dark's note and cluster fills from mainBkg, as v12's secondBkg", async () => {
+    const t = createTheme(await loadTheme('dark'), {
+      cssVariables: false,
+      themeVariables: { mainBkg: '#ff0000' },
+    });
+    // v12 theme-dark updateColors: secondBkg = lighten(mainBkg, 16), hsl(0, 100%, 66%).
+    expect(['noteBkgColor', 'clusterBkg'].map(t.value)).toEqual(['#ff5252', '#ff5252']);
+    const own = createTheme(await loadTheme('dark'), { cssVariables: false });
+    expect(['noteBkgColor', 'clusterBkg'].map(own.value)).toEqual(['#474949', '#474949']);
+  });
+
+  it('keeps the error and note colours under darkMode, as v12', async () => {
+    const t = createTheme(await loadTheme('forest'), {
+      cssVariables: false,
+      themeVariables: { darkMode: true },
+    });
+    expect(['errorBkgColor', 'errorTextColor', 'noteBkgColor'].map(t.value)).toEqual([
+      '#552222',
+      '#552222',
+      '#fff5ad',
+    ]);
   });
 });
 

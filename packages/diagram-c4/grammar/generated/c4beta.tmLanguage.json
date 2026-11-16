@@ -1,0 +1,356 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-c4beta",
+  "scopeName": "source.mermaid-c4beta",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "begin": "[^\\S\\n]*%%\\{",
+      "end": "\\}%%",
+      "name": "meta.embedded.mermaid-c4beta"
+    },
+    "rule-0": {
+      "match": "c4-beta(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-1": {
+      "match": "context(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-2": {
+      "match": "container(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-3": {
+      "match": "component(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-4": {
+      "match": "dynamic(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-5": {
+      "match": "deployment(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-6": {
+      "match": "person(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-7": {
+      "match": "softwareSystem(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-8": {
+      "match": "group(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-9": {
+      "match": "deploymentNode(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-10": {
+      "match": "infrastructureNode(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-11": {
+      "match": "instances(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-12": {
+      "match": "on(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-13": {
+      "match": "off(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-14": {
+      "match": "TB(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-15": {
+      "match": "BT(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-16": {
+      "match": "LR(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-17": {
+      "match": "RL(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-18": {
+      "match": "direction(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-19": {
+      "match": "legend(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-20": {
+      "match": "style(?!\\w|-\\w)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-21": {
+      "match": "title(?!\\w|-\\w)[^\\n\\r]*?(?=%%|[\\r\\n]|$)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-22": {
+      "match": "accTitle(?!\\w|-\\w)[\\t ]*:[^\\n\\r]*?(?=%%|[\\r\\n]|$)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-23": {
+      "match": "accDescr(?!\\w|-\\w)[\\t ]*:[^\\n\\r]*?(?=%%|[\\r\\n]|$)",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-24": {
+      "begin": "accDescr(?!\\w|-\\w)\\s*\\{",
+      "end": "\\}",
+      "name": "keyword.control.mermaid-c4beta"
+    },
+    "rule-25": {
+      "match": "-->",
+      "name": "keyword.operator.mermaid-c4beta"
+    },
+    "rule-26": {
+      "match": "<--(?!>)",
+      "name": "keyword.operator.mermaid-c4beta"
+    },
+    "rule-27": {
+      "match": "<-->",
+      "name": "keyword.operator.mermaid-c4beta"
+    },
+    "rule-28": {
+      "match": ":::[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*",
+      "name": "variable.other.mermaid-c4beta"
+    },
+    "rule-29": {
+      "match": ":",
+      "name": "punctuation.definition.mermaid-c4beta"
+    },
+    "rule-30": {
+      "match": ",",
+      "name": "punctuation.definition.mermaid-c4beta"
+    },
+    "rule-31": {
+      "match": "\\{",
+      "name": "punctuation.definition.mermaid-c4beta"
+    },
+    "rule-32": {
+      "match": "\\}",
+      "name": "punctuation.definition.mermaid-c4beta"
+    },
+    "rule-33": {
+      "match": "(?<=(?:^|[\\n\\r])[\\t ]*)[0-9]+(?=[\\t ]*:)",
+      "name": "constant.language.mermaid-c4beta"
+    },
+    "rule-34": {
+      "match": "#(?:[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})(?!\\w)",
+      "name": "constant.language.mermaid-c4beta"
+    },
+    "rule-35": {
+      "match": "\"(?:[^\"\\\\\\r\\n]|\\\\.)*\"|'(?:[^'\\\\\\r\\n]|\\\\.)*'",
+      "name": "string.quoted.mermaid-c4beta"
+    },
+    "rule-36": {
+      "match": "(?!(?:accTitle|accDescr)(?!\\w|-\\w))[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*",
+      "name": "variable.other.mermaid-c4beta"
+    },
+    "rule-37": {
+      "match": "\\r\\n|\\n|\\r"
+    },
+    "rule-38": {
+      "match": "[\\t ]+"
+    },
+    "rule-39": {
+      "match": "%%[^\\n\\r]*",
+      "name": "comment.line.mermaid-c4beta"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-3"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-8"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-10"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-12"
+        },
+        {
+          "include": "#rule-13"
+        },
+        {
+          "include": "#rule-14"
+        },
+        {
+          "include": "#rule-15"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-17"
+        },
+        {
+          "include": "#rule-18"
+        },
+        {
+          "include": "#rule-19"
+        },
+        {
+          "include": "#rule-20"
+        },
+        {
+          "include": "#rule-21"
+        },
+        {
+          "include": "#rule-22"
+        },
+        {
+          "include": "#rule-23"
+        },
+        {
+          "include": "#rule-24"
+        },
+        {
+          "include": "#rule-25"
+        },
+        {
+          "include": "#rule-26"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-28"
+        },
+        {
+          "include": "#rule-29"
+        },
+        {
+          "include": "#rule-30"
+        },
+        {
+          "include": "#rule-31"
+        },
+        {
+          "include": "#rule-32"
+        },
+        {
+          "include": "#rule-33"
+        },
+        {
+          "include": "#rule-34"
+        },
+        {
+          "include": "#rule-35"
+        },
+        {
+          "include": "#rule-36"
+        },
+        {
+          "include": "#rule-37"
+        },
+        {
+          "include": "#rule-38"
+        },
+        {
+          "include": "#rule-39"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-c4beta"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-c4beta"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-c4beta"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-c4beta"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}

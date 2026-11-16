@@ -127,6 +127,52 @@ describe('c4Diagram.jison quirks', () => {
     ]);
   });
 
+  it('ends an unclosed quoted argument at the line break before a statement (#681)', () => {
+    // v12's `[^"]*` ran on to the next quote, taking the statements in between.
+    expect(jison('C4Context\nPerson(a, "A)\nPerson(b, "B")')).toEqual([
+      ...H,
+      'PERSON:Person',
+      'STR:a',
+      'STR:A)',
+      'NEWLINE:\n',
+      'PERSON:Person',
+      'STR:b',
+      'STR:B',
+      ...END,
+    ]);
+    // Also across blank lines and an indent, and in a named argument's value.
+    expect(jison('C4Context\nPerson(a, "A", $descr="d\n\n  Rel(a, b)')).toEqual([
+      ...H,
+      'PERSON:Person',
+      'STR:a',
+      'STR:A',
+      'STR_KEY:descr',
+      'STR_VALUE:d\n',
+      'NEWLINE:\n',
+      'REL:Rel',
+      'STR:a',
+      'STR: b',
+      ...END,
+    ]);
+    // A line that only starts like a macro, or is not one, is text; so is a header.
+    expect(slices('C4Context\nPerson(a, "A\nPerson is\nFoo(x)\nC4Context")', T.Str)[1]).toEqual([
+      'A\nPerson is\nFoo(x)\nC4Context',
+      'A\nPerson is\nFoo(x)\nC4Context',
+    ]);
+  });
+
+  it('reads a tab before an opening quote as a blank (#681)', () => {
+    // v12's `[ ]*"` took no tab, so the quotes stayed in the unquoted argument.
+    expect(jison('C4Context\nPerson(a,\t"A", \t"")')).toEqual([
+      ...H,
+      'PERSON:Person',
+      'STR:a',
+      'STR:A',
+      'ATTRIBUTE_EMPTY: \t""',
+      ...END,
+    ]);
+  });
+
   it('leaves the line breaks after a `%%` comment to NEWLINE (D452)', () => {
     // v12's comment rule ate them, so the next statement followed with no NEWLINE.
     const src = 'C4Context\nPerson(a,"A") %% c\n\nPerson(b,"B")';

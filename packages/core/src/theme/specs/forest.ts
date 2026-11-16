@@ -51,6 +51,20 @@ const theme: ThemeSpec = {
     ...gitLabelRules('#32004d', '#abb594'),
   },
   values: {
+    // v12 theme-forest.js sets these in its constructor and never recomputes them, so no base
+    // colour moves them (#773, #798): the node fill, the borders, the inverted text inks (the
+    // tertiary one from its primaryColor), and the note and error colours, which darkMode leaves
+    // alone.
+    mainBkg: '#cde498',
+    border1: '#13540c',
+    primaryBorderColor: '#abb594',
+    secondaryBorderColor: '#b4e599',
+    tertiaryBorderColor: '#c3cab2',
+    secondaryTextColor: '#32004d',
+    tertiaryTextColor: '#321b67',
+    noteBkgColor: '#fff5ad',
+    errorBkgColor: '#552222',
+    errorTextColor: '#552222',
     nestedBkg: '#f0f0f0', // v12 `altBackground` (#192)
     // v12 theme-forest.js: the participant border is darken(mainBkg, 20), the fragment tab's
     // a dark green

@@ -1,0 +1,7 @@
+c4-beta container
+  title Internet Banking
+  person customer "Customer" "A customer of the bank."
+  softwareSystem banking "Banking System" {
+    container web "Web Application" "Delivers the content." "Java"
+  }
+  customer --> web : "Uses" "HTTPS"

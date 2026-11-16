@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cellWidth, repairRoutes, routeCollisions } from '@mermaid-js/core/ascii';
 import type { LayoutModel } from '@mermaid-js/core/layout';
+import { parseRequirement } from '@mermaid-js/diagram-requirement';
 import { createMermaid, MermaidError } from 'mermaid';
 import { requirementCases, requirementCorpus } from '../requirement/corpus.ts';
 import {
@@ -24,6 +25,8 @@ const CHARSETS: Charset[] = ['unicode', 'ascii'];
 
 interface Case {
   id: string;
+  /** The front-matter title as written. */
+  title: string | undefined;
   layout: RequirementCellLayout;
   out: Record<Charset, RequirementAsciiResult>;
   again: Record<Charset, string>;
@@ -49,7 +52,8 @@ beforeAll(async () => {
         out[charset] = await renderRequirementAscii(item.source, { charset });
         again[charset] = (await renderRequirementAscii(item.source, { charset })).text;
       }
-      cases.push({ id: item.id, layout: out.unicode.layout, out, again });
+      const { title } = parseRequirement(item.source).model;
+      cases.push({ id: item.id, title, layout: out.unicode.layout, out, again });
     } catch (e) {
       failed[item.id] = String(e);
     }
@@ -71,7 +75,7 @@ const perCharset = (check: (c: Case, charset: Charset) => unknown[]) =>
   );
 
 const structureOf = (c: Case, cs: Charset) =>
-  readRequirementStructure(c.out[cs].text, cs, requirementExpectedOf(c.layout));
+  readRequirementStructure(c.out[cs].text, cs, requirementExpectedOf(c.layout, c.title));
 
 describe('requirement ascii corpus properties (D438, R-ASCII-9)', () => {
   it('renders every requirement diagram SVG renders', () => {

@@ -1,6 +1,7 @@
 // cspell:words preorder onerror
 import { beforeAll, describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
+import { decodeEntities } from '@mermaid-js/core/text';
 import { treeView, type TreeViewModel } from '@mermaid-js/diagram-treeview';
 import type { ExtensionPlugin, Mermaid, MermaidConfig } from 'mermaid';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
@@ -130,10 +131,18 @@ describe('treeView render: structure', () => {
       assertInert(svg);
       const model = (await api.prepare(source)).parse.model as TreeViewModel;
       const labels = byClass(tree, 'treeView-node-label');
-      expect(labels.map((l) => textOf(tree, l))).toEqual(['/', ...model.nodes.map((n) => n.name)]);
+      // Entity codes are drawn as their characters (D563).
+      expect(labels.map((l) => textOf(tree, l))).toEqual([
+        '/',
+        ...model.nodes.map((n) => decodeEntities(n.name)),
+      ]);
       for (const l of labels) expect(attr(tree, l, 'xml:space')).toBe('preserve');
       const descriptions = byClass(tree, 'treeView-node-description').map((d) => textOf(tree, d));
-      expect(descriptions).toEqual(model.nodes.flatMap((n) => n.description ?? []));
+      expect(descriptions).toEqual(
+        model.nodes.flatMap((n) =>
+          n.description === undefined ? [] : decodeEntities(n.description)
+        )
+      );
       if (name === 'plain-text') {
         expect(svg).not.toMatch(/<script|<img|<br|<tspan/);
         expect(labels.map((l) => textOf(tree, l))).toContain('<br>x');

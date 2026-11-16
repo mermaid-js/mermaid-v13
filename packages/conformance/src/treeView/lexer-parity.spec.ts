@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { Kind } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
-import { ampEntities, LANGIUM_NAMES, treeViewLex } from '@mermaid-js/diagram-treeview/testing';
-import { decodeEntities } from '../flowchart/v12.ts';
+import { ampEntities } from '@mermaid-js/core/parser-kit/support';
+import { LANGIUM_NAMES, treeViewLex } from '@mermaid-js/diagram-treeview/testing';
+import { v12TokenText } from '../v12-entities.ts';
 import { loadLangiumLexerOracle } from '../langium-lexer.ts';
 import type { LangiumLex, LangiumToken } from '../langium-lexer.ts';
 import { TREEVIEW_E2E_AT_LEAST, treeViewE2eIds, treeViewGateCorpus } from './corpus.ts';
@@ -194,10 +195,10 @@ interface Streams {
 }
 
 function v12Streams(lexed: LangiumLex): Streams {
-  const decode = ([n, i]: LangiumToken): LangiumToken => [n, decodeEntities(i)];
+  const decode = ([n, i]: LangiumToken): LangiumToken => [n, v12TokenText(i)];
   const tokens = lexed.tokens.map(decode);
   if (lexed.errorAt !== undefined) {
-    const before = decodeEntities(lexed.input.slice(0, lexed.errorAt));
+    const before = v12TokenText(lexed.input.slice(0, lexed.errorAt));
     tokens.push([ERROR, `@${before.length}`]);
   }
   return { tokens, hidden: lexed.hidden.map(decode) };
@@ -313,7 +314,7 @@ describe('treeView lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () 
         diffs.push(`${item.id}: v12 never lexed it (${trace.error})`);
         continue;
       }
-      const v12 = decodeEntities(trace.lexed);
+      const v12 = v12TokenText(trace.lexed);
       if (box.kind === 'rewrite') {
         rewritten++;
         const v13 = ampEntities(box.rewrite.text);

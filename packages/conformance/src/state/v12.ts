@@ -9,7 +9,7 @@
  * renamed `<composite>:region<k>` in order within their composite, and the `[*]` states inside
  * them follow; note groups are left out (a note is `{ target, side, text }`).
  */
-import { decodeEntities } from '../flowchart/v12.ts';
+import { v12DecodeEntities } from '../v12-entities.ts';
 
 /** `diagram.type` mermaid v12 reports for `stateDiagram` and `stateDiagram-v2` alike. */
 export const STATE_V12_TYPES = ['stateDiagram'];
@@ -101,7 +101,7 @@ function stateOf(n: NodeV12, id: (raw: string) => string): StateSnapshot['states
     kind: n.isGroup ? 'composite' : (KINDS[n.shape ?? ''] ?? 'plain'),
     // A label that is the id is the renamed id.
     label: [n.label === n.id ? id(n.id) : (n.label ?? ''), ...(n.description ?? [])].map(
-      decodeEntities
+      v12DecodeEntities
     ),
     parent: n.parentId === undefined ? undefined : id(n.parentId),
     classes: userClasses(n.cssClasses ?? ''),
@@ -116,8 +116,8 @@ export function stateV12Snapshot(dbValue: unknown): StateSnapshot {
   const id = regionNames(data.nodes);
   const snap: StateSnapshot = {
     direction: data.direction,
-    accTitle: decodeEntities(db.getAccTitle()),
-    accDescr: decodeEntities(db.getAccDescription()),
+    accTitle: v12DecodeEntities(db.getAccTitle()),
+    accDescr: v12DecodeEntities(db.getAccDescription()),
     states: [],
     regions: [],
     transitions: [],
@@ -135,7 +135,7 @@ export function stateV12Snapshot(dbValue: unknown): StateSnapshot {
       snap.notes.push({
         target: n.id.replace(/----note-\d+$/, ''),
         side: n.position === 'left of' ? 'left' : 'right',
-        text: decodeEntities(n.label ?? ''),
+        text: v12DecodeEntities(n.label ?? ''),
       });
     } else if (n.isGroup && n.shape === 'divider') {
       snap.regions.push({ id: id(n.id), parent: id(n.parentId ?? ''), dir: n.dir ?? 'TB' });
@@ -146,7 +146,7 @@ export function stateV12Snapshot(dbValue: unknown): StateSnapshot {
     snap.transitions.push({
       from: id(e.start),
       to: id(e.end),
-      label: decodeEntities(e.label ?? ''),
+      label: v12DecodeEntities(e.label ?? ''),
     });
   }
   return snap;

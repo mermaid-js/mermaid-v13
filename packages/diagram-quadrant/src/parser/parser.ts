@@ -32,9 +32,10 @@ import type {
   Range,
   SymbolOccurrence,
 } from '@mermaid-js/core/parser-kit';
+import { decodePlaceholders } from '@mermaid-js/core/parser-kit/support';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { outerRanges } from '@mermaid-js/shared/parser/table';
-import { tokenValue, v12Text } from '@mermaid-js/shared/parser/v12-text';
+import { tokenText, tokenValue, v12Text } from '@mermaid-js/shared/parser/v12-text';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type {
   QuadrantAxis,
@@ -656,9 +657,22 @@ class QuadrantParser {
     const k = this.c.kind;
     if (!this.in(LABEL_START)) this.fail(LABEL);
     if (k === T.Str || k === T.MdStr) this.closed(k);
-    let text = this.take();
-    while (this.in(TEXT_MORE)) text += this.take();
-    return { text, markdown: k === T.MdStr, range: this.span(first) };
+    // v12's lexer split a placeholder over several tokens (`#name;` is `ﬂ°`, `name`, `¶ß`), so
+    // the text is decoded whole: a name core cannot decode is then seen and kept (D561).
+    let text = this.raw();
+    while (this.in(TEXT_MORE)) text += this.raw();
+    return {
+      text: decodePlaceholders(text),
+      markdown: k === T.MdStr,
+      range: this.span(first),
+    };
+  }
+
+  /** Consume the current token; its text as v12's lexer read it, placeholders kept. */
+  private raw(): string {
+    const text = tokenText(this.lexed, this.c.pos);
+    this.last = this.c.next();
+    return text;
   }
 
   /** A string or markdown string at the cursor must be closed. */

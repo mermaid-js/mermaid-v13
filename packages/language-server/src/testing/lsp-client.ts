@@ -1,6 +1,7 @@
 /**
  * A scripted LSP client for the specs (D99 suite 5): spawns `mermaid-language-server --stdio`
- * from source (node + tsx, the `mermaid-source` condition) and talks JSON-RPC over its stdio.
+ * from source (node + tsx, the `mermaid-source` condition), or a built bin such as the one npm
+ * installs, and talks JSON-RPC over its stdio.
  */
 import { spawn } from 'node:child_process';
 import { join } from 'node:path';
@@ -14,10 +15,24 @@ import type {
   InitializeResult,
   ProtocolConnection,
   PublishDiagnosticsParams,
+  TextDocumentContentChangeEvent,
 } from 'vscode-languageserver-protocol';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 const CLI = join(import.meta.dirname, '..', 'cli.ts');
+/**
+ * Which bin to run: the source through tsx, or a built one, such as the installed
+ * `node_modules/.bin/mermaid-language-server` of the pack smoke spec
+ * (`e2e/platform/language-server.spec.ts`), run as it is, through its shebang, as an editor
+ * runs it.
+ */
+export type Bin = 'source' | { readonly path: string };
+
+/** The executable and its arguments for `bin`. */
+function command(bin: Bin, args: readonly string[]): [string, string[]] {
+  if (typeof bin === 'object') return [bin.path, [...args]];
+  return [process.execPath, ['--import', 'tsx', '--conditions=mermaid-source', CLI, ...args]];
+}
 
 export interface Client {
   readonly connection: ProtocolConnection;
@@ -30,9 +45,15 @@ export interface Client {
   open(uri: string, text: string, languageId?: string): void;
   /** Replace the whole text of `uri`. */
   change(uri: string, text: string, version: number): void;
+  /** Send `changes` (ranged or full) for `uri` in one `didChange`, applied in order. */
+  edit(uri: string, version: number, changes: TextDocumentContentChangeEvent[]): void;
   close(uri: string): void;
   /** `shutdown` + `exit`; resolves with the server's exit code. */
   stop(): Promise<number | null>;
+  /** Close the server's stdin without `exit` (as a client that goes away does). */
+  endInput(): void;
+  /** Resolves with the server's exit code once its process has exited. */
+  readonly exited: Promise<number | null>;
   /** What the server wrote to stderr. */
   stderr(): string;
 }
@@ -42,14 +63,37 @@ export interface ClientOptions {
   workspaceFolders?: { uri: string; name: string }[];
   initializationOptions?: unknown;
   capabilities?: ClientCapabilities;
+  /** The bin to start (default `source`). */
+  bin?: Bin;
+  /** Arguments for the bin (default `['--stdio']`). */
+  args?: readonly string[];
+  /** The `processId` sent in `initialize` (default this process, which stays alive). */
+  processId?: number | null;
+}
+
+/** What a run of the bin that is not an LSP session wrote, and its exit code. */
+export interface CliRun {
+  readonly code: number | null;
+  readonly stdout: string;
+  readonly stderr: string;
+}
+
+/** Run the bin with `args` and stdin closed at once; resolves when it exits. */
+export function runCli(args: readonly string[], bin: Bin = 'source'): Promise<CliRun> {
+  const child = spawn(...command(bin, args), { cwd: ROOT, stdio: ['pipe', 'pipe', 'pipe'] });
+  let stdout = '';
+  let stderr = '';
+  child.stdout.setEncoding('utf8').on('data', (c: string) => (stdout += c));
+  child.stderr.setEncoding('utf8').on('data', (c: string) => (stderr += c));
+  child.stdin.end();
+  return new Promise((done) => child.on('close', (code) => done({ code, stdout, stderr })));
 }
 
 export async function startClient(options: ClientOptions = {}): Promise<Client> {
-  const child = spawn(
-    process.execPath,
-    ['--import', 'tsx', '--conditions=mermaid-source', CLI, '--stdio'],
-    { cwd: ROOT, stdio: ['pipe', 'pipe', 'pipe'] }
-  );
+  const child = spawn(...command(options.bin ?? 'source', options.args ?? ['--stdio']), {
+    cwd: ROOT,
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
   let stderr = '';
   child.stderr.setEncoding('utf8').on('data', (c: string) => (stderr += c));
   const exited = new Promise<number | null>((done) => child.on('exit', (code) => done(code)));
@@ -70,7 +114,7 @@ export async function startClient(options: ClientOptions = {}): Promise<Client> 
   // A server that dies before answering fails the spec with its stderr, not a timeout.
   const init = await Promise.race([
     connection.sendRequest<InitializeResult>('initialize', {
-      processId: process.pid,
+      processId: options.processId === undefined ? process.pid : options.processId,
       rootUri: options.rootUri ?? null,
       capabilities: options.capabilities ?? {},
       ...(options.workspaceFolders ? { workspaceFolders: options.workspaceFolders } : {}),
@@ -103,6 +147,12 @@ export async function startClient(options: ClientOptions = {}): Promise<Client> 
         contentChanges: [{ text }],
       });
     },
+    edit(uri, version, contentChanges) {
+      void connection.sendNotification('textDocument/didChange', {
+        textDocument: { uri, version },
+        contentChanges,
+      });
+    },
     close(uri) {
       void connection.sendNotification('textDocument/didClose', { textDocument: { uri } });
     },
@@ -113,6 +163,10 @@ export async function startClient(options: ClientOptions = {}): Promise<Client> 
       connection.dispose();
       return code;
     },
+    endInput() {
+      child.stdin.end();
+    },
+    exited,
     stderr: () => stderr,
   };
 }

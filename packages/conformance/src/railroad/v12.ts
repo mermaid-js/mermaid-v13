@@ -14,7 +14,7 @@
  * - the title is the in-text one: the oracle never passes the front matter on, so
  *   `getDiagramTitle()` holds no front-matter title (the v13 side leaves it out too).
  */
-import { decodeEntities as d } from '../flowchart/v12.ts';
+import { v12DecodeEntities as d } from '../v12-entities.ts';
 
 export type RailroadNodeSnapshot =
   | { type: 'terminal'; value: string }

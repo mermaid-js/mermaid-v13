@@ -30,6 +30,7 @@ import {
   type MeasuredLabel,
   type Run,
 } from '@mermaid-js/core/text';
+import { tagsOnly } from '@mermaid-js/core/text/tags-only';
 import { eventModelingConfig } from '../config.ts';
 import type { EventModel, EventModelFrame } from '../model.ts';
 import { eventModelStructure, type EventModelRelation } from '../structure.ts';
@@ -53,15 +54,28 @@ import type {
 } from './types.ts';
 import { unionRects } from '@mermaid-js/shared/layout';
 
-/** What the layout reads from the render context (`warn` for `EVENTMODELING_CONFIG_INVALID`). */
+/**
+ * What the layout reads from the render context (`warn` for `EVENTMODELING_CONFIG_INVALID`,
+ * `inline` for the HTML tags its labels lose).
+ */
 export type EventModelLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
-  Partial<Pick<RenderContext, 'warn'>>;
+  Partial<Pick<RenderContext, 'warn' | 'inline'>>;
 
 interface Env {
   /** `text` through core's label layout in the layout's font, wrapped at `wrap`. */
   label(text: string, wrap: number, style: number): MeasuredLabel;
   /** The width of `text` in mono. */
   monoWidth(text: string): number;
+}
+
+/** The label and width measurements of one layout, in its font. */
+function environment(font: FontKey, { measurer, inline }: EventModelLayoutContext): Env {
+  // No inline boxes here.
+  const options = { inline: tagsOnly(inline) };
+  return {
+    label: (text, wrap, style) => layoutLabel(text, font, wrap, measurer, { ...options, style }),
+    monoWidth: (text) => measurer.width(text, font, Style.Mono),
+  };
 }
 
 /** Lays out an event model in px. */
@@ -74,11 +88,7 @@ export function layoutEventModel(
     size: ctx.theme.number('fontSize'),
     weight: FONT_WEIGHT,
   };
-  const { measurer } = ctx;
-  const env: Env = {
-    label: (text, wrap, style) => layoutLabel(text, font, wrap, measurer, { style }),
-    monoWidth: (text) => measurer.width(text, font, Style.Mono),
-  };
+  const env = environment(font, ctx);
   const { padding } = eventModelingConfig(ctx.config.eventmodeling, ctx.warn ?? ignore);
   const structure = eventModelStructure(model);
 
