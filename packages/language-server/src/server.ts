@@ -17,6 +17,8 @@
  * feature then works inside their Mermaid fences and answers nothing outside them. Folding and
  * semantic tokens of a Markdown document stay with the client's Markdown server unless
  * `mermaid.markdownTokensAndFolding` is on too.
+ * A document opened later also has its package root scanned, once, when that root lies inside
+ * a workspace folder; new facets rebuild the service and re-publish the open documents (D579).
  */
 import { fileURLToPath } from 'node:url';
 import type { FacetEntry, LanguageService } from '@mermaid-js/language-service';
@@ -52,7 +54,7 @@ import {
 import type { Positions } from './convert.ts';
 import type { Open, Part } from './documents.ts';
 import { analyse, forget, partAt } from './documents.ts';
-import { discoverFacets } from './facets.ts';
+import { pluginRoots, type PluginRoots } from './roots.ts';
 import { selectionChain } from './selection.ts';
 import { VERSION } from './version.ts';
 
@@ -205,6 +207,45 @@ function serveDecorations(
   });
 }
 
+interface StartFacets {
+  readonly facets: readonly FacetEntry[];
+  /** Where to scan for more as documents open; set when the client opts in (D579). */
+  readonly plugins?: PluginRoots;
+}
+
+/**
+ * The facets the service starts with: the embedder's rows, else, when the client opts in
+ * (D157), the plugins of the workspace folders it names (D578).
+ */
+async function startFacets(
+  connection: Connection,
+  options: ServerOptions,
+  params: InitializeParams
+): Promise<StartFacets> {
+  if (options.facets !== undefined) return { facets: options.facets };
+  if (!pluginsEnabled(params.initializationOptions)) return { facets: [] };
+  const folders = rootsOf(params);
+  // No folder: the working directory is not one the user chose to trust (D578).
+  if (folders.length === 0) {
+    connection.console.warn(
+      'mermaid: plugins are on, but the client named no workspace folder: no plugins discovered'
+    );
+    return { facets: [] };
+  }
+  const plugins = pluginRoots(folders, { log: (m) => connection.console.warn(`mermaid: ${m}`) });
+  return { facets: await plugins.folders(), plugins };
+}
+
+/**
+ * A service with `facets`, every facet loaded (D155), so no snapshot is made before its facet
+ * is there.
+ */
+async function preloaded(facets: readonly FacetEntry[]): Promise<LanguageService> {
+  const service = createLanguageService({ facets });
+  await service.preload();
+  return service;
+}
+
 /** Wire the server to `connection` and start listening. */
 export function startServer(connection: Connection, options: ServerOptions = {}): void {
   let service: LanguageService | undefined;
@@ -214,6 +255,8 @@ export function startServer(connection: Connection, options: ServerOptions = {})
   let nestedSymbols = false;
   let markdown = { markdown: false, tokensAndFolding: false };
   const open = new Map<string, Open>();
+  let { facets, plugins }: StartFacets = { facets: [] };
+  let rebuilt: Promise<void> = Promise.resolve();
 
   const update = (uri: string, text: string, version: number, asMarkdown: boolean) => {
     if (!service) return;
@@ -228,6 +271,20 @@ export function startServer(connection: Connection, options: ServerOptions = {})
     });
   };
 
+  /**
+   * Rebuild the service with `rows` added, if any, and re-publish every open document's
+   * diagnostics (D579). Rebuilds run one at a time; a change that arrives meanwhile goes to
+   * the old service and is parsed again by the new one.
+   */
+  const addFacets = (rows: readonly FacetEntry[]): void => {
+    if (rows.length === 0) return;
+    rebuilt = rebuilt.then(async () => {
+      facets = [...facets, ...rows];
+      service = await preloaded(facets);
+      for (const [uri, o] of open) update(uri, o.text, o.version, o.markdown);
+    });
+  };
+
   /** The snapshot at `position` of the open document, and the offset in it. */
   const at = (textDocument: TextDocumentIdentifier, position: Position): At | undefined =>
     partAtPosition(open.get(textDocument.uri), position);
@@ -239,21 +296,8 @@ export function startServer(connection: Connection, options: ServerOptions = {})
     hoverMarkdown = takesMarkdown(text?.hover?.contentFormat);
     docMarkdown = takesMarkdown(text?.completion?.completionItem?.documentationFormat);
     nestedSymbols = text?.documentSymbol?.hierarchicalDocumentSymbolSupport === true;
-    let facets = options.facets ?? [];
-    if (options.facets === undefined && pluginsEnabled(params.initializationOptions)) {
-      const roots = rootsOf(params);
-      // No folder: the working directory is not one the user chose to trust (D578).
-      if (roots.length === 0)
-        connection.console.warn(
-          'mermaid: plugins are on, but the client named no workspace folder: no plugins discovered'
-        );
-      else
-        facets = await discoverFacets(roots, {
-          log: (m) => connection.console.warn(`mermaid: ${m}`),
-        });
-    }
-    service = createLanguageService({ facets });
-    await service.preload();
+    ({ facets, plugins } = await startFacets(connection, options, params));
+    service = await preloaded(facets);
     return {
       serverInfo: { name: 'mermaid-language-server', version: VERSION },
       capabilities: {
@@ -280,9 +324,14 @@ export function startServer(connection: Connection, options: ServerOptions = {})
   });
 
   connection.onDidOpenTextDocument(({ textDocument: { uri, languageId, version, text } }) => {
-    if (isMermaidUri(uri) || languageId === 'mermaid') update(uri, text, version, false);
+    let asMarkdown: boolean;
+    if (isMermaidUri(uri) || languageId === 'mermaid') asMarkdown = false;
     else if (markdown.markdown && (isMarkdownUri(uri) || MARKDOWN_LANGUAGES.has(languageId)))
-      update(uri, text, version, true);
+      asMarkdown = true;
+    else return;
+    update(uri, text, version, asMarkdown);
+    const file = fileDir(uri);
+    if (plugins && file !== undefined) void plugins.document(file).then(addFacets);
   });
   connection.onDidChangeTextDocument(({ textDocument: { uri, version }, contentChanges }) => {
     const o = open.get(uri);

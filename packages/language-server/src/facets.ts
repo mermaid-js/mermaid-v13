@@ -33,6 +33,11 @@ export interface DiscoverOptions {
   log?: (message: string) => void;
   /** Time limit on each detector or language import, in ms (default 5000). */
   importTimeoutMs?: number;
+  /**
+   * The ids earlier calls took, by package. A package claiming one is skipped, and the ids this
+   * call takes are added, so a root scanned later never replaces a facet (D579).
+   */
+  owners?: Map<string, string>;
 }
 
 /** `import(url)`, rejected after `ms`. */
@@ -121,7 +126,7 @@ async function scanRoot(
  * Facet rows for every third-party language facet in the own `node_modules` of each root:
  * roots in the order given, each in package-name order (D166). A package whose id is a
  * first-party diagram id or type (`flowchart`, `flowchart-v2`), or an id an earlier package
- * holds, is skipped.
+ * holds (in this call or, through `owners`, an earlier one), is skipped.
  */
 export async function discoverFacets(
   roots: string | readonly string[],
@@ -130,7 +135,7 @@ export async function discoverFacets(
   const log = options.log ?? ((): void => undefined);
   const ms = options.importTimeoutMs ?? IMPORT_TIMEOUT_MS;
   const firstParty = new Set(firstPartyFacets.flatMap((e) => [e.id, e.type]));
-  const owners = new Map<string, string>();
+  const owners = options.owners ?? new Map<string, string>();
   const rows: FacetEntry[] = [];
   const found: Facet[] = [];
   for (const root of typeof roots === 'string' ? [roots] : roots)

@@ -30,7 +30,7 @@ The server runs over stdio: start it as `mermaid-language-server --stdio`. It ex
 
 ## Editor setup
 
-Each snippet turns on the `plugins` option, which loads third-party diagram facets from the workspace's `node_modules` (see [Plugins](#plugins-opt-in)). Leave it out to serve first-party types only.
+Each snippet turns on the `plugins` option, which loads third-party diagram facets from the `node_modules` of the workspace and of its packages (see [Plugins](#plugins-opt-in)). Leave it out to serve first-party types only.
 
 ### Neovim (0.11 or newer)
 
@@ -99,7 +99,11 @@ By default the server serves first-party diagram types only and runs no code fro
 
 The server then scans each workspace folder's own `node_modules` (not ancestor folders) for packages with a `mermaid` manifest that has a `language` entry. It finds them with the same scan `mermaid` uses to render in Node (`mermaid/node-scan`), so a plugin package is either usable in both or skipped by both, with the same warning in the server's log. It refuses manifest paths outside the package, gives each import 5 seconds, and never lets a package replace a first-party diagram type. When two packages have the same diagram id, the first by package name wins. Embedders can pass rows directly with `startServer(connection, { facets })`, and no scan happens then.
 
-The scan runs once, while the server answers `initialize`. A client that names no workspace folder gets first-party types only, and the server logs one line saying so: it never scans its working directory. A folder added to the workspace later is not scanned, and neither are packages installed later: restart the server to pick them up.
+The workspace folders are scanned while the server answers `initialize`. A client that names no workspace folder gets first-party types only, and the server logs one line saying so: it never scans its working directory.
+
+When a `file:` document opens, the server also scans the nearest package root above it, the nearest directory with a `package.json` that names a package or lists dependencies, as `mermaid` finds an app's root in Node. So in a pnpm workspace, a plugin that is a dependency of `packages/foo` (installed in `packages/foo/node_modules`) is found once a document under `packages/foo` opens. The same rules apply: only that package's own `node_modules`, paths confined to each package, 5 seconds per import, and an id another package already holds is skipped. The document opens with the facets found so far; when the scan finds new ones, the server rebuilds its service and pushes fresh diagnostics for every open document.
+
+This happens only for documents inside a workspace folder the client named, and only when the package root lies inside that folder too (symlinks followed). A file opened from elsewhere, or one whose nearest package root is above the folder, never runs code from its `node_modules`. Each package root is scanned once per session. A folder added to the workspace later is not scanned, and neither are packages installed after their root was scanned: restart the server to pick them up.
 
 A third-party facet whose hover, completion or rename code throws gives no hover, no items, or a rename refusal that names the failure. It does not fail the request.
 
