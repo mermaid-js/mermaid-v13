@@ -2,7 +2,13 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "workspaces": {
     ".": {
-      "entry": ["tools/check-deps/cli.ts", "e2e/dom/server.ts", "e2e/dom/page.ts"],
+      "entry": [
+        "tools/check-deps/cli.ts",
+        "tools/workspace/check-generated-cli.ts",
+        "tools/workspace/typecheck-worker.ts",
+        "e2e/dom/server.ts",
+        "e2e/dom/page.ts"
+      ],
       "project": [
         "tools/**/*.{ts,js}",
         "e2e/{browser,dev,smoke,dom}/**/*.ts",
