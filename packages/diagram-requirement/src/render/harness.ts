@@ -15,8 +15,6 @@ import type { RequirementModel } from '../model.ts';
 import type { RequirementDocument } from '../parser/index.ts';
 import { requirement } from '../plugin.ts';
 
-export { TEST_VERSION } from '@mermaid-js/shared/testing/test-context';
-
 export type RenderRequirementOptions = Pick<
   TestRenderOptions,
   'config' | 'idPrefix' | 'engine' | 'outline' | 'measurer'

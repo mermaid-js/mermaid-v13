@@ -102,6 +102,8 @@ describe('workspace layout (DESIGN §2)', () => {
         './svg/graph',
         './svg/route',
         './testing/layout-invariants',
+        './testing/render-harness',
+        './testing/test-context',
       ].sort()
     );
   });

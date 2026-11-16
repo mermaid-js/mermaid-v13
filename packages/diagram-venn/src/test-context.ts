@@ -21,8 +21,6 @@ import type { VennModel } from './model.ts';
 import { parseVenn } from './parser/index.ts';
 import { venn } from './plugin.ts';
 
-export { TEST_VERSION } from '@mermaid-js/shared/testing/test-context';
-
 /** The config a render of `pre` resolves under `integrator`, as `initialize()` would get it. */
 export const vennTestConfig = (
   pre?: PreprocessResult,

@@ -33,7 +33,8 @@ export const TEST_VERSION = '13.0.0-alpha.0';
 /** The id prefix of a test render when none is given. */
 export const TEST_ID_PREFIX = 'mermaid-0';
 
-type Warn = (w: Warning) => void;
+/** Where a test render's warnings go. */
+export type Warn = (w: Warning) => void;
 
 /**
  * The config a render of `pre` resolves for the diagram whose config section is `section`:

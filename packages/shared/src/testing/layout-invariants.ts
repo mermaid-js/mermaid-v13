@@ -7,7 +7,7 @@
  */
 
 /** A box by its top-left corner and size. */
-interface Rect {
+export interface Rect {
   readonly x: number;
   readonly y: number;
   readonly width: number;
