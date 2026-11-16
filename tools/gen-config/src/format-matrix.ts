@@ -6,7 +6,7 @@
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ManifestSource } from './registry.ts';
-import { V12_DETECTORS } from './registry.ts';
+import { formatsOf, V12_DETECTORS } from './registry.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 export const FORMAT_MATRIX_PATH = join(ROOT, 'v13/docs/format-matrix.md');
@@ -38,7 +38,7 @@ export function generateFormatMatrix(manifests: readonly ManifestSource[]): stri
   ];
   for (const [type] of V12_DETECTORS) {
     const m = byType.get(type);
-    const cells = FORMATS.map((f) => (m?.manifest.formats.includes(f) ? 'yes' : 'no'));
+    const cells = FORMATS.map((f) => (m && formatsOf(m, type).includes(f) ? 'yes' : 'no'));
     lines.push(`| \`${type}\` | ${m ? `\`${m.name}\`` : 'not ported'} | ${cells.join(' | ')} |`);
   }
   lines.push('');

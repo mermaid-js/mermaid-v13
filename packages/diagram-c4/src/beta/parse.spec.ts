@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseC4Beta } from './parser.ts';
+import { parseC4 } from '../parser/index.ts';
+import { isC4Beta } from './model.ts';
 
 const parse = (body: string, header = 'c4-beta context') => parseC4Beta(`${header}\n${body}`);
 const errors = (body: string, header?: string) =>
@@ -246,5 +248,23 @@ describe('c4-beta statement spans and symbols', () => {
       ['c', 'ref'],
       ['s', 'ref'],
     ]);
+  });
+});
+
+describe('telling the two models apart (spec #730)', () => {
+  it('knows a c4-beta model by its kind, whatever other fields it carries', () => {
+    const beta = parse('person a "A"').model;
+    expect(isC4Beta(beta)).toBe(true);
+    expect(isC4Beta({ ...beta, boundaries: [] })).toBe(true);
+    expect(isC4Beta(parseC4('C4Context\nPerson(a, "A")\n').model)).toBe(false);
+  });
+});
+
+describe('whitespace before the header (spec #730)', () => {
+  it('skips a byte-order mark or a no-break space before it, and only there', () => {
+    expect(parseC4Beta('\uFEFF\u00A0c4-beta\nperson a "A"\n').diagnostics).toEqual([]);
+    expect(parseC4Beta('c4-beta\n\u00A0person a "A"\n').diagnostics.map((d) => d.code)).not.toEqual(
+      []
+    );
   });
 });

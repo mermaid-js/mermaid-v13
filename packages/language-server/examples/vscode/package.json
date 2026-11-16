@@ -1,0 +1,69 @@
+{
+  "name": "vscode-mermaid-lsp",
+  "displayName": "Mermaid LSP (dev)",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Minimal VS Code client for @mermaid-js/language-server, for maintainers to try the LSP. Not published.",
+  "publisher": "mermaid-js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/language-server/examples/vscode"
+  },
+  "type": "module",
+  "main": "./dist/extension.cjs",
+  "engines": {
+    "vscode": "^1.91.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [],
+  "contributes": {
+    "languages": [
+      {
+        "id": "mermaid",
+        "aliases": [
+          "Mermaid",
+          "mermaid"
+        ],
+        "extensions": [
+          ".mmd",
+          ".mermaid"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "configuration": {
+      "title": "Mermaid LSP (dev)",
+      "properties": {
+        "mermaidLsp.serverPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Path to the server's `cli.js`, run with VS Code's own Node. Empty: the workspace build (`packages/language-server/dist/cli.js`) when present, else `mermaid-language-server` on `PATH`."
+        },
+        "mermaidLsp.plugins": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Load third-party diagram facets from each workspace folder's `node_modules` (the server's `mermaid.plugins` initialization option). Restart the server after changing it."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "mermaidLsp.restart",
+        "title": "Mermaid LSP: Restart Server"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --platform=node --format=cjs --target=node20 --external:vscode --outfile=dist/extension.cjs",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/vscode": "1.91.0",
+    "esbuild": "^0.25.12",
+    "vscode-languageclient": "11.0.0"
+  }
+}

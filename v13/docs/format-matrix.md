@@ -12,7 +12,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `mindmap` | `@mermaid-js/diagram-mindmap` | yes | no |
 | `architecture` | `@mermaid-js/diagram-architecture` | yes | no |
 | `agentflow` | `@mermaid-js/diagram-agentflow` | yes | yes |
-| `c4beta` | `@mermaid-js/diagram-c4` | yes | yes |
+| `c4beta` | `@mermaid-js/diagram-c4` | yes | no |
 | `c4` | `@mermaid-js/diagram-c4` | yes | yes |
 | `kanban` | `@mermaid-js/diagram-kanban` | yes | yes |
 | `classDiagram` | `@mermaid-js/diagram-class` | yes | no |

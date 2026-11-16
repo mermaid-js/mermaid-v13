@@ -7,7 +7,7 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'mindmap', pattern: /^\s*mindmap/, id: 'mindmap', formats: ['svg'] },
   { type: 'architecture', pattern: /^\s*architecture/, id: 'architecture', formats: ['svg'] },
   { type: 'agentflow', pattern: /^\s*agentflow-beta\b/, id: 'agentflow', formats: ['svg', 'ascii'] },
-  { type: 'c4beta', pattern: /^\s*c4-beta(?![\w-])/, id: 'c4', formats: ['svg', 'ascii'], section: 'c4beta' },
+  { type: 'c4beta', pattern: /^\s*c4-beta(?![\w-])/, id: 'c4', formats: ['svg'], section: 'c4beta' },
   { type: 'c4', pattern: /^\s*C4(Context|Container|Component|Dynamic|Deployment)\b/, id: 'c4', formats: ['svg', 'ascii'] },
   { type: 'kanban', pattern: /^\s*kanban/, id: 'kanban', formats: ['svg', 'ascii'] },
   { type: 'classDiagram', pattern: /^\s*classDiagram/, id: 'class', formats: ['svg'] },
@@ -42,3 +42,6 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'cynefin', pattern: /^\s*cynefin-beta(?:[\s:]|$)/, id: 'cynefin', formats: ['svg'] },
   { type: 'usecase', pattern: /^\s*usecase-beta(?:\s|$)/, id: 'usecase', formats: ['svg', 'ascii'] },
 ];
+
+/** The ids of the first-party diagram plugins: the keys of `createMermaid({ diagrams })` in `mermaid/slim`. */
+export type FirstPartyDiagramId = 'flowchart' | 'mindmap' | 'architecture' | 'agentflow' | 'c4' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'requirement' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'xychart' | 'block' | 'eventmodeling' | 'treeView' | 'radar' | 'ishikawa' | 'treemap' | 'railroad' | 'venn' | 'wardley' | 'cynefin' | 'usecase';

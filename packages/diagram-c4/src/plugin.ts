@@ -9,7 +9,7 @@ import type { SvgWriter } from '@mermaid-js/core/svg';
 import type { AstNode, ParseResult } from '@mermaid-js/core/parser-kit';
 import { detectC4Beta } from './beta/detect.ts';
 import { layoutC4Beta } from './beta/layout.ts';
-import type { C4BetaModel } from './beta/model.ts';
+import { isC4Beta, type C4BetaModel } from './beta/model.ts';
 import { parseC4Beta } from './beta/parser.ts';
 import { renderC4Beta } from './beta/render.ts';
 import { c4ConfigDefaults } from './generated/config-defaults.ts';
@@ -28,9 +28,6 @@ import { theme } from './theme/table.ts';
 
 /** What the one `c4` plugin parses: a legacy C4 model, or a c4-beta one (spec #730). */
 export type C4AnyModel = C4Model | C4BetaModel;
-
-/** Whether `model` is c4-beta's: legacy C4's has `boundaries`, c4-beta's holds them as elements. */
-export const isC4Beta = (model: C4AnyModel): model is C4BetaModel => !('boundaries' in model);
 
 /**
  * Every text the layout hands to core's label layout (D176), as written: each element's name,
