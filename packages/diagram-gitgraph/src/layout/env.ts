@@ -6,6 +6,7 @@ import type { RenderContext } from '@mermaid-js/core';
 import { decodeEntities, type FontKey } from '@mermaid-js/core/text';
 import { GIT_GEOMETRY, GIT_METRICS, type GitGeometry, type GitMetrics } from './metrics.ts';
 import type { GitText, Point, Rect, Transform } from './types.ts';
+import { fontWeightOf as weightOf } from '@mermaid-js/shared/config/readers';
 
 /** What the layout reads from the render context. */
 export type GitLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
@@ -16,12 +17,6 @@ const GIT_CONFIG_IGNORED = 'GIT_CONFIG_IGNORED';
 
 const WEIGHT_NORMAL = 400;
 const WEIGHT_BOLD = 700;
-
-function weightOf(value: string): number {
-  if (value === 'bold' || value === 'bolder') return WEIGHT_BOLD;
-  const n = Number(value);
-  return Number.isFinite(n) && n > 0 ? n : WEIGHT_NORMAL;
-}
 
 function lengthOf(
   value: unknown,
@@ -84,7 +79,7 @@ export function envOf(ctx: GitLayoutContext): Env {
   const conf = (ctx.config.gitGraph ?? {}) as Readonly<Record<string, unknown>>;
   const { theme, measurer } = ctx;
   const family = theme.value('fontFamily');
-  const weight = weightOf(theme.value('fontWeight'));
+  const weight = weightOf(theme.value('fontWeight'), WEIGHT_BOLD, WEIGHT_NORMAL);
   const size = (name: string): number => {
     const n = theme.number(name);
     return Number.isFinite(n) && n > 0 ? n : theme.number('fontSize');

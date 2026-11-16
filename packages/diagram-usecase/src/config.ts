@@ -17,6 +17,7 @@
 import { checkStyle } from '@mermaid-js/core/svg';
 import { USECASE_CONFIG_IGNORED } from './codes.ts';
 import { usecaseConfigDefaults } from './generated/config-defaults.ts';
+import { NUMERIC } from '@mermaid-js/shared/config/readers';
 
 /** The CSS weights a font key takes, as numbers. */
 export const FONT_WEIGHT = Object.freeze({ normal: 400, bold: 700 });
@@ -88,9 +89,6 @@ const MINIMUM: Readonly<Record<LengthKey, number>> = {
 
 /** Lengths at or above this are not taken (the cap every graph port has); styled font sizes too. */
 export const MAX_LENGTH = 1e4;
-
-/** A whole decimal number, spaces around it allowed: `"20"`, `" 2.5 "`; not `"20px"`. */
-const NUMERIC = /^\s*[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?\s*$/i;
 
 /** The schema's weight pattern (`cssFontWeightPattern`). */
 const WEIGHT = /^(normal|bold|bolder|lighter|inherit|initial|revert|unset|[1-9][0-9]{0,3})$/;

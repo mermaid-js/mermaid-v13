@@ -13,42 +13,105 @@
  *
  * Flowchart's parser is ported from Pele's `src/diagrams/flowchart/parser.ts` at 3a2f075
  * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano). Changed: the block rules are
- * agentflow's (`flow`, `global`, the header), as above; vertex and statement rules moved to
- * `statements.ts`, the token helpers to `base.ts`.
+ * agentflow's (`flow`, `global`, `connector`), as above; the rules agentflow shares with
+ * flowchart (tokens, errors and recovery, vertices, links, chains, the one-line statements, the
+ * header) are the flow family's (`@mermaid-js/shared/parser/flow`). Here are agentflow's own:
+ * the `maxTextSize` source view (`source.ts`), its ranges over directives and blanks, v12's
+ * `@{ … }` reading (its trailing commas, D464), AST ids for every mention (D468) and the
+ * reserved `connectors` id (D464).
  * cspell:ignore kepano
  */
-import { inKindSet, Kind, STOP } from '@mermaid-js/core/parser-kit';
-import type { AstId, Range } from '@mermaid-js/core/parser-kit';
-import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import {
-  AFTER_DIR,
-  AFTER_FLOW_ID,
-  AFTER_TITLE,
-  BLANKS,
-  BLOCK_DOC_KINDS,
-  DIR_KINDS,
-  DOC_KINDS,
-  EXPECTED,
-  FLOW_HEADER,
-  GRAPH,
-  HEADER_START,
-  LINE_END,
-  LINE_END_SET,
-} from './tables.ts';
-import type { Frame, ShapeData } from './tables.ts';
-import { StatementParser } from './statements.ts';
-import type { AgentflowParseOptions, AgentflowParseResult } from './base.ts';
+  inKindSet,
+  isSpace,
+  LBRACE,
+  localOffset,
+  SourceOffsets,
+} from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
+import type { AstId, ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
+import { LIMIT_CODES } from '@mermaid-js/core/limits';
+import { isYamlMap, parseYaml } from '@mermaid-js/core/preprocess';
+import type { PreprocessResult } from '@mermaid-js/core/preprocess';
+import { flowBuilderLimits, FlowParser } from '@mermaid-js/shared/parser/flow';
 import type {
+  FlowDocItem,
+  FlowNodeStmt,
+  FlowParserDialect,
+  FlowShapeData,
+} from '@mermaid-js/shared/parser/flow';
+import { AFTER_FLOW_ID, AFTER_TITLE, CONNECTOR_SPACE, TABLES } from './tables.ts';
+import type { Frame } from './tables.ts';
+import type {
+  AgentflowConnectorStmt,
   AgentflowDocument,
   AgentflowFlow,
   AgentflowGlobal,
-  AgentflowHeader,
   AgentflowLabelNode,
+  AgentflowStatementNode,
 } from './ast.ts';
+import { lex } from './lexer.ts';
+import { AgentflowBuilder, destructLink } from './model.ts';
+import type { AgentflowModel, VertexParts } from './model.ts';
+import { RESERVED_ID } from './shapes.ts';
+import { agentflowSourceView } from './source.ts';
+import { stripLineTrailingCommas } from './trailing-commas.ts';
 import { T } from './tokens.ts';
 
-export type { AgentflowParseOptions, AgentflowParseResult } from './base.ts';
-export { READ_PAST } from './tables.ts';
+export interface AgentflowParseOptions extends ParseOptions {
+  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
+  preprocessed?: PreprocessResult;
+  /**
+   * v12's `maxTextSize` (the site config's): past it v12 parsed the text without its comments
+   * (`agentflowSourceView`).
+   */
+  maxTextSize?: number;
+  /** Edge cap (core `DEFAULT_LIMITS.maxEdges`; v12's `maxEdges` was 500). */
+  maxEdges?: number;
+  /** Vertex cap (core `DEFAULT_LIMITS.maxNodes`). */
+  maxNodes?: number;
+  /** Flow nesting cap (core `DEFAULT_LIMITS.maxDepth`). */
+  maxDepth?: number;
+  /** v12 `flowchart.inheritDir`, which agentflow reads (D466). */
+  inheritDir?: boolean;
+  /** Features claimed by extension plugins; `callbacks` silences `CALLBACK_IGNORED`. */
+  claims?: readonly string[];
+}
+
+export type AgentflowParseResult = ParseResult<AgentflowModel, AgentflowDocument>;
+
+const { LINE_END, LINE_END_SET } = TABLES;
+
+/** What the flow family's parser needs of agentflow. */
+const DIALECT: FlowParserDialect<AgentflowBuilder, AgentflowParseOptions> = {
+  kinds: T,
+  tables: TABLES,
+  view: (src, pre, options) =>
+    agentflowSourceView(
+      src,
+      pre.bodyStart,
+      pre.directives.map((d) => d.range),
+      options.maxTextSize
+    ),
+  lex,
+  builder: (options, diagnostics) =>
+    new AgentflowBuilder({
+      ...flowBuilderLimits(options),
+      error: (code, message, range) => {
+        diagnostics.error(code, message, range);
+      },
+      warn: (code, message, range, extra) => {
+        const { related, astIds } = extra ?? {};
+        const d = diagnostics.warning(code, message, range, related ? { related } : undefined);
+        // Core's render `Warning` keeps `astIds` (and drops `related`): `AgentflowParseWarning`.
+        if (astIds) Object.assign(d, { astIds });
+      },
+    }),
+  destructLink,
+};
+
+/** The nodes agentflow adds to the family's statements. */
+type OwnNode = AgentflowFlow | AgentflowGlobal | AgentflowConnectorStmt;
 
 /** Parse an agentflow. Never throws: problems are error diagnostics. */
 export function parseAgentflow(
@@ -58,53 +121,226 @@ export function parseAgentflow(
   return new AgentflowParser(src, options).parse();
 }
 
-/** The block rules, the document and the header. */
-class AgentflowParser extends StatementParser {
+/** One parse: agentflow's own rules. */
+class AgentflowParser extends FlowParser<AgentflowBuilder, AgentflowParseOptions, OwnNode, Frame> {
+  /** Text offsets to source offsets, for {@link keywordBefore}; made on first use. */
+  private offsets: SourceOffsets | undefined;
+  /** Directive starts by their end, for ranges over the blanks around them. */
+  private directiveAt: Map<number, number> | undefined;
+
+  constructor(src: string, options: AgentflowParseOptions) {
+    super(src, options, DIALECT);
+  }
+
   parse(): AgentflowParseResult {
-    const { st, db, src, options } = this;
-    this.header();
+    const { st, db } = this;
+    this.header('an agentflow starts with `agentflow-beta` and an optional direction');
     this.document();
     db.finish((at) => this.lineOf(at));
     this.dropUnclaimedReserved();
     // In source order (blocks left open are reported at the end, innermost first).
     st.diagnostics.list.sort((a, b) => a.range.start - b.range.start);
     const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
-    const model = db.model(warnings, this.pre.frontMatter?.title);
-    if (model.callbacks.length > 0 && !options.claims?.includes('callbacks')) {
-      const first = model.callbacks[0];
-      const d = st.diagnostics.warning(
-        'CALLBACK_IGNORED',
-        '`click … callback` and `call` are ignored: install the interactions plugin to run callbacks.',
-        first?.range ?? { start: 0, end: 0 }
-      );
-      model.warnings.push(d);
-    }
-    const ast: AgentflowDocument = {
-      id: 'doc',
-      type: 'Document',
-      range: { start: this.pre.bodyStart, end: src.length },
-      children: this.children,
-    };
-    return st.result(model, ast, this.fullTokens, options, this.probe);
+    return this.result(db.model(warnings, this.pre.frontMatter?.title));
   }
 
-  // ---- flows, globals and the document ------------------------------------------------
+  // ---- tokens -------------------------------------------------------------------------
+
+  /**
+   * The source start of `word`, then blanks (with `{` and more blanks when `brace`), that end
+   * at `at` in the text v12 lexed (a directive may stand anywhere in them), if they are there.
+   */
+  protected override keywordBefore(at: number, word: string, brace: boolean): number | undefined {
+    const { view } = this;
+    const t = view.text;
+    let b = localOffset(view, at);
+    while (b > 0 && isSpace(t.charCodeAt(b - 1))) b--;
+    if (brace) {
+      if (t.charCodeAt(b - 1) !== LBRACE) return undefined;
+      b--;
+      while (b > 0 && isSpace(t.charCodeAt(b - 1))) b--;
+    }
+    const i = b - word.length;
+    if (i < 0 || !t.startsWith(word, i)) return undefined;
+    if (!view.runs) return i;
+    // One cursor per parse: the tokens come in source order, so its walks add up to one pass.
+    this.offsets ??= new SourceOffsets(view.runs);
+    return this.offsets.source(i);
+  }
+
+  /** The end of the text before the blanks (and directives) that end at `at`. */
+  private blanksAfter(from: number, at: number): number {
+    const { src } = this;
+    let e = at;
+    for (;;) {
+      while (e > from && (src[e - 1] === ' ' || src[e - 1] === '\t')) e--;
+      const d = (this.directiveAt ??= new Map(
+        this.pre.directives.map((x) => [x.range.end, x.range.start])
+      )).get(e);
+      if (d === undefined || d < from) return e;
+      e = d;
+    }
+  }
+
+  protected override tokEnd(j: number): number {
+    const k = this.kind(j);
+    // `end` and `global` take the blanks after them (`[ \t]*`).
+    if (k === T.End || k === T.Global) return this.blanksAfter(this.start(j), this.end(j));
+    return super.tokEnd(j);
+  }
+
+  protected override found(j = this.i): string {
+    return this.kind(j) === T.Comment ? 'a comment' : super.found(j);
+  }
+
+  // ---- metadata -----------------------------------------------------------------------
+
+  /**
+   * `@{ … }`, read as v12 read it: blocks back to back are one, a newline in a string is
+   * `<br/>`, one line is read as `{ … }`, several as block YAML, retried once without the
+   * commas that end a line when that fails (v12's trailing-comma retry, D464).
+   */
+  protected shapeData(): FlowShapeData {
+    const block = this.dataBlock();
+    const { built, whole } = block;
+    // One line is read from the opener's `{` (a directive may stand between `@` and `{`).
+    let result = this.readData(block, block.opener.end - 1);
+    let ranged = block.inPlace;
+    const failed = (r: typeof result) => r.diagnostics.some((d) => d.severity === 'error');
+    if (failed(result) && block.multiline) {
+      const stripped = stripLineTrailingCommas(built);
+      if (stripped !== built) {
+        const retry = parseYaml(stripped + '\n');
+        if (!failed(retry)) {
+          result = retry;
+          ranged = false;
+        }
+      }
+    }
+    this.reportData(result.diagnostics, ranged, whole);
+    // The element keeps no data.
+    if (failed(result)) return { value: null, range: whole };
+    const value = result.value;
+    // v12 read an empty document as `{}`.
+    return { value: isYamlMap(value) ? value : {}, range: whole };
+  }
+
+  // ---- vertices -----------------------------------------------------------------------
+
+  /** A flow's id and the reserved `connectors` id make no vertex. */
+  protected override creates(name: string): boolean {
+    return super.creates(name) && !this.db.flow(name) && name !== RESERVED_ID;
+  }
+
+  /** Every mention has its own AST id (D468), and a bracket shape the range it is written at. */
+  protected override mentionParts(
+    node: FlowNodeStmt,
+    parts: VertexParts,
+    shapeFrom?: number
+  ): VertexParts {
+    if (shapeFrom !== undefined && parts.type !== undefined) parts.shapeAt = this.span(shapeFrom);
+    return { ...parts, mention: node.id };
+  }
+
+  /**
+   * Once the text is read: the mentions of the reserved `connectors` id leave the symbols when
+   * no `connector connectors` or `flow connectors` takes it (also one written after them). v12
+   * makes no node of it, so it is no symbol: renaming it would make one.
+   */
+  private dropUnclaimedReserved(): void {
+    const { symbols } = this.st;
+    if (this.db.reservedClaimed() || !symbols.some((s) => s.name === RESERVED_ID)) return;
+    const kept = symbols.filter(
+      (s) => s.name !== RESERVED_ID || (s.kind !== 'node' && s.kind !== 'subgraph')
+    );
+    symbols.length = 0;
+    symbols.push(...kept);
+  }
+
+  // ---- connectors ---------------------------------------------------------------------
+
+  protected override ownStatement(
+    t: number,
+    out: AgentflowStatementNode[]
+  ): FlowDocItem | undefined {
+    return t === T.Connector ? this.connectorStatement(out) : undefined;
+  }
+
+  /** `connector id`, `connector id[title]`, each with optional metadata: its id. */
+  private connectorStatement(out: AgentflowStatementNode[]): FlowDocItem {
+    const { db, st } = this;
+    const from = this.i;
+    this.i++;
+    this.tested(CONNECTOR_SPACE);
+    this.expect(T.Space);
+    const id = this.textNoTags();
+    let title: AgentflowLabelNode | undefined;
+    this.tested(AFTER_FLOW_ID);
+    if (this.kind() === T.SQS) {
+      this.open('connector title', '`]`');
+      title = this.text();
+      this.closer(T.SQE);
+    }
+    this.tested(AFTER_TITLE);
+    const data = this.kind() === T.ShapeData ? this.shapeData() : undefined;
+    this.tested(LINE_END);
+    if (!inKindSet(LINE_END_SET, this.kind()))
+      this.fail(data || title ? LINE_END : [...LINE_END, T.SQS, T.ShapeData]);
+    const name = id.text.trim();
+    const nameRange = this.trimmed(id.range);
+    const replacing = name !== '' && db.vertices.has(name) && !db.isConnector(name);
+    const ast = this.ids.node(name);
+    if (name !== '')
+      st.symbol(name, 'node', nameRange, db.vertices.has(name) && !replacing ? 'ref' : 'def');
+    const sid = db.addConnector(name, title?.text ?? '', ast, nameRange);
+    if (data !== undefined && sid !== '') db.addVertex(sid, ast, data.range, { data: data.value });
+    const r = this.span(from);
+    st.statement('connector', r);
+    const node: AgentflowConnectorStmt = { id: ast, type: 'Connector', range: r, name, nameRange };
+    if (title) node.title = title;
+    if (data) node.dataRange = data.range;
+    out.push(node);
+    this.separator();
+    return sid;
+  }
+
+  /** `range` without the blanks around its text. */
+  private trimmed(r: Range): Range {
+    const written = this.src.slice(r.start, r.end);
+    const start = r.start + (written.length - written.trimStart().length);
+    return { start, end: start + written.trim().length };
+  }
+
+  // ---- flows and globals --------------------------------------------------------------
+
+  protected block(t: number): boolean {
+    if (t === T.Comment) this.i++;
+    else if (t === T.Flow) {
+      this.hint =
+        'write a flow as `flow`, `flow id` or `flow id[title]`, with optional metadata `@{ … }`, on its own line';
+      this.flowHeader();
+    } else if (t === T.Global) {
+      this.hint = 'write `global` on its own line, and the nodes it holds on the lines after it';
+      this.globalHeader();
+    } else return false;
+    return true;
+  }
 
   /**
    * `flow`, `flow id`, `flow id[title]`, each of the named ones with optional metadata, then a
    * separator. A header error still opens the flow, so its `end` closes it (R-PARSE-4: one
    * error, one diagnostic) and the body stays inside it.
    */
-  protected flowHeader(): void {
+  private flowHeader(): void {
     const from = this.i;
     const opener = this.range(from);
     this.i++;
     let id: AgentflowLabelNode | undefined;
     let title: AgentflowLabelNode | undefined;
-    let data: ShapeData | undefined;
+    let data: FlowShapeData | undefined;
     let failed = false;
     try {
-      this.tested(FLOW_HEADER);
+      this.tested(TABLES.BLOCK_HEADER);
       if (!inKindSet(LINE_END_SET, this.kind())) {
         this.expect(T.Space, ...LINE_END);
         id = this.textNoTags();
@@ -130,7 +366,7 @@ class AgentflowParser extends StatementParser {
   }
 
   /** `global`, then a separator. */
-  protected globalHeader(): void {
+  private globalHeader(): void {
     const from = this.i;
     const opener = this.range(from);
     this.i++;
@@ -145,7 +381,7 @@ class AgentflowParser extends StatementParser {
     if (failed) throw STOP;
   }
 
-  protected openFrame(
+  private openFrame(
     kind: Frame['kind'],
     from: number,
     opener: Range,
@@ -187,7 +423,7 @@ class AgentflowParser extends StatementParser {
     }
   }
 
-  protected closeFrame(frame: Frame, end: number): void {
+  private closeFrame(frame: Frame, end: number): void {
     const { db, st, ids } = this;
     st.endStatement(frame.span, end);
     let item: string | undefined;
@@ -207,7 +443,7 @@ class AgentflowParser extends StatementParser {
     if (this.collect && item !== undefined) this.list.push(item);
   }
 
-  protected closeFlow(frame: Frame, end: number): string {
+  private closeFlow(frame: Frame, end: number): string {
     const { db, st, ids } = this;
     // Each opening gets its own AST id (`s:A`, then `s:A@2`); the model keeps the first.
     let opening: AstId | undefined;
@@ -242,35 +478,8 @@ class AgentflowParser extends StatementParser {
     return fid;
   }
 
-  protected document(): void {
+  protected closeOpenBlocks(): void {
     const { frames, st, src } = this;
-    for (;;) {
-      this.tested(frames.length > 0 ? BLOCK_DOC_KINDS : DOC_KINDS);
-      const t = this.kind();
-      if (t === Kind.EOF) break;
-      try {
-        if (t === T.End) this.closeEnd();
-        else if (t === T.Semi || t === Kind.Newline || t === T.Space || t === T.Eof) {
-          if (this.collect) this.list.push(this.raw());
-          this.i++;
-        } else if (t === T.Comment) this.i++;
-        else if (t === T.Flow) {
-          this.hint =
-            'write a flow as `flow`, `flow id` or `flow id[title]`, with optional metadata `@{ … }`, on its own line';
-          this.flowHeader();
-        } else if (t === T.Global) {
-          this.hint =
-            'write `global` on its own line, and the nodes it holds on the lines after it';
-          this.globalHeader();
-        } else {
-          const item = this.statement(this.collect, this.body);
-          if (this.collect && (!Array.isArray(item) || item.length > 0)) this.list.push(item);
-        }
-      } catch (e) {
-        if (e !== STOP) throw e;
-        this.recover();
-      }
-    }
     while (frames.length > 0) {
       const frame = frames[frames.length - 1] as Frame;
       if (!frame.failed)
@@ -308,87 +517,14 @@ class AgentflowParser extends StatementParser {
     throw STOP;
   }
 
-  protected header(): void {
-    const { db, st } = this;
-    for (;;) {
-      this.tested(HEADER_START);
-      const k = this.kind();
-      if (k !== T.Space && k !== Kind.Newline && k !== T.Comment) break;
-      this.i++;
-    }
-    const from = this.i;
-    try {
-      this.tested(GRAPH);
-      if (this.kind() !== T.Graph)
-        this.fail([T.Graph], 'an agentflow starts with `agentflow-beta` and an optional direction');
-      this.i++;
-      this.tested(DIR_KINDS);
-      if (this.kind() === T.NoDir) {
-        this.i++;
-        db.setDirection('TB');
-      } else {
-        if (this.kind() === Kind.Error) this.unknownDirection();
-        const dir = this.raw(this.expect(T.Dir, T.NoDir));
-        this.tested(AFTER_DIR);
-        let t = this.kind();
-        if (t === T.Space) {
-          do {
-            this.i++;
-            this.tested(BLANKS);
-          } while (this.kind() === T.Space);
-          t = this.kind();
-          if (t !== Kind.Newline) this.fail([Kind.Newline]);
-        } else if (!inKindSet(LINE_END_SET, t) || t === T.Eof)
-          this.fail([T.Semi, Kind.Newline, T.Comment]);
-        this.i++;
-        db.setDirection(dir);
-      }
-      const r = { start: this.start(from), end: this.end(from + 1) };
-      if (this.kind(from + 1) === T.NoDir) r.end = this.end(from);
-      st.statement('header', r);
-      const h: AgentflowHeader = {
-        id: this.ids.statement('header'),
-        type: 'Header',
-        range: r,
-        keyword: this.raw(from),
-        direction: db.direction,
-      };
-      this.children.push(h);
-    } catch (e) {
-      if (e !== STOP) throw e;
-      this.recover();
-    }
-  }
-
-  /** The word after `agentflow-beta` that is no direction. */
-  protected unknownDirection(): never {
-    const { src } = this;
-    let w = this.start(this.i);
-    while (w < src.length && /\s/.test(src[w] ?? '')) w++;
-    let e = w;
-    while (e < src.length && !/\s/.test(src[e] ?? '')) e++;
-    // A direction was expected across the word, which may lex as several tokens.
-    const { probe, tokens } = this;
-    if (probe !== undefined) {
-      for (let j = this.i; j < tokens.length && this.start(j) < e; j++) {
-        if (probe.isAt(tokens, j, this.viewFrom)) probe.tested(DIR_KINDS, this.start(j));
-      }
-    }
-    if (src.startsWith('%%', w)) {
-      // v12's direction state has no comment rule: `agentflow-beta %% …` is a lexical error.
-      this.st.diagnostics.error(
-        'HEADER_COMMENT',
-        'A comment cannot follow `agentflow-beta` on its line unless a direction comes first: put the comment on its own line, or write `agentflow-beta TB %% …`.',
-        { start: w, end: this.lineBreakAfter(w) },
-        { expected: EXPECTED.names([T.Dir, T.NoDir]) }
-      );
-      throw STOP;
-    }
+  /** v12's direction state has no comment rule: `agentflow-beta %% …` is a lexical error. */
+  protected override notDirection(w: number): void {
+    if (!this.src.startsWith('%%', w)) return;
     this.st.diagnostics.error(
-      'UNKNOWN_DIRECTION',
-      `Unknown direction \`${src.slice(w, e)}\`: use TB, TD, BT, LR or RL (or \`>\`, \`<\`, \`^\`, \`v\`).`,
-      { start: w, end: e },
-      { expected: EXPECTED.names([T.Dir]) }
+      'HEADER_COMMENT',
+      'A comment cannot follow `agentflow-beta` on its line unless a direction comes first: put the comment on its own line, or write `agentflow-beta TB %% …`.',
+      { start: w, end: this.lineBreakAfter(w) },
+      { expected: TABLES.EXPECTED.names([T.Dir, T.NoDir]) }
     );
     throw STOP;
   }

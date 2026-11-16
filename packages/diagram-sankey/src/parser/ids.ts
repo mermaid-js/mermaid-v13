@@ -1,14 +1,15 @@
 /**
  * Sankey AST ids (D397, DESIGN §4.2): `node:<name>` for a node's first occurrence and
  * `link:<source>-><target>` for a row, with `@2`, `@3`, … for later rows between the same two
- * nodes (pitfall 9). Names are escaped with the rules of core's `AstIds`: `%`, `>`, `@` and `#`
- * are percent-encoded, so the `->` between the two names and the `@` before a count are the only
- * ones in an id, and two rows get the same id only when they link the same two names.
+ * nodes (pitfall 9). Names are escaped with the rules of core's `AstIds` (copied: core does not
+ * export its escape): `%`, `>`, `@` and `#` are percent-encoded, so the `->` between the two
+ * names and the `@` before a count are the only ones in an id, and two rows get the same id
+ * only when they link the same two names.
  */
+import { idEscaper } from '@mermaid-js/shared/parser/support';
 import type { AstId } from '@mermaid-js/core/parser-kit';
-import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
-/** A name with `%`, `>`, `@` and `#` percent-encoded. */
+/** A name with `%`, `>`, `@` and `#` percent-encoded (core `ast.ts` `esc`, copied). */
 const escapeName = /* @__PURE__ */ idEscaper();
 
 /** `node:<name>`. */

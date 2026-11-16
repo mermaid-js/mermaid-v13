@@ -5,20 +5,15 @@
 import {
   armOf,
   Canvas,
-  cellWidth,
   DOWN,
   drawBox,
   drawText,
-  DX,
-  DY,
   glyphFor,
   INTO,
-  junction,
   LEFT,
   opposite,
   RIGHT,
   sideOf,
-  unicode,
   UP,
   type CellRect,
   type Dir,
@@ -28,66 +23,20 @@ import type { LayoutModel, Point, Side } from '@mermaid-js/core/layout';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { EdgeView, NodeView, Prepared } from '../render/prepare.ts';
 import { textForm } from './shapes.ts';
-
-interface Centred {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-/**
- * The cells of a box from its centre and size: columns `x − w/2 + ½ … x + w/2 − ½`, the grid
- * model's convention (`LayoutGraph.grid`), which the repair router shares.
- */
-export function cellRect(b: Centred): CellRect {
-  const x = Math.round(b.x - b.width / 2 + 0.5);
-  const y = Math.round(b.y - b.height / 2 + 0.5);
-  return {
-    x,
-    y,
-    width: Math.round(b.x + b.width / 2 - 0.5) - x + 1,
-    height: Math.round(b.y + b.height / 2 - 0.5) - y + 1,
-  };
-}
-
-function dirOf(a: Point, b: Point): Dir {
-  if (b.x !== a.x) return b.x > a.x ? RIGHT : LEFT;
-  return b.y > a.y ? DOWN : UP;
-}
-
-/** The cells a corner polyline passes, in order. */
-function cellsOf(points: readonly Point[]): Point[] {
-  const out: Point[] = [];
-  points.forEach((p, i) => {
-    if (i === 0) return void out.push(p);
-    const prev = points[i - 1]!;
-    const d = dirOf(prev, p);
-    const n = Math.abs(p.x - prev.x) + Math.abs(p.y - prev.y);
-    for (let k = 1; k <= n; k++) out.push({ x: prev.x + DX[d] * k, y: prev.y + DY[d] * k });
-  });
-  return out;
-}
-
-/** Writes a label's lines centred in a `width`-cell-wide block from (x, y). */
-function writeLabel(
-  canvas: Canvas,
-  label: MeasuredLabel,
-  x: number,
-  y: number,
-  width: number,
-  glyphs: GlyphSet
-): void {
-  label.lines.forEach((runs, i) => {
-    let text = runs.map((r) => r.text).join('');
-    // Only a list item's own marker: a bullet written in the text stays as written.
-    if (glyphs.name === 'ascii' && label.left) text = text.replace(/^(\s*)[•◦]/, '$1-');
-    const indent = label.indents[i] ?? 0;
-    const lineWidth = label.widths[i] ?? 0;
-    const at = label.left ? x + Math.floor((width - label.width) / 2) + indent : x;
-    drawText(canvas, label.left ? at : x + Math.floor((width - lineWidth) / 2), y + i, text);
-  });
-}
+import {
+  cellRect,
+  cellsOf,
+  clearGaps,
+  drawEdgeLabels,
+  drawFrames,
+  drawLineCells,
+  finish,
+  listWriter,
+  onFrame,
+  tee,
+  writeBoxLabel,
+  type LabelWriter,
+} from '@mermaid-js/shared/ascii';
 
 interface End {
   /** The node or group the edge ends at. */
@@ -114,18 +63,7 @@ function drawEdge(
   const last = cells.length - 1;
   const source = { at: e.source, cell: cells[0]!, into: INTO[ports.source], marker: e.start };
   const target = { at: e.target, cell: cells[last]!, into: INTO[ports.target], marker: e.end };
-  cells.forEach((c, i) => {
-    let arms = 0;
-    const arm = (d: Dir): void => void (arms |= armOf(d, weight));
-    if (i > 0) arm(dirOf(c, cells[i - 1]!));
-    if (i < last) arm(dirOf(c, cells[i + 1]!));
-    if (i === 0) arm(source.into);
-    if (i === last) arm(target.into);
-    let glyph = glyphFor(arms, glyphs);
-    if (dotted && arms === (armOf(LEFT, weight) | armOf(RIGHT, weight))) glyph = dotted.h;
-    if (dotted && arms === (armOf(UP, weight) | armOf(DOWN, weight))) glyph = dotted.v;
-    if (glyph) canvas.draw(c.x, c.y, glyph);
-  });
+  drawLineCells(canvas, glyphs, cells, source.into, target.into, { dotted, weight });
   for (const end of [source, target])
     ends.push({ ...end, stroke: weight === 2 ? 'thick' : 'light' });
 }
@@ -144,28 +82,15 @@ function markerGlyph(glyphs: GlyphSet, end: End): string | undefined {
   }
 }
 
-/** The border glyph where an edge leaves a box: a tee with its stem towards the edge. */
-function tee(canvas: Canvas, glyphs: GlyphSet, end: End): void {
-  const x = end.cell.x + DX[end.into];
-  const y = end.cell.y + DY[end.into];
-  const out = opposite(end.into);
-  const fallback = sideOf(glyphs.tee, out);
-  if (glyphs.name !== 'unicode') return void canvas.set(x, y, fallback);
-  // A one-armed stub towards the edge, merged into the border as a tee.
-  const stub = glyphFor(armOf(out, end.stroke === 'thick' ? 2 : 1), unicode)!;
-  const merged = junction(canvas.get(x, y), stub);
-  canvas.set(x, y, merged === stub ? fallback : merged);
-}
-
 // A marker on a group's frame is reached from inside the group, so it points the other way.
 function drawMarkers(
   canvas: Canvas,
   glyphs: GlyphSet,
   ends: readonly End[],
-  onFrame: (end: End) => boolean
+  framed: (end: End) => boolean
 ): void {
   for (const end of ends) {
-    const head = markerGlyph(glyphs, onFrame(end) ? { ...end, into: opposite(end.into) } : end);
+    const head = markerGlyph(glyphs, framed(end) ? { ...end, into: opposite(end.into) } : end);
     if (head) canvas.set(end.cell.x, end.cell.y, head);
   }
 }
@@ -191,12 +116,18 @@ function titleGaps(label: MeasuredLabel, at: { x: number; y: number; width: numb
  * under them when it has a title, and the inner diagram's text centred in the rest (a grown
  * box keeps it centred, D140). The inner text is copied as it is, not merged with the frame.
  */
-function drawBlock(canvas: Canvas, glyphs: GlyphSet, n: NodeView, r: CellRect): void {
+function drawBlock(
+  canvas: Canvas,
+  glyphs: GlyphSet,
+  n: NodeView,
+  r: CellRect,
+  write: LabelWriter
+): void {
   const inner = n.embedText!;
   drawBox(canvas, glyphs, r);
   let top = r.y + 1;
   if (n.label.width > 0) {
-    writeLabel(canvas, n.label, r.x + 1, top, r.width - 2, glyphs);
+    write(canvas, n.label, r.x + 1, top, r.width - 2);
     top += n.label.lines.length;
     const right = r.x + r.width - 1;
     for (let x = r.x + 1; x < right; x++) canvas.set(x, top, glyphs.solid.h);
@@ -217,30 +148,40 @@ function drawBlock(canvas: Canvas, glyphs: GlyphSet, n: NodeView, r: CellRect): 
  * A folded block (#670) drawn as text: a box like a folded subgraph's (`+` in its top-left
  * corner) with the title, a dotted divider, and the inner type centred under it.
  */
-function drawFolded(canvas: Canvas, glyphs: GlyphSet, n: NodeView, r: CellRect): void {
+function drawFolded(
+  canvas: Canvas,
+  glyphs: GlyphSet,
+  n: NodeView,
+  r: CellRect,
+  write: LabelWriter
+): void {
   const type = n.fold!.label!;
   drawBox(canvas, glyphs, r, textForm('collapsedGroup', glyphs) ?? {});
   const right = r.x + r.width - 1;
   const rows = n.label.lines.length;
   // The padding rows go above the title and below the type.
   const top = r.y + Math.floor((r.height - rows - 2) / 2);
-  writeLabel(canvas, n.label, r.x + 1, top, r.width - 2, glyphs);
+  write(canvas, n.label, r.x + 1, top, r.width - 2);
   const divider = top + rows;
   for (let x = r.x + 1; x < right; x++) canvas.set(x, divider, glyphs.dotted.h);
   canvas.set(r.x, divider, glyphFor(armOf(UP, 1) | armOf(DOWN, 1) | armOf(RIGHT, 1), glyphs)!);
   canvas.set(right, divider, glyphFor(armOf(UP, 1) | armOf(DOWN, 1) | armOf(LEFT, 1), glyphs)!);
-  writeLabel(canvas, type, r.x + 1, divider + 1, r.width - 2, glyphs);
+  write(canvas, type, r.x + 1, divider + 1, r.width - 2);
 }
 
 /** A node's box and label: a block (ADR-15), a folded one (#670), or a text-form shape. */
-function drawNode(canvas: Canvas, glyphs: GlyphSet, n: NodeView, r: CellRect): void {
-  if (n.block === 'folded') return drawFolded(canvas, glyphs, n, r);
-  if (n.embedText) return drawBlock(canvas, glyphs, n, r);
+function drawNode(
+  canvas: Canvas,
+  glyphs: GlyphSet,
+  n: NodeView,
+  r: CellRect,
+  write: LabelWriter
+): void {
+  if (n.block === 'folded') return drawFolded(canvas, glyphs, n, r, write);
+  if (n.embedText) return drawBlock(canvas, glyphs, n, r, write);
   drawBox(canvas, glyphs, r, textForm(n.shape, glyphs) ?? {});
   // D140: a grown box keeps its label centred.
-  const lines = n.label.lines.length;
-  const top = r.y + Math.floor((r.height - lines) / 2);
-  writeLabel(canvas, n.label, r.x + 1, top, r.width - 2, glyphs);
+  writeBoxLabel(canvas, n.label, r, write);
 }
 
 export interface DrawOptions {
@@ -263,23 +204,8 @@ export function drawFlowchart(
   options: DrawOptions = {}
 ): string {
   const canvas = new Canvas();
-
-  // A space either side of a title, where the border is still plain (`┌─ one ───┐`).
-  const gaps: Point[] = [];
-  for (const g of flow.groups) {
-    const box = layout.groups.get(g.id);
-    if (!box) continue;
-    drawBox(canvas, glyphs, cellRect(box));
-    if (g.label.width === 0) continue;
-    // The repair router walled these cells off: round(x − w/2 + ½) from the title's centre.
-    const at = cellRect({
-      ...box.title,
-      width: g.label.width,
-      height: Math.max(g.label.height, 1),
-    });
-    writeLabel(canvas, g.label, at.x, at.y, at.width, glyphs);
-    gaps.push(...titleGaps(g.label, at));
-  }
+  const write = listWriter(glyphs);
+  const gaps = drawFrames(canvas, glyphs, flow.groups, layout, write, titleGaps);
 
   const ends: End[] = [];
   for (const e of flow.edges) {
@@ -288,78 +214,21 @@ export function drawFlowchart(
     if (!placed || !route || e.edge.stroke === 'invisible') continue;
     drawEdge(canvas, glyphs, e, route, placed.ports, ends);
   }
-  for (const { x, y } of gaps) if (canvas.get(x, y) === glyphs.solid.h) canvas.set(x, y, ' ');
-  // An edge between a group and its own member ends on the group's frame (#42): the line
-  // already joins the border there, so there is no tee to add, and
-  // the line reaches it from inside the group, so a marker there points the other way.
-  const onFrame = (end: End): boolean => {
-    const g = layout.groups.get(end.at);
-    if (!g) return false;
-    const r = cellRect(g);
-    const { x, y } = end.cell;
-    const inX = x >= r.x && x < r.x + r.width;
-    const inY = y >= r.y && y < r.y + r.height;
-    return (
-      (inX && (y === r.y || y === r.y + r.height - 1)) ||
-      (inY && (x === r.x || x === r.x + r.width - 1))
-    );
-  };
-  drawMarkers(canvas, glyphs, ends, onFrame);
-
-  for (const e of flow.edges) {
-    const at = layout.edges.get(e.id)?.label;
-    if (!at || e.label.width === 0) continue;
-    const r = cellRect({ ...at, width: e.label.width, height: Math.max(e.label.height, 1) });
-    // The patch around the text is the edge's own (repair keeps other lines out of it).
-    for (let y = r.y; y < r.y + r.height; y++)
-      for (let x = r.x - 1; x <= r.x + r.width; x++) canvas.set(x, y, ' ');
-    writeLabel(canvas, e.label, r.x, r.y, r.width, glyphs);
-  }
+  clearGaps(canvas, glyphs, gaps);
+  // An edge between a group and its own member ends on the group's frame (#42).
+  const framed = (end: End): boolean => onFrame(layout, end);
+  drawMarkers(canvas, glyphs, ends, framed);
+  drawEdgeLabels(canvas, flow.edges, layout, write);
 
   for (const n of flow.nodes) {
     const box = layout.nodes.get(n.id);
     if (!box) continue;
     const r = cellRect(box);
-    drawNode(canvas, glyphs, n, r);
+    drawNode(canvas, glyphs, n, r, write);
   }
-  for (const end of ends) if (!markerGlyph(glyphs, end) && !onFrame(end)) tee(canvas, glyphs, end);
+  for (const end of ends)
+    if (!markerGlyph(glyphs, end) && !framed(end))
+      tee(canvas, glyphs.tee, glyphs.name === 'unicode', end, end.stroke === 'thick' ? 2 : 1);
 
   return finish(canvas, options.title, options.maxWidth);
-}
-
-// Greedy word wrap to `width` cells; a word longer than that keeps a line of its own.
-function wrapTitle(text: string, width: number): string[] {
-  if (cellWidth(text) <= width) return [text];
-  const lines: string[] = [];
-  let line = '';
-  for (const word of text.split(/\s+/)) {
-    const next = line === '' ? word : `${line} ${word}`;
-    if (line !== '' && cellWidth(next) > width) {
-      lines.push(line);
-      line = word;
-    } else line = next;
-  }
-  if (line !== '') lines.push(line);
-  return lines;
-}
-
-/** Trims the empty margin and puts the title, centred, on the first lines. */
-function finish(canvas: Canvas, title: string | undefined, maxWidth?: number): string {
-  let lines = canvas.toString().split('\n');
-  while (lines.length > 0 && lines[0] === '') lines.shift();
-  while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
-  const margin = Math.min(...lines.filter((l) => l !== '').map((l) => l.search(/\S/)));
-  if (margin > 0 && Number.isFinite(margin)) lines = lines.map((l) => l.slice(margin));
-  const text = title?.trim();
-  if (text) {
-    const width = Math.max(0, ...lines.map(cellWidth));
-    // Only a width budget wraps it: then to the budget, or to the drawing when that is wider.
-    const wrapped = maxWidth === undefined ? [text] : wrapTitle(text, Math.max(width, maxWidth));
-    const out = new Canvas();
-    wrapped.forEach((line, i) =>
-      drawText(out, Math.max(0, Math.floor((width - cellWidth(line)) / 2)), i, line)
-    );
-    lines.unshift(...out.toString().split('\n'));
-  }
-  return lines.join('\n');
 }

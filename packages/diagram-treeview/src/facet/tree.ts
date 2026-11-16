@@ -22,6 +22,7 @@ import type { TreeViewIconOptions } from '../icons.ts';
 import type { TreeViewModel, TreeViewNode } from '../model.ts';
 import { writtenName } from '../parser/convert.ts';
 import type { TreeViewDocument } from '../parser/ast.ts';
+import { isPlain } from '@mermaid-js/shared/parser/facet';
 
 export interface Tree {
   /** The model node of each AST node, by AST id. */
@@ -29,9 +30,6 @@ export interface Tree {
   /** Each node's parent; a node at the top has none. */
   readonly parents: ReadonlyMap<TreeViewNode, TreeViewNode>;
 }
-
-const isPlain = (v: unknown): v is Record<string, unknown> =>
-  typeof v === 'object' && v !== null && !Array.isArray(v);
 
 const ICON_KEYS = ['showIcons', 'defaultIconPack', 'filenameIcons', 'extensionIcons'] as const;
 

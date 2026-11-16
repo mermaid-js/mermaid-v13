@@ -17,7 +17,10 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { openSvgRoot, textElement } from '@mermaid-js/core/svg/document';
+import { cls, openSvgRoot, textElement } from '@mermaid-js/shared/svg/document';
+import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
+import { marker, markerTrim } from '@mermaid-js/shared/svg/arrowheads';
+import { routePath } from '@mermaid-js/shared/svg/route';
 import { layoutLabel, type MeasuredLabel } from '@mermaid-js/core/text';
 import { tagsOnly } from '@mermaid-js/core/text/tags-only';
 import type {
@@ -29,7 +32,6 @@ import type {
 } from '../layout/index.ts';
 import type { AgentflowModel } from '../parser/index.ts';
 import type { AgentflowRenderContext } from './context.ts';
-import { marker, markerTrim, routePath } from './edges.ts';
 import { paints, type FramePaint, type LabelPaint, type Paints } from './paint.ts';
 import { drawCardTrim, shapeDrawer, usesPlain } from './shapes.ts';
 import { flowOrder, flowTint, kindTint, type Tint } from './slots.ts';
@@ -40,17 +42,6 @@ const FRAME_WIDTH = 0.75;
 const TITLE_SIZE = 18;
 const DOTTED = '2' as SafeValue;
 /** An edge label's background: padding either side, corner radius. */
-const LABEL_PAD = 4;
-const LABEL_RADIUS = 3;
-
-const cls = (names: readonly string[]): string => {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
-};
 
 /** The front-matter title, measured and placed: centred over the drawing, its baseline up. */
 interface Title {
@@ -147,13 +138,21 @@ function viewBox(
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, paint }: Scene, model: AgentflowModel, title?: Title): void {
+  const { config } = ctx;
+  const box = viewBox(layout, title);
+  const maxWidth = config.agentflow?.useMaxWidth !== false;
+  const acc = model.accTitle.trim();
+  const desc = model.accDescr.trim();
   openSvgRoot(w, ctx, {
     name: 'agentflow',
-    viewBox: viewBox(layout, title),
-    maxWidth: ctx.config.agentflow?.useMaxWidth,
-    title: model.accTitle.trim(),
-    desc: model.accDescr.trim(),
-    attrs: { 'font-family': paint.node.font, 'font-size': paint.node.fontSize },
+    viewBox: box,
+    maxWidth,
+    title: acc,
+    desc,
+    attrs: {
+      'font-family': paint.node.font,
+      'font-size': paint.node.fontSize,
+    },
   });
 }
 
@@ -256,25 +255,19 @@ function drawEdge({ w, layout, paint }: Scene, e: AgentflowEdgeView): void {
     'fill-opacity': e.style.shape['stroke-opacity'],
   };
   const start = { x: path.sx, y: path.sy, dx: path.sdx, dy: path.sdy };
-  marker(w, e.start, start, headPaint, paint.heads);
-  marker(w, e.end, { x: path.ex, y: path.ey, dx: path.edx, dy: path.edy }, headPaint, paint.heads);
+  marker(w, e.start, start, headPaint, paint.heads, true);
+  const end = { x: path.ex, y: path.ey, dx: path.edx, dy: path.edy };
+  marker(w, e.end, end, headPaint, paint.heads, true);
 }
 
 function drawEdgeLabel({ w, layout }: Scene, e: AgentflowEdgeView, paint: LabelPaint): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
-  const lw = e.label.width + 2 * LABEL_PAD;
-  w.open('g', { class: 'edgeLabel', 'data-id': e.edge.id });
-  w.leaf('rect', {
-    x: at.x - lw / 2,
-    y: at.y - e.label.height / 2,
-    width: lw,
-    height: e.label.height,
-    rx: LABEL_RADIUS,
+  labelOnBox(w, e.label, at, e.edge.id, {
     fill: paint.fill,
+    text: { fill: paint.text, ...e.style.text },
+    rx: 3,
   });
-  w.label(e.label, at.x, at.y, { fill: paint.text, ...e.style.text });
-  w.close();
 }
 
 /** A vertex's kind tint or a card's flow tint, under a palette. */

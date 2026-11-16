@@ -5,7 +5,7 @@
 // v12's root style gave the text; info has no theme variable of its own.
 import type { RenderContext } from '@mermaid-js/core';
 import type { SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { InfoLayout } from './layout.ts';
 import type { InfoModel } from './model.ts';
 

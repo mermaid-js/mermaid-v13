@@ -27,9 +27,10 @@ import {
   type Size,
 } from '@mermaid-js/core/layout';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import { configLengths } from '@mermaid-js/shared/config/readers';
+import { ARCHITECTURE_CONFIG_IGNORED } from '../codes.ts';
 import { architectureConfigDefaults } from '../generated/config-defaults.ts';
 import type { ArchitectureModel, ArchitectureSide } from '../model.ts';
-import { configLengths } from './config-length.ts';
 import type { ArchitectureLayoutContext } from './context.ts';
 import { ARCHITECTURE_METRICS, architectureSizes, type ArchitectureSizes } from './metrics.ts';
 
@@ -90,6 +91,8 @@ const SIDE: Readonly<Record<ArchitectureSide, Side>> = {
 function sizesOf(ctx: ArchitectureLayoutContext): ArchitectureSizes {
   const D = architectureConfigDefaults;
   const length = configLengths(
+    'architecture',
+    ARCHITECTURE_CONFIG_IGNORED,
     (ctx.config.architecture ?? {}) as Readonly<Record<string, unknown>>,
     D,
     ctx.warn

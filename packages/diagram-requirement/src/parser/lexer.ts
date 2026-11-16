@@ -48,7 +48,6 @@ import {
   DASH,
   DQUOTE,
   EQUALS,
-  firstHole,
   GT,
   HASH,
   isLineEnd,
@@ -57,18 +56,17 @@ import {
   Kind,
   LBRACE,
   LF,
-  localOffset,
   LT,
   PERCENT,
   QUOTE,
   RBRACE,
   SEMI,
-  SourceOffsets,
   sourceView,
   SPACE,
-  TokenWriter,
 } from '@mermaid-js/core/parser-kit';
-import type { Hole, Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import { lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
+import type { Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { StateLexerOptions } from '@mermaid-js/shared/parser/state';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { KEYWORD_SPELLINGS, T } from './tokens.ts';
@@ -87,9 +85,6 @@ const S = {
 const S_NAMES = ['INITIAL', 'string', 'style', 'accTitle', 'accDescr', 'accDescrMultiline'];
 
 const APOS = "'";
-
-/** ASCII lower case of `c`, for case-insensitive literals. */
-const lower = (c: number) => (c >= 65 && c <= 90 ? c + 32 : c);
 
 /** Not in `[^#\n;]` (a title). */
 const isTitleStop = (c: number) => c === HASH || c === LF || c === SEMI;
@@ -164,12 +159,15 @@ export function requirementView(
   return { from: pre.bodyStart, view };
 }
 
+/** How v12's lexer read its text (see `StateLexerOptions`). */
+const OPTIONS: StateLexerOptions = { charsPerToken: 4, crlf: 'fold', dropSpace: true };
+
 /**
  * Lex the requirement body `src[from…]`. `from` and `view` come from {@link requirementView}.
  * With a `probe`, the start condition at its offset is recorded as its mode.
  */
 export function lex(src: string, from: number, view: SourceView, probe?: Probe): Lexed {
-  const tokens = new RequirementLexer(src, from, view).run(probe);
+  const tokens = new RequirementLexer(src, from, view, OPTIONS).run(probe);
   const textOf = (start: number, end: number): string => cook(src, start, end, view);
   return {
     tokens,
@@ -181,27 +179,9 @@ export function lex(src: string, from: number, view: SourceView, probe?: Probe):
 /**
  * One lex. Offsets are into {@link text}, v12's text; {@link emit} maps them to the source.
  */
-class RequirementLexer {
-  /** The text v12 lexed (see the file comment), plus the line break v12 appended. */
-  private readonly text: string;
-  /** Length of v12's text without the appended line break. */
-  private readonly len: number;
-  private readonly n: number;
-  /**
-   * `at[i]` is the view-text offset of `text[i]` (`at[len]` its end), when a CR made the two
-   * differ; else undefined and they are the same.
-   */
-  private readonly at: Uint32Array | undefined;
-  private readonly offsets: SourceOffsets | undefined;
-  private readonly holes: readonly Hole[];
-  /** The next removed span to write as trivia. */
-  private hole: number;
-  /** The end of the last token's source range (dropped `;` before it belong to a token). */
-  private covered = 0;
-  private readonly w: TokenWriter;
+class RequirementLexer extends StateLexer {
   /** jison's condition stack. */
-  private readonly stack: number[] = [S.INITIAL];
-  private p: number;
+  protected override readonly stack: number[] = [S.INITIAL];
   /**
    * Whether everything consumed since the last line break (or the start) is blank: the next
    * token starts a line (D431, D432). What jison had matched so far ends in a line break and
@@ -213,58 +193,13 @@ class RequirementLexer {
   /** The next `}` at or after the last lookup (-2: not looked up; -1: none). */
   private nextBrace = -2;
 
-  constructor(
-    private readonly src: string,
-    from: number,
-    view: SourceView
-  ) {
-    this.offsets = view.runs && new SourceOffsets(view.runs);
-    this.holes = view.holes;
-    this.hole = firstHole(view, from);
-    const start = localOffset(view, from);
-    const { text, at } = this.v12Text(view.text, start);
-    this.at = at;
-    this.len = text.length;
-    this.text = this.placeholders(text, view.mask) + '\n';
-    this.n = this.text.length;
-    this.p = start;
-    // About one token per four characters of requirement text.
-    this.w = new TokenWriter(((this.len - this.p) >> 2) + 8);
-  }
-
-  /**
-   * `raw` with every CRLF and lone CR as one LF, as v12 had it, and where each character came
-   * from. A CR and an LF that a removed span left side by side are two line ends: v12 turned
-   * CRs into LFs before it removed anything. Offsets before `start` are kept as they are.
-   */
-  private v12Text(raw: string, start: number): { text: string; at: Uint32Array | undefined } {
-    if (!raw.includes('\r', start)) return { text: raw, at: undefined };
-    const at = new Uint32Array(raw.length + 1);
-    const out: string[] = [];
-    let k = 0;
-    let run = 0;
-    for (let q = 0; q < raw.length; q++) {
-      at[k++] = q;
-      if (raw.charCodeAt(q) !== CR) continue;
-      out.push(raw.slice(run, q), '\n');
-      run = q + 1;
-      if (q >= start && raw.charCodeAt(q + 1) === LF && this.adjacent(q)) {
-        q++;
-        run = q + 1;
-      }
-    }
-    out.push(raw.slice(run));
-    at[k] = raw.length;
-    return { text: out.join(''), at: at.subarray(0, k + 1) };
-  }
-
   /**
    * `text` with v12's other rewrites that change what a rule matches, each in place (the
    * length is kept): a `"` that v12's `cleanupText` turned into `'` reads `'`, and each
    * `#name;` entity reads `ﬂ`, the name and `¶`, so no rule takes its `#` or `;` (v12's
    * placeholders `ﬂ°…¶ß` are not `\w`, blanks or a rule's punctuation either).
    */
-  private placeholders(text: string, mask: Uint8Array | undefined): string {
+  protected override prepare(text: string, { mask }: SourceView): string {
     let out = text;
     if (mask && out.includes('"')) {
       const parts: string[] = [];
@@ -281,28 +216,21 @@ class RequirementLexer {
     return out;
   }
 
-  /** Whether view-text offsets `q` and `q + 1` are next to each other in the source. */
-  private adjacent(q: number): boolean {
-    const o = this.offsets;
-    return !o || o.source(q + 1) === o.source(q) + 1;
-  }
-
   run(probe?: Probe): TokenStream {
-    const { text, n } = this;
-    // v12 trimmed leading blanks (after removing comments) before lexing.
-    while (this.p < this.len && isSpace(text.charCodeAt(this.p))) this.p++;
+    const { n } = this;
+    this.trim();
     if (probe) {
       while (this.p < n) {
-        const mode = S_NAMES[this.state()] ?? '';
+        const mode = S_NAMES[this.top()] ?? '';
         const before = this.p;
         this.step();
         probe.lexed(this.source(before), this.source(this.p), mode);
       }
-      probe.lexed(this.src.length, this.src.length, S_NAMES[this.state()] ?? '');
+      probe.lexed(this.src.length, this.src.length, S_NAMES[this.top()] ?? '');
     } else while (this.p < n) this.step();
     // jison's last match, on the empty rest of the input.
     const end = this.len;
-    switch (this.state()) {
+    switch (this.top()) {
       case S.INITIAL:
         this.emit(T.Eof, end, end);
         break;
@@ -325,57 +253,18 @@ class RequirementLexer {
     return this.w.finish(this.src);
   }
 
-  private state(): number {
+  private top(): number {
     return this.stack[this.stack.length - 1] ?? S.INITIAL;
   }
 
   // --- Offsets and output -------------------------------------------------------------------
 
-  /** View-text offset of `text[i]`. */
-  private view(i: number): number {
-    return this.at ? (this.at[i] ?? 0) : i;
-  }
-
-  /** Source offset of `text[i]`; the end of the source from the appended line break on. */
-  private source(i: number): number {
-    if (i >= this.len) return this.src.length;
-    const v = this.view(i);
-    return this.offsets ? this.offsets.source(v) : v;
-  }
-
-  /** Source offset just past the last source character of `text[i]` (a CRLF's LF). */
-  private sourceEnd(i: number): number {
-    const v = this.view(i + 1) - 1;
-    return (this.offsets ? this.offsets.source(v) : v) + 1;
-  }
-
-  /**
-   * Write the removed spans that start before `at` (a source offset) as trivia. A dropped `;`
-   * that no token's range took (one after skipped blanks) is a `Space` token of its own.
-   */
-  private trivia(at: number): void {
-    const hs = this.holes;
-    for (let h = hs[this.hole]; h && h.start < at; h = hs[++this.hole]) {
-      if (h.kind === 'comment') this.w.push(Kind.Comment, h.start, h.end);
-      else if (h.kind === 'directive') this.w.push(Kind.Directive, h.start, h.end);
-      else if (h.start >= this.covered) this.w.push(Kind.Space, h.start, h.end);
-    }
-  }
-
   /**
    * Write the token `text[s, end)` with its source range, and move to `consumed` (past text
    * the rule matched but the token leaves out: an unquoted string's trailing blanks).
    */
-  private emit(kind: number, s: number, end: number, consumed = end): void {
-    const a = this.source(s);
-    const last = Math.min(end, this.len);
-    let b = last > s ? this.sourceEnd(last - 1) : a;
-    if (this.holes.length > 0) {
-      this.trivia(a);
-      if (b > a) b = this.dropAt(b);
-    }
-    this.w.push(kind, a, b);
-    if (b > this.covered) this.covered = b;
+  protected override emit(kind: number, s: number, end: number, consumed = end): void {
+    super.emit(kind, s, end, this.p);
     this.advance(consumed);
   }
 
@@ -396,29 +285,7 @@ class RequirementLexer {
     this.p = to;
   }
 
-  /** The end of the `;` v12 dropped at `b`, which belongs to the token before it; else `b`. */
-  private dropAt(b: number): number {
-    const hs = this.holes;
-    let k = this.hole;
-    while (k < hs.length && (hs[k]?.start ?? b) < b) k++;
-    const h = hs[k];
-    return h && h.start === b && h.kind === 'drop' ? h.end : b;
-  }
-
   // --- Scans --------------------------------------------------------------------------------
-
-  /** The end of the run of `\s` from `q`. */
-  private spaces(q: number): number {
-    let j = q;
-    while (j < this.n && isSpace(this.text.charCodeAt(j))) j++;
-    return j;
-  }
-
-  /** The first LF at or after `q` (the appended one at the latest). */
-  private lineEnd(q: number): number {
-    const e = this.text.indexOf('\n', q);
-    return e === -1 ? this.n : e;
-  }
 
   /** The first `"` at or after `q`, or the end. `q` never decreases between calls. */
   private quote(q: number): number {
@@ -434,21 +301,12 @@ class RequirementLexer {
     return e === -1 ? this.n : e;
   }
 
-  /** Whether the case-insensitive literal `word` (lower case) is at `q`. */
-  private literal(word: string, q: number): boolean {
-    if (q + word.length > this.n) return false;
-    for (let k = 0; k < word.length; k++) {
-      if (lower(this.text.charCodeAt(q + k)) !== word.charCodeAt(k)) return false;
-    }
-    return true;
-  }
-
   // --- Rules --------------------------------------------------------------------------------
 
-  private step(): void {
+  protected step(): void {
     const { text, p } = this;
     const c = text.charCodeAt(p);
-    switch (this.state()) {
+    switch (this.top()) {
       case S.INITIAL:
         this.initial(c);
         return;
@@ -465,7 +323,7 @@ class RequirementLexer {
       case S.ACC_TITLE:
       case S.ACC_DESCR: {
         // `(?!\n|;|#)*[^\n]*` (jison compiled the lookahead to nothing), then back.
-        const kind = this.state() === S.ACC_TITLE ? T.AccTitleValue : T.AccDescrValue;
+        const kind = this.top() === S.ACC_TITLE ? T.AccTitleValue : T.AccDescrValue;
         this.stack.pop();
         this.emit(kind, p, this.lineEnd(p));
         return;
@@ -482,7 +340,7 @@ class RequirementLexer {
   /** The initial state's rules, in jison's order. */
   private initial(c: number): void {
     const { text, p } = this;
-    const lc = lower(c);
+    const lc = lowerCode(c);
     // 0: `title\s[^#\n;]+`.
     if (lc === 0x74 && this.title()) return;
     // 1, 3, 5: `accTitle\s*:\s*`, `accDescr\s*:\s*`, `accDescr\s*\{\s*`.
@@ -496,7 +354,7 @@ class RequirementLexer {
     }
     // 13: `\s+`, skipped (D431).
     if (isSpace(c)) {
-      this.blanks();
+      this.blankRun();
       return;
     }
     // 14, 15: `\#[^\n]*`, `\%%[^\n]*` (compiled to `%[^\n]*`), skipped.
@@ -566,7 +424,7 @@ class RequirementLexer {
    * After other text on the line it ends at its first line break, and the run of line breaks
    * there is a {@link T.NewlineAfterBlank}.
    */
-  private blanks(): void {
+  private blankRun(): void {
     const { text, p } = this;
     if (this.clean) {
       this.advance(this.spaces(p));
@@ -619,7 +477,10 @@ class RequirementLexer {
     let w = p + 9;
     while (isLineBlank(text.charCodeAt(w))) w++;
     if (w === p + 9 || isWord(text.charCodeAt(w + 2))) return false;
-    const pair = String.fromCharCode(lower(text.charCodeAt(w)), lower(text.charCodeAt(w + 1)));
+    const pair = String.fromCharCode(
+      lowerCode(text.charCodeAt(w)),
+      lowerCode(text.charCodeAt(w + 1))
+    );
     const d = DIRECTIONS.indexOf(pair);
     if (d < 0) return false;
     this.emit(DIRECTION_KINDS[d] ?? T.DirectionTB, p, w + 2);

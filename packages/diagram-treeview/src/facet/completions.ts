@@ -27,6 +27,7 @@ import type { TreeViewDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { span } from './ranges.ts';
 import { iconOptionsOf } from './tree.ts';
+import { keywordItem } from '@mermaid-js/shared/parser/facet';
 
 /** Where an item is offered, besides the parser expecting its kind. */
 type Place = 'header' | 'lineStart' | 'afterName';
@@ -169,15 +170,7 @@ export function treeViewCompletions(
   for (const k of items) {
     if (!placed[k.place] || !k.kinds.some((kind) => expected.has(kind))) continue;
     if (!k.label.startsWith(prefix)) continue;
-    const documentation = k.doc === undefined ? undefined : treeviewDocs[k.doc];
-    out.push({
-      label: k.label,
-      kind: k.item,
-      insertText: k.insert ?? k.label,
-      range,
-      ...(k.detail === undefined ? {} : { detail: k.detail }),
-      ...(documentation === undefined ? {} : { documentation }),
-    });
+    out.push(keywordItem(k, range, k.doc === undefined ? undefined : treeviewDocs[k.doc]));
   }
   return out;
 }

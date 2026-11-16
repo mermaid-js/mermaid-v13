@@ -11,9 +11,9 @@
  * the layout sees is always an author's. The schema's default is 15 too, so its documentation
  * says what is drawn.
  */
-import { configNumber } from '@mermaid-js/core/config/readers';
 
 /** The `venn` options the layout reads, every one set. */
+import { configNumber } from '@mermaid-js/shared/config/readers';
 export interface VennLayoutConfig {
   readonly width: number;
   readonly height: number;

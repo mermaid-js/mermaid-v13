@@ -12,13 +12,12 @@ import type {
   Range,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
-import { code, span } from '@mermaid-js/core/parser-kit/facet';
 import { blockDocs } from '../generated/docs.ts';
 import { isComposite, type Block, type BlockModel } from '../model.ts';
 import type { BlockDocument, BlockStatementNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { TYPE_NAMES } from './tables.ts';
-import { plural, tokenAt } from './text.ts';
+import { code, plural, span, tokenAt } from './text.ts';
 
 /** The tokens of a block's shape or block arrow, after its id up to its closer. */
 const SHAPE_PARTS = new Set<number>([

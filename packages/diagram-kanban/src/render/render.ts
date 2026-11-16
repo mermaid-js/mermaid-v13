@@ -7,7 +7,7 @@
  * Columns and cards go through `w.outline` (hand-drawn, D379); the priority bar does not.
  */
 import { checkStyle, type Attrs, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { centreX, centreY, openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { FontKey, Run } from '@mermaid-js/core/text';
 import type { CardLayout, ColumnLayout, KanbanLayout, PlacedLabel } from '../layout/index.ts';
 import type { KanbanItem, KanbanModel } from '../model.ts';
@@ -62,12 +62,13 @@ function openRoot({ w, layout, ctx }: Scene): void {
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
+  const maxWidth = config.kanban?.useMaxWidth !== false;
   // Read before the root style and the auto sheet are written, so they declare its aliases.
   const font = fontAttrs(layout.font, theme);
   openSvgRoot(w, ctx, {
     name: 'kanban',
     viewBox: [x, y, width, height],
-    maxWidth: config.kanban?.useMaxWidth,
+    maxWidth,
     attrs: { ...font },
   });
 }
@@ -84,9 +85,6 @@ function fontAttrs(f: FontKey, theme: KanbanRenderContext['theme']): Attrs {
   const size = f.size === theme.number('fontSize') ? theme.length('fontSize') : f.size;
   return { 'font-family': family, 'font-size': size };
 }
-
-const centreX = (r: PlacedLabel): number => r.x + r.width / 2;
-const centreY = (r: PlacedLabel): number => r.y + r.height / 2;
 
 /** A label in its `g.label` group; card labels are left-aligned in their box. */
 function drawLabel(

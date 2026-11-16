@@ -3,8 +3,9 @@
  * they come from the grammar file (`generated/docs.ts`).
  */
 import type { MindmapShape } from '../model.ts';
-
-export { code, span } from '@mermaid-js/core/parser-kit/facet';
+export { lineBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 /** A shape written with delimiters: its opener, the closer it reads best with, its name. */
 export interface ShapeForm {
@@ -49,13 +50,6 @@ export const SHAPE_NAMES: Readonly<Record<MindmapShape, string>> = {
 };
 
 const LINE_END = /[\n\r\u2028\u2029]/;
-
-/** The text of `at`'s line before `at`. */
-export function lineBefore(text: string, at: number): string {
-  let start = at;
-  while (start > 0 && !LINE_END.test(text.charAt(start - 1))) start--;
-  return text.slice(start, at);
-}
 
 /** The text of `at`'s line from `at` on. */
 export function lineAfter(text: string, at: number): string {

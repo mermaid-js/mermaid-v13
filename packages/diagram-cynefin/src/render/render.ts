@@ -9,9 +9,8 @@
 // rect or ellipse, each item's `g` and each transition's line. Labels, subtitles, arrowheads and
 // arrow labels carry `data-id` only.
 import type { RenderContext } from '@mermaid-js/core';
-import { translate } from '@mermaid-js/core/svg';
-import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { translate, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { CynefinBadge, CynefinFont, CynefinLayout, PlacedLabel } from '../layout/index.ts';
 import { FONTS } from '../layout/metrics.ts';
 import type { CynefinModel } from '../model.ts';
@@ -230,19 +229,21 @@ function openRoot(
   ctx: CynefinRenderContext,
   w: SvgWriter
 ): void {
+  const { theme, config } = ctx;
   const { x, y } = layout.viewBox;
+  const width = Math.max(1, Math.ceil(layout.viewBox.width));
+  const height = Math.max(1, Math.ceil(layout.viewBox.height));
+  const maxWidth = config.cynefin?.useMaxWidth !== false;
+  const title = model.accTitle.trim();
+  const desc = model.accDescr.trim();
+  // Read before the root style is written, so it declares its alias.
+  const font = theme.font();
   openSvgRoot(w, ctx, {
     name: 'cynefin',
-    viewBox: [
-      x,
-      y,
-      Math.max(1, Math.ceil(layout.viewBox.width)),
-      Math.max(1, Math.ceil(layout.viewBox.height)),
-    ],
-    maxWidth: ctx.config.cynefin?.useMaxWidth,
-    title: model.accTitle.trim(),
-    desc: model.accDescr.trim(),
-    // Read before the root style is written, so it declares its alias.
-    attrs: { 'font-family': ctx.theme.font() },
+    viewBox: [x, y, width, height],
+    maxWidth,
+    title,
+    desc,
+    attrs: { 'font-family': font },
   });
 }
