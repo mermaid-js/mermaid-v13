@@ -29,6 +29,10 @@ Call `preload()` (or `preload({ types: ['flowchart'] })`) once, before the first
 
 Positions are UTF-16 offsets into the whole text (front matter included). `doc.lines()` converts to 0-based line and column.
 
+## Mermaid in Markdown
+
+The service reads Mermaid text only. For a Markdown document, `mermaidFences(markdown)` lists its Mermaid fences (backtick or tilde, any indent) as `{ start, text }`. Give each `text` to `update` under a uri of its own, add `start` to every offset that comes back, and subtract it from every offset you send. The language server does this when a client opts in with `mermaid.markdown`.
+
 ## Third-party diagram types
 
 Pass their rows to `createLanguageService({ facets: [{ type, id, detector, load }] })`. A facet is written against the types this package re-exports (`LanguageFacet`, `ParseResult`, `ProbeResult`, `DocumentView`, `HoverTarget`, …). The shared golden suite runs from `@mermaid-js/language-service/testing` (Node only).
