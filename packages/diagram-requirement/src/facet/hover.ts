@@ -100,7 +100,7 @@ export function requirementHover(
   const t = at.token;
   if (!t) return undefined;
   const range = trimmed(text, t.range);
-  if (!covers(range, at.offset)) return undefined;
+  if (!covers(at.offset, range)) return undefined;
   const docText = requirementDocs[t.kind];
   if (docText === undefined) return undefined;
   const word = text.slice(range.start, range.end);

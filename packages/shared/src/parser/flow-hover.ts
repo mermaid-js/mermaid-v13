@@ -157,7 +157,7 @@ export function flowTokenHover(
   const T = dialect.kinds;
   // Tokens may take blanks and line breaks with them (`end`, links): only their text counts.
   const range = trimmed(text, token.range);
-  if (!covers(range, offset)) return undefined;
+  if (!covers(offset, range)) return undefined;
   const word = text.slice(range.start, range.end);
   if (token.kind === T.Link || token.kind === T.StartLink) return dialect.link(range, word);
   if (token.kind === T.Dir) {

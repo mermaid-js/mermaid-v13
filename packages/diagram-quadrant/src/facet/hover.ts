@@ -54,7 +54,7 @@ export function quadrantHover(
   const t = at.token;
   if (!t) return undefined;
   const range = trimmed(text, t.range);
-  if (!covers(range, at.offset)) return undefined;
+  if (!covers(at.offset, range)) return undefined;
   const kind = DOC_KIND[t.kind] ?? t.kind;
   const docText = quadrantDocs[kind];
   if (docText === undefined) return undefined;

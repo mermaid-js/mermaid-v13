@@ -62,7 +62,7 @@ Later milestones add the `core/ascii` subpath and a `mermaid` CLI bin (M2, §6.3
 - `/theme`
 - `/config`
 - `/ascii` (M2): the text-grid kit (§6.3), never imported by an SVG render
-- `/svg/document`, `/parser-kit/support`, `/config/readers`, `/text/v12-label` and `/text/tags-only`: helpers that every diagram package used to copy (the `<svg>` root and its title and description; AST id escaping and v12's entity placeholders; the config number and `useMaxWidth` readers; the label mode of a v12 Markdown label, D564; the inline spans of a label that draws no inline boxes, D566). Only diagram chunks import them, so they stay outside the core bundle (D557)
+- `/svg/document`, `/parser-kit/support`, `/config/readers`, `/text/v12-label` and `/text/tags-only`: helpers that every diagram package used to copy (the `<svg>` root and its title and description; AST id escaping and v12's entity placeholders; the config number and `useMaxWidth` readers; the label mode of a v12 Markdown label, D564; the inline spans of a label that draws no inline boxes, D566). Only diagram chunks import them, so they stay outside the core bundle (D557). The language-facet helpers (ranges, Markdown code, the token before an offset) are diagram code and live only in `@mermaid-js/shared/parser/facet` (D559, #820)
 
 `mermaid` exports (M3.5, §12.4):
 

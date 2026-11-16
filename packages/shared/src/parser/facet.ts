@@ -21,7 +21,7 @@ export const span = (start: number, end: number): Range => ({ start, end });
 export const inside = (offset: number, r: Range): boolean => r.start <= offset && offset <= r.end;
 
 /** Whether `r` is not empty and `offset` is in it, ends included: a token a hover may show. */
-export const covers = (r: Range, offset: number): boolean => r.start < r.end && inside(offset, r);
+export const covers = (offset: number, r: Range): boolean => r.start < r.end && inside(offset, r);
 
 /** `r` without the blanks at its ends. */
 export function trimmed(text: string, r: Range): Range {
@@ -84,9 +84,38 @@ function lastAtOrBefore(length: number, startOf: (i: number) => number, offset: 
   return found;
 }
 
-/** Index of the last token of `tokens` starting at or before `offset`, or -1. */
-export function tokenBefore(tokens: TokenStream, offset: number): number {
-  return lastAtOrBefore(tokens.length, (i) => tokens.start[i] ?? 0, offset);
+/**
+ * Index of the last token of `tokens` starting (or, with `edge` `end`, ending) at or before
+ * `offset`, or -1.
+ */
+export function tokenBefore(
+  tokens: TokenStream,
+  offset: number,
+  edge: 'start' | 'end' = 'start'
+): number {
+  const at = tokens[edge];
+  return lastAtOrBefore(tokens.length, (i) => at[i] ?? 0, offset);
+}
+
+/**
+ * A statement of `list` (in source order, never overlapping) whose range holds `at`, its ends
+ * included, found by bisection: where two ranges touch at `at`, the one the bisection meets
+ * first (unlike {@link statementAt}, which takes the later one).
+ */
+export function statementOverlapping<N extends { readonly range: Range }>(
+  list: readonly N[],
+  at: number
+): N | undefined {
+  let lo = 0;
+  let hi = list.length - 1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    const n = list[mid]!;
+    if (n.range.end < at) lo = mid + 1;
+    else if (n.range.start > at) hi = mid - 1;
+    else return n;
+  }
+  return undefined;
 }
 
 /**
@@ -130,6 +159,14 @@ export function lineBefore(text: string, at: number, unicode = false): string {
   let start = at;
   while (start > 0 && !lineBreak.test(text.charAt(start - 1))) start--;
   return text.slice(start, at);
+}
+
+/** The text of `at`'s line from `at` on. `unicode`: U+2028 and U+2029 end a line too. */
+export function lineAfter(text: string, at: number, unicode = false): string {
+  const lineBreak = unicode ? UNICODE_BREAK : ASCII_BREAK;
+  let end = at;
+  while (end < text.length && !lineBreak.test(text.charAt(end))) end++;
+  return text.slice(at, end);
 }
 
 /** Whether only spaces and tabs are between `at` and the start of its line. */

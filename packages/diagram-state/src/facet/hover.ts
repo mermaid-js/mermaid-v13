@@ -156,7 +156,7 @@ export function stateHover(at: HoverTarget, doc: DocumentView<StateDocument>): H
   if (!t) return undefined;
   // Tokens may take blanks and line breaks with them (`state `, the header): only their text.
   const range = trimmed(text, t.range);
-  if (!covers(range, at.offset)) return undefined;
+  if (!covers(at.offset, range)) return undefined;
   const word = text.slice(range.start, range.end);
   if (t.kind === T.EdgeState) return pseudoHover(result.ast, model, at.offset);
   if (t.kind === T.Arrow) {

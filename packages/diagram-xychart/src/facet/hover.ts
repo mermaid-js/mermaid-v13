@@ -80,6 +80,6 @@ export function xyChartHover(
   }
   if (!t) return undefined;
   const range = trimmed(text, t.range);
-  if (!covers(range, at.offset)) return undefined;
+  if (!covers(at.offset, range)) return undefined;
   return keywordHover(text, at.offset, range, undefined, xychartDocs[DOC_KIND[t.kind] ?? t.kind]);
 }

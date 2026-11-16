@@ -14,16 +14,8 @@ import type {
 import { lineBefore, span } from './facet.ts';
 
 const BLANK = /^[\t ]*$/;
-const LINE_BREAK = /[\n\r\u2028\u2029]/;
 /** A class word's end: the blanks a `:::` line is split at. */
 const CLASS_BLANK = /[\t\n\f\r ]/;
-
-/** The text of `at`'s line from `at` on (U+2028 and U+2029 end a line too). */
-export function lineAfter(text: string, at: number): string {
-  let end = at;
-  while (end < text.length && !LINE_BREAK.test(text.charAt(end))) end++;
-  return text.slice(at, end);
-}
 
 /**
  * The index of the last token of `kinds` in `tokens` that holds `at` (starts at or before it,
