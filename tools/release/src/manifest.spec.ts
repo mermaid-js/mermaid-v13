@@ -4,6 +4,7 @@ import {
   danglingExports,
   inexactWorkspaceRanges,
   publishManifest,
+  testSupportEntries,
   workspaceLeaks,
 } from './manifest.ts';
 import type { PackedManifest } from './manifest.ts';
@@ -161,6 +162,79 @@ describe('published manifests', () => {
       './testing-ish': {},
     });
     expect(danglingExports(manifest)).toEqual(['./testing-ish']);
+  });
+
+  it('keeps a source-only ./testing outside the diagram packages and shared, so it still dangles', () => {
+    // language-service publishes `./testing` on purpose (tsconfig.testing.json builds it): a
+    // broken one must fail the pack, not vanish.
+    const manifest = publishManifest(
+      {
+        name: '@mermaid-js/language-service',
+        version: '13.0.0-alpha.3',
+        exports: { './testing': { 'mermaid-source': './src/testing/index.ts' } },
+      },
+      { target: 'public', workspace: [] }
+    );
+    expect(danglingExports(manifest)).toEqual(['./testing']);
+    const shared = publishManifest(
+      {
+        name: '@mermaid-js/shared',
+        version: '13.0.0-alpha.1',
+        exports: { './testing/x': { 'mermaid-source': './src/testing/x.ts' } },
+      },
+      { target: 'private', workspace: [] }
+    );
+    expect(shared.exports).toEqual({});
+  });
+
+  it('finds test support in a tarball listing, outside the test subpaths a package publishes (#816)', () => {
+    const pie: PackedManifest = {
+      name: '@mermaid-js/diagram-pie',
+      version: '13.0.0-alpha.3',
+      exports: { '.': { types: './dist/index.d.ts', default: './dist/index.js' } },
+    };
+    expect(
+      testSupportEntries(pie, [
+        'package.json',
+        'README.md',
+        'dist/index.js',
+        'dist/layout/index.js',
+        'dist/layout/metrics.js',
+        // what a stale `dist` from before #816 still holds
+        'dist/testing.js',
+        'dist/testing.d.ts',
+        'dist/test-context.js',
+        'dist/render/harness.js',
+        'dist/layout/invariants.d.ts',
+        'dist/layout/fixtures.js',
+        'dist/layout/mmd.fixtures.js',
+        'dist/v12-specs/adapter.js',
+        'dist/layout/swimlane/__tests__/graphs.js',
+        'dist/fixtures/basic.js',
+        'dist/layout.spec.js',
+      ])
+    ).toEqual([
+      'dist/testing.js',
+      'dist/testing.d.ts',
+      'dist/test-context.js',
+      'dist/render/harness.js',
+      'dist/layout/invariants.d.ts',
+      'dist/layout/fixtures.js',
+      'dist/layout/mmd.fixtures.js',
+      'dist/v12-specs/adapter.js',
+      'dist/layout/swimlane/__tests__/graphs.js',
+      'dist/fixtures/basic.js',
+      'dist/layout.spec.js',
+    ]);
+    // core's `./svg/testing` and language-service's `./testing` are published on purpose.
+    const core: PackedManifest = {
+      name: '@mermaid-js/core',
+      version: '13.0.0-alpha.3',
+      exports: { './svg/testing': { default: './dist/svg/testing/index.js' } },
+    };
+    expect(
+      testSupportEntries(core, ['dist/svg/testing/index.js', 'dist/svg/testing/index.d.ts'])
+    ).toEqual([]);
   });
 
   it('publishes only alpha prereleases, so the alpha tag never moves latest or a release line', () => {

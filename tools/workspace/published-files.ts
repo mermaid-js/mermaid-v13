@@ -7,8 +7,13 @@
  *
  * Both sets follow relative imports only: a package reaches another package through its
  * `exports`, never through a path.
+ *
+ * Two guards hold for every published package, core and the plugins too: no built file carries a
+ * test-support name ({@link TEST_SUPPORT}), and none makes a test-only import ({@link
+ * TEST_IMPORT}), which catches a test file under a new name that a published barrel re-exports.
+ * The release checks the real tarball as well (`testSupportEntries`, tools/release).
  */
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import ts from 'typescript';
 
@@ -17,7 +22,13 @@ export const TEST_SUBPATH = /^\.\/testing(?:\/|$)/;
 
 /** A source file name that only test support carries. */
 export const TEST_SUPPORT =
-  /(?:^|\/)(?:v12-specs\/|testing[./]|test-context\.ts$|harness\.ts$|invariants\.ts$|fixtures\.ts$|[^/]*\.fixtures\.ts$|[^/]*\.spec\.ts$)/;
+  /(?:^|\/)(?:v12-specs\/|__tests__\/|fixtures\/|testing[./]|test-context\.ts$|harness\.ts$|invariants\.ts$|fixtures\.ts$|[^/]*\.fixtures\.ts$|[^/]*\.spec\.ts$)/;
+
+/**
+ * An import only test code makes, whatever the importing file is called: the test runner, or a
+ * package's test subpath (`@mermaid-js/diagram-pie/testing`, `@mermaid-js/shared/testing/…`).
+ */
+const TEST_IMPORT = /^(?:vitest|@vitest\/.*|node:test)$|^[^.][^]*\/testing(?:\/|$)/;
 
 /**
  * The one `tsconfig.build.json` of every diagram package. The build starts from the top-level
@@ -66,6 +77,46 @@ export function builtSources(dir: string): Set<string> {
   const config = ts.readConfigFile(path, (p) => readFileSync(p, 'utf8'));
   const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, dir, undefined, path);
   return closure(dir, parsed.fileNames);
+}
+
+/** `file: specifier` for each test-only import ({@link TEST_IMPORT}) in `files` (relative to `dir`). */
+export function testImports(dir: string, files: Iterable<string>): string[] {
+  return [...files].flatMap((file) =>
+    ts
+      .preProcessFile(readFileSync(join(dir, file), 'utf8'), true, true)
+      .importedFiles.filter(({ fileName }) => TEST_IMPORT.test(fileName))
+      .map(({ fileName }) => `${file}: ${fileName}`)
+  );
+}
+
+/**
+ * The source folders of the test subpaths a package publishes on purpose, with a built target
+ * (core's `./svg/testing`): their files may carry test names.
+ */
+export function publishedTestDirs(dir: string): string[] {
+  const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as {
+    exports?: Record<string, Record<string, string> | string>;
+  };
+  return Object.entries(pkg.exports ?? {})
+    .filter(([key, value]) => /(?:^|\/)testing(?:\/|$)/.test(key) && typeof value === 'object')
+    .filter(([, value]) => Object.keys(value).some((condition) => condition !== 'mermaid-source'))
+    .map(([, value]) => (value as Record<string, string>)['mermaid-source'] ?? '')
+    .filter((source) => source !== '')
+    .map((source) => source.replace(/^\.\//, '').replace(/[^/]*$/, ''));
+}
+
+/** The published packages under `root/packages` that build with a `tsconfig.build.json`. */
+export function builtPackageDirs(root: string): string[] {
+  return readdirSync(join(root, 'packages'))
+    .sort()
+    .map((name) => `packages/${name}`)
+    .filter((dir) => existsSync(join(root, dir, 'tsconfig.build.json')))
+    .filter((dir) => {
+      const pkg = JSON.parse(readFileSync(join(root, dir, 'package.json'), 'utf8')) as {
+        private?: boolean;
+      };
+      return pkg.private !== true;
+    });
 }
 
 /** The sources a user can load: what the package's exports reach, its `./testing…` aside. */

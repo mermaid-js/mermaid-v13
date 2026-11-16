@@ -40,6 +40,9 @@
     "e2e/rendering/common-tests/**"
   ],
   "ignoreExportsUsedInFile": true,
+  "resolve": {
+    "conditions": ["mermaid-source"]
+  },
   "workspaces": {
     "settings": {
       "packages/bench": {
