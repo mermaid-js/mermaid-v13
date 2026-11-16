@@ -20,7 +20,6 @@ import {
   Kind,
   kindSet,
   LineIndex,
-  NO_AST_ID,
   nodeId,
   ParseState,
   Probe,
@@ -367,6 +366,8 @@ interface Opener {
 }
 
 const NO_ITEMS: string[] = [];
+/** `NO_ID`: the id a lean parse without ids gives where only `data-ast` reads one. */
+const NO_ID: AstId = '';
 
 /** How each statement is written, for errors inside it. */
 const STATEMENT_HINTS: Record<number, string> = {
@@ -418,7 +419,7 @@ class FlowParser {
   private readonly view: SourceView;
   private readonly st: ParseState;
   private readonly ids: ParseState['ids'];
-  /** An edge's AST id, for the model: `NO_AST_ID` in a lean parse without ids. */
+  /** An edge's AST id, for the model: `NO_ID` in a lean parse without ids. */
   private readonly edgeAst: (start: string, end: string) => AstId;
   private readonly db: FlowBuilder;
   private readonly fullTokens: TokenStream;
@@ -461,7 +462,7 @@ class FlowParser {
     );
     if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
     const ids = (this.ids = this.st.ids);
-    this.edgeAst = this.st.astIds ? (a, b) => ids.edge(a, b) : () => NO_AST_ID;
+    this.edgeAst = this.st.astIds ? (a, b) => ids.edge(a, b) : () => NO_ID;
     const diagnostics = this.st.diagnostics;
     this.db = new FlowBuilder({
       maxEdges: options.maxEdges ?? DEFAULT_LIMITS.maxEdges,
@@ -917,7 +918,7 @@ class FlowParser {
 
   /** A vertex's AST id is its first mention's: `n:<name>`. */
   private nodeAst(name: string): AstId {
-    if (!this.st.astIds) return NO_AST_ID;
+    if (!this.st.astIds) return NO_ID;
     return this.db.vertices.get(name)?.ast ?? nodeId(name);
   }
 
@@ -938,7 +939,6 @@ class FlowParser {
 
   /** A `class` statement target: an edge mention when it names an edge (v12 `setClass`). */
   private classTarget(name: string, r: Range): void {
-    if (this.st.lean) return;
     if (this.namesEdge(name)) this.edgeSymbol(name, r);
     else this.st.symbol(name, 'node', r, 'ref');
   }
@@ -965,7 +965,7 @@ class FlowParser {
     const [name, nameRange] = this.idString();
     this.nodeSymbol(name, nameRange);
     const node: FlowNodeStmt = {
-      id: this.st.lean ? NO_AST_ID : this.ids.node(name),
+      id: this.st.lean ? NO_ID : this.ids.node(name),
       type: 'Node',
       range: nameRange,
       name,
@@ -1159,17 +1159,18 @@ class FlowParser {
       const nextNames = next.map((n) => n.name);
       const before = db.edges.length;
       db.addLink(names, nextNames, info, this.edgeAst, linkRange);
-      if (!this.st.lean) this.edgeNodes(chain, [stmt, next], before, linkRange, label);
+      if (!this.st.lean) this.edgeNodes(chain, stmt, next, before, linkRange, label);
       if (collect) later.push(nextNames);
       stmt = next;
       names = nextNames;
     }
   }
 
-  /** The AST edge of each model edge from `before` on, between the nodes of `ends`. */
+  /** The AST edge of each model edge from `before` on, between the nodes of `stmt` and `next`. */
   private edgeNodes(
     chain: (FlowNodeStmt | FlowEdge)[],
-    [stmt, next]: [FlowNodeStmt[], FlowNodeStmt[]],
+    stmt: FlowNodeStmt[],
+    next: FlowNodeStmt[],
     before: number,
     linkRange: Range,
     label: FlowLabelNode | undefined
@@ -1233,7 +1234,6 @@ class FlowParser {
     out: string[],
     mention: (part: string, r: Range) => void
   ): void {
-    if (this.st.lean) return;
     let at = r.start;
     const exact = this.src.slice(r.start, r.end) === list;
     for (const part of list.split(',')) {
