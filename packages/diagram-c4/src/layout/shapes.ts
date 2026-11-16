@@ -373,15 +373,15 @@ function reach(spans: readonly (readonly [number, number])[]): number {
 }
 
 /**
- * How far `p` can move along the unit vector `n`, either way, and stay inside `box`'s outline:
- * the lesser of the two ways, 0 when `p` is not inside.
+ * How far `p` can move along the unit vector `n` and stay inside `box`'s outline: against `n`,
+ * then along it; 0 each way when `p` is not inside.
  */
-export function insideAlong(box: Outline, p: Point, n: Point): number {
+export function insideAlong(box: Outline, p: Point, n: Point): [number, number] {
   const spans = piecesOf(box).flatMap((piece) => {
     const s = spanIn(piece, p, n);
     return s ? [s] : [];
   });
-  return Math.min(reach(spans), reach(spans.map(([lo, hi]) => [-hi, -lo] as const)));
+  return [reach(spans.map(([lo, hi]) => [-hi, -lo] as const)), reach(spans)];
 }
 
 /** Whether `p` is on `box`'s outline, within `tol`: inside it grown by `tol`, not inside it shrunk by `tol`. */

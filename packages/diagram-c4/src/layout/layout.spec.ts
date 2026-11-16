@@ -427,6 +427,35 @@ describe('c4 relations (D455)', () => {
     expect(c4RelationPath(r).map((c) => c.op)).toEqual(['M', 'C']);
   });
 
+  describe('self-loops that repeat a shape (#680)', () => {
+    /** More loops than fit their ends `near` apart on a system's right side (5). */
+    const PAST_ROOM = 7;
+    const loops = (src: string): C4RelationLayout[] =>
+      sound(src).relations.filter((r) => r.route === 'loop');
+    /** Where each loop meets the outline, in order down the side, and the gaps between them. */
+    const ends = (drawn: readonly C4RelationLayout[]): { ys: number[]; gaps: number[] } => {
+      const ys = drawn.flatMap((r) => [r.start.y, r.end.y]).sort((u, v) => u - v);
+      return { ys, gaps: ys.slice(1).map((y, i) => y - ys[i]!) };
+    };
+
+    it('draws each on its own stretch of the side, its arrowheads apart from the others', () => {
+      const drawn = loops('C4Context\nSystem(a, "A")\nRel(a, a, "one")\nBiRel(a, a, "two")');
+      expect(drawn).toHaveLength(2);
+      const [one, two] = drawn as [C4RelationLayout, C4RelationLayout];
+      // The first statement above the second, each loop's ends on its own stretch.
+      expect(Math.max(one.start.y, one.end.y)).toBeLessThan(Math.min(two.start.y, two.end.y));
+      for (const gap of ends(drawn).gaps) expect(gap).toBeGreaterThanOrEqual(M.near);
+    });
+
+    it('limit: past the room on the side, keeps their ends evenly apart, closer than `near`', () => {
+      const src = Array.from({ length: PAST_ROOM }, (_, i) => `Rel(a, a, "r${i}")`).join('\n');
+      const { ys, gaps } = ends(loops(`C4Context\nSystem(a, "A")\n${src}`));
+      expect(new Set(ys).size).toBe(2 * PAST_ROOM);
+      for (const gap of gaps) expect(Math.abs(gap - gaps[0]!)).toBeLessThan(1e-9);
+      expect(gaps[0]).toBeLessThan(M.near);
+    });
+  });
+
   it('numbers C4Dynamic relations in model order, and leaves out one with an unknown end', () => {
     const layout = sound(
       'C4Dynamic\nSystem(a, "A")\nSystem(b, "B")\nRel(a, b, "first")\nRel(a, zz, "lost")\nRel(b, a, "third")'

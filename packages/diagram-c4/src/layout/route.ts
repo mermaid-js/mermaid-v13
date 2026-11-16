@@ -164,13 +164,13 @@ export function pairRoom(a: Outline, b: Outline): number {
     const middle = { x: cx(inner), y: cy(inner) };
     const [ox, oy] = nearestSide(down ? a : b, inner);
     const n = unitNormal([ox, oy, middle.x, middle.y]);
-    return Math.max(0, insideAlong(inner, middle, n) - M.portInset);
+    return Math.max(0, Math.min(...insideAlong(inner, middle, n)) - M.portInset);
   }
   const line = baseLine(a, b);
   const n = unitNormal(line);
   const reach = Math.min(
-    insideAlong(a, { x: line[0], y: line[1] }, n),
-    insideAlong(b, { x: line[2], y: line[3] }, n)
+    ...insideAlong(a, { x: line[0], y: line[1] }, n),
+    ...insideAlong(b, { x: line[2], y: line[3] }, n)
   );
   return Math.max(0, reach - M.portInset);
 }
@@ -434,11 +434,39 @@ function elbow(
   return bent(points, 2, { room: upright ? M.narrow : M.wide });
 }
 
-/** A self-loop on the right side of `a`, its ends on the outline. */
-function loop(a: Outline): Route {
-  const spread = Math.max(0, Math.min(a.height / 2 - M.loopSpreadInset, M.loopSpread));
+/** A self-loop's place among the self-loops on its shape: the `nth` (from 0) of `count`. */
+export interface LoopPlace {
+  readonly nth: number;
+  readonly count: number;
+}
+
+const ONE_LOOP: LoopPlace = { nth: 0, count: 1 };
+
+/**
+ * Where on `a`'s right side its self-loops end: the middle, and how far from it either way. One
+ * loop alone sits at the middle of the box. Several share the stretch the outline has down the
+ * side, measured `shapeRadius` in from it (a person's body, not its head) (#680). Both keep
+ * `loopSpreadInset` clear of the ends.
+ */
+function loopStretch(a: Outline, count: number): [number, number] {
+  if (count === 1) return [cy(a), Math.max(0, a.height / 2 - M.loopSpreadInset)];
+  const at = { x: a.x + a.width - M.shapeRadius, y: cy(a) };
+  const [up, down] = insideAlong(a, at, { x: 0, y: 1 });
+  return [cy(a) + (down - up) / 2, Math.max(0, (up + down) / 2 - M.loopSpreadInset)];
+}
+
+/**
+ * A self-loop on the right side of `a`, its ends on the outline. With several loops on one
+ * shape (#680), each takes a stretch of the side of its own, the first at the top: their ends
+ * are spread evenly down the side, and no loop is taller than one alone. Past
+ * `half / near + 1/2` loops (`half` from {@link loopStretch}), their ends are closer than `near`.
+ */
+function loop(a: Outline, { nth, count }: LoopPlace): Route {
+  const [middle, half] = loopStretch(a, count);
+  // A loop's ends are `2 * spread` apart, and so is the next loop's first end from its last.
+  const spread = Math.min(half / (2 * count - 1), M.loopSpread);
   const x = a.x + a.width;
-  const y = cy(a);
+  const y = middle + (4 * nth - 2 * (count - 1)) * spread;
   const far = x + M.loop;
   const endAt = (yy: number): number =>
     far + (cx(a) - far) * Math.min(hit(a, { x: far, y: yy }, { x: cx(a), y: yy }), 1);
@@ -469,6 +497,8 @@ function loop(a: Outline): Route {
 /** How a relation is routed: its sideways shift, the shapes to steer clear of, and the lanes taken. */
 export interface RouteOptions {
   readonly shift: number;
+  /** A self-loop's place among the loops on its shape; the only one when left out. */
+  readonly loop?: LoopPlace;
   /** Undefined once the budget is spent: the line goes straight. */
   readonly others?: readonly Outline[];
   readonly lanes: Lanes;
@@ -476,12 +506,13 @@ export interface RouteOptions {
 
 /**
  * Routes a relation from a to b. `shift` moves the line sideways, off the others between the
- * same two shapes; it stays within their `pairRoom`. `others` are the shapes to steer clear of;
- * undefined skips that check (over the budget).
- * `lanes` holds what the routes before it take up, so that this one keeps apart from them.
+ * same two shapes; it stays within their `pairRoom`. `loop` places a self-loop among the others
+ * on its shape. `others` are the shapes to steer clear of; undefined skips that check (over the
+ * budget). `lanes` holds what the routes before it take up, so that this one keeps apart from them.
  */
-export function route(a: Outline, b: Outline, { shift, others, lanes }: RouteOptions): Route {
-  if (a === b) return loop(a);
+export function route(a: Outline, b: Outline, options: RouteOptions): Route {
+  const { shift, others, lanes } = options;
+  if (a === b) return loop(a, options.loop ?? ONE_LOOP);
   const line = connect(a, b, shift);
   return (others && around({ a, b, others, lanes, line })) ?? straight(line, shift, lanes);
 }

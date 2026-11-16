@@ -35,7 +35,16 @@ import {
 } from './grid.ts';
 import { cellConfig, cellPxMeasurer, cellRoom, type CellSize } from './cells.ts';
 import { C4_METRICS as M, FONT_WEIGHT } from './metrics.ts';
-import { Lanes, lineOf, pairRoom, pointsOf, route, Work, type Route } from './route.ts';
+import {
+  Lanes,
+  lineOf,
+  pairRoom,
+  pointsOf,
+  route,
+  Work,
+  type LoopPlace,
+  type Route,
+} from './route.ts';
 import {
   hitRect,
   outlineForm,
@@ -511,15 +520,24 @@ class Lines {
   }
 }
 
+/** Where a relation runs among the others between the same two shapes. */
+interface Place {
+  /** How far it moves sideways, along its own normal. */
+  readonly shift: number;
+  /** A self-loop's place among the loops on its shape. */
+  readonly loop?: LoopPlace;
+}
+
 /**
- * How far each relation moves sideways (along its own normal) to keep off the others between the
- * same two shapes, in either direction: none for the only one, else the group spread in steps of
+ * Where each relation runs among the others between the same two shapes (#680). A self-loop
+ * gets its place among the loops on its shape. Any other relation moves sideways (along its own
+ * normal), in either direction: none for the only one, else the group spread in steps of
  * `2 * pairShift` about the middle, the first statement's side first. A pair with one relation
- * each way keeps `pairShift` to either side of the middle, as before repeated relations were kept
- * (#680). Where the room the two shapes share (`pairRoom`) holds fewer steps, the steps shrink to
+ * each way keeps `pairShift` to either side of the middle, as before repeated relations were
+ * kept. Where the room the two shapes share (`pairRoom`) holds fewer steps, the steps shrink to
  * fit it: past `2 * room / near + 1` relations they are closer than `near` and read as one band.
  */
-function pairShifts(drawn: readonly { a: Outline; b: Outline }[]): number[] {
+function pairPlaces(drawn: readonly { a: Outline; b: Outline }[]): Place[] {
   interface Between {
     a: Outline;
     b: Outline;
@@ -528,8 +546,7 @@ function pairShifts(drawn: readonly { a: Outline; b: Outline }[]): number[] {
   }
   const groups = new Map<Outline, Map<Outline, Between>>();
   // Each relation's group and its place in it, counted as the group fills.
-  const places = drawn.map(({ a, b }): [Between, number] | undefined => {
-    if (a === b) return undefined;
+  const places = drawn.map(({ a, b }): [Between, number] => {
     let g = groups.get(a)?.get(b) ?? groups.get(b)?.get(a);
     if (!g) {
       g = { a, b, count: 0 };
@@ -539,13 +556,13 @@ function pairShifts(drawn: readonly { a: Outline; b: Outline }[]): number[] {
     }
     return [g, g.count++];
   });
-  return drawn.map(({ a }, k) => {
-    const place = places[k];
-    if (!place || place[0].count < 2) return 0;
-    const [g, nth] = place;
+  return drawn.map(({ a }, k): Place => {
+    const [g, nth] = places[k]!;
+    if (g.a === g.b) return { shift: 0, loop: { nth, count: g.count } };
+    if (g.count < 2) return { shift: 0 };
     g.step ??= Math.min(2 * M.pairShift, (2 * pairRoom(g.a, g.b)) / (g.count - 1));
     const side = ((g.count - 1) / 2 - nth) * g.step;
-    return a === g.a ? side : -side;
+    return { shift: a === g.a ? side : -side };
   });
 }
 
@@ -559,7 +576,7 @@ function routeAll(input: RouteInput): RoutedAll {
     if (!a || !b) return;
     drawn.push({ rel, index, a, b });
   });
-  const shifts = pairShifts(drawn);
+  const places = pairPlaces(drawn);
   // The comparisons are counted as they are made: once the budget is spent, the relations still
   // to route go straight and the labels still to place sit at their middle, in model order.
   const work = new Work(input.budget);
@@ -581,7 +598,7 @@ function routeAll(input: RouteInput): RoutedAll {
   const routes = drawn.map(({ rel, a, b }, k) => {
     if (work.done) careful = false;
     const r = route(a, b, {
-      shift: shifts[k] ?? 0,
+      ...(places[k] ?? { shift: 0 }),
       ...(work.done ? {} : { others: shapes }),
       lanes,
     });

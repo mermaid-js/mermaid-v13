@@ -1,10 +1,12 @@
 ---
 description: >-
-  More relations between one pair than fit 14 px apart (#680): eight between
-  two systems side by side, and three from a boundary to the system inside
-  it. Each is drawn on a line of its own: the step between them shrinks to
-  fit the side the two shapes share. Before, the two outer lines fell back
-  onto the middle, and the three inside the boundary were drawn as one.
+  Relations that repeat a pair where there is little room (#680): eight
+  between two systems side by side, three from a boundary to the system
+  inside it, and two self-loops on one system. Each is drawn on a path of
+  its own: the step between the lines shrinks to fit the side the two
+  shapes share, and each loop takes its own stretch of the side. Before,
+  the two outer lines fell back onto the middle, the three inside the
+  boundary were drawn as one, and the two loops as one.
 ---
 C4Context
   title Repeated relations in little room
@@ -24,3 +26,5 @@ C4Context
   Rel(bank, vault, "Opens")
   Rel(bank, vault, "Counts")
   Rel(vault, bank, "Reports")
+  Rel(billing, billing, "Retries")
+  BiRel(billing, billing, "Reconciles")
