@@ -1,6 +1,7 @@
 import { contrastRatio, parseColor } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
 import { renderC4BetaForTest } from '../render/harness.ts';
+import { TEXT_CONTRAST } from './paint.ts';
 import { c4TestTheme } from '../test-context.ts';
 
 /**
@@ -28,8 +29,6 @@ const LIGHT = {
   External: ['#6c6c6c', '#8a8a8a'],
 } as const;
 
-/** The least contrast of a `Color` (text) on the page: WCAG 2.1 success criterion 1.4.3, level AA. */
-const TEXT_CONTRAST = 4.5;
 /** The least contrast of a `Border` (outline) on the page: WCAG 2.1 success criterion 1.4.11, level AA. */
 const OUTLINE_CONTRAST = 3;
 
@@ -200,5 +199,89 @@ describe('the legend swatch of a kind', () => {
       { fill: 'var(--_bg)', stroke: 'var(--_c4inb)' },
       { fill: 'var(--_bg)', stroke: 'var(--_c4exb)' },
     ]);
+  });
+});
+
+describe('the text on a fill a style gave', () => {
+  const PAGE = 'var(--_bg)';
+  const INK = 'var(--_tx)';
+  const text = async (lines: string[], theme = 'default') =>
+    (
+      await renderC4BetaForTest(['c4-beta', 'legend off', ...lines].join('\n'), {
+        config: { theme },
+      })
+    ).svg;
+
+  it('is not the theme colour when that is the fill\u2019s own hue (a container on a blue fill)', async () => {
+    const svg = await text(['style container fill:#0b5cab, stroke:#0a4d91', 'container w "Web"']);
+    expect(drawn(svg, 'w').text).toBe(PAGE);
+  });
+
+  it('is the style\u2019s `color` when one is given, whatever the fill', async () => {
+    const svg = await text(['style container fill:#0b5cab, color:#123456', 'container w "Web"']);
+    expect(drawn(svg, 'w').text).toBe('#123456');
+  });
+
+  it('keeps the theme colour when it reaches 4.5:1 on the fill, and with no fill', async () => {
+    const svg = await text([
+      'style light fill:#ffffff',
+      'container w "Web" :::light',
+      'container v "Plain"',
+    ]);
+    expect(drawn(svg, 'w').text).toBe('var(--_c4coc)');
+    expect(drawn(svg, 'v').text).toBe('var(--_c4coc)');
+  });
+
+  it('is the page text colour when the fill is light and the theme colour does not read', async () => {
+    const svg = await text(['style pale fill:#ffffff', 'person p "P" :::pale'], 'neo-dark');
+    expect(drawn(svg, 'p').text).toBe(PAGE);
+    const dark = await text(['style ink fill:#111111', 'container c "C" :::ink'], 'default');
+    expect(drawn(dark, 'c').text).toBe(PAGE);
+  });
+
+  it('follows the fill of a kind style and of a tag style, from whichever statement gave it', async () => {
+    const svg = await text([
+      'style container fill:#0b5cab',
+      'style blue fill:#0000aa',
+      'style note stroke:#00ff00',
+      'container k "Kind"',
+      'container t "Tag" :::blue',
+      'container m "Many" :::blue :::note',
+    ]);
+    for (const id of ['k', 't', 'm']) expect(drawn(svg, id).text, id).toBe(PAGE);
+  });
+
+  it('is measured on a boundary\u2019s fill, for its label and its description', async () => {
+    const svg = await text([
+      'style zone fill:#1e3a8a',
+      'softwareSystem s "S" "Holds it." :::zone {',
+      '  container c "C"',
+      '}',
+    ]);
+    const header = svg.slice(svg.indexOf('<g class="c4-boundary" data-id="s"'));
+    for (const part of ['label', 'descr'])
+      expect(
+        new RegExp(`class="c4-boundary-${part}"[^>]*? fill="([^"]+)"`).exec(header)![1],
+        part
+      ).toBe(PAGE);
+  });
+
+  it('leaves a relation label on the page, in the relation colour, when a style gives a stroke only', async () => {
+    const svg = await text([
+      'style hot stroke:#ff0000',
+      'container a "A"',
+      'container b "B"',
+      'a --> b : "Calls" :::hot',
+    ]);
+    const g = svg.slice(svg.indexOf('<g class="c4-relation"'));
+    expect(/class="c4-rel-label"[^>]*? fill="([^"]+)"/.exec(g)![1]).toBe('var(--_c4r)');
+  });
+
+  it('leaves the legend text on the page in the page text colour', async () => {
+    const { svg } = await renderC4BetaForTest(
+      ['c4-beta', 'style container fill:#0b5cab', 'container c "C"'].join('\n')
+    );
+    const legend = svg.slice(svg.indexOf('<g class="c4-legend">'));
+    expect(legend).toContain(`fill="${INK}"`);
   });
 });

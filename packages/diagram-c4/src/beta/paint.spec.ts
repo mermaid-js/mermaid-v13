@@ -74,7 +74,7 @@ describe('what a style paints on an element', () => {
       'person x "X" :::a',
       'person y "Y" :::b'
     );
-    expect(element(svg, 'x')).toEqual({ fill: '#112233', stroke: '#112233', text: PERSON_TEXT });
+    expect(element(svg, 'x')).toEqual({ fill: '#112233', stroke: '#112233', text: PAGE });
     expect(element(svg, 'y')).toEqual({ fill: PAGE, stroke: '#445566', text: PERSON_TEXT });
   });
 

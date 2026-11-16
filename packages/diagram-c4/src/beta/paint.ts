@@ -17,6 +17,7 @@
  * through the colour check and is written as an attribute, never into `style`.
  */
 import type { Paint, SafeValue } from '@mermaid-js/core/svg';
+import { contrastRatio, parseColor } from '@mermaid-js/core/theme';
 import type {
   C4BoundaryLayout,
   C4Layout,
@@ -133,14 +134,33 @@ const ROWS: Readonly<Record<C4BetaElementKind, Rows>> = {
   deploymentNode: CONTAINER,
 };
 
-/** An element's text and outline from the theme; an external element's win over its kind's. */
+/** An element's text variable and outline from the theme; an external element's win over its kind's. */
 function themed(
   colours: Colours,
   kind: C4BetaElementKind,
   external: boolean
-): { readonly text: Paint; readonly stroke: Paint } {
+): { readonly color: string; readonly text: Paint; readonly stroke: Paint } {
   const rows = external ? EXTERNAL : ROWS[kind];
-  return { text: colours.theme(rows.color), stroke: colours.theme(rows.border) };
+  return { color: rows.color, text: colours.theme(rows.color), stroke: colours.theme(rows.border) };
+}
+
+/** The least contrast of text on its fill: WCAG 2.1 success criterion 1.4.3, level AA. */
+export const TEXT_CONTRAST = 4.5;
+
+/**
+ * The text colour on a fill a style gave: the theme's `name` when it reaches `TEXT_CONTRAST` on
+ * that fill, else whichever of the theme's `background` and `textColor` reads better on it. With
+ * no style fill (or one that is not a colour that can be measured) the theme's `name` stands.
+ */
+function textOn(st: Styling, fill: Paint | undefined, name: string): Paint {
+  const { colours } = st;
+  const on = fill === undefined ? undefined : parseColor(String(fill));
+  const ink = (n: string): number => {
+    const c = colours.themeRgba(n);
+    return c && on ? contrastRatio(c, on) : Infinity;
+  };
+  if (on === undefined || ink(name) >= TEXT_CONTRAST) return colours.theme(name);
+  return colours.theme(ink('background') >= ink('textColor') ? 'background' : 'textColor');
 }
 
 /** The styles an element or boundary takes: its kind's, then each tag's. */
@@ -157,7 +177,7 @@ function boundaryPaint(st: Styling, b: C4BoundaryLayout): BoundaryPaint {
   return {
     fill: s.fill ?? 'none',
     stroke: s.stroke ?? frame,
-    ...(header ? { text: s.color ?? frame } : {}),
+    ...(header ? { text: s.color ?? textOn(st, s.fill, 'c4BoundaryColor') } : {}),
   };
 }
 
@@ -176,7 +196,7 @@ function elementPaints(st: Styling, layout: C4Layout): Map<number, ElementPaint>
         {
           fill: s.fill ?? st.colours.theme('background'),
           stroke: s.stroke ?? base.stroke,
-          text: s.color ?? base.text,
+          text: s.color ?? textOn(st, s.fill, base.color),
         },
       ];
     })
