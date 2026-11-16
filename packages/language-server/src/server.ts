@@ -10,9 +10,15 @@
  * `service.preload()`, so no snapshot is ever made before its facet is there. Third-party
  * facets are found only when the client opts in with `initializationOptions.mermaid.plugins`
  * (D157); by default the server runs no code from the opened folder.
+ *
+ * Markdown documents (`.md`, `.markdown`, `.mdx`, language id `markdown` or `mdx`) are served
+ * only when the client opts in with `initializationOptions.mermaid.markdown` (D581): every
+ * feature then works inside their Mermaid fences and answers nothing outside them. Folding and
+ * semantic tokens of a Markdown document stay with the client's Markdown server unless
+ * `mermaid.markdownTokensAndFolding` is on too.
  */
 import { fileURLToPath } from 'node:url';
-import type { DocumentSnapshot, FacetEntry, LanguageService } from '@mermaid-js/language-service';
+import type { FacetEntry, LanguageService } from '@mermaid-js/language-service';
 import {
   COMPLETION_TRIGGERS,
   createLanguageService,
@@ -42,7 +48,10 @@ import {
   toSelectionRange,
   toSymbolInformation,
 } from './convert.ts';
+import type { Positions } from './convert.ts';
 import { discoverFacets } from './discover.ts';
+import type { Open, Part } from './documents.ts';
+import { analyse, forget, partAt } from './documents.ts';
 import { selectionChain } from './selection.ts';
 import { VERSION } from './version.ts';
 
@@ -51,6 +60,14 @@ export function isMermaidUri(uri: string): boolean {
   const path = uri.replace(/[?#].*$/, '');
   return /\.(mmd|mermaid)$/i.test(path);
 }
+
+/** Markdown documents by URI: `.md`, `.markdown` and `.mdx` (any case). */
+export function isMarkdownUri(uri: string): boolean {
+  const path = uri.replace(/[?#].*$/, '');
+  return /\.(md|markdown|mdx)$/i.test(path);
+}
+
+const MARKDOWN_LANGUAGES: ReadonlySet<string> = new Set(['markdown', 'mdx']);
 
 export interface ServerOptions {
   /**
@@ -66,11 +83,21 @@ export function pluginsEnabled(initializationOptions: unknown): boolean {
   return (mermaid as { plugins?: unknown } | null | undefined)?.plugins === true;
 }
 
-interface Open {
-  readonly text: string;
-  readonly version: number;
-  readonly index: LineIndex;
-  readonly doc: DocumentSnapshot;
+/**
+ * The client's opt-ins for Markdown documents (D581): `mermaid.markdown` serves the Mermaid
+ * fences, and `mermaid.markdownTokensAndFolding` adds their semantic tokens and folding
+ * ranges, which a client's Markdown server otherwise keeps (meaningless without `markdown`).
+ */
+export function markdownOptions(initializationOptions: unknown): {
+  markdown: boolean;
+  tokensAndFolding: boolean;
+} {
+  const mermaid = (initializationOptions as { mermaid?: unknown } | null | undefined)?.mermaid as
+    | { markdown?: unknown; markdownTokensAndFolding?: unknown }
+    | null
+    | undefined;
+  if (mermaid?.markdown !== true) return { markdown: false, tokensAndFolding: false };
+  return { markdown: true, tokensAndFolding: mermaid.markdownTokensAndFolding === true };
 }
 
 const fileDir = (uri: string): string | undefined => {
@@ -100,6 +127,19 @@ function applyChange(text: string, change: TextDocumentContentChangeEvent): stri
   return text.slice(0, start) + change.text + text.slice(end);
 }
 
+/** The part of an open document at an LSP position: its snapshot, positions and offset. */
+interface At {
+  readonly doc: Part['doc'];
+  readonly index: Positions;
+  readonly offset: number;
+}
+
+/** The part of `o` at `position`, or undefined in the prose of a Markdown document. */
+function partAtPosition(o: Open | undefined, position: Position): At | undefined {
+  const found = o && partAt(o, toOffset(o.index, position));
+  return found && { doc: found.part.doc, index: found.part.index, offset: found.offset };
+}
+
 /**
  * Highlights, selection ranges and the outline (#810) of the open documents (`get`); `nested`
  * tells whether the client takes hierarchical document symbols.
@@ -110,27 +150,57 @@ function serveStructure(
   nested: () => boolean
 ): void {
   connection.onDocumentHighlight(({ textDocument, position }) => {
-    const o = get(textDocument.uri);
+    const o = partAtPosition(get(textDocument.uri), position);
     if (!o) return null;
-    const offset = toOffset(o.index, position);
-    return toHighlights(o.index, o.doc.references(offset), o.doc.definition(offset));
+    return toHighlights(o.index, o.doc.references(o.offset), o.doc.definition(o.offset));
   });
 
   connection.onSelectionRanges(({ textDocument, positions }) => {
-    const o = get(textDocument.uri);
-    if (!o) return null;
-    return positions.map((p) =>
-      toSelectionRange(o.index, selectionChain(o.doc, toOffset(o.index, p)))
-    );
+    const open = get(textDocument.uri);
+    if (!open) return null;
+    // In prose, the empty range at the position: LSP's answer for "no selection range here".
+    return positions.map((p) => {
+      const o = partAtPosition(open, p);
+      return o
+        ? toSelectionRange(o.index, selectionChain(o.doc, o.offset))
+        : { range: { start: p, end: p } };
+    });
   });
 
   connection.onDocumentSymbol(({ textDocument }) => {
     const o = get(textDocument.uri);
     if (!o) return null;
-    const symbols = o.doc.symbols();
+    // A Markdown document lists the symbols of each fence in turn.
     return nested()
-      ? toDocumentSymbols(o.index, symbols)
-      : toSymbolInformation(o.index, textDocument.uri, symbols);
+      ? o.parts.flatMap((p) => toDocumentSymbols(p.index, p.doc.symbols()))
+      : o.parts.flatMap((p) => toSymbolInformation(p.index, textDocument.uri, p.doc.symbols()));
+  });
+}
+
+/**
+ * Folding ranges and semantic tokens of the open documents (`get`), each part's moved down to
+ * its first line. A Markdown document gets neither (null, so its Markdown server's answer
+ * stands) unless `tokensAndFolding` (D581); `multiline` tells whether the client takes
+ * multi-line tokens.
+ */
+function serveDecorations(
+  connection: Connection,
+  get: (uri: string) => Open | undefined,
+  options: () => { multiline: boolean; tokensAndFolding: boolean }
+): void {
+  const served = (o: Open | undefined): o is Open =>
+    o !== undefined && (!o.markdown || options().tokensAndFolding);
+
+  connection.onFoldingRanges(({ textDocument }) => {
+    const o = get(textDocument.uri);
+    if (!served(o)) return null;
+    return o.parts.flatMap((p) => p.doc.lineFoldingRanges().map((f) => toFoldingRange(f, p.line)));
+  });
+
+  connection.languages.semanticTokens.on(({ textDocument }) => {
+    const o = get(textDocument.uri);
+    if (o?.markdown && !served(o)) return null;
+    return { data: served(o) ? semanticTokenData(o.parts, options().multiline) : [] };
   });
 }
 
@@ -141,31 +211,28 @@ export function startServer(connection: Connection, options: ServerOptions = {})
   let hoverMarkdown = true;
   let docMarkdown = true;
   let nestedSymbols = false;
+  let markdown = { markdown: false, tokensAndFolding: false };
   const open = new Map<string, Open>();
 
-  const update = (uri: string, text: string, version: number) => {
+  const update = (uri: string, text: string, version: number, asMarkdown: boolean) => {
     if (!service) return;
-    const index = new LineIndex(text);
-    // A facet whose parse throws gives a LANGUAGE_FACET_FAILED snapshot (the service guards it).
-    const doc = service.update(uri, text);
-    open.set(uri, { text, version, index, doc });
+    const o = analyse(service, uri, text, version, asMarkdown, open.get(uri));
+    open.set(uri, o);
     void connection.sendDiagnostics({
       uri,
       version,
-      diagnostics: doc.diagnostics().map((d) => toDiagnostic(index, uri, d)),
+      diagnostics: o.parts.flatMap((p) =>
+        p.doc.diagnostics().map((d) => toDiagnostic(p.index, uri, d))
+      ),
     });
   };
 
-  /** The open document's snapshot and the offset of `position` in it. */
-  const at = (
-    textDocument: TextDocumentIdentifier,
-    position: Position
-  ): { doc: DocumentSnapshot; index: LineIndex; offset: number } | undefined => {
-    const o = open.get(textDocument.uri);
-    return o && { doc: o.doc, index: o.index, offset: toOffset(o.index, position) };
-  };
+  /** The snapshot at `position` of the open document, and the offset in it. */
+  const at = (textDocument: TextDocumentIdentifier, position: Position): At | undefined =>
+    partAtPosition(open.get(textDocument.uri), position);
 
   connection.onInitialize(async (params): Promise<InitializeResult> => {
+    markdown = markdownOptions(params.initializationOptions);
     const text = params.capabilities.textDocument;
     multiline = text?.semanticTokens?.multilineTokenSupport === true;
     hoverMarkdown = takesMarkdown(text?.hover?.contentFormat);
@@ -206,7 +273,9 @@ export function startServer(connection: Connection, options: ServerOptions = {})
   });
 
   connection.onDidOpenTextDocument(({ textDocument: { uri, languageId, version, text } }) => {
-    if (isMermaidUri(uri) || languageId === 'mermaid') update(uri, text, version);
+    if (isMermaidUri(uri) || languageId === 'mermaid') update(uri, text, version, false);
+    else if (markdown.markdown && (isMarkdownUri(uri) || MARKDOWN_LANGUAGES.has(languageId)))
+      update(uri, text, version, true);
   });
   connection.onDidChangeTextDocument(({ textDocument: { uri, version }, contentChanges }) => {
     const o = open.get(uri);
@@ -215,11 +284,13 @@ export function startServer(connection: Connection, options: ServerOptions = {})
       connection.console.warn(`mermaid: ignored version ${version} of ${uri} (have ${o.version})`);
       return;
     }
-    update(uri, contentChanges.reduce(applyChange, o.text), version);
+    update(uri, contentChanges.reduce(applyChange, o.text), version, o.markdown);
   });
   connection.onDidCloseTextDocument(({ textDocument: { uri } }) => {
-    if (!open.delete(uri)) return;
-    service?.close(uri);
+    const o = open.get(uri);
+    if (!o) return;
+    open.delete(uri);
+    if (service) forget(service, o);
     void connection.sendDiagnostics({ uri, diagnostics: [] });
   });
 
@@ -276,15 +347,11 @@ export function startServer(connection: Connection, options: ServerOptions = {})
     () => nestedSymbols
   );
 
-  connection.onFoldingRanges(({ textDocument }) => {
-    const o = open.get(textDocument.uri);
-    return o ? o.doc.lineFoldingRanges().map(toFoldingRange) : null;
-  });
-
-  connection.languages.semanticTokens.on(({ textDocument }) => {
-    const o = open.get(textDocument.uri);
-    return { data: o ? semanticTokenData(o.doc, multiline) : [] };
-  });
+  serveDecorations(
+    connection,
+    (uri) => open.get(uri),
+    () => ({ multiline, tokensAndFolding: markdown.tokensAndFolding })
+  );
 
   connection.onCompletion(({ textDocument, position }) => {
     const o = at(textDocument, position);

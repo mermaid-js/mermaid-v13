@@ -1,6 +1,6 @@
 # @mermaid-js/language-server
 
-The Mermaid language server: `@mermaid-js/language-service` over LSP (stdio). It serves `.mmd` and `.mermaid` files, and any document opened with language id `mermaid`.
+The Mermaid language server: `@mermaid-js/language-service` over LSP (stdio). It serves `.mmd` and `.mermaid` files, and any document opened with language id `mermaid`. On opt-in it also serves the Mermaid fences of Markdown documents (see [Markdown](#markdown-opt-in)).
 
 Every first-party diagram type has language support: flowchart, sequence, class, state, ER, gantt, pie, mindmap, timeline, journey, gitGraph, quadrantChart, requirement, C4, sankey, xychart, packet, block, architecture, kanban, radar, treemap, treeView, venn, ishikawa, railroad, wardley, cynefin, usecase, eventmodeling, agentflow and info. Features:
 
@@ -101,9 +101,38 @@ The server then scans each workspace folder's own `node_modules` (not ancestor f
 
 A third-party facet whose hover, completion or rename code throws gives no hover, no items, or a rename refusal that names the failure. It does not fail the request.
 
+## Markdown (opt-in)
+
+By default the server ignores Markdown documents. To get diagnostics, hover, completion, definition, references, rename, highlights, selection ranges and the outline inside the Mermaid fences of Markdown files, the client sends:
+
+```json
+{ "initializationOptions": { "mermaid": { "markdown": true } } }
+```
+
+The server then serves documents named `.md`, `.markdown` or `.mdx`, and any document opened with language id `markdown` or `mdx`. It finds each fence whose info string starts with `mermaid`, with backticks or tildes, at any indent (a fence inside a list item is indented):
+
+````markdown
+1. The flow:
+
+   ```mermaid
+   flowchart LR
+     A --> B
+   ```
+````
+
+Each fence is a diagram of its own: completion offers the ids of that fence only, and a rename edits that fence only. Positions are those of the Markdown file. Outside the fences every request answers nothing, and no edit touches the prose. A fence inside a block quote (`> `) is not read.
+
+Your editor's Markdown server probably answers folding ranges and semantic tokens for the same file, and some clients use only one server's answer. So the server leaves both to it for Markdown documents. To get them for the fences from this server too, add `markdownTokensAndFolding`:
+
+```json
+{ "initializationOptions": { "mermaid": { "markdown": true, "markdownTokensAndFolding": true } } }
+```
+
+`markdownTokensAndFolding` does nothing without `markdown`. Add the Markdown documents to your client's document selector as well, for example `{ language: 'markdown' }` for `vscode-languageclient` or `filetypes = { 'mermaid', 'markdown' }` for Neovim.
+
 ## What it does not do
 
-- **No Markdown.** Mermaid blocks inside Markdown files get nothing. The server serves `.mmd` and `.mermaid` documents only.
+- **Markdown only on opt-in.** Without `mermaid.markdown`, Mermaid fences inside Markdown files get nothing (see [Markdown](#markdown-opt-in)).
 - **Stdio only.** There is no IPC, pipe, socket or browser transport.
 - **No formatting and no code actions.** The language service has neither.
 
