@@ -265,6 +265,7 @@ const doc = service.update(uri, text);   // synchronous, complete, immutable sna
 doc.diagnostics(); doc.definition(offset); doc.references(offset, includeDeclaration?);
 doc.prepareRename(offset); doc.rename(offset, newName);   // edits or { refused: reason }
 doc.hover(offset); doc.completions(offset);
+doc.symbols();                                            // the outline: each symbol once, nested (D580)
 doc.foldingRanges(); doc.lineFoldingRanges();             // offsets; by line as editors fold
 doc.semanticTokens(); doc.lineSemanticTokens();           // whole tokens; cut per line
 doc.lines();                                              // the text's LineIndex
@@ -283,6 +284,7 @@ All positions are UTF-16 offsets into the full text, as the parser already uses;
 | --- | --- |
 | diagnostics | `preprocess` + `parse` diagnostics as they are, each once (D91); front-matter config warnings (D96); info diagnostic for a type with no facet |
 | definition / references / rename | `symbols` grouped by the facet's `namespaces`; definition = first `def` (D92); an occurrence of a `standalone` kind is its own symbol (D289); a facet's `nameSyntax` reads where each name is written and writes each rename's edit (escapes, quotes added), and `isValidId` then judges every new name, quoted or not (D398) |
+| symbols (outline) | each symbol's definition (as `definition` finds it), once; its range is the innermost `statements` span holding the definition, and a symbol nests under the nearest symbol whose span holds that span (a subgraph, a composite state, a namespace) (D580) |
 | folding | every `statements` span covering more than one line (subgraphs, multi-line `accDescr { }` and `@{ }`), plus the front-matter range; `lineFoldingRanges` keeps a closing `end`/`}`/`---` line visible, one fold per start line |
 | semantic tokens | `tokens` × facet `categories`, modifiers from symbol roles (D94); `lineSemanticTokens` cuts them per line without continuation indentation, never overlapping |
 | completion | probe (below) × facet `completions` (D95); config keys from the schema (D96) |
@@ -295,7 +297,7 @@ The service also exports what makes the three adapters show the same thing: `lin
 
 **Front matter (R-LANG-5, D96).** The YAML reader gains an opt-in mode that returns a node tree with key and value ranges and keeps reading after an error (one error per bad line). The service walks `config:` against the gen-config JSON schema, scoped to the detected type.
 
-**Adapters (R-LANG-2, D98).** Each awaits `service.preload()` before its first snapshot (D155). CodeMirror: Lezer language from #21, `linter`, `autocompletion`, `hoverTooltip`, `foldService`, semantic-token decorations, a cursor → `AstId` facet; diagnostics debounced ~150 ms. Monaco: language id, Monarch tokens from #21, every provider. LSP: stdio, push diagnostics, `textDocument/{definition,references,prepareRename,rename,hover,foldingRange,semanticTokens/full,completion}`, `.mmd`/`.mermaid` and language id `mermaid`; third-party facets only on opt-in (D157). All three take folds, per-line tokens, diagnostic messages (related places kept) and completion trigger characters from the service, so one document looks the same in each. First-paint highlighting (Lezer, Monarch) is generated for flowchart only today; other types get semantic tokens once their facet lands.
+**Adapters (R-LANG-2, D98).** Each awaits `service.preload()` before its first snapshot (D155). CodeMirror: Lezer language from #21, `linter`, `autocompletion`, `hoverTooltip`, `foldService`, semantic-token decorations, a cursor → `AstId` facet; diagnostics debounced ~150 ms. Monaco: language id, Monarch tokens from #21, every provider. LSP: stdio, push diagnostics, `textDocument/{definition,references,documentHighlight,prepareRename,rename,hover,foldingRange,selectionRange,documentSymbol,semanticTokens/full,completion}` (highlights from `references`, the definition a write; selection ranges from the name, `astAt`/`rangeOf`, the multi-line statements and the whole text, each strictly inside the next; the outline from `symbols`, flat with container names for a client without hierarchical symbols), `.mmd`/`.mermaid` and language id `mermaid`; third-party facets only on opt-in (D157). All three take folds, per-line tokens, diagnostic messages (related places kept) and completion trigger characters from the service, so one document looks the same in each. First-paint highlighting (Lezer, Monarch) is generated for flowchart only today; other types get semantic tokens once their facet lands.
 
 **M2.5 work breakdown** (spec #26; items 1–11 are #27–#36 and #38, in order):
 

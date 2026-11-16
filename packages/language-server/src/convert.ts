@@ -8,6 +8,7 @@ import type {
   CompletionKind,
   Diagnostic as ServiceDiagnostic,
   DocumentSnapshot,
+  DocumentSymbol as ServiceDocumentSymbol,
   LineFoldingRange,
   LineIndex,
   Range as ServiceRange,
@@ -21,11 +22,16 @@ import {
 import type {
   CompletionItem,
   Diagnostic,
+  DocumentHighlight,
+  DocumentSymbol,
   FoldingRange,
   MarkupContent,
   Position,
   Range,
+  SelectionRange,
+  SymbolInformation,
 } from 'vscode-languageserver';
+import { DocumentHighlightKind, SymbolKind } from 'vscode-languageserver';
 
 export function toPosition(index: LineIndex, offset: number): Position {
   const { line, column } = index.position(offset);
@@ -112,6 +118,92 @@ export function toCompletionItems(
     if (item.documentation !== undefined)
       out.documentation = toMarkup(item.documentation, markdown);
     return out;
+  });
+}
+
+/**
+ * The occurrences of the name under the cursor (`references` with the declaration) as LSP
+ * highlights: the definition a write, the others text.
+ */
+export function toHighlights(
+  index: LineIndex,
+  references: readonly ServiceRange[],
+  definition: ServiceRange | undefined
+): DocumentHighlight[] {
+  return references.map((r) => ({
+    range: toRange(index, r),
+    kind:
+      r.start === definition?.start && r.end === definition.end
+        ? DocumentHighlightKind.Write
+        : DocumentHighlightKind.Text,
+  }));
+}
+
+/** A selection chain (innermost first) as the linked LSP selection range. */
+export function toSelectionRange(index: LineIndex, chain: readonly ServiceRange[]): SelectionRange {
+  let out: SelectionRange | undefined;
+  for (let i = chain.length - 1; i >= 0; i--) {
+    const range = toRange(index, chain[i]!);
+    out = out ? { range, parent: out } : { range };
+  }
+  return out ?? { range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } } };
+}
+
+/**
+ * LSP `SymbolKind` of the facets' symbol kinds: groups (a subgraph, a namespace, a C4
+ * boundary) are namespaces, classes classes; every other kind (a node, a state, a participant,
+ * an entity's id …) is a variable, as completion shows a node id.
+ */
+const SYMBOL_KIND: Readonly<Record<string, SymbolKind>> = {
+  subgraph: SymbolKind.Namespace,
+  namespace: SymbolKind.Namespace,
+  group: SymbolKind.Namespace,
+  boundary: SymbolKind.Namespace,
+  section: SymbolKind.Namespace,
+  frame: SymbolKind.Namespace,
+  domain: SymbolKind.Namespace,
+  class: SymbolKind.Class,
+  cssClass: SymbolKind.Class,
+  interface: SymbolKind.Interface,
+  entity: SymbolKind.Struct,
+  field: SymbolKind.Field,
+};
+
+export const symbolKind = (kind: string): SymbolKind =>
+  Object.hasOwn(SYMBOL_KIND, kind) ? SYMBOL_KIND[kind]! : SymbolKind.Variable;
+
+/** The service's outline as LSP document symbols, nested. */
+export function toDocumentSymbols(
+  index: LineIndex,
+  symbols: readonly ServiceDocumentSymbol[]
+): DocumentSymbol[] {
+  return symbols.map((s) => ({
+    name: s.name,
+    kind: symbolKind(s.kind),
+    range: toRange(index, s.range),
+    selectionRange: toRange(index, s.nameRange),
+    children: toDocumentSymbols(index, s.children),
+  }));
+}
+
+/**
+ * The outline flat, for a client without `hierarchicalDocumentSymbolSupport`: each symbol
+ * with its statement's range and the name of the symbol it is nested in.
+ */
+export function toSymbolInformation(
+  index: LineIndex,
+  uri: string,
+  symbols: readonly ServiceDocumentSymbol[],
+  container?: string
+): SymbolInformation[] {
+  return symbols.flatMap((s) => {
+    const info: SymbolInformation = {
+      name: s.name,
+      kind: symbolKind(s.kind),
+      location: { uri, range: toRange(index, s.range) },
+    };
+    if (container !== undefined) info.containerName = container;
+    return [info, ...toSymbolInformation(index, uri, s.children, s.name)];
   });
 }
 
