@@ -17,4 +17,10 @@ export const C4_BETA_METRICS = {
   headGap: 16,
   /** Room kept between a boundary's header and a relation that passes along it. */
   headClear: 4,
+  /** The legend (v12's): the gap below the drawing, a swatch's side, and its gap to the text. */
+  legendGap: 24,
+  legendSwatch: 12,
+  legendSwatchGap: 6,
+  /** The space between legend rows (v12's row height of 18 less a 12 px swatch). */
+  legendRowGap: 6,
 } as const;

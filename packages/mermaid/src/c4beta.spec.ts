@@ -6,8 +6,10 @@ import { createMermaid, MermaidError, UnsupportedFormatError } from './index.ts'
 
 // c4-beta is the second header type of the `c4` plugin (spec #730): detected, routed, laid out by
 // core's `layered` engine and drawn with C4's painters.
-const FIXTURES = join(import.meta.dirname, '../../../e2e/diagrams/c4beta/pr-check');
-const fixture = (name: string): string => readFileSync(join(FIXTURES, name), 'utf8');
+const FIXTURES = join(import.meta.dirname, '../../../e2e/diagrams/c4beta');
+const PR_CHECK = 'pr-check';
+const fixture = (name: string, tier = PR_CHECK): string =>
+  readFileSync(join(FIXTURES, tier, name), 'utf8');
 
 const rejection = (p: Promise<unknown>): Promise<unknown> =>
   p.then(
@@ -78,7 +80,7 @@ describe('c4-beta through the public API (spec #730)', () => {
       'markup-and-quotes-in-every-text.mmd': ['C4_COLOR_INVALID', 'HTML_DROPPED'],
     };
     const m = createMermaid();
-    const files = readdirSync(FIXTURES).filter((f) => f.endsWith('.mmd'));
+    const files = readdirSync(join(FIXTURES, PR_CHECK)).filter((f) => f.endsWith('.mmd'));
     expect(files.length).toBeGreaterThanOrEqual(19);
     for (const f of files) {
       const r = await m.render('c1', fixture(f));
@@ -217,6 +219,64 @@ describe('c4-beta through the public API (spec #730)', () => {
         withConfig(BODY, '  c4:\n    useMaxWidth: false\n  c4beta:\n    useMaxWidth: true')
       );
       expect(both.svg).toBe(fit);
+    });
+
+    describe('the legend (T3)', () => {
+      const legendRows = (svg: string): string[] => {
+        const legend = /<g class="c4-legend">([\s\S]*?)<\/g>/.exec(svg)?.[1] ?? '';
+        return texts(legend);
+      };
+      const viewBox = (svg: string): number[] =>
+        /viewBox="([^"]*)"/.exec(svg)![1]!.split(' ').map(Number);
+
+      it('draws a heading and one row per kind in use, and none for a kind the diagram lacks', async () => {
+        const r = await createMermaid().render('c1', fixture('legend-kinds.mmd'));
+        expect(legendRows(r.svg)).toEqual([
+          'Legend',
+          'Person',
+          'External Software System',
+          'Software System',
+          'Container',
+          'Component',
+        ]);
+        expect(r.warnings).toEqual([]);
+        assertInert(r.svg);
+      });
+
+      it('adds a row for each tag style with a colour that an element or relation uses, and for no other', async () => {
+        const r = await createMermaid().render('c1', fixture('legend-tag-styles.mmd'));
+        expect(legendRows(r.svg)).toEqual(['Legend', 'Person', 'Container', 'critical', 'async']);
+        expect(r.warnings.map((w) => w.code)).toEqual([]);
+      });
+
+      it('is gone with `legend off`, and the canvas shrinks by what it held', async () => {
+        const on = await createMermaid().render('c1', fixture('legend-kinds.mmd'));
+        const off = await createMermaid().render('c1', fixture('legend-off.mmd', 'nightly-check'));
+        expect(off.svg).not.toContain('c4-legend');
+        const [, , , heightOn] = viewBox(on.svg);
+        const [, , , heightOff] = viewBox(off.svg);
+        expect(heightOn!).toBeGreaterThan(heightOff!);
+      });
+
+      it('is shown when the source says nothing about it', async () => {
+        const r = await createMermaid().render('c1', fixture('b02-basic-context.mmd'));
+        expect(legendRows(r.svg)[0]).toBe('Legend');
+        const off = await createMermaid().render('c1', fixture('b10-direction-legend-acc.mmd'));
+        expect(off.svg).not.toContain('c4-legend');
+      });
+
+      it('lies inside the viewBox', async () => {
+        const r = await createMermaid().render('c1', fixture('legend-tag-styles.mmd'));
+        const [, , width, height] = viewBox(r.svg);
+        const legend = /<g class="c4-legend">([\s\S]*?)<\/g>/.exec(r.svg)![1]!;
+        for (const m of legend.matchAll(
+          /<rect [^>]*x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/g
+        )) {
+          const [x, y, w, h] = m.slice(1).map(Number);
+          expect(x! + w!).toBeLessThanOrEqual(width!);
+          expect(y! + h!).toBeLessThanOrEqual(height!);
+        }
+      });
     });
 
     it('leaves legacy C4 to its own section', async () => {

@@ -79,6 +79,32 @@ export function drawScene(
     for (const r of layout.relations) drawRelation(scene, r);
     w.close();
   }
+  drawLegend(scene);
+  w.close();
+}
+
+/** c4-beta's legend (spec #730 T3): `g.c4-legend` with its heading and, per row, a swatch and text. */
+function drawLegend(scene: Scene): void {
+  const { w, layout, paint } = scene;
+  if (!layout.legend || !paint.legend) return;
+  const { text, rows } = paint.legend;
+  w.open('g', { class: 'c4-legend' });
+  drawText(scene, { label: layout.legend.title, cls: 'c4-legend-title', fill: text });
+  layout.legend.rows.forEach((row, i) => {
+    const { fill, stroke } = rows[i]!;
+    const { x, y, width, height } = row.swatch;
+    w.leaf('rect', {
+      class: 'c4-legend-swatch',
+      x,
+      y,
+      width,
+      height,
+      fill,
+      stroke,
+      'stroke-width': R.boundaryStroke,
+    });
+    drawText(scene, { label: row.label, cls: 'c4-legend-label', fill: text });
+  });
   w.close();
 }
 

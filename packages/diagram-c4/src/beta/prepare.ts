@@ -29,6 +29,7 @@ import {
 import type { C4BaseKind, C4ElementKind } from '../model.ts';
 import type { C4ShapeId } from '../layout/types.ts';
 import type { C4BetaElement, C4BetaModel, C4BetaRelation } from './model.ts';
+import { legendEntries, measureLegend, type BetaLegend } from './legend.ts';
 import { C4_BETA_METRICS as B } from './metrics.ts';
 
 /** The context the layout reads: C4's, and the width the page offers, if it offers one. */
@@ -69,6 +70,8 @@ export interface C4BetaPrepared {
   readonly frames: ReadonlyMap<string, BetaFrame>;
   readonly edges: readonly BetaEdge[];
   readonly title?: Measured;
+  /** Set when the diagram shows a legend with at least one row. */
+  readonly legend?: BetaLegend;
   readonly diagramPadding: number;
   readonly config: C4LayoutConfig;
 }
@@ -82,6 +85,9 @@ const STEREOTYPES: Readonly<Record<C4BetaElement['kind'], string>> = {
   group: 'Group',
   deploymentNode: 'Deployment Node',
 };
+
+/** The name an element kind goes by in the diagram: its type line's, `Software System`. */
+export const kindName = (kind: C4BetaElement['kind']): string => STEREOTYPES[kind];
 
 /** The legacy element kind whose font and colours an element takes. */
 export function legacyKind(element: Pick<C4BetaElement, 'kind' | 'tags'>): C4ElementKind {
@@ -294,6 +300,11 @@ export function prepareC4Beta(model: C4BetaModel, ctx: C4BetaLayoutContext): C4B
       : {}),
   };
   const title = measuring.measure(model.title, titleFont(family), Infinity);
+  const legend = measureLegend(
+    legendEntries(model, legacyKind, kindName),
+    fonts,
+    measuring.measure
+  );
   return {
     model,
     graph,
@@ -301,6 +312,7 @@ export function prepareC4Beta(model: C4BetaModel, ctx: C4BetaLayoutContext): C4B
     frames,
     edges,
     ...(title ? { title } : {}),
+    ...(legend ? { legend } : {}),
     diagramPadding,
     config,
   };
