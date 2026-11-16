@@ -24,5 +24,5 @@ export function renderC4Beta(
     accDescr: model.accDescr.trim(),
     relationTitle: () => undefined,
   };
-  drawScene(view, layout, betaPaints(layout, ctx), ctx, w);
+  drawScene(view, layout, betaPaints(model, layout, ctx), ctx, w);
 }
