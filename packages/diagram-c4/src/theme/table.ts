@@ -4,20 +4,22 @@ import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 /**
  * c4-beta's element colours in light themes (spec #730 T2, D592): the prototype's literals, in
  * the order person, software system, container, component, infrastructure node, external. A kind's
- * `Color` is its text and its `Border` its outline (v12's #7868 named the first `...Bkg`).
+ * `Color` is its text and its `Border` its outline (v12's #7868 named the first `...Bkg`). The
+ * container, component and external `Color` are the prototype's hue darkened until the text reads
+ * at 4.5:1 on the `base` theme's `#f4f4f4`, the least white of the light themes (`#438dd5`, `#85bbf0` and `#999999` read at 3.5, 2.0 and 2.9).
  */
 const ELEMENT_LIGHT = {
   c4PersonColor: '#08427b',
   c4PersonBorder: '#073b6f',
   c4SoftwareSystemColor: '#1168bd',
   c4SoftwareSystemBorder: '#3c7fc0',
-  c4ContainerColor: '#438dd5',
+  c4ContainerColor: '#296eb8',
   c4ContainerBorder: '#3c7fc0',
-  c4ComponentColor: '#85bbf0',
+  c4ComponentColor: '#216ec8',
   c4ComponentBorder: '#78a8d8',
   c4InfrastructureNodeColor: '#6b6b6b',
   c4InfrastructureNodeBorder: '#5a5a5a',
-  c4ExternalColor: '#999999',
+  c4ExternalColor: '#6c6c6c',
   c4ExternalBorder: '#8a8a8a',
 } as const;
 

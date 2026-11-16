@@ -18,18 +18,19 @@ const KINDS = [
   'External',
 ] as const;
 
-/** The prototype's light literals (v12's #7868, whose `...Bkg` is `...Color` here). */
+/** The light values: the prototype's (v12's #7868, whose `...Bkg` is `...Color` here), but for the three text colours darkened to 4.5:1. */
 const LIGHT = {
   Person: ['#08427b', '#073b6f'],
   SoftwareSystem: ['#1168bd', '#3c7fc0'],
-  Container: ['#438dd5', '#3c7fc0'],
-  Component: ['#85bbf0', '#78a8d8'],
+  Container: ['#296eb8', '#3c7fc0'],
+  Component: ['#216ec8', '#78a8d8'],
   InfrastructureNode: ['#6b6b6b', '#5a5a5a'],
-  External: ['#999999', '#8a8a8a'],
+  External: ['#6c6c6c', '#8a8a8a'],
 } as const;
 
-/** The least contrast of a dark `Color` (text) and `Border` (outline) on the page (WCAG 1.4.3, 1.4.11). */
+/** The least contrast of a `Color` (text) on the page: WCAG 2.1 success criterion 1.4.3, level AA. */
 const TEXT_CONTRAST = 4.5;
+/** The least contrast of a dark `Border` (outline) on the page: WCAG 2.1 success criterion 1.4.11. */
 const OUTLINE_CONTRAST = 3;
 
 const LIGHT_THEMES = ['default', 'forest', 'neutral', 'base', 'redux', 'redux-color', 'neo'];
@@ -62,6 +63,19 @@ describe('the c4-beta element rows', () => {
         LIGHT[kind]
       );
   });
+
+  it.each([...LIGHT_THEMES, ...DARK_THEMES])(
+    'draw every text colour at 4.5:1 on the page in %s',
+    async (name) => {
+      const theme = await c4TestTheme(name);
+      const page = parseColor(String(theme.value('background')))!;
+      for (const kind of KINDS)
+        expect(
+          contrastRatio(parseColor(String(theme.value(`c4${kind}Color`)))!, page),
+          kind
+        ).toBeGreaterThanOrEqual(TEXT_CONTRAST);
+    }
+  );
 
   it.each(DARK_THEMES)('read on the page in %s', async (name) => {
     const theme = await c4TestTheme(name);
