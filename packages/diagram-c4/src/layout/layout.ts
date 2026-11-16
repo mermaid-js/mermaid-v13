@@ -521,25 +521,26 @@ class Lines {
 function pairShifts(drawn: readonly { a: Outline; b: Outline }[]): number[] {
   interface Between {
     a: Outline;
-    ks: number[];
+    count: number;
   }
   const groups = new Map<Outline, Map<Outline, Between>>();
-  const groupOf = drawn.map(({ a, b }, k): Between | undefined => {
+  // Each relation's group and its place in it, counted as the group fills.
+  const places = drawn.map(({ a, b }): [Between, number] | undefined => {
     if (a === b) return undefined;
     let g = groups.get(a)?.get(b) ?? groups.get(b)?.get(a);
     if (!g) {
-      g = { a, ks: [] };
+      g = { a, count: 0 };
       let ends = groups.get(a);
       if (!ends) groups.set(a, (ends = new Map<Outline, Between>()));
       ends.set(b, g);
     }
-    g.ks.push(k);
-    return g;
+    return [g, g.count++];
   });
   return drawn.map(({ a }, k) => {
-    const g = groupOf[k];
-    if (!g || g.ks.length < 2) return 0;
-    const side = ((g.ks.length - 1) / 2 - g.ks.indexOf(k)) * 2 * M.pairShift;
+    const place = places[k];
+    if (!place || place[0].count < 2) return 0;
+    const [g, nth] = place;
+    const side = ((g.count - 1) / 2 - nth) * 2 * M.pairShift;
     return a === g.a ? side : -side;
   });
 }
