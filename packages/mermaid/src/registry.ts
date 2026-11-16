@@ -141,7 +141,7 @@ interface Entry extends Detected {
   readonly formats: readonly string[];
   /**
    * A first-party row's own formats, which bound its plugin's: a type can draw fewer formats
-   * than the package that serves it (`typeOptions` `formats`: `c4beta` has no text output).
+   * than the package that serves it (a manifest's `typeOptions` `formats`).
    */
   readonly rowFormats?: readonly string[];
   /**
