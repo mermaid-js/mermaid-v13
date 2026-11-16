@@ -17,7 +17,7 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { cls, openSvgRoot, textElement } from '@mermaid-js/shared/svg/document';
+import { cls, openSvgRoot, textElement, type RootOptions } from '@mermaid-js/shared/svg/document';
 import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
 import { marker, markerTrim } from '@mermaid-js/shared/svg/arrowheads';
 import { routePath } from '@mermaid-js/shared/svg/route';
@@ -121,13 +121,10 @@ function titleOf(
 }
 
 /** The drawn box: the layout's, grown to hold the title and the padding around it. */
-function viewBox(
-  layout: AgentflowLayout,
-  title: Title | undefined
-): [number, number, number, number] {
+function viewBox(layout: AgentflowLayout, title: Title | undefined): RootOptions['viewBox'] {
+  if (!title) return { width: layout.width, height: layout.height };
   const width = Math.max(1, Math.ceil(layout.width));
   const height = Math.max(1, Math.ceil(layout.height));
-  if (!title) return [0, 0, width, height];
   const pad = layout.agentflow.graph.diagramPadding ?? 0;
   const half = title.label.width / 2;
   const x0 = Math.floor(Math.min(0, title.x - half - pad));
@@ -138,13 +135,10 @@ function viewBox(
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, paint }: Scene, model: AgentflowModel, title?: Title): void {
-  const { config } = ctx;
-  const box = viewBox(layout, title);
-  const maxWidth = config.agentflow?.useMaxWidth !== false;
   openSvgRoot(w, ctx, {
     name: 'agentflow',
-    viewBox: box,
-    maxWidth,
+    viewBox: viewBox(layout, title),
+    maxWidth: ctx.config.agentflow?.useMaxWidth !== false,
     title: model.accTitle,
     desc: model.accDescr,
     attrs: {
