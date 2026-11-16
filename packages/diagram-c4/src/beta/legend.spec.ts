@@ -237,7 +237,15 @@ async function paintedWith(colours: { fill?: string; stroke?: string }) {
       ),
     },
   };
-  return { legend: betaPaints(forged, ctx).legend, warnings };
+  return {
+    legend: betaPaints(forged, {
+      ...ctx,
+      idPrefix: '',
+      version: '13.0.0-test',
+      warn: (w) => void warnings.push(w),
+    }).legend,
+    warnings,
+  };
 }
 
 describe('what a tag swatch falls back to', () => {
