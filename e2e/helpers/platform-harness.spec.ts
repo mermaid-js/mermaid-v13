@@ -41,9 +41,26 @@ describe('fixture plugins', () => {
       id: 'fixturebox',
       formats: ['svg'],
       detector: './detector.js',
-      entry: './index.js',
+      entry: './entry.js',
       export: 'fixturebox',
     });
+  });
+
+  it('exports a lazy descriptor whose loader resolves to the plugin entry (D586)', async () => {
+    const { dir } = packageSources().get(FIXTURE_DIAGRAM)!;
+    const { default: box } = (await import(join(dir, 'index.js'))) as {
+      default: {
+        id: string;
+        detector: (text: string) => boolean;
+        loader: () => Promise<{ default: { id: string; parse: unknown; render: unknown } }>;
+      };
+    };
+    expect(box.id).toBe('fixturebox');
+    expect(box.detector('fixturebox hi')).toBe(true);
+    const entry = await box.loader();
+    expect(entry.default.id).toBe('fixturebox');
+    expect(typeof entry.default.parse).toBe('function');
+    expect(typeof entry.default.render).toBe('function');
   });
 
   it('has an extension with a valid manifest', () => {
@@ -58,7 +75,7 @@ describe('fixture plugins', () => {
 
   it('ships the files its manifest names, and the detector matches its keyword', async () => {
     const { dir, manifest } = packageSources().get(FIXTURE_DIAGRAM)!;
-    expect(manifest.files).toEqual(['index.js', 'detector.js']);
+    expect(manifest.files).toEqual(['index.js', 'detector.js', 'entry.js']);
     const { detector } = (await import(join(dir, 'detector.js'))) as {
       detector: (text: string) => boolean;
     };

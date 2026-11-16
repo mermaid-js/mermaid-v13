@@ -105,6 +105,7 @@ function check(name: string, text: string): string[] {
   };
   run('diagnostics', () => doc.diagnostics());
   run('foldingRanges', () => doc.foldingRanges());
+  run('symbols', () => doc.symbols());
   // A query's own result is checked too; it is called again only when it threw, as before.
   const tokens = run('semanticTokens', () => doc.semanticTokens()) ?? doc.semanticTokens();
   for (let i = 1; i < tokens.length; i++) {
