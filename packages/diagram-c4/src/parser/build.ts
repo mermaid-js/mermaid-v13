@@ -296,7 +296,8 @@ export class C4Builder {
   private relationEnds(i: number, from: string, to: string): void {
     const r = this.relations[i] as OpenRelation;
     const old = this.between(r.from, r.to);
-    old.splice(old.indexOf(i), 1);
+    const was = old.indexOf(i);
+    if (was !== -1) old.splice(was, 1);
     r.from = from;
     r.to = to;
     const next = this.between(from, to);

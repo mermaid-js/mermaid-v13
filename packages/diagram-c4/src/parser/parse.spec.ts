@@ -142,6 +142,17 @@ describe('the model, as v12 built it', () => {
     ]);
   });
 
+  it('keeps the other relations of a pair when one written with a named end moves (#680)', () => {
+    // `Rel($from="a", b, …)` starts with an empty start: it was never listed under `"", b`.
+    const r = parse(
+      'C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel("", b, "x")\nRel($from="a", b, "y")\nUpdateRelStyle("", b, $lineColor="red")'
+    );
+    expect(r.model.relations.map((x) => [x.label, x.from, x.to, x.lineColor])).toEqual([
+      ['x', '', 'b', 'red'],
+      ['y', 'a', 'b', undefined],
+    ]);
+  });
+
   it('leaves a field out when a named argument took its slot (v12 set no default there)', () => {
     const m = model('C4Context\nPerson(a, "A", $sprite="s")\nRel(a, a, "x", $offsetX="3")');
     expect(m.elements[0]).not.toHaveProperty('descr');
