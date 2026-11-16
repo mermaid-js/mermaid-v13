@@ -67,7 +67,7 @@ Later milestones add the `core/ascii` subpath and a `mermaid` CLI bin (M2, §6.3
 `mermaid` exports (M3.5, §12.4):
 
 - `.`: the public API. Under the `node` export condition it resolves to `dist/node.js`, the same API plus Node discovery (D165); browser bundlers never take that condition.
-- `/slim`: the API without the first-party diagram loaders (only the plugins passed to `createMermaid` render) and without discovery.
+- `/slim`: the API without the first-party diagram loaders (only the diagrams passed to `createMermaid` render, as plugin objects or as lazy loaders by id, D587) and without discovery.
 - `/node-scan`: the manifest scan (`findAppRoot`, `scanPlugins`, `FIRST_PARTY_IDS`). It has `node` and `types` conditions only, so a browser build fails to resolve it. Node discovery and the bundler plugin share it.
 - `/discovered`: the list of discovered plugins. The published module is `export default []`; the bundler plugin replaces it at build time with the scanned list (D164).
 - `dist/mermaid.esm.min.mjs` and `dist/mermaid.min.js`: the CDN build (D162), not in `exports`; `unpkg`/`jsdelivr` point at the loader.
