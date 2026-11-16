@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import vitestConfig from '../../vitest.config.ts';
 import { ROOT } from './diagrams.ts';
-import { printResult, runAll, staticSteps, type Task } from './parallel.ts';
+import { checkPhases, printResult, runAll, staticSteps, stepLanes, type Task } from './parallel.ts';
 
 const scripts = (
   JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as {
@@ -81,6 +81,22 @@ describe('runAll', { timeout: 60_000 }, () => {
     expect(Number(low!.output)).toBe(Number(plain!.output) + 10);
   });
 
+  it('ends a task when its process exits, even if a grandchild still holds its output', async () => {
+    // The grandchild inherits stdout and sleeps for ten minutes; the task must not wait for it
+    // (the spec's timeout is the bar). It prints its pid so the spec can stop it.
+    const orphan = `
+      const { spawn } = require('node:child_process');
+      const child = spawn(process.execPath, ['-e', 'setTimeout(() => {}, 600000)'], {
+        stdio: 'inherit', detached: true,
+      });
+      process.stdout.write('pid ' + child.pid + ' ');
+      child.unref();`;
+    const [result] = await runAll([node('orphan', orphan)], { cwd: ROOT });
+    const pid = Number(/pid (\d+)/.exec(result!.output)?.[1]);
+    process.kill(pid);
+    expect(result!.ok).toBe(true);
+  });
+
   it('prints the status line, then the output', () => {
     let printed = '';
     printResult(
@@ -136,9 +152,22 @@ describe('pnpm check', () => {
   const ALONE = ['language-budget'];
 
   it('runs the static checks beside the unit tests, then the language budget specs alone', () => {
-    expect(scripts.check).toBe(
-      "tsx tools/workspace/parallel-cli.ts 'pnpm check:static' 'pnpm test:main' && pnpm test:budget"
-    );
+    expect(scripts.check).toBe('tsx tools/workspace/check-cli.ts');
+    expect(checkPhases({})).toEqual([
+      ['pnpm check:static', 'pnpm test:main'],
+      ['pnpm test:budget'],
+    ]);
+  });
+
+  // release-alpha.yml runs `pnpm check` on a 4-vCPU runner, where specs that assert wall-clock
+  // limits would suffer from the static checks beside them.
+  it('runs one step after another under CI, as before', () => {
+    for (const CI of ['true', '1']) {
+      expect(checkPhases({ CI })).toEqual([['pnpm check:static'], ['pnpm test']]);
+      expect(stepLanes(6, { CI })).toBe(1);
+    }
+    expect(stepLanes(6, {})).toBe(6);
+    expect(stepLanes(6, { CI: 'false' })).toBe(6);
   });
 
   it('runs every vitest project once between its two test steps', () => {

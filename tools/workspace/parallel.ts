@@ -55,7 +55,10 @@ function runOne(task: Task, cwd: string): Promise<TaskResult> {
     let output = '';
     child.stdout.on('data', (chunk: Buffer) => (output += chunk.toString()));
     child.stderr.on('data', (chunk: Buffer) => (output += chunk.toString()));
-    const finish = (code: number | null, extra = '') =>
+    let finished = false;
+    const finish = (code: number | null, extra = '') => {
+      if (finished) return;
+      finished = true;
       done({
         task,
         ok: code === 0,
@@ -63,10 +66,26 @@ function runOne(task: Task, cwd: string): Promise<TaskResult> {
         output: output + extra,
         seconds: (performance.now() - start) / 1000,
       });
+    };
     child.on('error', (error) => finish(null, `${error.message}\n`));
-    child.on('close', (code) => finish(code));
+    // The task ends when its process exits. Its output normally closes right after; a
+    // grandchild that outlives it may hold the pipes open, so stop reading after a moment.
+    child.on('exit', (code) => {
+      const drained = setTimeout(() => {
+        child.stdout.destroy();
+        child.stderr.destroy();
+        finish(code);
+      }, DRAIN_MS);
+      child.on('close', () => {
+        clearTimeout(drained);
+        finish(code);
+      });
+    });
   });
 }
+
+/** How long a task's output may stay open after its process exited. */
+const DRAIN_MS = 2000;
 
 /**
  * Runs the tasks, at most `lanes` at a time, in the order given; resolves with every result,
@@ -117,4 +136,29 @@ export function staticSteps(script: string): string[] {
   const rebuilt = `${PARALLEL_CLI}${steps.map((s) => ` '${s}'`).join('')}`;
   if (rebuilt !== script) throw new Error(`cannot read the steps of \`${script}\``);
   return steps;
+}
+
+type Env = Readonly<Record<string, string | undefined>>;
+
+const onCi = (env: Env) => env.CI !== undefined && !['', '0', 'false'].includes(env.CI);
+
+/**
+ * How many steps `parallel-cli.ts` runs at once: all of them, but one at a time under CI,
+ * where `pnpm check` runs on small runners (release-alpha.yml: 4 vCPUs).
+ */
+export function stepLanes(count: number, env: Env): number {
+  return onCi(env) ? 1 : count;
+}
+
+/**
+ * The phases of `pnpm check` (`check-cli.ts`): the commands of a phase run side by side, and a
+ * phase starts when the one before it has passed. Locally the static checks run beside the unit
+ * tests and the language budget specs run alone at the end, as vitest.config.ts orders them.
+ * Under CI it is the old chain, `pnpm check:static && pnpm test`: specs that assert wall-clock
+ * limits must not share a 4-vCPU runner with ESLint and tsc.
+ */
+export function checkPhases(env: Env): string[][] {
+  return onCi(env)
+    ? [['pnpm check:static'], ['pnpm test']]
+    : [['pnpm check:static', 'pnpm test:main'], ['pnpm test:budget']];
 }

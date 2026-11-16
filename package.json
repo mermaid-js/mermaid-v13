@@ -35,7 +35,7 @@
     "test:main": "vitest run --project=!language-budget",
     "test:budget": "vitest run --project=language-budget",
     "test:watch": "vitest",
-    "check": "tsx tools/workspace/parallel-cli.ts 'pnpm check:static' 'pnpm test:main' && pnpm test:budget",
+    "check": "tsx tools/workspace/check-cli.ts",
     "check:static": "tsx tools/workspace/parallel-cli.ts 'pnpm lint' 'pnpm lint:knip' 'pnpm typecheck' 'pnpm check:deps' 'pnpm check:licenses' 'tsx tools/workspace/check-generated-cli.ts'",
     "e2e": "playwright test --project chromium --project dev",
     "e2e:dom": "playwright test -c e2e/dom/playwright.config.ts",
