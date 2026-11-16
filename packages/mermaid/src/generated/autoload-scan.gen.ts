@@ -237,12 +237,17 @@ async function moduleFiles(
   };
 }
 
-/** One package directory: a found plugin, a skip warning, or undefined (not a plugin). */
-async function scanOne(
-  dir: string,
-  folder: string,
-  firstParty: ReadonlySet<string>
-): Promise<ScannedPackage | ScanWarning | undefined> {
+/** What a package.json says about the plugin: its label and `mermaid` value. */
+interface Described {
+  readonly label: string;
+  readonly raw: unknown;
+}
+
+/**
+ * A package directory's package.json: the plugin it describes, a skip warning when it cannot be
+ * read, or undefined when it is not a plugin (not installed, no `mermaid` key).
+ */
+async function describe(dir: string, folder: string): Promise<Described | ScanWarning | undefined> {
   let pkg: unknown;
   try {
     pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'));
@@ -255,32 +260,54 @@ async function scanOne(
   }
   if (typeof pkg !== 'object' || pkg === null) return undefined;
   const { name, mermaid: raw } = pkg as { name?: unknown; mermaid?: unknown };
-  const label = typeof name === 'string' && name !== '' ? name : folder;
   if (raw === undefined) return undefined;
+  return { label: typeof name === 'string' && name !== '' ? name : folder, raw };
+}
+
+/**
+ * The scanned package for a manifest: undefined for mermaid's own first-party package, `Skip`
+ * when the manifest is invalid, incomplete or has a path that is missing or leaves the package.
+ * Layout manifests (#238, D177: `plugin: "layout"`, `names`, `entry`, `export`?, `config`?)
+ * are found like the others; autoload hands them to the registry as a `ManifestPlugin`.
+ */
+async function scanManifest(
+  dir: string,
+  { label, raw }: Described,
+  firstParty: ReadonlySet<string>
+): Promise<ScannedPackage | undefined> {
+  let manifest: PluginManifest;
   try {
-    // Layout manifests (#238, D177: `plugin: "layout"`, `names`, `entry`, `export`?, `config`?)
-    // are found like the others; autoload hands them to the registry as a `ManifestPlugin`.
-    let manifest: PluginManifest;
-    try {
-      manifest = readManifest(raw);
-    } catch (error) {
-      throw new Skip((error as Error).message);
-    }
-    const diagram = manifest.plugin === 'diagram' ? manifest : undefined;
-    if (diagram && label.startsWith('@mermaid-js/') && firstParty.has(diagram.id)) return undefined;
-    if (manifest.entry === undefined) throw new Skip('the manifest has no "entry"');
-    if (diagram && diagram.detector === undefined) throw new Skip('the manifest has no "detector"');
-    const root = await realpath(dir);
-    return {
-      package: label,
-      dir: root,
-      raw,
-      manifest,
-      files: await moduleFiles(dir, root, manifest, manifest.entry),
-    };
+    manifest = readManifest(raw);
+  } catch (error) {
+    throw new Skip((error as Error).message);
+  }
+  const diagram = manifest.plugin === 'diagram' ? manifest : undefined;
+  if (diagram && label.startsWith('@mermaid-js/') && firstParty.has(diagram.id)) return undefined;
+  if (manifest.entry === undefined) throw new Skip('the manifest has no "entry"');
+  if (diagram && diagram.detector === undefined) throw new Skip('the manifest has no "detector"');
+  const root = await realpath(dir);
+  return {
+    package: label,
+    dir: root,
+    raw,
+    manifest,
+    files: await moduleFiles(dir, root, manifest, manifest.entry),
+  };
+}
+
+/** One package directory: a found plugin, a skip warning, or undefined (not a plugin). */
+async function scanOne(
+  dir: string,
+  folder: string,
+  firstParty: ReadonlySet<string>
+): Promise<ScannedPackage | ScanWarning | undefined> {
+  const described = await describe(dir, folder);
+  if (described === undefined || 'code' in described) return described;
+  try {
+    return await scanManifest(dir, described, firstParty);
   } catch (error) {
     if (!(error instanceof Skip)) throw error;
-    return skipped(label, error.message);
+    return skipped(described.label, error.message);
   }
 }
 

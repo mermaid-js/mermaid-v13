@@ -28,7 +28,7 @@ A plugin must be listed in your `package.json` to be found. One that npm or Yarn
 
 Packages register in package-name order (code-unit order, so the same on every file system), one `registerExternalDiagrams` call each, so detectors run in that order after the first-party ones. A first-party id or type is never replaced. When two packages claim the same diagram id, extension id or layout name, the first by package name keeps it and the other is skipped with a warning.
 
-Call `autoload` before the first render. `mermaid`'s own Node entry also discovers plugins on its first render, until that is removed; `autoload` marks the instance it serves so the entry stands down, and an instance that already rendered has already discovered.
+Call `autoload` before the first render. `mermaid`'s own Node entry also discovers plugins on its first render, until that is removed; `autoload` marks the instance it serves, so the entry stands down and nothing is imported twice or reported twice. On an instance that has already rendered, the entry has discovered already: `autoload` still registers its plugins (explicit registration wins over discovered), but the packages are imported a second time.
 
 ## Warnings, never a throw
 

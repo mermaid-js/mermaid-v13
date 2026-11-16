@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 
-interface Mirror {
+export interface Mirror {
   /** The source, relative to the workspace root. */
   readonly from: string;
   /** The copy, relative to the workspace root. */

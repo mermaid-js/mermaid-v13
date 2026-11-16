@@ -75,51 +75,57 @@ type Skipped = Extract<ScanWarning, { code: 'PLUGIN_SKIPPED' }>;
 
 const reason = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
-/** One scanned package as a plugin; a module that fails to load gives a skip warning. */
-async function toPlugin(p: ScannedPackage, ms: number): Promise<ManifestPlugin | Skipped> {
-  const skip = (why: string): Skipped => ({
-    code: 'PLUGIN_SKIPPED',
-    message: `${p.package}: ${why}`,
-    package: p.package,
-  });
-  const entry = p.files.entry;
-  const ascii = p.files.ascii;
-  // The extension entry loads when it registers (its activation): under the time limit.
-  if (p.manifest.plugin === 'extension')
-    return { manifest: p.raw, load: () => importWithin(entry, ms) };
-  const load = (): Promise<unknown> => importFile(entry);
-  if (p.manifest.plugin === 'layout') {
-    let config: unknown;
-    let extension: unknown;
-    if (p.files.config !== undefined) {
-      try {
-        ({ config, extension } = configModuleOf(await importWithin(p.files.config, ms)));
-      } catch (error) {
-        return skip(`config failed to load (${reason(error)})`);
-      }
-      if (config === undefined) return skip('the config module exports no fragment');
+const skip = (p: ScannedPackage, why: string): Skipped => ({
+  code: 'PLUGIN_SKIPPED',
+  message: `${p.package}: ${why}`,
+  package: p.package,
+});
+
+/** A layout package: its `config` module now, its entry when a diagram names a layout (D177). */
+async function layoutPlugin(p: ScannedPackage, ms: number): Promise<ManifestPlugin | Skipped> {
+  let config: unknown;
+  let extension: unknown;
+  if (p.files.config !== undefined) {
+    try {
+      ({ config, extension } = configModuleOf(await importWithin(p.files.config, ms)));
+    } catch (error) {
+      return skip(p, `config failed to load (${reason(error)})`);
     }
-    return {
-      manifest: p.raw,
-      load,
-      ...(config === undefined ? {} : { config: config as ConfigFragment }),
-      ...(extension === undefined ? {} : { extension: extension as ExtensionPlugin }),
-    };
+    if (config === undefined) return skip(p, 'the config module exports no fragment');
   }
-  if (p.files.detector === undefined) return skip('the manifest has no "detector"');
+  return {
+    manifest: p.raw,
+    load: () => importFile(p.files.entry),
+    ...(config === undefined ? {} : { config: config as ConfigFragment }),
+    ...(extension === undefined ? {} : { extension: extension as ExtensionPlugin }),
+  };
+}
+
+/** A diagram package: its detector now, its entry (and `ascii` entry) on first detection. */
+async function diagramPlugin(p: ScannedPackage, ms: number): Promise<ManifestPlugin | Skipped> {
+  const { entry, ascii } = p.files;
+  if (p.files.detector === undefined) return skip(p, 'the manifest has no "detector"');
   let detector: Detector | undefined;
   try {
     detector = detectorOf(await importWithin(p.files.detector, ms));
   } catch (error) {
-    return skip(`detector failed to load (${reason(error)})`);
+    return skip(p, `detector failed to load (${reason(error)})`);
   }
-  if (!detector) return skip('the detector module exports no function');
+  if (!detector) return skip(p, 'the detector module exports no function');
   return {
     manifest: p.raw,
     detector,
-    load,
+    load: () => importFile(entry),
     ...(ascii === undefined ? {} : { loadAscii: () => importFile(ascii) }),
   };
+}
+
+/** One scanned package as a plugin; a module that fails to load gives a skip warning. */
+function toPlugin(p: ScannedPackage, ms: number): Promise<ManifestPlugin | Skipped> {
+  // The extension entry loads when it registers (its activation): under the time limit.
+  if (p.manifest.plugin === 'extension')
+    return Promise.resolve({ manifest: p.raw, load: () => importWithin(p.files.entry, ms) });
+  return p.manifest.plugin === 'layout' ? layoutPlugin(p, ms) : diagramPlugin(p, ms);
 }
 
 export interface LoadOptions {

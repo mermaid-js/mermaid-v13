@@ -41,7 +41,6 @@ describe('published packages in this workspace', () => {
       '@mermaid-js/language-service',
       '@mermaid-js/language-service-codemirror',
       '@mermaid-js/language-service-monaco',
-      '@mermaid-js/plugin-autoload',
       'mermaid',
     ]);
   });

@@ -7,10 +7,14 @@ import { mkdirSync, mkdtempSync, realpathSync, symlinkSync, writeFileSync } from
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { layered } from '@mermaid-js/core/layout';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { discoverOnFirstUse } from './discovery.ts';
 import { createMermaid, MermaidError } from './index.ts';
-import { nodeDiscovery, type NodeDiscoveryOptions } from './node.ts';
+import {
+  createMermaid as createNodeMermaid,
+  nodeDiscovery,
+  type NodeDiscoveryOptions,
+} from './node.ts';
 import { packageModule, scanPlugins } from './node-scan.ts';
 
 const DETECTOR = (keyword: string) =>
@@ -97,6 +101,26 @@ const unsupported = async (p: Promise<unknown>) => {
   expect(error).toBeInstanceOf(MermaidError);
   expect((error as MermaidError).code).toBe('UNSUPPORTED_DIAGRAM');
 };
+
+afterEach(() => vi.restoreAllMocks());
+
+describe('Node discovery and @mermaid-js/plugin-autoload (#867)', () => {
+  it('stands down on an instance autoload marked, so nothing registers or warns twice', async () => {
+    const root = app({
+      'mermaid-box': diagram('mermaid-box', 'box'),
+      bad: { 'package.json': '{' },
+    });
+    vi.spyOn(process, 'cwd').mockReturnValue(root);
+    const found = await createNodeMermaid().render('a', 'box x');
+    expect(found.svg).toContain('box: x');
+    expect(skips(found.warnings)).toHaveLength(1);
+    // autoload sets this symbol, by name, before it registers anything.
+    const marked = createNodeMermaid();
+    (marked as unknown as Record<symbol, unknown>)[Symbol.for('mermaid.autoloaded')] = true;
+    await unsupported(marked.render('b', 'box x'));
+    expect((await marked.render('c', 'flowchart LR\n  A --> B\n')).warnings).toEqual([]);
+  });
+});
 
 describe('Node discovery', () => {
   it('renders a discovered diagram and runs a discovered extension, with no registration', async () => {
