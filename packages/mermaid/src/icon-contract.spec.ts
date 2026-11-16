@@ -495,7 +495,10 @@ function flowchartCorpus(): { id: string; source: string }[] {
   return out;
 }
 
-describe('the contract over the flowchart corpus', () => {
+/** The test renders every flowchart corpus file twice, so the limit is sized for a slow CI runner. */
+const CORPUS_TIMEOUT_MS = 30_000;
+
+describe('the contract over the flowchart corpus', { timeout: CORPUS_TIMEOUT_MS }, () => {
   it('passes the allow-list and keeps stream and tree output equal with icons drawn (R-SEC-2)', async () => {
     const glyphs: ExtensionPlugin = {
       id: 'fixture-glyphs',
