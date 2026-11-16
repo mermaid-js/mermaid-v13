@@ -29,7 +29,8 @@ import { loadFixtures } from '../fixtures.ts';
 import { identityReport } from '../identity.ts';
 import { detectPipeline } from '../pipeline.ts';
 import type { BenchReport, RendererId } from '../report.ts';
-import { measureCoreSize } from '../size-budget.ts';
+import { REPO_ROOT, measureCodeSize } from '../code-size.ts';
+import { measureStaticClosure, readSizeBudget } from '../size-budget.ts';
 import { classifyFixtures } from '../support.ts';
 import { parseArgs } from './args.ts';
 import { commitInfo, gate, modeSetting, publish, reportOnlyGates } from './output.ts';
@@ -95,6 +96,7 @@ try {
     for (const line of lines) log(line);
     process.exitCode = exitCode;
   } else {
+    const core = await measureStaticClosure(readSizeBudget().core.entry);
     const report: BenchReport = {
       schema: 1,
       createdAt: new Date().toISOString(),
@@ -116,7 +118,9 @@ try {
       asciiSize: asciiSize(site.v13),
       asciiSizeByType: asciiSizeByType(site.v13),
       // R-PERF-8: core, the entry's static closure (D161).
-      coreSize: await measureCoreSize(),
+      coreSize: core.size,
+      // #814: lines by category and gzip bytes per diagram chunk, from the same build.
+      codeSize: measureCodeSize(REPO_ROOT, core.bundle),
       renderers: await driveBrowser({
         browser,
         server,

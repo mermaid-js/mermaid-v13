@@ -9,6 +9,7 @@
     "bench": "tsx --conditions=mermaid-source src/cli/bench.ts",
     "pr": "tsx --conditions=mermaid-source src/cli/pr.ts",
     "gates": "tsx --conditions=mermaid-source src/cli/gates.ts",
+    "size-report": "tsx --conditions=mermaid-source src/cli/size-report.ts",
     "typecheck": "tsc -p tsconfig.json",
     "language": "tsx --conditions=mermaid-source src/cli/language.ts",
     "language:sequence": "tsx --conditions=mermaid-source src/cli/language-sequence.ts",
