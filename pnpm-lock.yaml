@@ -857,6 +857,9 @@ importers:
       '@mermaid-js/language-service':
         specifier: workspace:*
         version: link:../language-service
+      mermaid:
+        specifier: workspace:*
+        version: link:../mermaid
       vscode-languageserver:
         specifier: ^11.0.0
         version: 11.0.0

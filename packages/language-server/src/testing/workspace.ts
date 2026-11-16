@@ -47,6 +47,7 @@ export function facetPackage(name: string, id: string, word = id): PackageFiles 
       },
     }),
     'detector.js': detectorSource(word),
+    'index.js': 'export default {};\n',
     'language.js': FAKE_FACET,
   };
 }
