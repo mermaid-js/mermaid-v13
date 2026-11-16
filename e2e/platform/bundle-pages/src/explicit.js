@@ -6,7 +6,10 @@
 import { registerExternalDiagrams, render } from 'mermaid';
 import box from 'mermaid-fixture-diagram';
 
-registerExternalDiagrams([box]);
+async function main() {
+  await registerExternalDiagrams([box]);
+  document.getElementById('status').textContent = 'ready';
+}
 
 window.draw = async (id, text) => {
   try {
@@ -20,4 +23,7 @@ window.draw = async (id, text) => {
     return { error: error?.code ?? String(error) };
   }
 };
-document.getElementById('status').textContent = 'ready';
+
+main().catch((error) => {
+  document.getElementById('status').textContent = `failed: ${String(error)}`;
+});
