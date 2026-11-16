@@ -190,3 +190,33 @@ describe('c4-beta without text output (spec #730 T0)', () => {
     ]);
   });
 });
+
+// c4-beta is laid out by core's `layered` engine whatever `layout` says (spec #730, Q2).
+describe('c4-beta and the layout setting (spec #730)', () => {
+  const body = 'c4-beta\nperson a "A"\nsoftwareSystem s "S"\na --> s\n';
+  const codes = async (text: string) =>
+    (await createMermaid().render('c1', text)).warnings.map((w) => w.code);
+
+  it('warns once for a layout it does not use, from a directive or front matter', async () => {
+    expect(await codes(`%%{init: {"layout": "elk"}}%%\n${body}`)).toEqual([
+      'C4BETA_LAYOUT_IGNORED',
+    ]);
+    expect(await codes(`---\nconfig:\n  layout: tree\n---\n${body}`)).toEqual([
+      'C4BETA_LAYOUT_IGNORED',
+    ]);
+  });
+
+  it('says nothing for layered, dagre or no layout, and draws the same diagram', async () => {
+    const plain = await createMermaid().render('c1', body);
+    expect(plain.warnings).toEqual([]);
+    for (const layout of ['layered', 'dagre', 'elk']) {
+      const r = await createMermaid().render('c1', `%%{init: {"layout": "${layout}"}}%%\n${body}`);
+      expect(r.warnings.length, layout).toBe(layout === 'elk' ? 1 : 0);
+      expect(r.svg, layout).toBe(plain.svg);
+    }
+  });
+
+  it('leaves legacy C4 as it was', async () => {
+    expect(await codes('%%{init: {"layout": "elk"}}%%\nC4Context\nPerson(a, "A")\n')).toEqual([]);
+  });
+});
