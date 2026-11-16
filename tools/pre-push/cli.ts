@@ -13,11 +13,12 @@
  * file handles it). `PRE_PUSH_BASE=<rev>` replaces the base commit, and naming checks runs only
  * those: `pnpm exec tsx tools/pre-push/cli.ts typecheck knip`.
  */
-import { spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { availableParallelism } from 'node:os';
 import { join, relative } from 'node:path';
+import { pool, runProcess } from '../workspace/parallel.ts';
 import type { CheckResult, TscStep, WorkspacePackage } from './plan.ts';
 import {
   codeReferencePattern,
@@ -52,22 +53,15 @@ interface Finished {
   readonly output: string;
 }
 
-/** Runs a command and resolves with its exit code and its output, stdout and stderr in order. */
-function run(command: readonly string[], cwd = ROOT, env = process.env): Promise<Finished> {
-  return new Promise((resolve) => {
-    const [file = '', ...args] = command;
-    const child = spawn(file, args, { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] });
-    const chunks: Buffer[] = [];
-    child.stdout.on('data', (chunk: Buffer) => chunks.push(chunk));
-    child.stderr.on('data', (chunk: Buffer) => chunks.push(chunk));
-    const done = (code: number, note = ''): void =>
-      resolve({
-        code,
-        output: `$ ${command.join(' ')}\n${Buffer.concat(chunks).toString()}${note}`,
-      });
-    child.on('error', (error) => done(1, `${error.message}\n`));
-    child.on('close', (code, signal) => done(code ?? 1, signal ? `killed by ${signal}\n` : ''));
-  });
+/**
+ * Runs a command and resolves with its exit code and its output, stdout and stderr in order
+ * (`runProcess` in tools/workspace/parallel.ts, shared with `pnpm lint` and `check:static`).
+ */
+async function run(command: readonly string[], cwd = ROOT, env = process.env): Promise<Finished> {
+  const [file = '', ...args] = command;
+  const { code, signal, output } = await runProcess(file, args, { cwd, env });
+  const note = signal ? `killed by ${signal}\n` : '';
+  return { code: code ?? 1, output: `$ ${command.join(' ')}\n${output}${note}` };
 }
 
 interface Outcome {
@@ -203,20 +197,6 @@ async function runTsc({ cwd, project, buildInfo }: TscStep): Promise<Finished> {
   );
   const title = `tsc -p ${project} (in ${cwd})`;
   return { code, output: code === 0 ? `passed: ${title}\n` : `\nFAILED: ${title}\n${output}` };
-}
-
-/** Runs `task` over `items`, at most `limit` at a time. */
-async function pool<T, R>(items: readonly T[], limit: number, task: (item: T) => Promise<R>) {
-  const results: R[] = [];
-  let next = 0;
-  const worker = async (): Promise<void> => {
-    while (next < items.length) {
-      const index = next++;
-      results[index] = await task(items[index] as T);
-    }
-  };
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
-  return results;
 }
 
 /**

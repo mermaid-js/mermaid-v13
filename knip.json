@@ -5,9 +5,7 @@
       "entry": [
         "tools/check-deps/cli.ts",
         "tools/pre-push/*cli.ts",
-        "tools/workspace/check-cli.ts",
         "tools/workspace/check-generated-cli.ts",
-        "tools/workspace/typecheck-worker.ts",
         "e2e/dom/server.ts",
         "e2e/dom/page.ts"
       ],

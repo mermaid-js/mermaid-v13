@@ -1,116 +1,112 @@
 /**
- * Runs commands side by side for the check scripts (`pnpm lint`, `pnpm typecheck`,
- * `pnpm check:static`). Every command runs to the end, even after another failed; each one's
- * output is printed in one piece when it ends, so outputs do not interleave. The result is a
- * failure when any command failed, so running in parallel never hides one.
+ * Running processes side by side, for the check scripts (`pnpm lint`, `pnpm check:static`)
+ * and the pre-push hook (`tools/pre-push/cli.ts`). Every command runs to the end, even after
+ * another failed; each one's output is kept in one piece, so outputs do not interleave. A
+ * caller fails when any command failed, so running in parallel never hides one.
  */
 import { spawn } from 'node:child_process';
 import { availableParallelism } from 'node:os';
+
+export interface Finished {
+  /** The exit code; null when the command could not start or was killed by a signal. */
+  readonly code: number | null;
+  /** The signal that killed it, if one did. */
+  readonly signal: NodeJS.Signals | null;
+  /** stdout and stderr, in the order they arrived, then the reason it could not start. */
+  readonly output: string;
+}
+
+/** How long a command's output may stay open after its process exited. */
+const DRAIN_MS = 2000;
+
+/**
+ * Runs one command and resolves with its exit code and output. It resolves when the process
+ * exits: its output normally closes right after, but a grandchild that outlives it may hold the
+ * pipes open, so reading stops {@link DRAIN_MS} later.
+ */
+export function runProcess(
+  command: string,
+  args: readonly string[],
+  { cwd, env = process.env }: { readonly cwd: string; readonly env?: NodeJS.ProcessEnv }
+): Promise<Finished> {
+  return new Promise((done) => {
+    const child = spawn(command, args, { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] });
+    const chunks: Buffer[] = [];
+    child.stdout.on('data', (chunk: Buffer) => chunks.push(chunk));
+    child.stderr.on('data', (chunk: Buffer) => chunks.push(chunk));
+    let finished = false;
+    const finish = (code: number | null, signal: NodeJS.Signals | null, extra = '') => {
+      if (finished) return;
+      finished = true;
+      done({ code, signal, output: Buffer.concat(chunks).toString() + extra });
+    };
+    child.on('error', (error) => finish(null, null, `${error.message}\n`));
+    child.on('exit', (code, signal) => {
+      const drained = setTimeout(() => {
+        child.stdout.destroy();
+        child.stderr.destroy();
+        finish(code, signal);
+      }, DRAIN_MS);
+      child.on('close', () => {
+        clearTimeout(drained);
+        finish(code, signal);
+      });
+    });
+  });
+}
+
+/** Runs `task` over `items`, at most `limit` at a time; the results keep the items' order. */
+export async function pool<T, R>(
+  items: readonly T[],
+  limit: number,
+  task: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = [];
+  let next = 0;
+  const worker = async (): Promise<void> => {
+    while (next < items.length) {
+      const index = next++;
+      results[index] = await task(items[index]!);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, worker));
+  return results;
+}
 
 export interface Task {
   /** What the summary line calls it. */
   readonly label: string;
   readonly command: string;
   readonly args: readonly string[];
-  readonly env?: Readonly<Record<string, string>>;
-  /**
-   * Run at a lower scheduling priority (`nice -n 10`). For batch work that has no timeouts
-   * (ESLint, tsc, Prettier): beside the unit tests in `pnpm check` it takes the cores the tests
-   * leave idle instead of slowing the tests down. Alone it runs at full speed.
-   */
-  readonly nice?: boolean;
 }
 
-export interface TaskResult {
+export interface TaskResult extends Finished {
   readonly task: Task;
   readonly ok: boolean;
-  /** The exit code; null when the command could not start or was killed. */
-  readonly code: number | null;
-  readonly output: string;
   readonly seconds: number;
 }
 
 export interface RunOptions {
   readonly cwd: string;
-  /** How many commands run at once; at least 1. Defaults to the core count. */
+  /** How many commands run at once. Defaults to the core count. */
   readonly lanes?: number;
-  /**
-   * Called as each command ends, in the order they end. Tasks it returns run next, before the
-   * ones still queued.
-   */
-  readonly onDone?: (result: TaskResult) => readonly Task[] | void;
+  /** Called as each command ends, in the order they end. */
+  readonly onDone?: (result: TaskResult) => void;
 }
 
-function runOne(task: Task, cwd: string): Promise<TaskResult> {
-  const start = performance.now();
-  return new Promise((done) => {
-    const [command, args] = task.nice
-      ? ['nice', ['-n', '10', task.command, ...task.args]]
-      : [task.command, task.args];
-    const child = spawn(command, args, {
-      cwd,
-      env: { ...process.env, ...task.env },
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    let output = '';
-    child.stdout.on('data', (chunk: Buffer) => (output += chunk.toString()));
-    child.stderr.on('data', (chunk: Buffer) => (output += chunk.toString()));
-    let finished = false;
-    const finish = (code: number | null, extra = '') => {
-      if (finished) return;
-      finished = true;
-      done({
-        task,
-        ok: code === 0,
-        code,
-        output: output + extra,
-        seconds: (performance.now() - start) / 1000,
-      });
-    };
-    child.on('error', (error) => finish(null, `${error.message}\n`));
-    // The task ends when its process exits. Its output normally closes right after; a
-    // grandchild that outlives it may hold the pipes open, so stop reading after a moment.
-    child.on('exit', (code) => {
-      const drained = setTimeout(() => {
-        child.stdout.destroy();
-        child.stderr.destroy();
-        finish(code);
-      }, DRAIN_MS);
-      child.on('close', () => {
-        clearTimeout(drained);
-        finish(code);
-      });
-    });
-  });
-}
-
-/** How long a task's output may stay open after its process exited. */
-const DRAIN_MS = 2000;
-
-/**
- * Runs the tasks, at most `lanes` at a time, in the order given; resolves with every result,
- * except those of tasks whose `onDone` handed back follow-up tasks instead.
- */
+/** Runs the tasks, at most `lanes` at a time, in the order given; resolves with every result. */
 export function runAll(tasks: readonly Task[], options: RunOptions): Promise<TaskResult[]> {
-  const queue = [...tasks];
-  const results: TaskResult[] = [];
-  const lanes = Math.max(1, options.lanes ?? availableParallelism());
-  let running = 0;
-  return new Promise((resolve) => {
-    const pump = () => {
-      while (running < lanes && queue.length > 0) {
-        running++;
-        void runOne(queue.shift()!, options.cwd).then((result) => {
-          running--;
-          const next = options.onDone?.(result);
-          if (next) queue.unshift(...next);
-          else results.push(result);
-          pump();
-        });
-      }
-      if (running === 0 && queue.length === 0) resolve(results);
+  return pool(tasks, options.lanes ?? availableParallelism(), async (task) => {
+    const start = performance.now();
+    const finished = await runProcess(task.command, task.args, { cwd: options.cwd });
+    const result = {
+      ...finished,
+      task,
+      ok: finished.code === 0,
+      seconds: (performance.now() - start) / 1000,
     };
-    pump();
+    options.onDone?.(result);
+    return result;
   });
 }
 
@@ -138,27 +134,15 @@ export function staticSteps(script: string): string[] {
   return steps;
 }
 
-type Env = Readonly<Record<string, string | undefined>>;
-
-const onCi = (env: Env) => env.CI !== undefined && !['', '0', 'false'].includes(env.CI);
-
 /**
  * How many steps `parallel-cli.ts` runs at once: all of them, but one at a time under CI,
- * where `pnpm check` runs on small runners (release-alpha.yml: 4 vCPUs).
+ * where `pnpm check` runs on small runners (release-alpha.yml: 4 vCPUs) and the generated-files
+ * check runs a vitest spec with a 10 s hook timeout.
  */
-export function stepLanes(count: number, env: Env): number {
-  return onCi(env) ? 1 : count;
-}
-
-/**
- * The phases of `pnpm check` (`check-cli.ts`): the commands of a phase run side by side, and a
- * phase starts when the one before it has passed. Locally the static checks run beside the unit
- * tests and the language budget specs run alone at the end, as vitest.config.ts orders them.
- * Under CI it is the old chain, `pnpm check:static && pnpm test`: specs that assert wall-clock
- * limits must not share a 4-vCPU runner with ESLint and tsc.
- */
-export function checkPhases(env: Env): string[][] {
-  return onCi(env)
-    ? [['pnpm check:static'], ['pnpm test']]
-    : [['pnpm check:static', 'pnpm test:main'], ['pnpm test:budget']];
+export function stepLanes(
+  count: number,
+  env: Readonly<Record<string, string | undefined>>
+): number {
+  const ci = env.CI !== undefined && !['', '0', 'false'].includes(env.CI);
+  return ci ? 1 : count;
 }
