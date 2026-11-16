@@ -36,6 +36,8 @@ describe('packAll (this workspace)', () => {
       // Peer of mermaid (D164): after it.
       '@mermaid-chart/bundler-plugin',
       '@mermaid-chart/language-service',
+      // Peer of mermaid, a dependency of the language server: before it.
+      '@mermaid-chart/plugin-autoload',
       '@mermaid-chart/language-server',
       '@mermaid-chart/language-service-codemirror',
       '@mermaid-chart/language-service-monaco',

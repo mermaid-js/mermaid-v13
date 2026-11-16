@@ -1,5 +1,5 @@
 /**
- * One plugin workspace that both the render scan (`mermaid/node-scan`) and the server's
+ * One plugin workspace that both the scan `autoload` runs (`@mermaid-js/plugin-autoload`) and the server's
  * discovery read (D577, #808): each package is a diagram plugin with a valid `language` entry,
  * so the two must accept and skip exactly the same packages. The first four entries are the
  * cases where the server's old scan disagreed with the render scan.

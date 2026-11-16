@@ -58,11 +58,22 @@ const extension = (name: string): Files =>
     }
   );
 
-/** A temp app: a package.json and `node_modules/<name>/<file>` for each package. */
-function app(packages: Record<string, Files>, base = mkdtempSync(join(tmpdir(), 'mmd-node-'))) {
+/**
+ * A temp app: `node_modules/<name>/<file>` for each package, and a package.json declaring
+ * them all in `dependencies` (D589), or declaring `manifest` instead when given.
+ */
+function app(
+  packages: Record<string, Files>,
+  base = mkdtempSync(join(tmpdir(), 'mmd-node-')),
+  manifest?: Record<string, unknown>
+) {
   mkdirSync(base, { recursive: true });
   const root = realpathSync(base);
-  writeFileSync(join(root, 'package.json'), JSON.stringify({ name: 'app', private: true }));
+  const dependencies = Object.fromEntries(Object.keys(packages).map((name) => [name, '1.0.0']));
+  writeFileSync(
+    join(root, 'package.json'),
+    JSON.stringify(manifest ?? { name: 'app', private: true, dependencies })
+  );
   for (const [name, files] of Object.entries(packages))
     for (const [file, text] of Object.entries(files)) {
       const path = join(root, 'node_modules', name, file);
@@ -415,6 +426,115 @@ ${EXTENSION.replace("id: 'mark'", "id: 'hops'").replace('export const mark', 'ex
     expect(skips(r.warnings)).toHaveLength(2);
     // Serially: 2 × 500 ms. In parallel: one 500 ms limit.
     expect(Date.now() - start).toBeLessThan(950);
+  });
+
+  it('finds only declared packages, not ones hoisted into node_modules (D589)', async () => {
+    const root = app(
+      { declared: diagram('declared', 'declared'), hoisted: diagram('hoisted', 'hoisted') },
+      undefined,
+      { name: 'app', dependencies: { declared: '1.0.0' } }
+    );
+    expect((await scanPlugins(root)).packages.map((p) => p.package)).toEqual(['declared']);
+    const m = discovering(root);
+    expect((await m.render('a', 'declared x')).svg).toContain('declared: x');
+    await unsupported(m.render('b', 'hoisted x'));
+  });
+
+  it.each(['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies'])(
+    'honours %s',
+    async (field) => {
+      const root = app({ 'mermaid-box': diagram('mermaid-box', 'box') }, undefined, {
+        name: 'app',
+        [field]: { 'mermaid-box': '1.0.0' },
+      });
+      expect((await scanPlugins(root)).packages.map((p) => p.package)).toEqual(['mermaid-box']);
+    }
+  );
+
+  it('finds an npm alias under its key and reports the name in its own package.json', async () => {
+    const root = app({ box: diagram('@acme/box', 'box') }, undefined, {
+      name: 'app',
+      dependencies: { box: 'npm:@acme/box@1.0.0' },
+    });
+    const { packages } = await scanPlugins(root);
+    expect(packages.map((p) => p.package)).toEqual(['@acme/box']);
+    expect((await discovering(root).render('a', 'box x')).svg).toContain('box: x');
+  });
+
+  it('skips a declared package that is not installed, with no warning', async () => {
+    const root = app({ ok: diagram('ok', 'ok') }, undefined, {
+      name: 'app',
+      dependencies: { ok: '1.0.0', '@acme/missing': '1.0.0' },
+      optionalDependencies: { missing: '1.0.0' },
+      peerDependencies: { 'also-missing': '1.0.0' },
+    });
+    expect(await scanPlugins(root)).toMatchObject({ packages: [{ package: 'ok' }], warnings: [] });
+  });
+
+  it('never looks outside node_modules for a dependency key', async () => {
+    const root = app({}, undefined, {
+      name: 'app',
+      dependencies: { '../escape': '1.0.0', '@a/../../escape': '1.0.0', '.hidden': '1.0.0' },
+    });
+    mkdirSync(join(root, 'node_modules'), { recursive: true });
+    for (const [file, text] of Object.entries(diagram('escape', 'escape'))) {
+      mkdirSync(join(root, 'escape'), { recursive: true });
+      writeFileSync(join(root, 'escape', file), text);
+    }
+    expect(await scanPlugins(root)).toEqual({ packages: [], warnings: [] });
+  });
+
+  it('finds a declared link: package symlinked from elsewhere, still confined (D157)', async () => {
+    const elsewhere = realpathSync(mkdtempSync(join(tmpdir(), 'mmd-link-')));
+    for (const [file, text] of Object.entries(diagram('linked', 'linked')))
+      writeFileSync(join(elsewhere, file), text);
+    const root = app({}, undefined, {
+      name: 'app',
+      dependencies: { linked: `link:${elsewhere}` },
+    });
+    mkdirSync(join(root, 'node_modules'), { recursive: true });
+    symlinkSync(elsewhere, join(root, 'node_modules', 'linked'));
+    const { packages } = await scanPlugins(root);
+    expect(packages).toMatchObject([{ package: 'linked', dir: elsewhere }]);
+    expect((await discovering(root).render('a', 'linked x')).svg).toContain('linked: x');
+    // A path out of the linked package's own folder is still skipped.
+    const sub = realpathSync(mkdtempSync(join(tmpdir(), 'mmd-link-')));
+    for (const [file, text] of Object.entries(
+      pkg(
+        'escaper',
+        {
+          plugin: 'diagram',
+          id: 'escaper',
+          detector: '../outside.js',
+          entry: './index.js',
+          export: 'plugin',
+        },
+        { 'index.js': ENTRY('escaper') }
+      )
+    ))
+      writeFileSync(join(sub, file), text);
+    const root2 = app({}, undefined, { name: 'app', dependencies: { escaper: `link:${sub}` } });
+    mkdirSync(join(root2, 'node_modules'), { recursive: true });
+    symlinkSync(sub, join(root2, 'node_modules', 'escaper'));
+    expect(skips((await scanPlugins(root2)).warnings)).toEqual([
+      'escaper: "detector" is outside the package',
+    ]);
+  });
+
+  it('discovers nothing and logs once when the root package.json is unreadable', async () => {
+    const root = app({ 'mermaid-box': diagram('mermaid-box', 'box') });
+    expect((await scanPlugins(root)).packages).toHaveLength(1);
+    writeFileSync(join(root, 'package.json'), '{ "name": "app", ');
+    expect(await scanPlugins(root)).toMatchObject({
+      packages: [],
+      warnings: [{ code: 'PLUGIN_DISCOVERY_NO_PACKAGE_JSON' }],
+    });
+    const logged: string[] = [];
+    const m = discovering(root, { log: (w) => void logged.push(w.code) });
+    const r = await m.render('a', 'flowchart LR\n  A --> B\n');
+    expect(r.warnings).toEqual([]);
+    await unsupported(m.render('b', 'box x'));
+    expect(logged).toEqual(['PLUGIN_DISCOVERY_NO_PACKAGE_JSON']);
   });
 
   it('does nothing without a package.json above the folder', async () => {

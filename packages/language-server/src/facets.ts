@@ -1,9 +1,9 @@
 /**
  * Third-party language facets (DESIGN §4.5, D89, D157, D577): diagram plugins in a workspace
  * folder's own `node_modules` whose manifest has a `language` entry. The packages are found by
- * the render scan (`mermaid/node-scan`), so the editor and the renderer accept and skip the
- * same packages: `readManifest`, confinement, package-name order (D166) and the scan's
- * warnings. The server calls this only when the client opts in (D157); by default it runs no
+ * the scan `@mermaid-js/plugin-autoload` registers plugins with (D589), so the editor and
+ * `autoload` accept and skip the same packages: `readManifest`, confinement, package-name
+ * order (D166) and the scan's warnings. The server calls this only when the client opts in (D157); by default it runs no
  * code from the opened folder.
  *
  * The server's own rules on top: a first-party id or type is never replaced, an id an earlier
@@ -21,7 +21,7 @@ import {
   packageModule,
   scanPlugins,
   type ScannedPackage,
-} from 'mermaid/node-scan';
+} from '@mermaid-js/plugin-autoload';
 
 type Detector = FacetEntry['detector'];
 

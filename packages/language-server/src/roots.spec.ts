@@ -11,11 +11,14 @@ import { facetPackage, tree, under } from './testing/workspace.ts';
 function fixture(): string {
   return tree({
     'w/package.json': JSON.stringify({ name: 'w' }),
-    'w/pkg/package.json': JSON.stringify({ name: 'pkg' }),
+    'w/pkg/package.json': JSON.stringify({ name: 'pkg', dependencies: { 'mermaid-fake': '1' } }),
     ...under('w/pkg/node_modules/mermaid-fake', facetPackage('mermaid-fake', 'fake')),
     'w/pkg/a.mmd': 'fake\n',
     'w/loose/b.mmd': 'fake\n',
-    'outside/package.json': JSON.stringify({ name: 'outside' }),
+    'outside/package.json': JSON.stringify({
+      name: 'outside',
+      dependencies: { 'mermaid-out': '1' },
+    }),
     ...under('outside/node_modules/mermaid-out', facetPackage('mermaid-out', 'out')),
     'outside/c.mmd': 'out\n',
   });

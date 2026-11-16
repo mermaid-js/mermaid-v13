@@ -30,6 +30,7 @@ describe('workspace layout (DESIGN §2)', () => {
     ['packages/plugin-hand-drawn', '@mermaid-js/plugin-hand-drawn', false],
     ['packages/plugin-icons', '@mermaid-js/plugin-icons', false],
     ['packages/bundler-plugin', '@mermaid-js/bundler-plugin', false],
+    ['packages/plugin-autoload', '@mermaid-js/plugin-autoload', false],
     ['packages/language-service', '@mermaid-js/language-service', false],
     ['packages/language-server', '@mermaid-js/language-server', false],
     ['packages/conformance', '@mermaid-js/conformance', true],

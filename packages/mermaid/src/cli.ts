@@ -13,10 +13,12 @@
  */
 import { readFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
+import { autoloadPlugins, registerPlugin } from './cli-plugins.ts';
 import {
   createMermaid,
   MermaidError,
   type InitializeConfig,
+  type Mermaid,
   type RenderResult,
   type TextRenderOptions,
   type TextRenderResult,
@@ -32,12 +34,22 @@ Options:
   --format ascii|svg       Output format (required). ascii is text in character cells.
   --charset unicode|ascii  Text glyph set: unicode box drawing (default) or pure ascii.
   --width N|auto           Fit text output into N columns; auto uses the terminal's width.
-  --warnings               Write warnings to stderr.
+  --plugin <package>       Register a Mermaid plugin package (repeatable). The package is
+                           looked up from the current directory: its default export (or its
+                           only plugin export) is a lazy diagram, a diagram plugin or an
+                           extension.
+  --autoload               Register every plugin your package.json lists, as
+                           @mermaid-js/plugin-autoload does (install it with your plugins;
+                           the command fails and names it when it is missing).
+  --warnings               Write warnings to stderr, plugins skipped by --autoload included.
   -h, --help               Show this help.
   -v, --version            Show the version.
 
 --charset and --width win over ascii.charset and ascii.maxWidth set in the diagram
 (front matter or directives); without them the diagram's own settings apply.
+
+With one or two plugins name them with --plugin;
+with many, list them in package.json and use --autoload (--plugin ones register after).
 
 Errors go to stderr. Exit status: 0 on success, 1 on an error (a bad option or
 --format value included), 2 when the diagram type cannot be rendered in the
@@ -56,6 +68,9 @@ interface Command {
   /** `--charset` and `--width`: explicit, so they win over the diagram's own `ascii` config. */
   ascii: NonNullable<TextRenderOptions['ascii']>;
   warnings: boolean;
+  /** `--plugin`, in order. */
+  plugins: string[];
+  autoload: boolean;
 }
 
 function terminalColumns(): number | undefined {
@@ -90,6 +105,8 @@ function parse(argv: string[]) {
         charset: { type: 'string' },
         width: { type: 'string' },
         warnings: { type: 'boolean', default: false },
+        plugin: { type: 'string', multiple: true, default: [] },
+        autoload: { type: 'boolean', default: false },
         help: { type: 'boolean', short: 'h', default: false },
         version: { type: 'boolean', short: 'v', default: false },
       },
@@ -122,6 +139,8 @@ function command(argv: string[]): Command | 'help' | 'version' {
     format: values.format,
     ascii,
     warnings: values.warnings,
+    plugins: values.plugin,
+    autoload: values.autoload,
   };
 }
 
@@ -141,8 +160,25 @@ async function source(file: string | undefined): Promise<string> {
   }
 }
 
-async function render(cmd: Command, text: string): Promise<RenderResult | TextRenderResult> {
+/**
+ * A `mermaid` with the plugins the command asks for (D589), resolved from the working
+ * directory: `--autoload` first, then each `--plugin` in order. Returns the autoload warnings.
+ */
+async function withPlugins(
+  cmd: Command
+): Promise<{ mermaid: Mermaid; warnings: readonly { code: string; message: string }[] }> {
   const mermaid = createMermaid();
+  const cwd = process.cwd();
+  const warnings = cmd.autoload ? await autoloadPlugins(mermaid, cwd) : [];
+  for (const name of cmd.plugins) await registerPlugin(mermaid, name, cwd);
+  return { mermaid, warnings };
+}
+
+async function render(
+  mermaid: Mermaid,
+  cmd: Command,
+  text: string
+): Promise<RenderResult | TextRenderResult> {
   const options = {
     format: cmd.format,
     config: CONFIG,
@@ -159,6 +195,7 @@ function write(stream: NodeJS.WriteStream, text: string): void {
 async function main(argv: string[]): Promise<number> {
   let cmd: Command | 'help' | 'version';
   let text: string;
+  let plugins: Awaited<ReturnType<typeof withPlugins>>;
   try {
     cmd = command(argv);
     if (cmd === 'help') {
@@ -170,6 +207,7 @@ async function main(argv: string[]): Promise<number> {
       return 0;
     }
     text = await source(cmd.file);
+    plugins = await withPlugins(cmd);
   } catch (e) {
     const hint = e instanceof UsageError ? "\nRun 'mermaid --help' for usage." : '';
     write(process.stderr, `mermaid: ${(e as Error).message}${hint}`);
@@ -177,9 +215,11 @@ async function main(argv: string[]): Promise<number> {
   }
   const name = cmd.file ?? '<stdin>';
   try {
-    const result = await render(cmd, text);
+    const result = await render(plugins.mermaid, cmd, text);
     write(process.stdout, 'format' in result ? result.text : result.svg);
     if (cmd.warnings) {
+      for (const w of plugins.warnings)
+        write(process.stderr, `mermaid: warning ${w.code}: ${w.message}`);
       for (const w of result.warnings)
         write(process.stderr, `${name}: warning ${w.code}: ${w.message}`);
     }

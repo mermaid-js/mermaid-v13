@@ -1055,7 +1055,7 @@ export const configSchema: ConfigSchema = {
       }
     },
     "discovery": {
-      "description": "Plugin auto-discovery (D164, D165): before the first render, `mermaid` registers the\nplugins found in the app's own `node_modules`, by the Node/SSR scan or, in a bundled\napp, by `@mermaid-js/bundler-plugin`'s build-time list. Set `false` to turn both off.\nIt does not cover the CDN `globalThis.mermaidPlugins` queue (D167): a script that\npushes itself there always registers. Integrator-only: diagram text cannot set it.\n",
+      "description": "Plugin auto-discovery (D164, D165, D589): before the first render, `mermaid` registers\nthe plugins the app declares in its own `package.json` and has installed in its own\n`node_modules`, by the Node/SSR scan or, in a bundled app, by\n`@mermaid-js/bundler-plugin`'s build-time list. Set `false` to turn both off.\nIt does not cover the CDN `globalThis.mermaidPlugins` queue (D167): a script that\npushes itself there always registers. Integrator-only: diagram text cannot set it.\n",
       "type": "boolean",
       "x-mermaid": {
         "status": "honoured",

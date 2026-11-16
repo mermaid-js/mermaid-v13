@@ -3,7 +3,7 @@
  *
  * - `mermaid/import-boundaries`: diagram-* → core + shared, shared → core, mermaid → core +
  *   diagram-*, core → nothing (so nothing in `shared` is loaded before a diagram needs it);
- *   mermaid's Node-only files (the bin `src/cli.ts`, D85; the Node entry `src/node.ts` and its
+ *   mermaid's Node-only files (the bin `src/cli.ts` and its `src/cli-plugins.ts`, D85, D589; the Node entry `src/node.ts` and its
  *   scan `src/node-scan.ts`, D165) may also import `node:` builtins;
  *   `core/ascii` imports no SVG code and only ASCII code imports it (DESIGN §6.3);
  *   a diagram's language-side code (`src/language*`, `src/facet/`, `src/parser/`) never imports its
@@ -83,7 +83,9 @@ const isTestOnly = (s: string) =>
   s === 'vitest' || s.startsWith('vitest/') || s.startsWith('node:');
 
 /** mermaid's Node-only files: the bin (D85), and the Node entry and its scan (D165). */
-const NODE_ONLY = ['cli.ts', 'node.ts', 'node-scan.ts'].map((f) => join('src', f));
+const NODE_ONLY = ['cli.ts', 'cli-plugins.ts', 'node.ts', 'node-scan.ts'].map((f) =>
+  join('src', f)
+);
 const isBin = (pkg: string, dir: string, filename: string) =>
   pkg === 'mermaid' && NODE_ONLY.includes(relative(dir, filename));
 
