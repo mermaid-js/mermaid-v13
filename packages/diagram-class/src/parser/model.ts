@@ -9,10 +9,10 @@
  * where v12 threw on a statement (an annotation for a class that does not exist, a method it
  * could not read) the builder reports an error instead.
  */
+import { idEscaper } from '@mermaid-js/shared/parser/support';
 import type { AstId, Diagnostic, Range } from '@mermaid-js/core/parser-kit';
 import { readMember } from './member.ts';
 import type { MemberParts } from './member.ts';
-import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 export type { Classifier, MemberParts, Visibility } from './member.ts';
 

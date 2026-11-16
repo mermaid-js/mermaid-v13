@@ -40,13 +40,9 @@
 import {
   APOSTROPHE,
   BACKTICK,
-  COLON,
-  CR,
-  codePointEnd,
   DASH,
   DOT,
   DQUOTE,
-  firstHole,
   isBlank,
   isDigit,
   isLetter,
@@ -56,34 +52,22 @@ import {
   Kind,
   LBRACE,
   LBRACKET,
-  LF,
-  localOffset,
-  newlineAt,
   PERCENT,
-  QUOTE,
   RBRACE,
   RBRACKET,
   SLASH,
-  SourceOffsets,
   STAR,
-  TokenWriter,
   UNDERSCORE,
 } from '@mermaid-js/core/parser-kit';
-import type { Hole, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import { isBreak, RuleLexer, SKIP, UNSET } from '@mermaid-js/shared/parser/rule';
+import type { RuleLexerOptions } from '@mermaid-js/shared/parser/rule';
+import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { KEYWORDS, T } from './tokens.ts';
-
-/** `kind` of a rule that matched and writes no token (EM_WS). */
-const SKIP = -1;
-/** A memo not set yet. */
-const UNSET = -2;
 
 const HEADER = 'eventmodeling';
 /** EM_DATA_INLINE's openers and their closers, by memo index. */
 const OPENERS: readonly number[] = [LBRACE, DQUOTE, APOSTROPHE];
 const CLOSERS: readonly number[] = [RBRACE, DQUOTE, APOSTROPHE];
-
-/** Not in `[^\n\r]`. */
-const isBreak = (c: number) => c === LF || c === CR;
 
 /** A first-match search memo: the search from `from` found `at` (-1: none). */
 interface Found {
@@ -98,30 +82,27 @@ interface LastOnLine {
   last: number;
 }
 
+/** The shared terminals' kinds, and about how many characters one token takes. */
+const OPTIONS: RuleLexerOptions = {
+  accDescr: T.AccDescr,
+  accTitle: T.AccTitle,
+  title: T.Title,
+  yaml: T.Yaml,
+  charsPerToken: 4,
+  // v12 lexed `withComments`, which it never trimmed: EM_WS takes leading blanks.
+  trim: false,
+};
+
 /**
  * Lex the event modeling body `src[from…]`. `view` comes from `eventModelingView` (core's
  * view with the comment lines kept).
  */
 export function lex(src: string, from: number, view: SourceView): TokenStream {
-  return new EventModelingLexer(src, from, view).run();
+  return new EventModelingLexer(src, from, view, OPTIONS).run();
 }
 
 /** One lex. Offsets are into {@link text}; {@link emit} maps them to the source. */
-class EventModelingLexer {
-  /** The text v12 lexed (tag quotes as `'`), plus the line break v12 appended. */
-  private readonly text: string;
-  /** Length of {@link text} without the appended line break. */
-  private readonly len: number;
-  private readonly n: number;
-  private readonly offsets: SourceOffsets | undefined;
-  private readonly holes: readonly Hole[];
-  /** The next removed span to write as trivia. */
-  private hole: number;
-  private readonly w: TokenWriter;
-  private p: number;
-  /** The kind of the last match of {@link scan}. */
-  private kind = SKIP;
-
+class EventModelingLexer extends RuleLexer {
   // Memos that keep failed or repeated scans linear.
   private readonly lineEnds: Found = { from: -1, at: UNSET };
   /** By closer, as {@link CLOSERS}. */
@@ -131,56 +112,12 @@ class EventModelingLexer {
     last: -1,
   }));
   private readonly blockClosers: Found = { from: -1, at: UNSET };
-  private readonly braces: Found = { from: -1, at: UNSET };
   private readonly commentEnds: Found = { from: -1, at: UNSET };
   /** The first `---` line that closes a YAML block (see {@link yaml}). */
   private readonly yamlClosers: Found = { from: -1, at: UNSET };
-  /** A directive whose body starts at or after this has no closing `}%%`. */
-  private directiveFails = Infinity;
-
-  constructor(
-    private readonly src: string,
-    from: number,
-    view: SourceView
-  ) {
-    const text = view.mask ? tagQuotes(view) : view.text;
-    this.text = text + '\n';
-    this.len = text.length;
-    this.n = this.text.length;
-    this.offsets = view.runs && new SourceOffsets(view.runs);
-    this.holes = view.holes;
-    this.hole = firstHole(view, from);
-    this.p = localOffset(view, from);
-    // About one token per four characters of event modeling text.
-    this.w = new TokenWriter(((this.len - this.p) >> 2) + 8);
-  }
-
-  run(): TokenStream {
-    const { text, n } = this;
-    // v12 lexed `withComments`, which it never trimmed: EM_WS takes leading blanks.
-    let error = -1;
-    while (this.p < n) {
-      const p = this.p;
-      const end = this.scan(p);
-      if (end < 0) {
-        // No rule matches: skip to the next offset where one does, as Chevrotain does.
-        if (error < 0) error = p;
-        this.p = codePointEnd(text, p);
-        continue;
-      }
-      if (error >= 0) {
-        this.emit(Kind.Error, error, p);
-        error = -1;
-      }
-      if (this.kind !== SKIP) this.emit(this.kind, p, end);
-      this.p = end;
-    }
-    this.trivia(this.src.length + 1);
-    return this.w.finish(this.src);
-  }
 
   /** The end of the rule that matches at `p` (its kind in {@link kind}), or -1. */
-  private scan(p: number): number {
+  protected scan(p: number): number {
     const c = this.text.charCodeAt(p);
     if (isLetter(c) || c === UNDERSCORE) return this.word(p);
     const e = this.symbol(p, c);
@@ -228,11 +165,6 @@ class EventModelingLexer {
     if (c !== SLASH) return -1;
     if (d === STAR) return this.blockComment(p);
     return d === SLASH ? this.match(T.LineComment, this.lineEnd(p + 2)) : -1;
-  }
-
-  private match(kind: number, end: number): number {
-    this.kind = kind;
-    return end;
   }
 
   // --- Rules --------------------------------------------------------------------------------
@@ -309,39 +241,6 @@ class EventModelingLexer {
     });
   }
 
-  /**
-   * EM_ACC_DESCR, EM_ACC_TITLE and EM_TITLE at a blank `p` (EM_ID takes them at a letter). The
-   * blank run is scanned once for the three (EM_WS takes it when none follows).
-   */
-  private accessibility(p: number): number {
-    const { text } = this;
-    const q = this.blanks(p);
-    if (text.startsWith('accDescr', q)) {
-      const e = this.accDescr(q + 8);
-      if (e >= 0) return this.match(T.AccDescr, e);
-    }
-    if (text.startsWith('accTitle', q)) {
-      const r = this.blanks(q + 8);
-      if (text.charCodeAt(r) === COLON) return this.match(T.AccTitle, this.lineTail(r + 1));
-    }
-    if (text.startsWith('title', q)) {
-      const r = q + 5;
-      return this.match(T.Title, isBlank(text.charCodeAt(r)) ? this.lineTail(r + 1) : r);
-    }
-    return -1;
-  }
-
-  /** After `accDescr`: `[\t ]*:` and a line tail, or `\s*{[^}]*}`. */
-  private accDescr(r: number): number {
-    const { text } = this;
-    const colon = this.blanks(r);
-    if (text.charCodeAt(colon) === COLON) return this.lineTail(colon + 1);
-    const b = this.spaces(r);
-    if (text.charCodeAt(b) !== LBRACE) return -1;
-    const close = this.search(this.braces, b + 1, (from) => text.indexOf('}', from));
-    return close < 0 ? -1 : close + 1;
-  }
-
   /** EM_ML_COMMENT: `/\*[\s\S]*?\*\/` from `p`. */
   private blockComment(p: number): number {
     const close = this.search(this.commentEnds, p + 2, (from) => this.text.indexOf('*/', from));
@@ -354,7 +253,7 @@ class EventModelingLexer {
    * first closing line after a line break in the body wins; only without one does a `---` at
    * the body's start close it.
    */
-  private yaml(p: number): number {
+  protected override yaml(p: number): number {
     const { text } = this;
     if (!text.startsWith('---', p)) return -1;
     const b = this.blanks(p + 3);
@@ -370,27 +269,6 @@ class EventModelingLexer {
     if (k >= 0) return this.match(T.Yaml, this.closer(k + 3));
     const e = text.startsWith('---', body) ? this.closer(body + 3) : -1;
     return e >= 0 ? this.match(T.Yaml, e) : -1;
-  }
-
-  /** EM_DIRECTIVE: `%%{[\S\s]*?}%%(?:\r?\n|(?!\S))` (the `[\t ]*` before it is EM_WS's). */
-  private directive(p: number): number {
-    const { text } = this;
-    if (text.charCodeAt(p + 2) !== LBRACE) return -1;
-    const body = p + 3;
-    if (body >= this.directiveFails) return -1;
-    for (let k = text.indexOf('}%%', body); k !== -1; k = text.indexOf('}%%', k + 1)) {
-      const e = this.closer(k + 3);
-      if (e >= 0) return this.match(Kind.Directive, e);
-    }
-    this.directiveFails = body;
-    return -1;
-  }
-
-  /** `(?:\r?\n|(?!\S))` at `q`: its end, or -1. */
-  private closer(q: number): number {
-    const nl = this.newline(q);
-    if (nl > 0) return q + nl;
-    return q >= this.n || isSpace(this.text.charCodeAt(q)) ? q : -1;
   }
 
   // --- Scans --------------------------------------------------------------------------------
@@ -420,94 +298,7 @@ class EventModelingLexer {
    * The length of the line break at `q` (`\r?\n` or a lone CR, which v12 read as LF), or 0. A
    * CR that ends the source is one break on its own, not a CRLF with the appended line break.
    */
-  private newline(q: number): number {
-    const nl = newlineAt(this.text, q);
-    return nl === 2 && q + 1 === this.len ? 1 : nl;
+  protected override newline(q: number): number {
+    return this.newlineInSource(q);
   }
-
-  /** The end of the run of `[\t ]` from `q`. */
-  private blanks(q: number): number {
-    let j = q;
-    while (j < this.n && isBlank(this.text.charCodeAt(j))) j++;
-    return j;
-  }
-
-  /** The end of the run of `\s` from `q`. */
-  private spaces(q: number): number {
-    let j = q;
-    while (j < this.n && isSpace(this.text.charCodeAt(j))) j++;
-    return j;
-  }
-
-  /** The end of the run of `[^\n\r]` from `q`. */
-  private lineEnd(q: number): number {
-    let j = q;
-    while (j < this.n && !isBreak(this.text.charCodeAt(j))) j++;
-    return j;
-  }
-
-  /** `[^\n\r]*?(?=%%)|[^\n\r]*` from `q`: the first `%%` on the line, else the line end. */
-  private lineTail(q: number): number {
-    const { text, n } = this;
-    let j = q;
-    while (j < n) {
-      const c = text.charCodeAt(j);
-      if (isBreak(c) || (c === PERCENT && text.charCodeAt(j + 1) === PERCENT)) break;
-      j++;
-    }
-    return j;
-  }
-
-  // --- Offsets and output -------------------------------------------------------------------
-
-  /** Source offset of `text[i]`; the end of the source from the appended line break on. */
-  private source(i: number): number {
-    if (i >= this.len) return this.src.length;
-    return this.offsets ? this.offsets.source(i) : i;
-  }
-
-  /** Write the removed spans that start before `at` (a source offset) as trivia. */
-  private trivia(at: number): void {
-    const hs = this.holes;
-    for (let h = hs[this.hole]; h && h.start < at; h = hs[++this.hole]) {
-      if (h.kind === 'comment') this.w.push(Kind.Comment, h.start, h.end);
-      else if (h.kind === 'directive') this.w.push(Kind.Directive, h.start, h.end);
-    }
-  }
-
-  /** Write the token `text[s, e)` with its source range. */
-  private emit(kind: number, s: number, e: number): void {
-    const a = this.source(s);
-    const last = Math.min(e, this.len);
-    let b = last > s ? this.source(last - 1) + 1 : a;
-    if (this.holes.length > 0) {
-      this.trivia(a);
-      if (b > a) b = this.dropAt(b);
-    }
-    this.w.push(kind, a, b);
-  }
-
-  /** The end of the character v12 dropped at `b`, which belongs to the token before it; else `b`. */
-  private dropAt(b: number): number {
-    const hs = this.holes;
-    let k = this.hole;
-    while (k < hs.length && (hs[k]?.start ?? b) < b) k++;
-    const h = hs[k];
-    return h && h.start === b && h.kind === 'drop' ? h.end : b;
-  }
-}
-
-/** The view's text with the tag-attribute quotes v12 turned into `'` turned so too. */
-function tagQuotes(view: SourceView): string {
-  const { text, mask, runs } = view;
-  if (!mask) return text;
-  const at = runs ? new SourceOffsets(runs) : undefined;
-  let out = '';
-  let from = 0;
-  for (let i = text.indexOf('"'); i !== -1; i = text.indexOf('"', i + 1)) {
-    if (((mask[at ? at.source(i) : i] ?? 0) & QUOTE) === 0) continue;
-    out += text.slice(from, i) + "'";
-    from = i + 1;
-  }
-  return out + text.slice(from);
 }

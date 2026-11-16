@@ -16,6 +16,7 @@ import { forService } from './facet/symbols.ts';
 import { journeyCategories } from './generated/categories.ts';
 import { parseJourney } from './parser/index.ts';
 import type { JourneyDocument, JourneyParseOptions, JourneyParseResult } from './parser/index.ts';
+import { shapeReason } from '@mermaid-js/shared/parser/facet';
 
 export { journeyCategories } from './generated/categories.ts';
 export { journeyDocs } from './generated/docs.ts';
@@ -50,13 +51,6 @@ const NOUNS: Readonly<Record<string, string>> = {
   task: 'a task name',
 };
 
-function shapeReason(name: string): string | undefined {
-  if (name === '') return 'A name cannot be empty.';
-  if (/[\r\n]/.test(name)) return 'A name cannot contain a line break.';
-  if (name !== name.trim()) return 'A name cannot start or end with a space.';
-  return undefined;
-}
-
 /** Whether `name`, written for `@` in each of `lines`, reads back as one `kind` symbol there. */
 function readsBack(name: string, kind: string, lines: readonly string[]): boolean {
   let text = 'journey\n';
@@ -80,7 +74,7 @@ function readsBack(name: string, kind: string, lines: readonly string[]): boolea
 function invalidReason(name: string, kind = 'actor'): string | undefined {
   const lines = LINES[kind];
   if (!lines) return `'${kind}' is not a user journey symbol kind.`;
-  const shape = shapeReason(name);
+  const shape = shapeReason(name, 'A name', 'ends');
   if (shape) return shape;
   return readsBack(name, kind, lines) ? undefined : `'${name}' is not ${NOUNS[kind]}.`;
 }

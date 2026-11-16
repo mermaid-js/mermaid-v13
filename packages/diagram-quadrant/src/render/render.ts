@@ -12,7 +12,7 @@ import {
   type Paint,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { QuadrantModel } from '../model.ts';
 import type { QuadrantLayout, QuadrantTextAnchor } from '../layout/types.ts';
@@ -175,6 +175,7 @@ function openRoot({ w, ctx, model }: Scene, box: Box): void {
   const { theme, config } = ctx;
   const width = Math.max(1, box.maxX - box.minX);
   const height = Math.max(1, box.maxY - box.minY);
+  const maxWidth = config.quadrantChart?.useMaxWidth !== false;
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
@@ -184,7 +185,7 @@ function openRoot({ w, ctx, model }: Scene, box: Box): void {
     name: 'quadrant',
     roleDescription: 'quadrantChart',
     viewBox: [box.minX, box.minY, width, height],
-    maxWidth: config.quadrantChart?.useMaxWidth,
+    maxWidth,
     title,
     desc,
     attrs: {

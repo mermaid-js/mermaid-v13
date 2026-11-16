@@ -12,8 +12,8 @@
 // (4,000,000), so at the default limits it is a `LIMIT` error (GAPS, for the maintainer).
 import type { RenderContext } from '@mermaid-js/core';
 import type { SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
-import type { PacketLayout, PacketPieceLayout, PlacedLabel } from '../layout/index.ts';
+import { centreX, centreY, openSvgRoot } from '@mermaid-js/shared/svg/document';
+import type { PacketLayout, PacketPieceLayout } from '../layout/index.ts';
 import type { PacketModel } from '../model.ts';
 import { paints, type Paints } from './paint.ts';
 
@@ -52,9 +52,6 @@ export function renderPacket(
     });
   w.close();
 }
-
-const centreX = (r: PlacedLabel): number => r.x + r.width / 2;
-const centreY = (r: PlacedLabel): number => r.y + r.height / 2;
 
 function drawPiece({ model, paint, w }: Parts, p: PacketPieceLayout): void {
   const field = model.fields[p.field]!;
@@ -97,6 +94,7 @@ function openRoot(
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
+  const maxWidth = config.packet?.useMaxWidth !== false;
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.
@@ -104,7 +102,7 @@ function openRoot(
   openSvgRoot(w, ctx, {
     name: 'packet',
     viewBox: [x, y, width, height],
-    maxWidth: config.packet?.useMaxWidth,
+    maxWidth,
     title,
     desc,
     attrs: {

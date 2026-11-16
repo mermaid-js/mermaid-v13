@@ -6,6 +6,9 @@
 // variables only, never a theme name or a look (R-THEME-11, D152; checked by conformance
 // `state/render-theme-names.spec.ts`).
 import { pxProfile } from '@mermaid-js/core/layout';
+import { arrowheads, marker, markerTrim, type Arrowheads } from '@mermaid-js/shared/svg/arrowheads';
+import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
+import { routePath } from '@mermaid-js/shared/svg/route';
 import {
   checkLinkTarget,
   checkUrl,
@@ -16,7 +19,7 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { openSvgRoot, textElement } from '@mermaid-js/core/svg/document';
+import { cls, openSvgRoot, textElement } from '@mermaid-js/shared/svg/document';
 import type {
   StateEdgeView,
   StateGroupView,
@@ -30,7 +33,6 @@ import type {
 import { stateMetrics } from '../layout/index.ts';
 import { completeLayout, type CompleteStateLayout } from '../layout/layout.ts';
 import type { StateLink, StateModel } from '../parser/index.ts';
-import { arrowTrim, arrowhead, drawArrowhead, routePath, type Arrowhead } from './edges.ts';
 import { drawFolded } from '@mermaid-js/core/svg/folded';
 import { drawFramed } from '@mermaid-js/core/svg/framed';
 import { drawDescribed, drawShape, type ShapePaint } from './shapes.ts';
@@ -40,17 +42,6 @@ import { drawDescribed, drawShape, type ShapePaint } from './shapes.ts';
 const NOTE_DASH = '5' as SafeValue;
 const DIVIDER_DASH = '10 10' as SafeValue;
 // Room either side of a transition label on its background.
-const LABEL_PAD = 4;
-const LABEL_RADIUS = 3;
-
-const cls = (names: readonly string[]): string => {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
-};
 
 type ThemeOf = StateRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
@@ -64,7 +55,7 @@ interface Tint {
 
 /** Every theme variable the body uses, looked up before the root is written (rootStyle). */
 interface Paints {
-  readonly head: Arrowhead;
+  readonly head: Arrowheads;
   readonly font: ReturnType<ThemeOf['font']>;
   readonly fontSize: Length;
   readonly strokeWidth: Length;
@@ -131,7 +122,7 @@ function paletteSlots(theme: ThemeOf, model: StateModel, s: StatePrepared): Map<
 
 function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
   const node = {
-    head: arrowhead(theme),
+    head: arrowheads(theme),
     font: theme.font(),
     fontSize: theme.length('fontSize'),
     strokeWidth: theme.length('strokeWidth'),
@@ -232,16 +223,23 @@ export function renderState(
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, paint }: Scene, model: StateModel): void {
+  const { config } = ctx;
   const width = Math.max(1, Math.ceil(layout.width));
   const height = Math.max(1, Math.ceil(layout.height));
+  const maxWidth = config.state?.useMaxWidth !== false;
+  const title = model.accTitle.trim();
+  const desc = model.accDescr.trim();
   openSvgRoot(w, ctx, {
     name: 'state statediagram',
     roleDescription: 'stateDiagram',
     viewBox: [0, 0, width, height],
-    maxWidth: ctx.config.state?.useMaxWidth,
-    title: model.accTitle.trim(),
-    desc: model.accDescr.trim(),
-    attrs: { 'font-family': paint.font, 'font-size': paint.fontSize },
+    maxWidth,
+    title,
+    desc,
+    attrs: {
+      'font-family': paint.font,
+      'font-size': paint.fontSize,
+    },
   });
 }
 
@@ -377,7 +375,8 @@ function drawEdge({ w, layout, paint }: Scene, e: StateEdgeView): void {
       w,
       route.points,
       e.source === e.target ? 'rounded' : 'curved',
-      e.note ? 0 : arrowTrim(paint.head)
+      0,
+      e.note ? 0 : markerTrim('arrow_point', paint.head)
     );
     // Paint comes from the `edgePaths` group (stroke, width, no fill).
     w.outline('edge', 'path', {
@@ -385,7 +384,10 @@ function drawEdge({ w, layout, paint }: Scene, e: StateEdgeView): void {
       'stroke-dasharray': e.note ? NOTE_DASH : undefined,
       'stroke-linecap': e.note ? 'butt' : undefined,
     });
-    if (!e.note) drawArrowhead(w, path, { fill: paint.arrow }, paint.head);
+    if (!e.note) {
+      const end = { x: path.ex, y: path.ey, dx: path.edx, dy: path.edy };
+      marker(w, 'arrow_point', end, { fill: paint.arrow }, paint.head);
+    }
   }
   w.close();
 }
@@ -393,18 +395,8 @@ function drawEdge({ w, layout, paint }: Scene, e: StateEdgeView): void {
 function drawEdgeLabel({ w, layout, paint }: Scene, e: StateEdgeView): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
-  const lw = e.label.width + 2 * LABEL_PAD;
-  w.open('g', { class: 'edgeLabel', 'data-id': e.id });
-  w.leaf('rect', {
-    x: at.x - lw / 2,
-    y: at.y - e.label.height / 2,
-    width: lw,
-    height: e.label.height,
-    rx: LABEL_RADIUS,
-    fill: paint.edgeLabel!.fill,
-  });
-  w.label(e.label, at.x, at.y, { fill: paint.edgeLabel!.text });
-  w.close();
+  const { fill, text } = paint.edgeLabel!;
+  labelOnBox(w, e.label, at, e.id, { fill, text: { fill: text }, rx: 3 });
 }
 
 function nodeClass(view: StateNodeView): string {

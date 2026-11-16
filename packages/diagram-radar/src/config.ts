@@ -7,7 +7,7 @@
  */
 import type { Warning } from '@mermaid-js/core';
 import type { RadarDiagramConfig } from '@mermaid-js/core/config';
-import { configNumber, useMaxWidth } from '@mermaid-js/core/config/readers';
+import { configNumber, shownValue as shown, useMaxWidth } from '@mermaid-js/shared/config/readers';
 import { radarConfigDefaults } from './generated/config-defaults.ts';
 
 export const RADAR_CONFIG_INVALID = 'RADAR_CONFIG_INVALID';
@@ -52,9 +52,6 @@ const RANGES: Readonly<Record<keyof RadarLayoutConfig, Range>> = {
 };
 
 const DEFAULTS = radarConfigDefaults as RadarLayoutConfig;
-
-const shown = (value: unknown): string =>
-  typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
 
 /** The layout's options from the resolved `radar` section, each checked. */
 export function radarLayoutConfig(

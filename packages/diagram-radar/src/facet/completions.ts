@@ -10,34 +10,13 @@ import type {
   CompletionItem,
   DocumentView,
   ProbeResult,
-  Range,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { radarDocs } from '../generated/docs.ts';
 import type { RadarDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { declaredAxes, ITEMS } from './tables.ts';
-import { span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
-
-/** The probed word's range: the prefix, plus the rest of the word after the cursor. */
-function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeResult): Range {
-  const o = probe.offset;
-  let end = o;
-  const i = tokens ? tokenBefore(tokens, o) : -1;
-  if (tokens && i >= 0 && (tokens.start[i] ?? 0) < o && o < (tokens.end[i] ?? 0))
-    end = tokens.end[i] ?? o;
-  // A word stops at the first blank, line break, quote or punctuation after the cursor.
-  const stop = /[\s"':,[\]{}]/.exec(text.slice(o, end));
-  if (stop) end = o + stop.index;
-  return span(probe.prefix.start, end);
-}
-
-/** Whether only blanks come before `at` on its line. */
-function atLineStart(text: string, at: number): boolean {
-  let i = at;
-  while (i > 0 && (text.charAt(i - 1) === ' ' || text.charAt(i - 1) === '\t')) i--;
-  return i === 0 || text.charAt(i - 1) === '\n' || text.charAt(i - 1) === '\r';
-}
+import { declaredAxes, ITEMS, tokenBefore } from './tables.ts';
+import { atLineStart, keywordCompletions, wordRange } from '@mermaid-js/shared/parser/facet';
 
 /** Whether `at` is inside a curve's `{ }`: the last brace before it is a `{`. */
 function inBraces(tokens: TokenStream | undefined, at: number): boolean {
@@ -58,22 +37,17 @@ export function radarCompletions(
   if (probe.mode !== 'INITIAL') return [];
   const { text, result } = doc;
   const expected = new Set(probe.expected);
-  const range = wordRange(text, result.tokens, probe);
+  const range = wordRange(text, result.tokens, probe, /[\s"':,[\]{}]/);
   const prefix = text.slice(range.start, probe.offset);
   const lineStart = atLineStart(text, range.start);
-  const out: CompletionItem[] = [];
-  for (const k of ITEMS) {
-    if (!expected.has(k.kind) || (k.lineStart && !lineStart)) continue;
-    if (!k.label.startsWith(prefix)) continue;
-    const documentation = radarDocs[k.kind];
-    out.push({
-      label: k.label,
-      kind: k.item,
-      insertText: k.insert ?? k.label,
-      range,
-      ...(documentation === undefined ? {} : { documentation }),
-    });
-  }
+  const out = keywordCompletions(
+    ITEMS,
+    expected,
+    prefix,
+    range,
+    radarDocs,
+    (k) => !k.lineStart || lineStart
+  );
   if (expected.has(T.Id) && inBraces(result.tokens, range.start)) {
     for (const [name, [a]] of declaredAxes(result.ast)) {
       if (!a || !name.startsWith(prefix)) continue;

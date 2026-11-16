@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
@@ -7,8 +7,17 @@ import { describe, expect, it } from 'vitest';
 // is an instance created per parse. At module scope only `const` bindings are allowed, and
 // none may be initialised with a mutable collection (`[]`, `{}` without `as const`,
 // `new Map/Set/Array`). Typed lookup tables and sticky regexes are read-only by convention.
-const dir = join(import.meta.dirname, '..', '..', 'packages', 'core', 'src', 'parser-kit');
-const sources = readdirSync(dir).filter((f) => f.endsWith('.ts') && !f.endsWith('.spec.ts'));
+const packages = join(import.meta.dirname, '..', '..', 'packages');
+// Core's parser kit and the lexer and parser families in `shared` that build on it.
+const dirs = [
+  join(packages, 'core', 'src', 'parser-kit'),
+  join(packages, 'shared', 'src', 'parser'),
+];
+const sources = dirs.flatMap((dir) =>
+  readdirSync(dir)
+    .filter((f) => f.endsWith('.ts') && !f.endsWith('.spec.ts'))
+    .map((f) => join(dir, f))
+);
 
 function mutableBindings(code: string): string[] {
   const file = ts.createSourceFile('x.ts', code, ts.ScriptTarget.ES2022, true);
@@ -33,13 +42,18 @@ function mutableBindings(code: string): string[] {
 
 describe('parser kit module state', () => {
   it('has source files to check', () => {
-    expect(sources).toContain('index.ts');
+    expect(sources.map((f) => relative(packages, f))).toContain(
+      join('core', 'src', 'parser-kit', 'index.ts')
+    );
     expect(sources.length).toBeGreaterThan(5);
   });
 
-  it.each(sources)('%s declares no mutable module-level bindings', (file) => {
-    expect(mutableBindings(readFileSync(join(dir, file), 'utf8'))).toEqual([]);
-  });
+  it.each(sources.map((f) => [relative(packages, f), f]))(
+    '%s declares no mutable module-level bindings',
+    (_, file) => {
+      expect(mutableBindings(readFileSync(file, 'utf8'))).toEqual([]);
+    }
+  );
 
   it('the guard flags what it bans and allows what it allows', () => {
     const banned = 'let a; var b = 1; const c = new Map(); const d = []; const e = { x: 1 };';

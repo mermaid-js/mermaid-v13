@@ -5,16 +5,13 @@
 // shared builder metrics, plus state's own shape table (D108, `metrics.ts`).
 import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
 import { fromPx, pxProfile, type UnitProfile } from '@mermaid-js/core/layout';
-import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
-import {
-  fontSizePx,
-  layoutLabel,
-  Style,
-  type FontKey,
-  type MeasuredLabel,
-} from '@mermaid-js/core/text';
+import { graphSpacing, labelledEdge, sideways } from '@mermaid-js/shared/layout';
+import type { CheckedStyle } from '@mermaid-js/core/svg';
+import { styleCache } from '@mermaid-js/shared/svg/document';
+import { textStyle } from '@mermaid-js/shared/svg/graph';
+import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { StateModel, StateNode, StateNote, StateTransition } from '../parser/index.ts';
-import { configLengths, type ConfigLength } from './config-length.ts';
+import { configLengths, type ConfigLength } from '@mermaid-js/shared/config/readers';
 import type { StateRenderContext } from './context.ts';
 import { stateConfigDefaults } from '../generated/config-defaults.ts';
 import { stateMetrics, type StateMetrics } from './metrics.ts';
@@ -105,17 +102,6 @@ export interface StatePrepared {
   regions: ReadonlyMap<string, readonly string[]>;
 }
 
-const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
-
-function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
-  const t = style.text;
-  const weight = t['font-weight'];
-  const bold = weight === 'bold' || weight === 'bolder' || Number(weight) >= 600;
-  const bits = (bold ? Style.Bold : 0) | (t['font-style'] === 'italic' ? Style.Italic : 0);
-  const size = fontSizePx(t['font-size'], font.size);
-  return [size !== undefined && size > 0 && size < 1000 ? { ...font, size } : font, bits];
-}
-
 /** The text a state is labelled with: its one description, else its id. */
 const labelText = (s: StateNode): string =>
   s.descriptions.length === 1 ? s.descriptions[0]! : s.id;
@@ -152,7 +138,9 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
   const units = ctx.units ?? pxProfile;
   const b = units.builder;
   const cfg = ctx.config.state ?? {};
-  const length = configLengths(cfg, stateConfigDefaults, (w) => ctx.warn(w));
+  const length = configLengths('state', 'STATE_CONFIG_IGNORED', cfg, stateConfigDefaults, (w) =>
+    ctx.warn(w)
+  );
   const measure = (
     text: string,
     mode: V12LabelMode | undefined,
@@ -181,7 +169,7 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
     minWidth: fromPx(units, length('minNodeWidth') ?? stateConfigDefaults.minNodeWidth!, 'x'),
     label: (text, style, max) => measure(...v12Label(text), style, max),
     plain: (text, style, max) => measure(text, undefined, style, max),
-    styleOf: styleCache(model, ctx),
+    styleOf: styleCache(new Map(model.classes.map((c) => [c.id, c.styles])), (w) => ctx.warn(w)),
     embed: ctx.embed,
     typeLabel: (type) =>
       layoutLabel(
@@ -369,24 +357,6 @@ function scopes(model: StateModel) {
   return { regionsOf, groupAst, groupDir, parentOf, flowOf, depthOf, notes, transitions };
 }
 
-/** The checked style of class names plus own declarations, one per distinct list. */
-function styleCache(model: StateModel, ctx: StateRenderContext): Measure['styleOf'] {
-  const classDefs = new Map<string, string[]>();
-  // `color` in `styles` already sets the label's fill (checkStyle); v12's `textStyles` repeat it
-  // as `fill`, which here would also paint the shape.
-  for (const c of model.classes) classDefs.set(c.id, c.styles);
-  const styles = new Map<string, CheckedStyle>();
-  return (classes, own = []) => {
-    const decls: string[] = [];
-    for (const name of classes) for (const s of classDefs.get(name) ?? []) decls.push(s.trim());
-    for (const s of own) decls.push(s.trim());
-    const key = decls.join(';');
-    let style = styles.get(key);
-    if (!style) styles.set(key, (style = checkStyle(decls, (w) => ctx.warn(w))));
-    return style;
-  };
-}
-
 /** A text box: the label and its padding (in cells, a border cell on each side too). */
 function boxOf(
   label: MeasuredLabel,
@@ -480,20 +450,7 @@ function layoutGraph(
 ): LayoutGraph {
   const { units } = m;
   const b = units.builder;
-  const fromConfig = (key: string, fallback: number, axis: 'x' | 'y', min: number): number => {
-    const px = length(key);
-    return px === undefined ? fallback : fromPx(units, px, axis, min);
-  };
-  const along = sideways(model.direction) ? 'x' : 'y';
-  const across = along === 'x' ? 'y' : 'x';
-  const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
-    node: fromConfig('nodeSpacing', b.spacing.node, node, b.minSpacing.node),
-    rank: fromConfig('rankSpacing', b.spacing.rank, rank, b.minSpacing.rank),
-    edge: b.spacing.edge,
-  });
-  const spacing = spacingOn(along, across);
-  const down = spacingOn('y', 'x');
-  const turned = down.node !== spacing.node || down.rank !== spacing.rank;
+  const spacing = graphSpacing(units, model.direction, length);
   // Composites a reopening left holding plain children beside its regions (model `group()`).
   const mixed = new Set<string>();
   for (const x of [...nodes, ...groups.filter((g) => !g.region)])
@@ -515,22 +472,8 @@ function layoutGraph(
       if (d) group.direction = d;
       return group;
     }),
-    edges: edges.map((e) => ({
-      id: e.id,
-      source: e.source,
-      target: e.target,
-      minLen: 1,
-      ...(e.label.width > 0
-        ? {
-            label: {
-              width: e.label.width + b.labelPatch.x,
-              height: e.label.height + b.labelPatch.y,
-            },
-          }
-        : {}),
-    })),
-    spacing,
-    ...(turned ? { turnedSpacing: down } : {}),
+    edges: edges.map((e) => labelledEdge(b, e.id, e.source, e.target, e.label)),
+    ...spacing,
     diagramPadding: b.diagramPadding,
     // On the grid routes are always square (D78).
     routing: units.grid === undefined ? 'curved' : 'stepped',

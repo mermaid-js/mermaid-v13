@@ -7,7 +7,7 @@
 // `:::` classes on nodes, `edge section-edge-<n> edge-depth-<d>` on edges (`d` from the raw
 // indent, GAPS #388). Coordinates are absolute; nothing has a transform.
 import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { MindmapLayout } from '../layout/layout.ts';
 import type { MindmapNodeView } from '../layout/prepare.ts';
 import type { MindmapModel } from '../model.ts';
@@ -55,12 +55,13 @@ function openRoot({ w, layout, ctx }: Scene): void {
   const { theme, config } = ctx;
   const width = Math.max(1, Math.ceil(layout.width));
   const height = Math.max(1, Math.ceil(layout.height));
+  const maxWidth = config.mindmap?.useMaxWidth !== false;
   const font = theme.font();
   const fontSize = theme.length('fontSize');
   openSvgRoot(w, ctx, {
     name: 'mindmap',
     viewBox: [0, 0, width, height],
-    maxWidth: config.mindmap?.useMaxWidth,
+    maxWidth,
     attrs: {
       'font-family': font,
       'font-size': fontSize,

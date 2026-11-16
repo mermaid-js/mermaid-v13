@@ -45,8 +45,8 @@ import {
   sourceView,
   syncTo,
   TokenCursor,
-  STOP,
 } from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type {
   ParseOptions,
   ParseResult,
@@ -295,8 +295,7 @@ class IshikawaParser {
   /** Report what was found where `names` were expected, with a hint. */
   private report(names: string[], hint?: string): void {
     const { range, found } = this.named();
-    const d = this.st.diagnostics.unexpected('UNEXPECTED', range, names, found);
-    if (hint) d.message = `${d.message.slice(0, -1)}; ${hint}.`;
+    this.st.diagnostics.unexpected('UNEXPECTED', range, names, found, undefined, hint);
   }
 
   /** Report, then stop the statement. */

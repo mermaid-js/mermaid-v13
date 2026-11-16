@@ -1,10 +1,11 @@
 import { Kind } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
-import { decodePlaceholders } from '@mermaid-js/core/parser-kit/support';
+import { tokenValue, v12Text } from '@mermaid-js/shared/parser/v12-text';
 import { lex } from './lexer.ts';
 import type { ClassLex } from './lexer.ts';
-import { v12Text } from './v12-text.ts';
+
+export { tokenValue };
 
 export interface ClassToken {
   /** A `T` kind or a shared `Kind`. */
@@ -21,17 +22,7 @@ export interface ClassToken {
 export function lexClass(src: string, onRule?: (rule: number) => void): ClassLex {
   const pre = preprocess(src);
   const directives = pre.directives.map((d) => d.range);
-  return lex(src, v12Text(src, pre.bodyStart, directives), onRule);
-}
-
-/**
- * The text of token `i` as v12's parser read it (less the `\n` v12 appended), or the source
- * text of a trivia token.
- */
-export function tokenValue(l: ClassLex, i: number): string {
-  const s = l.textStart[i] ?? -1;
-  if (s < 0) return l.tokens.source.slice(l.tokens.start[i] ?? 0, l.tokens.end[i] ?? 0);
-  return decodePlaceholders(l.v12.text.slice(s, Math.min(l.textEnd[i] ?? s, l.v12.length)));
+  return lex(src, v12Text(src, pre.bodyStart, directives, true), onRule);
 }
 
 /**

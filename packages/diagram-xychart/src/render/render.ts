@@ -23,7 +23,7 @@ import {
   type PathData,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   Segment,
@@ -276,18 +276,22 @@ function openRoot(
   ctx: XyChartRenderContext,
   w: SvgWriter
 ): void {
+  const { theme } = ctx;
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
+  // D387: `useMaxWidth` is honoured (v12 always scaled to the container).
+  const maxWidth = layout.useMaxWidth;
+  const title = model.accTitle.trim();
+  const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.
-  const font = ctx.theme.font();
+  const font = theme.font();
   openSvgRoot(w, ctx, {
     name: 'xychart',
     viewBox: [x, y, width, height],
-    // D387: `useMaxWidth` is honoured (v12 always scaled to the container).
-    maxWidth: layout.useMaxWidth,
-    title: model.accTitle.trim(),
-    desc: model.accDescr.trim(),
+    maxWidth,
+    title,
+    desc,
     attrs: { 'font-family': font },
   });
 }
