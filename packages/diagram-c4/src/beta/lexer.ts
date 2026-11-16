@@ -103,12 +103,17 @@ class C4BetaLexer {
     const { src } = this;
     while (this.p < src.length) {
       const c = src.charCodeAt(this.p);
-      if (isBlank(c) || (this.leading && isSpace(c) && c !== LF && c !== CR)) this.p++;
+      if (this.blank(c)) this.p++;
       else if (this.directive()) continue;
       else if (c === LF || c === CR) this.newline(c);
       else this.token(c);
     }
     return this.w.finish(src);
+  }
+
+  /** A blank: a tab or space, and before the first token any `\s` but a line break. */
+  private blank(c: number): boolean {
+    return isBlank(c) || (this.leading && isSpace(c) && c !== LF && c !== CR);
   }
 
   private emit(kind: number, end: number): void {

@@ -224,12 +224,14 @@ function checkTypeOptions(m: ManifestSource): void {
       );
     if (o.layout !== undefined && !knownLayout(o.layout))
       throw new Error(`${m.name}: typeOptions.${type}.layout "${o.layout}" is not a known layout`);
-    const stray = o.formats?.find((f) => !m.manifest.formats.includes(f));
-    if (o.formats?.length === 0 || stray !== undefined)
-      throw new Error(
-        `${m.name}: typeOptions.${type}.formats must be some of the package's formats`
-      );
+    if (o.formats !== undefined) checkTypeFormats(m, type, o.formats);
   }
+}
+
+/** Throws unless a type's own `formats` are some of its package's, at least one. */
+function checkTypeFormats(m: ManifestSource, type: string, formats: readonly string[]): void {
+  if (formats.length === 0 || formats.some((f) => !m.manifest.formats.includes(f)))
+    throw new Error(`${m.name}: typeOptions.${type}.formats must be some of the package's formats`);
 }
 
 /** The manifest serving each v12 type; throws on a type v12 does not have. */

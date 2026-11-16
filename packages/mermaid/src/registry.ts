@@ -605,15 +605,20 @@ export class Registry {
     return pending;
   }
 
+  /** `typeOrId`'s entry, unless its row draws no text (a type without its plugin's ascii). */
+  private textEntryFor(typeOrId: string): Entry | undefined {
+    const entry = this.entryFor(typeOrId);
+    return entry?.rowFormats?.includes('ascii') === false ? undefined : entry;
+  }
+
   /**
    * Loads the text-output hook of `typeOrId` (D76, only for `format: 'ascii'`): the plugin's
    * own `ascii` method, else its lazily loaded `ascii` entry. Undefined when it has neither.
    */
   async loadAscii(typeOrId: string): Promise<AnyAsciiHook | undefined> {
-    const entry = this.entryFor(typeOrId);
+    const entry = this.textEntryFor(typeOrId);
     const id = entry?.id;
-    if (!entry || id === undefined || entry.rowFormats?.includes('ascii') === false)
-      return undefined;
+    if (!entry || id === undefined) return undefined;
     const have = this.ascii(id);
     if (have) return have;
     if (!(await this.load(id))) return this.ascii(id);
