@@ -77,6 +77,22 @@ describe('symbols()', () => {
     ]);
   });
 
+  it('marks a symbol that opens a block, even one that defines nothing new, and no other', async () => {
+    const blocks = (list: readonly DocumentSymbol[]): string[] =>
+      list.flatMap((s) => [...(s.block ? [s.name] : []), ...blocks(s.children)]);
+    // S holds only B, defined before it: no children in the outline, but a block.
+    const flow = await open('flowchart LR\n  A --> B\n  subgraph S\n    B\n  end\n');
+    expect(flow.symbols().find((s) => s.name === 'S')?.children).toEqual([]);
+    expect(blocks(flow.symbols())).toEqual(['S']);
+    // A class body holds members, not statements: the class is no block; the namespace is.
+    const cls = await open(
+      'classDiagram\n  class Animal {\n    +int age\n  }\n  namespace N {\n    class Duck\n  }\n'
+    );
+    expect(blocks(cls.symbols())).toEqual(['N']);
+    const st = await open('stateDiagram-v2\n  A --> B\n  state Busy {\n    A\n  }\n');
+    expect(blocks(st.symbols())).toEqual(['Busy']);
+  });
+
   it('is empty without a facet, and frozen', async () => {
     expect((await open('')).symbols()).toEqual([]);
     expect((await open('zenuml\n  A.method()\n')).symbols()).toEqual([]);

@@ -20,6 +20,12 @@ export interface DocumentSymbol {
   readonly range: Range;
   /** The definition: the occurrence `definition` goes to, inside {@link range}. */
   readonly nameRange: Range;
+  /**
+   * Whether the symbol opens a block: {@link range} is a statement, first written by this
+   * symbol, that holds statements of its own (a subgraph, a composite state, a namespace),
+   * though they may define nothing new. Adapters show it as a group, whatever the diagram.
+   */
+  readonly block: boolean;
   /** The symbols defined inside this one's statement, in source order. */
   readonly children: readonly DocumentSymbol[];
 }
@@ -29,6 +35,7 @@ interface Building {
   kind: string;
   range: Range;
   nameRange: Range;
+  block: boolean;
   children: Building[];
 }
 
@@ -103,9 +110,13 @@ export function outline(
       kind: d.kind,
       range: span ? { start: span.range.start, end: span.range.end } : { ...d.range },
       nameRange: { start: d.range.start, end: d.range.end },
+      block: false,
       children: [],
     };
-    if (span && !owner.has(span)) owner.set(span, node);
+    if (span && !owner.has(span)) {
+      owner.set(span, node);
+      node.block = Array.isArray(span.children);
+    }
     return { node, path };
   });
   const roots: Building[] = [];

@@ -908,7 +908,7 @@ describe('highlights, selection ranges and the outline (#810)', () => {
     children: DocumentSymbol[] = []
   ): DocumentSymbol => ({ name, kind, range: r, selectionRange, children });
 
-  it('lists the outline, nested by subgraph and by composite state', async () => {
+  it('lists the outline nested by block; a block is a namespace, any other symbol a variable', async () => {
     expect(
       await request<DocumentSymbol[]>('textDocument/documentSymbol', {
         textDocument: { uri: flow },
@@ -919,7 +919,7 @@ describe('highlights, selection ranges and the outline (#810)', () => {
       sym('S1', SymbolKind.Namespace, range(3, 2, 5, 5), range(3, 11, 13), [
         sym('C', SymbolKind.Variable, range(4, 4, 11), range(4, 10, 11)),
       ]),
-      sym('hot', SymbolKind.Class, range(6, 2, 24), range(6, 11, 14)),
+      sym('hot', SymbolKind.Variable, range(6, 2, 24), range(6, 11, 14)),
     ]);
     expect(
       await request<DocumentSymbol[]>('textDocument/documentSymbol', {
@@ -927,7 +927,7 @@ describe('highlights, selection ranges and the outline (#810)', () => {
       })
     ).toEqual([
       sym('Idle', SymbolKind.Variable, range(1, 2, 14), range(1, 10, 14)),
-      sym('Busy', SymbolKind.Variable, range(2, 2, 3, 5), range(2, 8, 12), [
+      sym('Busy', SymbolKind.Namespace, range(2, 2, 3, 5), range(2, 8, 12), [
         sym('A', SymbolKind.Variable, range(3, 4, 11), range(3, 4, 5)),
         sym('B', SymbolKind.Variable, range(3, 4, 11), range(3, 10, 11)),
       ]),
@@ -953,7 +953,7 @@ describe('highlights, selection ranges and the outline (#810)', () => {
           },
           {
             name: 'Busy',
-            kind: SymbolKind.Variable,
+            kind: SymbolKind.Namespace,
             location: { uri: state, range: range(2, 2, 3, 5) },
           },
           {

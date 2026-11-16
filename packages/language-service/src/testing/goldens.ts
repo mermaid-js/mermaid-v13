@@ -134,7 +134,7 @@ export const FEATURES: Readonly<Record<string, Render>> = {
   symbols: (doc, _, p) => {
     const tree = (list: ReturnType<DocumentSnapshot['symbols']>, indent: string): string[] =>
       list.flatMap((s) => [
-        `${indent}${s.kind} ${p.range(s.nameRange)} in ${p.pos(s.range.start)}-${p.pos(s.range.end)}`,
+        `${indent}${s.kind} ${p.range(s.nameRange)} in ${p.pos(s.range.start)}-${p.pos(s.range.end)}${s.block ? ' block' : ''}`,
         ...tree(s.children, `${indent}  `),
       ]);
     const lines = tree(doc.symbols(), '');

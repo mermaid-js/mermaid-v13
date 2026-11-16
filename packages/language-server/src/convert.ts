@@ -166,27 +166,13 @@ export function toSelectionRange(index: Positions, chain: readonly ServiceRange[
 }
 
 /**
- * LSP `SymbolKind` of the facets' symbol kinds: groups (a subgraph, a namespace, a C4
- * boundary) are namespaces, classes classes; every other kind (a node, a state, a participant,
- * an entity's id …) is a variable, as completion shows a node id.
+ * LSP `SymbolKind` of an outline symbol, read from the outline's structure alone, so no
+ * diagram's kind names live here (R-LANG-8): a symbol that opens a block (a subgraph, a
+ * composite state, a namespace) is a namespace, any other a variable, as completion shows a
+ * node id.
  */
-const SYMBOL_KIND: Readonly<Record<string, SymbolKind>> = {
-  subgraph: SymbolKind.Namespace,
-  namespace: SymbolKind.Namespace,
-  group: SymbolKind.Namespace,
-  boundary: SymbolKind.Namespace,
-  section: SymbolKind.Namespace,
-  frame: SymbolKind.Namespace,
-  domain: SymbolKind.Namespace,
-  class: SymbolKind.Class,
-  cssClass: SymbolKind.Class,
-  interface: SymbolKind.Interface,
-  entity: SymbolKind.Struct,
-  field: SymbolKind.Field,
-};
-
-export const symbolKind = (kind: string): SymbolKind =>
-  Object.hasOwn(SYMBOL_KIND, kind) ? SYMBOL_KIND[kind]! : SymbolKind.Variable;
+const symbolKind = (s: ServiceDocumentSymbol): SymbolKind =>
+  s.block ? SymbolKind.Namespace : SymbolKind.Variable;
 
 /** The service's outline as LSP document symbols, nested. */
 export function toDocumentSymbols(
@@ -195,7 +181,7 @@ export function toDocumentSymbols(
 ): DocumentSymbol[] {
   return symbols.map((s) => ({
     name: s.name,
-    kind: symbolKind(s.kind),
+    kind: symbolKind(s),
     range: toRange(index, s.range),
     selectionRange: toRange(index, s.nameRange),
     children: toDocumentSymbols(index, s.children),
@@ -215,7 +201,7 @@ export function toSymbolInformation(
   return symbols.flatMap((s) => {
     const info: SymbolInformation = {
       name: s.name,
-      kind: symbolKind(s.kind),
+      kind: symbolKind(s),
       location: { uri, range: toRange(index, s.range) },
     };
     if (container !== undefined) info.containerName = container;
