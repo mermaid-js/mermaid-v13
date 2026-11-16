@@ -261,6 +261,45 @@ export function readsBack(
 }
 
 /**
+ * A read-back probe: `header`, then each of `lines` with its `@` written as `name`, one per
+ * line, and where each `@` landed.
+ */
+export function probeText(
+  header: string,
+  lines: readonly string[],
+  name: string
+): { text: string; spots: number[] } {
+  let text = header;
+  const spots: number[] = [];
+  for (const line of lines) {
+    spots.push(text.length + line.indexOf('@'));
+    text += `${line.replace('@', () => name)}\n`;
+  }
+  return { text, spots };
+}
+
+/**
+ * Whether a probe parse read, with no error, exactly one `kind` symbol at each of `spots`, named
+ * `name` and spanning it. With `others`, the parse holds exactly `others` more `kind` symbols
+ * than spots, so nothing else read as the kind.
+ */
+export function readsBackAt(
+  result: Pick<ParseResult<unknown>, 'diagnostics' | 'symbols'>,
+  spots: readonly number[],
+  name: string,
+  kind: string,
+  others?: number
+): boolean {
+  if (result.diagnostics.some((d) => d.severity === 'error')) return false;
+  const mine = result.symbols.filter((s) => s.kind === kind);
+  if (others !== undefined && mine.length !== spots.length + others) return false;
+  return spots.every((at) => {
+    const hits = mine.filter((s) => s.range.start === at);
+    return hits.length === 1 && hits[0]!.name === name && hits[0]!.range.end === at + name.length;
+  });
+}
+
+/**
  * The text a keyword written with `separator` (`: `, ` `) inserts before `rest`, the text after
  * the word it replaces: no separator when `rest` opens with one already (`opens`), and the
  * separator without its trailing blank when `rest` starts with a blank.
