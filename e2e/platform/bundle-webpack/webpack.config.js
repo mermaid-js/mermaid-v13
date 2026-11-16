@@ -9,6 +9,7 @@ export default {
     'src/flowchart': './src/flowchart.js',
     'src/all': './src/all.js',
     'src/plugin': './src/plugin.js',
+    'src/explicit': './src/explicit.js',
   },
   plugins: process.env.MERMAID_PLUGIN === 'off' ? [] : [mermaid()],
   output: {

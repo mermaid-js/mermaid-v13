@@ -4,7 +4,7 @@ import mermaid from '@mermaid-js/bundler-plugin/rollup';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 
 export default {
-  input: { 'src/flowchart': 'src/flowchart.js', 'src/all': 'src/all.js', 'src/plugin': 'src/plugin.js' },
+  input: { 'src/flowchart': 'src/flowchart.js', 'src/all': 'src/all.js', 'src/plugin': 'src/plugin.js', 'src/explicit': 'src/explicit.js' },
   plugins: [
     nodeResolve({ browser: true }),
     ...(process.env.MERMAID_PLUGIN === 'off' ? [] : [mermaid()]),
