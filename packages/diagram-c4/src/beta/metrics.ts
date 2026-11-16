@@ -23,4 +23,7 @@ export const C4_BETA_METRICS = {
   legendSwatchGap: 6,
   /** The space between legend rows (v12's row height of 18 less a 12 px swatch). */
   legendRowGap: 6,
+  /** Text output, in cells: the rows above the drawing that hold the title, and a label block's blank cells beside its text. */
+  cellTitleRows: 3,
+  cellLabelPad: 2,
 } as const;
