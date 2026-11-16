@@ -34,12 +34,17 @@ function within(path: string, folder: string): boolean {
   return rel !== '..' && !rel.startsWith(`..${sep}`) && !isAbsolute(rel);
 }
 
-/** The package root of the document at `file` if it lies inside one of `folders` (real paths). */
+/**
+ * The package root of the document at `file` when one of `folders` (real paths) holds both the
+ * document and its root (D579).
+ */
 async function rootOf(file: string, folders: readonly string[]): Promise<string | undefined> {
   const dir = await real(dirname(file));
-  if (dir === undefined || !folders.some((f) => within(dir, f))) return undefined;
+  if (dir === undefined) return undefined;
+  const holding = folders.filter((f) => within(dir, f));
+  if (holding.length === 0) return undefined;
   const root = await findAppRoot(dir);
-  return root !== undefined && folders.some((f) => within(root, f)) ? root : undefined;
+  return root !== undefined && holding.some((f) => within(root, f)) ? root : undefined;
 }
 
 /** The plugin roots of a session whose client named `folders` (at least one). */

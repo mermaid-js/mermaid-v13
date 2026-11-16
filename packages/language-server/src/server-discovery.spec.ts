@@ -180,6 +180,111 @@ describe('plugin discovery in the package root of an opened document (D579)', ()
   );
 
   it(
+    'scans a root inside the named folder that holds the document, with folders nested',
+    async () => {
+      const root = monorepo();
+      // b.mmd lies in both folders; its root packages/foo lies only in the outer one, which
+      // holds the document too, so it is scanned. c.mmd's root lies in both.
+      const client = await startClient({
+        workspaceFolders: [
+          { uri: fileUri(root, 'packages/foo/docs'), name: 'docs' },
+          { uri: fileUri(root, 'packages/foo'), name: 'foo' },
+        ],
+        initializationOptions: PLUGINS,
+      });
+      try {
+        const doc = fileUri(root, 'packages/foo/docs/b.mmd');
+        client.open(doc, 'fake\n');
+        await pushed(client, doc, FAKE);
+        const inner = fileUri(root, 'packages/foo/docs/inner/c.mmd');
+        client.open(inner, 'inner\n');
+        await pushed(client, inner, FAKE);
+      } finally {
+        await client.stop();
+      }
+    },
+    T
+  );
+
+  it(
+    'falls back to rootPath when rootUri is not a file: URI (D578)',
+    async () => {
+      const root = monorepo();
+      const client = await startClient({
+        rootUri: 'vscode-vfs://github/mono',
+        rootPath: join(root, 'packages/foo'),
+        initializationOptions: PLUGINS,
+      });
+      try {
+        const doc = fileUri(root, 'packages/foo/a.mmd');
+        client.open(doc, 'fake\n');
+        // The folder was scanned during initialize: the first push has the plugin.
+        expect(codes(await client.diagnostics(doc))).toEqual(FAKE);
+      } finally {
+        await client.stop();
+      }
+    },
+    T
+  );
+
+  it(
+    'scans for a Markdown document and re-publishes its fences at Markdown positions (#811)',
+    async () => {
+      const root = monorepo();
+      const client = await startClient({
+        rootUri: pathToFileURL(root).href,
+        initializationOptions: { mermaid: { plugins: true, markdown: true } },
+      });
+      try {
+        const doc = fileUri(root, 'packages/foo/notes.md');
+        client.open(doc, '# Notes\n\nSome prose.\n\n```mermaid\nfake\n```\n', 'markdown');
+        await pushed(client, doc, FAKE);
+        const pushes = client.published.filter((p) => p.uri === doc);
+        expect(pushes.map(codes)).toEqual([UNSUPPORTED, FAKE]);
+        // The rebuild's push keeps the version of the text it was made from.
+        expect(pushes.map((p) => p.version)).toEqual([1, 1]);
+        // The fence body starts on line 5: the facet's offsets 0–4 land there.
+        expect(pushes[1]!.diagnostics[0]!.range).toEqual({
+          start: { line: 5, character: 0 },
+          end: { line: 5, character: 4 },
+        });
+      } finally {
+        await client.stop();
+      }
+    },
+    T
+  );
+
+  it(
+    "keeps each open document's version in the rebuild's push (D579)",
+    async () => {
+      const root = monorepo();
+      const client = await startClient({
+        rootUri: pathToFileURL(root).href,
+        initializationOptions: PLUGINS,
+      });
+      try {
+        const other = fileUri(root, 'packages/foo/a.mmd');
+        client.open(other, 'fake\n');
+        await pushed(client, other, FAKE);
+        client.change(other, 'fake\n\n', 7);
+        await pushed(client, other, FAKE);
+        const doc = fileUri(root, 'packages/foo/docs/inner/c.mmd');
+        client.open(doc, 'inner\n');
+        await pushed(client, doc, FAKE);
+        // The rebuild re-published `other` (opened first) before `doc`, at the version it holds.
+        await pushed(client, other, FAKE);
+        expect(client.published.filter((p) => p.uri === other).map((p) => p.version)).toEqual([
+          1, 1, 7, 7,
+        ]);
+      } finally {
+        await client.stop();
+      }
+    },
+    T
+  );
+
+  it(
     'scans each package root once per session',
     async () => {
       const root = monorepo();

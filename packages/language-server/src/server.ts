@@ -58,16 +58,17 @@ import { pluginRoots, type PluginRoots } from './roots.ts';
 import { selectionChain } from './selection.ts';
 import { VERSION } from './version.ts';
 
+/** The path part of `uri`: its query and fragment left out. */
+const uriPath = (uri: string): string => uri.replace(/[?#].*$/, '');
+
 /** Documents the server serves by URI: `.mmd` and `.mermaid` (any case). */
 export function isMermaidUri(uri: string): boolean {
-  const path = uri.replace(/[?#].*$/, '');
-  return /\.(mmd|mermaid)$/i.test(path);
+  return /\.(mmd|mermaid)$/i.test(uriPath(uri));
 }
 
 /** Markdown documents by URI: `.md`, `.markdown` and `.mdx` (any case). */
 export function isMarkdownUri(uri: string): boolean {
-  const path = uri.replace(/[?#].*$/, '');
-  return /\.(md|markdown|mdx)$/i.test(path);
+  return /\.(md|markdown|mdx)$/i.test(uriPath(uri));
 }
 
 const MARKDOWN_LANGUAGES: ReadonlySet<string> = new Set(['markdown', 'mdx']);
@@ -80,10 +81,17 @@ export interface ServerOptions {
   readonly facets?: readonly FacetEntry[];
 }
 
+/** The client's `initializationOptions.mermaid`, or `{}` when it sent none. */
+function mermaidOptions(initializationOptions: unknown): Readonly<Record<string, unknown>> {
+  const mermaid = (initializationOptions as { mermaid?: unknown } | null | undefined)?.mermaid;
+  return typeof mermaid === 'object' && mermaid !== null
+    ? (mermaid as Record<string, unknown>)
+    : {};
+}
+
 /** The client's opt-in to third-party facets (D157): `{ mermaid: { plugins: true } }`. */
 export function pluginsEnabled(initializationOptions: unknown): boolean {
-  const mermaid = (initializationOptions as { mermaid?: unknown } | null | undefined)?.mermaid;
-  return (mermaid as { plugins?: unknown } | null | undefined)?.plugins === true;
+  return mermaidOptions(initializationOptions).plugins === true;
 }
 
 /**
@@ -92,15 +100,12 @@ export function pluginsEnabled(initializationOptions: unknown): boolean {
  * ranges, which a client's Markdown server otherwise keeps (meaningless without `markdown`).
  */
 export function markdownOptions(initializationOptions: unknown): {
-  markdown: boolean;
+  served: boolean;
   tokensAndFolding: boolean;
 } {
-  const mermaid = (initializationOptions as { mermaid?: unknown } | null | undefined)?.mermaid as
-    | { markdown?: unknown; markdownTokensAndFolding?: unknown }
-    | null
-    | undefined;
-  if (mermaid?.markdown !== true) return { markdown: false, tokensAndFolding: false };
-  return { markdown: true, tokensAndFolding: mermaid.markdownTokensAndFolding === true };
+  const mermaid = mermaidOptions(initializationOptions);
+  if (mermaid.markdown !== true) return { served: false, tokensAndFolding: false };
+  return { served: true, tokensAndFolding: mermaid.markdownTokensAndFolding === true };
 }
 
 const fileDir = (uri: string): string | undefined => {
@@ -117,7 +122,8 @@ function rootsOf(params: InitializeParams): string[] {
   const folders = (params.workspaceFolders ?? []).map((f) => fileDir(f.uri));
   const roots = folders.filter((d) => d !== undefined);
   if (roots.length > 0) return roots;
-  const root = params.rootUri ? fileDir(params.rootUri) : (params.rootPath ?? undefined);
+  // A `rootUri` that is not a `file:` URI (a virtual folder) leaves `rootPath` to name one.
+  const root = (params.rootUri ? fileDir(params.rootUri) : undefined) ?? params.rootPath;
   return root ? [root] : [];
 }
 
@@ -191,19 +197,19 @@ function serveDecorations(
   get: (uri: string) => Open | undefined,
   options: () => { multiline: boolean; tokensAndFolding: boolean }
 ): void {
-  const served = (o: Open | undefined): o is Open =>
-    o !== undefined && (!o.markdown || options().tokensAndFolding);
+  const served = (o: Open): boolean => !o.markdown || options().tokensAndFolding;
 
   connection.onFoldingRanges(({ textDocument }) => {
     const o = get(textDocument.uri);
-    if (!served(o)) return null;
+    if (!o || !served(o)) return null;
     return o.parts.flatMap((p) => p.doc.lineFoldingRanges().map((f) => toFoldingRange(f, p.line)));
   });
 
   connection.languages.semanticTokens.on(({ textDocument }) => {
     const o = get(textDocument.uri);
-    if (o?.markdown && !served(o)) return null;
-    return { data: served(o) ? semanticTokenData(o.parts, options().multiline) : [] };
+    if (!o) return { data: [] };
+    if (!served(o)) return null;
+    return { data: semanticTokenData(o.parts, options().multiline) };
   });
 }
 
@@ -253,7 +259,7 @@ export function startServer(connection: Connection, options: ServerOptions = {})
   let hoverMarkdown = true;
   let docMarkdown = true;
   let nestedSymbols = false;
-  let markdown = { markdown: false, tokensAndFolding: false };
+  let markdown = { served: false, tokensAndFolding: false };
   const open = new Map<string, Open>();
   let { facets, plugins }: StartFacets = { facets: [] };
   let rebuilt: Promise<void> = Promise.resolve();
@@ -326,7 +332,7 @@ export function startServer(connection: Connection, options: ServerOptions = {})
   connection.onDidOpenTextDocument(({ textDocument: { uri, languageId, version, text } }) => {
     let asMarkdown: boolean;
     if (isMermaidUri(uri) || languageId === 'mermaid') asMarkdown = false;
-    else if (markdown.markdown && (isMarkdownUri(uri) || MARKDOWN_LANGUAGES.has(languageId)))
+    else if (markdown.served && (isMarkdownUri(uri) || MARKDOWN_LANGUAGES.has(languageId)))
       asMarkdown = true;
     else return;
     update(uri, text, version, asMarkdown);

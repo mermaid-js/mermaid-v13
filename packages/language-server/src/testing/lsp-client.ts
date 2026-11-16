@@ -67,6 +67,8 @@ export interface Client {
 
 export interface ClientOptions {
   rootUri?: string | null;
+  /** The deprecated `rootPath`, sent only when given. */
+  rootPath?: string | null;
   workspaceFolders?: { uri: string; name: string }[];
   initializationOptions?: unknown;
   capabilities?: ClientCapabilities;
@@ -127,6 +129,7 @@ export async function startClient(options: ClientOptions = {}): Promise<Client> 
     connection.sendRequest<InitializeResult>('initialize', {
       processId: options.processId === undefined ? process.pid : options.processId,
       rootUri: options.rootUri ?? null,
+      ...(options.rootPath !== undefined ? { rootPath: options.rootPath } : {}),
       capabilities: options.capabilities ?? {},
       ...(options.workspaceFolders ? { workspaceFolders: options.workspaceFolders } : {}),
       ...(options.initializationOptions !== undefined
