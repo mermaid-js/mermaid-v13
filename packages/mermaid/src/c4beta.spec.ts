@@ -220,16 +220,9 @@ describe('c4-beta through the public API (spec #730)', () => {
         assertInert(r.svg);
       });
 
-      it('adds a row for each tag style an element or relation uses, and for no other', async () => {
+      it('adds a row for each tag style with a colour that an element or relation uses, and for no other', async () => {
         const r = await createMermaid().render('c1', fixture('legend-tag-styles.mmd'));
-        expect(legendRows(r.svg)).toEqual([
-          'Legend',
-          'Person',
-          'Container',
-          'critical',
-          'async',
-          'store',
-        ]);
+        expect(legendRows(r.svg)).toEqual(['Legend', 'Person', 'Container', 'critical', 'async']);
         expect(r.warnings.map((w) => w.code)).toEqual([]);
       });
 

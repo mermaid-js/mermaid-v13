@@ -11,8 +11,8 @@
  *   `deploymentNode`, any element with a body) has no fill and no row. A kind row's swatch takes
  *   that kind's palette, as the elements do.
  * - then a tag row, named as the author wrote the tag, for each `style` whose target is a tag some element or relation carries, with the
- *   style's `fill` and `stroke` as written; a style for a kind or for a tag nothing carries has
- *   none. Later statements for one tag override earlier entries.
+ *   style's `fill` and `stroke` as written; a style for a kind, for a tag nothing carries, or
+ *   with neither colour has none. Later statements for one tag override earlier entries.
  * - none at all for `legend off`, or when there is no row to show.
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
@@ -59,7 +59,11 @@ interface TagColours {
   stroke?: string;
 }
 
-/** The tag rows: one per `style` target some element or relation carries. */
+/**
+ * The tag rows: one per `style` target some element or relation carries, and only for a style
+ * with a `fill` or a `stroke`: a swatch shows nothing else yet, so another style's row would be an
+ * empty outline.
+ */
 function tagEntries(model: C4BetaModel): LegendEntry[] {
   const used = new Set([
     ...model.elements.flatMap((e) => e.tags),
@@ -74,7 +78,9 @@ function tagEntries(model: C4BetaModel): LegendEntry[] {
     }
     merged.set(style.target, colours);
   }
-  return [...merged].map(([label, tag]) => ({ label, tag }));
+  return [...merged]
+    .filter(([, tag]) => tag.fill !== undefined || tag.stroke !== undefined)
+    .map(([label, tag]) => ({ label, tag }));
 }
 
 /** The rows `model` earns, in drawing order: its kinds, then its tag styles. */

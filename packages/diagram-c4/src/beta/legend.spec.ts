@@ -103,6 +103,24 @@ describe('which rows the legend has', () => {
     expect(rows).toEqual(['Person', 'Container', 'hot', 'slow']);
   });
 
+  it('has no row for a style with neither a fill nor a stroke, until a swatch can show its other keys', () => {
+    const rows = entries(
+      [
+        'c4-beta',
+        'legend on',
+        'style odd foo:bar',
+        'style async line:dashed, color:#333333',
+        'style store shape:cylinder',
+        'style hot fill:#b91c1c',
+        'style edge stroke:#0a7a3d',
+        'person a "A" :::odd :::async :::store :::hot',
+        'container b "B"',
+        'a --> b : "Calls" :::edge',
+      ].join('\n')
+    );
+    expect(rows).toEqual(['Person', 'Container', 'hot', 'edge']);
+  });
+
   it('merges the statements of one tag, the later entry winning', () => {
     const { model } = parseC4Beta(
       'c4-beta\nlegend on\nstyle hot fill:#111111, stroke:#222222\nstyle hot fill:#333333\nperson a "A" :::hot'
@@ -169,7 +187,7 @@ describe('what the legend draws', () => {
     const r = await renderC4BetaForTest(STYLED);
     expect(r.rejected).toBe(false);
     expect(r.svg.match(/<g class="c4-legend">/g)).toHaveLength(1);
-    expect(r.svg.match(/class="c4-legend-swatch"/g)).toHaveLength(5);
+    expect(r.svg.match(/class="c4-legend-swatch"/g)).toHaveLength(4);
     expect(r.svg.match(/class="c4-legend-title"/g)).toHaveLength(1);
     expect(r.svg).toContain('fill="#b91c1c"');
     expect(r.svg).toContain('stroke="#7f1d1d"');
@@ -200,6 +218,28 @@ function tagSwatches(svg: string): { fill: string; stroke: string }[] {
 
 const tagged = (style: string) => `c4-beta\nlegend on\n${style}\nperson p "P" :::t`;
 
+/**
+ * The paints of a legend whose tag row says `colours`, as a layout the parser would not give: the
+ * grammar lets through only words and `#hex` values, which the colour check accepts, and a style
+ * with neither colour has no row, so the swatch's own fallbacks are reached with a forged row.
+ */
+async function paintedWith(colours: { fill?: string; stroke?: string }) {
+  const theme = await c4TestTheme('default');
+  const warnings: Warning[] = [];
+  const ctx = c4TestContext(c4TestConfig(), theme, warnings);
+  const layout = layoutC4Beta(parseC4Beta(tagged('style t fill:#112233')).model, ctx);
+  const forged: C4Layout = {
+    ...layout,
+    legend: layout.legend && {
+      ...layout.legend,
+      rows: layout.legend.rows.map((row) =>
+        row.tag ? { ...row, tag: { name: row.tag.name, ast: row.tag.ast, ...colours } } : row
+      ),
+    },
+  };
+  return { legend: betaPaints(forged, ctx).legend, warnings };
+}
+
 describe('what a tag swatch falls back to', () => {
   it('takes the stroke from the fill when the style has only a fill', async () => {
     const r = await renderC4BetaForTest(tagged('style t fill:#112233'));
@@ -211,26 +251,14 @@ describe('what a tag swatch falls back to', () => {
     expect(tagSwatches(r.svg)).toEqual([{ fill: 'none', stroke: '#445566' }]);
   });
 
-  it('draws an outline in the text colour when the style has neither', async () => {
-    const r = await renderC4BetaForTest(tagged('style t line:dashed'));
-    expect(tagSwatches(r.svg)).toEqual([{ fill: 'none', stroke: 'var(--_tx)' }]);
+  it('draws an outline in the text colour when a tag has neither colour', async () => {
+    const { legend, warnings } = await paintedWith({});
+    expect(legend?.rows.at(-1)).toEqual({ fill: 'none', stroke: legend?.text });
+    expect(warnings).toEqual([]);
   });
 
   it('warns C4_COLOR_INVALID and falls back for a colour the check refuses', async () => {
-    const theme = await c4TestTheme('default');
-    const warnings: Warning[] = [];
-    const ctx = c4TestContext(c4TestConfig(), theme, warnings);
-    const layout = layoutC4Beta(parseC4Beta(tagged('style t fill:#112233')).model, ctx);
-    const forged: C4Layout = {
-      ...layout,
-      legend: layout.legend && {
-        ...layout.legend,
-        rows: layout.legend.rows.map((row) =>
-          row.tag ? { ...row, tag: { ...row.tag, fill: 'url(#x)', stroke: 'a;b' } } : row
-        ),
-      },
-    };
-    const { legend } = betaPaints(forged, ctx);
+    const { legend, warnings } = await paintedWith({ fill: 'url(#x)', stroke: 'a;b' });
     expect(legend?.rows.at(-1)).toEqual({ fill: 'none', stroke: legend?.text });
     expect(warnings.map((w) => w.code)).toEqual([C4_COLOR_INVALID]);
     expect(warnings[0]?.message).toContain('style t fill');
