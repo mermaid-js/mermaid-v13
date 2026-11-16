@@ -19,6 +19,8 @@ import { Kind } from '@mermaid-js/core/parser-kit';
 import { STOP } from '@mermaid-js/shared/parser/support';
 import type {
   AstId,
+  LeanParseOptions,
+  LeanParseResult,
   ParseOptions,
   ParseResult,
   ParseState,
@@ -59,6 +61,18 @@ export interface FlowParseOptions extends ParseOptions {
 
 export type FlowParseResult = ParseResult<FlowModel, FlowDocument>;
 
+/** The options of a lean parse (`LeanParseOptions`): no token stream, no probe. */
+export type FlowLeanOptions = Omit<FlowParseOptions, keyof ParseOptions> & LeanParseOptions;
+
+/** A lean parse's result: the model and the diagnostics, for drawing only. */
+export type LeanFlowParseResult = LeanParseResult<FlowModel>;
+
+/** What the parser reads of either kind of options. */
+type AnyFlowOptions = Omit<FlowParseOptions, 'lean'> & {
+  readonly lean?: boolean;
+  readonly astIds?: boolean;
+};
+
 const TABLES = /* @__PURE__ */ flowTables(T, {
   keywords: [T.Subgraph],
   separators: [],
@@ -90,7 +104,7 @@ const EMBED_END = [T.EmbedEnd];
 export const READ_PAST = TABLES.READ_PAST;
 
 /** What the flow family's parser needs of flowchart. */
-const DIALECT: FlowParserDialect<FlowBuilder, FlowParseOptions> = {
+const DIALECT: FlowParserDialect<FlowBuilder, AnyFlowOptions> = {
   kinds: T,
   tables: TABLES,
   view: (src, pre) =>
@@ -111,6 +125,7 @@ const DIALECT: FlowParserDialect<FlowBuilder, FlowParseOptions> = {
       },
     }),
   destructLink,
+  mode: ({ lean, astIds }) => (lean ? { lean, astIds } : undefined),
 };
 
 interface Frame {
@@ -125,24 +140,32 @@ interface Frame {
   outer: FlowStatementNode[];
 }
 
-/** Parse a flowchart. Never throws: problems are error diagnostics. */
-export function parseFlowchart(src: string, options: FlowParseOptions = {}): FlowParseResult {
+/**
+ * Parse a flowchart. Never throws: problems are error diagnostics. Lean options (DESIGN §4.2)
+ * give a lean result: it accepts and rejects as the full parse and has its warnings.
+ */
+export function parseFlowchart(src: string, options: FlowLeanOptions): LeanFlowParseResult;
+export function parseFlowchart(src: string, options?: FlowParseOptions): FlowParseResult;
+export function parseFlowchart(
+  src: string,
+  options: FlowParseOptions | FlowLeanOptions = {}
+): FlowParseResult | LeanFlowParseResult {
   return new FlowchartParser(src, options).parse();
 }
 
 /** One parse: flowchart's own rules. */
-class FlowchartParser extends FlowParser<FlowBuilder, FlowParseOptions, FlowOwnStmt, Frame> {
-  constructor(src: string, options: FlowParseOptions) {
+class FlowchartParser extends FlowParser<FlowBuilder, AnyFlowOptions, FlowOwnStmt, Frame> {
+  constructor(src: string, options: AnyFlowOptions) {
     super(src, options, DIALECT);
   }
 
-  parse(): FlowParseResult {
+  parse(): FlowParseResult | LeanFlowParseResult {
     const { st, db } = this;
     this.header('a flowchart starts with `flowchart` or `graph` and a direction');
     this.document();
     db.finish();
     const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
-    const result = this.result(db.model(warnings));
+    const result = this.outcome(db.model(warnings));
     if (db.embeds.length > 0) result.embeds = db.embeds;
     result.edgeCount = result.model.edges.length;
     return result;

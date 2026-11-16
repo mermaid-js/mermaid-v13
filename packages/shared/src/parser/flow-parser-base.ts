@@ -32,6 +32,7 @@ import type {
   Diagnostic,
   Diagnostics,
   KindSet,
+  LeanParseOptions,
   ParseOptions,
   Range,
   SourceView,
@@ -46,7 +47,11 @@ import type { FlowKinds } from './flow-kinds.ts';
 import type { FlowTables } from './flow-tables.ts';
 
 /** The parse options every dialect has. */
-export interface FlowParseOptionsBase extends ParseOptions {
+/**
+ * A dialect's parse options. `lean` is not among them: a dialect that offers a lean parse
+ * (flowchart) adds `lean` and `astIds` to its own, and the parse state reads them from there.
+ */
+export interface FlowParseOptionsBase extends Omit<ParseOptions, 'lean'> {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
   /** Block nesting cap (core `DEFAULT_LIMITS.maxDepth`). */
@@ -138,6 +143,11 @@ export interface FlowParserDialect<B extends FlowParserBuilder, O extends FlowPa
   builder(options: O, diagnostics: Diagnostics): B;
   /** v12's `destructLink`: an arrow's text, and the text that opened its label if any. */
   destructLink(end: string, start?: string): FlowLinkInfo;
+  /**
+   * How a parse with `options` runs (DESIGN §4.2): lean when it returns `LeanParseOptions`.
+   * A dialect without it (agentflow) always parses in full.
+   */
+  mode?(options: O): LeanParseOptions | undefined;
 }
 
 /** The `maxNodes`, `maxEdges` and `inheritDir` a builder is made with, from the parse options. */
@@ -196,7 +206,7 @@ export abstract class FlowParserBase<
   protected readonly tb: FlowTables;
   protected readonly pre: PreprocessResult;
   protected readonly view: SourceView;
-  protected readonly st = new ParseState();
+  protected readonly st: ParseState;
   protected readonly ids: ParseState['ids'];
   protected readonly db: B;
   protected readonly fullTokens: TokenStream;
@@ -232,6 +242,7 @@ export abstract class FlowParserBase<
     protected readonly dialect: FlowParserDialect<B, O>
   ) {
     this.T = dialect.kinds;
+    this.st = new ParseState(dialect.mode?.(options));
     const tb = (this.tb = dialect.tables);
     const pre = (this.pre = options.preprocessed ?? preprocess(src));
     this.view = dialect.view(src, pre, options);

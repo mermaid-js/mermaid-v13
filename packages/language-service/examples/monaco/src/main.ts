@@ -8,6 +8,9 @@ import type { AstId } from '@mermaid-js/language-service';
 import mermaid from 'mermaid';
 import { monaco } from './monaco.ts';
 
+// The preview maps elements to AST nodes through `data-ast`, which mermaid draws only on request.
+mermaid.initialize({ output: { dataAst: true } });
+
 const INITIAL = `---
 title: It's a demo
 ---
