@@ -1,11 +1,13 @@
 ---
 '@mermaid-js/diagram-agentflow': patch
 '@mermaid-js/diagram-architecture': patch
+'@mermaid-js/diagram-block': patch
 '@mermaid-js/diagram-class': patch
 '@mermaid-js/diagram-cynefin': patch
 '@mermaid-js/diagram-er': patch
 '@mermaid-js/diagram-flowchart': patch
 '@mermaid-js/diagram-gantt': patch
+'@mermaid-js/diagram-ishikawa': patch
 '@mermaid-js/diagram-kanban': patch
 '@mermaid-js/diagram-mindmap': patch
 '@mermaid-js/diagram-packet': patch
