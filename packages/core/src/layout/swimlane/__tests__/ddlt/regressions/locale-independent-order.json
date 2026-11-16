@@ -1,0 +1,276 @@
+{
+  "tuning": {
+    "ignoreCrossLaneEdges": true,
+    "optimizeRanksByCrossings": true,
+    "automaticLaneOrdering": false
+  },
+  "graph": {
+    "direction": "TB",
+    "nodes": [
+      {
+        "id": "t",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "E",
+        "span": 128
+      },
+      {
+        "id": "t2",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "E",
+        "span": 128
+      },
+      {
+        "id": "z",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "E",
+        "span": 128
+      },
+      {
+        "id": "z2",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "E",
+        "span": 128
+      },
+      {
+        "id": "ch",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "C",
+        "span": 128
+      },
+      {
+        "id": "ch2",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "C",
+        "span": 128
+      },
+      {
+        "id": "h",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "C",
+        "span": 128
+      },
+      {
+        "id": "h2",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "C",
+        "span": 128
+      },
+      {
+        "id": "b",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "D",
+        "span": 128
+      },
+      {
+        "id": "b2",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "D",
+        "span": 128
+      },
+      {
+        "id": "B",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "D",
+        "span": 128
+      },
+      {
+        "id": "B2",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "D",
+        "span": 128
+      },
+      {
+        "id": "ä",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "S",
+        "span": 128
+      },
+      {
+        "id": "ä2",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "S",
+        "span": 128
+      },
+      {
+        "id": "y",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "S",
+        "span": 128
+      },
+      {
+        "id": "y2",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "S",
+        "span": 128
+      }
+    ],
+    "groups": [
+      {
+        "id": "E",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 54.474,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "C",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 39.676,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "D",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 43.568,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "S",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 52.906,
+          "height": 16.1
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "L_t_t2_0",
+        "source": "t",
+        "target": "t2",
+        "minLen": 1
+      },
+      {
+        "id": "L_z_z2_0",
+        "source": "z",
+        "target": "z2",
+        "minLen": 1
+      },
+      {
+        "id": "L_ch_ch2_0",
+        "source": "ch",
+        "target": "ch2",
+        "minLen": 1
+      },
+      {
+        "id": "L_h_h2_0",
+        "source": "h",
+        "target": "h2",
+        "minLen": 1
+      },
+      {
+        "id": "L_b_b2_0",
+        "source": "b",
+        "target": "b2",
+        "minLen": 1
+      },
+      {
+        "id": "L_B_B2_0",
+        "source": "B",
+        "target": "B2",
+        "minLen": 1
+      },
+      {
+        "id": "L_ä_ä2_0",
+        "source": "ä",
+        "target": "ä2",
+        "minLen": 1
+      },
+      {
+        "id": "L_y_y2_0",
+        "source": "y",
+        "target": "y2",
+        "minLen": 1
+      }
+    ],
+    "spacing": {
+      "node": 50,
+      "rank": 50,
+      "edge": 20
+    },
+    "diagramPadding": 8,
+    "routing": "stepped",
+    "headRoom": 7,
+    "metrics": {
+      "portPitch": 16,
+      "minPitch": 8,
+      "portSep": 20,
+      "trackMargin": 18,
+      "trackPitch": 10,
+      "trackSpread": 14,
+      "levelMargin": 28,
+      "levelPitch": 12,
+      "levelLead": 12,
+      "levelClear": 8,
+      "levelTouch": 4,
+      "snap": 12,
+      "bendSnap": 24,
+      "leanClear": 40,
+      "fan": 24,
+      "loop": 26,
+      "loopGap": 6,
+      "loopLabel": 28,
+      "corner": 12,
+      "turnBreakpoint": 640,
+      "endLabelAlong": 4,
+      "endLabelAcross": 6
+    }
+  }
+}
