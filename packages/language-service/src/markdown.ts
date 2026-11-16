@@ -117,22 +117,29 @@ function opening(line: string): { fence: string; mermaid: boolean } | undefined 
 export function mermaidFences(markdown: string): MermaidFence[] {
   const out: MermaidFence[] = [];
   let open: { fence: string; mermaid: boolean; start: number } | undefined;
-  for (let at = 0; ; ) {
-    const newline = markdown.indexOf('\n', at);
-    const end = newline < 0 ? markdown.length : newline;
-    const line = markdown.slice(at, end).replace(/\r$/, '');
-    if (open) {
-      if (closes(line, open.fence)) {
-        if (open.mermaid) out.push({ start: open.start, text: markdown.slice(open.start, at) });
-        open = undefined;
-      }
-    } else {
+  for (const { line, at, next } of linesOf(markdown)) {
+    if (!open) {
       const fence = opening(line);
-      if (fence) open = { ...fence, start: newline < 0 ? end : end + 1 };
+      if (fence) open = { ...fence, start: next };
+    } else if (closes(line, open.fence)) {
+      if (open.mermaid) out.push({ start: open.start, text: markdown.slice(open.start, at) });
+      open = undefined;
     }
-    if (newline < 0) break;
-    at = newline + 1;
   }
   if (open?.mermaid) out.push({ start: open.start, text: markdown.slice(open.start) });
   return out;
+}
+
+/** Each line of `text` without its line end, its start, and where the next line starts. */
+function linesOf(text: string): { line: string; at: number; next: number }[] {
+  const out = [];
+  for (let at = 0; ; ) {
+    const newline = text.indexOf('\n', at);
+    if (newline < 0) {
+      out.push({ line: text.slice(at).replace(/\r$/, ''), at, next: text.length });
+      return out;
+    }
+    out.push({ line: text.slice(at, newline).replace(/\r$/, ''), at, next: newline + 1 });
+    at = newline + 1;
+  }
 }
