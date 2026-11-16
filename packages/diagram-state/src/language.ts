@@ -24,7 +24,8 @@ const HEADER = 'stateDiagram-v2\n';
  */
 function readsBack(line: string, name: string, kind: string): boolean {
   const { text, spots } = probeText(HEADER, [line], name);
-  return readsBackAt(parseState(text), spots, name, kind);
+  // `Z` and the other names on the line vary, so the kinds are not counted.
+  return readsBackAt(parseState(text), spots, name, kind, null);
 }
 
 /** Where a state id is written, apart from `class` and `style` statements. */

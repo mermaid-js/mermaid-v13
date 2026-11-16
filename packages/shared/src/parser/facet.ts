@@ -279,23 +279,14 @@ export function shapeReason(
 
 /**
  * Whether a parse read exactly one symbol of `kind`, named `name`, at `at`, and no error: the
- * read-back check of a new name written into a probe text.
+ * read-back check of a new name written into a probe text ({@link readsBackAt} at one spot).
  */
-export function readsBack(
+export const readsBack = (
   result: Pick<ParseResult<unknown>, 'diagnostics' | 'symbols'>,
   at: number,
   name: string,
   kind: string
-): boolean {
-  const hits = result.symbols.filter((s) => s.kind === kind);
-  return (
-    !result.diagnostics.some((d) => d.severity === 'error') &&
-    hits.length === 1 &&
-    hits[0]!.name === name &&
-    hits[0]!.range.start === at &&
-    hits[0]!.range.end === at + name.length
-  );
-}
+): boolean => readsBackAt(result, [at], name, kind, 0);
 
 /**
  * A read-back probe: `header`, then each of `lines` with its `@` written as `name`, one per
@@ -317,19 +308,19 @@ export function probeText(
 
 /**
  * Whether a probe parse read, with no error, exactly one `kind` symbol at each of `spots`, named
- * `name` and spanning it. With `others`, the parse holds exactly `others` more `kind` symbols
- * than spots, so nothing else read as the kind.
+ * `name` and spanning it. `others` is how many more `kind` symbols the parse holds, so that
+ * nothing else read as the kind; `null` counts none, for a probe whose other names vary.
  */
 export function readsBackAt(
   result: Pick<ParseResult<unknown>, 'diagnostics' | 'symbols'>,
   spots: readonly number[],
   name: string,
   kind: string,
-  others?: number
+  others: number | null
 ): boolean {
   if (result.diagnostics.some((d) => d.severity === 'error')) return false;
   const mine = result.symbols.filter((s) => s.kind === kind);
-  if (others !== undefined && mine.length !== spots.length + others) return false;
+  if (others !== null && mine.length !== spots.length + others) return false;
   return spots.every((at) => {
     const hits = mine.filter((s) => s.range.start === at);
     return hits.length === 1 && hits[0]!.name === name && hits[0]!.range.end === at + name.length;
