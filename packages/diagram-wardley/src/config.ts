@@ -15,7 +15,7 @@
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { WardleyDiagramConfig } from '@mermaid-js/core/config';
-import { configNumber, useMaxWidth } from '@mermaid-js/core/config/readers';
+import { configNumber, shownValue as shown, useMaxWidth } from '@mermaid-js/shared/config/readers';
 import { WARDLEY_CONFIG_INVALID } from './codes.ts';
 import { wardleyBetaConfigDefaults } from './generated/config-defaults.ts';
 import type { WardleyModel } from './model.ts';
@@ -74,9 +74,6 @@ const RANGES: Readonly<Record<LengthKey, Range>> = {
 
 const inRange = (n: number, range: Range): boolean =>
   range.exclusive ? n > range.min : n >= range.min;
-
-const shown = (value: unknown): string =>
-  typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
 
 /**
  * The layout's options from the resolved `wardley-beta` section and the map's `size`, each

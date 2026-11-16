@@ -19,14 +19,12 @@
  * Nothing in a quoted text, a stereotype, a JSON object, an accessible title or description,
  * a comment, a directive or front matter.
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
-import type {
-  CompletionItem,
-  CompletionKind,
-  DocumentView,
-  ProbeResult,
-  Range,
-  TokenStream,
+import {
+  type CompletionItem,
+  type DocumentView,
+  Kind,
+  type ProbeResult,
+  type TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { usecaseDocs } from '../generated/docs.ts';
 import type { UsecaseModel } from '../model.ts';
@@ -42,10 +40,10 @@ import {
   KEYWORD_ITEMS,
   KIND_NAMES,
   METADATA_KEYS,
-  span,
+  type MetadataKind,
   tokenBefore,
 } from './tables.ts';
-import type { MetadataKind } from './tables.ts';
+import { atLineStart, CompletionList as Items, wordRange } from '@mermaid-js/shared/parser/facet';
 
 /** Where a statement ends. */
 const LINE_BREAK = new Set<number>([Kind.Newline, Kind.EOF]);
@@ -62,40 +60,6 @@ const IN_METADATA = new Set<number>([
 /** Ids, keywords and numbers: a cursor inside one replaces all of it. */
 const WORDS = new Set<number>([T.Identifier, T.Number, ...KEYWORD_ITEMS.map((k) => k.kind)]);
 
-/** Items filtered by the typed prefix, one per label. */
-class Items {
-  readonly list: CompletionItem[] = [];
-  private readonly seen = new Set<string>();
-
-  constructor(
-    readonly prefix: string,
-    private readonly range: Range
-  ) {}
-
-  add(label: string, kind: CompletionKind, extra: Partial<CompletionItem> = {}): void {
-    if (!label.startsWith(this.prefix) || this.seen.has(label)) return;
-    this.seen.add(label);
-    this.list.push({ label, kind, insertText: label, range: this.range, ...extra });
-  }
-}
-
-/** The probed word's range: the prefix, plus the rest of the word after the cursor. */
-function wordRange(text: string, tokens: TokenStream, probe: ProbeResult): Range {
-  const o = probe.offset;
-  let end = o;
-  const i = tokenBefore(tokens, o);
-  if (
-    i >= 0 &&
-    (tokens.start[i] ?? 0) < o &&
-    o < (tokens.end[i] ?? 0) &&
-    WORDS.has(tokens.kind[i]!)
-  )
-    end = tokens.end[i] ?? o;
-  const stop = /[^\w-]/.exec(text.slice(o, end));
-  if (stop) end = o + stop.index;
-  return span(probe.prefix.start, end);
-}
-
 /** The significant tokens of the cursor's line before `at`, as indexes into `tokens`. */
 function lineBefore(tokens: TokenStream, at: number): number[] {
   const out: number[] = [];
@@ -107,16 +71,6 @@ function lineBefore(tokens: TokenStream, at: number): number[] {
     out.push(i);
   }
   return out.reverse();
-}
-
-/** Whether only blanks stand between the start of `at`'s line and `at`. */
-function atLineStart(text: string, at: number): boolean {
-  for (let i = at - 1; i >= 0; i--) {
-    const c = text.charAt(i);
-    if (c === '\n' || c === '\r') return true;
-    if (c !== ' ' && c !== '\t') return false;
-  }
-  return true;
 }
 
 /** The `@{` the cursor at `at` is inside (across lines), or -1. */
@@ -263,11 +217,7 @@ function ids(items: Items, doc: DocumentView<UsecaseDocument>, place: IdPlace, e
 function keywords(items: Items, expected: ReadonlySet<number>): void {
   for (const k of KEYWORD_ITEMS) {
     if (!expected.has(k.kind)) continue;
-    const documentation = usecaseDocs[k.kind];
-    items.add(k.label, 'keyword', {
-      insertText: k.insert ?? k.label,
-      ...(documentation === undefined ? {} : { documentation }),
-    });
+    items.keyword(k, usecaseDocs[k.kind]);
   }
 }
 
@@ -311,7 +261,7 @@ export function usecaseCompletions(
   const tokens = result.tokens;
   if (!tokens) return [];
   const expected = new Set(probe.expected);
-  const range = wordRange(text, tokens, probe);
+  const range = wordRange(text, tokens, probe, /[^\w-]/, (k) => WORDS.has(k));
   const items = new Items(text.slice(range.start, probe.offset), range);
   const m = openMetadata(tokens, range.start);
   if (m >= 0) {

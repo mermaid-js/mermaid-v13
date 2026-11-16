@@ -3,21 +3,14 @@
  * and the token at one.
  */
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
-import { span } from '@mermaid-js/core/parser-kit/facet';
+import { span } from '@mermaid-js/shared/parser/facet';
+export { lineBefore } from '@mermaid-js/shared/parser/facet';
+export { plural } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 /** A line break as the lexer reads one (`\s` takes the line separators). */
 export const LINE_BREAK = /[\n\r\u2028\u2029]/;
-
-/** `1 block`, `2 blocks`. */
-export const plural = (n: number, one: string, many = `${one}s`): string =>
-  `${n} ${n === 1 ? one : many}`;
-
-/** The text of `at`'s line before `at`. */
-export function lineBefore(text: string, at: number): string {
-  let start = at;
-  while (start > 0 && !LINE_BREAK.test(text.charAt(start - 1))) start--;
-  return text.slice(start, at);
-}
 
 /** Where the run of characters matching `re` (one character each) around `at` starts and ends. */
 export function runAround(text: string, at: number, re: RegExp, from = 0, to = text.length): Range {

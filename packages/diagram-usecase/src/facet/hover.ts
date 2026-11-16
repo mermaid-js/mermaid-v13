@@ -4,14 +4,15 @@
  * members; a JSON table its rows; a relation id, and an arrow, the relation's type and ends; a
  * direction what it means; a keyword the one-line doc of the grammar file (`generated/docs.ts`).
  */
-import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
+import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-kit';
 import { usecaseDocs } from '../generated/docs.ts';
 import type { UsecaseModel, UsecaseRelationship } from '../model.ts';
 import type { UsecaseDocument, UsecaseElementKind, UsecaseStatementNode } from '../parser/ast.ts';
 import { ARROW_SET } from '../parser/tables.ts';
 import { generatedId } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
-import { ARROW_MEANING, code, DIRECTIONS, KIND_NAMES, plural, span } from './tables.ts';
+import { ARROW_MEANING, code, DIRECTIONS, KIND_NAMES, plural } from './tables.ts';
+import { trimmed } from '@mermaid-js/shared/parser/facet';
 
 /** At most this many members or rows are listed; the rest are counted. */
 const LISTED = 8;
@@ -136,14 +137,6 @@ function relationAt(children: readonly UsecaseStatementNode[], at: number) {
     if (c.type === 'Relation' && c.arrowRange.start <= at && at <= c.arrowRange.end) return c;
   }
   return undefined;
-}
-
-/** A range without its leading and trailing blanks. */
-function trimmed(text: string, r: Range): Range {
-  let { start, end } = r;
-  while (start < end && /\s/.test(text[start]!)) start++;
-  while (end > start && /\s/.test(text[end - 1]!)) end--;
-  return span(start, end);
 }
 
 const RELATION_WORDS = new Set<number>([T.Include, T.Extend, T.Generalization, T.DependencyArrow]);

@@ -1,5 +1,6 @@
 /**
- * Agentflow hover (DESIGN §4.5, D93), written from a copy of flowchart's (D467): a node id shows
+ * Agentflow hover (DESIGN §4.5, D93), on the flow family's pieces
+ * (`@mermaid-js/shared/parser/flow-facet`, shared with flowchart, D467): a node id shows
  * its kind (`task`, `tool`, …, `connector`), label, drawn shape, flow, classes, metadata and edge
  * counts; a flow id its title, members, view and metadata; a class its `classDef` styles; an
  * edge id its ends and semantic; a link its semantic; a keyword the one-line doc of the grammar
@@ -10,11 +11,16 @@ import type {
   DocumentView,
   Hover,
   HoverTarget,
-  Range,
   SymbolOccurrence,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
-import { code, span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
+import { code, plural, span, trimmed } from '@mermaid-js/shared/parser/facet';
+import {
+  flowBareKeywordHover,
+  flowClassHover,
+  flowShapeHover,
+  flowTokenHover,
+} from '@mermaid-js/shared/parser/flow-facet';
 import { agentflowDocs } from '../generated/docs.ts';
 import type {
   AgentflowDocument,
@@ -25,9 +31,9 @@ import type {
 import type { AgentflowFlowModel, AgentflowModel } from '../parser/model.ts';
 import { destructLink } from '../parser/model.ts';
 import { T } from '../parser/tokens.ts';
-import { describeLink, DIRECTION_DOCS, shapeText } from './tables.ts';
+import { describeLink, shapeText } from './tables.ts';
 
-const LINK_TOKENS = new Set<number>([T.Link, T.StartLink]);
+const DOCS = { kinds: T, docs: agentflowDocs };
 
 /** Every node mention and edge of the AST, in source order, flows and globals included. */
 function* chainParts(
@@ -38,8 +44,6 @@ function* chainParts(
     else if (c.type === 'Flow' || c.type === 'Global') yield* chainParts(c.children);
   }
 }
-
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 /** A metadata value as a short text: strings as written, the rest as JSON. */
 function valueText(value: unknown): string {
@@ -114,22 +118,6 @@ function flowHover(flow: AgentflowFlowModel, model: AgentflowModel): string {
   return lines.join('\n\n');
 }
 
-function classHover(name: string, model: AgentflowModel): string {
-  const c = model.classes.find((x) => x.id === name);
-  const used =
-    name === 'default'
-      ? 'Applies to every node without a class.'
-      : `Used by ${plural(model.vertices.filter((v) => v.classes.includes(name)).length, 'node')}`;
-  let styles = 'No `classDef` defines it.';
-  if (c !== undefined) {
-    styles =
-      c.styles.length === 0
-        ? 'Its `classDef` sets no styles.'
-        : code(`classDef ${name} ${c.styles.join(',')}`);
-  }
-  return `**class** ${code(name)}\n\n${styles}\n\n${used}`;
-}
-
 function edgeHover(name: string, model: AgentflowModel): string | undefined {
   const e = model.edges.find((x) => x.id === name);
   if (!e) return undefined;
@@ -148,20 +136,12 @@ function symbolHover(
       return flow ? flowHover(flow, model) : nodeHover(s.name, model, ast);
     }
     case 'class':
-      return classHover(s.name, model);
+      return flowClassHover(s.name, model);
     case 'edge':
       return edgeHover(s.name, model);
     default:
       return undefined;
   }
-}
-
-/** A range without its leading and trailing blanks. */
-function trimmed(text: string, r: Range): Range {
-  let { start, end } = r;
-  while (start < end && /\s/.test(text[start]!)) start++;
-  while (end > start && /\s/.test(text[end - 1]!)) end--;
-  return span(start, end);
 }
 
 function linkHover(
@@ -181,43 +161,6 @@ function linkHover(
     return { range, contents: `${what}\n\n${ends}\n\n${agentflowDocs[T.Link]}` };
   }
   return undefined;
-}
-
-function shapeHover(text: string, token: Range, at: number): Hover | undefined {
-  const body = text.slice(token.start, token.end);
-  for (const m of body.matchAll(/(?:^|[\s,{])shape\s*:\s*([\w-]+)/g)) {
-    const name = m[1]!;
-    const start = token.start + m.index + m[0].length - name.length;
-    if (at < start || at > start + name.length) continue;
-    return {
-      range: span(start, start + name.length),
-      contents: `**${code(name)}** shape\n\n${shapeText(name)}`,
-    };
-  }
-  return undefined;
-}
-
-/** Keywords the lexer emits no token for, and the kind of the token they come before. */
-const BARE_KEYWORDS: Readonly<Record<string, number>> = { call: T.CallbackName };
-
-/** `call` under the cursor: the doc of the token right after it. */
-function bareKeyword(text: string, tokens: TokenStream | undefined, at: number): Hover | undefined {
-  if (!tokens) return undefined;
-  let start = at;
-  let end = at;
-  while (start > 0 && start > at - 5 && /[a-z]/.test(text.charAt(start - 1))) start--;
-  while (end < text.length && end < at + 5 && /[a-z]/.test(text.charAt(end))) end++;
-  const kind = BARE_KEYWORDS[text.slice(start, end)];
-  if (kind === undefined || (start > 0 && /\w/.test(text.charAt(start - 1)))) return undefined;
-  // The next token after the keyword and its blanks must be the one it introduces.
-  let next = end;
-  while (next < text.length && /[^\S\r\n]/.test(text.charAt(next))) next++;
-  const i = tokenBefore(tokens, next);
-  if (i < 0 || tokens.start[i] !== next || tokens.kind[i] !== kind) return undefined;
-  const doc = agentflowDocs[kind];
-  return doc === undefined
-    ? undefined
-    : { range: span(start, end), contents: `**${code(text.slice(start, end))}**\n\n${doc}` };
 }
 
 /**
@@ -264,31 +207,27 @@ export function agentflowHover(
   if (!t || t.kind === T.AccDescrMultilineValue) {
     const block = accDescrBlock(text, result.tokens, at.offset);
     if (block || t) return block;
-    return bareKeyword(text, result.tokens, at.offset);
+    return flowBareKeywordHover(text, result.tokens, at.offset, DOCS);
   }
-  if (t.kind === T.ShapeData) return shapeHover(text, t.range, at.offset);
-  // Tokens may take blanks and line breaks with them (`end`, links): only their text counts.
-  const range = trimmed(text, t.range);
-  if (at.offset < range.start || at.offset > range.end || range.start === range.end) {
-    return undefined;
+  if (t.kind === T.ShapeData) {
+    return flowShapeHover(
+      text,
+      t.range,
+      at.offset,
+      (name) => `**${code(name)}** shape\n\n${shapeText(name)}`
+    );
   }
-  const word = text.slice(range.start, range.end);
-  if (LINK_TOKENS.has(t.kind)) {
-    const h = linkHover(text, at.offset, model, result.ast);
-    if (h) return h;
-    const { type, semantic } = destructLink(word);
-    if (type === 'INVALID') return undefined;
-    return {
-      range,
-      contents: `**${code(word)}** ${describeLink(semantic)}\n\n${agentflowDocs[T.Link]}`,
-    };
-  }
-  if (t.kind === T.Dir) {
-    const meaning = DIRECTION_DOCS.find(([d]) => d === model.direction)?.[1] ?? model.direction;
-    const as = word === model.direction ? '' : ` (${code(model.direction)})`;
-    return { range, contents: `**${code(word)}** direction: ${meaning}${as}` };
-  }
-  const docText = agentflowDocs[t.kind];
-  if (docText === undefined) return undefined;
-  return { range, contents: `**${code(word)}**\n\n${docText}` };
+  return flowTokenHover(text, at.offset, t, model.direction, {
+    ...DOCS,
+    link: (range, word) => {
+      const h = linkHover(text, at.offset, model, result.ast);
+      if (h) return h;
+      const { type, semantic } = destructLink(word);
+      if (type === 'INVALID') return undefined;
+      return {
+        range,
+        contents: `**${code(word)}** ${describeLink(semantic)}\n\n${agentflowDocs[T.Link]}`,
+      };
+    },
+  });
 }

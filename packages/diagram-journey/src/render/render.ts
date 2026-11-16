@@ -6,7 +6,7 @@
 // A task dot's `data-id` is its legend entry's (`a:<name>`), its `data-ast` the mention's.
 import type { RenderContext } from '@mermaid-js/core';
 import type { SafeValue, SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot, textElement } from '@mermaid-js/core/svg/document';
+import { centreX, centreY, openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { JourneyModel } from '../model.ts';
 import { journeyMetrics, type JourneyMetrics } from '../layout/metrics.ts';
@@ -59,8 +59,6 @@ export function renderJourney(
   w.close();
 }
 
-const centreX = (r: { x: number; width: number }): number => r.x + r.width / 2;
-const centreY = (r: { y: number; height: number }): number => r.y + r.height / 2;
 /** Lines start at the label's left edge (v12 drew the legend and title `text-anchor: start`). */
 const leftAligned = (text: MeasuredLabel): MeasuredLabel => ({ ...text, left: true });
 
@@ -70,6 +68,7 @@ function openRoot({ w, layout, ctx, model }: Scene): void {
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
+  const maxWidth = config.journey?.useMaxWidth !== false;
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
@@ -78,7 +77,7 @@ function openRoot({ w, layout, ctx, model }: Scene): void {
   openSvgRoot(w, ctx, {
     name: 'journey',
     viewBox: [x, y, width, height],
-    maxWidth: config.journey?.useMaxWidth,
+    maxWidth,
     title,
     desc,
     attrs: {
@@ -217,7 +216,9 @@ function drawTask(scene: Scene, t: TaskLayout, names: ReadonlyMap<string, string
       'stroke-width': m.dotStroke,
     });
     // v12's tooltip naming the actor, as the legend shows it.
-    textElement(w, 'title', names.get(d.actor) ?? d.actor);
+    w.open('title');
+    w.text(names.get(d.actor) ?? d.actor);
+    w.close();
     w.close();
   }
   if (t.label) drawName(w, t.label, t.ast, 'task-label', paint.labelOf(t.band));

@@ -2,14 +2,14 @@
  * Requirement AST ids (D437, DESIGN §4.2): `requirement:<name>`, `element:<name>`,
  * `relation:<src>-><dst>` and `classDef:<name>`, each with `@2`, `@3`, … for a later one of the
  * same names (pitfall 9); statements without a name of their own are core's `<kind>:<n>`
- * (`style:1`, `class:2`). Names are escaped with the rules of core's `AstIds`: `%`, `>`, `@`
- * and `#` are percent-encoded, so the `->` between two names and the `@` before a count are the
- * only ones in an id.
+ * (`style:1`, `class:2`). Names are escaped with the rules of core's `AstIds` (copied: core does
+ * not export its escape): `%`, `>`, `@` and `#` are percent-encoded, so the `->` between two
+ * names and the `@` before a count are the only ones in an id.
  */
+import { idEscaper } from '@mermaid-js/shared/parser/support';
 import type { AstId } from '@mermaid-js/core/parser-kit';
-import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
-/** A name with `%`, `>`, `@` and `#` percent-encoded. */
+/** A name with `%`, `>`, `@` and `#` percent-encoded (core `ast.ts` `esc`, copied). */
 const escapeName = /* @__PURE__ */ idEscaper();
 
 /** Hands out the named ids of one parse. */

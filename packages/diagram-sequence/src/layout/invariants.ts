@@ -17,26 +17,21 @@ import type {
   Rect,
   SequenceLayout,
 } from './types.ts';
+import {
+  nonFinite as numbers,
+  rectsOverlap as overlaps,
+  within,
+} from '@mermaid-js/shared/layout/invariants';
 
 type Participants = ReadonlyMap<string, ParticipantLayout>;
 
 /** Tolerance for float sums. */
 const EPS = 1e-6;
 
-function numbers(value: unknown, path: string, out: string[]): void {
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value)) out.push(`${path} is ${value}`);
-  } else if (Array.isArray(value)) value.forEach((v, i) => numbers(v, `${path}[${i}]`, out));
-  else if (value && typeof value === 'object')
-    for (const [k, v] of Object.entries(value)) numbers(v, `${path}.${k}`, out);
-}
-
 /** Top of the top box to the end of the participant: the bottom box or the lifeline's end. */
 function span(p: ParticipantLayout): [number, number] {
   return [p.top, p.bottom !== undefined ? p.bottom + p.height : p.lifeline.y2];
 }
-
-const within = (v: number, lo: number, hi: number): boolean => v >= lo - EPS && v <= hi + EPS;
 
 function boxesOf(p: ParticipantLayout): Rect[] {
   const r = [{ x: p.x, y: p.top, width: p.width, height: p.height }];
@@ -48,11 +43,6 @@ const inside = (r: Rect, x: number, y: number): boolean =>
   within(x, r.x, r.x + r.width) && within(y, r.y, r.y + r.height);
 const contains = (outer: Rect, inner: Rect): boolean =>
   inside(outer, inner.x, inner.y) && inside(outer, inner.x + inner.width, inner.y + inner.height);
-const overlaps = (a: Rect, b: Rect): boolean =>
-  a.x < b.x + b.width - EPS &&
-  b.x < a.x + a.width - EPS &&
-  a.y < b.y + b.height - EPS &&
-  b.y < a.y + a.height - EPS;
 
 /** The rectangles a message takes: its line (and self loop), and its label. */
 function messageRects(msg: MessageLayout): Rect[] {

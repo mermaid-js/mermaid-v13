@@ -30,19 +30,11 @@ import type {
   TimelineLine,
   TimelinePeriodLayout,
 } from './types.ts';
+import { nonFinite as numbers, within } from '@mermaid-js/shared/layout/invariants';
 
 const EPS = 1e-6;
 
-function numbers(value: unknown, path: string, out: string[]): void {
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value)) out.push(`${path} is ${value}`);
-  } else if (Array.isArray(value)) value.forEach((v, i) => numbers(v, `${path}[${i}]`, out));
-  else if (value && typeof value === 'object')
-    for (const [k, v] of Object.entries(value)) numbers(v, `${path}.${k}`, out);
-}
-
 const near = (a: number, b: number): boolean => Math.abs(a - b) <= EPS;
-const within = (v: number, lo: number, hi: number): boolean => v >= lo - EPS && v <= hi + EPS;
 const right = (r: Rect): number => r.x + r.width;
 const bottom = (r: Rect): number => r.y + r.height;
 const insideX = (outer: Rect, inner: Rect): boolean =>

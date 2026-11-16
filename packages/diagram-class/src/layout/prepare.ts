@@ -13,6 +13,8 @@ import {
   type LayoutNode,
   type UnitProfile,
 } from '@mermaid-js/core/layout';
+import { graphSpacing } from '@mermaid-js/shared/layout';
+import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import {
   namespaceGroups,
@@ -28,7 +30,7 @@ import {
 import { MARKER_ACROSS } from '../render/markers.ts';
 import { measureBox, type BoxMetrics, type ClassBoxGeometry } from './box.ts';
 import { configDefaults } from '../config-defaults.ts';
-import { configLengths, type ConfigLength } from './config-length.ts';
+import { configLengths, type ConfigLength } from '@mermaid-js/shared/config/readers';
 import type { ClassLayoutContext } from './context.ts';
 import { v12Label } from '@mermaid-js/core/text/v12-label';
 
@@ -151,27 +153,11 @@ const NOTE_PAD = 6;
 const GROUP_PAD = 16;
 
 /** How class edges are drawn: v12 drew them with `flowchart.curve` (flowchart's names). */
-export type ClassCurve = 'curved' | 'linear' | 'step' | 'stepBefore' | 'stepAfter' | 'rounded';
+export type ClassCurve = CurveKind;
 
-/** v12's curve names; any other name is an S-curve (flowchart's `curveKind`). */
-export function classCurve(curve: string | undefined): ClassCurve {
-  return curve === 'linear' ||
-    curve === 'step' ||
-    curve === 'stepBefore' ||
-    curve === 'stepAfter' ||
-    curve === 'rounded'
-    ? curve
-    : 'curved';
-}
-
-/** How the engine routes each curve (flowchart's table): the rest are right angles. */
-const ROUTING: Readonly<Partial<Record<ClassCurve, 'straight' | 'curved'>>> = {
-  linear: 'straight',
-  curved: 'curved',
-};
+export const classCurve = curveKind;
 
 const DIRS: ReadonlySet<string> = new Set(['TB', 'BT', 'LR', 'RL']);
-const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
 
 /** What the view builders share. */
 interface Build {
@@ -241,7 +227,9 @@ export function prepare(model: ClassModel, ctx: ClassLayoutContext): ClassPrepar
     classIds: new Map(),
     interfaceIds: new Map(),
   };
-  const length = configLengths(conf, configDefaults, (w) => ctx.warn?.(w));
+  const length = configLengths('class', 'CLASS_CONFIG_IGNORED', conf, configDefaults, (w) =>
+    ctx.warn?.(w)
+  );
   const padding = length('padding');
   const boxPad = padding ?? BOX_PAD;
   const metrics: BoxMetrics = {
@@ -426,18 +414,9 @@ function layoutGraph(
     const v = configLength(key);
     return v === undefined ? fallback : fromPx(units, v, axis, min);
   };
-  const along = sideways(direction) ? 'x' : 'y';
-  const across = along === 'x' ? 'y' : 'x';
   // `class.nodeSpacing` runs across the flow and `class.rankSpacing` along it (v12 fell back
   // to 50 for both).
-  const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
-    node: fromConfig('nodeSpacing', b.spacing.node, node, b.minSpacing.node),
-    rank: fromConfig('rankSpacing', b.spacing.rank, rank, b.minSpacing.rank),
-    edge: b.spacing.edge,
-  });
-  const spacing = spacingOn(along, across);
-  const down = spacingOn('y', 'x');
-  const turned = down.node !== spacing.node || down.rank !== spacing.rank;
+  const spacing = graphSpacing(units, direction, configLength);
   const headRoom = b.headRoom;
   // v12 padded namespaces with `class.padding ?? 16` on every side; the title adds its height.
   const groupPx = configLength('padding') ?? GROUP_PAD;
@@ -497,15 +476,14 @@ function layoutGraph(
         ...(marker(e.endMarker) ? { endMarker: marker(e.endMarker)! } : {}),
       })
     ),
-    spacing,
-    ...(turned ? { turnedSpacing: down } : {}),
+    ...spacing,
     diagramPadding:
       units.grid === undefined
         ? fromConfig('diagramPadding', b.diagramPadding, 'x', 0)
         : b.diagramPadding,
     // `flowchart.curve`, as v12 drew class edges with it; `rounded` (right angles) by default.
     // On the grid routes are always square (D78).
-    routing: units.grid === undefined ? (ROUTING[curve] ?? 'stepped') : 'stepped',
+    routing: units.grid === undefined ? curveRouting(curve) : 'stepped',
     headRoom,
     metrics: units.engine,
   };

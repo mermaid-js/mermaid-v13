@@ -36,8 +36,8 @@ import {
   ProbeCursor,
   sourceView,
   TokenCursor,
-  STOP,
 } from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type { ParseOptions, ParseResult, Range, StatementSpan } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
@@ -289,14 +289,14 @@ class SankeyParser {
     const { c } = this;
     const here =
       c.kind === Kind.EOF || c.kind === T.Eof ? { start: c.start, end: c.start } : c.range;
-    const d = this.st.diagnostics.unexpected(
+    this.st.diagnostics.unexpected(
       'UNEXPECTED',
       at?.range ?? here,
       names,
-      at?.found ?? this.found()
+      at?.found ?? this.found(),
+      undefined,
+      this.hint(hint)
     );
-    const h = this.hint(hint);
-    if (h) d.message = `${d.message.slice(0, -1)}; ${h}.`;
     throw STOP;
   }
 

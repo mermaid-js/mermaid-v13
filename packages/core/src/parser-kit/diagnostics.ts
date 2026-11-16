@@ -55,15 +55,20 @@ export class Diagnostics {
     return this.add('warning', code, message, range, extra);
   }
 
-  /** Error `Expected <names>, got <found>.` with `expected` set to `names`. */
+  /**
+   * Error `Expected <names>, got <found>.` with `expected` set to `names`; with a `hint`, the
+   * message ends `, got <found>; <hint>.`.
+   */
   unexpected(
     code: string,
     range: Range,
     names: string[],
     found: string,
-    extra?: DiagnosticExtra
+    extra?: DiagnosticExtra,
+    hint?: string
   ): Diagnostic {
-    return this.error(code, `Expected ${formatExpected(names)}, got ${found}.`, range, {
+    const why = hint ? `; ${hint}` : '';
+    return this.error(code, `Expected ${formatExpected(names)}, got ${found}${why}.`, range, {
       ...extra,
       expected: names,
     });

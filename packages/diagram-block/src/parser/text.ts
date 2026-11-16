@@ -2,8 +2,8 @@
  * Value conversion for the block parser (parser-method §3): v12 `blockDB.ts`'s shape and edge
  * decoding and `addStyleClass`, and AST id escaping (D448).
  */
+import { ID_CONTROL, ID_RESERVED, idEscaper } from '@mermaid-js/shared/parser/support';
 import type { BlockArrowType, BlockType } from '../model.ts';
-import { ID_CONTROL, ID_RESERVED, idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 const SHAPES: Readonly<Record<string, BlockType>> = {
   '[]': 'square',
@@ -83,9 +83,9 @@ export function classStyles(css: string): { styles: string[]; textStyles: string
 /**
  * `%`, `>`, `@` and `#` percent-encoded (the separators of block AST ids), and so are the
  * characters XML 1.0 cannot hold (C0 controls but tab, LF and CR; DEL; lone surrogates; U+FFFE,
- * U+FFFF). Two hex digits up to U+007F, four above, so the encoding stays one-to-one. An id as it
- * goes into an AST id.
+ * U+FFFF). Two hex digits up to U+007F, four above, so the encoding stays one-to-one.
  */
+/** An id as it goes into an AST id. */
 export const esc = /* @__PURE__ */ idEscaper(`${ID_RESERVED}${ID_CONTROL}`);
 
 /** `a`, `a and b`, `a, b and c`. */
