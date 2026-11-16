@@ -37,7 +37,6 @@ import {
   Probe,
   significantTokens,
   sourceView,
-  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
@@ -210,6 +209,13 @@ function valueStart(
   while (k < end && /\s/.test(src.charAt(k))) k++;
   return { from: k + 1, block: src.charAt(k) === '{' };
 }
+
+/**
+ * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
+ * instance, so its stack is captured once.
+ */
+class Stop extends Error {}
+const STOP = new Stop();
 
 /** One id occurrence, resolved to a symbol once the model knows who registered each id. */
 interface Mention {

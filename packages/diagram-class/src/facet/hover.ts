@@ -9,16 +9,15 @@ import type {
   DocumentView,
   Hover,
   HoverTarget,
-  Range,
   SymbolOccurrence,
 } from '@mermaid-js/core/parser-kit';
-import { code, span } from '@mermaid-js/core/parser-kit/facet';
 import { classDocs } from '../generated/docs.ts';
 import type { ClassDocument, ClassRelationStmt, ClassStatementNode } from '../parser/ast.ts';
 import type { ClassModel } from '../parser/model.ts';
 import { DIRECTIONS as DIRECTION_OF } from '../parser/tables.ts';
 import { T } from '../parser/tokens.ts';
-import { ARROW_PARTS, DIRECTIONS, describeRelation, plural } from './tables.ts';
+import { ARROW_PARTS, code, DIRECTIONS, describeRelation, plural } from './tables.ts';
+import { trimmed } from '@mermaid-js/shared/parser/facet';
 
 /** Every relationship statement of the AST, namespaces included. */
 function* relations(children: readonly ClassStatementNode[]): Generator<ClassRelationStmt> {
@@ -120,14 +119,6 @@ function namespaceAt(
 
 /** Kinds a namespace name is lexed into. */
 const NAME_KINDS = new Set<number>([T.Alpha, T.Num, T.Minus, T.UnicodeText, T.Dot]);
-
-/** A range without its leading and trailing blanks. */
-function trimmed(text: string, r: Range): Range {
-  let { start, end } = r;
-  while (start < end && /\s/.test(text[start]!)) start++;
-  while (end > start && /\s/.test(text[end - 1]!)) end--;
-  return span(start, end);
-}
 
 /** The relationship whose arrow holds `at`, as the model records it. */
 function arrowHover(

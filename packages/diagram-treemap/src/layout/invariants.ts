@@ -21,6 +21,7 @@ import {
   type TreemapLeafLayout,
   type TreemapSectionLayout,
 } from './types.ts';
+import { numbers, rectInside as inside } from '@mermaid-js/shared/layout/invariants';
 
 const EPS = 1e-6;
 
@@ -28,15 +29,6 @@ type Item = TreemapSectionLayout | TreemapLeafLayout;
 
 const area = (r: Rect): number => r.width * r.height;
 const show = (r: Rect): string => `(${r.x}, ${r.y}, ${r.width} × ${r.height})`;
-
-function inside(inner: Rect, outer: Rect): boolean {
-  return (
-    inner.x >= outer.x - EPS &&
-    inner.y >= outer.y - EPS &&
-    inner.x + inner.width <= outer.x + outer.width + EPS &&
-    inner.y + inner.height <= outer.y + outer.height + EPS
-  );
-}
 
 function overlap(a: Rect, b: Rect): boolean {
   return (
@@ -57,20 +49,10 @@ function padded(r: Rect): Rect {
   };
 }
 
-/** Every number in the layout, with a path to name it. */
-function* numbers(value: unknown, path: string): Generator<[string, number]> {
-  if (typeof value === 'number') yield [path, value];
-  else if (Array.isArray(value)) {
-    for (let i = 0; i < value.length; i++) yield* numbers(value[i], `${path}[${i}]`);
-  } else if (value !== null && typeof value === 'object') {
-    for (const [k, v] of Object.entries(value)) if (k !== 'node') yield* numbers(v, `${path}.${k}`);
-  }
-}
-
 /** The broken invariants of `layout` as a layout of `model`. */
 export function treemapLayoutViolations(model: TreemapModel, layout: TreemapLayout): string[] {
   const out: string[] = [];
-  for (const [path, n] of numbers(layout, 'layout'))
+  for (const [path, n] of numbers(layout, 'layout', 'node'))
     if (Number.isNaN(n) || (!Number.isFinite(n) && !path.endsWith('.value')))
       out.push(`${path} is ${n}`);
   if (out.length > 0) return out;

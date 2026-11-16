@@ -14,9 +14,16 @@
  * leaves, not `w.outline`: the hand-drawn look leaves it as it is
  * (`e2e/diagrams/architecture/hand-drawn.txt`).
  */
-import { translate, rotate, type SvgWriter } from '@mermaid-js/core/svg';
+import {
+  px,
+  styleScope,
+  styleText,
+  themeStyleSheet,
+  translate,
+  rotate,
+  type SvgWriter,
+} from '@mermaid-js/core/svg';
 import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
 import { ARCHITECTURE_ARROW_SHRUNK, ARCHITECTURE_EDGE_NOT_DRAWN } from '../codes.ts';
 import type { ArchitectureLayout } from '../layout/layout.ts';
 import type { ArchitectureSizes } from '../layout/metrics.ts';
@@ -149,17 +156,41 @@ function boundsOf(layout: ArchitectureLayout, edges: readonly EdgeScene[]): Exte
 /** The `<svg>` root with its title and description (R-A11Y-1, D133). */
 function openRoot({ w, model, ctx, bounds }: Scene): void {
   const { theme, config } = ctx;
+  const prefix = ctx.idPrefix;
   const width = Math.max(1, bounds.x1 - bounds.x0);
   const height = Math.max(1, bounds.y1 - bounds.y0);
   const section = (config.architecture ?? {}) as Readonly<Record<string, unknown>>;
-  openSvgRoot(w, ctx, {
-    name: 'architecture',
+  const maxWidth = section.useMaxWidth !== false;
+  const title = model.accTitle.trim();
+  const desc = model.accDescr.trim();
+  const font = theme.font();
+  const fontSize = theme.length('fontSize');
+  const auto = theme.autoDeclarations();
+  w.open('svg', {
+    xmlns: 'http://www.w3.org/2000/svg',
+    class: 'mermaid mermaid-architecture',
     viewBox: [bounds.x0, bounds.y0, width, height],
-    maxWidth: section.useMaxWidth,
-    title: model.accTitle.trim(),
-    desc: model.accDescr.trim(),
-    attrs: { 'font-family': theme.font(), 'font-size': theme.length('fontSize') },
+    width: maxWidth ? '100%' : width,
+    height: maxWidth ? undefined : height,
+    role: 'img',
+    'aria-roledescription': 'architecture',
+    'aria-labelledby': title ? `${prefix}-title` : undefined,
+    'aria-describedby': desc ? `${prefix}-desc` : undefined,
+    'data-mermaid-version': ctx.version,
+    'data-p': auto ? styleScope(prefix) : undefined,
+    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
+    'font-family': font,
+    'font-size': fontSize,
   });
+  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));
+  if (title) textElement(w, 'title', title, `${prefix}-title`);
+  if (desc) textElement(w, 'desc', desc, `${prefix}-desc`);
+}
+
+function textElement(w: SvgWriter, tag: 'title' | 'desc', content: string, id: string): void {
+  w.open(tag, { id });
+  w.text(content);
+  w.close();
 }
 
 /** A label in v12's `architecture-service-label` group, `data-id` its owner's AST id. */

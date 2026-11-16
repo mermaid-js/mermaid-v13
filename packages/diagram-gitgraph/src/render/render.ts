@@ -16,7 +16,7 @@ import {
   type SvgWriter,
   type Transform as SvgTransform,
 } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type {
   GitCommitLayout,
   GitLane,
@@ -78,6 +78,7 @@ function openRoot(model: GitModel, layout: GitLayout, ctx: GitRenderContext, w: 
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
+  const maxWidth = config.gitGraph?.useMaxWidth !== false;
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
@@ -86,7 +87,7 @@ function openRoot(model: GitModel, layout: GitLayout, ctx: GitRenderContext, w: 
   openSvgRoot(w, ctx, {
     name: 'gitGraph',
     viewBox: [x, y, width, height],
-    maxWidth: config.gitGraph?.useMaxWidth,
+    maxWidth,
     title,
     desc,
     attrs: {

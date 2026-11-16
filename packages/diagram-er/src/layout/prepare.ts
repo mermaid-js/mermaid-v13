@@ -2,23 +2,14 @@
 // subgraph title measured, before layout. Groups and edge ends follow v12's `ErDB.getData`.
 // Every length comes from the unit profile (ADR-13); this file holds no length literal
 // (`packages/conformance/src/er-prepare-literals.spec.ts`).
-import type {
-  Dir,
-  LayoutGraph,
-  LayoutGroup,
-  LayoutNode,
-  UnitProfile,
-} from '@mermaid-js/core/layout';
+import type { LayoutGraph, LayoutGroup, LayoutNode, UnitProfile } from '@mermaid-js/core/layout';
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
+import { graphSpacing, groupPadding, labelledEdge } from '@mermaid-js/shared/layout';
 import { erConfigDefaults } from '../generated/config-defaults.ts';
-import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
-import {
-  fontSizePx,
-  layoutLabel,
-  Style,
-  type FontKey,
-  type MeasuredLabel,
-} from '@mermaid-js/core/text';
+import type { CheckedStyle } from '@mermaid-js/core/svg';
+import { styleCache } from '@mermaid-js/shared/svg/document';
+import { textStyle } from '@mermaid-js/shared/svg/graph';
+import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   ErAttribute,
   ErEntity,
@@ -26,7 +17,7 @@ import type {
   ErRelationship,
   ErSubgraph,
 } from '../parser/index.ts';
-import { configLengths, type ConfigLength } from './config-length.ts';
+import { configLengths, type ConfigLength } from '@mermaid-js/shared/config/readers';
 import type { ErRenderContext } from './context.ts';
 import { END_CELLS, erMetrics } from './ends.ts';
 
@@ -106,17 +97,6 @@ export interface ErPrepared {
   groups: GroupView[];
   /** Padding inside every table cell, per side (D116). */
   pad: { readonly x: number; readonly y: number };
-}
-
-const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
-
-function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
-  const t = style.text;
-  const weight = t['font-weight'];
-  const bold = weight === 'bold' || weight === 'bolder' || Number(weight) >= 600;
-  const bits = (bold ? Style.Bold : 0) | (t['font-style'] === 'italic' ? Style.Italic : 0);
-  const size = fontSizePx(t['font-size'], font.size);
-  return [size !== undefined && size > 0 && size < 1000 ? { ...font, size } : font, bits];
 }
 
 /**
@@ -208,7 +188,13 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
     size: theme.number('fontSize'),
     weight: 400,
   };
-  const length = configLengths(ctx.config.er ?? {}, erConfigDefaults, (w) => ctx.warn(w));
+  const length = configLengths(
+    'er',
+    'ER_CONFIG_IGNORED',
+    ctx.config.er ?? {},
+    erConfigDefaults,
+    (w) => ctx.warn(w)
+  );
   const m: Measure = {
     font,
     pad: cellPad(units, length),
@@ -217,7 +203,10 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
     // v12 passes every ER label through `createText` with Markdown on (D565).
     label: (text, f, max, bits = 0) =>
       layoutLabel(text, f, max, measurer, { style: bits, inline: ctx.inline, markup: 'emphasis' }),
-    styleOf: styleCache(model, ctx),
+    styleOf: styleCache(
+      new Map(model.classes.map((c) => [c.name, [...c.styles, ...c.textStyles]])),
+      (w) => ctx.warn(w)
+    ),
   };
   const minWidth = sizeKey(units, length, 'minEntityWidth');
   const nest = nesting(model);
@@ -263,24 +252,6 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
   }
   const graph = layoutGraph(model, { entities, groups, edges }, ctx, length);
   return { graph, entities, edges, groups, pad: m.pad };
-}
-
-/** The checked style of class names plus own declarations, one per distinct list. */
-function styleCache(model: ErModel, ctx: ErRenderContext): Measure['styleOf'] {
-  const classDefs = new Map<string, readonly string[]>();
-  for (const c of model.classes) classDefs.set(c.name, [...c.styles, ...c.textStyles]);
-  const styles = new Map<string, CheckedStyle>();
-  return (classes, own = []) => {
-    const decls: string[] = [];
-    for (const name of classes) {
-      for (const s of classDefs.get(name) ?? []) decls.push(s.trim());
-    }
-    for (const s of own) decls.push(s.trim());
-    const key = decls.join(';');
-    let style = styles.get(key);
-    if (!style) styles.set(key, (style = checkStyle(decls, (w) => ctx.warn(w))));
-    return style;
-  };
 }
 
 interface Nesting {
@@ -463,23 +434,12 @@ function layoutGraph(
   // gap is at least that (6), over the cell profile's own 4. In px the marks size the
   // engine's self-loop and port pitch instead (`erMetrics`).
   const endRoom = units.grid === undefined ? 0 : ENDS_GAP;
-  const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
-    node: fromConfig(
-      sizeKey(units, length, 'nodeSpacing'),
-      b.spacing.node,
-      node,
-      b.minSpacing.node
-    ),
-    rank: Math.max(
-      fromConfig(sizeKey(units, length, 'rankSpacing'), b.spacing.rank, rank, b.minSpacing.rank),
-      endRoom
-    ),
-    edge: b.spacing.edge,
-  });
-  const along = sideways(model.direction) ? 'x' : 'y';
-  const spacing = spacingOn(along, along === 'x' ? 'y' : 'x');
-  const down = spacingOn('y', 'x');
-  const turned = down.node !== spacing.node || down.rank !== spacing.rank;
+  const spacing = graphSpacing(
+    units,
+    model.direction,
+    (key) => sizeKey(units, length, key),
+    endRoom
+  );
   const graph: LayoutGraph = {
     direction: model.direction,
     nodes: entities.map((e): LayoutNode => {
@@ -491,34 +451,15 @@ function layoutGraph(
       const titled = g.label.height > 0;
       const group: LayoutGroup = {
         id: g.id,
-        padding: {
-          top: titled ? b.titlePad : b.groupPad,
-          right: b.groupPad,
-          bottom: b.groupPad,
-          left: b.groupPad,
-        },
+        padding: groupPadding(b, titled),
       };
       if (titled) group.title = { width: g.label.width, height: g.label.height };
       if (g.parent !== undefined) group.parent = g.parent;
       if (g.subgraph.direction) group.direction = g.subgraph.direction;
       return group;
     }),
-    edges: edges.map((e) => ({
-      id: e.id,
-      source: e.source,
-      target: e.target,
-      minLen: 1,
-      ...(e.label.width > 0
-        ? {
-            label: {
-              width: e.label.width + b.labelPatch.x,
-              height: e.label.height + b.labelPatch.y,
-            },
-          }
-        : {}),
-    })),
-    spacing,
-    ...(turned ? { turnedSpacing: down } : {}),
+    edges: edges.map((e) => labelledEdge(b, e.id, e.source, e.target, e.label)),
+    ...spacing,
     // D116: er.diagramPadding (px) is the margin around the drawing. Text output trims the
     // empty margin, so in cells the profile's own applies (as the flowchart).
     diagramPadding:

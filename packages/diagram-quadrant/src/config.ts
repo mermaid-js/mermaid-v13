@@ -6,9 +6,9 @@
  * back to the schema default with one `QUADRANT_CONFIG_INVALID` warning per key.
  */
 import type { Warning } from '@mermaid-js/core';
-import { configNumber } from '@mermaid-js/core/config/readers';
 import { quadrantChartConfigDefaults } from './generated/config-defaults.ts';
 import type { QuadrantLayoutConfig } from './layout/index.ts';
+import { configNumber, shownValue as shown } from '@mermaid-js/shared/config/readers';
 
 type NumberKey = {
   [K in keyof QuadrantLayoutConfig]: QuadrantLayoutConfig[K] extends number ? K : never;
@@ -40,9 +40,6 @@ const SIDES: Readonly<Record<'xAxisPosition' | 'yAxisPosition', readonly string[
 };
 
 const DEFAULTS = quadrantChartConfigDefaults as QuadrantLayoutConfig;
-
-const shown = (value: unknown): string =>
-  typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
 
 const invalid = (key: string, value: unknown, wants: string, used: unknown): Warning => ({
   code: 'QUADRANT_CONFIG_INVALID',

@@ -9,21 +9,20 @@
  * - the priority bar: v12's four literal colours in every theme (D375).
  */
 import type { RenderContext } from '@mermaid-js/core';
-import { checkColor, type Paint } from '@mermaid-js/core/svg';
+import type { Paint } from '@mermaid-js/core/svg';
+import { fixedPaint } from '@mermaid-js/shared/svg/document';
 import type { KanbanLayout } from '../layout/index.ts';
 import type { KanbanPriority } from '../priority.ts';
 import { columnSlot, columnVar } from '../theme/columns.ts';
 
 type Theme = RenderContext['theme'];
 
-const fixed = (c: string): Paint => checkColor(c) as Paint;
-
 /** v12 `colorFromPriority` (`kanbanItem.ts:9-22`): renderer constants, matched exactly (D375). */
 export const PRIORITY_COLORS: Readonly<Record<KanbanPriority, Paint>> = {
-  'Very High': fixed('red'),
-  High: fixed('orange'),
-  Low: fixed('blue'),
-  'Very Low': fixed('lightblue'),
+  'Very High': fixedPaint('red'),
+  High: fixedPaint('orange'),
+  Low: fixedPaint('blue'),
+  'Very Low': fixedPaint('lightblue'),
 };
 
 /** A card's rect: v12's `.node rect`. */

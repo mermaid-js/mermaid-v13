@@ -29,8 +29,8 @@ import {
   ProbeCursor,
   sourceView,
   TokenCursor,
-  STOP,
 } from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type {
   ParseOptions,
   ParseResult,
@@ -247,8 +247,7 @@ class TimelineParser {
 
   /** Report what was found where `names` were expected, then stop the statement. */
   private fail(names: string[], hint?: string, at: Range = this.c.range): never {
-    const d = this.st.diagnostics.unexpected('UNEXPECTED', at, names, this.found());
-    if (hint) d.message = `${d.message.slice(0, -1)}; ${hint}.`;
+    this.st.diagnostics.unexpected('UNEXPECTED', at, names, this.found(), undefined, hint);
     throw STOP;
   }
 
@@ -358,8 +357,8 @@ class TimelineParser {
     let p = keyword.start;
     while (p < keyword.end && !this.breaksIn(p, p + 1)) p++;
     const at = { start: p, end: p };
-    const d = this.st.diagnostics.unexpected('UNEXPECTED', at, TEXT, 'the end of the text');
-    d.message = `${d.message.slice(0, -1)}; write it as \`${word}: <text>\`.`;
+    const hint = `write it as \`${word}: <text>\``;
+    this.st.diagnostics.unexpected('UNEXPECTED', at, TEXT, 'the end of the text', undefined, hint);
   }
 
   /** `accDescr {` with no `}` after it: the description runs to the end of the text. */

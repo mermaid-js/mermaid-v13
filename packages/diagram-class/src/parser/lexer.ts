@@ -1,6 +1,6 @@
 /**
  * Class-diagram lexer: v12's `classDiagram.jison` lexer rules ({@link RULES}), run on exactly
- * the text v12's lexer saw ({@link v12Text}), with every token mapped back to its source range
+ * the text v12's lexer saw (`v12Text`), with every token mapped back to its source range
  * (DESIGN §4.3). The source is never rewritten. Comments and directives v12 removed before
  * lexing are trivia tokens with their own ranges, in source order.
  *
@@ -12,20 +12,13 @@
  * Every scan is linear in the text it consumes (R-PARSE-7).
  */
 import { codePointEnd, Kind, TokenWriter } from '@mermaid-js/core/parser-kit';
-import type { Hole, Probe, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { Hole, Probe } from '@mermaid-js/core/parser-kit';
 import { A, RULES, rulesAt, S } from './rules.ts';
 import type { Rule, Scan } from './rules.ts';
-import type { V12Text } from './v12-text.ts';
+import type { V12Lex, V12Text } from '@mermaid-js/shared/parser/v12-text';
 
 /** A lex: the tokens (source offsets), and each token's range in v12's text. */
-export interface ClassLex {
-  tokens: TokenStream;
-  /** Start of token `i` in {@link V12Text.text}; trivia from removed spans get -1. */
-  textStart: Int32Array;
-  /** End of token `i` in {@link V12Text.text} (it may include the `\n` v12 appended). */
-  textEnd: Int32Array;
-  v12: V12Text;
-}
+export type ClassLex = V12Lex;
 
 /** Start condition names by number, for the probe's lexer mode (jison's names). */
 const JISON_STATE: Readonly<Record<string, string>> = {

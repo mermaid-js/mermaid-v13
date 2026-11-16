@@ -14,7 +14,7 @@
 // rects and texts carry `data-id` only (pitfall 12).
 import type { RenderContext } from '@mermaid-js/core';
 import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import { eventModelingUseMaxWidth } from '../config.ts';
 import type {
   EventModelBoxLayout,
@@ -152,17 +152,21 @@ function openRoot(
   ctx: EventModelRenderContext,
   w: SvgWriter
 ): void {
+  const { theme, config } = ctx;
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = eventModelingUseMaxWidth(ctx.config.eventmodeling, ctx.warn);
+  const maxWidth = eventModelingUseMaxWidth(config.eventmodeling, ctx.warn);
+  const title = model.accTitle.trim();
+  const desc = model.accDescr.trim();
+  // Read before the root style is written, so it declares its alias.
+  const font = theme.font();
   openSvgRoot(w, ctx, {
     name: 'eventmodeling',
     viewBox: [x, y, width, height],
     maxWidth,
-    title: model.accTitle.trim(),
-    desc: model.accDescr.trim(),
-    // Read before the root style is written, so it declares its alias.
-    attrs: { 'font-family': ctx.theme.font() },
+    title,
+    desc,
+    attrs: { 'font-family': font },
   });
 }

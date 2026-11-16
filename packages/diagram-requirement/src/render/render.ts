@@ -13,7 +13,8 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { cls, openSvgRoot, paletteSlots } from '@mermaid-js/shared/svg/document';
+import { routePath } from '@mermaid-js/shared/svg/route';
 import type { RequirementRenderContext } from '../layout/context.ts';
 import type { RequirementLayout } from '../layout/layout.ts';
 import { REQUIREMENT_METRICS as M } from '../layout/metrics.ts';
@@ -25,19 +26,9 @@ import {
 } from '../layout/prepare.ts';
 import type { RequirementModel } from '../model.ts';
 import { drawMarker } from './markers.ts';
-import { routePath } from './route.ts';
 
 // The dash of every relation but `contains` (v12 `stroke-dasharray: 10,7`).
 const DASH = M.dash.join(',') as SafeValue;
-
-const cls = (names: readonly string[]): string => {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
-};
 
 type ThemeOf = RequirementRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
@@ -47,26 +38,6 @@ interface Tint {
   readonly id: `color-${number}`;
   readonly stroke: Paint;
   readonly fill?: Paint;
-}
-
-/**
- * Per-box palette colour (v12 `requirementBox.ts`, `data-color-id`, and `styles.js`
- * `genColor`): on only when the theme carries a non-empty `borderColorArray`, never by theme
- * name (D152). The slot is the box's (v12's `colorIndex`: requirements first, then elements)
- * modulo the palette; the fill comes from `bkgColorArray` only when that is not empty.
- */
-function paletteSlots(theme: ThemeOf): (slot: number) => Tint | undefined {
-  const border = theme.palette('borderColorArray');
-  const bkg = theme.palette('bkgColorArray');
-  return (n) => {
-    if (border.length === 0) return undefined;
-    const slot = n % border.length;
-    return {
-      id: `color-${slot}`,
-      stroke: border[slot]!,
-      fill: bkg.length > 0 ? bkg[n % bkg.length] : undefined,
-    };
-  };
 }
 
 interface Paints {
@@ -201,12 +172,13 @@ function openRoot({ w, ctx, paint }: Scene, model: RequirementModel, frame: Fram
   const y = Math.floor(frame.y);
   const width = Math.max(1, Math.ceil(frame.x + frame.width) - x);
   const height = Math.max(1, Math.ceil(frame.y + frame.height) - y);
+  const maxWidth = config.requirement?.useMaxWidth !== false;
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   openSvgRoot(w, ctx, {
     name: 'requirement requirementDiagram',
     viewBox: [x, y, width, height],
-    maxWidth: config.requirement?.useMaxWidth,
+    maxWidth,
     title,
     desc,
     attrs: {

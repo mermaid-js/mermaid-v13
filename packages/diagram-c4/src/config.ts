@@ -16,9 +16,9 @@
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { C4DiagramConfig } from '@mermaid-js/core/config';
+import { configNumber, fontWeightOf as weightOf } from '@mermaid-js/shared/config/readers';
 import { checkStyle } from '@mermaid-js/core/svg';
 import { fontSizePx, type FontKey } from '@mermaid-js/core/text';
-import { configNumber } from '@mermaid-js/core/config/readers';
 import { c4ConfigDefaults } from './generated/config-defaults.ts';
 import { FONT_WEIGHT } from './layout/metrics.ts';
 import { C4_ELEMENT_KINDS, type C4ElementKind } from './model.ts';
@@ -112,13 +112,6 @@ export function c4LayoutConfig(config: RenderContext['config']): C4LayoutConfig 
   };
 }
 
-/** A CSS font weight as a number: `bold` and `bolder` are 700, anything else not a number 400. */
-function weightOf(value: unknown): number {
-  if (value === 'bold' || value === 'bolder') return FONT_WEIGHT.bold;
-  const n = Number(value);
-  return Number.isFinite(n) && n > 0 ? n : FONT_WEIGHT.normal;
-}
-
 /** The fonts text is measured in, and so drawn in: by element kind, and for boundaries and relations. */
 export interface C4Fonts {
   readonly element: (kind: C4ElementKind) => FontKey;
@@ -155,7 +148,7 @@ export function c4Fonts(
     return {
       family: safe ?? family,
       size: s !== undefined && s > 0 ? s : size,
-      weight: weightOf(c4[`${prefix}FontWeight`]),
+      weight: weightOf(c4[`${prefix}FontWeight`], FONT_WEIGHT.bold, FONT_WEIGHT.normal),
     };
   };
   const elements = new Map(C4_ELEMENT_KINDS.map((k) => [k, font(k)]));

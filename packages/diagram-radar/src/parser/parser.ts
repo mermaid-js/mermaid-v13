@@ -26,30 +26,24 @@
  */
 import { checkLimit } from '@mermaid-js/core/limits';
 import {
-  APOSTROPHE,
   ASCII_MAX,
-  cook,
-  DQUOTE,
   ExpectedTable,
   formatExpected,
   Kind,
   kindSet,
-  LineIndex,
-  ParseState,
-  Probe,
-  significantTokens,
-  sourceView,
-  STOP,
 } from '@mermaid-js/core/parser-kit';
-import type {
-  AstId,
-  ParseOptions,
-  ParseResult,
-  Range,
-  SourceView,
-  TokenStream,
-  TokenView,
-} from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
+import {
+  accessibilityAsName,
+  RuleParser,
+  textProbeMode,
+  textValue,
+  TITLE_STATEMENT,
+  unclosedLabel,
+  withoutIndent,
+} from '@mermaid-js/shared/parser/rule';
+import type { AstId, ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
+import type { RuleGrammar, TextValues } from '@mermaid-js/shared/parser/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { RadarModel } from '../model.ts';
@@ -63,7 +57,7 @@ import type {
 } from './ast.ts';
 import { normalise } from './normalise.ts';
 import type { OptionName } from './normalise.ts';
-import { accDescrValue, accTitleValue, labelValue, titleValue } from './convert.ts';
+import { labelValue } from './convert.ts';
 import { lex } from './lexer.ts';
 import { PREFIX_KEYWORDS, RADAR_TRIVIA, T, TEXT_STATEMENTS } from './tokens.ts';
 
@@ -121,34 +115,6 @@ const OPTION_OF: Readonly<Record<number, { readonly name: OptionName; readonly v
   [T.Graticule]: { name: 'graticule', value: T.GraticuleValue },
 };
 
-/**
- * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the
- * mode names what the offset is in: `title`, `accTitle` or `accDescr` past the keyword of
- * that statement, `string` inside a label (closed or not), else `INITIAL` (code).
- */
-function probeMode(src: string, tokens: TokenStream, o: number): string {
-  for (let j = 0; j < tokens.length; j++) {
-    const start = tokens.start[j] ?? 0;
-    const end = tokens.end[j] ?? 0;
-    if (start >= o) break;
-    if (end < o) continue;
-    const kind = tokens.kind[j] ?? Kind.EOF;
-    const c = src.charCodeAt(start);
-    if (kind === T.String && o < end) return 'string';
-    // An unclosed label is an error token from its quote on.
-    if (kind === Kind.Error && (c === DQUOTE || c === APOSTROPHE)) return 'string';
-    const word = TEXT_STATEMENTS[kind]?.word;
-    if (!word) continue;
-    let k = start;
-    while (/[\t ]/.test(src.charAt(k))) k++;
-    k += word.length;
-    // A block `accDescr { … }` ends at its `}`; the other values run to the line end.
-    const block = kind === T.AccDescr && /^\s*\{/.test(src.slice(k, end));
-    if (o > k && (o < end || !block)) return word;
-  }
-  return 'INITIAL';
-}
-
 /** Human names for what the parser expects (R-ERR-2, R-ERR-5). */
 const EXPECTED = new ExpectedTable([
   ['`radar-beta`', [T.RadarBeta, T.RadarBetaColon]],
@@ -175,55 +141,40 @@ export function parseRadar(src: string, options: RadarParseOptions = {}): RadarP
   return new RadarParser(src, options).parse();
 }
 
+const GRAMMAR: RuleGrammar = {
+  lex,
+  trivia: RADAR_TRIVIA,
+  probeFollows: PROBE_FOLLOWS,
+  probeMode: /* @__PURE__ */ textProbeMode({
+    texts: TEXT_STATEMENTS,
+    accDescr: T.AccDescr,
+    string: T.String,
+  }),
+};
+
 /**
  * One parse. Each grammar rule is a method that returns what it read; a rule that fails
  * records a diagnostic and throws {@link STOP}, and the statement loop recovers.
  */
-class RadarParser {
-  private readonly pre: PreprocessResult;
-  private readonly view: SourceView;
-  private readonly full: TokenStream;
-  private readonly t: TokenView;
-  private i = 0;
+class RadarParser extends RuleParser<PreprocessResult> {
   /** Inside the `{ … }` of the curve being read (recovery skips to its `}`). */
   private inBraces = false;
-  private readonly st = new ParseState();
-  private readonly probe: Probe | undefined;
   private readonly children: RadarStatementNode[] = [];
-  private lines: LineIndex | undefined;
-  /** Mentions per id base (`axis:A`, `title`, …), for the `@n` suffixes. */
-  private readonly mentions = new Map<string, number>();
   private readonly axes: RadarAxisNode[] = [];
   private readonly curves: RadarCurveNode[] = [];
   /** The last option of each name (v12 `setOptions`). */
   private readonly options = new Map<OptionName, RadarOptionNode>();
   /** The last in-text value of each (v12's Langium assignments: the last one wins). */
-  private title = '';
+  private readonly texts: TextValues = { title: '', accTitle: '', accDescr: '' };
   /** The AST id of the last `title` statement. */
   private titleAstId: AstId | undefined;
-  private accTitle = '';
-  private accDescr = '';
 
   constructor(
-    private readonly src: string,
+    src: string,
     private readonly opts: RadarParseOptions
   ) {
-    const pre = (this.pre = opts.preprocessed ?? preprocess(src));
-    if (!opts.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
-    this.view = sourceView(
-      src,
-      pre.bodyStart,
-      pre.directives.map((d) => d.range)
-    );
-    this.full = lex(src, pre.bodyStart, this.view);
-    this.t = significantTokens(this.full, RADAR_TRIVIA);
-    if (opts.probe !== undefined) {
-      const probe = (this.probe = new Probe(src, opts.probe, PROBE_FOLLOWS));
-      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
-      else probe.trivia(this.full);
-      // Ignored when the offset is outside code.
-      probe.lexed(probe.offset, probe.offset, probeMode(src, this.full, probe.offset));
-    }
+    const given = opts.preprocessed;
+    super(src, given ?? preprocess(src), !given, GRAMMAR, opts.probe);
   }
 
   parse(): RadarParseResult {
@@ -243,36 +194,6 @@ class RadarParser {
 
   // ---- tokens -------------------------------------------------------------------------
 
-  private kind(j = this.i): number {
-    return this.t.kind[j] ?? Kind.EOF;
-  }
-
-  private range(j = this.i): Range {
-    return { start: this.t.start[j] ?? 0, end: this.t.end[j] ?? 0 };
-  }
-
-  /** A token's text as v12's lexer read it (removed spans dropped, entities decoded). */
-  private raw(j = this.i): string {
-    const { start, end } = this.range(j);
-    return cook(this.src, start, end, this.view);
-  }
-
-  /**
-   * Probe hook: the parser tests the current token for `kinds` (a constant list), or would
-   * accept them there. Records them when it is the probed token.
-   */
-  private tested(kinds: readonly number[]): void {
-    const p = this.probe;
-    if (p?.isAt(this.t, this.i, this.pre.bodyStart)) p.tested(kinds, this.range().start);
-  }
-
-  /** Consume a token of `kind` and return its index, or fail. */
-  private expect(kind: number, hint?: string): number {
-    this.tested([kind]);
-    if (this.kind() !== kind) this.fail([kind], hint);
-    return this.i++;
-  }
-
   /**
    * Consume the line breaks at the cursor. `next` (a constant list, with `Kind.Newline`) is
    * what may follow them, tested at each: on a blank line inside `{ }` the cursor is at a line
@@ -286,31 +207,10 @@ class RadarParser {
     }
   }
 
-  /** `id`, then `id@2`, `id@3`, … */
-  private id(base: string): AstId {
-    const n = (this.mentions.get(base) ?? 0) + 1;
-    this.mentions.set(base, n);
-    return n === 1 ? base : `${base}@${n}`;
-  }
-
   // ---- errors and recovery ------------------------------------------------------------
 
-  private lineOf(at: number): number {
-    return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
-  }
-
-  /** How an error message names the current token. */
-  private found(): string {
-    const k = this.kind();
-    if (k === Kind.EOF) return 'the end of the text';
-    if (k === Kind.Newline) return 'a line break';
-    const text = this.raw().trim();
-    const line = text.split('\n', 1)[0] ?? '';
-    return line.length > 24 || line !== text ? `\`${line.slice(0, 24)}…\`` : `\`${line}\``;
-  }
-
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  private fail(want: readonly number[], hint?: string): never {
+  protected fail(want: readonly number[], hint?: string): never {
     const { st } = this;
     const where = this.range();
     if (this.kind() === Kind.Error) this.badCharacters(where);
@@ -327,16 +227,7 @@ class RadarParser {
     const { st } = this;
     const text = this.raw();
     const line = this.lineOf(where.start);
-    if (text.startsWith('"') || text.startsWith("'")) {
-      const q = text[0] ?? '"';
-      st.diagnostics.error(
-        'UNCLOSED_STRING',
-        `Unclosed label: the \`${q}\` at line ${line} has no closing \`${q}\`. Add \`${q}\` after the label.`,
-        where,
-        { expected: [`\`${q}\``] }
-      );
-      throw STOP;
-    }
+    if (unclosedLabel(st.diagnostics, text, line, where)) throw STOP;
     const shown = text.length > 24 ? `${text.slice(0, 24)}…` : text;
     let why = '';
     if (text === ';') why = '; `;` does not end a statement in a radar chart: start a new line';
@@ -360,20 +251,8 @@ class RadarParser {
     if (word !== 'accDescr' && word !== 'accTitle') return;
     let j = this.i + 1;
     while (this.kind(j) === Kind.Newline) j++;
-    if (word === 'accDescr' && this.kind(j) === T.LBrace) {
-      this.st.diagnostics.error(
-        'UNCLOSED_ACC_DESCR',
-        `Unclosed accessible description: the \`accDescr {\` at line ${this.lineOf(where.start)} has no closing \`}\`. Write \`accDescr { … }\` or \`accDescr: …\`.`,
-        where
-      );
-      throw STOP;
-    }
-    this.st.diagnostics.error(
-      'UNEXPECTED',
-      `Expected \`:\` after \`${word}\`; write it as \`${word}: …\`${word === 'accDescr' ? ' or `accDescr { … }`' : ''}.`,
-      where,
-      { expected: ['`:`'] }
-    );
+    const line = this.lineOf(where.start);
+    accessibilityAsName(this.st.diagnostics, word, this.kind(j) === T.LBrace, line, where);
     throw STOP;
   }
 
@@ -437,7 +316,7 @@ class RadarParser {
    * skip to its `}` first, unless a line that starts a statement comes before it (the `{` is
    * unclosed); after an error at a line end, skip the next line too unless it starts one.
    */
-  private recover(): void {
+  protected override recover(): void {
     this.probe?.freeze();
     let depth = this.inBraces ? 1 : 0;
     // A statement cut short at its line end (`axis A,`, `curve c`): the next line, unless it
@@ -462,16 +341,6 @@ class RadarParser {
         continue;
       }
       this.i++;
-    }
-  }
-
-  /** Run one statement rule; on failure, recover. */
-  private statement(rule: () => void): void {
-    try {
-      rule();
-    } catch (error) {
-      if (error !== STOP) throw error;
-      this.recover();
     }
   }
 
@@ -694,14 +563,9 @@ class RadarParser {
   /** `(ACC_DESCR | ACC_TITLE | TITLE) EOL` */
   private text(k: number): void {
     const j = this.i++;
-    const image = this.raw(j);
-    const { type, word: kind } = TEXT_STATEMENTS[k] ?? TEXT_STATEMENTS[T.Title]!;
-    const range = this.range(j);
-    while (range.start < range.end && /[\t ]/.test(this.src[range.start] ?? '')) range.start++;
-    let text: string;
-    if (type === 'Title') text = this.title = titleValue(image);
-    else if (type === 'AccTitle') text = this.accTitle = accTitleValue(image);
-    else text = this.accDescr = accDescrValue(image);
+    const { type, word: kind } = TEXT_STATEMENTS[k] ?? TITLE_STATEMENT;
+    const range = withoutIndent(this.src, this.range(j));
+    const text = (this.texts[kind] = textValue(type, this.raw(j)));
     const id = this.id(kind);
     if (type === 'Title') this.titleAstId = id;
     this.children.push({ id, type, range, text });
@@ -732,10 +596,10 @@ class RadarParser {
         axes: this.axes,
         curves: this.curves,
         options: this.options,
-        title: this.title,
+        title: this.texts.title,
         titleAstId: this.titleAstId,
-        accTitle: this.accTitle,
-        accDescr: this.accDescr,
+        accTitle: this.texts.accTitle,
+        accDescr: this.texts.accDescr,
         frontMatterTitle: this.pre.frontMatter?.title,
       },
       diagnostics

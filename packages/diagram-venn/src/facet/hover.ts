@@ -8,18 +8,17 @@
  * - any keyword: the one-line doc of the grammar file (`generated/docs.ts`).
  * Never a preview.
  */
-import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
+import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-kit';
 import { vennDocs } from '../generated/docs.ts';
 import { idsKey, setIdOf, type VennModel } from '../model.ts';
 import type { VennDocument } from '../parser/ast.ts';
 import { idText, listOf } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
 import { code, setsByName, span, STYLE_KEYS } from './tables.ts';
+import { inside } from '@mermaid-js/shared/parser/facet';
 
 /** Kinds whose doc is for the keyword at their start only: a title holds its text too. */
 const VALUE_WORDS: Readonly<Partial<Record<number, string>>> = { [T.Title]: 'title' };
-
-const inside = (offset: number, r: Range) => r.start <= offset && offset <= r.end;
 
 /** An overlap as written: `union A,B`. */
 const union = (sets: readonly string[]) => code(`union ${sets.map(idText).join(',')}`);

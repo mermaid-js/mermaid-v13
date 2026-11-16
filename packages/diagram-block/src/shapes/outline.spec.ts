@@ -5,6 +5,7 @@ import { clipOutline, outlineDistance, outlineExtent, type Outline } from './out
 
 const PADS: Pads = {
   node: { x: 16, y: 12 },
+  r: 0,
   pad: 8,
   stadium: { x: 40, y: 24 },
   hexagon: { x: 70, y: 32 },

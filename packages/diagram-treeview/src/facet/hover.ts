@@ -6,17 +6,22 @@
  * file (`generated/docs.ts`). Never a preview.
  */
 import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-kit';
-import { code } from '@mermaid-js/core/parser-kit/facet';
 import { treeviewDocs } from '../generated/docs.ts';
-import { BUILTIN_ICON_PACK, detectIcon, isBuiltinIcon, resolveIcon } from '../icons.ts';
-import type { TreeViewIconOptions } from '../icons.ts';
+import {
+  BUILTIN_ICON_PACK,
+  detectIcon,
+  isBuiltinIcon,
+  resolveIcon,
+  type TreeViewIconOptions,
+} from '../icons.ts';
 import type { TreeViewNode } from '../model.ts';
 import type { TreeViewDocument } from '../parser/ast.ts';
 import { writtenName } from '../parser/convert.ts';
 import { textKeyword } from '../parser/parser.ts';
 import { T } from '../parser/tokens.ts';
-import { inside, span, statementAt } from './ranges.ts';
+import { inside, statementAt } from './ranges.ts';
 import { iconOptionsOf, pathOf, treeOf } from './tree.ts';
+import { code, keywordHover } from '@mermaid-js/shared/parser/facet';
 
 /** The keyword of a token that holds more than it (a text statement, `:::name`). */
 const keywordOf = (kind: number): string | undefined =>
@@ -66,15 +71,5 @@ export function treeViewHover(
   }
   const t = at.token;
   if (!t) return undefined;
-  let range = t.range;
-  const word = keywordOf(t.kind);
-  if (word !== undefined) {
-    const start =
-      range.start + (/^[\t ]*/.exec(text.slice(range.start, range.end))?.[0].length ?? 0);
-    range = span(start, start + word.length);
-  }
-  if (!inside(at.offset, range)) return undefined;
-  const docText = treeviewDocs[t.kind];
-  if (docText === undefined) return undefined;
-  return { range, contents: `**${code(text.slice(range.start, range.end))}**\n\n${docText}` };
+  return keywordHover(text, at.offset, t.range, keywordOf(t.kind), treeviewDocs[t.kind]);
 }

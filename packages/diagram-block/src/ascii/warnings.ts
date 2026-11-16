@@ -10,6 +10,7 @@ import { hasTextForm } from './draw.ts';
 import type { BlockText } from './grid.ts';
 import { textLabel } from './grid.ts';
 import type { InlineSpans } from '@mermaid-js/core/text';
+import { asciiDropped } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'emphasis';
@@ -73,12 +74,7 @@ export function asciiWarnings(
 ): AsciiWarning[] {
   const out: AsciiWarning[] = [];
   const dropped = (feature: AsciiDroppedFeature, astIds: string[]): void =>
-    void out.push({
-      code: 'ASCII_DROPPED',
-      feature,
-      astIds,
-      message: `Text output has no ${WHAT[feature]}; dropped.`,
-    });
+    void out.push(asciiDropped(feature, astIds, WHAT[feature]));
   const all = blocks(model);
   const styled = all.filter((b) => b.classes.length > 0 || b.styles.length > 0).map((b) => b.ast);
   if (styled.length > 0) {

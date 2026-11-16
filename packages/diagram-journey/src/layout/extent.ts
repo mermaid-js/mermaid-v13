@@ -4,6 +4,7 @@
  */
 import type { Circle, JourneyLayout, Rect } from './types.ts';
 import type { JourneyMetrics } from './metrics.ts';
+import { unionRects } from '@mermaid-js/shared/layout';
 
 const circle = (c: Circle, stroke: number): Rect => {
   const r = c.r + stroke / 2;
@@ -37,18 +38,4 @@ export function drawnRects(
   return out;
 }
 
-/** The smallest rectangle holding every one of `rects`; a zero box at the origin for none. */
-export function union(rects: readonly Rect[]): Rect {
-  if (rects.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
-  let x1 = Infinity;
-  let y1 = Infinity;
-  let x2 = -Infinity;
-  let y2 = -Infinity;
-  for (const r of rects) {
-    x1 = Math.min(x1, r.x);
-    y1 = Math.min(y1, r.y);
-    x2 = Math.max(x2, r.x + r.width);
-    y2 = Math.max(y2, r.y + r.height);
-  }
-  return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
-}
+export { unionRects as union };
