@@ -16,13 +16,21 @@ import { pathToFileURL } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type {
   CompletionItem,
+  DocumentHighlight,
+  DocumentSymbol,
   FoldingRange,
   Hover,
   Location,
+  SelectionRange,
   SemanticTokens,
   WorkspaceEdit,
 } from 'vscode-languageserver-protocol';
-import { LSPErrorCodes, TextDocumentSyncKind } from 'vscode-languageserver-protocol';
+import {
+  DocumentHighlightKind,
+  LSPErrorCodes,
+  SymbolKind,
+  TextDocumentSyncKind,
+} from 'vscode-languageserver-protocol';
 import { decodeTokens, startClient } from './testing/lsp-client.ts';
 import type { Client } from './testing/lsp-client.ts';
 import { detectorSource, FAKE_FACET, facetPackage, workspace } from './testing/workspace.ts';
@@ -76,6 +84,9 @@ describe('mermaid-language-server over stdio', () => {
     expect(caps.renameProvider).toEqual({ prepareProvider: true });
     expect(caps.hoverProvider).toBe(true);
     expect(caps.foldingRangeProvider).toBe(true);
+    expect(caps.documentHighlightProvider).toBe(true);
+    expect(caps.selectionRangeProvider).toBe(true);
+    expect(caps.documentSymbolProvider).toBe(true);
     // The same trigger characters as Monaco and CodeMirror.
     expect(caps.completionProvider).toEqual({ triggerCharacters: [...COMPLETION_TRIGGERS] });
     expect(caps.positionEncoding ?? 'utf-16').toBe('utf-16');
@@ -779,6 +790,187 @@ describe('a third-party facet whose queries throw (#809)', () => {
         expect(refused?.message).toBe('The fake language support failed on this rename (boom id).');
       } finally {
         await client.stop();
+      }
+    },
+    T
+  );
+});
+
+describe('highlights, selection ranges and the outline (#810)', () => {
+  let client: Client;
+  const flow = 'file:///w/outline.mmd';
+  const state = 'file:///w/outline-state.mmd';
+  /** Lines 0–7: a composite state with two states inside. */
+  const STATE = [
+    'stateDiagram-v2',
+    '  [*] --> Idle',
+    '  state Busy {',
+    '    A --> B',
+    '    B --> A',
+    '  }',
+    '  Idle --> Busy',
+    '',
+  ].join('\n');
+  const request = <R>(method: string, params: object) =>
+    client.connection.sendRequest<R>(method, params);
+
+  beforeAll(async () => {
+    client = await startClient({
+      capabilities: {
+        textDocument: { documentSymbol: { hierarchicalDocumentSymbolSupport: true } },
+      },
+    });
+    client.open(flow, VALID);
+    client.open(state, STATE);
+    await client.diagnostics(flow);
+    await client.diagnostics(state);
+  }, T);
+  afterAll(async () => {
+    await client.stop();
+  }, T);
+
+  it('highlights every use of a name, its definition as a write', async () => {
+    expect(
+      await request<DocumentHighlight[]>('textDocument/documentHighlight', {
+        textDocument: { uri: flow },
+        position: pos(4, 4),
+      })
+    ).toEqual([
+      { range: range(2, 13, 14), kind: DocumentHighlightKind.Write },
+      { range: range(4, 4, 5), kind: DocumentHighlightKind.Text },
+      { range: range(7, 10, 11), kind: DocumentHighlightKind.Text },
+    ]);
+    expect(
+      await request<DocumentHighlight[]>('textDocument/documentHighlight', {
+        textDocument: { uri: state },
+        position: pos(4, 10),
+      })
+    ).toEqual([
+      { range: range(3, 4, 5), kind: DocumentHighlightKind.Write },
+      { range: range(4, 10, 11), kind: DocumentHighlightKind.Text },
+    ]);
+    // Nothing on a keyword; null for a document the server does not hold.
+    expect(
+      await request('textDocument/documentHighlight', {
+        textDocument: { uri: flow },
+        position: pos(0, 2),
+      })
+    ).toEqual([]);
+    expect(
+      await request('textDocument/documentHighlight', {
+        textDocument: { uri: 'file:///w/closed.mmd' },
+        position: pos(0, 0),
+      })
+    ).toBeNull();
+  });
+
+  /** A selection range chain as its ranges, innermost first. */
+  const chain = (s: SelectionRange | undefined): unknown[] =>
+    s ? [s.range, ...chain(s.parent)] : [];
+
+  it('expands the selection from a name to the whole text, one chain per position', async () => {
+    const ranges = await request<SelectionRange[]>('textDocument/selectionRange', {
+      textDocument: { uri: flow },
+      positions: [pos(4, 10), pos(1, 2)],
+    });
+    expect(ranges).toHaveLength(2);
+    // `C` in `    B --> C`, inside `subgraph S1`.
+    expect(chain(ranges[0])).toEqual([
+      range(4, 10, 11),
+      range(4, 4, 11),
+      range(3, 2, 5, 5),
+      range(0, 0, 0, 8),
+    ]);
+    // `A` in `A["Start⏎  here"] --> B(End)`.
+    expect(chain(ranges[1])).toEqual([
+      range(1, 2, 3),
+      range(1, 2, 8, 2),
+      range(1, 2, 19, 2),
+      range(0, 0, 0, 8),
+    ]);
+    const inState = await request<SelectionRange[]>('textDocument/selectionRange', {
+      textDocument: { uri: state },
+      positions: [pos(3, 4)],
+    });
+    expect(chain(inState[0])).toEqual([
+      range(3, 4, 5),
+      range(3, 4, 11),
+      range(2, 2, 3, 5),
+      range(0, 0, 0, 7),
+    ]);
+  });
+
+  const sym = (
+    name: string,
+    kind: SymbolKind,
+    r: ReturnType<typeof range>,
+    selectionRange: ReturnType<typeof range>,
+    children: DocumentSymbol[] = []
+  ): DocumentSymbol => ({ name, kind, range: r, selectionRange, children });
+
+  it('lists the outline nested by block; a block is a namespace, any other symbol a variable', async () => {
+    expect(
+      await request<DocumentSymbol[]>('textDocument/documentSymbol', {
+        textDocument: { uri: flow },
+      })
+    ).toEqual([
+      sym('A', SymbolKind.Variable, range(1, 2, 19, 2), range(1, 2, 3)),
+      sym('B', SymbolKind.Variable, range(1, 2, 19, 2), range(2, 13, 14)),
+      sym('S1', SymbolKind.Namespace, range(3, 2, 5, 5), range(3, 11, 13), [
+        sym('C', SymbolKind.Variable, range(4, 4, 11), range(4, 10, 11)),
+      ]),
+      sym('hot', SymbolKind.Variable, range(6, 2, 24), range(6, 11, 14)),
+    ]);
+    expect(
+      await request<DocumentSymbol[]>('textDocument/documentSymbol', {
+        textDocument: { uri: state },
+      })
+    ).toEqual([
+      sym('Idle', SymbolKind.Variable, range(1, 2, 14), range(1, 10, 14)),
+      sym('Busy', SymbolKind.Namespace, range(2, 2, 3, 5), range(2, 8, 12), [
+        sym('A', SymbolKind.Variable, range(3, 4, 11), range(3, 4, 5)),
+        sym('B', SymbolKind.Variable, range(3, 4, 11), range(3, 10, 11)),
+      ]),
+    ]);
+  });
+
+  it(
+    'lists the outline flat, with container names, for a client without nested symbols',
+    async () => {
+      const flat = await startClient();
+      try {
+        flat.open(state, STATE);
+        await flat.diagnostics(state);
+        expect(
+          await flat.connection.sendRequest('textDocument/documentSymbol', {
+            textDocument: { uri: state },
+          })
+        ).toEqual([
+          {
+            name: 'Idle',
+            kind: SymbolKind.Variable,
+            location: { uri: state, range: range(1, 2, 14) },
+          },
+          {
+            name: 'Busy',
+            kind: SymbolKind.Namespace,
+            location: { uri: state, range: range(2, 2, 3, 5) },
+          },
+          {
+            name: 'A',
+            kind: SymbolKind.Variable,
+            location: { uri: state, range: range(3, 4, 11) },
+            containerName: 'Busy',
+          },
+          {
+            name: 'B',
+            kind: SymbolKind.Variable,
+            location: { uri: state, range: range(3, 4, 11) },
+            containerName: 'Busy',
+          },
+        ]);
+      } finally {
+        await flat.stop();
       }
     },
     T

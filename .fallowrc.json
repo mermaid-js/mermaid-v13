@@ -95,6 +95,10 @@
         "patterns": ["packages/bundler-plugin/**"]
       },
       {
+        "name": "language-server",
+        "patterns": ["packages/language-server/**"]
+      },
+      {
         "name": "language",
         "patterns": ["packages/language-*/**"]
       },
@@ -135,6 +139,10 @@
       {
         "from": "language",
         "allow": ["core", "package", "language", "shared"]
+      },
+      {
+        "from": "language-server",
+        "allow": ["core", "package", "language", "shared", "mermaid"]
       }
     ]
   },
