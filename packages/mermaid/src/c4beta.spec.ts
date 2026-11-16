@@ -220,3 +220,19 @@ describe('c4-beta and the layout setting (spec #730)', () => {
     expect(await codes('%%{init: {"layout": "elk"}}%%\nC4Context\nPerson(a, "A")\n')).toEqual([]);
   });
 });
+
+// The detector reads leading whitespace as regex `\s` does (a byte-order mark, a no-break space
+// included), so the c4-beta parser skips the same before its header, as legacy C4's does.
+describe('c4-beta after leading Unicode whitespace (spec #730)', () => {
+  it.each([
+    ['a byte-order mark', '﻿'],
+    ['a no-break space', ' '],
+    ['both, and a line break', '﻿\n  '],
+  ])('renders after %s, as legacy C4 does', async (_, lead) => {
+    const m = createMermaid();
+    const beta = await m.render('c1', `${lead}c4-beta\nperson a "A"\n`);
+    expect(beta.diagramType).toBe('c4beta');
+    expect(beta.svg).toBe((await m.render('c1', 'c4-beta\nperson a "A"\n')).svg);
+    expect((await m.render('c1', `${lead}C4Context\nPerson(a, "A")\n`)).diagramType).toBe('c4');
+  });
+});

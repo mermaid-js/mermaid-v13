@@ -242,3 +242,12 @@ describe('telling the two models apart (spec #730)', () => {
     expect(isC4Beta(parseC4('C4Context\nPerson(a, "A")\n').model)).toBe(false);
   });
 });
+
+describe('whitespace before the header (spec #730)', () => {
+  it('skips a byte-order mark or a no-break space before it, and only there', () => {
+    expect(parseC4Beta('\uFEFF\u00A0c4-beta\nperson a "A"\n').diagnostics).toEqual([]);
+    expect(parseC4Beta('c4-beta\n\u00A0person a "A"\n').diagnostics.map((d) => d.code)).not.toEqual(
+      []
+    );
+  });
+});
