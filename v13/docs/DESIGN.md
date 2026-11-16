@@ -62,12 +62,12 @@ Later milestones add the `core/ascii` subpath and a `mermaid` CLI bin (M2, §6.3
 - `/theme`
 - `/config`
 - `/ascii` (M2): the text-grid kit (§6.3), never imported by an SVG render
-- `/parser-kit/support`, `/text/v12-label` and `/text/tags-only`: helpers that every diagram package used to copy (AST id escaping and v12's entity placeholders; the label mode of a v12 Markdown label, D564; the inline spans of a label that draws no inline boxes, D566). Only diagram chunks import them, so they stay outside the core bundle (D557). `/parser-kit/facet` (facet ranges and Markdown code) is still exported, but no package imports it: the facets use `@mermaid-js/shared`'s `/parser/facet` (#820 settles which copy stays). The `<svg>` root and the config readers are `@mermaid-js/shared`'s `/svg/document` and `/config/readers` (D559, D585)
+- `/parser-kit/support`, `/text/v12-label` and `/text/tags-only`: helpers that every diagram package used to copy (AST id escaping and v12's entity placeholders; the label mode of a v12 Markdown label, D564; the inline spans of a label that draws no inline boxes, D566). Only diagram chunks import them, so they stay outside the core bundle (D557). `/parser-kit/facet` (facet ranges and Markdown code) is still exported, but no package imports it: the facets use `@mermaid-js/shared`'s `/parser/facet` (#820 settles which copy stays). The `<svg>` root and the config readers are `@mermaid-js/shared`'s `/svg/document` and `/config/readers` (D559, D591)
 
 `mermaid` exports (M3.5, §12.4):
 
 - `.`: the public API. Under the `node` export condition it resolves to `dist/node.js`, the same API plus Node discovery (D165); browser bundlers never take that condition.
-- `/slim`: the API without the first-party diagram loaders (only the plugins passed to `createMermaid` render) and without discovery.
+- `/slim`: the API without the first-party diagram loaders (only the diagrams passed to `createMermaid` render, as plugin objects or as lazy loaders by id, D587) and without discovery.
 - `/node-scan`: the manifest scan (`findAppRoot`, `scanPlugins`, `FIRST_PARTY_IDS`). It has `node` and `types` conditions only, so a browser build fails to resolve it. Node discovery and the bundler plugin share it.
 - `/discovered`: the list of discovered plugins. The published module is `export default []`; the bundler plugin replaces it at build time with the scanned list (D164).
 - `dist/mermaid.esm.min.mjs` and `dist/mermaid.min.js`: the CDN build (D162), not in `exports`; `unpkg`/`jsdelivr` point at the loader.
@@ -693,6 +693,15 @@ interface DiagramPlugin<M = unknown, L = LayoutModel> {
 ```
 
 `plugin` is the kind. Extension manifests have no detector; the entry is loaded when the plugin is activated (on discovery, or through `registerExternalDiagrams`).
+
+**Main export: a lazy descriptor (D586, #867).** A diagram plugin package's main export is a `LazyDiagram`, so an app registers it in code with no bundler plugin: `import box from 'mermaid-box'; registerExternalDiagrams([box])`. The package keeps three modules: `detector.js` (a small, import-free function), `entry.js` (the full `DiagramPlugin`, exported as default and by name) and `index.js`:
+
+```js
+import { detector } from './detector.js';
+export default { id: 'box', detector, formats: ['svg'], loader: () => import('./entry.js') };
+```
+
+`index.js` imports only the detector, so a bundler puts it in the page's scripts and puts `entry.js` in its own chunk, loaded on the first render of the type. `loader` may resolve to the plugin itself or to a module whose `default` (or `diagram`) export is the plugin, so `() => import('./entry.js')` works as written. The manifest's `detector` and `entry` point at the two modules (not at `index.js`), and `exports` lists `.`, `./detector` and `./entry`; discovery, the language server and autoload read the manifest. Extension plugins keep exporting their extension object. The e2e fixture `mermaid-fixture-diagram` has this layout, and `e2e/platform/explicit-registration.spec.ts` builds it on four bundlers without a bundler plugin.
 
 **Layout manifests (M3.5, D177).** `names` is required and non-empty, and never claims the built-in `layered` or `dagre` (D127, D171), or `tree` (D284); `entry` is required, and `id`, `export` and `config` are optional; a layout has no `detector`, `formats` or `ascii`. Activation registers each name lazily, as `registerLayoutLoaders` does. The entry loads once, when a diagram first names one of the layouts. Its export (`export`, else the default export) is either v12's `LayoutLoader[]`, looked up by name, or one engine that serves every name. `config` names a small module whose `config` (else default) export is the package's config fragment. It is loaded eagerly with the manifest, like a detector, so the keys are known before the entry loads. The same module may export `extension`, the package's `ExtensionPlugin` (M3.5, #243): it runs as `LayoutLoader.extension` does, only on renders laid out by one of the package's names. Through `registerExternalDiagrams` the caller passes them as `ManifestPlugin.config` and `ManifestPlugin.extension`; a manifest with `config` but no fragment is refused, and so is an extension with no `config` module.
 

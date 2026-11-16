@@ -3,5 +3,6 @@ packages:
   - 'packages/*'
   - 'tools/*'
   - 'packages/language-service/examples/*'
+  - 'packages/language-server/examples/*'
 onlyBuiltDependencies:
   - esbuild
