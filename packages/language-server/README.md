@@ -6,9 +6,14 @@ Every first-party diagram type has language support: flowchart, sequence, class,
 
 - diagnostics, pushed on every change with the document version they answer
 - definition, references, prepare rename and rename
+- document highlights: the other uses of the name under the cursor, its definition marked as a write
+- selection ranges: expand and shrink the selection from a name to its statement, its block and the whole text
+- document symbols: the outline (also breadcrumbs and go to symbol), each name once at its definition, nested by subgraph, composite state or namespace; a client without hierarchical symbols gets a flat list with container names
 - hover
 - completion, with trigger characters, in the order the service ranks the items
 - folding ranges and semantic tokens
+
+It answers the `textDocument/` requests `definition`, `references`, `documentHighlight`, `prepareRename`, `rename`, `hover`, `completion`, `foldingRange`, `selectionRange`, `documentSymbol` and `semanticTokens/full`, and pushes `textDocument/publishDiagnostics`.
 
 Positions are UTF-16, LSP's default. Sync is incremental.
 
@@ -101,7 +106,6 @@ A third-party facet whose hover, completion or rename code throws gives no hover
 - **No Markdown.** Mermaid blocks inside Markdown files get nothing. The server serves `.mmd` and `.mermaid` documents only.
 - **Stdio only.** There is no IPC, pipe, socket or browser transport.
 - **No formatting and no code actions.** The language service has neither.
-- **No document highlights, selection ranges or outline** yet.
 
 ## Notes
 

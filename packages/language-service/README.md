@@ -1,6 +1,6 @@
 # @mermaid-js/language-service
 
-An editor-agnostic language service for Mermaid: diagnostics, go to definition, references, rename, hover, completion (front-matter `config:` included), folding, semantic tokens, and a cursor ↔ AST map for live previews. It has no runtime dependencies. `@mermaid-js/core` is a peer, and each diagram's language support (its _facet_) is an optional peer that loads on `preload()`.
+An editor-agnostic language service for Mermaid: diagnostics, go to definition, references, rename, hover, completion (front-matter `config:` included), an outline, folding, semantic tokens, and a cursor ↔ AST map for live previews. It has no runtime dependencies. `@mermaid-js/core` is a peer, and each diagram's language support (its _facet_) is an optional peer that loads on `preload()`.
 
 Use it directly, or through an adapter: `@mermaid-js/language-server` for any LSP editor, `@mermaid-js/language-service-codemirror` for CodeMirror 6, `@mermaid-js/language-service-monaco` for Monaco.
 
@@ -20,6 +20,7 @@ const doc = service.update('file:///a.mmd', text); // synchronous, complete, imm
 doc.diagnostics();
 doc.completions(offset);
 doc.rename(offset, 'NewName'); // { edits } or { refused: reason }
+doc.symbols(); // the outline: each symbol once, at its definition, nested by subgraph
 doc.lineFoldingRanges(); // folds by line, as editors show them
 doc.lineSemanticTokens(); // tokens cut per line
 ```
