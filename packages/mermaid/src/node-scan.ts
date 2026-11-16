@@ -169,7 +169,8 @@ export type PackageModule =
  * A module path of a scanned package that the scan does not read itself, such as the LSP
  * server's `language` (D577), confined as the manifest's own paths are: inside the package,
  * symlinks followed. `missing` tells a path that does not exist from one that leads out of the
- * package; `skip` is the warning text, under the manifest key `key`. Never rejects.
+ * package; `skip` is the warning text, under the manifest key `key`. A path that is missing or
+ * leads out resolves with `skip`; only an unexpected error (not a skip) rejects.
  */
 export async function packageModule(
   pkg: Pick<ScannedPackage, 'dir'>,

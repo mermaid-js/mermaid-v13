@@ -10,7 +10,15 @@ import { describe, expect, it } from 'vitest';
 import { discoverFacets } from './facets.ts';
 import { scanFixtureWorkspace } from './testing/scan-fixtures.ts';
 
-/** Found by the scan, then dropped by the render (registry and Node discovery), and why. */
+/**
+ * Found by the scan, then dropped by the render (registry and Node discovery), and why. Written
+ * by hand: the render's own drops cannot run from here without new public API. Node discovery
+ * (`nodeDiscovery` in mermaid's `node.ts`) is reached only through the `node` condition of
+ * `mermaid`, which the `mermaid-source` condition these specs resolve with replaces by
+ * `index.ts`, and it scans from `process.cwd()`; the duplicate-id and first-party drops happen
+ * in the registry when a render registers discovered plugins, which no export exposes. The
+ * messages here are the ones `mermaid/src/node.ts` and `registry.ts` write.
+ */
 const RENDER_DROPS: Readonly<Record<string, string>> = {
   'claims-flowchart-v2': '"flowchart-v2" is a first-party diagram id or type',
   'claims-sequence': '"sequence" is a first-party diagram id or type',
