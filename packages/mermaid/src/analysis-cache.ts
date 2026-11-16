@@ -1,4 +1,4 @@
-import { leanOf, MermaidError, type DiagramParseContext } from '@mermaid-js/core';
+import { MermaidError, type DiagramParseContext } from '@mermaid-js/core';
 import type { LeanParseResult, ParseResult } from '@mermaid-js/core/parser-kit';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { Prepared } from './api-types.ts';
@@ -63,7 +63,11 @@ export function parseStep(
   let parse = plugin.parse(text, lean ? { ...ctx, lean, astIds } : ctx);
   if (parse.lean && parse.diagnostics.some((d) => d.severity === 'error'))
     parse = plugin.parse(text, ctx);
-  return parse.lean ? { lean: parse } : { lean: leanOf(parse), full: parse };
+  if (parse.lean) return { lean: parse };
+  // The lean view: what a draw reads, nothing of the AST, symbols, statements or tokens.
+  const full: ParseResult<unknown> = parse;
+  const { model, diagnostics, embeds, edgeCount } = full;
+  return { lean: { lean: true, model, diagnostics, embeds, edgeCount }, full };
 }
 
 /** `plugin`'s full parse: a plugin gives a lean one only when asked for it. */
