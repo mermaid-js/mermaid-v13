@@ -1,23 +1,33 @@
 /**
  * `pnpm typecheck`: every tsconfig that a workspace package's `typecheck` script names, checked
- * as `tsc -p` checks it, with the work shared where sharing cannot change a result.
+ * as `tsc -p` checks it, with the work shared where sharing should not change a result.
  *
  * Workspace packages resolve each other to their TypeScript sources (the `mermaid-source`
  * condition), so `tsc -p` in each diagram package type-checks core and shared again: about 35
  * programs that all contain core. Configs whose compiler options are identical are checked as
  * one program instead, so each file is checked once. That gives the same diagnostics as
- * separate programs as long as no file can see what another member brought in, which only
- * global declarations allow: a script (non-module) file, `declare global`, a
- * `declare module 'x'` augmentation, a UMD `export as namespace`, or a `/// <reference lib>`.
- * When the shared program has such a file that is not in every member's own program (vitest's
- * and chai's globals and `types` packages are in all of them), every member is checked on its
- * own, exactly as before. A config with emit, references or incremental output
- * is never shared, and a `typecheck` script that is not plain `tsc -p` steps runs as written.
+ * separate programs as long as every file sees the same global scope and resolves the same
+ * way in both. Globals come from script (non-module) files, `declare global`,
+ * `declare module 'x'` augmentations, UMD `export as namespace`, `/// <reference lib>` and the
+ * `types` packages, so configs share a program only when their `types` resolve to the same
+ * files and each member's own program has exactly the shared program's global-declaring files
+ * (vitest's and chai's globals are in all of them). Otherwise every member is checked alone
+ * by `tsc -p`, exactly as before. A config with emit, references or incremental output is
+ * never shared (it runs as `tsc -p`), and a `typecheck` script that is not plain `tsc -p`
+ * steps runs as written.
+ *
+ * One difference remains: errors that depend on the order in which the checker meets
+ * declarations (circularity such as TS7022 or TS2502, "excessively deep" instantiation) were
+ * met from about 35 starting points, one per package, and are now met from one. A shared
+ * program reports them where it first reaches them; it could in principle miss one that only a
+ * particular starting point shows.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
+import { createRequire } from 'node:module';
 import { load } from 'js-yaml';
 import ts from 'typescript';
+import type { Task, TaskResult } from './parallel.ts';
 
 /** A workspace package's `typecheck` script. */
 export interface TypecheckScript {
@@ -219,9 +229,30 @@ const checkOne =
   ];
 
 /**
- * Type-checks the configs, as one program when that cannot change the result: when every file
- * of the shared program that declares globals is also in every member's own program, each
- * file sees the same global scope in both, and resolves its imports the same way.
+ * The `types` packages a config loads and the files they resolve to. `types` names, and
+ * `typeRoots` when it is not set, resolve from the config's own directory, which `stableJson`
+ * leaves out of the comparison: configs share a program only when this is the same for all.
+ */
+function automaticTypes(options: ts.CompilerOptions, host: ts.CompilerHost): string {
+  const containing = join(dirname(options.configFilePath as string), '__inferred_types__.ts');
+  return ts
+    .getAutomaticTypeDirectiveNames(options, host)
+    .map((name) => {
+      const resolved = ts.resolveTypeReferenceDirective(name, containing, options, host);
+      return `${name}=${resolved.resolvedTypeReferenceDirective?.resolvedFileName ?? '(unresolved)'}`;
+    })
+    .join('\n');
+}
+
+const sameSet = (a: readonly string[], b: readonly string[]) =>
+  a.length === b.length && new Set([...a, ...b]).size === a.length;
+
+/**
+ * Type-checks the configs, as one program when that should not change the result: the members'
+ * `types` resolve to the same files, and every member's own program has exactly the shared
+ * program's global-declaring files, so each file sees the same global scope in both and
+ * resolves its imports the same way. Otherwise each member is checked on its own (or, with
+ * `split`, nothing is checked and the caller runs them).
  */
 export function checkConfigs(
   configs: readonly string[],
@@ -239,23 +270,22 @@ export function checkConfigs(
 
   const options = parsed[0]!.options;
   const host = cachingHost(options);
+  const apart = () =>
+    split
+      ? { shared: false, split: true, diagnostics: [], errors: [] }
+      : done(false, parsed.flatMap(checkOne(host)));
+  const types = new Set(parsed.map((p) => automaticTypes(p.options, host)));
+  if (types.size !== 1) return apart();
+
   const program = ts.createProgram({
     rootNames: [...new Set(parsed.flatMap((p) => p.fileNames))],
     options,
     host,
   });
   // Building the members' programs only resolves imports: every file is parsed already.
-  const members = parsed.map(
-    (p) =>
-      new Set(
-        programOf(p, host)
-          .getSourceFiles()
-          .map((sf) => sf.fileName)
-      )
-  );
-  const leaks = globalDeclarers(program).some((file) => members.some((m) => !m.has(file)));
-  if (leaks && split) return { shared: false, split: true, diagnostics: [], errors: [] };
-  if (leaks) return done(false, parsed.flatMap(checkOne(host)));
+  const declarers = globalDeclarers(program);
+  const leaks = parsed.some((p) => !sameSet(globalDeclarers(programOf(p, host)), declarers));
+  if (leaks) return apart();
   return done(true, [...ts.getPreEmitDiagnostics(program)]);
 }
 
@@ -264,4 +294,72 @@ export function formatDiagnostics(diagnostics: readonly ts.Diagnostic[], pretty:
   return pretty
     ? ts.formatDiagnosticsWithColorAndContext(diagnostics, formatHost)
     : ts.formatDiagnostics(diagnostics, formatHost);
+}
+
+/** The `tsc` the workspace's packages run (the root `typescript`). */
+export const TSC = createRequire(import.meta.url).resolve('typescript/bin/tsc');
+
+export interface TypecheckTools {
+  /** `node` and its flags, to run the worker (tsx's loader included). */
+  readonly node: readonly string[];
+  /** `typecheck-worker.ts`. */
+  readonly worker: string;
+  readonly pretty: boolean;
+}
+
+const SPLIT = '--split';
+
+/** A literal `tsc -p <config>`, as the package's own `typecheck` script ran it. */
+function tscTask(config: string, tools: TypecheckTools): Task {
+  return {
+    label: config,
+    command: tools.node[0]!,
+    args: [TSC, '-p', config, ...(tools.pretty ? ['--pretty'] : [])],
+    nice: true,
+  };
+}
+
+/**
+ * The tasks for a plan: a group of configs runs in the worker (`--split`: it hands the group
+ * back when its members must run alone), a lone config runs as `tsc -p`, and a script runs as
+ * written.
+ */
+export function typecheckTasks(plan: TypecheckPlan, tools: TypecheckTools): Task[] {
+  return [
+    ...plan.groups.map(
+      (group): Task =>
+        group.configs.length === 1
+          ? tscTask(group.configs[0]!, tools)
+          : {
+              label: `${group.configs[0]} and ${group.configs.length - 1} more with the same options`,
+              command: tools.node[0]!,
+              args: [
+                ...tools.node.slice(1),
+                tools.worker,
+                ...(tools.pretty ? ['--pretty'] : []),
+                SPLIT,
+                ...group.configs,
+              ],
+              nice: true,
+            }
+    ),
+    ...plan.scripts.map((s) => ({
+      label: `${s.dir}: ${s.script}`,
+      command: 'pnpm',
+      args: ['--dir', s.dir, 'run', 'typecheck'],
+      nice: true,
+    })),
+  ];
+}
+
+/**
+ * The members of a group the worker handed back (exit {@link SPLIT_EXIT} from a `--split`
+ * worker), each as `tsc -p`; undefined for any other result, including exit 3 from `tsc`
+ * itself or from a script, which are failures.
+ */
+export function splitTasks(result: TaskResult, tools: TypecheckTools): Task[] | undefined {
+  const { args } = result.task;
+  const at = args.indexOf(SPLIT);
+  if (result.code !== SPLIT_EXIT || at === -1 || !args.includes(tools.worker)) return undefined;
+  return args.slice(at + 1).map((config) => tscTask(config, tools));
 }

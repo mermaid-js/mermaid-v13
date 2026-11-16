@@ -1,12 +1,17 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { ROOT } from './diagrams.ts';
+import type { Task } from './parallel.ts';
 import {
   checkConfigs,
   parseTypecheckScript,
   planTypecheck,
+  SPLIT_EXIT,
+  splitTasks,
+  TSC,
+  typecheckTasks,
   workspaceTypecheckScripts,
 } from './typecheck.ts';
 
@@ -30,7 +35,9 @@ const BASE = {
   },
 };
 
-const temp = mkdtempSync(join(tmpdir(), 'typecheck-spec-'));
+// The real path: on macOS the temp directory is behind a symlink, which would make one file
+// look like two to TypeScript.
+const temp = realpathSync(mkdtempSync(join(tmpdir(), 'typecheck-spec-')));
 afterAll(() => rmSync(temp, { recursive: true, force: true }));
 
 let fixtureCount = 0;
@@ -208,6 +215,66 @@ describe('checking a group of configs', { timeout: 60_000 }, () => {
     expect(result.errors[0]).toMatch(/packages\/b\/src\/b\.ts.*TS2322/);
   });
 
+  // Review of #892: the shared program resolves `types` from the first member's directory, so a
+  // member whose own `types` resolve to other files (here an `Error` augmentation) must not share.
+  it('checks members apart when their `types` resolve to different files', () => {
+    const typed = { ...BASE, compilerOptions: { ...BASE.compilerOptions, types: ['fake'] } };
+    const fake = (text: string) => ({
+      package: { name: '@types/fake', types: 'index.d.ts' },
+      text,
+    });
+    const [forA, forB] = [
+      fake('declare const fakeA: number;\n'),
+      fake('interface Error {\n  code: string;\n}\n'),
+    ];
+    const root = fixture({
+      'tsconfig.json': {
+        ...typed,
+        compilerOptions: { ...typed.compilerOptions, allowImportingTsExtensions: true },
+      },
+      'packages/a/node_modules/@types/fake/package.json': forA.package,
+      'packages/a/node_modules/@types/fake/index.d.ts': forA.text,
+      'packages/b/node_modules/@types/fake/package.json': forB.package,
+      'packages/b/node_modules/@types/fake/index.d.ts': forB.text,
+      ...pkg('a', {
+        'x.ts':
+          '/// <reference path="../node_modules/@types/fake/index.d.ts" />\nexport const x = 1;\n',
+      }),
+      ...pkg('b', {
+        'b.ts':
+          "import { x } from '../../a/src/x.ts';\nexport const e: Error = { name: 'n', message: 'm' };\nexport const y = x;\n",
+      }),
+    });
+    expect(checkConfigs(configsOf(root, 'b')).errors.join('\n')).toMatch(/b\.ts.*TS2741/);
+    const result = checkConfigs(configsOf(root, 'a', 'b'));
+    expect(result.shared).toBe(false);
+    expect(result.errors.join('\n')).toMatch(/packages\/b\/src\/b\.ts.*TS2741/);
+    expect(checkConfigs(configsOf(root, 'b', 'a')).errors.join('\n')).toMatch(/b\.ts.*TS2741/);
+  });
+
+  it('checks members apart when one has a global-declaring file the shared program lacks', () => {
+    // Same `types` names, no reference between the members: only the resolution differs.
+    const typed = { ...BASE, compilerOptions: { ...BASE.compilerOptions, types: ['fake'] } };
+    const root = fixture({
+      'tsconfig.json': typed,
+      'packages/a/node_modules/@types/fake/package.json': {
+        name: '@types/fake',
+        types: 'index.d.ts',
+      },
+      'packages/a/node_modules/@types/fake/index.d.ts': 'declare const fakeA: number;\n',
+      'packages/b/node_modules/@types/fake/package.json': {
+        name: '@types/fake',
+        types: 'index.d.ts',
+      },
+      'packages/b/node_modules/@types/fake/index.d.ts': 'declare const fakeB: number;\n',
+      ...pkg('a', { 'a.ts': 'export const a: number = fakeA;\n' }),
+      ...pkg('b', { 'b.ts': 'export const b: number = fakeA;\n' }),
+    });
+    const result = checkConfigs(configsOf(root, 'a', 'b'));
+    expect(result.shared).toBe(false);
+    expect(result.errors.join('\n')).toMatch(/packages\/b\/src\/b\.ts.*TS\d+.*fakeA/);
+  });
+
   it('reports a broken tsconfig', () => {
     const root = fixture({
       'tsconfig.json': BASE,
@@ -215,5 +282,43 @@ describe('checking a group of configs', { timeout: 60_000 }, () => {
       'packages/a/src/a.ts': 'export const a = 1;\n',
     });
     expect(checkConfigs(configsOf(root, 'a')).errors.join('\n')).toMatch(/missing\.json/);
+  });
+});
+
+describe('the typecheck tasks', () => {
+  const tools = { node: ['node'], worker: 'worker.ts', pretty: false };
+  const plan = {
+    groups: [
+      { configs: ['/r/a/tsconfig.json', '/r/b/tsconfig.json'], size: 2 },
+      { configs: ['/r/c/tsconfig.json'], size: 1 },
+    ],
+    scripts: [{ dir: '/r/d', name: 'd', script: 'vue-tsc' }],
+  };
+  const tasks = typecheckTasks(plan, tools);
+  const result = (task: Task, code: number) => ({
+    task,
+    ok: code === 0,
+    code,
+    output: 'x',
+    seconds: 1,
+  });
+
+  it('runs a group in the worker, a lone config as a literal `tsc -p`, a script as written', () => {
+    expect(tasks.map((t) => [t.command, ...t.args].join(' '))).toEqual([
+      'node worker.ts --split /r/a/tsconfig.json /r/b/tsconfig.json',
+      `node ${TSC} -p /r/c/tsconfig.json`,
+      'pnpm --dir /r/d run typecheck',
+    ]);
+  });
+
+  it('splits only a group worker that asked for it, into `tsc -p` per member', () => {
+    expect(splitTasks(result(tasks[0]!, SPLIT_EXIT), tools)?.map((t) => t.args)).toEqual([
+      [TSC, '-p', '/r/a/tsconfig.json'],
+      [TSC, '-p', '/r/b/tsconfig.json'],
+    ]);
+    expect(splitTasks(result(tasks[0]!, 1), tools)).toBeUndefined();
+    // tsc exits 3 for an invalid project, and a script may exit 3 too: those are failures.
+    expect(splitTasks(result(tasks[1]!, SPLIT_EXIT), tools)).toBeUndefined();
+    expect(splitTasks(result(tasks[2]!, SPLIT_EXIT), tools)).toBeUndefined();
   });
 });
