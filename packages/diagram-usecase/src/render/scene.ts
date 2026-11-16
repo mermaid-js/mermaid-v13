@@ -24,15 +24,7 @@ export interface Scene {
   readonly spokenOf: ReadonlyMap<string, string>;
 }
 
-/** Author class names as CSS classes, each with a leading space; unsafe characters dropped. */
-export function cls(names: readonly string[]): string {
-  let out = '';
-  for (const name of names) {
-    const c = name.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
-}
+export { cls } from '@mermaid-js/shared/svg/document';
 
 /**
  * The font attributes for a part drawn in `font`: its size always (parts differ from the root's

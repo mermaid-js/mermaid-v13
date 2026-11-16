@@ -1,0 +1,137 @@
+{
+  "name": "@mermaid-js/shared",
+  "version": "13.0.0-alpha.0",
+  "description": "Code shared by several Mermaid diagram packages: lexer and parser families, node shapes, edge drawing, graph layout helpers and ASCII drawing. Each subpath loads only with the diagrams that use it.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/shared"
+  },
+  "sideEffects": false,
+  "exports": {
+    "./parser/rule": {
+      "mermaid-source": "./src/parser/rule.ts",
+      "types": "./dist/parser/rule.d.ts",
+      "default": "./dist/parser/rule.js"
+    },
+    "./parser/state": {
+      "mermaid-source": "./src/parser/state.ts",
+      "types": "./dist/parser/state.d.ts",
+      "default": "./dist/parser/state.js"
+    },
+    "./parser/tree": {
+      "mermaid-source": "./src/parser/tree.ts",
+      "types": "./dist/parser/tree.d.ts",
+      "default": "./dist/parser/tree.js"
+    },
+    "./parser/table": {
+      "mermaid-source": "./src/parser/table.ts",
+      "types": "./dist/parser/table.d.ts",
+      "default": "./dist/parser/table.js"
+    },
+    "./parser/v12-text": {
+      "mermaid-source": "./src/parser/v12-text.ts",
+      "types": "./dist/parser/v12-text.d.ts",
+      "default": "./dist/parser/v12-text.js"
+    },
+    "./parser/drop": {
+      "mermaid-source": "./src/parser/drop.ts",
+      "types": "./dist/parser/drop.d.ts",
+      "default": "./dist/parser/drop.js"
+    },
+    "./parser/facet": {
+      "mermaid-source": "./src/parser/facet.ts",
+      "types": "./dist/parser/facet.d.ts",
+      "default": "./dist/parser/facet.js"
+    },
+    "./parser/flow": {
+      "mermaid-source": "./src/parser/flow.ts",
+      "types": "./dist/parser/flow.d.ts",
+      "default": "./dist/parser/flow.js"
+    },
+    "./parser/flow-facet": {
+      "mermaid-source": "./src/parser/flow-facet.ts",
+      "types": "./dist/parser/flow-facet.d.ts",
+      "default": "./dist/parser/flow-facet.js"
+    },
+    "./svg/arrowheads": {
+      "mermaid-source": "./src/svg/arrowheads.ts",
+      "types": "./dist/svg/arrowheads.d.ts",
+      "default": "./dist/svg/arrowheads.js"
+    },
+    "./svg/graph": {
+      "mermaid-source": "./src/svg/graph.ts",
+      "types": "./dist/svg/graph.d.ts",
+      "default": "./dist/svg/graph.js"
+    },
+    "./svg/route": {
+      "mermaid-source": "./src/svg/route.ts",
+      "types": "./dist/svg/route.d.ts",
+      "default": "./dist/svg/route.js"
+    },
+    "./shapes/kit": {
+      "mermaid-source": "./src/shapes/kit.ts",
+      "types": "./dist/shapes/kit.d.ts",
+      "default": "./dist/shapes/kit.js"
+    },
+    "./shapes/basic": {
+      "mermaid-source": "./src/shapes/basic.ts",
+      "types": "./dist/shapes/basic.d.ts",
+      "default": "./dist/shapes/basic.js"
+    },
+    "./shapes/extended": {
+      "mermaid-source": "./src/shapes/extended.ts",
+      "types": "./dist/shapes/extended.d.ts",
+      "default": "./dist/shapes/extended.js"
+    },
+    "./layout": {
+      "mermaid-source": "./src/layout/index.ts",
+      "types": "./dist/layout/index.d.ts",
+      "default": "./dist/layout/index.js"
+    },
+    "./ascii": {
+      "mermaid-source": "./src/ascii/index.ts",
+      "types": "./dist/ascii/index.d.ts",
+      "default": "./dist/ascii/index.js"
+    },
+    "./config/readers": {
+      "mermaid-source": "./src/config/readers.ts",
+      "types": "./dist/config/readers.d.ts",
+      "default": "./dist/config/readers.js"
+    },
+    "./layout/invariants": {
+      "mermaid-source": "./src/layout/invariants.ts",
+      "types": "./dist/layout/invariants.d.ts",
+      "default": "./dist/layout/invariants.js"
+    },
+    "./svg/document": {
+      "mermaid-source": "./src/svg/document.ts",
+      "types": "./dist/svg/document.d.ts",
+      "default": "./dist/svg/document.js"
+    },
+    "./parser/support": {
+      "mermaid-source": "./src/parser/support.ts",
+      "types": "./dist/parser/support.d.ts",
+      "default": "./dist/parser/support.js"
+    }
+  },
+  "files": [
+    "dist",
+    "THIRD_PARTY_NOTICES"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@mermaid-js/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@mermaid-js/core": "workspace:^"
+  }
+}

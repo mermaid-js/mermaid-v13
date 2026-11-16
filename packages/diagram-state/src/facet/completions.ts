@@ -12,7 +12,6 @@ import type {
   CompletionKind,
   DocumentView,
   ProbeResult,
-  Range,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { stateCategories } from '../generated/categories.ts';
@@ -21,6 +20,7 @@ import type { StateDocument } from '../parser/ast.ts';
 import type { StateModel } from '../parser/model.ts';
 import { T } from '../parser/tokens.ts';
 import { DIRECTIONS, HEADERS, KEYWORDS, KIND_NAMES, MARKERS, span, tokenBefore } from './tables.ts';
+import { CompletionList as Items } from '@mermaid-js/shared/parser/facet';
 
 /** Lexer modes whose text is free text, not code. */
 const TEXT_MODES = new Set([
@@ -39,23 +39,6 @@ const TEXT_MODES = new Set([
 ]);
 /** Characters of a state id or keyword word (the rest of it after the cursor is replaced). */
 const WORD = /[^\s:;,{}"-]/;
-
-/** Items filtered by the typed prefix, one per label. */
-class Items {
-  readonly list: CompletionItem[] = [];
-  private readonly seen = new Set<string>();
-
-  constructor(
-    private readonly prefix: string,
-    private readonly range: Range
-  ) {}
-
-  add(label: string, kind: CompletionKind, extra: Partial<CompletionItem> = {}): void {
-    if (!label.startsWith(this.prefix) || this.seen.has(label)) return;
-    this.seen.add(label);
-    this.list.push({ label, kind, insertText: label, range: this.range, ...extra });
-  }
-}
 
 interface Context {
   text: string;
@@ -173,11 +156,7 @@ function byKind(c: Context, probe: ProbeResult): CompletionItem[] {
   const inComposite = expected.has(T.StructStop);
   for (const k of KEYWORDS) {
     if (!expected.has(k.kind) || (inComposite && TOP_LEVEL_ONLY.has(k.kind))) continue;
-    const documentation = stateDocs[k.kind];
-    items.add(k.label, 'keyword', {
-      insertText: k.insert ?? k.label,
-      ...(documentation === undefined ? {} : { documentation }),
-    });
+    items.keyword(k, stateDocs[k.kind]);
   }
   if (expected.has(T.Id)) states(items, c, from);
   if (expected.has(T.EdgeState)) items.add('[*]', 'constant', { detail: 'start or end state' });

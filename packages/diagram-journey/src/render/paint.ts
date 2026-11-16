@@ -10,6 +10,7 @@ import {
   type Paint,
   type SafeValue,
 } from '@mermaid-js/core/svg';
+import { fixedPaint } from '@mermaid-js/shared/svg/document';
 import type { FontKey } from '@mermaid-js/core/text';
 import { fontsOf } from '../layout/env.ts';
 import { FONT_WEIGHT, SECTION_SLOTS } from '../layout/metrics.ts';
@@ -20,18 +21,16 @@ type Theme = RenderContext['theme'];
 /** What the paints read from the render context. */
 export type PaintContext = Pick<RenderContext, 'config' | 'theme' | 'warn'>;
 
-const fixed = (c: string): Paint => checkColor(c) as Paint;
-
 /** v12's fixed greys and black (D245): constants in every theme. */
 export const FIXED_COLORS = {
   /** Band and task outlines (v12 `getNoteRect`). */
-  box: fixed('#666'),
+  box: fixedPaint('#666'),
   /** Eyes and mouth (v12 `#666` and `.mouth { stroke: #666 }`). */
-  feature: fixed('#666'),
+  feature: fixedPaint('#666'),
   /** The face outline (v12 `.face { stroke: #999 }`). */
-  face: fixed('#999'),
+  face: fixedPaint('#999'),
   /** Actor dot outlines, in the legend and on tasks. */
-  dot: fixed('#000'),
+  dot: fixedPaint('#000'),
 } as const;
 
 /**
@@ -141,7 +140,7 @@ export function paints(ctx: PaintContext, l: JourneyLayout): Paints {
   const sectionColours = colourList(ctx, 'sectionColours');
   const configured = colourList(ctx, 'actorColours');
   const palette: readonly Paint[] =
-    configured && configured.length > 0 ? configured : V12_ACTOR_COLOURS.map(fixed);
+    configured && configured.length > 0 ? configured : V12_ACTOR_COLOURS.map(fixedPaint);
   const actors = new Map<number, Paint>();
   for (const dot of [...l.legend.map((e) => e.dot), ...l.tasks.flatMap((t) => t.dots)])
     if (!actors.has(dot.slot))

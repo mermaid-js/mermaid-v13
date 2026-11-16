@@ -75,7 +75,9 @@ describe('packClosure', () => {
       .filter((p) => !p.private)
       .map((p) => p.name);
     expect(diagrams.length).toBeGreaterThan(20);
-    expect([...list].sort()).toEqual(['@mermaid-js/core', ...diagrams, 'mermaid'].sort());
+    expect([...list].sort()).toEqual(
+      ['@mermaid-js/core', '@mermaid-js/shared', ...diagrams, 'mermaid'].sort()
+    );
     expect(list[0]).toBe('@mermaid-js/core');
     expect(list.at(-1)).toBe('mermaid');
   });

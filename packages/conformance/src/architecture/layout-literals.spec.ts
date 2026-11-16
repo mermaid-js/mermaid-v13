@@ -12,7 +12,6 @@ const ALLOWED: Readonly<Record<string, string>> = {
   '1': 'the least edge length in ranks; the next index; a direction',
   '2': 'halving: the icon centre, a box centre',
   '0.5': "the invariant checks' float tolerance (core's validateLayout slack)",
-  '1e4': "the cap on a config length (`config-length.ts`, as class, er, state and flowchart's)",
   '180': 'degrees to radians (a turned label’s box)',
 };
 

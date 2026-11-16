@@ -10,10 +10,10 @@
  * kept at least at the profile's minimum, as the flowchart builder does (`fromPx`).
  */
 import type { SequenceDiagramConfig } from '@mermaid-js/core/config';
-import { configNumber } from '@mermaid-js/core/config/readers';
 import { fromPx, type UnitProfile } from '@mermaid-js/core/layout';
 import type { Theme } from '@mermaid-js/core/theme';
 import type { ParticipantKind } from '../model.ts';
+import { configNumber } from '@mermaid-js/shared/config/readers';
 
 export interface XY {
   readonly x: number;

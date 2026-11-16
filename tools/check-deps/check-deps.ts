@@ -55,7 +55,12 @@ const allowedThirdParty = (name: string, dep: string) =>
 
 const isZeroDependencyPackage = (dir: string) => {
   const name = basename(dir);
-  return name === 'core' || name === 'language-service' || name.startsWith('diagram-');
+  return (
+    name === 'core' ||
+    name === 'shared' ||
+    name === 'language-service' ||
+    name.startsWith('diagram-')
+  );
 };
 
 const isEditorAdapter = (dir: string) => basename(dir).startsWith('language-service-');
@@ -85,7 +90,7 @@ export function findDependencyViolations(packages: WorkspacePackage[]): string[]
     for (const dep of runtime) {
       if (isZeroDependencyPackage(dir)) {
         violations.push(
-          `${manifest.name}: runtime dependency "${dep}" is not allowed (core, diagram and language-service packages have zero runtime dependencies)`
+          `${manifest.name}: runtime dependency "${dep}" is not allowed (core, shared, diagram and language-service packages have zero runtime dependencies)`
         );
       } else if (!workspaceNames.has(dep) && !allowedThirdParty(manifest.name, dep)) {
         violations.push(`${manifest.name}: runtime dependency "${dep}" is not a workspace package`);

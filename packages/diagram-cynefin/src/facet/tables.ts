@@ -3,21 +3,14 @@
  * not here: they come from the grammar file (`generated/docs.ts`); the domain texts come from
  * `domains.ts`, as v12 drew them.
  */
-import type { CompletionKind } from '@mermaid-js/core/parser-kit';
 import { DOMAIN_META } from '../domains.ts';
-import { CYNEFIN_DOMAIN_NAMES } from '../model.ts';
-import type { CynefinDomainName } from '../model.ts';
+import { CYNEFIN_DOMAIN_NAMES, type CynefinDomainName } from '../model.ts';
 import { T } from '../parser/tokens.ts';
-
-/** An item offered when the parser expects `kind`. */
-export interface KeywordItem {
-  readonly kind: number;
-  readonly label: string;
-  readonly item: CompletionKind;
-  /** Text inserted, when it is not the label. */
-  readonly insert?: string;
-  readonly detail?: string;
-}
+import type { TypedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
+export type { TypedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
+export { tokenBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 /**
  * What each domain means, as v12's syntax page (`docs/syntax/cynefin.md` at `mermaid@12.2.0`,

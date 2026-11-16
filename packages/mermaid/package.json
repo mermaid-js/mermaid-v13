@@ -89,7 +89,8 @@
     "@mermaid-js/diagram-usecase": "workspace:*",
     "@mermaid-js/diagram-venn": "workspace:*",
     "@mermaid-js/diagram-wardley": "workspace:*",
-    "@mermaid-js/diagram-xychart": "workspace:*"
+    "@mermaid-js/diagram-xychart": "workspace:*",
+    "@mermaid-js/shared": "workspace:*"
   },
   "devDependencies": {
     "esbuild": "^0.25.12",

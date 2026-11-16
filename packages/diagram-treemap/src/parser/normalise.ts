@@ -10,7 +10,6 @@ import type { AstId, Diagnostics } from '@mermaid-js/core/parser-kit';
 import type { TreemapClass, TreemapModel, TreemapNode } from '../model.ts';
 import type { TreemapClassDefNode, TreemapLeafNode, TreemapRowNode } from './ast.ts';
 import { isPlainNumber } from './convert.ts';
-import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 /** D402: a value v12 read as `NaN`, or not as written (`1_000`, `1,2,3`, `1.2.3`). */
 export const TREEMAP_INVALID_VALUE = 'TREEMAP_INVALID_VALUE';
@@ -37,7 +36,10 @@ export interface ClassDefRead {
 }
 
 /** `%`, `/` and `@` percent-encoded, so a name path reads back one way. */
-const escapeName = /* @__PURE__ */ idEscaper('%/@');
+const escapeName = (name: string): string =>
+  /[%/@]/.test(name)
+    ? name.replace(/[%/@]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
+    : name;
 
 /** Mutable while the tree is built; frozen into a {@link TreemapNode}. */
 interface Building {

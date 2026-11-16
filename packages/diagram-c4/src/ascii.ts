@@ -10,11 +10,11 @@
  * (D459); a drawing wider than `ascii.maxWidth` is not folded: the API adds `ASCII_TOO_WIDE`.
  */
 import type { TextRenderContext } from '@mermaid-js/core';
-import { ascii as asciiGlyphs, asciiOptions, unicode } from '@mermaid-js/core/ascii';
 import type { C4Layout } from './layout/index.ts';
 import type { C4Model } from './model.ts';
 import { drawC4, ROUTE_BUDGET } from './ascii/draw.ts';
 import { asciiWarnings } from './ascii/warnings.ts';
+import { glyphSetOf } from '@mermaid-js/shared/ascii';
 
 export type { AsciiDroppedFeature, AsciiDroppedWarning, AsciiWarning } from './ascii/warnings.ts';
 
@@ -30,7 +30,7 @@ export type C4AsciiContext = Pick<TextRenderContext, 'config' | 'warn'> &
  * so the SVG chunk is not split for it.
  */
 export function ascii(model: C4Model, layout: C4Layout, ctx: C4AsciiContext): string {
-  const glyphs = asciiOptions(ctx.config).charset === 'ascii' ? asciiGlyphs : unicode;
+  const glyphs = glyphSetOf(ctx.config);
   for (const w of asciiWarnings(model, layout)) ctx.warn(w);
   // R-SEC-5, D542: capped by the integrator's limit, as the SVG layout's budget is.
   const budget = Math.min(ROUTE_BUDGET, ctx.limits?.maxLayoutWork ?? Infinity);

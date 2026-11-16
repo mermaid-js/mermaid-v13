@@ -416,20 +416,9 @@
       "count": 10
     }
   },
-  "packages/diagram-flowchart/src/parser/lexer.ts": {
-    "complexity": {
-      "count": 3
-    },
-    "max-lines": {
-      "count": 1
-    }
-  },
   "packages/diagram-flowchart/src/parser/model.ts": {
     "@typescript-eslint/no-base-to-string": {
       "count": 7
-    },
-    "@typescript-eslint/prefer-for-of": {
-      "count": 1
     },
     "complexity": {
       "count": 1
@@ -447,16 +436,7 @@
     }
   },
   "packages/diagram-flowchart/src/parser/parser.ts": {
-    "@typescript-eslint/no-unnecessary-condition": {
-      "count": 3
-    },
-    "max-lines": {
-      "count": 1
-    },
     "tsdoc/syntax": {
-      "count": 1
-    },
-    "unicorn/prefer-spread": {
       "count": 1
     }
   },
@@ -474,11 +454,8 @@
     }
   },
   "packages/diagram-flowchart/src/render/shapes.ts": {
-    "@typescript-eslint/no-empty-function": {
-      "count": 1
-    },
     "max-params": {
-      "count": 2
+      "count": 1
     }
   },
   "packages/diagram-flowchart/src/v12-specs/adapter.ts": {

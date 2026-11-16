@@ -18,16 +18,10 @@ import type { JourneyModel } from '../model.ts';
 import type { JourneyDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { KEYWORDS, plural, span, tokenBefore } from './tables.ts';
+import { keywordCompletions, wordRangeOf } from '@mermaid-js/shared/parser/facet';
 
 /** Characters a keyword is made of: the word being typed runs over them. */
 const WORD = /[A-Za-z]/;
-
-/** The probed word's range: the prefix, plus the rest of the word after the cursor. */
-function wordRange(text: string, probe: ProbeResult): Range {
-  let end = probe.offset;
-  while (end < text.length && WORD.test(text.charAt(end))) end++;
-  return span(probe.prefix.start, end);
-}
 
 /** How many tasks name each actor. */
 function taskCounts(model: JourneyModel): Map<string, number> {
@@ -118,20 +112,8 @@ export function journeyCompletions(
   if (!tokens || probe.mode !== 'INITIAL') return [];
   const actors = actorItems(text, tokens, probe.offset, doc);
   if (actors) return actors;
-  const range = wordRange(text, probe);
+  const range = wordRangeOf(text, probe, WORD);
   const prefix = text.slice(range.start, probe.offset);
   const expected = new Set(probe.expected);
-  const out: CompletionItem[] = [];
-  for (const k of KEYWORDS) {
-    if (!expected.has(k.kind) || !k.label.startsWith(prefix)) continue;
-    const documentation = journeyDocs[k.kind];
-    out.push({
-      label: k.label,
-      kind: 'keyword',
-      insertText: k.insert ?? k.label,
-      range,
-      ...(documentation === undefined ? {} : { documentation }),
-    });
-  }
-  return out;
+  return keywordCompletions(KEYWORDS, expected, prefix, range, journeyDocs);
 }

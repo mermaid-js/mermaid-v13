@@ -5,19 +5,18 @@
 import { Kind } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
+import { tokenValue, v12Text } from '@mermaid-js/shared/parser/v12-text';
 import { lex } from './lexer.ts';
 import type { QuadrantLex } from './lexer.ts';
-import { tokenValue } from './value.ts';
-import { v12Text } from './v12-text.ts';
 
 export { parseQuadrant } from './parser.ts';
 export type { QuadrantParseOptions, QuadrantParseResult } from './parser.ts';
 export { detectQuadrant } from './detect.ts';
 export type * from './ast.ts';
-export { tokenValue } from './value.ts';
+export { tokenValue } from '@mermaid-js/shared/parser/v12-text';
 export { JISON_NAMES, T as QuadrantTokenKind } from './tokens.ts';
 export type { QuadrantLex } from './lexer.ts';
-export type { V12Text } from './v12-text.ts';
+export type { V12Text } from '@mermaid-js/shared/parser/v12-text';
 
 export interface QuadrantToken {
   /** A `QuadrantTokenKind` or a shared `Kind`. */

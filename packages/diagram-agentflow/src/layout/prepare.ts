@@ -15,22 +15,19 @@
  */
 import type {
   Dir,
-  EdgeRouting,
   LayoutGraph,
   LayoutGroup,
   LayoutNode,
   UnitProfile,
 } from '@mermaid-js/core/layout';
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
+import { graphSpacing, groupPadding, labelledEdge, sideways } from '@mermaid-js/shared/layout';
 import type { AgentflowDiagramConfig } from '@mermaid-js/core/config';
-import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
-import {
-  fontSizePx,
-  layoutLabel,
-  Style,
-  type FontKey,
-  type MeasuredLabel,
-} from '@mermaid-js/core/text';
+import type { CheckedStyle } from '@mermaid-js/core/svg';
+import { styleCache } from '@mermaid-js/shared/svg/document';
+import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
+import { textStyle } from '@mermaid-js/shared/svg/graph';
+import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   AgentflowFlowModel,
   AgentflowModel,
@@ -41,20 +38,9 @@ import { layoutDir } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { AgentflowLayoutContext } from './context.ts';
 import { agentflowConfigDefaults } from '../generated/config-defaults.ts';
-import {
-  AGENTFLOW_METRICS,
-  FLOWCHART_LENGTH_DEFAULTS,
-  MIN_SLANT,
-  TITLE_MARGIN_DEFAULTS,
-} from './metrics.ts';
-import {
-  shapeSize,
-  shapeSpan,
-  type LayoutShape,
-  type Pads,
-  type PadXY,
-  type ShapeGeometry,
-} from './shapes.ts';
+import { AGENTFLOW_METRICS, FLOWCHART_LENGTH_DEFAULTS, TITLE_MARGIN_DEFAULTS } from './metrics.ts';
+import { shapeSize, shapeSpan, type LayoutShape, type ShapeGeometry } from './shapes.ts';
+import { themePads } from '@mermaid-js/shared/shapes/kit';
 
 /** A vertex or a collapsed flow, drawn as a node. */
 export interface AgentflowNodeView {
@@ -108,8 +94,7 @@ export interface AgentflowEdgeView {
 /** The arrowheads an agentflow edge has: `-->`, `--x` or none (`-.-`). */
 export type Arrowhead = 'none' | 'arrow_point' | 'arrow_cross';
 
-/** How an edge is drawn between its route points (flowchart's kinds; v12's d3 curves are `curved`). */
-export type CurveKind = 'curved' | 'linear' | 'step' | 'stepBefore' | 'stepAfter' | 'rounded';
+export type { CurveKind };
 
 export interface AgentflowPrepared {
   graph: LayoutGraph;
@@ -127,44 +112,11 @@ export interface AgentflowPrepared {
   titleTopMargin: number;
 }
 
-const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
-
-/** A curve name as flowchart reads it: any other name (v12's d3 curves) is `curved`. */
-function curveKind(curve: string | undefined): CurveKind {
-  return curve === 'linear' ||
-    curve === 'step' ||
-    curve === 'stepBefore' ||
-    curve === 'stepAfter' ||
-    curve === 'rounded'
-    ? curve
-    : 'curved';
-}
-
-/** How the engine routes for the diagram's default curve (flowchart's table); else stepped. */
-const ROUTING: Readonly<Partial<Record<CurveKind, EdgeRouting>>> = {
-  linear: 'straight',
-  curved: 'curved',
-};
-
 /** v12 `destructEdgeType`: an open link has no head; a cross or point head at the end. */
 const arrowsOf = (type: string): [Arrowhead, Arrowhead] =>
   type === 'arrow_open'
     ? ['none', 'none']
     : ['none', type === 'arrow_cross' ? 'arrow_cross' : 'arrow_point'];
-
-/** The bold and italic `Style` bits a checked style's text declarations ask for. */
-export function emphasisBits(style: CheckedStyle): number {
-  const t = style.text;
-  const weight = t['font-weight'];
-  const bold = weight === 'bold' || weight === 'bolder' || Number(weight) >= 600;
-  return (bold ? Style.Bold : 0) | (t['font-style'] === 'italic' ? Style.Italic : 0);
-}
-
-function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
-  const bits = emphasisBits(style);
-  const size = fontSizePx(style.text['font-size'], font.size);
-  return [size !== undefined && size > 0 && size < 1000 ? { ...font, size } : font, bits];
-}
 
 /** Everything the views and the graph are measured with. */
 interface Measure {
@@ -225,7 +177,7 @@ export function prepareAgentflow(
     // This is the only place the builder looks at which profile it has (flowchart's rule).
     cells: units.id === 'cell',
     font,
-    geometry: { pads: padsOf(theme, flowchartLength('padding')), metrics: AGENTFLOW_METRICS },
+    geometry: { pads: themePads(theme, flowchartLength('padding')), metrics: AGENTFLOW_METRICS },
     curve: curveKind(model.defaultInterpolate ?? flowchart?.curve),
     wrap: fromPx(units, agentflowLength('wrappingWidth'), 'x') || units.builder.wrapWidth,
     minWidth: fromPx(units, agentflowLength('minNodeWidth'), 'x'),
@@ -238,7 +190,10 @@ export function prepareAgentflow(
         inline,
         keepWords: units.id !== 'cell',
       }),
-    styleOf: styleCache(model, ctx),
+    styleOf: styleCache(
+      new Map(model.classes.map((c) => [c.id, [...c.styles, ...c.textStyles]])),
+      (w) => ctx.warn(w)
+    ),
   };
   const rootDir = layoutDir(model.direction) ?? 'TB';
   const { views, groups, nodes, flowDir } = nodeViews(model, rootDir, m);
@@ -250,41 +205,6 @@ export function prepareAgentflow(
     ? agentflowLength('titleTopMargin')
     : agentflowLength.fallback('titleTopMargin');
   return { graph, groups, nodes, edges, views, geometry: m.geometry, titleMargin, titleTopMargin };
-}
-
-function padsOf(theme: AgentflowLayoutContext['theme'], pad: number): Pads {
-  const padOf = (name: string) => theme.padding(name, pad);
-  const xy = (shape: string): PadXY => ({
-    x: padOf(`${shape}PaddingX`),
-    y: padOf(`${shape}PaddingY`),
-  });
-  return {
-    node: xy('node'),
-    r: theme.number('radius'),
-    pad,
-    hexagon: xy('hexagon'),
-    hexagonSlant: Math.max(theme.number('hexagonSlant'), MIN_SLANT),
-    subroutine: xy('subroutine'),
-    lean: xy('lean'),
-  };
-}
-
-/** The checked style of class names plus own declarations, one per distinct list. */
-function styleCache(model: AgentflowModel, ctx: AgentflowLayoutContext): Measure['styleOf'] {
-  const classDefs = new Map<string, string[]>();
-  for (const c of model.classes) classDefs.set(c.id, [...c.styles, ...c.textStyles]);
-  const styles = new Map<string, CheckedStyle>();
-  return (classes, own = []) => {
-    const decls: string[] = [];
-    for (const name of classes) {
-      for (const s of classDefs.get(name) ?? []) decls.push(s.trim());
-    }
-    for (const s of own) decls.push(s.trim());
-    const key = decls.join(';');
-    let style = styles.get(key);
-    if (!style) styles.set(key, (style = checkStyle(decls, (w) => ctx.warn(w))));
-    return style;
-  };
 }
 
 interface Views {
@@ -484,16 +404,7 @@ function layoutGraph(
   const { units, agentflowLength } = m;
   const b = units.builder;
   // Node spacing runs across the flow and rank spacing along it (px config, v12 `|| 50`).
-  const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
-    node: fromPx(units, agentflowLength('nodeSpacing'), node, b.minSpacing.node),
-    rank: fromPx(units, agentflowLength('rankSpacing'), rank, b.minSpacing.rank),
-    edge: b.spacing.edge,
-  });
-  const along = sideways(rootDir) ? 'x' : 'y';
-  const spacing = spacingOn(along, along === 'x' ? 'y' : 'x');
-  // An LR/RL drawing the engine turns to TB for `availableWidth` runs its ranks down (#47).
-  const down = spacingOn('y', 'x');
-  const turned = down.node !== spacing.node || down.rank !== spacing.rank;
+  const spacing = graphSpacing(units, rootDir, agentflowLength);
   // In cells a flow's title sits on its top border (`ascii/warnings.ts` names a margin set).
   const titleRoom = m.cells ? 0 : fromPx(units, titleMargin.top + titleMargin.bottom, 'y');
   const graph: LayoutGraph = {
@@ -502,20 +413,14 @@ function layoutGraph(
       const node: LayoutNode = { id: n.id, width: n.w, height: n.h, shape: n.shape };
       if (n.parent !== undefined) node.parent = n.parent;
       // A text-form box leaves the span to the engine's `corner` metric.
-      if (!m.cells)
-        node.span = shapeSpan(n.shape, n.w, n.h, sideways(flowDir(n.parent)), m.geometry);
+      if (!m.cells) node.span = shapeSpan(n.shape, n.w, n.h, sideways(flowDir(n.parent)));
       return node;
     }),
     groups: groups.map((g): LayoutGroup => {
       const titled = g.label.height > 0;
       const group: LayoutGroup = {
         id: g.id,
-        padding: {
-          top: titled ? b.titlePad + titleRoom : b.groupPad,
-          right: b.groupPad,
-          bottom: b.groupPad,
-          left: b.groupPad,
-        },
+        padding: groupPadding(b, titled, titleRoom),
       };
       if (titled) group.title = { width: g.label.width, height: g.label.height };
       if (g.parent !== undefined) group.parent = g.parent;
@@ -526,28 +431,14 @@ function layoutGraph(
       if (typeof algorithm === 'string') group.algorithm = algorithm;
       return group;
     }),
-    edges: edges.map((e) => ({
-      id: e.id,
-      source: e.source,
-      target: e.target,
-      minLen: e.edge.length ?? 1,
-      ...(e.label.width > 0
-        ? {
-            label: {
-              width: e.label.width + b.labelPatch.x,
-              height: e.label.height + b.labelPatch.y,
-            },
-          }
-        : {}),
-    })),
-    spacing,
-    ...(turned ? { turnedSpacing: down } : {}),
+    edges: edges.map((e) => labelledEdge(b, e.id, e.source, e.target, e.label, e.edge.length ?? 1)),
+    ...spacing,
     // Text output trims the empty margin, so in cells a margin would only eat into
     // `ascii.maxWidth` (D84): the profile's own (0) applies.
     diagramPadding: m.cells
       ? b.diagramPadding
       : fromPx(units, agentflowLength('diagramPadding'), 'x', 0),
-    routing: units.grid === undefined ? (ROUTING[m.curve] ?? 'stepped') : 'stepped',
+    routing: units.grid === undefined ? curveRouting(m.curve) : 'stepped',
     headRoom: b.headRoom,
     metrics: units.engine,
   };

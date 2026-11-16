@@ -13,7 +13,7 @@
 // Each node's `g` carries `data-ast` (and `data-id`); its parts and its connectors `data-id`
 // only (pitfall 12, D487). The root row is not an AST node: it carries neither.
 import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import { Style } from '@mermaid-js/core/text';
 import { treeViewUseMaxWidth } from '../config.ts';
 import {
@@ -137,14 +137,17 @@ function openRoot(
 ): void {
   const { theme, config } = ctx;
   const { x, y, width, height } = layout.bounds;
+  const maxWidth = treeViewUseMaxWidth(config.treeView);
+  const title = model.accTitle.trim();
+  const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
   openSvgRoot(w, ctx, {
     name: 'treeView',
     viewBox: [x, y, width, height],
-    maxWidth: treeViewUseMaxWidth(config.treeView),
-    title: model.accTitle.trim(),
-    desc: model.accDescr.trim(),
+    maxWidth,
+    title,
+    desc,
     attrs: { 'font-family': font },
   });
 }
