@@ -113,6 +113,12 @@
     },
     "./testing/layout-invariants": {
       "mermaid-source": "./src/testing/layout-invariants.ts"
+    },
+    "./testing/render-harness": {
+      "mermaid-source": "./src/testing/render-harness.ts"
+    },
+    "./testing/test-context": {
+      "mermaid-source": "./src/testing/test-context.ts"
     }
   },
   "files": [

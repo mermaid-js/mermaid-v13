@@ -40,10 +40,14 @@ import type {
   Rect,
   TrackPath,
 } from './types.ts';
+import {
+  EPS,
+  near,
+  nonFinite,
+  rectInside as inside,
+  rectsOverlap as overlap,
+} from '@mermaid-js/shared/testing/layout-invariants';
 
-const EPS = 1e-6;
-
-const near = (a: number, b: number): boolean => Math.abs(a - b) <= EPS;
 const same = (p: Point, x: number, y: number): boolean => near(p.x, x) && near(p.y, y);
 const last = (path: TrackPath): Point => path.segments[path.segments.length - 1] ?? path.start;
 const pathPoints = (path: TrackPath): Point[] => [path.start, ...path.segments];
@@ -54,29 +58,6 @@ const box0 = (e: RailroadExpressionLayout): Rect => ({
   width: e.width,
   height: e.up + e.down,
 });
-
-/** Whether two rectangles share more than an edge. */
-const overlap = (a: Rect, b: Rect): boolean =>
-  a.x < b.x + b.width - EPS &&
-  b.x < a.x + a.width - EPS &&
-  a.y < b.y + b.height - EPS &&
-  b.y < a.y + a.height - EPS;
-
-const inside = (r: Rect, outer: Rect): boolean =>
-  r.x >= outer.x - EPS &&
-  r.y >= outer.y - EPS &&
-  r.x + r.width <= outer.x + outer.width + EPS &&
-  r.y + r.height <= outer.y + outer.height + EPS;
-
-/** Every non-finite number in `value`, by path. */
-function nonFinite(value: unknown, at: string, out: string[]): void {
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value)) out.push(`${at} is ${value}`);
-  } else if (Array.isArray(value)) value.forEach((v, i) => nonFinite(v, `${at}[${i}]`, out));
-  else if (typeof value === 'object' && value !== null) {
-    for (const [k, v] of Object.entries(value)) nonFinite(v, `${at}.${k}`, out);
-  }
-}
 
 const childrenOf = (n: RailroadNode): readonly RailroadNode[] => {
   switch (n.type) {

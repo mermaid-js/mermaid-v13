@@ -45,7 +45,8 @@
     "@mermaid-js/core": "workspace:*"
   },
   "devDependencies": {
-    "@mermaid-js/core": "workspace:^"
+    "@mermaid-js/core": "workspace:^",
+    "@mermaid-js/shared": "workspace:^"
   },
   "mermaid": {
     "plugin": "diagram",

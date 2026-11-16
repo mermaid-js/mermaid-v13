@@ -1,7 +1,9 @@
 /**
  * What the diagrams' layout invariant checks share (the `layout/invariants.ts` of each
- * `diagram-*` package, run by its DDLT-style tests): the walk for non-finite numbers and the
- * rectangle tests, each with the 1e-6 slack the copies had.
+ * `diagram-*` package, run by its DDLT-style tests): the walk for non-finite numbers, the
+ * rectangle tests and the way a box is printed in a problem, each with the 1e-6 slack the
+ * copies had (#817: what three or more packages repeated). What only one type checks stays in
+ * its package.
  */
 
 /** A box by its top-left corner and size. */
@@ -13,7 +15,16 @@ interface Rect {
 }
 
 /** Slack of the layout invariants: rounding, not layout, may be off by this much. */
-const EPS = 1e-6;
+export const EPS = 1e-6;
+
+/** Whether `a` and `b` differ by at most `eps`. */
+export const near = (a: number, b: number, eps = EPS): boolean => Math.abs(a - b) <= eps;
+
+/** A box as a problem prints it, `(x, y, w × h)`, each number to `digits` places if given. */
+export const rectText = (r: Rect, digits?: number): string => {
+  const n = (v: number): string => (digits === undefined ? String(v) : v.toFixed(digits));
+  return `(${n(r.x)}, ${n(r.y)}, ${n(r.width)} × ${n(r.height)})`;
+};
 
 /** Every number in `value`, with its path (`layout.nodes[2].x`), depth first; `skip` is a key not entered. */
 export function* numbers(value: unknown, path: string, skip?: string): Generator<[string, number]> {

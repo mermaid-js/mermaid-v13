@@ -19,9 +19,7 @@ import { linearScale } from './scale.ts';
 import { textBounds } from './text.ts';
 import type { Rect, XyAxisLayout, XyChartLayout } from './types.ts';
 import { clamp, visitDrawn } from './walk.ts';
-
-/** Float tolerance of the checks, in px. */
-const EPS = 1e-6;
+import { EPS, rectInside as inBox } from '@mermaid-js/shared/testing/layout-invariants';
 
 export function xyChartLayoutViolations(model: XyChartModel, layout: XyChartLayout): string[] {
   const out: string[] = [];
@@ -33,12 +31,6 @@ export function xyChartLayoutViolations(model: XyChartModel, layout: XyChartLayo
   bounds(layout, out);
   return out;
 }
-
-const inBox = (r: Rect, box: Rect): boolean =>
-  r.x >= box.x - EPS &&
-  r.y >= box.y - EPS &&
-  r.x + r.width <= box.x + box.width + EPS &&
-  r.y + r.height <= box.y + box.height + EPS;
 
 const near = (a: number, b: number): boolean =>
   Math.abs(a - b) <= EPS * Math.max(1, Math.abs(a), Math.abs(b));

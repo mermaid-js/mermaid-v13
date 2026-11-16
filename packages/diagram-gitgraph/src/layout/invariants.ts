@@ -22,6 +22,8 @@ import { apply, corners } from './env.ts';
 import { GIT_METRICS } from './metrics.ts';
 import type { GitLayout, Point, Rect, Transform } from './types.ts';
 import {
+  EPS,
+  near,
   nonFinite as numbers,
   rectsOverlap as overlaps,
 } from '@mermaid-js/shared/testing/layout-invariants';
@@ -31,9 +33,6 @@ export interface ViolationOptions {
   readonly parallelCommits?: boolean;
 }
 
-const EPS = 1e-6;
-
-const near = (a: number, b: number): boolean => Math.abs(a - b) <= EPS;
 const fmt = (p: Point): string => `(${p.x}, ${p.y})`;
 
 function counts(model: GitModel, layout: GitLayout, out: string[]): void {
