@@ -1,0 +1,26 @@
+---
+description: >-
+  More relations between one pair than fit 14 px apart (#680): eight between
+  two systems side by side, and three from a boundary to the system inside
+  it. Each is drawn on a line of its own: the step between them shrinks to
+  fit the side the two shapes share. Before, the two outer lines fell back
+  onto the middle, and the three inside the boundary were drawn as one.
+---
+C4Context
+  title Repeated relations in little room
+  System(ledger, "Ledger")
+  System(billing, "Billing")
+  Boundary(bank, "Bank") {
+    System(vault, "Vault")
+  }
+  Rel(ledger, billing, "1")
+  Rel(ledger, billing, "2")
+  Rel(billing, ledger, "3")
+  Rel(ledger, billing, "4")
+  Rel(billing, ledger, "5")
+  Rel(ledger, billing, "6")
+  Rel(billing, ledger, "7")
+  Rel(ledger, billing, "8")
+  Rel(bank, vault, "Opens")
+  Rel(bank, vault, "Counts")
+  Rel(vault, bank, "Reports")

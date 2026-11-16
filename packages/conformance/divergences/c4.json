@@ -776,6 +776,14 @@
     "since": "2026-11-13"
   },
   {
+    "id": "e2e/diagrams/c4/pr-check/repeated-relations-room.mmd",
+    "inputHash": "sha256:dd5e11099e805d77",
+    "kind": "model",
+    "reason": "v12 merged a relation that repeats a from/to pair into the first (the last label and kind won, an earlier technology stayed, and C4Dynamic lost the step); v13 keeps every relation statement as a relation of its own (D458 amended, #680, MIGRATION.md).",
+    "owner": "#680",
+    "since": "2026-11-16"
+  },
+  {
     "id": "e2e/diagrams/c4/pr-check/quotes.mmd",
     "inputHash": "sha256:57e53432affdcd9b",
     "kind": "model",

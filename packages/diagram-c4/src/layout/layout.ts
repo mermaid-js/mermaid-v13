@@ -35,7 +35,7 @@ import {
 } from './grid.ts';
 import { cellConfig, cellPxMeasurer, cellRoom, type CellSize } from './cells.ts';
 import { C4_METRICS as M, FONT_WEIGHT } from './metrics.ts';
-import { Lanes, lineOf, pointsOf, route, Work, type Route } from './route.ts';
+import { Lanes, lineOf, pairRoom, pointsOf, route, Work, type Route } from './route.ts';
 import {
   hitRect,
   outlineForm,
@@ -511,17 +511,20 @@ class Lines {
   }
 }
 
-/** Routes every relation with known ends in model order, then places their labels (Pele `render.ts`). */
 /**
  * How far each relation moves sideways (along its own normal) to keep off the others between the
- * same two shapes, in either direction: none for the only one, else the group spread across
- * `2 * pairShift` steps, the first statement's side first. A pair with one relation each way keeps
- * `pairShift` to either side of the middle, as before repeated relations were kept (#680).
+ * same two shapes, in either direction: none for the only one, else the group spread in steps of
+ * `2 * pairShift` about the middle, the first statement's side first. A pair with one relation
+ * each way keeps `pairShift` to either side of the middle, as before repeated relations were kept
+ * (#680). Where the room the two shapes share (`pairRoom`) holds fewer steps, the steps shrink to
+ * fit it: past `2 * room / near + 1` relations they are closer than `near` and read as one band.
  */
 function pairShifts(drawn: readonly { a: Outline; b: Outline }[]): number[] {
   interface Between {
     a: Outline;
+    b: Outline;
     count: number;
+    step?: number;
   }
   const groups = new Map<Outline, Map<Outline, Between>>();
   // Each relation's group and its place in it, counted as the group fills.
@@ -529,7 +532,7 @@ function pairShifts(drawn: readonly { a: Outline; b: Outline }[]): number[] {
     if (a === b) return undefined;
     let g = groups.get(a)?.get(b) ?? groups.get(b)?.get(a);
     if (!g) {
-      g = { a, count: 0 };
+      g = { a, b, count: 0 };
       let ends = groups.get(a);
       if (!ends) groups.set(a, (ends = new Map<Outline, Between>()));
       ends.set(b, g);
@@ -540,11 +543,13 @@ function pairShifts(drawn: readonly { a: Outline; b: Outline }[]): number[] {
     const place = places[k];
     if (!place || place[0].count < 2) return 0;
     const [g, nth] = place;
-    const side = ((g.count - 1) / 2 - nth) * 2 * M.pairShift;
+    g.step ??= Math.min(2 * M.pairShift, (2 * pairRoom(g.a, g.b)) / (g.count - 1));
+    const side = ((g.count - 1) / 2 - nth) * g.step;
     return a === g.a ? side : -side;
   });
 }
 
+/** Routes every relation with known ends in model order, then places their labels (Pele `render.ts`). */
 function routeAll(input: RouteInput): RoutedAll {
   const { model, endOf, shapes, frames, order } = input;
   const drawn: { rel: C4Relation; index: number; a: Outline; b: Outline }[] = [];

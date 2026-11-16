@@ -11,7 +11,7 @@
  */
 // cspell:ignore kepano
 import { C4_METRICS as M } from './metrics.ts';
-import { hit, hitRect, sidesOf, type Outline, type Sides } from './shapes.ts';
+import { hit, hitRect, insideAlong, sidesOf, type Outline, type Sides } from './shapes.ts';
 import type { C4RouteKind, Point } from './types.ts';
 
 /** A routed relation: its corners, the stretch its label may sit on, and how to place it. */
@@ -87,15 +87,27 @@ function nearestSide(outer: Outline, inner: Outline): [number, number] {
   return [cx(inner), least === bottom ? outer.y + outer.height : outer.y];
 }
 
-/** One box holds the other: a short line from the nearest side of the outer box. */
-function nestedLine(outer: Outline, inner: Outline, down: boolean): Line {
-  const ix = cx(inner);
-  const iy = cy(inner);
+/** The unit normal of a line, to the left of its way in the drawing; a point reads as level. */
+function unitNormal([px, py, qx, qy]: Line): Point {
+  const len = Math.hypot(qx - px, qy - py) || 1;
+  return { x: -(qy - py) / len, y: (qx - px) / len };
+}
+
+/**
+ * One box holds the other: a short line from the nearest side of the outer box, moved along
+ * that side by `shift` (the outer box is `a` when `down`).
+ */
+function nestedLine(outer: Outline, inner: Outline, down: boolean, shift: number): Line {
   const [ox, oy] = nearestSide(outer, inner);
-  const t = Math.min(hit(inner, { x: ox, y: oy }, { x: ix, y: iy }), 1);
-  const mx = ox + (ix - ox) * t;
-  const my = oy + (iy - oy) * t;
-  return down ? [ox, oy, mx, my] : [mx, my, ox, oy];
+  const n = unitNormal([ox, oy, cx(inner), cy(inner)]);
+  // `shift` is across the way from a to b, which runs out of the inner box when it is a.
+  const s = down ? shift : -shift;
+  const [sx, sy] = [ox + n.x * s, oy + n.y * s];
+  const [ix, iy] = [cx(inner) + n.x * s, cy(inner) + n.y * s];
+  const t = Math.min(hit(inner, { x: sx, y: sy }, { x: ix, y: iy }), 1);
+  const mx = sx + (ix - sx) * t;
+  const my = sy + (iy - sy) * t;
+  return down ? [sx, sy, mx, my] : [mx, my, sx, sy];
 }
 
 /**
@@ -136,8 +148,31 @@ function apartLine(a: Outline, b: Outline, shift: number): Line {
 /** The straight line from a to b. */
 function connect(a: Outline, b: Outline, shift: number): Line {
   const down = contains(a, b);
-  if (down || contains(b, a)) return nestedLine(down ? a : b, down ? b : a, down);
+  if (down || contains(b, a)) return nestedLine(down ? a : b, down ? b : a, down, shift);
   return apartLine(a, b, shift);
+}
+
+/**
+ * How far the straight line between a and b can move to either side and still end inside both
+ * outlines, `portInset` clear of their edges: the room the relations between them share (#680).
+ * Between nested boxes, along the side the short line leaves, inside the inner box.
+ */
+export function pairRoom(a: Outline, b: Outline): number {
+  const down = contains(a, b);
+  if (down || contains(b, a)) {
+    const inner = down ? b : a;
+    const middle = { x: cx(inner), y: cy(inner) };
+    const [ox, oy] = nearestSide(down ? a : b, inner);
+    const n = unitNormal([ox, oy, middle.x, middle.y]);
+    return Math.max(0, insideAlong(inner, middle, n) - M.portInset);
+  }
+  const line = baseLine(a, b);
+  const n = unitNormal(line);
+  const reach = Math.min(
+    insideAlong(a, { x: line[0], y: line[1] }, n),
+    insideAlong(b, { x: line[2], y: line[3] }, n)
+  );
+  return Math.max(0, reach - M.portInset);
 }
 
 /** The sides of a box a line leaves or reaches. */
@@ -440,8 +475,9 @@ export interface RouteOptions {
 }
 
 /**
- * Routes a relation from a to b. `shift` moves the line sideways when another runs the opposite
- * way. `others` are the shapes to steer clear of; undefined skips that check (over the budget).
+ * Routes a relation from a to b. `shift` moves the line sideways, off the others between the
+ * same two shapes; it stays within their `pairRoom`. `others` are the shapes to steer clear of;
+ * undefined skips that check (over the budget).
  * `lanes` holds what the routes before it take up, so that this one keeps apart from them.
  */
 export function route(a: Outline, b: Outline, { shift, others, lanes }: RouteOptions): Route {

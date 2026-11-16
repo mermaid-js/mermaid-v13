@@ -7,9 +7,10 @@ import { C4_BOUNDARY_CYCLE } from '../codes.ts';
 import { c4TestContext, c4TestTheme, parsedC4 } from '../test-context.ts';
 import { c4LayoutViolations, c4RelationCrossings } from './invariants.ts';
 import { layoutC4 } from './layout.ts';
+import { C4_METRICS as M } from './metrics.ts';
 import { c4RelationPath } from './path.ts';
 import { fixture, FIXTURES } from './mmd.fixtures.ts';
-import type { C4Layout, C4RelationLayout, PlacedLabel, Rect } from './types.ts';
+import type { C4Layout, C4RelationLayout, PlacedLabel, Point, Rect } from './types.ts';
 
 /**
  * The C4 layout (spec #522 T3) through its seam, `layoutC4(model, ctx)`, on parser-produced
@@ -359,6 +360,63 @@ describe('c4 relations (D455)', () => {
       'C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel(a, b, "x")\nRel(b, a, "y")'
     );
     expect(rel(layout, 'a', 'b').start.y).not.toBeCloseTo(rel(layout, 'b', 'a').end.y);
+  });
+
+  describe('relations that repeat a pair (#680)', () => {
+    const repeated = (head: string, n: number): string =>
+      head + Array.from({ length: n }, (_, i) => `Rel(a, b, "r${i}")\n`).join('');
+    const ROW = 'C4Context\nSystem(a, "A")\nSystem(b, "B")\n';
+    const COLUMN =
+      'C4Context\nUpdateLayoutConfig($c4ShapeInRow="1")\nSystem(a, "A")\nSystem(b, "B")\n';
+    const DIAGONAL =
+      'C4Context\nUpdateLayoutConfig($c4ShapeInRow="2")\nSystem(a, "A")\nSystem(x, "X")\nSystem(y, "Y")\nSystem(b, "B")\n';
+    const NESTED = 'C4Context\nBoundary(a, "A") {\nSystem(b, "B")\n}\n';
+    /**
+     * More lines than fit `2 * pairShift` apart between two systems side by side (4), fewer than
+     * fit `near` apart (10).
+     */
+    const SQUEEZED = 8;
+    /** More lines than fit `near` apart between two systems side by side. */
+    const PAST_ROOM = 12;
+    /** Rounding in the shift arithmetic, far below a pixel. */
+    const ROUNDING = 1e-9;
+    /** Each straight line's offset across the first one's direction, in order, and the gaps. */
+    const across = (layout: C4Layout): { offsets: number[]; gaps: number[] } => {
+      const lines = layout.relations.filter((r) => r.from === 'a' && r.to === 'b');
+      expect(lines.every((r) => r.route === 'line')).toBe(true);
+      const [p, q] = lines[0]!.points as [Point, Point];
+      const len = Math.hypot(q.x - p.x, q.y - p.y);
+      const [nx, ny] = [-(q.y - p.y) / len, (q.x - p.x) / len];
+      const offsets = lines.map((r) => (r.start.x - p.x) * nx + (r.start.y - p.y) * ny);
+      const sorted = [...offsets].sort((u, v) => u - v);
+      return { offsets, gaps: sorted.slice(1).map((o, i) => o - sorted[i]!) };
+    };
+
+    it.each([
+      ['side by side', ROW],
+      ['one above the other', COLUMN],
+      ['diagonally apart', DIAGONAL],
+      ['one inside the other', NESTED],
+    ])('keeps each line between shapes %s at least `near` from the next', (_name, head) => {
+      const { gaps } = across(sound(repeated(head, SQUEEZED)));
+      expect(gaps).toHaveLength(SQUEEZED - 1);
+      for (const gap of gaps) expect(gap).toBeGreaterThanOrEqual(M.near - ROUNDING);
+    });
+
+    it('spreads them across in statement order', () => {
+      const { offsets } = across(sound(repeated(ROW, SQUEEZED)));
+      const steps = offsets.slice(1).map((o, i) => Math.sign(o - offsets[i]!));
+      expect(new Set(steps).size).toBe(1);
+      expect(steps[0]).not.toBe(0);
+    });
+
+    it('limit: past the room the pair shares, keeps them evenly apart, closer than `near`', () => {
+      const { gaps } = across(sound(repeated(ROW, PAST_ROOM)));
+      expect(gaps).toHaveLength(PAST_ROOM - 1);
+      for (const gap of gaps) expect(Math.abs(gap - gaps[0]!)).toBeLessThan(ROUNDING);
+      expect(gaps[0]).toBeGreaterThan(0);
+      expect(gaps[0]).toBeLessThan(M.near);
+    });
   });
 
   it('draws a self-loop on the right side', () => {
