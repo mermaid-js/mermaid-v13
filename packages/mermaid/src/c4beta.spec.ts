@@ -75,6 +75,7 @@ describe('c4-beta through the public API (spec #730)', () => {
       'b08-style-values.mmd': ['C4BETA_STYLE_IGNORED'],
       'b21-tech-on-person.mmd': ['C4BETA_TECHNOLOGY_DROPPED', 'C4BETA_INSTANCES_DROPPED'],
       'b25-step-outside-dynamic.mmd': ['C4BETA_STEP_IGNORED'],
+      'markup-and-quotes-in-every-text.mmd': ['C4_COLOR_INVALID', 'HTML_DROPPED'],
     };
     const m = createMermaid();
     const files = readdirSync(FIXTURES).filter((f) => f.endsWith('.mmd'));
@@ -105,6 +106,25 @@ describe('c4-beta through the public API (spec #730)', () => {
     expect(e).toBeInstanceOf(UnsupportedFormatError);
     expect((e as UnsupportedFormatError).diagramType).toBe('c4beta');
     expect((e as UnsupportedFormatError).format).toBe('ascii');
+  });
+
+  it('writes markup and quotes in every text as text, and refuses a colour that is not one', async () => {
+    const r = await createMermaid().render('c1', fixture('markup-and-quotes-in-every-text.mmd'));
+    assertInert(r.svg);
+    expect(r.svg).not.toMatch(/<(script|img|a)\b|<[^>]*\son\w+=|<[^>]*href=/i);
+    expect(r.svg.match(/<svg\b/g)).toHaveLength(1);
+    const all = texts(r.svg).join('\n');
+    for (const part of [
+      '"Title" & \'more\'',
+      'Says "hi" & \'bye\'',
+      'Serves </text><text>orders',
+      '"now"',
+      "[HTTPS & 'TLS']",
+    ])
+      expect(all, part).toContain(part);
+    expect(r.svg).toContain('&lt;b onmouseover=&quot;x()&quot;&gt;Acc&lt;/b&gt;');
+    expect(r.svg).toContain('&lt;/desc&gt;&lt;script&gt;alert(2)&lt;/script&gt;');
+    expect(r.svg).toMatch(/c4-person"[^>]*><rect [^>]*fill="#08427B"/);
   });
 
   it('keeps ids unique and writes none but the accessible title and description', async () => {
