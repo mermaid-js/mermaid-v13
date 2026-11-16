@@ -131,6 +131,17 @@ describe('the model, as v12 built it', () => {
     ]);
   });
 
+  it('moves and styles every relation an UpdateRelStyle selects, also by `$from` (#680)', () => {
+    const m = model(
+      'C4Context\nSystem(a, "A")\nSystem(b, "B")\nSystem(c, "C")\nRel(a, b, "one")\nRel(a, b, "two")\nRel(a, b, "three")\nUpdateRelStyle(a, b, $from="c", $lineColor="red")\nUpdateRelStyle(c, b, $textColor="blue")'
+    );
+    expect(m.relations.map((r) => [r.label, r.from, r.to, r.lineColor, r.textColor])).toEqual([
+      ['one', 'c', 'b', 'red', 'blue'],
+      ['two', 'c', 'b', 'red', 'blue'],
+      ['three', 'c', 'b', 'red', 'blue'],
+    ]);
+  });
+
   it('leaves a field out when a named argument took its slot (v12 set no default there)', () => {
     const m = model('C4Context\nPerson(a, "A", $sprite="s")\nRel(a, a, "x", $offsetX="3")');
     expect(m.elements[0]).not.toHaveProperty('descr');

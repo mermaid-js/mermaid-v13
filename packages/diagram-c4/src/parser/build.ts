@@ -560,8 +560,9 @@ export class C4Builder {
     if (!from || !to || from.name !== undefined || to.name !== undefined) return;
     this.ref(from.value, from);
     this.ref(to.value, to);
-    // Every relation between the pair written so far (#680).
-    for (const i of this.relationIndex.get(from.value)?.get(to.value) ?? []) {
+    // Every relation between the pair written so far (#680), listed before any is styled: a
+    // `$from` or `$to` among the arguments moves each out of that list.
+    for (const i of [...(this.relationIndex.get(from.value)?.get(to.value) ?? [])]) {
       const item: Item = { type: 'relation', bag: this.relations[i] as OpenRelation, index: i };
       this.rest(item, args, { table: REL_STYLE, from: 2, to: 4 });
       this.relStyleOffsets(item, args);
