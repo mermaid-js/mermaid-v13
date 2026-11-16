@@ -13,7 +13,7 @@ async function main() {
     {
       manifest: diagramPackage.mermaid,
       detector,
-      load: () => import('mermaid-fixture-diagram'),
+      load: () => import('mermaid-fixture-diagram/entry'),
     },
     { manifest: extensionPackage.mermaid, load: () => import('mermaid-fixture-extension') },
   ]);

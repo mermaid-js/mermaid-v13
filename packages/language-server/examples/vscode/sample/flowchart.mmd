@@ -1,0 +1,11 @@
+flowchart TD
+  %% F2 on `pr` renames it on every line below.
+  pr[Pull request] --> ci{CI green?}
+  ci -->|yes| review[Review]
+  ci -->|no| pr
+  subgraph land [Landing]
+    review --> merge[Merge]
+  end
+  review -.->|changes| pr
+  classDef hot fill:#f96
+  class pr hot
