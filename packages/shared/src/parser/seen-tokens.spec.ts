@@ -1,7 +1,17 @@
 import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { TokenStream } from '@mermaid-js/core/parser-kit';
 import { describe, expect, it } from 'vitest';
-import { bodyTokens, seenIndices, seenTokens } from './seen-tokens.ts';
+import {
+  bodyTokens,
+  bodyView,
+  COMMENTS,
+  cooked,
+  keptTokens,
+  NO_KINDS,
+  seenIndices,
+  seenTokens,
+  TRIVIA_KINDS,
+} from './seen-tokens.ts';
 
 const WORD = 10;
 
@@ -87,5 +97,52 @@ describe('bodyTokens', () => {
     });
     expect(seen).toEqual([from]);
     expect(out).toEqual([{ kind: WORD, text: 'pie', range: { start: from, end: src.length } }]);
+  });
+});
+
+describe('bodyView', () => {
+  it('starts after front matter and cuts out the directives', () => {
+    const src = '---\ntitle: t\n---\n%%{init: {}}%%\npie';
+    const { bodyStart, view } = bodyView(src);
+    expect(bodyStart).toBe(src.indexOf('%%{'));
+    expect(view.holes.map((h) => h.kind)).toContain('directive');
+  });
+});
+
+describe('keptTokens', () => {
+  const src = 'a %% c\n  b';
+  const s = stream(src, [
+    [WORD, 0, 1],
+    [Kind.Space, 1, 2],
+    [Kind.Comment, 2, 6],
+    [Kind.Newline, 6, 7],
+    [Kind.Space, 7, 9],
+    [WORD, 9, 10],
+  ]);
+  const raw = (j: number) => src.slice(s.start[j], s.end[j]);
+
+  it('leaves out the kinds in `skip` and the final EOF, with the text `text` reads', () => {
+    expect(keptTokens(s, TRIVIA_KINDS, raw)).toEqual([
+      { kind: WORD, text: 'a', range: { start: 0, end: 1 } },
+      { kind: Kind.Newline, text: '\n', range: { start: 6, end: 7 } },
+      { kind: WORD, text: 'b', range: { start: 9, end: 10 } },
+    ]);
+  });
+
+  it('keeps blanks when `skip` is only comments and directives', () => {
+    expect(keptTokens(s, COMMENTS, raw).map((t) => t.kind)).toEqual([
+      WORD,
+      Kind.Space,
+      Kind.Newline,
+      Kind.Space,
+      WORD,
+    ]);
+  });
+
+  it('reads each token through the source view with `cooked`', () => {
+    const crlf = 'a\r\nb';
+    const t = stream(crlf, [[WORD, 0, 4]]);
+    const view = sourceView(crlf, 0, []);
+    expect(keptTokens(t, NO_KINDS, cooked(crlf, t, view))[0]?.text).toBe('a\nb');
   });
 });

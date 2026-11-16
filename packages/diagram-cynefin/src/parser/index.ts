@@ -2,11 +2,10 @@
  * The cynefin parser's public surface: the lexer, gated against v12's Langium lexer (T1, #461),
  * and the parser, detection and AST (T2, #465).
  */
-import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
+import { Kind } from '@mermaid-js/core/parser-kit';
 import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
-import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import { seenTokens } from '@mermaid-js/shared/parser/seen-tokens';
+import { bodyView, seenTokens } from '@mermaid-js/shared/parser/seen-tokens';
 import type { SeenToken } from '@mermaid-js/shared/parser/seen-tokens';
 import { lex } from './lexer.ts';
 
@@ -16,6 +15,7 @@ export type { CynefinParseOptions, CynefinParseResult } from './parser.ts';
 export { detectCynefin } from './detect.ts';
 export type * from './ast.ts';
 
+/** A token of this diagram: its `kind` is a `CynefinTokenKind` or a shared `Kind`. */
 export type CynefinToken = SeenToken;
 
 export interface CynefinLexed {
@@ -28,17 +28,12 @@ export interface CynefinLexed {
 }
 
 /**
- * Lex a whole source as the parser does: core's {@link preprocess}, the {@link sourceView} of
- * the body, then the cynefin lexer over it. The one stream setup the parser (T2), the tokens
+ * Lex a whole source as the parser does: core's preprocess and the source view of the body
+ * ({@link bodyView}), then the cynefin lexer over it. The one stream setup the parser (T2), the tokens
  * below and the gates share.
  */
 export function lexCynefin(src: string): CynefinLexed {
-  const pre = preprocess(src);
-  const view = sourceView(
-    src,
-    pre.bodyStart,
-    pre.directives.map((d) => d.range)
-  );
+  const { pre, view } = bodyView(src);
   return { pre, view, stream: lex(src, pre.bodyStart, view) };
 }
 

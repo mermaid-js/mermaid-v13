@@ -12,6 +12,7 @@ export type { GitGraphParseOptions, GitGraphParseResult } from './parser.ts';
 export { detectGitGraph } from './detect.ts';
 export type * from './ast.ts';
 
+/** A token of this diagram: its `kind` is a `GitGraphTokenKind` or a shared `Kind`. */
 export type GitGraphToken = SeenToken;
 
 /**

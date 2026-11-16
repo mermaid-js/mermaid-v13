@@ -13,6 +13,7 @@ export type { PacketParseOptions, PacketParseResult } from './parser.ts';
 export { detectPacket } from './detect.ts';
 export type * from './ast.ts';
 
+/** A token of this diagram: its `kind` is a `PacketTokenKind` or a shared `Kind`. */
 export type PacketToken = SeenToken;
 
 /**

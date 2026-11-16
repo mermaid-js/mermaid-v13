@@ -1,21 +1,36 @@
 /**
- * The token list a langium-family diagram's `xxxTokens()` gives the language service and the
- * lexer-parity specs (R-LANG-7): what v12's lexer saw, as each `parser/index.ts` used to compute
- * it by hand.
+ * The token list a diagram's `xxxTokens()` gives the language service and the lexer-parity specs
+ * (R-LANG-7), as each `parser/index.ts` used to compute it by hand. The langium family lists
+ * what v12's lexer saw ({@link seenTokens}); the jison family leaves out a set of kinds
+ * ({@link keptTokens}).
  */
 import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
-import type { Range, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { Range, SourceView, TokenStream, TokenView } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
+import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 
 export interface SeenToken {
   /** The diagram's own token kind, or a shared `Kind`. */
   kind: number;
   /**
-   * The token's text as v12's lexer read it: CRLF and CR as LF, removed spans cut out, tag
-   * quotes as `'`, entities decoded to `&name;` as v12's renderer did.
+   * The token's text as v12's lexer read it. Through {@link cooked}: CRLF and CR as LF, removed
+   * spans cut out, tag quotes as `'`, entities decoded to `&name;` as v12's renderer did.
    */
   text: string;
   range: Range;
+}
+
+/** The text of token `j`. */
+export type TokenText = (j: number) => string;
+
+/** Each token's text `cook()`ed from `src` through `view`, as v12's lexer read it. */
+export function cooked(src: string, tokens: TokenView, view: SourceView): TokenText {
+  return (j) => cook(src, tokens.start[j] ?? 0, tokens.end[j] ?? 0, view);
+}
+
+function tokenAt(tokens: TokenView, j: number, text: TokenText): SeenToken {
+  const range = { start: tokens.start[j] ?? 0, end: tokens.end[j] ?? 0 };
+  return { kind: tokens.kind[j] ?? Kind.EOF, text: text(j), range };
 }
 
 /**
@@ -45,30 +60,65 @@ export function seenIndices(stream: TokenStream, view: SourceView): number[] {
 
 /** The tokens at {@link seenIndices}, each with its text `cook()`ed from `src`. */
 export function seenTokens(src: string, stream: TokenStream, view: SourceView): SeenToken[] {
-  return seenIndices(stream, view).map((j) => {
-    const start = stream.start[j] ?? 0;
-    const end = stream.end[j] ?? 0;
-    return {
-      kind: stream.kind[j] ?? Kind.EOF,
-      text: cook(src, start, end, view),
-      range: { start, end },
-    };
-  });
+  const text = cooked(src, stream, view);
+  return seenIndices(stream, view).map((j) => tokenAt(stream, j, text));
 }
 
 /** A diagram's lexer over `src[from…]`, through the v12 source view. */
 export type ViewLexer = (src: string, from: number, view: SourceView) => TokenStream;
 
+/** Core's preprocess of a source, where its body starts, and the view of that body. */
+export interface BodyView {
+  pre: PreprocessResult;
+  bodyStart: number;
+  view: SourceView;
+}
+
 /**
- * {@link seenTokens} of `src` for a diagram whose v12 text is core's preprocessed body with only
- * the directives cut out: `lex` runs from the body start over the default source view.
+ * `src` as most v12 lexers read it: core's preprocess (front matter, directives) and the source
+ * view over the body with default options (v12 ran every shared rewrite).
  */
-export function bodyTokens(src: string, lex: ViewLexer): SeenToken[] {
+export function bodyView(src: string): BodyView {
   const pre = preprocess(src);
   const view = sourceView(
     src,
     pre.bodyStart,
     pre.directives.map((d) => d.range)
   );
-  return seenTokens(src, lex(src, pre.bodyStart, view), view);
+  return { pre, bodyStart: pre.bodyStart, view };
+}
+
+/** {@link seenTokens} of `src`, lexed by `lex` from the body start over {@link bodyView}. */
+export function bodyTokens(src: string, lex: ViewLexer): SeenToken[] {
+  const { bodyStart, view } = bodyView(src);
+  return seenTokens(src, lex(src, bodyStart, view), view);
+}
+
+/** Comments and directives: what a jison-family token list leaves out when it keeps blanks. */
+export const COMMENTS: ReadonlySet<number> = /* @__PURE__ */ new Set([
+  Kind.Comment,
+  Kind.Directive,
+]);
+/** Comments, directives and blanks. */
+export const TRIVIA_KINDS: ReadonlySet<number> = /* @__PURE__ */ new Set([
+  Kind.Comment,
+  Kind.Directive,
+  Kind.Space,
+]);
+/** No kind: every token but the final `EOF`. */
+export const NO_KINDS: ReadonlySet<number> = /* @__PURE__ */ new Set<number>();
+
+/** The tokens of `tokens` whose kind is not in `skip`, in order, without the final `EOF`. */
+export function keptTokens(
+  tokens: TokenView,
+  skip: ReadonlySet<number>,
+  text: TokenText
+): SeenToken[] {
+  const out: SeenToken[] = [];
+  for (let j = 0; j < tokens.length; j++) {
+    const kind = tokens.kind[j] ?? Kind.EOF;
+    if (kind === Kind.EOF || skip.has(kind)) continue;
+    out.push(tokenAt(tokens, j, text));
+  }
+  return out;
 }

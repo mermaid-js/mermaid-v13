@@ -12,6 +12,7 @@ export type { PieParseOptions, PieParseResult } from './parser.ts';
 export { detectPie } from './detect.ts';
 export type * from './ast.ts';
 
+/** A token of this diagram: its `kind` is a `PieTokenKind` or a shared `Kind`. */
 export type PieToken = SeenToken;
 
 /**

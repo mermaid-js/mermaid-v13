@@ -18,6 +18,7 @@ export { TREEMAP_INVALID_VALUE } from './normalise.ts';
 export { detectTreemap } from './detect.ts';
 export type * from './ast.ts';
 
+/** A token of this diagram: its `kind` is a `TreemapTokenKind` or a shared `Kind`. */
 export type TreemapToken = SeenToken;
 
 /**

@@ -2,9 +2,8 @@
  * The timeline parser's public surface: the parser, detection, and the lexer gated against
  * v12's jison lexer.
  */
-import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
-import type { Range } from '@mermaid-js/core/parser-kit';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { bodyView, cooked, keptTokens, TRIVIA_KINDS } from '@mermaid-js/shared/parser/seen-tokens';
+import type { SeenToken } from '@mermaid-js/shared/parser/seen-tokens';
 import { lex } from './lexer.ts';
 
 export { JISON_NAMES, T as TimelineTokenKind } from './tokens.ts';
@@ -13,39 +12,15 @@ export type { TimelineParseOptions, TimelineParseResult } from './parser.ts';
 export { detectTimeline } from './detect.ts';
 export type * from './ast.ts';
 
-export interface TimelineToken {
-  /** A `TimelineTokenKind` or a shared `Kind`. */
-  kind: number;
-  /** The token's text as v12's parser read it (entities, CRLF and removed spans applied). */
-  text: string;
-  range: Range;
-}
+/** A token of this diagram: its `kind` is a `TimelineTokenKind` or a shared `Kind`. */
+export type TimelineToken = SeenToken;
 
 /**
  * The significant timeline tokens of `src` (trivia left out), for editors
  * and for the lexer-parity gate.
  */
 export function timelineTokens(src: string): TimelineToken[] {
-  const pre = preprocess(src);
-  const view = sourceView(
-    src,
-    pre.bodyStart,
-    pre.directives.map((d) => d.range)
-  );
-  const stream = lex(src, pre.bodyStart, view);
-  const out: TimelineToken[] = [];
-  for (let j = 0; j < stream.length; j++) {
-    const kind = stream.kind[j] ?? Kind.EOF;
-    if (
-      kind === Kind.Comment ||
-      kind === Kind.Directive ||
-      kind === Kind.Space ||
-      kind === Kind.EOF
-    )
-      continue;
-    const start = stream.start[j] ?? 0;
-    const end = stream.end[j] ?? 0;
-    out.push({ kind, text: cook(src, start, end, view), range: { start, end } });
-  }
-  return out;
+  const { bodyStart, view } = bodyView(src);
+  const stream = lex(src, bodyStart, view);
+  return keptTokens(stream, TRIVIA_KINDS, cooked(src, stream, view));
 }

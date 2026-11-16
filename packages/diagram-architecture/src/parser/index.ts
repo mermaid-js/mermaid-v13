@@ -12,6 +12,7 @@ export type { ArchitectureParseOptions, ArchitectureParseResult } from './parser
 export { detectArchitecture } from './detect.ts';
 export type * from './ast.ts';
 
+/** A token of this diagram: its `kind` is an `ArchitectureTokenKind` or a shared `Kind`. */
 export type ArchitectureToken = SeenToken;
 
 /**

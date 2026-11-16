@@ -2,10 +2,9 @@
  * The treeView parser's public surface: the parser and detection (#572), and the lexer gated
  * against v12's Langium lexer (#571).
  */
-import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
+import { Kind } from '@mermaid-js/core/parser-kit';
 import type { Range, SourceView } from '@mermaid-js/core/parser-kit';
-import { preprocess } from '@mermaid-js/core/preprocess';
-import { seenIndices } from '@mermaid-js/shared/parser/seen-tokens';
+import { bodyView, seenIndices } from '@mermaid-js/shared/parser/seen-tokens';
 import { lex } from './lexer.ts';
 import type { BoxPass } from './box.ts';
 
@@ -45,13 +44,7 @@ export interface TreeViewView {
  * the source view over the body with default options (v12 ran every shared rewrite).
  */
 export function treeViewView(src: string): TreeViewView {
-  const pre = preprocess(src);
-  const view = sourceView(
-    src,
-    pre.bodyStart,
-    pre.directives.map((d) => d.range)
-  );
-  return { bodyStart: pre.bodyStart, view };
+  return bodyView(src);
 }
 
 /** What {@link treeViewTokens} gives: the tokens, the box pass, and v12's text before each. */

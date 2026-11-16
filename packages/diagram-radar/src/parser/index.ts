@@ -20,6 +20,7 @@ export type { RadarParseOptions, RadarParseResult } from './parser.ts';
 export { detectRadar } from './detect.ts';
 export type * from './ast.ts';
 
+/** A token of this diagram: its `kind` is a `RadarTokenKind` or a shared `Kind`. */
 export type RadarToken = SeenToken;
 
 /**

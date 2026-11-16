@@ -16,6 +16,7 @@ export type * from './ast.ts';
 
 export { EVENTMODELING_TRIVIA, T as EventModelingTokenKind, LANGIUM_NAMES } from './tokens.ts';
 
+/** A token of this diagram: its `kind` is an `EventModelingTokenKind` or a shared `Kind`. */
 export type EventModelingToken = SeenToken;
 
 /**

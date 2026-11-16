@@ -12,6 +12,7 @@ export type { InfoParseOptions, InfoParseResult } from './parser.ts';
 export { detectInfo } from './detect.ts';
 export type * from './ast.ts';
 
+/** A token of this diagram: its `kind` is an `InfoTokenKind` or a shared `Kind`. */
 export type InfoToken = SeenToken;
 
 /**
