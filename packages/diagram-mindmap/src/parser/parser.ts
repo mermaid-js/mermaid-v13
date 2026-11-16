@@ -32,7 +32,7 @@
  * line and carries on.
  */
 import { cook, CR, isSpace, Kind, kindSet, LF, SPACE, TAB } from '@mermaid-js/core/parser-kit';
-import { STOP } from '@mermaid-js/shared/parser/support';
+import { holesIn, STOP } from '@mermaid-js/shared/parser/support';
 import type {
   ParseOptions,
   ParseResult,
@@ -40,7 +40,7 @@ import type {
   StatementSpan,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
-import { CLOSERS, treeGrammar, TreeParser } from '@mermaid-js/shared/parser/tree';
+import { treeGrammar, TreeParser } from '@mermaid-js/shared/parser/tree';
 import { DEFAULT_LIMITS, LIMIT_CODES, checkLimit } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
@@ -98,7 +98,6 @@ const PROBE_FOLLOWS = kindSet(T.SpaceList, T.SpaceLine, T.NodeDStart, T.NodeDesc
 const CLASS_WORD = /[^\t\n\f\r ]+/g;
 const CLASS_BLANK = /[\t\n\f\r ]/;
 
-const TEXT = ['the text of the node'];
 const ONE_HEADER = '`mindmap` starts the diagram and comes only once';
 const BRACE_HINT = 'a hexagon is written `{{text}}`';
 
@@ -115,6 +114,7 @@ const GRAMMAR = /* @__PURE__ */ treeGrammar<Lexed>({
   header: ['`mindmap`'],
   headerHint: 'a mindmap starts with `mindmap`',
   statement: ['a node such as `root` or `id[text]`', 'a `::icon(…)` or `:::class` line'],
+  shapeText: ['the text of the node'],
   decorationHint: 'an `::icon(…)` or `:::class` goes on a line of its own, after its node',
   oneNodeHint: 'each node goes on a line of its own',
   afterBlankHint:
@@ -186,25 +186,14 @@ class MindmapParser extends TreeParser<Lexed, PreprocessResult> {
     this.start();
     this.document();
     this.closeOpen(0, this.lastEnd);
-    const { st, pre, src } = this;
     const colorBy = this.options.colorBy ?? 'branch';
     const sections = mindmapSections(this.nodes, colorBy);
     this.nodes.forEach((n, k) => {
       const s = sections[k];
       if (s !== undefined) n.section = s;
     });
-    const model: MindmapModel = {
-      nodes: this.nodes as MindmapNode[],
-      colorBy,
-      warnings: st.diagnostics.list.filter((d) => d.severity === 'warning'),
-    };
-    const ast: MindmapDocument = {
-      id: 'doc',
-      type: 'Document',
-      range: { start: pre.bodyStart, end: src.length },
-      children: this.children,
-    };
-    return st.result(model, ast, this.c.tokens, this.options, this.probe);
+    const model = { nodes: this.nodes as MindmapNode[], colorBy };
+    return this.finish(model, this.children, this.options);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -241,7 +230,7 @@ class MindmapParser extends TreeParser<Lexed, PreprocessResult> {
    */
   private sourceWords(r: Range): Range[] {
     const { src } = this;
-    const holes = this.holesIn(r);
+    const holes = holesIn(this.view, r);
     const out: Range[] = [];
     let h = 0;
     let start = -1;
@@ -266,21 +255,6 @@ class MindmapParser extends TreeParser<Lexed, PreprocessResult> {
     return out;
   }
 
-  /** The removed spans that overlap `r`, found by binary search (they are in source order). */
-  private holesIn(r: Range): readonly Range[] {
-    const { holes } = this.view;
-    let lo = 0;
-    let hi = holes.length;
-    while (lo < hi) {
-      const mid = (lo + hi) >> 1;
-      if ((holes[mid]?.end ?? 0) <= r.start) lo = mid + 1;
-      else hi = mid;
-    }
-    let end = lo;
-    while (end < holes.length && (holes[end]?.start ?? 0) < r.end) end++;
-    return holes.slice(lo, end);
-  }
-
   protected hintFor(kind: number): string | undefined {
     if (kind === T.Mindmap) return ONE_HEADER;
     return kind === Kind.Error ? BRACE_HINT : undefined;
@@ -291,14 +265,8 @@ class MindmapParser extends TreeParser<Lexed, PreprocessResult> {
   /** `node`: `nodeWithId` (an id, then an optional shape) or `nodeWithoutId` (a shape). */
   protected node(indent: number): void {
     const { c } = this;
-    let nodeId: string | undefined;
     const first = c.pos;
-    if (c.kind === T.NodeId) {
-      const j = c.next();
-      nodeId = this.raw(j);
-      this.idSymbol(nodeId, j);
-      c.tested(T.NodeDStart);
-    }
+    const nodeId = this.nodeId(T.NodeDStart);
     const parts: NodeParts = {
       nodeId,
       label: nodeId ?? '',
@@ -323,28 +291,13 @@ class MindmapParser extends TreeParser<Lexed, PreprocessResult> {
 
   /** `NODE_DSTART NODE_DESCR NODE_DEND`, into `parts` as far as it gets. */
   private shape(parts: NodeParts): void {
-    const { c } = this;
-    const open = c.next();
-    const opener = this.raw(open);
-    parts.shape = shapeOf(opener, '');
-    parts.range = { start: parts.range.start, end: this.range(open).end };
-    c.tested(T.NodeDescr);
-    if (c.kind !== T.NodeDescr) {
-      if (c.kind === Kind.EOF) this.endsOpen();
-      this.fail(TEXT);
-    }
-    const text = c.next();
+    // The shape as far as the opener tells, for a node whose shape is left open.
+    parts.shape = shapeOf(this.raw(), '');
+    const { opener, text } = this.shapeOpen(parts);
     parts.label = this.raw(text);
-    if (c.tokens.kind[text - 1] === T.MdStringStart) parts.markdown = true;
-    parts.range = { start: parts.range.start, end: this.range(text).end };
-    c.tested(T.NodeDEnd);
-    if (c.kind !== T.NodeDEnd) {
-      if (c.kind === Kind.EOF) this.endsOpen();
-      this.fail([`\`${CLOSERS[opener] ?? ')'}\``]);
-    }
-    const close = c.next();
+    if (this.c.tokens.kind[text - 1] === T.MdStringStart) parts.markdown = true;
+    const close = this.shapeClose(parts, opener, text);
     parts.shape = shapeOf(opener, this.raw(close));
-    parts.range = { start: parts.range.start, end: this.range(close).end };
   }
 
   /** v12 `addNode`: the node's place in the tree, or the second-root error. */

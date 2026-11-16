@@ -20,11 +20,14 @@
  * they build, and its messages ({@link TreeGrammar}).
  */
 import {
+  type AstNode,
   type Diagnostic,
   inKindSet,
   Kind,
   type KindSet,
   LineIndex,
+  type ParseOptions,
+  type ParseResult,
   ParseState,
   Probe,
   ProbeCursor,
@@ -62,6 +65,8 @@ export interface TreeGrammarSpec<Lexed extends { readonly tokens: TokenStream }>
   readonly headerHint: string;
   /** What may start a statement, for messages. */
   readonly statement: string[];
+  /** What the parser expects after a shape's opener: `the text of the node`. */
+  readonly shapeText: string[];
   /** The hint where a decoration follows on a node's line. */
   readonly decorationHint: string;
   /** The hint where a second node follows on a line. */
@@ -107,6 +112,11 @@ export const CLOSERS: Readonly<Record<string, string>> = /* @__PURE__ */ Object.
   '-)': '(-',
   '(-': '-)',
 });
+
+/** The document AST a tree parse returns: one node per node statement, in source order. */
+export interface TreeDocument<C extends AstNode> extends AstNode<'Document'> {
+  children: C[];
+}
 
 /** The text of the first line. */
 const FIRST_LINE = /^[^\n\r\u2028\u2029]*/;
@@ -167,6 +177,29 @@ export abstract class TreeParser<
     this.lexed = grammar.lex(src, pre.bodyStart, this.view, probe);
     // The cursor marks an offset inside a comment or directive as outside code.
     this.c = new ProbeCursor(this.lexed.tokens, probe, grammar.skipped);
+  }
+
+  /**
+   * The parse result: `model` with the warnings reported so far, and the document over the
+   * body holding `children`.
+   */
+  protected finish<M extends object, C extends AstNode>(
+    model: M,
+    children: C[],
+    options: ParseOptions
+  ): ParseResult<M & { warnings: Diagnostic[] }, TreeDocument<C>> {
+    const { st, pre, src } = this;
+    const full = {
+      ...model,
+      warnings: st.diagnostics.list.filter((d) => d.severity === 'warning'),
+    };
+    const ast: TreeDocument<C> = {
+      id: 'doc',
+      type: 'Document',
+      range: { start: pre.bodyStart, end: src.length },
+      children,
+    };
+    return st.result(full, ast, this.c.tokens, options, this.probe);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -538,6 +571,65 @@ export abstract class TreeParser<
 
   /** `node`: an id, then an optional shape, or a shape; at `indent` (its width as written). */
   protected abstract node(indent: number): void;
+
+  /**
+   * A node's optional `NODE_ID`, recorded as a symbol: its text, or undefined without one. With
+   * one, `after` is what the probe hears the parser accept next.
+   */
+  protected nodeId(after: number | readonly number[]): string | undefined {
+    const { c } = this;
+    if (c.kind !== this.k.NodeId) return undefined;
+    const j = c.next();
+    const id = this.raw(j);
+    this.idSymbol(id, j);
+    c.tested(after);
+    return id;
+  }
+
+  /**
+   * `NODE_DSTART NODE_DESCR`, the start of a shape, with `node.range` extended over each token
+   * read: the opener's text and the text token's index.
+   */
+  protected shapeOpen(node: { range: Range }): { opener: string; text: number } {
+    const { c } = this;
+    const open = c.next();
+    const opener = this.raw(open);
+    node.range = { start: node.range.start, end: this.range(open).end };
+    c.tested(this.k.NodeDescr);
+    if (c.kind !== this.k.NodeDescr) {
+      if (c.kind === Kind.EOF) this.endsOpen();
+      this.fail(this.grammar.shapeText);
+    }
+    const text = c.next();
+    node.range = { start: node.range.start, end: this.range(text).end };
+    return { opener, text };
+  }
+
+  /**
+   * `NODE_DEND`, the end of the shape `opener` opened, its text at token `text`: the closer's
+   * index, with `node.range` extended over it.
+   */
+  protected shapeClose(node: { range: Range }, opener: string, text: number): number {
+    const { c } = this;
+    c.tested(this.k.NodeDEnd);
+    if (c.kind !== this.k.NodeDEnd) {
+      const closer = `\`${CLOSERS[opener] ?? ')'}\``;
+      this.unclosedShape(closer, text);
+      if (c.kind === Kind.EOF) this.endsOpen();
+      this.fail([closer]);
+    }
+    const close = c.next();
+    node.range = { start: node.range.start, end: this.range(close).end };
+    return close;
+  }
+
+  /**
+   * Where a shape's closer (`closer`, in backticks) is due and missing after its text at token
+   * `text`: a diagram's own report, which throws {@link STOP}. Nothing by default.
+   */
+  protected unclosedShape(_closer: string, _text: number): void {
+    // The generic report follows in shapeClose.
+  }
 
   /** `ICON` or `CLASS`, on the last node in source order. */
   protected abstract decoration(): void;
