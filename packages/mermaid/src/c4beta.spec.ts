@@ -6,8 +6,10 @@ import { createMermaid, MermaidError, UnsupportedFormatError } from './index.ts'
 
 // c4-beta is the second header type of the `c4` plugin (spec #730): detected, routed, laid out by
 // core's `layered` engine and drawn with C4's painters.
-const FIXTURES = join(import.meta.dirname, '../../../e2e/diagrams/c4beta/pr-check');
-const fixture = (name: string): string => readFileSync(join(FIXTURES, name), 'utf8');
+const FIXTURES = join(import.meta.dirname, '../../../e2e/diagrams/c4beta');
+const PR_CHECK = 'pr-check';
+const fixture = (name: string, tier = PR_CHECK): string =>
+  readFileSync(join(FIXTURES, tier, name), 'utf8');
 
 const rejection = (p: Promise<unknown>): Promise<unknown> =>
   p.then(
@@ -77,7 +79,7 @@ describe('c4-beta through the public API (spec #730)', () => {
       'b25-step-outside-dynamic.mmd': ['C4BETA_STEP_IGNORED'],
     };
     const m = createMermaid();
-    const files = readdirSync(FIXTURES).filter((f) => f.endsWith('.mmd'));
+    const files = readdirSync(join(FIXTURES, PR_CHECK)).filter((f) => f.endsWith('.mmd'));
     expect(files.length).toBeGreaterThanOrEqual(19);
     for (const f of files) {
       const r = await m.render('c1', fixture(f));
@@ -228,7 +230,7 @@ describe('c4-beta through the public API (spec #730)', () => {
 
       it('is gone with `legend off`, and the canvas shrinks by what it held', async () => {
         const on = await createMermaid().render('c1', fixture('legend-kinds.mmd'));
-        const off = await createMermaid().render('c1', fixture('legend-off.mmd'));
+        const off = await createMermaid().render('c1', fixture('legend-off.mmd', 'nightly-check'));
         expect(off.svg).not.toContain('c4-legend');
         const [, , , heightOn] = viewBox(on.svg);
         const [, , , heightOff] = viewBox(off.svg);
