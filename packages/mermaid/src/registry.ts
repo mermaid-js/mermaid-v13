@@ -140,6 +140,11 @@ export interface SkippedPlugin {
 interface Entry extends Detected {
   readonly formats: readonly string[];
   /**
+   * A first-party row's own formats, which bound its plugin's: a type can draw fewer formats
+   * than the package that serves it (`typeOptions` `formats`: `c4beta` has no text output).
+   */
+  readonly rowFormats?: readonly string[];
+  /**
    * `body` is the text from the diagram's start (front matter, leading directives and comments
    * skipped). `clean` is the text third-party detectors are given and `v12` the one first-party
    * rows fall back to (core's `detectText`, without and with `keepLastLineComment`). Both are
@@ -466,6 +471,7 @@ export class Registry {
         ...e,
         id: e.id,
         formats: e.formats ?? [],
+        rowFormats: e.formats,
         detect: (body, _clean, _config, v12) =>
           firstPartyDetects((text) => e.pattern.test(text), body, v12),
       });
@@ -572,7 +578,8 @@ export class Registry {
     const match = (e: Entry): boolean => e.type === typeOrId || e.id === typeOrId;
     const explicit = this.external.find(match);
     if (explicit) return explicit;
-    const first = this.entries.find(match);
+    // A type finds its own row before a row whose plugin id it is (`c4` after `c4beta`).
+    const first = this.entries.find((e) => e.type === typeOrId) ?? this.entries.find(match);
     if (first) return this.replacementOf(first) ?? first;
     return this.replaced.get(typeOrId) ?? this.discoveredFor(match);
   }
@@ -605,7 +612,8 @@ export class Registry {
   async loadAscii(typeOrId: string): Promise<AnyAsciiHook | undefined> {
     const entry = this.entryFor(typeOrId);
     const id = entry?.id;
-    if (!entry || id === undefined) return undefined;
+    if (!entry || id === undefined || entry.rowFormats?.includes('ascii') === false)
+      return undefined;
     const have = this.ascii(id);
     if (have) return have;
     if (!(await this.load(id))) return this.ascii(id);
@@ -631,7 +639,9 @@ export class Registry {
   formats(typeOrId: string): readonly string[] {
     const entry = this.entryFor(typeOrId);
     if (!entry?.id) return [];
-    return this.plugins.get(entry.id)?.formats ?? entry.formats;
+    const all = this.plugins.get(entry.id)?.formats ?? entry.formats;
+    const row = entry.rowFormats;
+    return row ? all.filter((f) => row.includes(f)) : all;
   }
 
   /** Forgets what was loaded for `id`; an eager entry is ready again at once. */

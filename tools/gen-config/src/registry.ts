@@ -91,8 +91,9 @@ export interface DiagramManifest {
   readonly section?: string;
   /**
    * Per-type options, by v12 type (D534): `section`, the config section the type reads on top of
-   * the package's own (`swimlane` for `swimlane-beta`), and `layout`, the type's default layout
-   * (`elk` for `flowchart-elk`), below every config layer.
+   * the package's own (`swimlane` for `swimlane-beta`), `layout`, the type's default layout
+   * (`elk` for `flowchart-elk`), below every config layer, and `formats`, the type's output formats
+   * when it draws fewer than the package (`['svg']` for `c4beta` until it has text output).
    */
   readonly typeOptions?: Readonly<Record<string, TypeOptions>>;
 }
@@ -101,7 +102,19 @@ export interface DiagramManifest {
 export interface TypeOptions {
   readonly section?: string;
   readonly layout?: string;
+  readonly formats?: readonly string[];
 }
+
+/** The output formats of `type`: its own `typeOptions` entry's, else the package's. */
+export function formatsOf(m: ManifestSource, type: string): readonly string[] {
+  return m.manifest.typeOptions?.[type]?.formats ?? m.manifest.formats;
+}
+
+/** A row's `formats: [...]` literal. */
+const formatsLiteral = (m: ManifestSource, type: string): string =>
+  formatsOf(m, type)
+    .map((f) => `'${f}'`)
+    .join(', ');
 
 /** A row's `section` and `layout` fields, from the manifest's options for `type`. */
 function typeFields(m: ManifestSource, type: string): string[] {
@@ -211,6 +224,11 @@ function checkTypeOptions(m: ManifestSource): void {
       );
     if (o.layout !== undefined && !knownLayout(o.layout))
       throw new Error(`${m.name}: typeOptions.${type}.layout "${o.layout}" is not a known layout`);
+    const stray = o.formats?.find((f) => !m.manifest.formats.includes(f));
+    if (o.formats?.length === 0 || stray !== undefined)
+      throw new Error(
+        `${m.name}: typeOptions.${type}.formats must be some of the package's formats`
+      );
   }
 }
 
@@ -245,7 +263,7 @@ export function generateRegistry(manifests: readonly ManifestSource[]): string {
       lines.push(`  { type: '${type}', pattern: ${pattern} },`);
       continue;
     }
-    const formats = m.manifest.formats.map((f) => `'${f}'`).join(', ');
+    const formats = formatsLiteral(m, type);
     lines.push(
       `  {`,
       `    type: '${type}',`,
@@ -349,7 +367,7 @@ export function generateDetectors(manifests: readonly ManifestSource[]): string 
       lines.push(`  { type: '${type}', pattern: ${pattern} },`);
       continue;
     }
-    const formats = m.manifest.formats.map((f) => `'${f}'`).join(', ');
+    const formats = formatsLiteral(m, type);
     const extra = typeFields(m, type)
       .map((f) => `, ${f}`)
       .join('');

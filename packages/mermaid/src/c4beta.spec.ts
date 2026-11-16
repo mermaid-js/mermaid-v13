@@ -120,3 +120,53 @@ describe('c4-beta through the public API (spec #730)', () => {
     expect(r.svg).toContain('aria-roledescription="c4"');
   });
 });
+
+// Until c4-beta draws text (spec #730 T7), it has no text output in every place a type without
+// one is asked for it, as `classDiagram` has none; legacy C4 keeps its own.
+describe('c4-beta without text output (spec #730 T0)', () => {
+  it('says so through supportsFormat, while legacy C4 keeps ascii', () => {
+    const m = createMermaid();
+    expect(m.supportsFormat('c4beta', 'ascii')).toBe(false);
+    expect(m.supportsFormat('c4beta', 'svg')).toBe(true);
+    expect(m.supportsFormat('c4', 'ascii')).toBe(true);
+  });
+
+  it('throws UnsupportedFormatError from prepare, before renderSync', async () => {
+    const e = await rejection(
+      createMermaid().prepare(fixture('b02-basic-context.mmd'), { format: 'ascii' })
+    );
+    expect(e).toBeInstanceOf(UnsupportedFormatError);
+    expect((e as UnsupportedFormatError).diagramType).toBe('c4beta');
+  });
+
+  it('gives UNSUPPORTED_FORMAT, not a syntax error, for a broken source', async () => {
+    const e = await rejection(
+      createMermaid().render('c1', 'c4-beta\nperson\n', { format: 'ascii' })
+    );
+    expect(e).toBeInstanceOf(UnsupportedFormatError);
+    expect((e as MermaidError).code).toBe('UNSUPPORTED_FORMAT');
+  });
+
+  it('throws from preload for ascii', async () => {
+    const e = await rejection(createMermaid().preload({ types: ['c4beta'], formats: ['ascii'] }));
+    expect(e).toBeInstanceOf(UnsupportedFormatError);
+  });
+
+  it('draws a block embedded in a flowchart as a stand-in frame with one warning', async () => {
+    const text = [
+      'flowchart TB',
+      '  A --> model',
+      '  mermaid model["Context"] {',
+      '    c4-beta context',
+      '      person a "A"',
+      '  }',
+    ].join('\n');
+    const m = createMermaid();
+    await m.prepare(text, { format: 'ascii' });
+    const out = m.renderSync(text, { format: 'ascii' });
+    expect(out.text).toMatch(/│ +\[c4beta\] +│/);
+    expect(out.warnings).toEqual([
+      expect.objectContaining({ code: 'ASCII_DROPPED', feature: 'embed' }),
+    ]);
+  });
+});

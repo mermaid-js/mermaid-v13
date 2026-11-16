@@ -59,6 +59,13 @@
       "c4",
       "c4beta"
     ],
+    "typeOptions": {
+      "c4beta": {
+        "formats": [
+          "svg"
+        ]
+      }
+    },
     "formats": [
       "svg",
       "ascii"
