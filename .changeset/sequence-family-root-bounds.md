@@ -9,4 +9,4 @@
 '@mermaid-js/diagram-timeline': patch
 ---
 
-Sequence, gantt, journey, timeline, gitGraph, kanban, mindmap and railroad open their SVG root through the shared bounds and title trimming; railroad now uses the shared root. Output is unchanged.
+Internal refactor of how the SVG root is opened; rendered SVG is unchanged. `@mermaid-js/diagram-railroad` now needs `@mermaid-js/shared` as a peer dependency, like the other diagram packages.
