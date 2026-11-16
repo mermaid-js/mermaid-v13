@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import {
@@ -9,6 +11,7 @@ import {
   type C4BetaModel,
 } from '@mermaid-js/diagram-c4/testing';
 import type { C4Layout, Rect } from '@mermaid-js/diagram-c4';
+import { REPO_ROOT } from '../corpus.ts';
 import { c4betaSources } from './corpus.ts';
 import {
   allViolations,
@@ -135,6 +138,34 @@ describe('the legend (T3) lies inside the bounds and over nothing, on every acce
     expect(
       legendViolations(at({ ...legend.box, y: scene.bounds.y + scene.bounds.height }))
     ).toContain('the legend is outside the bounds');
+  });
+});
+
+/** The `e2e/diagrams/c4beta` fixtures, every folder, by path. */
+const FIXTURE_DIR = join(REPO_ROOT, 'e2e/diagrams/c4beta');
+const fixtures = readdirSync(FIXTURE_DIR, { recursive: true, encoding: 'utf8' })
+  .filter((f) => f.endsWith('.mmd'))
+  .sort()
+  .map((f) => ({ id: f, source: readFileSync(join(FIXTURE_DIR, f), 'utf8') }));
+
+describe('the invariants hold on every e2e fixture in every direction (spec #730 T0)', () => {
+  it('reads every fixture, and every one parses', () => {
+    expect(fixtures.length).toBeGreaterThanOrEqual(23);
+    for (const { id, source } of fixtures)
+      expect(
+        parseC4Beta(source).diagnostics.filter((d) => d.severity === 'error'),
+        id
+      ).toEqual([]);
+  });
+
+  it.each(DIRECTIONS)('direction %s: engine, crossings, labels, headers, containment', (d) => {
+    const failures: string[] = [];
+    for (const { id, source } of fixtures) {
+      const { model, run } = laidOut(source, d);
+      const all = [...allViolations(model, run), ...titleViolations(run.scene)];
+      failures.push(...all.map((v) => `${id}: ${v}`));
+    }
+    expect(failures).toEqual([]);
   });
 });
 

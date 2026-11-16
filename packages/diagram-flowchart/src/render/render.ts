@@ -152,6 +152,14 @@ export interface NodePaint {
 export interface Paints {
   readonly heads: Arrowheads;
   readonly node: NodePaint;
+  /**
+   * Shared by every element that has no palette slot or style of its own, so those write the
+   * same attributes, in the same order, without a new object each: a node's outline paint and
+   * its inner lines, and an arrowhead's paint.
+   */
+  readonly shape: Attrs;
+  readonly line: Attrs;
+  readonly head: Attrs;
   readonly cluster?: { fill: Color; stroke: OutlinePaint; strokeWidth: Length; text: Color };
   /**
    * A lane's border: clusterBorder as a colour, never the gradient (v12's swimlane styles forced
@@ -164,7 +172,14 @@ export interface Paints {
   readonly folded?: { readonly ink: Color; readonly muted: Color };
   /** A subgraph's palette slot from its source order (a lane's too, the default lane's included). */
   readonly slotOf: (view: Pick<NodeView, 'order'>) => Tint | undefined;
-  readonly edgeLabel?: { fill: Color; text: Color };
+  /** `text` is the label paint of an edge without a text style. */
+  readonly edgeLabel?: { fill: Color; text: Attrs };
+}
+
+/** Whether a checked style sets nothing (prepare shares one object per distinct class list). */
+function isEmpty(style: Attrs): boolean {
+  for (const _name in style) return false;
+  return true;
 }
 
 /**
@@ -211,9 +226,30 @@ function paints(theme: ThemeOf, flow: Prepared, lanes: boolean): Paints {
   const slotOf = (view: Pick<NodeView, 'order'>): Tint | undefined =>
     view.order === undefined ? undefined : slot(view.order);
   const edgeLabel = flow.edges.some((e) => e.label.width > 0)
-    ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
+    ? { fill: theme.color('edgeLabelBackground'), text: { fill: theme.color('textColor') } }
     : undefined;
-  return { heads, node, cluster, laneStroke, collapsedLine, folded, slotOf, edgeLabel };
+  const shape: Attrs = {
+    fill: node.fill,
+    stroke: node.stroke,
+    'stroke-width': node.strokeWidth,
+    filter: node.shadow,
+  };
+  const line: Attrs = { stroke: node.stroke, 'stroke-width': node.strokeWidth };
+  // An arrowhead's paint: these three keys in this order, as an edge with a style writes them.
+  const head: Attrs = { fill: node.arrow, opacity: undefined, 'fill-opacity': undefined };
+  return {
+    heads,
+    node,
+    shape,
+    line,
+    head,
+    cluster,
+    laneStroke,
+    collapsedLine,
+    folded,
+    slotOf,
+    edgeLabel,
+  };
 }
 
 /** What every section of one render draws from. */
@@ -359,6 +395,7 @@ function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
       markerTrim(e.start, paint.heads),
       markerTrim(e.end, paint.heads)
     );
+    const style = e.style.shape;
     w.outline('edge', 'path', {
       d: path.d,
       'stroke-width': edge.stroke === 'thick' ? THICK : undefined,
@@ -367,15 +404,20 @@ function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
       // Animated edges keep round caps, as v12's .edge-animation-* rules set them.
       'stroke-linecap':
         edge.stroke === 'dotted' && !edge.animate && !edge.animation ? 'butt' : undefined,
-      ...e.style.shape,
+      ...style,
       fill: 'none',
     });
     // The head fades with its line: opacity, and stroke-opacity as the head's fill-opacity.
-    const headPaint: Attrs = {
-      fill: e.style.shape.stroke ?? paint.node.arrow,
-      opacity: e.style.shape.opacity,
-      'fill-opacity': e.style.shape['stroke-opacity'],
-    };
+    const headPaint: Attrs =
+      style.stroke === undefined &&
+      style.opacity === undefined &&
+      style['stroke-opacity'] === undefined
+        ? paint.head
+        : {
+            fill: style.stroke ?? paint.node.arrow,
+            opacity: style.opacity,
+            'fill-opacity': style['stroke-opacity'],
+          };
     marker(
       w,
       e.start,
@@ -398,7 +440,8 @@ function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
   const { fill, text } = paint.edgeLabel!;
-  labelOnBox(w, e.label, at, e.edge.id, { fill, text: { fill: text, ...e.style.text }, rx: 3 });
+  const own = isEmpty(e.style.text) ? text : { fill: text.fill, ...e.style.text };
+  labelOnBox(w, e.label, at, e.edge.id, { fill, text: own, rx: 3 });
 }
 
 /** A node's own classes: a collapsed subgraph's card, a block (ADR-15), or a plain node. */
@@ -436,19 +479,21 @@ function drawNode(
       : checkUrl(v.link, { securityLevel, linkSchemes: ctx.linkSchemes, warn });
   if (href) w.open('a', { href, target: checkLinkTarget(v?.linkTarget, warn) });
   // A collapsed subgraph takes its palette slot; the author's style still wins (spread after).
-  const shapeAttrs: Attrs = {
-    fill: slot?.fill ?? paint.node.fill,
-    stroke: slot?.stroke ?? paint.node.stroke,
-    'stroke-width': paint.node.strokeWidth,
-    filter: paint.node.shadow,
-    ...view.style.shape,
-  };
+  const plain = slot === undefined && isEmpty(view.style.shape);
+  const shapeAttrs: Attrs = plain
+    ? paint.shape
+    : {
+        fill: slot?.fill ?? paint.node.fill,
+        stroke: slot?.stroke ?? paint.node.stroke,
+        'stroke-width': paint.node.strokeWidth,
+        filter: paint.node.shadow,
+        ...view.style.shape,
+      };
   // Inner lines follow the outline, except a collapsed card's separator and dots, which take
   // the palette slot's border or else clusterBorder.
-  let lineAttrs: Attrs = {
-    stroke: shapeAttrs.stroke,
-    'stroke-width': shapeAttrs['stroke-width'],
-  };
+  let lineAttrs: Attrs = plain
+    ? paint.line
+    : { stroke: shapeAttrs.stroke, 'stroke-width': shapeAttrs['stroke-width'] };
   if (paint.collapsedLine && view.shape === 'collapsedGroup') {
     lineAttrs = slot ? { stroke: slot.stroke } : paint.collapsedLine;
   }
@@ -483,13 +528,17 @@ function drawNode(
     drawIcon(w, view, shapeAttrs, view.style.shape.stroke ?? paint.node.stroke, ctx);
   } else drawShape(view.shape, w, view.w, view.h, shapeAttrs, lineAttrs, flow.pads);
   const fill = view.style.shape.fill;
-  w.label(view.label, 0, view.dy, {
-    fill:
-      fill && shapeFilled(view.shape) && !v?.img && !v?.icon && !block
-        ? ctx.theme.ink(fill)
-        : undefined,
-    ...view.style.text,
-  });
+  const ink =
+    fill && shapeFilled(view.shape) && !v?.img && !v?.icon && !block
+      ? ctx.theme.ink(fill)
+      : undefined;
+  // No attributes at all writes the same label as `{ fill: undefined }`.
+  w.label(
+    view.label,
+    0,
+    view.dy,
+    ink === undefined && isEmpty(view.style.text) ? undefined : { fill: ink, ...view.style.text }
+  );
   if (href) w.close();
   w.close();
 }

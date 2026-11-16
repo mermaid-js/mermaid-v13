@@ -61,7 +61,10 @@
     ],
     "typeOptions": {
       "c4beta": {
-        "section": "c4beta"
+        "section": "c4beta",
+        "formats": [
+          "svg"
+        ]
       }
     },
     "formats": [

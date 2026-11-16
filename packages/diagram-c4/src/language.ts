@@ -16,6 +16,7 @@
 import type { DocumentView, LanguageFacet } from '@mermaid-js/core/parser-kit';
 import type { C4BetaDocument } from './beta/ast.ts';
 import { detectC4Beta } from './beta/detect.ts';
+import { isC4Beta } from './beta/model.ts';
 import { parseC4Beta } from './beta/parser.ts';
 import { c4Completions } from './facet/completions.ts';
 import { c4Hover } from './facet/hover.ts';
@@ -29,10 +30,16 @@ export { c4Docs } from './generated/docs.ts';
 export { C4TokenKind, c4Tokens, detectC4, parseC4 } from './parser/index.ts';
 export type * from './parser/index.ts';
 
-/** The view of a legacy C4 document: completion and hover are legacy C4's only (spec #730 T6). */
+/**
+ * The view of a legacy C4 document: completion and hover are legacy C4's only (spec #730 T6).
+ * Told by the parse the view holds, so the text is not preprocessed again on every request.
+ */
 const isLegacy = (
   doc: DocumentView<C4Document | C4BetaDocument>
-): doc is DocumentView<C4Document> => !detectC4Beta(doc.text);
+): doc is DocumentView<C4Document> => {
+  const { model } = doc.result;
+  return !(typeof model === 'object' && model !== null && isC4Beta(model));
+};
 
 /**
  * The C4 facet. It parses a `c4-beta` header with the c4-beta parser (spec #730); the rest of its

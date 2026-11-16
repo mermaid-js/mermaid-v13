@@ -11,7 +11,8 @@ decide the syntax, and the parser must match this file (DESIGN §4.4). Where the
 differs, the spec lists why.
 
 **Lexer input.** The lexer reads the diagram body: front matter removed, `%%{…}%%` directives
-blanked out. A statement ends at a line break; `%%` starts a comment outside strings. Words are
+blanked out. Before the header, any whitespace regex `\s` matches is a blank (a byte-order mark,
+a no-break space), as the detector reads it; after it, only tabs and spaces. A statement ends at a line break; `%%` starts a comment outside strings. Words are
 case-sensitive. An id is words of letters, digits and `_` joined by single `-`, so `a-->b`
 reads as `a`, `-->`, `b`. Only `title`, `accTitle`, `accDescr`, `direction`, `legend` and
 `style` are reserved: every other word, element kinds included, may be an id. A step (`2:`) is

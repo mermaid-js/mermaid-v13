@@ -10,6 +10,7 @@ import {
   generateRegistry,
   readManifests,
 } from './registry.ts';
+import { generateFormatMatrix } from './format-matrix.ts';
 
 describe('first-party diagram registry (DESIGN §12.4)', () => {
   it('maps the manifest types onto the v12 detector table', () => {
@@ -185,6 +186,31 @@ describe('first-party language facets (R-LANG-8, D89)', () => {
     );
     for (const layout of ['layered', 'dagre', 'tree', 'compass', 'swimlane', 'elk', 'elk.stress'])
       expect(bad({ swimlane: { layout } })).not.toThrow();
+  });
+
+  it('gives a type its own formats when it draws fewer than its package (spec #730)', () => {
+    const manifest = {
+      ...flowchart.manifest,
+      types: ['flowchart-elk', 'flowchart-v2'],
+      formats: ['svg', 'ascii'],
+      typeOptions: { 'flowchart-elk': { formats: ['svg'] } },
+    };
+    const rows = generateRegistry([{ ...flowchart, manifest }]);
+    expect(rows).toMatch(/type: 'flowchart-elk',[^}]*formats: \['svg'\],/);
+    expect(rows).toMatch(/type: 'flowchart-v2',[^}]*formats: \['svg', 'ascii'\],/);
+    expect(generateDetectors([{ ...flowchart, manifest }])).toMatch(
+      /type: 'flowchart-elk',[^}]*formats: \['svg'\] \}/
+    );
+    const matrix = generateFormatMatrix([{ ...flowchart, manifest }]);
+    expect(matrix).toContain('| `flowchart-elk` | `@x/diagram-flowchart` | yes | no |');
+    expect(matrix).toContain('| `flowchart-v2` | `@x/diagram-flowchart` | yes | yes |');
+    const bad = (formats: string[]) => () =>
+      generateRegistry([
+        { ...flowchart, manifest: { ...manifest, typeOptions: { 'flowchart-v2': { formats } } } },
+      ]);
+    expect(bad([])).toThrow(/formats must be some of the package's formats/);
+    expect(bad(['png'])).toThrow(/formats must be some of the package's formats/);
+    expect(bad(['ascii'])).not.toThrow();
   });
 
   it("reads mermaid's lazy engines from LAZY_LAYOUTS, parts and line hops left out (#651)", () => {

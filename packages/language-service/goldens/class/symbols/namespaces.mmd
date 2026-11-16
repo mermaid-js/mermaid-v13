@@ -1,0 +1,17 @@
+%% The outline: classes nested by namespace.
+classDiagram
+  class Animal {
+    +int age
+    +isMammal() bool
+  }
+  namespace Outer {
+    class Duck {
+      +swim()
+    }
+    namespace Inner {
+      class Fish
+    }
+  }
+  Animal <|-- Duck
+  Animal <|-- Zebra
+  classDef warm fill:#f96

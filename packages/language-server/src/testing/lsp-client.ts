@@ -4,7 +4,9 @@
  * installs, and talks JSON-RPC over its stdio.
  */
 import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import {
   createProtocolConnection,
   StreamMessageReader,
@@ -13,6 +15,7 @@ import {
 import type {
   ClientCapabilities,
   InitializeResult,
+  LogMessageParams,
   ProtocolConnection,
   PublishDiagnosticsParams,
   TextDocumentContentChangeEvent,
@@ -20,6 +23,8 @@ import type {
 
 const ROOT = join(import.meta.dirname, '..', '..', '..', '..');
 const CLI = join(import.meta.dirname, '..', 'cli.ts');
+/** tsx's loader by URL, so the server starts from any working directory. */
+const TSX = pathToFileURL(createRequire(join(ROOT, 'package.json')).resolve('tsx')).href;
 /**
  * Which bin to run: the source through tsx, or a built one, such as the installed
  * `node_modules/.bin/mermaid-language-server` of the pack smoke spec
@@ -31,12 +36,14 @@ export type Bin = 'source' | { readonly path: string };
 /** The executable and its arguments for `bin`. */
 function command(bin: Bin, args: readonly string[]): [string, string[]] {
   if (typeof bin === 'object') return [bin.path, [...args]];
-  return [process.execPath, ['--import', 'tsx', '--conditions=mermaid-source', CLI, ...args]];
+  return [process.execPath, ['--import', TSX, '--conditions=mermaid-source', CLI, ...args]];
 }
 
 export interface Client {
   readonly connection: ProtocolConnection;
   readonly init: InitializeResult;
+  /** Every `window/logMessage` the server sent, in order. */
+  readonly logs: LogMessageParams[];
   /** Every `publishDiagnostics` the server sent, in order. */
   readonly published: PublishDiagnosticsParams[];
   /** The next `publishDiagnostics` for `uri` (one already received and not yet taken first). */
@@ -60,6 +67,8 @@ export interface Client {
 
 export interface ClientOptions {
   rootUri?: string | null;
+  /** The deprecated `rootPath`, sent only when given. */
+  rootPath?: string | null;
   workspaceFolders?: { uri: string; name: string }[];
   initializationOptions?: unknown;
   capabilities?: ClientCapabilities;
@@ -67,6 +76,8 @@ export interface ClientOptions {
   bin?: Bin;
   /** Arguments for the bin (default `['--stdio']`). */
   args?: readonly string[];
+  /** The server's working directory (default the repository root). */
+  cwd?: string;
   /** The `processId` sent in `initialize` (default this process, which stays alive). */
   processId?: number | null;
 }
@@ -91,7 +102,7 @@ export function runCli(args: readonly string[], bin: Bin = 'source'): Promise<Cl
 
 export async function startClient(options: ClientOptions = {}): Promise<Client> {
   const child = spawn(...command(options.bin ?? 'source', options.args ?? ['--stdio']), {
-    cwd: ROOT,
+    cwd: options.cwd ?? ROOT,
     stdio: ['pipe', 'pipe', 'pipe'],
   });
   let stderr = '';
@@ -102,6 +113,8 @@ export async function startClient(options: ClientOptions = {}): Promise<Client> 
     new StreamMessageWriter(child.stdin)
   );
   const published: PublishDiagnosticsParams[] = [];
+  const logs: LogMessageParams[] = [];
+  connection.onNotification('window/logMessage', (p: LogMessageParams) => void logs.push(p));
   const unread: PublishDiagnosticsParams[] = [];
   const waiting: { uri: string; done: (p: PublishDiagnosticsParams) => void }[] = [];
   connection.onNotification('textDocument/publishDiagnostics', (p: PublishDiagnosticsParams) => {
@@ -116,6 +129,7 @@ export async function startClient(options: ClientOptions = {}): Promise<Client> 
     connection.sendRequest<InitializeResult>('initialize', {
       processId: options.processId === undefined ? process.pid : options.processId,
       rootUri: options.rootUri ?? null,
+      ...(options.rootPath !== undefined ? { rootPath: options.rootPath } : {}),
       capabilities: options.capabilities ?? {},
       ...(options.workspaceFolders ? { workspaceFolders: options.workspaceFolders } : {}),
       ...(options.initializationOptions !== undefined
@@ -130,6 +144,7 @@ export async function startClient(options: ClientOptions = {}): Promise<Client> 
   return {
     connection,
     init,
+    logs,
     published,
     diagnostics(uri) {
       const i = unread.findIndex((x) => x.uri === uri);

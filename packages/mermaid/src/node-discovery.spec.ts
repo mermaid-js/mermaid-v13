@@ -11,7 +11,7 @@ import { describe, expect, it } from 'vitest';
 import { discoverOnFirstUse } from './discovery.ts';
 import { createMermaid, MermaidError } from './index.ts';
 import { nodeDiscovery, type NodeDiscoveryOptions } from './node.ts';
-import { scanPlugins } from './node-scan.ts';
+import { packageModule, scanPlugins } from './node-scan.ts';
 
 const DETECTOR = (keyword: string) =>
   `export function detector(text) { return text.trimStart().startsWith(${JSON.stringify(keyword)}); }\n`;
@@ -170,6 +170,25 @@ describe('Node discovery', () => {
       'up: "detector" is outside the package',
     ]);
     expect(r.warnings.find((w) => w.code === 'PLUGIN_SKIPPED')).toMatchObject({ package: 'abs' });
+  });
+
+  it('confines a module path the scan does not read itself (packageModule, D577)', async () => {
+    const elsewhere = realpathSync(mkdtempSync(join(tmpdir(), 'mmd-out-')));
+    writeFileSync(join(elsewhere, 'language.js'), '');
+    const root = app({ ok: { ...diagram('ok', 'ok'), 'language.js': '', '..language.js': '' } });
+    symlinkSync(join(elsewhere, 'language.js'), join(root, 'node_modules', 'ok', 'link.js'));
+    const [ok] = (await scanPlugins(root)).packages;
+    const at = (path: string) => packageModule(ok!, path, 'language');
+    expect(await at('./language.js')).toEqual({ file: join(ok!.dir, 'language.js') });
+    expect(await at('./..language.js')).toEqual({ file: join(ok!.dir, '..language.js') });
+    const outside = { skip: '"language" is outside the package', missing: false };
+    expect(await at('../language.js')).toEqual(outside);
+    expect(await at(join(elsewhere, 'language.js'))).toEqual(outside);
+    expect(await at('./link.js')).toEqual(outside);
+    expect(await at('./gone.js')).toEqual({
+      skip: '"language" (./gone.js) does not exist',
+      missing: true,
+    });
   });
 
   it('skips a slow, failing or empty detector module, with a warning', async () => {

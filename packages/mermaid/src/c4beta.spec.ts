@@ -77,6 +77,7 @@ describe('c4-beta through the public API (spec #730)', () => {
       'b08-style-values.mmd': ['C4BETA_STYLE_IGNORED'],
       'b21-tech-on-person.mmd': ['C4BETA_TECHNOLOGY_DROPPED', 'C4BETA_INSTANCES_DROPPED'],
       'b25-step-outside-dynamic.mmd': ['C4BETA_STEP_IGNORED'],
+      'markup-and-quotes-in-every-text.mmd': ['C4_COLOR_INVALID', 'HTML_DROPPED'],
     };
     const m = createMermaid();
     const files = readdirSync(join(FIXTURES, PR_CHECK)).filter((f) => f.endsWith('.mmd'));
@@ -109,6 +110,25 @@ describe('c4-beta through the public API (spec #730)', () => {
     expect((e as UnsupportedFormatError).format).toBe('ascii');
   });
 
+  it('writes markup and quotes in every text as text, and refuses a colour that is not one', async () => {
+    const r = await createMermaid().render('c1', fixture('markup-and-quotes-in-every-text.mmd'));
+    assertInert(r.svg);
+    expect(r.svg).not.toMatch(/<(script|img|a)\b|<[^>]*\son\w+=|<[^>]*href=/i);
+    expect(r.svg.match(/<svg\b/g)).toHaveLength(1);
+    const all = texts(r.svg).join('\n');
+    for (const part of [
+      '"Title" & \'more\'',
+      'Says "hi" & \'bye\'',
+      'Serves </text><text>orders',
+      '"now"',
+      "[HTTPS & 'TLS']",
+    ])
+      expect(all, part).toContain(part);
+    expect(r.svg).toContain('&lt;b onmouseover=&quot;x()&quot;&gt;Acc&lt;/b&gt;');
+    expect(r.svg).toContain('&lt;/desc&gt;&lt;script&gt;alert(2)&lt;/script&gt;');
+    expect(r.svg).toMatch(/c4-person"[^>]*><rect [^>]*fill="#08427B"/);
+  });
+
   it('keeps ids unique and writes none but the accessible title and description', async () => {
     const r = await createMermaid().render('c1', fixture('b34-accdescr-block.mmd'));
     const ids = [...r.svg.matchAll(/\sid="([^"]*)"/g)].map((m) => m[1]);
@@ -127,7 +147,8 @@ describe('c4-beta through the public API (spec #730)', () => {
     /** `source` with a front matter `config` of `lines` (two-space indented under `config:`). */
     const withConfig = (source: string, lines: string): string =>
       `---\nconfig:\n${lines}\n---\n${source}`;
-    const BODY = fixture('b02-basic-context.mmd');
+    // The fixture's own front matter (its description) goes, so `withConfig` can add one.
+    const BODY = fixture('b02-basic-context.mmd').replace(/^---\n[\s\S]*?\n---\n/, '');
     const size = (svg: string): [number, number] => {
       const [, , w, h] = /viewBox="([^"]*)"/.exec(svg)![1]!.split(' ').map(Number);
       return [w!, h!];
@@ -446,5 +467,101 @@ describe('the c4beta stereotype keys (spec #730 T5)', () => {
       '  c4beta:\n    showStereotypes: false\n    hideStereotypes: [person]\n    personWrappingWidth: 40'
     );
     expect((await createMermaid().render('c1', set)).svg).toBe(plain);
+  });
+});
+
+// Until c4-beta draws text (spec #730 T7), it has no text output in every place a type without
+// one is asked for it, as `classDiagram` has none; legacy C4 keeps its own.
+describe('c4-beta without text output (spec #730 T0)', () => {
+  it('says so through supportsFormat, while legacy C4 keeps ascii', () => {
+    const m = createMermaid();
+    expect(m.supportsFormat('c4beta', 'ascii')).toBe(false);
+    expect(m.supportsFormat('c4beta', 'svg')).toBe(true);
+    expect(m.supportsFormat('c4', 'ascii')).toBe(true);
+  });
+
+  it('throws UnsupportedFormatError from prepare, before renderSync', async () => {
+    const e = await rejection(
+      createMermaid().prepare(fixture('b02-basic-context.mmd'), { format: 'ascii' })
+    );
+    expect(e).toBeInstanceOf(UnsupportedFormatError);
+    expect((e as UnsupportedFormatError).diagramType).toBe('c4beta');
+  });
+
+  it('gives UNSUPPORTED_FORMAT, not a syntax error, for a broken source', async () => {
+    const e = await rejection(
+      createMermaid().render('c1', 'c4-beta\nperson\n', { format: 'ascii' })
+    );
+    expect(e).toBeInstanceOf(UnsupportedFormatError);
+    expect((e as MermaidError).code).toBe('UNSUPPORTED_FORMAT');
+  });
+
+  it('throws from preload for ascii', async () => {
+    const e = await rejection(createMermaid().preload({ types: ['c4beta'], formats: ['ascii'] }));
+    expect(e).toBeInstanceOf(UnsupportedFormatError);
+  });
+
+  it('draws a block embedded in a flowchart as a stand-in frame with one warning', async () => {
+    const text = [
+      'flowchart TB',
+      '  A --> model',
+      '  mermaid model["Context"] {',
+      '    c4-beta context',
+      '      person a "A"',
+      '  }',
+    ].join('\n');
+    const m = createMermaid();
+    await m.prepare(text, { format: 'ascii' });
+    const out = m.renderSync(text, { format: 'ascii' });
+    expect(out.text).toMatch(/│ +\[c4beta\] +│/);
+    expect(out.warnings).toEqual([
+      expect.objectContaining({ code: 'ASCII_DROPPED', feature: 'embed' }),
+    ]);
+  });
+});
+
+// c4-beta is laid out by core's `layered` engine whatever `layout` says (spec #730, Q2).
+describe('c4-beta and the layout setting (spec #730)', () => {
+  const body = 'c4-beta\nperson a "A"\nsoftwareSystem s "S"\na --> s\n';
+  const codes = async (text: string) =>
+    (await createMermaid().render('c1', text)).warnings.map((w) => w.code);
+
+  it('warns once for a layout it does not use, from a directive or front matter', async () => {
+    expect(await codes(`%%{init: {"layout": "elk"}}%%\n${body}`)).toEqual([
+      'C4BETA_LAYOUT_IGNORED',
+    ]);
+    expect(await codes(`---\nconfig:\n  layout: tree\n---\n${body}`)).toEqual([
+      'C4BETA_LAYOUT_IGNORED',
+    ]);
+  });
+
+  it('says nothing for layered, dagre or no layout, and draws the same diagram', async () => {
+    const plain = await createMermaid().render('c1', body);
+    expect(plain.warnings).toEqual([]);
+    for (const layout of ['layered', 'dagre', 'elk']) {
+      const r = await createMermaid().render('c1', `%%{init: {"layout": "${layout}"}}%%\n${body}`);
+      expect(r.warnings.length, layout).toBe(layout === 'elk' ? 1 : 0);
+      expect(r.svg, layout).toBe(plain.svg);
+    }
+  });
+
+  it('leaves legacy C4 as it was', async () => {
+    expect(await codes('%%{init: {"layout": "elk"}}%%\nC4Context\nPerson(a, "A")\n')).toEqual([]);
+  });
+});
+
+// The detector reads leading whitespace as regex `\s` does (a byte-order mark, a no-break space
+// included), so the c4-beta parser skips the same before its header, as legacy C4's does.
+describe('c4-beta after leading Unicode whitespace (spec #730)', () => {
+  it.each([
+    ['a byte-order mark', '\uFEFF'],
+    ['a no-break space', '\u00A0'],
+    ['both, and a line break', '\uFEFF\n\u00A0 '],
+  ])('renders after %s, as legacy C4 does', async (_, lead) => {
+    const m = createMermaid();
+    const beta = await m.render('c1', `${lead}c4-beta\nperson a "A"\n`);
+    expect(beta.diagramType).toBe('c4beta');
+    expect(beta.svg).toBe((await m.render('c1', 'c4-beta\nperson a "A"\n')).svg);
+    expect((await m.render('c1', `${lead}C4Context\nPerson(a, "A")\n`)).diagramType).toBe('c4');
   });
 });

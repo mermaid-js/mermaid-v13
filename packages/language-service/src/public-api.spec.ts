@@ -1,12 +1,16 @@
 /**
  * What a third-party facet author gets from this package alone (R-LANG-3): every type the
- * `LanguageFacet` contract names, and the golden runner as the `./testing` subpath.
+ * `LanguageFacet` contract names, and the golden runner as the `./testing` subpath. And what
+ * an adapter gets: the outline query and its type (D580).
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { createLanguageService } from '@mermaid-js/language-service';
 import type {
   CompletionItem,
+  DocumentSnapshot,
+  DocumentSymbol,
   DocumentView,
   FacetParseOptions,
   Hover,
@@ -74,5 +78,27 @@ describe('the public API for facet authors', () => {
       types: './dist/testing/index.d.ts',
       default: './dist/testing/index.js',
     });
+  });
+});
+
+/** An adapter's outline, written against the package entry alone. */
+const outlineOf = (doc: DocumentSnapshot): string[] => {
+  const walk = (list: readonly DocumentSymbol[], depth: number): string[] =>
+    list.flatMap((s) => [
+      `${'  '.repeat(depth)}${s.kind} ${s.name}`,
+      ...walk(s.children, depth + 1),
+    ]);
+  return walk(doc.symbols(), 0);
+};
+
+describe('the public API for adapters', () => {
+  it('lists the outline from the package entry (D580)', async () => {
+    const service = createLanguageService();
+    await service.preload({ types: ['flowchart'] });
+    const doc = service.update(
+      'file:///api.mmd',
+      'flowchart LR\n  subgraph S\n    A --> B\n  end\n'
+    );
+    expect(outlineOf(doc)).toEqual(['subgraph S', '  node A', '  node B']);
   });
 });
