@@ -92,19 +92,24 @@ const LINE_SEPARATOR = 0x2028;
 const PARAGRAPH_SEPARATOR = 0x2029;
 const isLineSep = (c: number) => c === LF || c === LINE_SEPARATOR || c === PARAGRAPH_SEPARATOR;
 
+type Matcher = (x: Scan, p: number) => number;
+/** The ASCII characters a matcher can start a match with; a matcher absent here may start with any. */
+const FIRST = new WeakMap<Matcher, { chars: string | undefined; blank: boolean }>();
+const startsWith = (m: Matcher, chars: string | undefined, blank = false): Matcher => {
+  FIRST.set(m, { chars, blank });
+  return m;
+};
+
 /** End of the literal `word` at `p` (with jison's trailing `\b` when it ends in `\w`), or -1. */
-const lit =
-  (word: string) =>
-  (x: Scan, p: number): number => {
+const lit = (word: string) =>
+  startsWith((x, p) => {
     if (!x.text.startsWith(word, p)) return -1;
     const end = p + word.length;
     return isWord(word.charCodeAt(word.length - 1)) && isWord(x.text.charCodeAt(end)) ? -1 : end;
-  };
+  }, word.charAt(0));
 /** One character code. */
-const ch =
-  (code: number) =>
-  (x: Scan, p: number): number =>
-    x.text.charCodeAt(p) === code ? p + 1 : -1;
+const ch = (code: number) =>
+  startsWith((x, p) => (x.text.charCodeAt(p) === code ? p + 1 : -1), String.fromCharCode(code));
 /** `[^stop]*` (`+` with `min` 1): up to the next `stop`. */
 const until =
   (stop: string, min = 0) =>
@@ -114,13 +119,16 @@ const until =
     return end - p >= min ? end : -1;
   };
 /** `\s*` then `rest` (greedy `\s*` gives nothing back: `rest` never starts with a blank). */
-const blanksThen =
-  (rest: (x: Scan, p: number) => number) =>
-  (x: Scan, p: number): number => {
-    let i = p;
-    while (isSpace(x.text.charCodeAt(i))) i++;
-    return rest(x, i);
-  };
+const blanksThen = (rest: Matcher) =>
+  startsWith(
+    (x, p) => {
+      let i = p;
+      while (isSpace(x.text.charCodeAt(i))) i++;
+      return rest(x, i);
+    },
+    FIRST.get(rest)?.chars,
+    true
+  );
 /** `\s*(\r?\n)+`: blanks through the last line feed among them. */
 const newlines = (x: Scan, p: number): number => {
   let end = -1;
@@ -134,15 +142,16 @@ const blanks = (x: Scan, p: number): number => {
   return i > p ? i : -1;
 };
 /** `literal\s*`. */
-const litBlanks = (word: string, close: number) => (x: Scan, p: number) => {
-  if (!x.text.startsWith(word, p)) return -1;
-  let i = p + word.length;
-  while (isSpace(x.text.charCodeAt(i))) i++;
-  if (x.text.charCodeAt(i) !== close) return -1;
-  i++;
-  while (isSpace(x.text.charCodeAt(i))) i++;
-  return i;
-};
+const litBlanks = (word: string, close: number) =>
+  startsWith((x, p) => {
+    if (!x.text.startsWith(word, p)) return -1;
+    let i = p + word.length;
+    while (isSpace(x.text.charCodeAt(i))) i++;
+    if (x.text.charCodeAt(i) !== close) return -1;
+    i++;
+    while (isSpace(x.text.charCodeAt(i))) i++;
+    return i;
+  }, word.charAt(0));
 const end = (x: Scan, p: number): number => (p >= x.text.length ? p : -1);
 
 /** Next line end as regex `.` sees it, at or after `p` (memoised: `p` never decreases). */
@@ -228,8 +237,11 @@ const space = (x: Scan, p: number) => (isSpace(x.text.charCodeAt(p)) ? p + 1 : -
 const aggregation = blanksThen((x, p) =>
   x.text.charCodeAt(p) === LOWER_O && !isWord(x.text.charCodeAt(p + 1)) ? p + 1 : -1
 );
-const two = (a: number, b: number) => (x: Scan, p: number) =>
-  x.text.charCodeAt(p) === a && x.text.charCodeAt(p + 1) === b ? p + 2 : -1;
+const two = (a: number, b: number) =>
+  startsWith(
+    (x, p) => (x.text.charCodeAt(p) === a && x.text.charCodeAt(p + 1) === b ? p + 2 : -1),
+    String.fromCharCode(a)
+  );
 /** `\([\s]*\)`. */
 const emptyArgs = (x: Scan, p: number) => {
   if (x.text.charCodeAt(p) !== LPAREN) return -1;
@@ -252,7 +264,6 @@ const comment = (x: Scan, p: number) => {
   return i;
 };
 
-type Matcher = (x: Scan, p: number) => number;
 const r = (match: Matcher, kind = -1, action: number = A.none, state = 0): Rule => ({
   match,
   kind,
@@ -347,3 +358,26 @@ export const CONDITIONS: readonly (readonly number[])[] = [
   withAll([29, 30, 31, 32, 33]),
   withAll([29, 34, 35, 36, 37, 38, 39]),
 ];
+
+/** `rules` memo: per state, by the character at the offset (128: any other). */
+const AT: (readonly number[] | undefined)[][] = CONDITIONS.map(() => []);
+
+/**
+ * The rules of `state` that can match where the text has `c` (its code, NaN past the end), in
+ * jison's order. A rule that starts with some other character cannot match there, so the first
+ * match is the one {@link CONDITIONS} gives, found without trying those.
+ */
+export function rulesAt(state: number, c: number): readonly number[] {
+  const all = CONDITIONS[state] ?? [];
+  if (Number.isNaN(c)) return all;
+  const k = c < 128 ? c : 128;
+  return ((AT[state] ??= [])[k] ??= all.filter((i) => canStart(RULES[i] as Rule, k)));
+}
+
+/** Whether `rule` may start a match at character `c` (below 128; 128 for a non-ASCII one). */
+function canStart(rule: Rule, c: number): boolean {
+  const first = FIRST.get(rule.match);
+  if (first?.chars === undefined) return true;
+  if (c === 128) return first.blank;
+  return first.chars.includes(String.fromCharCode(c)) || (first.blank && isSpace(c));
+}
