@@ -34,4 +34,5 @@ export const c4betaDocs: Readonly<Partial<Record<number, string>>> = {
   [T.ArrowRight]: "`-->`: a relation from the first element to the second.",
   [T.ArrowLeft]: "`<--`: a relation read right to left: the second element is its source.",
   [T.ArrowBoth]: "`<-->`: a relation that points both ways.",
+  [T.ArrowUndirected]: "`---`: a relation with no arrowhead, drawn between the two elements as it is written. `----` and `--->` are not undirected arrows.",
 };

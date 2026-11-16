@@ -128,7 +128,8 @@ Relation @Relation = [ STEP COLON ] id arrow id [ COLON STRING [ STRING ] ] { TA
 ```ebnf
 arrow = ARROW_RIGHT
       | ARROW_LEFT
-      | ARROW_BOTH ;
+      | ARROW_BOTH
+      | ARROW_UNDIRECTED ;
 ```
 
 Any word but the six reserved ones.
@@ -191,6 +192,7 @@ Modes: `INITIAL`.
 | INITIAL | ARROW_RIGHT | `-->` |  | `-->`: a relation from the first element to the second. |
 | INITIAL | ARROW_LEFT | `<--(?!>)` |  | `<--`: a relation read right to left: the second element is its source. |
 | INITIAL | ARROW_BOTH | `<-->` |  | `<-->`: a relation that points both ways. |
+| INITIAL | ARROW_UNDIRECTED | `---(?![->])` |  | `---`: a relation with no arrowhead, drawn between the two elements as it is written. `----` and `--->` are not undirected arrows. |
 | INITIAL | TAG | `:::[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*` |  | `:::team`: a tag on an element or a relation. |
 | INITIAL | COLON | `:` |  |  |
 | INITIAL | COMMA | `,` |  |  |

@@ -16,6 +16,7 @@ import {
   codePointEnd,
   CR,
   DASH,
+  GT,
   DQUOTE,
   APOSTROPHE,
   BACKSLASH,
@@ -39,12 +40,14 @@ import {
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import { KEYWORDS, T } from './tokens.ts';
 
-/** `<-->` before `<--`, which it starts with. */
+/** `<-->` before `<--`, which it starts with. `---` is checked apart: `----` and `--->` are not it. */
 const ARROWS: readonly (readonly [string, number])[] = [
   ['<-->', T.ArrowBoth],
   ['-->', T.ArrowRight],
   ['<--', T.ArrowLeft],
 ];
+/** The undirected arrow, unless a `-` or `>` follows it. */
+const UNDIRECTED = '---';
 const SINGLES: ReadonlyMap<number, number> = new Map([
   [COMMA, T.Comma],
   [LBRACE, T.Lbrace],
@@ -227,9 +230,14 @@ class C4BetaLexer {
     this.emit(ok ? T.Hex : Kind.Error, ok ? i : p + 1);
   }
 
-  /** `-->`, `<--` and `<-->`; any other `-` or `<` is an error. */
+  /** `-->`, `<--`, `<-->` and `---`; any other `-` or `<` is an error. */
   private arrow(): void {
-    const hit = ARROWS.find(([text]) => this.src.startsWith(text, this.p));
+    const { src, p } = this;
+    const after = src.charCodeAt(p + UNDIRECTED.length);
+    const hit =
+      src.startsWith(UNDIRECTED, p) && after !== DASH && after !== GT
+        ? ([UNDIRECTED, T.ArrowUndirected] as const)
+        : ARROWS.find(([text]) => src.startsWith(text, p));
     this.emit(hit ? hit[1] : Kind.Error, this.p + (hit ? hit[0].length : 1));
   }
 

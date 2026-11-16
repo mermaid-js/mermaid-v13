@@ -39,18 +39,19 @@ export const T = {
   ArrowRight: F + 24,
   ArrowLeft: F + 25,
   ArrowBoth: F + 26,
+  ArrowUndirected: F + 27,
   /** `:::name`, the colons included. */
-  Tag: F + 27,
-  Colon: F + 28,
-  Comma: F + 29,
-  Lbrace: F + 30,
-  Rbrace: F + 31,
+  Tag: F + 28,
+  Colon: F + 29,
+  Comma: F + 30,
+  Lbrace: F + 31,
+  Rbrace: F + 32,
   /** The digits of `2:` at the start of a line. */
-  Step: F + 32,
-  Hex: F + 33,
+  Step: F + 33,
+  Hex: F + 34,
   /** `"…"` or `'…'`, the quotes included. */
-  String: F + 34,
-  Id: F + 35,
+  String: F + 35,
+  Id: F + 36,
 } as const;
 
 /** Trivia: comments and the directives core found. Blanks are never tokens. */

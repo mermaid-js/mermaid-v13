@@ -76,6 +76,9 @@ ARROW_RIGHT           /-->/                               :operator ;
 ARROW_LEFT            /<--(?!>)/                          :operator ;
 (** `<-->`: a relation that points both ways. *)
 ARROW_BOTH            /<-->/                              :operator ;
+(** `---`: a relation with no arrowhead, drawn between the two elements as it is written. `----` and `--->` are not
+undirected arrows. *)
+ARROW_UNDIRECTED      /---(?![->])/                       :operator ;
 (** `:::team`: a tag on an element or a relation. *)
 TAG                   /:::[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*/ :variable ;
 COLON                 /:/                                 :punctuation ;
@@ -139,7 +142,7 @@ body = LBRACE ( RBRACE | NEWLINE { NEWLINE | Element NEWLINE } RBRACE ) ;
 (** `2: api --> db : "Reads" "SQL" :::async`: a relation, its step (dynamic diagrams), its
 description and technology, and tags. *)
 Relation @Relation = [ STEP COLON ] id arrow id [ COLON STRING [ STRING ] ] { TAG } ;
-arrow = ARROW_RIGHT | ARROW_LEFT | ARROW_BOTH ;
+arrow = ARROW_RIGHT | ARROW_LEFT | ARROW_BOTH | ARROW_UNDIRECTED ;
 
 (** Any word but the six reserved ones. *)
 id = ID | HEADER | CONTEXT | CONTAINER | COMPONENT | DYNAMIC | DEPLOYMENT | PERSON
