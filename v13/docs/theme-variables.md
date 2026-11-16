@@ -168,7 +168,7 @@ flags and opacities, which are read literally.
 | `c4ContainerColor` | | color | `#296eb8` | `#296eb8` | `#60a0dc` | `#60a0dc` | `#296eb8` | `#60a0dc` | `#296eb8` | `#296eb8` | `#296eb8` | `#296eb8` | `#60a0dc` |
 | `c4ContainerBorder` | | color | `#3c7fc0` | `#3c7fc0` | `#4e8cc8` | `#4e8cc8` | `#3c7fc0` | `#4e8cc8` | `#3c7fc0` | `#3c7fc0` | `#3c7fc0` | `#3c7fc0` | `#4e8cc8` |
 | `c4ComponentColor` | | color | `#216ec8` | `#216ec8` | `#6eaeed` | `#6eaeed` | `#216ec8` | `#6eaeed` | `#216ec8` | `#216ec8` | `#216ec8` | `#216ec8` | `#6eaeed` |
-| `c4ComponentBorder` | | color | `#78a8d8` | `#78a8d8` | `#649bd2` | `#649bd2` | `#78a8d8` | `#649bd2` | `#78a8d8` | `#78a8d8` | `#78a8d8` | `#78a8d8` | `#649bd2` |
+| `c4ComponentBorder` | | color | `#5591ce` | `#5591ce` | `#649bd2` | `#649bd2` | `#5591ce` | `#649bd2` | `#5591ce` | `#5591ce` | `#5591ce` | `#5591ce` | `#649bd2` |
 | `c4InfrastructureNodeColor` | | color | `#6b6b6b` | `#6b6b6b` | `#9e9e9e` | `#9e9e9e` | `#6b6b6b` | `#9e9e9e` | `#6b6b6b` | `#6b6b6b` | `#6b6b6b` | `#6b6b6b` | `#9e9e9e` |
 | `c4InfrastructureNodeBorder` | | color | `#5a5a5a` | `#5a5a5a` | `#8d8d8d` | `#8d8d8d` | `#5a5a5a` | `#8d8d8d` | `#5a5a5a` | `#5a5a5a` | `#5a5a5a` | `#5a5a5a` | `#8d8d8d` |
 | `c4ExternalColor` | | color | `#6c6c6c` | `#6c6c6c` | `#bfbfbf` | `#bfbfbf` | `#6c6c6c` | `#bfbfbf` | `#6c6c6c` | `#6c6c6c` | `#6c6c6c` | `#6c6c6c` | `#bfbfbf` |

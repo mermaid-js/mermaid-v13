@@ -16,7 +16,7 @@ const ELEMENT_LIGHT = {
   c4ContainerColor: '#296eb8',
   c4ContainerBorder: '#3c7fc0',
   c4ComponentColor: '#216ec8',
-  c4ComponentBorder: '#78a8d8',
+  c4ComponentBorder: '#5591ce',
   c4InfrastructureNodeColor: '#6b6b6b',
   c4InfrastructureNodeBorder: '#5a5a5a',
   c4ExternalColor: '#6c6c6c',
