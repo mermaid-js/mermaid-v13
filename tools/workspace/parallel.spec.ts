@@ -113,19 +113,29 @@ describe('parallel-cli', { timeout: 60_000 }, () => {
 });
 
 describe('pnpm check:static', () => {
-  it('runs every static check, side by side', () => {
+  it('runs every static check: the generated-files check alone, the rest side by side', () => {
+    // The generated-files check runs a vitest spec whose `beforeAll` has a 10 s timeout; beside
+    // ESLint and tsc it timed out even on a quiet machine, so it runs first, on its own.
+    const [first, ...rest] = scripts['check:static']!.split('&&').map((s) => s.trim());
+    expect(first).toBe('tsx tools/workspace/check-generated-cli.ts');
+    expect(rest).toHaveLength(1);
     expect(staticSteps(scripts['check:static']!)).toEqual([
+      'tsx tools/workspace/check-generated-cli.ts',
       'pnpm lint',
       'pnpm lint:knip',
       'pnpm typecheck',
       'pnpm check:deps',
       'pnpm check:licenses',
-      'tsx tools/workspace/check-generated-cli.ts',
     ]);
   });
 
   it('reads a plain chain too, and refuses what it cannot read', () => {
     expect(staticSteps('a && b')).toEqual(['a', 'b']);
+    expect(staticSteps("a && tsx tools/workspace/parallel-cli.ts 'b' 'c'")).toEqual([
+      'a',
+      'b',
+      'c',
+    ]);
     expect(() => staticSteps("tsx tools/workspace/parallel-cli.ts 'a' b")).toThrow();
   });
 });

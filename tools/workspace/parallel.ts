@@ -123,15 +123,18 @@ export function printResult(
 const PARALLEL_CLI = 'tsx tools/workspace/parallel-cli.ts';
 
 /**
- * The steps of a script that runs them with `parallel-cli.ts`, each quoted in single quotes
- * (`pnpm check:static`), or of a plain `a && b` chain.
+ * The steps of an `a && b` chain whose parts may run steps with `parallel-cli.ts`, each quoted
+ * in single quotes (`pnpm check:static`), in order.
  */
 export function staticSteps(script: string): string[] {
-  if (!script.startsWith(`${PARALLEL_CLI} `)) return script.split('&&').map((s) => s.trim());
-  const steps = [...script.slice(PARALLEL_CLI.length).matchAll(/\s+'([^']*)'/g)].map((m) => m[1]!);
-  const rebuilt = `${PARALLEL_CLI}${steps.map((s) => ` '${s}'`).join('')}`;
-  if (rebuilt !== script) throw new Error(`cannot read the steps of \`${script}\``);
-  return steps;
+  return script.split('&&').flatMap((part) => {
+    const step = part.trim();
+    if (!step.startsWith(`${PARALLEL_CLI} `)) return [step];
+    const steps = [...step.slice(PARALLEL_CLI.length).matchAll(/\s+'([^']*)'/g)].map((m) => m[1]!);
+    const rebuilt = `${PARALLEL_CLI}${steps.map((s) => ` '${s}'`).join('')}`;
+    if (rebuilt !== step) throw new Error(`cannot read the steps of \`${step}\``);
+    return steps;
+  });
 }
 
 /**

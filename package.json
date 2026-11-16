@@ -34,7 +34,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "pnpm check:static && pnpm test",
-    "check:static": "tsx tools/workspace/parallel-cli.ts 'pnpm lint' 'pnpm lint:knip' 'pnpm typecheck' 'pnpm check:deps' 'pnpm check:licenses' 'tsx tools/workspace/check-generated-cli.ts'",
+    "check:static": "tsx tools/workspace/check-generated-cli.ts && tsx tools/workspace/parallel-cli.ts 'pnpm lint' 'pnpm lint:knip' 'pnpm typecheck' 'pnpm check:deps' 'pnpm check:licenses'",
     "e2e": "playwright test --project chromium --project dev",
     "e2e:dom": "playwright test -c e2e/dom/playwright.config.ts",
     "prepare": "husky",
