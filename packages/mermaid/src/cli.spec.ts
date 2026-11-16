@@ -285,7 +285,8 @@ describe('mermaid CLI --help', () => {
   }, 30_000);
 });
 
-// --plugin and --autoload (D589): each test builds a project in a temp folder, with the plugin
+// --plugin and --autoload (D589), run one at a time (each spawns tsx; a burst starves other
+// specs on the same CI shard): each test builds a project in a temp folder, with the plugin
 // packages in its own node_modules, and runs the bin from there.
 type Files = Record<string, string>;
 
@@ -336,7 +337,7 @@ const inProject = (dir: string, text: string, ...args: string[]) =>
 const FLOW_TEXT = 'flowchart LR\n  A --> B\n';
 
 describe('mermaid render --plugin (D589)', () => {
-  it.concurrent(
+  it(
     'registers the lazy diagram a package exports by default, resolved from the project',
     async () => {
       const dir = project({ 'mermaid-box': lazyBox });
@@ -350,7 +351,7 @@ describe('mermaid render --plugin (D589)', () => {
     T
   );
 
-  it.concurrent(
+  it(
     'takes a full diagram plugin, a manifest-named export and an only plugin export; an import-only exports map works',
     async () => {
       const dir = project({
@@ -392,7 +393,7 @@ describe('mermaid render --plugin (D589)', () => {
     T
   );
 
-  it.concurrent(
+  it(
     'registers an extension, and each repeated --plugin',
     async () => {
       const dir = project({
@@ -418,7 +419,7 @@ describe('mermaid render --plugin (D589)', () => {
     T
   );
 
-  it.concurrent.each([
+  it.each([
     [['--plugin', 'not-installed'], '--plugin not-installed: package not found'],
     [['--plugin', '../escape'], '--plugin ../escape: not a package name'],
     [['--plugin', 'no-plugin'], '--plugin no-plugin: its main export is not a plugin'],
@@ -462,7 +463,7 @@ describe('mermaid render --autoload (D589)', () => {
     'entry.js': `export const plugin = ${DIAGRAM('box')};\n`,
   };
 
-  it.concurrent(
+  it(
     'registers the plugins package.json lists, through @mermaid-js/plugin-autoload from the project',
     async () => {
       const dir = project({ 'mermaid-box': declaredBox }, AUTOLOAD);
@@ -473,7 +474,7 @@ describe('mermaid render --autoload (D589)', () => {
     T
   );
 
-  it.concurrent(
+  it(
     'writes the packages autoload skipped with --warnings, and still renders',
     async () => {
       const broken = { 'package.json': manifestOf('broken', { mermaid: { plugin: 'theme' } }) };
@@ -488,7 +489,7 @@ describe('mermaid render --autoload (D589)', () => {
     T
   );
 
-  it.concurrent(
+  it(
     'writes the skipped package with --warnings even when the render then fails (exit 2)',
     async () => {
       const dir = project(
@@ -513,7 +514,7 @@ describe('mermaid render --autoload (D589)', () => {
     T
   );
 
-  it.concurrent(
+  it(
     'combines with --plugin',
     async () => {
       const dir = project({ 'mermaid-box': lazyBox, 'other-box': declaredBox }, AUTOLOAD);
@@ -524,7 +525,7 @@ describe('mermaid render --autoload (D589)', () => {
     T
   );
 
-  it.concurrent(
+  it(
     'exits 1 naming @mermaid-js/plugin-autoload and how to install it when it is missing',
     async () => {
       const dir = project({ 'mermaid-box': declaredBox });
