@@ -1,4 +1,4 @@
-import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
+import { Kind, sourceView, TRIVIA } from '@mermaid-js/core/parser-kit';
 import type { TokenStream } from '@mermaid-js/core/parser-kit';
 import { describe, expect, it } from 'vitest';
 import {
@@ -10,7 +10,6 @@ import {
   NO_KINDS,
   seenIndices,
   seenTokens,
-  TRIVIA_KINDS,
 } from './seen-tokens.ts';
 
 const WORD = 10;
@@ -122,7 +121,7 @@ describe('keptTokens', () => {
   const raw = (j: number) => src.slice(s.start[j], s.end[j]);
 
   it('leaves out the kinds in `skip` and the final EOF, with the text `text` reads', () => {
-    expect(keptTokens(s, TRIVIA_KINDS, raw)).toEqual([
+    expect(keptTokens(s, TRIVIA, raw)).toEqual([
       { kind: WORD, text: 'a', range: { start: 0, end: 1 } },
       { kind: Kind.Newline, text: '\n', range: { start: 6, end: 7 } },
       { kind: WORD, text: 'b', range: { start: 9, end: 10 } },

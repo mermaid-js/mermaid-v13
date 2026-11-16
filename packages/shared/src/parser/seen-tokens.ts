@@ -4,8 +4,14 @@
  * what v12's lexer saw ({@link seenTokens}); the jison family leaves out a set of kinds
  * ({@link keptTokens}).
  */
-import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
-import type { Range, SourceView, TokenStream, TokenView } from '@mermaid-js/core/parser-kit';
+import { cook, inKindSet, Kind, kindSet, sourceView } from '@mermaid-js/core/parser-kit';
+import type {
+  KindSet,
+  Range,
+  SourceView,
+  TokenStream,
+  TokenView,
+} from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 
@@ -94,30 +100,23 @@ export function bodyTokens(src: string, lex: ViewLexer): SeenToken[] {
   return seenTokens(src, lex(src, bodyStart, view), view);
 }
 
-/** Comments and directives: what a jison-family token list leaves out when it keeps blanks. */
-export const COMMENTS: ReadonlySet<number> = /* @__PURE__ */ new Set([
-  Kind.Comment,
-  Kind.Directive,
-]);
-/** Comments, directives and blanks. */
-export const TRIVIA_KINDS: ReadonlySet<number> = /* @__PURE__ */ new Set([
-  Kind.Comment,
-  Kind.Directive,
-  Kind.Space,
-]);
+/**
+ * Comments and directives: what a jison-family token list leaves out when it keeps blanks. With
+ * blanks too, pass core's `TRIVIA`.
+ */
+export const COMMENTS: KindSet = /* @__PURE__ */ kindSet(Kind.Comment, Kind.Directive);
 /** No kind: every token but the final `EOF`. */
-export const NO_KINDS: ReadonlySet<number> = /* @__PURE__ */ new Set<number>();
+export const NO_KINDS: KindSet = /* @__PURE__ */ kindSet();
 
-/** The tokens of `tokens` whose kind is not in `skip`, in order, without the final `EOF`. */
-export function keptTokens(
-  tokens: TokenView,
-  skip: ReadonlySet<number>,
-  text: TokenText
-): SeenToken[] {
+/**
+ * The tokens of `tokens` whose kind is not in `skip`, in order, without the final `EOF`. The
+ * check is one array read per token.
+ */
+export function keptTokens(tokens: TokenView, skip: KindSet, text: TokenText): SeenToken[] {
   const out: SeenToken[] = [];
   for (let j = 0; j < tokens.length; j++) {
     const kind = tokens.kind[j] ?? Kind.EOF;
-    if (kind === Kind.EOF || skip.has(kind)) continue;
+    if (kind === Kind.EOF || inKindSet(skip, kind)) continue;
     out.push(tokenAt(tokens, j, text));
   }
   return out;

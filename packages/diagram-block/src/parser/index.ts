@@ -2,10 +2,10 @@
  * The block parser's public surface: the parser, detection, and the lexer gated against v12's
  * jison lexer.
  */
-import { sourceView } from '@mermaid-js/core/parser-kit';
+import { sourceView, TRIVIA } from '@mermaid-js/core/parser-kit';
 import type { SourceView } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
-import { keptTokens, TRIVIA_KINDS } from '@mermaid-js/shared/parser/seen-tokens';
+import { keptTokens } from '@mermaid-js/shared/parser/seen-tokens';
 import type { SeenToken } from '@mermaid-js/shared/parser/seen-tokens';
 import { lex } from './lexer.ts';
 
@@ -40,5 +40,5 @@ export function blockView(src: string): { from: number; view: SourceView } {
 export function blockTokens(src: string): BlockToken[] {
   const { from, view } = blockView(src);
   const lexed = lex(src, from, view);
-  return keptTokens(lexed.tokens, TRIVIA_KINDS, (j) => lexed.text(j));
+  return keptTokens(lexed.tokens, TRIVIA, (j) => lexed.text(j));
 }

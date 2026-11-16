@@ -2,7 +2,8 @@
  * The mindmap parser's public surface: the parser, detection, and the lexer gated against v12's
  * jison lexer.
  */
-import { bodyView, cooked, keptTokens, TRIVIA_KINDS } from '@mermaid-js/shared/parser/seen-tokens';
+import { TRIVIA } from '@mermaid-js/core/parser-kit';
+import { bodyView, cooked, keptTokens } from '@mermaid-js/shared/parser/seen-tokens';
 import type { SeenToken } from '@mermaid-js/shared/parser/seen-tokens';
 import { lex } from './lexer.ts';
 
@@ -22,5 +23,5 @@ export type MindmapToken = SeenToken;
 export function mindmapTokens(src: string): MindmapToken[] {
   const { bodyStart, view } = bodyView(src);
   const stream = lex(src, bodyStart, view);
-  return keptTokens(stream, TRIVIA_KINDS, cooked(src, stream, view));
+  return keptTokens(stream, TRIVIA, cooked(src, stream, view));
 }

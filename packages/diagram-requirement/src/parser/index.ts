@@ -2,7 +2,8 @@
  * The requirement parser's public surface: the parser, detection, and the lexer gated against
  * v12's jison lexer.
  */
-import { keptTokens, TRIVIA_KINDS } from '@mermaid-js/shared/parser/seen-tokens';
+import { TRIVIA } from '@mermaid-js/core/parser-kit';
+import { keptTokens } from '@mermaid-js/shared/parser/seen-tokens';
 import type { SeenToken } from '@mermaid-js/shared/parser/seen-tokens';
 import { lex, requirementView } from './lexer.ts';
 
@@ -30,5 +31,5 @@ export type RequirementToken = SeenToken;
 export function requirementTokens(src: string): RequirementToken[] {
   const { from, view } = requirementView(src);
   const lexed = lex(src, from, view);
-  return keptTokens(lexed.tokens, TRIVIA_KINDS, (j) => lexed.text(j));
+  return keptTokens(lexed.tokens, TRIVIA, (j) => lexed.text(j));
 }
