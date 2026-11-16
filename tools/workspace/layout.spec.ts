@@ -19,6 +19,7 @@ const readPackage = (dir: string): PackageJson =>
 describe('workspace layout (DESIGN §2)', () => {
   it.each([
     ['packages/core', '@mermaid-js/core', false],
+    ['packages/shared', '@mermaid-js/shared', false],
     ['packages/diagram-flowchart', '@mermaid-js/diagram-flowchart', false],
     ['packages/diagram-er', '@mermaid-js/diagram-er', false],
     ['packages/diagram-sequence', '@mermaid-js/diagram-sequence', false],
@@ -75,6 +76,45 @@ describe('workspace layout (DESIGN §2)', () => {
         './timing',
       ].sort()
     );
+  });
+
+  it('exposes shared code by subpath only, so each family is its own chunk', () => {
+    expect(Object.keys(readPackage('packages/shared').exports ?? {}).sort()).toEqual(
+      [
+        './ascii',
+        './config/readers',
+        './layout',
+        './layout/invariants',
+        './parser/drop',
+        './parser/facet',
+        './parser/flow',
+        './parser/flow-facet',
+        './parser/rule',
+        './parser/state',
+        './parser/support',
+        './parser/table',
+        './parser/tree',
+        './parser/v12-text',
+        './shapes/basic',
+        './shapes/extended',
+        './shapes/kit',
+        './svg/arrowheads',
+        './svg/document',
+        './svg/graph',
+        './svg/route',
+      ].sort()
+    );
+  });
+
+  it('keeps shared out of core and mermaid sources, so it loads only with a diagram', () => {
+    for (const pkg of ['core', 'mermaid']) {
+      const src = join(root, 'packages', pkg, 'src');
+      const naming = readdirSync(src, { recursive: true, encoding: 'utf8' }).filter(
+        (f) =>
+          f.endsWith('.ts') && readFileSync(join(src, f), 'utf8').includes('@mermaid-js/shared')
+      );
+      expect(naming).toEqual([]);
+    }
   });
 
   it('carries no v12 diagram sources (R-ARCH-9)', () => {

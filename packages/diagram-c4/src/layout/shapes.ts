@@ -15,6 +15,7 @@
  * `2·pad`, as the others.
  */
 // cspell:ignore kepano
+import { capRy, cylinderSize, queueRx } from '@mermaid-js/shared/shapes/kit';
 import { kindParts, type C4Element } from '../model.ts';
 import { C4_METRICS as M } from './metrics.ts';
 import type { C4ShapeId, Point, Rect } from './types.ts';
@@ -49,11 +50,6 @@ export function shapeOf(element: Pick<C4Element, 'shape' | 'sprite' | 'tags' | '
   if (store === 'queue') return 'h-cyl';
   return 'rounded';
 }
-
-/** The cylinder's cap radius for a width, and the queue's for a height. */
-export const capRy = (w: number): number =>
-  Math.min(M.capMax, Math.max(M.capMin, w / M.capDivisor));
-export const queueRx = (h: number): number => Math.min(M.capMax, h / M.queueDivisor);
 
 /** The person figure's head radius for a width `w` (#683). */
 export const personHead = (w: number): number =>
@@ -131,11 +127,8 @@ export function shapeSize(
       const body = Math.max(overlap + h, w * M.personBodyRatio);
       return { w, h: body + 2 * r - overlap, dx: 0, dy: r };
     }
-    case 'cyl': {
-      const cw = Math.max(least, tw + cylinder.x);
-      const ry = capRy(cw);
-      return { w: cw, h: th + cylinder.y + 3 * ry, dx: 0, dy: ry / 2 };
-    }
+    case 'cyl':
+      return { ...cylinderSize(tw, th, cylinder, 0, least), dx: 0 };
     case 'h-cyl': {
       const qh = th + queue.y;
       const rx = queueRx(qh);

@@ -22,14 +22,13 @@ import type {
   ProbeResult,
   Range,
 } from '@mermaid-js/core/parser-kit';
-import { span } from '@mermaid-js/core/parser-kit/facet';
 import { c4Docs } from '../generated/docs.ts';
 import type { C4Document, C4StatementNode } from '../parser/ast.ts';
 import { HEADERS, KEYWORDS, T } from '../parser/tokens.ts';
 import { callAt } from './args.ts';
 import type { CallAt, WrittenArg } from './args.ts';
 import { SLOT_TABLES } from '../parser/slots.ts';
-import { lineBefore } from './markdown.ts';
+import { lineBefore, span } from './markdown.ts';
 import { signature } from './tables.ts';
 
 const BLANK = /^[\t ]*$/;

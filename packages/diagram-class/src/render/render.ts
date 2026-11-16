@@ -16,8 +16,10 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { cls, openSvgRoot, paletteSlots, textElement } from '@mermaid-js/shared/svg/document';
+import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
+import { routePath } from '@mermaid-js/shared/svg/route';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
-import { openSvgRoot, textElement } from '@mermaid-js/core/svg/document';
 import type {
   ClassBoxView,
   ClassEdgeView,
@@ -31,7 +33,6 @@ import { prepareClass } from '../layout/index.ts';
 import type { ClassModel, ClassNode } from '../parser/index.ts';
 import type { ClassRenderContext } from './context.ts';
 import { marker, markers, markerTrim, type Markers } from './markers.ts';
-import { routePath } from './route.ts';
 
 // v12's dash patterns: `.edge-pattern-dashed` (relationships written `..`) and
 // `.edge-pattern-dotted` (note edges).
@@ -39,16 +40,6 @@ const DASHED = '3' as SafeValue;
 const DOTTED = '2' as SafeValue;
 const DASH: Readonly<Record<string, SafeValue | undefined>> = { dashed: DASHED, dotted: DOTTED };
 /** Room on each side of a relationship label's background (as the flowchart's). */
-const LABEL_PAD = 4;
-
-const cls = (names: readonly string[]): string => {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
-};
 
 type ThemeOf = ClassRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
@@ -58,26 +49,6 @@ interface Tint {
   readonly id: `color-${number}`;
   readonly stroke: Paint;
   readonly fill?: Paint;
-}
-
-/**
- * Per-class palette colour (v12 class `genColor` and `stampColorSlot`). On only when the theme
- * carries a non-empty `borderColorArray`, never by theme name (D152). The slot is the class's
- * declaration order modulo the palette length (v12 `colorIndex`: only classes take a slot);
- * the fill comes from `bkgColorArray` only when that is not empty.
- */
-function paletteSlots(theme: ThemeOf): (order: number) => Tint | undefined {
-  const border = theme.palette('borderColorArray');
-  const bkg = theme.palette('bkgColorArray');
-  return (order) => {
-    if (border.length === 0) return undefined;
-    const slot = order % border.length;
-    return {
-      id: `color-${slot}`,
-      stroke: border[slot]!,
-      fill: bkg.length > 0 ? bkg[order % bkg.length] : undefined,
-    };
-  };
 }
 
 /** Every theme variable the body uses, looked up before the root is written. */
@@ -203,14 +174,23 @@ export function renderClass(
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, paint }: Scene, model: ClassModel): void {
+  const { config } = ctx;
+  const width = Math.max(1, Math.ceil(layout.width));
+  const height = Math.max(1, Math.ceil(layout.height));
+  const maxWidth = config.class?.useMaxWidth !== false;
+  const title = model.accTitle.trim();
+  const desc = model.accDescr.trim();
   openSvgRoot(w, ctx, {
     name: 'class',
     roleDescription: 'classDiagram',
-    viewBox: [0, 0, Math.max(1, Math.ceil(layout.width)), Math.max(1, Math.ceil(layout.height))],
-    maxWidth: ctx.config.class?.useMaxWidth,
-    title: model.accTitle.trim(),
-    desc: model.accDescr.trim(),
-    attrs: { 'font-family': paint.font, 'font-size': paint.fontSize },
+    viewBox: [0, 0, width, height],
+    maxWidth,
+    title,
+    desc,
+    attrs: {
+      'font-family': paint.font,
+      'font-size': paint.fontSize,
+    },
   });
 }
 
@@ -334,20 +314,12 @@ function drawEdges(scene: Scene, idOf: (e: ClassEdgeView) => string): void {
 function drawEdgeLabels({ w, layout, paint }: Scene, e: ClassEdgeView, id: string): void {
   const at = layout.edges.get(e.layoutId);
   if (!at) return;
-  if (e.label && at.label && paint.edgeLabel) {
-    const lw = e.label.width + 2 * LABEL_PAD;
-    w.open('g', { class: 'edgeLabel', 'data-id': id });
-    w.leaf('rect', {
-      x: at.label.x - lw / 2,
-      y: at.label.y - e.label.height / 2,
-      width: lw,
-      height: e.label.height,
-      rx: 3,
+  if (e.label && at.label && paint.edgeLabel)
+    labelOnBox(w, e.label, at.label, id, {
       fill: paint.edgeLabel,
+      text: { fill: paint.text },
+      rx: 3,
     });
-    w.label(e.label, at.label.x, at.label.y, { fill: paint.text });
-    w.close();
-  }
   const ends: [MeasuredLabel | undefined, { x: number; y: number } | undefined][] = [
     [e.startLabel, at.startLabel],
     [e.endLabel, at.endLabel],

@@ -404,7 +404,7 @@ export function drawBlock(model: BlockModel, options: BlockDrawOptions): BlockDr
   for (const edge of routed) {
     if (edge.edge.label === '') continue;
     const line = textLabel(edge.edge.label, options.inline).lines.join(' ');
-    labels.place(edge, cut(line, M.labelCap, mark));
+    labels.place(edge, cut(line, M.labelCap, mark, true));
   }
 
   const { text, top, left } = trimmed(sc.canvas);

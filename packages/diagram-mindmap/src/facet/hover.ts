@@ -9,6 +9,7 @@ import type { MindmapModel } from '../model.ts';
 import type { MindmapDocument, MindmapNodeNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { code, SHAPE_NAMES, span } from './tables.ts';
+import { plural } from '@mermaid-js/shared/parser/facet';
 
 /** The tokens of a node statement. */
 const NODE_TOKENS = new Set<number>([
@@ -21,8 +22,6 @@ const NODE_TOKENS = new Set<number>([
   T.MdStringStart,
   T.MdStringEnd,
 ]);
-
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
 /** The node statement holding `at` (AST nodes are in source order and never overlap). */
 function nodeAt(doc: DocumentView<MindmapDocument>, at: number): MindmapNodeNode | undefined {

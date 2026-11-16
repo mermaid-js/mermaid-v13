@@ -7,8 +7,8 @@
 // carry `data-id` only (pitfall 12). A skipped curve draws nothing, as pie's dropped slices.
 import type { RenderContext } from '@mermaid-js/core';
 import type { PathBuilder, PathData, SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
-import type { CubicSegment, PlacedLabel, Point, RadarLayout } from '../layout/index.ts';
+import { centreX, centreY, openSvgRoot } from '@mermaid-js/shared/svg/document';
+import type { CubicSegment, Point, RadarLayout } from '../layout/index.ts';
 import type { RadarModel } from '../model.ts';
 import { radarUseMaxWidth } from '../config.ts';
 import { paints, type Paints } from './paint.ts';
@@ -42,8 +42,6 @@ export function renderRadar(
   w.close();
 }
 
-const centreX = (r: PlacedLabel): number => r.x + r.width / 2;
-const centreY = (r: PlacedLabel): number => r.y + r.height / 2;
 const flat = (points: readonly Point[]): number[] => points.flatMap((p) => [p.x, p.y]);
 
 /** v12 `drawGraticule`: a circle or a polygon per ring, filled at `radarGraticuleOpacity`. */
@@ -164,8 +162,6 @@ function openRoot(
     maxWidth,
     title,
     desc,
-    attrs: {
-      'font-family': font,
-    },
+    attrs: { 'font-family': font },
   });
 }

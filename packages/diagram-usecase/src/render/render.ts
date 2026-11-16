@@ -7,7 +7,7 @@
  * description (R-SEC-2, R-ARCH-6, D475).
  */
 import { translate, type SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { UsecaseLayout } from '../layout/layout.ts';
 import { prepareUsecase, type UsecasePrepared } from '../layout/prepare.ts';
 import type { UsecaseModel } from '../model.ts';
@@ -73,13 +73,19 @@ function openRoot({ w, layout, p, ctx, paint, model }: Scene): { width: number; 
   const band = p.title ? p.title.height + padding : 0;
   const width = Math.max(1, Math.ceil(Math.max(layout.width, titleWidth(p))));
   const height = Math.max(1, Math.ceil(layout.height + band));
+  const maxWidth = p.config.useMaxWidth;
+  const title = model.accTitle.trim();
+  const desc = model.accDescr.trim();
   openSvgRoot(w, ctx, {
     name: 'usecase',
     viewBox: [0, 0, width, height],
-    maxWidth: p.config.useMaxWidth,
-    title: model.accTitle.trim(),
-    desc: model.accDescr.trim(),
-    attrs: { 'font-family': paint.font, 'font-size': paint.fontSize },
+    maxWidth,
+    title,
+    desc,
+    attrs: {
+      'font-family': paint.font,
+      'font-size': paint.fontSize,
+    },
   });
   return { width, band };
 }

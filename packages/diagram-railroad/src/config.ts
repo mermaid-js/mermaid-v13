@@ -18,7 +18,6 @@ import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { checkColor, checkStyle, type SafeColor, type SafeValue } from '@mermaid-js/core/svg';
 import { railroadConfigDefaults } from './generated/config-defaults.ts';
-import { useMaxWidth } from '@mermaid-js/core/config/readers';
 
 /** The `railroad` lengths the layout reads, every one set. */
 export interface RailroadLayoutConfig {
@@ -190,7 +189,7 @@ export function railroadConfig(
     lengths: railroadLayoutConfig(given),
     font,
     colours,
-    useMaxWidth: useMaxWidth(given.useMaxWidth),
+    useMaxWidth: given.useMaxWidth !== false,
     dropped,
   };
 }

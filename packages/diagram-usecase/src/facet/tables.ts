@@ -7,16 +7,12 @@ import type { UsecaseArrowType, UsecaseModel } from '../model.ts';
 import type { UsecaseElementKind } from '../parser/ast.ts';
 import { generatedId } from '../parser/text.ts';
 import { ANY_CASE, KEYWORDS, T } from '../parser/tokens.ts';
-
-export { code, span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
-
-/** A keyword item: offered at a line start when the parser expects `kind`. */
-export interface KeywordItem {
-  readonly kind: number;
-  readonly label: string;
-  /** Text inserted, when it is not the label. */
-  readonly insert?: string;
-}
+import type { KeywordItem } from '@mermaid-js/shared/parser/facet';
+export type { KeywordItem } from '@mermaid-js/shared/parser/facet';
+export { plural } from '@mermaid-js/shared/parser/facet';
+export { tokenBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 /**
  * Statement keywords, in the order they are offered. `json` is not one: `json Id@` and its
@@ -175,6 +171,3 @@ export const KIND_NAMES: Readonly<Record<UsecaseElementKind, string>> = {
   json: 'JSON table',
   edge: 'relation',
 };
-
-export const plural = (n: number, one: string, many = `${one}s`): string =>
-  `${n} ${n === 1 ? one : many}`;

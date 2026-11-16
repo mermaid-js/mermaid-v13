@@ -33,17 +33,21 @@ import {
   DQUOTE,
   firstHole,
   HASH,
+  type Hole,
   isSpace,
   isWord,
   Kind,
   LF,
   localOffset,
+  type Probe,
   QUOTE,
   SEMI,
   SourceOffsets,
+  type SourceView,
+  type TokenStream,
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
-import type { Hole, Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import { dropAt } from '@mermaid-js/shared/parser/drop';
 import { SankeyKind } from './tokens.ts';
 
 // Start conditions of sankey.jison.
@@ -299,22 +303,13 @@ class SankeyLexer {
     let b = end > s ? (this.v12.end[end - 1] ?? a) : a;
     if (this.holes.length > 0) {
       this.trivia(a);
-      if (b > a) b = this.dropAt(b);
+      if (b > a) b = dropAt(this.holes, this.hole, b);
     }
     this.writer.push(kind, a, b);
     this.vStart.push(s);
     this.vEnd.push(end);
     if (b > this.covered) this.covered = b;
     this.p = end;
-  }
-
-  /** The end of the `;` v12 dropped at `b`, which belongs to the token before it; else `b`. */
-  private dropAt(b: number): number {
-    const hs = this.holes;
-    let k = this.hole;
-    while (k < hs.length && (hs[k]?.start ?? b) < b) k++;
-    const h = hs[k];
-    return h && h.start === b && h.kind === 'drop' ? h.end : b;
   }
 
   // --- Scans --------------------------------------------------------------------------------

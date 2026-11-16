@@ -36,6 +36,7 @@ import {
   type TreemapText,
   type TreemapTextAnchor,
 } from './types.ts';
+import { RectUnion } from '@mermaid-js/shared/layout';
 
 /** What the layout reads from the render context (`warn` for `TREEMAP_CONFIG_INVALID`). */
 export type TreemapLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
@@ -372,18 +373,4 @@ class Ordinal {
 }
 
 /** The union of what is drawn. */
-class Box {
-  private x0 = Infinity;
-  private y0 = Infinity;
-  private x1 = -Infinity;
-  private y1 = -Infinity;
-  add(r: Rect): void {
-    this.x0 = Math.min(this.x0, r.x);
-    this.y0 = Math.min(this.y0, r.y);
-    this.x1 = Math.max(this.x1, r.x + r.width);
-    this.y1 = Math.max(this.y1, r.y + r.height);
-  }
-  rect(): Rect {
-    return { x: this.x0, y: this.y0, width: this.x1 - this.x0, height: this.y1 - this.y0 };
-  }
-}
+const Box = RectUnion;

@@ -15,14 +15,13 @@
  * chart (venn.js's `disjoint`) is not drawn.
  */
 import {
-  checkColor,
   translate,
   type Attrs,
   type Paint,
   type PathData,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { fixedPaint, openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type {
   PlacedLabel,
   RegionPath,
@@ -52,9 +51,6 @@ interface Scene {
   readonly areas: readonly PaintedArea[];
   readonly textNodes: readonly (readonly Paint[])[];
 }
-
-/** A fixed colour of v12's (the debug shapes), checked as a paint. */
-const fixed = (c: string): Paint => checkColor(c) as Paint;
 
 /** Writes the whole `<svg>` document for a laid-out venn diagram. */
 export function renderVenn(
@@ -159,7 +155,7 @@ function drawTextNodes({ w, layout, textNodes }: Scene): void {
         cy: t.inner.y,
         r: t.inner.radius,
         fill: 'none',
-        stroke: fixed(VENN_PAINT.debugCircle),
+        stroke: fixedPaint(VENN_PAINT.debugCircle),
         'stroke-width': debug.circleStroke,
         'stroke-dasharray': dash(VENN_PAINT.debugCircleDash) as Attrs['stroke-dasharray'],
       });
@@ -172,7 +168,7 @@ function drawTextNodes({ w, layout, textNodes }: Scene): void {
           width: n.cell.width,
           height: n.cell.height,
           fill: 'none',
-          stroke: fixed(VENN_PAINT.debugCell),
+          stroke: fixedPaint(VENN_PAINT.debugCell),
           'stroke-width': debug.cellStroke,
           'stroke-dasharray': dash(VENN_PAINT.debugCellDash) as Attrs['stroke-dasharray'],
         });
@@ -199,13 +195,15 @@ function openRoot(model: VennModel, { w, layout }: Scene, ctx: VennRenderContext
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
+  const maxWidth = (config.venn as { useMaxWidth?: unknown } | undefined)?.useMaxWidth !== false;
+  const title = model.title?.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
   openSvgRoot(w, ctx, {
     name: 'venn',
     viewBox: [x, y, width, height],
-    maxWidth: (config.venn as { useMaxWidth?: unknown } | undefined)?.useMaxWidth,
-    title: model.title?.trim(),
+    maxWidth,
+    title,
     attrs: { 'font-family': font },
   });
 }
