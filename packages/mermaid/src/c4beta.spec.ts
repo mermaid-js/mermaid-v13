@@ -225,9 +225,9 @@ describe('c4-beta and the layout setting (spec #730)', () => {
 // included), so the c4-beta parser skips the same before its header, as legacy C4's does.
 describe('c4-beta after leading Unicode whitespace (spec #730)', () => {
   it.each([
-    ['a byte-order mark', '﻿'],
-    ['a no-break space', ' '],
-    ['both, and a line break', '﻿\n  '],
+    ['a byte-order mark', '\uFEFF'],
+    ['a no-break space', '\u00A0'],
+    ['both, and a line break', '\uFEFF\n\u00A0 '],
   ])('renders after %s, as legacy C4 does', async (_, lead) => {
     const m = createMermaid();
     const beta = await m.render('c1', `${lead}c4-beta\nperson a "A"\n`);
