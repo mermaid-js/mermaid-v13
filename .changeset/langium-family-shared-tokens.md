@@ -10,6 +10,7 @@
 '@mermaid-js/diagram-radar': patch
 '@mermaid-js/diagram-railroad': patch
 '@mermaid-js/diagram-treemap': patch
+'@mermaid-js/diagram-treeview': patch
 '@mermaid-js/diagram-wardley': patch
 ---
 
