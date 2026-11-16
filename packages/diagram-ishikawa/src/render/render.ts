@@ -30,7 +30,7 @@
  */
 import type { RenderContext } from '@mermaid-js/core';
 import type { Attrs, LabelBox, Paint, SafeValue, SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type {
   IshikawaBone,
   IshikawaCauseLayout,

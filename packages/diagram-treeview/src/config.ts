@@ -16,7 +16,11 @@
  */
 import type { Warning } from '@mermaid-js/core';
 import type { TreeViewDiagramConfig } from '@mermaid-js/core/config';
-import { rawConfigNumber as configNumber, useMaxWidth } from '@mermaid-js/core/config/readers';
+import {
+  rawConfigNumber as configNumber,
+  shownValue as shown,
+  useMaxWidth,
+} from '@mermaid-js/shared/config/readers';
 import { treeViewConfigDefaults } from './generated/config-defaults.ts';
 import type { TreeViewIconOptions } from './icons.ts';
 
@@ -69,9 +73,6 @@ function iconMap(value: unknown): Readonly<Record<string, string>> | undefined {
   for (const [k, v] of Object.entries(value)) if (typeof v === 'string') out[k] = v;
   return out;
 }
-
-const shown = (value: unknown): string =>
-  typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
 
 /**
  * The options from the resolved `treeView` section, each checked (`undefined`: the defaults);

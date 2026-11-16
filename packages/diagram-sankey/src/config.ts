@@ -26,10 +26,10 @@ import type {
   SankeyNodeAlignment,
 } from '@mermaid-js/core/config';
 import { checkColor, type SafeColor } from '@mermaid-js/core/svg';
-import { configNumber } from '@mermaid-js/core/config/readers';
 import { SANKEY_COLOR_INVALID, SANKEY_CONFIG_INVALID } from './codes.ts';
 import { sankeyConfigDefaults } from './generated/config-defaults.ts';
 import type { LinkPaint } from './layout/types.ts';
+import { shownValue as shown } from '@mermaid-js/shared/config/readers';
 
 export interface SankeyLayoutConfig {
   readonly width: number;
@@ -76,13 +76,15 @@ function linkPaint(given: unknown): LinkPaint | undefined {
   return MODES.has(given) ? (given as LinkPaint) : checkColor(given);
 }
 
-const shown = (value: unknown): string =>
-  typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
-
 type Reader = (value: unknown) => unknown;
 
 /** A finite number of 0 or more, or a string that reads as one; else undefined. */
-const length: Reader = (value) => configNumber(value, 0);
+const length: Reader = (value) => {
+  let n = Number.NaN;
+  if (typeof value === 'number') n = value;
+  else if (typeof value === 'string' && value.trim() !== '') n = Number(value);
+  return Number.isFinite(n) && n >= 0 ? n : undefined;
+};
 const oneOf =
   (values: readonly string[]): Reader =>
   (value) =>

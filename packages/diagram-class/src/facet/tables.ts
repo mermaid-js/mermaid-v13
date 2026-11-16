@@ -5,14 +5,13 @@
  */
 import type { RelationType } from '../parser/model.ts';
 import { T } from '../parser/tokens.ts';
-
-/** A keyword item: offered when the parser expects `kind`. */
-export interface KeywordItem {
-  readonly kind: number;
-  readonly label: string;
-  /** Text inserted, when it is not the label. */
-  readonly insert?: string;
-}
+import type { KeywordItem } from '@mermaid-js/shared/parser/facet';
+export type { KeywordItem } from '@mermaid-js/shared/parser/facet';
+export { LINK_TARGETS } from '@mermaid-js/shared/parser/facet';
+export { plural } from '@mermaid-js/shared/parser/facet';
+export { tokenBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 /** Statement and clause keywords, in the order they are offered. */
 export const KEYWORDS: readonly KeywordItem[] = [
@@ -44,9 +43,6 @@ export const DIRECTIONS: readonly (readonly [dir: string, meaning: string])[] = 
   ['LR', 'left to right'],
   ['RL', 'right to left'],
 ];
-
-/** `link … "url"` and `click … href "url"` targets. */
-export const LINK_TARGETS = ['_self', '_blank', '_parent', '_top'];
 
 /** Annotations the class diagram documentation names (`<<interface>>`); any word is accepted. */
 export const ANNOTATIONS: readonly (readonly [name: string, meaning: string])[] = [
@@ -135,7 +131,3 @@ export function describeRelation(
   const drawn = `${dotted ? 'dashed' : 'solid'} line${ends.length > 0 ? ` with ${ends.join(' and ')}` : ''}`;
   return `${what}: ${drawn}`;
 }
-
-/** `n` and the noun, plural when `n` is not 1. */
-export const plural = (n: number, one: string, many = `${one}s`): string =>
-  `${n} ${n === 1 ? one : many}`;

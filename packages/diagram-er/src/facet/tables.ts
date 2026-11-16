@@ -5,14 +5,12 @@
  */
 import type { ErCardinality, ErDirection } from '../parser/model.ts';
 import { T } from '../parser/tokens.ts';
-
-/** A keyword item: offered when the parser expects `kind`. */
-export interface KeywordItem {
-  readonly kind: number;
-  readonly label: string;
-  /** Text inserted, when it is not the label. */
-  readonly insert?: string;
-}
+import type { KeywordItem } from '@mermaid-js/shared/parser/facet';
+export type { KeywordItem } from '@mermaid-js/shared/parser/facet';
+export { plural } from '@mermaid-js/shared/parser/facet';
+export { tokenBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 /** Statement keywords, in the order they are offered. */
 export const KEYWORDS: readonly KeywordItem[] = [
@@ -93,6 +91,3 @@ export const KEYS: readonly (readonly [key: string, meaning: string])[] = [
   ['FK', 'foreign key'],
   ['UK', 'unique key'],
 ];
-
-export const plural = (n: number, one: string, many = `${one}s`): string =>
-  `${n} ${n === 1 ? one : many}`;

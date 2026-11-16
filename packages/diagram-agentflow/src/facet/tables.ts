@@ -1,10 +1,11 @@
 /**
- * The agentflow facet's completion and hover tables (DESIGN §4.5, D95), written from a copy of
- * flowchart's (D467): what each expected token kind is offered as. Keyword docs are not here:
- * they come from the grammar file (`generated/docs.ts`).
+ * The agentflow facet's completion and hover tables (DESIGN §4.5, D95): what each expected token
+ * kind is offered as. Keyword docs are not here: they come from the grammar file
+ * (`generated/docs.ts`); the tables agentflow shares with flowchart are the flow family's
+ * (`@mermaid-js/shared/parser/flow-facet`).
  */
-import type { FlowchartDiagramConfig } from '@mermaid-js/core/config';
-import { code } from '@mermaid-js/core/parser-kit/facet';
+import { code } from '@mermaid-js/shared/parser/facet';
+import { FLOW_EDGE_DATA, flowKeywordItems } from '@mermaid-js/shared/parser/flow-facet';
 import type { EdgeSemantic } from '../parser/model.ts';
 import {
   acceptsDataShape,
@@ -16,50 +17,13 @@ import {
 import type { AgentflowShape, VertexKind } from '../parser/shapes.ts';
 import { T } from '../parser/tokens.ts';
 
-/** A keyword item: offered when the parser expects `kind`. */
-export interface KeywordItem {
-  readonly kind: number;
-  readonly label: string;
-  /** Text inserted, when it is not the label. */
-  readonly insert?: string;
-}
-
 /** Statement and clause keywords, in the order they are offered. */
-export const KEYWORDS: readonly KeywordItem[] = [
+export const KEYWORDS = /* @__PURE__ */ flowKeywordItems(T, [
   { kind: T.Graph, label: 'agentflow-beta' },
   { kind: T.Flow, label: 'flow' },
   { kind: T.Connector, label: 'connector' },
   { kind: T.Global, label: 'global' },
-  { kind: T.End, label: 'end' },
-  { kind: T.Style, label: 'style' },
-  { kind: T.ClassDef, label: 'classDef' },
-  { kind: T.Class, label: 'class' },
-  { kind: T.LinkStyle, label: 'linkStyle' },
-  { kind: T.Click, label: 'click' },
-  { kind: T.AccTitle, label: 'accTitle', insert: 'accTitle: ' },
-  { kind: T.AccDescr, label: 'accDescr', insert: 'accDescr: ' },
-  { kind: T.DirectionTB, label: 'direction TB' },
-  { kind: T.DirectionTD, label: 'direction TD' },
-  { kind: T.DirectionBT, label: 'direction BT' },
-  { kind: T.DirectionLR, label: 'direction LR' },
-  { kind: T.DirectionRL, label: 'direction RL' },
-  { kind: T.Default, label: 'default' },
-  { kind: T.Interpolate, label: 'interpolate' },
-  { kind: T.Href, label: 'href' },
-  { kind: T.CallbackName, label: 'call' },
-];
-
-/** Header directions and what they mean (v12 reads `TD` as `TB`). */
-export const DIRECTION_DOCS: readonly (readonly [dir: string, meaning: string])[] = [
-  ['TB', 'top to bottom'],
-  ['TD', 'top down (same as TB)'],
-  ['BT', 'bottom to top'],
-  ['LR', 'left to right'],
-  ['RL', 'right to left'],
-];
-
-/** `click … "url"` targets. */
-export const LINK_TARGETS = ['_self', '_blank', '_parent', '_top'];
+]);
 
 /** The three links (v12 `agentflow.jison`), in the order they are offered. */
 export const ARROWS = ['-->', '--x', '-.-'];
@@ -129,45 +93,24 @@ export function shapeText(name: string): string {
 /** `view:` values a flow reads (`collapsed` draws it as a card). */
 const VIEWS: readonly string[] = ['collapsed'];
 
-/** A `flowchart.curve` value: the generated config type, from the config schema's enum. */
-type Curve = NonNullable<FlowchartDiagramConfig['curve']>;
-
-/**
- * Every curve, in the schema's order. A record over {@link Curve} so typecheck fails when the
- * schema's `flowchart.curve` enum gains or loses a value and this does not follow.
- */
-const CURVE_SET: Readonly<Record<Curve, true>> = {
-  basis: true,
-  bumpX: true,
-  bumpY: true,
-  cardinal: true,
-  catmullRom: true,
-  linear: true,
-  monotoneX: true,
-  monotoneY: true,
-  natural: true,
-  step: true,
-  stepAfter: true,
-  stepBefore: true,
-  rounded: true,
-};
-
-/** Curve names (`linkStyle … interpolate`, edge `curve:`): the config schema's `flowchart.curve`. */
-export const CURVES = Object.keys(CURVE_SET) as readonly Curve[];
-
-/** Keys of an edge's `@{ … }` data that the model reads, with the values it accepts. */
-export const EDGE_DATA: Readonly<Record<string, readonly string[]>> = {
-  animate: ['true', 'false'],
-  animation: ['fast', 'slow'],
-  curve: CURVES,
-};
-
 /** Keys of a node's `@{ … }` metadata that the model reads, with the values it knows. */
-export const NODE_DATA: Readonly<Record<string, readonly string[]>> = {
+const NODE_DATA: Readonly<Record<string, readonly string[]>> = {
   shape: SHAPE_VALUES.map((s) => s.name),
   label: [],
   labelType: ['text', 'string', 'markdown'],
 };
 
 /** Keys of a flow's metadata that the model reads. */
-export const FLOW_DATA: Readonly<Record<string, readonly string[]>> = { view: VIEWS };
+const FLOW_DATA: Readonly<Record<string, readonly string[]>> = { view: VIEWS };
+
+/** What a `@{ … }` block gives its keys to. */
+export type DataOwner = 'node' | 'flow' | 'connector' | 'edge';
+
+/** The keys an owner's block reads, with their known values. */
+export const DATA_KEYS: Readonly<Record<DataOwner, Readonly<Record<string, readonly string[]>>>> = {
+  node: NODE_DATA,
+  flow: FLOW_DATA,
+  // A connector keeps its metadata as written; its kind is `connector` whatever the shape.
+  connector: {},
+  edge: FLOW_EDGE_DATA,
+};

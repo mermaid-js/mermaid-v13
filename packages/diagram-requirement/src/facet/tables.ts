@@ -16,16 +16,12 @@ import {
   RISKS,
 } from '../parser/syntax.ts';
 import { KEYWORD_SPELLINGS, T } from '../parser/tokens.ts';
-
-/** A keyword item: offered when the parser expects `kind`. */
-export interface KeywordItem {
-  readonly kind: number;
-  readonly label: string;
-  /** Text inserted, when it is not the label. */
-  readonly insert?: string;
-  /** One short line next to the label. */
-  readonly detail?: string;
-}
+import type { DetailedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
+export type { DetailedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
+export { plural } from '@mermaid-js/shared/parser/facet';
+export { tokenBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 const SPELLING: ReadonlyMap<number, string> = new Map(KEYWORD_SPELLINGS);
 
@@ -77,6 +73,3 @@ export const OPERATORS: readonly KeywordItem[] = [
   { kind: T.EndArrowR, label: '->', insert: '-> ' },
   { kind: T.StyleSeparator, label: ':::' },
 ];
-
-export const plural = (n: number, one: string, many = `${one}s`): string =>
-  `${n} ${n === 1 ? one : many}`;

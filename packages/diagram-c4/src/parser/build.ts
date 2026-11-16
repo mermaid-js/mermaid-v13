@@ -5,6 +5,7 @@
  * came before it (R-PARSE-7). The parser hands each macro's arguments here and places the AST
  * nodes; this module holds no grammar.
  */
+import { idEscaper } from '@mermaid-js/shared/parser/support';
 import type { AstId, ParseState, Range } from '@mermaid-js/core/parser-kit';
 import * as codes from '../codes.ts';
 import {
@@ -30,7 +31,6 @@ import {
   REL_STYLE,
 } from './slots.ts';
 import type { SlotTable } from './slots.ts';
-import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 /**
  * Where an alias a named argument gives belongs: an element's or a boundary's own, or a

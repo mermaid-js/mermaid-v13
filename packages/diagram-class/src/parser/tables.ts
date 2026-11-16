@@ -1,4 +1,5 @@
 import { ExpectedTable, isSpace, Kind, kindSet, TRIVIA } from '@mermaid-js/core/parser-kit';
+import { Stop, STOP } from '@mermaid-js/shared/parser/support';
 import type { KindSet, ParseState, Range } from '@mermaid-js/core/parser-kit';
 import type { ClassNamespaceStmt } from './ast.ts';
 import type { ClassLex } from './lexer.ts';
@@ -183,6 +184,8 @@ export const STATEMENT_HINTS: Readonly<Record<number, string>> = {
   [T.Click]:
     'write it as `click Class call fn()` or `click Class href "url"`, e.g. `click Shape href "https://example.com"`',
 };
+
+export { STOP, Stop };
 
 /** One open namespace body. */
 export interface Frame {

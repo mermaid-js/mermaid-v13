@@ -20,11 +20,13 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { openSvgRoot, textElement } from '@mermaid-js/core/svg/document';
+import { cls, openSvgRoot, paletteSlots, textElement } from '@mermaid-js/shared/svg/document';
+import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
 import { drawIcon, drawImage } from './assets.ts';
-import { arrowheads, marker, markerTrim, routePath, type Arrowheads } from './edges.ts';
+import { arrowheads, marker, markerTrim, type Arrowheads } from '@mermaid-js/shared/svg/arrowheads';
+import { routePath } from '@mermaid-js/shared/svg/route';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
 import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
 
@@ -87,16 +89,6 @@ export function layoutFlowchart(model: FlowModel, ctx: FlowRenderContext): FlowL
 
 const THICK = 3.5;
 const DOTTED = '2' as SafeValue;
-const LABEL_PAD = 4;
-
-const cls = (names: readonly string[]): string => {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
-};
 
 // Moves a route end from the node's box onto the outline of the shape drawn in it.
 function inset(
@@ -125,26 +117,6 @@ export interface Tint {
   readonly id: `color-${number}`;
   readonly stroke: Paint;
   readonly fill?: Paint;
-}
-
-/**
- * Per-subgraph palette colour (#86, v12 flowchart `genColor`). On only when the theme carries
- * a non-empty `borderColorArray`, never by theme name (D152). The slot is the subgraph's source
- * order modulo the palette length; the fill comes from `bkgColorArray` only when that is not
- * empty, so `redux-dark-color` colours borders only.
- */
-function paletteSlots(theme: FlowRenderContext['theme']): Paints['slotOf'] {
-  const border = theme.palette('borderColorArray');
-  const bkg = theme.palette('bkgColorArray');
-  return (view) => {
-    if (view.order === undefined || border.length === 0) return undefined;
-    const slot = view.order % border.length;
-    return {
-      id: `color-${slot}`,
-      stroke: border[slot]!,
-      fill: bkg.length > 0 ? bkg[view.order % bkg.length] : undefined,
-    };
-  };
 }
 
 type ThemeOf = FlowRenderContext['theme'];
@@ -235,7 +207,9 @@ function paints(theme: ThemeOf, flow: Prepared, lanes: boolean): Paints {
   const folded = flow.nodes.some((v) => v.block === 'folded')
     ? { ink: theme.color('nodeBorder'), muted: theme.color('mutedBorder') }
     : undefined;
-  const slotOf = paletteSlots(theme);
+  const slot = paletteSlots(theme);
+  const slotOf = (view: Pick<NodeView, 'order'>): Tint | undefined =>
+    view.order === undefined ? undefined : slot(view.order);
   const edgeLabel = flow.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
     : undefined;
@@ -299,12 +273,13 @@ function openRoot({ w, layout, ctx, paint }: Scene, model: FlowModel): void {
   const { config } = ctx;
   const width = Math.max(1, Math.ceil(layout.width));
   const height = Math.max(1, Math.ceil(layout.height));
+  const maxWidth = config.flowchart?.useMaxWidth !== false;
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   openSvgRoot(w, ctx, {
     name: 'flowchart',
     viewBox: [0, 0, width, height],
-    maxWidth: config.flowchart?.useMaxWidth,
+    maxWidth,
     title,
     desc,
     attrs: {
@@ -422,18 +397,8 @@ function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
 function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
-  const lw = e.label.width + 2 * LABEL_PAD;
-  w.open('g', { class: 'edgeLabel', 'data-id': e.edge.id });
-  w.leaf('rect', {
-    x: at.x - lw / 2,
-    y: at.y - e.label.height / 2,
-    width: lw,
-    height: e.label.height,
-    rx: 3,
-    fill: paint.edgeLabel!.fill,
-  });
-  w.label(e.label, at.x, at.y, { fill: paint.edgeLabel!.text, ...e.style.text });
-  w.close();
+  const { fill, text } = paint.edgeLabel!;
+  labelOnBox(w, e.label, at, e.edge.id, { fill, text: { fill: text, ...e.style.text }, rx: 3 });
 }
 
 /** A node's own classes: a collapsed subgraph's card, a block (ADR-15), or a plain node. */

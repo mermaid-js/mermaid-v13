@@ -231,13 +231,18 @@ export default tseslint.config(
     files: [
       'packages/core/src/parser-kit/**/*.ts',
       'packages/core/src/preprocess/**/*.ts',
+      'packages/shared/src/parser/**/*.ts',
       'packages/diagram-*/src/parser/**/*.ts',
     ],
     rules: { 'no-param-reassign': 'off' },
   },
   {
     // The DOM-free, console-free, config-global-free layer (R-ARCH-1, R-ARCH-5, R-ERR-4).
-    files: ['packages/core/src/**/*.{ts,js}', 'packages/diagram-*/src/**/*.{ts,js}'],
+    files: [
+      'packages/core/src/**/*.{ts,js}',
+      'packages/shared/src/**/*.{ts,js}',
+      'packages/diagram-*/src/**/*.{ts,js}',
+    ],
     languageOptions: { globals: { ...globals.es2021 } },
     rules: {
       'no-restricted-globals': [
@@ -255,7 +260,11 @@ export default tseslint.config(
     // Core and diagram code never read the clock (DESIGN §1, D270): `now` is on the render
     // context. Specs may time themselves. Nor does it order strings by the host locale
     // (R-ARCH-6, DESIGN §12.4, #676).
-    files: ['packages/core/src/**/*.{ts,js}', 'packages/diagram-*/src/**/*.{ts,js}'],
+    files: [
+      'packages/core/src/**/*.{ts,js}',
+      'packages/shared/src/**/*.{ts,js}',
+      'packages/diagram-*/src/**/*.{ts,js}',
+    ],
     ignores: ['**/*.spec.ts'],
     rules: {
       'no-restricted-syntax': [

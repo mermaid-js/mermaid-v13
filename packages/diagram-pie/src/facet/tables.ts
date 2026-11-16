@@ -2,18 +2,12 @@
  * The pie facet's completion table and shared helpers (DESIGN §4.5, D95). Keyword docs are not
  * here: they come from the grammar file (`generated/docs.ts`).
  */
-import type { CompletionKind } from '@mermaid-js/core/parser-kit';
 import { T } from '../parser/tokens.ts';
-
-/** An item offered when the parser expects `kind`. */
-export interface KeywordItem {
-  readonly kind: number;
-  readonly label: string;
-  readonly item: CompletionKind;
-  /** Text inserted, when it is not the label. */
-  readonly insert?: string;
-  readonly detail?: string;
-}
+import type { TypedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
+export type { TypedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
+export { tokenBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 /** Everything completion offers, in the order it is offered. */
 export const ITEMS: readonly KeywordItem[] = [

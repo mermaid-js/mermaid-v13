@@ -17,6 +17,7 @@ import { treemapValueOptions, type TreemapValueOptions } from '../options.ts';
 import type { TreemapDocument } from '../parser/ast.ts';
 import { d3Sum } from '../sum.ts';
 import { code } from './tables.ts';
+import { isPlain } from '@mermaid-js/shared/parser/facet';
 
 /** A section's sum (d3's `sum`, as the layout takes it) and its number of leaves. */
 export interface Total {
@@ -32,9 +33,6 @@ export interface Values {
   readonly showValues: boolean;
   readonly format: (value: number) => string;
 }
-
-const isPlain = (v: unknown): v is Record<string, unknown> =>
-  typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** `valueFormat` and `showValues` as the text sets them. */
 function options(text: string): TreemapValueOptions {

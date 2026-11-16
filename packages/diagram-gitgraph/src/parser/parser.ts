@@ -22,30 +22,23 @@
  * parser does not stop at the first error: it reports it, skips to the next line break and
  * carries on (R-PARSE-4). A statement with a syntax error changes nothing.
  */
+import { APOSTROPHE, DQUOTE, ExpectedTable, Kind, kindSet } from '@mermaid-js/core/parser-kit';
+import { ID_CONTROL, ID_RESERVED, idEscaper, STOP } from '@mermaid-js/shared/parser/support';
 import {
-  APOSTROPHE,
-  cook,
-  DQUOTE,
-  ExpectedTable,
-  Kind,
-  kindSet,
-  LineIndex,
-  ParseState,
-  Probe,
-  significantTokens,
-  skipTo,
-  sourceView,
-  STOP,
-} from '@mermaid-js/core/parser-kit';
+  RuleParser,
+  textStatements,
+  textValue,
+  TITLE_STATEMENT,
+  withoutIndent,
+} from '@mermaid-js/shared/parser/rule';
 import type {
   AstId,
   ParseOptions,
   ParseResult,
   Range,
-  SourceView,
   TokenStream,
-  TokenView,
 } from '@mermaid-js/core/parser-kit';
+import type { RuleGrammar, TextValues } from '@mermaid-js/shared/parser/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { GitDirection, GitModel, GitWrittenType } from '../model.ts';
@@ -54,14 +47,12 @@ import type {
   GitGraphDocument,
   GitMergeNode,
   GitStatementNode,
-  GitTextNode,
   GitValue,
 } from './ast.ts';
 import { GitBuilder, WRITTEN_TYPES } from './build.ts';
-import { accDescrValue, accTitleValue, stringValue, titleValue } from './convert.ts';
+import { stringValue } from './convert.ts';
 import { lex } from './lexer.ts';
 import { GITGRAPH_TRIVIA, T } from './tokens.ts';
-import { ID_CONTROL, ID_RESERVED, idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 export interface GitGraphParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
@@ -94,8 +85,6 @@ const MERGE_OPTIONS = [T.Id, T.Tag, T.Type];
 const PICK_OPTIONS = [T.Id, T.Tag, T.Parent];
 const AFTER_BRANCH = [T.Order, ...LINE_END];
 
-/** Where recovery resumes (R-PARSE-4). */
-const BOUNDARY = kindSet(Kind.Newline, Kind.EOF);
 /**
  * Kinds a probe's cursor follows rather than extends: the `…:` keywords and `:`, and a string,
  * which its closing quote ends (right after `id:"a"` the parser expects the next option).
@@ -112,12 +101,8 @@ const PROBE_FOLLOWS = kindSet(
   T.String
 );
 
-/** The keyword of each statement-value token, also its probe mode ({@link probeMode}). */
-const VALUE_WORDS: Readonly<Record<number, string>> = {
-  [T.Title]: 'title',
-  [T.AccTitle]: 'accTitle',
-  [T.AccDescr]: 'accDescr',
-};
+/** `title`, `accTitle` and `accDescr` by token kind; a keyword is also its probe mode. */
+const TEXTS = /* @__PURE__ */ textStatements(T.Title, T.AccTitle, T.AccDescr);
 
 /**
  * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the
@@ -139,7 +124,7 @@ function probeMode(src: string, tokens: TokenStream, o: number): string {
     }
     if (end < o) continue;
     if (kind === T.String && o < end) return 'string';
-    const word = VALUE_WORDS[kind];
+    const word = TEXTS[kind]?.word;
     if (!word) continue;
     let k = start;
     while (/[\t ]/.test(src.charAt(k))) k++;
@@ -167,16 +152,6 @@ const EXPECTED = new ExpectedTable([
   ['the end of the text', [Kind.EOF]],
 ]);
 
-const KIND_OF: Record<number, GitTextNode['type']> = {
-  [T.Title]: 'Title',
-  [T.AccTitle]: 'AccTitle',
-  [T.AccDescr]: 'AccDescr',
-};
-const SPAN_OF: Record<GitTextNode['type'], string> = {
-  Title: 'title',
-  AccTitle: 'accTitle',
-  AccDescr: 'accDescr',
-};
 const DIRECTION_OF: Record<number, GitDirection> = { [T.LR]: 'LR', [T.TB]: 'TB', [T.BT]: 'BT' };
 const ONE_PER_LINE = 'put each statement on a line of its own';
 /** The word keywords, for "case-sensitive" and "put a blank after" hints. */
@@ -206,44 +181,32 @@ export function parseGitGraph(
   return new GitGraphParser(src, options).parse();
 }
 
+const GRAMMAR: RuleGrammar = {
+  lex,
+  trivia: GITGRAPH_TRIVIA,
+  probeFollows: PROBE_FOLLOWS,
+  probeMode,
+};
+
 /**
  * One parse. Each grammar rule is a method that returns what it read; a rule that fails
  * records a diagnostic and throws {@link STOP}, and the statement loop recovers.
  */
-class GitGraphParser {
-  private readonly pre: PreprocessResult;
-  private readonly view: SourceView;
-  private readonly full: TokenStream;
-  private readonly t: TokenView;
-  private i = 0;
-  private readonly st = new ParseState();
-  private readonly probe: Probe | undefined;
+class GitGraphParser extends RuleParser<PreprocessResult> {
   private readonly git: GitBuilder;
   private readonly children: GitStatementNode[] = [];
-  private lines: LineIndex | undefined;
-  /** `@n` mentions per id base (`c:A`, `b:dev`). */
-  private readonly mentions = new Map<string, number>();
   /** `#k` ordinals per id base (`c`, `m:dev`, `cp:A`, `co:dev`, `st`). */
   private readonly ordinals = new Map<string, number>();
   private direction: GitDirection = 'LR';
   /** The last in-text value of each (v12's Langium assignments: the last one wins). */
-  private title = '';
-  private accTitle = '';
-  private accDescr = '';
+  private readonly texts: TextValues = { title: '', accTitle: '', accDescr: '' };
 
   constructor(
-    private readonly src: string,
+    src: string,
     private readonly options: GitGraphParseOptions
   ) {
-    const pre = (this.pre = options.preprocessed ?? preprocess(src));
-    if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
-    this.view = sourceView(
-      src,
-      pre.bodyStart,
-      pre.directives.map((d) => d.range)
-    );
-    this.full = lex(src, pre.bodyStart, this.view);
-    this.t = significantTokens(this.full, GITGRAPH_TRIVIA);
+    const given = options.preprocessed;
+    super(src, given ?? preprocess(src), !given, GRAMMAR, options.probe);
     this.git = new GitBuilder(
       this.st.diagnostics,
       options.mainBranchName ?? MAIN_BRANCH,
@@ -251,13 +214,6 @@ class GitGraphParser {
       this.writtenIds(),
       options.maxNodes
     );
-    if (options.probe !== undefined) {
-      const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
-      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
-      else probe.trivia(this.full);
-      // Ignored when the offset is outside code.
-      probe.lexed(probe.offset, probe.offset, probeMode(src, this.full, probe.offset));
-    }
   }
 
   parse(): GitGraphParseResult {
@@ -266,7 +222,7 @@ class GitGraphParser {
     this.document();
     const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
     // D265 (as D218): the in-text title if non-empty, else the front-matter one.
-    const title = this.title || this.pre.frontMatter?.title;
+    const title = this.texts.title || this.pre.frontMatter?.title;
     const model: GitModel = Object.freeze({
       direction: this.direction,
       commits: Object.freeze(git.commitList()),
@@ -275,8 +231,8 @@ class GitGraphParser {
       currentBranch: git.currentBranch,
       head: git.headId,
       ...(title ? { title } : {}),
-      accTitle: this.accTitle,
-      accDescr: this.accDescr,
+      accTitle: this.texts.accTitle,
+      accDescr: this.texts.accDescr,
       warnings: Object.freeze(warnings),
     });
     const ast: GitGraphDocument = {
@@ -314,36 +270,6 @@ class GitGraphParser {
 
   // ---- tokens -------------------------------------------------------------------------
 
-  private kind(j = this.i): number {
-    return this.t.kind[j] ?? Kind.EOF;
-  }
-
-  private range(j = this.i): Range {
-    return { start: this.t.start[j] ?? 0, end: this.t.end[j] ?? 0 };
-  }
-
-  /** A token's text as v12's lexer read it (removed spans dropped, entities decoded). */
-  private raw(j = this.i): string {
-    const { start, end } = this.range(j);
-    return cook(this.src, start, end, this.view);
-  }
-
-  /**
-   * Probe hook: the parser tests the current token for `kinds` (a constant list), or would
-   * accept them there. Records them when it is the probed token.
-   */
-  private tested(kinds: readonly number[]): void {
-    const p = this.probe;
-    if (p?.isAt(this.t, this.i, this.pre.bodyStart)) p.tested(kinds, this.range().start);
-  }
-
-  /** Consume a token of `kind` and return its index, or fail. */
-  private expect(kind: number, hint?: string): number {
-    this.tested([kind]);
-    if (this.kind() !== kind) this.fail([kind], hint);
-    return this.i++;
-  }
-
   /** `base@2`, `base@3`, … for the second and later mentions of `base`. */
   private mention(base: string): AstId {
     const n = (this.mentions.get(base) ?? 0) + 1;
@@ -367,30 +293,21 @@ class GitGraphParser {
 
   // ---- errors and recovery ------------------------------------------------------------
 
-  private lineOf(at: number): number {
-    return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
-  }
-
-  /** How an error message names the current token. */
-  private found(): string {
-    const k = this.kind();
-    if (k === Kind.EOF) return 'the end of the text';
-    if (k === Kind.Newline) return 'a line break';
-    const text = this.raw().trim();
-    const line = text.split('\n', 1)[0] ?? '';
-    return line.length > 24 || line !== text ? `\`${line.slice(0, 24)}…\`` : `\`${line}\``;
-  }
-
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  private fail(want: readonly number[], hint?: string): never {
+  protected fail(want: readonly number[], hint?: string): never {
     const { st } = this;
     const where = this.range();
     // `title` and the accessibility tokens take the blanks before them.
     while (where.start < where.end && /[\t ]/.test(this.src[where.start] ?? '')) where.start++;
     if (this.kind() === Kind.Error) this.badCharacters(where);
-    const d = st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found());
-    const why = hint ?? this.explain();
-    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
+    st.diagnostics.unexpected(
+      'UNEXPECTED',
+      where,
+      EXPECTED.names(want),
+      this.found(),
+      undefined,
+      hint ?? this.explain()
+    );
     throw STOP;
   }
 
@@ -442,22 +359,6 @@ class GitGraphParser {
     const glued = KEYWORDS.find((w) => word.startsWith(w));
     if (glued) return `put a blank after \`${glued}\``;
     return undefined;
-  }
-
-  /** Skip to the next line break after an error (R-PARSE-4). */
-  private recover(): void {
-    this.probe?.freeze();
-    this.i = skipTo(this.t, this.i, BOUNDARY);
-  }
-
-  /** Run one statement rule; on failure, recover. */
-  private statement(rule: () => void): void {
-    try {
-      rule();
-    } catch (error) {
-      if (error !== STOP) throw error;
-      this.recover();
-    }
   }
 
   // ---- rules --------------------------------------------------------------------------
@@ -777,15 +678,11 @@ class GitGraphParser {
   private text(k: number): void {
     const j = this.i++;
     const image = this.raw(j);
-    const type = KIND_OF[k] ?? 'Title';
-    const range = this.range(j);
-    while (range.start < range.end && /[\t ]/.test(this.src[range.start] ?? '')) range.start++;
+    const { type, word } = TEXTS[k] ?? TITLE_STATEMENT;
+    const range = withoutIndent(this.src, this.range(j));
     this.eol(k, []);
-    let text: string;
-    if (type === 'Title') text = this.title = titleValue(image);
-    else if (type === 'AccTitle') text = this.accTitle = accTitleValue(image);
-    else text = this.accDescr = accDescrValue(image);
+    const text = (this.texts[word] = textValue(type, image));
     this.children.push({ id: this.line(), type, range, text });
-    this.st.statement(SPAN_OF[type], range);
+    this.st.statement(word, range);
   }
 }

@@ -22,7 +22,7 @@ import {
   type PathData,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import { wardleySection, wardleyUseMaxWidth } from '../config.ts';
 import { BOLD_WEIGHT, WARDLEY_METRICS as metrics } from '../layout/metrics.ts';
 import type {
@@ -466,14 +466,17 @@ function openRoot(
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
+  const maxWidth = wardleyUseMaxWidth(wardleySection(config));
+  const title = model.accTitle.trim();
+  const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
   openSvgRoot(w, ctx, {
     name: 'wardley',
     viewBox: [x, y, width, height],
-    maxWidth: wardleyUseMaxWidth(wardleySection(config)),
-    title: model.accTitle.trim(),
-    desc: model.accDescr.trim(),
+    maxWidth,
+    title,
+    desc,
     attrs: { 'font-family': font },
   });
 }

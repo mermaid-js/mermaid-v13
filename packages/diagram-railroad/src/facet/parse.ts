@@ -26,8 +26,7 @@ import type { RailroadParseOptions, RailroadParseResult } from '../parser/parser
 import { parseRailroad } from '../parser/parse.ts';
 import { T } from '../parser/tokens.ts';
 import type { RailroadNotation } from '../parser/tokens.ts';
-import { atLineStart, isTrivia, notationOf } from './tables.ts';
-import { code } from '@mermaid-js/core/parser-kit/facet';
+import { atLineStart, code, isTrivia, notationOf } from './tables.ts';
 
 /** D513's hint codes, and D517's undefined reference. */
 export const RAILROAD_TITLE_PREFIX = 'RAILROAD_TITLE_PREFIX';
