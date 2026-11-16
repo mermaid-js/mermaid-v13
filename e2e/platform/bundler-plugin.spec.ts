@@ -44,7 +44,7 @@ const draw = (page: Page, id: string, text: string): Promise<Drawn> =>
 const holds = (dist: string, paths: readonly string[], suffix: string): boolean =>
   paths.some((p) => chunkSources(dist, p).some((s) => s.endsWith(suffix)));
 
-const FIXTURE_ENTRY = 'mermaid-fixture-diagram/index.js';
+const FIXTURE_ENTRY = 'mermaid-fixture-diagram/entry.js';
 const FIXTURE_DETECTOR = 'mermaid-fixture-diagram/detector.js';
 
 for (const bundler of BUNDLERS) {
