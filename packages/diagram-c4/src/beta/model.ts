@@ -77,3 +77,12 @@ export interface C4BetaModel {
   readonly styles: readonly C4BetaStyle[];
   readonly warnings: readonly Diagnostic[];
 }
+
+/**
+ * Whether `model` is c4-beta's rather than legacy C4's (one `c4` plugin parses both, spec #730):
+ * by its `kind`, which only c4-beta's model has. Other fields either model may gain do not change
+ * the answer.
+ */
+export function isC4Beta(model: object): model is C4BetaModel {
+  return 'kind' in model;
+}

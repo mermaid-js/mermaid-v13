@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseC4Beta } from './parser.ts';
+import { parseC4 } from '../parser/index.ts';
+import { isC4Beta } from './model.ts';
 
 const parse = (body: string, header = 'c4-beta context') => parseC4Beta(`${header}\n${body}`);
 const errors = (body: string, header?: string) =>
@@ -229,5 +231,14 @@ describe('c4-beta statement spans and symbols', () => {
       ['c', 'ref'],
       ['s', 'ref'],
     ]);
+  });
+});
+
+describe('telling the two models apart (spec #730)', () => {
+  it('knows a c4-beta model by its kind, whatever other fields it carries', () => {
+    const beta = parse('person a "A"').model;
+    expect(isC4Beta(beta)).toBe(true);
+    expect(isC4Beta({ ...beta, boundaries: [] })).toBe(true);
+    expect(isC4Beta(parseC4('C4Context\nPerson(a, "A")\n').model)).toBe(false);
   });
 });
