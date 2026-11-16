@@ -1,0 +1,6 @@
+class 3:9-3:15 "Animal" in 3:3-6:4
+namespace 7:13-7:18 "Outer" in 7:3-14:4 block
+  class 8:11-8:15 "Duck" in 8:5-10:6
+  class 12:13-12:17 "Fish" in 12:7-12:17
+class 16:14-16:19 "Zebra" in 16:3-16:19
+cssClass 17:12-17:16 "warm" in 17:3-17:26
