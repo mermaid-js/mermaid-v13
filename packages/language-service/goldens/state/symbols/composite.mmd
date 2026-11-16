@@ -1,0 +1,12 @@
+%% The outline: states nested by composite state, regions included.
+stateDiagram-v2
+  [*] --> Idle
+  state Outer {
+    state Inner {
+      A --> B
+    }
+    --
+    C
+  }
+  Idle --> Outer
+  note right of A : a note
