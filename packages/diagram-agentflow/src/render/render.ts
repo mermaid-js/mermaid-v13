@@ -141,14 +141,12 @@ function openRoot({ w, layout, ctx, paint }: Scene, model: AgentflowModel, title
   const { config } = ctx;
   const box = viewBox(layout, title);
   const maxWidth = config.agentflow?.useMaxWidth !== false;
-  const acc = model.accTitle.trim();
-  const desc = model.accDescr.trim();
   openSvgRoot(w, ctx, {
     name: 'agentflow',
     viewBox: box,
     maxWidth,
-    title: acc,
-    desc,
+    title: model.accTitle,
+    desc: model.accDescr,
     attrs: {
       'font-family': paint.node.font,
       'font-size': paint.node.fontSize,
