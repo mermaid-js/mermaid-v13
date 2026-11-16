@@ -1,0 +1,32 @@
+---
+description: >-
+  C4Context where only a boundary has a `direction`: the top level fills as
+  usual, the boundary `outer` fills in columns (LR), its nested boundary
+  `inner` takes that order from it, and `reset` goes back to TB with its own
+  statement. The last `direction` in a boundary's braces wins.
+---
+C4Context
+title A boundary with its own fill order
+System(a, "A")
+System(b, "B")
+Boundary(outer, "Outer, LR") {
+  direction TB
+  direction LR
+  System(c, "C")
+  System(d, "D")
+  System(e, "E")
+  Boundary(inner, "Inner, inherits LR") {
+    System(f, "F")
+    System(g, "G")
+    System(h, "H")
+  }
+  Boundary(reset, "Reset, TB") {
+    direction TB
+    System(i, "I")
+    System(j, "J")
+    System(k, "K")
+  }
+}
+Rel(a, c, "Uses")
+Rel(f, i, "Calls")
+UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")

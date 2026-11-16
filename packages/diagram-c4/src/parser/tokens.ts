@@ -11,15 +11,16 @@ const F = FIRST_DIAGRAM_KIND;
 
 export const T = {
   /**
-   * `.*direction\s+TB[^\n]*`, tried first in INITIAL: from the token start through the last
-   * `direction TB` on the line (its blanks may span line breaks) to the next line break.
+   * `direction[ \t]+TB\b`, tried first in INITIAL: a token that starts with `direction`, through
+   * the value (#730; 12.2.0's `.*direction\s+TB[^\n]*` took the rest of the line, from wherever
+   * in it the token started).
    */
   DirectionTB: F,
-  /** `.*direction\s+BT[^\n]*`. */
+  /** `direction[ \t]+BT\b`. */
   DirectionBT: F + 1,
-  /** `.*direction\s+RL[^\n]*`. */
+  /** `direction[ \t]+RL\b`. */
   DirectionRL: F + 2,
-  /** `.*direction\s+LR[^\n]*`. */
+  /** `direction[ \t]+LR\b`. */
   DirectionLR: F + 3,
   /** `title\s[^\n;]+` (the `\s` is not a line break, #683 the `#`), or `title` right before one (D452). */
   Title: F + 4,

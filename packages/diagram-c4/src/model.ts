@@ -24,6 +24,9 @@
  *   (`#35;` reads `&#35;`): core's label layout decodes them;
  * - the title is the last `title` statement's text, trimmed (D453), else the front-matter title
  *   (D218); `accTitle:` sets the accessible title only (D453; v12 set the visible one);
+ * - `direction` (#730, amending D452) is the last `direction` statement at the top level, and on
+ *   a boundary the last in its braces (across every statement that opens it); a line is a row
+ *   in TB and BT, a column in LR and RL, and a boundary without one takes its parent's;
  * - `shapeInRow` and `boundaryInRow` are the last valid `UpdateLayoutConfig` values (an integer
  *   prefix of at least 1, by position), undefined when none: the layout's config defaults apply.
  *
@@ -35,6 +38,9 @@ import type { AstId, Diagnostic } from '@mermaid-js/core/parser-kit';
 
 /** The five headers. */
 export type C4Type = 'C4Context' | 'C4Container' | 'C4Component' | 'C4Dynamic' | 'C4Deployment';
+
+/** A fill order (#730): a line of members is a row in TB and BT, a column in LR and RL. */
+export type C4Direction = 'TB' | 'BT' | 'LR' | 'RL';
 
 /**
  * The ten base element kinds, each with an `external_` twin (v12 `C4_ELEMENT_TYPES`): the one
@@ -148,6 +154,8 @@ export interface C4Boundary extends C4ElementFields {
    * alias inside itself (or inside a boundary in it) can make the parents a cycle, as in v12.
    */
   readonly parent: number;
+  /** The last `direction` in its braces; absent when it has none (it inherits its parent's). */
+  readonly direction?: C4Direction;
 }
 
 export interface C4Relation {
@@ -185,6 +193,8 @@ export interface C4Model {
   readonly shapeInRow?: number;
   /** `UpdateLayoutConfig`'s second value, when it gave a valid one. */
   readonly boundaryInRow?: number;
+  /** The last top-level `direction`; absent when there is none (TB). */
+  readonly direction?: C4Direction;
   /** The last in-text `title`, trimmed, else the front-matter title. */
   readonly title?: string;
   /** The last `accTitle:` (`''` when none). */

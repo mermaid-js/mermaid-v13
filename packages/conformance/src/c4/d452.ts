@@ -12,7 +12,11 @@
  *   lexical error) or, with the `#` first, did not match at all;
  * - `quote` (#681): v13's quoted value opens after a tab (`[ \t]*"`, where v12's `[ ]*"` left the
  *   quotes in an unquoted argument), and an unclosed one stops at the line break before a line
- *   that starts a statement, where v12's ran on to the next quote.
+ *   that starts a statement, where v12's ran on to the next quote;
+ * - `direction` (#730, amending D452): v13's `direction[ \t]+(TB|BT|RL|LR)\b` is read where a
+ *   token starts, where 12.2.0's `.*direction\s+LR[^\n]*` took the line from the token start
+ *   (a label that holds the words, and the text after a `direction`, were part of the token) and
+ *   a blank run that spans a line break or a U+2028 was part of it.
  */
 import { c4Tokens, JISON_NAMES } from '@mermaid-js/diagram-c4';
 import { v12TokenText } from '../v12-entities.ts';
@@ -40,8 +44,17 @@ export function v13Tokens(source: string): { tokens: JisonToken[]; ranges: [numb
   return { tokens, ranges };
 }
 
+/**
+ * #730: whether v13 reads a `direction` statement in `source`. 12.2.0 has none: it refuses the
+ * line, so the gates that compare accept and reject with it list these sources as an accept
+ * divergence.
+ */
+export function usesDirection(source: string): boolean {
+  return v13Tokens(source).tokens.some(([name]) => name.startsWith('direction_'));
+}
+
 /** D452's, #683's and #681's lexing changes, by the gate exclusion they are listed under. */
-export type Exclusion = 'unquoted' | 'comment' | 'title' | 'hash' | 'quote';
+export type Exclusion = 'unquoted' | 'comment' | 'title' | 'hash' | 'quote' | 'direction';
 
 /** The terminals whose text #683 lets run over a `#`. */
 const HASH_RUNS = new Set(['title', 'accDescription']);
@@ -70,6 +83,7 @@ export function exclusion(
   if (stopsUnquoted(a, b, v12[at - 1])) return 'unquoted';
   if (runsOverHash(a, b)) return 'hash';
   if (quoteChange(a, b)) return 'quote';
+  if (directionRead(a, b)) return 'direction';
   if (b?.[0] === 'NEWLINE' && a?.[0] !== 'NEWLINE' && gap.includes('%%')) return 'comment';
   // v12's `title\s` took the line break (and the next line, or failed at a blank line).
   const loneTitle = b?.[0] === 'title' && b[1] === 'title';
@@ -87,6 +101,16 @@ function quoteChange(a: JisonToken | undefined, b: JisonToken | undefined): bool
   if (a[0] === 'STR' && /^ *\t[ \t]*"/.test(a[1])) return true;
   const start = /\n[ \t]*\w+\(/.exec(a[1]);
   return start !== null && b[1] === a[1].slice(0, start.index);
+}
+
+/**
+ * #730: whether v12's `a` is a `direction` token that v13's `b` is not, or only a part of: a label
+ * holding the words or a value cut off by a line break or U+2028 (`b` is another token), or the
+ * line's start or its rest left out of the token (`b` is the same token, shorter).
+ */
+function directionRead(a: JisonToken | undefined, b: JisonToken | undefined): boolean {
+  if (!a?.[0].startsWith('direction_')) return false;
+  return a[0] !== b?.[0] || (a[1] !== b[1] && a[1].includes(b[1]));
 }
 
 /** Whether v12's `a` ran over a `)` or line break where v13's `b` stopped (`before`: v12's). */

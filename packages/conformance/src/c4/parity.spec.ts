@@ -7,7 +7,7 @@ import { DIVERGENCES_DIR } from '../registry.ts';
 import { diffPaths, runParity } from '../runner.ts';
 import type { CorpusItem } from '../types.ts';
 import { c4Cases, c4Corpus, c4ParityCorpus, VARIANTS } from './corpus.ts';
-import { lexingExclusion } from './d452.ts';
+import { lexingExclusion, usesDirection } from './d452.ts';
 import type { Exclusion } from './d452.ts';
 import { c4V12Snapshot } from './v12.ts';
 import type { C4Snapshot } from './v12.ts';
@@ -31,6 +31,7 @@ import { c4Adapter, c4V13Snapshot, parseC4ForParity } from './v13.ts';
  *   variant may change the text at those paths, but one more difference fails;
  * - or only its title differs, and v12's trimmed is v13's (D453): the U+2028/U+2029 variant
  *   adds blanks around every line's text, which v12 kept in the title.
+ * - or v13 accepts it for its `direction` statement, which 12.2.0 refuses (#730, amending D452).
  * Any other difference fails, and so does a variant that stops differing.
  */
 const VARIANT = new RegExp(` \\((?:${VARIANTS.map(([s]) => s).join('|')})\\)$`);
@@ -94,12 +95,14 @@ describe('c4 oracle parity with mermaid@12 over the generated variants', () => {
     const originals = new Map(
       [...(await c4Corpus()), ...c4Cases()].map((i) => [baseId(i.id), i.source])
     );
-    const by: Record<Exclusion | 'as-listed' | 'title trimmed', number> = {
+    const by: Record<Exclusion | 'as-listed' | 'title trimmed' | 'v12 has no direction', number> = {
       unquoted: 0,
       comment: 0,
       title: 0,
       hash: 0,
       quote: 0,
+      direction: 0,
+      'v12 has no direction': 0,
       'as-listed': 0,
       'title trimmed': 0,
     };
@@ -107,7 +110,9 @@ describe('c4 oracle parity with mermaid@12 over the generated variants', () => {
     for (const d of report.unlisted) {
       const why = await lexingExclusion(lexer, sources.get(d.id) ?? '');
       if (why) by[why]++;
-      else if (
+      else if (d.kind === 'accept' && usesDirection(sources.get(d.id) ?? '')) {
+        by['v12 has no direction']++;
+      } else if (
         listedKind.get(baseId(d.id)) === d.kind &&
         (await difference(sources.get(d.id) ?? '')) ===
           (await difference(originals.get(baseId(d.id)) ?? ''))
@@ -121,22 +126,25 @@ describe('c4 oracle parity with mermaid@12 over the generated variants', () => {
     const rejected = agree.filter((r) => !r.oracleAccepted).length;
     process.stdout.write(
       `c4 variant parity: ${report.results.length} sources, ${agree.length} agree (${rejected} rejected by both), ` +
-        `${report.unlisted.length} differ: ${by.unquoted} unquoted, ${by.comment} comment, ${by.title} title, ${by.hash} hash, ${by.quote} quote, ${by['as-listed']} as their source, ${by['title trimmed']} title trimmed\n`
+        `${report.unlisted.length} differ: ${by.unquoted} unquoted, ${by.comment} comment, ${by.title} title, ${by.hash} hash, ${by.quote} quote, ${by.direction} direction, ${by['v12 has no direction']} no direction in v12, ${by['as-listed']} as their source, ${by['title trimmed']} title trimmed\n`
     );
     expect(unexplained).toEqual([]);
     expect(by).toEqual(DIFFERING);
     expect(agree.length).toBeGreaterThan(1500);
-    expect(rejected).toBeGreaterThan(400);
+    // #730: the sources with a `direction` statement are no longer rejected by both.
+    expect(rejected).toBeGreaterThan(390);
   }, 600_000);
 });
 
 /** How many variants differ, by reason. */
 const DIFFERING = {
-  unquoted: 311,
+  unquoted: 313,
   comment: 21,
   title: 19,
   hash: 19,
   quote: 13,
+  direction: 33,
+  'v12 has no direction': 44,
   'as-listed': 315,
   'title trimmed': 54,
 };

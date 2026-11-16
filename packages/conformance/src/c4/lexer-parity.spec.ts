@@ -44,23 +44,25 @@ import type { Exclusion } from './d452.ts';
  *   (`[^,)\n]+`), or a line break leaves the arguments (the parser reports the macro open);
  * - `comment`: v13 has a `NEWLINE` right after a `%%` comment, whose line breaks v12 ate;
  * - `title`: v12's `title` took a line break and the next line, v13's is a lone `title`.
- * #683's and #681's changes are listed the same way:
+ * #683's, #681's and #730's changes are listed the same way:
  * - `hash`: v13's `title` or `accDescription` runs over a `#`, where v12's stopped at it (v12's
  *   fix mermaid-js/mermaid#8039);
  * - `quote` (#681): v13's quoted value opens after a tab, and an unclosed one stops at the line
- *   break before a line that starts a statement.
- * The rest of D452 (`direction` lines and `$__proto__` as diagnostics, named arguments in the
- * alias or label slot) is parser work. A quoted label holding `direction LR` stays one
- * `direction_lr` token, so the parser reports it as D452's `direction` diagnostic.
+ *   break before a line that starts a statement;
+ * - `direction` (#730, amending D452): v13 reads `direction[ \t]+(TB|BT|RL|LR)\b` where a token
+ *   starts, where 12.2.0's `.*direction\s+LR[^\n]*` took the line from there on: a label that holds
+ *   the words and the text after a `direction` were part of the token.
+ * The rest of D452 (`$__proto__` as a diagnostic, named arguments in the alias or label slot) is
+ * parser work.
  *
  * Sources v12 never lexed as C4 (`oracle.tokens` is undefined) are skipped; the test lists
  * them: five commented copies of a short body, where `%% cut` goes through the header.
  */
 /**
  * The e2e fixtures under `e2e/diagrams/c4` (the 32 of 12.2.0's corpus, #538's 12, #539's 2,
- * #542's 14 baselines, #683's 3, #739's 1 and #681's 1).
+ * #542's 14 baselines, #683's 3, #739's 1 and #681's 1 and #730's 5).
  */
-const E2E_FIXTURES = 65;
+const E2E_FIXTURES = 70;
 
 /** The sources each D452 exclusion covers as they are (not in a variant), in corpus order. */
 const D452_EXCLUDED: Record<Exclusion, string[]> = {
@@ -103,12 +105,27 @@ const D452_EXCLUDED: Record<Exclusion, string[]> = {
     'c4-cases/tab-after-comma',
     'c4-cases/unclosed-quote-runs-to-end',
   ],
+  direction: [
+    'e2e/pr-check/direction-boundary.mmd',
+    'c4-cases/direction-on-header-line',
+    'c4-cases/direction-in-label',
+    'c4-cases/direction-in-label-next-line',
+    'c4-cases/direction-after-statement',
+    'c4-cases/direction-blanks-span-lines',
+    'c4-cases/direction-rule-order',
+    'c4-cases/direction-last-on-line',
+    'c4-cases/direction-indented',
+    'c4-cases/direction-glued',
+    'c4-cases/direction-longer',
+    'c4-cases/direction-in-boundary',
+    'c4-cases/direction-after-comment',
+  ],
 };
 /**
  * How many sources, variants included, each exclusion covers: unquoted, comment, title, hash,
- * quote.
+ * quote, direction.
  */
-const D452_COUNTS = [373, 43, 23, 22, 21];
+const D452_COUNTS = [364, 43, 23, 22, 21, 95];
 
 /** A C4 header at the start of a text, as v12's detector and lexer read it. */
 const HEADER = /^\s*C4(?:Context|Container|Component|Dynamic|Deployment)\b/;
@@ -126,6 +143,7 @@ describe('c4 lexer parity with mermaid@12 (jison)', () => {
       title: [],
       hash: [],
       quote: [],
+      direction: [],
     };
     const skipped: string[] = [];
     let compared = 0;
@@ -166,7 +184,7 @@ describe('c4 lexer parity with mermaid@12 (jison)', () => {
     process.stdout.write(
       `lexer parity: ${compared} of ${items.length} sources lexed by v12 (${e2e} e2e, ${specs} specs, ${cases} cases); ` +
         `D452 exclusions: ${count('unquoted')} unquoted, ${count('comment')} comment, ${count('title')} title; ` +
-        `#683: ${count('hash')} hash; #681: ${count('quote')} quote\n`
+        `#683: ${count('hash')} hash; #681: ${count('quote')} quote; #730: ${count('direction')} direction\n`
     );
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
     expect(
@@ -182,6 +200,7 @@ describe('c4 lexer parity with mermaid@12 (jison)', () => {
       title: plain('title'),
       hash: plain('hash'),
       quote: plain('quote'),
+      direction: plain('direction'),
     }).toEqual(D452_EXCLUDED);
     expect([
       count('unquoted'),
@@ -189,6 +208,7 @@ describe('c4 lexer parity with mermaid@12 (jison)', () => {
       count('title'),
       count('hash'),
       count('quote'),
+      count('direction'),
     ]).toEqual(D452_COUNTS);
     // Every e2e fixture, every harvested spec and syntax-page string and every case reaches
     // the lexer.

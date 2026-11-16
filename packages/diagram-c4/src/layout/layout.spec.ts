@@ -8,7 +8,7 @@ import { c4TestContext, c4TestTheme, parsedC4 } from '../test-context.ts';
 import { c4LayoutViolations, c4RelationCrossings } from './invariants.ts';
 import { layoutC4 } from './layout.ts';
 import { c4RelationPath } from './path.ts';
-import { fixture, FIXTURES } from './mmd.fixtures.ts';
+import { fixture, fixtureSource, FIXTURES } from './mmd.fixtures.ts';
 import type { C4Layout, C4RelationLayout, PlacedLabel, Rect } from './types.ts';
 
 /**
@@ -234,6 +234,149 @@ describe('c4 grid (D454)', () => {
     ]);
     expect(warnings.map((w) => w.code)).toEqual([C4_BOUNDARY_CYCLE]);
     expect(warnings[0]!.astIds).toEqual([model.boundaries[0]!.ast]);
+  });
+});
+
+describe('c4 direction: the fill order of the grid (#730, amends D452)', () => {
+  const SHAPES = ['a', 'b', 'c', 'd', 'e', 'f'];
+  const placed = (name: string) => sound(fixtureSource(`pr-check/direction-${name}`));
+  /** The aliases of `layout`'s elements grouped by the value `key` gives, groups in key order. */
+  const lines = (layout: C4Layout, aliases: string[], key: (r: Rect) => number): string[][] => {
+    const by = new Map<number, string[]>();
+    for (const alias of aliases) {
+      const at = key(el(layout, alias).box);
+      by.set(at, [...(by.get(at) ?? []), alias]);
+    }
+    return [...by.entries()].sort(([x], [y]) => x - y).map(([, group]) => group);
+  };
+  const byX = (r: Rect) => r.x;
+  const byY = (r: Rect) => r.y;
+  /** Each alias of a line, ordered along the other axis. */
+  const along = (layout: C4Layout, group: string[], key: (r: Rect) => number): string[] =>
+    [...group].sort((p, q) => key(el(layout, p).box) - key(el(layout, q).box));
+
+  it('lays the TB fixture out in rows, the lines down, the boundary below', () => {
+    const layout = placed('tb');
+    expect(lines(layout, SHAPES, byY)).toEqual([
+      ['a', 'b', 'c'],
+      ['d', 'e', 'f'],
+    ]);
+    expect(along(layout, ['a', 'b', 'c'], byX)).toEqual(['a', 'b', 'c']);
+    expect(frame(layout, 'g').box.y).toBeGreaterThan(bottom(el(layout, 'f').box));
+  });
+
+  it('is the TB fixture without its direction line, to the pixel', () => {
+    const src = fixtureSource('pr-check/direction-tb');
+    const plain = src.replace('direction TB\n', '');
+    expect(plain).not.toBe(src);
+    expect(JSON.stringify(lay(src).layout)).toBe(JSON.stringify(lay(plain).layout));
+  });
+
+  it('lays the LR fixture out as the TB one transposed: its rows are columns, its lines go right', () => {
+    const tb = placed('tb');
+    const lr = placed('lr');
+    // The line of the TB fixture's row is the LR fixture's column.
+    expect(lines(lr, SHAPES, byX)).toEqual(lines(tb, SHAPES, byY));
+    // Members of a line run top to bottom, in statement order.
+    for (const line of [
+      ['a', 'b', 'c'],
+      ['d', 'e', 'f'],
+    ]) {
+      expect(along(lr, line, byY)).toEqual(line);
+      expect(new Set(line.map((alias) => el(lr, alias).box.x)).size).toBe(1);
+    }
+    // The boundary sits right of the elements instead of below them.
+    expect(frame(lr, 'g').box.x).toBeGreaterThan(right(el(lr, 'f').box));
+  });
+
+  it('lays RL out as LR with the lines reversed, the boundary on the left', () => {
+    const lr = placed('lr');
+    const rl = placed('rl');
+    expect(lines(rl, SHAPES, byX)).toEqual(lines(lr, SHAPES, byX).reverse());
+    for (const line of [
+      ['a', 'b', 'c'],
+      ['d', 'e', 'f'],
+    ]) {
+      expect(along(rl, line, byY)).toEqual(line);
+    }
+    expect(right(frame(rl, 'g').box)).toBeLessThan(el(rl, 'a').box.x + el(rl, 'a').box.width);
+    expect(frame(rl, 'g').box.x).toBeLessThan(el(rl, 'a').box.x);
+  });
+
+  it('lays BT out as TB with the lines reversed, the boundary above', () => {
+    const tb = placed('tb');
+    const bt = placed('bt');
+    expect(lines(bt, SHAPES, byY)).toEqual(lines(tb, SHAPES, byY).reverse());
+    for (const line of [
+      ['a', 'b', 'c'],
+      ['d', 'e', 'f'],
+    ]) {
+      expect(along(bt, line, byX)).toEqual(line);
+    }
+    expect(bottom(frame(bt, 'g').box)).toBeLessThan(el(bt, 'a').box.y + el(bt, 'a').box.height);
+    expect(frame(bt, 'g').box.y).toBeLessThan(el(bt, 'd').box.y);
+  });
+
+  it('keeps the same elements, relations and boundary in every direction', () => {
+    for (const name of ['lr', 'rl', 'bt']) {
+      const layout = placed(name);
+      expect(layout.elements.map((e) => e.alias)).toEqual(
+        placed('tb').elements.map((e) => e.alias)
+      );
+      expect(layout.relations.map((r) => `${r.from}>${r.to}`)).toEqual(['a>d', 'c>h']);
+    }
+  });
+
+  it('gives a boundary its own order, inherited by the boundaries in it, the last statement winning', () => {
+    const layout = placed('boundary');
+    // The top level is TB: a and b are a row.
+    expect(el(layout, 'a').box.y).toBe(el(layout, 'b').box.y);
+    // `outer` is LR (its last statement): c and d fill a column, e starts the next.
+    expect(el(layout, 'c').box.x).toBe(el(layout, 'd').box.x);
+    expect(el(layout, 'd').box.y).toBeGreaterThan(el(layout, 'c').box.y);
+    expect(el(layout, 'e').box.x).toBeGreaterThan(el(layout, 'c').box.x);
+    expect(el(layout, 'e').box.y).toBe(el(layout, 'c').box.y);
+    // Its child boundaries sit right of its elements, and `inner` inherits LR: f and g in a column.
+    expect(frame(layout, 'inner').box.x).toBeGreaterThan(right(el(layout, 'e').box));
+    expect(el(layout, 'f').box.x).toBe(el(layout, 'g').box.x);
+    expect(el(layout, 'g').box.y).toBeGreaterThan(el(layout, 'f').box.y);
+    // `reset` says TB: i and j are a row, k below.
+    expect(el(layout, 'i').box.y).toBe(el(layout, 'j').box.y);
+    expect(el(layout, 'j').box.x).toBeGreaterThan(el(layout, 'i').box.x);
+    expect(el(layout, 'k').box.y).toBeGreaterThan(bottom(el(layout, 'i').box));
+    // c4BoundaryInRow is 1, so each child boundary is a column of its own, an X gap apart (a
+    // gap keeps its physical axis: diagramMarginX, where TB's rows are a Y gap apart).
+    expect(frame(layout, 'reset').box.x).toBe(right(frame(layout, 'inner').box) + 50);
+    expect(frame(layout, 'reset').box.y).toBe(frame(layout, 'inner').box.y);
+  });
+
+  it('sizes an LR boundary to the taller of its elements and its child boundaries, not their sum', () => {
+    const layout = placed('boundary');
+    const outer = frame(layout, 'outer');
+    const inside = ['c', 'd', 'e'].map((a) => bottom(el(layout, a).box));
+    const kids = ['inner', 'reset'].map((a) => bottom(frame(layout, a).box));
+    // c4ShapeMargin (50) below the lowest content, as every frame.
+    expect(bottom(outer.box)).toBe(Math.max(...inside, ...kids) + 50);
+  });
+
+  it("takes the top level's direction for a boundary with none, wherever the statement is", () => {
+    const src = (at: string) =>
+      [
+        'C4Context',
+        at === 'first' ? 'direction LR' : '',
+        'Boundary(b, "B") {',
+        '  System(a, "A")',
+        '  System(c, "C")',
+        '}',
+        at === 'last' ? 'direction LR' : '',
+      ].join('\n');
+    for (const at of ['first', 'last']) {
+      const layout = sound(src(at));
+      expect(el(layout, 'a').box.x).toBe(el(layout, 'c').box.x);
+      expect(el(layout, 'c').box.y).toBeGreaterThan(el(layout, 'a').box.y);
+    }
+    const tb = sound(src('none'));
+    expect(el(tb, 'a').box.y).toBe(el(tb, 'c').box.y);
   });
 });
 

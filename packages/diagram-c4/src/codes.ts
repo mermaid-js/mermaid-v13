@@ -9,8 +9,6 @@
  * the field it names (v12 stored the raw argument there); the slot is left empty.
  */
 export const C4_NAMED_ARGUMENT_MOVED = 'C4_NAMED_ARGUMENT_MOVED';
-/** D452: a line holding `direction TB`, `BT`, `RL` or `LR` (v12 threw `setDirection`). */
-export const C4_DIRECTION = 'C4_DIRECTION';
 /**
  * D452: a `$__proto__` argument (v12 threw a `TypeError`), kept as an unknown name, as Pele keeps
  * it (a warning: Pele accepts it).

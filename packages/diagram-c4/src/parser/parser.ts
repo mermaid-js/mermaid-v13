@@ -54,7 +54,14 @@ import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import * as codes from '../codes.ts';
 import { checkLimits } from './limits.ts';
 import type { C4LimitOptions } from './limits.ts';
-import type { C4ElementKind, C4Model, C4NodeKind, C4RelationKind, C4Type } from '../model.ts';
+import type {
+  C4Direction,
+  C4ElementKind,
+  C4Model,
+  C4NodeKind,
+  C4RelationKind,
+  C4Type,
+} from '../model.ts';
 import type {
   C4BoundaryNode,
   C4Document,
@@ -159,16 +166,25 @@ const MACROS: ReadonlyMap<number, Macro> = new Map<number, Macro>([
 
 /** The other statements: title and accessibility. */
 const OTHER = kindSet(T.Title, T.AccDescription, T.AccTitle, T.AccDescr, T.AccDescrBlockValue);
-const DIRECTIONS = kindSet(T.DirectionTB, T.DirectionBT, T.DirectionRL, T.DirectionLR);
+const DIRECTIONS_LIST = [T.DirectionTB, T.DirectionBT, T.DirectionRL, T.DirectionLR];
+const DIRECTIONS = kindSet(...DIRECTIONS_LIST);
+/** The fill order each `direction` token names. */
+const DIRECTION_OF = new Map<number, C4Direction>([
+  [T.DirectionTB, 'TB'],
+  [T.DirectionBT, 'BT'],
+  [T.DirectionRL, 'RL'],
+  [T.DirectionLR, 'LR'],
+]);
 /** Where the text ends: jison's `EOF`, or the stream's end (the lexer ended in a value). */
 const ENDS = kindSet(T.Eof, Kind.EOF);
 
 // What the parser accepts at its decision points, for the probe (R-LANG-7, D95). Constants,
 // so a parse without a probe allocates nothing for them.
 const HEADER_KINDS = [...HEADERS];
-/** What may start a statement: a macro, then a title or accessibility line. */
+/** What may start a statement: a macro, a `direction`, then a title or accessibility line. */
 const STATEMENT_KINDS = [
   ...MACROS.keys(),
+  ...DIRECTIONS_LIST,
   T.Title,
   T.AccDescription,
   T.AccTitle,
@@ -177,8 +193,11 @@ const STATEMENT_KINDS = [
 ];
 /** What may start a statement in a boundary: those and its `}`. */
 const BOUNDARY_STATEMENT_KINDS = [...STATEMENT_KINDS, T.RBrace];
-/** What may start a boundary's first statement: no title or accessibility line goes there. */
-const BOUNDARY_FIRST_KINDS = [...MACROS.keys(), T.RBrace];
+/**
+ * What may start a boundary's first statement: no title or accessibility line goes there, a
+ * `direction` may.
+ */
+const BOUNDARY_FIRST_KINDS = [...MACROS.keys(), ...DIRECTIONS_LIST, T.RBrace];
 /** What may come next in the arguments. */
 const ARGUMENT_KINDS = [T.ArgsClose, T.Str, T.AttributeEmpty, T.QuoteOpen, T.KeyStart];
 /**
@@ -222,6 +241,7 @@ const STATEMENT = [
 const LINE_BREAK = ['a line break'];
 const ONE_LINE_HINT = 'each statement goes on a line of its own';
 const NO_SEMICOLON_HINT = 'C4 has no `;`: each statement goes on a line of its own';
+const DIRECTION_HINT = 'write `direction TB`, `BT`, `LR` or `RL`, alone on a line';
 const BLANK_BEFORE_PAREN_HINT = 'write the `(` right after the macro name, with no blank';
 const NAMED_HINT = 'a named argument is written `$name="value"`';
 
@@ -419,6 +439,7 @@ class C4Parser {
     if (ch === ';') return NO_SEMICOLON_HINT;
     if (c.start === c.end) return 'write the `(` on the line of the macro name';
     if (/\s/.test(ch)) return BLANK_BEFORE_PAREN_HINT;
+    if (this.src.startsWith('direction', c.start)) return DIRECTION_HINT;
     return undefined;
   }
 
@@ -508,7 +529,6 @@ class C4Parser {
       if (!this.lineBreaks()) this.fail(LINE_BREAK, ONE_LINE_HINT);
       return;
     }
-    if (inKindSet(DIRECTIONS, k)) this.direction();
     this.fail(HEADER);
   }
 
@@ -571,6 +591,7 @@ class C4Parser {
       c.next();
       return DIAGRAM_STATEMENT;
     }
+    if (inKindSet(DIRECTIONS, k)) return this.direction();
     if (frame) frame.count++;
     if (inKindSet(OTHER, k)) {
       if (frame?.count === 1) {
@@ -585,7 +606,6 @@ class C4Parser {
     }
     const macro = MACROS.get(k);
     if (macro) return this.macro(macro);
-    if (inKindSet(DIRECTIONS, k)) this.direction();
     if (HEADERS.has(k)) this.fail(STATEMENT, 'the `C4…` header comes once, on the first line');
     if (k === T.LBrace) {
       // A `{` with no boundary before it: open one anyway, so its `}` matches.
@@ -598,14 +618,18 @@ class C4Parser {
     this.fail(STATEMENT, k === T.RBrace ? 'this `}` closes no boundary' : this.hint());
   }
 
-  /** D452: a `direction` line is a diagnostic, not v12's `setDirection` crash. */
-  private direction(): never {
-    this.st.diagnostics.error(
-      codes.C4_DIRECTION,
-      'C4 has no `direction` statement: elements are laid out in statement order. A line holding `direction TB`, `BT`, `RL` or `LR` is read as one, even inside a label; reword it.',
-      this.cursor.range
-    );
-    throw STOP;
+  /**
+   * `direction TB|BT|RL|LR` (#730): the fill order of the boundary whose braces hold it, else of
+   * the top level. It is no statement of the boundary (a boundary still needs an element, a
+   * relation or a style) and has no AST node. A boundary that failed to parse takes none.
+   */
+  private direction(): After {
+    const { cursor: c } = this;
+    const frame = this.frames[this.frames.length - 1];
+    this.builder.direction(frame ? frame.boundary : -1, DIRECTION_OF.get(c.kind) ?? 'TB');
+    this.st.statement('direction', c.range);
+    c.next();
+    return DIAGRAM_STATEMENT;
   }
 
   /** `title`, `accDescription`, `accTitle:`, `accDescr:` or `accDescr { … }`. */

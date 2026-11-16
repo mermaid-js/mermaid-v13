@@ -21,6 +21,7 @@ import { c4Fonts, c4LayoutConfig, type C4Fonts, type C4LayoutConfig } from '../c
 import {
   kindParts,
   type C4Boundary,
+  type C4Direction,
   type C4Element,
   type C4Family,
   type C4Model,
@@ -206,6 +207,7 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
   const order: Group[] = [root];
   // Breadth first: the iterator reads the boundaries pushed while it runs.
   for (const g of order) for (const kid of g.kids) order.push(kid as Group);
+  setDirections(order, model.direction);
 
   const spacing: GridSpacing = {
     shapeGapX: 2 * config.c4ShapeMargin,
@@ -261,6 +263,19 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
   );
   const cell = units ? { cell: units.pxPerUnit } : {};
   return assemble({ nodes, order, relations, ...(title ? { title } : {}), config, ...cell });
+}
+
+/**
+ * Gives each group its fill order (#730): its own `direction`, else its parent's, the top level's
+ * the last one at the top level (TB when none). `order` has parents before children.
+ */
+function setDirections(order: readonly Group[], top: C4Direction | undefined): void {
+  const byIndex = new Map(order.map((g) => [g.index, g]));
+  for (const g of order) {
+    const direction =
+      g.boundary?.direction ?? (g.index < 0 ? top : byIndex.get(g.parent)?.direction);
+    if (direction) g.direction = direction;
+  }
 }
 
 function group(index: number, boundary: GridGroup['boundary'], parent: number): Group {

@@ -102,7 +102,7 @@ describe('C4 diagrams through the public API (#542)', () => {
       'C4Context\nPerson(u, "U"\n',
       'C4Context\nBoundary(b, "B") {\n}\n',
       'C4Context\nPerson(u, "U")\nRel(u, x, "r")\n',
-      'C4Context\ndirection TB\nPerson(u, "U")\n',
+      'C4Context\ndirection XY\nPerson(u, "U")\n',
     ]) {
       const e = await rejection(m.render('c3', text));
       expect(e, text).toBeInstanceOf(MermaidError);
@@ -114,6 +114,24 @@ describe('C4 diagrams through the public API (#542)', () => {
     );
     const e = await rejection(m.render('c3', 'C4ContextX\nPerson(u, "U")\n'));
     expect((e as MermaidError).code).toBe('UNSUPPORTED_DIAGRAM');
+  });
+
+  it('fills the grid in the order of a direction (#730): TB is the drawing without one', async () => {
+    const m = createMermaid();
+    const body = 'System(a, "A")\nSystem(b, "B")\nSystem(c, "C")\nSystem(d, "D")\n';
+    const none = await m.render('c4', `C4Context\n${body}UpdateLayoutConfig($c4ShapeInRow="2")`);
+    const draw = async (direction: string) =>
+      (
+        await m.render(
+          'c4',
+          `C4Context\n${direction}\n${body}UpdateLayoutConfig($c4ShapeInRow="2")`
+        )
+      ).svg;
+    expect(await draw('direction TB')).toBe(none.svg);
+    const lr = await draw('direction LR');
+    expect(lr).not.toBe(none.svg);
+    expect(await draw('direction RL')).not.toBe(lr);
+    expect(await draw('direction BT')).not.toBe(none.svg);
   });
 
   it('honours the c4 section over its generated defaults (D454)', async () => {

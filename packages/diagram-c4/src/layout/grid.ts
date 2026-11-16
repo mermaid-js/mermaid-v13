@@ -11,9 +11,17 @@
  * first `nextLinePaddingX` in), shapes keep their own height in a row as v12's did (Pele
  * stretched them), the header is v12's (centred; label, `[type]`, description at v12's offsets),
  * and a boundary on a parent cycle is drawn at the top level (D454) instead of not at all.
+ *
+ * A `direction` (#730, amending D452) sets the fill order of a group's contents. In TB, the
+ * default and the order above, a line is a row of `c4ShapeInRow`, its members run left to right
+ * and the lines go down, with the child boundaries below the elements. In LR a line is a column:
+ * its members run top to bottom, the lines go right and the child boundaries sit right of the
+ * elements. BT and RL are TB and LR with the lines (and the elements against the child
+ * boundaries) in the opposite order, so the first statement comes last. Gaps keep their
+ * physical axis: a horizontal gap is the X one wherever it falls.
  */
 // cspell:ignore kepano
-import type { C4Boundary, C4Model } from '../model.ts';
+import type { C4Boundary, C4Direction, C4Model } from '../model.ts';
 
 /** A box the grid places: its size is set before, its top-left corner by the grid. */
 export interface GridBox {
@@ -39,6 +47,8 @@ export interface GridGroup extends GridBox {
   /** The header's height from the frame's top, and its width; set by `header`. */
   head: number;
   headW: number;
+  /** The fill order of its contents (TB when absent): its own `direction`, else its parent's. */
+  direction?: C4Direction;
 }
 
 /** The gaps and margins the grid uses (from the `c4` config). */
@@ -93,14 +103,47 @@ export function brokenCycles(model: Pick<C4Model, 'boundaries'>): {
 /** How a run of boxes is put in rows. */
 interface Rows {
   readonly perRow: number;
+  /** Between members of a line, and between lines (each on its physical axis). */
   readonly gapX: number;
   readonly gapY: number;
-  /** How far rows after the first move right (left when negative). */
+  /** How far lines after the first move along the members' axis (back when negative). */
   readonly indent: number;
 }
 
-/** Places boxes left to right in rows from (0, 0); returns the width and height they take. */
-function rows(boxes: readonly GridBox[], { perRow, gapX, gapY, indent }: Rows): [number, number] {
+/** What a fill order does: which axis the members run on, and whether the lines go back. */
+interface Flow {
+  /** LR and RL: a line is a column. */
+  readonly columns: boolean;
+  /** BT and RL: the first line comes last. */
+  readonly reversed: boolean;
+}
+
+const FLOWS: Readonly<Record<C4Direction, Flow>> = {
+  TB: { columns: false, reversed: false },
+  BT: { columns: false, reversed: true },
+  LR: { columns: true, reversed: false },
+  RL: { columns: true, reversed: true },
+};
+
+/** A group's fill order. */
+const flowOf = (group: GridGroup): Flow => FLOWS[group.direction ?? 'TB'];
+
+/**
+ * Places boxes in lines from (0, 0): the members left to right in rows (TB), or top to bottom
+ * in columns (LR); a reversed flow then mirrors the lines. Returns the width and height they
+ * take.
+ */
+function rows(boxes: readonly GridBox[], layout: Rows, flow: Flow): [number, number] {
+  const size = flow.columns ? columns(boxes, layout) : horizontal(boxes, layout);
+  if (flow.reversed) mirror(boxes, size, flow.columns);
+  return size;
+}
+
+/** The members of each line run left to right and the lines go down. */
+function horizontal(
+  boxes: readonly GridBox[],
+  { perRow, gapX, gapY, indent }: Rows
+): [number, number] {
   // A negative indent moves the first row right instead, so no row starts left of 0.
   const least = boxes.length > perRow ? Math.min(0, indent) : 0;
   let width = 0;
@@ -122,6 +165,40 @@ function rows(boxes: readonly GridBox[], { perRow, gapX, gapY, indent }: Rows): 
   return [width, boxes.length > 0 ? y - gapY : 0];
 }
 
+/** `horizontal` with the axes swapped: members top to bottom, lines going right. */
+function columns(boxes: readonly GridBox[], layout: Rows): [number, number] {
+  const swapped = boxes.map((box) => ({ x: box.y, y: box.x, w: box.h, h: box.w }));
+  const [height, width] = horizontal(swapped, {
+    ...layout,
+    gapX: layout.gapY,
+    gapY: layout.gapX,
+  });
+  boxes.forEach((box, i) => {
+    box.x = swapped[i]!.y;
+    box.y = swapped[i]!.x;
+  });
+  return [width, height];
+}
+
+/**
+ * The lines in the opposite order: the boxes mirrored across the lines' axis within the run's
+ * own extent (a box shorter than its line ends up at the line's far side).
+ */
+function mirror(boxes: readonly GridBox[], [width, height]: [number, number], across: boolean) {
+  for (const box of boxes) {
+    if (across) box.x = width - box.x - box.w;
+    else box.y = height - box.y - box.h;
+  }
+}
+
+/** Where a group's elements and its child boundaries start inside its contents' area. */
+interface Offsets {
+  readonly nodesX: number;
+  readonly nodesY: number;
+  readonly kidsX: number;
+  readonly kidsY: number;
+}
+
 /**
  * Lays out the groups: `order` is parents before children, `order[0]` the top level. `header`
  * measures a boundary's header for the width its contents take and sets `head` and `headW`.
@@ -131,46 +208,73 @@ export function placeGrid(
   s: GridSpacing,
   header: (group: GridGroup, contentWidth: number) => void
 ): void {
-  const kidsTop = new Map<GridGroup, number>();
-  for (let i = order.length - 1; i >= 0; i--) {
-    const group = order[i]!;
-    const top = group.index < 0;
-    const [gridW, gridH] = rows(group.nodes, {
-      perRow: s.shapeInRow,
-      gapX: s.shapeGapX,
-      gapY: s.shapeGapY,
-      indent: s.nextLinePaddingX,
-    });
-    const [kidsW, kidsH] = rows(group.kids, {
-      perRow: s.boundaryInRow,
-      gapX: s.groupGapX,
-      gapY: s.groupGapY,
-      indent: 0,
-    });
-    const between = gridH > 0 && kidsH > 0 ? s.groupGapY : 0;
-    kidsTop.set(group, gridH + between);
-    const contentW = Math.max(gridW, kidsW);
-    if (top) {
-      group.w = contentW;
-      group.h = gridH + between + kidsH;
-      continue;
-    }
-    header(group, contentW);
-    group.w = Math.max(contentW + 2 * s.pad, group.headW + 2 * s.headPadX);
-    group.h = group.head + s.pad + gridH + between + kidsH + s.pad;
-  }
+  const offsets = new Map<GridGroup, Offsets>();
+  for (let i = order.length - 1; i >= 0; i--) sizeGroup(order[i]!, s, header, offsets);
   for (const group of order) {
     const top = group.index < 0;
     const left = group.x + (top ? 0 : s.pad);
     const first = group.y + (top ? 0 : group.head + s.pad);
+    const at = offsets.get(group)!;
     for (const node of group.nodes) {
-      node.x += left;
-      node.y += first;
+      node.x += left + at.nodesX;
+      node.y += first + at.nodesY;
     }
     for (const kid of group.kids) {
-      kid.x += left;
-      kid.y += first + kidsTop.get(group)!;
+      kid.x += left + at.kidsX;
+      kid.y += first + at.kidsY;
       kid.depth = group.depth + 1;
     }
   }
+}
+
+/**
+ * Places a group's elements and then its child boundaries in lines, sizes the group around them
+ * (the contents of a TB or BT group stack down, those of an LR or RL group side by side), and
+ * records where each part starts.
+ */
+function sizeGroup(
+  group: GridGroup,
+  s: GridSpacing,
+  header: (group: GridGroup, contentWidth: number) => void,
+  offsets: Map<GridGroup, Offsets>
+): void {
+  const flow = flowOf(group);
+  const [gridW, gridH] = rows(
+    group.nodes,
+    { perRow: s.shapeInRow, gapX: s.shapeGapX, gapY: s.shapeGapY, indent: s.nextLinePaddingX },
+    flow
+  );
+  const [kidsW, kidsH] = rows(
+    group.kids,
+    { perRow: s.boundaryInRow, gapX: s.groupGapX, gapY: s.groupGapY, indent: 0 },
+    flow
+  );
+  const gap = flow.columns ? s.groupGapX : s.groupGapY;
+  const nodesSize = flow.columns ? gridW : gridH;
+  const kidsSize = flow.columns ? kidsW : kidsH;
+  const between = nodesSize > 0 && kidsSize > 0 ? gap : 0;
+  offsets.set(group, partOffsets(flow, nodesSize + between, kidsSize + between));
+  const contentW = flow.columns ? gridW + between + kidsW : Math.max(gridW, kidsW);
+  if (group.index < 0) {
+    group.w = contentW;
+    group.h = flow.columns ? Math.max(gridH, kidsH) : gridH + between + kidsH;
+    return;
+  }
+  header(group, contentW);
+  group.w = Math.max(contentW + 2 * s.pad, group.headW + 2 * s.headPadX);
+  group.h = flow.columns
+    ? group.head + s.pad + Math.max(gridH, kidsH) + s.pad
+    : group.head + s.pad + gridH + between + kidsH + s.pad;
+}
+
+/**
+ * The starts of the elements and the child boundaries: the boundaries after the elements in TB
+ * and LR, before them in BT and RL. `afterNodes` and `afterKids` are each part's size and the
+ * gap.
+ */
+function partOffsets(flow: Flow, afterNodes: number, afterKids: number): Offsets {
+  const [nodes, kids] = flow.reversed ? [afterKids, 0] : [0, afterNodes];
+  return flow.columns
+    ? { nodesX: nodes, nodesY: 0, kidsX: kids, kidsY: 0 }
+    : { nodesX: 0, nodesY: nodes, kidsX: 0, kidsY: kids };
 }
