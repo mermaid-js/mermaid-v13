@@ -71,7 +71,6 @@ import {
   parseStep,
   type Analysis,
   type Detection,
-  type Parsed,
 } from './analysis-cache.ts';
 import { createDomAdapter } from './dom.ts';
 import type { DrawBlocks } from './block-pass.ts';
@@ -219,7 +218,7 @@ export function createMermaid(
     { detected, pre }: Detection,
     host?: BlockHost,
     full = false
-  ): Parsed {
+  ): Analysis {
     const warnings: Warning[] = [];
     const warn = (w: Warning): void => void warnings.push(toWarning(w, registry.fragments()));
     for (const d of pre.diagnostics) if (d.severity === 'warning') warn(d);
@@ -261,9 +260,9 @@ export function createMermaid(
       ...(title !== undefined ? { title } : {}),
       sources: [hit.site.site, front, ...directives],
       dataAst,
-      full: fullSource(plugin, text, ctx),
+      full: fullSource(plugin, text, ctx, parsed.full),
     };
-    return { analysis, full: parsed.full };
+    return analysis;
   }
 
   function detect(text: string, s: Snapshot): Detection {
@@ -290,8 +289,8 @@ export function createMermaid(
   }
 
   /**
-   * Parses with the loaded `plugin` and caches the analysis (DESIGN §3 steps 2–4): only its
-   * lean parse; a full parse goes to the call that asked for it.
+   * Parses with the loaded `plugin` and caches the analysis (DESIGN §3 steps 2–4): its lean
+   * parse, and a full one only as `Analysis.full` hands it out.
    */
   function analysisOf(
     text: string,
@@ -299,18 +298,18 @@ export function createMermaid(
     found: Found,
     plugin: AnyPlugin | undefined,
     full = false
-  ): Parsed {
+  ): Analysis {
     if (!plugin) throw unsupportedDiagram(found.detected.type);
-    const parsed = analyse(text, s, plugin, found, undefined, full);
-    cache.set(text, s, parsed.analysis);
-    return parsed;
+    const analysis = analyse(text, s, plugin, found, undefined, full);
+    cache.set(text, s, analysis);
+    return analysis;
   }
 
   // Embedded diagrams (ADR-15): a host's blocks, parsed and drawn before the host draws. The
   // pass is a chunk of its own, loaded for the first text with a block (D553).
   const blocks = blockLoader({
     detect,
-    analyse: (text, s, found, plugin, host) => analyse(text, s, plugin, found, host).analysis,
+    analyse: (text, s, found, plugin, host) => analyse(text, s, plugin, found, host),
     load: (id) => registry.load(id),
     loaded: (id) => registry.plugin(id),
     resources: async (a, format) => {
@@ -321,7 +320,7 @@ export function createMermaid(
     draw: (text, s, options, a, id, inner) => {
       const { now, placeholders } = options ?? {};
       const drawing = { id, now, placeholders };
-      const { drawn, ctx, warnings, mount } = drawSvg(text, s, drawing, { analysis: a }, inner);
+      const { drawn, ctx, warnings, mount } = drawSvg(text, s, drawing, a, inner);
       const own = warnings.slice(skipped.length);
       return {
         ...drawn,
@@ -336,7 +335,7 @@ export function createMermaid(
       if (!textOf(a)) return textBackend!.blockStandIn(a.detected.type, b.id);
       const { now, ascii } = (options ?? {}) as Partial<TextRenderOptions>;
       const call = { format: 'ascii', id, now, ascii } as const;
-      const { warnings, ...drawn } = drawAscii(b.text, s, call, { analysis: a }, () => inner);
+      const { warnings, ...drawn } = drawAscii(b.text, s, call, a, () => inner);
       return { ...drawn, warnings: warnings.slice(skipped.length) };
     },
   });
@@ -392,29 +391,26 @@ export function createMermaid(
     });
   }
 
-  /** The analysis of `text` with what it draws with loaded; `full` adds the full parse. */
+  /** The analysis of `text` with what it draws with loaded; `full`: parse it in full. */
   async function prepareWith(
     text: string,
     s: Snapshot,
     format?: string,
     full = false
-  ): Promise<Parsed> {
+  ): Promise<Analysis> {
     if (discovery.pending) await discovery.settle();
     const ascii = checkFormat(text, s, format) === 'ascii';
-    const hit = cache.get(text, s);
-    let parsed: Parsed;
-    if (hit) parsed = { analysis: hit, full: full ? hit.full() : undefined };
-    else {
+    let analysis = cache.get(text, s);
+    if (!analysis) {
       const f = detectSupported(text, s, ascii);
-      parsed = analysisOf(text, s, f, await registry.load(f.detected.id), full || ascii);
+      analysis = analysisOf(text, s, f, await registry.load(f.detected.id), full || ascii);
     }
-    const { analysis } = parsed;
     if (ascii) await loadText(analysis);
     await (
       await blocks.load(analysis)
     )?.prepare({ root: text, at: 0, a: analysis, s }, ascii ? 'ascii' : 'svg');
     await loadFor(analysis, ascii);
-    return parsed;
+    return analysis;
   }
 
   /** Loads what `a` draws with: layout, themes, plugin and extension resources. */
@@ -427,13 +423,8 @@ export function createMermaid(
 
   async function prepare(text: string, options?: RenderOptions): Promise<Prepared> {
     try {
-      const { analysis, full } = await prepareWith(
-        text,
-        snapshotFor(options),
-        options?.format,
-        true
-      );
-      return { ...analysis.prepared, parse: full ?? analysis.full() };
+      const analysis = await prepareWith(text, snapshotFor(options), options?.format, true);
+      return { ...analysis.prepared, parse: analysis.full() };
     } catch (e) {
       throw toMermaidError(e);
     }
@@ -445,9 +436,9 @@ export function createMermaid(
     s: Snapshot,
     options: RenderOptions | undefined,
     ascii: boolean
-  ): Parsed | RenderResult {
+  ): Analysis | RenderResult {
     const hit = cache.get(text, s);
-    if (hit) return { analysis: hit };
+    if (hit) return hit;
     const f = detectSupported(text, s, ascii);
     const plugin = registry.plugin(f.detected.id);
     if (plugin) return analysisOf(text, s, f, plugin, ascii);
@@ -612,12 +603,12 @@ export function createMermaid(
     text: string,
     s: Snapshot,
     options: RenderOptions | undefined,
-    { analysis, full }: Parsed,
+    analysis: Analysis,
     blocksFor?: (options: TextRenderOptions) => DrawBlocks<EmbeddedText> | undefined
   ): TextRenderResult {
     const { prepared, plugin } = analysis;
     // Text output reads the AST and the model's AST ids (D82's drop warnings).
-    const parse = analysis.full(true, full);
+    const parse = analysis.full(true);
     checkText(analysis.detected);
     const hook = registry.ascii(plugin.id);
     const backend = textBackend;
@@ -678,11 +669,10 @@ export function createMermaid(
   function draw(
     text: string,
     s: Snapshot,
-    options: RenderOptions | undefined,
-    prepared?: Parsed
+    options: RenderOptions | undefined
   ): RenderResult | TextRenderResult {
     const queued = skipped.length;
-    const result = drawWith(text, s, options, prepared);
+    const result = drawWith(text, s, options);
     skipped.splice(0, queued);
     return result;
   }
@@ -690,19 +680,17 @@ export function createMermaid(
   function drawWith(
     text: string,
     s: Snapshot,
-    options: RenderOptions | undefined,
-    prepared?: Parsed
+    options: RenderOptions | undefined
   ): RenderResult | TextRenderResult {
     const format = checkFormat(text, s, options?.format);
-    const parsed = prepared ?? analysisFor(text, s, options, format === 'ascii');
-    if (!('analysis' in parsed)) return parsed;
-    const { analysis } = parsed;
+    const analysis = analysisFor(text, s, options, format === 'ascii');
+    if (!('prepared' in analysis)) return analysis;
     if (format === 'ascii')
-      return drawAscii(text, s, options, parsed, (o) =>
+      return drawAscii(text, s, options, analysis, (o) =>
         blocks.of(analysis)?.drawText({ root: text, at: 0, a: analysis, s }, o)
       );
     const blockDraw = blocks.of(analysis)?.draw({ root: text, at: 0, a: analysis, s }, options);
-    const { drawn, warnings, mount } = drawSvg(text, s, options, parsed, blockDraw);
+    const { drawn, warnings, mount } = drawSvg(text, s, options, analysis, blockDraw);
     const result: RenderResult = { ...drawn, diagramType: analysis.prepared.diagramType, warnings };
     // The DOM adapter's afterMount entry point (DESIGN §12.2, §12.3); `run`/`mount` call it.
     const bind = mount(result, true);
@@ -715,7 +703,7 @@ export function createMermaid(
     text: string,
     s: Snapshot,
     options: RenderOptions | undefined,
-    { analysis: a, full }: Parsed,
+    a: Analysis,
     blockDraw: DrawBlocks | undefined
   ) {
     const units = { units: pxProfile, width: options?.availableWidth };
@@ -723,7 +711,7 @@ export function createMermaid(
     const renderHooks = hooksFor(a);
     const run = renderHooks.size === 0 ? undefined : renderHooks.start(ctx, a.plugin.id);
     // A `postParse` hook reads the AST: this draw has the full parse (DESIGN §4.2).
-    const parse = renderHooks.readsAst ? a.full(true, full) : a.prepared.parse;
+    const parse = renderHooks.readsAst ? a.full(true) : a.prepared.parse;
     // D537: the line-hop step, when its chunk is loaded and decides that this render hops.
     const edges = registry.hops?.(a);
     const drawHooks = run && { run, ast: parse.lean ? undefined : parse.ast };
@@ -767,8 +755,8 @@ export function createMermaid(
     const options = renderOptions(containerOrOptions);
     const s = snapshotFor(options);
     try {
-      const parsed = await prepareWith(text, s, options?.format);
-      return draw(text, s, { ...options, id }, parsed);
+      await prepareWith(text, s, options?.format);
+      return draw(text, s, { ...options, id });
     } catch (e) {
       throw toMermaidError(e);
     }
@@ -787,7 +775,7 @@ export function createMermaid(
       const { detected, pre } = f;
       const plugin = await registry.load(detected.id);
       // A lean parse: what `parse` returns reads no AST (DESIGN §4.2).
-      const a = cache.get(text, s) ?? analysisOf(text, s, f, plugin).analysis;
+      const a = cache.get(text, s) ?? analysisOf(text, s, f, plugin);
       await (await blocks.load(a))?.prepare({ root: text, at: 0, a, s }, undefined);
       const config: Plain = {};
       const front = pre.frontMatter?.config;

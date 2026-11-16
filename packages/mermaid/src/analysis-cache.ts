@@ -21,17 +21,11 @@ export interface Analysis {
   readonly dataAst: boolean;
   /**
    * The full parse, for a call that reads the AST (`prepare()`, text output, a `postParse`
-   * hook): `made` (the one the call made), else the one this entry keeps, else the text parsed
-   * again. A draw that reads the AST passes `keep`, so its entry keeps the full parse and the
-   * next draw of the text parses nothing; `prepare()`'s is the caller's only.
+   * hook): the one the analysis made, handed over once, else the one this entry keeps, else the
+   * text parsed again. A draw that reads the AST passes `keep`, so its entry keeps the full
+   * parse and the next draw of the text parses nothing; `prepare()`'s is the caller's only.
    */
-  readonly full: (keep?: boolean, made?: ParseResult<unknown>) => ParseResult<unknown>;
-}
-
-/** An analysis, with the full parse when the call that made it parsed in full. */
-export interface Parsed {
-  readonly analysis: Analysis;
-  readonly full?: ParseResult<unknown>;
+  readonly full: (keep?: boolean) => ParseResult<unknown>;
 }
 
 /**
@@ -81,15 +75,21 @@ function fullParse(
   return parse;
 }
 
-/** {@link Analysis.full} for `plugin`'s parse of `text` with `ctx`: it holds nothing yet. */
+/**
+ * {@link Analysis.full} for `plugin`'s parse of `text` with `ctx`. `made` is the full parse the
+ * analysis made, if it made one: the first call takes it.
+ */
 export function fullSource(
   plugin: AnyPlugin,
   text: string,
-  ctx: DiagramParseContext
+  ctx: DiagramParseContext,
+  made: ParseResult<unknown> | undefined
 ): Analysis['full'] {
+  let fresh = made;
   let kept: ParseResult<unknown> | undefined;
-  return (keep, made) => {
-    const full = made ?? kept ?? fullParse(plugin, text, ctx);
+  return (keep) => {
+    const full = fresh ?? kept ?? fullParse(plugin, text, ctx);
+    fresh = undefined;
     if (keep) kept = full;
     return full;
   };
