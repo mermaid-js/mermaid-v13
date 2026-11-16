@@ -15,7 +15,8 @@
  * `2·pad`, as the others.
  */
 // cspell:ignore kepano
-import { capRy, cylinderSize, queueRx } from '@mermaid-js/shared/shapes/kit';
+import { capRy, cylinderSize, queueRx, type PadXY } from '@mermaid-js/shared/shapes/kit';
+import { headRadius, neck, personSize } from '@mermaid-js/shared/shapes/person';
 import { kindParts, type C4Element } from '../model.ts';
 import { C4_METRICS as M } from './metrics.ts';
 import type { C4ShapeId, Point, Rect } from './types.ts';
@@ -51,10 +52,6 @@ export function shapeOf(element: Pick<C4Element, 'shape' | 'sprite' | 'tags' | '
   return 'rounded';
 }
 
-/** The person figure's head radius for a width `w` (#683). */
-export const personHead = (w: number): number =>
-  Math.min(M.personHeadMax, Math.max(M.personHeadMin, w * M.personHeadRatio));
-
 /** A person's head (a circle) and body (a box the head overlaps), in its laid-out box. */
 export interface PersonParts {
   readonly head: { readonly cx: number; readonly cy: number; readonly r: number };
@@ -62,9 +59,9 @@ export interface PersonParts {
 }
 
 /**
- * The person's head and body in `box`. As a figure (the SVG, #683): the head's radius from the
- * width ({@link personHead}), at the top, overlapping the body by `personOverlap` of itself. As a
- * box (`figure` false, the text output's cell layout): 12.2.0's head of radius 13 in a 26 px row.
+ * The person's head and body in `box`. As a figure (the SVG, #683): the shared person figure's
+ * head, its radius from the width, at the top and overlapping the body. As a box (`figure`
+ * false, the text output's cell layout): 12.2.0's head of radius 13 in a 26 px row.
  */
 export function personParts({ x, y, width: w, height: h }: Rect, figure = true): PersonParts {
   if (!figure) {
@@ -73,11 +70,11 @@ export function personParts({ x, y, width: w, height: h }: Rect, figure = true):
       body: { x, y: y + M.personHead, width: w, height: h - M.personHead },
     };
   }
-  const r = personHead(w);
-  const neck = 2 * r - r * M.personOverlap;
+  const r = headRadius(w);
+  const top = neck(r);
   return {
     head: { cx: x + w / 2, cy: y + r, r },
-    body: { x, y: y + neck, width: w, height: h - neck },
+    body: { x, y: y + top, width: w, height: h - top },
   };
 }
 
@@ -87,12 +84,6 @@ export interface ShapeSize {
   readonly h: number;
   readonly dx: number;
   readonly dy: number;
-}
-
-/** Padding totals across (`x`) and down (`y`). */
-export interface PadXY {
-  readonly x: number;
-  readonly y: number;
 }
 
 /**
@@ -120,12 +111,8 @@ export function shapeSize(
   switch (shape) {
     case 'person': {
       if (!figure) return { w, h: h + M.personHead, dx: 0, dy: M.personHead / 2 };
-      // The body holds the text below the head, and is at least `personBodyRatio` × w tall; the
-      // text is centred on the part the head does not cover, one head radius below the centre.
-      const r = personHead(w);
-      const overlap = r * M.personOverlap;
-      const body = Math.max(overlap + h, w * M.personBodyRatio);
-      return { w, h: body + 2 * r - overlap, dx: 0, dy: r };
+      // The text is centred on the part of the body the head does not cover.
+      return { w, ...personSize(w, h), dx: 0 };
     }
     case 'cyl':
       return { ...cylinderSize(tw, th, cylinder, 0, least), dx: 0 };

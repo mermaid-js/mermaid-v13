@@ -1,10 +1,10 @@
 // The shapes v12.2 added by name (`@{ shape: … }`) and the ones it draws for other diagrams'
-// nodes: each one's size from its label, its drawer, and how far its outline sits inside the
-// layout box. Ported from Pele's src/svg/shapes.ts @ 3a2f075 (https://github.com/obsidianmd/pele,
+// nodes, which only flowchart draws (those another diagram shares are `basic.ts`'s): each one's
+// size from its label, its drawer, and how far its outline sits inside the layout box. Ported from Pele's src/svg/shapes.ts @ 3a2f075 (https://github.com/obsidianmd/pele,
 // MIT, (c) 2026 kepano), with v12's shape names and the theme's padding and radius tokens.
 // cspell:ignore kepano
-import { translate, type Attrs, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
-import { drawCylinder, rhombusInset, rhombusPoints } from './basic.ts';
+import { translate, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
+import { drawCylinder, rhombusInset, rhombusPoints, waveInset } from './basic.ts';
 import { personFigure, personSize } from './person.ts';
 import {
   box,
@@ -25,30 +25,12 @@ import {
   queueRx,
   roundInset,
   roundSpan,
-  RULE,
   wave,
-  WAVE,
   type Barrel,
-  type Inset,
-  type Pads,
   type PolygonShape,
   type Shape,
   type ShapeSize,
 } from './kit.ts';
-
-const waveInset: Inset = (_W, _H, side) => (side === 2 ? 10 : 0);
-// A rounded corner of radius r on a side of length `len`: how far in the outline is at `t`.
-const cornerInset = (len: number, t: number, r: number): number => {
-  const k = Math.abs(t) - (len / 2 - r);
-  return r > 0 && k > 0 ? r - Math.sqrt(Math.max(0, r * r - Math.min(k, r) ** 2)) : 0;
-};
-
-// The collapsed-subgraph card (v12 collapsedGroup): fixed padding, gap and indicator row.
-const CARD_PAD = 8;
-const CARD_GAP = 8;
-const CARD_ROW = 20;
-const CARD_MIN_W = 80;
-const cardRadius = (W: number, H: number, p: Pads): number => Math.min(p.r, W / 2, H / 2);
 
 function brace(w: SvgWriter, x: number, H: number, dir: number, line: Attrs): void {
   const y = H / 2;
@@ -378,17 +360,6 @@ export const taggedDocument: Shape = {
   },
 };
 
-/** v12 `lin-doc`: a document with a rule down its left side. */
-export const linedDocument: Shape = {
-  plain: true,
-  inset: waveInset,
-  size: /* @__PURE__ */ grown(RULE, WAVE.depth, -WAVE.depth / 2),
-  draw: (w, W, H, a, line) => {
-    wave(w, W, H, a);
-    lines(w, [-W / 2 + RULE, -H / 2, -W / 2 + RULE, H / 2 - 6], line);
-  },
-};
-
 export const stackedDocument: Shape = {
   inset: waveInset,
   size: /* @__PURE__ */ grown(8, 18, -1),
@@ -562,45 +533,5 @@ export const cloud: Shape = {
       .close()
       .done();
     w.outline('node', 'path', { d, ...a });
-  },
-};
-
-/**
- * v12's collapsedGroup: a rounded card, the label above a dashed separator and an indicator
- * row of three dots. Padding is v12's fixed 8, not the theme's; `line` carries clusterBorder.
- */
-export const collapsedGroup: Shape = {
-  span: flat,
-  inset: (W, H, side, t, p) => cornerInset(side & 1 ? H : W, t, cardRadius(W, H, p)),
-  size: (tw, th) => ({
-    w: Math.max(tw + 2 * CARD_PAD, CARD_MIN_W),
-    h: th + CARD_GAP + CARD_ROW + 2 * CARD_PAD,
-    dy: -(CARD_GAP + CARD_ROW) / 2,
-  }),
-  draw: (w, W, H, a, line, p) => {
-    const x = -W / 2;
-    const y = -H / 2;
-    drawRect(w, { x, y, width: W, height: H, rx: cardRadius(W, H, p) }, a);
-    const th = H - CARD_GAP - CARD_ROW - 2 * CARD_PAD;
-    const sy = y + CARD_PAD + th + CARD_GAP;
-    w.outline('divider', 'line', {
-      class: 'collapsed-separator',
-      x1: x + CARD_PAD,
-      y1: sy,
-      x2: x + W - CARD_PAD,
-      y2: sy,
-      stroke: line.stroke,
-      'stroke-width': 0.75,
-      'stroke-dasharray': '3,3' as SafeValue,
-    });
-    for (let i = -1; i <= 1; i++)
-      w.outline('mark', 'circle', {
-        class: 'collapsed-indicator',
-        cx: i * 10,
-        cy: sy + CARD_ROW / 2,
-        r: 2.5,
-        fill: line.stroke,
-        opacity: 0.6,
-      });
   },
 };

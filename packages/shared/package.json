@@ -86,6 +86,11 @@
       "types": "./dist/shapes/extended.d.ts",
       "default": "./dist/shapes/extended.js"
     },
+    "./shapes/person": {
+      "mermaid-source": "./src/shapes/person.ts",
+      "types": "./dist/shapes/person.d.ts",
+      "default": "./dist/shapes/person.js"
+    },
     "./layout": {
       "mermaid-source": "./src/layout/index.ts",
       "types": "./dist/layout/index.d.ts",

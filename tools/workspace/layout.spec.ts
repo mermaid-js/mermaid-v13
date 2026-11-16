@@ -98,6 +98,7 @@ describe('workspace layout (DESIGN §2)', () => {
         './shapes/basic',
         './shapes/extended',
         './shapes/kit',
+        './shapes/person',
         './svg/arrowheads',
         './svg/document',
         './svg/graph',

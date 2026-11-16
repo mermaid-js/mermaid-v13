@@ -12,7 +12,10 @@ const OVERLAP = 0.27;
 const BODY = 0.6;
 
 /** The head's radius for a body `W` wide. */
-const headRadius = (W: number): number => Math.min(HEAD_MAX, Math.max(HEAD_MIN, W * HEAD));
+export const headRadius = (W: number): number => Math.min(HEAD_MAX, Math.max(HEAD_MIN, W * HEAD));
+
+/** How far below the figure's top its body starts, for a head of radius `r`. */
+export const neck = (r: number): number => 2 * r - r * OVERLAP;
 
 /** The figure's height around a padded label `W` wide and `h` high, and the label's shift. */
 export function personSize(W: number, h: number): { h: number; dy: number } {
