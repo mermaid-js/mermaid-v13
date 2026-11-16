@@ -98,7 +98,7 @@ export function sequenceHover(
     if (!word) return undefined;
     range = span(range.start, range.start + word[0].length);
   }
-  if (!covers(range, at.offset)) return undefined;
+  if (!covers(at.offset, range)) return undefined;
   if (ARROW_BY_TOKEN.has(t.kind)) return arrowHover(text, range, t.kind, result.ast);
   return keywordHover(text, at.offset, range, undefined, sequenceDocs[t.kind]);
 }

@@ -14,6 +14,7 @@ import {
   readsBackAt,
   span,
   statementAt,
+  statementOverlapping,
   statementTokens,
   tokenBefore,
   wordRange,
@@ -67,10 +68,23 @@ describe('facet helpers', () => {
     expect(statementAt([], 1)).toBeUndefined();
   });
 
+  it('statementOverlapping finds the statement the bisection meets first', () => {
+    const list = [{ range: span(0, 3) }, { range: span(5, 9) }, { range: span(12, 14) }];
+    expect(statementOverlapping(list, 0)).toBe(list[0]);
+    expect(statementOverlapping(list, 4)).toBeUndefined();
+    expect(statementOverlapping(list, 14)).toBe(list[2]);
+    expect(statementOverlapping([], 1)).toBeUndefined();
+    // Touching ranges: the middle of the bisection wins, where statementAt takes the later one.
+    const touching = [{ range: span(0, 5) }, { range: span(5, 9) }, { range: span(9, 12) }];
+    expect(statementOverlapping(touching, 5)).toBe(touching[1]);
+    expect(statementOverlapping(touching, 9)).toBe(touching[1]);
+    expect(statementAt(touching, 9)).toBe(touching[2]);
+  });
+
   it('covers a non-empty range holding the offset', () => {
-    expect(covers(span(2, 4), 4)).toBe(true);
-    expect(covers(span(2, 4), 5)).toBe(false);
-    expect(covers(span(2, 2), 2)).toBe(false);
+    expect(covers(4, span(2, 4))).toBe(true);
+    expect(covers(5, span(2, 4))).toBe(false);
+    expect(covers(2, span(2, 2))).toBe(false);
   });
 
   it('statementTokens lists the statement before the cursor, first to last', () => {

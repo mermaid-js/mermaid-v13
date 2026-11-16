@@ -1,12 +1,13 @@
 ---
-'@mermaid-js/core': patch
 '@mermaid-js/diagram-agentflow': patch
 '@mermaid-js/diagram-architecture': patch
+'@mermaid-js/diagram-block': patch
 '@mermaid-js/diagram-class': patch
 '@mermaid-js/diagram-cynefin': patch
 '@mermaid-js/diagram-er': patch
 '@mermaid-js/diagram-flowchart': patch
 '@mermaid-js/diagram-gantt': patch
+'@mermaid-js/diagram-ishikawa': patch
 '@mermaid-js/diagram-kanban': patch
 '@mermaid-js/diagram-mindmap': patch
 '@mermaid-js/diagram-packet': patch
@@ -26,4 +27,4 @@
 '@mermaid-js/shared': patch
 ---
 
-refactor: the language facets share their completion and hover helpers through `@mermaid-js/shared` (`/parser/facet`, `/parser/flow-facet` and the new `/parser/tree-facet` for kanban and mindmap) instead of keeping copies, and the unused `@mermaid-js/core/parser-kit/facet` subpath is gone. Completion and hover are unchanged (#820).
+refactor: the language facets share their completion and hover helpers through `@mermaid-js/shared` (`/parser/facet`, `/parser/flow-facet` and the new `/parser/tree-facet` for kanban and mindmap) instead of keeping copies. Completion and hover are unchanged (#820).

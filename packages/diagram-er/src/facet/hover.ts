@@ -129,7 +129,7 @@ export function erHover(at: HoverTarget, doc: DocumentView<ErDocument>): Hover |
   let range = trimmed(text, t.range);
   const dir = DIRECTION_KINDS[t.kind];
   if (dir !== undefined) range = directionRange(text, range);
-  if (!covers(range, at.offset)) return undefined;
+  if (!covers(at.offset, range)) return undefined;
   const word = text.slice(range.start, range.end);
   if (dir !== undefined) {
     const meaning = DIRECTIONS.find(([d]) => d === dir)?.[1] ?? dir;

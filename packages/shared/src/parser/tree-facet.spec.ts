@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { ProbeResult, SymbolOccurrence, TokenStream } from '@mermaid-js/core/parser-kit';
-import { span } from './facet.ts';
+import { lineAfter, span } from './facet.ts';
 import {
   classItems,
-  lineAfter,
   namesOutside,
   outlineKeywords,
   statementStartWord,
@@ -30,10 +29,11 @@ const cls = (name: string, start: number): SymbolOccurrence =>
   ({ kind: 'class', name, range: span(start, start + name.length) }) as SymbolOccurrence;
 
 describe('tree facet helpers', () => {
-  it('lineAfter stops at any line break', () => {
-    expect(lineAfter('ab\ncd', 1)).toBe('b');
-    expect(lineAfter('ab cd', 0)).toBe('ab');
-    expect(lineAfter('ab', 2)).toBe('');
+  it('lineAfter stops at a line break, U+2028 and U+2029 too when asked', () => {
+    expect(lineAfter('ab\ncd', 1, true)).toBe('b');
+    expect(lineAfter('ab\u2028cd', 0, true)).toBe('ab');
+    expect(lineAfter('ab\u2028cd', 0)).toBe('ab\u2028cd');
+    expect(lineAfter('ab', 2, true)).toBe('');
   });
 
   it('tokenAt finds the last token of the kinds holding an offset', () => {

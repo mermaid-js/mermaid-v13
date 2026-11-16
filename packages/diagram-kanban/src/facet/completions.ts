@@ -29,12 +29,12 @@ import { invalidReason } from './names.ts';
 import { DATA_KEYS, dataPlace, span } from './tables.ts';
 import {
   classItems,
-  lineAfter,
   namesOutside,
   type OutlineKinds,
   outlineKeywords,
   statementStartWord,
 } from '@mermaid-js/shared/parser/tree-facet';
+import { lineAfter } from '@mermaid-js/shared/parser/facet';
 
 /** A key written in data: after `@{`, a line break or a `,`, before a `:`. */
 const WRITTEN_KEY = /(?:^|[\n\r,])[\t ]*([A-Za-z]+)[\t ]*:/g;
@@ -83,7 +83,7 @@ function dataItems(
   // it; data still open is taken to the end of the cursor's line, as typed so far.
   const data = doc.result.ast.children.find((n) => n.data?.range.start === open)?.data;
   const closed = data !== undefined && text.charAt(data.range.end - 1) === '}';
-  const blockEnd = closed ? data.range.end : at + lineAfter(text, at).length;
+  const blockEnd = closed ? data.range.end : at + lineAfter(text, at, true).length;
   const block = isBlockData(closed ? data.text : text.slice(open + 2, blockEnd));
   const place = dataPlace(text, open, at, block);
   if (place.key) {

@@ -29,12 +29,12 @@ import { T } from '../parser/tokens.ts';
 import { CLOSER_OF, SHAPES, span } from './tables.ts';
 import {
   classItems,
-  lineAfter,
   type OutlineKinds,
   outlineKeywords,
   statementStartWord,
   tokenAt,
 } from '@mermaid-js/shared/parser/tree-facet';
+import { lineAfter } from '@mermaid-js/shared/parser/facet';
 
 const BLANK = /^[\t ]*$/;
 /** The kinds of a `:::` class list. */
@@ -51,7 +51,7 @@ const KINDS: OutlineKinds = {
 function closerItems(probe: ProbeResult, tokens: TokenStream, text: string): CompletionItem[] {
   const expected = new Set(probe.expected);
   if (!expected.has(T.NodeDEnd) && !expected.has(T.NodeDescr)) return [];
-  if (!BLANK.test(lineAfter(text, probe.offset))) return [];
+  if (!BLANK.test(lineAfter(text, probe.offset, true))) return [];
   let open = -1;
   for (let j = 0; j < tokens.length && (tokens.end[j] ?? 0) <= probe.offset; j++) {
     if (tokens.kind[j] === T.NodeDStart) open = j;
@@ -148,7 +148,7 @@ export function mindmapCompletions(
     id !== '' &&
     id === prefix &&
     !id.startsWith(':') &&
-    BLANK.test(lineAfter(text, offset))
+    BLANK.test(lineAfter(text, offset, true))
   ) {
     out.push(...shapeItems(id, span(start, offset)));
   }

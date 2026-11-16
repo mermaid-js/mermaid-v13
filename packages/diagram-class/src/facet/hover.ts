@@ -154,7 +154,7 @@ export function classHover(at: HoverTarget, doc: DocumentView<ClassDocument>): H
   if (!t) return undefined;
   // Arrow head tokens take the blanks before them: only their text counts.
   const range = trimmed(text, t.range);
-  if (!covers(range, at.offset)) return undefined;
+  if (!covers(at.offset, range)) return undefined;
   if (ARROW_PARTS.has(t.kind)) return arrowHover(text, at.offset, model, result.ast);
   if (NAME_KINDS.has(t.kind)) {
     const ns = namespaceAt(text, at.offset, result.ast.children);

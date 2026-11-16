@@ -152,7 +152,7 @@ export function usecaseHover(
   const t = at.token;
   if (!t) return undefined;
   const range = trimmed(text, t.range);
-  if (!covers(range, at.offset)) return undefined;
+  if (!covers(at.offset, range)) return undefined;
   const word = text.slice(range.start, range.end);
   const docText = usecaseDocs[t.kind];
   if (ARROW_SET[t.kind] === 1 || RELATION_WORDS.has(t.kind)) {
