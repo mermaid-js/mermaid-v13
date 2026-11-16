@@ -214,12 +214,15 @@ async function main(argv: string[]): Promise<number> {
     return EXIT_ERROR;
   }
   const name = cmd.file ?? '<stdin>';
+  // Before the render: a plugin that was skipped is the likely reason a render then fails.
+  if (cmd.warnings) {
+    for (const w of plugins.warnings)
+      write(process.stderr, `mermaid: warning ${w.code}: ${w.message}`);
+  }
   try {
     const result = await render(plugins.mermaid, cmd, text);
     write(process.stdout, 'format' in result ? result.text : result.svg);
     if (cmd.warnings) {
-      for (const w of plugins.warnings)
-        write(process.stderr, `mermaid: warning ${w.code}: ${w.message}`);
       for (const w of result.warnings)
         write(process.stderr, `${name}: warning ${w.code}: ${w.message}`);
     }

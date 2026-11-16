@@ -489,6 +489,31 @@ describe('mermaid render --autoload (D589)', () => {
   );
 
   it.concurrent(
+    'writes the skipped package with --warnings even when the render then fails (exit 2)',
+    async () => {
+      const dir = project(
+        {
+          // Its manifest is invalid, so it is skipped and its diagram type stays unknown.
+          'mermaid-box': {
+            ...declaredBox,
+            'package.json': manifestOf('mermaid-box', { mermaid: { plugin: 'theme' } }),
+          },
+        },
+        AUTOLOAD
+      );
+      const r = await inProject(dir, 'box hello', '--autoload', '--warnings');
+      expect(r.code).toBe(1);
+      expect(r.stdout).toBe('');
+      expect(r.stderr).toContain(
+        'mermaid: warning PLUGIN_SKIPPED: mermaid-box: Invalid mermaid plugin manifest'
+      );
+      expect(r.stderr).toContain('<stdin>:');
+      expect(r.stderr.indexOf('PLUGIN_SKIPPED')).toBeLessThan(r.stderr.indexOf('<stdin>:'));
+    },
+    T
+  );
+
+  it.concurrent(
     'combines with --plugin',
     async () => {
       const dir = project({ 'mermaid-box': lazyBox, 'other-box': declaredBox }, AUTOLOAD);
