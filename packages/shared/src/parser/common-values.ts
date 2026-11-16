@@ -38,7 +38,7 @@ export function stringValue(image: string): string {
 }
 
 /** `match[1].trim().replace(/[\t ]{2,}/gm, ' ')`: the one-line value. */
-function oneLine(text: string): string {
+export function oneLine(text: string): string {
   const t = text.trim();
   return /[\t ]{2}/.test(t) ? t.replace(/[\t ]{2,}/g, ' ') : t;
 }
