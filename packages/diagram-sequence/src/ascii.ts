@@ -6,12 +6,13 @@
  * (the cell measurer and the cell profile, D108), with core's text-grid kit.
  */
 import type { TextRenderContext } from '@mermaid-js/core';
-import { ascii as asciiGlyphs, asciiOptions, cellMeasurer, unicode } from '@mermaid-js/core/ascii';
+import { asciiOptions, cellMeasurer } from '@mermaid-js/core/ascii';
 import { cellProfile } from '@mermaid-js/core/layout';
 import type { SequenceModel } from './model.ts';
 import { layoutSequence, type SequenceLayout } from './layout/index.ts';
 import { drawSequence, type Align } from './ascii/draw.ts';
 import { asciiWarnings } from './ascii/warnings.ts';
+import { glyphSetOf } from '@mermaid-js/shared/ascii';
 
 export type {
   AsciiDroppedFeature,
@@ -40,7 +41,7 @@ export function ascii(
   ctx: TextRenderContext
 ): string {
   const laid = layout.units === 'cell' ? layout : layoutAscii(model, ctx);
-  const glyphs = asciiOptions(ctx.config).charset === 'ascii' ? asciiGlyphs : unicode;
+  const glyphs = glyphSetOf(ctx.config);
   const config = (ctx.config.sequence ?? {}) as Readonly<Record<string, unknown>>;
   const warnings = asciiWarnings(model, laid, { ast: ctx.ast, charset: glyphs.name, config });
   for (const w of warnings) ctx.warn(w);

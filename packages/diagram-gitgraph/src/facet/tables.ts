@@ -4,8 +4,9 @@
  */
 import type { CompletionKind } from '@mermaid-js/core/parser-kit';
 import { T } from '../parser/tokens.ts';
-
-export { code, span } from '@mermaid-js/core/parser-kit/facet';
+export { lineBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 /** An item offered when the parser expects `kind`. */
 export interface KeywordItem {
@@ -86,11 +87,4 @@ export function quoted(value: string, prefer = '"'): string {
   if (plain && !value.includes(prefer)) return `${prefer}${value}${prefer}`;
   if (plain && !value.includes(other)) return `${other}${value}${other}`;
   return `${prefer}${value.replace(/[\\"']/g, (c) => `\\${c}`)}${prefer}`;
-}
-
-/** The text of `at`'s line before `at`. */
-export function lineBefore(text: string, at: number): string {
-  let start = at;
-  while (start > 0 && !/[\n\r]/.test(text.charAt(start - 1))) start--;
-  return text.slice(start, at);
 }

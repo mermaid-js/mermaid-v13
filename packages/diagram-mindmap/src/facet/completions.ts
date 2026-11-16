@@ -173,7 +173,7 @@ export function mindmapCompletions(
   const expected = new Set(probe.expected);
   const start = probe.prefix.start;
   const prefix = text.slice(start, offset);
-  if (!BLANK.test(lineBefore(text, start)) || /[\n\r]/.test(prefix)) return [];
+  if (!BLANK.test(lineBefore(text, start, true)) || /[\n\r]/.test(prefix)) return [];
   const lower = prefix.toLowerCase();
   const word = /^[^\s()[\]{}]*/.exec(text.slice(offset))?.[0] ?? '';
   const range = span(start, prefix === '' ? offset : offset + word.length);

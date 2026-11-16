@@ -28,7 +28,9 @@ grammars:
 # theme: what the theme specs need from this package (tools/gen-config/src/theme-packages.ts):
 # dynamicReads: names the sources build at run time, which the usedBy scan for literals can't see.
 theme:
-  # `padsOf` in layout/prepare.ts reads `${shape}PaddingX` / `${shape}PaddingY`.
+  # `themePads` (`@mermaid-js/shared/shapes/kit`, called in layout/prepare.ts) reads the shapes'
+  # padding and sizes for this package: the scan does not follow this subpath (one read set per shape). These are the ones
+  # agentflow's seven shapes are sized and drawn with.
   dynamicReads:
     [
       'nodePaddingX',
@@ -39,6 +41,8 @@ theme:
       'subroutinePaddingY',
       'leanPaddingX',
       'leanPaddingY',
+      'radius',
+      'hexagonSlant',
     ]
 
 # languageBundle: what this package's ./language bundle must not reach (R-LANG-8, bench).
@@ -66,10 +70,7 @@ credits:
   files:
     src/parser/lexer.ts: ['Pele']
     src/parser/parser.ts: ['Pele']
-    src/parser/base.ts: ['Pele']
-    src/parser/statements.ts: ['Pele']
     src/parser/model.ts: ['Pele']
     src/layout/prepare.ts: ['Pele']
     src/layout/shapes.ts: ['Pele']
     src/render/shapes.ts: ['Pele']
-    src/render/edges.ts: ['Pele']

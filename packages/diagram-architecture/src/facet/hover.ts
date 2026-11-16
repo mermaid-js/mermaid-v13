@@ -8,7 +8,6 @@
  * grammar file (`generated/docs.ts`). Never a preview.
  */
 import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
-import { code, span } from '@mermaid-js/core/parser-kit/facet';
 import { architectureDocs } from '../generated/docs.ts';
 import type { ArchitectureModel } from '../model.ts';
 import type {
@@ -17,7 +16,7 @@ import type {
   ArchitectureEdgeNode,
 } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { elementOf, inside, SIDE_NAMES } from './tables.ts';
+import { code, elementOf, inside, SIDE_NAMES, span } from './tables.ts';
 
 /** Tokens with a doc that hover leaves alone: ids and text. */
 const NO_DOC = new Set<number>([T.String, T.Id, T.Icon, T.Label]);

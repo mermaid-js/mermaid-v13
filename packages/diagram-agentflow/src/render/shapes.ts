@@ -1,21 +1,23 @@
 /**
- * Draws agentflow's seven shapes through the SvgWriter: a local copy of v13 flowchart's drawers
- * for task `rounded`, tool `fr-rect`, input `lean-r`, decision `diam`, refdoc `lin-doc`, action
- * `hex` and v12's collapsed-flow card (D446), on the geometry the layout sized and outlined them
- * with (`layout/shapes.ts`, `layout/metrics.ts`), so every edge end the layout put on an outline
- * is on the drawn one. Every element goes through `w.outline` (D301, D302): the outline as
- * `node`, inner lines as `divider`, the card's dots as `mark`; a flow's frame as `group`
- * (`render.ts`).
+ * Draws agentflow's seven shapes through the SvgWriter: the shared drawers
+ * (`@mermaid-js/shared/shapes/*`) for tool `fr-rect`, input `lean-r`, decision `diam` and action
+ * `hex`, and its own for task `rounded`, refdoc `lin-doc` and v12's collapsed-flow card, on the
+ * geometry the layout sized and outlined them with (`layout/shapes.ts`, `layout/metrics.ts`), so
+ * every edge end the layout put on an outline is on the drawn one. Every element goes through
+ * `w.outline` (D301, D302): the outline as `node`, inner lines as `divider`, the card's dots as
+ * `mark`; a flow's frame as `group` (`render.ts`).
  *
- * Flowchart's drawers are ported from Pele's `src/svg/shapes.ts` at 3a2f075
- * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano). Changed: cut to agentflow's seven
- * shapes and the collapsed-flow card, drawn on the layout's outline.
+ * The shared drawers are ported from Pele's `src/svg/shapes.ts` at 3a2f075
+ * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano), as the three here are. Changed:
+ * the task box's radius is the layout's, the refdoc's rule runs down to its wave, and the card
+ * is v12's `flow` style, its trimmings drawn apart.
  * cspell:ignore kepano
  */
 import type { Attrs, SafeValue, SvgWriter } from '@mermaid-js/core/svg';
+import { lines, RULE, wave, WAVE } from '@mermaid-js/shared/shapes/kit';
 import {
   cornerRadius,
-  shapeOutline,
+  sharedShape,
   type LayoutShape,
   type ShapeGeometry,
 } from '../layout/index.ts';
@@ -41,22 +43,11 @@ type Drawer = (
   geometry: ShapeGeometry
 ) => void;
 
-/** A straight-sided shape as a polygon of the layout's outline (`layout/shapes.ts`). */
-const polygon =
+/** The shared shape's own drawer. */
+const shared =
   (shape: LayoutShape): Drawer =>
-  (w, W, H, outline, _line, g) =>
-    w.outline('node', 'polygon', {
-      points: shapeOutline(shape, W, H, g).flatMap((p) => [p.x, p.y]),
-      ...outline,
-    });
-
-/** Line segments [x0, y0, x1, y1, …] as one path, each pair of points a separate stroke. */
-function lines(w: SvgWriter, coords: number[], a: Attrs): void {
-  const b = w.path();
-  for (let i = 0; i + 3 < coords.length; i += 4)
-    b.moveTo(coords[i]!, coords[i + 1]!).lineTo(coords[i + 2]!, coords[i + 3]!);
-  w.outline('divider', 'path', { d: b.done(), ...a, fill: 'none' });
-}
+  (w, W, H, outline, line, g) =>
+    sharedShape(shape).draw(w, W, H, outline, line, g.pads);
 
 function box(w: SvgWriter, W: number, H: number, a: Attrs, rx: number): void {
   w.outline('node', 'rect', {
@@ -71,34 +62,21 @@ function box(w: SvgWriter, W: number, H: number, a: Attrs, rx: number): void {
 
 const DRAW: Readonly<Record<LayoutShape, Drawer>> = {
   rounded: (w, W, H, outline, _line, g) => box(w, W, H, outline, cornerRadius('rounded', W, H, g)),
-  'fr-rect': (w, W, H, outline, line, g) => {
-    box(w, W, H, outline, 0);
-    const x = W / 2 - g.metrics.frame;
-    lines(w, [-x, -H / 2, -x, H / 2, x, -H / 2, x, H / 2], line);
-  },
-  'lean-r': polygon('lean-r'),
-  diam: polygon('diam'),
-  // The wave is the outline's two quadratic halves: control points `control` off the base.
-  'lin-doc': (w, W, H, outline, line, g) => {
+  'fr-rect': shared('fr-rect'),
+  'lean-r': shared('lean-r'),
+  diam: shared('diam'),
+  // The shared wave is the outline's two quadratic halves: control points `control` off the base.
+  'lin-doc': (w, W, H, outline, line) => {
     const x = W / 2;
-    const base = H / 2 - g.metrics.wave.depth;
-    const k = g.metrics.wave.control;
-    const d = w
-      .path()
-      .moveTo(-x, -H / 2)
-      .lineTo(x, -H / 2)
-      .lineTo(x, base)
-      .quadTo(x / 2, base - k, 0, base)
-      .quadTo(-x / 2, base + k, -x, base)
-      .close()
-      .done();
-    w.outline('node', 'path', { d, ...outline });
+    const base = H / 2 - WAVE.depth;
+    const k = WAVE.control;
+    wave(w, W, H, outline);
     // The rule runs down to the wave: on the left half it is at `t` = (x − rule) / x.
-    const rx = -x + g.metrics.docRule;
-    const t = x > 0 ? Math.max(0, x - g.metrics.docRule) / x : 0;
+    const rx = -x + RULE;
+    const t = x > 0 ? Math.max(0, x - RULE) / x : 0;
     lines(w, [rx, -H / 2, rx, base + 2 * k * t * (1 - t)], line);
   },
-  hex: polygon('hex'),
+  hex: shared('hex'),
   // v12 collapsedGroup's `flow` style: a rounded card (its trimmings: `drawCardTrim`).
   collapsedGroup: (w, W, H, outline, _line, g) =>
     w.outline('node', 'rect', {
@@ -152,7 +130,7 @@ export const shapeDrawer = (shape: LayoutShape): Drawer => DRAW[shape];
 
 /**
  * Whether the shape's inner line is one segment, whose zero-width box a bounding-box gradient
- * can't paint (D185): it is drawn in `nodeBorder` as a colour when the outline is the gradient,
- * as flowchart's `usesPlain` does for `lin-doc`.
+ * can't paint (D185): it is drawn in `nodeBorder` as a colour when the outline is the gradient
+ * (the shared shape's `plain`: `lin-doc`).
  */
-export const usesPlain = (shape: LayoutShape): boolean => shape === 'lin-doc';
+export const usesPlain = (shape: LayoutShape): boolean => sharedShape(shape).plain === true;

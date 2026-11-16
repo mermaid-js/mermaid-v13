@@ -30,24 +30,16 @@
     TitleAndAccessibilities: ((ACC_DESCR | ACC_TITLE | TITLE) EOL)+     EOL: NEWLINE+ | EOF
     Name: STRING | ID | NAME_WITH_SPACES     WN: WARDLEY_NUMBER     C: WN | INT
 */
+import { formatExpected, Kind } from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import {
-  formatExpected,
-  Kind,
-  LineIndex,
-  ParseState,
-  Probe,
-  significantTokens,
-  sourceView,
-  STOP,
-} from '@mermaid-js/core/parser-kit';
-import type {
-  AstId,
-  ParseResult,
-  Range,
-  SourceView,
-  TokenStream,
-  TokenView,
-} from '@mermaid-js/core/parser-kit';
+  accessibilityAsName,
+  RuleParser,
+  textValue,
+  TITLE_STATEMENT,
+} from '@mermaid-js/shared/parser/rule';
+import type { AstId, ParseResult, Range } from '@mermaid-js/core/parser-kit';
+import type { RuleGrammar, TextValues } from '@mermaid-js/shared/parser/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { WardleyModel, WardleyStrategy } from '../model.ts';
@@ -63,14 +55,7 @@ import type {
   WardleyStage,
   WardleyStatementNode,
 } from './ast.ts';
-import {
-  accDescrValue,
-  accTitleValue,
-  displayText,
-  linkLabelValue,
-  stringValue,
-  titleValue,
-} from './convert.ts';
+import { displayText, linkLabelValue, stringValue } from './convert.ts';
 import { astName, childId, linkName } from './ids.ts';
 import { lex } from './lexer.ts';
 import {
@@ -125,16 +110,18 @@ export function parseWardley(src: string, options: WardleyParseOptions = {}): Wa
   return new WardleyParser(src, options).parse();
 }
 
+const GRAMMAR: RuleGrammar = {
+  lex,
+  trivia: WARDLEY_TRIVIA,
+  probeFollows: PROBE_FOLLOWS,
+  probeMode,
+};
+
 /**
  * One parse. Each grammar rule is a method that returns what it read; a rule that fails
  * records a diagnostic and throws {@link STOP}, and the statement loop recovers.
  */
-class WardleyParser {
-  private readonly pre: PreprocessResult;
-  private readonly view: SourceView;
-  private readonly full: TokenStream;
-  private readonly t: TokenView;
-  private i = 0;
+class WardleyParser extends RuleParser<PreprocessResult> {
   /** The first token of the statement being read (for D423's glued-keyword hint). */
   private stmt = 0;
   /** Past the header: the statements have begun. */
@@ -146,43 +133,23 @@ class WardleyParser {
    * a line that starts with a keyword.
    */
   private description = false;
-  private readonly st = new ParseState();
-  private readonly probe: Probe | undefined;
   private readonly children: WardleyStatementNode[] = [];
   /** Components of pipelines whose name failed: no node, their values still checked. */
   private readonly orphans: WardleyPipelineComponentNode[] = [];
-  private lines: LineIndex | undefined;
-  /** Mentions per id base (`node:A`, `title`, …), for the `@n` suffixes. */
-  private readonly mentions = new Map<string, number>();
   /** Notes so far, for `note:k`. */
   private notes = 0;
   /** Names that have a `node` definition so far (D427: the first one defines). */
   private readonly defined = new Set<string>();
   /** The last in-text value of each (v12's Langium assignments: the last one wins). */
-  private title = '';
+  private readonly texts: TextValues = { title: '', accTitle: '', accDescr: '' };
   private titleAstId: AstId | undefined;
-  private accTitle = '';
-  private accDescr = '';
 
   constructor(
-    private readonly src: string,
+    src: string,
     private readonly opts: WardleyParseOptions
   ) {
-    const pre = (this.pre = opts.preprocessed ?? preprocess(src));
-    if (!opts.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
-    this.view = sourceView(
-      src,
-      pre.bodyStart,
-      pre.directives.map((d) => d.range)
-    );
-    this.full = lex(src, pre.bodyStart, this.view);
-    this.t = significantTokens(this.full, WARDLEY_TRIVIA);
-    if (opts.probe !== undefined) {
-      const probe = (this.probe = new Probe(src, opts.probe, PROBE_FOLLOWS));
-      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
-      else probe.trivia(this.full);
-      probe.lexed(probe.offset, probe.offset, probeMode(src, this.full, probe.offset));
-    }
+    const given = opts.preprocessed;
+    super(src, given ?? preprocess(src), !given, GRAMMAR, opts.probe);
   }
 
   parse(): WardleyParseResult {
@@ -202,14 +169,6 @@ class WardleyParser {
 
   // ---- tokens -------------------------------------------------------------------------
 
-  private kind(j = this.i): number {
-    return this.t.kind[j] ?? Kind.EOF;
-  }
-
-  private range(j = this.i): Range {
-    return { start: this.t.start[j] ?? 0, end: this.t.end[j] ?? 0 };
-  }
-
   /**
    * A token's display text: as v12's lexer read it (removed spans dropped), with v12's `#name;`
    * codes as the characters v12 drew (`displayText`).
@@ -217,23 +176,6 @@ class WardleyParser {
   private displayed(j = this.i): string {
     const { start, end } = this.range(j);
     return displayText(this.src, start, end, this.view);
-  }
-
-  /**
-   * Probe hook: the parser tests token `j` (the current one, or the next when a rule looks
-   * ahead, as a component's `(`) for `kinds` (a constant list), or would accept them there.
-   * Records them when it is the probed token.
-   */
-  private tested(kinds: readonly number[], j = this.i): void {
-    const p = this.probe;
-    if (p?.isAt(this.t, j, this.pre.bodyStart)) p.tested(kinds, this.range(j).start);
-  }
-
-  /** Consume a token of `kind` and return its index, or fail. */
-  private expect(kind: number, hint?: string): number {
-    this.tested([kind]);
-    if (this.kind() !== kind) this.fail([kind], hint);
-    return this.i++;
   }
 
   /** Whether the current token is `kind` (tested for `kinds`, what may come here); consume it if so. */
@@ -251,13 +193,6 @@ class WardleyParser {
       if (this.kind() !== Kind.Newline) return;
       this.i++;
     }
-  }
-
-  /** `id`, then `id@2`, `id@3`, … */
-  private id(base: string): AstId {
-    const n = (this.mentions.get(base) ?? 0) + 1;
-    this.mentions.set(base, n);
-    return n === 1 ? base : `${base}@${n}`;
   }
 
   /** `Name: STRING | ID | NAME_WITH_SPACES`, converted. */
@@ -310,12 +245,8 @@ class WardleyParser {
 
   // ---- errors and recovery ------------------------------------------------------------
 
-  private lineOf(at: number): number {
-    return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
-  }
-
   /** How an error message names the token at `j`. */
-  private found(j = this.i): string {
+  protected override found(j = this.i): string {
     const k = this.kind(j);
     if (k === Kind.EOF) return 'the end of the text';
     if (k === Kind.Newline) return 'a line break';
@@ -325,7 +256,7 @@ class WardleyParser {
   }
 
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  private fail(want: readonly number[], hint?: string, names = EXPECTED.names(want)): never {
+  protected fail(want: readonly number[], hint?: string, names = EXPECTED.names(want)): never {
     if (this.kind() === Kind.Error) this.badCharacters(this.range());
     this.accessibilityName();
     this.report(want, hint, names);
@@ -370,21 +301,9 @@ class WardleyParser {
     const word = this.displayed(this.stmt);
     if (word !== 'accDescr' && word !== 'accTitle') return;
     const where = this.range(this.stmt);
-    if (word === 'accDescr' && this.kind(this.stmt + 1) === T.LBrace) {
-      this.description = true;
-      this.st.diagnostics.error(
-        'UNCLOSED_ACC_DESCR',
-        `Unclosed accessible description: the \`accDescr {\` at line ${this.lineOf(where.start)} has no closing \`}\`. Write \`accDescr { … }\` or \`accDescr: …\`.`,
-        where
-      );
-      throw STOP;
-    }
-    this.st.diagnostics.error(
-      'UNEXPECTED',
-      `Expected \`:\` after \`${word}\`; write it as \`${word}: …\`${word === 'accDescr' ? ' or `accDescr { … }`' : ''}.`,
-      where,
-      { expected: ['`:`'] }
-    );
+    const block = word === 'accDescr' && this.kind(this.stmt + 1) === T.LBrace;
+    if (block) this.description = true;
+    accessibilityAsName(this.st.diagnostics, word, block, this.lineOf(where.start), where);
     throw STOP;
   }
 
@@ -456,7 +375,7 @@ class WardleyParser {
    * an unclosed `accDescr {`, skip to a line that starts with a keyword (the description's
    * lines are text, not links).
    */
-  private recover(): void {
+  protected override recover(): void {
     this.probe?.freeze();
     let continued = this.kind() === Kind.Newline;
     const description = this.description;
@@ -476,15 +395,10 @@ class WardleyParser {
     }
   }
 
-  /** Run one statement rule; on failure, recover. */
-  private statement(rule: () => void): void {
+  /** Run one statement's rule from the current token; a failure inside it recovers. */
+  protected override statement(rule: () => void): void {
     this.stmt = this.i;
-    try {
-      rule();
-    } catch (error) {
-      if (error !== STOP) throw error;
-      this.recover();
-    }
+    super.statement(rule);
   }
 
   // ---- rules --------------------------------------------------------------------------
@@ -952,13 +866,9 @@ class WardleyParser {
   /** `(ACC_DESCR | ACC_TITLE | TITLE) EOL` */
   private text(k: number): void {
     const j = this.i++;
-    const image = this.displayed(j);
-    const { type, word } = TEXT_STATEMENTS[k] ?? { type: 'Title', word: 'title' };
+    const { type, word } = TEXT_STATEMENTS[k] ?? TITLE_STATEMENT;
     const range = this.range(j);
-    let text: string;
-    if (type === 'Title') text = this.title = titleValue(image);
-    else if (type === 'AccTitle') text = this.accTitle = accTitleValue(image);
-    else text = this.accDescr = accDescrValue(image);
+    const text = (this.texts[word] = textValue(type, this.displayed(j)));
     const id = this.id(word);
     if (type === 'Title') this.titleAstId = id;
     this.eol(LINE_END, '`title`, `accTitle` and `accDescr` end their line');
@@ -980,10 +890,10 @@ class WardleyParser {
       {
         statements: this.children,
         orphans: this.orphans,
-        title: this.title,
+        title: this.texts.title,
         titleAstId: this.titleAstId,
-        accTitle: this.accTitle,
-        accDescr: this.accDescr,
+        accTitle: this.texts.accTitle,
+        accDescr: this.texts.accDescr,
         frontMatterTitle: this.pre.frontMatter?.title,
         limits: this.opts,
       },

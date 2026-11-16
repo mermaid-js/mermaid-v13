@@ -21,6 +21,10 @@ import type { GitModel } from '../model.ts';
 import { apply, corners } from './env.ts';
 import { GIT_METRICS } from './metrics.ts';
 import type { GitLayout, Point, Rect, Transform } from './types.ts';
+import {
+  nonFinite as numbers,
+  rectsOverlap as overlaps,
+} from '@mermaid-js/shared/layout/invariants';
 
 export interface ViolationOptions {
   /** Whether the layout ran with `parallelCommits`. */
@@ -29,20 +33,7 @@ export interface ViolationOptions {
 
 const EPS = 1e-6;
 
-function numbers(value: unknown, path: string, out: string[]): void {
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value)) out.push(`${path} is ${value}`);
-  } else if (Array.isArray(value)) value.forEach((v, i) => numbers(v, `${path}[${i}]`, out));
-  else if (value && typeof value === 'object')
-    for (const [k, v] of Object.entries(value)) numbers(v, `${path}.${k}`, out);
-}
-
 const near = (a: number, b: number): boolean => Math.abs(a - b) <= EPS;
-const overlaps = (a: Rect, b: Rect): boolean =>
-  a.x < b.x + b.width - EPS &&
-  b.x < a.x + a.width - EPS &&
-  a.y < b.y + b.height - EPS &&
-  b.y < a.y + a.height - EPS;
 const fmt = (p: Point): string => `(${p.x}, ${p.y})`;
 
 function counts(model: GitModel, layout: GitLayout, out: string[]): void {

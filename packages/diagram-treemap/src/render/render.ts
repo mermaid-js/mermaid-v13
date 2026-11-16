@@ -12,7 +12,7 @@
 // the shape's on the rect, the text's (`color` as `fill`) on the label and value.
 import type { RenderContext } from '@mermaid-js/core';
 import { checkStyle, type Attrs, type CheckedStyle, type SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import { treemapUseMaxWidth } from '../config.ts';
 import {
   TREEMAP_METRICS as M,
@@ -183,14 +183,17 @@ function openRoot(
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
+  const maxWidth = treemapUseMaxWidth(config.treemap);
+  const title = model.accTitle.trim();
+  const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
   openSvgRoot(w, ctx, {
     name: 'treemap',
     viewBox: [x, y, width, height],
-    maxWidth: treemapUseMaxWidth(config.treemap),
-    title: model.accTitle.trim(),
-    desc: model.accDescr.trim(),
+    maxWidth,
+    title,
+    desc,
     attrs: { 'font-family': font },
   });
 }

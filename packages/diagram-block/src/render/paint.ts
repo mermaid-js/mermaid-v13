@@ -8,10 +8,11 @@
  * (leaves, block arrows and composites), not on edges or labels (D227).
  */
 import type { Warning } from '@mermaid-js/core';
-import { checkStyle, type CheckedStyle, type OutlinePaint, type Paint } from '@mermaid-js/core/svg';
+import type { CheckedStyle, OutlinePaint, Paint } from '@mermaid-js/core/svg';
+import { paletteSlots, styleCache } from '@mermaid-js/shared/svg/document';
 import type { Theme } from '@mermaid-js/core/theme';
 import { isComposite, type Block, type BlockModel } from '../model.ts';
-import { arrowheads, type Arrowheads } from './arrowheads.ts';
+import { arrowheads, type Arrowheads } from '@mermaid-js/shared/svg/arrowheads';
 import { BLOCK_RENDER } from './metrics.ts';
 
 type Length = ReturnType<Theme['length']>;
@@ -87,28 +88,6 @@ export interface Paints {
   readonly styleOf: (block: Block) => CheckedStyle;
 }
 
-/**
- * The composite palette (v12 `genColor`), copied from flowchart's `paletteSlots()`: on wherever
- * the theme carries a non-empty `borderColorArray` (never by theme name, D152), the slot the
- * composite's declaration order modulo the palette; the fill is `bkgColorArray`'s entry at the
- * slot modulo its length (v12), only when that is not empty, so `redux-dark-color` colours
- * borders only.
- */
-function paletteSlots(theme: Theme): Paints['slotOf'] {
-  const border = theme.palette('borderColorArray');
-  const bkg = theme.palette('bkgColorArray');
-  return (order) => {
-    if (order === undefined || border.length === 0) return undefined;
-    const slot = order % border.length;
-    return {
-      id: `color-${slot}`,
-      stroke: border[slot]!,
-      // v12 `genColor`: the fill is the slot's, not the order's, when the arrays differ.
-      fill: bkg.length > 0 ? bkg[slot % bkg.length] : undefined,
-    };
-  };
-}
-
 /** Whether `model` has a composite, without recursion (composites nest thousands deep). */
 function hasComposite(model: BlockModel): boolean {
   const stack: Block[] = [...model.blocks];
@@ -122,9 +101,9 @@ function hasComposite(model: BlockModel): boolean {
 
 /**
  * The composites' paint where the theme has no composite palette and turns
- * `blockCompositeClusterPaint` on (#771, the classic family): decided by the variables, as
- * {@link paletteSlots} is, never by theme name (D152). Off (the redux and neo families), a
- * composite keeps the leaves' paint, as v12 `look: neo` drew it.
+ * `blockCompositeClusterPaint` on (#771, the classic family): decided by the variables, never
+ * by theme name (D152). Off (the redux and neo families), a composite keeps the leaves' paint,
+ * as v12 `look: neo` drew it.
  */
 function compositePaint(theme: Theme, model: BlockModel): CompositePaint | undefined {
   if (theme.value('blockCompositeClusterPaint') !== 'true') return undefined;
@@ -134,30 +113,6 @@ function compositePaint(theme: Theme, model: BlockModel): CompositePaint | undef
     fillOpacity: BLOCK_RENDER.compositeFillOpacity,
     stroke: theme.outline('clusterBorder'),
     strokeOpacity: theme.gradient() ? undefined : BLOCK_RENDER.compositeStrokeOpacity,
-  };
-}
-
-/**
- * Each block's style, as flowchart v13 resolves it: its classes' declarations (each `class`
- * statement's text looked up as one name, as v12 did and the layout measured), then its own
- * `style`, checked once per distinct list (a class's `color` reaches the label); a dropped
- * declaration warns.
- */
-function styleCache(model: BlockModel, warn: (w: Warning) => void): Paints['styleOf'] {
-  const classDefs = new Map<string, readonly string[]>();
-  // `styles` only: v12's `textStyles` rewrote `color` as `fill` for its CSS, and `checkStyle`
-  // already sends `color` to the label.
-  for (const c of model.classDefs) classDefs.set(c.id, c.styles);
-  const checked = new Map<string, CheckedStyle>();
-  return (block) => {
-    const decls: string[] = [];
-    for (const name of block.classes)
-      for (const s of classDefs.get(name) ?? []) decls.push(s.trim());
-    for (const s of block.styles) decls.push(s.trim());
-    const key = decls.join(';');
-    let style = checked.get(key);
-    if (!style) checked.set(key, (style = checkStyle(decls, warn)));
-    return style;
   };
 }
 
@@ -182,13 +137,18 @@ export function paints(theme: Theme, model: BlockModel, warn: (w: Warning) => vo
     labelFill: theme.color('edgeLabelBackground'),
     labelText: node.text,
   };
+  // v12 `genColor`: the fill is the slot's, not the order's, when the arrays differ.
+  const slot = paletteSlots(theme, 'slot');
+  // `styles` only: v12's `textStyles` rewrote `color` as `fill` for its CSS, and `checkStyle`
+  // already sends `color` to the label.
+  const styleOf = styleCache(new Map(model.classDefs.map((c) => [c.id, c.styles])), warn);
   return {
     font,
     fontSize,
     node,
     edge,
-    slotOf: paletteSlots(theme),
+    slotOf: (order) => (order === undefined ? undefined : slot(order)),
     composite: compositePaint(theme, model),
-    styleOf: styleCache(model, warn),
+    styleOf: (block) => styleOf(block.classes, block.styles),
   };
 }

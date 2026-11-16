@@ -8,6 +8,7 @@ import type { AstNode } from '@mermaid-js/core/parser-kit';
 import { treeViewOptions } from '../config.ts';
 import { resolveIcon } from '../icons.ts';
 import { highlighted, type TreeViewModel } from '../model.ts';
+import { asciiDropped } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'icon' | 'style' | 'accessibility';
@@ -47,13 +48,6 @@ export function asciiWarnings(
   return (Object.keys(WHAT) as AsciiDroppedFeature[]).flatMap((feature) => {
     const astIds = found[feature];
     if (astIds.length === 0 && !(feature === 'accessibility' && acc)) return [];
-    return [
-      {
-        code: 'ASCII_DROPPED' as const,
-        feature,
-        astIds,
-        message: `Text output has no ${WHAT[feature]}; dropped.`,
-      },
-    ];
+    return [asciiDropped(feature, astIds, WHAT[feature])];
   });
 }

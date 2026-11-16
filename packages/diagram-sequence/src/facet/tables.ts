@@ -6,14 +6,11 @@
 import { PARTICIPANT_KINDS, type ArrowKind, type ParticipantKind } from '../model.ts';
 import { ARROW_KINDS } from '../parser/arrows.ts';
 import { T } from '../parser/tokens.ts';
-
-/** A keyword item: offered when the parser expects `kind`. */
-export interface KeywordItem {
-  readonly kind: number;
-  readonly label: string;
-  /** Text inserted, when it is not the label. */
-  readonly insert?: string;
-}
+import type { KeywordItem } from '@mermaid-js/shared/parser/facet';
+export type { KeywordItem } from '@mermaid-js/shared/parser/facet';
+export { tokenBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 /** Statement and clause keywords, in the order they are offered. */
 export const KEYWORDS: readonly KeywordItem[] = [

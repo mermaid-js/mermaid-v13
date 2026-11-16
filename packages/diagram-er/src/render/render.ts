@@ -12,8 +12,9 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { cls, openSvgRoot, paletteSlots } from '@mermaid-js/shared/svg/document';
+import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
 import type { ErLayout } from '../layout/layout.ts';
 import type { ErRenderContext } from '../layout/context.ts';
 import type { EdgeView, EntityView, ErPrepared, GroupView } from '../layout/prepare.ts';
@@ -24,17 +25,7 @@ import { drawEnd, fitEnds, lineEnd, routePath, type EndPaint, type LineEnd } fro
 // The dash of a non-identifying line (v12 `.edge-pattern-dashed`, every theme).
 const DASH = '8,8' as SafeValue;
 // Room left and right of an edge label inside its background (as the flowchart's).
-const LABEL_PAD = 4;
 const CELL_CLASSES = ['attribute-type', 'attribute-name', 'attribute-keys', 'attribute-comment'];
-
-const cls = (names: readonly string[]): string => {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
-};
 
 type ThemeOf = ErRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
@@ -44,26 +35,6 @@ interface Tint {
   readonly id: `color-${number}`;
   readonly stroke: Paint;
   readonly fill?: Paint;
-}
-
-/**
- * Per-entity palette colour (v12 ER `genColor`, `colorIndex`). On only when the theme carries
- * a non-empty `borderColorArray`, never by theme name (D152). The slot is the entity's
- * declaration order modulo the palette length; the fill (outline and rows) comes from
- * `bkgColorArray` only when that is not empty.
- */
-function paletteSlots(theme: ThemeOf): (order: number) => Tint | undefined {
-  const border = theme.palette('borderColorArray');
-  const bkg = theme.palette('bkgColorArray');
-  return (order) => {
-    if (border.length === 0) return undefined;
-    const slot = order % border.length;
-    return {
-      id: `color-${slot}`,
-      stroke: border[slot]!,
-      fill: bkg.length > 0 ? bkg[order % bkg.length] : undefined,
-    };
-  };
 }
 
 interface TablePaint {
@@ -244,13 +215,22 @@ export function renderEr(
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, paint }: Scene, model: ErModel): void {
+  const { config } = ctx;
+  const width = Math.max(1, Math.ceil(layout.width));
+  const height = Math.max(1, Math.ceil(layout.height));
+  const maxWidth = config.er?.useMaxWidth !== false;
+  const title = model.accTitle.trim();
+  const desc = model.accDescr.trim();
   openSvgRoot(w, ctx, {
     name: 'er erDiagram',
-    viewBox: [0, 0, Math.max(1, Math.ceil(layout.width)), Math.max(1, Math.ceil(layout.height))],
-    maxWidth: ctx.config.er?.useMaxWidth,
-    title: model.accTitle.trim(),
-    desc: model.accDescr.trim(),
-    attrs: { 'font-family': paint.font, 'font-size': paint.fontSize },
+    viewBox: [0, 0, width, height],
+    maxWidth,
+    title,
+    desc,
+    attrs: {
+      'font-family': paint.font,
+      'font-size': paint.fontSize,
+    },
   });
 }
 
@@ -332,17 +312,8 @@ function drawEdge({ w, layout, paint, ends }: Scene, e: EdgeView, i: number): vo
 function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView, i: number): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
-  const lw = e.label.width + 2 * LABEL_PAD;
-  w.open('g', { class: 'edgeLabel', 'data-id': edgeDataId(e, i) });
-  w.leaf('rect', {
-    x: at.x - lw / 2,
-    y: at.y - e.label.height / 2,
-    width: lw,
-    height: e.label.height,
-    fill: paint.edgeLabel!.fill,
-  });
-  w.label(e.label, at.x, at.y, { fill: paint.edgeLabel!.text });
-  w.close();
+  const { fill, text } = paint.edgeLabel!;
+  labelOnBox(w, e.label, at, edgeDataId(e, i), { fill, text: { fill: text } });
 }
 
 function drawEntity(scene: Scene, view: EntityView): void {
