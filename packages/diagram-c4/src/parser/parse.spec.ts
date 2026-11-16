@@ -142,6 +142,16 @@ describe('the model, as v12 built it', () => {
     ]);
   });
 
+  it('leaves the pair a relation moved from by `$to`: a later UpdateRelStyle there misses it (#680)', () => {
+    const m = model(
+      'C4Context\nPerson(a, "A")\nPerson(b, "B")\nRel(a, a, "1")\nRel(a, a, "2", $to="b")\nUpdateRelStyle(a, a, "red")\nUpdateRelStyle(c, b, "blue")'
+    );
+    expect(m.relations.map((r) => [r.label, r.to, r.textColor])).toEqual([
+      ['1', 'a', 'red'],
+      ['2', 'b', undefined],
+    ]);
+  });
+
   it('keeps the other relations of a pair when one written with a named end moves (#680)', () => {
     // `Rel($from="a", b, …)` starts with an empty start: it was never listed under `"", b`.
     const r = parse(

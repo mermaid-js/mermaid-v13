@@ -153,9 +153,11 @@ function connect(a: Outline, b: Outline, shift: number): Line {
 }
 
 /**
- * How far the straight line between a and b can move to either side and still end inside both
- * outlines, `portInset` clear of their edges: the room the relations between them share (#680).
- * Between nested boxes, along the side the short line leaves, inside the inner box.
+ * How far the straight line between a and b can move to either side and still meet both
+ * outlines: the room the relations between them share (#680). It is how far each point the line
+ * runs from (a shape's middle, or the middle of the span two shapes share) can move across the
+ * line and stay inside its outline, the lesser of the two, less `portInset`. Between nested
+ * boxes, along the side the short line leaves, from the middle of the inner box.
  */
 export function pairRoom(a: Outline, b: Outline): number {
   const down = contains(a, b);
