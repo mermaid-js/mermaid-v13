@@ -1,0 +1,14 @@
+%% The outline: each name once, at its definition, nested by subgraph.
+flowchart LR
+  A["Start
+  here"] --> B(End)
+  B --> S2
+  subgraph S1 [Group]
+    B --> C
+    subgraph S2
+      D --> A
+    end
+  end
+  classDef hot fill:#f00
+  class A,B hot
+  A -->\|go\| C

@@ -2,17 +2,19 @@
   "name": "mermaid-fixture-diagram",
   "version": "1.0.0",
   "private": true,
-  "description": "Test fixture: a tiny third-party Mermaid diagram plugin (manifest, eager detector, lazy entry).",
+  "description": "Test fixture: a tiny third-party Mermaid diagram plugin (lazy descriptor as main export, manifest, eager detector, lazy entry).",
   "type": "module",
   "license": "MIT",
   "exports": {
     ".": "./index.js",
     "./detector": "./detector.js",
+    "./entry": "./entry.js",
     "./package.json": "./package.json"
   },
   "files": [
     "index.js",
-    "detector.js"
+    "detector.js",
+    "entry.js"
   ],
   "mermaid": {
     "plugin": "diagram",
@@ -21,7 +23,7 @@
       "svg"
     ],
     "detector": "./detector.js",
-    "entry": "./index.js",
+    "entry": "./entry.js",
     "export": "fixturebox"
   }
 }

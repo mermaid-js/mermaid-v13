@@ -1,36 +1,15 @@
 /**
  * Story 35 (spec #26, #180): a Markdown host calls the service on a fenced block's text and
- * maps offsets itself. The service knows nothing about Markdown; the host below finds the
- * fenced mermaid blocks, gives each block's body to `update` under its own uri, and adds the
- * body's start offset to every range that comes back (and subtracts it from every offset it
- * sends). Diagnostics, completion and rename land on the right characters of the Markdown
- * file, and the prose around a block is never edited.
+ * maps offsets itself. The analysis knows nothing about Markdown; the host below finds the
+ * fenced mermaid blocks with `mermaidFences`, gives each block's body to `update` under its own
+ * uri, and adds the body's start offset to every range that comes back (and subtracts it from
+ * every offset it sends). Diagnostics, completion and rename land on the right characters of
+ * the Markdown file, and the prose around a block is never edited. The LSP server does the
+ * same on opt-in (D581, #811).
  */
 import { beforeAll, describe, expect, it } from 'vitest';
-import { createLanguageService, LineIndex } from './index.ts';
-import type { DocumentSnapshot, Range } from './index.ts';
-
-/** One fenced mermaid block: its body text and where the body starts in the Markdown file. */
-interface Block {
-  readonly start: number;
-  readonly text: string;
-}
-
-/** The host's own fence scan: a backtick or tilde mermaid fence up to its closing fence. */
-function mermaidBlocks(markdown: string): Block[] {
-  const blocks: Block[] = [];
-  const open = /^(```|~~~)mermaid[^\n]*\n/gm;
-  for (let m = open.exec(markdown); m; m = open.exec(markdown)) {
-    const start = m.index + m[0].length;
-    const close = new RegExp(`^${m[1]}\\s*$`, 'm');
-    const rest = markdown.slice(start);
-    const end = close.exec(rest);
-    const length = end ? end.index : rest.length;
-    blocks.push({ start, text: rest.slice(0, length) });
-    open.lastIndex = start + length;
-  }
-  return blocks;
-}
+import { createLanguageService, LineIndex, mermaidFences } from './index.ts';
+import type { DocumentSnapshot, MermaidFence as Block, Range } from './index.ts';
 
 const MARKDOWN = `# Release notes
 
@@ -51,7 +30,7 @@ flowchart TD
 ~~~
 `;
 
-const blocks = mermaidBlocks(MARKDOWN);
+const blocks = mermaidFences(MARKDOWN);
 let docs: DocumentSnapshot[] = [];
 beforeAll(async () => {
   const service = createLanguageService();

@@ -24,6 +24,7 @@ import {
   type LayeredResult,
 } from './layered.ts';
 import { pxProfile } from '../units.ts';
+import { copy, f64, i32, scratch, u8 } from './scratch.ts';
 
 export type Dir = 'TB' | 'BT' | 'LR' | 'RL';
 
@@ -180,18 +181,23 @@ export function routeCrossings(
   // Crossings within this distance of a shared node are not counted (`LayoutMetrics.fan`).
   fan = pxProfile.engine.fan
 ): number {
+  return scratch(() => crossingsOf(nodes, edges, style, fan));
+}
+
+// Its scratch arrays live until it returns (see scratch.ts).
+function crossingsOf(nodes: CNode[], edges: CEdge[], style: Style, fan: number): number {
   let size = 0;
   for (const e of edges)
     if (e.src !== e.dst && e.route.length > 3) size += (e.route.length / 3 - 1) * STEP_PIECES;
-  const ax = new Float64Array(size);
-  const ay = new Float64Array(size);
-  const bx = new Float64Array(size);
-  const by = new Float64Array(size);
-  const low = new Float64Array(size);
-  const high = new Float64Array(size);
-  const owner = new Int32Array(size);
+  const ax = f64(size);
+  const ay = f64(size);
+  const bx = f64(size);
+  const by = f64(size);
+  const low = f64(size);
+  const high = f64(size);
+  const owner = i32(size);
   // Endpoint flags: 1 for the first segment, 2 for the last.
-  const ends = new Uint8Array(size);
+  const ends = u8(size);
   let count = 0;
   let top = Infinity;
   let bottom = -Infinity;
@@ -321,19 +327,19 @@ export function routeCrossings(
   const bands = bottom > top ? Math.round(Math.sqrt(count)) : 1;
   const scale = bottom > top ? bands / (bottom - top) : 0;
   const bandOf = (y: number): number => Math.min(bands - 1, Math.floor((y - top) * scale));
-  const first = new Int32Array(count);
-  const bandStart = new Int32Array(bands + 1);
+  const first = i32(count);
+  const bandStart = i32(bands + 1);
   for (let p = 0; p < count; p++) {
     first[p] = bandOf(low[p]!);
     for (let b = first[p]!, last = bandOf(high[p]!); b <= last; b++) bandStart[b + 1]!++;
   }
   for (let b = 0; b < bands; b++) bandStart[b + 1]! += bandStart[b]!;
-  const fill = bandStart.slice(0, bands);
-  const inBand = new Int32Array(bandStart[bands]!);
+  const fill = copy(bandStart, bands);
+  const inBand = i32(bandStart[bands]!);
   for (let p = 0; p < count; p++)
     for (let b = first[p]!, last = bandOf(high[p]!); b <= last; b++) inBand[fill[b]!++] = p;
   // Edges merging into a shared endpoint run do not count as crossings.
-  const runs = new Float64Array(edges.length * 8);
+  const runs = f64(edges.length * 8);
   const inLine = (r: number[], a: number, b: number, c: number): boolean =>
     (Math.abs(r[a]! - r[b]!) < IN_LINE && Math.abs(r[a]! - r[c]!) < IN_LINE) ||
     (Math.abs(r[a + 1]! - r[b + 1]!) < IN_LINE && Math.abs(r[a + 1]! - r[c + 1]!) < IN_LINE);

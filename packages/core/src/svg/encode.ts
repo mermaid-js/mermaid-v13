@@ -2,21 +2,40 @@
  * Turning one attribute value into its unescaped string form. Both writer backings and the
  * `SvgTree` view call this, so they agree byte for byte.
  */
-import { GRADIENT_ATTRS, HREF_TAGS, isAllowedAttr, isAllowedTag } from './allowlist.ts';
+import {
+  GRADIENT_ATTRS,
+  HREF_TAGS,
+  isAllowedAttr,
+  PLAIN_ATTRS,
+  WRITABLE_TAGS,
+} from './allowlist.ts';
 import { num } from './escape.ts';
 
 export function checkTag(tag: string): void {
-  if (!isAllowedTag(tag)) throw new TypeError(`<${tag}> is not an allowed SVG element`);
+  if (!WRITABLE_TAGS.has(tag)) throw new TypeError(`<${tag}> is not an allowed SVG element`);
 }
 
-/** The attribute's value as written (before escaping), or undefined to skip it. */
-export function formatValue(tag: string, name: string, value: unknown): string | undefined {
-  if (value === undefined) return undefined;
+/**
+ * The name checks for attribute `name` on `<tag>`, one by one. A name in `PLAIN_ATTRS` passes
+ * all of them on every element, so callers that found it there skip this.
+ */
+export function checkName(tag: string, name: string): void {
   if (GRADIENT_ATTRS.has(name)) throw new TypeError(`${name} is not allowed on <${tag}>`);
   if (!isAllowedAttr(name)) throw new TypeError(`${name} is not an allowed SVG attribute`);
   if (name === 'href' && !HREF_TAGS.has(tag))
     throw new TypeError(`href is not allowed on <${tag}>`);
   if (name === 'xmlns' && tag !== 'svg') throw new TypeError(`xmlns is only allowed on <svg>`);
+}
+
+/** The attribute's value as written (before escaping), or undefined to skip it. */
+export function formatValue(tag: string, name: string, value: unknown): string | undefined {
+  if (value === undefined) return undefined;
+  if (!PLAIN_ATTRS.has(name)) checkName(tag, name);
+  return formatChecked(name, value);
+}
+
+/** `formatValue` for a defined value whose name has passed the name checks. */
+export function formatChecked(name: string, value: unknown): string {
   if (typeof value === 'number') return num(value);
   if (typeof value === 'string') return value;
   if (Array.isArray(value)) {

@@ -7,7 +7,8 @@
  * - Positions print as 1-based `line:column`; a range prints as `l:c-l:c 'text'`.
  *
  * Features with markers (definition, references, rename, astAt, completions, hover) print one
- * block per marker; the others (diagnostics, folding, semanticTokens) print the whole document.
+ * block per marker; the others (diagnostics, folding, semanticTokens, symbols) print the whole
+ * document.
  *
  * A feature folder with no renderer in {@link FEATURES} runs through the snapshot method of
  * the same name (one call per marker), printed by {@link generic}: a new query needs a folder
@@ -130,6 +131,15 @@ export const FEATURES: Readonly<Record<string, Render>> = {
   }),
   folding: (doc, _, p) =>
     doc.foldingRanges().map((f) => `${p.pos(f.range.start)}-${p.pos(f.range.end)} ${f.kind}`),
+  symbols: (doc, _, p) => {
+    const tree = (list: ReturnType<DocumentSnapshot['symbols']>, indent: string): string[] =>
+      list.flatMap((s) => [
+        `${indent}${s.kind} ${p.range(s.nameRange)} in ${p.pos(s.range.start)}-${p.pos(s.range.end)}${s.block ? ' block' : ''}`,
+        ...tree(s.children, `${indent}  `),
+      ]);
+    const lines = tree(doc.symbols(), '');
+    return lines.length ? lines : ['none'];
+  },
   semanticTokens: (doc, _, p) =>
     doc
       .semanticTokens()
