@@ -755,6 +755,179 @@ describe('plain-label wrapper', () => {
     const box = layout('aaa\u00a0aaa aaa\u3000aaa aaa', 40);
     expect(box).toStrictEqual(layout('<span>aaa\u00a0aaa aaa\u3000aaa aaa</span>', 40));
   });
+
+  // Labels whose only markup is explicit breaks: each source line is plain once trimmed, and is
+  // laid out as a plain label. Breaks as `plainLines` splits at with white space around them,
+  // runs of spaces and tabs in them, and some for the general path: spellings it does not split
+  // at (a tag dropped as markup, or text) and other white space. A written `\n` (or `\N`) breaks
+  // only with `backslashBreak`, and is text without it.
+  const BREAKS = [
+    ...['<br>', '<br/>', '<br />', '<BR>', '<Br  />', '<bR\t/>', '<br\n>', '<br\r\n/>'],
+    ...['\\n', '\\N', '\n', '\r\n', '\r', '\n\r', '\\n\\n', '<br><br>', '\\\\n'],
+  ];
+  const NOT_BREAKS = [
+    '<br/ >',
+    '<br class="x">',
+    '<br>>',
+    '<<br>',
+    '<\\n>',
+    '\\ n',
+    '</br>',
+    '<hr>',
+  ];
+  const AROUND = ['', '', '', ' ', ' ', '  ', '\t', ' \t '];
+  const NOT_AROUND = ['\u00a0', '\u3000 ', '&#32;', '\u00ad'];
+  const spaced = (rnd: () => number): string =>
+    sentence(rnd).replace(/ /g, () => (rnd() < 0.5 ? ' ' : ' \t  '));
+  // `*`, `_`, backticks and backslashes: text in a plain label; `*` and `_` are emphasis in an
+  // emphasis label, which then takes the general path.
+  const MARKS = ['*', '_', '`', '\\', '**', '__', '\\*', '\\\\', '`a`', '*a*', '_a_', 'a_b'];
+  const marked = (rnd: () => number): string =>
+    sentence(rnd).replace(/ |$/g, (s) =>
+      rnd() < 0.3 ? MARKS[Math.floor(rnd() * MARKS.length)] + s : s
+    );
+  const LINES = [sentence, sentence, hyphenated, spaced, marked, () => '', () => ' '];
+  const broken = (rnd: () => number): string => {
+    const pick = <T>(a: readonly T[]): T => a[Math.floor(rnd() * a.length)] as T;
+    const around = (): string => pick(rnd() < 0.03 ? NOT_AROUND : AROUND);
+    const br = (): string => around() + pick(rnd() < 0.03 ? NOT_BREAKS : BREAKS) + around();
+    const n = 2 + Math.floor(rnd() * 4);
+    let text = rnd() < 0.2 ? br() : '';
+    for (let i = 0; i < n; i++) text += (i > 0 ? br() : '') + pick(LINES)(rnd);
+    return rnd() < 0.2 ? text + br() : text;
+  };
+  // The modes a label with breaks can take the plain path in, with and without `backslashBreak`.
+  const BREAK_MODES: readonly [LabelMarkup, boolean][] = [
+    ['plain', true],
+    ['plain', false],
+    ['emphasis', true],
+    ['emphasis', false],
+  ];
+  const differentialBreaks = (
+    measurer: Measurer,
+    seed: number,
+    count: number,
+    generate = broken
+  ): number => {
+    const rnd = random(seed);
+    let compared = 0;
+    for (let k = 0; k < count; k++) {
+      const text = generate(rnd);
+      // Trimmed, a label may be empty (an empty box, where `<span></span>` is an empty line) or
+      // plain (measured once where it fits).
+      const trimmed = text.trim();
+      if (trimmed === '' || (PLAIN.test(trimmed) && !trimmed.includes('  '))) continue;
+      const font = FONTS[Math.floor(rnd() * FONTS.length)] as FontKey;
+      const style = STYLES[Math.floor(rnd() * STYLES.length)] as number;
+      const maxes = [-1, 0, rnd() * 20, 5 + rnd() * 60, 20 + rnd() * 200, NaN, Infinity];
+      for (const max of maxes) {
+        // Not markdown: a markdown string with breaks takes the general path, where `<span>`
+        // would keep a line that markdown drops as blank. `<span>` goes around the trimmed text,
+        // since the label is trimmed before it is split into lines.
+        for (const keepWords of [false, true]) {
+          for (const [markup, backslashBreak] of BREAK_MODES) {
+            const options: LabelOptions = { style, keepWords, markup, backslashBreak };
+            const fast = layoutLabel(text, font, max, measurer, options);
+            const general = layoutLabel(
+              `<span>${text.trim()}</span>`,
+              font,
+              max,
+              measurer,
+              options
+            );
+            if (!same(fast, general)) {
+              const at = JSON.stringify({
+                text,
+                font,
+                style,
+                max,
+                keepWords,
+                markup,
+                backslashBreak,
+              });
+              expect(fast, at).toStrictEqual(general);
+            }
+            compared++;
+          }
+        }
+      }
+    }
+    return compared;
+  };
+
+  it('lays out generated labels with breaks exactly as the general path', () => {
+    const lumpy: Measurer = {
+      id: 'lumpy',
+      width: (text, font, style) => {
+        let h = style * 7;
+        for (let i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) % 1009;
+        return text.length ** 1.1 * font.size * 0.47 + h / 997;
+      },
+      metrics: (font) => tableMeasurer.metrics(font),
+    };
+    expect(differentialBreaks(tableMeasurer, 5, 750)).toBeGreaterThan(35000);
+    expect(differentialBreaks(lumpy, 6, 375)).toBeGreaterThan(17500);
+    // Without breaks: labels with `*`, `_`, backticks and backslashes.
+    expect(differentialBreaks(tableMeasurer, 7, 375, marked)).toBeGreaterThan(15000);
+    expect(differentialBreaks(lumpy, 8, 250, marked)).toBeGreaterThan(8000);
+  }, 60_000);
+
+  it('lays out labels with breaks at several widths as the general path', () => {
+    const labels = [
+      'a<br>b',
+      '<br>',
+      '<br><br>',
+      '\\n',
+      '<br>aaa aaa aaa<br>',
+      'aaa  <BR/>   aaa aaa aaa\\n\\n aaa-aaa aaa\t<br />\taaa',
+      'aaa aaa\r\n\r\naaa aaa\raaa\n\naaa',
+      'well-known<br>one-to-zero-or-one-non-identifying relationship',
+      'ab-'.repeat(30) + '<br/>' + 'abcdefghij'.repeat(10) + ' x',
+      '\u6f22\u5b57\u3002\u6f22\u5b57<br>\u300c\u6f22\u5b57\u300d aaa',
+      'aaa\u00a0<br>aaa',
+      'aaa<br>a&amp;b',
+      'aaa<br class="x">aaa aaa',
+      'aaa  aaa\taaa aaa \t aaa',
+      'a*b* __c__ `d` e\\f snake_case<br>**x** \\* _',
+      'a `b` c\\d\\ne<br>f\\Ng',
+      'aaa<script>x<br>y</script>bbb<br>ccc',
+      'aaa<style>x</style><br>bbb',
+    ];
+    for (const text of labels) {
+      for (let max = 0; max <= 120; max += 4) {
+        for (const keepWords of [false, true]) {
+          for (const [markup, backslashBreak] of BREAK_MODES) {
+            const options: LabelOptions = { keepWords, markup, backslashBreak };
+            expect(
+              layoutLabel(text, arial, max, tableMeasurer, options),
+              JSON.stringify({ text, max, keepWords, markup, backslashBreak })
+            ).toStrictEqual(
+              layoutLabel(`<span>${text.trim()}</span>`, arial, max, tableMeasurer, options)
+            );
+          }
+        }
+      }
+    }
+  });
+
+  it('lays out a label with breaks without calling the table measurer', () => {
+    const width = vi.spyOn(tableMeasurer, 'width');
+    try {
+      const text = '  one two <br/>  \\nthree-four-five six\nseven  ';
+      const box = layoutLabel(text, arial, 40, tableMeasurer);
+      expect(texts(box)).toEqual(['one two', '', 'three-', 'four-five', 'six', 'seven']);
+      expect(box.widths[1]).toBe(0);
+      // In an emphasis label a backtick and a backslash are text, and without backslashBreak a
+      // written `\n` is too.
+      const options: LabelOptions = { markup: 'emphasis', backslashBreak: false };
+      const kept = layoutLabel('a `b` c\\nd <br> e', arial, Infinity, tableMeasurer, options);
+      expect(texts(kept)).toEqual(['a `b` c\\nd', 'e']);
+      // The lines are measured by the table directly.
+      expect(width).not.toHaveBeenCalled();
+    } finally {
+      width.mockRestore();
+    }
+  });
 });
 
 describe('drawing with SvgWriter.label()', () => {

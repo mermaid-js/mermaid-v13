@@ -174,9 +174,12 @@ export function layoutLabel(
 }
 
 /**
- * Lays out a plain label without inline boxes as the general path does, or returns undefined for
- * it: trimmed, one source line, no markup, entities, break hints or runs of white space
- * (`RE_SLOW`). A label that fits is measured once; a wider one is laid out by `wrapPlain`.
+ * Lays out a label without inline boxes as the general path does, or returns undefined for it:
+ * a plain label, or a label not markdown whose source lines (`sourceLines`) are plain once `tidy`
+ * has collapsed and trimmed their spaces. In such a line a backtick and a backslash are text, and
+ * so are `*` and `_` in the `plain` mode. Each line is laid out by `wrapPlain`. A plain label that
+ * fits is measured once instead; a line between breaks is not, as `wrap` adds up the widths of
+ * its words and a measurer need not be additive.
  */
 function plainLabel(
   src: string,
@@ -186,24 +189,40 @@ function plainLabel(
   measurer: Measurer,
   options: LabelOptions
 ): [Run[][], number[], number[]] | undefined {
-  const markdown = (options.markdown ? 'markdown' : options.markup) === 'markdown';
-  if (RE_SLOW.test(text) || (markdown && RE_BULLET.test(text))) return undefined;
+  const markup = options.markdown ? 'markdown' : options.markup;
   const base = options.style ?? 0;
-  const width = measurer.width(text, font, base);
-  if (width <= maxWidth) return [[[run(text, base, width)]], [0], [width]];
-  // A markdown label's lines come from the untrimmed source; keep that to the general path.
-  if ((markdown && src !== text) || RE_OTHER_SPACE.test(text)) return undefined;
+  const slow = RE_SLOW.test(text);
+  if (markup === 'markdown' && (slow || RE_BULLET.test(text))) return undefined;
+  // What else `RE_SLOW` finds in a line that `inline` reads as more than text.
+  const marked = markup === 'emphasis' ? /[<&*_\u00ad\u200b]/ : /[<&\u00ad\u200b]/;
   const lines: Run[][] = [];
   const indents: number[] = [];
   const widths: number[] = [];
-  const push = (t: string, w: number): void => {
-    lines.push([run(t, base, w)]);
+  const push = (runs: Run[], width: number): void => {
+    lines.push(runs);
     indents.push(0);
-    widths.push(w);
+    widths.push(width);
   };
-  return wrapPlain(text, font, maxWidth, measurer, options, push)
-    ? [lines, indents, widths]
-    : undefined;
+  let width: number;
+  for (let line of slow ? sourceLines(text, options.backslashBreak) : [text]) {
+    if (slow) {
+      // As `tidy`, which leaves white space other than spaces and tabs: the line must have none.
+      line = line.replace(RE_SPACES, ' ');
+      if (RE_OTHER_SPACE.test(line) || marked.test((line = line.trim()))) return undefined;
+    }
+    if (line === '') push([], 0);
+    else if (!slow && (width = measurer.width(line, font, base)) <= maxWidth) {
+      push([run(line, base, width)], width);
+    } else if (
+      // A markdown label's lines come from the untrimmed source; keep that to the general path.
+      (markup === 'markdown' && src !== text) ||
+      RE_OTHER_SPACE.test(line) ||
+      !wrapPlain(line, font, maxWidth, measurer, options, (t, w) => push([run(t, base, w)], w))
+    ) {
+      return undefined;
+    }
+  }
+  return [lines, indents, widths];
 }
 
 /**
@@ -247,12 +266,14 @@ const RE_MD_BREAK = /<br\s*\/?>|\r\n?/gi;
 // After `RE_MD_BREAK` has made every `<br>` and line end a `\n`.
 const RE_PLAIN_BREAK = /\\n|\n/i;
 
-/** Lines of a plain or emphasis label. Without `backslashBreak` a written `\n` stays text. */
-function plainLines(text: string, backslashBreak = true): SourceLine[] {
-  return text
-    .replace(RE_MD_BREAK, '\n')
-    .split(backslashBreak ? RE_PLAIN_BREAK : '\n')
-    .map((source) => ({ source }));
+/** Source lines of a plain or emphasis label. Without `backslashBreak` a written `\n` stays text. */
+function sourceLines(text: string, backslashBreak = true): string[] {
+  return text.replace(RE_MD_BREAK, '\n').split(backslashBreak ? RE_PLAIN_BREAK : '\n');
+}
+
+/** Lines of a plain or emphasis label, as `sourceLines`. */
+function plainLines(text: string, backslashBreak?: boolean): SourceLine[] {
+  return sourceLines(text, backslashBreak).map((source) => ({ source }));
 }
 
 /**
