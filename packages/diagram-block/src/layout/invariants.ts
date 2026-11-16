@@ -20,24 +20,9 @@ import { isComposite } from '../model.ts';
 import { outlineDistance } from '../shapes/outline.ts';
 import { blockIndex, drawnBoxes } from './layout.ts';
 import type { BlockLayout, BlockNodeLayout, Rect } from './types.ts';
+import { numbers, rectInside as inside } from '@mermaid-js/shared/layout/invariants';
 
 const EPS = 1e-6;
-
-/** Every number in `value`, with its path. */
-function* numbers(value: unknown, path: string): Generator<[string, number]> {
-  if (typeof value === 'number') yield [path, value];
-  else if (Array.isArray(value)) {
-    for (let i = 0; i < value.length; i++) yield* numbers(value[i], `${path}[${i}]`);
-  } else if (value && typeof value === 'object') {
-    for (const [k, v] of Object.entries(value)) yield* numbers(v, `${path}.${k}`);
-  }
-}
-
-const inside = (inner: Rect, outer: Rect, eps: number): boolean =>
-  inner.x >= outer.x - eps &&
-  inner.y >= outer.y - eps &&
-  inner.x + inner.width <= outer.x + outer.width + eps &&
-  inner.y + inner.height <= outer.y + outer.height + eps;
 
 const overlaps = (a: Rect, b: Rect, eps: number): boolean =>
   a.x < b.x + b.width - eps &&

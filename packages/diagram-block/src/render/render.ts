@@ -21,7 +21,7 @@
  * edge's `path`; labels carry `data-id` only.
  */
 import { translate, type Attrs, type CheckedStyle, type SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { BlockLayout, BlockNodeLayout, PlacedLabel } from '../layout/types.ts';
 import { isComposite, type Block, type BlockModel } from '../model.ts';
 import { drawShape } from '../shapes/draw.ts';
@@ -73,15 +73,19 @@ function modelBlocks(model: BlockModel): ReadonlyMap<string, Block> {
 
 /** The `<svg>` root: the layout's bounds as the viewBox (D224), the theme's aliases. */
 function openRoot({ w, ctx, layout, paint }: Scene): void {
+  const { config } = ctx;
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const config = ctx.config as { block?: { useMaxWidth?: unknown } };
+  const maxWidth = (config as { block?: { useMaxWidth?: unknown } }).block?.useMaxWidth !== false;
   openSvgRoot(w, ctx, {
     name: 'block',
     viewBox: [x, y, width, height],
-    maxWidth: config.block?.useMaxWidth,
-    attrs: { 'font-family': paint.font, 'font-size': paint.fontSize },
+    maxWidth,
+    attrs: {
+      'font-family': paint.font,
+      'font-size': paint.fontSize,
+    },
   });
 }
 

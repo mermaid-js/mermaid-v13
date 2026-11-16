@@ -25,8 +25,8 @@ function invalidReason(name: string, kind = 'entity'): string | undefined {
     const at = HEADER.length + 'classDef '.length;
     const text = `${HEADER}classDef ${name} fill:#000\n`;
     return (
-      shapeReason(name) ??
-      (readsBack(text, at, name, 'class') ? undefined : `'${name}' is not a class name.`)
+      shapeReason(name, 'A name') ??
+      (readsBack(parseEr(text), at, name, 'class') ? undefined : `'${name}' is not a class name.`)
     );
   }
   return entityReason(name);

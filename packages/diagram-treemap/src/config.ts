@@ -13,7 +13,11 @@
  */
 import type { Warning } from '@mermaid-js/core';
 import type { TreemapDiagramConfig } from '@mermaid-js/core/config';
-import { rawConfigNumber as configNumber, useMaxWidth } from '@mermaid-js/core/config/readers';
+import {
+  rawConfigNumber as configNumber,
+  shownValue as shown,
+  useMaxWidth,
+} from '@mermaid-js/shared/config/readers';
 import { TREEMAP_DEFAULTS, treemapValueOptions } from './options.ts';
 
 export const TREEMAP_CONFIG_INVALID = 'TREEMAP_CONFIG_INVALID';
@@ -32,9 +36,6 @@ type LengthKey = 'nodeWidth' | 'nodeHeight' | 'padding' | 'diagramPadding';
 
 /** The length keys: each a number of 0 or more (`minimum: 0` in the schema). */
 const LENGTHS: readonly LengthKey[] = ['nodeWidth', 'nodeHeight', 'padding', 'diagramPadding'];
-
-const shown = (value: unknown): string =>
-  typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
 
 /** The layout's options from the resolved `treemap` section, each checked. */
 export function treemapLayoutConfig(

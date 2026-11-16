@@ -6,6 +6,7 @@
 import type { PacketModel } from '../model.ts';
 import { PACKET_METRICS as m } from './metrics.ts';
 import type { PacketLayout, PacketPieceLayout, Rect } from './types.ts';
+import { nonFinite as finite } from '@mermaid-js/shared/layout/invariants';
 
 /** Float tolerance of the checks. */
 const EPS = 1e-6;
@@ -196,13 +197,4 @@ function titleViolations(model: PacketModel, layout: PacketLayout, out: string[]
   const middle = title.y + title.text.lineHeight / 2;
   const want = Math.max(layout.height - pitch / 2, bottom + title.text.lineHeight / 2);
   if (Math.abs(middle - want) > EPS) out.push(`the title's first line is centred at y ${middle}`);
-}
-
-/** Every number in `v`, at any depth, is finite. */
-function finite(v: unknown, path: string, out: string[]): void {
-  if (typeof v === 'number') {
-    if (!Number.isFinite(v)) out.push(`${path} is ${v}`);
-  } else if (Array.isArray(v)) v.forEach((x, i) => finite(x, `${path}[${i}]`, out));
-  else if (v !== null && typeof v === 'object')
-    for (const [k, x] of Object.entries(v)) finite(x, `${path}.${k}`, out);
 }

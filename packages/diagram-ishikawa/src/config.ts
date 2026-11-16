@@ -6,7 +6,7 @@
  * minimum; for `useMaxWidth` a boolean.
  */
 import type { IshikawaDiagramConfig } from '@mermaid-js/core/config';
-import { configNumber, useMaxWidth } from '@mermaid-js/core/config/readers';
+import { configNumber, useMaxWidth } from '@mermaid-js/shared/config/readers';
 import { ishikawaConfigDefaults } from './generated/config-defaults.ts';
 
 /** The `ishikawa` options the layout reads, every one set. */

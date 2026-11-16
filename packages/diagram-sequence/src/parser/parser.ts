@@ -17,7 +17,6 @@ import {
   Probe,
   significantTokens,
   sourceView,
-  STOP,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
@@ -75,6 +74,7 @@ import {
   SECTION_KINDS,
   SECTION_OF,
   SECTION_OWNERS,
+  STOP,
   TXT,
 } from './tables.ts';
 import type {

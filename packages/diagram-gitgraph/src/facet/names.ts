@@ -7,15 +7,13 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { parseGitGraph } from '../parser/index.ts';
 import type { GitGraphParseResult } from '../parser/index.ts';
+import { isPlain } from '@mermaid-js/shared/parser/facet';
 
 /** The `gitGraph` config keys the parse reads. */
 export interface DocumentGitConfig {
   mainBranchName?: string;
   mainBranchOrder?: number;
 }
-
-const isPlain = (v: unknown): v is Record<string, unknown> =>
-  typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /**
  * `gitGraph.mainBranchName` and `mainBranchOrder` as the document sets them: the front matter's

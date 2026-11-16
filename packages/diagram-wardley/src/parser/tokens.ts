@@ -4,7 +4,7 @@
  * lexer (parser-method §1, D213). Kinds are plain numbers (TS enums are banned).
  */
 import { FIRST_DIAGRAM_KIND, Kind, kindSet } from '@mermaid-js/core/parser-kit';
-import type { WardleyTextNode } from './ast.ts';
+import { textStatements } from '@mermaid-js/shared/parser/rule';
 
 const F = FIRST_DIAGRAM_KIND;
 
@@ -85,22 +85,11 @@ export const KEYWORDS: readonly (readonly [word: string, kind: number])[] = [
 /** The STRATEGY terminal's words, in its alternation's order. */
 export const STRATEGIES: readonly string[] = ['build', 'buy', 'outsource', 'market'];
 
-/** A statement whose token holds its text too: its AST node type and its keyword. */
-export interface TextStatement {
-  readonly type: WardleyTextNode['type'];
-  /** The keyword, also the stem of the AST id and the probe's mode past it. */
-  readonly word: 'title' | 'accTitle' | 'accDescr';
-}
-
 /**
  * `title …`, `accTitle: …` and `accDescr …` by token kind: the one table the parser (nodes,
  * ids, probe modes) reads.
  */
-export const TEXT_STATEMENTS: Readonly<Partial<Record<number, TextStatement>>> = {
-  [T.Title]: { type: 'Title', word: 'title' },
-  [T.AccTitle]: { type: 'AccTitle', word: 'accTitle' },
-  [T.AccDescr]: { type: 'AccDescr', word: 'accDescr' },
-};
+export const TEXT_STATEMENTS = /* @__PURE__ */ textStatements(T.Title, T.AccTitle, T.AccDescr);
 
 /**
  * Trivia for the wardley parser: the shared trivia kinds and {@link T.Yaml}. In-text `%%`

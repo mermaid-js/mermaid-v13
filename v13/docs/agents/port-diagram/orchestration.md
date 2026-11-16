@@ -19,11 +19,10 @@ This file is for runs where one orchestrating session implements a whole v13 spe
 
 - The brief is three lines: the ticket number, a pointer to `IMPLEMENTER.md`, and any ticket-specific pointers. Point to things instead of repeating them.
 - When a handoff arrives:
-  1. Check for AI attribution: `git log --format=%b <integration>..<branch> | grep -ciE 'co-authored|generated with'` must print 0.
-  2. Spot-check one or two claimed acceptance criteria yourself, against the code or a test run. Handoff claims are unverified until checked.
-  3. Review the ticket's diff if it is non-trivial. Send any findings back to the same agent.
-  4. Merge with `--ff-only` if the branch has the integration tip. Otherwise use a merger agent (`--no-ff`, `pnpm check` after the merge, fix only merge breakage).
-  5. Move the ticket's unmet criteria into `GAPS.md` under the ticket that owns each one.
+  1. Spot-check one or two claimed acceptance criteria yourself, against the code or a test run. Handoff claims are unverified until checked.
+  2. Review the ticket's diff if it is non-trivial. Send any findings back to the same agent.
+  3. Merge with `--ff-only` if the branch has the integration tip. Otherwise use a merger agent (`--no-ff`, `pnpm check` after the merge, fix only merge breakage).
+  4. Move the ticket's unmet criteria into `GAPS.md` under the ticket that owns each one.
   6. Push the integration branch.
 - After every merge, check the frontier. Start each newly unblocked ticket right away, in its own worktree.
 - Only one merge runs at a time in the main checkout.
@@ -40,7 +39,6 @@ This file is for runs where one orchestrating session implements a whole v13 spe
 2. Review the whole integration branch once more, focused on how the tickets fit together. Fix the findings with a single implementer agent.
 3. Remove the worktrees after checking that each one is clean and merged.
 4. Closing issues is usually denied in agent sessions. Give the maintainer the `gh issue close` commands instead.
-5. Commit messages and PR bodies carry no AI attribution (`AGENTS.md`).
 
 ## IMPLEMENTER.md template
 
@@ -51,7 +49,7 @@ This file is for runs where one orchestrating session implements a whole v13 spe
 1. Confirm your base: `git merge-base --is-ancestor <integration> HEAD`. If that fails, reset onto <integration>.
 2. Work test-first: write a failing test, then the code that makes it pass. Test through `createMermaid().render()`, except where the recipe step names another seam.
 3. Stay in the ticket's scope. Touch shared files minimally and additively. Escalate decisions instead of making them.
-4. Run `pnpm check` until it is green. Commit with no AI attribution. Don't push, open PRs, or comment on or close issues.
+4. Run `pnpm check` until it is green. Don't push, open PRs, or comment on or close issues.
 5. Before reporting, merge <integration> and run `pnpm check` again.
 6. Write tickets/<N>.md (≤ 40 lines): exports, how to use them, test helpers, gz size, unmet criteria.
 7. Reply in ≤ 12 lines: branch, head sha, checks, deviations, unmet criteria.

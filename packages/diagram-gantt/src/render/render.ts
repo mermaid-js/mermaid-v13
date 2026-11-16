@@ -18,7 +18,7 @@ import {
   type SafeUrl,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import { GANTT_METRICS } from '../layout/metrics.ts';
 import type {
   GanttAxis,
@@ -73,6 +73,7 @@ function openRoot({ w, layout, ctx, model }: Scene): void {
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
+  const maxWidth = (config.gantt as { useMaxWidth?: unknown } | undefined)?.useMaxWidth !== false;
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
@@ -81,7 +82,7 @@ function openRoot({ w, layout, ctx, model }: Scene): void {
   openSvgRoot(w, ctx, {
     name: 'gantt',
     viewBox: [x, y, width, height],
-    maxWidth: (config.gantt as { useMaxWidth?: unknown } | undefined)?.useMaxWidth,
+    maxWidth,
     title,
     desc,
     attrs: {

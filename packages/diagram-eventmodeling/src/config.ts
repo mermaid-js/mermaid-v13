@@ -13,10 +13,10 @@
  */
 import type { Warning } from '@mermaid-js/core';
 import type { EventModelingDiagramConfig } from '@mermaid-js/core/config';
-import { rawConfigNumber, useMaxWidth } from '@mermaid-js/core/config/readers';
 import { EVENTMODELING_CONFIG_INVALID } from './codes.ts';
 import { eventmodelingConfigDefaults } from './generated/config-defaults.ts';
 import { PADDING_HEADROOM } from './layout/metrics.ts';
+import { useMaxWidth } from '@mermaid-js/shared/config/readers';
 
 export interface EventModelingConfig {
   /** The margin around what is drawn, px. */
@@ -32,7 +32,9 @@ export function eventModelingConfig(
   // Typed as a number, but a directive can write anything.
   const given: unknown = section?.padding;
   if (given === undefined) return { padding: fallback };
-  const n = rawConfigNumber(given);
+  let n = Number.NaN;
+  if (typeof given === 'number') n = given;
+  else if (typeof given === 'string' && given.trim() !== '') n = Number(given);
   if (n >= 0 && Number.isFinite(n * PADDING_HEADROOM)) return { padding: n };
   warn({
     code: EVENTMODELING_CONFIG_INVALID,

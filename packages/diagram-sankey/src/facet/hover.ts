@@ -4,15 +4,14 @@
  * from it (`parseFloat`, so the text after the number is dropped) and why the link counts as 0
  * when it does; `sankey` the one-line doc of the grammar file (`generated/docs.ts`).
  */
-import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
+import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-kit';
 import { sankeyDocs } from '../generated/docs.ts';
 import type { SankeyModel } from '../model.ts';
 import type { SankeyDocument, SankeyField } from '../parser/ast.ts';
 import { SankeyKind as T } from '../parser/tokens.ts';
 import { invalidity, readValue, trailingTextMessage } from '../parser/values.ts';
-import { code } from '@mermaid-js/core/parser-kit/facet';
-
-const inside = (offset: number, r: Range) => r.start <= offset && offset <= r.end;
+import { code } from './tables.ts';
+import { inside } from '@mermaid-js/shared/parser/facet';
 
 /** A sum as it reads, without the binary noise of adding decimals (`0.1 + 0.2`). */
 const total = (n: number) => String(Number(n.toPrecision(12)));

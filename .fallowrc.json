@@ -99,6 +99,10 @@
         "patterns": ["packages/language-*/**"]
       },
       {
+        "name": "shared",
+        "patterns": ["packages/shared/**"]
+      },
+      {
         "name": "package",
         "autoDiscover": ["packages"]
       }
@@ -109,8 +113,12 @@
         "allow": []
       },
       {
-        "from": "package",
+        "from": "shared",
         "allow": ["core"]
+      },
+      {
+        "from": "package",
+        "allow": ["core", "shared"]
       },
       {
         "from": "mermaid",
@@ -118,7 +126,7 @@
       },
       {
         "from": "extension-spec",
-        "allow": ["core", "package", "mermaid"]
+        "allow": ["core", "package", "mermaid", "shared"]
       },
       {
         "from": "bundler",
@@ -126,7 +134,7 @@
       },
       {
         "from": "language",
-        "allow": ["core", "package", "language"]
+        "allow": ["core", "package", "language", "shared"]
       }
     ]
   },

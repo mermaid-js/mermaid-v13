@@ -30,6 +30,7 @@ describe('packAll (this workspace)', () => {
     expect(diagrams.length).toBeGreaterThan(20);
     expect(names).toEqual([
       '@mermaid-chart/core',
+      '@mermaid-chart/shared',
       ...diagrams,
       '@mermaid-chart/mermaid',
       // Peer of mermaid (D164): after it.

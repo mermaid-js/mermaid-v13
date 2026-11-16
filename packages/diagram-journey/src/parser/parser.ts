@@ -30,8 +30,8 @@ import {
   sourceView,
   syncTo,
   TokenCursor,
-  STOP,
 } from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type {
   AstId,
   ParseOptions,
@@ -209,8 +209,7 @@ class JourneyParser {
     const k = c.kind;
     const empty = k === Kind.Newline || k === T.Eof || k === Kind.EOF;
     const where = empty ? { start: c.start, end: c.start } : this.span(c.pos);
-    const d = this.st.diagnostics.unexpected('UNEXPECTED', where, names, this.found());
-    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
+    this.st.diagnostics.unexpected('UNEXPECTED', where, names, this.found(), undefined, why);
     throw STOP;
   }
 
