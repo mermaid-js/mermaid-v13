@@ -6,8 +6,11 @@ import { createLanguageService } from '@mermaid-js/language-service';
 import { mkdirSync, symlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { discoverFacets } from './discover.ts';
+import { discoverFacets } from './facets.ts';
 import { detectorSource, FAKE_FACET, facetPackage, workspace } from './testing/workspace.ts';
+
+/** The diagram entry every manifest names (the render scan needs it to exist). */
+const ENTRY = { 'index.js': '' };
 
 const codes = async (root: string, text: string) => {
   const service = createLanguageService({ facets: await discoverFacets(root) });
@@ -63,21 +66,28 @@ describe('discoverFacets', () => {
     writeFileSync(join(outside, 'detector.js'), detectorSource('esc'));
     writeFileSync(join(outside, 'language.js'), FAKE_FACET);
     const manifest = (name: string, detector: string, language: string) =>
-      JSON.stringify({ name, mermaid: { plugin: 'diagram', id: name, detector, language } });
+      JSON.stringify({
+        name,
+        mermaid: { plugin: 'diagram', id: name, detector, entry: './index.js', language },
+      });
     const root = workspace({
       'up-detector': {
+        ...ENTRY,
         'package.json': manifest('up-detector', '../../../../detector.js', './language.js'),
         'language.js': FAKE_FACET,
       },
       'abs-language': {
+        ...ENTRY,
         'package.json': manifest('abs-language', './detector.js', join(outside, 'language.js')),
         'detector.js': detectorSource('abs'),
       },
       'link-detector': {
+        ...ENTRY,
         'package.json': manifest('link-detector', './detector.js', './language.js'),
         'language.js': FAKE_FACET,
       },
       'link-language': {
+        ...ENTRY,
         'package.json': manifest('link-language', './detector.js', './language.js'),
         'detector.js': detectorSource('link'),
       },
@@ -121,34 +131,52 @@ describe('discoverFacets', () => {
       'no-package-json': { 'index.js': '' },
       'string-manifest': { 'package.json': JSON.stringify({ name: 'x', mermaid: 'diagram' }) },
       'no-language': {
+        ...ENTRY,
+        'd.js': detectorSource('nl'),
         'package.json': JSON.stringify({
           name: 'no-language',
-          mermaid: { plugin: 'diagram', id: 'nl' },
+          mermaid: { plugin: 'diagram', id: 'nl', detector: './d.js', entry: './index.js' },
         }),
       },
       'extension-only': {
+        ...ENTRY,
         'package.json': JSON.stringify({
           name: 'ext',
-          mermaid: { plugin: 'extension', id: 'ext' },
+          mermaid: { plugin: 'extension', id: 'ext', entry: './index.js' },
         }),
       },
       'no-detector': {
+        ...ENTRY,
         'package.json': JSON.stringify({
           name: 'no-detector',
-          mermaid: { plugin: 'diagram', id: 'nd', language: './language.js' },
+          mermaid: { plugin: 'diagram', id: 'nd', entry: './index.js', language: './language.js' },
         }),
         'language.js': FAKE_FACET,
       },
       'no-id': {
+        ...ENTRY,
         'package.json': JSON.stringify({
           name: 'no-id',
-          mermaid: { plugin: 'diagram', detector: './d.js', language: './language.js' },
+          mermaid: {
+            plugin: 'diagram',
+            detector: './d.js',
+            entry: './index.js',
+            language: './language.js',
+          },
         }),
       },
       'bad-language-path': {
+        ...ENTRY,
+        'd.js': detectorSource('blp'),
         'package.json': JSON.stringify({
           name: 'bad-language-path',
-          mermaid: { plugin: 'diagram', id: 'blp', detector: './d.js', language: 42 },
+          mermaid: {
+            plugin: 'diagram',
+            id: 'blp',
+            detector: './d.js',
+            entry: './index.js',
+            language: 42,
+          },
         }),
       },
       'missing-detector-file': {
@@ -167,16 +195,23 @@ describe('discoverFacets', () => {
     const log: string[] = [];
     const rows = await discoverFacets(root, { log: (m) => log.push(m) });
     expect(rows.map((r) => r.id)).toEqual(['good']);
+    // The render scan's rules and warnings (D577): `readManifest` checks the id, and a
+    // manifest that is not an object is reported, not passed over.
     expect(log.join('\n')).toMatch(/not-json: unreadable package\.json/);
+    expect(log.join('\n')).toMatch(/x: Invalid mermaid plugin manifest: expected an object/);
     expect(log.join('\n')).toMatch(/no-detector: the manifest has no "detector"/);
-    expect(log.join('\n')).toMatch(/no-id: the manifest has no "id"/);
+    expect(log.join('\n')).toMatch(
+      /no-id: Invalid mermaid plugin manifest: "id" must be a plugin id/
+    );
     expect(log.join('\n')).toMatch(/bad-language-path: "language" must be a module path/);
-    expect(log.join('\n')).toMatch(/missing-detector-file: detector failed to load/);
+    expect(log.join('\n')).toMatch(
+      /missing-detector-file: "detector" \(\.\/detector\.js\) does not exist/
+    );
     expect(log.join('\n')).toMatch(/throwing-detector: detector failed to load \(boom\)/);
     expect(log.join('\n')).toMatch(
       /detector-not-a-function: the detector module exports no function/
     );
-    expect(log).toHaveLength(7);
+    expect(log).toHaveLength(8);
   });
 
   it('gives a facet whose language module is missing LANGUAGE_LOAD_FAILED, not a throw', async () => {
