@@ -72,47 +72,49 @@ function contains(outer: Outline, inner: Outline): boolean {
 const cx = (b: Outline): number => b.x + b.width / 2;
 const cy = (b: Outline): number => b.y + b.height / 2;
 
-/** The straight line from a to b: x, y of its start, then of its end. */
-function connect(a: Outline, b: Outline, shift: number): [number, number, number, number] {
-  const ax = cx(a);
-  const ay = cy(a);
-  const bx = cx(b);
-  const by = cy(b);
-  const down = contains(a, b);
-  if (down || contains(b, a)) {
-    // One holds the other: a short line from the nearest side of the outer box.
-    const outer = down ? a : b;
-    const inner = down ? b : a;
-    const ix = cx(inner);
-    const iy = cy(inner);
-    const left = inner.x - outer.x;
-    const right = outer.x + outer.width - inner.x - inner.width;
-    const top = inner.y - outer.y;
-    const bottom = outer.y + outer.height - inner.y - inner.height;
-    const least = Math.min(left, right, top, bottom);
-    let ox = ix;
-    let oy = least === bottom ? outer.y + outer.height : outer.y;
-    if (least === left || least === right) {
-      ox = least === left ? outer.x : outer.x + outer.width;
-      oy = iy;
-    }
-    const t = Math.min(hit(inner, { x: ox, y: oy }, { x: ix, y: iy }), 1);
-    const mx = ox + (ix - ox) * t;
-    const my = oy + (iy - oy) * t;
-    return down ? [ox, oy, mx, my] : [mx, my, ox, oy];
-  }
+/** A straight line: x, y of its start, then of its end. */
+type Line = [number, number, number, number];
 
-  let px = ax;
-  let py = ay;
-  let qx = bx;
-  let qy = by;
-  // Shapes that share a column or a row are joined by an upright or level line through the shared span.
+/** Where on the outer box's nearest side a short line to the inner box starts. */
+function nearestSide(outer: Outline, inner: Outline): [number, number] {
+  const left = inner.x - outer.x;
+  const right = outer.x + outer.width - inner.x - inner.width;
+  const top = inner.y - outer.y;
+  const bottom = outer.y + outer.height - inner.y - inner.height;
+  const least = Math.min(left, right, top, bottom);
+  if (least === left || least === right)
+    return [least === left ? outer.x : outer.x + outer.width, cy(inner)];
+  return [cx(inner), least === bottom ? outer.y + outer.height : outer.y];
+}
+
+/** One box holds the other: a short line from the nearest side of the outer box. */
+function nestedLine(outer: Outline, inner: Outline, down: boolean): Line {
+  const ix = cx(inner);
+  const iy = cy(inner);
+  const [ox, oy] = nearestSide(outer, inner);
+  const t = Math.min(hit(inner, { x: ox, y: oy }, { x: ix, y: iy }), 1);
+  const mx = ox + (ix - ox) * t;
+  const my = oy + (iy - oy) * t;
+  return down ? [ox, oy, mx, my] : [mx, my, ox, oy];
+}
+
+/**
+ * The line between the middles of a and b before any shift. Shapes that share a column or a
+ * row are joined by an upright or level line through the shared span.
+ */
+function baseLine(a: Outline, b: Outline): Line {
   const x0 = Math.max(a.x, b.x);
   const x1 = Math.min(a.x + a.width, b.x + b.width);
   const y0 = Math.max(a.y, b.y);
   const y1 = Math.min(a.y + a.height, b.y + b.height);
-  if (x0 < x1) px = qx = (x0 + x1) / 2;
-  else if (y0 < y1) py = qy = (y0 + y1) / 2;
+  if (x0 < x1) return [(x0 + x1) / 2, cy(a), (x0 + x1) / 2, cy(b)];
+  if (y0 < y1) return [cx(a), (y0 + y1) / 2, cx(b), (y0 + y1) / 2];
+  return [cx(a), cy(a), cx(b), cy(b)];
+}
+
+/** The straight line from a to b, shifted sideways by `shift` while it still meets both. */
+function apartLine(a: Outline, b: Outline, shift: number): Line {
+  let [px, py, qx, qy] = baseLine(a, b);
   const len = Math.hypot(qx - px, qy - py) || 1;
   const nx = (-(qy - py) / len) * shift;
   const ny = ((qx - px) / len) * shift;
@@ -124,14 +126,18 @@ function connect(a: Outline, b: Outline, shift: number): [number, number, number
     qx += nx;
     qy += ny;
   } else {
-    px = ax;
-    py = ay;
-    qx = bx;
-    qy = by;
+    [px, py, qx, qy] = [cx(a), cy(a), cx(b), cy(b)];
     ta = Math.min(hit(a, { x: qx, y: qy }, { x: px, y: py }), 1);
     tb = Math.min(hit(b, { x: px, y: py }, { x: qx, y: qy }), 1);
   }
   return [qx + (px - qx) * ta, qy + (py - qy) * ta, px + (qx - px) * tb, py + (qy - py) * tb];
+}
+
+/** The straight line from a to b. */
+function connect(a: Outline, b: Outline, shift: number): Line {
+  const down = contains(a, b);
+  if (down || contains(b, a)) return nestedLine(down ? a : b, down ? b : a, down);
+  return apartLine(a, b, shift);
 }
 
 /** The sides of a box a line leaves or reaches. */
@@ -440,26 +446,42 @@ export interface RouteOptions {
  */
 export function route(a: Outline, b: Outline, { shift, others, lanes }: RouteOptions): Route {
   if (a === b) return loop(a);
+  const line = connect(a, b, shift);
+  return (others && around({ a, b, others, lanes, line })) ?? straight(line, shift, lanes);
+}
 
-  const [sx, sy, ex, ey] = connect(a, b, shift);
-  const upright = sx === ex;
-  const level = sy === ey;
+/** What going round the shapes in a straight line's way reads. */
+interface Around {
+  readonly a: Outline;
+  readonly b: Outline;
+  readonly others: readonly Outline[];
+  readonly lanes: Lanes;
+  readonly line: Line;
+}
+
+/**
+ * The way round the shapes in the way of the straight line from a to b: a detour for an upright
+ * or level line, else an elbow. Undefined when nothing is in the way, when one holds the other,
+ * or when no elbow is free.
+ */
+function around({ a, b, others, lanes, line }: Around): Route | undefined {
+  const [sx, sy, ex, ey] = line;
   const inTheWay = (o: Outline): boolean =>
     o !== a && o !== b && hitRect(sidesOf(o), { x: sx, y: sy }, { x: ex - sx, y: ey - sy }) <= 1;
-  if (others) lanes.work.charge(others.length);
-  const blocked =
-    others !== undefined && !contains(a, b) && !contains(b, a) && others.some(inTheWay);
-  if (others && blocked && !upright && !level) {
-    const around = elbow(a, b, others, lanes);
-    if (around) return around;
-  }
-  if (others && blocked && (upright || level))
-    return detour({ a, b, others, lanes, upright, line: [sx, sy, ex, ey], inTheWay });
+  lanes.work.charge(others.length);
+  if (contains(a, b) || contains(b, a) || !others.some(inTheWay)) return undefined;
+  const upright = sx === ex;
+  if (upright || sy === ey) return detour({ a, b, others, lanes, upright, line, inTheWay });
+  return elbow(a, b, others, lanes);
+}
 
+/** The straight line as a route, its label pushed to the side of `shift`. */
+function straight(line: Line, shift: number, lanes: Lanes): Route {
+  const [sx, sy, ex, ey] = line;
   const len = Math.hypot(ex - sx, ey - sy) || 1;
   const dx = (ex - sx) / len;
   const dy = (ey - sy) / len;
-  if (upright || level) lanes.take([sx, sy, ex, ey]);
+  if (sx === ex || sy === ey) lanes.take([sx, sy, ex, ey]);
   return {
     kind: 'line',
     points: [sx, sy, ex, ey],
