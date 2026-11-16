@@ -10,6 +10,7 @@ import { DETECTORS, type FirstPartyDiagramId } from './generated/detectors.gen.t
 import type { AnyPlugin, FirstPartyEntry } from './registry.ts';
 
 export * from './exports.ts';
+export type { FirstPartyDiagramId };
 
 /**
  * A first-party diagram as a loader: `() => import('@mermaid-js/diagram-flowchart')`. It is
@@ -69,45 +70,58 @@ function ready(entry: FirstPartyEntry, plugin: AnyPlugin, ascii?: Hook): AnyPlug
   return { ...plugin, ...(ascii ? { ascii } : {}), formats };
 }
 
+/** A loader's plugin and text hook, shared by every row of its id. */
+interface Loaded {
+  plugin: AnyPlugin;
+  ascii?: Hook;
+}
+
 /** The detector row, loading what was passed for its id. */
 function row(
   entry: FirstPartyEntry,
-  given: AnyPlugin | DiagramLoader | undefined
+  given: AnyPlugin | (() => Promise<Loaded>) | undefined
 ): FirstPartyEntry {
   if (given === undefined) return { type: entry.type, pattern: entry.pattern };
   if (typeof given === 'function') {
-    // One call per loader, though several types share a plugin; a failure is retried.
-    let pending: Promise<AnyPlugin> | undefined;
-    const load = (): Promise<AnyPlugin> => {
-      pending ??= given().then((m) => {
-        const { plugin, ascii } = pluginOf(m, entry.id!);
-        return ready(entry, plugin, ascii);
-      });
-      pending.catch(() => (pending = undefined));
-      return pending;
-    };
     // Before the load only the manifest's formats are known: the row keeps them.
-    return { ...entry, load };
+    return { ...entry, load: () => given().then((l) => ready(entry, l.plugin, l.ascii)) };
   }
   const loaded = ready(entry, given);
   return { ...entry, formats: loaded.formats, load: () => Promise.resolve(loaded) };
 }
 
+/** `loader` called once for all rows of `id`; a failure is forgotten, so the next render retries. */
+function once(id: string, loader: DiagramLoader): () => Promise<Loaded> {
+  let pending: Promise<Loaded> | undefined;
+  return () => {
+    pending ??= loader().then((m) => pluginOf(m, id));
+    pending.catch(() => (pending = undefined));
+    return pending;
+  };
+}
+
 /** A new `mermaid` API object that renders only `options.diagrams`. */
 export function createMermaid(options: SlimOptions = {}): Mermaid {
   const list = options.diagrams ?? [];
-  const pairs: [string, AnyPlugin | DiagramLoader][] = Array.isArray(list)
+  const pairs: [string, unknown][] = Array.isArray(list)
     ? (list as readonly AnyPlugin[]).map((p) => [p.id, p])
     : Object.entries(list as DiagramsById);
-  const given = new Map<string, AnyPlugin | DiagramLoader>();
+  const given = new Map<string, AnyPlugin | (() => Promise<Loaded>)>();
   for (const [id, diagram] of pairs) {
+    // An explicit undefined is a diagram left out.
+    if (diagram === undefined) continue;
     if (!DETECTORS.some((e) => e.id === id))
       throw new TypeError(
         `"${String(id)}" is not a first-party diagram; register it with registerExternalDiagrams()`
       );
-    if (typeof diagram !== 'function' && diagram.id !== id)
-      throw new TypeError(`The plugin under "${id}" has the id "${String(diagram.id)}"`);
-    given.set(id, diagram);
+    if (typeof diagram === 'function') given.set(id, once(id, diagram as DiagramLoader));
+    else if (typeof diagram !== 'object' || diagram === null)
+      throw new TypeError(`The diagram under "${id}" must be a plugin object or a loader`);
+    else if ((diagram as AnyPlugin).id !== id)
+      throw new TypeError(
+        `The plugin under "${id}" has the id "${String((diagram as AnyPlugin).id)}"`
+      );
+    else given.set(id, diagram as AnyPlugin);
   }
   // The collision rules (D166) see every first-party id and type, loadable or not.
   return createInstance(

@@ -26,7 +26,6 @@ const DIAGRAMS = {
   timeline: 'timeline\n  title History\n  2002 : LinkedIn\n',
 };
 
-window.diagramIds = Object.keys(DIAGRAMS);
 window.renderType = async (id) => {
   const result = await mermaid.render(`d-${id}`, DIAGRAMS[id]);
   const holder = document.createElement('div');

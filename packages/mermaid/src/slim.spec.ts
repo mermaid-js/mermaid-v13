@@ -142,6 +142,44 @@ describe('mermaid/slim', () => {
       expect((await rejection(empty.render('s', FLOW))).message).toContain('"flowchart"');
     });
 
+    it('calls a loader once for all the types of its id, and retries a failure once', async () => {
+      let fail = true;
+      let n = 0;
+      const m = createMermaid({
+        diagrams: {
+          flowchart: () => {
+            n++;
+            return fail
+              ? Promise.reject(new Error('chunk 404'))
+              : import('@mermaid-js/diagram-flowchart');
+          },
+        },
+      });
+      await rejection(m.render('a', 'graph TD\n  A --> B\n'));
+      expect(n).toBe(1);
+      fail = false;
+      const [x, y] = await Promise.all([
+        m.render('b', 'graph TD\n  A --> B\n'),
+        m.render('c', FLOW),
+      ]);
+      expect(x.svg).toContain('<svg');
+      expect(y.svg).toContain('<svg');
+      await m.render('d', 'flowchart LR\n  X --> Y\n');
+      expect(n).toBe(2);
+    });
+
+    it('treats an undefined value as left out, and refuses any other non-diagram', async () => {
+      const m = createMermaid({ diagrams: { flowchart: undefined, pie: pieLoader } });
+      expect((await rejection(m.render('s', FLOW))).code).toBe('UNSUPPORTED_DIAGRAM');
+      expect((await m.render('p', PIE)).svg).toContain('<svg');
+      // @ts-expect-error null is neither a plugin nor a loader
+      expect(() => createMermaid({ diagrams: { pie: null } })).toThrow(/plugin object or a loader/);
+      // @ts-expect-error nor is a string
+      expect(() => createMermaid({ diagrams: { pie: 'pie' } })).toThrow(
+        /plugin object or a loader/
+      );
+    });
+
     it('refuses a key that is not first-party, and a plugin under another id', () => {
       const other = { other: () => import('@mermaid-js/diagram-flowchart') };
       // @ts-expect-error `other` is not a first-party id
