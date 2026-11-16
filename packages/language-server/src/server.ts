@@ -34,12 +34,17 @@ import {
   takesMarkdown,
   toCompletionItems,
   toDiagnostic,
+  toDocumentSymbols,
   toFoldingRange,
+  toHighlights,
   toMarkup,
   toOffset,
   toRange,
+  toSelectionRange,
+  toSymbolInformation,
 } from './convert.ts';
 import { discoverFacets } from './facets.ts';
+import { selectionChain } from './selection.ts';
 import { VERSION } from './version.ts';
 
 /** Documents the server serves by URI: `.mmd` and `.mermaid` (any case). */
@@ -96,12 +101,47 @@ function applyChange(text: string, change: TextDocumentContentChangeEvent): stri
   return text.slice(0, start) + change.text + text.slice(end);
 }
 
+/**
+ * Highlights, selection ranges and the outline (#810) of the open documents (`get`); `nested`
+ * tells whether the client takes hierarchical document symbols.
+ */
+function serveStructure(
+  connection: Connection,
+  get: (uri: string) => Open | undefined,
+  nested: () => boolean
+): void {
+  connection.onDocumentHighlight(({ textDocument, position }) => {
+    const o = get(textDocument.uri);
+    if (!o) return null;
+    const offset = toOffset(o.index, position);
+    return toHighlights(o.index, o.doc.references(offset), o.doc.definition(offset));
+  });
+
+  connection.onSelectionRanges(({ textDocument, positions }) => {
+    const o = get(textDocument.uri);
+    if (!o) return null;
+    return positions.map((p) =>
+      toSelectionRange(o.index, selectionChain(o.doc, toOffset(o.index, p)))
+    );
+  });
+
+  connection.onDocumentSymbol(({ textDocument }) => {
+    const o = get(textDocument.uri);
+    if (!o) return null;
+    const symbols = o.doc.symbols();
+    return nested()
+      ? toDocumentSymbols(o.index, symbols)
+      : toSymbolInformation(o.index, textDocument.uri, symbols);
+  });
+}
+
 /** Wire the server to `connection` and start listening. */
 export function startServer(connection: Connection, options: ServerOptions = {}): void {
   let service: LanguageService | undefined;
   let multiline = false;
   let hoverMarkdown = true;
   let docMarkdown = true;
+  let nestedSymbols = false;
   const open = new Map<string, Open>();
 
   const update = (uri: string, text: string, version: number) => {
@@ -131,6 +171,7 @@ export function startServer(connection: Connection, options: ServerOptions = {})
     multiline = text?.semanticTokens?.multilineTokenSupport === true;
     hoverMarkdown = takesMarkdown(text?.hover?.contentFormat);
     docMarkdown = takesMarkdown(text?.completion?.completionItem?.documentationFormat);
+    nestedSymbols = text?.documentSymbol?.hierarchicalDocumentSymbolSupport === true;
     let facets = options.facets ?? [];
     if (options.facets === undefined && pluginsEnabled(params.initializationOptions)) {
       const roots = rootsOf(params);
@@ -156,6 +197,9 @@ export function startServer(connection: Connection, options: ServerOptions = {})
         renameProvider: { prepareProvider: true },
         hoverProvider: true,
         foldingRangeProvider: true,
+        documentHighlightProvider: true,
+        selectionRangeProvider: true,
+        documentSymbolProvider: true,
         completionProvider: { triggerCharacters: [...COMPLETION_TRIGGERS] },
         semanticTokensProvider: {
           legend: {
@@ -232,6 +276,12 @@ export function startServer(connection: Connection, options: ServerOptions = {})
       range: toRange(o.index, hover.range),
     };
   });
+
+  serveStructure(
+    connection,
+    (uri) => open.get(uri),
+    () => nestedSymbols
+  );
 
   connection.onFoldingRanges(({ textDocument }) => {
     const o = open.get(textDocument.uri);
