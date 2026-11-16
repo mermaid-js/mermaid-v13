@@ -51,6 +51,7 @@ import {
   firstHole,
   GT,
   HASH,
+  type Hole,
   isBlank,
   isDigit,
   isHex,
@@ -77,14 +78,16 @@ import {
   SEMI,
   SLASH,
   SourceOffsets,
+  type SourceView,
   SPACE,
   STAR,
   TAB,
   TILDE,
+  type TokenStream,
   TokenWriter,
   UNDERSCORE,
 } from '@mermaid-js/core/parser-kit';
-import type { Hole, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import { dropAt } from '@mermaid-js/shared/parser/drop';
 import { ANY_CASE, KEYWORDS, T } from './tokens.ts';
 
 /** `kind` of a rule that matched and writes no token (`HWS`). */
@@ -705,19 +708,10 @@ class UsecaseLexer {
     let b = e > s ? this.input.end(e - 1) : a;
     if (this.holes.length > 0) {
       this.trivia(a);
-      if (b > a) b = this.dropAt(b);
+      if (b > a) b = dropAt(this.holes, this.hole, b);
     }
     this.w.push(kind, a, b);
     this.at.push(s);
     this.to.push(e);
-  }
-
-  /** The end of the `;` v12 dropped at `b`, which belongs to the token before it; else `b`. */
-  private dropAt(b: number): number {
-    const hs = this.holes;
-    let k = this.hole;
-    while (k < hs.length && (hs[k]?.start ?? b) < b) k++;
-    const h = hs[k];
-    return h && h.start === b && h.kind === 'drop' ? h.end : b;
   }
 }

@@ -7,6 +7,7 @@
 import type { RadarModel } from '../model.ts';
 import { RADAR_METRICS, RADAR_SLOTS } from './metrics.ts';
 import type { Point, RadarLayout, Rect } from './types.ts';
+import { nonFinite as finite } from '@mermaid-js/shared/layout/invariants';
 
 /** Float tolerance of the checks, relative to the chart's size. */
 const EPS = 1e-6;
@@ -147,13 +148,4 @@ function onRay(c: Point, p: Point, a: number, r: number, tol: number): boolean {
   return (
     Math.abs(p.x - (c.x + r * Math.cos(a))) <= tol && Math.abs(p.y - (c.y + r * Math.sin(a))) <= tol
   );
-}
-
-/** Every number in `v`, at any depth, is finite. */
-function finite(v: unknown, path: string, out: string[]): void {
-  if (typeof v === 'number') {
-    if (!Number.isFinite(v)) out.push(`${path} is ${v}`);
-  } else if (Array.isArray(v)) v.forEach((x, i) => finite(x, `${path}[${i}]`, out));
-  else if (v !== null && typeof v === 'object')
-    for (const [k, x] of Object.entries(v)) finite(x, `${path}.${k}`, out);
 }

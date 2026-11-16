@@ -6,11 +6,10 @@
 // one element that carries its `data-ast` (every section has a row, shown or not); the slice
 // and its percentage carry `data-id` only (pitfall 12).
 import type { RenderContext } from '@mermaid-js/core';
-import { scale, translate } from '@mermaid-js/core/svg';
-import type { SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { scale, translate, type SvgWriter } from '@mermaid-js/core/svg';
+import { centreX, centreY, openSvgRoot } from '@mermaid-js/shared/svg/document';
 import { slicePath } from '../layout/index.ts';
-import type { PieLayout, PlacedLabel } from '../layout/index.ts';
+import type { PieLayout } from '../layout/index.ts';
 import type { PieModel } from '../model.ts';
 import { paints, type Paints } from './paint.ts';
 
@@ -67,9 +66,6 @@ export function renderPie(
   w.close();
 }
 
-const centreX = (r: PlacedLabel): number => r.x + r.width / 2;
-const centreY = (r: PlacedLabel): number => r.y + r.height / 2;
-
 /** The outer circle, the slices and the percentages, in a group at the pie's centre. */
 function drawPie(layout: PieLayout, paint: Paints, w: SvgWriter): void {
   const { center } = layout;
@@ -114,6 +110,7 @@ function openRoot(model: PieModel, layout: PieLayout, ctx: PieRenderContext, w: 
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
+  const maxWidth = config.pie?.useMaxWidth !== false;
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.
@@ -121,11 +118,9 @@ function openRoot(model: PieModel, layout: PieLayout, ctx: PieRenderContext, w: 
   openSvgRoot(w, ctx, {
     name: 'pie',
     viewBox: [x, y, width, height],
-    maxWidth: config.pie?.useMaxWidth,
+    maxWidth,
     title,
     desc,
-    attrs: {
-      'font-family': font,
-    },
+    attrs: { 'font-family': font },
   });
 }

@@ -3,15 +3,8 @@
  * expectations, R-LANG-7), the human names of what it expects (R-ERR-2, R-ERR-5) and the
  * probe's mode. Built once at module scope; nothing here changes.
  */
-import {
-  APOSTROPHE,
-  DQUOTE,
-  ExpectedTable,
-  formatExpected,
-  Kind,
-  kindSet,
-} from '@mermaid-js/core/parser-kit';
-import type { TokenStream } from '@mermaid-js/core/parser-kit';
+import { ExpectedTable, formatExpected, Kind, kindSet } from '@mermaid-js/core/parser-kit';
+import { textProbeMode } from '@mermaid-js/shared/parser/rule';
 import { STRATEGIES, T, TEXT_STATEMENTS } from './tokens.ts';
 
 export const TEXT = [T.Title, T.AccTitle, T.AccDescr];
@@ -120,26 +113,11 @@ export const EXPECTED = new ExpectedTable([
 export const PIPELINE_CHILD = 'a component such as `component Kettle [0.5]`';
 
 /**
- * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the
- * mode names what the offset is in: `title`, `accTitle` or `accDescr` past the keyword of
- * that statement, `string` inside a quoted name or text (closed or not), else `INITIAL`.
+ * The probe's mode at an offset (R-LANG-7): `title`, `accTitle` or `accDescr` past the keyword
+ * of that statement, `string` inside a quoted name or text (closed or not), else `INITIAL`.
  */
-export function probeMode(src: string, tokens: TokenStream, o: number): string {
-  for (let j = 0; j < tokens.length; j++) {
-    const start = tokens.start[j] ?? 0;
-    const end = tokens.end[j] ?? 0;
-    if (start >= o) break;
-    if (end < o) continue;
-    const kind = tokens.kind[j] ?? Kind.EOF;
-    const c = src.charCodeAt(start);
-    if (kind === T.String && o < end) return 'string';
-    if (kind === Kind.Error && (c === DQUOTE || c === APOSTROPHE)) return 'string';
-    const word = TEXT_STATEMENTS[kind]?.word;
-    if (!word) continue;
-    const k = start + word.length;
-    // A block `accDescr { … }` ends at its `}`; the other values run to the line end.
-    const block = kind === T.AccDescr && /^\s*\{/.test(src.slice(k, end));
-    if (o > k && (o < end || !block)) return word;
-  }
-  return 'INITIAL';
-}
+export const probeMode = /* @__PURE__ */ textProbeMode({
+  texts: TEXT_STATEMENTS,
+  accDescr: T.AccDescr,
+  string: T.String,
+});

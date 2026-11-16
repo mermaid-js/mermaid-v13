@@ -30,10 +30,3 @@ languageBundle:
 release:
   summary: 'The usecase diagram plugin (SVG; `usecase-beta`).'
   install: 'with `mermaid/slim`'
-
-# credits: licence credits for pnpm check:licenses (tools/release/src/licenses.ts, R-REL-4). The
-# edge route drawing is Pele's `routePath` (a shared upstream: its MIT text is in this package's
-# THIRD_PARTY_NOTICES and in mermaid's), so the file must keep crediting it.
-credits:
-  files:
-    src/render/route.ts: ['Pele']

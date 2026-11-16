@@ -11,7 +11,6 @@ import type {
   Range,
   SymbolOccurrence,
 } from '@mermaid-js/core/parser-kit';
-import { code, span } from '@mermaid-js/core/parser-kit/facet';
 import { erDocs } from '../generated/docs.ts';
 import type { ErDocument, ErRelationshipNode, ErStatementNode } from '../parser/ast.ts';
 import type { ErModel } from '../parser/model.ts';
@@ -19,12 +18,15 @@ import { T } from '../parser/tokens.ts';
 import {
   CARDINALITY_KINDS,
   CARDINALITY_MEANING,
+  code,
   describeLine,
   DIRECTION_KINDS,
   DIRECTIONS,
   KEYS,
   plural,
+  span,
 } from './tables.ts';
+import { trimmed } from '@mermaid-js/shared/parser/facet';
 
 /** At most this many attributes are listed; the rest are counted. */
 const LISTED = 8;
@@ -85,14 +87,6 @@ function symbolHover(s: SymbolOccurrence, model: ErModel): string | undefined {
     default:
       return undefined;
   }
-}
-
-/** A range without its leading and trailing blanks. */
-function trimmed(text: string, r: Range): Range {
-  let { start, end } = r;
-  while (start < end && /\s/.test(text[start]!)) start++;
-  while (end > start && /\s/.test(text[end - 1]!)) end--;
-  return span(start, end);
 }
 
 /** The relationship whose cardinalities and line hold `at`. */

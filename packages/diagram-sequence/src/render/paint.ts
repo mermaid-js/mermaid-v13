@@ -5,6 +5,7 @@
 // shadow (`dropShadow`).
 import type { RenderContext } from '@mermaid-js/core';
 import { checkStyle, type Attrs, type Paint, type SafeValue } from '@mermaid-js/core/svg';
+import { paletteSlots } from '@mermaid-js/shared/svg/document';
 import type { FontKey } from '@mermaid-js/core/text';
 import { fontsOf } from '../layout/env.ts';
 import type { SequenceLayout } from '../layout/index.ts';
@@ -75,25 +76,6 @@ function fontAttrs(f: FontKey, family: string, size: number): Attrs {
         : (checkStyle(['font-family:' + f.family]).text['font-family'] as SafeValue | undefined),
     'font-size': f.size === size ? undefined : f.size,
     'font-weight': f.weight === NORMAL ? undefined : (String(f.weight) as SafeValue),
-  };
-}
-
-/**
- * Per-participant palette colour (v12 `COLOR_THEMES`): on only when the theme carries a
- * non-empty `borderColorArray`, never by theme name (D152). The slot is the participant's
- * declaration order modulo the palette length.
- */
-function paletteSlots(theme: Theme): (index: number) => Tint | undefined {
-  const border = theme.palette('borderColorArray');
-  const bkg = theme.palette('bkgColorArray');
-  return (index) => {
-    if (border.length === 0) return undefined;
-    const slot = index % border.length;
-    return {
-      id: `color-${slot}`,
-      stroke: border[slot]!,
-      fill: bkg.length > 0 ? bkg[index % bkg.length] : undefined,
-    };
   };
 }
 

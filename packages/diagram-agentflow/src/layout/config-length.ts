@@ -5,25 +5,12 @@
  * default too, with one `AGENTFLOW_CONFIG_INVALID` warning per key, however often it is read.
  */
 import { MAX_CONFIG_LENGTH } from './metrics.ts';
+import { type ConfigLengthWarning, numericValue } from '@mermaid-js/shared/config/readers';
+export type { ConfigLengthWarning } from '@mermaid-js/shared/config/readers';
+export { numericValue } from '@mermaid-js/shared/config/readers';
 
 /** A config length the layout can't honour (pitfall 22): it draws with the default instead. */
 export const AGENTFLOW_CONFIG_INVALID = 'AGENTFLOW_CONFIG_INVALID';
-
-/** A whole decimal number, spaces around it allowed: `"20"`, `" 20 "`, `"2.5"`; not `"20px"`. */
-const NUMERIC = /^\s*[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?\s*$/i;
-
-/**
- * A config value as the lengths read it: a whole numeric string as its number (`"20"` is 20),
- * anything else as it is (any other string stays a string, and so is not taken).
- */
-export const numericValue = (value: unknown): unknown =>
-  typeof value === 'string' && NUMERIC.test(value) ? Number(value) : value;
-
-export interface ConfigLengthWarning {
-  readonly code: string;
-  readonly message: string;
-  readonly path: string;
-}
 
 /** The lengths a config object may set, with their defaults (only numbers are length defaults). */
 export type LengthDefaults<K extends string> = Readonly<Partial<Record<K, unknown>>>;

@@ -3,13 +3,13 @@
  * completion offers, the style keys v12 reads with their docs, and token helpers. Keyword docs
  * are not here: they come from the grammar file (`generated/docs.ts`).
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
-import type { CompletionKind, TokenStream } from '@mermaid-js/core/parser-kit';
-import { tokenBefore } from '@mermaid-js/core/parser-kit/facet';
+import { type CompletionKind, Kind, type TokenStream } from '@mermaid-js/core/parser-kit';
 import type { VennDocument, VennSetNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-
-export { code, span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
+import { tokenBefore } from '@mermaid-js/shared/parser/facet';
+export { tokenBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 /** A keyword offered when the parser expects one of `kinds`. */
 export interface KeywordItem {
