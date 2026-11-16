@@ -57,8 +57,8 @@ import {
   significantTokens,
   skipTo,
   sourceView,
-  STOP,
 } from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type {
   ParseOptions,
   ParseResult,
@@ -388,8 +388,14 @@ class VennParser {
       this.badCharacters();
       throw STOP;
     }
-    const d = this.st.diagnostics.unexpected('UNEXPECTED', this.range(), [...names], this.found());
-    if (hint) d.message = `${d.message.slice(0, -1)}; ${hint}.`;
+    this.st.diagnostics.unexpected(
+      'UNEXPECTED',
+      this.range(),
+      [...names],
+      this.found(),
+      undefined,
+      hint
+    );
     throw STOP;
   }
 

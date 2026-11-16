@@ -11,9 +11,9 @@ import type { TreemapModel } from '../model.ts';
 import type { TreemapDocument, TreemapLeafNode, TreemapRowNode } from '../parser/ast.ts';
 import { isPlainNumber } from '../parser/convert.ts';
 import { T } from '../parser/tokens.ts';
-import { code, inside, span, statementAt } from './tables.ts';
-import { drawnValue, valuesOf } from './values.ts';
-import type { Values } from './values.ts';
+import { code, inside, statementAt } from './tables.ts';
+import { drawnValue, type Values, valuesOf } from './values.ts';
+import { keywordHover } from '@mermaid-js/shared/parser/facet';
 
 /** Tokens that hold the statement's text too: only their keyword is hovered. */
 const KEYWORD_WORDS: Readonly<Partial<Record<number, string>>> = {
@@ -75,15 +75,5 @@ export function treemapHover(
   }
   const t = at.token;
   if (!t) return undefined;
-  let range = t.range;
-  const word = KEYWORD_WORDS[t.kind];
-  if (word !== undefined) {
-    const start =
-      range.start + (/^[\t ]*/.exec(text.slice(range.start, range.end))?.[0].length ?? 0);
-    range = span(start, start + word.length);
-  }
-  if (!inside(at.offset, range)) return undefined;
-  const docText = treemapDocs[t.kind];
-  if (docText === undefined) return undefined;
-  return { range, contents: `**${code(text.slice(range.start, range.end))}**\n\n${docText}` };
+  return keywordHover(text, at.offset, t.range, KEYWORD_WORDS[t.kind], treemapDocs[t.kind]);
 }

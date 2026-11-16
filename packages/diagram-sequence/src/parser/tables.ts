@@ -3,11 +3,11 @@
  * of what it expects (R-ERR-2, R-ERR-5) and the statement hints. Built once at module load.
  */
 import { ExpectedTable, Kind, kindSet, TRIVIA } from '@mermaid-js/core/parser-kit';
+import { idEscaper, STOP } from '@mermaid-js/shared/parser/support';
 import type { FragmentKind } from '../model.ts';
 import { ARROW_TOKENS } from './arrows.ts';
 import type { SequenceMenuStmt } from './ast.ts';
 import { T } from './tokens.ts';
-import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 /** jison's `NEWLINE`: a line break, `;`, the alias state's empty match, the end of the text. */
 export const LINE_END = [Kind.Newline, T.Semi, T.AliasEnd, T.Eof];
@@ -163,6 +163,8 @@ export const HINTS: Readonly<Record<number, string>> = {
   [T.Properties]: 'write it as `properties <id>: {"key": "value"}`',
   [T.Details]: 'write it as `details <id>: <element id>`',
 };
+
+export { STOP };
 
 /** `%`, `>`, `@` and `#` in names are percent-encoded in AST ids (as core's `AstIds`). */
 export const esc = /* @__PURE__ */ idEscaper();

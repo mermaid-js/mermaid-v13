@@ -8,14 +8,14 @@
  * a value is written (after a kind keyword, after a field's `:`). Inside quotes and in the
  * `acc…` values nothing is offered.
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
-import type {
-  CompletionItem,
-  CompletionKind,
-  DocumentView,
-  ProbeResult,
-  Range,
-  TokenStream,
+import {
+  type CompletionItem,
+  type CompletionKind,
+  type DocumentView,
+  Kind,
+  type ProbeResult,
+  type Range,
+  type TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { requirementCategories } from '../generated/categories.ts';
 import { requirementDocs } from '../generated/docs.ts';
@@ -24,9 +24,17 @@ import type { RequirementDocument } from '../parser/ast.ts';
 import { NAME, REQ_KINDS } from '../parser/syntax.ts';
 import { T } from '../parser/tokens.ts';
 import { nameAsWritten } from './names.ts';
-import type { KeywordItem } from './tables.ts';
-import { FIELDS, OPERATORS, RELATIONSHIPS, STATEMENT_KEYWORDS, VALUES } from './tables.ts';
-import { span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
+import {
+  FIELDS,
+  type KeywordItem,
+  OPERATORS,
+  RELATIONSHIPS,
+  span,
+  STATEMENT_KEYWORDS,
+  tokenBefore,
+  VALUES,
+} from './tables.ts';
+import { CompletionList as Items } from '@mermaid-js/shared/parser/facet';
 
 /** Modes whose text is a value, not code: nothing is offered there. */
 const VALUE_MODES = new Set([
@@ -53,35 +61,6 @@ const STATEMENT_END = new Set<number>([
 const isWord = (kind: number) =>
   ['Variable', 'Keyword', 'Number', 'Constant', 'Type'].includes(requirementCategories[kind] ?? '');
 
-/** Items filtered by the typed prefix (case-insensitive, as the keywords), one per label. */
-class Items {
-  readonly list: CompletionItem[] = [];
-  private readonly seen = new Set<string>();
-
-  constructor(
-    readonly prefix: string,
-    private readonly range: Range
-  ) {}
-
-  add(label: string, kind: CompletionKind, extra: Partial<CompletionItem> = {}): void {
-    if (!label.toLowerCase().startsWith(this.prefix.toLowerCase()) || this.seen.has(label)) return;
-    this.seen.add(label);
-    this.list.push({ label, kind, insertText: label, range: this.range, ...extra });
-  }
-
-  keywords(table: readonly KeywordItem[], expected: ReadonlySet<number>, kind: CompletionKind) {
-    for (const k of table) {
-      if (!expected.has(k.kind)) continue;
-      const documentation = requirementDocs[k.kind];
-      this.add(k.label, kind, {
-        insertText: k.insert ?? k.label,
-        ...(k.detail === undefined ? {} : { detail: k.detail }),
-        ...(documentation === undefined ? {} : { documentation }),
-      });
-    }
-  }
-}
-
 /** The statement the cursor is in, up to the word being typed. */
 interface Statement {
   /** Kind of its first significant token, or -1 at a statement start. */
@@ -92,8 +71,15 @@ interface Statement {
   groups: number;
 }
 
+/** A significant token of the statement. */
+interface FoundToken {
+  kind: number;
+  start: number;
+  end: number;
+}
+
 function statementBefore(text: string, tokens: TokenStream, at: number): Statement {
-  const found: { kind: number; start: number; end: number }[] = [];
+  const found: FoundToken[] = [];
   for (let i = tokenBefore(tokens, at - 1); i >= 0; i--) {
     const k = tokens.kind[i]!;
     const end = tokens.end[i] ?? 0;
@@ -103,14 +89,24 @@ function statementBefore(text: string, tokens: TokenStream, at: number): Stateme
     found.push({ kind: k, start: tokens.start[i] ?? 0, end });
   }
   found.reverse();
-  // Blanks are no token, so groups are told apart by the text between tokens; a quoted name
-  // (`"`, text, `"`) is one group.
+  return {
+    head: found[0]?.kind ?? -1,
+    prev: found[found.length - 1]?.kind ?? -1,
+    groups: groupsAfterHead(text, found),
+  };
+}
+
+/**
+ * Blanks are no token, so groups are told apart by the text between tokens; a quoted name
+ * (`"`, text, `"`) is one group.
+ */
+function groupsAfterHead(text: string, found: readonly FoundToken[]): number {
   let groups = 0;
   for (let i = 1; i < found.length; i++) {
     if (/\s/.test(text.slice(found[i - 1]!.end, found[i]!.start)) && found[i]!.kind !== T.QString)
       groups++;
   }
-  return { head: found[0]?.kind ?? -1, prev: found[found.length - 1]?.kind ?? -1, groups };
+  return groups;
 }
 
 /** Tokens that take the `:` or `{` and the blanks after their keyword. */
@@ -174,6 +170,14 @@ function classes(items: Items, model: RequirementModel): void {
   }
 }
 
+/** The word tables offered by expected kind anywhere, in the order they are offered. */
+const WORD_GROUPS: readonly (readonly [readonly KeywordItem[], CompletionKind])[] = [
+  [STATEMENT_KEYWORDS, 'keyword'],
+  [FIELDS, 'property'],
+  [VALUES, 'constant'],
+  [RELATIONSHIPS, 'keyword'],
+];
+
 export function requirementCompletions(
   probe: ProbeResult,
   doc: DocumentView<RequirementDocument>
@@ -185,18 +189,30 @@ export function requirementCompletions(
   if (VALUE_KINDS.some((k) => expected.has(k))) return [];
   const range = wordRange(text, tokens, probe);
   if (!range) return [];
-  const items = new Items(text.slice(range.start, probe.offset), range);
-  const model = result.model as RequirementModel;
-  items.keywords(STATEMENT_KEYWORDS, expected, 'keyword');
-  items.keywords(FIELDS, expected, 'property');
-  items.keywords(VALUES, expected, 'constant');
-  items.keywords(RELATIONSHIPS, expected, 'keyword');
+  const items = new Items(text.slice(range.start, probe.offset), range, true);
+  for (const [rows, kind] of WORD_GROUPS) expectedWords(items, expected, rows, kind);
   const st = statementBefore(text, tokens, range.start);
   if (NAME.some((k) => expected.has(k)) || expected.has(T.Alpha)) {
-    const context = nameContext(st);
-    if (context === 'boxes') boxes(items, model);
-    else if (context === 'classes') classes(items, model);
+    names(items, nameContext(st), result.model as RequirementModel);
   }
-  if (st.head !== -1) items.keywords(OPERATORS, expected, 'operator');
+  if (st.head !== -1) expectedWords(items, expected, OPERATORS, 'operator');
   return items.list;
+}
+
+/** The words of `rows` whose kind the parser tests at the cursor, as items of `kind`. */
+function expectedWords(
+  items: Items,
+  expected: ReadonlySet<number>,
+  rows: readonly KeywordItem[],
+  kind: CompletionKind
+): void {
+  for (const k of rows) {
+    if (expected.has(k.kind)) items.keyword(k, requirementDocs[k.kind], kind);
+  }
+}
+
+/** The names an expected name may be, by its context. */
+function names(items: Items, context: NameContext, model: RequirementModel): void {
+  if (context === 'boxes') boxes(items, model);
+  else if (context === 'classes') classes(items, model);
 }

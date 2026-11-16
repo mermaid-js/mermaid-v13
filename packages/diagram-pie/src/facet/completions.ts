@@ -5,30 +5,11 @@
  * `:` after a label. Inside a label or a statement's text (probe modes `string`, `title`,
  * `accTitle`, `accDescr`) and outside code nothing is offered; after `:` a value is typed.
  */
-import type {
-  CompletionItem,
-  DocumentView,
-  ProbeResult,
-  Range,
-  TokenStream,
-} from '@mermaid-js/core/parser-kit';
+import type { CompletionItem, DocumentView, ProbeResult } from '@mermaid-js/core/parser-kit';
 import { pieDocs } from '../generated/docs.ts';
 import type { PieDocument } from '../parser/ast.ts';
 import { HEADER_LINE, ITEMS } from './tables.ts';
-import { span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
-
-/** The probed word's range: the prefix, plus the rest of the word after the cursor. */
-function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeResult): Range {
-  const o = probe.offset;
-  let end = o;
-  const i = tokens ? tokenBefore(tokens, o) : -1;
-  if (tokens && i >= 0 && (tokens.start[i] ?? 0) < o && o < (tokens.end[i] ?? 0))
-    end = tokens.end[i] ?? o;
-  // A word stops at the first blank, line break, quote or `:` after the cursor.
-  const stop = /[\s"':]/.exec(text.slice(o, end));
-  if (stop) end = o + stop.index;
-  return span(probe.prefix.start, end);
-}
+import { keywordCompletions, wordRange } from '@mermaid-js/shared/parser/facet';
 
 /** Whether `at` is on the `pie` line, after `pie` (and `showData`). */
 function onHeaderLine(text: string, at: number): boolean {
@@ -44,22 +25,15 @@ export function pieCompletions(
   if (probe.mode !== 'INITIAL') return [];
   const { text, result } = doc;
   const expected = new Set(probe.expected);
-  const range = wordRange(text, result.tokens, probe);
+  const range = wordRange(text, result.tokens, probe, /[\s"':]/);
   const prefix = text.slice(range.start, probe.offset);
   const header = onHeaderLine(text, range.start);
-  const out: CompletionItem[] = [];
-  for (const k of ITEMS) {
-    if (!expected.has(k.kind) || (header && !HEADER_LINE.has(k.kind))) continue;
-    if (!k.label.startsWith(prefix)) continue;
-    const documentation = pieDocs[k.kind];
-    out.push({
-      label: k.label,
-      kind: k.item,
-      insertText: k.insert ?? k.label,
-      range,
-      ...(k.detail === undefined ? {} : { detail: k.detail }),
-      ...(documentation === undefined ? {} : { documentation }),
-    });
-  }
-  return out;
+  return keywordCompletions(
+    ITEMS,
+    expected,
+    prefix,
+    range,
+    pieDocs,
+    (k) => !header || HEADER_LINE.has(k.kind)
+  );
 }

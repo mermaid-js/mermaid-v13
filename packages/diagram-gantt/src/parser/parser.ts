@@ -31,8 +31,8 @@ import {
   significantTokens,
   skipTo,
   sourceView,
-  STOP,
 } from '@mermaid-js/core/parser-kit';
+import { idEscaper, STOP } from '@mermaid-js/shared/parser/support';
 import type {
   AstId,
   Range,
@@ -64,7 +64,6 @@ import { checkNodes } from './limits.ts';
 import type { GanttParseOptions, GanttParseResult } from './options.ts';
 import { TaskIds } from './task-ids.ts';
 import { T } from './tokens.ts';
-import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 export type { GanttParseOptions, GanttParseResult } from './options.ts';
 
@@ -412,8 +411,7 @@ class GanttParser {
 
   /** Report what was found where `names` were expected, then stop the statement. */
   private fail(names: string[], hint?: string, at: Range = this.range()): never {
-    const d = this.st.diagnostics.unexpected('UNEXPECTED', at, names, this.found());
-    if (hint) d.message = `${d.message.slice(0, -1)}; ${hint}.`;
+    this.st.diagnostics.unexpected('UNEXPECTED', at, names, this.found(), undefined, hint);
     // At the end of the text: the error the end would give is this one.
     if (this.kind() === Kind.EOF || at.start >= this.src.length) this.endReported = true;
     throw STOP;
@@ -940,8 +938,15 @@ class GanttParser {
     this.endReported = true;
     const word = k === T.AccTitle ? 'accTitle' : 'accDescr';
     const at = this.lineEndIn(keyword);
-    const d = this.st.diagnostics.unexpected('UNEXPECTED', at, ['text'], 'the end of the text');
-    d.message = `${d.message.slice(0, -1)}; write it as \`${word}: <text>\`.`;
+    const hint = `write it as \`${word}: <text>\``;
+    this.st.diagnostics.unexpected(
+      'UNEXPECTED',
+      at,
+      ['text'],
+      'the end of the text',
+      undefined,
+      hint
+    );
   }
 }
 

@@ -1,7 +1,4 @@
-/** The line helper the C4 facet's completion reads. */
-/** The text of the line before `at`. */
-export function lineBefore(text: string, at: number): string {
-  let from = at;
-  while (from > 0 && !/[\n\r]/.test(text.charAt(from - 1))) from--;
-  return text.slice(from, at);
-}
+/** Markdown and range helpers the C4 facet's completion and hover share. */
+export { lineBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';

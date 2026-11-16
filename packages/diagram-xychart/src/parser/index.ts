@@ -5,9 +5,9 @@
 import { Kind } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
+import { tokenValue } from '@mermaid-js/shared/parser/v12-text';
 import { lex } from './lexer.ts';
 import type { XyChartLex } from './lexer.ts';
-import { tokenValue } from './value.ts';
 import { v12Text } from './v12-text.ts';
 
 export {
@@ -19,10 +19,10 @@ export {
 export type { XyChartParseOptions, XyChartParseResult } from './parser.ts';
 export { detectXyChart } from './detect.ts';
 export type * from './ast.ts';
-export { tokenValue } from './value.ts';
+export { tokenValue } from '@mermaid-js/shared/parser/v12-text';
 export { JISON_NAMES, T as XyChartTokenKind } from './tokens.ts';
 export type { XyChartLex } from './lexer.ts';
-export type { V12Text } from './v12-text.ts';
+export type { V12Text } from '@mermaid-js/shared/parser/v12-text';
 
 export interface XyChartToken {
   /** An `XyChartTokenKind` or a shared `Kind`. */

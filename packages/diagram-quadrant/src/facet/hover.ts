@@ -8,8 +8,7 @@ import type { QuadrantModel } from '../model.ts';
 import { quadrantDocs } from '../generated/docs.ts';
 import type { QuadrantClassDefNode, QuadrantDocument, QuadrantPointNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { plural, QUADRANT_PLACES, trimmed } from './tables.ts';
-import { code } from '@mermaid-js/core/parser-kit/facet';
+import { code, plural, QUADRANT_PLACES, trimmed } from './tables.ts';
 
 /** Glue tokens that hover as the keyword they belong to. */
 const DOC_KIND: Readonly<Record<number, number>> = {

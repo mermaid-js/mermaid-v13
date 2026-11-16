@@ -1,7 +1,8 @@
 /**
  * Local eslint plugin holding the v13 architecture in place (DESIGN §2, R-ARCH-1/5, R-PARSE-7).
  *
- * - `mermaid/import-boundaries`: diagram-* → core, mermaid → core + diagram-*, core → nothing;
+ * - `mermaid/import-boundaries`: diagram-* → core + shared, shared → core, mermaid → core +
+ *   diagram-*, core → nothing (so nothing in `shared` is loaded before a diagram needs it);
  *   mermaid's Node-only files (the bin `src/cli.ts`, D85; the Node entry `src/node.ts` and its
  *   scan `src/node-scan.ts`, D165) may also import `node:` builtins;
  *   `core/ascii` imports no SVG code and only ASCII code imports it (DESIGN §6.3);
@@ -19,6 +20,7 @@ import type { ESLint, Rule, Scope } from 'eslint';
 import type { CallExpression, Expression, NewExpression, Node as EsNode } from 'estree';
 
 const CORE = '@mermaid-js/core';
+const SHARED = '@mermaid-js/shared';
 
 /** Which workspace package a file belongs to, from its path. */
 function packageOf(filename: string): { name: string; dir: string } | undefined {
@@ -32,6 +34,8 @@ function packageOf(filename: string): { name: string; dir: string } | undefined 
 }
 
 const isCore = (s: string) => s === CORE || s.startsWith(`${CORE}/`);
+/** A `shared` subpath. The bare name is not an entry: one barrel would be one chunk. */
+const isShared = (s: string) => s.startsWith(`${SHARED}/`);
 const isDiagram = (s: string) => s.startsWith('@mermaid-js/diagram-');
 const isCoreAscii = (s: string) => s === `${CORE}/ascii` || s.startsWith(`${CORE}/ascii/`);
 /** ASCII code: a path inside the package with an `ascii` directory or an `ascii.*` file. */
@@ -99,21 +103,40 @@ function bareImportViolation(
   if (pkg === 'core') {
     return 'core imports nothing outside itself';
   }
+  if (pkg === 'shared') {
+    return isCore(specifier) ? undefined : `shared imports only ${CORE}`;
+  }
   if (pkg.startsWith('diagram-')) {
-    if (isCore(specifier)) {
-      return undefined;
-    }
-    if (isDiagram(specifier)) {
-      return 'a diagram package never imports another diagram package';
-    }
-    return `diagram packages import only ${CORE}`;
+    return diagramImportViolation(specifier);
   }
   if (pkg === 'mermaid') {
-    return isCore(specifier) || isDiagram(specifier)
-      ? undefined
-      : `mermaid imports only ${CORE} and @mermaid-js/diagram-*`;
+    return mermaidImportViolation(specifier);
   }
   return undefined;
+}
+
+/** Why a diagram package may not import `specifier`, or undefined when it may. */
+function diagramImportViolation(specifier: string): string | undefined {
+  if (isCore(specifier) || isShared(specifier)) {
+    return undefined;
+  }
+  if (isDiagram(specifier)) {
+    return 'a diagram package never imports another diagram package';
+  }
+  if (specifier === SHARED) {
+    return `${SHARED} has no root entry; import a subpath`;
+  }
+  return `diagram packages import only ${CORE} and ${SHARED} subpaths`;
+}
+
+/** Why `mermaid` may not import `specifier`, or undefined when it may. */
+function mermaidImportViolation(specifier: string): string | undefined {
+  if (specifier === SHARED || isShared(specifier)) {
+    return `mermaid never imports ${SHARED}: it loads with the diagrams that use it`;
+  }
+  return isCore(specifier) || isDiagram(specifier)
+    ? undefined
+    : `mermaid imports only ${CORE} and @mermaid-js/diagram-*`;
 }
 
 const importBoundaries: Rule.RuleModule = {
@@ -157,8 +180,12 @@ const importBoundaries: Rule.RuleModule = {
         ) {
           reason = 'code reachable from ./language never imports rendering code (R-LANG-8)';
         }
-      } else if (isCoreAscii(specifier) && !inTest && !isAsciiCode(pkg.dir, filename)) {
-        reason = `only ASCII code imports ${CORE}/ascii (DESIGN §6.3)`;
+      } else if (
+        (isCoreAscii(specifier) || specifier === `${SHARED}/ascii`) &&
+        !inTest &&
+        !isAsciiCode(pkg.dir, filename)
+      ) {
+        reason = `only ASCII code imports ${specifier} (DESIGN §6.3)`;
       } else {
         reason = bareImportViolation(
           pkg.name,

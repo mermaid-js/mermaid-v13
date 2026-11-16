@@ -2,9 +2,7 @@
  * The event modeling facet's completion table and shared helpers (DESIGN §4.5, D95). Keyword
  * docs are not here: they come from the grammar file (`generated/docs.ts`).
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
-import type { CompletionKind, Range, TokenStream } from '@mermaid-js/core/parser-kit';
-import { tokenBefore } from '@mermaid-js/core/parser-kit/facet';
+import { type CompletionKind, Kind, type TokenStream } from '@mermaid-js/core/parser-kit';
 import type { EventModelDocument, EventModelFrameNode } from '../parser/ast.ts';
 import {
   DATA_TYPES,
@@ -15,6 +13,11 @@ import {
   T,
 } from '../parser/tokens.ts';
 import { defaultLaneLabel } from '../structure.ts';
+import { tokenBefore } from '@mermaid-js/shared/parser/facet';
+export { inside } from '@mermaid-js/shared/parser/facet';
+export { tokenBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 /** An item offered when the parser expects `kind`. */
 export interface KeywordItem {
@@ -100,9 +103,6 @@ export function kindsBefore(tokens: TokenStream | undefined, at: number, n: numb
   }
   return out;
 }
-
-/** Whether `offset` is in `r`, its ends included. */
-export const inside = (offset: number, r: Range): boolean => r.start <= offset && offset <= r.end;
 
 /** `a`, `a and b`, `a, b and c`. */
 export function list(items: readonly string[]): string {

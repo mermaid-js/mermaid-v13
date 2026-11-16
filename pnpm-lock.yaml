@@ -473,120 +473,180 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-architecture:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-block:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-c4:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-class:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-cynefin:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-er:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-eventmodeling:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-flowchart:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-gantt:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-gitgraph:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-info:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-ishikawa:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-journey:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-kanban:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-mindmap:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-packet:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-pie:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-quadrant:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-radar:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-railroad:
     devDependencies:
@@ -599,66 +659,99 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-sankey:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-sequence:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-state:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-timeline:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-treemap:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-treeview:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-usecase:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-venn:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-wardley:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-xychart:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/language-server:
     dependencies:
@@ -1141,6 +1234,9 @@ importers:
       '@mermaid-js/diagram-xychart':
         specifier: workspace:*
         version: link:../diagram-xychart
+      '@mermaid-js/shared':
+        specifier: workspace:*
+        version: link:../shared
     devDependencies:
       esbuild:
         specifier: ^0.25.12
@@ -1215,6 +1311,12 @@ importers:
       tsx:
         specifier: ^4.20.6
         version: 4.20.6
+
+  packages/shared:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
 
   tools/gen-config:
     devDependencies:

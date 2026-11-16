@@ -19,7 +19,7 @@
  * config margins round it (D224). Only elements are sketched by a hand-drawn drawer (D301).
  */
 import type { SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import { c4Section } from '../config.ts';
 import { C4_METRICS as M } from '../layout/metrics.ts';
 import type { C4BoundaryLayout, C4ElementLayout, C4Layout } from '../layout/types.ts';
@@ -83,14 +83,19 @@ export function drawScene(
 
 /** The `<svg>` root with its accessible title and description (R-A11Y-1, D453). */
 function openRoot({ w, ctx, view, layout }: Scene): void {
+  const { theme, config } = ctx;
+  const width = Math.max(1, Math.ceil(layout.width));
+  const height = Math.max(1, Math.ceil(layout.height));
+  const maxWidth = c4Section(config).useMaxWidth !== false;
+  // Read before the root style is written, so it declares its alias.
+  const font = theme.font();
   openSvgRoot(w, ctx, {
     name: view.name,
-    viewBox: [0, 0, Math.max(1, Math.ceil(layout.width)), Math.max(1, Math.ceil(layout.height))],
-    maxWidth: c4Section(ctx.config).useMaxWidth,
+    viewBox: [0, 0, width, height],
+    maxWidth,
     title: view.accTitle,
     desc: view.accDescr,
-    // Read before the root style is written, so it declares its alias.
-    attrs: { 'font-family': ctx.theme.font() },
+    attrs: { 'font-family': font },
   });
 }
 

@@ -6,7 +6,9 @@
 // profile's sizing (`sizing.ts`: in px the metrics table, the config or core's px profile,
 // pitfall 13: `usecase-layout-literals.spec.ts`; in cells, text output's D478 forms, T7).
 import type { LayoutEdge, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
-import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
+import { labelledEdge } from '@mermaid-js/shared/layout';
+import type { CheckedStyle } from '@mermaid-js/core/svg';
+import { styleCache } from '@mermaid-js/shared/svg/document';
 import {
   fontSizePx,
   layoutLabel,
@@ -317,7 +319,9 @@ function measureFor(model: UsecaseModel, ctx: UsecaseLayoutContext): Measure {
         // v12's HTML labels kept a long word whole (#649); in cells it is split to fit its box.
         keepWords: ctx.units?.id !== 'cell',
       }),
-    styleOf: styleCache(model, ctx),
+    styleOf: styleCache(new Map(model.classDefs.map((c) => [c.id, c.styles])), (w) => ctx.warn(w), [
+      'default',
+    ]),
   };
 }
 
@@ -404,24 +408,6 @@ export function prepareUsecase(model: UsecaseModel, ctx: UsecaseLayoutContext): 
   const plain = parts.measure.styleOf([]);
   const title = text ? parts.measure.label(text, base, Infinity, plain) : undefined;
   return { graph, nodes, layoutIds, boundaries, edges, config, ...(title ? { title } : {}) };
-}
-
-/** The checked style of class names plus own declarations, one per distinct list. */
-function styleCache(model: UsecaseModel, ctx: UsecaseLayoutContext): Measure['styleOf'] {
-  const classDefs = new Map<string, readonly string[]>();
-  for (const c of model.classDefs) classDefs.set(c.id, c.styles);
-  const styles = new Map<string, CheckedStyle>();
-  return (classes, own = []) => {
-    const decls: string[] = [];
-    for (const name of ['default', ...classes]) {
-      for (const s of classDefs.get(name) ?? []) decls.push(s.trim());
-    }
-    for (const s of own) decls.push(s.trim());
-    const key = decls.join(';');
-    let style = styles.get(key);
-    if (!style) styles.set(key, (style = checkStyle(decls, (w) => ctx.warn(w))));
-    return style;
-  };
 }
 
 function withParent<T extends object>(view: T, parent: string | undefined): T {
@@ -675,20 +661,12 @@ function layoutGraph(views: Views, config: UsecaseLayoutConfig, sizing: Sizing):
       else if (titled) group.title = { width: g.label.width, height: g.label.height };
       return group;
     }),
-    edges: views.edges.map((e): LayoutEdge => {
-      const edge: LayoutEdge = {
-        id: e.id,
-        source: e.source,
-        target: e.target,
-        minLen: e.kind === 'relation' ? e.relationship.minlen : 1,
-      };
-      if (e.kind === 'relation' && e.label && e.label.width > 0)
-        edge.label = {
-          width: e.label.width + builder.labelPatch.x,
-          height: e.label.height + builder.labelPatch.y,
-        };
-      return edge;
-    }),
+    edges: views.edges.map(
+      (e): LayoutEdge =>
+        e.kind === 'relation'
+          ? labelledEdge(builder, e.id, e.source, e.target, e.label, e.relationship.minlen)
+          : labelledEdge(builder, e.id, e.source, e.target, undefined)
+    ),
     spacing: { node: config.nodeSpacing, rank: config.rankSpacing, edge: builder.spacing.edge },
     diagramPadding: config.diagramPadding,
     headRoom: builder.headRoom,

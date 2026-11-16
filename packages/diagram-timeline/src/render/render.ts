@@ -7,7 +7,7 @@
 // (`timeline-node`, `section-<n>`, `taskWrapper`, `eventWrapper`, `lineWrapper`).
 import type { RenderContext } from '@mermaid-js/core';
 import type { SafeValue, SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import { fontSizePx } from '@mermaid-js/core/text';
 import { TIMELINE_METRICS } from '../layout/metrics.ts';
 import type {
@@ -61,16 +61,22 @@ function openRoot({ w, layout, ctx, model }: Scene): void {
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
+  const maxWidth = config.timeline?.useMaxWidth !== false;
+  const title = model.accTitle.trim();
+  const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
   const font = theme.font();
   const fontSize = theme.length('fontSize');
   openSvgRoot(w, ctx, {
     name: 'timeline',
     viewBox: [x, y, width, height],
-    maxWidth: config.timeline?.useMaxWidth,
-    title: model.accTitle.trim(),
-    desc: model.accDescr.trim(),
-    attrs: { 'font-family': font, 'font-size': fontSize },
+    maxWidth,
+    title,
+    desc,
+    attrs: {
+      'font-family': font,
+      'font-size': fontSize,
+    },
   });
 }
 
