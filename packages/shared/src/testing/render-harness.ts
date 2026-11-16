@@ -161,7 +161,8 @@ export function createRenderHarness<M, L, A>(
       pre && { config, preprocessed: pre, limits },
       options.allowErrors ?? spec.allowErrors ?? false
     );
-    if (ast !== undefined && spec.modelWarnings) warnings.push(...spec.modelWarnings(model));
+    if (ast !== undefined && spec.modelWarnings)
+      warnings.push(...spec.modelWarnings(model).map(keep));
     const idPrefix = options.idPrefix ?? TEST_ID_PREFIX;
     const theme = await testTheme(config, {
       diagram: plugin.theme,

@@ -1,8 +1,11 @@
 /**
  * Test harness (`@mermaid-js/diagram-railroad/testing`): the shared render harness
  * (`@mermaid-js/shared/testing/render-harness`) over the railroad plugin and its theme table,
- * with the parse's own warnings (`RAILROAD_DUPLICATE_RULE`) ahead of the render's.
- * `createMermaid()` renders railroad through the registry since #615.
+ * with the parse's own warnings (`RAILROAD_DUPLICATE_RULE`) ahead of the render's. With
+ * `tree: true` the drawing is made once, with the tree writer, and `svg` is that writer's output
+ * (before #817 a stream draw made `svg` and a second draw made the tree; core's
+ * `svg/backings.spec.ts` holds the two writers to the same bytes). `createMermaid()` renders
+ * railroad through the registry since #615.
  */
 import {
   createRenderHarness,
