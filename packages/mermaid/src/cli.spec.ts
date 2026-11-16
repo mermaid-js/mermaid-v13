@@ -490,7 +490,7 @@ describe('mermaid render --autoload (D589)', () => {
   );
 
   it(
-    'writes the skipped package with --warnings even when the render then fails (exit 2)',
+    'writes the skipped package with --warnings even when the render then fails (exit 1)',
     async () => {
       const dir = project(
         {
