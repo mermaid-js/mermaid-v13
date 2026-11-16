@@ -1284,6 +1284,13 @@ export const configSchema: ConfigSchema = {
         "since": "13.0.0"
       }
     },
+    "c4beta": {
+      "$ref": "#/$defs/C4BetaDiagramConfig",
+      "x-mermaid": {
+        "status": "honoured",
+        "since": "13.0.0"
+      }
+    },
     "sankey": {
       "$ref": "#/$defs/SankeyDiagramConfig",
       "x-mermaid": {
@@ -6421,6 +6428,62 @@ export const configSchema: ConfigSchema = {
         "justify": "Like `left`, except that nodes without any outgoing links are moved to the far right."
       },
       "default": "justify"
+    },
+    "C4BetaDiagramConfig": {
+      "title": "C4 Beta Diagram Config",
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseDiagramConfig"
+        }
+      ],
+      "description": "The object containing configurations specific for c4-beta diagrams (spec #730). The type\nreads this section over the `c4` section (D534): a key both have (`theme`, `useMaxWidth`)\ntakes the `c4` value unless this section sets it. `diagramPadding` is c4-beta's own. Shape\nmetrics and fonts are still read from `c4`.\n",
+      "type": "object",
+      "unevaluatedProperties": false,
+      "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the C4 renderer never did."
+          }
+        },
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for c4-beta diagrams (a diagram section beats the top level within a config layer)."
+          }
+        },
+        "layout": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "c4-beta lays out with core's `layered` engine, called directly (`layoutKind: 'custom'`); neither the top-level nor a c4-beta-scoped `layout` changes it."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As `c4.useMaxWidth`: true draws `width=\"100%\"` and a `max-width`; false draws the diagram at its own `width` and `height`. A `c4.useMaxWidth` applies to c4-beta when this key is not set."
+          }
+        },
+        "diagramPadding": {
+          "description": "The margin round the drawing, on all four sides, in pixels. It is the room between\nthe canvas edge and the nearest element, boundary, relation or title.\n",
+          "type": "number",
+          "minimum": 0,
+          "default": 10,
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The canvas grows by twice the change on each axis. A value that is not a finite number of at least 0 draws the default 10."
+          }
+        }
+      }
     },
     "SankeyDiagramConfig": {
       "title": "Sankey Diagram Config",

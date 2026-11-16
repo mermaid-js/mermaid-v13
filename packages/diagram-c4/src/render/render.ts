@@ -40,6 +40,7 @@ export function renderC4(
 ): void {
   const view: SceneView = {
     name: 'c4',
+    maxWidth: c4Section(ctx.config).useMaxWidth,
     accTitle: model.accTitle.trim(),
     accDescr: model.accDescr.trim(),
     relationTitle: (index) => model.relations[index]!.descr?.trim(),
@@ -83,10 +84,10 @@ export function drawScene(
 
 /** The `<svg>` root with its accessible title and description (R-A11Y-1, D453). */
 function openRoot({ w, ctx, view, layout }: Scene): void {
-  const { theme, config } = ctx;
+  const { theme } = ctx;
   const width = Math.max(1, Math.ceil(layout.width));
   const height = Math.max(1, Math.ceil(layout.height));
-  const maxWidth = c4Section(config).useMaxWidth !== false;
+  const maxWidth = view.maxWidth !== false;
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
   openSvgRoot(w, ctx, {

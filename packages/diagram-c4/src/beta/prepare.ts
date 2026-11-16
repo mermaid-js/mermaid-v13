@@ -7,7 +7,13 @@
  */
 import type { LayoutEdge, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
 import { Style, type FontKey } from '@mermaid-js/core/text';
-import { c4Fonts, c4LayoutConfig, type C4Fonts, type C4LayoutConfig } from '../config.ts';
+import {
+  c4betaDiagramPadding,
+  c4Fonts,
+  c4LayoutConfig,
+  type C4Fonts,
+  type C4LayoutConfig,
+} from '../config.ts';
 import { C4_METRICS as M, FONT_WEIGHT } from '../layout/metrics.ts';
 import { shapeSize, type ShapeRoom } from '../layout/shapes.ts';
 import {
@@ -25,11 +31,6 @@ import { C4_BETA_METRICS as B } from './metrics.ts';
 
 /** The context the layout reads: C4's, and the width the page offers, if it offers one. */
 export type C4BetaLayoutContext = C4LayoutContext & { readonly availableWidth?: number };
-
-/** What the layout takes besides the context: the `c4beta` section's keys (T1), once they exist. */
-export interface C4BetaLayoutOptions {
-  readonly diagramPadding?: number;
-}
 
 /** A leaf element measured: its three text sections and its shape's size around them. */
 export interface BetaLeaf {
@@ -203,11 +204,7 @@ export function labelBlock(edge: Pick<BetaEdge, 'label' | 'techn'>): LayoutEdge[
 const ignoreWarning = (): void => undefined;
 
 /** Measures `model` and builds the engine's input. Pure: the model is not changed. */
-export function prepareC4Beta(
-  model: C4BetaModel,
-  ctx: C4BetaLayoutContext,
-  options: C4BetaLayoutOptions = {}
-): C4BetaPrepared {
+export function prepareC4Beta(model: C4BetaModel, ctx: C4BetaLayoutContext): C4BetaPrepared {
   const config = c4LayoutConfig(ctx.config);
   const family = ctx.theme.value('fontFamily');
   const fonts = c4Fonts(ctx.config, family, ctx.warn ?? ignoreWarning);
@@ -248,7 +245,7 @@ export function prepareC4Beta(
       ? [measureEdge(relation, index, measuring)]
       : []
   );
-  const diagramPadding = options.diagramPadding ?? B.diagramPadding;
+  const diagramPadding = c4betaDiagramPadding(ctx.config);
   const available = ctx.availableWidth;
   const graph: LayoutGraph = {
     direction: model.direction,

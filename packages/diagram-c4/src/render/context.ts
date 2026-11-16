@@ -20,6 +20,8 @@ export type C4RenderContext = Pick<
 export interface SceneView {
   /** The root's class after `mermaid mermaid-` and its `aria-roledescription`: `c4`, `c4beta`. */
   readonly name: string;
+  /** The section's `useMaxWidth` as the config holds it: `c4`'s, or c4-beta's `c4beta`. */
+  readonly maxWidth: unknown;
   /** The accessible title and description, trimmed; `''` for none. */
   readonly accTitle: string;
   readonly accDescr: string;

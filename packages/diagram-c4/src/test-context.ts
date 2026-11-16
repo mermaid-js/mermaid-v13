@@ -25,11 +25,13 @@ import { theme as c4ThemeTable } from './theme/table.ts';
 /**
  * The config a render of `pre` resolves: core's defaults and the `c4` section's generated
  * defaults (the plugin's `configDefaults`), then `integrator` as `initialize()` would get it, then
- * the front matter and `init` directives.
+ * the front matter and `init` directives. With `beta`, the section is `c4beta` over `c4`, as the
+ * registry chains them for a c4-beta source (D534); `c4beta`'s defaults come from core's.
  */
 export function c4TestConfig(
   pre?: PreprocessResult,
-  integrator?: Readonly<Record<string, unknown>>
+  integrator?: Readonly<Record<string, unknown>>,
+  beta = false
 ): ResolvedConfig {
   const directives = (pre?.directives ?? []).flatMap((d) =>
     d.kind === 'init' && d.args && typeof d.args === 'object' ? [d.args as ConfigInput] : []
@@ -40,7 +42,7 @@ export function c4TestConfig(
     pre?.frontMatter?.config,
     directives,
     { c4: c4ConfigDefaults },
-    { section: 'c4' }
+    { section: beta ? ['c4beta', 'c4'] : 'c4' }
   );
 }
 

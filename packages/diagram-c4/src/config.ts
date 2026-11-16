@@ -19,7 +19,7 @@ import type { C4DiagramConfig } from '@mermaid-js/core/config';
 import { configNumber, fontWeightOf as weightOf } from '@mermaid-js/shared/config/readers';
 import { checkStyle } from '@mermaid-js/core/svg';
 import { fontSizePx, type FontKey } from '@mermaid-js/core/text';
-import { c4ConfigDefaults } from './generated/config-defaults.ts';
+import { c4betaConfigDefaults, c4ConfigDefaults } from './generated/config-defaults.ts';
 import { FONT_WEIGHT } from './layout/metrics.ts';
 import { C4_ELEMENT_KINDS, type C4ElementKind } from './model.ts';
 
@@ -85,6 +85,24 @@ export function c4Section(config: RenderContext['config']): Readonly<Record<stri
   return section !== null && typeof section === 'object'
     ? (section as Readonly<Record<string, unknown>>)
     : {};
+}
+
+/** The `c4beta` section from the resolved config (spec #730 T1; c4-beta reads this alone). */
+export function c4betaSection(config: RenderContext['config']): Readonly<Record<string, unknown>> {
+  const section = (config as { c4beta?: unknown }).c4beta;
+  return section !== null && typeof section === 'object'
+    ? (section as Readonly<Record<string, unknown>>)
+    : {};
+}
+
+/**
+ * The margin round a c4-beta drawing: `c4beta.diagramPadding` when it is a number (or a numeric
+ * string) of at least 0, else the schema's default (`gen:config`, from `C4BetaDiagramConfig`).
+ */
+export function c4betaDiagramPadding(config: RenderContext['config']): number {
+  const fallback = c4betaConfigDefaults.diagramPadding;
+  if (fallback === undefined) throw new Error('The c4beta config section has no diagramPadding');
+  return configNumber(c4betaSection(config).diagramPadding, 0) ?? fallback;
 }
 
 /** The layout's options from the resolved config. */

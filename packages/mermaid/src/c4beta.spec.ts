@@ -139,6 +139,93 @@ describe('c4-beta through the public API (spec #730)', () => {
     expect(r.diagramType).toBe('c4');
     expect(r.svg).toContain('aria-roledescription="c4"');
   });
+
+  describe('the c4beta config section (T1)', () => {
+    const configFixture = (name: string): string => fixture(`config-${name}`);
+    /** `source` with a front matter `config` of `lines` (two-space indented under `config:`). */
+    const withConfig = (source: string, lines: string): string =>
+      `---\nconfig:\n${lines}\n---\n${source}`;
+    // The fixture's own front matter (its description) goes, so `withConfig` can add one.
+    const BODY = fixture('b02-basic-context.mmd').replace(/^---\n[\s\S]*?\n---\n/, '');
+    const size = (svg: string): [number, number] => {
+      const [, , w, h] = /viewBox="([^"]*)"/.exec(svg)![1]!.split(' ').map(Number);
+      return [w!, h!];
+    };
+    const padded = async (value: string): Promise<[number, number]> =>
+      size(
+        (
+          await createMermaid().render(
+            'c1',
+            withConfig(BODY, `  c4beta:\n    diagramPadding: ${value}`)
+          )
+        ).svg
+      );
+
+    it('diagramPadding: 40 widens and heightens the canvas by 60 px over the default 10', async () => {
+      const [w0, h0] = size((await createMermaid().render('c1', BODY)).svg);
+      const r = await createMermaid().render('c1', configFixture('diagram-padding.mmd'));
+      const [w1, h1] = size(r.svg);
+      expect(w1 - w0).toBe(60);
+      // The root rounds the height up to a whole pixel; the unrounded layout is exact (config.spec.ts).
+      expect(h1 - h0).toBeGreaterThanOrEqual(60);
+      expect(h1 - h0).toBeLessThanOrEqual(61);
+      expect(r.warnings).toEqual([]);
+    });
+
+    it('diagramPadding: 0 is the least, and a value that is not a length draws the default', async () => {
+      const [w0, h0] = size((await createMermaid().render('c1', BODY)).svg);
+      expect(await padded('0')).toEqual([w0 - 20, h0 - 20]);
+      for (const bad of ['-5', '"wide"', '.nan', 'true'])
+        expect(await padded(bad), bad).toEqual([w0, h0]);
+    });
+
+    it('resolves the section over the c4 section (D534), and puts no default in core', async () => {
+      const set = await createMermaid().prepare(
+        withConfig(BODY, '  c4beta:\n    diagramPadding: 40')
+      );
+      expect(set.config.c4beta?.diagramPadding).toBe(40);
+      expect(set.config.c4?.diagramMarginX).toBe(50);
+      // A default in CORE_DEFAULTS would move every diagram's derived ids; the plugin holds it.
+      expect((await createMermaid().prepare(BODY)).config.c4beta).not.toHaveProperty(
+        'diagramPadding'
+      );
+    });
+
+    it('useMaxWidth: false draws the diagram at its own size, and a c4beta value wins over a c4 one', async () => {
+      const fit = (await createMermaid().render('c1', BODY)).svg;
+      expect(fit).toMatch(/width="100%"/);
+      expect(fit).toMatch(/max-width:/);
+      const fixed = await createMermaid().render('c1', configFixture('use-max-width-off.mmd'));
+      const [w, h] = size(fixed.svg);
+      expect(fixed.svg).toContain(`width="${w}"`);
+      expect(fixed.svg).toContain(`height="${h}"`);
+      expect(fixed.svg).not.toMatch(/max-width:/);
+      expect(fixed.warnings).toEqual([]);
+      // D534: a key both sections have is read from c4 when c4beta is silent, and c4beta wins.
+      const viaC4 = await createMermaid().render(
+        'c1',
+        withConfig(BODY, '  c4:\n    useMaxWidth: false')
+      );
+      const viaC4beta = await createMermaid().render(
+        'c1',
+        withConfig(BODY, '  c4beta:\n    useMaxWidth: false')
+      );
+      expect(viaC4.svg).toBe(viaC4beta.svg);
+      expect(viaC4.svg).not.toBe(fit);
+      const both = await createMermaid().render(
+        'c1',
+        withConfig(BODY, '  c4:\n    useMaxWidth: false\n  c4beta:\n    useMaxWidth: true')
+      );
+      expect(both.svg).toBe(fit);
+    });
+
+    it('leaves legacy C4 to its own section', async () => {
+      const legacy = 'C4Context\nPerson(a, "A")\n';
+      const plain = (await createMermaid().render('c1', legacy)).svg;
+      const set = withConfig(legacy, '  c4beta:\n    useMaxWidth: false\n    diagramPadding: 40');
+      expect((await createMermaid().render('c1', set)).svg).toBe(plain);
+    });
+  });
 });
 
 // Until c4-beta draws text (spec #730 T7), it has no text output in every place a type without

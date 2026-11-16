@@ -23,6 +23,6 @@ export {
 export { detectC4Beta } from './beta/detect.ts';
 export { parseC4Beta, lexC4Beta, C4BetaTokenKind } from './beta/index.ts';
 export { layoutC4Beta, layoutC4BetaFull } from './beta/layout.ts';
-export type { C4BetaLaidOut, C4BetaLayoutContext, C4BetaLayoutOptions } from './beta/layout.ts';
+export type { C4BetaLaidOut, C4BetaLayoutContext } from './beta/layout.ts';
 export type { C4BetaPrepared } from './beta/prepare.ts';
 export type * from './beta/index.ts';
