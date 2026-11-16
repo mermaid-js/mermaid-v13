@@ -28,8 +28,9 @@ export interface ConfigLength<K extends string> {
 /**
  * Reads lengths from one config object (`path` names it in warnings, e.g. `agentflow`), with
  * `defaults` for the keys it may read (a section's generated defaults, whose other keys are not
- * lengths, or a table of lengths): a key whose default is no number defaults to 0. A key not in
- * `defaults` is a type error.
+ * lengths, or a table of lengths). A key not in `defaults` is a type error. A key whose default
+ * is no number draws 0, and its warning says "using the default"; every length agentflow reads
+ * has a number default.
  */
 export function configLengths<K extends string>(
   section: unknown,
