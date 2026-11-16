@@ -143,7 +143,7 @@ function drawElement(scene: Scene, e: C4ElementLayout): void {
   w.open('g', { class: 'label', 'data-id': e.alias });
   const fill = colours.text;
   if (e.name) drawText(scene, { label: e.name, cls: 'c4-name', fill });
-  drawText(scene, { label: e.type, cls: 'c4-type', fill });
+  if (e.type) drawText(scene, { label: e.type, cls: 'c4-type', fill });
   if (e.descr) drawText(scene, { label: e.descr, cls: 'c4-descr', fill });
   w.close();
   w.close();

@@ -64,6 +64,31 @@ describe('the invariants hold on every accepted source in every direction', () =
   });
 });
 
+describe('the invariants hold with the type lines hidden (T5)', () => {
+  const configs = {
+    'hideStereotypes: [person]': { hideStereotypes: ['person'] },
+    'showStereotypes: false': { showStereotypes: false },
+    'personWrappingWidth: 40': { personWrappingWidth: 40 },
+    'personWrappingWidth: 120': { personWrappingWidth: 120 },
+    'personWrappingWidth: 1000 (wider than the shape)': { personWrappingWidth: 1000 },
+  } as const;
+
+  it.each(Object.entries(configs))(
+    '%s: engine, crossings, labels, headers, containment',
+    (_, c4beta) => {
+      const failures: string[] = [];
+      for (const { id, source } of accepted) {
+        const { model } = laidOut(source);
+        const config = c4TestConfig(undefined, { c4beta }, true);
+        const run = layoutC4BetaFull(model, c4TestContext(config, theme));
+        const all = [...allViolations(model, run), ...titleViolations(run.scene)];
+        failures.push(...all.map((v) => `${id}: ${v}`));
+      }
+      expect(failures).toEqual([]);
+    }
+  );
+});
+
 /** The `e2e/diagrams/c4beta` fixtures, every folder, by path. */
 const FIXTURE_DIR = join(REPO_ROOT, 'e2e/diagrams/c4beta');
 const fixtures = readdirSync(FIXTURE_DIR, { recursive: true, encoding: 'utf8' })

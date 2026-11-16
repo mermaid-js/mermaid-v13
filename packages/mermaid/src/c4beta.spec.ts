@@ -228,6 +228,188 @@ describe('c4-beta through the public API (spec #730)', () => {
   });
 });
 
+describe('the c4beta stereotype keys (spec #730 T5)', () => {
+  const withConfig = (source: string, lines: string): string =>
+    `---\nconfig:\n${lines}\n---\n${source}`;
+  const BODY = fixture('config-hide-stereotypes-person.mmd').replace(/^---[\s\S]*?\n---\n/, '');
+  const lines = async (source: string, m = createMermaid()): Promise<string[]> =>
+    texts((await m.render('c1', source)).svg);
+  const size = (svg: string): [number, number] => {
+    const [, , w, h] = /viewBox="([^"]*)"/.exec(svg)![1]!.split(' ').map(Number);
+    return [w!, h!];
+  };
+  const PERSON = '[Person]';
+  const SYSTEM = '[Software System]';
+  const CONTAINER = '[Container: Rust]';
+
+  it('shows every type line by default', async () => {
+    const all = await lines(BODY);
+    for (const line of [PERSON, SYSTEM, CONTAINER]) expect(all).toContain(line);
+  });
+
+  it('hideStereotypes: [person] from front matter hides the people line only', async () => {
+    const r = await createMermaid().render('c1', fixture('config-hide-stereotypes-person.mmd'));
+    const all = texts(r.svg);
+    expect(all).not.toContain(PERSON);
+    expect(all).toContain('Ledger Clerk');
+    expect(all).toContain(SYSTEM);
+    expect(all).toContain(CONTAINER);
+    expect(r.warnings).toEqual([]);
+  });
+
+  it('showStereotypes: false from front matter hides every line, a technology staying', async () => {
+    const r = await createMermaid().render('c1', fixture('config-show-stereotypes-off.mmd'));
+    const all = texts(r.svg);
+    for (const line of [PERSON, SYSTEM, CONTAINER]) expect(all).not.toContain(line);
+    expect(all).toContain('[Rust]');
+    expect(all).toContain('Ledger Clerk');
+    expect(r.warnings).toEqual([]);
+  });
+
+  it('hiding a line shrinks the canvas rather than leaving a blank line', async () => {
+    const [, h0] = size((await createMermaid().render('c1', BODY)).svg);
+    const hidden = await createMermaid().render(
+      'c1',
+      withConfig(BODY, '  c4beta:\n    showStereotypes: false')
+    );
+    expect(size(hidden.svg)[1]).toBeLessThan(h0);
+  });
+
+  /** The lines the person's description is drawn in. */
+  const personLines = (svg: string): number => {
+    const person = /<g class="node c4-shape c4-person"[\s\S]*?<\/g><\/g>/.exec(svg)![0];
+    return /<text class="c4-descr"[\s\S]*?<\/text>/.exec(person)![0].split('<tspan').length - 1;
+  };
+
+  it('personWrappingWidth from front matter wraps a person alone', async () => {
+    const source = fixture('config-person-wrapping-width.mmd');
+    const unset = await createMermaid().render(
+      'c1',
+      source.replace('    personWrappingWidth: 120\n', '')
+    );
+    const narrow = await createMermaid().render('c1', source);
+    // 120 px breaks the description into more lines than the width every element wraps at.
+    expect(personLines(narrow.svg)).toBeGreaterThan(personLines(unset.svg));
+    expect(narrow.warnings).toEqual([]);
+  });
+
+  describe('each key arrives intact from front matter, a directive and initialize', () => {
+    const hasPerson = (all: string[]): boolean => all.includes(PERSON);
+    const hasSystem = (all: string[]): boolean => all.includes(SYSTEM);
+
+    it('hideStereotypes: a block list, a flow list and a directive hide the people line', async () => {
+      for (const front of [
+        '  c4beta:\n    hideStereotypes:\n      - person',
+        '  c4beta:\n    hideStereotypes: [person]',
+      ]) {
+        const all = await lines(withConfig(BODY, front));
+        expect(hasPerson(all), front).toBe(false);
+        expect(hasSystem(all), front).toBe(true);
+      }
+      const viaDirective = await lines(
+        '%%{init: {"c4beta": {"hideStereotypes": ["person"]}}}%%\n' + BODY
+      );
+      expect(hasPerson(viaDirective)).toBe(false);
+      expect(hasSystem(viaDirective)).toBe(true);
+      const m = createMermaid();
+      m.initialize({ c4beta: { hideStereotypes: ['person'] } });
+      const viaInit = await lines(BODY, m);
+      expect(hasPerson(viaInit)).toBe(false);
+      expect(hasSystem(viaInit)).toBe(true);
+    });
+
+    it('hideStereotypes: every listed kind is hidden', async () => {
+      const all = await lines(
+        withConfig(BODY, '  c4beta:\n    hideStereotypes: [person, softwareSystem, container]')
+      );
+      for (const line of [PERSON, SYSTEM, CONTAINER]) expect(all).not.toContain(line);
+    });
+
+    it('hideStereotypes: an empty list hides none, and joins a list set earlier rather than clearing it', async () => {
+      expect(hasPerson(await lines(withConfig(BODY, '  c4beta:\n    hideStereotypes: []')))).toBe(
+        true
+      );
+      const m = createMermaid();
+      m.initialize({ c4beta: { hideStereotypes: ['person'] } });
+      // Arrays union across sources, as v12's `assignWithDepth` did (core's resolveConfig), so
+      // an empty list adds nothing and a diagram cannot show a kind the integrator hid.
+      expect(
+        hasPerson(await lines(withConfig(BODY, '  c4beta:\n    hideStereotypes: []'), m))
+      ).toBe(false);
+      const viaDirective = await lines(
+        '%%{init: {"c4beta": {"hideStereotypes": []}}}%%\n' + BODY,
+        m
+      );
+      expect(hasPerson(viaDirective)).toBe(false);
+    });
+
+    it('hideStereotypes: front matter adds to a list set earlier', async () => {
+      const m = createMermaid();
+      m.initialize({ c4beta: { hideStereotypes: ['person'] } });
+      const all = await lines(withConfig(BODY, '  c4beta:\n    hideStereotypes: [container]'), m);
+      expect(all).not.toContain(PERSON);
+      expect(all).not.toContain(CONTAINER);
+      expect(all).toContain(SYSTEM);
+    });
+
+    it('showStereotypes: false from a directive and from initialize, and true overrides false', async () => {
+      const viaDirective = await lines(
+        '%%{init: {"c4beta": {"showStereotypes": false}}}%%\n' + BODY
+      );
+      expect(hasPerson(viaDirective) || hasSystem(viaDirective)).toBe(false);
+      const m = createMermaid();
+      m.initialize({ c4beta: { showStereotypes: false } });
+      const viaInit = await lines(BODY, m);
+      expect(hasPerson(viaInit) || hasSystem(viaInit)).toBe(false);
+      const back = await lines(withConfig(BODY, '  c4beta:\n    showStereotypes: true'), m);
+      expect(hasPerson(back) && hasSystem(back)).toBe(true);
+    });
+
+    it('personWrappingWidth from a directive and from initialize, and front matter wins over initialize', async () => {
+      const viaDirective = await createMermaid().render(
+        'c1',
+        '%%{init: {"c4beta": {"personWrappingWidth": 120}}}%%\n' + BODY
+      );
+      const m = createMermaid();
+      m.initialize({ c4beta: { personWrappingWidth: 120 } });
+      const viaInit = await m.render('c1', BODY);
+      expect(personLines(viaDirective.svg)).toBeGreaterThan(
+        personLines((await createMermaid().render('c1', BODY)).svg)
+      );
+      expect(viaInit.svg).toBe(viaDirective.svg);
+      const over = await m.render('c1', withConfig(BODY, '  c4beta:\n    personWrappingWidth: 60'));
+      expect(personLines(over.svg)).toBeGreaterThan(personLines(viaInit.svg));
+    });
+
+    it('the resolved config carries the three keys, and core holds no default for them', async () => {
+      const set = await createMermaid().prepare(
+        withConfig(
+          BODY,
+          '  c4beta:\n    hideStereotypes: [person]\n    showStereotypes: false\n    personWrappingWidth: 90'
+        )
+      );
+      expect(set.config.c4beta).toMatchObject({
+        hideStereotypes: ['person'],
+        showStereotypes: false,
+        personWrappingWidth: 90,
+      });
+      const plain = (await createMermaid().prepare(BODY)).config.c4beta;
+      for (const key of ['showStereotypes', 'hideStereotypes', 'personWrappingWidth'])
+        expect(plain).not.toHaveProperty(key);
+    });
+  });
+
+  it('leaves legacy C4 to its own section', async () => {
+    const legacy = 'C4Context\nPerson(a, "A")\n';
+    const plain = (await createMermaid().render('c1', legacy)).svg;
+    const set = withConfig(
+      legacy,
+      '  c4beta:\n    showStereotypes: false\n    hideStereotypes: [person]\n    personWrappingWidth: 40'
+    );
+    expect((await createMermaid().render('c1', set)).svg).toBe(plain);
+  });
+});
+
 // Until c4-beta draws text (spec #730 T7), it has no text output in every place a type without
 // one is asked for it, as `classDiagram` has none; legacy C4 keeps its own.
 describe('c4-beta without text output (spec #730 T0)', () => {

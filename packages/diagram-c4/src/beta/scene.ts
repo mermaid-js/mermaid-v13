@@ -77,7 +77,7 @@ function leafOut(p: C4BetaPrepared, laid: LayoutModel, s: Shift): C4ElementLayou
         shape: leaf.form,
         box,
         ...(name ? { name } : {}),
-        type: type!,
+        ...(type ? { type } : {}),
         ...(descr ? { descr } : {}),
       },
     ];

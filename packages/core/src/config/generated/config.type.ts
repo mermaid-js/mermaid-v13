@@ -2265,6 +2265,26 @@ useMaxWidth?: boolean
  * 
  */
 diagramPadding?: number
+/**
+ * Whether an element shows its type line (`[Person]`, `[Software System]`, `[Container: Rust]`)
+ * above its name. `false` hides it on every element; use `hideStereotypes` to hide it on some
+ * kinds only.
+ * 
+ */
+showStereotypes?: boolean
+/**
+ * The element kinds whose type line is hidden while `showStereotypes` is on, for example
+ * `[person]`. Unset hides none.
+ * 
+ */
+hideStereotypes?: ("person" | "softwareSystem" | "container" | "component" | "infrastructureNode")[]
+/**
+ * The width in pixels at which a person's name, type line and description wrap. Unset, a
+ * person wraps at the width every c4-beta element wraps at, `c4.width` less twice
+ * `c4.c4ShapePadding` (176 px by default).
+ * 
+ */
+personWrappingWidth?: number
 }
 /**
  * The object containing configurations specific for sankey diagrams.

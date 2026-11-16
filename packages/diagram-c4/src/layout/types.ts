@@ -50,7 +50,8 @@ export interface C4ElementLayout {
   readonly box: Rect;
   /** v12's sections, top to bottom: the bold name, `[Person]`/`[Container: techn]`, the description. */
   readonly name?: PlacedLabel;
-  readonly type: PlacedLabel;
+  /** Absent when c4-beta hides the type line (`showStereotypes`, `hideStereotypes`). */
+  readonly type?: PlacedLabel;
   readonly descr?: PlacedLabel;
 }
 
