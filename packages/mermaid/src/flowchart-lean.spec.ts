@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ExtensionPlugin } from '@mermaid-js/core';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
-import type { FlowModel } from '@mermaid-js/diagram-flowchart';
+import { flowchart, type FlowModel } from '@mermaid-js/diagram-flowchart';
 import { createMermaid } from './index.ts';
 import type { InitializeConfig } from './api.ts';
 
@@ -97,5 +97,23 @@ describe('flowchart data-ast (R-PARSE-8)', () => {
     expect(await textFirst.render('h', host, { format: 'ascii' })).toEqual(text);
     expect((await textFirst.render('h', host)).svg).toBe(svg);
     expect(svg).not.toContain('data-ast');
+  });
+
+  it('draws text output of a cached text with the full parse its entry keeps: no parse', async () => {
+    const m = api();
+    const real = flowchart.parse;
+    let parses = 0;
+    flowchart.parse = (text, ctx) => (parses++, real(text, ctx));
+    try {
+      const first = await m.render('f', FLOW, { format: 'ascii' });
+      for (let i = 0; i < 3; i++) expect(m.renderSync(FLOW, { format: 'ascii' })).toEqual(first);
+      expect(parses).toBe(1);
+      // An entry made lean by an SVG draw is filled by the first text output, then kept.
+      await m.render('g', `${FLOW}\n%% other`);
+      for (let i = 0; i < 3; i++) m.renderSync(`${FLOW}\n%% other`, { format: 'ascii' });
+      expect(parses).toBe(3);
+    } finally {
+      flowchart.parse = real;
+    }
   });
 });
