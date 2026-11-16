@@ -16,7 +16,13 @@ import type { StateDocument, StateRegionNode, StateStatementNode } from '../pars
 import type { StateModel } from '../parser/model.ts';
 import { T } from '../parser/tokens.ts';
 import { code, DIRECTIONS, KIND_NAMES, plural } from './tables.ts';
-import { trimmed } from '@mermaid-js/shared/parser/facet';
+import {
+  classDefHover,
+  covers,
+  keywordHover,
+  symbolHoverOf,
+  trimmed,
+} from '@mermaid-js/shared/parser/facet';
 
 /** Kinds with no grammar terminal, and the kind whose doc covers them. */
 const DOC_OF: Readonly<Record<number, number>> = {
@@ -85,14 +91,7 @@ function stateInfo(name: string, model: StateModel): string {
 function classHover(name: string, model: StateModel): string {
   const c = model.classes.find((x) => x.id === name);
   const used = `Used by ${plural(model.states.filter((s) => s.classes.includes(name)).length, 'state')}`;
-  let styles = 'No `classDef` defines it.';
-  if (c !== undefined) {
-    styles =
-      c.styles.length === 0
-        ? 'Its `classDef` sets no styles.'
-        : code(`classDef ${name} ${c.styles.join(',')}`);
-  }
-  return `**class** ${code(name)}\n\n${styles}\n\n${used}`;
+  return classDefHover('class', name, c?.styles, used);
 }
 
 function symbolHover(s: SymbolOccurrence, model: StateModel): string | undefined {
@@ -151,17 +150,13 @@ function arrowHover(ast: StateDocument, range: Range): Hover | undefined {
 export function stateHover(at: HoverTarget, doc: DocumentView<StateDocument>): Hover | undefined {
   const { text, result } = doc;
   const model = result.model as StateModel;
-  if (at.symbol) {
-    const contents = symbolHover(at.symbol, model);
-    if (contents !== undefined) return { range: at.symbol.range, contents };
-  }
+  const symbol = symbolHoverOf(at, (s) => symbolHover(s, model));
+  if (symbol) return symbol;
   const t = at.token;
   if (!t) return undefined;
   // Tokens may take blanks and line breaks with them (`state `, the header): only their text.
   const range = trimmed(text, t.range);
-  if (at.offset < range.start || at.offset > range.end || range.start === range.end) {
-    return undefined;
-  }
+  if (!covers(range, at.offset)) return undefined;
   const word = text.slice(range.start, range.end);
   if (t.kind === T.EdgeState) return pseudoHover(result.ast, model, at.offset);
   if (t.kind === T.Arrow) {
@@ -178,6 +173,5 @@ export function stateHover(at: HoverTarget, doc: DocumentView<StateDocument>): H
     return { range, contents: `**${code(word)}** direction: ${meaning}\n\n${stateDocs[t.kind]}` };
   }
   const docText = stateDocs[t.kind] ?? stateDocs[DOC_OF[t.kind] ?? -1];
-  if (docText === undefined) return undefined;
-  return { range, contents: `**${code(word)}**\n\n${docText}` };
+  return keywordHover(text, at.offset, range, undefined, docText);
 }

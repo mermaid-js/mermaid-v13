@@ -12,7 +12,7 @@ import { ARROW_SET } from '../parser/tables.ts';
 import { generatedId } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
 import { ARROW_MEANING, code, DIRECTIONS, KIND_NAMES, plural } from './tables.ts';
-import { trimmed } from '@mermaid-js/shared/parser/facet';
+import { covers, keywordHover, symbolHoverOf, trimmed } from '@mermaid-js/shared/parser/facet';
 
 /** At most this many members or rows are listed; the rest are counted. */
 const LISTED = 8;
@@ -147,16 +147,12 @@ export function usecaseHover(
 ): Hover | undefined {
   const { text, result } = doc;
   const model = result.model as UsecaseModel;
-  if (at.symbol) {
-    const contents = symbolHover(at.symbol.kind, at.symbol.name, model);
-    if (contents !== undefined) return { range: at.symbol.range, contents };
-  }
+  const symbol = symbolHoverOf(at, (s) => symbolHover(s.kind, s.name, model));
+  if (symbol) return symbol;
   const t = at.token;
   if (!t) return undefined;
   const range = trimmed(text, t.range);
-  if (at.offset < range.start || at.offset > range.end || range.start === range.end) {
-    return undefined;
-  }
+  if (!covers(range, at.offset)) return undefined;
   const word = text.slice(range.start, range.end);
   const docText = usecaseDocs[t.kind];
   if (ARROW_SET[t.kind] === 1 || RELATION_WORDS.has(t.kind)) {
@@ -169,6 +165,5 @@ export function usecaseHover(
   if (dir) {
     return { range, contents: `**${code(word)}** direction: ${dir[2]}\n\n${docText ?? ''}`.trim() };
   }
-  if (docText === undefined) return undefined;
-  return { range, contents: `**${code(word)}**\n\n${docText}` };
+  return keywordHover(text, at.offset, range, undefined, docText);
 }

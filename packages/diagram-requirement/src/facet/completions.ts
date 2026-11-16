@@ -34,7 +34,9 @@ import {
   tokenBefore,
   VALUES,
 } from './tables.ts';
-import { CompletionList as Items } from '@mermaid-js/shared/parser/facet';
+import { CompletionList as Items, statementTokens } from '@mermaid-js/shared/parser/facet';
+
+const isTrivia = (k: number) => k === Kind.Comment || k === Kind.Directive || k === Kind.Space;
 
 /** Modes whose text is a value, not code: nothing is offered there. */
 const VALUE_MODES = new Set([
@@ -79,16 +81,11 @@ interface FoundToken {
 }
 
 function statementBefore(text: string, tokens: TokenStream, at: number): Statement {
-  const found: FoundToken[] = [];
-  for (let i = tokenBefore(tokens, at - 1); i >= 0; i--) {
-    const k = tokens.kind[i]!;
-    const end = tokens.end[i] ?? 0;
-    if (end > at) continue;
-    if (STATEMENT_END.has(k)) break;
-    if (k === Kind.Comment || k === Kind.Directive || k === Kind.Space) continue;
-    found.push({ kind: k, start: tokens.start[i] ?? 0, end });
-  }
-  found.reverse();
+  const found: FoundToken[] = statementTokens(tokens, at, STATEMENT_END, isTrivia).map((i) => ({
+    kind: tokens.kind[i]!,
+    start: tokens.start[i] ?? 0,
+    end: tokens.end[i] ?? 0,
+  }));
   return {
     head: found[0]?.kind ?? -1,
     prev: found[found.length - 1]?.kind ?? -1,

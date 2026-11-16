@@ -13,7 +13,13 @@ import type {
 } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { ARROWS, code, MESSAGE_DOC, span } from './tables.ts';
-import { plural, trimmed } from '@mermaid-js/shared/parser/facet';
+import {
+  covers,
+  keywordHover,
+  plural,
+  symbolHoverOf,
+  trimmed,
+} from '@mermaid-js/shared/parser/facet';
 
 const ARROW_BY_TOKEN = new Map(ARROWS.map((a) => [a.token, a]));
 /** `title …` is one token: only the keyword is hovered. */
@@ -80,10 +86,10 @@ export function sequenceHover(
 ): Hover | undefined {
   const { text, result } = doc;
   const model = result.model as SequenceModel;
-  if (at.symbol?.kind === 'participant') {
-    const contents = participantHover(at.symbol.name, model);
-    if (contents !== undefined) return { range: at.symbol.range, contents };
-  }
+  const symbol = symbolHoverOf(at, (s) =>
+    s.kind === 'participant' ? participantHover(s.name, model) : undefined
+  );
+  if (symbol) return symbol;
   const t = at.token;
   if (!t) return undefined;
   let range = trimmed(text, t.range);
@@ -92,11 +98,7 @@ export function sequenceHover(
     if (!word) return undefined;
     range = span(range.start, range.start + word[0].length);
   }
-  if (at.offset < range.start || at.offset > range.end || range.start === range.end) {
-    return undefined;
-  }
+  if (!covers(range, at.offset)) return undefined;
   if (ARROW_BY_TOKEN.has(t.kind)) return arrowHover(text, range, t.kind, result.ast);
-  const docText = sequenceDocs[t.kind];
-  if (docText === undefined) return undefined;
-  return { range, contents: `**${code(text.slice(range.start, range.end))}**\n\n${docText}` };
+  return keywordHover(text, at.offset, range, undefined, sequenceDocs[t.kind]);
 }

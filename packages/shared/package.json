@@ -46,6 +46,11 @@
       "types": "./dist/parser/facet.d.ts",
       "default": "./dist/parser/facet.js"
     },
+    "./parser/tree-facet": {
+      "mermaid-source": "./src/parser/tree-facet.ts",
+      "types": "./dist/parser/tree-facet.d.ts",
+      "default": "./dist/parser/tree-facet.js"
+    },
     "./parser/flow": {
       "mermaid-source": "./src/parser/flow.ts",
       "types": "./dist/parser/flow.d.ts",

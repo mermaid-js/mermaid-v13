@@ -43,7 +43,14 @@ import {
   type MetadataKind,
   tokenBefore,
 } from './tables.ts';
-import { atLineStart, CompletionList as Items, wordRange } from '@mermaid-js/shared/parser/facet';
+import {
+  atLineStart,
+  CompletionList as Items,
+  statementTokens,
+  wordRange,
+} from '@mermaid-js/shared/parser/facet';
+
+const isTrivia = (k: number) => k === Kind.Comment || k === Kind.Directive;
 
 /** Where a statement ends. */
 const LINE_BREAK = new Set<number>([Kind.Newline, Kind.EOF]);
@@ -62,15 +69,7 @@ const WORDS = new Set<number>([T.Identifier, T.Number, ...KEYWORD_ITEMS.map((k) 
 
 /** The significant tokens of the cursor's line before `at`, as indexes into `tokens`. */
 function lineBefore(tokens: TokenStream, at: number): number[] {
-  const out: number[] = [];
-  for (let i = tokenBefore(tokens, at - 1); i >= 0; i--) {
-    const k = tokens.kind[i]!;
-    if ((tokens.end[i] ?? 0) > at) continue;
-    if (LINE_BREAK.has(k)) break;
-    if (k === Kind.Comment || k === Kind.Directive) continue;
-    out.push(i);
-  }
-  return out.reverse();
+  return statementTokens(tokens, at, LINE_BREAK, isTrivia);
 }
 
 /** The `@{` the cursor at `at` is inside (across lines), or -1. */

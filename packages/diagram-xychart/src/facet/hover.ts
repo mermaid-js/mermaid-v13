@@ -10,6 +10,7 @@ import { xychartDocs } from '../generated/docs.ts';
 import type { XyChartAxisNode, XyChartDocument, XyChartPlotNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { code, plural, trimmed } from './tables.ts';
+import { covers, keywordHover } from '@mermaid-js/shared/parser/facet';
 
 /** Glue tokens that hover as the keyword they belong to. */
 const DOC_KIND: Readonly<Record<number, number>> = {
@@ -79,10 +80,6 @@ export function xyChartHover(
   }
   if (!t) return undefined;
   const range = trimmed(text, t.range);
-  if (at.offset < range.start || at.offset > range.end || range.start === range.end) {
-    return undefined;
-  }
-  const docText = xychartDocs[DOC_KIND[t.kind] ?? t.kind];
-  if (docText === undefined) return undefined;
-  return { range, contents: `**${code(text.slice(range.start, range.end))}**\n\n${docText}` };
+  if (!covers(range, at.offset)) return undefined;
+  return keywordHover(text, at.offset, range, undefined, xychartDocs[DOC_KIND[t.kind] ?? t.kind]);
 }
