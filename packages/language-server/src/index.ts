@@ -4,5 +4,5 @@
  */
 export { isMermaidUri, startServer } from './server.ts';
 export type { ServerOptions } from './server.ts';
-export { discoverFacets } from './discover.ts';
-export type { DiscoverOptions } from './discover.ts';
+export { discoverFacets } from './facets.ts';
+export type { DiscoverOptions } from './facets.ts';

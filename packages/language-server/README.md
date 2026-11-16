@@ -92,7 +92,9 @@ By default the server serves first-party diagram types only and runs no code fro
 { "initializationOptions": { "mermaid": { "plugins": true } } }
 ```
 
-The server then scans each workspace folder's own `node_modules` (not ancestor folders) for packages with a `mermaid` manifest that has a `language` entry. It refuses manifest paths outside the package and gives each import 5 seconds. Embedders can pass rows directly with `startServer(connection, { facets })`, and no scan happens then.
+The server then scans each workspace folder's own `node_modules` (not ancestor folders) for packages with a `mermaid` manifest that has a `language` entry. It finds them with the same scan `mermaid` uses to render in Node (`mermaid/node-scan`), so a plugin package is either usable in both or skipped by both, with the same warning in the server's log. It refuses manifest paths outside the package, gives each import 5 seconds, and never lets a package replace a first-party diagram type. When two packages have the same diagram id, the first by package name wins. Embedders can pass rows directly with `startServer(connection, { facets })`, and no scan happens then.
+
+The scan runs once, while the server answers `initialize`. A client that names no workspace folder gets first-party types only, and the server logs one line saying so: it never scans its working directory. A folder added to the workspace later is not scanned, and neither are packages installed later: restart the server to pick them up.
 
 A third-party facet whose hover, completion or rename code throws gives no hover, no items, or a rename refusal that names the failure. It does not fail the request.
 
