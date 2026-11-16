@@ -3,6 +3,10 @@
  * spans, which may be fenced with several backticks when the code holds one (flowchart's
  * `code()` in facet/tables.ts). Adapters render the parts: CodeMirror as DOM, the LSP server
  * as plain text for a client without Markdown.
+ *
+ * And the Mermaid fences of a Markdown document (`mermaidFences`), for a host that runs the
+ * service on each fence body and maps offsets by the body's start: the LSP server on opt-in
+ * (D581), or any Markdown editor (#180).
  */
 
 export interface InlinePart {
@@ -69,5 +73,66 @@ export function inlineMarkdown(text: string): InlinePart[] {
     i++;
   }
   flush();
+  return out;
+}
+
+/** A Mermaid fence of a Markdown document (#180, #811). */
+export interface MermaidFence {
+  /** Offset in the Markdown text of the body's first character: the line after the opening fence. */
+  readonly start: number;
+  /** The body as written, its indent and line ends kept, up to the closing fence's line. */
+  readonly text: string;
+}
+
+/** An opening fence: indent, then three or more backticks or tildes, then the info string. */
+const OPENING = /^[ \t]*(`{3,}|~{3,})(.*)$/;
+/** A closing fence: indent, a run of backticks or tildes, nothing after it but blanks. */
+const CLOSING = /^[ \t]*(`{3,}|~{3,})[ \t]*$/;
+
+/** Whether `line` closes a fence opened with `fence`: its own character, at least as long. */
+function closes(line: string, fence: string): boolean {
+  const run = CLOSING.exec(line)?.[1];
+  return run !== undefined && run.startsWith(fence.charAt(0)) && run.length >= fence.length;
+}
+
+/** The fence `line` opens, and whether its info string names mermaid, or undefined. */
+function opening(line: string): { fence: string; mermaid: boolean } | undefined {
+  const m = OPENING.exec(line);
+  if (!m) return undefined;
+  const fence = m[1]!;
+  const info = m[2]!;
+  // A backtick fence's info string may not hold a backtick (CommonMark): that line is prose.
+  if (fence.startsWith(BACKTICK) && info.includes(BACKTICK)) return undefined;
+  return { fence, mermaid: info.trim().split(/\s/)[0]!.toLowerCase() === 'mermaid' };
+}
+
+/**
+ * The fenced code blocks of `markdown` whose info string starts with `mermaid` (in any case),
+ * with backticks or tildes and any indent (a fence inside a list item is indented). Each body
+ * keeps its text as written, so an offset in it plus `start` is the offset in `markdown`. A
+ * fence closes at a line holding only a run of its own character at least as long; one never
+ * closed runs to the end of the text. A Mermaid fence quoted inside another fence is code of
+ * that fence, not a fence. Fences inside a block quote are not read.
+ */
+export function mermaidFences(markdown: string): MermaidFence[] {
+  const out: MermaidFence[] = [];
+  let open: { fence: string; mermaid: boolean; start: number } | undefined;
+  for (let at = 0; ; ) {
+    const newline = markdown.indexOf('\n', at);
+    const end = newline < 0 ? markdown.length : newline;
+    const line = markdown.slice(at, end).replace(/\r$/, '');
+    if (open) {
+      if (closes(line, open.fence)) {
+        if (open.mermaid) out.push({ start: open.start, text: markdown.slice(open.start, at) });
+        open = undefined;
+      }
+    } else {
+      const fence = opening(line);
+      if (fence) open = { ...fence, start: newline < 0 ? end : end + 1 };
+    }
+    if (newline < 0) break;
+    at = newline + 1;
+  }
+  if (open?.mermaid) out.push({ start: open.start, text: markdown.slice(open.start) });
   return out;
 }
