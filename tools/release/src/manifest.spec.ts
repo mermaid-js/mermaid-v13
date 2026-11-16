@@ -125,6 +125,44 @@ describe('published manifests', () => {
     ).toEqual([]);
   });
 
+  it('drops the workspace-only test subpaths (`./testing`, `./testing/…`) that point only at src/ (#816)', () => {
+    const manifest = publishManifest(
+      {
+        name: '@mermaid-js/diagram-pie',
+        version: '13.0.0-alpha.3',
+        exports: {
+          '.': { 'mermaid-source': './src/index.ts', default: './dist/index.js' },
+          './testing': { 'mermaid-source': './src/testing.ts' },
+          './testing/layout-invariants': {
+            'mermaid-source': './src/testing/layout-invariants.ts',
+          },
+        },
+      },
+      { target: 'public', workspace: [] }
+    );
+    expect(manifest.exports).toEqual({ '.': { default: './dist/index.js' } });
+    expect(danglingExports(manifest)).toEqual([]);
+  });
+
+  it('keeps a test subpath that has a published target, so dropping one is never silent', () => {
+    const manifest = publishManifest(
+      {
+        name: '@mermaid-js/core',
+        version: '13.0.0-alpha.3',
+        exports: {
+          './svg/testing': { 'mermaid-source': './src/svg/testing.ts', default: './dist/x.js' },
+          './testing-ish': { 'mermaid-source': './src/testing.ts' },
+        },
+      },
+      { target: 'public', workspace: [] }
+    );
+    expect(manifest.exports).toEqual({
+      './svg/testing': { default: './dist/x.js' },
+      './testing-ish': {},
+    });
+    expect(danglingExports(manifest)).toEqual(['./testing-ish']);
+  });
+
   it('publishes only alpha prereleases, so the alpha tag never moves latest or a release line', () => {
     expect(() => assertAlphaVersion(mermaid())).not.toThrow();
     for (const version of ['13.0.0', '13.0.0-beta.1', '11.16.0-b.4', '0.0.0'])

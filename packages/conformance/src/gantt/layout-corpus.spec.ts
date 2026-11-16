@@ -4,12 +4,8 @@ import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import { MAX_STEPS } from '@mermaid-js/core/limits';
-import {
-  ganttLayoutViolations,
-  layoutGantt,
-  parseGantt,
-  schedule,
-} from '@mermaid-js/diagram-gantt';
+import { layoutGantt, parseGantt, schedule } from '@mermaid-js/diagram-gantt';
+import { ganttLayoutViolations } from '@mermaid-js/diagram-gantt/testing';
 import type { CorpusItem } from '../types.ts';
 import { ganttGateCorpus } from './corpus.ts';
 import { scheduleFuzz } from './fuzz.ts';

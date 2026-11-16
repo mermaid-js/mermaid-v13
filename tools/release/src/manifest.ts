@@ -4,6 +4,9 @@
  * `pnpm pack` already turns `workspace:` ranges into concrete ones. On top of that:
  * - the `mermaid-source` export condition is dropped: it points at `src/`, which is not shipped
  *   (`danglingExports` refuses a subpath that had no other target);
+ * - a workspace-only test subpath is dropped whole: `./testing` or `./testing/…` with no target
+ *   but `mermaid-source`. The specs and conformance import it from the workspace; its files are
+ *   left out of the build, so it is not in the tarball (#816);
  * - devDependencies are dropped: they name private workspace packages and mean nothing to users;
  * - for the private registry (GitHub Packages, scope `@mermaid-chart`, D28) every package is
  *   renamed into that scope and every workspace dependency becomes an npm alias
@@ -43,6 +46,21 @@ export function privateName(name: string): string {
   return `${PRIVATE_SCOPE}/${name.replace(/^@[^/]+\//, '')}`;
 }
 
+/** `./testing`, `./testing/layout-invariants`: the subpath names test support may use. */
+const TEST_SUBPATH = /^\.\/testing(?:\/|$)/;
+
+/** A test subpath whose only target is the source: the workspace resolves it, users never see it. */
+function workspaceOnly([key, value]: [string, unknown]): boolean {
+  if (!TEST_SUBPATH.test(key) || value === null || typeof value !== 'object') return false;
+  const conditions = Object.keys(value);
+  return conditions.length === 1 && conditions[0] === SOURCE_CONDITION;
+}
+
+function dropWorkspaceOnly(exports: unknown): unknown {
+  if (exports === null || typeof exports !== 'object' || Array.isArray(exports)) return exports;
+  return Object.fromEntries(Object.entries(exports).filter((entry) => !workspaceOnly(entry)));
+}
+
 function stripSourceCondition(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(stripSourceCondition);
   if (value === null || typeof value !== 'object') return value;
@@ -59,7 +77,7 @@ export function publishManifest(
 ): PackedManifest {
   const out: PackedManifest = { ...packed };
   delete out.devDependencies;
-  if (out.exports !== undefined) out.exports = stripSourceCondition(out.exports);
+  if (out.exports !== undefined) out.exports = stripSourceCondition(dropWorkspaceOnly(out.exports));
   if (opts.target === 'public') return out;
 
   out.name = privateName(packed.name);

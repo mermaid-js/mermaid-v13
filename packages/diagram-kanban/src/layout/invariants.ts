@@ -20,7 +20,7 @@ import {
   nonFinite as numbers,
   rectsOverlap as overlaps,
   within,
-} from '@mermaid-js/shared/layout/invariants';
+} from '@mermaid-js/shared/testing/layout-invariants';
 
 const EPS = 1e-6;
 const contains = (outer: Rect, inner: Rect): boolean =>

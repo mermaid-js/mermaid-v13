@@ -7,7 +7,7 @@
 import type { RadarModel } from '../model.ts';
 import { RADAR_METRICS, RADAR_SLOTS } from './metrics.ts';
 import type { Point, RadarLayout, Rect } from './types.ts';
-import { nonFinite as finite } from '@mermaid-js/shared/layout/invariants';
+import { nonFinite as finite } from '@mermaid-js/shared/testing/layout-invariants';
 
 /** Float tolerance of the checks, relative to the chart's size. */
 const EPS = 1e-6;

@@ -7,7 +7,7 @@
  */
 export { JISON_NAMES, SankeyTokenKind, sankeyTokens } from './parser/index.ts';
 export type { SankeyToken } from './parser/index.ts';
-export { sankeyLayoutViolations } from './layout/index.ts';
+export { sankeyLayoutViolations } from './layout/invariants.ts';
 export { sankeyTestContext, sankeyTestTheme } from './test-context.ts';
 export { renderSankeyForTest, TEST_VERSION } from './render/harness.ts';
 export type { RenderedSankey, RenderSankeyOptions } from './render/harness.ts';
