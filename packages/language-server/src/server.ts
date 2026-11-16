@@ -9,7 +9,8 @@
  * Facets load during `initialize` (D155): the server answers it only after
  * `service.preload()`, so no snapshot is ever made before its facet is there. Third-party
  * facets are found only when the client opts in with `initializationOptions.mermaid.plugins`
- * (D157); by default the server runs no code from the opened folder.
+ * (D157), with the render scan (D577), in the workspace folders `initialize` names and never
+ * in the working directory (D578); by default the server runs no code from the opened folder.
  *
  * Markdown documents (`.md`, `.markdown`, `.mdx`, language id `markdown` or `mdx`) are served
  * only when the client opts in with `initializationOptions.mermaid.markdown` (D581): every
@@ -49,9 +50,9 @@ import {
   toSymbolInformation,
 } from './convert.ts';
 import type { Positions } from './convert.ts';
-import { discoverFacets } from './discover.ts';
 import type { Open, Part } from './documents.ts';
 import { analyse, forget, partAt } from './documents.ts';
+import { discoverFacets } from './facets.ts';
 import { selectionChain } from './selection.ts';
 import { VERSION } from './version.ts';
 
@@ -241,9 +242,15 @@ export function startServer(connection: Connection, options: ServerOptions = {})
     let facets = options.facets ?? [];
     if (options.facets === undefined && pluginsEnabled(params.initializationOptions)) {
       const roots = rootsOf(params);
-      facets = await discoverFacets(roots.length > 0 ? roots : [process.cwd()], {
-        log: (m) => connection.console.warn(`mermaid: ${m}`),
-      });
+      // No folder: the working directory is not one the user chose to trust (D578).
+      if (roots.length === 0)
+        connection.console.warn(
+          'mermaid: plugins are on, but the client named no workspace folder: no plugins discovered'
+        );
+      else
+        facets = await discoverFacets(roots, {
+          log: (m) => connection.console.warn(`mermaid: ${m}`),
+        });
     }
     service = createLanguageService({ facets });
     await service.preload();

@@ -132,7 +132,14 @@ async function packageDirs(modules: string, names: readonly string[]): Promise<s
   return nested.flat();
 }
 
-class Skip extends Error {}
+class Skip extends Error {
+  /** The path does not exist (rather than leading out of the package). */
+  readonly missing: boolean;
+  constructor(message: string, missing = false) {
+    super(message);
+    this.missing = missing;
+  }
+}
 
 const outside = (from: string, to: string): boolean => {
   const rel = relative(from, to);
@@ -147,10 +154,34 @@ async function confined(dir: string, root: string, path: string, key: string): P
   try {
     real = await realpath(target);
   } catch {
-    throw new Skip(`"${key}" (${path}) does not exist`);
+    throw new Skip(`"${key}" (${path}) does not exist`, true);
   }
   if (outside(root, real)) throw new Skip(`"${key}" is outside the package`);
   return real;
+}
+
+/** Where `packageModule` found a module path: its real path, or why it cannot be used. */
+export type PackageModule =
+  | { readonly file: string }
+  | { readonly skip: string; readonly missing: boolean };
+
+/**
+ * A module path of a scanned package that the scan does not read itself, such as the LSP
+ * server's `language` (D577), confined as the manifest's own paths are: inside the package,
+ * symlinks followed. `missing` tells a path that does not exist from one that leads out of the
+ * package; `skip` is the warning text, under the manifest key `key`. Never rejects.
+ */
+export async function packageModule(
+  pkg: Pick<ScannedPackage, 'dir'>,
+  path: string,
+  key: string
+): Promise<PackageModule> {
+  try {
+    return { file: await confined(pkg.dir, pkg.dir, path, key) };
+  } catch (error) {
+    if (!(error instanceof Skip)) throw error;
+    return { skip: error.message, missing: error.missing };
+  }
 }
 
 /** Code-unit order of package names (R-ARCH-6), never `localeCompare`. */
