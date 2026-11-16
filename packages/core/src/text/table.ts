@@ -4,7 +4,14 @@
 // Based on Pele's metricsMeasurer (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
 import { ASCII_MAX, LATIN1_MAX, SPACE } from '../parser-kit/char-codes.ts';
 import { familyNames } from './fonts.ts';
-import { SMALLER, Style, type FontKey, type Measurer, type VerticalMetrics } from './measurer.ts';
+import {
+  SMALLER,
+  Style,
+  type FontKey,
+  type Measurer,
+  type StyleBits,
+  type VerticalMetrics,
+} from './measurer.ts';
 import { FACES } from './metrics.ts';
 
 interface Face {
@@ -95,31 +102,43 @@ function isZeroWidth(c: number): boolean {
   );
 }
 
+/**
+ * The table measurer's width of `text[from, to)`: `(units * size) / 1000`, where `units` sums
+ * integer advances, so label layout can measure a slice of a label without slicing it.
+ */
+export function tableWidth(
+  text: string,
+  from: number,
+  to: number,
+  font: FontKey,
+  style: StyleBits
+): number {
+  const mono = (style & Style.Mono) !== 0;
+  const size = style & (Style.Sub | Style.Sup) ? font.size / SMALLER : font.size;
+  const f = faceFor(font.family);
+  const bold = (style & Style.Bold) !== 0 || font.weight >= 600;
+  const table = bold ? f.bold : f.regular;
+  const other = bold ? f.boldDefault : f.regularDefault;
+  let units = 0;
+  for (let i = from; i < to; i++) {
+    const c = text.charCodeAt(i);
+    if (c >= SPACE && c < ASCII_MAX) {
+      units += mono ? 600 : (table[c - SPACE] ?? other);
+      continue;
+    }
+    if (isZeroWidth(c)) continue;
+    if (isWide(c)) units += mono ? 1200 : 1000;
+    else if (mono) units += 600;
+    else if (c < ASCII_MAX) units += table[c - 0x20] ?? other;
+    else if (c <= LATIN1_MAX) units += table[c - 0xa0 + LATIN1_AT] ?? other;
+    else units += other;
+  }
+  return (units * size) / 1000;
+}
+
 export const tableMeasurer: Measurer = {
   id: 'table',
-  width(text, font, style) {
-    const mono = (style & Style.Mono) !== 0;
-    const size = style & (Style.Sub | Style.Sup) ? font.size / SMALLER : font.size;
-    const f = faceFor(font.family);
-    const bold = (style & Style.Bold) !== 0 || font.weight >= 600;
-    const table = bold ? f.bold : f.regular;
-    const other = bold ? f.boldDefault : f.regularDefault;
-    let units = 0;
-    for (let i = 0; i < text.length; i++) {
-      const c = text.charCodeAt(i);
-      if (c >= SPACE && c < ASCII_MAX) {
-        units += mono ? 600 : (table[c - SPACE] ?? other);
-        continue;
-      }
-      if (isZeroWidth(c)) continue;
-      if (isWide(c)) units += mono ? 1200 : 1000;
-      else if (mono) units += 600;
-      else if (c < ASCII_MAX) units += table[c - 0x20] ?? other;
-      else if (c <= LATIN1_MAX) units += table[c - 0xa0 + LATIN1_AT] ?? other;
-      else units += other;
-    }
-    return (units * size) / 1000;
-  },
+  width: (text, font, style) => tableWidth(text, 0, text.length, font, style),
   metrics(font: FontKey): VerticalMetrics {
     const [ascent, descent, lineHeight] = faceFor(font.family).vertical;
     return {
