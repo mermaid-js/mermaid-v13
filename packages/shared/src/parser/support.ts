@@ -1,10 +1,8 @@
 /**
  * Small pieces every hand-written parser repeats: the statement-level stop sentinel, the
- * "got …" text of an unexpected token, the escaping of names inside AST ids, and the removed
- * spans inside a token.
+ * "got …" text of an unexpected token, and the escaping of names inside AST ids.
  */
-import { firstHole, Kind } from '@mermaid-js/core/parser-kit';
-import type { Range, SourceView } from '@mermaid-js/core/parser-kit';
+import { Kind } from '@mermaid-js/core/parser-kit';
 
 /**
  * Thrown inside a parser after a diagnostic is recorded; caught at statement level. One
@@ -48,16 +46,4 @@ export function foundText(kind: number, raw: string): string {
   const text = raw.trim();
   const line = text.split('\n', 1)[0] ?? '';
   return line.length > 24 || line !== text ? `\`${line.slice(0, 24)}…\`` : `\`${line}\``;
-}
-
-/**
- * The removed spans of `view` (comments, directives) that overlap `r`, in source order: found
- * by binary search, so the cost is the log of the spans plus the ones returned.
- */
-export function holesIn(view: SourceView, r: Range): readonly Range[] {
-  const { holes } = view;
-  const from = firstHole(view, r.start);
-  let end = from;
-  while (end < holes.length && (holes[end]?.start ?? 0) < r.end) end++;
-  return holes.slice(from, end);
 }

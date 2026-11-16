@@ -32,7 +32,7 @@
  * line and carries on.
  */
 import { cook, CR, isSpace, Kind, kindSet, LF, SPACE, TAB } from '@mermaid-js/core/parser-kit';
-import { holesIn, STOP } from '@mermaid-js/shared/parser/support';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type {
   ParseOptions,
   ParseResult,
@@ -40,7 +40,7 @@ import type {
   StatementSpan,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
-import { treeGrammar, TreeParser } from '@mermaid-js/shared/parser/tree';
+import { holesIn, treeGrammar, TreeParser } from '@mermaid-js/shared/parser/tree';
 import { DEFAULT_LIMITS, LIMIT_CODES, checkLimit } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';

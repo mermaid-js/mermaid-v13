@@ -22,6 +22,7 @@
 import {
   type AstNode,
   type Diagnostic,
+  firstHole,
   inKindSet,
   Kind,
   type KindSet,
@@ -113,9 +114,16 @@ export const CLOSERS: Readonly<Record<string, string>> = /* @__PURE__ */ Object.
   '(-': '-)',
 });
 
-/** The document AST a tree parse returns: one node per node statement, in source order. */
-export interface TreeDocument<C extends AstNode> extends AstNode<'Document'> {
-  children: C[];
+/**
+ * The removed spans of `view` (comments, directives) that overlap `r`, in source order: found
+ * by binary search, so the cost is the log of the spans plus the ones returned.
+ */
+export function holesIn(view: SourceView, r: Range): readonly Range[] {
+  const { holes } = view;
+  const from = firstHole(view, r.start);
+  let end = from;
+  while (end < holes.length && (holes[end]?.start ?? 0) < r.end) end++;
+  return holes.slice(from, end);
 }
 
 /** The text of the first line. */
@@ -187,13 +195,13 @@ export abstract class TreeParser<
     model: M,
     children: C[],
     options: ParseOptions
-  ): ParseResult<M & { warnings: Diagnostic[] }, TreeDocument<C>> {
+  ): ParseResult<M & { warnings: Diagnostic[] }, AstNode<'Document'> & { children: C[] }> {
     const { st, pre, src } = this;
     const full = {
       ...model,
       warnings: st.diagnostics.list.filter((d) => d.severity === 'warning'),
     };
-    const ast: TreeDocument<C> = {
+    const ast: AstNode<'Document'> & { children: C[] } = {
       id: 'doc',
       type: 'Document',
       range: { start: pre.bodyStart, end: src.length },
@@ -625,10 +633,11 @@ export abstract class TreeParser<
 
   /**
    * Where a shape's closer (`closer`, in backticks) is due and missing after its text at token
-   * `text`: a diagram's own report, which throws {@link STOP}. Nothing by default.
+   * `text`: a diagram's own report, which may record a diagnostic and throw {@link STOP};
+   * otherwise the generic missing-closer report follows.
    */
   protected unclosedShape(_closer: string, _text: number): void {
-    // The generic report follows in shapeClose.
+    // None.
   }
 
   /** `ICON` or `CLASS`, on the last node in source order. */

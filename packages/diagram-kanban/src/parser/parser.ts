@@ -33,9 +33,9 @@
  * not stop at the first error: it reports it, skips to the next line and carries on.
  */
 import { inKindSet, Kind, kindSet } from '@mermaid-js/core/parser-kit';
-import { holesIn, STOP } from '@mermaid-js/shared/parser/support';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type { ParseOptions, ParseResult, Range, StatementSpan } from '@mermaid-js/core/parser-kit';
-import { treeGrammar, TreeParser } from '@mermaid-js/shared/parser/tree';
+import { holesIn, treeGrammar, TreeParser } from '@mermaid-js/shared/parser/tree';
 import { isYamlMap, parseYaml, preprocess } from '@mermaid-js/core/preprocess';
 import type {
   PreprocessResult,

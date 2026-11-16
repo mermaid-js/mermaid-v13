@@ -1,6 +1,6 @@
 import { sourceView } from '@mermaid-js/core/parser-kit';
 import { describe, expect, it } from 'vitest';
-import { holesIn } from './support.ts';
+import { holesIn } from './tree-parser.ts';
 
 describe('holesIn', () => {
   // Three directives, removed: 2–9, 11–19 and 21–28.
