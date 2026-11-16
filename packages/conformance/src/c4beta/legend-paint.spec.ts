@@ -61,11 +61,16 @@ describe('a legend swatch and what it describes', () => {
           compared++;
         };
         if (row.kind) {
-          const kinds = new Set(
-            r.layout.elements.filter((e) => e.kind === row.kind).map((e) => e.ast)
-          );
+          // `row.kind` folds an infrastructure node into a container; `row.of` tells them apart.
+          const external = row.kind.startsWith('external_');
           for (const e of model.elements)
-            if (kinds.has(e.ast) && none(e.tags)) same(`${id} ${e.id}`, bodyOf(e));
+            if (
+              !e.boundary &&
+              e.kind === row.of &&
+              e.tags.includes('external') === external &&
+              none(e.tags)
+            )
+              same(`${id} ${e.id}`, bodyOf(e));
         }
         const tag = row.tag?.name;
         if (tag === undefined) return;

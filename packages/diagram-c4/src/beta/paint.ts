@@ -1,11 +1,14 @@
 /**
- * The colours a c4-beta diagram is drawn with (spec #730): the paint table `drawScene` takes. Until
- * the theme ticket (T2) adds `c4<Kind>Color` rows, an element takes its legacy kind's palette from
- * the `c4` section (v12's colours), and boundaries, relations and the title the shared variables
- * `c4BoundaryColor`, `c4RelationColor` and `c4TitleColor`. Every theme colour is read before the
- * root is written, in drawing order, as `render/paint.ts` does.
+ * The colours a c4-beta diagram is drawn with (spec #730): the paint table `drawScene` takes. An
+ * element is an outline on the page: its fill the page's `background`, its outline the theme's
+ * `c4<Kind>Border` and its text `c4<Kind>Color` (`External` for an element tagged `external`,
+ * `Container` for a group or a deployment node drawn as a shape); boundaries, relations and the
+ * title take the shared variables `c4BoundaryColor`, `c4RelationColor` and `c4TitleColor`. The
+ * `c4` section's `<kind>_bg_color` keys are legacy C4's and colour nothing here. Every theme
+ * colour is read before the root is written, in drawing order, as `render/paint.ts` does.
  *
- * A `style` paints what it targets over those defaults. An item takes the statements for its kind
+ * A `style` paints what it targets over those defaults, so the order is the theme's row, then a
+ * `style` for the element's kind, then the styles for its tags. An item takes the statements for its kind
  * first, then those for each tag in the order it lists them, and a later key replaces an earlier
  * one (the prototype's order: a tag style is pushed after the kind's colours, and the last tag
  * wins). `fill` and `stroke` colour an element's body and outline (`stroke` is `fill` when only a
@@ -26,16 +29,21 @@ import { C4_RENDER_METRICS as R } from '../render/metrics.ts';
 import {
   Colours,
   colourWarning,
-  ELEMENT_TEXT,
-  kindPalette,
   type BoundaryPaint,
   type ElementPaint,
   type LegendPaint,
   type Paints,
   type RelationPaint,
 } from '../render/paint.ts';
+import { isExternal } from '../model.ts';
 import { legacyKind } from './prepare.ts';
-import type { C4BetaElement, C4BetaModel, C4BetaRelation, C4BetaStyle } from './model.ts';
+import type {
+  C4BetaElement,
+  C4BetaElementKind,
+  C4BetaModel,
+  C4BetaRelation,
+  C4BetaStyle,
+} from './model.ts';
 
 /** The keys of a style that colour or dash what it targets. */
 type PaintKey = 'fill' | 'stroke' | 'color' | 'line';
@@ -94,10 +102,45 @@ function coloursOf(keys: Keys, colours: Colours): { fill?: Paint; stroke?: Paint
 interface Styling {
   readonly elementAt: ReadonlyMap<string, C4BetaElement>;
   readonly relationAt: ReadonlyMap<string, C4BetaRelation>;
-  /** The element kind a legend kind row stands for, by the palette kind it is drawn with. */
-  readonly modelKind: ReadonlyMap<string, string>;
   readonly styles: ReadonlyMap<string, readonly C4BetaStyle[]>;
   readonly colours: Colours;
+}
+
+/** The two theme rows an element takes its colours from: its text and its outline. */
+interface Rows {
+  readonly color: string;
+  readonly border: string;
+}
+
+const PERSON: Rows = { color: 'c4PersonColor', border: 'c4PersonBorder' };
+const SYSTEM: Rows = { color: 'c4SoftwareSystemColor', border: 'c4SoftwareSystemBorder' };
+const CONTAINER: Rows = { color: 'c4ContainerColor', border: 'c4ContainerBorder' };
+const COMPONENT: Rows = { color: 'c4ComponentColor', border: 'c4ComponentBorder' };
+const INFRASTRUCTURE: Rows = {
+  color: 'c4InfrastructureNodeColor',
+  border: 'c4InfrastructureNodeBorder',
+};
+const EXTERNAL: Rows = { color: 'c4ExternalColor', border: 'c4ExternalBorder' };
+
+/** The rows by element kind; a group or a deployment node drawn as a shape takes a container's. */
+const ROWS: Readonly<Record<C4BetaElementKind, Rows>> = {
+  person: PERSON,
+  softwareSystem: SYSTEM,
+  container: CONTAINER,
+  component: COMPONENT,
+  infrastructureNode: INFRASTRUCTURE,
+  group: CONTAINER,
+  deploymentNode: CONTAINER,
+};
+
+/** An element's text and outline from the theme; an external element's win over its kind's. */
+function themed(
+  colours: Colours,
+  kind: C4BetaElementKind,
+  external: boolean
+): { readonly text: Paint; readonly stroke: Paint } {
+  const rows = external ? EXTERNAL : ROWS[kind];
+  return { text: colours.theme(rows.color), stroke: colours.theme(rows.border) };
 }
 
 /** The styles an element or boundary takes: its kind's, then each tag's. */
@@ -122,18 +165,19 @@ function boundaryPaints(st: Styling, layout: C4Layout): Map<number, BoundaryPain
   return new Map(layout.boundaries.map((b) => [b.index, boundaryPaint(st, b)]));
 }
 
-function elementPaints(
-  st: Styling,
-  layout: C4Layout,
-  palette: ReturnType<typeof kindPalette>
-): Map<number, ElementPaint> {
+function elementPaints(st: Styling, layout: C4Layout): Map<number, ElementPaint> {
   return new Map(
     layout.elements.map((e) => {
-      const [fill, stroke] = palette(e.kind);
+      const element = st.elementAt.get(e.ast)!;
+      const base = themed(st.colours, element.kind, isExternal(legacyKind(element)));
       const s = elementStyle(st, e.ast);
       return [
         e.index,
-        { fill: s.fill ?? fill, stroke: s.stroke ?? stroke, text: s.color ?? ELEMENT_TEXT },
+        {
+          fill: s.fill ?? st.colours.theme('background'),
+          stroke: s.stroke ?? base.stroke,
+          text: s.color ?? base.text,
+        },
       ];
     })
   );
@@ -174,16 +218,14 @@ export function betaPaints(model: C4BetaModel, layout: C4Layout, ctx: C4RenderCo
   const st: Styling = {
     elementAt: new Map(model.elements.map((e) => [e.ast, e])),
     relationAt: new Map(model.relations.map((r) => [r.ast, r])),
-    modelKind: new Map(model.elements.map((e) => [legacyKind(e), e.kind])),
     styles: stylesByTarget(model),
     colours,
   };
   const boundaries = boundaryPaints(st, layout);
-  const palette = kindPalette(ctx, colours);
-  const elements = elementPaints(st, layout, palette);
+  const elements = elementPaints(st, layout);
   const relations = relationPaints(st, layout);
   const title = layout.title ? colours.theme('c4TitleColor') : undefined;
-  const legend = layout.legend && legendPaints(layout.legend, palette, st);
+  const legend = layout.legend && legendPaints(layout.legend, st);
   if (colours.dropped.length > 0) ctx.warn(colourWarning(colours.dropped));
   return {
     elements,
@@ -197,15 +239,12 @@ export function betaPaints(model: C4BetaModel, layout: C4Layout, ctx: C4RenderCo
 /** A swatch's fill and outline. */
 type Swatch = LegendPaint['rows'][number];
 
-/** A kind row: the kind's palette, or its kind style. */
-function kindSwatch(
-  kind: C4LegendRow['kind'] & string,
-  palette: ReturnType<typeof kindPalette>,
-  st: Styling
-): Swatch {
-  const [fill, stroke] = palette(kind);
-  const s = coloursOf(keysOf(st.styles, [st.modelKind.get(kind) ?? kind]), st.colours);
-  return { fill: s.fill ?? fill, stroke: s.stroke ?? stroke };
+/** A kind row: the colours of its kind's elements, or its kind style. */
+function kindSwatch(row: C4LegendRow, st: Styling): Swatch {
+  const kind = row.of!;
+  const base = themed(st.colours, kind, isExternal(row.kind!));
+  const s = coloursOf(keysOf(st.styles, [kind]), st.colours);
+  return { fill: s.fill ?? st.colours.theme('background'), stroke: s.stroke ?? base.stroke };
 }
 
 /** A tag row: the style's own colours (`stroke` falls back to `fill`, then to the text colour). */
@@ -217,18 +256,14 @@ function tagSwatch(tag: NonNullable<C4LegendRow['tag']>, st: Styling, text: Pain
 }
 
 /**
- * The legend's paints: a kind row takes its kind's palette, or its kind style, as the elements do;
+ * The legend's paints: a kind row takes its kind's colours, or its kind style, as the elements do;
  * a tag row the style's own colours through the colour check (`stroke` falls back to `fill`, and
  * with neither the swatch is an outline in the text colour).
  */
-function legendPaints(
-  legend: C4LegendLayout,
-  palette: ReturnType<typeof kindPalette>,
-  st: Styling
-): LegendPaint {
+function legendPaints(legend: C4LegendLayout, st: Styling): LegendPaint {
   const text = st.colours.theme('textColor');
   const rows = legend.rows.map((row) =>
-    row.kind ? kindSwatch(row.kind, palette, st) : tagSwatch(row.tag!, st, text)
+    row.kind ? kindSwatch(row, st) : tagSwatch(row.tag!, st, text)
   );
   return { text, rows };
 }
