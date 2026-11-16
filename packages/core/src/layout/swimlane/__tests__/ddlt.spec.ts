@@ -56,6 +56,10 @@ const V13_ONLY: readonly string[] = [
   'regressions/tb-empty-lane',
   // mermaid-js/mermaid#8772
   'regressions/lr-empty-lane',
+  // mermaid-js/mermaid#8788
+  'regressions/tb-empty-lane-tight-spacing',
+  'regressions/tb-empty-first-lane-auto-order',
+  'regressions/tb-lanes-keep-padding-tight-spacing',
 ];
 
 describe('swimlane DDLT fixtures', () => {

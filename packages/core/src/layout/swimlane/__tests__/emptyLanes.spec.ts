@@ -1,12 +1,19 @@
-// v13-only: what the v12 changes behind the empty-lane fixtures assert (they come over as fixtures,
-// #684): mermaid-js/mermaid#8754 (an empty lane in TB and BT gets a column of its own) and
-// mermaid-js/mermaid#8772 (the same band in LR and RL). Each runs on the fixture's own capture,
-// laid out in the directions v12 tested it in.
+// v13-only: what the v12 changes behind the empty-lane and tight-spacing fixtures assert (they
+// come over as fixtures, #684): mermaid-js/mermaid#8754 (an empty lane in TB and BT gets a column
+// of its own), mermaid-js/mermaid#8772 (the same band in LR and RL) and mermaid-js/mermaid#8788
+// (below a node spacing of 20, neighbouring lanes still keep their padding). Each runs on the
+// fixture's own capture, laid out in the directions v12 tested it in.
 import { describe, expect, it } from 'vitest';
 import type { LayoutGraph, LayoutModel } from '../../types.ts';
 import { swimlaneLayout } from '../swimlane.ts';
 import { DDLT_FIXTURES, fixtureGraph } from './ddlt.fixtures.ts';
 
+/** Two lanes touch when the seam between them is under this (px), as v12's `TOLERANCE`. */
+const SEAM_TOLERANCE = 0.5;
+/** The node spacing from which twice it is no less than the lane padding on both sides. */
+const TIGHT_LIMIT = 20;
+/** A lane padding wider than the default node spacing's half (v12's `WIDE_LANE_PADDING`). */
+const WIDE_LANE_PADDING = 60;
 /** Exact equality of coordinates the engine computes by adding the same numbers. */
 const EXACT_DIGITS = 6;
 
@@ -17,8 +24,17 @@ interface Span {
 }
 
 /** `id` laid out in `direction` (the fixture's own when omitted), with its graph. */
-function layOut(id: string, direction?: string, without?: string) {
+function layOut(
+  id: string,
+  direction?: string,
+  without?: string,
+  paddings: Readonly<Record<string, number>> = {}
+) {
   const graph = fixtureGraph(id);
+  for (const g of graph.groups) {
+    const padding = paddings[g.id];
+    if (padding !== undefined) g.padding = { ...g.padding, left: padding, right: padding };
+  }
   if (direction) (graph as { direction: string }).direction = direction;
   if (without) {
     graph.groups = graph.groups.filter((g) => g.id !== without);
@@ -46,6 +62,22 @@ function expectTouching(spans: readonly Span[]): void {
         0
       );
   }
+}
+
+/**
+ * How much room beyond its lane's padding the node with the least keeps on its tighter side along
+ * `axis`: 0 or more when every node keeps its padding.
+ */
+function smallestSpare(graph: LayoutGraph, model: LayoutModel, axis: 'x' | 'y'): number {
+  const size = axis === 'x' ? 'width' : 'height';
+  const spares = graph.nodes.map((n) => {
+    const node = model.nodes.get(n.id)!;
+    const lane = model.groups.get(n.parent!)!;
+    const [from, to] = [lane[axis] - lane[size] / 2, lane[axis] + lane[size] / 2];
+    const inset = Math.min(node[axis] - node[size] / 2 - from, to - node[axis] - node[size] / 2);
+    return inset - paddingOf(graph, n.parent!);
+  });
+  return Math.min(...spares);
 }
 
 /** The width of a lane's title as the graph measures it. */
@@ -120,6 +152,99 @@ describe('#684: an empty lane gets a band of its own in LR and RL (mermaid-js/me
           control.nodes.get(node)!.y + legal.height,
           EXACT_DIGITS
         );
+    }
+  );
+});
+
+describe('#684: at a node spacing below 20 neighbouring lanes keep their padding (mermaid-js/mermaid#8788)', () => {
+  const TIGHT = [
+    'regressions/tb-lanes-keep-padding-tight-spacing',
+    'regressions/tb-empty-lane-tight-spacing',
+    'regressions/tb-empty-first-lane-auto-order',
+  ];
+
+  it.each(TIGHT)('%s is laid out at a node spacing of 10', (id) => {
+    expect(fixtureGraph(id).spacing.node).toBe(10);
+  });
+
+  describe.each(TIGHT.flatMap((id) => ['TB', 'BT'].map((direction) => [id, direction] as const)))(
+    '%s in %s',
+    (id, direction) => {
+      it('no lane overlaps another', () => {
+        const { graph, model } = layOut(id, direction);
+        const spans = lanesAcross(graph, model, 'x');
+        const overlaps = spans.slice(1).map((s, i) => spans[i]!.to - s.from);
+        expect(Math.max(...overlaps)).toBeLessThanOrEqual(SEAM_TOLERANCE);
+      });
+
+      it('every node stays inside its lane with the lane padding on both sides', () => {
+        const { graph, model } = layOut(id, direction);
+        expect(smallestSpare(graph, model, 'x')).toBeGreaterThanOrEqual(-SEAM_TOLERANCE);
+      });
+    }
+  );
+
+  it.each(['TB', 'BT'])('%s: the two populated lanes touch', (direction) => {
+    const id = 'regressions/tb-lanes-keep-padding-tight-spacing';
+    const { graph, model } = layOut(id, direction);
+    expectTouching(lanesAcross(graph, model, 'x'));
+  });
+
+  it.each(['TB', 'BT'])(
+    '%s: an empty lane keeps the lane after it clear, and that lane moves with its nodes',
+    (direction) => {
+      const id = 'regressions/tb-empty-lane-tight-spacing';
+      const { graph, model } = layOut(id, direction);
+      const control = layOut(id, direction, 'L2').model;
+      const spans = lanesAcross(graph, model, 'x');
+      expect(spans.map((s) => s.id)).toEqual(['L1', 'L2', 'L3']);
+      expectTouching(spans);
+      const moved = model.groups.get('L3')!.x - control.groups.get('L3')!.x;
+      expect(moved).toBeGreaterThan(0);
+      expect(model.nodes.get('C')!.x).toBeCloseTo(control.nodes.get('C')!.x + moved, EXACT_DIGITS);
+      expect(model.nodes.get('A')!.x).toBeCloseTo(control.nodes.get('A')!.x, EXACT_DIGITS);
+    }
+  );
+  describe.each(['LR', 'RL'])('%s', (direction) => {
+    it.each([0, 10, 19])(
+      'node spacing %d: the lanes are rows that touch, none overlapping',
+      (node) => {
+        const id = 'regressions/tb-lanes-keep-padding-tight-spacing';
+        const graph = fixtureGraph(id);
+        (graph as { direction: string }).direction = direction;
+        graph.spacing = { ...graph.spacing, node };
+        const model = swimlaneLayout(graph, DDLT_FIXTURES[id]!.tuning);
+        const spans = lanesAcross(graph, model, 'y');
+        expect(spans).toHaveLength(2);
+        expectTouching(spans);
+      }
+    );
+
+    // The lane gap is for TB and BT, whose lanes are columns; LR and RL stack touching rows whose
+    // height still follows the node spacing, so tightening it still makes the rows shorter.
+    it('a node spacing of 10 gives shorter rows than a node spacing of 20', () => {
+      const id = 'regressions/tb-lanes-keep-padding-tight-spacing';
+      const rowHeight = (node: number): number => {
+        const graph = fixtureGraph(id);
+        (graph as { direction: string }).direction = direction;
+        graph.spacing = { ...graph.spacing, node };
+        const [row] = lanesAcross(graph, swimlaneLayout(graph, DDLT_FIXTURES[id]!.tuning), 'y');
+        return row!.to - row!.from;
+      };
+      expect(rowHeight(10)).toBeLessThan(rowHeight(TIGHT_LIMIT));
+    });
+  });
+
+  it.each(['TB', 'BT'])(
+    '%s: a lane padding wider than half the node spacing is kept, whichever lane has it',
+    (direction) => {
+      const id = 'regressions/tb-lanes-keep-padding-tight-spacing';
+      for (const wide of ['L1', 'L2']) {
+        const { graph, model } = layOut(id, direction, undefined, { [wide]: WIDE_LANE_PADDING });
+        expect(paddingOf(graph, wide)).toBe(WIDE_LANE_PADDING);
+        expectTouching(lanesAcross(graph, model, 'x'));
+        expect(smallestSpare(graph, model, 'x'), wide).toBeGreaterThanOrEqual(-SEAM_TOLERANCE);
+      }
     }
   );
 });
