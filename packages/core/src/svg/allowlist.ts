@@ -158,6 +158,14 @@ export const LINK_TARGETS: ReadonlySet<string> = new Set(['_self', '_blank', '_p
 export const BLANK_REL = 'noopener noreferrer';
 export const SVG_NS = 'http://www.w3.org/2000/svg';
 
+/**
+ * The attributes every element may carry with any value of their type: the allowed ones less the
+ * gradient's, `href` and `xmlns`, which only some elements may carry.
+ */
+export const PLAIN_ATTRS: ReadonlySet<string> = new Set(
+  [...ALLOWED_ATTRS].filter((n) => !GRADIENT_ATTRS.has(n) && n !== 'href' && n !== 'xmlns')
+);
+
 /** A tag renderers and hooks may write (the gradient's are the writer's own). */
 export function isAllowedTag(tag: string): tag is AllowedTag {
   return ALLOWED_TAGS.has(tag) && !GRADIENT_TAGS.has(tag);

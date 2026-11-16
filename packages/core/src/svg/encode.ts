@@ -2,21 +2,32 @@
  * Turning one attribute value into its unescaped string form. Both writer backings and the
  * `SvgTree` view call this, so they agree byte for byte.
  */
-import { GRADIENT_ATTRS, HREF_TAGS, isAllowedAttr, isAllowedTag } from './allowlist.ts';
+import {
+  GRADIENT_ATTRS,
+  HREF_TAGS,
+  isAllowedAttr,
+  isAllowedTag,
+  PLAIN_ATTRS,
+} from './allowlist.ts';
 import { num } from './escape.ts';
 
 export function checkTag(tag: string): void {
   if (!isAllowedTag(tag)) throw new TypeError(`<${tag}> is not an allowed SVG element`);
 }
 
-/** The attribute's value as written (before escaping), or undefined to skip it. */
-export function formatValue(tag: string, name: string, value: unknown): string | undefined {
-  if (value === undefined) return undefined;
+/** Throws unless `name` may be written on `tag`. */
+function checkName(tag: string, name: string): void {
   if (GRADIENT_ATTRS.has(name)) throw new TypeError(`${name} is not allowed on <${tag}>`);
   if (!isAllowedAttr(name)) throw new TypeError(`${name} is not an allowed SVG attribute`);
   if (name === 'href' && !HREF_TAGS.has(tag))
     throw new TypeError(`href is not allowed on <${tag}>`);
   if (name === 'xmlns' && tag !== 'svg') throw new TypeError(`xmlns is only allowed on <svg>`);
+}
+
+/** The attribute's value as written (before escaping), or undefined to skip it. */
+export function formatValue(tag: string, name: string, value: unknown): string | undefined {
+  if (value === undefined) return undefined;
+  if (!PLAIN_ATTRS.has(name)) checkName(tag, name);
   if (typeof value === 'number') return num(value);
   if (typeof value === 'string') return value;
   if (Array.isArray(value)) {
