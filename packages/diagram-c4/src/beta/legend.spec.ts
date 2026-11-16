@@ -1,4 +1,6 @@
+import type { Warning } from '@mermaid-js/core';
 import { describe, expect, it } from 'vitest';
+import { C4_COLOR_INVALID } from '../codes.ts';
 import { renderC4BetaForTest } from '../render/harness.ts';
 import { c4TestConfig, c4TestContext, c4TestTheme } from '../test-context.ts';
 import { legendViolations } from '../layout/invariants.ts';
@@ -7,6 +9,7 @@ import { layoutC4Beta } from './layout.ts';
 import { legendEntries } from './legend.ts';
 import { C4_BETA_METRICS as B } from './metrics.ts';
 import { kindName, legacyKind } from './prepare.ts';
+import { betaPaints } from './paint.ts';
 import { parseC4Beta } from './parser.ts';
 
 /**
@@ -184,5 +187,53 @@ describe('what the legend draws', () => {
   it('draws nothing for `legend off`', async () => {
     const r = await renderC4BetaForTest(KINDS.replace('legend on', 'legend off'));
     expect(r.svg).not.toContain('c4-legend');
+  });
+});
+
+/** The `fill` and `stroke` of each tag row's swatch, in row order, after the kind rows. */
+function tagSwatches(svg: string): { fill: string; stroke: string }[] {
+  const legend = svg.slice(svg.indexOf('<g class="c4-legend">'));
+  return [...legend.matchAll(/class="c4-legend-swatch"[^>]*? fill="([^"]*)" stroke="([^"]*)"/g)]
+    .slice(1)
+    .map(([, fill, stroke]) => ({ fill: fill!, stroke: stroke! }));
+}
+
+const tagged = (style: string) => `c4-beta\nlegend on\n${style}\nperson p "P" :::t`;
+
+describe('what a tag swatch falls back to', () => {
+  it('takes the stroke from the fill when the style has only a fill', async () => {
+    const r = await renderC4BetaForTest(tagged('style t fill:#112233'));
+    expect(tagSwatches(r.svg)).toEqual([{ fill: '#112233', stroke: '#112233' }]);
+  });
+
+  it('keeps no fill when the style has only a stroke', async () => {
+    const r = await renderC4BetaForTest(tagged('style t stroke:#445566'));
+    expect(tagSwatches(r.svg)).toEqual([{ fill: 'none', stroke: '#445566' }]);
+  });
+
+  it('draws an outline in the text colour when the style has neither', async () => {
+    const r = await renderC4BetaForTest(tagged('style t line:dashed'));
+    expect(tagSwatches(r.svg)).toEqual([{ fill: 'none', stroke: 'var(--_tx)' }]);
+  });
+
+  it('warns C4_COLOR_INVALID and falls back for a colour the check refuses', async () => {
+    const theme = await c4TestTheme('default');
+    const warnings: Warning[] = [];
+    const ctx = c4TestContext(c4TestConfig(), theme, warnings);
+    const layout = layoutC4Beta(parseC4Beta(tagged('style t fill:#112233')).model, ctx);
+    const forged: C4Layout = {
+      ...layout,
+      legend: layout.legend && {
+        ...layout.legend,
+        rows: layout.legend.rows.map((row) =>
+          row.tag ? { ...row, tag: { ...row.tag, fill: 'url(#x)', stroke: 'a;b' } } : row
+        ),
+      },
+    };
+    const { legend } = betaPaints(forged, ctx);
+    expect(legend?.rows.at(-1)).toEqual({ fill: 'none', stroke: legend?.text });
+    expect(warnings.map((w) => w.code)).toEqual([C4_COLOR_INVALID]);
+    expect(warnings[0]?.message).toContain('style t fill');
+    expect(warnings[0]?.message).toContain('style t stroke');
   });
 });
