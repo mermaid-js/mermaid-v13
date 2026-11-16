@@ -67,7 +67,7 @@ import {
 import {
   AnalysisCache,
   dataAstOf,
-  fullParse,
+  fullSource,
   parseStep,
   type Analysis,
   type Detection,
@@ -261,7 +261,7 @@ export function createMermaid(
       ...(title !== undefined ? { title } : {}),
       sources: [hit.site.site, front, ...directives],
       dataAst,
-      full: () => fullParse(plugin, text, ctx),
+      full: fullSource(plugin, text, ctx),
     };
     return { analysis, full: parsed.full };
   }
@@ -617,7 +617,7 @@ export function createMermaid(
   ): TextRenderResult {
     const { prepared, plugin } = analysis;
     // Text output reads the AST and the model's AST ids (D82's drop warnings).
-    const parse = full ?? analysis.full();
+    const parse = analysis.full(true, full);
     checkText(analysis.detected);
     const hook = registry.ascii(plugin.id);
     const backend = textBackend;
@@ -723,7 +723,7 @@ export function createMermaid(
     const renderHooks = hooksFor(a);
     const run = renderHooks.size === 0 ? undefined : renderHooks.start(ctx, a.plugin.id);
     // A `postParse` hook reads the AST: this draw has the full parse (DESIGN §4.2).
-    const parse = renderHooks.readsAst ? (full ?? a.full()) : a.prepared.parse;
+    const parse = renderHooks.readsAst ? a.full(true, full) : a.prepared.parse;
     // D537: the line-hop step, when its chunk is loaded and decides that this render hops.
     const edges = registry.hops?.(a);
     const drawHooks = run && { run, ast: parse.lean ? undefined : parse.ast };

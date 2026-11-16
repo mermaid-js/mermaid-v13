@@ -20,10 +20,12 @@ export interface Analysis {
   /** Whether its SVG draws write `data-ast` (`RenderContext.dataAst`). */
   readonly dataAst: boolean;
   /**
-   * The text parsed again in full, for a call that reads the AST (`prepare()`, text output, a
-   * `postParse` hook). It is the caller's: nothing keeps it.
+   * The full parse, for a call that reads the AST (`prepare()`, text output, a `postParse`
+   * hook): `made` (the one the call made), else the one this entry keeps, else the text parsed
+   * again. A draw that reads the AST passes `keep`, so its entry keeps the full parse and the
+   * next draw of the text parses nothing; `prepare()`'s is the caller's only.
    */
-  readonly full: () => ParseResult<unknown>;
+  readonly full: (keep?: boolean, made?: ParseResult<unknown>) => ParseResult<unknown>;
 }
 
 /** An analysis, with the full parse when the call that made it parsed in full. */
@@ -65,7 +67,7 @@ export function parseStep(
 }
 
 /** `plugin`'s full parse: a plugin gives a lean one only when asked for it. */
-export function fullParse(
+function fullParse(
   plugin: AnyPlugin,
   text: string,
   ctx: DiagramParseContext
@@ -73,6 +75,20 @@ export function fullParse(
   const parse = plugin.parse(text, ctx);
   if (parse.lean) throw new MermaidError('INTERNAL', `${plugin.id}: lean parse unasked`);
   return parse;
+}
+
+/** {@link Analysis.full} for `plugin`'s parse of `text` with `ctx`: it holds nothing yet. */
+export function fullSource(
+  plugin: AnyPlugin,
+  text: string,
+  ctx: DiagramParseContext
+): Analysis['full'] {
+  let kept: ParseResult<unknown> | undefined;
+  return (keep, made) => {
+    const full = made ?? kept ?? fullParse(plugin, text, ctx);
+    if (keep) kept = full;
+    return full;
+  };
 }
 
 /** What `detect` found. */
