@@ -27,6 +27,8 @@ import { hover } from './hover.ts';
 import { deepFreeze } from './freeze.ts';
 import type { FoldingRange } from './folding.ts';
 import { lineFoldingRanges, lineSemanticTokens } from './lines.ts';
+import { outline } from './outline.ts';
+import type { DocumentSymbol } from './outline.ts';
 import type { LineFoldingRange, LineSemanticToken } from './lines.ts';
 import { LineIndex, tooDeep } from '@mermaid-js/core/parser-kit';
 import { semanticTokens, withBlockTokens } from './semantic-tokens.ts';
@@ -141,6 +143,12 @@ export interface DocumentSnapshot {
   prepareRename(offset: number): PrepareRenameResult;
   /** Edits renaming the name at `offset` everywhere, or why not (invalid id, clash). */
   rename(offset: number, newName: string): RenameResult;
+  /**
+   * Every symbol once, at its definition (where `definition` goes), nested by the statements
+   * holding the definitions (a subgraph, a composite state), in source order: the outline
+   * (D580). Empty without a facet.
+   */
+  symbols(): readonly DocumentSymbol[];
   /** Folding ranges as offsets (statement kind, `frontMatter`, `directive`). */
   foldingRanges(): readonly FoldingRange[];
   /** The folding ranges by line, as editors fold them (closing `end`/`---` line visible). */
@@ -318,6 +326,24 @@ class Snapshot implements DocumentSnapshot {
   /** Edits renaming the name at `offset` everywhere, or why not (invalid id, clash). */
   rename(offset: number, newName: string): RenameResult {
     return rename(this.#context, this.#occurrences(), offset, newName);
+  }
+
+  /**
+   * The outline (D580). A malformed third-party parse (statements that are not spans) gives
+   * what can be read of it, and nothing rather than a throw (R-LANG-4).
+   */
+  symbols(): readonly DocumentSymbol[] {
+    return this.#memo('symbols', () => {
+      try {
+        return outline(
+          this.#context,
+          this.#occurrences(),
+          this.#context.facet?.declaredOnly === true
+        );
+      } catch {
+        return [];
+      }
+    });
   }
 
   foldingRanges(): readonly FoldingRange[] {

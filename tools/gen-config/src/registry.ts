@@ -362,6 +362,7 @@ export function generateDetectors(manifests: readonly ManifestSource[]): string 
     '/** First-party detectors in v12 detection order, without loaders (`mermaid/slim`). */',
     'export const DETECTORS: readonly FirstPartyEntry[] = [',
   ];
+  const ids: string[] = [];
   for (const [type, source, flags] of V12_DETECTORS) {
     const m = byType.get(type);
     const pattern = `/${source}/${flags}`;
@@ -369,6 +370,7 @@ export function generateDetectors(manifests: readonly ManifestSource[]): string 
       lines.push(`  { type: '${type}', pattern: ${pattern} },`);
       continue;
     }
+    if (!ids.includes(m.manifest.id)) ids.push(m.manifest.id);
     const formats = formatsLiteral(m, type);
     const extra = typeFields(m, type)
       .map((f) => `, ${f}`)
@@ -377,6 +379,12 @@ export function generateDetectors(manifests: readonly ManifestSource[]): string 
       `  { type: '${type}', pattern: ${pattern}, id: '${m.manifest.id}', formats: [${formats}]${extra} },`
     );
   }
-  lines.push('];', '');
+  lines.push(
+    '];',
+    '',
+    '/** The ids of the first-party diagram plugins: the keys of `createMermaid({ diagrams })` in `mermaid/slim`. */',
+    `export type FirstPartyDiagramId = ${ids.map((id) => `'${id}'`).join(' | ') || 'never'};`,
+    ''
+  );
   return lines.join('\n');
 }

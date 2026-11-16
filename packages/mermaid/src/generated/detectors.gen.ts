@@ -42,3 +42,6 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'cynefin', pattern: /^\s*cynefin-beta(?:[\s:]|$)/, id: 'cynefin', formats: ['svg'] },
   { type: 'usecase', pattern: /^\s*usecase-beta(?:\s|$)/, id: 'usecase', formats: ['svg', 'ascii'] },
 ];
+
+/** The ids of the first-party diagram plugins: the keys of `createMermaid({ diagrams })` in `mermaid/slim`. */
+export type FirstPartyDiagramId = 'flowchart' | 'mindmap' | 'architecture' | 'agentflow' | 'c4' | 'kanban' | 'class' | 'er' | 'gantt' | 'info' | 'pie' | 'requirement' | 'sequence' | 'timeline' | 'gitGraph' | 'state' | 'journey' | 'quadrantChart' | 'sankey' | 'packet' | 'xychart' | 'block' | 'eventmodeling' | 'treeView' | 'radar' | 'ishikawa' | 'treemap' | 'railroad' | 'venn' | 'wardley' | 'cynefin' | 'usecase';
