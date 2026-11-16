@@ -225,3 +225,21 @@ describe("the c4 facet's kind to category table", () => {
     expect(c4Language.categories[LEGACY.Str]).toBe('String');
   });
 });
+
+describe('the facet with a c4-beta document (spec #730)', () => {
+  it('parses it with the c4-beta parser', () => {
+    const text = 'c4-beta context\nperson a "A"\n';
+    expect(c4Language.parse(text, { keepTokens: true }).diagnostics).toEqual([]);
+  });
+
+  it('tells the two apart by the parse it is given, not by reading the text again', () => {
+    const betaText = 'c4-beta context\n';
+    const beta = c4Language.parse(betaText, { keepTokens: true, probe: betaText.length });
+    const legacyText = 'C4Context\nPerson(a, "A")\n';
+    // The labels say whose completions they are; a range reads the text, so it is left out.
+    const labels = (text: string) =>
+      c4Language.completions(beta.probe!, { text, result: beta }).map((c) => c.label);
+    expect(labels(betaText)).toContain('softwareSystem');
+    expect(labels(legacyText)).toEqual(labels(betaText));
+  });
+});

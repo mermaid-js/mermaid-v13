@@ -2,6 +2,7 @@
   "$schema": "./node_modules/fallow/schema.json",
   "entry": [
     "tools/check-deps/cli.ts",
+    "tools/pre-push/*cli.ts",
     "e2e/dom/server.ts",
     "e2e/dom/page.ts",
     "packages/*/src/*/index.ts",
@@ -95,6 +96,10 @@
         "patterns": ["packages/bundler-plugin/**"]
       },
       {
+        "name": "language-server",
+        "patterns": ["packages/language-server/**"]
+      },
+      {
         "name": "language",
         "patterns": ["packages/language-*/**"]
       },
@@ -135,6 +140,10 @@
       {
         "from": "language",
         "allow": ["core", "package", "language", "shared"]
+      },
+      {
+        "from": "language-server",
+        "allow": ["core", "package", "language", "shared", "mermaid"]
       }
     ]
   },

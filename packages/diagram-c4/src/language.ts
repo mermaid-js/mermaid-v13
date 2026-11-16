@@ -16,6 +16,7 @@
 import type { DocumentView, LanguageFacet } from '@mermaid-js/core/parser-kit';
 import type { C4BetaDocument } from './beta/ast.ts';
 import { detectC4Beta } from './beta/detect.ts';
+import { isC4Beta } from './beta/model.ts';
 import { parseC4Beta } from './beta/parser.ts';
 import { c4betaCompletions } from './facet/beta-completions.ts';
 import { c4betaHover } from './facet/beta-hover.ts';
@@ -38,10 +39,16 @@ export type * from './parser/index.ts';
  */
 const categories = Object.freeze({ ...c4Categories, ...c4betaCategories });
 
-/** Whether the document is c4-beta: its header decides, as it does for the parse. */
+/**
+ * Whether the document is c4-beta: told by the parse the view holds (its header decided it), so
+ * the text is not preprocessed again on every request.
+ */
 const isBeta = (
   doc: DocumentView<C4Document | C4BetaDocument>
-): doc is DocumentView<C4BetaDocument> => detectC4Beta(doc.text);
+): doc is DocumentView<C4BetaDocument> => {
+  const { model } = doc.result;
+  return typeof model === 'object' && model !== null && isC4Beta(model);
+};
 
 /**
  * The C4 facet. It parses a `c4-beta` header with the c4-beta parser (spec #730); the rest of its

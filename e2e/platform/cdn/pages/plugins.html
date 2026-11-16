@@ -19,11 +19,11 @@ flowchart LR
           id: 'fixturebox',
           formats: ['svg'],
           detector: './detector.js',
-          entry: './index.js',
+          entry: './entry.js',
           export: 'fixturebox',
         },
         detector: (text) => /^\s*fixturebox\b/.test(text),
-        load: () => import('%CDN%/mermaid-fixture-diagram/index.js'),
+        load: () => import('%CDN%/mermaid-fixture-diagram/entry.js'),
       });
     </script>
     <script src="%CDN%/mermaid/dist/mermaid.min.js"></script>
