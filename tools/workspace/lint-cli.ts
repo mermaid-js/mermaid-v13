@@ -11,7 +11,7 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { availableParallelism } from 'node:os';
 import { ROOT } from './diagrams.ts';
-import { lintShards, shardArgs } from './lint.ts';
+import { lintShards, shardArgs, shardCount } from './lint.ts';
 import { printResult, runAll, type Task } from './parallel.ts';
 
 const CACHE_DIR = '.eslintcache';
@@ -27,12 +27,8 @@ const require = createRequire(import.meta.url);
 const eslint = join(dirname(require.resolve('eslint/package.json')), 'bin', 'eslint.js');
 const color = process.stdout.isTTY ? ['--color'] : [];
 
-// About a third of the cores: with Prettier, cspell and (in `pnpm check`) the other steps
-// beside them, more shards only parse the shared packages more often.
-const SHARDS = Math.max(2, Math.round(availableParallelism() / 3));
-
 const tasks: Task[] = [
-  ...lintShards(ROOT, SHARDS).map((shard) => ({
+  ...lintShards(ROOT, shardCount(availableParallelism())).map((shard) => ({
     label: `eslint (${shard.name}: ${shard.paths.length} paths)`,
     command: process.execPath,
     args: [eslint, ...color, ...shardArgs(shard, ESLINT_ARGS, CACHE_DIR)],

@@ -93,3 +93,12 @@ export function shardArgs(
     ...shard.paths,
   ];
 }
+
+/**
+ * How many shards `pnpm lint` uses on `cores` cores: about a third of them (at least 2). With
+ * Prettier, cspell and, in `pnpm check`, the other steps beside them, more shards only parse
+ * the shared packages more often.
+ */
+export function shardCount(cores: number): number {
+  return Math.max(2, Math.round(cores / 3));
+}

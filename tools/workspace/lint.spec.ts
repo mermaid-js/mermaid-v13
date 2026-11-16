@@ -1,10 +1,10 @@
-import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
+import { availableParallelism } from 'node:os';
 import { join } from 'node:path';
 import { ESLint } from 'eslint';
 import { describe, expect, it } from 'vitest';
 import { ROOT } from './diagrams.ts';
-import { lintShards, shardArgs } from './lint.ts';
+import { lintShards, shardArgs, shardCount } from './lint.ts';
 
 const scripts = (
   JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as {
@@ -12,40 +12,51 @@ const scripts = (
   }
 ).scripts;
 
+/** Every file under `dir`, relative to ROOT, as ESLint walks the tree (not git's list). */
+function walk(dir: string): string[] {
+  return readdirSync(join(ROOT, dir), { withFileTypes: true }).flatMap((entry) => {
+    const path = dir === '.' ? entry.name : `${dir}/${entry.name}`;
+    // ESLint never lints these (its own defaults and the config's global ignores).
+    if (['node_modules', '.git', 'dist', '.claude'].includes(entry.name)) return [];
+    return entry.isDirectory() ? walk(path) : [path];
+  });
+}
+
 describe('the ESLint shards', { timeout: 120_000 }, () => {
   const shards = lintShards(ROOT, 5);
+  const packageDirs = readdirSync(join(ROOT, 'packages'), { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    .map((e) => `packages/${e.name}`);
 
-  it('lint every file `eslint .` lints, each in exactly one shard', async () => {
-    const files = execFileSync('git', ['ls-files', '-co', '--exclude-standard'], {
-      cwd: ROOT,
-      encoding: 'utf8',
-    })
-      .split('\n')
-      .filter((f) => /\.(?:[cm]?[jt]s)$/.test(f));
-    expect(files.length).toBeGreaterThan(1000);
+  it('put every package directory in exactly one shard, and the rest in `rest`, for any count', () => {
+    for (const count of [2, 3, 5, 8, shardCount(availableParallelism()), shardCount(4)]) {
+      const all = lintShards(ROOT, count);
+      const rest = all.filter((s) => s.name === 'rest');
+      expect(rest, `count ${count}`).toEqual([
+        { name: 'rest', paths: ['.'], ignore: ['packages/*/'], weight: 0 },
+      ]);
+      const paths = all.filter((s) => s.name !== 'rest').flatMap((s) => [...s.paths]);
+      expect(paths.sort(), `count ${count}`).toEqual([...packageDirs].sort());
+      expect(all.filter((s) => s.name !== 'rest').every((s) => s.ignore.length === 0)).toBe(true);
+    }
+  });
 
+  it('leave to the package shards exactly the files under a package directory', async () => {
+    // The rest shard is `.` with `packages/*/` ignored; by ESLint's own ignore logic that
+    // removes the files under a package directory and nothing else.
+    const files = walk('.').filter((f) => /\.(?:[cm]?[jt]s)$/.test(f));
     const whole = new ESLint({ cwd: ROOT });
-    const byShard = shards.map((shard) => ({
-      shard,
-      eslint: new ESLint({ cwd: ROOT, ignorePatterns: [...shard.ignore] }),
-    }));
-    const missed: string[] = [];
-    const twice: string[] = [];
+    const rest = new ESLint({ cwd: ROOT, ignorePatterns: ['packages/*/'] });
+    const wrong: string[] = [];
     let linted = 0;
     for (const file of files) {
       if (await whole.isPathIgnored(file)) continue;
       linted++;
-      let owners = 0;
-      for (const { shard, eslint } of byShard) {
-        const under = shard.paths.some((p) => p === '.' || file.startsWith(`${p}/`));
-        if (under && !(await eslint.isPathIgnored(file))) owners++;
-      }
-      if (owners === 0) missed.push(file);
-      if (owners > 1) twice.push(file);
+      const inPackage = packageDirs.some((dir) => file.startsWith(`${dir}/`));
+      if ((await rest.isPathIgnored(file)) !== inPackage) wrong.push(file);
     }
     expect(linted).toBeGreaterThan(1000);
-    expect(missed).toEqual([]);
-    expect(twice).toEqual([]);
+    expect(wrong).toEqual([]);
   });
 
   it('are package shards of about equal size, and the rest', () => {
