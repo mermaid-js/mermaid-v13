@@ -29,7 +29,7 @@ export {
   V12_SPACING,
   type SpacingConfig,
 } from './layered/index.ts';
-export { countCrossings, validateLayout } from './validate.ts';
+export { countCrossings, titleCrossings, validateLayout } from './validate.ts';
 export { validateGrid } from './validate-grid.ts';
 export {
   cellProfile,
