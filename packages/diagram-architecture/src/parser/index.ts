@@ -2,9 +2,7 @@
  * The architecture parser's public surface: the parser (#599), detection, and the lexer gated
  * against v12's Langium lexer (#594).
  */
-import { sourceView } from '@mermaid-js/core/parser-kit';
-import { preprocess } from '@mermaid-js/core/preprocess';
-import { seenTokens } from '@mermaid-js/shared/parser/seen-tokens';
+import { bodyTokens } from '@mermaid-js/shared/parser/seen-tokens';
 import type { SeenToken } from '@mermaid-js/shared/parser/seen-tokens';
 import { lex } from './lexer.ts';
 
@@ -24,12 +22,5 @@ export type ArchitectureToken = SeenToken;
  * break v12 appended.
  */
 export function architectureTokens(src: string): ArchitectureToken[] {
-  const pre = preprocess(src);
-  const view = sourceView(
-    src,
-    pre.bodyStart,
-    pre.directives.map((d) => d.range)
-  );
-  const stream = lex(src, pre.bodyStart, view);
-  return seenTokens(src, stream, view);
+  return bodyTokens(src, lex);
 }

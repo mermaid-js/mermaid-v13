@@ -6,8 +6,7 @@
  * (`accTitle`, `accDescr`, the one-line title) are `@mermaid-js/shared/parser/common-values`.
  */
 export { accDescrValue, accTitleValue } from '@mermaid-js/shared/parser/common-values';
-import { BACKSLASH } from '@mermaid-js/core/parser-kit';
-import { oneLine } from '@mermaid-js/shared/parser/common-values';
+import { oneLine, unquote } from '@mermaid-js/shared/parser/common-values';
 import type { RailroadNotation } from './tokens.ts';
 
 /** v12's escapes in IR, EBNF and PEG strings: these three; any other `\c` is `c`. */
@@ -19,19 +18,7 @@ const ESCAPES: Readonly<Record<string, string>> = { n: '\n', r: '\r', t: '\t' };
  * stays.
  */
 export function decodeEscaped(image: string): string {
-  const body = image.slice(1, -1);
-  if (!body.includes('\\')) return body;
-  let out = '';
-  for (let i = 0; i < body.length; i++) {
-    const c = body[i] ?? '';
-    if (c.charCodeAt(0) !== BACKSLASH || i + 1 >= body.length) {
-      out += c;
-      continue;
-    }
-    const e = body[++i] ?? '';
-    out += ESCAPES[e] ?? e;
-  }
-  return out;
+  return unquote(image, ESCAPES, true);
 }
 
 /** A quoted string's value: decoded in IR, EBNF and PEG; the text between the quotes in ABNF. */

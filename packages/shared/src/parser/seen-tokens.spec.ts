@@ -1,7 +1,7 @@
 import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { TokenStream } from '@mermaid-js/core/parser-kit';
 import { describe, expect, it } from 'vitest';
-import { seenTokens } from './seen-tokens.ts';
+import { bodyTokens, seenIndices, seenTokens } from './seen-tokens.ts';
 
 const WORD = 10;
 
@@ -60,5 +60,32 @@ describe('seenTokens', () => {
     const view = sourceView(src, 0, []);
     const out = seenTokens(src, stream(src, [[WORD, 0, 4]]), view);
     expect(out[0]?.text).toBe('a\nb');
+  });
+});
+
+describe('seenIndices', () => {
+  it('gives the stream indices of the tokens v12 saw', () => {
+    const src = 'pie\n%% gone\nx';
+    const s = stream(src, [
+      [WORD, 0, 3],
+      [Kind.Newline, 3, 4],
+      [Kind.Comment, 4, 12],
+      [WORD, 12, 13],
+    ]);
+    expect(seenIndices(s, sourceView(src, 0, []))).toEqual([0, 1, 3]);
+  });
+});
+
+describe('bodyTokens', () => {
+  it('lexes from the body start, after front matter', () => {
+    const src = '---\ntitle: t\n---\npie';
+    const from = src.indexOf('pie');
+    const seen: number[] = [];
+    const out = bodyTokens(src, (text, at) => {
+      seen.push(at);
+      return stream(text, [[WORD, at, text.length]]);
+    });
+    expect(seen).toEqual([from]);
+    expect(out).toEqual([{ kind: WORD, text: 'pie', range: { start: from, end: src.length } }]);
   });
 });
