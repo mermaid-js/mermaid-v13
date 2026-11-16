@@ -120,7 +120,7 @@ try {
       // R-PERF-8: core, the entry's static closure (D161).
       coreSize: core.size,
       // #814: lines by category and gzip bytes per diagram chunk, from the same build.
-      codeSize: measureCodeSize(REPO_ROOT, core.bundle),
+      codeSize: await measureCodeSize(REPO_ROOT, core.bundle),
       renderers: await driveBrowser({
         browser,
         server,

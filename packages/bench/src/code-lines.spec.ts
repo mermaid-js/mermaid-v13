@@ -19,14 +19,15 @@ describe('countCodeLines', () => {
     expect(countCodeLines(source)).toBe(3);
   });
 
-  it('counts every line of a multi-line string, comment markers included', () => {
+  it('counts every non-blank line of a multi-line string, comment markers included', () => {
     const source = [
       'const t = `first',
       '// not a comment',
       '',
+      '   ',
       '/* not a comment either */`;',
     ].join('\n');
-    expect(countCodeLines(source)).toBe(4);
+    expect(countCodeLines(source)).toBe(3);
   });
 
   it('reads a regular expression with comment markers as code', () => {

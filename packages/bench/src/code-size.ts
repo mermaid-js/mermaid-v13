@@ -13,7 +13,7 @@ import type { Bundle } from './build.ts';
 import { sizeOf } from './build.ts';
 import { categoryOf } from './code-categories.ts';
 import { countFileLines, listSourceFiles } from './code-lines.ts';
-import { closureSize, flowchartClosureSize } from './size-budget.ts';
+import { chunkOf, closureSize, flowchartClosureSize } from './size-budget.ts';
 
 /** The root of this checkout. */
 export const REPO_ROOT = fileURLToPath(new URL('../../../', import.meta.url));
@@ -83,8 +83,37 @@ export interface CodeSizeReport {
  * The full report for this checkout: lines from `root`, bytes from `bundle`, the production
  * build of the core entry that `measureStaticClosure` makes for the size gates.
  */
-export function measureCodeSize(root: string, bundle: Bundle): CodeSizeReport {
-  return { lines: measureLines(root), chunks: diagramChunks(bundle), pele: peleChunks() };
+export async function measureCodeSize(root: string, bundle: Bundle): Promise<CodeSizeReport> {
+  const pkgs = Object.values(bundle.graph)
+    .map((n) => DIAGRAM_ENTRY.exec(n.entryPoint ?? '')?.[1])
+    .filter((p): p is string => p !== undefined);
+  return {
+    lines: measureLines(root),
+    chunks: diagramChunks(bundle, await defaultLayouts(pkgs)),
+    pele: peleChunks(),
+  };
+}
+
+/**
+ * The default layout engine of each diagram package whose plugin names one other than
+ * `layered` (`layoutEngine.default`, D284/D285), by package folder. Read from the plugins
+ * themselves, which the bench depends on, so a new default shows up without a list here.
+ */
+export async function defaultLayouts(
+  pkgs: readonly string[],
+  load: (pkg: string) => Promise<Record<string, unknown>> = (pkg) =>
+    import(`@mermaid-js/${pkg}`) as Promise<Record<string, unknown>>
+): Promise<Record<string, string>> {
+  const out: Record<string, string> = {};
+  for (const pkg of pkgs) {
+    const mod = await load(pkg);
+    for (const value of Object.values(mod)) {
+      const engine = (value as { layoutEngine?: { default?: unknown } } | null)?.layoutEngine
+        ?.default;
+      if (typeof engine === 'string' && engine !== 'layered') out[pkg] = engine;
+    }
+  }
+  return out;
 }
 
 /** Gzip-9 bytes of one diagram's code. */
@@ -93,8 +122,14 @@ export interface DiagramChunk {
   pkg: string;
   /** The diagram's own chunk, the one the registry imports. */
   chunk: number;
-  /** What an SVG render of the diagram loads beyond core: the chunk and its static imports. */
+  /** The diagram's static closure beyond core: its chunk and the chunks it imports statically. */
   closure: number;
+  /**
+   * The lazy chunk of its default layout engine, which the registry loads for every render of
+   * the type (mindmap's `tree`, architecture's `compass`): bytes beyond core and `closure`.
+   * Absent when the default engine is in core (`layered`).
+   */
+  layout?: { engine: string; bytes: number };
 }
 
 export interface ChunkSizes {
@@ -115,20 +150,42 @@ const gzipOf = (b: Bundle, paths: Iterable<string>) => {
   return b.files.filter((f) => set.has(f.path)).reduce((a, f) => a + f.gzip, 0);
 };
 
-/** Gzip bytes per diagram chunk of a production build of the core entry (`measureStaticClosure`). */
-export function diagramChunks(b: Bundle): ChunkSizes {
+/**
+ * The lazy chunk of a first-party layout engine: the registry loads engine `<name>` from
+ * `@mermaid-js/core/layout/<name>`, whose source is `packages/core/src/layout/<name>/index.ts`.
+ */
+const engineChunk = (b: Bundle, engine: string) =>
+  chunkOf(b, `packages/core/src/layout/${engine}/index.ts`);
+
+/**
+ * Gzip bytes per diagram chunk of a production build of the core entry (`measureStaticClosure`).
+ * `layouts` names each package's default engine (`defaultLayouts`), whose lazy chunk is added.
+ */
+export function diagramChunks(
+  b: Bundle,
+  layouts: Readonly<Record<string, string>> = {}
+): ChunkSizes {
   const core = closureSize(b);
   const inCore = new Set(core.files.map((f) => f.path));
+  const beyond = (roots: string[], seen: ReadonlySet<string>) =>
+    closureSize(b, roots).files.filter((f) => !seen.has(f.path));
   const diagrams: DiagramChunk[] = [];
   for (const [file, node] of Object.entries(b.graph)) {
     const pkg = DIAGRAM_ENTRY.exec(node.entryPoint ?? '')?.[1];
     if (pkg === undefined) continue;
-    const beyond = closureSize(b, [file]).files.filter((f) => !inCore.has(f.path));
-    diagrams.push({
+    const own = beyond([file], inCore);
+    const entry: DiagramChunk = {
       pkg,
       chunk: gzipOf(b, [file]),
-      closure: beyond.reduce((a, f) => a + f.gzip, 0),
-    });
+      closure: own.reduce((a, f) => a + f.gzip, 0),
+    };
+    const engine = layouts[pkg];
+    const chunk = engine === undefined ? undefined : engineChunk(b, engine);
+    if (engine !== undefined && chunk !== undefined) {
+      const seen = new Set([...inCore, ...own.map((f) => f.path)]);
+      entry.layout = { engine, bytes: beyond([chunk], seen).reduce((a, f) => a + f.gzip, 0) };
+    }
+    diagrams.push(entry);
   }
   return {
     core: core.gzip,

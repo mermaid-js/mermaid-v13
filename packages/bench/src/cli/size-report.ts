@@ -26,10 +26,10 @@ const report: CodeSizeReport & { root: string; commit?: string } = root
   : {
       root: REPO_ROOT,
       ...commitInfo(),
-      ...measureCodeSize(
+      ...(await measureCodeSize(
         REPO_ROOT,
         (await measureStaticClosure(readSizeBudget().core.entry)).bundle
-      ),
+      )),
     };
 
 const md = [

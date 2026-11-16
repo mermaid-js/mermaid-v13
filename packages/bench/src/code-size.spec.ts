@@ -1,12 +1,16 @@
-/** The line half of the size report (#814): lines per package and category of a checkout. */
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+/**
+ * The size report (#814): lines per package and category of a checkout, and gzip bytes per
+ * diagram chunk. The equality with the gates' own figures on the real build is checked in
+ * `core-size.spec.ts`, which already makes that build.
+ */
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { beforeAll, describe, expect, it } from 'vitest';
-import type { ChunkSizes } from './code-size.ts';
-import { diagramChunks, measureLines, peleChunks } from './code-size.ts';
-import type { ClosureSize } from './size-budget.ts';
-import { flowchartClosureSize, measureStaticClosure, readSizeBudget } from './size-budget.ts';
+import { describe, expect, it } from 'vitest';
+import type { Bundle } from './build.ts';
+import { sizeOf } from './build.ts';
+import { defaultLayouts, diagramChunks, measureLines, peleChunks } from './code-size.ts';
+import { FLOWCHART_ENTRY } from './size-budget.ts';
 
 function checkout(files: Record<string, string>): string {
   const root = mkdtempSync(join(tmpdir(), 'mermaid-lines-'));
@@ -54,54 +58,133 @@ describe('measureLines', () => {
   });
 });
 
-describe('diagramChunks (v13 production build)', () => {
-  let core: ClosureSize;
-  let chunks: ChunkSizes;
-  beforeAll(async () => {
-    core = await measureStaticClosure(readSizeBudget().core.entry);
-    chunks = diagramChunks(core.bundle);
-  }, 60_000);
+/**
+ * A production build of the core entry, by hand: core is `index.js` and `chunks/core.js`;
+ * flowchart and mindmap share `chunks/shared.js`; the tree engine is a lazy chunk with its own
+ * static import. Gzip sizes are round numbers so the sums can be read off.
+ */
+function handBuiltBundle(): Bundle {
+  const gzip: Record<string, number> = {
+    'index.js': 100,
+    'chunks/core.js': 50,
+    'chunks/flow.js': 30,
+    'chunks/mind.js': 20,
+    'chunks/shared.js': 7,
+    'chunks/tree.js': 9,
+    'chunks/tree-dep.js': 4,
+  };
+  const s = (path: string) => ({ path, kind: 'static' as const });
+  const d = (path: string) => ({ path, kind: 'dynamic' as const });
+  return {
+    outdir: '/out',
+    entryFile: 'index.js',
+    files: Object.entries(gzip).map(([path, g]) => ({ path, raw: g * 3, gzip: g, brotli: g })),
+    staticClosure: ['index.js', 'chunks/core.js'],
+    graph: {
+      'index.js': {
+        entryPoint: 'packages/mermaid/src/cdn.ts',
+        imports: [
+          s('chunks/core.js'),
+          d('chunks/flow.js'),
+          d('chunks/mind.js'),
+          d('chunks/tree.js'),
+        ],
+        inputs: [],
+      },
+      'chunks/core.js': { imports: [], inputs: [] },
+      'chunks/flow.js': {
+        entryPoint: FLOWCHART_ENTRY,
+        imports: [s('chunks/core.js'), s('chunks/shared.js')],
+        inputs: [],
+      },
+      'chunks/mind.js': {
+        entryPoint: 'packages/diagram-mindmap/src/index.ts',
+        imports: [s('chunks/core.js'), s('chunks/shared.js')],
+        inputs: [],
+      },
+      'chunks/shared.js': { imports: [], inputs: [] },
+      'chunks/tree.js': {
+        entryPoint: 'packages/core/src/layout/tree/index.ts',
+        imports: [s('chunks/core.js'), s('chunks/tree-dep.js')],
+        inputs: [],
+      },
+      'chunks/tree-dep.js': { imports: [], inputs: [] },
+    },
+  };
+}
 
-  it('reports the core and loaded figures the size gates check', () => {
-    expect(chunks.core).toBe(core.size.gzip);
-    expect(chunks.loaded).toBe(flowchartClosureSize(core.bundle).gzip);
+describe('diagramChunks', () => {
+  const chunks = diagramChunks(handBuiltBundle(), { 'diagram-mindmap': 'tree' });
+
+  it('gives core and core + flowchart (loaded) as the size gates measure them', () => {
+    expect(chunks.core).toBe(150);
+    expect(chunks.loaded).toBe(150 + 30 + 7);
   });
 
-  it('sizes the chunk of every diagram package, and what its render loads beyond core', () => {
-    const names = chunks.diagrams.map((d) => d.pkg);
-    expect(names).toContain('diagram-flowchart');
-    expect(names).toContain('diagram-pie');
-    expect(names).toEqual([...names].sort());
-    for (const d of chunks.diagrams) {
-      expect(d.chunk).toBeGreaterThan(0);
-      expect(d.closure).toBeGreaterThanOrEqual(d.chunk);
-    }
-    const flowchart = chunks.diagrams.find((d) => d.pkg === 'diagram-flowchart')!;
-    expect(chunks.core + flowchart.closure).toBe(chunks.loaded);
+  it('sizes each diagram chunk, its static closure beyond core, and its default layout chunk', () => {
+    expect(chunks.diagrams).toEqual([
+      { pkg: 'diagram-flowchart', chunk: 30, closure: 37 },
+      { pkg: 'diagram-mindmap', chunk: 20, closure: 27, layout: { engine: 'tree', bytes: 13 } },
+    ]);
   });
 
   it('totals every output file once, core included', () => {
-    expect(chunks.files).toBe(core.bundle.files.length);
-    expect(chunks.total).toBe(core.bundle.files.reduce((a, f) => a + f.gzip, 0));
+    expect(chunks).toMatchObject({ total: 220, files: 7 });
+  });
+
+  it('adds no layout for an engine that has no lazy chunk (layered is in core)', () => {
+    const plain = diagramChunks(handBuiltBundle(), { 'diagram-flowchart': 'layered' });
+    expect(plain.diagrams[0]).toEqual({ pkg: 'diagram-flowchart', chunk: 30, closure: 37 });
   });
 });
 
-describe('peleChunks (the published build the bench depends on)', () => {
-  const pele = peleChunks();
+describe('defaultLayouts', () => {
+  // The plugins' own shapes; importing the real packages here would cost seconds of transform.
+  const modules: Record<string, Record<string, unknown>> = {
+    'diagram-mindmap': { mindmap: { id: 'mindmap', layoutEngine: { default: 'tree' } }, other: 1 },
+    'diagram-architecture': { architecture: { layoutEngine: { default: 'compass' } } },
+    'diagram-flowchart': { flowchart: { layoutEngine: { default: 'layered' } } },
+    'diagram-pie': { pie: { id: 'pie' }, nothing: null },
+  };
 
-  it('sizes Pele core and each diagram entry beyond core, chunks gzipped one by one', () => {
-    expect(pele.core).toBeGreaterThan(0);
-    const flowchart = pele.diagrams.find((d) => d.diagram === 'flowchart');
-    expect(flowchart?.closure).toBeGreaterThan(0);
-    expect(pele.diagrams.length).toBeGreaterThan(20);
-    expect(pele.total).toBeGreaterThan(flowchart!.closure);
+  it("reads each diagram plugin's default layout engine, leaving out layered", async () => {
+    const layouts = await defaultLayouts(Object.keys(modules), (pkg) =>
+      Promise.resolve(modules[pkg]!)
+    );
+    expect(layouts).toEqual({ 'diagram-mindmap': 'tree', 'diagram-architecture': 'compass' });
+  });
+});
+
+describe('peleChunks', () => {
+  it("sizes a Pele build's core and each diagram entry beyond core, file by file", () => {
+    const dir = checkout({
+      'package.json': '{"version":"9.9.9"}',
+      'dist/esm/core.js': 'import{a}from"./chunks/A.js";export{a};',
+      'dist/esm/lazy.js': 'import"./chunks/A.js";const f=()=>import("./chunks/C.js");',
+      'dist/esm/chunks/A.js': 'export const a=1;',
+      'dist/esm/chunks/B.js': 'import{a}from"./A.js";export const b=a;',
+      'dist/esm/chunks/C.js': 'export const c=3;',
+      'dist/esm/diagrams/pie.js':
+        'import{b}from"../chunks/B.js";import"../chunks/A.js";export{b as default};',
+    });
+    const pele = peleChunks(dir);
+    const gz = (p: string) => sizeOf(p, readFileSync(join(dir, 'dist/esm', p))).gzip;
+    expect(pele.version).toBe('9.9.9');
+    expect(pele.core).toBe(gz('core.js') + gz('chunks/A.js'));
+    // The dynamic import in lazy.js is not followed; A.js is core's.
+    expect(pele.diagrams).toEqual([
+      { diagram: 'pie', closure: gz('diagrams/pie.js') + gz('chunks/B.js') },
+    ]);
+    expect(pele.files).toBe(6);
   });
 
-  // Spec #813 measured Pele 1.13.0 in decimal kilobytes: 19.2 KB gz for core and 313 KB over
-  // all 122 files.
-  it.runIf(pele.version === '1.13.0')('gives the figures spec #813 measured on 1.13.0', () => {
+  // The bench's own Pele, against the figures spec #813 measured (decimal KB: 19.2 KB gz core,
+  // 313 KB over 122 files). A Pele bump fails here on purpose: re-measure and update the figures.
+  it('measures the pinned Pele 1.13.0 as spec #813 did', () => {
+    const pele = peleChunks();
+    expect(pele.version).toBe('1.13.0');
     expect(Math.round(pele.core / 100) / 10).toBe(19.2);
     expect(Math.round(pele.total / 1000)).toBe(313);
     expect(pele.files).toBe(122);
-  });
+  }, 30_000);
 });

@@ -60,6 +60,7 @@
     "mermaid-v12": "npm:mermaid@^12.2.0",
     "mermaid-v12-frozen": "npm:mermaid@12.2.0",
     "pele": "^1.13.0",
-    "tsx": "^4.20.6"
+    "tsx": "^4.20.6",
+    "typescript": "~6.0.3"
   }
 }

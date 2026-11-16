@@ -25,6 +25,8 @@ export type CategoryId =
 export interface Category {
   id: CategoryId;
   label: string;
+  /** A column header for the per-package table. */
+  short: string;
   /** Matched against `packages/<folder>/src/…`. */
   match: readonly RegExp[];
 }
@@ -39,16 +41,19 @@ export const CATEGORIES: readonly Category[] = [
   {
     id: 'tooling',
     label: 'Private tooling (bench, conformance, dev); not in the spec #813 total',
+    short: 'Tooling',
     match: [/^packages\/(bench|conformance|dev)\/src\//],
   },
   {
     id: 'generated',
     label: 'Generated .ts',
+    short: 'Generated',
     match: [/^packages\/[^/]+\/src\/(.*\/)?generated\//, /^packages\/[^/]+\/src\/.*\.gen\.ts$/],
   },
   {
     id: 'test',
     label: 'Test support kept in src',
+    short: 'Test',
     match: [
       /^packages\/[^/]+\/src\/(.*\/)?(fixtures|invariants|harness|test-context|testing|v12-specs|__tests__)(\/|\.ts$)/,
       /^packages\/[^/]+\/src\/.*\.fixtures\.ts$/,
@@ -57,6 +62,7 @@ export const CATEGORIES: readonly Category[] = [
   {
     id: 'editor',
     label: 'Editor support (facets, language service)',
+    short: 'Editor',
     match: [
       /^packages\/language-[^/]+\/src\//,
       /^packages\/[^/]+\/src\/(.*\/)?(facet|language)(\/|\.ts$)/,
@@ -67,26 +73,31 @@ export const CATEGORIES: readonly Category[] = [
   {
     id: 'ascii',
     label: 'ASCII output',
+    short: 'ASCII',
     match: [/^packages\/[^/]+\/src\/ascii(\/|\.ts$)/],
   },
   {
     id: 'swimlane',
     label: 'Swimlane engine',
+    short: 'Swimlane',
     match: [re(C, 'layout/swimlane/')],
   },
   {
     id: 'shared-layout',
     label: 'Shared layout (layered, compass, tree, hops)',
+    short: 'Shared layout',
     match: [re(C, 'layout/'), /^packages\/shared\/src\/layout\//],
   },
   {
     id: 'theme-config',
     label: 'Theme and config',
+    short: 'Theme, config',
     match: [re(C, '(theme|config)/'), re(D, '(theme/|config/|config\\.ts$|config-defaults\\.ts$)')],
   },
   {
     id: 'plugins',
     label: 'Plugins, ELK adapter, DOM',
+    short: 'Plugins',
     match: [
       /^packages\/(plugin-[^/]+|layout-elk|bundler-plugin)\/src\//,
       /^packages\/mermaid\/src\/dom\.ts$/,
@@ -95,6 +106,7 @@ export const CATEGORIES: readonly Category[] = [
   {
     id: 'parsing',
     label: 'Parsing (lexers, parsers, AST, model building, preprocess)',
+    short: 'Parsing',
     match: [
       re(C, '(parser-kit|preprocess)/'),
       re(D, 'parser/'),
@@ -105,6 +117,7 @@ export const CATEGORIES: readonly Category[] = [
   {
     id: 'render',
     label: 'Diagram layout, render, SVG, text',
+    short: 'Render',
     match: [
       re(C, '(svg|text)/'),
       re(D, '(layout|render|shapes|svg|solver|schedule|dates|format|beta)/'),
@@ -114,6 +127,7 @@ export const CATEGORIES: readonly Category[] = [
   {
     id: 'api',
     label: 'API, pipeline, glue',
+    short: 'API',
     match: [
       /^packages\/mermaid\/src\//,
       re(C, '(pipeline|limits|timing)/'),

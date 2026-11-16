@@ -75,6 +75,9 @@ describe('code categories', () => {
   it('names each category once, with a label', () => {
     const ids = CATEGORIES.map((c) => c.id);
     expect(new Set(ids).size).toBe(ids.length);
-    for (const c of CATEGORIES) expect(c.label).not.toBe('');
+    for (const c of CATEGORIES) {
+      expect(c.label).not.toBe('');
+      expect(c.short).not.toBe('');
+    }
   });
 });

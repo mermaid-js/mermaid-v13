@@ -2,9 +2,10 @@
  * Line counts for the size report (#814, spec #813): "lines" are non-blank, non-comment lines of
  * the non-spec `.ts` files under `packages/*\/src`, the measure spec #813's table uses.
  *
- * A line counts when a token of the TypeScript syntax tree starts, ends or continues on it, so a
- * multi-line string or template counts on every line, and a regular expression that holds `//`
- * or `/*` is read as code. Comments, doc comments included, are trivia and never count.
+ * A non-blank line counts when a token of the TypeScript syntax tree starts, ends or continues on
+ * it, so a multi-line string or template counts on each of its non-blank lines, and a regular
+ * expression that holds `//` or `/*` is read as code. Comments, doc comments included, are
+ * trivia and never count.
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -14,6 +15,7 @@ import ts from 'typescript';
 export function countCodeLines(text: string): number {
   const file = ts.createSourceFile('x.ts', text, ts.ScriptTarget.Latest, false, ts.ScriptKind.TS);
   const lines = new Set<number>();
+  const blank = text.split('\n').map((l) => l.trim() === '');
   const lineOf = (pos: number) => file.getLineAndCharacterOfPosition(pos).line;
   const visit = (node: ts.Node): void => {
     if (node.kind >= ts.SyntaxKind.FirstJSDocNode && node.kind <= ts.SyntaxKind.LastJSDocNode)
@@ -27,7 +29,8 @@ export function countCodeLines(text: string): number {
     const start = node.getStart(file);
     if (start >= node.end) return;
     const last = lineOf(node.end);
-    for (let line = lineOf(start); line <= last; line++) lines.add(line);
+    // A blank line inside a multi-line string or template is still blank.
+    for (let line = lineOf(start); line <= last; line++) if (!blank[line]) lines.add(line);
   };
   visit(file);
   return lines.size;
