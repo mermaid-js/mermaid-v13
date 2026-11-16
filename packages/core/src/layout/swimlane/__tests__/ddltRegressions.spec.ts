@@ -30,6 +30,18 @@ function gap(a: Point, b: Point, r: Rect): number {
   return Math.hypot(dx, dy);
 }
 
+/** A segment that runs less than this far inside a box only touches it (v12's `TOUCH_LENGTH`). */
+const TOUCH_LENGTH = 1;
+
+/** How far the square segment from `a` to `b` runs strictly inside `r`; 0 for a slanted one. */
+function lengthInside(a: Point, b: Point, r: Rect): number {
+  const overlap = (from: number, to: number, low: number, high: number) =>
+    Math.max(0, Math.min(Math.max(from, to), high) - Math.max(Math.min(from, to), low));
+  if (a.x === b.x) return a.x > r.left && a.x < r.right ? overlap(a.y, b.y, r.top, r.bottom) : 0;
+  if (a.y === b.y) return a.y > r.top && a.y < r.bottom ? overlap(a.x, b.x, r.left, r.right) : 0;
+  return 0;
+}
+
 /**
  * The locales whose collation orders the ids of `regressions/locale-independent-order` other than
  * by code unit: Estonian puts z before t, Czech ch after h, Danish b after B, Swedish a-umlaut
@@ -139,6 +151,28 @@ describe('swimlane DDLT regressions', () => {
     expect(Math.abs(back[0]!.x - down[0]!.x)).toBeCloseTo(EDGE_ROUTING.MIN_ARROWHEAD_SPACING, 6);
     expect(back[0]!.x).toBeCloseTo(back[1]!.x, 6);
     expect(down[0]!.x).toBeCloseTo(down[1]!.x, 6);
+  });
+
+  // mermaid-js/mermaid#8695: the router ran "B2 -> A2" on through A2 and started "B3 -> A1" inside
+  // B3. Each edge is cut where it meets its box, so no route runs on inside a box at either end.
+  it('#684: no route of edge-end-on-box runs inside the box at either of its ends', () => {
+    const { graph, model, issues } = layOut('regressions/edge-end-on-box');
+    expect(issues.map((i) => i.message)).toEqual([]);
+    const runsInside: string[] = [];
+    for (const e of graph.edges) {
+      const points = model.edges.get(e.id)!.points;
+      for (const end of [e.source, e.target]) {
+        const r = box(model.nodes.get(end)!);
+        const deepest = Math.max(
+          0,
+          ...points.slice(1).map((p, i) => lengthInside(points[i]!, p, r))
+        );
+        if (deepest >= TOUCH_LENGTH)
+          runsInside.push(`${e.id} runs ${deepest.toFixed(1)} px inside ${end}`);
+      }
+    }
+    expect(graph.edges.length).toBeGreaterThan(0);
+    expect(runsInside).toEqual([]);
   });
 
   // mermaid-js/mermaid#8770: ids are ordered by code unit, so the layout is the same for a reader
