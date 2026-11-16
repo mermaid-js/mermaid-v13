@@ -25,8 +25,14 @@ function shapeFiles(type: string): string[] {
 }
 
 describe('shared shape chunks (#822)', () => {
+  it("keeps every shape file out of core's static closure", () => {
+    const inputs = bundle.staticClosure.flatMap((f) => bundle.graph[f]!.inputs);
+    expect(inputs.length).toBeGreaterThan(0);
+    expect(inputs.filter((p) => p.startsWith('packages/shared/src/shapes/'))).toEqual([]);
+  });
+
   it('loads every shape file for flowchart, which can name any shape', () => {
-    expect(shapeFiles('flowchart')).toEqual(['basic.ts', 'extended.ts', 'kit.ts', 'person.ts']);
+    expect(shapeFiles('flowchart')).toEqual(['basic.ts', 'extended.ts', 'kit.ts']);
   });
 
   it('loads no extended shape for agentflow and block, which draw only basic ones', () => {
@@ -34,7 +40,7 @@ describe('shared shape chunks (#822)', () => {
     expect(shapeFiles('block')).toEqual(['basic.ts', 'kit.ts']);
   });
 
-  it("loads the kit and the person figure for c4, and none of flowchart's shapes", () => {
-    expect(shapeFiles('c4')).toEqual(['kit.ts', 'person.ts']);
+  it("loads only the kit for c4, which draws none of flowchart's shapes", () => {
+    expect(shapeFiles('c4')).toEqual(['kit.ts']);
   });
 });

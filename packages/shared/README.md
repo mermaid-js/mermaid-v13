@@ -14,10 +14,9 @@ Code that Mermaid v13 diagram packages share, kept out of `@mermaid-js/core` so 
 | `/parser/facet` | Completion and hover helpers for a diagram's `./language` entry |
 | `/parser/flow` | The lexer, parser and model builder base flowchart shares with the diagrams whose grammar was cut from its own (agentflow) |
 | `/parser/flow-facet` | Completion and hover for the same diagrams' `./language` entries |
-| `/shapes/kit` | Shape types, paddings, sizers and path builders |
+| `/shapes/kit` | Shape types, paddings, sizers and path builders, and the person figure's proportions |
 | `/shapes/basic` | The node shapes several diagrams draw, one export per shape: the bracket-syntax shapes, the lined document and the collapsed-group card |
 | `/shapes/extended` | The node shapes only flowchart draws |
-| `/shapes/person` | The person figure's proportions, for flowchart's `person` shape and C4's person |
 | `/svg/document` | The SVG root, title and description, class lists, palette slots and the style cache every renderer uses |
 | `/svg/route` | Edge paths for graph diagrams |
 | `/svg/arrowheads` | Arrowhead markers and the trim they need |

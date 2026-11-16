@@ -15,8 +15,15 @@
  * `2·pad`, as the others.
  */
 // cspell:ignore kepano
-import { capRy, cylinderSize, queueRx, type PadXY } from '@mermaid-js/shared/shapes/kit';
-import { headRadius, neck, personSize } from '@mermaid-js/shared/shapes/person';
+import {
+  capRy,
+  cylinderSize,
+  personHead,
+  personNeck,
+  personSize,
+  queueRx,
+  type PadXY,
+} from '@mermaid-js/shared/shapes/kit';
 import { kindParts, type C4Element } from '../model.ts';
 import { C4_METRICS as M } from './metrics.ts';
 import type { C4ShapeId, Point, Rect } from './types.ts';
@@ -70,8 +77,8 @@ export function personParts({ x, y, width: w, height: h }: Rect, figure = true):
       body: { x, y: y + M.personHead, width: w, height: h - M.personHead },
     };
   }
-  const r = headRadius(w);
-  const top = neck(r);
+  const r = personHead(w);
+  const top = personNeck(r);
   return {
     head: { cx: x + w / 2, cy: y + r, r },
     body: { x, y: y + top, width: w, height: h - top },
