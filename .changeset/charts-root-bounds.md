@@ -15,4 +15,4 @@
 '@mermaid-js/diagram-xychart': patch
 ---
 
-The chart diagrams open their SVG root through the shared bounds and title trimming; output is unchanged.
+Internal refactor of how the SVG root is opened; rendered SVG is unchanged.

@@ -277,12 +277,12 @@ function openRoot(
   w: SvgWriter
 ): void {
   const { theme } = ctx;
-  // D387: `useMaxWidth` is honoured (v12 always scaled to the container).
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
   openSvgRoot(w, ctx, {
     name: 'xychart',
     viewBox: layout.bounds,
+    // D387: `useMaxWidth` is honoured (v12 always scaled to the container).
     maxWidth: layout.useMaxWidth,
     title: model.accTitle,
     desc: model.accDescr,
