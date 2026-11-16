@@ -1,0 +1,13 @@
+---
+description: >-
+  Probe b27 of spec #730: a relation between two boundaries. No oddity-
+  table row; relation ends may be groups (spec section Layout).
+---
+c4-beta container
+softwareSystem s1 "Shop" {
+    container a "A"
+}
+softwareSystem s2 "Bank" {
+    container b "B"
+}
+s1 --> s2 : "Settles with"

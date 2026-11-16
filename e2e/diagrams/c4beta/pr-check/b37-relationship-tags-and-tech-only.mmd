@@ -1,0 +1,11 @@
+---
+description: >-
+  Probe b37 of spec #730: a relation with only a tag, and one with an
+  empty description and a technology. No oddity-table row; the optional
+  parts of a relation.
+---
+c4-beta context
+softwareSystem a "Alpha"
+softwareSystem b "Beta"
+a --> b :::async
+a --> b : "" "gRPC"

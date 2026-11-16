@@ -24,9 +24,9 @@ import { c4Section } from '../config.ts';
 import { C4_METRICS as M } from '../layout/metrics.ts';
 import type { C4BoundaryLayout, C4ElementLayout, C4Layout } from '../layout/types.ts';
 import { isExternal, type C4ElementKind, type C4Model } from '../model.ts';
-import type { C4RenderContext, Scene } from './context.ts';
+import type { C4RenderContext, Scene, SceneView } from './context.ts';
 import { C4_RENDER_METRICS as R } from './metrics.ts';
-import { paints } from './paint.ts';
+import { paints, type Paints } from './paint.ts';
 import { drawRelation } from './relations.ts';
 import { drawShape } from './shapes.ts';
 import { drawText } from './text.ts';
@@ -38,15 +38,28 @@ export function renderC4(
   ctx: C4RenderContext,
   w: SvgWriter
 ): void {
-  // Every theme variable is read before the root, so its style declares them.
-  const scene: Scene = {
-    w,
-    ctx,
-    model,
-    layout,
-    paint: paints(model, layout, ctx),
-    family: ctx.theme.value('fontFamily'),
+  const view: SceneView = {
+    name: 'c4',
+    accTitle: model.accTitle.trim(),
+    accDescr: model.accDescr.trim(),
+    relationTitle: (index) => model.relations[index]!.descr?.trim(),
   };
+  // Every theme variable is read before the root, so its style declares them.
+  drawScene(view, layout, paints(model, layout, ctx), ctx, w);
+}
+
+/**
+ * Writes the document for a laid-out scene and the paints its items need (read before the root).
+ * Legacy C4 and c4-beta both end here.
+ */
+export function drawScene(
+  view: SceneView,
+  layout: C4Layout,
+  paint: Paints,
+  ctx: C4RenderContext,
+  w: SvgWriter
+): void {
+  const scene: Scene = { w, ctx, view, layout, paint, family: ctx.theme.value('fontFamily') };
   openRoot(scene);
   if (layout.title && scene.paint.title)
     drawText(scene, { label: layout.title, cls: 'c4-title', fill: scene.paint.title });
@@ -69,21 +82,19 @@ export function renderC4(
 }
 
 /** The `<svg>` root with its accessible title and description (R-A11Y-1, D453). */
-function openRoot({ w, ctx, model, layout }: Scene): void {
+function openRoot({ w, ctx, view, layout }: Scene): void {
   const { theme, config } = ctx;
   const width = Math.max(1, Math.ceil(layout.width));
   const height = Math.max(1, Math.ceil(layout.height));
   const maxWidth = c4Section(config).useMaxWidth !== false;
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
   openSvgRoot(w, ctx, {
-    name: 'c4',
+    name: view.name,
     viewBox: [0, 0, width, height],
     maxWidth,
-    title,
-    desc,
+    title: view.accTitle,
+    desc: view.accDescr,
     attrs: { 'font-family': font },
   });
 }

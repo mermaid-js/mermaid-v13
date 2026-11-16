@@ -12,9 +12,15 @@ export {
   parsedC4,
   type ParsedC4,
 } from './test-context.ts';
-export { renderC4ForTest, type RenderC4Options, type RenderedC4 } from './render/harness.ts';
-// The c4-beta parser and layout, reachable from specs only until its detection, plugin and
-// renderer land (spec #730).
+export {
+  renderC4BetaForTest,
+  renderC4ForTest,
+  type RenderC4Options,
+  type RenderedC4,
+  type RenderedC4Beta,
+} from './render/harness.ts';
+// The c4-beta parser, layout and detection, for specs (spec #730).
+export { detectC4Beta } from './beta/detect.ts';
 export { parseC4Beta, lexC4Beta, C4BetaTokenKind } from './beta/index.ts';
 export { layoutC4Beta, layoutC4BetaFull } from './beta/layout.ts';
 export type { C4BetaLaidOut, C4BetaLayoutContext, C4BetaLayoutOptions } from './beta/layout.ts';
