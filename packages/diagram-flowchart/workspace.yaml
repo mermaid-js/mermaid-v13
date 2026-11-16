@@ -44,7 +44,8 @@ release:
 # dynamicReads: names the sources build at run time, which the usedBy scan for literals
 # can't see; someThemes / authorOnly: table rows that may resolve to `currentColor` (#374).
 theme:
-  # `padsOf` in render/prepare.ts reads `${shape}PaddingX` / `${shape}PaddingY`.
+  # `themePads` (`@mermaid-js/shared/shapes/kit`, called in render/prepare.ts) reads the shapes'
+  # padding and sizes for this package: the scan does not follow this subpath (one read set per shape).
   dynamicReads:
     [
       'nodePaddingX',
@@ -61,4 +62,10 @@ theme:
       'leanPaddingY',
       'oddPaddingX',
       'oddPaddingY',
+      'radius',
+      'hexagonSlant',
+      'doubleCircleGap',
+      'doubleCirclePadding',
+      'circlePadding',
+      'circleMinDiameter',
     ]

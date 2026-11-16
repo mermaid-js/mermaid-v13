@@ -13,8 +13,16 @@
 // (R-SEC-2), so each element carries v12's computed values as presentation attributes. What
 // every element shares (the stroke width, the font family and size) is written once on the root.
 import type { RenderContext } from '@mermaid-js/core';
-import { num, translate, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import {
+  num,
+  px,
+  styleScope,
+  styleText,
+  themeStyleSheet,
+  translate,
+  type SafeValue,
+  type SvgWriter,
+} from '@mermaid-js/core/svg';
 import type {
   PlacedText,
   RailroadExpressionLayout,
@@ -163,6 +171,7 @@ function openRoot(
 ): void {
   const { theme } = ctx;
   const { font, useMaxWidth: maxWidth } = layout.config;
+  const prefix = ctx.idPrefix;
   const { x, y, width, height } = layout.bounds;
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
@@ -171,17 +180,31 @@ function openRoot(
   // written, so it declares their aliases).
   const family = font.family ?? theme.font();
   const size = font.size ?? theme.length('fontSize');
-  openSvgRoot(w, ctx, {
-    name: 'railroad railroad-diagram',
-    roleDescription: model.notation,
+  const auto = theme.autoDeclarations();
+  w.open('svg', {
+    xmlns: 'http://www.w3.org/2000/svg',
+    class: 'mermaid mermaid-railroad railroad-diagram',
     viewBox: [x, y, width, height],
-    maxWidth,
-    title,
-    desc,
-    attrs: {
-      'font-family': family,
-      'font-size': size,
-      'stroke-width': layout.config.lengths.strokeWidth,
-    },
+    width: maxWidth ? '100%' : width,
+    height: maxWidth ? undefined : height,
+    role: 'img',
+    'aria-roledescription': model.notation,
+    'aria-labelledby': title ? `${prefix}-title` : undefined,
+    'aria-describedby': desc ? `${prefix}-desc` : undefined,
+    'data-mermaid-version': ctx.version,
+    'data-p': auto ? styleScope(prefix) : undefined,
+    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
+    'font-family': family,
+    'font-size': size,
+    'stroke-width': layout.config.lengths.strokeWidth,
   });
+  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));
+  if (title) textElement(w, 'title', title, `${prefix}-title`);
+  if (desc) textElement(w, 'desc', desc, `${prefix}-desc`);
+}
+
+function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: string): void {
+  w.open(tag, { id });
+  w.text(text);
+  w.close();
 }

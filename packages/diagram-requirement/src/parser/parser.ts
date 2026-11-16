@@ -35,8 +35,8 @@ import {
   ProbeCursor,
   syncTo,
   TokenCursor,
-  STOP,
 } from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type { KindSet, ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
@@ -389,8 +389,7 @@ class RequirementParser {
         { expected: names }
       );
     } else {
-      const d = st.diagnostics.unexpected('UNEXPECTED', at, names, this.found());
-      if (hint) d.message = `${d.message.slice(0, -1)}; ${hint}.`;
+      st.diagnostics.unexpected('UNEXPECTED', at, names, this.found(), undefined, hint);
     }
     const tokens = c.tokens;
     for (let j = this.mark; j < c.pos; j++) {

@@ -22,8 +22,8 @@ import {
   syncTo,
   TokenCursor,
   TRIVIA,
-  STOP,
 } from '@mermaid-js/core/parser-kit';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type { ParseOptions, ParseResult, Range, StatementSpan } from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
@@ -359,9 +359,14 @@ class ErParser {
       );
       throw STOP;
     }
-    const d = st.diagnostics.unexpected('UNEXPECTED', where, names, this.found());
-    const why = this.hint ?? this.explain();
-    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
+    st.diagnostics.unexpected(
+      'UNEXPECTED',
+      where,
+      names,
+      this.found(),
+      undefined,
+      this.hint ?? this.explain()
+    );
     throw STOP;
   }
 

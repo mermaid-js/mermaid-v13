@@ -52,11 +52,11 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `arrowheadGap` | `--mermaid-arrowheadGap` | token | length | | | all | flowchart, state, agentflow, block |
 | `arrowheadLength` | `--mermaid-arrowheadLength` | token | length | | | all | flowchart, state, agentflow, block |
 | `arrowheadWidth` | `--mermaid-arrowheadWidth` | token | length | | | all | flowchart, state, agentflow, block |
-| `circleArrowheadSize` | `--mermaid-circleArrowheadSize` | token | length | | | all | flowchart, block |
-| `circleArrowheadGap` | `--mermaid-circleArrowheadGap` | token | length | | | all | flowchart, block |
-| `crossArrowheadSize` | `--mermaid-crossArrowheadSize` | token | length | | | all | flowchart, agentflow, block |
-| `crossArrowheadGap` | `--mermaid-crossArrowheadGap` | token | length | | | all | flowchart, agentflow, block |
-| `crossArrowheadStrokeWidth` | `--mermaid-crossArrowheadStrokeWidth` | token | length | | | all | flowchart, agentflow, block |
+| `circleArrowheadSize` | `--mermaid-circleArrowheadSize` | token | length | | | all | flowchart, agentflow, block, state |
+| `circleArrowheadGap` | `--mermaid-circleArrowheadGap` | token | length | | | all | flowchart, agentflow, block, state |
+| `crossArrowheadSize` | `--mermaid-crossArrowheadSize` | token | length | | | all | flowchart, agentflow, block, state |
+| `crossArrowheadGap` | `--mermaid-crossArrowheadGap` | token | length | | | all | flowchart, agentflow, block, state |
+| `crossArrowheadStrokeWidth` | `--mermaid-crossArrowheadStrokeWidth` | token | length | | | all | flowchart, agentflow, block, state |
 | `nodePaddingX` | `--mermaid-nodePaddingX` | token | padding | | | all | flowchart, mindmap, agentflow, block |
 | `nodePaddingY` | `--mermaid-nodePaddingY` | token | padding | | | all | flowchart, mindmap, agentflow, block |
 | `stadiumPaddingX` | `--mermaid-stadiumPaddingX` | token | padding | | | all | flowchart, block |

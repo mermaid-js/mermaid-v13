@@ -5,9 +5,10 @@
  */
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { LINE_BREAK } from '../parser/text.ts';
-import { span } from '@mermaid-js/core/parser-kit/facet';
-
-export { code, span } from '@mermaid-js/core/parser-kit/facet';
+import { span } from '@mermaid-js/shared/parser/facet';
+export { lineBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 /**
  * The `@{ … }` keys v12's `addNode` reads (spec #424 story 4, D375, D376), in the order
@@ -36,13 +37,6 @@ export const DATA_KEYS: readonly (readonly [key: string, doc: string])[] = [
 
 /** Hover doc of each `@{ … }` key. */
 export const KEY_DOCS: Readonly<Record<string, string>> = Object.fromEntries(DATA_KEYS);
-
-/** The text of `at`'s line before `at`. */
-export function lineBefore(text: string, at: number): string {
-  let start = at;
-  while (start > 0 && !LINE_BREAK.test(text.charAt(start - 1))) start--;
-  return text.slice(start, at);
-}
 
 /** The text of `at`'s line from `at` on. */
 export function lineAfter(text: string, at: number): string {

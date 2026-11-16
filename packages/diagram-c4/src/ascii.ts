@@ -10,12 +10,12 @@
  * (D459); a drawing wider than `ascii.maxWidth` is not folded: the API adds `ASCII_TOO_WIDE`.
  */
 import { UnsupportedFormatError, type TextRenderContext } from '@mermaid-js/core';
-import { ascii as asciiGlyphs, asciiOptions, unicode } from '@mermaid-js/core/ascii';
 import type { C4Layout } from './layout/index.ts';
 import type { C4Model } from './model.ts';
 import type { C4BetaModel } from './beta/model.ts';
 import { drawC4, ROUTE_BUDGET } from './ascii/draw.ts';
 import { asciiWarnings } from './ascii/warnings.ts';
+import { glyphSetOf } from '@mermaid-js/shared/ascii';
 
 export type { AsciiDroppedFeature, AsciiDroppedWarning, AsciiWarning } from './ascii/warnings.ts';
 
@@ -33,7 +33,7 @@ export type C4AsciiContext = Pick<TextRenderContext, 'config' | 'warn'> &
 export function ascii(model: C4Model | C4BetaModel, layout: C4Layout, ctx: C4AsciiContext): string {
   // c4-beta has no text output yet (spec #730 T7); legacy C4's model alone has `boundaries`.
   if (!('boundaries' in model)) throw new UnsupportedFormatError('c4beta', 'ascii');
-  const glyphs = asciiOptions(ctx.config).charset === 'ascii' ? asciiGlyphs : unicode;
+  const glyphs = glyphSetOf(ctx.config);
   for (const w of asciiWarnings(model, layout)) ctx.warn(w);
   // R-SEC-5, D542: capped by the integrator's limit, as the SVG layout's budget is.
   const budget = Math.min(ROUTE_BUDGET, ctx.limits?.maxLayoutWork ?? Infinity);

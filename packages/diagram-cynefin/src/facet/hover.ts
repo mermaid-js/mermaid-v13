@@ -5,14 +5,19 @@
  * one-line doc of the grammar file (`generated/docs.ts`). Items and labels have none. Never a
  * preview.
  */
-import { LineIndex } from '@mermaid-js/core/parser-kit';
-import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
-import { code, span } from '@mermaid-js/core/parser-kit/facet';
+import {
+  type DocumentView,
+  type Hover,
+  type HoverTarget,
+  LineIndex,
+  type Range,
+} from '@mermaid-js/core/parser-kit';
 import { cynefinDocs } from '../generated/docs.ts';
 import { CYNEFIN_DOMAIN_NAMES } from '../model.ts';
 import type { CynefinDocument, CynefinDomainNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { DOMAIN_MEANING, domainLine } from './tables.ts';
+import { code, DOMAIN_MEANING, domainLine } from './tables.ts';
+import { inside, keywordHover } from '@mermaid-js/shared/parser/facet';
 
 /** Statement tokens that hold their text too: only the keyword is hovered. */
 const VALUE_WORDS: Readonly<Partial<Record<number, string>>> = {
@@ -23,8 +28,6 @@ const VALUE_WORDS: Readonly<Partial<Record<number, string>>> = {
 
 /** Kinds whose doc is for completion only: an item's quote and a transition's `:`. */
 const NO_HOVER = new Set<number>([T.String, T.Colon]);
-
-const inside = (offset: number, r: Range) => r.start <= offset && offset <= r.end;
 
 /** When the block named at `range` is not its domain's last, which line the drawn one is on. */
 function replacedBy(doc: DocumentView<CynefinDocument>, range: Range, name: string) {
@@ -58,15 +61,6 @@ export function cynefinHover(
     return domainHover(doc, at.symbol.range);
   if (!t) return undefined;
   if (t.kind === T.DomainName) return domainHover(doc, t.range);
-  let range = t.range;
-  const word = VALUE_WORDS[t.kind];
-  if (word !== undefined) {
-    const start =
-      range.start + (/^[\t ]*/.exec(text.slice(range.start, range.end))?.[0].length ?? 0);
-    range = span(start, start + word.length);
-  }
-  if (at.offset < range.start || at.offset > range.end) return undefined;
-  const docText = cynefinDocs[t.kind];
-  if (docText === undefined || NO_HOVER.has(t.kind)) return undefined;
-  return { range, contents: `**${code(text.slice(range.start, range.end))}**\n\n${docText}` };
+  const docText = NO_HOVER.has(t.kind) ? undefined : cynefinDocs[t.kind];
+  return keywordHover(text, at.offset, t.range, VALUE_WORDS[t.kind], docText);
 }

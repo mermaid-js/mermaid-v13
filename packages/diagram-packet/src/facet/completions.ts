@@ -6,32 +6,13 @@
  * statement's text (probe modes `string`, `title`, `accTitle`, `accDescr`), in bits being typed
  * after `+` or `-`, and outside code nothing is offered.
  */
-import type {
-  CompletionItem,
-  DocumentView,
-  ProbeResult,
-  Range,
-  TokenStream,
-} from '@mermaid-js/core/parser-kit';
+import type { CompletionItem, DocumentView, ProbeResult } from '@mermaid-js/core/parser-kit';
 import { packetDocs } from '../generated/docs.ts';
 import type { PacketDocument, PacketFieldNode } from '../parser/ast.ts';
 import { parsePacket } from '../parser/parser.ts';
 import { T } from '../parser/tokens.ts';
 import { HEADER_LINE, ITEMS } from './tables.ts';
-import { span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
-
-/** The probed word's range: the prefix, plus the rest of the word after the cursor. */
-function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeResult): Range {
-  const o = probe.offset;
-  let end = o;
-  const i = tokens ? tokenBefore(tokens, o) : -1;
-  if (tokens && i >= 0 && (tokens.start[i] ?? 0) < o && o < (tokens.end[i] ?? 0))
-    end = tokens.end[i] ?? o;
-  // A word stops at the first blank, line break, quote, `:`, `-` or `+` after the cursor.
-  const stop = /[\s"':+-]/.exec(text.slice(o, end));
-  if (stop) end = o + stop.index;
-  return span(probe.prefix.start, end);
-}
+import { keywordItem, wordRange } from '@mermaid-js/shared/parser/facet';
 
 /** Whether `at` is on the `packet` line, after `packet` (or `packet-beta`). */
 function onHeaderLine(text: string, at: number): boolean {
@@ -78,7 +59,7 @@ export function packetCompletions(
   if (probe.mode !== 'INITIAL') return [];
   const { text, result } = doc;
   const expected = new Set(probe.expected);
-  const range = wordRange(text, result.tokens, probe);
+  const range = wordRange(text, result.tokens, probe, /[\s"':+-]/);
   const prefix = text.slice(range.start, probe.offset);
   const header = onHeaderLine(text, range.start);
   const out: CompletionItem[] = [];
@@ -87,15 +68,7 @@ export function packetCompletions(
   };
   for (const k of ITEMS) {
     if (!expected.has(k.kind) || (header && !HEADER_LINE.has(k.kind))) continue;
-    const documentation = packetDocs[k.kind];
-    offer({
-      label: k.label,
-      kind: k.item,
-      insertText: k.insert ?? k.label,
-      range,
-      ...(k.detail === undefined ? {} : { detail: k.detail }),
-      ...(documentation === undefined ? {} : { documentation }),
-    });
+    offer(keywordItem(k, range, packetDocs[k.kind]));
   }
   // A field may start here (not only its end bit after `-`): the next free bit.
   if (!header && expected.has(T.Int) && expected.has(T.Plus)) {

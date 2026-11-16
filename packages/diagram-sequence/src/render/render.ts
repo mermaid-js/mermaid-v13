@@ -5,7 +5,7 @@
 // an AST node carries `data-id` and `data-ast` (R-PARSE-8); labels carry `data-id` only.
 import type { RenderContext } from '@mermaid-js/core';
 import { checkColor, type Paint, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/core/svg/document';
+import { centreX, centreY, openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { SequenceModel } from '../model.ts';
 import { sequenceMetrics, type SequenceMetrics } from '../layout/index.ts';
 import type {
@@ -82,15 +82,13 @@ export function renderSequence(
   w.close();
 }
 
-const centreX = (r: { x: number; width: number }): number => r.x + r.width / 2;
-const centreY = (r: { y: number; height: number }): number => r.y + r.height / 2;
-
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, model }: Scene): void {
   const { theme, config } = ctx;
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
+  const maxWidth = config.sequence?.useMaxWidth !== false;
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
@@ -99,7 +97,7 @@ function openRoot({ w, layout, ctx, model }: Scene): void {
   openSvgRoot(w, ctx, {
     name: 'sequence',
     viewBox: [x, y, width, height],
-    maxWidth: config.sequence?.useMaxWidth,
+    maxWidth,
     title,
     desc,
     attrs: {

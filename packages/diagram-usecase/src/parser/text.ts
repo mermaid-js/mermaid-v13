@@ -5,8 +5,8 @@
  * wrote was escaped and shows as written. The parser keeps v12's text (ids are made from it,
  * conflicts compare it) and the model shows it with {@link shown}.
  */
+import { idEscaper } from '@mermaid-js/shared/parser/support';
 import { entityAt } from '@mermaid-js/core/text';
-import { idEscaper } from '@mermaid-js/core/parser-kit/support';
 
 const OPEN = 'ﬂ°';
 /** `°`: a second one marks a numeric code (`ﬂ°°123¶ß`). */

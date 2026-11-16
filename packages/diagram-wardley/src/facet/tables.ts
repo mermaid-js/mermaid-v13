@@ -2,7 +2,7 @@
  * The wardley facet's completion table and shared helpers (DESIGN §4.5, D95). Keyword docs are
  * not here: they come from the grammar file (`generated/docs.ts`).
  */
-import type { CompletionKind, Range } from '@mermaid-js/core/parser-kit';
+import type { CompletionKind } from '@mermaid-js/core/parser-kit';
 import type {
   WardleyAnchorNode,
   WardleyComponentNode,
@@ -14,8 +14,10 @@ import type {
 } from '../parser/ast.ts';
 import { KEYWORD_STARTS } from '../parser/tables.ts';
 import { KEYWORDS, STRATEGIES, T, TEXT_STATEMENTS } from '../parser/tokens.ts';
-
-export { code, span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
+export { inside } from '@mermaid-js/shared/parser/facet';
+export { tokenBefore } from '@mermaid-js/shared/parser/facet';
+export { span } from '@mermaid-js/shared/parser/facet';
+export { code } from '@mermaid-js/shared/parser/facet';
 
 /** An item offered when the parser expects `kind`. */
 export interface KeywordItem {
@@ -150,6 +152,3 @@ export function referencesOf(n: WardleyStatementNode): WardleyName[] {
 
 /** A percentage for text: at most two decimals, no trailing zeros (`43 %`, `12.5 %`). */
 export const showPercent = (value: number): string => `${Number(value.toFixed(2))} %`;
-
-/** Whether `offset` is in `r`, its ends included. */
-export const inside = (offset: number, r: Range): boolean => r.start <= offset && offset <= r.end;

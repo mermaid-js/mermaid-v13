@@ -15,6 +15,8 @@ import { agentflowCategories } from './generated/categories.ts';
 import { agentflowTokens, parseAgentflow, RESERVED_ID } from './parser/index.ts';
 import type { AgentflowDocument } from './parser/index.ts';
 import { T } from './parser/tokens.ts';
+import { readsBack, shapeReason } from '@mermaid-js/shared/parser/facet';
+import { flowNameReason } from '@mermaid-js/shared/parser/flow-facet';
 
 export { agentflowCategories } from './generated/categories.ts';
 export { agentflowDocs } from './generated/docs.ts';
@@ -49,7 +51,7 @@ const KEYWORDS = new Set<number>([
  * the parser must read `name` alone on a line as one node whose id is exactly `name`.
  */
 function invalidIdReason(name: string): string | undefined {
-  const shape = shapeReason(name);
+  const shape = shapeReason(name, 'An id');
   if (shape) return shape;
   if (name === RESERVED_ID) {
     return `'${RESERVED_ID}' is reserved: agentflow keeps it for its connectors and draws no node for it.`;
@@ -61,31 +63,9 @@ function invalidIdReason(name: string): string | undefined {
   );
   if (tokens.some((t) => LINKS.has(t.kind))) return `'${name}' contains an arrow.`;
   if (tokens.length === 1 && KEYWORDS.has(tokens[0]!.kind)) return `'${name}' is a keyword.`;
-  return readsBack(text, HEADER.length, name, 'node') ? undefined : `'${name}' is not a node id.`;
-}
-
-/** Blank, line-break and space checks every kind of id shares. */
-function shapeReason(name: string): string | undefined {
-  if (name === '') return 'An id cannot be empty.';
-  if (/[\r\n]/.test(name)) return 'An id cannot contain a line break.';
-  if (/\s/.test(name)) return 'An id cannot contain spaces.';
-  return undefined;
-}
-
-/**
- * Whether `name` reads back as exactly one `kind` symbol named `name` at `at` when written
- * into `text` (a one-statement probe document), with no error.
- */
-function readsBack(text: string, at: number, name: string, kind: string): boolean {
-  const { diagnostics, symbols } = parseAgentflow(text);
-  const hits = symbols.filter((s) => s.kind === kind);
-  return (
-    !diagnostics.some((d) => d.severity === 'error') &&
-    hits.length === 1 &&
-    hits[0]!.name === name &&
-    hits[0]!.range.start === at &&
-    hits[0]!.range.end === at + name.length
-  );
+  return readsBack(parseAgentflow(text), HEADER.length, name, 'node')
+    ? undefined
+    : `'${name}' is not a node id.`;
 }
 
 /**
@@ -93,22 +73,8 @@ function readsBack(text: string, at: number, name: string, kind: string): boolea
  * A flow id is checked as a node id: edges and `style` name it as one.
  */
 function invalidReason(name: string, kind = 'node'): string | undefined {
-  if (kind === 'class') {
-    const at = HEADER.length + 'classDef '.length;
-    const text = `${HEADER}classDef ${name} fill:#000\n`;
-    return (
-      shapeReason(name) ??
-      (readsBack(text, at, name, 'class') ? undefined : `'${name}' is not a class name.`)
-    );
-  }
-  if (kind === 'edge') {
-    const at = HEADER.length + 'A '.length;
-    const text = `${HEADER}A ${name}@--> B\n`;
-    return (
-      shapeReason(name) ??
-      (readsBack(text, at, name, 'edge') ? undefined : `'${name}' is not an edge id.`)
-    );
-  }
+  if (kind === 'class' || kind === 'edge')
+    return flowNameReason(name, kind, HEADER, parseAgentflow);
   return invalidIdReason(name);
 }
 

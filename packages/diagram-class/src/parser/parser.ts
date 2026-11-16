@@ -10,7 +10,7 @@
  * restarts on the line after it.
  */
 // cspell:words LALR
-import { Kind, inKindSet, isLineEnd, isSpace, nodeId, STOP } from '@mermaid-js/core/parser-kit';
+import { Kind, inKindSet, isLineEnd, isSpace, nodeId } from '@mermaid-js/core/parser-kit';
 import type { ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { LIMIT_CODES, checkLimit } from '@mermaid-js/core/limits';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
@@ -61,6 +61,7 @@ import {
   SEPARATOR,
   STATEMENT_HINTS,
   STATEMENT_KINDS,
+  STOP,
   STR,
   STRUCT_START,
   cleanupLabel,
