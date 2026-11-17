@@ -9,16 +9,16 @@ Integration branch `feature/855_complexity` (from `mermaid-v13` at ce2cb1b04), w
 | Ticket | Issue | Branch | Blocked by | State |
 | --- | --- | --- | --- | --- |
 | X1 grid hooks | #856 | `feature/856_grid-hooks` | — | started |
-| X2 `layered.ts` phases | #857 | `feature/857_layered-phases` | #856, decision 1 | waiting |
-| X3 `compound.ts` | #858 | `feature/858_compound-state` | #856, decision 1 | waiting |
+| X2 `layered.ts` phases | #857 | `feature/857_layered-phases` | #856 | waiting |
+| X3 `compound.ts` | #858 | `feature/858_compound-state` | #856 | waiting |
 | X4 `createMermaid` | #859 | `feature/859_create-mermaid-split` | — | started |
 | X5 allow-list checker | #860 | `feature/860_allow-list-checker` | — | started |
 | X6 small core functions | #861 | `feature/861_core-small-functions` | — | started |
 | X7 flowchart functions | #862 | `feature/862_flowchart-functions` | — | started |
-| X8 YAML reader | #863 | `feature/863_yaml-reader` | decision 2 | waiting |
-| X9 private packages, tools | #864 | `feature/864_private-and-tools` | runs last; decision 3 for the limits | waiting |
+| X8 YAML reader | #863 | `feature/863_yaml-reader` | — | started (leave whole) |
+| X9 private packages, tools | #864 | `feature/864_private-and-tools` | runs last | waiting |
 
-Maintainer decisions 1, 2 and 3 of #855 are open (asked 2026-11-17). Decisions 4 and 5 are followed as the spec writes them. X1, X5 and X6 edit core and share its 236 B of headroom; they merge one at a time, each measured after the merge.
+Maintainer decisions (Knut, 2026-11-17): 1 yes, `layered.ts` and `compound.ts` may leave Pele's file shape, each phase file recording the Pele commit it was split from (D596, amends D66); 2 the YAML reader stays whole and both files cite the decision (D597); 3 yes, the readability limits are extended to `tools/*/src` with today's violations entered as suppressions (D598). Decisions 4 and 5 are followed as the spec writes them. X8 records D596 and D597 in `DECISIONS.md`; X9 records D598. D591, D592 and D594 are left to other open PRs. X1, X5 and X6 edit core and share its 236 B of headroom; they merge one at a time, each measured after the merge.
 
 ## Pointers per ticket
 
