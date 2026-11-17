@@ -37,10 +37,21 @@ async function instance(): Promise<Mermaid> {
   return mermaid;
 }
 
+const callOf = (options: AsciiOptions) =>
+  ({ format: 'ascii', config: { ascii: { ...options } } }) as const;
+
+/**
+ * Loads what `text` needs for its text drawing, embedded diagram types included, so that a
+ * later {@link renderAscii} of it finds every module loaded.
+ */
+export async function prepareAscii(text: string, options: AsciiOptions = {}): Promise<void> {
+  await (await instance()).prepare(text, callOf(options));
+}
+
 /** `text` drawn as text through the public API (#47), with its cell layout. Throws what `render` throws. */
 export async function renderAscii(text: string, options: AsciiOptions = {}): Promise<AsciiResult> {
   const m = await instance();
-  const call = { format: 'ascii', config: { ascii: { ...options } } } as const;
+  const call = callOf(options);
   await m.prepare(text, call);
   captured = undefined;
   const result = m.renderSync(text, call);
