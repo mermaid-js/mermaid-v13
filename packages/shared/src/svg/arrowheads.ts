@@ -34,9 +34,6 @@ export function arrowheads(theme: Theme): Arrowheads {
   };
 }
 
-/** How far an edge runs straight before a marker at its end, where it has the room. */
-export const LEAD = 6;
-
 /** Where a line meets a node outline, and the unit direction it travels there. */
 export interface LineEnd {
   readonly x: number;
