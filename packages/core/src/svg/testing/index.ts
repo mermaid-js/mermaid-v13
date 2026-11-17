@@ -337,6 +337,3 @@ export function outliningEveryLeaf(w: SvgWriter, role: OutlineRole = 'node'): Sv
     embed: (svg) => w.embed(svg),
   };
 }
-
-// Temporary (spec #855, X5): see inert-internals.ts.
-export * from './inert-internals.ts';

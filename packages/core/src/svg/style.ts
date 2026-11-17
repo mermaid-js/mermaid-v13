@@ -290,7 +290,7 @@ const VALUE_CHECKS: Readonly<Record<Kind, ValueCheck>> = {
   join: oneOf(LINE_JOINS),
 };
 
-export function checkValue(kind: Kind, v: string): string | undefined {
+function checkValue(kind: Kind, v: string): string | undefined {
   return VALUE_CHECKS[kind](v, v.toLowerCase());
 }
 
