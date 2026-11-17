@@ -16,7 +16,8 @@ import type {
   ArchitectureEdgeNode,
 } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { code, elementOf, inside, SIDE_NAMES, span } from './tables.ts';
+import { elementOf, SIDE_NAMES } from './tables.ts';
+import { code, inside, keywordHover } from '@mermaid-js/shared/parser/facet';
 
 /** Tokens with a doc that hover leaves alone: ids and text. */
 const NO_DOC = new Set<number>([T.String, T.Id, T.Icon, T.Label]);
@@ -115,15 +116,5 @@ export function architectureHover(
     return { range: t.range, contents: idHover(model, text.slice(t.range.start, t.range.end)) };
   }
   if (!t || NO_DOC.has(t.kind)) return undefined;
-  let range = t.range;
-  const word = TEXT_WORDS[t.kind];
-  if (word !== undefined) {
-    const start =
-      range.start + (/^[\t ]*/.exec(text.slice(range.start, range.end))?.[0].length ?? 0);
-    range = span(start, start + word.length);
-  }
-  if (at.offset < range.start || at.offset > range.end) return undefined;
-  const docText = architectureDocs[t.kind];
-  if (docText === undefined) return undefined;
-  return { range, contents: `**${code(text.slice(range.start, range.end))}**\n\n${docText}` };
+  return keywordHover(text, at.offset, t.range, TEXT_WORDS[t.kind], architectureDocs[t.kind]);
 }

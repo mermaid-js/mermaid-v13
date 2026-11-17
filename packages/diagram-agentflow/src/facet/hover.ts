@@ -14,10 +14,14 @@ import type {
   SymbolOccurrence,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
-import { code, plural, span, trimmed } from '@mermaid-js/shared/parser/facet';
+import { code, plural, span, symbolHoverOf } from '@mermaid-js/shared/parser/facet';
 import {
   flowBareKeywordHover,
+  flowClassesFact,
   flowClassHover,
+  flowEdgeCounts,
+  flowLinkAt,
+  flowNodeLabels,
   flowShapeHover,
   flowTokenHover,
 } from '@mermaid-js/shared/parser/flow-facet';
@@ -58,16 +62,6 @@ function metadataLine(metadata: Readonly<Record<string, unknown>> | undefined): 
   return [`Metadata: ${entries.map(([k, v]) => code(`${k}: ${valueText(v)}`)).join(', ')}`];
 }
 
-function edgeCounts(name: string, model: AgentflowModel): string {
-  let into = 0;
-  let out = 0;
-  for (const e of model.edges) {
-    if (e.end === name) into++;
-    if (e.start === name) out++;
-  }
-  return `Edges: ${into} in, ${out} out`;
-}
-
 /** The flow a vertex or flow is written in, and the collapsed flow it is drawn in, if any. */
 function placeFacts(parent: string | undefined, collapsedInto: string | undefined): string[] {
   const facts: string[] = [];
@@ -83,24 +77,16 @@ function nodeHover(
 ): string | undefined {
   const v = model.vertices.find((x) => x.id === name);
   if (!v) return undefined;
-  const labels = [v.text];
-  for (const p of chainParts(ast.children)) {
-    if (p.type !== 'Node' || p.name !== name || !p.label) continue;
-    const l = p.label.text.trim().replace(/^"(.*)"$/s, '$1');
-    if (!labels.includes(l)) labels.push(l);
-  }
+  const labels = flowNodeLabels(name, v.text, chainParts(ast.children));
   let what = labels.length === 1 ? 'Label' : 'Labels';
   if (v.connector) what = 'Title';
   const facts = [`${what}: ${labels.map(code).join(', ')}`];
   if (!v.connector) facts.push(`Shape: ${code(v.shape)}`);
-  const classes = [...new Set(v.classes)];
-  if (classes.length > 0) {
-    facts.push(`${classes.length === 1 ? 'Class' : 'Classes'}: ${classes.map(code).join(', ')}`);
-  }
+  facts.push(...flowClassesFact(v.classes));
   const lines = [`**${v.kind}** ${code(name)}`, facts.join(' · ')];
   const place = placeFacts(v.parent, v.collapsedInto);
   if (place.length > 0) lines.push(place.join(', '));
-  lines.push(...metadataLine(v.metadata), edgeCounts(name, model));
+  lines.push(...metadataLine(v.metadata), flowEdgeCounts(name, model.edges));
   return lines.join('\n\n');
 }
 
@@ -114,7 +100,7 @@ function flowHover(flow: AgentflowFlowModel, model: AgentflowModel): string {
   const lines = [`**flow** ${code(flow.id)}`, facts.join(' · ')];
   const place = placeFacts(flow.parent, flow.collapsedInto);
   if (place.length > 0) lines.push(place.join(', '));
-  lines.push(...metadataLine(flow.metadata), edgeCounts(flow.id, model));
+  lines.push(...metadataLine(flow.metadata), flowEdgeCounts(flow.id, model.edges));
   return lines.join('\n\n');
 }
 
@@ -150,17 +136,12 @@ function linkHover(
   model: AgentflowModel,
   ast: AgentflowDocument
 ): Hover | undefined {
-  for (const p of chainParts(ast.children)) {
-    if (p.type !== 'Edge' || p.linkRange.start > at || at >= p.linkRange.end) continue;
-    const e = model.edges.find((x) => x.id === p.edgeId);
-    if (!e) break;
-    const range = trimmed(text, p.linkRange);
-    const arrow = text.slice(range.start, range.end);
-    const ends = `${code(e.start)} → ${code(e.end)}`;
-    const what = `**${code(arrow)}** ${describeLink(e.semantic)}`;
-    return { range, contents: `${what}\n\n${ends}\n\n${agentflowDocs[T.Link]}` };
-  }
-  return undefined;
+  const link = flowLinkAt(text, chainParts(ast.children), at);
+  const e = link && model.edges.find((x) => x.id === link.edgeId);
+  if (!link || !e) return undefined;
+  const ends = `${code(e.start)} → ${code(e.end)}`;
+  const what = `**${code(link.arrow)}** ${describeLink(e.semantic)}`;
+  return { range: link.range, contents: `${what}\n\n${ends}\n\n${agentflowDocs[T.Link]}` };
 }
 
 /**
@@ -199,10 +180,8 @@ export function agentflowHover(
 ): Hover | undefined {
   const { text, result } = doc;
   const model = result.model as AgentflowModel;
-  if (at.symbol) {
-    const contents = symbolHover(at.symbol, model, result.ast);
-    if (contents !== undefined) return { range: at.symbol.range, contents };
-  }
+  const symbol = symbolHoverOf(at, (s) => symbolHover(s, model, result.ast));
+  if (symbol) return symbol;
   const t = at.token;
   if (!t || t.kind === T.AccDescrMultilineValue) {
     const block = accDescrBlock(text, result.tokens, at.offset);

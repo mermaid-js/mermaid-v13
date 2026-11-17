@@ -36,11 +36,12 @@ Pele, in @mermaid-js/diagram-agentflow
 --------------------------------------
 
 The CDN build also bundles @mermaid-js/diagram-agentflow without its legal comments. That
-package's parser/lexer.ts, parser/parser.ts, parser/model.ts, layout/prepare.ts,
-layout/shapes.ts, render/shapes.ts and render/edges.ts are local copies of
-@mermaid-js/diagram-flowchart's lexer, parser, builder, shapes and edges (D446, D467), which are
-ported from, or based on, Pele (https://github.com/obsidianmd/pele) at commit 3a2f075 (release
-1.13.0). Pele is used under the MIT License:
+package's parser/lexer.ts, parser/parser.ts, parser/model.ts and layout/prepare.ts are local
+copies of @mermaid-js/diagram-flowchart's lexer, parser and builder (D467), and its
+layout/shapes.ts and render/shapes.ts outline and draw the shared shapes of @mermaid-js/shared
+(D446, D559) with agentflow's own variants. All are ported from, or based on, Pele
+(https://github.com/obsidianmd/pele) at commit 3a2f075 (release 1.13.0). Pele is used under the
+MIT License:
 
 MIT License
 
@@ -70,9 +71,9 @@ Pele, in @mermaid-js/diagram-c4
 The CDN build also bundles @mermaid-js/diagram-c4 without its legal comments. That package's
 layout/grid.ts, layout/layout.ts, layout/metrics.ts, layout/path.ts, layout/route.ts and
 layout/shapes.ts are ported from Pele's C4 grid, relation router and label placement, and its
-render/shapes.ts is a local copy of @mermaid-js/diagram-flowchart's shapes (D446), all ported
-from, or based on, Pele (https://github.com/obsidianmd/pele) at commit 3a2f075 (release
-1.13.0). Pele is used under the MIT License:
+render/shapes.ts draws C4's shapes with the shared shapes' paths from @mermaid-js/shared (D446,
+D559), all ported from, or based on, Pele (https://github.com/obsidianmd/pele) at commit
+3a2f075 (release 1.13.0). Pele is used under the MIT License:
 
 MIT License
 

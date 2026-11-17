@@ -19,7 +19,11 @@ import type { QuadrantDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { readsAs } from './names.ts';
 import { KEYWORDS, STYLE_KEYS, tokenBefore } from './tables.ts';
-import { CompletionList as Items, wordRange } from '@mermaid-js/shared/parser/facet';
+import {
+  CompletionList as Items,
+  statementTokens,
+  wordRange,
+} from '@mermaid-js/shared/parser/facet';
 
 /** Modes whose text is a value, not code: nothing is offered there. */
 const VALUE_MODES = new Set([
@@ -44,17 +48,11 @@ const isWord = (kind: number) => WORD_KINDS.has(kind) || quadrantCategories[kind
 
 /** The significant tokens of the statement the cursor is in, up to the word being typed. */
 function statementBefore(tokens: TokenStream, at: number): number[] {
-  const kinds: number[] = [];
-  for (let i = tokenBefore(tokens, at - 1); i >= 0; i--) {
-    const k = tokens.kind[i]!;
-    if ((tokens.end[i] ?? 0) > at) continue;
-    if (STATEMENT_END.has(k)) break;
-    if (k === Kind.Comment || k === Kind.Directive) continue;
-    kinds.push(k);
-  }
+  const isTrivia = (k: number) => k === Kind.Comment || k === Kind.Directive;
+  const kinds = statementTokens(tokens, at, STATEMENT_END, isTrivia).map((i) => tokens.kind[i]!);
   // The blanks before the statement are not part of it.
-  while (kinds[kinds.length - 1] === T.Space) kinds.pop();
-  return kinds.reverse();
+  while (kinds[0] === T.Space) kinds.shift();
+  return kinds;
 }
 
 /** Keywords whose kind the parser tests at the cursor. */

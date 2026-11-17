@@ -192,18 +192,13 @@ function label(w: SvgWriter, p: PlacedLabel, attrs: Attrs): void {
 /** The `<svg>` root with its title (R-A11Y-1, D133). */
 function openRoot(model: VennModel, { w, layout }: Scene, ctx: VennRenderContext): void {
   const { theme, config } = ctx;
-  const { x, y } = layout.bounds;
-  const width = Math.max(1, Math.ceil(layout.bounds.width));
-  const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = (config.venn as { useMaxWidth?: unknown } | undefined)?.useMaxWidth !== false;
-  const title = model.title?.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
   openSvgRoot(w, ctx, {
     name: 'venn',
-    viewBox: [x, y, width, height],
-    maxWidth,
-    title,
+    viewBox: layout.bounds,
+    maxWidth: (config.venn as { useMaxWidth?: unknown } | undefined)?.useMaxWidth !== false,
+    title: model.title,
     attrs: { 'font-family': font },
   });
 }

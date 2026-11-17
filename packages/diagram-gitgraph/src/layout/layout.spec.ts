@@ -4,7 +4,8 @@ import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import { theme } from '../theme/table.ts';
 import type { GitModel } from '../model.ts';
 import * as fx from './fixtures.ts';
-import { GIT_GEOMETRY, gitLayoutViolations, layoutGitGraph, type GitLayout } from './index.ts';
+import { GIT_GEOMETRY, layoutGitGraph, type GitLayout } from './index.ts';
+import { gitLayoutViolations } from './invariants.ts';
 
 let classic: ThemeSpec;
 /** The `redux` theme's geometry variables, laid over `default` (its fonts) by `redux: true`. */

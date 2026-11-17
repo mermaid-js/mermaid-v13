@@ -7,11 +7,11 @@
 import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-kit';
 import { kanbanDocs } from '../generated/docs.ts';
 import type { KanbanItem, KanbanModel } from '../model.ts';
-import type { KanbanDocument, KanbanItemNode } from '../parser/ast.ts';
+import type { KanbanDocument } from '../parser/ast.ts';
 import { FIRST_LINE } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
 import { code, KEY_DOCS, span } from './tables.ts';
-import { plural } from '@mermaid-js/shared/parser/facet';
+import { plural, statementOverlapping } from '@mermaid-js/shared/parser/facet';
 
 /** The tokens of an item statement, its data aside. */
 const ITEM_TOKENS = new Set<number>([
@@ -24,21 +24,6 @@ const ITEM_TOKENS = new Set<number>([
   T.MdStringStart,
   T.MdStringEnd,
 ]);
-
-/** The item statement holding `at` (AST nodes are in source order and never overlap). */
-function itemAt(doc: DocumentView<KanbanDocument>, at: number): KanbanItemNode | undefined {
-  const items = doc.result.ast.children;
-  let lo = 0;
-  let hi = items.length - 1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    const n = items[mid]!;
-    if (n.range.end < at) lo = mid + 1;
-    else if (n.range.start > at) hi = mid - 1;
-    else return n;
-  }
-  return undefined;
-}
 
 /** One line: the first, cut at 40 characters. */
 function short(text: string): string {
@@ -121,7 +106,7 @@ export function kanbanHover(at: HoverTarget, doc: DocumentView<KanbanDocument>):
     return { range: key.range, contents: `**${code(key.key)}**\n\n${KEY_DOCS[key.key]}` };
   }
   if (!ITEM_TOKENS.has(t.kind)) return undefined;
-  const node = itemAt(doc, at.offset);
+  const node = statementOverlapping(doc.result.ast.children, at.offset);
   const item = node && model.items.find((x) => x.ast === node.id);
   if (!node || !item) return undefined;
   return { range: node.range, contents: itemHover(model, item) };

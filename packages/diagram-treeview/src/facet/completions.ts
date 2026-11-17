@@ -25,9 +25,8 @@ import { BUILTIN_ICONS } from '../icons.ts';
 import type { TreeViewModel } from '../model.ts';
 import type { TreeViewDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { span } from './ranges.ts';
 import { iconOptionsOf } from './tree.ts';
-import { keywordItem } from '@mermaid-js/shared/parser/facet';
+import { keywordItem, span } from '@mermaid-js/shared/parser/facet';
 
 /** Where an item is offered, besides the parser expecting its kind. */
 type Place = 'header' | 'lineStart' | 'afterName';

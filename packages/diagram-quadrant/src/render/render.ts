@@ -175,9 +175,6 @@ function openRoot({ w, ctx, model }: Scene, box: Box): void {
   const { theme, config } = ctx;
   const width = Math.max(1, box.maxX - box.minX);
   const height = Math.max(1, box.maxY - box.minY);
-  const maxWidth = config.quadrantChart?.useMaxWidth !== false;
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
   const font = theme.font();
   const fontSize = theme.length('fontSize');
@@ -185,9 +182,9 @@ function openRoot({ w, ctx, model }: Scene, box: Box): void {
     name: 'quadrant',
     roleDescription: 'quadrantChart',
     viewBox: [box.minX, box.minY, width, height],
-    maxWidth,
-    title,
-    desc,
+    maxWidth: config.quadrantChart?.useMaxWidth !== false,
+    title: model.accTitle,
+    desc: model.accDescr,
     attrs: {
       'font-family': font,
       'font-size': fontSize,

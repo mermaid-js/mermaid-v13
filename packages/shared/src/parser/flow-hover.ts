@@ -5,9 +5,67 @@
  * its own ids show.
  */
 import type { Hover, Range, TokenStream } from '@mermaid-js/core/parser-kit';
-import { code, plural, span, tokenBefore, trimmed } from './facet.ts';
+import { classDefHover, code, covers, plural, span, tokenBefore, trimmed } from './facet.ts';
 import { FLOW_DIRECTION_DOCS } from './flow-facet-tables.ts';
+import type { FlowEdge, FlowNodeStmt } from './flow-ast.ts';
 import type { FlowKinds } from './flow-kinds.ts';
+
+/**
+ * The labels node `name` is written with: `first` (the model's), then each other label of its
+ * mentions among `parts`, unquoted, once each.
+ */
+export function flowNodeLabels(
+  name: string,
+  first: string,
+  parts: Iterable<FlowNodeStmt | FlowEdge>
+): string[] {
+  const labels = [first];
+  for (const p of parts) {
+    if (p.type !== 'Node' || p.name !== name || !p.label) continue;
+    const t = p.label.text.trim();
+    const l = t.length > 1 && t.startsWith('"') && t.endsWith('"') ? t.slice(1, -1) : t;
+    if (!labels.includes(l)) labels.push(l);
+  }
+  return labels;
+}
+
+/** `Class: a` or `Classes: a, b`, each class once; nothing for none. */
+export function flowClassesFact(classes: readonly string[]): string[] {
+  const once = [...new Set(classes)];
+  if (once.length === 0) return [];
+  return [`${once.length === 1 ? 'Class' : 'Classes'}: ${once.map(code).join(', ')}`];
+}
+
+/** `Edges: 2 in, 1 out`: the edges of `edges` that end and start at node `name`. */
+export function flowEdgeCounts(
+  name: string,
+  edges: readonly { readonly start: string; readonly end: string }[]
+): string {
+  let into = 0;
+  let out = 0;
+  for (const e of edges) {
+    if (e.end === name) into++;
+    if (e.start === name) out++;
+  }
+  return `Edges: ${into} in, ${out} out`;
+}
+
+/**
+ * The first edge among `parts` whose link holds `at` (its start included, its end not): the
+ * model edge id, and the link's range and text without its blanks.
+ */
+export function flowLinkAt(
+  text: string,
+  parts: Iterable<FlowNodeStmt | FlowEdge>,
+  at: number
+): { edgeId: string; range: Range; arrow: string } | undefined {
+  for (const p of parts) {
+    if (p.type !== 'Edge' || p.linkRange.start > at || at >= p.linkRange.end) continue;
+    const range = trimmed(text, p.linkRange);
+    return { edgeId: p.edgeId, range, arrow: text.slice(range.start, range.end) };
+  }
+  return undefined;
+}
 
 /** What a class hover reads of a model. */
 interface ClassesModel {
@@ -22,14 +80,7 @@ export function flowClassHover(name: string, model: ClassesModel): string {
     name === 'default'
       ? 'Applies to every node without a class.'
       : `Used by ${plural(model.vertices.filter((v) => v.classes.includes(name)).length, 'node')}`;
-  let styles = 'No `classDef` defines it.';
-  if (c !== undefined) {
-    styles =
-      c.styles.length === 0
-        ? 'Its `classDef` sets no styles.'
-        : code(`classDef ${name} ${c.styles.join(',')}`);
-  }
-  return `**class** ${code(name)}\n\n${styles}\n\n${used}`;
+  return classDefHover('class', name, c?.styles, used);
 }
 
 /**
@@ -106,7 +157,7 @@ export function flowTokenHover(
   const T = dialect.kinds;
   // Tokens may take blanks and line breaks with them (`end`, links): only their text counts.
   const range = trimmed(text, token.range);
-  if (offset < range.start || offset > range.end || range.start === range.end) return undefined;
+  if (!covers(offset, range)) return undefined;
   const word = text.slice(range.start, range.end);
   if (token.kind === T.Link || token.kind === T.StartLink) return dialect.link(range, word);
   if (token.kind === T.Dir) {

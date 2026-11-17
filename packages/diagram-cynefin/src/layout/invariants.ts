@@ -9,10 +9,7 @@ import { cubicBox, grow, pointsBox, quadBox } from './geometry.ts';
 import { drawnItems } from './layout.ts';
 import { ARROWS, BADGES } from './metrics.ts';
 import type { CynefinBadge, CynefinLayout, Point, Rect } from './types.ts';
-import { nonFinite as finite } from '@mermaid-js/shared/layout/invariants';
-
-/** Float tolerance of the checks. */
-const EPS = 1e-6;
+import { EPS, nonFinite as finite, rectInside } from '@mermaid-js/shared/testing/layout-invariants';
 
 export function cynefinLayoutViolations(model: CynefinModel, layout: CynefinLayout): string[] {
   const out: string[] = [];
@@ -170,11 +167,4 @@ const same = (a: Rect, b: Rect): boolean =>
   near(a, b) && Math.abs(a.width - b.width) <= EPS && Math.abs(a.height - b.height) <= EPS;
 
 /** `outer` holds `inner`, within the tolerance. */
-function contains(outer: Rect, inner: Rect): boolean {
-  return (
-    inner.x >= outer.x - EPS &&
-    inner.y >= outer.y - EPS &&
-    inner.x + inner.width <= outer.x + outer.width + EPS &&
-    inner.y + inner.height <= outer.y + outer.height + EPS
-  );
-}
+const contains = (outer: Rect, inner: Rect): boolean => rectInside(inner, outer);

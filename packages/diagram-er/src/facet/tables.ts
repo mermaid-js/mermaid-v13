@@ -8,7 +8,6 @@ import { T } from '../parser/tokens.ts';
 import type { KeywordItem } from '@mermaid-js/shared/parser/facet';
 export type { KeywordItem } from '@mermaid-js/shared/parser/facet';
 export { plural } from '@mermaid-js/shared/parser/facet';
-export { tokenBefore } from '@mermaid-js/shared/parser/facet';
 export { span } from '@mermaid-js/shared/parser/facet';
 export { code } from '@mermaid-js/shared/parser/facet';
 

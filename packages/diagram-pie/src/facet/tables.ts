@@ -5,8 +5,6 @@
 import { T } from '../parser/tokens.ts';
 import type { TypedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
 export type { TypedKeywordItem as KeywordItem } from '@mermaid-js/shared/parser/facet';
-export { tokenBefore } from '@mermaid-js/shared/parser/facet';
-export { span } from '@mermaid-js/shared/parser/facet';
 export { code } from '@mermaid-js/shared/parser/facet';
 
 /** Everything completion offers, in the order it is offered. */

@@ -5,7 +5,8 @@ import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { RadarModel } from '../model.ts';
 import { radar as plugin } from '../plugin.ts';
 import { FIXTURES } from './fixtures.ts';
-import { layoutRadar, radarLayoutViolations, type RadarLayout } from './index.ts';
+import { layoutRadar, type RadarLayout } from './index.ts';
+import { radarLayoutViolations } from './invariants.ts';
 
 let spec: ThemeSpec;
 beforeAll(async () => {

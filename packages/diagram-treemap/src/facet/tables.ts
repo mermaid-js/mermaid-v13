@@ -3,11 +3,9 @@
  * not here: they come from the grammar file (`generated/docs.ts`).
  */
 import type { CompletionKind } from '@mermaid-js/core/parser-kit';
-import type { TreemapDocument, TreemapStatementNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 export { inside } from '@mermaid-js/shared/parser/facet';
 export { tokenBefore } from '@mermaid-js/shared/parser/facet';
-export { span } from '@mermaid-js/shared/parser/facet';
 export { code } from '@mermaid-js/shared/parser/facet';
 
 /** Where an item is offered, besides the parser expecting its kind. */
@@ -65,23 +63,3 @@ export const ITEMS: readonly KeywordItem[] = [
     detail: 'then a class name',
   },
 ];
-
-/** The statement of `doc` whose range holds `offset` (its ends included), if any. */
-export function statementAt(
-  doc: TreemapDocument,
-  offset: number
-): TreemapStatementNode | undefined {
-  const list = doc.children;
-  let lo = 0;
-  let hi = list.length - 1;
-  let found = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if ((list[mid]?.range.start ?? 0) <= offset) {
-      found = mid;
-      lo = mid + 1;
-    } else hi = mid - 1;
-  }
-  const n = list[found];
-  return n && offset <= n.range.end ? n : undefined;
-}
