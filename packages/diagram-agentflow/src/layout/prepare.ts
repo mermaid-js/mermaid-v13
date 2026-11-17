@@ -172,7 +172,7 @@ export function prepareAgentflow(
     size: theme.number('fontSize'),
     weight: 400,
   };
-  const curveOf = curveReporter(warn);
+  const curveOf = curveReporter((w) => ctx.warn(w));
   const curve = curveOf(model.defaultInterpolate ?? flowchart?.curve);
   const m: Measure = {
     ctx,

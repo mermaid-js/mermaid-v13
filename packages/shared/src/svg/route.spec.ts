@@ -48,6 +48,31 @@ describe('routePath step curves (#356, D602)', () => {
     expect(path('stepBefore', detour)).toBe(path('step', detour));
   });
 
+  it('turns an interior offset leg by the plain inset, without marker room', () => {
+    // Not from the layered engine: a diagonal leg between two bends. The marker room (6) belongs to
+    // the first and last legs only, so this leg turns a quarter of its 40 away from each end.
+    const bent = [down(0, 0), down(0, 20), down(60, 60), down(60, 100)];
+    expect(path('stepBefore', bent, 6)).toContain('L60,30');
+    expect(path('stepAfter', bent, 6)).toContain('L0,50');
+    expect(path('step', bent, 6)).toContain('L60,40');
+    for (const k of ['step', 'stepBefore', 'stepAfter'] as const) {
+      expect(path(k, bent, 6)).not.toMatch(/[QAC]/);
+    }
+  });
+
+  it('keeps the marker room at the ends of a two-point offset route', () => {
+    const diagonal = [down(0, 0), down(100, 100)];
+    const [step, before, after] = (['step', 'stepBefore', 'stepAfter'] as const).map((k) =>
+      path(k, diagonal, 6)
+    );
+    expect(step).toContain('L0,50');
+    expect(before).toContain('L0,');
+    expect(new Set([step, before, after]).size).toBe(3);
+    const ys = (d: string): number[] => [...d.matchAll(/L0,([\d.]+)/g)].map((m) => Number(m[1]));
+    expect(Math.min(...ys(before))).toBeGreaterThanOrEqual(6);
+    expect(Math.max(...ys(after))).toBeLessThanOrEqual(94);
+  });
+
   it('leaves rounded corners as arcs and curved legs as S-curves', () => {
     expect(path('rounded')).toMatch(/A5,5/);
     expect(path('curved')).toMatch(/C/);
@@ -71,6 +96,7 @@ describe('curveKind (#356, D602)', () => {
     expect(seen).toHaveLength(1);
     expect(seen[0]!.code).toBe('CURVE_UNKNOWN');
     expect(seen[0]!.message).toContain('bogus');
+    expect(seen[0]).not.toHaveProperty('path');
   });
 
   it('stays silent without a sink', () => {

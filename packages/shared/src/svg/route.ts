@@ -35,7 +35,6 @@ export type CurveKind = 'curved' | 'linear' | 'step' | 'stepBefore' | 'stepAfter
 export interface CurveWarning {
   readonly code: 'CURVE_UNKNOWN';
   readonly message: string;
-  readonly path: string;
 }
 
 /**
@@ -53,7 +52,6 @@ export function curveKind(
   warn?.({
     code: 'CURVE_UNKNOWN',
     message: `Unknown curve "${curve}": edges are drawn with S-curves (curve: basis)`,
-    path: 'flowchart.curve',
   });
   return 'curved';
 }
@@ -154,14 +152,18 @@ class Legs {
   constructor(
     readonly kind: CurveKind,
     route: readonly RoutePoint[],
-    private readonly startTrim: number,
-    private readonly endTrim: number
+    startTrim: number,
+    endTrim: number
   ) {
     this.linear = kind === 'linear';
     const stepped = kind === 'step' || kind === 'stepBefore' || kind === 'stepAfter';
-    for (const p of stepped ? movedStep(kind, route, startTrim, endTrim) : route) {
+    const points = stepped ? movedStep(kind, route, startTrim, endTrim) : route;
+    for (const [i, p] of points.entries()) {
       const axis = p.axis === 'h' ? 1 : 0;
-      if (stepped) this.step(p, axis);
+      // Only the first leg has marker room at its start, and the last at its end.
+      if (stepped) {
+        this.step(p, axis, i === 1 ? startTrim : 0, i === points.length - 1 ? endTrim : 0);
+      }
       this.xs.push(p.x);
       this.ys.push(p.y);
       this.axes.push(axis);
@@ -170,7 +172,7 @@ class Legs {
   }
 
   /** Adds the turn of a stepped route between the last point and p, where they are not in line. */
-  private step(p: RoutePoint, axis: number): void {
+  private step(p: RoutePoint, axis: number, startTrim: number, endTrim: number): void {
     const last = this.xs.length - 1;
     if (last < 0) return;
     const px = this.xs[last]!;
@@ -179,12 +181,12 @@ class Legs {
     if (!offset) return;
     // The turn: along then across, or across then along.
     if (axis === 0) {
-      const ty = stepCorner(this.kind, py, p.y, this.startTrim, this.endTrim);
+      const ty = stepCorner(this.kind, py, p.y, startTrim, endTrim);
       this.turn(px, ty, px, py, p, axis);
       this.turn(p.x, ty, px, py, p, axis);
       return;
     }
-    const tx = stepCorner(this.kind, px, p.x, this.startTrim, this.endTrim);
+    const tx = stepCorner(this.kind, px, p.x, startTrim, endTrim);
     this.turn(tx, py, px, py, p, axis);
     this.turn(tx, p.y, px, py, p, axis);
   }
