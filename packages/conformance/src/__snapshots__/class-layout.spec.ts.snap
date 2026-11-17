@@ -3,6 +3,7 @@
 exports[`layered over parser-produced class graphs > lays out every corpus graph validly, nested and flat, and records crossings 1`] = `
 {
   "class/baseline/classes/classDiagram-v2-keyword.mmd": 0,
+  "class/baseline/classes/clickable.mmd": 0,
   "class/baseline/classes/direction-lr.mmd": 0,
   "class/baseline/classes/generics-annotations.mmd": 0,
   "class/baseline/classes/simple.mmd": 0,

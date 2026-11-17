@@ -1,0 +1,10 @@
+---
+description:
+  Edge metadata animate and animation are parsed but not drawn in v13, so a render
+  of this diagram raises one warning for each.
+---
+flowchart LR
+ A e1@==> B
+ e1@{ animate: true }
+ B e2@--> C
+ e2@{ animation: fast }

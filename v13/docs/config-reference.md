@@ -115,7 +115,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `dompurifyConfig` | import('dompurify').Config |  | removed (13.0.0) | v13 has no HTML sanitizer: output is safe by construction (R-SEC-1). Replacement: none. | Configuration options to pass to the `dompurify` library. |
 | `wrap` | boolean |  | pending |  |  |
 | `fontSize` | number | `16` | honoured (13.0.0) | Read by timeline, as v12's renderer read it: each box is `fontSize × 0.55` px taller than its text, and the TD axis starts `2 × fontSize` above the content and ends `0.5 × fontSize + 20` below it. Text is drawn at `themeVariables.fontSize`; no other type reads this key. |  |
-| `markdownAutoWrap` | boolean | `true` | pending |  |  |
+| `markdownAutoWrap` | boolean | `true` | honoured (13.0.0) | Set to `false`, a flowchart markdown label (node, subgraph and edge) breaks only at its own line breaks, as v12 did for HTML labels. No other diagram type reads this key. |  |
 | `suppressErrorRendering` | boolean | `false` | honoured (13.0.0) | `run()` and `mount()` put the error image (`renderErrorSvg`) in place of a failing diagram unless this is set; `render()` always rejects with a `MermaidError` and never touches the DOM. | Suppresses inserting 'Syntax error' diagram in the DOM. This is useful when you want to control how to handle syntax errors in your application. |
 
 ## `flowchart`

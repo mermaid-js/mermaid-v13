@@ -1396,7 +1396,9 @@ export const configSchema: ConfigSchema = {
       "type": "boolean",
       "default": true,
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0",
+        "reason": "Set to `false`, a flowchart markdown label (node, subgraph and edge) breaks only at its own line breaks, as v12 did for HTML labels. No other diagram type reads this key."
       }
     },
     "suppressErrorRendering": {

@@ -362,6 +362,7 @@ function drawClass(
     'data-ast': view.ast,
     'data-color-id': slot?.id,
     transform: translate(at.x, at.y),
+    cursor: node.classes.includes('clickable') ? 'pointer' : undefined,
   });
   if (node.tooltip) textElement(w, 'title', node.tooltip);
   const warn = ctx.warn.bind(ctx);

@@ -295,3 +295,26 @@ describe('checkFilter: the drop-shadow allow-list (#85)', () => {
     assertInert(w.finish());
   });
 });
+
+describe('cursor attribute', () => {
+  it('accepts the one keyword pointer (D605)', () => {
+    expect(inertProblem('<g cursor="pointer"/>')).toBeUndefined();
+    const w = treeWriter();
+    w.open('g', { cursor: 'pointer' });
+    w.close();
+    expect(w.finish()).toContain('cursor="pointer"');
+  });
+
+  for (const v of [
+    'default',
+    'move',
+    'pointer;x:y',
+    'url(https://evil.example/c.cur)',
+    'Pointer',
+    '',
+  ]) {
+    it(`refuses cursor=${JSON.stringify(v)}`, () => {
+      expect(inertProblem(`<g cursor="${v}"/>`)).toBeTypeOf('string');
+    });
+  }
+});

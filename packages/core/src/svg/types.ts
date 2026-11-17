@@ -84,6 +84,8 @@ export interface AttrTypes {
   style: StyleText;
   transform: Transform;
   'pointer-events': 'none' | 'all' | 'visiblePainted';
+  /** `pointer` only: the mark of a clickable node (D605). */
+  cursor: 'pointer';
   // geometry
   x: number;
   y: number;
