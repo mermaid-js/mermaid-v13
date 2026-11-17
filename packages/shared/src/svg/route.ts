@@ -2,6 +2,7 @@
 // Ported from Pele's src/svg/edges.ts @ 3a2f075 (https://github.com/obsidianmd/pele, MIT,
 // (c) 2026 kepano): `routePath`. The one route drawing every graph diagram shares.
 // cspell:ignore kepano
+import type { Warning } from '@mermaid-js/core';
 import type { EdgeRouting, RoutePoint } from '@mermaid-js/core/layout';
 import type { PathData, SvgWriter } from '@mermaid-js/core/svg';
 import { LEAD } from './arrowheads.ts';
@@ -30,21 +31,12 @@ const D3_CURVES: ReadonlySet<string> = new Set([
 /** How the line between two route points is drawn, from the v12 `curve` name. */
 export type CurveKind = 'curved' | 'linear' | 'step' | 'stepBefore' | 'stepAfter' | 'rounded';
 
-/** The warning for a `curve` name that is none of the {@link CurveKind}s (D602). */
-export interface CurveWarning {
-  readonly code: 'CURVE_UNKNOWN';
-  readonly message: string;
-}
-
 /**
  * The curve kind for a v12 `curve` name. A name that is not drawn otherwise is drawn `curved`:
  * a d3 curve factory name (`basis`, `cardinal`, …) silently, any other name with a
  * `CURVE_UNKNOWN` warning to `warn` (D602). Use {@link curveReporter} to warn once per name.
  */
-export function curveKind(
-  curve: string | undefined,
-  warn?: (warning: CurveWarning) => void
-): CurveKind {
+export function curveKind(curve: string | undefined, warn?: (warning: Warning) => void): CurveKind {
   if (curve === undefined || D3_CURVES.has(curve)) return 'curved';
   if (curve === 'linear' || curve === 'rounded') return curve;
   if (curve === 'step' || curve === 'stepBefore' || curve === 'stepAfter') return curve;
@@ -57,7 +49,7 @@ export function curveKind(
 
 /** {@link curveKind} for one render: each unknown name is reported once, however many edges use it. */
 export function curveReporter(
-  warn: (warning: CurveWarning) => void
+  warn: (warning: Warning) => void
 ): (curve: string | undefined) => CurveKind {
   const seen = new Set<string>();
   return (curve) =>
