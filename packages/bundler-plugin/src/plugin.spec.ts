@@ -300,7 +300,12 @@ export default [{ name: 'hops', loader: async () => (graph, ctx) => {
     expect((await built.draw('one x')).type).toBe('one');
   });
 
-  it('rebuilds in watch mode when a plugin package is installed', async () => {
+  // The one test here with a limit of its own: esbuild's watch mode notices a change by polling
+  // a random subset of the watched files, which in a large project can take up to about 2 s, and
+  // the test builds twice around that wait. Measured 2026-11-17: 0.8–1.5 s alone, 3.7 s in the
+  // whole file on a loaded laptop; on CI runners a median of 2.1 s, a maximum of 5.0 s, and one
+  // failure at vitest's 5 s default (#904).
+  it('rebuilds in watch mode when a plugin package is installed', { timeout: 15_000 }, async () => {
     const root = app({});
     const outdir = join(root, 'dist-watch');
     let rebuilt: () => void = () => undefined;
