@@ -33,7 +33,7 @@ describe('flowchart step curves', () => {
 
 describe('flowchart unknown curve name', () => {
   it('is drawn with S-curves and warns CURVE_UNKNOWN once', async () => {
-    const { paths, warnings } = await render('curve-unknown.mmd');
+    const { paths, warnings } = await render('../../nightly-check/curve-unknown.mmd');
     expect(paths.some((d) => d.includes('C'))).toBe(true);
     const curve = warnings.filter((w) => w.code === 'CURVE_UNKNOWN');
     expect(curve).toHaveLength(1);
