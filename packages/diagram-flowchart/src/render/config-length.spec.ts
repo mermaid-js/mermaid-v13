@@ -21,7 +21,7 @@ function run(make: (warn: (w: ConfigLengthWarning) => void) => (key: string) => 
   return { values: KEYS.map((k) => length(k)), warnings };
 }
 
-// Flowchart keeps its own copy of the shared reader on purpose (D591): this keeps the two in step.
+// Flowchart keeps its own copy of the shared reader on purpose (D594): this keeps the two in step.
 describe("flowchart's configLengths copy", () => {
   it.each(SECTIONS)('reads %j as the shared reader does', (section) => {
     expect(run((warn) => configLengths(section, DEFAULTS, warn))).toEqual(
