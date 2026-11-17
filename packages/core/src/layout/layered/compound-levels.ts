@@ -1,8 +1,7 @@
 // Ported from Pele (https://github.com/obsidianmd/pele), src/layout/compound.ts at 3a2f075.
 // Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
 // Changes from Pele: split out of `compound.ts` (D596): the levels of the group tree, the port
-// budget and the sorting of edges into levels, which `compoundLayout` did inline. The algorithm is
-// unchanged.
+// budget and the sorting of edges into levels. The algorithm is unchanged.
 // cspell:ignore kepano
 //
 import type { CNode, Dir } from './compound.ts';

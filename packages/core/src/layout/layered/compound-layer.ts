@@ -1,8 +1,7 @@
 // Ported from Pele (https://github.com/obsidianmd/pele), src/layout/compound.ts at 3a2f075.
 // Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
 // Changes from Pele: split out of `compound.ts` (D596): the graph `layered` gets for one level, the
-// flat layout that orders the levels together, and the cache of levels laid out, which
-// `compoundLayout` had as closures. The algorithm is unchanged.
+// flat layout that orders the levels together, and the cache of levels laid out. The algorithm is unchanged.
 // cspell:ignore kepano lnode lnodes cnode
 //
 import { endpointBelow } from './compound-own.ts';

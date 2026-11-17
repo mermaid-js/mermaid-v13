@@ -30,6 +30,17 @@ type Scope = 'diagram' | 'folder';
 const STAGE_ORDER: readonly Stage[] = ['parse', 'measure', 'layout', 'serialise'];
 
 /** One render: the wall time and the time per stage it recorded. */
+type MermaidInstance = ReturnType<DevMermaid['module']['createMermaid']>;
+
+/** What one profile run threads through its per-diagram timing. */
+interface RunState {
+  current: Partial<Record<Stage, number>>;
+  readonly seen: Set<Stage>;
+  unit: number;
+  units: number;
+  readonly iterations: number;
+}
+
 interface Sample {
   readonly total: number;
   readonly stages: Partial<Record<Stage, number>>;
@@ -321,11 +332,50 @@ export class ProfileTab extends ViewerTabElement {
     return diagrams;
   }
 
-  async #instance(dev: DevMermaid): Promise<ReturnType<DevMermaid['module']['createMermaid']>> {
+  async #instance(dev: DevMermaid): Promise<MermaidInstance> {
     const instance = dev.module.createMermaid();
     instance.registerLayoutLoaders(dev.module.devLayoutLoaders);
     await instance.registerExternalDiagrams([dev.module.interactions]);
     return instance;
+  }
+
+  /** Time one diagram under one layout: `iterations` renders, failures counted. */
+  async #timeDiagram(
+    instance: MermaidInstance,
+    config: ReturnType<typeof renderConfig>,
+    layout: string,
+    diagram: { path: string; text: string },
+    run: RunState
+  ): Promise<DiagramResult> {
+    const { iterations } = run;
+    const samples: Sample[] = [];
+    let failures = 0;
+    let error: string | undefined;
+    for (let i = 0; i < iterations && !this.#cancel; i++) {
+      this.progress = `${layout} · ${baseName(diagram.path)} · ${i + 1}/${iterations} (${run.unit}/${run.units})`;
+      // Let the progress label paint before a long render.
+      await this.updateComplete;
+      // A fresh site snapshot per run: `render` caches the parse per (text, snapshot),
+      // and every run should pay for its parse as a first render does.
+      instance.initialize(config);
+      run.current = {};
+      const start = performance.now();
+      try {
+        await instance.render(`dev-profile-${run.unit}-${i}`, diagram.text);
+        const total = performance.now() - start;
+        for (const stage of Object.keys(run.current) as Stage[]) run.seen.add(stage);
+        samples.push({ total, stages: run.current });
+      } catch (e) {
+        failures++;
+        error = e instanceof Error ? e.message : String(e);
+      }
+    }
+    return {
+      diagram: diagram.path,
+      stats: trimmedStats(samples),
+      failures,
+      ...(error ? { error } : {}),
+    };
   }
 
   async #run(): Promise<void> {
@@ -348,13 +398,6 @@ export class ProfileTab extends ViewerTabElement {
       return;
     }
     const { module } = dev;
-    let current: Partial<Record<Stage, number>> = {};
-    const clock: StageClock = {
-      now: () => performance.now(),
-      record: (stage, ms) => {
-        current[stage] = (current[stage] ?? 0) + ms;
-      },
-    };
     try {
       if (!module.STAGE_TIMING) {
         throw new Error('Stage timing is off in this build; restart the dev server.');
@@ -363,10 +406,21 @@ export class ProfileTab extends ViewerTabElement {
       const diagrams = await this.#diagrams();
       if (diagrams.length === 0) throw new Error('No diagrams to profile.');
       const instance = await this.#instance(dev);
-      const seen = new Set<Stage>();
       const results: LayoutResult[] = [];
+      const run: RunState = {
+        current: {},
+        seen: new Set<Stage>(),
+        unit: 0,
+        units: layouts.length * diagrams.length,
+        iterations,
+      };
+      const clock: StageClock = {
+        now: () => performance.now(),
+        record: (stage, ms) => {
+          run.current[stage] = (run.current[stage] ?? 0) + ms;
+        },
+      };
       module.installStageClock(clock);
-      let unit = 0;
       for (const layout of layouts) {
         const config = renderConfig({ ...settings, layout });
         instance.initialize(config);
@@ -376,35 +430,8 @@ export class ProfileTab extends ViewerTabElement {
         const perDiagram: DiagramResult[] = [];
         for (const diagram of diagrams) {
           if (this.#cancel) break;
-          unit++;
-          const samples: Sample[] = [];
-          let failures = 0;
-          let error: string | undefined;
-          for (let i = 0; i < iterations && !this.#cancel; i++) {
-            this.progress = `${layout} · ${baseName(diagram.path)} · ${i + 1}/${iterations} (${unit}/${layouts.length * diagrams.length})`;
-            // Let the progress label paint before a long render.
-            await this.updateComplete;
-            // A fresh site snapshot per run: `render` caches the parse per (text, snapshot),
-            // and every run should pay for its parse as a first render does.
-            instance.initialize(config);
-            current = {};
-            const start = performance.now();
-            try {
-              await instance.render(`dev-profile-${unit}-${i}`, diagram.text);
-              const total = performance.now() - start;
-              for (const stage of Object.keys(current) as Stage[]) seen.add(stage);
-              samples.push({ total, stages: current });
-            } catch (e) {
-              failures++;
-              error = e instanceof Error ? e.message : String(e);
-            }
-          }
-          perDiagram.push({
-            diagram: diagram.path,
-            stats: trimmedStats(samples),
-            failures,
-            ...(error ? { error } : {}),
-          });
+          run.unit++;
+          perDiagram.push(await this.#timeDiagram(instance, config, layout, diagram, run));
         }
         results.push(summarise(layout, perDiagram));
         if (this.#cancel) break;
@@ -414,7 +441,7 @@ export class ProfileTab extends ViewerTabElement {
         scope,
         iterations,
         theme: settings.theme,
-        stages: STAGE_ORDER.filter((s) => seen.has(s)),
+        stages: STAGE_ORDER.filter((s) => run.seen.has(s)),
         layouts: results,
         cancelled: this.#cancel,
       };

@@ -265,7 +265,7 @@ function decodePercent(uri: string): string {
 
 // What a browser makes of an href: tabs and line breaks dropped, then leading spaces and controls.
 // eslint-disable-next-line no-control-regex -- C0 controls are what browsers strip
-const RE_LEADING_CTRL = /^[\u0000- ]+/;
+const RE_LEADING_CTRL = /^[\u0000-\u0020]+/;
 function browserView(value: string): string {
   return value.replace(/[\t\n\r]/g, '').replace(RE_LEADING_CTRL, '');
 }

@@ -1,8 +1,9 @@
 /**
  * The state of one API object: its registry, hooks, analyser, site config and the rest, held in
  * one `Session` that the draw, prepare and parse steps (`draw.ts`, `prepare.ts`) read. The
- * public methods in `api.ts` are the only code that writes it, after a registration or
- * `initialize`.
+ * public methods in `api.ts` write it after a registration or `initialize`; `prepare.ts` sets
+ * `textBackend`, and `rebuildHooks` and `hooksFor` here write `hooks`, `extensionList` and
+ * `layoutRunners`.
  */
 import { HookRunner } from '@mermaid-js/core';
 import { layoutName } from './registry.ts';
