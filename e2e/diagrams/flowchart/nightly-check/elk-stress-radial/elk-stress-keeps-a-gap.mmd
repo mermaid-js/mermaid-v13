@@ -1,0 +1,16 @@
+---
+description: >-
+  Verifies that elk.stress keeps a gap between nodes sized by the label, so no
+  node overlaps another and every edge is visible (#417).
+config:
+  layout: elk.stress
+---
+flowchart TB
+  A --> B
+  A --> C
+  B --> D
+  B --> E
+  C --> F
+  subgraph G [Group]
+    E --> H
+  end
