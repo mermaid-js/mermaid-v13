@@ -321,20 +321,12 @@
     }
   },
   "packages/core/src/svg/inert.ts": {
-    "complexity": {
-      "count": 2
-    },
     "tsdoc/syntax": {
       "count": 1
     }
   },
   "packages/core/src/svg/path.ts": {
     "max-params": {
-      "count": 1
-    }
-  },
-  "packages/core/src/svg/style.ts": {
-    "complexity": {
       "count": 1
     }
   },

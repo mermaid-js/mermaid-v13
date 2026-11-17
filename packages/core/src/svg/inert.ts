@@ -8,31 +8,19 @@
  * (c) 2026 kepano), tests/support/inert.ts @ 3a2f075.
  */
 import {
-  ALLOWED_ATTRS,
   ALLOWED_TAGS,
   BLANK_REL,
   GRADIENT_ATTRS,
   GRADIENT_FIXED,
   GRADIENT_TAGS,
-  HREF_TAGS,
-  LINK_TARGETS,
-  NUMERIC_ATTRS,
   RE_GRADIENT_ID,
   RE_USER_GRADIENT_ID,
-  SVG_NS,
 } from './allowlist.ts';
 import { RE_INVALID_XML } from './escape.ts';
-import {
-  BLEND,
-  BLEND_MODES,
-  RE_UNSAFE_STYLE,
-  STYLE_TEXT_PROPERTIES,
-  checkColor,
-  checkFilter,
-  styleSheetProblem,
-} from './style.ts';
+import { attrProblem, badAmp, decodeAttr } from './inert-attrs.ts';
+import { checkColor, styleSheetProblem } from './style.ts';
 import type { EmbeddedSvg } from './types.ts';
-import { isImageDataUrl, type SecurityLevel } from './url.ts';
+import type { SecurityLevel } from './url.ts';
 
 export interface InertOptions {
   readonly securityLevel?: SecurityLevel;
@@ -193,165 +181,6 @@ function gradientRef(name: string, value: string, g: GradientScan): boolean {
 const STYLE_OPEN = '<style>';
 const STYLE_CLOSE = '</style>';
 
-const RE_NUMBER = /^-?\d{1,15}(?:\.\d{1,15})?(?:e[-+]?\d{1,3})?$/;
-const RE_PERCENT = /^\d{1,15}(?:\.\d{1,15})?%$/;
-const RE_NUMBER_LIST = /^[\d\s,.eE+-]*$/;
-// cspell:disable-next-line
-const RE_PATH = /^[MLHVCSQTAZmlhvcsqtaz\d\s,.eE+-]*$/;
-const RE_ALIAS_REF = /^var\(--_[A-Za-z0-9_-]{1,64}\)$/;
-// A palette slot as `AllowedAttr['data-color-id']` types it, `color-<n>`.
-const RE_COLOR_ID = /^color-\d{1,3}$/;
-const RE_TRANSFORM_CHARS = /^[a-zA-Z(),.\d\s+-]*$/;
-const TRANSFORMS: ReadonlySet<string> = new Set([
-  'translate',
-  'rotate',
-  'scale',
-  'matrix',
-  'skewX',
-  'skewY',
-  'e',
-]);
-const RE_WORD = /[a-zA-Z]+/g;
-const RE_SCHEME = /^([a-zA-Z][a-zA-Z0-9+.-]*):/;
-const RE_NETWORK_PATH = /^[\\/]{2}/;
-const RE_ENTITY = /^&(?:amp|lt|gt|quot|apos|#\d{1,8}|#x[0-9a-fA-F]{1,8});/;
-const PAINT_LIKE: ReadonlySet<string> = new Set([
-  'fill',
-  'stroke',
-  'color',
-  'font-family',
-  'font-size',
-  'font-weight',
-  'font-style',
-  'text-decoration',
-  'letter-spacing',
-  'opacity',
-  'fill-opacity',
-  'stroke-opacity',
-  'stroke-width',
-  'stroke-dasharray',
-  'stroke-dashoffset',
-]);
-
-function decodeAttr(value: string): string {
-  if (!value.includes('&')) return value;
-  return value
-    .replace(/&#x([0-9a-fA-F]{1,8});/g, (_m, hex: string) =>
-      String.fromCodePoint(Math.min(parseInt(hex, 16), 0x10ffff))
-    )
-    .replace(/&#(\d{1,8});/g, (_m, dec: string) =>
-      String.fromCodePoint(Math.min(Number(dec), 0x10ffff))
-    )
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&');
-}
-
-// Every `&` must start a well-formed reference.
-function badAmp(text: string): boolean {
-  for (let i = text.indexOf('&'); i !== -1; i = text.indexOf('&', i + 1)) {
-    if (!RE_ENTITY.test(text.slice(i, i + 12))) return true;
-  }
-  return false;
-}
-
-function decodePercent(uri: string): string {
-  try {
-    return decodeURIComponent(uri);
-  } catch {
-    return uri;
-  }
-}
-
-// What a browser makes of an href: tabs and line breaks dropped, then leading spaces and controls.
-// eslint-disable-next-line no-control-regex -- C0 controls are what browsers strip
-const RE_LEADING_CTRL = /^[\u0000-\u0020]+/;
-function browserView(value: string): string {
-  return value.replace(/[\t\n\r]/g, '').replace(RE_LEADING_CTRL, '');
-}
-
-function hrefProblem(tag: string, value: string, options: InertOptions): string | undefined {
-  const strict = options.securityLevel === 'strict';
-  const image = tag === 'image';
-  const seen = browserView(value);
-  // An image source follows checkImageUrl: raster data URLs, and no mail or link schemes.
-  if (image && isImageDataUrl(seen) && isImageDataUrl(decodePercent(seen))) return undefined;
-  let schemes: readonly string[] = options.linkSchemes ?? ['http', 'https', 'mailto'];
-  if (strict) schemes = [];
-  else if (image) schemes = ['http', 'https'];
-  for (const form of [seen, browserView(decodePercent(seen))]) {
-    if (RE_NETWORK_PATH.test(form)) return `href="${value}" is a network path`;
-    const scheme = RE_SCHEME.exec(form);
-    if (scheme && !schemes.includes((scheme[1] as string).toLowerCase()))
-      return `href="${value}" has a scheme that is not allowed`;
-  }
-  return undefined;
-}
-
-function attrProblem(
-  tag: string,
-  name: string,
-  value: string,
-  options: InertOptions
-): string | undefined {
-  if (!ALLOWED_ATTRS.has(name)) return `attribute ${name} on <${tag}>`;
-  if (NUMERIC_ATTRS.has(name))
-    return RE_NUMBER.test(value) ? undefined : `${name}="${value}" is not a number`;
-  switch (name) {
-    case 'width':
-    case 'height':
-      return RE_NUMBER.test(value) || RE_PERCENT.test(value)
-        ? undefined
-        : `${name}="${value}" is not a size`;
-    case 'xmlns':
-      return tag === 'svg' && value === SVG_NS ? undefined : `xmlns="${value}" on <${tag}>`;
-    case 'href':
-      return HREF_TAGS.has(tag) ? hrefProblem(tag, value, options) : `href on <${tag}>`;
-    case 'target':
-      return LINK_TARGETS.has(value) ? undefined : `target="${value}"`;
-    case 'rel':
-      return value === BLANK_REL ? undefined : `rel="${value}"`;
-    case 'd':
-      return RE_PATH.test(value) ? undefined : `d="${value}"`;
-    case 'points':
-    case 'viewBox':
-      return RE_NUMBER_LIST.test(value) ? undefined : `${name}="${value}"`;
-    case 'transform': {
-      if (!RE_TRANSFORM_CHARS.test(value)) return `transform="${value}"`;
-      for (const word of value.match(RE_WORD) ?? [])
-        if (!TRANSFORMS.has(word)) return `transform="${value}"`;
-      return undefined;
-    }
-    case 'fill-rule':
-    case 'clip-rule':
-      return value === 'nonzero' || value === 'evenodd' ? undefined : `${name}="${value}"`;
-    case 'data-color-id':
-      return RE_COLOR_ID.test(value) ? undefined : `data-color-id="${value}"`;
-    case 'filter':
-      // A theme alias, or a drop-shadow list: never url(), which could load or reference.
-      return RE_ALIAS_REF.test(value) || checkFilter(value) !== undefined
-        ? undefined
-        : `filter="${value}"`;
-    case 'style': {
-      for (const decl of value.split(';')) {
-        if (decl.trim() === '') continue;
-        const at = decl.indexOf(':');
-        const prop = (at < 0 ? decl : decl.slice(0, at)).trim();
-        if (at < 0 || (!prop.startsWith('--') && !STYLE_TEXT_PROPERTIES.has(prop)))
-          return `style property ${prop}`;
-        const v = decl.slice(at + 1);
-        if (RE_UNSAFE_STYLE.test(v) || (prop === BLEND && !BLEND_MODES.has(v.trim())))
-          return `style="${value}"`;
-      }
-      return undefined;
-    }
-  }
-  if (PAINT_LIKE.has(name) && RE_UNSAFE_STYLE.test(value)) return `${name}="${value}"`;
-  return undefined;
-}
-
 /** One root `<svg>`'s scope: the outer root's, or an embedded diagram's (ADR-15). */
 interface Scope {
   /** Where the root sits in the element stack. */
@@ -379,6 +208,169 @@ function scopeOf(base: number, options: InertOptions): Scope {
 }
 
 /**
+ * Where the scan is: the markup, the position in it, the open elements and the roots they sit
+ * under, and the start tag being read.
+ */
+interface Scan {
+  readonly svg: string;
+  readonly n: number;
+  readonly options: InertOptions;
+  i: number;
+  /** Where the next `<` is, or -1. */
+  lt: number;
+  readonly stack: string[];
+  /** The outer root, then each embedded diagram's root (ADR-15) open around the scan. */
+  readonly frames: Scope[];
+  /** The innermost root's scope: its own style sheet, gradients and scope. */
+  f: Scope;
+  /** The start tag being read: its attributes by name, and whether it ends `/>`. */
+  attrs: Map<string, string>;
+  selfClosing: boolean;
+}
+
+function skipSpace(s: Scan): void {
+  while (s.i < s.n && /\s/.test(s.svg[s.i] as string)) s.i++;
+}
+
+/** The name at the position, as far as name characters go. */
+function readName(s: Scan): string {
+  const start = s.i;
+  while (s.i < s.n && /[\w:.-]/.test(s.svg[s.i] as string)) s.i++;
+  return s.svg.slice(start, s.i);
+}
+
+/** The text up to the next `<`: no `>`, and every `&` a reference. */
+function textProblem(s: Scan): string | undefined {
+  s.lt = s.svg.indexOf('<', s.i);
+  const text = s.svg.slice(s.i, s.lt === -1 ? s.n : s.lt);
+  if (text.includes('>')) return `unescaped ">" in text near ${JSON.stringify(text.slice(0, 40))}`;
+  if (badAmp(text)) return `unescaped "&" in text near ${JSON.stringify(text.slice(0, 40))}`;
+  return undefined;
+}
+
+/** A `<style>` under the root (`theme: 'auto'`): one sheet of custom properties, skipped over. */
+function styleProblem(s: Scan): string | undefined {
+  const { svg, stack, f } = s;
+  if (svg.slice(s.lt, s.lt + STYLE_OPEN.length) !== STYLE_OPEN) return '<style> with attributes';
+  if (stack.length !== f.base + 1 || stack[f.base] !== 'svg')
+    return '<style> that is not a child of <svg>';
+  if (++f.sheets > 1) return 'a second <style>';
+  f.g.rootChildren++;
+  const end = svg.indexOf(STYLE_CLOSE, s.lt);
+  if (end === -1) return 'unclosed <style>';
+  const css = svg.slice(s.lt + STYLE_OPEN.length, end);
+  if (css.includes('<') || css.includes('&')) return 'markup in <style>';
+  const problem = styleSheetProblem(css);
+  if (problem !== undefined) return `<style> holds ${problem}`;
+  s.i = end + STYLE_CLOSE.length;
+  return undefined;
+}
+
+/** `</tag>`: it closes the open element, and that ends its gradient, `<defs>` or embedded root. */
+function closingProblem(s: Scan, tag: string): string | undefined {
+  skipSpace(s);
+  if (s.svg[s.i] !== '>') return `malformed </${tag}>`;
+  s.i++;
+  const { stack, frames } = s;
+  const open = stack.pop();
+  if (open !== tag) return `</${tag}> closes <${open ?? 'nothing'}>`;
+  if (tag === 'linearGradient' && s.f.g.stops !== 2) return '<linearGradient> without two stops';
+  if (tag === 'defs' && s.f.g.ids.size === 0) return '<defs> without a gradient';
+  if (tag === 'svg' && frames.length > 1 && stack.length === s.f.base) {
+    frames.pop();
+    s.f = frames[frames.length - 1] as Scope;
+  }
+  return undefined;
+}
+
+/** One `name="value"` of the start tag `tag`: well-formed, once, and allowed. */
+function attributeProblem(s: Scan, tag: string): string | undefined {
+  const { svg } = s;
+  const name = readName(s);
+  if (name === '' || svg[s.i] !== '=' || svg[s.i + 1] !== '"')
+    return `malformed attribute on <${tag}>`;
+  s.i += 2;
+  const end = svg.indexOf('"', s.i);
+  if (end === -1) return `unterminated attribute ${name} on <${tag}>`;
+  const raw = svg.slice(s.i, end);
+  s.i = end + 1;
+  if (raw.includes('<')) return `"<" in attribute ${name} on <${tag}>`;
+  if (badAmp(raw)) return `unescaped "&" in attribute ${name} on <${tag}>`;
+  if (s.attrs.has(name)) return `<${tag}> has ${name} twice`;
+  s.attrs.set(name, '');
+  const value = decodeAttr(raw);
+  const g = s.f.g;
+  const problem =
+    gradientAttrProblem(tag, name, value, g) ??
+    (gradientRef(name, value, g) ? undefined : attrProblem(tag, name, value, s.options));
+  if (problem !== undefined) return problem;
+  s.attrs.set(name, value);
+  return undefined;
+}
+
+/** The attributes of the start tag `tag`, up to its `>` or `/>`. */
+function attributesProblem(s: Scan, tag: string): string | undefined {
+  s.attrs = new Map();
+  s.selfClosing = false;
+  for (;;) {
+    const before = s.i;
+    skipSpace(s);
+    if (s.svg[s.i] === '>') {
+      s.i++;
+      return undefined;
+    }
+    if (s.svg[s.i] === '/' && s.svg[s.i + 1] === '>') {
+      s.i += 2;
+      s.selfClosing = true;
+      return undefined;
+    }
+    if (s.i === before) return `malformed <${tag}>`;
+    const problem = attributeProblem(s, tag);
+    if (problem !== undefined) return problem;
+  }
+}
+
+/**
+ * `<tag ...>`: where the element may stand, its attributes, what the whole tag must satisfy,
+ * then it opens (unless it ends `/>`).
+ */
+function openingProblem(s: Scan, tag: string): string | undefined {
+  const problem = gradientPlace(tag, s.stack, s.f.base, s.f.g) ?? attributesProblem(s, tag);
+  if (problem !== undefined) return problem;
+  if (s.attrs.get('target') === '_blank' && s.attrs.get('rel') !== BLANK_REL)
+    return `<${tag} target="_blank"> without rel="${BLANK_REL}"`;
+  if (tag === 'linearGradient') {
+    const shape = gradientShape(s.f.g, s.f.options);
+    if (shape !== undefined) return shape;
+  }
+  if (s.selfClosing && (tag === 'defs' || tag === 'linearGradient')) return `an empty <${tag}>`;
+  if (tag === 'stop' && !s.attrs.has('offset')) return '<stop> without an offset';
+  if (!s.selfClosing) {
+    // A nested root opens an embedded diagram's scope.
+    if (tag === 'svg' && s.stack.length > 0) {
+      s.f = scopeOf(s.stack.length, { ...s.options, gradient: undefined, scope: undefined });
+      s.frames.push(s.f);
+    }
+    s.stack.push(tag);
+  }
+  return undefined;
+}
+
+/** The markup at the `<` `s.lt`: a `<style>` sheet, an end tag or a start tag. */
+function markupProblem(s: Scan): string | undefined {
+  const { svg } = s;
+  s.i = s.lt + 1;
+  const closing = svg[s.i] === '/';
+  if (closing) s.i++;
+  const tag = readName(s);
+  if (tag === '' || !/^[A-Za-z]/.test(tag))
+    return `markup ${JSON.stringify(svg.slice(s.lt, s.lt + 20))}`;
+  if (tag === 'style' && s.options.themeStyle && !closing) return styleProblem(s);
+  if (!ALLOWED_TAGS.has(tag)) return `element <${tag}>`;
+  return closing ? closingProblem(s, tag) : openingProblem(s, tag);
+}
+
+/**
  * The first thing about the markup that is not inert, or undefined when there is none. A
  * nested `<svg>` (an embedded diagram, ADR-15) is checked as a root of its own: one `<style>`
  * and one `<defs>` directly under it, its own gradient scope.
@@ -386,118 +378,25 @@ function scopeOf(base: number, options: InertOptions): Scope {
 export function inertProblem(svg: string, options: InertOptions = {}): string | undefined {
   const bad = RE_INVALID_XML.exec(svg);
   if (bad) return `character U+${bad[0].charCodeAt(0).toString(16).toUpperCase()} at ${bad.index}`;
-  const stack: string[] = [];
-  let i = 0;
-  const n = svg.length;
-  // The outer root, then each embedded diagram's root (ADR-15) open around the scan: each has
-  // its own style sheet, gradients and scope.
-  const frames: Scope[] = [scopeOf(0, options)];
-  let f = frames[0] as Scope;
-  while (i < n) {
-    const lt = svg.indexOf('<', i);
-    const text = svg.slice(i, lt === -1 ? n : lt);
-    if (text.includes('>'))
-      return `unescaped ">" in text near ${JSON.stringify(text.slice(0, 40))}`;
-    if (badAmp(text)) return `unescaped "&" in text near ${JSON.stringify(text.slice(0, 40))}`;
-    if (lt === -1) break;
-    i = lt + 1;
-    const closing = svg[i] === '/';
-    if (closing) i++;
-    const nameStart = i;
-    while (i < n && /[\w:.-]/.test(svg[i] as string)) i++;
-    const tag = svg.slice(nameStart, i);
-    if (tag === '' || !/^[A-Za-z]/.test(tag))
-      return `markup ${JSON.stringify(svg.slice(lt, lt + 20))}`;
-    if (tag === 'style' && options.themeStyle && !closing) {
-      if (svg.slice(lt, lt + STYLE_OPEN.length) !== STYLE_OPEN) return '<style> with attributes';
-      if (stack.length !== f.base + 1 || stack[f.base] !== 'svg')
-        return '<style> that is not a child of <svg>';
-      if (++f.sheets > 1) return 'a second <style>';
-      f.g.rootChildren++;
-      const end = svg.indexOf(STYLE_CLOSE, lt);
-      if (end === -1) return 'unclosed <style>';
-      const css = svg.slice(lt + STYLE_OPEN.length, end);
-      if (css.includes('<') || css.includes('&')) return 'markup in <style>';
-      const problem = styleSheetProblem(css);
-      if (problem !== undefined) return `<style> holds ${problem}`;
-      i = end + STYLE_CLOSE.length;
-      continue;
-    }
-    if (!ALLOWED_TAGS.has(tag)) return `element <${tag}>`;
-    if (closing) {
-      while (i < n && /\s/.test(svg[i] as string)) i++;
-      if (svg[i] !== '>') return `malformed </${tag}>`;
-      i++;
-      const open = stack.pop();
-      if (open !== tag) return `</${tag}> closes <${open ?? 'nothing'}>`;
-      if (tag === 'linearGradient' && f.g.stops !== 2) return '<linearGradient> without two stops';
-      if (tag === 'defs' && f.g.ids.size === 0) return '<defs> without a gradient';
-      if (tag === 'svg' && frames.length > 1 && stack.length === f.base) {
-        frames.pop();
-        f = frames[frames.length - 1] as Scope;
-      }
-      continue;
-    }
-    const g = f.g;
-    const place = gradientPlace(tag, stack, f.base, g);
-    if (place !== undefined) return place;
-    const seen = new Set<string>();
-    let target: string | undefined;
-    let rel: string | undefined;
-    let selfClosing = false;
-    for (;;) {
-      const before = i;
-      while (i < n && /\s/.test(svg[i] as string)) i++;
-      if (svg[i] === '>') {
-        i++;
-        break;
-      }
-      if (svg[i] === '/' && svg[i + 1] === '>') {
-        i += 2;
-        selfClosing = true;
-        break;
-      }
-      if (i === before) return `malformed <${tag}>`;
-      const attrStart = i;
-      while (i < n && /[\w:.-]/.test(svg[i] as string)) i++;
-      const name = svg.slice(attrStart, i);
-      if (name === '' || svg[i] !== '=' || svg[i + 1] !== '"')
-        return `malformed attribute on <${tag}>`;
-      i += 2;
-      const end = svg.indexOf('"', i);
-      if (end === -1) return `unterminated attribute ${name} on <${tag}>`;
-      const raw = svg.slice(i, end);
-      i = end + 1;
-      if (raw.includes('<')) return `"<" in attribute ${name} on <${tag}>`;
-      if (badAmp(raw)) return `unescaped "&" in attribute ${name} on <${tag}>`;
-      if (seen.has(name)) return `<${tag}> has ${name} twice`;
-      seen.add(name);
-      const value = decodeAttr(raw);
-      const problem =
-        gradientAttrProblem(tag, name, value, g) ??
-        (gradientRef(name, value, g) ? undefined : attrProblem(tag, name, value, options));
-      if (problem !== undefined) return problem;
-      if (name === 'target') target = value;
-      if (name === 'rel') rel = value;
-    }
-    if (target === '_blank' && rel !== BLANK_REL)
-      return `<${tag} target="_blank"> without rel="${BLANK_REL}"`;
-    if (tag === 'linearGradient') {
-      const shape = gradientShape(g, f.options);
-      if (shape !== undefined) return shape;
-    }
-    if (selfClosing && (tag === 'defs' || tag === 'linearGradient')) return `an empty <${tag}>`;
-    if (tag === 'stop' && !seen.has('offset')) return '<stop> without an offset';
-    if (!selfClosing) {
-      // A nested root opens an embedded diagram's scope.
-      if (tag === 'svg' && stack.length > 0) {
-        f = scopeOf(stack.length, { ...options, gradient: undefined, scope: undefined });
-        frames.push(f);
-      }
-      stack.push(tag);
-    }
+  const root = scopeOf(0, options);
+  const s: Scan = {
+    svg,
+    n: svg.length,
+    options,
+    i: 0,
+    lt: -1,
+    stack: [],
+    frames: [root],
+    f: root,
+    attrs: new Map(),
+    selfClosing: false,
+  };
+  while (s.i < s.n) {
+    const problem = textProblem(s) ?? (s.lt === -1 ? undefined : markupProblem(s));
+    if (problem !== undefined) return problem;
+    if (s.lt === -1) break;
   }
-  if (stack.length > 0) return `unclosed <${stack[stack.length - 1]}>`;
+  if (s.stack.length > 0) return `unclosed <${s.stack[s.stack.length - 1]}>`;
   return undefined;
 }
 

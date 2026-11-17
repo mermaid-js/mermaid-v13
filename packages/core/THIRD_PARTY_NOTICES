@@ -18,6 +18,7 @@ used under the MIT License:
   src/parser-kit/chars.ts
   src/preprocess/yaml.ts
   src/svg/escape.ts
+  src/svg/inert-attrs.ts
   src/svg/inert.ts
   src/svg/testing/index.ts
   src/svg/url.ts
