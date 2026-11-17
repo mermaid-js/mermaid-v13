@@ -68,7 +68,7 @@ describe('routePath step curves (#356, D602)', () => {
     expect(step).toContain('L0,50');
     expect(before).toContain('L0,');
     expect(new Set([step, before, after]).size).toBe(3);
-    const ys = (d: string): number[] => [...d.matchAll(/L0,([\d.]+)/g)].map((m) => Number(m[1]));
+    const ys = (d: string): number[] => [...d.matchAll(/L0,([\d.]+)/g)].map((m) => Number(m[1]!));
     expect(Math.min(...ys(before))).toBeGreaterThanOrEqual(6);
     expect(Math.max(...ys(after))).toBeLessThanOrEqual(94);
   });
