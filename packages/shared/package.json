@@ -41,6 +41,16 @@
       "types": "./dist/parser/drop.d.ts",
       "default": "./dist/parser/drop.js"
     },
+    "./parser/common-values": {
+      "mermaid-source": "./src/parser/common-values.ts",
+      "types": "./dist/parser/common-values.d.ts",
+      "default": "./dist/parser/common-values.js"
+    },
+    "./parser/seen-tokens": {
+      "mermaid-source": "./src/parser/seen-tokens.ts",
+      "types": "./dist/parser/seen-tokens.d.ts",
+      "default": "./dist/parser/seen-tokens.js"
+    },
     "./parser/facet": {
       "mermaid-source": "./src/parser/facet.ts",
       "types": "./dist/parser/facet.d.ts",

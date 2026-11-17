@@ -20,25 +20,38 @@ const ESCAPES: Readonly<Record<string, string>> = {
   0: '\0',
 } as const;
 
-/** A `"…"` or `'…'` string without its quotes, with `\x` unescaped. Not trimmed. */
-export function stringValue(image: string): string {
+/**
+ * The text between the quotes of `image`, with each `\x` read through `escapes` (as `x` when
+ * `escapes` has no entry). A `\` that is the last character inside the quotes is dropped, or
+ * kept when `keepLastBackslash` is set (v12's railroad `decodeEscapedString`).
+ */
+export function unquote(
+  image: string,
+  escapes: Readonly<Record<string, string>> = ESCAPES,
+  keepLastBackslash = false
+): string {
   const body = image.slice(1, -1);
   if (!body.includes('\\')) return body;
   let out = '';
   for (let i = 0; i < body.length; i++) {
     const c = body[i] ?? '';
-    if (c.charCodeAt(0) !== BACKSLASH) {
+    if (c.charCodeAt(0) !== BACKSLASH || (keepLastBackslash && i + 1 >= body.length)) {
       out += c;
       continue;
     }
     const e = body[++i] ?? '';
-    out += ESCAPES[e] ?? e;
+    out += escapes[e] ?? e;
   }
   return out;
 }
 
+/** A `"…"` or `'…'` string without its quotes, with `\x` unescaped. Not trimmed. */
+export function stringValue(image: string): string {
+  return unquote(image);
+}
+
 /** `match[1].trim().replace(/[\t ]{2,}/gm, ' ')`: the one-line value. */
-function oneLine(text: string): string {
+export function oneLine(text: string): string {
   const t = text.trim();
   return /[\t ]{2}/.test(t) ? t.replace(/[\t ]{2,}/g, ' ') : t;
 }
