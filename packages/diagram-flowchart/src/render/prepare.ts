@@ -151,8 +151,19 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     minWidth: length('minNodeWidth') ?? 0,
     // This is the only place the builder looks at which profile it has.
     cells: units.id === 'cell',
+    // `markdownAutoWrap: false` breaks a markdown label only where its source does (v12).
     label: (text, markdown, f, max, bits = 0) =>
-      layoutLabel(text, f, max, measurer, { markdown, style: bits, inline }),
+      layoutLabel(
+        text,
+        f,
+        markdown && ctx.config.markdownAutoWrap === false ? Infinity : max,
+        measurer,
+        {
+          markdown,
+          style: bits,
+          inline,
+        }
+      ),
     styleOf: styleCache(
       new Map(model.classes.map((c) => [c.id, [...c.styles, ...c.textStyles]])),
       ctx.warn
