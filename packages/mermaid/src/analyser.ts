@@ -132,7 +132,7 @@ export class Analyser {
 
   /**
    * Whether `a`'s type has text output (R-ASCII-5, D80). Asked by type: a type can draw fewer
-   * formats than its plugin (`c4beta` has no text output yet).
+   * formats than its plugin (`typeOptions` `formats`).
    */
   textOf(a: { detected: Detected }): boolean {
     return a.detected.id !== undefined && this.registry.formats(a.detected.type).includes('ascii');

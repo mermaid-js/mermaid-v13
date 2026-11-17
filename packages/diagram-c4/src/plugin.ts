@@ -1,9 +1,4 @@
-import {
-  UnsupportedFormatError,
-  type DiagramParseContext,
-  type DiagramPlugin,
-  type RenderContext,
-} from '@mermaid-js/core';
+import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
 import { resolveLimits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import type { AstNode, ParseResult } from '@mermaid-js/core/parser-kit';
@@ -64,7 +59,8 @@ function c4BetaLabels(model: C4BetaModel): string[] {
  *
  * It is also the plugin of `c4-beta` (spec #730, `aliases`): `parse` routes on the header, and
  * `layout` and `render` on the model it made. c4-beta lays out with core's `layered` engine
- * (`beta/layout.ts`) and draws with the painters above; it has no text output yet.
+ * (`beta/layout.ts`) and draws with the painters above; its text output is the same `./ascii` entry,
+ * on the cell profile and the engine's grid mode (`beta/cells.ts`).
  */
 export const c4 = {
   id: 'c4',
@@ -85,10 +81,7 @@ export const c4 = {
   labels: (model: C4AnyModel): string[] =>
     isC4Beta(model) ? c4BetaLabels(model) : c4Labels(model),
   layout: (model: C4AnyModel, ctx: RenderContext): C4Layout => {
-    if (!isC4Beta(model)) return layoutC4(model, ctx);
-    // No text output yet: refuse before measuring in cells (spec #730 T0; T7 draws it).
-    if (ctx.units.id === 'cell') throw new UnsupportedFormatError('c4beta', 'ascii');
-    return layoutC4Beta(model, ctx);
+    return isC4Beta(model) ? layoutC4Beta(model, ctx) : layoutC4(model, ctx);
   },
   render: (model: C4AnyModel, layout: C4Layout, ctx: RenderContext, w: SvgWriter): void =>
     isC4Beta(model) ? renderC4Beta(model, layout, ctx, w) : renderC4(model, layout, ctx, w),

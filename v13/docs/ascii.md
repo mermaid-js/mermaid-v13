@@ -400,6 +400,58 @@ Rel(web, db, "Reads")
   kind: `style` (`UpdateElementStyle` and `UpdateRelStyle` colours), `offset` (`$offsetX`,
   `$offsetY`), `tooltip` (a relation's description) and `accessibility` (`accTitle`, `accDescr`).
 
+### c4-beta
+
+`c4-beta` (spec #730 T7) is drawn by the same entry, from its own layout: text measured in cells,
+laid out by core's `layered` engine in grid mode (`grid: 1` and the cell profile's metrics), and
+read back at 8 × 16 px a cell, so the drawing, the router and the labels are the C4 diagram's.
+
+```
+   Ledger - System Context
+
+╭─────────────────────────╮
+│                         │
+│                         │
+│                         │
+│      Ledger Clerk       │
+│        [Person]         │
+│ Posts journal entries.  │
+╰────────────┬────────────╯
+             │
+             │
+    Posts entries using
+          [HTTPS]
+             │
+             ▼
+╭─────────────────────────╮
+│                         │
+│         Ledger          │
+│    [Software System]    │
+│    Keeps the books.     │
+╰─────────────────────────╯
+```
+
+from
+
+```mermaid
+c4-beta context
+title Ledger - System Context
+person clerk "Ledger Clerk" "Posts journal entries."
+softwareSystem ledger "Ledger" "Keeps the books."
+clerk --> ledger : "Posts entries using" "HTTPS"
+```
+
+- Every direction (`TB`, `BT`, `LR`, `RL`), nested boundaries (a frame with its label in the top
+  border and `[technology] xN` and the description under it), `dynamic` step numbers (`2. Reads`)
+  and the four arrows draw as in SVG: `-->` and `<--` (stored reversed) one head, `<-->` two,
+  `---` none, a tee where a line leaves a box.
+- Dropped, one `ASCII_DROPPED` warning per kind: `style` (a `style` statement's `fill`, `stroke`,
+  `color` and `line` where it applies to something drawn; `shape:cylinder` is drawn, as caps),
+  `accessibility` (`accTitle`, `accDescr`) and `legend`. The legend's rows are swatches that key
+  the fill colours the text does not show, and each box already carries its `[Kind]` line, so
+  the legend is left out, with one warning, unless the source says `legend off`. Config and theme
+  colours are ignored without a warning, as for the C4 diagram.
+
 ## Block diagrams
 
 The block diagram's text entry (`@mermaid-js/diagram-block/ascii`, #559, D449) lays its own grid

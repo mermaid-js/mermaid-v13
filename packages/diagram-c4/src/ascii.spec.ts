@@ -96,6 +96,22 @@ describe('the C4 ascii hook (#545)', () => {
     expect(drawing.text).toContain('Skips');
   });
 
+  it('draws every relation between a pair, each with its label (#680)', () => {
+    const src = [
+      'C4Context',
+      'System(a, "A")',
+      'System(b, "B")',
+      'Rel(a, b, "Pushes")',
+      'BiRel(a, b, "Reconciles")',
+      'Rel(b, a, "Replies")',
+    ].join('\n');
+    const { parsed, ctx } = context(src);
+    const laid = layoutC4(parsed.model, { ...ctx, measurer: cellMeasurer, units: cellProfile() });
+    const drawing = drawC4(laid, unicode);
+    expect(drawing.lines).toHaveLength(3);
+    for (const label of ['Pushes', 'Reconciles', 'Replies']) expect(drawing.text).toContain(label);
+  });
+
   it('cuts a line wider than its box with …', () => {
     const { parsed, ctx } = context(SRC);
     const laid = layoutC4(parsed.model, { ...ctx, measurer: cellMeasurer, units: cellProfile() });
