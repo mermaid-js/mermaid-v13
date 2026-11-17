@@ -133,6 +133,13 @@ export function monarchCategorise(json: string): Categorise {
   };
 }
 
+/** The state stack after a rule: `@pop`, a `switchTo` of the top state, or a `next` push. */
+function monarchStack(stack: string[], action: MonarchRule[1], next: string | undefined): string[] {
+  if (next === '@pop') return stack.length > 1 ? stack.slice(0, -1) : stack;
+  if (action.switchTo) return [...stack.slice(0, -1), next?.slice(1) ?? 'root'];
+  return next ? [...stack, next.slice(1)] : stack;
+}
+
 /**
  * The first Monarch rule matching `line` at `p`: it paints its categories into `cats` and gives
  * the state stack after it, with the match width (-1 when no rule matched).
@@ -153,10 +160,7 @@ function monarchStep(
     if (m[0].length === 0 && !next && line.length > 0) continue;
     const c = MONARCH[action.token] ?? 'Other';
     for (let i = p; i < p + m[0].length; i++) cats[i] = c;
-    let after = stack;
-    if (next === '@pop') after = stack.length > 1 ? stack.slice(0, -1) : stack;
-    else if (action.switchTo) after = [...stack.slice(0, -1), next?.slice(1) ?? 'root'];
-    else if (next) after = [...stack, next.slice(1)];
+    const after = monarchStack(stack, action, next);
     return { width: m[0].length, stack: after };
   }
   return { width: -1, stack };

@@ -60,15 +60,20 @@ function checkUnnamed(where: string, unnamed: unknown): void {
   }
 }
 
+/** `kinds.mixed` and `kinds.documented` are lists of names. */
+function checkKindLists(where: string, kinds: Record<string, unknown>): void {
+  for (const key of ['mixed', 'documented'] as const)
+    if (kinds[key] !== undefined && !isStrings(kinds[key]))
+      throw new Error(`${where}: \`kinds.${key}\` must be a list of names`);
+}
+
 /** The `kinds` of a grammar entry, or the reason it is malformed. */
 function checkKinds(where: string, kinds: unknown): void {
   if (!isRecord(kinds) || typeof kinds.module !== 'string' || typeof kinds.object !== 'string')
     throw new Error(`${where}: \`kinds\` needs a string \`module\` and \`object\``);
   for (const key of Object.keys(kinds))
     if (!KIND_KEYS.has(key)) throw new Error(`${where}: unknown kinds key "${key}"`);
-  for (const key of ['mixed', 'documented'] as const)
-    if (kinds[key] !== undefined && !isStrings(kinds[key]))
-      throw new Error(`${where}: \`kinds.${key}\` must be a list of names`);
+  checkKindLists(where, kinds);
   if (kinds.unnamed !== undefined) checkUnnamed(where, kinds.unnamed);
 }
 

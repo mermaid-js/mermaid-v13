@@ -267,24 +267,15 @@ class GrammarParser {
     return { actions, scope };
   }
 
-  /** One `<modes> NAME /regex/ actions :scope;` rule of the lexer or trivia section. */
-  lexRule(t: Tok, section: 'lexer' | 'trivia'): void {
-    const doc = t.doc;
-    let ruleModes = ['INITIAL'];
-    if (t.k === 'modes') {
-      ruleModes = t.v.split(',').map((m) => m.trim());
-      this.p++;
-    }
-    const nameTok = this.peek();
-    let name: string | undefined;
-    if (nameTok?.k === 'word') name = nameTok.v;
-    else if (!(nameTok?.k === 'punct' && nameTok.v === '-')) this.err('expected a token name or -');
+  /** The modes a lexer rule is active in, and the token that follows its `<modes>` prefix. */
+  ruleModes(t: Tok): string[] {
+    if (t.k !== 'modes') return ['INITIAL'];
     this.p++;
-    const re = this.peek();
-    if (re?.k !== 'regex') this.err('expected /regex/');
-    this.p++;
-    const { actions, scope } = this.lexTail();
-    this.expectPunct(';');
+    return t.v.split(',').map((m) => m.trim());
+  }
+
+  /** Every mode a rule names (its own and its `push` targets) is declared. */
+  checkModes(t: Tok, ruleModes: string[], actions: LexAction[]): void {
     for (const m of ruleModes) {
       if (m !== '*' && m !== 'INITIAL' && !this.modes.includes(m)) {
         this.err(`unknown mode \`${m}\``, t);
@@ -295,6 +286,23 @@ class GrammarParser {
         this.err(`unknown mode \`${a.mode}\``, t);
       }
     }
+  }
+
+  /** One `<modes> NAME /regex/ actions :scope;` rule of the lexer or trivia section. */
+  lexRule(t: Tok, section: 'lexer' | 'trivia'): void {
+    const doc = t.doc;
+    const ruleModes = this.ruleModes(t);
+    const nameTok = this.peek();
+    let name: string | undefined;
+    if (nameTok?.k === 'word') name = nameTok.v;
+    else if (!(nameTok?.k === 'punct' && nameTok.v === '-')) this.err('expected a token name or -');
+    this.p++;
+    const re = this.peek();
+    if (re?.k !== 'regex') this.err('expected /regex/');
+    this.p++;
+    const { actions, scope } = this.lexTail();
+    this.expectPunct(';');
+    this.checkModes(t, ruleModes, actions);
     try {
       new RegExp(re.v, 'y');
     } catch (e) {
