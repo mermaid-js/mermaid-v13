@@ -415,10 +415,7 @@
   },
   "packages/diagram-flowchart/src/parser/model.ts": {
     "@typescript-eslint/no-base-to-string": {
-      "count": 7
-    },
-    "complexity": {
-      "count": 1
+      "count": 6
     },
     "tsdoc/syntax": {
       "count": 1
@@ -443,15 +440,7 @@
     }
   },
   "packages/diagram-flowchart/src/render/render.ts": {
-    "complexity": {
-      "count": 1
-    },
     "unicorn/prefer-spread": {
-      "count": 1
-    }
-  },
-  "packages/diagram-flowchart/src/render/shapes.ts": {
-    "max-params": {
       "count": 1
     }
   },
