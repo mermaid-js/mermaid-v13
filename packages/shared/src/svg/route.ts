@@ -31,6 +31,10 @@ const D3_CURVES: ReadonlySet<string> = new Set([
 /** How the line between two route points is drawn, from the v12 `curve` name. */
 export type CurveKind = 'curved' | 'linear' | 'step' | 'stepBefore' | 'stepAfter' | 'rounded';
 
+/** Whether a curve name is one of the three step curves, which turn at right angles. */
+const isStepped = (kind: string): kind is 'step' | 'stepBefore' | 'stepAfter' =>
+  kind === 'step' || kind === 'stepBefore' || kind === 'stepAfter';
+
 /**
  * The curve kind for a v12 `curve` name. A name that is not drawn otherwise is drawn `curved`:
  * a d3 curve factory name (`basis`, `cardinal`, …) silently, any other name with a
@@ -39,7 +43,7 @@ export type CurveKind = 'curved' | 'linear' | 'step' | 'stepBefore' | 'stepAfter
 export function curveKind(curve: string | undefined, warn?: (warning: Warning) => void): CurveKind {
   if (curve === undefined || D3_CURVES.has(curve)) return 'curved';
   if (curve === 'linear' || curve === 'rounded') return curve;
-  if (curve === 'step' || curve === 'stepBefore' || curve === 'stepAfter') return curve;
+  if (isStepped(curve)) return curve;
   warn?.({
     code: 'CURVE_UNKNOWN',
     message: `Unknown curve "${curve}": edges are drawn with S-curves (curve: basis)`,
@@ -159,7 +163,7 @@ class Legs {
     endTrim: number
   ) {
     this.linear = kind === 'linear';
-    const stepped = kind === 'step' || kind === 'stepBefore' || kind === 'stepAfter';
+    const stepped = isStepped(kind);
     const points = stepped ? movedStep(kind, route, startTrim, endTrim) : route;
     for (const [i, p] of points.entries()) {
       const axis = p.axis === 'h' ? 1 : 0;
@@ -333,7 +337,7 @@ class Pen {
     private readonly r: Legs,
     private readonly kind: CurveKind
   ) {
-    this.stepped = kind === 'step' || kind === 'stepBefore' || kind === 'stepAfter';
+    this.stepped = isStepped(kind);
     this.atX = r.x(0);
     this.atY = r.y(0);
     this.b = w.path().moveTo(this.atX, this.atY);

@@ -8,8 +8,9 @@ import { parseSvg } from './svg-tree.ts';
 /**
  * A clickable node shows a pointer (#355, D605). v12 set it with stylesheet rules; v13 writes
  * `cursor="pointer"` on the element, so it holds for every `securityLevel`, as v12's did. It
- * is on every element whose classes include `clickable` (flowchart and class nodes, gantt
- * bars and task text) and nowhere else.
+ * is on every node or task whose classes include `clickable` (flowchart and class nodes, gantt
+ * bars and task text) and nowhere else. A clickable subgraph gets none: v12's rule was
+ * `.node.clickable`, which a subgraph does not match.
  */
 
 const NOW = new Date(2024, 0, 3, 12).getTime();

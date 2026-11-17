@@ -191,8 +191,9 @@ export interface AnimatedEdge {
 
 /**
  * v13 parses edge `animate` and `animation` but draws no animation (R-SEC-2: the keyframes need
- * a `<style>`; the edge keeps only its `edge-animation-*` class). Raises one `EDGE_ANIMATION_IGNORED` for each of the two features the edges use,
- * so the author learns why nothing moves.
+ * a `<style>`; the edge keeps only its `edge-animation-*` class). Raises one
+ * `EDGE_ANIMATION_IGNORED` for each of the two features the edges use, so the author learns why
+ * nothing moves.
  */
 export function warnIgnoredAnimation(
   edges: Iterable<AnimatedEdge>,
