@@ -6,7 +6,8 @@ import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { CynefinModel } from '../model.ts';
 import { cynefin as plugin } from '../plugin.ts';
 import { fixture, FIXTURES } from './mmd.fixtures.ts';
-import { cynefinLayoutViolations, layoutCynefin, type CynefinLayout } from './index.ts';
+import { layoutCynefin, type CynefinLayout } from './index.ts';
+import { cynefinLayoutViolations } from './invariants.ts';
 
 let spec: ThemeSpec;
 beforeAll(async () => {

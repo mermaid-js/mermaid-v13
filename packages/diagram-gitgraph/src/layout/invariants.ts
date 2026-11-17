@@ -24,7 +24,7 @@ import type { GitLayout, Point, Rect, Transform } from './types.ts';
 import {
   nonFinite as numbers,
   rectsOverlap as overlaps,
-} from '@mermaid-js/shared/layout/invariants';
+} from '@mermaid-js/shared/testing/layout-invariants';
 
 export interface ViolationOptions {
   /** Whether the layout ran with `parallelCommits`. */

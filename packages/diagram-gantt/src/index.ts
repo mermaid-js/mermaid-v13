@@ -27,7 +27,6 @@ export {
   GANTT_METRICS,
   GANTT_TICK_INTERVAL_IGNORED,
   GANTT_UNKNOWN_TASK,
-  ganttLayoutViolations,
   layoutGantt,
 } from './layout/index.ts';
 export type * from './layout/index.ts';

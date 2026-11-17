@@ -7,7 +7,7 @@ import type { PieModel } from '../model.ts';
 import { pieSum } from '../shares.ts';
 import { MIN_PERCENT, PERCENT, PIE_COLOURS as COLOURS } from './metrics.ts';
 import type { PieLayout, Point, Rect } from './types.ts';
-import { nonFinite as finite } from '@mermaid-js/shared/layout/invariants';
+import { nonFinite as finite } from '@mermaid-js/shared/testing/layout-invariants';
 
 /** Float tolerance of the checks. */
 const EPS = 1e-6;

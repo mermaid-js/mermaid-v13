@@ -3,11 +3,8 @@ import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import { DIAGRAM_TABLES } from '../diagram-themes.ts';
-import {
-  layoutTimeline,
-  parseTimeline,
-  timelineLayoutViolations,
-} from '@mermaid-js/diagram-timeline';
+import { layoutTimeline, parseTimeline } from '@mermaid-js/diagram-timeline';
+import { timelineLayoutViolations } from '@mermaid-js/diagram-timeline/testing';
 import type { TimelineModel } from '@mermaid-js/diagram-timeline';
 import type { CorpusItem } from '../types.ts';
 import { timelineGateCorpus } from './corpus.ts';

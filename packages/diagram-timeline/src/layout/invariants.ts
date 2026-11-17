@@ -30,7 +30,7 @@ import type {
   TimelineLine,
   TimelinePeriodLayout,
 } from './types.ts';
-import { nonFinite as numbers, within } from '@mermaid-js/shared/layout/invariants';
+import { nonFinite as numbers, within } from '@mermaid-js/shared/testing/layout-invariants';
 
 const EPS = 1e-6;
 

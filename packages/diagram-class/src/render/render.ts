@@ -174,19 +174,13 @@ export function renderClass(
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, paint }: Scene, model: ClassModel): void {
-  const { config } = ctx;
-  const width = Math.max(1, Math.ceil(layout.width));
-  const height = Math.max(1, Math.ceil(layout.height));
-  const maxWidth = config.class?.useMaxWidth !== false;
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
   openSvgRoot(w, ctx, {
     name: 'class',
     roleDescription: 'classDiagram',
-    viewBox: [0, 0, width, height],
-    maxWidth,
-    title,
-    desc,
+    viewBox: { width: layout.width, height: layout.height },
+    maxWidth: ctx.config.class?.useMaxWidth !== false,
+    title: model.accTitle,
+    desc: model.accDescr,
     attrs: {
       'font-family': paint.font,
       'font-size': paint.fontSize,

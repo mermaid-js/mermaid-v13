@@ -5,7 +5,8 @@ import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { PacketModel } from '../model.ts';
 import { packet as plugin } from '../plugin.ts';
 import { FIXTURES, model, REGISTER } from './fixtures.ts';
-import { layoutPacket, packetLayoutViolations, type PacketLayout } from './index.ts';
+import { layoutPacket, type PacketLayout } from './index.ts';
+import { packetLayoutViolations } from './invariants.ts';
 
 let spec: ThemeSpec;
 beforeAll(async () => {
