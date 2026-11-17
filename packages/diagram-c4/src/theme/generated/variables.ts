@@ -17,4 +17,4 @@ function table(text: string): Record<string, DiagramThemeVar> {
 
 /** The diagram's theme variables, for `DiagramThemeTable.vars`: `THEME_VARIABLES` without `usedBy`. */
 export const THEME_VARIABLE_TABLE: Readonly<Record<string, DiagramThemeVar>> =
-  /* @__PURE__ */ table('c4RelationColor c4r color - c4BoundaryColor c4b color - c4TitleColor c4t color -');
+  /* @__PURE__ */ table('c4RelationColor c4r color - c4BoundaryColor c4b color - c4TitleColor c4t color - c4PersonColor c4pec color - c4PersonBorder c4peb color - c4SoftwareSystemColor c4ssc color - c4SoftwareSystemBorder c4ssb color - c4ContainerColor c4coc color - c4ContainerBorder c4cob color - c4ComponentColor c4cmc color - c4ComponentBorder c4cmb color - c4InfrastructureNodeColor c4inc color - c4InfrastructureNodeBorder c4inb color - c4ExternalColor c4exc color - c4ExternalBorder c4exb color -');
