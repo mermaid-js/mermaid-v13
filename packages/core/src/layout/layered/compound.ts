@@ -8,10 +8,7 @@
 //
 import {
   Kind,
-  floorTo,
   ease,
-  edgeOn,
-  midCell,
   layered,
   layoutInputs,
   ledge,
@@ -25,6 +22,7 @@ import {
 } from './layered.ts';
 import { pxProfile } from '../units.ts';
 import { copy, f64, i32, scratch, u8 } from './scratch.ts';
+import type { GridHooks } from './grid.ts';
 
 export type Dir = 'TB' | 'BT' | 'LR' | 'RL';
 
@@ -442,27 +440,6 @@ export function inheritCrossedDirections(
   }
 }
 
-// The middle of a cell on the top side of `b`, off its corners, nearest the middle and at least
-// `pitch` (else one cell) from where other routes already end there.
-function freeTop(b: CNode, edges: CEdge[], grid: number, pitch: number): number {
-  const top = b.y - b.h / 2;
-  const lo = b.x - b.w / 2 + 1.5 * grid;
-  const hi = b.x + b.w / 2 - 1.5 * grid;
-  const used: number[] = [];
-  for (const e of edges) {
-    const r = e.route;
-    for (const k of r.length >= 6 ? [0, r.length - 3] : [])
-      if (Math.abs(r[k + 1]! - top) < 1e-6 && r[k]! >= lo && r[k]! <= hi) used.push(r[k]!);
-  }
-  const mid = midCell(b.x, grid);
-  const cells: number[] = [];
-  for (let x = lo; x <= hi + 1e-6; x += grid) cells.push(x);
-  cells.sort((p, q) => Math.abs(p - mid) - Math.abs(q - mid) || p - q);
-  for (const gap of [Math.max(pitch, grid), grid])
-    for (const x of cells) if (used.every((u) => Math.abs(u - x) >= gap - 1e-6)) return x;
-  return mid;
-}
-
 // The left end of a run `w` long from `start` on, `gap` clear of every line at `xs`.
 function clearOf(start: number, w: number, xs: readonly number[], gap: number): number {
   let at = start;
@@ -507,7 +484,7 @@ function ownEdgesOf(
   stray: readonly number[],
   edges: readonly CEdge[],
   depth: Int32Array,
-  grid: number,
+  hooks: GridHooks | undefined,
   pitch: number
 ): OwnEdge[] {
   const out: OwnEdge[] = [];
@@ -518,7 +495,7 @@ function ownEdgesOf(
     const [group, member] = fromGroup ? [e.src, e.dst] : [e.dst, e.src];
     const own: OwnEdge = { ei, group, member, fromGroup, offset: 0 };
     out.push(own);
-    if (!grid) {
+    if (!hooks) {
       let lines = byMember.get(member);
       if (!lines) byMember.set(member, (lines = []));
       lines.push(own);
@@ -537,7 +514,7 @@ interface BandLevel {
   level: Level;
   lnodes: readonly LNode[];
   boxX: (ln: LNode) => number;
-  grid: number;
+  hooks: GridHooks | undefined;
 }
 
 // The height a band of `labelled` edges' labels, one a row `gapY` apart from `bandTop` below the
@@ -555,7 +532,10 @@ function ownBandHeight(
 
 // The rightmost x in the box where a line of `own` may land on its member's top (`freeTop` on
 // the grid).
-function rightmostOwnLine({ nodes, level, lnodes, boxX, grid }: BandLevel, own: OwnEdge[]): number {
+function rightmostOwnLine(
+  { nodes, level, lnodes, boxX, hooks }: BandLevel,
+  own: OwnEdge[]
+): number {
   let rightmost = -Infinity;
   for (const { member: m, offset } of own) {
     // The member's middle in the box: through the item of this level that holds it.
@@ -568,9 +548,7 @@ function rightmostOwnLine({ nodes, level, lnodes, boxX, grid }: BandLevel, own: 
     const dx = boxX(lnodes[level.items.indexOf(d)]!);
     const mid = d === m ? dx : dx - nodes[d]!.w / 2 + x;
     const half = nodes[m]!.w / 2;
-    const lineX = grid
-      ? mid + half - (nodes[m]!.w >= 3 * grid ? 1.5 * grid : grid / 2)
-      : mid + offset;
+    const lineX = hooks ? mid + half - hooks.ownLineInset(nodes[m]!.w) : mid + offset;
     rightmost = Math.max(rightmost, lineX);
   }
   return rightmost;
@@ -597,21 +575,6 @@ function topBorderCrossings(
     crossing.push(x);
   });
   return crossing;
-}
-
-// The box width, at least `boxW`, that keeps the labels' right edge `right` (from the content's
-// left) `inset` inside the frame, with the content still centred.
-function widenedForOwnLabels(
-  boxW: number,
-  contentW: number,
-  right: number,
-  inset: number,
-  grid: number
-): number {
-  if (!grid) return Math.max(boxW, 2 * (right + inset) - contentW);
-  let w = boxW;
-  while (floorTo((w - contentW) / 2, grid) + right > w - inset + 1e-9) w += 2 * grid;
-  return w;
 }
 
 // Appends `part`, offset by (`ox`, `oy`), to `route`, without repeating the point it ends at.
@@ -700,7 +663,7 @@ export function compoundLayout(
   opt: LayeredOptions
 ): CompoundResult {
   const M = opt.metrics ?? pxProfile.engine;
-  const grid = opt.grid !== undefined && opt.grid > 0 ? opt.grid : 0;
+  const hooks = opt.grid;
   const n = nodes.length;
   const levelOf = new Map<number, Level>();
   const order: Level[] = [];
@@ -823,7 +786,7 @@ export function compoundLayout(
       b = nodes[b]!.parent;
     }
     if (a === b) {
-      if (grid || e.labelW > 0) {
+      if (hooks || e.labelW > 0) {
         stray.push(ei);
         continue;
       }
@@ -849,17 +812,17 @@ export function compoundLayout(
   // top into the member's top; their labels sit in a band of rows at the top of the group, below
   // its title and above its content, right of every such line, one label a row. On the grid every
   // such edge runs so; in px the labelled ones do (an unlabelled one is in `Level.own`, #415).
-  const ownEdges = ownEdgesOf(stray, edges, depth, grid, M.portPitch);
+  const ownEdges = ownEdgesOf(stray, edges, depth, hooks, M.portPitch);
   const ownByGroup = new Map<number, OwnEdge[]>();
   for (const own of ownEdges) {
     let list = ownByGroup.get(own.group);
     if (!list) ownByGroup.set(own.group, (list = []));
     list.push(own);
   }
-  const ownGapX = grid ? grid / 2 : Math.max(M.endLabelAcross, M.portPitch / 2);
-  const ownGapY = grid ? 0 : M.loopGap;
+  const ownGapX = hooks ? hooks.cell / 2 : Math.max(M.endLabelAcross, M.portPitch / 2);
+  const ownGapY = hooks ? 0 : M.loopGap;
   // Where the band starts below the group's top: on the grid the title is on the border row.
-  const bandTop = (g: CNode): number => (grid ? grid : g.padTop);
+  const bandTop = (g: CNode): number => (hooks ? hooks.cell : g.padTop);
 
   const local = new Int32Array(n);
 
@@ -887,7 +850,7 @@ export function compoundLayout(
       const sh = node.h + node.loopH;
       const ln = sized ? lnode(vertical ? sw : sh, vertical ? sh : sw) : lnode(0, 0);
       // On the grid a group's ends may use its whole side off the corners, which it grows for.
-      const inset = grid ? M.corner : node.padX;
+      const inset = hooks ? M.corner : node.padX;
       ln.span = node.isGroup
         ? Math.min(node.span, (vertical ? node.w : node.h) - 2 * inset)
         : node.span;
@@ -1101,8 +1064,7 @@ export function compoundLayout(
       let boxW = Math.max(contentW + 2 * padX, group ? group.minW : 0);
       // On the grid a frame wider than its content (a long title) keeps the content centred:
       // the slack is a whole number of cells either side.
-      if (grid && level.items.length > 0 && Math.round((boxW - contentW) / grid) % 2 !== 0)
-        boxW += grid;
+      if (hooks && level.items.length > 0) boxW = hooks.centred(boxW, contentW);
       const across = (ly: number): number => (flip ? size.height - ly : ly);
       // Room for the labels of the group's edges to its own members (#198): the band below the
       // title, and the width for them right of the lines.
@@ -1113,18 +1075,20 @@ export function compoundLayout(
         : [];
       if (group && own && labelled.length > 0) {
         const boxX = (ln: LNode): number => (vertical ? ln.x : across(ln.y));
-        const band: BandLevel = { nodes, edges, level, lnodes, boxX, grid };
+        const band: BandLevel = { nodes, edges, level, lnodes, boxX, hooks };
         bandH = ownBandHeight(labelled, bandTop(group), ownGapY, padTop);
         let widest = 0;
         for (const e of labelled) widest = Math.max(widest, e.labelW);
         const crossing = topBorderCrossings(band, built.dummies, levelOf);
         const lines = rightmostOwnLine(band, own);
         const right = clearOf(lines + ownGapX, widest, crossing, ownGapX) + widest;
-        boxW = widenedForOwnLabels(boxW, contentW, right, grid ? grid : padX, grid);
+        boxW = hooks
+          ? hooks.widen(boxW, contentW, right)
+          : Math.max(boxW, 2 * (right + padX) - contentW);
       }
       bandH += opt.portSep * +level.ports.some((p) => p.below);
       const boxH = contentH + padTop + bandH + (group ? group.padBottom : 0);
-      const offX = grid ? floorTo((boxW - contentW) / 2, grid) : (boxW - contentW) / 2;
+      const offX = hooks ? hooks.floor((boxW - contentW) / 2) : (boxW - contentW) / 2;
       const offY = padTop + bandH;
       const tx = (lx: number, ly: number): number => offX + (vertical ? lx : across(ly));
       const ty = (lx: number, ly: number): number => offY + (vertical ? across(ly) : lx);
@@ -1179,9 +1143,9 @@ export function compoundLayout(
         else if (port.side === Side.Left) ix -= item.w / 2;
         else ix += item.w / 2;
         // On the grid, a line runs through the middle of a cell (D78).
-        if (grid && !(item.isGroup && endpointBelow(port.inner, edges[port.e]!, port.out))) {
-          if (port.side === Side.Top || port.side === Side.Bottom) ix = midCell(ix, grid);
-          else iy = midCell(iy, grid);
+        if (hooks && !(item.isGroup && endpointBelow(port.inner, edges[port.e]!, port.out))) {
+          if (port.side === Side.Top || port.side === Side.Bottom) ix = hooks.mid(ix);
+          else iy = hooks.mid(iy);
         }
         let bx = ix;
         let by = iy;
@@ -1336,9 +1300,9 @@ export function compoundLayout(
     const top = member.y - member.h / 2;
     let x: number;
     let frame: number;
-    if (grid) {
-      x = freeTop(member, edges, grid, edgeOn(M.portPitch, grid));
-      frame = group.y - group.h / 2 + grid;
+    if (hooks) {
+      x = hooks.ownTop(member, edges, M.portPitch);
+      frame = group.y - group.h / 2 + hooks.cell;
     } else {
       x = member.x + offset;
       frame = group.y - group.h / 2;
