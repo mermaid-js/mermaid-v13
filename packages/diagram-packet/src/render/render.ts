@@ -91,20 +91,14 @@ function openRoot(
   w: SvgWriter
 ): void {
   const { theme, config } = ctx;
-  const { x, y } = layout.bounds;
-  const width = Math.max(1, Math.ceil(layout.bounds.width));
-  const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = config.packet?.useMaxWidth !== false;
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
   openSvgRoot(w, ctx, {
     name: 'packet',
-    viewBox: [x, y, width, height],
-    maxWidth,
-    title,
-    desc,
+    viewBox: layout.bounds,
+    maxWidth: config.packet?.useMaxWidth !== false,
+    title: model.accTitle,
+    desc: model.accDescr,
     attrs: {
       'font-family': font,
       // Inherited by every piece.
