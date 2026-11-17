@@ -301,12 +301,12 @@ export function settlePositions(g: Graph): void {
 // Gives every node of rank `r` its barycenter among the ends of its edges that lie `down` or up,
 // and `moving` the ones that may move. Returns how many.
 function rankBary(g: Graph, s: Search, r: number, down: boolean): number {
-  const { real, W, EF, ET, EFD, ETD, layerStart, order, pos, offsets, GRP } = g;
+  const { real, W, layerStart, order, pos, offsets, GRP } = g;
   const { bary, moving } = s;
   const start = down ? g.predStart : g.succStart;
   const list = down ? g.predE : g.succE;
-  const other = down ? EF : ET;
-  const otherDx = down ? EFD : ETD;
+  const other = down ? g.EF : g.ET;
+  const otherDx = down ? g.EFD : g.ETD;
   const first = layerStart[r]!;
   const last = layerStart[r + 1]!;
   let movable = 0;
@@ -380,9 +380,9 @@ function outOfOrder(g: Graph): number {
 
 // Where an end of segment `e` lies along its node, in node widths from the first.
 function endAt(g: Graph, e: number, up: boolean): number {
-  const { W, EF, ET, EFD, ETD, pos } = g;
-  const u = up ? EF[e]! : ET[e]!;
-  return g.offsets && W[u]! > 0 ? pos[u]! + (up ? EFD[e]! : ETD[e]!) / W[u]! : pos[u]!;
+  const { W, pos } = g;
+  const u = up ? g.EF[e]! : g.ET[e]!;
+  return g.offsets && W[u]! > 0 ? pos[u]! + (up ? g.EFD[e]! : g.ETD[e]!) / W[u]! : pos[u]!;
 }
 
 // Crossings between a and b, assuming a is left of b.

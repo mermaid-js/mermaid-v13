@@ -400,9 +400,9 @@ function cutPieces(
   pieces: Pieces,
   ei: number
 ): void {
-  const { RANK, EF, ET, EFD, ETD, firstSeg, lastSeg } = g;
+  const { RANK, EF, firstSeg, lastSeg } = g;
   const d0 = g.firstDummy[ei]!;
-  let x = xs[EF[firstSeg[ei]!]!]! + EFD[firstSeg[ei]!]!;
+  let x = xs[EF[firstSeg[ei]!]!]! + g.EFD[firstSeg[ei]!]!;
   let rank = RANK[EF[firstSeg[ei]!]!]!;
   for (let d = d0, end = d0 < 0 ? d0 : d0 + g.span[ei]! - 1; d < end; d++) {
     if (empty?.[RANK[d]!]) continue;
@@ -414,7 +414,7 @@ function cutPieces(
     rank = RANK[d]!;
   }
   pieces.from.push(x);
-  pieces.to.push(xs[ET[lastSeg[ei]!]!]! + ETD[lastSeg[ei]!]!);
+  pieces.to.push(xs[g.ET[lastSeg[ei]!]!]! + g.ETD[lastSeg[ei]!]!);
   pieces.rank.push(rank);
   pieces.lower.push(-1);
 }

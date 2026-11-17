@@ -73,7 +73,7 @@ function labelRankOf(e: LEdge, ra: number, rb: number, step: number): number {
 
 // Cuts edge `ei` into segments from segment `ce` on, with its bends from node `next` on.
 function cutEdge(c: Cut, e: LEdge, ei: number, next: number, ce: number): void {
-  const { step, RANK, KEY, W, H, KIND, EF, ET, EFD, ETD, EFH, ETH, EFK, ETK } = c;
+  const { RANK, KEY, W, H, KIND, EF, ET, EFD, EFK, ETK } = c;
   const rev = e.reversed;
   const a = rev ? e.head : e.tail;
   const b = rev ? e.tail : e.head;
@@ -84,13 +84,13 @@ function cutEdge(c: Cut, e: LEdge, ei: number, next: number, ce: number): void {
   if (aDx !== 0 || bDx !== 0) c.offsets = true;
   const ra = RANK[a]!;
   const rb = RANK[b]!;
-  const labelRank = e.labelW > 0 ? labelRankOf(e, ra, rb, step) : -1;
+  const labelRank = e.labelW > 0 ? labelRankOf(e, ra, rb, c.step) : -1;
   let prev = a;
   let d = next;
   let at = ce;
   if (rb - ra > 1) c.firstDummy[ei] = next;
   c.firstSeg[ei] = ce;
-  EFH[ce] = aFixed ? 1 : 0;
+  c.EFH[ce] = aFixed ? 1 : 0;
   if (EFK && !aFixed) EFK[ce] = rev ? End.Arrives : End.Leaves;
   for (let r = ra + 1; r < rb; r++, d++) {
     RANK[d] = r;
@@ -113,8 +113,8 @@ function cutEdge(c: Cut, e: LEdge, ei: number, next: number, ce: number): void {
   EF[at] = prev;
   ET[at] = b;
   EFD[at] = prev === a ? aDx : 0;
-  ETD[at] = bDx;
-  ETH[at] = bFixed ? 1 : 0;
+  c.ETD[at] = bDx;
+  c.ETH[at] = bFixed ? 1 : 0;
   if (ETK && !bFixed) ETK[at] = rev ? End.Leaves : End.Arrives;
   c.lastSeg[ei] = at;
 }
@@ -205,8 +205,8 @@ function commonGroup(parent: Int32Array, a: number, b: number): number {
 
 // Bends belong to the innermost group containing both edge endpoints.
 function bendGroups(c: Cut, edges: LEdge[], of: Int32Array, parent: Int32Array): void {
-  const { n, real, firstDummy, span } = c;
-  const GRP = i32(n);
+  const { real, firstDummy, span } = c;
+  const GRP = i32(c.n);
   for (let i = 0; i < real; i++) GRP[i] = of[i]!;
   for (let ei = 0; ei < edges.length; ei++) {
     if (firstDummy[ei]! < 0) continue;
