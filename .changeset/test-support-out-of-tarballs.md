@@ -35,4 +35,4 @@
 '@mermaid-js/diagram-xychart': patch
 ---
 
-chore: the diagram packages, `@mermaid-js/shared` and `@mermaid-js/core` no longer ship test support (render harnesses, test contexts, layout invariants, fixtures, ported v12 spec adapters, core's swimlane `__tests__` helpers): about 646 KB and 14,000 lines less across the tarballs. The test-only `./testing` subpaths, `@mermaid-js/shared/layout/invariants` and the `*LayoutViolations` functions that gantt, journey, kanban, quadrant, sequence and timeline exported from their root entry are no longer published (#816).
+chore: the diagram packages, `@mermaid-js/shared` and `@mermaid-js/core` no longer ship test support (render harnesses, test contexts, layout invariants, fixtures, ported v12 spec adapters, core's swimlane `__tests__` helpers): about 646 KB and 14,000 lines less across the tarballs. The test-only `./testing` subpaths, `@mermaid-js/shared/layout/invariants` and the `*LayoutViolations` functions that gantt, journey, kanban, quadrant, sequence and timeline exported from their root entry are no longer published, nor is the `ViolationOptions` type that timeline's root entry exported with them (#816).

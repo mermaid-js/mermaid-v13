@@ -5,23 +5,8 @@
  * parse stays linear.
  */
 import { CR, LF } from '@mermaid-js/core/parser-kit';
-import type { Range, SourceView } from '@mermaid-js/core/parser-kit';
+import type { Range } from '@mermaid-js/core/parser-kit';
 import { CLASS_BLANK } from './text.ts';
-
-/** The removed spans of `view` that overlap `r`, found by binary search (in source order). */
-export function holesIn(view: SourceView, r: Range): readonly Range[] {
-  const { holes } = view;
-  let lo = 0;
-  let hi = holes.length;
-  while (lo < hi) {
-    const mid = (lo + hi) >> 1;
-    if ((holes[mid]?.end ?? 0) <= r.start) lo = mid + 1;
-    else hi = mid;
-  }
-  let end = lo;
-  while (end < holes.length && (holes[end]?.start ?? 0) < r.end) end++;
-  return holes.slice(lo, end);
-}
 
 /**
  * The first offset of `src` at or after `from` in `within` where `word` stands as a word of its
