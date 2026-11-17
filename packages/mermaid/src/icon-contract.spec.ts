@@ -3,7 +3,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import type { InlinePatternProvider } from '@mermaid-js/core/text';
 import type { DiagramIcon } from '@mermaid-js/core';
@@ -495,34 +495,40 @@ function flowchartCorpus(): { id: string; source: string }[] {
   return out;
 }
 
+// One test per corpus file: the corpus (540 files, each rendered twice) grows with every fixture,
+// and as one test it timed out on busy CI runners. The last test counts what the others drew.
 describe('the contract over the flowchart corpus', () => {
-  it('passes the allow-list and keeps stream and tree output equal with icons drawn (R-SEC-2)', async () => {
-    const glyphs: ExtensionPlugin = {
-      id: 'fixture-glyphs',
-      glyphs: { glyph: (_, { size }) => GLYPH(size) },
-    };
-    const { m, ready } = api(icons, glyphs);
-    await ready;
-    // A postRender hook switches the writer to its tree backing, which must agree byte for byte.
-    const { m: tree, ready: treeReady } = api(icons, glyphs, { id: 'tree', postRender: () => {} });
-    await treeReady;
-    let labels = 0;
-    let shapes = 0;
-    for (const { id, source } of flowchartCorpus()) {
+  const glyphs: ExtensionPlugin = {
+    id: 'fixture-glyphs',
+    glyphs: { glyph: (_, { size }) => GLYPH(size) },
+  };
+  const { m, ready } = api(icons, glyphs);
+  // A postRender hook switches the writer to its tree backing, which must agree byte for byte.
+  const { m: tree, ready: treeReady } = api(icons, glyphs, { id: 'tree', postRender: () => {} });
+  beforeAll(() => Promise.all([ready, treeReady]));
+  const labels = new Set<string>();
+  const shapes = new Set<string>();
+
+  it.each(flowchartCorpus())(
+    'passes the allow-list and keeps stream and tree output equal with icons drawn: $id (R-SEC-2)',
+    async ({ id, source }) => {
       let r;
       try {
         r = await m.render('mermaid-0', source);
       } catch (e) {
-        if (e instanceof MermaidError) continue;
+        if (e instanceof MermaidError) return;
         throw e;
       }
-      if (boxes(r.svg).length > 0) labels++;
-      if (r.svg.includes('fixture-glyph')) shapes++;
+      if (boxes(r.svg).length > 0) labels.add(id);
+      if (r.svg.includes('fixture-glyph')) shapes.add(id);
       expect(codes(r.warnings), id).not.toContain('ICON_NOT_RENDERED');
       expect(() => assertInert(r.svg, { themeStyle: r.svg.includes('<style>') }), id).not.toThrow();
       expect((await tree.render('mermaid-0', source)).svg, id).toBe(r.svg);
     }
-    expect(labels).toBeGreaterThanOrEqual(50);
-    expect(shapes).toBeGreaterThanOrEqual(4);
+  );
+
+  it('draws label icons in at least 50 corpus files and glyphs in at least 4', () => {
+    expect(labels.size).toBeGreaterThanOrEqual(50);
+    expect(shapes.size).toBeGreaterThanOrEqual(4);
   });
 });

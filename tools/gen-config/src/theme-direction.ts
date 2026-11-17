@@ -85,17 +85,33 @@ const FAMILIES: ReadonlySet<string> = new Set(THEME_FAMILIES);
 /** The shared palettes, which only a `palette` variable's rule may name whole (D545). */
 const PALETTES: ReadonlySet<string> = new Set(PALETTE_VARIABLES);
 
+/**
+ * Each file's syntax nodes in tree order, parsed and walked once: rules 1 and 2 each read a file
+ * twice, and parsing and walking the repository's 1,400 files is the check's time.
+ */
+const trees = new WeakMap<SourceFile, readonly ts.Node[]>();
+function nodesOf(file: SourceFile): readonly ts.Node[] {
+  let nodes = trees.get(file);
+  if (!nodes) {
+    const all: ts.Node[] = [];
+    const walk = (node: ts.Node): void => {
+      all.push(node);
+      ts.forEachChild(node, walk);
+    };
+    walk(ts.createSourceFile(file.path, file.text, ts.ScriptTarget.Latest, true));
+    trees.set(file, (nodes = all));
+  }
+  return nodes;
+}
+
 function literals(file: SourceFile, visit: (node: ts.StringLiteralLike) => void): void {
-  const sf = ts.createSourceFile(file.path, file.text, ts.ScriptTarget.Latest, true);
-  const walk = (node: ts.Node): void => {
+  for (const node of nodesOf(file)) {
     if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) visit(node);
     else if (ts.isTemplateExpression(node)) {
       visit(node.head as unknown as ts.StringLiteralLike);
       for (const span of node.templateSpans) visit(span.literal as unknown as ts.StringLiteralLike);
     }
-    ts.forEachChild(node, walk);
-  };
-  walk(sf);
+  }
 }
 
 /**
@@ -104,8 +120,7 @@ function literals(file: SourceFile, visit: (node: ts.StringLiteralLike) => void)
  * literals, which {@link literals} visits; comments are not part of the tree.
  */
 function propertyNames(file: SourceFile, visit: (name: string) => void): void {
-  const sf = ts.createSourceFile(file.path, file.text, ts.ScriptTarget.Latest, true);
-  const walk = (node: ts.Node): void => {
+  for (const node of nodesOf(file)) {
     if (
       (ts.isPropertyAssignment(node) || ts.isShorthandPropertyAssignment(node)) &&
       ts.isIdentifier(node.name)
@@ -113,9 +128,7 @@ function propertyNames(file: SourceFile, visit: (name: string) => void): void {
       visit(node.name.text);
     else if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.name))
       visit(node.name.text);
-    ts.forEachChild(node, walk);
-  };
-  walk(sf);
+  }
 }
 
 /** Whether a literal is compared with, or looked up beside, an expression naming a theme. */
@@ -285,8 +298,7 @@ export function checkThemeDirection(input: DirectionInput): Violation[] {
         if (themes.has(text) && (!WORDS.has(text) || comparedWithTheme(node)))
           out.push({ rule: 'diagram-names-theme', where: `${type}: ${file.path}`, name: text });
       });
-      const sf = ts.createSourceFile(file.path, file.text, ts.ScriptTarget.Latest, true);
-      const walk = (node: ts.Node): void => {
+      for (const node of nodesOf(file))
         if (
           ts.isPropertyAccessExpression(node) &&
           node.name.text === 'name' &&
@@ -297,9 +309,6 @@ export function checkThemeDirection(input: DirectionInput): Violation[] {
             where: `${type}: ${file.path}`,
             name: 'theme.name',
           });
-        ts.forEachChild(node, walk);
-      };
-      walk(sf);
     }
 
   // 3. A table reads shared names, palette slots and its own (and a `palette` variable's rule a
