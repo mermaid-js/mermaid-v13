@@ -75,9 +75,6 @@
     }
   },
   "packages/bench/src/gates.ts": {
-    "complexity": {
-      "count": 1
-    },
     "tsdoc/syntax": {
       "count": 1
     }
@@ -362,15 +359,7 @@
   },
   "packages/dev/src/browser/explorer/tabs/profile.ts": {
     "@typescript-eslint/no-unnecessary-condition": {
-      "count": 3
-    },
-    "max-depth": {
       "count": 2
-    }
-  },
-  "packages/dev/src/explorer.ts": {
-    "max-lines-per-function": {
-      "count": 1
     }
   },
   "packages/dev/src/fixture-discovery.ts": {
