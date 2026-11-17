@@ -63,9 +63,9 @@ release:
 
 # credits: licence credits for pnpm check:licenses (tools/release/src/licenses.ts, R-REL-4):
 # the files that must credit an upstream. Pele is a shared upstream (`SHARED_UPSTREAMS`): these
-# files are local copies of flowchart's Pele-derived lexer, parser, builder, shapes and edges
-# (D446, D467). mermaid's notices carry them too (its CDN build bundles this package):
-# notices/mermaid.txt.
+# files are local copies of flowchart's Pele-derived lexer, parser and builder (D467), and
+# outline and draw the shared Pele-derived shapes (D446, D559). mermaid's notices carry them too
+# (its CDN build bundles this package): notices/mermaid.txt.
 credits:
   files:
     src/parser/lexer.ts: ['Pele']

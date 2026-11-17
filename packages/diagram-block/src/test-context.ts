@@ -1,48 +1,33 @@
 /**
- * The block tests' one context builder, which the layout specs and the conformance layout specs
- * (invariants, parity, stress) share. It builds what the pipeline builds (`mermaid/src/api.ts`
- * `themeFor`, `core/src/pipeline/draw.ts`): the config core resolves from its defaults and the
- * source's front matter and directives; the theme that config names (block has no table of its
- * own, spec #521), with its `themeVariables` and its dark half for `theme: 'auto'`; and a render
- * context with a measurer (the table measurer by default).
+ * The block tests' context builder, which the layout specs and the conformance layout specs
+ * (invariants, parity, stress) share: the shared test context
+ * (`@mermaid-js/shared/testing/test-context`) with block's config section and theme table.
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
-import {
-  CORE_DEFAULTS,
-  resolveConfig,
-  type ConfigInput,
-  type ResolvedConfig,
-} from '@mermaid-js/core/config';
-import { pxProfile } from '@mermaid-js/core/layout';
-import { resolveLimits } from '@mermaid-js/core/limits';
+import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { Diagnostic } from '@mermaid-js/core/parser-kit';
 import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
-import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
-import { createTheme, loadTheme, resolveThemeName, type Theme } from '@mermaid-js/core/theme';
+import type { Measurer } from '@mermaid-js/core/text';
+import type { Theme } from '@mermaid-js/core/theme';
+import {
+  defaultsWith,
+  selfLaidOut,
+  testConfig,
+  testRenderContext,
+  testTheme,
+} from '@mermaid-js/shared/testing/test-context';
 import type { BlockModel } from './model.ts';
 import { parseBlock } from './parser/index.ts';
 import { theme as table } from './theme/table.ts';
 
-/** The `data-mermaid-version` the test renders write. */
-export const TEST_VERSION = '13.0.0-alpha.0';
+export { TEST_VERSION } from '@mermaid-js/shared/testing/test-context';
 
-/**
- * The config a render of `pre` resolves: core's defaults, then `integrator` as `initialize()`
- * would get it, then the front matter and directives.
- */
-export function blockTestConfig(
+/** The config a render of `pre` resolves under `integrator`, as `initialize()` would get it. */
+export const blockTestConfig = (
   pre?: PreprocessResult,
   integrator?: Readonly<Record<string, unknown>>,
   warn?: (w: Warning) => void
-): ResolvedConfig {
-  const directives = (pre?.directives ?? []).flatMap((d) =>
-    d.kind === 'init' && d.args && typeof d.args === 'object' ? [d.args as ConfigInput] : []
-  );
-  return resolveConfig(CORE_DEFAULTS, integrator, pre?.frontMatter?.config, directives, undefined, {
-    ...(warn ? { warn } : {}),
-    section: 'block',
-  });
-}
+): ResolvedConfig => testConfig('block', pre, integrator, warn);
 
 /** What {@link blockTestTheme} takes besides the config. */
 export interface BlockThemeOptions {
@@ -52,48 +37,26 @@ export interface BlockThemeOptions {
 }
 
 /** The theme `config` names (with no config, core's default), its variables and dark half. */
-export async function blockTestTheme(
+export const blockTestTheme = (
   config: ResolvedConfig = blockTestConfig(),
-  { idPrefix, warn }: BlockThemeOptions = {}
-): Promise<Theme> {
-  const choice = resolveThemeName(config.theme, warn);
-  return createTheme(await loadTheme(choice.name), {
-    diagram: table,
-    themeVariables: config.themeVariables as Record<string, unknown> | undefined,
-    dark: choice.dark ? await loadTheme(choice.dark) : undefined,
-    ...(warn ? { warn } : {}),
-    ...(idPrefix !== undefined ? { idPrefix: () => idPrefix } : {}),
-  });
-}
+  options: BlockThemeOptions = {}
+): Promise<Theme> => testTheme(config, { ...options, diagram: table });
 
 /**
- * The render context the pipeline would give block under `config` (core's defaults when absent)
- * and `theme`, with the `block` section `section` over the config's; warnings go to `warnings`.
+ * The render context the pipeline would give block under core's defaults and `theme`, with the
+ * `block` section `section` over the defaults' own; warnings go to `warnings`.
  */
-export function blockTestContext(
+export const blockTestContext = (
   theme: Theme,
   section: Readonly<Record<string, unknown>> = {},
-  measurer: Measurer = tableMeasurer,
+  measurer?: Measurer,
   warnings: Warning[] = []
-): RenderContext {
-  const base = blockTestConfig();
-  const resolved = (base as { block?: Record<string, unknown> }).block ?? {};
-  const config = { ...base, block: { ...resolved, ...section } } as unknown as ResolvedConfig;
-  return {
-    config,
-    measurer,
-    units: pxProfile,
-    theme,
-    securityLevel: 'default',
-    idPrefix: 'mermaid-0',
-    version: TEST_VERSION,
-    layout: () => {
-      throw new Error('block lays itself out (layoutKind: custom)');
-    },
-    limits: resolveLimits(config),
+): RenderContext =>
+  testRenderContext(defaultsWith('block', section, true), theme, {
+    ...(measurer ? { measurer } : {}),
+    layout: selfLaidOut('block'),
     warn: (w) => void warnings.push(w),
-  };
-}
+  });
 
 /** A source parsed: its model, its diagnostics, and the `block` config and theme its text sets. */
 export interface ParsedBlock {

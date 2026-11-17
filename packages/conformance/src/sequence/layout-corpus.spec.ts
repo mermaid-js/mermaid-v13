@@ -8,12 +8,8 @@ import type { Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme } from '@mermaid-js/core/theme';
 import { DIAGRAM_TABLES } from '../diagram-themes.ts';
 import type { ThemeSpec } from '@mermaid-js/core/theme';
-import {
-  detectSequence,
-  layoutSequence,
-  parseSequence,
-  sequenceLayoutViolations,
-} from '@mermaid-js/diagram-sequence';
+import { detectSequence, layoutSequence, parseSequence } from '@mermaid-js/diagram-sequence';
+import { sequenceLayoutViolations } from '@mermaid-js/diagram-sequence/testing';
 import { sequenceGateCorpus } from './corpus.ts';
 
 let spec: ThemeSpec;

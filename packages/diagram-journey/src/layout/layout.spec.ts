@@ -6,7 +6,8 @@ import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { JourneyModel } from '../model.ts';
 import { FIXTURES, WHOLE_WORD, journey, section, task } from './fixtures.ts';
-import { journeyLayoutViolations, layoutJourney, type JourneyLayout } from './index.ts';
+import { layoutJourney, type JourneyLayout } from './index.ts';
+import { journeyLayoutViolations } from './invariants.ts';
 import { journey as diagramPlugin } from '../plugin.ts';
 
 /** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */

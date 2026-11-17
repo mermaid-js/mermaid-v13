@@ -32,23 +32,11 @@ import { architectureDocs } from '../generated/docs.ts';
 import type { ArchitectureModel } from '../model.ts';
 import type { ArchitectureDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { BUILTIN_ICON_NAMES, ITEMS, lineTokens, span, tokenBefore } from './tables.ts';
+import { BUILTIN_ICON_NAMES, ITEMS, lineTokens } from './tables.ts';
+import { keywordItem, span, wordRange } from '@mermaid-js/shared/parser/facet';
 
-/** The probed word's range: the prefix, plus the rest of the token after the cursor. */
-function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeResult): Range {
-  const o = probe.offset;
-  let end = o;
-  const i = tokens ? tokenBefore(tokens, o) : -1;
-  if (tokens && i >= 0 && (tokens.start[i] ?? 0) < o && o < (tokens.end[i] ?? 0)) {
-    end = tokens.end[i] ?? o;
-    // An icon is replaced whole, its `)` included; other tokens up to a blank or punctuation.
-    if (tokens.kind[i] !== T.Icon) {
-      const stop = /[\s"':()[\]{}<>]/.exec(text.slice(o, end));
-      if (stop) end = o + stop.index;
-    }
-  }
-  return span(Math.min(probe.prefix.start, o), end);
-}
+/** Where the word at the cursor stops: an icon is replaced whole, its `)` included. */
+const wordStop = (kind: number) => (kind === T.Icon ? undefined : /[\s"':()[\]{}<>]/);
 
 /** The line's text from its start to `at`. */
 function lineText(text: string, at: number): string {
@@ -195,15 +183,7 @@ function keywords(
     if (k.afterSide && last !== T.Direction) continue;
     if (k.afterArrow && last !== T.DashDash && last !== T.Dash) continue;
     if (!k.label.startsWith(prefix)) continue;
-    const documentation = architectureDocs[k.kind];
-    out.push({
-      label: k.label,
-      kind: k.item,
-      insertText: k.insert ?? k.label,
-      range,
-      ...(k.detail === undefined ? {} : { detail: k.detail }),
-      ...(documentation === undefined ? {} : { documentation }),
-    });
+    out.push(keywordItem(k, range, architectureDocs[k.kind]));
   }
   return out;
 }
@@ -221,7 +201,7 @@ export function architectureCompletions(
   const done = unfinished({ ...c0, before: [] }, probe.offset);
   if (done) return done;
   const expected = new Set(probe.expected);
-  const range = wordRange(text, tokens, probe);
+  const range = wordRange(text, tokens, probe, wordStop);
   const prefix = text.slice(range.start, probe.offset);
   const c: Context = { ...c0, before: lineTokens(tokens, range.start) };
   // Nothing but the header before the word on its line: a statement starts here (v12 lets the

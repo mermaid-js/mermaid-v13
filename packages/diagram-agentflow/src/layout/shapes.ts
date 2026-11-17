@@ -11,8 +11,15 @@
  * cspell:ignore kepano
  */
 import type { Point } from '@mermaid-js/core/layout';
-import { collapsedGroup, linedDocument } from '@mermaid-js/shared/shapes/extended';
-import { diamond, framedRect, hexagon, leanRight, rounded } from '@mermaid-js/shared/shapes/basic';
+import {
+  collapsedGroup,
+  diamond,
+  framedRect,
+  hexagon,
+  leanRight,
+  linedDocument,
+  rounded,
+} from '@mermaid-js/shared/shapes/basic';
 import {
   WAVE,
   type Pads,

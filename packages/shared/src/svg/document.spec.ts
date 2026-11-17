@@ -53,6 +53,38 @@ describe('openSvgRoot', () => {
         'data-mermaid-version="13.0.0" style="" font-size="16"/>'
     );
   });
+
+  it('sizes the root from bounds, rounded up to whole pixels and at least 1', () => {
+    const w = streamWriter();
+    openSvgRoot(w, ctx(), {
+      name: 'pie',
+      viewBox: { x: -2.5, y: 3, width: 10.2, height: 0 },
+      maxWidth: false,
+    });
+    w.close();
+    expect(w.finish()).toContain('viewBox="-2.5 3 11 1" width="11" height="1"');
+  });
+
+  it('reads bounds without a corner as starting at the origin', () => {
+    const w = streamWriter();
+    openSvgRoot(w, ctx(), { name: 'state', viewBox: { width: 4.5, height: 2 }, maxWidth: false });
+    w.close();
+    expect(w.finish()).toContain('viewBox="0 0 5 2"');
+  });
+
+  it('trims the title and description, and writes neither when blank', () => {
+    const w = streamWriter();
+    openSvgRoot(
+      w,
+      ctx(() => 'm1'),
+      { name: 'pie', viewBox: [0, 0, 1, 1], maxWidth: false, title: '  T \n', desc: ' \t' }
+    );
+    w.close();
+    const svg = w.finish();
+    expect(svg).toContain('<title id="m1-title">T</title>');
+    expect(svg).not.toContain('<desc');
+    expect(svg).not.toContain('aria-describedby');
+  });
 });
 
 describe('textElement', () => {

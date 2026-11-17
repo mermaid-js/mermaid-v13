@@ -53,15 +53,12 @@ export function renderMindmap(
 /** The `<svg>` root. Mindmap has no title or description (v12's grammar has none). */
 function openRoot({ w, layout, ctx }: Scene): void {
   const { theme, config } = ctx;
-  const width = Math.max(1, Math.ceil(layout.width));
-  const height = Math.max(1, Math.ceil(layout.height));
-  const maxWidth = config.mindmap?.useMaxWidth !== false;
   const font = theme.font();
   const fontSize = theme.length('fontSize');
   openSvgRoot(w, ctx, {
     name: 'mindmap',
-    viewBox: [0, 0, width, height],
-    maxWidth,
+    viewBox: { width: layout.width, height: layout.height },
+    maxWidth: config.mindmap?.useMaxWidth !== false,
     attrs: {
       'font-family': font,
       'font-size': fontSize,

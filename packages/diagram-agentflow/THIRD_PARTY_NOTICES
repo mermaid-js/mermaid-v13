@@ -4,8 +4,9 @@ Third-party notices for @mermaid-js/diagram-agentflow
 Pele
 ----
 
-The files below are local copies of @mermaid-js/diagram-flowchart's lexer, parser, builder,
-shape and edge code (D446, D467), which is ported from, or based on, Pele
+The parser files and layout/prepare.ts below are local copies of @mermaid-js/diagram-flowchart's
+lexer, parser and builder (D467); the shape files outline and draw the shared shapes of
+@mermaid-js/shared (D446, D559). All are ported from, or based on, Pele
 (https://github.com/obsidianmd/pele) at commit 3a2f075 (release 1.13.0). Each file's header
 says what it took and what changed. Pele is used under the MIT License:
 
