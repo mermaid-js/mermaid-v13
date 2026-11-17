@@ -15,6 +15,7 @@ import {
   type C4Element,
   type C4ElementKind,
   type C4Extra,
+  type C4Direction,
   type C4Model,
   type C4NodeKind,
   type C4Relation,
@@ -159,6 +160,7 @@ export class C4Builder {
   readonly relations: OpenRelation[] = [];
   shapeInRow: number | undefined;
   boundaryInRow: number | undefined;
+  private topDirection: C4Direction | undefined;
   /** Each relation's statement, for the unknown-end check. */
   private readonly relationAt: Range[] = [];
   private readonly elementIndex = new Map<string, number>();
@@ -620,14 +622,24 @@ export class C4Builder {
     }
   }
 
-  /** The model's items and row counts. */
-  model(): Pick<C4Model, 'elements' | 'boundaries' | 'relations' | 'shapeInRow' | 'boundaryInRow'> {
+  /** A `direction` statement: boundary `index`'s (-1: the top level's, none when it failed). */
+  direction(index: number, direction: C4Direction): void {
+    if (index === -1) this.topDirection = direction;
+    else if (this.boundaries[index]) this.boundaries[index].direction = direction;
+  }
+
+  /** The model's items, row counts and top-level direction. */
+  model(): Pick<
+    C4Model,
+    'elements' | 'boundaries' | 'relations' | 'shapeInRow' | 'boundaryInRow' | 'direction'
+  > {
     return {
       elements: this.elements,
       boundaries: this.boundaries,
       relations: this.relations,
       ...(this.shapeInRow !== undefined && { shapeInRow: this.shapeInRow }),
       ...(this.boundaryInRow !== undefined && { boundaryInRow: this.boundaryInRow }),
+      ...(this.topDirection !== undefined && { direction: this.topDirection }),
     };
   }
 }

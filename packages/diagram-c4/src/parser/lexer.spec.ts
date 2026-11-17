@@ -191,34 +191,54 @@ describe('c4Diagram.jison quirks', () => {
     expect(comment && src.slice(comment.start, comment.end)).toBe('%% c');
   });
 
-  it('tries the `.*direction` rules first, over the whole line from the token start', () => {
-    // Inside a quoted label: the line from `Person` on is one token.
+  it('reads `direction[ \\t]+(TB|BT|RL|LR)\\b` where a token starts, not inside a label (#730)', () => {
+    // 12.2.0's `.*direction\\s+LR[^\\n]*` took the line from `Person` on, a label included.
     expect(jison('C4Context\nPerson(a, "the direction LR is")')).toEqual([
       ...H,
-      'direction_lr:Person(a, "the direction LR is")',
+      'PERSON:Person',
+      'STR:a',
+      'STR:the direction LR is',
       ...END,
     ]);
-    // Rule order wins over position: TB is tried before LR.
+    expect(jison('C4Context\n  direction\tRL\nPerson(a, "A")')).toEqual([
+      ...H,
+      'direction_rl:direction\tRL',
+      'NEWLINE:\n',
+      'PERSON:Person',
+      'STR:a',
+      'STR:A',
+      ...END,
+    ]);
+    // The token stops at the value: what follows lexes as usual.
     expect(untilError('C4Context\ndirection LR then direction TB\nx')).toEqual([
       ...H,
-      'direction_tb:direction LR then direction TB',
-      'NEWLINE:\n',
+      'direction_lr:direction LR',
       'LEXICAL_ERROR:',
     ]);
-    // `.*` is greedy: the last `direction` on the line, whose blanks may span a line break.
-    expect(untilError('C4Context\ndirection TB x direction\nTB y\nz')).toEqual([
+    expect(untilError('C4Context\ndirection BT Person(a, "A")')).toEqual([
       ...H,
-      'direction_tb:direction TB x direction\nTB y',
-      'NEWLINE:\n',
-      'LEXICAL_ERROR:',
+      'direction_bt:direction BT',
+      'PERSON:Person',
+      'STR:a',
+      'STR:A',
+      ...END,
     ]);
-    // A statement before it on the line is part of the token too.
-    expect(untilError('C4Context\nPerson(a, "A") direction TB\nx')).toEqual([
-      ...H,
-      'direction_tb:Person(a, "A") direction TB',
-      'NEWLINE:\n',
-      'LEXICAL_ERROR:',
-    ]);
+  });
+
+  it('takes only blanks and a tab between `direction` and its value, and a whole word (#730)', () => {
+    // No blank, a line break, U+2028, a longer word and a lower-case value are no `direction`.
+    for (const text of [
+      'directionTB',
+      'direction\nTB',
+      'direction\u2028TB',
+      'direction TBX',
+      'direction tb',
+      'direction',
+    ]) {
+      expect(untilError(`C4Context\n${text}\nPerson(a, "A")`)).toEqual([...H, 'LEXICAL_ERROR:']);
+    }
+    // A word before it is no statement start: `x` stops the lexer first.
+    expect(untilError('C4Context\nxdirection TB')).toEqual([...H, 'LEXICAL_ERROR:']);
   });
 
   it('reads `title\\s[^\\n;]+` (blanks kept), and a lone `title` as a title (D452)', () => {
@@ -395,18 +415,6 @@ describe('c4Diagram.jison quirks', () => {
       ...END,
     ]);
     expect(jison('C4Context\nPerson(a, "x #amp; y")')[4]).toBe('STR:x &amp; y');
-  });
-
-  it('lets a regex `.` stop at U+2028 in the direction rules, and `\\s` take it', () => {
-    expect(untilError('C4Context\nPerson(a, "A") direction TB\nx')).toEqual([
-      ...H,
-      'PERSON:Person',
-      'STR:a',
-      'STR:A',
-      'direction_tb:direction TB',
-      'NEWLINE:\n',
-      'LEXICAL_ERROR:',
-    ]);
   });
 });
 

@@ -25,7 +25,10 @@
  * (v12's `\s` took the line break, so the next line was the title). #683 changes one more:
  * `title` and `accDescription` run over a `#` (`[^\n;]+`, as v12's fix mermaid-js/mermaid#8039;
  * 12.2.0's `[^#\n;]+` stopped there, and the rest of the line was a lexical error), also a listed
- * exclusion of the gate. The rules that return no
+ * exclusion of the gate. #730 changes the `direction` rules: 12.2.0's `.*direction\s+LR[^\n]*`
+ * took a whole line that held the words anywhere, a label included; here a token that starts
+ * with `direction`, blanks and the value, ending at a word boundary, is the one (also an
+ * exclusion of the gate). The rules that return no
  * token (`(`, `)`, `,`, the quotes, `$`, `="`, `accDescr {` and its `}`) are kinds of their
  * own with no jison name. At the end jison tries the current state's rules once more on the
  * empty text: `EOF` in INITIAL, `EOF_IN_STRUCT` right after a macro keyword (never reached:
@@ -36,8 +39,8 @@
  * each is a one-character `Kind.Error` and lexing goes on in the same state, except at a line
  * break after a macro name or in `$name=`: a zero-width error there leaves the macro's states,
  * so the parser can go on at the next line. Every scan is
- * linear in the text it consumes (R-PARSE-7): the `direction` rules are looked up once per
- * line, and a keyword is read no further than one past the longest one.
+ * linear in the text it consumes (R-PARSE-7): a keyword is read no further than one past the
+ * longest one.
  */
 import type { SourceOffsets } from '@mermaid-js/core/parser-kit';
 import {
@@ -51,6 +54,7 @@ import {
   LBRACE,
   LF,
   LOWER_A,
+  LOWER_D,
   LPAREN,
   PERCENT,
   type Probe,
@@ -60,6 +64,7 @@ import {
   SEMI,
   type SourceView,
   SPACE,
+  TAB,
   type TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { StateLexer, type StateLexerOptions } from '@mermaid-js/shared/parser/state';
@@ -92,7 +97,7 @@ const S_NAMES: readonly string[] = (() => {
   return out;
 })();
 
-/** The four `direction` rules, in order: the two letters after the blanks, and the kind. */
+/** The four `direction` rules, in order: the two letters of the value, and the kind. */
 const DIRECTIONS: readonly (readonly [string, number])[] = [
   ['TB', T.DirectionTB],
   ['BT', T.DirectionBT],
@@ -169,15 +174,6 @@ function rewritten(view: SourceView, offsets: SourceOffsets | undefined): string
  * Each start condition is a method named after it.
  */
 class C4Lexer extends StateLexer {
-  /** The next `direction` at or after the last lookup (-2: not looked up, -1: none). */
-  private nextDirection = -2;
-  /** The line end the `direction` matches below are for (-1: none yet). */
-  private directionLine = -1;
-  /** Per `direction` rule: the last start on that line where it matches, or -1. */
-  private readonly directionAt = [-1, -1, -1, -1];
-  /** Per `direction` rule: where that match ends. */
-  private readonly directionEnd = [0, 0, 0, 0];
-
   protected override viewText(view: SourceView): string {
     return rewritten(view, this.offsets);
   }
@@ -246,38 +242,25 @@ class C4Lexer extends StateLexer {
   }
 
   /**
-   * Which `direction` rule matches at `p`, as its index into {@link DIRECTIONS}, or -1. `.*`
-   * is greedy, so a rule matches at the last `direction` on the line (up to the next line end
-   * a `.` stops at) where it does; any such start at or after `p` will do. The matches are
-   * found once per line, the first time a token starts on it.
+   * `direction[ \t]+(TB|BT|RL|LR)\b` at `p` (its first character `c`): emits the token and says so.
+   * Only a token that starts with the word is one, so a label that holds it stays text (#730).
    */
-  private direction(p: number): number {
-    const line = this.dotEnd(p);
-    if (line !== this.directionLine) this.directionsOn(p, line);
-    for (let k = 0; k < DIRECTIONS.length; k++) if ((this.directionAt[k] ?? -1) >= p) return k;
-    return -1;
+  private directionToken(c: number, p: number): boolean {
+    if (c !== LOWER_D || !this.startsWith(DIRECTION, p)) return false;
+    const value = this.blankRun(p + DIRECTION.length);
+    if (value === p + DIRECTION.length || isWord(this.text.charCodeAt(value + 2))) return false;
+    const word = this.text.slice(value, value + 2);
+    const rule = DIRECTIONS.find(([name]) => name === word);
+    if (!rule) return false;
+    this.emit(rule[1], p, value + 2);
+    return true;
   }
 
-  /** Find the `direction` matches of the line `[from, line)`. */
-  private directionsOn(from: number, line: number): void {
-    const { text } = this;
-    this.directionLine = line;
-    this.directionAt.fill(-1);
-    let s = this.nextDirection;
-    if (s !== -1 && s < from) s = text.indexOf(DIRECTION, from);
-    while (s !== -1 && s < line) {
-      const b = this.spaces(s + DIRECTION.length);
-      if (b > s + DIRECTION.length) {
-        const two = text.slice(b, b + 2);
-        for (let k = 0; k < DIRECTIONS.length; k++) {
-          if (DIRECTIONS[k]?.[0] !== two) continue;
-          this.directionAt[k] = s;
-          this.directionEnd[k] = this.find('\n', b + 2);
-        }
-      }
-      s = text.indexOf(DIRECTION, s + 1);
-    }
-    this.nextDirection = s;
+  /** The end of the run of blanks (`[ \t]+`) from `q`. */
+  private blankRun(q: number): number {
+    let j = q;
+    while (this.text.charCodeAt(j) === SPACE || this.text.charCodeAt(j) === TAB) j++;
+    return j;
   }
 
   /** Whether `word` is at `q`. */
@@ -332,12 +315,8 @@ class C4Lexer extends StateLexer {
 
   private initial(c: number): void {
     const { text, p } = this;
-    // `.*direction\s+(TB|BT|RL|LR)[^\n]*`, before every other rule.
-    const d = this.direction(p);
-    if (d >= 0) {
-      this.emit(DIRECTIONS[d]?.[1] ?? T.DirectionTB, p, this.directionEnd[d] ?? this.n);
-      return;
-    }
+    // `direction[ \t]+(TB|BT|RL|LR)\b`, before every other rule.
+    if (this.directionToken(c, p)) return;
     // `title\s[^\n;]+` and `accDescription\s[^\n;]+`.
     if ((c === LOWER_T || c === LOWER_A) && this.title(p)) return;
     // `accTitle\s*:\s*`, `accDescr\s*:\s*`, `accDescr\s*\{\s*`.

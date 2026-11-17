@@ -377,13 +377,7 @@ describe('D452: parse quirks that damaged the model', () => {
     expect(m.elements).toHaveLength(1);
   });
 
-  it('reports `direction` lines and `$__proto__` instead of crashing (D452)', () => {
-    expect(codesOf('C4Context\ndirection TB\nPerson(a, "A")')).toEqual([
-      ['error', codes.C4_DIRECTION],
-    ]);
-    expect(codesOf('C4Context\nPerson(a, "the direction LR is")')).toEqual([
-      ['error', codes.C4_DIRECTION],
-    ]);
+  it('reports `$__proto__` instead of crashing (D452)', () => {
     // A warning: Pele keeps it as an unknown name, with no error.
     const r = parse('C4Context\nPerson(a, "A", $__proto__="x")');
     expect(r.diagnostics.map((d) => [d.severity, d.code])).toEqual([
@@ -414,6 +408,106 @@ describe('D452: parse quirks that damaged the model', () => {
       descr: '',
       sprite: 'D',
     });
+  });
+});
+
+describe('#730: direction, the fill order of the grid (amends D452)', () => {
+  const direction = (src: string) => model(src).direction;
+  const directions = (src: string) => model(src).boundaries.map((b) => b.direction);
+  const BOUNDARY = 'Boundary(b, "B") {\n  Person(a, "A")\n}';
+
+  it("sets the top level's order, the last statement winning, and leaves it out when none is given", () => {
+    expect(direction('C4Context\ndirection LR\nPerson(a, "A")')).toBe('LR');
+    expect(direction('C4Context\ndirection LR\nPerson(a, "A")\ndirection BT')).toBe('BT');
+    expect('direction' in model('C4Context\nPerson(a, "A")')).toBe(false);
+    for (const d of ['TB', 'BT', 'RL', 'LR']) {
+      expect(direction(`C4Context\n  direction ${d}\nPerson(a, "A")`)).toBe(d);
+    }
+  });
+
+  it("sets a boundary's own order from its braces, leaving the top level's alone", () => {
+    const m = model(`C4Context\nBoundary(b, "B") {\n  direction RL\n  Person(a, "A")\n}`);
+    expect(m.boundaries[0]?.direction).toBe('RL');
+    expect('direction' in m).toBe(false);
+    expect(directions(`C4Context\n${BOUNDARY}`)).toEqual([undefined]);
+    // Anywhere in the braces, the last one winning.
+    expect(
+      directions(
+        'C4Context\nBoundary(b, "B") {\n  Person(a, "A")\n  direction LR\n  direction BT\n}'
+      )
+    ).toEqual(['BT']);
+  });
+
+  it("keeps each boundary's statement for itself, nested ones included", () => {
+    const src = [
+      'C4Context',
+      'direction LR',
+      'Boundary(o, "O") {',
+      '  direction BT',
+      '  Boundary(i, "I") {',
+      '    Person(a, "A")',
+      '  }',
+      '  Person(b, "B")',
+      '}',
+      'Boundary(p, "P") {',
+      '  Person(c, "C")',
+      '  direction TB',
+      '}',
+    ].join('\n');
+    const m = model(src);
+    expect(m.direction).toBe('LR');
+    expect(m.boundaries.map((b) => [b.alias, b.direction])).toEqual([
+      ['o', 'BT'],
+      ['i', undefined],
+      ['p', 'TB'],
+    ]);
+  });
+
+  it('lets the last statement win across the statements that open a boundary again', () => {
+    const src = (second: string) =>
+      `C4Context\nBoundary(b, "B") {\n direction LR\n Person(a, "A")\n}\nBoundary(b, "B") {\n${second}\n Person(c, "C")\n}`;
+    expect(directions(src(' direction RL'))).toEqual(['RL']);
+    expect(directions(src(' '))).toEqual(['LR']);
+  });
+
+  it('reads no direction from a label, a comment or a longer word', () => {
+    expect(direction('C4Context\nPerson(a, "the direction LR is")')).toBeUndefined();
+    expect(direction('C4Context\nPerson(a, "A") %% direction LR\n')).toBeUndefined();
+    expect(model('C4Context\ntitle direction LR\nPerson(a, "A")').title).toBe('direction LR');
+    expect(model('C4Context\naccDescr: reads in direction RL\nPerson(a, "A")').accDescr).toBe(
+      'reads in direction RL'
+    );
+  });
+
+  it('is no statement of a boundary: it still needs an element, a relation or a style', () => {
+    expect(codesOf('C4Context\nBoundary(b, "B") {\n  direction LR\n}')).toEqual([
+      ['error', 'UNEXPECTED'],
+    ]);
+    // After a `direction` the boundary starts with a macro as before: no title goes first.
+    expect(
+      codesOf('C4Context\nBoundary(b, "B") {\n  direction LR\n  title X\n  Person(a, "A")\n}')
+    ).toEqual([['error', 'UNEXPECTED']]);
+    expect(
+      parse('C4Context\nBoundary(b, "B") {\n  direction LR\n  Person(a, "A")\n}').ast.children
+    ).toHaveLength(1);
+  });
+
+  it('has no AST node, and takes the line to itself', () => {
+    const r = parse('C4Context\ndirection LR\nPerson(a, "A")');
+    expect(ids(r.ast.children)).toEqual(['element:a']);
+    for (const text of [
+      'C4Context direction LR\nPerson(a, "A")',
+      'C4Context\ndirection LR Person(a, "A")',
+      'C4Context\nPerson(a, "A") direction LR',
+      'C4Context\ndirection LR then more\nPerson(a, "A")',
+      'C4Context\ndirection XY\nPerson(a, "A")',
+    ]) {
+      expect(codesOf(text)).toEqual([['error', 'UNEXPECTED']]);
+    }
+    // A value it does not know says what to write.
+    expect(parse('C4Context\ndirection XY\nPerson(a, "A")').diagnostics[0]?.message).toContain(
+      'write `direction TB`, `BT`, `LR` or `RL`'
+    );
   });
 });
 

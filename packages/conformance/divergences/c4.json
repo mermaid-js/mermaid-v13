@@ -790,5 +790,117 @@
     "reason": "12.2.0 read `\"Web \\\"shop\\\"\"` as a quoted `Web \\` and an unquoted `shop\\\"\"` that ran on over the line break to the next comma, so the statements after it were swallowed; v13 stops the unquoted argument at `)`, keeps the text as written and warns with `C4_QUOTE_IN_ARGUMENT`; a tab before an opening quote is a blank where v12 left the quotes in the text (#681, D452; a lexer-parity exclusion, MIGRATION.md).",
     "owner": "#681",
     "since": "2026-11-13"
+  },
+  {
+    "id": "c4-cases/direction-tb",
+    "inputHash": "sha256:d248972dcf8511f1",
+    "kind": "accept",
+    "reason": "12.2.0 has no `direction` statement and refuses the line; v13 reads `direction TB`, `BT`, `RL` or `LR` where a statement starts, as the fill order of the grid (#730, amending D452).",
+    "owner": "#730",
+    "since": "2026-11-16"
+  },
+  {
+    "id": "c4-cases/direction-bt",
+    "inputHash": "sha256:074a3215c7b6674a",
+    "kind": "accept",
+    "reason": "12.2.0 has no `direction` statement and refuses the line; v13 reads `direction TB`, `BT`, `RL` or `LR` where a statement starts, as the fill order of the grid (#730, amending D452).",
+    "owner": "#730",
+    "since": "2026-11-16"
+  },
+  {
+    "id": "c4-cases/direction-rl",
+    "inputHash": "sha256:14fd843057b4756f",
+    "kind": "accept",
+    "reason": "12.2.0 has no `direction` statement and refuses the line; v13 reads `direction TB`, `BT`, `RL` or `LR` where a statement starts, as the fill order of the grid (#730, amending D452).",
+    "owner": "#730",
+    "since": "2026-11-16"
+  },
+  {
+    "id": "c4-cases/direction-lr",
+    "inputHash": "sha256:de2407731a784396",
+    "kind": "accept",
+    "reason": "12.2.0 has no `direction` statement and refuses the line; v13 reads `direction TB`, `BT`, `RL` or `LR` where a statement starts, as the fill order of the grid (#730, amending D452).",
+    "owner": "#730",
+    "since": "2026-11-16"
+  },
+  {
+    "id": "c4-cases/direction-in-label",
+    "inputHash": "sha256:ec2027a06ade363e",
+    "kind": "accept",
+    "reason": "12.2.0's `.*direction\\s+LR[^\\n]*` rule took a whole line that held the words, a label included, and refused it; v13 reads `direction` only where a token starts, so the label stays text (#730, amending D452).",
+    "owner": "#730",
+    "since": "2026-11-16"
+  },
+  {
+    "id": "c4-cases/direction-in-label-next-line",
+    "inputHash": "sha256:48ae54431c5e1ef7",
+    "kind": "accept",
+    "reason": "12.2.0's `.*direction\\s+LR[^\\n]*` rule took a whole line that held the words, a label included, and refused it; v13 reads `direction` only where a token starts, so the label stays text (#730, amending D452).",
+    "owner": "#730",
+    "since": "2026-11-16"
+  },
+  {
+    "id": "c4-cases/direction-indented",
+    "inputHash": "sha256:f722353ac75e5d5a",
+    "kind": "accept",
+    "reason": "12.2.0 refuses a `direction` line; v13 reads it as the fill order of the grid, and its leading blanks are skipped (#730, amending D452).",
+    "owner": "#730",
+    "since": "2026-11-16"
+  },
+  {
+    "id": "c4-cases/direction-after-comment",
+    "inputHash": "sha256:f32e55cb309b8ce0",
+    "kind": "accept",
+    "reason": "12.2.0's `.*direction` rule matched inside a trailing `%%` comment and refused the line; v13 reads the comment as a comment (#730, amending D452).",
+    "owner": "#730",
+    "since": "2026-11-16"
+  },
+  {
+    "id": "c4-cases/direction-in-boundary",
+    "inputHash": "sha256:9beb60dbae62a7a8",
+    "kind": "accept",
+    "reason": "12.2.0 has no `direction` statement; v13 reads one in a boundary's braces as that boundary's fill order (#730, amending D452).",
+    "owner": "#730",
+    "since": "2026-11-16"
+  },
+  {
+    "id": "e2e/diagrams/c4/pr-check/direction-tb.mmd",
+    "inputHash": "sha256:ae411057d63968fb",
+    "kind": "accept",
+    "reason": "12.2.0 has no `direction` statement and refuses the line; v13 reads `direction TB`, `BT`, `RL` or `LR` where a statement starts, as the fill order of the grid (#730, amending D452).",
+    "owner": "#730",
+    "since": "2026-11-16"
+  },
+  {
+    "id": "e2e/diagrams/c4/pr-check/direction-lr.mmd",
+    "inputHash": "sha256:d878c3da06526c45",
+    "kind": "accept",
+    "reason": "12.2.0 has no `direction` statement and refuses the line; v13 reads `direction TB`, `BT`, `RL` or `LR` where a statement starts, as the fill order of the grid (#730, amending D452).",
+    "owner": "#730",
+    "since": "2026-11-16"
+  },
+  {
+    "id": "e2e/diagrams/c4/pr-check/direction-rl.mmd",
+    "inputHash": "sha256:aae28fa3d1df9627",
+    "kind": "accept",
+    "reason": "12.2.0 has no `direction` statement and refuses the line; v13 reads `direction TB`, `BT`, `RL` or `LR` where a statement starts, as the fill order of the grid (#730, amending D452).",
+    "owner": "#730",
+    "since": "2026-11-16"
+  },
+  {
+    "id": "e2e/diagrams/c4/pr-check/direction-bt.mmd",
+    "inputHash": "sha256:046c42ca8c687acb",
+    "kind": "accept",
+    "reason": "12.2.0 has no `direction` statement and refuses the line; v13 reads `direction TB`, `BT`, `RL` or `LR` where a statement starts, as the fill order of the grid (#730, amending D452).",
+    "owner": "#730",
+    "since": "2026-11-16"
+  },
+  {
+    "id": "e2e/diagrams/c4/pr-check/direction-boundary.mmd",
+    "inputHash": "sha256:ff1540f127b5a1e6",
+    "kind": "accept",
+    "reason": "12.2.0 has no `direction` statement; v13 reads one in a boundary's braces as that boundary's fill order (#730, amending D452).",
+    "owner": "#730",
+    "since": "2026-11-16"
   }
 ]

@@ -29,6 +29,7 @@ import {
 import {
   brokenCycles,
   placeGrid,
+  setDirections,
   type GridGroup,
   type GridNode,
   type GridSpacing,
@@ -215,6 +216,7 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
   const order: Group[] = [root];
   // Breadth first: the iterator reads the boundaries pushed while it runs.
   for (const g of order) for (const kid of g.kids) order.push(kid as Group);
+  setDirections(order, model.direction);
 
   const spacing: GridSpacing = {
     shapeGapX: 2 * config.c4ShapeMargin,

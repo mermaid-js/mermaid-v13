@@ -41,6 +41,7 @@ describe('c4 grammar lexer', () => {
       title: 0,
       hash: 0,
       quote: 0,
+      direction: 0,
     };
     for (const item of await c4GateCorpus()) {
       const v12 = await oracle.tokens(item.source);
@@ -66,17 +67,18 @@ describe('c4 grammar lexer', () => {
       );
     }
     process.stdout.write(
-      `c4 grammar lexer: ${against.jison} against jison, ${against.unquoted + against.comment + against.title + against.hash + against.quote} against v13 (D452, #683, #681)\n`
+      `c4 grammar lexer: ${against.jison} against jison, ${against.unquoted + against.comment + against.title + against.hash + against.quote + against.direction} against v13 (D452, #683, #681, #730)\n`
     );
     expect(diffs.slice(0, 10)).toEqual([]);
     expect(against.jison).toBeGreaterThan(2000);
     expect(against).toEqual({
-      jison: 2395,
-      unquoted: 373,
+      jison: 2349,
+      unquoted: 364,
       comment: 43,
       title: 23,
       hash: 22,
       quote: 21,
+      direction: 95,
     });
   }, 300_000);
 });
