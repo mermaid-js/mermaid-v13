@@ -118,6 +118,20 @@ describe('the c4 facet on c4-beta', () => {
     expect(complete(`${H}person ¦`)).toEqual([]);
   });
 
+  it('lists a label once where an element kind and an id are spelled the same', () => {
+    // `container container "C"` declares an element with the id `container`, which starts a
+    // relation (`container --> api`) as the kind starts an element: one entry stands for both.
+    const named = `${H}container container "C"\nperson person "P" :::person\n`;
+    expect(complete(`${named}con¦`)).toEqual(['container -> container  @ con']);
+    expect(complete(`${named}per¦`)).toEqual(['person -> person  @ per']);
+    const atStart = complete(`${named}¦`).filter((item) => /^(container|person) ->/.test(item));
+    expect(atStart).toEqual(['person -> person  @ ', 'container -> container  @ ']);
+    // After an arrow only the id is offered, so it stays.
+    expect(complete(`${named}user --> con¦`)).toEqual(['container -> container @ con']);
+    // A tag spelled like an element kind is the same target of a `style`: its word names both.
+    expect(complete(`${named}style per¦`)).toEqual(['person -> person @ per']);
+  });
+
   it('completes the tags in use, but not the one being typed', () => {
     expect(complete(`${H}person p "P" :::t¦`)).toEqual([':::team -> :::team @ :::t']);
     expect(complete(`${H}person p "P" :::te¦ :::x`)).toEqual([':::team -> :::team @ :::te']);
