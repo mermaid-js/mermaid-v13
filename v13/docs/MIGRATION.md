@@ -1073,7 +1073,11 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
   loading under `placeholders`) keeps the frame with its outline, not v12's blue `?`.
   `ICON_UNAVAILABLE` is deprecated in favour of `ICON_NOT_RENDERED`. See [Icons](#icons).
 - **Step animation** (`step` on edges, `flowchart.stepNumbers`, `flowchart.stepDuration`) and
-  edge `animate`/`animation` are parsed but not drawn.
+  edge `animate`/`animation` are parsed but not drawn. A render that uses `animate` or
+  `animation` on an edge raises one `EDGE_ANIMATION_IGNORED` warning for each of the two (#357);
+  the edge keeps its `edge-animation-*` class.
+- **`markdownAutoWrap: false`** keeps a markdown label (node, subgraph or edge) on its own line
+  breaks, as v12 did (#357).
 - **`style`, `classDef` and `linkStyle`** go through a per-property allow-list; an unknown
   property or unsafe value (`url(`, `expression(`, `javascript:`, `@import`, …) is dropped with
   `STYLE_PROPERTY_DROPPED` or `STYLE_VALUE_DROPPED`. `color` sets the label's fill.

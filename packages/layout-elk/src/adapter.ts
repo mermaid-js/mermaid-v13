@@ -365,6 +365,23 @@ export interface Again {
   pins: Pinned;
 }
 
+/** The option each algorithm reads its edge length from. */
+const EDGE_LENGTH_KEY: Partial<Record<ElkAlgorithm, string>> = {
+  stress: 'elk.stress.desiredEdgeLength',
+  radial: 'elk.radial.radius',
+};
+
+/**
+ * The edge length stress and radial need to keep nodes apart (#417). Neither reads node size or
+ * `elk.spacing.nodeNode`. The length is a target between centres. Boxes W x H with gap s are
+ * clear on any diagonal when the distance is at least hypot(W + s, H + s), and W + H + s covers
+ * that whenever s^2 is at most 2 W H (the widest plus the tallest node bounds every pair).
+ */
+function edgeLengthOptions(algorithm: ElkAlgorithm, length: number): LayoutOptions {
+  const key = EDGE_LENGTH_KEY[algorithm];
+  return key === undefined ? {} : { [key]: String(length) };
+}
+
 const FIRST_PASS: Again = { grow: new Map(), pins: new Map() };
 
 /**
@@ -387,6 +404,12 @@ export function toElkGraph(
     'elk.spacing.nodeNode': String(graph.spacing.node),
     'elk.layered.spacing.nodeNodeBetweenLayers': String(graph.spacing.rank),
     'elk.spacing.edgeEdge': String(graph.spacing.edge),
+    ...edgeLengthOptions(
+      algorithm,
+      graph.nodes.reduce((m, n) => Math.max(m, n.width), 0) +
+        graph.nodes.reduce((m, n) => Math.max(m, n.height), 0) +
+        graph.spacing.node
+    ),
   };
   const pad = graph.diagramPadding ?? 0;
   const root: ElkNode = {
