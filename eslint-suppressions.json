@@ -255,11 +255,6 @@
       "count": 2
     }
   },
-  "packages/core/src/parser-kit/source-view.ts": {
-    "complexity": {
-      "count": 2
-    }
-  },
   "packages/core/src/parser-kit/tiny-grammar.spec.ts": {
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 2
