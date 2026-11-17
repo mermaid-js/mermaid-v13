@@ -27,6 +27,7 @@ import { hits, markerRect, rectOf, type Rect } from './end-markers.ts';
 import { gridObstacles, type GridBorders } from './grid-obstacles.ts';
 import { edgeOn, floorTo, type LayeredOptions } from './layered.ts';
 import { honourSides, OUTWARD } from './sides.ts';
+import { clearTitles } from './titles.ts';
 import { pxProfile, type LayoutMetrics } from '../units.ts';
 
 // Length constants (port and loop sizes, corners, the turn breakpoint) come from
@@ -165,7 +166,7 @@ function sideRoom(k: number, pitch: number, grid: number): number {
 function grown(graph: LayoutGraph, dir: Dir, tight: boolean): LayoutModel {
   const grid = gridOf(graph);
   let model = run(graph, dir, tight);
-  if (!grid) return endLabels(graph, model, grid);
+  if (!grid) return endLabels(graph, clearTitles(graph, model), grid);
   const M = graph.metrics ?? pxProfile.engine;
   const pitch = Math.max(grid, edgeOn(M.portPitch, grid));
   let current = graph;
