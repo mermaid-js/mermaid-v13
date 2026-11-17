@@ -240,11 +240,6 @@
       "count": 9
     }
   },
-  "packages/core/src/layout/validate.ts": {
-    "complexity": {
-      "count": 1
-    }
-  },
   "packages/core/src/parser-kit/diagnostics.spec.ts": {
     "unicorn/prefer-spread": {
       "count": 1
