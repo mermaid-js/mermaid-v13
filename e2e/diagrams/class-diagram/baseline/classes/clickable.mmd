@@ -1,0 +1,11 @@
+---
+description: link, callback and click-call classes carry a pointer cursor; a plain class does not (#355, D605)
+---
+classDiagram
+  class Linked
+  class Called
+  class Back
+  class Plain
+  link Linked "https://example.com" "to Linked"
+  click Called call cb() "tip"
+  callback Back "cb" "tip"
