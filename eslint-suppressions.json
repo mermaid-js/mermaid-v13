@@ -219,16 +219,16 @@
       "count": 1
     },
     "complexity": {
-      "count": 6
+      "count": 5
     },
     "max-depth": {
-      "count": 14
+      "count": 10
     },
     "max-lines": {
       "count": 1
     },
     "max-lines-per-function": {
-      "count": 4
+      "count": 3
     },
     "max-params": {
       "count": 3
