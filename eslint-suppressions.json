@@ -213,22 +213,22 @@
   },
   "packages/core/src/layout/layered/layered.ts": {
     "@typescript-eslint/no-shadow": {
-      "count": 3
+      "count": 2
     },
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 1
     },
     "complexity": {
-      "count": 5
+      "count": 4
     },
     "max-depth": {
-      "count": 10
+      "count": 7
     },
     "max-lines": {
       "count": 1
     },
     "max-lines-per-function": {
-      "count": 3
+      "count": 2
     },
     "max-params": {
       "count": 3
@@ -237,7 +237,7 @@
       "count": 8
     },
     "unicorn/prefer-spread": {
-      "count": 9
+      "count": 2
     }
   },
   "packages/core/src/layout/validate.ts": {
