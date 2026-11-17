@@ -2,6 +2,7 @@
  * The bench report: what one run of the harness produced, as JSON. Gates, the markdown
  * table and stored baselines are all derived from it.
  */
+import type { CodeSizeReport } from './code-size.ts';
 import type { FixtureSet } from './fixtures.ts';
 
 export const STAGES = ['parse', 'measure', 'layout', 'serialise'] as const;
@@ -106,6 +107,8 @@ export interface BenchReport {
    * the production build (`source: 'static'`). Absent in reports older than M3.5.
    */
   coreSize?: SizeSummary | null;
+  /** #814: lines by package and category, gzip bytes per diagram chunk, v13 and Pele. */
+  codeSize?: CodeSizeReport;
   /** Browser runs (Chromium through Playwright); every gate reads these. */
   renderers: RendererRun[];
 }
