@@ -1,8 +1,8 @@
 // Engine-agnostic checks on a LayoutModel, for DDLT-style tests of any layout engine: every
 // coordinate finite, everything placed inside the drawing, no boxes overlapping, groups holding
 // their members, and edges starting and ending at their own boxes (or, for a `border` end on a
-// node, on the border of the node's group). `countCrossings` gives a
-// quality number to record per fixture.
+// node, on the border of the node's group). `countCrossings` and `titleCrossings` give
+// quality numbers to record per fixture.
 import type { LayoutGraph, LayoutModel, Point } from './types.ts';
 
 // How far apart two boxes may overlap, or a point may lie off a box, and still count as clear.
@@ -202,6 +202,39 @@ function cross(a: Point, b: Point, c: Point, d: Point): boolean {
 
 function same(a: Point, b: Point): boolean {
   return Math.abs(a.x - b.x) < SLACK && Math.abs(a.y - b.y) < SLACK;
+}
+
+// Whether the segment a-b runs into the open box `r`: an end inside it, or a proper crossing of
+// one of its sides. A segment along a side only touches it.
+function enters(r: Rect, a: Point, b: Point): boolean {
+  const inside = (p: Point): boolean => p.x > r.x0 && p.x < r.x1 && p.y > r.y0 && p.y < r.y1;
+  const c = [
+    { x: r.x0, y: r.y0 },
+    { x: r.x1, y: r.y0 },
+    { x: r.x1, y: r.y1 },
+    { x: r.x0, y: r.y1 },
+  ];
+  return inside(a) || inside(b) || c.some((p, i) => cross(a, b, p, c[(i + 1) % 4]!));
+}
+
+/**
+ * The edges whose routes run through a group's title box, as `'<edge> x <group>'`, in group
+ * order and then edge order. Not part of `validateLayout`: a quality check to count per fixture
+ * (#675), since a title can lack the room to move clear of every route.
+ */
+export function titleCrossings(graph: LayoutGraph, model: LayoutModel): string[] {
+  const out: string[] = [];
+  for (const g of graph.groups) {
+    const placed = model.groups.get(g.id);
+    if (!g.title || !placed) continue;
+    const t = rect({ ...placed.title, ...g.title });
+    const r = { x0: t.x0 + SLACK, y0: t.y0 + SLACK, x1: t.x1 - SLACK, y1: t.y1 - SLACK };
+    for (const [id, e] of model.edges) {
+      if (e.points.some((p, i) => i > 0 && enters(r, e.points[i - 1]!, p)))
+        out.push(`${id} x ${g.id}`);
+    }
+  }
+  return out;
 }
 
 /**

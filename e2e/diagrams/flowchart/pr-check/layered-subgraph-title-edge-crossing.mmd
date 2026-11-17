@@ -1,0 +1,15 @@
+---
+description: >-
+  Under the layered layout an edge that enters or leaves a titled subgraph
+  through its top no longer runs through the title text; the title moves
+  along its band beside the edge (mermaid-js/mermaid-v13#675).
+---
+flowchart TD
+  A[Order] --> B
+  subgraph pay [Payments]
+    B[Charge the card] --> C[Send the receipt]
+  end
+  subgraph ship [Shipping]
+    D[Print the label]
+  end
+  C --> D

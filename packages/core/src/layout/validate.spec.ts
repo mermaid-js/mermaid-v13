@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LayoutGraph, LayoutModel } from './types.ts';
-import { countCrossings, validateLayout } from './validate.ts';
+import { countCrossings, titleCrossings, validateLayout } from './validate.ts';
 
 const graph: LayoutGraph = {
   direction: 'TB',
@@ -272,5 +272,60 @@ describe('validateLayout: `border` ends lie on the right group border (D501)', (
     expect(validateLayout(nested, model)).toEqual(["edge 'e' does not end at its target"]);
     model.edges.get('e')!.points[1] = { x: 50, y: 70, axis: 'v' };
     expect(validateLayout(nested, model)).toEqual([]);
+  });
+});
+
+describe('titleCrossings (#675)', () => {
+  // The group's title box is x 40..60, y 70..80 in `good()`.
+  const titled: LayoutGraph = {
+    ...graph,
+    groups: [{ ...graph.groups[0]!, title: { width: 20, height: 10 } }],
+  };
+  const routed = (...points: [number, number][]): LayoutModel => {
+    const model = good();
+    const e = model.edges.get('e')!;
+    model.edges.set('e', { ...e, points: points.map(([x, y]) => ({ x, y, axis: 'v' })) });
+    return model;
+  };
+
+  it('names an edge whose route runs through the title', () => {
+    expect(titleCrossings(titled, good())).toEqual(['e x g']);
+  });
+
+  it('names a route that ends inside the title', () => {
+    expect(titleCrossings(titled, routed([50, 20], [50, 75]))).toEqual(['e x g']);
+  });
+
+  it('names a route that crosses the title on a slant or across', () => {
+    expect(titleCrossings(titled, routed([30, 60], [70, 90]))).toEqual(['e x g']);
+    expect(titleCrossings(titled, routed([30, 75], [70, 75]))).toEqual(['e x g']);
+  });
+
+  it('passes a route beside the title, along its side or within the slack', () => {
+    expect(titleCrossings(titled, routed([65, 20], [65, 90]))).toEqual([]);
+    expect(titleCrossings(titled, routed([60, 20], [60, 90]))).toEqual([]);
+    expect(titleCrossings(titled, routed([59.6, 20], [59.6, 90]))).toEqual([]);
+    expect(titleCrossings(titled, routed([59.4, 20], [59.4, 90]))).toEqual(['e x g']);
+  });
+
+  // With the slack, the box counted is x 40.5..59.5, y 70.5..79.5.
+  it('counts no route that lies on a side of the box counted', () => {
+    expect(titleCrossings(titled, routed([40.5, 72], [40.5, 78]))).toEqual([]);
+    expect(titleCrossings(titled, routed([59.5, 72], [59.5, 78]))).toEqual([]);
+    expect(titleCrossings(titled, routed([45, 79.5], [55, 79.5]))).toEqual([]);
+    expect(titleCrossings(titled, routed([30, 70.2], [70, 70.2]))).toEqual([]);
+  });
+
+  it('names a route that starts or ends inside the box from a point on its side', () => {
+    expect(titleCrossings(titled, routed([40.5, 75], [50, 75]))).toEqual(['e x g']);
+    expect(titleCrossings(titled, routed([50, 75], [40.5, 75]))).toEqual(['e x g']);
+  });
+
+  it('names a route that cuts a corner of the box', () => {
+    expect(titleCrossings(titled, routed([45, 60], [65, 80]))).toEqual(['e x g']);
+  });
+
+  it('skips a group without a title', () => {
+    expect(titleCrossings(graph, good())).toEqual([]);
   });
 });
