@@ -441,15 +441,6 @@ function readName(s: Scan): string {
   return s.svg.slice(start, s.i);
 }
 
-/** The text up to the next `<`: no `>`, and every `&` a reference. */
-function textProblem(s: Scan): string | undefined {
-  s.lt = s.svg.indexOf('<', s.i);
-  const text = s.svg.slice(s.i, s.lt === -1 ? s.n : s.lt);
-  if (text.includes('>')) return `unescaped ">" in text near ${JSON.stringify(text.slice(0, 40))}`;
-  if (badAmp(text)) return `unescaped "&" in text near ${JSON.stringify(text.slice(0, 40))}`;
-  return undefined;
-}
-
 /** A `<style>` under the root (`theme: 'auto'`): one sheet of custom properties, skipped over. */
 function styleProblem(s: Scan): string | undefined {
   const { svg, stack, f } = s;
@@ -594,9 +585,15 @@ export function inertProblem(svg: string, options: InertOptions = {}): string | 
     selfClosing: false,
   };
   while (s.i < s.n) {
-    const problem = textProblem(s) ?? (s.lt === -1 ? undefined : markupProblem(s));
-    if (problem !== undefined) return problem;
+    // The text up to the next `<`: no `>`, and every `&` a reference.
+    s.lt = svg.indexOf('<', s.i);
+    const text = svg.slice(s.i, s.lt === -1 ? s.n : s.lt);
+    if (text.includes('>'))
+      return `unescaped ">" in text near ${JSON.stringify(text.slice(0, 40))}`;
+    if (badAmp(text)) return `unescaped "&" in text near ${JSON.stringify(text.slice(0, 40))}`;
     if (s.lt === -1) break;
+    const problem = markupProblem(s);
+    if (problem !== undefined) return problem;
   }
   if (s.stack.length > 0) return `unclosed <${s.stack[s.stack.length - 1]}>`;
   return undefined;
