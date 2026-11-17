@@ -13,9 +13,11 @@ import { parseC4Beta } from './parser.ts';
  * legend's swatches are in `legend.spec.ts`; that a swatch and its element agree over every fixture
  * is in `packages/conformance`.
  */
-const PERSON = { fill: '#08427B', stroke: '#073B6F' };
-const CONTAINER = { fill: '#438DD5', stroke: '#3C7FC0' };
-const WHITE = '#FFFFFF';
+const PAGE = 'var(--_bg)';
+const PERSON = { fill: PAGE, stroke: 'var(--_c4peb)' };
+const CONTAINER = { fill: PAGE, stroke: 'var(--_c4cob)' };
+const PERSON_TEXT = 'var(--_c4pec)';
+const CONTAINER_TEXT = 'var(--_c4coc)';
 
 /** The part of `svg` from the group `marker` opens. */
 const from = (svg: string, marker: string): string => svg.slice(svg.indexOf(marker));
@@ -62,7 +64,7 @@ describe('what a style paints on an element', () => {
     const hot = { fill: '#b91c1c', stroke: '#7f1d1d', text: '#fefefe' };
     expect(element(svg, 'a')).toEqual(hot);
     expect(element(svg, 'b')).toEqual(hot);
-    expect(element(svg, 'c')).toEqual({ ...CONTAINER, text: WHITE });
+    expect(element(svg, 'c')).toEqual({ ...CONTAINER, text: CONTAINER_TEXT });
   });
 
   it('draws the outline in the fill when the style gives only a fill, and keeps the fill for only a stroke', async () => {
@@ -72,8 +74,8 @@ describe('what a style paints on an element', () => {
       'person x "X" :::a',
       'person y "Y" :::b'
     );
-    expect(element(svg, 'x')).toEqual({ fill: '#112233', stroke: '#112233', text: WHITE });
-    expect(element(svg, 'y')).toEqual({ fill: PERSON.fill, stroke: '#445566', text: WHITE });
+    expect(element(svg, 'x')).toEqual({ fill: '#112233', stroke: '#112233', text: PAGE });
+    expect(element(svg, 'y')).toEqual({ fill: PAGE, stroke: '#445566', text: PERSON_TEXT });
   });
 
   it('paints a kind, and a tag over it', async () => {
@@ -115,7 +117,7 @@ describe('what a style paints on an element', () => {
       'style gone fill:#111111',
       'person p "P" :::odd'
     );
-    expect(element(svg, 'p')).toEqual({ ...PERSON, text: WHITE });
+    expect(element(svg, 'p')).toEqual({ ...PERSON, text: PERSON_TEXT });
   });
 
   it('paints the tag `external` over the external palette', async () => {

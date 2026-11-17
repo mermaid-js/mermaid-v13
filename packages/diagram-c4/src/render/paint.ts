@@ -19,6 +19,7 @@
  */
 import type { Warning } from '@mermaid-js/core';
 import { checkColor, type Paint, type SafeValue } from '@mermaid-js/core/svg';
+import { parseColor, type Rgba } from '@mermaid-js/core/theme';
 import { C4_COLOR_INVALID } from '../codes.ts';
 import { c4Default, c4Section } from '../config.ts';
 import type { C4Layout } from '../layout/types.ts';
@@ -99,6 +100,11 @@ export class Colours {
     let paint = this.read.get(name);
     if (paint === undefined) this.read.set(name, (paint = this.ctx.theme.color(name)));
     return paint;
+  }
+
+  /** The theme variable `name` as a colour, for measuring; undefined if it is not one. */
+  themeRgba(name: string): Rgba | undefined {
+    return parseColor(this.ctx.theme.value(name));
   }
 
   /** `value` if the colour check allows it; else undefined, and `where` noted when one was given. */

@@ -161,6 +161,18 @@ flags and opacities, which are read literally.
 | `c4RelationColor` | | color | `#444444` | `#444444` | `#cccccc` | `#cccccc` | `#444444` | `#d3d3d3` | `#444444` | `#444444` | `#444444` | `#444444` | `#cccccc` |
 | `c4BoundaryColor` | | color | `#444444` | `#444444` | `#ffffff` | `#ffffff` | `#444444` | `#cccccc` | `#444444` | `#444444` | `#444444` | `#444444` | `#cccccc` |
 | `c4TitleColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+| `c4PersonColor` | | color | `#08427b` | `#08427b` | `#449ff4` | `#449ff4` | `#08427b` | `#449ff4` | `#08427b` | `#08427b` | `#08427b` | `#08427b` | `#449ff4` |
+| `c4PersonBorder` | | color | `#073b6f` | `#073b6f` | `#0a7fe5` | `#0a7fe5` | `#073b6f` | `#0a7fe5` | `#073b6f` | `#073b6f` | `#073b6f` | `#073b6f` | `#0a7fe5` |
+| `c4SoftwareSystemColor` | | color | `#1168bd` | `#1168bd` | `#51a0ec` | `#51a0ec` | `#1168bd` | `#51a0ec` | `#1168bd` | `#1168bd` | `#1168bd` | `#1168bd` | `#51a0ec` |
+| `c4SoftwareSystemBorder` | | color | `#3c7fc0` | `#3c7fc0` | `#5a93cb` | `#5a93cb` | `#3c7fc0` | `#5a93cb` | `#3c7fc0` | `#3c7fc0` | `#3c7fc0` | `#3c7fc0` | `#5a93cb` |
+| `c4ContainerColor` | | color | `#296eb8` | `#296eb8` | `#60a0dc` | `#60a0dc` | `#296eb8` | `#60a0dc` | `#296eb8` | `#296eb8` | `#296eb8` | `#296eb8` | `#60a0dc` |
+| `c4ContainerBorder` | | color | `#3c7fc0` | `#3c7fc0` | `#4e8cc8` | `#4e8cc8` | `#3c7fc0` | `#4e8cc8` | `#3c7fc0` | `#3c7fc0` | `#3c7fc0` | `#3c7fc0` | `#4e8cc8` |
+| `c4ComponentColor` | | color | `#216ec8` | `#216ec8` | `#6eaeed` | `#6eaeed` | `#216ec8` | `#6eaeed` | `#216ec8` | `#216ec8` | `#216ec8` | `#216ec8` | `#6eaeed` |
+| `c4ComponentBorder` | | color | `#5591ce` | `#5591ce` | `#649bd2` | `#649bd2` | `#5591ce` | `#649bd2` | `#5591ce` | `#5591ce` | `#5591ce` | `#5591ce` | `#649bd2` |
+| `c4InfrastructureNodeColor` | | color | `#6b6b6b` | `#6b6b6b` | `#9e9e9e` | `#9e9e9e` | `#6b6b6b` | `#9e9e9e` | `#6b6b6b` | `#6b6b6b` | `#6b6b6b` | `#6b6b6b` | `#9e9e9e` |
+| `c4InfrastructureNodeBorder` | | color | `#5a5a5a` | `#5a5a5a` | `#8d8d8d` | `#8d8d8d` | `#5a5a5a` | `#8d8d8d` | `#5a5a5a` | `#5a5a5a` | `#5a5a5a` | `#5a5a5a` | `#8d8d8d` |
+| `c4ExternalColor` | | color | `#6c6c6c` | `#6c6c6c` | `#bfbfbf` | `#bfbfbf` | `#6c6c6c` | `#bfbfbf` | `#6c6c6c` | `#6c6c6c` | `#6c6c6c` | `#6c6c6c` | `#bfbfbf` |
+| `c4ExternalBorder` | | color | `#8a8a8a` | `#8a8a8a` | `#b0b0b0` | `#b0b0b0` | `#8a8a8a` | `#b0b0b0` | `#8a8a8a` | `#8a8a8a` | `#8a8a8a` | `#8a8a8a` | `#b0b0b0` |
 
 ### class
 
