@@ -16,26 +16,20 @@ import type { EventModel } from '../model.ts';
 import { eventModelStructure } from '../structure.ts';
 import { drawn } from './layout.ts';
 import type { EventModelLayout, Point, Rect } from './types.ts';
-import { numbers, rectInside as inside } from '@mermaid-js/shared/layout/invariants';
-
-const EPS = 1e-6;
-
-const show = (r: Rect): string => `(${r.x}, ${r.y}, ${r.width} × ${r.height})`;
-
-function overlap(a: Rect, b: Rect): boolean {
-  return (
-    a.x < b.x + b.width - EPS &&
-    b.x < a.x + a.width - EPS &&
-    a.y < b.y + b.height - EPS &&
-    b.y < a.y + a.height - EPS
-  );
-}
+import {
+  EPS,
+  near,
+  numbers,
+  rectInside as inside,
+  rectsOverlap as overlap,
+  rectText as show,
+  within,
+} from '@mermaid-js/shared/testing/layout-invariants';
 
 /** On the rectangle's outline (within the tolerance). */
 function onEdge(p: Point, r: Rect): boolean {
-  const near = (a: number, b: number): boolean => Math.abs(a - b) <= EPS;
-  const inX = p.x >= r.x - EPS && p.x <= r.x + r.width + EPS;
-  const inY = p.y >= r.y - EPS && p.y <= r.y + r.height + EPS;
+  const inX = within(p.x, r.x, r.x + r.width);
+  const inY = within(p.y, r.y, r.y + r.height);
   return (
     (inX && (near(p.y, r.y) || near(p.y, r.y + r.height))) ||
     (inY && (near(p.x, r.x) || near(p.x, r.x + r.width)))
@@ -125,8 +119,7 @@ function relationViolations({ boxes, relations }: EventModelLayout, out: string[
     r.points[0] as Point,
     r.points[r.points.length - 1] as Point,
   ];
-  const same = (a: Point, b: Point): boolean =>
-    Math.abs(a.x - b.x) <= EPS && Math.abs(a.y - b.y) <= EPS;
+  const same = (a: Point, b: Point): boolean => near(a.x, b.x) && near(a.y, b.y);
   for (const loop of relations) {
     if (loop.source !== loop.target) continue;
     for (const r of relations) {

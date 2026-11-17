@@ -5,7 +5,8 @@ import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { PieModel } from '../model.ts';
 import { FIXTURES, model } from './fixtures.ts';
-import { layoutPie, pieLayoutViolations, type PieLayout } from './index.ts';
+import { layoutPie, type PieLayout } from './index.ts';
+import { pieLayoutViolations } from './invariants.ts';
 import { pie as diagramPlugin } from '../plugin.ts';
 
 /** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */

@@ -3,25 +3,17 @@
  * corpus): the `default` theme (sankey adds no theme variables), the table measurer (or one a
  * spec gives), and a `sankey` config section.
  */
-import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
-import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
+import type { Theme } from '@mermaid-js/core/theme';
+import { namedTestTheme, sectionConfig } from '@mermaid-js/shared/testing/test-context';
 import type { SankeyLayoutContext } from './layout/index.ts';
 
 /** The `default` theme. */
-export async function sankeyTestTheme(): Promise<Theme> {
-  return createTheme(await loadTheme('default'));
-}
+export const sankeyTestTheme = (): Promise<Theme> => namedTestTheme('default');
 
 /** A layout context over `theme` with the `sankey` config section `section`. */
-export function sankeyTestContext(
+export const sankeyTestContext = (
   theme: Theme,
   section: Readonly<Record<string, unknown>> = {},
   measurer: Measurer = tableMeasurer
-): SankeyLayoutContext {
-  return {
-    config: { sankey: section } as unknown as ResolvedConfig,
-    theme,
-    measurer,
-  };
-}
+): SankeyLayoutContext => ({ config: sectionConfig('sankey', section), theme, measurer });

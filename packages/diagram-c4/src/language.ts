@@ -13,7 +13,11 @@
  * namespace has is refused when the statements that name either would then name the other.
  * Boundaries and a multi-line `accDescr { … }` fold.
  */
-import type { LanguageFacet } from '@mermaid-js/core/parser-kit';
+import type { DocumentView, LanguageFacet } from '@mermaid-js/core/parser-kit';
+import type { C4BetaDocument } from './beta/ast.ts';
+import { detectC4Beta } from './beta/detect.ts';
+import { isC4Beta } from './beta/model.ts';
+import { parseC4Beta } from './beta/parser.ts';
 import { c4Completions } from './facet/completions.ts';
 import { c4Hover } from './facet/hover.ts';
 import { invalidReason } from './facet/names.ts';
@@ -26,17 +30,32 @@ export { c4Docs } from './generated/docs.ts';
 export { C4TokenKind, c4Tokens, detectC4, parseC4 } from './parser/index.ts';
 export type * from './parser/index.ts';
 
-/** The C4 facet. */
-export const c4Language: LanguageFacet<C4Document> = {
+/**
+ * The view of a legacy C4 document: completion and hover are legacy C4's only (spec #730 T6).
+ * Told by the parse the view holds, so the text is not preprocessed again on every request.
+ */
+const isLegacy = (
+  doc: DocumentView<C4Document | C4BetaDocument>
+): doc is DocumentView<C4Document> => {
+  const { model } = doc.result;
+  return !(typeof model === 'object' && model !== null && isC4Beta(model));
+};
+
+/**
+ * The C4 facet. It parses a `c4-beta` header with the c4-beta parser (spec #730); the rest of its
+ * language knowledge is legacy C4's until T6.
+ */
+export const c4Language: LanguageFacet<C4Document | C4BetaDocument> = {
   id: 'c4',
-  parse: (text, options) => parseC4(text, options),
+  parse: (text, options) =>
+    detectC4Beta(text) ? parseC4Beta(text, options) : parseC4(text, options),
   categories: c4Categories,
   namespaces: [['element'], ['boundary']],
   // An alias no macro defines (an unknown relation end, D457) has no definition.
   declaredOnly: true,
   isValidId: invalidReason,
-  completions: c4Completions,
-  hover: c4Hover,
+  completions: (probe, doc) => (isLegacy(doc) ? c4Completions(probe, doc) : []),
+  hover: (at, doc) => (isLegacy(doc) ? c4Hover(at, doc) : undefined),
 };
 
 /** The facet under the fixed name the language service imports (manifest `language`, D89). */

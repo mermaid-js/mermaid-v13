@@ -1,0 +1,15 @@
+---
+description: >-
+  Probe b10 of spec #730: title, accTitle, a one-line accDescr, `direction
+  LR` and `legend off`. No oddity-table row; the statements besides
+  elements and relations.
+---
+c4-beta context
+title Payments
+accTitle: Payments view
+accDescr: Who calls the payment gateway
+direction LR
+legend off
+person p "Payer"
+softwareSystem g "Gateway"
+p --> g : "Pays with"

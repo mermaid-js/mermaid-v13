@@ -61,7 +61,6 @@ describe('workspace layout (DESIGN §2)', () => {
         './layout/tree',
         './limits',
         './parser-kit',
-        './parser-kit/facet',
         './parser-kit/support',
         './preprocess',
         './svg',
@@ -84,7 +83,6 @@ describe('workspace layout (DESIGN §2)', () => {
         './ascii',
         './config/readers',
         './layout',
-        './layout/invariants',
         './parser/drop',
         './parser/facet',
         './parser/flow',
@@ -94,6 +92,7 @@ describe('workspace layout (DESIGN §2)', () => {
         './parser/support',
         './parser/table',
         './parser/tree',
+        './parser/tree-facet',
         './parser/v12-text',
         './shapes/basic',
         './shapes/extended',
@@ -102,6 +101,9 @@ describe('workspace layout (DESIGN §2)', () => {
         './svg/document',
         './svg/graph',
         './svg/route',
+        './testing/layout-invariants',
+        './testing/render-harness',
+        './testing/test-context',
       ].sort()
     );
   });

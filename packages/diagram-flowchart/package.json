@@ -12,9 +12,7 @@
   "sideEffects": false,
   "exports": {
     "./testing": {
-      "mermaid-source": "./src/testing.ts",
-      "types": "./dist/testing.d.ts",
-      "default": "./dist/testing.js"
+      "mermaid-source": "./src/testing.ts"
     },
     ".": {
       "mermaid-source": "./src/index.ts",

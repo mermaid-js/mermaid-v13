@@ -5,12 +5,8 @@ import { cellProfile, pxProfile, type UnitProfile } from '@mermaid-js/core/layou
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
-import {
-  kanbanLayoutInput,
-  kanbanLayoutViolations,
-  layoutKanban,
-  parseKanban,
-} from '@mermaid-js/diagram-kanban';
+import { kanbanLayoutInput, layoutKanban, parseKanban } from '@mermaid-js/diagram-kanban';
+import { kanbanLayoutViolations } from '@mermaid-js/diagram-kanban/testing';
 import type { CorpusItem } from '../types.ts';
 import { kanbanCases, kanbanCorpus } from './corpus.ts';
 

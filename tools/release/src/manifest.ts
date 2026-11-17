@@ -4,6 +4,10 @@
  * `pnpm pack` already turns `workspace:` ranges into concrete ones. On top of that:
  * - the `mermaid-source` export condition is dropped: it points at `src/`, which is not shipped
  *   (`danglingExports` refuses a subpath that had no other target);
+ * - in a diagram package or shared, a workspace-only test subpath is dropped whole: `./testing`
+ *   or `./testing/…` with no target but `mermaid-source`. The specs and conformance import it
+ *   from the workspace; its files are left out of the build, so it is not in the tarball (#816).
+ *   `testSupportEntries` refuses a tarball that holds test support all the same (a stale `dist`);
  * - devDependencies are dropped: they name private workspace packages and mean nothing to users;
  * - for the private registry (GitHub Packages, scope `@mermaid-chart`, D28) every package is
  *   renamed into that scope and every workspace dependency becomes an npm alias
@@ -43,6 +47,69 @@ export function privateName(name: string): string {
   return `${PRIVATE_SCOPE}/${name.replace(/^@[^/]+\//, '')}`;
 }
 
+/** `./testing`, `./testing/layout-invariants`: the subpath names test support may use. */
+const TEST_SUBPATH = /^\.\/testing(?:\/|$)/;
+
+/**
+ * The packages whose test subpaths are workspace-only: the diagram packages (one build config,
+ * `tools/workspace/published-files.ts`) and shared. Elsewhere a `./testing` is published on
+ * purpose (language-service builds it), so a source-only one there is still a dangling export.
+ */
+const WORKSPACE_TESTING = /^@mermaid-js\/(?:diagram-[^/]+|shared)$/;
+
+/** A test subpath whose only target is the source: the workspace resolves it, users never see it. */
+function workspaceOnly([key, value]: [string, unknown]): boolean {
+  if (!TEST_SUBPATH.test(key) || value === null || typeof value !== 'object') return false;
+  const conditions = Object.keys(value);
+  return conditions.length === 1 && conditions[0] === SOURCE_CONDITION;
+}
+
+function dropWorkspaceOnly(exports: unknown): unknown {
+  if (exports === null || typeof exports !== 'object' || Array.isArray(exports)) return exports;
+  return Object.fromEntries(Object.entries(exports).filter((entry) => !workspaceOnly(entry)));
+}
+
+/**
+ * A compiled file only tests use: ported v12 spec adapters, `__tests__/` and `fixtures/`
+ * folders, `*.fixtures`, `*.spec` and `*.test` modules, harnesses, test contexts, layout
+ * invariants and `testing` entries.
+ */
+const TEST_SUPPORT_ENTRY = new RegExp(
+  [
+    String.raw`(?:^|/)(?:v12-specs|__tests__|fixtures|testing)/`,
+    String.raw`(?:^|/)(?:harness|invariants|test-context|testing|fixtures)\.(?:d\.ts|[cm]?js)(?:\.map)?$`,
+    String.raw`\.(?:fixtures|spec|test)\.(?:d\.ts|[cm]?js)(?:\.map)?$`,
+  ].join('|')
+);
+
+/** Every path an export value names, under any condition. */
+function targets(value: unknown): string[] {
+  if (typeof value === 'string') return [value];
+  if (value === null || typeof value !== 'object') return [];
+  return Object.values(value).flatMap(targets);
+}
+
+/** The folders of the test subpaths a manifest publishes on purpose (core's `./svg/testing`). */
+function publishedTestDirs(manifest: PackedManifest): string[] {
+  const exports = manifest.exports;
+  if (exports === null || typeof exports !== 'object' || Array.isArray(exports)) return [];
+  return Object.entries(exports)
+    .filter(([key]) => /(?:^|\/)testing(?:\/|$)/.test(key))
+    .flatMap(([, value]) => targets(value))
+    .map((target) => target.replace(/^\.\//, '').replace(/[^/]*$/, ''));
+}
+
+/**
+ * The entries of a tarball (paths relative to its `package/`) that are test support no published
+ * subpath names: a stale `dist` from an older build, or a build that compiled a test file (#816).
+ */
+export function testSupportEntries(manifest: PackedManifest, entries: readonly string[]): string[] {
+  const allowed = publishedTestDirs(manifest);
+  return entries.filter(
+    (entry) => TEST_SUPPORT_ENTRY.test(entry) && !allowed.some((dir) => entry.startsWith(dir))
+  );
+}
+
 function stripSourceCondition(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(stripSourceCondition);
   if (value === null || typeof value !== 'object') return value;
@@ -59,7 +126,12 @@ export function publishManifest(
 ): PackedManifest {
   const out: PackedManifest = { ...packed };
   delete out.devDependencies;
-  if (out.exports !== undefined) out.exports = stripSourceCondition(out.exports);
+  if (out.exports !== undefined) {
+    const exports = WORKSPACE_TESTING.test(packed.name)
+      ? dropWorkspaceOnly(out.exports)
+      : out.exports;
+    out.exports = stripSourceCondition(exports);
+  }
   if (opts.target === 'public') return out;
 
   out.name = privateName(packed.name);
@@ -94,11 +166,6 @@ export function workspaceLeaks(manifest: PackedManifest): string[] {
 export function danglingExports(manifest: PackedManifest): string[] {
   const exports = manifest.exports;
   if (exports === null || typeof exports !== 'object' || Array.isArray(exports)) return [];
-  const targets = (value: unknown): string[] => {
-    if (typeof value === 'string') return [value];
-    if (value === null || typeof value !== 'object') return [];
-    return Object.values(value).flatMap(targets);
-  };
   return Object.entries(exports)
     .filter(([key]) => key.startsWith('.'))
     .filter(([, value]) => {

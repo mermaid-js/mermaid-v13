@@ -7,7 +7,8 @@ import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { SequenceModel } from '../model.ts';
 import { FIXTURES, act, frag, model, msg, note, p } from './fixtures.ts';
-import { layoutSequence, sequenceLayoutViolations, type SequenceLayout } from './index.ts';
+import { layoutSequence, type SequenceLayout } from './index.ts';
+import { sequenceLayoutViolations } from './invariants.ts';
 import { sequence as diagramPlugin } from '../plugin.ts';
 
 /** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */

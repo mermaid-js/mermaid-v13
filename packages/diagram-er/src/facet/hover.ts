@@ -26,7 +26,13 @@ import {
   plural,
   span,
 } from './tables.ts';
-import { trimmed } from '@mermaid-js/shared/parser/facet';
+import {
+  classDefHover,
+  covers,
+  keywordHover,
+  symbolHoverOf,
+  trimmed,
+} from '@mermaid-js/shared/parser/facet';
 
 /** At most this many attributes are listed; the rest are counted. */
 const LISTED = 8;
@@ -67,14 +73,7 @@ function classHover(name: string, model: ErModel): string {
     name === 'default'
       ? 'Applies to every entity.'
       : `Used by ${plural(model.entities.filter((e) => e.classes.includes(name)).length, 'entity', 'entities')}`;
-  let styles = 'No `classDef` defines it.';
-  if (c !== undefined) {
-    styles =
-      c.styles.length === 0
-        ? 'Its `classDef` sets no styles.'
-        : code(`classDef ${name} ${c.styles.join(',')}`);
-  }
-  return `**class** ${code(name)}\n\n${styles}\n\n${used}`;
+  return classDefHover('class', name, c?.styles, used);
 }
 
 function symbolHover(s: SymbolOccurrence, model: ErModel): string | undefined {
@@ -123,18 +122,14 @@ function directionRange(text: string, r: Range): Range {
 export function erHover(at: HoverTarget, doc: DocumentView<ErDocument>): Hover | undefined {
   const { text, result } = doc;
   const model = result.model as ErModel;
-  if (at.symbol) {
-    const contents = symbolHover(at.symbol, model);
-    if (contents !== undefined) return { range: at.symbol.range, contents };
-  }
+  const symbol = symbolHoverOf(at, (s) => symbolHover(s, model));
+  if (symbol) return symbol;
   const t = at.token;
   if (!t) return undefined;
   let range = trimmed(text, t.range);
   const dir = DIRECTION_KINDS[t.kind];
   if (dir !== undefined) range = directionRange(text, range);
-  if (at.offset < range.start || at.offset > range.end || range.start === range.end) {
-    return undefined;
-  }
+  if (!covers(at.offset, range)) return undefined;
   const word = text.slice(range.start, range.end);
   if (dir !== undefined) {
     const meaning = DIRECTIONS.find(([d]) => d === dir)?.[1] ?? dir;
@@ -154,7 +149,5 @@ export function erHover(at: HoverTarget, doc: DocumentView<ErDocument>): Hover |
     const meaning = KEYS.find(([k]) => k === word.toUpperCase())?.[1] ?? 'key';
     return { range, contents: `**${code(word)}** ${meaning}\n\n${erDocs[T.AttributeKey]}` };
   }
-  const docText = erDocs[t.kind];
-  if (docText === undefined) return undefined;
-  return { range, contents: `**${code(word)}**\n\n${docText}` };
+  return keywordHover(text, at.offset, range, undefined, erDocs[t.kind]);
 }

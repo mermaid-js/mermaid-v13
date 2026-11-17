@@ -1,0 +1,22 @@
+---
+config:
+  theme: default
+description: >-
+  legend off: no legend, and the drawing is as it was before the legend existed
+---
+c4-beta component
+title Ledger - Components
+legend off
+person clerk "Ledger Clerk" "Posts journal entries."
+softwareSystem erp "ERP" "Holds the chart of accounts." :::external
+softwareSystem bank "Bank" "Settles payments."
+softwareSystem ledger "Ledger" {
+  group core "Core" {
+    container api "Ledger API" "Keeps the books." "Rust"
+    component posting "Posting" "Validates and posts entries." "Rust"
+  }
+}
+clerk --> api : "Posts entries using" "HTTPS"
+api --> posting : "Calls"
+api --> erp : "Reads accounts from"
+api --> bank : "Settles with"

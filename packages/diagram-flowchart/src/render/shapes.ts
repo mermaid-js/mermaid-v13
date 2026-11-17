@@ -14,7 +14,6 @@ import {
   bucket,
   choice,
   cloud,
-  collapsedGroup,
   crossedCircle,
   curvedTrapezoid,
   datastore,
@@ -31,7 +30,6 @@ import {
   horizontalCylinder,
   hourglass,
   linedCylinder,
-  linedDocument,
   linedRect,
   notchedPentagon,
   notchedRect,
@@ -49,6 +47,7 @@ import {
 } from '@mermaid-js/shared/shapes/extended';
 import {
   circle,
+  collapsedGroup,
   cylinder,
   diamond,
   doubleCircle,
@@ -56,6 +55,7 @@ import {
   hexagon,
   leanLeft,
   leanRight,
+  linedDocument,
   odd,
   rect,
   rounded,

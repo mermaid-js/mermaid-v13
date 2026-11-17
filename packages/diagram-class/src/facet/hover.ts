@@ -17,7 +17,13 @@ import type { ClassModel } from '../parser/model.ts';
 import { DIRECTIONS as DIRECTION_OF } from '../parser/tables.ts';
 import { T } from '../parser/tokens.ts';
 import { ARROW_PARTS, code, DIRECTIONS, describeRelation, plural } from './tables.ts';
-import { trimmed } from '@mermaid-js/shared/parser/facet';
+import {
+  classDefHover,
+  covers,
+  keywordHover,
+  symbolHoverOf,
+  trimmed,
+} from '@mermaid-js/shared/parser/facet';
 
 /** Every relationship statement of the AST, namespaces included. */
 function* relations(children: readonly ClassStatementNode[]): Generator<ClassRelationStmt> {
@@ -73,14 +79,7 @@ function styleClassHover(name: string, model: ClassModel): string {
   const users = model.classes.filter((x) => x.classes.includes(name)).length;
   const used =
     name === 'default' ? 'Applies to every class.' : `Used by ${plural(users, 'class', 'classes')}`;
-  let styles = 'No `classDef` defines it.';
-  if (c !== undefined) {
-    styles =
-      c.styles.length === 0
-        ? 'Its `classDef` sets no styles.'
-        : code(`classDef ${name} ${c.styles.join(',')}`);
-  }
-  return `**style class** ${code(name)}\n\n${styles}\n\n${used}`;
+  return classDefHover('style class', name, c?.styles, used);
 }
 
 function symbolHover(s: SymbolOccurrence, model: ClassModel): string | undefined {
@@ -149,17 +148,13 @@ export function classHover(at: HoverTarget, doc: DocumentView<ClassDocument>): H
   const { text, result } = doc;
   const model = result.model as ClassModel | undefined;
   if (!model) return undefined;
-  if (at.symbol) {
-    const contents = symbolHover(at.symbol, model);
-    if (contents !== undefined) return { range: at.symbol.range, contents };
-  }
+  const symbol = symbolHoverOf(at, (s) => symbolHover(s, model));
+  if (symbol) return symbol;
   const t = at.token;
   if (!t) return undefined;
   // Arrow head tokens take the blanks before them: only their text counts.
   const range = trimmed(text, t.range);
-  if (at.offset < range.start || at.offset > range.end || range.start === range.end) {
-    return undefined;
-  }
+  if (!covers(at.offset, range)) return undefined;
   if (ARROW_PARTS.has(t.kind)) return arrowHover(text, at.offset, model, result.ast);
   if (NAME_KINDS.has(t.kind)) {
     const ns = namespaceAt(text, at.offset, result.ast.children);
@@ -172,7 +167,5 @@ export function classHover(at: HoverTarget, doc: DocumentView<ClassDocument>): H
     const meaning = DIRECTIONS.find(([d]) => d === dir)?.[1] ?? dir;
     return { range, contents: `**${code(word)}** direction: ${meaning}` };
   }
-  const docText = classDocs[t.kind];
-  if (docText === undefined) return undefined;
-  return { range, contents: `**${code(word)}**\n\n${docText}` };
+  return keywordHover(text, at.offset, range, undefined, classDocs[t.kind]);
 }

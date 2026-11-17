@@ -36,6 +36,15 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     load: () => import('@mermaid-js/diagram-agentflow/language').then((m) => m.language),
   },
   {
+    type: 'c4beta',
+    id: 'c4',
+    section: 'c4beta',
+    baseSection: 'c4',
+    pattern: /^\s*c4-beta(?![\w-])/,
+    detector: (text) => /^\s*c4-beta(?![\w-])/.test(text),
+    load: () => import('@mermaid-js/diagram-c4/language').then((m) => m.language),
+  },
+  {
     type: 'c4',
     id: 'c4',
     section: 'c4',
