@@ -1,7 +1,7 @@
 // v13-only: the two DDLT fixtures that failed D538's gates with v13's sizes (#595), and the v12
 // fixes that come over as fixtures (#683), each reduced to the edge that failed, so a fix in the
 // engine shows here before `ddlt.spec.ts` gates the lot.
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Point } from '../../types.ts';
 import { EDGE_ROUTING } from '../config.ts';
 import { crossingPointsBetween } from '../direction/laneContainment.ts';
@@ -28,6 +28,25 @@ function gap(a: Point, b: Point, r: Rect): number {
   const dx = Math.max(r.left - Math.max(a.x, b.x), Math.min(a.x, b.x) - r.right, 0);
   const dy = Math.max(r.top - Math.max(a.y, b.y), Math.min(a.y, b.y) - r.bottom, 0);
   return Math.hypot(dx, dy);
+}
+
+/**
+ * The locales whose collation orders the ids of `regressions/locale-independent-order` other than
+ * by code unit: Estonian puts z before t, Czech ch after h, Danish b after B, Swedish a-umlaut
+ * after z.
+ */
+const OTHER_LOCALES = ['et-EE', 'cs-CZ', 'da-DK', 'sv-SE'] as const;
+
+/** Makes a `localeCompare` call without a locale argument sort as it does for a reader of `locale`. */
+function readAs(locale: string): void {
+  vi.spyOn(String.prototype, 'localeCompare').mockImplementation(function (
+    this: string,
+    that: string,
+    locales?: Intl.LocalesArgument,
+    options?: Intl.CollatorOptions
+  ) {
+    return new Intl.Collator(locales ?? locale, options).compare(this, that);
+  });
 }
 
 function layOut(id: string) {
@@ -120,6 +139,46 @@ describe('swimlane DDLT regressions', () => {
     expect(Math.abs(back[0]!.x - down[0]!.x)).toBeCloseTo(EDGE_ROUTING.MIN_ARROWHEAD_SPACING, 6);
     expect(back[0]!.x).toBeCloseTo(back[1]!.x, 6);
     expect(down[0]!.x).toBeCloseTo(down[1]!.x, 6);
+  });
+
+  // mermaid-js/mermaid#8770: ids are ordered by code unit, so the layout is the same for a reader
+  // of any language. A stand-in for each locale's `localeCompare` lays the fixture out as that
+  // reader would have seen it, were the engine to ask the host.
+  describe('#684: the layout of locale-independent-order does not depend on the reader locale', () => {
+    const id = 'regressions/locale-independent-order';
+    const layOutAs = (locale: string) => {
+      readAs(locale);
+      try {
+        return layOut(id).model;
+      } finally {
+        vi.restoreAllMocks();
+      }
+    };
+
+    afterEach(() => vi.restoreAllMocks());
+
+    it('has a stand-in that sorts like an Estonian reader', () => {
+      readAs('et-EE');
+      expect('z'.localeCompare('t')).toBe(-1);
+      expect('z'.localeCompare('t', 'en')).toBe(1);
+    });
+
+    it.each(OTHER_LOCALES)('lays out the same for a reader in %s as in en-US', (locale) => {
+      expect(layOutAs(locale)).toEqual(layOutAs('en-US'));
+    });
+
+    it('stacks the two chains of each lane in code unit order', () => {
+      const { model } = layOut(id);
+      const y = (node: string) => model.nodes.get(node)!.y;
+      // Each pair collates the other way round in the locale named in OTHER_LOCALES.
+      for (const [first, second] of [
+        ['t', 'z'],
+        ['ch', 'h'],
+        ['B', 'b'],
+        ['y', 'ä'],
+      ] as const)
+        expect(y(first), `${first} above ${second}`).toBeLessThan(y(second));
+    });
   });
 
   // mermaid-js/mermaid#8693: three tracks meet on the right face of Triage: its straight
