@@ -5,7 +5,7 @@
 // only logged in v12, so it runs from the specs (`__tests__/ddlt.spec.ts`), not here.
 import type { LayoutData } from './layoutData.ts';
 import { postProcessSwimlaneLayout } from './postProcessing.ts';
-import { toGraphView, writeBackToLayoutData } from './helpers.ts';
+import { toGraphView, topLaneGap, writeBackToLayoutData } from './helpers.ts';
 import { sugiyamaLayout } from './pipeline.ts';
 import { resolveTopLaneOrder } from './phase2.options.ts';
 import { routeForDirection } from './turnedRouting.ts';
@@ -29,8 +29,10 @@ export function runSwimlaneLayoutCore(data4Layout: LayoutData): SwimlaneDirectio
   const automaticLaneOrdering = data4Layout.config.swimlane.automaticLaneOrdering ?? false;
   const direction = data4Layout.direction;
 
+  const columnsAcross = direction === 'TB' || direction === 'BT';
   const { ordered, coordinates, laneOrder } = sugiyamaLayout(g, {
     nodeGap,
+    laneGap: columnsAcross ? topLaneGap(data4Layout.nodes, nodeGap) : undefined,
     layerGap,
     ignoreCrossLaneEdges,
     optimizeRanksByCrossings,
