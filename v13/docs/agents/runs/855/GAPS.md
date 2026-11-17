@@ -20,3 +20,7 @@ Unmet acceptance criteria and announced shared contracts, under the ticket that 
 ## X9 (#864)
 
 - `pnpm release:rehearse` was not run for the `rehearse-cli.ts` split (it needs Verdaccio). Run it once before the next release.
+
+## X3 (#858)
+
+- `straightPortRoute` (`core/src/layout/layered/compound-place.ts`), the route of a port on a side the flow does not run through, is executed by no test: not by the specs, not by the 42,768 fixture renders, and not by about 90,000 random compound graphs (mixed group directions, nesting, group-to-member edges, grid). Group ports always lie on the flow axis (`inheritCrossedDirections`), so it looks unreachable. Inside `place` it was hidden in the baseline; as a function of its own it failed CI's Structural audit (CRAP 272), so it is split into helpers of at most four branches. Whether it is dead code from the Pele port is open; removing it would be an algorithm change and is not part of this spec.
