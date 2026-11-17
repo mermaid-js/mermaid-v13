@@ -60,10 +60,11 @@
     "@mermaid-js/diagram-wardley": "workspace:*",
     "@mermaid-js/diagram-xychart": "workspace:*",
     "@mermaid-js/language-service": "workspace:*",
-    "mermaid": "workspace:*",
+    "@mermaid-js/plugin-autoload": "workspace:*",
     "vscode-languageserver": "^11.0.0"
   },
   "devDependencies": {
+    "mermaid": "workspace:*",
     "vscode-languageserver-protocol": "3.18.5"
   }
 }

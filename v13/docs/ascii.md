@@ -93,7 +93,8 @@ and `afterMount` do not run for text, and there is no text post-processing hook 
 The `mermaid` package ships a zero-dependency `mermaid` command (D85):
 
 ```sh
-mermaid render [file|-] --format ascii|svg [--charset unicode|ascii] [--width N|auto] [--warnings]
+mermaid render [file|-] --format ascii|svg [--charset unicode|ascii] [--width N|auto]
+               [--plugin <package>]... [--autoload] [--warnings]
 ```
 
 | Option                      | Meaning                                                                    |
@@ -102,7 +103,9 @@ mermaid render [file|-] --format ascii|svg [--charset unicode|ascii] [--width N|
 | `--format ascii\|svg`       | Required. `ascii` for text, `svg` for SVG. Output goes to stdout. Any other value is a usage error. |
 | `--charset unicode\|ascii`  | Glyph set: Unicode box drawing (`unicode`, the default) or pure ASCII.     |
 | `--width N`, `--width auto` | Fit the drawing to `N` columns (`ascii.maxWidth`); `auto` uses the terminal's width (`COLUMNS` off a terminal; no limit when neither is known). |
-| `--warnings`                | Print warnings to stderr. Without it they are not printed.                 |
+| `--plugin <package>`        | Register a plugin package (repeatable), resolved from the current directory: its default export (or its only plugin export) is a lazy diagram, a diagram plugin or an extension. A package that is not installed, or whose export is not a plugin, exits 1 with a message naming it. |
+| `--autoload`                | Register every plugin the current project's `package.json` lists, through `@mermaid-js/plugin-autoload`. The CLI imports that package from your project at run time only when you pass the flag; when it is not installed the command exits 1 and names it. `--plugin` packages register after the autoloaded ones. |
+| `--warnings`                | Print warnings to stderr, the packages `--autoload` skipped included. Without it they are not printed. |
 | `-h`, `--help`              | Print usage to stdout and exit 0.                                          |
 | `-v`, `--version`           | Print the version to stdout and exit 0.                                    |
 
@@ -113,12 +116,19 @@ diagram's front matter, its directives, the flags. The API offers the same throu
 `render(id, text, { format: 'ascii', ascii: { … } })`: keys in `ascii` win over every config
 source, key by key.
 
+For a project with many plugins, keep the list in `package.json`, not on the command line (D589):
+
+```sh
+npm install -D @mermaid-js/plugin-autoload mermaid-box mermaid-foo
+mermaid render diagram.mmd --format svg --autoload
+```
+
 Errors are printed to stderr with the source line and a caret under the problem (R-ERR-2).
 
 | Exit code | When                                                                                   |
 | --------- | -------------------------------------------------------------------------------------- |
 | 0         | Rendered (or `--help`, `--version`).                                                   |
-| 1         | Any error: a usage error (unknown option or command, a `--format` other than `ascii` or `svg`, a bad `--width` or `--charset`), syntax, unknown diagram, unreadable file. |
+| 1         | Any error: a usage error (unknown option or command, a `--format` other than `ascii` or `svg`, a bad `--width` or `--charset`), a plugin that cannot be loaded (`--plugin`, `--autoload`), syntax, unknown diagram, unreadable file. |
 | 2         | The API's `UNSUPPORTED_FORMAT`: the diagram type has no form in the asked-for format.  |
 
 Of the diagram types built into 13.0, the flowchart, the ER diagram, the sequence diagram,

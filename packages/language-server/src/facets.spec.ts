@@ -42,6 +42,27 @@ describe('discoverFacets', () => {
     expect(await discoverFacets(join(root, 'src', 'deep'))).toEqual([]);
   });
 
+  it('finds only the packages the root package.json declares (D589)', async () => {
+    const root = workspace({ 'mermaid-fake': facetPackage('mermaid-fake', 'fake') });
+    const hoisted = facetPackage('mermaid-hoisted', 'hoisted');
+    mkdirSync(join(root, 'node_modules', 'mermaid-hoisted'), { recursive: true });
+    for (const [file, text] of Object.entries(hoisted))
+      writeFileSync(join(root, 'node_modules', 'mermaid-hoisted', file), text!);
+    expect((await discoverFacets(root)).map((r) => r.id)).toEqual(['fake']);
+  });
+
+  it('discovers nothing in a folder without a package.json, and logs once', async () => {
+    const root = workspace(
+      { 'mermaid-fake': facetPackage('mermaid-fake', 'fake') },
+      { manifest: false }
+    );
+    const log: string[] = [];
+    expect(await discoverFacets(root, { log: (m) => log.push(m) })).toEqual([]);
+    expect(log).toEqual([
+      `No readable package.json in ${root}: no plugins discovered (only the packages it declares are)`,
+    ]);
+  });
+
   it('scans each of several roots', async () => {
     const a = workspace({ 'mermaid-a': facetPackage('mermaid-a', 'aaa') });
     const b = workspace({ 'mermaid-b': facetPackage('mermaid-b', 'bbb') });
