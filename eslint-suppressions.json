@@ -227,14 +227,11 @@
     "max-lines-per-function": {
       "count": 2
     },
-    "max-params": {
-      "count": 1
-    },
     "no-param-reassign": {
       "count": 6
     },
     "unicorn/prefer-spread": {
-      "count": 2
+      "count": 1
     }
   },
   "packages/core/src/parser-kit/diagnostics.spec.ts": {

@@ -122,6 +122,10 @@ export interface Graph {
   // What each segment's end is to the node it meets, for the ends that may move along its side.
   EFK?: Uint8Array;
   ETK?: Uint8Array;
+  // Each edge: how many ranks it spans, whether it is drawn as one curve, and the first of its bends.
+  span: Int32Array;
+  direct: Uint8Array;
+  firstDummy: Int32Array;
   GRP?: Int32Array;
   groupParent?: Int32Array;
   M: LayoutMetrics;

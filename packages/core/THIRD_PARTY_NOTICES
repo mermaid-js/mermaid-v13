@@ -11,6 +11,7 @@ used under the MIT License:
   src/layout/compass/compass.ts
   src/layout/compass/grid.ts
   src/layout/compass/route.ts
+  src/layout/layered/bends.ts
   src/layout/layered/compound.ts
   src/layout/layered/ends.ts
   src/layout/layered/graph.ts
