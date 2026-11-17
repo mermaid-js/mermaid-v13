@@ -36,7 +36,7 @@ function analysisFor(
   ascii: boolean
 ): Analysis | RenderResult {
   const { analyser } = k;
-  const hit = analyser.cached(text, s);
+  const hit = analyser.cache.get(text, s);
   if (hit) return hit;
   const f = analyser.detectSupported(text, s, ascii);
   const plugin = k.registry.plugin(f.detected.id);

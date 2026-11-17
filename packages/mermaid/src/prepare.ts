@@ -46,7 +46,7 @@ export async function prepareWith(
   const { analyser, registry } = k;
   if (k.discovery.pending) await k.discovery.settle();
   const ascii = checkFormat(k, text, s, format) === 'ascii';
-  let analysis = analyser.cached(text, s);
+  let analysis = analyser.cache.get(text, s);
   if (!analysis) {
     const f = analyser.detectSupported(text, s, ascii);
     analysis = analyser.analysisOf(text, s, f, await registry.load(f.detected.id));
@@ -71,7 +71,7 @@ export async function parseText(
     const f = analyser.detectSupported(text, s, false);
     const { detected, pre } = f;
     const plugin = await k.registry.load(detected.id);
-    const a = analyser.cached(text, s) ?? analyser.analysisOf(text, s, f, plugin);
+    const a = analyser.cache.get(text, s) ?? analyser.analysisOf(text, s, f, plugin);
     await (await k.blocks.load(a))?.prepare({ root: text, at: 0, a, s }, undefined);
     const config: Plain = {};
     const front = pre.frontMatter?.config;
@@ -94,10 +94,10 @@ export async function parseText(
   }
 }
 
-/** The loads one type of a `preload` request starts: plugin, its layout and part, and ascii. */
-function typeTasks(k: Session, t: string, ascii: boolean | undefined): Promise<unknown>[] {
+/** The loads one type of a `preload` request: plugin, its layout and part, and ascii. */
+function loadType(k: Session, tasks: Promise<unknown>[], t: string, ascii: boolean | undefined) {
   const { registry } = k;
-  const tasks: Promise<unknown>[] = [
+  tasks.push(
     registry.load(t).then((p) => {
       if (!p)
         throw new MermaidError('UNSUPPORTED_DIAGRAM', `Diagram type "${t}" is not supported.`);
@@ -106,25 +106,23 @@ function typeTasks(k: Session, t: string, ascii: boolean | undefined): Promise<u
       return Promise.all(
         [layout, registry.layoutPart(p, layout!)[0]].map((n) => n && registry.loadLayout(n))
       );
-    }),
-  ];
+    })
+  );
   if (ascii)
     tasks.push(
       registry.loadAscii(t).then((hook) => {
         if (!hook) throw new UnsupportedFormatError(t, 'ascii');
       })
     );
-  return tasks;
 }
 
 /** The theme loads of a `preload` request: `auto` needs its dark spec too. */
-function themeTasks(names: readonly string[]): Promise<unknown>[] {
-  return names.flatMap((name) => {
+function loadThemes(tasks: Promise<unknown>[], names: readonly string[]): void {
+  for (const name of names) {
     const choice = resolveThemeName(name);
-    return choice.dark
-      ? [loadTheme(choice.name), loadTheme(choice.dark)]
-      : [loadTheme(choice.name)];
-  });
+    tasks.push(loadTheme(choice.name));
+    if (choice.dark) tasks.push(loadTheme(choice.dark));
+  }
 }
 
 export async function preload(k: Session, req: PreloadRequest): Promise<void> {
@@ -133,9 +131,9 @@ export async function preload(k: Session, req: PreloadRequest): Promise<void> {
   const tasks: Promise<unknown>[] = [];
   const ascii = req.formats?.includes('ascii');
   if (ascii) tasks.push(import('./ascii.ts').then((b) => void (k.textBackend = b)));
-  for (const t of req.types ?? []) tasks.push(...typeTasks(k, t, ascii));
+  for (const t of req.types ?? []) loadType(k, tasks, t, ascii);
   for (const l of req.layouts ?? []) tasks.push(registry.loadLayout(l));
-  tasks.push(...themeTasks(req.themes ?? []));
+  loadThemes(tasks, req.themes ?? []);
   // Extensions' resources by kind: `math: true` loads what a math extension provides (D178).
   if (req.math) for (const n of k.hooks.provided('math')) tasks.push(n.load());
   for (const name of req.iconPacks ?? []) tasks.push(k.iconPacks.load(name));

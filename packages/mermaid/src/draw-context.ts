@@ -66,34 +66,33 @@ function themeNames(config: ResolvedConfig): ThemeName[] {
 }
 
 /** The themes of `config` that are not loaded yet. */
-function missingThemes(config: ResolvedConfig): Resource[] {
-  return themeNames(config)
-    .filter((name) => !loadedTheme(name))
-    .map((name) => ({ kind: 'theme', name }));
+function missingThemes(config: ResolvedConfig, missing: Resource[]): void {
+  for (const name of themeNames(config)) {
+    if (!loadedTheme(name)) missing.push({ kind: 'theme', name });
+  }
 }
 
 /** The layout engine and part `a` needs that are not loaded yet. */
-function missingLayout(registry: Registry, a: Analysis): Resource[] {
-  const missing: Resource[] = [];
-  if (a.plugin.layoutKind !== 'graph') return missing;
+function missingLayout(registry: Registry, a: Analysis, missing: Resource[]): void {
+  if (a.plugin.layoutKind !== 'graph') return;
   const name = layoutName(a.prepared.config, a.plugin);
   const { need } = registry.layout(name, a.plugin.layoutEngine);
   if (need !== undefined) missing.push({ kind: 'layout', name: need });
   const [part, loaded] = registry.layoutPart(a.plugin, name);
   if (part && !loaded) missing.push({ kind: 'layout', name: part });
-  return missing;
 }
 
 /** The layout, themes and plugin resources `a` needs that are not loaded yet. */
 function missingFor(registry: Registry, a: Analysis, text = false): Resource[] {
   const { config } = a.prepared;
   // Text output lays out with core's own `layered`, never a registered engine (D179).
-  const missing = text ? [] : missingLayout(registry, a);
+  const missing: Resource[] = [];
+  if (!text) missingLayout(registry, a, missing);
   // D537: the line-hop chunk when the shared key turns hops on. An engine whose own `lineHops`
   // defaults on (`swimlane`, ELK) carries the step, so loading it loads them.
   if (!text && !registry.hops && config.lineHops) missing.push({ kind: 'layout', name: LINE_HOPS });
   // Text output draws no colours, so it needs no theme (D82).
-  if (!text) missing.push(...missingThemes(config));
+  if (!text) missingThemes(config, missing);
   for (const r of a.plugin.resources?.(a.prepared.parse, config) ?? []) missing.push(r);
   return missing;
 }

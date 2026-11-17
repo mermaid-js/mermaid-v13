@@ -34,7 +34,8 @@ function warnOf(diagnostics: readonly Diagnostic[], warn: (w: Warning) => void):
 }
 
 export class Analyser {
-  private readonly cache = new AnalysisCache<Analysis>();
+  /** The analyses of recent texts, each valid only for the snapshot it was made with. */
+  readonly cache = new AnalysisCache<Analysis>();
 
   /**
    * `claims`: what the registered extensions claim of a parse, read at each parse because the
@@ -49,10 +50,6 @@ export class Analyser {
   /** Drops every parsed text: a registration changes how texts detect, resolve and parse. */
   invalidate(): void {
     this.cache.clear();
-  }
-
-  cached(text: string, s: Snapshot): Analysis | undefined {
-    return this.cache.get(text, s);
   }
 
   /** The author's config layers and the config they resolve to, over the site's and a host's. */
