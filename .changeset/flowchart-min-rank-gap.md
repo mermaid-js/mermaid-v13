@@ -1,5 +1,6 @@
 ---
 '@mermaid-js/diagram-flowchart': patch
+'@mermaid-js/shared': patch
 ---
 
-fix: with a tiny `rankSpacing`, flowchart subgraph frames no longer touch, because a rank gap keeps room for an arrowhead and its lead (#399).
+Flowchart subgraph frames no longer touch at a tiny `rankSpacing`: a rank gap keeps room for an arrowhead and its lead.
