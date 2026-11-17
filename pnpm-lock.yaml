@@ -656,6 +656,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-requirement:
     devDependencies:
