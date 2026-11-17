@@ -18,7 +18,7 @@
  * render naming each.
  */
 import type { Warning } from '@mermaid-js/core';
-import { checkColor, type Paint } from '@mermaid-js/core/svg';
+import { checkColor, type Paint, type SafeValue } from '@mermaid-js/core/svg';
 import { C4_COLOR_INVALID } from '../codes.ts';
 import { c4Default, c4Section } from '../config.ts';
 import type { C4Layout } from '../layout/types.ts';
@@ -58,6 +58,8 @@ export interface RelationPaint {
   readonly head: Paint;
   readonly text?: Paint;
   readonly labelBkg?: Paint;
+  /** The line's `stroke-dasharray`; undefined for a solid line. */
+  readonly dash?: SafeValue;
 }
 
 /** The legend's text, and each row's swatch by its place in the layout's rows. */
@@ -103,8 +105,9 @@ export class Colours {
   checked(value: unknown, where: string, ast?: string): Paint | undefined {
     if (value === undefined) return undefined;
     const colour = typeof value === 'string' ? checkColor(value) : undefined;
-    if (colour === undefined)
-      this.dropped.push({ where, value: JSON.stringify(value), ...(ast ? { ast } : {}) });
+    const given = JSON.stringify(value);
+    if (colour === undefined && !this.dropped.some((d) => d.where === where && d.value === given))
+      this.dropped.push({ where, value: given, ...(ast ? { ast } : {}) });
     return colour;
   }
 }
