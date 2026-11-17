@@ -1,0 +1,8 @@
+---
+description: callback and call nodes carry a pointer cursor, even where the callback does not fire (#355, D605)
+---
+flowchart LR
+  A[Callback] --> B[Call]
+  B --> C[Plain]
+  click A callback "tip"
+  click B call cb() "tip"

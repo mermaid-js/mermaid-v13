@@ -1,5 +1,6 @@
 ---
 '@mermaid-js/core': patch
+'@mermaid-js/shared': patch
 '@mermaid-js/diagram-flowchart': patch
 '@mermaid-js/diagram-class': patch
 '@mermaid-js/diagram-gantt': patch

@@ -15,7 +15,9 @@ import { parseSvg } from './svg-tree.ts';
 const NOW = new Date(2024, 0, 3, 12).getTime();
 const FIXTURES = [
   'flowchart/baseline/interactions/clickable',
+  'flowchart/nightly-check/clickable-callback',
   'class-diagram/baseline/classes/clickable',
+  'class-diagram/nightly-check/clickable-callback',
   'gantt/baseline/features/links',
 ];
 

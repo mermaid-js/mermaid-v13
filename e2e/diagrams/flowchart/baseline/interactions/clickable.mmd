@@ -1,10 +1,8 @@
 ---
-description: callback, call and href nodes carry a pointer cursor; a plain node does not (#355, D605)
+description: href nodes carry a pointer cursor; a plain node does not (#355, D605)
 ---
 flowchart LR
-  A[Callback] --> B[Call]
-  B --> C[Link]
-  C --> D[Plain]
-  click A callback "tip"
-  click B call cb() "tip"
-  click C "https://example.com" "to C"
+  A[Link] --> B[Link with tip]
+  B --> C[Plain]
+  click A "https://example.com" "to A"
+  click B href "https://example.com/b" "to B"
