@@ -27,6 +27,13 @@ import { placeLegend } from './legend.ts';
 import { C4_BETA_METRICS as B } from './metrics.ts';
 import { labelBlock, legacyKind, type BetaEdge, type C4BetaPrepared } from './prepare.ts';
 
+/** The row above the drawing that holds the title, in px. */
+const titleHeight = (p: C4BetaPrepared): number =>
+  p.cell ? B.cellTitleRows * p.cell.y : M.titleRow;
+
+/** The room a relation's label block takes beside its text, in px. */
+const labelPad = (p: C4BetaPrepared): number => (p.cell ? B.cellLabelPad * p.cell.x : M.labelPad);
+
 /** The move from the engine's frame onto the canvas. */
 interface Shift {
   readonly ox: number;
@@ -51,7 +58,7 @@ function extent(p: C4BetaPrepared, laid: LayoutModel): readonly [number, number,
     const e = laid.edges.get(edge.id);
     if (!e) continue;
     points.push(...e.points);
-    const block = labelBlock(edge);
+    const block = labelBlock(edge, labelPad(p));
     if (e.label && block) boxes.push(rectOf({ ...e.label, ...block }));
   }
   if (boxes.length + points.length === 0) return [0, 0, 0, 0];
@@ -166,7 +173,12 @@ function relationKind(startArrow: boolean, endArrow: boolean): string {
   return endArrow ? 'birel' : 'rel_b';
 }
 
-function relationOut(edge: BetaEdge, laid: LayoutModel, s: Shift): C4RelationLayout | undefined {
+function relationOut(
+  edge: BetaEdge,
+  laid: LayoutModel,
+  s: Shift,
+  pad: number
+): C4RelationLayout | undefined {
   const e = laid.edges.get(edge.id);
   if (!e || e.points.length < 2) return undefined;
   const pts = corners(e.points.map((q: RoutePoint): Point => ({ x: q.x + s.ox, y: q.y + s.oy })));
@@ -174,7 +186,7 @@ function relationOut(edge: BetaEdge, laid: LayoutModel, s: Shift): C4RelationLay
   const { relation } = edge;
   const startArrow = relation.start === 'arrow';
   const endArrow = relation.end === 'arrow';
-  const block = labelBlock(edge);
+  const block = labelBlock(edge, pad);
   const stack = (): { label?: PlacedLabel; techn?: PlacedLabel; labelBox: Rect } => {
     const box = moved(rectOf({ ...e.label!, ...block! }), s);
     const at = (m: Measured | undefined, y: number): PlacedLabel | undefined =>
@@ -215,7 +227,7 @@ export function placeC4Beta(p: C4BetaPrepared, laid: LayoutModel): C4Layout {
   const [x0, y0, x1, y1] = extent(p, laid);
   const margin = p.diagramPadding;
   const contentW = Math.max(x1 - x0, p.title?.text.width ?? 0, p.legend?.width ?? 0);
-  const titleRow = p.title ? M.titleRow : 0;
+  const titleRow = p.title ? titleHeight(p) : 0;
   const shift: Shift = { ox: margin - x0 + (contentW - (x1 - x0)) / 2, oy: margin + titleRow - y0 };
   const title =
     p.title &&
@@ -232,7 +244,7 @@ export function placeC4Beta(p: C4BetaPrepared, laid: LayoutModel): C4Layout {
     (all, box) => (box ? union(all, box) : all),
     content
   );
-  const relations = p.edges.flatMap((edge) => relationOut(edge, laid, shift) ?? []);
+  const relations = p.edges.flatMap((edge) => relationOut(edge, laid, shift, labelPad(p)) ?? []);
   return {
     width: contentW + 2 * margin,
     height: titleRow + (y1 - y0) + legendRow + 2 * margin,
@@ -244,5 +256,7 @@ export function placeC4Beta(p: C4BetaPrepared, laid: LayoutModel): C4Layout {
     bounds: drawn,
     careful: true,
     ...(p.config.wrapAll ? { labelsWrap: true as const } : {}),
+    ...(p.cell ? { cell: p.cell } : {}),
+    ...(p.legendDropped ? { legendDropped: true as const } : {}),
   };
 }

@@ -43,6 +43,7 @@ export function drawRelation(scene: Scene, rel: C4RelationLayout): void {
     fill: 'none',
     stroke: colours.stroke,
     'stroke-width': R.relationStroke,
+    'stroke-dasharray': colours.dash,
   });
   if (rel.startArrow) arrowhead(w, rel.start, colours.head);
   if (rel.endArrow) arrowhead(w, rel.end, colours.head);

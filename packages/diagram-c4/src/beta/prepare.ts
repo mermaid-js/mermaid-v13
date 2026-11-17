@@ -5,7 +5,13 @@
  * with its measured label. Text is measured here, in the fonts it is drawn in (pitfall 16), with
  * the shape and text metrics legacy C4 uses; the engine never measures.
  */
-import type { LayoutEdge, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
+import type {
+  LayoutEdge,
+  LayoutGraph,
+  LayoutGroup,
+  LayoutNode,
+  UnitProfile,
+} from '@mermaid-js/core/layout';
 import { Style, type FontKey } from '@mermaid-js/core/text';
 import {
   c4betaDiagramPadding,
@@ -16,6 +22,7 @@ import {
   type C4Fonts,
   type C4LayoutConfig,
 } from '../config.ts';
+import { cellConfig, cellPxMeasurer, cellRoom, type CellSize } from '../layout/cells.ts';
 import { C4_METRICS as M, FONT_WEIGHT } from '../layout/metrics.ts';
 import { shapeSize, type ShapeRoom } from '../layout/shapes.ts';
 import {
@@ -29,6 +36,7 @@ import {
 import type { C4BaseKind, C4ElementKind } from '../model.ts';
 import type { C4ShapeId } from '../layout/types.ts';
 import type { C4BetaElement, C4BetaModel, C4BetaRelation } from './model.ts';
+import { cellGraph } from './cells.ts';
 import { legendEntries, measureLegend, type BetaLegend } from './legend.ts';
 import { C4_BETA_METRICS as B } from './metrics.ts';
 
@@ -74,6 +82,13 @@ export interface C4BetaPrepared {
   readonly legend?: BetaLegend;
   readonly diagramPadding: number;
   readonly config: C4LayoutConfig;
+  /**
+   * Set for text output: px per cell. Text was measured in cells at this size and `graph` is in
+   * cells (`grid: 1`); `placeC4Beta` reads the engine's answer back at this size (`./cells.ts`).
+   */
+  readonly cell?: CellSize;
+  /** Set when text output leaves out a legend the diagram would show. */
+  readonly legendDropped?: true;
 }
 
 const STEREOTYPES: Readonly<Record<C4BetaElement['kind'], string>> = {
@@ -221,39 +236,37 @@ function measureEdge(relation: C4BetaRelation, index: number, m: Measuring): Bet
 }
 
 /** The size of a relation's label block: the two texts stacked, `labelPad` wider than the wider. */
-export function labelBlock(edge: Pick<BetaEdge, 'label' | 'techn'>): LayoutEdge['label'] {
+export function labelBlock(
+  edge: Pick<BetaEdge, 'label' | 'techn'>,
+  pad: number = M.labelPad
+): LayoutEdge['label'] {
   if (!edge.label && !edge.techn) return undefined;
   return {
-    width: Math.max(edge.label?.text.width ?? 0, edge.techn?.text.width ?? 0) + M.labelPad,
+    width: Math.max(edge.label?.text.width ?? 0, edge.techn?.text.width ?? 0) + pad,
     height: (edge.label?.text.height ?? 0) + (edge.techn?.text.height ?? 0),
   };
 }
 
 const ignoreWarning = (): void => undefined;
 
-/** Measures `model` and builds the engine's input. Pure: the model is not changed. */
-export function prepareC4Beta(model: C4BetaModel, ctx: C4BetaLayoutContext): C4BetaPrepared {
-  const config = c4LayoutConfig(ctx.config);
-  const family = ctx.theme.value('fontFamily');
-  const fonts = c4Fonts(ctx.config, family, ctx.warn ?? ignoreWarning);
-  const measuring: Measuring = {
-    config,
-    fonts,
-    measure: textMeasure(ctx.measurer, ctx.inline),
-    room: shapeRoom(config, ctx.theme),
-    stereotypeShown: c4betaStereotypeShown(ctx.config),
-    personWrapWidth: c4betaPersonWrappingWidth(ctx.config),
-  };
-  const leaves = new Map<string, BetaLeaf>();
-  const frames = new Map<string, BetaFrame>();
+/** What `prepareC4Beta` measured, before the engine's graph is built from it. */
+type Measured4 = Pick<C4BetaPrepared, 'leaves' | 'frames' | 'edges'>;
+
+/** The graph in px: a leaf and a boundary at their measured size, spacing from the metrics. */
+function pxGraph(
+  model: C4BetaModel,
+  { leaves, frames, edges }: Measured4,
+  config: C4LayoutConfig,
+  { diagramPadding, available }: { diagramPadding: number; available: number | undefined }
+): LayoutGraph {
   const nodes: LayoutNode[] = [];
   const groups: LayoutGroup[] = [];
   const pad = config.c4ShapeMargin;
   for (const element of model.elements) {
     const parent = element.parent === undefined ? {} : { parent: element.parent };
-    if (element.boundary) {
-      const frame = measureFrame(element, measuring);
-      frames.set(element.id, frame);
+    const frame = frames.get(element.id);
+    const leaf = leaves.get(element.id);
+    if (frame) {
       groups.push({
         id: element.id,
         ...parent,
@@ -263,21 +276,9 @@ export function prepareC4Beta(model: C4BetaModel, ctx: C4BetaLayoutContext): C4B
           height: frame.head - M.boundaryLabelTop,
         },
       });
-    } else {
-      const leaf = measureLeaf(model, element, measuring);
-      leaves.set(element.id, leaf);
-      nodes.push({ id: element.id, ...parent, width: leaf.w, height: leaf.h });
-    }
+    } else if (leaf) nodes.push({ id: element.id, ...parent, width: leaf.w, height: leaf.h });
   }
-  const known = new Set(model.elements.map((e) => e.id));
-  const edges = model.relations.flatMap((relation, index) =>
-    known.has(relation.from) && known.has(relation.to)
-      ? [measureEdge(relation, index, measuring)]
-      : []
-  );
-  const diagramPadding = c4betaDiagramPadding(ctx.config);
-  const available = ctx.availableWidth;
-  const graph: LayoutGraph = {
+  return {
     direction: model.direction,
     nodes,
     groups,
@@ -299,22 +300,101 @@ export function prepareC4Beta(model: C4BetaModel, ctx: C4BetaLayoutContext): C4B
       ? { availableWidth: available }
       : {}),
   };
-  const title = measuring.measure(model.title, titleFont(family), Infinity);
-  const legend = measureLegend(
-    legendEntries(model, legacyKind, kindName),
+}
+
+/** What the measuring reads: the fonts, the config and the room, in px or on the cell grid. */
+interface Setup {
+  readonly measuring: Measuring;
+  readonly fonts: C4Fonts;
+  readonly family: string;
+}
+
+/** The measuring of a render: with `units` (text output) the text in cells at their size (D459). */
+function setupOf(ctx: C4BetaLayoutContext, units: UnitProfile | undefined): Setup {
+  const size = units?.pxPerUnit;
+  const warn = ctx.warn ?? ignoreWarning;
+  const config = units
+    ? cellConfig(c4LayoutConfig(ctx.config), units, warn)
+    : c4LayoutConfig(ctx.config);
+  const family = ctx.theme.value('fontFamily');
+  const fonts = c4Fonts(ctx.config, family, warn);
+  const room = shapeRoom(config, ctx.theme);
+  const measuring: Measuring = {
+    config,
     fonts,
-    measuring.measure
+    measure: textMeasure(size ? cellPxMeasurer(ctx.measurer, size) : ctx.measurer, ctx.inline),
+    room: size ? cellRoom(room, size) : room,
+    stereotypeShown: c4betaStereotypeShown(ctx.config),
+    personWrapWidth: c4betaPersonWrappingWidth(ctx.config),
+  };
+  return { measuring, fonts, family };
+}
+
+/** Every leaf, boundary header and relation label of `model`, measured. */
+function measureModel(model: C4BetaModel, m: Measuring): Measured4 {
+  const leaves = new Map<string, BetaLeaf>();
+  const frames = new Map<string, BetaFrame>();
+  for (const element of model.elements) {
+    if (element.boundary) frames.set(element.id, measureFrame(element, m));
+    else leaves.set(element.id, measureLeaf(model, element, m));
+  }
+  const known = new Set(model.elements.map((e) => e.id));
+  const edges = model.relations.flatMap((relation, index) =>
+    known.has(relation.from) && known.has(relation.to) ? [measureEdge(relation, index, m)] : []
   );
+  return { leaves, frames, edges };
+}
+
+/** The engine's graph: in px, or in cells on the grid for text output (`./cells.ts`). */
+function graphOf(
+  model: C4BetaModel,
+  measured: Measured4,
+  ctx: C4BetaLayoutContext,
+  units: UnitProfile | undefined,
+  config: C4LayoutConfig
+): LayoutGraph {
+  if (units === undefined)
+    return pxGraph(model, measured, config, {
+      diagramPadding: c4betaDiagramPadding(ctx.config),
+      available: ctx.availableWidth,
+    });
+  const edges = measured.edges.map((e) => ({
+    id: e.id,
+    from: e.relation.from,
+    to: e.relation.to,
+    block: labelBlock(e, 0),
+  }));
+  const { availableWidth } = ctx;
+  return cellGraph(
+    { model, ...measured, edges, ...(availableWidth === undefined ? {} : { availableWidth }) },
+    units
+  );
+}
+
+/**
+ * Measures `model` and builds the engine's input. Pure: the model is not changed. With the cell
+ * profile (`ctx.units`, text output) text is measured in cells, the graph is in cells on the
+ * grid (`./cells.ts`) and the legend is left out (`legendDropped`): its swatches key colours
+ * the text does not show.
+ */
+export function prepareC4Beta(model: C4BetaModel, ctx: C4BetaLayoutContext): C4BetaPrepared {
+  const units = ctx.units?.id === 'cell' ? ctx.units : undefined;
+  const { measuring, fonts, family } = setupOf(ctx, units);
+  const measured = measureModel(model, measuring);
+  const graph = graphOf(model, measured, ctx, units, measuring.config);
+  const title = measuring.measure(model.title, titleFont(family), Infinity);
+  const entries = legendEntries(model, legacyKind, kindName);
+  const legend = units ? undefined : measureLegend(entries, fonts, measuring.measure);
   return {
     model,
     graph,
-    leaves,
-    frames,
-    edges,
+    ...measured,
     ...(title ? { title } : {}),
     ...(legend ? { legend } : {}),
-    diagramPadding,
-    config,
+    diagramPadding: graph.diagramPadding ?? c4betaDiagramPadding(ctx.config),
+    config: measuring.config,
+    ...(units ? { cell: units.pxPerUnit } : {}),
+    ...(units && entries.length > 0 ? { legendDropped: true as const } : {}),
   };
 }
 

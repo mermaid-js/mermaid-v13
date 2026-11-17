@@ -34,4 +34,4 @@
 '@mermaid-js/diagram-xychart': patch
 ---
 
-refactor: the SVG root, parser stop and id-escape, and config-reader helpers that each diagram package copied now come from `@mermaid-js/core` (`/svg/document`, `/parser-kit`, `/parser-kit/support`, `/config/readers`). Output is unchanged (#701).
+refactor: the parser stop and id-escape helpers that each diagram package copied now come from `@mermaid-js/core` (`/parser-kit`, `/parser-kit/support`); the SVG root, config-reader and language-facet helpers come from `@mermaid-js/shared`. Output is unchanged (#701).

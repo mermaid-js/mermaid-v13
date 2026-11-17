@@ -19,9 +19,6 @@ export const TITLE_MARGIN_DEFAULTS: Readonly<Record<'top' | 'bottom', number>> =
   bottom: 0,
 });
 
-/** Config lengths at or above this are not taken (the cap flowchart's builder has). */
-export const MAX_CONFIG_LENGTH = 1e4;
-
 export interface AgentflowMetrics {
   /**
    * v12's flow corner radius (`clusters.js` `flowGroup`): the expanded frame's, and the

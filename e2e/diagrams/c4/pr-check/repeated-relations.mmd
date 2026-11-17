@@ -1,0 +1,14 @@
+---
+description: >-
+  Relations that repeat a pair (#680): each statement is drawn with its own
+  label and technology, two lines side by side. mermaid 12.2.0 merged them
+  into one, with the last label and the first technology.
+---
+C4Context
+  title Repeated relations
+  System(a, "Ledger")
+  System(b, "Billing")
+  Rel(a, b, "Pushes balances", "AMQP")
+  BiRel(a, b, "Reconciles nightly")
+  Rel(b, a, "Sends invoices", "HTTPS")
+  UpdateRelStyle(a, b, $lineColor="teal")
