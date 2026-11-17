@@ -4,7 +4,8 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import { DIAGRAM_TABLES } from '../diagram-themes.ts';
-import { journeyLayoutViolations, layoutJourney, parseJourney } from '@mermaid-js/diagram-journey';
+import { layoutJourney, parseJourney } from '@mermaid-js/diagram-journey';
+import { journeyLayoutViolations } from '@mermaid-js/diagram-journey/testing';
 import type { CorpusItem } from '../types.ts';
 import { journeyGrammarCorpus } from './corpus.ts';
 

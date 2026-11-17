@@ -22,7 +22,7 @@ Code that Mermaid v13 diagram packages share, kept out of `@mermaid-js/core` so 
 | `/svg/arrowheads` | Arrowhead markers and the trim they need |
 | `/svg/graph` | The edge label on its background box and the text style a label is measured with |
 | `/config/readers` | Readers for config numbers, lengths and `useMaxWidth` |
-| `/layout/invariants` | What the diagrams' layout invariant checks share |
+| `/testing/layout-invariants` | What the diagrams' layout invariant checks share. Workspace-only: specs import it, the build and the tarball leave it out |
 | `/layout` | Spacing, group padding and bounds helpers for graph layouts |
 | `/ascii` | Line, label, frame and title drawing and the shapes' text forms for ASCII output |
 

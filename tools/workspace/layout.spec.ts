@@ -84,7 +84,6 @@ describe('workspace layout (DESIGN §2)', () => {
         './ascii',
         './config/readers',
         './layout',
-        './layout/invariants',
         './parser/drop',
         './parser/facet',
         './parser/flow',
@@ -102,6 +101,7 @@ describe('workspace layout (DESIGN §2)', () => {
         './svg/document',
         './svg/graph',
         './svg/route',
+        './testing/layout-invariants',
       ].sort()
     );
   });

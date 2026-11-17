@@ -148,6 +148,27 @@ describe('markdown report', () => {
     );
   });
 
+  it('ends with the size report when the run measured it (#814)', () => {
+    expect(md).not.toContain('## Code size');
+    const withCode: BenchReport = {
+      ...report,
+      codeSize: {
+        lines: {
+          packages: [{ pkg: 'core', total: 10, byCategory: { parsing: 10 } }],
+          byCategory: { parsing: 10 },
+          total: 10,
+          unclassified: [],
+        },
+      },
+    };
+    const out = formatMarkdown(
+      withCode,
+      evaluateGates({ report: withCode, baseline: undefined, mode: 'report', corpusSize: 1 })
+    );
+    expect(out).toContain('## Code size');
+    expect(out).toContain('| core | 10 | 10 |');
+  });
+
   it('says the gates are only reporting while the pipeline is missing', () => {
     expect(md).toContain('Gates: report');
     expect(md).toMatch(/\| R-PERF-1 \| Loaded size, core \+ flowchart \(gzip\) \| pass \| no \|/);

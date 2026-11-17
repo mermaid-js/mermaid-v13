@@ -4,7 +4,7 @@
  * invariants. They live outside the runtime entry, so the chunk mermaid loads for a radar render
  * stays small (D217).
  */
-export { radarLayoutViolations } from './layout/index.ts';
+export { radarLayoutViolations } from './layout/invariants.ts';
 export { LANGIUM_NAMES, RADAR_TRIVIA, RadarTokenKind, radarTokens } from './parser/index.ts';
 export type { RadarToken } from './parser/index.ts';
 export { radarTestContext, radarTestTheme, type RadarTestContext } from './test-context.ts';

@@ -25,7 +25,7 @@ import { treeViewOptions } from '../config.ts';
 import { highlighted, type TreeViewModel, type TreeViewNode } from '../model.ts';
 import { TREEVIEW_METRICS as M } from './metrics.ts';
 import type { Rect, TreeViewLayout, TreeViewLine, TreeViewRow, TreeViewText } from './types.ts';
-import { numbers, rectInside as inside } from '@mermaid-js/shared/layout/invariants';
+import { numbers, rectInside as inside } from '@mermaid-js/shared/testing/layout-invariants';
 
 const EPS = 1e-6;
 

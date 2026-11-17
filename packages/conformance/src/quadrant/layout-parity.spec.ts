@@ -5,11 +5,11 @@ import type { Warning } from '@mermaid-js/core';
 import {
   layoutQuadrant,
   parseQuadrant,
-  quadrantLayoutViolations,
   type QuadrantLayout,
   type QuadrantModel,
   type QuadrantTextAnchor,
 } from '@mermaid-js/diagram-quadrant';
+import { quadrantLayoutViolations } from '@mermaid-js/diagram-quadrant/testing';
 import { REPO_ROOT, corpusFromDir } from '../corpus.ts';
 import { modelDivergenceIds } from '../divergences.ts';
 import { DIVERGENCES_DIR } from '../registry.ts';
