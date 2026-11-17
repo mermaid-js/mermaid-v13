@@ -73,7 +73,7 @@ describe('c4-beta recovery (R-PARSE-4)', () => {
   });
 
   it('reports a run of bad characters once, and each separate run', () => {
-    const codes = parse('person a "A" ---\nperson b "B" ; ;\nperson c "C"').map((x) => x.code);
+    const codes = parse('person a "A" ;;;\nperson b "B" ; ;\nperson c "C"').map((x) => x.code);
     expect(codes).toEqual(['UNEXPECTED_CHARACTER', 'UNEXPECTED_CHARACTER', 'UNEXPECTED_CHARACTER']);
   });
 

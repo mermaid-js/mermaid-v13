@@ -24,11 +24,11 @@ const kindOf = (kind: string): C4RelationKind =>
 
 /** One relation: `g.c4-relation` holding its title, line, arrowheads and text. */
 export function drawRelation(scene: Scene, rel: C4RelationLayout): void {
-  const { w, model, paint } = scene;
+  const { w, view, paint } = scene;
   const colours = paint.relations.get(rel.index)!;
   const dataId = `${rel.from}->${rel.to}`;
   w.open('g', { class: 'c4-relation', 'data-id': dataId });
-  const descr = model.relations[rel.index]!.descr?.trim();
+  const descr = view.relationTitle(rel.index);
   if (descr) {
     w.open('title');
     w.text(descr);

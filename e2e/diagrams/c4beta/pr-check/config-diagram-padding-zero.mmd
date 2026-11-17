@@ -1,0 +1,14 @@
+---
+config:
+  theme: default
+  c4beta:
+    diagramPadding: 0
+description: >-
+  c4beta.diagramPadding 0, the least: the drawing runs to the canvas edge on every side, the
+  title row included
+---
+c4-beta context
+title Ledger - System Context
+person clerk "Ledger Clerk" "Posts journal entries."
+softwareSystem ledger "Ledger" "Keeps the books."
+clerk --> ledger : "Posts entries using" "HTTPS"

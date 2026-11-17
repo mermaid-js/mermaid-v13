@@ -1,0 +1,6 @@
+sketched
+
+The c4-beta elements draw with the shapes C4 draws (D301: boundaries and relations stay plain), so
+the hand-drawn plugin sketches them as it does C4's. With the plugin on, this folder's whole
+corpus renders through it in packages/plugin-hand-drawn/src/corpus.spec.ts. The first line is
+read: `sketched` or `unsketched`.

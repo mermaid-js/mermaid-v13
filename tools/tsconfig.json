@@ -1,6 +1,6 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": { "types": ["node"], "allowJs": true, "checkJs": true },
-  "include": ["eslint-plugin", "check-deps", "workspace", "../vitest.config.ts"],
+  "include": ["eslint-plugin", "check-deps", "workspace", "pre-push", "../vitest.config.ts"],
   "exclude": ["**/fixtures/**"]
 }
