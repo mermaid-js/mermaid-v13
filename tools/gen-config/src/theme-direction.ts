@@ -114,6 +114,17 @@ function literals(file: SourceFile, visit: (node: ts.StringLiteralLike) => void)
   }
 }
 
+/** Every read of `<…theme>.name` in a file. */
+function themeNameReads(file: SourceFile, visit: () => void): void {
+  for (const node of nodesOf(file))
+    if (
+      ts.isPropertyAccessExpression(node) &&
+      node.name.text === 'name' &&
+      /theme$/i.test(node.expression.getText())
+    )
+      visit();
+}
+
 /**
  * Every identifier a file uses as a property name: an object literal's key (`{ pie1: … }`), a
  * shorthand property (`{ pie1 }`) and a property access (`t.vars.pie1`). Quoted keys are string
@@ -298,17 +309,13 @@ export function checkThemeDirection(input: DirectionInput): Violation[] {
         if (themes.has(text) && (!WORDS.has(text) || comparedWithTheme(node)))
           out.push({ rule: 'diagram-names-theme', where: `${type}: ${file.path}`, name: text });
       });
-      for (const node of nodesOf(file))
-        if (
-          ts.isPropertyAccessExpression(node) &&
-          node.name.text === 'name' &&
-          /theme$/i.test(node.expression.getText())
-        )
-          out.push({
-            rule: 'diagram-names-theme',
-            where: `${type}: ${file.path}`,
-            name: 'theme.name',
-          });
+      themeNameReads(file, () =>
+        out.push({
+          rule: 'diagram-names-theme',
+          where: `${type}: ${file.path}`,
+          name: 'theme.name',
+        })
+      );
     }
 
   // 3. A table reads shared names, palette slots and its own (and a `palette` variable's rule a
