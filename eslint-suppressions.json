@@ -471,9 +471,6 @@
   "packages/mermaid/src/api.ts": {
     "@typescript-eslint/explicit-module-boundary-types": {
       "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
     }
   },
   "packages/mermaid/src/dom.ts": {
