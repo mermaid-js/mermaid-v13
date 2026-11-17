@@ -119,7 +119,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 
 | ID | Requirement | Pri | MS | Src | Acceptance |
 | --- | --- | --- | --- | --- | --- |
-| R-PERF-1 | Core + flowchart, as loaded for a flowchart render, is ≤ 145 KB gzip (D160, D311, D312, D553, D567, D559, D583; was 80 KB, then 120 KB, then 124 KB, then 128 KB, then 133 KB, then 134 KB, then 143 KB). | Must | M1 | D10, D160, D311, D312, D553, D567, D559, D583 | Bench "Loaded" size, measured after one flowchart render |
+| R-PERF-1 | Core + flowchart, as loaded for a flowchart render, is ≤ 147 KB gzip (D160, D311, D312, D553, D567, D559, D583, D600; was 80 KB, then 120 KB, then 124 KB, then 128 KB, then 133 KB, then 134 KB, then 143 KB, then 145 KB). | Must | M1 | D10, D160, D311, D312, D553, D567, D559, D583, D600 | Bench "Loaded" size, measured after one flowchart render |
 | R-PERF-2 | Core and every first-party diagram package have **zero** runtime npm dependencies. | Must | M1 | D10 | CI check on `dependencies` of published packages |
 | R-PERF-3 | Warm render is ≥ 50× faster than frozen `mermaid@12.2.0` with dagre, as a geomean over the corpus. | Must | M1 | D10, D45, D150 | Approaches harness geomean, reported in CI and enforced on a local run (D150); current v12 also reported |
 | R-PERF-4 | 100% of the flowchart corpus renders without error, including the large and huge tiers. | Must | M1 | D10 | Harness OK count = corpus size |
