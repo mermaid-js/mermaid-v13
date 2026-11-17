@@ -403,7 +403,7 @@ export function prepareRequirement(
       dashed: !contains,
     });
   });
-  const curve = requirementCurve(ctx.config.flowchart?.curve ?? 'rounded');
+  const curve = requirementCurve(ctx.config.flowchart?.curve ?? 'rounded', (w) => ctx.warn(w));
   // The marker geometry and its room are the px drawing's; text output draws its own marks.
   let graph: LayoutGraph;
   let markers: MarkerGeometry | undefined;
