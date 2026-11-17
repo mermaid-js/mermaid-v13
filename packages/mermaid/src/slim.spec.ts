@@ -189,4 +189,36 @@ describe('mermaid/slim', () => {
       );
     });
   });
+
+  // spec #730: c4beta shares the c4 plugin but has no text output yet (typeOptions formats).
+  describe('a type that draws fewer formats than its plugin', () => {
+    const c4Ascii = () => import('@mermaid-js/diagram-c4/ascii').then((m) => m.ascii);
+    const BETA = 'c4-beta\nperson a "A"\n';
+
+    it('keeps c4beta without text output, given c4 as an object or a loader', async () => {
+      const { c4 } = await import('@mermaid-js/diagram-c4');
+      const c4Text = await c4Ascii();
+      const loader = async () => ({
+        ...(await import('@mermaid-js/diagram-c4')),
+        ascii: c4Text,
+      });
+      for (const c4Given of [{ ...c4, ascii: c4Text }, loader]) {
+        const m = createMermaid({ diagrams: { c4: c4Given } });
+        expect((await m.render('b', BETA)).svg).toContain('aria-roledescription="c4beta"');
+        expect(m.supportsFormat('c4beta', 'ascii')).toBe(false);
+        expect(m.supportsFormat('c4', 'ascii')).toBe(true);
+        const e = await rejection(m.prepare(BETA, { format: 'ascii' }));
+        expect(e.code).toBe('UNSUPPORTED_FORMAT');
+        const legacy = 'C4Context\nPerson(a, "A")\n';
+        await m.prepare(legacy, { format: 'ascii' });
+        expect(m.renderSync(legacy, { format: 'ascii' }).text).toContain('A');
+        // Loaded through the c4 row first, the plugin still leaves c4beta without text.
+        const first = createMermaid({ diagrams: { c4: c4Given } });
+        await first.prepare(legacy, { format: 'ascii' });
+        expect((await rejection(first.prepare(BETA, { format: 'ascii' }))).code).toBe(
+          'UNSUPPORTED_FORMAT'
+        );
+      }
+    });
+  });
 });

@@ -54,6 +54,24 @@ export function sectionOwners(root?: string): Readonly<Record<string, string>> {
 export const SECTION_OWNERS: Readonly<Record<string, string>> = sectionOwners();
 
 /**
+ * The type sections (D534) of a package with `configDefaults`, other than its own and core's:
+ * `c4beta`, which c4-beta reads over `c4`. The defaults go into the package's
+ * `config-defaults.ts` beside its own section's, not into core, because core's defaults are in
+ * every diagram's resolved config and so in the default id prefix every render hashes.
+ */
+export function typeSectionOwners(root?: string): Readonly<Record<string, string>> {
+  const owners: Record<string, string> = {};
+  for (const p of diagramPackages(root)) {
+    if (p.wiring.configDefaults !== true) continue;
+    const own = p.manifest.section ?? p.manifest.id;
+    for (const { section } of Object.values(p.manifest.typeOptions ?? {}))
+      if (section !== undefined && section !== own && !CORE_SECTIONS.has(section))
+        owners[section] = p.dir;
+  }
+  return owners;
+}
+
+/**
  * The name of a section's generated defaults: `flowchartConfigDefaults`; a section v12 named with
  * a dash is camel-cased (`wardley-beta` → `wardleyBetaConfigDefaults`).
  */
@@ -740,21 +758,34 @@ export async function generate(
       `export const CORE_DEFAULTS: MermaidConfig = ${ts(coreDefaults(root))};\n`
   );
   files.set(`${CORE_GENERATED}/keys.ts`, keyTreeSource(root));
-  for (const [section, pkg] of Object.entries(SECTION_OWNERS)) {
-    const node = root.properties?.[section];
-    // A schema without the section (a spec's cut-down one) writes no defaults for it; the real
-    // schema has every owner's section (generate.spec.ts).
-    if (node === undefined) continue;
-    const typeName = root.$defs[defName(node.$ref) ?? '']?.title?.replace(/\s+/g, '');
-    if (typeName === undefined) {
-      throw new Error(`section ${section} must $ref a titled def`);
-    }
-    const name = defaultsName(section);
+  const bySection = { ...SECTION_OWNERS, ...typeSectionOwners() };
+  const byPackage = new Map<string, string[]>();
+  for (const [section, pkg] of Object.entries(bySection))
+    byPackage.set(pkg, [...(byPackage.get(pkg) ?? []), section]);
+  for (const [pkg, sections] of byPackage) {
+    const parts = sections.flatMap((section) => {
+      const node = root.properties?.[section];
+      // A schema without the section (a spec's cut-down one) writes no defaults for it; the real
+      // schema has every owner's section (generate.spec.ts).
+      if (node === undefined) return [];
+      const typeName = root.$defs[defName(node.$ref) ?? '']?.title?.replace(/\s+/g, '');
+      if (typeName === undefined) {
+        throw new Error(`section ${section} must $ref a titled def`);
+      }
+      return [{ section, typeName, defaults: defaultsOf(root, node) ?? {} }];
+    });
+    if (parts.length === 0) continue;
+    const types = [...new Set(parts.map((x) => x.typeName))].join(', ');
     files.set(
       `${pkg}/src/generated/config-defaults.ts`,
-      `${BANNER}import type { ${typeName} } from '@mermaid-js/core/config';\n\n` +
-        `/** Defaults of the \`${section}\` config section. */\n` +
-        `export const ${name}: ${typeName} = ${ts(defaultsOf(root, node) ?? {})};\n`
+      `${BANNER}import type { ${types} } from '@mermaid-js/core/config';\n` +
+        parts
+          .map(
+            (x) =>
+              `\n/** Defaults of the \`${x.section}\` config section. */\n` +
+              `export const ${defaultsName(x.section)}: ${x.typeName} = ${ts(x.defaults)};\n`
+          )
+          .join('')
     );
   }
   files.set(SERVICE_SCHEMA, serviceSchema(root));

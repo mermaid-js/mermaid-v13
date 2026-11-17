@@ -23,6 +23,7 @@ import type {
   Rect,
 } from '../layout/types.ts';
 import { headerCentre, blockedStretches } from './headers.ts';
+import { placeLegend } from './legend.ts';
 import { C4_BETA_METRICS as B } from './metrics.ts';
 import { labelBlock, legacyKind, type BetaEdge, type C4BetaPrepared } from './prepare.ts';
 
@@ -77,7 +78,7 @@ function leafOut(p: C4BetaPrepared, laid: LayoutModel, s: Shift): C4ElementLayou
         shape: leaf.form,
         box,
         ...(name ? { name } : {}),
-        type: type!,
+        ...(type ? { type } : {}),
         ...(descr ? { descr } : {}),
       },
     ];
@@ -213,7 +214,7 @@ const union = (a: Rect, b: Rect): Rect => {
 export function placeC4Beta(p: C4BetaPrepared, laid: LayoutModel): C4Layout {
   const [x0, y0, x1, y1] = extent(p, laid);
   const margin = p.diagramPadding;
-  const contentW = Math.max(x1 - x0, p.title?.text.width ?? 0);
+  const contentW = Math.max(x1 - x0, p.title?.text.width ?? 0, p.legend?.width ?? 0);
   const titleRow = p.title ? M.titleRow : 0;
   const shift: Shift = { ox: margin - x0 + (contentW - (x1 - x0)) / 2, oy: margin + titleRow - y0 };
   const title =
@@ -224,15 +225,23 @@ export function placeC4Beta(p: C4BetaPrepared, laid: LayoutModel): C4Layout {
       margin + (titleRow - p.title.text.height) / 2
     );
   const content: Rect = { x: margin, y: margin + titleRow, width: contentW, height: y1 - y0 };
+  const legend =
+    p.legend && placeLegend(p.legend, margin, content.y + content.height + B.legendGap);
+  const legendRow = legend ? B.legendGap + legend.box.height : 0;
+  const drawn = [title, legend?.box].reduce<Rect>(
+    (all, box) => (box ? union(all, box) : all),
+    content
+  );
   const relations = p.edges.flatMap((edge) => relationOut(edge, laid, shift) ?? []);
   return {
     width: contentW + 2 * margin,
-    height: titleRow + (y1 - y0) + 2 * margin,
+    height: titleRow + (y1 - y0) + legendRow + 2 * margin,
     ...(title ? { title } : {}),
     boundaries: boundaryOut(p, laid, shift, relations),
     elements: leafOut(p, laid, shift),
     relations,
-    bounds: title ? union(content, title) : content,
+    ...(legend ? { legend } : {}),
+    bounds: drawn,
     careful: true,
     ...(p.config.wrapAll ? { labelsWrap: true as const } : {}),
   };

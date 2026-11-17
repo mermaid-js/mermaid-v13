@@ -1,0 +1,18 @@
+---
+config:
+  theme: default
+  c4beta:
+    showStereotypes: false
+description: >-
+  c4beta.showStereotypes false (default true): no element draws its type line (`[Person]`,
+  `[Software System]`, `[Container: Rust]` becomes `[Rust]`), and each shape is one line shorter
+---
+c4-beta container
+title Ledger - Containers
+person clerk "Ledger Clerk" "Posts journal entries and closes the month for every branch office."
+softwareSystem erp "ERP" "Holds the chart of accounts."
+softwareSystem ledger "Ledger" {
+  container api "Ledger API" "Keeps the books." "Rust"
+}
+clerk --> api : "Posts entries using" "HTTPS"
+api --> erp : "Reads accounts from"

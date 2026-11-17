@@ -1,0 +1,25 @@
+---
+config:
+  theme: default
+description: >-
+  legend on: below the drawing, one row per kind of element drawn as a shape, named as its type
+  line names it (Person, External Software System, Software System, Container, Component) in the
+  order each first appears, none for a kind not used, and none for the frames (the group and the
+  `ledger` system, which has a body)
+---
+c4-beta component
+title Ledger - Components
+legend on
+person clerk "Ledger Clerk" "Posts journal entries."
+softwareSystem erp "ERP" "Holds the chart of accounts." :::external
+softwareSystem bank "Bank" "Settles payments."
+softwareSystem ledger "Ledger" {
+  group core "Core" {
+    container api "Ledger API" "Keeps the books." "Rust"
+    component posting "Posting" "Validates and posts entries." "Rust"
+  }
+}
+clerk --> api : "Posts entries using" "HTTPS"
+api --> posting : "Calls"
+api --> erp : "Reads accounts from"
+api --> bank : "Settles with"
