@@ -58,6 +58,54 @@ describe('the c4 facet on c4-beta', () => {
     expect(complete(`${H}group g "G" {\n  per¦\n}`)).toEqual(['person -> person  @ per']);
   });
 
+  it('offers statement starts at a line start only, at the end of the text too', () => {
+    const labels = (marked: string) => complete(marked).map((item) => item.split(' -> ')[0]);
+    // The last line has no line break: the cursor is after a complete statement, mid-line.
+    expect(complete(`${H}container n "N" ¦`)).toEqual([':::team -> :::team @ ']);
+    expect(complete(`${H}user --> api ¦`)).toEqual([':::team -> :::team @ ']);
+    expect(complete(`${H}style team fill:#fff ¦`)).toEqual([]);
+    expect(complete(`${H}group g "G" {\n  person p "P" ¦`)).toEqual([':::team -> :::team @ ']);
+    expect(complete(`${H}group g "G" {\n  person p "P"\n}¦`)).toEqual([]);
+    expect(labels('c4-beta ¦')).toEqual([
+      'context',
+      'container',
+      'component',
+      'dynamic',
+      'deployment',
+    ]);
+    // A final line break and a blank last line are line starts.
+    for (const marked of [`${H}¦`, `${H}  ¦`, `${H}\n¦`]) {
+      expect(labels(marked), marked).toEqual(
+        expect.arrayContaining(['person', 'container', 'title', 'style', 'user', 'api'])
+      );
+    }
+    // Whatever the last statement is, a line break after it ends the line: statement values,
+    // a block, a trailing comment, a comment line and a CRLF ending.
+    for (const last of [
+      'title T\n',
+      'accTitle: T\n',
+      'accDescr: D\n',
+      'accDescr {\n d\n}\n',
+      'person p "P" %% c\n',
+      '%% c\n',
+      'person p "P"\r\n',
+      'title T\r\n',
+    ]) {
+      expect(labels(`c4-beta\n${last}¦`), last).toEqual(
+        expect.arrayContaining(['person', 'title', 'style'])
+      );
+    }
+    expect(labels(`${H}group g "G" {\n  person p "P"\n  ¦`)).toEqual([
+      'person',
+      'softwareSystem',
+      'container',
+      'component',
+      'group',
+      'deploymentNode',
+      'infrastructureNode',
+    ]);
+  });
+
   it('completes ids after an arrow or a step, arrows after an id, and no id for a new element', () => {
     expect(complete(`${H}user --> ¦`)).toEqual(['user -> user @ ', 'api -> api @ ']);
     expect(complete(`${H}1: a¦`)).toEqual(['api -> api @ a']);
