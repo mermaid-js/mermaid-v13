@@ -7,7 +7,7 @@ import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { graphSpacing, groupPadding, labelledEdge, sideways } from '@mermaid-js/shared/layout';
 import type { CheckedStyle } from '@mermaid-js/core/svg';
-import { styleCache } from '@mermaid-js/shared/svg/document';
+import { styleCache, warnIgnoredAnimation } from '@mermaid-js/shared/svg/document';
 import {
   FOLDED_TYPE_SIZE,
   foldedCells,
@@ -149,8 +149,19 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     minWidth: length('minNodeWidth') ?? 0,
     // This is the only place the builder looks at which profile it has.
     cells: units.id === 'cell',
+    // `markdownAutoWrap: false` breaks a markdown label only where its source does (v12).
     label: (text, markdown, f, max, bits = 0) =>
-      layoutLabel(text, f, max, measurer, { markdown, style: bits, inline }),
+      layoutLabel(
+        text,
+        f,
+        markdown && ctx.config.markdownAutoWrap === false ? Infinity : max,
+        measurer,
+        {
+          markdown,
+          style: bits,
+          inline,
+        }
+      ),
     styleOf: styleCache(
       new Map(model.classes.map((c) => [c.id, [...c.styles, ...c.textStyles]])),
       ctx.warn
@@ -160,6 +171,10 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
   const nest = nesting(model, rootDir);
   const { views, groups, nodes } = nodeViews(model, nest, m);
   const edges = edgeViews(model, nest.collapsedInto, views, m);
+  warnIgnoredAnimation(
+    edges.map((e) => e.edge),
+    (w) => ctx.warn(w)
+  );
   const graph = layoutGraph(model, rootDir, nest, { groups, nodes, edges }, m, length);
   return { graph, groups, nodes, edges, views, pads: m.pads };
 }
