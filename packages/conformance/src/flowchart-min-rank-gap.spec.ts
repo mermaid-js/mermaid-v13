@@ -10,6 +10,8 @@ import { REPO_ROOT } from './index.ts';
 const FIXTURE = 'e2e/diagrams/flowchart/baseline/subgraphs/tiny-spacing-edge-between.mmd';
 /** The default theme's arrowhead point: its gap (4) and length (10.5), `NEO_ARROWHEADS`. */
 const ARROWHEAD = 4 + 10.5;
+/** What the line is trimmed by under that head (gap and length less 1), and the lead after it. */
+const FLOOR = 4 + (10.5 - 1) + 6;
 
 async function frames(source: string): Promise<LayoutModel> {
   const m = createMermaid();
@@ -41,7 +43,15 @@ describe('minimum rank gap between subgraphs', () => {
   const source = readFileSync(join(REPO_ROOT, FIXTURE), 'utf8');
 
   it('holds the arrowhead between two frames at spacing 1', async () => {
-    expect(gap(await frames(source))).toBeGreaterThanOrEqual(ARROWHEAD);
+    const held = gap(await frames(source));
+    expect(held).toBeGreaterThanOrEqual(ARROWHEAD);
+    expect(held).toBe(FLOOR);
+  });
+
+  it('keeps a rank spacing just above the floor literal', async () => {
+    const just = Math.floor(FLOOR) + 1;
+    const near = source.replaceAll('rankSpacing: 1', `rankSpacing: ${just}`);
+    expect(gap(await frames(near))).toBe(just);
   });
 
   it('keeps a literal rank spacing above the floor', async () => {

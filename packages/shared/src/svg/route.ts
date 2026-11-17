@@ -4,9 +4,8 @@
 // cspell:ignore kepano
 import type { EdgeRouting, RoutePoint } from '@mermaid-js/core/layout';
 import type { PathData, SvgWriter } from '@mermaid-js/core/svg';
+import { LEAD } from './arrowheads.ts';
 
-// How far an edge runs straight before a marker at its end, where it has the room.
-const LEAD = 6;
 // How far from the marker room at the end of a leg `stepBefore` and `stepAfter` put their step
 // (less where the leg is short).
 const STEP_INSET = 12;

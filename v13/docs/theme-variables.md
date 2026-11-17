@@ -49,14 +49,14 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `spacing1` | `--mermaid-spacing1` | token | length | | | all | core |
 | `spacing2` | `--mermaid-spacing2` | token | length | | | all | core |
 | `spacing3` | `--mermaid-spacing3` | token | length | | | all | core |
-| `arrowheadGap` | `--mermaid-arrowheadGap` | token | length | | | all | flowchart, state, agentflow, block |
-| `arrowheadLength` | `--mermaid-arrowheadLength` | token | length | | | all | flowchart, state, agentflow, block |
-| `arrowheadWidth` | `--mermaid-arrowheadWidth` | token | length | | | all | flowchart, state, agentflow, block |
-| `circleArrowheadSize` | `--mermaid-circleArrowheadSize` | token | length | | | all | flowchart, agentflow, block, state |
-| `circleArrowheadGap` | `--mermaid-circleArrowheadGap` | token | length | | | all | flowchart, agentflow, block, state |
-| `crossArrowheadSize` | `--mermaid-crossArrowheadSize` | token | length | | | all | flowchart, agentflow, block, state |
-| `crossArrowheadGap` | `--mermaid-crossArrowheadGap` | token | length | | | all | flowchart, agentflow, block, state |
-| `crossArrowheadStrokeWidth` | `--mermaid-crossArrowheadStrokeWidth` | token | length | | | all | flowchart, agentflow, block, state |
+| `arrowheadGap` | `--mermaid-arrowheadGap` | token | length | | | all | flowchart, state, agentflow, block, class, requirement, usecase |
+| `arrowheadLength` | `--mermaid-arrowheadLength` | token | length | | | all | flowchart, state, agentflow, block, class, requirement, usecase |
+| `arrowheadWidth` | `--mermaid-arrowheadWidth` | token | length | | | all | flowchart, state, agentflow, block, class, requirement, usecase |
+| `circleArrowheadSize` | `--mermaid-circleArrowheadSize` | token | length | | | all | flowchart, agentflow, block, class, requirement, state, usecase |
+| `circleArrowheadGap` | `--mermaid-circleArrowheadGap` | token | length | | | all | flowchart, agentflow, block, class, requirement, state, usecase |
+| `crossArrowheadSize` | `--mermaid-crossArrowheadSize` | token | length | | | all | flowchart, agentflow, block, class, requirement, state, usecase |
+| `crossArrowheadGap` | `--mermaid-crossArrowheadGap` | token | length | | | all | flowchart, agentflow, block, class, requirement, state, usecase |
+| `crossArrowheadStrokeWidth` | `--mermaid-crossArrowheadStrokeWidth` | token | length | | | all | flowchart, agentflow, block, class, requirement, state, usecase |
 | `nodePaddingX` | `--mermaid-nodePaddingX` | token | padding | | | all | flowchart, mindmap, agentflow, block |
 | `nodePaddingY` | `--mermaid-nodePaddingY` | token | padding | | | all | flowchart, mindmap, agentflow, block |
 | `stadiumPaddingX` | `--mermaid-stadiumPaddingX` | token | padding | | | all | flowchart, block |
