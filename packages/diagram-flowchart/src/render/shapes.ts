@@ -137,15 +137,19 @@ const def = (shape: string): Shape => BY_NAME.get(shape) ?? FALLBACK;
 export const shapeSize = (shape: string, tw: number, th: number, p: Pads): ShapeSize =>
   def(shape).size(tw, th, p);
 
-export const drawShape = (
-  shape: string,
-  w: SvgWriter,
-  W: number,
-  H: number,
-  a: Attrs,
-  line: Attrs,
-  p: Pads
-): void => def(shape).draw(w, W, H, a, line, p);
+/** What {@link drawShape} draws: the shape `kind` at `width` x `height`, its paint and pads. */
+export interface ShapeDraw {
+  readonly kind: string;
+  readonly w: SvgWriter;
+  readonly width: number;
+  readonly height: number;
+  readonly attrs: Attrs;
+  readonly lines: Attrs;
+  readonly pads: Pads;
+}
+
+export const drawShape = (d: ShapeDraw): void =>
+  def(d.kind).draw(d.w, d.width, d.height, d.attrs, d.lines, d.pads);
 export const shapeInset = (
   shape: string,
   W: number,

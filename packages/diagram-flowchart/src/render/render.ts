@@ -445,16 +445,123 @@ function nodeClass(view: NodeView): string {
   return view.block === 'folded' ? 'node embed folded' : 'node embed';
 }
 
-function drawNode(
-  { w, layout, flow, ctx, paint, warn }: Scene,
+/** The outline attributes of a node, from its palette slot and its style. */
+function shapeAttrsOf(paint: Scene['paint'], view: NodeView, slot: Tint | undefined): Attrs {
+  // A collapsed subgraph takes its palette slot; the author's style still wins (spread after).
+  if (slot === undefined && isEmpty(view.style.shape)) return paint.shape;
+  return {
+    fill: slot?.fill ?? paint.node.fill,
+    stroke: slot?.stroke ?? paint.node.stroke,
+    'stroke-width': paint.node.strokeWidth,
+    filter: paint.node.shadow,
+    ...view.style.shape,
+  };
+}
+
+/**
+ * Inner lines follow the outline, except a collapsed card's separator and dots, which take
+ * the palette slot's border or else clusterBorder.
+ */
+function lineAttrsOf(
+  paint: Scene['paint'],
   view: NodeView,
-  tip?: string
+  slot: Tint | undefined,
+  shapeAttrs: Attrs
+): Attrs {
+  const plain = slot === undefined && isEmpty(view.style.shape);
+  let lineAttrs: Attrs = plain
+    ? paint.line
+    : { stroke: shapeAttrs.stroke, 'stroke-width': shapeAttrs['stroke-width'] };
+  if (paint.collapsedLine && view.shape === 'collapsedGroup') {
+    lineAttrs = slot ? { stroke: slot.stroke } : paint.collapsedLine;
+  }
+  if (paint.node.plainStroke && lineAttrs.stroke === paint.node.stroke && usesPlain(view.shape)) {
+    lineAttrs = { ...lineAttrs, stroke: paint.node.plainStroke };
+  }
+  return lineAttrs;
+}
+
+/** The fill, stroke and inner-line attributes of a node. */
+function nodeAttrs(
+  paint: Scene['paint'],
+  view: NodeView,
+  slot: Tint | undefined
+): { shapeAttrs: Attrs; lineAttrs: Attrs } {
+  const shapeAttrs = shapeAttrsOf(paint, view, slot);
+  return { shapeAttrs, lineAttrs: lineAttrsOf(paint, view, slot, shapeAttrs) };
+}
+
+/** A block's border and transparent background, which set a block apart from a subgraph. */
+function blockFrame(paint: Scene['paint'], view: NodeView): Attrs {
+  return {
+    fill: 'none',
+    stroke: paint.node.stroke,
+    'stroke-width': paint.node.strokeWidth,
+    ...view.style.shape,
+  };
+}
+
+/** The picture of a node that is not a folded block: block frame, image, icon or shape. */
+function drawNodeBody(
+  { w, flow, ctx, paint, warn }: Scene,
+  view: NodeView,
+  attrs: { shapeAttrs: Attrs; lineAttrs: Attrs }
 ): void {
+  const v = view.vertex;
+  if (view.block) {
+    drawFramed(
+      w,
+      { width: view.w, height: view.h },
+      view.label.height,
+      view.embed ?? null,
+      blockFrame(paint, view)
+    );
+  } else if (v?.img) drawImage(w, view, v.img, ctx.securityLevel ?? 'default', warn);
+  else if (v?.icon) {
+    // D298: the glyph takes the author's stroke, else nodeBorder (`node.stroke`, the gradient
+    // under neo).
+    drawIcon(w, view, attrs.shapeAttrs, view.style.shape.stroke ?? paint.node.stroke, ctx);
+  } else {
+    drawShape({
+      kind: view.shape,
+      w,
+      width: view.w,
+      height: view.h,
+      attrs: attrs.shapeAttrs,
+      lines: attrs.lineAttrs,
+      pads: flow.pads,
+    });
+  }
+}
+
+/** The checked link of a node, or undefined when it has none or the level refuses it. */
+function nodeHref({ ctx, warn }: Scene, v: NodeView['vertex']): ReturnType<typeof checkUrl> {
+  if (v?.link === undefined) return undefined;
+  return checkUrl(v.link, {
+    securityLevel: ctx.securityLevel ?? 'default',
+    linkSchemes: ctx.linkSchemes,
+    warn,
+  });
+}
+
+/** A folded block: its frame, mark and title. */
+function drawFoldedNode({ w, paint }: Scene, view: NodeView): void {
+  const frame = blockFrame(paint, view);
+  const { type, label } = view.fold!;
+  drawFolded(w, { width: view.w, height: view.h }, view.label, label!, type.length, {
+    frame,
+    mark: frame.stroke ?? paint.node.stroke,
+    ...paint.folded!,
+    title: view.style.text,
+  });
+}
+
+function drawNode(scene: Scene, view: NodeView, tip?: string): void {
+  const { w, layout, ctx, paint, warn } = scene;
   const box = layout.nodes.get(view.id);
   if (!box) return;
   const v = view.vertex;
   const slot = paint.slotOf(view);
-  const securityLevel = ctx.securityLevel ?? 'default';
   const { block } = view;
   w.open('g', {
     class: nodeClass(view) + cls(view.classes),
@@ -467,60 +574,15 @@ function drawNode(
     'aria-label': block ? v?.text || view.id : undefined,
   });
   if (tip) textElement(w, 'title', tip);
-  const href =
-    v?.link === undefined
-      ? undefined
-      : checkUrl(v.link, { securityLevel, linkSchemes: ctx.linkSchemes, warn });
+  const href = nodeHref(scene, v);
   if (href) w.open('a', { href, target: checkLinkTarget(v?.linkTarget, warn) });
-  // A collapsed subgraph takes its palette slot; the author's style still wins (spread after).
-  const plain = slot === undefined && isEmpty(view.style.shape);
-  const shapeAttrs: Attrs = plain
-    ? paint.shape
-    : {
-        fill: slot?.fill ?? paint.node.fill,
-        stroke: slot?.stroke ?? paint.node.stroke,
-        'stroke-width': paint.node.strokeWidth,
-        filter: paint.node.shadow,
-        ...view.style.shape,
-      };
-  // Inner lines follow the outline, except a collapsed card's separator and dots, which take
-  // the palette slot's border or else clusterBorder.
-  let lineAttrs: Attrs = plain
-    ? paint.line
-    : { stroke: shapeAttrs.stroke, 'stroke-width': shapeAttrs['stroke-width'] };
-  if (paint.collapsedLine && view.shape === 'collapsedGroup') {
-    lineAttrs = slot ? { stroke: slot.stroke } : paint.collapsedLine;
+  if (block === 'folded') {
+    drawFoldedNode(scene, view);
+    if (href) w.close();
+    w.close();
+    return;
   }
-  if (paint.node.plainStroke && lineAttrs.stroke === paint.node.stroke && usesPlain(view.shape)) {
-    lineAttrs = { ...lineAttrs, stroke: paint.node.plainStroke };
-  }
-  if (block) {
-    // A border and a transparent background, which set a block apart from a subgraph.
-    const frame: Attrs = {
-      fill: 'none',
-      stroke: paint.node.stroke,
-      'stroke-width': paint.node.strokeWidth,
-      ...view.style.shape,
-    };
-    if (block === 'folded') {
-      const { type, label } = view.fold!;
-      drawFolded(w, { width: view.w, height: view.h }, view.label, label!, type.length, {
-        frame,
-        mark: frame.stroke ?? paint.node.stroke,
-        ...paint.folded!,
-        title: view.style.text,
-      });
-      if (href) w.close();
-      w.close();
-      return;
-    }
-    drawFramed(w, { width: view.w, height: view.h }, view.label.height, view.embed ?? null, frame);
-  } else if (v?.img) drawImage(w, view, v.img, securityLevel, warn);
-  else if (v?.icon) {
-    // D298: the glyph takes the author's stroke, else nodeBorder (`node.stroke`, the gradient
-    // under neo).
-    drawIcon(w, view, shapeAttrs, view.style.shape.stroke ?? paint.node.stroke, ctx);
-  } else drawShape(view.shape, w, view.w, view.h, shapeAttrs, lineAttrs, flow.pads);
+  drawNodeBody(scene, view, nodeAttrs(paint, view, slot));
   const fill = view.style.shape.fill;
   const ink =
     fill && shapeFilled(view.shape) && !v?.img && !v?.icon && !block
