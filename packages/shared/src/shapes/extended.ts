@@ -119,7 +119,8 @@ export const fork: Shape = {
   noLabel: true,
   plain: true,
   span: (W, H, s) => (s ? H : W) - 8,
-  size: /* @__PURE__ */ fixed(72, 8),
+  // v12 forkJoin is 70 × 10 (D604); a diagram that flows sideways swaps the two.
+  size: /* @__PURE__ */ fixed(70, 10),
   // v12 forkJoin: filled plain, stroked like the outline.
   draw: (w, W, H, a, line) =>
     centred(w, W, H, { ...line, stroke: a.stroke, fill: line.stroke, filter: a.filter }, 2),
