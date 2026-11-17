@@ -20,7 +20,7 @@ import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/
 import type { FlowModel, FlowModelEdge, FlowVertex } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { FlowRenderContext } from './context.ts';
-import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
+import { curveReporter, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
 import { dirOf, nesting, type Nesting } from './nesting.ts';
 import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
 import { assetSize } from './assets.ts';
@@ -122,6 +122,8 @@ interface Measure {
     max: number,
     bits?: number
   ) => MeasuredLabel;
+  /** `curveKind` for this render: an unknown name warns once (D602). */
+  readonly curveOf: (curve: string | undefined) => CurveKind;
   readonly styleOf: (classes: readonly string[], own?: readonly string[]) => CheckedStyle;
 }
 
@@ -163,6 +165,7 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
           inline,
         }
       ),
+    curveOf: curveReporter((w) => ctx.warn(w)),
     styleOf: styleCache(
       new Map(model.classes.map((c) => [c.id, [...c.styles, ...c.textStyles]])),
       ctx.warn
@@ -358,7 +361,7 @@ function edgeViews(
       style,
       start,
       end,
-      curve: curveKind(e.interpolate ?? model.defaultInterpolate ?? flow.curve),
+      curve: m.curveOf(e.interpolate ?? model.defaultInterpolate ?? flow.curve),
     });
   }
   return edges;
@@ -394,7 +397,7 @@ function layoutGraph(
   );
   // How edges are routed follows the diagram's default curve: `linkStyle default interpolate`
   // first, then config, as each edge's own drawing does.
-  const curve = curveKind(model.defaultInterpolate ?? flow.curve);
+  const curve = m.curveOf(model.defaultInterpolate ?? flow.curve);
   const graph: LayoutGraph = {
     direction: rootDir,
     nodes: nodes.map((n): LayoutNode => {

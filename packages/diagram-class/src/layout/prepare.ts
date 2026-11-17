@@ -243,7 +243,7 @@ export function prepare(model: ClassModel, ctx: ClassLayoutContext): ClassPrepar
   const notes = noteViews(padding ?? NOTE_PAD, build, edges);
   const interfaces = model.interfaces.map((iface) => interfaceView(iface, build));
   edges.push(...relationEdges(build));
-  const curve = classCurve(ctx.config.flowchart?.curve ?? 'rounded');
+  const curve = classCurve(ctx.config.flowchart?.curve ?? 'rounded', (w) => ctx.warn?.(w));
   const graph = layoutGraph(model, ctx, units, curve, length, {
     boxes,
     notes,

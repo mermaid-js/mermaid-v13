@@ -1,5 +1,6 @@
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { ConfigLengthWarning } from '@mermaid-js/shared/config/readers';
+import type { CurveWarning } from '@mermaid-js/shared/svg/route';
 import type { LayoutGraph, LayoutModel, UnitProfile } from '@mermaid-js/core/layout';
 import type { InlineSpans, Measurer } from '@mermaid-js/core/text';
 import type { Theme } from '@mermaid-js/core/theme';
@@ -19,6 +20,6 @@ export interface ClassLayoutContext {
   layout?(graph: LayoutGraph): LayoutModel;
   /** The render's inline-box providers (D177), handed to every label; text output boxes none. */
   readonly inline?: InlineSpans;
-  /** Receives the config warnings (`CLASS_CONFIG_IGNORED`); the renderer's context has it. */
-  warn?(warning: ConfigLengthWarning): void;
+  /** Receives the config warnings (`CLASS_CONFIG_IGNORED`, `CURVE_UNKNOWN`); the renderer's context has it. */
+  warn?(warning: ConfigLengthWarning | CurveWarning): void;
 }

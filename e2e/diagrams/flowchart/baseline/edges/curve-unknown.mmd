@@ -1,0 +1,11 @@
+---
+description: an unknown curve name is drawn as S-curves with one CURVE_UNKNOWN warning (#356)
+config:
+  flowchart:
+    curve: bogus
+---
+flowchart TD
+  A --> B
+  A --> C
+  B --> D
+  C --> D
