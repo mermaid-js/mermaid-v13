@@ -93,7 +93,7 @@ export interface DiagramManifest {
    * Per-type options, by v12 type (D534): `section`, the config section the type reads on top of
    * the package's own (`swimlane` for `swimlane-beta`), `layout`, the type's default layout
    * (`elk` for `flowchart-elk`), below every config layer, and `formats`, the type's output formats
-   * when it draws fewer than the package (`['svg']` for `c4beta` until it has text output).
+   * when it draws fewer than the package.
    */
   readonly typeOptions?: Readonly<Record<string, TypeOptions>>;
 }

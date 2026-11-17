@@ -387,7 +387,7 @@ export function createMermaid(
 
   /**
    * Whether `a`'s type has text output (R-ASCII-5, D80). Asked by type: a type can draw fewer
-   * formats than its plugin (`c4beta` has no text output yet).
+   * formats than its plugin (`typeOptions` `formats`).
    */
   const textOf = (a: { detected: Detected }): boolean =>
     a.detected.id !== undefined && registry.formats(a.detected.type).includes('ascii');
