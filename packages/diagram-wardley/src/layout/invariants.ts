@@ -16,10 +16,8 @@ import type {
   WardleyLayout,
   WardleyNodeLayout,
 } from './types.ts';
-import { nonFinite as finite } from '@mermaid-js/shared/layout/invariants';
+import { EPS, nonFinite as finite } from '@mermaid-js/shared/testing/layout-invariants';
 
-/** Float tolerance of the checks, relative to the canvas. */
-const EPS = 1e-6;
 /** How far two label boxes may run into each other before they count as on top of one another. */
 const OVERLAP_SLACK = 1;
 

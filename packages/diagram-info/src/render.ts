@@ -47,16 +47,14 @@ function openRoot(
   const { x, y } = layout.bounds;
   const width = Math.ceil(layout.bounds.width);
   const height = Math.ceil(layout.bounds.height);
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
   const font = theme.font();
   // v12's `configureSvgSize(svg, 100, 400, true)`: always the full width, up to the canvas.
   openSvgRoot(w, ctx, {
     name: 'info',
     viewBox: [x, y, width, height],
     maxWidth: true,
-    title,
-    desc,
+    title: model.accTitle,
+    desc: model.accDescr,
     attrs: { 'font-family': font },
   });
 }

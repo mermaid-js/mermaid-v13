@@ -25,12 +25,14 @@ import { treeViewOptions } from '../config.ts';
 import { highlighted, type TreeViewModel, type TreeViewNode } from '../model.ts';
 import { TREEVIEW_METRICS as M } from './metrics.ts';
 import type { Rect, TreeViewLayout, TreeViewLine, TreeViewRow, TreeViewText } from './types.ts';
-import { numbers, rectInside as inside } from '@mermaid-js/shared/layout/invariants';
-
-const EPS = 1e-6;
+import {
+  EPS,
+  numbers,
+  rectInside as inside,
+  rectText as showRect,
+} from '@mermaid-js/shared/testing/layout-invariants';
 
 const near = (a: number, b: number): boolean => Math.abs(a - b) <= EPS * Math.max(1, Math.abs(b));
-const showRect = (r: Rect): string => `(${r.x}, ${r.y}, ${r.width} × ${r.height})`;
 const showLine = (l: Omit<TreeViewLine, 'kind' | 'row'>): string =>
   `(${l.x1}, ${l.y1})–(${l.x2}, ${l.y2})`;
 const rowName = (r: TreeViewRow | undefined): string => r?.node?.astId ?? (r ? 'the root' : 'none');

@@ -21,5 +21,5 @@ export type {
   TreeViewTokens,
   TreeViewView,
 } from './parser/index.ts';
-export { treeViewLayoutViolations } from './layout/index.ts';
+export { treeViewLayoutViolations } from './layout/invariants.ts';
 export { treeViewTestContext, treeViewTestTheme } from './test-context.ts';

@@ -2,9 +2,8 @@
  * The packet parser's public surface: the parser (#454), detection, and the lexer gated against
  * v12's Langium lexer (#452).
  */
-import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
-import type { Range } from '@mermaid-js/core/parser-kit';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { bodyTokens } from '@mermaid-js/shared/parser/seen-tokens';
+import type { SeenToken } from '@mermaid-js/shared/parser/seen-tokens';
 import { lex } from './lexer.ts';
 
 export { PACKET_TRIVIA, T as PacketTokenKind } from './tokens.ts';
@@ -14,16 +13,8 @@ export type { PacketParseOptions, PacketParseResult } from './parser.ts';
 export { detectPacket } from './detect.ts';
 export type * from './ast.ts';
 
-export interface PacketToken {
-  /** A `PacketTokenKind` or a shared `Kind`. */
-  kind: number;
-  /**
-   * The token's text as v12's lexer read it: CRLF and CR as LF, removed spans cut out, tag
-   * quotes as `'`, entities decoded to `&name;` as v12's renderer did.
-   */
-  text: string;
-  range: Range;
-}
+/** A token of this diagram: its `kind` is a `PacketTokenKind` or a shared `Kind`. */
+export type PacketToken = SeenToken;
 
 /**
  * The tokens of `src` that v12's lexer saw, in order: significant tokens, the hidden comments,
@@ -33,27 +24,5 @@ export interface PacketToken {
  * break v12 appended.
  */
 export function packetTokens(src: string): PacketToken[] {
-  const pre = preprocess(src);
-  const view = sourceView(
-    src,
-    pre.bodyStart,
-    pre.directives.map((d) => d.range)
-  );
-  const stream = lex(src, pre.bodyStart, view);
-  const removed = view.holes.filter((h) => h.kind !== 'drop');
-  let h = 0;
-  const out: PacketToken[] = [];
-  for (let j = 0; j < stream.length; j++) {
-    const kind = stream.kind[j] ?? Kind.EOF;
-    const start = stream.start[j] ?? 0;
-    const end = stream.end[j] ?? 0;
-    if (kind === Kind.EOF) continue;
-    while ((removed[h]?.start ?? Infinity) < start) h++;
-    const hole = removed[h];
-    const trivia = kind === Kind.Comment || kind === Kind.Directive;
-    // A span v12 removed before lexing: its lexer never saw it.
-    if (trivia && hole?.start === start && hole.end === end) continue;
-    out.push({ kind, text: cook(src, start, end, view), range: { start, end } });
-  }
-  return out;
+  return bodyTokens(src, lex);
 }

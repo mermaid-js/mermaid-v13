@@ -1,23 +1,20 @@
 /**
- * One scan for rendering and the editor (D577, #808): the shared fixture workspace through the
- * render scan (`scanPlugins`, as `mermaid` in Node runs it) and through `discoverFacets`. The
- * server accepts what the scan accepts and skips what it skips, with the scan's own warnings.
- * Packages the scan finds and the render then drops (a first-party id, an id an earlier
- * package holds, a detector that does not load, D166) the server drops too, for the same reason.
+ * One scan for rendering and the editor (D577, D589, #808): the shared fixture workspace
+ * through `@mermaid-js/plugin-autoload` (its scan, and `autoload` itself on a `mermaid`
+ * instance) and through `discoverFacets`. The server accepts what the scan accepts and skips
+ * what it skips, with the scan's own warnings. Packages the scan finds and `autoload` then
+ * drops (a first-party id, an id an earlier package holds, a detector that does not load, D166)
+ * the server drops too, for the same reason.
  */
-import { FIRST_PARTY_IDS, scanPlugins } from 'mermaid/node-scan';
+import { autoload, FIRST_PARTY_IDS, scanPlugins } from '@mermaid-js/plugin-autoload';
+import { createMermaid } from 'mermaid';
 import { describe, expect, it } from 'vitest';
 import { discoverFacets } from './facets.ts';
 import { scanFixtureWorkspace } from './testing/scan-fixtures.ts';
 
 /**
- * Found by the scan, then dropped by the render (registry and Node discovery), and why. Written
- * by hand: the render's own drops cannot run from here without new public API. Node discovery
- * (`nodeDiscovery` in mermaid's `node.ts`) is reached only through the `node` condition of
- * `mermaid`, which the `mermaid-source` condition these specs resolve with replaces by
- * `index.ts`, and it scans from `process.cwd()`; the duplicate-id and first-party drops happen
- * in the registry when a render registers discovered plugins, which no export exposes. The
- * messages here are the ones `mermaid/src/node.ts` and `registry.ts` write.
+ * Found by the scan, then dropped by `autoload` (its loader and the registry), and why, in the
+ * server's words. The test below checks that `autoload` drops exactly these packages.
  */
 const RENDER_DROPS: Readonly<Record<string, string>> = {
   'claims-flowchart-v2': '"flowchart-v2" is a first-party diagram id or type',
@@ -45,6 +42,17 @@ describe('the render scan and the server discovery (D577)', () => {
     expect([...new Set(log.map(packageOf))].sort()).toEqual(skipped.sort());
     expect(log).toEqual(expect.arrayContaining(scan.warnings.map((w) => w.message)));
     for (const [pkg, why] of Object.entries(RENDER_DROPS)) expect(log).toContain(`${pkg}: ${why}`);
+  });
+
+  it('skip the same packages: autoload on a mermaid instance drops what the server drops', async () => {
+    const root = scanFixtureWorkspace();
+    const log: string[] = [];
+    await discoverFacets(root, { log: (m) => log.push(m) });
+    const warnings = await autoload(createMermaid(), { root });
+    const dropped = (names: Iterable<string>) => [...new Set(names)].sort();
+    expect(dropped(warnings.flatMap((w) => ('package' in w ? [w.package] : [])))).toEqual(
+      dropped(log.map(packageOf))
+    );
   });
 
   it('agree on the cases where the old server scan did not', async () => {

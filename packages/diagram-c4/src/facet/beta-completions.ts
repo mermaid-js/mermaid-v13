@@ -24,7 +24,7 @@ import type {
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { Kind } from '@mermaid-js/core/parser-kit';
-import { span, tokenBefore } from '@mermaid-js/core/parser-kit/facet';
+import { span, tokenBefore } from '@mermaid-js/shared/parser/facet';
 import type { C4BetaDocument } from '../beta/ast.ts';
 import type { C4BetaModel } from '../beta/model.ts';
 import { C4BETA_TRIVIA, T } from '../beta/tokens.ts';

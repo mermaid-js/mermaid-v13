@@ -6,7 +6,6 @@ import type { CompletionKind } from '@mermaid-js/core/parser-kit';
 import type { RadarAxisNode, RadarDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 export { tokenBefore } from '@mermaid-js/shared/parser/facet';
-export { span } from '@mermaid-js/shared/parser/facet';
 export { code } from '@mermaid-js/shared/parser/facet';
 
 /** An item offered when the parser expects `kind`. */

@@ -3,7 +3,6 @@
  * they come from the grammar file (`generated/docs.ts`).
  */
 import type { MindmapShape } from '../model.ts';
-export { lineBefore } from '@mermaid-js/shared/parser/facet';
 export { span } from '@mermaid-js/shared/parser/facet';
 export { code } from '@mermaid-js/shared/parser/facet';
 
@@ -48,12 +47,3 @@ export const SHAPE_NAMES: Readonly<Record<MindmapShape, string>> = {
   bang: 'bang',
   hexagon: 'hexagon',
 };
-
-const LINE_END = /[\n\r\u2028\u2029]/;
-
-/** The text of `at`'s line from `at` on. */
-export function lineAfter(text: string, at: number): string {
-  let end = at;
-  while (end < text.length && !LINE_END.test(text.charAt(end))) end++;
-  return text.slice(at, end);
-}

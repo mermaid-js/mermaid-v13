@@ -7,7 +7,7 @@
  * preview.
  */
 import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
-import { code, span } from '@mermaid-js/core/parser-kit/facet';
+import { code, inside, plural, span } from '@mermaid-js/shared/parser/facet';
 import type { C4BetaDocument, C4BetaStyleNode } from '../beta/ast.ts';
 import type { C4BetaElement, C4BetaModel } from '../beta/model.ts';
 import { VALUE_WORDS } from '../beta/probe.ts';
@@ -16,8 +16,6 @@ import { c4betaDocs } from '../generated/c4beta.docs.ts';
 import { short } from './hover.ts';
 import { DIAGRAM_KIND_DOCS, ELEMENT_INFO, STYLE_KEY_DOCS } from './beta-tables.ts';
 
-const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
-const inside = (offset: number, r: Range) => r.start <= offset && offset <= r.end;
 const lineOf = (text: string, at: number) => text.slice(0, at).split(/\r\n|\r|\n/).length;
 
 function elementFacts(model: C4BetaModel, e: C4BetaElement): string {

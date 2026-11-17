@@ -1,11 +1,14 @@
 /**
- * Config lengths, read as flowchart's builder reads its own (a copy, D446): a number, or a whole
- * numeric string as its number (`"20"`, `" 2.5 "`, as v12 took them), from 0 up to `MAX_CONFIG_LENGTH`. Unset
- * reads as the default. Anything else that is set (`"20px"`, `-5`, `true`) reads as the
- * default too, with one `AGENTFLOW_CONFIG_INVALID` warning per key, however often it is read.
+ * Config lengths, read by the shared reader (`@mermaid-js/shared/config/readers`, #821): a
+ * number, or a whole numeric string as its number (`"20"`, `" 2.5 "`, as v12 took them), from 0
+ * up to 10000. Unset reads as the default. Anything else that is set (`"20px"`, `-5`, `true`)
+ * reads as the default too, with one `AGENTFLOW_CONFIG_INVALID` warning per key, however often
+ * it is read. Agentflow adds a default for every key and the default alone (`fallback`).
  */
-import { MAX_CONFIG_LENGTH } from './metrics.ts';
-import { type ConfigLengthWarning, numericValue } from '@mermaid-js/shared/config/readers';
+import {
+  configLengths as sectionLengths,
+  type ConfigLengthWarning,
+} from '@mermaid-js/shared/config/readers';
 export type { ConfigLengthWarning } from '@mermaid-js/shared/config/readers';
 export { numericValue } from '@mermaid-js/shared/config/readers';
 
@@ -25,8 +28,9 @@ export interface ConfigLength<K extends string> {
 /**
  * Reads lengths from one config object (`path` names it in warnings, e.g. `agentflow`), with
  * `defaults` for the keys it may read (a section's generated defaults, whose other keys are not
- * lengths, or a table of lengths): a key whose default is no number defaults to 0. A key not in
- * `defaults` is a type error.
+ * lengths, or a table of lengths). A key not in `defaults` is a type error. A key whose default
+ * is no number draws 0, and its warning says "using the default"; every length agentflow reads
+ * has a number default.
  */
 export function configLengths<K extends string>(
   section: unknown,
@@ -40,24 +44,6 @@ export function configLengths<K extends string>(
     const d = defaults[key];
     return typeof d === 'number' ? d : 0;
   };
-  const read = new Map<K, number>();
-  const length = (key: K): number => {
-    const known = read.get(key);
-    if (known !== undefined) return known;
-    const value = Object.hasOwn(values, key) ? values[key] : undefined;
-    const n = numericValue(value);
-    const taken = typeof n === 'number' && n >= 0 && n < MAX_CONFIG_LENGTH ? n : undefined;
-    const px = taken ?? fallback(key);
-    read.set(key, px);
-    if (taken === undefined && value !== undefined) {
-      const at = `${path}.${key}`;
-      warn({
-        code: AGENTFLOW_CONFIG_INVALID,
-        message: `Ignored ${at}: it is not a number from 0 up to ${MAX_CONFIG_LENGTH}; using ${px}`,
-        path: at,
-      });
-    }
-    return px;
-  };
-  return Object.assign(length, { fallback });
+  const read = sectionLengths(path, AGENTFLOW_CONFIG_INVALID, values, defaults, warn);
+  return Object.assign((key: K): number => read(key) ?? fallback(key), { fallback });
 }

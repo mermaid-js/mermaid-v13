@@ -3,9 +3,8 @@
  * quadrants tile one square, and every point centre lies inside it. Each violation is one line;
  * an empty list means the layout holds.
  */
+import { EPS, near } from '@mermaid-js/shared/testing/layout-invariants';
 import type { QuadrantLayout, QuadrantRect } from './types.ts';
-
-const EPS = 1e-6;
 
 function nonFinite(value: unknown, path: string, out: string[]): void {
   if (typeof value === 'number') {
@@ -16,8 +15,6 @@ function nonFinite(value: unknown, path: string, out: string[]): void {
     for (const [k, v] of Object.entries(value)) nonFinite(v, path ? `${path}.${k}` : k, out);
   }
 }
-
-const near = (a: number, b: number): boolean => Math.abs(a - b) <= EPS;
 
 /** Every way `layout` breaks the invariants. */
 export function quadrantLayoutViolations(layout: QuadrantLayout): string[] {

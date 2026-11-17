@@ -14,38 +14,39 @@
  * where the parser reported an error at the cursor (an item after two blank lines, as in v12).
  * Keywords are matched without regard to case, as the lexer reads `kanban` and `::icon(`.
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
 import type {
   CompletionItem,
   DocumentView,
   ProbeResult,
-  Range,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { kanbanDocs } from '../generated/docs.ts';
 import type { KanbanDocument } from '../parser/ast.ts';
 import { BAR_PRIORITIES } from '../priority.ts';
-import { CLASS_BLANK, isBlockData, LINE_BREAK } from '../parser/text.ts';
+import { isBlockData, LINE_BREAK } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
 import { invalidReason } from './names.ts';
-import { DATA_KEYS, dataPlace, lineAfter, lineBefore, span } from './tables.ts';
+import { DATA_KEYS, dataPlace, span } from './tables.ts';
+import {
+  classItems,
+  namesOutside,
+  type OutlineKinds,
+  outlineKeywords,
+  statementStartWord,
+} from '@mermaid-js/shared/parser/tree-facet';
+import { lineAfter } from '@mermaid-js/shared/parser/facet';
 
-const BLANK = /^[\t ]*$/;
 /** A key written in data: after `@{`, a line break or a `,`, before a `:`. */
 const WRITTEN_KEY = /(?:^|[\n\r,])[\t ]*([A-Za-z]+)[\t ]*:/g;
-
-/**
- * The index of the last token of `kinds` in `tokens` that holds `at` (starts at or before it,
- * ends at or after it), or -1.
- */
-function tokenAt(tokens: TokenStream, at: number, kinds: readonly number[]): number {
-  let found = -1;
-  for (let j = 0; j < tokens.length; j++) {
-    if ((tokens.start[j] ?? 0) > at) break;
-    if (at <= (tokens.end[j] ?? 0) && kinds.includes(tokens.kind[j] ?? Kind.EOF)) found = j;
-  }
-  return found;
-}
+/** The kinds of a `:::` class list. */
+const CLASSES = { start: T.ClassStart, names: T.Class };
+/** The keywords at a statement start. */
+const KINDS: OutlineKinds = {
+  header: [T.Kanban, 'kanban'],
+  nodeId: T.NodeId,
+  iconStart: T.IconStart,
+  classStart: T.ClassStart,
+};
 
 /** The last token of `kind` that starts before `at`, or -1. */
 function lastBefore(tokens: TokenStream, at: number, kind: number): number {
@@ -54,53 +55,6 @@ function lastBefore(tokens: TokenStream, at: number, kind: number): number {
     if (tokens.kind[j] === kind) found = j;
   }
   return found;
-}
-
-/**
- * The names of `kind` used in `doc`, first use first, but not those inside `line` other than
- * the one at `word` (the one an item may replace).
- */
-function namesOf(
-  doc: DocumentView<KanbanDocument>,
-  kind: string,
-  line: Range,
-  word: Range
-): string[] {
-  const out = new Set<string>();
-  const taken = new Set<string>();
-  for (const s of doc.result.symbols) {
-    if (s.kind !== kind) continue;
-    const inLine = line.start <= s.range.start && s.range.end <= line.end;
-    const atCursor = s.range.start === word.start && s.range.end === word.end;
-    if (inLine && !atCursor) taken.add(s.name);
-    else if (!inLine) out.add(s.name);
-  }
-  return [...out].filter((name) => !taken.has(name));
-}
-
-/** The class names for the word at the cursor in a `:::` line, or undefined when not in one. */
-function classItems(
-  doc: DocumentView<KanbanDocument>,
-  tokens: TokenStream,
-  at: number
-): CompletionItem[] | undefined {
-  const { text } = doc;
-  const j = tokenAt(tokens, at, [T.Class, T.ClassStart]);
-  if (j < 0) return undefined;
-  const start = tokens.start[j] ?? 0;
-  const end = tokens.end[j] ?? 0;
-  // `:::` itself: the cursor is in it, not after it.
-  if (tokens.kind[j] === T.ClassStart && at < end) return undefined;
-  let from = at;
-  while (from > start && !CLASS_BLANK.test(text.charAt(from - 1))) from--;
-  let to = at;
-  while (to < end && !CLASS_BLANK.test(text.charAt(to))) to++;
-  if (tokens.kind[j] === T.ClassStart) from = to = at;
-  const prefix = text.slice(from, at);
-  const range = span(from, to);
-  return namesOf(doc, 'class', span(start, end), range)
-    .filter((name) => name.startsWith(prefix))
-    .map((name) => ({ label: name, kind: 'class', insertText: name, range }));
 }
 
 /** The end of the value being written at `at`: the line's end, or (flow data) a `,` or `}`. */
@@ -129,7 +83,7 @@ function dataItems(
   // it; data still open is taken to the end of the cursor's line, as typed so far.
   const data = doc.result.ast.children.find((n) => n.data?.range.start === open)?.data;
   const closed = data !== undefined && text.charAt(data.range.end - 1) === '}';
-  const blockEnd = closed ? data.range.end : at + lineAfter(text, at).length;
+  const blockEnd = closed ? data.range.end : at + lineAfter(text, at, true).length;
   const block = isBlockData(closed ? data.text : text.slice(open + 2, blockEnd));
   const place = dataPlace(text, open, at, block);
   if (place.key) {
@@ -165,7 +119,7 @@ function dataItems(
     names = [...BAR_PRIORITIES];
     detail = 'priority';
   } else if (value.key === 'assigned') {
-    names = namesOf(doc, 'assignee', span(open, blockEnd), range).filter(
+    names = namesOutside(doc.result.symbols, 'assignee', span(open, blockEnd), range).filter(
       (name) => invalidReason(name, 'assignee') === undefined
     );
     detail = 'assignee';
@@ -191,43 +145,13 @@ export function kanbanCompletions(
   const { mode, offset } = probe;
   if (mode === 'SHAPE_DATA') return dataItems(doc, tokens, offset);
   if (mode !== 'INITIAL' && mode !== 'CLASS') return [];
-  const classes = classItems(doc, tokens, offset);
+  const classes = classItems(text, tokens, result.symbols, offset, CLASSES);
   if (classes) return classes;
   if (mode !== 'INITIAL') return [];
 
-  const expected = new Set(probe.expected);
-  const start = probe.prefix.start;
-  const prefix = text.slice(start, offset);
-  if (!BLANK.test(lineBefore(text, start, true)) || /[\n\r]/.test(prefix)) return [];
-  const lower = prefix.toLowerCase();
-  const word = /^[^\s()[\]{}@]*/.exec(text.slice(offset))?.[0] ?? '';
-  const range = span(start, prefix === '' ? offset : offset + word.length);
-  const out: CompletionItem[] = [];
-  const keyword = (
-    label: string,
-    insertText: string,
-    kind: number,
-    item: 'keyword' | 'operator'
-  ) => {
-    if (!label.toLowerCase().startsWith(lower)) return;
-    const documentation = kanbanDocs[kind];
-    out.push({
-      label,
-      kind: item,
-      insertText,
-      range,
-      ...(documentation === undefined ? {} : { documentation }),
-    });
-  };
-  if (expected.has(T.Kanban)) {
-    keyword('kanban', 'kanban', T.Kanban, 'keyword');
-    return out;
-  }
-  if (!expected.has(T.NodeId)) return out;
+  const at = statementStartWord(text, probe, /^[^\s()[\]{}@]*/);
+  if (!at) return [];
   // The decorations of the item above: none before the first item (an error).
-  if (result.ast.children.some((n) => n.range.end <= start)) {
-    keyword('::icon()', '::icon()', T.IconStart, 'operator');
-    keyword(':::', ':::', T.ClassStart, 'operator');
-  }
-  return out;
+  const afterNode = result.ast.children.some((n) => n.range.end <= at.range.start);
+  return outlineKeywords(at, new Set(probe.expected), KINDS, kanbanDocs, afterNode);
 }

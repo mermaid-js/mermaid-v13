@@ -13,6 +13,9 @@ export const C4_RENDER_METRICS = {
   relationStroke: 1,
   /** v12 `svgDraw.ts`: a boundary's dash (a deployment node's frame is solid). */
   boundaryDash: '7 7' as SafeValue,
+  /** v12's `edge-pattern-dashed` and `edge-pattern-dotted` dashes, which a c4-beta `line:` key names. */
+  relationDashed: '3' as SafeValue,
+  relationDotted: '2' as SafeValue,
   /** v12's arrowhead marker: the layout's size (`C4_METRICS.arrow`), the room labels keep off. */
   arrowLength: C4_METRICS.arrow,
   arrowWidth: C4_METRICS.arrow,

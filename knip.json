@@ -5,6 +5,7 @@
       "entry": [
         "tools/check-deps/cli.ts",
         "tools/pre-push/*cli.ts",
+        "tools/workspace/check-generated-cli.ts",
         "e2e/dom/server.ts",
         "e2e/dom/page.ts"
       ],
@@ -35,7 +36,7 @@
         "src/parser/{rule,state,support,tree,table,v12-text,drop,facet,flow,flow-facet}.ts",
         "src/svg/{arrowheads,document,graph,route}.ts",
         "src/config/readers.ts",
-        "src/layout/invariants.ts",
+        "src/testing/*.ts",
         "src/shapes/{kit,basic,extended}.ts"
       ],
       "project": ["src/**/*.ts"]
