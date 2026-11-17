@@ -227,7 +227,8 @@ async function paintedWith(colours: { fill?: string; stroke?: string }) {
   const theme = await c4TestTheme('default');
   const warnings: Warning[] = [];
   const ctx = c4TestContext(c4TestConfig(), theme, warnings);
-  const layout = layoutC4Beta(parseC4Beta(tagged('style t fill:#112233')).model, ctx);
+  const { model } = parseC4Beta(tagged('style t fill:#112233'));
+  const layout = layoutC4Beta(model, ctx);
   const forged: C4Layout = {
     ...layout,
     legend: layout.legend && {
@@ -238,7 +239,7 @@ async function paintedWith(colours: { fill?: string; stroke?: string }) {
     },
   };
   return {
-    legend: betaPaints(forged, {
+    legend: betaPaints(model, forged, {
       ...ctx,
       idPrefix: '',
       version: '13.0.0-test',

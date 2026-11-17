@@ -69,8 +69,8 @@ Use pnpm. Node 22.12 or newer; `.node-version` names the version CI uses.
 pnpm install          # once per checkout or worktree
 pnpm dev              # dev server with the diagram explorer
 pnpm test             # every unit test (vitest, no build needed)
-pnpm check:static     # eslint, prettier, cspell, knip, tsc, dependency, licence, config and grammar checks
-pnpm check            # check:static and test: the full gate, about 13 minutes
+pnpm check:static     # eslint (sharded), prettier, cspell, knip, tsc, dependency, licence, config and grammar checks, side by side
+pnpm check            # check:static, then test: the full gate. Most of its time is the unit suite
 pnpm e2e              # Playwright: visual baseline, browser and dev explorer specs
 pnpm regen            # run every generator
 ```

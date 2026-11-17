@@ -1,9 +1,10 @@
 /**
  * `pnpm check:static`'s generated-files check (#694): every step of the root `pnpm regen`
  * script has a check here that fails when the step would change a tracked file, so an edit to
- * a generator's input without a regen fails before the unit tests run. The steps are read
- * from the `regen` script itself; a step with no entry in {@link CHECKS} is an error, so a new
- * regen step cannot land without its check.
+ * a generator's input without a regen fails `pnpm check` (locally it runs beside the unit
+ * tests; under CI before them). The steps are read from the `regen` script itself; a step
+ * with no entry in {@link CHECKS} is an error, so a new regen step cannot land without its
+ * check.
  */
 import { spawnSync } from 'node:child_process';
 import { ROOT } from './diagrams.ts';

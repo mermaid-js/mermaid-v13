@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { streamWriter } from '@mermaid-js/core/svg';
 import type { SafeColor, StyleText } from '@mermaid-js/core/svg';
-import { cls, openSvgRoot, paletteSlots, styleCache } from './document.ts';
+import { cls, openSvgRoot, paletteSlots, styleCache, textElement } from './document.ts';
 import type { RootContext } from './document.ts';
 
 const ctx = (idPrefix?: () => string): RootContext => ({
@@ -84,6 +84,17 @@ describe('openSvgRoot', () => {
     expect(svg).toContain('<title id="m1-title">T</title>');
     expect(svg).not.toContain('<desc');
     expect(svg).not.toContain('aria-describedby');
+  });
+});
+
+describe('textElement', () => {
+  it('writes a title with an id, or a desc without one', () => {
+    const w = streamWriter();
+    w.open('g');
+    textElement(w, 'title', 'a < b', 'x-title');
+    textElement(w, 'desc', 'D');
+    w.close();
+    expect(w.finish()).toBe('<g><title id="x-title">a &lt; b</title><desc>D</desc></g>');
   });
 });
 

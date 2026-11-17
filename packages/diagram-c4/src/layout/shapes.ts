@@ -325,6 +325,59 @@ function inPiece(piece: Piece, p: Point, by: number): boolean {
   return u * u + v * v <= 1;
 }
 
+/** Where along one axis `at + s·d` lies between lo and hi: every s, none, or an interval of s. */
+function axisSpan(lo: number, hi: number, at: number, d: number): [number, number] | undefined {
+  if (d === 0) return at >= lo && at <= hi ? [-Infinity, Infinity] : undefined;
+  const u = (lo - at) / d;
+  const v = (hi - at) / d;
+  return [Math.min(u, v), Math.max(u, v)];
+}
+
+/** The s for which `p + s·n` is inside `piece`, as an interval; none when the line misses it. */
+function spanIn(piece: Piece, p: Point, n: Point): [number, number] | undefined {
+  if (piece.kind === 'rect') {
+    const x = axisSpan(piece.x0, piece.x1, p.x, n.x);
+    const y = axisSpan(piece.y0, piece.y1, p.y, n.y);
+    if (!x || !y) return undefined;
+    const lo = Math.max(x[0], y[0]);
+    const hi = Math.min(x[1], y[1]);
+    return lo <= hi ? [lo, hi] : undefined;
+  }
+  const [ux, uy] = [n.x / piece.rx, n.y / piece.ry];
+  const [vx, vy] = [(p.x - piece.cx) / piece.rx, (p.y - piece.cy) / piece.ry];
+  const a = ux * ux + uy * uy;
+  const b = 2 * (ux * vx + uy * vy);
+  const disc = b * b - 4 * a * (vx * vx + vy * vy - 1);
+  if (a === 0 || disc < 0) return undefined;
+  return [(-b - Math.sqrt(disc)) / (2 * a), (-b + Math.sqrt(disc)) / (2 * a)];
+}
+
+/** How far up from 0 the intervals cover without a gap; 0 when none holds 0. */
+function reach(spans: readonly (readonly [number, number])[]): number {
+  let far = 0;
+  for (let grown = true; grown; ) {
+    grown = false;
+    for (const [lo, hi] of spans)
+      if (lo <= far && hi > far) {
+        far = hi;
+        grown = true;
+      }
+  }
+  return far;
+}
+
+/**
+ * How far `p` can move along the unit vector `n` and stay inside `box`'s outline: against `n`,
+ * then along it; 0 each way when `p` is not inside.
+ */
+export function insideAlong(box: Outline, p: Point, n: Point): [number, number] {
+  const spans = piecesOf(box).flatMap((piece) => {
+    const s = spanIn(piece, p, n);
+    return s ? [s] : [];
+  });
+  return [reach(spans.map(([lo, hi]) => [-hi, -lo] as const)), reach(spans)];
+}
+
 /** Whether `p` is on `box`'s outline, within `tol`: inside it grown by `tol`, not inside it shrunk by `tol`. */
 export function onOutline(box: Outline, p: Point, tol: number): boolean {
   const pieces = piecesOf(box);
