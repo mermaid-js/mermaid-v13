@@ -545,6 +545,7 @@ exports[`layered over parser-produced flowchart graphs > lays out every corpus g
   "flowchart/visual-check/sub-graphs-and-markdown-strings-2.mmd": 0,
   "flowchart/visual-check/sub-graphs-and-markdown-strings.mmd": 0,
   "flowchart/visual-check/subgraph-titles-wider-than-children.mmd": 0,
+  "flowchart/visual-check/triangle-and-stack-edges.mmd": 0,
   "flowchart/visual-check/v2-16-render-stadium-shape.mmd": 0,
   "flowchart/visual-check/v2-17-should-apply-class-def-colour-to-edge-label.mmd": 0,
   "flowchart/visual-check/v2-18-should-render-nested-subgraphs-with-edge-from-cluster-containing-extractable-subgraph.mmd": 0,

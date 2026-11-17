@@ -46,6 +46,8 @@ export interface NodeView {
   h: number;
   /** Label shift from the centre. */
   dy: number;
+  /** Label shift sideways from the centre. */
+  dx: number;
   style: CheckedStyle;
   classes: string[];
   parent?: string;
@@ -200,6 +202,7 @@ function nodeViews(
     w: 0,
     h: 0,
     dy: 0,
+    dx: 0,
     style: m.styleOf([]),
     classes: [],
     parent: nest.parentOf.get(id),
@@ -259,6 +262,9 @@ function nodeViews(
   groups.sort((g, h) => g.depth - h.depth);
   return { views, groups, nodes };
 }
+
+/** A size's label shift sideways, none when it has no `dx`. */
+const labelDx = (s: { dx?: number }): number => s.dx ?? 0;
 
 function measureNode(
   view: NodeView,
@@ -322,6 +328,7 @@ function measureNode(
   view.w = s.w;
   view.h = s.h;
   view.dy = s.dy;
+  view.dx = labelDx(s);
 }
 
 /** A fork or join bar lies across the flow: 10 × 70 where it runs sideways (v12, D604). */

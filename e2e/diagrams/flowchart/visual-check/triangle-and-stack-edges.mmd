@@ -1,0 +1,20 @@
+---
+description: tri, flip-tri, stacked rectangle and stacked document with several edges each (#395, #403); every edge ends on the outline
+---
+flowchart LR
+  a[A] --> t@{ shape: tri, label: "Triangle" }
+  b[B] --> t
+  t --> c[C]
+  t --> d[D]
+  e[E] --> f@{ shape: flip-tri, label: "Flipped triangle" }
+  f --> g[G]
+  f --> h[H]
+  f --> i[I]
+  j[J] --> s@{ shape: procs, label: "Stacked rectangle" }
+  k[K] --> s
+  s --> l[L]
+  s --> m[M]
+  n[N] --> u@{ shape: docs, label: "Stacked document" }
+  o[O] --> u
+  u --> p[P]
+  u --> q[Q]
