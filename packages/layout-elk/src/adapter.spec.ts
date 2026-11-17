@@ -364,6 +364,21 @@ describe('elkEngine (LayoutGraph → ELK → LayoutModel)', () => {
       expect(smallestGap(model)).toBeGreaterThanOrEqual(spacing.node);
     });
 
+    const hub = (leaves: number): string =>
+      Array.from({ length: leaves }, (_, i) => `H${String.fromCharCode(97 + i)}`).join(' ');
+
+    it.each([4, 8, 12, 20])('elk.stress: a hub with %i leaves keeps a gap of spacing.node', (n) => {
+      const gap = smallestGap(elkEngine('stress')(sized(hub(n), 'TB')));
+      expect(gap).toBeGreaterThan(0);
+      expect(gap).toBeGreaterThanOrEqual(spacing.node);
+    });
+
+    it.each([4, 8, 12, 20])('elk.radial: a hub with %i leaves keeps a gap of spacing.node', (n) => {
+      const gap = smallestGap(elkEngine('radial')(sized(hub(n), 'TB')));
+      expect(gap).toBeGreaterThan(0);
+      expect(gap).toBeGreaterThanOrEqual(spacing.node);
+    });
+
     it('sets the edge length from the widest and tallest node plus spacing.node', () => {
       const stress = toElkGraph(sized(stressTree, 'TB'), 'stress').root.layoutOptions!;
       expect(stress['elk.stress.desiredEdgeLength']).toBe(String(152 + 40 + spacing.node));
