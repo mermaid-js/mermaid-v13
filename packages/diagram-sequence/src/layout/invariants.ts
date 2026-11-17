@@ -21,7 +21,7 @@ import {
   nonFinite as numbers,
   rectsOverlap as overlaps,
   within,
-} from '@mermaid-js/shared/layout/invariants';
+} from '@mermaid-js/shared/testing/layout-invariants';
 
 type Participants = ReadonlyMap<string, ParticipantLayout>;
 

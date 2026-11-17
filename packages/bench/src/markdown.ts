@@ -1,4 +1,5 @@
 /** Markdown of a full bench report (release, nightly): summary, gates and per-diagram tables. */
+import { codeSizeLines } from './code-size-markdown.ts';
 import type { GateOutcome } from './gates.ts';
 import { speedup } from './gates.ts';
 import { dash, kb, ms, num, row, rule } from './md.ts';
@@ -189,5 +190,6 @@ export function formatMarkdown(report: BenchReport, outcome: GateOutcome): strin
       { id: 'pele', ratio: 'vs pele' },
     ]),
     ...unsupportedLines(report),
+    ...(report.codeSize ? codeSizeLines(report.codeSize) : []),
   ].join('\n');
 }

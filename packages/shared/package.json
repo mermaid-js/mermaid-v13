@@ -101,11 +101,6 @@
       "types": "./dist/config/readers.d.ts",
       "default": "./dist/config/readers.js"
     },
-    "./layout/invariants": {
-      "mermaid-source": "./src/layout/invariants.ts",
-      "types": "./dist/layout/invariants.d.ts",
-      "default": "./dist/layout/invariants.js"
-    },
     "./svg/document": {
       "mermaid-source": "./src/svg/document.ts",
       "types": "./dist/svg/document.d.ts",
@@ -115,6 +110,9 @@
       "mermaid-source": "./src/parser/support.ts",
       "types": "./dist/parser/support.d.ts",
       "default": "./dist/parser/support.js"
+    },
+    "./testing/layout-invariants": {
+      "mermaid-source": "./src/testing/layout-invariants.ts"
     }
   },
   "files": [

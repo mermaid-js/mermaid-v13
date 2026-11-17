@@ -6,12 +6,8 @@ import { cellProfile, pxProfile } from '@mermaid-js/core/layout';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import { EDGE_CASES, gridMeasurer, kanban, parsed } from './fixtures.ts';
-import {
-  kanbanLayoutViolations,
-  layoutKanban,
-  type KanbanLayout,
-  type KanbanLayoutInput,
-} from './index.ts';
+import { layoutKanban, type KanbanLayout, type KanbanLayoutInput } from './index.ts';
+import { kanbanLayoutViolations } from './invariants.ts';
 
 /** The parsed layout input of a board. */
 const board = (...lines: string[]): KanbanLayoutInput => parsed(kanban(...lines)).input;

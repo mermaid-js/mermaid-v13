@@ -23,8 +23,17 @@ import {
   danglingExports,
   inexactWorkspaceRanges,
   publishManifest,
+  testSupportEntries,
   workspaceLeaks,
 } from './manifest.ts';
+
+/** Every file under `dir`, relative to it, with `/` separators. */
+function filesUnder(dir: string, prefix = ''): string[] {
+  return readdirSync(join(dir, prefix), { withFileTypes: true }).flatMap((entry) => {
+    const path = prefix === '' ? entry.name : `${prefix}/${entry.name}`;
+    return entry.isDirectory() ? filesUnder(dir, path) : [path];
+  });
+}
 
 export interface Registry {
   target: Target;
@@ -114,6 +123,11 @@ export function packAll(
     if (dangling.length > 0)
       throw new Error(
         `DANGLING EXPORT in ${manifest.name} (no published target), do not publish:\n${dangling.join('\n')}`
+      );
+    const testSupport = testSupportEntries(manifest, filesUnder(join(work, 'package')));
+    if (testSupport.length > 0)
+      throw new Error(
+        `TEST SUPPORT in ${manifest.name} (a stale dist? rebuild it clean), do not publish:\n${testSupport.join('\n')}`
       );
     writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
 

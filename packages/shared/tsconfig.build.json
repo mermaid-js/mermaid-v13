@@ -7,5 +7,5 @@
     "rootDir": "src",
     "customConditions": []
   },
-  "exclude": ["src/**/*.spec.ts", "src/**/*.fixtures.ts"]
+  "exclude": ["src/**/*.spec.ts", "src/**/*.fixtures.ts", "src/testing/**"]
 }

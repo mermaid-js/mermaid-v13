@@ -73,15 +73,10 @@ function modelBlocks(model: BlockModel): ReadonlyMap<string, Block> {
 
 /** The `<svg>` root: the layout's bounds as the viewBox (D224), the theme's aliases. */
 function openRoot({ w, ctx, layout, paint }: Scene): void {
-  const { config } = ctx;
-  const { x, y } = layout.bounds;
-  const width = Math.max(1, Math.ceil(layout.bounds.width));
-  const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = (config as { block?: { useMaxWidth?: unknown } }).block?.useMaxWidth !== false;
   openSvgRoot(w, ctx, {
     name: 'block',
-    viewBox: [x, y, width, height],
-    maxWidth,
+    viewBox: layout.bounds,
+    maxWidth: (ctx.config as { block?: { useMaxWidth?: unknown } }).block?.useMaxWidth !== false,
     attrs: {
       'font-family': paint.font,
       'font-size': paint.fontSize,
