@@ -36,6 +36,7 @@ exports[`layered over parser-produced flowchart graphs > lays out every corpus g
   "flowchart/baseline/icons/neo-dark.mmd": 0,
   "flowchart/baseline/icons/neo.mmd": 0,
   "flowchart/baseline/icons/redux.mmd": 0,
+  "flowchart/baseline/interactions/clickable.mmd": 0,
   "flowchart/baseline/shapes/bang.mmd": 0,
   "flowchart/baseline/shapes/bolt.mmd": 0,
   "flowchart/baseline/shapes/bow-rect.mmd": 0,
