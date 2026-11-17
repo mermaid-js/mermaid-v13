@@ -70,6 +70,11 @@ interface PlacedLabel {
   r: Rect;
 }
 
+interface Size {
+  width: number;
+  height: number;
+}
+
 const bad = (v: number): boolean => !Number.isFinite(v);
 
 function checkDrawingSize(c: Check): void {
@@ -124,16 +129,18 @@ function ancestors(c: Check, id: string): Set<string> {
   return out;
 }
 
-// Groups hold their members; boxes that are not nested in one another do not overlap.
-function checkNesting(c: Check): void {
-  const ids = [...c.boxes.keys()];
-  const chains = new Map(ids.map((id) => [id, ancestors(c, id)]));
+// Groups hold their members.
+function checkMembers(c: Check, ids: string[], chains: Map<string, Set<string>>): void {
   for (const id of ids) {
     for (const g of chains.get(id)!) {
       if (!contains(c.boxes.get(g)!, c.boxes.get(id)!))
         c.problems.push(`'${id}' lies outside its group '${g}'`);
     }
   }
+}
+
+// Boxes that are not nested in one another do not overlap.
+function checkOverlaps(c: Check, ids: string[], chains: Map<string, Set<string>>): void {
   for (let i = 0; i < ids.length; i++) {
     for (let j = i + 1; j < ids.length; j++) {
       const a = ids[i]!;
@@ -142,6 +149,13 @@ function checkNesting(c: Check): void {
       if (overlaps(c.boxes.get(a)!, c.boxes.get(b)!)) c.problems.push(`'${a}' and '${b}' overlap`);
     }
   }
+}
+
+function checkNesting(c: Check): void {
+  const ids = [...c.boxes.keys()];
+  const chains = new Map(ids.map((id) => [id, ancestors(c, id)]));
+  checkMembers(c, ids, chains);
+  checkOverlaps(c, ids, chains);
 }
 
 const badPoint = (p: Point | undefined): boolean => !!p && (bad(p.x) || bad(p.y));
@@ -192,6 +206,31 @@ function checkEdgeEnds(c: Check, e: LayoutGraph['edges'][number]): void {
     c.problems.push(`edge '${e.id}' does not end at its target`);
 }
 
+// One label of an edge: placed, and clear of the nodes and of the edge's labels so far.
+function checkLabel(
+  c: Check,
+  e: LayoutGraph['edges'][number],
+  name: string,
+  size: Size | undefined,
+  at: Point | undefined,
+  labels: [string, Rect][]
+): Rect | undefined {
+  if (!size) return undefined;
+  if (!at) {
+    c.problems.push(`edge '${e.id}' has a ${name} but no ${name} position`);
+    return undefined;
+  }
+  const r = rect({ ...at, ...size });
+  for (const n of c.graph.nodes) {
+    const b = c.boxes.get(n.id);
+    if (b && overlaps(r, b)) c.problems.push(`${name} of edge '${e.id}' overlaps node '${n.id}'`);
+  }
+  for (const [other, o] of labels) {
+    if (overlaps(r, o)) c.problems.push(`${name} of edge '${e.id}' overlaps its ${other}`);
+  }
+  return r;
+}
+
 // The middle label, then the end labels (D102), which also keep clear of the edge's others.
 function checkEdgeLabels(
   c: Check,
@@ -205,19 +244,8 @@ function checkEdgeLabels(
     ['start label', e.startLabel, placed.startLabel],
     ['end label', e.endLabel, placed.endLabel],
   ] as const) {
-    if (!size) continue;
-    if (!at) {
-      c.problems.push(`edge '${e.id}' has a ${name} but no ${name} position`);
-      continue;
-    }
-    const r = rect({ ...at, ...size });
-    for (const n of c.graph.nodes) {
-      const b = c.boxes.get(n.id);
-      if (b && overlaps(r, b)) c.problems.push(`${name} of edge '${e.id}' overlaps node '${n.id}'`);
-    }
-    for (const [other, o] of labels) {
-      if (overlaps(r, o)) c.problems.push(`${name} of edge '${e.id}' overlaps its ${other}`);
-    }
+    const r = checkLabel(c, e, name, size, at, labels);
+    if (!r) continue;
     labels.push([name, r]);
     placedLabels.push({ edge: e.id, name, r });
   }

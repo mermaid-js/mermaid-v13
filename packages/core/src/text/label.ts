@@ -446,21 +446,27 @@ function takeCode(s: Scan): boolean {
   return true;
 }
 
+/**
+ * Whether the mark `ch` of length `len` at `i` opens (`opening`) an emphasis that a later mark
+ * closes, or closes one that follows text, and is not an underscore inside a word.
+ */
+function canMark(source: string, i: number, ch: string, len: number, opening: boolean): boolean {
+  const prev = source[i - 1] ?? ' ';
+  const next = source[i + len] ?? ' ';
+  const can = opening
+    ? next.trim() !== '' && source.includes(len === 2 ? ch + ch : ch, i + len + 1)
+    : prev.trim() !== '';
+  return can && !(ch === '_' && RE_WORD.test(prev) && RE_WORD.test(next));
+}
+
 /** An emphasis mark (`*`, `_`, doubled for bold) at the scan position that opens or closes. */
 function takeEmphasis(s: Scan, ch: string): boolean {
   if (!s.emphasis) return false;
-  const { source, i } = s;
-  const double = source[i + 1] === ch;
+  const double = s.source[s.i + 1] === ch;
   const bit = double ? Style.Bold : Style.Italic;
   const len = double ? 2 : 1;
-  const prev = source[i - 1] ?? ' ';
-  const next = source[i + len] ?? ' ';
   const opening = (s.marked & bit) === 0;
-  const can = opening
-    ? next.trim() !== '' && source.includes(double ? ch + ch : ch, i + len + 1)
-    : prev.trim() !== '';
-  const intraWord = ch === '_' && RE_WORD.test(prev) && RE_WORD.test(next);
-  if (!can || intraWord) return false;
+  if (!canMark(s.source, s.i, ch, len, opening)) return false;
   s.marked = opening ? s.marked | bit : s.marked & ~bit;
   restyle(s);
   s.i += len;

@@ -243,8 +243,30 @@ function isGone(m: Uint8Array | undefined, source: (i: number) => number, x: num
 }
 
 /**
- * One `style.*:\S*#.*;` match of `t[from, le)`: the `:` then `#` with no space between them
- * (a space resets the colon), then the line's last `;` after the `#` is marked as dropped.
+ * The `#` of the first `:\S*#` in `t[from, le)` that the mask has not cut, or -1: a space
+ * between the `:` and the `#` resets the colon.
+ */
+function findHashAfterColon(
+  t: string,
+  from: number,
+  le: number,
+  source: (i: number) => number,
+  m: Uint8Array | undefined
+): number {
+  let colon = false;
+  for (let j = from; j < le; j++) {
+    const c = t.charCodeAt(j);
+    if (isGone(m, source, j)) continue;
+    if (c === COLON) colon = true;
+    else if (c === HASH && colon) return j;
+    else if (isSpace(c)) colon = false;
+  }
+  return -1;
+}
+
+/**
+ * One `style.*:\S*#.*;` match of `t[from, le)`: the line's last `;` after the `#` is marked
+ * as dropped.
  */
 function dropLastSemicolon(
   t: string,
@@ -254,17 +276,7 @@ function dropLastSemicolon(
   mark: (i: number, bit: number) => void,
   m: Uint8Array | undefined
 ): void {
-  let colon = false;
-  let hash = -1;
-  for (let j = from; j < le; j++) {
-    const c = t.charCodeAt(j);
-    if (isGone(m, source, j)) continue;
-    if (c === COLON) colon = true;
-    else if (c === HASH && colon) {
-      hash = j;
-      break;
-    } else if (isSpace(c)) colon = false;
-  }
+  const hash = findHashAfterColon(t, from, le, source, m);
   if (hash < 0) return;
   for (let j = le - 1; j > hash; j--) {
     if (t.charCodeAt(j) === SEMI && !isGone(m, source, j)) {
@@ -404,15 +416,18 @@ function holes(src: string, from: number, directives: readonly Range[]): Hole[] 
   return directives.length === 0 ? out : withDirectives(out, directives, from);
 }
 
+// A removed span inside the range, or right before it (then the text before is not src's).
+function isSplit(view: SourceView, start: number, end: number): boolean {
+  const removed = view.holes;
+  const k = firstHole(view, start);
+  return (removed[k]?.start ?? end) < end || (k > 0 && removed[k - 1]?.end === start);
+}
+
 /** Whether `src[start, end)` reads the same cooked, so `cook` can slice it. */
 function isPlainRange(src: string, start: number, end: number, view: SourceView): boolean {
   const { mask, braceNewline } = view;
-  const removed = view.holes;
-  const k = firstHole(view, start);
-  // A removed span inside the range, or right before it (then the text before is not src's).
-  const split = (removed[k]?.start ?? end) < end || (k > 0 && removed[k - 1]?.end === start);
   return (
-    !split &&
+    !isSplit(view, start, end) &&
     !(braceNewline ? /[\r#}]/ : /[\r#]/).test(src.slice(start, end)) &&
     (!braceNewline || src.charCodeAt(start - 1) !== RBRACE) &&
     !masked(mask, start, end)
@@ -505,6 +520,18 @@ function entityRef(name: string): string {
   return ref[1] === '#' || entityAt(ref, 0) ? ref : `#${name};`;
 }
 
+function blanksEnd(text: string, from: number, to: number): number {
+  let j = from;
+  while (j < to && isSpace(text.charCodeAt(j))) j++;
+  return j;
+}
+
+/** The last line break of `text[from, to)`, or -1. */
+function lastNewline(text: string, from: number, to: number): number {
+  for (let j = to - 1; j >= from; j--) if (isNl(text.charCodeAt(j))) return j;
+  return -1;
+}
+
 /**
  * The blanks after a `}` (`brace`, at `i`) or at the start of a range that follows one. Returns
  * the index to continue from (`i` itself when the blanks are kept), `NO_BRACE_CASE` when the
@@ -512,12 +539,9 @@ function entityRef(name: string): string {
  * for the index `k` to continue from.
  */
 function braceBlanks(text: string, i: number, to: number, brace: boolean): number {
-  let j = brace ? i + 1 : i;
-  let nl = -1;
-  while (j < to && isSpace(text.charCodeAt(j))) {
-    if (isNl(text.charCodeAt(j))) nl = j;
-    j++;
-  }
+  const at = brace ? i + 1 : i;
+  const j = blanksEnd(text, at, to);
+  const nl = lastNewline(text, at, j);
   // v12 appended a line break, so blanks up to the end of the text reach one too; the
   // final line break itself belongs to no source text.
   if (j >= text.length) return j - 1;
