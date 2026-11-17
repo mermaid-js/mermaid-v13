@@ -245,11 +245,11 @@ describe('c4 element text and shapes', () => {
     const db = el(layout, 'db');
     expect(db.shape).toBe('cyl');
     expect(db.name!.bold).toBe(true);
-    expect(textOf(db.type)).toBe('[Container: Postgres]');
-    expect(db.type.font.size).toBeCloseTo(14 * 0.75);
+    expect(textOf(db.type!)).toBe('[Container: Postgres]');
+    expect(db.type!.font.size).toBeCloseTo(14 * 0.75);
     expect(db.descr!.font.size).toBeCloseTo(14 * 0.82);
-    expect(db.type.y).toBeCloseTo(bottom(db.name!) + 3);
-    expect(db.descr!.y).toBeCloseTo(bottom(db.type) + 3);
+    expect(db.type!.y).toBeCloseTo(bottom(db.name!) + 3);
+    expect(db.descr!.y).toBeCloseTo(bottom(db.type!) + 3);
     expect(db.name!.x + db.name!.width / 2).toBeCloseTo(db.box.x + db.box.width / 2);
   });
 
@@ -257,7 +257,7 @@ describe('c4 element text and shapes', () => {
     const layout = sound(
       'C4Context\nPerson_Ext(p, "P")\nSystemQueue_Ext(q, "Q")\nComponent(c, "C")'
     );
-    expect(['p', 'q', 'c'].map((a) => textOf(el(layout, a).type))).toEqual([
+    expect(['p', 'q', 'c'].map((a) => textOf(el(layout, a).type!))).toEqual([
       '[Person]',
       '[Software System]',
       '[Component]',

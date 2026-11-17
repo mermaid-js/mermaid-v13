@@ -87,7 +87,9 @@ function row(
     return { ...entry, load: () => given().then((l) => ready(entry, l.plugin, l.ascii)) };
   }
   const loaded = ready(entry, given);
-  return { ...entry, formats: loaded.formats, load: () => Promise.resolve(loaded) };
+  // The row keeps its own bound: a type may draw fewer than its plugin (c4beta, spec #730).
+  const formats = loaded.formats?.filter((f) => entry.formats?.includes(f) ?? true);
+  return { ...entry, formats, load: () => Promise.resolve(loaded) };
 }
 
 /** `loader` called once for all rows of `id`; a failure is forgotten, so the next render retries. */

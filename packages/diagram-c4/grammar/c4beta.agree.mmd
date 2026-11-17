@@ -18,3 +18,4 @@ deploymentNode dc "Data centre" "" "Linux" instances "2..4" {
 1: user --> api : "Signs in" "HTTPS"
 2: api <-- db : "Is read by" :::async
 api <--> db
+api --- db : "Shares data with"

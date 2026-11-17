@@ -11,6 +11,7 @@ import {
   defaultsName,
   generate,
   spliceMigration,
+  typeSectionOwners,
 } from './generate.ts';
 
 const root = join(import.meta.dirname, '../../..');
@@ -106,6 +107,16 @@ describe('gen-config', () => {
     }
     expect(SECTION_OWNERS['wardley-beta']).toBe('packages/diagram-wardley');
     expect(SECTION_OWNERS.xyChart).toBe('packages/diagram-xychart');
+  });
+
+  it('writes a type section of a package beside its own section, not into core (D534)', async () => {
+    const { files } = await generate(read(SCHEMA_PATH)!, read);
+    expect(typeSectionOwners()).toEqual({ c4beta: 'packages/diagram-c4' });
+    const c4 = files.get('packages/diagram-c4/src/generated/config-defaults.ts');
+    expect(c4).toContain('export const c4ConfigDefaults: ');
+    expect(c4).toContain('export const c4betaConfigDefaults: C4BetaDiagramConfig = ');
+    // Core's defaults reach every diagram's resolved config, and the id prefix hashes that.
+    expect(files.get('packages/core/src/config/generated/defaults.ts')).not.toContain('c4beta');
   });
 
   it('owns a section exactly for the packages whose workspace.yaml says configDefaults', () => {
