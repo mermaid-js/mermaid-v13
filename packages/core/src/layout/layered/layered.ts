@@ -38,7 +38,6 @@ import { pxProfile } from '../units.ts';
 import { copy, f64, i32, scratch, u8 } from './scratch.ts';
 import {
   End,
-  IN_LINE,
   Kind,
   type Graph,
   type LEdge,
@@ -47,14 +46,15 @@ import {
   type LayeredResult,
   type Pieces,
 } from './graph.ts';
-import type { LayoutMetrics } from '../units.ts';
 import { alignLabels, alignPorts, freeEnds, settle, snap, spread, writeBackEnds } from './ends.ts';
+import { assignTracks } from './tracks.ts';
 import { emptyRanks, pastLabels, straighten } from './bends.ts';
 import { reduceCrossings, settlePositions, sortLayer } from './order.ts';
 import { position } from './position.ts';
 import { orient, rank } from './rank.ts';
 export { orient, rank } from './rank.ts';
 export { groupArranger, sortLayer } from './order.ts';
+export { ease } from './tracks.ts';
 export { Kind, type LEdge, type LNode, type LayeredOptions, type LayeredResult } from './graph.ts';
 
 /** The fields of {@link LNode} and {@link LEdge} that `layered` reads. The others are its output. */
@@ -135,27 +135,6 @@ const MAX_GAP = 3;
 // to run across on. The levels of a gap keep this far from its ranks, to leave room to turn
 // in (`levelMargin`), and from each other (`levelPitch`).
 const LEVEL_WIDE = 2;
-// Two plain curves that would pass too near each other turn at levels of their own as well:
-// nearer than `levelClear` where one of them runs far across, since it stays near the other for
-// a long way, and otherwise nearer than `levelTouch`. `levelLead` is the room a plain curve is
-// taken to keep straight at each end of its gap.
-// Levels tell apart curves that run alongside each other. Where the curves of a gap cross each
-// other more often than that, runs along levels only make the crossings long and shallow, so
-// each curve is one plain S instead, and the gap is made this many times as tall as its widest
-// curve runs across (and no taller than MAX_GAP allows), for them to cross at a clear angle.
-const CROSSED_SLOPE = 0.5;
-// `snap`: a node, with whatever it is already in line with, moves this far at most to bring one
-// more of its edges into line. `bendSnap`: bends with no node in line with them move this far at
-// most to bring an edge into line. `leanClear`: an end that cannot be brought into line leans
-// towards where its edge goes, but keeps this far from the ends of the part of its side that
-// edges spread along. On a narrow node that leaves it in the middle.
-// Past this many edges across one gap, tracks are given out in a plain order: weighing every
-// pair of edges against each other would take too long.
-const MAX_WEIGHED = 400;
-// Reuse curve-sampling buffers across layouts.
-const SAMPLES = 16;
-const LINE_A = new Float64Array(2 * SAMPLES + 2);
-const LINE_B = new Float64Array(2 * SAMPLES + 2);
 
 // Its scratch arrays live until it returns (see scratch.ts); none is kept in what it gives back.
 export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredResult {
@@ -791,268 +770,4 @@ function roomForEnds(
       grow(prev, rb, lower, rb - 1);
     }
   });
-}
-
-// How far along the flow the handles of a plain S reach, as a share of the way it travels along
-// it. Half gives an even S. One that runs more than eight times as far across as along turns
-// sooner and crosses in a straighter line, down to a quarter at sixteen times. The layout uses
-// this to tell how near two curves will pass, and the drawing to draw them.
-export function ease(across: number, along: number): number {
-  return Math.max(0.25, Math.min(0.5, (4 * Math.abs(along)) / (Math.abs(across) || 1)));
-}
-
-// Gives every piece that does not run straight down a track across its gap, and counts the
-// tracks of each gap. Two pieces in one gap share a track only where they cannot be mistaken
-// for each other: where they do not overlap, or where they leave from or arrive at the same
-// point, as the branches of a tree do. Which of two goes above the other is whichever makes
-// them cross less. With `curved`, the tracks are levels for curves to turn onto, and only the
-// pieces that would run along or too near another get one: each group of those counts its
-// tracks from its own first. `room` is the height of the gap under each rank, and `tall`
-// receives the height that a gap whose curves mostly cross each other should have instead of levels.
-function assignTracks(
-  pieces: Pieces,
-  trackCount: Int32Array,
-  curved: boolean,
-  room: Float64Array,
-  tall: Float64Array,
-  M: LayoutMetrics
-): void {
-  const { from, to, rank, track, levels, wide } = pieces;
-  const total = from.length;
-  const byRank = new Map<number, number[]>();
-  for (let k = 0; k < total; k++) {
-    track.push(-1);
-    levels.push(0);
-    if (Math.abs(from[k]! - to[k]!) < IN_LINE) continue;
-    const list = byRank.get(rank[k]!);
-    if (list) list.push(k);
-    else byRank.set(rank[k]!, [k]);
-  }
-  if (byRank.size === 0) return;
-  // The pieces are compared pair by pair, so where each begins and ends across the flow is worked out once.
-  const LO = f64(total);
-  const HI = f64(total);
-  for (let k = 0; k < total; k++) {
-    LO[k] = Math.min(from[k]!, to[k]!);
-    HI[k] = Math.max(from[k]!, to[k]!);
-  }
-  const within = (x: number, k: number): number =>
-    x >= LO[k]! - IN_LINE && x <= HI[k]! + IN_LINE ? 1 : 0;
-  const mates = (a: number, b: number): boolean =>
-    Math.abs(from[a]! - from[b]!) < IN_LINE || Math.abs(to[a]! - to[b]!) < IN_LINE;
-  const overlap = (a: number, b: number): boolean =>
-    LO[a]! < HI[b]! - IN_LINE && LO[b]! < HI[a]! - IN_LINE;
-  // Whether a and b need tracks of their own.
-  const clash = (a: number, b: number): boolean => overlap(a, b) && !mates(a, b);
-  // Whether one of a and b could cross the other, depending on which is above.
-  const meet = (a: number, b: number): boolean =>
-    overlap(a, b) ||
-    within(to[a]!, b) + within(from[b]!, a) + within(to[b]!, a) + within(from[a]!, b) > 0;
-  // How often a and b cross with a on the higher track: a's way down through b, and b's way down to itself through a.
-  const crossings = (a: number, b: number): number => within(to[a]!, b) + within(from[b]!, a);
-  // Returns pairs of list indices, smaller first. Omitted pairs cannot meet or clash.
-  const nearPairs = (list: number[]): number[] => {
-    const byLo = list.map((_, i) => i).sort((a, b) => LO[list[a]!]! - LO[list[b]!]!);
-    const pairs: number[] = [];
-    for (let x = 0; x < byLo.length; x++) {
-      const i = byLo[x]!;
-      const reach = HI[list[i]!]! + 4 * IN_LINE;
-      for (let y = x + 1; y < byLo.length && LO[list[byLo[y]!]!]! <= reach; y++) {
-        const j = byLo[y]!;
-        pairs.push(Math.min(i, j), Math.max(i, j));
-      }
-    }
-    return pairs;
-  };
-
-  // Gives the pieces of one gap in `list` their tracks, and each the number of tracks that the
-  // pieces it has to do with take between them, counting its own from the first of those.
-  // Returns the number of tracks. The pieces come without tracks.
-  const lay = (list: number[]): number => {
-    // A plain order to start from, and to keep where nothing says otherwise: the pieces that
-    // reach furthest go first, so that those of one fan nest.
-    list.sort((a, b) => HI[b]! - LO[b]! - (HI[a]! - LO[a]!) || LO[a]! - LO[b]! || a - b);
-    const count = list.length;
-    const above: number[][] = [];
-    const group = list.map((_, i) => i);
-    const find = (i: number): number => {
-      while (group[i]! !== i) i = group[i] = group[group[i]!]!;
-      return i;
-    };
-    const weighed = count <= MAX_WEIGHED;
-    // Avoid storing quadratically many pairs in dense gaps.
-    const pairs = weighed ? nearPairs(list) : [];
-    const clashes: number[][] = weighed ? list.map(() => []) : [];
-    for (let p = 0; p < pairs.length; p += 2) {
-      const i = pairs[p]!;
-      const j = pairs[p + 1]!;
-      if (!clash(list[i]!, list[j]!)) continue;
-      clashes[i]!.push(j);
-      clashes[j]!.push(i);
-    }
-    let sequence = list.map((_, i) => i);
-    if (weighed) {
-      // above[j] lists the pieces that should be above list[j]. The order follows as many of
-      // these as it can: a piece is placed once all that should be above it are, and when
-      // none is free, the one with the fewest still waiting.
-      const waiting = i32(count);
-      const after: number[][] = [];
-      for (let i = 0; i < count; i++) {
-        above.push([]);
-        after.push([]);
-      }
-      for (let p = 0; p < pairs.length; p += 2) {
-        const i = pairs[p]!;
-        const j = pairs[p + 1]!;
-        const a = list[i]!;
-        const b = list[j]!;
-        if (!meet(a, b)) continue;
-        group[find(i)] = find(j);
-        const ab = crossings(a, b);
-        const ba = crossings(b, a);
-        if (ab === ba) continue;
-        const first = ab < ba ? i : j;
-        const second = ab < ba ? j : i;
-        above[second]!.push(first);
-        after[first]!.push(second);
-        waiting[second]!++;
-      }
-      const placed = u8(count);
-      sequence = [];
-      for (let done = 0; done < count; done++) {
-        let pick = -1;
-        for (let i = 0; i < count; i++) {
-          if (placed[i]!) continue;
-          if (pick < 0 || waiting[i]! < waiting[pick]!) pick = i;
-          if (waiting[i]! === 0) break;
-        }
-        placed[pick] = 1;
-        sequence.push(pick);
-        for (const j of after[pick]!) waiting[j]!--;
-      }
-    }
-    const taken = new Set<number>();
-    const onTrack: number[][] = [];
-    let rows = 0;
-    for (const at of sequence) {
-      const k = list[at]!;
-      let t = 0;
-      for (const i of above[at]! ?? []) if (track[list[i]!]! >= t) t = track[list[i]!]! + 1;
-      if (weighed) {
-        taken.clear();
-        for (const i of clashes[at]!) taken.add(track[list[i]!]!);
-        while (taken.has(t)) t++;
-      } else {
-        while (onTrack[t]?.some((other) => clash(k, other))) t++;
-        (onTrack[t] ??= []).push(k);
-      }
-      track[k] = t;
-      if (t >= rows) rows = t + 1;
-    }
-    const first = i32(count).fill(rows);
-    const last = i32(count).fill(-1);
-    for (let i = 0; i < count; i++) {
-      const root = find(i);
-      first[root] = Math.min(first[root]!, track[list[i]!]!);
-      last[root] = Math.max(last[root]!, track[list[i]!]!);
-    }
-    for (let i = 0; i < count; i++) {
-      const root = find(i);
-      levels[list[i]!] = last[root]! - first[root]! + 1;
-      if (curved) track[list[i]!]! -= first[root]!;
-    }
-    return rows;
-  };
-
-  const sample = (k: number, h: number, out: Float64Array): void => {
-    const c = ease(to[k]! - from[k]!, h);
-    for (let i = 0; i <= SAMPLES; i++) {
-      const t = i / SAMPLES;
-      const u = 1 - t;
-      out[2 * i] = from[k]! + (to[k]! - from[k]!) * t * t * (3 - 2 * t);
-      out[2 * i + 1] = h * (3 * c * t * u * u + 3 * (1 - c) * t * t * u + t * t * t);
-    }
-  };
-  const reaches = (points: Float64Array, line: Float64Array, limit: number): boolean => {
-    // Allow rounding error in the cheap distance check before calling Math.hypot.
-    const bound = limit * limit * (1 + 1e-9);
-    for (let i = 0; i <= SAMPLES; i++) {
-      const px = points[2 * i]!;
-      const py = points[2 * i + 1]!;
-      for (let j = 0; j < SAMPLES; j++) {
-        const dx = line[2 * j + 2]! - line[2 * j]!;
-        const dy = line[2 * j + 3]! - line[2 * j + 1]!;
-        const t = Math.max(
-          0,
-          Math.min(
-            1,
-            ((px - line[2 * j]!) * dx + (py - line[2 * j + 1]!) * dy) / (dx * dx + dy * dy || 1)
-          )
-        );
-        const ex = px - line[2 * j]! - t * dx;
-        const ey = py - line[2 * j + 1]! - t * dy;
-        if (ex * ex + ey * ey < bound && Math.hypot(ex, ey) < limit) return true;
-      }
-    }
-    return false;
-  };
-  const near = (a: number, b: number, height: number, limit: number): boolean => {
-    const h = Math.max(height / 2, height - 2 * M.levelLead);
-    sample(a, h, LINE_A);
-    sample(b, h, LINE_B);
-    return reaches(LINE_A, LINE_B, limit) || reaches(LINE_B, LINE_A, limit);
-  };
-
-  for (const [r, all] of byRank) {
-    if (!curved) {
-      trackCount[r] = lay(all);
-      continue;
-    }
-    if (all.length > MAX_WEIGHED) continue;
-    // The pieces that turn onto levels: first those that run far across and have another such
-    // piece to be told apart from, then any two that would pass too near each other as plain
-    // curves.
-    const far = all.filter((k) => wide[k]! === 1);
-    lay(far);
-    const level = new Set(far.filter((k) => levels[k]! > 1));
-    const pairs = nearPairs(all);
-    for (let p = 0; p < pairs.length; p += 2) {
-      const a = all[pairs[p]!]!;
-      const b = all[pairs[p + 1]!]!;
-      if ((level.has(a) && level.has(b)) || !clash(a, b) || from[a]! < to[a]! !== from[b]! < to[b]!)
-        continue;
-      if (near(a, b, room[r]!, wide[a]! === 1 || wide[b]! === 1 ? M.levelClear : M.levelTouch))
-        level.add(a).add(b);
-    }
-    for (const k of far) {
-      track[k] = -1;
-      levels[k] = 0;
-    }
-    if (level.size === 0) continue;
-    let crossing = 0;
-    let alongside = 0;
-    const beside = new Set<number>();
-    for (let p = 0; p < pairs.length; p += 2) {
-      const a = all[pairs[p]!]!;
-      const b = all[pairs[p + 1]!]!;
-      if (level.has(a) && level.has(b)) {
-        if (!overlap(a, b)) continue;
-        if (from[a]! < to[a]! !== from[b]! < to[b]!) crossing++;
-        else if (!mates(a, b)) alongside++;
-      } else if ((level.has(a) || level.has(b)) && meet(a, b)) beside.add(a).add(b);
-    }
-    if (crossing > alongside) {
-      for (const k of all)
-        if ((HI[k]! - LO[k]!) * CROSSED_SLOPE > tall[r]!)
-          tall[r] = (HI[k]! - LO[k]!) * CROSSED_SLOPE;
-      continue;
-    }
-    // With them go the short pieces that could cross one of them, so that each has its place
-    // among the levels and crosses none.
-    const members = all.filter((k) => level.has(k) || (wide[k]! !== 1 && beside.has(k)));
-    lay(members);
-    let most = 0;
-    for (const k of members) if (levels[k]! > most) most = levels[k]!;
-    trackCount[r] = most;
-  }
 }

@@ -23,6 +23,7 @@ used under the MIT License:
   src/layout/layered/order.ts
   src/layout/layered/position.ts
   src/layout/layered/rank.ts
+  src/layout/layered/tracks.ts
   src/layout/tree/tree.ts
   src/parser-kit/chars.ts
   src/preprocess/yaml.ts
