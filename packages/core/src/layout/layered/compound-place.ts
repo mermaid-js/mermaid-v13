@@ -1,9 +1,8 @@
 // Ported from Pele (https://github.com/obsidianmd/pele), src/layout/compound.ts at 3a2f075.
 // Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
 // Changes from Pele: split out of `compound.ts` (D596): `place`, which lays every level out and
-// puts the results in the plane, is cut into the phases it had inline, and the pass that reads
-// port hints off the routes. They share the `Compound` record in place of closure variables. The
-// algorithm is unchanged.
+// puts the results in the plane in phases, and the pass that reads port hints off the routes.
+// They share the `Compound` record. The algorithm is unchanged.
 // cspell:ignore kepano lnode lnodes cnode
 //
 import type { CNode } from './compound.ts';
