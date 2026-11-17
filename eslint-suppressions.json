@@ -349,9 +349,6 @@
   "packages/core/src/text/label.ts": {
     "@typescript-eslint/no-shadow": {
       "count": 1
-    },
-    "complexity": {
-      "count": 1
     }
   },
   "packages/core/src/theme/registry.ts": {
