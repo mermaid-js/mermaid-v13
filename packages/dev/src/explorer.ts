@@ -325,7 +325,7 @@ function filePutRoute(mmd: MmdTarget): Route {
   };
 }
 
-export function explorerRoutes(root: string, options: ExplorerOptions = {}): Route[] {
+function explorerRoutes(root: string, options: ExplorerOptions = {}): Route[] {
   const folders = foldersOf(root, options);
   const within = withinFolders(root, folders);
   const mmd = mmdTarget(within);

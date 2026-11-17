@@ -108,7 +108,7 @@ async function loadResources(registry: Registry, missing: readonly Resource[]): 
 }
 
 /** What the registered extensions still need for `a` (R-API-2, D178): `math`, say. */
-export function extensionNeeds(
+function extensionNeeds(
   { hooks, iconPacks }: Session,
   a: Analysis,
   ascii: boolean
