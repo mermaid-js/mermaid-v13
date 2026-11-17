@@ -50,6 +50,8 @@ import {
   type Pieces,
 } from './graph.ts';
 import type { LayoutMetrics } from '../units.ts';
+import { orient, rank } from './rank.ts';
+export { orient, rank } from './rank.ts';
 export { Kind, type LEdge, type LNode, type LayeredOptions, type LayeredResult } from './graph.ts';
 
 /** The fields of {@link LNode} and {@link LEdge} that `layered` reads. The others are its output. */
@@ -902,150 +904,6 @@ function roomForEnds(
       grow(prev, rb, lower, rb - 1);
     }
   });
-}
-
-// Reverses the edges that close a cycle, found by depth-first search in declaration order.
-export function orient(nodes: LNode[], edges: LEdge[]): void {
-  const n = nodes.length;
-  const m = edges.length;
-  const start = i32(n + 1);
-  for (let i = 0; i < m; i++) {
-    const e = edges[i]!;
-    e.reversed = nodes[e.head]!.kind === Kind.StartPort || nodes[e.tail]!.kind === Kind.EndPort;
-    if (!e.reversed) start[e.tail + 1]!++;
-  }
-  for (let i = 0; i < n; i++) start[i + 1]! += start[i]!;
-  const out = i32(start[n]!);
-  {
-    const fill = copy(start, n);
-    for (let i = 0; i < m; i++) if (!edges[i]!.reversed) out[fill[edges[i]!.tail]!++] = i;
-  }
-  const state = u8(n);
-  const cursor = copy(start, n);
-  const stack: number[] = [];
-  for (let root = 0; root < n; root++) {
-    if (state[root]! !== 0) continue;
-    stack.push(root);
-    state[root] = 1;
-    while (stack.length > 0) {
-      const v = stack[stack.length - 1]!;
-      if (cursor[v]! < start[v + 1]!) {
-        const e = edges[out[cursor[v]!++]!]!;
-        const w = e.head;
-        if (state[w]! === 1) e.reversed = true;
-        else if (state[w]! === 0) {
-          state[w] = 1;
-          stack.push(w);
-        }
-      } else {
-        state[v] = 2;
-        stack.pop();
-      }
-    }
-  }
-}
-
-export function rank(nodes: LNode[], edges: LEdge[], step: number): void {
-  const n = nodes.length;
-  const m = edges.length;
-  const from = i32(m);
-  const to = i32(m);
-  const len = i32(m);
-  const outStart = i32(n + 1);
-  const inStart = i32(n + 1);
-  for (let i = 0; i < m; i++) {
-    const e = edges[i]!;
-    const a = e.reversed ? e.head : e.tail;
-    const b = e.reversed ? e.tail : e.head;
-    from[i] = a;
-    to[i] = b;
-    len[i] = Math.max(1, e.minlen) * step;
-    outStart[a + 1]!++;
-    inStart[b + 1]!++;
-  }
-  for (let i = 0; i < n; i++) {
-    outStart[i + 1]! += outStart[i]!;
-    inStart[i + 1]! += inStart[i]!;
-  }
-  const outE = i32(m);
-  const inE = i32(m);
-  {
-    const of = copy(outStart, n);
-    const inf = copy(inStart, n);
-    for (let i = 0; i < m; i++) {
-      outE[of[from[i]!]!++] = i;
-      inE[inf[to[i]!]!++] = i;
-    }
-  }
-
-  const r = i32(n);
-  // Start ports go above every node later, so they don't push their targets down a rank.
-  for (let i = 0; i < n; i++) if (nodes[i]!.kind === Kind.StartPort) r[i] = -step;
-  const indeg = i32(n);
-  for (let i = 0; i < n; i++) indeg[i] = inStart[i + 1]! - inStart[i]!;
-  const topo = i32(n);
-  let count = 0;
-  for (let i = 0; i < n; i++) if (indeg[i]! === 0) topo[count++] = i;
-  for (let q = 0; q < count; q++) {
-    const v = topo[q]!;
-    for (let k = outStart[v]!; k < outStart[v + 1]!; k++) {
-      const ei = outE[k]!;
-      const w = to[ei]!;
-      if (r[v]! + len[ei]! > r[w]!) r[w] = r[v]! + len[ei]!;
-      if (--indeg[w]! === 0) topo[count++] = w;
-    }
-  }
-
-  // Longest-path ranking leaves loosely attached nodes far from their neighbours.
-  // Move each node toward the side that has more edges.
-  for (let pass = 0; pass < 8; pass++) {
-    let changed = false;
-    for (let q = count - 1; q >= 0; q--) {
-      const v = topo[q]!;
-      const ins = inStart[v + 1]! - inStart[v]!;
-      const outs = outStart[v + 1]! - outStart[v]!;
-      if (ins === 0 && outs === 0) continue;
-      let lo = -Infinity;
-      let hi = Infinity;
-      for (let k = inStart[v]!; k < inStart[v + 1]!; k++) {
-        const ei = inE[k]!;
-        lo = Math.max(lo, r[from[ei]!]! + len[ei]!);
-      }
-      for (let k = outStart[v]!; k < outStart[v + 1]!; k++) {
-        const ei = outE[k]!;
-        hi = Math.min(hi, r[to[ei]!]! - len[ei]!);
-      }
-      let next = r[v]!;
-      if (outs > ins && hi !== Infinity) next = hi;
-      else if (ins > outs && lo !== -Infinity) next = lo;
-      if (next !== r[v]!) {
-        r[v] = next;
-        changed = true;
-      }
-    }
-    if (!changed) break;
-  }
-
-  let min = Infinity;
-  let max = -Infinity;
-  let startPorts = false;
-  for (let i = 0; i < n; i++) {
-    const kind = nodes[i]!.kind;
-    if (kind === Kind.StartPort) startPorts = true;
-    if (kind === Kind.StartPort || kind === Kind.EndPort) continue;
-    if (r[i]! < min) min = r[i]!;
-    if (r[i]! > max) max = r[i]!;
-  }
-  if (min === Infinity) {
-    min = 0;
-    max = 0;
-  }
-  for (let i = 0; i < n; i++) {
-    if (nodes[i]!.kind === Kind.StartPort) r[i] = min - step;
-    else if (nodes[i]!.kind === Kind.EndPort) r[i] = max + step;
-  }
-  if (startPorts) min -= step;
-  for (let i = 0; i < n; i++) nodes[i]!.rank = r[i]! - min;
 }
 
 // The ends of edges that may move along one side of a node (0 the side its edges arrive at, 1 the
