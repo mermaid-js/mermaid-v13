@@ -1,0 +1,11 @@
+---
+title: '#355 pointer cursor on clickable nodes'
+description:
+  Hover each node. Fixed when the cursor is a pointer over the whole node for
+  all three (callback, call and href), not only over the text of the href node.
+---
+flowchart LR
+  A[Callback] --> B[Call fn] --> C[Href]
+  click A cbFn "tip A"
+  click B call cbFn("argB")
+  click C href "https://example.com"

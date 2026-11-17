@@ -1,0 +1,12 @@
+---
+title: '#356 unknown curve name'
+description:
+  The curve name bogus does not exist. Fixed when the render reports a warning naming the
+  value (today it silently draws basis curves).
+config:
+  flowchart:
+    curve: bogus
+---
+flowchart LR
+  A --> B --> C
+  A --> C
