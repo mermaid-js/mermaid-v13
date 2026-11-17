@@ -189,23 +189,6 @@
       "count": 2
     }
   },
-  "packages/core/src/layout/layered/compound.ts": {
-    "complexity": {
-      "count": 3
-    },
-    "max-depth": {
-      "count": 1
-    },
-    "max-lines": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 3
-    },
-    "no-param-reassign": {
-      "count": 2
-    }
-  },
   "packages/core/src/layout/layered/layered.fixtures.ts": {
     "max-lines-per-function": {
       "count": 1
