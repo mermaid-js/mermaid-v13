@@ -89,7 +89,13 @@ function encodingProblems(
   return problems;
 }
 
-describe('encodeSemanticTokens', () => {
+/**
+ * The limit #899 sized for a slow CI runner, when one test walked every corpus file. Each test
+ * now walks one corpus folder (#830); whether the limit stays is the maintainer's call.
+ */
+const CORPUS_TIMEOUT_MS = 30_000;
+
+describe('encodeSemanticTokens', { timeout: CORPUS_TIMEOUT_MS }, () => {
   const service = createLanguageService();
   beforeAll(() => service.preload());
 

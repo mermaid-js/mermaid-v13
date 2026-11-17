@@ -495,9 +495,15 @@ function flowchartCorpus(): { id: string; source: string }[] {
   return out;
 }
 
+/**
+ * The limit #899 sized for a slow CI runner, when one test rendered every flowchart corpus file
+ * twice. Each test now renders one file (#904); whether the limit stays is the maintainer's call.
+ */
+const CORPUS_TIMEOUT_MS = 30_000;
+
 // One test per corpus file: the corpus (540 files, each rendered twice) grows with every fixture,
 // and as one test it timed out on busy CI runners. The last test counts what the others drew.
-describe('the contract over the flowchart corpus', () => {
+describe('the contract over the flowchart corpus', { timeout: CORPUS_TIMEOUT_MS }, () => {
   const glyphs: ExtensionPlugin = {
     id: 'fixture-glyphs',
     glyphs: { glyph: (_, { size }) => GLYPH(size) },
