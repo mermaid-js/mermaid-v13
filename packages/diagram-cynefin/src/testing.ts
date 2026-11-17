@@ -16,11 +16,11 @@ export type { CynefinLexed, CynefinToken } from './parser/index.ts';
 export {
   cliffCurve,
   confusionEllipse,
-  cynefinLayoutViolations,
   foldCurve,
   hashString,
   horizonCurve,
   resolveSeed,
   seededRandom,
 } from './layout/index.ts';
+export { cynefinLayoutViolations } from './layout/invariants.ts';
 export { curveData, ellipseData } from './render/path.ts';

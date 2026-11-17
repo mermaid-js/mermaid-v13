@@ -10,7 +10,7 @@ import type { JourneyModel } from '../model.ts';
 import { drawnRects } from './extent.ts';
 import { journeyMetrics } from './metrics.ts';
 import type { JourneyLayout, Rect } from './types.ts';
-import { rectsOverlap as overlaps, within } from '@mermaid-js/shared/layout/invariants';
+import { rectsOverlap as overlaps, within } from '@mermaid-js/shared/testing/layout-invariants';
 
 const EPS = 1e-6;
 

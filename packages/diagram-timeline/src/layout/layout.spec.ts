@@ -5,7 +5,8 @@ import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { TimelineModel } from '../model.ts';
 import * as fx from './fixtures.ts';
-import { layoutTimeline, timelineLayoutViolations, type TimelineLayout } from './index.ts';
+import { layoutTimeline, type TimelineLayout } from './index.ts';
+import { timelineLayoutViolations } from './invariants.ts';
 import { timeline as diagramPlugin } from '../plugin.ts';
 
 /** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
