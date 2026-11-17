@@ -242,6 +242,27 @@ describe('extended shapes: triangles and stacks (#395, #403, D603)', () => {
     expect((Math.min(...xs) + Math.max(...xs)) / 2).toBeCloseTo(size.dx!, 9);
   });
 
+  it.each(LABELS)(
+    'ends an edge at or beyond the corner of the bottom of docs on the outline, label %s × %s',
+    (tw, th) => {
+      const { w: W, h: H } = shapeSize('docs', tw, th, PADS);
+      const layers = outlines('docs', W, H);
+      for (const t of [-W / 2 - 100, -W / 2 - 1, -W / 2, W / 2, W / 2 + 1, W / 2 + 100]) {
+        const a = shapeInset('docs', W, H, 2, t, PADS);
+        expect(Number.isFinite(a), `t ${t}`).toBe(true);
+        // At the corner itself, the end lies on the outer outline.
+        if (Math.abs(t) <= W / 2) expect(onOutline(layers, edgeEnd('docs', W, H, 2, t))).toBe(true);
+      }
+      // Beyond the corner is the corner.
+      expect(shapeInset('docs', W, H, 2, W / 2 + 100, PADS)).toBe(
+        shapeInset('docs', W, H, 2, W / 2, PADS)
+      );
+      expect(shapeInset('docs', W, H, 2, -W / 2 - 100, PADS)).toBe(
+        shapeInset('docs', W, H, 2, -W / 2, PADS)
+      );
+    }
+  );
+
   it.each(STACKS.flatMap((kind) => LABELS.map(([tw, th]) => [kind, tw, th] as const)))(
     'ends every edge off the centre on the outline of %s, label %s × %s',
     (kind, tw, th) => {

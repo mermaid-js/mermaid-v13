@@ -2,11 +2,12 @@
 // Ported from Pele's src/svg/edges.ts @ 3a2f075 (https://github.com/obsidianmd/pele, MIT,
 // (c) 2026 kepano): `routePath`. The one route drawing every graph diagram shares.
 // cspell:ignore kepano
+import type { Warning } from '@mermaid-js/core';
 import type { EdgeRouting, RoutePoint } from '@mermaid-js/core/layout';
 import type { PathData, SvgWriter } from '@mermaid-js/core/svg';
 
 // How far an edge runs straight before a marker at its end, where it has the room.
-const LEAD = 6;
+export const LEAD = 6;
 // How far from the marker room at the end of a leg `stepBefore` and `stepAfter` put their step
 // (less where the leg is short).
 const STEP_INSET = 12;
@@ -31,24 +32,19 @@ const D3_CURVES: ReadonlySet<string> = new Set([
 /** How the line between two route points is drawn, from the v12 `curve` name. */
 export type CurveKind = 'curved' | 'linear' | 'step' | 'stepBefore' | 'stepAfter' | 'rounded';
 
-/** The warning for a `curve` name that is none of the {@link CurveKind}s (D602). */
-export interface CurveWarning {
-  readonly code: 'CURVE_UNKNOWN';
-  readonly message: string;
-}
+/** Whether a curve name is one of the three step curves, which turn at right angles. */
+const isStepped = (kind: string): kind is 'step' | 'stepBefore' | 'stepAfter' =>
+  kind === 'step' || kind === 'stepBefore' || kind === 'stepAfter';
 
 /**
  * The curve kind for a v12 `curve` name. A name that is not drawn otherwise is drawn `curved`:
  * a d3 curve factory name (`basis`, `cardinal`, …) silently, any other name with a
  * `CURVE_UNKNOWN` warning to `warn` (D602). Use {@link curveReporter} to warn once per name.
  */
-export function curveKind(
-  curve: string | undefined,
-  warn?: (warning: CurveWarning) => void
-): CurveKind {
+export function curveKind(curve: string | undefined, warn?: (warning: Warning) => void): CurveKind {
   if (curve === undefined || D3_CURVES.has(curve)) return 'curved';
   if (curve === 'linear' || curve === 'rounded') return curve;
-  if (curve === 'step' || curve === 'stepBefore' || curve === 'stepAfter') return curve;
+  if (isStepped(curve)) return curve;
   warn?.({
     code: 'CURVE_UNKNOWN',
     message: `Unknown curve "${curve}": edges are drawn with S-curves (curve: basis)`,
@@ -58,7 +54,7 @@ export function curveKind(
 
 /** {@link curveKind} for one render: each unknown name is reported once, however many edges use it. */
 export function curveReporter(
-  warn: (warning: CurveWarning) => void
+  warn: (warning: Warning) => void
 ): (curve: string | undefined) => CurveKind {
   const seen = new Set<string>();
   return (curve) =>
@@ -123,11 +119,23 @@ function movedStep(
   if (kind === 'step' || route.length !== 4) return route;
   const [a, b, c, d] = route as [RoutePoint, RoutePoint, RoutePoint, RoutePoint];
   const eq = (u: number, v: number): boolean => Math.abs(u - v) < 0.01;
+  // The across leg moves only where it already lies between the ends, clear of the marker room
+  // at each: a U-shaped route would otherwise enter its last node from the wrong side.
+  const between = (at: number, from: number, to: number): boolean => {
+    const sign = Math.sign(to - from);
+    return (
+      sign !== 0 &&
+      sign * (at - (from + sign * startTrim)) > 0 &&
+      sign * (to - sign * endTrim - at) > 0
+    );
+  };
   if (eq(a.x, b.x) && eq(b.y, c.y) && eq(c.x, d.x)) {
+    if (!between(b.y, a.y, d.y)) return route;
     const y = stepCorner(kind, a.y, d.y, startTrim, endTrim);
     return [a, { ...b, y }, { ...c, y }, d];
   }
   if (eq(a.y, b.y) && eq(b.x, c.x) && eq(c.y, d.y)) {
+    if (!between(b.x, a.x, d.x)) return route;
     const x = stepCorner(kind, a.x, d.x, startTrim, endTrim);
     return [a, { ...b, x }, { ...c, x }, d];
   }
@@ -156,7 +164,7 @@ class Legs {
     endTrim: number
   ) {
     this.linear = kind === 'linear';
-    const stepped = kind === 'step' || kind === 'stepBefore' || kind === 'stepAfter';
+    const stepped = isStepped(kind);
     const points = stepped ? movedStep(kind, route, startTrim, endTrim) : route;
     for (const [i, p] of points.entries()) {
       const axis = p.axis === 'h' ? 1 : 0;
@@ -330,7 +338,7 @@ class Pen {
     private readonly r: Legs,
     private readonly kind: CurveKind
   ) {
-    this.stepped = kind === 'step' || kind === 'stepBefore' || kind === 'stepAfter';
+    this.stepped = isStepped(kind);
     this.atX = r.x(0);
     this.atY = r.y(0);
     this.b = w.path().moveTo(this.atX, this.atY);

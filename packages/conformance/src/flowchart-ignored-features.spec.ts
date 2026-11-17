@@ -2,10 +2,11 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { createMermaid } from 'mermaid';
+import { REPO_ROOT } from './index.ts';
 
 /** An e2e flowchart fixture, `e2e/diagrams/flowchart/<path>.mmd`. */
 const fixture = (path: string): string =>
-  readFileSync(join(import.meta.dirname, '../../../e2e/diagrams/flowchart', `${path}.mmd`), 'utf8');
+  readFileSync(join(REPO_ROOT, 'e2e/diagrams/flowchart', `${path}.mmd`), 'utf8');
 
 const mermaid = () => {
   const m = createMermaid();

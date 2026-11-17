@@ -127,9 +127,11 @@ function stackInset(s: number, drop: number): Inset {
 function stackedDocumentBottom(s: number): Inset {
   return (W, H, _side, t) => {
     const half = (W - 2 * s) / 2;
+    // An end past the corner of the box takes the corner, as `stackInset` does.
+    const at = Math.min(W / 2, Math.max(-W / 2, t));
     let lowest = -Infinity;
     for (let i = 0; i < 3; i++) {
-      const x = t - (1 - i) * s;
+      const x = at - (1 - i) * s;
       const u = Math.abs(x) / half;
       if (u > 1) continue;
       const dip = 2 * WAVE.control * u * (1 - u) * (x > 0 ? -1 : 1);

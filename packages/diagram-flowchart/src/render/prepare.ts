@@ -20,7 +20,7 @@ import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/
 import type { FlowModel, FlowModelEdge, FlowVertex } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { FlowRenderContext } from './context.ts';
-import { curveReporter, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
+import { curveReporter, curveRouting, LEAD, type CurveKind } from '@mermaid-js/shared/svg/route';
 import { dirOf, nesting, type Nesting } from './nesting.ts';
 import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
 import { assetSize } from './assets.ts';
@@ -393,14 +393,14 @@ function layoutGraph(
     return px === undefined ? fallback : fromPx(units, px, axis, min);
   };
   // Node spacing runs across the flow and rank spacing along it.
-  // D601: a literal rank gap stays literal, but never below an arrowhead and a lead as long as
-  // the head, so the edge between two subframes stays visible (#399).
-  const head = markerTrim('arrow_point', arrowheads(m.ctx.theme));
+  // D601: a literal rank gap stays literal, but never below an arrowhead and its lead, so the
+  // edge between two subframes stays visible (#399).
+  const head = markerTrim('arrow_point', arrowheads(m.ctx.theme)) + LEAD;
   const spacing = graphSpacing(
     units,
     rootDir,
     length,
-    fromPx(units, 2 * head, sideways(rootDir) ? 'x' : 'y')
+    fromPx(units, head, sideways(rootDir) ? 'x' : 'y')
   );
   // How edges are routed follows the diagram's default curve: `linkStyle default interpolate`
   // first, then config, as each edge's own drawing does.

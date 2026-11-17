@@ -6,4 +6,4 @@
 '@mermaid-js/diagram-agentflow': patch
 ---
 
-fix: the `step`, `stepBefore` and `stepAfter` curves draw right-angle corners and look different from each other (the step in the middle, near the start, near the end of the leg), and an unknown `curve` name warns `CURVE_UNKNOWN` once per render before drawing S-curves (#356).
+The `step`, `stepBefore` and `stepAfter` curves draw right-angle corners and differ from each other, and an unknown `curve` name warns `CURVE_UNKNOWN` instead of being ignored.
