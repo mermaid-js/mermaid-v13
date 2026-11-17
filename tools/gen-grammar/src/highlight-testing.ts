@@ -119,32 +119,47 @@ export function monarchCategorise(json: string): Categorise {
       for (let p = 0, still = 0, once = true; (once || p < line.length) && still < 8; ) {
         once = false;
         const rules = compiled[stack[stack.length - 1] ?? 'root'] ?? [];
-        let width = -1;
-        for (const [re, action] of rules) {
-          re.lastIndex = p;
-          const m = re.exec(line);
-          if (!m) continue;
-          const next = action.switchTo ?? action.next;
-          // As Monaco: an empty match that changes no state only counts on an empty line.
-          if (m[0].length === 0 && !next && line.length > 0) continue;
-          const c = MONARCH[action.token] ?? 'Other';
-          for (let i = p; i < p + m[0].length; i++) cats[i] = c;
-          if (next === '@pop') stack = stack.length > 1 ? stack.slice(0, -1) : stack;
-          else if (action.switchTo) stack = [...stack.slice(0, -1), next?.slice(1) ?? 'root'];
-          else if (next) stack = [...stack, next.slice(1)];
-          width = m[0].length;
-          break;
-        }
-        if (width > 0) {
-          p += width;
+        const step = monarchStep(rules, line, p, cats, stack);
+        stack = step.stack;
+        if (step.width > 0) {
+          p += step.width;
           still = 0;
-        } else if (width === 0) still++;
+        } else if (step.width === 0) still++;
         else if (p < line.length) p++;
       }
       out.push(...cats.slice(0, raw.length), 'Other');
     }
     return out.slice(0, text.length);
   };
+}
+
+/**
+ * The first Monarch rule matching `line` at `p`: it paints its categories into `cats` and gives
+ * the state stack after it, with the match width (-1 when no rule matched).
+ */
+function monarchStep(
+  rules: readonly (readonly [RegExp, MonarchRule[1]])[],
+  line: string,
+  p: number,
+  cats: string[],
+  stack: string[]
+): { width: number; stack: string[] } {
+  for (const [re, action] of rules) {
+    re.lastIndex = p;
+    const m = re.exec(line);
+    if (!m) continue;
+    const next = action.switchTo ?? action.next;
+    // As Monaco: an empty match that changes no state only counts on an empty line.
+    if (m[0].length === 0 && !next && line.length > 0) continue;
+    const c = MONARCH[action.token] ?? 'Other';
+    for (let i = p; i < p + m[0].length; i++) cats[i] = c;
+    let after = stack;
+    if (next === '@pop') after = stack.length > 1 ? stack.slice(0, -1) : stack;
+    else if (action.switchTo) after = [...stack.slice(0, -1), next?.slice(1) ?? 'root'];
+    else if (next) after = [...stack, next.slice(1)];
+    return { width: m[0].length, stack: after };
+  }
+  return { width: -1, stack };
 }
 
 /**
