@@ -373,18 +373,13 @@ const EDGE_LENGTH_KEY: Partial<Record<ElkAlgorithm, string>> = {
 
 /**
  * The edge length stress and radial need to keep nodes apart (#417). Neither reads node size or
- * `elk.spacing.nodeNode`, and their own defaults are for 30 px boxes. `length` is the widest plus
- * the tallest node plus `spacing.node` (the largest extent alone left 43 px for 152 x 40 nodes,
- * because the edge length is a target between centres and a diagonal pair sits nearer); a value
- * already in `set` stays (an explicit option wins).
+ * `elk.spacing.nodeNode`. The length is a target between centres. Boxes W x H with gap s are
+ * clear on any diagonal when the distance is at least hypot(W + s, H + s), and W + H + s covers
+ * that whenever s^2 is at most 2 W H (the widest plus the tallest node bounds every pair).
  */
-export function edgeLengthOptions(
-  algorithm: ElkAlgorithm,
-  length: number,
-  set: LayoutOptions = {}
-): LayoutOptions {
+function edgeLengthOptions(algorithm: ElkAlgorithm, length: number): LayoutOptions {
   const key = EDGE_LENGTH_KEY[algorithm];
-  return key === undefined ? {} : { [key]: set[key] ?? String(length) };
+  return key === undefined ? {} : { [key]: String(length) };
 }
 
 const FIRST_PASS: Again = { grow: new Map(), pins: new Map() };

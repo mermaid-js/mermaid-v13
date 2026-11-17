@@ -1,13 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { layered, validateLayout, type LayoutGraph } from '@mermaid-js/core/layout';
-import {
-  edgeLengthOptions,
-  elkEngine,
-  takeNotes,
-  toElkGraph,
-  type ElkAlgorithm,
-} from './adapter.ts';
+import { elkEngine, takeNotes, toElkGraph, type ElkAlgorithm } from './adapter.ts';
 
 const spacing = { node: 50, rank: 50, edge: 20 };
 
@@ -365,6 +359,11 @@ describe('elkEngine (LayoutGraph → ELK → LayoutModel)', () => {
       expect(smallestGap(model)).toBeGreaterThanOrEqual(spacing.node);
     });
 
+    it('elk.radial: the issue class tree (A <|-- B, A <|-- C, C --> D) keeps a gap', () => {
+      const model = elkEngine('radial')(sized('AB AC CD', 'TB'));
+      expect(smallestGap(model)).toBeGreaterThanOrEqual(spacing.node);
+    });
+
     it('sets the edge length from the widest and tallest node plus spacing.node', () => {
       const stress = toElkGraph(sized(stressTree, 'TB'), 'stress').root.layoutOptions!;
       expect(stress['elk.stress.desiredEdgeLength']).toBe(String(152 + 40 + spacing.node));
@@ -373,7 +372,8 @@ describe('elkEngine (LayoutGraph → ELK → LayoutModel)', () => {
     });
 
     it('sets nothing for the other algorithms (layered output is unchanged)', () => {
-      for (const algorithm of ALL.filter((a) => a !== 'stress')) {
+      // `ALL` has no radial, so this covers every algorithm but stress and radial.
+      for (const algorithm of ALL.filter((a) => a !== 'stress' && a !== 'radial')) {
         const options = toElkGraph(sized(stressTree, 'TB'), algorithm).root.layoutOptions!;
         expect(Object.keys(options).filter((k) => /stress|radial/.test(k))).toEqual([]);
       }
@@ -384,13 +384,6 @@ describe('elkEngine (LayoutGraph → ELK → LayoutModel)', () => {
       expect(built.nodes.get('G')!.layoutOptions!['elk.stress.desiredEdgeLength']).toBe(
         String(152 + 40 + spacing.node)
       );
-    });
-
-    it('a value the caller already put in the options wins over the computed one', () => {
-      const options = edgeLengthOptions('stress', 202, { 'elk.stress.desiredEdgeLength': '300' });
-      expect(options['elk.stress.desiredEdgeLength']).toBe('300');
-      const radial = edgeLengthOptions('radial', 202, { 'elk.radial.radius': '99' });
-      expect(radial['elk.radial.radius']).toBe('99');
     });
   });
 });
