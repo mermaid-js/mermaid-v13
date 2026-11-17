@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Point } from '../../types.ts';
 import { EDGE_ROUTING } from '../config.ts';
+import { crossingPointsBetween } from '../direction/laneContainment.ts';
 import { swimlaneLayout } from '../swimlane.ts';
 import { DDLT_FIXTURES, fixtureGraph } from './ddlt.fixtures.ts';
 import { swimlaneGateIssues } from './ddltGates.ts';
@@ -35,6 +36,16 @@ function layOut(id: string) {
   return { graph, model, issues: swimlaneGateIssues(graph, model) };
 }
 
+/** Edges with both ends in one lane, each once routed round a rail outside it: fixture, edge, lane. */
+const SAME_LANE_EDGES: readonly (readonly [fixture: string, edge: string, lane: string])[] = [
+  ['regressions/same-lane-detour-tb', 'L_d_e_0', 'Qa'],
+  ['regressions/same-lane-back-edge-lr', 'L_c_a_0', 'Ops'],
+  ['regressions/terminal-lane-detour', 'L_E_G_0', 'subGraph1'],
+  ['8-query-process-2', 'L_E_G_0', 'subGraph1'],
+  ['4-car-fun-sales-tb', 'L_I_K_0', 'Legal'],
+  ['7-car-sales-constr', 'L_I_K_0', 'Legal'],
+];
+
 describe('swimlane DDLT regressions', () => {
   it('#634: an unlabelled edge leaving beside a labelled one keeps clear of its label', () => {
     const { graph, model, issues } = layOut('5-car-fun-sales-wide-tb');
@@ -63,12 +74,7 @@ describe('swimlane DDLT regressions', () => {
 
   // mermaid-js/mermaid#8698: each edge has both ends in one lane, and was routed round a rail
   // outside it. The LR one stays in its lane in v13 already (LR is routed on drawn sizes).
-  it.each([
-    ['regressions/same-lane-detour-tb', 'L_d_e_0', 'Qa'],
-    ['regressions/same-lane-back-edge-lr', 'L_c_a_0', 'Ops'],
-    ['4-car-fun-sales-tb', 'L_I_K_0', 'Legal'],
-    ['7-car-sales-constr', 'L_I_K_0', 'Legal'],
-  ])('#683: %s keeps %s inside lane %s', (id, edge, lane) => {
+  it.each(SAME_LANE_EDGES)('#683: %s keeps %s inside lane %s', (id, edge, lane) => {
     const { model, issues } = layOut(id);
     expect(issues.filter((i) => i.edgeId === edge).map((i) => i.message)).toEqual([]);
     const band = box(model.groups.get(lane)!);
@@ -78,6 +84,29 @@ describe('swimlane DDLT regressions', () => {
       expect(p.y).toBeGreaterThanOrEqual(band.top);
       expect(p.y).toBeLessThanOrEqual(band.bottom);
     }
+  });
+
+  // mermaid-js/mermaid#8698: the route that stays in the lane may cost a crossing, and the hop
+  // drawn over it must not run into an arrowhead of either edge.
+  it.each(SAME_LANE_EDGES)('#683: %s draws no hop of %s near an arrowhead', (id, edge) => {
+    const { graph, model } = layOut(id);
+    const route = model.edges.get(edge)!.points;
+    const tooClose = graph.edges
+      .filter((other) => other.id !== edge)
+      .flatMap((other) => {
+        const otherRoute = model.edges.get(other.id)?.points ?? [];
+        const tips = [route[0], route.at(-1), otherRoute[0], otherRoute.at(-1)];
+        return crossingPointsBetween(route, otherRoute)
+          .filter((hop) =>
+            tips.some(
+              (tip) =>
+                tip !== undefined &&
+                Math.hypot(tip.x - hop.x, tip.y - hop.y) < EDGE_ROUTING.TERMINAL_HOP_CLEARANCE
+            )
+          )
+          .map((hop) => `${other.id} at (${hop.x.toFixed(1)}, ${hop.y.toFixed(1)})`);
+      });
+    expect(tooClose).toEqual([]);
   });
 
   it('#683: two opposite edges between stacked nodes run an arrowhead spacing apart', () => {
