@@ -17,18 +17,18 @@ import type { KanbanLayoutInput } from './input.ts';
 import { drawnRects } from './extent.ts';
 import type { KanbanLayout, Rect } from './types.ts';
 import {
+  EPS,
   nonFinite as numbers,
+  rectText as box,
   rectsOverlap as overlaps,
   within,
-} from '@mermaid-js/shared/layout/invariants';
+} from '@mermaid-js/shared/testing/layout-invariants';
 
-const EPS = 1e-6;
 const contains = (outer: Rect, inner: Rect): boolean =>
   within(inner.x, outer.x, outer.x + outer.width) &&
   within(inner.x + inner.width, outer.x, outer.x + outer.width) &&
   within(inner.y, outer.y, outer.y + outer.height) &&
   within(inner.y + inner.height, outer.y, outer.y + outer.height);
-const box = (r: Rect): string => `(${r.x}, ${r.y}, ${r.width} × ${r.height})`;
 
 /** Every invariant `layout` breaks for `input`, one line each; empty when it holds them all. */
 export function kanbanLayoutViolations(input: KanbanLayoutInput, layout: KanbanLayout): string[] {

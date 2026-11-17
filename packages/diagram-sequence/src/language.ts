@@ -10,7 +10,7 @@ import { sequenceHover } from './facet/hover.ts';
 import { sequenceCategories } from './generated/categories.ts';
 import { parseSequence } from './parser/index.ts';
 import type { SequenceDocument } from './parser/index.ts';
-import { shapeReason } from '@mermaid-js/shared/parser/facet';
+import { probeText, readsBackAt, shapeReason } from '@mermaid-js/shared/parser/facet';
 
 export { sequenceCategories } from './generated/categories.ts';
 export { sequenceDocs } from './generated/docs.ts';
@@ -53,21 +53,9 @@ const ZS = PARTICIPANT_LINES.filter((l) => l.includes('Z')).length;
  * initial mode, so a line reads as it would alone.
  */
 function readsBack(name: string): boolean {
-  let text = HEADER;
-  const spots: number[] = [];
-  for (const line of PARTICIPANT_LINES) {
-    spots.push(text.length + line.indexOf('@'));
-    text += `${line.replace('@', () => name)}\n`;
-  }
-  const { diagnostics, symbols } = parseSequence(text);
-  if (diagnostics.some((d) => d.severity === 'error')) return false;
-  const participants = symbols.filter((s) => s.kind === 'participant');
+  const { text, spots } = probeText(HEADER, PARTICIPANT_LINES, name);
   // Each line has one `@` and at most one `Z`, so nothing else may read as a participant.
-  if (participants.length !== spots.length + ZS) return false;
-  return spots.every((at) => {
-    const hits = participants.filter((s) => s.range.start === at);
-    return hits.length === 1 && hits[0]!.name === name && hits[0]!.range.end === at + name.length;
-  });
+  return readsBackAt(parseSequence(text), spots, name, 'participant', ZS);
 }
 
 /** Why `name` cannot be a participant id, if it cannot. */

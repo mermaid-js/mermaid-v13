@@ -28,13 +28,10 @@ import type {
   Rect,
   Segment,
 } from './types.ts';
-import { numbers } from '@mermaid-js/shared/layout/invariants';
-
-const EPS = 1e-6;
+import { EPS, numbers, rectText } from '@mermaid-js/shared/testing/layout-invariants';
 
 /** A rectangle as a violation message prints it. */
-const printed = (r: Rect): string =>
-  `(${r.x.toFixed(2)}, ${r.y.toFixed(2)}, ${r.width.toFixed(2)} × ${r.height.toFixed(2)})`;
+const printed = (r: Rect): string => rectText(r, 2);
 
 /** The causes in source order. */
 const causesOf = (layout: IshikawaLayout): IshikawaCauseLayout[] =>

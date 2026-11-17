@@ -1,0 +1,16 @@
++-------------------------+
+|                         |
+|      Single quoted      |
+|    [Software System]    |
+|  Has "escaped" quotes   |
++------------+------------+
+             |
+             |
+           Calls
+             |
+             v
++-------------------------+
+|                         |
+|       Back\slash        |
+|    [Software System]    |
++-------------------------+

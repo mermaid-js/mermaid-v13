@@ -60,7 +60,11 @@ const STORE = 'node_modules/.pnpm/mermaid-fake@1.0.0/node_modules/mermaid-fake';
  */
 function monorepo(): string {
   return tree({
-    'package.json': JSON.stringify({ name: 'mono', private: true }),
+    'package.json': JSON.stringify({
+      name: 'mono',
+      private: true,
+      devDependencies: { 'mermaid-broken-top': '1.0.0' },
+    }),
     'pnpm-workspace.yaml': "packages:\n  - 'packages/*'\n",
     ...under(STORE, facetPackage('mermaid-fake', 'fake')),
     ...under('node_modules/mermaid-broken-top', {
@@ -69,7 +73,7 @@ function monorepo(): string {
     }),
     'packages/foo/package.json': JSON.stringify({
       name: 'foo',
-      dependencies: { 'mermaid-fake': '1.0.0' },
+      dependencies: { 'mermaid-fake': '1.0.0', 'mermaid-broken': '1.0.0' },
     }),
     'packages/foo/node_modules/mermaid-fake': { link: `../../../${STORE}` },
     ...under('packages/foo/node_modules/mermaid-broken', {
@@ -78,7 +82,10 @@ function monorepo(): string {
     }),
     'packages/foo/a.mmd': 'fake\n',
     'packages/foo/docs/b.mmd': 'fake\n',
-    'packages/foo/docs/inner/package.json': JSON.stringify({ name: 'inner' }),
+    'packages/foo/docs/inner/package.json': JSON.stringify({
+      name: 'inner',
+      dependencies: { 'mermaid-inner': '1.0.0' },
+    }),
     ...under(
       'packages/foo/docs/inner/node_modules/mermaid-inner',
       facetPackage('mermaid-inner', 'inner')
@@ -132,7 +139,10 @@ describe('plugin discovery in the package root of an opened document (D579)', ()
     async () => {
       const root = monorepo();
       const outside = tree({
-        'package.json': JSON.stringify({ name: 'elsewhere' }),
+        'package.json': JSON.stringify({
+          name: 'elsewhere',
+          dependencies: { 'mermaid-out': '1.0.0' },
+        }),
         ...under('node_modules/mermaid-out', facetPackage('mermaid-out', 'out')),
         'x.mmd': 'out\n',
       });

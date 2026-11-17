@@ -233,6 +233,9 @@ importers:
       tsx:
         specifier: ^4.20.6
         version: 4.20.6
+      typescript:
+        specifier: ~6.0.3
+        version: 6.0.3
 
   packages/bundler-plugin:
     dependencies:
@@ -653,6 +656,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-requirement:
     devDependencies:
@@ -857,13 +863,16 @@ importers:
       '@mermaid-js/language-service':
         specifier: workspace:*
         version: link:../language-service
-      mermaid:
+      '@mermaid-js/plugin-autoload':
         specifier: workspace:*
-        version: link:../mermaid
+        version: link:../plugin-autoload
       vscode-languageserver:
         specifier: ^11.0.0
         version: 11.0.0
     devDependencies:
+      mermaid:
+        specifier: workspace:*
+        version: link:../mermaid
       vscode-languageserver-protocol:
         specifier: 3.18.5
         version: 3.18.5
@@ -1260,6 +1269,16 @@ importers:
         specifier: ^4.20.6
         version: 4.20.6
 
+  packages/plugin-autoload:
+    dependencies:
+      '@mermaid-js/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      mermaid:
+        specifier: workspace:*
+        version: link:../mermaid
+
   packages/plugin-hand-drawn:
     dependencies:
       roughjs:
@@ -1290,6 +1309,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/plugin-autoload':
+        specifier: workspace:*
+        version: link:../plugin-autoload
       esbuild:
         specifier: ^0.25.12
         version: 0.25.12

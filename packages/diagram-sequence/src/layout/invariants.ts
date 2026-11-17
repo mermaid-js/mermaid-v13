@@ -18,15 +18,13 @@ import type {
   SequenceLayout,
 } from './types.ts';
 import {
+  EPS,
   nonFinite as numbers,
   rectsOverlap as overlaps,
   within,
-} from '@mermaid-js/shared/layout/invariants';
+} from '@mermaid-js/shared/testing/layout-invariants';
 
 type Participants = ReadonlyMap<string, ParticipantLayout>;
-
-/** Tolerance for float sums. */
-const EPS = 1e-6;
 
 /** Top of the top box to the end of the participant: the bottom box or the lifeline's end. */
 function span(p: ParticipantLayout): [number, number] {

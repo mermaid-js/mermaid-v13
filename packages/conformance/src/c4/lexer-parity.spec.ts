@@ -58,9 +58,9 @@ import type { Exclusion } from './d452.ts';
  */
 /**
  * The e2e fixtures under `e2e/diagrams/c4` (the 32 of 12.2.0's corpus, #538's 12, #539's 2,
- * #542's 14 baselines, #683's 3, #739's 1 and #681's 1).
+ * #542's 14 baselines, #683's 3, #739's 1, #681's 1 and #680's 3).
  */
-const E2E_FIXTURES = 65;
+const E2E_FIXTURES = 68;
 
 /** The sources each D452 exclusion covers as they are (not in a variant), in corpus order. */
 const D452_EXCLUDED: Record<Exclusion, string[]> = {

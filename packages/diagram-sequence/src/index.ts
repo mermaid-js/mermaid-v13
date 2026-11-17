@@ -9,12 +9,7 @@ import type { SequenceModel } from './model.ts';
 import type { SequenceLayout } from './layout/index.ts';
 
 export type * from './model.ts';
-export {
-  layoutSequence,
-  sequenceLayoutViolations,
-  type SequenceLayout,
-  type SequenceLayoutContext,
-} from './layout/index.ts';
+export { layoutSequence, type SequenceLayout, type SequenceLayoutContext } from './layout/index.ts';
 export {
   detectSequence,
   JISON_NAMES,

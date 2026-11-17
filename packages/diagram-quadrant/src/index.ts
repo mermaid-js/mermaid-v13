@@ -9,7 +9,7 @@ import type { QuadrantLayout } from './layout/index.ts';
 
 export type * from './model.ts';
 export * from './parser/index.ts';
-export { layoutQuadrant, quadrantLayoutViolations } from './layout/index.ts';
+export { layoutQuadrant } from './layout/index.ts';
 export type * from './layout/index.ts';
 export { quadrantChartConfigDefaults } from './generated/config-defaults.ts';
 export { quadrant } from './plugin.ts';

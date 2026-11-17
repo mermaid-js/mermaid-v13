@@ -9,7 +9,6 @@ export type { DetailedKeywordItem as KeywordItem } from '@mermaid-js/shared/pars
 export { plural } from '@mermaid-js/shared/parser/facet';
 export { trimmed } from '@mermaid-js/shared/parser/facet';
 export { tokenBefore } from '@mermaid-js/shared/parser/facet';
-export { span } from '@mermaid-js/shared/parser/facet';
 export { code } from '@mermaid-js/shared/parser/facet';
 
 /** The header keyword (`xychart-beta` is still read, but not offered). */

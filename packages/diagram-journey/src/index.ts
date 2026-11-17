@@ -24,7 +24,6 @@ export type {
   JourneyToken,
 } from './parser/index.ts';
 export {
-  journeyLayoutViolations,
   journeyMetrics,
   layoutJourney,
   type JourneyLayout,

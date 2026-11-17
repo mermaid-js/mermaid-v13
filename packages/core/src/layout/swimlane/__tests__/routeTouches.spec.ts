@@ -28,7 +28,10 @@ const MEASURED_IN_VIEWER: Record<string, NodeSizes> = {
 };
 
 // Touches no stage resolves yet. The router leaves two of them in `pebr-2-edge-intrudes-lane-label`:
-// two tracks in one channel end 3.3px apart, and no later stage moves a corner. v12 listed
+// two tracks in one channel end 3.3px apart, and no later stage moves a corner. It leaves four in
+// `regressions/edge-end-on-box` (v12 never swept that fixture for touches): `L_B1_A1_0` and
+// `L_B2_A1_0` run 3px apart along one channel, and `L_A3_B2_0` and `L_B1_A1_0` share a vertical
+// over 10px; the later stages clear 11 of the 15 touches there and leave these. v12 listed
 // `14-messy-layout` and `6-legal-constr-sales`; v13 resolves the first, and a detour rescued into
 // a straight line now keeps the visible gap from a corner of the route beside it
 // (`siblingRescueTouch.spec.ts`), which clears the second, `5-car-fun-sales-wide-tb`,
