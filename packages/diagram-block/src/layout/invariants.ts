@@ -20,18 +20,15 @@ import { isComposite } from '../model.ts';
 import { outlineDistance } from '../shapes/outline.ts';
 import { blockIndex, drawnBoxes } from './layout.ts';
 import type { BlockLayout, BlockNodeLayout, Rect } from './types.ts';
-import { numbers, rectInside as inside } from '@mermaid-js/shared/testing/layout-invariants';
+import {
+  EPS,
+  numbers,
+  rectInside as inside,
+  rectsOverlap as overlaps,
+  rectText,
+} from '@mermaid-js/shared/testing/layout-invariants';
 
-const EPS = 1e-6;
-
-const overlaps = (a: Rect, b: Rect, eps: number): boolean =>
-  a.x < b.x + b.width - eps &&
-  b.x < a.x + a.width - eps &&
-  a.y < b.y + b.height - eps &&
-  b.y < a.y + a.height - eps;
-
-const printed = (r: Rect): string =>
-  `(${r.x.toFixed(2)}, ${r.y.toFixed(2)}, ${r.width.toFixed(2)} × ${r.height.toFixed(2)})`;
+const printed = (r: Rect): string => rectText(r, 2);
 
 /** The violations of `layout`. */
 export function blockLayoutViolations(layout: BlockLayout): string[] {

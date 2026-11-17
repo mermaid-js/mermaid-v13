@@ -21,23 +21,16 @@ import {
   type TreemapLeafLayout,
   type TreemapSectionLayout,
 } from './types.ts';
-import { numbers, rectInside as inside } from '@mermaid-js/shared/testing/layout-invariants';
-
-const EPS = 1e-6;
+import {
+  numbers,
+  rectInside as inside,
+  rectsOverlap as overlap,
+  rectText as show,
+} from '@mermaid-js/shared/testing/layout-invariants';
 
 type Item = TreemapSectionLayout | TreemapLeafLayout;
 
 const area = (r: Rect): number => r.width * r.height;
-const show = (r: Rect): string => `(${r.x}, ${r.y}, ${r.width} × ${r.height})`;
-
-function overlap(a: Rect, b: Rect): boolean {
-  return (
-    a.x < b.x + b.width - EPS &&
-    b.x < a.x + a.width - EPS &&
-    a.y < b.y + b.height - EPS &&
-    b.y < a.y + a.height - EPS
-  );
-}
 
 /** A box with the header band and the margins of a section taken off. */
 function padded(r: Rect): Rect {
