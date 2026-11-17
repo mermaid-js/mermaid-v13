@@ -1,10 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import type { ProbeResult, TokenStream } from '@mermaid-js/core/parser-kit';
+import type {
+  Diagnostic,
+  ProbeResult,
+  SymbolOccurrence,
+  TokenStream,
+} from '@mermaid-js/core/parser-kit';
 import {
   classDefHover,
   code,
   covers,
   insertWithSeparator,
+  probeText,
+  readsBack,
+  readsBackAt,
   span,
   statementAt,
   statementOverlapping,
@@ -126,5 +134,59 @@ describe('facet helpers', () => {
     expect(insertWithSeparator('accTitle', ': ', ' x', opens)).toBe('accTitle:');
     expect(insertWithSeparator('accTitle', ': ', ' : x', opens)).toBe('accTitle');
     expect(insertWithSeparator('end', undefined, '', opens)).toBe('end');
+  });
+});
+
+describe('read-back probes', () => {
+  const sym = (name: string, kind: string, start: number): SymbolOccurrence => ({
+    name,
+    kind,
+    range: { start, end: start + name.length },
+    role: 'def',
+  });
+  const ok = { diagnostics: [] };
+
+  it('writes the name for each @ after the header, and gives each spot', () => {
+    expect(probeText('h\n', ['x @', '@: y'], 'ab')).toEqual({
+      text: 'h\nx ab\nab: y\n',
+      spots: [4, 7],
+    });
+  });
+
+  it('reads back one symbol of the kind, named and spanning the name, at every spot', () => {
+    const symbols = [sym('ab', 'k', 4), sym('Z', 'k', 0), sym('ab', 'k', 7)];
+    expect(readsBackAt({ ...ok, symbols }, [4, 7], 'ab', 'k', null)).toBe(true);
+    expect(readsBackAt({ ...ok, symbols }, [4, 7], 'ab', 'k', 1)).toBe(true);
+    // A count that does not add up: something else read as the kind.
+    expect(readsBackAt({ ...ok, symbols }, [4, 7], 'ab', 'k', 0)).toBe(false);
+  });
+
+  it('refuses an error, another name, a shorter span or two symbols at a spot', () => {
+    const one = [sym('ab', 'k', 4)];
+    const bad: Diagnostic = { severity: 'error', code: 'X', message: 'x', range: span(0, 1) };
+    const error = { diagnostics: [bad], symbols: one };
+    expect(readsBackAt(error, [4], 'ab', 'k', null)).toBe(false);
+    expect(readsBackAt({ ...ok, symbols: [sym('a', 'k', 4)] }, [4], 'ab', 'k', null)).toBe(false);
+    expect(readsBackAt({ ...ok, symbols: [sym('ab', 'other', 4)] }, [4], 'ab', 'k', null)).toBe(
+      false
+    );
+    expect(readsBackAt({ ...ok, symbols: [...one, ...one] }, [4], 'ab', 'k', null)).toBe(false);
+  });
+  it('readsBack is readsBackAt at one spot with no other symbol of the kind', () => {
+    const bad: Diagnostic = { severity: 'error', code: 'X', message: 'x', range: span(0, 1) };
+    const warning: Diagnostic = { ...bad, severity: 'warning' };
+    const cases = [
+      { diagnostics: [], symbols: [sym('ab', 'k', 4)] },
+      { diagnostics: [bad], symbols: [sym('ab', 'k', 4)] },
+      { diagnostics: [warning], symbols: [sym('ab', 'k', 4)] },
+      { diagnostics: [], symbols: [sym('ab', 'k', 4), sym('Z', 'k', 0)] },
+      { diagnostics: [], symbols: [sym('ab', 'k', 4), sym('Z', 'other', 0)] },
+      { diagnostics: [], symbols: [sym('a', 'k', 4)] },
+      { diagnostics: [], symbols: [sym('ab', 'k', 5)] },
+      { diagnostics: [], symbols: [] },
+    ];
+    const answers = cases.map((r) => readsBack(r, 4, 'ab', 'k'));
+    expect(answers).toEqual(cases.map((r) => readsBackAt(r, [4], 'ab', 'k', 0)));
+    expect(answers).toEqual([true, false, true, false, true, false, false, false]);
   });
 });

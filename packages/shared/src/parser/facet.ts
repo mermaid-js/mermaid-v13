@@ -279,22 +279,52 @@ export function shapeReason(
 
 /**
  * Whether a parse read exactly one symbol of `kind`, named `name`, at `at`, and no error: the
- * read-back check of a new name written into a probe text.
+ * read-back check of a new name written into a probe text ({@link readsBackAt} at one spot).
  */
-export function readsBack(
+export const readsBack = (
   result: Pick<ParseResult<unknown>, 'diagnostics' | 'symbols'>,
   at: number,
   name: string,
   kind: string
+): boolean => readsBackAt(result, [at], name, kind, 0);
+
+/**
+ * A read-back probe: `header`, then each of `lines` with its `@` written as `name`, one per
+ * line, and where each `@` landed.
+ */
+export function probeText(
+  header: string,
+  lines: readonly string[],
+  name: string
+): { text: string; spots: number[] } {
+  let text = header;
+  const spots: number[] = [];
+  for (const line of lines) {
+    spots.push(text.length + line.indexOf('@'));
+    text += `${line.replace('@', () => name)}\n`;
+  }
+  return { text, spots };
+}
+
+/**
+ * Whether a probe parse read, with no error, exactly one `kind` symbol at each of `spots`, named
+ * `name` and spanning it. `others` is how many more `kind` symbols the parse holds, so that
+ * nothing else read as the kind; `null` counts none, for a probe whose other names vary.
+ */
+export function readsBackAt(
+  result: Pick<ParseResult<unknown>, 'diagnostics' | 'symbols'>,
+  spots: readonly number[],
+  name: string,
+  kind: string,
+  others: number | null
 ): boolean {
-  const hits = result.symbols.filter((s) => s.kind === kind);
-  return (
-    !result.diagnostics.some((d) => d.severity === 'error') &&
-    hits.length === 1 &&
-    hits[0]!.name === name &&
-    hits[0]!.range.start === at &&
-    hits[0]!.range.end === at + name.length
-  );
+  if (result.diagnostics.some((d) => d.severity === 'error')) return false;
+  const mine = result.symbols.filter((s) => s.kind === kind);
+  if (others !== null && mine.length !== spots.length + others) return false;
+  return spots.every((at) => {
+    const hits = mine.filter((s) => s.range.start === at);
+    return hits.length === 1 && hits[0]!.name === name && hits[0]!.range.end === at + name.length;
+  });
 }
 
 /**
