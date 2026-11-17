@@ -7,6 +7,7 @@ import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { graphSpacing, groupPadding, labelledEdge, sideways } from '@mermaid-js/shared/layout';
 import type { CheckedStyle } from '@mermaid-js/core/svg';
+import { arrowheads, markerTrim } from '@mermaid-js/shared/svg/arrowheads';
 import { styleCache } from '@mermaid-js/shared/svg/document';
 import {
   FOLDED_TYPE_SIZE,
@@ -245,7 +246,10 @@ function nodeViews(
     const sg = subgraphs.get(view.id);
     const v = view.vertex;
     if (sg) measureNode(view, sg.title, sg.labelType === 'markdown', m);
-    else if (v) measureNode(view, v.text, v.labelType === 'markdown', m, v);
+    else if (v) {
+      measureNode(view, v.text, v.labelType === 'markdown', m, v);
+      turnBar(view, nest.flowDir(view.id), m.cells);
+    }
   }
   for (const view of groups) {
     const sg = subgraphs.get(view.id)!;
@@ -320,6 +324,11 @@ function measureNode(
   view.dy = s.dy;
 }
 
+/** A fork or join bar lies across the flow: 10 × 70 where it runs sideways (v12, D604). */
+function turnBar(view: NodeView, flow: Dir, cells: boolean): void {
+  if (view.shape === 'fork' && !cells && sideways(flow)) [view.w, view.h] = [view.h, view.w];
+}
+
 /** One view per drawn edge; edges into a collapsed subgraph end at it, and a loop it hides goes. */
 function edgeViews(
   model: FlowModel,
@@ -377,7 +386,15 @@ function layoutGraph(
     return px === undefined ? fallback : fromPx(units, px, axis, min);
   };
   // Node spacing runs across the flow and rank spacing along it.
-  const spacing = graphSpacing(units, rootDir, length);
+  // D601: a literal rank gap stays literal, but never below an arrowhead and a lead as long as
+  // the head, so the edge between two subframes stays visible (#399).
+  const head = markerTrim('arrow_point', arrowheads(m.ctx.theme));
+  const spacing = graphSpacing(
+    units,
+    rootDir,
+    length,
+    fromPx(units, 2 * head, sideways(rootDir) ? 'x' : 'y')
+  );
   // How edges are routed follows the diagram's default curve: `linkStyle default interpolate`
   // first, then config, as each edge's own drawing does.
   const curve = m.curveOf(model.defaultInterpolate ?? flow.curve);

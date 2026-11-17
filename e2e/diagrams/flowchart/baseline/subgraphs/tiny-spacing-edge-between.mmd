@@ -1,0 +1,20 @@
+---
+description:
+  with nodeSpacing and rankSpacing of 1, the edge between two subgraphs keeps room for its
+  arrowhead, so the frames never touch (#399, D601)
+config:
+  flowchart:
+    nodeSpacing: 1
+    rankSpacing: 1
+---
+flowchart LR
+  X --> Y
+  subgraph X
+    direction LR
+    A
+    C
+  end
+  subgraph Y
+    B
+    D
+  end
