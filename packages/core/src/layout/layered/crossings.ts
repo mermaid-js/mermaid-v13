@@ -3,7 +3,7 @@
 // Changes from Pele: split out of `compound.ts` (D596): `crossingsOf` is cut into the phases it
 // had inline, which share one `Segs` record in place of closure variables. Its scratch arrays are
 // taken from the same frame. The algorithm is unchanged.
-// cspell:ignore kepano
+// cspell:ignore kepano segs
 //
 import { ease, type LayeredOptions } from './layered.ts';
 import { pxProfile } from '../units.ts';
