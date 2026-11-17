@@ -2,7 +2,7 @@
 // Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
 // Changes from Pele: split out of `layered.ts`, and `position` is `sortNeighbours`,
 // `markConflicts`, `alignBlocks`, `placeBlocks` and `medianOf`. The algorithm is unchanged.
-// cspell:ignore kepano indeg topo Köpf
+// cspell:ignore kepano indeg topo cand maxs Köpf
 //
 // The cross-flow position of every node and bend once the order is fixed.
 import { isDummy, Kind, type Graph, type LayeredOptions } from './graph.ts';
