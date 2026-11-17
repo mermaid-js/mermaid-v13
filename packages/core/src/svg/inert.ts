@@ -213,6 +213,7 @@ const RE_SCHEME = /^([a-zA-Z][a-zA-Z0-9+.-]*):/;
 const RE_NETWORK_PATH = /^[\\/]{2}/;
 const RE_ENTITY = /^&(?:amp|lt|gt|quot|apos|#\d{1,8}|#x[0-9a-fA-F]{1,8});/;
 const FILL_RULES: ReadonlySet<string> = new Set(['nonzero', 'evenodd']);
+const CURSORS: ReadonlySet<string> = new Set(['pointer']);
 const PAINT_LIKE: ReadonlySet<string> = new Set([
   'fill',
   'stroke',
@@ -361,6 +362,7 @@ const ATTR_RULES: ReadonlyMap<string, AttrRule> = new Map<string, AttrRule>([
   ['fill-rule', among(FILL_RULES)],
   ['clip-rule', among(FILL_RULES)],
   ['data-color-id', matching(RE_COLOR_ID)],
+  ['cursor', among(CURSORS)],
   ['filter', filterRule],
   ['style', styleRule],
 ]);
