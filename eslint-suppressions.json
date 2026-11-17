@@ -211,23 +211,6 @@
       "count": 1
     }
   },
-  "packages/core/src/layout/layered/layered.ts": {
-    "@typescript-eslint/no-shadow": {
-      "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
-    },
-    "no-param-reassign": {
-      "count": 5
-    },
-    "unicorn/prefer-spread": {
-      "count": 1
-    }
-  },
   "packages/core/src/parser-kit/diagnostics.spec.ts": {
     "unicorn/prefer-spread": {
       "count": 1

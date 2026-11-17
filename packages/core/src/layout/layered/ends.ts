@@ -543,13 +543,8 @@ export function snap(
 }
 
 // Writes the offsets the ends settled on back to the edges that run through segments.
-export function writeBackEnds(
-  edges: readonly LEdge[],
-  direct: Uint8Array,
-  firstSeg: Int32Array,
-  lastSeg: Int32Array,
-  { EFD, ETD }: Graph
-): void {
+function writeBackEnds(edges: readonly LEdge[], g: Graph): void {
+  const { EFD, ETD, direct, firstSeg, lastSeg } = g;
   for (let ei = 0; ei < edges.length; ei++) {
     if (direct[ei]!) continue;
     const e = edges[ei]!;
@@ -558,4 +553,28 @@ export function writeBackEnds(
     e.tailDx = e.reversed ? bDx : aDx;
     e.headDx = e.reversed ? aDx : bDx;
   }
+}
+
+// Settles the ends of the edges along their nodes, and lines border ports up with them. In grid
+// mode a label's line runs through the middle of a cell inside the label's box, and the box
+// itself sits on the grid: returns the box's middle.
+export function placeEnds(
+  g: Graph,
+  nodes: LNode[],
+  edges: LEdge[],
+  xs: Float64Array,
+  empty: Uint8Array | undefined,
+  opt: LayeredOptions
+): Float64Array | undefined {
+  if (g.EFK && g.ETK) {
+    const free = freeEnds(g);
+    alignLabels(g, nodes, xs, free, opt, empty);
+    settle(g, nodes, xs, free, empty);
+    snap(g, xs, empty, opt);
+    writeBackEnds(edges, g);
+  }
+  alignPorts(g, xs, empty);
+  const labelAt = opt.grid?.cross(g, nodes, xs, g.EFH, g.ETH);
+  if (labelAt) writeBackEnds(edges, g);
+  return labelAt;
 }

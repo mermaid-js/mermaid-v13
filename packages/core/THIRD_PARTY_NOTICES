@@ -13,7 +13,9 @@ used under the MIT License:
   src/layout/compass/route.ts
   src/layout/layered/bends.ts
   src/layout/layered/compound.ts
+  src/layout/layered/emit.ts
   src/layout/layered/ends.ts
+  src/layout/layered/gaps.ts
   src/layout/layered/graph.ts
   src/layout/layered/grid-layout.ts
   src/layout/layered/grid-model.ts
@@ -23,6 +25,7 @@ used under the MIT License:
   src/layout/layered/order.ts
   src/layout/layered/position.ts
   src/layout/layered/rank.ts
+  src/layout/layered/segments.ts
   src/layout/layered/tracks.ts
   src/layout/tree/tree.ts
   src/parser-kit/chars.ts

@@ -126,6 +126,20 @@ export interface Graph {
   span: Int32Array;
   direct: Uint8Array;
   firstDummy: Int32Array;
+  // The first and last segment of each edge, and the bend of each edge that holds its label.
+  firstSeg: Int32Array;
+  lastSeg: Int32Array;
+  labelNode: Int32Array;
+  // Which way the edges with a label in each rank head: 1 down, 2 up, 3 both.
+  heads: Uint8Array;
+  // Segment ends held where their offset puts them (grid mode moves only the others).
+  EFH: Uint8Array;
+  ETH: Uint8Array;
+  // Where each node would like to be across the flow, NaN if unknown.
+  KEY: Float64Array;
+  H: Float64Array;
+  // Ranks per gap: 2 where every edge gets a middle rank of its own for a label or a twin.
+  step: number;
   GRP?: Int32Array;
   groupParent?: Int32Array;
   M: LayoutMetrics;
@@ -145,4 +159,6 @@ export interface Pieces {
   track: number[];
   levels: number[];
   wide: number[];
+  // Each edge's run of pieces: edge `ei` has pieces `start[ei]..start[ei + 1]`.
+  start: Int32Array;
 }

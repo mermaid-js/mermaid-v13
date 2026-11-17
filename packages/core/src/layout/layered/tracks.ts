@@ -7,7 +7,7 @@
 //
 // The tracks and levels that edges turn onto in the gaps between ranks.
 import type { LayoutMetrics } from '../units.ts';
-import { IN_LINE, type Pieces } from './graph.ts';
+import { IN_LINE, type Graph, type LayeredOptions, type Pieces } from './graph.ts';
 import { f64, i32, u8 } from './scratch.ts';
 
 // Levels tell apart curves that run alongside each other. Where the curves of a gap cross each
@@ -372,4 +372,81 @@ export function assignTracks(
       if (most > 0) trackCount[r] = most;
     }
   }
+}
+
+// Whether the bends of edge `ei` stay to keep it clear of its twin: an edge that keeps a bend is
+// drawn through the bend, as it is, and so is one that has a bend left out in a rank of labels,
+// because its curve crosses that rank.
+function hasTwin(
+  g: Graph,
+  empty: Uint8Array | undefined,
+  onLine: Uint8Array,
+  tracks: boolean | undefined,
+  ei: number
+): boolean {
+  const d0 = g.firstDummy[ei]!;
+  for (let d = d0, end = d0 < 0 ? d0 : d0 + g.span[ei]! - 1; d < end; d++) {
+    const bare = empty !== undefined && empty[g.RANK[d]!]! === 1;
+    if (!tracks && bare !== (onLine[d]! === 1)) return true;
+  }
+  return false;
+}
+
+// Cuts edge `ei` where it passes a rank that holds something: one piece for each gap it crosses.
+function cutPieces(
+  g: Graph,
+  xs: Float64Array,
+  empty: Uint8Array | undefined,
+  pieces: Pieces,
+  ei: number
+): void {
+  const { RANK, EF, ET, EFD, ETD, firstSeg, lastSeg } = g;
+  const d0 = g.firstDummy[ei]!;
+  let x = xs[EF[firstSeg[ei]!]!]! + EFD[firstSeg[ei]!]!;
+  let rank = RANK[EF[firstSeg[ei]!]!]!;
+  for (let d = d0, end = d0 < 0 ? d0 : d0 + g.span[ei]! - 1; d < end; d++) {
+    if (empty?.[RANK[d]!]) continue;
+    pieces.from.push(x);
+    pieces.to.push(xs[d]!);
+    pieces.rank.push(rank);
+    pieces.lower.push(d);
+    x = xs[d]!;
+    rank = RANK[d]!;
+  }
+  pieces.from.push(x);
+  pieces.to.push(xs[ET[lastSeg[ei]!]!]! + ETD[lastSeg[ei]!]!);
+  pieces.rank.push(rank);
+  pieces.lower.push(-1);
+}
+
+// An edge is cut where it passes a rank that holds something, and each piece crosses one gap.
+// With `tracks`, every piece that does not run straight gets a track to run across on at
+// right angles. Otherwise, where edges spread along their nodes, a piece gets one only if it
+// needs a level to turn onto. `start` gives every edge's run of pieces.
+export function buildPieces(
+  g: Graph,
+  xs: Float64Array,
+  empty: Uint8Array | undefined,
+  onLine: Uint8Array,
+  opt: LayeredOptions
+): Pieces | undefined {
+  if (!opt.tracks && !(g.EFK && !opt.straight)) return undefined;
+  const m = g.direct.length;
+  const pieces: Pieces = {
+    from: [],
+    to: [],
+    rank: [],
+    lower: [],
+    track: [],
+    levels: [],
+    wide: [],
+    start: i32(m + 1),
+  };
+  for (let ei = 0; ei < m; ei++) {
+    pieces.start[ei] = pieces.from.length;
+    if (g.direct[ei]! || hasTwin(g, empty, onLine, opt.tracks, ei)) continue;
+    cutPieces(g, xs, empty, pieces, ei);
+  }
+  pieces.start[m] = pieces.from.length;
+  return pieces;
 }

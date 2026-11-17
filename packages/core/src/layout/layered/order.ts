@@ -5,8 +5,8 @@
 // cspell:ignore kepano lnode indeg
 //
 // The order of the nodes in each rank: where the search starts, and how it cuts down the crossings.
-import type { Graph, LNode } from './graph.ts';
-import { f64, i32, u8 } from './scratch.ts';
+import { Kind, type Graph, type LNode } from './graph.ts';
+import { copy, f64, i32, u8 } from './scratch.ts';
 
 const MAX_SWEEPS = 24;
 
@@ -487,6 +487,64 @@ function mirrored(g: Graph, s: Search, best: number, chosenOut: number, bestOrde
   for (let r = 0; r <= maxRank; r++) order.subarray(layerStart[r], layerStart[r + 1]).reverse();
   settlePositions(g);
   if (countCrossings(g, s) > best || outOfOrder(g) >= chosenOut) order.set(bestOrder);
+}
+
+// Depth-first from the top so that subtrees start out contiguous.
+function depthFirst(g: Graph): void {
+  const { n, maxRank, RANK, ET, succStart, succE, layerStart, order } = g;
+  const byRank = i32(n);
+  const fill = copy(layerStart, maxRank + 1);
+  for (let i = 0; i < n; i++) byRank[fill[RANK[i]!]!++] = i;
+  for (let r = 0; r <= maxRank; r++) fill[r] = layerStart[r]!;
+  const visited = u8(n);
+  const stack: number[] = [];
+  for (let k = 0; k < n; k++) {
+    if (visited[byRank[k]!]!) continue;
+    stack.push(byRank[k]!);
+    while (stack.length > 0) {
+      const v = stack.pop()!;
+      if (visited[v]!) continue;
+      visited[v] = 1;
+      order[fill[RANK[v]!]!++] = v;
+      for (let j = succStart[v + 1]! - 1; j >= succStart[v]!; j--) {
+        const w = ET[succE[j]!]!;
+        if (!visited[w]!) stack.push(w);
+      }
+    }
+  }
+}
+
+// Puts the pinned nodes of each rank after those that are not, keeping the order otherwise.
+function pinOrder(g: Graph, nodes: LNode[]): void {
+  const { real, maxRank, layerStart, order } = g;
+  let pinned = false;
+  for (let i = 0; i < real; i++) if (nodes[i]!.pin !== 0) pinned = true;
+  if (!pinned) return;
+  for (let r = 0; r <= maxRank; r++) {
+    const layer = [...order.subarray(layerStart[r], layerStart[r + 1])];
+    const index = new Map<number, number>();
+    layer.forEach((v, i) => index.set(v, i));
+    layer.sort((a, b) => pinOf(g, nodes, a) - pinOf(g, nodes, b) || index.get(a)! - index.get(b)!);
+    order.set(layer, layerStart[r]);
+  }
+}
+
+// The order that the sweeps start from: depth-first, then by the key of each node where every
+// node of a rank has one, then with pinned nodes last, and with border ports in the order of
+// where their edges lead.
+export function initialOrder(g: Graph, nodes: LNode[]): void {
+  const { real, maxRank, layerStart, order, KEY, fixed } = g;
+  depthFirst(g);
+  const sortRank = (r: number, key: (v: number) => number): boolean =>
+    sortLayer(order, layerStart[r]!, layerStart[r + 1]!, key);
+  for (let r = 0; r <= maxRank; r++) sortRank(r, (v) => KEY[v]!);
+  pinOrder(g, nodes);
+  // Preserve port order to avoid crossings outside the group.
+  const hint = (v: number): number =>
+    v < real && (nodes[v]!.kind === Kind.StartPort || nodes[v]!.kind === Kind.EndPort)
+      ? nodes[v]!.hint
+      : NaN;
+  for (const r of [0, maxRank]) if (sortRank(r, hint)) fixed[r] = 1;
 }
 
 // Returns [final crossings, crossings before grouping or reordering].
