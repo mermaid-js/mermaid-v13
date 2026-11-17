@@ -340,6 +340,17 @@ describe('relations (D455)', () => {
     expect(svg).toContain('>2: second<');
   });
 
+  it('draws and numbers every C4Dynamic step, also steps between the same pair (#680)', async () => {
+    const src = `C4Dynamic\nPerson(a, "A")\nSystem(b, "B")\nRel(a, b, "one")\nRel(b, a, "two")\nRel(a, b, "three")\nRel(a, b, "four")\nRel(b, a, "five")`;
+    const { svg } = await renderC4ForTest(src);
+    for (const label of ['1: one', '2: two', '3: three', '4: four', '5: five'])
+      expect(svg).toContain(`>${label}<`);
+    // Their lines are side by side, not on top of each other.
+    const ds = byClass(svg, 'path', 'c4-rel').map((p) => p.d);
+    expect(ds).toHaveLength(5);
+    expect(new Set(ds).size).toBe(5);
+  });
+
   it('takes UpdateRelStyle’s colours for the line and its text, not its heads', async () => {
     const src = `C4Context\nPerson(a, "A")\nSystem(b, "B")\nRel(a, b, "Uses", "HTTPS")\nUpdateRelStyle(a, b, $textColor="blue", $lineColor="red")`;
     const { svg } = await renderC4ForTest(src);
