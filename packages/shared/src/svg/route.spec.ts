@@ -48,6 +48,28 @@ describe('routePath step curves (#356, D602)', () => {
     expect(path('stepBefore', detour)).toBe(path('step', detour));
   });
 
+  it.each(['stepBefore', 'stepAfter'] as const)(
+    '%s leaves a U-shaped route as the engine routed it',
+    (kind) => {
+      // The across leg (y 120) lies beyond both ends (y 0 and 100): moving it between them would
+      // make the last leg enter the node from the wrong side.
+      const u = [down(0, 0), down(0, 120), side(100, 120), down(100, 100)];
+      expect(path(kind, u)).toBe(path('step', u));
+      expect(path(kind, u)).toBe('M0,0L0,120L100,120L100,100');
+      expect(path(kind, u, 6)).toBe(path('step', u, 6));
+      // And the same with the legs running across.
+      const across = [side(0, 0), side(120, 0), down(120, 100), side(100, 100)];
+      expect(path(kind, across)).toBe(path('step', across));
+    }
+  );
+
+  it('moves the across leg only where it lies clear of the marker room at both ends', () => {
+    const tight = [down(0, 0), down(0, 10), side(100, 10), down(100, 20)];
+    for (const kind of ['stepBefore', 'stepAfter'] as const) {
+      expect(path(kind, tight, 12)).toBe(path('step', tight, 12));
+    }
+  });
+
   it('turns an interior offset leg by the plain inset, without marker room', () => {
     // Not from the layered engine: a diagonal leg between two bends. The marker room (6) belongs to
     // the first and last legs only, so this leg turns a quarter of its 40 away from each end.

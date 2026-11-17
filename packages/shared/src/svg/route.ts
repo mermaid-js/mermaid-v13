@@ -122,11 +122,23 @@ function movedStep(
   if (kind === 'step' || route.length !== 4) return route;
   const [a, b, c, d] = route as [RoutePoint, RoutePoint, RoutePoint, RoutePoint];
   const eq = (u: number, v: number): boolean => Math.abs(u - v) < 0.01;
+  // The across leg moves only where it already lies between the ends, clear of the marker room
+  // at each: a U-shaped route would otherwise enter its last node from the wrong side.
+  const between = (at: number, from: number, to: number): boolean => {
+    const sign = Math.sign(to - from);
+    return (
+      sign !== 0 &&
+      sign * (at - (from + sign * startTrim)) > 0 &&
+      sign * (to - sign * endTrim - at) > 0
+    );
+  };
   if (eq(a.x, b.x) && eq(b.y, c.y) && eq(c.x, d.x)) {
+    if (!between(b.y, a.y, d.y)) return route;
     const y = stepCorner(kind, a.y, d.y, startTrim, endTrim);
     return [a, { ...b, y }, { ...c, y }, d];
   }
   if (eq(a.y, b.y) && eq(b.x, c.x) && eq(c.y, d.y)) {
+    if (!between(b.x, a.x, d.x)) return route;
     const x = stepCorner(kind, a.x, d.x, startTrim, endTrim);
     return [a, { ...b, x }, { ...c, x }, d];
   }
