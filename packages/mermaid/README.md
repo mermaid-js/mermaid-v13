@@ -40,6 +40,23 @@ const mermaid = createMermaid({ diagrams: [{ ...flowchart, ascii }] });
 const { svg } = await mermaid.render('id', 'flowchart LR\n  A --> B');
 ```
 
+To load each diagram on first use, pass loaders keyed by diagram id instead. A loader runs when a diagram of that type is first rendered, never at `createMermaid`, and a bundler puts each in a chunk of its own. Objects and loaders mix, and a key that is not a first-party id is an error:
+
+```js
+import { createMermaid } from 'mermaid/slim';
+import { pie } from '@mermaid-js/diagram-pie';
+
+const mermaid = createMermaid({
+  diagrams: {
+    flowchart: () => import('@mermaid-js/diagram-flowchart'),
+    sequence: () => import('@mermaid-js/diagram-sequence'),
+    pie,
+  },
+});
+```
+
+A loader that fails, or that resolves to a module without that diagram's plugin, rejects the render with an error naming the id (a failed load is tried again on the next render). For text output, resolve to the module with its hook added: `() => import('@mermaid-js/diagram-flowchart').then(async (m) => ({ ...m, ascii: (await import('@mermaid-js/diagram-flowchart/ascii')).ascii }))`. Before the first load, `supportsFormat` answers from the diagram's manifest.
+
 Other diagram types are still detected, and reject with an `UNSUPPORTED_DIAGRAM` error. `mermaid/slim` has no default instance and does not render `.mermaid` elements on page load: call `mermaid.run()` yourself.
 
 ## Command line

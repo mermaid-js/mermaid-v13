@@ -1,0 +1,12 @@
+---
+description: >-
+  Probe b09 of spec #730: two tags on one element, and an `:::external`
+  software system that is also a boundary. No oddity-table row; external
+  is marked by tag.
+---
+c4-beta container
+softwareSystem bank "Bank" :::external :::legacy {
+    container core "Core" :::legacy
+}
+person p "Customer"
+p --> core : "Uses"
