@@ -52,6 +52,10 @@ const V13_ONLY: readonly string[] = [
   'regressions/same-lane-detour-tb',
   // mermaid-js/mermaid#8693
   'regressions/terminal-lanes-keep-straight-connector',
+  // mermaid-js/mermaid#8695
+  'regressions/edge-end-on-box',
+  // mermaid-js/mermaid#8770
+  'regressions/locale-independent-order',
 ];
 
 describe('swimlane DDLT fixtures', () => {

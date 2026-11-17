@@ -12,7 +12,7 @@
 import { realpath } from 'node:fs/promises';
 import { dirname, isAbsolute, relative, sep } from 'node:path';
 import type { FacetEntry } from '@mermaid-js/language-service';
-import { findAppRoot } from 'mermaid/node-scan';
+import { findAppRoot } from '@mermaid-js/plugin-autoload';
 import { discoverFacets, type DiscoverOptions } from './facets.ts';
 
 export interface PluginRoots {

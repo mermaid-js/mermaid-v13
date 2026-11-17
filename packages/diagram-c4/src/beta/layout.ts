@@ -9,6 +9,7 @@ import { layered, type LayoutModel } from '@mermaid-js/core/layout';
 import { C4BETA_LAYOUT_IGNORED } from '../codes.ts';
 import type { C4Layout } from '../layout/types.ts';
 import { prepareC4Beta, type C4BetaLayoutContext, type C4BetaPrepared } from './prepare.ts';
+import { laidInPx } from './cells.ts';
 import { placeC4Beta } from './scene.ts';
 
 /** Everything a c4-beta layout produces: the engine's input and answer, and the scene. */
@@ -26,7 +27,9 @@ export function layoutC4BetaFull(
   warnLayoutIgnored(ctx);
   const prepared = prepareC4Beta(model, ctx);
   const laid = layered(prepared.graph);
-  return { prepared, laid, scene: placeC4Beta(prepared, laid) };
+  // Text output: the engine answered in cells, and the scene is made in px (`./cells.ts`).
+  const placedIn = prepared.cell ? laidInPx(laid, prepared.cell) : laid;
+  return { prepared, laid, scene: placeC4Beta(prepared, placedIn) };
 }
 
 /** The engines c4-beta answers to silently: the one it uses, and v12's name for it. */

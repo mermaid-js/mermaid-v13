@@ -1,6 +1,8 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    // DOM: the specs import `mermaid` (to check the scan against `autoload`), whose sources use it.
+    "lib": ["ES2022", "DOM"],
     "types": ["node"]
   },
   "include": ["src"]

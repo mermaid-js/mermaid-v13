@@ -7,8 +7,9 @@
  *   aliases and relation ends are compared as written, after `trim()`;
  * - a repeated alias merges into the first element (or boundary) with it: the kind, the label and
  *   the parent are the last statement's, `descr` and `techn` are kept when it leaves them out,
- *   and every argument it gives replaces the field's value. A repeated `from`, `to` pair merges
- *   the same way into the first relation. Elements and boundaries are separate namespaces;
+ *   and every argument it gives replaces the field's value. Elements and boundaries are separate
+ *   namespaces. Every relation statement is a relation of its own, also one that repeats a
+ *   `from`, `to` pair (#680; v12 merged them into the first, and D458 kept that);
  * - each argument fills the field of its slot, a `$name="value"` one the field it names (v12's
  *   rule), names v12 has no use for kept in `extra`. A name for the structure is v12's too:
  *   `$alias` renames the element or boundary, a relation's `$type`, `$from` and `$to` set its kind

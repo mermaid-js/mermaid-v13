@@ -66,6 +66,19 @@ export interface GridSpacing {
 }
 
 /**
+ * Gives each group its fill order (#730): its own `direction`, else its parent's, the top level's
+ * the last one at the top level (TB when none). `order` has parents before children.
+ */
+export function setDirections(order: readonly GridGroup[], top: C4Direction | undefined): void {
+  const byIndex = new Map(order.map((g) => [g.index, g]));
+  for (const g of order) {
+    const direction =
+      g.boundary?.direction ?? (g.index < 0 ? top : byIndex.get(g.parent)?.direction);
+    if (direction) g.direction = direction;
+  }
+}
+
+/**
  * The top-level boundaries' parents with every parent cycle broken (D454): on each cycle, the
  * boundary first in the model is moved to the top level. Returns the parents and the boundaries
  * moved.

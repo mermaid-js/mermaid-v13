@@ -164,9 +164,10 @@ securityLevel?: ("default" | "strict" | "loose" | "antiscript" | "sandbox")
  */
 startOnLoad?: boolean
 /**
- * Plugin auto-discovery (D164, D165): before the first render, `mermaid` registers the
- * plugins found in the app's own `node_modules`, by the Node/SSR scan or, in a bundled
- * app, by `@mermaid-js/bundler-plugin`'s build-time list. Set `false` to turn both off.
+ * Plugin auto-discovery (D164, D165, D589): before the first render, `mermaid` registers
+ * the plugins the app declares in its own `package.json` and has installed in its own
+ * `node_modules`, by the Node/SSR scan or, in a bundled app, by
+ * `@mermaid-js/bundler-plugin`'s build-time list. Set `false` to turn both off.
  * It does not cover the CDN `globalThis.mermaidPlugins` queue (D167): a script that
  * pushes itself there always registers. Integrator-only: diagram text cannot set it.
  * 
@@ -2265,6 +2266,26 @@ useMaxWidth?: boolean
  * 
  */
 diagramPadding?: number
+/**
+ * Whether an element shows its type line (`[Person]`, `[Software System]`, `[Container: Rust]`)
+ * above its name. `false` hides it on every element; use `hideStereotypes` to hide it on some
+ * kinds only.
+ * 
+ */
+showStereotypes?: boolean
+/**
+ * The element kinds whose type line is hidden while `showStereotypes` is on, for example
+ * `[person]`. Unset hides none.
+ * 
+ */
+hideStereotypes?: ("person" | "softwareSystem" | "container" | "component" | "infrastructureNode")[]
+/**
+ * The width in pixels at which a person's name, type line and description wrap. Unset, a
+ * person wraps at the width every c4-beta element wraps at, `c4.width` less twice
+ * `c4.c4ShapePadding` (176 px by default).
+ * 
+ */
+personWrappingWidth?: number
 }
 /**
  * The object containing configurations specific for sankey diagrams.

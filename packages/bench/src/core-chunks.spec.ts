@@ -98,6 +98,22 @@ async function measure(stableCore: boolean, stub?: URL, inCore = false): Promise
 const coreModules = (m: Measured): string[] =>
   m.bundle.staticClosure.flatMap((f) => m.bundle.graph[f]!.inputs).sort();
 
+/** The diagram packages whose lazily loaded entry reaches output file `target` statically. */
+function diagramsLoading(m: Measured, target: string): string[] {
+  const reaches = (path: string, seen = new Set<string>()): boolean => {
+    if (path === target) return true;
+    if (seen.has(path)) return false;
+    seen.add(path);
+    const imports = m.bundle.graph[path]?.imports ?? [];
+    return imports.some((i) => i.kind === 'static' && reaches(i.path, seen));
+  };
+  const types = Object.entries(m.bundle.graph).flatMap(([path, f]) => {
+    const type = /diagram-([\w-]+)\//.exec(f.entryPoint ?? '')?.[1];
+    return type && reaches(path) ? [type] : [];
+  });
+  return [...new Set(types)].sort();
+}
+
 const stubs = Object.keys(STUBS) as Stub[];
 let stable: Measured;
 let plain: Measured;
@@ -166,6 +182,34 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
     const [path, file] = files[0]!;
     expect(stable.bundle.staticClosure).not.toContain(path);
     expect(file.inputs.every(isCompass)).toBe(true);
+  });
+
+  // #818 (D559): `@mermaid-js/shared/parser/common-values` is a lazy chunk of its own, loaded by
+  // the diagrams ported from a langium grammar and by no other diagram.
+  it('keeps the common.langium value readers in a lazy chunk of their own', () => {
+    const isValues = (input: string) => input.endsWith('shared/src/parser/common-values.ts');
+    expect(coreModules(stable).filter(isValues)).toEqual([]);
+    const files = Object.entries(stable.bundle.graph).filter(([, f]) => f.inputs.some(isValues));
+    expect(files).toHaveLength(1);
+    const [path, file] = files[0]!;
+    expect(stable.bundle.staticClosure).not.toContain(path);
+    expect(file.inputs.every(isValues)).toBe(true);
+    expect(diagramsLoading(stable, path)).toEqual(
+      [
+        'architecture',
+        'cynefin',
+        'eventmodeling',
+        'gitgraph',
+        'info',
+        'packet',
+        'pie',
+        'radar',
+        'railroad',
+        'treemap',
+        'treeview',
+        'wardley',
+      ].sort()
+    );
   });
 
   it.each(stubs)('grows core by the registry row only for one more lazy diagram (%s)', (s) => {

@@ -18,6 +18,7 @@
 
 import type { LayoutData, Node as MermaidNode } from '../layoutData.ts';
 import { buildLaneModel } from '../lanes.ts';
+import { RoutedSegmentIndex } from './routedSegmentIndex.ts';
 import { PRECISION, isDiamondShape, isHexagonShape } from '../config.ts';
 
 const EPS = PRECISION.EPSILON;
@@ -293,6 +294,11 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
 
   // Global list of all routed segments for crossing reduction
   const allRoutedSegments: RoutedSegment[] = [];
+  const routedIndex = new RoutedSegmentIndex();
+  const addRoutedSegment = (seg: RoutedSegment): number => {
+    routedIndex.add({ ...seg, coord: seg.pipe.coord });
+    return allRoutedSegments.push(seg);
+  };
   const edgeSegmentIndices: number[][] = []; // edgeIndex -> [routedSegmentIndex, ...]
   // Centered straight-line fast-path edges should keep their pipe coord.
   const straightIntraLaneEdges = new Set<number>();
@@ -308,45 +314,24 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
       return 0;
     }
 
-    let penalties = 0;
-    if (isHorizontal) {
-      const y = from.y;
-      const minX = Math.min(from.x, to.x) - EPS;
-      const maxX = Math.max(from.x, to.x) + EPS;
-      if (maxX <= minX) {
-        return 0;
-      }
-      for (const seg of allRoutedSegments) {
-        if (seg.edgeIndex === edgeIdx || seg.orientation !== 'vertical') {
-          continue;
-        }
-        if (seg.pipe.coord < minX || seg.pipe.coord > maxX) {
-          continue;
-        }
-        if (seg.from - EPS <= y && seg.to + EPS >= y) {
-          penalties += CROSSING_PENALTY;
-        }
-      }
-    } else if (isVertical) {
-      const x = from.x;
-      const minY = Math.min(from.y, to.y) - EPS;
-      const maxY = Math.max(from.y, to.y) + EPS;
-      if (maxY <= minY) {
-        return 0;
-      }
-      for (const seg of allRoutedSegments) {
-        if (seg.edgeIndex === edgeIdx || seg.orientation !== 'horizontal') {
-          continue;
-        }
-        if (seg.pipe.coord < minY || seg.pipe.coord > maxY) {
-          continue;
-        }
-        if (seg.from - EPS <= x && seg.to + EPS >= x) {
-          penalties += CROSSING_PENALTY;
-        }
-      }
+    // The segments across the step: those of the other orientation on a line within its span,
+    // that span the step's line. `routedIndex` finds them by line instead of scanning all.
+    const [low, high, through] = isHorizontal
+      ? [Math.min(from.x, to.x) - EPS, Math.max(from.x, to.x) + EPS, from.y]
+      : [Math.min(from.y, to.y) - EPS, Math.max(from.y, to.y) + EPS, from.x];
+    if (high <= low) {
+      return 0;
     }
-    return penalties;
+    return (
+      CROSSING_PENALTY *
+      routedIndex.countAcross(
+        isHorizontal ? 'vertical' : 'horizontal',
+        edgeIdx,
+        [low, high],
+        through,
+        EPS
+      )
+    );
   };
 
   // -----------------------------------------------------------------------
@@ -1132,7 +1117,7 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
             spanMax: fastPathTo,
             tracks: [],
           };
-          allRoutedSegments.push({
+          addRoutedSegment({
             edgeIndex: i,
             segmentIndex: 0,
             orientation: fastPathOrientation,
@@ -1681,8 +1666,7 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
         to,
       };
 
-      allRoutedSegments.push(rSeg);
-      edgeSegmentIndices[i].push(allRoutedSegments.length - 1);
+      edgeSegmentIndices[i].push(addRoutedSegment(rSeg) - 1);
 
       const track0: Track = pipe.tracks[0] ?? { index: 0, coord: pipe.coord, segments: [] };
       pipe.tracks[0] = track0;

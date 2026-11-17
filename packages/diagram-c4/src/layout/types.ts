@@ -6,6 +6,7 @@
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
+import type { C4BetaElementKind } from '../beta/model.ts';
 import type { C4ElementKind, C4NodeKind } from '../model.ts';
 
 export interface Point {
@@ -50,7 +51,8 @@ export interface C4ElementLayout {
   readonly box: Rect;
   /** v12's sections, top to bottom: the bold name, `[Person]`/`[Container: techn]`, the description. */
   readonly name?: PlacedLabel;
-  readonly type: PlacedLabel;
+  /** Absent when c4-beta hides the type line (`showStereotypes`, `hideStereotypes`). */
+  readonly type?: PlacedLabel;
   readonly descr?: PlacedLabel;
 }
 
@@ -127,6 +129,31 @@ export interface C4RelationLayout {
   readonly crowded?: true;
 }
 
+/** One legend row: a swatch and its label. */
+export interface C4LegendRow {
+  readonly swatch: Rect;
+  readonly label: PlacedLabel;
+  /** A kind row's element kind: the swatch takes that kind's palette. */
+  readonly kind?: C4ElementKind;
+  /** A kind row's c4-beta element kind, which `kind` (v12's) does not tell apart: a container from an infrastructure node. */
+  readonly of?: C4BetaElementKind;
+  /** A tag row's style, its colours as written: the swatch takes them. */
+  readonly tag?: {
+    readonly name: string;
+    readonly ast: AstId;
+    readonly fill?: string;
+    readonly stroke?: string;
+  };
+}
+
+/** c4-beta's legend (spec #730 T3): a heading and one row per kind and tag style in use. */
+export interface C4LegendLayout {
+  /** Everything the legend draws. */
+  readonly box: Rect;
+  readonly title: PlacedLabel;
+  readonly rows: readonly C4LegendRow[];
+}
+
 export interface C4Layout {
   /** The canvas: everything drawn, the config margins all round, and the title row. */
   readonly width: number;
@@ -135,6 +162,8 @@ export interface C4Layout {
   readonly boundaries: readonly C4BoundaryLayout[];
   readonly elements: readonly C4ElementLayout[];
   readonly relations: readonly C4RelationLayout[];
+  /** Below the drawing; set only by c4-beta, and only when it has a row to show. */
+  readonly legend?: C4LegendLayout;
   /** Everything drawn (D224): frames, shapes, lines, labels and the title. */
   readonly bounds: Rect;
   /**
@@ -152,4 +181,9 @@ export interface C4Layout {
    * in cells at this size, so the layout divided by it is the drawing on the character grid.
    */
   readonly cell?: { readonly x: number; readonly y: number };
+  /**
+   * Set when text output left out the legend a c4-beta diagram shows in SVG: its rows key colours
+   * the text does not show. The text entry says so with one `ASCII_DROPPED` warning.
+   */
+  readonly legendDropped?: true;
 }

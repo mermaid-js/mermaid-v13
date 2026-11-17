@@ -34,6 +34,7 @@ import type { BlockDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { DIRECTIONS, LINKS, SHAPES } from './tables.ts';
 import { LINE_BREAK, lineBefore, runAround, span, tokenAt } from './text.ts';
+import { tokenBefore as lastToken } from '@mermaid-js/shared/parser/facet';
 
 const BLANK = /^[\t ]*$/;
 /** An id character (the id rule's class). */
@@ -76,25 +77,9 @@ const KEYWORD_WORDS = new Set([
 /** The kinds a complete block ends with (the parser is in a chain after it). */
 const AFTER_BLOCK = new Set<number>([T.NodeId, T.NodeDEnd, T.BlockArrowEnd, T.Size]);
 
-/** The index of the last token of `tokens` whose `edge` (`start` or `end`) is below `limit`. */
-function lastBelow(tokens: TokenStream, edge: 'start' | 'end', limit: number): number {
-  const at = tokens[edge];
-  let lo = 0;
-  let hi = tokens.length - 1;
-  let found = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if ((at[mid] ?? 0) < limit) {
-      found = mid;
-      lo = mid + 1;
-    } else hi = mid - 1;
-  }
-  return found;
-}
-
 /** The token of `kinds` that holds `at` (starts before it, ends at or after it), or -1. */
 function tokenOf(tokens: TokenStream, at: number, kinds: readonly number[]): number {
-  let j = lastBelow(tokens, 'start', at);
+  let j = lastToken(tokens, at - 1);
   while (j >= 0 && tokens.start[j] === tokens.end[j]) j--;
   if (j < 0 || at > (tokens.end[j] ?? 0)) return -1;
   return kinds.includes(tokens.kind[j] ?? Kind.EOF) ? j : -1;
@@ -102,7 +87,7 @@ function tokenOf(tokens: TokenStream, at: number, kinds: readonly number[]): num
 
 /** The last significant, non-empty token that ends at or before `at`, or -1. */
 function tokenBefore(tokens: TokenStream, at: number): number {
-  for (let j = lastBelow(tokens, 'end', at + 1); j >= 0; j--) {
+  for (let j = lastToken(tokens, at, 'end'); j >= 0; j--) {
     const k = tokens.kind[j] ?? Kind.EOF;
     if (k === Kind.Comment || k === Kind.Directive || k === Kind.Space) continue;
     if ((tokens.end[j] ?? 0) > (tokens.start[j] ?? 0)) return j;

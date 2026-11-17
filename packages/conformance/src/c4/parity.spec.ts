@@ -145,6 +145,6 @@ const DIFFERING = {
   quote: 13,
   direction: 33,
   'v12 has no direction': 44,
-  'as-listed': 315,
+  'as-listed': 356,
   'title trimmed': 54,
 };

@@ -1,0 +1,15 @@
+---
+description: >-
+  C4Dynamic with steps that share a pair (#680): all five are drawn and
+  numbered 1 to 5. mermaid 12.2.0 merged the steps between the same two
+  shapes, so it drew fewer and renumbered them.
+---
+C4Dynamic
+  title Checkout
+  Person(customer, "Customer")
+  System(shop, "Web shop")
+  Rel(customer, shop, "Adds to the cart")
+  Rel(shop, customer, "Shows the total")
+  Rel(customer, shop, "Pays")
+  Rel(customer, shop, "Confirms the address")
+  Rel(shop, customer, "Sends a receipt")

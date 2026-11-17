@@ -1,19 +1,20 @@
-// Activation (R-PLUG-5, D168): the package's `extension` manifest as discovery reads it, and a
-// Node app with the package installed, found by the scan with no registration code.
+// Activation (R-PLUG-5, D168, D590): the package's `extension` manifest as `autoload` reads it,
+// and a Node app that declares the package, registered by `await autoload(mermaid)` alone.
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { readManifest } from '@mermaid-js/core';
 import { build } from 'esbuild';
+import { autoload, scanPlugins } from '@mermaid-js/plugin-autoload';
 import { createMermaid } from 'mermaid';
-import { scanPlugins } from 'mermaid/node-scan';
 import { describe, expect, it } from 'vitest';
 import { icons } from './index.ts';
 
 const DIR = fileURLToPath(new URL('..', import.meta.url));
 const pkg = JSON.parse(readFileSync(join(DIR, 'package.json'), 'utf8')) as {
   name: string;
+  version: string;
   mermaid: unknown;
 };
 const BELL = {
@@ -52,11 +53,15 @@ describe('the extension manifest', () => {
     expect(byManifest.svg).toBe(explicit.svg);
   });
 
-  it('is found installed in a Node app, and its built entry activates', async () => {
+  it('is found declared and installed in a Node app, and its built entry activates', async () => {
     const app = realpathSync(mkdtempSync(join(tmpdir(), 'mmd-icons-')));
     const home = join(app, 'node_modules', '@mermaid-js', 'plugin-icons');
     mkdirSync(join(home, 'dist'), { recursive: true });
-    writeFileSync(join(app, 'package.json'), JSON.stringify({ name: 'app', private: true }));
+    // The scan reads only the packages the app declares (D589).
+    writeFileSync(
+      join(app, 'package.json'),
+      JSON.stringify({ name: 'app', private: true, dependencies: { [pkg.name]: pkg.version } })
+    );
     cpSync(join(DIR, 'package.json'), join(home, 'package.json'));
     // The entry as a bundle with core inlined, so the app needs nothing else installed.
     await build({
@@ -73,12 +78,9 @@ describe('the extension manifest', () => {
     expect(scan.packages.map((p) => [p.package, p.manifest.plugin])).toEqual([
       [pkg.name, 'extension'],
     ]);
-    const [found] = scan.packages;
-    const discovered = await draw((m) =>
-      m.registerExternalDiagrams([
-        // As the Node discovery source hands it over (`node.ts`).
-        { manifest: found!.raw, load: () => import(pathToFileURL(found!.files.entry).href) },
-      ])
+    // Registered by autoload alone, from the app's own install (the built entry above).
+    const discovered = await draw(async (m) =>
+      expect(await autoload(m, { root: app })).toEqual([])
     );
     expect(discovered.warnings).toEqual([]);
     expect(discovered.svg).toBe((await draw((m) => m.registerExternalDiagrams([icons]))).svg);

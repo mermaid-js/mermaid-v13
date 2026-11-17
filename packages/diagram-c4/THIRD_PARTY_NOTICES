@@ -7,7 +7,7 @@ Pele
 The files below are ported from, or based on, Pele (https://github.com/obsidianmd/pele) at
 commit 3a2f075 (release 1.13.0): its C4 grid (src/diagrams/c4/layout.ts), relation router
 (src/diagrams/c4/route.ts) and label placement (src/diagrams/c4/render.ts), and its node shapes
-(src/svg/shapes.ts, through Mermaid's flowchart shapes). Each file's header says what it took
+(src/svg/shapes.ts, through @mermaid-js/shared's shapes). Each file's header says what it took
 and what changed. Pele is used under the MIT License:
 
   src/layout/grid.ts

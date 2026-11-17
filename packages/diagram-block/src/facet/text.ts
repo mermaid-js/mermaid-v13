@@ -3,7 +3,7 @@
  * and the token at one.
  */
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
-import { span } from '@mermaid-js/shared/parser/facet';
+import { span, tokenBefore } from '@mermaid-js/shared/parser/facet';
 export { lineBefore } from '@mermaid-js/shared/parser/facet';
 export { plural } from '@mermaid-js/shared/parser/facet';
 export { span } from '@mermaid-js/shared/parser/facet';
@@ -26,16 +26,7 @@ export function runAround(text: string, at: number, re: RegExp, from = 0, to = t
  * or -1. Tokens are in source order and never overlap; empty ones hold nothing.
  */
 export function tokenAt(tokens: TokenStream, at: number): number {
-  let lo = 0;
-  let hi = tokens.length - 1;
-  let j = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if ((tokens.start[mid] ?? 0) <= at) {
-      j = mid;
-      lo = mid + 1;
-    } else hi = mid - 1;
-  }
+  let j = tokenBefore(tokens, at);
   while (j >= 0 && tokens.start[j] === tokens.end[j]) j--;
   return j >= 0 && at < (tokens.end[j] ?? 0) ? j : -1;
 }
