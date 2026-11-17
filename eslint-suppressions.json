@@ -191,7 +191,7 @@
   },
   "packages/core/src/layout/layered/compound.ts": {
     "complexity": {
-      "count": 3
+      "count": 2
     },
     "max-depth": {
       "count": 1
@@ -200,9 +200,6 @@
       "count": 1
     },
     "max-lines-per-function": {
-      "count": 3
-    },
-    "no-param-reassign": {
       "count": 2
     }
   },
