@@ -34,6 +34,7 @@ import {
   type PolygonShape,
   type Shape,
   type ShapeSize,
+  type Sizer,
 } from './kit.ts';
 
 function brace(w: SvgWriter, x: number, H: number, dir: number, line: Attrs): void {
@@ -82,6 +83,11 @@ function triInset(flip: boolean): Inset {
 const STACK_RECT = 5;
 /** Each layer of a stacked document (v12's `multiWaveEdgedRectangle`, D603). */
 const STACK_DOC = 10;
+
+/** A sizer whose label also sits `s` left: on the front layer of a stack, as in v12. */
+const leftOf =
+  (size: Sizer, s: number): Sizer =>
+  (tw, th, p) => ({ ...size(tw, th, p), dx: -s });
 
 /**
  * Three layers, back to front, each `s` further left and down: layer `i` covers x from
@@ -323,7 +329,7 @@ export const taggedRect: Shape = {
 export const stackedRect: Shape = {
   inset: /* @__PURE__ */ stackInset(STACK_RECT, 0),
   span: (W, H, s) => (s ? H : W) - 2 * CORNER - 2 * STACK_RECT,
-  size: /* @__PURE__ */ grown(2 * STACK_RECT, 2 * STACK_RECT, STACK_RECT),
+  size: /* @__PURE__ */ leftOf(grown(2 * STACK_RECT, 2 * STACK_RECT, STACK_RECT), STACK_RECT),
   draw: (w, W, H, a) => {
     const s = STACK_RECT;
     for (let i = 0; i < 3; i++)

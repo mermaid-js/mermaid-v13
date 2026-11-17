@@ -591,7 +591,7 @@ function drawNode(scene: Scene, view: NodeView, tip?: string): void {
   // No attributes at all writes the same label as `{ fill: undefined }`.
   w.label(
     view.label,
-    0,
+    view.dx ?? 0,
     view.dy,
     ink === undefined && isEmpty(view.style.text) ? undefined : { fill: ink, ...view.style.text }
   );

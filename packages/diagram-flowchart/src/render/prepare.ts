@@ -45,6 +45,8 @@ export interface NodeView {
   h: number;
   /** Label shift from the centre. */
   dy: number;
+  /** Label shift sideways from the centre. */
+  dx: number | undefined;
   style: CheckedStyle;
   classes: string[];
   parent?: string;
@@ -185,6 +187,7 @@ function nodeViews(
     w: 0,
     h: 0,
     dy: 0,
+    dx: undefined,
     style: m.styleOf([]),
     classes: [],
     parent: nest.parentOf.get(id),
@@ -304,6 +307,7 @@ function measureNode(
   view.w = s.w;
   view.h = s.h;
   view.dy = s.dy;
+  view.dx = s.dx;
 }
 
 /** One view per drawn edge; edges into a collapsed subgraph end at it, and a loop it hides goes. */

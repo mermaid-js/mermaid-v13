@@ -74,6 +74,8 @@ export interface ShapeSize {
   readonly h: number;
   /** Shift of the label from the shape's centre. */
   readonly dy: number;
+  /** Shift of the label sideways from the shape's centre; none when absent. */
+  readonly dx?: number;
 }
 
 /** A shape's size about a label box `tw` × `th`. */
