@@ -240,11 +240,6 @@
       "count": 9
     }
   },
-  "packages/core/src/layout/validate.ts": {
-    "complexity": {
-      "count": 1
-    }
-  },
   "packages/core/src/parser-kit/diagnostics.spec.ts": {
     "unicorn/prefer-spread": {
       "count": 1
@@ -252,11 +247,6 @@
   },
   "packages/core/src/parser-kit/diagnostics.ts": {
     "tsdoc/syntax": {
-      "count": 2
-    }
-  },
-  "packages/core/src/parser-kit/source-view.ts": {
-    "complexity": {
       "count": 2
     }
   },
@@ -353,9 +343,6 @@
   },
   "packages/core/src/text/label.ts": {
     "@typescript-eslint/no-shadow": {
-      "count": 1
-    },
-    "complexity": {
       "count": 1
     }
   },
