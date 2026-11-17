@@ -1,6 +1,7 @@
 /**
  * The `<svg>` document root and small renderer helpers every diagram shares.
  */
+import type { Warning } from '@mermaid-js/core';
 import {
   checkColor,
   checkStyle,
@@ -176,4 +177,36 @@ export function styleCache(
     if (!style) styles.set(key, (style = checkStyle(decls, warn)));
     return style;
   };
+}
+
+/** An edge that may carry v12's `animate` or `animation` metadata. */
+export interface AnimatedEdge {
+  readonly animate?: boolean;
+  readonly animation?: string;
+}
+
+/**
+ * v13 parses edge `animate` and `animation` but draws no animation (R-SEC-2: the keyframes need
+ * a `<style>`; the edge keeps only its `edge-animation-*` class). Raises one `EDGE_ANIMATION_IGNORED` for each of the two features the edges use,
+ * so the author learns why nothing moves.
+ */
+export function warnIgnoredAnimation(
+  edges: Iterable<AnimatedEdge>,
+  warn: (warning: Warning) => void
+): void {
+  let animate = false;
+  let animation = false;
+  for (const e of edges) {
+    animate ||= e.animate === true;
+    animation ||= e.animation !== undefined;
+  }
+  for (const [used, feature] of [
+    [animate, 'animate'],
+    [animation, 'animation'],
+  ] as const)
+    if (used)
+      warn({
+        code: 'EDGE_ANIMATION_IGNORED',
+        message: `Edge \`${feature}\` is ignored: v13 parses it but draws no edge animation. The edge keeps its \`edge-animation-*\` class, which draws nothing.`,
+      });
 }
