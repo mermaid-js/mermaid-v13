@@ -1,0 +1,15 @@
+c4-beta
+person user "User"
+softwareSystem shop "Shop" {
+  container api "API"
+  container db "DB"
+}
+deploymentNode dc "DC" {
+  infrastructureNode lb "LB"
+}
+us|er --> a|pi : "Calls"
+api --- d|b
+lb <-- sh|op
+user --> mis|sing
+style api fill:#fff
+user --> api :::a|pi

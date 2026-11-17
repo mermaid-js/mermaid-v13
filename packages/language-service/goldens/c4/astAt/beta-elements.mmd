@@ -1,0 +1,13 @@
+c4-beta dynamic
+title Sign in
+direction LR
+legend off
+style store shape:cylinder
+person user "User"
+softwareSystem sh|op "Shop" {
+  container api "API" :::team
+  container st|ore "Store"
+}
+1: user --> |api : "Signs in"
+user <--> api
+api --- st|ore

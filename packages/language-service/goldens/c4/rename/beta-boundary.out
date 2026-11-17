@@ -1,0 +1,13 @@
+@ 4:18  softwareSystem sh|op "Shop" {
+  prepare: 4:16-4:20 "shop"; rename to "platform":
+  c4-beta
+  %% rename-to: platform
+  person user "User"
+  softwareSystem platform "Shop" {
+    group inner "Inner" {
+      container api "API"
+    }
+  }
+  user --> platform
+  platform --> inner
+  inner --> platform : "Reports"

@@ -1,0 +1,3 @@
+@ 3:10  person us|er "User"
+  prepare: 3:8-3:12 "user"; rename to "api":
+  refused: 'api' is already an element id in this diagram.

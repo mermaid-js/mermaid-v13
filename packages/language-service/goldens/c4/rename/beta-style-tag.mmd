@@ -1,0 +1,12 @@
+c4-beta
+%% rename-to: gateway
+style store shape:cylinder
+style container fill:#fff
+style person fill:#eee
+person person "A person"
+container store |"Store" :::store
+container container "Container" :::store
+container db "DB" :::store
+person --> store : "Reads" :::store
+container --> db
+db --> sto|re

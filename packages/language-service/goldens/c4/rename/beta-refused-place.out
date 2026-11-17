@@ -1,0 +1,61 @@
+@ 3:1  |person user "User"
+  prepare: refused: There is no id or class name here to rename.
+@ 4:12  person user| "User"
+  prepare: 4:8-4:12 "user"; rename to "gateway":
+  c4-beta
+  %% rename-to: gateway
+  person gateway "User"
+  person gateway "User"
+  person gateway "User" :::tag
+  container api "API" {
+  }
+  style user shape:cylinder
+  gateway --> api : "Calls"
+  gateway --> api
+  legend off
+  title User
+  gateway --> missing
+@ 5:16  person user "Us|er" :::tag
+  prepare: refused: There is no id or class name here to rename.
+@ 5:24  person user "User" :::t|ag
+  prepare: refused: There is no id or class name here to rename.
+@ 7:2  }|
+  prepare: refused: There is no id or class name here to rename.
+@ 8:9  style us|er shape:cylinder
+  prepare: refused: There is no id or class name here to rename.
+@ 9:11  user --> a|pi : "Calls"
+  prepare: 9:10-9:13 "api"; rename to "gateway":
+  c4-beta
+  %% rename-to: gateway
+  person user "User"
+  person user "User"
+  person user "User" :::tag
+  container gateway "API" {
+  }
+  style user shape:cylinder
+  user --> gateway : "Calls"
+  user --> gateway
+  legend off
+  title User
+  user --> missing
+@ 10:6  user |--> api
+  prepare: refused: There is no id or class name here to rename.
+@ 11:7  legend| off
+  prepare: refused: There is no id or class name here to rename.
+@ 12:9  title Us|er
+  prepare: refused: There is no id or class name here to rename.
+@ 13:14  user --> miss|ing
+  prepare: 13:10-13:17 "missing"; rename to "gateway":
+  c4-beta
+  %% rename-to: gateway
+  person user "User"
+  person user "User"
+  person user "User" :::tag
+  container api "API" {
+  }
+  style user shape:cylinder
+  user --> api : "Calls"
+  user --> api
+  legend off
+  title User
+  user --> gateway

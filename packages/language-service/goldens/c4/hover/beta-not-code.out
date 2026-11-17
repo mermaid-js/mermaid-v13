@@ -1,0 +1,12 @@
+@ 2:9  %% a com|ment
+  none
+@ 3:16  person user "Us|er" "Desc"
+  none
+@ 3:23  person user "User" "De|sc"
+  none
+@ 4:20  user --> user : "Ca|lls" "HTTP"
+  none
+@ 4:28  user --> user : "Calls" "HT|TP"
+  none
+@ 5:17  user --> user ::|:
+  none

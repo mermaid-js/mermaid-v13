@@ -1,0 +1,8 @@
+@ 4:12  container a|pi "API"
+  prepare: 4:11-4:14 "api"; rename to "person":
+  c4-beta
+  %% rename-to: person
+  person user "User"
+  container person "API"
+  user --> person
+  person --> user

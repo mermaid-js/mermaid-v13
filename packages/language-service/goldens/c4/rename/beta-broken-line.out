@@ -1,0 +1,9 @@
+@ 4:12  container a|pi "API" ??
+  prepare: 4:11-4:14 "api"; rename to "gateway":
+  c4-beta
+  %% rename-to: gateway
+  person user "User"
+  container gateway "API" ??
+  user --> gateway
+  container db "DB" {
+  user --> db
