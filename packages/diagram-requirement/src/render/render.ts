@@ -173,14 +173,12 @@ function openRoot({ w, ctx, paint }: Scene, model: RequirementModel, frame: Fram
   const width = Math.max(1, Math.ceil(frame.x + frame.width) - x);
   const height = Math.max(1, Math.ceil(frame.y + frame.height) - y);
   const maxWidth = config.requirement?.useMaxWidth !== false;
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
   openSvgRoot(w, ctx, {
     name: 'requirement requirementDiagram',
     viewBox: [x, y, width, height],
     maxWidth,
-    title,
-    desc,
+    title: model.accTitle,
+    desc: model.accDescr,
     attrs: {
       'font-family': paint.font,
       'font-size': paint.fontSize,

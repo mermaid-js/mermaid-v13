@@ -9,7 +9,7 @@ import { stateHover } from './facet/hover.ts';
 import { stateCategories } from './generated/categories.ts';
 import { parseState } from './parser/index.ts';
 import type { StateDocument, StateParseResult } from './parser/index.ts';
-import { shapeReason } from '@mermaid-js/shared/parser/facet';
+import { probeText, readsBackAt, shapeReason } from '@mermaid-js/shared/parser/facet';
 
 export { stateCategories } from './generated/categories.ts';
 export { stateDocs } from './generated/docs.ts';
@@ -23,15 +23,9 @@ const HEADER = 'stateDiagram-v2\n';
  * `kind` symbol named `name` at that spot, with no error.
  */
 function readsBack(line: string, name: string, kind: string): boolean {
-  const at = HEADER.length + line.indexOf('@');
-  const { diagnostics, symbols } = parseState(`${HEADER}${line.replace('@', () => name)}\n`);
-  const hits = symbols.filter((s) => s.kind === kind && s.range.start === at);
-  return (
-    !diagnostics.some((d) => d.severity === 'error') &&
-    hits.length === 1 &&
-    hits[0]!.name === name &&
-    hits[0]!.range.end === at + name.length
-  );
+  const { text, spots } = probeText(HEADER, [line], name);
+  // `Z` and the other names on the line vary, so the kinds are not counted.
+  return readsBackAt(parseState(text), spots, name, kind, null);
 }
 
 /** Where a state id is written, apart from `class` and `style` statements. */

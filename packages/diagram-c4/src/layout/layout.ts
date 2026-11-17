@@ -35,7 +35,16 @@ import {
 } from './grid.ts';
 import { cellConfig, cellPxMeasurer, cellRoom, type CellSize } from './cells.ts';
 import { C4_METRICS as M, FONT_WEIGHT } from './metrics.ts';
-import { Lanes, lineOf, pointsOf, route, Work, type Route } from './route.ts';
+import {
+  Lanes,
+  lineOf,
+  pairRoom,
+  pointsOf,
+  route,
+  Work,
+  type LoopPlace,
+  type Route,
+} from './route.ts';
 import {
   hitRect,
   outlineForm,
@@ -317,15 +326,17 @@ export interface SectionRoom {
   readonly font: FontKey;
   readonly config: C4LayoutConfig;
   readonly measure: Measure;
+  /** The width the text wraps at when `config.wrap` is on, in place of the `c4` width's. */
+  readonly wrapWidth?: number;
 }
 
 /** An element's name (bold), type line and description, measured in its kind's font. */
 export function measureSections(
   texts: { readonly name: string; readonly type: string; readonly descr?: string },
-  { font, config, measure }: SectionRoom
+  { font, config, measure, wrapWidth }: SectionRoom
 ): (Measured | undefined)[] {
   const wrapW = config.wrap
-    ? Math.max(config.width - 2 * config.c4ShapePadding, M.minWrapWidth)
+    ? Math.max(wrapWidth ?? config.width - 2 * config.c4ShapePadding, M.minWrapWidth)
     : Infinity;
   const sized = (scale: number): FontKey => ({ ...font, size: font.size * scale });
   return [
@@ -511,20 +522,63 @@ class Lines {
   }
 }
 
+/** Where a relation runs among the others between the same two shapes. */
+interface Place {
+  /** How far it moves sideways, along its own normal. */
+  readonly shift: number;
+  /** A self-loop's place among the loops on its shape. */
+  readonly loop?: LoopPlace;
+}
+
+/**
+ * Where each relation runs among the others between the same two shapes (#680). A self-loop
+ * gets its place among the loops on its shape. Any other relation moves sideways (along its own
+ * normal), in either direction: none for the only one, else the group spread in steps of
+ * `2 * pairShift` about the middle, the first statement's side first. A pair with one relation
+ * each way keeps `pairShift` to either side of the middle, as before repeated relations were
+ * kept. Where the room the two shapes share (`pairRoom`) holds fewer steps, the steps shrink to
+ * fit it: past `2 * room / near + 1` relations they are closer than `near` and read as one band.
+ */
+function pairPlaces(drawn: readonly { a: Outline; b: Outline }[]): Place[] {
+  interface Between {
+    a: Outline;
+    b: Outline;
+    count: number;
+    step?: number;
+  }
+  const groups = new Map<Outline, Map<Outline, Between>>();
+  // Each relation's group and its place in it, counted as the group fills.
+  const places = drawn.map(({ a, b }): [Between, number] => {
+    let g = groups.get(a)?.get(b) ?? groups.get(b)?.get(a);
+    if (!g) {
+      g = { a, b, count: 0 };
+      let ends = groups.get(a);
+      if (!ends) groups.set(a, (ends = new Map<Outline, Between>()));
+      ends.set(b, g);
+    }
+    return [g, g.count++];
+  });
+  return drawn.map(({ a }, k): Place => {
+    const [g, nth] = places[k]!;
+    if (g.a === g.b) return { shift: 0, loop: { nth, count: g.count } };
+    if (g.count < 2) return { shift: 0 };
+    g.step ??= Math.min(2 * M.pairShift, (2 * pairRoom(g.a, g.b)) / (g.count - 1));
+    const side = ((g.count - 1) / 2 - nth) * g.step;
+    return { shift: a === g.a ? side : -side };
+  });
+}
+
 /** Routes every relation with known ends in model order, then places their labels (Pele `render.ts`). */
 function routeAll(input: RouteInput): RoutedAll {
   const { model, endOf, shapes, frames, order } = input;
   const drawn: { rel: C4Relation; index: number; a: Outline; b: Outline }[] = [];
-  const pairs = new Map<Outline, Set<Outline>>();
   model.relations.forEach((rel, index) => {
     const a = endOf(rel.from);
     const b = endOf(rel.to);
     if (!a || !b) return;
     drawn.push({ rel, index, a, b });
-    let targets = pairs.get(a);
-    if (!targets) pairs.set(a, (targets = new Set()));
-    targets.add(b);
   });
+  const places = pairPlaces(drawn);
   // The comparisons are counted as they are made: once the budget is spent, the relations still
   // to route go straight and the labels still to place sit at their middle, in model order.
   const work = new Work(input.budget);
@@ -543,11 +597,10 @@ function routeAll(input: RouteInput): RoutedAll {
   // Every line is routed before any label is placed, so that labels can keep off the arrowheads.
   const lanes = new Lanes(work);
   for (const f of frames) lanes.frame(f);
-  const routes = drawn.map(({ rel, a, b }) => {
-    const reverse = a !== b && pairs.get(b)?.has(a) === true;
+  const routes = drawn.map(({ rel, a, b }, k) => {
     if (work.done) careful = false;
     const r = route(a, b, {
-      shift: reverse ? M.pairShift : 0,
+      ...(places[k] ?? { shift: 0 }),
       ...(work.done ? {} : { others: shapes }),
       lanes,
     });

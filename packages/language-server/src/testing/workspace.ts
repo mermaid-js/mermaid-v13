@@ -52,9 +52,20 @@ export function facetPackage(name: string, id: string, word = id): PackageFiles 
   };
 }
 
-/** A temp directory with `node_modules/<name>/…` for each package; returns its path. */
-export function workspace(packages: Readonly<Record<string, PackageFiles>>): string {
+/**
+ * A temp directory with `node_modules/<name>/…` for each package and a package.json declaring
+ * them all (discovery reads only declared packages, D589), or none with `manifest: false`;
+ * returns its path.
+ */
+export function workspace(
+  packages: Readonly<Record<string, PackageFiles>>,
+  { manifest = true }: { readonly manifest?: boolean } = {}
+): string {
   const root = mkdtempSync(join(tmpdir(), 'mermaid-lsp-'));
+  if (manifest) {
+    const dependencies = Object.fromEntries(Object.keys(packages).map((name) => [name, '1.0.0']));
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ name: 'w', dependencies }));
+  }
   for (const [name, files] of Object.entries(packages)) {
     const dir = join(root, 'node_modules', name);
     for (const [file, text] of Object.entries(files)) {

@@ -11,6 +11,7 @@ import {
   UNCHECKED_STEPS,
 } from './check-generated.ts';
 import { ROOT } from './diagrams.ts';
+import { staticSteps } from './parallel.ts';
 
 const scripts = (
   JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as {
@@ -36,7 +37,7 @@ describe('the generated-files check (#694)', () => {
   });
 
   it('runs as part of `pnpm check:static`', () => {
-    expect(scripts['check:static']!.split('&&').map((s) => s.trim())).toContain(
+    expect(staticSteps(scripts['check:static']!)).toContain(
       'tsx tools/workspace/check-generated-cli.ts'
     );
   });

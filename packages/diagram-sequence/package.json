@@ -25,6 +25,9 @@
       "mermaid-source": "./src/language.ts",
       "types": "./dist/language.d.ts",
       "default": "./dist/language.js"
+    },
+    "./testing": {
+      "mermaid-source": "./src/testing.ts"
     }
   },
   "files": [

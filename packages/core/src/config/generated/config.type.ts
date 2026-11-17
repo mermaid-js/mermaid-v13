@@ -164,9 +164,10 @@ securityLevel?: ("default" | "strict" | "loose" | "antiscript" | "sandbox")
  */
 startOnLoad?: boolean
 /**
- * Plugin auto-discovery (D164, D165): before the first render, `mermaid` registers the
- * plugins found in the app's own `node_modules`, by the Node/SSR scan or, in a bundled
- * app, by `@mermaid-js/bundler-plugin`'s build-time list. Set `false` to turn both off.
+ * Plugin auto-discovery (D164, D165, D589): before the first render, `mermaid` registers
+ * the plugins the app declares in its own `package.json` and has installed in its own
+ * `node_modules`, by the Node/SSR scan or, in a bundled app, by
+ * `@mermaid-js/bundler-plugin`'s build-time list. Set `false` to turn both off.
  * It does not cover the CDN `globalThis.mermaidPlugins` queue (D167): a script that
  * pushes itself there always registers. Integrator-only: diagram text cannot set it.
  * 
@@ -249,6 +250,7 @@ treemap?: TreemapDiagramConfig
 kanban?: KanbanDiagramConfig
 gitGraph?: GitGraphDiagramConfig
 c4?: C4DiagramConfig
+c4beta?: C4BetaDiagramConfig
 sankey?: SankeyDiagramConfig
 packet?: PacketDiagramConfig
 block?: BlockDiagramConfig
@@ -2227,6 +2229,63 @@ component_queueFont?: FontCalculator
 external_component_queueFont?: FontCalculator
 boundaryFont?: FontCalculator
 messageFont?: FontCalculator
+}
+/**
+ * The object containing configurations specific for c4-beta diagrams (spec #730). The type
+ * reads this section over the `c4` section (D534): a key both have (`theme`, `useMaxWidth`)
+ * takes the `c4` value unless this section sets it. `diagramPadding` is c4-beta's own. Shape
+ * metrics and fonts are still read from `c4`.
+ * 
+ * 
+ * This interface was referenced by `MermaidConfig`'s JSON-Schema
+ * via the `definition` "C4BetaDiagramConfig".
+ */
+export interface C4BetaDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * Theme, the CSS style sheet.
+ * You may also use `themeCSS` to override this value.
+ * 
+ */
+theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
+/**
+ * Defines which layout algorithm to use for rendering the diagram.
+ * 
+ */
+layout?: string
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
+/**
+ * The margin round the drawing, on all four sides, in pixels. It is the room between
+ * the canvas edge and the nearest element, boundary, relation or title.
+ * 
+ */
+diagramPadding?: number
+/**
+ * Whether an element shows its type line (`[Person]`, `[Software System]`, `[Container: Rust]`)
+ * above its name. `false` hides it on every element; use `hideStereotypes` to hide it on some
+ * kinds only.
+ * 
+ */
+showStereotypes?: boolean
+/**
+ * The element kinds whose type line is hidden while `showStereotypes` is on, for example
+ * `[person]`. Unset hides none.
+ * 
+ */
+hideStereotypes?: ("person" | "softwareSystem" | "container" | "component" | "infrastructureNode")[]
+/**
+ * The width in pixels at which a person's name, type line and description wrap. Unset, a
+ * person wraps at the width every c4-beta element wraps at, `c4.width` less twice
+ * `c4.c4ShapePadding` (176 px by default).
+ * 
+ */
+personWrappingWidth?: number
 }
 /**
  * The object containing configurations specific for sankey diagrams.

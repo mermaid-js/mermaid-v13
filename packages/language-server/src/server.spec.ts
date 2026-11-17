@@ -542,7 +542,7 @@ describe('review fixes (#38)', () => {
   it(
     'imports nothing from the workspace without the opt-in (D157)',
     async () => {
-      const root = workspace({});
+      const root = workspace({ 'mermaid-fake': {} });
       const marker = join(root, 'detector-ran');
       const pkg = facetPackage('mermaid-fake', 'fake');
       const files = {

@@ -7,9 +7,10 @@ import { C4_BOUNDARY_CYCLE } from '../codes.ts';
 import { c4TestContext, c4TestTheme, parsedC4 } from '../test-context.ts';
 import { c4LayoutViolations, c4RelationCrossings } from './invariants.ts';
 import { layoutC4 } from './layout.ts';
+import { C4_METRICS as M } from './metrics.ts';
 import { c4RelationPath } from './path.ts';
 import { fixture, FIXTURES } from './mmd.fixtures.ts';
-import type { C4Layout, C4RelationLayout, PlacedLabel, Rect } from './types.ts';
+import type { C4Layout, C4RelationLayout, PlacedLabel, Point, Rect } from './types.ts';
 
 /**
  * The C4 layout (spec #522 T3) through its seam, `layoutC4(model, ctx)`, on parser-produced
@@ -245,11 +246,11 @@ describe('c4 element text and shapes', () => {
     const db = el(layout, 'db');
     expect(db.shape).toBe('cyl');
     expect(db.name!.bold).toBe(true);
-    expect(textOf(db.type)).toBe('[Container: Postgres]');
-    expect(db.type.font.size).toBeCloseTo(14 * 0.75);
+    expect(textOf(db.type!)).toBe('[Container: Postgres]');
+    expect(db.type!.font.size).toBeCloseTo(14 * 0.75);
     expect(db.descr!.font.size).toBeCloseTo(14 * 0.82);
-    expect(db.type.y).toBeCloseTo(bottom(db.name!) + 3);
-    expect(db.descr!.y).toBeCloseTo(bottom(db.type) + 3);
+    expect(db.type!.y).toBeCloseTo(bottom(db.name!) + 3);
+    expect(db.descr!.y).toBeCloseTo(bottom(db.type!) + 3);
     expect(db.name!.x + db.name!.width / 2).toBeCloseTo(db.box.x + db.box.width / 2);
   });
 
@@ -257,7 +258,7 @@ describe('c4 element text and shapes', () => {
     const layout = sound(
       'C4Context\nPerson_Ext(p, "P")\nSystemQueue_Ext(q, "Q")\nComponent(c, "C")'
     );
-    expect(['p', 'q', 'c'].map((a) => textOf(el(layout, a).type))).toEqual([
+    expect(['p', 'q', 'c'].map((a) => textOf(el(layout, a).type!))).toEqual([
       '[Person]',
       '[Software System]',
       '[Component]',
@@ -359,14 +360,192 @@ describe('c4 relations (D455)', () => {
       'C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel(a, b, "x")\nRel(b, a, "y")'
     );
     expect(rel(layout, 'a', 'b').start.y).not.toBeCloseTo(rel(layout, 'b', 'a').end.y);
+    // Each to the left of its own way: `a -> b` runs right, so below; `b -> a` above.
+    expect(rel(layout, 'a', 'b').start.y).toBeGreaterThan(rel(layout, 'b', 'a').end.y);
   });
 
-  it('draws a self-loop on the right side', () => {
-    const layout = sound('C4Context\nSystem(a, "A")\nRel(a, a, "self")');
-    const r = rel(layout, 'a', 'a');
-    expect(r.route).toBe('loop');
-    expect(r.controls![0].x).toBeGreaterThan(right(el(layout, 'a').box));
-    expect(c4RelationPath(r).map((c) => c.op)).toEqual(['M', 'C']);
+  describe('relations that repeat a pair (#680)', () => {
+    const repeated = (head: string, n: number): string =>
+      head + Array.from({ length: n }, (_, i) => `Rel(a, b, "r${i}")\n`).join('');
+    const ROW = 'C4Context\nSystem(a, "A")\nSystem(b, "B")\n';
+    const COLUMN =
+      'C4Context\nUpdateLayoutConfig($c4ShapeInRow="1")\nSystem(a, "A")\nSystem(b, "B")\n';
+    const DIAGONAL =
+      'C4Context\nUpdateLayoutConfig($c4ShapeInRow="2")\nSystem(a, "A")\nSystem(x, "X")\nSystem(y, "Y")\nSystem(b, "B")\n';
+    const NESTED = 'C4Context\nBoundary(a, "A") {\nSystem(b, "B")\n}\n';
+    /**
+     * More lines than fit `2 * pairShift` apart between two systems side by side (4), fewer than
+     * fit `near` apart (10).
+     */
+    const SQUEEZED = 8;
+    /** More lines than fit `near` apart between two systems side by side. */
+    const PAST_ROOM = 12;
+    /** More lines than fit `2 * pairShift` apart across a system's width (15). */
+    const PAST_WIDTH = 24;
+    /** Rounding in the shift arithmetic, far below a pixel. */
+    const ROUNDING = 1e-9;
+    /** Each straight line's offset across the first one's direction, in order, and the gaps. */
+    const across = (layout: C4Layout): { offsets: number[]; gaps: number[] } => {
+      const lines = layout.relations.filter((r) => r.from === 'a' && r.to === 'b');
+      expect(lines.every((r) => r.route === 'line')).toBe(true);
+      const [p, q] = lines[0]!.points as [Point, Point];
+      const len = Math.hypot(q.x - p.x, q.y - p.y);
+      const [nx, ny] = [-(q.y - p.y) / len, (q.x - p.x) / len];
+      const offsets = lines.map((r) => (r.start.x - p.x) * nx + (r.start.y - p.y) * ny);
+      const sorted = [...offsets].sort((u, v) => u - v);
+      return { offsets, gaps: sorted.slice(1).map((o, i) => o - sorted[i]!) };
+    };
+
+    it.each([
+      ['side by side', ROW],
+      ['one above the other', COLUMN],
+      ['diagonally apart', DIAGONAL],
+      ['one inside the other', NESTED],
+    ])('keeps each line between shapes %s at least `near` from the next', (_name, head) => {
+      const { gaps } = across(sound(repeated(head, SQUEEZED)));
+      expect(gaps).toHaveLength(SQUEEZED - 1);
+      for (const gap of gaps) expect(gap).toBeGreaterThanOrEqual(M.near - ROUNDING);
+    });
+
+    it('spreads them across in statement order', () => {
+      const { offsets } = across(sound(repeated(ROW, SQUEEZED)));
+      const steps = offsets.slice(1).map((o, i) => Math.sign(o - offsets[i]!));
+      expect(new Set(steps).size).toBe(1);
+      expect(steps[0]).not.toBe(0);
+    });
+
+    it('limit: past the room the pair shares, keeps them evenly apart, closer than `near`', () => {
+      const { gaps } = across(sound(repeated(ROW, PAST_ROOM)));
+      expect(gaps).toHaveLength(PAST_ROOM - 1);
+      for (const gap of gaps) expect(Math.abs(gap - gaps[0]!)).toBeLessThan(ROUNDING);
+      expect(gaps[0]).toBeGreaterThan(0);
+      expect(gaps[0]).toBeLessThan(M.near);
+    });
+
+    it('limit: puts the outermost lines `portInset` inside the side two shapes share', () => {
+      const layout = sound(repeated(ROW, PAST_ROOM));
+      const box = el(layout, 'a').box;
+      const ys = layout.relations.map((r) => r.start.y);
+      expect(Math.min(...ys)).toBeCloseTo(box.y + M.portInset, 9);
+      expect(Math.max(...ys)).toBeCloseTo(bottom(box) - M.portInset, 9);
+    });
+
+    it('limit: between shapes diagonally apart, as far as each middle moves across the line', () => {
+      const layout = sound(repeated(DIAGONAL, PAST_ROOM));
+      const [a, b] = [el(layout, 'a').box, el(layout, 'b').box];
+      const middle = (r: Rect): Point => ({ x: r.x + r.width / 2, y: r.y + r.height / 2 });
+      const [p, q] = [middle(a), middle(b)];
+      const len = Math.hypot(q.x - p.x, q.y - p.y);
+      const [nx, ny] = [-(q.y - p.y) / len, (q.x - p.x) / len];
+      // From the middle across the line, out through a straight side (clear of the corners here).
+      const out = (r: Rect): number =>
+        Math.min(r.width / 2 / Math.abs(nx), r.height / 2 / Math.abs(ny));
+      const room = Math.min(out(a), out(b)) - M.portInset;
+      const offsets = layout.relations.map((r) => (r.start.x - p.x) * nx + (r.start.y - p.y) * ny);
+      expect(Math.max(...offsets)).toBeCloseTo(room, 6);
+      expect(Math.min(...offsets)).toBeCloseTo(-room, 6);
+    });
+
+    it('limit: between cylinders side by side, out through their rounded ends', () => {
+      const layout = sound(
+        repeated('C4Context\nContainerDb(a, "A", "SQL")\nContainerDb(b, "B", "SQL")\n', PAST_ROOM)
+      );
+      const box = el(layout, 'a').box;
+      const ys = layout.relations.map((r) => r.start.y);
+      expect(Math.min(...ys)).toBeCloseTo(box.y + M.portInset, 9);
+      expect(Math.max(...ys)).toBeCloseTo(bottom(box) - M.portInset, 9);
+    });
+
+    /** Where each relation between a boundary and the shape in it crosses the side it leaves. */
+    const alongSide = (layout: C4Layout): { at: number[]; inner: [number, number] } => {
+      const inner = el(layout, 'b').box;
+      const upright = layout.relations.every((r) => r.start.x === r.end.x);
+      expect(upright || layout.relations.every((r) => r.start.y === r.end.y)).toBe(true);
+      return {
+        at: layout.relations.map((r) => (upright ? r.start.x : r.start.y)),
+        inner: upright ? [inner.x, right(inner)] : [inner.y, bottom(inner)],
+      };
+    };
+
+    it('limit: inside a boundary, along the side it leaves, `portInset` inside the shape', () => {
+      const { at, inner } = alongSide(sound(repeated(NESTED, PAST_WIDTH)));
+      expect(Math.min(...at)).toBeCloseTo(inner[0] + M.portInset, 9);
+      expect(Math.max(...at)).toBeCloseTo(inner[1] - M.portInset, 9);
+    });
+
+    it.each([
+      ['into the shape', 'Rel(a, b, "in")'],
+      ['out of the shape', 'Rel(b, a, "out")'],
+    ])('limit: from the side of a boundary nearest the shape, the first one %s', (_way, first) => {
+      // The person beside the system leaves the frame's bottom farther from it than its left.
+      const head = `C4Context\nBoundary(a, "A") {\nSystem(b, "B")\nPerson(p, "P")\n}\n${first}\n`;
+      const layout = sound(repeated(head, PAST_ROOM - 1));
+      const { at, inner } = alongSide(layout);
+      for (const r of layout.relations)
+        expect(r.from === 'a' ? r.start.x : r.end.x).toBeCloseTo(frame(layout, 'a').box.x, 9);
+      expect(Math.min(...at)).toBeCloseTo(inner[0] + M.portInset, 9);
+      expect(Math.max(...at)).toBeCloseTo(inner[1] - M.portInset, 9);
+    });
+
+    it('spreads them in statement order inside a boundary, either way', () => {
+      const { at } = alongSide(
+        sound(
+          'C4Context\nBoundary(a, "A") {\nSystem(b, "B")\n}\nRel(a, b, "1")\nRel(a, b, "2")\nRel(b, a, "3")'
+        )
+      );
+      const steps = at.slice(1).map((o, i) => Math.sign(o - at[i]!));
+      expect(new Set(steps).size).toBe(1);
+      expect(steps[0]).not.toBe(0);
+    });
+  });
+
+  describe('self-loops that repeat a shape (#680)', () => {
+    /** More loops than fit their ends `near` apart on a system's right side (5). */
+    const PAST_ROOM = 7;
+    const loops = (src: string): C4RelationLayout[] =>
+      sound(src).relations.filter((r) => r.route === 'loop');
+    /** Where each loop meets the outline, in order down the side, and the gaps between them. */
+    const ends = (drawn: readonly C4RelationLayout[]): { ys: number[]; gaps: number[] } => {
+      const ys = drawn.flatMap((r) => [r.start.y, r.end.y]).sort((u, v) => u - v);
+      return { ys, gaps: ys.slice(1).map((y, i) => y - ys[i]!) };
+    };
+
+    it('draws each on its own stretch of the side, its arrowheads apart from the others', () => {
+      const drawn = loops('C4Context\nSystem(a, "A")\nRel(a, a, "one")\nBiRel(a, a, "two")');
+      expect(drawn).toHaveLength(2);
+      const [one, two] = drawn as [C4RelationLayout, C4RelationLayout];
+      // The first statement above the second, each loop's ends on its own stretch.
+      expect(Math.max(one.start.y, one.end.y)).toBeLessThan(Math.min(two.start.y, two.end.y));
+      for (const gap of ends(drawn).gaps) expect(gap).toBeGreaterThanOrEqual(M.near);
+    });
+
+    it('limit: past the room on the side, keeps their ends evenly apart, closer than `near`', () => {
+      const src = Array.from({ length: PAST_ROOM }, (_, i) => `Rel(a, a, "r${i}")`).join('\n');
+      const { ys, gaps } = ends(loops(`C4Context\nSystem(a, "A")\n${src}`));
+      expect(new Set(ys).size).toBe(2 * PAST_ROOM);
+      for (const gap of gaps) expect(Math.abs(gap - gaps[0]!)).toBeLessThan(1e-9);
+      expect(gaps[0]).toBeLessThan(M.near);
+      // They fill the side, `loopSpreadInset` clear of its ends.
+      const box = el(sound(`C4Context\nSystem(a, "A")\n${src}`), 'a').box;
+      expect(ys[0]).toBeCloseTo(box.y + M.loopSpreadInset, 9);
+      expect(ys[ys.length - 1]).toBeCloseTo(bottom(box) - M.loopSpreadInset, 9);
+    });
+
+    it('keeps a lone loop at the middle of the box, also on a person', () => {
+      const layout = sound('C4Context\nPerson(a, "A")\nRel(a, a, "self")');
+      const r = rel(layout, 'a', 'a');
+      const box = el(layout, 'a').box;
+      expect((r.start.y + r.end.y) / 2).toBeCloseTo(box.y + box.height / 2, 9);
+    });
+
+    it('ends the loops on a person on its body, at its right side, not on its head', () => {
+      const layout = sound('C4Context\nPerson(a, "A")\nRel(a, a, "one")\nBiRel(a, a, "two")');
+      const box = el(layout, 'a').box;
+      for (const r of loops('C4Context\nPerson(a, "A")\nRel(a, a, "one")\nBiRel(a, a, "two")'))
+        for (const end of [r.start, r.end])
+          expect(end.x).toBeGreaterThanOrEqual(right(box) - M.shapeRadius);
+      expect(layout.relations).toHaveLength(2);
+    });
   });
 
   it('numbers C4Dynamic relations in model order, and leaves out one with an unknown end', () => {

@@ -52,8 +52,12 @@ const V13_ONLY: readonly string[] = [
   'regressions/same-lane-detour-tb',
   // mermaid-js/mermaid#8693
   'regressions/terminal-lanes-keep-straight-connector',
+  // mermaid-js/mermaid#8695
+  'regressions/edge-end-on-box',
   // mermaid-js/mermaid#8754
   'regressions/tb-empty-lane',
+  // mermaid-js/mermaid#8770
+  'regressions/locale-independent-order',
   // mermaid-js/mermaid#8772
   'regressions/lr-empty-lane',
   // mermaid-js/mermaid#8788

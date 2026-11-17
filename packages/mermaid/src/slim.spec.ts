@@ -189,4 +189,30 @@ describe('mermaid/slim', () => {
       );
     });
   });
+
+  // spec #730 T7: c4beta shares the c4 plugin, and its text output is the plugin's ascii entry.
+  describe('c4beta text output through the c4 plugin', () => {
+    const c4Ascii = () => import('@mermaid-js/diagram-c4/ascii').then((m) => m.ascii);
+    const BETA = 'c4-beta\nperson a "A"\n';
+
+    it('draws c4beta as text, given c4 as an object or a loader', async () => {
+      const { c4 } = await import('@mermaid-js/diagram-c4');
+      const c4Text = await c4Ascii();
+      const loader = async () => ({
+        ...(await import('@mermaid-js/diagram-c4')),
+        ascii: c4Text,
+      });
+      for (const c4Given of [{ ...c4, ascii: c4Text }, loader]) {
+        const m = createMermaid({ diagrams: { c4: c4Given } });
+        expect((await m.render('b', BETA)).svg).toContain('aria-roledescription="c4beta"');
+        expect(m.supportsFormat('c4beta', 'ascii')).toBe(true);
+        expect(m.supportsFormat('c4', 'ascii')).toBe(true);
+        await m.prepare(BETA, { format: 'ascii' });
+        expect(m.renderSync(BETA, { format: 'ascii' }).text).toContain('[Person]');
+        const legacy = 'C4Context\nPerson(a, "A")\n';
+        await m.prepare(legacy, { format: 'ascii' });
+        expect(m.renderSync(legacy, { format: 'ascii' }).text).toContain('A');
+      }
+    });
+  });
 });

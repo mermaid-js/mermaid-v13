@@ -10,10 +10,14 @@ import type {
   HoverTarget,
   SymbolOccurrence,
 } from '@mermaid-js/core/parser-kit';
-import { code, plural, trimmed } from '@mermaid-js/shared/parser/facet';
+import { code, plural, symbolHoverOf } from '@mermaid-js/shared/parser/facet';
 import {
   flowBareKeywordHover,
+  flowClassesFact,
   flowClassHover,
+  flowEdgeCounts,
+  flowLinkAt,
+  flowNodeLabels,
   flowShapeHover,
   flowTokenHover,
 } from '@mermaid-js/shared/parser/flow-facet';
@@ -35,35 +39,16 @@ function* chainParts(children: readonly FlowStatementNode[]): Generator<FlowNode
   }
 }
 
-const unquote = (s: string) => {
-  const t = s.trim();
-  return t.length > 1 && t.startsWith('"') && t.endsWith('"') ? t.slice(1, -1) : t;
-};
-
 function nodeHover(name: string, model: FlowModel, ast: FlowDocument): string | undefined {
   const v = model.vertices.find((x) => x.id === name);
   if (!v) return undefined;
-  const labels = [v.text];
-  for (const p of chainParts(ast.children)) {
-    if (p.type !== 'Node' || p.name !== name || !p.label) continue;
-    const l = unquote(p.label.text);
-    if (!labels.includes(l)) labels.push(l);
-  }
-  let into = 0;
-  let out = 0;
-  for (const e of model.edges) {
-    if (e.end === name) into++;
-    if (e.start === name) out++;
-  }
+  const labels = flowNodeLabels(name, v.text, chainParts(ast.children));
   const facts = [
     `${labels.length === 1 ? 'Label' : 'Labels'}: ${labels.map(code).join(', ')}`,
     `Shape: ${v.type === undefined ? 'default' : code(v.type)}`,
+    ...flowClassesFact(v.classes),
   ];
-  const classes = [...new Set(v.classes)];
-  if (classes.length > 0) {
-    facts.push(`${classes.length === 1 ? 'Class' : 'Classes'}: ${classes.map(code).join(', ')}`);
-  }
-  return `**node** ${code(name)}\n\n${facts.join(' · ')}\n\nEdges: ${into} in, ${out} out`;
+  return `**node** ${code(name)}\n\n${facts.join(' · ')}\n\n${flowEdgeCounts(name, model.edges)}`;
 }
 
 function subgraphHover(name: string, model: FlowModel): string | undefined {
@@ -99,16 +84,14 @@ function linkHover(
   model: FlowModel,
   ast: FlowDocument
 ): Hover | undefined {
-  for (const p of chainParts(ast.children)) {
-    if (p.type !== 'Edge' || p.linkRange.start > at || at >= p.linkRange.end) continue;
-    const e = model.edges.find((x) => x.id === p.edgeId);
-    if (!e) break;
-    const range = trimmed(text, p.linkRange);
-    const arrow = text.slice(range.start, range.end);
-    const what = describeLink(e.type, e.stroke, e.length);
-    return { range, contents: `**${code(arrow)}** ${what}\n\n${flowchartDocs[T.Link]}` };
-  }
-  return undefined;
+  const link = flowLinkAt(text, chainParts(ast.children), at);
+  const e = link && model.edges.find((x) => x.id === link.edgeId);
+  if (!link || !e) return undefined;
+  const what = describeLink(e.type, e.stroke, e.length);
+  return {
+    range: link.range,
+    contents: `**${code(link.arrow)}** ${what}\n\n${flowchartDocs[T.Link]}`,
+  };
 }
 
 /** A shape name in `@{ shape: … }`: its other names. One v12 does not accept shows nothing. */
@@ -128,10 +111,8 @@ export function flowchartHover(
 ): Hover | undefined {
   const { text, result } = doc;
   const model = result.model as FlowModel;
-  if (at.symbol) {
-    const contents = symbolHover(at.symbol, model, result.ast);
-    if (contents !== undefined) return { range: at.symbol.range, contents };
-  }
+  const symbol = symbolHoverOf(at, (s) => symbolHover(s, model, result.ast));
+  if (symbol) return symbol;
   const t = at.token;
   if (!t) return flowBareKeywordHover(text, result.tokens, at.offset, DOCS);
   if (t.kind === T.ShapeData) return flowShapeHover(text, t.range, at.offset, shapeText);

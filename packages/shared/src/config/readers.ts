@@ -94,7 +94,8 @@ export function configLengths(
   const read = new Map<string, number | undefined>();
   return (key) => {
     if (read.has(key)) return read.get(key);
-    const value = section[key];
+    // Only the section's own keys: an inherited one reads as unset.
+    const value = Object.hasOwn(section, key) ? section[key] : undefined;
     // Any other string stays a string, and so is not taken.
     const n = numericValue(value);
     const taken = typeof n === 'number' && n >= 0 && n < MAX_LENGTH ? n : undefined;

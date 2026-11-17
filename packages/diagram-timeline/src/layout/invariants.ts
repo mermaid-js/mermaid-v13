@@ -30,11 +30,15 @@ import type {
   TimelineLine,
   TimelinePeriodLayout,
 } from './types.ts';
-import { nonFinite as numbers, within } from '@mermaid-js/shared/layout/invariants';
+import {
+  EPS,
+  near,
+  nonFinite as numbers,
+  rectsOverlap as overlaps,
+  rectText as fmt,
+  within,
+} from '@mermaid-js/shared/testing/layout-invariants';
 
-const EPS = 1e-6;
-
-const near = (a: number, b: number): boolean => Math.abs(a - b) <= EPS;
 const right = (r: Rect): number => r.x + r.width;
 const bottom = (r: Rect): number => r.y + r.height;
 const insideX = (outer: Rect, inner: Rect): boolean =>
@@ -43,11 +47,8 @@ const contains = (outer: Rect, inner: Rect): boolean =>
   insideX(outer, inner) &&
   within(inner.y, outer.y, bottom(outer)) &&
   within(bottom(inner), outer.y, bottom(outer));
-const overlaps = (a: Rect, b: Rect): boolean =>
-  a.x < right(b) - EPS && b.x < right(a) - EPS && a.y < bottom(b) - EPS && b.y < bottom(a) - EPS;
 const holds = (r: Rect, p: Point): boolean =>
   within(p.x, r.x, right(r)) && within(p.y, r.y, bottom(r));
-const fmt = (r: Rect): string => `(${r.x}, ${r.y}, ${r.width} × ${r.height})`;
 
 function counts(model: TimelineModel, layout: TimelineLayout, out: string[]): void {
   if (layout.direction !== model.direction)

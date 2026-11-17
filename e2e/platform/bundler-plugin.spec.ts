@@ -6,8 +6,11 @@
  * (`bundle-pages/plugin.html`) has no registration code. With the plugin, the fixture diagram
  * renders, its entry in a chunk that loads only on its first render; the fixture extension
  * marks every svg; click callbacks fire. Without it, the fixture type is UNSUPPORTED_DIAGRAM.
+ * `bundle-hoisted/` (npm) gets the fixture diagram only as a dependency of
+ * `mermaid-fixture-wrapper`: npm hoists it, the app does not declare it, so it is not
+ * discovered (D589).
  */
-import { cpSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import {
@@ -145,3 +148,38 @@ for (const bundler of BUNDLERS) {
       });
   });
 }
+
+// D589: discovery finds only the app's declared dependencies. npm hoists a dependency of a
+// dependency to the top of node_modules; the app never chose it, so it is not discovered.
+test.describe('mermaid() in an npm app that only gets the fixture diagram transitively', () => {
+  test.describe.configure({ mode: 'serial', timeout: 240_000 });
+  let app: InstalledApp | undefined;
+  let server: StaticServer | undefined;
+
+  test.beforeAll(async () => {
+    app = installApp('bundle-hoisted', { manager: 'npm' });
+    cpSync(join(PLATFORM_DIR, 'bundle-pages'), app.dir, { recursive: true });
+    app.run('npm', ['run', 'build']);
+    server = await serveDir(join(app.dir, 'dist'));
+  });
+
+  test.afterAll(async () => {
+    await server?.close();
+    app?.close();
+  });
+
+  test('leaves the hoisted, undeclared fixture diagram out: UNSUPPORTED_DIAGRAM', async ({
+    page,
+  }) => {
+    // The case under test: npm put the fixture at the top of the app's node_modules.
+    expect(
+      existsSync(join(app!.dir, 'node_modules', 'mermaid-fixture-diagram', 'package.json'))
+    ).toBe(true);
+    await page.goto(server!.url('/plugin.html'));
+    await expect(page.locator('#status')).toHaveText('ready');
+    expect(await draw(page, 'box', 'fixturebox hoisted')).toEqual({
+      error: 'UNSUPPORTED_DIAGRAM',
+    });
+    expect((await draw(page, 'flow', FLOWCHART)).type).toBe('flowchart-v2');
+  });
+});

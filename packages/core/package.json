@@ -31,11 +31,6 @@
       "types": "./dist/parser-kit/support.d.ts",
       "default": "./dist/parser-kit/support.js"
     },
-    "./parser-kit/facet": {
-      "mermaid-source": "./src/parser-kit/facet.ts",
-      "types": "./dist/parser-kit/facet.d.ts",
-      "default": "./dist/parser-kit/facet.js"
-    },
     "./preprocess": {
       "mermaid-source": "./src/preprocess/index.ts",
       "types": "./dist/preprocess/index.d.ts",
@@ -70,11 +65,6 @@
       "mermaid-source": "./src/svg/index.ts",
       "types": "./dist/svg/index.d.ts",
       "default": "./dist/svg/index.js"
-    },
-    "./svg/document": {
-      "mermaid-source": "./src/svg/document.ts",
-      "types": "./dist/svg/document.d.ts",
-      "default": "./dist/svg/document.js"
     },
     "./svg/folded": {
       "mermaid-source": "./src/svg/folded.ts",
@@ -115,11 +105,6 @@
       "mermaid-source": "./src/config/index.ts",
       "types": "./dist/config/index.d.ts",
       "default": "./dist/config/index.js"
-    },
-    "./config/readers": {
-      "mermaid-source": "./src/config/readers.ts",
-      "types": "./dist/config/readers.d.ts",
-      "default": "./dist/config/readers.js"
     },
     "./limits": {
       "mermaid-source": "./src/limits/index.ts",

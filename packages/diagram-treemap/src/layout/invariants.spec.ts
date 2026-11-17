@@ -3,7 +3,8 @@ import { tableMeasurer } from '@mermaid-js/core/text';
 import type { Theme } from '@mermaid-js/core/theme';
 import { treemapTestTheme } from '../test-context.ts';
 import { context, leaf, model, section } from './fixtures.ts';
-import { layoutTreemap, treemapLayoutViolations, type TreemapLayout } from './index.ts';
+import { layoutTreemap, type TreemapLayout } from './index.ts';
+import { treemapLayoutViolations } from './invariants.ts';
 
 let theme: Theme;
 beforeAll(async () => {

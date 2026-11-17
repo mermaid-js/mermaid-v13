@@ -385,9 +385,12 @@ export function createMermaid(
     return extra ? overlays.get(site, extra) : site;
   }
 
-  /** Whether `a`'s type has text output (R-ASCII-5, D80). */
+  /**
+   * Whether `a`'s type has text output (R-ASCII-5, D80). Asked by type: a type can draw fewer
+   * formats than its plugin (`typeOptions` `formats`).
+   */
   const textOf = (a: { detected: Detected }): boolean =>
-    a.detected.id !== undefined && registry.formats(a.detected.id).includes('ascii');
+    a.detected.id !== undefined && registry.formats(a.detected.type).includes('ascii');
 
   /** Throws `UnsupportedFormatError` unless `detected` declares ascii (R-ASCII-5, D80). */
   function checkText(detected: Detected): void {

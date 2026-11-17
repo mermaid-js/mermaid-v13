@@ -2,9 +2,9 @@
  * The treeView parser's public surface: the parser and detection (#572), and the lexer gated
  * against v12's Langium lexer (#571).
  */
-import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
+import { Kind } from '@mermaid-js/core/parser-kit';
 import type { Range, SourceView } from '@mermaid-js/core/parser-kit';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { bodyView, seenIndices } from '@mermaid-js/shared/parser/seen-tokens';
 import { lex } from './lexer.ts';
 import type { BoxPass } from './box.ts';
 
@@ -44,13 +44,7 @@ export interface TreeViewView {
  * the source view over the body with default options (v12 ran every shared rewrite).
  */
 export function treeViewView(src: string): TreeViewView {
-  const pre = preprocess(src);
-  const view = sourceView(
-    src,
-    pre.bodyStart,
-    pre.directives.map((d) => d.range)
-  );
-  return { bodyStart: pre.bodyStart, view };
+  return bodyView(src);
 }
 
 /** What {@link treeViewTokens} gives: the tokens, the box pass, and v12's text before each. */
@@ -73,23 +67,11 @@ export function treeViewLex(src: string): TreeViewTokens {
   const { bodyStart, view } = treeViewView(src);
   const lexed = lex(src, bodyStart, view);
   const stream = lexed.tokens;
-  const removed = view.holes.filter((h) => h.kind !== 'drop');
-  let h = 0;
-  const tokens: TreeViewToken[] = [];
-  const index: number[] = [];
-  for (let j = 0; j < stream.length; j++) {
-    const kind = stream.kind[j] ?? Kind.EOF;
-    const start = stream.start[j] ?? 0;
-    const end = stream.end[j] ?? 0;
-    if (kind === Kind.EOF) continue;
-    while ((removed[h]?.start ?? Infinity) < start) h++;
-    const hole = removed[h];
-    const trivia = kind === Kind.Comment || kind === Kind.Directive;
-    // A span v12 removed before lexing: its lexer never saw it.
-    if (trivia && hole?.start === start && hole.end === end) continue;
-    tokens.push({ kind, text: lexed.text(j), range: { start, end } });
-    index.push(j);
-  }
+  const index = seenIndices(stream, view);
+  const tokens = index.map((j): TreeViewToken => {
+    const range = { start: stream.start[j] ?? 0, end: stream.end[j] ?? 0 };
+    return { kind: stream.kind[j] ?? Kind.EOF, text: lexed.text(j), range };
+  });
   return { tokens, box: lexed.box, before: (i) => lexed.before(index[i] ?? stream.length - 1) };
 }
 

@@ -1,0 +1,26 @@
+---
+config:
+  theme: default
+description: >-
+  style paints what it targets: a kind, a tag (the last tag of an element wins each key), a boundary,
+  and a relation's line, arrowheads, label and dash
+---
+c4-beta container
+title Orders - Tag Styles
+style container fill:#0b5cab, stroke:#0a4d91
+style critical fill:#b91c1c, stroke:#7f1d1d, color:#fef2f2
+style audited stroke:#0a7a3d
+style zone fill:#fef3c7, stroke:#b45309, color:#78350f
+style slow stroke:#c2410c, color:#9a3412, line:dashed
+style optional line:dotted
+person clerk "Order Clerk" "Places orders." :::audited
+softwareSystem shop "Shop" :::zone {
+  container web "Web App" "Takes orders." "React"
+  container api "Orders API" "Keeps the orders." "Go" :::critical :::audited
+  container queue "Queue" "Holds events." "Kafka" :::audited
+}
+softwareSystem mail "Mail" "Sends receipts." :::external
+clerk --> web : "Uses" "HTTPS"
+web --> api : "Calls" "JSON" :::slow
+api --> queue : "Publishes" "AMQP" :::slow :::optional
+api --> mail : "Sends receipts using" "SMTP" :::optional

@@ -5,4 +5,4 @@
  * that chunk stays small (D217).
  */
 export { LANGIUM_NAMES, PIE_TRIVIA, PieTokenKind, pieTokens } from './parser/index.ts';
-export { pieLayoutViolations } from './layout/index.ts';
+export { pieLayoutViolations } from './layout/invariants.ts';
