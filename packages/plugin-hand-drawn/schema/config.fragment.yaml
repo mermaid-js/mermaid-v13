@@ -35,6 +35,7 @@ x-mermaid-fragment:
     - { from: kanban.look, when: handDrawn, to: handDrawn, value: true }
     - { from: gitGraph.look, when: handDrawn, to: handDrawn, value: true }
     - { from: c4.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: c4beta.look, when: handDrawn, to: handDrawn, value: true }
     - { from: sankey.look, when: handDrawn, to: handDrawn, value: true }
     - { from: packet.look, when: handDrawn, to: handDrawn, value: true }
     - { from: block.look, when: handDrawn, to: handDrawn, value: true }

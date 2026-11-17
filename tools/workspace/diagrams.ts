@@ -70,6 +70,8 @@ export interface DiagramManifestShape {
   readonly id: string;
   readonly types: readonly string[];
   readonly section?: string;
+  /** Per-type options by v12 type; `section` is the config section the type reads (D534). */
+  readonly typeOptions?: Readonly<Record<string, { readonly section?: string }>>;
   readonly [key: string]: unknown;
 }
 

@@ -7,7 +7,15 @@
  */
 import type { LayoutEdge, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
 import { Style, type FontKey } from '@mermaid-js/core/text';
-import { c4Fonts, c4LayoutConfig, type C4Fonts, type C4LayoutConfig } from '../config.ts';
+import {
+  c4betaDiagramPadding,
+  c4betaPersonWrappingWidth,
+  c4betaStereotypeShown,
+  c4Fonts,
+  c4LayoutConfig,
+  type C4Fonts,
+  type C4LayoutConfig,
+} from '../config.ts';
 import { C4_METRICS as M, FONT_WEIGHT } from '../layout/metrics.ts';
 import { shapeSize, type ShapeRoom } from '../layout/shapes.ts';
 import {
@@ -21,15 +29,11 @@ import {
 import type { C4BaseKind, C4ElementKind } from '../model.ts';
 import type { C4ShapeId } from '../layout/types.ts';
 import type { C4BetaElement, C4BetaModel, C4BetaRelation } from './model.ts';
+import { legendEntries, measureLegend, type BetaLegend } from './legend.ts';
 import { C4_BETA_METRICS as B } from './metrics.ts';
 
 /** The context the layout reads: C4's, and the width the page offers, if it offers one. */
 export type C4BetaLayoutContext = C4LayoutContext & { readonly availableWidth?: number };
-
-/** What the layout takes besides the context: the `c4beta` section's keys (T1), once they exist. */
-export interface C4BetaLayoutOptions {
-  readonly diagramPadding?: number;
-}
 
 /** A leaf element measured: its three text sections and its shape's size around them. */
 export interface BetaLeaf {
@@ -66,6 +70,8 @@ export interface C4BetaPrepared {
   readonly frames: ReadonlyMap<string, BetaFrame>;
   readonly edges: readonly BetaEdge[];
   readonly title?: Measured;
+  /** Set when the diagram shows a legend with at least one row. */
+  readonly legend?: BetaLegend;
   readonly diagramPadding: number;
   readonly config: C4LayoutConfig;
 }
@@ -79,6 +85,9 @@ const STEREOTYPES: Readonly<Record<C4BetaElement['kind'], string>> = {
   group: 'Group',
   deploymentNode: 'Deployment Node',
 };
+
+/** The name an element kind goes by in the diagram: its type line's, `Software System`. */
+export const kindName = (kind: C4BetaElement['kind']): string => STEREOTYPES[kind];
 
 /** The legacy element kind whose font and colours an element takes. */
 export function legacyKind(element: Pick<C4BetaElement, 'kind' | 'tags'>): C4ElementKind {
@@ -99,9 +108,16 @@ const BASE_KINDS: Readonly<Record<C4BetaElement['kind'], C4BaseKind>> = {
   deploymentNode: 'container',
 };
 
-/** `[Container: techn]`, `[Person]`: the type line of a leaf. */
-export function stereotypeOf(element: Pick<C4BetaElement, 'kind' | 'technology'>): string {
-  const name = STEREOTYPES[element.kind];
+/**
+ * `[Container: techn]`, `[Person]`: the type line of a leaf. Without the stereotype (`shown`
+ * false) it is the technology alone, `[techn]`, or nothing.
+ */
+export function stereotypeOf(
+  element: Pick<C4BetaElement, 'kind' | 'technology'>,
+  shown = true
+): string {
+  const name = shown ? STEREOTYPES[element.kind] : undefined;
+  if (name === undefined) return element.technology ? `[${element.technology}]` : '';
   return element.technology ? `[${name}: ${element.technology}]` : `[${name}]`;
 }
 
@@ -130,13 +146,26 @@ interface Measuring {
   readonly fonts: C4Fonts;
   readonly measure: Measure;
   readonly room: ShapeRoom;
+  readonly stereotypeShown: (kind: C4BetaElement['kind']) => boolean;
+  readonly personWrapWidth: number | undefined;
 }
 
 function measureLeaf(model: C4BetaModel, element: C4BetaElement, m: Measuring): BetaLeaf {
   const { config, fonts, measure } = m;
   const sections = measureSections(
-    { name: element.name, type: stereotypeOf(element), descr: element.description },
-    { font: fonts.element(legacyKind(element)), config, measure }
+    {
+      name: element.name,
+      type: stereotypeOf(element, m.stereotypeShown(element.kind)),
+      descr: element.description,
+    },
+    {
+      font: fonts.element(legacyKind(element)),
+      config,
+      measure,
+      ...(element.kind === 'person' && m.personWrapWidth !== undefined
+        ? { wrapWidth: m.personWrapWidth }
+        : {}),
+    }
   );
   const present = sections.filter((s): s is Measured => s !== undefined);
   const tw = Math.max(0, ...present.map((s) => s.text.width));
@@ -203,11 +232,7 @@ export function labelBlock(edge: Pick<BetaEdge, 'label' | 'techn'>): LayoutEdge[
 const ignoreWarning = (): void => undefined;
 
 /** Measures `model` and builds the engine's input. Pure: the model is not changed. */
-export function prepareC4Beta(
-  model: C4BetaModel,
-  ctx: C4BetaLayoutContext,
-  options: C4BetaLayoutOptions = {}
-): C4BetaPrepared {
+export function prepareC4Beta(model: C4BetaModel, ctx: C4BetaLayoutContext): C4BetaPrepared {
   const config = c4LayoutConfig(ctx.config);
   const family = ctx.theme.value('fontFamily');
   const fonts = c4Fonts(ctx.config, family, ctx.warn ?? ignoreWarning);
@@ -216,6 +241,8 @@ export function prepareC4Beta(
     fonts,
     measure: textMeasure(ctx.measurer, ctx.inline),
     room: shapeRoom(config, ctx.theme),
+    stereotypeShown: c4betaStereotypeShown(ctx.config),
+    personWrapWidth: c4betaPersonWrappingWidth(ctx.config),
   };
   const leaves = new Map<string, BetaLeaf>();
   const frames = new Map<string, BetaFrame>();
@@ -248,7 +275,7 @@ export function prepareC4Beta(
       ? [measureEdge(relation, index, measuring)]
       : []
   );
-  const diagramPadding = options.diagramPadding ?? B.diagramPadding;
+  const diagramPadding = c4betaDiagramPadding(ctx.config);
   const available = ctx.availableWidth;
   const graph: LayoutGraph = {
     direction: model.direction,
@@ -273,6 +300,11 @@ export function prepareC4Beta(
       : {}),
   };
   const title = measuring.measure(model.title, titleFont(family), Infinity);
+  const legend = measureLegend(
+    legendEntries(model, legacyKind, kindName),
+    fonts,
+    measuring.measure
+  );
   return {
     model,
     graph,
@@ -280,6 +312,7 @@ export function prepareC4Beta(
     frames,
     edges,
     ...(title ? { title } : {}),
+    ...(legend ? { legend } : {}),
     diagramPadding,
     config,
   };

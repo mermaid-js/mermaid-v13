@@ -1,0 +1,14 @@
+---
+config:
+  theme: default
+  c4beta:
+    diagramPadding: 40
+description: >-
+  c4beta.diagramPadding 40 (default 10): the margin round the drawing grows by 30 px on each
+  side, so the canvas is 60 px wider and 60 px taller than the same diagram with the default
+---
+c4-beta context
+title Ledger - System Context
+person clerk "Ledger Clerk" "Posts journal entries."
+softwareSystem ledger "Ledger" "Keeps the books."
+clerk --> ledger : "Posts entries using" "HTTPS"

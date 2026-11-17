@@ -1,0 +1,18 @@
+---
+config:
+  theme: default
+  c4beta:
+    personWrappingWidth: 120
+description: >-
+  c4beta.personWrappingWidth 120 (unset: the 176 px every element wraps at): the person's
+  description wraps at 120 px, so it takes more lines than by default; the other shapes do not change
+---
+c4-beta container
+title Ledger - Containers
+person clerk "Ledger Clerk" "Posts journal entries and closes the month for every branch office."
+softwareSystem erp "ERP" "Holds the chart of accounts."
+softwareSystem ledger "Ledger" {
+  container api "Ledger API" "Keeps the books." "Rust"
+}
+clerk --> api : "Posts entries using" "HTTPS"
+api --> erp : "Reads accounts from"
