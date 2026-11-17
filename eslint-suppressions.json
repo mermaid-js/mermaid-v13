@@ -219,10 +219,7 @@
       "count": 1
     },
     "complexity": {
-      "count": 4
-    },
-    "max-depth": {
-      "count": 7
+      "count": 3
     },
     "max-lines": {
       "count": 1
@@ -231,10 +228,10 @@
       "count": 2
     },
     "max-params": {
-      "count": 3
+      "count": 1
     },
     "no-param-reassign": {
-      "count": 8
+      "count": 6
     },
     "unicorn/prefer-spread": {
       "count": 2

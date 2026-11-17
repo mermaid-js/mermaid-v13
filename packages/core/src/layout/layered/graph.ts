@@ -119,6 +119,9 @@ export interface Graph {
   offsets: boolean;
   // Ranks whose order must remain fixed.
   fixed: Uint8Array;
+  // What each segment's end is to the node it meets, for the ends that may move along its side.
+  EFK?: Uint8Array;
+  ETK?: Uint8Array;
   GRP?: Int32Array;
   groupParent?: Int32Array;
   M: LayoutMetrics;
