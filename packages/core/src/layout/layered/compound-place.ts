@@ -26,6 +26,7 @@ import {
   type PortEdge,
 } from './compound-state.ts';
 import { IN_LINE } from './crossings.ts';
+import type { GridHooks } from './grid.ts';
 import { orient, rank, type LEdge, type LNode, type LayeredResult } from './layered.ts';
 
 const isVertical = (level: Level): boolean => level.dir === 'TB' || level.dir === 'BT';
@@ -180,36 +181,52 @@ function dummyPortRoute(f: Fit, port: PortEdge, points: number[]): void {
   port.route = route;
 }
 
-// The route of a port on a side the flow does not run through: straight from its item to the border.
-function straightPortRoute(c: Compound, f: Fit, port: PortEdge): void {
-  const { nodes, edges, hooks } = c;
-  const item = nodes[port.inner]!;
-  const below = item.isGroup && endpointBelow(port.inner, edges[port.e]!, port.out);
-  let ix = item.x;
-  let iy = item.y;
-  if (below) {
-    const inner = innerPort(c, port);
-    ix += inner.px - item.w / 2;
-    iy += inner.py - item.h / 2;
-  } else if (port.side === Side.Top) iy -= item.h / 2;
-  else if (port.side === Side.Bottom) iy += item.h / 2;
-  else if (port.side === Side.Left) ix -= item.w / 2;
-  else ix += item.w / 2;
-  // On the grid, a line runs through the middle of a cell (D78).
-  if (hooks && !below) {
-    if (port.side === Side.Top || port.side === Side.Bottom) ix = hooks.mid(ix);
-    else iy = hooks.mid(iy);
-  }
-  let bx = ix;
-  let by = iy;
-  if (port.side === Side.Top) by = 0;
-  else if (port.side === Side.Bottom) by = f.boxH;
-  else if (port.side === Side.Left) bx = 0;
-  else bx = f.boxW;
+type Point = readonly [number, number];
+
+// Where a straight port leaves its item: the item's own side.
+function sideEnd(item: CNode, side: Side): Point {
+  if (side === Side.Top) return [item.x, item.y - item.h / 2];
+  if (side === Side.Bottom) return [item.x, item.y + item.h / 2];
+  if (side === Side.Left) return [item.x - item.w / 2, item.y];
+  return [item.x + item.w / 2, item.y];
+}
+
+// Where a straight port leaves a group that holds its edge's end: the group's own port.
+function belowEnd(c: Compound, port: PortEdge, item: CNode): Point {
+  const inner = innerPort(c, port);
+  return [item.x + (inner.px - item.w / 2), item.y + (inner.py - item.h / 2)];
+}
+
+// On the grid, a line runs through the middle of a cell (D78).
+function cellMiddle(hooks: GridHooks, side: Side, [ix, iy]: Point): Point {
+  if (side === Side.Top || side === Side.Bottom) return [hooks.mid(ix), iy];
+  return [ix, hooks.mid(iy)];
+}
+
+// The point of the box's border on the port's side, in line with `(ix, iy)`.
+function borderPoint(f: Fit, side: Side, [ix, iy]: Point): Point {
+  if (side === Side.Top) return [ix, 0];
+  if (side === Side.Bottom) return [ix, f.boxH];
+  if (side === Side.Left) return [0, iy];
+  return [f.boxW, iy];
+}
+
+// Sets the port's border point and its route from `(ix, iy)` to it.
+function setStraightRoute(f: Fit, port: PortEdge, item: Point): void {
+  const [ix, iy] = item;
+  const [bx, by] = borderPoint(f, port.side, item);
   const a = port.side === Side.Top || port.side === Side.Bottom ? 0 : 1;
   port.px = bx;
   port.py = by;
   port.route = port.out ? [ix, iy, a, bx, by, a] : [bx, by, a, ix, iy, a];
+}
+
+// The route of a port on a side the flow does not run through: straight from its item to the border.
+function straightPortRoute(c: Compound, f: Fit, port: PortEdge): void {
+  const item = c.nodes[port.inner]!;
+  const below = item.isGroup && endpointBelow(port.inner, c.edges[port.e]!, port.out);
+  const end = below ? belowEnd(c, port, item) : sideEnd(item, port.side);
+  setStraightRoute(f, port, c.hooks && !below ? cellMiddle(c.hooks, port.side, end) : end);
 }
 
 // Puts the level's items, edges and ports in its box.
