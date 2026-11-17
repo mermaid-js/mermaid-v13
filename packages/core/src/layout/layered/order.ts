@@ -1,7 +1,7 @@
 // Ported from Pele (https://github.com/obsidianmd/pele), src/layout/layered.ts at 3a2f075.
 // Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
 // Changes from Pele: split out of `layered.ts`, and `reduceCrossings` is `searchOf`,
-// `countCrossings`, `sweep`, `transpose`, `explore` and `mirrored`. The algorithm is unchanged.
+// `crossingCounter`, `sweep`, `transpose`, `explore` and `mirrored`. The algorithm is unchanged.
 // cspell:ignore kepano lnode indeg
 //
 // The order of the nodes in each rank: where the search starts, and how it cuts down the crossings.
@@ -152,14 +152,7 @@ export function groupArranger(
 // What the search for an order keeps: how crossings are counted, and what each sweep works in.
 interface Search {
   nodes: LNode[];
-  // With offsets, each edge's place along the node it reaches, and how many places a node has.
-  place: Int32Array | undefined;
-  placeIn: Int32Array;
-  places: Int32Array;
-  leaving: Int32Array;
-  mixed: Uint8Array;
-  tree: Int32Array;
-  targets: Int32Array;
+  count: () => number;
   bary: Float64Array;
   moving: Int32Array;
   spare: Int32Array;
@@ -176,131 +169,122 @@ function byOffset(list: Int32Array, from: number, to: number, dx: Float64Array):
   return false;
 }
 
-// With offsets, edges that reach one node at different offsets take separate places along it.
-function offsetPlaces(g: Graph, s: Search): void {
-  const { n, ETD, EFD, predE, predStart, succStart } = g;
-  const { placeIn, places, leaving, mixed } = s;
-  const arriving = new Int32Array(predE);
-  for (let v = 0; v < n; v++) {
-    places[v] = 1;
-    if (byOffset(arriving, predStart[v]!, predStart[v + 1]!, ETD)) {
-      for (let k = predStart[v]! + 1; k < predStart[v + 1]!; k++) {
+// The function that counts the crossings of the order `g` has now.
+function crossingCounter(g: Graph, widest: number): () => number {
+  const { n, EF, ET, EFD, ETD, maxRank, succStart, succE, predStart, predE, layerStart } = g;
+  const { order, pos } = g;
+  // With offsets, edges that reach one node at different offsets take separate places along it.
+  const place = g.offsets ? i32(EF.length) : undefined;
+  // Local offset indices and counts do not depend on node order.
+  const placeIn = i32(place ? EF.length : 0);
+  const places = i32(place ? n : 0);
+  const leaving = place ? new Int32Array(succE) : succE;
+  const mixed = u8(place ? n : 0);
+  if (place) {
+    const arriving = new Int32Array(predE);
+    for (let v = 0; v < n; v++) {
+      places[v] = 1;
+      const sorted = byOffset(arriving, predStart[v]!, predStart[v + 1]!, ETD);
+      for (let k = predStart[v]! + 1; sorted && k < predStart[v + 1]!; k++) {
         if (ETD[arriving[k]!]! !== ETD[arriving[k - 1]!]!) places[v]!++;
         placeIn[arriving[k]!] = places[v]! - 1;
       }
+      if (byOffset(leaving, succStart[v]!, succStart[v + 1]!, EFD)) mixed[v] = 1;
     }
-    if (byOffset(leaving, succStart[v]!, succStart[v + 1]!, EFD)) mixed[v] = 1;
   }
+  let size = 1;
+  while (size < (place ? widest + EF.length : widest)) size <<= 1;
+  const tree = i32(2 * size);
+  const targets = i32(EF.length);
+
+  // Gives the edges that arrive at rank `r + 1` their places along its nodes, and returns how
+  // many places the rank has.
+  const numberSouth = (r: number): number => {
+    let next = 0;
+    for (let i = layerStart[r + 1]!; i < layerStart[r + 2]!; i++) {
+      const v = order[i]!;
+      for (let k = predStart[v]!; k < predStart[v + 1]!; k++)
+        place![predE[k]!] = next + placeIn[predE[k]!]!;
+      next += places[v]!;
+    }
+    return next;
+  };
+  // Sorts the targets `t0..t` of the edges that leave node `v`.
+  const sortTargets = (v: number, t0: number, t: number): void => {
+    if (place && mixed[v]!) {
+      const from = succStart[v]!;
+      // Sort equal-offset edges by destination to avoid counting shared endpoints as crossings.
+      for (let a = t0 + 1; a < t; a++) {
+        const item = targets[a]!;
+        const dx = EFD[leaving[from + a - t0]!]!;
+        let b = a - 1;
+        while (b >= t0 && EFD[leaving[from + b - t0]!]! === dx && targets[b]! > item) {
+          targets[b + 1] = targets[b]!;
+          b--;
+        }
+        targets[b + 1] = item;
+      }
+    } else if (t - t0 <= 12) {
+      for (let a = t0 + 1; a < t; a++) {
+        const item = targets[a]!;
+        let b = a - 1;
+        while (b >= t0 && targets[b]! > item) {
+          targets[b + 1] = targets[b]!;
+          b--;
+        }
+        targets[b + 1] = item;
+      }
+    } else {
+      targets.subarray(t0, t).sort();
+    }
+  };
+  // How many pairs of the first `t` targets are out of order, with `southLen` places to put them in.
+  const inversions = (southLen: number, t: number): number => {
+    let total = 0;
+    let leaves = 1;
+    while (leaves < southLen) leaves <<= 1;
+    tree.fill(0, 0, 2 * leaves);
+    for (let k = 0; k < t; k++) {
+      let i = targets[k]! + leaves;
+      tree[i]!++;
+      while (i > 1) {
+        if ((i & 1) === 0) total += tree[i + 1]!;
+        i >>= 1;
+        tree[i]!++;
+      }
+    }
+    return total;
+  };
+
+  return (): number => {
+    let total = 0;
+    for (let r = 0; r < maxRank; r++) {
+      const southLen = place ? numberSouth(r) : layerStart[r + 2]! - layerStart[r + 1]!;
+      if (southLen < 2) continue;
+      let t = 0;
+      for (let i = layerStart[r]!; i < layerStart[r + 1]!; i++) {
+        const v = order[i]!;
+        const t0 = t;
+        for (let k = succStart[v]!; k < succStart[v + 1]!; k++)
+          targets[t++] = place ? place[leaving[k]!]! : pos[ET[succE[k]!]!]!;
+        if (t - t0 >= 2) sortTargets(v, t0, t);
+      }
+      if (t >= 2) total += inversions(southLen, t);
+    }
+    return total;
+  };
 }
 
 function searchOf(g: Graph, nodes: LNode[], widest: number): Search {
-  const { n, EF, succE } = g;
-  const place = g.offsets ? i32(EF.length) : undefined;
-  let size = 1;
-  while (size < (place ? widest + EF.length : widest)) size <<= 1;
-  const s: Search = {
+  const { n } = g;
+  return {
     nodes,
-    // Local offset indices and counts do not depend on node order.
-    place,
-    placeIn: i32(place ? EF.length : 0),
-    places: i32(place ? n : 0),
-    leaving: place ? new Int32Array(succE) : succE,
-    mixed: u8(place ? n : 0),
-    tree: i32(2 * size),
-    targets: i32(EF.length),
+    count: crossingCounter(g, widest),
     bary: f64(n),
     moving: i32(widest),
     spare: i32(widest),
     arrange: groupArranger(n, g.layerStart, g.order, g.pos, g.GRP, g.groupParent),
   };
-  if (place) offsetPlaces(g, s);
-  return s;
-}
-
-// Gives the edges that arrive at rank `r + 1` their places along its nodes, and returns how many
-// places the rank has.
-function numberSouth(g: Graph, s: Search, r: number): number {
-  const { layerStart, predStart, predE, order } = g;
-  let next = 0;
-  for (let i = layerStart[r + 1]!; i < layerStart[r + 2]!; i++) {
-    const v = order[i]!;
-    for (let k = predStart[v]!; k < predStart[v + 1]!; k++)
-      s.place![predE[k]!] = next + s.placeIn[predE[k]!]!;
-    next += s.places[v]!;
-  }
-  return next;
-}
-
-// Sorts the targets `t0..t` of the edges that leave node `v`.
-function sortTargets(g: Graph, s: Search, v: number, t0: number, t: number): void {
-  const { targets, leaving } = s;
-  if (s.place && s.mixed[v]!) {
-    const from = g.succStart[v]!;
-    // Sort equal-offset edges by destination to avoid counting shared endpoints as crossings.
-    for (let a = t0 + 1; a < t; a++) {
-      const item = targets[a]!;
-      const dx = g.EFD[leaving[from + a - t0]!]!;
-      let b = a - 1;
-      while (b >= t0 && g.EFD[leaving[from + b - t0]!]! === dx && targets[b]! > item) {
-        targets[b + 1] = targets[b]!;
-        b--;
-      }
-      targets[b + 1] = item;
-    }
-  } else if (t - t0 <= 12) {
-    for (let a = t0 + 1; a < t; a++) {
-      const item = targets[a]!;
-      let b = a - 1;
-      while (b >= t0 && targets[b]! > item) {
-        targets[b + 1] = targets[b]!;
-        b--;
-      }
-      targets[b + 1] = item;
-    }
-  } else {
-    targets.subarray(t0, t).sort();
-  }
-}
-
-// How many pairs of the first `t` targets are out of order, with `southLen` places to put them in.
-function inversions(s: Search, southLen: number, t: number): number {
-  const { tree, targets } = s;
-  let total = 0;
-  let leaves = 1;
-  while (leaves < southLen) leaves <<= 1;
-  tree.fill(0, 0, 2 * leaves);
-  for (let k = 0; k < t; k++) {
-    let i = targets[k]! + leaves;
-    tree[i]!++;
-    while (i > 1) {
-      if ((i & 1) === 0) total += tree[i + 1]!;
-      i >>= 1;
-      tree[i]!++;
-    }
-  }
-  return total;
-}
-
-function countCrossings(g: Graph, s: Search): number {
-  const { maxRank, ET, succStart, succE, layerStart, order, pos } = g;
-  const { place, leaving, targets } = s;
-  let total = 0;
-  for (let r = 0; r < maxRank; r++) {
-    const southLen = place ? numberSouth(g, s, r) : layerStart[r + 2]! - layerStart[r + 1]!;
-    if (southLen < 2) continue;
-    let t = 0;
-    for (let i = layerStart[r]!; i < layerStart[r + 1]!; i++) {
-      const v = order[i]!;
-      const from = succStart[v]!;
-      const to = succStart[v + 1]!;
-      const t0 = t;
-      for (let k = from; k < to; k++)
-        targets[t++] = place ? place[leaving[k]!]! : pos[ET[succE[k]!]!]!;
-      if (t - t0 >= 2) sortTargets(g, s, v, t0, t);
-    }
-    if (t >= 2) total += inversions(s, southLen, t);
-  }
-  return total;
 }
 
 function pinOf(g: Graph, nodes: LNode[], v: number): number {
@@ -459,7 +443,7 @@ function explore(
   const foundOrder = new Int32Array(initial);
   for (let i = 0, stale = 0; stale < 4 && i < MAX_SWEEPS; i++, stale++) {
     sweep(g, s, (i + attempt) % 2 === 0, i % 4 >= 2);
-    const c = countCrossings(g, s);
+    const c = s.count();
     if (c < found) {
       found = c;
       foundOrder.set(order);
@@ -471,7 +455,7 @@ function explore(
   if (small && found > 0) {
     settlePositions(g);
     transpose(g, s.nodes);
-    const c = countCrossings(g, s);
+    const c = s.count();
     if (c < found) {
       found = c;
       foundOrder.set(order);
@@ -486,7 +470,7 @@ function mirrored(g: Graph, s: Search, best: number, chosenOut: number, bestOrde
   const { maxRank, layerStart, order } = g;
   for (let r = 0; r <= maxRank; r++) order.subarray(layerStart[r], layerStart[r + 1]).reverse();
   settlePositions(g);
-  if (countCrossings(g, s) > best || outOfOrder(g) >= chosenOut) order.set(bestOrder);
+  if (s.count() > best || outOfOrder(g) >= chosenOut) order.set(bestOrder);
 }
 
 // Depth-first from the top so that subtrees start out contiguous.
@@ -554,7 +538,7 @@ export function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
   for (let r = 0; r <= maxRank; r++) widest = Math.max(widest, layerStart[r + 1]! - layerStart[r]!);
   if (widest < 2) return [0, 0];
   const s = searchOf(g, nodes, widest);
-  const declared = countCrossings(g, s);
+  const declared = s.count();
   if (GRP) {
     const at = f64(n);
     for (let r = 0; r <= maxRank; r++) {
@@ -562,7 +546,7 @@ export function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
       s.arrange(r, at);
     }
   }
-  let best = GRP ? countCrossings(g, s) : declared;
+  let best = GRP ? s.count() : declared;
   if (best === 0) return [0, declared];
   const bestOrder = new Int32Array(order);
   // Require improvements over both the grouped and ungrouped starting orders.
@@ -588,7 +572,7 @@ export function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
   settlePositions(g);
   bestOrder.set(chosen);
   // The retained grouped order may exceed the ungrouped threshold; recount it.
-  if (GRP) best = countCrossings(g, s);
+  if (GRP) best = s.count();
 
   if (!small) return [best, declared];
   for (let i = 0; i < real; i++) if (nodes[i]!.pin !== 0) return [best, declared];

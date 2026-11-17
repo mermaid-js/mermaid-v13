@@ -91,23 +91,18 @@ function trackYOf(d: Draw): (piece: number, onTrack?: number) => number {
   };
 }
 
-// The part of its rank that an edge runs straight through at a bend or label. A bare bend
-// beside labels keeps to the middle half, which leaves the curves either side of it more room
-// and still keeps them clear of the labels' corners.
-function inset(g: Graph, d: Draw, v: number): number {
-  const r = g.RANK[v]!;
-  return g.KIND[v]! === Kind.Dummy && d.b.between[r]! && !d.opt.tracks
-    ? (d.b.bottom[r]! - d.b.top[r]!) / 4
-    : 0;
-}
-
 // The bend at `v` as points: down into its rank and out of it again.
 function pushBend(g: Graph, d: Draw, v: number, x: number, pts: number[]): void {
   const r = g.RANK[v]!;
   const top = d.b.top[r]!;
   const bottom = d.b.bottom[r]!;
-  pts.push(x, top + inset(g, d, v));
-  if (bottom > top) pts.push(x, bottom - inset(g, d, v));
+  // The part of its rank that an edge runs straight through at a bend or label. A bare bend
+  // beside labels keeps to the middle half, which leaves the curves either side of it more room
+  // and still keeps them clear of the labels' corners.
+  const inset =
+    g.KIND[v]! === Kind.Dummy && d.b.between[r]! && !d.opt.tracks ? (bottom - top) / 4 : 0;
+  pts.push(x, top + inset);
+  if (bottom > top) pts.push(x, bottom - inset);
 }
 
 // The points of edge `ei` that its pieces run through, in the order of the pieces.

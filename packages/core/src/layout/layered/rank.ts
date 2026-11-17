@@ -1,7 +1,7 @@
 // Ported from Pele (https://github.com/obsidianmd/pele), src/layout/layered.ts at 3a2f075.
 // Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
-// Changes from Pele: split out of `layered.ts`, and `rank` is `rankGraph`, `longestPath`,
-// `balance` and `writeRanks`. The algorithm is unchanged.
+// Changes from Pele: split out of `layered.ts`, and `rank` has `balance` and
+// `writeRanks` as functions of its own. The algorithm is unchanged.
 // cspell:ignore kepano indeg topo
 //
 // The first phases of the layered layout: which way each edge runs, and the rank of each node.
@@ -49,21 +49,11 @@ export function orient(nodes: LNode[], edges: LEdge[]): void {
   }
 }
 
-// The edges once `orient` has run, as arrays: where each runs from and to, how many ranks it
-// spans at least, and each node's edges out and in.
-interface RankGraph {
-  from: Int32Array;
-  to: Int32Array;
-  len: Int32Array;
-  outStart: Int32Array;
-  inStart: Int32Array;
-  outE: Int32Array;
-  inE: Int32Array;
-}
-
-function rankGraph(nodes: LNode[], edges: LEdge[], step: number): RankGraph {
+export function rank(nodes: LNode[], edges: LEdge[], step: number): void {
   const n = nodes.length;
   const m = edges.length;
+  // The edges once `orient` has run, as arrays: where each runs from and to, how many ranks it
+  // spans at least, and each node's edges out and in.
   const from = i32(m);
   const to = i32(m);
   const len = i32(m);
@@ -93,16 +83,13 @@ function rankGraph(nodes: LNode[], edges: LEdge[], step: number): RankGraph {
       inE[inf[to[i]!]!++] = i;
     }
   }
-  return { from, to, len, outStart, inStart, outE, inE };
-}
 
-// Gives every node the rank that puts it below all it follows, and fills `topo` with the nodes
-// in that order. Returns how many nodes it holds.
-function longestPath(d: RankGraph, r: Int32Array, topo: Int32Array): number {
-  const { to, len, outStart, inStart, outE } = d;
-  const n = r.length;
+  const r = i32(n);
+  // Start ports go above every node later, so they don't push their targets down a rank.
+  for (let i = 0; i < n; i++) if (nodes[i]!.kind === Kind.StartPort) r[i] = -step;
   const indeg = i32(n);
   for (let i = 0; i < n; i++) indeg[i] = inStart[i + 1]! - inStart[i]!;
+  const topo = i32(n);
   let count = 0;
   for (let i = 0; i < n; i++) if (indeg[i]! === 0) topo[count++] = i;
   for (let q = 0; q < count; q++) {
@@ -114,74 +101,62 @@ function longestPath(d: RankGraph, r: Int32Array, topo: Int32Array): number {
       if (--indeg[w]! === 0) topo[count++] = w;
     }
   }
-  return count;
-}
 
-// Longest-path ranking leaves loosely attached nodes far from their neighbours.
-// Moves each node toward the side that has more edges.
-function balance(d: RankGraph, r: Int32Array, topo: Int32Array, count: number): void {
-  const { from, to, len, outStart, inStart, outE, inE } = d;
-  for (let pass = 0; pass < 8; pass++) {
-    let changed = false;
-    for (let q = count - 1; q >= 0; q--) {
-      const v = topo[q]!;
-      const ins = inStart[v + 1]! - inStart[v]!;
-      const outs = outStart[v + 1]! - outStart[v]!;
-      if (ins === 0 && outs === 0) continue;
-      let lo = -Infinity;
-      let hi = Infinity;
-      for (let k = inStart[v]!; k < inStart[v + 1]!; k++) {
-        const ei = inE[k]!;
-        lo = Math.max(lo, r[from[ei]!]! + len[ei]!);
+  // Longest-path ranking leaves loosely attached nodes far from their neighbours.
+  // Moves each node toward the side that has more edges.
+  const balance = (): void => {
+    for (let pass = 0; pass < 8; pass++) {
+      let changed = false;
+      for (let q = count - 1; q >= 0; q--) {
+        const v = topo[q]!;
+        const ins = inStart[v + 1]! - inStart[v]!;
+        const outs = outStart[v + 1]! - outStart[v]!;
+        if (ins === 0 && outs === 0) continue;
+        let lo = -Infinity;
+        let hi = Infinity;
+        for (let k = inStart[v]!; k < inStart[v + 1]!; k++) {
+          const ei = inE[k]!;
+          lo = Math.max(lo, r[from[ei]!]! + len[ei]!);
+        }
+        for (let k = outStart[v]!; k < outStart[v + 1]!; k++) {
+          const ei = outE[k]!;
+          hi = Math.min(hi, r[to[ei]!]! - len[ei]!);
+        }
+        let next = r[v]!;
+        if (outs > ins && hi !== Infinity) next = hi;
+        else if (ins > outs && lo !== -Infinity) next = lo;
+        if (next !== r[v]!) {
+          r[v] = next;
+          changed = true;
+        }
       }
-      for (let k = outStart[v]!; k < outStart[v + 1]!; k++) {
-        const ei = outE[k]!;
-        hi = Math.min(hi, r[to[ei]!]! - len[ei]!);
-      }
-      let next = r[v]!;
-      if (outs > ins && hi !== Infinity) next = hi;
-      else if (ins > outs && lo !== -Infinity) next = lo;
-      if (next !== r[v]!) {
-        r[v] = next;
-        changed = true;
-      }
+      if (!changed) break;
     }
-    if (!changed) break;
-  }
-}
+  };
+  balance();
 
-// Puts the start ports above and the end ports below every node, and counts ranks from zero.
-function writeRanks(nodes: LNode[], r: Int32Array, step: number): void {
-  const n = nodes.length;
-  let min = Infinity;
-  let max = -Infinity;
-  let startPorts = false;
-  for (let i = 0; i < n; i++) {
-    const kind = nodes[i]!.kind;
-    if (kind === Kind.StartPort) startPorts = true;
-    if (kind === Kind.StartPort || kind === Kind.EndPort) continue;
-    if (r[i]! < min) min = r[i]!;
-    if (r[i]! > max) max = r[i]!;
-  }
-  if (min === Infinity) {
-    min = 0;
-    max = 0;
-  }
-  for (let i = 0; i < n; i++) {
-    if (nodes[i]!.kind === Kind.StartPort) r[i] = min - step;
-    else if (nodes[i]!.kind === Kind.EndPort) r[i] = max + step;
-  }
-  if (startPorts) min -= step;
-  for (let i = 0; i < n; i++) nodes[i]!.rank = r[i]! - min;
-}
-
-export function rank(nodes: LNode[], edges: LEdge[], step: number): void {
-  const n = nodes.length;
-  const d = rankGraph(nodes, edges, step);
-  const r = i32(n);
-  // Start ports go above every node later, so they don't push their targets down a rank.
-  for (let i = 0; i < n; i++) if (nodes[i]!.kind === Kind.StartPort) r[i] = -step;
-  const topo = i32(n);
-  balance(d, r, topo, longestPath(d, r, topo));
-  writeRanks(nodes, r, step);
+  // Puts the start ports above and the end ports below every node, and counts ranks from zero.
+  const writeRanks = (): void => {
+    let min = Infinity;
+    let max = -Infinity;
+    let startPorts = false;
+    for (let i = 0; i < n; i++) {
+      const kind = nodes[i]!.kind;
+      if (kind === Kind.StartPort) startPorts = true;
+      if (kind === Kind.StartPort || kind === Kind.EndPort) continue;
+      if (r[i]! < min) min = r[i]!;
+      if (r[i]! > max) max = r[i]!;
+    }
+    if (min === Infinity) {
+      min = 0;
+      max = 0;
+    }
+    for (let i = 0; i < n; i++) {
+      if (nodes[i]!.kind === Kind.StartPort) r[i] = min - step;
+      else if (nodes[i]!.kind === Kind.EndPort) r[i] = max + step;
+    }
+    if (startPorts) min -= step;
+    for (let i = 0; i < n; i++) nodes[i]!.rank = r[i]! - min;
+  };
+  writeRanks();
 }

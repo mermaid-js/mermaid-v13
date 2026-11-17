@@ -186,18 +186,14 @@ function cutEdges(nodes: LNode[], edges: LEdge[], step: number, opt: LayeredOpti
   return c;
 }
 
-function groupDepth(parent: Int32Array, from: number): number {
-  let d = 0;
-  for (let gr = from; gr >= 0; gr = parent[gr]!) d++;
-  return d;
-}
-
 // The innermost group that holds both groups `a` and `b`.
 function commonGroup(parent: Int32Array, a: number, b: number): number {
   let x = a;
   let y = b;
-  let dx = groupDepth(parent, x);
-  let dy = groupDepth(parent, y);
+  let dx = 0;
+  let dy = 0;
+  for (let gr = a; gr >= 0; gr = parent[gr]!) dx++;
+  for (let gr = b; gr >= 0; gr = parent[gr]!) dy++;
   for (; dx > dy; dx--) x = parent[x]!;
   for (; dy > dx; dy--) y = parent[y]!;
   while (x !== y) {
