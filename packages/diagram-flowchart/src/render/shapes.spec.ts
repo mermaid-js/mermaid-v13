@@ -27,7 +27,15 @@ function person(tw: number, th: number) {
   const w = {
     outline: (_role: string, tag: string, attrs: Attrs) => void drawn.push({ tag, attrs }),
   } as unknown as SvgWriter;
-  drawShape('person', w, size.w, size.h, {}, {}, PADS);
+  drawShape({
+    kind: 'person',
+    w,
+    width: size.w,
+    height: size.h,
+    attrs: {},
+    lines: {},
+    pads: PADS,
+  });
   const n = (tag: string, key: string) =>
     Number((drawn.find((d) => d.tag === tag)?.attrs as Record<string, unknown> | undefined)?.[key]);
   const body = { top: n('rect', 'y'), width: n('rect', 'width'), height: n('rect', 'height') };

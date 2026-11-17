@@ -335,6 +335,31 @@ interface Tags {
 const RE_ESCAPABLE = /[!-/:-@[-`{-~]/;
 const RE_WORD = /\w/;
 
+/** The HTML subset tag that starts at `i`, or undefined. */
+function tagAt(source: string, i: number): RegExpExecArray | undefined {
+  RE_TAG.lastIndex = i;
+  const m = RE_TAG.exec(source);
+  const tag = m?.[2]?.toLowerCase();
+  return m && tag !== undefined && HTML_TAGS.has(tag) ? m : undefined;
+}
+
+/**
+ * The length (1, or 2 for bold) of the emphasis mark `ch` at `i` when it opens or closes
+ * emphasis, given the bits `marked` already open; 0 when it is plain text.
+ */
+function emphasisAt(source: string, i: number, ch: string, marked: number): number {
+  const double = source[i + 1] === ch;
+  const len = double ? 2 : 1;
+  const prev = source[i - 1] ?? ' ';
+  const next = source[i + len] ?? ' ';
+  const opening = (marked & (double ? Style.Bold : Style.Italic)) === 0;
+  const can = opening
+    ? next.trim() !== '' && source.includes(double ? ch + ch : ch, i + len + 1)
+    : prev.trim() !== '';
+  const intraWord = ch === '_' && RE_WORD.test(prev) && RE_WORD.test(next);
+  return can && !intraWord ? len : 0;
+}
+
 /**
  * Splits one line of source into styled pieces: HTML subset tags and character references, in
  * the `emphasis` and `markdown` modes emphasis, and in `markdown` inline code and backslash
@@ -398,11 +423,9 @@ function inline(
       continue;
     }
     if (ch === '<') {
-      RE_TAG.lastIndex = i;
-      const m = RE_TAG.exec(source);
-      const tag = m?.[2]?.toLowerCase();
-      if (m && tag !== undefined && HTML_TAGS.has(tag)) {
-        count(tag, m[1] === '/' ? -1 : 1);
+      const m = tagAt(source, i);
+      if (m) {
+        count((m[2] as string).toLowerCase(), m[1] === '/' ? -1 : 1);
         i += m[0].length;
         continue;
       }
@@ -427,18 +450,10 @@ function inline(
         continue;
       }
     } else if (emphasis && (ch === '*' || ch === '_')) {
-      const double = source[i + 1] === ch;
-      const bit = double ? Style.Bold : Style.Italic;
-      const len = double ? 2 : 1;
-      const prev = source[i - 1] ?? ' ';
-      const next = source[i + len] ?? ' ';
-      const opening = (marked & bit) === 0;
-      const can = opening
-        ? next.trim() !== '' && source.includes(double ? ch + ch : ch, i + len + 1)
-        : prev.trim() !== '';
-      const intraWord = ch === '_' && RE_WORD.test(prev) && RE_WORD.test(next);
-      if (can && !intraWord) {
-        marked = opening ? marked | bit : marked & ~bit;
+      const len = emphasisAt(source, i, ch, marked);
+      if (len > 0) {
+        const bit = len === 2 ? Style.Bold : Style.Italic;
+        marked = (marked & bit) === 0 ? marked | bit : marked & ~bit;
         restyle();
         i += len;
         continue;

@@ -43,6 +43,40 @@ const isRecord = (v: unknown): v is Record<string, unknown> =>
 const isStrings = (v: unknown): v is string[] =>
   Array.isArray(v) && v.every((s) => typeof s === 'string');
 
+/** The `kinds.unnamed` map of a grammar entry: each rule is `{ mode, pattern, docOf?, terminal? }`. */
+function checkUnnamed(where: string, unnamed: unknown): void {
+  if (!isRecord(unnamed)) throw new Error(`${where}: \`kinds.unnamed\` must map kinds`);
+  for (const [kind, rule] of Object.entries(unnamed)) {
+    const ok =
+      isRecord(rule) &&
+      typeof rule.mode === 'string' &&
+      typeof rule.pattern === 'string' &&
+      Object.keys(rule).every((k) => UNNAMED_KEYS.has(k)) &&
+      ['docOf', 'terminal'].every((k) => rule[k] === undefined || typeof rule[k] === 'string');
+    if (!ok)
+      throw new Error(
+        `${where}: \`kinds.unnamed.${kind}\` must be { mode, pattern, docOf?, terminal? }`
+      );
+  }
+}
+
+/** `kinds.mixed` and `kinds.documented` are lists of names. */
+function checkKindLists(where: string, kinds: Record<string, unknown>): void {
+  for (const key of ['mixed', 'documented'] as const)
+    if (kinds[key] !== undefined && !isStrings(kinds[key]))
+      throw new Error(`${where}: \`kinds.${key}\` must be a list of names`);
+}
+
+/** The `kinds` of a grammar entry, or the reason it is malformed. */
+function checkKinds(where: string, kinds: unknown): void {
+  if (!isRecord(kinds) || typeof kinds.module !== 'string' || typeof kinds.object !== 'string')
+    throw new Error(`${where}: \`kinds\` needs a string \`module\` and \`object\``);
+  for (const key of Object.keys(kinds))
+    if (!KIND_KEYS.has(key)) throw new Error(`${where}: unknown kinds key "${key}"`);
+  checkKindLists(where, kinds);
+  if (kinds.unnamed !== undefined) checkUnnamed(where, kinds.unnamed);
+}
+
 /**
  * One `grammars` entry of `<dir>/workspace.yaml` as a target, or the reason it is not one. The
  * package is where the file is: an entry names `package` only by its place, never as a key.
@@ -57,35 +91,13 @@ export function grammarTarget(pkg: string, entry: unknown): GrammarTarget {
     throw new Error(`${where}: an entry needs a string \`type\` and \`title\``);
   if (grammar !== undefined && typeof grammar !== 'string')
     throw new Error(`${where} ${type}: \`grammar\` must be a string`);
-  if (!isRecord(kinds) || typeof kinds.module !== 'string' || typeof kinds.object !== 'string')
-    throw new Error(`${where} ${type}: \`kinds\` needs a string \`module\` and \`object\``);
-  for (const key of Object.keys(kinds))
-    if (!KIND_KEYS.has(key)) throw new Error(`${where} ${type}: unknown kinds key "${key}"`);
-  for (const key of ['mixed', 'documented'] as const)
-    if (kinds[key] !== undefined && !isStrings(kinds[key]))
-      throw new Error(`${where} ${type}: \`kinds.${key}\` must be a list of names`);
-  if (kinds.unnamed !== undefined) {
-    if (!isRecord(kinds.unnamed))
-      throw new Error(`${where} ${type}: \`kinds.unnamed\` must map kinds`);
-    for (const [kind, rule] of Object.entries(kinds.unnamed)) {
-      const ok =
-        isRecord(rule) &&
-        typeof rule.mode === 'string' &&
-        typeof rule.pattern === 'string' &&
-        Object.keys(rule).every((k) => UNNAMED_KEYS.has(k)) &&
-        ['docOf', 'terminal'].every((k) => rule[k] === undefined || typeof rule[k] === 'string');
-      if (!ok)
-        throw new Error(
-          `${where} ${type}: \`kinds.unnamed.${kind}\` must be { mode, pattern, docOf?, terminal? }`
-        );
-    }
-  }
+  checkKinds(`${where} ${type}`, kinds);
   return {
     type,
     ...(type !== pkg && { package: pkg }),
     ...(grammar !== undefined && { grammar }),
     title,
-    kinds: kinds as unknown as KindSource,
+    kinds: kinds as KindSource,
   };
 }
 

@@ -145,21 +145,11 @@ function stageStatus(compared: number, regressed: number): GateStatus {
   return regressed > 0 ? 'fail' : 'pass';
 }
 
-export function evaluateGates({
-  report,
-  baseline,
-  mode,
-  reportOnly = [],
-  corpusSize,
-  corpusOk,
-  skip = {},
-}: GateInput): GateOutcome {
-  const v13 = rendererRun(report, 'v13');
-  const enforces = (id: GateId) => mode === 'enforce' && !reportOnly.includes(id);
-  const gates: GateResult[] = [];
+type Enforces = (id: GateId) => boolean;
 
-  const size = v13?.size ?? null;
-  gates.push({
+function sizeGate(report: BenchReport, enforces: Enforces): GateResult {
+  const size = rendererRun(report, 'v13')?.size ?? null;
+  return {
     id: 'size',
     title: 'Loaded size, core + flowchart (gzip)',
     requirement: 'R-PERF-1',
@@ -172,10 +162,12 @@ export function evaluateGates({
       size === null
         ? 'no size measured'
         : `${kb(size.gzip)} ${size.source === 'loaded' ? 'fetched by the runner for one flowchart render' : 'static closure of the entry and the flowchart chunk'} (limit ${kb(LIMITS.loadedGzipBytes)})`,
-  });
+  };
+}
 
+function coreSizeGate(report: BenchReport): GateResult {
   const core = report.coreSize ?? null;
-  gates.push({
+  return {
     id: 'core-size',
     title: 'Core, the mermaid entry static import closure (gzip)',
     requirement: 'R-PERF-8',
@@ -189,10 +181,12 @@ export function evaluateGates({
       core === null
         ? 'no core size measured'
         : `${kb(core.gzip)} in ${core.files.length} file(s), no diagram chunk (budget ${kb(LIMITS.coreGzipBytes)})`,
-  });
+  };
+}
 
+function speedGate(report: BenchReport, enforces: Enforces): GateResult {
   const s = speedup(report);
-  gates.push({
+  return {
     id: 'speed',
     title: 'Warm geomean vs mermaid@12.2.0 dagre',
     requirement: 'R-PERF-3',
@@ -205,11 +199,21 @@ export function evaluateGates({
       s.value === null
         ? 'no diagram rendered in both v13 and v12-frozen'
         : `${s.value}× over ${s.common} common diagrams (need ≥ ${LIMITS.minSpeedup}×)`,
-  });
+  };
+}
 
+function okCountGate(
+  report: BenchReport,
+  enforces: Enforces,
+  corpusSize: number,
+  corpusOk: number | undefined
+): GateResult {
   const ok =
-    corpusOk ?? (v13?.results ?? []).filter((r) => r.set === 'corpus' && r.status === 'ok').length;
-  gates.push({
+    corpusOk ??
+    (rendererRun(report, 'v13')?.results ?? []).filter(
+      (r) => r.set === 'corpus' && r.status === 'ok'
+    ).length;
+  return {
     id: 'ok-count',
     title: 'Corpus diagrams rendered',
     requirement: 'R-PERF-4',
@@ -219,10 +223,16 @@ export function evaluateGates({
     actual: ok,
     limit: corpusSize,
     detail: `${ok}/${corpusSize} rendered`,
-  });
+  };
+}
 
+function stageRegressionGate(
+  report: BenchReport,
+  baseline: Baseline | undefined,
+  enforces: Enforces
+): GateResult {
   if (baseline === undefined) {
-    gates.push({
+    return {
       id: 'stage-regression',
       title: 'Stage regression vs stored baseline',
       requirement: 'R-PERF-7',
@@ -232,34 +242,35 @@ export function evaluateGates({
       actual: null,
       limit: LIMITS.maxStageRatio,
       detail: `no baseline stored for runner "${report.runner}"`,
-    });
-  } else {
-    const ratios = stageRatios(report, baseline);
-    const entries = Object.entries(ratios) as [Stage, number][];
-    const worst = entries.reduce<[Stage, number] | undefined>(
-      (w, e) => (w && w[1] >= e[1] ? w : e),
-      undefined
-    );
-    const regressed = entries.filter(([, r]) => r > LIMITS.maxStageRatio);
-    gates.push({
-      id: 'stage-regression',
-      title: 'Stage regression vs stored baseline',
-      requirement: 'R-PERF-7',
-      level: 'must',
-      status: stageStatus(entries.length, regressed.length),
-      enforced: enforces('stage-regression') && entries.length > 0,
-      actual: worst?.[1] ?? null,
-      limit: LIMITS.maxStageRatio,
-      detail:
-        entries.length === 0
-          ? 'no stage timings to compare'
-          : entries.map(([stage, r]) => `${stage} ×${r}`).join(', ') +
-            (regressed.length > 0 ? ` — regressed: ${regressed.map(([st]) => st).join(', ')}` : ''),
-    });
+    };
   }
+  const ratios = stageRatios(report, baseline);
+  const entries = Object.entries(ratios) as [Stage, number][];
+  const worst = entries.reduce<[Stage, number] | undefined>(
+    (w, e) => (w && w[1] >= e[1] ? w : e),
+    undefined
+  );
+  const regressed = entries.filter(([, r]) => r > LIMITS.maxStageRatio);
+  return {
+    id: 'stage-regression',
+    title: 'Stage regression vs stored baseline',
+    requirement: 'R-PERF-7',
+    level: 'must',
+    status: stageStatus(entries.length, regressed.length),
+    enforced: enforces('stage-regression') && entries.length > 0,
+    actual: worst?.[1] ?? null,
+    limit: LIMITS.maxStageRatio,
+    detail:
+      entries.length === 0
+        ? 'no stage timings to compare'
+        : entries.map(([stage, r]) => `${stage} ×${r}`).join(', ') +
+          (regressed.length > 0 ? ` — regressed: ${regressed.map(([st]) => st).join(', ')}` : ''),
+  };
+}
 
-  const ready = v13?.readyAtMs ?? null;
-  gates.push({
+function readyAtGate(report: BenchReport): GateResult {
+  const ready = rendererRun(report, 'v13')?.readyAtMs ?? null;
+  return {
     id: 'ready-at',
     title: '"Ready at"',
     requirement: 'R-PERF-9 (Should)',
@@ -272,8 +283,10 @@ export function evaluateGates({
       ready === null
         ? 'v13 did not become ready'
         : `${round(ready, 1)} ms (target ≤ ${LIMITS.readyAtMs} ms)`,
-  });
+  };
+}
 
+function asciiSizeGate(report: BenchReport): GateResult {
   const ascii = report.asciiSize ?? null;
   const byType = (sizes: BenchReport['asciiSizeByType']): string =>
     sizes === undefined || Object.keys(sizes).length === 0
@@ -281,7 +294,7 @@ export function evaluateGates({
       : `; by type: ${Object.entries(sizes)
           .map(([type, gzip]) => `${type} ${kb(gzip)}`)
           .join(', ')}`;
-  gates.push({
+  return {
     id: 'ascii-size',
     title: "ASCII chunks, core/ascii + one type's ascii entry, per-type max (gzip, D130)",
     requirement: 'R-ASCII-9',
@@ -295,7 +308,28 @@ export function evaluateGates({
       ascii === null
         ? 'no ascii size measured'
         : `${kb(ascii.gzip)} in ${ascii.files.length} chunk(s) an SVG render never loads (limit ${kb(LIMITS.asciiGzipBytes)})${byType(report.asciiSizeByType)}`,
-  });
+  };
+}
+
+export function evaluateGates({
+  report,
+  baseline,
+  mode,
+  reportOnly = [],
+  corpusSize,
+  corpusOk,
+  skip = {},
+}: GateInput): GateOutcome {
+  const enforces: Enforces = (id) => mode === 'enforce' && !reportOnly.includes(id);
+  const gates: GateResult[] = [
+    sizeGate(report, enforces),
+    coreSizeGate(report),
+    speedGate(report, enforces),
+    okCountGate(report, enforces, corpusSize, corpusOk),
+    stageRegressionGate(report, baseline, enforces),
+    readyAtGate(report),
+    asciiSizeGate(report),
+  ];
 
   for (const g of gates) {
     const reason = skip[g.id];
