@@ -1,2 +1,9 @@
 #!/usr/bin/env sh
-NODE_OPTIONS="--max_old_space_size=8192" pnpm check
+# Checks what this push changes since it left mermaid-v13 (tools/pre-push/cli.ts, #879): about
+# a minute instead of the whole `pnpm check`, which CI runs on every PR.
+#   PRE_PUSH_FULL=1 git push    runs the full `pnpm check` here instead.
+export NODE_OPTIONS="--max_old_space_size=8192"
+case "${PRE_PUSH_FULL:-}" in
+  '' | 0 | false) pnpm exec tsx tools/pre-push/cli.ts ;;
+  *) pnpm check ;;
+esac

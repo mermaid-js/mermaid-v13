@@ -16,6 +16,7 @@ import {
   codePointEnd,
   CR,
   DASH,
+  GT,
   DQUOTE,
   APOSTROPHE,
   BACKSLASH,
@@ -39,12 +40,14 @@ import {
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import { KEYWORDS, T } from './tokens.ts';
 
-/** `<-->` before `<--`, which it starts with. */
+/** `<-->` before `<--`, which it starts with. `---` is checked apart: `----` and `--->` are not it. */
 const ARROWS: readonly (readonly [string, number])[] = [
   ['<-->', T.ArrowBoth],
   ['-->', T.ArrowRight],
   ['<--', T.ArrowLeft],
 ];
+/** The undirected arrow, unless a `-` or `>` follows it. */
+const UNDIRECTED = '---';
 const SINGLES: ReadonlyMap<number, number> = new Map([
   [COMMA, T.Comma],
   [LBRACE, T.Lbrace],
@@ -84,6 +87,11 @@ class C4BetaLexer {
   private nextDirective = 0;
   /** From this offset on there is no `}`: an unclosed `accDescr {` need not look again. */
   private noBraceFrom = Infinity;
+  /**
+   * Before the first token: there any whitespace regex `\s` matches is a blank (a byte-order
+   * mark, a no-break space), as the detector's `^\s*c4-beta` reads it. After it, only `[\t ]`.
+   */
+  private leading = true;
 
   constructor(
     private readonly src: string,
@@ -98,7 +106,7 @@ class C4BetaLexer {
     const { src } = this;
     while (this.p < src.length) {
       const c = src.charCodeAt(this.p);
-      if (isBlank(c)) this.p++;
+      if (this.blank(c)) this.p++;
       else if (this.directive()) continue;
       else if (c === LF || c === CR) this.newline(c);
       else this.token(c);
@@ -106,10 +114,16 @@ class C4BetaLexer {
     return this.w.finish(src);
   }
 
+  /** A blank: a tab or space, and before the first token any `\s` but a line break. */
+  private blank(c: number): boolean {
+    return isBlank(c) || (this.leading && isSpace(c) && c !== LF && c !== CR);
+  }
+
   private emit(kind: number, end: number): void {
     this.w.push(kind, this.p, end);
     this.p = end;
     this.lineStart = false;
+    this.leading = false;
   }
 
   /** A directive at the offset: its own trivia token; the line start stays. */
@@ -216,9 +230,14 @@ class C4BetaLexer {
     this.emit(ok ? T.Hex : Kind.Error, ok ? i : p + 1);
   }
 
-  /** `-->`, `<--` and `<-->`; any other `-` or `<` is an error. */
+  /** `-->`, `<--`, `<-->` and `---`; any other `-` or `<` is an error. */
   private arrow(): void {
-    const hit = ARROWS.find(([text]) => this.src.startsWith(text, this.p));
+    const { src, p } = this;
+    const after = src.charCodeAt(p + UNDIRECTED.length);
+    const hit =
+      src.startsWith(UNDIRECTED, p) && after !== DASH && after !== GT
+        ? ([UNDIRECTED, T.ArrowUndirected] as const)
+        : ARROWS.find(([text]) => src.startsWith(text, p));
     this.emit(hit ? hit[1] : Kind.Error, this.p + (hit ? hit[0].length : 1));
   }
 

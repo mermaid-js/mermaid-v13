@@ -4,7 +4,7 @@ import { copyFileSync, mkdirSync } from 'node:fs';
 import mermaid from '@mermaid-js/bundler-plugin/esbuild';
 import { build } from 'esbuild';
 
-const pages = ['flowchart', 'all', 'plugin'];
+const pages = ['flowchart', 'all', 'plugin', 'explicit'];
 const plugins = process.env.MERMAID_PLUGIN === 'off' ? [] : [mermaid()];
 
 await build({
