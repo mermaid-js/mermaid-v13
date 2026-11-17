@@ -139,9 +139,11 @@ describe('ascii goldens: expected.txt (exact)', () => {
   ];
   // The first case with an embedded block loads that block's diagram types (v13/embedded_folded:
   // sequence and class), which on a busy CI runner took over 10 s inside one case's 5 s. They load
-  // here, once, so each case times its own drawing only.
+  // here, once, so each case times its own drawing only. A fixture whose preparing fails is left to
+  // its own cases: `renderAscii` prepares again, so they fail under their own names.
   beforeAll(async () => {
-    for (const f of new Set(cases.map((c) => c.f))) await prepareAscii(f.input, f.options);
+    for (const f of new Set(cases.map((c) => c.f)))
+      await prepareAscii(f.input, f.options).catch(() => undefined);
   }, 60_000);
 
   it.each(cases.map((c) => [`${c.f.id}/${c.file}`, c] as const))('%s', async (_, c) => {

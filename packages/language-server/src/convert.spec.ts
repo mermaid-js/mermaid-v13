@@ -90,8 +90,8 @@ function encodingProblems(
 }
 
 /**
- * The limit #899 sized for a slow CI runner, when one test walked every corpus file. Each test
- * now walks one corpus folder (#830); whether the limit stays is the maintainer's call.
+ * The limit for each test here, sized for a slow CI runner. The longest is one corpus folder's
+ * test: at most 1.4 s in 20 runs on a laptop at load average up to 30 (2026-11-17).
  */
 const CORPUS_TIMEOUT_MS = 30_000;
 
@@ -109,7 +109,11 @@ describe('encodeSemanticTokens', { timeout: CORPUS_TIMEOUT_MS }, () => {
       const problems = corpusFolders
         .get(folder)!
         .flatMap(({ path, text }) => encodingProblems(service, path, text));
-      expect(problems).toEqual([]);
+      // The first 20 and the count: a change that breaks every token would list them all.
+      expect({ count: problems.length, first: problems.slice(0, 20) }).toEqual({
+        count: 0,
+        first: [],
+      });
     }
   );
 

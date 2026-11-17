@@ -496,8 +496,8 @@ function flowchartCorpus(): { id: string; source: string }[] {
 }
 
 /**
- * The limit #899 sized for a slow CI runner, when one test rendered every flowchart corpus file
- * twice. Each test now renders one file (#904); whether the limit stays is the maintainer's call.
+ * The limit for each corpus test below, sized for a slow CI runner. Each renders one corpus file
+ * twice: at most 1.2 s in 20 runs on a laptop at load average up to 30 (2026-11-17).
  */
 const CORPUS_TIMEOUT_MS = 30_000;
 
