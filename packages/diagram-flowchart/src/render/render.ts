@@ -21,6 +21,7 @@ import {
   type SvgWriter,
 } from '@mermaid-js/core/svg';
 import {
+  clickCursor,
   cls,
   openSvgRoot,
   paletteSlots,
@@ -583,7 +584,7 @@ function drawNode(scene: Scene, view: NodeView, tip?: string): void {
     // A block is one image to assistive technology, named by its title (ADR-15).
     role: block ? 'img' : undefined,
     'aria-label': block ? v?.text || view.id : undefined,
-    cursor: view.classes.includes('clickable') ? 'pointer' : undefined,
+    cursor: clickCursor(view.classes),
   });
   if (tip) textElement(w, 'title', tip);
   const href = nodeHref(scene, v);

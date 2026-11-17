@@ -117,6 +117,10 @@ export function cls(names: readonly string[]): string {
   return out;
 }
 
+/** The pointer cursor of a clickable node: its classes include `clickable` (#355, D605). */
+export const clickCursor = (classes: readonly string[]): 'pointer' | undefined =>
+  classes.includes('clickable') ? 'pointer' : undefined;
+
 /** A colour written in the source of a renderer, as a paint. */
 export const fixedPaint = (c: string): Paint => checkColor(c) as Paint;
 

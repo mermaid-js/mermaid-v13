@@ -16,7 +16,13 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { cls, openSvgRoot, paletteSlots, textElement } from '@mermaid-js/shared/svg/document';
+import {
+  clickCursor,
+  cls,
+  openSvgRoot,
+  paletteSlots,
+  textElement,
+} from '@mermaid-js/shared/svg/document';
 import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
 import { routePath } from '@mermaid-js/shared/svg/route';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
@@ -362,7 +368,7 @@ function drawClass(
     'data-ast': view.ast,
     'data-color-id': slot?.id,
     transform: translate(at.x, at.y),
-    cursor: node.classes.includes('clickable') ? 'pointer' : undefined,
+    cursor: clickCursor(node.classes),
   });
   if (node.tooltip) textElement(w, 'title', node.tooltip);
   const warn = ctx.warn.bind(ctx);
