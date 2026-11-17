@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { layered, validateLayout, type LayoutGraph } from '@mermaid-js/core/layout';
-import { elkEngine, takeNotes, toElkGraph, type ElkAlgorithm } from './adapter.ts';
+import {
+  edgeLengthOptions,
+  elkEngine,
+  takeNotes,
+  toElkGraph,
+  type ElkAlgorithm,
+} from './adapter.ts';
 
 const spacing = { node: 50, rank: 50, edge: 20 };
 
@@ -294,6 +300,97 @@ describe('elkEngine (LayoutGraph → ELK → LayoutModel)', () => {
         'elk.layered.nodePlacement.networkSimplex.nodeFlexibility': 'PORT_POSITION',
         'elk.spacing.portsSurrounding': '[top=12,left=12,bottom=12,right=12]',
       });
+    });
+  });
+
+  describe('stress and radial keep a gap between nodes (#417)', () => {
+    // v13 nodes are 152 x 40 for a one-letter label; neither algorithm reads node size.
+    const sized = (pairs: string, direction: LayoutGraph['direction'], group = ''): LayoutGraph => {
+      const edges = pairs.split(' ').map((p, i) => ({
+        id: `e${i}`,
+        source: p[0]!,
+        target: p[1]!,
+        minLen: 1,
+      }));
+      const ids = [...new Set(edges.flatMap((e) => [e.source, e.target]))];
+      return {
+        direction,
+        spacing,
+        nodes: ids.map((id) => ({
+          id,
+          width: 152,
+          height: 40,
+          ...(group.includes(id) ? { parent: 'G' } : {}),
+        })),
+        edges,
+        groups: group
+          ? [{ id: 'G', padding: { top: 8, right: 8, bottom: 8, left: 8 }, title: undefined }]
+          : [],
+      };
+    };
+    /** The smallest distance between any two node boxes (negative: they overlap). */
+    const smallestGap = (model: ReturnType<ReturnType<typeof elkEngine>>): number => {
+      const boxes = [...model.nodes.values()];
+      let min = Infinity;
+      for (const [i, a] of boxes.entries())
+        for (const b of boxes.slice(i + 1)) {
+          const dx = Math.abs(a.x - b.x) - (a.width + b.width) / 2;
+          const dy = Math.abs(a.y - b.y) - (a.height + b.height) / 2;
+          min = Math.min(min, Math.max(dx, dy));
+        }
+      return min;
+    };
+    const stressTree = 'AB AC BD BE CF EH';
+
+    it('elk.stress: the issue sample has no overlap and a gap of at least spacing.node', () => {
+      const model = elkEngine('stress')(sized(stressTree, 'TB'));
+      expect(smallestGap(model)).toBeGreaterThanOrEqual(spacing.node);
+    });
+
+    it('elk.stress: the sample with a subgraph has no overlap between the nodes outside it', () => {
+      const graph = sized('AB AC BD BE CF EH', 'TB', 'EH');
+      const model = elkEngine('stress')(graph);
+      const outside = new Map([...model.nodes].filter(([id]) => !'EH'.includes(id)));
+      expect(smallestGap({ ...model, nodes: outside })).toBeGreaterThanOrEqual(spacing.node);
+      expect(
+        smallestGap({
+          ...model,
+          nodes: new Map([...model.nodes].filter(([id]) => 'EH'.includes(id))),
+        })
+      ).toBeGreaterThanOrEqual(spacing.node);
+    });
+
+    it('elk.radial: the issue chain keeps a gap of at least spacing.node', () => {
+      const model = elkEngine('radial')(sized('AB BC CD', 'LR'));
+      expect(smallestGap(model)).toBeGreaterThanOrEqual(spacing.node);
+    });
+
+    it('sets the edge length from the widest and tallest node plus spacing.node', () => {
+      const stress = toElkGraph(sized(stressTree, 'TB'), 'stress').root.layoutOptions!;
+      expect(stress['elk.stress.desiredEdgeLength']).toBe(String(152 + 40 + spacing.node));
+      const radial = toElkGraph(sized('AB BC CD', 'LR'), 'radial').root.layoutOptions!;
+      expect(radial['elk.radial.radius']).toBe(String(152 + 40 + spacing.node));
+    });
+
+    it('sets nothing for the other algorithms (layered output is unchanged)', () => {
+      for (const algorithm of ALL.filter((a) => a !== 'stress')) {
+        const options = toElkGraph(sized(stressTree, 'TB'), algorithm).root.layoutOptions!;
+        expect(Object.keys(options).filter((k) => /stress|radial/.test(k))).toEqual([]);
+      }
+    });
+
+    it('sets the length on every group that ELK lays out on its own', () => {
+      const built = toElkGraph(sized(stressTree, 'TB', 'EH'), 'stress');
+      expect(built.nodes.get('G')!.layoutOptions!['elk.stress.desiredEdgeLength']).toBe(
+        String(152 + 40 + spacing.node)
+      );
+    });
+
+    it('a value the caller already put in the options wins over the computed one', () => {
+      const options = edgeLengthOptions('stress', 202, { 'elk.stress.desiredEdgeLength': '300' });
+      expect(options['elk.stress.desiredEdgeLength']).toBe('300');
+      const radial = edgeLengthOptions('radial', 202, { 'elk.radial.radius': '99' });
+      expect(radial['elk.radial.radius']).toBe('99');
     });
   });
 });

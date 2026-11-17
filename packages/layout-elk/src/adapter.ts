@@ -365,6 +365,28 @@ export interface Again {
   pins: Pinned;
 }
 
+/** The option each algorithm reads its edge length from. */
+const EDGE_LENGTH_KEY: Partial<Record<ElkAlgorithm, string>> = {
+  stress: 'elk.stress.desiredEdgeLength',
+  radial: 'elk.radial.radius',
+};
+
+/**
+ * The edge length stress and radial need to keep nodes apart (#417). Neither reads node size or
+ * `elk.spacing.nodeNode`, and their own defaults are for 30 px boxes. `length` is the widest plus
+ * the tallest node plus `spacing.node` (the largest extent alone left 43 px for 152 x 40 nodes,
+ * because the edge length is a target between centres and a diagonal pair sits nearer); a value
+ * already in `set` stays (an explicit option wins).
+ */
+export function edgeLengthOptions(
+  algorithm: ElkAlgorithm,
+  length: number,
+  set: LayoutOptions = {}
+): LayoutOptions {
+  const key = EDGE_LENGTH_KEY[algorithm];
+  return key === undefined ? {} : { [key]: set[key] ?? String(length) };
+}
+
 const FIRST_PASS: Again = { grow: new Map(), pins: new Map() };
 
 /**
@@ -387,6 +409,12 @@ export function toElkGraph(
     'elk.spacing.nodeNode': String(graph.spacing.node),
     'elk.layered.spacing.nodeNodeBetweenLayers': String(graph.spacing.rank),
     'elk.spacing.edgeEdge': String(graph.spacing.edge),
+    ...edgeLengthOptions(
+      algorithm,
+      graph.nodes.reduce((m, n) => Math.max(m, n.width), 0) +
+        graph.nodes.reduce((m, n) => Math.max(m, n.height), 0) +
+        graph.spacing.node
+    ),
   };
   const pad = graph.diagramPadding ?? 0;
   const root: ElkNode = {
