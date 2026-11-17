@@ -2,6 +2,7 @@
 '@mermaid-js/shared': patch
 '@mermaid-js/diagram-architecture': patch
 '@mermaid-js/diagram-block': patch
+'@mermaid-js/diagram-c4': patch
 '@mermaid-js/diagram-cynefin': patch
 '@mermaid-js/diagram-eventmodeling': patch
 '@mermaid-js/diagram-gantt': patch

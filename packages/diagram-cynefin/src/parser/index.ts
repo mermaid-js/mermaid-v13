@@ -2,10 +2,9 @@
  * The cynefin parser's public surface: the lexer, gated against v12's Langium lexer (T1, #461),
  * and the parser, detection and AST (T2, #465).
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
 import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import { bodyView, seenTokens } from '@mermaid-js/shared/parser/seen-tokens';
+import { bodyView, keptTokens, NO_KINDS, seenTokens } from '@mermaid-js/shared/parser/seen-tokens';
 import type { SeenToken } from '@mermaid-js/shared/parser/seen-tokens';
 import { lex } from './lexer.ts';
 
@@ -64,13 +63,5 @@ export function cynefinVerbatimTokens(text: string): CynefinToken[] {
     braceNewline: false,
   };
   const stream = lex(text, 0, view, { verbatim: true });
-  const out: CynefinToken[] = [];
-  for (let j = 0; j < stream.length; j++) {
-    const kind = stream.kind[j] ?? Kind.EOF;
-    if (kind === Kind.EOF) continue;
-    const start = stream.start[j] ?? 0;
-    const end = stream.end[j] ?? 0;
-    out.push({ kind, text: text.slice(start, end), range: { start, end } });
-  }
-  return out;
+  return keptTokens(stream, NO_KINDS, (j) => text.slice(stream.start[j] ?? 0, stream.end[j] ?? 0));
 }
