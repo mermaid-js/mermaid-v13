@@ -8,17 +8,17 @@ Integration branch `feature/855_complexity` (from `mermaid-v13` at ce2cb1b04), w
 
 | Ticket | Issue | Branch | Blocked by | State |
 | --- | --- | --- | --- | --- |
-| X1 grid hooks | #856 | `feature/856_grid-hooks` | — | started |
-| X2 `layered.ts` phases | #857 | `feature/857_layered-phases` | #856 | waiting |
-| X3 `compound.ts` | #858 | `feature/858_compound-state` | #856 | waiting |
-| X4 `createMermaid` | #859 | `feature/859_create-mermaid-split` | — | started |
-| X5 allow-list checker | #860 | `feature/860_allow-list-checker` | — | started |
-| X6 small core functions | #861 | `feature/861_core-small-functions` | — | started |
-| X7 flowchart functions | #862 | `feature/862_flowchart-functions` | — | started |
-| X8 YAML reader | #863 | `feature/863_yaml-reader` | — | started (leave whole) |
+| X1 grid hooks | #856 | `feature/856_grid-hooks` | — | merged (0d7a74793); core +160 B; gaps: grid sites 40 to 33, no entry freed |
+| X2 `layered.ts` phases | #857 | `feature/857_layered-phases` | #856 | started |
+| X3 `compound.ts` | #858 | `feature/858_compound-state` | #856 | reviewed, merging; 8 entries and 2 `no-param-reassign`; core +1,140 B |
+| X4 `createMermaid` | #859 | `feature/859_create-mermaid-split` | — | reviewed, merging; 1 entry; CDN closure +254 B |
+| X5 allow-list checker | #860 | `feature/860_allow-list-checker` | — | reviewed, merging; 3 entries; core +316 B |
+| X6 small core functions | #861 | `feature/861_core-small-functions` | — | merged (d1f2f4fe5); 4 entries; core +30 B |
+| X7 flowchart functions | #862 | `feature/862_flowchart-functions` | — | merged (ff 85fc72c7a); 3 entries |
+| X8 YAML reader | #863 | `feature/863_yaml-reader` | — | merged (ff 0b4d31158); stays whole (D597) |
 | X9 private packages, tools | #864 | `feature/864_private-and-tools` | runs last | waiting |
 
-Maintainer decisions (Knut, 2026-11-17): 1 yes, `layered.ts` and `compound.ts` may leave Pele's file shape, each phase file recording the Pele commit it was split from (D596, amends D66); 2 the YAML reader stays whole and both files cite the decision (D597); 3 yes, the readability limits are extended to `tools/*/src` with today's violations entered as suppressions (D598). Decisions 4 and 5 are followed as the spec writes them. X8 records D596 and D597 in `DECISIONS.md`; X9 records D598. D591, D592 and D594 are left to other open PRs. X1, X5 and X6 edit core and share its 236 B of headroom; they merge one at a time, each measured after the merge.
+Maintainer decisions (Knut, 2026-11-17): 1 yes, `layered.ts` and `compound.ts` may leave Pele's file shape, each phase file recording the Pele commit it was split from (D596, amends D66); 2 the YAML reader stays whole and both files cite the decision (D597); 3 yes, the readability limits are extended to `tools/*/src` with today's violations entered as suppressions (D598). Decisions 4 and 5 are followed as the spec writes them. X8 records D596 and D597 in `DECISIONS.md`; X9 records D598. D591, D592 and D594 are left to other open PRs. Budgets (Knut, 2026-11-17): core rises to 102,400 B (D599) and `loaded` to 150,528 B (D600); the spec's "no budget change" rule is amended by both. A split costs bytes because locals minify to one letter and the fields of a state record keep their names. Core tickets merge one at a time, each measured after the merge.
 
 ## Pointers per ticket
 
@@ -57,8 +57,8 @@ Common gates for X1 to X8 (run all four, about 50 s together):
 
 ## Size
 
-- Core: `packages/bench/src/core-size.spec.ts` (`vitest run packages/bench/src/core-size.spec.ts`, 1.5 s) fails when core exceeds `packages/mermaid/size-budget.json` `core.gzipBytes`. Loaded (`size` gate, `bench/src/gates.ts:161-174`) has no cheap CLI; a scratch script calling `measureStaticClosure(readSizeBudget().core.entry)` and `flowchartClosureSize(bundle)` from `bench/src/size-budget.ts` works (name it `.mts`, run with `tsx --conditions=mermaid-source` from `packages/bench`). Script: `/private/tmp/claude-502/-Users-knsv-repos-mermaid-v13/3e3bcbfd-c595-448d-97b1-92da849dde4a/scratchpad/size.mts`, 3 s.
-- Today: core 100,116 B gz of 100,352 (headroom 236 B); loaded 147,472 of 148,480 (headroom 1,008 B). A split adds function wrappers, so X1 to X3 can overrun. The spec allows no budget change: a ticket that would exceed a limit stops and reports. The headroom is shared by every core ticket of this run, so aim for a net change of zero or less and report the delta.
+- Core: `packages/bench/src/core-size.spec.ts` (`vitest run packages/bench/src/core-size.spec.ts`, 1.5 s) fails when core exceeds `packages/mermaid/size-budget.json` `core.gzipBytes`. Loaded (`size` gate, `bench/src/gates.ts:161-174`) has no cheap CLI; a scratch script calling `measureStaticClosure(readSizeBudget().core.entry)` and `flowchartClosureSize(bundle)` from `bench/src/size-budget.ts` works (name it `.mts`, run with `tsx --conditions=mermaid-source` from `packages/bench`). Script: `/private/tmp/claude-502/-Users-knsv-repos-mermaid-v13/3e3bcbfd-c595-448d-97b1-92da849dde4a/scratchpad/size-local.mts`: copy it into your worktree's `packages/bench/`, run it there, delete the copy. (The earlier `size.mts` imported from the i855 worktree by absolute path, so it measured the integration branch whatever tree it ran in; sizes in ticket notes written before 2026-11-17 12:30 that came from it are wrong.)
+- Today: core 100,116 B gz of 100,352 (headroom 236 B); loaded 147,472 of 148,480 (headroom 1,008 B). A split adds function wrappers, so X1 to X3 can overrun. Limits since D599 and D600: core 102,400 B, loaded 150,528 B. A ticket that would exceed one stops and reports; never change a limit. Report the delta measured in your own tree.
 - ASCII soft budget: `bench/src/ascii-size.ts`; the other size gates are in `bench/src/gates.ts`.
 
 ## Bench (steady runner only; no timings run here)

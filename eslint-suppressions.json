@@ -189,23 +189,6 @@
       "count": 2
     }
   },
-  "packages/core/src/layout/layered/compound.ts": {
-    "complexity": {
-      "count": 3
-    },
-    "max-depth": {
-      "count": 1
-    },
-    "max-lines": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 3
-    },
-    "no-param-reassign": {
-      "count": 2
-    }
-  },
   "packages/core/src/layout/layered/layered.fixtures.ts": {
     "max-lines-per-function": {
       "count": 1
@@ -282,20 +265,12 @@
     }
   },
   "packages/core/src/svg/inert.ts": {
-    "complexity": {
-      "count": 2
-    },
     "tsdoc/syntax": {
       "count": 1
     }
   },
   "packages/core/src/svg/path.ts": {
     "max-params": {
-      "count": 1
-    }
-  },
-  "packages/core/src/svg/style.ts": {
-    "complexity": {
       "count": 1
     }
   },
@@ -417,9 +392,6 @@
   },
   "packages/mermaid/src/api.ts": {
     "@typescript-eslint/explicit-module-boundary-types": {
-      "count": 1
-    },
-    "max-lines-per-function": {
       "count": 1
     }
   },
