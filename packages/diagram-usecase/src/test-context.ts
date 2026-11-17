@@ -1,68 +1,36 @@
 /**
- * The usecase tests' one context builder (as venn's, #495), which the render harness
- * (`render/harness.ts`) and the conformance render and theme specs share. It builds what the
- * pipeline builds (`mermaid/src/api.ts` `themeFor`, `core/src/pipeline/draw.ts`): the config core
- * resolves from its defaults, the integrator's config and the source's front matter and
- * directives; the theme that config names, with the plugin's table, its `themeVariables` and its
- * dark half for `theme: 'auto'`; and a render context with a measurer (the table measurer by
- * default), a layout engine (core's `layered` by default) and the warnings collected.
+ * The usecase tests' context builder (as venn's, #495), which the ASCII fixtures share: the
+ * shared test context (`@mermaid-js/shared/testing/test-context`) with usecase's config section
+ * and theme table, laid out with core's `layered` unless another engine is given.
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
-import {
-  CORE_DEFAULTS,
-  resolveConfig,
-  type ConfigInput,
-  type ResolvedConfig,
-} from '@mermaid-js/core/config';
-import { layered, pxProfile, type LayoutEngine } from '@mermaid-js/core/layout';
-import { resolveLimits } from '@mermaid-js/core/limits';
+import type { ResolvedConfig } from '@mermaid-js/core/config';
+import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
-import { createTheme, loadTheme, resolveThemeName, type Theme } from '@mermaid-js/core/theme';
+import type { Measurer } from '@mermaid-js/core/text';
+import type { Theme } from '@mermaid-js/core/theme';
+import {
+  testConfig,
+  testRenderContext,
+  testTheme,
+  TEST_ID_PREFIX,
+} from '@mermaid-js/shared/testing/test-context';
 import { usecase } from './plugin.ts';
 
-/** The `data-mermaid-version` the test renders write. */
-export const TEST_VERSION = '13.0.0-alpha.0';
-
-/** The id prefix of a test render when none is given. */
-export const ID_PREFIX = 'mermaid-0';
-
-/**
- * The config a render of `pre` resolves: core's defaults, then `integrator` as `initialize()`
- * would get it, then the front matter and `init` directives.
- */
-export function usecaseTestConfig(
+/** The config a render of `pre` resolves under `integrator`, as `initialize()` would get it. */
+export const usecaseTestConfig = (
   pre?: PreprocessResult,
   integrator?: Readonly<Record<string, unknown>>,
   warn?: (w: Warning) => void
-): ResolvedConfig {
-  const directives = (pre?.directives ?? []).flatMap((d) =>
-    d.kind === 'init' && d.args && typeof d.args === 'object' ? [d.args as ConfigInput] : []
-  );
-  return resolveConfig(CORE_DEFAULTS, integrator, pre?.frontMatter?.config, directives, undefined, {
-    ...(warn ? { warn } : {}),
-    section: 'usecase',
-  });
-}
+): ResolvedConfig => testConfig('usecase', pre, integrator, warn);
 
-/**
- * The theme `config` names (with no config, core's default, redux-color), with usecase's table,
- * the config's `themeVariables` and, for `theme: 'auto'`, its dark half.
- */
-export async function usecaseTestTheme(
+/** The theme `config` names (core's default with none), with usecase's table. */
+export const usecaseTestTheme = (
   config: ResolvedConfig = usecaseTestConfig(),
   warn?: (w: Warning) => void,
-  idPrefix = ID_PREFIX
-): Promise<Theme> {
-  const choice = resolveThemeName(config.theme, warn);
-  return createTheme(await loadTheme(choice.name), {
-    themeVariables: config.themeVariables as Record<string, unknown> | undefined,
-    dark: choice.dark ? await loadTheme(choice.dark) : undefined,
-    diagram: usecase.theme,
-    ...(warn ? { warn } : {}),
-    idPrefix: () => idPrefix,
-  });
-}
+  idPrefix = TEST_ID_PREFIX
+): Promise<Theme> =>
+  testTheme(config, { diagram: usecase.theme, idPrefix, ...(warn ? { warn } : {}) });
 
 /** What {@link usecaseRenderContext} takes besides the config and the theme. */
 export interface UsecaseContextOptions {
@@ -75,28 +43,8 @@ export interface UsecaseContextOptions {
 }
 
 /** The render context the pipeline would give usecase under `config` and `theme`. */
-export function usecaseRenderContext(
+export const usecaseRenderContext = (
   config: ResolvedConfig,
   theme: Theme,
-  {
-    measurer = tableMeasurer,
-    idPrefix = ID_PREFIX,
-    engine = layered,
-    icon,
-    warn,
-  }: UsecaseContextOptions
-): RenderContext {
-  return {
-    config,
-    measurer,
-    units: pxProfile,
-    theme,
-    securityLevel: 'default',
-    idPrefix,
-    version: TEST_VERSION,
-    layout: (graph) => engine(graph),
-    limits: resolveLimits(config),
-    ...(icon ? { icon } : {}),
-    warn,
-  };
-}
+  { engine = layered, ...options }: UsecaseContextOptions
+): RenderContext => testRenderContext(config, theme, { ...options, layout: (g) => engine(g) });

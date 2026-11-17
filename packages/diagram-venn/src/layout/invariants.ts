@@ -20,13 +20,15 @@ import { idsKey, setIdOf, type VennModel } from '../model.ts';
 import { circleBox, drawnBoxes, overlaps } from './geometry.ts';
 import { VENN_METRICS } from './metrics.ts';
 import type { Circle, Rect, VennLayout } from './types.ts';
-import { numbers, rectInside as inside } from '@mermaid-js/shared/layout/invariants';
-
-const EPS = 1e-6;
+import {
+  EPS,
+  numbers,
+  rectInside as inside,
+  rectText,
+} from '@mermaid-js/shared/testing/layout-invariants';
 
 /** A rectangle as a violation message prints it. */
-const printed = (r: Rect): string =>
-  `(${r.x.toFixed(2)}, ${r.y.toFixed(2)}, ${r.width.toFixed(2)} × ${r.height.toFixed(2)})`;
+const printed = (r: Rect): string => rectText(r, 2);
 
 /** The violations of `layout`, laid out from `model`. */
 export function vennLayoutViolations(model: VennModel, layout: VennLayout): string[] {

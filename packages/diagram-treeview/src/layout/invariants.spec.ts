@@ -3,7 +3,8 @@ import type { Theme } from '@mermaid-js/core/theme';
 import { treeViewTestTheme } from '../test-context.ts';
 import type { Measurer } from '@mermaid-js/core/text';
 import { context, halfEm, tree } from './fixtures.ts';
-import { layoutTreeView, treeViewLayoutViolations, type TreeViewLayout } from './index.ts';
+import { layoutTreeView, type TreeViewLayout } from './index.ts';
+import { treeViewLayoutViolations } from './invariants.ts';
 
 // The checker passes sound layouts and names each broken invariant (the corpus run is
 // packages/conformance/src/treeView/layout-corpus.spec.ts).

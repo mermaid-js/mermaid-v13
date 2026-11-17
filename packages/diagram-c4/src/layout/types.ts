@@ -50,7 +50,8 @@ export interface C4ElementLayout {
   readonly box: Rect;
   /** v12's sections, top to bottom: the bold name, `[Person]`/`[Container: techn]`, the description. */
   readonly name?: PlacedLabel;
-  readonly type: PlacedLabel;
+  /** Absent when c4-beta hides the type line (`showStereotypes`, `hideStereotypes`). */
+  readonly type?: PlacedLabel;
   readonly descr?: PlacedLabel;
 }
 
@@ -127,6 +128,29 @@ export interface C4RelationLayout {
   readonly crowded?: true;
 }
 
+/** One legend row: a swatch and its label. */
+export interface C4LegendRow {
+  readonly swatch: Rect;
+  readonly label: PlacedLabel;
+  /** A kind row's element kind: the swatch takes that kind's palette. */
+  readonly kind?: C4ElementKind;
+  /** A tag row's style, its colours as written: the swatch takes them. */
+  readonly tag?: {
+    readonly name: string;
+    readonly ast: AstId;
+    readonly fill?: string;
+    readonly stroke?: string;
+  };
+}
+
+/** c4-beta's legend (spec #730 T3): a heading and one row per kind and tag style in use. */
+export interface C4LegendLayout {
+  /** Everything the legend draws. */
+  readonly box: Rect;
+  readonly title: PlacedLabel;
+  readonly rows: readonly C4LegendRow[];
+}
+
 export interface C4Layout {
   /** The canvas: everything drawn, the config margins all round, and the title row. */
   readonly width: number;
@@ -135,6 +159,8 @@ export interface C4Layout {
   readonly boundaries: readonly C4BoundaryLayout[];
   readonly elements: readonly C4ElementLayout[];
   readonly relations: readonly C4RelationLayout[];
+  /** Below the drawing; set only by c4-beta, and only when it has a row to show. */
+  readonly legend?: C4LegendLayout;
   /** Everything drawn (D224): frames, shapes, lines, labels and the title. */
   readonly bounds: Rect;
   /**

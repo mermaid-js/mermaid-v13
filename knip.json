@@ -2,7 +2,12 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "workspaces": {
     ".": {
-      "entry": ["tools/check-deps/cli.ts", "e2e/dom/server.ts", "e2e/dom/page.ts"],
+      "entry": [
+        "tools/check-deps/cli.ts",
+        "tools/pre-push/*cli.ts",
+        "e2e/dom/server.ts",
+        "e2e/dom/page.ts"
+      ],
       "project": [
         "tools/**/*.{ts,js}",
         "e2e/{browser,dev,smoke,dom}/**/*.ts",
@@ -30,7 +35,7 @@
         "src/parser/{rule,state,support,tree,table,v12-text,drop,facet,flow,flow-facet}.ts",
         "src/svg/{arrowheads,document,graph,route}.ts",
         "src/config/readers.ts",
-        "src/layout/invariants.ts",
+        "src/testing/*.ts",
         "src/shapes/{kit,basic,extended}.ts"
       ],
       "project": ["src/**/*.ts"]
@@ -71,6 +76,10 @@
     },
     "packages/language-service/examples/*": {
       "entry": ["src/main.ts", "vite.config.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/language-server/examples/*": {
+      "entry": ["src/extension.ts"],
       "project": ["src/**/*.ts"]
     },
     "tools/*": {

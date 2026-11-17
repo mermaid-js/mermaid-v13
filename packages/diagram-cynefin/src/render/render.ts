@@ -230,20 +230,14 @@ function openRoot(
   w: SvgWriter
 ): void {
   const { theme, config } = ctx;
-  const { x, y } = layout.viewBox;
-  const width = Math.max(1, Math.ceil(layout.viewBox.width));
-  const height = Math.max(1, Math.ceil(layout.viewBox.height));
-  const maxWidth = config.cynefin?.useMaxWidth !== false;
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
   openSvgRoot(w, ctx, {
     name: 'cynefin',
-    viewBox: [x, y, width, height],
-    maxWidth,
-    title,
-    desc,
+    viewBox: layout.viewBox,
+    maxWidth: config.cynefin?.useMaxWidth !== false,
+    title: model.accTitle,
+    desc: model.accDescr,
     attrs: { 'font-family': font },
   });
 }

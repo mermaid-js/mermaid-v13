@@ -15,15 +15,17 @@ Code that Mermaid v13 diagram packages share, kept out of `@mermaid-js/core` so 
 | `/parser/facet` | Completion and hover helpers for a diagram's `./language` entry |
 | `/parser/flow` | The lexer, parser and model builder base flowchart shares with the diagrams whose grammar was cut from its own (agentflow) |
 | `/parser/flow-facet` | Completion and hover for the same diagrams' `./language` entries |
-| `/shapes/kit` | Shape types, paddings, sizers and path builders |
-| `/shapes/basic` | The bracket-syntax node shapes several diagrams draw, one export per shape |
-| `/shapes/extended` | The other flowchart node shapes |
+| `/shapes/kit` | Shape types, paddings, sizers and path builders, and the person figure's proportions |
+| `/shapes/basic` | The node shapes several diagrams draw, one export per shape: the bracket-syntax shapes, the lined document and the collapsed-group card |
+| `/shapes/extended` | The node shapes only flowchart draws |
 | `/svg/document` | The SVG root, title and description, class lists, palette slots and the style cache every renderer uses |
 | `/svg/route` | Edge paths for graph diagrams |
 | `/svg/arrowheads` | Arrowhead markers and the trim they need |
 | `/svg/graph` | The edge label on its background box and the text style a label is measured with |
 | `/config/readers` | Readers for config numbers, lengths and `useMaxWidth` |
-| `/layout/invariants` | What the diagrams' layout invariant checks share |
+| `/testing/layout-invariants` | What the diagrams' layout invariant checks share: the non-finite walk, box containment and overlap, `near`, the tolerance and the way a box is printed. Workspace-only: specs import it, the build and the tarball leave it out |
+| `/testing/test-context` | The config, theme and render context a diagram's tests render with, as the pipeline builds them. Workspace-only |
+| `/testing/render-harness` | `createRenderHarness(plugin, spec)`: a source or a model through the plugin's parse, layout and render, for a package's `render<Type>ForTest`. Workspace-only |
 | `/layout` | Spacing, group padding and bounds helpers for graph layouts |
 | `/ascii` | Line, label, frame and title drawing and the shapes' text forms for ASCII output |
 

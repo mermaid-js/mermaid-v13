@@ -2,6 +2,7 @@
   "$schema": "./node_modules/fallow/schema.json",
   "entry": [
     "tools/check-deps/cli.ts",
+    "tools/pre-push/*cli.ts",
     "e2e/dom/server.ts",
     "e2e/dom/page.ts",
     "packages/*/src/*/index.ts",
@@ -40,6 +41,9 @@
     "e2e/rendering/common-tests/**"
   ],
   "ignoreExportsUsedInFile": true,
+  "resolve": {
+    "conditions": ["mermaid-source"]
+  },
   "workspaces": {
     "settings": {
       "packages/bench": {

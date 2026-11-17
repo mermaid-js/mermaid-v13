@@ -1,71 +1,40 @@
 /**
- * The venn tests' one context builder, which the render harness (`render/harness.ts`) and the
- * layout specs (the layout specs, the conformance layout corpus, parity and stress) share. It
- * builds what the pipeline builds (`mermaid/src/api.ts` `themeFor`, `core/src/pipeline/draw.ts`):
- * the config core resolves from its defaults, the integrator's config and the source's front
- * matter and directives; the theme that config names, with the plugin's table, its
- * `themeVariables` and its dark half for `theme: 'auto'`; and a render context with a measurer
- * (the table measurer by default) and the warnings collected.
+ * The venn tests' context builder, which the layout specs, the conformance layout corpus, parity
+ * and stress share: the shared test context (`@mermaid-js/shared/testing/test-context`) with
+ * venn's config section and theme table.
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
-import {
-  CORE_DEFAULTS,
-  resolveConfig,
-  type ConfigInput,
-  type ResolvedConfig,
-} from '@mermaid-js/core/config';
-import { pxProfile } from '@mermaid-js/core/layout';
-import { resolveLimits } from '@mermaid-js/core/limits';
+import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { Diagnostic } from '@mermaid-js/core/parser-kit';
 import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
-import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
-import { createTheme, loadTheme, resolveThemeName, type Theme } from '@mermaid-js/core/theme';
+import type { Measurer } from '@mermaid-js/core/text';
+import type { Theme } from '@mermaid-js/core/theme';
+import {
+  defaultsWith,
+  selfLaidOut,
+  testConfig,
+  testRenderContext,
+  testTheme,
+  TEST_ID_PREFIX,
+} from '@mermaid-js/shared/testing/test-context';
 import type { VennModel } from './model.ts';
 import { parseVenn } from './parser/index.ts';
 import { venn } from './plugin.ts';
 
-/** The `data-mermaid-version` the test renders write. */
-export const TEST_VERSION = '13.0.0-alpha.0';
-
-/** The id prefix of a test render when none is given. */
-const ID_PREFIX = 'mermaid-0';
-
-/**
- * The config a render of `pre` resolves: core's defaults, then `integrator` as `initialize()`
- * would get it, then the front matter and `init` directives.
- */
-export function vennTestConfig(
+/** The config a render of `pre` resolves under `integrator`, as `initialize()` would get it. */
+export const vennTestConfig = (
   pre?: PreprocessResult,
   integrator?: Readonly<Record<string, unknown>>,
   warn?: (w: Warning) => void
-): ResolvedConfig {
-  const directives = (pre?.directives ?? []).flatMap((d) =>
-    d.kind === 'init' && d.args && typeof d.args === 'object' ? [d.args as ConfigInput] : []
-  );
-  return resolveConfig(CORE_DEFAULTS, integrator, pre?.frontMatter?.config, directives, undefined, {
-    ...(warn ? { warn } : {}),
-    section: 'venn',
-  });
-}
+): ResolvedConfig => testConfig('venn', pre, integrator, warn);
 
-/**
- * The theme `config` names (with no config, core's default, redux-color), with venn's table,
- * the config's `themeVariables` and, for `theme: 'auto'`, its dark half.
- */
-export async function vennTestTheme(
+/** The theme `config` names (core's default with none), with venn's table. */
+export const vennTestTheme = (
   config: ResolvedConfig = vennTestConfig(),
   warn?: (w: Warning) => void,
-  idPrefix = ID_PREFIX
-): Promise<Theme> {
-  const choice = resolveThemeName(config.theme, warn);
-  return createTheme(await loadTheme(choice.name), {
-    themeVariables: config.themeVariables as Record<string, unknown> | undefined,
-    dark: choice.dark ? await loadTheme(choice.dark) : undefined,
-    diagram: venn.theme,
-    ...(warn ? { warn } : {}),
-    idPrefix: () => idPrefix,
-  });
-}
+  idPrefix = TEST_ID_PREFIX
+): Promise<Theme> =>
+  testTheme(config, { diagram: venn.theme, idPrefix, ...(warn ? { warn } : {}) });
 
 /** What {@link vennRenderContext} takes besides the config and the theme. */
 export interface VennContextOptions {
@@ -75,45 +44,26 @@ export interface VennContextOptions {
 }
 
 /** The render context the pipeline would give venn under `config` and `theme`. */
-export function vennRenderContext(
+export const vennRenderContext = (
   config: ResolvedConfig,
   theme: Theme,
-  { measurer = tableMeasurer, idPrefix = ID_PREFIX, warn }: VennContextOptions
-): RenderContext {
-  return {
-    config,
-    measurer,
-    units: pxProfile,
-    theme,
-    securityLevel: 'default',
-    idPrefix,
-    version: TEST_VERSION,
-    layout: () => {
-      throw new Error('venn lays itself out (layoutKind: custom)');
-    },
-    limits: resolveLimits(config),
-    warn,
-  };
-}
-
-/** Core's defaults under no source, resolved once. */
-let plain: ResolvedConfig | undefined;
+  options: VennContextOptions
+): RenderContext => testRenderContext(config, theme, { ...options, layout: selfLaidOut('venn') });
 
 /**
  * {@link vennRenderContext} over `theme`, with core's defaults and the `venn` section `section`
- * as given (the resolver passes a section's values through as they are), for the layout specs;
- * warnings go to `warnings`.
+ * as given, for the layout specs; warnings go to `warnings`.
  */
-export function vennTestContext(
+export const vennTestContext = (
   theme: Theme,
   section: Readonly<Record<string, unknown>> = {},
   warnings: Warning[] = [],
-  measurer: Measurer = tableMeasurer
-): RenderContext {
-  plain ??= vennTestConfig();
-  const config = { ...plain, venn: section } as unknown as ResolvedConfig;
-  return vennRenderContext(config, theme, { measurer, warn: (w) => void warnings.push(w) });
-}
+  measurer?: Measurer
+): RenderContext =>
+  vennRenderContext(defaultsWith('venn', section), theme, {
+    ...(measurer ? { measurer } : {}),
+    warn: (w) => void warnings.push(w),
+  });
 
 /** A source parsed: its model, its diagnostics, and the `venn` config its text sets. */
 export interface ParsedVenn {

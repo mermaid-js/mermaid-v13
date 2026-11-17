@@ -85,7 +85,7 @@ const TEXT_TYPES = new Map<number, C4BetaTextNode['type']>([
 ]);
 /** The statement words, which are never ids. */
 const RESERVED = kindSet(T.Title, T.AccTitle, T.AccDescr, T.Direction, T.Legend, T.Style);
-const ARROWS = kindSet(T.ArrowRight, T.ArrowLeft, T.ArrowBoth);
+const ARROWS = kindSet(T.ArrowRight, T.ArrowLeft, T.ArrowBoth, T.ArrowUndirected);
 const BOUNDARY = kindSet(Kind.Newline, Kind.EOF);
 
 /** Human names for what the parser expects (R-ERR-2, R-ERR-5). */
@@ -94,7 +94,7 @@ const EXPECTED = new ExpectedTable([
   ['an element such as `person`', [T.Person, T.SoftwareSystem]],
   ['an id', [T.Id]],
   ['a name in quotes, as in `"Payments"`', [T.String]],
-  ['an arrow such as `-->`', [T.ArrowRight, T.ArrowLeft, T.ArrowBoth]],
+  ['an arrow such as `-->`', [T.ArrowRight, T.ArrowLeft, T.ArrowBoth, T.ArrowUndirected]],
   ['`:` and a label', [T.Colon]],
   ['`:` after a step number', [T.Step]],
   ['a direction such as `LR`', [T.Tb, T.Bt, T.Lr, T.Rl]],
@@ -503,7 +503,7 @@ class C4BetaParser {
       to: this.raw(to),
       toRange: this.range(to),
       start: arrow === T.ArrowBoth ? 'arrow' : 'none',
-      end: 'arrow',
+      end: arrow === T.ArrowUndirected ? 'none' : 'arrow',
       tags: [],
       ...(step === undefined ? {} : { step }),
     };
