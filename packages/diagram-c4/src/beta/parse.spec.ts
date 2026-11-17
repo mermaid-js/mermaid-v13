@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseC4Beta } from './parser.ts';
+import { parseC4 } from '../parser/index.ts';
+import { isC4Beta } from './model.ts';
 
 const parse = (body: string, header = 'c4-beta context') => parseC4Beta(`${header}\n${body}`);
 const errors = (body: string, header?: string) =>
@@ -95,6 +97,23 @@ describe('c4-beta model', () => {
       ['c', 'a', 'none', 'arrow'],
       ['b', 'a', 'arrow', 'arrow'],
     ]);
+  });
+
+  it('stores `---` as a relation with no head, split from the ids round it', () => {
+    const { model } = parse(
+      'person a-b "A"\nperson c "C"\nperson d "D"\na-b---c : "Linked"\nc --- d\nd---a-b'
+    );
+    expect(model.relations.map((r) => [r.from, r.to, r.start, r.end])).toEqual([
+      ['a-b', 'c', 'none', 'none'],
+      ['c', 'd', 'none', 'none'],
+      ['d', 'a-b', 'none', 'none'],
+    ]);
+    expect(model.relations[0]?.description).toBe('Linked');
+  });
+
+  it('does not read `----` or `--->` as an undirected arrow', () => {
+    for (const arrow of ['----', '--->'])
+      expect(errors(`person a "A"\nperson b "B"\na ${arrow} b`).length, arrow).toBeGreaterThan(0);
   });
 
   it('numbers the repeats of an id and of a relation', () => {
@@ -229,5 +248,23 @@ describe('c4-beta statement spans and symbols', () => {
       ['c', 'ref'],
       ['s', 'ref'],
     ]);
+  });
+});
+
+describe('telling the two models apart (spec #730)', () => {
+  it('knows a c4-beta model by its kind, whatever other fields it carries', () => {
+    const beta = parse('person a "A"').model;
+    expect(isC4Beta(beta)).toBe(true);
+    expect(isC4Beta({ ...beta, boundaries: [] })).toBe(true);
+    expect(isC4Beta(parseC4('C4Context\nPerson(a, "A")\n').model)).toBe(false);
+  });
+});
+
+describe('whitespace before the header (spec #730)', () => {
+  it('skips a byte-order mark or a no-break space before it, and only there', () => {
+    expect(parseC4Beta('\uFEFF\u00A0c4-beta\nperson a "A"\n').diagnostics).toEqual([]);
+    expect(parseC4Beta('c4-beta\n\u00A0person a "A"\n').diagnostics.map((d) => d.code)).not.toEqual(
+      []
+    );
   });
 });

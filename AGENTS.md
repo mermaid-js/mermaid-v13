@@ -92,7 +92,16 @@ pnpm eslint --quiet packages/diagram-pie packages/conformance/src/pie
 - Run `pnpm prettier --check <files>` on files that eslint does not cover, such as Markdown.
 - If you changed a schema, a grammar file, a manifest or a `workspace.yaml`, run `pnpm regen` and commit what it writes.
 
-The per-package check does not replace the full gate. Specs that cover every type at once (parity, corpus, manifests, registry), knip and the dependency checks only run in `pnpm check`. CI runs it on every PR, and the pre-push hook runs it locally.
+The per-package check does not replace the full gate. Specs that cover every type at once (parity, corpus, manifests, registry), knip and the dependency checks only run in `pnpm check`. CI runs it on every PR.
+
+### The pre-push hook
+
+`git push` runs `tools/pre-push/cli.ts`, which checks what the push changes since it left `mermaid-v13`. It does not run the unit suite or the build: CI does.
+
+- A push that changes only documentation (`*.md`, `docs/`, `v13/docs/`) runs Prettier on those files. Markdown that code reads (snapshots, fixtures, a docs file that source code names) does not count as documentation.
+- Any other push runs these at the same time and reports every failure: ESLint and Prettier on the changed files; cspell, knip and the typecheck over everything; `check:deps`, `check:licenses` and the generated-file check; and CI's structural audit (the tests the change reaches, with coverage, then `fallow audit`). A failing test in the audit is a warning here and a failure in CI.
+- Each check's log is in `node_modules/.cache/pre-push/`. To run some checks again: `pnpm exec tsx tools/pre-push/cli.ts typecheck knip`.
+- `PRE_PUSH_FULL=1 git push` runs the full `pnpm check` instead. Run it, or `pnpm test`, before a push that changes shared code if you do not want to wait for CI to find a failing test.
 
 ## Tests
 

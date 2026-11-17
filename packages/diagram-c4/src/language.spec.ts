@@ -207,3 +207,20 @@ describe('the c4 facet', () => {
     expect(hover('C4Context\naccDescr {\n  x\n¦}\nPerson(a, "A")')?.[0]).toBe('}');
   });
 });
+
+describe('the facet with a c4-beta document (spec #730)', () => {
+  it('parses it with the c4-beta parser and offers no legacy completion or hover', () => {
+    const text = 'c4-beta context\nperson a "A"\n';
+    expect(c4Language.parse(text, { keepTokens: true }).diagnostics).toEqual([]);
+    expect(complete('c4-beta context\nperson a "A"\n¦')).toEqual([]);
+    expect(hover('c4-beta context\nper¦son a "A"\n')).toBeUndefined();
+  });
+
+  it('tells the two apart by the parse it is given, not by reading the text again', () => {
+    const text = 'C4Context\nPerson(a, "A")\n';
+    const legacy = c4Language.parse(text, { keepTokens: true, probe: text.length });
+    const beta = c4Language.parse('c4-beta context\n', { keepTokens: true, probe: 16 });
+    expect(c4Language.completions(legacy.probe!, { text, result: legacy })).not.toEqual([]);
+    expect(c4Language.completions(legacy.probe!, { text, result: beta })).toEqual([]);
+  });
+});

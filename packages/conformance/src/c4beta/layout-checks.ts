@@ -3,7 +3,11 @@
  * layout returns: the geometric rules the engine's own `validateLayout` does not state in C4's
  * terms. Each check returns one message per violation; an empty list means it holds.
  */
-import type { C4BetaModel, C4BetaLaidOut } from '@mermaid-js/diagram-c4/testing';
+import {
+  legendViolations,
+  type C4BetaModel,
+  type C4BetaLaidOut,
+} from '@mermaid-js/diagram-c4/testing';
 import type { C4Layout, PlacedLabel, Point, Rect } from '@mermaid-js/diagram-c4';
 import { validateLayout } from '@mermaid-js/core/layout';
 
@@ -180,5 +184,6 @@ export function allViolations(model: C4BetaModel, run: C4BetaLaidOut): string[] 
     ...crossingViolations(run.scene),
     ...labelViolations(run.scene),
     ...containmentViolations(model, run.scene),
+    ...legendViolations(run.scene),
   ];
 }

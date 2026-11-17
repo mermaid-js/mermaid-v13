@@ -187,7 +187,7 @@ test('plugin scripts placed before and after mermaid both register, and later pu
       id: 'latebox',
       detector: (text: string) => /^\s*latebox\b/.test(text),
       loader: async () => {
-        const m = (await import(`${cdn}/mermaid-fixture-diagram/index.js`)) as FixtureModule;
+        const m = (await import(`${cdn}/mermaid-fixture-diagram/entry.js`)) as FixtureModule;
         return {
           ...m.fixturebox,
           id: 'latebox',

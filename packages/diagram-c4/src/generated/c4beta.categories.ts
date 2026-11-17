@@ -36,6 +36,7 @@ export const c4betaCategories = /* @__PURE__ */ kindCategories(T, {
   ArrowRight: 'Operator',
   ArrowLeft: 'Operator',
   ArrowBoth: 'Operator',
+  ArrowUndirected: 'Operator',
   Tag: 'Variable',
   Colon: 'Punctuation',
   Comma: 'Punctuation',

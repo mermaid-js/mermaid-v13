@@ -26,6 +26,7 @@ export const FIXTURE_FOLDER_TYPES: Readonly<Record<string, readonly string[]>> =
   architecture: ['architecture'],
   block: ['block'],
   c4: ['c4'],
+  c4beta: ['c4beta'],
   'class-diagram': ['classDiagram'],
   'conf-and-directives': ['flowchart-v2'],
   cynefin: ['cynefin'],

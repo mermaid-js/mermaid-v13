@@ -1,0 +1,14 @@
+---
+description: >-
+  Probe b12 of spec #730: `%%` comments before the header, on their own
+  lines and after statements, and blank lines. No oddity-table row;
+  comments outside strings.
+---
+%% leading comment
+c4-beta context
+
+%% own line
+person p "Payer" %% trailing comment
+softwareSystem g "Gateway"
+
+p --> g : "Pays with" %% trailing

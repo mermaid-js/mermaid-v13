@@ -3,6 +3,18 @@
   "version": "0.2.0",
   "configurations": [
     {
+      // The dev-only VS Code client for @mermaid-js/language-server. Build the server and the
+      // extension first: see packages/language-server/examples/vscode/README.md.
+      "name": "Run Mermaid LSP extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/packages/language-server/examples/vscode",
+        "${workspaceFolder}/packages/language-server/examples/vscode/sample"
+      ],
+      "outFiles": ["${workspaceFolder}/packages/language-server/examples/vscode/dist/**/*.cjs"]
+    },
+    {
       "type": "node",
       "request": "launch",
       "name": "Debug Current Test File",
