@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "pnpm --filter @mermaid-js/dev dev",
     "build": "pnpm -r --filter \"./packages/**\" run build",
-    "lint": "eslint --quiet --cache --cache-strategy content . && prettier --cache --check . && pnpm lint:spell",
+    "lint": "tsx tools/workspace/lint-cli.ts",
     "lint:fix": "eslint --cache --cache-strategy content --fix --prune-suppressions . && prettier --cache --write .",
     "lint:knip": "knip --no-progress --no-gitignore",
     "lint:spell": "cspell --no-progress --no-summary --gitignore --gitignore-root . \"packages/**/*.ts\" \"tools/**/*.{ts,js}\"",
@@ -34,7 +34,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "pnpm check:static && pnpm test",
-    "check:static": "pnpm lint && pnpm lint:knip && pnpm typecheck && pnpm check:deps && pnpm check:licenses && tsx tools/workspace/check-generated-cli.ts",
+    "check:static": "tsx tools/workspace/check-generated-cli.ts && tsx tools/workspace/parallel-cli.ts 'pnpm lint' 'pnpm lint:knip' 'pnpm typecheck' 'pnpm check:deps' 'pnpm check:licenses'",
     "e2e": "playwright test --project chromium --project dev",
     "e2e:dom": "playwright test -c e2e/dom/playwright.config.ts",
     "prepare": "husky",
