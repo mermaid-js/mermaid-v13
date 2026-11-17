@@ -2,8 +2,7 @@
 '@mermaid-js/diagram-flowchart': patch
 '@mermaid-js/diagram-usecase': patch
 '@mermaid-js/shared': patch
-'@mermaid-js/core': patch
-'mermaid': patch
+'@mermaid-js/language-service': patch
 ---
 
-fix(flowchart): an edge `animate` or `animation` now raises an `EDGE_ANIMATION_IGNORED` warning (flowchart and usecase), and `markdownAutoWrap: false` keeps markdown labels on their own line breaks (#357).
+fix: an edge `animate` or `animation` in a flowchart or usecase diagram now raises an `EDGE_ANIMATION_IGNORED` warning, once per feature, and `markdownAutoWrap: false` keeps flowchart markdown labels on their own line breaks (#357).

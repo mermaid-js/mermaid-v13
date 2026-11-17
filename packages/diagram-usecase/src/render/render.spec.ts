@@ -526,7 +526,9 @@ describe('ignored edge animation (#357)', () => {
   it('raises EDGE_ANIMATION_IGNORED once per ignored feature', async () => {
     const { warnings } = await render('nightly-check/15-animation-variants');
     const ignored = warnings.filter((w) => w.code === 'EDGE_ANIMATION_IGNORED');
-    expect(ignored.length).toBeGreaterThanOrEqual(1);
-    expect(ignored.length).toBeLessThanOrEqual(2);
+    expect(ignored.map((w) => /`(animate|animation)`/.exec(w.message)?.[1]).sort()).toEqual([
+      'animate',
+      'animation',
+    ]);
   });
 });

@@ -1,6 +1,7 @@
 /**
  * The `<svg>` document root and small renderer helpers every diagram shares.
  */
+import type { Warning } from '@mermaid-js/core';
 import {
   checkColor,
   checkStyle,
@@ -186,12 +187,12 @@ export interface AnimatedEdge {
 
 /**
  * v13 parses edge `animate` and `animation` but draws no animation (R-SEC-2: the keyframes need
- * a `<style>`). Raises one `EDGE_ANIMATION_IGNORED` for each of the two features the edges use,
+ * a `<style>`; the edge keeps only its `edge-animation-*` class). Raises one `EDGE_ANIMATION_IGNORED` for each of the two features the edges use,
  * so the author learns why nothing moves.
  */
 export function warnIgnoredAnimation(
   edges: Iterable<AnimatedEdge>,
-  warn: (warning: { code: string; message: string }) => void
+  warn: (warning: Warning) => void
 ): void {
   let animate = false;
   let animation = false;
@@ -206,6 +207,6 @@ export function warnIgnoredAnimation(
     if (used)
       warn({
         code: 'EDGE_ANIMATION_IGNORED',
-        message: `Edge \`${feature}\` is ignored: v13 parses it but draws no edge animation. The edge keeps its \`edge-animation-*\` class only.`,
+        message: `Edge \`${feature}\` is ignored: v13 parses it but draws no edge animation. The edge keeps its \`edge-animation-*\` class, which draws nothing.`,
       });
 }

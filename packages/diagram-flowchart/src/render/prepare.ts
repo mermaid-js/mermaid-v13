@@ -7,7 +7,7 @@ import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { graphSpacing, groupPadding, labelledEdge, sideways } from '@mermaid-js/shared/layout';
 import type { CheckedStyle } from '@mermaid-js/core/svg';
-import { styleCache, warnIgnoredAnimation } from '@mermaid-js/shared/svg/document';
+import { styleCache } from '@mermaid-js/shared/svg/document';
 import {
   FOLDED_TYPE_SIZE,
   foldedCells,
@@ -171,10 +171,6 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
   const nest = nesting(model, rootDir);
   const { views, groups, nodes } = nodeViews(model, nest, m);
   const edges = edgeViews(model, nest.collapsedInto, views, m);
-  warnIgnoredAnimation(
-    edges.map((e) => e.edge),
-    (w) => ctx.warn(w)
-  );
   const graph = layoutGraph(model, rootDir, nest, { groups, nodes, edges }, m, length);
   return { graph, groups, nodes, edges, views, pads: m.pads };
 }
