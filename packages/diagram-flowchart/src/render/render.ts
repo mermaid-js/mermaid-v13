@@ -20,7 +20,13 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { cls, openSvgRoot, paletteSlots, textElement } from '@mermaid-js/shared/svg/document';
+import {
+  cls,
+  openSvgRoot,
+  paletteSlots,
+  textElement,
+  warnIgnoredAnimation,
+} from '@mermaid-js/shared/svg/document';
 import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
@@ -292,6 +298,11 @@ export function renderFlowchart(
     'stroke-width': scene.paint.node.strokeWidth,
     'stroke-linecap': 'round',
   });
+  // The `edge-animation-*` class is all an animated edge gets (`edgeClass`): say so, once.
+  warnIgnoredAnimation(
+    flow.edges.map((e) => e.edge),
+    scene.warn
+  );
   for (const e of flow.edges) drawEdge(scene, e);
   w.close();
   w.open('g', { class: 'edgeLabels' });
@@ -572,6 +583,7 @@ function drawNode(scene: Scene, view: NodeView, tip?: string): void {
     // A block is one image to assistive technology, named by its title (ADR-15).
     role: block ? 'img' : undefined,
     'aria-label': block ? v?.text || view.id : undefined,
+    cursor: view.classes.includes('clickable') ? 'pointer' : undefined,
   });
   if (tip) textElement(w, 'title', tip);
   const href = nodeHref(scene, v);

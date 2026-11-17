@@ -521,3 +521,14 @@ describe('hand-drawn (D302, spec #517)', () => {
     expect(drawn.warnings.map((w) => w.code)).toContain('LOOK_REMOVED');
   });
 });
+
+describe('ignored edge animation (#357)', () => {
+  it('raises EDGE_ANIMATION_IGNORED once per ignored feature', async () => {
+    const { warnings } = await render('nightly-check/15-animation-variants');
+    const ignored = warnings.filter((w) => w.code === 'EDGE_ANIMATION_IGNORED');
+    expect(ignored.map((w) => /`(animate|animation)`/.exec(w.message)?.[1]).sort()).toEqual([
+      'animate',
+      'animation',
+    ]);
+  });
+});
