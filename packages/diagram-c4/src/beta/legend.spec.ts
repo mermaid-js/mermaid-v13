@@ -196,7 +196,7 @@ describe('what the legend draws', () => {
   it('paints a kind swatch with the colours its elements use', async () => {
     const r = await renderC4BetaForTest(KINDS);
     const [, fill, stroke] =
-      /class="node c4-shape c4-person"[^]*?fill="(#\w+)"[^]*?stroke="(#\w+)"/.exec(r.svg)!;
+      /class="node c4-shape c4-person"[^]*?fill="([^"]+)"[^]*?stroke="([^"]+)"/.exec(r.svg)!;
     const legend = r.svg.slice(r.svg.indexOf('<g class="c4-legend">'));
     expect(legend).toContain(`fill="${fill}"`);
     expect(legend).toContain(`stroke="${stroke}"`);

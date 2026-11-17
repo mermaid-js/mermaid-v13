@@ -31,6 +31,8 @@ const TITLE = 'Legend';
 export interface LegendEntry {
   readonly label: string;
   readonly kind?: C4ElementKind;
+  /** The element's own kind, which `kind` (the legacy one) folds: an infrastructure node into a container. */
+  readonly of?: C4BetaElement['kind'];
   readonly tag?: NonNullable<C4LegendRow['tag']>;
 }
 
@@ -46,7 +48,7 @@ function kindEntries(
     const kind = kindOf(element);
     const name = nameOf(element.kind);
     const label = isExternal(kind) ? `External ${name}` : name;
-    if (!rows.has(label)) rows.set(label, { label, kind });
+    if (!rows.has(label)) rows.set(label, { label, kind, of: element.kind });
   }
   return [...rows.values()];
 }
@@ -151,6 +153,7 @@ export function placeLegend(legend: BetaLegend, x: number, y: number): C4LegendL
         top + (h - label.text.height) / 2
       ),
       ...(entry.kind ? { kind: entry.kind } : {}),
+      ...(entry.of ? { of: entry.of } : {}),
       ...(entry.tag ? { tag: entry.tag } : {}),
     };
     top += h;
