@@ -872,7 +872,7 @@ classes works the same with the look on.
 | `curve` picks a d3 curve factory | The engine routes edges: `linear` draws straight segments, `step`/`stepBefore`/`stepAfter` stepped ones, `rounded` (the default) straight segments joined by arcs of radius 5, every other value S-curves | |
 | dagre adds 25 px of rank spacing inside subgraphs | Not reproduced: subgraphs are slightly more compact | |
 | An unlabelled edge between a subgraph and one of its own nodes or nested subgraphs, drawn by dagre to a stand-in node | Laid out inside the subgraph from its border, where its flow starts (entering, below the title when that is the top) or ends (leaving). A labelled one runs down from the subgraph's top, its label in a band below the title | #405, #415, #198 |
-| A subgraph title centred at the top of its subgraph, run through by any edge that entered or left the subgraph there | Under `layered`, a title that a route or its gap of 6 px would cover moves along its band to the nearest place clear of every route, inside the subgraph's padding; a title with no such place stays centred. Routes and sizes do not change. ELK moves the edge beside the title instead | #675 |
+| A subgraph title centred at the top of its subgraph, run through by any edge that entered or left the subgraph there | Under `layered`, a title that a route runs through moves along its band to the nearest place 6 px clear of every route, inside the subgraph's padding; a title no route runs through, or with no such place, stays centred. Routes and sizes do not change. ELK moves the edge beside the title instead | #675 |
 
 Node positions differ from v12's dagre and ELK output; layouts are deterministic for the same
 input.

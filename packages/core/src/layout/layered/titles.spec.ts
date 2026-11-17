@@ -52,6 +52,12 @@ const titleX = (routes: [number, number][][], title: typeof TITLE | null = TITLE
   return clearTitles(graphWith(routes.length, title), model).groups.get('g')!.title.x;
 };
 
+// A vertical route at `x` through the whole band.
+const at = (x: number): [number, number][] => [
+  [x, -20],
+  [x, 60],
+];
+
 describe('clearTitles (#675)', () => {
   it('keeps a title no route comes near, and returns the model it was given', () => {
     const model = modelWith([
@@ -100,15 +106,20 @@ describe('clearTitles (#675)', () => {
     ).toBe(105 - GAP - 20);
   });
 
-  it('moves a title off a route closer than the gap', () => {
+  it('keeps a title a route passes closer than the gap, or along its side, without crossing it', () => {
+    expect(titleX([at(120 + GAP - 1)])).toBe(100);
+    expect(titleX([at(120)])).toBe(100);
+  });
+
+  it('moves a title that a route only just runs into, a gap clear of it', () => {
     expect(
       titleX([
         [
-          [120 + GAP - 1, -20],
-          [120 + GAP - 1, 60],
+          [119, -20],
+          [119, 60],
         ],
       ])
-    ).toBe(120 + GAP - 1 - GAP - 20);
+    ).toBe(119 - GAP - 20);
   });
 
   it('sees a route that only runs within the band, or across it', () => {
@@ -178,10 +189,6 @@ describe('clearTitles (#675)', () => {
   it('stays inside the group padding, and stays put with no place there', () => {
     // Centres may go 60 either way (100 - 20 padding - 20 half title). Routes at 66, 100 and 140
     // leave one place, 40, exactly at that limit.
-    const at = (x: number): [number, number][] => [
-      [x, -20],
-      [x, 60],
-    ];
     expect(titleX([at(66), at(100), at(140)])).toBe(40);
     // Routes at 64, 100 and 136 leave places only at 38 and 162, inside the padding: it stays.
     expect(titleX([at(64), at(100), at(136)])).toBe(100);
@@ -197,6 +204,23 @@ describe('clearTitles (#675)', () => {
         { width: 160, height: 10 }
       )
     ).toBe(100);
+  });
+
+  it('keeps a gap from every route, not only the one it moves off', () => {
+    // Routes at 100 and 50: 74 is the left side of the first but only 4 clear of the second.
+    expect(titleX([at(100), at(50)])).toBe(126);
+  });
+
+  it('goes on to the next group after one without a title', () => {
+    const graph = graphWith(1);
+    const titled = graph.groups[0]!;
+    const twoGroups: LayoutGraph = {
+      ...graph,
+      groups: [{ id: 'u', padding: titled.padding }, titled],
+    };
+    const model = modelWith(at(100));
+    model.groups.set('u', { x: 300, y: 50, width: 100, height: 100, title: { x: 300, y: 15 } });
+    expect(clearTitles(twoGroups, model).groups.get('g')!.title.x).toBe(100 - GAP - 20);
   });
 
   it('skips a group without a title', () => {
