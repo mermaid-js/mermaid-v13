@@ -335,152 +335,29 @@ interface Tags {
 const RE_ESCAPABLE = /[!-/:-@[-`{-~]/;
 const RE_WORD = /\w/;
 
-/** The state of one {@link inline} scan; one record per line, in place of per-line closures. */
-interface Scan {
-  readonly source: string;
-  readonly base: StyleBits;
-  readonly tags: Tags;
-  readonly boxes: readonly LabelBoxSpan[] | undefined;
-  readonly markdown: boolean;
-  readonly emphasis: boolean;
-  readonly out: Piece[];
-  /** The text of the piece in progress, in `style`. */
-  text: string;
-  style: StyleBits;
-  /** The emphasis bits the line has open. */
-  marked: number;
-  /** The scan position in `source`. */
-  i: number;
-}
-
-function boxAt(boxes: readonly LabelBoxSpan[] | undefined, ch: string): LabelBoxSpan | undefined {
-  return boxes?.[ch.charCodeAt(0) - PLACEHOLDER];
-}
-
-// Pushes source text in one style, its box placeholders as box pieces. Only placeholders in
-// the source are boxes: a character reference is decoded into `text` and never reaches here.
-function pushSource(s: Scan, src: string, style: StyleBits): void {
-  let chunk = '';
-  for (const ch of src) {
-    const box = boxAt(s.boxes, ch);
-    if (box === undefined) {
-      chunk += ch;
-      continue;
-    }
-    if (chunk !== '') s.out.push({ text: chunk, style });
-    s.out.push({ text: ch, style, box });
-    chunk = '';
-  }
-  if (chunk !== '') s.out.push({ text: chunk, style });
-}
-
-// Ends the piece in progress, if it has text.
-function flush(s: Scan): void {
-  if (s.text !== '') s.out.push({ text: s.text, style: s.style });
-  s.text = '';
-}
-
-// Ends the piece in progress when the style the tags and emphasis give now differs from it.
-function restyle(s: Scan): void {
-  const next =
-    s.base | s.marked | (s.tags.bold > 0 ? Style.Bold : 0) | (s.tags.italic > 0 ? Style.Italic : 0);
-  if (next === s.style) return;
-  flush(s);
-  s.style = next;
-}
-
-// Counts one HTML tag: `step` is 1 for a start tag and -1 for an end tag.
-function countTag(s: Scan, tag: string, step: number): void {
-  if (tag === 'b' || tag === 'strong') s.tags.bold = Math.max(0, s.tags.bold + step);
-  else if (tag === 'i' || tag === 'em') s.tags.italic = Math.max(0, s.tags.italic + step);
-  else s.tags.dropped?.add(tag);
-  restyle(s);
-}
-
-/** A box placeholder at the scan position becomes a box piece. */
-function takeBox(s: Scan, ch: string): boolean {
-  const box = boxAt(s.boxes, ch);
-  if (box === undefined) return false;
-  flush(s);
-  s.out.push({ text: ch, style: s.style, box });
-  s.i++;
-  return true;
-}
-
-/** An HTML subset tag at the scan position. */
-function takeTag(s: Scan): boolean {
-  RE_TAG.lastIndex = s.i;
-  const m = RE_TAG.exec(s.source);
+/** The HTML subset tag that starts at `i`, or undefined. */
+function tagAt(source: string, i: number): RegExpExecArray | undefined {
+  RE_TAG.lastIndex = i;
+  const m = RE_TAG.exec(source);
   const tag = m?.[2]?.toLowerCase();
-  if (!m || tag === undefined || !HTML_TAGS.has(tag)) return false;
-  countTag(s, tag, m[1] === '/' ? -1 : 1);
-  s.i += m[0].length;
-  return true;
-}
-
-/** A character reference at the scan position, decoded into the text. */
-function takeEntity(s: Scan): boolean {
-  const entity = entityAt(s.source, s.i);
-  if (!entity) return false;
-  s.text += entity[0];
-  s.i += entity[1];
-  return true;
-}
-
-/** A markdown backslash escape at the scan position: the escaped character, without the backslash. */
-function takeEscape(s: Scan): boolean {
-  if (!s.markdown || !RE_ESCAPABLE.test(s.source[s.i + 1] ?? '')) return false;
-  s.text += s.source[s.i + 1];
-  s.i += 2;
-  return true;
-}
-
-/** A markdown inline code span at the scan position, in the mono style. */
-function takeCode(s: Scan): boolean {
-  if (!s.markdown) return false;
-  const end = s.source.indexOf('`', s.i + 1);
-  if (end <= s.i + 1) return false;
-  flush(s);
-  pushSource(s, s.source.slice(s.i + 1, end), s.style | Style.Mono);
-  s.i = end + 1;
-  return true;
+  return m && tag !== undefined && HTML_TAGS.has(tag) ? m : undefined;
 }
 
 /**
- * Whether the mark `ch` of length `len` at `i` opens (`opening`) an emphasis that a later mark
- * closes, or closes one that follows text, and is not an underscore inside a word.
+ * The length (1, or 2 for bold) of the emphasis mark `ch` at `i` when it opens or closes
+ * emphasis, given the bits `marked` already open; 0 when it is plain text.
  */
-function canMark(source: string, i: number, ch: string, len: number, opening: boolean): boolean {
+function emphasisAt(source: string, i: number, ch: string, marked: number): number {
+  const double = source[i + 1] === ch;
+  const len = double ? 2 : 1;
   const prev = source[i - 1] ?? ' ';
   const next = source[i + len] ?? ' ';
+  const opening = (marked & (double ? Style.Bold : Style.Italic)) === 0;
   const can = opening
-    ? next.trim() !== '' && source.includes(len === 2 ? ch + ch : ch, i + len + 1)
+    ? next.trim() !== '' && source.includes(double ? ch + ch : ch, i + len + 1)
     : prev.trim() !== '';
-  return can && !(ch === '_' && RE_WORD.test(prev) && RE_WORD.test(next));
-}
-
-/** An emphasis mark (`*`, `_`, doubled for bold) at the scan position that opens or closes. */
-function takeEmphasis(s: Scan, ch: string): boolean {
-  if (!s.emphasis) return false;
-  const double = s.source[s.i + 1] === ch;
-  const bit = double ? Style.Bold : Style.Italic;
-  const len = double ? 2 : 1;
-  const opening = (s.marked & bit) === 0;
-  if (!canMark(s.source, s.i, ch, len, opening)) return false;
-  s.marked = opening ? s.marked | bit : s.marked & ~bit;
-  restyle(s);
-  s.i += len;
-  return true;
-}
-
-/** Whatever markup starts with `ch` at the scan position, or false when `ch` is plain text. */
-function takeMarkup(s: Scan, ch: string): boolean {
-  if (ch === '<') return takeTag(s);
-  if (ch === '&') return takeEntity(s);
-  if (ch === '\\') return takeEscape(s);
-  if (ch === '`') return takeCode(s);
-  if (ch === '*' || ch === '_') return takeEmphasis(s, ch);
-  return false;
+  const intraWord = ch === '_' && RE_WORD.test(prev) && RE_WORD.test(next);
+  return can && !intraWord ? len : 0;
 }
 
 /**
@@ -496,28 +373,97 @@ function inline(
   boxes?: readonly LabelBoxSpan[]
 ): Piece[] {
   const markdown = markup === 'markdown';
-  const s: Scan = {
-    source,
-    base,
-    tags,
-    boxes,
-    markdown,
-    emphasis: markdown || markup === 'emphasis',
-    out: [],
-    text: '',
-    style: base,
-    marked: 0,
-    i: 0,
+  const emphasis = markdown || markup === 'emphasis';
+  const out: Piece[] = [];
+  const boxAt = (ch: string): LabelBoxSpan | undefined => boxes?.[ch.charCodeAt(0) - PLACEHOLDER];
+  // Pushes source text in one style, its box placeholders as box pieces. Only placeholders in
+  // the source are boxes: a character reference is decoded into `text` and never reaches here.
+  const pushSource = (src: string, s: StyleBits): void => {
+    let chunk = '';
+    for (const ch of src) {
+      const box = boxAt(ch);
+      if (box === undefined) {
+        chunk += ch;
+        continue;
+      }
+      if (chunk !== '') out.push({ text: chunk, style: s });
+      out.push({ text: ch, style: s, box });
+      chunk = '';
+    }
+    if (chunk !== '') out.push({ text: chunk, style: s });
   };
-  restyle(s);
-  while (s.i < source.length) {
-    const ch = source[s.i] as string;
-    if (takeBox(s, ch) || takeMarkup(s, ch)) continue;
-    s.text += ch;
-    s.i++;
+  let text = '';
+  let style = base;
+  let marked = 0;
+  const restyle = (): void => {
+    const next =
+      base | marked | (tags.bold > 0 ? Style.Bold : 0) | (tags.italic > 0 ? Style.Italic : 0);
+    if (next === style) return;
+    if (text !== '') out.push({ text, style });
+    text = '';
+    style = next;
+  };
+  restyle();
+  // Counts one HTML tag: `step` is 1 for a start tag and -1 for an end tag.
+  const count = (tag: string, step: number): void => {
+    if (tag === 'b' || tag === 'strong') tags.bold = Math.max(0, tags.bold + step);
+    else if (tag === 'i' || tag === 'em') tags.italic = Math.max(0, tags.italic + step);
+    else tags.dropped?.add(tag);
+    restyle();
+  };
+  let i = 0;
+  while (i < source.length) {
+    const ch = source[i] as string;
+    const box = boxAt(ch);
+    if (box !== undefined) {
+      if (text !== '') out.push({ text, style });
+      out.push({ text: ch, style, box });
+      text = '';
+      i++;
+      continue;
+    }
+    if (ch === '<') {
+      const m = tagAt(source, i);
+      if (m) {
+        count((m[2] as string).toLowerCase(), m[1] === '/' ? -1 : 1);
+        i += m[0].length;
+        continue;
+      }
+    } else if (ch === '&') {
+      const entity = entityAt(source, i);
+      if (entity) {
+        text += entity[0];
+        i += entity[1];
+        continue;
+      }
+    } else if (markdown && ch === '\\' && RE_ESCAPABLE.test(source[i + 1] ?? '')) {
+      text += source[i + 1];
+      i += 2;
+      continue;
+    } else if (markdown && ch === '`') {
+      const end = source.indexOf('`', i + 1);
+      if (end > i + 1) {
+        if (text !== '') out.push({ text, style });
+        pushSource(source.slice(i + 1, end), style | Style.Mono);
+        text = '';
+        i = end + 1;
+        continue;
+      }
+    } else if (emphasis && (ch === '*' || ch === '_')) {
+      const len = emphasisAt(source, i, ch, marked);
+      if (len > 0) {
+        const bit = len === 2 ? Style.Bold : Style.Italic;
+        marked = (marked & bit) === 0 ? marked | bit : marked & ~bit;
+        restyle();
+        i += len;
+        continue;
+      }
+    }
+    text += ch;
+    i++;
   }
-  flush(s);
-  return s.out;
+  if (text !== '') out.push({ text, style });
+  return out;
 }
 
 /** Collapses white space within and across pieces and trims the line. */
