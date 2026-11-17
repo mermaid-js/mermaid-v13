@@ -245,7 +245,7 @@ export class FlowBuilder extends FlowBuilderBase<
   /** v12 `addVertex`: create the vertex `id` if it is new, then apply `parts` to it. */
   addVertex(id: string, ast: AstId, at: Range, parts: VertexParts = {}): void {
     if (!id || id.trim().length === 0) return;
-    const { label, type, styles, props, data } = parts;
+    const { data } = parts;
     let doc: YamlMap | undefined;
     if (data !== undefined && isYamlMap(data)) {
       doc = { ...data };
@@ -260,28 +260,48 @@ export class FlowBuilder extends FlowBuilderBase<
 
     const edge = this.edgeById.get(id);
     if (edge) {
-      if (doc) this.edgeData(edge, doc, at);
-      if (doc?.step !== undefined) {
-        const step = doc.step;
-        if (typeof step === 'number' && Number.isInteger(step) && step > 0) edge.step = step;
-      }
+      this.edgeTarget(edge, doc, at);
       return;
     }
 
     if (doc?.view === 'collapsed') this.foldIds.add(id);
-    let vertex = this.vertices.get(id);
-    if (vertex === undefined) {
-      // Reported in finish(): a subgraph with this id (defined before or after) takes the style.
-      if (label === undefined && type === undefined && styles !== undefined)
-        this.unknownStyles.push({ id, at });
-      if (this.atNodeLimit(at)) return;
-      // `props` keys are the author's: no prototype, so `__proto__` is a key like any other.
-      const own = Object.create(null) as Record<string, string>;
-      vertex = { id, ast, text: id, labelType: 'text', styles: [], classes: [], props: own };
-      this.vertices.set(id, vertex);
-    }
-    if ((label !== undefined || type !== undefined) && type !== 'embed' && !this.shapedAt.has(id))
-      this.shapedAt.set(id, at);
+    const vertex = this.vertexOf(id, ast, at, parts);
+    if (vertex === undefined) return;
+    this.applyParts(vertex, at, parts);
+
+    if (doc === undefined) return;
+    this.vertexShape(vertex, doc, at);
+    applyVertexDoc(vertex, doc);
+  }
+
+  /** The vertex `id`, created when new; undefined when the node limit stops it. */
+  private vertexOf(id: string, ast: AstId, at: Range, parts: VertexParts): FlowVertex | undefined {
+    const existing = this.vertices.get(id);
+    if (existing !== undefined) return existing;
+    const { label, type, styles } = parts;
+    // Reported in finish(): a subgraph with this id (defined before or after) takes the style.
+    if (label === undefined && type === undefined && styles !== undefined)
+      this.unknownStyles.push({ id, at });
+    if (this.atNodeLimit(at)) return undefined;
+    // `props` keys are the author's: no prototype, so `__proto__` is a key like any other.
+    const own = Object.create(null) as Record<string, string>;
+    const vertex: FlowVertex = {
+      id,
+      ast,
+      text: id,
+      labelType: 'text',
+      styles: [],
+      classes: [],
+      props: own,
+    };
+    this.vertices.set(id, vertex);
+    return vertex;
+  }
+
+  /** The label, type, styles and props of an `addVertex` call. */
+  private applyParts(vertex: FlowVertex, at: Range, parts: VertexParts): void {
+    const { label, type, styles, props } = parts;
+    if (label !== undefined || type !== undefined) this.noteShaped(vertex.id, type, at);
     if (label !== undefined) {
       vertex.labelType = label.type;
       vertex.text = unquoteLabel(label.text.trim());
@@ -289,42 +309,37 @@ export class FlowBuilder extends FlowBuilderBase<
     if (type !== undefined) vertex.type = type;
     if (styles) vertex.styles.push(...styles);
     if (props) for (const [k, v] of Object.entries(props)) vertex.props[k] = v;
+  }
 
-    if (doc === undefined) return;
-    if (doc.shape) {
-      const shape = doc.shape;
-      if (typeof shape !== 'string') {
-        this.options.error('UNKNOWN_SHAPE', `No such shape: ${String(shape)}.`, at);
-      } else if (shape !== shape.toLowerCase() || shape.includes('_')) {
-        this.options.error(
-          'UNKNOWN_SHAPE',
-          `No such shape: ${shape}. Shape names should be lowercase.`,
-          at
-        );
-      } else if (!isValidShape(shape)) {
-        this.options.error('UNKNOWN_SHAPE', `No such shape: ${shape}.`, at);
-      } else vertex.type = shape;
+  /** Remember where a vertex was first given a label or a type (an `embed` does not count). */
+  private noteShaped(id: string, type: string | undefined, at: Range): void {
+    if (type !== 'embed' && !this.shapedAt.has(id)) this.shapedAt.set(id, at);
+  }
+
+  /** `addVertex` on an edge id: its metadata and `step`. */
+  private edgeTarget(edge: FlowModelEdge, doc: YamlMap | undefined, at: Range): void {
+    if (doc) this.edgeData(edge, doc, at);
+    if (doc?.step !== undefined) {
+      const step = doc.step;
+      if (typeof step === 'number' && Number.isInteger(step) && step > 0) edge.step = step;
     }
-    const docLabel = typeof doc.label === 'string' ? doc.label : undefined;
-    if (doc.label) {
-      vertex.text = String(doc.label);
-      vertex.labelType = flowLabelType(doc.labelType);
-    }
-    if (doc.icon) {
-      vertex.icon = String(doc.icon);
-      if (!docLabel?.trim() && vertex.text === id) vertex.text = '';
-    }
-    if (doc.form) vertex.form = String(doc.form);
-    if (doc.pos) vertex.pos = String(doc.pos);
-    if (doc.img) {
-      vertex.img = String(doc.img);
-      if (!docLabel?.trim() && vertex.text === id) vertex.text = '';
-    }
-    if (doc.constraint) vertex.constraint = String(doc.constraint);
-    const w = Number(doc.w);
-    const h = Number(doc.h);
-    if (doc.w && Number.isFinite(w)) vertex.assetWidth = w;
-    if (doc.h && Number.isFinite(h)) vertex.assetHeight = h;
+  }
+
+  /** The metadata `shape` of a vertex; an unusable one is reported and the type kept. */
+  private vertexShape(vertex: FlowVertex, doc: YamlMap, at: Range): void {
+    if (!doc.shape) return;
+    const shape = doc.shape;
+    if (typeof shape !== 'string') {
+      this.options.error('UNKNOWN_SHAPE', `No such shape: ${String(shape)}.`, at);
+    } else if (shape !== shape.toLowerCase() || shape.includes('_')) {
+      this.options.error(
+        'UNKNOWN_SHAPE',
+        `No such shape: ${shape}. Shape names should be lowercase.`,
+        at
+      );
+    } else if (!isValidShape(shape)) {
+      this.options.error('UNKNOWN_SHAPE', `No such shape: ${shape}.`, at);
+    } else vertex.type = shape;
   }
 
   /** v12 `addSubGraph`; returns the subgraph id. */
@@ -446,5 +461,35 @@ export class FlowBuilder extends FlowBuilderBase<
     if (this.defaultInterpolate !== undefined) model.defaultInterpolate = this.defaultInterpolate;
     if (this.defaultStyle !== undefined) model.defaultStyle = this.defaultStyle;
     return model;
+  }
+}
+
+/** The metadata keys of a vertex other than `shape`: label, icon, form, pos, image, size. */
+function applyVertexDoc(vertex: FlowVertex, doc: YamlMap): void {
+  applyDocLabel(vertex, doc);
+  if (doc.form) vertex.form = String(doc.form);
+  if (doc.pos) vertex.pos = String(doc.pos);
+  if (doc.constraint) vertex.constraint = String(doc.constraint);
+  applyAssetSize(vertex, doc);
+}
+
+function applyAssetSize(vertex: FlowVertex, doc: YamlMap): void {
+  const w = Number(doc.w);
+  const h = Number(doc.h);
+  if (doc.w && Number.isFinite(w)) vertex.assetWidth = w;
+  if (doc.h && Number.isFinite(h)) vertex.assetHeight = h;
+}
+
+/** The metadata `label`, `icon` and `img`; an icon or image with no label drops the id text. */
+function applyDocLabel(vertex: FlowVertex, doc: YamlMap): void {
+  const docLabel = typeof doc.label === 'string' ? doc.label : undefined;
+  if (doc.label) {
+    vertex.text = String(doc.label);
+    vertex.labelType = flowLabelType(doc.labelType);
+  }
+  for (const key of ['icon', 'img'] as const) {
+    if (!doc[key]) continue;
+    vertex[key] = String(doc[key]);
+    if (!docLabel?.trim() && vertex.text === vertex.id) vertex.text = '';
   }
 }
