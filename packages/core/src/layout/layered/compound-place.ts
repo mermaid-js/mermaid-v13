@@ -221,12 +221,17 @@ function setStraightRoute(f: Fit, port: PortEdge, item: Point): void {
   port.route = port.out ? [ix, iy, a, bx, by, a] : [bx, by, a, ix, iy, a];
 }
 
+// Where a straight port leaves its item, on the grid at the middle of a cell.
+function straightStart(c: Compound, port: PortEdge, item: CNode): Point {
+  if (item.isGroup && endpointBelow(port.inner, c.edges[port.e]!, port.out))
+    return belowEnd(c, port, item);
+  const end = sideEnd(item, port.side);
+  return c.hooks ? cellMiddle(c.hooks, port.side, end) : end;
+}
+
 // The route of a port on a side the flow does not run through: straight from its item to the border.
 function straightPortRoute(c: Compound, f: Fit, port: PortEdge): void {
-  const item = c.nodes[port.inner]!;
-  const below = item.isGroup && endpointBelow(port.inner, c.edges[port.e]!, port.out);
-  const end = below ? belowEnd(c, port, item) : sideEnd(item, port.side);
-  setStraightRoute(f, port, c.hooks && !below ? cellMiddle(c.hooks, port.side, end) : end);
+  setStraightRoute(f, port, straightStart(c, port, c.nodes[port.inner]!));
 }
 
 // Puts the level's items, edges and ports in its box.
