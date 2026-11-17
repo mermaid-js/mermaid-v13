@@ -41,7 +41,10 @@ const token = (start: number, end: number, type: SemanticToken['type'] = 'string
   modifiers: [],
 });
 
-describe('encodeSemanticTokens', () => {
+/** One test here walks every corpus file, so the limit is sized for a slow CI runner. */
+const CORPUS_TIMEOUT_MS = 30_000;
+
+describe('encodeSemanticTokens', { timeout: CORPUS_TIMEOUT_MS }, () => {
   const service = createLanguageService();
   beforeAll(() => service.preload());
 

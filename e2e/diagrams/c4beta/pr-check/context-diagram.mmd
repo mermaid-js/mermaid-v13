@@ -1,0 +1,15 @@
+---
+description: >-
+  A system context in c4-beta: a person, an internal system, two external
+  systems and four relations with technologies.
+---
+c4-beta context
+title Internet Banking - System Context
+person customer "Personal Customer" "A customer of the bank."
+softwareSystem banking "Internet Banking" "Lets customers view accounts and make payments."
+softwareSystem mainframe "Mainframe Banking" "Holds the core banking data." :::external
+softwareSystem mail "E-mail System" "Sends e-mails to customers." :::external
+customer --> banking : "Views accounts and pays with" "HTTPS"
+banking --> mainframe : "Reads and writes accounts using" "XML/HTTPS"
+banking --> mail : "Sends e-mail using" "SMTP"
+mail --> customer : "Sends e-mails to"

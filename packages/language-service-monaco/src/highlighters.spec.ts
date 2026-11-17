@@ -179,7 +179,11 @@ describe('the per-type Monarch highlighters (D134)', () => {
       if (pre.bodyStart >= text.length) continue;
       const start = diagramStart(text, pre);
       const body = text.slice(start);
-      const id = firstPartyFacets.find((e) => e.detector(body))?.id;
+      const entry = firstPartyFacets.find((e) => e.detector(body));
+      // c4-beta shares the `c4` facet but has no first-paint grammar until its language ticket
+      // (spec #730 T6): the `c4` Monarch file colours the C4 headers only.
+      if (entry?.type === 'c4beta') continue;
+      const id = entry?.id;
       // The one thing a line-based tokenizer cannot follow: a detector that matches past the
       // first line. None does since D451 anchored c4's headers (v12 found `C4Container|…`
       // anywhere in the text).

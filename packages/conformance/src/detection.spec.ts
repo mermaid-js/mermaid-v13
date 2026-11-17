@@ -51,6 +51,7 @@ const HEADERS: Readonly<Record<string, string>> = {
   mindmap: 'mindmap',
   architecture: 'architecture-beta',
   agentflow: 'agentflow-beta',
+  c4beta: 'c4-beta',
   c4: 'C4Context',
   kanban: 'kanban',
   classDiagram: 'classDiagram',
@@ -87,6 +88,16 @@ const HEADERS: Readonly<Record<string, string>> = {
 };
 
 const BODY = '\n  x\n';
+
+/**
+ * Types with no v12 oracle: 12.2.0 does not know them (spec #730's `c4beta`), so v12's
+ * `detectType` rejects their header and there is nothing to compare v13 with. They are held to
+ * the rule the cases show for every other type, that a comment or directive around the header does
+ * not change the type, and to their own probes below. The comparison with v12 stays for every
+ * other type, and for these it says only that v12 rejects them, so a v12 that gains the type
+ * fails here and the exception is removed.
+ */
+const NO_V12_ORACLE: ReadonlySet<string> = new Set(['c4beta']);
 
 /** The cases for one header. */
 function cases(h: string): [name: string, text: string][] {
@@ -250,12 +261,20 @@ describe('first-party detection against v12 detectType (#469)', () => {
   it('covers every row of the detector table, each header detected alone by v12', () => {
     expect(ROWS.length).toBeGreaterThan(30);
     expect(Object.keys(HEADERS)).toEqual(ROWS);
-    for (const [type, h] of Object.entries(HEADERS)) expect(v12.detectType(h + BODY), h).toBe(type);
+    for (const [type, h] of Object.entries(HEADERS)) {
+      if (NO_V12_ORACLE.has(type)) {
+        expect(
+          outcome((t) => v12.detectType(t), h + BODY),
+          h
+        ).toBe('rejected');
+        expect(v13.detectType(h + BODY), h).toBe(type);
+      } else expect(v12.detectType(h + BODY), h).toBe(type);
+    }
   });
 
   it('gives v12’s type, or rejects where v12 rejects, except the listed divergences', () => {
     const all = [
-      ...ROWS.flatMap((type) =>
+      ...ROWS.filter((type) => !NO_V12_ORACLE.has(type)).flatMap((type) =>
         cases(HEADERS[type]!).map(([n, t]) => [`${type}: ${n}`, t] as const)
       ),
       ...ORDER.map(([n, t]) => [`order: ${n}`, t] as const),
@@ -278,7 +297,9 @@ describe('first-party detection against v12 detectType (#469)', () => {
       seed = (seed * 1103515245 + 12345) & 0x7fffffff;
       return seed % n;
     };
-    const headers = Object.values(HEADERS);
+    const headers = Object.entries(HEADERS)
+      .filter(([type]) => !NO_V12_ORACLE.has(type))
+      .map(([, h]) => h);
     const found: string[] = [];
     let rejected = 0;
     let unclosed = 0;
@@ -334,6 +355,38 @@ describe('first-party detection against v12 detectType (#469)', () => {
       if (lsp !== now) found.push(`${JSON.stringify(text)}: mermaid ${now}, service ${lsp}`);
     }
     expect(found).toEqual([]);
+  });
+
+  it('detects each type without a v12 oracle through the same comment and directive cases', () => {
+    for (const type of NO_V12_ORACLE)
+      for (const [name, text] of cases(HEADERS[type]!))
+        expect(
+          outcome((t) => v13.detectType(t), text),
+          `${type}: ${name}`
+        ).toBe(type);
+  });
+
+  it('never takes plain C4 for c4-beta, or c4-beta for C4 (spec #730)', () => {
+    const probes: [text: string, type: string][] = [
+      ['c4-beta', 'c4beta'],
+      ['c4-beta context\n  person a "A"', 'c4beta'],
+      ['  c4-beta container', 'c4beta'],
+      ['%% note\nc4-beta dynamic', 'c4beta'],
+      ['C4Context\n  Person(a, "A")', 'c4'],
+      ['C4Container', 'c4'],
+      ['C4Dynamic\n  title c4-beta', 'c4'],
+      ['C4Context\n  Person(a, "c4-beta")', 'c4'],
+      ['c4-beta\n  person a "C4Context"', 'c4beta'],
+      ['c4-betas', 'rejected'],
+      ['c4-beta-x', 'rejected'],
+      ['c4beta', 'rejected'],
+      ['c4context', 'rejected'],
+    ];
+    for (const [text, type] of probes)
+      expect(
+        outcome((t) => v13.detectType(t), text),
+        JSON.stringify(text)
+      ).toBe(type);
   });
 
   it('agrees on the order cases v12’s text decides', () => {
