@@ -250,7 +250,7 @@ export const STYLE_PROPERTIES: ReadonlySet<string> = new Set(
   Object.keys(PROPERTIES).filter((p) => p !== BLEND)
 );
 
-function checkValue(kind: Kind, v: string): string | undefined {
+export function checkValue(kind: Kind, v: string): string | undefined {
   const lower = v.toLowerCase();
   switch (kind) {
     case 'blend':
