@@ -412,6 +412,9 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `c4.height` | ignored | v12's C4 renderer never read it: an element is as tall as its text (D454). |  |
 | `c4.boxMargin` | ignored | v12's C4 renderer never read it (D454). |  |
 | `c4.wrapPadding` | ignored | v12's C4 renderer never read it (D454). |  |
+| `c4beta.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the C4 renderer never did. |  |
+| `c4beta.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `c4beta.layout` | ignored | c4-beta lays out with core's `layered` engine, called directly (`layoutKind: 'custom'`); neither the top-level nor a c4-beta-scoped `layout` changes it. |  |
 | `sankey.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the sankey renderer never did. |  |
 | `sankey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `packet.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the packet renderer never did. |  |

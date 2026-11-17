@@ -28,7 +28,7 @@ import type {
   Rect,
   Segment,
 } from './types.ts';
-import { numbers } from '@mermaid-js/shared/layout/invariants';
+import { numbers } from '@mermaid-js/shared/testing/layout-invariants';
 
 const EPS = 1e-6;
 

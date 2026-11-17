@@ -6,7 +6,8 @@ import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { GanttModel } from '../model.ts';
 import { parseGantt } from '../parser/index.ts';
 import { fixture, type LayoutFixture } from './fixtures.ts';
-import { ganttLayoutViolations, layoutGantt, type GanttLayout } from './index.ts';
+import { layoutGantt, type GanttLayout } from './index.ts';
+import { ganttLayoutViolations } from './invariants.ts';
 
 // Spec #293 T3: the layout seam, on hand-built models. Expected numbers are v12's formulas
 // (`ganttRenderer.js` at fa796a943) worked by hand at the schema defaults: w 1200, padding 75

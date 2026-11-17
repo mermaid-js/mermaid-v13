@@ -7,6 +7,6 @@
  */
 export { LANGIUM_NAMES, TREEMAP_TRIVIA, TreemapTokenKind, treemapTokens } from './parser/index.ts';
 export type { TreemapToken } from './parser/index.ts';
-export { treemapLayoutViolations } from './layout/index.ts';
+export { treemapLayoutViolations } from './layout/invariants.ts';
 export { classStyles } from './model.ts';
 export { treemapTestContext, treemapTestTheme } from './test-context.ts';

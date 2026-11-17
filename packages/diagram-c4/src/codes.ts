@@ -67,3 +67,8 @@ export const C4BETA_INSTANCES_DROPPED = 'C4BETA_INSTANCES_DROPPED';
 export const C4BETA_STEP_IGNORED = 'C4BETA_STEP_IGNORED';
 /** c4-beta: a `style` entry with an unknown key or a value its key does not take (dropped). */
 export const C4BETA_STYLE_IGNORED = 'C4BETA_STYLE_IGNORED';
+/**
+ * c4-beta: a `layout` other than `layered` or v12's `dagre`. c4-beta is laid out by core's
+ * `layered` engine whatever `layout` names (spec #730, Q2); the diagram is drawn the same.
+ */
+export const C4BETA_LAYOUT_IGNORED = 'C4BETA_LAYOUT_IGNORED';

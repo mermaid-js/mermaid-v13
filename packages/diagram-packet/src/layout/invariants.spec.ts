@@ -3,7 +3,8 @@ import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import { FIXTURES, type Fixture } from './fixtures.ts';
-import { layoutPacket, packetLayoutViolations, type PacketLayout } from './index.ts';
+import { layoutPacket, type PacketLayout } from './index.ts';
+import { packetLayoutViolations } from './invariants.ts';
 import { packet as plugin } from '../plugin.ts';
 
 let spec: ThemeSpec;
