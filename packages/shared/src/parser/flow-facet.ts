@@ -10,7 +10,11 @@ export {
 } from './flow-facet-tables.ts';
 export {
   flowBareKeywordHover,
+  flowClassesFact,
   flowClassHover,
+  flowEdgeCounts,
+  flowLinkAt,
+  flowNodeLabels,
   flowShapeHover,
   flowTokenHover,
 } from './flow-hover.ts';

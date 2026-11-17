@@ -9,7 +9,7 @@ import type { MindmapModel } from '../model.ts';
 import type { MindmapDocument, MindmapNodeNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { code, SHAPE_NAMES, span } from './tables.ts';
-import { plural } from '@mermaid-js/shared/parser/facet';
+import { plural, statementOverlapping } from '@mermaid-js/shared/parser/facet';
 
 /** The tokens of a node statement. */
 const NODE_TOKENS = new Set<number>([
@@ -22,21 +22,6 @@ const NODE_TOKENS = new Set<number>([
   T.MdStringStart,
   T.MdStringEnd,
 ]);
-
-/** The node statement holding `at` (AST nodes are in source order and never overlap). */
-function nodeAt(doc: DocumentView<MindmapDocument>, at: number): MindmapNodeNode | undefined {
-  const nodes = doc.result.ast.children;
-  let lo = 0;
-  let hi = nodes.length - 1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    const n = nodes[mid]!;
-    if (n.range.end < at) lo = mid + 1;
-    else if (n.range.start > at) hi = mid - 1;
-    else return n;
-  }
-  return undefined;
-}
 
 /** How `node` is written: its opener and closer as in the source, `…` for its text. */
 function written(doc: DocumentView<MindmapDocument>, node: MindmapNodeNode): string | undefined {
@@ -102,7 +87,7 @@ export function mindmapHover(
     return { range: span(start, end), contents: `**${code(word)}**\n\n${docText}` };
   }
   if (!NODE_TOKENS.has(t.kind)) return undefined;
-  const node = nodeAt(doc, at.offset);
+  const node = statementOverlapping(doc.result.ast.children, at.offset);
   if (!node) return undefined;
   return { range: node.range, contents: nodeHover(doc, node) };
 }
