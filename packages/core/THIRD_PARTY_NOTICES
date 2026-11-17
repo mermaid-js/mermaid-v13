@@ -14,6 +14,7 @@ used under the MIT License:
   src/layout/layered/compound.ts
   src/layout/layered/grid-layout.ts
   src/layout/layered/grid-model.ts
+  src/layout/layered/graph.ts
   src/layout/layered/grid.ts
   src/layout/layered/index.ts
   src/layout/layered/layered.ts
