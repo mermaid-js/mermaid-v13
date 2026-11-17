@@ -459,10 +459,9 @@ const bottomOfDocuments = /* @__PURE__ */ stackedDocumentBottom(STACK_DOC);
 export const stackedDocument: Shape = {
   inset: (W, H, side, t, p) =>
     side === 2 ? bottomOfDocuments(W, H, side, t, p) : sidesOfDocuments(W, H, side, t, p),
-  size: /* @__PURE__ */ grown(
-    2 * STACK_DOC,
-    2 * STACK_DOC + WAVE.depth,
-    STACK_DOC - WAVE.depth / 2
+  size: /* @__PURE__ */ leftOf(
+    grown(2 * STACK_DOC, 2 * STACK_DOC + WAVE.depth, STACK_DOC - WAVE.depth / 2),
+    STACK_DOC
   ),
   draw: (w, W, H, a) => {
     const s = STACK_DOC;

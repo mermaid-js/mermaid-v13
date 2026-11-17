@@ -231,6 +231,17 @@ describe('extended shapes: triangles and stacks (#395, #403, D603)', () => {
     expect(d2![0]![1] - d0![0]![1]).toBe(20);
   });
 
+  it.each([
+    ['st-rect', 5],
+    ['docs', 10],
+  ])('centres the label of %s across the front layer, %s px left of the box', (kind, s) => {
+    const size = shapeSize(kind, 100, 20, PADS);
+    expect(size.dx).toBe(-s);
+    const front = outlines(kind, size.w, size.h)[2]!;
+    const xs = front.map((p) => p[0]);
+    expect((Math.min(...xs) + Math.max(...xs)) / 2).toBeCloseTo(size.dx!, 9);
+  });
+
   it.each(STACKS.flatMap((kind) => LABELS.map(([tw, th]) => [kind, tw, th] as const)))(
     'ends every edge off the centre on the outline of %s, label %s × %s',
     (kind, tw, th) => {
