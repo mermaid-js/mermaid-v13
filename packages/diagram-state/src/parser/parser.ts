@@ -82,6 +82,7 @@ import {
 import { keyOf, trimColon } from './names.ts';
 import type { Scope } from './names.ts';
 import { clickInComposite, ignoredInComposite, scaleIgnored, undrawnNotices } from './notices.ts';
+import type { Declared } from './notices.ts';
 import { splitRegions } from './regions.ts';
 import { StateCursor, STOP } from './cursor.ts';
 import { terminals } from './terminals.ts';
@@ -122,7 +123,11 @@ class StateParser extends StateCursor {
   /** Region ordinals handed out per composite name. */
   private readonly regionCount = new Map<string, number>();
   /** `state X` lines on their own, which v12 does not draw unless X is mentioned elsewhere. */
-  private readonly declared: [string, Range][] = [];
+  private readonly declared: Declared[] = [];
+  /** The token of the last `state X` word, to join the words of one line (#362). */
+  private lastDeclared = -1;
+  /** Where that line's first word starts. */
+  private firstWord = 0;
   private readonly clicks: [string, Range][] = []; // top-level `click` targets
   /** Embedded diagram blocks (ADR-15), for `ParseResult.embeds`. */
   private readonly embeds: EmbeddedBlock[] = [];
@@ -304,7 +309,7 @@ class StateParser extends StateCursor {
         node.declaredOnly = true;
         nodes.push(node);
         this.st.statement('state', node.range);
-        this.declared.push([name, node.range]);
+        this.declare(from, name, node.range);
         items.push(NOOP);
         return;
       }
@@ -426,6 +431,28 @@ class StateParser extends StateCursor {
       if (name) this.symbol(name, 'state', { start: s, end: s + name.length }, 'ref');
       at += part.length + 1;
     }
+  }
+
+  /**
+   * Record the `state X` word at token `j`. v12's lexer reads each word of `state A B` (or
+   * `state A: text`) as its own `state X`, and so does v13; a word right after another on the
+   * same line joins that line's record, so the line gets one warning (#362, D609).
+   */
+  private declare(j: number, name: string, range: Range): void {
+    const prev = this.declared.at(-1);
+    const own = this.own(j);
+    if (
+      prev &&
+      this.lastDeclared === j - 1 &&
+      !this.src.slice(prev.range.end, own.start).includes('\n')
+    ) {
+      prev.range = { start: prev.range.start, end: own.end };
+      prev.words = this.src.slice(this.firstWord, own.end);
+    } else {
+      this.declared.push({ name, range });
+      this.firstWord = own.start;
+    }
+    this.lastDeclared = j;
   }
 
   /** A state mention's AST node, `n:<name>` (or the scoped id of `[*]`). */

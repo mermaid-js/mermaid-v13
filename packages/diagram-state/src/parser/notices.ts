@@ -47,6 +47,28 @@ export function scaleIgnored(sink: Sink, at: Range): void {
   );
 }
 
+/** A `state X` line on its own. */
+export interface Declared {
+  name: string;
+  range: Range;
+  /**
+   * The words after `state` as written, when the line has more than one: v12's lexer reads
+   * each as its own `state X` (#362), and the line gets one warning (D609).
+   */
+  words?: string;
+}
+
+/** `state A B` or `state A: text`: the line draws nothing of its own, whatever else draws A. */
+function lineMessage(first: string, words: string): string {
+  const id = first.endsWith(':') ? first.slice(0, -1) : first;
+  const rest = words.slice(id.length).trim();
+  if (rest.startsWith(':')) {
+    const text = rest.slice(1).trim() || 'text';
+    return `\`state ${words}\` is not read: \`state\` takes no description, so the text after \`:\` is not drawn (v12 ignores it too). Write \`${id} : ${text}\`, without \`state\`.`;
+  }
+  return `\`state ${words}\` declares nothing: v12 reads each word after \`state\` as a \`state X\` line of its own, and those draw nothing. Write one state per line, and mention it in a transition or give it a description, e.g. \`${id} : text\`.`;
+}
+
 /**
  * Once the model is built: `state X` lines that draw nothing (`STATE_NOT_DRAWN`) and top-level
  * `click` links on a composite or an undrawn state (`LINK_NOT_DRAWN`; the renderer links
@@ -55,11 +77,15 @@ export function scaleIgnored(sink: Sink, at: Range): void {
 export function undrawnNotices(
   sink: Sink,
   model: StateModel,
-  declared: readonly (readonly [string, Range])[],
+  declared: readonly Declared[],
   clicks: readonly (readonly [string, Range])[]
 ): void {
   const drawn = new Set(model.states.map((s) => s.id));
-  for (const [name, range] of declared) {
+  for (const { name, range, words } of declared) {
+    if (words !== undefined) {
+      sink.warning('STATE_NOT_DRAWN', lineMessage(name, words), range);
+      continue;
+    }
     if (drawn.has(name)) continue;
     sink.warning(
       'STATE_NOT_DRAWN',
