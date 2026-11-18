@@ -830,9 +830,9 @@ npm install @mermaid-js/plugin-hand-drawn
   relationship lines; business marks stay plain, as v12 drew them without roughjs) and
   agentflow (vertices, their inner lines, flow frames, the collapsed card with its separator and
   dots, edges). v12
-  did not sketch mindmap's plain node in the classic themes; v13 does (D308). An edge label's
-  tag (flowchart, swimlane-beta, class, state, ER, agentflow) has its 1 px border sketched like a
-  node's outline and its fill drawn solid, never hatched; v12 never sketched it (D630).
+  did not sketch mindmap's plain node in the classic themes; v13 does (D308). Every edge label
+  drawn as a tag (the shared edge-label box, D626) has its 1 px border sketched like a node's
+  outline and its fill drawn solid, never hatched; v12 never sketched it (D630).
   Arrowheads and text are never sketched, as in v12.
   Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for edges. State composites are drawn
   at 0.7, where v12 used roughjs's default of 1. An outline with no fill and no stroke

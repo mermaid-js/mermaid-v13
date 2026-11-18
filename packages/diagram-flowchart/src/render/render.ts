@@ -29,7 +29,7 @@ import {
   paletteSlots,
   textElement,
 } from '@mermaid-js/shared/svg/document';
-import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
+import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
 import { drawIcon, drawImage } from './assets.ts';
@@ -233,7 +233,7 @@ function paints(theme: ThemeOf, flow: Prepared, lanes: boolean): Paints {
   const slot = paletteSlots(theme);
   const slotOf = (view: Pick<NodeView, 'order'>): Tint | undefined =>
     view.order === undefined ? undefined : slot(view.order);
-  const edgeLabel = flow.edges.some((e) => e.label.width > 0)
+  const labelPaint = flow.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('edgeLabelBackground'), text: { fill: theme.color('textColor') } }
     : undefined;
   const shape: Attrs = {
@@ -256,7 +256,7 @@ function paints(theme: ThemeOf, flow: Prepared, lanes: boolean): Paints {
     collapsedLine,
     folded,
     slotOf,
-    edgeLabel,
+    edgeLabel: labelPaint,
   };
 }
 
@@ -451,7 +451,7 @@ function drawEdgeLabel({ w, layout, ctx, paint }: Scene, e: EdgeView): void {
   if (!at || e.label.width === 0) return;
   const { fill, text } = paint.edgeLabel!;
   const own = isEmpty(e.style.text) ? text : { fill: text.fill, ...e.style.text };
-  labelOnBox(w, e.label, at, e.edge.id, {
+  edgeLabel(w, e.label, at, e.edge.id, {
     fill,
     stroke: e.style.shape.stroke ?? paint.node.line,
     text: own,
