@@ -257,7 +257,7 @@ describe('review cases (#593)', () => {
     expect(() => swimlane({ ...layoutGraph({ nodes: ['a'] }), grid: 1 })).toThrow(RangeError);
   });
 
-  it('places an empty lane beside its neighbours in the automatic lane order', () => {
+  it('draws the lanes in the automatic order, an empty lane right after the lane declared before it', () => {
     const graph = layoutGraph({
       lanes: { L1: ['a'], L2: ['b'], Empty: [], L3: ['c'], L4: ['d'] },
       edges: [
@@ -271,6 +271,7 @@ describe('review cases (#593)', () => {
     const tuning = { automaticLaneOrdering: true };
     const order = runSwimlane(graph, tuning).laneOrder!;
     expect(order).not.toEqual(['L1', 'L2', 'Empty', 'L3', 'L4']);
+    expect(order[order.indexOf('L2') + 1]).toBe('Empty');
     const model = swimlane(graph, withConfig(tuning));
     const across = [...model.groups.keys()].sort(
       (a, b) => model.groups.get(a)!.x - model.groups.get(b)!.x

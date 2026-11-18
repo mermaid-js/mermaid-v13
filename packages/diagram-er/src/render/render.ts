@@ -13,7 +13,7 @@ import {
   type SvgWriter,
 } from '@mermaid-js/core/svg';
 import { cls, openSvgRoot, paletteSlots } from '@mermaid-js/shared/svg/document';
-import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
+import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { ErLayout } from '../layout/layout.ts';
 import type { ErRenderContext } from '../layout/context.ts';
@@ -130,7 +130,7 @@ function paints(theme: ThemeOf, er: ErPrepared): Paints {
           text: theme.color('titleColor'),
         }
       : undefined;
-  const edgeLabel = er.edges.some((e) => e.label.width > 0)
+  const labelPaint = er.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('erEdgeLabelBackground'), text: theme.color('textColor') }
     : undefined;
   return {
@@ -140,7 +140,7 @@ function paints(theme: ThemeOf, er: ErPrepared): Paints {
     line,
     ends,
     cluster,
-    edgeLabel,
+    edgeLabel: labelPaint,
     slotOf: paletteSlots(theme),
   };
 }
@@ -308,7 +308,7 @@ function drawEdgeLabel({ w, layout, ctx, paint }: Scene, e: EdgeView, i: number)
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0 || !paint.line) return;
   const { fill, text } = paint.edgeLabel!;
-  labelOnBox(w, e.label, at, edgeDataId(e, i), {
+  edgeLabel(w, e.label, at, edgeDataId(e, i), {
     fill,
     stroke: paint.line.stroke,
     text: { fill: text },

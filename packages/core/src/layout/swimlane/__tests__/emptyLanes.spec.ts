@@ -156,6 +156,31 @@ describe('#684: an empty lane gets a band of its own in LR and RL (mermaid-js/me
   );
 });
 
+describe('#684: with automatic lane ordering an empty lane stands beside the lanes declared next to it (mermaid-js/mermaid#8754, mermaid-js/mermaid#8772)', () => {
+  const id = 'regressions/tb-empty-first-lane-auto-order';
+
+  it.each(['TB', 'BT', 'LR', 'RL'])(
+    '%s: an empty first lane stands right before the lane declared after it, and only the lanes from there on move',
+    (direction) => {
+      const axis = direction === 'LR' || direction === 'RL' ? 'y' : 'x';
+      const { graph, model } = layOut(id, direction);
+      const control = layOut(id, direction, 'L0').model;
+      const spans = lanesAcross(graph, model, axis);
+      // Ordering puts Left (L2) before Hub (L1); the empty lane (L0) is declared before Hub.
+      expect(spans.map((s) => s.id)).toEqual(['L2', 'L0', 'L1', 'L3']);
+      expectTouching(spans);
+      const empty = model.groups.get('L0')!;
+      const width = axis === 'x' ? empty.width : empty.height;
+      expect(model.nodes.get('b')![axis]).toBeCloseTo(control.nodes.get('b')![axis], EXACT_DIGITS);
+      for (const node of ['a', 'c'])
+        expect(model.nodes.get(node)![axis]).toBeCloseTo(
+          control.nodes.get(node)![axis] + width,
+          EXACT_DIGITS
+        );
+    }
+  );
+});
+
 describe('#684: at a node spacing below 20 neighbouring lanes keep their padding (mermaid-js/mermaid#8788)', () => {
   const TIGHT = [
     'regressions/tb-lanes-keep-padding-tight-spacing',

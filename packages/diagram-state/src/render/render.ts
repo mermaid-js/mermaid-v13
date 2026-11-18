@@ -7,7 +7,7 @@
 // `state/render-theme-names.spec.ts`).
 import { pxProfile } from '@mermaid-js/core/layout';
 import { arrowheads, marker, markerTrim, type Arrowheads } from '@mermaid-js/shared/svg/arrowheads';
-import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
+import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import { routePath } from '@mermaid-js/shared/svg/route';
 import {
   checkLinkTarget,
@@ -156,14 +156,21 @@ function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
         text: theme.color('noteTextColor'),
       }
     : undefined;
-  const edgeLabel = s.edges.some((e) => e.label.width > 0)
+  const labelPaint = s.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
     : undefined;
   // Read here, not in core, so the theme inventory lists the diagrams that use them.
   const folded = s.nodes.some((v) => v.block === 'folded')
     ? { ink: theme.color('nodeBorder'), muted: theme.color('mutedBorder') }
     : undefined;
-  return { ...node, composite, note, folded, edgeLabel, slots: paletteSlots(theme, model, s) };
+  return {
+    ...node,
+    composite,
+    note,
+    folded,
+    edgeLabel: labelPaint,
+    slots: paletteSlots(theme, model, s),
+  };
 }
 
 /** What every section of one render draws from. */
@@ -391,7 +398,7 @@ function drawEdgeLabel({ w, layout, ctx, paint }: Scene, e: StateEdgeView): void
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
   const { fill, text } = paint.edgeLabel!;
-  labelOnBox(w, e.label, at, e.id, {
+  edgeLabel(w, e.label, at, e.id, {
     fill,
     stroke: paint.line,
     text: { fill: text },
