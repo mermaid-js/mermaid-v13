@@ -331,7 +331,7 @@ describe('class render: themes (D152, R-THEME-11)', () => {
     expect(attr(tree, rect, 'filter')).toBeUndefined();
   });
 
-  it('puts relationship labels on the theme background in every theme (D621)', async () => {
+  it('puts relationship labels on the theme background in every theme (D628)', async () => {
     const label = async (theme: string) => {
       const m = createMermaid();
       m.initialize({ deterministic: true, theme, output: { cssVariables: false } } as never);

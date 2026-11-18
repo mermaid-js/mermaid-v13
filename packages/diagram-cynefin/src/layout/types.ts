@@ -48,6 +48,10 @@ export type CynefinQuadrantName = Exclude<CynefinDomainName, 'confusion'>;
 /** A quadrant's background. */
 export interface CynefinQuadrant extends Rect {
   readonly name: CynefinQuadrantName;
+  /**
+   * Where its texts and transitions hang from: the centre of its quarter of v12's canvas, which
+   * stays at the top of a row that grew (D617).
+   */
   readonly center: Point;
   /** The drawn block's AST id when the domain is declared; undeclared domains are drawn too. */
   readonly ast?: AstId;
@@ -111,7 +115,10 @@ export interface CynefinTransitionLayout {
 }
 
 export interface CynefinLayout {
-  /** The canvas, `width × height` (v12's fixed geometry, D361). */
+  /**
+   * The canvas, `width × height`: v12's fixed geometry (D361), taller by what a row grew to fit
+   * its list (D617).
+   */
   readonly width: number;
   readonly height: number;
   readonly padding: number;
@@ -120,7 +127,7 @@ export interface CynefinLayout {
   readonly showDomainDescriptions: boolean;
   /** The seed the fold and the horizon were drawn with (D362). */
   readonly seed: number;
-  /** complex, complicated, chaotic, clear: they tile the canvas. */
+  /** complex, complicated, chaotic, clear: they tile the canvas in two rows. */
   readonly quadrants: readonly CynefinQuadrant[];
   readonly confusion: CynefinEllipse;
   readonly boundaries: {

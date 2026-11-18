@@ -60,7 +60,7 @@ describe('journey layout invariants on parsed models', () => {
         }
       }
     }
-    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(36);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(37);
     expect(tasks).toBeGreaterThan(500);
     expect(failures.slice(0, 10)).toEqual([]);
   }, 120_000);

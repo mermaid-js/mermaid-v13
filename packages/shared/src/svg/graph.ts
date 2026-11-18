@@ -5,18 +5,18 @@
 import { type FontKey, fontSizePx, Style } from '@mermaid-js/core/text';
 import type { Attrs, CheckedStyle, LabelBox, SvgWriter } from '@mermaid-js/core/svg';
 
-/** An edge label's corner radius (D619). */
+/** An edge label's corner radius (D626). */
 const TAG_RADIUS = 6;
 
-/** What an edge label is painted with (D619–D621). */
+/** What an edge label is painted with (D626–D628). */
 export interface EdgeLabelPaint {
-  /** The box's fill: the type's label-fill variable, `background` by default (D621). */
+  /** The box's fill: the type's label-fill variable, `background` by default (D628). */
   readonly fill: Attrs['fill'];
-  /** The edge's resolved stroke: the border's colour, never its width or dashes (D620). */
+  /** The edge's resolved stroke: the border's colour, never its width or dashes (D627). */
   readonly stroke: Attrs['stroke'];
   /** The text's attributes. */
   readonly text: Attrs;
-  /** The profile's `labelPatch`: the room around the text, as the layout reserved it (D622). */
+  /** The profile's `labelPatch`: the room around the text, as the layout reserved it (D629). */
   readonly patch: { readonly x: number; readonly y: number };
 }
 
@@ -26,10 +26,10 @@ function blank(label: LabelBox): boolean {
 }
 
 /**
- * An edge label as a tag centred on `at` (D619): a `g.edgeLabel` (`data-id`) holding a box
+ * An edge label as a tag centred on `at` (D626): a `g.edgeLabel` (`data-id`) holding a box
  * with rounded corners, the label's size plus `paint.patch`, filled with `paint.fill` and
  * bordered 1 px solid in `paint.stroke`, then the text. The box is an outline of role `label`
- * (D623). A blank label draws nothing.
+ * (D630). A blank label draws nothing.
  */
 export function edgeLabel(
   w: SvgWriter,

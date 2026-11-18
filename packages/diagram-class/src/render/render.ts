@@ -124,7 +124,7 @@ function paints(theme: ThemeOf, p: ClassPrepared): Paints {
   const terminalSize = p.edges.some((e) => e.startLabel ?? e.endLabel)
     ? theme.length('classTerminalFontSize')
     : undefined;
-  // The theme background, as every edge label's fill (D621).
+  // The theme background, as every edge label's fill (D628).
   const edgeLabel = labelled ? theme.color('background') : undefined;
   return {
     font: theme.font(),
@@ -315,7 +315,7 @@ function drawEdges(scene: Scene, idOf: (e: ClassEdgeView) => string): void {
 function drawEdgeLabels({ w, layout, ctx, paint }: Scene, e: ClassEdgeView, id: string): void {
   const at = layout.edges.get(e.layoutId);
   if (!at) return;
-  // The middle label is a tag bordered in the line colour (D619, D620); the ends stay plain.
+  // The middle label is a tag bordered in the line colour (D626, D627); the ends stay plain.
   if (e.label && at.label && paint.edgeLabel)
     labelOnBox(w, e.label, at.label, id, {
       fill: paint.edgeLabel,

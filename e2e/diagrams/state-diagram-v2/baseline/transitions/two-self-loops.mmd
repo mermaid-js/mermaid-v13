@@ -1,0 +1,16 @@
+---
+description: >-
+  two labelled self-loops on a state and on a composite state (#768, D618): the
+  second of each is mirrored to the far side
+---
+stateDiagram-v2
+  [*] --> Idle
+  Idle --> Idle : poll
+  Idle --> Idle : tick
+  Idle --> Busy
+  state Busy {
+    Work --> Done
+  }
+  Busy --> Busy : retry
+  Busy --> Busy : resume
+  Busy --> [*]

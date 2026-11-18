@@ -89,7 +89,7 @@ describe('createTheme: base derives by rule (#797, v12 theme-base)', () => {
     expect(t.value('secondaryColor')).toBe('#66cc33');
     expect(t.value('tertiaryColor')).toBe('#d1a347');
     expect(t.value('clusterBkg')).toBe('#d1a347');
-    // Edge labels sit on the background, whatever primaryColor is (D621).
+    // Edge labels sit on the background, whatever primaryColor is (D628).
     expect(t.value('edgeLabelBackground')).toBe(t.value('background'));
   });
 

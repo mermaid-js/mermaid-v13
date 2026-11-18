@@ -7,7 +7,7 @@ import type { CynefinModel } from '../model.ts';
 import { cynefin as plugin } from '../plugin.ts';
 import { fixture, FIXTURES } from './mmd.fixtures.ts';
 import { layoutCynefin, type CynefinLayout } from './index.ts';
-import { cynefinLayoutViolations } from './invariants.ts';
+import { cynefinCrowdingViolations, cynefinLayoutViolations } from './invariants.ts';
 
 let spec: ThemeSpec;
 beforeAll(async () => {
@@ -49,7 +49,7 @@ const OPTION_SETS: readonly unknown[] = [
 
 describe('cynefin layout invariants', () => {
   it('reads every e2e fixture', () => {
-    expect(Object.keys(FIXTURES).length).toBe(32);
+    expect(Object.keys(FIXTURES).length).toBe(33);
   });
 
   it.each(Object.keys(FIXTURES))('hold for %s at every option set', (name) => {
@@ -59,6 +59,18 @@ describe('cynefin layout invariants', () => {
     );
     expect(failures).toEqual([]);
   });
+
+  // The canvas sizes the corpus draws at: a smaller one has no room for the texts side by side.
+  it.each(Object.keys(FIXTURES))(
+    'keep %s badges in their quadrant and off other domains',
+    (name) => {
+      const m = FIXTURES[name]!;
+      const failures = OPTION_SETS.slice(0, 6).flatMap((o) =>
+        cynefinCrowdingViolations(lay(m, o)).map((v) => `${JSON.stringify(o)}: ${v}`)
+      );
+      expect(failures).toEqual([]);
+    }
+  );
 
   it('warns once per invalid key per render, and never for a valid one', () => {
     const warnings: Warning[] = [];

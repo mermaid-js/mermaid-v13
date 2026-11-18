@@ -85,7 +85,7 @@ describe('built-in themes', () => {
   );
 
   it.each(specs.map((s) => [s.name, s] as const))(
-    '%s fills edge labels with its background, an author value winning (D621)',
+    '%s fills edge labels with its background, an author value winning (D628)',
     (_name, spec) => {
       const t = createTheme(spec, { cssVariables: false });
       expect(t.value('edgeLabelBackground')).toBe(t.value('background'));

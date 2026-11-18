@@ -1,7 +1,7 @@
 /**
  * ER under classic-theme overrides (spec #795 T3), through the public `render()` with literal
  * colours: attribute text takes the ink against its own row's fill (#758), and the relationship
- * label is filled with the theme background whatever `tertiaryColor` is (D621, replacing #761's
+ * label is filled with the theme background whatever `tertiaryColor` is (D628, replacing #761's
  * half-opaque `tertiaryColor`). Sources are the issues' fixtures under
  * `e2e/diagrams/er-diagram/baseline/themes/`.
  */
@@ -64,7 +64,7 @@ describe('ER under classic-theme overrides (#795 T3)', () => {
     expect(contrastRatio(rgba(inkOf(name)), rgba(outline.attrs.fill!))).toBeGreaterThanOrEqual(4.5);
   });
 
-  it('fills the relationship label with the background, not tertiaryColor, in every family (D621)', async () => {
+  it('fills the relationship label with the background, not tertiaryColor, in every family (D628)', async () => {
     const fills = { default: '#ffffff', dark: '#333333', redux: '#ffffff', neo: '#ffffff' };
     for (const [theme, fill] of Object.entries(fills))
       expect(labelFill(await render('default-tertiary-label.mmd', theme)), theme).toBe(fill);
