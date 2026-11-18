@@ -1073,10 +1073,14 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
   stroke is its fill). An icon that is not drawn (no plugin, no such pack or icon, a pack still
   loading under `placeholders`) keeps the frame with its outline, not v12's blue `?`.
   `ICON_UNAVAILABLE` is deprecated in favour of `ICON_NOT_RENDERED`. See [Icons](#icons).
-- **Step animation** (`step` on edges, `flowchart.stepNumbers`, `flowchart.stepDuration`) and
-  edge `animate`/`animation` are parsed but not drawn. A render that uses `animate` or
-  `animation` on an edge raises one `EDGE_ANIMATION_IGNORED` warning for each of the two (#357);
-  the edge keeps its `edge-animation-*` class.
+- **Edge `animate` and `animation`** move the edge's dashes as v12 did (#918, D606): the
+  pattern `9,5` with round caps, running from the source to the target, in 20 s for `fast` and
+  `animate: true` and in 50 s for `slow`. The edge keeps its `edge-animation-fast|slow` class.
+  The motion is an SVG `<animate>` in the edge's group, not v12's `@keyframes`, since the output
+  has no `<style>`; CSS that overrode v12's `animation` on `.edge-animation-*` has no effect on
+  it.
+- **Step animation** (`step` on edges, `flowchart.stepNumbers`, `flowchart.stepDuration`) is
+  parsed but not drawn.
 - **`markdownAutoWrap: false`** keeps a markdown label (node, subgraph or edge) on its own line
   breaks, as v12 did (#357).
 - **`style`, `classDef` and `linkStyle`** go through a per-property allow-list; an unknown
@@ -3327,7 +3331,7 @@ order are kept: `g.clusters` (each `g.usecase-system-boundary.system-boundary-<t
 | The front-matter `title` was set, then wiped by `db.clear()` before `insertTitle` ran: never drawn | Drawn above the diagram as `text.usecaseDiagramTitleText` in the root's text colour, centred, the drawing moved down by its height and the diagram padding; it does not name the diagram (`accTitle` does) | D472, D133 |
 | `<defs>` with `<marker>` elements (`point`, `circle`, `cross`, `extension`) referenced by `marker-end` | Each marker is a `path.marker` in its relationship's group: v12's classic point, circle, cross and the generalization's hollow triangle (filled `mainBkg`), sized as v12's classic markers in every theme, in the line's colour (an author's `style` stroke included) | DESIGN §7.1, D227 |
 | An invisible `rect.usecase-actor-outline` (`opacity: 0`) around each actor | Not written: the actor's group carries the name, the layout its box | Nothing invisible is drawn |
-| Animated relationships: `stroke-dasharray: 9,5` and the `dash` keyframes | The `edge-animation-fast|slow` class only, with round caps: the keyframes need a `<style>` | R-SEC-2, as the flowchart |
+| Animated relationships: `stroke-dasharray: 9,5` and the `dash` keyframes | The same dashes, caps and speeds, moved by an `<animate>` in the relationship's group: the keyframes need a `<style>` | R-SEC-2, D606, as the flowchart |
 | An icon actor drew Font Awesome's fallback glyph (`usecase-actor-icon-fallback`) for an unknown icon | The icons extension's glyph (D293) in the frame, else the frame alone with one `ICON_NOT_RENDERED` | D293, D299 |
 | `look: neo` (the `usecase.look` default) was never read by the renderer, which took the global `look` (`classic`): no shadow, no gradient | The same in every theme: usecase differs between families by colour only | D227, D153 |
 | Hand-drawn: roughjs sketched each shape, cell and frame (roughness 0.7, hachure, fill weight 1.5) and each line (roughness 0.3) | `@mermaid-js/plugin-hand-drawn` sketches each node shape (`node`), JSON cell (`part`), boundary frame and tab (`group`, fill weight 3) and line (`edge`); markers, business marks and text stay plain | D301, D302 |

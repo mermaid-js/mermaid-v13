@@ -7,7 +7,7 @@
  * description (R-SEC-2, R-ARCH-6, D475).
  */
 import { translate, type SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot, warnIgnoredAnimation } from '@mermaid-js/shared/svg/document';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { UsecaseLayout } from '../layout/layout.ts';
 import { prepareUsecase, type UsecasePrepared } from '../layout/prepare.ts';
 import type { UsecaseModel } from '../model.ts';
@@ -44,7 +44,6 @@ export function renderUsecase(
   const dx = Math.max(0, (titleWidth(p) - layout.width) / 2);
   const moved = band > 0 || dx > 0;
   if (moved) w.open('g', { transform: translate(dx, band) });
-  warnIgnoredAnimation(model.relationships, (warning) => ctx.warn(warning));
   drawBoundaries(scene);
   drawEdges(scene);
   drawEdgeLabels(scene);

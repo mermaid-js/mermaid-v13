@@ -217,6 +217,16 @@ export const verifyScreenshot = async (
   const svg = diagramSvg(page).first();
   const hasSvg = (await svg.count()) > 0;
   const target = hasSvg ? svg : page;
+
+  // An animated edge is an SVG `<animate>` (D606), which runs on the SVG's own clock:
+  // Playwright's `animations: 'disabled'` stops CSS animations only. Hold every diagram at 0 so
+  // the dashes are in the same place in each capture.
+  await page.evaluate(() => {
+    for (const root of document.querySelectorAll('svg')) {
+      root.pauseAnimations();
+      root.setCurrentTime(0);
+    }
+  });
   const specRelPath = relative(testInfo.project.testDir, testInfo.file).split(sep).join('/');
 
   if (useArgos) {
