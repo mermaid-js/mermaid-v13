@@ -26,7 +26,7 @@ import {
 } from '../config.ts';
 import { cellConfig, cellPxMeasurer, cellRoom, type CellSize } from '../layout/cells.ts';
 import { C4_METRICS as M, FONT_WEIGHT } from '../layout/metrics.ts';
-import { labelRoom, type LabelRoom } from '../layout/room.ts';
+import { labelRoomOf, type LabelRoom } from '../layout/room.ts';
 import { shapeSize, type ShapeRoom } from '../layout/shapes.ts';
 import {
   measureSections,
@@ -394,7 +394,7 @@ export function prepareC4Beta(model: C4BetaModel, ctx: C4BetaLayoutContext): C4B
     ...(legend ? { legend } : {}),
     diagramPadding: graph.diagramPadding ?? c4betaDiagramPadding(ctx.config),
     config: measuring.config,
-    labelRoom: labelRoom(units),
+    labelRoom: labelRoomOf(units),
     ...(units ? { cell: units.pxPerUnit } : {}),
     ...(units && entries.length > 0 ? { legendDropped: true as const } : {}),
   };

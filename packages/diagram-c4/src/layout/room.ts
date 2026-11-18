@@ -12,7 +12,7 @@ export interface LabelRoom {
 }
 
 /** `units`' `labelPatch` (the px profile's without one) in px. */
-export function labelRoom(units: RenderContext['units'] | undefined): LabelRoom {
+export function labelRoomOf(units: RenderContext['units'] | undefined): LabelRoom {
   const { builder, pxPerUnit } = units ?? pxProfile;
   return { x: builder.labelPatch.x * pxPerUnit.x, y: builder.labelPatch.y * pxPerUnit.y };
 }

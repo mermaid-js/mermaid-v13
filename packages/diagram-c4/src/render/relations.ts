@@ -12,7 +12,7 @@
 import type { LabelBox, Paint, PathData, SvgWriter } from '@mermaid-js/core/svg';
 import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import { c4RelationPath } from '../layout/path.ts';
-import { labelRoom } from '../layout/room.ts';
+import { labelRoomOf } from '../layout/room.ts';
 import type { C4RelationEnd, C4RelationLayout, PlacedLabel } from '../layout/types.ts';
 import { C4_RELATION_KINDS, type C4RelationKind } from '../model.ts';
 import type { Scene } from './context.ts';
@@ -58,7 +58,7 @@ export function drawRelation(scene: Scene, rel: C4RelationLayout): void {
       fill: colours.labelBkg,
       stroke: colours.stroke,
       text: { fill: colours.text, ...fontAttrs(scene, lines[0]!) },
-      patch: labelRoom(scene.ctx.units),
+      patch: labelRoomOf(scene.ctx.units),
     });
   w.close();
 }

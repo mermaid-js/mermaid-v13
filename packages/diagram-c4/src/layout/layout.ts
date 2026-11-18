@@ -36,7 +36,7 @@ import {
 } from './grid.ts';
 import { cellConfig, cellPxMeasurer, cellRoom, type CellSize } from './cells.ts';
 import { C4_METRICS as M, FONT_WEIGHT } from './metrics.ts';
-import { labelRoom, type LabelRoom } from './room.ts';
+import { labelRoomOf, type LabelRoom } from './room.ts';
 import {
   Lanes,
   lineOf,
@@ -264,7 +264,7 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
     config,
     fonts,
     measure,
-    labelPatch: labelRoom(ctx.units),
+    labelRoom: units ? { x: M.textLabelPad, y: 0 } : labelRoomOf(ctx.units),
   });
 
   const title = measure(
@@ -459,8 +459,11 @@ interface RouteInput extends Measuring {
   readonly shapes: readonly Outline[];
   readonly frames: readonly Outline[];
   readonly order: readonly Group[];
-  /** The room a label's box adds round its stacked texts: the `labelPatch` in px (D629). */
-  readonly labelPatch: LabelRoom;
+  /**
+   * The room a label's box adds round its stacked texts, in px: the `labelPatch` (D629) where
+   * the box is drawn as an edge-label tag; text output keeps `textLabelPad` across.
+   */
+  readonly labelRoom: LabelRoom;
 }
 
 /**
@@ -702,13 +705,13 @@ function placeLabel({
   input,
   keep,
 }: LabelInput): Pick<Routed, 'label' | 'techn' | 'cx' | 'top' | 'lw' | 'lh' | 'crowded'> {
-  const { model, config, fonts, measure, labelPatch } = input;
+  const { model, config, fonts, measure, labelRoom } = input;
   const room = config.wrapAll ? r.room : Infinity;
   const label = measure(relationLabelText(model, rel, index), fonts.message, room);
   const techn = measure(relationTechnText(rel), fonts.message, room, Style.Italic);
   if (!label && !techn) return { cx: r.x0, top: r.y0, lw: 0, lh: 0 };
-  const lw = Math.max(label?.text.width ?? 0, techn?.text.width ?? 0) + labelPatch.x;
-  const lh = (label?.text.height ?? 0) + (techn?.text.height ?? 0) + labelPatch.y;
+  const lw = Math.max(label?.text.width ?? 0, techn?.text.width ?? 0) + labelRoom.x;
+  const lh = (label?.text.height ?? 0) + (techn?.text.height ?? 0) + labelRoom.y;
 
   const beside = Math.abs(r.nx) * (lw / 2) + Math.abs(r.ny) * (lh / 2) + M.besideGap;
   const aside = r.lean ? Math.max(0, Math.min(r.lean, beside - M.leanSlack)) : beside;

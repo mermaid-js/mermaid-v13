@@ -65,6 +65,11 @@ export const C4_METRICS = {
   /** Label widths that fit the gap between two columns, and where there is room to spare. */
   narrow: 88,
   wide: 160,
+  /**
+   * Text output: the room across a relation label's text, in px (one cell). The text drawing
+   * frames the label itself (`ascii/draw.ts`); the SVG's tag takes the `labelPatch` (D629).
+   */
+  textLabelPad: 8,
   /** Parallel stretches closer than this read as one line; a line this close to a frame, as part of it. */
   near: 6,
   frameNear: 3,
