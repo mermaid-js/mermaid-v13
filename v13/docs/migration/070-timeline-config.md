@@ -5,8 +5,8 @@
   `UnsupportedFormatError` (D216).
 - **Honoured** in the `timeline` section, with v12's effective values when unset (v12's renderer
   with its default config merged): `leftMargin` (150), `padding` (no schema default; 50, v12's
-  fallback), `useMaxWidth` (true) and `disableMulticolor` (false). The top-level `fontSize` (16)
-  is read as v12's timeline read it: each box is `0.55 × fontSize` taller than its text, and the
+  fallback), `useMaxWidth` (true) and `disableMulticolor` (false). The top-level `fontSize` (no
+  schema default since D620; 16 when unset, as in v12) is read as v12's timeline read it: each box is `0.55 × fontSize` taller than its text, and the
   TD axis starts `2 × fontSize` above the content and ends `0.5 × fontSize + 20` below it. The
   text itself is drawn at `themeVariables.fontSize`, as in v12. A `leftMargin`, `padding` or
   `fontSize` that is not a number of at least 0 is replaced by its default, with a
