@@ -129,8 +129,14 @@ const tildes = (s: string): number => {
   return n;
 };
 
+/** The pair a generic's `~ … ~` becomes. */
+type Brackets = readonly [open: string, close: string];
+const LITERAL: Brackets = ['<', '>'];
+/** As character references, so the label layout never reads `List<Data>` as a tag (D619). */
+const REFERENCES: Brackets = ['&lt;', '&gt;'];
+
 /** v12 `processSet`: the `~`s paired from both ends inwards become `<` … `>`. */
-function processSet(input: string): string {
+function processSet(input: string, [open, close]: Brackets): string {
   const count = tildes(input);
   if (count <= 1) return input;
   let text = input;
@@ -143,8 +149,8 @@ function processSet(input: string): string {
   for (let i = 0; i < text.length; i++) if (text[i] === '~') at.push(i);
   const chars = text.split('');
   for (let k = 0; k < at.length - 1 - k; k++) {
-    chars[at[k] ?? 0] = '<';
-    chars[at[at.length - 1 - k] ?? 0] = '>';
+    chars[at[k] ?? 0] = open;
+    chars[at[at.length - 1 - k] ?? 0] = close;
   }
   return (lead ? '~' : '') + chars.join('');
 }
@@ -153,7 +159,10 @@ function processSet(input: string): string {
  * v12 `parseGenericTypes`: `List~int~` → `List<int>`, `Map~K, V~` → `Map<K, V>`. Commas split
  * the text into sets, joined again when the sets on both sides of a comma hold one `~` each.
  */
-export function parseGenericTypes(input: string): string {
+export function parseGenericTypes(
+  input: string,
+  brackets: readonly [open: string, close: string] = LITERAL
+): string {
   const sets: string[] = [];
   let from = 0;
   for (let i = 0; i <= input.length; i++) {
@@ -175,7 +184,7 @@ export function parseGenericTypes(input: string): string {
         out.pop();
       }
     }
-    out.push(processSet(set));
+    out.push(processSet(set, brackets));
   }
   return out.join('');
 }
@@ -187,16 +196,28 @@ const CLASSIFIER_CSS: Readonly<Record<Classifier, string>> = {
   $: 'text-decoration:underline;',
 };
 
+/** A member's text with each generic's `~ … ~` as `brackets`. */
+function shown(m: MemberParts, brackets: Brackets): string {
+  let text = m.visibility + parseGenericTypes(m.name, brackets);
+  if (m.kind === 'method') {
+    text += `(${parseGenericTypes(m.parameters.trim(), brackets)})`;
+    if (m.returnType) text += ' : ' + parseGenericTypes(m.returnType, brackets);
+  }
+  return text.trim();
+}
+
 /** The text v12's renderer drew for a member, and the CSS of its classifier (`getDisplayDetails`). */
 export function memberDisplay(m: MemberParts): { displayText: string; cssStyle: string } {
-  let displayText = m.visibility + parseGenericTypes(m.name);
-  if (m.kind === 'method') {
-    displayText += `(${parseGenericTypes(m.parameters.trim())})`;
-    if (m.returnType) displayText += ' : ' + parseGenericTypes(m.returnType);
-  }
-  const cssStyle = CLASSIFIER_CSS[m.classifier];
-  return { displayText: displayText.trim(), cssStyle };
+  return { displayText: shown(m, LITERAL), cssStyle: CLASSIFIER_CSS[m.classifier] };
 }
+
+/**
+ * A member row's text as the label layout reads it: {@link memberDisplay}'s text with the
+ * brackets of each generic as `&lt;` and `&gt;`, as v12 wrote them (`ClassMember.text`), so
+ * `+List~Data~ items` draws `+List<Data> items` (D619). Unlike v12, a tag the author typed
+ * (`<br>`, `<b>`) is still read as markup (D564).
+ */
+export const memberLabel = (m: MemberParts): string => shown(m, REFERENCES);
 
 /**
  * v12 `ClassMember.text`: the member's text with `<` and `>` escaped, visibility first

@@ -2,10 +2,10 @@
  * The lexer of the indentation-tree diagrams (mindmap, kanban): a state machine mirroring the
  * start conditions and rule order of v12's `mindmap.jison`, which `kanban.jison` forks (it adds
  * `@{ … }` shape data), modelled on the timeline lexer (parser-method §1):
- * - it lexes the text v12 lexed, with comments and directives cut out (`sourceView`) and line
- *   breaks as v12 had them (CRLF and CR as LF), and maps each token back to its range in the
- *   source, which is never rewritten. A token that runs over a removed span is one token whose
- *   range covers it;
+ * - it lexes the text v12 lexed, with comments and directives cut out (`sourceView`), a tag's
+ *   `="x"` as `='x'` (D114) and line breaks as v12 had them (CRLF and CR as LF), and maps each
+ *   token back to its range in the source, which is never rewritten. A token that runs over a
+ *   removed span is one token whose range covers it;
  * - comments and directives are trivia tokens, each with its own range, in source order; so is
  *   a dropped `;` that no token took (`Space`).
  *
@@ -51,6 +51,7 @@ import {
   type SourceView,
   type TokenStream,
 } from '@mermaid-js/core/parser-kit';
+import { tagQuotes } from './drop.ts';
 import { lowerCode, StateLexer, type StateLexerOptions } from './state-lexer.ts';
 
 /**
@@ -191,6 +192,11 @@ class TreeLexer extends StateLexer {
   ) {
     super(src, from, view, OPTIONS);
     this.wordStart = word.charCodeAt(0);
+  }
+
+  /** v12's text: `="x"` inside a tag as `='x'` (`cleanupText`, D114), one character for one. */
+  protected override viewText(view: SourceView): string {
+    return view.mask ? tagQuotes(view) : view.text;
   }
 
   run(probe?: Probe): TokenStream {

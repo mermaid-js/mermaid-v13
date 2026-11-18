@@ -308,6 +308,16 @@ subGraphTitleMargin?: {
 top?: number
 bottom?: number
 }
+/**
+ * Where the title of a subgraph sits: at the top or the bottom of the subgraph, and at
+ * the left, the middle or the right. A subgraph can set its own with
+ * `id@{ titlePosition: bottom-left }`.
+ * 
+ * When unset, the title is at the top in the middle (at the top left with the `compass`
+ * layout). Swimlane lanes, collapsed subgraphs and text output keep their own placement.
+ * 
+ */
+subGraphTitlePosition?: ("top-left" | "top-center" | "top-right" | "bottom-left" | "bottom-center" | "bottom-right")
 arrowMarkerAbsolute?: boolean
 /**
  * The amount of padding around the diagram as a whole so that embedded

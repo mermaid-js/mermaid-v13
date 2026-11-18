@@ -164,6 +164,29 @@ describe('mindmap parser: nodes', () => {
     ]);
   });
 
+  it('reads a double-quoted attribute in a tag of a quoted label as v12 (#837, D114)', () => {
+    const label = '<span style="color:red">red</span> text';
+    const lexed = "<span style='color:red'>red</span> text";
+    for (const [open, close, shape] of [
+      ['[', ']', 'rect'],
+      ['(', ')', 'rounded'],
+      ['((', '))', 'circle'],
+      ['))', '((', 'bang'],
+      [')', '(', 'cloud'],
+      ['{{', '}}', 'hexagon'],
+    ] as const) {
+      for (const quoted of [`"${label}"`, `"\`${label}\`"`]) {
+        const src = `mindmap\n  root${open}${quoted}${close}\n    a${open}${quoted}${close}\n`;
+        const r = parseMindmap(src);
+        expect(r.diagnostics, src).toEqual([]);
+        expect(r.model.nodes.map((n) => [n.id, n.label, n.shape])).toEqual([
+          ['root', lexed, shape],
+          ['a', lexed, shape],
+        ]);
+      }
+    }
+  });
+
   it('keeps v12 ids: blanks, colons and a comment after a shapeless node', () => {
     const m = model('mindmap\n  root\n    a:::b\n    c %% d\n    e(f) %% g\n');
     expect(m.nodes.slice(1).map((n) => [n.id, n.classes])).toEqual([

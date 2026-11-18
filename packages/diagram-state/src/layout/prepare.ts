@@ -25,7 +25,10 @@ import {
   foldedTypeText,
 } from '@mermaid-js/core/svg/folded';
 
-/** What a node is drawn as. `described`: a state with several description lines (v12 `rectWithTitle`). */
+/**
+ * What a node is drawn as. `described`: a state with several description lines (v12
+ * `rectWithTitle`), titled by the first.
+ */
 export type StateShape =
   | 'state'
   | 'described'
@@ -43,7 +46,7 @@ export interface StateNodeView {
   id: string;
   ast: string;
   shape: StateShape;
-  /** The label; a described state's title (its id). */
+  /** The label; a described state's title (its first description). */
   label: MeasuredLabel;
   /** A described state's description lines, below its title. */
   rows?: MeasuredLabel;
@@ -421,9 +424,11 @@ function measureState(
       break;
   }
   if (s.descriptions.length > 1) {
-    // v12 `rectWithTitle`: the id as a title, a divider, then the description lines.
-    const label = m.plain(s.id, style, m.wrap);
-    const rows = m.plain(s.descriptions.join('\n'), style, m.wrap);
+    // v12 `rectWithTitle`: the first description as the title, a divider, then the other
+    // description lines (v12 stateDb `label[0]` and `label.slice(1)`). The id is not drawn.
+    const [title, ...more] = s.descriptions;
+    const label = m.plain(title!, style, m.wrap);
+    const rows = m.plain(more.join('\n'), style, m.wrap);
     const wide = label.width > rows.width ? label : rows;
     const box = boxOf(wide, sm.statePad, m, m.cells ? 0 : m.minWidth);
     const tall = m.cells ? label.lines.length + rows.lines.length : label.height + rows.height;

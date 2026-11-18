@@ -1,0 +1,14 @@
+---
+config:
+  fontSize: 24
+description: >-
+  The top-level fontSize scales actor, message and note text when no sequence.*FontSize key is
+  set, as v12 drew it (D620, #765). The title keeps the theme's size.
+---
+sequenceDiagram
+  title Root font size
+  participant A as Alice
+  actor B as Bob
+  A->>B: Hello Bob
+  Note over A,B: a note at the root size
+  B-->>A: Hi Alice
