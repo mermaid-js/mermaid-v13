@@ -550,8 +550,9 @@ export abstract class ParserBase {
     return made;
   }
 
-  protected checkNodes(r: Range): void {
-    checkLimit(this.st.diagnostics, 'maxNodes', this.db.classCount, this.maxNodes, 'classes', r);
+  /** Checks `maxNodes` for one new class; `count` is the class count once it was added. */
+  protected checkNodes(r: Range, count = this.db.classCount): void {
+    checkLimit(this.st.diagnostics, 'maxNodes', count, this.maxNodes, 'classes', r);
   }
 
   /** The interface end of a lollipop relationship: its AST node and symbol. */
