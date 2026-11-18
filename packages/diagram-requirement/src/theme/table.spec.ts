@@ -134,7 +134,10 @@ describe('the requirement theme table (D435)', () => {
       const t = await themed(name, { edgeLabelBackground: '#abcdef' });
       expect(t.value('relationLabelBackground'), name).toBe('#abcdef');
     }
-    expect((await themed('default')).value('relationLabelBackground')).toBe('#e8e8e8cc');
-    expect((await themed('neo-dark')).value('relationLabelBackground')).toBe('#323333');
+    // edgeLabelBackground is the theme background by default (D628).
+    for (const name of ['default', 'dark', 'neo-dark']) {
+      const t = await themed(name);
+      expect(t.value('relationLabelBackground'), name).toBe(t.value('background'));
+    }
   });
 });

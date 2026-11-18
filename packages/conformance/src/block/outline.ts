@@ -11,5 +11,7 @@ export const outline: OutlineCase = {
     /<rect class="basic cluster composite label-container"[^>]*\/>/g,
     /<polygon class="label-container block-arrow"[^>]*\/>/g,
     /<path class="edge-thickness-[^>]*\/>/g,
+    // Its own edge-label box, until it draws the shared tag (#943).
+    /<g class="edgeLabel"[^>]*><rect [^>]*\/>/g,
   ],
 };

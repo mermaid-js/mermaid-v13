@@ -10,7 +10,11 @@ export const outline: OutlineCase = {
   plugin: usecase as unknown as OutlineCase['plugin'],
   dirs: ['usecase'],
   roles: ['edge', 'group', 'node', 'part'],
-  // v12 drew the business marks with `append('path')`, never through roughjs; arrowheads and
-  // label backgrounds are the shared plain shapes.
-  plain: [/<path class="usecase-business-marker[^"]*"[^>]*\/>/g],
+  // v12 drew the business marks with `append('path')`, never through roughjs; arrowheads are the
+  // shared plain shapes, and its own edge-label box stays plain until it draws the shared tag
+  // (#943).
+  plain: [
+    /<path class="usecase-business-marker[^"]*"[^>]*\/>/g,
+    /<g class="edgeLabel"[^>]*><rect [^>]*\/>/g,
+  ],
 };

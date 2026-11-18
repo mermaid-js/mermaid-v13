@@ -7,9 +7,9 @@ import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
  */
 export const theme: DiagramThemeTable = {
   vars: THEME_VARIABLE_TABLE,
-  // Where themes of one family write a colour differently (the classic row fills, the redux
-  // colour themes' edge labels), it reads a shared input as each theme wrote it (`inline()`,
-  // D332), byte for byte.
+  // Where themes of one family write a colour differently (the classic row fills), it reads a
+  // shared input as each theme wrote it (`inline()`, D332), byte for byte. The edge label's
+  // fill is the shared label fill, the theme background by default in every family (D628).
   rules: {
     light: {
       rowOdd: 'inline(rowBkg)',
@@ -29,9 +29,6 @@ export const theme: DiagramThemeTable = {
   },
   families: {
     classic: {
-      // v12 classic `.labelBkg`: `tertiaryColor` at half opacity (#761). The colour themes write
-      // `linkLabelBkg`; the classic family derives the fill (D152), with no name check.
-      rules: { erEdgeLabelBackground: 'alpha(tertiaryColor, 50%)' },
       // v12 `zero_or_more`: refX 39, cx 9.
       tokens: { erZeroOrMoreCircleOffset: 30 },
     },

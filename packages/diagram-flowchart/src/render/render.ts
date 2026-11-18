@@ -7,7 +7,7 @@ import type {
   LayoutModelNode,
   RoutePoint,
 } from '@mermaid-js/core/layout';
-import { layered } from '@mermaid-js/core/layout';
+import { layered, pxProfile } from '@mermaid-js/core/layout';
 import { drawFolded } from '@mermaid-js/core/svg/folded';
 import { drawFramed } from '@mermaid-js/core/svg/framed';
 import {
@@ -445,12 +445,18 @@ function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
   w.close();
 }
 
-function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView): void {
+/** An edge's label as a tag, bordered in the edge's own stroke (D626, D627). */
+function drawEdgeLabel({ w, layout, ctx, paint }: Scene, e: EdgeView): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
   const { fill, text } = paint.edgeLabel!;
   const own = isEmpty(e.style.text) ? text : { fill: text.fill, ...e.style.text };
-  labelOnBox(w, e.label, at, e.edge.id, { fill, text: own, rx: 3 });
+  labelOnBox(w, e.label, at, e.edge.id, {
+    fill,
+    stroke: e.style.shape.stroke ?? paint.node.line,
+    text: own,
+    patch: (ctx.units ?? pxProfile).builder.labelPatch,
+  });
 }
 
 /** A node's own classes: a collapsed subgraph's card, a block (ADR-15), or a plain node. */

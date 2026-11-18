@@ -111,10 +111,8 @@ properties:
         `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 /
         ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2;
         `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and
-        `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground`
-        white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground` /
-        `tertiaryColor` at half opacity (v12's `.labelBkg`, D572);
-        `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding;
+        `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erMarkerFill`
+        `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding;
         `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding;
         `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding;
         `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5;
@@ -430,8 +428,8 @@ properties:
         x-mermaid: *erColor
       erEdgeLabelBackground:
         description: |
-          ER diagrams: background of relationship labels. In the classic themes `tertiaryColor`
-          at half opacity, as v12 (D572).
+          ER diagrams: background of relationship labels. `edgeLabelBackground` unless set, which
+          is the theme's `background` in every theme (D628).
         type: string
         x-mermaid: *erColor
       erMarkerFill:

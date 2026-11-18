@@ -252,13 +252,19 @@ function drawEdge({ w, layout, paint }: Scene, e: AgentflowEdgeView): void {
   marker(w, e.end, end, headPaint, paint.heads, true);
 }
 
-function drawEdgeLabel({ w, layout }: Scene, e: AgentflowEdgeView, paint: LabelPaint): void {
+/** An edge's label as a tag, bordered in the edge's own stroke (D626, D627). */
+function drawEdgeLabel(
+  { w, layout, ctx, paint: { node } }: Scene,
+  e: AgentflowEdgeView,
+  paint: LabelPaint
+): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
   labelOnBox(w, e.label, at, e.edge.id, {
     fill: paint.fill,
+    stroke: e.style.shape.stroke ?? node.line,
     text: { fill: paint.text, ...e.style.text },
-    rx: 3,
+    patch: (ctx.units ?? pxProfile).builder.labelPatch,
   });
 }
 

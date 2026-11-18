@@ -51,6 +51,9 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   `astIds` names both lanes) and `SWIMLANE_NESTED_LANE` for each subgraph nested in a lane
   (`astIds` names it). **Changed:** v12 removed a lane that a shared node left empty; v13 draws
   it as an empty lane, so every subgraph stays in the SVG with its `data-ast`.
+- **Edge labels are tags**, as in flowchart (D626–D630): a rounded box bordered 1 px solid in
+  the edge's colour and filled opaque with `edgeLabelBackground` (the theme background unless
+  set), the same inside a coloured lane. Edges reserve the matching room.
 - **Line hops** (D537). Crossing edges hop by default under the swimlane engine
   (`swimlane.lineHops`, default `arc`; `gap` cuts the run that gives way instead, `false` draws
   it unbroken), as in v12. The shared top-level `lineHops` is new: `lineHops: false` turns hops

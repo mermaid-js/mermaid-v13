@@ -3,7 +3,7 @@
 // renderer does; every class, member, relationship, namespace, note and interface drawn from
 // the AST is one element with `data-id` and `data-ast` (R-SVG-2, -3, R-PARSE-8). What the
 // boxes hold and where is `ClassLayout.class` (#155); this file only paints it.
-import type { LayoutModelNode } from '@mermaid-js/core/layout';
+import { pxProfile, type LayoutModelNode } from '@mermaid-js/core/layout';
 import {
   checkLinkTarget,
   checkStyle,
@@ -124,7 +124,8 @@ function paints(theme: ThemeOf, p: ClassPrepared): Paints {
   const terminalSize = p.edges.some((e) => e.startLabel ?? e.endLabel)
     ? theme.length('classTerminalFontSize')
     : undefined;
-  const edgeLabel = labelled ? theme.color('mainBkg') : undefined;
+  // The theme background, as every edge label's fill (D628).
+  const edgeLabel = labelled ? theme.color('background') : undefined;
   return {
     font: theme.font(),
     fontSize: theme.length('fontSize'),
@@ -311,14 +312,16 @@ function drawEdges(scene: Scene, idOf: (e: ClassEdgeView) => string): void {
   w.close();
 }
 
-function drawEdgeLabels({ w, layout, paint }: Scene, e: ClassEdgeView, id: string): void {
+function drawEdgeLabels({ w, layout, ctx, paint }: Scene, e: ClassEdgeView, id: string): void {
   const at = layout.edges.get(e.layoutId);
   if (!at) return;
+  // The middle label is a tag bordered in the line colour (D626, D627); the ends stay plain.
   if (e.label && at.label && paint.edgeLabel)
     labelOnBox(w, e.label, at.label, id, {
       fill: paint.edgeLabel,
+      stroke: paint.line,
       text: { fill: paint.text },
-      rx: 3,
+      patch: (ctx.units ?? pxProfile).builder.labelPatch,
     });
   const ends: [MeasuredLabel | undefined, { x: number; y: number } | undefined][] = [
     [e.startLabel, at.startLabel],

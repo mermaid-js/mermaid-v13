@@ -3,7 +3,7 @@
 // (`relationshipLine`, `outer-path`, `row-rect-odd`/`-even`, `attribute-*`, `divider`); every
 // entity, attribute row, relationship and subgraph is one element with `data-id` and
 // `data-ast` (R-SVG-2, R-PARSE-8). Colours and sizes come from theme variables only (D152).
-import type { LayoutModelNode } from '@mermaid-js/core/layout';
+import { pxProfile, type LayoutModelNode } from '@mermaid-js/core/layout';
 import {
   translate,
   type Attrs,
@@ -303,11 +303,17 @@ function drawEdge({ w, layout, paint, ends }: Scene, e: EdgeView, i: number): vo
   w.close();
 }
 
-function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView, i: number): void {
+/** A relationship's label as a tag, bordered in the relationship line's colour (D626, D627). */
+function drawEdgeLabel({ w, layout, ctx, paint }: Scene, e: EdgeView, i: number): void {
   const at = layout.edges.get(e.id)?.label;
-  if (!at || e.label.width === 0) return;
+  if (!at || e.label.width === 0 || !paint.line) return;
   const { fill, text } = paint.edgeLabel!;
-  labelOnBox(w, e.label, at, edgeDataId(e, i), { fill, text: { fill: text } });
+  labelOnBox(w, e.label, at, edgeDataId(e, i), {
+    fill,
+    stroke: paint.line.stroke,
+    text: { fill: text },
+    patch: (ctx.units ?? pxProfile).builder.labelPatch,
+  });
 }
 
 function drawEntity(scene: Scene, view: EntityView): void {

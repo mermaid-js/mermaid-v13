@@ -61,7 +61,6 @@ const theme: ThemeSpec = {
     clusterBkg: '#fcfcfc',
     clusterBorder: '#707070',
     titleColor: '#333333',
-    edgeLabelBackground: '#ffffff',
     arrowheadColor: '#333333',
     border2: '#707070',
     noteBkgColor: '#666666',

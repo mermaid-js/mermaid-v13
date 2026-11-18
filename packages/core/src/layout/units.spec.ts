@@ -24,6 +24,10 @@ describe('pxProfile (D77)', () => {
     expect(pxProfile.grid).toBeUndefined();
   });
 
+  it('leaves 8 px each side of an edge label and 4 px above and below (D629)', () => {
+    expect(pxProfile.builder.labelPatch).toEqual({ x: 16, y: 8 });
+  });
+
   it('is frozen', () => {
     expect(Object.isFrozen(pxProfile)).toBe(true);
     expect(Object.isFrozen(pxProfile.engine)).toBe(true);
