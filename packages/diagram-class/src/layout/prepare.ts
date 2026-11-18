@@ -467,9 +467,8 @@ function layoutGraph(
               },
             }
           : {}),
-        // Multiplicities need no room of their own: the engine puts them `endLabelAcross` off
-        // the line, which clears their own end's marker (12 px across), and past every edge's
-        // markers, which it is told about (#201).
+        // Multiplicities need no room of their own: the engine puts them past their own end's
+        // marker and clear of every edge's markers, which it is told about (#201, D607).
         ...(e.startLabel ? { startLabel: size(e.startLabel) } : {}),
         ...(e.endLabel ? { endLabel: size(e.endLabel) } : {}),
         ...(marker(e.startMarker) ? { startMarker: marker(e.startMarker)! } : {}),

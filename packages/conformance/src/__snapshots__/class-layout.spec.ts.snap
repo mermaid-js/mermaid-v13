@@ -21,6 +21,8 @@ exports[`layered over parser-produced class graphs > lays out every corpus graph
   "class/baseline/namespaces/nested.mmd": 0,
   "class/baseline/notes/notes.mmd": 0,
   "class/baseline/relationships/all-types.mmd": 0,
+  "class/baseline/relationships/cardinality-past-markers-lr.mmd": 0,
+  "class/baseline/relationships/cardinality-past-markers.mmd": 0,
   "class/baseline/relationships/cardinality.mmd": 0,
   "class/baseline/relationships/self-and-multi.mmd": 0,
   "class/baseline/relationships/two-way-and-lollipop.mmd": 0,

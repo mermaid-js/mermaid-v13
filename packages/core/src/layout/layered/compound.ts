@@ -49,9 +49,10 @@ export interface CEdge {
   minlen: number;
   labelW: number;
   labelH: number;
-  // Sizes of the edge-end labels (D102), when the edge has them.
-  start?: { width: number; height: number };
-  end?: { width: number; height: number };
+  // Sizes of the edge-end labels (D102), when the edge has them, and the room before each along
+  // the edge (`endLabelAlong`, its marker or the head room, a gap to the middle label: D607).
+  start?: { width: number; height: number; along: number };
+  end?: { width: number; height: number; along: number };
   // x, y, axis triples; axis is 0 where the edge runs vertically into the point, 1 horizontally.
   route: number[];
   labelX: number;
