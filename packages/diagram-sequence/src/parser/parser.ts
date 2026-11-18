@@ -108,6 +108,10 @@ export interface SequenceParseOptions extends ParseOptions {
   preprocessed?: PreprocessResult;
   /** Block nesting cap (core `DEFAULT_LIMITS.maxDepth`). */
   maxDepth?: number;
+  /** Participant cap (core `DEFAULT_LIMITS.maxNodes`, D608). */
+  maxNodes?: number;
+  /** Message cap (core `DEFAULT_LIMITS.maxEdges`, D608); notes do not count. */
+  maxEdges?: number;
 }
 
 export type SequenceParseResult = ParseResult<SequenceModel, SequenceDocument>;
@@ -175,19 +179,22 @@ class SequenceParser extends TokenRules {
     if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
     this.ids = this.st.ids;
     const diagnostics = this.st.diagnostics;
-    this.db = new SequenceBuilder({
-      error: (code, message, range) => {
-        diagnostics.error(code, message, range);
+    this.db = new SequenceBuilder(
+      {
+        error: (code, message, range) => {
+          diagnostics.error(code, message, range);
+        },
+        warn: (code, message, range) => {
+          diagnostics.warning(code, message, range);
+        },
+        // The plugin sees what the model keeps: menus before the reset are no longer emitted.
+        menusReset: (id) => {
+          for (const node of this.menus.get(id) ?? []) delete node.menu;
+          this.menus.delete(id);
+        },
       },
-      warn: (code, message, range) => {
-        diagnostics.warning(code, message, range);
-      },
-      // The plugin sees what the model keeps: menus before the reset are no longer emitted.
-      menusReset: (id) => {
-        for (const node of this.menus.get(id) ?? []) delete node.menu;
-        this.menus.delete(id);
-      },
-    });
+      { maxNodes: options.maxNodes, maxEdges: options.maxEdges }
+    );
     this.maxDepth = options.maxDepth ?? DEFAULT_LIMITS.maxDepth;
     if (probe) {
       if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');

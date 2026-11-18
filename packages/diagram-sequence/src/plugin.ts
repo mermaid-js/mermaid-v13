@@ -19,11 +19,15 @@ export const sequence = {
   formats: ['svg', 'ascii'] as const,
   layoutKind: 'custom' as const,
   detector: (text: string): boolean => detectSequence(text),
-  parse: (text: string, ctx: DiagramParseContext): SequenceParseResult =>
-    parseSequence(text, {
+  parse: (text: string, ctx: DiagramParseContext): SequenceParseResult => {
+    const caps = ctx.limits ?? resolveLimits(ctx.config);
+    return parseSequence(text, {
       preprocessed: ctx.preprocessed,
-      maxDepth: (ctx.limits ?? resolveLimits(ctx.config)).maxDepth,
-    }),
+      maxEdges: caps.maxEdges,
+      maxNodes: caps.maxNodes,
+      maxDepth: caps.maxDepth,
+    });
+  },
   labels: sequenceLabels,
   layout: (model: SequenceModel, ctx: RenderContext): SequenceLayout => layoutSequence(model, ctx),
   render: (model: SequenceModel, layout: SequenceLayout, ctx: RenderContext, w: SvgWriter): void =>
