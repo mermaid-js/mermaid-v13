@@ -7,6 +7,7 @@ import type { CorpusItem } from '../types.ts';
 import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
+import { D621_RULES, LINK_ID_12_3, LINK_ID_RULE } from './d621.ts';
 
 /**
  * Lexer-parity gate (notes/07): the v13 flowchart lexer emits the same terminals, with the same
@@ -28,6 +29,10 @@ import type { JisonToken } from '../jison/oracle.ts';
  * comments and directives as trivia; both are left out. After a lexical error jison stops, so
  * both streams are cut at the first `INVALID` (the oracle's `LEXICAL_ERROR`; flowchart's jison
  * has no `INVALID` terminal).
+ *
+ * The decided change (D621, ahead of the oracle bump, D316): 12.2.0's LINK_ID rule is replaced
+ * in v12's lexer by 12.3.0's (`D621_RULES`), whose run also stops at `[ ] ( ) { } |`; every
+ * other rule is still compared.
  */
 const MERGED = new Set(['TEXT', 'EDGE_TEXT', 'STR', 'MD_STR']);
 
@@ -105,14 +110,35 @@ function commented(src: string): string {
   return head + (lines.length > 2 ? lines.join('\n' + '  %% c\n'.repeat(9)) : split);
 }
 
+interface V12Lexer {
+  rules: RegExp[];
+}
+interface MermaidV12 {
+  mermaidAPI: {
+    getDiagramFromText(text: string): Promise<{ parser: { parser: { lexer: V12Lexer } } }>;
+  };
+}
+
 describe('flowchart lexer parity with mermaid@12 (jison)', () => {
+  it('replaces the rule D621 names, and only it', async () => {
+    await loadJisonLexerOracle('flowchart');
+    const mermaid = ((await import('mermaid-v12')) as unknown as { default: MermaidV12 }).default;
+    const { rules } = (await mermaid.mermaidAPI.getDiagramFromText('flowchart TD\n')).parser.parser
+      .lexer;
+    expect(rules.length).toBe(122);
+    expect(rules[LINK_ID_RULE]?.source).toBe(String.raw`^(?:[^\s\"]+@(?=[^\{\"]))`);
+    expect(Object.keys(D621_RULES)).toEqual([String(LINK_ID_RULE)]);
+    // flow.jison at 12.3.0 (a5060b1d8): `[^\s\"\[\]\(\)\{\}\|]+\@(?=[^\{\"])`.
+    expect(LINK_ID_12_3.source).toBe(String.raw`^(?:[^\s"[\](){}|]+@(?=[^{"]))`);
+  });
+
   it('emits the same tokens over the e2e fixtures and the v12 spec strings', async () => {
     const oracle = await loadJisonLexerOracle('flowchart');
     const items = await corpus();
     const diffs: { id: string; at: number; v12: JisonToken[]; v13: JisonToken[] }[] = [];
     let compared = 0;
     for (const item of items) {
-      const v12 = (await oracle.tokens(item.source))?.map(
+      const v12 = (await oracle.tokens(item.source, { rules: D621_RULES }))?.map(
         ([n, i]): JisonToken => [n === LEXICAL_ERROR ? 'INVALID' : n, i]
       );
       if (!v12) continue;
