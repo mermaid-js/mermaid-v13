@@ -51,8 +51,6 @@ export const REQUIREMENT_METRICS = Object.freeze({
   titleMargin: 25,
   /** Around the drawing (`setupViewPortForSVG(svg, 8, …)`). */
   viewBoxPadding: 8,
-  /** Room left and right of a relation label on its chip (ER's and the flowchart's). */
-  labelPad: 4,
   /** A font size a style sets is taken below this, in px (ER's cap). */
   maxFontSize: 1000,
 });

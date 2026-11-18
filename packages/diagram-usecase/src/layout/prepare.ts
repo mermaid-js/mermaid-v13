@@ -594,6 +594,11 @@ function boundaryView(boundary: UsecaseBoundary, parts: ViewInputs): BoundaryVie
   };
 }
 
+/** Whether a measured label shows nothing: no inline box and only whitespace (as `edgeLabel`). */
+function blank(label: MeasuredLabel): boolean {
+  return label.lines.every((line) => line.every((r) => r.kind !== 'box' && !r.text.trim()));
+}
+
 /**
  * A relationship's edge. Include and extend labels are plain text whatever the model says (v12
  * forced `labelType: 'text'` on them, `usecaseDb.ts:267-268`).
@@ -609,6 +614,8 @@ function relationView(
   const style = measure.styleOf(r.classes, r.styles);
   const font = measure.font(parts.fonts.edge, style);
   const type = r.type === 'association' ? r.labelType : 'text';
+  const label =
+    text === undefined ? undefined : measure.label(text, font, sizing.edgeWrap, style, type);
   return {
     id: r.astId,
     kind: 'relation',
@@ -617,9 +624,8 @@ function relationView(
     target,
     dotted: r.type === 'include' || r.type === 'extend',
     markers: markersOf(r),
-    ...(text !== undefined
-      ? { label: measure.label(text, font, sizing.edgeWrap, style, type) }
-      : {}),
+    // A label of only whitespace draws no tag (D626), so it takes no room either.
+    ...(label && !blank(label) ? { label } : {}),
     style,
     font,
   };

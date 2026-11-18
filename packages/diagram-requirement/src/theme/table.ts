@@ -6,7 +6,7 @@ import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
  * mermaid\@12.2.0 draws (D435): the box fill `mainBkg`, its outline `nodeBorder`, its text and
  * the relation label ink `nodeTextColor` where the theme writes one, else `textColor` (v12
  * `.label text, span`: `nodeTextColor || textColor`; equal to v12 in all eleven themes),
- * the lines and markers `lineColor`, the label chip `edgeLabelBackground` where the theme has
+ * the lines and markers `lineColor`, the label tag `edgeLabelBackground` where the theme has
  * no `linkLabelBkg` (v12 `.labelBkg`).
  *
  * The families replace v12's `look: neo` branches (D152, D153). Classic is v12 classic: 1.3px
@@ -15,9 +15,9 @@ import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
  * box, lines and marker strokes at `strokeWidth` (one token, `relationStrokeWidth`, for the
  * lines and the marker strokes) (`[data-look="neo"].node path`,
  * `.relationshipLine`, the `_neo` markers in user space) and the chevron at 0.8 (its
- * `viewBox 0 0 25 20` in a 20 × 20 marker). The four redux themes set v12's
- * `requirementEdgeLabelBackground`, which `.labelBkg` reads before `edgeLabelBackground`:
- * white, or `#16141f` in the dark ones (GAPS #587); neo has none.
+ * `viewBox 0 0 25 20` in a 20 × 20 marker). The label tag's fill is the theme background in
+ * every family (D628): v12's redux `requirementEdgeLabelBackground` literals (GAPS #587) are
+ * gone, and an author's `relationLabelBackground` still wins.
  */
 export const theme: DiagramThemeTable = {
   vars: THEME_VARIABLE_TABLE,
@@ -43,14 +43,8 @@ export const theme: DiagramThemeTable = {
       },
     },
     redux: {
-      rules: { relationLabelBackground: '#ffffff' },
       tokens: { relationArrowScale: 0.8 },
-      dark: { rules: { relationLabelBackground: '#16141f' } },
     },
-    neo: {
-      fallback: 'redux',
-      rules: { relationLabelBackground: 'inline(linkLabelBkg, edgeLabelBackground)' },
-      dark: { rules: { relationLabelBackground: 'inline(linkLabelBkg, edgeLabelBackground)' } },
-    },
+    neo: { fallback: 'redux' },
   },
 };

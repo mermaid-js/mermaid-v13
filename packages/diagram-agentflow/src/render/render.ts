@@ -18,7 +18,7 @@ import {
   type SvgWriter,
 } from '@mermaid-js/core/svg';
 import { cls, openSvgRoot, textElement, type RootOptions } from '@mermaid-js/shared/svg/document';
-import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
+import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import { marker, markerTrim } from '@mermaid-js/shared/svg/arrowheads';
 import { routePath } from '@mermaid-js/shared/svg/route';
 import { layoutLabel, type MeasuredLabel } from '@mermaid-js/core/text';
@@ -80,7 +80,7 @@ export function renderAgentflow(
     order: flowOrder(model),
   };
   openRoot(scene, model, title);
-  const { frame, edgeLabel, title: ink } = scene.paint;
+  const { frame, edgeLabel: labelPaint, title: ink } = scene.paint;
   if (frame) drawFrames(scene, frame);
   w.open('g', {
     class: 'edgePaths',
@@ -92,7 +92,7 @@ export function renderAgentflow(
   for (const e of prepared.edges) drawEdge(scene, e);
   w.close();
   w.open('g', { class: 'edgeLabels' });
-  if (edgeLabel) for (const e of prepared.edges) drawEdgeLabel(scene, e, edgeLabel);
+  if (labelPaint) for (const e of prepared.edges) drawEdgeLabel(scene, e, labelPaint);
   w.close();
   const tips = new Map(model.tooltips);
   w.open('g', { class: 'nodes', fill: scene.paint.node.text });
@@ -260,7 +260,7 @@ function drawEdgeLabel(
 ): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
-  labelOnBox(w, e.label, at, e.edge.id, {
+  edgeLabel(w, e.label, at, e.edge.id, {
     fill: paint.fill,
     stroke: e.style.shape.stroke ?? node.line,
     text: { fill: paint.text, ...e.style.text },

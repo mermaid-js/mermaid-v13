@@ -4,7 +4,9 @@
  * stopped short of the outlines for its arrowheads, which follow it inline. Edges are plain
  * leaves: v12 never sketched them (D447).
  */
+import { pxProfile } from '@mermaid-js/core/layout';
 import { marker, markerTrim, type LineEnd } from '@mermaid-js/shared/svg/arrowheads';
+import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import type { Attrs, PathData, SvgWriter } from '@mermaid-js/core/svg';
 import type { BlockEdgeLayout, PlacedLabel, Point } from '../layout/types.ts';
 import { BLOCK_RENDER } from './metrics.ts';
@@ -97,21 +99,18 @@ export function drawEdge({ w, paint }: Scene, e: BlockEdgeLayout): void {
   marker(w, e.arrowTypeEnd, path.end, head, heads);
 }
 
-/** v12's edge label: a `g.edgeLabel` (`data-id` only), its background box, then its text. */
+/**
+ * An edge's label as the shared tag (D626–D628), centred in the room the layout gave it: the
+ * text plus the px profile's `labelPatch` (D629). Block has no edge style, so the border takes
+ * the line colour every edge is drawn in.
+ */
 export function drawEdgeLabel({ w, paint }: Scene, e: BlockEdgeLayout, label: PlacedLabel): void {
   const { edge } = paint;
-  const pad = BLOCK_RENDER.edgeLabelPad;
-  w.open('g', { class: 'edgeLabel', 'data-id': e.id });
-  w.leaf('rect', {
-    x: label.x - pad,
-    y: label.y,
-    width: label.width + 2 * pad,
-    height: label.height,
-    rx: BLOCK_RENDER.edgeLabelRadius,
+  const at = { x: label.x + label.width / 2, y: label.y + label.height / 2 };
+  edgeLabel(w, label.text, at, e.id, {
     fill: edge.labelFill,
+    stroke: edge.line,
+    text: { fill: edge.labelText },
+    patch: pxProfile.builder.labelPatch,
   });
-  w.label(label.text, label.x + label.width / 2, label.y + label.height / 2, {
-    fill: edge.labelText,
-  });
-  w.close();
 }

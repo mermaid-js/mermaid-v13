@@ -830,9 +830,9 @@ npm install @mermaid-js/plugin-hand-drawn
   relationship lines; business marks stay plain, as v12 drew them without roughjs) and
   agentflow (vertices, their inner lines, flow frames, the collapsed card with its separator and
   dots, edges). v12
-  did not sketch mindmap's plain node in the classic themes; v13 does (D308). An edge label's
-  tag (flowchart, swimlane-beta, class, state, ER, agentflow) has its 1 px border sketched like a
-  node's outline and its fill drawn solid, never hatched; v12 never sketched it (D630).
+  did not sketch mindmap's plain node in the classic themes; v13 does (D308). Every edge label
+  drawn as a tag (the shared edge-label box, D626) has its 1 px border sketched like a node's
+  outline and its fill drawn solid, never hatched; v12 never sketched it (D630).
   Arrowheads and text are never sketched, as in v12.
   Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for edges. State composites are drawn
   at 0.7, where v12 used roughjs's default of 1. An outline with no fill and no stroke
@@ -2821,6 +2821,7 @@ each a `g.node` (`node <classes or default> flowchart-label`) holding its shape 
 | Edge classes `… flowchart-link LS-a1 LE-b1` (fixed, meaningless `LS`/`LE`) | `edge-thickness-* edge-pattern-* flowchart-link` | Dead classes dropped |
 | Edges from centre to centre, clipped at the outline v12's intersect found (the crossing nearest the far end) | Clipped at the outermost crossing of each outline; a self-loop is a cubic standing out at the top right | D441 |
 | Edge label `g.edgeLabel` > `g.label` > `foreignObject`, a background at `edgeLabelBackground` | `g.edgeLabel` > its background `rect` (`edgeLabelBackground`) and its `text` | R-SEC-2 |
+| Edge label on a half-transparent `edgeLabelBackground` fill with square corners and no border, the edge's room not counting it | A tag, the shared edge label: a rounded box (`rx` 6) with 8 px of room each side and 4 px above and below, filled opaque with `edgeLabelBackground` (the theme background unless set) and bordered 1 px solid in the line colour, also on thick and dotted edges. The label's room in the layout is the same box (`labelPatch`), so diagrams with labels grow a little. Under `look: handDrawn` the border is sketched | D626, D627, D628, D629, D630 |
 | Each edge label drawn straight after its edge (`insertEdges`), so a later edge could cross it | Every edge first, then every edge label, so no edge crosses a label | As flowchart v13 (one family, user story 6) |
 | Arrowheads painted `lineColor` (block's `.marker` rule) | Painted `arrowheadColor`, as flowchart v13: the same colour in every theme but `forest` and `neutral`, which set their own | One family with flowchart |
 | Composite palette in CSS (`[data-look][data-color-id="color-i"].node rect.composite`), only in `redux-color` and `redux-dark-color` | `data-color-id="color-<n>"` on the composite's `g.node` (kept) with the slot's stroke and fill on its `rect`, wherever the theme or the author sets `borderColorArray`; `style`/`classDef` still beat it | D152, `paletteSlots()` |
@@ -2832,7 +2833,7 @@ each a `g.node` (`node <classes or default> flowchart-label`) holding its shape 
 | Composites nested 5 or more levels deep sized as v12's repeated sizing compounded (a block at depth d sized 2^d times) | Each composite is sized at most 16 times, so the layout stays linear: v12's sizes exactly to 4 levels; at 5 levels 97 of 300 generated trees differ (median 544 px, at most 27,405 px), at 6 levels 32 of 100 (median 2,496 px, at most 53,192 px) | Linear layout; past the cap pending a D-id (D440) |
 | The `viewBox` from the browser's `getBBox()` plus 5, and a height one "magic factor" taller | The layout's bounds (every outline, label and edge, plus v12's 5 px) | D224 |
 | No text output | `format: 'ascii'` (both charsets): boxes on a character grid, one width per column at the widest label, composites as frames with the label on the top border, spaces blank, labels cut with `…`, block arrows as boxes with an arrowhead per pointing side, edges as stepped lines with arrowheads; `block.padding` ignored with no warning | D449, D320 |
-| Hand-drawn: leaves sketched by roughjs | Leaves through the outline hook (`node`, and `divider` for the subroutine's frames, the cylinder's rim and the double circle's inner ring); composites, block arrows and edges plain, as v12 | D301, D302, D447 |
+| Hand-drawn: leaves sketched by roughjs | Leaves through the outline hook (`node`, and `divider` for the subroutine's frames, the cylinder's rim and the double circle's inner ring); composites, block arrows and edges plain, as v12; an edge label's border sketched (`label`) | D301, D302, D447, D630 |
 
 ## C4 diagram
 
@@ -3198,8 +3199,9 @@ v12's, apart from the two layout fixes of D514.
 - **Theme variables** (D435): `requirementBackground`, `requirementBorderColor`,
   `requirementBorderSize`, `requirementTextColor` and `relationLabelBackground`, which v12
   documented and never read, now take effect, with `relationColor` and `relationLabelColor`
-  added; unset, they draw v12's colours. The redux themes' label chip is white (dark: `#16141f`),
-  as v12 drew it. See [theme-variables.md](./theme-variables.md).
+  added; unset, they draw v12's colours, but for the label tag's fill, which is the theme
+  background in every theme (D628; v12's redux chip was white, dark `#16141f`). See
+  [theme-variables.md](./theme-variables.md).
 - **Boxes** (D436) keep v12's one-column `Key: value` text with no wrapping. A multi-line value
   (a quoted text spanning lines) is stacked line under line, where v12 overlapped it with the
   line above, and a font whose half line passes the 20px padding no longer draws text above
@@ -3235,7 +3237,7 @@ What changed in the requirement diagram's SVG compared with v12 (DESIGN §7.2, s
 #574). The groups are v12's unified render's (`edgePaths`, `edgeLabels`, `nodes`), and v12's
 class names are kept where the element still exists (`node default <classDef>`, `basic
 label-container outer-path`, `divider`, `relationshipLine`, `edge-thickness-normal`,
-`edge-pattern-solid`/`-dashed`, `edgeLabel`, `labelBkg`, `requirementDiagramTitleText`).
+`edge-pattern-solid`/`-dashed`, `edgeLabel`, `requirementDiagramTitleText`).
 
 | v12 | v13 | Why |
 | --- | --- | --- |
@@ -3248,7 +3250,8 @@ label-container outer-path`, `divider`, `relationshipLine`, `edge-thickness-norm
 | A relation to a name no box has: an edge with an undefined end | Not drawn; its `<n>` still counts it | D434 |
 | `look: neo`: 2px lines, the chevron at 0.8 in user space, marker strokes and box outline at `strokeWidth`, the gradient on the outline and divider, the drop shadow on the outline | The same, by theme family: the redux and neo themes draw it, the classic themes draw v12 classic (1px lines, a 20 × 20 chevron and r 9 circle with 1px strokes, a 1.3px outline, no shadow). The geometry is `relationStrokeWidth` (lines and marker strokes), `relationArrowScale` and `requirementBorderSize` | D152, D153, D227 |
 | Marker room: none (dagre); markers could overlap the next box | The layout keeps each marker's drawn extent clear, from the theme's marker geometry (21 × 21 classic, 20 × 20 redux and neo, more for a wider `strokeWidth`; marker strokes stop at 8px, the chevron scale at 2) | Spec #520 (marker room from the family tokens) |
-| Edge label `<g class="edgeLabel">` with `<foreignObject>` (`div.labelBkg`, `span.edgeLabel`) | `<g class="edgeLabel" data-id>` with `<rect class="labelBkg">` 4px wider than the text each side and a `<text>` | Text labels; labels carry no `data-ast` (D437) |
+| Edge label `<g class="edgeLabel">` with `<foreignObject>` (`div.labelBkg`, `span.edgeLabel`) | `<g class="edgeLabel" data-id>` with a `<rect>` and a `<text>` | Text labels; labels carry no `data-ast` (D437) |
+| Relation label on a square chip with no border (`relationLabelBackground`, white or `#16141f` in the redux themes) | A tag, the shared edge label: a rounded box (`rx` 6, no `labelBkg` class) with 8 px of room each side and 4 px above and below, filled opaque with `relationLabelBackground` (the theme background unless set, in every theme) and bordered 1 px solid in `relationColor`, solid on the dashed lines. The layout reserves the same box (`labelPatch`). Under `look: handDrawn` the border is sketched | D626, D627, D628, D629, D630 |
 | Edges drawn with `flowchart.curve` (`rounded` by default) | The same curves, through `flowchart.curve` (class's precedent) | |
 | A self-loop drawn with `flowchart.curve` | A self-loop is always `rounded`, whatever the curve | Class's precedent: its legs are too short for the other curves |
 | A `style` / `classDef` `fill` left the text in the theme's ink (`styles2String` sends only `color` and `font-*` to the labels) | A `fill` with no `color` gives the text `theme.ink(fill)`, an ink that reads on it | R-THEME-12, ER's precedent |
@@ -3387,7 +3390,8 @@ order are kept: `g.clusters` (each `g.usecase-system-boundary.system-boundary-<t
 | Animated relationships: `stroke-dasharray: 9,5` and the `dash` keyframes | The same dashes, caps and speeds, moved by an `<animate>` in the relationship's group: the keyframes need a `<style>` | R-SEC-2, D606, as the flowchart |
 | An icon actor drew Font Awesome's fallback glyph (`usecase-actor-icon-fallback`) for an unknown icon | The icons extension's glyph (D293) in the frame, else the frame alone with one `ICON_NOT_RENDERED` | D293, D299 |
 | `look: neo` (the `usecase.look` default) was never read by the renderer, which took the global `look` (`classic`): no shadow, no gradient | The same in every theme: usecase differs between families by colour only | D227, D153 |
-| Hand-drawn: roughjs sketched each shape, cell and frame (roughness 0.7, hachure, fill weight 1.5) and each line (roughness 0.3) | `@mermaid-js/plugin-hand-drawn` sketches each node shape (`node`), JSON cell (`part`), boundary frame and tab (`group`, fill weight 3) and line (`edge`); markers, business marks and text stay plain | D301, D302 |
+| Hand-drawn: roughjs sketched each shape, cell and frame (roughness 0.7, hachure, fill weight 1.5) and each line (roughness 0.3) | `@mermaid-js/plugin-hand-drawn` sketches each node shape (`node`), JSON cell (`part`), boundary frame and tab (`group`, fill weight 3), line (`edge`) and edge-label border (`label`, solid fill); markers, business marks and text stay plain | D301, D302, D630 |
+| Relationship label on a `.labelBkg` background (`edgeLabelBackground`, 2 px each side, square, no border) | A tag, the shared edge label: `g.edgeLabel` > a rounded `rect` (`rx` 6, no `labelBkg` class) with 8 px of room each side and 4 px above and below, filled opaque with `edgeLabelBackground` (the theme background unless set) and bordered 1 px solid in the line's colour (an author's `style` stroke, else include's or extend's colour, else `lineColor`), solid on dashed lines; then `text.relationship-label`. The layout reserves the same box (`labelPatch`) | D626, D627, D628, D629 |
 
 ### Usecase theme colours
 
