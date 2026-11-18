@@ -6,6 +6,7 @@ exports[`layered over parser-produced class graphs > lays out every corpus graph
   "class/baseline/classes/clickable.mmd": 0,
   "class/baseline/classes/direction-lr.mmd": 0,
   "class/baseline/classes/generics-annotations.mmd": 0,
+  "class/baseline/classes/generics-named-like-html.mmd": 0,
   "class/baseline/classes/simple.mmd": 0,
   "class/baseline/classes/visibility.mmd": 0,
   "class/baseline/handdrawn/default.mmd": 1,

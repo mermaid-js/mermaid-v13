@@ -1,0 +1,11 @@
+---
+description: generic types named like HTML tags (U, B, I, Data, Button) are drawn as written, in titles and members
+---
+classDiagram
+  A --> B~U~
+  class Bold~B~
+  class C~I~
+  class Box~Button~ {
+    +List~Data~ items
+    +get(Map~K, Option~ m) Box~Form~
+  }
