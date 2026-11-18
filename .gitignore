@@ -81,6 +81,8 @@ generated/
 
 
 /assistant/
+# Local output of the mermaid-docs skills (architecture docs, health reports)
+/.mermaid/
 # Project skills are shared (v13/docs/RELEASING.md uses release-alpha); the rest of .claude stays
 # local. `!/.claude/` first, so a global `.claude` ignore can't hide the skills.
 !/.claude/

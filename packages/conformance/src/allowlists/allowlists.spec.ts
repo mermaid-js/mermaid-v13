@@ -21,7 +21,7 @@ import {
 } from './allowlists.ts';
 
 /** Only ever lower these. A new entry takes a reference, not a place in the baseline. */
-const BASELINE_SIZE = { divergences: 105, skips: 80, lintDisables: 210, swimlane: 0 };
+const BASELINE_SIZE = { divergences: 105, skips: 79, lintDisables: 210, swimlane: 0 };
 
 const rules: Rules = {
   decisions: new Set(['D7', 'D310']),
