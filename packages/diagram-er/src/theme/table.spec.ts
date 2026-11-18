@@ -59,7 +59,7 @@ describe('the ER theme table (#414 T3)', () => {
       expect((await themed(name)).value('erMarkerFill'), name).toBe('#ffffff');
   });
 
-  it('fills edge labels with the theme background in every theme (D621)', async () => {
+  it('fills edge labels with the theme background in every theme (D628)', async () => {
     for (const name of [...CLASSIC, 'redux', 'redux-color', 'redux-dark', 'redux-dark-color']) {
       const t = await themed(name);
       expect(t.value('erEdgeLabelBackground'), name).toBe(t.value('background'));

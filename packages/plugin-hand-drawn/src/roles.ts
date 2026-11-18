@@ -31,7 +31,7 @@ export const COMPOSITE: SketchOptions = {
 };
 
 /**
- * An edge label's box (D623, no v12 counterpart: v12 never sketched it): the border sketched as
+ * An edge label's box (D630, no v12 counterpart: v12 never sketched it): the border sketched as
  * a node's outline, the fill plain (solid, never hachure), as a state composite's.
  */
 export const LABEL: SketchOptions = { ...COMPOSITE };

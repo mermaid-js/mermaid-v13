@@ -64,7 +64,7 @@ const V12: Readonly<Record<string, SketchOptions>> = {
   },
   // edges.js: { roughness: 0.3 }
   edge: { roughness: 0.3, fillStyle: 'hachure', fillWeight: -1, hachureGap: -1 },
-  // No v12 counterpart: an edge label's box, its border sketched and its fill solid (D623).
+  // No v12 counterpart: an edge label's box, its border sketched and its fill solid (D630).
   label: { roughness: 0.7, fillStyle: 'solid', fillWeight: -1, hachureGap: -1 },
 };
 

@@ -16,7 +16,7 @@
   composite states count as states; concurrency regions and notes do not. Over either, render
   rejects with a `LIMIT` `MermaidError`. v12 had no such limit. Only the integrator can raise
   them ([Limits](#limits)).
-- **Transition labels are tags** (D619–D623): a rounded box (`rx` 6) with 8 px of room each
+- **Transition labels are tags** (D626–D630): a rounded box (`rx` 6) with 8 px of room each
   side and 4 px above and below, filled opaque with `edgeLabelBackground` (the theme background
   unless set) and bordered 1 px solid in the transitions' line colour. v12 drew the label on a
   half-transparent fill with no border. Transitions reserve the matching room, so diagrams with

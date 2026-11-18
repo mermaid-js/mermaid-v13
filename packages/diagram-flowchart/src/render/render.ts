@@ -445,7 +445,7 @@ function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
   w.close();
 }
 
-/** An edge's label as a tag, bordered in the edge's own stroke (D619, D620). */
+/** An edge's label as a tag, bordered in the edge's own stroke (D626, D627). */
 function drawEdgeLabel({ w, layout, ctx, paint }: Scene, e: EdgeView): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;

@@ -14,7 +14,7 @@ import { withoutEmbedded } from './svg-tree.ts';
  * each type's corpus: every role the type has reaches the drawer, every shape does (only
  * arrowheads, kanban's priority bar, venn's unfilled overlaps and debug shapes, the label boxes
  * of the types that still draw their own, and text stay plain), and no arrowhead or text does.
- * An edge label drawn by the shared tag reaches the drawer as role `label` (D623).
+ * An edge label drawn by the shared tag reaches the drawer as role `label` (D630).
  */
 
 interface Call {
