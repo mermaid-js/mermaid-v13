@@ -454,6 +454,23 @@ describe('treemap render: paints (D215, D227, D404, D406, D407)', () => {
     expect(fills).toEqual(['#555555', '#f4f4f4', '#555555']);
   });
 
+  it('fills and strokes the 13th section and later ones, cycling cScale0 to 11 (D612, #844)', async () => {
+    const { tree } = await render(probe('thirteen-sections'), literal('default'));
+    const rects = byClass(tree, 'treemapSection').filter((n) => tree.tag(n) === 'rect');
+    expect(rects).toHaveLength(14);
+    const paints = rects.map((r) => [attr(tree, r, 'fill'), attr(tree, r, 'stroke')]);
+    for (const [i, [fill, stroke]] of paints.entries()) {
+      expect(fill, `section ${i + 1}`).not.toBe('transparent');
+      expect(stroke, `section ${i + 1}`).not.toBe('transparent');
+    }
+    // Twelve colours, then round again: the 13th takes the 1st's, the 14th the 2nd's.
+    expect(new Set(paints.slice(0, 12).map(([fill]) => fill)).size).toBe(12);
+    expect(paints.slice(12)).toEqual(paints.slice(0, 2));
+    // The 13th section's leaf takes its parent's fill.
+    const leaf = rectOf(tree, groupOf(tree, 'a12'));
+    expect(attr(tree, leaf, 'fill')).toBe(paints[12]![0]);
+  });
+
   it("writes classDef styles over v12's own: shape styles on the rect, text styles on the text", async () => {
     const { tree } = await render(probe('simple'), literal('neutral'));
     const g = groupOf(tree, 'Section 1.2');
