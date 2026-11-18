@@ -1,0 +1,9 @@
+---
+description: >-
+  two self-relationships on one entity (#768, D618): the second is mirrored to
+  the far side, with its cardinality markers
+---
+erDiagram
+  PERSON ||--o{ PERSON : parents
+  PERSON }o--o| PERSON : spouse
+  PERSON ||--|{ ADDRESS : has
