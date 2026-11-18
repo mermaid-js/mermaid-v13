@@ -1,16 +1,18 @@
 // Ported from v12 `swimlanes/layoutCore.ts` at upstream `c9b12739f` (D532). Changed: spacing and
 // tuning come from the adapter's `LayoutData.config` (`graph.spacing`, `ctx.config.swimlane`);
-// the lane order the phases used is kept on `laneOrder` for the adapter; the curve choice
-// (`basis` to `rounded`) is flowchart's (T1, the model has no curve); `validateSwimlanesLayout`
-// only logged in v12, so it runs from the specs (`__tests__/ddlt.spec.ts`), not here.
+// the lane order the phases used, empty lanes beside their declared neighbours, is kept on
+// `laneOrder` for the adapter; the curve choice (`basis` to `rounded`) is flowchart's (T1, the
+// model has no curve); `validateSwimlanesLayout` only logged in v12, so it runs from the specs
+// (`__tests__/ddlt.spec.ts`), not here.
 import type { LayoutData } from './layoutData.ts';
 import { postProcessSwimlaneLayout } from './postProcessing.ts';
 import { toGraphView, topLaneGap, writeBackToLayoutData } from './helpers.ts';
 import { sugiyamaLayout } from './pipeline.ts';
-import { resolveTopLaneOrder } from './phase2.options.ts';
+import { buildTopLaneOrder, resolveTopLaneOrder } from './phase2.options.ts';
+import { withEmptyLanesBesideDeclaredNeighbours } from './laneOrdering.ts';
 import { routeForDirection } from './turnedRouting.ts';
 import { routeSelfLoops } from './selfLoops.ts';
-import { fitLanesToRoutes, fitLanesToTitles } from './laneFit.ts';
+import { fitLanesToRoutes, fitLanesToTitles, isPlaced } from './laneFit.ts';
 import { reattachTerminals } from './terminalReattach.ts';
 
 export type SwimlaneDirection = 'TB' | 'LR' | 'BT' | 'RL';
@@ -40,7 +42,15 @@ export function runSwimlaneLayoutCore(data4Layout: LayoutData): SwimlaneDirectio
     direction,
   });
   writeBackToLayoutData(g, ordered, coordinates, { nodeGap, layerGap });
-  data4Layout.laneOrder = resolveTopLaneOrder(g, laneOrder);
+  // The phases size every lane with nodes; the adapter places the rest in this order.
+  const empty = new Set(
+    data4Layout.nodes.filter((n) => n.isGroup && !isPlaced(n)).map((n) => n.id)
+  );
+  data4Layout.laneOrder = withEmptyLanesBesideDeclaredNeighbours(
+    resolveTopLaneOrder(g, laneOrder),
+    buildTopLaneOrder(g),
+    empty
+  );
 
   // The layout phases above position nodes only; they do not emit edge routing.
   // Reset any edge points carried on the input so routeEdgesOrthogonal below is

@@ -1,4 +1,6 @@
-// Ported from v12 `swimlanes/laneOrdering.ts` at upstream `c9b12739f` (D532).
+// Ported from v12 `swimlanes/laneOrdering.ts` at upstream `c9b12739f` (D532). Added:
+// `withEmptyLanesBesideDeclaredNeighbours`, the place the v12 changes mermaid-js/mermaid#8754 and
+// mermaid-js/mermaid#8772 give an empty lane.
 import { byCodeUnit } from './compare.ts';
 import type { Graph } from './helpers.ts';
 import { buildTopLaneOrder, createTopLaneResolver } from './phase2.options.ts';
@@ -168,6 +170,40 @@ function seedForRestart(
     .map(({ a, b, weight }) => `${a}:${b}:${weight}`)
     .join('|');
   return hashString(`${sourceOrder.join('|')}#${weightSignature}#${restartIndex}`);
+}
+
+/**
+ * Where the empty lane `declared[index]` goes in `order`, which holds the lanes declared before
+ * it: right after the lane declared just before it, or, for the first lane, right before the
+ * first lane declared after it that `order` holds.
+ */
+function emptyLaneSlot(
+  order: readonly string[],
+  declared: readonly string[],
+  index: number
+): number {
+  if (index > 0) return order.indexOf(declared[index - 1]!) + 1;
+  const next = declared.find((id) => order.includes(id));
+  return next === undefined ? 0 : order.indexOf(next);
+}
+
+/**
+ * The lanes across the flow, with each lane in `empty` beside the lanes declared next to it, as
+ * the v12 changes mermaid-js/mermaid#8754 (TB, BT) and mermaid-js/mermaid#8772 (LR, RL) place an
+ * empty lane: right after the lane declared before it, or the first lane right before the next
+ * lane with nodes. The other lanes keep their order in `drawn` (the source or automatic order),
+ * so with `drawn` in `declared` order nothing moves.
+ */
+export function withEmptyLanesBesideDeclaredNeighbours(
+  drawn: readonly string[],
+  declared: readonly string[],
+  empty: ReadonlySet<string>
+): string[] {
+  const order = drawn.filter((id) => !empty.has(id));
+  for (const [index, id] of declared.entries()) {
+    if (empty.has(id)) order.splice(emptyLaneSlot(order, declared, index), 0, id);
+  }
+  return order;
 }
 
 export function optimizeTopLaneOrder(g: Graph, opts: { restarts?: number } = {}): string[] {
