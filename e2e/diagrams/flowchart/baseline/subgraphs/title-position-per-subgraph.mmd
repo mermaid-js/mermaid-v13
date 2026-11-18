@@ -1,0 +1,37 @@
+---
+description:
+  Each subgraph sets its own title position with titlePosition, one for each of the six
+  positions, and the last keeps the default at the top in the middle. A subgraph's position
+  does not pass to the subgraph nested in it (mermaid-js/mermaid#2977).
+---
+flowchart TD
+    subgraph tl [Top left]
+        a1[First node] --> a2[Second node]
+    end
+    subgraph tc [Top center]
+        b1[First node] --> b2[Second node]
+    end
+    subgraph tr [Top right]
+        c1[First node] --> c2[Second node]
+    end
+    subgraph bl [Bottom left]
+        d1[First node] --> d2[Second node]
+    end
+    subgraph bc [Bottom center]
+        e1[First node] --> e2[Second node]
+    end
+    subgraph br [Bottom right]
+        f1[First node] --> f2[Second node]
+        subgraph inner [Nested keeps the default]
+            f3[Third node]
+        end
+    end
+    subgraph plain [Default]
+        g1[First node] --> g2[Second node]
+    end
+    tl@{ titlePosition: top-left }
+    tc@{ titlePosition: top-center }
+    tr@{ titlePosition: top-right }
+    bl@{ titlePosition: bottom-left }
+    bc@{ titlePosition: bottom-center }
+    br@{ titlePosition: bottom-right }

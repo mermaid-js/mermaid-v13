@@ -19,6 +19,7 @@ import type {
   RoutePoint,
   Side,
 } from '../types.ts';
+import { titleAlign, titleLow, titlePoint } from '../title.ts';
 
 interface Rect {
   x0: number;
@@ -532,13 +533,19 @@ export function layoutTree(graph: LayoutGraph): LayoutModel {
   const groups = new Map<string, LayoutModelGroup>();
   for (const g of graph.groups) {
     const r = boxes.get(g.id)!;
-    const cx = (r.x0 + r.x1) / 2 + dx;
+    const frame = [r.x0 + dx, r.y0 + dy, r.x1 + dx, r.y1 + dy] as const;
+    const { top, bottom, left, right } = g.padding;
     groups.set(g.id, {
-      x: cx,
+      x: (r.x0 + r.x1) / 2 + dx,
       y: (r.y0 + r.y1) / 2 + dy,
       width: r.x1 - r.x0,
       height: r.y1 - r.y0,
-      title: { x: cx, y: r.y0 + g.padding.top / 2 + dy },
+      title: titlePoint(
+        g,
+        frame,
+        (titleLow(g) ? bottom : top) / 2,
+        titleAlign(g) < 0 ? left : right
+      ),
     });
   }
   const edges = new Map<string, LayoutModelEdge>();

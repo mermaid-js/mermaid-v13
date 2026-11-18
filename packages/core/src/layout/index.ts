@@ -21,6 +21,7 @@ export type {
   RoutePoint,
   Side,
   Size,
+  TitlePosition,
 } from './types.ts';
 export {
   layered,

@@ -32,6 +32,10 @@ export interface CNode {
   padTop: number;
   padBottom: number;
   minW: number;
+  // A group's title: in the bottom padding, not the top; -1 at the left, 0 in the middle, 1 at
+  // the right.
+  titleLow: boolean;
+  titleSide: number;
   // Declaration order; a group takes the smallest value among its members.
   seq: number;
   // How much of a side its edges may spread along, measured across the flow; 0 keeps them at its middle.
@@ -116,6 +120,8 @@ export function cnode(w: number, h: number, parent = -1): CNode {
     padTop: 0,
     padBottom: 0,
     minW: 0,
+    titleLow: false,
+    titleSide: 0,
     seq: 0,
     span: 0,
     loopW: 0,

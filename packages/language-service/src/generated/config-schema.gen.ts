@@ -6254,6 +6254,23 @@ export const configSchema: ConfigSchema = {
             "status": "pending"
           }
         },
+        "subGraphTitlePosition": {
+          "description": "Where the title of a subgraph sits: at the top or the bottom of the subgraph, and at\nthe left, the middle or the right. A subgraph can set its own with\n`id@{ titlePosition: bottom-left }`.\n\nWhen unset, the title is at the top in the middle (at the top left with the `compass`\nlayout). Swimlane lanes, collapsed subgraphs and text output keep their own placement.\n",
+          "type": "string",
+          "enum": [
+            "top-left",
+            "top-center",
+            "top-right",
+            "bottom-left",
+            "bottom-center",
+            "bottom-right"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "New in v13 (mermaid-js/mermaid#2977). Any other value draws with the default and adds one `FLOWCHART_CONFIG_IGNORED` warning."
+          }
+        },
         "arrowMarkerAbsolute": {
           "type": "boolean",
           "x-mermaid": {
