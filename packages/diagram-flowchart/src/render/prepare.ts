@@ -7,6 +7,7 @@ import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { graphSpacing, groupPadding, labelledEdge, sideways } from '@mermaid-js/shared/layout';
 import type { CheckedStyle } from '@mermaid-js/core/svg';
+import { arrowheads, markerTrim } from '@mermaid-js/shared/svg/arrowheads';
 import { styleCache } from '@mermaid-js/shared/svg/document';
 import {
   FOLDED_TYPE_SIZE,
@@ -19,7 +20,7 @@ import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/
 import type { FlowModel, FlowModelEdge, FlowVertex } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { FlowRenderContext } from './context.ts';
-import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
+import { curveReporter, curveRouting, LEAD, type CurveKind } from '@mermaid-js/shared/svg/route';
 import { dirOf, nesting, type Nesting } from './nesting.ts';
 import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
 import { assetSize } from './assets.ts';
@@ -45,6 +46,8 @@ export interface NodeView {
   h: number;
   /** Label shift from the centre. */
   dy: number;
+  /** Label shift sideways from the centre. */
+  dx: number;
   style: CheckedStyle;
   classes: string[];
   parent?: string;
@@ -121,6 +124,8 @@ interface Measure {
     max: number,
     bits?: number
   ) => MeasuredLabel;
+  /** `curveKind` for this render: an unknown name warns once (D602). */
+  readonly curveOf: (curve: string | undefined) => CurveKind;
   readonly styleOf: (classes: readonly string[], own?: readonly string[]) => CheckedStyle;
 }
 
@@ -149,8 +154,20 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     minWidth: length('minNodeWidth') ?? 0,
     // This is the only place the builder looks at which profile it has.
     cells: units.id === 'cell',
+    // `markdownAutoWrap: false` breaks a markdown label only where its source does (v12).
     label: (text, markdown, f, max, bits = 0) =>
-      layoutLabel(text, f, max, measurer, { markdown, style: bits, inline }),
+      layoutLabel(
+        text,
+        f,
+        markdown && ctx.config.markdownAutoWrap === false ? Infinity : max,
+        measurer,
+        {
+          markdown,
+          style: bits,
+          inline,
+        }
+      ),
+    curveOf: curveReporter((w) => ctx.warn(w)),
     styleOf: styleCache(
       new Map(model.classes.map((c) => [c.id, [...c.styles, ...c.textStyles]])),
       ctx.warn
@@ -185,6 +202,7 @@ function nodeViews(
     w: 0,
     h: 0,
     dy: 0,
+    dx: 0,
     style: m.styleOf([]),
     classes: [],
     parent: nest.parentOf.get(id),
@@ -231,7 +249,10 @@ function nodeViews(
     const sg = subgraphs.get(view.id);
     const v = view.vertex;
     if (sg) measureNode(view, sg.title, sg.labelType === 'markdown', m);
-    else if (v) measureNode(view, v.text, v.labelType === 'markdown', m, v);
+    else if (v) {
+      measureNode(view, v.text, v.labelType === 'markdown', m, v);
+      turnBar(view, nest.flowDir(view.id), m.cells);
+    }
   }
   for (const view of groups) {
     const sg = subgraphs.get(view.id)!;
@@ -241,6 +262,9 @@ function nodeViews(
   groups.sort((g, h) => g.depth - h.depth);
   return { views, groups, nodes };
 }
+
+/** A size's label shift sideways, none when it has no `dx`. */
+const labelDx = (s: { dx?: number }): number => s.dx ?? 0;
 
 function measureNode(
   view: NodeView,
@@ -304,6 +328,12 @@ function measureNode(
   view.w = s.w;
   view.h = s.h;
   view.dy = s.dy;
+  view.dx = labelDx(s);
+}
+
+/** A fork or join bar lies across the flow: 10 × 70 where it runs sideways (v12, D604). */
+function turnBar(view: NodeView, flow: Dir, cells: boolean): void {
+  if (view.shape === 'fork' && !cells && sideways(flow)) [view.w, view.h] = [view.h, view.w];
 }
 
 /** One view per drawn edge; edges into a collapsed subgraph end at it, and a loop it hides goes. */
@@ -338,7 +368,7 @@ function edgeViews(
       style,
       start,
       end,
-      curve: curveKind(e.interpolate ?? model.defaultInterpolate ?? flow.curve),
+      curve: m.curveOf(e.interpolate ?? model.defaultInterpolate ?? flow.curve),
     });
   }
   return edges;
@@ -363,10 +393,18 @@ function layoutGraph(
     return px === undefined ? fallback : fromPx(units, px, axis, min);
   };
   // Node spacing runs across the flow and rank spacing along it.
-  const spacing = graphSpacing(units, rootDir, length);
+  // D601: a literal rank gap stays literal, but never below an arrowhead and its lead, so the
+  // edge between two subframes stays visible (#399).
+  const head = markerTrim('arrow_point', arrowheads(m.ctx.theme)) + LEAD;
+  const spacing = graphSpacing(
+    units,
+    rootDir,
+    length,
+    fromPx(units, head, sideways(rootDir) ? 'x' : 'y')
+  );
   // How edges are routed follows the diagram's default curve: `linkStyle default interpolate`
   // first, then config, as each edge's own drawing does.
-  const curve = curveKind(model.defaultInterpolate ?? flow.curve);
+  const curve = m.curveOf(model.defaultInterpolate ?? flow.curve);
   const graph: LayoutGraph = {
     direction: rootDir,
     nodes: nodes.map((n): LayoutNode => {

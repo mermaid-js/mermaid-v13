@@ -1,0 +1,10 @@
+---
+description: in a left-to-right diagram a subgraph with direction TB keeps a horizontal bar (D604)
+---
+flowchart LR
+  x[Start] --> h@{ shape: fork } --> y[Mid]
+  subgraph down [Down]
+    direction TB
+    c[In] --> g@{ shape: fork } --> d[Out]
+  end
+  y --> c

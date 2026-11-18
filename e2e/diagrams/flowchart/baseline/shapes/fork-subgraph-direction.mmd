@@ -1,0 +1,13 @@
+---
+description: a fork follows the flow direction of its subgraph, not the diagram's (D604)
+---
+flowchart TB
+  subgraph side [Sideways]
+    direction LR
+    a[In] --> f@{ shape: fork } --> b[Out]
+  end
+  subgraph down [Down]
+    direction TB
+    c[In] --> g@{ shape: join } --> d[Out]
+  end
+  b --> c

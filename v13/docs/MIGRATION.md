@@ -454,7 +454,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `layout` | `"layered"` | The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 value `dagre` stays valid and maps to `layered` silently. `elk` and `elk.<algorithm>` (and the `flowchart-elk` header) are laid out by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). Other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. A diagram can name its own default engine (D284): mindmap lays out with `tree` (D280, loaded lazily) when no config layer sets `layout`, maps v12's `cose-bilkent` and `tidy-tree` to it silently (D282), honours `layered`, `dagre` and an installed `elk.*`, and draws an unknown or uninstalled name with `tree` and the same warnings; other diagrams do not reach `tree` (D285). Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not: any other name gives one `ASCII_DROPPED` warning (`feature: 'layout'`) and nothing else, and its engine is never loaded (D179). |
 | `maxEdges` | `5000` | The default changes from 500 to 5,000 (D31): one `A & … --> B & …` line multiplies edges, and v13 draws 5,000 quickly. Integrator-only; it sets the `maxEdges` render limit (R-SEC-5); an explicit `limits.maxEdges` wins. Over the limit, render() rejects with a `LIMIT` error. |
 | `securityLevel` | `"default"` | The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose`, `antiscript` and `sandbox` act as `default` with a warning. |
-| `flowchart.curve` | `"rounded"` | The default changes from `basis` to `rounded`, the look of v12's default ELK layout: stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis` to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped routes; `rounded` draws straight segments with rounded corners; every other value draws S-curves (the layout engine routes edges, not a d3 curve factory). |
+| `flowchart.curve` | `"rounded"` | The default changes from `basis` to `rounded`, the look of v12's default ELK layout: stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis` to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped routes with right-angle corners (the step in the middle, near the start and near the end of the leg); `rounded` draws straight segments with rounded corners; every other value draws S-curves (the layout engine routes edges, not a d3 curve factory), and a name outside this list also warns `CURVE_UNKNOWN`, once per render (D602). |
 | `sequence.actorFontSize` |  | The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
 | `sequence.actorFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. |
 | `sequence.noteFontSize` |  | The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
@@ -869,7 +869,8 @@ classes works the same with the look on.
 | An unknown layout name falls back to `dagre` with a console warning | Falls back to `layered` with a `LAYOUT_UNKNOWN` warning | R-ERR-4 |
 | Mindmap lays out with `cose-bilkent` (not deterministic), or `tidy-tree` with its plugin; `mindmap.layoutAlgorithm` is never read | Mindmap lays out with `tree`, core's two-sided tidy tree (loaded lazily), when no config sets `layout`. `cose-bilkent` and `tidy-tree` map to `tree` silently; `layered`, `dagre` and an installed `elk.*` are honoured; an unknown or uninstalled name draws with `tree` and warns. The mindmap key `layoutAlgorithm` is ignored | D280–D285 |
 | `nodeSpacing`, `rankSpacing`, `diagramPadding` | Honoured with v12's defaults (50, 50, 8) | |
-| `curve` picks a d3 curve factory | The engine routes edges: `linear` draws straight segments, `step`/`stepBefore`/`stepAfter` stepped ones, `rounded` (the default) straight segments joined by arcs of radius 5, every other value S-curves | |
+| `curve` picks a d3 curve factory | The engine routes edges: `linear` draws straight segments, `step`/`stepBefore`/`stepAfter` stepped ones, `rounded` (the default) straight segments joined by arcs of radius 5, every other value S-curves. `step`, `stepBefore` and `stepAfter` have right-angle corners and put the step in the middle, near the start and near the end of the leg | |
+| A `curve` name that is none of the `flowchart.curve` values (`curve: bogus`) is drawn like `basis`, silently | Drawn like `basis`, with one `CURVE_UNKNOWN` warning per name and render; every diagram type that draws edges with `flowchart.curve` (flowchart, class, requirement, agentflow) reports it | D602, #356 |
 | dagre adds 25 px of rank spacing inside subgraphs | Not reproduced: subgraphs are slightly more compact | |
 | An unlabelled edge between a subgraph and one of its own nodes or nested subgraphs, drawn by dagre to a stand-in node | Laid out inside the subgraph from its border, where its flow starts (entering, below the title when that is the top) or ends (leaving). A labelled one runs down from the subgraph's top, its label in a band below the title | #405, #415, #198 |
 
@@ -1073,7 +1074,11 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
   loading under `placeholders`) keeps the frame with its outline, not v12's blue `?`.
   `ICON_UNAVAILABLE` is deprecated in favour of `ICON_NOT_RENDERED`. See [Icons](#icons).
 - **Step animation** (`step` on edges, `flowchart.stepNumbers`, `flowchart.stepDuration`) and
-  edge `animate`/`animation` are parsed but not drawn.
+  edge `animate`/`animation` are parsed but not drawn. A render that uses `animate` or
+  `animation` on an edge raises one `EDGE_ANIMATION_IGNORED` warning for each of the two (#357);
+  the edge keeps its `edge-animation-*` class.
+- **`markdownAutoWrap: false`** keeps a markdown label (node, subgraph or edge) on its own line
+  breaks, as v12 did (#357).
 - **`style`, `classDef` and `linkStyle`** go through a per-property allow-list; an unknown
   property or unsafe value (`url(`, `expression(`, `javascript:`, `@import`, …) is dropped with
   `STYLE_PROPERTY_DROPPED` or `STYLE_VALUE_DROPPED`. `color` sets the label's fill.
@@ -1287,6 +1292,7 @@ them keep working.
 | `style`/`classDef`/`linkStyle` as a `style` attribute | Presentation attributes (`fill`, `stroke`, …) after the allow-list (R-SEC-3) | Unknown properties and unsafe values are dropped with a warning |
 | `click A "url"` wraps the node in `<a xlink:href>`; tooltips are an HTML hover div | `<a href>` inside the node group (only URLs that pass `securityLevel`); tooltips are an SVG `<title>`; `click … callback` draws nothing (interactions plugin) | No script in output (R-SVG-4, R-SVG-5) |
 | `viewBox` may start at negative coordinates | `viewBox="0 0 w h"` | Layout places the drawing at the origin |
+| `nodeSpacing`/`rankSpacing` below the arrowhead: a subgraph level used its parent's `nodesep` and `ranksep + 25`, so frames were never drawn as tight as asked | Spacing is literal, except a rank gap is never smaller than an arrowhead plus its 6 px lead (13 px classic, 19.5 px neo), so the edge between two subgraphs stays visible | D601, #399 |
 
 ## Sequence SVG structure
 

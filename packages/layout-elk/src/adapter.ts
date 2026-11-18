@@ -365,6 +365,42 @@ export interface Again {
   pins: Pinned;
 }
 
+/** The option each algorithm reads its edge length from. */
+const EDGE_LENGTH_KEY: Partial<Record<ElkAlgorithm, string>> = {
+  stress: 'elk.stress.desiredEdgeLength',
+  radial: 'elk.radial.radius',
+};
+
+/**
+ * The edge length stress and radial need to keep nodes apart (#417). Neither reads node size or
+ * `elk.spacing.nodeNode`. The length is a target between centres.
+ *
+ * Boxes W x H with gap s are clear on any diagonal when the distance is at least
+ * hypot(W + s, H + s), and W + H + s covers that whenever s^2 is at most 2 W H (the widest plus
+ * the tallest node bounds every pair). That `pitch` is enough for a node with a few neighbours.
+ * A node with n neighbours puts them around a ring of that length, and the ring's n chords must
+ * each be at least one pitch: 2 R sin(pi / n) is at least pitch. The highest degree in the graph sets the
+ * ring, and the length is the larger of the two.
+ */
+function clearEdgeLength(graph: LayoutGraph): number {
+  const widest = Math.max(0, ...graph.nodes.map((n) => n.width));
+  const tallest = Math.max(0, ...graph.nodes.map((n) => n.height));
+  const pitch = widest + tallest + graph.spacing.node;
+  const degree = new Map<string, number>();
+  for (const e of graph.edges) {
+    for (const end of [e.source, e.target]) degree.set(end, (degree.get(end) ?? 0) + 1);
+  }
+  const most = Math.max(0, ...degree.values());
+  // Up to two neighbours sit opposite each other, and up to six fit on a ring of one pitch.
+  return most > 2 ? Math.max(pitch, pitch / (2 * Math.sin(Math.PI / most))) : pitch;
+}
+
+/** The option each algorithm reads its edge length from, set to `length`. */
+function edgeLengthOptions(algorithm: ElkAlgorithm, length: number): LayoutOptions {
+  const key = EDGE_LENGTH_KEY[algorithm];
+  return key === undefined ? {} : { [key]: String(length) };
+}
+
 const FIRST_PASS: Again = { grow: new Map(), pins: new Map() };
 
 /**
@@ -387,6 +423,7 @@ export function toElkGraph(
     'elk.spacing.nodeNode': String(graph.spacing.node),
     'elk.layered.spacing.nodeNodeBetweenLayers': String(graph.spacing.rank),
     'elk.spacing.edgeEdge': String(graph.spacing.edge),
+    ...edgeLengthOptions(algorithm, clearEdgeLength(graph)),
   };
   const pad = graph.diagramPadding ?? 0;
   const root: ElkNode = {

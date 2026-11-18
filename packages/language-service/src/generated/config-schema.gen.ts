@@ -1396,7 +1396,9 @@ export const configSchema: ConfigSchema = {
       "type": "boolean",
       "default": true,
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0",
+        "reason": "Set to `false`, a flowchart markdown label (node, subgraph and edge) breaks only at its own line breaks, as v12 did for HTML labels. No other diagram type reads this key."
       }
     },
     "suppressErrorRendering": {
@@ -6325,7 +6327,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "The default changes from `basis` to `rounded`, the look of v12's default ELK layout: stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis` to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped routes; `rounded` draws straight segments with rounded corners; every other value draws S-curves (the layout engine routes edges, not a d3 curve factory)."
+            "reason": "The default changes from `basis` to `rounded`, the look of v12's default ELK layout: stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis` to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped routes with right-angle corners (the step in the middle, near the start and near the end of the leg); `rounded` draws straight segments with rounded corners; every other value draws S-curves (the layout engine routes edges, not a d3 curve factory), and a name outside this list also warns `CURVE_UNKNOWN`, once per render (D602)."
           }
         },
         "padding": {

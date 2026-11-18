@@ -21,10 +21,12 @@ describe('layered over parser-produced flowchart graphs', () => {
     };
     // Every name the corpus selects, so front matter `layout:` is captured too.
     m.registerLayoutLoaders(
-      ['layered', 'dagre', 'elk', 'elk.box', 'elk.rectpacking'].map((name) => ({
-        name,
-        loader: () => Promise.resolve(capture),
-      }))
+      ['layered', 'dagre', 'elk', 'elk.box', 'elk.rectpacking', 'elk.stress', 'elk.radial'].map(
+        (name) => ({
+          name,
+          loader: () => Promise.resolve(capture),
+        })
+      )
     );
     for await (const item of corpusFromDir(
       join(REPO_ROOT, 'e2e/diagrams/flowchart'),

@@ -226,6 +226,7 @@ function drawBar({ w, paint }: Scene, b: GanttBar, i: number): void {
   const o = b.pivot;
   w.leaf('rect', {
     class: barClass(b),
+    cursor: b.clickable ? 'pointer' : undefined,
     'data-id': b.id,
     'data-ast': b.ast,
     x: b.x,
@@ -253,6 +254,7 @@ function drawBar({ w, paint }: Scene, b: GanttBar, i: number): void {
 function drawLabel({ w, layout, paint }: Scene, b: GanttBar, i: number): void {
   drawText(w, b.label, {
     class: labelClass(b),
+    cursor: b.clickable ? 'pointer' : undefined,
     'data-id': b.id,
     fill: paint.labels[i],
     'font-size': b.kind === 'vert' ? M.vertFontSize : layout.fontSize,
