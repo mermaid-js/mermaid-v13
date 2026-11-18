@@ -540,7 +540,7 @@ The maintainer accepted every recommended answer on 2026-11-06, relayed through 
 
 | # | Decision |
 | --- | --- |
-| D361 | **Cynefin keeps v12's fixed geometry, and the bounding box grows to cover what is drawn**: items below the canvas, a title wider than it or above it (D224). Pele's measured layout (quadrants sized to their blocks, wrapped items, clipped and bowed arrows, a reserved title row) is recorded as a candidate for a later opt-in, not taken now. P2, D325. |
+| D361 | **Cynefin keeps v12's fixed geometry, and the bounding box grows to cover what is drawn**: items below the canvas, a title wider than it or above it (D224). Pele's measured layout (quadrants sized to their blocks, wrapped items, clipped and bowed arrows, a reserved title row) is recorded as a candidate for a later opt-in, not taken now. P2, D325. *(Amended by D617.)* |
 | D362 | **Cynefin's default seed (`seed: 0`) hashes `ctx.idPrefix`** with v12's `hashString`, as Pele does, instead of the SVG element id. This is deterministic under R-ARCH-6, since `idPrefix` is an option, and diagrams on one page still differ. Non-zero seeds give v12's exact paths. Hashing the source text (D260's style) was not taken. |
 | D363 | **Cynefin items, transition labels and the title use core's label layout** (D225), with no wrapping, as v12 has none. The badge's 26 px is a minimum height that grows with lines. The fixed domain texts and `+N more` stay plain constants. MIGRATION.md notes that `<br>` now breaks lines. |
 | D364 | **A repeated cynefin domain block keeps v12's result**: the first block's position, the last block's items. One `CYNEFIN_DUPLICATE_DOMAIN` warning per render names the replaced blocks (D226). Merging the items was not taken. P2. |
