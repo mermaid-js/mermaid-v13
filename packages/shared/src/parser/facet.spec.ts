@@ -10,6 +10,7 @@ import {
   code,
   covers,
   insertWithSeparator,
+  matchesTyped,
   probeText,
   readsBack,
   readsBackAt,
@@ -188,5 +189,18 @@ describe('read-back probes', () => {
     const answers = cases.map((r) => readsBack(r, 4, 'ab', 'k'));
     expect(answers).toEqual(cases.map((r) => readsBackAt(r, [4], 'ab', 'k', 0)));
     expect(answers).toEqual([true, false, true, false, true, false, false, false]);
+  });
+});
+
+describe('matchesTyped', () => {
+  it('matches a label that starts with what was typed, whatever the case', () => {
+    expect(matchesTyped('accTitle', 'ACC')).toBe(true);
+    expect(matchesTyped('Title', 'ti')).toBe(true);
+    expect(matchesTyped('title', '')).toBe(true);
+  });
+
+  it('does not match a label that only contains it, or a longer word', () => {
+    expect(matchesTyped('accTitle', 'title')).toBe(false);
+    expect(matchesTyped('title', 'titles')).toBe(false);
   });
 });

@@ -72,8 +72,9 @@ export interface LayoutData {
   edges: Edge[];
   direction: Dir;
   /**
-   * The lanes in the order the phases placed them across the flow (source order, or the
-   * automatic order), written by `runSwimlaneLayoutCore`.
+   * The lanes across the flow, written by `runSwimlaneLayoutCore`: the lanes with nodes in the
+   * order the phases placed them (source order, or the automatic order), and each empty lane
+   * beside the lanes declared next to it.
    */
   laneOrder?: string[];
   config: {
