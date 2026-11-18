@@ -2,7 +2,8 @@
 // parses as in v12, whose `cleanupText` turned `="x"` into `='x'` inside a tag before lexing.
 // What it draws is what flowchart draws for the same label: the tag and its attributes are
 // dropped with one HTML_DROPPED, the text is kept, and nothing of the tag reaches the SVG.
-// Each type's `baseline/text/html-attribute-in-quoted-label.mmd` holds the cases.
+// Each type's `nightly-check/html-attribute-in-quoted-label.mmd` holds the cases (nightly-check,
+// not baseline, because it warns by design, as the other HTML_DROPPED fixtures do).
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
@@ -12,7 +13,7 @@ import { drawn } from './testing/labels.ts';
 const fixture = (dir: string): string =>
   readFileSync(
     new URL(
-      `../../../e2e/diagrams/${dir}/baseline/text/html-attribute-in-quoted-label.mmd`,
+      `../../../e2e/diagrams/${dir}/nightly-check/html-attribute-in-quoted-label.mmd`,
       import.meta.url
     ),
     'utf8'

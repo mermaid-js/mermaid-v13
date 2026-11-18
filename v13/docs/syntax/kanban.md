@@ -90,11 +90,11 @@ Every rule ignores case: a rule for `ab` also matches `AB` and `aB`.
 
 | Modes | Token | Pattern | Action | Doc |
 | --- | --- | --- | --- | --- |
-| INITIAL | SHAPE_DATA | `@\{` | push(shapeData) empty | Shape data `@{ … }`: the item's YAML data (`ticket`, `assigned`, `priority`, `label`, `icon`, `shape`); line breaks in a quoted value read as `<br/>`. |
+| INITIAL | SHAPE_DATA | `@\{` | push(shapeData) empty | Shape data `@{ … }`: the item's YAML data (`ticket`, `assigned`, `priority`, `label`, `icon`, `shape`); line breaks in a quoted value read as `<br/>`. A tag's `="x"` is text, as in a string (#837). |
 | shapeData | SHAPE_DATA | `"` | push(shapeDataStr) |  |
 | shapeDataStr | SHAPE_DATA | `"` | pop |  |
-| shapeDataStr | SHAPE_DATA | `[^"]+` | fold |  |
-| shapeData | SHAPE_DATA | `[^}^"]+` |  |  |
+| shapeDataStr | SHAPE_DATA | `(?:<\w+(?:[^>"]\|="[^">]*")*>\|[^"])+` | fold |  |
+| shapeData | SHAPE_DATA | `(?:<\w+(?:[^>"}^]\|="[^">}^]*")*>\|[^}^"])+` |  |  |
 | shapeData | — | `\}` | pop |  |
 | INITIAL | SPACELINE | `\s*%%.*` |  | A `%%` comment v12's comment removal left (after text on a line, or a bare `%%`), with the blanks and line breaks before it: a blank line. |
 | INITIAL | KANBAN | `kanban\b` |  | `kanban`: starts a kanban board; its columns and cards follow, one per line. |
@@ -117,11 +117,11 @@ Every rule ignores case: a rule for `ab` also matches `AB` and `aB`.
 | INITIAL | SPACELIST | `[\s]+` |  | The indent before an item: the first item's sets the column level. |
 | INITIAL | NODE_ID | `[^\(\[\n\)\{\}@]+` |  | An item id, which may hold blanks: the text up to a shape opener, `@` or the line end. |
 | INITIAL | EOF | `$` |  | The end of the text. |
-| node | — | `["][`]` | push(nstr2) | Strings in a shape: `"…"` and markdown strings `` "`…`" ``. |
-| nstr2 | NODE_DESCR | `[^`"]+` |  |  |
+| node | — | `["][`]` | push(nstr2) | Strings in a shape: `"…"` and markdown strings `` "`…`" ``. The text of either may hold a tag with `="x"` attributes (`<span style="color:red">`), which the lexer reads as `='x'` (#837). |
+| nstr2 | NODE_DESCR | `(?:<\w+(?:[^>"`]\|="[^">`]*")*>\|[^`"])+` |  |  |
 | nstr2 | — | `[`]["]` | pop |  |
 | node | — | `["]` | push(nstr) |  |
-| nstr | NODE_DESCR | `[^"]+` |  |  |
+| nstr | NODE_DESCR | `(?:<\w+(?:[^>"]\|="[^">]*")*>\|[^"])+` |  |  |
 | nstr | — | `["]` | pop |  |
 | node | NODE_DEND | `[\)]\)` | pop | A shape closer: any of them closes any shape. |
 | node | NODE_DEND | `[\)]` | pop |  |

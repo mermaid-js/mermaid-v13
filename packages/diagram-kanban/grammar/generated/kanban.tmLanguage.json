@@ -579,7 +579,7 @@
       ]
     },
     "rule-31": {
-      "match": "(?i)[^\"]+",
+      "match": "(?i)(?:<\\w+(?:[^>\"]|=\"[^\">]*\")*>|[^\"])+",
       "name": "string.quoted.mermaid-kanban"
     },
     "mode-nstr": {
@@ -596,7 +596,7 @@
       ]
     },
     "rule-28": {
-      "match": "(?i)[^`\"]+",
+      "match": "(?i)(?:<\\w+(?:[^>\"`]|=\"[^\">`]*\")*>|[^`\"])+",
       "name": "string.quoted.mermaid-kanban"
     },
     "mode-nstr2": {
@@ -632,7 +632,7 @@
       }
     },
     "rule-4": {
-      "match": "(?i)[^}^\"]+",
+      "match": "(?i)(?:<\\w+(?:[^>\"}^]|=\"[^\">}^]*\")*>|[^}^\"])+",
       "name": "meta.embedded.mermaid-kanban"
     },
     "mode-shapeData": {
@@ -652,7 +652,7 @@
       ]
     },
     "rule-3": {
-      "match": "(?i)[^\"]+",
+      "match": "(?i)(?:<\\w+(?:[^>\"]|=\"[^\">]*\")*>|[^\"])+",
       "name": "string.quoted.mermaid-kanban"
     },
     "mode-shapeDataStr": {
