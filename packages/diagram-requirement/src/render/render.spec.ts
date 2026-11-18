@@ -255,7 +255,12 @@ describe('structure (spec #520 Renderer)', () => {
     expect(lines).toHaveLength(2);
     expect(lines[0]!.d).not.toBe(lines[1]!.d);
     const [vx, vy, vw, vh] = elements(svg, 'svg')[0]!.viewBox!.split(' ').map(Number);
-    const rects = byClass(svg, 'rect', 'labelBkg').map((r) => {
+    // Each label's tag: the rect inside its g.edgeLabel (D626).
+    const tags = svg
+      .split('<g class="edgeLabel"')
+      .slice(1)
+      .map((part) => elements(part, 'rect')[0]!);
+    const rects = tags.map((r) => {
       const [x, y, w, h] = [r.x, r.y, r.width, r.height].map(Number);
       return { x0: x!, y0: y!, x1: x! + w!, y1: y! + h! };
     });
