@@ -395,12 +395,20 @@ class C4BetaParser {
   private document(): void {
     for (;;) {
       const k = this.kind();
-      // Every line start, a blank line and the end of the text included.
-      this.tested(this.open.length > 0 ? lists.BODY_LIST : lists.TOP_LIST);
+      this.testedAtLineStart(k);
       if (k === Kind.EOF) return;
       if (k === Kind.Newline) this.i++;
       else this.statement(() => (this.open.length > 0 ? this.inBody(k) : this.top(k)));
     }
+  }
+
+  /**
+   * Probe hook for what may start a statement: at every line start, a blank line and the last
+   * line included. The end of the text after a statement with no line break is mid-line.
+   */
+  private testedAtLineStart(k: number): void {
+    if (k === Kind.EOF && this.kind(this.i - 1) !== Kind.Newline) return;
+    this.tested(this.open.length > 0 ? lists.BODY_LIST : lists.TOP_LIST);
   }
 
   /** The statement at the top level. */
