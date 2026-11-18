@@ -1,0 +1,16 @@
+---
+title: '#416 transition from a composite to a state two levels down'
+description:
+  Fixed when Outer --> Deeper is its own visible arrow from the frame of Outer
+  to Deeper, not drawn on top of Deeper --> End.
+---
+stateDiagram-v2
+  [*] --> Outer
+  state Outer {
+    state Mid {
+      Deep --> Deeper
+    }
+  }
+  Start --> Deep
+  Deeper --> End
+  Outer --> Deeper

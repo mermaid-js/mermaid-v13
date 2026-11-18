@@ -1,0 +1,10 @@
+---
+title: '#836 state label with emphasis and a code span'
+description:
+  Fixed when "bold" is bold and "it" is italic with no asterisks shown, and
+  the code span is shown as written, backticks included.
+---
+stateDiagram-v2
+  s1 : **bold** and `code` and *it*
+  s2 : **bold** and *it*
+  s1 --> s2
