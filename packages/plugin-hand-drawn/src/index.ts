@@ -39,7 +39,7 @@ export const handDrawn: ExtensionPlugin = {
 
 export default handDrawn;
 
-export { EDGE, GROUP, MARK, NODE, COMPOSITE, optionsFor } from './roles.ts';
+export { EDGE, GROUP, LABEL, MARK, NODE, COMPOSITE, optionsFor } from './roles.ts';
 export {
   roughSeed,
   sketch,

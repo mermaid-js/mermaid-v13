@@ -386,11 +386,17 @@ function drawEdge({ w, layout, paint }: Scene, e: StateEdgeView): void {
   w.close();
 }
 
-function drawEdgeLabel({ w, layout, paint }: Scene, e: StateEdgeView): void {
+/** A transition's label as a tag, bordered in the transitions' line colour (D619, D620). */
+function drawEdgeLabel({ w, layout, ctx, paint }: Scene, e: StateEdgeView): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
   const { fill, text } = paint.edgeLabel!;
-  labelOnBox(w, e.label, at, e.id, { fill, text: { fill: text }, rx: 3 });
+  labelOnBox(w, e.label, at, e.id, {
+    fill,
+    stroke: paint.line,
+    text: { fill: text },
+    patch: (ctx.units ?? pxProfile).builder.labelPatch,
+  });
 }
 
 function nodeClass(view: StateNodeView): string {
