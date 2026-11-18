@@ -25,6 +25,7 @@ exports[`layered over parser-produced class graphs > lays out every corpus graph
   "class/baseline/relationships/cardinality-past-markers.mmd": 0,
   "class/baseline/relationships/cardinality.mmd": 0,
   "class/baseline/relationships/self-and-multi.mmd": 0,
+  "class/baseline/relationships/two-self-loops.mmd": 0,
   "class/baseline/relationships/two-way-and-lollipop.mmd": 0,
   "class/baseline/styles/classdef-and-style.mmd": 0,
   "class/baseline/styles/hide-empty-members.mmd": 0,
