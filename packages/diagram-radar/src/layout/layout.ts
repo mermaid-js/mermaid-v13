@@ -2,8 +2,9 @@
  * The radar custom layout (spec #422 T3, `layoutKind: 'custom'`): `RadarModel` in,
  * `RadarLayout` out. It follows v12's `renderer.ts` with the drawing taken out: every label is
  * measured first through the injected measurer and laid out by core's label layout (D355), then
- * the rings, spokes, curves, legend and title are placed where v12 put them, and the bounds grow
- * past v12's canvas wherever something drawn reaches out of it (D354). Lengths come from the
+ * the rings, spokes, curves, legend and title are placed where v12 put them (the legend moves
+ * right of an axis label a row would meet, D614), and the bounds grow past v12's canvas wherever
+ * something drawn reaches out of it (D354). Lengths come from the
  * `radar` config, the theme and the metrics table (pitfall 13).
  *
  * v12 bugs fixed on the way (D356): `max = min` draws every point at the centre (v12 wrote NaN),
@@ -28,6 +29,7 @@ import type {
   RadarRing,
   RadarSpoke,
   RadarTextAnchor,
+  Rect,
 } from './types.ts';
 import { RectUnion } from '@mermaid-js/shared/layout';
 
@@ -152,6 +154,7 @@ export function layoutRadar(model: RadarModel, ctx: RadarLayoutContext): RadarLa
     config,
     center,
     swatchSize: theme.number('radarLegendBoxSize'),
+    axisLabels: spokes.map((spoke) => spoke.label),
   });
   // The title (`:41-45`): middle-anchored at the canvas top, `hanging`.
   const title = titleText && placeAt(titleText, { x: center.x, y: 0 }, 'middle', 'hanging');
@@ -238,6 +241,8 @@ interface LegendParts {
   readonly center: Point;
   /** `radarLegendBoxSize`. */
   readonly swatchSize: number;
+  /** The placed axis labels the legend keeps clear of (D614). */
+  readonly axisLabels: readonly Rect[];
 }
 
 /**
@@ -245,11 +250,30 @@ interface LegendParts {
  * centre, its swatch there and its text `legendTextGap` right of the swatch (16 px from the
  * row's origin with v12's 12 px swatch), `hanging`. A label of several lines (D355) pushes
  * the rows after it down by its extra lines.
+ *
+ * When a row meets an axis label (#846: a long start-anchored label at the top right grows
+ * into it), the whole legend moves right to `legendLabelGap` past that label, again until no
+ * row meets one (D614). The rows keep their `y`; with no overlap the legend is where v12 put it.
  */
 function legendOf(parts: LegendParts): RadarLegendRow[] {
+  const { config, center, axisLabels } = parts;
+  let x = center.x + RADAR_METRICS.legendFactor * (config.width / 2 + config.marginRight);
+  for (;;) {
+    const rows = legendRowsAt(parts, x);
+    let right = -Infinity;
+    for (const row of rows)
+      for (const label of axisLabels)
+        if (meets(row.swatch, label) || meets(row.label, label))
+          right = Math.max(right, label.x + label.width);
+    if (right === -Infinity) return rows;
+    x = right + RADAR_METRICS.legendLabelGap;
+  }
+}
+
+/** The legend's rows with their swatches' left edge at `x`. */
+function legendRowsAt(parts: LegendParts, x: number): RadarLegendRow[] {
   const { model, labels, config, center, swatchSize: size } = parts;
   const { legendFactor, legendTextGap, legendRow } = RADAR_METRICS;
-  const x = center.x + legendFactor * (config.width / 2 + config.marginRight);
   let y = center.y - legendFactor * (config.height / 2 + config.marginTop);
   return labels.map((label, index) => {
     const row: RadarLegendRow = {
@@ -268,6 +292,11 @@ function legendOf(parts: LegendParts): RadarLegendRow[] {
     y += legendRow + extraLines(label);
     return row;
   });
+}
+
+/** Two boxes share area; boxes that only touch do not. */
+function meets(a: Rect, b: Rect): boolean {
+  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
 
 /** v12's three-way choice by `cos θ` or `sin θ` (`:116-117`), with its ±0.01 dead band. */
