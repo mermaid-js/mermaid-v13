@@ -70,14 +70,14 @@ statement = Chain separator
           | AccDescr ;
 ```
 
-Nodes joined by links: `A --> B & C -.-> D`. Blanks after shape data must lead to `&`.
+Nodes joined by links: `A --> B & C -.-> D`. Blanks may follow a node, shape data too.
 
 ```ebnf
 Chain @Chain = nodeGroup { Link nodeGroup } ;
 ```
 
 ```ebnf
-nodeGroup = { node SPACE+ AMP SPACE+ } ( plainNode [ SPACE+ ] | dataNode ) ;
+nodeGroup = { node SPACE+ AMP SPACE+ } node [ SPACE+ ] ;
 ```
 
 ```ebnf
@@ -350,7 +350,7 @@ Modes: `INITIAL`, `string`, `md_string`, `acc_title`, `acc_descr`, `acc_descr_mu
 | INITIAL | direction_rl | `.*direction\s+RL[^\n]*` |  |  |
 | INITIAL | direction_lr | `.*direction\s+LR[^\n]*` |  |  |
 | INITIAL | direction_td | `.*direction\s+TD[^\n]*` |  |  |
-| INITIAL | LINK_ID | `[^\s"]+@(?=[^{"])` |  | An edge id `e1@` before a link: the run up to its last `@` not followed by `{` or `"`. |
+| INITIAL | LINK_ID | `[^\s"[\](){}\|]+@(?=[^{"])` |  | An edge id `e1@` before a link: the run up to its last `@` not followed by `{` or `"`. The run stops at `[ ] ( ) { } \|`, so `A[bla]e1@` is a node and the edge id `e1@`. |
 | INITIAL | NUM | `[0-9]+` |  |  |
 | INITIAL | BRKT | `#` |  |  |
 | INITIAL | STYLE_SEPARATOR | `:::` |  | `A:::name`: gives the node a class, as `class A name` does. |
