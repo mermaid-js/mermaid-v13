@@ -9,7 +9,12 @@ import { cubicBox, grow, pointsBox, quadBox } from './geometry.ts';
 import { drawnItems } from './layout.ts';
 import { ARROWS, BADGES } from './metrics.ts';
 import type { CynefinBadge, CynefinLayout, Point, Rect } from './types.ts';
-import { EPS, nonFinite as finite, rectInside } from '@mermaid-js/shared/testing/layout-invariants';
+import {
+  EPS,
+  nonFinite as finite,
+  rectInside,
+  rectsOverlap,
+} from '@mermaid-js/shared/testing/layout-invariants';
 
 export function cynefinLayoutViolations(model: CynefinModel, layout: CynefinLayout): string[] {
   const out: string[] = [];
@@ -32,7 +37,8 @@ export function cynefinLayoutViolations(model: CynefinModel, layout: CynefinLayo
   };
   if (!contains(bounds, v12)) out.push("the bounds are smaller than v12's viewBox");
 
-  // The quadrants tile the canvas in v12's order.
+  // The quadrants tile the canvas in v12's order: two columns of half the width, and two rows
+  // that meet at the horizon, where the ellipse sits (a row grows for its list, D617).
   const tiles: readonly [string, number, number][] = [
     ['complex', 0, 0],
     ['complicated', 1, 0],
@@ -40,17 +46,22 @@ export function cynefinLayoutViolations(model: CynefinModel, layout: CynefinLayo
     ['clear', 1, 1],
   ];
   if (layout.quadrants.length !== tiles.length) out.push(`${layout.quadrants.length} quadrants`);
+  const upper = layout.quadrants[0]?.height ?? 0;
   layout.quadrants.forEach((q, i) => {
     const [name, col, row] = tiles[i] ?? ['', 0, 0];
     const want = {
       x: (col * width) / 2,
-      y: (row * height) / 2,
+      y: row * upper,
       width: width / 2,
-      height: height / 2,
+      height: row === 0 ? upper : height - upper,
     };
     if (q.name !== name) out.push(`quadrant ${i} is ${q.name}, not ${name}`);
-    if (!same(q, want)) out.push(`${q.name} is not its quarter of the canvas`);
+    if (!same(q, want)) out.push(`${q.name} is not its part of the canvas`);
+    if (Math.abs(q.center.x - (q.x + q.width / 2)) > EPS)
+      out.push(`${q.name}'s centre is off its column`);
   });
+  if (Math.abs(layout.confusion.center.y - upper) > EPS)
+    out.push('the confusion ellipse is off the horizon');
   const declared = new Map(model.domains.map((d) => [d.name, d]));
   for (const q of layout.quadrants)
     if (q.ast !== declared.get(q.name)?.ast) out.push(`${q.name} has AST id ${q.ast}`);
@@ -93,6 +104,31 @@ export function cynefinLayoutViolations(model: CynefinModel, layout: CynefinLayo
     if (t.label) inside(t.label, `${t.ast}'s label`);
   }
   if (layout.title) inside(layout.title, 'the title');
+  return out;
+}
+
+/**
+ * Crowded lists (D617): every quadrant badge lies between its quadrant's top and bottom edges,
+ * and no badge meets a badge, a domain label or a subtitle of another domain. A label wider
+ * than its quadrant may still cross a side edge, as in v12. Only the rows grow, so this holds
+ * on a canvas wide enough for the domains' texts side by side, not on every canvas the config
+ * allows: the specs check it at the corpus's own sizes.
+ */
+export function cynefinCrowdingViolations(layout: CynefinLayout): string[] {
+  const out: string[] = [];
+  const all = badges(layout);
+  for (const b of all) {
+    const q = layout.quadrants.find((quadrant) => quadrant.name === b.domain);
+    if (q && (b.y < q.y - EPS || b.y + b.height > q.y + q.height + EPS))
+      out.push(`a ${b.domain} badge at y ${b.y} leaves its quadrant`);
+    const others: readonly (Rect & { readonly domain: CynefinDomainName })[] = [
+      ...all,
+      ...layout.labels,
+      ...layout.subtitles,
+    ];
+    const hit = others.find((o) => o.domain !== b.domain && rectsOverlap(b, o));
+    if (hit) out.push(`a ${b.domain} badge at y ${b.y} meets ${hit.domain}'s text or badge`);
+  }
   return out;
 }
 
