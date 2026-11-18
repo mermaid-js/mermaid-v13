@@ -952,7 +952,7 @@ variables instead.
 | HTML labels in `<foreignObject>` (`htmlLabels: true`) or SVG text | SVG `<text>`/`<tspan>` only | D5 |
 | Any HTML in labels, sanitised by DOMPurify | `<b>`/`<strong>` and `<i>`/`<em>` are drawn bold and italic, `<br>` breaks the line. Other HTML element tags are dropped and their text kept (`<img>` draws nothing, `<a>` is not a link, `<sub>`/`<sup>`/`<u>` draw plain text), with one `HTML_DROPPED` warning per render that names the tags. For a link, use `click id "url"`; the warning says so when `<a>` is among them. A `<script>` or `<style>` element is dropped with its content, up to its end tag; with no end tag only the tag is dropped and the text after it stays, where v12 lost the rest of the label. Text that only looks like a tag, such as `List<T>` or `<style.css>`, is shown as written | R-TEXT-3, D566 |
 | Markdown strings (`` "`**bold**`" ``) | Same subset: `**`/`__` bold, `*`/`_` italic, `` `code` `` (monospace), `- ` and `* ` bullet lists (one nesting level), backslash escapes, `<br>` and newlines | R-TEXT-2 |
-| Mindmap, state, requirement and class labels were read as Markdown without backticks: `**bold**` and `_italic_` were formatted, and a label starting with `- `, `* ` or `+ ` or holding backticks was shown as written | The same: bold and italic are read, list markers and backticks are drawn as written. Only a mindmap markdown string (`` "`…`" ``) has bullets and inline code. Not Markdown: the rows of a state with several description lines, class multiplicities, namespace titles and lollipop interface names. In a label that holds a code span, bold and italic outside it are not read | D564, #763 |
+| Mindmap, state, requirement and class labels were read as Markdown without backticks: `**bold**` and `_italic_` were formatted, and a label starting with `- `, `* ` or `+ ` or holding backticks was shown as written | The same: bold and italic are read, list markers and code spans are drawn as written. In a label that holds a code span, bold and italic outside the span are read. Only a mindmap markdown string (`` "`…`" ``) has bullets and inline code. Not Markdown: the rows of a state with several description lines, class multiplicities, namespace titles and lollipop interface names | D564, D610, #763, #836 |
 | Sequence labels broke at `<br>` only; `\n` written as two characters was drawn | The same: a written `\n` is text in participant, message, note and block labels. In the other types a plain label still breaks there | D564, #763 |
 | Markdown emphasis in a label written without backticks, in the types that pass every label through Markdown: ER (`"This **is** _Markdown_"`) | ER reads `**`/`__` as bold and `*`/`_` as italic in entity names, aliases, attribute cells, relationship labels and subgraph titles, and nothing else of Markdown: backticks and a leading `- ` are drawn as written. An underscore inside a word (`order_item`) is text. Text output drops the markers | #754, D562, D565 |
 | Entities: Mermaid's `#quot;`/`#35;` and HTML `&…;`, decoded by the browser, so every HTML5 name worked | Both decoded; about 70 named HTML entities plus numeric ones. The names include the ASCII punctuation used to escape syntax: `colon`, `semi`, `vert`, `verbar`, `lpar`, `rpar`, `lsqb`, `rsqb`, `lcub`, `rcub`, `num`, `excl`, `quest`, `commat`, `equals`, `plus`, `comma`, `period`, `sol`, `bsol`, `grave`, `lowbar`, `percnt`, `dollar`, `ast` | #396, D561 |
@@ -1368,7 +1368,7 @@ rows below are class-specific. Group class names (`clusters`, `edgePaths`, `edge
 | Class ids, labels and member text passed through `sanitizeText` (DOMPurify), so `A : +List<T> items` lost `<T>` | Text is escaped when written, never sanitised: `+List<T> items` is shown as written, and known HTML tags are read as the label subset ([Labels and text](#labels-and-text)) | R-SEC-1; the flowchart's rule |
 | `link` / `click … href` as `<a xlink:href>`; tooltip as an HTML hover div; `callback` / `click … call` bound with `bindFunctions` | `<a href target>` inside the node group (URLs that pass `securityLevel`); the tooltip is an SVG `<title>`; callbacks draw nothing (interactions plugin) | R-SVG-4, R-SVG-5 |
 | Front-matter `title` drawn above the diagram (`classDiagramTitleText`) | Not drawn, as for flowcharts | v13 renderers draw no title yet |
-| Names, annotations, members, notes and relation labels read as Markdown without backticks; multiplicities and namespace titles drawn as plain text | The same: bold and italic are read in box rows, notes and relation labels; a text that starts with `- `, `* ` or `+ ` or holds backticks is drawn as written; multiplicities, namespace titles and lollipop interface names are plain. An unknown `#name;` is drawn as written, where v12 drew `&name;` | D564, D561, #763 |
+| Names, annotations, members, notes and relation labels read as Markdown without backticks; multiplicities and namespace titles drawn as plain text | The same: bold and italic are read in box rows, notes and relation labels; a text that starts with `- `, `* ` or `+ ` is drawn as written, and so is a code span (backticks and what they hold), with bold and italic outside it still read; multiplicities, namespace titles and lollipop interface names are plain. An unknown `#name;` is drawn as written, where v12 drew `&name;` | D564, D610, D561, #763, #836 |
 
 ## ER SVG structure
 
@@ -1564,8 +1564,9 @@ Legend entries carry `data-id="a:<name>"` only.
   over the top-level `layout`, with the same names and fallbacks.
 - **Labels** are SVG text, measured in the theme's font, instead of HTML in `<foreignObject>`
   ([Mindmap SVG structure](#mindmap-svg-structure)). As in v12, every label reads bold, italic
-  and `<br>` line breaks without backticks, and a label that starts with `- `, `* ` or `+ ` or
-  holds backticks (``[`a **b**`]``) is drawn as written (D564, #763). Only a markdown string
+  and `<br>` line breaks without backticks, and a label that starts with `- `, `* ` or `+ ` is
+  drawn as written (D564, #763). A code span (``[`a **b**`]``) is drawn as written, backticks
+  included, and bold and italic outside it are still read (D610, #836). Only a markdown string
   (`` "`…`" ``) has bullet lists and inline code, which v12 did not draw (D56). A written `\n`
   is text. A word wider than `maxNodeWidth` stays
   whole and the node grows to hold it, as v12's HTML labels did (#649).
@@ -3134,10 +3135,11 @@ v12's, apart from the two layout fixes of D514.
   spec strings and docs examples, and the grammar is in
   [syntax/requirement.md](./syntax/requirement.md). Every error is reported, not only the first,
   with a range at the token (R-PARSE-4).
-- **Label text** (D564, #763): names, the `text:`, `type:` and `docref:` rows and the other
-  box rows read bold and italic, as in v12. A value that starts with `- `, `* ` or `+ ` or
-  holds backticks is drawn as written, backticks included: `` "`**bold**`" `` draws
-  `` `**bold**` ``. A requirement diagram has no markdown strings.
+- **Label text** (D564, D610, #763, #836): names, the `text:`, `type:` and `docref:` rows and
+  the other box rows read bold and italic, as in v12. A value that starts with `- `, `* ` or
+  `+ ` is drawn as written. A code span is drawn as written, backticks included:
+  `` "`**bold**`" `` draws `` `**bold**` ``, and bold and italic outside the span are still
+  read. A requirement diagram has no markdown strings.
 - **Trailing blanks** (D431): blanks before a line end are dropped, so the five places where
   v12 rejected them (after the header, after `{`, after a keyword value, after a quoted value)
   now accept. The six forms v12 accepted only because a blank swallowed the next line break
@@ -3213,9 +3215,10 @@ label-container outer-path`, `divider`, `relationshipLine`, `edge-thickness-norm
 
 ## State diagram
 
-- **Label text** (D564, #763): state text, composite titles, transition text and notes read
-  bold and italic, as in v12. A label that starts with `- `, `* ` or `+ ` or holds backticks is
-  drawn as written: no bullet, no monospace. The title and rows of a state with several
+- **Label text** (D564, D610, #763, #836): state text, composite titles, transition text and
+  notes read bold and italic, as in v12. A label that starts with `- `, `* ` or `+ ` is drawn
+  as written: no bullet. A code span is drawn as written, backticks included and no monospace,
+  and bold and italic outside it are still read. The title and rows of a state with several
   description lines are plain text, as v12 drew them: `**x**` stays as written there and a
   written `\n` breaks the line.
 - **A transition written inside a composite that names the composite** (D555):

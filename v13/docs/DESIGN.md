@@ -353,7 +353,7 @@ Open question: Trebuchet MS isn't installed on most Linux systems, so browser ou
   | `markup` | Handles | v12 equivalent |
   | --- | --- | --- |
   | `plain` (default) | character references, `<br>`, the `<b>`/`<i>` HTML subset | text drawn without `createText` Markdown |
-  | `emphasis` | plain, plus `**`, `*`, `__`, `_` | a label without backticks passed through `createText` |
+  | `emphasis` | plain, plus `**`, `*`, `__`, `_` | a label passed through `createText`; `v12Label` keeps a code span as written (D610) |
   | `markdown` | emphasis, plus inline code, bullet lists and backslash escapes | a Markdown string (`` "`…`" ``) |
 
   `emphasis` splits lines as `plain` does and never reads `- ` as a bullet or a backtick as code. `markdown: true` is still read as `markup: 'markdown'` until every caller has moved, then goes.
