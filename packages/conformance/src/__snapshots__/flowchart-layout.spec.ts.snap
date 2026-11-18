@@ -13,6 +13,7 @@ exports[`layered over parser-produced flowchart graphs > lays out every corpus g
   "flowchart/baseline/edges/double-arrow-circle.mmd": 0,
   "flowchart/baseline/edges/double-arrow-cross.mmd": 0,
   "flowchart/baseline/edges/double-arrow-point.mmd": 0,
+  "flowchart/baseline/edges/edge-id-after-node.mmd": 0,
   "flowchart/baseline/edges/labels.mmd": 0,
   "flowchart/baseline/edges/lengths.mmd": 0,
   "flowchart/baseline/edges/line-hops-off.mmd": 2,
