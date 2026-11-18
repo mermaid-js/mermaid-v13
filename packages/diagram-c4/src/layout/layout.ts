@@ -36,6 +36,7 @@ import {
 } from './grid.ts';
 import { cellConfig, cellPxMeasurer, cellRoom, type CellSize } from './cells.ts';
 import { C4_METRICS as M, FONT_WEIGHT } from './metrics.ts';
+import { labelRoom, type LabelRoom } from './room.ts';
 import {
   Lanes,
   lineOf,
@@ -263,6 +264,7 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
     config,
     fonts,
     measure,
+    labelPatch: labelRoom(ctx.units),
   });
 
   const title = measure(
@@ -434,9 +436,11 @@ interface Routed {
   readonly endArrow: boolean;
   readonly label?: Measured;
   readonly techn?: Measured;
-  /** The label box's centre and top. */
+  /** The label box's centre and top, and its size (zero without a label). */
   readonly cx: number;
   readonly top: number;
+  readonly lw: number;
+  readonly lh: number;
   /** No spot kept the label off its arrowheads, the shapes and the headers. */
   readonly crowded?: true;
 }
@@ -455,6 +459,8 @@ interface RouteInput extends Measuring {
   readonly shapes: readonly Outline[];
   readonly frames: readonly Outline[];
   readonly order: readonly Group[];
+  /** The room a label's box adds to its text: the profile's `labelPatch` in px (D629). */
+  readonly labelPatch: LabelRoom;
 }
 
 /**
@@ -695,13 +701,15 @@ function placeLabel({
   r,
   input,
   keep,
-}: LabelInput): Pick<Routed, 'label' | 'techn' | 'cx' | 'top' | 'crowded'> {
-  const { model, config, fonts, measure } = input;
+}: LabelInput): Pick<Routed, 'label' | 'techn' | 'cx' | 'top' | 'lw' | 'lh' | 'crowded'> {
+  const { model, config, fonts, measure, labelPatch } = input;
   const room = config.wrapAll ? r.room : Infinity;
   const label = measure(relationLabelText(model, rel, index), fonts.message, room);
   const techn = measure(relationTechnText(rel), fonts.message, room, Style.Italic);
-  const [lw, lh] = labelSize({ label, techn });
-  if (lh === 0) return { cx: r.x0, top: r.y0 };
+  if (!label && !techn) return { cx: r.x0, top: r.y0, lw: 0, lh: 0 };
+  // The box: the label and `[techn]` stacked, with the `labelPatch` round them.
+  const lw = Math.max(label?.text.width ?? 0, techn?.text.width ?? 0) + labelPatch.x;
+  const lh = (label?.text.height ?? 0) + (techn?.text.height ?? 0) + labelPatch.y;
 
   const beside = Math.abs(r.nx) * (lw / 2) + Math.abs(r.ny) * (lh / 2) + M.besideGap;
   const aside = r.lean ? Math.max(0, Math.min(r.lean, beside - M.leanSlack)) : beside;
@@ -726,6 +734,8 @@ function placeLabel({
     ...(techn ? { techn } : {}),
     cx,
     top,
+    lw,
+    lh,
     ...(crowded ? { crowded: true as const } : {}),
   };
 }
@@ -832,12 +842,6 @@ interface Shift {
   readonly oy: number;
 }
 
-/** A label's box: the label and `[techn]` stacked, with the label pad across. */
-function labelSize(r: { readonly label?: Measured; readonly techn?: Measured }): [number, number] {
-  const lw = Math.max(r.label?.text.width ?? 0, r.techn?.text.width ?? 0) + M.labelPad;
-  return [lw, (r.label?.text.height ?? 0) + (r.techn?.text.height ?? 0)];
-}
-
 /** Everything drawn, in the grid's frame: x0, y0, x1, y1 (zeros when nothing is). */
 function extent(p: Parts): [number, number, number, number] {
   let x0 = Infinity;
@@ -855,10 +859,7 @@ function extent(p: Parts): [number, number, number, number] {
   for (const r of p.relations.list) {
     const pts = [...r.route.points, ...(r.route.controls ?? [])];
     for (let i = 0; i < pts.length; i += 2) grow(pts[i]!, pts[i + 1]!);
-    if (r.label || r.techn) {
-      const [lw, lh] = labelSize(r);
-      grow(r.cx - lw / 2, r.top, lw, lh);
-    }
+    if (r.label || r.techn) grow(r.cx - r.lw / 2, r.top, r.lw, r.lh);
   }
   return x0 === Infinity ? [0, 0, 0, 0] : [x0, y0, x1, y1];
 }
@@ -925,10 +926,12 @@ function relationOut(r: Routed, { ox, oy }: Shift): C4RelationLayout {
   const last = pts[pts.length - 1]!;
   const top = r.top + oy;
   const cx = r.cx + ox;
-  const label = r.label && placed(r.label, cx - r.label.text.width / 2, top);
-  const technTop = top + (r.label?.text.height ?? 0);
+  const { lw, lh } = r;
+  // The texts stacked in the middle of the box, the room split above and below.
+  const textTop = top + (lh - (r.label?.text.height ?? 0) - (r.techn?.text.height ?? 0)) / 2;
+  const label = r.label && placed(r.label, cx - r.label.text.width / 2, textTop);
+  const technTop = textTop + (r.label?.text.height ?? 0);
   const techn = r.techn && placed(r.techn, cx - r.techn.text.width / 2, technTop);
-  const [lw, lh] = labelSize(r);
   return {
     ast: r.rel.ast,
     index: r.index,

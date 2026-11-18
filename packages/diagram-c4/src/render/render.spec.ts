@@ -327,10 +327,33 @@ describe('relations (D455)', () => {
     expect(rel).toMatch(
       /^<g class="c4-relation" data-id="a-&gt;b"><title>Reads the accounts<\/title><path class="c4-rel c4-rel-rel"/
     );
-    expect(byClass(rel, 'text', 'c4-rel-label')).toHaveLength(1);
-    expect(rel).toContain('font-style="italic">[HTTPS]<');
-    // Text sits on a box of the page's background, which the line does not run through.
-    expect(byClass(rel, 'rect', 'c4-rel-label-box')[0]).toMatchObject({ fill: 'var(--_bg)' });
+    // One text for both lines: the label, then [techn] in italic under it.
+    const tag = group(rel, 'class="edgeLabel"');
+    expect(elements(tag, 'text')).toHaveLength(1);
+    expect(tag).toMatch(/>Uses<\/tspan><tspan [^>]*font-style="italic">\[HTTPS\]</);
+  });
+
+  it('draws the label as the shared tag (D626–D629): the relation’s stroke, 1 px solid, radius 6, on the page’s background, the box the layout placed', async () => {
+    const src = `C4Context\nPerson(a, "A")\nSystem(b, "B")\nRel(a, b, "Uses", "HTTPS")`;
+    const { svg, layout } = await renderC4ForTest(src);
+    const rel = group(svg, 'class="c4-relation"');
+    const line = byClass(rel, 'path', 'c4-rel')[0]!;
+    const tag = group(rel, 'class="edgeLabel"');
+    expect(tag).toMatch(/^<g class="edgeLabel" data-id="a-&gt;b">/);
+    const box = elements(tag, 'rect')[0]!;
+    expect(box).toMatchObject({
+      rx: '6',
+      fill: 'var(--_bg)',
+      stroke: line.stroke,
+      'stroke-width': '1',
+    });
+    expect(box['stroke-dasharray']).toBeUndefined();
+    // The box drawn is the box the layout kept the other labels and the shapes off.
+    const placed = layout.relations[0]!.labelBox!;
+    expect([box.x, box.y, box.width, box.height].map(Number)).toEqual(
+      [placed.x, placed.y, placed.width, placed.height].map((v) => +v.toFixed(2))
+    );
+    expect(svg).not.toMatch(/c4-rel-label|c4-rel-techn/);
   });
 
   it('numbers C4Dynamic’s relations in model order', async () => {
@@ -356,8 +379,10 @@ describe('relations (D455)', () => {
     const { svg } = await renderC4ForTest(src);
     expect(byClass(svg, 'path', 'c4-rel')[0]!.stroke).toBe('red');
     expect(byClass(svg, 'path', 'marker')[0]!.fill).toBe('var(--_tx)');
-    expect(byClass(svg, 'text', 'c4-rel-label')[0]!.fill).toBe('blue');
-    expect(byClass(svg, 'text', 'c4-rel-techn')[0]!.fill).toBe('blue');
+    const tag = group(svg, 'class="edgeLabel"');
+    expect(elements(tag, 'text')[0]!.fill).toBe('blue');
+    // The tag's border follows the line (D627).
+    expect(elements(tag, 'rect')[0]!.stroke).toBe('red');
   });
 });
 
@@ -435,7 +460,7 @@ describe('fonts (pitfall 16)', () => {
     // The theme's family is the root's: a text measured in it names none.
     const system = byClass(group(svg, 'data-id="s" data-ast'), 'text', 'c4-name')[0]!;
     expect(system['font-family']).toBeUndefined();
-    expect(byClass(svg, 'text', 'c4-rel-label')[0]!['font-size']).toBe('9');
+    expect(elements(group(svg, 'class="edgeLabel"'), 'text')[0]!['font-size']).toBe('9');
   });
 });
 

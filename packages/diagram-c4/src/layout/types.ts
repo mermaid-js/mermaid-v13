@@ -118,8 +118,8 @@ export interface C4RelationLayout {
   readonly label?: PlacedLabel;
   readonly techn?: PlacedLabel;
   /**
-   * The label's box, under the label and `[techn]`: both stacked, `labelPad` wider than the
-   * wider. The renderer draws it and the invariants check it; set when either is.
+   * The label's box, round the label and `[techn]` stacked: the profile's `labelPatch` (D629)
+   * wider and taller. The renderer draws it and the invariants check it; set when either is.
    */
   readonly labelBox?: Rect;
   /**

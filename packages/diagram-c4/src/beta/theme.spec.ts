@@ -274,7 +274,9 @@ describe('the text on a fill a style gave', () => {
       'a --> b : "Calls" :::hot',
     ]);
     const g = svg.slice(svg.indexOf('<g class="c4-relation"'));
-    expect(/class="c4-rel-label"[^>]*? fill="([^"]+)"/.exec(g)![1]).toBe('var(--_c4r)');
+    expect(/<g class="edgeLabel"[^>]*><rect[^>]*><text[^>]*? fill="([^"]+)"/.exec(g)![1]).toBe(
+      'var(--_c4r)'
+    );
   });
 
   it('leaves the legend text on the page in the page text colour', async () => {

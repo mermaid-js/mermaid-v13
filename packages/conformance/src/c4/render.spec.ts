@@ -61,7 +61,7 @@ beforeAll(async () => {
 
 describe('c4 render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, with every shape, boundaries and relations', () => {
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(73);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(74);
     expect([...rejected].filter((id) => id.startsWith('e2e/'))).toEqual([]);
     expect(cases.length).toBeGreaterThan(150 * THEMES.length);
     const all = cases.map((c) => c.r.svg).join('');
@@ -76,7 +76,8 @@ describe('c4 render properties over the parsed corpus', () => {
       'class="c4-rel c4-rel-birel"',
       'class="c4-rel c4-rel-rel_b"',
       '<path class="marker"',
-      'class="c4-rel-techn"',
+      '<g class="edgeLabel"',
+      'font-style="italic">[',
       'class="c4-title"',
       '<title>',
     ])

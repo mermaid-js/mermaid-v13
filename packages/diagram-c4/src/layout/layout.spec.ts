@@ -89,10 +89,17 @@ const CROSSING_EXCEPTIONS = [
  * that gap to clear it on its line, and beside it clears the lane only below `c`, three label
  * depths out, which costs more than the crossing. (The docs' container example's
  * `backend_api -> banking_system` was listed too, until the person figure, #683, moved its rows.)
+ * With the grid measurer's wider text, two more labels found no clear spot once the label box
+ * took the `labelPatch` round its text (D629: 8 px wider and 8 px taller than before): the docs'
+ * container example's `backend_api -> banking_system` again (only in the product default theme,
+ * whose shapes are padded differently), and the large diagram's `c2_6 -> c2_7`. An entry names
+ * its theme in brackets when it holds in that theme only.
  */
 const CROWDED_EXCEPTIONS = [
   'baseline/config/rows-and-fixed-width table: c -> d',
   'baseline/config/rows-and-fixed-width grid: c -> d',
+  'nightly-check/docs/2-container grid (the product default theme): backend_api -> banking_system',
+  'nightly-check/large-diagram grid: c2_6 -> c2_7',
 ];
 
 describe('c4 layout invariants on the e2e fixtures', () => {
@@ -113,10 +120,13 @@ describe('c4 layout invariants on the e2e fixtures', () => {
       // Every label found a spot off its own arrowheads, the elements, the headers (#542) and
       // the other relations' lines, so the label invariant held for each, none excused as
       // crowded but the listed ones.
-      const crowded = layout.relations
-        .filter((r) => r.crowded)
-        .map((r) => `${path} ${name}: ${r.from} -> ${r.to}`);
-      expect(crowded).toEqual(CROWDED_EXCEPTIONS.filter((c) => c.startsWith(`${path} ${name}:`)));
+      const crowded = layout.relations.filter((r) => r.crowded).map((r) => `${r.from} -> ${r.to}`);
+      const listed = CROWDED_EXCEPTIONS.flatMap((c) => {
+        for (const run of [`${path} ${name}: `, `${path} ${name} (${themeName}): `])
+          if (c.startsWith(run)) return [c.slice(run.length)];
+        return [];
+      });
+      expect(crowded, themeName).toEqual(listed);
     }
   });
 

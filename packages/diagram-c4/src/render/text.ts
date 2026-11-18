@@ -20,7 +20,7 @@ export interface TextParts {
 }
 
 /** The font attributes of `label`, beside the root's family. */
-function fontAttrs(scene: Scene, label: PlacedLabel): Attrs {
+export function fontAttrs(scene: Scene, label: PlacedLabel): Attrs {
   const { font } = label;
   const family =
     font.family === scene.family

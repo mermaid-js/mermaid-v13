@@ -65,8 +65,6 @@ export const C4_METRICS = {
   /** Label widths that fit the gap between two columns, and where there is room to spare. */
   narrow: 88,
   wide: 160,
-  /** The space a label's box adds to the width of its text. */
-  labelPad: 8,
   /** Parallel stretches closer than this read as one line; a line this close to a frame, as part of it. */
   near: 6,
   frameNear: 3,

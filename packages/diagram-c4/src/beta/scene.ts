@@ -12,6 +12,7 @@
 import type { LayoutModel, RoutePoint } from '@mermaid-js/core/layout';
 import { placed, stackSections, type Measured } from '../layout/layout.ts';
 import { C4_METRICS as M } from '../layout/metrics.ts';
+import type { LabelRoom } from '../layout/room.ts';
 import type {
   C4BoundaryLayout,
   C4ElementLayout,
@@ -30,9 +31,6 @@ import { labelBlock, legacyKind, type BetaEdge, type C4BetaPrepared } from './pr
 /** The row above the drawing that holds the title, in px. */
 const titleHeight = (p: C4BetaPrepared): number =>
   p.cell ? B.cellTitleRows * p.cell.y : M.titleRow;
-
-/** The room a relation's label block takes beside its text, in px. */
-const labelPad = (p: C4BetaPrepared): number => (p.cell ? B.cellLabelPad * p.cell.x : M.labelPad);
 
 /** The move from the engine's frame onto the canvas. */
 interface Shift {
@@ -58,7 +56,7 @@ function extent(p: C4BetaPrepared, laid: LayoutModel): readonly [number, number,
     const e = laid.edges.get(edge.id);
     if (!e) continue;
     points.push(...e.points);
-    const block = labelBlock(edge, labelPad(p));
+    const block = labelBlock(edge, p.labelRoom);
     if (e.label && block) boxes.push(rectOf({ ...e.label, ...block }));
   }
   if (boxes.length + points.length === 0) return [0, 0, 0, 0];
@@ -177,7 +175,7 @@ function relationOut(
   edge: BetaEdge,
   laid: LayoutModel,
   s: Shift,
-  pad: number
+  room: LabelRoom
 ): C4RelationLayout | undefined {
   const e = laid.edges.get(edge.id);
   if (!e || e.points.length < 2) return undefined;
@@ -186,13 +184,15 @@ function relationOut(
   const { relation } = edge;
   const startArrow = relation.start === 'arrow';
   const endArrow = relation.end === 'arrow';
-  const block = labelBlock(edge, pad);
+  const block = labelBlock(edge, room);
   const stack = (): { label?: PlacedLabel; techn?: PlacedLabel; labelBox: Rect } => {
     const box = moved(rectOf({ ...e.label!, ...block! }), s);
     const at = (m: Measured | undefined, y: number): PlacedLabel | undefined =>
       m && placed(m, box.x + (box.width - m.text.width) / 2, y);
-    const label = at(edge.label, box.y);
-    const techn = at(edge.techn, box.y + (edge.label?.text.height ?? 0));
+    // The texts stacked in the middle of the box, the room split above and below.
+    const top = box.y + room.y / 2;
+    const label = at(edge.label, top);
+    const techn = at(edge.techn, top + (edge.label?.text.height ?? 0));
     return { ...(label ? { label } : {}), ...(techn ? { techn } : {}), labelBox: box };
   };
   return {
@@ -244,7 +244,7 @@ export function placeC4Beta(p: C4BetaPrepared, laid: LayoutModel): C4Layout {
     (all, box) => (box ? union(all, box) : all),
     content
   );
-  const relations = p.edges.flatMap((edge) => relationOut(edge, laid, shift, labelPad(p)) ?? []);
+  const relations = p.edges.flatMap((edge) => relationOut(edge, laid, shift, p.labelRoom) ?? []);
   return {
     width: contentW + 2 * margin,
     height: titleRow + (y1 - y0) + legendRow + 2 * margin,
