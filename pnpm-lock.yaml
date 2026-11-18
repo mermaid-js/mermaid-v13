@@ -398,12 +398,18 @@ importers:
 
   packages/dev:
     devDependencies:
+      '@codemirror/autocomplete':
+        specifier: ^6.18.0
+        version: 6.20.4
       '@codemirror/commands':
         specifier: ^6.11.1
         version: 6.11.1
       '@codemirror/language':
         specifier: ^6.13.1
         version: 6.13.1
+      '@codemirror/lint':
+        specifier: ^6.8.0
+        version: 6.9.7
       '@codemirror/state':
         specifier: ^6.7.6
         version: 6.7.6
@@ -413,15 +419,27 @@ importers:
       '@fontsource/noto-sans-sc':
         specifier: ^5.3.1
         version: 5.3.1
+      '@lezer/common':
+        specifier: ^1.5.4
+        version: 1.5.4
       '@lezer/highlight':
         specifier: ^1.2.5
         version: 1.2.5
+      '@lezer/lr':
+        specifier: 1.4.2
+        version: 1.4.2
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/language-service':
+        specifier: workspace:^
+        version: link:../language-service
+      '@mermaid-js/language-service-codemirror':
+        specifier: workspace:^
+        version: link:../language-service-codemirror
       '@mermaid-js/layout-elk':
         specifier: workspace:^
         version: link:../layout-elk
@@ -446,9 +464,6 @@ importers:
       chokidar:
         specifier: ^5.0.0
         version: 5.0.0
-      codemirror-lang-mermaid:
-        specifier: ^0.5.0
-        version: 0.5.0
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
@@ -3633,9 +3648,6 @@ packages:
   cli-truncate@5.0.0:
     resolution: {integrity: sha512-ds7u02fPOOBpcUl2VSjLF3lfnAik9u7Zt0BTaaAQlT5RtABALl4cvpJHthXx+rM50J4gSfXKPH5Tix/tfdefUQ==}
     engines: {node: '>=20'}
-
-  codemirror-lang-mermaid@0.5.0:
-    resolution: {integrity: sha512-Taw/2gPCyNArQJCxIP/HSUif+3zrvD+6Ugt7KJZ2dUKou/8r3ZhcfG8krNTZfV2iu8AuGnymKuo7bLPFyqsh/A==}
 
   color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
@@ -7905,12 +7917,6 @@ snapshots:
     dependencies:
       slice-ansi: 7.1.2
       string-width: 8.1.0
-
-  codemirror-lang-mermaid@0.5.0:
-    dependencies:
-      '@codemirror/language': 6.13.1
-      '@lezer/highlight': 1.2.5
-      '@lezer/lr': 1.4.2
 
   color-convert@2.0.1:
     dependencies:

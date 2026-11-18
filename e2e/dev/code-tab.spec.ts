@@ -2,7 +2,9 @@
  * The Code tab (#59): CodeMirror over the open `.mmd`. Unsaved edits re-render the diagram,
  * Mod-s writes the file and clears the dirty status, an on-disk change while dirty shows a
  * warning, and `ctx.goto('code', { line, column })` opens the editor at that position (the
- * Messages panel's diagnostics, #60).
+ * Messages panel's diagnostics, #60). The editor runs the Mermaid language service through
+ * `@mermaid-js/language-service-codemirror`; the adapter's own features are covered by
+ * `e2e/language/codemirror.spec.ts`, so this only checks that the tab wires them in.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
@@ -43,7 +45,7 @@ const cursor = (page: Page) =>
 test('editing re-renders the diagram without saving', async ({ page }) => {
   await openCode(page);
   await expect(status(page)).toHaveAttribute('data-status', 'saved');
-  // codemirror-lang-mermaid highlights the tokens.
+  // The adapter's first-paint highlighter colours the tokens.
   await expect(page.locator('dev-tab-code .cm-line span').first()).toBeVisible();
   await replaceText(page, 'flowchart LR\n  A[Delta] --> B[Beta]\n');
   await expect(status(page)).toHaveAttribute('data-status', 'dirty');
@@ -51,6 +53,29 @@ test('editing re-renders the diagram without saving', async ({ page }) => {
   await page.locator('sl-tab[panel="diagram"]').click();
   await expect(diagram(page)).toContainText('Delta');
   expect(readFileSync(explorer.path(FILE), 'utf8')).toBe(SOURCE);
+});
+
+test('the language service attaches: semantic tokens, diagnostics and hover', async ({
+  page,
+}) => {
+  await openCode(page);
+  await expect(codeTab(page).locator('.mount')).toHaveAttribute('data-language', 'ready');
+  await expect(
+    page.locator('dev-tab-code .cm-content .cm-mermaid-node', { hasText: /^A$/ }).first()
+  ).toBeVisible();
+  await expect(page.locator('dev-tab-code .cm-lintRange-error')).toHaveCount(0);
+
+  await replaceText(page, 'flowchart LR\n  A[Alpha] --> B[Beta]\n  A --> (\n');
+  await expect(page.locator('dev-tab-code .cm-lintRange-error')).toHaveCount(1);
+  await expect(page.locator('dev-tab-code .cm-lint-marker-error')).toHaveCount(1);
+
+  const at = await codeTab(page)
+    .locator('.cm-content .cm-mermaid-node', { hasText: /^B$/ })
+    .first()
+    .boundingBox();
+  if (!at) throw new Error('node B is not drawn');
+  await page.mouse.move(at.x + 2, at.y + at.height / 2);
+  await expect(page.locator('dev-tab-code .cm-tooltip-hover')).toContainText('node');
 });
 
 test('Mod-s writes the file and clears the dirty status', async ({ page }) => {
@@ -112,7 +137,7 @@ test('ctx.goto opens the editor at a line and column', async ({ page }) => {
   await expect(codeTab(page)).toHaveAttribute('active', '');
   expect(new URL(page.url()).searchParams.get('tab')).toBe('code');
   await expect.poll(() => cursor(page)).toEqual({ line: 3, column: 5 });
-  await expect(page.locator('dev-tab-code .cm-activeLineGutter')).toHaveText('3');
+  await expect(page.locator('dev-tab-code .cm-lineNumbers .cm-activeLineGutter')).toHaveText('3');
   await expect(page.locator('dev-tab-code .cm-editor')).toHaveClass(/cm-focused/);
 
   // Typing lands at the revealed position.
