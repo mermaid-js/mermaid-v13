@@ -305,7 +305,7 @@ class StateParser extends StateCursor {
           return this.composite(scope, doc, from, name, from, undefined);
         }
         // `state X` alone: jison's action returns the name, which v12 then ignores.
-        const node = this.stateNode(from, name, this.own(from), scope);
+        const node = this.stateNode(from, name, this.own(from), scope, undefined, true);
         node.declaredOnly = true;
         nodes.push(node);
         this.st.statement('state', node.range);
@@ -461,10 +461,15 @@ class StateParser extends StateCursor {
     name: string,
     nameRange: Range,
     scope: Scope | undefined,
-    end?: boolean
+    end?: boolean,
+    declared?: boolean
   ): StateStmt {
     const ast = this.ids.node(keyOf(name, scope, end));
-    if (name !== '[*]') {
+    if (declared && name.length > 1 && name.endsWith(':')) {
+      // `state X:` as in `state X: text` (#362, D609): the symbol is `X`, the state the
+      // warning names, so a rename keeps the colon and the line's warning.
+      this.symbol(name.slice(0, -1), 'state', { ...nameRange, end: nameRange.end - 1 });
+    } else if (name !== '[*]') {
       this.symbol(name, 'state', nameRange);
     }
     return { id: ast, type: 'State', range: this.span(j), name, nameRange };

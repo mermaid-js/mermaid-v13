@@ -44,6 +44,16 @@ describe('a `state` line with several words (#362)', () => {
     expect(parseState(sample).model.states.map((s) => s.descriptions)).toEqual([[], [], [], []]);
   });
 
+  it('names the state without the colon as a symbol, so a rename keeps the colon', () => {
+    const r = parseState(sample);
+    const at = sample.indexOf('state State1:') + 'state '.length;
+    const symbol = r.symbols.find((s) => s.range.start === at);
+    expect(symbol && [symbol.name, sample.slice(symbol.range.start, symbol.range.end)]).toEqual([
+      'State1',
+      'State1',
+    ]);
+  });
+
   it('reads `state X : text`, with a blank before the colon, the same way', () => {
     expect(messages(lines('  A --> B', '  state A : go'))).toEqual([
       '`state A : go` is not read: `state` takes no description, so the text after `:` is not drawn (v12 ignores it too). Write `A : go`, without `state`.',
