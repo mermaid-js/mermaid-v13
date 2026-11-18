@@ -1,0 +1,14 @@
+---
+description:
+  Edge metadata animate and animation make the edge's dashes move from source to target, as in
+  v12. The thick edge A to B and the edge B to C run fast, C to D runs slow, and D to E is a
+  plain edge that does not move.
+---
+flowchart LR
+ A e1@==> B
+ e1@{ animate: true }
+ B e2@--> C
+ e2@{ animation: fast }
+ C e3@-.-> D
+ e3@{ animation: slow }
+ D --> E

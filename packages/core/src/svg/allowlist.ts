@@ -28,6 +28,7 @@ const TAG_TABLE: Record<AllowedTag | GradientTag, true> = {
   title: true,
   desc: true,
   image: true,
+  animate: true,
   defs: true,
   linearGradient: true,
   stop: true,
@@ -99,6 +100,11 @@ const ATTR_TABLE: Record<AllowedAttr | GradientAttr, true> = {
   href: true,
   target: true,
   rel: true,
+  attributeName: true,
+  from: true,
+  to: true,
+  dur: true,
+  repeatCount: true,
   offset: true,
   'stop-color': true,
   'stop-opacity': true,
@@ -156,6 +162,9 @@ export const NUMERIC_ATTRS: ReadonlySet<string> = new Set([
   'dx',
   'dy',
   'stroke-miterlimit',
+  'from',
+  'to',
+  'dur',
 ]);
 /** Elements that may carry `href`. */
 export const HREF_TAGS: ReadonlySet<string> = new Set(['a', 'image']);
@@ -200,6 +209,8 @@ const KEYWORDS: { readonly [K in AllowedAttr]?: readonly Extract<AttrTypes[K], s
   'xml:space': ['preserve'],
   target: ['_self', '_blank', '_parent', '_top'],
   rel: ['noopener noreferrer'],
+  attributeName: ['stroke-dashoffset'],
+  repeatCount: ['indefinite'],
 };
 
 /**

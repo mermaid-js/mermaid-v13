@@ -3,9 +3,10 @@
  * relationship is a `g.relationship.relationship-<type>` with the line through
  * `w.outline('edge', …)` (D302) and its markers as paths; include, extend and note lines are
  * dashed 3 (`styles.ts`), include and extend in their own colours. An author's `classDef` /
- * `style` on a relationship wins, and its markers take its stroke. Animation is a class only, as
- * in the flowchart: the keyframes would need a `<style>` (out of scope, spec #517).
+ * `style` on a relationship wins, and its markers take its stroke. An animated relationship moves
+ * as in the flowchart (`animateEdge`, D606).
  */
+import { ANIMATED_DASH, animateEdge } from '@mermaid-js/shared/svg/document';
 import { routePath } from '@mermaid-js/shared/svg/route';
 import type { Attrs, Paint, SafeValue } from '@mermaid-js/core/svg';
 import { noteEdgeId, type RelationEdgeView, type UsecaseEdgeView } from '../layout/prepare.ts';
@@ -79,11 +80,14 @@ function drawEdge(scene: Scene, e: UsecaseEdgeView): void {
       markerTrim(ends.start),
       markerTrim(ends.end)
     );
+    const animated = e.kind === 'relation' && animateEdge(w, e.relationship);
     w.outline('edge', 'path', {
       d: path.d,
       'stroke-dasharray': e.dotted ? DASH : undefined,
       ...lineAttrs(scene, e),
       ...e.style.shape,
+      // The moving dashes replace the line's own pattern and an author's, as in v12.
+      ...(animated && { 'stroke-dasharray': ANIMATED_DASH, 'stroke-dashoffset': undefined }),
       fill: 'none',
     });
     const head = {
