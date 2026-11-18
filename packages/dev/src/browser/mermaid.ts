@@ -13,6 +13,7 @@
  * holds one copy of core, so that clock is the one the pipeline reads.
  */
 import { THEME_NAMES } from '@mermaid-js/core/theme';
+import elkLayouts from '@mermaid-js/layout-elk';
 import type { LayoutLoader } from 'mermaid';
 
 export * from 'mermaid';
@@ -22,7 +23,7 @@ export { installStageClock, STAGE_TIMING } from '@mermaid-js/core/timing';
 export type { Stage, StageClock } from '@mermaid-js/core/timing';
 
 /** Layout engines the dev build registers (`registerLayoutLoaders`) besides the built-in one. */
-export const devLayoutLoaders: readonly LayoutLoader[] = [];
+export const devLayoutLoaders: readonly LayoutLoader[] = elkLayouts;
 
 /** The `theme` values this build ships, plus `auto`. */
 export const devThemes: readonly string[] = [...THEME_NAMES, 'auto'];
