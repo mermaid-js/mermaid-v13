@@ -214,6 +214,9 @@ const RE_NETWORK_PATH = /^[\\/]{2}/;
 const RE_ENTITY = /^&(?:amp|lt|gt|quot|apos|#\d{1,8}|#x[0-9a-fA-F]{1,8});/;
 const FILL_RULES: ReadonlySet<string> = new Set(['nonzero', 'evenodd']);
 const CURSORS: ReadonlySet<string> = new Set(['pointer']);
+// An `<animate>` may move a dash pattern and nothing else (D606): never `href`, never an event.
+const ANIMATED: ReadonlySet<string> = new Set(['stroke-dashoffset']);
+const REPEATS: ReadonlySet<string> = new Set(['indefinite']);
 const PAINT_LIKE: ReadonlySet<string> = new Set([
   'fill',
   'stroke',
@@ -363,6 +366,8 @@ const ATTR_RULES: ReadonlyMap<string, AttrRule> = new Map<string, AttrRule>([
   ['clip-rule', among(FILL_RULES)],
   ['data-color-id', matching(RE_COLOR_ID)],
   ['cursor', among(CURSORS)],
+  ['attributeName', among(ANIMATED)],
+  ['repeatCount', among(REPEATS)],
   ['filter', filterRule],
   ['style', styleRule],
 ]);

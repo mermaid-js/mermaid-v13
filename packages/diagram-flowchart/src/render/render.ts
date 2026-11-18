@@ -21,12 +21,13 @@ import {
   type SvgWriter,
 } from '@mermaid-js/core/svg';
 import {
+  ANIMATED_DASH,
+  animateEdge,
   clickCursor,
   cls,
   openSvgRoot,
   paletteSlots,
   textElement,
-  warnIgnoredAnimation,
 } from '@mermaid-js/shared/svg/document';
 import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
 import type { FlowModel } from '../parser/index.ts';
@@ -299,11 +300,6 @@ export function renderFlowchart(
     'stroke-width': scene.paint.node.strokeWidth,
     'stroke-linecap': 'round',
   });
-  // The `edge-animation-*` class is all an animated edge gets (`edgeClass`): say so, once.
-  warnIgnoredAnimation(
-    flow.edges.map((e) => e.edge),
-    scene.warn
-  );
   for (const e of flow.edges) drawEdge(scene, e);
   w.close();
   w.open('g', { class: 'edgeLabels' });
@@ -384,6 +380,23 @@ function edgeClass(edge: EdgeView['edge']): string {
   return 'edge flowchart-link' + look + animation + cls(edge.classes);
 }
 
+/** The edge's line: its weight and pattern, then the author's style, then an animation's dashes. */
+function edgeLine(edge: EdgeView['edge'], d: Attrs['d'], style: Attrs, animated: boolean): Attrs {
+  const dotted = edge.stroke === 'dotted';
+  return {
+    d,
+    'stroke-width': edge.stroke === 'thick' ? THICK : undefined,
+    'stroke-dasharray': dotted ? DOTTED : undefined,
+    // v12 drew dotted edges with butt caps; the group's round caps close a 2px dash's gaps.
+    // Animated edges keep round caps, as v12's .edge-animation-* rules set them.
+    'stroke-linecap': dotted && !animated ? 'butt' : undefined,
+    ...style,
+    // The moving dashes replace the edge's own pattern and any `linkStyle` one, as in v12.
+    ...(animated && { 'stroke-dasharray': ANIMATED_DASH, 'stroke-dashoffset': undefined }),
+    fill: 'none',
+  };
+}
+
 function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
   const edge = e.edge;
   const route = layout.edges.get(e.id);
@@ -402,17 +415,7 @@ function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
       markerTrim(e.end, paint.heads)
     );
     const style = e.style.shape;
-    w.outline('edge', 'path', {
-      d: path.d,
-      'stroke-width': edge.stroke === 'thick' ? THICK : undefined,
-      'stroke-dasharray': edge.stroke === 'dotted' ? DOTTED : undefined,
-      // v12 drew dotted edges with butt caps; the group's round caps close a 2px dash's gaps.
-      // Animated edges keep round caps, as v12's .edge-animation-* rules set them.
-      'stroke-linecap':
-        edge.stroke === 'dotted' && !edge.animate && !edge.animation ? 'butt' : undefined,
-      ...style,
-      fill: 'none',
-    });
+    w.outline('edge', 'path', edgeLine(edge, path.d, style, animateEdge(w, edge)));
     // The head fades with its line: opacity, and stroke-opacity as the head's fill-opacity.
     const headPaint: Attrs =
       style.stroke === undefined &&
