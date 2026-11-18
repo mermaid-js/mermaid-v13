@@ -41,20 +41,28 @@ export const ELLIPSE_STOP = 4;
 export const TRAP_STOP = 8;
 /** Ends a run of `<shapeData>`. */
 export const SHAPE_DATA_STOP = 16;
+/** Also ends a link id's run (only in a dialect built with `bracketsEndLinkId`). */
+export const LINK_ID_STOP = 32;
 
 /**
  * The character classes of a dialect's rules. With `labelComments` (v12 left the comments in
  * the text it lexed), `%` is one of the characters a `<text>` or `<trapText>` run stops at: it
  * ends the run when another `%` follows.
+ *
+ * With `bracketsEndLinkId`, the LINK_ID rule is v12 12.3.0's flow.jison
+ * `[^\s\"\[\]\(\)\{\}\|]+\@(?=[^\{\"])`: a link id's run also ends at `[ ] ( ) { } |`, so
+ * `A[bla]e1@` is a node, its shape and the id `e1@` (D621). Without it, the run ends only at a
+ * blank or a quote, as in 12.2.0's `[^\s\"]+\@(?=[^\{\"])`.
  */
-export function flowChars(labelComments: boolean): Uint8Array {
+export function flowChars(labelComments: boolean, bracketsEndLinkId: boolean): Uint8Array {
   const percent = labelComments ? '%' : '';
   return charTable(
     [NODE, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!"#$%&\'*+.`?\\_/'],
     [TEXT_STOP, '[](){}|' + percent],
     [ELLIPSE_STOP, '()[]{}'],
     [TRAP_STOP, '\\[](){}/' + percent],
-    [SHAPE_DATA_STOP, '}^']
+    [SHAPE_DATA_STOP, '}^'],
+    [LINK_ID_STOP, bracketsEndLinkId ? '[](){}|' : '']
   );
 }
 
@@ -84,7 +92,7 @@ export function flowKeywords(words: readonly FlowKeyword[]): FlowKeywords {
 export interface FlowLexerDialect {
   /** The diagram's token kinds. */
   readonly kinds: FlowKinds;
-  /** Its character classes ({@link flowChars}). */
+  /** Its character classes ({@link flowChars}), which also say where a link id ends. */
   readonly chars: Uint8Array;
   /**
    * The keywords besides the ones every dialect has (`accTitle`, `accDescr`, `call`, `class`,

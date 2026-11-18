@@ -315,13 +315,44 @@ describe('layoutXyChart: data labels', () => {
     );
     expect(zero.bars[0]!.height).toBe(0);
     expect(zero.dataLabels.map((t) => t.text)).toEqual(['5']);
-    const { layout, warnings } = lay('xychart\n  x-axis [a, b]\n  bar [1000000, 2000000]\n', {
+    // Every bar is shorter than the 10 px margin: none has room (D611).
+    const { layout, warnings } = lay('xychart\n  x-axis [a, b]\n  bar [1, 2]\n', {
       showDataLabel: true,
-      width: 100,
-      height: 60,
+      height: 16,
     });
+    expect(bars(layout).bars.every((b) => b.height > 0 && b.height < 10)).toBe(true);
     expect(bars(layout).dataLabels).toEqual([]);
     expect(warnings.map((w) => w.code)).toContain(XYCHART_LABEL_TOO_SMALL);
+  });
+
+  it('leaves out only the bars with no room for their label, with an automatic range (D611)', () => {
+    // #537: the inferred range starts at the lowest value, so its bar is a few px high.
+    for (const orientation of ['vertical', 'horizontal']) {
+      const { layout, warnings } = lay('xychart\n  bar [10, 30]\n', {
+        showDataLabel: true,
+        chartOrientation: orientation,
+      });
+      const p = bars(layout);
+      expect(
+        p.dataLabels.map((t) => t.text),
+        orientation
+      ).toEqual(['30']);
+      expect(p.dataLabels[0]!.font.size, orientation).toBeGreaterThan(0);
+      expect(warnings, orientation).toEqual([]);
+    }
+  });
+
+  it('sizes the labels by the smallest bar that has room, not by the bars with none (D611)', () => {
+    const { layout, warnings } = lay('xychart\n  bar [10, 30, 11]\n', { showDataLabel: true });
+    const p = bars(layout);
+    expect(p.dataLabels.map((t) => t.text)).toEqual(['30', '11']);
+    // The 11 is the shortest bar with room: its label leaves the 10 px margin and no more.
+    const short = p.bars[2]!;
+    const sizes = [...new Set(p.dataLabels.map((t) => t.font.size))];
+    expect(sizes).toHaveLength(1);
+    expect(10 + sizes[0]!).toBeLessThanOrEqual(short.height);
+    expect(10 + sizes[0]! + 2).toBeGreaterThan(short.height);
+    expect(warnings).toEqual([]);
   });
 
   it('draws no data labels without showDataLabel', () => {

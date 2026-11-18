@@ -20,6 +20,11 @@ export interface RadarMetrics {
   readonly legendTextGap: number;
   /** The legend sits `¾` of the way from the centre to the canvas corner (`:220-221`). */
   readonly legendFactor: number;
+  /**
+   * When a legend row meets an axis label, the legend moves right to this far past the label's
+   * right edge (D614, #846); v12 had no such rule.
+   */
+  readonly legendLabelGap: number;
 }
 
 export const RADAR_METRICS: RadarMetrics = {
@@ -28,6 +33,7 @@ export const RADAR_METRICS: RadarMetrics = {
   legendRow: 20,
   legendTextGap: 4,
   legendFactor: 3 / 4,
+  legendLabelGap: 4,
 };
 
 /** v12 writes `radarCurve-0`…`radarCurve-11`: a curve takes slot `index mod 12` (D353). */

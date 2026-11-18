@@ -110,6 +110,12 @@ export const FIXTURES: Readonly<Record<string, RadarModel>> = {
   // One and two axes: degenerate polygons, still on their spokes.
   one: model([axis('A')], [curve('c1', [1])]),
   two: model([axis('A'), axis('B')], [curve('c1', [1, 2])], { graticule: 'polygon' }),
+  // #846: eight axes and two curves; "Axis label 1" at 45° grows right into legend row 1 at
+  // v12's position, so the legend moves right of it (D614).
+  legendOnLabel: model(
+    ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((n) => axis(n, n === 'b' ? 'Axis label 1' : n)),
+    [curve('x', [1, 2, 3, 4, 5, 1, 2, 3]), curve('y', [2, 3, 4, 5, 1, 2, 3, 4])]
+  ),
   // showLegend false: no rows.
   noLegend: model(abc, [curve('c1', [1, 2, 3])], { showLegend: false }),
   // Long labels and title, wider than the 50 px margins (D354); labels through core label

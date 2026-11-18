@@ -171,13 +171,20 @@ const CASES: Case[] = [
     keeps: ['C', 'D'],
   },
   {
-    name: 'shape data followed by blanks and a link',
-    lines: ['flowchart TD', 'A@{ shape: rect } ;', 'B --> C', 'D@{ shape: rect } e1@--> E'],
+    // D621: blanks after shape data may lead to an edge id; an edge id has no brackets.
+    name: 'edge ids with brackets between edge ids after shape data',
+    lines: [
+      'flowchart TD',
+      'A e[1]@--> B',
+      'C@{ shape: rect } e1@--> D',
+      'E@{ shape: rect } ;',
+      'F e|2|@--> G',
+    ],
     errors: [
       ['UNEXPECTED', 2],
-      ['UNEXPECTED', 4],
+      ['UNEXPECTED', 5],
     ],
-    keeps: ['B', 'C'],
+    keeps: ['C', 'D', 'E'],
   },
   {
     name: 'a missing header',

@@ -276,6 +276,8 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
   // its own pair of cells along the side.
   const loopCount = new Int32Array(cnodes.length);
   const loopsSeen = new Int32Array(cnodes.length);
+  // Off the grid, how far out the loops already placed on each side of a node reach (#768).
+  const loopUsed = new Float64Array(2 * cnodes.length);
   const cedges: CEdge[] = graph.edges.map((e, k) => {
     const [src, dst] = ends[k]!;
     const labelW = e.label?.width ?? 0;
@@ -349,7 +351,7 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
         e.id,
         hooks
           ? hooks.loop(box(src), below, e.label, M, slot)
-          : selfLoop(box(src), below, e.label, M)
+          : selfLoop(box(src), below, e.label, M, nth, loopUsed.subarray(2 * src))
       );
       return;
     }
@@ -522,18 +524,30 @@ function sideOf(b: LayoutModelNode, p: RoutePoint | undefined, fallback: Side): 
   return dx < 0 ? 'left' : 'right';
 }
 
-// A loop out of one side of a node and back, beside it across the flow.
+// A loop out of one side of a node and back, beside it across the flow. The node's loops take
+// its two sides in turn (#768, D618): the `nth` takes the far side when `nth` is odd, and starts
+// past the loops already on that side, which `used` holds for the near and far side and this
+// one adds to (in reserveLoop's room). Its ends spread towards the corners, so it never runs
+// along an inner one.
 function selfLoop(
   b: LayoutModelNode,
   below: boolean,
   label: { width: number; height: number } | undefined,
-  M: LayoutMetrics
+  M: LayoutMetrics,
+  nth: number,
+  used: Float64Array
 ): LayoutModelEdge {
+  const i = nth & 1;
+  const s = 1 - 2 * i;
+  const off = used[i]!;
+  const size = below ? label?.height : label?.width;
+  used[i] = off + M.loop + (size ? size + M.loopGap : 0);
+  const f = 0.5 - 0.25 / ((nth >> 1) + 1);
   if (below) {
-    const y = b.y + b.height / 2;
-    const out = y + M.loop;
-    const x0 = b.x - b.width / 4;
-    const x1 = b.x + b.width / 4;
+    const y = b.y + (s * b.height) / 2;
+    const out = y + s * (off + M.loop);
+    const x0 = b.x - b.width * f;
+    const x1 = b.x + b.width * f;
     return {
       points: [
         { x: x0, y, axis: 'v' },
@@ -541,14 +555,14 @@ function selfLoop(
         { x: x1, y: out, axis: 'h' },
         { x: x1, y, axis: 'v' },
       ],
-      ...(label ? { label: { x: b.x, y: out + M.loopGap + label.height / 2 } } : {}),
-      ports: { source: 'bottom', target: 'bottom' },
+      ...(label ? { label: { x: b.x, y: out + s * M.loopGap + (s * label.height) / 2 } } : {}),
+      ports: s > 0 ? { source: 'bottom', target: 'bottom' } : { source: 'top', target: 'top' },
     };
   }
-  const x = b.x + b.width / 2;
-  const out = x + M.loop;
-  const y0 = b.y - b.height / 4;
-  const y1 = b.y + b.height / 4;
+  const x = b.x + (s * b.width) / 2;
+  const out = x + s * (off + M.loop);
+  const y0 = b.y - b.height * f;
+  const y1 = b.y + b.height * f;
   return {
     points: [
       { x, y: y0, axis: 'h' },
@@ -556,7 +570,7 @@ function selfLoop(
       { x: out, y: y1, axis: 'v' },
       { x, y: y1, axis: 'h' },
     ],
-    ...(label ? { label: { x: out + M.loopGap + label.width / 2, y: b.y } } : {}),
-    ports: { source: 'right', target: 'right' },
+    ...(label ? { label: { x: out + s * M.loopGap + (s * label.width) / 2, y: b.y } } : {}),
+    ports: s > 0 ? { source: 'right', target: 'right' } : { source: 'left', target: 'left' },
   };
 }
