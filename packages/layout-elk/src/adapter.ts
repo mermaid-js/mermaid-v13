@@ -469,9 +469,10 @@ export function toElkGraph(
     const title = g.title ?? { width: 0, height: 0 };
     const { top, right, bottom, left } = g.padding;
     const own = handling.get(g.id);
+    const [above, below] = titleHeights(g);
     // Room for the title, where a first pass found the frame too narrow for it (`titleRoom`).
     const extra = grow.get(g.id) ?? 0;
-    // The title sits in the top padding. ELK layered does not keep a compound node's minimum
+    // The title sits in the top padding, or in the bottom padding (`titlePosition`). ELK layered does not keep a compound node's minimum
     // size under INCLUDE_CHILDREN, so `widenForTitles` also widens frames after layout.
     nodes.set(g.id, {
       id: g.id,
@@ -481,7 +482,7 @@ export function toElkGraph(
         ...(own ? { 'elk.hierarchyHandling': own } : {}),
         ...groupOptions(elk, separate(g.id)),
         ...FIXED_GROUP,
-        'elk.padding': padding(top + title.height, right + extra, bottom, left + extra),
+        'elk.padding': padding(top + above, right + extra, bottom + below, left + extra),
         ...(title.width > 0
           ? {
               'elk.nodeSize.constraints': '[MINIMUM_SIZE]',
@@ -714,9 +715,30 @@ function straighten(graph: LayoutGraph, built: Built, routes: Routes): Map<strin
   return labelMoved;
 }
 
-/** Where a group's title is drawn: centred on the frame, in the middle of the top padding. */
+/** Whether a group's title sits in its bottom padding (`titlePosition`). */
+function titleLow(g: LayoutGraph['groups'][number]): boolean {
+  return g.titlePosition?.startsWith('bottom') === true;
+}
+
+/** The room a group's title takes above and below its content: on the title's side. */
+function titleHeights(g: LayoutGraph['groups'][number]): [above: number, below: number] {
+  const height = g.title?.height ?? 0;
+  return titleLow(g) ? [0, height] : [height, 0];
+}
+
+/**
+ * Where a group's title is drawn: in the middle of the top padding and centred on the frame, or
+ * where `titlePosition` puts it, a title at the left or right in by that side's padding.
+ */
 function titleCentre(g: LayoutGraph['groups'][number], r: Rect): Point {
-  return { x: r.x + r.width / 2, y: r.y + g.padding.top / 2 + (g.title?.height ?? 0) / 2 };
+  const { top, bottom, left, right } = g.padding;
+  const { width = 0, height = 0 } = g.title ?? {};
+  const low = titleLow(g);
+  const drop = (low ? bottom : top) / 2 + height / 2;
+  let x = r.x + r.width / 2;
+  if (g.titlePosition?.endsWith('left')) x = r.x + left + width / 2;
+  if (g.titlePosition?.endsWith('right')) x = r.x + r.width - right - width / 2;
+  return { x, y: low ? r.y + r.height - drop : r.y + drop };
 }
 
 /** Node shapes whose top and bottom are straight, so a run end may slide along them. */

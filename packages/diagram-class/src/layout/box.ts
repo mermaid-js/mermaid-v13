@@ -13,12 +13,15 @@ import {
   type StyleBits,
 } from '@mermaid-js/core/text';
 import type { ClassMember, ClassNode } from '../parser/model.ts';
-import { memberDisplay } from '../parser/member.ts';
+import { memberLabel } from '../parser/member.ts';
 import { v12Label } from '@mermaid-js/core/text/v12-label';
 
 /** One line of text in a class box. */
 export interface ClassRow {
-  /** The source text, before markdown is read: `«interface»`, `Animal<T>`, `+eat(food) : bool`. */
+  /**
+   * The source text, before markdown is read: `«interface»`, `Animal&lt;T&gt;`,
+   * `+eat(food) : bool`. A generic's brackets are character references here (D619).
+   */
   readonly text: string;
   readonly label: MeasuredLabel;
   /**
@@ -52,7 +55,7 @@ export interface ClassBoxGeometry {
   readonly height: number;
   /** `«name»` above the name, for the first annotation (v12 drew only the first). */
   readonly annotation?: ClassRow;
-  /** The class name, bold, with its generic type: `Name<T>`. */
+  /** The class name, bold, with its generic type: `Name&lt;T&gt;`, drawn `Name<T>`. */
   readonly name: ClassRow;
   /** None (`hideEmptyMembersBox` with no members), or attributes then methods. */
   readonly compartments: readonly ClassCompartment[];
@@ -76,14 +79,19 @@ const CLASSIFIER_STYLE: Readonly<Record<string, StyleBits>> = {
   $: Style.Underline,
 };
 
-/** The name row's text: the label, then `<type>` for a generic class (v12 `ClassNode.text`). */
+/**
+ * The name row's text as the label layout reads it: the label, then `&lt;type&gt;` for a
+ * generic class (v12 `ClassNode.text`), so `B~U~` draws `B<U>`, not `B` underlined (D619).
+ */
 export const classTitle = (node: ClassNode): string =>
-  node.type ? `${node.label}<${node.type}>` : node.label;
+  node.type ? `${node.label}&lt;${node.type}&gt;` : node.label;
 
 /**
  * Measures one class box. Text goes through core's label layout in the `emphasis` mode, as
  * v12's `addText` passed it to `createText` with markdown on: `**bold**`, `_italic_`, `<br>`
- * and the HTML subset are read, and `List<T>` stays text (only known tags are tags).
+ * and the HTML subset are read. A generic's brackets come as `&lt;` and `&gt;`, so `List~Data~`
+ * is text whatever the type's name (D619); a `<T>` the author types stays text unless `T` is a
+ * known tag.
  *
  * Heights follow v12's `classBox` (P = padding, rows = the compartment's text):
  * - header: P, the annotation and the name, P;
@@ -137,12 +145,12 @@ export function measureBox(
       const lead = kind === 'methods' && node.attributes.length === 0 ? 1.5 * P : P;
       let at = top + lead;
       for (const member of list) {
-        const { displayText } = memberDisplay(member);
+        const text = memberLabel(member);
         const style = CLASSIFIER_STYLE[member.classifier] ?? 0;
-        const label = measure(displayText, style);
+        const label = measure(text, style);
         if (rows.length > 0) at += m.rowGap;
         rows.push({
-          text: displayText,
+          text,
           label,
           x: m.pad.x,
           y: at,

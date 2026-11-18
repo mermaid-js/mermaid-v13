@@ -557,7 +557,7 @@
       ]
     },
     "rule-25": {
-      "match": "(?i)[^\"]+",
+      "match": "(?i)(?:<\\w+\\b(?:[^<>\"=]|=(?!\")|=\"[^<>\"]*\")*>|[^\"])+",
       "name": "string.quoted.mermaid-mindmap"
     },
     "mode-nstr": {
@@ -574,7 +574,7 @@
       ]
     },
     "rule-22": {
-      "match": "(?i)[^`\"]+",
+      "match": "(?i)(?:<\\w+\\b(?:[^<>\"`=]|=(?!\")|=\"[^<>\"`]*\")*>|[^`\"])+",
       "name": "string.quoted.mermaid-mindmap"
     },
     "mode-nstr2": {

@@ -121,6 +121,10 @@ export function fontsOf(
   const seq = (ctx.config.sequence ?? {}) as Readonly<Record<string, unknown>>;
   const family = ctx.theme.value('fontFamily');
   const size = ctx.theme.number('fontSize');
+  // A set top-level `fontSize` comes before the theme's for actor, message and note text, as
+  // v12's `setConf` copied it; the title keeps the theme's (D620).
+  const root = fontSizePx(ctx.config.fontSize, size);
+  const text = root !== undefined && root > 0 ? root : size;
   // Family keys inherit the Mermaid font; size and weight keys apply when set.
   const font = (prefix: string): FontKey => {
     const key = `${prefix}FontFamily`;
@@ -138,7 +142,7 @@ export function fontsOf(
     const s = fontSizePx(seq[`${prefix}FontSize`], size);
     return {
       family: safe ?? family,
-      size: s !== undefined && s > 0 ? s : size,
+      size: s !== undefined && s > 0 ? s : text,
       weight: weightOf(seq[`${prefix}FontWeight`], FONT_WEIGHT.bold, FONT_WEIGHT.normal),
     };
   };

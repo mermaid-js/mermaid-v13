@@ -1,0 +1,20 @@
+---
+description:
+  An edge enters the subgraph from above through the middle of its top border. The title is
+  at the top left, clear of the edge, and the second subgraph's own position overrides the
+  config with bottom-center (mermaid-js/mermaid#2977).
+config:
+  flowchart:
+    subGraphTitlePosition: top-left
+---
+flowchart TD
+    Root ==> Child
+    subgraph Items
+        Child --> ThingA
+        Child --> ThingB
+        Child --> ThingC
+    end
+    subgraph Notes
+        ThingB --> Note
+    end
+    Notes@{ titlePosition: bottom-center }
