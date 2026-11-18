@@ -5,6 +5,7 @@ import {
   buildWeightedLaneEdges,
   laneArrangementCost,
   optimizeTopLaneOrder,
+  withEmptyLanesBesideDeclaredNeighbours,
 } from '../laneOrdering.ts';
 import { buildTopLaneOrder } from '../phase2.options.ts';
 import { viewOf } from './graphs.ts';
@@ -70,5 +71,42 @@ describe('automatic swimlane ordering', () => {
       ]
     );
     expect(optimizeTopLaneOrder(g, { restarts: 8 })).toEqual(['laneA', 'laneB', 'laneC']);
+  });
+});
+
+// v13-only: v12 places an empty lane by declared order (mermaid-js/mermaid#8754 for TB and BT,
+// mermaid-js/mermaid#8772 for LR and RL), whatever order the lanes with nodes stand in.
+describe('empty lanes beside their declared neighbours (#684)', () => {
+  const place = (drawn: string[], declared: string[], empty: string[]) =>
+    withEmptyLanesBesideDeclaredNeighbours(drawn, declared, new Set(empty));
+
+  it('leaves the order alone when the lanes stand in declared order', () => {
+    const declared = ['E1', 'A', 'E2', 'E3', 'B', 'E4'];
+    expect(place(declared, declared, ['E1', 'E2', 'E3', 'E4'])).toEqual(declared);
+  });
+
+  it('puts an empty first lane right before the first lane with nodes declared after it', () => {
+    expect(place(['E', 'L', 'H', 'R'], ['E', 'H', 'L', 'R'], ['E'])).toEqual(['L', 'E', 'H', 'R']);
+  });
+
+  it('puts an empty lane right after the lane declared before it, wherever that lane stands', () => {
+    expect(place(['C', 'E', 'A', 'B'], ['A', 'B', 'E', 'C'], ['E'])).toEqual(['C', 'A', 'B', 'E']);
+  });
+
+  it('keeps empty lanes declared one after another together, in declared order', () => {
+    const declared = ['E1', 'E2', 'A', 'E3', 'E4', 'B'];
+    const drawn = ['E4', 'B', 'E3', 'A', 'E2', 'E1'];
+    expect(place(drawn, declared, ['E1', 'E2', 'E3', 'E4'])).toEqual([
+      'B',
+      'E1',
+      'E2',
+      'A',
+      'E3',
+      'E4',
+    ]);
+  });
+
+  it('stands lanes that are all empty in declared order', () => {
+    expect(place(['E2', 'E1'], ['E1', 'E2'], ['E1', 'E2'])).toEqual(['E1', 'E2']);
   });
 });

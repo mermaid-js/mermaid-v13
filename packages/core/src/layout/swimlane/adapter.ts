@@ -117,8 +117,9 @@ const edgeOf = (n: Node, axis: Axis, far: boolean): number => {
 };
 
 /**
- * Lanes the author left empty get a band of their own, between their neighbours in the order
- * the phases placed the lanes (`laneOrder`: source order, or the automatic order), as wide as their title needs: the phases give them no size (v12 collapses them).
+ * Lanes the author left empty get a band of their own, between their neighbours in `laneOrder`
+ * (which stands each beside the lanes declared next to it), as wide as their title needs: the
+ * phases give them no size (v12 collapses them).
  */
 function placeEmptyLanes(data: LayoutData, laneOrder: readonly string[]): void {
   const byId = new Map(data.nodes.map((n) => [n.id, n]));
