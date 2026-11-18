@@ -1,0 +1,11 @@
+---
+title: '#363 class relations with a label and cardinalities'
+description:
+  Fixed when each relation label, both cardinalities and the arrowhead sit clear
+  of each other, with the same room between them as between label and box.
+---
+classDiagram
+  Customer "1" --> "*" Ticket : buys a long relationship label
+  Student "1" --> "1..*" Course : enrolls in
+  Galaxy --> "many" Star : contains
+  Customer "1" --> "0..1" Address : lives at
