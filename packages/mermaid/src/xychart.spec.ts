@@ -108,6 +108,22 @@ describe('XY charts through the public API (#513)', () => {
     expect(r.warnings.map((w) => w.code)).toEqual(['XYCHART_EMPTY_RANGE', 'XYCHART_MISSING_VALUE']);
     expect(r.svg).not.toMatch(/NaN|Infinity/);
   });
+
+  it('draws the data labels that fit with an automatic y range, without a warning (#537, D611)', async () => {
+    const m = createMermaid();
+    for (const body of [
+      '    showDataLabel: true\n',
+      '    showDataLabel: true\n    chartOrientation: horizontal\n',
+    ]) {
+      const r = await m.render('x', withConfig(body, 'xychart\n  bar [10, 30, 11]\n'));
+      // The inferred range starts at 10, so that bar is too short for its label; the others fit.
+      const labels = [...r.svg.matchAll(/<g class="bar-plot-0"[^]*?<\/g>/g)]
+        .flatMap(([g]) => [...g.matchAll(/<text [^>]*>([^<]*)<\/text>/g)].map((t) => t[1]))
+        .sort();
+      expect(labels, body).toEqual(['11', '30']);
+      expect(r.warnings, body).toEqual([]);
+    }
+  });
 });
 
 describe('the xyChart config section through render() (#513, D387)', () => {
