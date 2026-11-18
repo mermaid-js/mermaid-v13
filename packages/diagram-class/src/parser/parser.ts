@@ -200,8 +200,13 @@ class ClassParser extends ParserBase {
       ...(endLabel ? { endLabel: endLabel.text } : {}),
       ...(label ? { label: label.text } : {}),
     });
-    if (!had[0] && db.has(first.id)) this.checkNodes(first.range);
-    if (!had[1] && db.has(second.id)) this.checkNodes(second.range);
+    // Check each new class with the count it had when it was added (#748): `checkLimit` expects
+    // one call per class, so when the relation made both ends, the first is checked at one less.
+    // `A --> A` makes one class.
+    const madeFirst = !had[0] && db.has(first.id);
+    const madeSecond = first.id !== second.id && !had[1] && db.has(second.id);
+    if (madeFirst) this.checkNodes(first.range, db.classCount - (madeSecond ? 1 : 0));
+    if (madeSecond) this.checkNodes(second.range);
     checkLimit(
       st.diagnostics,
       'maxEdges',
