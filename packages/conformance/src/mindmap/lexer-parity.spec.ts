@@ -85,7 +85,7 @@ describe('mindmap lexer parity with mermaid@12 (jison)', () => {
     // Every e2e fixture and every harvested spec and syntax-page string reaches the lexer.
     // 85, #328's 4 icon baselines, 14 from the corpus cleanup, #649's long word, #781's 2,
     // #783's icon text and #836's emphasis beside a code span.
-    expect(e2e).toBe(108);
+    expect(e2e).toBe(109);
     expect(specs).toBe(46);
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
     expect(

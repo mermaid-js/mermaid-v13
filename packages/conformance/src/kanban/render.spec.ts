@@ -74,7 +74,7 @@ function lineEnds(tree: SvgView): { x: number; y: number }[] {
 describe('kanban render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, with cards, bars, links and 15 columns', () => {
     // The 30 restored fixtures and the 23 baselines (#459).
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(53);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(54);
     expect(cases.length).toBeGreaterThan(100 * THEMES.length);
     // Every e2e fixture renders; the cases file holds the rejections.
     expect([...rejected].filter((id) => id.startsWith('e2e/'))).toEqual([]);

@@ -96,7 +96,7 @@ describe('kanban lexer parity with mermaid@12 (jison)', () => {
     process.stdout.write(`lexer parity: ${compared} of ${items.length} sources lexed by v12\n`);
     // Every e2e fixture, every harvested spec and syntax-page string and every case reaches
     // the lexer: 30 restored e2e fixtures and 23 baselines (#459).
-    expect(e2e).toBe(53);
+    expect(e2e).toBe(54);
     expect(specs).toBe(32);
     expect(cases).toBe(136);
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
