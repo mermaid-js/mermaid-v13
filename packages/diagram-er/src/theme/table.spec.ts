@@ -59,12 +59,19 @@ describe('the ER theme table (#414 T3)', () => {
       expect((await themed(name)).value('erMarkerFill'), name).toBe('#ffffff');
   });
 
-  it('draws edge labels on a plain fill in the colour themes, on edgeLabelBackground elsewhere', async () => {
-    expect((await themed('redux-color')).value('erEdgeLabelBackground')).toBe('#ffffff');
-    expect((await themed('redux-dark-color')).value('erEdgeLabelBackground')).toBe('#16141f');
-    for (const name of ['redux', 'redux-dark', 'neo', 'neo-dark']) {
-      const t = await themed(name, { edgeLabelBackground: '#abcdef' });
-      expect(t.value('erEdgeLabelBackground'), name).toBe('#abcdef');
+  it('fills edge labels with the theme background in every theme (D621)', async () => {
+    for (const name of [...CLASSIC, 'redux', 'redux-color', 'redux-dark', 'redux-dark-color']) {
+      const t = await themed(name);
+      expect(t.value('erEdgeLabelBackground'), name).toBe(t.value('background'));
+    }
+  });
+
+  it('lets the author set the edge label fill, by its own variable or the shared one', async () => {
+    for (const name of [...CLASSIC, 'redux', 'redux-color', 'neo-dark']) {
+      const own = await themed(name, { erEdgeLabelBackground: '#123456' });
+      expect(own.value('erEdgeLabelBackground'), name).toBe('#123456');
+      const shared = await themed(name, { edgeLabelBackground: '#abcdef' });
+      expect(shared.value('erEdgeLabelBackground'), name).toBe('#abcdef');
     }
   });
 
@@ -79,13 +86,6 @@ describe('the ER theme table (#414 T3)', () => {
     expect((await themed('default', { mainBkg: '#000000' })).value('rowEven')).toBe(own);
     expect((await themed('base', { mainBkg: '#000000' })).value('rowEven')).toBe('#0d0d0d');
     expect((await themed('forest', { mainBkg: '#000000' })).value('rowEven')).toBe('#333333');
-  });
-
-  it('fills the classic relationship label with tertiaryColor at half opacity, as v12 (#761)', async () => {
-    for (const name of CLASSIC) {
-      const t = await themed(name, { tertiaryColor: '#ff00ff', edgeLabelBackground: '#abcdef' });
-      expect(t.value('erEdgeLabelBackground'), name).toBe('#ff00ff80');
-    }
   });
 
   it('inks attribute text against its own row, the header against the entity (#758)', async () => {

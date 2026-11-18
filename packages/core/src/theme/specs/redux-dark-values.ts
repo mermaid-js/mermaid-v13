@@ -49,7 +49,6 @@ export const REDUX_DARK_VALUES: NonNullable<ThemeSpec['values']> = {
   clusterBkg: '#1e1a2e',
   clusterBorder: '#bdbccc',
   titleColor: '#dfe0e0',
-  edgeLabelBackground: '#474949',
   border1: '#cccccc',
   border2: '#ffffff40',
   noteBkgColor: '#fef9c3',

@@ -71,7 +71,6 @@ const theme: ThemeSpec = {
     clusterBkg: '#ffffde',
     clusterBorder: '#aaaa33',
     titleColor: '#333333',
-    edgeLabelBackground: '#e8e8e8cc',
     border2: '#aaaa33',
     noteTextColor: '#000000',
     noteBorderColor: '#aaaa33',

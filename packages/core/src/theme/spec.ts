@@ -60,7 +60,8 @@ export const LIGHT_RULES: ThemeRuleTable = {
   clusterBkg: 'tertiaryColor',
   clusterBorder: 'tertiaryBorderColor',
   titleColor: 'contrast(clusterBkg, textColor, background)',
-  edgeLabelBackground: 'secondaryColor',
+  // Every edge label's fill is the background it sits on (D621).
+  edgeLabelBackground: 'background',
   arrowheadColor: 'lineColor',
   defaultLinkColor: 'lineColor',
   border1: 'primaryBorderColor',
@@ -121,7 +122,6 @@ export const DARK_RULES: ThemeRuleTable = {
   primaryBorderColor: 'mix(primaryColor, white, 20%)',
   secondaryBorderColor: 'mix(secondaryColor, white, 20%)',
   tertiaryBorderColor: 'mix(tertiaryColor, white, 20%)',
-  edgeLabelBackground: 'mix(secondaryColor, black, 30%)',
   noteBkgColor: 'secondaryColor',
   noteBorderColor: 'mix(noteBkgColor, white, 30%)',
   errorBkgColor: '#a44141',

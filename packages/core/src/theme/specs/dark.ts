@@ -63,7 +63,6 @@ const theme: ThemeSpec = {
     clusterBorder: '#ffffff40',
     titleColor: '#f9fffe',
     // v12 has #585858, which is 4.45:1 under #ccc text; a shade darker meets AA.
-    edgeLabelBackground: '#555555',
     border2: '#ffffff40',
     noteBorderColor: '#2f2f2f',
     errorTextColor: '#dddddd',
