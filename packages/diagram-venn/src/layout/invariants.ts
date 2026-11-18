@@ -12,7 +12,8 @@
  *   not checked against the inner circle: v12's grid is the `1.9 · r` square about it, so every
  *   cell's corners reach past it. Two of v12's own rules put a cell centre past the circle too,
  *   when the circle is small for the canvas width: the grid's least size (`80s × 60s`) and its
- *   move down (`min(32s, r / 4)`, `30s`); a centre is let past for those only (GAPS #491);
+ *   move down (`min(32s, r / 4)`, `30s`, and a label's lines below its first, D613); a centre is
+ *   let past for those only (GAPS #491);
  * - the labels of different areas do not overlap (a repeated area's copies share one place);
  * - everything drawn is inside `bounds`.
  */
@@ -98,7 +99,8 @@ function circlesProportional(
 function textInInnerCircles(layout: VennLayout, eps: number, out: string[]): void {
   for (const t of layout.textAreas) {
     const { radius } = t.inner;
-    // v12 makes the grid at least 80s × 60s, and moves it down by the label offset.
+    // v12 makes the grid at least 80s × 60s, and moves it down by the label offset (and D613 by
+    // a label's extra lines).
     const leastSize =
       t.grid.width > VENN_METRICS.textBoxFactor * radius + eps ||
       t.grid.height > VENN_METRICS.textBoxFactor * radius + eps;
