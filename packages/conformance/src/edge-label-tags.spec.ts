@@ -19,9 +19,14 @@ const DIRS = [
   'class-diagram',
   'agentflow',
   'er-diagram',
+  'c4',
+  'c4beta',
 ];
 /** The stroke the fixtures give a styled edge, or the line colour they set. */
 const PINK = '#d6336c';
+/** Whether a fixture styles an edge in pink: a `stroke`, or C4's `UpdateRelStyle` `$lineColor`. */
+const styledEdge = (s: string): boolean =>
+  s.includes(`stroke:${PINK}`) || s.includes(`$lineColor="${PINK}"`);
 
 function fixtures(dir: string): [string, string][] {
   const at = join(REPO_ROOT, 'e2e/diagrams', dir, 'baseline/edge-labels');
@@ -99,7 +104,7 @@ describe('edge labels are tags (D619–D623)', () => {
     }
   });
 
-  it.each(CASES.filter(([, s]) => s.includes(`stroke:${PINK}`)))(
+  it.each(CASES.filter(([, s]) => styledEdge(s)))(
     '%s: the styled edge borders its label in its own stroke',
     async (_id, source) => {
       const found = tags(await render(source));
@@ -141,7 +146,7 @@ describe('edge labels are tags (D619–D623)', () => {
     expect(tags(svg).map((t) => t.text)).toContain('holds');
   });
 
-  it.each(CASES.filter(([id]) => !id.startsWith('class-diagram/')))(
+  it.each(CASES.filter(([id]) => !/^(?:class-diagram|c4|c4beta)\//.test(id)))(
     '%s: an author label fill still wins',
     async (_id, source) => {
       const own = { edgeLabelBackground: '#123456', erEdgeLabelBackground: '#654321' };
