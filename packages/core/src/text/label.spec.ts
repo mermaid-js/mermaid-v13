@@ -311,7 +311,8 @@ describe('HTML subset (R-TEXT-3)', () => {
   });
 
   it('drops only the tag of a <script> or <style> with no end tag, and keeps what follows', () => {
-    // A class generic reaches the label as a tag: `List~Style~ items` is `List<Style> items`.
+    // Text shaped like a generic, as an author may type it in a label: `+List<Style> items`.
+    // (A class generic written with `~` reaches the label as `&lt;Style&gt;`, D619.)
     expect(droppedBy('+List<Style> items')).toEqual([['+List items'], ['style']]);
     expect(droppedBy('+run(Map<Script> m) void')).toEqual([['+run(Map m) void'], ['script']]);
     // The end tag of another element, or one before the start tag, closes nothing.

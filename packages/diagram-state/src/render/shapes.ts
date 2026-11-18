@@ -84,8 +84,8 @@ export function drawShape(w: SvgWriter, view: StateNodeView, paint: ShapePaint):
 }
 
 /**
- * A described state's labels: its title (the id) at the top, a divider, and the description
- * lines below, as v12 `rectWithTitle` stacks them.
+ * A described state's labels: its title (the first description) at the top, a divider, and the
+ * other description lines below, as v12 `rectWithTitle` stacks them.
  */
 export function drawDescribed(
   w: SvgWriter,

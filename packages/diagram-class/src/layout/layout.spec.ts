@@ -127,7 +127,7 @@ class C {
       await lay('classDiagram\nclass Shape~T~ {\n<<interface>>\n<<other>>\n+draw()*\n+count$\n}')
     ).class!.boxes[0]!;
     expect(box.annotation?.text).toBe('«interface»');
-    expect(box.name.text).toBe('Shape<T>');
+    expect(box.name.text).toBe('Shape&lt;T&gt;');
     expect(
       box.name.label.lines
         .flat()
@@ -153,6 +153,58 @@ class C {
     expect(box.width).toBeCloseTo(
       Math.max(box.name.label.width, ...rows.map((r) => r.label.width)) + 10
     );
+  });
+});
+
+describe('generic types named like HTML tags (#756, D619)', () => {
+  /** What a row draws, and the style bits of each run. */
+  const shown = (r: { label: { lines: { text: string; style: number }[][] } }) => ({
+    text: r.label.lines.map((l) => l.map((x) => x.text).join('')).join('\n'),
+    styles: [...new Set(r.label.lines.flat().map((x) => x.style))],
+  });
+  const boxOf = async (src: string, id: string) => {
+    const out = await lay(src);
+    const box = out.class!.boxes.find((b) => b.id === id);
+    expect(box).toBeDefined();
+    return box!;
+  };
+
+  it.each([
+    ['classDiagram\nclass B~U~', 'B', 'B<U>'],
+    ['classDiagram\nA --> B~U~', 'B', 'B<U>'],
+    // Read as bold and italic before the fix, with no warning.
+    ['classDiagram\nclass B~B~', 'B', 'B<B>'],
+    ['classDiagram\nclass C~I~', 'C', 'C<I>'],
+    ['classDiagram\nclass List~Data~', 'List', 'List<Data>'],
+  ])('draws the title of %j as written', async (src, id, text) => {
+    const box = await boxOf(src, id);
+    expect(shown(box.name)).toEqual({ text, styles: [1] });
+  });
+
+  it('draws a member generic as written, and still reads a tag typed in a member', async () => {
+    const box = await boxOf(
+      'classDiagram\nclass A {\n+List~Data~ items\n+get(Map~K, Option~ m) Box~B~\n+a<br>b\n+<b>x</b>\n}',
+      'A'
+    );
+    const [attrs, methods] = box.compartments;
+    expect(attrs!.rows.map((r) => shown(r))).toEqual([
+      { text: '+List<Data> items', styles: [0] },
+      { text: '+a\nb', styles: [0] },
+      { text: '+x', styles: [0, 1] },
+    ]);
+    expect(shown(methods!.rows[0]!)).toEqual({
+      text: '+get(Map<K, Option> m) : Box<B>',
+      styles: [0],
+    });
+  });
+
+  it('lists the title and members as they are measured (DiagramPlugin.labels)', () => {
+    const model = parseClass('classDiagram\nclass B~U~ {\n+List~Data~ items\n+a<br>b\n}').model;
+    expect(diagramPlugin.labels(model)).toEqual([
+      'B&lt;U&gt;',
+      '+List&lt;Data&gt; items',
+      '+a<br>b',
+    ]);
   });
 });
 

@@ -19,6 +19,7 @@
   layout property (string) 6:5-6:5 "" -> "layout: "
   titleTopMargin property (integer) 6:5-6:5 "" -> "titleTopMargin: "
   subGraphTitleMargin property (object) 6:5-6:5 "" -> "subGraphTitleMargin: "
+  subGraphTitlePosition property (string) 6:5-6:5 "" -> "subGraphTitlePosition: "
   arrowMarkerAbsolute property (boolean) 6:5-6:5 "" -> "arrowMarkerAbsolute: "
   diagramPadding property (integer) 6:5-6:5 "" -> "diagramPadding: "
   nodeSpacing property (integer) 6:5-6:5 "" -> "nodeSpacing: "

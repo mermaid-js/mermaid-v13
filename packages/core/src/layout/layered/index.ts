@@ -171,11 +171,31 @@ function before(graph: LayoutGraph, e: LayoutEdge, head: boolean): number {
   );
 }
 
-// The groups as laid out; the title sits midway down the top padding.
+// A group's title (`titlePosition`): `bottom-…` puts it and its room below the content, `…-left`
+// and `…-right` at that side. Sets the group's padding above and below (`padTop`, `padBottom`,
+// already scaled) with the title's height and the frame's `cell`, and returns the padding the title sits in.
+function titleBand(
+  g: LayoutGraph['groups'][number],
+  c: CNode,
+  padTop: number,
+  padBottom: number,
+  cell: number
+): number {
+  const at = g.titlePosition ?? '';
+  const titleH = g.title?.height ?? 0;
+  c.titleLow = at.startsWith('b');
+  c.titleSide = at.endsWith('left') ? -1 : Number(at.endsWith('right'));
+  c.padTop = padTop + (c.titleLow ? 0 : titleH) + cell;
+  c.padBottom = padBottom + (c.titleLow ? titleH : 0) + cell;
+  return c.titleLow ? padBottom : padTop;
+}
+
+// The groups as laid out. The title sits midway down the padding of its side (`bands`), in the
+// middle or `padX` in from the side it is at.
 function groupModels(
   graph: LayoutGraph,
   cgroups: CNode[],
-  padTops: number[],
+  bands: number[],
   pad: number
 ): Map<string, LayoutModelGroup> {
   const groups = new Map<string, LayoutModelGroup>();
@@ -183,9 +203,12 @@ function groupModels(
     const c = cgroups[j]!;
     const x = c.x + pad;
     const y = c.y + pad;
-    const top = y - c.h / 2;
-    const titleY = top + padTops[j]! / 2 + (g.title?.height ?? 0) / 2;
-    groups.set(g.id, { x, y, width: c.w, height: c.h, title: { x, y: titleY } });
+    const { width = 0, height = 0 } = g.title ?? {};
+    const title = {
+      x: x + c.titleSide * (c.w / 2 - c.padX - width / 2),
+      y: y + (c.titleLow ? 1 : -1) * (c.h / 2 - bands[j]! / 2 - height / 2),
+    };
+    groups.set(g.id, { x, y, width: c.w, height: c.h, title });
   });
   return groups;
 }
@@ -234,8 +257,9 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
     c.seq = i;
     cnodes.push(c);
   });
-  // Pele places the title in the top padding: half of `padding.top` above it, half below.
-  const padTops: number[] = [];
+  // Pele places the title in the top padding: half of `padding.top` above it, half below. A
+  // title at the bottom sits in the bottom padding the same way.
+  const bands: number[] = [];
   graph.groups.forEach((g, j) => {
     index.set(g.id, nodeCount + j);
     const c = cnode(0, 0);
@@ -243,10 +267,8 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
     c.dir = g.direction;
     // On the grid the frame takes a cell of its own, and the padding is blank cells inside it.
     c.padX = scaled(Math.max(g.padding.left, g.padding.right), padScale) + cell;
-    const padTop = scaled(g.padding.top, padScale);
-    padTops.push(padTop);
-    c.padTop = padTop + (g.title?.height ?? 0) + cell;
-    c.padBottom = scaled(g.padding.bottom, padScale) + cell;
+    const padBottom = scaled(g.padding.bottom, padScale);
+    bands.push(titleBand(g, c, scaled(g.padding.top, padScale), padBottom, cell));
     c.minW = (g.title?.width ?? 0) + 2 * c.padX;
     c.seq = nodeCount + j;
     c.span = Infinity;
@@ -332,7 +354,7 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
     const c = cnodes[i]!;
     nodes.set(n.id, { x: c.x + pad, y: c.y + pad, width: n.width, height: n.height });
   });
-  const groups = groupModels(graph, cnodes.slice(nodeCount), padTops, pad);
+  const groups = groupModels(graph, cnodes.slice(nodeCount), bands, pad);
 
   const box = (i: number): LayoutModelNode => {
     const c = cnodes[i]!;

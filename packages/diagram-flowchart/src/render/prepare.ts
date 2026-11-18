@@ -34,6 +34,7 @@ import {
   type Pads,
 } from './shapes.ts';
 import { themePads } from '@mermaid-js/shared/shapes/kit';
+import { titlePositions } from './title-position.ts';
 
 export interface NodeView {
   id: string;
@@ -405,6 +406,9 @@ function layoutGraph(
   // How edges are routed follows the diagram's default curve: `linkStyle default interpolate`
   // first, then config, as each edge's own drawing does.
   const curve = m.curveOf(model.defaultInterpolate ?? flow.curve);
+  const titleAt = titlePositions(m.cells ? undefined : flow.subGraphTitlePosition, (w) =>
+    m.ctx.warn(w)
+  );
   const graph: LayoutGraph = {
     direction: rootDir,
     nodes: nodes.map((n): LayoutNode => {
@@ -418,10 +422,19 @@ function layoutGraph(
     }),
     groups: groups.map((g): LayoutGroup => {
       const titled = g.label.height > 0;
+      const padding = groupPadding(b, titled);
+      // Text output keeps the title on the top border (D82).
+      const at =
+        titled && !m.cells
+          ? titleAt(nest.subgraphs.get(g.id)?.metadata?.titlePosition, g.id, g.ast)
+          : undefined;
+      // The title's room goes with it: a title at the bottom has it below the content.
+      const low = at?.startsWith('bottom');
       const group: LayoutGroup = {
         id: g.id,
-        padding: groupPadding(b, titled),
+        padding: low ? { ...padding, top: padding.bottom, bottom: padding.top } : padding,
       };
+      if (at) group.titlePosition = at;
       if (titled) group.title = { width: g.label.width, height: g.label.height };
       if (g.parent !== undefined) group.parent = g.parent;
       const d = dirOf(nest.subgraphs.get(g.id)?.dir);
