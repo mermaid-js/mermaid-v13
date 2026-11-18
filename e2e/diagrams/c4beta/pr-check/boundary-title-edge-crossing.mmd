@@ -1,0 +1,19 @@
+---
+description: >-
+  A container diagram whose person reaches two containers inside the system
+  boundary; no edge may run through the boundary title (mermaid-js/mermaid-v13#675).
+---
+c4-beta container
+person customer "Customer" "A bank customer."
+softwareSystem banking "Internet Banking System" {
+  container web "Web Application" "Delivers the static content." "Java and Spring MVC"
+  container spa "Single-Page App" "All banking features in the browser." "JavaScript and Angular"
+  container mobile "Mobile App" "Banking features on a phone." "Xamarin"
+  container api "API Application" "Banking features over JSON/HTTPS." "Java and Spring MVC"
+}
+customer --> web : "Visits" "HTTPS"
+customer --> spa : "Views account balances"
+customer --> mobile : "Views account balances"
+web --> spa : "Delivers to the browser"
+spa --> api : "Makes API calls to" "JSON/HTTPS"
+mobile --> api : "Makes API calls to" "JSON/HTTPS"

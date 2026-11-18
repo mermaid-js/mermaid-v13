@@ -148,6 +148,17 @@ const fixtures = readdirSync(FIXTURE_DIR, { recursive: true, encoding: 'utf8' })
   .sort()
   .map((f) => ({ id: f, source: readFileSync(join(FIXTURE_DIR, f), 'utf8') }));
 
+const BOUNDARY_TITLE_FIXTURE = 'pr-check/boundary-title-edge-crossing.mmd';
+
+/**
+ * Expected failure (#675): in TB, three relations leave `customer` for the system boundary and
+ * enter it at 168, 326 and 507 px. The title (about 182 px) fits in none of the stretches between
+ * them or beside them, so it cannot slide clear of the middle one. The other directions are clean.
+ */
+const FIXTURE_TITLE_CROSSINGS: Readonly<Record<string, readonly string[]>> = {
+  [BOUNDARY_TITLE_FIXTURE]: ['customer -> spa crosses the title of banking'],
+};
+
 describe('the invariants hold on every e2e fixture in every direction (spec #730 T0)', () => {
   it('reads every fixture, and every one parses', () => {
     expect(fixtures.length).toBeGreaterThanOrEqual(23);
@@ -162,10 +173,26 @@ describe('the invariants hold on every e2e fixture in every direction (spec #730
     const failures: string[] = [];
     for (const { id, source } of fixtures) {
       const { model, run } = laidOut(source, d);
-      const all = [...allViolations(model, run), ...titleViolations(run.scene)];
+      const titles = titleViolations(run.scene).filter(
+        (v) => !(d === 'TB' && FIXTURE_TITLE_CROSSINGS[id]?.includes(v))
+      );
+      const all = [...allViolations(model, run), ...titles];
       failures.push(...all.map((v) => `${id}: ${v}`));
     }
     expect(failures).toEqual([]);
+  });
+
+  it('TB: the fixture of #675 is crossed by the relation that enters beside the other two', () => {
+    const { source } = fixtures.find(({ id }) => id === BOUNDARY_TITLE_FIXTURE)!;
+    expect(titleViolations(laidOut(source, 'TB').run.scene)).toEqual(
+      FIXTURE_TITLE_CROSSINGS[BOUNDARY_TITLE_FIXTURE]
+    );
+  });
+
+  // Expected failure (see FIXTURE_TITLE_CROSSINGS): the wanted behaviour, flipped when it holds.
+  it.fails('TB: the fixture of #675 is not crossed either', () => {
+    const { source } = fixtures.find(({ id }) => id === BOUNDARY_TITLE_FIXTURE)!;
+    expect(titleViolations(laidOut(source, 'TB').run.scene)).toEqual([]);
   });
 });
 
