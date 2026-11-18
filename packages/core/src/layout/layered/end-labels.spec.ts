@@ -367,3 +367,59 @@ describe('layered: edge-end labels on every fixture edge (grid: 1)', () => {
     expect([...validateGrid(graph, model), ...endProblems(graph, model, 2, 2)]).toEqual([]);
   });
 });
+
+// #363: an end label stands past its own end's marker (at the target, past `headRoom` where the
+// marker is shorter), and `endLabelAlong` clear of its edge's middle label; the gap grows to it.
+describe('layered: room for end labels past their markers (#363)', () => {
+  const ALONG = pxProfile.engine.endLabelAlong;
+  const LABEL: Size = { width: 40, height: 20 };
+  const marked = (dir: LayoutGraph['direction'], length: number, label: boolean): LayoutGraph => ({
+    ...pair(dir),
+    edges: [
+      {
+        ...pair(dir).edges[0]!,
+        ...(label ? { label: LABEL } : {}),
+        startMarker: { length, width: 12 },
+        endMarker: { length, width: 12 },
+      },
+    ],
+    headRoom: 7,
+    routing: 'stepped',
+  });
+  const cases = (['TB', 'BT', 'LR', 'RL'] as const).flatMap((dir) =>
+    [20, 3].flatMap((length) => [true, false].map((label) => [dir, length, label] as const))
+  );
+  it.each(cases)('%s, marker %d, middle label %s', (dir, length, label) => {
+    const graph = marked(dir, length, label);
+    const model = layered(graph);
+    expect(validateLayout(graph, model)).toEqual([]);
+    const e = model.edges.get('ab')!;
+    const [axis, sign] = FLOW[dir];
+    const dim = axis === 'x' ? 'width' : 'height';
+    const lo = (c: Point, s: Size): number => sign * c[axis] - s[dim] / 2;
+    const hi = (c: Point, s: Size): number => sign * c[axis] + s[dim] / 2;
+    const a = model.nodes.get('a')!;
+    const b = model.nodes.get('b')!;
+    const eps = 1e-6;
+    expect.soft(lo(e.startLabel!, ONE) - hi(a, a)).toBeGreaterThanOrEqual(ALONG + length - eps);
+    expect
+      .soft(lo(b, b) - hi(e.endLabel!, MANY))
+      .toBeGreaterThanOrEqual(ALONG + Math.max(length, 7) - eps);
+    if (!label) return;
+    expect.soft(lo(e.label!, LABEL) - hi(e.startLabel!, ONE)).toBeGreaterThanOrEqual(ALONG - eps);
+    expect.soft(lo(e.endLabel!, MANY) - hi(e.label!, LABEL)).toBeGreaterThanOrEqual(ALONG - eps);
+  });
+
+  it('moves nothing for markers on an edge without end labels', () => {
+    const graph = marked('TB', 20, true);
+    const bare: LayoutGraph = {
+      ...graph,
+      edges: graph.edges.map(({ startLabel: _s, endLabel: _e, ...e }) => e),
+    };
+    const plain: LayoutGraph = {
+      ...bare,
+      edges: bare.edges.map(({ startMarker: _s, endMarker: _e, ...e }) => e),
+    };
+    expect(layered(bare)).toEqual(layered(plain));
+  });
+});
