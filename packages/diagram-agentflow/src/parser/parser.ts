@@ -108,6 +108,8 @@ const DIALECT: FlowParserDialect<AgentflowBuilder, AgentflowParseOptions> = {
       },
     }),
   destructLink,
+  // v12's agentflow.jison kept 12.2.0's rule (D621).
+  blanksAfterData: false,
 };
 
 /** The nodes agentflow adds to the family's statements. */

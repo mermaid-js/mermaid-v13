@@ -138,6 +138,12 @@ export interface FlowParserDialect<B extends FlowParserBuilder, O extends FlowPa
   builder(options: O, diagnostics: Diagnostics): B;
   /** v12's `destructLink`: an arrow's text, and the text that opened its label if any. */
   destructLink(end: string, start?: string): FlowLinkInfo;
+  /**
+   * v12 12.3.0's `node shapeData spaceList` (D621): blanks after `@{ … }` may end the node, so
+   * an edge id, a link or the end of the statement may follow them. Off, as in 12.2.0, only
+   * `&` and another node may.
+   */
+  readonly blanksAfterData: boolean;
 }
 
 /** The `maxNodes`, `maxEdges` and `inheritDir` a builder is made with, from the parse options. */

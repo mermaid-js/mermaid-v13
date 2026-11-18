@@ -268,7 +268,7 @@
       "name": "keyword.control.mermaid-flowchart"
     },
     "rule-50": {
-      "match": "[^\\s\"]+@(?=[^{\"])",
+      "match": "[^\\s\"\\[\\](){}|]+@(?=[^{\"])",
       "name": "variable.other.mermaid-flowchart"
     },
     "rule-51": {
