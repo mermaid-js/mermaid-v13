@@ -19,7 +19,12 @@ const DIRS = [
   'class-diagram',
   'agentflow',
   'er-diagram',
+  'block',
+  'usecase',
+  'requirement',
 ];
+/** The folders whose labels are fixed text, with no line break (requirement's `<<kind>>`). */
+const FIXED_LABELS = ['requirement'];
 /** The stroke the fixtures give a styled edge, or the line colour they set. */
 const PINK = '#d6336c';
 
@@ -122,7 +127,7 @@ describe('edge labels are tags (D619–D623)', () => {
 
   it('draws one box around a label of two lines, taller than a one-line one', async () => {
     const sources = CASES.filter(([, s]) => s.includes('<br/>'));
-    expect(sources.length).toBeGreaterThanOrEqual(DIRS.length);
+    expect(sources.length).toBeGreaterThanOrEqual(DIRS.length - FIXED_LABELS.length);
     for (const [id, source] of sources) {
       const found = tags(await render(source));
       const [two, ...more] = found.filter((t) => / (?:line|and) /.test(t.text));
@@ -144,7 +149,11 @@ describe('edge labels are tags (D619–D623)', () => {
   it.each(CASES.filter(([id]) => !id.startsWith('class-diagram/')))(
     '%s: an author label fill still wins',
     async (_id, source) => {
-      const own = { edgeLabelBackground: '#123456', erEdgeLabelBackground: '#654321' };
+      const own = {
+        edgeLabelBackground: '#123456',
+        erEdgeLabelBackground: '#654321',
+        relationLabelBackground: '#123456',
+      };
       const fill = _id.startsWith('er-diagram/') ? '#654321' : '#123456';
       for (const t of tags(await render(source, own))) expect(t.box.fill, t.text).toBe(fill);
     }

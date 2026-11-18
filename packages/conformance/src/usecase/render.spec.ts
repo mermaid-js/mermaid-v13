@@ -67,7 +67,7 @@ beforeAll(async () => {
 
 describe('usecase render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, with every kind of element', () => {
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(56);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(59);
     expect([...rejected].filter((id) => id.startsWith('e2e/'))).toEqual([]);
     expect(cases.length).toBeGreaterThan(100 * THEMES.length);
     const all = cases.map((c) => c.rendered.svg).join('');
@@ -211,12 +211,12 @@ describe('usecase AST round-trip (R-PARSE-8, D475)', () => {
 /** `<g class="outline-…">` around its one path: what the fixture drew. */
 const OUTLINED = /<g class="outline-[a-z]+"><path [^>]*\/><\/g>/g;
 /**
- * What stays plain under hand-drawn: markers, label backgrounds, business marks (v12 drew them
- * with `append('path')`, never through roughjs) and an icon's glyph.
+ * What stays plain under hand-drawn: markers, business marks (v12 drew them with
+ * `append('path')`, never through roughjs) and an icon's glyph. Edge-label tags are sketched
+ * (`label`, D630).
  */
 const PLAIN = [
   /<path class="marker[^"]*"[^>]*\/>/g,
-  /<rect class="labelBkg"[^>]*\/>/g,
   /<path class="usecase-business-marker[^"]*"[^>]*\/>/g,
 ];
 const SHAPE = /<(rect|circle|ellipse|polygon|line|path)\b[^>]*>/;
@@ -243,6 +243,6 @@ describe('usecase hand-drawn: every outline goes through w.outline (D301, D302, 
       compared++;
     }
     expect(compared).toBeGreaterThan(100);
-    expect([...roles].sort()).toEqual(['edge', 'group', 'node', 'part']);
+    expect([...roles].sort()).toEqual(['edge', 'group', 'label', 'node', 'part']);
   });
 });

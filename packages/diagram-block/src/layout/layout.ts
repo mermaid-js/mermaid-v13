@@ -9,6 +9,7 @@
  * from the `block` config and the metrics table (pitfall 13).
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
+import { pxProfile } from '@mermaid-js/core/layout';
 import { BLOCK_CONFIG_INVALID } from '../codes.ts';
 import { checkStyle } from '@mermaid-js/core/svg';
 import { fontSizePx, layoutLabel, Style, type FontKey } from '@mermaid-js/core/text';
@@ -341,6 +342,7 @@ function edgesOf(
   measure: (text: string) => Measured
 ): BlockEdgeLayout[] {
   const { loopAngle, loopReach } = BLOCK_METRICS;
+  const patch = pxProfile.builder.labelPatch;
   const angle = (loopAngle * Math.PI) / 180;
   const out: BlockEdgeLayout[] = [];
   for (const e of edges) {
@@ -385,7 +387,11 @@ function edgesOf(
       points = [s, middle, t];
     }
     const text = e.label === '' ? undefined : measure(e.label);
-    const label = text && { ...text, ...rectAt(middle.x, middle.y, text.width, text.height) };
+    // The tag's room: the text plus the px profile's `labelPatch` (D629), as it is drawn.
+    const label = text && {
+      ...text,
+      ...rectAt(middle.x, middle.y, text.width + patch.x, text.height + patch.y),
+    };
     out.push({
       id: e.id,
       ast: e.ast,

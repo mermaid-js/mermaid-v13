@@ -136,7 +136,7 @@ describe('structure (spec #520 Renderer)', () => {
     ]);
   });
 
-  it('draws relations as dashed or solid relationshipLine paths with data-ast, v12 data-ids and labels on a chip', async () => {
+  it('draws relations as dashed or solid relationshipLine paths with data-ast, v12 data-ids and labels on a tag', async () => {
     const { svg } = await render(SMALL, { theme: 'default' });
     const lines = byClass(svg, 'path', 'relationshipLine');
     expect(lines.map((l) => [l.class, l['data-id'], l['data-ast'], l['stroke-dasharray']])).toEqual(
@@ -162,8 +162,46 @@ describe('structure (spec #520 Renderer)', () => {
     ]);
     expect(labels.map((l) => l['data-id'])).toEqual(['b-a-0', 'a-b-1']);
     expect(svg).toMatch(
-      /<g class="edgeLabel" data-id="b-a-0"><rect class="labelBkg" [^>]*fill="var\(--_rqlb\)"\/><text[^>]*>&lt;&lt;satisfies&gt;&gt;/
+      /<g class="edgeLabel" data-id="b-a-0"><rect [^>]*fill="var\(--_rqlb\)"[^>]*\/><text[^>]*>&lt;&lt;satisfies&gt;&gt;/
     );
+  });
+
+  it('draws each relation label as a tag bordered 1 px solid in the relation colour (D626, D627)', async () => {
+    const { svg, layout } = await render(SMALL, {
+      theme: 'default',
+      themeVariables: { relationColor: '#d6336c' },
+    });
+    const lines = byClass(svg, 'path', 'relationshipLine');
+    const groups = svg.split('<g class="edgeLabel"').slice(1);
+    expect(groups).toHaveLength(2);
+    groups.forEach((part, i) => {
+      const box = elements(part, 'rect')[0]!;
+      expect(box.rx).toBe('6');
+      expect(box.stroke).toBe(lines[i]!.stroke);
+      expect(lit(svg, box.stroke)).toBe('#d6336c');
+      expect(box['stroke-width']).toBe('1');
+      // The dashed `satisfies` line still borders its label solid.
+      expect(box['stroke-dasharray']).toBeUndefined();
+      expect(box.class).toBeUndefined();
+    });
+    expect(lines[0]!['stroke-dasharray']).toBeDefined();
+    // The box is the room the layout reserved: the label plus the px labelPatch (D629).
+    const label = layout.requirement!.relations.find((r) => r.id === 'relation:b->a')!.label;
+    const box = elements(groups[0]!, 'rect')[0]!;
+    expect(Number(box.width)).toBeCloseTo(label.width + 16);
+    expect(Number(box.height)).toBeCloseTo(label.height + 8);
+  });
+
+  it('fills the tag with the background, an author relationLabelBackground still winning (D628)', async () => {
+    const plain = await render(SMALL, { theme: 'redux-dark' });
+    const box = elements(plain.svg.split('<g class="edgeLabel"')[1]!, 'rect')[0]!;
+    expect(lit(plain.svg, box.fill)).toBe(lit(plain.svg, 'var(--_bg)'));
+    const own = await render(SMALL, {
+      theme: 'default',
+      themeVariables: { relationLabelBackground: '#123456' },
+    });
+    const ownBox = elements(own.svg.split('<g class="edgeLabel"')[1]!, 'rect')[0]!;
+    expect(lit(own.svg, ownBox.fill)).toBe('#123456');
   });
 
   it('puts the chevron tip on the target and the contains circle at the source, outside the boxes', async () => {
@@ -387,6 +425,9 @@ describe('the w.outline hook (D301, D302)', () => {
     expect(calls.map((c) => `${c.role} ${c.tag}`)).toEqual([
       'edge path',
       'edge path',
+      // The label tags' borders (D630).
+      'label rect',
+      'label rect',
       'node rect',
       'divider path',
       'node rect',
@@ -400,8 +441,8 @@ describe('the w.outline hook (D301, D302)', () => {
       return true;
     };
     const drawn = await renderRequirementForTest(SMALL, { outline: sketch });
-    expect(byClass(drawn.svg, 'path', 'sketch')).toHaveLength(5);
-    expect(elements(drawn.svg, 'rect').filter((e) => e.class !== 'labelBkg')).toEqual([]);
+    expect(byClass(drawn.svg, 'path', 'sketch')).toHaveLength(7);
+    expect(elements(drawn.svg, 'rect')).toEqual([]);
     const markers = (s: string) =>
       s.match(/<(?:path|circle)[^>]*requirement_(?:arrow|contains)[^>]*>|<circle[^>]*>/g);
     expect(markers(drawn.svg)).toEqual(markers(plain.svg));
@@ -419,7 +460,15 @@ describe('the w.outline hook (D301, D302)', () => {
       config: { theme: 'neo' },
       outline: sketch,
     });
-    expect(calls.map((c) => c.role)).toEqual(['edge', 'edge', 'node', 'divider', 'node']);
+    expect(calls.map((c) => c.role)).toEqual([
+      'edge',
+      'edge',
+      'label',
+      'label',
+      'node',
+      'divider',
+      'node',
+    ]);
     // The divider's path is the rule only: one move, one line, no second outline.
     const divider = calls.find((c) => c.role === 'divider')!.d!;
     expect(divider.match(/[MLZ]/g)).toEqual(['M', 'L']);

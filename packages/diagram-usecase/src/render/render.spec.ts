@@ -224,7 +224,52 @@ describe('labels', () => {
     expect(byClass(svg, 'relationship-label', 'text').every((t) => t['font-size'] === '10')).toBe(
       true
     );
-    expect(byClass(svg, 'labelBkg', 'rect')).toHaveLength(2);
+    expect(svg.match(/<g class="edgeLabel"/g)).toHaveLength(2);
+  });
+
+  it('draws each label as a tag bordered 1 px solid in its line colour (D626, D627)', async () => {
+    const { svg, layout } = await render('baseline/edge-labels/tags', plain);
+    const prepared = layout.usecase!;
+    const lines = new Map(
+      elements(svg, 'g')
+        .filter((g) => g.class?.startsWith('relationship '))
+        .map((g) => [g['data-id']!, g])
+    );
+    const strokeOf = (id: string): string | undefined => {
+      const at = svg.indexOf(`data-id="${id}"`);
+      const path = elements(svg.slice(at), 'path')[0]!;
+      return path.stroke ?? lines.get(id)?.stroke ?? 'var(--_l)';
+    };
+    const tags = svg
+      .split('<g class="edgeLabel"')
+      .slice(1)
+      .map((part) => ({
+        id: /data-id="([^"]*)"/.exec(part)![1]!,
+        box: elements(part, 'rect')[0]!,
+      }));
+    expect(tags).toHaveLength(6);
+    for (const { id, box } of tags) {
+      expect(box.rx, id).toBe('6');
+      expect(box['stroke-width'], id).toBe('1');
+      expect(box['stroke-dasharray'], id).toBeUndefined();
+      expect(box.stroke, id).toBe(strokeOf(id));
+      const view = prepared.edges.find((e) => e.kind === 'relation' && e.relationship.id === id);
+      if (view?.kind !== 'relation') throw new Error(`no relation ${id}`);
+      // The box is the label plus the px profile's labelPatch (D629).
+      expect(Number(box.width), id).toBeCloseTo(view.label!.width + 16);
+      expect(Number(box.height), id).toBeCloseTo(view.label!.height + 8);
+      expect(layout.edges.get(view.id)?.label, id).toBeDefined();
+    }
+    const styled = tags.find((t) => t.id === 'styledEdge')!;
+    expect(styled.box.stroke).toBe('#d6336c');
+  });
+
+  it('draws no box for a whitespace-only label (D626)', async () => {
+    const { svg } = await renderUsecaseForTest(
+      'usecase-beta\n  actor A\n  B\n  A -- " " ---> B\n',
+      plain
+    );
+    expect(svg).not.toContain('<g class="edgeLabel"');
   });
 
   it('draws markdown labels through core label layout, as runs (D225)', async () => {
@@ -508,6 +553,8 @@ describe('hand-drawn (D302, spec #517)', () => {
     expect([...roles].sort()).toEqual([
       'edge path',
       'group rect',
+      // Edge-label tags sketch their border (D630).
+      'label rect',
       'node circle',
       'node ellipse',
       'node path',

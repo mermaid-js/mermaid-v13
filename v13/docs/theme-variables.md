@@ -439,7 +439,7 @@ flags and opacities, which are read literally.
 | `requirementBorderColor` | | color | `#28253d` | `#28253d` | `#ffffff` | `#ffffff` | `#9370db` | `#cccccc` | `#13540c` | `#999999` | `#d9cfbc` | `#000000` | `#cccccc` |
 | `requirementBorderSize` | | length | `2` | `2` | `2` | `2` | `1.3` | `1.3` | `1.3` | `1.3` | `1.3` | `2` | `2` |
 | `requirementTextColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#e0dfdf` |
-| `relationLabelBackground` | | color | `#ffffff` | `#ffffff` | `#16141f` | `#16141f` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `relationLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
 | `relationColor` | | color | `#000000` | `#000000` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
 | `relationLabelColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#e0dfdf` |
 | `relationStrokeWidth` | | length | `2` | `2` | `2` | `2` | `1` | `1` | `1` | `1` | `1` | `2` | `2` |
