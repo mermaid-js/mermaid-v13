@@ -223,6 +223,13 @@ describe('agentflow AST and symbols (D468)', () => {
 });
 
 describe('agentflow diagnostics (D461)', () => {
+  it("keeps 12.2.0's rule after metadata: only `&` may follow its blanks (D621)", () => {
+    expect(errors(af(' a@{ shape: rect } e1@--> b'))).toEqual(['UNEXPECTED']);
+    expect(errors(af(' a@{ shape: rect } ;'))).toEqual(['UNEXPECTED']);
+    expect(errors(af(' a[x]e1@--> b'))).toEqual(['UNEXPECTED']);
+    expect(parse(af(' a e[1]@--> b')).model.edges.map((e) => e.id)).toEqual(['e[1]']);
+  });
+
   it('reports removed and unsupported shapes at their bracket or block, as warnings', () => {
     expect(warnings(af(' a((x))', ' b@{ shape: triangle }', ' c[(y)] --> d'))).toEqual([
       ['SHAPE_REMOVED', 2, '((x))'],

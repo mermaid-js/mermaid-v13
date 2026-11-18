@@ -1063,6 +1063,13 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
   as `-->` …``), show the line with a caret, and never mention token or rule names. Every error
   in the text is reported, not only the first (R-PARSE-4).
 - **A bare `subgraph`** (no id) is accepted; v12 crashed with a `TypeError`.
+- **Edge ids** follow v12 12.3.0, ahead of the oracle (D621): an edge id may follow a node's
+  shape or its shape data directly (`A[bla]e1@--> B`, `A@{ shape: circle } e1@--> B`), and an
+  `@` in a label needs no space before it (`A[me@example.com] --> B`). As in 12.3.0, an edge
+  id can no longer contain `[`, `]`, `(`, `)`, `{`, `}` or `|`: they end the id, which is what
+  lets it start right after a node's brackets. `A e[1]@--> B`, which 12.2.0 read as the edge
+  `e[1]`, is a syntax error; rename the id. `swimlane-beta` reads edge ids the same way;
+  agentflow keeps the 12.2.0 rule, as v12's agentflow does.
 - **Shape data** (`A@{ shape: … }`) is read with v13's YAML reader: YAML anchors (`&a`) are
   rejected, which js-yaml accepted. A few malformed values that js-yaml rejected are accepted.
 - **Shapes** not in the documented shape list (`classBox`, `erBox`, `usecase*`, `bpmn-*`,
