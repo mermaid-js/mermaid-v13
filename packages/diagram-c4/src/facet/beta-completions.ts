@@ -24,7 +24,7 @@ import type {
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { Kind } from '@mermaid-js/core/parser-kit';
-import { span, tokenBefore } from '@mermaid-js/shared/parser/facet';
+import { matchesTyped, span, tokenBefore } from '@mermaid-js/shared/parser/facet';
 import type { C4BetaDocument } from '../beta/ast.ts';
 import type { C4BetaModel } from '../beta/model.ts';
 import { C4BETA_TRIVIA, T } from '../beta/tokens.ts';
@@ -50,9 +50,6 @@ const DIRECTIONS = ['TB', 'BT', 'LR', 'RL'] as const;
 const ON_OFF = ['on', 'off'] as const;
 const DIAGRAM_KINDS = ['context', 'container', 'component', 'dynamic', 'deployment'] as const;
 const ARROW_KINDS: ReadonlySet<number> = new Set(ARROWS.map(([, kind]) => kind));
-
-const matches = (label: string, typed: string) =>
-  label.toLowerCase().startsWith(typed.toLowerCase());
 
 /** What a statement word inserts: its separator, unless a blank or a `:` follows already. */
 function statementText(label: string, separator: string, after: string): string {
@@ -123,7 +120,7 @@ class Items {
   ) {}
 
   add(label: string, kind: CompletionKind, rest: Partial<CompletionItem> = {}): void {
-    if (matches(label, this.typed))
+    if (matchesTyped(label, this.typed))
       this.out.push({ label, kind, insertText: label, range: this.range, ...rest });
   }
 
