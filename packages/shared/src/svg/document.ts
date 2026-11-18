@@ -1,7 +1,6 @@
 /**
  * The `<svg>` document root and small renderer helpers every diagram shares.
  */
-import type { Warning } from '@mermaid-js/core';
 import {
   checkColor,
   checkStyle,
@@ -15,6 +14,7 @@ import type {
   CheckedStyle,
   Paint,
   SafeColor,
+  SafeValue,
   StyleText,
   SvgWriter,
   ThemeRef,
@@ -189,29 +189,24 @@ export interface AnimatedEdge {
   readonly animation?: string;
 }
 
+/** v12's `.edge-animation-*` dash pattern: it replaces the edge's own (`!important`). */
+export const ANIMATED_DASH = '9,5' as SafeValue;
+
 /**
- * v13 parses edge `animate` and `animation` but draws no animation (R-SEC-2: the keyframes need
- * a `<style>`; the edge keeps only its `edge-animation-*` class). Raises one
- * `EDGE_ANIMATION_IGNORED` for each of the two features the edges use, so the author learns why
- * nothing moves.
+ * Animates the open edge group as v12's `.edge-animation-fast|slow` did, and says whether it
+ * did: the dash pattern runs from offset 900 to 0, linearly and forever, in 20 s (`fast`, and a
+ * bare `animate`) or 50 s (`slow`). An `<animate>` and no keyframes, which would need a `<style>`
+ * (R-SEC-2, D606). `stroke-dashoffset` is inherited, so every line in the group moves, in any
+ * look; the caller gives its line `ANIMATED_DASH` and round caps.
  */
-export function warnIgnoredAnimation(
-  edges: Iterable<AnimatedEdge>,
-  warn: (warning: Warning) => void
-): void {
-  let animate = false;
-  let animation = false;
-  for (const e of edges) {
-    animate ||= e.animate === true;
-    animation ||= e.animation !== undefined;
-  }
-  for (const [used, feature] of [
-    [animate, 'animate'],
-    [animation, 'animation'],
-  ] as const)
-    if (used)
-      warn({
-        code: 'EDGE_ANIMATION_IGNORED',
-        message: `Edge \`${feature}\` is ignored: v13 parses it but draws no edge animation. The edge keeps its \`edge-animation-*\` class, which draws nothing.`,
-      });
+export function animateEdge(w: SvgWriter, edge: AnimatedEdge): boolean {
+  if (!edge.animate && edge.animation === undefined) return false;
+  w.leaf('animate', {
+    attributeName: 'stroke-dashoffset',
+    from: 900,
+    to: 0,
+    dur: edge.animation === 'slow' ? 50 : 20,
+    repeatCount: 'indefinite',
+  });
+  return true;
 }
