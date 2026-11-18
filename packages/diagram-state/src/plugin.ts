@@ -27,11 +27,15 @@ export const state = {
   layoutKind: 'graph' as const,
   configDefaults: stateConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectState(text),
-  parse: (text: string, ctx: DiagramParseContext): StateParseResult =>
-    parseState(text, {
+  parse: (text: string, ctx: DiagramParseContext): StateParseResult => {
+    const caps = ctx.limits ?? resolveLimits(ctx.config);
+    return parseState(text, {
       preprocessed: ctx.preprocessed,
-      maxDepth: (ctx.limits ?? resolveLimits(ctx.config)).maxDepth,
-    }),
+      maxEdges: caps.maxEdges,
+      maxNodes: caps.maxNodes,
+      maxDepth: caps.maxDepth,
+    });
+  },
   labels: stateLabels,
   layout: (model: StateModel, ctx: StateRenderContext): CompleteStateLayout =>
     layoutState(model, ctx),

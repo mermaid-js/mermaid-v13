@@ -353,7 +353,7 @@ Open question: Trebuchet MS isn't installed on most Linux systems, so browser ou
   | `markup` | Handles | v12 equivalent |
   | --- | --- | --- |
   | `plain` (default) | character references, `<br>`, the `<b>`/`<i>` HTML subset | text drawn without `createText` Markdown |
-  | `emphasis` | plain, plus `**`, `*`, `__`, `_` | a label without backticks passed through `createText` |
+  | `emphasis` | plain, plus `**`, `*`, `__`, `_` | a label passed through `createText`; `v12Label` keeps a code span as written (D610) |
   | `markdown` | emphasis, plus inline code, bullet lists and backslash escapes | a Markdown string (`` "`…`" ``) |
 
   `emphasis` splits lines as `plain` does and never reads `- ` as a bullet or a backtick as code. `markdown: true` is still read as `markup: 'markdown'` until every caller has moved, then goes.
@@ -620,6 +620,7 @@ The vocabulary is split by owner (D331). Core's `packages/core/src/theme/vocabul
 | Script / event handlers | Tag and attr unions exclude them; property test over corpus + ported v12 XSS pages | §7.1, R-SEC-2 |
 | CSS injection via `style`/`classDef`/`linkStyle` | Property allow-list; values matching `url( expression( javascript: @import image-set /* [<>{};\\]` are dropped; output as presentation attrs (`SafeColor`, `SafeLength`) | `core/svg/style.ts` |
 | Malicious links | `checkUrl`: control-char/entity stripping (port of the `sanitize-url` logic), scheme allow-list on raw + decoded form, `//host` blocked; `_blank` gets `rel="noopener noreferrer"`. Default `securityLevel`: http, https, mailto, relative. `strict`: relative only. `loose`/`antiscript`/`sandbox` map to default with a warning (R-SEC-4, R-SEC-6) | `core/svg/url.ts` |
+| Animation | The only animation element is `<animate>`, and only with `attributeName="stroke-dashoffset"`, numeric `from`, `to` and `dur`, and `repeatCount="indefinite"`. It cannot target `href`, take a `values` list, or carry `begin` or an `on*` event (D606) | `core/svg/allowlist.ts`, `core/svg/inert.ts` |
 | Extension plugins (`postRender`) | The `SvgTree` view only accepts allowed tags, attributes and branded values, and the allow-list check runs after all hooks (R-PLUG-2) | `core/svg/tree.ts` |
 | Click callbacks | Not in core output. The interactions plugin binds them in the DOM after mount, only when the integrator installed it and set `securityLevel: 'loose'` (D554); diagram text cannot do either (R-PLUG-9) | `plugin-interactions` |
 | Theme-variable injection | `safeColor`: charset + function allow-list (`rgb hsl lab oklch color-mix light-dark var(--mermaid-*)`) | `core/theme` |

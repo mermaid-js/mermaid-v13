@@ -4,6 +4,7 @@
 // flat layout that orders the levels together, and the cache of levels laid out. The algorithm is unchanged.
 // cspell:ignore kepano lnode lnodes cnode
 //
+import type { CEdge } from './compound.ts';
 import { endpointBelow } from './compound-own.ts';
 import {
   opposite,
@@ -35,15 +36,8 @@ export interface Layer {
 const isVertical = (level: Level): boolean => level.dir === 'TB' || level.dir === 'BT';
 
 // The room an edge-end label takes along the flow of its level, with the room before it (D102).
-function endRoom(
-  c: Compound,
-  size: { width: number; height: number } | undefined,
-  vertical: boolean,
-  head: boolean
-): number {
-  return size
-    ? (vertical ? size.height : size.width) + c.M.endLabelAlong + (head ? (c.opt.headRoom ?? 0) : 0)
-    : 0;
+function endRoom(size: CEdge['start'], vertical: boolean): number {
+  return size ? (vertical ? size.height : size.width) + size.along : 0;
 }
 
 function heldEnd(c: Compound, item: number, ei: number, out: boolean): boolean {
@@ -100,8 +94,8 @@ function layerEdges(c: Compound, level: Level, sized: boolean): LEdge[] {
       edge.headDx = endOffset(c, level, sized, le.b, le.e, false);
       edge.tailFixed = heldEnd(c, le.a, le.e, true);
       edge.headFixed = heldEnd(c, le.b, le.e, false);
-      if (le.a === e.src) edge.tailEnd = endRoom(c, e.start, vertical, false);
-      if (le.b === e.dst) edge.headEnd = endRoom(c, e.end, vertical, true);
+      if (le.a === e.src) edge.tailEnd = endRoom(e.start, vertical);
+      if (le.b === e.dst) edge.headEnd = endRoom(e.end, vertical);
     }
     ledges.push(edge);
   }
@@ -118,11 +112,11 @@ function portEdge(c: Compound, level: Level, sized: boolean, port: PortEdge, d: 
   if (port.out) {
     edge.tailDx = endOffset(c, level, sized, port.inner, port.e, true);
     edge.tailFixed = heldEnd(c, port.inner, port.e, true);
-    if (sized && port.inner === e.src) edge.tailEnd = endRoom(c, e.start, vertical, false);
+    if (sized && port.inner === e.src) edge.tailEnd = endRoom(e.start, vertical);
   } else {
     edge.headDx = endOffset(c, level, sized, port.inner, port.e, false);
     edge.headFixed = heldEnd(c, port.inner, port.e, false);
-    if (sized && port.inner === e.dst) edge.headEnd = endRoom(c, e.end, vertical, true);
+    if (sized && port.inner === e.dst) edge.headEnd = endRoom(e.end, vertical);
   }
   return edge;
 }

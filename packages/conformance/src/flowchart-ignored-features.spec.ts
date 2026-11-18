@@ -30,34 +30,63 @@ const texts = (svg: string): { text: string; lines: number }[] =>
     lines: Math.max(1, new Set(t[2]!.match(/<tspan\b[^>]*\sy="[^"]*"/g)).size),
   }));
 
-const ANIMATION = 'pr-check/edge-animation-ignored';
-const features = (warnings: readonly { code: string; message: string }[]): (string | undefined)[] =>
-  warnings
-    .filter((w) => w.code === 'EDGE_ANIMATION_IGNORED')
-    .map((w) => /`(animate|animation)`/.exec(w.message)?.[1])
-    .sort();
+const ANIMATION = 'pr-check/edge-animation';
 
-describe('flowchart: ignored features warn (#357)', () => {
-  it('raises one EDGE_ANIMATION_IGNORED per ignored feature, naming it', async () => {
-    const { warnings } = await draw(fixture(ANIMATION));
-    expect(features(warnings)).toEqual(['animate', 'animation']);
+/** Each edge group of `svg`, by its `data-id`: its `<animate>` and its line's start tag. */
+const edges = (svg: string): Map<string, { animate?: string; line: string }> =>
+  new Map(
+    [...svg.matchAll(/<g class="edge [^>]*data-id="([^"]*)"[^>]*>(.*?)<\/g>/gs)].map((g) => [
+      g[1]!,
+      { animate: /<animate\b[^>]*>/.exec(g[2]!)?.[0], line: /<path\b[^>]*>/.exec(g[2]!)![0] },
+    ])
+  );
+
+const animate = (seconds: number): string =>
+  `<animate attributeName="stroke-dashoffset" from="900" to="0" dur="${seconds}" repeatCount="indefinite"/>`;
+
+describe('flowchart: edge animation (#918, D606)', () => {
+  it('animates an edge with animate or animation as v12 did: fast in 20 s, slow in 50 s', async () => {
+    const { svg } = await draw(fixture(ANIMATION));
+    const drawn = edges(svg);
+    expect(drawn.get('e1')?.animate).toBe(animate(20));
+    expect(drawn.get('e2')?.animate).toBe(animate(20));
+    expect(drawn.get('e3')?.animate).toBe(animate(50));
   });
 
-  it('raises the same through prepare() and renderSync()', async () => {
-    const { warnings } = await drawPrepared(fixture(ANIMATION));
-    expect(features(warnings)).toEqual(['animate', 'animation']);
+  it("gives the animated line v12's 9,5 dashes with round caps, a dotted one too", async () => {
+    const { svg } = await draw(fixture(ANIMATION));
+    for (const id of ['e1', 'e2', 'e3']) {
+      const { line } = edges(svg).get(id)!;
+      expect(line, id).toContain('stroke-dasharray="9,5"');
+      expect(line, id).not.toContain('stroke-linecap');
+    }
   });
 
-  it('warns once however many edges use the feature', async () => {
-    const { warnings } = await draw(
-      fixture('nightly-check/classic/03-40-should-add-edge-animation')
-    );
-    expect(features(warnings)).toEqual(['animation']);
+  it('leaves an edge without the metadata still', async () => {
+    const { svg } = await draw(fixture(ANIMATION));
+    const still = [...edges(svg)].filter(([id]) => !/^e\d$/.test(id));
+    expect(still).toHaveLength(1);
+    expect(still[0]![1].animate).toBeUndefined();
+    expect(still[0]![1].line).not.toContain('stroke-dasharray');
+    expect(svg.match(/<animate\b/g)).toHaveLength(3);
   });
 
-  it('does not warn when no edge is animated', async () => {
-    const { warnings } = await draw(fixture('pr-check/4-classdef-style'));
-    expect(features(warnings)).toEqual([]);
+  it('draws the same through prepare() and renderSync()', async () => {
+    const text = fixture(ANIMATION);
+    expect((await drawPrepared(text)).svg).toBe((await draw(text)).svg);
+  });
+
+  it('no longer warns that the animation is ignored, and writes no style sheet', async () => {
+    const { svg, warnings } = await draw(fixture(ANIMATION));
+    expect(warnings.filter((w) => w.code === 'EDGE_ANIMATION_IGNORED')).toEqual([]);
+    expect(svg).not.toContain('<style');
+  });
+
+  it("replaces a linkStyle dash pattern on an animated edge, as v12's !important did", async () => {
+    const { svg } = await draw(fixture('nightly-check/classic/03-40-should-add-edge-animation'));
+    const animated = [...edges(svg).values()].filter((e) => e.animate);
+    expect(animated.map((e) => e.animate).sort()).toEqual([animate(20), animate(50)]);
+    for (const e of animated) expect(e.line).toContain('stroke-dasharray="9,5"');
   });
 });
 

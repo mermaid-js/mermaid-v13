@@ -1,0 +1,14 @@
+---
+description: >-
+  #363 left to right: every marker type at each end of a relation that has a
+  label and a cardinality at both ends. Each cardinality stands past its end's
+  marker, and apart from the relation label.
+---
+classDiagram
+  direction LR
+  Customer "1" --> "*" Ticket : buys a long relationship label
+  Pond "1" o-- "0..*" Duck : holds
+  Car "1" *-- "4" Wheel : has
+  Animal "1" <|-- "many" Dog : is
+  Port "1" ()-- "1..*" Plug : fits
+  Ticket "*" --o "1" Queue : waits in

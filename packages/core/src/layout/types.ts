@@ -78,7 +78,8 @@ export interface LayoutEdge {
   /**
    * Room a marker drawn at the source end takes (a class diamond): `length` out from the box
    * along the route, `width` across it, centred on the line. End labels keep clear of every
-   * edge's markers; nothing else moves for them.
+   * edge's markers, and in `layered` an edge's own end label stands past its marker's `length`
+   * (D607); nothing else moves for them.
    */
   startMarker?: EndMarker;
   /** As `startMarker`, at the target end. */

@@ -626,7 +626,8 @@ class C4Parser {
   private direction(): After {
     const { cursor: c } = this;
     const frame = this.frames[this.frames.length - 1];
-    this.builder.direction(frame ? frame.boundary : -1, DIRECTION_OF.get(c.kind) ?? 'TB');
+    if (!frame || frame.boundary >= 0)
+      this.builder.direction(frame ? frame.boundary : -1, DIRECTION_OF.get(c.kind) ?? 'TB');
     this.st.statement('direction', c.range);
     c.next();
     return DIAGRAM_STATEMENT;

@@ -109,9 +109,13 @@ function tagsIn(doc: DocumentView<C4BetaDocument>, offset: number): string[] {
   return [...tags];
 }
 
-/** The items for one word: each label the typed text starts, replacing the word's range. */
+/**
+ * The items for one word: each label the typed text starts, replacing the word's range. A label
+ * is listed once, by whatever adds it first: a kind and an id spelled the same are one entry.
+ */
 class Items {
   readonly out: CompletionItem[] = [];
+  private readonly labels = new Set<string>();
   constructor(
     readonly range: Range,
     readonly typed: string,
@@ -120,8 +124,9 @@ class Items {
   ) {}
 
   add(label: string, kind: CompletionKind, rest: Partial<CompletionItem> = {}): void {
-    if (matchesTyped(label, this.typed))
-      this.out.push({ label, kind, insertText: label, range: this.range, ...rest });
+    if (!matchesTyped(label, this.typed) || this.labels.has(label)) return;
+    this.labels.add(label);
+    this.out.push({ label, kind, insertText: label, range: this.range, ...rest });
   }
 
   /** A keyword that stands before more text: a blank follows it unless one does already. */

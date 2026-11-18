@@ -82,6 +82,7 @@ import {
 import { keyOf, trimColon } from './names.ts';
 import type { Scope } from './names.ts';
 import { clickInComposite, ignoredInComposite, scaleIgnored, undrawnNotices } from './notices.ts';
+import type { Declared } from './notices.ts';
 import { splitRegions } from './regions.ts';
 import { StateCursor, STOP } from './cursor.ts';
 import { terminals } from './terminals.ts';
@@ -92,6 +93,10 @@ export interface StateParseOptions extends ParseOptions {
   preprocessed?: PreprocessResult;
   /** Composite nesting cap (core `DEFAULT_LIMITS.maxDepth`). */
   maxDepth?: number;
+  /** State cap (core `DEFAULT_LIMITS.maxNodes`, D608). */
+  maxNodes?: number;
+  /** Transition cap (core `DEFAULT_LIMITS.maxEdges`, D608). */
+  maxEdges?: number;
 }
 
 export type StateParseResult = ParseResult<StateModel, StateDocument>;
@@ -122,7 +127,11 @@ class StateParser extends StateCursor {
   /** Region ordinals handed out per composite name. */
   private readonly regionCount = new Map<string, number>();
   /** `state X` lines on their own, which v12 does not draw unless X is mentioned elsewhere. */
-  private readonly declared: [string, Range][] = [];
+  private readonly declared: Declared[] = [];
+  /** The token of the last `state X` word, to join the words of one line (#362). */
+  private lastDeclared = -1;
+  /** Where that line's first word starts. */
+  private firstWord = 0;
   private readonly clicks: [string, Range][] = []; // top-level `click` targets
   /** Embedded diagram blocks (ADR-15), for `ParseResult.embeds`. */
   private readonly embeds: EmbeddedBlock[] = [];
@@ -147,6 +156,8 @@ class StateParser extends StateCursor {
     this.db = new StateBuilder({
       error: (code, message, range) => void diagnostics.error(code, message, range),
       warn: (code, message, range) => void diagnostics.warning(code, message, range),
+      maxNodes: options.maxNodes,
+      maxEdges: options.maxEdges,
     });
     this.maxDepth = options.maxDepth ?? DEFAULT_LIMITS.maxDepth;
     probe?.trivia(this.all);
@@ -300,11 +311,11 @@ class StateParser extends StateCursor {
           return this.composite(scope, doc, from, name, from, undefined);
         }
         // `state X` alone: jison's action returns the name, which v12 then ignores.
-        const node = this.stateNode(from, name, this.own(from), scope);
+        const node = this.stateNode(from, name, this.own(from), scope, undefined, true);
         node.declaredOnly = true;
         nodes.push(node);
         this.st.statement('state', node.range);
-        this.declared.push([name, node.range]);
+        this.declare(from, name, node.range);
         items.push(NOOP);
         return;
       }
@@ -428,16 +439,43 @@ class StateParser extends StateCursor {
     }
   }
 
+  /**
+   * Record the `state X` word at token `j`. v12's lexer reads each word of `state A B` (or
+   * `state A: text`) as its own `state X`, and so does v13; a word right after another on the
+   * same line joins that line's record, so the line gets one warning (#362, D609).
+   */
+  private declare(j: number, name: string, range: Range): void {
+    const prev = this.declared.at(-1);
+    const own = this.own(j);
+    if (
+      prev &&
+      this.lastDeclared === j - 1 &&
+      !this.src.slice(prev.range.end, own.start).includes('\n')
+    ) {
+      prev.range = { start: prev.range.start, end: own.end };
+      prev.words = this.src.slice(this.firstWord, own.end);
+    } else {
+      this.declared.push({ name, range });
+      this.firstWord = own.start;
+    }
+    this.lastDeclared = j;
+  }
+
   /** A state mention's AST node, `n:<name>` (or the scoped id of `[*]`). */
   private stateNode(
     j: number,
     name: string,
     nameRange: Range,
     scope: Scope | undefined,
-    end?: boolean
+    end?: boolean,
+    declared?: boolean
   ): StateStmt {
     const ast = this.ids.node(keyOf(name, scope, end));
-    if (name !== '[*]') {
+    if (declared && name.length > 1 && name.endsWith(':')) {
+      // `state X:` as in `state X: text` (#362, D609): the symbol is `X`, the state the
+      // warning names, so a rename keeps the colon and the line's warning.
+      this.symbol(name.slice(0, -1), 'state', { ...nameRange, end: nameRange.end - 1 });
+    } else if (name !== '[*]') {
       this.symbol(name, 'state', nameRange);
     }
     return { id: ast, type: 'State', range: this.span(j), name, nameRange };

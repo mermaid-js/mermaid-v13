@@ -6,6 +6,7 @@
 import type {
   Dir,
   LayoutContext,
+  LayoutEdge,
   LayoutEngine,
   LayoutGraph,
   LayoutModel,
@@ -160,6 +161,16 @@ function grown(graph: LayoutGraph, dir: Dir, tight: boolean): LayoutModel {
   return endLabels(done.graph, done.model, hooks.cell);
 }
 
+// The room along an edge before an end label (D102): `endLabelAlong` past the end's own marker,
+// and at the target past `headRoom` where that is longer (D607).
+function before(graph: LayoutGraph, e: LayoutEdge, head: boolean): number {
+  const marker = (head ? e.endMarker : e.startMarker)?.length ?? 0;
+  return (
+    (graph.metrics ?? pxProfile.engine).endLabelAlong +
+    Math.max(marker, head ? (graph.headRoom ?? 0) : 0)
+  );
+}
+
 // The groups as laid out; the title sits midway down the top padding.
 function groupModels(
   graph: LayoutGraph,
@@ -269,6 +280,8 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
     const [src, dst] = ends[k]!;
     const labelW = e.label?.width ?? 0;
     const labelH = e.label?.height ?? 0;
+    // An end label next to a middle label keeps `endLabelAlong` from it too (D607).
+    const gap = e.label ? M.endLabelAlong : 0;
     if (src === dst) loopCount[src]!++;
     if (src === dst) {
       const below = sideways(src);
@@ -287,8 +300,8 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
       minlen: Math.max(1, Math.round(e.minLen)),
       labelW,
       labelH,
-      ...(e.startLabel ? { start: e.startLabel } : {}),
-      ...(e.endLabel ? { end: e.endLabel } : {}),
+      ...(e.startLabel ? { start: { ...e.startLabel, along: before(graph, e, false) + gap } } : {}),
+      ...(e.endLabel ? { end: { ...e.endLabel, along: before(graph, e, true) + gap } } : {}),
       route: [],
       labelX: 0,
       labelY: 0,
@@ -373,9 +386,9 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
 }
 
 // Edge-end labels (D102), placed once the routes are final: each sits beside the segment that
-// leaves its end's side, `endLabelAlong` out from the side (the target's also past the
-// arrowhead's room) and `endLabelAcross` off the line, on the side of the line the route does not
-// turn towards. Where that would cover a label already placed (any edge's middle label, or an end
+// leaves its end's side, `endLabelAlong` out past its end's own marker (the target's at least
+// past the arrowhead's room, D607) and `endLabelAcross` off the line, on the side of the line the
+// route does not turn towards. Where that would cover a label already placed (any edge's middle label, or an end
 // label placed before it, or any edge's end marker, `LayoutEdge.startMarker`) it takes the other side, and where both would, it moves further out
 // along the segment on whichever side needs less, past what is in the way. It never moves onto a
 // node or a group's title. On the grid all of it is whole cells: the label starts in the row or
@@ -384,7 +397,6 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
 function endLabels(graph: LayoutGraph, model: LayoutModel, grid: number): LayoutModel {
   if (!graph.edges.some((e) => e.startLabel ?? e.endLabel)) return model;
   const M = graph.metrics ?? pxProfile.engine;
-  const headRoom = graph.headRoom ?? 0;
   const walls: Rect[] = [...model.nodes.values()].map((b) => rectOf(b, b));
   for (const g of graph.groups) {
     const placed = model.groups.get(g.id);
@@ -411,15 +423,15 @@ function endLabels(graph: LayoutGraph, model: LayoutModel, grid: number): Layout
     const placed = model.edges.get(e.id);
     if (!placed || placed.points.length === 0) continue;
     const { points, ports } = placed;
-    const room = { along: M.endLabelAlong, across, grid };
     if (e.startLabel) {
+      const room = { along: before(graph, e, false), across, grid };
       const at = endLabelAt(points, ports.source, e.startLabel, room, around);
       placed.startLabel = at;
       taken.push(rectOf(at, e.startLabel));
     }
     if (e.endLabel) {
       const back = [...points].reverse();
-      const head = { ...room, along: room.along + headRoom };
+      const head = { along: before(graph, e, true), across, grid };
       const at = endLabelAt(back, ports.target, e.endLabel, head, around);
       placed.endLabel = at;
       taken.push(rectOf(at, e.endLabel));
