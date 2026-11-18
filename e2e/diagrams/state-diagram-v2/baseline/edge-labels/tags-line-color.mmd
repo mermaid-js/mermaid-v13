@@ -1,0 +1,12 @@
+---
+description: >-
+  Transition labels as tags under a custom lineColor (D620): the transitions
+  and the border of every label box take the author's line colour.
+config:
+  themeVariables:
+    lineColor: '#d6336c'
+---
+stateDiagram-v2
+  [*] --> Idle
+  Idle --> Running : start
+  Running --> Idle : stop

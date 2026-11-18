@@ -1,0 +1,14 @@
+---
+description: >-
+  Transition labels as tags (D619–D622): a plain label, a label of two lines,
+  and labels inside a composite state. Each box is rounded, bordered 1 px in
+  the line colour and filled with the theme background.
+---
+stateDiagram-v2
+  [*] --> Idle
+  Idle --> Running : start
+  Running --> Idle : stop<br/>and reset
+  state Running {
+    [*] --> Fast
+    Fast --> Slow : brake
+  }

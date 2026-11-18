@@ -242,8 +242,8 @@
         "target": "J",
         "minLen": 1,
         "label": {
-          "width": 36.122,
-          "height": 20.1
+          "width": 40.122,
+          "height": 24.1
         }
       },
       {
@@ -258,8 +258,8 @@
         "target": "K",
         "minLen": 2,
         "label": {
-          "width": 22.108,
-          "height": 20.1
+          "width": 26.108,
+          "height": 24.1
         }
       },
       {

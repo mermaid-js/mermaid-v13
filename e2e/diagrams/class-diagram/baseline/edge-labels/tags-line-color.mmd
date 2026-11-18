@@ -1,0 +1,11 @@
+---
+description: >-
+  Relation labels as tags under a custom lineColor (D620): the relations and
+  the border of every label box take the author's line colour.
+config:
+  themeVariables:
+    lineColor: '#d6336c'
+---
+classDiagram
+  Customer --> Order : places
+  Order ..> Invoice : dashed

@@ -78,7 +78,7 @@ const keys = (theme: Classic, cases: readonly string[], names: readonly string[]
 const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
   "D29 (R-THEME-9): v13 meets AA where v12 does not: dark's #b8b6b6 text on #474949 (4.49:1) and #585858 label fill under #ccc text (4.43:1); base's #333 node text on a dark primaryColor or mainBkg":
     [
-      ...keys('dark', ALL, ['edgeLabelBackground', 'noteTextColor', 'secondaryTextColor']),
+      ...keys('dark', ALL, ['noteTextColor', 'secondaryTextColor']),
       ...keys('base', ['primaryColor:dark', 'mainBkg:dark'], ['nodeTextColor']),
     ],
   "D71: v13's shared border rule (15% black, 20% white under darkMode) approximates v12's mkBorder (saturation -40, lightness ∓10)":
@@ -105,8 +105,14 @@ const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
         'titleColor',
       ]),
     ],
-  'D71: under darkMode v13 mixes 30% black into secondaryColor for the edge label where v12 base darkens its HSL lightness by 30':
-    [...keys('base', ['darkMode'], ['edgeLabelBackground'])],
+  "D621: every edge label is filled with the theme background, where v12 used its own label fill (secondaryColor, or the theme's literal); neutral's was white, its background, until an author moves the background":
+    [
+      ...keys('default', ALL, ['edgeLabelBackground']),
+      ...keys('dark', ALL, ['edgeLabelBackground']),
+      ...keys('forest', ALL, ['edgeLabelBackground']),
+      ...keys('base', ALL, ['edgeLabelBackground']),
+      ...keys('neutral', ['background:light', 'background:dark'], ['edgeLabelBackground']),
+    ],
   "D571: v12's darkMode turns base's primaryTextColor (and the text that follows it) to #eee and dark's and neutral's scaleLabelColor to black; v13's darkMode switches only the derivation rules":
     [
       ...keys(

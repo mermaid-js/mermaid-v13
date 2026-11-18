@@ -1,0 +1,18 @@
+---
+description: >-
+  Agentflow edge labels as tags (D619–D622): a plain label, a label of two
+  lines, a label on an edge with a linkStyle stroke, and a label on a dotted
+  edge (still a 1 px solid border). Each box is filled with the theme
+  background.
+---
+agentflow-beta LR
+  a["Plan"]
+  b["Act"]
+  c["Check"]
+  d["Report"]
+  e["Archive"]
+  a -->|plain| b
+  b -->|"first line<br/>second line"| c
+  c -->|styled| d
+  d -.-|dotted| e
+  linkStyle 2 stroke:#d6336c

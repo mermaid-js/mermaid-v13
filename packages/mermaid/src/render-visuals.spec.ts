@@ -32,7 +32,7 @@ describe('styled font sizes are measured as drawn', () => {
 
   it('measures edge labels with their linkStyle font', async () => {
     const width = (svg: string) =>
-      Number(/<g class="edgeLabel"[^>]*><rect [^>]*width="([\d.]+)"/.exec(svg)?.[1]);
+      Number(/<g class="edgeLabel"[^>]*><rect [^>]*\swidth="([\d.]+)"/.exec(svg)?.[1]);
     const plain = width(await svgOf('flowchart LR\n  A -->|hello world| B'));
     const big = width(
       await svgOf('flowchart LR\n  A -->|hello world| B\n  linkStyle 0 font-size:40px')

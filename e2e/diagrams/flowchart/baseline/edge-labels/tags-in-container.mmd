@@ -1,0 +1,17 @@
+---
+description: >-
+  Edge labels as tags inside coloured subgraphs (D621): the label inside the
+  styled subgraph and the one inside the palette-coloured subgraph keep the
+  theme background as their fill, as the label outside does.
+config:
+  theme: redux-color
+---
+flowchart LR
+  subgraph S1[styled]
+    A -->|inside| B
+  end
+  subgraph S2[palette]
+    C -->|also inside| D
+  end
+  B -->|outside| C
+  style S1 fill:#fde68a,stroke:#b45309

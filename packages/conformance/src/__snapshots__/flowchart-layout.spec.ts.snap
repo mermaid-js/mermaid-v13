@@ -2,6 +2,8 @@
 
 exports[`layered over parser-produced flowchart graphs > lays out every corpus graph validly and records crossings 1`] = `
 {
+  "flowchart/baseline/edge-labels/tags-in-container.mmd": 0,
+  "flowchart/baseline/edge-labels/tags.mmd": 0,
   "flowchart/baseline/edges/arrow-circle.mmd": 0,
   "flowchart/baseline/edges/arrow-cross.mmd": 0,
   "flowchart/baseline/edges/arrow-open.mmd": 0,

@@ -7,6 +7,6 @@ export const outline: OutlineCase = {
   dirs: ['agentflow'],
   // Vertices and the collapsed card (`node`), the tool's rails, the refdoc's rule and the card's
   // separator (`divider`), the card's dots (`mark`), flow frames (`group`) and edges (`edge`), as
-  // v12 sketched shapes, frames and cards (D301).
-  roles: ['node', 'divider', 'mark', 'group', 'edge'],
+  // v12 sketched shapes, frames and cards (D301), and edge-label boxes (`label`, D623).
+  roles: ['node', 'divider', 'mark', 'group', 'edge', 'label'],
 };

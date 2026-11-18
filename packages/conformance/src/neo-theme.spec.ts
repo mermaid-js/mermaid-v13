@@ -93,8 +93,9 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   ),
   critTextColor:
     'D574: v13 ink for text on a critical gantt bar (v12 `.critText0` took taskTextColor); taskTextColor here',
-  erEdgeLabelBackground:
-    'D152: v12 ER labels use edgeLabelBackground outside its COLOR_THEMES (redux-color, redux-dark-color)',
+  edgeLabelBackground: 'D621: every edge label is filled with the theme background',
+  erEdgeLabelBackground: 'D621: every edge label is filled with the theme background',
+  relationLabelBackground: 'D621: every edge label is filled with the theme background',
   border1: 'D152: v12 neo leaves it unset; no ported diagram reads it (usedBy is empty)',
   quadrantPointFill:
     'D231: v12 resolved it to hsl(…, NaN%); v13 defaults to textColor, as v12 points showed',
@@ -205,7 +206,8 @@ describe('neo against v12 12.2.0 (#225, D151, D181)', () => {
     expect(hex(neo.value('rowOdd'))).toBe(hex(OLD.mainBkg));
     expect(hex(neo.value('rowEven'))).toBe(hex(OLD.mainBkg));
     expect(hex(neo.value('erMarkerFill'))).toBe(hex(OLD.mainBkg));
-    expect(hex(neo.value('erEdgeLabelBackground'))).toBe(hex(OLD.edgeLabelBackground));
+    // Edge labels sit on the background (D621).
+    expect(neo.value('erEdgeLabelBackground')).toBe(neo.value('background'));
   });
 
   it('lists border1 only because nothing reads it', () => {

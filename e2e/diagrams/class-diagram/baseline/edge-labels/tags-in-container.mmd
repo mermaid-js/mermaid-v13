@@ -1,0 +1,20 @@
+---
+description: >-
+  Relation labels as tags inside palette-coloured namespaces (D621): the
+  labels inside each namespace and the one between them keep the theme
+  background as their fill.
+config:
+  theme: redux-color
+---
+classDiagram
+  namespace Shop {
+    class Cart
+    class Item
+  }
+  namespace Billing {
+    class Invoice
+    class Payment
+  }
+  Cart --> Item : holds
+  Invoice --> Payment : settles
+  Cart --> Invoice : bills

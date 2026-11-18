@@ -75,7 +75,6 @@ const DARK_DERIVED = [
   'tertiaryBorderColor',
   'clusterBorder',
   'noteBorderColor',
-  'edgeLabelBackground',
 ] as const;
 
 const DARK_WHY = 'D183: derived with the dark rules; v12 never set darkMode';
@@ -102,8 +101,8 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   requirementBackground: 'D435, D541: v12 resolved primaryColor; it drew the box in mainBkg',
   requirementBorderSize:
     "D435, D541, D183: v12 resolved '1' and drew strokeWidth (1 in v12 neo-dark); v13 strokeWidth is 2",
-  relationLabelBackground:
-    'D435, D541, D183: edgeLabelBackground, as v12 drew it; v13 neo-dark derives it darker (DARK_RULES)',
+  relationLabelBackground: 'D621: every edge label is filled with the theme background',
+  edgeLabelBackground: 'D621: every edge label is filled with the theme background',
   // v13 variables for what v12 decides by look or by theme name.
   rowOdd: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
   rowEven: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
@@ -116,8 +115,7 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   ),
   critTextColor:
     'D574: v13 ink for text on a critical gantt bar (v12 `.critText0` took taskTextColor); taskTextColor here',
-  erEdgeLabelBackground:
-    'D152, D183: v12 ER labels use edgeLabelBackground outside its COLOR_THEMES; it is dark-derived',
+  erEdgeLabelBackground: 'D621: every edge label is filled with the theme background',
   ...Object.fromEntries(LOOK_GEOMETRY.map((n) => [n, LOOK_GEOMETRY_WHY])),
   ...Object.fromEntries(
     TIMELINE.map((n) => [n, 'D227: v12 has no variable; theme neo drew classic timeline boxes'])
@@ -189,9 +187,11 @@ describe('neo-dark against v12 12.2.0 (#227, D151, D181, D183)', () => {
       expect(Object.hasOwn(spec.values ?? {}, name), name).toBe(false);
       expect(Object.hasOwn(spec.rules ?? {}, name), name).toBe(false);
     }
-    expect(DARK_RULES.edgeLabelBackground).toBe('mix(secondaryColor, black, 30%)');
+    expect(DARK_RULES.secondaryBorderColor).toBe('mix(secondaryColor, white, 20%)');
     expect(neoDark.value('clusterBorder')).toBe(neoDark.value('tertiaryBorderColor'));
-    expect(neoDark.value('erEdgeLabelBackground')).toBe(neoDark.value('edgeLabelBackground'));
+    // Edge labels sit on the background in every theme (D621).
+    expect(neoDark.value('edgeLabelBackground')).toBe(neoDark.value('background'));
+    expect(neoDark.value('erEdgeLabelBackground')).toBe(neoDark.value('background'));
   });
 
   it('meets AA with the smallest change to v12 secondaryTextColor (D183, R-THEME-9)', () => {

@@ -1,0 +1,11 @@
+---
+description: >-
+  Relationship labels as tags (D619–D622): a plain label on an identifying
+  relationship, a label of two lines, and a label on a non-identifying (dashed)
+  relationship, still a 1 px solid border. Each box is rounded and filled with
+  the theme background.
+---
+erDiagram
+  CUSTOMER ||--o{ ORDER : places
+  ORDER ||--|{ LINE_ITEM : "first line<br/>second line"
+  CUSTOMER }|..|{ ADDRESS : "uses"

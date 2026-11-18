@@ -5,5 +5,5 @@ import type { OutlineCase } from '../outline-cases.ts';
 export const outline: OutlineCase = {
   plugin: classDiagram as unknown as OutlineCase['plugin'],
   dirs: ['class-diagram'],
-  roles: ['node', 'divider', 'group', 'edge'],
+  roles: ['node', 'divider', 'group', 'edge', 'label'],
 };

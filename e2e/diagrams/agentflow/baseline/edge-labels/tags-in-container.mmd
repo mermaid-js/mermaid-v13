@@ -1,0 +1,21 @@
+---
+description: >-
+  Agentflow edge labels as tags inside coloured flows (D621): the label inside
+  the styled flow and the one inside the palette-coloured flow keep the theme
+  background as their fill.
+config:
+  theme: redux-color
+---
+agentflow-beta LR
+  flow styled["Styled"]
+    a["Plan"]
+    b["Act"]
+  end
+  flow palette["Palette"]
+    c["Check"]
+    d["Report"]
+  end
+  a -->|inside| b
+  c -->|also inside| d
+  b -->|outside| c
+  style styled fill:#fde68a,stroke:#b45309

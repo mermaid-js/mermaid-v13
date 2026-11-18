@@ -1,0 +1,16 @@
+---
+description: >-
+  Relationship labels as tags inside coloured subgraphs (D621): the labels
+  inside the palette-coloured subgraphs and the one between them keep the
+  theme background as their fill.
+config:
+  theme: redux-color
+---
+erDiagram
+  subgraph Sales
+    CUSTOMER ||--o{ ORDER : places
+  end
+  subgraph Stock
+    PRODUCT ||--|{ PART : contains
+  end
+  ORDER }|--|{ PRODUCT : lists

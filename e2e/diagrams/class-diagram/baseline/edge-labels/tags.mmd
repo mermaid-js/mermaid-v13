@@ -1,0 +1,12 @@
+---
+description: >-
+  Relation labels as tags (D619–D622): a plain label, a label of two lines, a
+  label on a dashed relation (still a 1 px solid border), and a relation with a
+  multiplicity at both ends and a middle label: only the middle label is a tag,
+  the multiplicities stay plain text.
+---
+classDiagram
+  Customer --> Order : places
+  Order --> Item : first line<br/>second line
+  Order ..> Invoice : dashed
+  Cart "1" --> "*" Item : holds
