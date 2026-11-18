@@ -459,7 +459,7 @@ interface RouteInput extends Measuring {
   readonly shapes: readonly Outline[];
   readonly frames: readonly Outline[];
   readonly order: readonly Group[];
-  /** The room a label's box adds to its text: the profile's `labelPatch` in px (D629). */
+  /** The room a label's box adds round its stacked texts: the `labelPatch` in px (D629). */
   readonly labelPatch: LabelRoom;
 }
 
@@ -707,7 +707,6 @@ function placeLabel({
   const label = measure(relationLabelText(model, rel, index), fonts.message, room);
   const techn = measure(relationTechnText(rel), fonts.message, room, Style.Italic);
   if (!label && !techn) return { cx: r.x0, top: r.y0, lw: 0, lh: 0 };
-  // The box: the label and `[techn]` stacked, with the `labelPatch` round them.
   const lw = Math.max(label?.text.width ?? 0, techn?.text.width ?? 0) + labelPatch.x;
   const lh = (label?.text.height ?? 0) + (techn?.text.height ?? 0) + labelPatch.y;
 
@@ -917,6 +916,20 @@ function boundaryOut(g: Group, s: Shift): C4BoundaryLayout {
   };
 }
 
+/** A label box at (`cx`, `top`): the label and `[techn]` stacked in its middle; none without. */
+function labelOut(r: Routed, cx: number, top: number): Partial<C4RelationLayout> {
+  const { label, techn, lw, lh } = r;
+  if (!label && !techn) return {};
+  const labelH = label?.text.height ?? 0;
+  const textTop = top + (lh - labelH - (techn?.text.height ?? 0)) / 2;
+  const at = (m: Measured, y: number): PlacedLabel => placed(m, cx - m.text.width / 2, y);
+  return {
+    ...(label ? { label: at(label, textTop) } : {}),
+    ...(techn ? { techn: at(techn, textTop + labelH) } : {}),
+    labelBox: { x: cx - lw / 2, y: top, width: lw, height: lh },
+  };
+}
+
 /** A relation's layout. */
 function relationOut(r: Routed, { ox, oy }: Shift): C4RelationLayout {
   const at = (q: Point): Point => ({ x: q.x + ox, y: q.y + oy });
@@ -924,14 +937,6 @@ function relationOut(r: Routed, { ox, oy }: Shift): C4RelationLayout {
   const c = r.route.controls ? pointsOf(r.route.controls).map(at) : [];
   const first = pts[0]!;
   const last = pts[pts.length - 1]!;
-  const top = r.top + oy;
-  const cx = r.cx + ox;
-  const { lw, lh } = r;
-  // The texts stacked in the middle of the box, the room split above and below.
-  const textTop = top + (lh - (r.label?.text.height ?? 0) - (r.techn?.text.height ?? 0)) / 2;
-  const label = r.label && placed(r.label, cx - r.label.text.width / 2, textTop);
-  const technTop = textTop + (r.label?.text.height ?? 0);
-  const techn = r.techn && placed(r.techn, cx - r.techn.text.width / 2, technTop);
   return {
     ast: r.rel.ast,
     index: r.index,
@@ -945,9 +950,7 @@ function relationOut(r: Routed, { ox, oy }: Shift): C4RelationLayout {
     end: { ...last, dx: r.route.edx, dy: r.route.edy },
     startArrow: r.startArrow,
     endArrow: r.endArrow,
-    ...(label ? { label } : {}),
-    ...(techn ? { techn } : {}),
-    ...(label || techn ? { labelBox: { x: cx - lw / 2, y: top, width: lw, height: lh } } : {}),
+    ...labelOut(r, r.cx + ox, r.top + oy),
     ...(r.crowded ? { crowded: true as const } : {}),
   };
 }
