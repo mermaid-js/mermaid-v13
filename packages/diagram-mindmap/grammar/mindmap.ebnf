@@ -58,12 +58,17 @@ NODE_ID                   /[^\(\[\n\)\{\}]+/               :variable ;
 (** The end of the text. *)
 EOF                       /$/ ;
 
-(** Strings in a shape: `"…"` and markdown strings `` "`…`" ``. *)
-<node> -                  /["][`]/                         push(nstr2) attach-next :string ;
-<nstr2> NODE_DESCR        /[^`"]+/                         :string ;
+(* The tag rule in a string stays linear for the highlighters: a tag name ends at a word
+boundary, a tag holds no `<`, and each character of it has one reading (`=` before `"` opens a
+value). *)
+(** Strings in a shape: `"…"` and markdown strings `` "`…`" ``. The text of either may hold a
+tag with `="x"` attributes (`<span style="color:red">`), which the lexer reads as `='x'`
+(#837). *)
+<node> -                  /["][`]/                       push(nstr2) attach-next :string ;
+<nstr2> NODE_DESCR        /(?:<\w+\b(?:[^<>"`=]|=(?!")|="[^<>"`]*")*>|[^`"])+/ :string ;
 <nstr2> -                 /[`]["]/                         pop attach-prev :string ;
 <node> -                  /["]/                            push(nstr) attach-next :string ;
-<nstr> NODE_DESCR         /[^"]+/                          :string ;
+<nstr> NODE_DESCR         /(?:<\w+\b(?:[^<>"=]|=(?!")|="[^<>"]*")*>|[^"])+/ :string ;
 <nstr> -                  /["]/                            pop attach-prev :string ;
 (** A shape closer: any of them closes any shape. *)
 <node> NODE_DEND          /[\)]\)/                         pop :punctuation ;
