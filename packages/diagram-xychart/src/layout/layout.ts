@@ -10,8 +10,9 @@
  * Changed from v12 by decision:
  * - each bar plot's data labels are its own values, not plot 0's (D382);
  * - a missing value draws no bar, point or label (`XYCHART_MISSING_VALUE`); an empty range maps
- *   every value to the axis middle (`XYCHART_EMPTY_RANGE`); data labels with no room are left
- *   out (`XYCHART_LABEL_TOO_SMALL`); one warning per kind (D383);
+ *   every value to the axis middle (`XYCHART_EMPTY_RANGE`); one warning per kind (D383);
+ * - a bar with no room for its data label gets none, and the others are drawn at the smallest
+ *   size that fits them; `XYCHART_LABEL_TOO_SMALL` when no bar of a plot has room (D611);
  * - a legend name of several lines (D385) pushes the rows after it down by its extra lines;
  * - by the T3 invariant ("bars inside the plot box from axis to value"), not a D-id: a bar is
  *   held inside the plot box, where v12 drew a value past an end of the range with a negative
@@ -373,9 +374,11 @@ function linePlot(
 
 /**
  * v12's data labels (`xychartRenderer.ts:102-226`), each bar plot with its own values (D382):
- * every bar with an area gets one; each tries font sizes down from a start until its text fits
- * by the 0.7 character-width approximation, and all take the smallest. None when that is not a
- * positive size (`XYCHART_LABEL_TOO_SMALL`).
+ * every bar with an area may get one; each tries font sizes down from a start until its text
+ * fits by the 0.7 character-width approximation. A bar whose fitted size is under 1 px has no
+ * room and gets no label; the others all take the smallest of their sizes (D611, #537: v12 took
+ * the smallest over every bar and wrote a size of 0 or less). None when no bar has room
+ * (`XYCHART_LABEL_TOO_SMALL`).
  */
 function withDataLabels(
   layout: XyBarPlotLayout,
@@ -384,27 +387,26 @@ function withDataLabels(
   family: string,
   texts: TextMeasure
 ): XyBarPlotLayout {
-  const items = layout.bars
-    .filter((b) => b.width > 0 && b.height > 0)
-    .map((bar) => ({ bar, text: String(bar.value) }));
-  if (items.length === 0) return layout;
   const char = dataLabelCharWidth;
   const margin = dataLabelMargin;
-  let smallest = Infinity;
-  for (const { bar, text } of items) {
-    const n = text.length;
-    const size = horizontal
-      ? fit(bar.height * dataLabelStart, (f) => f * n * char <= bar.width - margin)
-      : fit(bar.width / (n * char), (f) => {
-          const w = f * n * char;
-          const center = bar.x + bar.width / 2;
-          const across = center - w / 2 >= bar.x && center + w / 2 <= bar.x + bar.width;
-          return across && bar.y + margin + f <= bar.y + bar.height;
-        });
-    smallest = Math.min(smallest, size);
-  }
-  const size = Math.floor(smallest);
-  if (!(size > 0)) return layout;
+  const items = layout.bars
+    .filter((b) => b.width > 0 && b.height > 0)
+    .map((bar) => {
+      const text = String(bar.value);
+      const n = text.length;
+      const fitted = horizontal
+        ? fit(bar.height * dataLabelStart, (f) => f * n * char <= bar.width - margin)
+        : fit(bar.width / (n * char), (f) => {
+            const w = f * n * char;
+            const center = bar.x + bar.width / 2;
+            const across = center - w / 2 >= bar.x && center + w / 2 <= bar.x + bar.width;
+            return across && bar.y + margin + f <= bar.y + bar.height;
+          });
+      return { bar, text, size: Math.floor(fitted) };
+    })
+    .filter((item) => item.size > 0);
+  if (items.length === 0) return layout;
+  const size = items.reduce((min, item) => Math.min(min, item.size), Infinity);
   const font: FontKey = { family, size, weight: NORMAL_WEIGHT };
   const outside = options.showDataLabelOutsideBar;
   const dataLabels = items.map(({ bar, text }) => {

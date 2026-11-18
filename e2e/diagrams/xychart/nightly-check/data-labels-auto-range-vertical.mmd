@@ -1,0 +1,13 @@
+---
+description: >-
+  Data labels with no y-axis range given (#537, D611). The inferred range
+  starts at the lowest value, so the 10 bar is only a few px high and has
+  no room for its label: it gets none, and the 30 and 11 bars are labelled
+  at the size that fits the 11 bar. No XYCHART_LABEL_TOO_SMALL warning.
+  Horizontal counterpart: data-labels-auto-range-horizontal.mmd.
+config:
+  xyChart:
+    showDataLabel: true
+---
+xychart
+  bar [10, 30, 11]
