@@ -303,7 +303,7 @@ function drawEdge({ w, layout, paint, ends }: Scene, e: EdgeView, i: number): vo
   w.close();
 }
 
-/** A relationship's label as a tag, bordered in the relationship line's colour (D619, D620). */
+/** A relationship's label as a tag, bordered in the relationship line's colour (D626, D627). */
 function drawEdgeLabel({ w, layout, ctx, paint }: Scene, e: EdgeView, i: number): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0 || !paint.line) return;

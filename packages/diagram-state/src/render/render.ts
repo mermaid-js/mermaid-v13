@@ -386,7 +386,7 @@ function drawEdge({ w, layout, paint }: Scene, e: StateEdgeView): void {
   w.close();
 }
 
-/** A transition's label as a tag, bordered in the transitions' line colour (D619, D620). */
+/** A transition's label as a tag, bordered in the transitions' line colour (D626, D627). */
 function drawEdgeLabel({ w, layout, ctx, paint }: Scene, e: StateEdgeView): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;

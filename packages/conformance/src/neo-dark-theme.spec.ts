@@ -101,8 +101,8 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   requirementBackground: 'D435, D541: v12 resolved primaryColor; it drew the box in mainBkg',
   requirementBorderSize:
     "D435, D541, D183: v12 resolved '1' and drew strokeWidth (1 in v12 neo-dark); v13 strokeWidth is 2",
-  relationLabelBackground: 'D621: every edge label is filled with the theme background',
-  edgeLabelBackground: 'D621: every edge label is filled with the theme background',
+  relationLabelBackground: 'D628: every edge label is filled with the theme background',
+  edgeLabelBackground: 'D628: every edge label is filled with the theme background',
   // v13 variables for what v12 decides by look or by theme name.
   rowOdd: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
   rowEven: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
@@ -115,7 +115,7 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   ),
   critTextColor:
     'D574: v13 ink for text on a critical gantt bar (v12 `.critText0` took taskTextColor); taskTextColor here',
-  erEdgeLabelBackground: 'D621: every edge label is filled with the theme background',
+  erEdgeLabelBackground: 'D628: every edge label is filled with the theme background',
   ...Object.fromEntries(LOOK_GEOMETRY.map((n) => [n, LOOK_GEOMETRY_WHY])),
   ...Object.fromEntries(
     TIMELINE.map((n) => [n, 'D227: v12 has no variable; theme neo drew classic timeline boxes'])
@@ -189,7 +189,7 @@ describe('neo-dark against v12 12.2.0 (#227, D151, D181, D183)', () => {
     }
     expect(DARK_RULES.secondaryBorderColor).toBe('mix(secondaryColor, white, 20%)');
     expect(neoDark.value('clusterBorder')).toBe(neoDark.value('tertiaryBorderColor'));
-    // Edge labels sit on the background in every theme (D621).
+    // Edge labels sit on the background in every theme (D628).
     expect(neoDark.value('edgeLabelBackground')).toBe(neoDark.value('background'));
     expect(neoDark.value('erEdgeLabelBackground')).toBe(neoDark.value('background'));
   });

@@ -199,6 +199,41 @@ describe('structure (spec #520 Renderer)', () => {
     // v12 counts the undrawn relation too.
     expect(byClass(svg, 'path', 'relationshipLine')[0]!['data-id']).toBe('a-a-1');
   });
+
+  it('draws two self-loops on one requirement apart, each label clear of the other (#768, D618)', async () => {
+    // The issue's source: `contains` and `refines` on one requirement.
+    const src = `requirementDiagram
+  requirement r {
+    id: 1
+    text: x
+    risk: low
+    verifymethod: test
+  }
+  r - contains -> r
+  r - refines -> r
+`;
+    const { svg, layout } = await render(src, { theme: 'default' });
+    const lines = byClass(svg, 'path', 'relationshipLine');
+    expect(lines).toHaveLength(2);
+    expect(lines[0]!.d).not.toBe(lines[1]!.d);
+    const [vx, vy, vw, vh] = elements(svg, 'svg')[0]!.viewBox!.split(' ').map(Number);
+    const rects = byClass(svg, 'rect', 'labelBkg').map((r) => {
+      const [x, y, w, h] = [r.x, r.y, r.width, r.height].map(Number);
+      return { x0: x!, y0: y!, x1: x! + w!, y1: y! + h! };
+    });
+    expect(rects).toHaveLength(2);
+    const [a, b] = rects as [(typeof rects)[0], (typeof rects)[0]];
+    expect(a.x1 <= b.x0 || b.x1 <= a.x0 || a.y1 <= b.y0 || b.y1 <= a.y0).toBe(true);
+    for (const r of rects) {
+      expect(r.x0).toBeGreaterThanOrEqual(vx!);
+      expect(r.y0).toBeGreaterThanOrEqual(vy!);
+      expect(r.x1).toBeLessThanOrEqual(vx! + vw!);
+      expect(r.y1).toBeLessThanOrEqual(vy! + vh!);
+    }
+    // One loop out of each side of the box.
+    const out = [...layout.edges.values()].map((e) => Math.sign(e.points[1]!.x - e.points[0]!.x));
+    expect(out.sort()).toEqual([-1, 1]);
+  });
 });
 
 describe('the families (D152, D215, D227)', () => {

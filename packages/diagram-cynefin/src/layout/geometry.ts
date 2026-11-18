@@ -86,6 +86,15 @@ export function quadBox(start: Point, control: Point, end: Point): Rect {
   return rectOf(quadRange(start.x, control.x, end.x), quadRange(start.y, control.y, end.y));
 }
 
+/** `curve` with every point's y passed through `f`: a curve moved or stretched vertically. */
+export function mapY(curve: CubicCurve, f: (y: number) => number): CubicCurve {
+  const at = (p: Point): Point => ({ x: p.x, y: f(p.y) });
+  return {
+    from: at(curve.from),
+    segments: curve.segments.map((s) => ({ c1: at(s.c1), c2: at(s.c2), to: at(s.to) })),
+  };
+}
+
 /** The box of some points. */
 export function pointsBox(points: readonly Point[]): Rect {
   const box = new Box();

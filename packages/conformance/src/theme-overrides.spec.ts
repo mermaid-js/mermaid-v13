@@ -105,7 +105,7 @@ const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
         'titleColor',
       ]),
     ],
-  "D621: every edge label is filled with the theme background, where v12 used its own label fill (secondaryColor, or the theme's literal); neutral's was white, its background, until an author moves the background":
+  "D628: every edge label is filled with the theme background, where v12 used its own label fill (secondaryColor, or the theme's literal); neutral's was white, its background, until an author moves the background":
     [
       ...keys('default', ALL, ['edgeLabelBackground']),
       ...keys('dark', ALL, ['edgeLabelBackground']),

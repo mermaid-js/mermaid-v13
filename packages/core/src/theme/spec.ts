@@ -60,7 +60,7 @@ export const LIGHT_RULES: ThemeRuleTable = {
   clusterBkg: 'tertiaryColor',
   clusterBorder: 'tertiaryBorderColor',
   titleColor: 'contrast(clusterBkg, textColor, background)',
-  // Every edge label's fill is the background it sits on (D621).
+  // Every edge label's fill is the background it sits on (D628).
   edgeLabelBackground: 'background',
   arrowheadColor: 'lineColor',
   defaultLinkColor: 'lineColor',

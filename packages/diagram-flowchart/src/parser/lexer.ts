@@ -78,7 +78,8 @@ const isBlank = (c: number) => c === SPACE || c === TAB;
  */
 const DIALECT: FlowLexerDialect = {
   kinds: T,
-  chars: /* @__PURE__ */ flowChars(false),
+  // A link id ends at `[ ] ( ) { } |`, as in v12 12.3.0 (D621); swimlane-beta shares it.
+  chars: /* @__PURE__ */ flowChars(false, true),
   keywords: /* @__PURE__ */ flowKeywords([
     ['style', T.Style],
     ['swimlane-beta', T.Graph, 'graph'],

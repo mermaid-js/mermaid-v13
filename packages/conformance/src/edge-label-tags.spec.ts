@@ -1,5 +1,5 @@
 /**
- * Edge labels as tags (D619–D623), over each covered type's `baseline/edge-labels` fixtures
+ * Edge labels as tags (D626–D630), over each covered type's `baseline/edge-labels` fixtures
  * through `createMermaid().render()`: every middle label is one rounded box with a 1 px solid
  * border in its edge's colour (a `linkStyle` stroke, else the line colour), filled with the
  * theme background unless the author sets the type's label fill. Colours are read through the
@@ -87,7 +87,7 @@ function tags(svg: string): Tag[] {
 /** The theme background the root style declares. */
 const background = (svg: string): string | undefined => resolver(svg)('var(--_bg)');
 
-describe('edge labels are tags (D619–D623)', () => {
+describe('edge labels are tags (D626–D630)', () => {
   it('has fixtures for each covered type', () => {
     for (const dir of DIRS) expect(fixtures(dir).length, dir).toBeGreaterThan(0);
   });

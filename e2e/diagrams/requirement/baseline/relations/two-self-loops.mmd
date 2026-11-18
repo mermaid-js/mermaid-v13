@@ -1,0 +1,14 @@
+---
+description: >-
+  two self-loops on one requirement (#768, D618): the second is mirrored to the
+  left of the box, so both lines and both labels show
+---
+requirementDiagram
+  requirement r {
+    id: 1
+    text: x
+    risk: low
+    verifymethod: test
+  }
+  r - contains -> r
+  r - refines -> r

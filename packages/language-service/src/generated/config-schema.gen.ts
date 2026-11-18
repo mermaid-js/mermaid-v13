@@ -381,7 +381,7 @@ export const configSchema: ConfigSchema = {
           }
         },
         "erEdgeLabelBackground": {
-          "description": "ER diagrams: background of relationship labels. `edgeLabelBackground` unless set, which\nis the theme's `background` in every theme (D621).\n",
+          "description": "ER diagrams: background of relationship labels. `edgeLabelBackground` unless set, which\nis the theme's `background` in every theme (D628).\n",
           "type": "string",
           "x-mermaid": {
             "status": "honoured",

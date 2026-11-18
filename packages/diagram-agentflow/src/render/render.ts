@@ -252,7 +252,7 @@ function drawEdge({ w, layout, paint }: Scene, e: AgentflowEdgeView): void {
   marker(w, e.end, end, headPaint, paint.heads, true);
 }
 
-/** An edge's label as a tag, bordered in the edge's own stroke (D619, D620). */
+/** An edge's label as a tag, bordered in the edge's own stroke (D626, D627). */
 function drawEdgeLabel(
   { w, layout, ctx, paint: { node } }: Scene,
   e: AgentflowEdgeView,

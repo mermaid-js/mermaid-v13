@@ -429,7 +429,7 @@ properties:
       erEdgeLabelBackground:
         description: |
           ER diagrams: background of relationship labels. `edgeLabelBackground` unless set, which
-          is the theme's `background` in every theme (D621).
+          is the theme's `background` in every theme (D628).
         type: string
         x-mermaid: *erColor
       erMarkerFill:

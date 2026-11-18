@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { checkColor, streamWriter, type LabelBox, type OutlineRole } from '@mermaid-js/core/svg';
 import { edgeLabel } from './graph.ts';
 
-// A one-line label 40 px wide and 18 px high, and the px profile's room around it (D622).
+// A one-line label 40 px wide and 18 px high, and the px profile's room around it (D629).
 const ONE: LabelBox & { width: number } = {
   lines: [[{ text: 'A3' }]],
   lineHeight: 18,
@@ -44,7 +44,7 @@ const rects = (svg: string): string[] => svg.match(/<rect [^>]*\/>/g) ?? [];
 const attr = (el: string, name: string): string | undefined =>
   new RegExp(`\\s${name}="([^"]*)"`).exec(el)?.[1];
 
-describe('edgeLabel draws an edge label as a tag (D619–D623)', () => {
+describe('edgeLabel draws an edge label as a tag (D626–D630)', () => {
   it('borders the box in the stroke the caller passes, 1 px and solid', () => {
     const [box] = rects(draw(ONE, { stroke: c('#123456') }));
     expect(attr(box!, 'stroke')).toBe('#123456');

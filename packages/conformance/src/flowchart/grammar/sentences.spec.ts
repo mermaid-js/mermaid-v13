@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildGenerator } from '@mermaid-js/gen-grammar';
 import { loadOracle } from '../../oracle.ts';
+import { d621Oracle } from '../d621.ts';
 import { flowchartV12Snapshot } from '../v12.ts';
 import { flowchartV13Snapshot, parseFlowchartForParity } from '../v13.ts';
 import { flowchartCorpus } from './corpus.ts';
@@ -43,7 +44,8 @@ const SENTENCES = 3000;
  * Grammar differential over generated sentences (R-PARSE-9): random derivations of
  * `grammar/flowchart.ebnf`, weighted by how often the corpus uses each rule, with token texts
  * drawn from the corpus. The hand-written parser must agree with the reference parser on
- * accept/reject and AST shape, and mermaid@12 on accept/reject.
+ * accept/reject and AST shape, and mermaid@12 on accept/reject, with 12.3.0's LINK_ID rule in its
+ * lexer (D621).
  */
 describe('flowchart grammar differential (generated sentences)', () => {
   it.each(REGRESSIONS)('agrees on %s', async (_id, text) => {
@@ -66,7 +68,7 @@ describe('flowchart grammar differential (generated sentences)', () => {
     const corpus = await flowchartCorpus();
     const model = learnSentenceModel(corpus.map((c) => c.source));
     const generator = buildGenerator(referenceParser(), model);
-    const oracle = await loadOracle();
+    const oracle = await d621Oracle();
     const diffs: string[] = [];
     let accepted = 0;
     for (let seed = 1; seed <= SENTENCES; seed++) {

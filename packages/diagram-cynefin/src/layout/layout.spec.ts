@@ -54,6 +54,7 @@ const F = {
   ),
   lineBreaks: fixture('baseline/text/line-breaks-and-markdown'),
   crowded: fixture('baseline/layout/crowded-and-wide'),
+  long: fixture('baseline/layout/long-lists-every-quadrant'),
   repeats: fixture('baseline/layout/repeated-transitions'),
 };
 
@@ -214,13 +215,64 @@ describe('cynefin layout: item badges (:229-348)', () => {
     expect(lay(F.repeats).items[0]).toMatchObject({ width: 20, height: 26 });
   });
 
-  it('lets a twelfth item run past the canvas, and grows the bounds to cover it (D361)', () => {
+  it('grows a row to fit its longest list, and moves what lies below it (D617)', () => {
+    // Six complex items: the row reaches 4 under the sixth badge, 150 + 25 + 6 × 30 = 355.
+    // Twelve chaotic items: 150 + 25 + 12 × 30 = 535 for the lower row.
     const l = lay(F.crowded);
+    expect(l.quadrants.map((q) => [q.name, q.y, q.height, q.center.y])).toEqual([
+      ['complex', 0, 355, 150],
+      ['complicated', 0, 355, 150],
+      ['chaotic', 355, 535, 505],
+      ['clear', 355, 535, 505],
+    ]);
+    expect(l.height).toBe(890);
     const chaotic = l.items.filter((i) => i.domain === 'chaotic');
-    const last = chaotic[chaotic.length - 1]!;
-    expect(last.y).toBe(475 + 11 * 30);
-    expect(l.bounds.y + l.bounds.height).toBeCloseTo(last.y + 26 + 0.5);
+    expect(chaotic[0]!.y).toBe(530);
+    expect(chaotic.at(-1)!.y + 26 + 4).toBe(890);
+    // The labels keep their place under the row's top edge; the ellipse sits on the horizon.
+    expect(center(l.labels.find((t) => t.domain === 'chaotic')!).y).toBe(475);
+    expect(l.confusion.center.y).toBe(355);
+    expect(center(l.labels.find((t) => t.domain === 'confusion')!).y).toBe(345);
+    // The fold spans the canvas, the horizon moved down 55, the cliff spans the lower row.
+    const v12 = lay(F.empty).boundaries;
+    expect(l.boundaries.fold.segments.at(-1)!.to.y).toBe(890);
+    expect(l.boundaries.horizon.from.y).toBeCloseTo(v12.horizon.from.y + 55);
+    expect(l.boundaries.cliff.from).toEqual({ x: 400, y: 355 });
+    expect(l.boundaries.cliff.segments.at(-1)!.to).toEqual({ x: 400, y: 890 });
+    // The padding stays under the grown canvas.
+    expect(l.bounds.y + l.bounds.height).toBe(890 + 40);
     expect(l.viewBox.height).toBeCloseTo(l.bounds.height);
+  });
+
+  it('keeps v12’s canvas for four items, and grows the row from the fifth', () => {
+    const upTo = (n: number): CynefinModel => ({
+      ...F.long,
+      domains: F.long.domains.map((d) => ({ ...d, items: d.items.slice(0, n) })),
+      transitions: [],
+    });
+    const four = lay(upTo(4));
+    expect(four.quadrants.map((q) => [q.y, q.height])).toEqual([
+      [0, 300],
+      [0, 300],
+      [300, 300],
+      [300, 300],
+    ]);
+    expect(four.boundaries).toEqual(lay(F.empty).boundaries);
+    // The fifth single-line item ends at 321; the row reaches 4 further.
+    expect(lay(upTo(5)).quadrants.map((q) => q.height)).toEqual([325, 325, 325, 325]);
+    expect(lay(upTo(5), { showDomainDescriptions: false }).quadrants[0]!.height).toBe(315);
+  });
+
+  it('grows a row by a badge’s extra lines (D363)', () => {
+    // Complex: nine items, the sixth two lines (+14.4); 150 + 25 + 9 × 30 + 14.4.
+    const l = lay(F.long);
+    expect(l.quadrants[0]!.height).toBeCloseTo(459.4);
+    // Chaotic's eight items under the moved centre.
+    expect(l.quadrants[2]!.height).toBe(150 + 25 + 8 * 30);
+    // Transitions run between the moved centres.
+    const back = l.transitions.find((t) => t.from === 'chaotic')!;
+    expect(back.start.y).toBeCloseTo(459.4 + 150);
+    expect(back.end).toEqual({ x: 200, y: 150 });
   });
 });
 

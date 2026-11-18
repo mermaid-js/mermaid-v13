@@ -1,5 +1,5 @@
 /**
- * An edge label's box under `look: handDrawn` (D623): it reaches the drawer as role `label`, its
+ * An edge label's box under `look: handDrawn` (D630): it reaches the drawer as role `label`, its
  * 1 px border is sketched like a node's outline, and its fill stays plain (no hachure).
  */
 import { checkColor, streamWriter, type Attrs } from '@mermaid-js/core/svg';
@@ -26,7 +26,7 @@ function sketchLabel(): string {
   return w.finish();
 }
 
-describe('the edge-label role (D623)', () => {
+describe('the edge-label role (D630)', () => {
   it('sketches the border in the box stroke, 1 px wide', () => {
     const svg = sketchLabel();
     expect(svg).not.toContain('<rect');
