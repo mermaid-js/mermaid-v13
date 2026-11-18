@@ -6,6 +6,7 @@
 // properties are `conformance/src/requirement/render.spec.ts`.
 import { describe, expect, it } from 'vitest';
 import type { Attrs, OutlineDraw } from '@mermaid-js/core/svg';
+import { pxProfile } from '@mermaid-js/core/layout';
 import { renderRequirementForTest } from './harness.ts';
 
 /** Every `<tag>` start tag's attributes, in document order. */
@@ -188,8 +189,9 @@ describe('structure (spec #520 Renderer)', () => {
     // The box is the room the layout reserved: the label plus the px labelPatch (D629).
     const label = layout.requirement!.relations.find((r) => r.id === 'relation:b->a')!.label;
     const box = elements(groups[0]!, 'rect')[0]!;
-    expect(Number(box.width)).toBeCloseTo(label.width + 16);
-    expect(Number(box.height)).toBeCloseTo(label.height + 8);
+    const patch = pxProfile.builder.labelPatch;
+    expect(Number(box.width)).toBeCloseTo(label.width + patch.x);
+    expect(Number(box.height)).toBeCloseTo(label.height + patch.y);
   });
 
   it('fills the tag with the background, an author relationLabelBackground still winning (D628)', async () => {

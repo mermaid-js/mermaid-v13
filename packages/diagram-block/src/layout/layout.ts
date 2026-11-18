@@ -386,7 +386,9 @@ function edgesOf(
       }
       points = [s, middle, t];
     }
-    const text = e.label === '' ? undefined : measure(e.label);
+    const measured = e.label === '' ? undefined : measure(e.label);
+    // A label of only whitespace draws no tag (D626), so it takes no room either.
+    const text = measured && !blank(measured.text) ? measured : undefined;
     // The tag's room: the text plus the px profile's `labelPatch` (D629), as it is drawn.
     const label = text && {
       ...text,
@@ -407,6 +409,11 @@ function edgesOf(
     });
   }
   return out;
+}
+
+/** Whether a measured label shows nothing: no inline box and only whitespace (as `edgeLabel`). */
+function blank(label: PlacedLabel['text']): boolean {
+  return label.lines.every((line) => line.every((r) => r.kind !== 'box' && !r.text.trim()));
 }
 
 /** Every box and point drawn (D224): outlines, labels, edge points and edge labels. */
