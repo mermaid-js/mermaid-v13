@@ -1,0 +1,21 @@
+---
+description: >-
+  Edge labels as tags inside coloured lanes (D628): the label inside the
+  styled lane and the one inside the palette-coloured lane keep the theme
+  background as their fill, as the label across the lanes does.
+config:
+  theme: redux-color
+---
+swimlane-beta LR
+  subgraph Styled
+    A
+    B
+  end
+  subgraph Palette
+    C
+    D
+  end
+  A -->|inside| B
+  C -->|also inside| D
+  B -->|across| C
+  style Styled fill:#fde68a,stroke:#b45309
