@@ -356,10 +356,10 @@ The nine spec issues (#288–#296) each ended with questions for the maintainer.
 | # | Decision |
 | --- | --- |
 | D241 | **Journey sections cycle over all eight `fillType`s.** v12 cycled over 7 (a length read at module load) and its CSS hid `sectionFills`, so `fillType7` never showed. `sectionFills` becomes `ignored`. MIGRATION.md. |
-| D242 | **Journey sizing: v12's positions at default config, without its bugs.** Size comes from the drawn box (D224), band gaps use `taskMargin`, and the legend margin widens by the widest legend line with no threshold. v12 counted `leftMargin` twice, used `diagramMarginX` as the band gap, and jumped from 150 to about 230 px past a threshold. MIGRATION.md. |
+| D242 | **Journey sizing: v12's positions at default config, without its bugs.** Size comes from the drawn box (D224), band gaps use `taskMargin`, and the legend margin widens by the widest legend line with no threshold. v12 counted `leftMargin` twice, used `diagramMarginX` as the band gap, and jumped from 150 to about 230 px past a threshold. MIGRATION.md. *(Amended by D615.)* |
 | D244 | **The empty actor `''` stays in the model and is not drawn.** Only named actors take colours, so they no longer shift. MIGRATION.md. |
 | D245 | **Journey's fixed greys stay constants** (`#666`, `#999`, `#000`, D152). Lines take `textColor`, and the arrowhead takes its line's colour (as D131). |
-| D248 | **The journey title keeps v12's place and size**: (`leftMargin`, 25), bold, `4ex` relative to the theme font size, `titleFontFamily` inheriting `fontFamily`. An unset `titleColor` takes `textColor` instead of v12's empty value, which rendered black on dark themes. |
+| D248 | **The journey title keeps v12's place and size**: (`leftMargin`, 25), bold, `4ex` relative to the theme font size, `titleFontFamily` inheriting `fontFamily`. An unset `titleColor` takes `textColor` instead of v12's empty value, which rendered black on dark themes. *(Amended by D615.)* |
 | D249 | **`actorColours` stays the default in every theme** (six fixed colours, P2). An author's `actor0`–`actor5` wins. No redux actor palette in M4. |
 ### Timeline and gitGraph
 

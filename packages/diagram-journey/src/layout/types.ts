@@ -106,7 +106,7 @@ export interface JourneyLayout {
   /** One per model task, in model order. */
   readonly tasks: readonly TaskLayout[];
   readonly activity: ActivityLine;
-  /** Drawn bold at (`left`, v12's baseline 25). */
+  /** Drawn bold at `left`, its last baseline at v12's 25; extra lines go up (D615). */
   readonly title?: PlacedLabel;
   /** The x tasks start at: `leftMargin`, or past the legend when it is wider (D242). */
   readonly left: number;
