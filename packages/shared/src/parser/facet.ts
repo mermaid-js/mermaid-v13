@@ -409,6 +409,10 @@ export function keywordCompletions<K extends KeywordRow & { readonly kind: numbe
   return out;
 }
 
+/** Whether `label` starts with what was `typed`, ignoring case. */
+export const matchesTyped = (label: string, typed: string): boolean =>
+  label.toLowerCase().startsWith(typed.toLowerCase());
+
 /** The items of one completion request: prefix-filtered, each label once, in the order added. */
 export class CompletionList {
   readonly list: CompletionItem[] = [];
@@ -422,9 +426,7 @@ export class CompletionList {
   ) {}
 
   add(label: string, kind: CompletionKind, extra: Partial<CompletionItem> = {}): void {
-    const starts = this.foldCase
-      ? label.toLowerCase().startsWith(this.prefix.toLowerCase())
-      : label.startsWith(this.prefix);
+    const starts = this.foldCase ? matchesTyped(label, this.prefix) : label.startsWith(this.prefix);
     if (!starts || this.seen.has(label)) return;
     this.seen.add(label);
     this.list.push({ label, kind, insertText: label, range: this.range, ...extra });
