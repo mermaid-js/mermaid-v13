@@ -18,6 +18,7 @@ exports[`layered over parser-produced flowchart graphs > lays out every corpus g
   "flowchart/baseline/edges/line-hops-off.mmd": 2,
   "flowchart/baseline/edges/line-hops-on.mmd": 2,
   "flowchart/baseline/edges/self-loops-and-multi.mmd": 0,
+  "flowchart/baseline/edges/two-self-loops.mmd": 0,
   "flowchart/baseline/embedded/class-untitled.mmd": 0,
   "flowchart/baseline/embedded/folded-in-subgraph.mmd": 0,
   "flowchart/baseline/embedded/folded.mmd": 0,

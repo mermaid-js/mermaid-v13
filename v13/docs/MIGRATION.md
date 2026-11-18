@@ -3194,6 +3194,10 @@ v12's, apart from the two layout fixes of D514.
   ignored-keys table); `look` as everywhere (D153).
 - **Edges** follow `flowchart.curve` (class's precedent), a self-loop always `rounded`; the
   layout keeps room for each marker so it no longer overlaps the next box.
+- **Several self-loops on one box** (D618, #768) each get their own route: the second is drawn
+  on the opposite side of the box and later ones nest outward, alternating sides, so every line
+  and label shows, as v12 drew them side by side. Before, they were drawn over one another. A
+  single self-loop is unchanged.
 - **Text output** (`format: 'ascii'`) is new (#588, D320, D438): see
   [ASCII output](../ascii.md#requirement-diagrams).
 - **Hand-drawn:** the diagram is sketched under `look: handDrawn`: the box outline, the divider
