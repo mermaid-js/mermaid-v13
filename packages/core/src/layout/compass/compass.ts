@@ -22,6 +22,7 @@ import type {
   Point,
   Side,
 } from '../types.ts';
+import { checkGraph, checkNodeSpan, finite } from '../check.ts';
 import { BOTTOM, DX, DY, LEFT, placeOnGrid, RIGHT, TOP, type Grid } from './grid.ts';
 import { METRICS as M } from './metrics.ts';
 import { clearSpot, hits, route, simplify, Space, toRoute, type Port, type Rect } from './route.ts';
@@ -47,72 +48,36 @@ const DERIVED: Readonly<Record<LayoutGraph['direction'], readonly [number, numbe
   BT: [TOP, BOTTOM],
 };
 
-function finite(v: number, what: string): void {
-  if (!Number.isFinite(v) || v < 0)
-    throw new RangeError(`layout: ${what} must be a finite number >= 0, got ${v}`);
-}
-
 function sized(s: { width: number; height: number } | undefined, what: string): void {
   if (!s) return;
   finite(s.width, `${what} width`);
   finite(s.height, `${what} height`);
 }
 
-function checkEdges(graph: LayoutGraph, ids: Set<string>): void {
-  const edges = new Set<string>();
-  for (const e of graph.edges) {
-    if (edges.has(e.id)) throw new Error(`layout: duplicate edge id '${e.id}'`);
-    edges.add(e.id);
-    if (!ids.has(e.source))
-      throw new Error(`layout: edge '${e.id}' has unknown source '${e.source}'`);
-    if (!ids.has(e.target))
-      throw new Error(`layout: edge '${e.id}' has unknown target '${e.target}'`);
-    finite(e.minLen, `minLen of edge '${e.id}'`);
-    sized(e.label, `label of edge '${e.id}'`);
-    sized(e.startLabel, `start label of edge '${e.id}'`);
-    sized(e.endLabel, `end label of edge '${e.id}'`);
-    for (const [end, m] of [
-      ['start', e.startMarker],
-      ['end', e.endMarker],
-    ] as const) {
-      if (!m) continue;
-      finite(m.length, `${end} marker length of edge '${e.id}'`);
-      finite(m.width, `${end} marker width of edge '${e.id}'`);
-    }
-    for (const side of [e.sides?.source, e.sides?.target]) {
-      if (side !== undefined && !Object.hasOwn(SIDE_INDEX, side))
-        throw new RangeError(`layout: edge '${e.id}' has unknown side '${String(side)}'`);
-    }
-  }
-}
-
-// The same checks as `layered`'s (`layered/index.ts`), plus compass's own fields. One shared
-// check for every engine is a follow-up (GAPS.md, T0 #590).
 function check(graph: LayoutGraph): void {
-  const ids = new Set<string>();
-  const add = (id: string, what: string): void => {
-    if (ids.has(id)) throw new Error(`layout: duplicate ${what} id '${id}'`);
-    ids.add(id);
-  };
-  for (const n of graph.nodes) {
-    add(n.id, 'node');
-    finite(n.width, `width of node '${n.id}'`);
-    finite(n.height, `height of node '${n.id}'`);
-    if (n.span !== undefined) finite(n.span, `span of node '${n.id}'`);
-    if (n.anchorY !== undefined) finite(n.anchorY, `anchorY of node '${n.id}'`);
-  }
-  for (const g of graph.groups) {
-    add(g.id, 'group');
-    for (const v of [g.padding.top, g.padding.right, g.padding.bottom, g.padding.left])
-      finite(v, `padding of group '${g.id}'`);
-    sized(g.title, `title of group '${g.id}'`);
-  }
-  checkEdges(graph, ids);
-  finite(graph.spacing.node, 'spacing.node');
-  finite(graph.spacing.rank, 'spacing.rank');
-  finite(graph.spacing.edge, 'spacing.edge');
-  finite(graph.diagramPadding ?? 0, 'diagramPadding');
-  if (graph.headRoom !== undefined) finite(graph.headRoom, 'headRoom');
+  checkGraph(graph, {
+    routed: true,
+    node: checkNodeSpan,
+    group: (g) => sized(g.title, `title of group '${g.id}'`),
+    edge(e) {
+      finite(e.minLen, `minLen of edge '${e.id}'`);
+      sized(e.label, `label of edge '${e.id}'`);
+      sized(e.startLabel, `start label of edge '${e.id}'`);
+      sized(e.endLabel, `end label of edge '${e.id}'`);
+      for (const [end, m] of [
+        ['start', e.startMarker],
+        ['end', e.endMarker],
+      ] as const) {
+        if (!m) continue;
+        finite(m.length, `${end} marker length of edge '${e.id}'`);
+        finite(m.width, `${end} marker width of edge '${e.id}'`);
+      }
+      for (const side of [e.sides?.source, e.sides?.target]) {
+        if (side !== undefined && !Object.hasOwn(SIDE_INDEX, side))
+          throw new RangeError(`layout: edge '${e.id}' has unknown side '${String(side)}'`);
+      }
+    },
+  });
 }
 
 /**
