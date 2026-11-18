@@ -6,6 +6,7 @@
 import type {
   Dir,
   LayoutContext,
+  LayoutEdge,
   LayoutEngine,
   LayoutGraph,
   LayoutModel,
@@ -160,11 +161,41 @@ function grown(graph: LayoutGraph, dir: Dir, tight: boolean): LayoutModel {
   return endLabels(done.graph, done.model, hooks.cell);
 }
 
-// The groups as laid out; the title sits midway down the top padding.
+// The room along an edge before an end label (D102): `endLabelAlong` past the end's own marker,
+// and at the target past `headRoom` where that is longer (D607).
+function before(graph: LayoutGraph, e: LayoutEdge, head: boolean): number {
+  const marker = (head ? e.endMarker : e.startMarker)?.length ?? 0;
+  return (
+    (graph.metrics ?? pxProfile.engine).endLabelAlong +
+    Math.max(marker, head ? (graph.headRoom ?? 0) : 0)
+  );
+}
+
+// A group's title (`titlePosition`): `bottom-…` puts it and its room below the content, `…-left`
+// and `…-right` at that side. Sets the group's padding above and below (`padTop`, `padBottom`,
+// already scaled) with the title's height and the frame's `cell`, and returns the padding the title sits in.
+function titleBand(
+  g: LayoutGraph['groups'][number],
+  c: CNode,
+  padTop: number,
+  padBottom: number,
+  cell: number
+): number {
+  const at = g.titlePosition ?? '';
+  const titleH = g.title?.height ?? 0;
+  c.titleLow = at.startsWith('b');
+  c.titleSide = at.endsWith('left') ? -1 : Number(at.endsWith('right'));
+  c.padTop = padTop + (c.titleLow ? 0 : titleH) + cell;
+  c.padBottom = padBottom + (c.titleLow ? titleH : 0) + cell;
+  return c.titleLow ? padBottom : padTop;
+}
+
+// The groups as laid out. The title sits midway down the padding of its side (`bands`), in the
+// middle or `padX` in from the side it is at.
 function groupModels(
   graph: LayoutGraph,
   cgroups: CNode[],
-  padTops: number[],
+  bands: number[],
   pad: number
 ): Map<string, LayoutModelGroup> {
   const groups = new Map<string, LayoutModelGroup>();
@@ -172,9 +203,12 @@ function groupModels(
     const c = cgroups[j]!;
     const x = c.x + pad;
     const y = c.y + pad;
-    const top = y - c.h / 2;
-    const titleY = top + padTops[j]! / 2 + (g.title?.height ?? 0) / 2;
-    groups.set(g.id, { x, y, width: c.w, height: c.h, title: { x, y: titleY } });
+    const { width = 0, height = 0 } = g.title ?? {};
+    const title = {
+      x: x + c.titleSide * (c.w / 2 - c.padX - width / 2),
+      y: y + (c.titleLow ? 1 : -1) * (c.h / 2 - bands[j]! / 2 - height / 2),
+    };
+    groups.set(g.id, { x, y, width: c.w, height: c.h, title });
   });
   return groups;
 }
@@ -223,8 +257,9 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
     c.seq = i;
     cnodes.push(c);
   });
-  // Pele places the title in the top padding: half of `padding.top` above it, half below.
-  const padTops: number[] = [];
+  // Pele places the title in the top padding: half of `padding.top` above it, half below. A
+  // title at the bottom sits in the bottom padding the same way.
+  const bands: number[] = [];
   graph.groups.forEach((g, j) => {
     index.set(g.id, nodeCount + j);
     const c = cnode(0, 0);
@@ -232,10 +267,8 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
     c.dir = g.direction;
     // On the grid the frame takes a cell of its own, and the padding is blank cells inside it.
     c.padX = scaled(Math.max(g.padding.left, g.padding.right), padScale) + cell;
-    const padTop = scaled(g.padding.top, padScale);
-    padTops.push(padTop);
-    c.padTop = padTop + (g.title?.height ?? 0) + cell;
-    c.padBottom = scaled(g.padding.bottom, padScale) + cell;
+    const padBottom = scaled(g.padding.bottom, padScale);
+    bands.push(titleBand(g, c, scaled(g.padding.top, padScale), padBottom, cell));
     c.minW = (g.title?.width ?? 0) + 2 * c.padX;
     c.seq = nodeCount + j;
     c.span = Infinity;
@@ -265,10 +298,14 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
   // its own pair of cells along the side.
   const loopCount = new Int32Array(cnodes.length);
   const loopsSeen = new Int32Array(cnodes.length);
+  // Off the grid, how far out the loops already placed on each side of a node reach (#768).
+  const loopUsed = new Float64Array(2 * cnodes.length);
   const cedges: CEdge[] = graph.edges.map((e, k) => {
     const [src, dst] = ends[k]!;
     const labelW = e.label?.width ?? 0;
     const labelH = e.label?.height ?? 0;
+    // An end label next to a middle label keeps `endLabelAlong` from it too (D607).
+    const gap = e.label ? M.endLabelAlong : 0;
     if (src === dst) loopCount[src]!++;
     if (src === dst) {
       const below = sideways(src);
@@ -287,8 +324,8 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
       minlen: Math.max(1, Math.round(e.minLen)),
       labelW,
       labelH,
-      ...(e.startLabel ? { start: e.startLabel } : {}),
-      ...(e.endLabel ? { end: e.endLabel } : {}),
+      ...(e.startLabel ? { start: { ...e.startLabel, along: before(graph, e, false) + gap } } : {}),
+      ...(e.endLabel ? { end: { ...e.endLabel, along: before(graph, e, true) + gap } } : {}),
       route: [],
       labelX: 0,
       labelY: 0,
@@ -317,7 +354,7 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
     const c = cnodes[i]!;
     nodes.set(n.id, { x: c.x + pad, y: c.y + pad, width: n.width, height: n.height });
   });
-  const groups = groupModels(graph, cnodes.slice(nodeCount), padTops, pad);
+  const groups = groupModels(graph, cnodes.slice(nodeCount), bands, pad);
 
   const box = (i: number): LayoutModelNode => {
     const c = cnodes[i]!;
@@ -336,7 +373,7 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
         e.id,
         hooks
           ? hooks.loop(box(src), below, e.label, M, slot)
-          : selfLoop(box(src), below, e.label, M)
+          : selfLoop(box(src), below, e.label, M, nth, loopUsed.subarray(2 * src))
       );
       return;
     }
@@ -373,9 +410,9 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
 }
 
 // Edge-end labels (D102), placed once the routes are final: each sits beside the segment that
-// leaves its end's side, `endLabelAlong` out from the side (the target's also past the
-// arrowhead's room) and `endLabelAcross` off the line, on the side of the line the route does not
-// turn towards. Where that would cover a label already placed (any edge's middle label, or an end
+// leaves its end's side, `endLabelAlong` out past its end's own marker (the target's at least
+// past the arrowhead's room, D607) and `endLabelAcross` off the line, on the side of the line the
+// route does not turn towards. Where that would cover a label already placed (any edge's middle label, or an end
 // label placed before it, or any edge's end marker, `LayoutEdge.startMarker`) it takes the other side, and where both would, it moves further out
 // along the segment on whichever side needs less, past what is in the way. It never moves onto a
 // node or a group's title. On the grid all of it is whole cells: the label starts in the row or
@@ -384,7 +421,6 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
 function endLabels(graph: LayoutGraph, model: LayoutModel, grid: number): LayoutModel {
   if (!graph.edges.some((e) => e.startLabel ?? e.endLabel)) return model;
   const M = graph.metrics ?? pxProfile.engine;
-  const headRoom = graph.headRoom ?? 0;
   const walls: Rect[] = [...model.nodes.values()].map((b) => rectOf(b, b));
   for (const g of graph.groups) {
     const placed = model.groups.get(g.id);
@@ -411,15 +447,15 @@ function endLabels(graph: LayoutGraph, model: LayoutModel, grid: number): Layout
     const placed = model.edges.get(e.id);
     if (!placed || placed.points.length === 0) continue;
     const { points, ports } = placed;
-    const room = { along: M.endLabelAlong, across, grid };
     if (e.startLabel) {
+      const room = { along: before(graph, e, false), across, grid };
       const at = endLabelAt(points, ports.source, e.startLabel, room, around);
       placed.startLabel = at;
       taken.push(rectOf(at, e.startLabel));
     }
     if (e.endLabel) {
       const back = [...points].reverse();
-      const head = { ...room, along: room.along + headRoom };
+      const head = { along: before(graph, e, true), across, grid };
       const at = endLabelAt(back, ports.target, e.endLabel, head, around);
       placed.endLabel = at;
       taken.push(rectOf(at, e.endLabel));
@@ -510,18 +546,30 @@ function sideOf(b: LayoutModelNode, p: RoutePoint | undefined, fallback: Side): 
   return dx < 0 ? 'left' : 'right';
 }
 
-// A loop out of one side of a node and back, beside it across the flow.
+// A loop out of one side of a node and back, beside it across the flow. The node's loops take
+// its two sides in turn (#768, D618): the `nth` takes the far side when `nth` is odd, and starts
+// past the loops already on that side, which `used` holds for the near and far side and this
+// one adds to (in reserveLoop's room). Its ends spread towards the corners, so it never runs
+// along an inner one.
 function selfLoop(
   b: LayoutModelNode,
   below: boolean,
   label: { width: number; height: number } | undefined,
-  M: LayoutMetrics
+  M: LayoutMetrics,
+  nth: number,
+  used: Float64Array
 ): LayoutModelEdge {
+  const i = nth & 1;
+  const s = 1 - 2 * i;
+  const off = used[i]!;
+  const size = below ? label?.height : label?.width;
+  used[i] = off + M.loop + (size ? size + M.loopGap : 0);
+  const f = 0.5 - 0.25 / ((nth >> 1) + 1);
   if (below) {
-    const y = b.y + b.height / 2;
-    const out = y + M.loop;
-    const x0 = b.x - b.width / 4;
-    const x1 = b.x + b.width / 4;
+    const y = b.y + (s * b.height) / 2;
+    const out = y + s * (off + M.loop);
+    const x0 = b.x - b.width * f;
+    const x1 = b.x + b.width * f;
     return {
       points: [
         { x: x0, y, axis: 'v' },
@@ -529,14 +577,14 @@ function selfLoop(
         { x: x1, y: out, axis: 'h' },
         { x: x1, y, axis: 'v' },
       ],
-      ...(label ? { label: { x: b.x, y: out + M.loopGap + label.height / 2 } } : {}),
-      ports: { source: 'bottom', target: 'bottom' },
+      ...(label ? { label: { x: b.x, y: out + s * M.loopGap + (s * label.height) / 2 } } : {}),
+      ports: s > 0 ? { source: 'bottom', target: 'bottom' } : { source: 'top', target: 'top' },
     };
   }
-  const x = b.x + b.width / 2;
-  const out = x + M.loop;
-  const y0 = b.y - b.height / 4;
-  const y1 = b.y + b.height / 4;
+  const x = b.x + (s * b.width) / 2;
+  const out = x + s * (off + M.loop);
+  const y0 = b.y - b.height * f;
+  const y1 = b.y + b.height * f;
   return {
     points: [
       { x, y: y0, axis: 'h' },
@@ -544,7 +592,7 @@ function selfLoop(
       { x: out, y: y1, axis: 'v' },
       { x, y: y1, axis: 'h' },
     ],
-    ...(label ? { label: { x: out + M.loopGap + label.width / 2, y: b.y } } : {}),
-    ports: { source: 'right', target: 'right' },
+    ...(label ? { label: { x: out + s * M.loopGap + (s * label.width) / 2, y: b.y } } : {}),
+    ports: s > 0 ? { source: 'right', target: 'right' } : { source: 'left', target: 'left' },
   };
 }

@@ -9,10 +9,11 @@
   spec strings and docs examples, and the grammar is in
   [syntax/requirement.md](./syntax/requirement.md). Every error is reported, not only the first,
   with a range at the token (R-PARSE-4).
-- **Label text** (D564, #763): names, the `text:`, `type:` and `docref:` rows and the other
-  box rows read bold and italic, as in v12. A value that starts with `- `, `* ` or `+ ` or
-  holds backticks is drawn as written, backticks included: `` "`**bold**`" `` draws
-  `` `**bold**` ``. A requirement diagram has no markdown strings.
+- **Label text** (D564, D610, #763, #836): names, the `text:`, `type:` and `docref:` rows and
+  the other box rows read bold and italic, as in v12. A value that starts with `- `, `* ` or
+  `+ ` is drawn as written. A code span is drawn as written, backticks included:
+  `` "`**bold**`" `` draws `` `**bold**` ``, and bold and italic outside the span are still
+  read. A requirement diagram has no markdown strings.
 - **Trailing blanks** (D431): blanks before a line end are dropped, so the five places where
   v12 rejected them (after the header, after `{`, after a keyword value, after a quoted value)
   now accept. The six forms v12 accepted only because a blank swallowed the next line break
@@ -54,10 +55,18 @@
   ignored-keys table); `look` as everywhere (D153).
 - **Edges** follow `flowchart.curve` (class's precedent), a self-loop always `rounded`; the
   layout keeps room for each marker so it no longer overlaps the next box.
+- **Several self-loops on one box** (D618, #768) each get their own route: the second is drawn
+  on the opposite side of the box and later ones nest outward, alternating sides, so every line
+  and label shows, as v12 drew them side by side. Before, they were drawn over one another. A
+  single self-loop is unchanged.
 - **Text output** (`format: 'ascii'`) is new (#588, D320, D438): see
   [ASCII output](../ascii.md#requirement-diagrams).
 - **Hand-drawn:** the diagram is sketched under `look: handDrawn`: the box outline, the divider
   and the relation lines (markers are never sketched, D301).
+- **Limits** (R-SEC-5, D608): a diagram may have up to `limits.maxNodes` requirements and
+  elements together (10,000) and `limits.maxEdges` relationships (5,000); a repeated
+  definition is not a new box. Over either, render rejects with a `LIMIT` `MermaidError`. v12
+  had no such limit. Only the integrator can raise them ([Limits](#limits)).
 
 ## Requirement SVG structure
 

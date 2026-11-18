@@ -1,10 +1,11 @@
 /**
  * The cynefin custom layout (spec #423 T3, `layoutKind: 'custom'`): `CynefinModel` in,
  * `CynefinLayout` out. It follows v12's `cynefinRenderer.ts` with the drawing taken out, on
- * v12's fixed canvas (D361): quadrants, the ellipse, the seeded boundaries, the fixed texts,
- * the item badges, the transitions and the title, each text measured first through the
- * injected measurer (pitfall 16). The bounds start from v12's viewBox and grow wherever v12
- * clipped. Every length comes from the metrics table (pitfall 13).
+ * v12's fixed canvas (D361) with a row of quadrants grown to fit its longest list (D617):
+ * quadrants, the ellipse, the seeded boundaries, the fixed texts, the item badges, the
+ * transitions and the title, each text measured first through the injected measurer
+ * (pitfall 16). The bounds start from v12's viewBox and grow wherever v12 clipped. Every
+ * length comes from the metrics table (pitfall 13).
  *
  * v12 bugs fixed on the way: invalid config falls back (D366), so no NaN reaches the output;
  * the `label.length * 7` width fallback is gone, since v13 always measures.
@@ -15,7 +16,7 @@ import type { CynefinDomain, CynefinDomainName, CynefinModel } from '../model.ts
 import { cynefinThemeLengths, type CynefinThemeLengths } from '../theme/lengths.ts';
 import { cliffCurve, confusionEllipse, foldCurve, horizonCurve } from './boundaries.ts';
 import { cynefinOptions, type CynefinOptions } from './config.ts';
-import { Box, cubicBox, grow, pointsBox, quadBox } from './geometry.ts';
+import { Box, cubicBox, grow, mapY, pointsBox, quadBox } from './geometry.ts';
 import { DOMAIN_META, domainTitle } from '../domains.ts';
 import { ARROWS, BADGES, FONTS, LABELS, TITLE } from './metrics.ts';
 import { resolveSeed } from './random.ts';
@@ -71,15 +72,13 @@ export function layoutCynefin(model: CynefinModel, ctx: CynefinLayoutContext): C
   const env = environment(o, lengths, ctx);
   const declared = new Map<CynefinDomainName, CynefinDomain>(model.domains.map((d) => [d.name, d]));
 
-  const canvas = canvasOf(o, declared);
+  const lists = itemLabels(env, declared);
+  const rows = rowsOf(env, lists);
+  const canvas = canvasOf(o, declared, rows);
   const seed = resolveSeed(o.seed, ctx.idPrefix);
-  const boundaries = {
-    fold: foldCurve(o.width, o.height, seed, o.boundaryAmplitude),
-    horizon: horizonCurve(o.width, o.height, seed, o.boundaryAmplitude),
-    cliff: cliffCurve(o.width, o.height),
-  };
+  const boundaries = boundariesOf(o, seed, rows);
   const { labels, subtitles } = fixedTexts(env, canvas);
-  const { items, overflow } = badges(env, canvas, declared);
+  const { items, overflow } = badges(env, canvas, declared, lists);
   const transitions = model.transitions.flatMap((t) => transition(env, canvas, t, lengths));
   const title = model.title ? titleOf(env, model.title) : undefined;
   const strokes = {
@@ -91,7 +90,7 @@ export function layoutCynefin(model: CynefinModel, ctx: CynefinLayoutContext): C
 
   const drawn: Omit<CynefinLayout, 'bounds' | 'viewBox'> = {
     width: o.width,
-    height: o.height,
+    height: rows.top + rows.bottom,
     padding: o.padding,
     offset: { x: o.padding, y: o.padding },
     showDomainDescriptions: o.showDomainDescriptions,
@@ -153,10 +152,75 @@ function environment(
   };
 }
 
-/** The canvas (:40-50, :158): four quadrants of half the size, centred on their quarter points. */
+/** Each domain's shown items, measured once: they size the rows and fill the badges. */
+type ItemLabels = ReadonlyMap<CynefinDomainName, readonly MeasuredLabel[]>;
+
+function itemLabels(env: Env, declared: ReadonlyMap<CynefinDomainName, CynefinDomain>): ItemLabels {
+  const lists = new Map<CynefinDomainName, readonly MeasuredLabel[]>();
+  for (const name of DOMAINS) {
+    const items = declared.get(name)?.items ?? [];
+    if (items.length > 0)
+      lists.set(
+        name,
+        drawnItems(name, items).map((item) => env.rich(item.label, env.fonts.item))
+      );
+  }
+  return lists;
+}
+
+/** The heights of the upper and the lower row of quadrants. */
+interface Rows {
+  readonly top: number;
+  readonly bottom: number;
+}
+
+/**
+ * Each row is half the canvas, as in v12, or taller when a quadrant's list runs past it (D617):
+ * then it reaches to where the list's next badge would start. The texts keep their place under
+ * the row's top edge, so only what lies below a grown row moves.
+ */
+function rowsOf(env: Env, lists: ItemLabels): Rows {
+  const hh = env.o.height / 2;
+  const row = (names: readonly CynefinQuadrantName[]): number => {
+    let height = hh;
+    for (const name of names) {
+      const labels = lists.get(name);
+      if (!labels) continue;
+      let end = hh / 2 + firstBadgeTop(name, env.o.showDomainDescriptions);
+      for (const text of labels) end += BADGES.height + extraLines(text) + BADGES.gap;
+      if (end > height) height = end;
+    }
+    return height;
+  };
+  return { top: row(['complex', 'complicated']), bottom: row(['chaotic', 'clear']) };
+}
+
+/**
+ * The fold, the horizon and the cliff (:146) of v12's canvas, moved to the rows: the fold spans
+ * the canvas, the horizon follows the upper row's bottom edge and the cliff spans the lower row.
+ */
+function boundariesOf(o: CynefinOptions, seed: number, rows: Rows): CynefinLayout['boundaries'] {
+  const hh = o.height / 2;
+  const fold = foldCurve(o.width, rows.top + rows.bottom, seed, o.boundaryAmplitude);
+  const horizon = horizonCurve(o.width, o.height, seed, o.boundaryAmplitude);
+  const cliff = cliffCurve(o.width, o.height);
+  if (rows.top === hh && rows.bottom === hh) return { fold, horizon, cliff };
+  return {
+    fold,
+    horizon: mapY(horizon, (y) => y - hh + rows.top),
+    cliff: mapY(cliff, (y) => rows.top + (y - hh) * (rows.bottom / hh)),
+  };
+}
+
+/**
+ * The canvas (:40-50, :158): four quadrants of half the width in two rows (`rowsOf`), each
+ * centred on its quarter point of v12's canvas, at the top of a row that grew; the ellipse on
+ * the horizon.
+ */
 function canvasOf(
   o: CynefinOptions,
-  declared: ReadonlyMap<CynefinDomainName, CynefinDomain>
+  declared: ReadonlyMap<CynefinDomainName, CynefinDomain>,
+  rows: Rows
 ): Canvas {
   const hw = o.width / 2;
   const hh = o.height / 2;
@@ -164,25 +228,32 @@ function canvasOf(
     const d = declared.get(name);
     return d ? { ast: d.ast } : {};
   };
-  const corner: Readonly<Record<CynefinQuadrantName, Point>> = {
-    complex: { x: 0, y: 0 },
-    complicated: { x: hw, y: 0 },
-    chaotic: { x: 0, y: hh },
-    clear: { x: hw, y: hh },
+  const upper = { y: 0, height: rows.top };
+  const lower = { y: rows.top, height: rows.bottom };
+  const corner: Readonly<Record<CynefinQuadrantName, Point & { height: number }>> = {
+    complex: { x: 0, ...upper },
+    complicated: { x: hw, ...upper },
+    chaotic: { x: 0, ...lower },
+    clear: { x: hw, ...lower },
   };
   const quadrants: CynefinQuadrant[] = QUADRANTS.map((name) => {
-    const { x, y } = corner[name];
+    const { x, y, height } = corner[name];
     return {
       name,
       x,
       y,
       width: hw,
-      height: hh,
+      height,
       center: { x: x + hw / 2, y: y + hh / 2 },
       ...astOf(name),
     };
   });
-  const confusion = { ...confusionEllipse(o.width, o.height), ...astOf('confusion') };
+  const ellipse = confusionEllipse(o.width, o.height);
+  const confusion = {
+    ...ellipse,
+    center: { x: ellipse.center.x, y: rows.top },
+    ...astOf('confusion'),
+  };
   return {
     quadrants,
     confusion,
@@ -239,13 +310,15 @@ export function drawnItems<T>(name: CynefinDomainName, items: readonly T[]): rea
 function badges(
   env: Env,
   canvas: Canvas,
-  declared: ReadonlyMap<CynefinDomainName, CynefinDomain>
+  declared: ReadonlyMap<CynefinDomainName, CynefinDomain>,
+  lists: ItemLabels
 ): { items: CynefinItemBadge[]; overflow?: CynefinOverflowBadge } {
   const items: CynefinItemBadge[] = [];
   let overflow: CynefinOverflowBadge | undefined;
   for (const name of DOMAINS) {
     const domain = declared.get(name);
-    if (!domain || domain.items.length === 0) continue;
+    const labels = lists.get(name);
+    if (!domain || !labels) continue;
     const c = canvas.center(name);
     const shown = drawnItems(name, domain.items);
     let top = c.y + firstBadgeTop(name, env.o.showDomainDescriptions);
@@ -259,7 +332,7 @@ function badges(
     };
     shown.forEach((item, index) => {
       items.push({
-        ...badge(env.rich(item.label, env.fonts.item)),
+        ...badge(labels[index]!),
         ast: item.ast,
         index,
         id: item.label,

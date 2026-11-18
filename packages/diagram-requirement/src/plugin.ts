@@ -1,4 +1,5 @@
 import type { DiagramParseContext, DiagramPlugin } from '@mermaid-js/core';
+import { resolveLimits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { requirementConfigDefaults } from './generated/config-defaults.ts';
 import { requirementLabels } from './labels.ts';
@@ -29,8 +30,14 @@ export const requirement = {
   formats: ['svg', 'ascii'] as const,
   layoutKind: 'graph' as const,
   detector: (text: string): boolean => DETECT.test(text),
-  parse: (text: string, ctx: DiagramParseContext): RequirementParseResult =>
-    parseRequirement(text, { preprocessed: ctx.preprocessed }),
+  parse: (text: string, ctx: DiagramParseContext): RequirementParseResult => {
+    const caps = ctx.limits ?? resolveLimits(ctx.config);
+    return parseRequirement(text, {
+      preprocessed: ctx.preprocessed,
+      maxEdges: caps.maxEdges,
+      maxNodes: caps.maxNodes,
+    });
+  },
   labels: requirementLabels,
   layout: (model: RequirementModel, ctx: RequirementRenderContext): RequirementLayout =>
     layoutRequirement(model, ctx),

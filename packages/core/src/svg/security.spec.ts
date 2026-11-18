@@ -318,3 +318,54 @@ describe('cursor attribute', () => {
     });
   }
 });
+
+describe('animate element (D606)', () => {
+  const ANIMATE =
+    '<animate attributeName="stroke-dashoffset" from="900" to="0" dur="20" repeatCount="indefinite"/>';
+
+  it('accepts a dash offset running between two numbers, forever', () => {
+    expect(inertProblem(`<g>${ANIMATE}</g>`)).toBeUndefined();
+    for (const w of [streamWriter(), treeWriter()]) {
+      w.open('g');
+      w.leaf('animate', {
+        attributeName: 'stroke-dashoffset',
+        from: 900,
+        to: 0,
+        dur: 20,
+        repeatCount: 'indefinite',
+      });
+      w.close();
+      expect(w.finish()).toBe(`<g>${ANIMATE}</g>`);
+    }
+  });
+
+  // What makes SMIL dangerous: another target, a list of values, a trigger, an event, a link.
+  for (const attrs of [
+    'attributeName="href" from="900" to="0"',
+    'attributeName="xlink:href"',
+    'attributeName="onclick"',
+    'attributeName="stroke-dashoffset;href"',
+    'attributeName="stroke-dashoffset" values="javascript:alert(1)"',
+    'attributeName="stroke-dashoffset" from="javascript:alert(1)"',
+    'attributeName="stroke-dashoffset" to="url(#x)"',
+    'attributeName="stroke-dashoffset" dur="1s;x"',
+    'attributeName="stroke-dashoffset" begin="x.click"',
+    'attributeName="stroke-dashoffset" onbegin="alert(1)"',
+    'attributeName="stroke-dashoffset" onrepeat="alert(1)"',
+    'attributeName="stroke-dashoffset" href="#x"',
+    'attributeName="stroke-dashoffset" attributeType="XML"',
+    'attributeName="stroke-dashoffset" repeatCount="1"',
+  ]) {
+    it(`refuses <animate ${attrs}>`, () => {
+      expect(inertProblem(`<g><animate ${attrs}/></g>`)).toBeTypeOf('string');
+    });
+  }
+
+  for (const tag of ['set', 'animateTransform', 'animateMotion', 'mpath', 'discard']) {
+    it(`refuses <${tag}>`, () => {
+      expect(inertProblem(`<g><${tag}/></g>`)).toBe(`element <${tag}>`);
+      // @ts-expect-error not an allowed tag
+      expect(() => streamWriter().leaf(tag, {})).toThrow(TypeError);
+    });
+  }
+});

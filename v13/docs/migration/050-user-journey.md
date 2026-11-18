@@ -29,6 +29,12 @@
   colour slots change (#302).
 - **Legend wrapping (D225):** a legend name wider than `maxLabelWidth` wraps with core label
   layout, and a word too long for a line splits without the hyphen v12 added at each split.
+- **Tall labels (D615):** a title broken by `<br>` keeps its last line on v12's baseline (y 25)
+  and grows upward, so it stays above the section bands. A section name taller than its band
+  grows the band down and moves the task row down by as much. A task name taller than its box
+  grows the box, and the activity line and the faces move down by the band's growth plus the
+  tallest box's. v12 printed `<br>` as written and clipped names to their box, so nothing grew.
+  When every label fits its box, everything stays where v12 put it.
 
 ### Config
 

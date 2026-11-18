@@ -64,13 +64,19 @@ export function layoutPie(model: PieModel, ctx: PieLayoutContext): PieLayout {
   for (const t of legendText) if (t.width > longest) longest = t.width;
   const title = model.title === undefined ? undefined : measure(model.title, fonts.title);
 
-  // A row is v12's 22 px, and taller by the extra lines of its label (D225).
+  // A row is v12's 22 px, and taller by the extra lines of its label (D225). A legend taller
+  // than the canvas breaks into columns of the canvas height, except over the pie (D616).
   const pitches = legendText.map((t) => m.row + extraLines(t));
-  let total = 0;
-  for (const p of pitches) total += p;
+  const columns = legendColumns(pitches, position === 'center' ? Infinity : m.height);
+  const columnPitch = m.legendTextX + longest + m.columnGap;
+  const spread = (columns.count - 1) * columnPitch;
 
   const middle = m.width / 2;
-  const { rowX, rowY, shift, chartWidth, chartHeight } = legendPlace(position, total, longest);
+  const { rowX, rowY, shift, chartWidth, chartHeight } = legendPlace(position, {
+    height: columns.height,
+    longest,
+    spread,
+  });
   const center: Point = { x: middle + shift.x, y: m.height / 2 + shift.y };
 
   // Slices: under 1% of the sum dropped, the rest fill the circle (D223); percentages over the
@@ -101,9 +107,12 @@ export function layoutPie(model: PieModel, ctx: PieLayoutContext): PieLayout {
     };
   });
 
-  let rowTop = m.height / 2 + rowY;
+  const top = m.height / 2 + rowY;
+  let rowTop = top;
   const legend: PieLegendRow[] = sections.map((s, index) => {
-    const x = middle + rowX;
+    const column = columns.column[index]!;
+    if (column !== columns.column[index - 1]) rowTop = top;
+    const x = middle + rowX + column * columnPitch;
     const y = rowTop;
     rowTop += pitches[index]!;
     return {
@@ -115,17 +124,19 @@ export function layoutPie(model: PieModel, ctx: PieLayoutContext): PieLayout {
     };
   });
 
-  // The title stays on the canvas centre, whatever moved the pie. Its last line sits where
-  // v12's one line did, so extra lines grow up, clear of the pie and the legend (D224 bounds).
+  // The title stays on the canvas centre, whatever moved the pie; over legend columns it
+  // centres on the pie instead (D616). Its last line sits where v12's one line did, so extra
+  // lines grow up, clear of the pie and the legend (D224 bounds).
+  const titleX = columns.count > 1 ? center.x : middle;
   const titleBox =
-    title && placed(title, middle - title.width / 2, m.height / 2 - m.titleY - extraLines(title));
+    title && placed(title, titleX - title.width / 2, m.height / 2 - m.titleY - extraLines(title));
 
   const outerRadius = m.radius + outerStrokeWidth / 2;
   const box = new Box();
   // v12's viewBox: the chart and legend, widened only for the title.
   const titleWidth = title?.width ?? 0;
   box.add({ x: 0, y: 0, width: chartWidth, height: chartHeight });
-  box.add({ x: middle - titleWidth / 2, y: 0, width: titleWidth, height: 0 });
+  box.add({ x: titleX - titleWidth / 2, y: 0, width: titleWidth, height: 0 });
   // What is drawn: the outer circle, the slices (a highlighted one scaled), labels and swatches.
   box.circle(center, outerRadius + outerStrokeWidth / 2);
   box.circle(center, m.radius + strokeWidth / 2);
@@ -190,13 +201,50 @@ interface LegendPlace {
   readonly chartHeight: number;
 }
 
+interface LegendColumns {
+  /** Each row's column, from 0. */
+  readonly column: readonly number[];
+  readonly count: number;
+  /** The tallest column's rows, in px. */
+  readonly height: number;
+}
+
 /**
- * v12's legend offsets per position (`pieRenderer.ts` :195-251) for rows `total` px tall in all
- * (v12's `n * 22` when every label is one line).
+ * Rows `pitches` px tall, in order, into columns no taller than `limit` (D616); a row taller
+ * than `limit` has a column to itself. A legend that fits is one column, as v12 drew it.
  */
-function legendPlace(position: LegendPosition, total: number, longest: number): LegendPlace {
-  const centred = -longest / 2 - m.legendTextX;
-  const side = m.width + m.margin + m.legendTextX + longest;
+function legendColumns(pitches: readonly number[], limit: number): LegendColumns {
+  const column: number[] = [];
+  let count = 1;
+  let at = 0;
+  let height = 0;
+  for (const p of pitches) {
+    if (at > 0 && at + p > limit) {
+      count++;
+      at = 0;
+    }
+    column.push(count - 1);
+    at += p;
+    if (at > height) height = at;
+  }
+  return { column, count, height };
+}
+
+/** The legend's size: its tallest column, its longest label, and every column but the last. */
+interface LegendSize {
+  readonly height: number;
+  readonly longest: number;
+  readonly spread: number;
+}
+
+/**
+ * v12's legend offsets per position (`pieRenderer.ts` :195-251) for a column `height` px tall
+ * (v12's `n * 22` when every label is one line), widened by the columns before the last (D616).
+ */
+function legendPlace(position: LegendPosition, size: LegendSize): LegendPlace {
+  const { height: total, longest, spread } = size;
+  const centred = -(spread + longest) / 2 - m.legendTextX;
+  const side = m.width + m.margin + m.legendTextX + longest + spread;
   const middle = -total / 2;
   const none: Point = { x: 0, y: 0 };
   const base = { shift: none, chartWidth: m.width + m.margin, chartHeight: m.height };
@@ -218,7 +266,7 @@ function legendPlace(position: LegendPosition, total: number, longest: number): 
         ...base,
         rowX: -m.radius - m.legendTextX,
         rowY: middle,
-        shift: { x: longest + m.legendTextX, y: 0 },
+        shift: { x: longest + m.legendTextX + spread, y: 0 },
         chartWidth: side,
       };
     case 'right':

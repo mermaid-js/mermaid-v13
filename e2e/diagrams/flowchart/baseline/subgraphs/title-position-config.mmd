@@ -1,0 +1,20 @@
+---
+description:
+  With flowchart.subGraphTitlePosition set to bottom-left every subgraph title sits in the
+  bottom left corner of its subgraph, below the content (mermaid-js/mermaid#2977).
+config:
+  flowchart:
+    subGraphTitlePosition: bottom-left
+---
+flowchart TD
+    A(create_bot.py) --> B(main_bot.py)
+    subgraph handlers.py
+        C(client.py) --- F
+        D(admin.py) --- F
+        E(other.py) --- F
+        F[handlers]
+    end
+    A --> C
+    A --> D
+    A --> E
+    F --> B

@@ -353,7 +353,7 @@ Open question: Trebuchet MS isn't installed on most Linux systems, so browser ou
   | `markup` | Handles | v12 equivalent |
   | --- | --- | --- |
   | `plain` (default) | character references, `<br>`, the `<b>`/`<i>` HTML subset | text drawn without `createText` Markdown |
-  | `emphasis` | plain, plus `**`, `*`, `__`, `_` | a label without backticks passed through `createText` |
+  | `emphasis` | plain, plus `**`, `*`, `__`, `_` | a label passed through `createText`; `v12Label` keeps a code span as written (D610) |
   | `markdown` | emphasis, plus inline code, bullet lists and backslash escapes | a Markdown string (`` "`…`" ``) |
 
   `emphasis` splits lines as `plain` does and never reads `- ` as a bullet or a backtick as code. `markdown: true` is still read as `markup: 'markdown'` until every caller has moved, then goes.
@@ -620,6 +620,7 @@ The vocabulary is split by owner (D331). Core's `packages/core/src/theme/vocabul
 | Script / event handlers | Tag and attr unions exclude them; property test over corpus + ported v12 XSS pages | §7.1, R-SEC-2 |
 | CSS injection via `style`/`classDef`/`linkStyle` | Property allow-list; values matching `url( expression( javascript: @import image-set /* [<>{};\\]` are dropped; output as presentation attrs (`SafeColor`, `SafeLength`) | `core/svg/style.ts` |
 | Malicious links | `checkUrl`: control-char/entity stripping (port of the `sanitize-url` logic), scheme allow-list on raw + decoded form, `//host` blocked; `_blank` gets `rel="noopener noreferrer"`. Default `securityLevel`: http, https, mailto, relative. `strict`: relative only. `loose`/`antiscript`/`sandbox` map to default with a warning (R-SEC-4, R-SEC-6) | `core/svg/url.ts` |
+| Animation | The only animation element is `<animate>`, and only with `attributeName="stroke-dashoffset"`, numeric `from`, `to` and `dur`, and `repeatCount="indefinite"`. It cannot target `href`, take a `values` list, or carry `begin` or an `on*` event (D606) | `core/svg/allowlist.ts`, `core/svg/inert.ts` |
 | Extension plugins (`postRender`) | The `SvgTree` view only accepts allowed tags, attributes and branded values, and the allow-list check runs after all hooks (R-PLUG-2) | `core/svg/tree.ts` |
 | Click callbacks | Not in core output. The interactions plugin binds them in the DOM after mount, only when the integrator installed it and set `securityLevel: 'loose'` (D554); diagram text cannot do either (R-PLUG-9) | `plugin-interactions` |
 | Theme-variable injection | `safeColor`: charset + function allow-list (`rgb hsl lab oklch color-mix light-dark var(--mermaid-*)`) | `core/theme` |
@@ -838,7 +839,7 @@ A Playwright/Argos baseline on a curated subset: per shape, per edge type, per t
 | Budget | What is measured | Limit (gz) | Enforced by |
 | --- | --- | --- | --- |
 | `loaded`, R-PERF-1 (D160, D311, D312, D553, D567, D559, D583, D600, amends D10) | Core + flowchart as a browser page loads them for one flowchart render: the bench runner renders a two-node flowchart after `initialize` and then reads the fetched resources (report `source: 'loaded'`; the static entry + flowchart-chunk closure is only a fallback) | 147 KB | bench gate `size` |
-| `core`, R-PERF-8 (D161, D310, D546, D567, D583, D599) | Everything loaded before any diagram: the static import closure of `core.entry` (the CDN ESM entry `src/cdn.ts`, which is `src/index.ts` plus the queue and `cdnBase`), bundled with the bench's production esbuild options. No diagram, `ascii`, `language` or theme chunk | 100 KB | `packages/bench/src/core-size.spec.ts` in `pnpm check` (no browser, ~1 s); the bench reports it too (gate `core-size`). `core-chunks.spec.ts` checks that one more lazy diagram adds only its registry row (D313) |
+| `core`, R-PERF-8 (D161, D310, D546, D567, D583, D599, D625) | Everything loaded before any diagram: the static import closure of `core.entry` (the CDN ESM entry `src/cdn.ts`, which is `src/index.ts` plus the queue and `cdnBase`), bundled with the bench's production esbuild options. No diagram, `ascii`, `language` or theme chunk | 100 KB | `packages/bench/src/core-size.spec.ts` in `pnpm check` (no browser, ~1 s); the bench reports it too (gate `core-size`). `core-chunks.spec.ts` checks that one more lazy diagram adds only its registry row (D313) |
 
 Measured at the M3.5 close-out (2026-11-05, #232): loaded 110.9 KB (113550 B, 10 files), core 78.0 KB (79871 B, 7 files), CDN loader `mermaid.min.js` 0.9 KB (917 B). Diagram packages still have no budget of their own (D59). M3.5 had no size-reduction pass; the 80 KB below was the M1 target.
 

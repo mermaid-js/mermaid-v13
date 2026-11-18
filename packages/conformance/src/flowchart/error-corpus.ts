@@ -30,7 +30,7 @@ export const FLOWCHART_ERRORS: [name: string, source: string][] = [
   ['unknown shape', 'flowchart TD\n  A@{ shape: blob }'],
   ['shape name in capitals', 'flowchart TD\n  A@{ shape: Rect }'],
   ['bad shape data YAML', 'flowchart TD\n  A@{ shape: [rect }'],
-  ['blanks after shape data', 'flowchart TD\n  A@{ shape: rect } ;'],
+  ['a node after shape data', 'flowchart TD\n  A@{ shape: rect } B'],
   ['entity outside a label', 'flowchart TD\n  A#quot; --> B'],
   ['keyword as a node id', 'flowchart TD\n  A --> end'],
   ['two statements on a line', 'flowchart TD\n  A --> B C --> D'],

@@ -289,16 +289,29 @@ describe('relationships', () => {
     expect(group(svg, 'relationship', 'note-0-edge')['data-ast']).toBeUndefined();
   });
 
-  it('rounds an animated line’s caps and keeps the animation a class (no keyframes)', async () => {
+  it('rounds an animated line’s caps and moves its 9,5 dashes, fast or slow (D606)', async () => {
     const { svg } = await render('nightly-check/15-animation-variants');
     const animated = elements(svg, 'g').filter((e) =>
       /edge-animation-(fast|slow)/.test(e.class ?? '')
     );
     expect(animated.length).toBeGreaterThan(1);
     for (const g of animated) {
-      const line = elements(inside(svg, 'relationship', g['data-id']!), 'path')[0]!;
+      const drawn = inside(svg, 'relationship', g['data-id']!);
+      const line = elements(drawn, 'path')[0]!;
       expect(line['stroke-linecap']).toBe('round');
+      expect(line['stroke-dasharray']).toBe('9,5');
+      expect(elements(drawn, 'animate')).toEqual([
+        {
+          tag: 'animate',
+          attributeName: 'stroke-dashoffset',
+          from: '900',
+          to: '0',
+          dur: g.class!.includes('edge-animation-slow') ? '50' : '20',
+          repeatCount: 'indefinite',
+        },
+      ]);
     }
+    expect(elements(svg, 'animate')).toHaveLength(animated.length);
   });
 });
 
@@ -522,13 +535,9 @@ describe('hand-drawn (D302, spec #517)', () => {
   });
 });
 
-describe('ignored edge animation (#357)', () => {
-  it('raises EDGE_ANIMATION_IGNORED once per ignored feature', async () => {
+describe('edge animation (#918)', () => {
+  it('no longer warns that the animation is ignored', async () => {
     const { warnings } = await render('nightly-check/15-animation-variants');
-    const ignored = warnings.filter((w) => w.code === 'EDGE_ANIMATION_IGNORED');
-    expect(ignored.map((w) => /`(animate|animation)`/.exec(w.message)?.[1]).sort()).toEqual([
-      'animate',
-      'animation',
-    ]);
+    expect(warnings.filter((w) => w.code === 'EDGE_ANIMATION_IGNORED')).toEqual([]);
   });
 });

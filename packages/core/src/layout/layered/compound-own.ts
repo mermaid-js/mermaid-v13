@@ -189,7 +189,10 @@ export function placeOwnEdges(c: Compound): void {
       x = member.x + offset;
       frame = group.y - group.h / 2;
       const title = Math.max(0, group.minW - 2 * group.padX) / 2;
-      if (title > 0 && Math.abs(x - group.x) < title + M.endLabelAcross) frame += group.padTop;
+      // The title's middle: the group's, or `title` in from the padding of the title's side.
+      const mid = group.x + group.titleSide * (group.w / 2 - group.padX - title);
+      if (!group.titleLow && title > 0 && Math.abs(x - mid) < title + M.endLabelAcross)
+        frame += group.padTop;
     }
     e.route = fromGroup ? [x, frame, 0, x, top, 0] : [x, top, 0, x, frame, 0];
   }

@@ -84,6 +84,30 @@ describe('kanban.jison quirks', () => {
     expect(slices(src, T.ShapeDataStr)[0]).toEqual(['x<br/>y', 'x\n   y']);
   });
 
+  it("reads the quotes of a tag attribute as `'` before lexing, in a label and in data (#837)", () => {
+    // v12's `cleanupText` turned `="x"` into `='x'` inside a tag (D114): the quotes end no
+    // string and open no quoted run.
+    const src = 'kanban\n  a["<b class="k">b</b>"]@{ ticket: "<i id="t">T</i>" }';
+    expect(jison(src)).toEqual([
+      'KANBAN:kanban',
+      'NL:\n',
+      'SPACELIST:  ',
+      'NODE_ID:a',
+      'NODE_DSTART:[',
+      "NODE_DESCR:<b class='k'>b</b>",
+      'NODE_DEND:]',
+      'SHAPE_DATA:',
+      'SHAPE_DATA: ticket: ',
+      'SHAPE_DATA:"',
+      "SHAPE_DATA:<i id='t'>T</i>",
+      'SHAPE_DATA:"',
+      'SHAPE_DATA: ',
+      'NL:',
+      'EOF:',
+    ]);
+    expect(of(src, Kind.Error)).toEqual([]);
+  });
+
   it('ends a quoted run left open at the end in <br/>: it took the appended line break', () => {
     const src = 'kanban\n  a\n    b@{ x: "abc';
     expect(jison(src).slice(-2)).toEqual(['SHAPE_DATA:"', 'SHAPE_DATA:abc<br/>']);

@@ -238,6 +238,12 @@ describe('agentflow lexer', () => {
     expect(names(src)[0]).toBe('NEWLINE:\n');
   });
 
+  it("keeps 12.2.0's edge-id rule: brackets do not end the run (D621)", () => {
+    // v12's agentflow.jison never took flowchart's 12.3.0 LINK_ID; flowchart did.
+    expect(names(H + 'a[x]e1@--> b').slice(2, 4)).toEqual(['LINK_ID:a[x]e1@', 'LINK:--> ']);
+    expect(names(H + 'a e[1]@--> b').slice(4, 6)).toEqual(['LINK_ID:e[1]@', 'LINK:--> ']);
+  });
+
   it('lexes an empty text and a lone header', () => {
     expect(names('')).toEqual(['NEWLINE:', 'EOF:']);
     expect(names('agentflow-beta')).toEqual(['GRAPH:agentflow-beta', 'NODIR:', 'EOF:']);

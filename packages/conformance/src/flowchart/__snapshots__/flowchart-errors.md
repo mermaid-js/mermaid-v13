@@ -667,29 +667,29 @@ Error at line 2, column 20: Invalid YAML: missed comma between flow collection e
   |                    ^
 ```
 
-## blanks after shape data
+## a node after shape data
 
 ```mermaid
 flowchart TD
-  A@{ shape: rect } ;
+  A@{ shape: rect } B
 ```
 
 v12:
 
 ```text
 Parse error on line 2:
-...  A@{ shape: rect } ;
+...  A@{ shape: rect } B
 -----------------------^
-Expecting 'AMP', got 'SEMI'
+Expecting 'AMP', got 'NODE_STRING'
 ```
 
 v13:
 
 ```text
-Error at line 2, column 21: Expected `&`, got `;`; after shape data `@{ … }` only `&` and another node may follow on the line.
-2 |   A@{ shape: rect } ;
+Error at line 2, column 21: Expected a line break or `;` or the end of the text, got `B`; put each statement on its own line, or separate them with `;`.
+2 |   A@{ shape: rect } B
   |                     ^
-Expected: `&`
+Expected: a line break or `;`, the end of the text
 ```
 
 ## entity outside a label

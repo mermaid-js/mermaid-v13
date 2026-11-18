@@ -20,6 +20,7 @@
  * Lists are appended item by item, never spread into a call: a class may hold any number of
  * styles (`classDef c …` on 300,000 lines), more than a call's arguments may be.
  */
+import { checkLimit } from '@mermaid-js/core/limits';
 import type { AstId, Range, RelatedInfo } from '@mermaid-js/core/parser-kit';
 import {
   MAX_STYLE_COPIES,
@@ -80,7 +81,16 @@ export interface DefAt extends At {
 
 export interface BuilderOptions {
   /** Entries `style`, `class` and `classDef` may add before the rest are left out (D433). */
-  maxStyleCopies?: number;
+  maxStyleCopies?: number | undefined;
+  /** Requirement and element cap (core `DEFAULT_LIMITS.maxNodes`, D608). */
+  maxNodes?: number | undefined;
+  /** Relationship cap (core `DEFAULT_LIMITS.maxEdges`, D608). */
+  maxEdges?: number | undefined;
+}
+
+/** Where the builder reports a passed cap: the parser kit's diagnostics. */
+export interface LimitSink {
+  error(code: string, message: string, range: Range): unknown;
 }
 
 type Box = Writable<Requirement> | Writable<Element>;
@@ -176,7 +186,10 @@ export class RequirementBuilder {
   private readonly duplicates: Duplicate[] = [];
   private readonly shared: Shared[] = [];
 
-  constructor(options: BuilderOptions = {}) {
+  constructor(
+    private readonly options: BuilderOptions = {},
+    private readonly sink: LimitSink = { error: () => undefined }
+  ) {
     this.maxCopies = options.maxStyleCopies ?? MAX_STYLE_COPIES;
   }
 
@@ -200,6 +213,8 @@ export class RequirementBuilder {
   /** v12 `addRelationship`: kept whatever its ends name. */
   addRelationship(kind: RelationshipKind, src: string, dst: string, at: At): void {
     this.relations.push({ kind, src, dst, at });
+    const count = this.relations.length;
+    checkLimit(this.sink, 'maxEdges', count, this.options.maxEdges, 'relationships', at.range);
   }
 
   /** v12 `setCssStyle`: stops at the first id that names no box yet (D433: recorded). */
@@ -349,6 +364,9 @@ export class RequirementBuilder {
     if (shared) this.shared.push({ at, other: shared.range, name });
     own.set(name, box);
     this.boxes++;
+    // One check per box made (D608); a repeated definition makes none (D434).
+    const what = 'requirements and elements';
+    checkLimit(this.sink, 'maxNodes', this.boxes, this.options.maxNodes, what, range);
     this.order.push({ name, range });
     if (!this.firstOf.has(name)) this.firstOf.set(name, range);
     this.has(box, 'default');

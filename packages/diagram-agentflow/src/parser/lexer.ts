@@ -71,7 +71,8 @@ export interface LinkEnds {
  */
 const DIALECT: FlowLexerDialect = {
   kinds: T,
-  chars: /* @__PURE__ */ flowChars(true),
+  // v12's agentflow.jison kept 12.2.0's LINK_ID: brackets do not end a link id (D621).
+  chars: /* @__PURE__ */ flowChars(true, false),
   keywords: /* @__PURE__ */ flowKeywords([
     ['agentflow-beta', T.Graph, 'graph'],
     ['connector', T.Connector],

@@ -1,0 +1,18 @@
+---
+description:
+  A title position that is not one of the six is ignored with a warning. The config value
+  "middle" warns FLOWCHART_CONFIG_IGNORED, the subgraph's own "sideways" warns
+  FLOWCHART_TITLE_POSITION, and both titles are drawn at the top in the middle
+  (mermaid-js/mermaid#2977).
+config:
+  flowchart:
+    subGraphTitlePosition: middle
+---
+flowchart TD
+    subgraph one [First]
+        a --> b
+    end
+    subgraph two [Second]
+        c --> d
+    end
+    two@{ titlePosition: sideways }

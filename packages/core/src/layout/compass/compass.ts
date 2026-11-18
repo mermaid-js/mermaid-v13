@@ -25,6 +25,7 @@ import type {
 import { checkGraph, checkNodeSpan, finite } from '../check.ts';
 import { BOTTOM, DX, DY, LEFT, placeOnGrid, RIGHT, TOP, type Grid } from './grid.ts';
 import { METRICS as M } from './metrics.ts';
+import { titleAlign, titleLow } from '../title.ts';
 import { clearSpot, hits, route, simplify, Space, toRoute, type Port, type Rect } from './route.ts';
 
 export { METRICS } from './metrics.ts';
@@ -380,8 +381,12 @@ class Pixels {
     const pad = this.groups[g]!.padding;
     const left = pad.left + insL[g]!;
     let right = pad.right + insR[g]!;
-    const top = (headH[g]! > 0 ? Math.max(pad.top, headH[g]! + M.titleGap) : pad.top) + insT[g]!;
-    const bottom = pad.bottom + insB[g]!;
+    // The title's band: the padding of its side, or the title and its gap where that is more.
+    const low = titleLow(this.groups[g]!);
+    const band = (own: number): number =>
+      headH[g]! > 0 ? Math.max(own, headH[g]! + M.titleGap) : own;
+    const top = (low ? pad.top : band(pad.top)) + insT[g]!;
+    const bottom = (low ? band(pad.bottom) : pad.bottom) + insB[g]!;
     if (headW[g]! > 0) {
       let inner = left + right;
       for (let c = c0[g]!; c <= c1[g]!; c++) {
@@ -640,17 +645,25 @@ class Pixels {
     return { x: (r.x0 + r.x1) / 2, y: (r.y0 + r.y1) / 2 };
   }
 
-  /** A group's box and its title's centre: at the left, or after the edges that come down there. */
+  /**
+   * A group's box and its title's centre: at the left, or after the edges that come down there.
+   * A `titlePosition` moves it: to the bottom, and to the middle or the right as written.
+   */
   groupBox(g: number): [Rect, Point] {
     const r = this.groupRect(g);
     const { x0: x, y0: y } = r;
     const w = r.x1 - r.x0;
     const headW = this.headW[g]!;
-    const band = y + this.headH[g]! + M.titleGap;
+    const group = this.groups[g]!;
+    const low = titleLow(group);
+    const side = group.titlePosition ? titleAlign(group) : -1;
+    // The band the title is in, from `lo` to `hi`.
+    const depth = this.headH[g]! + M.titleGap;
+    const [lo, hi] = low ? [r.y1 - depth, r.y1] : [y, y + depth];
     const crossings: number[] = [];
     for (let i = 0; i < this.runs.length; i += 3) {
-      const [rx, lo, hi] = [this.runs[i]!, this.runs[i + 1]!, this.runs[i + 2]!];
-      if (lo < band && hi > y && rx > x && rx < x + w) crossings.push(rx);
+      const [rx, from, to] = [this.runs[i]!, this.runs[i + 1]!, this.runs[i + 2]!];
+      if (from < hi && to > lo && rx > x && rx < x + w) crossings.push(rx);
     }
     crossings.sort((a, b) => a - b);
     crossings.push(x + w - M.titleRight);
@@ -660,8 +673,11 @@ class Pixels {
       start = Math.max(start, crossing + M.titleClear);
     }
     if (start + headW > x + w - M.titleRight) start = x + M.titleLeft;
+    if (side === 0) start = x + (w - headW) / 2;
+    if (side > 0) start = x + w - M.titleLeft - headW;
     this.grow(r);
-    return [r, { x: start + headW / 2, y: y + M.titleTop + this.headH[g]! / 2 }];
+    const drop = M.titleTop + this.headH[g]! / 2;
+    return [r, { x: start + headW / 2, y: low ? r.y1 - drop : y + drop }];
   }
 
   model(): LayoutModel {

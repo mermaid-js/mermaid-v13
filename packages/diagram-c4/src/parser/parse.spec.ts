@@ -470,6 +470,22 @@ describe('#730: direction, the fill order of the grid (amends D452)', () => {
     expect(directions(src(' '))).toEqual(['LR']);
   });
 
+  it('takes no direction from a boundary that failed to parse, which its own error reports', () => {
+    // `Boundary(b, "B" {` fails (its arguments run into the brace) but opens, so its `}` matches.
+    const failed = (inner: string) =>
+      `Boundary(b, "B" {\n  direction ${inner}\n  Person(a, "A")\n}`;
+    const top = parse(`C4Context\n${failed('LR')}`);
+    expect(top.model.direction).toBeUndefined();
+    expect(codesOf(`C4Context\n${failed('LR')}`)).toEqual([['error', 'UNCLOSED_ARGUMENTS']]);
+    // The top level keeps the order it was given, whichever side of the failed boundary it is on.
+    expect(parse(`C4Context\ndirection BT\n${failed('LR')}`).model.direction).toBe('BT');
+    expect(parse(`C4Context\n${failed('LR')}\ndirection BT`).model.direction).toBe('BT');
+    // Inside a boundary that parsed, the failed one does not set the outer one's order either.
+    const nested = parse(`C4Context\nBoundary(o, "O") {\n  ${failed('RL')}\n  Person(c, "C")\n}`);
+    expect(nested.model.direction).toBeUndefined();
+    expect(nested.model.boundaries.map((b) => [b.alias, b.direction])).toEqual([['o', undefined]]);
+  });
+
   it('reads no direction from a label, a comment or a longer word', () => {
     expect(direction('C4Context\nPerson(a, "the direction LR is")')).toBeUndefined();
     expect(direction('C4Context\nPerson(a, "A") %% direction LR\n')).toBeUndefined();

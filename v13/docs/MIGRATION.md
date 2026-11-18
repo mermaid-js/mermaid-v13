@@ -455,11 +455,11 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `maxEdges` | `5000` | The default changes from 500 to 5,000 (D31): one `A & … --> B & …` line multiplies edges, and v13 draws 5,000 quickly. Integrator-only; it sets the `maxEdges` render limit (R-SEC-5); an explicit `limits.maxEdges` wins. Over the limit, render() rejects with a `LIMIT` error. |
 | `securityLevel` | `"default"` | The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose`, `antiscript` and `sandbox` act as `default` with a warning. |
 | `flowchart.curve` | `"rounded"` | The default changes from `basis` to `rounded`, the look of v12's default ELK layout: stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis` to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped routes with right-angle corners (the step in the middle, near the start and near the end of the leg); `rounded` draws straight segments with rounded corners; every other value draws S-curves (the layout engine routes edges, not a d3 curve factory), and a name outside this list also warns `CURVE_UNKNOWN`, once per render (D602). |
-| `sequence.actorFontSize` |  | The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
+| `sequence.actorFontSize` |  | The default changes: unset, it is the top-level `fontSize` when that is set (D620), else the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
 | `sequence.actorFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. |
-| `sequence.noteFontSize` |  | The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
+| `sequence.noteFontSize` |  | The default changes: unset, it is the top-level `fontSize` when that is set (D620), else the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
 | `sequence.noteFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. |
-| `sequence.messageFontSize` |  | The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
+| `sequence.messageFontSize` |  | The default changes: unset, it is the top-level `fontSize` when that is set (D620), else the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
 | `sequence.messageFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. |
 | `journey.taskFontSize` |  | The default changes: unset, task and section names are drawn in the theme's `fontSize` (16 by default), as for every diagram type, not v12's 14. A set value takes effect. |
 | `journey.taskFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect. |
@@ -506,6 +506,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `railroad.specialFill` |  | The documented default changes from `#F0E0FF` to none (D515): unset, the theme's `railroadSpecialFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
 | `railroad.specialStroke` |  | The documented default changes from `#8800CC` to none (D515): unset, the theme's `railroadSpecialStroke` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
 | `railroad.ruleNameColor` |  | The documented default changes from `#000066` to none (D515): unset, the theme's `railroadRuleNameColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `fontSize` |  | The documented default changes from 16 to none (D620), so a diagram can tell "not set" from 16: the resolved config (`CORE_DEFAULTS`, `prepare().config`) no longer holds `fontSize` unless a layer sets it. Read by sequence and timeline only, as in v12. Sequence: a set value sizes actor, message and note text where the `sequence.*FontSize` key is unset, and wins over `themeVariables.fontSize`; a CSS length such as `24px` works as for the per-key keys; the title stays at the theme's size. Timeline, as v12's renderer read it, with 16 when unset: each box is `fontSize × 0.55` px taller than its text, and the TD axis starts `2 × fontSize` above the content and ends `0.5 × fontSize + 20` below it; its text is drawn at `themeVariables.fontSize`. |
 
 <!-- END GENERATED CONFIG SECTION -->
 
@@ -565,6 +566,11 @@ Sequence diagrams (`sequence` section, #145):
   `fontSize` (D132). A diagram that sets none looks as before in a 16 px theme; under the redux
   family, `neo` and `neo-dark` (`fontSize` 14px) its text is 14 px where v12 drew 16 px.
   The documented defaults 14 and 16 are gone.
+- **A top-level `fontSize` that the author sets scales actor, message and note text** (D620),
+  as v12 drew it. A set per-key size still wins over it, where v12 let the top-level key
+  replace the per-key one; the top-level key wins over `themeVariables.fontSize`. The title
+  stays at the theme's size, as in v12. The top-level key no longer has a default of 16, so
+  the resolved config holds it only when a config layer sets it.
 - **Per-key font families follow the Mermaid font** when unset (`fontFamily`), as every
   diagram type's text does; a set `actorFontFamily`, `noteFontFamily` or `messageFontFamily`
   takes effect after the same safety check as other font keys.
@@ -952,7 +958,7 @@ variables instead.
 | HTML labels in `<foreignObject>` (`htmlLabels: true`) or SVG text | SVG `<text>`/`<tspan>` only | D5 |
 | Any HTML in labels, sanitised by DOMPurify | `<b>`/`<strong>` and `<i>`/`<em>` are drawn bold and italic, `<br>` breaks the line. Other HTML element tags are dropped and their text kept (`<img>` draws nothing, `<a>` is not a link, `<sub>`/`<sup>`/`<u>` draw plain text), with one `HTML_DROPPED` warning per render that names the tags. For a link, use `click id "url"`; the warning says so when `<a>` is among them. A `<script>` or `<style>` element is dropped with its content, up to its end tag; with no end tag only the tag is dropped and the text after it stays, where v12 lost the rest of the label. Text that only looks like a tag, such as `List<T>` or `<style.css>`, is shown as written | R-TEXT-3, D566 |
 | Markdown strings (`` "`**bold**`" ``) | Same subset: `**`/`__` bold, `*`/`_` italic, `` `code` `` (monospace), `- ` and `* ` bullet lists (one nesting level), backslash escapes, `<br>` and newlines | R-TEXT-2 |
-| Mindmap, state, requirement and class labels were read as Markdown without backticks: `**bold**` and `_italic_` were formatted, and a label starting with `- `, `* ` or `+ ` or holding backticks was shown as written | The same: bold and italic are read, list markers and backticks are drawn as written. Only a mindmap markdown string (`` "`…`" ``) has bullets and inline code. Not Markdown: the rows of a state with several description lines, class multiplicities, namespace titles and lollipop interface names. In a label that holds a code span, bold and italic outside it are not read | D564, #763 |
+| Mindmap, state, requirement and class labels were read as Markdown without backticks: `**bold**` and `_italic_` were formatted, and a label starting with `- `, `* ` or `+ ` or holding backticks was shown as written | The same: bold and italic are read, list markers and code spans are drawn as written. In a label that holds a code span, bold and italic outside the span are read. Only a mindmap markdown string (`` "`…`" ``) has bullets and inline code. Not Markdown: the title and rows of a state with several description lines, class multiplicities, namespace titles and lollipop interface names | D564, D610, #763, #836 |
 | Sequence labels broke at `<br>` only; `\n` written as two characters was drawn | The same: a written `\n` is text in participant, message, note and block labels. In the other types a plain label still breaks there | D564, #763 |
 | Markdown emphasis in a label written without backticks, in the types that pass every label through Markdown: ER (`"This **is** _Markdown_"`) | ER reads `**`/`__` as bold and `*`/`_` as italic in entity names, aliases, attribute cells, relationship labels and subgraph titles, and nothing else of Markdown: backticks and a leading `- ` are drawn as written. An underscore inside a word (`order_item`) is text. Text output drops the markers | #754, D562, D565 |
 | Entities: Mermaid's `#quot;`/`#35;` and HTML `&…;`, decoded by the browser, so every HTML5 name worked | Both decoded; about 70 named HTML entities plus numeric ones. The names include the ASCII punctuation used to escape syntax: `colon`, `semi`, `vert`, `verbar`, `lpar`, `rpar`, `lsqb`, `rsqb`, `lcub`, `rcub`, `num`, `excl`, `quest`, `commat`, `equals`, `plus`, `comma`, `period`, `sol`, `bsol`, `grave`, `lowbar`, `percnt`, `dollar`, `ast` | #396, D561 |
@@ -1063,6 +1069,13 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
   as `-->` …``), show the line with a caret, and never mention token or rule names. Every error
   in the text is reported, not only the first (R-PARSE-4).
 - **A bare `subgraph`** (no id) is accepted; v12 crashed with a `TypeError`.
+- **Edge ids** follow v12 12.3.0, ahead of the oracle (D621): an edge id may follow a node's
+  shape or its shape data directly (`A[bla]e1@--> B`, `A@{ shape: circle } e1@--> B`), and an
+  `@` in a label needs no space before it (`A[me@example.com] --> B`). As in 12.3.0, an edge
+  id can no longer contain `[`, `]`, `(`, `)`, `{`, `}` or `|`: they end the id, which is what
+  lets it start right after a node's brackets. `A e[1]@--> B`, which 12.2.0 read as the edge
+  `e[1]`, is a syntax error; rename the id. `swimlane-beta` reads edge ids the same way;
+  agentflow keeps the 12.2.0 rule, as v12's agentflow does.
 - **Shape data** (`A@{ shape: … }`) is read with v13's YAML reader: YAML anchors (`&a`) are
   rejected, which js-yaml accepted. A few malformed values that js-yaml rejected are accepted.
 - **Shapes** not in the documented shape list (`classBox`, `erBox`, `usecase*`, `bpmn-*`,
@@ -1073,10 +1086,14 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
   stroke is its fill). An icon that is not drawn (no plugin, no such pack or icon, a pack still
   loading under `placeholders`) keeps the frame with its outline, not v12's blue `?`.
   `ICON_UNAVAILABLE` is deprecated in favour of `ICON_NOT_RENDERED`. See [Icons](#icons).
-- **Step animation** (`step` on edges, `flowchart.stepNumbers`, `flowchart.stepDuration`) and
-  edge `animate`/`animation` are parsed but not drawn. A render that uses `animate` or
-  `animation` on an edge raises one `EDGE_ANIMATION_IGNORED` warning for each of the two (#357);
-  the edge keeps its `edge-animation-*` class.
+- **Edge `animate` and `animation`** move the edge's dashes as v12 did (#918, D606): the
+  pattern `9,5` with round caps, running from the source to the target, in 20 s for `fast` and
+  `animate: true` and in 50 s for `slow`. The edge keeps its `edge-animation-fast|slow` class.
+  The motion is an SVG `<animate>` in the edge's group, not v12's `@keyframes`, since the output
+  has no `<style>`; CSS that overrode v12's `animation` on `.edge-animation-*` has no effect on
+  it.
+- **Step animation** (`step` on edges, `flowchart.stepNumbers`, `flowchart.stepDuration`) is
+  parsed but not drawn.
 - **`markdownAutoWrap: false`** keeps a markdown label (node, subgraph or edge) on its own line
   breaks, as v12 did (#357).
 - **`style`, `classDef` and `linkStyle`** go through a per-property allow-list; an unknown
@@ -1121,6 +1138,11 @@ v12 spec strings; grammar in [syntax/sequence.md](./syntax/sequence.md)). The di
   diagram; v13 has no C4 package yet and throws `UNSUPPORTED_DIAGRAM`. Rename the participant
   (or use an alias: `participant C as C4Container` still matches, `participant C as Container`
   does not).
+- **Limits** (R-SEC-5, D608): a sequence diagram may have up to `limits.maxNodes` participants
+  (10,000) and `limits.maxEdges` messages (5,000), messages inside blocks included; a
+  participant made by a message, a note or `create` counts, and notes are not messages. Over
+  either, render rejects with a `LIMIT` `MermaidError`. v12 had no such limit. Only the
+  integrator can raise them ([Limits](#limits)).
 
 ## State diagram syntax
 
@@ -1361,10 +1383,10 @@ rows below are class-specific. Group class names (`clusters`, `edgePaths`, `edge
 | Per-class colour through `[data-look][data-color-id].node .outer-path` rules in the `<style>` | `data-color-id` is kept; the colours are presentation attributes on the box and its dividers; an author `style` / `classDef` still wins | No style sheet |
 | `classDef` styles reached a class through the generated `.name > *` CSS rules, even when the class was given after the `classDef` | The `classDef` styles of every CSS class of the class, then its own `style`, as presentation attributes after the allow-list | Unknown properties and unsafe values are dropped with a warning (R-SEC-3) |
 | Under `look: neo` (the redux family, `neo`, `neo-dark`), the `[data-look=neo]` rules beat a `style` / `classDef` fill and stroke on a class box | `style` and `classDef` fill and stroke on a class box take effect in every theme | D187, D152 |
-| Class ids, labels and member text passed through `sanitizeText` (DOMPurify), so `A : +List<T> items` lost `<T>` | Text is escaped when written, never sanitised: `+List<T> items` is shown as written, and known HTML tags are read as the label subset ([Labels and text](#labels-and-text)) | R-SEC-1; the flowchart's rule |
+| Class ids, labels and member text passed through `sanitizeText` (DOMPurify), so `A : +List<T> items` lost `<T>` | Text is escaped when written, never sanitised: `+List<T> items` is shown as written, and known HTML tags are read as the label subset ([Labels and text](#labels-and-text)). A generic written with `~` is always drawn as written, as in v12, also when its type is named like a tag: `B~U~` draws `B<U>` and `+List~Data~ items` draws `+List<Data> items`, with no `HTML_DROPPED` | R-SEC-1; the flowchart's rule; D619 |
 | `link` / `click … href` as `<a xlink:href>`; tooltip as an HTML hover div; `callback` / `click … call` bound with `bindFunctions` | `<a href target>` inside the node group (URLs that pass `securityLevel`); the tooltip is an SVG `<title>`; callbacks draw nothing (interactions plugin) | R-SVG-4, R-SVG-5 |
 | Front-matter `title` drawn above the diagram (`classDiagramTitleText`) | Not drawn, as for flowcharts | v13 renderers draw no title yet |
-| Names, annotations, members, notes and relation labels read as Markdown without backticks; multiplicities and namespace titles drawn as plain text | The same: bold and italic are read in box rows, notes and relation labels; a text that starts with `- `, `* ` or `+ ` or holds backticks is drawn as written; multiplicities, namespace titles and lollipop interface names are plain. An unknown `#name;` is drawn as written, where v12 drew `&name;` | D564, D561, #763 |
+| Names, annotations, members, notes and relation labels read as Markdown without backticks; multiplicities and namespace titles drawn as plain text | The same: bold and italic are read in box rows, notes and relation labels; a text that starts with `- `, `* ` or `+ ` is drawn as written, and so is a code span (backticks and what they hold), with bold and italic outside it still read; multiplicities, namespace titles and lollipop interface names are plain. An unknown `#name;` is drawn as written, where v12 drew `&name;` | D564, D610, D561, #763, #836 |
 
 ## ER SVG structure
 
@@ -1423,6 +1445,12 @@ where the element still exists (`node default <classDef>`, `outer-path`, `row-re
   colour slots change (#302).
 - **Legend wrapping (D225):** a legend name wider than `maxLabelWidth` wraps with core label
   layout, and a word too long for a line splits without the hyphen v12 added at each split.
+- **Tall labels (D615):** a title broken by `<br>` keeps its last line on v12's baseline (y 25)
+  and grows upward, so it stays above the section bands. A section name taller than its band
+  grows the band down and moves the task row down by as much. A task name taller than its box
+  grows the box, and the activity line and the faces move down by the band's growth plus the
+  tallest box's. v12 printed `<br>` as written and clipped names to their box, so nothing grew.
+  When every label fits its box, everything stays where v12 put it.
 
 ### Config
 
@@ -1478,10 +1506,10 @@ section and task classes now sit on the group that holds the box and its label.
 | Mouth: a d3 `arc` path moved by `transform`; a score of 3 or `NaN` a `<line class="mouth">` | An absolute `<path>` for every mouth, no `transform`; v12's shapes and its rule on the score as written | No d3 (R-PERF-2) |
 | Faces at `300 + (5 − score) × 30` for any score; `NaN` wrote `cy="NaN"` | `NaN` is drawn at 3 and other scores clamped to 0–5, with one `JOURNEY_SCORE` warning per render | D226 |
 | Legend: `<circle class="actor-<n>">` and `<text class="legend"><tspan>` siblings at the root, one row per actor including `''`, which took the first colour | `<g class="legend-entries">` with one `<g class="legend-entry" data-id="a:<name>">` per named actor, holding the `<circle class="actor-<n>">` and `<text class="legend">`; no `data-ast` (the task dots carry the mentions' ids). `''` draws nothing and takes no colour | D244 |
-| Labels: an HTML `<div>` in `<foreignObject>` (`textPlacement: fo`) or `<tspan>`s, `<br>` literal in the HTML and a hyphen at each split word in the legend | `<text>`/`<tspan>` from core's label layout: task names wrap to the task, section names to the band, legend names to `maxLabelWidth`, `<br>` breaks; `textPlacement` is ignored. A legend name splits a long word without a hyphen. A task or section name keeps a word wider than its box whole, as v12 did, and the box widens to hold it where v12 let it run out: a task is as wide as its widest line and the tasks after it move along, a section shares its extra width out among its tasks | D225, D558 |
+| Labels: an HTML `<div>` in `<foreignObject>` (`textPlacement: fo`) or `<tspan>`s, `<br>` literal in the HTML and a hyphen at each split word in the legend | `<text>`/`<tspan>` from core's label layout: task names wrap to the task, section names to the band, legend names to `maxLabelWidth`, `<br>` breaks; `textPlacement` is ignored. A legend name splits a long word without a hyphen. A task or section name keeps a word wider than its box whole, as v12 did, and the box widens to hold it where v12 let it run out: a task is as wide as its widest line and the tasks after it move along, a section shares its extra width out among its tasks. A name taller than its box grows the box down, and the rows below it move down by as much | D225, D558, D615 |
 | Colours from the `<style>`: `.task-type-<n>, .section-type-<n> { fill: fillType<n> }` (every rule gated on `fillType0`), `line { stroke: textColor }`, `.face { fill: faceColor or #FFF8DC; stroke: #999 }`, `.legend { fill: textColor }`, `.actor-<n> { fill: actor<n> }`; `#666` outlines, eyes and mouth, `#000` dot outlines | Presentation attributes: band and task fills from `fillType<slot>`, lines, arrowhead, legend and names from `textColor`, the face from `faceColor`, dots from `journey.actorColours` unless the author sets `actor<n>` (n < 6); `#666`, `#999` and `#000` stay constants in every theme | No style sheet (R-SEC-2); D152, D245, D249 |
 | `sectionColours` reached the `tspan` fallback only (the default `fo` label ignored it) | Colours section and task names, by band, when set; otherwise names are `textColor` | D225 |
-| Title: an unclassed bold `<text>` at (`leftMargin`, 25) with `fill="<titleColor>"` (default empty: black on dark themes) and `font-family="<titleFontFamily>"` | `<text class="journey-title">` at the same place, bold, `4ex` of the theme `fontSize` by default, in `titleColor` or else `textColor`; `titleFontFamily` inherits the Mermaid font when unset | D248 |
+| Title: an unclassed bold `<text>` at (`leftMargin`, 25) with `fill="<titleColor>"` (default empty: black on dark themes) and `font-family="<titleFontFamily>"` | `<text class="journey-title">` at the same place (a title of several lines ends on that baseline and grows upward), bold, `4ex` of the theme `fontSize` by default, in `titleColor` or else `textColor`; `titleFontFamily` inherits the Mermaid font when unset | D248, D615 |
 | Task text in `taskFontSize`/`taskFontFamily` (defaults 14 and Open Sans) via an inline `style` | Unset, both follow the theme font; when set, `font-family`/`font-size` are written on the `sections` and `tasks` groups | Fonts are uniform across diagrams (D132) |
 | A `journey.titleColor`, `actorColours` or `sectionColours` value that is not a colour went into the markup | Dropped with `STYLE_VALUE_DROPPED`; the default colour is used | Inert output (R-SEC-3) |
 
@@ -1497,8 +1525,8 @@ Legend entries carry `data-id="a:<name>"` only.
   `UnsupportedFormatError` (D216).
 - **Honoured** in the `timeline` section, with v12's effective values when unset (v12's renderer
   with its default config merged): `leftMargin` (150), `padding` (no schema default; 50, v12's
-  fallback), `useMaxWidth` (true) and `disableMulticolor` (false). The top-level `fontSize` (16)
-  is read as v12's timeline read it: each box is `0.55 × fontSize` taller than its text, and the
+  fallback), `useMaxWidth` (true) and `disableMulticolor` (false). The top-level `fontSize` (no
+  schema default since D620; 16 when unset, as in v12) is read as v12's timeline read it: each box is `0.55 × fontSize` taller than its text, and the
   TD axis starts `2 × fontSize` above the content and ends `0.5 × fontSize + 20` below it. The
   text itself is drawn at `themeVariables.fontSize`, as in v12. A `leftMargin`, `padding` or
   `fontSize` that is not a number of at least 0 is replaced by its default, with a
@@ -1560,8 +1588,9 @@ Legend entries carry `data-id="a:<name>"` only.
   over the top-level `layout`, with the same names and fallbacks.
 - **Labels** are SVG text, measured in the theme's font, instead of HTML in `<foreignObject>`
   ([Mindmap SVG structure](#mindmap-svg-structure)). As in v12, every label reads bold, italic
-  and `<br>` line breaks without backticks, and a label that starts with `- `, `* ` or `+ ` or
-  holds backticks (``[`a **b**`]``) is drawn as written (D564, #763). Only a markdown string
+  and `<br>` line breaks without backticks, and a label that starts with `- `, `* ` or `+ ` is
+  drawn as written (D564, #763). A code span (``[`a **b**`]``) is drawn as written, backticks
+  included, and bold and italic outside it are still read (D610, #836). Only a markdown string
   (`` "`…`" ``) has bullet lists and inline code, which v12 did not draw (D56). A written `\n`
   is text. A word wider than `maxNodeWidth` stays
   whole and the node grows to hold it, as v12's HTML labels did (#649).
@@ -1721,7 +1750,7 @@ names are kept (`pieOuterCircle`, `pieCircle`, `highlighted`, `highlightedOnHove
 | `highlightSlice: "hover"`: class `highlightedOnHover` and a `:hover` rule that scaled the slice | Class `highlightedOnHover` on every slice, no hover effect, and one `PIE_HOVER_IGNORED` warning per render. Host CSS can target the class | No style sheet (D222); an interactions hover can come later |
 | `highlightSlice: ""` (the default) highlighted a slice labelled `""` | Highlights nothing | v12 bug (#335) |
 | Title and legend text set with d3 `.text()`: `<br>` and tags printed as written, entities decoded | Core's label layout ([Labels and text](#labels-and-text)): `<br>` breaks the line, `<b>`/`<i>` are drawn bold and italic, entities decode; a legend label of several lines stays left-aligned | D225 |
-| The viewBox widened only for the title; many sections or a wide `top`/`bottom` legend were clipped | The viewBox covers everything drawn, and may start at a negative `x` or `y` | D224 |
+| The viewBox widened only for the title; many sections or a wide `top`/`bottom` legend were clipped | The viewBox covers everything drawn, and may start at a negative `x` or `y`. A `right`, `left`, `top` or `bottom` legend taller than the 450 px canvas (past 20 one-line rows) breaks into columns of the canvas height, and over a `left` legend in columns the title centres on the pie; a `center` legend stays one column | D224, D616 |
 | `neo` and the redux themes: the same pie as the classic themes | The same: pie differs between families by colour only, with no gradient and no shadow | D227 |
 
 ## Packet diagram
@@ -2153,6 +2182,7 @@ curves, legend, title.
 | `<text class="radarTitle">` always written, empty when there is no title | Written only when there is a title, with `data-ast="title"` (`title@2`, … for the last of several) when it comes from the text; a front-matter title (D218) has no `data-ast` | Nothing invisible is drawn |
 | Labels, legend and title set with d3 `.text()`: `<br>` and tags printed as written, a newline collapsed to a space | Core's label layout: `<br>` and newlines break the line, markdown strings render, math and icons work, entities decode. A label of several lines grows away from the chart; legend rows below it move down | D355 |
 | A fixed `viewBox` (the 700 × 700 canvas by default) that axis labels, wide legend labels, a fractional-`ticks` ring and a large title overflowed (clipped in `<img>` and server renders) | v12's positions; the `viewBox` (and `max-width`, or `width`/`height` with `useMaxWidth: false`) grows to cover everything drawn and may start at a negative `x` or `y`. A chart where everything fits keeps v12's canvas | D354 |
+| The legend always at `¾` of the way to the canvas's top-right corner, so a long axis label at the top right (start-anchored, growing right) could lie under a legend row | The legend keeps v12's position unless a row meets an axis label; then the whole legend moves right, 4 px past that label, and the `viewBox` grows to cover it. Rows keep their `y` | D614, #846 |
 | `look: neo` and the redux themes: the same chart as the classic themes | The same: radar differs between families by colour only (computed styles checked in `neo` and `neo-dark`) | D227 |
 
 ## Treemap
@@ -2168,6 +2198,7 @@ every e2e fixture, the v12 spec strings and the syntax page; grammar in
 | A value `parseFloat` cut short (`1_000` as 1, `1,2,3` as 123) was drawn silently; `.` gave `NaN` and drew a `NaN` rectangle | The same numbers, with one `TREEMAP_INVALID_VALUE` warning per render listing them; a `NaN` leaf takes no area and prints no value | D402 |
 | A leaf's group had the class `leaf<i> <class>x` (a stray `x`), so CSS written for the class never matched | `leaf<i> <class>`; inline styles apply as before | D403 |
 | A leaf directly under the root drew with no fill and no stroke (the hidden root takes the scales' first slot, `transparent`) | The same: kept | D404 |
+| Section colours wrapped round all 13 slots of the fill scale, so the 13th distinct section name (and the 26th, …) took the root's `transparent`: no fill, no outline, and its leaves floated on the canvas | Sections cycle through `cScale0`–`cScale11` and skip the root's slot: the 13th name takes `cScale0`, the 14th `cScale1`, and so on. Every section from the 13th distinct name on is one colour away from v12; diagrams with 12 or fewer section names are unchanged | D612 |
 | Labels and values fitted with `getComputedTextLength()` in the browser and clipped to their box | The same fitting rules (shrink 1 px at a time, section headers truncated with `...`), measured by the injected measurer; text is kept inside its box instead of clipped: a section label or value that does not fit is left out, and the label of a treemap of more than 20 leaves that is still too wide at the smallest size is truncated with `...`. Entities decode and tags print as text | D405 |
 | `valueFormat` passed to d3-format, with v12's own `$0,0`, `$…,…` and `$x` cases; a specifier d3 rejects fell back to `,`, and `$` with such a rest (`$abc`) threw | d3-format's specifier grammar re-implemented in the package, with v12's `$` cases: every specifier formats as in v12. `$abc` falls back to `,` too | D409 |
 | A `treemap` config value of the wrong type or a negative length (`padding: -5`, `nodeWidth: "wide"`) was used as it was | A number, or a numeric string as its number, of 0 or more; anything else draws with the default and one `TREEMAP_CONFIG_INVALID` warning per key. `nodeWidth`/`nodeHeight` of 0 still draws v12's 960 × 500 canvas, and an empty `valueFormat` is `,` | D226 |
@@ -2242,7 +2273,8 @@ only with `showDomainDescriptions`), `g.cynefin-items` (always; a translated `g`
 | Texts placed with `dominant-baseline` (`middle`, `central` for items, `auto` for arrow labels) | Each text placed by its measured baseline, at the same centre | Core's label layout |
 | Items, transition labels and the title set with d3 `.text()`: `<br>` and tags printed as written, entities decoded | Core's label layout ([Labels and text](#labels-and-text)): `<br>` breaks the line, markdown strings, entities, math and icons render; a badge is at least 26 px tall and grows with its label's lines, a title or transition label of several lines grows up from where v12 drew its one line. The fixed domain texts and `+N more` stay plain | D363, D225 |
 | Item widths measured with `getBBox()` after the CSS applied, or `label.length × 7` when it returned 0 | Measured in the font they are drawn in; no character-count fallback | Pitfall 16 |
-| A fixed `viewBox="0 0 width+2·padding height+2·padding"`: a fifth quadrant item, confusion items below the ellipse, a wide title or one in a `padding` under about 18 ran off it | The same placement (D361); the `viewBox` (and `max-width`, or `width`/`height` with `useMaxWidth: false`) grows to cover whatever is drawn past it, so it can start below 0. A diagram where everything fits keeps v12's | D361, D224 |
+| A fixed `viewBox="0 0 width+2·padding height+2·padding"`: a fifth quadrant item, confusion items below the ellipse, a wide title or one in a `padding` under about 18 ran off it | The same placement (D361), except that a long list grows its row (D617); the `viewBox` (and `max-width`, or `width`/`height` with `useMaxWidth: false`) grows to cover whatever is drawn past it, so it can start below 0. A diagram where everything fits keeps v12's | D361, D224 |
+| Quadrants were always half the canvas: from the fifth item a domain's list ran over the horizon onto the next row's headings and items, or below the canvas | A row of quadrants grows to fit its longest list, reaching to where the list's next badge would start; the horizon, the confusion ellipse with its items, the cliff and the lower row move down with it, and the fold spans the taller canvas. The texts keep their place under the row's top edge, and transitions run between them. No item is hidden; `confusion` still shows three and a `+N more` badge. Lists of four one-line items or fewer keep v12's geometry | D617 |
 | `seed: 0` (the default) hashed the SVG element id, so the waves changed with every render id | `seed: 0` hashes the render's `idPrefix` with v12's hash: deterministic for a given `id` option, different for two diagrams on a page. A non-zero `seed` draws v12's exact paths | D362, R-ARCH-6 |
 | A later block of a domain silently replaced the earlier one's items | The same, with one `CYNEFIN_DUPLICATE_DOMAIN` warning per render naming the replaced blocks | D364, D226 |
 | `x --> x` dropped with a console `log.warn`; repeated transitions drawn on top of each other | Dropped with one `CYNEFIN_SELF_LOOP` warning per render (the statement keeps its AST node); repeats drawn as v12 drew them | D365, D226 |
@@ -2425,6 +2457,7 @@ v12's chart builder to 0.01 px. What changes in config and drawing (spec #426):
 | Values past ±1e300 (a 309-digit number reads as `Infinity`) wrote `Infinity` or `NaN` coordinates | Drawn at ±1e300 | D383 |
 | A range with `min = max` (given or inferred) mapped values to the middle of the axis | The same, with one `XYCHART_EMPTY_RANGE` warning | D383 |
 | Data labels with no room in any bar wrote `font-size="Infinitypx"` | None are drawn, with one `XYCHART_LABEL_TOO_SMALL` warning | D383 |
+| Data labels took the smallest size over every bar, so one bar with no room (the lowest bar of an automatic y range is a few px high) gave every label a size of 0 or less, which browsers drew at the inherited size | A bar with no room gets no label; the others are drawn at the smallest size that fits them. `XYCHART_LABEL_TOO_SMALL` only when no bar of a plot has room | D611, #537 |
 | A plot written before its `x-axis` kept the x values of the axis it saw, silently; on a linear axis a category x had no position | The same, with one `XYCHART_PLOT_BEFORE_AXIS` warning naming the plots; a value with no x on the axis is drawn at the axis start, on a band and a linear axis alike | D386 |
 | An unclosed `accDescr {` ended in an empty description, silently | The same, with one `XYCHART_UNCLOSED_DESCRIPTION` warning | #508 |
 | `mermaid.parse()` accepted a chart with no plot (`xychart` alone); the render then failed with `No Plot to render, please provide a plot with some data` | Rejected at parse, with v12's message (`XYCHART_NO_PLOT`) | Choice, for the maintainer (#508) |
@@ -2486,7 +2519,7 @@ v12 drew with (D411): two- and three-set circles equal v12's. What changes (spec
 | Four or more sets: venn.js started from `Math.random`, so a diagram could change between renders | A fixed-seed start: the same diagram draws the same way every time. Four or more sets are not laid out as v12 laid them out | D413, R-ARCH-6 |
 | Text nodes were HTML spans in a `foreignObject` that the browser wrapped; set and overlap labels were `tspan` lines measured with `getComputedTextLength()`, as many as venn.js's wrapping made | Both are SVG text laid out by core ([Labels and text](#labels-and-text)): `<br>`, entities, markdown, math and icons work. Labels wrap to the first set's radius and stop at three lines, the rest of the text joined into the third; text nodes wrap to their cell | D414, D225 |
 | Labels that the layout put on top of one another were drawn there | A label that would lie on an earlier area's label moves down below it, in v12's area order, and a repeated area's copies share one label. Measured on the corpus at four canvases: no label moves at the default 800 × 450, at 500 × 600 or at 300 × 300; at 1600 × 200 v12's labels collided and v13's move | #491 (kept because the layout invariant needs it) |
-| Text nodes sat on the circles of a second solve (padding 8), labels on the drawn ones (padding 15); a text node could lie under an area's label, its own overlap's when it wraps to several lines, or a neighbouring one's | Text nodes sit on the drawn circles (D412), so they move by a few px (0 to 6 in the baselines: 0 for a centred overlap, 3.8 for `Terraform` under the triple overlap's label in `themes/*`). A text node can still lie under an area's label, as in v12: only labels are kept apart | D412, v12's positions |
+| Text nodes sat on the circles of a second solve (padding 8), labels on the drawn ones (padding 15); a text node could lie under an area's label, its own overlap's when it wraps to several lines, or a neighbouring one's | Text nodes sit on the drawn circles (D412), so they move by a few px (0 to 6 in the baselines: 0 for a centred overlap, 3.8 for `Terraform` under the triple overlap's label in `themes/*`). An area's text grid also moves down by what its own label reaches below one line, so a label of two or three lines (a `<br>` or a wrap, D414) stays above the area's text nodes; under a one-line label the grid is v12's. A text node can still lie under a label where v12's could: when the node wraps to several lines, in an area with three nodes or more, or under a neighbouring area's label. Only labels are kept apart from one another | D412, D613, v12's positions |
 | `title "Team overlap"` (the syntax page's own example) drew its quotes | One pair of surrounding quotes is removed, as labels already lost theirs | D416 |
 | `venn-beta` with no sets: the render threw | Draws only the title, with one `VENN_EMPTY` warning | D417 |
 | A negative size was passed to venn.js; a size too large to square drew `NaN` | Laid out as 0, with one `VENN_INVALID_SIZE` warning naming them | D417 |
@@ -3130,10 +3163,11 @@ v12's, apart from the two layout fixes of D514.
   spec strings and docs examples, and the grammar is in
   [syntax/requirement.md](./syntax/requirement.md). Every error is reported, not only the first,
   with a range at the token (R-PARSE-4).
-- **Label text** (D564, #763): names, the `text:`, `type:` and `docref:` rows and the other
-  box rows read bold and italic, as in v12. A value that starts with `- `, `* ` or `+ ` or
-  holds backticks is drawn as written, backticks included: `` "`**bold**`" `` draws
-  `` `**bold**` ``. A requirement diagram has no markdown strings.
+- **Label text** (D564, D610, #763, #836): names, the `text:`, `type:` and `docref:` rows and
+  the other box rows read bold and italic, as in v12. A value that starts with `- `, `* ` or
+  `+ ` is drawn as written. A code span is drawn as written, backticks included:
+  `` "`**bold**`" `` draws `` `**bold**` ``, and bold and italic outside the span are still
+  read. A requirement diagram has no markdown strings.
 - **Trailing blanks** (D431): blanks before a line end are dropped, so the five places where
   v12 rejected them (after the header, after `{`, after a keyword value, after a quoted value)
   now accept. The six forms v12 accepted only because a blank swallowed the next line break
@@ -3175,10 +3209,18 @@ v12's, apart from the two layout fixes of D514.
   ignored-keys table); `look` as everywhere (D153).
 - **Edges** follow `flowchart.curve` (class's precedent), a self-loop always `rounded`; the
   layout keeps room for each marker so it no longer overlaps the next box.
+- **Several self-loops on one box** (D618, #768) each get their own route: the second is drawn
+  on the opposite side of the box and later ones nest outward, alternating sides, so every line
+  and label shows, as v12 drew them side by side. Before, they were drawn over one another. A
+  single self-loop is unchanged.
 - **Text output** (`format: 'ascii'`) is new (#588, D320, D438): see
   [ASCII output](../ascii.md#requirement-diagrams).
 - **Hand-drawn:** the diagram is sketched under `look: handDrawn`: the box outline, the divider
   and the relation lines (markers are never sketched, D301).
+- **Limits** (R-SEC-5, D608): a diagram may have up to `limits.maxNodes` requirements and
+  elements together (10,000) and `limits.maxEdges` relationships (5,000); a repeated
+  definition is not a new box. Over either, render rejects with a `LIMIT` `MermaidError`. v12
+  had no such limit. Only the integrator can raise them ([Limits](#limits)).
 
 ## Requirement SVG structure
 
@@ -3209,9 +3251,10 @@ label-container outer-path`, `divider`, `relationshipLine`, `edge-thickness-norm
 
 ## State diagram
 
-- **Label text** (D564, #763): state text, composite titles, transition text and notes read
-  bold and italic, as in v12. A label that starts with `- `, `* ` or `+ ` or holds backticks is
-  drawn as written: no bullet, no monospace. The title and rows of a state with several
+- **Label text** (D564, D610, #763, #836): state text, composite titles, transition text and
+  notes read bold and italic, as in v12. A label that starts with `- `, `* ` or `+ ` is drawn
+  as written: no bullet. A code span is drawn as written, backticks included and no monospace,
+  and bold and italic outside it are still read. The title and rows of a state with several
   description lines are plain text, as v12 drew them: `**x**` stays as written there and a
   written `\n` breaks the line.
 - **A transition written inside a composite that names the composite** (D555):
@@ -3219,6 +3262,11 @@ label-container outer-path`, `divider`, `relationshipLine`, `edge-thickness-norm
   `Inner`. v12 filed the composite under itself (or under a state inside it) and then never
   returned under the ELK layouts, or threw. v13 keeps the composite where it was declared and
   draws the transition, with every layout.
+- **Limits** (R-SEC-5, D608): a state diagram may have up to `limits.maxNodes` states (10,000)
+  and `limits.maxEdges` transitions (5,000). Start and end dots, forks, joins, choices and
+  composite states count as states; concurrency regions and notes do not. Over either, render
+  rejects with a `LIMIT` `MermaidError`. v12 had no such limit. Only the integrator can raise
+  them ([Limits](#limits)).
 
 ## Tree view
 
@@ -3324,7 +3372,7 @@ order are kept: `g.clusters` (each `g.usecase-system-boundary.system-boundary-<t
 | The front-matter `title` was set, then wiped by `db.clear()` before `insertTitle` ran: never drawn | Drawn above the diagram as `text.usecaseDiagramTitleText` in the root's text colour, centred, the drawing moved down by its height and the diagram padding; it does not name the diagram (`accTitle` does) | D472, D133 |
 | `<defs>` with `<marker>` elements (`point`, `circle`, `cross`, `extension`) referenced by `marker-end` | Each marker is a `path.marker` in its relationship's group: v12's classic point, circle, cross and the generalization's hollow triangle (filled `mainBkg`), sized as v12's classic markers in every theme, in the line's colour (an author's `style` stroke included) | DESIGN §7.1, D227 |
 | An invisible `rect.usecase-actor-outline` (`opacity: 0`) around each actor | Not written: the actor's group carries the name, the layout its box | Nothing invisible is drawn |
-| Animated relationships: `stroke-dasharray: 9,5` and the `dash` keyframes | The `edge-animation-fast|slow` class only, with round caps: the keyframes need a `<style>` | R-SEC-2, as the flowchart |
+| Animated relationships: `stroke-dasharray: 9,5` and the `dash` keyframes | The same dashes, caps and speeds, moved by an `<animate>` in the relationship's group: the keyframes need a `<style>` | R-SEC-2, D606, as the flowchart |
 | An icon actor drew Font Awesome's fallback glyph (`usecase-actor-icon-fallback`) for an unknown icon | The icons extension's glyph (D293) in the frame, else the frame alone with one `ICON_NOT_RENDERED` | D293, D299 |
 | `look: neo` (the `usecase.look` default) was never read by the renderer, which took the global `look` (`classic`): no shadow, no gradient | The same in every theme: usecase differs between families by colour only | D227, D153 |
 | Hand-drawn: roughjs sketched each shape, cell and frame (roughness 0.7, hachure, fill weight 1.5) and each line (roughness 0.3) | `@mermaid-js/plugin-hand-drawn` sketches each node shape (`node`), JSON cell (`part`), boundary frame and tab (`group`, fill weight 3) and line (`edge`); markers, business marks and text stay plain | D301, D302 |

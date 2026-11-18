@@ -21,6 +21,7 @@
   layout property (string) 2:28-2:30 "cu" -> "layout: "
   titleTopMargin property (integer) 2:28-2:30 "cu" -> "titleTopMargin: "
   subGraphTitleMargin property (object) 2:28-2:30 "cu" -> "subGraphTitleMargin: "
+  subGraphTitlePosition property (string) 2:28-2:30 "cu" -> "subGraphTitlePosition: "
   arrowMarkerAbsolute property (boolean) 2:28-2:30 "cu" -> "arrowMarkerAbsolute: "
   diagramPadding property (integer) 2:28-2:30 "cu" -> "diagramPadding: "
   nodeSpacing property (integer) 2:28-2:30 "cu" -> "nodeSpacing: "
