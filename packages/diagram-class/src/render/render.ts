@@ -23,7 +23,7 @@ import {
   paletteSlots,
   textElement,
 } from '@mermaid-js/shared/svg/document';
-import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
+import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import { routePath } from '@mermaid-js/shared/svg/route';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type {
@@ -125,7 +125,7 @@ function paints(theme: ThemeOf, p: ClassPrepared): Paints {
     ? theme.length('classTerminalFontSize')
     : undefined;
   // The theme background, as every edge label's fill (D628).
-  const edgeLabel = labelled ? theme.color('background') : undefined;
+  const labelFill = labelled ? theme.color('background') : undefined;
   return {
     font: theme.font(),
     fontSize: theme.length('fontSize'),
@@ -138,7 +138,7 @@ function paints(theme: ThemeOf, p: ClassPrepared): Paints {
     note,
     cluster,
     text,
-    edgeLabel,
+    edgeLabel: labelFill,
     terminalSize,
     slotOf: paletteSlots(theme),
   };
@@ -317,7 +317,7 @@ function drawEdgeLabels({ w, layout, ctx, paint }: Scene, e: ClassEdgeView, id: 
   if (!at) return;
   // The middle label is a tag bordered in the line colour (D626, D627); the ends stay plain.
   if (e.label && at.label && paint.edgeLabel)
-    labelOnBox(w, e.label, at.label, id, {
+    edgeLabel(w, e.label, at.label, id, {
       fill: paint.edgeLabel,
       stroke: paint.line,
       text: { fill: paint.text },

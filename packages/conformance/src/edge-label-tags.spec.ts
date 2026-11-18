@@ -5,31 +5,56 @@
  * theme background unless the author sets the type's label fill. Colours are read through the
  * root `style`'s declarations, as a browser resolves them.
  */
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createMermaid } from 'mermaid';
 import { describe, expect, it } from 'vitest';
 import { REPO_ROOT } from './index.ts';
 
-/** The fixture folders of the types that draw their labels with the shared tag (T1, #942). */
-const DIRS = [
-  'flowchart',
-  'swimlanes',
-  'state-diagram-v2',
-  'class-diagram',
+const DIAGRAMS = join(REPO_ROOT, 'e2e/diagrams');
+const edgeLabels = (dir: string): string => join(DIAGRAMS, dir, 'baseline/edge-labels');
+
+/**
+ * The fixture folders of the types that draw their labels with the shared tag: every folder
+ * with a `baseline/edge-labels` directory. A type joins by adding its fixtures there.
+ */
+const DIRS = readdirSync(DIAGRAMS)
+  .filter((dir) => existsSync(edgeLabels(dir)))
+  .sort();
+/** The types the shared tag started with (#942); the others join with their own fixtures. */
+const FIRST = [
   'agentflow',
+  'class-diagram',
   'er-diagram',
-  'c4',
-  'c4beta',
+  'flowchart',
+  'state-diagram-v2',
+  'swimlanes',
 ];
+/** The folders whose labels are fixed text that cannot break a line (requirement's `<<kind>>`). */
+const FIXED_LABELS = ['requirement'];
+/** The folders of types with no label-fill variable of their own: class and C4 fill with `background`. */
+const NO_FILL_VARIABLE = ['class-diagram', 'c4', 'c4beta'];
 /** The stroke the fixtures give a styled edge, or the line colour they set. */
 const PINK = '#d6336c';
 /** Whether a fixture styles an edge in pink: a `stroke`, or C4's `UpdateRelStyle` `$lineColor`. */
 const styledEdge = (s: string): boolean =>
   s.includes(`stroke:${PINK}`) || s.includes(`$lineColor="${PINK}"`);
+/** An author's value for each label-fill variable, and the fill it gives in a folder. */
+const OWN_FILLS = {
+  edgeLabelBackground: '#123456',
+  erEdgeLabelBackground: '#654321',
+  relationLabelBackground: '#123457',
+};
+const ownFill = (dir: string): string =>
+  dir === 'er-diagram'
+    ? OWN_FILLS.erEdgeLabelBackground
+    : dir === 'requirement'
+      ? OWN_FILLS.relationLabelBackground
+      : OWN_FILLS.edgeLabelBackground;
+const folder = (id: string): string => id.slice(0, id.indexOf('/'));
 
 function fixtures(dir: string): [string, string][] {
-  const at = join(REPO_ROOT, 'e2e/diagrams', dir, 'baseline/edge-labels');
+  const at = edgeLabels(dir);
   return readdirSync(at)
     .filter((f) => f.endsWith('.mmd'))
     .sort()
@@ -89,6 +114,7 @@ const background = (svg: string): string | undefined => resolver(svg)('var(--_bg
 
 describe('edge labels are tags (D626–D630)', () => {
   it('has fixtures for each covered type', () => {
+    expect(DIRS).toEqual(expect.arrayContaining(FIRST));
     for (const dir of DIRS) expect(fixtures(dir).length, dir).toBeGreaterThan(0);
   });
 
@@ -127,7 +153,10 @@ describe('edge labels are tags (D626–D630)', () => {
 
   it('draws one box around a label of two lines, taller than a one-line one', async () => {
     const sources = CASES.filter(([, s]) => s.includes('<br/>'));
-    expect(sources.length).toBeGreaterThanOrEqual(DIRS.length);
+    const breakable = DIRS.filter((dir) => !FIXED_LABELS.includes(dir));
+    expect([...new Set(sources.map(([id]) => folder(id)))]).toEqual(
+      expect.arrayContaining(breakable)
+    );
     for (const [id, source] of sources) {
       const found = tags(await render(source));
       const [two, ...more] = found.filter((t) => / (?:line|and) /.test(t.text));
@@ -146,12 +175,11 @@ describe('edge labels are tags (D626–D630)', () => {
     expect(tags(svg).map((t) => t.text)).toContain('holds');
   });
 
-  it.each(CASES.filter(([id]) => !/^(?:class-diagram|c4|c4beta)\//.test(id)))(
+  it.each(CASES.filter(([id]) => !NO_FILL_VARIABLE.includes(folder(id))))(
     '%s: an author label fill still wins',
-    async (_id, source) => {
-      const own = { edgeLabelBackground: '#123456', erEdgeLabelBackground: '#654321' };
-      const fill = _id.startsWith('er-diagram/') ? '#654321' : '#123456';
-      for (const t of tags(await render(source, own))) expect(t.box.fill, t.text).toBe(fill);
+    async (id, source) => {
+      const fill = ownFill(folder(id));
+      for (const t of tags(await render(source, OWN_FILLS))) expect(t.box.fill, t.text).toBe(fill);
     }
   );
 });
