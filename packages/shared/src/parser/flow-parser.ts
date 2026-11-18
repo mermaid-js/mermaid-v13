@@ -298,7 +298,8 @@ export abstract class FlowParser<
 
   /**
    * The blanks at the cursor and a ` & ` after them: whether another node follows. `afterData`
-   * is whether the node before had `@{ … }`, which only `&` may follow on its line.
+   * is whether the node before had `@{ … }`, which only `&` may follow on its line unless the
+   * dialect's `blanksAfterData` is on.
    */
   private ampersand(afterData: boolean): boolean {
     const { T, tb } = this;
@@ -308,8 +309,9 @@ export abstract class FlowParser<
     } while (this.kind() === T.Space);
     this.tested(tb.AMP);
     if (this.kind() !== T.Amp) {
-      // Blanks after `@{ … }` must lead to `&` (v12 drops them before a line break).
-      if (afterData)
+      // In 12.2.0's grammar blanks after `@{ … }` must lead to `&` (v12 drops them before a line
+      // break); 12.3.0's flowchart lets them end the node (D621).
+      if (afterData && !this.dialect.blanksAfterData)
         this.fail(
           [T.Amp],
           `after ${tb.dataName} \`@{ … }\` only \`&\` and another node may follow on the line`

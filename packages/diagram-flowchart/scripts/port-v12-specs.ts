@@ -17,15 +17,10 @@ const ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const OUT = fileURLToPath(new URL('../src/v12-specs/', import.meta.url));
 
 /** `file: { test title: reason }`. Reasons are reported in the generated file. */
-const LATER =
-  'v12 behaviour added after mermaid@12.2.0, the oracle, which rejects this input; it arrives with the oracle bump (R-COMPAT-8)';
 const LAYOUT = "asserts v12's LayoutData (getData), which the renderer builds (#14)";
 
 /** `file: { test or describe title (or its unique start): reason }`. Reasons are written into the file. */
 export const SKIP: Record<string, Record<string, string>> = {
-  'flow-edges.spec.ts': {
-    'edge ids attached to the preceding node (#7032)': LATER,
-  },
   'flow-node-data.spec.ts': {
     'should order edges for the step animation': LAYOUT,
     'should give step edges the default step duration': LAYOUT,

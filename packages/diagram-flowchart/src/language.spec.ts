@@ -73,6 +73,9 @@ describe('flowchart language facet: isValidId by symbol kind', () => {
   it('checks edge ids as `id@-->` reads them', () => {
     expect(flowchartLanguage.isValidId('e1', 'edge')).toBeUndefined();
     expect(flowchartLanguage.isValidId('"q"', 'edge')).toBe('\'"q"\' is not an edge id.');
+    // D621: as in v12 12.3.0, an edge id has no `[ ] ( ) { } |`.
+    expect(flowchartLanguage.isValidId('e[1]', 'edge')).toBe("'e[1]' is not an edge id.");
+    expect(flowchartLanguage.isValidId('e|1', 'edge')).toBe("'e|1' is not an edge id.");
   });
 
   it('is exported under the fixed name `language`', () => {

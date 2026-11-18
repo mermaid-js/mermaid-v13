@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../../jison/oracle.ts';
+import { D621_RULES } from '../d621.ts';
 import { flowchartCorpus } from './corpus.ts';
 import { asJison, grammarTokens } from './flowchart-grammar.ts';
 
 /**
  * Lexer modes first (notes/07): the `@lexer` section of `grammar/flowchart.ebnf` emits
  * exactly mermaid@12's jison token stream (names and images, unnormalised) on the text
- * v12's lexer received, over the e2e fixtures and the v12 spec strings.
+ * v12's lexer received, over the e2e fixtures and the v12 spec strings. As in the lexer-parity
+ * gate, v12's LINK_ID rule is 12.3.0's (D621).
  */
 describe('flowchart grammar lexer', () => {
   it('builds the lexer input v12 lexed', async () => {
@@ -27,9 +29,9 @@ describe('flowchart grammar lexer', () => {
     const diffs: string[] = [];
     let compared = 0;
     for (const item of await flowchartCorpus()) {
-      const v12 = (await oracle.tokens(item.source, { keepAppendedNewline: true }))?.map(
-        ([n, i]): [string, string] => [n === LEXICAL_ERROR ? 'INVALID' : n, i]
-      );
+      const v12 = (
+        await oracle.tokens(item.source, { keepAppendedNewline: true, rules: D621_RULES })
+      )?.map(([n, i]): [string, string] => [n === LEXICAL_ERROR ? 'INVALID' : n, i]);
       if (!v12) continue;
       compared++;
       const ours = asJison(grammarTokens(item.source));

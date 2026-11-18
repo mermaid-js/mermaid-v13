@@ -1,0 +1,9 @@
+---
+description: edge ids written straight after a node's shape or its shape data, and an @ inside labels (v12 12.3.0)
+---
+flowchart LR
+  A[bla]e1@--> B
+  B(round)e2@--> C{d}e3@--> D
+  D@{ shape: circle } e4@--> E@{ shape: circle }e5@--> F
+  G[me@example.com] -->|a@b| H
+  e1@{ curve: linear }
