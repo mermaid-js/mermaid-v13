@@ -58,6 +58,10 @@
   [ASCII output](../ascii.md#requirement-diagrams).
 - **Hand-drawn:** the diagram is sketched under `look: handDrawn`: the box outline, the divider
   and the relation lines (markers are never sketched, D301).
+- **Limits** (R-SEC-5, D608): a diagram may have up to `limits.maxNodes` requirements and
+  elements together (10,000) and `limits.maxEdges` relationships (5,000); a repeated
+  definition is not a new box. Over either, render rejects with a `LIMIT` `MermaidError`. v12
+  had no such limit. Only the integrator can raise them ([Limits](#limits)).
 
 ## Requirement SVG structure
 

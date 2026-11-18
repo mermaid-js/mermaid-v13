@@ -92,6 +92,10 @@ export interface StateParseOptions extends ParseOptions {
   preprocessed?: PreprocessResult;
   /** Composite nesting cap (core `DEFAULT_LIMITS.maxDepth`). */
   maxDepth?: number;
+  /** State cap (core `DEFAULT_LIMITS.maxNodes`, D608). */
+  maxNodes?: number;
+  /** Transition cap (core `DEFAULT_LIMITS.maxEdges`, D608). */
+  maxEdges?: number;
 }
 
 export type StateParseResult = ParseResult<StateModel, StateDocument>;
@@ -147,6 +151,8 @@ class StateParser extends StateCursor {
     this.db = new StateBuilder({
       error: (code, message, range) => void diagnostics.error(code, message, range),
       warn: (code, message, range) => void diagnostics.warning(code, message, range),
+      maxNodes: options.maxNodes,
+      maxEdges: options.maxEdges,
     });
     this.maxDepth = options.maxDepth ?? DEFAULT_LIMITS.maxDepth;
     probe?.trivia(this.all);

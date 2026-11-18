@@ -1121,6 +1121,11 @@ v12 spec strings; grammar in [syntax/sequence.md](./syntax/sequence.md)). The di
   diagram; v13 has no C4 package yet and throws `UNSUPPORTED_DIAGRAM`. Rename the participant
   (or use an alias: `participant C as C4Container` still matches, `participant C as Container`
   does not).
+- **Limits** (R-SEC-5, D608): a sequence diagram may have up to `limits.maxNodes` participants
+  (10,000) and `limits.maxEdges` messages (5,000), messages inside blocks included; a
+  participant made by a message, a note or `create` counts, and notes are not messages. Over
+  either, render rejects with a `LIMIT` `MermaidError`. v12 had no such limit. Only the
+  integrator can raise them ([Limits](#limits)).
 
 ## State diagram syntax
 
@@ -3179,6 +3184,10 @@ v12's, apart from the two layout fixes of D514.
   [ASCII output](../ascii.md#requirement-diagrams).
 - **Hand-drawn:** the diagram is sketched under `look: handDrawn`: the box outline, the divider
   and the relation lines (markers are never sketched, D301).
+- **Limits** (R-SEC-5, D608): a diagram may have up to `limits.maxNodes` requirements and
+  elements together (10,000) and `limits.maxEdges` relationships (5,000); a repeated
+  definition is not a new box. Over either, render rejects with a `LIMIT` `MermaidError`. v12
+  had no such limit. Only the integrator can raise them ([Limits](#limits)).
 
 ## Requirement SVG structure
 
@@ -3219,6 +3228,11 @@ label-container outer-path`, `divider`, `relationshipLine`, `edge-thickness-norm
   `Inner`. v12 filed the composite under itself (or under a state inside it) and then never
   returned under the ELK layouts, or threw. v13 keeps the composite where it was declared and
   draws the transition, with every layout.
+- **Limits** (R-SEC-5, D608): a state diagram may have up to `limits.maxNodes` states (10,000)
+  and `limits.maxEdges` transitions (5,000). Start and end dots, forks, joins, choices and
+  composite states count as states; concurrency regions and notes do not. Over either, render
+  rejects with a `LIMIT` `MermaidError`. v12 had no such limit. Only the integrator can raise
+  them ([Limits](#limits)).
 
 ## Tree view
 
