@@ -342,7 +342,6 @@ function edgesOf(
   measure: (text: string) => Measured
 ): BlockEdgeLayout[] {
   const { loopAngle, loopReach } = BLOCK_METRICS;
-  const patch = pxProfile.builder.labelPatch;
   const angle = (loopAngle * Math.PI) / 180;
   const out: BlockEdgeLayout[] = [];
   for (const e of edges) {
@@ -386,14 +385,7 @@ function edgesOf(
       }
       points = [s, middle, t];
     }
-    const measured = e.label === '' ? undefined : measure(e.label);
-    // A label of only whitespace draws no tag (D626), so it takes no room either.
-    const text = measured && !blank(measured.text) ? measured : undefined;
-    // The tag's room: the text plus the px profile's `labelPatch` (D629), as it is drawn.
-    const label = text && {
-      ...text,
-      ...rectAt(middle.x, middle.y, text.width + patch.x, text.height + patch.y),
-    };
+    const label = labelRoom(e.label, middle, measure);
     out.push({
       id: e.id,
       ast: e.ast,
@@ -409,6 +401,26 @@ function edgesOf(
     });
   }
   return out;
+}
+
+/**
+ * An edge label's room centred on `middle`: the text plus the px profile's `labelPatch` (D629),
+ * as the tag is drawn. An empty label, or one of only whitespace, draws no tag (D626) and so
+ * takes no room.
+ */
+function labelRoom(
+  text: string,
+  middle: Point,
+  measure: (text: string) => Measured
+): PlacedLabel | undefined {
+  if (text === '') return undefined;
+  const measured = measure(text);
+  if (blank(measured.text)) return undefined;
+  const patch = pxProfile.builder.labelPatch;
+  return {
+    ...measured,
+    ...rectAt(middle.x, middle.y, measured.width + patch.x, measured.height + patch.y),
+  };
 }
 
 /** Whether a measured label shows nothing: no inline box and only whitespace (as `edgeLabel`). */
