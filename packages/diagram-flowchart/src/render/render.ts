@@ -380,6 +380,23 @@ function edgeClass(edge: EdgeView['edge']): string {
   return 'edge flowchart-link' + look + animation + cls(edge.classes);
 }
 
+/** The edge's line: its weight and pattern, then the author's style, then an animation's dashes. */
+function edgeLine(edge: EdgeView['edge'], d: Attrs['d'], style: Attrs, animated: boolean): Attrs {
+  const dotted = edge.stroke === 'dotted';
+  return {
+    d,
+    'stroke-width': edge.stroke === 'thick' ? THICK : undefined,
+    'stroke-dasharray': dotted ? DOTTED : undefined,
+    // v12 drew dotted edges with butt caps; the group's round caps close a 2px dash's gaps.
+    // Animated edges keep round caps, as v12's .edge-animation-* rules set them.
+    'stroke-linecap': dotted && !animated ? 'butt' : undefined,
+    ...style,
+    // The moving dashes replace the edge's own pattern and any `linkStyle` one, as in v12.
+    ...(animated && { 'stroke-dasharray': ANIMATED_DASH, 'stroke-dashoffset': undefined }),
+    fill: 'none',
+  };
+}
+
 function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
   const edge = e.edge;
   const route = layout.edges.get(e.id);
@@ -398,19 +415,7 @@ function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
       markerTrim(e.end, paint.heads)
     );
     const style = e.style.shape;
-    const animated = animateEdge(w, edge);
-    w.outline('edge', 'path', {
-      d: path.d,
-      'stroke-width': edge.stroke === 'thick' ? THICK : undefined,
-      'stroke-dasharray': edge.stroke === 'dotted' ? DOTTED : undefined,
-      // v12 drew dotted edges with butt caps; the group's round caps close a 2px dash's gaps.
-      // Animated edges keep round caps, as v12's .edge-animation-* rules set them.
-      'stroke-linecap': edge.stroke === 'dotted' && !animated ? 'butt' : undefined,
-      ...style,
-      // The moving dashes replace the edge's own pattern and any `linkStyle` one, as in v12.
-      ...(animated && { 'stroke-dasharray': ANIMATED_DASH, 'stroke-dashoffset': undefined }),
-      fill: 'none',
-    });
+    w.outline('edge', 'path', edgeLine(edge, path.d, style, animateEdge(w, edge)));
     // The head fades with its line: opacity, and stroke-opacity as the head's fill-opacity.
     const headPaint: Attrs =
       style.stroke === undefined &&
