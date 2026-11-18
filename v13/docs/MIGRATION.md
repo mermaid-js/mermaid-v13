@@ -455,11 +455,11 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `maxEdges` | `5000` | The default changes from 500 to 5,000 (D31): one `A & … --> B & …` line multiplies edges, and v13 draws 5,000 quickly. Integrator-only; it sets the `maxEdges` render limit (R-SEC-5); an explicit `limits.maxEdges` wins. Over the limit, render() rejects with a `LIMIT` error. |
 | `securityLevel` | `"default"` | The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose`, `antiscript` and `sandbox` act as `default` with a warning. |
 | `flowchart.curve` | `"rounded"` | The default changes from `basis` to `rounded`, the look of v12's default ELK layout: stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis` to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped routes with right-angle corners (the step in the middle, near the start and near the end of the leg); `rounded` draws straight segments with rounded corners; every other value draws S-curves (the layout engine routes edges, not a d3 curve factory), and a name outside this list also warns `CURVE_UNKNOWN`, once per render (D602). |
-| `sequence.actorFontSize` |  | The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
+| `sequence.actorFontSize` |  | The default changes: unset, it is the top-level `fontSize` when that is set (D620), else the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
 | `sequence.actorFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. |
-| `sequence.noteFontSize` |  | The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
+| `sequence.noteFontSize` |  | The default changes: unset, it is the top-level `fontSize` when that is set (D620), else the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
 | `sequence.noteFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. |
-| `sequence.messageFontSize` |  | The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
+| `sequence.messageFontSize` |  | The default changes: unset, it is the top-level `fontSize` when that is set (D620), else the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
 | `sequence.messageFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. |
 | `journey.taskFontSize` |  | The default changes: unset, task and section names are drawn in the theme's `fontSize` (16 by default), as for every diagram type, not v12's 14. A set value takes effect. |
 | `journey.taskFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect. |
@@ -506,6 +506,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `railroad.specialFill` |  | The documented default changes from `#F0E0FF` to none (D515): unset, the theme's `railroadSpecialFill` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
 | `railroad.specialStroke` |  | The documented default changes from `#8800CC` to none (D515): unset, the theme's `railroadSpecialStroke` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
 | `railroad.ruleNameColor` |  | The documented default changes from `#000066` to none (D515): unset, the theme's `railroadRuleNameColor` is drawn, as v12 drew (its runtime config reset the default). Set, it beats the theme variable (D516); a value that is not a colour core accepts is dropped with one `RAILROAD_CONFIG_INVALID` warning, where v12 fell back silently. |
+| `fontSize` |  | The documented default changes from 16 to none (D620), so a diagram can tell "not set" from 16: the resolved config (`CORE_DEFAULTS`, `prepare().config`) no longer holds `fontSize` unless a layer sets it. Read by sequence and timeline only, as in v12. Sequence: a set value sizes actor, message and note text where the `sequence.*FontSize` key is unset, and wins over `themeVariables.fontSize`; a CSS length such as `24px` works as for the per-key keys; the title stays at the theme's size. Timeline, as v12's renderer read it, with 16 when unset: each box is `fontSize × 0.55` px taller than its text, and the TD axis starts `2 × fontSize` above the content and ends `0.5 × fontSize + 20` below it; its text is drawn at `themeVariables.fontSize`. |
 
 <!-- END GENERATED CONFIG SECTION -->
 
@@ -565,6 +566,11 @@ Sequence diagrams (`sequence` section, #145):
   `fontSize` (D132). A diagram that sets none looks as before in a 16 px theme; under the redux
   family, `neo` and `neo-dark` (`fontSize` 14px) its text is 14 px where v12 drew 16 px.
   The documented defaults 14 and 16 are gone.
+- **A top-level `fontSize` that the author sets scales actor, message and note text** (D620),
+  as v12 drew it. A set per-key size still wins over it, where v12 let the top-level key
+  replace the per-key one; the top-level key wins over `themeVariables.fontSize`. The title
+  stays at the theme's size, as in v12. The top-level key no longer has a default of 16, so
+  the resolved config holds it only when a config layer sets it.
 - **Per-key font families follow the Mermaid font** when unset (`fontFamily`), as every
   diagram type's text does; a set `actorFontFamily`, `noteFontFamily` or `messageFontFamily`
   takes effect after the same safety check as other font keys.
@@ -1512,8 +1518,8 @@ Legend entries carry `data-id="a:<name>"` only.
   `UnsupportedFormatError` (D216).
 - **Honoured** in the `timeline` section, with v12's effective values when unset (v12's renderer
   with its default config merged): `leftMargin` (150), `padding` (no schema default; 50, v12's
-  fallback), `useMaxWidth` (true) and `disableMulticolor` (false). The top-level `fontSize` (16)
-  is read as v12's timeline read it: each box is `0.55 × fontSize` taller than its text, and the
+  fallback), `useMaxWidth` (true) and `disableMulticolor` (false). The top-level `fontSize` (no
+  schema default since D620; 16 when unset, as in v12) is read as v12's timeline read it: each box is `0.55 × fontSize` taller than its text, and the
   TD axis starts `2 × fontSize` above the content and ends `0.5 × fontSize + 20` below it. The
   text itself is drawn at `themeVariables.fontSize`, as in v12. A `leftMargin`, `padding` or
   `fontSize` that is not a number of at least 0 is replaced by its default, with a

@@ -1385,11 +1385,10 @@ export const configSchema: ConfigSchema = {
     },
     "fontSize": {
       "type": "number",
-      "default": 16,
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "Read by timeline, as v12's renderer read it: each box is `fontSize × 0.55` px taller than its text, and the TD axis starts `2 × fontSize` above the content and ends `0.5 × fontSize + 20` below it. Text is drawn at `themeVariables.fontSize`; no other type reads this key."
+        "reason": "The documented default changes from 16 to none (D620), so a diagram can tell \"not set\" from 16: the resolved config (`CORE_DEFAULTS`, `prepare().config`) no longer holds `fontSize` unless a layer sets it. Read by sequence and timeline only, as in v12. Sequence: a set value sizes actor, message and note text where the `sequence.*FontSize` key is unset, and wins over `themeVariables.fontSize`; a CSS length such as `24px` works as for the per-key keys; the title stays at the theme's size. Timeline, as v12's renderer read it, with 16 when unset: each box is `fontSize × 0.55` px taller than its text, and the TD axis starts `2 × fontSize` above the content and ends `0.5 × fontSize + 20` below it; its text is drawn at `themeVariables.fontSize`."
       }
     },
     "markdownAutoWrap": {
@@ -5816,7 +5815,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect."
+            "reason": "The default changes: unset, it is the top-level `fontSize` when that is set (D620), else the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect."
           }
         },
         "actorFontFamily": {
@@ -5849,7 +5848,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect."
+            "reason": "The default changes: unset, it is the top-level `fontSize` when that is set (D620), else the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect."
           }
         },
         "noteFontFamily": {
@@ -5896,7 +5895,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect."
+            "reason": "The default changes: unset, it is the top-level `fontSize` when that is set (D620), else the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect."
           }
         },
         "messageFontFamily": {

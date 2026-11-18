@@ -35,7 +35,6 @@ export const CORE_DEFAULTS: MermaidConfig = {
     "optimizeRanksByCrossings": true,
     "automaticLaneOrdering": false
   },
-  "fontSize": 16,
   "markdownAutoWrap": true,
   "suppressErrorRendering": false
 };
