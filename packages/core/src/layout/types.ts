@@ -97,6 +97,15 @@ export interface LayoutEdge {
   border?: { source?: boolean; target?: boolean };
 }
 
+/** Where a group's title sits: at the top or the bottom, at the left, the middle or the right. */
+export type TitlePosition =
+  | 'top-left'
+  | 'top-center'
+  | 'top-right'
+  | 'bottom-left'
+  | 'bottom-center'
+  | 'bottom-right';
+
 /** See `LayoutEdge.startMarker`. */
 export interface EndMarker {
   length: number;
@@ -109,9 +118,17 @@ export interface LayoutGroup {
   parent?: string;
   /** Own direction. A group that an edge crosses inherits its parent's instead, as in v12. */
   direction?: Dir;
-  /** Room between the group's border and its content. The title sits inside `padding.top`. */
+  /**
+   * Room between the group's border and its content. The title sits inside `padding.top`, or
+   * inside `padding.bottom` for a `titlePosition` at the bottom.
+   */
   padding: Box;
   title?: Size;
+  /**
+   * Where the title sits. Without it the engine places the title as it always did: `layered`,
+   * `tree` and ELK at the top in the middle, `compass` at the top left. `swimlane` ignores it.
+   */
+  titlePosition?: TitlePosition;
   /**
    * The layout algorithm the author named for this group (flowchart `id@{ algorithm: … }`), as
    * written. An engine that cannot lay a group out with another algorithm ignores it.
@@ -203,7 +220,7 @@ export interface LayoutModelGroup {
   y: number;
   width: number;
   height: number;
-  /** Centre of the title band. */
+  /** Centre of the title. */
   title: Point;
 }
 

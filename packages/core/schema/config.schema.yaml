@@ -5005,6 +5005,28 @@ $defs:
           top: 0
           bottom: 0
         x-mermaid: { status: pending }
+      subGraphTitlePosition:
+        description: |
+          Where the title of a subgraph sits: at the top or the bottom of the subgraph, and at
+          the left, the middle or the right. A subgraph can set its own with
+          `id@{ titlePosition: bottom-left }`.
+
+          When unset, the title is at the top in the middle (at the top left with the `compass`
+          layout). Swimlane lanes, collapsed subgraphs and text output keep their own placement.
+        type: string
+        enum:
+          - top-left
+          - top-center
+          - top-right
+          - bottom-left
+          - bottom-center
+          - bottom-right
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            New in v13 (mermaid-js/mermaid#2977). Any other value draws with the default and adds
+            one `FLOWCHART_CONFIG_IGNORED` warning.
       arrowMarkerAbsolute:
         type: boolean # TODO, is this actually used here (it has no default value but was in types)
         x-mermaid:
