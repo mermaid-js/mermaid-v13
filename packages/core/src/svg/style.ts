@@ -4,7 +4,7 @@
  * else is dropped with a warning. Also the constructors for the branded colour, length and
  * theme-reference values.
  */
-import { RE_INVALID_XML, num } from './escape.ts';
+import { RE_INVALID_XML, escAttr, num } from './escape.ts';
 import type {
   Attrs,
   SafeColor,
@@ -392,8 +392,41 @@ export function styleText(
       throw new TypeError(`Unsafe style value for ${prop}`);
     out += (out === '' ? '' : ';') + prop + ':' + text;
   }
-  if (tail) out += (out === '' ? '' : ';') + tail;
+  if (tail) {
+    const head = out === '' ? '' : out + ';';
+    out = head + tail;
+    if (tail === noted?.text) {
+      attrOut = out;
+      attrForm = (head === '' ? '' : escAttr(head)) + (noted.attr ??= escAttr(tail));
+    }
+  }
   return out as StyleText;
+}
+
+/** A theme's root text and, once a `styleText` that ends with it has needed it, its `escAttr`. */
+export interface NotedText {
+  readonly text: StyleText;
+  attr?: string;
+}
+
+// The root text a theme returned last, and the last `styleText` that ended with it, with its
+// `escAttr`: what the stream writer writes for that `style` value. Escaping is the same
+// character by character (`head` is free of invalid characters and ends with `;`), so the
+// escaped head and the escaped tail make up the escaped whole. Module-private; `attrForm` is
+// only ever `escAttr(attrOut)`, so an equal value from anywhere gets its own escaped form.
+let noted: NotedText | undefined;
+let attrOut: string | undefined;
+let attrForm = '';
+
+/** Marks `n.text` as the tail the next root `styleText` reads; returns the text. */
+export function noteRootText(n: NotedText): StyleText {
+  noted = n;
+  return n.text;
+}
+
+/** `escAttr(value)` when `value` is the last root style `styleText` built, else undefined. */
+export function rootStyleAttr(value: string): string | undefined {
+  return value === attrOut ? attrForm : undefined;
 }
 
 const RE_SCOPE = /^[A-Za-z_][\w-]{0,63}$/;

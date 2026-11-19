@@ -7,7 +7,7 @@ import { BLANK_REL, GRADIENT_FIXED, PLAIN_ATTRS, TEXT_HOLDERS } from './allowlis
 import { checkName, checkTag, formatChecked } from './encode.ts';
 import { esc, escAttr, num } from './escape.ts';
 import { isBuilt, pathBuilder, transforms, translate, type PathBuilder } from './path.ts';
-import { checkColor, hash36, styleScope } from './style.ts';
+import { checkColor, hash36, rootStyleAttr, styleScope } from './style.ts';
 import { CompactTree, type SvgTree } from './tree.ts';
 import type {
   AllowedTag,
@@ -483,7 +483,12 @@ class Stream implements StreamSvgWriter {
         rel = true;
       }
       const plain = unescaped(name, raw, value, keywords);
-      s += ' ' + name + '="' + (plain ? value : escAttr(value)) + '"';
+      s +=
+        ' ' +
+        name +
+        '="' +
+        (plain ? value : (name === 'style' && rootStyleAttr(value)) || escAttr(value)) +
+        '"';
     }
     if (blank && !rel) s += ' rel="' + BLANK_REL + '"';
     return s;
