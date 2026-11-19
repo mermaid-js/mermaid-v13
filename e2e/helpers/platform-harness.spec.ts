@@ -12,6 +12,7 @@ import {
   rmSync,
   symlinkSync,
   unlinkSync,
+  writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
@@ -21,6 +22,7 @@ import { diagramPackages } from '../../tools/workspace/diagrams.ts';
 import {
   FIXTURE_DIAGRAM,
   appEnv,
+  assertLoadedOnly,
   FIXTURE_EXTENSION,
   installManifest,
   packageSources,
@@ -241,5 +243,54 @@ describe('chunk parts (bundle spec)', () => {
       'app',
       'app',
     ]);
+  });
+});
+
+describe('assertLoadedOnly and @mermaid-js/shared (D559)', () => {
+  let dist: string;
+  /** Writes `name` into `dist` as a built file whose source map lists `sources`. */
+  const chunk = (name: string, sources: readonly string[]): string => {
+    writeFileSync(join(dist, name), `export {};\n//# sourceMappingURL=${name}.map\n`);
+    writeFileSync(join(dist, `${name}.map`), JSON.stringify({ version: 3, sources }));
+    return `/${name}`;
+  };
+  const shared = (file: string) => `../node_modules/@mermaid-js/shared/${file}`;
+  const flowchart = '../node_modules/@mermaid-js/diagram-flowchart/dist/index.js';
+
+  beforeEach(() => {
+    dist = mkdtempSync(join(tmpdir(), 'loaded-only-'));
+  });
+  afterEach(() => rmSync(dist, { recursive: true, force: true }));
+
+  it("allows the shared modules an allowed diagram imports, built or as the CDN's sources", () => {
+    const paths = [
+      chunk('a.js', [flowchart, shared('dist/parser/flow-lexer.js')]),
+      chunk('b.js', [shared('dist/shapes/basic.js'), shared('dist/layout/graph.js')]),
+      chunk('c.js', ['node_modules/@mermaid-js/shared/src/parser/state-lexer.ts']),
+    ];
+    expect(() => assertLoadedOnly(dist, paths, { diagrams: ['flowchart'] })).not.toThrow();
+  });
+
+  it('refuses shared code when no diagram is allowed', () => {
+    const paths = [chunk('a.js', [shared('dist/svg/document.js')])];
+    expect(() => assertLoadedOnly(dist, paths, { diagrams: [] })).toThrow(
+      'Loaded parts that should not load: shared:svg/document'
+    );
+  });
+
+  it('refuses a shared module that only another diagram imports', () => {
+    // parser/v12-text is class's, not flowchart's.
+    const paths = [chunk('a.js', [flowchart, shared('dist/parser/v12-text.js')])];
+    expect(() => assertLoadedOnly(dist, paths, { diagrams: ['flowchart'] })).toThrow(
+      'Loaded parts that should not load: shared:parser/v12-text'
+    );
+    expect(() => assertLoadedOnly(dist, paths, { diagrams: ['flowchart', 'class'] })).not.toThrow();
+  });
+
+  it("keeps shared's text drawing out, as any `ascii` part", () => {
+    const paths = [chunk('a.js', [flowchart, shared('dist/ascii/index.js')])];
+    expect(() => assertLoadedOnly(dist, paths, { diagrams: ['flowchart'] })).toThrow(
+      'Loaded parts that should not load: ascii'
+    );
   });
 });
