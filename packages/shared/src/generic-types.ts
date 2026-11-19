@@ -32,6 +32,14 @@ function processSet(input: string, [open, close]: GenericBrackets): string {
   return (lead ? '~' : '') + chars.join('');
 }
 
+/** Whether the comma at `sets[i]` joins its neighbours, which hold one `~` each (`Map~K, V~`). */
+const joins = (sets: readonly string[], i: number): boolean =>
+  sets[i] === ',' &&
+  i > 0 &&
+  i + 1 < sets.length &&
+  tildes(sets[i - 1] ?? '') === 1 &&
+  tildes(sets[i + 1] ?? '') === 1;
+
 /**
  * v12 `parseGenericTypes`: `List~int~` → `List<int>`, `Map~K, V~` → `Map<K, V>`. Commas split
  * the text into sets, joined again when the sets on both sides of a comma hold one `~` each.
@@ -39,26 +47,14 @@ function processSet(input: string, [open, close]: GenericBrackets): string {
  * never reads `List<Data>` as a tag (D619, #945).
  */
 export function parseGenericTypes(input: string, brackets: GenericBrackets = LITERAL): string {
-  const sets: string[] = [];
-  let from = 0;
-  for (let i = 0; i <= input.length; i++) {
-    if (i === input.length || input[i] === ',') {
-      sets.push(input.slice(from, i));
-      if (i < input.length) sets.push(',');
-      from = i + 1;
-    }
-  }
+  const sets = input.split(/(,)/);
   const out: string[] = [];
   for (let i = 0; i < sets.length; i++) {
     let set = sets[i] ?? '';
-    if (set === ',' && i > 0 && i + 1 < sets.length) {
-      const prev = sets[i - 1] ?? '';
-      const next = sets[i + 1] ?? '';
-      if (tildes(prev) === 1 && tildes(next) === 1) {
-        set = prev + ',' + next;
-        i++;
-        out.pop();
-      }
+    if (joins(sets, i)) {
+      set = `${sets[i - 1] ?? ''},${sets[i + 1] ?? ''}`;
+      i++;
+      out.pop();
     }
     out.push(processSet(set, brackets));
   }

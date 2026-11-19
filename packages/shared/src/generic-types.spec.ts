@@ -15,6 +15,10 @@ describe('parseGenericTypes', () => {
     ['A~T~, B~U~', 'A<T>, B<U>'],
     // An odd `~` left in the middle stays as written.
     ['a~b~c~d', 'a<b~c>d'],
+    // v12 joins from the raw sets, so a second join drops the first one's text.
+    ['a~b,c~,d~e', 'c<,d>e'],
+    ['a,', 'a,'],
+    [',a~T~', ',a<T>'],
     ['string', 'string'],
     ['', ''],
   ])('reads %j as %j', (input, expected) => {
