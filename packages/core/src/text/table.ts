@@ -1,4 +1,4 @@
-// cspell:words kepano
+// cspell:words dejavu kepano
 // Table measurer: the Node/worker default and the `deterministic: true` measurer
 // (DESIGN §5.1, R-TEXT-6, R-TEXT-7). Sums advance widths from generated font tables.
 // Based on Pele's metricsMeasurer (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
@@ -25,6 +25,23 @@ interface Face {
 }
 
 const FALLBACK = 'arial';
+/**
+ * Names measured with the Courier New row (D644): Courier, the generic monospace families, and
+ * the monospace fonts whose advance is within 1% of Courier New's 600/1000 em, as read from
+ * their font files (Menlo and DejaVu Sans Mono 602, the others 600).
+ */
+const MONO_FACE = 'courier new';
+const ALIASES: ReadonlySet<string> = new Set([
+  'courier',
+  'monospace',
+  'ui-monospace',
+  'andale mono',
+  'dejavu sans mono',
+  'liberation mono',
+  'menlo',
+  'monaco',
+  'pt mono',
+]);
 // Table index of a code point: printable ASCII, then Latin-1 from U+00A0.
 const LATIN1_AT = 0x7f - 0x20;
 
@@ -66,7 +83,7 @@ function faceFor(stack: string): Face {
   let f = stacks.get(stack);
   if (f) return f;
   for (const name of familyNames(stack)) {
-    f = face(name);
+    f = face(ALIASES.has(name) ? MONO_FACE : name);
     if (f) break;
   }
   f ??= face(FALLBACK) as Face;

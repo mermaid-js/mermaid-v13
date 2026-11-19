@@ -212,6 +212,7 @@ exports[`layered over parser-produced class graphs > lays out every corpus graph
   "class/nightly-check/handdrawn/should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look.mmd": 0,
   "class/nightly-check/handdrawn/should-render-a-simple-class-diagram-with-the-handdrawn-look.mmd": 0,
   "class/nightly-check/has-a-label-with-char-sequence-graph.mmd": 0,
+  "class/nightly-check/monospace-font-family-issue-759.mmd": 0,
   "class/nightly-check/renders-a-class-diagram-with-a-generic-class-in-a-namespace.mmd": 0,
   "class/nightly-check/renders-a-class-diagram-with-multiple-classes-and-relationships-in-a-namespace.mmd": 0,
   "class/nightly-check/renders-a-class-diagram-with-nested-namespaces-and-relationships.mmd": 0,

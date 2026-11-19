@@ -30,6 +30,35 @@ describe('tableMeasurer', () => {
   it('falls back to Arial for unknown families', () => {
     expect(tableMeasurer.width('Hello', font('Comic Neue, sans-serif'), 0)).toBeCloseTo(36.448, 9);
     expect(tableMeasurer.width('Hello', font(''), 0)).toBeCloseTo(36.448, 9);
+    expect(tableMeasurer.width('Hello', font('Consolas'), 0)).toBeCloseTo(36.448, 9);
+  });
+
+  // #759: every Courier New advance is 600, so 'Hello' at 16px is 5 × 9.6.
+  it('measures Courier New from its own row', () => {
+    expect(tableMeasurer.width('Hello', font('"Courier New"'), 0)).toBeCloseTo(48, 9);
+    expect(tableMeasurer.width('Hello', font('Courier New', 16, 700), 0)).toBeCloseTo(48, 9);
+    expect(tableMeasurer.width('±é', font('Courier New'), 0)).toBeCloseTo(19.2, 9);
+  });
+
+  it.each([
+    'courier',
+    'Courier',
+    'monospace',
+    'ui-monospace',
+    'Andale Mono',
+    'DejaVu Sans Mono',
+    'Liberation Mono',
+    'Menlo',
+    'Monaco',
+    'PT Mono',
+  ])('measures %s with the Courier New row', (family) => {
+    expect(tableMeasurer.width('Hello', font(family), 0)).toBeCloseTo(48, 9);
+    expect(tableMeasurer.metrics(font(family)).ascent).toBeCloseTo(13.328, 9);
+  });
+
+  it('reaches the Courier New row through a monospace name later in the stack', () => {
+    expect(tableMeasurer.width('Hello', font('Consolas, monospace'), 0)).toBeCloseTo(48, 9);
+    expect(tableMeasurer.width('Hello', font('Arial, monospace'), 0)).toBeCloseTo(36.448, 9);
   });
 
   it('uses the bold table for the Bold bit or a weight of 600 and up', () => {
@@ -86,6 +115,10 @@ describe('tableMeasurer', () => {
     expect(t.ascent).toBeCloseTo(18.78, 9);
     expect(t.descent).toBeCloseTo(4.44, 9);
     expect(t.lineHeight).toBeCloseTo(23.22, 9);
+    const c = tableMeasurer.metrics(font('Courier New'));
+    expect(c.ascent).toBeCloseTo(13.328, 9);
+    expect(c.descent).toBeCloseTo(4.8, 9);
+    expect(c.lineHeight).toBeCloseTo(18.128, 9);
   });
 
   it('has a stable id for the determinism key', () => {
