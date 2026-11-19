@@ -239,6 +239,6 @@ describe('a colour the check refuses', () => {
     const { paints, warnings } = await paintedWith('url(#x)');
     expect(paints.elements.get(0)).toMatchObject(PERSON);
     expect(warnings.map((w) => w.code)).toEqual([C4_COLOR_INVALID]);
-    expect(warnings[0]?.message).toContain('style hot fill');
+    expect(warnings[0]?.message).toContain('`fill:url(#x)` in `style hot` at line 2');
   });
 });

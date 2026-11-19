@@ -75,7 +75,7 @@ describe('c4-beta parser: probe', () => {
     expect(expected(`${H}legend ¦`)).toEqual([T.On, T.Off]);
     expect(expected(`${H}style ¦`)).toEqual([T.Id]);
     expect(expected(`${H}style s ¦`)).toEqual([T.Id]);
-    expect(expected(`${H}style s fill:¦`)).toEqual([T.Hex, T.Id]);
+    expect(expected(`${H}style s fill:¦`)).toEqual([T.Hex, T.ColorFunction, T.Id]);
     expect(expected(`${H}style s fill:#fff ¦`)).toEqual(expect.arrayContaining([T.Comma]));
     expect(expected(`${H}style s fill:#fff, ¦`)).toEqual([T.Id]);
   });

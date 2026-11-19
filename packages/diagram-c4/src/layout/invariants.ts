@@ -16,24 +16,22 @@ import { C4_METRICS as M } from './metrics.ts';
 import { crosses, lineOf } from './route.ts';
 import { onOutline, outlineForm, type Outline } from './shapes.ts';
 import type { C4Layout, C4RelationLayout, Point, Rect } from './types.ts';
-import { nonFinite as finite } from '@mermaid-js/shared/testing/layout-invariants';
+import {
+  EPS,
+  nonFinite as finite,
+  rectInside,
+  rectsOverlap as overlap,
+} from '@mermaid-js/shared/testing/layout-invariants';
 
-/** Float tolerance of the checks, in px. */
-const EPS = 1e-6;
 /** How far an end may lie off its outline, in px. */
 const END_TOL = 0.01;
 
+/** Whether `inner` lies in `outer`, from `top` down (a frame below its header). */
 const inside = (outer: Rect, inner: Rect, top = outer.y): boolean =>
-  inner.x >= outer.x - EPS &&
-  inner.y >= top - EPS &&
-  inner.x + inner.width <= outer.x + outer.width + EPS &&
-  inner.y + inner.height <= outer.y + outer.height + EPS;
-
-const overlap = (a: Rect, b: Rect): boolean =>
-  a.x < b.x + b.width - EPS &&
-  b.x < a.x + a.width - EPS &&
-  a.y < b.y + b.height - EPS &&
-  b.y < a.y + a.height - EPS;
+  rectInside(
+    inner,
+    top === outer.y ? outer : { ...outer, y: top, height: outer.y + outer.height - top }
+  );
 
 /** Pairs of boxes that overlap, by a sweep along x. */
 function overlapping<T>(items: readonly T[], box: (t: T) => Rect): [T, T][] {

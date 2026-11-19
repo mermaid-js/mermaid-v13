@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { contrastRatio, parseColor, THEME_NAMES } from '@mermaid-js/core/theme';
+import { composite, contrastRatio, parseColor, THEME_NAMES } from '@mermaid-js/core/theme';
 import { renderC4BetaForTest, type C4BetaElement } from '@mermaid-js/diagram-c4/testing';
 import { describe, expect, it } from 'vitest';
 import { REPO_ROOT } from '../corpus.ts';
@@ -11,7 +11,8 @@ import { c4betaSources } from './corpus.ts';
  * The text of a c4-beta element or boundary reads on its own fill (spec #730 T2, D592): over every
  * probe, grammar document and fixture, in all eleven themes, an item whose author gave no `color`
  * (in a style for its kind or for any of its tags) has text at WCAG 2.1 success criterion 1.4.3's
- * 4.5:1 or better against its fill, or the page's `background` when it has none. An author's own
+ * 4.5:1 or better against its fill (a translucent one over the page), or the page's `background`
+ * when it has none. An author's own
  * `color` is the author's choice and is not measured; neither is a fill that is not a colour core
  * can read.
  */
@@ -89,7 +90,8 @@ describe('text on its own fill', () => {
           const ink = g && inkOf(g);
           if (!shape || !ink) continue;
           const fillPaint = shape.attrs.fill === 'none' ? undefined : shape.attrs.fill;
-          const fill = fillPaint === undefined ? page : parseColor(resolve(fillPaint, map) ?? '');
+          const given = fillPaint === undefined ? page : parseColor(resolve(fillPaint, map) ?? '');
+          const fill = given && given[3] < 1 ? composite(given, page) : given;
           const text = parseColor(resolve(ink, map) ?? '');
           if (!fill || !text) {
             skipped.add(id);

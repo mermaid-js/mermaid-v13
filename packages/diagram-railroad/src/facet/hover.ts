@@ -8,20 +8,13 @@
  * (`generated/*.docs.ts`). Never a preview.
  */
 import { LineIndex } from '@mermaid-js/core/parser-kit';
-import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
+import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-kit';
 import type { RailroadDocument } from '../parser/ast.ts';
 import { RULE_SYMBOL } from '../parser/parser.ts';
 import { repeatBounds } from '../parser/convert.ts';
 import { T } from '../parser/tokens.ts';
-import {
-  block,
-  code,
-  NOTATION_DOCS,
-  notationOf,
-  ruleDefinitions,
-  ruleFirstLine,
-  span,
-} from './tables.ts';
+import { code, keywordHover } from '@mermaid-js/shared/parser/facet';
+import { block, NOTATION_DOCS, notationOf, ruleDefinitions, ruleFirstLine } from './tables.ts';
 
 /** The header statement tokens: only their keyword is hovered. */
 const STATEMENT_WORDS: Readonly<Record<number, string>> = {
@@ -86,15 +79,12 @@ export function railroadHover(
   if (notation === 'railroadAbnf' && (t.kind === T.Repeat || t.kind === T.ExactRepeat)) {
     return { range: t.range, contents: repeatHover(text.slice(t.range.start, t.range.end)) };
   }
-  let range: Range = t.range;
   // A statement token holds its text too: only the keyword is hovered.
-  const word = STATEMENT_WORDS[t.kind];
-  if (word !== undefined) {
-    const start = range.start + text.slice(range.start, range.end).indexOf(word);
-    range = span(start, start + word.length);
-  }
-  if (at.offset < range.start || at.offset > range.end) return undefined;
-  const docText = NOTATION_DOCS[notation][t.kind];
-  if (docText === undefined) return undefined;
-  return { range, contents: `**${code(text.slice(range.start, range.end))}**\n\n${docText}` };
+  return keywordHover(
+    text,
+    at.offset,
+    t.range,
+    STATEMENT_WORDS[t.kind],
+    NOTATION_DOCS[notation][t.kind]
+  );
 }

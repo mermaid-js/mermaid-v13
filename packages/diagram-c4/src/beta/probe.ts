@@ -55,8 +55,8 @@ export const AFTER_LABEL_LIST = [T.String, T.Tag, ...END];
 export const AFTER_RELATION_LIST = [T.Tag, ...END];
 export const DIRECTION_LIST = [T.Tb, T.Bt, T.Lr, T.Rl];
 export const LEGEND_LIST = [T.On, T.Off];
-/** A style entry's value: a colour, or a word. */
-export const VALUE_LIST = [T.Hex, T.Id];
+/** A style entry's value: a hex colour, a colour function, or a word. */
+export const VALUE_LIST = [T.Hex, T.ColorFunction, T.Id];
 /** After a style entry: another one, or the line's end. */
 export const AFTER_ENTRY_LIST = [T.Comma, ...END];
 

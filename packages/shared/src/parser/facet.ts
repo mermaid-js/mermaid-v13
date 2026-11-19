@@ -14,6 +14,7 @@ import type {
   SymbolOccurrence,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
+import { isBlank } from '@mermaid-js/core/parser-kit';
 
 export const span = (start: number, end: number): Range => ({ start, end });
 
@@ -169,11 +170,21 @@ export function lineAfter(text: string, at: number, unicode = false): string {
   return text.slice(at, end);
 }
 
-/** Whether only spaces and tabs are between `at` and the start of its line. */
-export function atLineStart(text: string, at: number): boolean {
-  let i = at;
-  while (i > 0 && (text.charAt(i - 1) === ' ' || text.charAt(i - 1) === '\t')) i--;
-  return i === 0 || text.charAt(i - 1) === '\n' || text.charAt(i - 1) === '\r';
+/**
+ * Whether only blanks are between `at` and the start of its line (LF or CR ends a line). A
+ * blank is a space or a tab, or what `blank` takes (railroad's `isSpace`, any `\s`).
+ */
+export function atLineStart(
+  text: string,
+  at: number,
+  blank: (code: number) => boolean = isBlank
+): boolean {
+  for (let i = at - 1; i >= 0; i--) {
+    const c = text.charAt(i);
+    if (c === '\n' || c === '\r') return true;
+    if (!blank(text.charCodeAt(i))) return false;
+  }
+  return true;
 }
 
 /** As {@link atLineStart} over any blank, where `opener` (`{`, `;`) starts a statement too. */

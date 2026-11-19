@@ -4,8 +4,9 @@
  * model's `notation`). Keyword docs are not written here: they come from the grammar files
  * (`generated/*.docs.ts`).
  */
-import { inKindSet, isSpace } from '@mermaid-js/core/parser-kit';
-import type { ParseResult, Range, TokenCategory, TokenStream } from '@mermaid-js/core/parser-kit';
+import { inKindSet } from '@mermaid-js/core/parser-kit';
+import type { ParseResult, Range, TokenCategory } from '@mermaid-js/core/parser-kit';
+import { lineAfter, span } from '@mermaid-js/shared/parser/facet';
 import { railroadCategories } from '../generated/categories.ts';
 import { railroadDocs } from '../generated/docs.ts';
 import { railroadAbnfCategories } from '../generated/railroad-abnf.categories.ts';
@@ -79,7 +80,7 @@ export function ruleDefinitions(
     const start = s.range.start;
     const def: RuleDefinition = rule
       ? { range: rule.range, parsed: true }
-      : { range: span(start, start + restOfLine(text, start).length), parsed: false };
+      : { range: span(start, start + lineAfter(text, start).length), parsed: false };
     const list = out.get(s.name);
     if (list) list.push(def);
     else out.set(s.name, [def]);
@@ -97,50 +98,8 @@ export function block(text: string): string {
 /** Whether a token of `kind` is trivia: a blank, comment, directive or YAML block. */
 export const isTrivia = (kind: number): boolean => inKindSet(RAILROAD_TRIVIA, kind);
 
-/** Whether only blanks come before `at` on its line. */
-export function atLineStart(text: string, at: number): boolean {
-  let i = at;
-  while (i > 0 && text.charAt(i - 1) !== '\n' && text.charAt(i - 1) !== '\r') {
-    if (!isSpace(text.charCodeAt(i - 1))) return false;
-    i--;
-  }
-  return true;
-}
-
-/** Index of the last token of `tokens` starting at or before `offset`, or -1. */
-export function tokenBefore(tokens: TokenStream, offset: number): number {
-  let lo = 0;
-  let hi = tokens.length - 1;
-  let found = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if ((tokens.start[mid] ?? 0) <= offset) {
-      found = mid;
-      lo = mid + 1;
-    } else hi = mid - 1;
-  }
-  return found;
-}
-
-/** Markdown inline code holding `text` as written, whatever backticks it has. */
-export function code(text: string): string {
-  const runs = text.match(/`+/g) ?? [];
-  const fence = '`'.repeat(Math.max(0, ...runs.map((r) => r.length)) + 1);
-  const pad = text.startsWith('`') || text.endsWith('`') || text === '' ? ' ' : '';
-  return `${fence}${pad}${text}${pad}${fence}`;
-}
-
-export const span = (start: number, end: number): Range => ({ start, end });
-
 /** The rule's first line: from its start to its line's end or its own end, if sooner. */
 export function ruleFirstLine(text: string, rule: { readonly range: Range }): string {
-  const line = restOfLine(text, rule.range.start);
+  const line = lineAfter(text, rule.range.start);
   return line.slice(0, rule.range.end - rule.range.start).trimEnd();
-}
-
-/** The line of `text` that holds `at`, from `at` to its end (no line break). */
-export function restOfLine(text: string, at: number): string {
-  let end = at;
-  while (end < text.length && text[end] !== '\n' && text[end] !== '\r') end++;
-  return text.slice(at, end);
 }

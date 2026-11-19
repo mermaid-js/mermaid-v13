@@ -35,15 +35,22 @@ function call(
       let text = '';
       res.setEncoding('utf8');
       res.on('data', (chunk: string) => (text += chunk));
-      res.on('end', () =>
-        resolve({
-          status: res.statusCode ?? 0,
-          type: String(res.headers['content-type'] ?? ''),
-          body: text,
-          headers: res.headers,
-        })
+      res.on(
+        'end',
+        () =>
+          void sent.then(() =>
+            resolve({
+              status: res.statusCode ?? 0,
+              type: String(res.headers['content-type'] ?? ''),
+              body: text,
+              headers: res.headers,
+            })
+          )
       );
     });
+    // A reply counts once the whole body was sent too: a 413 arrives while the client is
+    // still writing, and the server must let it finish (#830).
+    const sent = new Promise<void>((done) => req.on('finish', done));
     req.on('error', reject);
     req.end(body);
   });
