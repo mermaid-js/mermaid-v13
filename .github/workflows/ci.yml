@@ -162,7 +162,7 @@ jobs:
     # thresholds. Findings the base already has are reported, not failed. Two kinds only warn:
     # D640: it runs no tests and reads no coverage, so fallow only estimates CRAP scores, and
     # .fallowrc.pr.json makes CRAP findings warnings; exact CRAP, from the full unit suite's
-    # coverage, gates in the nightly run (fallow-nightly.yml). D652: new duplication warns,
+    # coverage, gates in the nightly run (fallow-nightly.yml). D664: new duplication warns,
     # because fallow 3.41's audit has no setting that fails on an introduced clone group; the
     # nightly fails on it, so a deliberate clone goes into .fallow-baseline/dupes.json in its PR.
     name: Structural audit

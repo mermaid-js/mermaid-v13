@@ -53,24 +53,7 @@ v13 closes the gap on **size, speed, theming and security** while keeping Mermai
 - Pixel parity with v12.
 - zenuml: it renders HTML through `@zenuml/core`. v13 reports `UNSUPPORTED_DIAGRAM` for it (D317).
 
-**Glossary:**
-
-- **Core:** the `packages/core` pipeline.
-- **Diagram package:** one diagram type, such as `@mermaid-js/diagram-flowchart`.
-- **Oracle:** `mermaid@12`, used in tests to decide what counts as correct syntax.
-- **Corpus:** the test diagrams (§21).
-- **Integrator:** an app embedding Mermaid.
-- **Author:** a person writing diagram text.
-- **Cell:** one character position in text output; the unit of ASCII layout (one column wide, one row high; wide characters take two).
-- **Unit profile (`UnitProfile`):** the injected table of every length constant layout uses (paddings, spacing, label patch, head room, track pitches, turn threshold). `px` for SVG, `cell` for ASCII. Layout depends on the measurer and the unit profile, never on a backend (R-ARCH-3).
-- **Grid quantum:** `LayoutGraph.grid`; when set, the engine places boxes, ports and tracks on whole multiples of it (1 for ASCII).
-- **Text-grid kit:** `@mermaid-js/core/ascii`: the character canvas, glyph sets, junction merging, cell measurer and repair router that diagram `ascii` hooks draw with.
-- **Glyph set:** the characters one charset uses for lines, corners, junctions and arrowheads (`unicode` or `ascii`).
-- **Repair router:** the cell-space A\* that re-routes only edge segments that collide after snapping.
-- **Upstream golden:** a mermaid-ascii fixture's expected output, kept beside v13's own golden and checked structurally only.
-- **Language service:** `@mermaid-js/language-service`, the pure, editor-agnostic engine behind the editor adapters and the LSP server (§20).
-- **Language facet:** what a diagram package exports from its `./language` subpath so the language service can support that type: parser entry, token kind → category table, completion table, hover docs and symbol namespace rules (R-LANG-8).
-- **Probe:** a parse run with `probe: offset`, which records the token kinds the parser would accept at that offset, the lexer mode and the typed prefix; it drives completion (R-LANG-7).
+**Glossary:** [GLOSSARY.md](GLOSSARY.md).
 
 ## 4. How to read the requirements
 
@@ -119,7 +102,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 
 | ID | Requirement | Pri | MS | Src | Acceptance |
 | --- | --- | --- | --- | --- | --- |
-| R-PERF-1 | Core + flowchart, as loaded for a flowchart render, is ≤ 147 KB gzip (D160, D311, D312, D553, D567, D559, D583, D600; was 80 KB, then 120 KB, then 124 KB, then 128 KB, then 133 KB, then 134 KB, then 143 KB, then 145 KB). | Must | M1 | D10, D160, D311, D312, D553, D567, D559, D583, D600 | Bench "Loaded" size, measured after one flowchart render |
+| R-PERF-1 | Core + flowchart, as loaded for a flowchart render, is ≤ 148.75 KB gzip (D160, D311, D312, D553, D567, D559, D583, D600, D651, D653, D660, D661; was 80 KB, then 120 KB, then 124 KB, then 128 KB, then 133 KB, then 134 KB, then 143 KB, then 145 KB, then 147 KB, then 148 KB, then 148.125 KB, then 148.375 KB). | Must | M1 | D10, D160, D311, D312, D553, D567, D559, D583, D600, D651, D653, D660, D661 | Bench "Loaded" size, measured after one flowchart render |
 | R-PERF-2 | Core and every first-party diagram package have **zero** runtime npm dependencies. | Must | M1 | D10 | CI check on `dependencies` of published packages |
 | R-PERF-3 | Warm render is ≥ 50× faster than frozen `mermaid@12.2.0` with dagre, as a geomean over the corpus. | Must | M1 | D10, D45, D150 | Approaches harness geomean, reported in CI and enforced on a local run (D150); current v12 also reported |
 | R-PERF-4 | 100% of the flowchart corpus renders without error, including the large and huge tiers. | Must | M1 | D10 | Harness OK count = corpus size |

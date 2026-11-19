@@ -12,7 +12,8 @@ The pipeline is `text → preprocess → detect → parse → layout → render 
 
 | Need | Where |
 | --- | --- |
-| Requirements, by R-id | [v13/docs/REQUIREMENTS.md](v13/docs/REQUIREMENTS.md). The glossary is in §3. |
+| Requirements, by R-id | [v13/docs/REQUIREMENTS.md](v13/docs/REQUIREMENTS.md) |
+| Domain terms | [v13/docs/GLOSSARY.md](v13/docs/GLOSSARY.md) |
 | How v13 is built | [v13/docs/DESIGN.md](v13/docs/DESIGN.md). Packages are in §2, the plugin contract in §12, testing in §13. |
 | Decisions, by D-id | D1 to D632 are rows in [v13/docs/DECISIONS.md](v13/docs/DECISIONS.md), which is closed. Later ones are one file each in [v13/docs/decisions/](v13/docs/decisions/README.md). A later decision replaces an earlier one. |
 | ADRs | [v13/docs/adr/](v13/docs/adr/) |
@@ -110,6 +111,7 @@ The per-package check does not replace the full gate. Specs that cover every typ
 - Test through the public seam, `createMermaid().render()` or `renderSync()`, unless the area has its own seam (lexer parity, layout invariants).
 - Specs are `*.spec.ts` files beside the source. Do not commit `.only`.
 - A change to rendered output needs a `.mmd` fixture under `e2e/diagrams/<type>/` that shows it. That can be a fixture that already exists. Before you add one, read [Visual tests](#visual-tests). The corpus and the visual baseline find fixtures there. Put test sources in fixtures, not in string lists inside a spec.
+- `packages/conformance/src/yaml-tree.spec.ts` pins the YAML read of each fixture with front matter or shape data, one `<id> <count> <hash16>` line per fixture in `src/__snapshots__/yaml-tree/<folder>.txt`. A new fixture passes unpinned and is listed in the output. It fails when a pinned fixture's read changes or a pinned fixture is gone. Regenerate with `pnpm vitest run packages/conformance/src/yaml-tree.spec.ts -u`; no other run writes the files.
 - A change that differs from v12 on purpose is listed, with its reason, in the type's divergences (`packages/conformance/divergences/`) and in the type's fragment under `v13/docs/migration/`.
 
 ## Visual tests

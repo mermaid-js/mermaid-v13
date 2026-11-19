@@ -11,6 +11,8 @@ import {
   type ExtensionPlugin,
   type RenderResult,
 } from 'mermaid';
+import type { Resource } from '@mermaid-js/core';
+import type { InlineRequest } from '@mermaid-js/core/text';
 import { describe, expect, it, vi } from 'vitest';
 
 const FLOW = 'flowchart LR\n  A["$$x^2$$"] --> B';
@@ -31,6 +33,28 @@ async function api(plugin: ExtensionPlugin) {
 }
 
 const codes = (r: { warnings: readonly { code: string }[] }) => r.warnings.map((w) => w.code);
+
+interface Warned {
+  code: string;
+  message: string;
+}
+
+/** What core hands the provider for one render's span; `standIns` as the render's (D655). */
+function inlineRequest(warnings: Warned[], standIns: readonly Resource[] = []): InlineRequest {
+  return {
+    font: { family: 'sans-serif', size: 16, weight: 400 },
+    measurer: {
+      id: 'x',
+      width: () => 10,
+      metrics: () => ({ ascent: 12, descent: 4, lineHeight: 19 }),
+    },
+    metrics: { ascent: 12, descent: 4, lineHeight: 19 },
+    ex: 8,
+    warn: (w) => void warnings.push(w),
+    scratch: {},
+    standIns,
+  };
+}
 
 function thrown(f: () => unknown): unknown {
   try {
@@ -70,22 +94,31 @@ describe('@mermaid-js/plugin-math', () => {
     // Label text the parse does not hold (so prepare() did not load the engine) reaches the
     // provider directly: the span is shown as written, but not silently.
     const math = await freshMath();
-    const warnings: { code: string; message: string }[] = [];
-    const request = {
-      font: { family: 'sans-serif', size: 16, weight: 400 },
-      measurer: {
-        id: 'x',
-        width: () => 10,
-        metrics: () => ({ ascent: 12, descent: 4, lineHeight: 19 }),
-      },
-      metrics: { ascent: 12, descent: 4, lineHeight: 19 },
-      ex: 8,
-      warn: (w: { code: string; message: string }) => void warnings.push(w),
-      scratch: {},
-    };
-    expect(math.inline![0]!.box('x^2', request)).toBeUndefined();
+    const warnings: Warned[] = [];
+    expect(math.inline![0]!.box('x^2', inlineRequest(warnings))).toBeUndefined();
     expect(warnings.map((w) => w.code)).toEqual(['MATH_NOT_RENDERED']);
     expect(warnings[0]?.message).toContain('preload({ math: true })');
+  });
+
+  it('declines without a warning of its own in a render drawn with placeholders for it', async () => {
+    const math = await freshMath();
+    const warnings: Warned[] = [];
+    const standIns: Resource[] = [{ kind: 'math', name: 'tex' }];
+    expect(math.inline![0]!.box('x^2', inlineRequest(warnings, standIns))).toBeUndefined();
+    expect(warnings).toEqual([]);
+  });
+
+  it('keeps no state from one render to the next (#1027)', async () => {
+    // A render with placeholders makes missing() report the engine. A later render without
+    // stand-ins (the provider called as core calls it) still warns for the span it declines.
+    const math = await freshMath();
+    const a = await api(math);
+    expect(codes(a.renderSync(FLOW, { placeholders: true }))).toEqual(['PLACEHOLDER']);
+    const warnings: Warned[] = [];
+    expect(math.inline![0]!.box('x^2', inlineRequest(warnings))).toBeUndefined();
+    expect(warnings.map((w) => w.code)).toEqual(['MATH_NOT_RENDERED']);
+    // And the first instance's next render still gives only its PLACEHOLDER.
+    expect(codes(a.renderSync(FLOW, { placeholders: true }))).toEqual(['PLACEHOLDER']);
   });
 
   it('does not load the engine for a diagram without a $$…$$ pair', async () => {

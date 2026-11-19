@@ -177,6 +177,8 @@ class StateParser extends StateCursor {
     const model = this.db.build(items, []);
     undrawnNotices(this.st.diagnostics, model, this.declared, this.clicks);
     model.warnings = warnings();
+    const title = this.pre.frontMatter?.title;
+    if (title) model.title = title;
     const ast: StateDocument = {
       id: 'doc',
       type: 'Document',

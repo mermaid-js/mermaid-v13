@@ -7,7 +7,7 @@ name: Nightly structure
 # is the job summary and a SARIF artifact. (Code scanning upload needs GitHub Advanced Security
 # on this private repository, so the SARIF stays an artifact.) Also runs on demand.
 #
-# #911 (D652): when the fallow step fails on mermaid-v13 (on the schedule or by hand), one open
+# #911 (D664): when the fallow step fails on mermaid-v13 (on the schedule or by hand), one open
 # `nightly-fallow` issue gets the run link and the report (opened when there is none). A later
 # green run comments on that issue and closes it. The issue job checks out and runs no
 # repository code.

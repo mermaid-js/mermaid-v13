@@ -539,6 +539,11 @@ export class Registry {
     return (this.order = out);
   }
 
+  /** The v12 type of every registered entry, in detection order. */
+  types(): string[] {
+    return this.detectionOrder().map((e) => e.type);
+  }
+
   /** The diagram type of `src`, or throws `MermaidError` (v12 order; first match wins). */
   detect(src: string, pre: PreprocessResult, config?: Readonly<Record<string, unknown>>): Detected {
     const start = diagramStart(src, pre);

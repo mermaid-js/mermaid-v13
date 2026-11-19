@@ -19,7 +19,13 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { cls, openSvgRoot, textElement } from '@mermaid-js/shared/svg/document';
+import {
+  cls,
+  openSvgRoot,
+  textElement,
+  placeTitle,
+  titledViewBox,
+} from '@mermaid-js/shared/svg/document';
 import type {
   StateEdgeView,
   StateGroupView,
@@ -206,7 +212,16 @@ export function renderState(
     paint: paints(ctx.theme, model, s),
     warn: (warning) => ctx.warn(warning),
   };
-  openRoot(scene, model);
+  // v12's `statediagramTitleText`: 18 px in `textColor`, `titleTopMargin` above the drawing (D652).
+  const title = placeTitle(
+    model.title,
+    layout.width,
+    ctx.config.state?.titleTopMargin ?? 25,
+    ctx,
+    18
+  );
+  const ink = title && ctx.theme.color('textColor');
+  openRoot(scene, model, titledViewBox(layout, title, 8));
   drawClusters(scene);
   w.open('g', {
     class: 'edgePaths',
@@ -225,15 +240,25 @@ export function renderState(
   w.open('g', { class: 'nodes', fill: scene.paint.text });
   for (const view of s.nodes) drawNode(scene, view, view.state && links.get(view.state.id));
   w.close();
+  if (title && ink)
+    w.label(title.label, title.x, title.y, {
+      class: 'statediagramTitleText',
+      fill: ink,
+      'font-size': 18,
+    });
   w.close();
 }
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
-function openRoot({ w, layout, ctx, paint }: Scene, model: StateModel): void {
+function openRoot(
+  { w, ctx, paint }: Scene,
+  model: StateModel,
+  viewBox: ReturnType<typeof titledViewBox>
+): void {
   openSvgRoot(w, ctx, {
     name: 'state statediagram',
     roleDescription: 'stateDiagram',
-    viewBox: { width: layout.width, height: layout.height },
+    viewBox,
     maxWidth: ctx.config.state?.useMaxWidth !== false,
     title: model.accTitle,
     desc: model.accDescr,

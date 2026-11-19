@@ -14,7 +14,13 @@ import {
   type SvgWriter,
 } from '@mermaid-js/core/svg';
 import { pxProfile } from '@mermaid-js/core/layout';
-import { cls, openSvgRoot, paletteSlots } from '@mermaid-js/shared/svg/document';
+import {
+  cls,
+  openSvgRoot,
+  paletteSlots,
+  titleAt,
+  titledViewBox,
+} from '@mermaid-js/shared/svg/document';
 import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import { routePath } from '@mermaid-js/shared/svg/route';
 import type { RequirementRenderContext } from '../layout/context.ts';
@@ -103,41 +109,6 @@ interface Scene {
   readonly paint: Paints;
 }
 
-/** The drawing's box: the layout's, grown for the title above it (v12 `insertTitle`). */
-interface Frame {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-  /** The title's centre. */
-  readonly title?: { readonly x: number; readonly y: number };
-}
-
-/**
- * v12 writes the title centred over the drawing with its baseline `titleTopMargin` (25) above
- * the layout's origin, so 33 above the boxes' top, then fits the viewBox to everything with 8
- * around it (`setupViewPortForSVG`).
- */
-function frameOf(layout: RequirementLayout, p: RequirementPrepared): Frame {
-  const width = Math.max(1, layout.width);
-  const height = Math.max(1, layout.height);
-  const t = p.title;
-  if (!t) return { x: 0, y: 0, width, height };
-  const cx = layout.width / 2;
-  const top = -M.titleMargin - t.baseline;
-  const pad = M.viewBoxPadding;
-  const x0 = Math.min(0, cx - t.width / 2 - pad);
-  const x1 = Math.max(width, cx + t.width / 2 + pad);
-  const y0 = Math.min(0, top - pad);
-  return {
-    x: x0,
-    y: y0,
-    width: x1 - x0,
-    height: height - y0,
-    title: { x: cx, y: top + t.height / 2 },
-  };
-}
-
 /** Writes the whole `<svg>` document for a laid-out requirement diagram. */
 export function renderRequirement(
   model: RequirementModel,
@@ -147,8 +118,11 @@ export function renderRequirement(
 ): void {
   const p = layout.requirement ?? prepareRequirement(model, ctx);
   const scene: Scene = { w, layout, p, ctx, paint: paints(ctx.theme, p) };
-  const frame = frameOf(layout, p);
-  openRoot(scene, model, frame);
+  // v12 writes the title centred over the drawing with its baseline `titleTopMargin` (25) above
+  // the layout's origin, so 33 above the boxes' top, then fits the viewBox to everything with 8
+  // around it (`setupViewPortForSVG`; D218, D652).
+  const title = p.title && titleAt(p.title, layout.width, M.titleMargin);
+  openRoot(scene, model, titledViewBox(layout, title, M.viewBoxPadding));
   w.open('g', { class: 'edgePaths', fill: 'none' });
   for (const r of p.relations) drawRelation(scene, r);
   w.close();
@@ -158,8 +132,8 @@ export function renderRequirement(
   w.open('g', { class: 'nodes', fill: scene.paint.box.text });
   for (const box of p.boxes) drawBox(scene, box);
   w.close();
-  if (p.title && frame.title) {
-    w.label(p.title, frame.title.x, frame.title.y, {
+  if (title) {
+    w.label(title.label, title.x, title.y, {
       class: 'requirementDiagramTitleText',
       fill: scene.paint.title,
     });
@@ -168,17 +142,15 @@ export function renderRequirement(
 }
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
-function openRoot({ w, ctx, paint }: Scene, model: RequirementModel, frame: Frame): void {
-  const { config } = ctx;
-  const x = Math.floor(frame.x);
-  const y = Math.floor(frame.y);
-  const width = Math.max(1, Math.ceil(frame.x + frame.width) - x);
-  const height = Math.max(1, Math.ceil(frame.y + frame.height) - y);
-  const maxWidth = config.requirement?.useMaxWidth !== false;
+function openRoot(
+  { w, ctx, paint }: Scene,
+  model: RequirementModel,
+  viewBox: ReturnType<typeof titledViewBox>
+): void {
   openSvgRoot(w, ctx, {
     name: 'requirement requirementDiagram',
-    viewBox: [x, y, width, height],
-    maxWidth,
+    viewBox,
+    maxWidth: ctx.config.requirement?.useMaxWidth !== false,
     title: model.accTitle,
     desc: model.accDescr,
     attrs: {
