@@ -16,13 +16,14 @@
  *     pane   → parent  { type: 'ready' }
  *     parent → pane    { type: 'load', bundle: { kind: 'dev' | 'npm', url, label } }
  *     pane   → parent  { type: 'loaded' }
- *     parent → pane    { type: 'render', text, config, background, requestId }
- *     pane   → parent  { type: 'rendered', svg, width, height, ms, requestId }
+ *     parent → pane    { type: 'render', text, config, background, runs, requestId }
+ *     pane   → parent  { type: 'rendered', svg, width, height, times, requestId }
  *     pane   → parent  { type: 'error', message, requestId }   (requestId null: load failed)
  *     parent → pane    { type: 'overlay', dataUrl }             (the diff mask, or null)
  *
- * `ms` is how long the mermaid `render()` call took. A pane's first render is preceded by an
- * untimed warm-up render, so lazy chunk loads and first-run compilation don't count.
+ * `times` holds how long each of the `runs` timed mermaid `render()` calls took, each with a
+ * fresh id (#358); the tab shows their median. A pane's first render is preceded by an untimed
+ * warm-up render, so lazy chunk loads and first-run compilation don't count.
  */
 import type * as DevBundleModule from './mermaid.ts';
 
@@ -40,6 +41,8 @@ export type ParentMessage =
       readonly text: string;
       readonly config: Record<string, unknown>;
       readonly background: string;
+      /** How many timed renders to make (at least one). */
+      readonly runs: number;
       readonly requestId: number;
     }
   | { readonly type: 'overlay'; readonly dataUrl: string | null };
@@ -52,8 +55,8 @@ export type PaneMessage =
       readonly svg: string;
       readonly width: number;
       readonly height: number;
-      /** The `render()` call's duration. */
-      readonly ms: number;
+      /** Each timed `render()` call's duration, in order. */
+      readonly times: readonly number[];
       readonly requestId: number;
     }
   | { readonly type: 'error'; readonly message: string; readonly requestId: number | null };
@@ -161,11 +164,18 @@ function start(): void {
       await draw(warmUp, m.text, m.config).catch(() => undefined);
       cleanUp(warmUp);
     }
-    const id = `compare-${++count}`;
+    let id = '';
     try {
-      const t0 = performance.now();
-      const svg = await draw(id, m.text, m.config);
-      const ms = performance.now() - t0;
+      const times: number[] = [];
+      let svg = '';
+      for (let run = 0; run < Math.max(1, m.runs); run++) {
+        // A fresh id per run, so no render reuses another's state.
+        if (id) cleanUp(id);
+        id = `compare-${++count}`;
+        const t0 = performance.now();
+        svg = await draw(id, m.text, m.config);
+        times.push(performance.now() - t0);
+      }
       if (typeof svg !== 'string' || !svg.includes('<svg')) {
         throw new Error('render() did not return an SVG');
       }
@@ -184,7 +194,7 @@ function start(): void {
         svg: new XMLSerializer().serializeToString(el),
         width,
         height,
-        ms,
+        times,
         requestId: m.requestId,
       });
     } catch (e) {
@@ -193,7 +203,7 @@ function start(): void {
       show(`Render error (${label}):\n${message}`, true);
       post({ type: 'error', message, requestId: m.requestId });
     } finally {
-      cleanUp(id);
+      if (id) cleanUp(id);
     }
   }
 
