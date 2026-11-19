@@ -107,9 +107,13 @@ export class Colours {
     return parseColor(this.ctx.theme.value(name));
   }
 
-  /** `value` if the colour check allows it; else undefined, and `where` noted when one was given. */
+  /**
+   * `value` if the colour check allows it; else undefined, and `where` noted when one was given.
+   * An empty value is not given: v12 reads an empty positional slot (`UpdateElementStyle(a,,,…)`)
+   * as "the default", so it draws the default with no warning (#774).
+   */
   checked(value: unknown, where: string, ast?: string): Paint | undefined {
-    if (value === undefined) return undefined;
+    if (value === undefined || value === '') return undefined;
     const colour = typeof value === 'string' ? checkColor(value) : undefined;
     const given = JSON.stringify(value);
     if (colour === undefined && !this.dropped.some((d) => d.where === where && d.value === given))
