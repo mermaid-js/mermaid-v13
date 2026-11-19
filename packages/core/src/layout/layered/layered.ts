@@ -114,7 +114,10 @@ export interface LayeredResult {
   declared?: number;
 }
 
-/** The fields of {@link LNode} and {@link LEdge} that `layered` reads. The others are its output. */
+/**
+ * The fields of {@link LNode} and {@link LEdge} that `layered` reads. The others are its output.
+ * `layoutInputs` reads these fields itself, in this order; inputs.spec.ts holds the two to each other.
+ */
 export const NODE_INPUTS = [
   'w',
   'h',
@@ -140,9 +143,23 @@ export const EDGE_INPUTS = [
 
 /** Every input `layered` reads from `nodes` and `edges`. Equal inputs and options give equal layouts. */
 export function layoutInputs(nodes: readonly LNode[], edges: readonly LEdge[]): number[] {
+  // The fields of NODE_INPUTS and EDGE_INPUTS, in that order, read directly (inputs.spec.ts).
   const inputs: number[] = [];
-  for (const n of nodes) for (const f of NODE_INPUTS) inputs.push(n[f]);
-  for (const e of edges) for (const f of EDGE_INPUTS) inputs.push(+e[f]);
+  for (const n of nodes) inputs.push(n.w, n.h, n.kind, n.pin, n.hint, n.key, n.span);
+  for (const e of edges)
+    inputs.push(
+      e.tail,
+      e.head,
+      e.minlen,
+      e.labelW,
+      e.labelH,
+      e.tailDx,
+      e.headDx,
+      +e.tailFixed,
+      +e.headFixed,
+      e.tailEnd,
+      e.headEnd
+    );
   return inputs;
 }
 
