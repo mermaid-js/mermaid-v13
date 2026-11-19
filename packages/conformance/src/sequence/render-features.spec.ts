@@ -20,6 +20,14 @@ const render = async (body: string, config = ''): Promise<string> => {
   const head = config ? `---\nconfig:\n${config}\n---\n` : '';
   return (await api.render('s', `${head}sequenceDiagram\n${body}`)).svg;
 };
+/** A sequence fixture's SVG (`e2e/diagrams/sequence/nightly-check`). */
+const fixtureSvg = async (name: string): Promise<string> =>
+  (
+    await api.render(
+      's',
+      readFileSync(join(REPO_ROOT, 'e2e/diagrams/sequence/nightly-check', name), 'utf8')
+    )
+  ).svg;
 const count = (svg: string, re: RegExp): number => svg.match(new RegExp(re, 'g'))?.length ?? 0;
 /** The opening tag of the first element whose attributes match `re`. */
 const tag = (svg: string, re: RegExp): string =>
@@ -121,6 +129,25 @@ describe('notes, frames, activations, rects and boxes', () => {
     const result = await api.render('s', 'sequenceDiagram\nrect url(x)\nA->>B: x\nend');
     expect(result.warnings.map((w) => w.code)).toContain('STYLE_VALUE_DROPPED');
     expect(result.svg).not.toContain('url(x)');
+    expect(tag(result.svg, /class="rect"/)).toContain('fill="var(--_rcb)"');
+  });
+
+  it('fills a colourless rect with rectBkgColor, with no stroke and no shadow, as v12 (#774)', async () => {
+    const svg = await fixtureSvg('should-render-sequence-rect-with-rectbkgcolor-override.mmd');
+    expect(svg).toContain('--_rcb:var(--mermaid-rectBkgColor,#ff00ff)');
+    const [plain, coloured] = svg.match(/<rect class="rect"[^>]*>/g) ?? [];
+    expect(plain).toContain('fill="var(--_rcb)"');
+    expect(coloured).toContain('fill="rgb(191, 223, 255)"');
+    for (const r of [plain, coloured]) expect(r).not.toMatch(/ (stroke|filter)=/);
+  });
+
+  it("takes the default theme's tertiaryColor for a colourless rect, as v12 (#774)", async () => {
+    const svg = await fixtureSvg(
+      'should-render-sequence-rect-with-theme-aware-default-background-default-theme.mmd'
+    );
+    expect(tag(svg, /class="rect"/)).toContain('fill="var(--_rcb)"');
+    expect(svg).toContain('--_rcb:var(--mermaid-rectBkgColor,var(--_t))');
+    expect(svg).toContain('--_t:var(--mermaid-tertiaryColor,#f9ffec)');
   });
 });
 
