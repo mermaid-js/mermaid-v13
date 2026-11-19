@@ -42,7 +42,7 @@
   9:1-9:6 "style"
   | **`style`**
   |
-  | `style store shape:cylinder, fill:#1f2937`: the target is a tag or an element kind.
+  | `style store shape:cylinder, fill:#1f2937`: the target is a tag or an element kind. A colour that is a word must be a CSS colour name or `currentColor`, or it is dropped with a warning; a line with a value the lexer cannot read, such as `#12`, is dropped with a warning, not an error.
 @ 9:16  style store sha|pe:cylinder, fill:#fff
   9:13-9:18 "shape"
   | **`shape`**
