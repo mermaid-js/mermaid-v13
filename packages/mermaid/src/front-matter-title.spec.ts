@@ -1,0 +1,112 @@
+// The front-matter title is drawn above flowchart, class, state and ER diagrams as v12's
+// `insertTitle` placed it, and where sequence's in-text `title` goes (#753, D652).
+import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
+import { createMermaid } from './index.ts';
+import { corpusLabels } from './testing/labels.ts';
+
+const { fixture } = corpusLabels(readFileSync);
+
+const CASES = [
+  {
+    path: 'flowchart/nightly-check/dagre/06-should-render-a-flowchart-with-title.mmd',
+    section: 'flowchart',
+    cls: 'flowchartTitleText',
+    text: 'Test Title',
+    size: '18',
+  },
+  {
+    path: 'class-diagram/nightly-check/front-matter-title.mmd',
+    section: 'class',
+    cls: 'classDiagramTitleText',
+    text: 'A class diagram title wider than the drawing',
+    size: undefined,
+  },
+  {
+    path: 'state-diagram-v2/nightly-check/1433-should-render-a-simple-state-diagram-with-a-title.mmd',
+    section: 'state',
+    cls: 'statediagramTitleText',
+    text: 'simple',
+    size: '18',
+  },
+  {
+    path: 'er-diagram/baseline/accessibility.mmd',
+    section: 'er',
+    cls: 'erDiagramTitleText',
+    text: 'Library',
+    size: undefined,
+  },
+] as const;
+
+async function render(path: string, config: Record<string, unknown> = {}) {
+  const m = createMermaid();
+  m.initialize({ deterministic: true, ...config });
+  return m.render('t', fixture(path));
+}
+
+/** The attributes of the one `<text>` with class `cls`, and the viewBox. */
+function titleOf(svg: string, cls: string) {
+  const tags = [...svg.matchAll(new RegExp(`<text class="${cls}"([^>]*)>([^<]*)</text>`, 'g'))];
+  expect(tags).toHaveLength(1);
+  const attrs = tags[0]![1]!;
+  const attr = (name: string) => new RegExp(` ${name}="([^"]*)"`).exec(attrs)?.[1];
+  const [vx, vy, vw] = (/viewBox="([^"]*)"/.exec(svg)?.[1] ?? '').split(' ').map(Number);
+  return {
+    text: tags[0]![2],
+    x: Number(attr('x')),
+    y: Number(attr('y')),
+    size: attr('font-size'),
+    viewBox: { x: vx!, y: vy!, width: vw! },
+  };
+}
+
+describe('the front-matter title in flowchart, class, state and ER (#753, D652)', () => {
+  it.each(CASES)('$section draws it as $cls, its baseline titleTopMargin above', async (c) => {
+    const { svg, warnings } = await render(c.path);
+    expect(warnings).toEqual([]);
+    const t = titleOf(svg, c.cls);
+    expect(t.text).toBe(c.text);
+    expect(t.size).toBe(c.size);
+    // v12: `y = -titleTopMargin` (default 25), centred, inside a viewBox grown to hold it.
+    expect(t.y).toBe(-25);
+    expect(t.viewBox.y).toBeLessThan(-25 - 10);
+    expect(t.x).toBeGreaterThan(t.viewBox.x);
+    expect(t.x).toBeLessThan(t.viewBox.x + t.viewBox.width);
+  });
+
+  it.each(CASES)('$section honours $section.titleTopMargin', async (c) => {
+    const { svg } = await render(c.path, { [c.section]: { titleTopMargin: 60 } });
+    expect(titleOf(svg, c.cls).y).toBe(-60);
+  });
+
+  it('grows the viewBox on both sides for a title wider than the drawing', async () => {
+    const t = titleOf((await render(CASES[1].path)).svg, CASES[1].cls);
+    expect(t.viewBox.x).toBeLessThan(0);
+    expect(t.x - t.viewBox.x).toBeCloseTo(t.viewBox.width / 2, 0);
+  });
+
+  it('does not name the diagram: the accessible name stays accTitle (D133)', async () => {
+    const { svg } = await render(CASES[3].path);
+    expect(svg).toContain('<title id="t-title">Library schema</title>');
+  });
+});
+
+describe('the front-matter title in sequence (#753, D218, D652)', () => {
+  it('is drawn as the in-text title when the text has none', async () => {
+    const path = 'sequence/nightly-check/front-matter-title.mmd';
+    const { svg, warnings } = await render(path);
+    expect(warnings).toEqual([]);
+    const stated = fixture(path).replace(
+      'sequenceDiagram\n',
+      'sequenceDiagram\n  title Checkout\n'
+    );
+    expect(svg).toContain('class="sequenceTitle"');
+    expect(svg).toBe((await createMermaidWith(stated)).svg);
+  });
+});
+
+async function createMermaidWith(text: string) {
+  const m = createMermaid();
+  m.initialize({ deterministic: true });
+  return m.render('t', text);
+}

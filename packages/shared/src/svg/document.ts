@@ -1,5 +1,6 @@
 /**
- * The `<svg>` document root and small renderer helpers every diagram shares.
+ * The `<svg>` document root, the front-matter title over it, and small renderer helpers every
+ * diagram shares.
  */
 import {
   checkColor,
@@ -20,6 +21,12 @@ import type {
   ThemeRef,
   Warn,
 } from '@mermaid-js/core/svg';
+import {
+  layoutLabel,
+  type InlineSpans,
+  type MeasuredLabel,
+  type Measurer,
+} from '@mermaid-js/core/text';
 
 /** The part of a render context the root reads. `idPrefix` is read only when an id is written. */
 export interface RootContext {
@@ -209,4 +216,67 @@ export function animateEdge(w: SvgWriter, edge: AnimatedEdge): boolean {
     repeatCount: 'indefinite',
   });
   return true;
+}
+
+// The front-matter `title` over a drawing, as v12's `insertTitle` placed it (D652): centred
+// over the drawing, its baseline `titleTopMargin` above the drawing's top, and the viewBox grown
+// to hold it with the diagram's padding around it. The title is plain text: an inline tag in it
+// is dropped and reported, as core's `tagsOnly` does for every title (D566), here without that
+// file's chunk on the flowchart path (R-PERF-1). It is not the accessible name (D133).
+
+/** A laid-out title and its centre. */
+export interface PlacedTitle {
+  readonly label: MeasuredLabel;
+  readonly x: number;
+  readonly y: number;
+}
+
+/** The part of a render context a title reads. */
+export interface TitleContext {
+  readonly theme: { value(name: 'fontFamily'): string };
+  readonly measurer: Measurer;
+  readonly inline?: InlineSpans | undefined;
+}
+
+/**
+ * `text` laid out in the theme's font family at `size` px, centred over
+ * a drawing `width` wide whose top is at 0, its baseline `topMargin` above it. Undefined for a
+ * missing or blank title.
+ */
+export function placeTitle(
+  text: string | undefined,
+  width: number,
+  topMargin: number,
+  ctx: TitleContext,
+  size: number
+): PlacedTitle | undefined {
+  const t = text?.trim();
+  if (!t) return undefined;
+  const font = { family: ctx.theme.value('fontFamily'), size, weight: 400 };
+  const label = layoutLabel(t, font, Infinity, ctx.measurer, {
+    inline: ctx.inline && { ...ctx.inline, extract: () => undefined },
+  });
+  return titleAt(label, width, topMargin);
+}
+
+/** A title laid out already, centred over a drawing `width` wide, its baseline `topMargin` above. */
+export function titleAt(label: MeasuredLabel, width: number, topMargin: number): PlacedTitle {
+  return { label, x: width / 2, y: label.height / 2 - topMargin - label.baseline };
+}
+
+/**
+ * The viewBox of a drawing `box` from the origin, grown to hold `title` with `pad` around it:
+ * `[x, y, width, height]` in whole pixels. The box itself without a title.
+ */
+export function titledViewBox(
+  box: Bounds,
+  title: PlacedTitle | undefined,
+  pad: number
+): Bounds | readonly [number, number, number, number] {
+  if (!title) return { width: box.width, height: box.height };
+  const half = title.label.width / 2;
+  const x0 = Math.floor(Math.min(0, title.x - half - pad));
+  const y0 = Math.floor(Math.min(0, title.y - title.label.height / 2 - pad));
+  const x1 = Math.ceil(Math.max(Math.max(1, Math.ceil(box.width)), title.x + half + pad));
+  return [x0, y0, x1 - x0, Math.max(1, Math.ceil(box.height)) - y0];
 }

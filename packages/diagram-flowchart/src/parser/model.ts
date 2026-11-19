@@ -116,6 +116,8 @@ export interface FlowModel {
   links: FlowLink[];
   /** `click … callback` / `call` statements. Ignored unless a plugin claims `callbacks`. */
   callbacks: FlowCallback[];
+  /** The front-matter `title`, drawn above the diagram (D652); absent when there is none. */
+  title?: string;
   accTitle: string;
   accDescr: string;
   /** Warning diagnostics of the parse (also in `ParseResult.diagnostics`). */
