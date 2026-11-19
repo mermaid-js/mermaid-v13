@@ -20,6 +20,7 @@ import type { LayoutData, Node as MermaidNode } from '../layoutData.ts';
 import { buildLaneModel } from '../lanes.ts';
 import { RoutedSegmentIndex } from './routedSegmentIndex.ts';
 import { ObstacleLines, OpenList, firstPipeNear } from './gridSearch.ts';
+import { PointKeys } from '../pointKeys.ts';
 import { PRECISION, isDiamondShape, isHexagonShape } from '../config.ts';
 
 const EPS = PRECISION.EPSILON;
@@ -240,6 +241,7 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
 
   // v13 (#843): the A* step test reads the boxes by the line it runs on.
   const obstacleLines = new ObstacleLines(obstacles);
+  const gridKeys = new PointKeys(1);
 
   // Helper to find or create pipe
   const getOrAddPipe = (
@@ -1201,7 +1203,8 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
     // Vertices: All intersections of hPipes and vPipes
     // We run A* on these vertices.
 
-    const getKey = (x: number, y: number) => `${x.toFixed(1)},${y.toFixed(1)}`;
+    // v13 (#843): each point's key is made once, for all edges.
+    const getKey = (x: number, y: number) => gridKeys.key(x, y);
     const startKey = getKey(pSrcAnchor.x, pSrcAnchor.y);
     const endKey = getKey(pDstAnchor.x, pDstAnchor.y);
 
