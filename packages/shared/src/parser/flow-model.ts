@@ -337,12 +337,12 @@ export abstract class FlowBuilderBase<
   // ---- classes, clicks and the rest ---------------------------------------------------
 
   addClass(ids: string, styles: string[]): void {
-    const style = styles
-      .join()
-      .replace(/\\,/g, '§§§')
-      .replace(/,/g, ';')
-      .replace(/§§§/g, ',')
-      .split(';');
+    const joined = styles.join();
+    // `\,` is a kept comma (v12 swapped it through `§§§`); without either, split at both.
+    const style =
+      joined.includes('\\,') || joined.includes('§§§')
+        ? joined.replace(/\\,/g, '§§§').replace(/,/g, ';').replace(/§§§/g, ',').split(';')
+        : joined.split(/[,;]/);
     for (const id of ids.split(',')) {
       let def = this.classes.get(id);
       if (def === undefined) {
