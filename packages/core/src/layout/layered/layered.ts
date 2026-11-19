@@ -1145,20 +1145,19 @@ export function rank(nodes: LNode[], edges: LEdge[], step: number): void {
       const v = topo[q]!;
       const ins = inStart[v + 1]! - inStart[v]!;
       const outs = outStart[v + 1]! - outStart[v]!;
-      if (ins === 0 && outs === 0) continue;
-      let lo = -Infinity;
-      let hi = Infinity;
-      for (let k = inStart[v]!; k < inStart[v + 1]!; k++) {
-        const ei = inE[k]!;
-        lo = Math.max(lo, r[from[ei]!]! + len[ei]!);
-      }
-      for (let k = outStart[v]!; k < outStart[v + 1]!; k++) {
-        const ei = outE[k]!;
-        hi = Math.min(hi, r[to[ei]!]! - len[ei]!);
-      }
-      let next = r[v]!;
-      if (outs > ins && hi !== Infinity) next = hi;
-      else if (ins > outs && lo !== -Infinity) next = lo;
+      // Only the side with more edges is read, and it has one at least.
+      if (ins === outs) continue;
+      let next = outs > ins ? Infinity : -Infinity;
+      if (outs > ins)
+        for (let k = outStart[v]!; k < outStart[v + 1]!; k++) {
+          const ei = outE[k]!;
+          next = Math.min(next, r[to[ei]!]! - len[ei]!);
+        }
+      else
+        for (let k = inStart[v]!; k < inStart[v + 1]!; k++) {
+          const ei = inE[k]!;
+          next = Math.max(next, r[from[ei]!]! + len[ei]!);
+        }
       if (next !== r[v]!) {
         r[v] = next;
         changed = true;
