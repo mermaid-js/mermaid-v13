@@ -139,5 +139,8 @@ export interface PreloadRequest {
   math?: boolean;
 }
 
-/** @deprecated v12 compatibility: receives the `MermaidError` of a failed `parse`. */
+/**
+ * @deprecated v12 compatibility: receives the `MermaidError` of a failed `parse()`, `render()` or
+ * `run()` element.
+ */
 export type ParseErrorHandler = (error: MermaidError) => void;

@@ -106,8 +106,12 @@ afterEach(async () => {
 describe('mermaid.min.js', () => {
   it('stubs every method of the API at once', async () => {
     const { stub } = await load((d) => `${d}/dist/mermaid.min.js`);
-    for (const name of Object.keys(createMermaid()))
-      expect(typeof stub[name], name).toBe('function');
+    const api: Record<string, unknown> = createMermaid();
+    const methods = Object.keys(api).filter((name) => typeof api[name] === 'function');
+    expect(methods).toContain('render');
+    for (const name of methods) expect(typeof stub[name], name).toBe('function');
+    // v12's `parseError` is a property: set on the stand-in, it is copied, not replayed.
+    expect(stub.parseError).toBeUndefined();
     expect(() => stub.detectType('flowchart')).toThrow(/needs the module loaded/);
   });
 
