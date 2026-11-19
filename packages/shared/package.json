@@ -134,6 +134,9 @@
     "./testing/layout-invariants": {
       "mermaid-source": "./src/testing/layout-invariants.ts"
     },
+    "./testing/parser-reference": {
+      "mermaid-source": "./src/testing/parser-reference.ts"
+    },
     "./testing/render-harness": {
       "mermaid-source": "./src/testing/render-harness.ts"
     },
