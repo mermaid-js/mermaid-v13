@@ -2284,6 +2284,30 @@ export function shortcutRedundantOrthogonalJogs(
   }
 }
 
+/** A candidate reroute of the crossing cleanup, with what its search reads of it. */
+interface Candidate {
+  path: PointLite[];
+  /** The segments of the path without consecutive duplicate points. */
+  rerouted: SegmentLite[];
+  bends: number;
+}
+
+/**
+ * The cleanup's candidates between the sides of two nodes, kept across its calls on one layout
+ * (#843), by the node map the calls share. The key is the two nodes' centres and boxes and the
+ * four outer tracks, written exactly, and that is all the candidates are built from: a node
+ * moved between calls, or other tracks, gives another key. No route holds a candidate's points
+ * (an accepted reroute is a copy), so no later pass can change a kept candidate.
+ */
+const sideCandidatesByLayout = new WeakMap<
+  Map<string, MaterializedNode>,
+  Map<string, Candidate[]>
+>();
+
+/** `values` as a key that tells every number apart, the two zeros too. */
+const exactNumbersKey = (values: readonly number[]): string =>
+  values.map((value) => (Object.is(value, -0) ? '-0' : String(value))).join(',');
+
 export function resolveRenderedOrthogonalCrossings(
   edges: MaterializedEdge[],
   nodeByIdMap: Map<string, MaterializedNode>
@@ -2322,14 +2346,6 @@ export function resolveRenderedOrthogonalCrossings(
     /** Built when a candidate is first tested for shared tracks. */
     conflicts?: TrackConflictIndex<MaterializedEdge>;
     candidates: Map<MaterializedEdge, Candidate[]>;
-  }
-
-  /** A candidate reroute, with what the search for one edge's reroute reads of it. */
-  interface Candidate {
-    path: PointLite[];
-    /** The segments of the path without consecutive duplicate points. */
-    rerouted: SegmentLite[];
-    bends: number;
   }
 
   interface PairCandidate {
@@ -2900,12 +2916,37 @@ export function resolveRenderedOrthogonalCrossings(
 
   // v13 (#687): the candidates between the sides of two nodes depend on the two nodes alone,
   // so they are built once for all rounds and for every edge between the same two nodes.
+  // v13 (#843): and once for both calls on the layout (`sideCandidatesByLayout`).
   const sideCandidates = new Map<NodeInfo, Map<NodeInfo, Candidate[]>>();
+  const builtSideCandidates =
+    sideCandidatesByLayout.get(nodeByIdMap) ?? new Map<string, Candidate[]>();
+  sideCandidatesByLayout.set(nodeByIdMap, builtSideCandidates);
+  const boxOf = ({ cx, cy, rect }: NodeInfo): number[] => [
+    cx,
+    cy,
+    rect.left,
+    rect.top,
+    rect.right,
+    rect.bottom,
+  ];
   const sideCandidatesFor = (srcNode: NodeInfo, dstNode: NodeInfo): Candidate[] => {
     const fromSrc = sideCandidates.get(srcNode) ?? new Map<NodeInfo, Candidate[]>();
     sideCandidates.set(srcNode, fromSrc);
     let candidates = fromSrc.get(dstNode);
-    if (!candidates) {
+    const key = candidates
+      ? ''
+      : exactNumbersKey([
+          ...boxOf(srcNode),
+          ...boxOf(dstNode),
+          activeTracks.top,
+          activeTracks.bottom,
+          activeTracks.left,
+          activeTracks.right,
+        ]);
+    candidates ??= builtSideCandidates.get(key);
+    if (candidates) {
+      fromSrc.set(dstNode, candidates);
+    } else {
       candidates = [];
       for (const srcSide of sides) {
         const srcPort = portForRectSide(srcNode, srcSide);
@@ -2917,6 +2958,7 @@ export function resolveRenderedOrthogonalCrossings(
         }
       }
       fromSrc.set(dstNode, candidates);
+      builtSideCandidates.set(key, candidates);
     }
     return candidates;
   };
