@@ -11,7 +11,8 @@ import {
 } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { ConfigSchema } from './config/schema.ts';
-import { blockBody, MAX_BLOCK_DEPTH } from '@mermaid-js/core/parser-kit';
+import { MAX_BLOCK_DEPTH } from '@mermaid-js/core/parser-kit';
+import { blockBody } from '@mermaid-js/core/parser-kit/embed-body';
 import type { DocumentContext } from './context.ts';
 import type { FacetEntry } from './facets.ts';
 import { firstPartyFacets } from './generated/facets.gen.ts';
