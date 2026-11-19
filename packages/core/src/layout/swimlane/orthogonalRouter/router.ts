@@ -19,6 +19,7 @@
 import type { LayoutData, Node as MermaidNode } from '../layoutData.ts';
 import { buildLaneModel } from '../lanes.ts';
 import { RoutedSegmentIndex } from './routedSegmentIndex.ts';
+import { firstPipeNear } from './gridSearch.ts';
 import { PRECISION, isDiamondShape, isHexagonShape } from '../config.ts';
 
 const EPS = PRECISION.EPSILON;
@@ -1261,6 +1262,10 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
 
     // If no direct path found, use A* (existing logic)
     if (foundPath.length === 0) {
+      // v13 (#843): sorted once per edge. `firstPipeNear` reads them as sorted, so nothing adds
+      // to them during the search: they are read-only from here.
+      const sortedVPipes: readonly Pipe[] = vPipes.sort((a, b) => a.coord - b.coord);
+      const hPipesSorted: readonly Pipe[] = hPipes.sort((a, b) => a.coord - b.coord);
       while (openList.length > 0) {
         openList.sort((a, b) => a.f - b.f);
         const current = openList.shift()!;
@@ -1285,11 +1290,9 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
         const cy = current.pt.y;
 
         // Find adjacent vPipes to cx
-        const sortedVPipes = vPipes.sort((a, b) => a.coord - b.coord);
-        const vIdx = sortedVPipes.findIndex((p) => Math.abs(p.coord - cx) < 1);
+        const vIdx = firstPipeNear(sortedVPipes, cx);
 
-        const hPipesSorted = hPipes.sort((a, b) => a.coord - b.coord);
-        const hIdx = hPipesSorted.findIndex((p) => Math.abs(p.coord - cy) < 1);
+        const hIdx = firstPipeNear(hPipesSorted, cy);
 
         const neighbors: Point[] = [];
 
