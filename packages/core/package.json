@@ -56,7 +56,7 @@
       "types": "./dist/layout/compass/index.d.ts",
       "default": "./dist/layout/compass/index.js"
     },
-    "./font-tables": {
+    "./text/font-tables": {
       "mermaid-source": "./src/text/font-tables.ts",
       "types": "./dist/text/font-tables.d.ts",
       "default": "./dist/text/font-tables.js"

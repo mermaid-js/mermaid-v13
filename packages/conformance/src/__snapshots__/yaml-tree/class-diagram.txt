@@ -233,6 +233,7 @@ e2e/diagrams/class-diagram/nightly-check/handdrawn/should-render-a-simple-class-
 e2e/diagrams/class-diagram/nightly-check/handdrawn/should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look.mmd 1 b2a077d39b3a7af7
 e2e/diagrams/class-diagram/nightly-check/handdrawn/should-render-a-simple-class-diagram-with-the-handdrawn-look.mmd 1 2a7e6f138a0799e3
 e2e/diagrams/class-diagram/nightly-check/has-a-label-with-char-sequence-graph.mmd 1 f43e904d23b3dd06
+e2e/diagrams/class-diagram/nightly-check/line-hops-close-crossings.mmd 1 d4dc40a9a71adf16
 e2e/diagrams/class-diagram/nightly-check/monospace-font-family-issue-759.mmd 1 a674d65df8a22044
 e2e/diagrams/class-diagram/nightly-check/renders-a-class-diagram-with-a-generic-class-in-a-namespace.mmd 1 1396eeed64671094
 e2e/diagrams/class-diagram/nightly-check/renders-a-class-diagram-with-multiple-classes-and-relationships-in-a-namespace.mmd 1 b0720f8225bf2774
@@ -287,7 +288,7 @@ e2e/diagrams/class-diagram/pr-check/dagre-1-1-should-render-a-simple-class-diagr
 e2e/diagrams/class-diagram/pr-check/dagre-1-should-render-a-simple-class-diagram.mmd 1 f8a0bc8c96c62dfa
 e2e/diagrams/class-diagram/pr-check/hd-8-should-render-a-simple-class-diagram-with-generic-class-and-relations.mmd 1 fe800884d51dd531
 e2e/diagrams/class-diagram/pr-check/layout-swimlane-namespaces.mmd 1 88f067ec715edb25
-e2e/diagrams/class-diagram/pr-check/line-hops.mmd 1 3bd16a312f9f5f21
+e2e/diagrams/class-diagram/pr-check/line-hops.mmd 1 f5d33c8f0a902020
 e2e/diagrams/class-diagram/pr-check/math-should-render-tex-in-every-class-label.mmd 1 a2633aa98160f4f2
 e2e/diagrams/class-diagram/visual-check/all-relationships-classic-look-neo-dark-theme.mmd 1 3da1fe371b030a37
 e2e/diagrams/class-diagram/visual-check/all-relationships-classic-look-neo-theme.mmd 1 6f5da1c2ba884300

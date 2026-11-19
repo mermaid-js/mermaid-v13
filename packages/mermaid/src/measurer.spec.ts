@@ -1,4 +1,4 @@
-import { createTableMeasurer } from '@mermaid-js/core/font-tables';
+import { createTableMeasurer } from '@mermaid-js/core/text/font-tables';
 import { Style, type FontKey, type Measurer } from '@mermaid-js/core/text';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

@@ -4,6 +4,8 @@
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import type { HookContext } from '@mermaid-js/core';
+import { checkColor, streamWriter, type Attrs } from '@mermaid-js/core/svg';
 import { createMermaid, type ExtensionPlugin, type Warning } from 'mermaid';
 import { describe, expect, it } from 'vitest';
 import { configFragment } from './generated/config-fragment.ts';
@@ -241,5 +243,50 @@ describe('text output (D305)', () => {
     expect(r.text).toBe(plain.text);
     expect(r.warnings.map((w) => [w.code, w.feature])).toEqual([['ASCII_DROPPED', 'handDrawn']]);
     expect(plain.warnings).toEqual([]);
+  });
+});
+
+describe('the seed belongs to its render (#1027, D655)', () => {
+  const BOX: Attrs = {
+    x: 0,
+    y: 0,
+    width: 80,
+    height: 40,
+    fill: checkColor('#ffffff'),
+    stroke: checkColor('#000000'),
+  };
+  const seeded = (n: number) => front(`  look: handDrawn\n  handDrawnSeed: ${n}`);
+
+  /** The drawer's sketch of `BOX` in the render whose hook context is `ctx`. */
+  function sketch(ctx: HookContext): string {
+    const w = streamWriter();
+    w.open('g');
+    expect(handDrawn.outline!.draw('node', 'rect', BOX, w, ctx)).toBe(true);
+    w.close();
+    return w.finish();
+  }
+
+  it('keeps the seed of each instance, whatever order their calls come in', async () => {
+    const contexts: HookContext[] = [];
+    const spy: ExtensionPlugin = {
+      ...handDrawn,
+      outline: {
+        active: (ctx) => (contexts.push(ctx), handDrawn.outline!.active(ctx)),
+        draw: handDrawn.outline!.draw,
+      },
+    };
+    const one = await api(spy);
+    const two = await api(spy);
+    const alone = (await one.render('a', seeded(1))).svg;
+    expect((await two.render('a', seeded(2))).svg).not.toBe(alone);
+    expect((await one.render('a', seeded(1))).svg).toBe(alone);
+
+    // A second render starting between the first one's `active` and its `draw` (an await, or a
+    // nested render) leaves the first one's sketch as it was.
+    const [first, second] = contexts as [HookContext, HookContext];
+    const own = sketch(first);
+    expect(handDrawn.outline!.active(second)).toBe(true);
+    expect(sketch(first)).toBe(own);
+    expect(sketch(second)).not.toBe(own);
   });
 });

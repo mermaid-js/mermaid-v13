@@ -1,7 +1,7 @@
 /**
  * The event modeling layout's px metrics (spec #527 "Package and contract", pitfall 13): v12's
  * constants (`db.ts:153-175` `diagramProps`, `renderer.ts`), and the few lengths v13 adds for
- * what v12 did not draw (the self relation's loop). No other file in `layout/` writes a length
+ * what v12 did not draw (the self relation's loop, the routes under a row). No other file in `layout/` writes a length
  * literal (`packages/conformance/src/eventmodeling-layout-literals.spec.ts`). Event modeling
  * draws SVG only (D320), so there is no cell table.
  */
@@ -39,13 +39,19 @@ export interface EventModelMetrics {
   readonly headLength: number;
   readonly headWidth: number;
   /**
-   * v13: a self relation's loop over its box's top right corner: it rises this far above the top
-   * (into the lane padding), is this wide, and comes down this far in from the right edge, clear
-   * of the ⅓ and ⅔ anchors of the relations between lanes.
+   * v13 (D659): a self relation's loop under its box's bottom right corner: it drops this far
+   * below the bottom, is this wide, and comes back up this far in from the right edge, clear of
+   * the ⅓ and ⅔ anchors of the relations between lanes. Each leg is at least twice the head.
    */
-  readonly selfLoopRise: number;
+  readonly selfLoopDepth: number;
   readonly selfLoopWidth: number;
   readonly selfLoopInset: number;
+  /**
+   * v13 (D659): a same-lane relation that skips a box runs this far below the lowest box bottom
+   * it spans, and relations whose spans overlap run this far apart.
+   */
+  readonly underDrop: number;
+  readonly underStep: number;
 }
 
 export const EVENTMODELING_METRICS: EventModelMetrics = {
@@ -66,9 +72,11 @@ export const EVENTMODELING_METRICS: EventModelMetrics = {
   radius: 3,
   headLength: 10,
   headWidth: 7,
-  selfLoopRise: 10,
-  selfLoopWidth: 10,
+  selfLoopDepth: 25,
+  selfLoopWidth: 20,
   selfLoopInset: 10,
+  underDrop: 25,
+  underStep: 10,
 };
 
 /**

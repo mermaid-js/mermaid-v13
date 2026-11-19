@@ -62,10 +62,12 @@ export interface EventModelBoxLayout extends Rect {
 
 /**
  * How a relation runs: `down`/`up` between lanes (v12's segment from ⅔ of the source's width to
- * ⅓ of the target's), `along` a lane (D521: source's right edge to target's left edge), or
- * `self`, a loop over the top of a box that names itself as its source.
+ * ⅓ of the target's), `along` a lane to the next box of the lane (D521: source's right edge to
+ * target's left edge), `under` the row to a box further along the lane (D659: down from the
+ * source's bottom, across, up into the target's bottom), or `self`, a loop under the bottom
+ * right corner of a box that names itself as its source (D659).
  */
-export type EventModelRoute = 'down' | 'up' | 'along' | 'self';
+export type EventModelRoute = 'down' | 'up' | 'along' | 'under' | 'self';
 
 export interface EventModelRelationLayout {
   /** Frame indices in `model.frames`. */
@@ -79,7 +81,7 @@ export interface EventModelRelationLayout {
   readonly route: EventModelRoute;
   /**
    * The line, on the source box's edge first and on the target box's edge last: two points, or
-   * four for `self`. The line runs to the arrowhead's tip, as v12's marker did (`refX 10`).
+   * four for `under` and `self`. The line runs to the arrowhead's tip, as v12's marker did (`refX 10`).
    */
   readonly points: readonly Point[];
   /** The arrowhead polygon, base corner, tip (the last point), base corner (10 × 7). */

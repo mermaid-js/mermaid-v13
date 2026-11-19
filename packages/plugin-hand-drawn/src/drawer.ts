@@ -47,18 +47,18 @@ const without = (attrs: Attrs, names: readonly string[]): Mutable => {
 /** What an edge's sketch is drawn with when the edge inherits its stroke (never written). */
 const PLACEHOLDER_STROKE = 'currentColor';
 
-/** The seed of the render being drawn, read by `active` (one SVG render draws at a time). */
-let seed = 0;
-
 /** Starts a render: the drawer is active when `handDrawn` is true (D303). */
 export function activate(config: Readonly<Record<string, unknown>>): boolean {
-  if (config.handDrawn !== true) return false;
-  const s = Number(config.handDrawnSeed ?? 0);
-  seed = Number.isFinite(s) ? s : 0;
-  return true;
+  return config.handDrawn === true;
 }
 
-function drawEdge(tag: OutlineTag, attrs: Attrs, sink: OutlineSink): boolean {
+/** The render's seed, read from its own config on each draw: no module state (D655). */
+function seedOf(config: Readonly<Record<string, unknown>>): number {
+  const s = Number(config.handDrawnSeed ?? 0);
+  return Number.isFinite(s) ? s : 0;
+}
+
+function drawEdge(tag: OutlineTag, attrs: Attrs, sink: OutlineSink, seed: number): boolean {
   if (attrs.stroke === 'none') return false;
   const paths = sketch(
     tag,
@@ -87,8 +87,16 @@ function pathAttrs(p: SketchPath, attrs: Attrs): Attrs {
     : { ...p.attrs, 'stroke-opacity': opacity };
 }
 
-export function draw(role: OutlineRole, tag: OutlineTag, attrs: Attrs, sink: OutlineSink): boolean {
-  if (role === 'edge') return drawEdge(tag, attrs, sink);
+/** Sketches one outline with the seed of `config`, the render's (D655). */
+export function draw(
+  role: OutlineRole,
+  tag: OutlineTag,
+  attrs: Attrs,
+  sink: OutlineSink,
+  config: Readonly<Record<string, unknown>>
+): boolean {
+  const seed = seedOf(config);
+  if (role === 'edge') return drawEdge(tag, attrs, sink, seed);
   const paths = sketch(tag, attrs, optionsFor(role, attrs), seed);
   if (!paths || paths.length === 0) return false;
   sink.open(
