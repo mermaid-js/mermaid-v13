@@ -110,16 +110,12 @@ function drawLegend(scene: Scene): void {
 
 /** The `<svg>` root with its accessible title and description (R-A11Y-1, D453). */
 function openRoot({ w, ctx, view, layout }: Scene): void {
-  const { theme } = ctx;
-  const width = Math.max(1, Math.ceil(layout.width));
-  const height = Math.max(1, Math.ceil(layout.height));
-  const maxWidth = view.maxWidth !== false;
   // Read before the root style is written, so it declares its alias.
-  const font = theme.font();
+  const font = ctx.theme.font();
   openSvgRoot(w, ctx, {
     name: view.name,
-    viewBox: [0, 0, width, height],
-    maxWidth,
+    viewBox: { width: layout.width, height: layout.height },
+    maxWidth: view.maxWidth !== false,
     title: view.accTitle,
     desc: view.accDescr,
     attrs: { 'font-family': font },
