@@ -1,0 +1,43 @@
+@ 5:7  style |
+  person keyword (element kind) 5:7-5:7 "" -> "person"
+  softwareSystem keyword (element kind) 5:7-5:7 "" -> "softwareSystem"
+  container keyword (element kind) 5:7-5:7 "" -> "container"
+  component keyword (element kind) 5:7-5:7 "" -> "component"
+  group keyword (element kind) 5:7-5:7 "" -> "group"
+  deploymentNode keyword (element kind) 5:7-5:7 "" -> "deploymentNode"
+  infrastructureNode keyword (element kind) 5:7-5:7 "" -> "infrastructureNode"
+  team class (tag) 5:7-5:7 "" -> "team"
+  external class (tag) 5:7-5:7 "" -> "external"
+  sync class (tag) 5:7-5:7 "" -> "sync"
+@ 6:8  style t|
+  team class (tag) 6:7-6:8 "t" -> "team"
+@ 7:11  style cont|
+  container keyword (element kind) 7:7-7:11 "cont" -> "container"
+@ 8:12  style team |
+  fill property 8:12-8:12 "" -> "fill:"
+  stroke property 8:12-8:12 "" -> "stroke:"
+  color property 8:12-8:12 "" -> "color:"
+  shape property 8:12-8:12 "" -> "shape:"
+  line property 8:12-8:12 "" -> "line:"
+@ 9:13  style team f|
+  fill property 9:12-9:13 "f" -> "fill:"
+@ 10:18  style team shape:|
+  cylinder value 10:18-10:18 "" -> "cylinder"
+@ 11:17  style team line:|
+  solid value 11:17-11:17 "" -> "solid"
+  dashed value 11:17-11:17 "" -> "dashed"
+  dotted value 11:17-11:17 "" -> "dotted"
+@ 12:17  style team fill:|
+  none
+@ 13:23  style team fill:#fff, |
+  fill property 13:23-13:23 "" -> "fill:"
+  stroke property 13:23-13:23 "" -> "stroke:"
+  color property 13:23-13:23 "" -> "color:"
+  shape property 13:23-13:23 "" -> "shape:"
+  line property 13:23-13:23 "" -> "line:"
+@ 14:24  style team fill:#fff, s|
+  stroke property 14:23-14:24 "s" -> "stroke:"
+  shape property 14:23-14:24 "s" -> "shape:"
+@ 15:34  style team shape:cylinder, line:d|
+  dashed value 15:33-15:34 "d" -> "dashed"
+  dotted value 15:33-15:34 "d" -> "dotted"

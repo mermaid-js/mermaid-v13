@@ -30,6 +30,50 @@ export interface ModeLexer {
   rulesFor(mode: string): LexRule[];
 }
 
+/** The first rule of `rules` that matches at `p`, with its text. */
+function firstMatch(
+  rules: readonly LexRule[],
+  compiled: ReadonlyMap<LexRule, RegExp>,
+  text: string,
+  p: number
+): { rule: LexRule; match: string } | undefined {
+  for (const r of rules) {
+    const re = compiled.get(r) as RegExp;
+    re.lastIndex = p;
+    const m = re.exec(text);
+    if (m) return { rule: r, match: m[0] };
+  }
+  return undefined;
+}
+
+/** Run a rule's actions on the mode stack; the token's image (`empty` and `fold` change it). */
+function runActions(rule: LexRule, match: string, stack: string[], fired: Set<LexRule>): string {
+  let image = match;
+  for (const a of rule.actions) {
+    switch (a.op) {
+      case 'push':
+        stack.push(a.mode as string);
+        break;
+      case 'push-once':
+        if (!fired.has(rule)) stack.push(a.mode as string);
+        break;
+      case 'pop':
+        if (stack.length > 1) stack.pop();
+        break;
+      case 'empty':
+        image = '';
+        break;
+      case 'fold':
+        image = image.replace(/\n\s*/g, '<br/>');
+        break;
+      case 'attach-next':
+      case 'attach-prev':
+        break;
+    }
+  }
+  return image;
+}
+
 export function buildLexer(g: Grammar): ModeLexer {
   const compiled = new Map<LexRule, RegExp>();
   const flags = g.ignoreCase ? 'iy' : 'y';
@@ -56,48 +100,16 @@ export function buildLexer(g: Grammar): ModeLexer {
       while (!done) {
         if (p >= text.length) done = true;
         const mode = stack[stack.length - 1] ?? 'INITIAL';
-        let rule: LexRule | undefined;
-        let match = '';
-        for (const r of rulesFor(mode)) {
-          const re = compiled.get(r) as RegExp;
-          re.lastIndex = p;
-          const m = re.exec(text);
-          if (m) {
-            rule = r;
-            match = m[0];
-            break;
-          }
-        }
-        if (!rule) {
+        const found = firstMatch(rulesFor(mode), compiled, text, p);
+        if (!found) {
           if (p >= text.length) break;
           return { tokens, error: p };
         }
+        const { rule, match } = found;
         const start = p;
         const end = p + match.length;
-        let image = match;
         const before = stack.length + stack.join();
-        for (const a of rule.actions) {
-          switch (a.op) {
-            case 'push':
-              stack.push(a.mode as string);
-              break;
-            case 'push-once':
-              if (!fired.has(rule)) stack.push(a.mode as string);
-              break;
-            case 'pop':
-              if (stack.length > 1) stack.pop();
-              break;
-            case 'empty':
-              image = '';
-              break;
-            case 'fold':
-              image = image.replace(/\n\s*/g, '<br/>');
-              break;
-            case 'attach-next':
-            case 'attach-prev':
-              break;
-          }
-        }
+        const image = runActions(rule, match, stack, fired);
         fired.add(rule);
         if (rule.name !== undefined) {
           tokens.push({

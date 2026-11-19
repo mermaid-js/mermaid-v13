@@ -5,7 +5,8 @@ import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { TimelineModel } from '../model.ts';
 import * as fx from './fixtures.ts';
-import { layoutTimeline, timelineLayoutViolations, type TimelineLayout } from './index.ts';
+import { layoutTimeline, type TimelineLayout } from './index.ts';
+import { timelineLayoutViolations } from './invariants.ts';
 import { timeline as diagramPlugin } from '../plugin.ts';
 
 /** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
@@ -277,6 +278,25 @@ describe('timeline TD follows timelineRendererVertical.ts', () => {
       fontSize: '20px',
     });
     expect(themed.axis.y1).toBe(50 - 32);
+  });
+
+  it('lays out an unset top-level fontSize as 16, with no warning (D620)', () => {
+    // The root key has no schema default since D620; timeline keeps v12's 16 on its own.
+    const at = (model: TimelineModel, config: Partial<ResolvedConfig>) => {
+      const warnings: unknown[] = [];
+      const l = layoutTimeline(model, {
+        config: { timeline: {}, ...config } as ResolvedConfig,
+        measurer: tableMeasurer,
+        theme: createTheme(specs.get('default')!, { diagram: diagramTheme }),
+        warn: (w) => warnings.push(w),
+      });
+      return { l, warnings };
+    };
+    for (const model of [fx.simple, fx.verticalSimple]) {
+      const unset = at(model, {});
+      expect(unset.l).toEqual(at(model, { fontSize: 16 }).l);
+      expect(unset.warnings).toEqual([]);
+    }
   });
 
   it('starts the axis below a title it would cross, where v12 drew it through', () => {

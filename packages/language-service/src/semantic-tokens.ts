@@ -157,9 +157,13 @@ export function semanticTokens(ctx: DocumentContext, list: readonly Occurrence[]
 
 /** A block's body (ADR-15) and its own tokens, ranges inside the body. */
 export interface BlockTokens {
+  /** Where the block body is in the outer text, as written. */
   readonly offset: number;
   readonly length: number;
+  /** The block's tokens, in its own document's text (D633: without the body's indentation). */
   readonly tokens: readonly SemanticToken[];
+  /** Where offset `at` of the block's document text is in the outer text. */
+  readonly outer: (at: number) => number;
 }
 
 /**
@@ -173,11 +177,11 @@ export function withBlockTokens(
   if (blocks.length === 0) return host as SemanticToken[];
   const out: SemanticToken[] = [];
   let i = 0;
-  for (const { offset, length, tokens } of blocks) {
+  for (const { offset, length, tokens, outer } of blocks) {
     while (i < host.length && host[i]!.range.start < offset) out.push(host[i++]!);
     while (i < host.length && host[i]!.range.start < offset + length) i++;
     for (const t of tokens) {
-      const range = { start: t.range.start + offset, end: t.range.end + offset };
+      const range = { start: outer(t.range.start), end: outer(t.range.end) };
       out.push({ range, type: t.type, modifiers: t.modifiers });
     }
   }

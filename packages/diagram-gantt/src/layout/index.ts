@@ -1,6 +1,7 @@
 /**
- * The gantt custom layout (spec #293 T3): `layoutGantt`, its input and result types, its
- * invariants, and the metrics table it takes its lengths from.
+ * The gantt custom layout (spec #293 T3): `layoutGantt`, its input and result types, and the
+ * metrics table it takes its lengths from. The invariants are in `invariants.ts`, which only tests
+ * import.
  */
 export {
   GANTT_BAD_DURATION,
@@ -13,4 +14,3 @@ export { GANTT_CONFIG_IGNORED, type GanttLayoutContext } from './env.ts';
 export { GANTT_TICK_INTERVAL_IGNORED } from './ticks.ts';
 export { GANTT_METRICS, type GanttDefaults, type GanttMetrics } from './metrics.ts';
 export type * from './types.ts';
-export { ganttLayoutViolations } from './invariants.ts';

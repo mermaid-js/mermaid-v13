@@ -1,0 +1,6 @@
+@ 1:9  c4-beta |
+  context keyword 1:9-1:9 "" -> "context"
+  container keyword 1:9-1:9 "" -> "container"
+  component keyword 1:9-1:9 "" -> "component"
+  dynamic keyword 1:9-1:9 "" -> "dynamic"
+  deployment keyword 1:9-1:9 "" -> "deployment"

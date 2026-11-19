@@ -1177,6 +1177,37 @@ export function shiftLeftLaneTitleBandsLeftOfRails(
   }
 }
 
+/**
+ * The routes of one round of a post-routing pass, read once and indexed: what each pass needs to
+ * score a candidate by what it changes, not by walking every pair of routes again.
+ */
+function indexRoutes(visibleEdges: readonly MaterializedEdge[]) {
+  const points = new Map(
+    visibleEdges.map(
+      (edge) =>
+        [edge, dedupeConsecutivePoints((edge as { points?: PointLite[] }).points ?? [])] as const
+    )
+  );
+  const segments = new Map(
+    visibleEdges.map((edge) => [edge, segmentsFor(points.get(edge)!)] as const)
+  );
+  const crossings = buildSegmentCrossingIndex([...segments.values()].flat(), EPS_LOCAL);
+  const bends = new Map(
+    visibleEdges.map((edge) => [edge, countOrthogonalBends(points.get(edge)!)] as const)
+  );
+  return {
+    points,
+    segments,
+    crossings,
+    lines: buildSegmentLineIndex(
+      visibleEdges.flatMap((owner) => segments.get(owner)!.map((segment) => ({ owner, segment })))
+    ),
+    bends,
+    totalBends: [...bends.values()].reduce((sum, count) => sum + count, 0),
+    ...countCrossingsPerRoute(segments, crossings, EPS_LOCAL),
+  };
+}
+
 export function swapDestinationTerminalTailsToReduceCrossings(
   edges: MaterializedEdge[],
   nodeByIdMap: Map<string, MaterializedNode>
@@ -1192,45 +1223,13 @@ export function swapDestinationTerminalTailsToReduceCrossings(
   const { realNodeRects } = collectNodeRectEntries(nodeByIdMap.values());
   const visibleEdges = edges.filter((edge) => !(edge as { isLayoutOnly?: boolean }).isLayoutOnly);
 
-  const replacementPointsFor = (
-    edge: MaterializedEdge,
-    replacements: EdgeReplacementMap = new Map()
-  ): PointLite[] =>
-    dedupeConsecutivePoints(
-      replacements.get(edge) ?? (edge as { points?: PointLite[] }).points ?? []
-    );
+  // v13 (#843): the routes are read once per round and indexed, and a swap is scored by what it
+  // changes. v12 recounted the crossings of every pair of edges and walked every edge for a shared
+  // track, for each pair of edges it tried.
+  let round = indexRoutes(visibleEdges);
 
-  const crossingCount = (replacements: EdgeReplacementMap = new Map()): number => {
-    let count = 0;
-    for (let i = 0; i < visibleEdges.length; i++) {
-      const firstSegments = segmentsFor(replacementPointsFor(visibleEdges[i]!, replacements));
-      for (let j = i + 1; j < visibleEdges.length; j++) {
-        const secondSegments = segmentsFor(replacementPointsFor(visibleEdges[j]!, replacements));
-        for (const firstSegment of firstSegments) {
-          for (const secondSegment of secondSegments) {
-            if (
-              orthogonalSegmentsStrictlyCross(
-                firstSegment.a,
-                firstSegment.b,
-                secondSegment.a,
-                secondSegment.b,
-                EPS_LOCAL
-              )
-            ) {
-              count++;
-            }
-          }
-        }
-      }
-    }
-    return count;
-  };
-
-  const totalBends = (replacements: EdgeReplacementMap = new Map()): number =>
-    visibleEdges.reduce(
-      (sum, edge) => sum + countOrthogonalBends(replacementPointsFor(edge, replacements)),
-      0
-    );
+  const replacementPointsFor = (edge: MaterializedEdge): PointLite[] =>
+    round.points.get(edge) ?? [];
 
   const terminalTailFor = (edge: MaterializedEdge): TerminalTail | undefined => {
     const points = replacementPointsFor(edge);
@@ -1298,31 +1297,65 @@ export function swapDestinationTerminalTailsToReduceCrossings(
     return false;
   };
 
+  const sharesTrack = (first: SegmentLite, second: SegmentLite): boolean =>
+    sameAxisSegmentOverlapLength(first, second, 0.5) >= MIN_SHARED;
+
+  /** `path` of `edge` shares a track with another route, `partnerPath` standing in for `partner`. */
   const pathHasSharedTrack = (
-    edge: MaterializedEdge,
-    path: PointLite[],
-    replacements: EdgeReplacementMap
+    [edge, path]: [MaterializedEdge, PointLite[]],
+    [partner, partnerPath]: [MaterializedEdge, PointLite[]]
   ): boolean => {
-    for (const other of visibleEdges) {
-      if (other === edge) {
-        continue;
-      }
-      for (const candidateSegment of segmentsFor(path)) {
-        for (const otherSegment of segmentsFor(replacementPointsFor(other, replacements))) {
-          if (sameAxisSegmentOverlapLength(candidateSegment, otherSegment, 0.5) >= MIN_SHARED) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
+    const partnerSegments = segmentsFor(dedupeConsecutivePoints(partnerPath));
+    return segmentsFor(path).some(
+      (segment) =>
+        partnerSegments.some((other) => sharesTrack(segment, other)) ||
+        [...round.lines.sameAxisNear(segment, 1)].some(
+          ({ owner, segment: other }) =>
+            owner !== edge && owner !== partner && sharesTrack(segment, other)
+        )
+    );
   };
 
   const candidateIsSafe = (
-    edge: MaterializedEdge,
-    path: PointLite[],
-    replacements: EdgeReplacementMap
-  ): boolean => !pathHasNodeHit(edge, path) && !pathHasSharedTrack(edge, path, replacements);
+    replacement: [MaterializedEdge, PointLite[]],
+    partner: [MaterializedEdge, PointLite[]]
+  ): boolean =>
+    !pathHasNodeHit(replacement[0], replacement[1]) && !pathHasSharedTrack(replacement, partner);
+
+  /** The crossings of `segments` with the round's routes of every edge but `excluded`. */
+  const crossingsAmongOthers = (segments: SegmentLite[], excluded: MaterializedEdge[]): number =>
+    round.crossings.count(segments) -
+    excluded.reduce(
+      (sum, edge) => sum + countSegmentCrossings(segments, round.segments.get(edge)!, EPS_LOCAL),
+      0
+    );
+
+  /** The crossings and the bends of all routes once `first` and `second` take their candidates. */
+  const scoreSwap = (
+    [first, firstPoints]: [MaterializedEdge, PointLite[]],
+    [second, secondPoints]: [MaterializedEdge, PointLite[]]
+  ): { crossings: number; bends: number } => {
+    const firstSegments = segmentsFor(dedupeConsecutivePoints(firstPoints));
+    const secondSegments = segmentsFor(dedupeConsecutivePoints(secondPoints));
+    const pair = [first, second];
+    const kept =
+      round.total -
+      (round.byRoute.get(first)! + round.byRoute.get(second)!) +
+      countSegmentCrossings(round.segments.get(first)!, round.segments.get(second)!, EPS_LOCAL);
+    return {
+      crossings:
+        kept +
+        crossingsAmongOthers(firstSegments, pair) +
+        crossingsAmongOthers(secondSegments, pair) +
+        countSegmentCrossings(firstSegments, secondSegments, EPS_LOCAL),
+      bends:
+        round.totalBends -
+        round.bends.get(first)! -
+        round.bends.get(second)! +
+        countOrthogonalBends(dedupeConsecutivePoints(firstPoints)) +
+        countOrthogonalBends(dedupeConsecutivePoints(secondPoints)),
+    };
+  };
 
   const edgesByDestination = (): Map<string, MaterializedEdge[]> => {
     const result = new Map<string, MaterializedEdge[]>();
@@ -1343,11 +1376,14 @@ export function swapDestinationTerminalTailsToReduceCrossings(
   };
 
   for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
-    const currentCrossings = crossingCount();
+    if (iteration > 0) {
+      round = indexRoutes(visibleEdges);
+    }
+    const currentCrossings = round.total;
     if (currentCrossings === 0) {
       return;
     }
-    const currentBends = totalBends();
+    const currentBends = round.totalBends;
 
     let bestReplacements: EdgeReplacementMap | undefined;
     let bestCrossings = currentCrossings;
@@ -1375,14 +1411,16 @@ export function swapDestinationTerminalTailsToReduceCrossings(
             [second, secondCandidate],
           ]);
           if (
-            !candidateIsSafe(first, firstCandidate, replacements) ||
-            !candidateIsSafe(second, secondCandidate, replacements)
+            !candidateIsSafe([first, firstCandidate], [second, secondCandidate]) ||
+            !candidateIsSafe([second, secondCandidate], [first, firstCandidate])
           ) {
             continue;
           }
 
-          const candidateCrossings = crossingCount(replacements);
-          const candidateBends = totalBends(replacements);
+          const { crossings: candidateCrossings, bends: candidateBends } = scoreSwap(
+            [first, firstCandidate],
+            [second, secondCandidate]
+          );
           if (candidateCrossings >= currentCrossings) {
             continue;
           }
@@ -1446,32 +1484,7 @@ export function reassignCrossingExternalRailChannels(
   // v13 (#726): the routes are read once per round and indexed, and a candidate is scored by
   // what it changes. v12 rebuilt every route of a component, recounted the crossings of every
   // pair of edges and walked every pair for a shared track, for each assignment it tried.
-  const startRound = () => {
-    const points = new Map(
-      visibleEdges.map(
-        (edge) =>
-          [edge, dedupeConsecutivePoints((edge as { points?: PointLite[] }).points ?? [])] as const
-      )
-    );
-    const segments = new Map(
-      visibleEdges.map((edge) => [edge, segmentsFor(points.get(edge)!)] as const)
-    );
-    const crossings = buildSegmentCrossingIndex([...segments.values()].flat(), EPS_LOCAL);
-    const bends = new Map(
-      visibleEdges.map((edge) => [edge, countOrthogonalBends(points.get(edge)!)] as const)
-    );
-    return {
-      points,
-      segments,
-      crossings,
-      lines: buildSegmentLineIndex(
-        visibleEdges.flatMap((owner) => segments.get(owner)!.map((segment) => ({ owner, segment })))
-      ),
-      bends,
-      totalBends: [...bends.values()].reduce((sum, count) => sum + count, 0),
-      ...countCrossingsPerRoute(segments, crossings, EPS_LOCAL),
-    };
-  };
+  const startRound = () => indexRoutes(visibleEdges);
   let round = startRound();
 
   const replacementPointsFor = (edge: MaterializedEdge): PointLite[] =>
@@ -2038,27 +2051,7 @@ export function shortcutRedundantOrthogonalJogs(
 
   // v13 (#726): the routes are read once per round and indexed. v12 recounted the crossings
   // of every pair of edges for each candidate, and walked every edge for a shared track.
-  const startRound = () => {
-    const points = new Map(
-      visibleEdges.map(
-        (edge) =>
-          [edge, dedupeConsecutivePoints((edge as { points?: PointLite[] }).points ?? [])] as const
-      )
-    );
-    const segments = new Map(
-      visibleEdges.map((edge) => [edge, segmentsFor(points.get(edge)!)] as const)
-    );
-    const crossings = buildSegmentCrossingIndex([...segments.values()].flat(), EPS_LOCAL);
-    return {
-      points,
-      segments,
-      crossings,
-      lines: buildSegmentLineIndex(
-        visibleEdges.flatMap((owner) => segments.get(owner)!.map((segment) => ({ owner, segment })))
-      ),
-      ...countCrossingsPerRoute(segments, crossings, EPS_LOCAL),
-    };
-  };
+  const startRound = () => indexRoutes(visibleEdges);
   let round = startRound();
 
   const pointsFor = (edge: MaterializedEdge): PointLite[] => round.points.get(edge) ?? [];

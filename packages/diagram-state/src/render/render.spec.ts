@@ -99,6 +99,10 @@ describe('state render: states and pseudo-states', () => {
     const b = one(tree, 'n:B');
     expect(tags(tree, b)).toEqual(['rect', 'text', 'line', 'text']);
     expect(classOf(tree, tree.children(b)[2]!)).toBe('divider');
+    // v12 stateDb: the first description is the title, the rest are the rows; the id is not drawn.
+    const [, title, , rows] = tree.children(b);
+    expect(textIn(tree, title!)).toBe('first');
+    expect(textIn(tree, rows!)).toBe('second');
 
     const start = one(tree, 'n:[*]start');
     expect(classOf(tree, start)).toBe('node default');
@@ -117,6 +121,17 @@ describe('state render: states and pseudo-states', () => {
       expect(classOf(tree, tree.children(bar)[0]!)).toBe('fork-join');
     }
     expect(tags(tree, one(tree, 'n:Q'))).toEqual(['polygon']);
+  });
+
+  it('titles an aliased state with its display name and puts its description below', async () => {
+    const { tree } = await renderForTest(
+      'stateDiagram-v2\n  state "Some long name" as S1\n  S1 : a description\n  [*] --> S1'
+    );
+    const s1 = one(tree, 'n:S1');
+    expect(tags(tree, s1)).toEqual(['rect', 'text', 'line', 'text']);
+    const [, title, , rows] = tree.children(s1);
+    expect(textIn(tree, title!)).toBe('Some long name');
+    expect(textIn(tree, rows!)).toBe('a description');
   });
 
   it('applies classDef classes and styles to a state, and its text colour to the label', async () => {

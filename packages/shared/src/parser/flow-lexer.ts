@@ -71,6 +71,7 @@ import type { Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit
 import {
   FLOW_STATE as S,
   FLOW_STATE_NAMES,
+  LINK_ID_STOP,
   isNl,
   NODE,
   SHAPE_DATA_STOP,
@@ -392,8 +393,10 @@ export abstract class FlowLexer extends StateLexer {
     return true;
   }
 
-  // mermaid@12.2.0's LINK_ID is `[^\s\"]+\@(?=[^\{\"])`.
+  // mermaid@12.2.0's LINK_ID is `[^\s\"]+\@(?=[^\{\"])`; 12.3.0's flowchart also stops the run at
+  // `[ ] ( ) { } |`, the LINK_ID_STOP of `flowChars(…, bracketsEndLinkId)` (D621).
   private isRunBreak(ch: number, q: number): boolean {
+    if (hasClass(this.chars, ch, LINK_ID_STOP)) return true;
     return (ch === DQUOTE && this.isQuote(q)) || isSpace(ch);
   }
 

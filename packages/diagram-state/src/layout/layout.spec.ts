@@ -167,12 +167,16 @@ describe('state graph builder', () => {
     expect(node(lr, 'f')).toMatchObject({ width: 10, height: 70 });
   });
 
-  it('gives described states a title and their description lines', () => {
-    const { layout } = run('stateDiagram-v2\n  A : first line\n  A : second line\n');
+  it('titles a described state with its first description and lists the rest below (v12 stateDb)', () => {
+    const { layout } = run(
+      'stateDiagram-v2\n  A : first line\n  A : second line\n  A : third line\n'
+    );
     const view = layout.state.views.get('A');
     expect(view).toMatchObject({ shape: 'described' });
     if (!view || !('rows' in view) || !view.rows) throw new Error('no rows');
-    expect(view.rows.lines).toHaveLength(2);
+    const text = (lines: { text: string }[][]) => lines.map((l) => l.map((r) => r.text).join(''));
+    expect(text(view.label.lines)).toEqual(['first line']);
+    expect(text(view.rows.lines)).toEqual(['second line', 'third line']);
     expect(view.h).toBeGreaterThan(view.label.height + view.rows.height);
   });
 

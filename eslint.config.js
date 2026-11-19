@@ -213,8 +213,10 @@ export default tseslint.config(
   },
   {
     // Readability limits. Existing violations live in eslint-suppressions.json; new ones fail.
-    files: ['packages/*/src/**/*.{ts,js}'],
+    // The tools' sources are held to them too (D598).
+    files: ['packages/*/src/**/*.{ts,js}', 'tools/*/src/**/*.{ts,js}'],
     ignores: ['**/*.spec.ts'],
+    plugins: { mermaid },
     rules: {
       'mermaid/no-magic-char-code': 'error',
       'no-nested-ternary': 'error',

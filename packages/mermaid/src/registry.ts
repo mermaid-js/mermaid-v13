@@ -141,7 +141,7 @@ interface Entry extends Detected {
   readonly formats: readonly string[];
   /**
    * A first-party row's own formats, which bound its plugin's: a type can draw fewer formats
-   * than the package that serves it (`typeOptions` `formats`: `c4beta` has no text output).
+   * than the package that serves it (a manifest's `typeOptions` `formats`).
    */
   readonly rowFormats?: readonly string[];
   /**
@@ -207,6 +207,12 @@ export interface Detected {
 
 /** Names the built-in engine answers to silently (DESIGN §6.1): `layered` and v12's `dagre`. */
 const FIRST_PARTY_LAYOUTS: ReadonlySet<string> = new Set(['layered', 'dagre']);
+
+/**
+ * v12's zenuml detector (`@mermaid-js/mermaid-zenuml`). zenuml has no v13 package (D317), so it
+ * is detected as a type without one and rejected with `UNSUPPORTED_DIAGRAM` (R-COMPAT-7).
+ */
+const ZENUML = /^\s*zenuml/;
 
 export const builtIn = (name: string): boolean => FIRST_PARTY_LAYOUTS.has(name);
 
@@ -554,6 +560,8 @@ export class Registry {
       // The entry itself: its type, id, section and layout (D534).
       if (e.detect(body, cleaned, config, v12)) return e;
     }
+    // D317: a v12 type with no v13 package, known after every plugin, so a plugin can claim it.
+    if (ZENUML.test(body)) return { type: 'zenuml', id: undefined };
     throw new MermaidError(
       'UNSUPPORTED_DIAGRAM',
       `No diagram type detected matching given configuration for text: ${body.slice(0, 200)}`,

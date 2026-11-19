@@ -1,0 +1,13 @@
+---
+description: >-
+  The same chart as data-labels-auto-range-vertical.mmd (#537, D611),
+  rendered with chartOrientation: horizontal. The 10 bar is only a few px
+  long and gets no label; the 30 and 11 bars are labelled. No
+  XYCHART_LABEL_TOO_SMALL warning.
+config:
+  xyChart:
+    showDataLabel: true
+    chartOrientation: horizontal
+---
+xychart
+  bar [10, 30, 11]

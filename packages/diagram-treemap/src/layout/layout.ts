@@ -79,8 +79,10 @@ export function layoutTreemap(model: TreemapModel, ctx: TreemapLayoutContext): T
   const fit = complex ? M.complex : M.simple;
 
   // v12's ordinal scales take slots in first-lookup order: every section's fill (the hidden
-  // root's `''` first, breadth first), then the labels of the sections and of the leaves.
-  const fills = new Ordinal(FILL_SLOTS);
+  // root's `''` first, breadth first), then the labels of the sections and of the leaves. The
+  // root keeps fill slot 0 and the sections cycle through 1…12, where v12 wrapped the 13th
+  // name onto the root's `transparent` (D612).
+  const fills = new Ordinal(FILL_SLOTS, 1);
   const labels = new Ordinal(LABEL_SLOTS);
   for (const t of tree.branches) fills.slot(t.node?.name ?? '');
   for (const t of tree.branches) if (t.node) labels.slot(t.node.name);
@@ -358,17 +360,25 @@ function titleOf(title: string, width: number, frame: Frame): TreemapText {
   );
 }
 
-/** d3's `scaleOrdinal` with an implicit domain: a key's slot is its first-lookup index mod n. */
+/**
+ * d3's `scaleOrdinal` with an implicit domain: a key's slot is its first-lookup index mod n.
+ * The first `reserved` keys keep their own slots and the rest cycle through the slots past
+ * them, so the fills' slot 0 (`transparent`) stays the hidden root's (D612).
+ */
 class Ordinal {
   private readonly index = new Map<string, number>();
-  constructor(private readonly n: number) {}
+  constructor(
+    private readonly n: number,
+    private readonly reserved = 0
+  ) {}
   slot(key: string): number {
     let i = this.index.get(key);
     if (i === undefined) {
       i = this.index.size;
       this.index.set(key, i);
     }
-    return i % this.n;
+    const r = this.reserved;
+    return i < r ? i : r + ((i - r) % (this.n - r));
   }
 }
 

@@ -14,6 +14,7 @@ import type {
   CheckedStyle,
   Paint,
   SafeColor,
+  SafeValue,
   StyleText,
   SvgWriter,
   ThemeRef,
@@ -35,16 +36,27 @@ export interface RootContext {
   readonly version?: string | undefined;
 }
 
+/** A drawing's extent, as a layout gives it. */
+export interface Bounds {
+  readonly x?: number;
+  readonly y?: number;
+  readonly width: number;
+  readonly height: number;
+}
+
 export interface RootOptions {
   /** The class after `mermaid mermaid-`: the diagram's name, then any v12 class it keeps. */
   readonly name: string;
   /** `aria-roledescription`; the first word of `name` when omitted. */
   readonly roleDescription?: string;
-  /** `[x, y, width, height]`, already rounded. */
-  readonly viewBox: readonly [number, number, number, number];
+  /**
+   * `[x, y, width, height]`, already rounded; or the drawing's bounds, whose width and height
+   * are rounded up to whole pixels, at least 1 (`x` and `y` default to 0).
+   */
+  readonly viewBox: readonly [number, number, number, number] | Bounds;
   /** `useMaxWidth`: full width up to the drawing's, else the drawing's own size. */
   readonly maxWidth: boolean;
-  /** The accessible title and description, trimmed; an empty one is not written. */
+  /** The accessible title and description, written trimmed; a blank one is not written. */
   readonly title?: string | undefined;
   readonly desc?: string | undefined;
   /** Attributes the drawing inherits (font, fill…), written after `style`. */
@@ -66,16 +78,21 @@ export function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, i
 export function openSvgRoot(w: SvgWriter, ctx: RootContext, o: RootOptions): void {
   const { theme } = ctx;
   const prefix = (): string => ctx.idPrefix ?? 'mermaid';
-  const width = o.viewBox[2];
+  const b = o.viewBox;
+  const up = (n: number): number => Math.max(1, Math.ceil(n));
+  const viewBox = 'width' in b ? ([b.x ?? 0, b.y ?? 0, up(b.width), up(b.height)] as const) : b;
+  const width = viewBox[2];
   const auto = theme.autoDeclarations();
-  const { title, desc, maxWidth } = o;
+  const { maxWidth } = o;
+  const title = o.title?.trim();
+  const desc = o.desc?.trim();
   const space = o.name.indexOf(' ');
   w.open('svg', {
     xmlns: 'http://www.w3.org/2000/svg',
     class: `mermaid mermaid-${o.name}`,
-    viewBox: o.viewBox,
+    viewBox,
     width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : o.viewBox[3],
+    height: maxWidth ? undefined : viewBox[3],
     role: 'img',
     'aria-roledescription': o.roleDescription ?? (space < 0 ? o.name : o.name.slice(0, space)),
     'aria-labelledby': title ? `${prefix()}-title` : undefined,
@@ -99,6 +116,10 @@ export function cls(names: readonly string[]): string {
   }
   return out;
 }
+
+/** The pointer cursor of a clickable node: its classes include `clickable` (#355, D605). */
+export const clickCursor = (classes: readonly string[]): 'pointer' | undefined =>
+  classes.includes('clickable') ? 'pointer' : undefined;
 
 /** A colour written in the source of a renderer, as a paint. */
 export const fixedPaint = (c: string): Paint => checkColor(c) as Paint;
@@ -160,4 +181,32 @@ export function styleCache(
     if (!style) styles.set(key, (style = checkStyle(decls, warn)));
     return style;
   };
+}
+
+/** An edge that may carry v12's `animate` or `animation` metadata. */
+export interface AnimatedEdge {
+  readonly animate?: boolean;
+  readonly animation?: string;
+}
+
+/** v12's `.edge-animation-*` dash pattern: it replaces the edge's own (`!important`). */
+export const ANIMATED_DASH = '9,5' as SafeValue;
+
+/**
+ * Animates the open edge group as v12's `.edge-animation-fast|slow` did, and says whether it
+ * did: the dash pattern runs from offset 900 to 0, linearly and forever, in 20 s (`fast`, and a
+ * bare `animate`) or 50 s (`slow`). An `<animate>` and no keyframes, which would need a `<style>`
+ * (R-SEC-2, D606). `stroke-dashoffset` is inherited, so every line in the group moves, in any
+ * look; the caller gives its line `ANIMATED_DASH` and round caps.
+ */
+export function animateEdge(w: SvgWriter, edge: AnimatedEdge): boolean {
+  if (!edge.animate && edge.animation === undefined) return false;
+  w.leaf('animate', {
+    attributeName: 'stroke-dashoffset',
+    from: 900,
+    to: 0,
+    dur: edge.animation === 'slow' ? 50 : 20,
+    repeatCount: 'indefinite',
+  });
+  return true;
 }

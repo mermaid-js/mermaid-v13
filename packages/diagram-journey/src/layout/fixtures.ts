@@ -599,6 +599,23 @@ export const FIXTURES: Readonly<Record<string, Fixture>> = {
       task('Short', 2, 'A')
     ),
   },
+  // e2e/diagrams/journey/baseline/text/tall-labels.mmd (D615, #769).
+  'tall-labels': {
+    model: journey(
+      'A title<br>broken over<br>three lines',
+      section(
+        'A section name long enough to wrap onto five lines inside a band that is only one task wide'
+      ),
+      task(
+        'A task name long enough to wrap onto seven lines inside a task box that is only one hundred and fifty pixels wide at the default size',
+        4,
+        'Me'
+      ),
+      section('Short'),
+      task('Next', 2, 'Me', 'Cat'),
+      task('Last', 5, 'Cat')
+    ),
+  },
   'missing-section-index': {
     model: {
       ...journey(undefined, section('A'), section('B'), section('A')),

@@ -1,0 +1,25 @@
+---
+config:
+  theme: redux
+description: >-
+  one representative c4-beta diagram in the redux theme (redux family, light; spec #730 T2, D592): each element
+  kind the theme colours (person, software system, container, component, infrastructure node and
+  an external system), a boundary (the `ledger` system, which has a body), relations and a legend,
+  so every row `c4<Kind>Color` and `c4<Kind>Border` is drawn
+---
+c4-beta container
+title Ledger - Containers
+legend on
+person clerk "Ledger Clerk" "Posts journal entries."
+softwareSystem erp "ERP" "Holds the chart of accounts." :::external
+softwareSystem bank "Bank" "Settles payments."
+softwareSystem ledger "Ledger" {
+  container api "Ledger API" "Keeps the books." "Rust"
+  component posting "Posting" "Validates and posts entries." "Rust"
+}
+infrastructureNode proxy "Proxy" "Terminates TLS." "nginx"
+clerk --> api : "Posts entries using" "HTTPS"
+api --> posting : "Calls"
+api --> erp : "Reads accounts from"
+api --> bank : "Settles with"
+proxy --> api : "Forwards to"

@@ -32,14 +32,16 @@ import {
   LEFT_ENDS,
   LINES,
   RIGHT_ENDS,
-  tokenBefore,
 } from './tables.ts';
 import {
   afterDirection,
   atStatementStart as atLineStart,
   CompletionList as Items,
+  statementTokens,
   wordRange,
 } from '@mermaid-js/shared/parser/facet';
+
+const isTrivia = (k: number) => k === Kind.Comment || k === Kind.Directive;
 
 /** Modes whose text is a value, not code: nothing is offered there. */
 const VALUE_MODES = new Set([
@@ -72,24 +74,15 @@ interface Statement {
 }
 
 function statementBefore(text: string, tokens: TokenStream, at: number): Statement {
-  const found: { kind: number; start: number; end: number }[] = [];
-  for (let i = tokenBefore(tokens, at - 1); i >= 0; i--) {
-    const k = tokens.kind[i]!;
-    const end = tokens.end[i] ?? 0;
-    if (end > at) continue;
-    if (STATEMENT_END.has(k)) break;
-    if (k === Kind.Comment || k === Kind.Directive) continue;
-    found.push({ kind: k, start: tokens.start[i] ?? 0, end });
-  }
-  found.reverse();
+  const found = statementTokens(tokens, at, STATEMENT_END, isTrivia);
   // The lexer skips blanks, so groups are told apart by the text between tokens.
   let groups = 0;
-  for (let i = 1; i < found.length; i++) {
-    if (/\s/.test(text.slice(found[i - 1]!.end, found[i]!.start))) groups++;
+  for (let j = 1; j < found.length; j++) {
+    if (/\s/.test(text.slice(tokens.end[found[j - 1]!], tokens.start[found[j]!]))) groups++;
   }
   return {
-    head: found[0]?.kind ?? -1,
-    prev: found[found.length - 1]?.kind ?? -1,
+    head: tokens.kind[found[0] ?? -1] ?? -1,
+    prev: tokens.kind[found[found.length - 1] ?? -1] ?? -1,
     groups,
   };
 }

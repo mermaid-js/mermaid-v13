@@ -80,7 +80,6 @@ const theme: ThemeSpec = {
     clusterBkg: '#cdffb2',
     clusterBorder: '#6eaa49',
     titleColor: '#333333',
-    edgeLabelBackground: '#e8e8e8',
     arrowheadColor: '#008000',
     border2: '#6eaa49',
     noteTextColor: '#000000',

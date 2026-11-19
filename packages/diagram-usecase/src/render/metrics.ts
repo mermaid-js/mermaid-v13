@@ -25,8 +25,6 @@ export const DRAW = Object.freeze({
   businessInset: 2,
   /** A business use case's mark: no width in v12's CSS, so 1 (an actor's takes its glyph's). */
   businessStroke: 1,
-  /** Room on each side of an edge label's background (`.labelBkg` padding `0 2px`). */
-  edgeLabelPad: 2,
 });
 
 /**

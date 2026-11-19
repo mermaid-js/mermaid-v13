@@ -32,8 +32,6 @@ const theme: ThemeSpec = {
   },
   values: {
     ...REDUX_DARK_VALUES,
-    // v12 draws ER edge labels on a plain fill here.
-    linkLabelBkg: '#16141f',
     // v12 draws labels on its series colours in the light ink here.
     seriesTextColor: '#28253d',
   },

@@ -5,7 +5,8 @@ import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { RadarModel } from '../model.ts';
 import { radar as plugin } from '../plugin.ts';
 import { FIXTURES } from './fixtures.ts';
-import { layoutRadar, radarLayoutViolations, type RadarLayout } from './index.ts';
+import { layoutRadar, type RadarLayout } from './index.ts';
+import { radarLayoutViolations } from './invariants.ts';
 
 let spec: ThemeSpec;
 beforeAll(async () => {
@@ -85,6 +86,21 @@ describe('radarLayoutViolations catches', () => {
         expect.stringContaining('legend rows 0 and 1'),
       ])
     );
+  });
+
+  it('a legend row on an axis label (D614)', () => {
+    const v = broken((l) => {
+      const { x, y } = l.spokes[0]!.label;
+      return {
+        ...l,
+        legend: l.legend.map((r) =>
+          r.index === 1
+            ? { ...r, swatch: { ...r.swatch, x, y }, label: { ...r.label, x: x + 16, y } }
+            : r
+        ),
+      };
+    });
+    expect(v).toContain("legend row 1 meets spoke 0's label");
   });
 
   it('a skipped curve drawn, and contents outside the bounds', () => {

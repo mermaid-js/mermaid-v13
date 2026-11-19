@@ -6,8 +6,11 @@
  * (`bundle-pages/plugin.html`) has no registration code. With the plugin, the fixture diagram
  * renders, its entry in a chunk that loads only on its first render; the fixture extension
  * marks every svg; click callbacks fire. Without it, the fixture type is UNSUPPORTED_DIAGRAM.
+ * `bundle-hoisted/` (npm) gets the fixture diagram only as a dependency of
+ * `mermaid-fixture-wrapper`: npm hoists it, the app does not declare it, so it is not
+ * discovered (D589).
  */
-import { cpSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import {
@@ -82,7 +85,11 @@ for (const bundler of BUNDLERS) {
       // The detector is in the page's own scripts; the entry is not.
       expect(holds(dist, scripts.next(), FIXTURE_DETECTOR)).toBe(true);
 
-      expect(await draw(page, 'flow', FLOWCHART)).toEqual({ type: 'flowchart-v2', warnings: [] });
+      // The page has not set `securityLevel: 'loose'`, so the plugin binds no callback (D554).
+      expect(await draw(page, 'flow', FLOWCHART)).toEqual({
+        type: 'flowchart-v2',
+        warnings: ['CALLBACK_IGNORED'],
+      });
       await page.waitForLoadState('networkidle');
       expect(holds(dist, scripts.all, FIXTURE_ENTRY)).toBe(false);
 
@@ -99,10 +106,9 @@ for (const bundler of BUNDLERS) {
     test('activates the discovered extensions: marks and click callbacks', async ({ page }) => {
       await page.goto(on!.url('/plugin.html'));
       await expect(page.locator('#status')).toHaveText('ready');
-      // Callbacks need `securityLevel: 'loose'` (#697, D554); core still reports that level,
-      // as it treats it as `default` for URLs (D75).
+      // Callbacks need `securityLevel: 'loose'` (#697, D554), which raises no warning (D634).
       await page.evaluate(() => window.loose());
-      expect((await draw(page, 'flow', FLOWCHART)).warnings).toEqual(['SECURITY_LEVEL']);
+      expect((await draw(page, 'flow', FLOWCHART)).warnings).toEqual([]);
       // mermaid-fixture-extension's postRender hook.
       await expect(page.locator('#flow svg.fixture-mark')).toHaveCount(1);
       // plugin-interactions (D169): `click A callback` calls window.callback('A').
@@ -145,3 +151,38 @@ for (const bundler of BUNDLERS) {
       });
   });
 }
+
+// D589: discovery finds only the app's declared dependencies. npm hoists a dependency of a
+// dependency to the top of node_modules; the app never chose it, so it is not discovered.
+test.describe('mermaid() in an npm app that only gets the fixture diagram transitively', () => {
+  test.describe.configure({ mode: 'serial', timeout: 240_000 });
+  let app: InstalledApp | undefined;
+  let server: StaticServer | undefined;
+
+  test.beforeAll(async () => {
+    app = installApp('bundle-hoisted', { manager: 'npm' });
+    cpSync(join(PLATFORM_DIR, 'bundle-pages'), app.dir, { recursive: true });
+    app.run('npm', ['run', 'build']);
+    server = await serveDir(join(app.dir, 'dist'));
+  });
+
+  test.afterAll(async () => {
+    await server?.close();
+    app?.close();
+  });
+
+  test('leaves the hoisted, undeclared fixture diagram out: UNSUPPORTED_DIAGRAM', async ({
+    page,
+  }) => {
+    // The case under test: npm put the fixture at the top of the app's node_modules.
+    expect(
+      existsSync(join(app!.dir, 'node_modules', 'mermaid-fixture-diagram', 'package.json'))
+    ).toBe(true);
+    await page.goto(server!.url('/plugin.html'));
+    await expect(page.locator('#status')).toHaveText('ready');
+    expect(await draw(page, 'box', 'fixturebox hoisted')).toEqual({
+      error: 'UNSUPPORTED_DIAGRAM',
+    });
+    expect((await draw(page, 'flow', FLOWCHART)).type).toBe('flowchart-v2');
+  });
+});

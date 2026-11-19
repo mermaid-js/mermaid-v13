@@ -111,6 +111,8 @@ const DIALECT: FlowParserDialect<FlowBuilder, FlowParseOptions> = {
       },
     }),
   destructLink,
+  // v12 12.3.0's `node shapeData spaceList` (D621); swimlane-beta shares it.
+  blanksAfterData: true,
 };
 
 interface Frame {

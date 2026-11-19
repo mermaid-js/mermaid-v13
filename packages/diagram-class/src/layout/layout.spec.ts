@@ -1,10 +1,13 @@
 import type { DiagramPlugin } from '@mermaid-js/core';
 import { describe, expect, it } from 'vitest';
+import { pxProfile } from '@mermaid-js/core/layout';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { parseClass } from '../index.ts';
 import { layoutClass, type ClassLayout, type ClassLayoutContext } from './index.ts';
+import { MARKER_ROOM } from './prepare.ts';
+import type { RelationType } from '../parser/model.ts';
 import { classDiagram as diagramPlugin } from '../plugin.ts';
 
 /** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
@@ -124,7 +127,7 @@ class C {
       await lay('classDiagram\nclass Shape~T~ {\n<<interface>>\n<<other>>\n+draw()*\n+count$\n}')
     ).class!.boxes[0]!;
     expect(box.annotation?.text).toBe('«interface»');
-    expect(box.name.text).toBe('Shape<T>');
+    expect(box.name.text).toBe('Shape&lt;T&gt;');
     expect(
       box.name.label.lines
         .flat()
@@ -150,6 +153,58 @@ class C {
     expect(box.width).toBeCloseTo(
       Math.max(box.name.label.width, ...rows.map((r) => r.label.width)) + 10
     );
+  });
+});
+
+describe('generic types named like HTML tags (#756, D619)', () => {
+  /** What a row draws, and the style bits of each run. */
+  const shown = (r: { label: { lines: { text: string; style: number }[][] } }) => ({
+    text: r.label.lines.map((l) => l.map((x) => x.text).join('')).join('\n'),
+    styles: [...new Set(r.label.lines.flat().map((x) => x.style))],
+  });
+  const boxOf = async (src: string, id: string) => {
+    const out = await lay(src);
+    const box = out.class!.boxes.find((b) => b.id === id);
+    expect(box).toBeDefined();
+    return box!;
+  };
+
+  it.each([
+    ['classDiagram\nclass B~U~', 'B', 'B<U>'],
+    ['classDiagram\nA --> B~U~', 'B', 'B<U>'],
+    // Read as bold and italic before the fix, with no warning.
+    ['classDiagram\nclass B~B~', 'B', 'B<B>'],
+    ['classDiagram\nclass C~I~', 'C', 'C<I>'],
+    ['classDiagram\nclass List~Data~', 'List', 'List<Data>'],
+  ])('draws the title of %j as written', async (src, id, text) => {
+    const box = await boxOf(src, id);
+    expect(shown(box.name)).toEqual({ text, styles: [1] });
+  });
+
+  it('draws a member generic as written, and still reads a tag typed in a member', async () => {
+    const box = await boxOf(
+      'classDiagram\nclass A {\n+List~Data~ items\n+get(Map~K, Option~ m) Box~B~\n+a<br>b\n+<b>x</b>\n}',
+      'A'
+    );
+    const [attrs, methods] = box.compartments;
+    expect(attrs!.rows.map((r) => shown(r))).toEqual([
+      { text: '+List<Data> items', styles: [0] },
+      { text: '+a\nb', styles: [0] },
+      { text: '+x', styles: [0, 1] },
+    ]);
+    expect(shown(methods!.rows[0]!)).toEqual({
+      text: '+get(Map<K, Option> m) : Box<B>',
+      styles: [0],
+    });
+  });
+
+  it('lists the title and members as they are measured (DiagramPlugin.labels)', () => {
+    const model = parseClass('classDiagram\nclass B~U~ {\n+List~Data~ items\n+a<br>b\n}').model;
+    expect(diagramPlugin.labels(model)).toEqual([
+      'B&lt;U&gt;',
+      '+List&lt;Data&gt; items',
+      '+a<br>b',
+    ]);
   });
 });
 
@@ -241,6 +296,48 @@ note "floating"`);
     const out = await lay('classDiagram\nnamespace N {\nclass A\n}\nI ()-- A');
     expect(out.class!.interfaces[0]!.parent).toBe('s:N');
   });
+
+  // #363: a cardinality stands past its end's marker, and clear of the relation's own label.
+  const ALONG = pxProfile.engine.endLabelAlong;
+  // Each marker type with the marker at the target end, then at the source end.
+  const ARROWS: [RelationType, string, string][] = [
+    ['aggregation', '--o', 'o--'],
+    ['composition', '--*', '*--'],
+    ['extension', '--|>', '<|--'],
+    ['dependency', '-->', '<--'],
+    ['lollipop', '--()', '()--'],
+  ];
+  const MARKED = ARROWS.flatMap(([kind, end, start]) =>
+    ['TB', 'LR'].flatMap((dir) => [
+      [kind, dir, 'end', end],
+      [kind, dir, 'start', start],
+    ])
+  ) as [RelationType, string, string, string][];
+  it.each(MARKED)(
+    '%s %s: the %s cardinality is past the marker, clear of the label',
+    async (kind, dir, at, arrow) => {
+      const out = await lay(`classDiagram\ndirection ${dir}\nA "1" ${arrow} "*" B : uses`);
+      const ge = out.class!.graph.edges[0]!;
+      const placed = out.edges.get(ge.id)!;
+      const head = at === 'end';
+      const size = (head ? ge.endLabel : ge.startLabel)!;
+      const centre = (head ? placed.endLabel : placed.startLabel)!;
+      const marker = (head ? ge.endMarker : ge.startMarker)!;
+      expect(marker.length).toBe(MARKER_ROOM[kind]);
+      const p = head ? placed.points.at(-1)! : placed.points[0]!;
+      const axis = dir === 'TB' ? 'y' : 'x';
+      const dim = axis === 'y' ? 'height' : 'width';
+      // Distance along the flow from the end to the near side of a box, and to its far side.
+      const span = (c: { x: number; y: number }, s: { width: number; height: number }) => {
+        const d = Math.abs(c[axis] - p[axis]);
+        return [d - s[dim] / 2, d + s[dim] / 2] as const;
+      };
+      const [near, far] = span(centre, size);
+      expect.soft(near, 'past the marker').toBeGreaterThanOrEqual(marker.length - 1e-6);
+      const [labelNear] = span(placed.label!, ge.label!);
+      expect.soft(labelNear - far, 'clear of the label').toBeGreaterThanOrEqual(ALONG - 1e-6);
+    }
+  );
 
   it('takes direction, spacing and diagramPadding from the diagram and class config', async () => {
     const out = await lay('classDiagram\ndirection LR\nA --> B', {

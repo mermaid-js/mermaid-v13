@@ -1,0 +1,11 @@
+---
+title: '#357 ignored edge animation'
+description:
+  v13 parses edge animate and animation but does not draw them. Fixed when the
+  render reports one warning per ignored feature, naming it (like LOOK_REMOVED).
+---
+flowchart LR
+  A e1@==> B
+  e1@{ animate: true }
+  B e2@--> C
+  e2@{ animation: fast }

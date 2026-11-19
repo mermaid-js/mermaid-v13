@@ -55,8 +55,9 @@ interface TreemapItem {
   readonly colorKey: string;
   /**
    * v12's slot in the fill range `['transparent', cScale0…cScale11]` and the stroke range
-   * `['transparent', cScalePeer0…11]` (the same domain): the first-lookup index of `colorKey`
-   * mod 13, the hidden root's `''` first. 0 is `transparent`.
+   * `['transparent', cScalePeer0…11]` (the same domain), by the first-lookup index of
+   * `colorKey`, the hidden root's `''` first: 0 is the root's, `transparent`; every later name
+   * cycles through 1…12 (D612; v12 took the index mod 13, so its 13th name was transparent).
    */
   readonly fill: number;
   /** v12's slot in `cScaleLabel0…11`: the first-lookup index of the item's own name, mod 12. */

@@ -59,16 +59,12 @@ export function renderKanban(
  */
 function openRoot({ w, layout, ctx }: Scene): void {
   const { theme, config } = ctx;
-  const { x, y } = layout.bounds;
-  const width = Math.max(1, Math.ceil(layout.bounds.width));
-  const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = config.kanban?.useMaxWidth !== false;
   // Read before the root style and the auto sheet are written, so they declare its aliases.
   const font = fontAttrs(layout.font, theme);
   openSvgRoot(w, ctx, {
     name: 'kanban',
-    viewBox: [x, y, width, height],
-    maxWidth,
+    viewBox: layout.bounds,
+    maxWidth: config.kanban?.useMaxWidth !== false,
     attrs: { ...font },
   });
 }

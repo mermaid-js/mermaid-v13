@@ -1,0 +1,4 @@
+2:13-2:18 "\"User" error UNCLOSED_STRING: Unclosed text: the `"` at line 2 has no closing `"`. Add `"` after the text.
+4:23-4:24 "?" error UNEXPECTED_CHARACTER: Unexpected character `?`.
+7:1-7:2 "}" error UNEXPECTED: Expected something else, got `}`; no `{` is open to close.
+8:17-8:22 "\"Uses" error UNCLOSED_STRING: Unclosed text: the `"` at line 8 has no closing `"`. Add `"` after the text.

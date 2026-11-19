@@ -111,10 +111,8 @@ properties:
         `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 /
         ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2;
         `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and
-        `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground`
-        white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground` /
-        `tertiaryColor` at half opacity (v12's `.labelBkg`, D572);
-        `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding;
+        `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erMarkerFill`
+        `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding;
         `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding;
         `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding;
         `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5;
@@ -430,8 +428,8 @@ properties:
         x-mermaid: *erColor
       erEdgeLabelBackground:
         description: |
-          ER diagrams: background of relationship labels. In the classic themes `tertiaryColor`
-          at half opacity, as v12 (D572).
+          ER diagrams: background of relationship labels. `edgeLabelBackground` unless set, which
+          is the theme's `background` in every theme (D628).
         type: string
         x-mermaid: *erColor
       erMarkerFill:
@@ -1022,13 +1020,13 @@ properties:
       default: (**default**) Link URLs may use `http`, `https`, `mailto` or be relative.
       strict: Only relative link URLs are kept; absolute links are dropped with a warning.
       antiscript: No longer supported; treated as `default`, with a warning.
-      loose: No longer supported; treated as `default`, with a warning.
+      loose: Turns on click callbacks (D554); link URLs follow `default`. No warning (D634).
       sandbox: No longer supported; treated as `default`, with a warning.
     default: default
     x-mermaid:
       status: honoured
       since: 13.0.0
-      reason: "The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose`, `antiscript` and `sandbox` act as `default` with a warning."
+      reason: "The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose` turns on click callbacks (D554) and acts as `default` for link URLs, with no warning (D634); `antiscript` and `sandbox` act as `default` with a warning."
   startOnLoad:
     description: Dictates whether mermaid starts on Page load
     type: boolean
@@ -1039,9 +1037,10 @@ properties:
       reason: As in v12, the browser build runs `run()` on `window` load unless `initialize()` turns this off.
   discovery:
     description: |
-      Plugin auto-discovery (D164, D165): before the first render, `mermaid` registers the
-      plugins found in the app's own `node_modules`, by the Node/SSR scan or, in a bundled
-      app, by `@mermaid-js/bundler-plugin`'s build-time list. Set `false` to turn both off.
+      Plugin auto-discovery (D164, D165, D589): before the first render, `mermaid` registers
+      the plugins the app declares in its own `package.json` and has installed in its own
+      `node_modules`, by the Node/SSR scan or, in a bundled app, by
+      `@mermaid-js/bundler-plugin`'s build-time list. Set `false` to turn both off.
       It does not cover the CDN `globalThis.mermaidPlugins` queue (D167): a script that
       pushes itself there always registers. Integrator-only: diagram text cannot set it.
     type: boolean
@@ -1269,19 +1268,27 @@ properties:
     x-mermaid: { status: pending }
   fontSize:
     type: number
-    default: 16
     x-mermaid:
       status: honoured
       since: 13.0.0
       reason: >-
-        Read by timeline, as v12's renderer read it: each box is `fontSize × 0.55` px taller
-        than its text, and the TD axis starts `2 × fontSize` above the content and ends
-        `0.5 × fontSize + 20` below it. Text is drawn at `themeVariables.fontSize`; no other
-        type reads this key.
+        The documented default changes from 16 to none (D620), so a diagram can tell "not set"
+        from 16: the resolved config (`CORE_DEFAULTS`, `prepare().config`) no longer holds
+        `fontSize` unless a layer sets it. Read by sequence and timeline only, as in v12.
+        Sequence: a set value sizes actor, message and note text where the
+        `sequence.*FontSize` key is unset, and wins over `themeVariables.fontSize`; a CSS
+        length such as `24px` works as for the per-key keys; the title stays at the theme's
+        size. Timeline, as v12's renderer read it, with 16 when unset: each box is
+        `fontSize × 0.55` px taller than its text, and the TD axis starts `2 × fontSize` above
+        the content and ends `0.5 × fontSize + 20` below it; its text is drawn at
+        `themeVariables.fontSize`.
   markdownAutoWrap:
     type: boolean
     default: true
-    x-mermaid: { status: pending }
+    x-mermaid:
+      status: honoured
+      since: 13.0.0
+      reason: 'Set to `false`, a flowchart markdown label (node, subgraph and edge) breaks only at its own line breaks, as v12 did for HTML labels. No other diagram type reads this key.'
   suppressErrorRendering:
     type: boolean
     default: false
@@ -4617,9 +4624,9 @@ $defs:
           status: honoured
           since: 13.0.0
           reason: >-
-            The default changes: unset, it is the theme's `fontSize` (16 by default), the size
-            v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set
-            value now takes effect.
+            The default changes: unset, it is the top-level `fontSize` when that is set (D620),
+            else the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced
+            every per-key size with the global `fontSize`. A set value now takes effect.
       actorFontFamily:
         description: This sets the font family of the actor's description
         type: string
@@ -4642,9 +4649,9 @@ $defs:
           status: honoured
           since: 13.0.0
           reason: >-
-            The default changes: unset, it is the theme's `fontSize` (16 by default), the size
-            v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set
-            value now takes effect.
+            The default changes: unset, it is the top-level `fontSize` when that is set (D620),
+            else the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced
+            every per-key size with the global `fontSize`. A set value now takes effect.
       noteFontFamily:
         description: This sets the font family of actor-attached notes
         type: string
@@ -4673,9 +4680,9 @@ $defs:
           status: honoured
           since: 13.0.0
           reason: >-
-            The default changes: unset, it is the theme's `fontSize` (16 by default), the size
-            v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set
-            value now takes effect.
+            The default changes: unset, it is the top-level `fontSize` when that is set (D620),
+            else the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced
+            every per-key size with the global `fontSize`. A set value now takes effect.
       messageFontFamily:
         description: This sets the font family of actor messages
         type: string
@@ -5001,6 +5008,28 @@ $defs:
           top: 0
           bottom: 0
         x-mermaid: { status: pending }
+      subGraphTitlePosition:
+        description: |
+          Where the title of a subgraph sits: at the top or the bottom of the subgraph, and at
+          the left, the middle or the right. A subgraph can set its own with
+          `id@{ titlePosition: bottom-left }`.
+
+          When unset, the title is at the top in the middle (at the top left with the `compass`
+          layout). Swimlane lanes, collapsed subgraphs and text output keep their own placement.
+        type: string
+        enum:
+          - top-left
+          - top-center
+          - top-right
+          - bottom-left
+          - bottom-center
+          - bottom-right
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            New in v13 (mermaid-js/mermaid#2977). Any other value draws with the default and adds
+            one `FLOWCHART_CONFIG_IGNORED` warning.
       arrowMarkerAbsolute:
         type: boolean # TODO, is this actually used here (it has no default value but was in types)
         x-mermaid:
@@ -5076,8 +5105,10 @@ $defs:
             The default changes from `basis` to `rounded`, the look of v12's default ELK layout:
             stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis`
             to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped
-            routes; `rounded` draws straight segments with rounded corners; every other value draws
-            S-curves (the layout engine routes edges, not a d3 curve factory).
+            routes with right-angle corners (the step in the middle, near the start and near the end of the leg);
+            `rounded` draws straight segments with rounded corners; every other value draws
+            S-curves (the layout engine routes edges, not a d3 curve factory), and a name outside
+            this list also warns `CURVE_UNKNOWN`, once per render (D602).
 
       padding:
         description: |

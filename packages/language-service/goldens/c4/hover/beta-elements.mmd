@@ -1,0 +1,15 @@
+c4-beta container
+person us|er "User" "Pays for orders." :::external
+softwareSystem sh|op "Shop" "Sells things." {
+  container ap|i "API" "Serves orders." "Kotlin" :::team :::sync
+  group inner "Inner" {
+    component ha|ndler "Handler"
+  }
+}
+deploymentNode dc "Data centre" "" "Linux" instances "2" {
+  infrastructureNode lb "Load balancer" "" "nginx"
+}
+us|er --> ap|i : "Signs in" "HTTPS"
+sh|op --> ha|ndler
+user --> mis|sing
+user --> api : "Signs in" "HTTPS"|

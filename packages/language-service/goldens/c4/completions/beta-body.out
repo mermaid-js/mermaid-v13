@@ -1,0 +1,38 @@
+@ 3:3  |
+  person keyword (person id "Name" "Description") 3:3-3:3 "" -> "person "
+  softwareSystem keyword (softwareSystem id "Name" "Description") 3:3-3:3 "" -> "softwareSystem "
+  container keyword (container id "Name" "Description" "Technology") 3:3-3:3 "" -> "container "
+  component keyword (component id "Name" "Description" "Technology") 3:3-3:3 "" -> "component "
+  group keyword (group id "Name" {) 3:3-3:3 "" -> "group "
+  deploymentNode keyword (deploymentNode id "Name" "Description" "Technology" instances "n" {) 3:3-3:3 "" -> "deploymentNode "
+  infrastructureNode keyword (infrastructureNode id "Name" "Description" "Technology") 3:3-3:3 "" -> "infrastructureNode "
+@ 4:6  con|
+  container keyword (container id "Name" "Description" "Technology") 4:3-4:6 "con" -> "container "
+@ 6:5  |
+  person keyword (person id "Name" "Description") 6:5-6:5 "" -> "person "
+  softwareSystem keyword (softwareSystem id "Name" "Description") 6:5-6:5 "" -> "softwareSystem "
+  container keyword (container id "Name" "Description" "Technology") 6:5-6:5 "" -> "container "
+  component keyword (component id "Name" "Description" "Technology") 6:5-6:5 "" -> "component "
+  group keyword (group id "Name" {) 6:5-6:5 "" -> "group "
+  deploymentNode keyword (deploymentNode id "Name" "Description" "Technology" instances "n" {) 6:5-6:5 "" -> "deploymentNode "
+  infrastructureNode keyword (infrastructureNode id "Name" "Description" "Technology") 6:5-6:5 "" -> "infrastructureNode "
+@ 8:6  per|
+  person keyword (person id "Name" "Description") 8:3-8:6 "per" -> "person "
+@ 9:6  sty|
+  none
+@ 11:1  |
+  person keyword (person id "Name" "Description") 11:1-11:1 "" -> "person "
+  softwareSystem keyword (softwareSystem id "Name" "Description") 11:1-11:1 "" -> "softwareSystem "
+  container keyword (container id "Name" "Description" "Technology") 11:1-11:1 "" -> "container "
+  component keyword (component id "Name" "Description" "Technology") 11:1-11:1 "" -> "component "
+  group keyword (group id "Name" {) 11:1-11:1 "" -> "group "
+  deploymentNode keyword (deploymentNode id "Name" "Description" "Technology" instances "n" {) 11:1-11:1 "" -> "deploymentNode "
+  infrastructureNode keyword (infrastructureNode id "Name" "Description" "Technology") 11:1-11:1 "" -> "infrastructureNode "
+  title keyword 11:1-11:1 "" -> "title "
+  accTitle keyword 11:1-11:1 "" -> "accTitle: "
+  accDescr keyword 11:1-11:1 "" -> "accDescr: "
+  direction keyword 11:1-11:1 "" -> "direction "
+  legend keyword 11:1-11:1 "" -> "legend "
+  style keyword 11:1-11:1 "" -> "style "
+  shop node (softwareSystem "Shop") 11:1-11:1 "" -> "shop"
+  api node (container "API") 11:1-11:1 "" -> "api"

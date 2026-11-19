@@ -5,7 +5,8 @@
  * - A push of documentation only runs Prettier on those files.
  * - Any other push runs, at the same time: ESLint and Prettier on the changed files; cspell,
  *   knip and the typecheck over everything (the typecheck incrementally); the dependency,
- *   licence and generated-file checks; and the structural audit as CI's job runs it.
+ *   licence and generated-file checks; and the structural audit as CI's job runs it, which is
+ *   `fallow audit` without coverage and runs no tests (D640).
  * - Not here: the full unit suite, the timing and language-budget projects, `pnpm build`.
  *
  * Every check writes a log under `node_modules/.cache/pre-push/`, and every failure is
@@ -13,15 +14,15 @@
  * file handles it). `PRE_PUSH_BASE=<rev>` replaces the base commit, and naming checks runs only
  * those: `pnpm exec tsx tools/pre-push/cli.ts typecheck knip`.
  */
-import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { availableParallelism } from 'node:os';
 import { join, relative } from 'node:path';
+import { pool, runProcess } from '../workspace/parallel.ts';
 import type { CheckResult, TscStep, WorkspacePackage } from './plan.ts';
 import {
   codeReferencePattern,
-  failedTestsWarning,
   findRemote,
   isDocsPath,
   lintTargets,
@@ -32,7 +33,6 @@ import {
 
 const ROOT = join(import.meta.dirname, '..', '..');
 const CACHE = join(ROOT, 'node_modules', '.cache', 'pre-push');
-const COVERAGE = join(ROOT, 'coverage', 'coverage-final.json');
 const TIMINGS = join(CACHE, 'timings.json');
 
 const say = (text: string): void => void process.stdout.write(`${text}\n`);
@@ -52,30 +52,21 @@ interface Finished {
   readonly output: string;
 }
 
-/** Runs a command and resolves with its exit code and its output, stdout and stderr in order. */
-function run(command: readonly string[], cwd = ROOT, env = process.env): Promise<Finished> {
-  return new Promise((resolve) => {
-    const [file = '', ...args] = command;
-    const child = spawn(file, args, { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] });
-    const chunks: Buffer[] = [];
-    child.stdout.on('data', (chunk: Buffer) => chunks.push(chunk));
-    child.stderr.on('data', (chunk: Buffer) => chunks.push(chunk));
-    const done = (code: number, note = ''): void =>
-      resolve({
-        code,
-        output: `$ ${command.join(' ')}\n${Buffer.concat(chunks).toString()}${note}`,
-      });
-    child.on('error', (error) => done(1, `${error.message}\n`));
-    child.on('close', (code, signal) => done(code ?? 1, signal ? `killed by ${signal}\n` : ''));
-  });
+/**
+ * Runs a command and resolves with its exit code and its output, stdout and stderr in order
+ * (`runProcess` in tools/workspace/parallel.ts, shared with `pnpm lint` and `check:static`).
+ */
+async function run(command: readonly string[], cwd = ROOT, env = process.env): Promise<Finished> {
+  const [file = '', ...args] = command;
+  const { code, signal, output } = await runProcess(file, args, { cwd, env });
+  const note = signal ? `killed by ${signal}\n` : '';
+  return { code: code ?? 1, output: `$ ${command.join(' ')}\n${output}${note}` };
 }
 
 interface Outcome {
   readonly ok: boolean;
   /** Everything the check printed: its log. */
   readonly output: string;
-  /** Printed after a check that passed, for something the push should not wait for. */
-  readonly warning?: string;
 }
 
 interface Check {
@@ -205,20 +196,6 @@ async function runTsc({ cwd, project, buildInfo }: TscStep): Promise<Finished> {
   return { code, output: code === 0 ? `passed: ${title}\n` : `\nFAILED: ${title}\n${output}` };
 }
 
-/** Runs `task` over `items`, at most `limit` at a time. */
-async function pool<T, R>(items: readonly T[], limit: number, task: (item: T) => Promise<R>) {
-  const results: R[] = [];
-  let next = 0;
-  const worker = async (): Promise<void> => {
-    while (next < items.length) {
-      const index = next++;
-      results[index] = await task(items[index] as T);
-    }
-  };
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
-  return results;
-}
-
 /**
  * `pnpm typecheck`, each `tsc` run made incremental. When the scripts hold something other
  * than plain `tsc -p` runs, `pnpm typecheck` runs as it is instead, so nothing is skipped.
@@ -245,29 +222,17 @@ async function typecheck(): Promise<Outcome> {
 }
 
 /**
- * CI's "Structural audit" job: the tests the change reaches run with coverage, then
- * `fallow audit` reads that coverage and decides. As in CI, a failing test does not fail the
- * audit; it is printed as a warning.
+ * CI's "Structural audit" job (`structure`): `fallow audit` with `.fallowrc.pr.json`, without
+ * coverage and without a test run (D640). The check passes when fallow exits with 0. CRAP
+ * findings are warnings there, because without coverage fallow can only estimate CRAP; the
+ * nightly fallow run, which has coverage, gates on it.
  */
 async function structuralAudit(base: string): Promise<Outcome> {
-  rmSync(COVERAGE, { force: true });
-  const tests = await run([
-    ...['pnpm', 'vitest', 'run', '--changed', base, '--passWithNoTests', '--coverage'],
-    ...['--project', 'workspace', '--project', 'gantt-utc', '--project', 'gantt-la'],
+  const { code, output } = await run([
+    ...['pnpm', 'exec', 'fallow', 'audit', '-c', '.fallowrc.pr.json'],
+    ...['--base', base, '--quiet'],
   ]);
-  const env = existsSync(COVERAGE)
-    ? { ...process.env, FALLOW_COVERAGE: 'coverage/coverage-final.json' }
-    : process.env;
-  const audit = await run(
-    ['pnpm', 'exec', 'fallow', 'audit', '--base', base, '--quiet'],
-    ROOT,
-    env
-  );
-  return {
-    ok: audit.code === 0,
-    output: `${tests.output}exit ${tests.code}\n\n${audit.output}`,
-    warning: tests.code === 0 ? undefined : failedTestsWarning(tests.output),
-  };
+  return { ok: code === 0, output };
 }
 
 const allChecks = (base: string, files: readonly string[]): Check[] => [

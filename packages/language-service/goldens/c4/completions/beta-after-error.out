@@ -1,0 +1,11 @@
+@ 3:13  person p ?? |
+  none
+@ 4:17  person q "Q" ?? |bad
+  none
+@ 5:10  user --> |
+  user node (person "User") 5:10-5:10 "" -> "user"
+  q node (person "Q") 5:10-5:10 "" -> "q"
+@ 6:15  person broken |"unclosed
+  none
+@ 7:12  user --> mi|
+  none

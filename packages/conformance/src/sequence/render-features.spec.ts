@@ -1,5 +1,8 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Mermaid } from 'mermaid';
+import { REPO_ROOT } from '../corpus.ts';
 import { pathPoints } from './path-bounds.ts';
 import { sequenceApi } from './render-api.ts';
 
@@ -156,6 +159,42 @@ describe('fonts', () => {
     expect(tag(plain, /class="messages"/)).not.toContain('font-size');
     const sized = await render('A->>B: x', '  sequence:\n    messageFontSize: 20');
     expect(tag(sized, /class="messages"/)).toContain('font-size="20"');
+  });
+
+  // D620 (#765): a top-level fontSize the author sets scales actor, message and note text.
+  const ROOT_FONT = readFileSync(
+    join(REPO_ROOT, 'e2e/diagrams/sequence/baseline/config/root-font-size.mmd'),
+    'utf8'
+  );
+  const rootBody = ROOT_FONT.slice(ROOT_FONT.indexOf('sequenceDiagram\n') + 16);
+  const height = (svg: string): number =>
+    Number(/viewBox="[^ ]+ [^ ]+ [^ ]+ ([^"]+)"/.exec(svg)![1]);
+  const sizesOf = (svg: string): string[] =>
+    ['participants', 'messages', 'notes'].map(
+      (c) => /font-size="([^"]+)"/.exec(tag(svg, new RegExp(`class="${c}"`)))?.[1] ?? 'theme'
+    );
+
+  it('draws actor, message and note text at a set top-level fontSize, and grows', async () => {
+    const plain = await render(rootBody);
+    const sized = (await api.render('s', ROOT_FONT)).svg;
+    expect(sizesOf(sized)).toEqual(['24', '24', '24']);
+    expect(height(sized)).toBeGreaterThan(height(plain));
+    // The title keeps the theme's size, as v12 drew it.
+    expect(tag(sized, /class="sequenceTitle"/)).toMatch(/^<text(?![^>]*font-size)/);
+  });
+
+  it('keeps a set sequence.*FontSize over the top-level fontSize', async () => {
+    const svg = await render(rootBody, '  fontSize: 24\n  sequence:\n    messageFontSize: 12');
+    expect(sizesOf(svg)).toEqual(['24', '12', '24']);
+  });
+
+  it('stays at the theme size when the top-level fontSize is unset', async () => {
+    expect(sizesOf(await render(rootBody))).toEqual(['theme', 'theme', 'theme']);
+  });
+
+  it('wins over themeVariables.fontSize when both are set', async () => {
+    const svg = await render(rootBody, "  fontSize: 24\n  themeVariables:\n    fontSize: '18px'");
+    expect(sizesOf(svg)).toEqual(['24', '24', '24']);
   });
 });
 

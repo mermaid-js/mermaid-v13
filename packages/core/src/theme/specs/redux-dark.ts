@@ -1,7 +1,7 @@
 /**
  * `redux-dark`: v12 `theme-redux-dark.js` at 12.2.0. v12 never sets `darkMode` on it, so where
- * it derives a colour it uses the light-mode rule (`edgeLabelBackground` is `secondaryColor`);
- * those values are pinned here rather than left to the shared dark rules.
+ * it derives a colour it uses the light-mode rule; those values are pinned here rather than
+ * left to the shared dark rules.
  */
 import type { ThemeSpec } from '../spec.ts';
 import { CONTRAST_LABELS, DARK_HUE_SOURCES, darkenedScale, gitLabelRules } from './scales.ts';

@@ -1,0 +1,9 @@
+@ 7:18  softwareSystem sh|op "Shop" {
+  element:shop 7:1-10:2 "softwareSystem shop \"Shop\" {\n  container api \"API\" :::team\n  container store \"Store\"\n}"
+@ 9:15  container st|ore "Store"
+  element:store 9:3-9:26 "container store \"Store\""
+  element:shop 7:1-10:2 "softwareSystem shop \"Shop\" {\n  container api \"API\" :::team\n  container store \"Store\"\n}"
+@ 11:13  1: user --> |api : "Signs in"
+  rel:user->api 11:1-11:29 "1: user --> api : \"Signs in\""
+@ 13:11  api --- st|ore
+  rel:api->store 13:1-13:14 "api --- store"

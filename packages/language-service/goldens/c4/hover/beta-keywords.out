@@ -1,0 +1,114 @@
+@ 1:12  c4-beta con|tainer
+  1:9-1:18 "container"
+  | **`container`**
+  |
+  | The container view: what runs inside a software system.
+@ 2:3  ti|tle Payments
+  2:1-2:6 "title"
+  | **`title`**
+  |
+  | `title Payments`: the title drawn above the diagram (the last one wins).
+@ 3:6  accTi|tle: Payments view
+  3:1-3:9 "accTitle"
+  | **`accTitle`**
+  |
+  | `accTitle: Payments view`: the accessible title.
+@ 4:6  accDe|scr {
+  4:1-4:9 "accDescr"
+  | **`accDescr`**
+  |
+  | `accDescr: …` or `accDescr { … }`: the accessible description.
+@ 7:5  dire|ction LR
+  7:1-7:10 "direction"
+  | **`direction`**
+  |
+  | `direction LR`: the layout direction, at the top level only.
+@ 7:12  direction L|R
+  7:11-7:13 "LR"
+  | **`LR`**
+  |
+  | `LR`: left to right.
+@ 8:4  leg|end off
+  8:1-8:7 "legend"
+  | **`legend`**
+  |
+  | `legend off`: shows or hides the legend.
+@ 8:9  legend o|ff
+  8:8-8:11 "off"
+  | **`off`**
+  |
+  | `off`: `legend off` hides the legend.
+@ 9:3  st|yle store shape:cylinder, fill:#fff
+  9:1-9:6 "style"
+  | **`style`**
+  |
+  | `style store shape:cylinder, fill:#1f2937`: the target is a tag or an element kind.
+@ 9:16  style store sha|pe:cylinder, fill:#fff
+  9:13-9:18 "shape"
+  | **`shape`**
+  |
+  | The shape: `cylinder` for a data store.
+@ 9:31  style store shape:cylinder, fi|ll:#fff
+  9:29-9:33 "fill"
+  | **`fill`**
+  |
+  | The fill colour: `#` and three or six hex digits, or a colour name.
+@ 10:4  per|son user "User"
+  10:1-10:7 "person"
+  | **`person`**
+  |
+  | A person: a user of the system. It has no technology.
+@ 11:18  softwareSystem sh|op "Shop"
+  11:16-11:20 "shop"
+  | **softwareSystem** `shop`
+  |
+  | Name: `Shop`
+  |
+  | 1 relation out, 4 in
+@ 12:4  gro|up g "G" {
+  12:1-12:6 "group"
+  | **`group`**
+  |
+  | A group: a frame around elements, with no meaning of its own.
+@ 14:6  compo|nent c "C"
+  14:1-14:10 "component"
+  | **`component`**
+  |
+  | A component: a part of a container, a group of related code behind one interface.
+@ 15:12  deploymentN|ode d "D" "" "Linux" instances "2"
+  15:1-15:15 "deploymentNode"
+  | **`deploymentNode`**
+  |
+  | A deployment node: a place software runs, with a technology and a number of instances.
+@ 15:37  deploymentNode d "D" "" "Linux" inst|ances "2"
+  15:33-15:42 "instances"
+  | **`instances`**
+  |
+  | `instances "2..4"`: how many instances of a deployment node run.
+@ 16:16  infrastructureN|ode i "I"
+  16:1-16:19 "infrastructureNode"
+  | **`infrastructureNode`**
+  |
+  | An infrastructure node: infrastructure such as a load balancer, inside a deployment node.
+@ 17:8  user --|> shop
+  17:6-17:9 "-->"
+  | **`-->`**
+  |
+  | `-->`: a relation from the first element to the second.
+@ 18:7  user <|-- shop
+  18:6-18:9 "<--"
+  | **`<--`**
+  |
+  | `<--`: a relation read right to left: the second element is its source.
+@ 19:8  user <-|-> shop
+  19:6-19:10 "<-->"
+  | **`<-->`**
+  |
+  | `<-->`: a relation that points both ways.
+@ 20:8  user --|- shop
+  20:6-20:9 "---"
+  | **`---`**
+  |
+  | `---`: a relation with no arrowhead, drawn between the two elements as it is written. `----` and `--->` are not undirected arrows.
+@ 21:2  1|: user --> shop
+  none

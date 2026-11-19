@@ -18,23 +18,24 @@ commas only separate them. A boundary holds its statements between `{` and `}`, 
 element, relation or style. As mermaid@12 lexed it, apart from D452: an unquoted argument stops
 at `)` and at the line end, a `%%` comment keeps the line break after it, and a lone `title` is
 a title with no text. A quoted text stops at the line break before a line that
-starts a statement (#681), and a tab may come before its opening quote. A line holding `direction TB`, `BT`, `RL` or `LR` is one token that no
-statement takes. *)
+starts a statement (#681), and a tab may come before its opening quote. A `direction TB`, `BT`,
+`RL` or `LR` is read where a token starts, not inside a label (#730, amending D452). *)
 
 @lexer
 
 @modes macro attribute string string_kv string_kv_key string_kv_value acc_title acc_descr
   acc_descr_multiline ;
 
-(** `direction TB|BT|RL|LR`: tried first, over the whole line from the token start (inside a
-label too). C4 has no `direction` statement: it is an error. *)
-direction_tb              /.*direction\s+TB[^\n]*/         :keyword ;
-(** `direction BT`: an error, as `direction TB`. *)
-direction_bt              /.*direction\s+BT[^\n]*/         :keyword ;
-(** `direction RL`: an error, as `direction TB`. *)
-direction_rl              /.*direction\s+RL[^\n]*/         :keyword ;
-(** `direction LR`: an error, as `direction TB`. *)
-direction_lr              /.*direction\s+LR[^\n]*/         :keyword ;
+(** `direction TB|BT|RL|LR`: tried first, where a token starts (#730: 12.2.0 took the rest of a
+line that held the words anywhere, a label too, and no statement took it). Its fill order is the
+top level's, or that of the boundary whose braces hold it. *)
+direction_tb              /direction[ \t]+TB\b/            :keyword ;
+(** `direction BT`: the lines go up. *)
+direction_bt              /direction[ \t]+BT\b/            :keyword ;
+(** `direction RL`: a line is a column, and the lines go left. *)
+direction_rl              /direction[ \t]+RL\b/            :keyword ;
+(** `direction LR`: a line is a column, and the lines go right. *)
+direction_lr              /direction[ \t]+LR\b/            :keyword ;
 (** `title <text>`: the diagram title, the rest of the line up to a `;`, trimmed (a `#` is
 text, #683; 12.2.0 stopped there). A lone `title` is a title with no text (D452). *)
 title                     /title(?=\n)/                    :keyword ;
@@ -171,6 +172,7 @@ nl = [ COMMENT ] NEWLINE { COMMENT NEWLINE } ;
 element on the same line (`accDescr { … }` ends before the line does). *)
 statements = otherStatement [ nl [ statements ] ]
   | otherStatement diagramStatements
+  | directionStatement [ nl [ statements ] ]
   | diagramStatements ;
 diagramStatements = diagramStatement [ nl [ statements ] ] ;
 
@@ -181,6 +183,12 @@ otherStatement = title
   | acc_title acc_title_value
   | acc_descr acc_descr_value
   | acc_descr_multiline_value ;
+
+(** `direction TB`, `BT`, `RL` or `LR`: how the grid fills (#730). A line of members is a row in
+`TB` and `BT`, a column in `LR` and `RL`. A `direction` at the top level sets the top level's
+order and one in a boundary's braces sets that boundary's; a boundary without one takes its
+parent's, and the last statement wins. It goes on a line of its own, and may start a boundary. *)
+directionStatement = direction_tb | direction_bt | direction_rl | direction_lr ;
 
 diagramStatement = Element | Relation | Style | Boundary ;
 
@@ -228,9 +236,10 @@ Style @Style = style arguments ;
 style = UPDATE_EL_STYLE | UPDATE_REL_STYLE | UPDATE_LAYOUT_CONFIG ;
 
 (** `Boundary(alias, "Label") { … }` and the other boundaries and deployment nodes: their
-statements go between `{` and `}`, the first an element, relation or style. The `{` ends the
-macro's line or starts the next. *)
-Boundary @Boundary = boundary arguments brace diagramStatements RBRACE ;
+statements go between `{` and `}`, the first an element, relation or style (a `direction` may
+come before it). The `{` ends the macro's line or starts the next. *)
+Boundary @Boundary = boundary arguments brace boundaryBody RBRACE ;
+boundaryBody = diagramStatements | directionStatement nl boundaryBody ;
 boundary = BOUNDARY
   | ENTERPRISE_BOUNDARY
   | SYSTEM_BOUNDARY

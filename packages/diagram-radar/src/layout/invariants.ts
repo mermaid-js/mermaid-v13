@@ -7,10 +7,8 @@
 import type { RadarModel } from '../model.ts';
 import { RADAR_METRICS, RADAR_SLOTS } from './metrics.ts';
 import type { Point, RadarLayout, Rect } from './types.ts';
-import { nonFinite as finite } from '@mermaid-js/shared/layout/invariants';
+import { EPS, nonFinite as finite } from '@mermaid-js/shared/testing/layout-invariants';
 
-/** Float tolerance of the checks, relative to the chart's size. */
-const EPS = 1e-6;
 const TAU = 2 * Math.PI;
 
 export function radarLayoutViolations(model: RadarModel, layout: RadarLayout): string[] {
@@ -88,19 +86,7 @@ export function radarLayoutViolations(model: RadarModel, layout: RadarLayout): s
     });
   }
 
-  // Legend: a row per curve in order under showLegend, 20 px apart (more under a taller label).
-  const rows = model.options.showLegend ? model.curves.length : 0;
-  if (legend.length !== rows) out.push(`${legend.length} legend rows for ${rows} curves`);
-  legend.forEach((r, i) => {
-    if (r.index !== i) out.push(`legend row ${i} is curve ${r.index}`);
-    if (r.slot !== i % RADAR_SLOTS) out.push(`legend row ${i} has slot ${r.slot}`);
-    const prev = legend[i - 1];
-    if (!prev) return;
-    const step =
-      RADAR_METRICS.legendRow + Math.max(0, prev.label.height - prev.label.text.lineHeight);
-    if (Math.abs(r.swatch.y - prev.swatch.y - step) > tol || r.swatch.x !== prev.swatch.x)
-      out.push(`legend rows ${i - 1} and ${i} are not ${step} px apart`);
-  });
+  legendViolations(model, layout, tol, out);
 
   // Everything drawn inside the bounds (D354).
   const inside = (r: Rect, what: string): void => {
@@ -141,6 +127,42 @@ export function radarLayoutViolations(model: RadarModel, layout: RadarLayout): s
   }
   if (layout.title) inside(layout.title, 'the title');
   return out;
+}
+
+/**
+ * The legend: a row per curve in order under showLegend, 20 px apart (more under a taller
+ * label), and no row on an axis label (D614, #846).
+ */
+function legendViolations(
+  model: RadarModel,
+  layout: RadarLayout,
+  tol: number,
+  out: string[]
+): void {
+  const { legend, spokes } = layout;
+  const rows = model.options.showLegend ? model.curves.length : 0;
+  if (legend.length !== rows) out.push(`${legend.length} legend rows for ${rows} curves`);
+  legend.forEach((r, i) => {
+    if (r.index !== i) out.push(`legend row ${i} is curve ${r.index}`);
+    if (r.slot !== i % RADAR_SLOTS) out.push(`legend row ${i} has slot ${r.slot}`);
+    const prev = legend[i - 1];
+    if (!prev) return;
+    const step =
+      RADAR_METRICS.legendRow + Math.max(0, prev.label.height - prev.label.text.lineHeight);
+    if (Math.abs(r.swatch.y - prev.swatch.y - step) > tol || r.swatch.x !== prev.swatch.x)
+      out.push(`legend rows ${i - 1} and ${i} are not ${step} px apart`);
+  });
+
+  // No legend row meets an axis label (D614, #846): touching edges are clear.
+  const meets = (a: Rect, b: Rect): boolean =>
+    a.x < b.x + b.width - tol &&
+    b.x < a.x + a.width - tol &&
+    a.y < b.y + b.height - tol &&
+    b.y < a.y + a.height - tol;
+  for (const r of legend)
+    for (const s of spokes)
+      if (meets(r.swatch, s.label) || meets(r.label, s.label))
+        out.push(`legend row ${r.index} meets spoke ${s.index}'s label`);
 }
 
 /** `p` is `r` from `c` along angle `a`. */

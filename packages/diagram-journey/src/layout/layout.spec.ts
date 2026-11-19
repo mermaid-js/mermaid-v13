@@ -6,7 +6,8 @@ import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { JourneyModel } from '../model.ts';
 import { FIXTURES, WHOLE_WORD, journey, section, task } from './fixtures.ts';
-import { journeyLayoutViolations, layoutJourney, type JourneyLayout } from './index.ts';
+import { layoutJourney, type JourneyLayout } from './index.ts';
+import { journeyLayoutViolations } from './invariants.ts';
 import { journey as diagramPlugin } from '../plugin.ts';
 
 /** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
@@ -297,20 +298,62 @@ describe('journey layout: sections', () => {
 });
 
 describe('journey layout: labels (D225)', () => {
-  it('grows a task box and a band downward for a label taller than them', () => {
+  it('grows a task box and a band downward, and moves the rows below them down (D615)', () => {
     const layout = lay(fixture('three-line-labels'));
     const [tall, short] = layout.tasks;
-    expect(tall!.label!.text.lines.length).toBe(3);
-    expect(tall!.y).toBe(110);
-    expect(tall!.height).toBeCloseTo(tall!.label!.height);
-    expect(tall!.height).toBeGreaterThan(50);
-    expect(short!.height).toBe(50);
-    expect(tall!.dots[0]!.cy).toBe(110);
-    expect(tall!.face.cy).toBe(330);
     const band = layout.bands[0]!;
     expect(band.label!.text.lines.length).toBe(3);
     expect(band.y).toBe(50);
     expect(band.height).toBeCloseTo(band.label!.height);
+    const bandGrowth = band.height - 50;
+    expect(bandGrowth).toBeGreaterThan(0);
+    // The task row moves down by the band's growth; its dots stay on the top edge.
+    expect(tall!.label!.text.lines.length).toBe(3);
+    expect(tall!.y).toBeCloseTo(110 + bandGrowth);
+    expect(short!.y).toBe(tall!.y);
+    expect(tall!.height).toBeCloseTo(tall!.label!.height);
+    expect(short!.height).toBe(50);
+    expect(tall!.dots[0]!.cy).toBe(tall!.y);
+    // The activity line and the faces move down by both growths.
+    const drop = bandGrowth + tall!.height - 50;
+    expect(layout.activity.y).toBeCloseTo(200 + drop);
+    expect(tall!.face.cy).toBeCloseTo(330 + drop);
+    expect(short!.face.cy).toBeCloseTo(390 + drop);
+    expect(tall!.line.y2).toBeCloseTo(450 + drop);
+  });
+
+  it('keeps a title of several lines above the bands, its last baseline at 25 (D615)', () => {
+    const layout = lay(fixture('tall-labels'));
+    const title = layout.title!;
+    const { lines, lineHeight, baseline } = title.text;
+    expect(lines.length).toBe(3);
+    expect(title.y + (lines.length - 1) * lineHeight + baseline).toBeCloseTo(25);
+    expect(title.y + title.height).toBeLessThanOrEqual(layout.bands[0]!.y);
+    expect(layout.bounds.y).toBeCloseTo(title.y - 10);
+  });
+
+  it('keeps a five-line band clear of the task row and a seven-line task clear of the arrow', () => {
+    const layout = lay(fixture('tall-labels'));
+    const band = layout.bands[0]!;
+    const tall = layout.tasks[0]!;
+    expect(band.label!.text.lines.length).toBeGreaterThanOrEqual(5);
+    expect(tall.label!.text.lines.length).toBeGreaterThanOrEqual(7);
+    for (const t of layout.tasks) {
+      expect(t.y - 7).toBeGreaterThanOrEqual(band.y + band.height);
+      expect(t.y + t.height).toBeLessThan(layout.activity.y - 2);
+    }
+    // The gaps v12 has at default config stay: 10 px band to task, 40 px task to arrow.
+    expect(tall.y - (band.y + band.height)).toBeCloseTo(10);
+    expect(layout.activity.y - (tall.y + tall.height)).toBeCloseTo(40);
+    expect(journeyLayoutViolations(fixture('tall-labels'), layout)).toEqual([]);
+  });
+
+  it('lays out a one-line title and labels that fit exactly as before', () => {
+    const layout = lay(fixture('working-day'));
+    expect(layout.title!.y + layout.title!.text.baseline).toBe(25);
+    expect(layout.tasks.every((t) => t.y === 110)).toBe(true);
+    expect(layout.activity.y).toBe(200);
+    expect(layout.tasks.map((t) => t.face.cy)).toEqual([300, 360, 420, 300, 300]);
   });
 
   it('wraps legend labels to maxLabelWidth and steps rows by their height', () => {
@@ -444,6 +487,21 @@ describe('journeyLayoutViolations', () => {
     expect(journeyLayoutViolations(tall, squashed)).toEqual([
       'task t:1: its label is outside its box',
       'band s:A section name long enough to wrap onto three lines: its label is outside its box',
+    ]);
+  });
+
+  it('reports a title over a band, a band over the task row and a task over the arrow', () => {
+    const layout = good();
+    const title = { ...layout.title!, y: 40 };
+    expect(journeyLayoutViolations(model, { ...layout, title })).toEqual([
+      'the title overlaps band s:Go to work',
+    ]);
+    const bands = layout.bands.map((b, i) => (i === 0 ? { ...b, height: 58 } : b));
+    expect(journeyLayoutViolations(model, { ...layout, bands })).toEqual([
+      'band s:Go to work reaches the task row at t:1, t:2, t:3',
+    ]);
+    expect(journeyLayoutViolations(model, withTask(layout, 1, { height: 89 }))).toEqual([
+      'task t:2 reaches the activity line (bottom 199, line top 198)',
     ]);
   });
 

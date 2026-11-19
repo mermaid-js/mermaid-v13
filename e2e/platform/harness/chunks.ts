@@ -4,8 +4,9 @@
  * installed packages it holds. Shared by the bundle specs of every bundler (T3, T5).
  */
 import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative, sep } from 'node:path';
 import type { Page } from '@playwright/test';
+import { REPO_ROOT } from './pack.ts';
 
 /**
  * A part of the installed code: `app` (the app's own modules and the bundler's runtime),
@@ -21,13 +22,20 @@ const NODE_MODULES = /(?:^|[/\\])node_modules[/\\]/g;
 const FACADE_STATEMENT =
   /(?:export\s*(?:\*|\{[^}]*\})\s*from\s*|import\s*)(?:"[^"]*"|'[^']*')\s*;?|\/\/[^\n]*/g;
 
-/** The part of one source-map source path. */
-export function partOf(source: string): ChunkPart {
+/** The installed package a source-map source path is in, and the file's path inside it. */
+function packageFile(source: string): { name: string; file: string } | undefined {
   const at = [...source.matchAll(NODE_MODULES)].at(-1);
-  if (at === undefined) return 'app';
+  if (at === undefined) return undefined;
   const rest = source.slice(at.index + at[0].length).split(/[/\\]/);
   const name = rest[0].startsWith('@') ? `${rest[0]}/${rest[1]}` : rest[0];
-  const file = rest.slice(name.split('/').length).join('/');
+  return { name, file: rest.slice(name.split('/').length).join('/') };
+}
+
+/** The part of one source-map source path. */
+export function partOf(source: string): ChunkPart {
+  const at = packageFile(source);
+  if (at === undefined) return 'app';
+  const { name, file } = at;
   if (/(?:^|\/)ascii(?:[./]|$)/.test(file)) return 'ascii';
   if (/(?:^|\/)language(?:[./]|$)/.test(file) || name.startsWith('@mermaid-js/language-'))
     return 'language';
@@ -97,10 +105,99 @@ export interface LoadedExpectation {
   readonly required?: readonly string[];
 }
 
+const SHARED = '@mermaid-js/shared';
+
 /**
- * Throws unless the scripts at `paths` hold only `app`, `core` and the chunks of the allowed
- * diagram types, and hold the required ones. No `ascii`, `language`, `testing` or other
- * package code may load. The message lists each script with its parts.
+ * A module's name inside its package: its path without `src/` or `dist/` and without the
+ * extension, so the TypeScript source (in the CDN build's maps) and the built file (in a
+ * bundler's maps) have the same one: `parser/flow-lexer`.
+ */
+const moduleName = (file: string): string =>
+  file.replace(/^(?:src|dist)\//, '').replace(/\.[cm]?[jt]s$/, '');
+
+/** The module specifiers of every `import`/`export … from` and `import()` that loads code. */
+function specifiers(code: string): string[] {
+  // Only comments that start a line: a `/*` inside a line comment or after code
+  // (`shared/shapes/*`) opens no block.
+  const text = code.replace(/^\s*\/\/.*$/gm, '').replace(/^\s*\/\*[\s\S]*?\*\//gm, '');
+  // `import type` and `export type` load nothing; `import { type A, b }` does.
+  const statics = text.matchAll(
+    /\b(?:import|export)\s+(?!type\s)(?:[^'";]*?\sfrom\s*)?['"]([^'"]+)['"]/g
+  );
+  const dynamics = text.matchAll(/\bimport\(\s*['"]([^'"]+)['"]\s*\)/g);
+  return [...statics, ...dynamics].map((m) => m[1]);
+}
+
+/** The source file of a workspace package's export, e.g. `('@mermaid-js/shared', './layout')`. */
+function exportSource(name: string, subpath: string): string {
+  const dir = join(REPO_ROOT, 'packages', name.replace(/^@mermaid-js\//, ''));
+  const exports = (
+    JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as {
+      exports: Partial<Record<string, { 'mermaid-source'?: string }>>;
+    }
+  ).exports;
+  const source = exports[subpath]?.['mermaid-source'];
+  if (source === undefined) throw new Error(`${name} has no export ${subpath}`);
+  return join(dir, source);
+}
+
+/** The TypeScript file a relative specifier in `from` names, if it is one. */
+function resolveRelative(from: string, specifier: string): string | undefined {
+  const base = join(dirname(from), specifier);
+  return [base, base.replace(/\.js$/, '.ts'), `${base}.ts`, join(base, 'index.ts')].find(
+    (f) => f.endsWith('.ts') && existsSync(f)
+  );
+}
+
+/**
+ * The `@mermaid-js/shared` modules that the SVG entries of `diagrams` reach through their
+ * imports, static and dynamic, as `moduleName`s. Read from the workspace sources the installed
+ * tarballs were packed from. Since D559 a diagram's own parser, shapes and drawing can live in
+ * shared, and a page that renders it loads them; a shared module no allowed diagram reaches
+ * must not load.
+ */
+function sharedReach(diagrams: readonly string[]): Set<string> {
+  const sharedDir = join(REPO_ROOT, 'packages', 'shared');
+  const reached = new Set<string>();
+  const seen = new Set<string>();
+  const queue = diagrams.map((d) => exportSource(`@mermaid-js/diagram-${d}`, '.'));
+  for (let file = queue.pop(); file !== undefined; file = queue.pop()) {
+    if (seen.has(file)) continue;
+    seen.add(file);
+    if (file.startsWith(sharedDir + sep)) reached.add(moduleName(relative(sharedDir, file)));
+    for (const s of specifiers(readFileSync(file, 'utf8'))) {
+      if (s.startsWith('.')) {
+        const target = resolveRelative(file, s);
+        if (target !== undefined) queue.push(target);
+      } else if (s.startsWith(`${SHARED}/`)) {
+        queue.push(exportSource(SHARED, `./${s.slice(SHARED.length + 1)}`));
+      }
+    }
+  }
+  return reached;
+}
+
+/**
+ * The parts of the built file at `path`, as `chunkParts` gives them, except that a module of
+ * `@mermaid-js/shared` is `shared` when it is in `reach` and `shared:<module>` when not.
+ */
+function partsWithShared(dist: string, path: string, reach: ReadonlySet<string>): Set<ChunkPart> {
+  return new Set(
+    chunkSources(dist, path).map((source) => {
+      const part = partOf(source);
+      if (part !== `package:${SHARED}`) return part;
+      const name = moduleName(packageFile(source)!.file);
+      return reach.has(name) ? 'shared' : `shared:${name}`;
+    })
+  );
+}
+
+/**
+ * Throws unless the scripts at `paths` hold only `app`, `core`, the chunks of the allowed
+ * diagram types and the `@mermaid-js/shared` modules those types import (D559), and hold the
+ * required ones. No `ascii`, `language`, `testing` or other package code may load, nor a shared
+ * module that only other types import (`shared:<module>`). The message lists each script with
+ * its parts.
  */
 export function assertLoadedOnly(
   dist: string,
@@ -108,7 +205,9 @@ export function assertLoadedOnly(
   expected: LoadedExpectation
 ): void {
   const allowed = new Set(['app', 'core', ...expected.diagrams.map((d) => `diagram:${d}`)]);
-  const parts = new Map(paths.map((p) => [p, chunkParts(dist, p)]));
+  const reach = sharedReach(expected.diagrams);
+  if (reach.size > 0) allowed.add('shared');
+  const parts = new Map(paths.map((p) => [p, partsWithShared(dist, p, reach)]));
   const loaded = new Set([...parts.values()].flatMap((s) => [...s]));
   const extra = [...loaded].filter((p) => !allowed.has(p));
   const missing = (expected.required ?? []).filter((d) => !loaded.has(`diagram:${d}`));

@@ -77,7 +77,7 @@ describe('c4-beta through the public API (spec #730)', () => {
       'b08-style-values.mmd': ['C4BETA_STYLE_IGNORED'],
       'b21-tech-on-person.mmd': ['C4BETA_TECHNOLOGY_DROPPED', 'C4BETA_INSTANCES_DROPPED'],
       'b25-step-outside-dynamic.mmd': ['C4BETA_STEP_IGNORED'],
-      'markup-and-quotes-in-every-text.mmd': ['C4_COLOR_INVALID', 'HTML_DROPPED'],
+      'markup-and-quotes-in-every-text.mmd': ['HTML_DROPPED'],
     };
     const m = createMermaid();
     const files = readdirSync(join(FIXTURES, PR_CHECK)).filter((f) => f.endsWith('.mmd'));
@@ -101,16 +101,19 @@ describe('c4-beta through the public API (spec #730)', () => {
     ]);
   });
 
-  it('reports the unsupported-format error for text output', async () => {
-    const e = await rejection(
-      createMermaid().render('c1', fixture('b02-basic-context.mmd'), { format: 'ascii' })
-    );
-    expect(e).toBeInstanceOf(UnsupportedFormatError);
-    expect((e as UnsupportedFormatError).diagramType).toBe('c4beta');
-    expect((e as UnsupportedFormatError).format).toBe('ascii');
+  it('draws text output in both charsets, ASCII with no character outside ASCII', async () => {
+    const src = fixture('nested-boundaries.mmd');
+    const m = createMermaid();
+    const unicode = await m.render('c1', src, { format: 'ascii' });
+    expect(unicode.format).toBe('ascii');
+    expect(unicode.diagramType).toBe('c4beta');
+    expect(unicode.text).toMatch(/[╭╮╰╯│─]/);
+    const plain = await m.render('c1', src, { format: 'ascii', ascii: { charset: 'ascii' } });
+    expect(plain.text).toMatch(/^[\x20-\x7e\n]+$/);
+    expect(plain.text).toContain('+');
   });
 
-  it('writes markup and quotes in every text as text, and refuses a colour that is not one', async () => {
+  it('writes markup and quotes in every text as text, and ignores a legacy palette colour that is not one', async () => {
     const r = await createMermaid().render('c1', fixture('markup-and-quotes-in-every-text.mmd'));
     assertInert(r.svg);
     expect(r.svg).not.toMatch(/<(script|img|a)\b|<[^>]*\son\w+=|<[^>]*href=/i);
@@ -126,7 +129,10 @@ describe('c4-beta through the public API (spec #730)', () => {
       expect(all, part).toContain(part);
     expect(r.svg).toContain('&lt;b onmouseover=&quot;x()&quot;&gt;Acc&lt;/b&gt;');
     expect(r.svg).toContain('&lt;/desc&gt;&lt;script&gt;alert(2)&lt;/script&gt;');
-    expect(r.svg).toMatch(/c4-person"[^>]*><rect [^>]*fill="#08427B"/);
+    expect(r.svg).toMatch(
+      /c4-person"[^>]*><rect [^>]*stroke="var\(--_c4peb\)"[^>]*fill="var\(--_bg\)"/
+    );
+    expect(r.svg).not.toContain('onload="alert(1)');
   });
 
   it('keeps ids unique and writes none but the accessible title and description', async () => {
@@ -470,38 +476,38 @@ describe('the c4beta stereotype keys (spec #730 T5)', () => {
   });
 });
 
-// Until c4-beta draws text (spec #730 T7), it has no text output in every place a type without
-// one is asked for it, as `classDiagram` has none; legacy C4 keeps its own.
-describe('c4-beta without text output (spec #730 T0)', () => {
-  it('says so through supportsFormat, while legacy C4 keeps ascii', () => {
+// c4-beta draws text through the one `c4` plugin's lazily loaded `ascii` entry (spec #730 T7).
+describe('c4-beta text output (spec #730 T7)', () => {
+  const BODY = 'c4-beta\nperson a "A"\nsoftwareSystem s "S"\na --> s : "uses"\n';
+
+  it('says so through supportsFormat, for both types of the plugin', () => {
     const m = createMermaid();
-    expect(m.supportsFormat('c4beta', 'ascii')).toBe(false);
+    expect(m.supportsFormat('c4beta', 'ascii')).toBe(true);
     expect(m.supportsFormat('c4beta', 'svg')).toBe(true);
     expect(m.supportsFormat('c4', 'ascii')).toBe(true);
   });
 
-  it('throws UnsupportedFormatError from prepare, before renderSync', async () => {
-    const e = await rejection(
-      createMermaid().prepare(fixture('b02-basic-context.mmd'), { format: 'ascii' })
-    );
-    expect(e).toBeInstanceOf(UnsupportedFormatError);
-    expect((e as UnsupportedFormatError).diagramType).toBe('c4beta');
+  it('resolves prepare and preload for ascii, then draws with renderSync', async () => {
+    const m = createMermaid();
+    await m.preload({ types: ['c4beta'], formats: ['ascii'] });
+    await m.prepare(BODY, { format: 'ascii' });
+    const out = m.renderSync(BODY, { format: 'ascii' });
+    expect(out.diagramType).toBe('c4beta');
+    expect(out.text).toContain('[Person]');
+    expect(out.text).toContain('uses');
   });
 
-  it('gives UNSUPPORTED_FORMAT, not a syntax error, for a broken source', async () => {
+  it('gives a broken source its syntax error, not UNSUPPORTED_FORMAT', async () => {
     const e = await rejection(
       createMermaid().render('c1', 'c4-beta\nperson\n', { format: 'ascii' })
     );
-    expect(e).toBeInstanceOf(UnsupportedFormatError);
-    expect((e as MermaidError).code).toBe('UNSUPPORTED_FORMAT');
+    expect(e).toBeInstanceOf(MermaidError);
+    expect(e).not.toBeInstanceOf(UnsupportedFormatError);
+    expect((e as MermaidError).code).not.toBe('UNSUPPORTED_FORMAT');
+    expect((e as MermaidError).diagnostics.length).toBeGreaterThan(0);
   });
 
-  it('throws from preload for ascii', async () => {
-    const e = await rejection(createMermaid().preload({ types: ['c4beta'], formats: ['ascii'] }));
-    expect(e).toBeInstanceOf(UnsupportedFormatError);
-  });
-
-  it('draws a block embedded in a flowchart as a stand-in frame with one warning', async () => {
+  it('draws a block embedded in a flowchart as its own text, with no stand-in', async () => {
     const text = [
       'flowchart TB',
       '  A --> model',
@@ -513,10 +519,27 @@ describe('c4-beta without text output (spec #730 T0)', () => {
     const m = createMermaid();
     await m.prepare(text, { format: 'ascii' });
     const out = m.renderSync(text, { format: 'ascii' });
-    expect(out.text).toMatch(/│ +\[c4beta\] +│/);
-    expect(out.warnings).toEqual([
-      expect.objectContaining({ code: 'ASCII_DROPPED', feature: 'embed' }),
-    ]);
+    expect(out.text).not.toContain('[c4beta]');
+    expect(out.text).toContain('[Person]');
+    expect(out.warnings.filter((w) => w.code === 'ASCII_DROPPED' && w.feature === 'embed')).toEqual(
+      []
+    );
+  });
+
+  const dropped = async (src: string, charset: 'unicode' | 'ascii' = 'unicode') =>
+    (await createMermaid().render('c1', src, { format: 'ascii', ascii: { charset } })).warnings
+      .filter((w) => w.code === 'ASCII_DROPPED')
+      .map((w) => (w as { feature?: string }).feature);
+
+  it('drops what text cannot show, one ASCII_DROPPED warning for each kind', async () => {
+    const styled = `c4-beta\naccTitle: T\n${BODY.slice(8)}style person fill:#f00\n`;
+    expect(await dropped(styled)).toEqual(['style', 'legend', 'accessibility']);
+    // A diagram with none of them says only what every c4-beta text drawing leaves out.
+    expect(await dropped(BODY)).toEqual(['legend']);
+    expect(await dropped(`${BODY}legend off\n`)).toEqual([]);
+    // A shape the text draws as caps, and a style naming nothing drawn, are not drops.
+    expect(await dropped(`${BODY}legend off\nstyle person shape:cylinder\n`)).toEqual([]);
+    expect(await dropped(`${BODY}legend off\nstyle nobody fill:#f00\n`)).toEqual([]);
   });
 });
 

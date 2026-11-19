@@ -80,14 +80,26 @@ export async function draw(text, config) {
 }
 `;
 
-/** Writes each package's files into `root/node_modules/<name>/`. */
-function install(root: string, packages: Record<string, Files>): void {
+/**
+ * Writes each package's files into `root/node_modules/<name>/` and, unless `declare` is false
+ * (a package hoisted there as someone else's dependency), adds it to the app's `dependencies`
+ * (D589), as `npm install` does.
+ */
+function install(root: string, packages: Record<string, Files>, declare = true): void {
   for (const [name, files] of Object.entries(packages))
     for (const [file, text] of Object.entries(files)) {
       const path = join(root, 'node_modules', name, file);
       mkdirSync(join(path, '..'), { recursive: true });
       writeFileSync(path, text);
     }
+  if (!declare) return;
+  const manifest = join(root, 'package.json');
+  const json = JSON.parse(readFileSync(manifest, 'utf8')) as {
+    dependencies?: Record<string, string>;
+  };
+  const added = Object.fromEntries(Object.keys(packages).map((name) => [name, '1.0.0']));
+  json.dependencies = { ...json.dependencies, ...added };
+  writeFileSync(manifest, JSON.stringify(json));
 }
 
 /**
@@ -226,6 +238,19 @@ export default [{ name: 'hops', loader: async () => (graph, ctx) => {
     expect((await built.draw('boxes hello')).error).toBe('UNSUPPORTED_DIAGRAM');
   });
 
+  it('leaves out an installed plugin the app does not declare (D589)', async () => {
+    const root = app({ 'boxes-plugin': diagram('boxes-plugin', 'boxes') });
+    // npm hoists a dependency of a dependency to the top of node_modules.
+    install(root, { 'hoisted-plugin': diagram('hoisted-plugin', 'hoisted') }, false);
+    const built = await bundle(root, [mermaid()]);
+    expect(built.buildWarnings).toEqual([]);
+    const module = readFileSync(join(built.outdir, 'main.js'), 'utf8');
+    expect(module).toContain('boxes-plugin');
+    expect(module).not.toContain('hoisted-plugin');
+    expect((await built.draw('boxes hi')).type).toBe('boxes');
+    expect((await built.draw('hoisted hi')).error).toBe('UNSUPPORTED_DIAGRAM');
+  });
+
   it('skips a package that fails confinement with a root-relative build warning only', async () => {
     const root = app({
       'boxes-plugin': diagram('boxes-plugin', 'boxes'),
@@ -300,7 +325,12 @@ export default [{ name: 'hops', loader: async () => (graph, ctx) => {
     expect((await built.draw('one x')).type).toBe('one');
   });
 
-  it('rebuilds in watch mode when a plugin package is installed', async () => {
+  // The one test here with a limit of its own: esbuild's watch mode notices a change by polling
+  // a random subset of the watched files, which in a large project can take up to about 2 s, and
+  // the test builds twice around that wait. Measured 2026-11-17: 0.8–1.5 s alone, 3.7 s in the
+  // whole file on a loaded laptop; on CI runners a median of 2.1 s, a maximum of 5.0 s, and one
+  // failure at vitest's 5 s default (#904).
+  it('rebuilds in watch mode when a plugin package is installed', { timeout: 15_000 }, async () => {
     const root = app({});
     const outdir = join(root, 'dist-watch');
     let rebuilt: () => void = () => undefined;

@@ -441,7 +441,7 @@ describe('interactions, math and the root (D105, D176)', () => {
 });
 
 describe('hand-drawn hook (D301, D302)', () => {
-  it('sends shapes, frames, card parts and edges through w.outline with their roles', async () => {
+  it('sends shapes, frames, card parts, edges and label boxes through w.outline with their roles', async () => {
     const seen = new Map<string, Set<string>>();
     const record: OutlineDraw = (role, tag, attrs: Attrs) => {
       const key = String(attrs.class ?? tag);
@@ -450,8 +450,9 @@ describe('hand-drawn hook (D301, D302)', () => {
       return false;
     };
     const declined = await renderAgentflowForTest(EVERY, { outline: record });
-    expect([...seen.keys()].sort()).toEqual(['divider', 'edge', 'group', 'mark', 'node']);
+    expect([...seen.keys()].sort()).toEqual(['divider', 'edge', 'group', 'label', 'mark', 'node']);
     expect(seen.get('group')).toEqual(new Set(['rect']));
+    expect(seen.get('label')).toEqual(new Set(['rect']));
     expect(seen.get('mark')).toEqual(new Set(['collapsed-indicator']));
     expect(seen.get('divider')).toEqual(new Set(['path', 'collapsed-separator']));
     expect(seen.get('node')).toEqual(new Set(['rect', 'polygon', 'path', 'flow-collapsed']));

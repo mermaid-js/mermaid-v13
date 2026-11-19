@@ -13,7 +13,9 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
+import { pxProfile } from '@mermaid-js/core/layout';
 import { cls, openSvgRoot, paletteSlots } from '@mermaid-js/shared/svg/document';
+import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import { routePath } from '@mermaid-js/shared/svg/route';
 import type { RequirementRenderContext } from '../layout/context.ts';
 import type { RequirementLayout } from '../layout/layout.ts';
@@ -173,14 +175,12 @@ function openRoot({ w, ctx, paint }: Scene, model: RequirementModel, frame: Fram
   const width = Math.max(1, Math.ceil(frame.x + frame.width) - x);
   const height = Math.max(1, Math.ceil(frame.y + frame.height) - y);
   const maxWidth = config.requirement?.useMaxWidth !== false;
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
   openSvgRoot(w, ctx, {
     name: 'requirement requirementDiagram',
     viewBox: [x, y, width, height],
     maxWidth,
-    title,
-    desc,
+    title: model.accTitle,
+    desc: model.accDescr,
     attrs: {
       'font-family': paint.font,
       'font-size': paint.fontSize,
@@ -212,21 +212,19 @@ function drawRelation({ w, layout, p, paint }: Scene, r: RelationView): void {
   if (p.markers) drawMarker(w, r.marker, end, paint.line.stroke, p.markers, r.dataId);
 }
 
-function drawRelationLabel({ w, layout, paint }: Scene, r: RelationView): void {
+/**
+ * A relation's label as the shared tag (D626–D628): bordered 1 px solid in the relation colour,
+ * solid on dashed lines too, and as large as the room the layout reserved (`labelPatch`, D629).
+ */
+function drawRelationLabel({ w, layout, ctx, paint }: Scene, r: RelationView): void {
   const at = layout.edges.get(r.id)?.label;
-  if (!at || r.label.width === 0 || !paint.label) return;
-  const lw = r.label.width + 2 * M.labelPad;
-  w.open('g', { class: 'edgeLabel', 'data-id': r.dataId });
-  w.leaf('rect', {
-    class: 'labelBkg',
-    x: at.x - lw / 2,
-    y: at.y - r.label.height / 2,
-    width: lw,
-    height: r.label.height,
+  if (!at || r.label.width === 0 || !paint.label || !paint.line) return;
+  edgeLabel(w, r.label, at, r.dataId, {
     fill: paint.label.fill,
+    stroke: paint.line.stroke,
+    text: { fill: paint.label.text },
+    patch: (ctx.units ?? pxProfile).builder.labelPatch,
   });
-  w.label(r.label, at.x, at.y, { fill: paint.label.text });
-  w.close();
 }
 
 function drawBox({ w, layout, ctx, paint }: Scene, view: BoxView): void {

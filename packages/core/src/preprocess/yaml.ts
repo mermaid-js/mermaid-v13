@@ -1,3 +1,4 @@
+// D597: this file stays whole as a Pele port; its `complexity` entries in eslint-suppressions.json are deliberate.
 /**
  * A small YAML reader covering what Mermaid feeds to js-yaml with the JSON schema: block and
  * flow collections, quoted and plain scalars, and block scalars. Used for front matter and for

@@ -1,0 +1,8 @@
+---
+title: '#403 stacked shapes'
+description:
+  Fixed when the back layers are clearly visible behind each node (v12 offsets
+  them 5 to 10 px; today it is 4).
+---
+flowchart LR
+  A@{ shape: procs, label: "procs" } --> B@{ shape: docs, label: "docs" } --> C@{ shape: st-rect, label: "st-rect" }

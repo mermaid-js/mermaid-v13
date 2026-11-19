@@ -1,0 +1,12 @@
+c4-beta container
+%% rename-to: gateway
+person user "User"
+softwareSystem shop "Shop" {
+  container a|pi "API" "Serves orders." "Kotlin"
+  container store "Store"
+}
+user --> api : "Calls"
+api --> store
+store <-- api
+shop --> ap|i
+1: ap|i --- store

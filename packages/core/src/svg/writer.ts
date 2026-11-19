@@ -94,9 +94,10 @@ export interface LabelBox {
 
 /**
  * What an outline draws (D302): a node's shape, a part of one (a compartment, an underlay), a
- * divider line inside a node, a small mark (a dot, a cross), a group's frame, or an edge line.
+ * divider line inside a node, a small mark (a dot, a cross), a group's frame, an edge line, or
+ * the box of an edge label (D630).
  */
-export type OutlineRole = 'node' | 'part' | 'divider' | 'mark' | 'group' | 'edge';
+export type OutlineRole = 'node' | 'part' | 'divider' | 'mark' | 'group' | 'edge' | 'label';
 
 /** The elements an outline can be. */
 export type OutlineTag = 'rect' | 'circle' | 'ellipse' | 'polygon' | 'line' | 'path';
@@ -131,8 +132,8 @@ export interface SvgWriter {
   leaf(tag: AllowedTag, attrs?: Attrs): void;
   /**
    * A shape outline (D302): exactly `leaf(tag, attrs)` unless an extension's drawer is active,
-   * which may draw it another way (hand-drawn). Arrowheads, label backgrounds and text are not
-   * outlines.
+   * which may draw it another way (hand-drawn). Arrowheads and text are not outlines; an edge
+   * label's box is, as role `label` (D630).
    */
   outline(role: OutlineRole, tag: OutlineTag, attrs?: Attrs): void;
   /**

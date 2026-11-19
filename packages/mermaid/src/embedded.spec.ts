@@ -233,6 +233,43 @@ describe('block syntax', () => {
     expect(e.line).toBe(4);
   });
 
+  it('places errors in an indented body at the author’s line and column (D633)', async () => {
+    // The body loses its common indentation before it is parsed; positions map back per line.
+    const one = [
+      'flowchart LR',
+      '  mermaid x {',
+      '    sequenceDiagram',
+      '      A->>B: hi',
+      '      A->>: oops',
+      '  }',
+    ].join('\n');
+    const two = [
+      'flowchart LR',
+      '  mermaid x {',
+      '    flowchart TD',
+      '      mermaid y {',
+      '        sequenceDiagram',
+      '          A->>B: hi',
+      '          A->>: oops',
+      '      }',
+      '  }',
+    ].join('\n');
+    for (const [text, line, column] of [
+      [one, 5, 11],
+      [two, 7, 15],
+    ] as const) {
+      for (const e of [
+        await rejection(createMermaid().render('host', text)),
+        await rejection(createMermaid().parse(text)),
+      ]) {
+        expect([e.line, e.column]).toEqual([line, column]);
+        expect(e.diagnostics[0]?.range.start).toBe(
+          text.split('\n', line - 1).join('\n').length + column
+        );
+      }
+    }
+  });
+
   it('reports an unclosed block at its opening line', async () => {
     const text = ['flowchart LR', '  mermaid x {', '    sequenceDiagram', '      A->>B: hi'].join(
       '\n'

@@ -1,0 +1,22 @@
+---
+title: '#399 nodeSpacing and rankSpacing 100'
+description:
+  Reference: large spacing already works (gaps of 100 px inside and between the subgraphs). It must look the same after the fix.
+config:
+  flowchart:
+    nodeSpacing: 100
+    rankSpacing: 100
+---
+flowchart LR
+  X --> Y
+  subgraph X
+    direction LR
+    A
+    C
+  end
+  subgraph Y
+    B
+    D
+  end
+  E --> F
+  E --> G

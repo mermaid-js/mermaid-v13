@@ -15,7 +15,15 @@
  * `2·pad`, as the others.
  */
 // cspell:ignore kepano
-import { capRy, cylinderSize, queueRx } from '@mermaid-js/shared/shapes/kit';
+import {
+  capRy,
+  cylinderSize,
+  personHead,
+  personNeck,
+  personSize,
+  queueRx,
+  type PadXY,
+} from '@mermaid-js/shared/shapes/kit';
 import { kindParts, type C4Element } from '../model.ts';
 import { C4_METRICS as M } from './metrics.ts';
 import type { C4ShapeId, Point, Rect } from './types.ts';
@@ -51,10 +59,6 @@ export function shapeOf(element: Pick<C4Element, 'shape' | 'sprite' | 'tags' | '
   return 'rounded';
 }
 
-/** The person figure's head radius for a width `w` (#683). */
-export const personHead = (w: number): number =>
-  Math.min(M.personHeadMax, Math.max(M.personHeadMin, w * M.personHeadRatio));
-
 /** A person's head (a circle) and body (a box the head overlaps), in its laid-out box. */
 export interface PersonParts {
   readonly head: { readonly cx: number; readonly cy: number; readonly r: number };
@@ -62,9 +66,9 @@ export interface PersonParts {
 }
 
 /**
- * The person's head and body in `box`. As a figure (the SVG, #683): the head's radius from the
- * width ({@link personHead}), at the top, overlapping the body by `personOverlap` of itself. As a
- * box (`figure` false, the text output's cell layout): 12.2.0's head of radius 13 in a 26 px row.
+ * The person's head and body in `box`. As a figure (the SVG, #683): the shared person figure's
+ * head, its radius from the width, at the top and overlapping the body. As a box (`figure`
+ * false, the text output's cell layout): 12.2.0's head of radius 13 in a 26 px row.
  */
 export function personParts({ x, y, width: w, height: h }: Rect, figure = true): PersonParts {
   if (!figure) {
@@ -74,10 +78,10 @@ export function personParts({ x, y, width: w, height: h }: Rect, figure = true):
     };
   }
   const r = personHead(w);
-  const neck = 2 * r - r * M.personOverlap;
+  const top = personNeck(r);
   return {
     head: { cx: x + w / 2, cy: y + r, r },
-    body: { x, y: y + neck, width: w, height: h - neck },
+    body: { x, y: y + top, width: w, height: h - top },
   };
 }
 
@@ -87,12 +91,6 @@ export interface ShapeSize {
   readonly h: number;
   readonly dx: number;
   readonly dy: number;
-}
-
-/** Padding totals across (`x`) and down (`y`). */
-export interface PadXY {
-  readonly x: number;
-  readonly y: number;
 }
 
 /**
@@ -120,12 +118,8 @@ export function shapeSize(
   switch (shape) {
     case 'person': {
       if (!figure) return { w, h: h + M.personHead, dx: 0, dy: M.personHead / 2 };
-      // The body holds the text below the head, and is at least `personBodyRatio` × w tall; the
-      // text is centred on the part the head does not cover, one head radius below the centre.
-      const r = personHead(w);
-      const overlap = r * M.personOverlap;
-      const body = Math.max(overlap + h, w * M.personBodyRatio);
-      return { w, h: body + 2 * r - overlap, dx: 0, dy: r };
+      // The text is centred on the part of the body the head does not cover.
+      return { w, ...personSize(w, h), dx: 0 };
     }
     case 'cyl':
       return { ...cylinderSize(tw, th, cylinder, 0, least), dx: 0 };
@@ -329,6 +323,59 @@ function inPiece(piece: Piece, p: Point, by: number): boolean {
   const u = (p.x - piece.cx) / rx;
   const v = (p.y - piece.cy) / ry;
   return u * u + v * v <= 1;
+}
+
+/** Where along one axis `at + s·d` lies between lo and hi: every s, none, or an interval of s. */
+function axisSpan(lo: number, hi: number, at: number, d: number): [number, number] | undefined {
+  if (d === 0) return at >= lo && at <= hi ? [-Infinity, Infinity] : undefined;
+  const u = (lo - at) / d;
+  const v = (hi - at) / d;
+  return [Math.min(u, v), Math.max(u, v)];
+}
+
+/** The s for which `p + s·n` is inside `piece`, as an interval; none when the line misses it. */
+function spanIn(piece: Piece, p: Point, n: Point): [number, number] | undefined {
+  if (piece.kind === 'rect') {
+    const x = axisSpan(piece.x0, piece.x1, p.x, n.x);
+    const y = axisSpan(piece.y0, piece.y1, p.y, n.y);
+    if (!x || !y) return undefined;
+    const lo = Math.max(x[0], y[0]);
+    const hi = Math.min(x[1], y[1]);
+    return lo <= hi ? [lo, hi] : undefined;
+  }
+  const [ux, uy] = [n.x / piece.rx, n.y / piece.ry];
+  const [vx, vy] = [(p.x - piece.cx) / piece.rx, (p.y - piece.cy) / piece.ry];
+  const a = ux * ux + uy * uy;
+  const b = 2 * (ux * vx + uy * vy);
+  const disc = b * b - 4 * a * (vx * vx + vy * vy - 1);
+  if (a === 0 || disc < 0) return undefined;
+  return [(-b - Math.sqrt(disc)) / (2 * a), (-b + Math.sqrt(disc)) / (2 * a)];
+}
+
+/** How far up from 0 the intervals cover without a gap; 0 when none holds 0. */
+function reach(spans: readonly (readonly [number, number])[]): number {
+  let far = 0;
+  for (let grown = true; grown; ) {
+    grown = false;
+    for (const [lo, hi] of spans)
+      if (lo <= far && hi > far) {
+        far = hi;
+        grown = true;
+      }
+  }
+  return far;
+}
+
+/**
+ * How far `p` can move along the unit vector `n` and stay inside `box`'s outline: against `n`,
+ * then along it; 0 each way when `p` is not inside.
+ */
+export function insideAlong(box: Outline, p: Point, n: Point): [number, number] {
+  const spans = piecesOf(box).flatMap((piece) => {
+    const s = spanIn(piece, p, n);
+    return s ? [s] : [];
+  });
+  return [reach(spans.map(([lo, hi]) => [-hi, -lo] as const)), reach(spans)];
 }
 
 /** Whether `p` is on `box`'s outline, within `tol`: inside it grown by `tol`, not inside it shrunk by `tol`. */

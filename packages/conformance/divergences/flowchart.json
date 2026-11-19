@@ -1,11 +1,27 @@
 [
   {
+    "id": "e2e/diagrams/flowchart/baseline/edges/edge-id-after-node.mmd",
+    "inputHash": "sha256:bdb4da23e2834ea2",
+    "kind": "accept",
+    "reason": "v12 fixed edge ids after mermaid@12.2.0 (`a5060b1d8`, `72f073244`, in 12.3.0): an edge id may follow a node's shape, or its shape data and blanks, and an `@` in a label needs no space before it, where 12.2.0 rejects (D621, D316).",
+    "owner": "D621",
+    "since": "2026-11-18"
+  },
+  {
     "id": "e2e/diagrams/flowchart/baseline/embedded/class-untitled.mmd",
     "inputHash": "sha256:4ab8c9a39cc32f8d",
     "kind": "accept",
     "reason": "v12 rejects `mermaid <id> {`; v13 parses an embedded diagram block (ADR-15, proof of concept).",
     "owner": "#664",
     "since": "2026-11-11"
+  },
+  {
+    "id": "e2e/diagrams/flowchart/baseline/embedded/eventmodeling-data-indented.mmd",
+    "inputHash": "sha256:5876113befb0097a",
+    "kind": "accept",
+    "reason": "v12 rejects `mermaid <id> {`; v13 parses an embedded diagram block (ADR-15), its body without the common indentation (D633).",
+    "owner": "D633",
+    "since": "2026-11-19"
   },
   {
     "id": "e2e/diagrams/flowchart/baseline/embedded/folded-in-subgraph.mmd",
@@ -78,5 +94,21 @@
     "reason": "D561: v12 turned every `#name;` into `&name;`, so a name no browser knows was drawn `&name;`; v13 keeps a `#name;` whose name core's entity table does not hold as the author wrote it (MIGRATION.md).",
     "owner": "D561",
     "since": "2026-11-13"
+  },
+  {
+    "id": "v12-specs/parser/flow-edges.spec.js#10",
+    "inputHash": "sha256:12bfc03f6e645fab",
+    "kind": "accept",
+    "reason": "v12 fixed edge ids after mermaid@12.2.0 (`a5060b1d8`, `72f073244`, in 12.3.0): blanks after shape data may lead to an edge id, where 12.2.0 expects `&` and rejects (D621, D316).",
+    "owner": "D621",
+    "since": "2026-11-18"
+  },
+  {
+    "id": "v12-specs/parser/flow-edges.spec.js#8",
+    "inputHash": "sha256:ae4837fe398ecf0b",
+    "kind": "accept",
+    "reason": "v12 fixed edge ids after mermaid@12.2.0 (`a5060b1d8`, `72f073244`, in 12.3.0): blanks after shape data may lead to an edge id, where 12.2.0 expects `&` and rejects (D621, D316).",
+    "owner": "D621",
+    "since": "2026-11-18"
   }
 ]

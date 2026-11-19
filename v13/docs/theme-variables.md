@@ -15,8 +15,8 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant, gitgraph, gantt, venn |
 | `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core |
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt, railroad |
-| `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban, wardley, xychart, venn, c4 |
-| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, packet, cynefin, wardley, xychart, railroad, usecase |
+| `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban, wardley, xychart, venn, c4, class |
+| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, packet, cynefin, wardley, xychart, railroad, state, usecase |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley, agentflow, architecture, block, c4, eventmodeling, gantt, ishikawa, railroad, requirement, treeview, usecase |
 | `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info, sankey, treemap, wardley, xychart, venn, agentflow, architecture, block, c4, eventmodeling, ishikawa, railroad, requirement, treeview, usecase |
 | `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, agentflow, architecture, block, eventmodeling, ishikawa, railroad, requirement, usecase |
@@ -32,7 +32,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `clusterBkg` | `--mermaid-clusterBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er, block, railroad, usecase |
 | `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er, block, usecase |
 | `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | flowchart, class, state, er, gantt, treemap, venn, agentflow, railroad, usecase |
-| `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `secondaryColor` | `mix(secondaryColor, black, 30%)` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, state, agentflow, block, usecase |
+| `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `background` | `background` | | flowchart, state, agentflow, block, usecase |
 | `arrowheadColor` | `--mermaid-arrowheadColor` | derived | color | `lineColor` | `lineColor` | forest, neutral | flowchart, state, agentflow, block |
 | `defaultLinkColor` | `--mermaid-defaultLinkColor` | derived | color | `lineColor` | `lineColor` | dark |  |
 | `border1` | `--mermaid-border1` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral |  |
@@ -95,7 +95,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `calloutBorder` | `--mermaid-calloutBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph, architecture |
 | `rowBkg` | `--mermaid-rowBkg` | derived | color | `lightenHsl(mainBkg, 75%)` | `lightenHsl(mainBkg, 5%)` | default, dark, neutral | er |
 | `rowAltBkg` | `--mermaid-rowAltBkg` | derived | color | `lightenHsl(mainBkg, 5%)` | `darkenHsl(mainBkg, 10%)` | default, dark, forest, neutral | er |
-| `linkLabelBkg` | `--mermaid-linkLabelBkg` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | redux-color, redux-dark-color | er, requirement |
+| `linkLabelBkg` | `--mermaid-linkLabelBkg` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | | er, requirement |
 | `nestedBkg` | `--mermaid-nestedBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | default, dark, forest, neutral | state |
 | `useGradient` | `--mermaid-useGradient` | token | flag | | | all | core |
 | `gradientStart` | `--mermaid-gradientStart` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
@@ -161,6 +161,18 @@ flags and opacities, which are read literally.
 | `c4RelationColor` | | color | `#444444` | `#444444` | `#cccccc` | `#cccccc` | `#444444` | `#d3d3d3` | `#444444` | `#444444` | `#444444` | `#444444` | `#cccccc` |
 | `c4BoundaryColor` | | color | `#444444` | `#444444` | `#ffffff` | `#ffffff` | `#444444` | `#cccccc` | `#444444` | `#444444` | `#444444` | `#444444` | `#cccccc` |
 | `c4TitleColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+| `c4PersonColor` | | color | `#08427b` | `#08427b` | `#449ff4` | `#449ff4` | `#08427b` | `#449ff4` | `#08427b` | `#08427b` | `#08427b` | `#08427b` | `#449ff4` |
+| `c4PersonBorder` | | color | `#073b6f` | `#073b6f` | `#0a7fe5` | `#0a7fe5` | `#073b6f` | `#0a7fe5` | `#073b6f` | `#073b6f` | `#073b6f` | `#073b6f` | `#0a7fe5` |
+| `c4SoftwareSystemColor` | | color | `#1168bd` | `#1168bd` | `#51a0ec` | `#51a0ec` | `#1168bd` | `#51a0ec` | `#1168bd` | `#1168bd` | `#1168bd` | `#1168bd` | `#51a0ec` |
+| `c4SoftwareSystemBorder` | | color | `#3c7fc0` | `#3c7fc0` | `#5a93cb` | `#5a93cb` | `#3c7fc0` | `#5a93cb` | `#3c7fc0` | `#3c7fc0` | `#3c7fc0` | `#3c7fc0` | `#5a93cb` |
+| `c4ContainerColor` | | color | `#296eb8` | `#296eb8` | `#60a0dc` | `#60a0dc` | `#296eb8` | `#60a0dc` | `#296eb8` | `#296eb8` | `#296eb8` | `#296eb8` | `#60a0dc` |
+| `c4ContainerBorder` | | color | `#3c7fc0` | `#3c7fc0` | `#4e8cc8` | `#4e8cc8` | `#3c7fc0` | `#4e8cc8` | `#3c7fc0` | `#3c7fc0` | `#3c7fc0` | `#3c7fc0` | `#4e8cc8` |
+| `c4ComponentColor` | | color | `#216ec8` | `#216ec8` | `#6eaeed` | `#6eaeed` | `#216ec8` | `#6eaeed` | `#216ec8` | `#216ec8` | `#216ec8` | `#216ec8` | `#6eaeed` |
+| `c4ComponentBorder` | | color | `#5591ce` | `#5591ce` | `#649bd2` | `#649bd2` | `#5591ce` | `#649bd2` | `#5591ce` | `#5591ce` | `#5591ce` | `#5591ce` | `#649bd2` |
+| `c4InfrastructureNodeColor` | | color | `#6b6b6b` | `#6b6b6b` | `#9e9e9e` | `#9e9e9e` | `#6b6b6b` | `#9e9e9e` | `#6b6b6b` | `#6b6b6b` | `#6b6b6b` | `#6b6b6b` | `#9e9e9e` |
+| `c4InfrastructureNodeBorder` | | color | `#5a5a5a` | `#5a5a5a` | `#8d8d8d` | `#8d8d8d` | `#5a5a5a` | `#8d8d8d` | `#5a5a5a` | `#5a5a5a` | `#5a5a5a` | `#5a5a5a` | `#8d8d8d` |
+| `c4ExternalColor` | | color | `#6c6c6c` | `#6c6c6c` | `#bfbfbf` | `#bfbfbf` | `#6c6c6c` | `#bfbfbf` | `#6c6c6c` | `#6c6c6c` | `#6c6c6c` | `#6c6c6c` | `#bfbfbf` |
+| `c4ExternalBorder` | | color | `#8a8a8a` | `#8a8a8a` | `#b0b0b0` | `#b0b0b0` | `#8a8a8a` | `#b0b0b0` | `#8a8a8a` | `#8a8a8a` | `#8a8a8a` | `#8a8a8a` | `#b0b0b0` |
 
 ### class
 
@@ -201,7 +213,7 @@ flags and opacities, which are read literally.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `rowOdd` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ffffff` | `#2c2d2d` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#2a2020` |
 | `rowEven` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#f1f1ff` | `#060606` | `#f4f9e9` | `#f4f4f4` | `#fffcf6` | `#ffffff` | `#2a2020` |
-| `erEdgeLabelBackground` | | color | `#ffffff` | `#cccccc` | `#474949` | `#16141f` | `#f9ffec80` | `#201f1f80` | `#e1efc080` | `#eeeeee80` | `#f6f9ff80` | `#cccccc` | `#323333` |
+| `erEdgeLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
 | `erMarkerFill` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#ffffff` | `#2a2020` |
 | `erRowOddTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
 | `erRowEvenTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
@@ -427,7 +439,7 @@ flags and opacities, which are read literally.
 | `requirementBorderColor` | | color | `#28253d` | `#28253d` | `#ffffff` | `#ffffff` | `#9370db` | `#cccccc` | `#13540c` | `#999999` | `#d9cfbc` | `#000000` | `#cccccc` |
 | `requirementBorderSize` | | length | `2` | `2` | `2` | `2` | `1.3` | `1.3` | `1.3` | `1.3` | `1.3` | `2` | `2` |
 | `requirementTextColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#e0dfdf` |
-| `relationLabelBackground` | | color | `#ffffff` | `#ffffff` | `#16141f` | `#16141f` | `#e8e8e8cc` | `#555555` | `#e8e8e8` | `#ffffff` | `#f4ddff` | `#cccccc` | `#323333` |
+| `relationLabelBackground` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
 | `relationColor` | | color | `#000000` | `#000000` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#000000` | `#666666` | `#0b0b0b` | `#000000` | `#cccccc` |
 | `relationLabelColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#e0dfdf` |
 | `relationStrokeWidth` | | length | `2` | `2` | `2` | `2` | `1` | `1` | `1` | `1` | `1` | `2` | `2` |
@@ -461,6 +473,8 @@ flags and opacities, which are read literally.
 | `compositeBackground` | | color | `#ffffff` | `#ffffff` | `#16141f` | `#16141f` | `#ffffff` | `#333333` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
 | `compositeTitleBackground` | | color | `#f9f9fb` | `#f9f9fb` | `#16141f` | `#16141f` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#ffffff` | `#2a2020` |
 | `altBackground` | | color | `#f9f9fb` | `#f9f9fb` | `#16141f` | `#16141f` | `#f0f0f0` | `#555555` | `#f0f0f0` | `#f4f4f4` | `#f6f9ff` | `#f0f0f0` | `#404040` |
+| `stateLabelColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `compositeTitleColor` | | color | `#28253d` | `#28253d` | `#dfe0e0` | `#dfe0e0` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#000000` | `#dfe0e0` |
 
 ### timeline
 

@@ -27,9 +27,7 @@
       "default": "./dist/language.js"
     },
     "./testing": {
-      "mermaid-source": "./src/testing.ts",
-      "types": "./dist/testing.d.ts",
-      "default": "./dist/testing.js"
+      "mermaid-source": "./src/testing.ts"
     }
   },
   "files": [
@@ -44,10 +42,12 @@
     "port:v12-specs": "tsx scripts/port-v12-specs.ts && prettier --write src/v12-specs"
   },
   "peerDependencies": {
-    "@mermaid-js/core": "workspace:*"
+    "@mermaid-js/core": "workspace:*",
+    "@mermaid-js/shared": "workspace:*"
   },
   "devDependencies": {
-    "@mermaid-js/core": "workspace:^"
+    "@mermaid-js/core": "workspace:^",
+    "@mermaid-js/shared": "workspace:^"
   },
   "mermaid": {
     "plugin": "diagram",

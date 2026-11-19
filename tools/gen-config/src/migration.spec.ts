@@ -51,7 +51,10 @@ describe('MIGRATION.md', () => {
       'bindFunctions only with the interactions plugin',
       /`(?:RenderResult\.)?bindFunctions`[^\n]*interactions/,
     ],
-    ['securityLevel values mapped to default', /`loose`, `antiscript` and `sandbox`/],
+    [
+      'securityLevel values mapped to default',
+      /`securityLevel: 'loose'` \(and `antiscript`, `sandbox`\) now means `default`/,
+    ],
     ['inline arrowheads instead of <marker>', /`<marker>`/],
     ['data-id and data-ast instead of ids', /`data-id`[^\n]*`data-ast`/],
     ['redux is the default theme', /`redux`[^\n]*default theme|default theme[^\n]*`redux`/],

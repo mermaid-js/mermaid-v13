@@ -164,9 +164,10 @@ securityLevel?: ("default" | "strict" | "loose" | "antiscript" | "sandbox")
  */
 startOnLoad?: boolean
 /**
- * Plugin auto-discovery (D164, D165): before the first render, `mermaid` registers the
- * plugins found in the app's own `node_modules`, by the Node/SSR scan or, in a bundled
- * app, by `@mermaid-js/bundler-plugin`'s build-time list. Set `false` to turn both off.
+ * Plugin auto-discovery (D164, D165, D589): before the first render, `mermaid` registers
+ * the plugins the app declares in its own `package.json` and has installed in its own
+ * `node_modules`, by the Node/SSR scan or, in a bundled app, by
+ * `@mermaid-js/bundler-plugin`'s build-time list. Set `false` to turn both off.
  * It does not cover the CDN `globalThis.mermaidPlugins` queue (D167): a script that
  * pushes itself there always registers. Integrator-only: diagram text cannot set it.
  * 
@@ -307,6 +308,16 @@ subGraphTitleMargin?: {
 top?: number
 bottom?: number
 }
+/**
+ * Where the title of a subgraph sits: at the top or the bottom of the subgraph, and at
+ * the left, the middle or the right. A subgraph can set its own with
+ * `id@{ titlePosition: bottom-left }`.
+ * 
+ * When unset, the title is at the top in the middle (at the top left with the `compass`
+ * layout). Swimlane lanes, collapsed subgraphs and text output keep their own placement.
+ * 
+ */
+subGraphTitlePosition?: ("top-left" | "top-center" | "top-right" | "bottom-left" | "bottom-center" | "bottom-right")
 arrowMarkerAbsolute?: boolean
 /**
  * The amount of padding around the diagram as a whole so that embedded

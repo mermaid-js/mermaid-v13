@@ -35,7 +35,7 @@ export interface Entry extends Refs {
 }
 
 export interface Rules {
-  /** Every id with a row in `v13/docs/DECISIONS.md`. */
+  /** Every id in the decision log: a row of `v13/docs/DECISIONS.md` or a file of `v13/docs/decisions`. */
   decisions: ReadonlySet<string>;
   open: ReadonlySet<number>;
   /** Closed issues, and numbers that are not an issue of this repository. */
@@ -56,6 +56,8 @@ const BASELINE_FILE = `${ALLOWLISTS}/baseline.json`;
 export const ISSUE_STATES_FILE = `${ALLOWLISTS}/issue-states.json`;
 const SKIP_REFS_FILE = `${ALLOWLISTS}/skips.json`;
 const DECISIONS_FILE = 'v13/docs/DECISIONS.md';
+/** One file per decision after the last row of the table (D636): `D<n>.md`. */
+const DECISIONS_DIR = 'v13/docs/decisions';
 const SWIMLANE_TESTS = 'packages/core/src/layout/swimlane/__tests__';
 const UNRESOLVED_TOUCHES_FILE = `${SWIMLANE_TESTS}/unresolvedTouches.json`;
 const V12_FIXTURES_FILE = `${SWIMLANE_TESTS}/v12Fixtures.json`;
@@ -76,8 +78,26 @@ export function refsIn(text: string): Refs {
   };
 }
 
-/** The ids with a row in the decision log. */
-function decisionIds(text: string = read(DECISIONS_FILE)): Set<string> {
+/**
+ * The decision log as one table: the rows of `DECISIONS.md`, then each decision file as a row
+ * of its own (`| D636 | <the file's text on one line> |`), so one lookup serves both.
+ */
+function decisionLog(): string {
+  const dir = join(REPO_ROOT, DECISIONS_DIR);
+  const files = readdirSync(dir).flatMap((name) => {
+    const id = /^(D\d+)\.md$/.exec(name)?.[1];
+    if (id === undefined) return [];
+    return [
+      `| ${id} | ${readFileSync(join(dir, name), 'utf8')
+        .trim()
+        .replace(/\s*\n\s*/g, ' ')} |`,
+    ];
+  });
+  return [read(DECISIONS_FILE), ...files].join('\n');
+}
+
+/** The ids in the decision log. */
+function decisionIds(text: string = decisionLog()): Set<string> {
   return new Set([...text.matchAll(/^\| (D\d+) \|/gm)].map((m) => m[1]!));
 }
 
@@ -281,7 +301,7 @@ export function audit(entries: Entry[], baseline: Baseline, rules: Rules): strin
       const unknown = e.decisions.filter((d) => !rules.decisions.has(d));
       if (unknown.length > 0)
         for (const d of unknown)
-          problems.push(`${list}: ${e.key} names ${d}, which ${DECISIONS_FILE} does not have`);
+          problems.push(`${list}: ${e.key} names ${d}, which the decision log does not have`);
       else if (e.issues.length === 0)
         problems.push(`${list}: ${e.key} names no open issue and no decision id`);
       else
@@ -340,12 +360,12 @@ export function sizeBudgets(): CitedBudget[] {
 }
 
 /**
- * A size budget names the decision that sets it, and that decision's row states the bytes
+ * A size budget names the decision that sets it, and that decision's row or file states the bytes
  * (`98,304 B`). So a changed number fails until a decision states the new one.
  */
 export function budgetProblems(
   budgets: CitedBudget[],
-  decisions: string = read(DECISIONS_FILE)
+  decisions: string = decisionLog()
 ): string[] {
   return budgets.flatMap((b) => {
     const bytes = `${b.gzipBytes.toLocaleString('en-US')} B`;
@@ -353,7 +373,7 @@ export function budgetProblems(
       return [`size budget ${b.name}: no "decision" (the D-id that sets ${bytes})`];
     const row = decisions.split('\n').find((line) => line.startsWith(`| ${b.decision} |`));
     if (row === undefined)
-      return [`size budget ${b.name}: ${b.decision} is not in ${DECISIONS_FILE}`];
+      return [`size budget ${b.name}: ${b.decision} is not in the decision log`];
     return row.includes(bytes)
       ? []
       : [

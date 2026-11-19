@@ -61,21 +61,105 @@ describe('the model, as v12 built it', () => {
     expect(c.elements[0]).toMatchObject({ label: 'C2', techn: 'Java', descr: 'x' });
   });
 
-  it('merges a repeated relation: kind and label replaced, techn kept', () => {
+  it('keeps every relation statement, also one that repeats a pair (#680)', () => {
     const m = model(
-      'C4Context\nPerson(a, "A")\nPerson(b, "B")\nRel(a, b, "x", "T")\nRel_Back(a, b, "y")'
+      'C4Context\nPerson(a, "A")\nPerson(b, "B")\nRel(a, b, "x", "T")\nRel_Back(a, b, "y")\nBiRel(b, a, "z")'
     );
     expect(m.relations).toEqual([
       {
         ast: 'rel:a->b',
-        kind: 'rel_b',
+        kind: 'rel',
         from: 'a',
         to: 'b',
-        label: 'y',
+        label: 'x',
         techn: 'T',
         descr: '',
         extra: [],
       },
+      {
+        ast: 'rel:a->b@2',
+        kind: 'rel_b',
+        from: 'a',
+        to: 'b',
+        label: 'y',
+        techn: '',
+        descr: '',
+        extra: [],
+      },
+      {
+        ast: 'rel:b->a',
+        kind: 'birel',
+        from: 'b',
+        to: 'a',
+        label: 'z',
+        techn: '',
+        descr: '',
+        extra: [],
+      },
+    ]);
+  });
+
+  it('shows the issue: no technology or label is carried from an earlier statement (#680)', () => {
+    const m = model(
+      'C4Context\nSystem(a, "Ledger")\nSystem(b, "Billing")\nRel(a, b, "Pushes balances", "AMQP")\nBiRel(a, b, "Reconciles nightly")'
+    );
+    expect(m.relations.map((r) => [r.kind, r.label, r.techn])).toEqual([
+      ['rel', 'Pushes balances', 'AMQP'],
+      ['birel', 'Reconciles nightly', ''],
+    ]);
+  });
+
+  it('applies UpdateRelStyle to every relation of the pair so far, in that direction only (#680)', () => {
+    const m = model(
+      'C4Context\nPerson(a, "A")\nPerson(b, "B")\nRel(a, b, "1")\nRel(b, a, "back")\nRel(a, b, "2")\nUpdateRelStyle(a, b, "red", "blue", "5")\nRel(a, b, "3")'
+    );
+    expect(m.relations.map((r) => [r.label, r.textColor, r.lineColor, r.offsetX])).toEqual([
+      ['1', 'red', 'blue', 5],
+      ['back', undefined, undefined, undefined],
+      ['2', 'red', 'blue', 5],
+      ['3', undefined, undefined, undefined],
+    ]);
+  });
+
+  it('finds a relation moved by `$from` and `$to` under its new pair (#680)', () => {
+    const m = model(
+      'C4Context\nPerson(a, "A")\nPerson(b, "B")\nRel(a, b, "1")\nRel(a, a, "2", $to="b")\nUpdateRelStyle(a, b, "red")'
+    );
+    expect(m.relations.map((r) => [r.label, r.to, r.textColor])).toEqual([
+      ['1', 'b', 'red'],
+      ['2', 'b', 'red'],
+    ]);
+  });
+
+  it('moves and styles every relation an UpdateRelStyle selects, also by `$from` (#680)', () => {
+    const m = model(
+      'C4Context\nSystem(a, "A")\nSystem(b, "B")\nSystem(c, "C")\nRel(a, b, "one")\nRel(a, b, "two")\nRel(a, b, "three")\nUpdateRelStyle(a, b, $from="c", $lineColor="red")\nUpdateRelStyle(c, b, $textColor="blue")'
+    );
+    expect(m.relations.map((r) => [r.label, r.from, r.to, r.lineColor, r.textColor])).toEqual([
+      ['one', 'c', 'b', 'red', 'blue'],
+      ['two', 'c', 'b', 'red', 'blue'],
+      ['three', 'c', 'b', 'red', 'blue'],
+    ]);
+  });
+
+  it('leaves the pair a relation moved from by `$to`: a later UpdateRelStyle there misses it (#680)', () => {
+    const m = model(
+      'C4Context\nPerson(a, "A")\nPerson(b, "B")\nRel(a, a, "1")\nRel(a, a, "2", $to="b")\nUpdateRelStyle(a, a, "red")\nUpdateRelStyle(c, b, "blue")'
+    );
+    expect(m.relations.map((r) => [r.label, r.to, r.textColor])).toEqual([
+      ['1', 'a', 'red'],
+      ['2', 'b', undefined],
+    ]);
+  });
+
+  it('keeps the other relations of a pair when one written with a named end moves (#680)', () => {
+    // `Rel($from="a", b, …)` starts with an empty start: it was never listed under `"", b`.
+    const r = parse(
+      'C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel("", b, "x")\nRel($from="a", b, "y")\nUpdateRelStyle("", b, $lineColor="red")'
+    );
+    expect(r.model.relations.map((x) => [x.label, x.from, x.to, x.lineColor])).toEqual([
+      ['x', '', 'b', 'red'],
+      ['y', 'a', 'b', undefined],
     ]);
   });
 
@@ -293,13 +377,7 @@ describe('D452: parse quirks that damaged the model', () => {
     expect(m.elements).toHaveLength(1);
   });
 
-  it('reports `direction` lines and `$__proto__` instead of crashing (D452)', () => {
-    expect(codesOf('C4Context\ndirection TB\nPerson(a, "A")')).toEqual([
-      ['error', codes.C4_DIRECTION],
-    ]);
-    expect(codesOf('C4Context\nPerson(a, "the direction LR is")')).toEqual([
-      ['error', codes.C4_DIRECTION],
-    ]);
+  it('reports `$__proto__` instead of crashing (D452)', () => {
     // A warning: Pele keeps it as an unknown name, with no error.
     const r = parse('C4Context\nPerson(a, "A", $__proto__="x")');
     expect(r.diagnostics.map((d) => [d.severity, d.code])).toEqual([
@@ -330,6 +408,122 @@ describe('D452: parse quirks that damaged the model', () => {
       descr: '',
       sprite: 'D',
     });
+  });
+});
+
+describe('#730: direction, the fill order of the grid (amends D452)', () => {
+  const direction = (src: string) => model(src).direction;
+  const directions = (src: string) => model(src).boundaries.map((b) => b.direction);
+  const BOUNDARY = 'Boundary(b, "B") {\n  Person(a, "A")\n}';
+
+  it("sets the top level's order, the last statement winning, and leaves it out when none is given", () => {
+    expect(direction('C4Context\ndirection LR\nPerson(a, "A")')).toBe('LR');
+    expect(direction('C4Context\ndirection LR\nPerson(a, "A")\ndirection BT')).toBe('BT');
+    expect('direction' in model('C4Context\nPerson(a, "A")')).toBe(false);
+    for (const d of ['TB', 'BT', 'RL', 'LR']) {
+      expect(direction(`C4Context\n  direction ${d}\nPerson(a, "A")`)).toBe(d);
+    }
+  });
+
+  it("sets a boundary's own order from its braces, leaving the top level's alone", () => {
+    const m = model(`C4Context\nBoundary(b, "B") {\n  direction RL\n  Person(a, "A")\n}`);
+    expect(m.boundaries[0]?.direction).toBe('RL');
+    expect('direction' in m).toBe(false);
+    expect(directions(`C4Context\n${BOUNDARY}`)).toEqual([undefined]);
+    // Anywhere in the braces, the last one winning.
+    expect(
+      directions(
+        'C4Context\nBoundary(b, "B") {\n  Person(a, "A")\n  direction LR\n  direction BT\n}'
+      )
+    ).toEqual(['BT']);
+  });
+
+  it("keeps each boundary's statement for itself, nested ones included", () => {
+    const src = [
+      'C4Context',
+      'direction LR',
+      'Boundary(o, "O") {',
+      '  direction BT',
+      '  Boundary(i, "I") {',
+      '    Person(a, "A")',
+      '  }',
+      '  Person(b, "B")',
+      '}',
+      'Boundary(p, "P") {',
+      '  Person(c, "C")',
+      '  direction TB',
+      '}',
+    ].join('\n');
+    const m = model(src);
+    expect(m.direction).toBe('LR');
+    expect(m.boundaries.map((b) => [b.alias, b.direction])).toEqual([
+      ['o', 'BT'],
+      ['i', undefined],
+      ['p', 'TB'],
+    ]);
+  });
+
+  it('lets the last statement win across the statements that open a boundary again', () => {
+    const src = (second: string) =>
+      `C4Context\nBoundary(b, "B") {\n direction LR\n Person(a, "A")\n}\nBoundary(b, "B") {\n${second}\n Person(c, "C")\n}`;
+    expect(directions(src(' direction RL'))).toEqual(['RL']);
+    expect(directions(src(' '))).toEqual(['LR']);
+  });
+
+  it('takes no direction from a boundary that failed to parse, which its own error reports', () => {
+    // `Boundary(b, "B" {` fails (its arguments run into the brace) but opens, so its `}` matches.
+    const failed = (inner: string) =>
+      `Boundary(b, "B" {\n  direction ${inner}\n  Person(a, "A")\n}`;
+    const top = parse(`C4Context\n${failed('LR')}`);
+    expect(top.model.direction).toBeUndefined();
+    expect(codesOf(`C4Context\n${failed('LR')}`)).toEqual([['error', 'UNCLOSED_ARGUMENTS']]);
+    // The top level keeps the order it was given, whichever side of the failed boundary it is on.
+    expect(parse(`C4Context\ndirection BT\n${failed('LR')}`).model.direction).toBe('BT');
+    expect(parse(`C4Context\n${failed('LR')}\ndirection BT`).model.direction).toBe('BT');
+    // Inside a boundary that parsed, the failed one does not set the outer one's order either.
+    const nested = parse(`C4Context\nBoundary(o, "O") {\n  ${failed('RL')}\n  Person(c, "C")\n}`);
+    expect(nested.model.direction).toBeUndefined();
+    expect(nested.model.boundaries.map((b) => [b.alias, b.direction])).toEqual([['o', undefined]]);
+  });
+
+  it('reads no direction from a label, a comment or a longer word', () => {
+    expect(direction('C4Context\nPerson(a, "the direction LR is")')).toBeUndefined();
+    expect(direction('C4Context\nPerson(a, "A") %% direction LR\n')).toBeUndefined();
+    expect(model('C4Context\ntitle direction LR\nPerson(a, "A")').title).toBe('direction LR');
+    expect(model('C4Context\naccDescr: reads in direction RL\nPerson(a, "A")').accDescr).toBe(
+      'reads in direction RL'
+    );
+  });
+
+  it('is no statement of a boundary: it still needs an element, a relation or a style', () => {
+    expect(codesOf('C4Context\nBoundary(b, "B") {\n  direction LR\n}')).toEqual([
+      ['error', 'UNEXPECTED'],
+    ]);
+    // After a `direction` the boundary starts with a macro as before: no title goes first.
+    expect(
+      codesOf('C4Context\nBoundary(b, "B") {\n  direction LR\n  title X\n  Person(a, "A")\n}')
+    ).toEqual([['error', 'UNEXPECTED']]);
+    expect(
+      parse('C4Context\nBoundary(b, "B") {\n  direction LR\n  Person(a, "A")\n}').ast.children
+    ).toHaveLength(1);
+  });
+
+  it('has no AST node, and takes the line to itself', () => {
+    const r = parse('C4Context\ndirection LR\nPerson(a, "A")');
+    expect(ids(r.ast.children)).toEqual(['element:a']);
+    for (const text of [
+      'C4Context direction LR\nPerson(a, "A")',
+      'C4Context\ndirection LR Person(a, "A")',
+      'C4Context\nPerson(a, "A") direction LR',
+      'C4Context\ndirection LR then more\nPerson(a, "A")',
+      'C4Context\ndirection XY\nPerson(a, "A")',
+    ]) {
+      expect(codesOf(text)).toEqual([['error', 'UNEXPECTED']]);
+    }
+    // A value it does not know says what to write.
+    expect(parse('C4Context\ndirection XY\nPerson(a, "A")').diagnostics[0]?.message).toContain(
+      'write `direction TB`, `BT`, `LR` or `RL`'
+    );
   });
 });
 
@@ -384,8 +578,15 @@ describe('D457: degenerate input', () => {
 
   it('reports a relation to an unknown alias with v12’s message, at parse', () => {
     const r = parse('C4Context\nPerson(a, "A")\nRel(a, nobody, "x")\nRel(a, nobody, "y")');
+    // One for each statement (#680).
+    const unknown = [
+      codes.C4_UNKNOWN_END,
+      'C4 rel "a" -> "nobody" references an unknown shape or boundary',
+      2,
+    ];
     expect(r.diagnostics.map((d) => [d.code, d.message, r.model.relations.length])).toEqual([
-      [codes.C4_UNKNOWN_END, 'C4 rel "a" -> "nobody" references an unknown shape or boundary', 1],
+      unknown,
+      unknown,
     ]);
     // A boundary end, and an alias defined further down, are known.
     expect(codesOf('C4Context\nRel(a, b, "x")\nBoundary(b, "B") {\nPerson(a, "A")\n}')).toEqual([]);
@@ -427,7 +628,7 @@ describe('D458: AST ids, symbols and statements', () => {
       'element:s',
       'element:x%40y%3Ez',
     ]);
-    expect(r.model.relations.map((x) => x.ast)).toEqual(['rel:a->s']);
+    expect(r.model.relations.map((x) => x.ast)).toEqual(['rel:a->s', 'rel:a->s@2']);
   });
 
   it('defines aliases at their first statement and refers to them after, per namespace', () => {

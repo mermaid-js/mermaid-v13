@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   codeReferencePattern,
-  failedTestsWarning,
   findRemote,
   isDocsPath,
   lintTargets,
@@ -153,55 +152,25 @@ describe('typecheckSteps', () => {
   });
 });
 
-describe('failedTestsWarning', () => {
-  it('lists each failing test once', () => {
-    const output = [
-      ' ❯ |workspace| packages/core/src/a.spec.ts (3 tests | 1 failed) 12ms',
-      '   × adds 4ms',
-      ' FAIL  |workspace| packages/core/src/a.spec.ts > adds',
-      ' FAIL  |workspace| packages/core/src/a.spec.ts > adds',
-      'AssertionError: expected 1 to be 2',
-    ].join('\n');
-    expect(failedTestsWarning(output).split('\n')).toEqual([
-      'tests the change reaches failed (a warning here; CI fails on them):',
-      '    × adds 4ms',
-      '    FAIL  |workspace| packages/core/src/a.spec.ts > adds',
-    ]);
-  });
-
-  it('cuts a long list and says how many it left out', () => {
-    const output = Array.from({ length: 25 }, (_, i) => ` FAIL  a.spec.ts > case ${i}`).join('\n');
-    const lines = failedTestsWarning(output).split('\n');
-    expect(lines).toHaveLength(22);
-    expect(lines.at(-1)).toBe('    … and 5 more');
-  });
-
-  it('points at the log when vitest failed without naming a test', () => {
-    expect(failedTestsWarning('Error: cannot start')).toContain('see the log');
-  });
-});
-
 describe('reportLines', () => {
   const passed = { name: 'cspell', ok: true, output: 'fine', log: 'logs/cspell.log' };
 
-  it('says nothing when every check passed without a warning', () => {
+  it('says nothing when every check passed', () => {
     expect(reportLines([passed])).toEqual([]);
   });
 
-  it('reports every failed check with the end of its output, and every warning', () => {
+  it('reports every failed check with the end of its output', () => {
     const long = Array.from({ length: 45 }, (_, i) => `line ${i + 1}`).join('\n') + '\n';
     const lines = reportLines([
       passed,
       { name: 'eslint', ok: false, output: 'a.ts: error', log: 'logs/eslint.log' },
       { name: 'knip', ok: false, output: long, log: 'logs/knip.log' },
-      { ...passed, name: 'structural audit', warning: 'a test failed' },
     ]);
-    expect(lines).toContain('Warning, structural audit: a test failed');
     expect(lines).toContain('── eslint failed (logs/eslint.log) ──');
     expect(lines).toContain('a.ts: error');
     expect(lines).toContain('… 5 lines above, in the log');
     expect(lines).not.toContain('line 5');
     expect(lines).toContain('line 6');
-    expect(lines.at(-1)).toBe('pre-push: 2 of 4 checks failed: eslint, knip');
+    expect(lines.at(-1)).toBe('pre-push: 2 of 3 checks failed: eslint, knip');
   });
 });

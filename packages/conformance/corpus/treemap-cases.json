@@ -780,6 +780,10 @@
     "source": "treemap\n\"A\"\n  \"x\": 1\n\"B\"\n  \"y\": 2\n\"A\"\n  \"z\": 3"
   },
   {
+    "id": "treemap-cases/render-thirteen-sections",
+    "source": "treemap\n\"Team 0\"\n  \"a0\": 10\n\"Team 1\"\n  \"a1\": 10\n\"Team 2\"\n  \"a2\": 10\n\"Team 3\"\n  \"a3\": 10\n\"Team 4\"\n  \"a4\": 10\n\"Team 5\"\n  \"a5\": 10\n\"Team 6\"\n  \"a6\": 10\n\"Team 7\"\n  \"a7\": 10\n\"Team 8\"\n  \"a8\": 10\n\"Team 9\"\n  \"a9\": 10\n\"Team 10\"\n  \"a10\": 10\n\"Team 11\"\n  \"a11\": 10\n\"Team 12\"\n  \"a12\": 10\n\"Team 13\"\n  \"a13\": 10"
+  },
+  {
     "id": "treemap-cases/render-utils-flat-to-tree",
     "source": "treemap\n\"Root\"\n    \"Branch 1\"\n        \"Leaf 1.1\": 10\n        \"Leaf 1.2\": 15\n    \"Branch 2\"\n        \"Leaf 2.1\": 20\n        \"Leaf 2.2\": 25\n        \"Leaf 2.3\": 30"
   },

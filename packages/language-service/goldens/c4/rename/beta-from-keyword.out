@@ -1,0 +1,11 @@
+@ 4:16  container conta|iner "Container"
+  prepare: 4:11-4:20 "container"; rename to "box":
+  c4-beta
+  %% rename-to: box
+  person user "User"
+  container box "Container"
+  component on "On"
+  softwareSystem TB "TB"
+  user --> box
+  box --> on
+  on --> TB

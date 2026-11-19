@@ -18,6 +18,7 @@ import {
   Kind,
   LineIndex,
   ParseState,
+  Probe,
   significantTokens,
   skipTo,
   kindSet,
@@ -42,6 +43,7 @@ import type {
 } from './ast.ts';
 import { buildModel } from './build.ts';
 import { lex } from './lexer.ts';
+import * as lists from './probe.ts';
 import type { C4BetaDirection, C4BetaElementKind, C4BetaKind, C4BetaModel } from './model.ts';
 import { C4BETA_TRIVIA, DIAGRAM_KINDS, ELEMENT_KINDS, ID_KINDS, T } from './tokens.ts';
 
@@ -137,6 +139,8 @@ class C4BetaParser {
   /** The bodies being read, innermost last. */
   private readonly open: Frame[] = [];
   private readonly mentions = new Map<string, number>();
+  /** Probe mode only (R-LANG-7). */
+  private readonly probe: Probe | undefined;
   private readonly depths: { depth: number; range: Range }[] = [];
   private elementCount = 0;
   private relationCount = 0;
@@ -155,6 +159,13 @@ class C4BetaParser {
     );
     this.t = significantTokens(this.full, C4BETA_TRIVIA);
     this.lines = new LineIndex(src);
+    if (options.probe !== undefined) {
+      const probe = (this.probe = new Probe(src, options.probe, lists.PROBE_FOLLOWS));
+      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+      else probe.trivia(this.full);
+      // Ignored when the offset is outside code.
+      probe.lexed(probe.offset, probe.offset, lists.probeMode(src, this.full, probe.offset));
+    }
   }
 
   parse(): C4BetaParseResult {
@@ -173,7 +184,7 @@ class C4BetaParser {
     // In source order (the facet contract, R-LANG-3): the semantic checks run after the parse.
     state.diagnostics.list.sort((a, b) => a.range.start - b.range.start);
     const warnings = state.diagnostics.list.filter((d) => d.severity === 'warning');
-    return state.result({ ...built, warnings }, ast, this.full, this.options);
+    return state.result({ ...built, warnings }, ast, this.full, this.options, this.probe);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -191,8 +202,17 @@ class C4BetaParser {
     return this.src.slice(start, end);
   }
 
-  private lineOf(at: number): number {
-    return this.lines.position(at).line + 1;
+  private lineOf(offset: number): number {
+    return this.lines.position(offset).line + 1;
+  }
+
+  /**
+   * Probe hook: the parser tests token `j` for `kinds` (a constant list), or would accept them
+   * there. Records them when it is the probed token.
+   */
+  private tested(kinds: readonly number[], j = this.i): void {
+    const p = this.probe;
+    if (p?.isAt(this.t, j, this.pre.bodyStart)) p.tested(kinds, this.t.start[j] ?? 0);
   }
 
   /** `id`, then `id@2`, `id@3`, … */
@@ -214,6 +234,7 @@ class C4BetaParser {
 
   /** Report what was found where one of `want` was expected, then stop the statement. */
   private fail(want: readonly number[], hint?: string): never {
+    this.tested(want);
     if (this.kind() === Kind.Error) {
       this.badCharacters(this.i);
       throw STOP;
@@ -269,6 +290,7 @@ class C4BetaParser {
    */
   private recover(depth: number): void {
     const end = skipTo(this.t, this.i, BOUNDARY);
+    this.freezeProbe(end);
     // Adjacent error characters are one problem, reported once.
     let reported = this.kind() === Kind.Error ? this.t.end[this.i] : -1;
     for (let j = this.i + 1; j < end; j++) {
@@ -281,6 +303,19 @@ class C4BetaParser {
       this.open.push({ list: this.open[this.open.length - 1]?.list ?? this.children });
     }
     this.i = end;
+  }
+
+  /**
+   * Recovery skips the tokens from here to the boundary `end` of the failed line, the boundary
+   * included: a cursor in them is on the failed line, where the parser accepts nothing.
+   */
+  private freezeProbe(end: number): void {
+    const probe = this.probe;
+    if (!probe) return;
+    probe.freeze();
+    for (let j = this.i; j <= end; j++) {
+      if (probe.isAt(this.t, j, this.pre.bodyStart)) probe.freeze(true);
+    }
   }
 
   /** Run one statement rule; on failure, recover. */
@@ -297,12 +332,14 @@ class C4BetaParser {
   // ---- rules --------------------------------------------------------------------------
 
   private expect(kind: number, hint?: string): number {
+    this.tested([kind]);
     if (this.kind() !== kind) this.fail([kind], hint);
     return this.i++;
   }
 
   /** An id: any word but the six that open a statement. */
   private idToken(): number {
+    this.tested(lists.ID_LIST);
     if (ID_KINDS[this.kind()] === 1) return this.i++;
     const word = RESERVED[this.kind()] === 1 ? `\`${this.raw().split(/[\s:]/, 1)[0]}\`` : '';
     return this.fail(
@@ -336,8 +373,10 @@ class C4BetaParser {
   /** `NEWLINE* "c4-beta" kind?` */
   private header(): void {
     while (this.kind() === Kind.Newline) this.i++;
-    if (this.kind() !== T.Header) this.fail([T.Header]);
+    this.tested(lists.HEADER_LIST);
+    if (this.kind() !== T.Header) this.fail(lists.HEADER_LIST);
     const start = this.range(this.i++);
+    this.tested(lists.KIND_LIST);
     const word = this.kind();
     const kind = KIND_NAMES.get(word);
     if (DIAGRAM_KINDS[word] !== 1 && ID_KINDS[word] === 1) {
@@ -356,10 +395,20 @@ class C4BetaParser {
   private document(): void {
     for (;;) {
       const k = this.kind();
+      this.testedAtLineStart(k);
       if (k === Kind.EOF) return;
       if (k === Kind.Newline) this.i++;
       else this.statement(() => (this.open.length > 0 ? this.inBody(k) : this.top(k)));
     }
+  }
+
+  /**
+   * Probe hook for what may start a statement: at every line start, a blank line and the last
+   * line included. The end of the text after a statement with no line break is mid-line.
+   */
+  private testedAtLineStart(k: number): void {
+    if (k === Kind.EOF && this.kind(this.i - 1) !== Kind.Newline) return;
+    this.tested(this.open.length > 0 ? lists.BODY_LIST : lists.TOP_LIST);
   }
 
   /** The statement at the top level. */
@@ -385,7 +434,7 @@ class C4BetaParser {
       );
     } else if (ID_KINDS[k] === 1) {
       this.i++;
-      this.fail([T.ArrowRight], 'a relation is `a --> b`');
+      this.fail(lists.ARROW_LIST, 'a relation is `a --> b`');
     } else this.fail(STATEMENT_START);
   }
 
@@ -435,17 +484,32 @@ class C4BetaParser {
       tags: [],
       children: [],
     };
-    if (this.kind() === T.String) node.description = this.unquote(this.i++);
-    if (node.description !== undefined && this.kind() === T.String)
-      node.technology = this.unquote(this.i++);
-    if (this.kind() === T.Instances) {
-      this.i++;
-      node.instances = this.quoted('`instances` takes a number in quotes, as in `instances "3"`');
-    }
-    while (this.kind() === T.Tag) node.tags.push(this.raw(this.i++).slice(3));
+    this.fields(node);
     node.range.end = this.range(this.i - 1).end;
     this.counted(node);
     this.body(node);
+  }
+
+  /** `(STRING STRING?)? ("instances" STRING)? TAG*` after an element's name. */
+  private fields(node: C4BetaElementNode): void {
+    this.tested(lists.AFTER_NAME_LIST);
+    if (this.kind() === T.String) {
+      node.description = this.unquote(this.i++);
+      this.tested(lists.AFTER_NAME_LIST);
+    }
+    if (node.description !== undefined && this.kind() === T.String) {
+      node.technology = this.unquote(this.i++);
+      this.tested(lists.AFTER_TECHNOLOGY_LIST);
+    }
+    if (this.kind() === T.Instances) {
+      this.i++;
+      node.instances = this.quoted('`instances` takes a number in quotes, as in `instances "3"`');
+      this.tested(lists.AFTER_TAG_LIST);
+    }
+    while (this.kind() === T.Tag) {
+      node.tags.push(this.raw(this.i++).slice(3));
+      this.tested(lists.AFTER_TAG_LIST);
+    }
   }
 
   private counted(node: C4BetaElementNode): void {
@@ -490,9 +554,11 @@ class C4BetaParser {
     }
     const left = this.idToken();
     const arrow = this.kind();
-    if (ARROWS[arrow] !== 1) this.fail([T.ArrowRight], 'a relation is `a --> b`');
+    if (ARROWS[arrow] !== 1) this.fail(lists.ARROW_LIST, 'a relation is `a --> b`');
+    this.tested(lists.ARROW_LIST);
     this.i++;
     const right = this.idToken();
+    this.tested(lists.AFTER_END_LIST);
     const [from, to] = arrow === T.ArrowLeft ? [right, left] : [left, right];
     const node: C4BetaRelationNode = {
       id: this.id(`rel:${this.raw(from)}->${this.raw(to)}`),
@@ -529,9 +595,16 @@ class C4BetaParser {
     if (this.kind() === T.Colon) {
       this.i++;
       node.description = this.quoted('a relation label is quoted, as in `a --> b : "Uses"`');
-      if (this.kind() === T.String) node.technology = this.unquote(this.i++);
+      this.tested(lists.AFTER_LABEL_LIST);
+      if (this.kind() === T.String) {
+        node.technology = this.unquote(this.i++);
+        this.tested(lists.AFTER_RELATION_LIST);
+      }
     }
-    while (this.kind() === T.Tag) node.tags.push(this.raw(this.i++).slice(3));
+    while (this.kind() === T.Tag) {
+      node.tags.push(this.raw(this.i++).slice(3));
+      this.tested(lists.AFTER_RELATION_LIST);
+    }
   }
 
   /** `title …`, `accTitle: …` and `accDescr …`: the value is what follows the keyword. */
@@ -548,6 +621,7 @@ class C4BetaParser {
 
   private direction(): void {
     const start = this.range(this.i++);
+    this.tested(lists.DIRECTION_LIST);
     const direction = DIRECTIONS.get(this.kind());
     if (!direction) this.fail([T.Tb], 'write `direction TB`, `BT`, `LR` or `RL`');
     const range = { start: start.start, end: this.range(this.i++).end };
@@ -558,6 +632,7 @@ class C4BetaParser {
 
   private legend(): void {
     const start = this.range(this.i++);
+    this.tested(lists.LEGEND_LIST);
     if (this.kind() !== T.On && this.kind() !== T.Off)
       this.fail([T.On], 'write `legend on` or `legend off`');
     const on = this.kind() === T.On;
@@ -586,7 +661,9 @@ class C4BetaParser {
   private entry(): C4BetaStyleNode['entries'][number] {
     const key = this.idToken();
     this.expect(T.Colon, 'a style entry is `key:value`, as in `fill:#1f2937`');
+    this.tested(lists.VALUE_LIST);
     const value = this.kind() === T.Hex ? this.i++ : this.idToken();
+    this.tested(lists.AFTER_ENTRY_LIST);
     return {
       key: this.raw(key),
       value: this.raw(value),

@@ -75,9 +75,6 @@
     }
   },
   "packages/bench/src/gates.ts": {
-    "complexity": {
-      "count": 1
-    },
     "tsdoc/syntax": {
       "count": 1
     }
@@ -189,23 +186,6 @@
       "count": 2
     }
   },
-  "packages/core/src/layout/layered/compound.ts": {
-    "complexity": {
-      "count": 3
-    },
-    "max-depth": {
-      "count": 1
-    },
-    "max-lines": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 3
-    },
-    "no-param-reassign": {
-      "count": 2
-    }
-  },
   "packages/core/src/layout/layered/layered.fixtures.ts": {
     "max-lines-per-function": {
       "count": 1
@@ -240,11 +220,6 @@
       "count": 9
     }
   },
-  "packages/core/src/layout/validate.ts": {
-    "complexity": {
-      "count": 1
-    }
-  },
   "packages/core/src/parser-kit/diagnostics.spec.ts": {
     "unicorn/prefer-spread": {
       "count": 1
@@ -252,11 +227,6 @@
   },
   "packages/core/src/parser-kit/diagnostics.ts": {
     "tsdoc/syntax": {
-      "count": 2
-    }
-  },
-  "packages/core/src/parser-kit/source-view.ts": {
-    "complexity": {
       "count": 2
     }
   },
@@ -321,20 +291,12 @@
     }
   },
   "packages/core/src/svg/inert.ts": {
-    "complexity": {
-      "count": 2
-    },
     "tsdoc/syntax": {
       "count": 1
     }
   },
   "packages/core/src/svg/path.ts": {
     "max-params": {
-      "count": 1
-    }
-  },
-  "packages/core/src/svg/style.ts": {
-    "complexity": {
       "count": 1
     }
   },
@@ -353,9 +315,6 @@
   },
   "packages/core/src/text/label.ts": {
     "@typescript-eslint/no-shadow": {
-      "count": 1
-    },
-    "complexity": {
       "count": 1
     }
   },
@@ -400,15 +359,7 @@
   },
   "packages/dev/src/browser/explorer/tabs/profile.ts": {
     "@typescript-eslint/no-unnecessary-condition": {
-      "count": 3
-    },
-    "max-depth": {
       "count": 2
-    }
-  },
-  "packages/dev/src/explorer.ts": {
-    "max-lines-per-function": {
-      "count": 1
     }
   },
   "packages/dev/src/fixture-discovery.ts": {
@@ -423,10 +374,7 @@
   },
   "packages/diagram-flowchart/src/parser/model.ts": {
     "@typescript-eslint/no-base-to-string": {
-      "count": 7
-    },
-    "complexity": {
-      "count": 1
+      "count": 6
     },
     "tsdoc/syntax": {
       "count": 1
@@ -451,15 +399,7 @@
     }
   },
   "packages/diagram-flowchart/src/render/render.ts": {
-    "complexity": {
-      "count": 1
-    },
     "unicorn/prefer-spread": {
-      "count": 1
-    }
-  },
-  "packages/diagram-flowchart/src/render/shapes.ts": {
-    "max-params": {
       "count": 1
     }
   },
@@ -470,9 +410,6 @@
   },
   "packages/mermaid/src/api.ts": {
     "@typescript-eslint/explicit-module-boundary-types": {
-      "count": 1
-    },
-    "max-lines-per-function": {
       "count": 1
     }
   },

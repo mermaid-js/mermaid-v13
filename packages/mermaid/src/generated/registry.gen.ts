@@ -38,7 +38,7 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     type: 'c4beta',
     pattern: /^\s*c4-beta(?![\w-])/,
     id: 'c4',
-    formats: ['svg'],
+    formats: ['svg', 'ascii'],
     section: 'c4beta',
     load: () => import('@mermaid-js/diagram-c4').then((m) => m.c4),
     loadAscii: () => import('@mermaid-js/diagram-c4/ascii').then((m) => m.ascii),

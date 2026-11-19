@@ -84,6 +84,20 @@ describe('built-in themes', () => {
     }
   );
 
+  it.each(specs.map((s) => [s.name, s] as const))(
+    '%s fills edge labels with its background, an author value winning (D628)',
+    (_name, spec) => {
+      const t = createTheme(spec, { cssVariables: false });
+      expect(t.value('edgeLabelBackground')).toBe(t.value('background'));
+      expect(t.value('linkLabelBkg')).toBe(t.value('background'));
+      const own = createTheme(spec, {
+        cssVariables: false,
+        themeVariables: { edgeLabelBackground: '#123456' },
+      });
+      expect(own.value('edgeLabelBackground')).toBe('#123456');
+    }
+  );
+
   it('renders fully from at most 8 base variables (R-THEME-5)', async () => {
     expect(BASE_VARIABLES.length).toBeLessThanOrEqual(8);
     const base = await loadTheme('base');

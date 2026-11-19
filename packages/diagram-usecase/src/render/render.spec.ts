@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Attrs, OutlineDraw, OutlineRole, OutlineTag } from '@mermaid-js/core/svg';
 import type { SvgFragment } from '@mermaid-js/core/text';
+import { pxProfile } from '@mermaid-js/core/layout';
 import { renderUsecaseForTest, type RenderUsecaseOptions } from './harness.ts';
 
 type RawGlob = (
@@ -224,7 +225,57 @@ describe('labels', () => {
     expect(byClass(svg, 'relationship-label', 'text').every((t) => t['font-size'] === '10')).toBe(
       true
     );
-    expect(byClass(svg, 'labelBkg', 'rect')).toHaveLength(2);
+    expect(svg.match(/<g class="edgeLabel"/g)).toHaveLength(2);
+  });
+
+  it('draws each label as a tag bordered 1 px solid in its line colour (D626, D627)', async () => {
+    const { svg, layout } = await render('baseline/edge-labels/tags', plain);
+    const prepared = layout.usecase!;
+    const patch = pxProfile.builder.labelPatch;
+    const lines = new Map(
+      elements(svg, 'g')
+        .filter((g) => g.class?.startsWith('relationship '))
+        .map((g) => [g['data-id']!, g])
+    );
+    const strokeOf = (id: string): string | undefined => {
+      const at = svg.indexOf(`data-id="${id}"`);
+      const path = elements(svg.slice(at), 'path')[0]!;
+      return path.stroke ?? lines.get(id)?.stroke ?? 'var(--_l)';
+    };
+    const tags = svg
+      .split('<g class="edgeLabel"')
+      .slice(1)
+      .map((part) => ({
+        id: /data-id="([^"]*)"/.exec(part)![1]!,
+        box: elements(part, 'rect')[0]!,
+      }));
+    expect(tags).toHaveLength(6);
+    for (const { id, box } of tags) {
+      expect(box.rx, id).toBe('6');
+      expect(box['stroke-width'], id).toBe('1');
+      expect(box['stroke-dasharray'], id).toBeUndefined();
+      expect(box.stroke, id).toBe(strokeOf(id));
+      const view = prepared.edges.find((e) => e.kind === 'relation' && e.relationship.id === id);
+      if (view?.kind !== 'relation') throw new Error(`no relation ${id}`);
+      // The box is the label plus the px profile's labelPatch (D629).
+      expect(Number(box.width), id).toBeCloseTo(view.label!.width + patch.x);
+      expect(Number(box.height), id).toBeCloseTo(view.label!.height + patch.y);
+      expect(layout.edges.get(view.id)?.label, id).toBeDefined();
+    }
+    const styled = tags.find((t) => t.id === 'styledEdge')!;
+    expect(styled.box.stroke).toBe('#d6336c');
+  });
+
+  it('draws no box and reserves no room for a whitespace-only label (D626)', async () => {
+    const { svg, layout } = await renderUsecaseForTest(
+      'usecase-beta\n  actor A\n  B\n  A -- " " ---> B\n',
+      plain
+    );
+    expect(svg).not.toContain('<g class="edgeLabel"');
+    const bare = await renderUsecaseForTest('usecase-beta\n  actor A\n  B\n  A ---> B\n', plain);
+    const view = layout.usecase!.edges[0]!;
+    expect(view.kind === 'relation' && view.label).toBeFalsy();
+    expect([layout.width, layout.height]).toEqual([bare.layout.width, bare.layout.height]);
   });
 
   it('draws markdown labels through core label layout, as runs (D225)', async () => {
@@ -289,16 +340,29 @@ describe('relationships', () => {
     expect(group(svg, 'relationship', 'note-0-edge')['data-ast']).toBeUndefined();
   });
 
-  it('rounds an animated line’s caps and keeps the animation a class (no keyframes)', async () => {
+  it('rounds an animated line’s caps and moves its 9,5 dashes, fast or slow (D606)', async () => {
     const { svg } = await render('nightly-check/15-animation-variants');
     const animated = elements(svg, 'g').filter((e) =>
       /edge-animation-(fast|slow)/.test(e.class ?? '')
     );
     expect(animated.length).toBeGreaterThan(1);
     for (const g of animated) {
-      const line = elements(inside(svg, 'relationship', g['data-id']!), 'path')[0]!;
+      const drawn = inside(svg, 'relationship', g['data-id']!);
+      const line = elements(drawn, 'path')[0]!;
       expect(line['stroke-linecap']).toBe('round');
+      expect(line['stroke-dasharray']).toBe('9,5');
+      expect(elements(drawn, 'animate')).toEqual([
+        {
+          tag: 'animate',
+          attributeName: 'stroke-dashoffset',
+          from: '900',
+          to: '0',
+          dur: g.class!.includes('edge-animation-slow') ? '50' : '20',
+          repeatCount: 'indefinite',
+        },
+      ]);
     }
+    expect(elements(svg, 'animate')).toHaveLength(animated.length);
   });
 });
 
@@ -495,6 +559,8 @@ describe('hand-drawn (D302, spec #517)', () => {
     expect([...roles].sort()).toEqual([
       'edge path',
       'group rect',
+      // Edge-label tags sketch their border (D630).
+      'label rect',
       'node circle',
       'node ellipse',
       'node path',
@@ -519,5 +585,12 @@ describe('hand-drawn (D302, spec #517)', () => {
     expect(byClass(drawn.svg, 'marker').length).toBe(byClass(bare.svg, 'marker').length);
     expect(texts(drawn.svg)).toEqual(texts(bare.svg));
     expect(drawn.warnings.map((w) => w.code)).toContain('LOOK_REMOVED');
+  });
+});
+
+describe('edge animation (#918)', () => {
+  it('no longer warns that the animation is ignored', async () => {
+    const { warnings } = await render('nightly-check/15-animation-variants');
+    expect(warnings.filter((w) => w.code === 'EDGE_ANIMATION_IGNORED')).toEqual([]);
   });
 });

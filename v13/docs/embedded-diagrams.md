@@ -74,6 +74,11 @@ stateDiagram-v2
 Any diagram type can be **inside** a block. Blocks can be nested if the inner diagram is a
 flowchart or a state diagram, up to four levels deep.
 
+Indent the body as you like. Before the inner diagram is read, the indentation that all its
+non-blank lines share is removed, so syntax that depends on the start of a line (such as the
+closing `}` of an event model's data block) works indented too. Error positions still point at
+the line and column you wrote.
+
 ## Folding
 
 A block can be shown folded, as a small box with its title and type, using the same statement

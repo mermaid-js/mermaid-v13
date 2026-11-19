@@ -1,11 +1,11 @@
 // The shapes v12.2 added by name (`@{ shape: … }`) and the ones it draws for other diagrams'
-// nodes: each one's size from its label, its drawer, and how far its outline sits inside the
-// layout box. Ported from Pele's src/svg/shapes.ts @ 3a2f075 (https://github.com/obsidianmd/pele,
-// MIT, (c) 2026 kepano), with v12's shape names and the theme's padding and radius tokens.
+// nodes, which only flowchart draws (those another diagram shares are `basic.ts`'s): each one's
+// size from its label, its drawer, and how far its outline sits inside the layout box. Ported
+// from Pele's src/svg/shapes.ts @ 3a2f075 (https://github.com/obsidianmd/pele, MIT, (c) 2026
+// kepano), with v12's shape names and the theme's padding and radius tokens.
 // cspell:ignore kepano
-import { translate, type Attrs, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
-import { drawCylinder, rhombusInset, rhombusPoints } from './basic.ts';
-import { personFigure, personSize } from './person.ts';
+import { translate, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
+import { drawCylinder, rhombusInset, rhombusPoints, waveInset } from './basic.ts';
 import {
   box,
   capInset,
@@ -19,36 +19,23 @@ import {
   grown,
   lines,
   NONE,
+  personFigure,
+  personSize,
   poly,
   queuePath,
   queueRim,
   queueRx,
   roundInset,
   roundSpan,
-  RULE,
   wave,
   WAVE,
-  type Barrel,
   type Inset,
-  type Pads,
+  type Barrel,
   type PolygonShape,
   type Shape,
   type ShapeSize,
+  type Sizer,
 } from './kit.ts';
-
-const waveInset: Inset = (_W, _H, side) => (side === 2 ? 10 : 0);
-// A rounded corner of radius r on a side of length `len`: how far in the outline is at `t`.
-const cornerInset = (len: number, t: number, r: number): number => {
-  const k = Math.abs(t) - (len / 2 - r);
-  return r > 0 && k > 0 ? r - Math.sqrt(Math.max(0, r * r - Math.min(k, r) ** 2)) : 0;
-};
-
-// The collapsed-subgraph card (v12 collapsedGroup): fixed padding, gap and indicator row.
-const CARD_PAD = 8;
-const CARD_GAP = 8;
-const CARD_ROW = 20;
-const CARD_MIN_W = 80;
-const cardRadius = (W: number, H: number, p: Pads): number => Math.min(p.r, W / 2, H / 2);
 
 function brace(w: SvgWriter, x: number, H: number, dir: number, line: Attrs): void {
   const y = H / 2;
@@ -66,11 +53,92 @@ function brace(w: SvgWriter, x: number, H: number, dir: number, line: Attrs): vo
   w.outline('node', 'path', { d, ...line, fill: 'none' });
 }
 
-function triSize(tw: number, th: number, flip: boolean): ShapeSize {
-  const w = Math.max(1.6 * tw + 40, 80);
-  const h = (th + 10) / (1 - (tw + 8) / w);
-  const dy = h / 2 - 10 - th / 2;
-  return { w, h, dy: flip ? -dy : dy };
+/**
+ * v12's triangle (#395): as wide as it is tall, `h = label width + padding + label height`, the
+ * label at the base (at the top when flipped) with half the padding below it (D603 leaves it as
+ * v12 had it).
+ */
+function triSize(tw: number, th: number, flip: boolean, pad: number): ShapeSize {
+  const h = tw + pad + th;
+  const dy = h / 2 - th / 2 - pad / 2;
+  return { w: h, h, dy: flip ? -dy : dy };
+}
+
+/**
+ * How far a triangle's outline is inside its box: on the slanted sides (1 right, 3 left) by how
+ * far along them `t` is, from the apex end, and on the apex's own side by how far `t` is across
+ * (the apex is at the top, or the bottom when `flip`). The base side is on the box.
+ */
+function triInset(flip: boolean): Inset {
+  return (W, H, side, t) => {
+    if (side & 1) {
+      const fromApex = Math.min(H, Math.max(0, flip ? H / 2 + t : H / 2 - t));
+      return (W / 2) * (fromApex / H);
+    }
+    return side === (flip ? 2 : 0) ? Math.min(H, (2 * H * Math.abs(t)) / W) : 0;
+  };
+}
+
+/** Each layer of a stacked rectangle is offset this far from the one behind it (D603, v12's). */
+const STACK_RECT = 5;
+/** Each layer of a stacked document (v12's `multiWaveEdgedRectangle`, D603). */
+const STACK_DOC = 10;
+
+/** A sizer whose label also sits `s` left: on the front layer of a stack, as in v12. */
+const leftOf =
+  (size: Sizer, s: number): Sizer =>
+  (tw, th, p) => ({ ...size(tw, th, p), dx: -s });
+
+/**
+ * Three layers, back to front, each `s` further left and down: layer `i` covers x from
+ * `-W/2 + (2-i)s` to `W/2 - i s` and y from `-H/2 + i s` to `H/2 - (2-i)s - drop` (`drop`: how
+ * far a document's wave line is above its layer's box bottom). How far the union is inside the
+ * box on `side` at `t`: the layer under `t`, or the nearest, from the back for the top and right
+ * and from the front for the bottom and left.
+ */
+function stackInset(s: number, drop: number): Inset {
+  return (W, H, side, t) => {
+    const sideways = (side & 1) === 1;
+    const half = (sideways ? H : W) / 2;
+    const at = Math.min(half, Math.max(-half, t));
+    const lo = (i: number): number => (sideways ? -H / 2 + i * s : -W / 2 + (2 - i) * s);
+    const hi = (i: number): number => (sideways ? H / 2 - (2 - i) * s - drop : W / 2 - i * s);
+    const back = side === 0 || side === 1;
+    let best = back ? 0 : 2;
+    let gap = Infinity;
+    for (let k = 0; k < 3; k++) {
+      const i = back ? k : 2 - k;
+      const g = Math.max(lo(i) - at, at - hi(i), 0);
+      if (g < gap) {
+        gap = g;
+        best = i;
+      }
+    }
+    return back ? best * s : (2 - best) * s;
+  };
+}
+
+/**
+ * How far the bottom of a stack of documents is inside the box at `t`: the lowest of the layers'
+ * waves there. A wave is two quadratic curves, which dip `WAVE.control / 2` below the line on the
+ * left half and rise as far on the right, so the bottom is no flat 10 inside the box but
+ * `24 u (1 - u)` off it, `u` the distance from the layer's middle in half widths.
+ */
+function stackedDocumentBottom(s: number): Inset {
+  return (W, H, _side, t) => {
+    const half = (W - 2 * s) / 2;
+    // An end past the corner of the box takes the corner, as `stackInset` does.
+    const at = Math.min(W / 2, Math.max(-W / 2, t));
+    let lowest = -Infinity;
+    for (let i = 0; i < 3; i++) {
+      const x = at - (1 - i) * s;
+      const u = Math.abs(x) / half;
+      if (u > 1) continue;
+      const dip = 2 * WAVE.control * u * (1 - u) * (x > 0 ? -1 : 1);
+      lowest = Math.max(lowest, H / 2 - WAVE.depth - (2 - i) * s + dip);
+    }
+    return H / 2 - lowest;
+  };
 }
 
 /** v12 `lin-cyl`: a cylinder with a second rim. */
@@ -135,7 +203,8 @@ export const fork: Shape = {
   noLabel: true,
   plain: true,
   span: (W, H, s) => (s ? H : W) - 8,
-  size: /* @__PURE__ */ fixed(72, 8),
+  // v12 forkJoin is 70 × 10 (D604); a diagram that flows sideways swaps the two.
+  size: /* @__PURE__ */ fixed(70, 10),
   // v12 forkJoin: filled plain, stroked like the outline.
   draw: (w, W, H, a, line) =>
     centred(w, W, H, { ...line, stroke: a.stroke, fill: line.stroke, filter: a.filter }, 2),
@@ -261,27 +330,35 @@ export const taggedRect: Shape = {
 };
 
 export const stackedRect: Shape = {
-  span: (W, H, s) => (s ? H : W) - 2 * CORNER - 8,
-  size: /* @__PURE__ */ grown(8, 8, 4),
+  inset: /* @__PURE__ */ stackInset(STACK_RECT, 0),
+  span: (W, H, s) => (s ? H : W) - 2 * CORNER - 2 * STACK_RECT,
+  size: /* @__PURE__ */ leftOf(grown(2 * STACK_RECT, 2 * STACK_RECT, STACK_RECT), STACK_RECT),
   draw: (w, W, H, a) => {
+    const s = STACK_RECT;
     for (let i = 0; i < 3; i++)
       drawRect(
         w,
-        { x: -W / 2 + (2 - i) * 4, y: -H / 2 + i * 4, width: W - 8, height: H - 8, rx: undefined },
+        {
+          x: -W / 2 + (2 - i) * s,
+          y: -H / 2 + i * s,
+          width: W - 2 * s,
+          height: H - 2 * s,
+          rx: undefined,
+        },
         a
       );
   },
 };
 
 export const triangle: Shape = {
-  inset: (W, _H, side) => (side & 1 ? W / 4 : 0),
-  size: (tw, th) => triSize(tw, th, false),
+  inset: /* @__PURE__ */ triInset(false),
+  size: (tw, th, p) => triSize(tw, th, false, p.pad),
   draw: (w, W, H, a) => poly(w, [0, -H / 2, W / 2, H / 2, -W / 2, H / 2], a),
 };
 
 export const flippedTriangle: Shape = {
-  inset: (W, _H, side) => (side & 1 ? W / 4 : 0),
-  size: (tw, th) => triSize(tw, th, true),
+  inset: /* @__PURE__ */ triInset(true),
+  size: (tw, th, p) => triSize(tw, th, true, p.pad),
   draw: (w, W, H, a) => poly(w, [-W / 2, -H / 2, W / 2, -H / 2, 0, H / 2], a),
 };
 
@@ -378,24 +455,21 @@ export const taggedDocument: Shape = {
   },
 };
 
-/** v12 `lin-doc`: a document with a rule down its left side. */
-export const linedDocument: Shape = {
-  plain: true,
-  inset: waveInset,
-  size: /* @__PURE__ */ grown(RULE, WAVE.depth, -WAVE.depth / 2),
-  draw: (w, W, H, a, line) => {
-    wave(w, W, H, a);
-    lines(w, [-W / 2 + RULE, -H / 2, -W / 2 + RULE, H / 2 - 6], line);
-  },
-};
+const sidesOfDocuments = /* @__PURE__ */ stackInset(STACK_DOC, WAVE.depth);
+const bottomOfDocuments = /* @__PURE__ */ stackedDocumentBottom(STACK_DOC);
 
 export const stackedDocument: Shape = {
-  inset: waveInset,
-  size: /* @__PURE__ */ grown(8, 18, -1),
+  inset: (W, H, side, t, p) =>
+    side === 2 ? bottomOfDocuments(W, H, side, t, p) : sidesOfDocuments(W, H, side, t, p),
+  size: /* @__PURE__ */ leftOf(
+    grown(2 * STACK_DOC, 2 * STACK_DOC + WAVE.depth, STACK_DOC - WAVE.depth / 2),
+    STACK_DOC
+  ),
   draw: (w, W, H, a) => {
+    const s = STACK_DOC;
     for (let i = 0; i < 3; i++) {
-      w.open('g', { transform: translate((1 - i) * 4, (i - 1) * 4) });
-      wave(w, W - 8, H - 8, a);
+      w.open('g', { transform: translate((1 - i) * s, (i - 1) * s) });
+      wave(w, W - 2 * s, H - 2 * s, a);
       w.close();
     }
   },
@@ -562,45 +636,5 @@ export const cloud: Shape = {
       .close()
       .done();
     w.outline('node', 'path', { d, ...a });
-  },
-};
-
-/**
- * v12's collapsedGroup: a rounded card, the label above a dashed separator and an indicator
- * row of three dots. Padding is v12's fixed 8, not the theme's; `line` carries clusterBorder.
- */
-export const collapsedGroup: Shape = {
-  span: flat,
-  inset: (W, H, side, t, p) => cornerInset(side & 1 ? H : W, t, cardRadius(W, H, p)),
-  size: (tw, th) => ({
-    w: Math.max(tw + 2 * CARD_PAD, CARD_MIN_W),
-    h: th + CARD_GAP + CARD_ROW + 2 * CARD_PAD,
-    dy: -(CARD_GAP + CARD_ROW) / 2,
-  }),
-  draw: (w, W, H, a, line, p) => {
-    const x = -W / 2;
-    const y = -H / 2;
-    drawRect(w, { x, y, width: W, height: H, rx: cardRadius(W, H, p) }, a);
-    const th = H - CARD_GAP - CARD_ROW - 2 * CARD_PAD;
-    const sy = y + CARD_PAD + th + CARD_GAP;
-    w.outline('divider', 'line', {
-      class: 'collapsed-separator',
-      x1: x + CARD_PAD,
-      y1: sy,
-      x2: x + W - CARD_PAD,
-      y2: sy,
-      stroke: line.stroke,
-      'stroke-width': 0.75,
-      'stroke-dasharray': '3,3' as SafeValue,
-    });
-    for (let i = -1; i <= 1; i++)
-      w.outline('mark', 'circle', {
-        class: 'collapsed-indicator',
-        cx: i * 10,
-        cy: sy + CARD_ROW / 2,
-        r: 2.5,
-        fill: line.stroke,
-        opacity: 0.6,
-      });
   },
 };

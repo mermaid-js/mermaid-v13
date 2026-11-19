@@ -1,0 +1,16 @@
+@ 7:17  container store |"Store" :::store
+  prepare: refused: There is no id or class name here to rename.
+@ 12:11  db --> sto|re
+  prepare: 12:8-12:13 "store"; rename to "gateway":
+  c4-beta
+  %% rename-to: gateway
+  style store shape:cylinder
+  style container fill:#fff
+  style person fill:#eee
+  person person "A person"
+  container gateway "Store" :::store
+  container container "Container" :::store
+  container db "DB" :::store
+  person --> gateway : "Reads" :::store
+  container --> db
+  db --> gateway

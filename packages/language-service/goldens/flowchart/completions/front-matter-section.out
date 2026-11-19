@@ -5,6 +5,7 @@
   layout property (string) 5:5-5:7 "cu" -> "layout: "
   titleTopMargin property (integer) 5:5-5:7 "cu" -> "titleTopMargin: "
   subGraphTitleMargin property (object) 5:5-5:7 "cu" -> "subGraphTitleMargin:\n      "
+  subGraphTitlePosition property (string) 5:5-5:7 "cu" -> "subGraphTitlePosition: "
   arrowMarkerAbsolute property (boolean) 5:5-5:7 "cu" -> "arrowMarkerAbsolute: "
   diagramPadding property (integer) 5:5-5:7 "cu" -> "diagramPadding: "
   nodeSpacing property (integer) 5:5-5:7 "cu" -> "nodeSpacing: "

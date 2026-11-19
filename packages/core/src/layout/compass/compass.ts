@@ -22,8 +22,10 @@ import type {
   Point,
   Side,
 } from '../types.ts';
+import { checkGraph, checkNodeSpan, finite } from '../check.ts';
 import { BOTTOM, DX, DY, LEFT, placeOnGrid, RIGHT, TOP, type Grid } from './grid.ts';
 import { METRICS as M } from './metrics.ts';
+import { titleAlign, titleLow } from '../title.ts';
 import { clearSpot, hits, route, simplify, Space, toRoute, type Port, type Rect } from './route.ts';
 
 export { METRICS } from './metrics.ts';
@@ -47,72 +49,36 @@ const DERIVED: Readonly<Record<LayoutGraph['direction'], readonly [number, numbe
   BT: [TOP, BOTTOM],
 };
 
-function finite(v: number, what: string): void {
-  if (!Number.isFinite(v) || v < 0)
-    throw new RangeError(`layout: ${what} must be a finite number >= 0, got ${v}`);
-}
-
 function sized(s: { width: number; height: number } | undefined, what: string): void {
   if (!s) return;
   finite(s.width, `${what} width`);
   finite(s.height, `${what} height`);
 }
 
-function checkEdges(graph: LayoutGraph, ids: Set<string>): void {
-  const edges = new Set<string>();
-  for (const e of graph.edges) {
-    if (edges.has(e.id)) throw new Error(`layout: duplicate edge id '${e.id}'`);
-    edges.add(e.id);
-    if (!ids.has(e.source))
-      throw new Error(`layout: edge '${e.id}' has unknown source '${e.source}'`);
-    if (!ids.has(e.target))
-      throw new Error(`layout: edge '${e.id}' has unknown target '${e.target}'`);
-    finite(e.minLen, `minLen of edge '${e.id}'`);
-    sized(e.label, `label of edge '${e.id}'`);
-    sized(e.startLabel, `start label of edge '${e.id}'`);
-    sized(e.endLabel, `end label of edge '${e.id}'`);
-    for (const [end, m] of [
-      ['start', e.startMarker],
-      ['end', e.endMarker],
-    ] as const) {
-      if (!m) continue;
-      finite(m.length, `${end} marker length of edge '${e.id}'`);
-      finite(m.width, `${end} marker width of edge '${e.id}'`);
-    }
-    for (const side of [e.sides?.source, e.sides?.target]) {
-      if (side !== undefined && !Object.hasOwn(SIDE_INDEX, side))
-        throw new RangeError(`layout: edge '${e.id}' has unknown side '${String(side)}'`);
-    }
-  }
-}
-
-// The same checks as `layered`'s (`layered/index.ts`), plus compass's own fields. One shared
-// check for every engine is a follow-up (GAPS.md, T0 #590).
 function check(graph: LayoutGraph): void {
-  const ids = new Set<string>();
-  const add = (id: string, what: string): void => {
-    if (ids.has(id)) throw new Error(`layout: duplicate ${what} id '${id}'`);
-    ids.add(id);
-  };
-  for (const n of graph.nodes) {
-    add(n.id, 'node');
-    finite(n.width, `width of node '${n.id}'`);
-    finite(n.height, `height of node '${n.id}'`);
-    if (n.span !== undefined) finite(n.span, `span of node '${n.id}'`);
-    if (n.anchorY !== undefined) finite(n.anchorY, `anchorY of node '${n.id}'`);
-  }
-  for (const g of graph.groups) {
-    add(g.id, 'group');
-    for (const v of [g.padding.top, g.padding.right, g.padding.bottom, g.padding.left])
-      finite(v, `padding of group '${g.id}'`);
-    sized(g.title, `title of group '${g.id}'`);
-  }
-  checkEdges(graph, ids);
-  finite(graph.spacing.node, 'spacing.node');
-  finite(graph.spacing.rank, 'spacing.rank');
-  finite(graph.spacing.edge, 'spacing.edge');
-  finite(graph.diagramPadding ?? 0, 'diagramPadding');
-  if (graph.headRoom !== undefined) finite(graph.headRoom, 'headRoom');
+  checkGraph(graph, {
+    routed: true,
+    node: checkNodeSpan,
+    group: (g) => sized(g.title, `title of group '${g.id}'`),
+    edge(e) {
+      finite(e.minLen, `minLen of edge '${e.id}'`);
+      sized(e.label, `label of edge '${e.id}'`);
+      sized(e.startLabel, `start label of edge '${e.id}'`);
+      sized(e.endLabel, `end label of edge '${e.id}'`);
+      for (const [end, m] of [
+        ['start', e.startMarker],
+        ['end', e.endMarker],
+      ] as const) {
+        if (!m) continue;
+        finite(m.length, `${end} marker length of edge '${e.id}'`);
+        finite(m.width, `${end} marker width of edge '${e.id}'`);
+      }
+      for (const side of [e.sides?.source, e.sides?.target]) {
+        if (side !== undefined && !Object.hasOwn(SIDE_INDEX, side))
+          throw new RangeError(`layout: edge '${e.id}' has unknown side '${String(side)}'`);
+      }
+    },
+  });
 }
 
 /**
@@ -415,8 +381,12 @@ class Pixels {
     const pad = this.groups[g]!.padding;
     const left = pad.left + insL[g]!;
     let right = pad.right + insR[g]!;
-    const top = (headH[g]! > 0 ? Math.max(pad.top, headH[g]! + M.titleGap) : pad.top) + insT[g]!;
-    const bottom = pad.bottom + insB[g]!;
+    // The title's band: the padding of its side, or the title and its gap where that is more.
+    const low = titleLow(this.groups[g]!);
+    const band = (own: number): number =>
+      headH[g]! > 0 ? Math.max(own, headH[g]! + M.titleGap) : own;
+    const top = (low ? pad.top : band(pad.top)) + insT[g]!;
+    const bottom = (low ? band(pad.bottom) : pad.bottom) + insB[g]!;
     if (headW[g]! > 0) {
       let inner = left + right;
       for (let c = c0[g]!; c <= c1[g]!; c++) {
@@ -675,17 +645,25 @@ class Pixels {
     return { x: (r.x0 + r.x1) / 2, y: (r.y0 + r.y1) / 2 };
   }
 
-  /** A group's box and its title's centre: at the left, or after the edges that come down there. */
+  /**
+   * A group's box and its title's centre: at the left, or after the edges that come down there.
+   * A `titlePosition` moves it: to the bottom, and to the middle or the right as written.
+   */
   groupBox(g: number): [Rect, Point] {
     const r = this.groupRect(g);
     const { x0: x, y0: y } = r;
     const w = r.x1 - r.x0;
     const headW = this.headW[g]!;
-    const band = y + this.headH[g]! + M.titleGap;
+    const group = this.groups[g]!;
+    const low = titleLow(group);
+    const side = group.titlePosition ? titleAlign(group) : -1;
+    // The band the title is in, from `lo` to `hi`.
+    const depth = this.headH[g]! + M.titleGap;
+    const [lo, hi] = low ? [r.y1 - depth, r.y1] : [y, y + depth];
     const crossings: number[] = [];
     for (let i = 0; i < this.runs.length; i += 3) {
-      const [rx, lo, hi] = [this.runs[i]!, this.runs[i + 1]!, this.runs[i + 2]!];
-      if (lo < band && hi > y && rx > x && rx < x + w) crossings.push(rx);
+      const [rx, from, to] = [this.runs[i]!, this.runs[i + 1]!, this.runs[i + 2]!];
+      if (from < hi && to > lo && rx > x && rx < x + w) crossings.push(rx);
     }
     crossings.sort((a, b) => a - b);
     crossings.push(x + w - M.titleRight);
@@ -695,8 +673,11 @@ class Pixels {
       start = Math.max(start, crossing + M.titleClear);
     }
     if (start + headW > x + w - M.titleRight) start = x + M.titleLeft;
+    if (side === 0) start = x + (w - headW) / 2;
+    if (side > 0) start = x + w - M.titleLeft - headW;
     this.grow(r);
-    return [r, { x: start + headW / 2, y: y + M.titleTop + this.headH[g]! / 2 }];
+    const drop = M.titleTop + this.headH[g]! / 2;
+    return [r, { x: start + headW / 2, y: low ? r.y1 - drop : y + drop }];
   }
 
   model(): LayoutModel {

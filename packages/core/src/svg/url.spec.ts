@@ -112,8 +112,14 @@ describe('resolveSecurityLevel', () => {
     expect(warnings).toEqual([]);
   });
 
+  it('treats loose as default for URLs, with no warning: it turns on click callbacks (D634)', () => {
+    const { warnings, warn } = collect();
+    expect(resolveSecurityLevel('loose', warn)).toBe('default');
+    expect(warnings).toEqual([]);
+  });
+
   it('treats the removed v12 levels as default, with a warning', () => {
-    for (const level of ['loose', 'antiscript', 'sandbox', 'bogus', 42]) {
+    for (const level of ['antiscript', 'sandbox', 'bogus', 42]) {
       const { warnings, warn } = collect();
       expect(resolveSecurityLevel(level, warn)).toBe('default');
       expect(warnings.map((w) => w.code)).toEqual(['SECURITY_LEVEL']);

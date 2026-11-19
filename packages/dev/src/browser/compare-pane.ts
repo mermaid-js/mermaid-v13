@@ -7,7 +7,8 @@
  *
  * The iframe is `sandbox="allow-scripts"`: an opaque origin, so the published mermaid running
  * here can't read or write through the dev server's API. It loads only `/build/compare-pane.js`,
- * `/mermaid.esm.mjs` and `/fonts/` from the server, which send CORS headers for it.
+ * `/mermaid.esm.mjs`, its chunks (`/chunks/mermaid.esm/`) and `/fonts/` from the server, which
+ * send CORS headers for them.
  *
  * Protocol (postMessage to `'*'`, since the pane's origin is opaque; both ends check
  * `event.source` identity):
@@ -69,8 +70,7 @@ async function loadRenderer(bundle: PaneBundle): Promise<Renderer> {
   if (bundle.kind === 'dev') {
     const module = (await import(/* @vite-ignore */ bundle.url)) as typeof DevBundleModule;
     const instance = module.createMermaid();
-    instance.registerLayoutLoaders(module.devLayoutLoaders);
-    await instance.registerExternalDiagrams([module.interactions]);
+    await module.setUpDevMermaid(instance);
     return async (id, text, config) => {
       instance.initialize(config as Parameters<typeof instance.initialize>[0]);
       return (await instance.render(id, text)).svg;

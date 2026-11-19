@@ -7,10 +7,8 @@ import type { PieModel } from '../model.ts';
 import { pieSum } from '../shares.ts';
 import { MIN_PERCENT, PERCENT, PIE_COLOURS as COLOURS } from './metrics.ts';
 import type { PieLayout, Point, Rect } from './types.ts';
-import { nonFinite as finite } from '@mermaid-js/shared/layout/invariants';
+import { EPS, nonFinite as finite } from '@mermaid-js/shared/testing/layout-invariants';
 
-/** Float tolerance of the checks. */
-const EPS = 1e-6;
 const TAU = 2 * Math.PI;
 
 export function pieLayoutViolations(model: PieModel, layout: PieLayout): string[] {
@@ -54,11 +52,14 @@ export function pieLayoutViolations(model: PieModel, layout: PieLayout): string[
       out.push(`slice ${s.index}'s percentage is not centred on its anchor`);
   }
 
-  // Legend rows apart.
+  // Legend rows apart: each under the one before, or the first of a new column right of its
+  // label (D616).
   for (let i = 1; i < legend.length; i++) {
-    const a = legend[i - 1]!.swatch;
+    const a = legend[i - 1]!;
     const b = legend[i]!.swatch;
-    if (b.y < a.y + a.height - EPS) out.push(`legend rows ${i - 1} and ${i} overlap`);
+    const below = b.y >= a.swatch.y + a.swatch.height - EPS;
+    const right = b.x >= a.label.x + a.label.width - EPS;
+    if (!below && !right) out.push(`legend rows ${i - 1} and ${i} overlap`);
   }
 
   labelViolations(layout, out);

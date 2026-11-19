@@ -25,7 +25,7 @@ import { graphSpacing, groupPadding, labelledEdge, sideways } from '@mermaid-js/
 import type { AgentflowDiagramConfig } from '@mermaid-js/core/config';
 import type { CheckedStyle } from '@mermaid-js/core/svg';
 import { styleCache } from '@mermaid-js/shared/svg/document';
-import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
+import { curveReporter, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type {
@@ -130,6 +130,8 @@ interface Measure {
   readonly geometry: ShapeGeometry;
   /** The diagram's curve: `linkStyle default interpolate`, else `flowchart.curve`. */
   readonly curve: CurveKind;
+  /** `curveKind` for this render: an unknown name warns once (D602). */
+  readonly curveOf: (curve: string | undefined) => CurveKind;
   readonly wrap: number;
   readonly minWidth: number;
   readonly edgeWrap: number;
@@ -170,6 +172,8 @@ export function prepareAgentflow(
     size: theme.number('fontSize'),
     weight: 400,
   };
+  const curveOf = curveReporter((w) => ctx.warn(w));
+  const curve = curveOf(model.defaultInterpolate ?? flowchart?.curve);
   const m: Measure = {
     ctx,
     units,
@@ -178,7 +182,8 @@ export function prepareAgentflow(
     cells: units.id === 'cell',
     font,
     geometry: { pads: themePads(theme, flowchartLength('padding')), metrics: AGENTFLOW_METRICS },
-    curve: curveKind(model.defaultInterpolate ?? flowchart?.curve),
+    curve,
+    curveOf,
     wrap: fromPx(units, agentflowLength('wrappingWidth'), 'x') || units.builder.wrapWidth,
     minWidth: fromPx(units, agentflowLength('minNodeWidth'), 'x'),
     edgeWrap: units.builder.edgeWrap,
@@ -382,7 +387,7 @@ function edgeViews(
       style,
       start,
       end,
-      curve: e.interpolate !== undefined ? curveKind(e.interpolate) : m.curve,
+      curve: e.interpolate !== undefined ? m.curveOf(e.interpolate) : m.curve,
     });
   }
   return edges;

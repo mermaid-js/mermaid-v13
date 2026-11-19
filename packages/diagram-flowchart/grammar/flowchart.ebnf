@@ -94,8 +94,9 @@ direction_rl              /.*direction\s+RL[^\n]*/         :keyword ;
 direction_lr              /.*direction\s+LR[^\n]*/         :keyword ;
 direction_td              /.*direction\s+TD[^\n]*/         :keyword ;
 
-(** An edge id `e1@` before a link: the run up to its last `@` not followed by `{` or `"`. *)
-LINK_ID                   /[^\s"]+@(?=[^{"])/              :variable ;
+(** An edge id `e1@` before a link: the run up to its last `@` not followed by `{` or `"`. The run
+stops at `[ ] ( ) { } |`, so `A[bla]e1@` is a node and the edge id `e1@`. *)
+LINK_ID                   /[^\s"[\](){}|]+@(?=[^{"])/      :variable ;
 NUM                       /[0-9]+/                         :number ;
 BRKT                      /#/ ;
 (** `A:::name`: gives the node a class, as `class A name` does. *)
@@ -252,9 +253,9 @@ statement = Chain separator
   | AccTitle
   | AccDescr ;
 
-(** Nodes joined by links: `A --> B & C -.-> D`. Blanks after shape data must lead to `&`. *)
+(** Nodes joined by links: `A --> B & C -.-> D`. Blanks may follow a node, shape data too. *)
 Chain @Chain = nodeGroup { Link nodeGroup } ;
-nodeGroup = { node SPACE+ AMP SPACE+ } ( plainNode [ SPACE+ ] | dataNode ) ;
+nodeGroup = { node SPACE+ AMP SPACE+ } node [ SPACE+ ] ;
 node = plainNode | dataNode ;
 
 (** One node mention: an id, an optional shape with its label, a class, shape data. *)

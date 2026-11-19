@@ -2,10 +2,18 @@
  * c4-beta token kinds. They are the terminals of `grammar/c4beta.ebnf`, in its order, so the
  * hand-written lexer can be checked against the grammar's own (spec #730). Kinds are plain
  * numbers (TS enums are banned); the line break, comment and end are the shared `Kind`s.
+ *
+ * They start above legacy C4's kinds (`parser/tokens.ts` has 72, from `FIRST_DIAGRAM_KIND`): the
+ * `c4` language facet serves both header types with one kind to category table, as the service
+ * reads it by kind number alone (railroad's four notations share one set of kinds likewise).
+ * `language.spec.ts` holds the two sets apart.
  */
 import { FIRST_DIAGRAM_KIND, Kind, kindSet } from '@mermaid-js/core/parser-kit';
 
-const F = FIRST_DIAGRAM_KIND;
+/** The first c4-beta kind: past the last legacy C4 kind, with room to add to it. */
+export const FIRST_BETA_KIND = FIRST_DIAGRAM_KIND + 80;
+
+const F = FIRST_BETA_KIND;
 
 export const T = {
   /** `c4-beta`. */

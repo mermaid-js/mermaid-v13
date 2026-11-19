@@ -3,7 +3,7 @@ import { buildGenerator } from '@mermaid-js/gen-grammar';
 import { loadJisonLexerOracle } from '../../jison/oracle.ts';
 import { loadOracle } from '../../oracle.ts';
 import { c4Cases, c4Corpus } from '../corpus.ts';
-import { lexingExclusion } from '../d452.ts';
+import { lexingExclusion, usesDirection } from '../d452.ts';
 import {
   handWrittenVerdict,
   learnSentenceModel,
@@ -23,7 +23,8 @@ const SENTENCES = 3000;
  * `grammar/c4.ebnf`, weighted by how often the corpus uses each rule, with token texts drawn
  * from the corpus. The hand-written parser must agree with the reference parser on accept/reject
  * and AST shape, and mermaid\@12 on accept/reject, apart from what `differential.spec.ts` leaves
- * out (D452's lexing changes; v12 stopping for a reason beyond its syntax).
+ * out (D452's lexing changes; a `direction` statement, #730; v12 stopping for a reason beyond its
+ * syntax).
  */
 describe('c4 grammar differential (generated sentences)', () => {
   it('agrees on generated sentences', async () => {
@@ -52,7 +53,7 @@ describe('c4 grammar differential (generated sentences)', () => {
           `${id}: AST differs\n  grammar ${JSON.stringify(ref.ast)}\n  parser  ${JSON.stringify(hand.ast)}`
         );
       }
-      if ((await lexingExclusion(lexer, text)) !== undefined) continue;
+      if ((await lexingExclusion(lexer, text)) !== undefined || usesDirection(text)) continue;
       const v12 = await oracle.parse(text);
       if (v12Syntax(v12) === !ref.accepted) {
         diffs.push(

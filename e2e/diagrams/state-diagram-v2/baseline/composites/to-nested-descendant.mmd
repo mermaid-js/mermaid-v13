@@ -1,0 +1,15 @@
+---
+description: >-
+  a transition from a composite to a state two levels inside it, drawn apart from the inner
+  state's own outgoing transition (#416)
+---
+stateDiagram-v2
+  [*] --> Outer
+  state Outer {
+    state Mid {
+      Deep --> Deeper
+    }
+  }
+  Start --> Deep
+  Deeper --> End
+  Outer --> Deeper

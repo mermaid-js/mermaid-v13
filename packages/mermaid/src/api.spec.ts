@@ -22,7 +22,7 @@ import { defaultIdPrefix } from './config-snapshot.ts';
 import { VERSION } from './version.ts';
 
 const FLOW = 'flowchart LR\n  A[Start] --> B(End)\n';
-/** A v12 diagram with no v13 package: ZenUML, external in v12, so no detector knows it. */
+/** A v12 diagram with no v13 package: ZenUML, external in v12 (D317). */
 const ZENUML = 'zenuml\n  A.method()\n';
 
 async function rejection(p: Promise<unknown>): Promise<MermaidError> {
@@ -86,10 +86,12 @@ describe('render (R-API-1, R-COMPAT-5)', () => {
   });
 
   it('reports a v12 diagram without a v13 package as UNSUPPORTED_DIAGRAM (R-COMPAT-7)', async () => {
-    // Every v12 detector row has a package; a detected type with none is mermaid/slim's case.
-    expect((await rejection(render('x', ZENUML))).code).toBe('UNSUPPORTED_DIAGRAM');
+    // zenuml is detected after every plugin, as a type with no package (D317, #751).
+    const e = await rejection(render('x', ZENUML));
+    expect(e.code).toBe('UNSUPPORTED_DIAGRAM');
+    expect(e.message).toContain('"zenuml"');
     expect(thrown(() => renderSync(ZENUML)).code).toBe('UNSUPPORTED_DIAGRAM');
-    expect(thrown(() => detectType(ZENUML)).code).toBe('UNSUPPORTED_DIAGRAM');
+    expect(detectType(ZENUML)).toBe('zenuml');
   });
 
   it('rejects text no detector knows with UNSUPPORTED_DIAGRAM', async () => {
@@ -325,10 +327,18 @@ describe('securityLevel (R-SEC-4, R-SEC-6, D75)', () => {
 
   it('treats the v12 levels as the default level, with one warning', async () => {
     const m = createMermaid();
-    m.initialize({ securityLevel: 'loose' });
+    m.initialize({ securityLevel: 'antiscript' });
     const result = await m.render('s', text);
     expect(hrefs(result.svg)).toEqual(['https://example.com', '/docs/b']);
     expect(result.warnings.map((w) => w.code)).toEqual(['SECURITY_LEVEL']);
+  });
+
+  it('keeps the default level for links under loose, with no warning (D634)', async () => {
+    const m = createMermaid();
+    m.initialize({ securityLevel: 'loose' });
+    const result = await m.render('s', text);
+    expect(hrefs(result.svg)).toEqual(['https://example.com', '/docs/b']);
+    expect(result.warnings).toEqual([]);
   });
 });
 
@@ -555,6 +565,20 @@ describe('plugins and v12 leftovers (R-API-3, R-API-4, R-PLUG-6)', () => {
     const r = await m.render('h', 'hello world');
     expect(r).toMatchObject({ diagramType: 'hello', width: 10, height: 20, warnings: [] });
     expect(r.svg).toContain('<text>hello world</text>');
+  });
+
+  it('lets a third-party diagram claim zenuml, which has no v13 package (D317)', async () => {
+    const m = createMermaid();
+    await m.registerExternalDiagrams([
+      {
+        id: 'zenuml-plugin',
+        detector: (text: string) => /^\s*zenuml/.test(text),
+        loader: async () => {
+          throw new Error('not loaded by detectType');
+        },
+      },
+    ]);
+    expect(m.detectType(ZENUML)).toBe('zenuml-plugin');
   });
 
   it('says registerIconPacks has no effect while no extension claims icons (D299)', async () => {

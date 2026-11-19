@@ -1,0 +1,17 @@
+---
+description: >-
+  Relation labels as tags (D627): with the line colour set, every label is
+  bordered in it, as the relation lines are.
+config:
+  themeVariables:
+    lineColor: '#d6336c'
+---
+requirementDiagram
+  requirement a {
+    id: 1
+  }
+  element c {
+    type: system
+  }
+  c - satisfies -> a
+  a - derives -> c

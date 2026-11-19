@@ -9,6 +9,7 @@
  * from the `block` config and the metrics table (pitfall 13).
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
+import { pxProfile } from '@mermaid-js/core/layout';
 import { BLOCK_CONFIG_INVALID } from '../codes.ts';
 import { checkStyle } from '@mermaid-js/core/svg';
 import { fontSizePx, layoutLabel, Style, type FontKey } from '@mermaid-js/core/text';
@@ -384,8 +385,7 @@ function edgesOf(
       }
       points = [s, middle, t];
     }
-    const text = e.label === '' ? undefined : measure(e.label);
-    const label = text && { ...text, ...rectAt(middle.x, middle.y, text.width, text.height) };
+    const label = labelRoom(e.label, middle, measure);
     out.push({
       id: e.id,
       ast: e.ast,
@@ -401,6 +401,31 @@ function edgesOf(
     });
   }
   return out;
+}
+
+/**
+ * An edge label's room centred on `middle`: the text plus the px profile's `labelPatch` (D629),
+ * as the tag is drawn. An empty label, or one of only whitespace, draws no tag (D626) and so
+ * takes no room.
+ */
+function labelRoom(
+  text: string,
+  middle: Point,
+  measure: (text: string) => Measured
+): PlacedLabel | undefined {
+  if (text === '') return undefined;
+  const measured = measure(text);
+  if (blank(measured.text)) return undefined;
+  const patch = pxProfile.builder.labelPatch;
+  return {
+    ...measured,
+    ...rectAt(middle.x, middle.y, measured.width + patch.x, measured.height + patch.y),
+  };
+}
+
+/** Whether a measured label shows nothing: no inline box and only whitespace (as `edgeLabel`). */
+function blank(label: PlacedLabel['text']): boolean {
+  return label.lines.every((line) => line.every((r) => r.kind !== 'box' && !r.text.trim()));
 }
 
 /** Every box and point drawn (D224): outlines, labels, edge points and edge labels. */

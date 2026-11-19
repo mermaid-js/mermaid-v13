@@ -125,20 +125,6 @@ export function typecheckSteps(
   });
 }
 
-const FAILED_TEST = /^\s*(FAIL|×)\s.*$/gm;
-const MAX_FAILED_TESTS = 20;
-
-/** The warning for tests that failed in the structural audit: the failing lines of vitest's output. */
-export function failedTestsWarning(output: string): string {
-  const lines = [...new Set((output.match(FAILED_TEST) ?? []).map((line) => line.trim()))];
-  const shown = lines.slice(0, MAX_FAILED_TESTS).map((line) => `    ${line}`);
-  if (lines.length > shown.length) shown.push(`    … and ${lines.length - shown.length} more`);
-  if (shown.length === 0) shown.push('    no test names found; see the log');
-  return ['tests the change reaches failed (a warning here; CI fails on them):', ...shown].join(
-    '\n'
-  );
-}
-
 export interface CheckResult {
   readonly name: string;
   readonly ok: boolean;
@@ -146,8 +132,6 @@ export interface CheckResult {
   readonly output: string;
   /** Where that output is kept, relative to the workspace root. */
   readonly log: string;
-  /** Printed whether the check passed or not, for something the push does not wait for. */
-  readonly warning?: string;
 }
 
 /** How many lines of a failed check's output the report repeats; the log has the rest. */
@@ -164,16 +148,12 @@ function failureLines({ name, log, output }: CheckResult): string[] {
   ];
 }
 
-/** The closing report: every warning, then every failed check with the end of its output. */
+/** The closing report: every failed check with the end of its output. */
 export function reportLines(results: readonly CheckResult[]): string[] {
-  const warnings = results.flatMap(({ name, warning }) =>
-    warning === undefined ? [] : ['', `Warning, ${name}: ${warning}`]
-  );
   const failed = results.filter(({ ok }) => !ok);
-  if (failed.length === 0) return warnings;
+  if (failed.length === 0) return [];
   const names = failed.map(({ name }) => name).join(', ');
   return [
-    ...warnings,
     ...failed.flatMap(failureLines),
     '',
     `pre-push: ${failed.length} of ${results.length} checks failed: ${names}`,

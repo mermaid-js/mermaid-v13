@@ -25,19 +25,19 @@
       "name": "meta.embedded.mermaid-c4"
     },
     "rule-0": {
-      "match": ".*direction\\s+TB[^\\n]*",
+      "match": "direction[ \\t]+TB\\b",
       "name": "keyword.control.mermaid-c4"
     },
     "rule-1": {
-      "match": ".*direction\\s+BT[^\\n]*",
+      "match": "direction[ \\t]+BT\\b",
       "name": "keyword.control.mermaid-c4"
     },
     "rule-2": {
-      "match": ".*direction\\s+RL[^\\n]*",
+      "match": "direction[ \\t]+RL\\b",
       "name": "keyword.control.mermaid-c4"
     },
     "rule-3": {
-      "match": ".*direction\\s+LR[^\\n]*",
+      "match": "direction[ \\t]+LR\\b",
       "name": "keyword.control.mermaid-c4"
     },
     "rule-4": {

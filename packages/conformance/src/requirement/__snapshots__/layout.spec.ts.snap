@@ -2,13 +2,17 @@
 
 exports[`requirement layout over parser-produced fixtures > records the crossings layered draws 1`] = `
 {
+  "e2e/baseline/edge-labels/tags-line-color.mmd": 0,
+  "e2e/baseline/edge-labels/tags.mmd": 0,
   "e2e/baseline/handdrawn/default.mmd": 0,
   "e2e/baseline/handdrawn/neo-dark.mmd": 0,
   "e2e/baseline/handdrawn/neo.mmd": 0,
   "e2e/baseline/handdrawn/redux.mmd": 0,
   "e2e/baseline/relations/all-kinds-lr.mmd": 0,
+  "e2e/baseline/relations/two-self-loops.mmd": 0,
   "e2e/baseline/styles/classes-and-title.mmd": 0,
   "e2e/baseline/text/backticks-and-emphasis.mmd": 0,
+  "e2e/baseline/text/emphasis-beside-code-span.mmd": 0,
   "e2e/baseline/themes/default.mmd": 0,
   "e2e/baseline/themes/neo-dark.mmd": 0,
   "e2e/baseline/themes/neo.mmd": 0,
