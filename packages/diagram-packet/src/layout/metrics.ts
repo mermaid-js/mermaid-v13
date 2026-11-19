@@ -26,7 +26,7 @@ export const PACKET_METRICS: PacketMetrics = {
 export const NORMAL_WEIGHT = 400;
 
 /**
- * D343: a label wider than its piece shrinks, its size scaled by the overflow, at most this many
+ * D343: a label wider or taller than its piece shrinks, its size scaled by the overflow, at most this many
  * measurements after the first; the last one is at the floor (the bit-number size), since a
  * measurer need not scale with the size.
  */
