@@ -57,6 +57,40 @@ describe('buildFixtureTree', () => {
   });
 });
 
+describe('listedFixtures', () => {
+  const fixtures = ['pie/pr-check/a.mmd', 'pie/pr-check/b.mmd', 'gantt/baseline/c.mmd'];
+
+  it('keeps every fixture when there is no list', () => {
+    expect(helpers.listedFixtures(fixtures)).toEqual(fixtures);
+    expect(helpers.listedFixtures(fixtures, '')).toEqual(fixtures);
+  });
+
+  it('keeps only the listed fixtures, ignoring blank lines and paths it does not know', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'fixture-list-'));
+    const list = join(dir, 'fixtures.txt');
+    writeFileSync(
+      list,
+      'gantt/baseline/c.mmd\n\npie/pr-check/a.mmd\nflowchart/nightly-check/x.mmd\n'
+    );
+    expect(helpers.listedFixtures(fixtures, list)).toEqual([
+      'pie/pr-check/a.mmd',
+      'gantt/baseline/c.mmd',
+    ]);
+    rmSync(dir, { recursive: true });
+  });
+});
+
+describe('fixedClockFor', () => {
+  it('takes the most specific entry: the fixture, then its tier folder, then its type', () => {
+    expect(helpers.fixedClockFor('gantt/pr-check/anything.mmd')).toBe('1010-10-10');
+    expect(helpers.fixedClockFor('gantt/baseline/x/y.mmd')).toBe('2024-01-10T12:00:00Z');
+    expect(
+      helpers.fixedClockFor('gantt/pr-check/should-render-a-gantt-diagram-with-a-vert-tag.mmd')
+    ).toBe('1010-10-10T00:00:01.500Z');
+    expect(helpers.fixedClockFor('pie/pr-check/a.mmd')).toBeUndefined();
+  });
+});
+
 describe('snapshotNameKey', () => {
   it('collapses the folder separator the same way the screenshot name does', () => {
     // A folder boundary and an in-name hyphen flatten identically.
