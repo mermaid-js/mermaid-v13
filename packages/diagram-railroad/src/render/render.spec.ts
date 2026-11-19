@@ -5,6 +5,7 @@ import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme } from '@mermaid-js/core/theme';
 import { RAILROAD_CONFIG_INVALID } from '../config.ts';
 import { layoutRailroad } from '../layout/index.ts';
+import { FIXTURES } from '../layout/layout.fixtures.ts';
 import { renderRailroadForTest as render } from './harness.ts';
 
 /**
@@ -364,5 +365,65 @@ describe('railroad colours and fonts (v12 styles.spec.ts, on the SVG)', () => {
     expect(layout.config.dropped).toHaveLength(4);
     const clean = await render(JSON_RULE, { config: { railroad: { lineColor: 'red' } } });
     expect(clean.warnings.filter((w) => w.code === RAILROAD_CONFIG_INVALID)).toEqual([]);
+  });
+});
+
+describe('blank and spaced terminals (#774)', () => {
+  const source = FIXTURES.find(([path]) => path.endsWith('ir-blank-and-spaced-terminals'))![1];
+
+  /** Each terminal's text (as written), its rect and its `<text>`, in drawing order. */
+  async function terminals() {
+    const r = await tree(source);
+    const { t } = r;
+    return {
+      ...r,
+      boxes: t.find({ class: 'railroad-terminal' }).map((g) => {
+        const [rect, text] = kids(t, g);
+        const num = (k: string) => Number(t.getAttr(rect!, k));
+        return {
+          text: text ? textOf(t, text) : '',
+          width: num('width'),
+          height: num('height'),
+          rx: num('rx'),
+          space: text ? t.getAttr(text, 'xml:space') : undefined,
+        };
+      }),
+    };
+  }
+
+  it('draws an empty or whitespace-only terminal as v12’s 20 × 20 circle', async () => {
+    const { boxes } = await terminals();
+    const blank = boxes.filter((b) => b.text.trim() === '');
+    expect(blank.map((b) => b.text)).toEqual([' ', '\t', '']);
+    for (const b of blank) expect([b.width, b.height, b.rx]).toEqual([20, 20, 10]);
+    // A blank text draws nothing either way, so its spaces are not kept.
+    expect(blank.map((b) => b.space)).toEqual([undefined, undefined, undefined]);
+    const x = boxes.find((b) => b.text === 'x')!;
+    expect(x.height).toBeGreaterThan(20);
+  });
+
+  it('draws a terminal’s spaces as written, at the width it was measured for', async () => {
+    const { boxes, layout } = await terminals();
+    const by = new Map(boxes.map((b) => [b.text, b]));
+    const font = layout.fonts.text;
+    const padding = layout.config.lengths.padding;
+    const measured = (s: string) => tableMeasurer.width(s, font, 0) + 2 * padding;
+    expect(by.get('a  b')!.width).toBeCloseTo(measured('a  b'), 1);
+    expect(by.get('a  b')!.width).toBeGreaterThan(by.get('a b')!.width);
+    for (const kept of ['a  b', ' a', 'a ', 'a\tb']) expect(by.get(kept)!.space).toBe('preserve');
+    for (const plain of ['a b', 'x']) expect(by.get(plain)!.space).toBeUndefined();
+    // A tab is drawn as a space where spaces are kept, so it is measured as one.
+    expect(by.get('a\tb')!.width).toBeCloseTo(by.get('a b')!.width, 2);
+  });
+
+  it('keeps the spaces of nonterminal and special texts as before', async () => {
+    const { t } = await tree(
+      'railroad-beta\na = sequence(nonterminal("q  r"), special("s  t")) ;\n'
+    );
+    for (const g of [
+      ...t.find({ class: 'railroad-nonterminal' }),
+      ...t.find({ class: 'railroad-special' }),
+    ])
+      expect(t.getAttr(kids(t, g)[1]!, 'xml:space')).toBeUndefined();
   });
 });
