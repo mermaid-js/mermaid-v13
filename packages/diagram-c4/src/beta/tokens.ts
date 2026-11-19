@@ -56,10 +56,13 @@ export const T = {
   Rbrace: F + 32,
   /** The digits of `2:` at the start of a line. */
   Step: F + 33,
+  /** `#` and 3, 4, 6 or 8 hex digits. */
   Hex: F + 34,
   /** `"…"` or `'…'`, the quotes included. */
   String: F + 35,
   Id: F + 36,
+  /** `rgb(…)`, `rgba(…)`, `hsl(…)` or `hsla(…)`, on one line, with no `(` inside. */
+  ColorFunction: F + 37,
 } as const;
 
 /** Trivia: comments and the directives core found. Blanks are never tokens. */

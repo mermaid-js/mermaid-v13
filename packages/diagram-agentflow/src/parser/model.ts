@@ -1,7 +1,8 @@
 /**
  * AgentflowModel: the plain-data result of an agentflow parse (DESIGN §4.3), and the builder
  * the parser drives. The builder does what v12's `AgentFlowDB` (`fa796a943`) did with each
- * parsed statement, written from a copy of v13 flowchart's builder (D467), and it reports at
+ * parsed statement, on the flow family's model builder, which agentflow shares with flowchart
+ * (D595, amending D467's copy), and it reports at
  * parse what v12 reported from `getData()` (D461): shapes that are drawn as the default, and
  * the containment that would close a cycle, which it cuts.
  *
@@ -14,7 +15,7 @@
  * written), links keep the URL as written, callbacks are recorded instead of bound, and
  * errors are diagnostics instead of exceptions.
  *
- * Flowchart's builder is ported from Pele's `src/diagrams/flowchart/db.ts` at 3a2f075
+ * The flow family's builder is ported from Pele's `src/diagrams/flowchart/db.ts` at 3a2f075
  * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano). Changed: agentflow's records
  * (flows, connectors, `global`, kinds from shapes) and the D461 and D464 diagnostics, as above.
  * cspell:ignore kepano

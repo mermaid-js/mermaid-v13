@@ -86,14 +86,16 @@ Direction @Direction = DIRECTION ( TB | BT | LR | RL ) ;
 Legend @Legend = LEGEND ( ON | OFF ) ;
 ```
 
-`style store shape:cylinder, fill:#1f2937`: the target is a tag or an element kind.
+`style store shape:cylinder, fill:#1f2937`: the target is a tag or an element kind. A colour
+that is a word must be a CSS colour name or `currentColor`, or it is dropped with a warning; a
+line with a value the lexer cannot read, such as `#12`, is dropped with a warning, not an error.
 
 ```ebnf
 Style @Style = STYLE id entry { COMMA entry } ;
 ```
 
 ```ebnf
-entry = id COLON ( HEX | id ) ;
+entry = id COLON ( HEX | COLOR_FUNCTION | id ) ;
 ```
 
 `container api "API" "Serves orders." "Kotlin" :::team`: an element with a name, a
@@ -199,7 +201,8 @@ Modes: `INITIAL`.
 | INITIAL | LBRACE | `\{` |  |  |
 | INITIAL | RBRACE | `\}` |  |  |
 | INITIAL | STEP | `(?<=(?:^\|[\n\r])[\t ]*)[0-9]+(?=[\t ]*:)` |  | `2:`: the step of a relation in a dynamic diagram: digits and a colon, at the start of a line. The colon is a token of its own. |
-| INITIAL | HEX | `#(?:[0-9A-Fa-f]{6}\|[0-9A-Fa-f]{3})(?!\w)` |  | `#1f2937`: a colour of a style, three or six hex digits. |
+| INITIAL | HEX | `#(?:[0-9A-Fa-f]{8}\|[0-9A-Fa-f]{6}\|[0-9A-Fa-f]{3,4})(?!\w)` |  | `#1f2937`: a colour of a style, `#` and 3, 4, 6 or 8 hex digits; with 4 or 8, the last one or two are the alpha. |
+| INITIAL | COLOR_FUNCTION | `(?:rgba?\|hsla?)\((?:[^()\n\r%]\|%(?!%))*\)` |  | `rgb(255, 0, 0)`: a colour of a style, `rgb(…)`, `rgba(…)`, `hsl(…)` or `hsla(…)` on one line. What is inside has no `(`, `)` or `%%`. |
 | INITIAL | STRING | `"(?:[^"\\\r\n]\|\\.)*"\|'(?:[^'\\\r\n]\|\\.)*'` |  | `"Ledger"` or `'Ledger'`: text. `\` escapes the next character. A string ends on its line. |
 | INITIAL | ID | `(?!(?:accTitle\|accDescr)(?!\w\|-\w))[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*` |  | An id: words of letters, digits and `_` joined by single `-`. The reserved words `title`, `accTitle`, `accDescr`, `direction`, `legend` and `style` are not ids. |
 | INITIAL | NEWLINE | `\r\n\|\n\|\r` |  |  |

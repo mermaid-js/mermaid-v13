@@ -30,10 +30,18 @@ export interface Oracle {
    * `{ securityLevel: 'loose' }`, which diagram text cannot set.
    */
   parse(text: string, config?: Record<string, unknown>): Promise<OracleResult>;
+  /**
+   * v12's `detectType` on the text, or `undefined` where it detects no diagram. It is
+   * the detection `parse` makes first, and an accepted parse's `diagramType` is its result,
+   * without the parse's cost: a spec over one type's sources narrows a large corpus with it
+   * before parsing (#644).
+   */
+  detect(text: string): string | undefined;
 }
 
 interface MermaidV12 {
   parse(text: string): Promise<unknown>;
+  detectType(text: string): string;
   initialize(config: Record<string, unknown>): void;
   mermaidAPI: {
     getDiagramFromText(text: string): Promise<{ type: string; db: unknown }>;
@@ -94,6 +102,13 @@ async function load(): Promise<Oracle> {
 
   return {
     version,
+    detect(text) {
+      try {
+        return mermaid.detectType(text);
+      } catch {
+        return undefined;
+      }
+    },
     async parse(text, config) {
       if (config) mermaid.initialize(config);
       // Directives and front matter mutate v12's global config; start every input clean.

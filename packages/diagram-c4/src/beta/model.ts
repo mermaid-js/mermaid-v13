@@ -61,6 +61,8 @@ export interface C4BetaRelation {
 export interface C4BetaStyle {
   readonly target: string;
   readonly entries: readonly { readonly key: string; readonly value: string }[];
+  /** The statement's line, for the messages that name it. */
+  readonly line: number;
   readonly ast: AstId;
 }
 

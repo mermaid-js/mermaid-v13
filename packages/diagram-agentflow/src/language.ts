@@ -1,9 +1,10 @@
 /**
  * Agentflow language facet (`@mermaid-js/diagram-agentflow/language`, DESIGN §4.5, R-LANG-8,
- * D89): the parser entry and the tables the language service needs, written from a copy of
- * flowchart's facet (D467). Nothing reachable from here imports the layout, the renderer, the
- * theme table or the plugin; the import-boundary lint and the bench's language bundle spec hold
- * that in place (`languageBundle` in `workspace.yaml`).
+ * D89): the parser entry and the tables the language service needs, on the flow family's facet
+ * (`@mermaid-js/shared/parser/flow-facet`), which agentflow shares with flowchart (D595).
+ * Nothing reachable from here imports the layout, the renderer, the theme table or the plugin;
+ * the import-boundary lint and the bench's language bundle spec hold that in place
+ * (`languageBundle` in `workspace.yaml`).
  *
  * Symbols (D468): vertex, connector and flow ids share one name space (`node` and `subgraph`,
  * as flowchart groups them), class names are `class` symbols and edge ids `edge` symbols.

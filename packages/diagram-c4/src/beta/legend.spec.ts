@@ -270,7 +270,7 @@ describe('what a tag swatch falls back to', () => {
     const { legend, warnings } = await paintedWith({ fill: 'url(#x)', stroke: 'a;b' });
     expect(legend?.rows.at(-1)).toEqual({ fill: 'none', stroke: legend?.text });
     expect(warnings.map((w) => w.code)).toEqual([C4_COLOR_INVALID]);
-    expect(warnings[0]?.message).toContain('style t fill');
-    expect(warnings[0]?.message).toContain('style t stroke');
+    expect(warnings[0]?.message).toContain('`fill:url(#x)` in `style t`');
+    expect(warnings[0]?.message).toContain('`stroke:a;b` in `style t`');
   });
 });

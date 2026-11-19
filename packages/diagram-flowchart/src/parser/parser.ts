@@ -227,7 +227,8 @@ class FlowchartParser extends FlowParser<FlowBuilder, FlowParseOptions, FlowOwnS
     const r = this.span(from);
     st.statement('embed', r);
     const stmt: FlowEmbedStmt = {
-      id: this.ids.statement('embed'),
+      // The block is a mention of its node (D69), as state's is: `n:<id>`, or `@2` after one.
+      id: this.nodeMention(name),
       type: 'Embed',
       range: r,
       name,

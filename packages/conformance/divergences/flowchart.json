@@ -96,6 +96,14 @@
     "since": "2026-11-13"
   },
   {
+    "id": "e2e/diagrams/flowchart/nightly-check/embedded/987-unmentioned-node.mmd",
+    "inputHash": "sha256:e6ffa755458a690a",
+    "kind": "accept",
+    "reason": "v12 rejects `mermaid <id> {`; v13 parses an embedded diagram block (ADR-15). The fixture checks that a block and a `style` line naming nodes nothing else mentions draw a `data-ast` the AST has (#987).",
+    "owner": "#987",
+    "since": "2026-11-19"
+  },
+  {
     "id": "v12-specs/parser/flow-edges.spec.js#10",
     "inputHash": "sha256:12bfc03f6e645fab",
     "kind": "accept",

@@ -91,8 +91,8 @@ export interface TestRender<M, L, A> {
 
 /** How a package's harness differs from the plugin's own seam; each is optional. */
 export interface HarnessSpec<M, A> {
-  /** The config section; the plugin's id by default. */
-  readonly section?: string;
+  /** The config section, or a chained type's sections highest first (D534); the plugin's id by default. */
+  readonly section?: string | readonly string[];
   /** The parse; the plugin's by default (a package may parse without the limits). */
   readonly parse?: (
     text: string,
@@ -100,7 +100,7 @@ export interface HarnessSpec<M, A> {
   ) => { readonly model: M; readonly ast: A; readonly diagnostics: readonly Diagnostic[] };
   /** A graph diagram's default engine, called with the config; none for a custom layout. */
   readonly engine?: LayoutEngine;
-  /** The config layer under the integrator's (the plugin's engine, D284). */
+  /** The config layer under the integrator's (the plugin's engine, D284, or its `configDefaults`). */
   readonly below?: ConfigInput;
   /** Draw a rejected source by default instead of throwing. */
   readonly allowErrors?: boolean;

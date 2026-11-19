@@ -21,14 +21,16 @@ import {
   rounded,
 } from '@mermaid-js/shared/shapes/basic';
 import {
+  flat as flatSpan,
   WAVE,
   type Pads,
   type PolygonShape,
   type Shape,
   type ShapeSize,
+  type Span,
 } from '@mermaid-js/shared/shapes/kit';
 import type { AgentflowShape } from '../parser/index.ts';
-import type { AgentflowMetrics } from './metrics.ts';
+import { AGENTFLOW_METRICS, type AgentflowMetrics } from './metrics.ts';
 
 export type { Pads, PadXY } from '@mermaid-js/shared/shapes/kit';
 
@@ -42,8 +44,14 @@ export interface ShapeGeometry {
 }
 
 interface ShapeDef {
-  /** The shared shape it is sized as, and edges spread along. */
+  /** The shared shape it is sized as, and edges spread along unless `span` says otherwise. */
   readonly shape: Shape;
+  /**
+   * The stretch of a side edge ends spread along, where it differs from the shared shape's.
+   * Every end is moved onto the outline (`ends.ts`), so ends may spread along a slant or a
+   * wave, which flowchart's drawing cannot follow (#674).
+   */
+  readonly span?: Span;
   outline(W: number, H: number, g: ShapeGeometry): Point[];
   /** The corner radius of a rounded outline; none for the others. */
   radius?(W: number, H: number, g: ShapeGeometry): number;
@@ -98,14 +106,20 @@ const SHAPES: Readonly<Record<LayoutShape, ShapeDef>> = {
   },
   // v12 subroutine (tool): a square box.
   'fr-rect': { shape: framedRect, outline: (W, H) => roundedBox(W, H, 0, 0) },
-  // v12 lean-right (input): the top left and bottom right corners cut in.
-  'lean-r': polygon(leanRight),
+  // v12 lean-right (input): the top left and bottom right corners cut in. Its slanted sides
+  // spread ends too, an eighth of the side kept clear at each corner.
+  'lean-r': {
+    ...polygon(leanRight),
+    span: (W, H, sideways) =>
+      sideways ? H * AGENTFLOW_METRICS.slantSpan : (leanRight.span?.(W, H, false) ?? 0),
+  },
   // v12 question (decision): a square rhombus.
   diam: polygon(diamond),
-  // v12 lined document (refdoc): a box whose bottom is a wave. Edges meet the middle of each
-  // side: the wave has no flat stretch to spread along.
+  // v12 lined document (refdoc): a box whose bottom is a wave. Ends spread as on a box; one on
+  // the bottom lands on the wave.
   'lin-doc': {
     shape: linedDocument,
+    span: flatSpan,
     outline: (W, H, { metrics: m }) => {
       const x = W / 2;
       const base = H / 2 - WAVE.depth;
@@ -150,7 +164,7 @@ export const shapeSize = (
 ): ShapeSize => SHAPES[shape].shape.size(tw, th, g.pads);
 
 export const shapeSpan = (shape: LayoutShape, W: number, H: number, sideways: boolean): number =>
-  Math.max(0, SHAPES[shape].shape.span?.(W, H, sideways) ?? 0);
+  Math.max(0, (SHAPES[shape].span ?? SHAPES[shape].shape.span)?.(W, H, sideways) ?? 0);
 
 /** The corner radius of a rounded shape's outline (the task box and the card), else 0. */
 export const cornerRadius = (shape: LayoutShape, W: number, H: number, g: ShapeGeometry): number =>
