@@ -9,7 +9,7 @@ import { entityAt } from './entities.ts';
 import { PLACEHOLDER, type InlineSpans } from './inline.ts';
 import { SPACE } from '../parser-kit/char-codes.ts';
 import { Style, type FontKey, type Measurer, type StyleBits } from './measurer.ts';
-import { SLICE, type SliceMeasurer } from './table.ts';
+import { SLICE, UNITS, unitsWidth, type SliceMeasurer, type Units } from './table.ts';
 
 /**
  * A run of text drawn in one style, or an inline box (`kind: 'box'`, D177) whose `text` is its
@@ -655,8 +655,10 @@ function split(
  * same decisions with the same arithmetic in one scan by index, and slices lines from `text`.
  *
  * With a table measurer, a slice's width is its {@link SLICE} width, bit for bit what
- * `measurer.width` returns for the slice, without slicing the text. Any other measurer measures
- * the same strings `wrap` and `finish` do.
+ * `measurer.width` returns for the slice, without slicing the text. Each word's advance
+ * {@link UNITS} are summed once: a line's units are its words' and the spaces' between them,
+ * which add up exactly, scaled once by `unitsWidth` as the slice width scales the line's slice.
+ * Any other measurer measures the same strings `wrap` and `finish` do.
  *
  * Passes each line and its width to `out`. Returns false where `wrap` would split a word after a
  * line it has started (only when the words before it measure 0), which the general path then
@@ -672,14 +674,28 @@ function wrapPlain(
 ): boolean {
   const style = options.style ?? 0;
   const [small, width] = plainWidths(text, font, style, measurer);
+  // Without a table measurer every count of units and the size are 0, so each width below is
+  // measured (`unitsWidth(...) || width(...)`, and `small` for a space). With one, measuring
+  // gives the same number, and it is measured only where the units' width is 0 or NaN.
+  const table = (measurer as Partial<SliceMeasurer>)[UNITS] ?? NO_UNITS;
+  const size = table.size(font, style);
+  const spaceUnits = table.units(' ', 0, 1, font, style);
+  const space = unitsWidth(spaceUnits, size);
   // Emits text[from, to) as a line.
   const emit = (from: number, to: number): void => out(text.slice(from, to), width(from, to));
   // As in `wrap`, where a word never has white space before it here (the text is trimmed and
   // each word takes the space after it), so its `lead` is 0. The current line is
-  // text[start, end), `line` wide with the space after it; `start` is -1 before its first word.
+  // text[start, end), `line` wide with the space after it; it has a word where `end > start`.
+  // Before its first word, `start` is where that word starts and `end`, the end of the line
+  // before (0 for the first line), is at most `start`.
+  // With a table measurer it has `units`, and `gap` is the units of the space after it: both 0
+  // before its first word. Lines are emitted in place: a closure that read these would hold them
+  // in its context, slower here.
   let line = 0;
-  let start = -1;
+  let start = 0;
   let end = 0;
+  let units = 0;
+  let gap = 0;
   let part = 0;
   let i = 0;
   while (i < text.length) {
@@ -688,28 +704,37 @@ function wrapPlain(
     // its hyphens that are break opportunities, into pieces without a space after them.
     if (i >= part) part = pieceEnd(text, i);
     const next = hyphenEnd(text, i, part);
-    const core = text.charCodeAt(next - 1) === SPACE ? next - 1 : next;
-    const coreWidth = width(i, core);
+    // Without the space after it: `next - core` is 1 where the piece has one, else 0.
+    const core = next - Number(text.charCodeAt(next - 1) === SPACE);
+    const coreUnits = table.units(text, i, core, font, style);
+    const coreWidth = unitsWidth(coreUnits, size) || width(i, core);
     if (!(line + coreWidth <= max) && line > 0) {
-      emit(start, end);
-      start = -1;
+      out(text.slice(start, end), unitsWidth(units, size) || width(start, end));
+      start = i;
       line = 0;
+      units = 0;
+      gap = 0;
     }
     if (options.keepWords || line !== 0 || !(coreWidth > max)) {
-      if (start < 0) start = i;
-      line += coreWidth + (next === core ? 0 : small(' ', style));
-    } else if (start >= 0) {
+      units += gap + coreUnits;
+      line += coreWidth + (next === core ? 0 : space || small(' ', style));
+    } else if (end > start) {
       return false;
     } else {
       start = splitWord(text.slice(i, next), i, style, small, max, emit);
       line = width(start, next);
+      units = table.units(text, start, core, font, style);
     }
+    gap = (next - core) * spaceUnits;
     end = core;
     i = next;
   }
-  emit(start, end);
+  out(text.slice(start, end), unitsWidth(units, size) || width(start, end));
   return true;
 }
+
+/** The {@link UNITS} `wrapPlain` takes for a measurer without them: none, at size 0. */
+const NO_UNITS: Units = { units: () => 0, size: () => 0 };
 
 /**
  * The widths `wrapPlain` takes of `text`: of spaces and characters (`small` in `wrap`), and of
