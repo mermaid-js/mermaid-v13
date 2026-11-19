@@ -201,6 +201,36 @@ describe.each(['layered', 'elk'])('%s', (engine) => {
         expect(off.length, name).toBeGreaterThan(0);
       }
     });
+
+    // ELK places its own ports: two of Input's ends are 1.3px apart there.
+    it.skipIf(engine !== 'layered')(
+      'spreads the ends on a slanted input and a lined document apart (#674)',
+      async () => {
+        for (const name of ['every-shape-many-ends-tb', 'every-shape-many-ends-lr']) {
+          const r = await run(name);
+          expect(r.problems, name).toEqual([]);
+          /** The closest two of `id`'s ends, sources' first points and targets' last. */
+          const closest = (id: string): number => {
+            const at = r.graph.edges.flatMap((e) => {
+              const points = r.layout.edges.get(e.id)!.points;
+              return [
+                ...(e.source === id ? [points[0]!] : []),
+                ...(e.target === id ? [points[points.length - 1]!] : []),
+              ];
+            });
+            let min = Infinity;
+            for (let i = 0; i < at.length; i++)
+              for (let j = i + 1; j < at.length; j++)
+                min = Math.min(min, Math.hypot(at[i]!.x - at[j]!.x, at[i]!.y - at[j]!.y));
+            return min;
+          };
+          // Reference (refdoc): `i --> r`, `d --x r`, `r --> llm`, `r -.- tl`. Input (input) has
+          // six edges out of one side of a box 31px across.
+          expect(closest('r'), name).toBeGreaterThanOrEqual(pxProfile.engine.minPitch);
+          expect(closest('i'), name).toBeGreaterThanOrEqual(pxProfile.engine.minPitch / 2);
+        }
+      }
+    );
   });
 
   describe('flows as groups', () => {

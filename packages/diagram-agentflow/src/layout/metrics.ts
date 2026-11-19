@@ -40,6 +40,11 @@ export interface AgentflowMetrics {
   readonly curveSteps: number;
   /** How far an edge end may sit off a box side and still count as on it. */
   readonly onSide: number;
+  /**
+   * The share of a slanted side (the input shape's, sideways to the flow) that edge ends spread
+   * along: an eighth kept clear at each cut corner (#674).
+   */
+  readonly slantSpan: number;
 }
 
 /**
@@ -57,4 +62,5 @@ export const AGENTFLOW_METRICS: AgentflowMetrics = Object.freeze({
   }),
   curveSteps: 8,
   onSide: 0.5,
+  slantSpan: 0.75,
 });
