@@ -423,15 +423,19 @@ function isSplit(view: SourceView, start: number, end: number): boolean {
   return (removed[k]?.start ?? end) < end || (k > 0 && removed[k - 1]?.end === start);
 }
 
-/** Whether `src[start, end)` reads the same cooked, so `cook` can slice it. */
-function isPlainRange(src: string, start: number, end: number, view: SourceView): boolean {
+/**
+ * Whether `src[start, end)` reads the same cooked, so `cook` can slice it: no removed span, no
+ * CR, `#` or masked offset, and with `braceNewline` no `}` in it or right before it.
+ */
+export function isPlainRange(src: string, start: number, end: number, view: SourceView): boolean {
   const { mask, braceNewline } = view;
-  return (
-    !isSplit(view, start, end) &&
-    !(braceNewline ? /[\r#}]/ : /[\r#]/).test(src.slice(start, end)) &&
-    (!braceNewline || src.charCodeAt(start - 1) !== RBRACE) &&
-    !masked(mask, start, end)
-  );
+  if (isSplit(view, start, end) || (braceNewline && src.charCodeAt(start - 1) === RBRACE))
+    return false;
+  for (let i = start; i < end; i++) {
+    const c = src.charCodeAt(i);
+    if (c === CR || c === HASH || (braceNewline && c === RBRACE) || mask?.[i]) return false;
+  }
+  return true;
 }
 
 /**
@@ -582,10 +586,4 @@ export function firstHole(view: SourceView, at: number): number {
     else hi = mid;
   }
   return lo;
-}
-
-function masked(mask: Uint8Array | undefined, start: number, end: number): boolean {
-  if (!mask) return false;
-  for (let i = start; i < end; i++) if (mask[i]) return true;
-  return false;
 }
