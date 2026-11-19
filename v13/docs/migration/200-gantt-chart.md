@@ -83,6 +83,26 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   the bands from `cScale0`/`cScale1`; those are not carried, so gantt colours differ from v12
   most in `default`, `dark`, `forest` and `neutral` (bars are the theme's `primaryColor`, text
   `textColor`). Set the variables in `themeVariables` for v12's look.
+- **Under a `themeVariables` override (D656, D657):** in the classic family the task bars,
+  the active bar and the third section band (`taskBkgColor`, `activeTaskBkgColor`,
+  `sectionBkgColor2`) read `mainBkg`, the first section band (`sectionBkgColor`) reads
+  `bandBkg`, and the active bar's outline and the `vert` marker read `guideLineColor`.
+  `default`, `dark`, `forest` and `neutral` pin all three to their own primary, tertiary and
+  line colours, so an author's `primaryColor`, `tertiaryColor` or `lineColor` leaves the bars,
+  the band and the outline alone there, as in v12. In `base` they derive from `primaryColor`,
+  `tertiaryColor` and `lineColor`, so they follow them, as in v12, except that the active
+  outline and the `vert` marker follow `lineColor` where v12's followed `primaryColor` and
+  stayed navy (D574). Set `bandBkg` or `guideLineColor` in `themeVariables` to move them.
+- **A `mainBkg` override moves the bars (D657):** an author's `mainBkg` recolours the task
+  bars, the active bar and the third band in every classic theme, where v12's `default`,
+  `forest` and `neutral` kept their own; under `dark` the text on the active bar follows that
+  fill. To darken the bars in the named themes, set `mainBkg`: a dark `primaryColor` with
+  light `textColor` leaves their pale bars alone, so the light text sits on pale bars (v12
+  kept its bars there too, with fixed white text).
+- **Three responses stay v13's (D667):** under `neutral` the done bar's outline stays grey
+  where v12's followed `lineColor`; under `dark` the alternate band stays white where v12's
+  followed `background`, and done bars follow `mainBkg` where v12's stayed light grey. Set
+  `doneTaskBorderColor`, `altSectionBkgColor` or `doneTaskBkgColor` for v12's colours.
 - **Contrast in the classic themes (D574):** with bars in the pale `primaryColor`, the classic
   family (`default`, `dark`, `forest`, `neutral`, `base`) draws the `vert` marker and its label
   and the active bar's outline in `lineColor`. Text on a critical bar has its own variable,

@@ -66,11 +66,12 @@ const PROBED: Readonly<
       { tertiaryColor: '#ff00ff' },
     ],
   },
-  // Text on normal and critical bars (D574): a dark primaryColor with light text, where an ink
-  // chosen against red alone would land on the navy bar.
+  // Text on normal and critical bars (D574): a dark bar with light text, where an ink chosen
+  // against red alone would land on the navy bar. The bars read `mainBkg` (D657), so the probe
+  // darkens them through it.
   gantt: {
     pairs: PAIRS.gantt!.slice(0, 2),
-    probes: [{ primaryColor: '#1a237e', textColor: '#ffffff' }],
+    probes: [{ mainBkg: '#1a237e', textColor: '#ffffff' }],
   },
 };
 

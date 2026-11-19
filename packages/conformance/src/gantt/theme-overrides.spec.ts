@@ -176,77 +176,15 @@ const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
     [
       ...keys('default', ['darkMode'], ['doneTaskBkgColor']),
       ...keys('forest', ['darkMode'], ['doneTaskBkgColor']),
+      ...keys('neutral', ['darkMode'], ['doneTaskBkgColor']),
       ...keys(
         'base',
         ['darkMode'],
         ['doneTaskBkgColor', 'taskTextColor', 'taskTextOutsideColor', 'taskTextDarkColor']
       ),
     ],
-  "#1035 T4 (#1041): gantt's variables do not respond to an override as v12's do (D656, D657); T4 deletes this group":
+  "D574: the classic family's active outline and vert marker take lineColor, for contrast, where v12's base keeps navy for the marker and the primary colour for the outline; base's lineColor derives from background":
     [
-      ...keys('default', ['tertiaryColor:light', 'tertiaryColor:dark'], ['sectionBkgColor']),
-      ...keys(
-        'default',
-        ['primaryColor:light', 'primaryColor:dark'],
-        ['sectionBkgColor2', 'taskBkgColor', 'activeTaskBkgColor']
-      ),
-      ...keys(
-        'default',
-        ['lineColor:light', 'lineColor:dark'],
-        ['vertLineColor', 'activeTaskBorderColor']
-      ),
-      ...keys('dark', ['tertiaryColor:light', 'tertiaryColor:dark'], ['sectionBkgColor']),
-      ...keys('dark', ['background:light', 'background:dark'], ['altSectionBkgColor']),
-      ...keys(
-        'dark',
-        ['primaryColor:light', 'primaryColor:dark'],
-        ['sectionBkgColor2', 'activeTaskBkgColor']
-      ),
-      ...keys(
-        'dark',
-        ['lineColor:light', 'lineColor:dark'],
-        ['vertLineColor', 'activeTaskBorderColor']
-      ),
-      ...keys(
-        'dark',
-        ['primaryColor:light', 'primaryColor:dark', 'mainBkg:light', 'mainBkg:dark'],
-        ['taskBkgColor']
-      ),
-      ...keys('dark', ['mainBkg:light', 'mainBkg:dark'], ['doneTaskBkgColor']),
-      ...keys('dark', ['primaryColor:light'], ['taskTextDarkColor']),
-      ...keys('forest', ['tertiaryColor:light', 'tertiaryColor:dark'], ['sectionBkgColor']),
-      ...keys(
-        'forest',
-        ['primaryColor:light', 'primaryColor:dark'],
-        ['sectionBkgColor2', 'taskBkgColor']
-      ),
-      ...keys(
-        'forest',
-        ['lineColor:light', 'lineColor:dark'],
-        ['vertLineColor', 'activeTaskBorderColor']
-      ),
-      ...keys(
-        'forest',
-        ['primaryColor:light', 'primaryColor:dark', 'mainBkg:light', 'mainBkg:dark'],
-        ['activeTaskBkgColor']
-      ),
-      ...keys('neutral', ['tertiaryColor:light', 'tertiaryColor:dark'], ['sectionBkgColor']),
-      ...keys(
-        'neutral',
-        ['primaryColor:light', 'primaryColor:dark'],
-        ['sectionBkgColor2', 'taskBkgColor']
-      ),
-      ...keys(
-        'neutral',
-        ['lineColor:light', 'lineColor:dark'],
-        ['vertLineColor', 'activeTaskBorderColor', 'doneTaskBorderColor']
-      ),
-      ...keys(
-        'neutral',
-        ['primaryColor:light', 'primaryColor:dark', 'mainBkg:light', 'mainBkg:dark'],
-        ['activeTaskBkgColor']
-      ),
-      ...keys('neutral', ['darkMode'], ['doneTaskBkgColor']),
       ...keys(
         'base',
         ['background:light', 'background:dark', 'lineColor:light', 'lineColor:dark'],
@@ -264,6 +202,33 @@ const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
         ],
         ['activeTaskBorderColor']
       ),
+    ],
+  "D657: the task bars, the active bar and the third section band read mainBkg, so an author's mainBkg moves them where v12's constructor values stay; under dark, the text on the active bar follows its fill (D574's contrast rule)":
+    [
+      ...keys(
+        'default',
+        ['mainBkg:light', 'mainBkg:dark'],
+        ['sectionBkgColor2', 'taskBkgColor', 'activeTaskBkgColor']
+      ),
+      ...keys(
+        'dark',
+        ['mainBkg:light', 'mainBkg:dark'],
+        ['sectionBkgColor2', 'activeTaskBkgColor']
+      ),
+      ...keys('dark', ['mainBkg:light'], ['taskTextDarkColor']),
+      ...keys('forest', ['mainBkg:light', 'mainBkg:dark'], ['sectionBkgColor2', 'taskBkgColor']),
+      ...keys('neutral', ['mainBkg:light', 'mainBkg:dark'], ['sectionBkgColor2', 'taskBkgColor']),
+      ...keys(
+        'base',
+        ['mainBkg:light', 'mainBkg:dark'],
+        ['sectionBkgColor2', 'taskBkgColor', 'activeTaskBkgColor']
+      ),
+    ],
+  "D667: v13 keeps its own response where following v12's would move a value with no override: neutral's done outline stays grey, dark's alternate band stays white, and dark's done bars follow mainBkg":
+    [
+      ...keys('neutral', ['lineColor:light', 'lineColor:dark'], ['doneTaskBorderColor']),
+      ...keys('dark', ['background:light', 'background:dark'], ['altSectionBkgColor']),
+      ...keys('dark', ['mainBkg:light', 'mainBkg:dark'], ['doneTaskBkgColor']),
     ],
 };
 
