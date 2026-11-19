@@ -192,6 +192,47 @@ function insertionIndex(
   return result.length;
 }
 
+/**
+ * The crossings between the edges at two neighbours of a layer, the one with `left` ends to the
+ * left of the one with `right` ends: the pairs with an end in `left` past an end in `right`. Both
+ * hold the positions of the edges' other ends, sorted.
+ */
+function crossingsOfNeighbours(left: readonly number[], right: readonly number[]): number {
+  let count = 0;
+  let below = 0;
+  for (const position of left) {
+    while (below < right.length && right[below]! < position) {
+      below++;
+    }
+    count += below;
+  }
+  return count;
+}
+
+/** For each node of `layer`, the sorted positions in `other` of the far ends of its `edges`. */
+function farEndPositions(
+  layer: NodeId[],
+  edges: Edge[],
+  nearEnd: 'src' | 'dst',
+  other: NodeId[]
+): Map<NodeId, number[]> {
+  const otherIndex = buildLayerIndex(other);
+  const farEnd = nearEnd === 'src' ? 'dst' : 'src';
+  const positions = new Map<NodeId, number[]>(layer.map((id) => [id, []]));
+  for (const e of edges) {
+    positions.get(e[nearEnd])?.push(otherIndex.get(e[farEnd])!);
+  }
+  for (const list of positions.values()) {
+    list.sort((a, b) => a - b);
+  }
+  return positions;
+}
+
+/**
+ * Adjacent swaps within a layer while one lowers the crossings with the layers on both sides.
+ * Swapping two neighbours changes only the crossings between their own edges, so a swap is
+ * scored by those (`crossingsOfNeighbours`).
+ */
 function transposeImprove(
   upper: NodeId[],
   current: NodeId[],
@@ -205,17 +246,13 @@ function transposeImprove(
   const nextSet = next ? new Set(next) : null;
 
   const edgesIn = edges.filter((e) => upperSet.has(e.src) && layerSet.has(e.dst));
-  const edgesOut = nextSet
-    ? edges.filter((e) => layerSet.has(e.src) && nextSet.has(e.dst))
-    : undefined;
-
-  const crossingScore = (order: NodeId[]): number => {
-    let score = countCrossingsBetweenAdjacent(upper, order, edgesIn);
-    if (edgesOut && next) {
-      score += countCrossingsBetweenAdjacent(order, next, edgesOut);
-    }
-    return score;
-  };
+  const edgesOut = nextSet ? edges.filter((e) => layerSet.has(e.src) && nextSet.has(e.dst)) : [];
+  const above = farEndPositions(current, edgesIn, 'dst', upper);
+  const below = farEndPositions(current, edgesOut, 'src', next ?? []);
+  /** The crossings between the edges of `a` and `b` while `a` is left of `b`. */
+  const crossingsWhileLeft = (a: NodeId, b: NodeId): number =>
+    crossingsOfNeighbours(above.get(a)!, above.get(b)!) +
+    crossingsOfNeighbours(below.get(a)!, below.get(b)!);
 
   // Precompute lane membership for same-lane check
   const laneOf = topLaneOf ? new Map<NodeId, string | null>() : null;
@@ -226,7 +263,6 @@ function transposeImprove(
   }
 
   let improved = true;
-  let bestScore = crossingScore(best);
   while (improved) {
     improved = false;
     for (let i = 0; i + 1 < best.length; i++) {
@@ -239,14 +275,10 @@ function transposeImprove(
         }
       }
 
-      const prev = bestScore;
-      [best[i], best[i + 1]] = [best[i + 1]!, best[i]!];
-      const nextScore = crossingScore(best);
-      if (nextScore < prev) {
-        bestScore = nextScore;
+      const [a, b] = [best[i]!, best[i + 1]!];
+      if (crossingsWhileLeft(b, a) < crossingsWhileLeft(a, b)) {
+        [best[i], best[i + 1]] = [b, a];
         improved = true;
-      } else {
-        [best[i], best[i + 1]] = [best[i + 1]!, best[i]!];
       }
     }
   }
