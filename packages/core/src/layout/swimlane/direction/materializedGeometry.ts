@@ -2307,6 +2307,18 @@ const sideCandidatesByLayout = new WeakMap<
   Map<string, Candidate[]>
 >();
 
+/** The side candidates kept for the layout of `nodeByIdMap`: an empty store the first time. */
+function keptSideCandidatesOf(
+  nodeByIdMap: Map<string, MaterializedNode>
+): Map<string, Candidate[]> {
+  let kept = sideCandidatesByLayout.get(nodeByIdMap);
+  if (!kept) {
+    kept = new Map<string, Candidate[]>();
+    sideCandidatesByLayout.set(nodeByIdMap, kept);
+  }
+  return kept;
+}
+
 /** `values` as a key that tells every number apart, the two zeros too. */
 const exactNumbersKey = (values: readonly number[]): string =>
   values.map((value) => (Object.is(value, -0) ? '-0' : String(value))).join(',');
@@ -2491,6 +2503,24 @@ export function resolveRenderedOrthogonalCrossings(
       EPS_LOCAL,
       limit
     );
+
+  /**
+   * All the crossings left if `edge` takes a reroute that crosses the others as `segments` do
+   * (`settled` plus its own), when that few could make it the best so far (`bestCrossings`, one
+   * fewer unless it has fewer bends than `bestBends`); else Infinity, which no test passes.
+   */
+  const crossingsIfBest = (
+    edge: MaterializedEdge,
+    segments: SegmentLite[],
+    candidateBends: number,
+    settled: number,
+    bestCrossings: number,
+    bestBends: number
+  ): number => {
+    const allowed = (candidateBends < bestBends ? bestCrossings : bestCrossings - 1) - settled;
+    const withOthers = crossingsWithOtherEdgesUpTo(edge, segments, allowed);
+    return withOthers > allowed ? Number.POSITIVE_INFINITY : settled + withOthers;
+  };
 
   /** The box around a route; two routes whose boxes are apart do not cross. */
   const extentOf = (points: PointLite[]): RectLite => {
@@ -2925,9 +2955,7 @@ export function resolveRenderedOrthogonalCrossings(
   // so they are built once for all rounds and for every edge between the same two nodes.
   // v13 (#843): and once for both calls on the layout (`sideCandidatesByLayout`).
   const sideCandidates = new Map<NodeInfo, Map<NodeInfo, Candidate[]>>();
-  const builtSideCandidates =
-    sideCandidatesByLayout.get(nodeByIdMap) ?? new Map<string, Candidate[]>();
-  sideCandidatesByLayout.set(nodeByIdMap, builtSideCandidates);
+  const builtSideCandidates = keptSideCandidatesOf(nodeByIdMap);
   const boxOf = ({ cx, cy, rect }: NodeInfo): number[] => [
     cx,
     cy,
@@ -3464,12 +3492,14 @@ export function resolveRenderedOrthogonalCrossings(
         // v13 (#687): a candidate is tested against the nodes and the other routes only once
         // its counts would make it the best so far; the tests do not depend on each other.
         // v13 (#843): nor are its crossings counted past the most that could make it so.
-        const allowed = (candidateBends < bestBends ? bestCrossings : bestCrossings - 1) - settled;
-        const withOthers = crossingsWithOtherEdgesUpTo(edge, rerouted, allowed);
-        if (withOthers > allowed) {
-          continue;
-        }
-        const candidateCrossings = settled + withOthers;
+        const candidateCrossings = crossingsIfBest(
+          edge,
+          rerouted,
+          candidateBends,
+          settled,
+          bestCrossings,
+          bestBends
+        );
         const improvesCurrentEdge =
           candidateCrossings < currentCrossings ||
           (candidateCrossings === currentCrossings && candidateBends < currentEdgeBends);
