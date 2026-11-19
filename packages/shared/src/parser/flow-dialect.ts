@@ -43,26 +43,42 @@ export const TRAP_STOP = 8;
 export const SHAPE_DATA_STOP = 16;
 /** Also ends a link id's run (only in a dialect built with `bracketsEndLinkId`). */
 export const LINK_ID_STOP = 32;
+// Which INITIAL rules a character can start (the lexer skips the others). A blank, which may
+// also be a character outside ASCII, is told by `isSpace`: the table has no bit left for it.
+/** The keyword rules: the family's and the dialect's. */
+export const KEYWORD_START = 64;
+/** Numbers, punctuation and the links and shapes they open. */
+export const PUNCTUATION_START = 128;
 
 /**
- * The character classes of a dialect's rules. With `labelComments` (v12 left the comments in
- * the text it lexed), `%` is one of the characters a `<text>` or `<trapText>` run stops at: it
- * ends the run when another `%` follows.
+ * The character classes of a dialect's rules, with `keywords` its own. With `labelComments`
+ * (v12 left the comments in the text it lexed), `%` is one of the characters a `<text>` or
+ * `<trapText>` run stops at: it ends the run when another `%` follows.
  *
  * With `bracketsEndLinkId`, the LINK_ID rule is v12 12.3.0's flow.jison
  * `[^\s\"\[\]\(\)\{\}\|]+\@(?=[^\{\"])`: a link id's run also ends at `[ ] ( ) { } |`, so
  * `A[bla]e1@` is a node, its shape and the id `e1@` (D621). Without it, the run ends only at a
  * blank or a quote, as in 12.2.0's `[^\s\"]+\@(?=[^\{\"])`.
  */
-export function flowChars(labelComments: boolean, bracketsEndLinkId: boolean): Uint8Array {
+export function flowChars(
+  labelComments: boolean,
+  bracketsEndLinkId: boolean,
+  keywords: FlowKeywords
+): Uint8Array {
   const percent = labelComments ? '%' : '';
+  let starts = 'a@c"h_';
+  keywords.forEach((words, c) => {
+    if (words) starts += String.fromCharCode(c);
+  });
   return charTable(
     [NODE, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!"#$%&\'*+.`?\\_/'],
     [TEXT_STOP, '[](){}|' + percent],
     [ELLIPSE_STOP, '()[]{}'],
     [TRAP_STOP, '\\[](){}/' + percent],
     [SHAPE_DATA_STOP, '}^'],
-    [LINK_ID_STOP, bracketsEndLinkId ? '[](){}|' : '']
+    [LINK_ID_STOP, bracketsEndLinkId ? '[](){}|' : ''],
+    [KEYWORD_START, starts],
+    [PUNCTUATION_START, '0123456789#:&;,*^xo.<-=~[(|{>\\v']
   );
 }
 
