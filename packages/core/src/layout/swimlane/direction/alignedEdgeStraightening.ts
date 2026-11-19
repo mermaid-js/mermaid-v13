@@ -4,7 +4,8 @@
 import type { Edge, Node } from '../layoutData.ts';
 import { EDGE_ROUTING, hasVertexFaces } from '../config.ts';
 import { collectNodeRectEntries, dedupeConsecutivePoints, rectOfNodeBounds } from './geometry.ts';
-import type { Point, RectBounds, RectSide } from './geometry.ts';
+import type { Point } from '../../types.ts';
+import type { RectBounds, RectSide } from './geometry.ts';
 import { EPS, clearOfNodes, clearOfOtherEdges, faceIsOwn } from './terminalGeometry.ts';
 import type { NodeFace, Obstacles } from './terminalGeometry.ts';
 

@@ -375,7 +375,7 @@ export interface TypedKeywordItem extends DetailedKeywordItem {
 }
 
 /** What {@link keywordItem} reads of a table row. */
-interface KeywordRow {
+export interface KeywordRow {
   readonly label: string;
   readonly item?: CompletionKind;
   readonly insert?: string;

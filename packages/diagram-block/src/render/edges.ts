@@ -8,7 +8,8 @@ import { pxProfile } from '@mermaid-js/core/layout';
 import { marker, markerTrim, type LineEnd } from '@mermaid-js/shared/svg/arrowheads';
 import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import type { Attrs, PathData, SvgWriter } from '@mermaid-js/core/svg';
-import type { BlockEdgeLayout, PlacedLabel, Point } from '../layout/types.ts';
+import type { BlockEdgeLayout, PlacedLabel } from '../layout/types.ts';
+import type { Point } from '../shapes/outline.ts';
 import { BLOCK_RENDER } from './metrics.ts';
 import type { Scene } from './render.ts';
 

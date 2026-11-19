@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseC4Beta } from './parser.ts';
-import { T } from './tokens.ts';
+import { BETA } from './tokens.ts';
 
 const H = 'c4-beta\n';
 
@@ -21,77 +21,96 @@ describe('c4-beta parser: probe', () => {
   });
 
   it('expects the header first, then a diagram kind', () => {
-    expect(expected('¦')).toEqual([T.Header]);
-    expect(expected('c4-beta ¦')).toEqual(expect.arrayContaining([T.Context, T.Dynamic]));
-    expect(expected('c4-beta co¦')).toEqual(expect.arrayContaining([T.Container, T.Component]));
+    expect(expected('¦')).toEqual([BETA.Header]);
+    expect(expected('c4-beta ¦')).toEqual(expect.arrayContaining([BETA.Context, BETA.Dynamic]));
+    expect(expected('c4-beta co¦')).toEqual(
+      expect.arrayContaining([BETA.Container, BETA.Component])
+    );
   });
 
   it('expects an element kind or a statement word at a line start, an id included', () => {
     for (const marked of [`${H}¦`, `${H}person p "P"\n¦`, `${H}person p "P"\n\n¦\n`]) {
       expect(expected(marked), marked).toEqual(
-        expect.arrayContaining([T.Person, T.Title, T.Direction, T.Legend, T.Style, T.Id, T.Step])
+        expect.arrayContaining([
+          BETA.Person,
+          BETA.Title,
+          BETA.Direction,
+          BETA.Legend,
+          BETA.Style,
+          BETA.Id,
+          BETA.Step,
+        ])
       );
-      expect(expected(marked), marked).not.toContain(T.Rbrace);
+      expect(expected(marked), marked).not.toContain(BETA.Rbrace);
     }
   });
 
   it('expects an element kind or the closing brace in a body, and no statement word', () => {
     const inBody = expected(`${H}softwareSystem s "S" {\n  ¦\n}`);
-    expect(inBody).toEqual(expect.arrayContaining([T.Person, T.Container, T.Rbrace]));
-    expect(inBody).not.toContain(T.Title);
-    expect(inBody).not.toContain(T.Style);
-    expect(inBody).not.toContain(T.Id);
+    expect(inBody).toEqual(expect.arrayContaining([BETA.Person, BETA.Container, BETA.Rbrace]));
+    expect(inBody).not.toContain(BETA.Title);
+    expect(inBody).not.toContain(BETA.Style);
+    expect(inBody).not.toContain(BETA.Id);
   });
 
   it('follows an element along its line', () => {
-    expect(expected(`${H}person ¦`)).toEqual([T.Id]);
-    expect(expected(`${H}person p ¦`)).toEqual([T.String]);
+    expect(expected(`${H}person ¦`)).toEqual([BETA.Id]);
+    expect(expected(`${H}person p ¦`)).toEqual([BETA.String]);
     expect(expected(`${H}person p "P" ¦`)).toEqual(
-      expect.arrayContaining([T.String, T.Instances, T.Tag, T.Lbrace])
+      expect.arrayContaining([BETA.String, BETA.Instances, BETA.Tag, BETA.Lbrace])
     );
     const afterTechnology = expected(`${H}container c "C" "d" "t" ¦`);
-    expect(afterTechnology).toEqual(expect.arrayContaining([T.Instances, T.Tag, T.Lbrace]));
-    expect(afterTechnology).not.toContain(T.String);
+    expect(afterTechnology).toEqual(
+      expect.arrayContaining([BETA.Instances, BETA.Tag, BETA.Lbrace])
+    );
+    expect(afterTechnology).not.toContain(BETA.String);
     const afterTag = expected(`${H}container c "C" :::a ¦`);
-    expect(afterTag).toEqual(expect.arrayContaining([T.Tag, T.Lbrace]));
-    expect(afterTag).not.toContain(T.Instances);
+    expect(afterTag).toEqual(expect.arrayContaining([BETA.Tag, BETA.Lbrace]));
+    expect(afterTag).not.toContain(BETA.Instances);
   });
 
   it('follows a relation along its line', () => {
     expect(expected(`${H}a ¦`)).toEqual(
-      expect.arrayContaining([T.ArrowRight, T.ArrowLeft, T.ArrowBoth, T.ArrowUndirected])
+      expect.arrayContaining([
+        BETA.ArrowRight,
+        BETA.ArrowLeft,
+        BETA.ArrowBoth,
+        BETA.ArrowUndirected,
+      ])
     );
-    expect(expected(`${H}a --> ¦`)).toEqual([T.Id]);
-    expect(expected(`${H}a --> b ¦`)).toEqual(expect.arrayContaining([T.Colon, T.Tag]));
-    expect(expected(`${H}a --> b : ¦`)).toEqual([T.String]);
-    expect(expected(`${H}a --> b : "x" ¦`)).toEqual(expect.arrayContaining([T.String, T.Tag]));
-    expect(expected(`${H}a --> b : "x" "y" ¦`)).toEqual(expect.arrayContaining([T.Tag]));
-    expect(expected(`${H}2:¦`)).toEqual([T.Id]);
-    expect(expected(`${H}2¦`)).toEqual(expect.arrayContaining([T.Step]));
+    expect(expected(`${H}a --> ¦`)).toEqual([BETA.Id]);
+    expect(expected(`${H}a --> b ¦`)).toEqual(expect.arrayContaining([BETA.Colon, BETA.Tag]));
+    expect(expected(`${H}a --> b : ¦`)).toEqual([BETA.String]);
+    expect(expected(`${H}a --> b : "x" ¦`)).toEqual(
+      expect.arrayContaining([BETA.String, BETA.Tag])
+    );
+    expect(expected(`${H}a --> b : "x" "y" ¦`)).toEqual(expect.arrayContaining([BETA.Tag]));
+    expect(expected(`${H}2:¦`)).toEqual([BETA.Id]);
+    expect(expected(`${H}2¦`)).toEqual(expect.arrayContaining([BETA.Step]));
   });
 
   it('expects the words of direction, legend and style', () => {
-    expect(expected(`${H}direction ¦`)).toEqual([T.Tb, T.Bt, T.Lr, T.Rl]);
-    expect(expected(`${H}legend ¦`)).toEqual([T.On, T.Off]);
-    expect(expected(`${H}style ¦`)).toEqual([T.Id]);
-    expect(expected(`${H}style s ¦`)).toEqual([T.Id]);
-    expect(expected(`${H}style s fill:¦`)).toEqual([T.Hex, T.ColorFunction, T.Id]);
-    expect(expected(`${H}style s fill:#fff ¦`)).toEqual(expect.arrayContaining([T.Comma]));
-    expect(expected(`${H}style s fill:#fff, ¦`)).toEqual([T.Id]);
+    expect(expected(`${H}direction ¦`)).toEqual([BETA.Tb, BETA.Bt, BETA.Lr, BETA.Rl]);
+    expect(expected(`${H}legend ¦`)).toEqual([BETA.On, BETA.Off]);
+    expect(expected(`${H}style ¦`)).toEqual([BETA.Id]);
+    expect(expected(`${H}style s ¦`)).toEqual([BETA.Id]);
+    expect(expected(`${H}style s fill:¦`)).toEqual([BETA.Hex, BETA.ColorFunction, BETA.Id]);
+    expect(expected(`${H}style s fill:#fff ¦`)).toEqual(expect.arrayContaining([BETA.Comma]));
+    expect(expected(`${H}style s fill:#fff, ¦`)).toEqual([BETA.Id]);
   });
 
   it('records nothing once the line has failed', () => {
     expect(expected(`${H}person p ?? ¦`)).toEqual([]);
-    expect(expected(`${H}person "x" ¦`)).not.toContain(T.Instances);
+    expect(expected(`${H}person "x" ¦`)).not.toContain(BETA.Instances);
   });
 
   it('follows an arrow, a colon and a closed text, and extends a word', () => {
     const p = probe(`${H}a -->¦`);
-    expect(p?.expected).toEqual([T.Id]);
+    expect(p?.expected).toEqual([BETA.Id]);
     expect(p?.prefix).toEqual({ start: H.length + 5, end: H.length + 5 });
     expect(probe(`${H}a --> bo¦`)?.prefix).toEqual({ start: H.length + 6, end: H.length + 8 });
-    expect(expected(`${H}a --> b : "x"¦`)).toEqual(expect.arrayContaining([T.String, T.Tag]));
-    expect(expected(`${H}a --> b : "x":::t¦`)).toEqual(expect.arrayContaining([T.Tag]));
+    expect(expected(`${H}a --> b : "x"¦`)).toEqual(expect.arrayContaining([BETA.String, BETA.Tag]));
+    expect(expected(`${H}a --> b : "x":::t¦`)).toEqual(expect.arrayContaining([BETA.Tag]));
   });
 
   it('names where the probe is: code, a text in quotes, a statement value or outside code', () => {

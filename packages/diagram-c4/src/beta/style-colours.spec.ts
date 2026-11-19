@@ -3,7 +3,7 @@ import { C4_COLOR_INVALID, C4BETA_STYLE_IGNORED } from '../codes.ts';
 import { renderC4BetaForTest } from '../render/harness.ts';
 import { lex } from './lexer.ts';
 import { parseC4Beta } from './parser.ts';
-import { T } from './tokens.ts';
+import { BETA } from './tokens.ts';
 
 /**
  * The colours a c4-beta `style` takes (D635, #929): the colour forms the lexer reads as one value,
@@ -32,7 +32,7 @@ const kindOf = (src: string, text: string): number | undefined =>
 describe('the colour values the lexer reads', () => {
   it('reads `#` and 3, 4, 6 or 8 hex digits as one value, and no other count', () => {
     for (const hex of ['#abc', '#cf0a', '#1f2937', '#ff000080'])
-      expect(kindOf(`style x fill:${hex}`, hex), hex).toBe(T.Hex);
+      expect(kindOf(`style x fill:${hex}`, hex), hex).toBe(BETA.Hex);
     for (const hex of ['#12', '#12345', '#1234567', '#123456789'])
       expect(kindOf(`style x fill:${hex}`, hex), hex).toBeUndefined();
   });
@@ -44,15 +44,15 @@ describe('the colour values the lexer reads', () => {
       'hsl(210 80% 85%)',
       'hsla(0,0%,0%,1)',
     ])
-      expect(kindOf(`style x fill:${call}, stroke:red`, call), call).toBe(T.ColorFunction);
+      expect(kindOf(`style x fill:${call}, stroke:red`, call), call).toBe(BETA.ColorFunction);
   });
 
   it('reads a call it cannot close, a nested one or another name as a word', () => {
-    expect(kindOf('style x fill:rgb(1, 2', 'rgb')).toBe(T.Id);
-    expect(kindOf('style x fill:rgb(calc(1), 0, 0)', 'rgb')).toBe(T.Id);
-    expect(kindOf('style x fill:rgb(1, 2\n)', 'rgb')).toBe(T.Id);
-    expect(kindOf('style x fill:rgb(1 %% 2)', 'rgb')).toBe(T.Id);
-    expect(kindOf('style x fill:lab(1 2 3)', 'lab')).toBe(T.Id);
+    expect(kindOf('style x fill:rgb(1, 2', 'rgb')).toBe(BETA.Id);
+    expect(kindOf('style x fill:rgb(calc(1), 0, 0)', 'rgb')).toBe(BETA.Id);
+    expect(kindOf('style x fill:rgb(1, 2\n)', 'rgb')).toBe(BETA.Id);
+    expect(kindOf('style x fill:rgb(1 %% 2)', 'rgb')).toBe(BETA.Id);
+    expect(kindOf('style x fill:lab(1 2 3)', 'lab')).toBe(BETA.Id);
   });
 
   it('keeps `rgb` an id where no `(` follows it', () => {
