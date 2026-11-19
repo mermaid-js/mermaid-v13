@@ -87,12 +87,13 @@ describe('the outline hook leaves the corpus byte-identical (D302)', () => {
       for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams', dir), dir)) {
         // Line hops (D537) are found at the edge outline, which the plain-leaf base does not
         // draw through: both sides compare a fixture that turns them on with them off, and the
-        // adopted diagrams must hop with them on.
+        // adopted diagrams must hop with them on: a plain hop, or one merged over crossings
+        // too close for a hop each (D650), which is wider than it is tall.
         const source = item.source.replace(/^(\s*lineHops:) (true|arc|gap)$/m, '$1 false');
         if (source !== item.source) {
           await variants['adopted, no drawer'].prepare(item.source, { id: 'm' });
           const hopped = variants['adopted, no drawer'].renderSync(item.source, { id: 'm' }).svg;
-          expect(hopped, `${item.id}: hops`).toMatch(/A6,6 0 0,[01] /);
+          expect(hopped, `${item.id}: hops`).toMatch(/A[\d.]+,6 [-\d.]+ 0,[01] /);
           hops++;
         }
         let expected: string;

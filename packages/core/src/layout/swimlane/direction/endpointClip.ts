@@ -12,7 +12,8 @@ import {
   sameY,
   simplifyPolyline,
 } from './geometry.ts';
-import type { Point, RectBounds } from './geometry.ts';
+import type { Point } from '../../types.ts';
+import type { RectBounds } from './geometry.ts';
 
 const EPS = 1e-3;
 const INSIDE_EPS = 0.5;

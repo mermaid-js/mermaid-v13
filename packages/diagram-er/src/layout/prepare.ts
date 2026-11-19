@@ -18,6 +18,7 @@ import type {
   ErSubgraph,
 } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from '@mermaid-js/shared/config/readers';
+import { parseGenericTypes, REFERENCES } from '@mermaid-js/shared/parser/generic-types';
 import type { ErRenderContext } from './context.ts';
 import { END_CELLS, erMetrics } from './ends.ts';
 
@@ -99,45 +100,15 @@ export interface ErPrepared {
   pad: { readonly x: number; readonly y: number };
 }
 
+/** v12 `parseGenericTypes` over an attribute type: `List~T~` → `List<T>`. */
+export const genericType = (input: string): string => parseGenericTypes(input);
+
 /**
- * v12 `parseGenericTypes`: `~T~` pairs read outside in become `<T>`; a comma splits the text
- * unless it sits inside one pair (`Map~K, V~`).
+ * An attribute type as the label layout reads it: {@link genericType}'s text with each
+ * generic's brackets as `&lt;` and `&gt;`, as v12's `erBox` wrote them, so `List~Data~` draws
+ * `List<Data>` whatever the generic's name (D619, #945).
  */
-export function genericType(input: string): string {
-  const tildes = (s: string) => s.split('~').length - 1;
-  const one = (set: string): string => {
-    const count = tildes(set);
-    if (count <= 1) return set;
-    const lead = count % 2 !== 0 && set.startsWith('~');
-    const text = lead ? set.slice(1) : set;
-    const chars = [...text];
-    let first = chars.indexOf('~');
-    let last = chars.lastIndexOf('~');
-    while (first !== -1 && first !== last) {
-      chars[first] = '<';
-      chars[last] = '>';
-      first = chars.indexOf('~');
-      last = chars.lastIndexOf('~');
-    }
-    return (lead ? '~' : '') + chars.join('');
-  };
-  const sets = input.split(/(,)/);
-  const out: string[] = [];
-  for (let i = 0; i < sets.length; i++) {
-    let set = sets[i]!;
-    if (set === ',' && i > 0 && i + 1 < sets.length) {
-      const prev = sets[i - 1]!;
-      const next = sets[i + 1]!;
-      if (tildes(prev) === 1 && tildes(next) === 1) {
-        set = `${prev},${next}`;
-        i++;
-        out.pop();
-      }
-    }
-    out.push(one(set));
-  }
-  return out.join('');
-}
+export const typeLabel = (input: string): string => parseGenericTypes(input, REFERENCES);
 
 interface Measure {
   readonly font: FontKey;
@@ -367,7 +338,7 @@ function entityView(
   const cells = entity.attributes.map(
     (a) =>
       [
-        m.label(genericType(a.type), f, Infinity, bits),
+        m.label(typeLabel(a.type), f, Infinity, bits),
         m.label(a.name, f, Infinity, bits),
         m.label(a.keys.join(','), f, Infinity, bits),
         m.label(a.comment, f, Infinity, bits),

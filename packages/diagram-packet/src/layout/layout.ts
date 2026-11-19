@@ -3,7 +3,7 @@
  * `PacketLayout` out. It follows v12's `renderer.ts` with the drawing taken out: every label,
  * bit number and the title is measured first through the injected measurer, in `fontFamily`
  * (pitfall 16), then placed where v12 put it. Positions never depend on the measurements: they
- * only shrink a label that is wider than its piece (D343) and grow the bounds (D344). Every
+ * only shrink a label that is wider or taller than its piece (D343) and grow the bounds (D344). Every
  * length comes from the metrics table, the checked config or the theme (pitfall 13).
  *
  * v12 bugs fixed on the way: a `paddingX` wider than a piece no longer gives a negative width
@@ -52,15 +52,20 @@ export function layoutPacket(model: PacketModel, ctx: PacketLayoutContext): Pack
     layoutLabel(text, f, Infinity, ctx.measurer, inline);
   const { ascent, descent } = ctx.measurer.metrics(fonts.byte);
 
-  /** A label in a piece `width` wide, shrunk to fit down to the bit-number size (D343). */
+  /**
+   * A label in a piece `width` wide and `rowHeight` tall, shrunk to fit both down to the
+   * bit-number size (D343; the height since #774, for labels of several `<br>` lines).
+   */
   const fitted = (text: string, width: number): { text: MeasuredLabel; font: FontKey } => {
     let f = fonts.label;
     let t = measure(text, f);
     const min = Math.min(fonts.label.size, fonts.byte.size);
-    // Scale by the overflow; a measurer need not scale with the size, so the last step is the
-    // floor itself, and a label that still does not fit overflows at the bit-number size.
-    for (let i = 1; t.width > width && f.size > min; i++) {
-      const scaled = (f.size * Math.max(width, 0)) / t.width;
+    const over = (l: MeasuredLabel): boolean => l.width > width || l.height > rowHeight;
+    // Scale by the larger overflow; a measurer need not scale with the size, so the last step is
+    // the floor itself, and a label that still does not fit overflows at the bit-number size.
+    for (let i = 1; over(t) && f.size > min; i++) {
+      const share = Math.min(Math.max(width, 0) / t.width, Math.max(rowHeight, 0) / t.height);
+      const scaled = f.size * share;
       f = font(i < FIT_STEPS ? Math.max(min, scaled) : min);
       t = measure(text, f);
     }

@@ -1,0 +1,15 @@
+---
+config:
+  theme: default
+description: >-
+  #929 sample 1: a misspelt colour name (`lightgren`) is dropped with C4_COLOR_INVALID and the
+  ledger keeps its theme colours, not a black box
+---
+c4-beta
+person p "Customer"
+softwareSystem s "Billing" "Sends invoices." :::billing
+softwareSystem t "Ledger" "Books entries." :::ledger
+p --> s : "Pays"
+s --> t : "Posts"
+style billing fill:lightgreen, stroke:darkgreen
+style ledger fill:lightgren

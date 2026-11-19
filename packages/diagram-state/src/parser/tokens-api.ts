@@ -1,23 +1,24 @@
-import { Kind } from '@mermaid-js/core/parser-kit';
-import type { Range } from '@mermaid-js/core/parser-kit';
+import { Kind, kindSet } from '@mermaid-js/core/parser-kit';
+import type { KindSet } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
+import { keptTokens } from '@mermaid-js/shared/parser/seen-tokens';
+import type { SeenToken } from '@mermaid-js/shared/parser/seen-tokens';
 import { lex, NO_VIEW } from './lexer.ts';
 import { stateView } from './view.ts';
 
-export interface StateToken {
-  /** A `StateTokenKind` or a shared `Kind`. */
-  kind: number;
-  /**
-   * The token's text as v12's lexer gave it: CRLF as LF, comment lines and dropped `;` cut out,
-   * trimmed where v12's lexer actions trimmed. Entities stay as `#name;`.
-   */
-  text: string;
-  range: Range;
-}
+/**
+ * A token of this diagram: its `kind` is a `StateTokenKind` or a shared `Kind`. Its `text` is
+ * the token's text as v12's lexer gave it: CRLF as LF, comment lines and dropped `;` cut out,
+ * trimmed where v12's lexer actions trimmed. Entities stay as `#name;`.
+ */
+export type StateToken = SeenToken;
+
+/** A directive token has no view offsets, so only comments need leaving out by kind. */
+const COMMENT: KindSet = /* @__PURE__ */ kindSet(Kind.Comment);
 
 /**
- * The significant state tokens of `src` (comments and directives left out), for editors and
- * for the lexer-parity gate (#138).
+ * The significant state tokens of `src` (comments, directives, the tokens outside the text v12's
+ * lexer saw and the final `Kind.EOF` left out), for editors and for the lexer-parity gate (#138).
  */
 export function stateTokens(src: string): StateToken[] {
   const pre = preprocess(src);
@@ -29,17 +30,15 @@ export function stateTokens(src: string): StateToken[] {
   const { tokens, viewStart, viewEnd } = lex(src, view);
   // The appended line break is not source text.
   const last = view.text.length - 1;
-  const out: StateToken[] = [];
-  for (let j = 0; j < tokens.length; j++) {
-    const kind = tokens.kind[j] ?? Kind.EOF;
-    const a = viewStart[j] ?? NO_VIEW;
-    if (kind === Kind.EOF || a === NO_VIEW || kind === Kind.Comment) continue;
-    const b = Math.min(viewEnd[j] ?? a, last);
-    out.push({
-      kind,
-      text: view.text.slice(Math.min(a, b), b),
-      range: { start: tokens.start[j] ?? 0, end: tokens.end[j] ?? 0 },
-    });
-  }
-  return out;
+  const startOf = (j: number): number => viewStart[j] ?? NO_VIEW;
+  return keptTokens(
+    tokens,
+    COMMENT,
+    (j) => {
+      const a = startOf(j);
+      const b = Math.min(viewEnd[j] ?? a, last);
+      return view.text.slice(Math.min(a, b), b);
+    },
+    { keep: (j) => startOf(j) !== NO_VIEW }
+  );
 }

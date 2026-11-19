@@ -8,6 +8,7 @@
 import { HookRunner } from '@mermaid-js/core';
 import { layoutName } from './registry.ts';
 import type { Warning } from '@mermaid-js/core';
+import type { Measurer } from '@mermaid-js/core/text';
 import type { ExtensionPlugin, ParseErrorHandler, RenderResult } from './api-types.ts';
 import type { Analysis } from './analysis-cache.ts';
 import type { Analyser } from './analyser.ts';
@@ -45,6 +46,8 @@ export interface Session {
   textBackend: TextBackend | undefined;
   /** Embedded diagrams (ADR-15): a host's blocks, parsed and drawn before the host draws. */
   blocks: BlockLoader;
+  /** The table measurer of each `fontTables` list, made by the font-table chunk (D645). */
+  readonly fontTables: WeakMap<object, Measurer>;
 }
 
 /** Rebuilds the hooks after a registration, so they run in D166 order whenever plugins arrived. */

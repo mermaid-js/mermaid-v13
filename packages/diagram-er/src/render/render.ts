@@ -12,7 +12,13 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { cls, openSvgRoot, paletteSlots } from '@mermaid-js/shared/svg/document';
+import {
+  cls,
+  openSvgRoot,
+  paletteSlots,
+  placeTitle,
+  titledViewBox,
+} from '@mermaid-js/shared/svg/document';
 import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { ErLayout } from '../layout/layout.ts';
@@ -196,7 +202,16 @@ export function renderEr(
     padX: er.pad.x,
     ends: edgeEnds(er, layout),
   };
-  openRoot(scene, model);
+  // v12's `erDiagramTitleText`: the root's size in `textColor`, `titleTopMargin` above the drawing (D652).
+  const title = placeTitle(
+    model.title,
+    layout.width,
+    ctx.config.er?.titleTopMargin ?? 25,
+    ctx,
+    ctx.theme.number('fontSize')
+  );
+  const ink = title && ctx.theme.color('textColor');
+  openRoot(scene, model, titledViewBox(layout, title, 8));
   // v12 numbers edge ids by the relationship's place among all of them.
   const order = new Map(model.relationships.map((r, i) => [r, i]));
   if (scene.paint.cluster) drawClusters(scene);
@@ -210,14 +225,20 @@ export function renderEr(
   w.open('g', { class: 'nodes', fill: scene.paint.table.text });
   for (const view of er.entities) drawEntity(scene, view);
   w.close();
+  if (title && ink)
+    w.label(title.label, title.x, title.y, { class: 'erDiagramTitleText', fill: ink });
   w.close();
 }
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
-function openRoot({ w, layout, ctx, paint }: Scene, model: ErModel): void {
+function openRoot(
+  { w, ctx, paint }: Scene,
+  model: ErModel,
+  viewBox: ReturnType<typeof titledViewBox>
+): void {
   openSvgRoot(w, ctx, {
     name: 'er erDiagram',
-    viewBox: { width: layout.width, height: layout.height },
+    viewBox,
     maxWidth: ctx.config.er?.useMaxWidth !== false,
     title: model.accTitle,
     desc: model.accDescr,

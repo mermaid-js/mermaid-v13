@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { T as BETA } from './beta/tokens.ts';
+import { BETA } from './beta/tokens.ts';
 import { c4Language, language } from './language.ts';
 import { T as LEGACY } from './parser/tokens.ts';
 

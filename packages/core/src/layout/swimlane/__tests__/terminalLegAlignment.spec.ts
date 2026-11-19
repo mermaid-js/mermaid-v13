@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Edge, Node } from '../layoutData.ts';
 import { CORNER_CLEARANCE } from '../direction/endpointClip.ts';
-import type { Point } from '../direction/geometry.ts';
+import type { Point } from '../../types.ts';
 import { alignTerminalLegsToPorts } from '../direction/terminalLegAlignment.ts';
 
 const SIZE = 100;

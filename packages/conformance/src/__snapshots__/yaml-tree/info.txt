@@ -1,1 +1,17 @@
-17 914185347e2dace5
+e2e/diagrams/info/baseline/config/theme-variables.mmd 1 5cc565a8bdea2ad9
+e2e/diagrams/info/baseline/text/accessibility.mmd 1 cfbf2b650958d4c9
+e2e/diagrams/info/baseline/text/front-matter-title.mmd 1 2dd6f0655cfd4b63
+e2e/diagrams/info/baseline/text/show-info-own-line.mmd 1 cbb67182b3400c99
+e2e/diagrams/info/baseline/themes/base.mmd 1 06eb15545c0255e7
+e2e/diagrams/info/baseline/themes/dark.mmd 1 ccd04557c5df5021
+e2e/diagrams/info/baseline/themes/default.mmd 1 b77d2585aa1b2dcf
+e2e/diagrams/info/baseline/themes/forest.mmd 1 15a9d9f78e4bc6f7
+e2e/diagrams/info/baseline/themes/neo-dark.mmd 1 85575a34d7efd271
+e2e/diagrams/info/baseline/themes/neo.mmd 1 7a8395a72843e83f
+e2e/diagrams/info/baseline/themes/neutral.mmd 1 fbacdfadab6d209b
+e2e/diagrams/info/baseline/themes/redux-color.mmd 1 d348c3cb8dbfa569
+e2e/diagrams/info/baseline/themes/redux-dark-color.mmd 1 cc47d405779ab7d2
+e2e/diagrams/info/baseline/themes/redux-dark.mmd 1 043f4336d8ce06f7
+e2e/diagrams/info/baseline/themes/redux.mmd 1 11a08a465fea3906
+e2e/diagrams/info/pr-check/should-handle-an-info-definition-with-showinfo.mmd 1 4b902db421faa76a
+e2e/diagrams/info/pr-check/should-handle-an-info-definition.mmd 1 a527d619d030b212

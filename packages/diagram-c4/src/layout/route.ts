@@ -5,11 +5,16 @@
  * between columns or rows, or a detour lane round the shapes in the way; ports spread along a
  * side, reverse pairs shifted apart, self-loops on the right side.
  *
+ * Added in the port (#774): a diagonal line that no elbow clears takes a path through the
+ * channels between the shapes (`./channels.ts`) instead of going straight through them. Only a
+ * spent work budget leaves it straight.
+ *
  * Changed in the port: it returns plain data (corners and the label stretch; the renderer draws
  * the path, `./path.ts`), lengths come from the metrics table, outlines are `./shapes.ts`'s
  * (rounded corners included), and the path's arrowhead trims are left to the renderer.
  */
 // cspell:ignore kepano
+import { channelPath, type Port, type Taken } from './channels.ts';
 import { C4_METRICS as M } from './metrics.ts';
 import { hit, hitRect, insideAlong, sidesOf, type Outline, type Sides } from './shapes.ts';
 import type { C4RouteKind, Point } from './types.ts';
@@ -289,6 +294,11 @@ export class Lanes {
     return out.length ? out : [want];
   }
 
+  /** The stretches taken so far (`./channels.ts`'s `Taken`). */
+  get stretches(): Taken {
+    return { upright: this.upright, level: this.level };
+  }
+
   claim(box: Outline, side: Side, at: number): void {
     const used = this.taken.get(box);
     if (used) used.push(side, at);
@@ -530,8 +540,9 @@ interface Around {
 
 /**
  * The way round the shapes in the way of the straight line from a to b: a detour for an upright
- * or level line, else an elbow. Undefined when nothing is in the way, when one holds the other,
- * or when no elbow is free.
+ * or level line, else an elbow, else a path through the channels between the shapes. Undefined
+ * when nothing is in the way, when one holds the other, when no path is clear, or once the budget
+ * is spent.
  */
 function around({ a, b, others, lanes, line }: Around): Route | undefined {
   const [sx, sy, ex, ey] = line;
@@ -541,7 +552,7 @@ function around({ a, b, others, lanes, line }: Around): Route | undefined {
   if (contains(a, b) || contains(b, a) || !others.some(inTheWay)) return undefined;
   const upright = sx === ex;
   if (upright || sy === ey) return detour({ a, b, others, lanes, upright, line, inTheWay });
-  return elbow(a, b, others, lanes);
+  return elbow(a, b, others, lanes) ?? channel(a, b, others, lanes);
 }
 
 /** The straight line as a route, its label pushed to the side of `shift`. */
@@ -678,6 +689,94 @@ function detour({ a, b, others, lanes, upright, line, inTheWay }: Detour): Route
   lanes.claim(a, side, p0);
   lanes.claim(b, side, p1);
   return bent(points, 2, upright ? { nx: sign, lean: M.lean, room: M.narrow } : { room: M.wide });
+}
+
+/** Where on `side` of `box` a line towards `to` would leave: a quarter of the way from the middle. */
+function portToward(lanes: Lanes, box: Outline, side: Side, to: Outline): Port & { at: number } {
+  const sideways = side === SIDE.left || side === SIDE.right;
+  const want = sideways
+    ? cy(box) + (Math.sign(cy(to) - cy(box)) * box.height) / 4
+    : cx(box) + (Math.sign(cx(to) - cx(box)) * box.width) / 4;
+  const at = portsOn(lanes, box, side, want)[0]!;
+  if (side === SIDE.left) return { x: box.x, y: at, dx: -1, dy: 0, at };
+  if (side === SIDE.right) return { x: box.x + box.width, y: at, dx: 1, dy: 0, at };
+  if (side === SIDE.top) return { x: at, y: box.y, dx: 0, dy: -1, at };
+  return { x: at, y: box.y + box.height, dx: 0, dy: 1, at };
+}
+
+/**
+ * Each stretch of a path but its first and last moved off the lanes other routes took, a lane
+ * step at a time either way while the path stays clear of the shapes, as a detour's lane moves.
+ */
+function settle(
+  path: number[],
+  others: readonly Outline[],
+  ends: [Outline, Outline],
+  lanes: Lanes
+): number[] {
+  let points = path;
+  for (let i = 2; i + 4 < points.length; i += 2) {
+    const upright = points[i] === points[i + 2];
+    const c = upright ? 0 : 1;
+    const at = points[i + c]!;
+    const [s0, s1] = [points[i + 1 - c]!, points[i + 3 - c]!];
+    if (lanes.free(upright, at, s0, s1)) continue;
+    for (let k = 1; k <= 2 * M.laneTries; k++) {
+      const moved = at + (k & 1 ? 1 : -1) * Math.ceil(k / 2) * M.laneStep;
+      const tried = [...points];
+      tried[i + c] = moved;
+      tried[i + 2 + c] = moved;
+      if (clearOf(tried, others, ends, lanes.work) && lanes.free(upright, moved, s0, s1)) {
+        points = tried;
+        break;
+      }
+    }
+  }
+  return points;
+}
+
+/** The end of the stretch from (px, py) into `box` along `port`'s line, on the box's outline. */
+function onOutline(box: Outline, port: Port, px: number, py: number): [number, number] {
+  const qx = port.dx ? cx(box) : px;
+  const qy = port.dx ? py : cy(box);
+  const t = Math.min(hit(box, { x: px, y: py }, { x: qx, y: qy }), 1);
+  return [px + (qx - px) * t, py + (qy - py) * t];
+}
+
+/**
+ * A path from a to b through the channels between the shapes (`./channels.ts`), for a diagonal
+ * line that no elbow clears (#774). It may leave and reach any side, at the port an elbow would
+ * take there; its stretches move off the lanes other routes took; its label sits on its longest
+ * stretch between two bends. Undefined when no path is clear, or once the budget is spent.
+ */
+function channel(
+  a: Outline,
+  b: Outline,
+  others: readonly Outline[],
+  lanes: Lanes
+): Route | undefined {
+  const sides: Side[] = [SIDE.left, SIDE.right, SIDE.top, SIDE.bottom];
+  const starts = sides.map((side) => portToward(lanes, a, side, b));
+  const ends = sides.map((side) => portToward(lanes, b, side, a));
+  const blocks = [...others, ...[a, b].filter((o) => !others.includes(o))];
+  const found = channelPath({ starts, ends, blocks, taken: lanes.stretches }, lanes.work);
+  if (!found) return undefined;
+  const points = settle(found.points, others, [a, b], lanes);
+  const n = points.length;
+  const start = starts[found.start]!;
+  const end = ends[found.end]!;
+  [points[0], points[1]] = onOutline(a, start, points[2]!, points[3]!);
+  [points[n - 2], points[n - 1]] = onOutline(b, end, points[n - 4]!, points[n - 3]!);
+  if (!clearOf(points, others, [a, b], lanes.work)) return undefined;
+  lanes.take(points);
+  lanes.claim(a, sides[found.start]!, start.at);
+  lanes.claim(b, sides[found.end]!, end.at);
+  // The label's stretch: the longest between two bends, or the longest of all on a path of two.
+  let along = n > 6 ? 2 : 0;
+  const length = (i: number): number =>
+    Math.abs(points[i + 2]! - points[i]!) + Math.abs(points[i + 3]! - points[i + 1]!);
+  for (let i = along; i + (n > 6 ? 6 : 4) <= n; i += 2) if (length(i) > length(along)) along = i;
+  return bent(points, along, { room: points[along] === points[along + 2] ? M.narrow : M.wide });
 }
 
 /** The corners of a route as points. */

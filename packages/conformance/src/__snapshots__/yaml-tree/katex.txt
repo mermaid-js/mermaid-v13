@@ -1,1 +1,4 @@
-4 03bd37582cf54ee0
+e2e/diagrams/katex/pr-check/1-should-render-a-complex-katex-flowchart-no-htmllabels.mmd 1 7415696a35eebc7b
+e2e/diagrams/katex/pr-check/2-should-render-a-katex-flowchart-containing-the-greek-alphabet.mmd 1 e6b033cb568ef4f3
+e2e/diagrams/katex/pr-check/3-should-render-a-katex-flowchart-containing-set-theory-symbols.mmd 1 b12e2cbd2e090453
+e2e/diagrams/katex/pr-check/4-should-render-consecutive-latex-equations-separated-by-text.mmd 1 5e18bf23210ba5d6

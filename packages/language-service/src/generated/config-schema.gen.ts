@@ -4348,7 +4348,8 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin",
           "default": 25,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "diagramPadding": {
@@ -4545,9 +4546,8 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin",
           "default": 25,
           "x-mermaid": {
-            "status": "ignored",
-            "since": "13.0.0",
-            "reason": "The state SVG draws no front-matter `title`, as flowchart's (D122)."
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "arrowMarkerAbsolute": {
@@ -4767,9 +4767,8 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin",
           "default": 25,
           "x-mermaid": {
-            "status": "ignored",
-            "since": "13.0.0",
-            "reason": "The class SVG draws no front-matter `title`, as flowchart's."
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "arrowMarkerAbsolute": {
@@ -6239,7 +6238,8 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin",
           "default": 25,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "subGraphTitleMargin": {

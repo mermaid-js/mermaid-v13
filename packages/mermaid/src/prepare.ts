@@ -9,7 +9,7 @@ import type { Analysis } from './analysis-cache.ts';
 import { sectionOf } from './analyser.ts';
 import type { ParseOptions, ParseResult12, PreloadRequest } from './api-types.ts';
 import { directiveConfig, mergeInto, type Plain, type Snapshot } from './config-snapshot.ts';
-import { loadFor } from './draw-context.ts';
+import { loadFontTables, loadFor } from './draw-context.ts';
 import { outsideBlocks } from './embeds.ts';
 import { toMermaidError } from './errors.ts';
 import type { Session } from './session.ts';
@@ -55,7 +55,7 @@ export async function prepareWith(
   await (
     await k.blocks.load(analysis)
   )?.prepare({ root: text, at: 0, a: analysis, s }, ascii ? 'ascii' : 'svg');
-  await loadFor(k, analysis, ascii);
+  await Promise.all([loadFor(k, analysis, ascii), ascii || loadFontTables(k, s)]);
   return analysis;
 }
 
@@ -137,6 +137,7 @@ export async function preload(k: Session, req: PreloadRequest): Promise<void> {
   // Extensions' resources by kind: `math: true` loads what a math extension provides (D178).
   if (req.math) for (const n of k.hooks.provided('math')) tasks.push(n.load());
   for (const name of req.iconPacks ?? []) tasks.push(k.iconPacks.load(name));
+  tasks.push(loadFontTables(k, k.site));
   try {
     await Promise.all(tasks);
   } catch (e) {

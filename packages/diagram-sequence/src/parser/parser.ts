@@ -207,6 +207,8 @@ class SequenceParser extends TokenRules {
     this.header();
     this.document();
     const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
+    // D218, D652: the front-matter title where the in-text `title` goes, when the text has none.
+    if (!db.title && this.pre.frontMatter?.title) db.title = this.pre.frontMatter.title;
     const model = db.model(warnings);
     const ast: SequenceDocument = {
       id: 'doc',

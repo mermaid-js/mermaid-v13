@@ -144,4 +144,15 @@ describe('keptTokens', () => {
     const view = sourceView(crlf, 0, []);
     expect(keptTokens(t, NO_KINDS, cooked(crlf, t, view))[0]?.text).toBe('a\nb');
   });
+
+  it('ends with the final EOF when `eof` is set', () => {
+    const out = keptTokens(s, TRIVIA, raw, { eof: true });
+    expect(out.map((t) => t.kind)).toEqual([WORD, Kind.Newline, WORD, Kind.EOF]);
+    expect(out.at(-1)).toEqual({ kind: Kind.EOF, text: '', range: { start: 10, end: 10 } });
+  });
+
+  it('also leaves out the tokens `keep` rejects', () => {
+    const out = keptTokens(s, NO_KINDS, raw, { keep: (j) => j !== 2 && j !== 5 });
+    expect(out.map((t) => t.text)).toEqual(['a', ' ', '\n', '  ']);
+  });
 });

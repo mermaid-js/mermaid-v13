@@ -29,9 +29,8 @@ export function ticksOf(
   weekday: string
 ): TickSet {
   const auto = (): number[] => {
-    // d3 has no ticks for a one-instant domain (its tick step is infinite), and gives a
-    // reversed domain (a start after every end) its ticks in reverse.
-    if (start === end) return [];
+    // d3 gives a one-instant domain a 1 ms step, so its one tick is the instant (v12 draws it),
+    // and a reversed domain (a start after every end) its ticks in reverse.
     if (start > end) return autoTicks(end, start, env.m.tickCount).reverse();
     return autoTicks(start, end, env.m.tickCount);
   };

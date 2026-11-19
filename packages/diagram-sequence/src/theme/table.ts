@@ -26,6 +26,13 @@ const CLASSIC = {
 };
 
 /**
+ * v12 theme-neo.js, theme-redux.js and theme-redux-color.js fill a colourless `rect` with the
+ * background darkened 4 (khroma, HSL lightness); their dark themes keep theme-base's
+ * `tertiaryColor`.
+ */
+const REDUX_RECT = 'darkenHsl(background, 4%)';
+
+/**
  * Sequence's theme table (`DiagramPlugin.theme`, D331, spec #414 T2): its participant, message
  * and fragment colours, and its geometry by family.
  */
@@ -49,13 +56,23 @@ export const theme: DiagramThemeTable = {
       activationBorderColor: 'inline(mutedBorder)',
       // Drawn in a circle filled with `lineColor`.
       sequenceNumberColor: 'inline(lineTextColor)',
+      // A `rect` block with no colour (v12 theme-base and the classic themes).
+      rectBkgColor: 'tertiaryColor',
     },
   },
   families: {
     classic: { tokens: CLASSIC },
     // v12 theme-redux-dark*.js draw messages in white, their text in the text ink.
-    redux: { tokens: NEO, dark: { values: { signalColor: '#ffffff' } } },
+    redux: {
+      tokens: NEO,
+      rules: { rectBkgColor: REDUX_RECT },
+      dark: { rules: { rectBkgColor: 'tertiaryColor' }, values: { signalColor: '#ffffff' } },
+    },
     // The redux geometry, without redux's dark message colour.
-    neo: { tokens: NEO },
+    neo: {
+      tokens: NEO,
+      rules: { rectBkgColor: REDUX_RECT },
+      dark: { rules: { rectBkgColor: 'tertiaryColor' } },
+    },
   },
 };

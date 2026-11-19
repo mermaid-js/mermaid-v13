@@ -11,7 +11,7 @@ import { code, inside, plural, span } from '@mermaid-js/shared/parser/facet';
 import type { C4BetaDocument, C4BetaStyleNode } from '../beta/ast.ts';
 import type { C4BetaElement, C4BetaModel } from '../beta/model.ts';
 import { VALUE_WORDS } from '../beta/probe.ts';
-import { ID_KINDS, T } from '../beta/tokens.ts';
+import { ID_KINDS, BETA } from '../beta/tokens.ts';
 import { c4betaDocs } from '../generated/c4beta.docs.ts';
 import { short } from './hover.ts';
 import { DIAGRAM_KIND_DOCS, ELEMENT_INFO, STYLE_KEY_DOCS } from './beta-tables.ts';
@@ -93,7 +93,7 @@ function keywordRange(text: string, t: { kind: number; range: Range }): Range {
 function keywordDoc(doc: DocumentView<C4BetaDocument>, kind: number, range: Range) {
   const header = doc.result.ast.children.find((n) => n.type === 'Header');
   const afterHeader =
-    header !== undefined && kind !== T.Header && inside(range.start, header.range);
+    header !== undefined && kind !== BETA.Header && inside(range.start, header.range);
   const written = doc.text.slice(range.start, range.end);
   if (afterHeader && DIAGRAM_KIND_DOCS[written] !== undefined) return DIAGRAM_KIND_DOCS[written];
   return ELEMENT_INFO.find((i) => i.token === kind)?.doc ?? c4betaDocs[kind];
@@ -113,7 +113,7 @@ export function c4betaHover(at: HoverTarget, doc: DocumentView<C4BetaDocument>):
   const { symbol, token } = at;
   if (symbol?.kind === 'element' && inside(at.offset, symbol.range))
     return idHover(doc, symbol.range, symbol.name);
-  if (token?.kind === T.Tag) {
+  if (token?.kind === BETA.Tag) {
     const name = doc.text.slice(token.range.start + 3, token.range.end);
     return {
       range: token.range,

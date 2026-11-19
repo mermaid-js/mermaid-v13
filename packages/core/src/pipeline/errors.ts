@@ -21,7 +21,9 @@ export type Resource =
   | { readonly kind: 'layout'; readonly name: string }
   | { readonly kind: 'theme'; readonly name: string }
   | { readonly kind: 'iconPack'; readonly name: string }
-  | { readonly kind: 'math'; readonly name: string };
+  | { readonly kind: 'math'; readonly name: string }
+  /** The integrator's `fontTables` (D645), named by their families. */
+  | { readonly kind: 'fontTables'; readonly name: string };
 
 export interface MermaidErrorInit {
   /** Offset and length in the original source; 0 when the error has no position. */

@@ -3323,7 +3323,7 @@ $defs:
       titleTopMargin:
         $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
         default: 25
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       diagramPadding:
         description: |
           The amount of padding around the diagram as a whole so that embedded
@@ -3495,10 +3495,7 @@ $defs:
       titleTopMargin:
         $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
         default: 25
-        x-mermaid:
-          status: ignored
-          since: 13.0.0
-          reason: The state SVG draws no front-matter `title`, as flowchart's (D122).
+        x-mermaid: { status: honoured, since: 13.0.0 }
       arrowMarkerAbsolute:
         # TODO: use $ref: '#/properties/arrowMarkerAbsolute' to copy main setting
         type: boolean
@@ -3719,10 +3716,7 @@ $defs:
       titleTopMargin:
         $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
         default: 25
-        x-mermaid:
-          status: ignored
-          since: 13.0.0
-          reason: The class SVG draws no front-matter `title`, as flowchart's.
+        x-mermaid: { status: honoured, since: 13.0.0 }
       # YAML anchor reference, don't use $ref since ajv doesn't load defaults
       arrowMarkerAbsolute: *arrowMarkerAbsolute
       dividerMargin:
@@ -5009,7 +5003,7 @@ $defs:
       titleTopMargin:
         $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
         default: 25
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       subGraphTitleMargin:
         description: |
           Defines a top/bottom margin for subgraph titles

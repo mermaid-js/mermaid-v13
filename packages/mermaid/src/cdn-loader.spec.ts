@@ -155,6 +155,19 @@ describe('mermaid.min.js', () => {
     expect(g.mermaid).not.toBe(stub);
   });
 
+  it('defers v12 init() as an async call and copies startOnLoad = false (#764, D643)', async () => {
+    const { stub, calls, settled } = await load((d) => `${d}/dist/mermaid.min.js`);
+    expect(stub.startOnLoad).toBe(true);
+    expect(() => (stub.getRegisteredDiagramsMetadata as () => unknown)()).toThrow(/module loaded/);
+    stub.startOnLoad = false;
+    const done = (stub.init as (c: unknown) => Promise<unknown>)({ theme: 'dark' });
+    expect(done).toBeInstanceOf(Promise);
+    await done;
+    await settled();
+    expect(calls).toEqual([['init', { theme: 'dark' }]]);
+    expect(g.mermaid!.startOnLoad).toBe(false);
+  });
+
   it('finds the ESM file under dist/ for a bare package URL (unpkg, jsDelivr)', async () => {
     const { stub } = await load((d) => `${d}?v=13`);
     expect(await stub.render('bare')).toBe('svg:bare');

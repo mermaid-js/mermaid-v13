@@ -28,7 +28,8 @@ import {
   segmentHitsAnyRect,
   simplifyPolyline,
 } from './geometry.ts';
-import type { OrthogonalSegment, Point, RectBounds, RectSide } from './geometry.ts';
+import type { Point } from '../../types.ts';
+import type { OrthogonalSegment, RectBounds, RectSide } from './geometry.ts';
 import type { Edge, Node } from '../layoutData.ts';
 import {
   buildRectHitIndex,

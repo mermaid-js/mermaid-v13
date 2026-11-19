@@ -35,7 +35,7 @@ export function paints(theme: Theme, slots: Iterable<number>, title: boolean): P
     stroke: theme.color('pieStrokeColor'),
     outerStroke: theme.color('pieOuterStrokeColor'),
     opacity: theme.number('pieOpacity'),
-    title: title ? theme.color('pieTitleTextColor') : ('currentColor' as Paint),
+    title: title ? theme.color('pieTitleTextColor') : 'currentColor',
     section: theme.color('pieSectionTextColor'),
     legend: theme.color('pieLegendTextColor'),
   };

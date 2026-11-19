@@ -69,18 +69,12 @@ const textOf = (l: PlacedLabel): string =>
 const bottom = (r: Rect): number => r.y + r.height;
 
 /**
- * Relations that cross an element on the e2e fixtures (the spec allows listed exceptions): in
- * the large diagram, a line between boundaries finds no free elbow of two bends (Pele's router
- * tries none with more) and goes straight.
+ * Relations that cross an element on the e2e fixtures (the spec allows listed exceptions): none.
+ * The large diagram's lines between boundaries, which no elbow of two bends clears, once went
+ * straight through the shapes in their way; they take a path through the channels between the
+ * shapes now (#774).
  */
-const CROSSING_EXCEPTIONS = [
-  'nightly-check/large-diagram: c1_0 -> c2_0 crosses c0_7',
-  'nightly-check/large-diagram: c3_0 -> c4_0 crosses c2_7',
-  'nightly-check/large-diagram: c5_0 -> c0_0 crosses c0_5',
-  'nightly-check/large-diagram: c5_0 -> c0_0 crosses c0_9',
-  'nightly-check/large-diagram: c5_0 -> c0_0 crosses c2_2',
-  'nightly-check/large-diagram: c5_0 -> c0_0 crosses c2_7',
-];
+const CROSSING_EXCEPTIONS: string[] = [];
 
 /**
  * Labels with no clear spot on the e2e fixtures, each over another relation's line, as it was
@@ -482,6 +476,44 @@ describe('c4 relations (D455)', () => {
     const r = rel(layout, 'a', 'c');
     expect(r.route).toBe('bent');
     expect(c4RelationCrossings(layout)).toEqual([]);
+  });
+
+  describe('a diagonal that no elbow of two bends clears (#774)', () => {
+    /** The stretches of a relation, each as its two ends. */
+    const stretches = (r: C4RelationLayout): [Point, Point][] =>
+      r.points.slice(1).map((q, k) => [r.points[k]!, q]);
+
+    it.each([
+      ['a1', 'c3'],
+      ['a3', 'c1'],
+    ])('goes round B2 from %s to %s, upright and level, its ends on both outlines', (from, to) => {
+      const { model, config } = fixture('nightly-check/relationships/blocked-diagonal-relations');
+      const layout = layoutC4(model, c4TestContext(config, theme));
+      expect(c4LayoutViolations(model, layout)).toEqual([]);
+      const r = rel(layout, from, to);
+      expect(r.route).toBe('bent');
+      for (const [p, q] of stretches(r)) expect(p.x === q.x || p.y === q.y).toBe(true);
+      expect(c4RelationCrossings(layout)).toEqual([]);
+      // a2 -> c2, upright past B2, keeps its detour: one lane beside B2.
+      expect(rel(layout, 'a2', 'c2').points).toHaveLength(4);
+    });
+
+    it('takes the large diagram’s c5_0 -> c0_0 past c0_5 and c0_9, not through them', () => {
+      const { model, config } = fixture('nightly-check/large-diagram');
+      const layout = layoutC4(model, c4TestContext(config, theme));
+      expect(layout.careful).toBe(true);
+      expect(rel(layout, 'c5_0', 'c0_0').route).toBe('bent');
+      expect(c4RelationCrossings(layout).filter((c) => c.startsWith('c5_0 -> c0_0'))).toEqual([]);
+    });
+
+    it('goes straight only once the work budget is spent (R-SEC-5)', () => {
+      const { model, config } = fixture('nightly-check/relationships/blocked-diagonal-relations');
+      const ctx = c4TestContext(config, theme);
+      const tight = layoutC4(model, { ...ctx, limits: { ...DEFAULT_LIMITS, maxLayoutWork: 1 } });
+      expect(tight.careful).toBe(false);
+      expect(rel(tight, 'a1', 'c3').route).toBe('line');
+      expect(c4LayoutViolations(model, tight)).toEqual([]);
+    });
   });
 
   it('draws arrowheads as v12: Rel_Back at the start only, BiRel at both', () => {

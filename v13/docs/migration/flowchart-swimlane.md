@@ -60,7 +60,8 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   off everywhere, swimlane included, and an author's `swimlane.lineHops` beats the top-level
   key under this engine. Crossings are found on straight runs only, as in v12: a rounded corner
   or a smoothed curve is never hopped, and unlike v12 the corners of an edge that hops keep
-  their rounding.
+  their rounding. Also unlike v12, crossings on one run too close for a hop each (closer than
+  about 7px) share one merged hop, as tall as the others, where v12 drew none (D650, #793).
 - **Layout differences from v12's engine** (D532: the engine is v12's, ported; these are the
   places it differs):
   - An empty lane, or one a shared node left empty, gets a band of its own (its title's width

@@ -26,7 +26,7 @@ Until wave 3, every port edited the same ~60 shared files: package lists, table 
 | jison / Langium lexer / v12 harvest rows | `packages/conformance/src/<type>/tables.ts`, `export const jison \| langium \| harvest = { <name>: … }` | `src/tables.ts` (was `JISON_TYPES`, `LANGIUM_LEXERS`, `HARVESTS`, and the smoke spec's list) |
 | Divergences | `packages/conformance/divergences/<type>.json` | `loadDivergences(DIVERGENCES_DIR)` (was `divergences.json`) |
 | Outline (hand-drawn hook) cases | `packages/conformance/src/<type>/outline.ts`, `export const outline` | outline specs |
-| YAML front-matter digests | written by `CI= vitest run packages/conformance/src/yaml-tree.spec.ts` to `src/__snapshots__/yaml-tree/<folder>.txt` | yaml-tree spec |
+| YAML front-matter digests | one line per fixture, written by `pnpm vitest run packages/conformance/src/yaml-tree.spec.ts -u` to `src/__snapshots__/yaml-tree/<folder>.txt`; a new fixture passes unpinned until then | yaml-tree spec |
 | Hand-drawn: sketched or not | `e2e/diagrams/<folder>/hand-drawn.txt`, first line `sketched` or `unsketched` | hand-drawn and dev specs (was `TYPES`, `UNSKETCHED`, the dev adapter's list) |
 | A test only your type needs in a shared spec | its own spec file, e.g. `packages/plugin-hand-drawn/src/<type>.spec.ts` | vitest |
 | Editor first-paint sample, adapters-agree document | `packages/diagram-<type>/grammar/<type>.sample.mmd`, `<type>.agree.mmd`, then `vitest run packages/language-service-codemirror -u` (writes `src/__highlights__/<id>.txt`) | highlighter, adapters-agree and e2e language specs (were `DOCS` / `TYPE_DOCS`) |
@@ -60,7 +60,7 @@ It stays out of everything that registers or publishes a diagram until the manif
    - Lines in shared specs (type lists, `TYPE_DOCS`, per-type `it`s): drop the list lines; samples → `grammar/<type>.sample.mmd` / `.agree.mmd`; a type-only `it` → your own spec file; your `goldens/<id>/completions/empty.*` → delete.
    - Hand-drawn: add `e2e/diagrams/<folder>/hand-drawn.txt`.
 3. Not at T5 yet? Make sure your package has a `workspace.yaml` (see above), or `pnpm regen` drops your conformance dependency.
-4. Run `pnpm regen`, then `CI= vitest run packages/conformance/src/yaml-tree.spec.ts` and `vitest run packages/language-service-codemirror -u`, and review what they wrote.
+4. Run `pnpm regen`, then `pnpm vitest run packages/conformance/src/yaml-tree.spec.ts -u` and `vitest run packages/language-service-codemirror -u`, and review what they wrote.
 5. Run your scoped checks, then `pnpm check`.
 
 Per in-flight port:

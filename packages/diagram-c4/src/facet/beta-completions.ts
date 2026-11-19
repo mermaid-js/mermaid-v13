@@ -24,27 +24,33 @@ import type {
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { Kind } from '@mermaid-js/core/parser-kit';
-import { matchesTyped, span, tokenBefore } from '@mermaid-js/shared/parser/facet';
+import {
+  insertWithSeparator,
+  matchesTyped,
+  span,
+  tokenBefore,
+  wordRangeOf,
+} from '@mermaid-js/shared/parser/facet';
 import type { C4BetaDocument } from '../beta/ast.ts';
 import type { C4BetaModel } from '../beta/model.ts';
-import { C4BETA_TRIVIA, T } from '../beta/tokens.ts';
+import { C4BETA_TRIVIA, BETA } from '../beta/tokens.ts';
 import { c4betaDocs } from '../generated/c4beta.docs.ts';
 import { DIAGRAM_KIND_DOCS, ELEMENT_INFO, STYLE_KEY_DOCS, STYLE_KEYS } from './beta-tables.ts';
 
 const ARROWS: readonly (readonly [label: string, kind: number, detail: string])[] = [
-  ['-->', T.ArrowRight, 'from the first to the second'],
-  ['<--', T.ArrowLeft, 'from the second to the first'],
-  ['<-->', T.ArrowBoth, 'both ways'],
-  ['---', T.ArrowUndirected, 'no arrowhead'],
+  ['-->', BETA.ArrowRight, 'from the first to the second'],
+  ['<--', BETA.ArrowLeft, 'from the second to the first'],
+  ['<-->', BETA.ArrowBoth, 'both ways'],
+  ['---', BETA.ArrowUndirected, 'no arrowhead'],
 ];
 /** The statement words, in the order offered: the token kind of each, and its separator. */
 const STATEMENTS: readonly (readonly [label: string, kind: number, separator: string])[] = [
-  ['title', T.Title, ' '],
-  ['accTitle', T.AccTitle, ': '],
-  ['accDescr', T.AccDescr, ': '],
-  ['direction', T.Direction, ' '],
-  ['legend', T.Legend, ' '],
-  ['style', T.Style, ' '],
+  ['title', BETA.Title, ' '],
+  ['accTitle', BETA.AccTitle, ': '],
+  ['accDescr', BETA.AccDescr, ': '],
+  ['direction', BETA.Direction, ' '],
+  ['legend', BETA.Legend, ' '],
+  ['style', BETA.Style, ' '],
 ];
 const DIRECTIONS = ['TB', 'BT', 'LR', 'RL'] as const;
 const ON_OFF = ['on', 'off'] as const;
@@ -52,18 +58,11 @@ const DIAGRAM_KINDS = ['context', 'container', 'component', 'dynamic', 'deployme
 const ARROW_KINDS: ReadonlySet<number> = new Set(ARROWS.map(([, kind]) => kind));
 
 /** What a statement word inserts: its separator, unless a blank or a `:` follows already. */
-function statementText(label: string, separator: string, after: string): string {
-  if (separator === ' ') return /^[\t ]/.test(after) ? label : `${label} `;
-  if (/^[\t ]*[:{]/.test(after)) return label;
-  return /^[\t ]/.test(after) ? `${label}:` : `${label}: `;
-}
+const statementText = (label: string, separator: string, after: string): string =>
+  insertWithSeparator(label, separator, after, separator === ' ' ? /^[\t ]/ : /^[\t ]*[:{]/);
 
-/** The probed word's range: the prefix, plus the rest of the word after the cursor. */
-function wordRange(text: string, probe: ProbeResult): Range {
-  // A word stops at the first blank, quote, comma, brace or `:` after the cursor.
-  const rest = /^[^\s"',{}:]*/.exec(text.slice(probe.offset))?.[0].length ?? 0;
-  return span(probe.prefix.start, probe.offset + rest);
-}
+/** A character of a word: a word stops at the first blank, quote, comma, brace or `:`. */
+const WORD = /[^\s"',{}:]/;
 
 /** A significant token before the cursor on its line. */
 interface Before {
@@ -89,7 +88,7 @@ function tagTokens(text: string, tokens: TokenStream, offset: number): string[] 
   for (let j = 0; j < tokens.length; j++) {
     const start = tokens.start[j] ?? 0;
     const end = tokens.end[j] ?? 0;
-    if (tokens.kind[j] === T.Tag && !(start <= offset && offset <= end))
+    if (tokens.kind[j] === BETA.Tag && !(start <= offset && offset <= end))
       out.push(text.slice(start + 3, end));
   }
   return out;
@@ -168,12 +167,12 @@ function lineStart({ items, expected, model }: Slot) {
     if (expected.has(info.token))
       items.word(info.kind, { detail: info.line, documentation: info.doc });
   }
-  if (!expected.has(T.Title)) return;
+  if (!expected.has(BETA.Title)) return;
   for (const [label, kind, separator] of STATEMENTS) {
     const insertText = statementText(label, separator, items.after);
     items.add(label, 'keyword', { insertText, ...docOf(kind) });
   }
-  if (expected.has(T.Id)) items.ids(model);
+  if (expected.has(BETA.Id)) items.ids(model);
 }
 
 function arrows({ items }: Slot) {
@@ -212,8 +211,8 @@ function styleKeys({ items }: Slot) {
 /** In a `style` line: a target, a key, or a value of the key before the colon. */
 function styleSlot(slot: Slot, tags: readonly string[]) {
   const [one, two] = slot.before;
-  if (one?.kind === T.Style) styleTargets(slot, tags);
-  else if (one?.kind === T.Colon && two !== undefined) styleValues(slot, two.range);
+  if (one?.kind === BETA.Style) styleTargets(slot, tags);
+  else if (one?.kind === BETA.Colon && two !== undefined) styleValues(slot, two.range);
   else styleKeys(slot);
 }
 
@@ -221,19 +220,19 @@ function styleSlot(slot: Slot, tags: readonly string[]) {
 function idSlot(slot: Slot) {
   const { before, items, model, doc } = slot;
   const [one, two] = before;
-  if (before[before.length - 1]?.kind === T.Style) styleSlot(slot, tagsIn(doc, items.offset));
-  else if (one !== undefined && (ARROW_KINDS.has(one.kind) || two?.kind === T.Step))
+  if (before[before.length - 1]?.kind === BETA.Style) styleSlot(slot, tagsIn(doc, items.offset));
+  else if (one !== undefined && (ARROW_KINDS.has(one.kind) || two?.kind === BETA.Step))
     items.ids(model);
 }
 
 /** The place the parser expects each kind at: the first listed kind it expects decides. */
 const SLOTS: readonly (readonly [kind: number, fill: (slot: Slot) => void])[] = [
-  [T.Context, diagramKinds],
-  [T.Person, lineStart],
-  [T.ArrowRight, arrows],
-  [T.Tb, directions],
-  [T.On, onOff],
-  [T.Id, idSlot],
+  [BETA.Context, diagramKinds],
+  [BETA.Person, lineStart],
+  [BETA.ArrowRight, arrows],
+  [BETA.Tb, directions],
+  [BETA.On, onOff],
+  [BETA.Id, idSlot],
 ];
 
 export function c4betaCompletions(
@@ -243,17 +242,17 @@ export function c4betaCompletions(
   if (probe.mode !== 'INITIAL' || !doc.result.tokens) return [];
   const { text, result } = doc;
   const expected = new Set(probe.expected);
-  const range = wordRange(text, probe);
+  const range = wordRangeOf(text, probe, WORD);
   const typed = text.slice(range.start, probe.offset);
   const items = new Items(range, typed, text.slice(range.end), probe.offset);
   const before = tokensBefore(doc.result.tokens, range.start);
   const slot: Slot = { items, expected, doc, model: result.model as C4BetaModel, before };
-  if (expected.has(T.Header)) items.word('c4-beta', docOf(T.Header));
+  if (expected.has(BETA.Header)) items.word('c4-beta', docOf(BETA.Header));
   SLOTS.find(([kind]) => expected.has(kind))?.[1](slot);
   // Words that end a line's fields, wherever the line is.
-  if (expected.has(T.Instances) && before[before.length - 1]?.kind === T.DeploymentNode)
-    items.word('instances', docOf(T.Instances));
-  if (expected.has(T.Tag))
+  if (expected.has(BETA.Instances) && before[before.length - 1]?.kind === BETA.DeploymentNode)
+    items.word('instances', docOf(BETA.Instances));
+  if (expected.has(BETA.Tag))
     for (const tag of tagsIn(doc, probe.offset)) items.add(`:::${tag}`, 'class', { detail: 'tag' });
   return items.out;
 }

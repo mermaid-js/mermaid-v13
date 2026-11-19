@@ -10,8 +10,6 @@
  */
 import type { Point } from './outline.ts';
 
-export type { Point } from './outline.ts';
-
 /** A direction as v12's grammar takes it (`DIR`), trimmed (D445). */
 export type ArrowDirection = 'right' | 'left' | 'up' | 'down' | 'x' | 'y';
 
