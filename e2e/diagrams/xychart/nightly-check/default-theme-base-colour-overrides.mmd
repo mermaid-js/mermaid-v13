@@ -1,0 +1,23 @@
+---
+config:
+  theme: default
+  themeVariables:
+    primaryColor: '#ffcc00'
+    primaryTextColor: '#003366'
+    lineColor: '#008800'
+    secondaryColor: '#99ccff'
+    tertiaryColor: '#ffe6f0'
+    background: '#fff2cc'
+  xyChart:
+    showDataLabel: true
+description: >-
+  baseline/themes/default.mmd, the representative XY chart, under base-colour overrides in
+  the default theme (#1035, D656): the background, text and axis colours keep v12 default's own colours, as in v12
+---
+xychart
+  title "Monthly sales"
+  x-axis Month [jan, feb, mar, apr, may, jun]
+  y-axis "Revenue (k$)" 0 --> 120
+  bar Online [42, 55, 61, 78, 90, 104]
+  bar Store [30, 38, 35, 44, 52, 49]
+  line Target [40, 50, 60, 70, 80, 90]
