@@ -22,14 +22,18 @@ import type {
   ProbeResult,
   Range,
 } from '@mermaid-js/core/parser-kit';
-import { matchesTyped } from '@mermaid-js/shared/parser/facet';
+import {
+  insertWithSeparator,
+  lineBefore,
+  matchesTyped,
+  span,
+} from '@mermaid-js/shared/parser/facet';
 import { c4Docs } from '../generated/docs.ts';
 import type { C4Document, C4StatementNode } from '../parser/ast.ts';
 import { HEADERS, KEYWORDS, T } from '../parser/tokens.ts';
 import { callAt } from './args.ts';
 import type { CallAt, WrittenArg } from './args.ts';
 import { SLOT_TABLES } from '../parser/slots.ts';
-import { lineBefore, span } from './markdown.ts';
 import { signature } from './tables.ts';
 
 const BLANK = /^[\t ]*$/;
@@ -56,8 +60,7 @@ const POSITIONAL = new Set(['label', 'index']);
  */
 function statementText(label: string, separator: string, after: string): string {
   if (separator === ' ') return /^[^\t \n\r]/.test(after) ? `${label} ` : label;
-  if (/^[\t ]*[:{]/.test(after)) return label;
-  return /^[\t ]/.test(after) ? label + separator.trimEnd() : label + separator;
+  return insertWithSeparator(label, separator, after, /^[\t ]*[:{]/);
 }
 
 /**
