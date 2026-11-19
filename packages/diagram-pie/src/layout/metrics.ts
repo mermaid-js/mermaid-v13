@@ -9,7 +9,7 @@
 const HEIGHT = 450;
 const MARGIN = 40;
 const LEGEND_RECT_SIZE = 18;
-const LEGEND_SPACING = 4;
+const LEGEND_SPACING = 5;
 /** v12 draws the title `50` px short of half the height above the centre (:143-148). */
 const TITLE_GAP = 50;
 /** The right-hand legend sits `12` swatches right of the centre (:240-247). */
