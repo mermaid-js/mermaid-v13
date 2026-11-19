@@ -11,7 +11,7 @@
 
 import { eventmodeling } from '@mermaid-js/diagram-eventmodeling';
 import { describe } from 'vitest';
-import { describeDiagramOverrides, keys, type ReferenceTable } from '../override-matrix.ts';
+import { describeDiagramOverrides, type ReferenceTable } from '../override-matrix.ts';
 
 /** v12 12.2.0's eventmodeling colours: `capture-theme-overrides.ts eventmodeling`. */
 const V12: ReferenceTable = {
@@ -129,17 +129,7 @@ const V12: ReferenceTable = {
  * Each difference from v12, keyed `theme / override / variable`, grouped by the decision that
  * accounts for it, or by the ticket of spec #1035 that deletes it (D654).
  */
-const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
-  "#1035 T3 (#1040): eventmodeling's variables do not respond to an override as v12's do (D656); T3 deletes this group":
-    [
-      ...keys(
-        'default',
-        ['lineColor:light', 'lineColor:dark'],
-        ['emRelationStroke', 'emArrowhead']
-      ),
-      ...keys('dark', ['lineColor:light', 'lineColor:dark'], ['emRelationStroke', 'emArrowhead']),
-    ],
-};
+const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {};
 
 /**
  * The variables that differ from v12 with no override, which the type's no-override spec

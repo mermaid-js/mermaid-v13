@@ -9,10 +9,11 @@ export const theme: DiagramThemeTable = {
   vars: THEME_VARIABLE_TABLE,
   // v12 theme-base.js. The classic themes write the nested body differently from one another
   // (default `#f0f0f0`, neutral `#f4f4f4`, base `tertiaryColor`), so it reads the shared input
-  // as each theme wrote it (`inline()`, D332), byte for byte.
+  // as each theme wrote it (`inline()`, D332), byte for byte. The composite body is the canvas
+  // fill, which `default` pins where v12 keeps `#ffffff` under a `background` override (D656).
   rules: {
     light: {
-      compositeBackground: 'background',
+      compositeBackground: 'canvasBkg',
       compositeTitleBackground: 'mainBkg',
       altBackground: 'inline(nestedBkg)',
       stateLabelColor: 'nodeTextColor',

@@ -61,7 +61,12 @@ export const theme: DiagramThemeTable = {
     },
   },
   families: {
-    classic: { tokens: CLASSIC },
+    // v12 theme-dark.js fills an activation with `secondBkg`, `lighten(mainBkg, 16)`, so it
+    // follows an author's `mainBkg` and not `secondaryColor` (D656), as `dark`'s notes do.
+    classic: {
+      tokens: CLASSIC,
+      dark: { rules: { activationBkgColor: 'lightenHsl(mainBkg, 16%)' } },
+    },
     // v12 theme-redux-dark*.js draw messages in white, their text in the text ink.
     redux: {
       tokens: NEO,

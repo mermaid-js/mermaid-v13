@@ -123,21 +123,27 @@ const V12: ReferenceTable = {
  * accounts for it, or by the ticket of spec #1035 that deletes it (D654).
  */
 const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
-  "#1035 T3 (#1040): requirement's variables do not respond to an override as v12's do (D656); T3 deletes this group":
+  "D435: the box fill and text are what v12 draws (mainBkg, nodeTextColor else textColor), not v12's requirementBackground and requirementTextColor, which its selectors never apply; the render follows the overrides v12's render follows":
     [
       ...keys('default', ['mainBkg:light', 'mainBkg:dark'], ['requirementBackground']),
-      ...keys('default', ['lineColor:light', 'lineColor:dark'], ['relationColor']),
-      ...keys('default', ['background:light', 'background:dark'], ['relationLabelBackground']),
-      ...keys(
-        'dark',
-        ['primaryColor:light', 'primaryColor:dark', 'mainBkg:light', 'mainBkg:dark'],
-        ['requirementBackground']
-      ),
-      ...keys('dark', ['lineColor:light', 'lineColor:dark'], ['relationColor']),
-      ...keys(
-        'dark',
-        ['primaryTextColor:light', 'primaryTextColor:dark'],
-        ['requirementTextColor']
+      ...(['dark', 'forest', 'neutral'] as const).flatMap((theme) => [
+        ...keys(
+          theme,
+          ['primaryColor:light', 'primaryColor:dark', 'mainBkg:light', 'mainBkg:dark'],
+          ['requirementBackground']
+        ),
+        ...keys(
+          theme,
+          ['primaryTextColor:light', 'primaryTextColor:dark'],
+          ['requirementTextColor']
+        ),
+      ]),
+      ...keys('base', ['mainBkg:light', 'mainBkg:dark'], ['requirementBackground']),
+    ],
+  "D628: the relation label's fill is the theme background in every theme, so it follows an author's background, where v12's label fill kept its own value or followed secondaryColor":
+    [
+      ...(['default', 'forest', 'neutral'] as const).flatMap((theme) =>
+        keys(theme, ['background:light', 'background:dark'], ['relationLabelBackground'])
       ),
       ...keys(
         'dark',
@@ -150,29 +156,6 @@ const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
         ],
         ['relationLabelBackground']
       ),
-      ...keys(
-        'forest',
-        ['primaryColor:light', 'primaryColor:dark', 'mainBkg:light', 'mainBkg:dark'],
-        ['requirementBackground']
-      ),
-      ...keys(
-        'forest',
-        ['primaryTextColor:light', 'primaryTextColor:dark'],
-        ['requirementTextColor']
-      ),
-      ...keys('forest', ['background:light', 'background:dark'], ['relationLabelBackground']),
-      ...keys(
-        'neutral',
-        ['primaryColor:light', 'primaryColor:dark', 'mainBkg:light', 'mainBkg:dark'],
-        ['requirementBackground']
-      ),
-      ...keys('neutral', ['background:light', 'background:dark'], ['relationLabelBackground']),
-      ...keys(
-        'neutral',
-        ['primaryTextColor:light', 'primaryTextColor:dark'],
-        ['requirementTextColor']
-      ),
-      ...keys('base', ['mainBkg:light', 'mainBkg:dark'], ['requirementBackground']),
       ...keys(
         'base',
         [

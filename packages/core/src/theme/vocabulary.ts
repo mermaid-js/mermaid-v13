@@ -235,15 +235,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   primaryColor: def('p', 'color', ['core', 'quadrant', 'gitgraph', 'gantt', 'venn']),
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core', 'gantt']),
-  background: def('bg', 'color', [
-    'core',
-    'state',
-    'packet',
-    'kanban',
-    'wardley',
-    'xychart',
-    'venn',
-  ]),
+  background: def('bg', 'color', ['core', 'packet', 'kanban', 'wardley', 'xychart', 'venn']),
   primaryTextColor: def('pt', 'color', [
     'core',
     'class',
@@ -447,8 +439,8 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   // it. Where v12 keeps a theme's constructor value under an override of the base colour, the
   // theme pins it in `values`, as D570 pinned `mainBkg`; elsewhere, and in `base`, each is its
   // base colour. v13 names; v12 has none.
-  canvasBkg: def('cvb', 'color', []),
-  canvasLineColor: def('cvl', 'color', []),
+  canvasBkg: def('cvb', 'color', ['state']),
+  canvasLineColor: def('cvl', 'color', ['requirement', 'eventmodeling']),
   canvasTextColor: def('cvt', 'color', []),
   canvasItemBkg: def('cvi', 'color', []),
   // The band behind a chart's rows and the lines that guide the eye over it (a marker, an
