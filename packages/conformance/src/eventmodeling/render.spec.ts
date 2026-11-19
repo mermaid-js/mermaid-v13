@@ -337,14 +337,18 @@ describe('event modeling render: what is drawn', () => {
     expect(weightOf(tree, tree.children(box)[1]!)).toBe('bold');
   });
 
-  it('draws relations as one line, a self relation as a loop, the inferred one without data-ast', async () => {
+  it('draws relations as one line, a self relation and one under its row in three, the inferred one without data-ast', async () => {
     const { tree } = await render(fixture('nightly-check/layout-relations.mmd'));
     const paths = tree.find((n, t) => t.getAttr(n, 'class') === 'em-relation');
+    // The self loop and 02 → 04, which skips 03 in the Events lane (D659).
+    const bent = ['relation:06->06', 'relation:02->04'];
     const self = paths.find((p) => attr(tree, p, 'data-id') === 'relation:06->06')!;
-    expect(attr(tree, self, 'd')!.match(/[ML]/g)).toEqual(['M', 'L', 'L', 'L']);
     expect(attr(tree, self, 'data-ast')).toBe('relation:06->06');
-    for (const p of paths.filter((q) => q !== self))
-      expect(attr(tree, p, 'd')!.match(/[ML]/g)).toEqual(['M', 'L']);
+    for (const p of paths)
+      expect(attr(tree, p, 'd')!.match(/[ML]/g)).toEqual(
+        bent.includes(attr(tree, p, 'data-id')!) ? ['M', 'L', 'L', 'L'] : ['M', 'L']
+      );
+    expect(paths.filter((p) => bent.includes(attr(tree, p, 'data-id')!))).toHaveLength(2);
     const last = paths.at(-1)!;
     expect(attr(tree, last, 'data-id')).toBe('relation:08->09');
     expect(attr(tree, last, 'data-ast')).toBeUndefined();

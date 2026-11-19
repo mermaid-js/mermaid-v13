@@ -19,12 +19,15 @@ import { parseEventModelForParity } from './v13.ts';
  * `\n` and not `<br/>`, as one line), and v13 with a measurer of 0 × 0, so every box is
  * `80 + 20` square on both sides and the placement can be compared to the px:
  * - lanes, boxes and relations come in v12's order, each in v12's lane;
- * - lane tops and heights, box tops, widths and heights equal v12's;
+ * - lane tops and heights, box tops, widths and heights equal v12's, except that a lane holding
+ *   a relation under its row or a self loop may be taller (D659), and everything below it moves
+ *   down by as much;
  * - box x equals v12's up to the first box v12 put less than 10 after its lane's previous box
  *   (over it, mostly), where v13 puts it 10 after (D521); a model with no such box has every x,
  *   the lane widths and every relation segment between lanes equal to v12's;
- * - a relation within a lane runs from the source's right edge to the target's left (D521) and
- *   a self relation loops (v12 drew both through the boxes).
+ * - a relation within a lane runs from the source's right edge to the target's left (D521), or
+ *   under the row when it skips a box of the lane (D659), and a self relation loops (v12 drew
+ *   all three through the boxes).
  */
 const stub: Measurer = {
   id: 'stub',
@@ -59,16 +62,40 @@ function compare(v12: EventModelV12Geometry, v13: EventModelLayout, ids: string[
     if (JSON.stringify(a) !== JSON.stringify(b))
       out.push(`${what}: v12 ${JSON.stringify(a)}, v13 ${JSON.stringify(b)}`);
   };
+  // D659: a lane with a relation under its row or a self loop may grow; the lanes after it move.
+  const grows = new Set<number>();
+  for (const r of v13.relations)
+    if (r.route === 'under' || r.route === 'self') grows.add(v13.boxes[r.source]?.lane ?? -1);
+  const shift: number[] = [];
+  let moved = 0;
+  for (const [k, lane] of v13.lanes.entries()) {
+    shift.push(moved);
+    const grown = lane.height - (v12.lanes[k]?.height ?? lane.height);
+    if (grown < 0 || (grown > 0 && !grows.has(k)))
+      out.push(`lane ${k} is ${lane.height} high, v12 ${v12.lanes[k]?.height}`);
+    moved += Math.max(0, grown);
+  }
   eq(
     'lanes',
-    v12.lanes.map((l) => [l.index, l.y, l.height]),
-    v13.lanes.map((l) => [l.index, l.y, l.height])
+    v12.lanes.map((l) => [l.index, l.y]),
+    v13.lanes.map((l, k) => [l.index, l.y - (shift[k] ?? 0)])
   );
   const laneIndex = (k: number): number | undefined => v13.lanes[k]?.index;
+  const laneOf = (y: number): number => {
+    let k = 0;
+    while (k + 1 < v13.lanes.length && (v13.lanes[k + 1]?.y ?? Infinity) <= y) k++;
+    return k;
+  };
   eq(
     'boxes',
     v12.boxes.map((b) => [b.frame, b.lane, b.y, b.width, b.height]),
-    v13.boxes.map((b) => [ids[b.frame], laneIndex(b.lane), b.y, b.width, b.height])
+    v13.boxes.map((b) => [
+      ids[b.frame],
+      laneIndex(b.lane),
+      b.y - (shift[b.lane] ?? 0),
+      b.width,
+      b.height,
+    ])
   );
   eq(
     'relations',
@@ -101,13 +128,16 @@ function compare(v12: EventModelV12Geometry, v13: EventModelLayout, ids: string[
       const v = v13.relations[k];
       if (!v) return;
       if (r.sameLane) {
-        const route = v.source === v.target ? 'self' : 'along';
+        const lane = v13.boxes[v.source]?.lane;
+        const [lo, hi] = [Math.min(v.source, v.target), Math.max(v.source, v.target)];
+        const skips = v13.boxes.some((b, j) => j > lo && j < hi && b.lane === lane);
+        const route = v.source === v.target ? 'self' : skips ? 'under' : 'along';
         eq(`relation ${k} route`, route, v.route);
       } else
         eq(
           `relation ${k}`,
           r.points,
-          v.points.flatMap((p) => [p.x, p.y])
+          v.points.flatMap((p) => [p.x, p.y - (shift[laneOf(p.y)] ?? 0)])
         );
     });
   }
