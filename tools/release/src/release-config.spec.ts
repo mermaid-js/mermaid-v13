@@ -18,6 +18,7 @@ interface Step {
 }
 interface Job {
   if?: string;
+  env?: Record<string, string>;
   needs?: string | string[];
   environment?: string | { name: string };
   permissions?: Record<string, string>;
@@ -225,10 +226,20 @@ describe('workflow branches (R-REL-1)', () => {
       jobs: Record<string, Job>;
     };
 
+  const argosUpload = (name: string) =>
+    wf(name).jobs.visual!.steps.find((s) => (s.run ?? '').includes('argos-upload.sh'));
+
   it('compares Argos screenshots with the mermaid-v13 baseline', () => {
-    const upload = wf('ci.yml').jobs.visual!.steps.find((s) =>
-      (s.run ?? '').includes('argos upload')
-    );
-    expect(upload?.env?.ARGOS_REFERENCE_BRANCH).toBe('mermaid-v13');
+    expect(argosUpload('ci.yml')?.env?.ARGOS_REFERENCE_BRANCH).toBe('mermaid-v13');
+    expect(argosUpload('visual-nightly.yml')?.env?.ARGOS_REFERENCE_BRANCH).toBe('mermaid-v13');
+  });
+
+  it('splits the fixture tiers between the PR job and the nightly, as two Argos builds (D631)', () => {
+    const tiers = (name: string) =>
+      (wf(name).jobs.visual!.env?.MERMAID_E2E_FIXTURE_TIER ?? '').split(',');
+    expect(tiers('ci.yml')).toEqual(['pr-check', 'baseline']);
+    expect(tiers('visual-nightly.yml')).toEqual(['nightly-check', 'visual-check']);
+    expect(argosUpload('ci.yml')?.env?.ARGOS_BUILD_NAME).toBeUndefined();
+    expect(argosUpload('visual-nightly.yml')?.env?.ARGOS_BUILD_NAME).toBe('nightly');
   });
 });
