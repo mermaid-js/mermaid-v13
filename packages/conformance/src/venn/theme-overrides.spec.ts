@@ -117,15 +117,6 @@ const V12: ReferenceTable = {
  * accounts for it, or by the ticket of spec #1035 that deletes it (D654).
  */
 const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
-  "#1035 T2 (#1039) pending: default keeps its secondary and tertiary slots under an override of those colours, as v12's do; no shared input is pinned to secondaryColor or tertiaryColor (D656), so these wait for one or a decision":
-    [
-      ...keys(
-        'default',
-        ['secondaryColor:light', 'secondaryColor:dark'],
-        ['venn2', 'venn6', 'venn8']
-      ),
-      ...keys('default', ['tertiaryColor:light', 'tertiaryColor:dark'], ['venn3']),
-    ],
   "D415: neutral takes default's slot formula on its own colours (a D541 family-rule approximation), so its slots follow the base colours, where v12's cScale greys stay":
     [
       ...keys(

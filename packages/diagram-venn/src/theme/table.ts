@@ -32,19 +32,21 @@ function perSlot(f: (i: number) => string): Record<string, string> {
 }
 
 /**
- * v12 default's eight: `adjust(c, { h, l })`, a hue turn as a literal. The primary slots read
- * `canvasItemBkg`, which `default` pins where v12 keeps its slots under a `primaryColor`
- * override, and which follows `primaryColor` elsewhere (D656).
+ * v12 default's eight: `adjust(c, { h, l })`, a hue turn as a literal. The slots read
+ * `canvasItemBkg`, `badgeBkg` and `canvasItemBkg3`, which `default` pins where v12 keeps its
+ * slots under an override of the primary, secondary or tertiary colour, and which follow those
+ * colours elsewhere (D656). `badgeBkg` is the secondary colour in that shape (D332), so venn
+ * reads it rather than a new input of its own.
  */
 const DEFAULT_SLOTS: readonly string[] = [
   'darkenHsl(canvasItemBkg, 30%)',
-  'darkenHsl(secondaryColor, 30%)',
-  'darkenHsl(tertiaryColor, 40%)',
+  'darkenHsl(badgeBkg, 30%)',
+  'darkenHsl(canvasItemBkg3, 40%)',
   'literal(darkenHsl(adjustHue(canvasItemBkg, 60), 30%))',
   'literal(darkenHsl(adjustHue(canvasItemBkg, -60), 30%))',
-  'literal(darkenHsl(adjustHue(secondaryColor, 60), 30%))',
+  'literal(darkenHsl(adjustHue(badgeBkg, 60), 30%))',
   'literal(darkenHsl(adjustHue(canvasItemBkg, 120), 30%))',
-  'literal(darkenHsl(adjustHue(secondaryColor, 120), 30%))',
+  'literal(darkenHsl(adjustHue(badgeBkg, 120), 30%))',
 ];
 
 export const theme: DiagramThemeTable = {

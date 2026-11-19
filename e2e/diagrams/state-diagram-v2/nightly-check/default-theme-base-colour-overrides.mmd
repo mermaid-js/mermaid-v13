@@ -1,0 +1,34 @@
+---
+config:
+  theme: default
+  themeVariables:
+    primaryColor: '#ffcc00'
+    primaryTextColor: '#003366'
+    lineColor: '#008800'
+    secondaryColor: '#99ccff'
+    tertiaryColor: '#ffe6f0'
+    background: '#fff2cc'
+    mainBkg: '#d9ead3'
+description: >-
+  baseline/themes/default.mmd, the representative state diagram, under base-colour overrides in
+  the default theme (#1035, D656, D668): the transitions and their label borders keep #333333,
+  the composite body #ffffff and its title strip #ececff, as in v12; the states take the
+  mainBkg override, and the start dot and the arrowheads the lineColor override
+---
+stateDiagram-v2
+  [*] --> Idle
+  Idle --> check : request
+  state check <<choice>>
+  check --> Working : valid
+  check --> Idle : invalid
+  state Working {
+    [*] --> Reading
+    Reading --> Writing
+    --
+    [*] --> Logging
+  }
+  Working --> Done
+  note right of Done : All done
+  classDef hot fill:#f96,stroke:#333
+  class Done hot
+  Done --> [*]

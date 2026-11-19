@@ -673,7 +673,7 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `erMarkerFill` (ER zero circles) | `mainBkg`, as v12 neo's `zero_or_more_neo` and `zero_or_one_neo` | white under every override, as v12 `look: classic` draws it. v12 12.2 and 12.3 default to `look: neo`, which fills the circle with `mainBkg`; `themeVariables.erMarkerFill` brings that back (#1042) |
 | `erRowOddTextColor` / `erRowEvenTextColor` (colour: ER attribute text, new in v13) | `nodeTextColor`: the rows show the entity fill, so the text keeps the header ink | the ink against each row's own fill: an author's `nodeTextColor` where it meets AA on the row, else `textColor`, else `background` where that reads better; in CSS the choice follows the row fill (D572) |
 | `compositeBackground` (state) | `background`; `#16141f` on `redux-dark` and `redux-dark-color` | `background` |
-| `compositeTitleBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color`; `mainBkg` on `neo` and `neo-dark` | `mainBkg` |
+| `compositeTitleBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color`; `mainBkg` on `neo` and `neo-dark` | `mainBkg`; `default` keeps `#ececff` under a `mainBkg` override, as v12 (D656) |
 | `altBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color`; `#f0f0f0` on `neo`; `#404040` on `neo-dark` (D189) | `#f0f0f0` (`default`, `forest`); `#555555` (`dark`); `#f4f4f4` (`neutral`); `tertiaryColor` (`base`) |
 
 The palette rows apply to the two colour themes only; plain `redux`, `redux-dark`, `neo` and
@@ -1263,16 +1263,17 @@ keyword; 12.2.0 sends both keywords to the unified one). v13 has one renderer fo
 
 Colours map to theme variables v13 already has (D152): states `mainBkg` / `nodeBorder` (v12
 `stateBkg`, `stateBorder`), start, fork and join `lineColor` (v12 `specialStateColor`), the end
-dot `nodeBorder` (v12 `innerEndBackground`), transitions `lineColor` and `arrowheadColor` (v12
-`transitionColor`), labels `textColor` on `edgeLabelBackground`, notes `noteBkgColor` /
-`noteBorderColor` / `noteTextColor`. State text reads `stateLabelColor` and composite titles
+dot `nodeBorder` (v12 `innerEndBackground`), transitions `canvasLineColor` and `arrowheadColor`
+(v12 `transitionColor`; under a `lineColor` override `default` and `dark` keep their transitions
+`#333333` and `#d3d3d3`, as v12 did, D668), labels `textColor` on `edgeLabelBackground`, notes
+`noteBkgColor` / `noteBorderColor` / `noteTextColor`. State text reads `stateLabelColor` and composite titles
 `compositeTitleColor`, state's own variables (D638): in the classic themes both follow
 `primaryTextColor`, as v12's `stateLabelColor` did, and setting `stateLabelColor` recolours both;
 in the redux and neo themes they are `nodeTextColor` and `titleColor`. Under `default`, v12
 ignored an author's `primaryTextColor` for state text; v13 applies it. Where v12's classic themes
 used fixed values of their own (`neutral`'s black transitions and outlines and `#222` start dot,
 `dark`'s `#f4f4f4` start dot, black arrowheads in `forest` and `neutral`), v13 draws the shared
-variables above (D639). A composite's title band reads `compositeTitleBackground`, its body
+variables above (D639, D668). A composite's title band reads `compositeTitleBackground`, its body
 `compositeBackground`, and a nested composite's body `altBackground`, with v12's values (D120,
 D126, #193, #197; see the theme variable table). The composite outline radius is `radius`; the
 state radius (5), the end-state stroke (2) and the dash patterns are the same in every v12 look,

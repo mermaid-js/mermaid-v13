@@ -1,0 +1,36 @@
+---
+config:
+  theme: default
+  themeVariables:
+    primaryColor: '#ffcc00'
+    primaryTextColor: '#003366'
+    lineColor: '#008800'
+    secondaryColor: '#99ccff'
+    tertiaryColor: '#ffe6f0'
+    background: '#fff2cc'
+description: >-
+  baseline/themes/default.mmd, the representative sequence diagram, with a colourless rect,
+  under base-colour overrides in the default theme (#1035, D656): the rect keeps v12 default's
+  #f9ffec under the tertiaryColor override, as in v12
+---
+sequenceDiagram
+  autonumber
+  actor U as User
+  participant W as Web
+  participant D@{ "type": "database" }
+  box Back end
+    participant A as API
+  end
+  U->>+W: open
+  rect
+    W->>A: request
+  end
+  alt found
+    A->>D: query
+    D-->>A: rows
+  else missing
+    A--xW: not found
+  end
+  note over W,A: retries once
+  A-)W: event
+  W-->>-U: page

@@ -169,8 +169,6 @@ const V12: ReferenceTable = {
  * accounts for it, or by the ticket of spec #1035 that deletes it (D654).
  */
 const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
-  "#1035 T3 (#1040), pending a shared input: v12's default keeps the colourless rect fill at #f9ffec under a tertiaryColor override, where dark, forest, neutral and base follow tertiaryColor; no shared input has that shape (D656)":
-    [...keys('default', ['tertiaryColor:light', 'tertiaryColor:dark'], ['rectBkgColor'])],
   "D576: forest's participant border stays v12's darken(#cde498, 20) (softBorder, pinned), and the lifeline with it, as v12's actorLineColor is its actorBorder; v12 recomputes both from an author's mainBkg":
     [...keys('forest', ['mainBkg:light', 'mainBkg:dark'], ['actorLineColor'])],
   "D571: v12's darkMode turns base's primaryTextColor, and the text inks that follow it, to #eee; v13's darkMode switches only the derivation rules":

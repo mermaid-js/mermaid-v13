@@ -75,7 +75,12 @@ interface Paints {
    */
   readonly plainBorder: Color;
   readonly text: Color;
-  /** Transitions, their arrowheads and the filled pseudo-states' fill. */
+  /**
+   * Transitions and their label borders: the canvas line colour, which `default` and `dark` pin
+   * where v12 keeps its transitions under a lineColor override (D668).
+   */
+  readonly transition: Color;
+  /** The filled pseudo-states' fill. */
   readonly line: Color;
   /** The start dot's, fork and join bars' and end ring's stroke: lineColor or the gradient. */
   readonly lineOutline: OutlinePaint;
@@ -138,6 +143,7 @@ function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
     border: theme.outline('nodeBorder'),
     plainBorder: theme.color('nodeBorder'),
     text: theme.color('stateLabelColor'),
+    transition: theme.color('canvasLineColor'),
     line: theme.color('lineColor'),
     lineOutline: theme.outline('lineColor'),
     arrow: theme.color('arrowheadColor'),
@@ -226,7 +232,7 @@ export function renderState(
   w.open('g', {
     class: 'edgePaths',
     fill: 'none',
-    stroke: scene.paint.line,
+    stroke: scene.paint.transition,
     'stroke-width': scene.paint.strokeWidth,
     'stroke-linecap': 'round',
   });
@@ -425,7 +431,7 @@ function drawEdgeLabel({ w, layout, ctx, paint }: Scene, e: StateEdgeView): void
   const { fill, text } = paint.edgeLabel!;
   edgeLabel(w, e.label, at, e.id, {
     fill,
-    stroke: paint.line,
+    stroke: paint.transition,
     text: { fill: text },
     patch: (ctx.units ?? pxProfile).builder.labelPatch,
   });

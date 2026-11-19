@@ -29,7 +29,7 @@ e2e/diagrams/venn/nightly-check/5-should-render-a-venn-diagram-with-labels.mmd 1
 e2e/diagrams/venn/nightly-check/9-should-render-with-dark-theme.mmd 1 258a6d158d679d01
 e2e/diagrams/venn/nightly-check/config-size-and-padding.mmd 1 900d8a467a92c08e
 e2e/diagrams/venn/nightly-check/debug-layout.mmd 1 e41d8c38a696de8c
-e2e/diagrams/venn/nightly-check/default-theme-base-colour-overrides.mmd 1 f85a4d553fc8dc56
+e2e/diagrams/venn/nightly-check/default-theme-base-colour-overrides.mmd 1 c1f7741e4e68b208
 e2e/diagrams/venn/nightly-check/duplicate-sets.mmd 1 c8cb5eddc4c8253c
 e2e/diagrams/venn/nightly-check/empty-with-title.mmd 1 d2d1e1083ea381f1
 e2e/diagrams/venn/nightly-check/explicit-set-style-over-redux-palette.mmd 1 d02ef3e52f84ccd0

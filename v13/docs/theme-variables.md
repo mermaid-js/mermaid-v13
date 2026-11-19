@@ -98,9 +98,11 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `linkLabelBkg` | `--mermaid-linkLabelBkg` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | | er, requirement |
 | `nestedBkg` | `--mermaid-nestedBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | default, dark, forest, neutral | state |
 | `canvasBkg` | `--mermaid-canvasBkg` | derived | color | `background` | `background` | default | state, wardley, xychart |
-| `canvasLineColor` | `--mermaid-canvasLineColor` | derived | color | `lineColor` | `lineColor` | default, dark | cynefin, wardley, eventmodeling, requirement |
+| `canvasLineColor` | `--mermaid-canvasLineColor` | derived | color | `lineColor` | `lineColor` | default, dark | cynefin, wardley, eventmodeling, requirement, state |
 | `canvasTextColor` | `--mermaid-canvasTextColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default | quadrant, cynefin, wardley, xychart |
 | `canvasItemBkg` | `--mermaid-canvasItemBkg` | derived | color | `primaryColor` | `primaryColor` | default | quadrant |
+| `canvasItemBkg3` | `--mermaid-canvasItemBkg3` | derived | color | `tertiaryColor` | `tertiaryColor` | default | sequence |
+| `canvasNodeBkg` | `--mermaid-canvasNodeBkg` | derived | color | `mainBkg` | `mainBkg` | default | state |
 | `bandBkg` | `--mermaid-bandBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | default, dark, forest, neutral | gantt |
 | `guideLineColor` | `--mermaid-guideLineColor` | derived | color | `lineColor` | `lineColor` | default, dark, forest, neutral | gantt |
 | `useGradient` | `--mermaid-useGradient` | token | flag | | | all | core |

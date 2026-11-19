@@ -105,7 +105,7 @@ export const VOCABULARY: Readonly<Record<string, ThemeVarEntry>> =
  * palettes and inks of T1a; the muted surface, its border, link ink, text on lines, soft border
  * and frame border of T2; the row fills, link label fill and nested body of T3 (read with
  * `inline()`); the badge and callout of T1b, which gitGraph's commit and tag labels read; the
- * canvas fill, line, text and item fill, and the band and guide line (#1041), that the named classic themes pin where v12 keeps its
+ * canvas fill, line, text, item fills and node fill, and the band and guide line (#1041), that the named classic themes pin where v12 keeps its
  * constructor value under an override (D656).
  */
 export const D332_INPUTS: readonly string[] = [
@@ -132,6 +132,8 @@ export const D332_INPUTS: readonly string[] = [
   'canvasLineColor',
   'canvasTextColor',
   'canvasItemBkg',
+  'canvasItemBkg3',
+  'canvasNodeBkg',
   'bandBkg',
   'guideLineColor',
 ];

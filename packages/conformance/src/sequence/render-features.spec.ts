@@ -141,13 +141,14 @@ describe('notes, frames, activations, rects and boxes', () => {
     for (const r of [plain, coloured]) expect(r).not.toMatch(/ (stroke|filter)=/);
   });
 
-  it("takes the default theme's tertiaryColor for a colourless rect, as v12 (#774)", async () => {
+  it("takes the default theme's tertiary colour for a colourless rect, as v12 (#774, D656)", async () => {
     const svg = await fixtureSvg(
       'should-render-sequence-rect-with-theme-aware-default-background-default-theme.mmd'
     );
     expect(tag(svg, /class="rect"/)).toContain('fill="var(--_rcb)"');
-    expect(svg).toContain('--_rcb:var(--mermaid-rectBkgColor,var(--_t))');
-    expect(svg).toContain('--_t:var(--mermaid-tertiaryColor,#f9ffec)');
+    // The tertiary item fill, which `default` pins where v12 keeps it under an override.
+    expect(svg).toContain('--_rcb:var(--mermaid-rectBkgColor,var(--_cv3))');
+    expect(svg).toContain('--_cv3:var(--mermaid-canvasItemBkg3,#f9ffec)');
   });
 });
 

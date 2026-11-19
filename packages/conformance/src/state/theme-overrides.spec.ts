@@ -109,8 +109,6 @@ const V12: ReferenceTable = {
  * accounts for it, or by the ticket of spec #1035 that deletes it (D654).
  */
 const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
-  "#1035 T3 (#1040), pending a shared input: v12's default keeps its composite title strip at #ececff under a mainBkg override, where dark, forest and neutral follow mainBkg; no shared input has that shape (D656)":
-    [...keys('default', ['mainBkg:light', 'mainBkg:dark'], ['compositeTitleBackground'])],
   "D638: an author's primaryTextColor recolours state text and composite titles in default too; v12's default fixed stateLabelColor before the override was applied":
     [...keys('default', ['primaryTextColor:light', 'primaryTextColor:dark'], ['stateLabelColor'])],
   "D571: v12's darkMode turns base's primaryTextColor, and the text inks that follow it, to #eee; v13's darkMode switches only the derivation rules":

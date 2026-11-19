@@ -423,9 +423,19 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   // theme pins it in `values`, as D570 pinned `mainBkg`; elsewhere, and in `base`, each is its
   // base colour. v13 names; v12 has none.
   canvasBkg: def('cvb', 'color', ['state', 'wardley', 'xychart']),
-  canvasLineColor: def('cvl', 'color', ['cynefin', 'wardley', 'eventmodeling', 'requirement']),
+  canvasLineColor: def('cvl', 'color', [
+    'cynefin',
+    'wardley',
+    'eventmodeling',
+    'requirement',
+    'state',
+  ]),
   canvasTextColor: def('cvt', 'color', ['quadrant', 'cynefin', 'wardley', 'xychart']),
   canvasItemBkg: def('cvi', 'color', ['quadrant']),
+  // The third item fill (the tertiary colour) and a node's fill (`mainBkg`), which only
+  // `default` pins (D656, #1035). The second item fill is `badgeBkg`, which has that shape.
+  canvasItemBkg3: def('cv3', 'color', ['sequence']),
+  canvasNodeBkg: def('cvn', 'color', ['state']),
   // The band behind a chart's rows and the lines that guide the eye over it (a marker, an
   // outline), which v12's named classic themes keep at their constructor tertiary and line
   // colours under every override (D656, #1041); `base` derives them. v13 names; v12 has none.

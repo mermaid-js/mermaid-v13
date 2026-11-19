@@ -10,7 +10,8 @@ export const theme: DiagramThemeTable = {
   // v12 theme-base.js. The classic themes write the nested body differently from one another
   // (default `#f0f0f0`, neutral `#f4f4f4`, base `tertiaryColor`), so it reads the shared input
   // as each theme wrote it (`inline()`, D332), byte for byte. The composite body is the canvas
-  // fill, which `default` pins where v12 keeps `#ffffff` under a `background` override (D656).
+  // fill, which `default` pins where v12 keeps `#ffffff` under a `background` override (D656);
+  // in the classic family the title strip is the node fill, which `default` pins likewise.
   rules: {
     light: {
       compositeBackground: 'canvasBkg',
@@ -25,7 +26,11 @@ export const theme: DiagramThemeTable = {
     // was set, so every classic theme drew state text and composite titles in
     // `primaryTextColor` (D638, #827). An author's `stateLabelColor` still recolours both.
     classic: {
-      rules: { stateLabelColor: 'primaryTextColor', compositeTitleColor: 'stateLabelColor' },
+      rules: {
+        compositeTitleBackground: 'canvasNodeBkg',
+        stateLabelColor: 'primaryTextColor',
+        compositeTitleColor: 'stateLabelColor',
+      },
     },
     // v12 theme-redux*.js pin the title strip and the nested body; the dark ones the body too
     // (#192, D126), not clusterBkg or background.

@@ -233,6 +233,17 @@ describe('createTheme: the named classic themes pin v12 constructor values (#798
     ['canvasItemBkg', 'primaryColor', 'forest', null],
     ['canvasItemBkg', 'primaryColor', 'neutral', null],
     ['canvasItemBkg', 'primaryColor', 'base', null],
+    // The third item fill and the node fill (#1035): only `default` keeps them.
+    ['canvasItemBkg3', 'tertiaryColor', 'default', '#f9ffec'],
+    ['canvasItemBkg3', 'tertiaryColor', 'dark', null],
+    ['canvasItemBkg3', 'tertiaryColor', 'forest', null],
+    ['canvasItemBkg3', 'tertiaryColor', 'neutral', null],
+    ['canvasItemBkg3', 'tertiaryColor', 'base', null],
+    ['canvasNodeBkg', 'mainBkg', 'default', '#ececff'],
+    ['canvasNodeBkg', 'mainBkg', 'dark', null],
+    ['canvasNodeBkg', 'mainBkg', 'forest', null],
+    ['canvasNodeBkg', 'mainBkg', 'neutral', null],
+    ['canvasNodeBkg', 'mainBkg', 'base', null],
     // The band and guide inputs (D656, #1041): v12's named classic themes keep their gantt
     // section band and outline/marker colours under every override, so all four pin them.
     ['bandBkg', 'tertiaryColor', 'default', '#f9ffec'],

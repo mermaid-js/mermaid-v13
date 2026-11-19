@@ -56,8 +56,9 @@ export const theme: DiagramThemeTable = {
       activationBorderColor: 'inline(mutedBorder)',
       // Drawn in a circle filled with `lineColor`.
       sequenceNumberColor: 'inline(lineTextColor)',
-      // A `rect` block with no colour (v12 theme-base and the classic themes).
-      rectBkgColor: 'tertiaryColor',
+      // A `rect` block with no colour (v12 theme-base and the classic themes): the tertiary
+      // item fill, which `default` pins where v12 keeps it under a tertiaryColor override (D656).
+      rectBkgColor: 'canvasItemBkg3',
     },
   },
   families: {
