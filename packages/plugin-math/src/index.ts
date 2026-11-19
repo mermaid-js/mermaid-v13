@@ -22,7 +22,9 @@ type Engine = typeof EngineModule;
 /** The resource this plugin loads: the MathJax engine. */
 const TEX: Resource = { kind: 'math', name: 'tex' };
 
+// eslint-disable-next-line mermaid/no-module-state -- lazy-load handle: the engine module once imported, the same for every render.
 let engine: Engine | undefined;
+// eslint-disable-next-line mermaid/no-module-state -- lazy-load handle: the pending import, so the engine downloads once.
 let loading: Promise<void> | undefined;
 /**
  * Whether the last `missing()` reported the engine. The API asks `missing()` right before it

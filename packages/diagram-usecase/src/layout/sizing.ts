@@ -97,6 +97,7 @@ function pxSizing(config: UsecaseLayoutConfig, units: UnitProfile = pxProfile): 
   };
 }
 
+// eslint-disable-next-line mermaid/no-module-state -- lazy-load handle: the ./ascii entry installs it once, when it loads.
 let textSizing: SizingFor | undefined;
 
 /** Installs the text output's sizing: the `./ascii` entry does, when it loads. */

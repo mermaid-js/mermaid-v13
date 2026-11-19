@@ -23,6 +23,18 @@ const DOM_GLOBALS = [
   'globalThis',
 ];
 
+// Code that only tests load: specs, `testing` helpers, fixtures and the ported v12 spec adapters.
+// No package build includes it.
+const TEST_SUPPORT = [
+  '**/*.spec.ts',
+  '**/testing/**',
+  '**/testing.ts',
+  '**/test-context.ts',
+  '**/*.fixtures.ts',
+  '**/fixtures.ts',
+  '**/v12-specs/**',
+];
+
 const NO_ENUM = { selector: 'TSEnumDeclaration', message: 'Use a union type instead of an enum.' };
 
 export default tseslint.config(
@@ -210,6 +222,22 @@ export default tseslint.config(
       'mermaid/import-boundaries': 'error',
       'mermaid/no-nested-quantifier': 'error',
     },
+  },
+  {
+    // The SVG brand types are minted only by core's checks in core/src/svg; a cast anywhere
+    // else skips the check (#1023). Existing casts live in eslint-suppressions.json.
+    files: ['packages/*/src/**/*.{ts,js}'],
+    ignores: ['packages/core/src/svg/**', ...TEST_SUPPORT],
+    plugins: { mermaid },
+    rules: { 'mermaid/no-brand-cast': 'error' },
+  },
+  {
+    // Module state in a plugin, layout or diagram outlives a render and a createMermaid()
+    // instance (R-ARCH-6, #1023). A lazy-load handle is disabled in place, with its reason.
+    files: ['packages/{plugin,layout,diagram}-*/src/**/*.{ts,js}'],
+    ignores: TEST_SUPPORT,
+    plugins: { mermaid },
+    rules: { 'mermaid/no-module-state': 'error' },
   },
   {
     // Readability limits. Existing violations live in eslint-suppressions.json; new ones fail.

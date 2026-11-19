@@ -22,7 +22,7 @@ export interface Paints {
 }
 
 /** For a paint nothing in this layout draws with. */
-const UNUSED = 'currentColor' as Paint;
+const UNUSED: Paint = 'currentColor';
 
 /**
  * Every paint the treeView uses, read before the root is written so that it declares their

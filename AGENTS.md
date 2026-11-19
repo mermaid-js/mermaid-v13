@@ -46,8 +46,10 @@ v13/docs/                  requirements, design, decisions, migration notes, ref
 - **No global config, no `console`** (R-ARCH-5, R-ERR-4): the config arrives as an argument. Problems are reported as diagnostics.
 - **No enums.** Use a union type. Type imports use `import type`.
 - **Code in the `./language` facet** of a diagram package never imports rendering code (R-LANG-8).
+- **No casts to SVG brand types** (rule `mermaid/no-brand-cast`, #1023): outside `packages/core/src/svg`, nothing casts to `SafeValue`, `SafeColor`, `Paint`, `Transform` or any other type of `core/src/svg/types.ts` that holds a `Brand<…>`. The writer emits those values unescaped, so only core's checks make them: use `checkColor`, `checkStyle`, `px`, `translate`, `pathBuilder`, `styleText`, or keep the type the value had when it was checked. Tests and test helpers are exempt.
+- **No module state in plugins, layouts and diagrams** (rule `mermaid/no-module-state`, R-ARCH-6, #1023): no top-level `let` or `var` in `packages/plugin-*`, `layout-*` or `diagram-*` `src`. It survives between renders and between `createMermaid()` instances. A lazy-load cache or handle, which never changes output, is disabled in place with an `eslint-disable-next-line` comment that says so.
 - **Dependencies:** `pnpm check:deps` and `pnpm check:licenses` gate what a published package may depend on. Ask before adding a runtime dependency.
-- **Readability limits** (complexity, function and file length, nesting): old violations are listed in `eslint-suppressions.json`. New ones fail. Do not add entries to that file.
+- **Readability limits** (complexity, function and file length, nesting), brand casts and module state: old violations are listed in `eslint-suppressions.json`. New ones fail. Do not add entries to that file.
 
 ## Rules the tools cannot check
 

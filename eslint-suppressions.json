@@ -243,6 +243,11 @@
       "count": 1
     }
   },
+  "packages/core/src/pipeline/error-svg.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
   "packages/core/src/pipeline/extensions.ts": {
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 2
@@ -316,6 +321,9 @@
   "packages/core/src/text/label.ts": {
     "@typescript-eslint/no-shadow": {
       "count": 1
+    },
+    "mermaid/no-brand-cast": {
+      "count": 1
     }
   },
   "packages/core/src/theme/registry.ts": {
@@ -326,6 +334,9 @@
   "packages/core/src/theme/theme.ts": {
     "@typescript-eslint/no-base-to-string": {
       "count": 1
+    },
+    "mermaid/no-brand-cast": {
+      "count": 11
     }
   },
   "packages/dev/src/browser/compare-pane.ts": {
@@ -372,6 +383,61 @@
       "count": 10
     }
   },
+  "packages/diagram-agentflow/src/render/render.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/diagram-agentflow/src/render/shapes.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/diagram-architecture/src/render/builtins.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/diagram-architecture/src/render/paint.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/diagram-block/src/render/metrics.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/diagram-c4/src/render/metrics.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 3
+    }
+  },
+  "packages/diagram-c4/src/render/paint.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/diagram-c4/src/render/text.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 2
+    }
+  },
+  "packages/diagram-class/src/render/render.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 2
+    }
+  },
+  "packages/diagram-cynefin/src/render/paint.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 3
+    }
+  },
+  "packages/diagram-er/src/render/render.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
   "packages/diagram-flowchart/src/parser/model.ts": {
     "@typescript-eslint/no-base-to-string": {
       "count": 6
@@ -399,12 +465,115 @@
     }
   },
   "packages/diagram-flowchart/src/render/render.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    },
     "unicorn/prefer-spread": {
       "count": 1
     }
   },
   "packages/diagram-flowchart/src/v12-specs/adapter.ts": {
     "@typescript-eslint/no-empty-function": {
+      "count": 1
+    }
+  },
+  "packages/diagram-gitgraph/src/render/paint.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 3
+    }
+  },
+  "packages/diagram-ishikawa/src/render/render.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/diagram-journey/src/render/paint.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 2
+    }
+  },
+  "packages/diagram-journey/src/render/render.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/diagram-kanban/src/render/render.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/diagram-railroad/src/config.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/diagram-railroad/src/render/render.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/diagram-requirement/src/render/render.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/diagram-sankey/src/layout/layout.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/diagram-sankey/src/render/render.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/diagram-sequence/src/render/arrows.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/diagram-sequence/src/render/paint.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 2
+    }
+  },
+  "packages/diagram-sequence/src/render/render.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 2
+    }
+  },
+  "packages/diagram-state/src/render/render.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 2
+    }
+  },
+  "packages/diagram-timeline/src/render/paint.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/diagram-timeline/src/render/render.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 2
+    }
+  },
+  "packages/diagram-usecase/src/render/edges.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/diagram-usecase/src/render/scene.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 2
+    }
+  },
+  "packages/diagram-venn/src/render/paint.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 3
+    }
+  },
+  "packages/diagram-xychart/src/render/render.ts": {
+    "mermaid/no-brand-cast": {
       "count": 1
     }
   },
@@ -435,6 +604,36 @@
   "packages/mermaid/src/registry.ts": {
     "@typescript-eslint/unbound-method": {
       "count": 2
+    }
+  },
+  "packages/plugin-hand-drawn/src/drawer.ts": {
+    "mermaid/no-module-state": {
+      "count": 1
+    }
+  },
+  "packages/plugin-icons/src/icon.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/plugin-icons/src/index.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 3
+    }
+  },
+  "packages/plugin-math/src/index.ts": {
+    "mermaid/no-module-state": {
+      "count": 1
+    }
+  },
+  "packages/shared/src/shapes/basic.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/shared/src/svg/document.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
     }
   },
   "tools/eslint-plugin/index.ts": {

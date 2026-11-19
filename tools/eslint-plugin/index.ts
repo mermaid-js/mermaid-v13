@@ -12,6 +12,10 @@
  * - `mermaid/no-magic-char-code`: char codes are compared with named constants, not numbers.
  * - `mermaid/no-nested-quantifier`: no quantifier nested in an unbounded/variable quantifier,
  *   and no unbounded quantifier before `$` which nothing anchors.
+ * - `mermaid/no-brand-cast`: no `as`/`<T>` cast to a brand type of `core/src/svg/types.ts`
+ *   (`SafeValue`, `Paint`, any `Brand<…>`), which only core's checks may mint (#1023).
+ * - `mermaid/no-module-state`: no top-level `let`/`var`, which keeps state between renders
+ *   and between `createMermaid()` instances (R-ARCH-6, #1023).
  */
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { RegExpParser, visitRegExpAST } from '@eslint-community/regexpp';
@@ -482,12 +486,194 @@ const noNestedQuantifier: Rule.RuleModule = {
   },
 };
 
+/**
+ * The brand types of `core/src/svg/types.ts`, and its aliases that hold one: a value of one of
+ * these may be written to SVG unescaped, so only the checks in `core/src/svg` mint one. A spec
+ * keeps this list in step with `types.ts`.
+ */
+export const BRAND_TYPES: ReadonlySet<string> = new Set([
+  'Brand',
+  'SafeUrl',
+  'SafeColor',
+  'SafeLength',
+  'ThemeRef',
+  'PathData',
+  'Transform',
+  'StyleText',
+  'ThemeStyleSheet',
+  'SafeFilter',
+  'EmbeddedSvg',
+  'SafeValue',
+  'GradientRef',
+  'Paint',
+  'OutlinePaint',
+  'StopColor',
+  'Length',
+]);
+
+/** The parts of the TypeScript AST the brand-cast rule reads; estree has no TS nodes. */
+interface TsNode {
+  readonly type: string;
+  readonly [key: string]: unknown;
+}
+
+const isTsNode = (value: unknown): value is TsNode =>
+  typeof value === 'object' && value !== null && typeof (value as TsNode).type === 'string';
+
+/** Whether `specifier`, imported from `filename`, is core's SVG types: a core entry or `src/svg`. */
+function isCoreSource(filename: string, specifier: string): boolean {
+  if (isCore(specifier)) {
+    return true;
+  }
+  const pkg = packageOf(filename);
+  return (
+    specifier.startsWith('.') &&
+    pkg?.name === 'core' &&
+    isInside(join(pkg.dir, 'src', 'svg'), resolve(dirname(filename), specifier))
+  );
+}
+
+const noBrandCast: Rule.RuleModule = {
+  meta: {
+    type: 'problem',
+    docs: {
+      description:
+        'Ban casts to the SVG brand types outside core/src/svg: only its checks may mint one (#1023).',
+    },
+    messages: {
+      cast: "Cast to '{{name}}' skips the core check that makes one, so unchecked text could reach the SVG unescaped. Use the core function that checks it (checkColor, checkStyle, px, translate, pathBuilder, styleText, …), or keep the type the value had when it was checked.",
+    },
+    schema: [],
+  },
+  create(context) {
+    /** Local names of brand types imported from core, and namespaces that hold them. */
+    const brands = new Map<string, string>();
+    const namespaces = new Set<string>();
+
+    /** The brand that `node`, a type, names anywhere in it. */
+    function brandIn(node: unknown): string | undefined {
+      if (Array.isArray(node)) {
+        for (const item of node) {
+          const found = brandIn(item);
+          if (found) {
+            return found;
+          }
+        }
+        return undefined;
+      }
+      if (!isTsNode(node)) {
+        return undefined;
+      }
+      const named = namedBrand(node);
+      if (named) {
+        return named;
+      }
+      for (const [key, value] of Object.entries(node)) {
+        if (key !== 'parent' && key !== 'loc' && key !== 'range') {
+          const found = brandIn(value);
+          if (found) {
+            return found;
+          }
+        }
+      }
+      return undefined;
+    }
+
+    /**
+     * The brand a type reference or `ns.Brand` names, if any. `import('…').Brand` needs no case:
+     * `consistent-type-imports` bans it.
+     */
+    function namedBrand(node: TsNode): string | undefined {
+      const name = node.type === 'TSTypeReference' ? node.typeName : undefined;
+      if (isTsNode(name) && name.type === 'Identifier') {
+        return brands.get(name.name as string);
+      }
+      if (isTsNode(name) && name.type === 'TSQualifiedName') {
+        const { left, right } = name as unknown as { left: TsNode; right: TsNode };
+        const inCore = left.type === 'Identifier' && namespaces.has(left.name as string);
+        return inCore && BRAND_TYPES.has(right.name as string) ? (right.name as string) : undefined;
+      }
+      return undefined;
+    }
+
+    function check(node: EsNode): void {
+      const name = brandIn((node as unknown as TsNode).typeAnnotation);
+      if (name) {
+        context.report({ node, messageId: 'cast', data: { name } });
+      }
+    }
+
+    return {
+      ImportDeclaration(node) {
+        if (typeof node.source.value !== 'string') {
+          return;
+        }
+        if (!isCoreSource(context.filename, node.source.value)) {
+          return;
+        }
+        for (const s of node.specifiers) {
+          if (s.type === 'ImportNamespaceSpecifier') {
+            namespaces.add(s.local.name);
+          } else if (
+            s.type === 'ImportSpecifier' &&
+            s.imported.type === 'Identifier' &&
+            BRAND_TYPES.has(s.imported.name)
+          ) {
+            brands.set(s.local.name, s.imported.name);
+          }
+        }
+      },
+      // A local alias of a brand (`type Ink = SafeColor | ThemeRef`) is a brand too.
+      TSTypeAliasDeclaration(node: EsNode) {
+        const alias = node as unknown as { id: { name: string }; typeAnnotation: unknown };
+        const name = brandIn(alias.typeAnnotation);
+        if (name) {
+          brands.set(alias.id.name, name);
+        }
+      },
+      // `<T>x` needs no case: `consistent-type-assertions` allows `as` only.
+      TSAsExpression: check,
+    };
+  },
+};
+
+const noModuleState: Rule.RuleModule = {
+  meta: {
+    type: 'problem',
+    docs: {
+      description:
+        'Ban top-level `let`/`var` in plugin, layout and diagram packages: module state outlives a render (R-ARCH-6, #1023).',
+    },
+    messages: {
+      state:
+        "Top-level '{{kind}}' keeps its value between renders and between createMermaid() instances, so the same input can render differently (R-ARCH-6). Keep the state in the render's context or a closure. A lazy-load cache or handle, which never changes output, takes an eslint-disable comment that says so.",
+    },
+    schema: [],
+  },
+  create(context) {
+    return {
+      VariableDeclaration(node) {
+        const parent = node.parent;
+        const topLevel =
+          parent.type === 'Program' ||
+          (parent.type === 'ExportNamedDeclaration' && parent.parent.type === 'Program');
+        const ambient = (node as { declare?: boolean }).declare === true;
+        if (topLevel && (node.kind === 'let' || node.kind === 'var') && !ambient) {
+          context.report({ node, messageId: 'state', data: { kind: node.kind } });
+        }
+      },
+    };
+  },
+};
+
 const plugin: ESLint.Plugin = {
   meta: { name: 'eslint-plugin-mermaid' },
   rules: {
     'import-boundaries': importBoundaries,
+    'no-brand-cast': noBrandCast,
     'no-global-config': noGlobalConfig,
     'no-magic-char-code': noMagicCharCode,
+    'no-module-state': noModuleState,
     'no-nested-quantifier': noNestedQuantifier,
   },
 };

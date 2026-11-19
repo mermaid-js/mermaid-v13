@@ -9,7 +9,7 @@
  * Icon art, not layout: the literal gate (`conformance/src/architecture/layout-literals.spec.ts`)
  * exempts this file, as it does the metrics table.
  */
-import { checkStyle, type Attrs, type PathData, type SafeColor } from '@mermaid-js/core/svg';
+import { checkColor, checkStyle, type Attrs, type PathData } from '@mermaid-js/core/svg';
 import type { SvgFragment } from '@mermaid-js/core/text';
 
 /** v12's pack, whose names a name without one resolves in (`fallbackPrefix`). */
@@ -19,8 +19,8 @@ export const BUILTIN_PACK = 'mermaid-architecture';
 export const ART_SIZE = 80;
 const SIDE = ART_SIZE;
 /** v12's icon square and its white strokes; text icons are white too (D506). */
-const BLUE = '#087ebf' as SafeColor;
-export const WHITE = '#fff' as SafeColor;
+const BLUE = checkColor('#087ebf')!;
+export const WHITE = checkColor('#fff')!;
 
 /** Path data written here, in v12's own (relative) form: package constants, never input. */
 const d = (data: string): PathData => data as PathData;
@@ -64,6 +64,7 @@ const lights = (y: number): SvgFragment =>
     [32.5, 27.5, 22.5].map((cx) => el('circle', { cx, cy: y, r: 0.75, ...DOT }))
   );
 
+// eslint-disable-next-line mermaid/no-module-state -- lazy cache: v12's seven icons, built from constants on first use.
 let builtins: ReadonlyMap<string, SvgFragment> | undefined;
 
 /** v12's seven icons, built once. */

@@ -57,7 +57,9 @@ function readIconOptions(text: string): TreeViewIconOptions {
   };
 }
 
+// eslint-disable-next-line mermaid/no-module-state -- one-entry cache of readIconOptions(), a pure function of the text.
 let lastText: string | undefined;
+// eslint-disable-next-line mermaid/no-module-state -- one-entry cache of readIconOptions(), a pure function of the text.
 let lastOptions: TreeViewIconOptions | undefined;
 
 /** The icon options `text` sets (kept for the last text). */
