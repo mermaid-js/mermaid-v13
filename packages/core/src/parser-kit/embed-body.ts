@@ -2,6 +2,9 @@
  * Embedded diagram blocks (ADR-15): a block's body as it is detected and parsed (D633). The
  * render (`mermaid`'s block pass) and the editor (the language service) both read a body
  * through {@link blockBody}, so they see the same text and place errors the same way.
+ *
+ * A subpath of its own (`@mermaid-js/core/parser-kit/embed-body`), not in the parser-kit barrel:
+ * the CDN build splits by file, so every diagram that imports the barrel would load it.
  */
 
 /** A block body without its common indentation, and the way back to the body as written. */
