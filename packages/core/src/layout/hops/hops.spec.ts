@@ -62,7 +62,7 @@ describe('hopPaths (D537 rules)', () => {
 /** Vertical lines at each `x`, for crossings on `H`. */
 const verticals = (...xs: number[]): string[] => xs.map((x) => `M${x},0L${x},100`);
 
-describe('hopPaths: crossings too close for a hop each (D656, #793)', () => {
+describe('hopPaths: crossings too close for a hop each (D650, #793)', () => {
   it('draws one hop over both, a radius beyond each, as tall as any other', () => {
     expect(hopPaths([H, ...verticals(48, 52)], 'arc')[0]).toBe(
       'M0,50L42,50A8,6 0 0,1 58,50L100,50'

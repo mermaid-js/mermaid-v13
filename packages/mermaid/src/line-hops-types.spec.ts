@@ -60,7 +60,7 @@ describe.each(TYPES)('lineHops in $type (#655, D537)', ({ dir, line }) => {
   });
 });
 
-describe("lineHops in #655's class sample (#793, D656)", () => {
+describe("lineHops in #655's class sample (#793, D650)", () => {
   // A to C's horizontal run crosses B to D and B to F, whose runs leave B 5px apart: too close
   // for a hop each, so the two share one merged hop, as tall as a plain hop and wider. Without
   // B to F, the crossing hops plainly (the class fixture above).

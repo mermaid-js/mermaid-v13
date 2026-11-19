@@ -88,7 +88,7 @@ describe('the outline hook leaves the corpus byte-identical (D302)', () => {
         // Line hops (D537) are found at the edge outline, which the plain-leaf base does not
         // draw through: both sides compare a fixture that turns them on with them off, and the
         // adopted diagrams must hop with them on: a plain hop, or one merged over crossings
-        // too close for a hop each (D656), which is wider than it is tall.
+        // too close for a hop each (D650), which is wider than it is tall.
         const source = item.source.replace(/^(\s*lineHops:) (true|arc|gap)$/m, '$1 false');
         if (source !== item.source) {
           await variants['adopted, no drawer'].prepare(item.source, { id: 'm' });

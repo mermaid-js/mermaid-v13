@@ -8,7 +8,7 @@
  * (v12 skips smoothed curves and rounded corners for the same reason). Unlike v12, the corners
  * of an edge that hops keep their rounding: only the run that carries the hop is split. Also
  * unlike v12, crossings too close for a hop each share one merged hop instead of drawing none
- * (D656, #793).
+ * (D650, #793).
  */
 import { pathBuilder } from '../../svg/path.ts';
 import type { PathData } from '../../svg/types.ts';
@@ -157,7 +157,7 @@ function fitted(hops: Hop[], length: number): Hop[] {
       list[k + 1]!.r = Math.min(list[k + 1]!.r, gap / 2);
     }
   }
-  // Neighbours too close to carry a hop each carry one hop over them all (D656, #793; v12 drew
+  // Neighbours too close to carry a hop each carry one hop over them all (D650, #793; v12 drew
   // none), from the first crossing less a radius to the last plus one. A squeezed hop always
   // has a squeezed neighbour, so such a cluster has two or more crossings, and the hops beside
   // it, which draw as before, bound its radius.
