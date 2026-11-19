@@ -208,6 +208,59 @@ describe('createTheme: the named classic themes pin v12 constructor values (#798
     expect(['noteBkgColor', 'clusterBkg'].map(own.value)).toEqual(['#474949', '#474949']);
   });
 
+  // D656: the canvas inputs carry a base colour as v12 12.2.0's diagrams keep it. Where v12 keeps
+  // the constructor value under an override of the base colour, the theme pins it (`default`
+  // all four, `dark` the line); elsewhere, and in `base`, the input follows the base colour.
+  const OVERRIDE = '#ffcc00';
+  const CANVAS: readonly [input: string, base: string, ThemeName, pinned: string | null][] = [
+    ['canvasBkg', 'background', 'default', '#ffffff'],
+    ['canvasBkg', 'background', 'dark', null],
+    ['canvasBkg', 'background', 'forest', null],
+    ['canvasBkg', 'background', 'neutral', null],
+    ['canvasBkg', 'background', 'base', null],
+    ['canvasLineColor', 'lineColor', 'default', '#333333'],
+    ['canvasLineColor', 'lineColor', 'dark', '#d3d3d3'],
+    ['canvasLineColor', 'lineColor', 'forest', null],
+    ['canvasLineColor', 'lineColor', 'neutral', null],
+    ['canvasLineColor', 'lineColor', 'base', null],
+    ['canvasTextColor', 'primaryTextColor', 'default', '#131300'],
+    ['canvasTextColor', 'primaryTextColor', 'dark', null],
+    ['canvasTextColor', 'primaryTextColor', 'forest', null],
+    ['canvasTextColor', 'primaryTextColor', 'neutral', null],
+    ['canvasTextColor', 'primaryTextColor', 'base', null],
+    ['canvasItemBkg', 'primaryColor', 'default', '#ececff'],
+    ['canvasItemBkg', 'primaryColor', 'dark', null],
+    ['canvasItemBkg', 'primaryColor', 'forest', null],
+    ['canvasItemBkg', 'primaryColor', 'neutral', null],
+    ['canvasItemBkg', 'primaryColor', 'base', null],
+  ];
+
+  it.each(CANVAS)(
+    '%s is the theme’s %s with no override, and under its override (%s) keeps %s',
+    async (input, baseName, name, pinned) => {
+      const own = createTheme(await loadTheme(name), { cssVariables: false });
+      const t = createTheme(await loadTheme(name), {
+        cssVariables: false,
+        themeVariables: { [baseName]: OVERRIDE },
+      });
+      expect(own.value(input)).toBe(own.value(baseName));
+      expect(t.value(input)).toBe(pinned ?? OVERRIDE);
+    }
+  );
+
+  it.each(CANVAS.filter(([, , name]) => name === 'default'))(
+    'default keeps %s (from %s) under a mainBkg override and takes the author’s own value',
+    async (input, _base, name, pinned) => {
+      const spec = await loadTheme(name);
+      const kept = createTheme(spec, {
+        cssVariables: false,
+        themeVariables: { mainBkg: OVERRIDE },
+      });
+      const own = createTheme(spec, { cssVariables: false, themeVariables: { [input]: OVERRIDE } });
+      expect([kept.value(input), own.value(input)]).toEqual([pinned, OVERRIDE]);
+    }
+  );
+
   it('keeps the error and note colours under darkMode, as v12', async () => {
     const t = createTheme(await loadTheme('forest'), {
       cssVariables: false,

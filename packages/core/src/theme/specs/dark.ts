@@ -70,6 +70,10 @@ const theme: ThemeSpec = {
     // never follow an override: khroma lighten(#1f2020, 5) and darken(#1f2020, 10) (D117).
     rowBkg: '#2c2d2d',
     rowAltBkg: '#060606',
+    // v12 theme-dark.js keeps its constructor lineColor (lightgrey) where wardley, cynefin,
+    // requirement and event modelling draw lines, so a lineColor override does not move them
+    // (D656). Its background, text ink and fill follow their base colours there.
+    canvasLineColor: '#d3d3d3',
   },
   // v12 theme-dark.js: fixed colours after slot 0, which is primaryColor.
   palettes: {
