@@ -1,24 +1,21 @@
 /**
- * Test harness (`@mermaid-js/diagram-c4/testing`): renders a C4 source through the plugin's own
- * seam, `parse` → `layout` → `render`, with a render context built as the pipeline builds one
- * (`mermaid/src/api.ts` `themeFor`, `core/src/pipeline/draw.ts`): the config of the tests' one
- * builder (`c4TestConfig`: core's defaults, the integrator's config, the source's front matter
- * and directives), the theme with the plugin's table, its `themeVariables` and its dark half for
- * `theme: 'auto'`, the table measurer, and the stream writer with the theme's gradient and an
- * optional outline drawer. C4 has no registry row until its manifest (#542), so
- * `createMermaid()` cannot draw it yet; this renders the plugin alone and gives back what the
- * public API does not return (the model, the AST, the layout).
+ * Test harness (`@mermaid-js/diagram-c4/testing`): the shared render harness
+ * (`@mermaid-js/shared/testing/render-harness`) over the c4 plugin and its theme table, with the
+ * plugin's `configDefaults` as the config layer under the integrator's. The one plugin parses
+ * both kinds by the header; each harness here parses one kind (`parseC4` or `parseC4Beta`, with
+ * the render's limits), so its result has that kind's model and AST, and c4-beta resolves the
+ * `c4beta` section over `c4` (D534). A source the parser rejects is still drawn (the model of
+ * what parsed), with `rejected` set, as the pipeline would not.
  */
-import type { RenderContext, Warning } from '@mermaid-js/core';
-import type { ResolvedConfig } from '@mermaid-js/core/config';
-import { pxProfile } from '@mermaid-js/core/layout';
-import { resolveLimits } from '@mermaid-js/core/limits';
-import type { Limits } from '@mermaid-js/core/limits';
+import type { DiagramParseContext } from '@mermaid-js/core';
 import type { AstNode, ParseResult } from '@mermaid-js/core/parser-kit';
-import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
-import { streamWriter, type OutlineDraw } from '@mermaid-js/core/svg';
-import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
-import { createTheme, loadTheme, resolveThemeName } from '@mermaid-js/core/theme';
+import {
+  createSourceHarness,
+  type HarnessPlugin,
+  type HarnessSpec,
+  type SourceRender,
+  type TestRenderOptions,
+} from '@mermaid-js/shared/testing/render-harness';
 import type { C4BetaDocument } from '../beta/ast.ts';
 import type { C4BetaModel } from '../beta/model.ts';
 import { parseC4Beta } from '../beta/parser.ts';
@@ -26,144 +23,39 @@ import type { C4Layout } from '../layout/types.ts';
 import type { C4Model } from '../model.ts';
 import { parseC4, type C4Document } from '../parser/index.ts';
 import { c4, type C4AnyModel } from '../plugin.ts';
-import { c4TestConfig } from '../test-context.ts';
+import { C4_BETA_SECTION, C4_PLUGIN_DEFAULTS } from '../test-context.ts';
 
-export interface RenderC4Options {
-  /** Integrator config, as `initialize()` would get it (`theme`, `themeVariables`, `c4`, …). */
-  readonly config?: Readonly<Record<string, unknown>>;
-  readonly idPrefix?: string;
-  /** An outline drawer (D302) installed on the writer, as an active extension's would be. */
-  readonly outline?: OutlineDraw;
-  readonly measurer?: Measurer;
-}
+export type RenderC4Options = Pick<
+  TestRenderOptions,
+  'config' | 'idPrefix' | 'outline' | 'measurer'
+>;
 
-export interface RenderedC4 {
-  readonly svg: string;
-  readonly model: C4Model;
-  readonly ast: C4Document;
-  readonly layout: C4Layout;
-  readonly config: ResolvedConfig;
-  readonly warnings: readonly Warning[];
-  /** Whether the parse had an error (what parsed is drawn, as the pipeline would not). */
-  readonly rejected: boolean;
-  /** The render's gradient id, or false when the theme draws none (for `assertInert`). */
-  readonly gradient: string | false;
-  /** Whether the SVG carries a `theme: 'auto'` style sheet (for `assertInert`). */
-  readonly themeStyle: boolean;
-}
+export type RenderedC4 = SourceRender<C4Model, C4Layout, C4Document>;
 
-/**
- * The version the harness writes as `data-mermaid-version`. Not exported: no spec reads it, and the
- * built `./testing` entry cannot import `package.json` (its `rootDir` is `src`).
- */
-const TEST_VERSION = '13.0.0-alpha.0';
+/** What {@link renderC4BetaForTest} gives back: {@link RenderedC4}'s, for a c4-beta source. */
+export type RenderedC4Beta = SourceRender<C4BetaModel, C4Layout, C4BetaDocument>;
 
-/** The seam both kinds share: the drawn document and what the public API does not return. */
-interface Drawn<M extends C4AnyModel, A extends AstNode> {
-  readonly svg: string;
-  readonly parse: ParseResult<M, A>;
-  readonly layout: C4Layout;
-  readonly config: ResolvedConfig;
-  readonly warnings: readonly Warning[];
-  readonly gradient: string | false;
-  readonly themeStyle: boolean;
-}
-
-/** What a render gives back besides the model and AST. */
-function summary<M extends C4AnyModel, A extends AstNode>(
-  d: Drawn<M, A>
-): Omit<RenderedC4, 'model' | 'ast'> {
-  return {
-    svg: d.svg,
-    layout: d.layout,
-    config: d.config,
-    warnings: d.warnings,
-    rejected: d.parse.diagnostics.some((x) => x.severity === 'error'),
-    gradient: d.gradient,
-    themeStyle: d.themeStyle,
+/** The c4 plugin parsing one kind of source with `parse`. */
+function harnessOf<M extends C4AnyModel, A extends AstNode>(
+  parse: (
+    text: string,
+    options: { preprocessed: DiagramParseContext['preprocessed'] }
+  ) => ParseResult<M, A>,
+  spec: HarnessSpec<M, A> = {}
+): (source: string, options?: RenderC4Options) => Promise<SourceRender<M, C4Layout, A>> {
+  const plugin: HarnessPlugin<M, C4Layout, A> = {
+    ...c4,
+    parse: (text, ctx) => parse(text, { preprocessed: ctx.preprocessed, ...ctx.limits }),
   };
+  return createSourceHarness(plugin, { below: C4_PLUGIN_DEFAULTS, allowErrors: true, ...spec });
 }
 
 /** Renders `source`, parsed with its front matter and directives. */
-export async function renderC4ForTest(
-  source: string,
-  options: RenderC4Options = {}
-): Promise<RenderedC4> {
-  const d = await drawParsed(source, options, (pre, limits) =>
-    parseC4(source, { preprocessed: pre, ...limits })
-  );
-  return { ...summary(d), model: d.parse.model, ast: d.parse.ast };
-}
-
-/** What {@link renderC4BetaForTest} gives back: {@link RenderedC4}'s, for a c4-beta source. */
-export interface RenderedC4Beta extends Omit<RenderedC4, 'model' | 'ast'> {
-  readonly model: C4BetaModel;
-  readonly ast: C4BetaDocument;
-}
+export const renderC4ForTest: (source: string, options?: RenderC4Options) => Promise<RenderedC4> =
+  harnessOf(parseC4);
 
 /** Renders a `c4-beta` `source` through the plugin's seam, as {@link renderC4ForTest}. */
-export async function renderC4BetaForTest(
+export const renderC4BetaForTest: (
   source: string,
-  options: RenderC4Options = {}
-): Promise<RenderedC4Beta> {
-  const d = await drawParsed(
-    source,
-    options,
-    (pre, limits) => parseC4Beta(source, { preprocessed: pre, ...limits }),
-    true
-  );
-  return { ...summary(d), model: d.parse.model, ast: d.parse.ast };
-}
-
-/** The limits `parse` takes: the three caps. */
-type ParseLimits = Pick<Limits, 'maxNodes' | 'maxEdges' | 'maxDepth'>;
-
-async function drawParsed<M extends C4AnyModel, A extends AstNode>(
-  source: string,
-  options: RenderC4Options,
-  parseWith: (pre: PreprocessResult, limits: ParseLimits) => ParseResult<M, A>,
-  beta = false
-): Promise<Drawn<M, A>> {
-  const warnings: Warning[] = [];
-  const warn = (w: Warning): void => void warnings.push(w);
-  const pre = preprocess(source);
-  const config = c4TestConfig(pre, options.config, beta);
-  const limits = resolveLimits(config);
-  const parse = parseWith(pre, limits);
-  const idPrefix = options.idPrefix ?? 'mermaid-0';
-  const choice = resolveThemeName(config.theme, warn);
-  const theme = createTheme(await loadTheme(choice.name), {
-    themeVariables: config.themeVariables as Record<string, unknown> | undefined,
-    dark: choice.dark ? await loadTheme(choice.dark) : undefined,
-    diagram: c4.theme,
-    warn,
-    idPrefix: () => idPrefix,
-  });
-  const ctx: RenderContext = {
-    config,
-    measurer: options.measurer ?? tableMeasurer,
-    units: pxProfile,
-    theme,
-    securityLevel: 'default',
-    idPrefix,
-    version: TEST_VERSION,
-    layout: () => {
-      throw new Error('c4 lays itself out (layoutKind: custom)');
-    },
-    limits,
-    warn,
-  };
-  const layout = c4.layout(parse.model, ctx);
-  const gradient = theme.gradient();
-  const w = streamWriter({ gradient, outline: options.outline });
-  c4.render(parse.model, layout, ctx, w);
-  return {
-    svg: w.finish(),
-    parse,
-    layout,
-    config,
-    warnings,
-    gradient: gradient?.id ?? false,
-    themeStyle: theme.autoDeclarations() !== undefined,
-  };
-}
+  options?: RenderC4Options
+) => Promise<RenderedC4Beta> = harnessOf(parseC4Beta, { section: C4_BETA_SECTION });

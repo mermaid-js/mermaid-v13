@@ -219,6 +219,35 @@ describe('gantt layout follows ganttRenderer.js', () => {
     expect(layout.excludes).toEqual([{ x: 75 + 117, y: 35, width: 350 - 117, height: 148 - 85 }]);
   });
 
+  it('clamps an excluded run that starts before the plot to its left edge (#774)', () => {
+    // Fri Jul 4 20:30:30 starts the plot; the Fri–Sat weekend run starts at Fri 00:00, before it.
+    // v12 draws that rect at a negative x, clipped by its `0 0 w h` viewBox. The end is pushed
+    // out to Wed Jul 9 10:30:30, so the domain is 110 h.
+    const { layout } = lay(
+      fixture()
+        .setDateFormat('YYYY-MM-DD HH:mm:ss')
+        .setExcludes('weekends')
+        .setWeekend('friday')
+        .addTask('a', 'a1,2025-07-04 20:30:30,2025-07-08 10:30:30')
+    );
+    expect(layout.domain!.end - layout.domain!.start).toBe(110 * 3600 * 1000);
+    // From the plot's left edge to Sat Jul 5 23:59:59.999, 27.49 h in: round(1050 · 27.49 / 110).
+    expect(layout.excludes).toEqual([{ x: 75, y: 35, width: 262, height: 124 - 85 }]);
+    expect(layout.bounds).toEqual({ x: 0, y: 0, width: 1200, height: layout.height });
+  });
+
+  it('drops an excluded run with nothing left inside the plot', () => {
+    // A one-instant domain maps every time to the plot's middle, so the run has no width.
+    const { layout } = lay(
+      fixture()
+        .setDateFormat('YYYY-MM-DD HH:mm:ss')
+        .setExcludes('weekends')
+        .addTask('a', 'a,2019-02-02 12:00:00,0d')
+        .addTask('b', 'b,2019-02-02 12:00:00,0d')
+    );
+    expect(layout.excludes).toEqual([]);
+  });
+
   it('skips exclude ranges over more than five years, with a warning', () => {
     const { layout, warnings } = lay(
       fixture().setExcludes('weekends').addTask('a', 'a,2014-01-01,2020-01-02')
@@ -273,6 +302,11 @@ describe('the time axis', () => {
     expect(bottomAxis.ticks).toHaveLength(9);
     expect(bottomAxis.ticks[0]).toMatchObject({ time: at(2014, 1, 1), x: 75, label: '2014-01-01' });
     expect(bottomAxis.ticks.at(-1)).toMatchObject({ x: 1125, label: '2014-01-05' });
+  });
+
+  it('labels the one tick of a one-instant domain with axisFormat (#774)', () => {
+    const { layout } = lay(fixture().addTask('A', 'a,2024-01-01,0d').setAxisFormat('%d %b'));
+    expect(layout.bottomAxis.ticks.map((t) => [t.x, t.label])).toEqual([[75 + 525, '01 Jan']]);
   });
 
   it('honours tickInterval and axisFormat, statement first', () => {
@@ -341,10 +375,12 @@ describe('nothing to schedule (D277)', () => {
     expect([layout.domain, layout.bars]).toEqual([undefined, []]);
   });
 
-  it('maps a one-instant domain to the middle, with no automatic ticks', () => {
+  it('maps a one-instant domain to the middle, with one tick there (#774)', () => {
     const { layout } = lay(fixture().addTask('m', 'milestone, m, 2014-01-02, 0d'));
     expect(layout.bars[0]!.x).toBe(75 + 525 - 10);
-    expect(layout.bottomAxis.ticks).toEqual([]);
+    expect(layout.bottomAxis.ticks).toEqual([
+      expect.objectContaining({ time: at(2014, 1, 2), x: 75 + 525, label: '2014-01-02' }),
+    ]);
   });
 
   it('keeps the row of a task that never resolves, and draws no bar for it', () => {

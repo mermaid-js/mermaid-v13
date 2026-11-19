@@ -8,7 +8,8 @@ import {
   sameAxisSegmentOverlapLength,
   segmentBoundsOverlapRect,
 } from './geometry.ts';
-import type { OrthogonalSegment, Point, RectEntry } from './geometry.ts';
+import type { Point } from '../../types.ts';
+import type { OrthogonalSegment, RectEntry } from './geometry.ts';
 
 /** How many of the sorted `values` are below `limit` (or equal to it, with `orEqual`). */
 function countBelow(values: Float64Array, limit: number, orEqual: boolean): number {

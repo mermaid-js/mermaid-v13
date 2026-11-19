@@ -21,6 +21,7 @@ export {
   type Warning,
 } from '@mermaid-js/core';
 export type { MermaidConfig } from '@mermaid-js/core/config';
+export type { FontTable } from '@mermaid-js/core/text';
 export type { InitializeConfig, IntegratorOptions, Mermaid } from './api.ts';
 export type {
   ExtensionPlugin,

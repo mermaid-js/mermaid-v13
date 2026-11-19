@@ -1,0 +1,10 @@
+---
+description: >-
+  #774: a ticket and an assignee too long to sit side by side on one row.
+  Each wraps, so the ticket takes a row and the assignee the row below,
+  still right-aligned, and the card grows to hold both (D647). v12 drew them
+  on the same row, over each other.
+---
+kanban
+  long[Column]
+    a[Card]@{ assigned: 'A very long assignee name that goes on', ticket: 'VERY-LONG-TICKET-NUMBER-12345' }

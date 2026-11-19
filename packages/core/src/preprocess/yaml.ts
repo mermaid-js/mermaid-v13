@@ -105,6 +105,9 @@ const RE_LEADING_BLANK = /^[ \t]/;
 const RE_BLOCK_HEADER = /^[|>][-+0-9]*\s*(?:#.*)?$/;
 const RE_INDENT_DIGIT = /[1-9]/;
 const END_EXPECTED = 'end of the stream or a document separator is expected';
+// An anchor alone on its line: `&a`, with nothing after it but a comment.
+const RE_ANCHOR_ONLY = /^&\S+$/;
+const NO_ANCHORS = 'tags, anchors and aliases (`!`, `&`, `*`) are not supported';
 
 /** One read of one YAML range. Lines keep their offsets into the original source. */
 class Reader {
@@ -275,9 +278,7 @@ class Reader {
     if (s === 'true' || s === 'True' || s === 'TRUE') return true;
     if (s === 'false' || s === 'False' || s === 'FALSE') return false;
     const c = s[0] ?? '';
-    if (c === '!' || c === '&' || c === '*') {
-      this.fail('tags, anchors and aliases (`!`, `&`, `*`) are not supported', at);
-    }
+    if (c === '!' || c === '&' || c === '*') this.fail(NO_ANCHORS, at);
     if (c === '@' || c === '`')
       this.fail(`\`${c}\` is reserved and cannot start a plain value`, at);
     if (c !== '-' && c !== '+' && c !== '.' && (c < '0' || c > '9')) return s;
@@ -608,6 +609,19 @@ class Reader {
     return text + '\n';
   }
 
+  /**
+   * Whether `text`, the plain value on line `this.i - 1`, is an anchor over a nested block
+   * mapping (`k: &a` above `  x: 1`). `scalar` would reject the anchor, but the mapping's first
+   * line is read as the value's continuation and fails first, on its indentation (#774).
+   */
+  anchorsMapping(text: string, indent: number): boolean {
+    if (!RE_ANCHOR_ONLY.test(text)) return false;
+    let j = this.i;
+    while (j < this.lines.length && (this.lines[j] ?? '').trim() === '') j++;
+    const line = this.lines[j] ?? '';
+    return leading(line) > indent && splitKey(line.trim()) !== null;
+  }
+
   /** The value in `slot`, starting at offset `at`; line `this.i - 1` holds it. */
   inlineValue(rest: string, at: number, indent: number, depth: number, slot: ValueSlot): YamlValue {
     const first = rest[0];
@@ -643,6 +657,7 @@ class Reader {
     let text = body.trim();
     let textEnd = at + text.length;
     this.printable(at, textEnd);
+    if (this.anchorsMapping(text, indent)) this.fail(NO_ANCHORS, at);
     this.plainStart(text, at, slot);
     const indicator = mappingIndicator(text, true);
     // `k: a: b` or `k: a:` at a line end: js-yaml reads a second mapping entry and fails.

@@ -10,7 +10,8 @@ import {
   orthogonalSegmentsForPoints,
   rectOfNodeBounds,
 } from './geometry.ts';
-import type { OrthogonalSegment, Point } from './geometry.ts';
+import type { Point } from '../../types.ts';
+import type { OrthogonalSegment } from './geometry.ts';
 import {
   buildRectHitIndex,
   buildSegmentCrossingIndex,

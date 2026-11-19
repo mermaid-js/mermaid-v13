@@ -36,6 +36,11 @@
       "types": "./dist/parser/v12-text.d.ts",
       "default": "./dist/parser/v12-text.js"
     },
+    "./parser/generic-types": {
+      "mermaid-source": "./src/parser/generic-types.ts",
+      "types": "./dist/parser/generic-types.d.ts",
+      "default": "./dist/parser/generic-types.js"
+    },
     "./parser/drop": {
       "mermaid-source": "./src/parser/drop.ts",
       "types": "./dist/parser/drop.d.ts",

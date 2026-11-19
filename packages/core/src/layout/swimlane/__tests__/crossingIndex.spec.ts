@@ -19,7 +19,8 @@ import {
   sameAxisSegmentOverlapLength,
   segmentHitsAnyRect,
 } from '../direction/geometry.ts';
-import type { OrthogonalSegment, Point, RectEntry } from '../direction/geometry.ts';
+import type { Point } from '../../types.ts';
+import type { OrthogonalSegment, RectEntry } from '../direction/geometry.ts';
 
 /**
  * The indexes of the crossing cleanup (#687) answer what the walks they replace answer. Each

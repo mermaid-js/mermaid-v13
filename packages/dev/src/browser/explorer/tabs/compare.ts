@@ -11,8 +11,9 @@
  * - URL state: `version` (left out for the default) and `diff=1`.
  * - A dev rebuild (`ctx.build`) gives the left side a fresh iframe; a different version, the
  *   right. The iframes exist only while the tab is showing.
- * - Each pane's header shows its render time and, once both sides rendered the same text, how
- *   many times faster (green) or slower (red) it was than the other side.
+ * - Each pane's header shows its render time, the median of `TIMED_RENDERS` timed renders
+ *   (min and max on hover, #358), and, once both sides rendered the same text, how many times
+ *   faster (green) or slower (red) it was than the other side, from the two medians.
  * - Spec hooks: `.pane[data-side][data-status]` (`waiting | loading | rendering | rendered |
  *   error`) with `.title` and `.error`; `iframe[data-side]`; `sl-select[data-role="version"]`;
  *   `sl-button[data-action="diff"]`; `[data-testid="compare-diff-status"][data-changed-pixels]`;
@@ -28,6 +29,7 @@ import { diffRenders, type DiffResult, type RenderedSvg } from '../compare-diff.
 import {
   V12_LINE,
   cdnBundleUrl,
+  TIMED_RENDERS,
   compareSpeed,
   formatRenderMs,
   isPrerelease,
@@ -35,6 +37,8 @@ import {
   npmRenderConfig,
   resolveVersion,
   serializeCompareUrlState,
+  summarizeRenderTimes,
+  type RenderTimes,
   type VersionsResponse,
 } from '../compare-model.ts';
 import { asHostText } from '../../../host-text.ts';
@@ -54,8 +58,8 @@ interface Pane {
   readonly status: PaneStatus;
   readonly message: string;
   readonly result: RenderedSvg | undefined;
-  /** How long the pane's `render()` call took for `result`. */
-  readonly renderMs: number | undefined;
+  /** How long the pane's timed `render()` calls took for `result`. */
+  readonly renderTimes: RenderTimes | undefined;
   /** The render key of `result`, and of the last render sent. */
   readonly resultKey: string;
   readonly sentKey: string;
@@ -69,7 +73,7 @@ const newPane = (key = '', bundle?: PaneBundle): Pane => ({
   status: key ? 'loading' : 'waiting',
   message: '',
   result: undefined,
-  renderMs: undefined,
+  renderTimes: undefined,
   resultKey: '',
   sentKey: '',
   requestId: 0,
@@ -329,6 +333,7 @@ export class CompareTab extends ViewerTabElement {
         text: asHostText(this.ctx.text),
         config: this.#config(side),
         background: this.#background,
+        runs: TIMED_RENDERS,
         requestId,
       });
     }
@@ -350,7 +355,7 @@ export class CompareTab extends ViewerTabElement {
         status: 'rendered',
         message: '',
         result: { svg: m.svg, width: m.width, height: m.height },
-        renderMs: m.ms,
+        renderTimes: summarizeRenderTimes(m.times),
         resultKey: pane.sentKey,
       });
     } else if (m.type === 'error') {
@@ -359,7 +364,7 @@ export class CompareTab extends ViewerTabElement {
         status: 'error',
         message: m.message,
         result: undefined,
-        renderMs: undefined,
+        renderTimes: undefined,
         resultKey: '',
       });
     }
@@ -467,25 +472,28 @@ export class CompareTab extends ViewerTabElement {
     >`;
   }
 
-  /** The pane's render time for the current text, if it has one. */
-  #currentMs(side: Side): number | undefined {
+  /** The pane's render times for the current text, if it has them. */
+  #currentTimes(side: Side): RenderTimes | undefined {
     const pane = this.panes[side];
     return pane.status === 'rendered' && pane.resultKey === this.#renderKey
-      ? pane.renderMs
+      ? pane.renderTimes
       : undefined;
   }
 
   #renderChips(side: Side) {
-    const ms = this.#currentMs(side);
-    if (ms === undefined) return nothing;
-    const otherMs = this.#currentMs(other(side));
+    const times = this.#currentTimes(side);
+    if (!times) return nothing;
+    const ms = times.median;
+    const otherMs = this.#currentTimes(other(side))?.median;
     const speed = otherMs === undefined ? undefined : compareSpeed(ms, otherMs);
+    const spread = `min ${formatRenderMs(times.min)}, max ${formatRenderMs(times.max)}`;
     return html`<span class="chips">
       <span
         class="chip"
         data-testid="render-time"
         data-ms=${ms}
-        title="The render() call, after one warm-up render in this pane"
+        data-runs=${times.runs}
+        title=${`Median of ${times.runs} render() calls, after one warm-up render in this pane (${spread})`}
         >${formatRenderMs(ms)}</span
       >
       ${speed
@@ -493,7 +501,7 @@ export class CompareTab extends ViewerTabElement {
             class="chip ${speed.kind}"
             data-testid="render-speed"
             data-speed=${speed.kind}
-            title=${`Than the ${other(side)} pane (${formatRenderMs(otherMs!)})`}
+            title=${`Than the ${other(side)} pane (median ${formatRenderMs(otherMs!)})`}
             >${speed.label}</span
           >`
         : nothing}

@@ -10,6 +10,7 @@ import { Kind } from '@mermaid-js/core/parser-kit';
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from '../parser/tokens.ts';
 import { SLOT_TABLES } from '../parser/slots.ts';
+import { tokenBefore } from '@mermaid-js/shared/parser/facet';
 
 /** One argument as written: where it is, and its parts. */
 export interface WrittenArg {
@@ -53,21 +54,6 @@ const IN_ARGS = new Set<number>([
   Kind.Directive,
   Kind.Space,
 ]);
-
-/** The index of the last token starting before `at`, or -1. */
-function lastStartBefore(tokens: TokenStream, at: number): number {
-  let lo = 0;
-  let hi = tokens.length - 1;
-  let found = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if ((tokens.start[mid] ?? 0) < at) {
-      found = mid;
-      lo = mid + 1;
-    } else hi = mid - 1;
-  }
-  return found;
-}
 
 /** The arguments of the call whose keyword is token `k`, read up to its `)` or line end. */
 function readArgs(
@@ -138,7 +124,8 @@ function readArgs(
  * undefined. `text` is the document the tokens are of.
  */
 export function callAt(tokens: TokenStream, text: string, at: number): CallAt | undefined {
-  let j = lastStartBefore(tokens, at);
+  // The last token starting before `at`.
+  let j = tokenBefore(tokens, at - 1);
   while (j >= 0 && IN_ARGS.has(tokens.kind[j] ?? Kind.EOF)) j--;
   if (j < 0) return undefined;
   const kind = tokens.kind[j] ?? Kind.EOF;

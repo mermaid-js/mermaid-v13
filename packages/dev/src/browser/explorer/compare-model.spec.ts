@@ -10,6 +10,7 @@ import {
   resolveVersion,
   serializeCompareUrlState,
   sortVersionsDesc,
+  summarizeRenderTimes,
   type VersionsResponse,
 } from './compare-model.ts';
 
@@ -70,6 +71,27 @@ describe('render time chips', () => {
 
   it('calls times within 5% of each other the same speed', () => {
     expect(compareSpeed(10, 10.4)).toMatchObject({ kind: 'same', label: 'same speed' });
+  });
+
+  it('sums up a pane’s timed renders as their median, min and max', () => {
+    expect(summarizeRenderTimes([4, 1, 5, 2, 3])).toEqual({ median: 3, min: 1, max: 5, runs: 5 });
+    expect(summarizeRenderTimes([4, 1, 3, 2])).toEqual({ median: 2.5, min: 1, max: 4, runs: 4 });
+    expect(summarizeRenderTimes([7])).toEqual({ median: 7, min: 7, max: 7, runs: 1 });
+    expect(summarizeRenderTimes([2, Number.NaN, 1, Infinity, 3])?.median).toBe(2);
+    expect(summarizeRenderTimes([])).toBeUndefined();
+  });
+
+  it('keeps one slow first render from setting the ratio (#358)', () => {
+    // The shape from the issue, in relative units: each pane's first timed run is much slower
+    // than the rest. Only the ratio is asserted.
+    const v13 = summarizeRenderTimes([44, 1, 1.1, 0.9, 1])!;
+    const v12 = summarizeRenderTimes([60, 35, 36, 34, 35])!;
+    expect(compareSpeed(v13.median, v12.median)).toMatchObject({
+      kind: 'faster',
+      label: '35× faster',
+    });
+    // The first runs alone would have said 1.4× faster.
+    expect(compareSpeed(44, 60)?.label).toBe('1.4× faster');
   });
 
   it('compares nothing without two positive times', () => {

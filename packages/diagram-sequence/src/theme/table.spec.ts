@@ -21,6 +21,7 @@ const OWN = [
   'activationBkgColor',
   'activationBorderColor',
   'sequenceNumberColor',
+  'rectBkgColor',
 ];
 const GEOMETRY = [
   'actorRadius',
@@ -54,6 +55,24 @@ describe('the sequence theme table (#414 T2)', () => {
     expect(await at('dark')).toEqual([3, 0, 0, 0, 0]);
     for (const name of ['redux', 'redux-dark-color', 'neo', 'neo-dark'])
       expect(await at(name), name).toEqual([6, 44, 3, 15, 30]);
+  });
+
+  it("fills a colourless rect as v12's theme files do (#774)", async () => {
+    const at = async (name: string) => {
+      const t = createTheme(await loadTheme(name as 'default'), {
+        diagram: table,
+        cssVariables: false,
+      });
+      return [t.value('rectBkgColor'), t.value('tertiaryColor')];
+    };
+    // theme-base and the classic themes, and the dark neo and redux themes: tertiaryColor.
+    for (const name of ['default', 'base', 'dark', 'forest', 'neutral', 'neo-dark', 'redux-dark']) {
+      const [rect, tertiary] = await at(name);
+      expect(rect, name).toBe(tertiary);
+    }
+    // theme-neo, theme-redux and theme-redux-color: the white background darkened 4 (v12 hsl(0, 0%, 96%)).
+    for (const name of ['neo', 'redux', 'redux-color'])
+      expect((await at(name))[0], name).toBe('#f5f5f5');
   });
 
   it('derives the participant and label colours as v12 theme-base does', async () => {

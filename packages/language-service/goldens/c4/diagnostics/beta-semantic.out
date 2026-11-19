@@ -4,4 +4,4 @@
 6:13-6:17 "user" error C4BETA_DUPLICATE_ID: The id `user` is declared twice, at line 2 and at line 6. Every element needs its own id.
 8:10-8:17 "missing" error C4_UNKNOWN_END: The relation `user --> missing` names `missing`, which is no element. Declare it with a statement such as `person missing "Name"`.
 9:1-9:16 "3: user --> api" warning C4BETA_STEP_IGNORED: A step number counts in a `dynamic` diagram; it is not drawn: `3:` at line 9.
-10:21-10:32 "weight:bold" warning C4BETA_STYLE_IGNORED: These style entries are ignored: a key is `fill`, `stroke`, `color`, `shape` or `line`: `weight:bold` at line 10, `shape:triangle` at line 10.
+10:21-10:32 "weight:bold" warning C4BETA_STYLE_IGNORED: These style entries are ignored (`fill`, `stroke` and `color` take a colour; `line` takes `solid`, `dashed` or `dotted`; `shape` takes `cylinder`): `weight:bold` at line 10, `shape:triangle` at line 10.

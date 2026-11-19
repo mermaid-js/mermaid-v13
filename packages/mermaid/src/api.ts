@@ -30,7 +30,7 @@ import {
   type InitializeConfig,
   type Snapshot,
 } from './config-snapshot.ts';
-import { createDomAdapter } from './dom.ts';
+import { createDomAdapter, v12Init } from './dom.ts';
 import { blockLoader, type BlockLoader } from './embeds.ts';
 import { loadFor } from './draw-context.ts';
 import { draw, drawAscii, drawSvg } from './draw.ts';
@@ -140,6 +140,7 @@ function createSession(
     parseErrorHandler: undefined,
     textBackend: undefined,
     blocks: undefined as unknown as BlockLoader,
+    fontTables: new WeakMap(),
   };
   // The block loader's callbacks read the session when a text with a block draws.
   k.blocks = blocksOf(k);
@@ -209,7 +210,10 @@ export function createMermaid(
       await prepareWith(k, text, s, options?.format);
       return draw(k, text, s, { ...options, id });
     } catch (e) {
-      throw toMermaidError(e);
+      // v12's render() passed every failure to `parseError` too (#757).
+      const error = toMermaidError(e);
+      k.parseErrorHandler?.(error);
+      throw error;
     }
   }
 
@@ -286,20 +290,46 @@ export function createMermaid(
    */
   const registerIconPacks: (packs: readonly IconLoader[]) => void = registerPacks;
 
-  /** @deprecated Catch the `MermaidError` that `parse()` rejects with instead. */
+  /**
+   * @deprecated Catch the `MermaidError` that `parse()` or `render()` rejects with instead.
+   * The same hook as `mermaid.parseError = handler`, as in v12.
+   */
   function setParseErrorHandler(handler: ParseErrorHandler): void {
     k.parseErrorHandler = handler;
   }
 
   // The DOM adapter (run, mount) reads the defaults at the start of each call, like render.
-  const { run, mount, contentLoaded } = createDomAdapter({
+  const {
+    run,
+    mount,
+    contentLoaded: startOnLoadRun,
+  } = createDomAdapter({
     prepare,
     renderSync,
     siteConfig: () => k.site.config,
     onParseError: (error) => k.parseErrorHandler?.(error),
   });
 
+  /**
+   * @deprecated Use `detectType(text)` and `supportsFormat(type, format)`. v12's list of
+   * detectors: `[{ id }]` with each v12 type in detection order, after v12's `error` and `---`.
+   * Synchronous, so a discovered type is listed only after an awaited `preload()` or render.
+   */
+  function getRegisteredDiagramsMetadata(): { id: string }[] {
+    return ['error', '---', ...registry.types()].map((id) => ({ id }));
+  }
+
+  /** v12's `contentLoaded`: `run()` on page load unless `startOnLoad` is off, here or in config. */
+  function contentLoaded(): void {
+    if (api.startOnLoad) startOnLoadRun();
+  }
+
   const api = {
+    /**
+     * @deprecated Use `initialize({ startOnLoad: false })`. v12's property: `false` stops the
+     * page-load `run()` as the config key does.
+     */
+    startOnLoad: true as boolean,
     render,
     prepare,
     renderSync,
@@ -315,6 +345,20 @@ export function createMermaid(
     registerLayoutLoaders,
     registerIconPacks,
     setParseErrorHandler,
+    /** @deprecated Use `initialize(config)`, then `run({ querySelector, nodes })` (D643). */
+    init: v12Init(initialize, run),
+    /** @deprecated Use `detectType(text)` and `supportsFormat(type, format)` (D643). */
+    getRegisteredDiagramsMetadata,
+    /**
+     * @deprecated v12's hook, the one `setParseErrorHandler` sets: called with the
+     * `MermaidError` of a failed `parse()`, `render()` or `run()` element (R-API-4, #757).
+     */
+    get parseError(): ParseErrorHandler | undefined {
+      return k.parseErrorHandler;
+    },
+    set parseError(handler: ParseErrorHandler | undefined) {
+      k.parseErrorHandler = handler;
+    },
   };
   registerSeam(api, k.discovery);
   return api;

@@ -22,6 +22,8 @@ function lay(m: EventModel, section: Record<string, unknown> = {}, warn?: (w: Wa
   return layout;
 }
 
+const round = (v: number) => Math.round(v * 100) / 100;
+
 const boxAt = (l: EventModelLayout) => l.boxes.map((b) => [b.x, b.y, b.width, b.height]);
 
 describe('layoutEventModel', () => {
@@ -130,24 +132,80 @@ describe('layoutEventModel', () => {
     });
   });
 
-  it('loops a self relation over the top right corner, clear of the other anchors', () => {
+  it('loops a self relation under the bottom right corner, clear of the other anchors (D659)', () => {
     const l = lay(model(frame('evt', 'E'), frame('ui', 'A', { sources: ['01', '02'] })));
     const self = l.relations.find((r) => r.route === 'self');
-    // A is at (280, 15), 100 wide: the loop rises 10 at 360, crosses to 370, comes down there.
+    // A is at (280, 15), 100 × 100: the loop drops 25 at 350, crosses to 370, comes up there.
     expect(self?.points).toEqual([
-      { x: 360, y: 15 },
-      { x: 360, y: 5 },
-      { x: 370, y: 5 },
-      { x: 370, y: 15 },
+      { x: 350, y: 115 },
+      { x: 350, y: 140 },
+      { x: 370, y: 140 },
+      { x: 370, y: 115 },
     ]);
     expect(self?.head).toEqual([
-      { x: 366.5, y: 5 },
-      { x: 370, y: 15 },
-      { x: 373.5, y: 5 },
+      { x: 373.5, y: 125 },
+      { x: 370, y: 115 },
+      { x: 366.5, y: 125 },
     ]);
     // The relation up from E ends at ⅓ of A's width on its bottom; nothing else ends at the loop.
     const up = l.relations.find((r) => r.route === 'up');
     expect(up?.points[1]).toEqual({ x: 280 + 100 / 3, y: 115 });
+    // A's lane grows to hold the loop, 15 under it; A keeps v12's top, and the lane below moves.
+    expect(l.lanes.map((x) => [x.y, x.height])).toEqual([
+      [0, 155],
+      [165, 130],
+    ]);
+    expect(l.boxes.map((b) => b.y)).toEqual([180, 15]);
+  });
+
+  it('routes a relation that skips a box of its lane under the row (D659)', () => {
+    const l = lay(
+      model(
+        frame('evt', 'A'),
+        frame('evt', 'B', { sources: ['01'] }),
+        frame('evt', 'C', { sources: ['01', '02'] }),
+        frame('evt', 'D', { sources: ['01'] })
+      )
+    );
+    const at = (id: string) => {
+      const r = l.relations.find((x) => x.id === id);
+      return [r?.route, r?.points.map((p) => [round(p.x), p.y])];
+    };
+    // Boxes at 250, 360, 470 and 580, 100 × 100 from y 15. Neighbours stay `along` (D521).
+    expect(at('relation:01->02')).toEqual([
+      'along',
+      [
+        [350, 65],
+        [360, 65],
+      ],
+    ]);
+    // 01 → 03 skips B: from A's bottom down to 25 under the boxes, across, up into C at ½.
+    // 01 → 04 overlaps it, so it runs 10 lower; on A its leg is the outer one, left of the
+    // other, so neither crosses the other's run. Both of A's ends lie between ⅓ and ⅔.
+    expect(at('relation:01->03')).toEqual([
+      'under',
+      [
+        [305.56, 115],
+        [305.56, 140],
+        [520, 140],
+        [520, 115],
+      ],
+    ]);
+    expect(at('relation:01->04')).toEqual([
+      'under',
+      [
+        [294.44, 115],
+        [294.44, 150],
+        [630, 150],
+        [630, 115],
+      ],
+    ]);
+    // The head points up into the target's bottom.
+    const r = l.relations.find((x) => x.id === 'relation:01->04');
+    expect(r?.head[1]).toEqual({ x: 630, y: 115 });
+    // The lane grows from 130 to the lowest channel and 15 under it; the boxes keep v12's top.
+    expect(l.lanes.map((x) => x.height)).toEqual([165]);
+    expect(l.boxes.map((b) => b.y)).toEqual([15, 15, 15, 15]);
   });
 
   it('draws no relation to the first frame or a reset frame', () => {

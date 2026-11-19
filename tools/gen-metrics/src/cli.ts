@@ -1,4 +1,5 @@
-// Writes packages/core/src/text/metrics.ts from Trebuchet MS, Verdana and Arial font files.
+// Writes packages/core/src/text/metrics.ts from Trebuchet MS, Verdana, Arial and Courier New
+// font files.
 // Usage: pnpm --filter @mermaid-js/gen-metrics generate [fontDir]
 // fontDir defaults to the macOS supplemental font folder.
 // The fonts are read, never shipped: only their advance widths and vertical metrics are kept.

@@ -1,6 +1,7 @@
 // Inline boxes in labels (DESIGN §5.3, D177): an extension registers a provider for a delimiter
 // pair or a pattern (D293), and label layout hands it each span, which comes back as a measured
 // box drawn on the line's baseline. Math (`$$…$$`) is the first user; icons (`fa:fa-car`) the next.
+import type { Resource } from '../pipeline/errors.ts';
 import type { IconPacks } from '../pipeline/icon-packs.ts';
 import type { InlineBox, LabelBoxSpan } from '../svg/writer.ts';
 import type { FontKey, Measurer, VerticalMetrics } from './measurer.ts';
@@ -22,6 +23,12 @@ export interface InlineRequest {
   readonly iconPacks?: IconPacks;
   /** The render's scratch ({@link InlineSpans.scratch}). */
   readonly scratch: Record<string, unknown>;
+  /**
+   * What this render is drawn without, because it has not loaded: the resources its one
+   * `PLACEHOLDER` warning names (D655). A provider whose engine is among them returns `undefined`
+   * without a warning of its own, since the render already said so. Empty otherwise.
+   */
+  readonly standIns: readonly Resource[];
 }
 
 /**
@@ -211,7 +218,8 @@ const FINDERS = FEATURES.map(finder);
 /**
  * The inline spans of one render: `providers` in registration order (the span that starts first
  * wins; on a tie, the first registered), `warn` for the feature warnings, given once per render,
- * and the render's icon packs for the providers (D294).
+ * the render's icon packs for the providers (D294), and what the render is drawn without
+ * (`InlineRequest.standIns`, D655).
  *
  * Text output (`format: 'ascii'`) draws no boxes, provider or not: every span is shown as
  * written, with one `ASCII_DROPPED` warning per feature (D179).
@@ -220,7 +228,8 @@ export function inlineSpans(
   providers: readonly InlineProvider[],
   warn: Warn,
   format: 'svg' | 'ascii' = 'svg',
-  iconPacks?: IconPacks
+  iconPacks?: IconPacks,
+  standIns: readonly Resource[] = []
 ): InlineSpans {
   const ascii = format === 'ascii';
   const finders = ascii ? [] : providers.map(finder);
@@ -270,6 +279,7 @@ export function inlineSpans(
               warn: once,
               iconPacks,
               scratch,
+              standIns,
             })
           );
         if (box) {

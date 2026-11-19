@@ -22,6 +22,8 @@ import {
   openSvgRoot,
   paletteSlots,
   textElement,
+  placeTitle,
+  titledViewBox,
 } from '@mermaid-js/shared/svg/document';
 import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import { routePath } from '@mermaid-js/shared/svg/route';
@@ -162,7 +164,16 @@ export function renderClass(
 ): void {
   const p = layout.class ?? prepareClass(model, ctx);
   const scene: Scene = { w, layout, p, ctx, paint: paints(ctx.theme, p) };
-  openRoot(scene, model);
+  // v12's `classDiagramTitleText`: the root's size in `textColor`, `titleTopMargin` above the drawing (D652).
+  const title = placeTitle(
+    model.title,
+    layout.width,
+    ctx.config.class?.titleTopMargin ?? 25,
+    ctx,
+    ctx.theme.number('fontSize')
+  );
+  const ink = title && ctx.theme.color('textColor');
+  openRoot(scene, model, titledViewBox(layout, title, 8));
   if (scene.paint.cluster) drawNamespaces(scene);
   // One `data-id` per relationship, on its line, its label and its multiplicities.
   const idOf = edgeIds(model);
@@ -176,15 +187,21 @@ export function renderClass(
   for (const view of p.notes) drawNote(scene, view);
   for (const view of p.interfaces) drawInterface(scene, view);
   w.close();
+  if (title && ink)
+    w.label(title.label, title.x, title.y, { class: 'classDiagramTitleText', fill: ink });
   w.close();
 }
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
-function openRoot({ w, layout, ctx, paint }: Scene, model: ClassModel): void {
+function openRoot(
+  { w, ctx, paint }: Scene,
+  model: ClassModel,
+  viewBox: ReturnType<typeof titledViewBox>
+): void {
   openSvgRoot(w, ctx, {
     name: 'class',
     roleDescription: 'classDiagram',
-    viewBox: { width: layout.width, height: layout.height },
+    viewBox,
     maxWidth: ctx.config.class?.useMaxWidth !== false,
     title: model.accTitle,
     desc: model.accDescr,

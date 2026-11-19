@@ -19,6 +19,10 @@ export const architectureLayoutEngine = { default: 'compass' } as const satisfie
 /** The first-party engines that rank nodes down the flow: `layered` and its v12 name. */
 const FLOW_ENGINES: ReadonlySet<unknown> = new Set(['layered', 'dagre']);
 
+/** Whether `config.layout` names `layered` or `dagre`, which rank services down the flow. */
+export const flowEngine = (ctx: ArchitectureLayoutContext): boolean =>
+  FLOW_ENGINES.has(ctx.config.layout);
+
 /** What `graph` asks of placement that a flow engine leaves out, as clauses of the warning. */
 function ignoredBy(graph: LayoutGraph): string[] {
   const clauses: string[] = [];
@@ -35,7 +39,7 @@ function ignoredBy(graph: LayoutGraph): string[] {
  */
 export function warnPlacementIgnored(graph: LayoutGraph, ctx: ArchitectureLayoutContext): void {
   const name = ctx.config.layout;
-  if (!FLOW_ENGINES.has(name)) return;
+  if (!flowEngine(ctx)) return;
   const layout = `Layout "${String(name)}"`;
   const parts =
     graph.edges.length === 0

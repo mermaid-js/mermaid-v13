@@ -28,6 +28,7 @@ import {
 } from '../config.ts';
 import type { RailroadModel, RailroadNode, RailroadRule } from '../model.ts';
 import { Box, shifted, Track, visitRule } from './geometry.ts';
+import { drawnText, isBlankText } from './text.ts';
 import { BOLD_WEIGHT, NORMAL_WEIGHT, RAILROAD_METRICS, type RailroadMetrics } from './metrics.ts';
 import type {
   PlacedText,
@@ -270,8 +271,12 @@ class Placer {
   ): Sized {
     const text = decodeEntities(written);
     const { padding } = this.o;
-    const tw = this.width(text);
-    const th = this.lineHeight;
+    // A terminal in px is measured as the SVG draws it (#774): a blank one as nothing, so its
+    // box is the padding alone (v12's empty bbox). The text output keeps its cell of room.
+    const literal = node.type === 'terminal' && this.cells.measurer === undefined;
+    const blank = literal && isBlankText(text);
+    const tw = blank ? 0 : this.width(literal ? drawnText(text) : text);
+    const th = blank ? 0 : this.lineHeight;
     const width = tw + 2 * padding;
     const h = th + 2 * padding;
     return {

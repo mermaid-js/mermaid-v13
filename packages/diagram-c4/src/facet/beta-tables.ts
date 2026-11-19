@@ -4,7 +4,7 @@
  * what a `style` key does. The keys and their fixed values are the builder's (`STYLE_KEYS`).
  */
 import type { C4BetaElementKind } from '../beta/model.ts';
-import { T } from '../beta/tokens.ts';
+import { BETA } from '../beta/tokens.ts';
 
 export { STYLE_KEYS } from '../beta/build.ts';
 
@@ -20,43 +20,43 @@ export interface ElementKindInfo {
 export const ELEMENT_INFO: readonly ElementKindInfo[] = [
   {
     kind: 'person',
-    token: T.Person,
+    token: BETA.Person,
     line: 'person id "Name" "Description"',
     doc: 'A person: a user of the system. It has no technology.',
   },
   {
     kind: 'softwareSystem',
-    token: T.SoftwareSystem,
+    token: BETA.SoftwareSystem,
     line: 'softwareSystem id "Name" "Description"',
     doc: 'A software system: the highest level of the model. It has no technology.',
   },
   {
     kind: 'container',
-    token: T.Container,
+    token: BETA.Container,
     line: 'container id "Name" "Description" "Technology"',
     doc: 'A container: an application or a data store that runs inside a software system.',
   },
   {
     kind: 'component',
-    token: T.Component,
+    token: BETA.Component,
     line: 'component id "Name" "Description" "Technology"',
     doc: 'A component: a part of a container, a group of related code behind one interface.',
   },
   {
     kind: 'group',
-    token: T.Group,
+    token: BETA.Group,
     line: 'group id "Name" {',
     doc: 'A group: a frame around elements, with no meaning of its own.',
   },
   {
     kind: 'deploymentNode',
-    token: T.DeploymentNode,
+    token: BETA.DeploymentNode,
     line: 'deploymentNode id "Name" "Description" "Technology" instances "n" {',
     doc: 'A deployment node: a place software runs, with a technology and a number of instances.',
   },
   {
     kind: 'infrastructureNode',
-    token: T.InfrastructureNode,
+    token: BETA.InfrastructureNode,
     line: 'infrastructureNode id "Name" "Description" "Technology"',
     doc: 'An infrastructure node: infrastructure such as a load balancer, inside a deployment node.',
   },

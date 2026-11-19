@@ -16,15 +16,21 @@ import type { Warning } from '@mermaid-js/core';
 import type { UnitProfile } from '@mermaid-js/core/layout';
 import { resolveLimits, type Limits } from '@mermaid-js/core/limits';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import type { Measurer } from '@mermaid-js/core/text';
+import type { FontTable, Measurer } from '@mermaid-js/core/text';
 import type { AnyPlugin, Detected } from './registry.ts';
 
 /** Options only the integrator can set; never read from diagram text (R-SEC-5, R-SEC-6). */
 export interface IntegratorOptions {
   /** Measures label text. Ignored under `deterministic: true` (R-TEXT-7, DESIGN §5.1). */
   measurer?: Measurer;
-  /** Use the built-in metric tables, never the canvas (R-TEXT-7). */
+  /** Use the metric tables, never the canvas (R-TEXT-7). */
   deterministic?: boolean;
+  /**
+   * Font tables the table measurer looks up before its built-in ones (D645, DESIGN §5.1). They
+   * load and are checked with the first `prepare()`, `render()` or `preload()`; a malformed entry
+   * rejects it with `MermaidError { code: 'SEMANTIC' }`.
+   */
+  fontTables?: readonly FontTable[];
   /** Replaces the default link schemes (http, https, mailto). */
   linkSchemes?: readonly string[];
   output?: { cssVariables?: boolean };
@@ -46,6 +52,7 @@ export type InitializeConfig = MermaidConfig & IntegratorOptions;
 const INTEGRATOR_KEYS = [
   'measurer',
   'deterministic',
+  'fontTables',
   'linkSchemes',
   'output',
   'limits',
@@ -107,11 +114,16 @@ function stableJson(value: unknown): string {
   return (JSON.stringify(value) as string | undefined) ?? 'null';
 }
 
-/** Integrator options as they enter a key: a measurer counts by its `id` (DESIGN §5.1). */
-export function optionsKey(options: Readonly<IntegratorOptions>): unknown {
+/**
+ * Integrator options as they enter a key: a measurer counts by its `id`, and font tables by the
+ * `id` of `table`, their table measurer (DESIGN §5.1, D645).
+ */
+export function optionsKey(options: Readonly<IntegratorOptions>, table?: Measurer): unknown {
   // Where chunks load from never changes the output.
-  const { measurer, cdnBase: _cdnBase, ...rest } = options;
-  return measurer ? { ...rest, measurer: measurer.id } : rest;
+  const { measurer, cdnBase: _cdnBase, fontTables: _fontTables, ...rest } = options;
+  const key: Plain = measurer ? { ...rest, measurer: measurer.id } : rest;
+  // No tables, or an empty list, key as before.
+  return table && table.id !== 'table' ? { ...key, fontTables: table.id } : key;
 }
 
 /**

@@ -145,6 +145,8 @@ class FlowchartParser extends FlowParser<FlowBuilder, FlowParseOptions, FlowOwnS
     db.finish();
     const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
     const result = this.result(db.model(warnings));
+    const title = this.pre.frontMatter?.title;
+    if (title) result.model.title = title;
     if (db.embeds.length > 0) result.embeds = db.embeds;
     result.edgeCount = result.model.edges.length;
     return result;
@@ -227,7 +229,8 @@ class FlowchartParser extends FlowParser<FlowBuilder, FlowParseOptions, FlowOwnS
     const r = this.span(from);
     st.statement('embed', r);
     const stmt: FlowEmbedStmt = {
-      id: this.ids.statement('embed'),
+      // The block is a mention of its node (D69), as state's is: `n:<id>`, or `@2` after one.
+      id: this.nodeMention(name),
       type: 'Embed',
       range: r,
       name,
