@@ -14,7 +14,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant, gitgraph, gantt, venn |
 | `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core |
-| `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt, railroad |
+| `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt, railroad, sequence |
 | `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban, wardley, xychart, venn, c4, class |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, packet, cynefin, wardley, xychart, railroad, state, usecase |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley, agentflow, architecture, block, c4, eventmodeling, gantt, ishikawa, railroad, requirement, treeview, usecase |
@@ -460,6 +460,7 @@ flags and opacities, which are read literally.
 | `activationBkgColor` | | color | `#cccccc` | `#cccccc` | `#474949` | `#474949` | `#f4f4f4` | `#474949` | `#f4f4f4` | `#f4f4f4` | `#f4ddff` | `#cccccc` | `#474949` |
 | `activationBorderColor` | | color | `#b3b3b3` | `#b3b3b3` | `#3e4040` | `#3e4040` | `#666666` | `#cccccc` | `#666666` | `#666666` | `#d5c1df` | `#b3b3b3` | `#2e3030` |
 | `sequenceNumberColor` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#000000` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
+| `rectBkgColor` | | color | `#f5f5f5` | `#f5f5f5` | `#201f1f` | `#201f1f` | `#f9ffec` | `#201f1f` | `#e1efc0` | `#eeeeee` | `#f6f9ff` | `#f5f5f5` | `#201f1f` |
 | `actorRadius` | | length | `6` | `6` | `6` | `6` | `3` | `3` | `3` | `3` | `3` | `6` | `6` |
 | `actorGlyphBand` | | length | `44` | `44` | `44` | `44` | `0` | `0` | `0` | `0` | `0` | `44` | `44` |
 | `messageEndGap` | | length | `3` | `3` | `3` | `3` | `0` | `0` | `0` | `0` | `0` | `3` | `3` |
