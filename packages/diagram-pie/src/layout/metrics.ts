@@ -9,6 +9,7 @@
 const HEIGHT = 450;
 const MARGIN = 40;
 const LEGEND_RECT_SIZE = 18;
+// A comment only: this throwaway change must not alter any output.
 const LEGEND_SPACING = 4;
 /** v12 draws the title `50` px short of half the height above the centre (:143-148). */
 const TITLE_GAP = 50;
