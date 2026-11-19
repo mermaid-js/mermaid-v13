@@ -14,7 +14,7 @@ The pipeline is `text → preprocess → detect → parse → layout → render 
 | --- | --- |
 | Requirements, by R-id | [v13/docs/REQUIREMENTS.md](v13/docs/REQUIREMENTS.md). The glossary is in §3. |
 | How v13 is built | [v13/docs/DESIGN.md](v13/docs/DESIGN.md). Packages are in §2, the plugin contract in §12, testing in §13. |
-| Decisions, by D-id | [v13/docs/DECISIONS.md](v13/docs/DECISIONS.md). A later row replaces an earlier one. |
+| Decisions, by D-id | D1 to D632 are rows in [v13/docs/DECISIONS.md](v13/docs/DECISIONS.md), which is closed. Later ones are one file each in [v13/docs/decisions/](v13/docs/decisions/README.md). A later decision replaces an earlier one. |
 | ADRs | [v13/docs/adr/](v13/docs/adr/) |
 | Changesets and releases | [v13/docs/RELEASING.md](v13/docs/RELEASING.md) |
 | Porting a diagram type | [v13/docs/agents/port-diagram/](v13/docs/agents/port-diagram/README.md), also as the `port-diagram-v13` skill |
@@ -58,7 +58,7 @@ v13/docs/                  requirements, design, decisions, migration notes, ref
 - **Do not copy code between diagram packages.** A helper that a second diagram type needs moves to `packages/shared` (or to `core` when every type needs it), and both import it. Where the copies would differ, the difference is a parameter. A shared subpath is one file, or one family of files that always load together: the CDN build splits by file, so a barrel makes every importer load everything behind it. See [packages/shared/README.md](packages/shared/README.md).
 - **Add files instead of editing shared lists.** A diagram type is found from its own files; see [shared-files.md](v13/docs/agents/port-diagram/shared-files.md).
 - **Timing tests assert ratios**, never absolute times.
-- **Escalate decisions.** If your change contradicts DESIGN, REQUIREMENTS or a D-id, or changes a v12 default or v12 semantics, stop and ask the maintainer. An answer becomes a new D-id row in DECISIONS.md.
+- **Escalate decisions.** If your change contradicts DESIGN, REQUIREMENTS or a D-id, or changes a v12 default or v12 semantics, stop and ask the maintainer. An answer becomes a new decision file, `v13/docs/decisions/D<n>.md` (D636). Never add a row to DECISIONS.md.
 - **Never loosen a gate** (a size or speed limit, a lint rule, a test bar, a workflow) to make a change pass. Report the failure instead.
 
 ## Commands
