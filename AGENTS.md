@@ -12,7 +12,8 @@ The pipeline is `text → preprocess → detect → parse → layout → render 
 
 | Need | Where |
 | --- | --- |
-| Requirements, by R-id | [v13/docs/REQUIREMENTS.md](v13/docs/REQUIREMENTS.md). The glossary is in §3. |
+| Requirements, by R-id | [v13/docs/REQUIREMENTS.md](v13/docs/REQUIREMENTS.md) |
+| Domain terms | [v13/docs/GLOSSARY.md](v13/docs/GLOSSARY.md) |
 | How v13 is built | [v13/docs/DESIGN.md](v13/docs/DESIGN.md). Packages are in §2, the plugin contract in §12, testing in §13. |
 | Decisions, by D-id | D1 to D632 are rows in [v13/docs/DECISIONS.md](v13/docs/DECISIONS.md), which is closed. Later ones are one file each in [v13/docs/decisions/](v13/docs/decisions/README.md). A later decision replaces an earlier one. |
 | ADRs | [v13/docs/adr/](v13/docs/adr/) |
