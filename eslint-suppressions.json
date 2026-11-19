@@ -396,6 +396,9 @@
   "packages/diagram-architecture/src/render/builtins.ts": {
     "mermaid/no-brand-cast": {
       "count": 1
+    },
+    "mermaid/no-module-state": {
+      "count": 1
     }
   },
   "packages/diagram-architecture/src/render/paint.ts": {
@@ -557,6 +560,16 @@
       "count": 2
     }
   },
+  "packages/diagram-treeview/src/facet/tree.ts": {
+    "mermaid/no-module-state": {
+      "count": 2
+    }
+  },
+  "packages/diagram-usecase/src/layout/sizing.ts": {
+    "mermaid/no-module-state": {
+      "count": 1
+    }
+  },
   "packages/diagram-usecase/src/render/edges.ts": {
     "mermaid/no-brand-cast": {
       "count": 1
@@ -575,6 +588,16 @@
   "packages/diagram-xychart/src/render/render.ts": {
     "mermaid/no-brand-cast": {
       "count": 1
+    }
+  },
+  "packages/layout-elk/src/index.ts": {
+    "mermaid/no-module-state": {
+      "count": 1
+    }
+  },
+  "packages/layout-elk/src/sync.ts": {
+    "mermaid/no-module-state": {
+      "count": 3
     }
   },
   "packages/mermaid/src/api.ts": {
@@ -621,9 +644,14 @@
       "count": 3
     }
   },
+  "packages/plugin-math/src/engine.ts": {
+    "mermaid/no-module-state": {
+      "count": 2
+    }
+  },
   "packages/plugin-math/src/index.ts": {
     "mermaid/no-module-state": {
-      "count": 1
+      "count": 3
     }
   },
   "packages/shared/src/shapes/basic.ts": {

@@ -646,7 +646,7 @@ const noModuleState: Rule.RuleModule = {
     },
     messages: {
       state:
-        "Top-level '{{kind}}' keeps its value between renders and between createMermaid() instances, so the same input can render differently (R-ARCH-6). Keep the state in the render's context or a closure. A lazy-load cache or handle, which never changes output, takes an eslint-disable comment that says so.",
+        "Top-level '{{kind}}' keeps its value between renders and between createMermaid() instances, so the same input can render differently (R-ARCH-6). Keep the state in the render's context or a closure. A lazy-load cache or handle, which never changes output, is the one exception: ask the maintainer before listing it in eslint-suppressions.json.",
     },
     schema: [],
   },

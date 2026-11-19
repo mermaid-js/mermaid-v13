@@ -46,7 +46,7 @@ const NAMES: readonly (readonly [string, ElkAlgorithm])[] = [
   ['elk.radial', 'radial'],
 ];
 /** The engine module, once a loader has imported it (the hooks below wait for it). */
-// eslint-disable-next-line mermaid/no-module-state -- lazy-load handle: the engine module once a loader has imported it.
+// Kept module state, lazy-load handle: the engine module once a loader has imported it.
 let engine: typeof Engine | undefined;
 
 /**

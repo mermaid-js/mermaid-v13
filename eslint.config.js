@@ -233,7 +233,7 @@ export default tseslint.config(
   },
   {
     // Module state in a plugin, layout or diagram outlives a render and a createMermaid()
-    // instance (R-ARCH-6, #1023). A lazy-load handle is disabled in place, with its reason.
+    // instance (R-ARCH-6, #1023). Existing cases live in eslint-suppressions.json.
     files: ['packages/{plugin,layout,diagram}-*/src/**/*.{ts,js}'],
     ignores: TEST_SUPPORT,
     plugins: { mermaid },

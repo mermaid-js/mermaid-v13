@@ -64,7 +64,7 @@ const lights = (y: number): SvgFragment =>
     [32.5, 27.5, 22.5].map((cx) => el('circle', { cx, cy: y, r: 0.75, ...DOT }))
   );
 
-// eslint-disable-next-line mermaid/no-module-state -- lazy cache: v12's seven icons, built from constants on first use.
+// Kept module state, lazy cache: v12's seven icons, built from constants on first use.
 let builtins: ReadonlyMap<string, SvgFragment> | undefined;
 
 /** v12's seven icons, built once. */

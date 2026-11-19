@@ -70,11 +70,11 @@ interface Engine {
   readonly forget: () => void;
 }
 
-// eslint-disable-next-line mermaid/no-module-state -- lazy-load handle: MathJax, started once; typeset() forgets its widths per call.
+// Kept module state, lazy-load handle: MathJax, started once; typeset() forgets its widths per call.
 let engine: Engine | undefined;
 
 /** How the current `typeset` call measures text the font lacks, and its math em in px. */
-// eslint-disable-next-line mermaid/no-module-state -- set and cleared inside one synchronous typeset() call, for MathJax's measure callback.
+// Kept module state, set and cleared inside one synchronous typeset() call, for MathJax's measure callback.
 let measuring:
   | { readonly measure: NonNullable<TypesetOptions['measure']>; readonly em: number }
   | undefined;
