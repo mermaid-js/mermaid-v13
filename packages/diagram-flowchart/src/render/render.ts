@@ -272,6 +272,20 @@ export interface Scene {
   readonly warn: Warn;
   /** The lane drawer, on a render the `swimlane` layout laid out (D535, D536). */
   readonly lanes: LaneDrawer | undefined;
+  /**
+   * `theme.ink` by fill, for this render only: nodes styled alike share a fill. It lives and
+   * dies with the scene, so nothing in it outlives the render or meets another theme.
+   */
+  readonly inks: Map<string, ReturnType<FlowRenderContext['theme']['ink']>>;
+}
+
+type Ink = ReturnType<ThemeOf['ink']>;
+
+/** `theme.ink(fill)`, worked out once per fill in a render (`ink` reads only the theme). */
+function inkOf({ ctx, inks }: Scene, fill: string): Ink {
+  let ink = inks.get(fill);
+  if (ink === undefined && !inks.has(fill)) inks.set(fill, (ink = ctx.theme.ink(fill)));
+  return ink;
 }
 
 /** Writes the whole `<svg>` document for a laid-out flowchart. */
@@ -292,6 +306,7 @@ export function renderFlowchart(
     paint: paints(ctx.theme, flow, !!lanes),
     warn: (warning) => ctx.warn(warning),
     lanes,
+    inks: new Map(),
   };
   const conf = ctx.config.flowchart;
   // v12's `flowchartTitleText`: 18 px in `textColor`, `titleTopMargin` above the drawing (D652).
@@ -608,7 +623,7 @@ function drawFoldedNode({ w, paint }: Scene, view: NodeView): void {
 }
 
 function drawNode(scene: Scene, view: NodeView, tip?: string): void {
-  const { w, layout, ctx, paint, warn } = scene;
+  const { w, layout, paint, warn } = scene;
   const box = layout.nodes.get(view.id);
   if (!box) return;
   const v = view.vertex;
@@ -638,7 +653,7 @@ function drawNode(scene: Scene, view: NodeView, tip?: string): void {
   const fill = view.style.shape.fill;
   const ink =
     fill && shapeFilled(view.shape) && !v?.img && !v?.icon && !block
-      ? ctx.theme.ink(fill)
+      ? inkOf(scene, fill)
       : undefined;
   // No attributes at all writes the same label as `{ fill: undefined }`.
   w.label(
