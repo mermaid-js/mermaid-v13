@@ -11,7 +11,7 @@ import {
 } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { ConfigSchema } from './config/schema.ts';
-import { MAX_BLOCK_DEPTH } from '@mermaid-js/core/parser-kit';
+import { blockBody, MAX_BLOCK_DEPTH } from '@mermaid-js/core/parser-kit';
 import type { DocumentContext } from './context.ts';
 import type { FacetEntry } from './facets.ts';
 import { firstPartyFacets } from './generated/facets.gen.ts';
@@ -186,11 +186,16 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
       loadError: state !== undefined && 'failed' in state ? state.failed : undefined,
       notLoaded: entry?.load !== undefined && state === undefined,
       available: entry === undefined ? available() : [],
-      embeds: (result?.embeds ?? []).map((block) => ({
-        block,
-        doc:
-          depth < MAX_BLOCK_DEPTH ? build(`${uri}#${block.id}`, block.text, depth + 1) : undefined,
-      })),
+      embeds: (result?.embeds ?? []).map((block) => {
+        // The body as the render reads it: its common indentation removed (D633).
+        const body = blockBody(block.text);
+        return {
+          block,
+          doc:
+            depth < MAX_BLOCK_DEPTH ? build(`${uri}#${block.id}`, body.text, depth + 1) : undefined,
+          outer: (o: number) => block.offset + body.outer(o),
+        };
+      }),
     };
     return createSnapshot(Object.freeze(context), at);
   };

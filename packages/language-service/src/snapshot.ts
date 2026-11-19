@@ -58,21 +58,29 @@ function copyDiagnostic(d: Diagnostic): Diagnostic {
 
 /**
  * The render's error for a block whose body does not start with a diagram type, on the body's
- * first diagram line (from `start` in the body `text`), moved to the outer text.
+ * first diagram line (from `start` in the body `text`), moved to the outer text by `outer`.
  */
-function noDiagramType(block: EmbeddedBlock, text: string, start: number): Diagnostic {
+function noDiagramType(
+  block: EmbeddedBlock,
+  text: string,
+  start: number,
+  outer: (at: number) => number
+): Diagnostic {
   const line = /^[^\r\n]*/.exec(text.slice(start))![0].trimEnd();
   const word = /^[^\s{[(;:]*/.exec(line)![0];
   return {
     severity: 'error',
     code: 'EMBED_NO_TYPE',
     message: `The \`mermaid ${block.id}\` block must start with a diagram type, such as \`sequenceDiagram\` or \`classDiagram\`, after any blank lines, comments and front matter${word ? `; \`${word}\` is not a diagram type` : ''}.`,
-    range: shifted({ start, end: start + line.length }, block.offset),
+    range: moved({ start, end: start + line.length }, outer),
   };
 }
 
-/** `r` moved by `by`. */
-const shifted = (r: Range, by: number): Range => ({ start: r.start + by, end: r.end + by });
+/** `r` placed in the outer text by `outer`. */
+const moved = (r: Range, outer: (at: number) => number): Range => ({
+  start: outer(r.start),
+  end: outer(r.end),
+});
 
 /**
  * `host`'s diagnostics with each block's own (ADR-15) moved to the outer text, in source
@@ -87,7 +95,7 @@ function withBlocks(
   if (embeds.length === 0) return host;
   const out: Diagnostic[] = [];
   let i = 0;
-  for (const { block, doc } of embeds) {
+  for (const { block, doc, outer } of embeds) {
     if (!doc) {
       // Its opening line starts before the body: it goes before the host's at that line.
       const deep = tooDeep(text, block.id, block.offset);
@@ -103,13 +111,13 @@ function withBlocks(
     const ctx = Snapshot.contextOf(doc);
     for (const d of doc.diagnostics()) {
       if (ctx.entry === undefined && d.code === 'UNSUPPORTED_DIAGRAM') {
-        out.push(noDiagramType(block, ctx.text, ctx.start));
+        out.push(noDiagramType(block, ctx.text, ctx.start, outer));
         continue;
       }
-      const moved = copyDiagnostic(d);
-      moved.range = shifted(d.range, block.offset);
-      if (moved.related) for (const r of moved.related) r.range = shifted(r.range, block.offset);
-      out.push(moved);
+      const copy = copyDiagnostic(d);
+      copy.range = moved(d.range, outer);
+      if (copy.related) for (const r of copy.related) r.range = moved(r.range, outer);
+      out.push(copy);
     }
   }
   return [...out, ...host.slice(i)];
@@ -362,9 +370,16 @@ class Snapshot implements DocumentSnapshot {
     return this.#memo('semanticTokens', () =>
       withBlockTokens(
         semanticTokens(this.#context, this.#occurrences()),
-        this.#context.embeds.flatMap(({ block, doc }) =>
+        this.#context.embeds.flatMap(({ block, doc, outer }) =>
           doc
-            ? [{ offset: block.offset, length: block.text.length, tokens: doc.semanticTokens() }]
+            ? [
+                {
+                  offset: block.offset,
+                  length: block.text.length,
+                  tokens: doc.semanticTokens(),
+                  outer,
+                },
+              ]
             : []
         )
       )

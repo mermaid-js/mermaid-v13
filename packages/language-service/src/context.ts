@@ -16,13 +16,15 @@ import type { DocumentSnapshot } from './snapshot.ts';
 
 /**
  * A diagram embedded in this one (ADR-15): the host's block and its body read as a document of
- * its own type. The body's ranges are offsets into `block.text`; add `block.offset` for the
- * host's text.
+ * its own type, without the body's common indentation (D633). The document's ranges are offsets
+ * into that text; {@link outer} places them in the host's text.
  */
 export interface EmbeddedDocument {
   readonly block: EmbeddedBlock;
   /** Undefined for a block nested deeper than the render allows: it is not read. */
   readonly doc: DocumentSnapshot | undefined;
+  /** Where offset `at` of the document's text is in the host's text. */
+  readonly outer: (at: number) => number;
 }
 
 export interface DocumentContext {
