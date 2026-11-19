@@ -1,19 +1,26 @@
 // DDLT on parser-produced architecture diagrams (spec #525 T3, #607): every source of the
 // e2e corpus, the harvested v12 spec strings and the hand-written cases that parses without an
 // error is measured by `prepareArchitecture` (core's table measurer, the source's config and
-// theme) and laid out by `compass(graph)`. The spec's invariants hold on each: no NaN, no
+// theme) and given to `compass(graph)` as `layoutArchitecture` gives it (labels of straight level
+// edges left out). The spec's invariants hold on each: no NaN, no
 // overlaps, containment and contents in the bounding box (`validateLayout`), edges on the sides
 // they name, facing edges between nodes in line straight, `align` members sharing their row or
 // column, and the same bytes on every run. D326's corpus numbers over the 20 v12 fixtures are in
 // `compass/architecture-corpus.spec.ts`.
 import { beforeAll, describe, expect, it } from 'vitest';
-import { validateLayout, type LayoutModel } from '@mermaid-js/core/layout';
+import {
+  validateLayout,
+  type LayoutEngine,
+  type LayoutGraph,
+  type LayoutModel,
+} from '@mermaid-js/core/layout';
 import { compass } from '@mermaid-js/core/layout/compass';
 import {
   architectureLayoutProblems,
   facingInLine,
   layoutBytes,
   portLines,
+  renderArchitectureForTest,
 } from '@mermaid-js/diagram-architecture/testing';
 import { architectureCases, architectureCorpus } from './corpus.ts';
 import { architectureLaidOut, type ArchitectureLaidOut } from './layout.ts';
@@ -134,6 +141,64 @@ describe('architecture layout over parser-produced fixtures (#607)', () => {
     expect(at('f').y).toBe(at('d').y);
     expect(at('e').y).toBeLessThan(at('d').y);
     expect(at('e').x).toBeLessThan(at('d').x);
+  });
+
+  it('wraps a long label on a level edge to the line, at the default gap (#774)', async () => {
+    const f = byId('layout-level-edge-label-wraps-to-the-line.mmd');
+    const gap = (layout: LayoutModel): number => {
+      const a = layout.nodes.get('a')!;
+      const b = layout.nodes.get('b')!;
+      return b.x - b.width / 2 - (a.x + a.width / 2);
+    };
+    // The engine is not given the label, so the gap is the one the same edge gets unlabelled.
+    expect(f.prepared.graph.edges[0]!.label).toBeUndefined();
+    const bare = await architectureLaidOut(f.source.replace(/-\[[^\]]*\]-/, '--'), compass);
+    expect(gap(f.layout)).toBe(gap(compass(bare!.prepared.graph)));
+    expect(f.prepared.edges[0]!.label!.width).toBeGreaterThan(gap(f.layout));
+    // The renderer wraps it to the line (the services' one-line labels have no tspans).
+    const { svg } = await renderArchitectureForTest(f.source);
+    const lines = [...svg.matchAll(/<tspan[^>]*>([^<]*)<\/tspan>/g)].map((m) => m[1]);
+    expect(lines.length).toBeGreaterThan(1);
+    // Every character, in order: a word wider than the line is broken across two.
+    const letters = (t: string): string => t.replace(/\s/g, '');
+    expect(letters(lines.join(''))).toBe(letters(f.model.edges[0]!.title!));
+  });
+
+  it('lays a labelled level edge out once when it runs straight, twice when it does not', async () => {
+    const f = byId('layout-level-edge-label-wraps-to-the-line.mmd');
+    const seen: LayoutGraph[] = [];
+    const counting: LayoutEngine = (graph) => (seen.push(graph), compass(graph));
+    await architectureLaidOut(f.source, counting);
+    // The trial without the label is the layout.
+    expect(seen.map((g) => g.edges[0]!.label)).toEqual([undefined]);
+    // An engine that bends the edge gets the label back on a second layout, to make room for it.
+    seen.length = 0;
+    const bending: LayoutEngine = (graph) => {
+      seen.push(graph);
+      const m = compass(graph);
+      const [p, q] = m.edges.get('edge:a->b')!.points;
+      const mid = (p!.x + q!.x) / 2;
+      const bent = [
+        p!,
+        { x: mid, y: p!.y, axis: 'h' as const },
+        { x: mid, y: q!.y + 1, axis: 'v' as const },
+        { ...q!, y: q!.y + 1 },
+      ];
+      return {
+        ...m,
+        edges: new Map([['edge:a->b', { ...m.edges.get('edge:a->b')!, points: bent }]]),
+      };
+    };
+    await architectureLaidOut(f.source, bending);
+    expect(seen.map((g) => g.edges[0]!.label === undefined)).toEqual([true, false]);
+    // `layered` and `dagre` never draw it straight: one layout, with the label.
+    seen.length = 0;
+    const flow = await architectureLaidOut(
+      `%%{init: {"layout": "dagre"}}%%\n${f.source}`,
+      counting
+    );
+    expect(flow!.warnings).toContain('ARCHITECTURE_PLACEMENT_IGNORED');
+    expect(seen.map((g) => g.edges[0]!.label === undefined)).toEqual([false]);
   });
 
   it("sizes boxes from the document's iconSize and padding", () => {
