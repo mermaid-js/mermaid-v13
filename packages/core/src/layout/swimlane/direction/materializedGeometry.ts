@@ -2970,20 +2970,34 @@ export function resolveRenderedOrthogonalCrossings(
   };
 
   /** An edge's candidates for this round: those of its nodes' sides, then those of its route. */
+  // v13 (#843): an edge's candidates depend on its route and the outer tracks, so a later round
+  // takes those of an edge whose points array and tracks are the ones they were built from. The
+  // pass replaces the array of an edge it moves and never edits one in place, so the same array
+  // is the same route (sideCandidateCache.differential.spec.ts checks this).
+  const candidatesByRoute = new Map<
+    MaterializedEdge,
+    { points: PointLite[] | undefined; tracks: Record<RectSide, number>; candidates: Candidate[] }
+  >();
   const candidatesFor = (edge: MaterializedEdge): Candidate[] => {
     let candidates = round.candidates.get(edge);
     if (!candidates) {
-      const srcId = (edge as { start?: string }).start;
-      const dstId = (edge as { end?: string }).end;
-      const srcNode = srcId ? nodeInfoById.get(srcId) : undefined;
-      const dstNode = dstId ? nodeInfoById.get(dstId) : undefined;
-      candidates =
-        srcNode && dstNode
-          ? [
-              ...sideCandidatesFor(srcNode, dstNode),
-              ...terminalPreservingOuterTrackCandidates(edge).map(toCandidate),
-            ]
-          : [];
+      const kept = candidatesByRoute.get(edge);
+      if (kept && kept.points === edge.points && kept.tracks === activeTracks) {
+        candidates = kept.candidates;
+      } else {
+        const srcId = (edge as { start?: string }).start;
+        const dstId = (edge as { end?: string }).end;
+        const srcNode = srcId ? nodeInfoById.get(srcId) : undefined;
+        const dstNode = dstId ? nodeInfoById.get(dstId) : undefined;
+        candidates =
+          srcNode && dstNode
+            ? [
+                ...sideCandidatesFor(srcNode, dstNode),
+                ...terminalPreservingOuterTrackCandidates(edge).map(toCandidate),
+              ]
+            : [];
+        candidatesByRoute.set(edge, { points: edge.points, tracks: activeTracks, candidates });
+      }
       round.candidates.set(edge, candidates);
     }
     return candidates;
