@@ -26,12 +26,6 @@ import {
   within,
 } from '@mermaid-js/shared/testing/layout-invariants';
 
-const contains = (outer: Rect, inner: Rect): boolean =>
-  within(inner.x, outer.x, outer.x + outer.width) &&
-  within(inner.x + inner.width, outer.x, outer.x + outer.width) &&
-  within(inner.y, outer.y, outer.y + outer.height) &&
-  within(inner.y + inner.height, outer.y, outer.y + outer.height);
-
 /**
  * A card's ticket and assignee are clear of each other: side by side only when they fit, else
  * the assignee stacked under the ticket and inside the card's bottom (D647).
@@ -46,6 +40,12 @@ function ticketRowViolations(card: CardLayout, where: string, out: string[]): vo
   )
     out.push(`${where}: its assignee, stacked under the ticket, sticks out of its bottom`);
 }
+
+const contains = (outer: Rect, inner: Rect): boolean =>
+  within(inner.x, outer.x, outer.x + outer.width) &&
+  within(inner.x + inner.width, outer.x, outer.x + outer.width) &&
+  within(inner.y, outer.y, outer.y + outer.height) &&
+  within(inner.y + inner.height, outer.y, outer.y + outer.height);
 
 /** Every invariant `layout` breaks for `input`, one line each; empty when it holds them all. */
 export function kanbanLayoutViolations(input: KanbanLayoutInput, layout: KanbanLayout): string[] {
