@@ -209,7 +209,10 @@ export function createMermaid(
       await prepareWith(k, text, s, options?.format);
       return draw(k, text, s, { ...options, id });
     } catch (e) {
-      throw toMermaidError(e);
+      // v12's render() passed every failure to `parseError` too (#757).
+      const error = toMermaidError(e);
+      k.parseErrorHandler?.(error);
+      throw error;
     }
   }
 
@@ -286,7 +289,10 @@ export function createMermaid(
    */
   const registerIconPacks: (packs: readonly IconLoader[]) => void = registerPacks;
 
-  /** @deprecated Catch the `MermaidError` that `parse()` rejects with instead. */
+  /**
+   * @deprecated Catch the `MermaidError` that `parse()` or `render()` rejects with instead.
+   * The same hook as `mermaid.parseError = handler`, as in v12.
+   */
   function setParseErrorHandler(handler: ParseErrorHandler): void {
     k.parseErrorHandler = handler;
   }
@@ -315,6 +321,16 @@ export function createMermaid(
     registerLayoutLoaders,
     registerIconPacks,
     setParseErrorHandler,
+    /**
+     * @deprecated v12's hook, the one `setParseErrorHandler` sets: called with the
+     * `MermaidError` of a failed `parse()`, `render()` or `run()` element (R-API-4, #757).
+     */
+    get parseError(): ParseErrorHandler | undefined {
+      return k.parseErrorHandler;
+    },
+    set parseError(handler: ParseErrorHandler | undefined) {
+      k.parseErrorHandler = handler;
+    },
   };
   registerSeam(api, k.discovery);
   return api;
