@@ -131,7 +131,7 @@ function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
     // with the gradient; lookups in the old order so other themes' roots are unchanged.
     border: theme.outline('nodeBorder'),
     plainBorder: theme.color('nodeBorder'),
-    text: theme.color('nodeTextColor'),
+    text: theme.color('stateLabelColor'),
     line: theme.color('lineColor'),
     lineOutline: theme.outline('lineColor'),
     arrow: theme.color('arrowheadColor'),
@@ -145,7 +145,7 @@ function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
           title: theme.color('compositeTitleBackground'),
           body: theme.color('compositeBackground'),
           alt: theme.color('altBackground'),
-          text: theme.color('titleColor'),
+          text: theme.color('compositeTitleColor'),
           radius: theme.number('radius'),
         }
       : undefined;

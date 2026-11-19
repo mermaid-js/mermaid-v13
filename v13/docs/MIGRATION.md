@@ -1261,12 +1261,18 @@ keyword; 12.2.0 sends both keywords to the unified one). v13 has one renderer fo
 | `classDef` / `style` as CSS (`.name > * { … !important }`), reaching the composite body but not its title strip | Presentation attributes after the allow-list (R-SEC-3), on a state's shape, on both of a composite's rects, and `color` on the label only | Unknown properties and unsafe values are dropped with a warning |
 | Front-matter `title` drawn as `statediagramTitleText` | Not drawn | As flowchart (D122) |
 
-Colours map to theme variables v13 already has (D152): states `mainBkg` / `nodeBorder` /
-`nodeTextColor` (v12 `stateBkg`, `stateBorder`, the node label colour), start, fork and join
-`lineColor` (v12 `specialStateColor`), the end dot `nodeBorder` (v12 `innerEndBackground`),
-transitions `lineColor` and `arrowheadColor` (v12 `transitionColor`), labels `textColor` on
-`edgeLabelBackground`, composite titles `titleColor`, notes `noteBkgColor` / `noteBorderColor` /
-`noteTextColor`. A composite's title band reads `compositeTitleBackground`, its body
+Colours map to theme variables v13 already has (D152): states `mainBkg` / `nodeBorder` (v12
+`stateBkg`, `stateBorder`), start, fork and join `lineColor` (v12 `specialStateColor`), the end
+dot `nodeBorder` (v12 `innerEndBackground`), transitions `lineColor` and `arrowheadColor` (v12
+`transitionColor`), labels `textColor` on `edgeLabelBackground`, notes `noteBkgColor` /
+`noteBorderColor` / `noteTextColor`. State text reads `stateLabelColor` and composite titles
+`compositeTitleColor`, state's own variables (D638): in the classic themes both follow
+`primaryTextColor`, as v12's `stateLabelColor` did, and setting `stateLabelColor` recolours both;
+in the redux and neo themes they are `nodeTextColor` and `titleColor`. Under `default`, v12
+ignored an author's `primaryTextColor` for state text; v13 applies it. Where v12's classic themes
+used fixed values of their own (`neutral`'s black transitions and outlines and `#222` start dot,
+`dark`'s `#f4f4f4` start dot, black arrowheads in `forest` and `neutral`), v13 draws the shared
+variables above (D639). A composite's title band reads `compositeTitleBackground`, its body
 `compositeBackground`, and a nested composite's body `altBackground`, with v12's values (D120,
 D126, #193, #197; see the theme variable table). The composite outline radius is `radius`; the
 state radius (5), the end-state stroke (2) and the dash patterns are the same in every v12 look,

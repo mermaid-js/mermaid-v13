@@ -15,9 +15,17 @@ export const theme: DiagramThemeTable = {
       compositeBackground: 'background',
       compositeTitleBackground: 'mainBkg',
       altBackground: 'inline(nestedBkg)',
+      stateLabelColor: 'nodeTextColor',
+      compositeTitleColor: 'titleColor',
     },
   },
   families: {
+    // v12 theme-*.js set `stateLabelColor` to `stateBkg || primaryTextColor` before `stateBkg`
+    // was set, so every classic theme drew state text and composite titles in
+    // `primaryTextColor` (D638, #827). An author's `stateLabelColor` still recolours both.
+    classic: {
+      rules: { stateLabelColor: 'primaryTextColor', compositeTitleColor: 'stateLabelColor' },
+    },
     // v12 theme-redux*.js pin the title strip and the nested body; the dark ones the body too
     // (#192, D126), not clusterBkg or background.
     redux: {
