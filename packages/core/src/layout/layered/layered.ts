@@ -189,6 +189,10 @@ export function ledge(tail: number, head: number, minlen = 1, labelW = 0, labelH
 
 const MAX_SWEEPS = 24;
 
+// Up to this many ends in a gap, `crossed` counts pair by pair rather than with the tree: fewer
+// steps for the few ends most gaps have. Exported for tests, which pin it.
+export const FEW_ENDS = 16;
+
 // An edge gets a bend point in every rank it skips. Past this many, the longest edges are
 // drawn as one direct curve instead, which keeps huge graphs from exhausting time and memory.
 const MAX_DUMMIES = 20000;
@@ -1013,7 +1017,8 @@ interface Pieces {
   wide: number[];
 }
 
-interface Graph {
+// Exported for tests.
+export interface Graph {
   n: number;
   real: number;
   maxRank: number;
@@ -2170,8 +2175,36 @@ export function groupArranger(
   };
 }
 
-// Returns [final crossings, crossings before grouping or reordering].
-function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
+// The pairs out of order in `targets[0..t)`: the crossings in a gap between two ranks, where
+// `places` is how many places its ends may take in the lower rank. Few ends are counted pair by
+// pair, more with an accumulator tree, which `tree` (at least twice `places` long, rounded up to
+// a power of two) holds. Exported for tests.
+export function crossed(targets: Int32Array, t: number, places: number, tree: Int32Array): number {
+  let total = 0;
+  if (t <= FEW_ENDS) {
+    for (let a = 1; a < t; a++) {
+      const x = targets[a]!;
+      for (let b = 0; b < a; b++) if (targets[b]! > x) total++;
+    }
+    return total;
+  }
+  let leaves = 1;
+  while (leaves < places) leaves <<= 1;
+  tree.fill(0, 0, 2 * leaves);
+  for (let k = 0; k < t; k++) {
+    let i = targets[k]! + leaves;
+    tree[i]!++;
+    while (i > 1) {
+      if ((i & 1) === 0) total += tree[i + 1]!;
+      i >>= 1;
+      tree[i]!++;
+    }
+  }
+  return total;
+}
+
+// Returns [final crossings, crossings before grouping or reordering]. Exported for tests.
+export function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
   const {
     n,
     real,
@@ -2280,19 +2313,7 @@ function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
           targets.subarray(t0, t).sort();
         }
       }
-      if (t < 2) continue;
-      let leaves = 1;
-      while (leaves < southLen) leaves <<= 1;
-      tree.fill(0, 0, 2 * leaves);
-      for (let k = 0; k < t; k++) {
-        let i = targets[k]! + leaves;
-        tree[i]!++;
-        while (i > 1) {
-          if ((i & 1) === 0) total += tree[i + 1]!;
-          i >>= 1;
-          tree[i]!++;
-        }
-      }
+      total += crossed(targets, t, southLen, tree);
     }
     return total;
   };
