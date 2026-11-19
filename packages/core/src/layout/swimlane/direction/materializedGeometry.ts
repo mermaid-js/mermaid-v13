@@ -2979,26 +2979,33 @@ export function resolveRenderedOrthogonalCrossings(
     MaterializedEdge,
     { points: PointLite[] | undefined; tracks: Record<RectSide, number>; candidates: Candidate[] }
   >();
+  /** The candidates kept for `edge`, if its points array and the tracks are those they had. */
+  const keptCandidatesFor = (edge: MaterializedEdge): Candidate[] | undefined => {
+    const kept = candidatesByRoute.get(edge);
+    return kept && kept.points === edge.points && kept.tracks === activeTracks
+      ? kept.candidates
+      : undefined;
+  };
+  /** An edge's candidates built afresh, and kept: those of its nodes' sides, then its route's. */
+  const builtCandidatesFor = (edge: MaterializedEdge): Candidate[] => {
+    const srcId = (edge as { start?: string }).start;
+    const dstId = (edge as { end?: string }).end;
+    const srcNode = srcId ? nodeInfoById.get(srcId) : undefined;
+    const dstNode = dstId ? nodeInfoById.get(dstId) : undefined;
+    const candidates =
+      srcNode && dstNode
+        ? [
+            ...sideCandidatesFor(srcNode, dstNode),
+            ...terminalPreservingOuterTrackCandidates(edge).map(toCandidate),
+          ]
+        : [];
+    candidatesByRoute.set(edge, { points: edge.points, tracks: activeTracks, candidates });
+    return candidates;
+  };
   const candidatesFor = (edge: MaterializedEdge): Candidate[] => {
     let candidates = round.candidates.get(edge);
     if (!candidates) {
-      const kept = candidatesByRoute.get(edge);
-      if (kept && kept.points === edge.points && kept.tracks === activeTracks) {
-        candidates = kept.candidates;
-      } else {
-        const srcId = (edge as { start?: string }).start;
-        const dstId = (edge as { end?: string }).end;
-        const srcNode = srcId ? nodeInfoById.get(srcId) : undefined;
-        const dstNode = dstId ? nodeInfoById.get(dstId) : undefined;
-        candidates =
-          srcNode && dstNode
-            ? [
-                ...sideCandidatesFor(srcNode, dstNode),
-                ...terminalPreservingOuterTrackCandidates(edge).map(toCandidate),
-              ]
-            : [];
-        candidatesByRoute.set(edge, { points: edge.points, tracks: activeTracks, candidates });
-      }
+      candidates = keptCandidatesFor(edge) ?? builtCandidatesFor(edge);
       round.candidates.set(edge, candidates);
     }
     return candidates;
