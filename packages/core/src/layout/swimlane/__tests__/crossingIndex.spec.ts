@@ -5,6 +5,7 @@ import {
   buildSegmentLineIndex,
   buildTrackConflictIndex,
   countCrossingsPerRoute,
+  countCrossingsWithOthersUpTo,
   countSegmentCrossings,
   shapesTouchAtBend,
 } from '../direction/crossingIndex.ts';
@@ -145,6 +146,32 @@ describe('the crossing cleanup indexes (#687)', () => {
         );
       }
     }
+  });
+
+  it('counts the crossings with the other routes up to a limit as the full count does (#843)', () => {
+    let stopped = 0;
+    for (const seed of [41, 42, 43, 44]) {
+      const indexed = routes(seed, 60).map((points) =>
+        orthogonalSegmentsForPoints(dedupeConsecutivePoints(points))
+      );
+      const index = buildSegmentCrossingIndex(indexed.flat(), EPSILON);
+      for (const [i, points] of routes(seed + 100, 60).entries()) {
+        const segments = orthogonalSegmentsForPoints(points);
+        const own = indexed[i % indexed.length]!;
+        const full = index.count(segments) - countSegmentCrossings(segments, own, EPSILON);
+        for (const limit of [-1, 0, 1, 2, full - 1, full, full + 1, Infinity]) {
+          const counted = countCrossingsWithOthersUpTo(index, segments, own, EPSILON, limit);
+          if (full <= limit) {
+            expect(counted).toBe(full);
+          } else {
+            expect(counted).toBeGreaterThan(limit);
+            if (counted < full) stopped++;
+          }
+        }
+      }
+    }
+    // It does stop early, so the comparison is not only of full counts.
+    expect(stopped).toBeGreaterThan(100);
   });
 
   it('counts nothing against an empty index, and nothing for an empty route', () => {

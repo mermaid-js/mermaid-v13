@@ -36,6 +36,7 @@ import {
   buildSegmentLineIndex,
   buildTrackConflictIndex,
   countCrossingsPerRoute,
+  countCrossingsWithOthersUpTo,
   countSegmentCrossings,
   shapesTouchAtBend,
 } from './crossingIndex.ts';
@@ -2457,7 +2458,20 @@ export function resolveRenderedOrthogonalCrossings(
 
   /** The crossings of a reroute of `edge`, given as segments, with every other edge. */
   const crossingsWithOtherEdges = (edge: MaterializedEdge, segments: SegmentLite[]): number =>
-    round.crossings.count(segments) - crossingCountBetweenSegments(segments, baseSegmentsFor(edge));
+    crossingsWithOtherEdgesUpTo(edge, segments, Number.POSITIVE_INFINITY);
+  /** `crossingsWithOtherEdges` when it is at most `limit`, else a number above `limit`. */
+  const crossingsWithOtherEdgesUpTo = (
+    edge: MaterializedEdge,
+    segments: SegmentLite[],
+    limit: number
+  ): number =>
+    countCrossingsWithOthersUpTo(
+      round.crossings,
+      segments,
+      baseSegmentsFor(edge),
+      EPS_LOCAL,
+      limit
+    );
 
   /** The box around a route; two routes whose boxes are apart do not cross. */
   const extentOf = (points: PointLite[]): RectLite => {
@@ -3374,7 +3388,13 @@ export function resolveRenderedOrthogonalCrossings(
       for (const { path: candidate, rerouted, bends: candidateBends } of candidatesFor(edge)) {
         // v13 (#687): a candidate is tested against the nodes and the other routes only once
         // its counts would make it the best so far; the tests do not depend on each other.
-        const candidateCrossings = settled + crossingsWithOtherEdges(edge, rerouted);
+        // v13 (#843): nor are its crossings counted past the most that could make it so.
+        const allowed = (candidateBends < bestBends ? bestCrossings : bestCrossings - 1) - settled;
+        const withOthers = crossingsWithOtherEdgesUpTo(edge, rerouted, allowed);
+        if (withOthers > allowed) {
+          continue;
+        }
+        const candidateCrossings = settled + withOthers;
         const improvesCurrentEdge =
           candidateCrossings < currentCrossings ||
           (candidateCrossings === currentCrossings && candidateBends < currentEdgeBends);

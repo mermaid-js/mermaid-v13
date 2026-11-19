@@ -249,6 +249,31 @@ export function countSegmentCrossings(
   return count;
 }
 
+/**
+ * The crossings of `segments` with the indexed segments other than `own`, as
+ * `index.count(segments) - countSegmentCrossings(segments, own, epsilon)` counts them, when that
+ * is at most `limit`; else a number above `limit`. `own` must be indexed too, with `epsilon`. It
+ * counts one segment at a time and stops once past `limit`: no segment crosses more of `own`
+ * than of the index, so the count only grows.
+ */
+export function countCrossingsWithOthersUpTo(
+  index: SegmentCrossingIndex,
+  segments: readonly OrthogonalSegment[],
+  own: readonly OrthogonalSegment[],
+  epsilon: number,
+  limit: number
+): number {
+  let count = 0;
+  for (const segment of segments) {
+    const one = [segment];
+    count += index.count(one) - countSegmentCrossings(one, own, epsilon);
+    if (count > limit) {
+      return count;
+    }
+  }
+  return count;
+}
+
 /** Items in the order of a number each has, for "every item within a range" lookups. */
 class Sorted<T> {
   private readonly keys: Float64Array;
