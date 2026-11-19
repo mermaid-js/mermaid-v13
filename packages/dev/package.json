@@ -9,6 +9,9 @@
     "dev": "tsx --conditions=mermaid-source src/cli/dev.ts",
     "serve": "tsx --conditions=mermaid-source src/cli/serve.ts",
     "gallery": "tsx --conditions=mermaid-source src/cli/gallery.ts",
+    "visual:hashes": "tsx --conditions=mermaid-source src/cli/visual-hashes.ts",
+    "visual:scope": "tsx --conditions=mermaid-source src/cli/visual-scope.ts",
+    "visual:replay": "tsx src/cli/visual-replay.ts",
     "typecheck": "tsc -p tsconfig.json && tsc -p ../../e2e/tsconfig.json",
     "smoke:build": "tsx src/smoke/build.ts",
     "smoke:deno": "npx --yes deno@2.9.4 run --no-prompt dist/smoke/smoke.mjs"
