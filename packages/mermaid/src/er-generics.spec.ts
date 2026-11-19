@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { corpusLabels, drawn } from './testing/labels.ts';
 
-const { svgOf } = corpusLabels(readFileSync);
+const { svgOf, textOf } = corpusLabels(readFileSync);
 const FIXTURE = 'er-diagram/nightly-check/attribute-generics-named-like-html.mmd';
 
 describe('ER generics named like HTML tags (#945, D619)', () => {
@@ -18,6 +18,13 @@ describe('ER generics named like HTML tags (#945, D619)', () => {
 
   it('raises no warning, HTML_DROPPED included', async () => {
     const { warnings } = await svgOf(FIXTURE);
+    expect(warnings).toEqual([]);
+  });
+
+  it('writes the same types in text output, with no warning', async () => {
+    const { text, warnings } = await textOf(FIXTURE);
+    for (const type of ['List<Data>', 'string<U>', 'Map<K,Option>', 'Box<B>', 'List<T>'])
+      expect(text).toContain(type);
     expect(warnings).toEqual([]);
   });
 });
