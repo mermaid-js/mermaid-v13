@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { ESLint } from 'eslint';
 import tseslint from 'typescript-eslint';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { BRAND_TYPES } from './index.ts';
 
 // Each architecture lint rule is proven by linting a fixture as if it lived at a given
 // path in the workspace, through the real root eslint.config.js.
@@ -40,6 +41,9 @@ const DIAGRAM_LANGUAGE_ENTRY = 'packages/diagram-flowchart/src/language.ts';
 const DIAGRAM_LANGUAGE = 'packages/diagram-flowchart/src/language/fixture.ts';
 const DIAGRAM_PARSER = 'packages/diagram-flowchart/src/parser/fixture.ts';
 const DIAGRAM_FACET = 'packages/diagram-flowchart/src/facet/fixture.ts';
+const CORE_THEME = 'packages/core/src/theme/fixture.ts';
+const PLUGIN = 'packages/plugin-math/src/fixture.ts';
+const LAYOUT = 'packages/layout-elk/src/fixture.ts';
 
 describe('architecture lint rules fire', () => {
   it.each([
@@ -84,6 +88,14 @@ describe('architecture lint rules fire', () => {
     ['trailing-quantifier.ts', DIAGRAM, 'mermaid/no-nested-quantifier'],
     ['magic-char-code.ts', CORE, 'mermaid/no-magic-char-code'],
     ['magic-char-code.ts', DIAGRAM, 'mermaid/no-magic-char-code'],
+    ['brand-cast.ts', DIAGRAM, 'mermaid/no-brand-cast'],
+    ['brand-cast.ts', SHARED, 'mermaid/no-brand-cast'],
+    ['brand-cast.ts', MERMAID, 'mermaid/no-brand-cast'],
+    ['brand-cast.ts', PLUGIN, 'mermaid/no-brand-cast'],
+    ['brand-cast-core.ts', CORE_THEME, 'mermaid/no-brand-cast'],
+    ['module-state.ts', DIAGRAM, 'mermaid/no-module-state'],
+    ['module-state.ts', PLUGIN, 'mermaid/no-module-state'],
+    ['module-state.ts', LAYOUT, 'mermaid/no-module-state'],
   ])('%s in %s reports %s', async (name, asFile, ruleId) => {
     expect(await ruleIds(name, asFile)).toEqual([ruleId]);
   });
@@ -119,12 +131,40 @@ describe('architecture lint rules fire', () => {
         Array(3).fill('mermaid/import-boundaries')
       );
     }
+    const [casts] = await eslint.lintText(fixture('brand-cast.ts'), {
+      filePath: join(root, DIAGRAM),
+    });
+    expect(casts?.messages.map((m) => m.line)).toEqual([13, 14, 15, 16, 17, 18, 19]);
+    const [state] = await eslint.lintText(fixture('module-state.ts'), {
+      filePath: join(root, PLUGIN),
+    });
+    expect(state?.messages.map((m) => m.line)).toEqual([2, 3, 4]);
+    // TypeScript files have `no-var` already; a JavaScript module is held to `var` too.
+    const [js] = await eslint.lintText('var n = 0;\nexport const next = () => n++;\n', {
+      filePath: join(root, 'packages/plugin-math/src/fixture.js'),
+    });
+    expect(js?.messages.map((m) => m.ruleId)).toEqual(['mermaid/no-module-state']);
     const [facet] = await eslint.lintText(fixture('import-render-from-facet.ts'), {
       filePath: join(root, DIAGRAM_FACET),
     });
     expect(facet?.messages.map((m) => m.ruleId)).toEqual(
       Array(6).fill('mermaid/import-boundaries')
     );
+  });
+});
+
+describe('mermaid/no-brand-cast', () => {
+  it('knows every brand type that core/src/svg/types.ts declares', () => {
+    const types = readFileSync(join(root, 'packages/core/src/svg/types.ts'), 'utf8');
+    const declared = [...types.matchAll(/^export type (\w+)(?:<[^=]*>)? = ([^;]+);/gm)];
+    const branded = new Set<string>(['Brand']);
+    // An alias holds a brand when it names `Brand<…>` or an alias found before it.
+    for (const [, name = '', body = ''] of declared) {
+      if ([...branded].some((b) => new RegExp(`\\b${b}\\b`).test(body))) {
+        branded.add(name);
+      }
+    }
+    expect([...BRAND_TYPES].sort()).toEqual([...branded].sort());
   });
 });
 
@@ -150,6 +190,17 @@ describe('architecture lint rules allow the intended directions', () => {
     ['fixed-date.ts', DIAGRAM],
     ['clock.ts', MERMAID],
     ['clock.ts', 'packages/core/src/svg/fixture.spec.ts'],
+    ['brand-cast-core.ts', CORE],
+    ['brand-cast.ts', 'packages/diagram-flowchart/src/render/render.spec.ts'],
+    ['brand-cast.ts', 'packages/shared/src/testing/fixture.ts'],
+    ['brand-checked.ts', DIAGRAM],
+    ['module-state.ts', CORE],
+    ['module-state.ts', SHARED],
+    ['module-state.ts', MERMAID],
+    ['module-state.ts', 'packages/plugin-math/src/index.spec.ts'],
+    ['module-state.ts', 'packages/diagram-flowchart/src/v12-specs/adapter.ts'],
+    ['module-state.ts', 'packages/diagram-flowchart/src/ascii/flow.fixtures.ts'],
+    ['module-const.ts', DIAGRAM],
   ])('%s in %s is clean', async (name, asFile) => {
     expect(await ruleIds(name, asFile)).toEqual([]);
   });
