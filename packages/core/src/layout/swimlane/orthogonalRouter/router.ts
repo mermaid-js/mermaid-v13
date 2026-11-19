@@ -19,7 +19,7 @@
 import type { LayoutData, Node as MermaidNode } from '../layoutData.ts';
 import { buildLaneModel } from '../lanes.ts';
 import { RoutedSegmentIndex } from './routedSegmentIndex.ts';
-import { firstPipeNear } from './gridSearch.ts';
+import { ObstacleLines, firstPipeNear } from './gridSearch.ts';
 import { PRECISION, isDiamondShape, isHexagonShape } from '../config.ts';
 
 const EPS = PRECISION.EPSILON;
@@ -237,6 +237,9 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
         visualXHalfExtent: isLR ? h / 2 + padding : w / 2 + padding,
       };
     });
+
+  // v13 (#843): the A* step test reads the boxes by the line it runs on.
+  const obstacleLines = new ObstacleLines(obstacles);
 
   // Helper to find or create pipe
   const getOrAddPipe = (
@@ -1319,18 +1322,14 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
           const minY = Math.min(cy, neighbor.y);
           const maxY = Math.max(cy, neighbor.y);
 
-          const blocked = obstacles.some((obs) => {
-            // Don't block on source or destination nodes - the edge needs to reach them
-            if (obs.nodeId === e.start || obs.nodeId === e.end) {
-              return false;
-            }
-            if (minX !== maxX) {
-              // Horizontal
-              return obs.minY < cy && obs.maxY > cy && obs.maxX > minX && obs.minX < maxX;
-            }
-            // Vertical
-            return obs.minX < cx && obs.maxX > cx && obs.maxY > minY && obs.minY < maxY;
-          });
+          // Don't block on source or destination nodes - the edge needs to reach them
+          const blocked = obstacleLines.blocksStep(
+            cx,
+            cy,
+            [minX, maxX, minY, maxY],
+            e.start,
+            e.end
+          );
 
           if (blocked) {
             continue;
