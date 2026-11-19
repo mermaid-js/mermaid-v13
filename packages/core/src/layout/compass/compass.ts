@@ -492,6 +492,20 @@ class Pixels {
     };
   }
 
+  /**
+   * Edge `k`'s route from `s` to `e`, simplified, with each run between two bends that would
+   * cross a node other than the edge's ends moved off it (#767).
+   */
+  routePoints(k: number, s: Port, e: Port): number[] {
+    const a = this.endA[k]!;
+    const b = this.endB[k]!;
+    const blocked = (r: Rect): Rect | undefined => this.nodeSpace.hit(r, (i) => i === a || i === b);
+    const routed = simplify(route(s, e));
+    const moved = detour(routed, blocked);
+    // Simplified again only when it moved: a second pass folds a loop's out-and-back run.
+    return moved === routed ? routed : simplify(moved);
+  }
+
   routeEdge(k: number): LayoutModelEdge {
     const edge = this.graph.edges[k]!;
     const s = this.port(this.endA[k]!, this.sideA[k]!, edge.border?.source);
@@ -512,14 +526,7 @@ class Pixels {
         e.x = Math.min(e.x1, e.x + M.loopPart);
       }
     }
-    // A run between two bends that would cross a node other than the edge's ends moves off it.
-    const a = this.endA[k]!;
-    const b = this.endB[k]!;
-    const blocked = (r: Rect): Rect | undefined => this.nodeSpace.hit(r, (i) => i === a || i === b);
-    const routed = simplify(route(s, e));
-    const moved = detour(routed, blocked);
-    // Simplified again only when it moved: a second pass folds a loop's out-and-back run.
-    const points = moved === routed ? routed : simplify(moved);
+    const points = this.routePoints(k, s, e);
     if (points.length < 4) points.push(e.x, e.y);
     const m = M.routeMargin;
     for (let i = 0; i < points.length; i += 2) {

@@ -290,28 +290,35 @@ export function detour(p: number[], blocked: (r: Rect) => Rect | undefined): num
   let out = p;
   for (let k = 1; k <= n - 3; k++) {
     const b = blocked(runBox(out, k));
-    if (!b) continue;
-    const flat = Math.abs(out[2 * k + 1]! - out[2 * k + 3]!) < 0.01;
-    // The coordinate that slides: y for a flat run, x for an upright one.
-    const c = flat ? 1 : 0;
-    const at = out[2 * k + c]!;
-    const lo = flat ? b.y0 : b.x0;
-    const hi = flat ? b.y1 : b.x1;
-    const { gap, stub } = METRICS;
-    const tries = [hi + gap / 2, lo - gap / 2, hi + stub, lo - stub].sort(
-      (u, v) => Math.abs(u - at) - Math.abs(v - at)
-    );
-    for (const v of tries) {
-      const q = [...out];
-      q[2 * k + c] = v;
-      q[2 * k + 2 + c] = v;
-      const clear = [k - 1, k, k + 1].every((j) => !blocked(runBox(q, j)));
-      const kept = [k - 1, k + 1].every((j) => runWay(q, j) === runWay(out, j));
-      if (clear && kept) {
-        out = q;
-        break;
-      }
-    }
+    if (b) out = slid(out, k, b, blocked) ?? out;
   }
   return out;
+}
+
+/** `p` with run `k` slid off the node box `b`, or undefined when no slide keeps it clear. */
+function slid(
+  p: readonly number[],
+  k: number,
+  b: Rect,
+  blocked: (r: Rect) => Rect | undefined
+): number[] | undefined {
+  const flat = Math.abs(p[2 * k + 1]! - p[2 * k + 3]!) < 0.01;
+  // The coordinate that slides: y for a flat run, x for an upright one.
+  const c = flat ? 1 : 0;
+  const at = p[2 * k + c]!;
+  const lo = flat ? b.y0 : b.x0;
+  const hi = flat ? b.y1 : b.x1;
+  const { gap, stub } = METRICS;
+  const tries = [hi + gap / 2, lo - gap / 2, hi + stub, lo - stub].sort(
+    (u, v) => Math.abs(u - at) - Math.abs(v - at)
+  );
+  for (const v of tries) {
+    const q = [...p];
+    q[2 * k + c] = v;
+    q[2 * k + 2 + c] = v;
+    const clear = [k - 1, k, k + 1].every((j) => !blocked(runBox(q, j)));
+    const kept = [k - 1, k + 1].every((j) => runWay(q, j) === runWay(p, j));
+    if (clear && kept) return q;
+  }
+  return undefined;
 }
