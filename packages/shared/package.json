@@ -111,6 +111,11 @@
       "types": "./dist/ascii/index.d.ts",
       "default": "./dist/ascii/index.js"
     },
+    "./generic-types": {
+      "mermaid-source": "./src/generic-types.ts",
+      "types": "./dist/generic-types.d.ts",
+      "default": "./dist/generic-types.js"
+    },
     "./config/readers": {
       "mermaid-source": "./src/config/readers.ts",
       "types": "./dist/config/readers.d.ts",

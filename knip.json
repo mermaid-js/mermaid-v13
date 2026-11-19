@@ -37,6 +37,7 @@
         "src/parser/{rule,state,support,tree,table,v12-text,drop,facet,flow,flow-facet}.ts",
         "src/svg/{arrowheads,document,graph,route}.ts",
         "src/config/readers.ts",
+        "src/generic-types.ts",
         "src/testing/*.ts",
         "src/shapes/{kit,basic,extended}.ts"
       ],

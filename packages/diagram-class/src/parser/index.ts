@@ -24,7 +24,8 @@ export type {
   RelationType,
   Visibility,
 } from './model.ts';
-export { memberDisplay, memberText, parseGenericTypes } from './member.ts';
+export { memberDisplay, memberText } from './member.ts';
+export { parseGenericTypes } from '@mermaid-js/shared/generic-types';
 export type { MemberLine } from './member.ts';
 export type {
   ClassAnnotationStmt,

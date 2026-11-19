@@ -1,0 +1,10 @@
+---
+description: generic attribute types named like HTML tags (Data, U, B) are drawn as written, beside one that is not (T)
+---
+erDiagram
+  CUSTOMER {
+    List~Data~ items
+    string~U~ name
+    List~T~ tags
+    Map~K, B~ flags
+  }

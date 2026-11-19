@@ -82,6 +82,7 @@ describe('workspace layout (DESIGN §2)', () => {
       [
         './ascii',
         './config/readers',
+        './generic-types',
         './layout',
         './parser/common-values',
         './parser/drop',
