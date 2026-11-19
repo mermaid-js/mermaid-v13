@@ -259,6 +259,11 @@ jobs:
     # types have a v13 package (e2e/helpers/mmd-snapshots.ts), in the Playwright image so fonts
     # and rendering are fixed. Every tier runs each night (visual-nightly.yml). This job only
     # takes screenshots; the specs that assert behaviour are the `e2e` job below.
+    # A push photographs every fixture of the two tiers: that build is the baseline. A PR
+    # photographs only the fixtures it renders differently (packages/dev's visual-scope: every
+    # fixture is rendered to SVG in Node on the PR and on its base, and the hashes compared) and
+    # uploads them as an Argos subset build, which is never a baseline; with none, it tells
+    # Argos to skip. The label `visual: full` on the PR photographs everything.
     # Screenshots go to Argos, which compares a PR with the newest mermaid-v13 build (R-REL-1)
     # and reports the differences on the PR for a maintainer to approve. Report only: this job
     # is not part of `checks`, and the Argos status is not a required check. R-TEST-6: the theme
@@ -277,18 +282,35 @@ jobs:
       MERMAID_E2E_FIXTURE_TIER: pr-check,baseline
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          # HEAD^1 is the base the scope step compares with: the base branch on a PR (HEAD is
+          # the merge commit).
+          fetch-depth: 2
       - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
       - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           cache: pnpm
           node-version-file: '.node-version'
       - run: pnpm install --frozen-lockfile
+      # Outputs `mode` (full, subset or skip) and, for subset, `list`: the file of fixtures to
+      # photograph. The job summary says which and why. A failed comparison ends in `full`.
+      - name: Decide what to photograph
+        id: scope
+        env:
+          VISUAL_PR: ${{ github.event.pull_request.number }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: pnpm --silent --filter @mermaid-js/dev visual:scope
       # The file comes before `--project`, which would otherwise take it as a project name.
       - name: Playwright (fixture snapshots)
+        if: ${{ steps.scope.outputs.mode != 'skip' }}
+        env:
+          MERMAID_E2E_FIXTURE_LIST: ${{ steps.scope.outputs.list }}
         run: pnpm exec playwright test rendering/mmd-snapshots.spec.ts --project chromium
       - name: Upload screenshots to Argos
-        if: ${{ !cancelled() && github.event_name != 'merge_group' }}
+        if: ${{ !cancelled() && steps.scope.outputs.mode != 'skip' && github.event_name != 'merge_group' }}
         env:
+          # 'true' or 'false', never empty: the CLI reads anything but 'false' as true.
+          ARGOS_SUBSET: ${{ steps.scope.outputs.mode == 'subset' }}
           # Empty on forks; Argos falls back to tokenless upload for public repositories.
           ARGOS_TOKEN: ${{ secrets.ARGOS_TOKEN }}
           ARGOS_REFERENCE_BRANCH: mermaid-v13
@@ -298,6 +320,12 @@ jobs:
         run: |
           pnpm exec argos --version
           bash .github/scripts/argos-upload.sh e2e/screenshots
+      # Nothing to photograph: Argos still gets a build, so the PR has a green Argos status.
+      - name: Tell Argos there is nothing to compare
+        if: ${{ steps.scope.outputs.mode == 'skip' && github.event_name == 'pull_request' }}
+        env:
+          ARGOS_TOKEN: ${{ secrets.ARGOS_TOKEN }}
+        run: pnpm exec argos skip
       - name: Build the theme gallery
         run: pnpm --filter @mermaid-js/dev gallery
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

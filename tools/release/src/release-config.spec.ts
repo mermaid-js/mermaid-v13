@@ -242,6 +242,27 @@ describe('workflow branches (R-REL-1)', () => {
     expect(argosUpload('visual-nightly.yml')?.env?.ARGOS_BUILD_NAME).toBe('nightly');
   });
 
+  it('photographs a PR by scope: a subset build for what changed, a skip for nothing (D632)', () => {
+    const steps = wf('ci.yml').jobs.visual!.steps;
+    const scope = steps.findIndex((s) => (s.run ?? '').includes('visual:scope'));
+    const playwright = steps.findIndex((s) => (s.run ?? '').includes('playwright test'));
+    expect(scope).toBeGreaterThan(-1);
+    expect(scope).toBeLessThan(playwright);
+    expect(steps[playwright]!.env?.MERMAID_E2E_FIXTURE_LIST).toBe(
+      '${{ steps.scope.outputs.list }}'
+    );
+    // 'true' or 'false': the Argos CLI reads an empty value as true.
+    expect(argosUpload('ci.yml')?.env?.ARGOS_SUBSET).toBe(
+      "${{ steps.scope.outputs.mode == 'subset' }}"
+    );
+    const skip = steps.find((s) => (s.run ?? '').includes('argos skip'));
+    expect(skip?.if).toContain("steps.scope.outputs.mode == 'skip'");
+    // The nightly is the safety net: always every fixture, never a subset.
+    const nightly = wf('visual-nightly.yml').jobs.visual!.steps;
+    expect(nightly.some((s) => (s.run ?? '').includes('visual:scope'))).toBe(false);
+    expect(argosUpload('visual-nightly.yml')?.env?.ARGOS_SUBSET).toBeUndefined();
+  });
+
   it('keeps the specs that take no screenshots out of the visual job', () => {
     const run = (jobId: string) =>
       wf('ci.yml')
