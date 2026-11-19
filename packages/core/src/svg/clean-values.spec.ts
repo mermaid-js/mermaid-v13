@@ -278,6 +278,15 @@ describe('a value cannot be passed off as built', () => {
     expect(isBuilt(first)).toBe(false);
     expect(isBuilt(translate(9, 9))).toBe(true);
   });
+
+  it('knows each of the last four, wherever the newest sits in the ring', () => {
+    for (let start = 0; start < 8; start++) {
+      const made = [0, 1, 2, 3].map((i) => translate(100 + start, i));
+      for (const v of made) expect(isBuilt(v), `${start} ${v}`).toBe(true);
+      expect(isBuilt(translate(200 + start, 0) + ' ')).toBe(false);
+      translate(-1, start); // moves the newest one place on
+    }
+  });
 });
 
 describe('transforms() joins caller strings, so its result is never trusted', () => {
