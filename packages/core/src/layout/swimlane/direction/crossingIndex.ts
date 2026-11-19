@@ -250,12 +250,59 @@ export function countSegmentCrossings(
 }
 
 /**
+ * Whether two segments of `orthogonalSegmentsForPoints` with `epsilon` cross strictly, as
+ * `orthogonalSegmentsStrictlyCross` with that `epsilon` decides. The flags the segments carry
+ * are the axes it would derive again, so it reads them and allocates nothing.
+ */
+function flaggedSegmentsCross(
+  one: OrthogonalSegment,
+  other: OrthogonalSegment,
+  epsilon: number
+): boolean {
+  if (!((one.horizontal && other.vertical) || (one.vertical && other.horizontal))) {
+    return false;
+  }
+  // The roles as orthogonalSegmentsStrictlyCross takes them, also for a segment with both flags.
+  const horizontal = one.horizontal ? one : other;
+  const vertical = one.horizontal ? other : one;
+  return (
+    strictlyWithin(vertical.a.x, horizontal.a.x, horizontal.b.x, epsilon) &&
+    strictlyWithin(horizontal.a.y, vertical.a.y, vertical.b.y, epsilon)
+  );
+}
+
+/** Whether `value` lies strictly between `a` and `b`, in either order, `epsilon` in from each. */
+const strictlyWithin = (value: number, a: number, b: number, epsilon: number): boolean =>
+  value > Math.min(a, b) + epsilon && value < Math.max(a, b) - epsilon;
+
+/**
+ * `countSegmentCrossings` for segments of `orthogonalSegmentsForPoints` with `epsilon`, as the
+ * cleanup's routes and candidates are (#843): the same pairs, counted from the segments' flags.
+ */
+export function countFlaggedSegmentCrossings(
+  first: readonly OrthogonalSegment[],
+  second: readonly OrthogonalSegment[],
+  epsilon: number
+): number {
+  let count = 0;
+  for (const one of first) {
+    for (const other of second) {
+      if (flaggedSegmentsCross(one, other, epsilon)) {
+        count++;
+      }
+    }
+  }
+  return count;
+}
+
+/**
  * The crossings of `segments` with the indexed segments other than `own`, as
  * `index.count(segments) - countSegmentCrossings(segments, own, epsilon)` counts them, when that
  * is at most `limit`; else a number above `limit`. `own` must be indexed too, with `epsilon`. It
  * counts one segment at a time and stops once past `limit`: no segment crosses more of `own`
  * than of the index, so the count only grows.
  */
+
 export function countCrossingsWithOthersUpTo(
   index: SegmentCrossingIndex,
   segments: readonly OrthogonalSegment[],
@@ -266,7 +313,7 @@ export function countCrossingsWithOthersUpTo(
   let count = 0;
   for (const segment of segments) {
     const one = [segment];
-    count += index.count(one) - countSegmentCrossings(one, own, epsilon);
+    count += index.count(one) - countFlaggedSegmentCrossings(one, own, epsilon);
     if (count > limit) {
       return count;
     }

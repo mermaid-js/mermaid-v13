@@ -6,6 +6,7 @@ import {
   buildTrackConflictIndex,
   countCrossingsPerRoute,
   countCrossingsWithOthersUpTo,
+  countFlaggedSegmentCrossings,
   countSegmentCrossings,
   shapesTouchAtBend,
 } from '../direction/crossingIndex.ts';
@@ -172,6 +173,66 @@ describe('the crossing cleanup indexes (#687)', () => {
     }
     // It does stop early, so the comparison is not only of full counts.
     expect(stopped).toBeGreaterThan(100);
+  });
+
+  it('counts crossings from the segment flags as the strict test counts them (#843)', () => {
+    let crossings = 0;
+    for (const seed of [61, 62, 63, 64]) {
+      const all = routes(seed, 80).map((points) => orthogonalSegmentsForPoints(points));
+      for (const first of all) {
+        for (const second of all) {
+          const expected = countSegmentCrossings(first, second, EPSILON);
+          expect(countFlaggedSegmentCrossings(first, second, EPSILON)).toBe(expected);
+          crossings += expected;
+        }
+      }
+    }
+    expect(crossings).toBeGreaterThan(1000);
+    // And at each tolerance edge: a crossing line exactly the tolerance in from an end.
+    const ends = [0, 10];
+    const at = [
+      ends[0]! + EPSILON,
+      ends[1]! - EPSILON,
+      ends[0]! + EPSILON + 1e-9,
+      ends[1]! - EPSILON - 1e-9,
+      5,
+    ];
+    const horizontals = at.map((y) =>
+      orthogonalSegmentsForPoints([
+        { x: ends[0]!, y },
+        { x: ends[1]!, y },
+      ])
+    );
+    const verticals = at.map((x) =>
+      orthogonalSegmentsForPoints([
+        { x, y: ends[0]! },
+        { x, y: ends[1]! },
+      ])
+    );
+    // And segments shorter than the tolerance both ways, which carry both flags.
+    const both = [
+      { x: 5, y: 5 },
+      { x: 0 + EPSILON / 2, y: 5 },
+      { x: 5, y: 10 - EPSILON / 2 },
+    ].map((a) => ({
+      index: 0,
+      a,
+      b: { x: a.x + EPSILON / 4, y: a.y + EPSILON / 4 },
+      horizontal: true,
+      vertical: true,
+    }));
+    for (const h of [...horizontals, ...both.map((segment) => [segment])]) {
+      for (const v of [...verticals, ...both.map((segment) => [segment])]) {
+        for (const [first, second] of [
+          [h, v],
+          [v, h],
+        ] as const) {
+          expect(countFlaggedSegmentCrossings(first, second, EPSILON)).toBe(
+            countSegmentCrossings(first, second, EPSILON)
+          );
+        }
+      }
+    }
   });
 
   it('counts nothing against an empty index, and nothing for an empty route', () => {

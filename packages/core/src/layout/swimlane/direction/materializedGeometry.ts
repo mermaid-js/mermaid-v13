@@ -37,6 +37,7 @@ import {
   buildTrackConflictIndex,
   countCrossingsPerRoute,
   countCrossingsWithOthersUpTo,
+  countFlaggedSegmentCrossings,
   countSegmentCrossings,
   shapesTouchAtBend,
 } from './crossingIndex.ts';
@@ -2470,7 +2471,7 @@ export function resolveRenderedOrthogonalCrossings(
   const crossingCountBetweenSegments = (
     firstSegments: SegmentLite[],
     secondSegments: SegmentLite[]
-  ): number => countSegmentCrossings(firstSegments, secondSegments, EPS_LOCAL);
+  ): number => countFlaggedSegmentCrossings(firstSegments, secondSegments, EPS_LOCAL);
 
   /** The crossings of a reroute of `edge`, given as segments, with every other edge. */
   const crossingsWithOtherEdges = (edge: MaterializedEdge, segments: SegmentLite[]): number =>
