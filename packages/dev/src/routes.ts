@@ -60,9 +60,11 @@ export function readBody(
       }
       req.off('data', onData);
       req.off('end', onEnd);
-      // The rest is discarded unread, so the client can finish sending and read the 413.
+      // The rest is read and discarded, not buffered, so the client can finish sending and
+      // read the 413. No `connection: close`: closing the socket after the answer, while the
+      // client is still writing, fails its request with ECONNRESET or EPIPE (#830).
       req.resume();
-      res.writeHead(413, { 'content-type': 'application/json', connection: 'close' });
+      res.writeHead(413, { 'content-type': 'application/json' });
       res.end(JSON.stringify({ error: 'Body too large' }));
       done(undefined);
     };
