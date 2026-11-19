@@ -37,6 +37,15 @@ describe('public API types against the mermaid@12 .d.ts (R-COMPAT-5)', () => {
     expectTypeOf(v13.run).returns.resolves.toBeVoid();
   });
 
+  it('the deprecated v12 init, getRegisteredDiagramsMetadata and startOnLoad (#764, D643)', () => {
+    const init: V12['init'] = v13.init;
+    expectTypeOf(init).returns.resolves.toBeVoid();
+    const metadata: V12['getRegisteredDiagramsMetadata'] = v13.getRegisteredDiagramsMetadata;
+    expectTypeOf(metadata).toBeFunction();
+    const startOnLoad: V12['startOnLoad'] = v13.default.startOnLoad;
+    expectTypeOf(startOnLoad).toEqualTypeOf<boolean>();
+  });
+
   it("render and renderSync are typed by format: TextRenderResult for 'ascii' (D80)", () => {
     const text = (t: string) => v13.renderSync(t, { format: 'ascii' });
     expectTypeOf(text).returns.toEqualTypeOf<v13.TextRenderResult>();

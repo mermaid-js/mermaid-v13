@@ -39,6 +39,8 @@ export const {
   registerLayoutLoaders,
   registerIconPacks,
   setParseErrorHandler,
+  init,
+  getRegisteredDiagramsMetadata,
 } = mermaid;
 
 // v12's `startOnLoad`: in a browser, `run()` once the page has loaded.

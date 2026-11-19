@@ -1,1 +1,18 @@
-18 81e94143e6a55d35
+e2e/diagrams/radar/baseline/config/polygon-ticks.mmd 1 e77747babd9e2dd2
+e2e/diagrams/radar/baseline/config/radar-config.mmd 1 beb7e4f96b28f45f
+e2e/diagrams/radar/baseline/data/legend-clear-of-labels.mmd 1 4531b0e28b45c885
+e2e/diagrams/radar/baseline/data/thirteen-curves.mmd 1 f14630ddbdd02d3e
+e2e/diagrams/radar/baseline/text/labels.mmd 1 54e133be2bdf8331
+e2e/diagrams/radar/baseline/theme-variables/cscale0.mmd 1 1e07666765def621
+e2e/diagrams/radar/baseline/theme-variables/radar-variables.mmd 1 604c593612e16864
+e2e/diagrams/radar/baseline/themes/default.mmd 1 5b912659befac17f
+e2e/diagrams/radar/baseline/themes/neo-dark.mmd 1 b118da8b5187d59a
+e2e/diagrams/radar/baseline/themes/neo.mmd 1 c37652140f3d221f
+e2e/diagrams/radar/baseline/themes/redux-dark-color.mmd 1 f4ab60463cf1bd00
+e2e/diagrams/radar/baseline/themes/redux.mmd 1 759682a1240fea9f
+e2e/diagrams/radar/nightly-check/complex-radar-diagram.mmd 1 cb12c0dac4209f8e
+e2e/diagrams/radar/pr-check/should-handle-radar-diagram-with-radar-style-override.mmd 1 d1317d4fce9472d8
+e2e/diagrams/radar/pr-check/should-parse-radar-diagram-with-theme-override.mmd 1 b83cd1385990b48b
+e2e/diagrams/radar/pr-check/should-render-a-radar-diagram-with-multiple-curves.mmd 1 b28c08d20a67a26c
+e2e/diagrams/radar/pr-check/should-render-a-simple-radar-diagram.mmd 1 dd13d9cf59a88cc2
+e2e/diagrams/radar/pr-check/should-render-radar-diagram-with-config-override.mmd 1 c9fd237f61842f19

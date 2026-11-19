@@ -628,12 +628,77 @@ describe('plugins and v12 leftovers (R-API-3, R-API-4, R-PLUG-6)', () => {
     expect(seen).toHaveLength(2);
   });
 
+  it('lists v12 detectors with getRegisteredDiagramsMetadata, a registered one last (#764, D643)', async () => {
+    const m = createMermaid();
+    const ids = () => m.getRegisteredDiagramsMetadata().map((d) => d.id);
+    expect(ids().slice(0, 4)).toEqual(['error', '---', 'flowchart-elk', 'mindmap']);
+    expect(ids()).toContain('flowchart-v2');
+    await m.registerExternalDiagrams([
+      { id: 'hello', detector: () => false, loader: () => Promise.reject(new Error('unused')) },
+    ]);
+    expect(ids().at(-1)).toBe('hello');
+    expect(m.getRegisteredDiagramsMetadata()[0]).toEqual({ id: 'error' });
+  });
   it('parse() resolves the v12 diagram type and the text config', async () => {
     expect(await parse('---\nconfig:\n  theme: dark\n---\ngraph TD\n  A')).toEqual({
       diagramType: 'flowchart-v2',
       config: { theme: 'dark' },
       warnings: [],
     });
+  });
+});
+
+describe('v12 init() and startOnLoad (#764, D643)', () => {
+  /** A stand-in `document` for `run()`: no `.mermaid` element, every query recorded. */
+  function fakeDocument(): string[] {
+    const queries: string[] = [];
+    const g = globalThis as { document?: unknown };
+    g.document = { querySelectorAll: (q: string) => (queries.push(q), []) };
+    return queries;
+  }
+  afterEach(() => {
+    delete (globalThis as { document?: unknown }).document;
+  });
+
+  it('init(config, selector) initializes, then runs over the selector', async () => {
+    const queries = fakeDocument();
+    const m = createMermaid();
+    await m.init({ theme: 'dark' }, '.diagram');
+    expect(queries).toEqual(['.diagram']);
+    expect((await m.parse(FLOW)).diagramType).toBe('flowchart-v2');
+    const dark = createMermaid();
+    dark.initialize({ theme: 'dark' });
+    expect((await m.render('a', FLOW)).svg).toBe((await dark.render('a', FLOW)).svg);
+    await m.init();
+    expect(queries).toEqual(['.diagram', '.mermaid']);
+  });
+
+  it('init(config, element | list) runs over those nodes without a query', async () => {
+    const queries = fakeDocument();
+    const seen: unknown[] = [];
+    // Already processed, so run() skips each one after reading the attribute.
+    const node = (): HTMLElement =>
+      ({ nodeType: 1, getAttribute: (a: string) => (seen.push(a), 'true') }) as never;
+    const m = createMermaid();
+    await m.init(undefined, node());
+    await m.init(undefined, [node(), node()]);
+    expect(queries).toEqual([]);
+    expect(seen).toEqual(['data-processed', 'data-processed', 'data-processed']);
+  });
+
+  it('contentLoaded() runs only while the startOnLoad property and config are on', async () => {
+    const queries = fakeDocument();
+    const m = createMermaid();
+    expect(m.startOnLoad).toBe(true);
+    m.startOnLoad = false;
+    m.contentLoaded();
+    m.startOnLoad = true;
+    m.initialize({ startOnLoad: false });
+    m.contentLoaded();
+    expect(queries).toEqual([]);
+    m.initialize({});
+    m.contentLoaded();
+    expect(queries).toEqual(['.mermaid']);
   });
 });
 

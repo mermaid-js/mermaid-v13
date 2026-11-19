@@ -4,9 +4,15 @@
  * its key or value. The default mode's own output (value and diagnostics) over the corpus front
  * matter and flowchart shape data is pinned by digest, so tree-mode work (#169) cannot change
  * what the renderer reads.
+ *
+ * The digest is pinned per fixture (#1020). A pinned fixture whose read changes fails, and so
+ * does a pinned fixture that is no longer in the corpus. A fixture that is not pinned yet passes
+ * and is listed in the output. Regenerate every digest file with
+ * `pnpm vitest run packages/conformance/src/yaml-tree.spec.ts -u`; a run without `-u` never
+ * writes them.
  */
 import { createHash } from 'node:crypto';
-import { readdirSync } from 'node:fs';
+import { readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseYaml, preprocess } from '@mermaid-js/core/preprocess';
@@ -15,8 +21,13 @@ import { corpusFromDir, REPO_ROOT } from './corpus.ts';
 import type { CorpusItem } from './types.ts';
 
 const CORPUS_DIR = 'e2e/diagrams';
-/** The pinned digests: `<folder>.txt` per e2e diagram folder with front matter or shape data. */
+/**
+ * The pinned reads: `<folder>.txt` per e2e diagram folder with front matter or shape data, one
+ * `<id> <count> <hash16>` line per fixture with reads, sorted by id (#1020).
+ */
 const DIGESTS = join(import.meta.dirname, '__snapshots__', 'yaml-tree');
+/** How to rewrite the digest files: vitest's update mode (`-u`). No other run writes them. */
+const REGENERATE = 'pnpm vitest run packages/conformance/src/yaml-tree.spec.ts -u';
 
 /** What the source text under a node must look like, for its kind and style. */
 function badText(text: string, node: YamlNode): string | undefined {
@@ -124,44 +135,94 @@ function readout(r: { value: unknown; diagnostics: unknown }): string {
   );
 }
 
+/** The default mode's reads of one fixture: its front matter, then each shape data block. */
+function readsOf(text: string): string[] {
+  const reads: string[] = [];
+  const fm = preprocess(text).frontMatter;
+  if (fm) {
+    const lineStart = text.lastIndexOf('\n', fm.range.start - 1) + 1;
+    const indent = /^[ \t]*/.exec(text.slice(lineStart, fm.range.start + 3))?.[0] ?? '';
+    reads.push(readout(parseYaml(text, { ...fm.yamlRange, indent })));
+  }
+  for (const data of shapeData(text)) reads.push(readout(parseYaml(data)));
+  return reads;
+}
+
+/** Folder → fixture id → `<count> <hash16>`, for every fixture with reads. */
+type Digests = Map<string, Map<string, string>>;
+
+function digests(items: CorpusItem[]): Digests {
+  const out: Digests = new Map();
+  for (const { id, source: text } of items) {
+    const reads = readsOf(text);
+    if (reads.length === 0) continue;
+    const folder = id.split('/')[2] ?? '';
+    const hash = createHash('sha256').update(reads.join('\n')).digest('hex').slice(0, 16);
+    let lines = out.get(folder);
+    if (lines === undefined) out.set(folder, (lines = new Map<string, string>()));
+    lines.set(id, `${reads.length} ${hash}`);
+  }
+  return out;
+}
+
+const LINE = /^(\S+) (\d+ [0-9a-f]{16})$/;
+
+/** What the digest files pin. A line that is not `<id> <count> <hash16>` fails here. */
+function pinnedDigests(): Digests {
+  const out: Digests = new Map();
+  for (const file of readdirSync(DIGESTS).filter((f) => f.endsWith('.txt'))) {
+    const lines = new Map<string, string>();
+    for (const line of readFileSync(join(DIGESTS, file), 'utf8').split('\n')) {
+      if (line === '') continue;
+      const match = LINE.exec(line);
+      expect(match, `${file}: not "<id> <count> <hash16>": ${line}`).not.toBeNull();
+      lines.set(match![1]!, match![2]!);
+    }
+    out.set(file.slice(0, -'.txt'.length), lines);
+  }
+  return out;
+}
+
+/** Rewrite every digest file from `current`, sorted by id, and drop those of folders with no reads. */
+function writeDigests(current: Digests): void {
+  for (const file of readdirSync(DIGESTS).filter((f) => f.endsWith('.txt')))
+    if (!current.has(file.slice(0, -'.txt'.length))) rmSync(join(DIGESTS, file));
+  const byCodePoint = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+  for (const [folder, lines] of current) {
+    const ids = [...lines.keys()].sort(byCodePoint);
+    const text = ids.map((id) => `${id} ${lines.get(id)}\n`).join('');
+    writeFileSync(join(DIGESTS, `${folder}.txt`), text);
+  }
+}
+
 describe('YAML default mode over the corpus', async () => {
   const items: CorpusItem[] = [];
   for await (const item of corpusFromDir(join(REPO_ROOT, CORPUS_DIR), CORPUS_DIR)) items.push(item);
 
-  it('reads front matter and shape data exactly as before (digest per diagram folder)', async () => {
-    const hashes = new Map<string, ReturnType<typeof createHash>>();
-    const counts = new Map<string, number>();
-    for (const { id, source: text } of items) {
-      const folder = id.split('/')[2] ?? '';
-      const reads: string[] = [];
-      const fm = preprocess(text).frontMatter;
-      if (fm) {
-        const lineStart = text.lastIndexOf('\n', fm.range.start - 1) + 1;
-        const indent = /^[ \t]*/.exec(text.slice(lineStart, fm.range.start + 3))?.[0] ?? '';
-        reads.push(readout(parseYaml(text, { ...fm.yamlRange, indent })));
+  it('reads front matter and shape data exactly as before (digest per fixture)', () => {
+    const current = digests(items);
+    expect(current.size).toBeGreaterThan(10);
+    if (expect.getState().snapshotState.snapshotUpdateState === 'all') return writeDigests(current);
+    const pins = pinnedDigests();
+    const corpus = new Set(items.map((item) => item.id));
+    const changed: string[] = [];
+    const missing: string[] = [];
+    const unpinned: string[] = [];
+    for (const [folder, pinned] of pins) {
+      for (const [id, line] of pinned) {
+        const now = current.get(folder)?.get(id);
+        if (!corpus.has(id)) missing.push(id);
+        else if (now !== line) changed.push(`${id}: pinned ${line}, reads ${now ?? 'nothing'}`);
       }
-      for (const data of shapeData(text)) reads.push(readout(parseYaml(data)));
-      if (reads.length === 0) continue;
-      let hash = hashes.get(folder);
-      if (hash === undefined) hashes.set(folder, (hash = createHash('sha256')));
-      hash.update(`${id}\n${reads.join('\n')}\n`);
-      counts.set(folder, (counts.get(folder) ?? 0) + reads.length);
     }
-    const digest = Object.fromEntries(
-      [...hashes]
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([folder, h]) => [folder, `${counts.get(folder)} ${h.digest('hex').slice(0, 16)}`])
-    );
-    expect(Object.keys(digest).length).toBeGreaterThan(10);
-    // One file per folder, so a port's fixtures change only its own digest file.
-    for (const [folder, line] of Object.entries(digest))
-      await expect(`${line}\n`).toMatchFileSnapshot(join(DIGESTS, `${folder}.txt`));
-    const files = readdirSync(DIGESTS)
-      .filter((f) => f.endsWith('.txt'))
-      .map((f) => f.slice(0, -'.txt'.length));
-    expect(
-      files.filter((f) => !(f in digest)),
-      'digests of folders with no reads'
-    ).toEqual([]);
+    for (const [folder, lines] of current)
+      for (const id of lines.keys()) if (!pins.get(folder)?.has(id)) unpinned.push(id);
+    if (unpinned.length > 0) {
+      console.info(
+        `yaml-tree: ${unpinned.length} fixture(s) with reads not pinned yet (${REGENERATE} pins them):\n  ${unpinned.join('\n  ')}`
+      );
+    }
+    expect(changed, `reads that changed (if on purpose, regenerate: ${REGENERATE})`).toEqual([]);
+    expect(missing, `pinned fixtures not in the corpus: regenerate with ${REGENERATE}`).toEqual([]);
   });
 });
