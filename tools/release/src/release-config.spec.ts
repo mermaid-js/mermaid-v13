@@ -18,6 +18,7 @@ interface Step {
 }
 interface Job {
   if?: string;
+  env?: Record<string, string>;
   needs?: string | string[];
   environment?: string | { name: string };
   permissions?: Record<string, string>;
@@ -225,10 +226,73 @@ describe('workflow branches (R-REL-1)', () => {
       jobs: Record<string, Job>;
     };
 
+  const argosUpload = (name: string) =>
+    wf(name).jobs.visual!.steps.find((s) => (s.run ?? '').includes('argos-upload.sh'));
+
   it('compares Argos screenshots with the mermaid-v13 baseline', () => {
-    const upload = wf('ci.yml').jobs.visual!.steps.find((s) =>
-      (s.run ?? '').includes('argos upload')
+    expect(argosUpload('ci.yml')?.env?.ARGOS_REFERENCE_BRANCH).toBe('mermaid-v13');
+    expect(argosUpload('visual-nightly.yml')?.env?.ARGOS_REFERENCE_BRANCH).toBe('mermaid-v13');
+  });
+
+  it('runs two fixture tiers on a PR and every tier at night, as two Argos builds (D631)', () => {
+    const tiers = (name: string) => wf(name).jobs.visual!.env?.MERMAID_E2E_FIXTURE_TIER;
+    expect(tiers('ci.yml')).toBe('pr-check,baseline');
+    expect(tiers('visual-nightly.yml')).toBeUndefined();
+    expect(argosUpload('ci.yml')?.env?.ARGOS_BUILD_NAME).toBeUndefined();
+    expect(argosUpload('visual-nightly.yml')?.env?.ARGOS_BUILD_NAME).toBe('nightly');
+  });
+
+  it('photographs a PR by scope: a subset build for what changed, a skip for nothing (D632)', () => {
+    const steps = wf('ci.yml').jobs.visual!.steps;
+    const scope = steps.findIndex((s) => (s.run ?? '').includes('visual:scope'));
+    const playwright = steps.findIndex((s) => (s.run ?? '').includes('playwright test'));
+    expect(scope).toBeGreaterThan(-1);
+    expect(scope).toBeLessThan(playwright);
+    expect(steps[playwright]!.env?.MERMAID_E2E_FIXTURE_LIST).toBe(
+      '${{ steps.scope.outputs.list }}'
     );
-    expect(upload?.env?.ARGOS_REFERENCE_BRANCH).toBe('mermaid-v13');
+    // 'true' or 'false': the Argos CLI reads an empty value as true.
+    expect(argosUpload('ci.yml')?.env?.ARGOS_SUBSET).toBe(
+      "${{ steps.scope.outputs.mode == 'subset' }}"
+    );
+    const skip = steps.find((s) => (s.run ?? '').includes('argos skip'));
+    expect(skip?.if).toContain("steps.scope.outputs.mode == 'skip'");
+    // The nightly is the safety net: always every fixture, never a subset.
+    const nightly = wf('visual-nightly.yml').jobs.visual!.steps;
+    expect(nightly.some((s) => (s.run ?? '').includes('visual:scope'))).toBe(false);
+    expect(argosUpload('visual-nightly.yml')?.env?.ARGOS_SUBSET).toBeUndefined();
+  });
+
+  it('lets a docs-only change skip every job but lint and the docs tests', () => {
+    const jobs = wf('ci.yml').jobs;
+    const codeOnly = "${{ needs.changes.outputs.scope == 'code' }}";
+    for (const id of [
+      'typecheck',
+      'build',
+      'structure',
+      'tests',
+      'bench',
+      'e2e',
+      'dom-adapter',
+      'smoke-render',
+    ]) {
+      expect(jobs[id]!.if, id).toBe(codeOnly);
+      expect(jobs[id]!.needs, id).toBe('changes');
+    }
+    expect(jobs.lint!.if).toBeUndefined();
+    expect(jobs['docs-tests']!.if).toContain("needs.changes.outputs.scope == 'docs'");
+    // The required check fails when the scope was not decided, whatever was skipped.
+    expect(jobs.checks!.needs).toContain('changes');
+    expect(jobs.checks!.steps[0]!.run).toContain('"$SCOPE" != "success"');
+  });
+
+  it('keeps the specs that take no screenshots out of the visual job', () => {
+    const run = (jobId: string) =>
+      wf('ci.yml')
+        .jobs[jobId]!.steps.map((s) => s.run ?? '')
+        .join('\n');
+    expect(run('visual')).toContain('playwright test rendering/mmd-snapshots.spec.ts');
+    expect(run('visual')).not.toContain('pnpm e2e');
+    expect(run('e2e')).toContain('pnpm e2e --grep-invert "mmd snapshots"');
   });
 });

@@ -14,6 +14,9 @@ export {
   FIXTURE_TYPE_EXCEPTIONS,
 } from '../../packages/dev/src/fixture-discovery.ts';
 
+// The time each fixture is rendered at; shared with the hash run (packages/dev visual-hashes).
+export { fixedClockFor } from '../../packages/dev/src/fixed-clocks.ts';
+
 // Fixture text as v12's e2e page saw it (entity-decoded); shared with the dev explorer.
 export { asHostText } from '../../packages/dev/src/host-text.ts';
 
@@ -167,4 +170,20 @@ export const assertUniqueSnapshotNames = (relativePaths: readonly string[]): voi
         collisions.map((paths) => `  ${paths.join('  ==  ')}`).join('\n')
     );
   }
+};
+
+/**
+ * `fixtures` narrowed to the paths listed in the file at `listPath` (one a line, blank lines
+ * ignored); all of them when `listPath` is unset or empty. A listed path that is not among
+ * `fixtures` (another tier, a type with no v13 package) is ignored.
+ */
+export const listedFixtures = (fixtures: readonly string[], listPath?: string): string[] => {
+  if (!listPath) return [...fixtures];
+  const wanted = new Set(
+    readFileSync(listPath, 'utf8')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+  );
+  return fixtures.filter((fixture) => wanted.has(fixture));
 };
