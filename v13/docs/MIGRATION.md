@@ -2033,21 +2033,26 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   the bands from `cScale0`/`cScale1`; those are not carried, so gantt colours differ from v12
   most in `default`, `dark`, `forest` and `neutral` (bars are the theme's `primaryColor`, text
   `textColor`). Set the variables in `themeVariables` for v12's look.
-- **Under a `themeVariables` override (D657):** in the classic family the task bars, the
-  active bar and the alternate section band (`taskBkgColor`, `activeTaskBkgColor`,
-  `sectionBkgColor2`) read `mainBkg`. `default`, `dark`, `forest` and `neutral` pin `mainBkg`
-  to their primary colour, so an author's `primaryColor` leaves the bars alone there, as in
-  v12; in `base` it derives from `primaryColor`, so the bars follow it, as in v12. An author's
-  `mainBkg` moves the bars in every classic theme, where v12's `default`, `forest` and
-  `neutral` kept their own (and, under `dark`, the text on the active bar follows that fill).
-  What else still responds differently from v12: under `default`, `dark`, `forest` and
-  `neutral` the first section band (`sectionBkgColor`) follows `tertiaryColor`, and the
-  active bar's outline and the `vert` marker follow `lineColor` (v12 kept its own); under
-  `dark` the alternate band stays white where v12's followed `background`, and done bars
-  follow `mainBkg`; under `neutral` the done bar's outline stays grey where v12's followed
-  `lineColor`; in `base` the active outline and the `vert` marker follow `lineColor` (D574),
-  where v12's followed `primaryColor` and stayed navy. Set the gantt variable itself in
-  `themeVariables` to fix it.
+- **Under a `themeVariables` override (D656, D657):** in the classic family the task bars,
+  the active bar and the third section band (`taskBkgColor`, `activeTaskBkgColor`,
+  `sectionBkgColor2`) read `mainBkg`, the first section band (`sectionBkgColor`) reads
+  `bandBkg`, and the active bar's outline and the `vert` marker read `guideLineColor`.
+  `default`, `dark`, `forest` and `neutral` pin all three to their own primary, tertiary and
+  line colours, so an author's `primaryColor`, `tertiaryColor` or `lineColor` leaves the bars,
+  the band and the outline alone there, as in v12. In `base` they derive from `primaryColor`,
+  `tertiaryColor` and `lineColor`, so they follow them, as in v12, except that the active
+  outline and the `vert` marker follow `lineColor` where v12's followed `primaryColor` and
+  stayed navy (D574). Set `bandBkg` or `guideLineColor` in `themeVariables` to move them.
+- **A `mainBkg` override moves the bars (D657):** an author's `mainBkg` recolours the task
+  bars, the active bar and the third band in every classic theme, where v12's `default`,
+  `forest` and `neutral` kept their own; under `dark` the text on the active bar follows that
+  fill. To darken the bars in the named themes, set `mainBkg`: a dark `primaryColor` with
+  light `textColor` leaves their pale bars alone, so the light text sits on pale bars (v12
+  kept its bars there too, with fixed white text).
+- **Three responses stay v13's (D667):** under `neutral` the done bar's outline stays grey
+  where v12's followed `lineColor`; under `dark` the alternate band stays white where v12's
+  followed `background`, and done bars follow `mainBkg` where v12's stayed light grey. Set
+  `doneTaskBorderColor`, `altSectionBkgColor` or `doneTaskBkgColor` for v12's colours.
 - **Contrast in the classic themes (D574):** with bars in the pale `primaryColor`, the classic
   family (`default`, `dark`, `forest`, `neutral`, `base`) draws the `vert` marker and its label
   and the active bar's outline in `lineColor`. Text on a critical bar has its own variable,
@@ -2078,7 +2083,7 @@ Class lists are written with single spaces and no trailing blank.
 | `todayMarker` written as a `style` attribute with `,` turned into `;` | Split on `,` (the statement stops at `;`, so none reaches the value) and checked: allowed properties become presentation attributes on the line, others are dropped with `STYLE_PROPERTY_DROPPED` | R-SEC-2 |
 | A `transform-origin` attribute on every bar and every excluded-day rect; milestones turned by CSS, `transform: rotate(45deg) scale(0.8, 0.8)` about it | No `transform-origin`. A milestone carries the same geometry as a `transform` attribute about v12's origin (its square's centre; above the marker for a task tagged both `vert` and `milestone`, which keeps both, as in v12) | No CSS in the output |
 | `<g class="grid" transform="translate(leftPadding, h − 50)">` (top axis: `translate(leftPadding, topPadding)`) and d3's `<g class="tick" transform="translate(x, 0)">` per tick | The same elements at absolute coordinates, without `transform` | The renderer writes absolute coordinates |
-| Tick text `fill="#000"` `stroke="none"` `font-size="10"`, overridden by `.grid .tick text { fill: textColor }`; d3's tick lines `stroke="currentColor"` (the page's colour, as v12's `.grid .tick { stroke: gridColor }` matched only the group); d3's axis path, hidden by `.grid path { stroke-width: 0 }`; `shape-rendering: crispEdges` on ticks and `doneCrit` bars | Tick text in `textColor` at 10px; tick lines in `gridColor` at v12's 0.8 opacity; no axis path; no `shape-rendering` | What v12's CSS meant; `shape-rendering` is not an allowed attribute |
+| Tick text `fill="#000"` `stroke="none"` `font-size="10"`, overridden by `.grid .tick text { fill: textColor }`; d3's tick lines `stroke="currentColor"` (the page's colour, as v12's `.grid .tick { stroke: gridColor }` matched only the group); d3's axis path, hidden by `.grid path { stroke-width: 0 }`; `shape-rendering: crispEdges` on ticks and `doneCrit` bars | Tick text in `textColor` at 10px; tick lines in `gridColor` at v12's 0.8 opacity; no axis path; no `shape-rendering` | What v12's CSS meant (D666: set `gridColor` for v12's dark lines); `shape-rendering` is not an allowed attribute |
 | `cursor: pointer` on clickable bars and labels; `text-height` on labels | Dropped; the `clickable` class stays for host CSS | No CSS in the output |
 | A `<text class="titleText">` always, empty without a title | Only when there is a title | Nothing invisible is drawn |
 | An HCL colour scale (`#00B9FA` → `#F95002`) built and never used | Dropped | It never reached the output |

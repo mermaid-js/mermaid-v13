@@ -451,6 +451,11 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   canvasLineColor: def('cvl', 'color', []),
   canvasTextColor: def('cvt', 'color', []),
   canvasItemBkg: def('cvi', 'color', []),
+  // The band behind a chart's rows and the lines that guide the eye over it (a marker, an
+  // outline), which v12's named classic themes keep at their constructor tertiary and line
+  // colours under every override (D656, #1041); `base` derives them. v13 names; v12 has none.
+  bandBkg: def('bnb', 'color', ['gantt']),
+  guideLineColor: def('gdl', 'color', ['gantt']),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
   // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.
   useGradient: def('ug', 'flag', ['core']),

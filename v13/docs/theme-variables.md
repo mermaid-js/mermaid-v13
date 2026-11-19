@@ -17,7 +17,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt, railroad, sequence |
 | `background` | `--mermaid-background` | base | color | | | all | core, state, packet, kanban, wardley, xychart, venn, c4, class |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant, packet, cynefin, wardley, xychart, railroad, state, usecase |
-| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley, agentflow, architecture, block, c4, eventmodeling, gantt, ishikawa, railroad, requirement, treeview, usecase |
+| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, cynefin, wardley, agentflow, architecture, block, c4, eventmodeling, ishikawa, railroad, requirement, treeview, usecase |
 | `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info, sankey, treemap, wardley, xychart, venn, agentflow, architecture, block, c4, eventmodeling, ishikawa, railroad, requirement, treeview, usecase |
 | `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, agentflow, architecture, block, eventmodeling, ishikawa, railroad, requirement, usecase |
 | `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | core, quadrant, gantt, railroad |
@@ -101,6 +101,8 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `canvasLineColor` | `--mermaid-canvasLineColor` | derived | color | `lineColor` | `lineColor` | default, dark |  |
 | `canvasTextColor` | `--mermaid-canvasTextColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default |  |
 | `canvasItemBkg` | `--mermaid-canvasItemBkg` | derived | color | `primaryColor` | `primaryColor` | default |  |
+| `bandBkg` | `--mermaid-bandBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | default, dark, forest, neutral | gantt |
+| `guideLineColor` | `--mermaid-guideLineColor` | derived | color | `lineColor` | `lineColor` | default, dark, forest, neutral | gantt |
 | `useGradient` | `--mermaid-useGradient` | token | flag | | | all | core |
 | `gradientStart` | `--mermaid-gradientStart` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
 | `gradientStop` | `--mermaid-gradientStop` | derived | color | `secondaryBorderColor` | `secondaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |

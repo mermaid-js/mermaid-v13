@@ -233,6 +233,18 @@ describe('createTheme: the named classic themes pin v12 constructor values (#798
     ['canvasItemBkg', 'primaryColor', 'forest', null],
     ['canvasItemBkg', 'primaryColor', 'neutral', null],
     ['canvasItemBkg', 'primaryColor', 'base', null],
+    // The band and guide inputs (D656, #1041): v12's named classic themes keep their gantt
+    // section band and outline/marker colours under every override, so all four pin them.
+    ['bandBkg', 'tertiaryColor', 'default', '#f9ffec'],
+    ['bandBkg', 'tertiaryColor', 'dark', '#201f1f'],
+    ['bandBkg', 'tertiaryColor', 'forest', '#e1efc0'],
+    ['bandBkg', 'tertiaryColor', 'neutral', '#eeeeee'],
+    ['bandBkg', 'tertiaryColor', 'base', null],
+    ['guideLineColor', 'lineColor', 'default', '#333333'],
+    ['guideLineColor', 'lineColor', 'dark', '#d3d3d3'],
+    ['guideLineColor', 'lineColor', 'forest', '#000000'],
+    ['guideLineColor', 'lineColor', 'neutral', '#666666'],
+    ['guideLineColor', 'lineColor', 'base', null],
   ];
 
   it.each(CANVAS)(

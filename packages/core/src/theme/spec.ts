@@ -120,6 +120,8 @@ export const LIGHT_RULES: ThemeRuleTable = {
   canvasLineColor: 'lineColor',
   canvasTextColor: 'primaryTextColor',
   canvasItemBkg: 'primaryColor',
+  bandBkg: 'tertiaryColor',
+  guideLineColor: 'lineColor',
 };
 
 /** Shared derivation for dark themes. */

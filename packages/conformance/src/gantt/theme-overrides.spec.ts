@@ -203,7 +203,7 @@ const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
         ['activeTaskBorderColor']
       ),
     ],
-  "D657: the task bars, the active bar and the alternate section band read mainBkg, so an author's mainBkg moves them where v12's constructor values stay; under dark, the text on the active bar follows its fill (D574's contrast rule)":
+  "D657: the task bars, the active bar and the third section band read mainBkg, so an author's mainBkg moves them where v12's constructor values stay; under dark, the text on the active bar follows its fill (D574's contrast rule)":
     [
       ...keys(
         'default',
@@ -224,32 +224,9 @@ const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
         ['sectionBkgColor2', 'taskBkgColor', 'activeTaskBkgColor']
       ),
     ],
-  '#1035 T4 (#1041): decision pending: these need a pinned input in the named classic themes (D656), or would move a value with no override (D574)':
+  "D667: v13 keeps its own response where following v12's would move a value with no override: neutral's done outline stays grey, dark's alternate band stays white, and dark's done bars follow mainBkg":
     [
-      ...keys('default', ['tertiaryColor:light', 'tertiaryColor:dark'], ['sectionBkgColor']),
-      ...keys('dark', ['tertiaryColor:light', 'tertiaryColor:dark'], ['sectionBkgColor']),
-      ...keys('forest', ['tertiaryColor:light', 'tertiaryColor:dark'], ['sectionBkgColor']),
-      ...keys('neutral', ['tertiaryColor:light', 'tertiaryColor:dark'], ['sectionBkgColor']),
-      ...keys(
-        'default',
-        ['lineColor:light', 'lineColor:dark'],
-        ['vertLineColor', 'activeTaskBorderColor']
-      ),
-      ...keys(
-        'dark',
-        ['lineColor:light', 'lineColor:dark'],
-        ['vertLineColor', 'activeTaskBorderColor']
-      ),
-      ...keys(
-        'forest',
-        ['lineColor:light', 'lineColor:dark'],
-        ['vertLineColor', 'activeTaskBorderColor']
-      ),
-      ...keys(
-        'neutral',
-        ['lineColor:light', 'lineColor:dark'],
-        ['vertLineColor', 'activeTaskBorderColor', 'doneTaskBorderColor']
-      ),
+      ...keys('neutral', ['lineColor:light', 'lineColor:dark'], ['doneTaskBorderColor']),
       ...keys('dark', ['background:light', 'background:dark'], ['altSectionBkgColor']),
       ...keys('dark', ['mainBkg:light', 'mainBkg:dark'], ['doneTaskBkgColor']),
     ],

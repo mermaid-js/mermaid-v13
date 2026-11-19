@@ -43,16 +43,19 @@ export const theme: DiagramThemeTable = {
     // in the derivation, for the classic family only (D574). The active outline, the `vert`
     // marker and its label take `lineColor`; text on a critical bar is black where the bar text
     // misses AA on red. Text on the other bars stays `taskTextColor`, the theme's text.
-    // The bars and the alternate band read `mainBkg`, which `default`, `forest`, `neutral` and
-    // `dark` pin to their primary colour, so an author's `primaryColor` leaves them alone there,
-    // as in v12; `base` derives `mainBkg` from it (D657).
+    // The bars and the third band (`sectionBkgColor2`) read `mainBkg`, which `default`, `forest`,
+    // `neutral` and `dark` pin to their primary colour, so an author's `primaryColor` leaves them
+    // alone there, as in v12; `base` derives `mainBkg` from it (D657). The first band reads `bandBkg` and the
+    // lines `guideLineColor`, the tertiary and line colours those four themes pin where v12 keeps
+    // its own under an override (D656); in `base` they are `tertiaryColor` and `lineColor`.
     classic: {
       rules: {
+        sectionBkgColor: 'bandBkg',
         sectionBkgColor2: 'mainBkg',
         taskBkgColor: 'mainBkg',
         activeTaskBkgColor: 'lightenHsl(mainBkg, 23%)',
-        activeTaskBorderColor: 'lineColor',
-        vertLineColor: 'lineColor',
+        activeTaskBorderColor: 'guideLineColor',
+        vertLineColor: 'guideLineColor',
         critTextColor: 'contrast(critBkgColor, taskTextColor, black)',
       },
       // Under a dark theme the critical fill darkens to #990000, on which the theme's light text

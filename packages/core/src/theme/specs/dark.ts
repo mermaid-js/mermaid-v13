@@ -44,6 +44,10 @@ const theme: ThemeSpec = {
     // colour moves them (#773, #798): the node fill, the borders, the tertiary ink and the link
     // (its lightgrey). Not the arrowhead: v12's `.marker` draws it in lineColor (D575).
     mainBkg: '#1f2020',
+    // v12 theme-dark.js keeps its constructor tertiary and line colours where gantt draws its
+    // section band, the active outline and the `vert` marker, so no override moves them (D656).
+    bandBkg: '#201f1f',
+    guideLineColor: '#d3d3d3',
     border1: '#cccccc',
     primaryBorderColor: '#cccccc',
     secondaryBorderColor: '#2f2f2f',
