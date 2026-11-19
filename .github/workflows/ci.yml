@@ -19,10 +19,10 @@ jobs:
     # What this run has to check (tools/ci/scope.ts). `code`: everything. `docs`: the change
     # touches only documentation, by the pre-push hook's rule, so only `lint` runs (Prettier
     # and the generated-file checks) plus, in `docs-tests`, the tests of the code that reads a
-    # changed docs file. On a PR that changes only TypeScript source of packages, `tests` is
-    # `related` and `test_files` lists the unit tests the change can reach (D637); the unit
-    # shards run those. Every doubt ends in `code` with every test. The other jobs read these
-    # outputs.
+    # changed docs file. On a PR that changes only TypeScript source of packages, `.mmd`
+    # fixtures and vitest snapshots (besides docs and changesets), `tests` is `related` and
+    # `test_files` lists the unit tests the change can reach (D637, D648); the unit shards run
+    # those. Every doubt ends in `code` with every test. The other jobs read these outputs.
     name: Scope
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 5
@@ -215,8 +215,10 @@ jobs:
     # tools/ci/duration-sequencer.ts). Each shard uploads a JSON report as `unit-durations-<n>`;
     # tools/ci/durations-cli.ts turns a run's six reports into tools/ci/test-durations.json.
     # A `related` run (D637) gives vitest the Scope job's list of test files: those the import
-    # graph finds affected by the change and those that read the tree without importing it. A
-    # push to mermaid-v13 always runs every test, which catches one a PR wrongly left out.
+    # graph finds affected by the change, the owners of changed snapshots and the readers of
+    # the e2e corpus when a fixture changed (D648), and those that read the tree without
+    # importing it. A push to mermaid-v13 always runs every test, which catches one a PR
+    # wrongly left out.
     name: Unit tests (${{ matrix.shard }}/6)
     needs: changes
     if: ${{ needs.changes.outputs.scope == 'code' }}
