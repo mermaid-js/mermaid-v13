@@ -606,7 +606,7 @@ Sequence diagrams (`sequence` section, #145):
 | `default`, `dark`, `forest` and `neutral` set `mainBkg`, their borders, some text inks, the notes and the errors as constructor literals, which an override of a base colour does not move | The same literals (`mainBkg` `#ececff`, `#1f2020`, `#cde498`, `#eeeeee`), so `primaryColor` in `themeVariables` does not repaint their nodes. On a host page `--mermaid-primaryColor` does not either: set `--mermaid-mainBkg` (and `--mermaid-nodeBorder` for the outlines). `dark`'s note and cluster fill follow an author's `mainBkg`, lightened by 16, as v12's `secondBkg`. `base` still derives `mainBkg` from `primaryColor` | D570, R-THEME-3 |
 | `arrowheadColor` in `getThemeVariables()`: `#333333` in `default`, `#d3d3d3` in `dark`, `invert(background)` in `base`; the drawn arrowheads took `lineColor` (`.marker`) | Arrowheads are painted `arrowheadColor`, which follows `lineColor` in `default`, `dark` and `base`, so an author's or host's `lineColor` recolours edges and heads together, as v12 drew them. Set `arrowheadColor` for heads of their own colour. `forest` and `neutral` keep their own (`#008000`, `#333333`) | D575 |
 | `forest`: an author's `mainBkg` moved the sequence participant border and the lifeline (`darken(mainBkg, 20)`) | Both stay `#a6cf47`: set `actorBorder` (and `actorLineColor` for the lifeline) | D576 |
-| `darkMode: true` turned `base`'s text (`primaryTextColor`, `textColor`, `nodeTextColor`, `scaleLabelColor`) to `#eee`, and `dark`'s and `neutral`'s `scaleLabelColor` to black | `darkMode` switches only the derivation rules; every theme keeps its own text colours (`#333333` in `base`, whose fills stay light; `#d3d3d3` and `#333333` scale labels in `dark` and `neutral`). Set the text variables in `themeVariables` for v12's | D571 |
+| `darkMode: true` turned `base`'s text (`primaryTextColor`, `textColor`, `nodeTextColor`, `scaleLabelColor`) to `#eee`, and `dark`'s and `neutral`'s `scaleLabelColor` to black | `darkMode` switches only the derivation rules; every theme keeps its own text colours (`#333333` in `base`, whose fills stay light; `#d3d3d3` and `#333333` scale labels in `dark` and `neutral`). Set the text variables in `themeVariables` for v12's. Derived fills take the dark rule under `darkMode` too, where v12 kept a value its theme set before `darkMode` applied: ER's `rowOdd` (`forest`, `base`) and gantt's `doneTaskBkgColor` (`default`, `forest`, `neutral`, `base`); set them in `themeVariables` for v12's | D571 |
 | `dark`: edge label fill `#585858` under `#ccc` text (4.43:1), note and secondary text `#b8b6b6` on `#474949` (4.49:1); `base` with a dark `primaryColor` or `mainBkg`: node text stays `#333` | WCAG AA: `dark`'s edge label fill is its background (D628), its note text `#cccccc` and secondary text `#e0dfdf`; under `base` node text turns light (`#f4f4f4`) on a dark `primaryColor` or `mainBkg` | D29, R-THEME-9 |
 | Edge label fill `edgeLabelBackground`: `#e8e8e8cc` (80% alpha) in `default`, `#585858` in `dark`, `#e8e8e8` in `forest`, `#ffffff` in `neutral`, `secondaryColor` elsewhere; ER `tertiaryColor` at half opacity in the classic themes, white or `#16141f` in the redux colour themes; class `mainBkg` | Every edge label is a rounded tag with a 1 px border in its edge's colour, filled opaque with the theme's `background` in every theme, for `edgeLabelBackground`, `erEdgeLabelBackground` and class's labels. Set `edgeLabelBackground` (or `erEdgeLabelBackground` for ER) in `themeVariables` for another fill | D626, D627, D628 |
 | `base`'s borders from khroma's `mkBorder` (saturation −40, lightness −10; +10 under `darkMode`), and its text on secondary and tertiary fills, titles and errors from `invert()` of the fill | Borders mix 15% black into their fill (20% white under `darkMode`): `nodeBorder`, `clusterBorder`, `actorBorder`, `noteBorderColor`, `border2`, the three `*BorderColor` and the gradient stops. `secondaryTextColor`, `tertiaryTextColor`, `titleColor` and `errorTextColor` pick `primaryTextColor` or `background` by contrast. Close to v12, not equal | D71 |
@@ -670,9 +670,9 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `compositionMarkerGap` / `dependencyMarkerGap` | 2.75 / 4 | 0.25 / 1 |
 | `erZeroOrMoreCircleOffset` (ER, centre of a zero-or-more circle from the outline) | 28 | 30 |
 | `rowOdd` / `rowEven` (ER attribute rows) | the entity fill (`mainBkg`): v12 neo leaves rows unfilled | v12's `rowOdd` / `rowEven`, the same colours (khroma's HSL lightening, D117) |
-| `erMarkerFill` (ER zero circles) | `mainBkg`, as v12 neo's `zero_or_more_neo` and `zero_or_one_neo` | white under every override, as v12 `look: classic` draws it. v12 12.2 and 12.3 default to `look: neo`, which fills the circle with `mainBkg`; `themeVariables.erMarkerFill` brings that back (#1042) |
+| `erMarkerFill` (ER zero circles) | `mainBkg`, as v12 neo's `zero_or_more_neo` and `zero_or_one_neo` | white under every override, as v12 `look: classic` draws it. v12 12.2 and 12.3 default to `look: neo`, which fills the circle with `mainBkg`; `themeVariables.erMarkerFill` brings that back (D152, D153) |
 | `erRowOddTextColor` / `erRowEvenTextColor` (colour: ER attribute text, new in v13) | `nodeTextColor`: the rows show the entity fill, so the text keeps the header ink | the ink against each row's own fill: an author's `nodeTextColor` where it meets AA on the row, else `textColor`, else `background` where that reads better; in CSS the choice follows the row fill (D572) |
-| `compositeBackground` (state) | `background`; `#16141f` on `redux-dark` and `redux-dark-color` | `background` |
+| `compositeBackground` (state) | `background`; `#16141f` on `redux-dark` and `redux-dark-color` | `background`; `default` keeps `#ffffff` under a `background` override, as v12 (D656) |
 | `compositeTitleBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color`; `mainBkg` on `neo` and `neo-dark` | `mainBkg`; `default` keeps `#ececff` under a `mainBkg` override, as v12 (D656) |
 | `altBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color`; `#f0f0f0` on `neo`; `#404040` on `neo-dark` (D189) | `#f0f0f0` (`default`, `forest`); `#555555` (`dark`); `#f4f4f4` (`neutral`); `tertiaryColor` (`base`) |
 
@@ -1493,11 +1493,12 @@ where the element still exists (`node default <classDef>`, `outer-path`, `row-re
 
 ### Themes
 
-- `fillType0`–`fillType7` are each theme's v12 values, written into the theme. v12 derived
-  them from `primaryColor` and `secondaryColor` with hue turns of ±64° and 128°, so a custom
-  `primaryColor` recoloured every section. In v13 it does not, except on `base`, where
-  `fillType0` and `fillType1` follow `primaryColor` and `secondaryColor` while
-  `fillType2`–`fillType7` keep base's v12 values. Set `fillType<n>` to recolour a section.
+- `fillType0`–`fillType7` are each theme's v12 values. v12 derived them from `primaryColor`
+  and `secondaryColor` with hue turns of ±64° and 128°, so a custom `primaryColor` recoloured
+  every section. The classic themes (`default`, `dark`, `forest`, `neutral`, `base`) keep
+  those rules, so an override recolours the sections as in v12 (D656). The redux and neo
+  themes write their values as fixed colours, which an override of a base colour does not
+  move. Set `fillType<n>` to recolour a section.
 - `faceColor` is `#FFF8DC` in every theme (v12's fallback; no v12 theme set it).
 - `actor0`–`actor5` have no theme value: dots take `journey.actorColours` in every theme,
   redux included, and an author's `actor<n>` wins for n < 6 (D249).
@@ -1726,9 +1727,13 @@ strings; grammar in [syntax/pie.md](./syntax/pie.md)). The differences:
   `pieSectionTextSize`, `pieSectionTextColor`, `pieLegendTextSize`, `pieLegendTextColor`,
   `pieStrokeColor`, `pieStrokeWidth`, `pieOuterStrokeColor`, `pieOuterStrokeWidth` and
   `pieOpacity` keep v12's names and each theme's v12 12.2.0 values
-  ([theme-variables.md](./theme-variables.md)). Slots v12 derives by lightness alone follow the
-  theme's base colours; hue-turned and `cScale` slots are fixed values (but forest's `pie6`, below), so in `redux-color` and
-  `redux-dark-color` a `cScale<n>` override no longer recolours `pie<n+1>` (set `pie<n+1>`).
+  ([theme-variables.md](./theme-variables.md)). The classic themes respond to an override of
+  a base colour as v12's do (D656): `default` keeps all twelve slots, as v12 computed them before
+  the override; `forest` and `base` recompute all twelve, hue turns included; `dark` and
+  `neutral` keep their `cScale` values. In the redux and neo themes, slots v12 derives by
+  lightness alone follow the theme's base colours and hue-turned and `cScale` slots are fixed
+  values, so in `redux-color` and `redux-dark-color` a `cScale<n>` override no longer recolours
+  `pie<n+1>` (set `pie<n+1>`).
   `pieOpacity` is a number from 0 to 1 (D221); any other value is dropped with
   `THEME_VARIABLE_DROPPED`.
 - **`dark` slot 12 (D228):** `dark` and `neutral` keep v12's `cScale` offset (slice *n* takes
@@ -1736,7 +1741,8 @@ strings; grammar in [syntax/pie.md](./syntax/pie.md)). The differences:
   slice drew black; it is now `cScale0`, as in `neutral`.
 - **Rounding artefacts (D333(a)).** Where v12 stepped a slot from its unrounded HSL base colour,
   which lands a few steps off the hex one, v13 derives the slot from the theme's hex base colour
-  by v12's own formula, so it also follows that base colour's override:
+  by v12's own formula (`default` writes the result as a fixed value, which v12 keeps under an
+  override):
 
   | Theme | Variable | v12 12.2.0 | v13 | Why |
   | --- | --- | --- | --- | --- |
@@ -2981,7 +2987,7 @@ Event modeling reads its own 14 flat theme variables, v12's names (`emUiFill`, `
 (core's `textColor`), for box and lane text, which v12 left to the page's colour. Every light
 theme of every family draws v12 `default`'s values, relations and arrowheads in the theme's line
 colour (`canvasLineColor`: `lineColor`, which `default` and `dark` keep under an override, as v12
-does); the dark themes draw v12 `dark`'s. An author's value is drawn as given in every theme, as in v12; the
+does, D656); the dark themes draw v12 `dark`'s. An author's value is drawn as given in every theme, as in v12; the
 author's `darkMode` alone keeps the light values, as in v12. What changed
 (`packages/conformance/src/eventmodeling/theme.spec.ts` lists each one):
 
