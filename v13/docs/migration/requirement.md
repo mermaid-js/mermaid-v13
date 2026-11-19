@@ -38,7 +38,10 @@
   `requirementBorderSize`, `requirementTextColor` and `relationLabelBackground`, which v12
   documented and never read, now take effect, with `relationColor` and `relationLabelColor`
   added; unset, they draw v12's colours, but for the label tag's fill, which is the theme
-  background in every theme (D628; v12's redux chip was white, dark `#16141f`). See
+  background in every theme (D628; v12's redux chip was white, dark `#16141f`), so it follows an
+  author's `background`, where v12's kept its own fill or followed `secondaryColor`. The box fill
+  and text follow the overrides v12's drawn box and text follow (`mainBkg`, the text ink), not
+  those of v12's unused `requirementBackground` and `requirementTextColor`. See
   [theme-variables.md](./theme-variables.md).
 - **Boxes** (D436) keep v12's one-column `Key: value` text with no wrapping. A multi-line value
   (a quoted text spanning lines) is stacked line under line, where v12 overlapped it with the

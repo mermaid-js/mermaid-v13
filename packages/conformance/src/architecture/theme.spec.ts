@@ -136,11 +136,13 @@ describe('architecture theme variables against v12 12.2.0 (#618, D541)', () => {
       const author = { lineColor: '#ff00ff', primaryBorderColor: '#00ff00' };
       const old = v12Vars(name, author);
       const theme = await v13Theme(name, author);
-      // The edges follow an author lineColor in every theme. v12's did in nine: dark's
-      // updateColors() resets lineColor to lightgrey first, and base pinned #777 (D541).
+      // The edges follow an author lineColor where v12's did, and in base. v12's did in nine:
+      // dark's updateColors() resets lineColor to lightgrey first, and v13's dark keeps it too
+      // (defaultLinkColor, D656); base pinned #777 (D541), and v13's base takes the rule.
       expect(hex(old.archEdgeColor) === '#ff00ff').toBe(!['dark', 'base'].includes(name));
-      expect(hex(theme.value('archEdgeColor'))).toBe('#ff00ff');
-      expect(hex(theme.value('archEdgeArrowColor'))).toBe('#ff00ff');
+      const edge = name === 'dark' ? '#d3d3d3' : '#ff00ff';
+      expect(hex(theme.value('archEdgeColor'))).toBe(edge);
+      expect(hex(theme.value('archEdgeArrowColor'))).toBe(edge);
       // The borders follow an author primaryBorderColor (calloutBorder, D332), where v12's kept
       // the constructor's colour (MIGRATION.md, "Architecture diagram").
       expect(hex(theme.value('archGroupBorderColor'))).toBe('#00ff00');

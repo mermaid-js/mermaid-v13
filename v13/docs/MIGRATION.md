@@ -605,7 +605,7 @@ Sequence diagrams (`sequence` section, #145):
 | `base` derives `secondaryColor` and `tertiaryColor` from `primaryColor`, and `lineColor` from `background`, unless the author sets them | The same rules, written as CSS over `--mermaid-primaryColor` and `--mermaid-background`, so a host page's override of either moves them too. Errors are drawn in `tertiaryColor` with `tertiaryTextColor`, and notes stay `#fff5ad` with `#333333` text under `darkMode` and a `primaryTextColor` override, as in v12 | D569 |
 | `default`, `dark`, `forest` and `neutral` set `mainBkg`, their borders, some text inks, the notes and the errors as constructor literals, which an override of a base colour does not move | The same literals (`mainBkg` `#ececff`, `#1f2020`, `#cde498`, `#eeeeee`), so `primaryColor` in `themeVariables` does not repaint their nodes. On a host page `--mermaid-primaryColor` does not either: set `--mermaid-mainBkg` (and `--mermaid-nodeBorder` for the outlines). `dark`'s note and cluster fill follow an author's `mainBkg`, lightened by 16, as v12's `secondBkg`. `base` still derives `mainBkg` from `primaryColor` | D570, R-THEME-3 |
 | `arrowheadColor` in `getThemeVariables()`: `#333333` in `default`, `#d3d3d3` in `dark`, `invert(background)` in `base`; the drawn arrowheads took `lineColor` (`.marker`) | Arrowheads are painted `arrowheadColor`, which follows `lineColor` in `default`, `dark` and `base`, so an author's or host's `lineColor` recolours edges and heads together, as v12 drew them. Set `arrowheadColor` for heads of their own colour. `forest` and `neutral` keep their own (`#008000`, `#333333`) | D575 |
-| `forest`: an author's `mainBkg` moved the sequence participant border (`darken(mainBkg, 20)`) | The border stays `#a6cf47`: set `actorBorder` | D576 |
+| `forest`: an author's `mainBkg` moved the sequence participant border and the lifeline (`darken(mainBkg, 20)`) | Both stay `#a6cf47`: set `actorBorder` (and `actorLineColor` for the lifeline) | D576 |
 | `darkMode: true` turned `base`'s text (`primaryTextColor`, `textColor`, `nodeTextColor`, `scaleLabelColor`) to `#eee`, and `dark`'s and `neutral`'s `scaleLabelColor` to black | `darkMode` switches only the derivation rules; every theme keeps its own text colours (`#333333` in `base`, whose fills stay light; `#d3d3d3` and `#333333` scale labels in `dark` and `neutral`). Set the text variables in `themeVariables` for v12's | D571 |
 | `dark`: edge label fill `#585858` under `#ccc` text (4.43:1), note and secondary text `#b8b6b6` on `#474949` (4.49:1); `base` with a dark `primaryColor` or `mainBkg`: node text stays `#333` | WCAG AA: `dark`'s edge label fill is its background (D628), its note text `#cccccc` and secondary text `#e0dfdf`; under `base` node text turns light (`#f4f4f4`) on a dark `primaryColor` or `mainBkg` | D29, R-THEME-9 |
 | Edge label fill `edgeLabelBackground`: `#e8e8e8cc` (80% alpha) in `default`, `#585858` in `dark`, `#e8e8e8` in `forest`, `#ffffff` in `neutral`, `secondaryColor` elsewhere; ER `tertiaryColor` at half opacity in the classic themes, white or `#16141f` in the redux colour themes; class `mainBkg` | Every edge label is a rounded tag with a 1 px border in its edge's colour, filled opaque with the theme's `background` in every theme, for `edgeLabelBackground`, `erEdgeLabelBackground` and class's labels. Set `edgeLabelBackground` (or `erEdgeLabelBackground` for ER) in `themeVariables` for another fill | D626, D627, D628 |
@@ -2740,8 +2740,7 @@ why (spec #525). The layout itself is `compass` (D326).
 | A service's label hung from the icon's bottom, its first line's middle 1em below it | The label's box starts at the icon's bottom, as `compass` sized the service (the icon with its label under it), a few px higher | D501 |
 | An arrowhead longer than its end of the line ran past the line's corner, and two heads on a short line (`<-->`) were drawn over each other (a large `iconSize`: the heads are `iconSize / 6`) | A head shrinks until its base stays on its own end segment (with two heads on one segment, until the bases meet), with one `ARCHITECTURE_ARROW_SHRUNK` warning. Never at the default sizes | GAPS #525 T3, T4 |
 | Edges were always drawn from the sides as written | They meet their nodes where the layout engine says (its ports): the same sides under `compass`; under `layout: elk` or another engine that ignores them, the heads and labels follow the line it drew. An edge the engine routes no line for keeps its `path.edge`, with no line, and one `ARCHITECTURE_EDGE_NOT_DRAWN` | D507, D508 |
-| `base` drew edges and arrowheads `#777` and group borders `#000`, literals no other theme had | `base` takes the rule every other theme follows: edges in `lineColor`, borders in v12's group border (below) | D541 |
-| In `dark`, an author's `lineColor` did not reach the edges (the theme reset it to `lightgrey` before setting them) | Edges and arrowheads follow an author's `lineColor` in every theme | No D-id: it follows from architecture's one theme rule (edges read `lineColor`, T4), which `dark` no longer overrides |
+| `base` drew edges and arrowheads `#777` and group borders `#000`, literals no other theme had, which no override moved | `base` takes the rule every other theme follows: edges in `lineColor`, borders in v12's group border (below). So in `base` an author's `lineColor` or `background` moves the edges, and `primaryColor` or `darkMode` the group borders | D541 |
 | Group borders (`archGroupBorderColor`) took the theme's `primaryBorderColor` as each theme's constructor first set it, before the theme recomputed it, so an author's `primaryColor` or `primaryBorderColor` never reached them | The same colour in every theme but `base` (the D332 input `calloutBorder`), and an author's `primaryBorderColor` now recolours them | D541, D332 |
 | v12 drew no line hops in architecture diagrams | `lineHops: true` (or `'arc'`, `'gap'`): where two edges cross, the straight run that gives way draws a 6px hop (`gap`: a break), through core's shared edge-path step. The edges stay plain under `look: handDrawn`. The shared key defaults to `false`, so existing documents draw as before | D537, #655 |
 
@@ -2959,8 +2958,9 @@ Event modeling reads its own 14 flat theme variables, v12's names (`emUiFill`, `
 `emCommandStroke`, `emEventFill`, `emEventStroke`, `emSwimlaneBackgroundOdd`,
 `emSwimlaneBackgroundStroke`, `emRelationStroke`, `emArrowhead`), and one new one, `emTextColor`
 (core's `textColor`), for box and lane text, which v12 left to the page's colour. Every light
-theme of every family draws v12 `default`'s values, relations and arrowheads in `lineColor`; the
-dark themes draw v12 `dark`'s. An author's value is drawn as given in every theme, as in v12; the
+theme of every family draws v12 `default`'s values, relations and arrowheads in the theme's line
+colour (`canvasLineColor`: `lineColor`, which `default` and `dark` keep under an override, as v12
+does); the dark themes draw v12 `dark`'s. An author's value is drawn as given in every theme, as in v12; the
 author's `darkMode` alone keeps the light values, as in v12. What changed
 (`packages/conformance/src/eventmodeling/theme.spec.ts` lists each one):
 
@@ -3226,7 +3226,10 @@ v12's, apart from the two layout fixes of D514.
   `requirementBorderSize`, `requirementTextColor` and `relationLabelBackground`, which v12
   documented and never read, now take effect, with `relationColor` and `relationLabelColor`
   added; unset, they draw v12's colours, but for the label tag's fill, which is the theme
-  background in every theme (D628; v12's redux chip was white, dark `#16141f`). See
+  background in every theme (D628; v12's redux chip was white, dark `#16141f`), so it follows an
+  author's `background`, where v12's kept its own fill or followed `secondaryColor`. The box fill
+  and text follow the overrides v12's drawn box and text follow (`mainBkg`, the text ink), not
+  those of v12's unused `requirementBackground` and `requirementTextColor`. See
   [theme-variables.md](./theme-variables.md).
 - **Boxes** (D436) keep v12's one-column `Key: value` text with no wrapping. A multi-line value
   (a quoted text spanning lines) is stacked line under line, where v12 overlapped it with the

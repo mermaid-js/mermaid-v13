@@ -59,13 +59,8 @@ const V12: ReferenceTable = {
  * accounts for it, or by the ticket of spec #1035 that deletes it (D654).
  */
 const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
-  "#1035 T3 (#1040): architecture's variables do not respond to an override as v12's do (D656); T3 deletes this group":
+  "D541: v12's base pins the edges at #777777 and the group border at #000000, which no trait separates from default; base takes the rule, so they follow the overrides its lineColor and calloutBorder follow":
     [
-      ...keys(
-        'dark',
-        ['lineColor:light', 'lineColor:dark'],
-        ['archEdgeColor', 'archEdgeArrowColor']
-      ),
       ...keys(
         'base',
         ['background:light', 'background:dark', 'lineColor:light', 'lineColor:dark'],

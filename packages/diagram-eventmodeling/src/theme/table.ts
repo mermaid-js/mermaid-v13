@@ -5,11 +5,12 @@
  * none):
  *
  * - **light** (every family): v12 `default`'s literals (`theme-default.js:457-470`, the same in
- *   `forest`, `neutral` and `base`), relations and heads in `lineColor`, text in `textColor`.
+ *   `forest`, `neutral` and `base`), relations and heads in `canvasLineColor` (the theme's
+ *   `lineColor`, which `default` and `dark` pin as v12 does, D656), text in `textColor`.
  * - **dark** (a dark theme's own trait, not the author's `darkMode`, which v12's literals did not
  *   follow): v12 `dark`'s values (`theme-dark.js:419-433`): `#2d2d2d`/`#555` for UI, the kind
  *   hues `lighten(…, 10)` as literals, lanes `lighten(background, 5)` and `(…, 12)`; relations
- *   and heads stay on `lineColor`.
+ *   and heads stay on `canvasLineColor`.
  *
  * The redux and neo families take the classic entries (`fallback: 'classic'`), so `neo-dark`,
  * `redux-dark` and `redux-dark-color` take the dark ones, where v12 drew those six themes with
@@ -35,8 +36,8 @@ export const theme: DiagramThemeTable = {
       emEventStroke: '#c19a0f',
       emSwimlaneBackgroundOdd: '#fafafa',
       emSwimlaneBackgroundStroke: '#f0f0f0',
-      emRelationStroke: 'lineColor',
-      emArrowhead: 'lineColor',
+      emRelationStroke: 'canvasLineColor',
+      emArrowhead: 'canvasLineColor',
       emTextColor: 'textColor',
     },
   },
