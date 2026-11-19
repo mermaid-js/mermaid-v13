@@ -643,6 +643,7 @@ function layOut(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredRes
   if (EFK && ETK) spread(g, nodes, EFK, ETK);
 
   const xs = position(g, opt);
+  if (!opt.grid) pullToHeld(g, opt, xs, ETH);
 
   const empty = emptyRanks(g);
   if (EFK && ETK) {
@@ -2472,6 +2473,52 @@ function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
 // A port on a group's border is a point that an edge passes through, and needs no more than a bend.
 function halfRoom(g: Graph, opt: LayeredOptions, v: number): number {
   return g.W[v]! / 2 + (g.KIND[v]! === Kind.Node ? opt.nodeSep : opt.edgeSep) / 2;
+}
+
+// Pulls what leads to a held end towards it (#650, new in v13). Brandes-Köpf lines up only one
+// bend with each node, so the ends held along a group's side leave the rest of their bends
+// packed together, and the nodes they come from stacked in the middle of the side. Going up the
+// ranks from the held heads, a bend, or a node with no edges coming in, moves to the median of
+// where its edges end on the rank below, when one of those is held or was pulled. A rank with
+// something more than `IN_LINE` out of place is then placed again, in order and no closer than
+// `position` keeps it: each node goes as far towards its place as it can pushed from the left,
+// and from the right, and takes the middle of the two. Held tails are not pulled: a second
+// sweep down the ranks for them costs about 40 B more gzip, which the R-PERF-1 limit (D651)
+// had no room for.
+function pullToHeld(g: Graph, opt: LayeredOptions, xs: Float64Array, ETH: Uint8Array): void {
+  if (!ETH.includes(1)) return;
+  const { maxRank, KIND, ET, EFD, ETD, succStart, succE, predStart, layerStart, order } = g;
+  const pulled = u8(g.n);
+  const gap = (i: number): number => halfRoom(g, opt, order[i - 1]!) + halfRoom(g, opt, order[i]!);
+  for (let r = maxRank; r--; ) {
+    const s = layerStart[r]!;
+    const end = layerStart[r + 1]!;
+    const lo: number[] = [];
+    let any = false;
+    for (let i = s; i < end; i++) {
+      const v = order[i]!;
+      lo.push(xs[v]!);
+      if (KIND[v]! > Kind.Label || (!KIND[v] && predStart[v + 1]! > predStart[v]!)) continue;
+      const ends: number[] = [];
+      let pull = false;
+      for (let k = succStart[v]!; k < succStart[v + 1]!; k++) {
+        const e = succE[k]!;
+        const w = ET[e]!;
+        if (ETH[e] || pulled[w]) pull = true;
+        ends.push(xs[w]! + ETD[e]! - EFD[e]!);
+      }
+      if (!pull) continue;
+      ends.sort((a, b) => a - b);
+      lo[i - s] = (ends[(ends.length - 1) >> 1]! + ends[ends.length >> 1]!) / 2;
+      pulled[v] = 1;
+      if (Math.abs(lo[i - s]! - xs[v]!) > IN_LINE) any = true;
+    }
+    if (!any) continue;
+    const hi = [...lo];
+    for (let i = s + 1; i < end; i++) lo[i - s] = Math.max(lo[i - s]!, lo[i - s - 1]! + gap(i));
+    for (let i = end - 1; i > s; i--) hi[i - s - 1] = Math.min(hi[i - s - 1]!, hi[i - s]! - gap(i));
+    for (let i = s; i < end; i++) xs[order[i]!] = (lo[i - s]! + hi[i - s]!) / 2;
+  }
 }
 
 // Brandes-Köpf horizontal coordinate assignment: four aligned layouts, balanced.
