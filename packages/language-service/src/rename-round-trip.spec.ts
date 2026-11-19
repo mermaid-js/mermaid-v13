@@ -34,20 +34,6 @@ const KNOWN_MODEL_CHANGES = [
 ];
 
 /**
- * Renames whose way back is refused: the original name is a v12 state id that the state facet
- * will not take as a new name (`isValidId`, #151), so it cannot be typed back. They come from the
- * corpus text, not from the rename: the fork/join fixtures write `&lt;&lt;fork&gt;&gt;`
- * HTML-escaped, so the marker is an id that `class`/`style` cannot name. (The symbol of
- * `state State1: Description 1` is `State1`, without the colon, since D609.)
- */
-const KNOWN_BACK_REFUSALS = [
-  "state-diagram/pr-check/should-render-forks-and-joins.mmd &lt;&lt;fork&gt;&gt;@299: back refused: '&lt;&lt;fork&gt;&gt;' cannot be named in `class` or `style` statements (letters, digits and `_` only).",
-  "state-diagram/pr-check/should-render-forks-and-joins.mmd &lt;&lt;join&gt;&gt;@409: back refused: '&lt;&lt;join&gt;&gt;' cannot be named in `class` or `style` statements (letters, digits and `_` only).",
-  "state-diagram/pr-check/should-render-forks-in-composit-states.mmd &lt;&lt;fork&gt;&gt;@321: back refused: '&lt;&lt;fork&gt;&gt;' cannot be named in `class` or `style` statements (letters, digits and `_` only).",
-  "state-diagram/pr-check/should-render-forks-in-composit-states.mmd &lt;&lt;join&gt;&gt;@431: back refused: '&lt;&lt;join&gt;&gt;' cannot be named in `class` or `style` statements (letters, digits and `_` only).",
-];
-
-/**
  * Renames whose way back writes the original name quoted: an XY chart name written bare with a
  * blank between its words (#683: v13 reads `jan feb` as one name with the space). The facet
  * writes a name with a blank in quotes (`writtenName`), which mermaid 12.2.0 also reads with its
@@ -274,11 +260,7 @@ describe('rename, re-parse, same model modulo the name', () => {
     expect(renamed).toBeGreaterThan(2000);
     expect(otherwise).toBeGreaterThanOrEqual(MIN_OTHERWISE);
     expect(fixed).toBeGreaterThan(0);
-    expect(problems).toEqual([
-      ...KNOWN_MODEL_CHANGES,
-      ...KNOWN_BACK_REFUSALS,
-      ...KNOWN_BACK_QUOTED,
-    ]);
+    expect(problems).toEqual([...KNOWN_MODEL_CHANGES, ...KNOWN_BACK_QUOTED]);
     expect(refused).toEqual(KNOWN_REFUSALS);
   }, 120_000);
 });
