@@ -99,6 +99,8 @@ class ClassParser extends ParserBase {
     this.mentionIds();
     const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
     const model = db.model(warnings);
+    const title = this.pre.frontMatter?.title;
+    if (title) model.title = title;
     if (model.callbacks.length > 0 && !options.claims?.includes('callbacks')) {
       const first = model.callbacks[0];
       model.warnings.push(

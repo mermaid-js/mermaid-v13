@@ -158,6 +158,7 @@ exports[`layered over parser-produced class graphs > lays out every corpus graph
   "class/nightly-check/dagre/handdrawn/dagre-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look-without-htmllabels.mmd": 0,
   "class/nightly-check/dagre/handdrawn/dagre-should-render-a-simple-class-diagram-with-styles-and-the-handdrawn-look.mmd": 0,
   "class/nightly-check/dagre/handdrawn/dagre-should-render-a-simple-class-diagram-with-the-handdrawn-look.mmd": 0,
+  "class/nightly-check/front-matter-title.mmd": 0,
   "class/nightly-check/generics-named-style-and-script.mmd": 0,
   "class/nightly-check/handdrawn/hd-0-should-render-a-simple-class-diagram.mmd": 0,
   "class/nightly-check/handdrawn/hd-10-should-render-a-simple-class-diagram-with-clickable-callback.mmd": 0,

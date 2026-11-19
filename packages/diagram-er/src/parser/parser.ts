@@ -255,6 +255,8 @@ class ErParser {
     this.document();
     const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
     const model = this.db.model(warnings);
+    const title = this.pre.frontMatter?.title;
+    if (title) model.title = title;
     const ast: ErDocument = {
       id: 'doc',
       type: 'Document',

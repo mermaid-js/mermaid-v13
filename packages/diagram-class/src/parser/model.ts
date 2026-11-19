@@ -147,6 +147,8 @@ export interface ClassCallback {
 export interface ClassModel {
   /** `TB`, `BT`, `LR` or `RL`. */
   direction: string;
+  /** The front-matter `title`, drawn above the diagram (D652); absent when there is none. */
+  title?: string;
   accTitle: string;
   accDescr: string;
   classes: ClassNode[];

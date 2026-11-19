@@ -145,6 +145,8 @@ class FlowchartParser extends FlowParser<FlowBuilder, FlowParseOptions, FlowOwnS
     db.finish();
     const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
     const result = this.result(db.model(warnings));
+    const title = this.pre.frontMatter?.title;
+    if (title) result.model.title = title;
     if (db.embeds.length > 0) result.embeds = db.embeds;
     result.edgeCount = result.model.edges.length;
     return result;

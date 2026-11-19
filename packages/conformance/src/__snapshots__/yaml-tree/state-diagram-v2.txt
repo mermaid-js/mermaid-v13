@@ -48,7 +48,7 @@ e2e/diagrams/state-diagram-v2/baseline/transitions/labels.mmd 1 f524950d5fe176aa
 e2e/diagrams/state-diagram-v2/baseline/transitions/lr.mmd 1 6360a3d5c1055a82
 e2e/diagrams/state-diagram-v2/baseline/transitions/styles.mmd 1 8fd2f20e77b4cf69
 e2e/diagrams/state-diagram-v2/baseline/transitions/two-self-loops.mmd 1 754e5e0bd48b2b66
-e2e/diagrams/state-diagram-v2/nightly-check/1433-should-render-a-simple-state-diagram-with-a-title.mmd 1 9fa1ff9e1850ba12
+e2e/diagrams/state-diagram-v2/nightly-check/1433-should-render-a-simple-state-diagram-with-a-title.mmd 1 fbf659fd3e517ec1
 e2e/diagrams/state-diagram-v2/nightly-check/a-simple-state-diagram-classic-look-default-theme.mmd 1 cd2a5cb5e21fec50
 e2e/diagrams/state-diagram-v2/nightly-check/basic-states-neo-look-neo-dark-theme.mmd 1 65a3898694ec3260
 e2e/diagrams/state-diagram-v2/nightly-check/basic-states-neo-look-neo-theme.mmd 1 16b2dd50dce336fc

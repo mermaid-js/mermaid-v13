@@ -108,6 +108,8 @@ export interface StateModel {
   notes: StateNote[];
   classes: StateClass[];
   links: StateLink[];
+  /** The front-matter `title`, drawn above the diagram (D652); absent when there is none. */
+  title?: string;
   accTitle: string;
   accDescr: string;
   warnings: Diagnostic[];

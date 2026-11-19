@@ -28,6 +28,8 @@ import {
   openSvgRoot,
   paletteSlots,
   textElement,
+  placeTitle,
+  titledViewBox,
 } from '@mermaid-js/shared/svg/document';
 import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import type { FlowModel } from '../parser/index.ts';
@@ -291,7 +293,11 @@ export function renderFlowchart(
     warn: (warning) => ctx.warn(warning),
     lanes,
   };
-  openRoot(scene, model);
+  const conf = ctx.config.flowchart;
+  // v12's `flowchartTitleText`: 18 px in `textColor`, `titleTopMargin` above the drawing (D652).
+  const title = placeTitle(model.title, layout.width, conf?.titleTopMargin ?? 25, ctx, 18);
+  const ink = title && ctx.theme.color('textColor');
+  openRoot(scene, model, titledViewBox(layout, title, conf?.diagramPadding ?? 8));
   if (scene.paint.cluster) drawClusters(scene);
   w.open('g', {
     class: 'edgePaths',
@@ -309,14 +315,25 @@ export function renderFlowchart(
   w.open('g', { class: 'nodes', fill: scene.paint.node.text });
   for (const view of flow.nodes) drawNode(scene, view, tips.get(view.id));
   w.close();
+  if (title && ink) {
+    w.label(title.label, title.x, title.y, {
+      class: 'flowchartTitleText',
+      fill: ink,
+      'font-size': 18,
+    });
+  }
   w.close();
 }
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
-function openRoot({ w, layout, ctx, paint }: Scene, model: FlowModel): void {
+function openRoot(
+  { w, ctx, paint }: Scene,
+  model: FlowModel,
+  viewBox: ReturnType<typeof titledViewBox>
+): void {
   openSvgRoot(w, ctx, {
     name: 'flowchart',
-    viewBox: { width: layout.width, height: layout.height },
+    viewBox,
     maxWidth: ctx.config.flowchart?.useMaxWidth !== false,
     title: model.accTitle,
     desc: model.accDescr,
