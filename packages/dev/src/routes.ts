@@ -41,8 +41,9 @@ export interface Route {
 export const MAX_BODY_BYTES = 1024 * 1024;
 
 /**
- * The request body as UTF-8, read as it streams in. Past `limit` bytes it stops keeping it,
- * answers 413 (closing the connection) and resolves `undefined`: the caller just returns.
+ * The request body as UTF-8, read as it streams in. Past `limit` bytes it stops keeping it and
+ * resolves `undefined` (the caller just returns), drains the rest unbuffered and answers 413
+ * once the whole body has arrived.
  */
 export function readBody(
   req: IncomingMessage,
@@ -50,7 +51,7 @@ export function readBody(
   limit = MAX_BODY_BYTES
 ): Promise<string | undefined> {
   return new Promise((done, reject) => {
-    const chunks: Buffer[] = [];
+    let chunks: Buffer[] = [];
     let size = 0;
     const onData = (chunk: Buffer): void => {
       size += chunk.length;
@@ -58,14 +59,17 @@ export function readBody(
         chunks.push(chunk);
         return;
       }
+      chunks = [];
       req.off('data', onData);
       req.off('end', onEnd);
-      // The rest is read and discarded, not buffered, so the client can finish sending and
-      // read the 413. No `connection: close`: closing the socket after the answer, while the
-      // client is still writing, fails its request with ECONNRESET or EPIPE (#830).
+      // Answering while the client still sends, then closing, makes its write fail (EPIPE)
+      // before it reads the 413 (#830). So the rest is read and dropped, and the 413 goes out
+      // once the body has ended. A client that aborts instead gets no answer.
+      req.once('end', () => {
+        res.writeHead(413, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Body too large' }));
+      });
       req.resume();
-      res.writeHead(413, { 'content-type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Body too large' }));
       done(undefined);
     };
     const onEnd = (): void => done(Buffer.concat(chunks).toString('utf8'));

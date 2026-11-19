@@ -14,10 +14,14 @@
  * wins). `fill` and `stroke` colour an element's body and outline (`stroke` is `fill` when only a
  * `fill` is given, as the legend's swatch shows it), `color` its text; a relation takes `stroke`
  * for its line and arrowheads, `color` for its text and `line` for its dash. Every colour goes
- * through the colour check and is written as an attribute, never into `style`.
+ * through the colour check and is written as an attribute, never into `style`. A value that is a
+ * word must also be a CSS colour name core's `parseColor` knows, or `currentColor` (D635): any
+ * other word (a misspelt name) is dropped, and the theme's colour drawn, with one `C4_COLOR_INVALID`
+ * per render naming each value and its line.
  */
+import type { Warning } from '@mermaid-js/core';
 import type { Paint, SafeValue } from '@mermaid-js/core/svg';
-import { contrastRatio, parseColor } from '@mermaid-js/core/theme';
+import { composite, contrastRatio, parseColor } from '@mermaid-js/core/theme';
 import type {
   C4BoundaryLayout,
   C4Layout,
@@ -26,10 +30,10 @@ import type {
   C4RelationLayout,
 } from '../layout/types.ts';
 import type { C4RenderContext } from '../render/context.ts';
+import { C4_COLOR_INVALID } from '../codes.ts';
 import { C4_RENDER_METRICS as R } from '../render/metrics.ts';
 import {
   Colours,
-  colourWarning,
   type BoundaryPaint,
   type ElementPaint,
   type LegendPaint,
@@ -37,6 +41,8 @@ import {
   type RelationPaint,
 } from '../render/paint.ts';
 import { isExternal } from '../model.ts';
+import { COLOUR_FORMS } from './build.ts';
+import { styleColour } from './colour.ts';
 import { legacyKind } from './prepare.ts';
 import type {
   C4BetaElement,
@@ -51,8 +57,10 @@ type PaintKey = 'fill' | 'stroke' | 'color' | 'line';
 
 /** A key's value, with where it was written (for `C4_COLOR_INVALID`) and its AST id. */
 interface Said {
+  readonly key: PaintKey;
   readonly value: string;
-  readonly where: string;
+  readonly target: string;
+  readonly line: number;
   readonly ast: string;
 }
 
@@ -84,27 +92,60 @@ function keysOf(
   for (const target of targets)
     for (const style of styles.get(target) ?? [])
       for (const { key, value } of style.entries)
-        if (PAINT_KEYS.has(key))
-          keys[key as PaintKey] = { value, where: `style ${target} ${key}`, ast: style.ast };
+        if (PAINT_KEYS.has(key)) {
+          const said = { key: key as PaintKey, value, target, line: style.line, ast: style.ast };
+          keys[key as PaintKey] = said;
+        }
   return keys;
 }
 
+/** Checks style colours, collecting each value it drops once. */
+class StyleColours {
+  readonly dropped: Said[] = [];
+
+  check(said: Said | undefined): Paint | undefined {
+    if (!said) return undefined;
+    const paint = styleColour(said.value);
+    const seen = (d: Said): boolean =>
+      d.ast === said.ast && d.key === said.key && d.value === said.value;
+    if (paint === undefined && !this.dropped.some(seen)) this.dropped.push(said);
+    return paint;
+  }
+}
+
+/** The one `C4_COLOR_INVALID` of a render, naming every dropped value and its line. */
+function styleColourWarning(dropped: readonly Said[]): Warning {
+  const named = dropped.map(
+    (d) => `\`${d.key}:${d.value}\` in \`style ${d.target}\` at line ${d.line}`
+  );
+  return {
+    code: C4_COLOR_INVALID,
+    message: `Not a colour, so the theme colour is drawn instead (${COLOUR_FORMS}): ${named.join(', ')}.`,
+    astIds: [...new Set(dropped.map((d) => d.ast))],
+  };
+}
+
 /** A style's colours through the colour check: `stroke` is `fill` when only a `fill` is given. */
-function coloursOf(keys: Keys, colours: Colours): { fill?: Paint; stroke?: Paint; color?: Paint } {
-  const check = (key: PaintKey): Paint | undefined =>
-    keys[key] && colours.checked(keys[key].value, keys[key].where, keys[key].ast);
+function coloursOf(
+  keys: Keys,
+  checker: StyleColours
+): { fill?: Paint; stroke?: Paint; color?: Paint } {
+  const check = (key: PaintKey): Paint | undefined => checker.check(keys[key]);
   const fill = check('fill');
   const stroke = check('stroke') ?? fill;
   const color = check('color');
   return { ...(fill ? { fill } : {}), ...(stroke ? { stroke } : {}), ...(color ? { color } : {}) };
 }
 
-/** What the paint functions share: the model's styles and items by AST id, and the colour check. */
+/** What the paint functions share: the model's styles and items by AST id, the theme and the colour check. */
 interface Styling {
   readonly elementAt: ReadonlyMap<string, C4BetaElement>;
   readonly relationAt: ReadonlyMap<string, C4BetaRelation>;
   readonly styles: ReadonlyMap<string, readonly C4BetaStyle[]>;
   readonly colours: Colours;
+  readonly checker: StyleColours;
+  /** Each `style` statement's line by its AST id. */
+  readonly lineAt: ReadonlyMap<string, number>;
 }
 
 /** The two theme rows an element takes its colours from: its text and its outline. */
@@ -154,7 +195,10 @@ export const TEXT_CONTRAST = 4.5;
  */
 function textOn(st: Styling, fill: Paint | undefined, name: string): Paint {
   const { colours } = st;
-  const on = fill === undefined ? undefined : parseColor(String(fill));
+  const given = fill === undefined ? undefined : parseColor(String(fill));
+  // A translucent fill (`#ff000080`) shows the page through it: the text sits on the two together.
+  const page = given && given[3] < 1 ? colours.themeRgba('background') : undefined;
+  const on = given && page ? composite(given, page) : given;
   const ink = (n: string): number => {
     const c = colours.themeRgba(n);
     return c && on ? contrastRatio(c, on) : Infinity;
@@ -166,7 +210,7 @@ function textOn(st: Styling, fill: Paint | undefined, name: string): Paint {
 /** The styles an element or boundary takes: its kind's, then each tag's. */
 function elementStyle(st: Styling, ast: string): ReturnType<typeof coloursOf> {
   const element = st.elementAt.get(ast);
-  return coloursOf(keysOf(st.styles, element ? [element.kind, ...element.tags] : []), st.colours);
+  return coloursOf(keysOf(st.styles, element ? [element.kind, ...element.tags] : []), st.checker);
 }
 
 /** One boundary's paint; the theme's colour is read only for a boundary, as a theme read puts its variable on the root. */
@@ -219,7 +263,7 @@ function relationPaint(st: Styling, r: C4RelationLayout): RelationPaint {
   const { colours } = st;
   const line = colours.theme('c4RelationColor');
   const keys = keysOf(st.styles, st.relationAt.get(r.ast)?.tags ?? []);
-  const s = coloursOf(keys, colours);
+  const s = coloursOf(keys, st.checker);
   return {
     stroke: s.stroke ?? line,
     head: s.stroke ?? colours.theme('textColor'),
@@ -240,13 +284,15 @@ export function betaPaints(model: C4BetaModel, layout: C4Layout, ctx: C4RenderCo
     relationAt: new Map(model.relations.map((r) => [r.ast, r])),
     styles: stylesByTarget(model),
     colours,
+    checker: new StyleColours(),
+    lineAt: new Map(model.styles.map((s) => [s.ast, s.line])),
   };
   const boundaries = boundaryPaints(st, layout);
   const elements = elementPaints(st, layout);
   const relations = relationPaints(st, layout);
   const title = layout.title ? colours.theme('c4TitleColor') : undefined;
   const legend = layout.legend && legendPaints(layout.legend, st);
-  if (colours.dropped.length > 0) ctx.warn(colourWarning(colours.dropped));
+  if (st.checker.dropped.length > 0) ctx.warn(styleColourWarning(st.checker.dropped));
   return {
     elements,
     boundaries,
@@ -263,15 +309,25 @@ type Swatch = LegendPaint['rows'][number];
 function kindSwatch(row: C4LegendRow, st: Styling): Swatch {
   const kind = row.of!;
   const base = themed(st.colours, kind, isExternal(row.kind!));
-  const s = coloursOf(keysOf(st.styles, [kind]), st.colours);
+  const s = coloursOf(keysOf(st.styles, [kind]), st.checker);
   return { fill: s.fill ?? st.colours.theme('background'), stroke: s.stroke ?? base.stroke };
 }
 
+type Tag = NonNullable<C4LegendRow['tag']>;
+
+/** A tag row's `key` as a style said it: the statement it came from names a refused value once. */
+function tagSaid(st: Styling, tag: Tag, key: 'fill' | 'stroke'): Said | undefined {
+  const value = tag[key];
+  if (value === undefined) return undefined;
+  const from = keysOf(st.styles, [tag.name])[key];
+  const ast = from?.ast ?? tag.ast;
+  return { key, value, target: tag.name, line: from?.line ?? st.lineAt.get(ast) ?? 0, ast };
+}
+
 /** A tag row: the style's own colours (`stroke` falls back to `fill`, then to the text colour). */
-function tagSwatch(tag: NonNullable<C4LegendRow['tag']>, st: Styling, text: Paint): Swatch {
-  const where = (key: string): string => `style ${tag.name} ${key}`;
-  const fill = st.colours.checked(tag.fill, where('fill'), tag.ast);
-  const stroke = st.colours.checked(tag.stroke, where('stroke'), tag.ast);
+function tagSwatch(tag: Tag, st: Styling, text: Paint): Swatch {
+  const fill = st.checker.check(tagSaid(st, tag, 'fill'));
+  const stroke = st.checker.check(tagSaid(st, tag, 'stroke'));
   return { fill: fill ?? 'none', stroke: stroke ?? fill ?? text };
 }
 

@@ -67,6 +67,7 @@ describe('c4-beta model', () => {
           { key: 'shape', value: 'cylinder' },
           { key: 'fill', value: '#1f2937' },
         ],
+        line: 15,
         ast: 'style:1',
       },
     ]);

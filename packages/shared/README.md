@@ -11,6 +11,7 @@ Code that Mermaid v13 diagram packages share, kept out of `@mermaid-js/core` so 
 | `/parser/table` | The rule-table lexer for diagrams that run a v12 jison lexer's rules as they are |
 | `/parser/v12-text` | The text a v12 jison lexer saw, with each character's source range |
 | `/parser/support` | The stop sentinel, the "got …" text of an unexpected token and the escaper of names in AST ids |
+| `/parser/generic-types` | v12's `parseGenericTypes`, which class and ER diagrams run over a type's `~…~` generics |
 | `/parser/drop` | Offset helpers both lexer families use |
 | `/parser/common-values` | The values of `common.langium`'s strings, `title`, `accTitle` and `accDescr`, for the diagrams that do not load `/parser/rule` |
 | `/parser/seen-tokens` | The token list of a langium-family diagram's lexer as v12's lexer saw it, for the language service and lexer-parity specs |

@@ -4,6 +4,7 @@
  */
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { request, type IncomingHttpHeaders } from 'node:http';
+import { connect } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -271,6 +272,28 @@ describe('the explorer file API', () => {
     it('/node-render over 1 MiB is a 413', async () => {
       const body = JSON.stringify({ code: big });
       expect((await call('/node-render', 'POST', body, {})).status).toBe(413);
+    });
+
+    it('reads the whole body before the 413, so the connection serves the next request', async () => {
+      // #830: answering mid-body and closing made the client's write fail (EPIPE). Two requests
+      // pipelined on one socket: the second gets its answer only if the first was read to the end.
+      const body = JSON.stringify({ code: big });
+      const replies = await new Promise<string>((resolve, reject) => {
+        const socket = connect(PORT, '127.0.0.1');
+        let text = '';
+        socket.setEncoding('utf8');
+        socket.on('data', (chunk: string) => (text += chunk));
+        socket.on('end', () => resolve(text));
+        socket.on('error', reject);
+        socket.write(
+          `POST /node-render HTTP/1.1\r\nhost: 127.0.0.1\r\ncontent-type: application/json\r\n` +
+            `content-length: ${Buffer.byteLength(body)}\r\n\r\n${body}`
+        );
+        // Not `end()`: the server drops pending requests when the client half-closes.
+        socket.write('GET /dev/api/files HTTP/1.1\r\nhost: 127.0.0.1\r\nconnection: close\r\n\r\n');
+      });
+      const statuses = [...replies.matchAll(/^HTTP\/1\.1 (\d{3})/gm)].map((m) => m[1]);
+      expect(statuses).toEqual(['413', '200']);
     });
   });
 

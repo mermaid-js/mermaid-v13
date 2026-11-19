@@ -27,7 +27,7 @@ export const c4betaDocs: Readonly<Partial<Record<number, string>>> = {
   [T.Rl]: "`RL`: right to left.",
   [T.Direction]: "`direction LR`: the layout direction, at the top level only.",
   [T.Legend]: "`legend off`: shows or hides the legend.",
-  [T.Style]: "`style store shape:cylinder, fill:#1f2937`: the target is a tag or an element kind.",
+  [T.Style]: "`style store shape:cylinder, fill:#1f2937`: the target is a tag or an element kind. A colour that is a word must be a CSS colour name or `currentColor`, or it is dropped with a warning; a line with a value the lexer cannot read, such as `#12`, is dropped with a warning, not an error.",
   [T.Title]: "`title Payments`: the title drawn above the diagram (the last one wins).",
   [T.AccTitle]: "`accTitle: Payments view`: the accessible title.",
   [T.AccDescr]: "`accDescr: …` or `accDescr { … }`: the accessible description.",
