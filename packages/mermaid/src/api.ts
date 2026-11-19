@@ -30,7 +30,7 @@ import {
   type InitializeConfig,
   type Snapshot,
 } from './config-snapshot.ts';
-import { createDomAdapter } from './dom.ts';
+import { createDomAdapter, v12Init } from './dom.ts';
 import { blockLoader, type BlockLoader } from './embeds.ts';
 import { loadFor } from './draw-context.ts';
 import { draw, drawAscii, drawSvg } from './draw.ts';
@@ -298,14 +298,37 @@ export function createMermaid(
   }
 
   // The DOM adapter (run, mount) reads the defaults at the start of each call, like render.
-  const { run, mount, contentLoaded } = createDomAdapter({
+  const {
+    run,
+    mount,
+    contentLoaded: startOnLoadRun,
+  } = createDomAdapter({
     prepare,
     renderSync,
     siteConfig: () => k.site.config,
     onParseError: (error) => k.parseErrorHandler?.(error),
   });
 
+  /**
+   * @deprecated Use `detectType(text)` and `supportsFormat(type, format)`. v12's list of
+   * detectors: `[{ id }]` with each v12 type in detection order, after v12's `error` and `---`.
+   * Synchronous, so a discovered type is listed only after an awaited `preload()` or render.
+   */
+  function getRegisteredDiagramsMetadata(): { id: string }[] {
+    return ['error', '---', ...registry.types()].map((id) => ({ id }));
+  }
+
+  /** v12's `contentLoaded`: `run()` on page load unless `startOnLoad` is off, here or in config. */
+  function contentLoaded(): void {
+    if (api.startOnLoad) startOnLoadRun();
+  }
+
   const api = {
+    /**
+     * @deprecated Use `initialize({ startOnLoad: false })`. v12's property: `false` stops the
+     * page-load `run()` as the config key does.
+     */
+    startOnLoad: true as boolean,
     render,
     prepare,
     renderSync,
@@ -321,6 +344,10 @@ export function createMermaid(
     registerLayoutLoaders,
     registerIconPacks,
     setParseErrorHandler,
+    /** @deprecated Use `initialize(config)`, then `run({ querySelector, nodes })` (D643). */
+    init: v12Init(initialize, run),
+    /** @deprecated Use `detectType(text)` and `supportsFormat(type, format)` (D643). */
+    getRegisteredDiagramsMetadata,
     /**
      * @deprecated v12's hook, the one `setParseErrorHandler` sets: called with the
      * `MermaidError` of a failed `parse()`, `render()` or `run()` element (R-API-4, #757).

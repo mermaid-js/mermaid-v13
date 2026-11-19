@@ -101,6 +101,9 @@ registerExternalDiagrams(defs: DiagramPlugin[], opts?: { lazyLoad?: boolean }): 
 registerLayoutLoaders(loaders: LayoutLoader[]): void
 registerIconPacks(packs: IconLoader[]): void   // v12's { name, icons } | { name, loader }, per API object (M4, D294); ICON_PACKS_UNSUPPORTED while no extension claims icons
 setParseErrorHandler(fn): void                 // deprecated
+init(config?, nodes?, callback?): Promise<void>  // deprecated: initialize + run (D643)
+getRegisteredDiagramsMetadata(): { id }[]      // deprecated: v12's detector ids in order (D643)
+startOnLoad: boolean                           // deprecated property; false stops contentLoaded's run (D643)
 
 interface RenderResult {
   svg: string; diagramType: string;

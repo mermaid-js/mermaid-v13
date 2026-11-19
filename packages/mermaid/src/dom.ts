@@ -111,6 +111,30 @@ function fontConfig(el: Element, base: InitializeConfig | undefined): Initialize
   return { ...base, themeVariables: { ...vars, fontFamily } };
 }
 
+/** v12's `init(config?, nodes?, callback?)`, over an API object's `initialize` and `run` (D643). */
+export function v12Init(
+  initialize: (config: InitializeConfig) => void,
+  run: (options: RunOptions) => Promise<void>
+) {
+  /**
+   * @deprecated Use `initialize(config)` and `run({ querySelector, nodes, postRenderCallback })`.
+   * `nodes` is a selector, an element or a list of elements (default `.mermaid`), and
+   * `callback` is called with each rendered diagram's id.
+   */
+  return async function init(
+    config?: InitializeConfig,
+    nodes?: string | HTMLElement | ArrayLike<HTMLElement>,
+    callback?: (id: string) => unknown
+  ): Promise<void> {
+    if (config) initialize(config);
+    const options: RunOptions = { querySelector: '.mermaid' };
+    if (callback) options.postRenderCallback = callback;
+    if (typeof nodes === 'string') options.querySelector = nodes;
+    else if (nodes) options.nodes = 'nodeType' in nodes ? [nodes] : nodes;
+    await run(options);
+  };
+}
+
 export function createDomAdapter(host: DomHost) {
   let counter = 0;
 
