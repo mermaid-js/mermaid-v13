@@ -9,10 +9,10 @@
  * `max(25, tallest title)`, shared by all; cards `W − 15` wide, centred, 5 apart; a card's height
  * `title + 20 + a`, with `a` half the taller of ticket and assignee (0 without either: checked
  * on a v12 render); the priority bar 2 in from the left, top and bottom. Changed: the margin is
- * `kanban.padding` (D378), `W` has a least value (`MIN_SECTION_WIDTH`), and the bounds are what
- * is drawn (D224). In cells (the text output, #466) the lengths are `KANBAN_CELL_METRICS`, the
- * ticket row is a row of its own (`CELL_META_ROW`), and a ticket and assignee that do not fit
- * side by side are stacked; the px layout is unchanged.
+ * `kanban.padding` (D378), `W` has a least value (`MIN_SECTION_WIDTH`), the bounds are what is
+ * drawn (D224), and a ticket and assignee that do not fit side by side are stacked, the card
+ * growing to hold both (`STACKED_META_ROW`, D647). In cells (the text output, #466) the lengths
+ * are `KANBAN_CELL_METRICS` and the ticket row is a row of its own (`CELL_META_ROW`).
  */
 import type { Warning } from '@mermaid-js/core';
 import { KANBAN_CONFIG_IGNORED } from '../codes.ts';
@@ -31,6 +31,7 @@ import {
   LENGTH_KEYS,
   METRIC_AXIS,
   PX_META_ROW,
+  STACKED_META_ROW,
   type KanbanLengths,
   type KanbanUnits,
   type MetaRow,
@@ -144,18 +145,20 @@ function cardOf(
   centre: number,
   top: number
 ): CardLayout {
-  const { lengths, meta } = env;
+  const { lengths } = env;
   const wrap = env.sectionWidth - lengths.wrapInset;
   const title = env.measure(source.title, wrap);
   const ticket = env.measure(source.ticket, wrap);
   const assignee = env.measure(source.assigned, wrap);
   const width = env.sectionWidth - lengths.cardInset;
   const left = centre - width / 2;
+  // Side by side, the ticket starts and the assignee ends `labelInset` in from the card's edges;
+  // when the two widths fill that row they no longer fit and are stacked (D647).
   const stacked =
-    meta.stack &&
     ticket !== undefined &&
     assignee !== undefined &&
     ticket.width + assignee.width >= width - 2 * lengths.labelInset;
+  const meta = stacked ? STACKED_META_ROW : env.meta;
   // The ticket row's height: an empty label measures 0 high, so a card without either adds
   // nothing (v12 `heightAdj`, of which the card grows by `meta.grow`).
   const metaRow = stacked

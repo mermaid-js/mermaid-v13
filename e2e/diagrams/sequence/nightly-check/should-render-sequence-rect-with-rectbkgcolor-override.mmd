@@ -1,0 +1,19 @@
+---
+description: >-
+  A `rect` block with no colour under the redux theme with
+  `themeVariables.rectBkgColor` set: the block is filled magenta, with no
+  stroke and no shadow, as in v12 (#774). The second block's own colour
+  wins over the variable.
+config:
+  theme: redux
+  themeVariables:
+    rectBkgColor: '#ff00ff'
+---
+sequenceDiagram
+  A->>B: x
+  rect
+    A->>B: y
+  end
+  rect rgb(191, 223, 255)
+    B->>A: z
+  end

@@ -108,15 +108,33 @@ export const COMMENTS: KindSet = /* @__PURE__ */ kindSet(Kind.Comment, Kind.Dire
 /** No kind: every token but the final `EOF`. */
 export const NO_KINDS: KindSet = /* @__PURE__ */ kindSet();
 
+/** How {@link keptTokens} differs for the lists that are not a plain kind filter. */
+export interface KeptOptions {
+  /** Keep the final `EOF` too, as flowchart's and agentflow's lists do. */
+  eof?: boolean;
+  /**
+   * Leave out token `j` as well when this is false: state's tokens outside the text its lexer's
+   * view held.
+   */
+  keep?: (j: number) => boolean;
+}
+
 /**
- * The tokens of `tokens` whose kind is not in `skip`, in order, without the final `EOF`. The
- * check is one array read per token.
+ * The tokens of `tokens` whose kind is not in `skip`, in order, without the final `EOF` unless
+ * `options.eof` is set. The kind check is one array read per token.
  */
-export function keptTokens(tokens: TokenView, skip: KindSet, text: TokenText): SeenToken[] {
+export function keptTokens(
+  tokens: TokenView,
+  skip: KindSet,
+  text: TokenText,
+  options: KeptOptions = {}
+): SeenToken[] {
+  const { eof = false, keep } = options;
   const out: SeenToken[] = [];
   for (let j = 0; j < tokens.length; j++) {
     const kind = tokens.kind[j] ?? Kind.EOF;
-    if (kind === Kind.EOF || inKindSet(skip, kind)) continue;
+    if ((kind === Kind.EOF && !eof) || inKindSet(skip, kind)) continue;
+    if (keep !== undefined && !keep(j)) continue;
     out.push(tokenAt(tokens, j, text));
   }
   return out;
