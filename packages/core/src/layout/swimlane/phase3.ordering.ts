@@ -118,9 +118,11 @@ function sortByHeuristic(
   neighborPositions: Map<NodeId, number[]>,
   currentLayerIndex: Map<NodeId, number>
 ): NodeId[] {
+  // The comparator reads each node's median from here.
+  const medians = new Map(nodes.map((id) => [id, median(neighborPositions.get(id) ?? [])]));
   return [...nodes].sort((a, b) => {
-    const sa = median(neighborPositions.get(a) ?? []);
-    const sb = median(neighborPositions.get(b) ?? []);
+    const sa = medians.get(a)!;
+    const sb = medians.get(b)!;
     if (sa === sb) {
       return currentOrderTieBreak(a, b, currentLayerIndex);
     }
@@ -132,6 +134,19 @@ function sortByHeuristic(
     }
     return sa - sb;
   });
+}
+
+/** Each node's barycenter, computed when first asked for and kept. */
+function barycenterMemo(neighborPositions: Map<NodeId, number[]>): (id: NodeId) => number {
+  const known = new Map<NodeId, number>();
+  return (id) => {
+    let bc = known.get(id);
+    if (bc === undefined) {
+      bc = barycenter(neighborPositions.get(id) ?? []);
+      known.set(id, bc);
+    }
+    return bc;
+  };
 }
 
 function reorderLayer(
@@ -180,6 +195,7 @@ function reorderLayer(
   if (nullNodes && nullNodes.length > 0) {
     // Sort null-lane nodes by their barycenter across the full layer
     const sorted = sortByHeuristic(nullNodes, neighborPositions, currIndex);
+    const barycenterOf = barycenterMemo(neighborPositions);
 
     // For each null-lane node, find the best insertion position
     // based on its connections to nodes already in the result
@@ -189,7 +205,7 @@ function reorderLayer(
 
       // Find the best insertion point: scan result and insert where the
       // node's barycenter fits relative to its neighbors
-      result.splice(insertionIndex(bc, result, neighborPositions), 0, nid);
+      result.splice(insertionIndex(bc, result, barycenterOf), 0, nid);
     }
   }
 
@@ -203,13 +219,13 @@ function reorderLayer(
 function insertionIndex(
   bc: number,
   result: NodeId[],
-  neighborPositions: Map<NodeId, number[]>
+  barycenterOf: (id: NodeId) => number
 ): number {
   if (!isFinite(bc)) {
     return result.length;
   }
   for (const [i, rid] of result.entries()) {
-    const rBc = barycenter(neighborPositions.get(rid) ?? []);
+    const rBc = barycenterOf(rid);
     if (bc < rBc) {
       return i;
     }
