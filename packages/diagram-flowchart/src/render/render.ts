@@ -42,7 +42,7 @@ import {
   type Arrowheads,
   type MarkerPaint,
 } from '@mermaid-js/shared/svg/arrowheads';
-import { routePath } from '@mermaid-js/shared/svg/route';
+import { drawRoute } from '@mermaid-js/shared/svg/route';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
 import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
 
@@ -458,7 +458,8 @@ function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
     const { views, pads } = flow;
     points[0] = inset(points[0]!, views.get(e.source), layout.nodes.get(e.source), pads);
     points[last] = inset(points[last]!, views.get(e.target), layout.nodes.get(e.target), pads);
-    const path = routePath(
+    // The copy is handed over: the route drawing works in it, without copies of its own.
+    const path = drawRoute(
       w,
       points,
       e.source === e.target ? 'rounded' : e.curve,
