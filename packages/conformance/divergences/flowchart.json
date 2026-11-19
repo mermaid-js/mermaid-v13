@@ -97,9 +97,9 @@
   },
   {
     "id": "e2e/diagrams/flowchart/nightly-check/embedded/987-unmentioned-node.mmd",
-    "inputHash": "sha256:287fd7b9fd63b2ce",
+    "inputHash": "sha256:e6ffa755458a690a",
     "kind": "accept",
-    "reason": "v12 rejects `mermaid <id> {`; v13 parses an embedded diagram block (ADR-15). The fixture checks that a block naming a node nothing else mentions draws a `data-ast` the AST has (#987).",
+    "reason": "v12 rejects `mermaid <id> {`; v13 parses an embedded diagram block (ADR-15). The fixture checks that a block and a `style` line naming nodes nothing else mentions draw a `data-ast` the AST has (#987).",
     "owner": "#987",
     "since": "2026-11-19"
   },
