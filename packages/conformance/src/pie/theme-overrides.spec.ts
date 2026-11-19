@@ -155,22 +155,6 @@ const V12: ReferenceTable = {
  * accounts for it, or by the ticket of spec #1035 that deletes it (D654).
  */
 const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
-  "#1035 T1 (#1038): pie's variables do not respond to an override as v12's do (D656); T1 deletes this group":
-    [
-      ...keys('default', ['primaryColor:light', 'primaryColor:dark'], ['pie1', 'pie4']),
-      ...keys('default', ['secondaryColor:light', 'secondaryColor:dark'], ['pie2', 'pie5']),
-      ...keys('default', ['tertiaryColor:light', 'tertiaryColor:dark'], ['pie3', 'pie6']),
-      ...keys(
-        'forest',
-        ['primaryColor:light', 'primaryColor:dark'],
-        ['pie7', 'pie8', 'pie9', 'pie10', 'pie11', 'pie12']
-      ),
-      ...keys(
-        'base',
-        ['primaryColor:light', 'primaryColor:dark'],
-        ['pie7', 'pie8', 'pie9', 'pie10', 'pie11', 'pie12']
-      ),
-    ],
   "D571: v12's darkMode turns base's primaryTextColor, and the text inks that follow it, to #eee; v13's darkMode switches only the derivation rules":
     [
       ...keys(
