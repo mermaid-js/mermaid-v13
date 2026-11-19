@@ -70,8 +70,7 @@ async function loadRenderer(bundle: PaneBundle): Promise<Renderer> {
   if (bundle.kind === 'dev') {
     const module = (await import(/* @vite-ignore */ bundle.url)) as typeof DevBundleModule;
     const instance = module.createMermaid();
-    instance.registerLayoutLoaders(module.devLayoutLoaders);
-    await instance.registerExternalDiagrams([module.interactions]);
+    await module.setUpDevMermaid(instance);
     return async (id, text, config) => {
       instance.initialize(config as Parameters<typeof instance.initialize>[0]);
       return (await instance.render(id, text)).svg;

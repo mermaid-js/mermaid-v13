@@ -334,8 +334,7 @@ export class ProfileTab extends ViewerTabElement {
 
   async #instance(dev: DevMermaid): Promise<MermaidInstance> {
     const instance = dev.module.createMermaid();
-    instance.registerLayoutLoaders(dev.module.devLayoutLoaders);
-    await instance.registerExternalDiagrams([dev.module.interactions]);
+    await dev.module.setUpDevMermaid(instance);
     return instance;
   }
 
