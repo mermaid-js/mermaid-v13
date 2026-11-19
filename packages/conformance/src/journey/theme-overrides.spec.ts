@@ -11,7 +11,7 @@
 
 import { journey } from '@mermaid-js/diagram-journey';
 import { describe } from 'vitest';
-import { describeDiagramOverrides, keys, type ReferenceTable } from '../override-matrix.ts';
+import { describeDiagramOverrides, type ReferenceTable } from '../override-matrix.ts';
 
 /** v12 12.2.0's journey colours: `capture-theme-overrides.ts journey`. */
 const V12: ReferenceTable = {
@@ -159,61 +159,7 @@ const V12: ReferenceTable = {
  * Each difference from v12, keyed `theme / override / variable`, grouped by the decision that
  * accounts for it, or by the ticket of spec #1035 that deletes it (D654).
  */
-const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
-  "#1035 T1 (#1038): journey's variables do not respond to an override as v12's do (D656); T1 deletes this group":
-    [
-      ...keys(
-        'default',
-        ['primaryColor:light', 'primaryColor:dark'],
-        ['fillType0', 'fillType2', 'fillType4', 'fillType6']
-      ),
-      ...keys(
-        'default',
-        ['secondaryColor:light', 'secondaryColor:dark'],
-        ['fillType1', 'fillType3', 'fillType5', 'fillType7']
-      ),
-      ...keys(
-        'dark',
-        ['primaryColor:light', 'primaryColor:dark'],
-        ['fillType0', 'fillType2', 'fillType4', 'fillType6']
-      ),
-      ...keys(
-        'dark',
-        ['secondaryColor:light', 'secondaryColor:dark'],
-        ['fillType1', 'fillType3', 'fillType5', 'fillType7']
-      ),
-      ...keys(
-        'forest',
-        ['primaryColor:light', 'primaryColor:dark'],
-        ['fillType0', 'fillType2', 'fillType4', 'fillType6']
-      ),
-      ...keys(
-        'forest',
-        ['secondaryColor:light', 'secondaryColor:dark'],
-        ['fillType1', 'fillType3', 'fillType5', 'fillType7']
-      ),
-      ...keys(
-        'neutral',
-        ['primaryColor:light', 'primaryColor:dark'],
-        ['fillType0', 'fillType2', 'fillType4', 'fillType6']
-      ),
-      ...keys(
-        'neutral',
-        ['secondaryColor:light', 'secondaryColor:dark'],
-        ['fillType1', 'fillType3', 'fillType5', 'fillType7']
-      ),
-      ...keys(
-        'base',
-        ['primaryColor:light', 'primaryColor:dark'],
-        ['fillType2', 'fillType4', 'fillType6']
-      ),
-      ...keys(
-        'base',
-        ['primaryColor:light', 'primaryColor:dark', 'secondaryColor:light', 'secondaryColor:dark'],
-        ['fillType3', 'fillType5', 'fillType7']
-      ),
-    ],
-};
+const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {};
 
 /**
  * The variables that differ from v12 with no override, which the type's no-override spec
