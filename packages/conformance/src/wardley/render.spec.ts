@@ -591,7 +591,7 @@ describe('wardley render: paints (D215, D227, D426, D540)', () => {
     const { svg } = await render(probe('everything'));
     expect(svg).toContain('--_wes:var(--mermaid-wardleyEvolutionStroke,var(--_wec))');
     expect(svg).toContain('--_wec:var(--mermaid-wardleyEvolutionColor,#dc3545)');
-    expect(svg).toContain('--_wax:var(--mermaid-wardleyAxisColor,var(--_l))');
+    expect(svg).toContain('--_wax:var(--mermaid-wardleyAxisColor,var(--_cvl))');
     // No paint nothing uses: no grid without showGrid.
     expect(svg).not.toContain('--_wgr');
   });

@@ -16,6 +16,7 @@ e2e/diagrams/quadrant-chart/baseline/themes/neo-dark.mmd 1 ace1e7eb1d88e646
 e2e/diagrams/quadrant-chart/baseline/themes/neo.mmd 1 75b275d985bb3604
 e2e/diagrams/quadrant-chart/baseline/themes/redux-color.mmd 1 9dd8b70ed74efc1b
 e2e/diagrams/quadrant-chart/baseline/themes/redux.mmd 1 0d92b8ebb92062ac
+e2e/diagrams/quadrant-chart/nightly-check/default-theme-base-colour-overrides.mmd 1 8c84547e458860a3
 e2e/diagrams/quadrant-chart/nightly-check/should-able-to-render-x-axis-on-bottom.mmd 1 fdf3106f0227ae7b
 e2e/diagrams/quadrant-chart/nightly-check/should-render-both-axes-labels-on-the-left-and-bottom-if-both-axes-have-only-one-label.mmd 1 ba2922b9f84d7145
 e2e/diagrams/quadrant-chart/nightly-check/should-render-if-only-chart-type-is-provided.mmd 1 12a45ab86a5f05ca

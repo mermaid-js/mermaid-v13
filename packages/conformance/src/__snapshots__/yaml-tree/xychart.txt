@@ -18,6 +18,7 @@ e2e/diagrams/xychart/nightly-check/data-labels-within-bars-horizontal-many-bars.
 e2e/diagrams/xychart/nightly-check/data-labels-within-bars-horizontal.mmd 1 8d7a34a274947b1c
 e2e/diagrams/xychart/nightly-check/data-labels-within-bars-vertical-many-bars.mmd 1 3bfbbb0f453fc354
 e2e/diagrams/xychart/nightly-check/data-labels-within-bars-vertical.mmd 1 2f0ad26151a5046b
+e2e/diagrams/xychart/nightly-check/default-theme-base-colour-overrides.mmd 1 5dd6f5f07ef64efd
 e2e/diagrams/xychart/nightly-check/label-rotation-clamped-above-limit.mmd 1 415939fb4f65c277
 e2e/diagrams/xychart/nightly-check/label-rotation-clamped-below-limit.mmd 1 4fd1c0fd4d82003e
 e2e/diagrams/xychart/nightly-check/legends-for-named-plots.mmd 1 64f4a104bb62665e

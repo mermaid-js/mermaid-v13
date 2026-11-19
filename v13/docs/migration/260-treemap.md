@@ -39,6 +39,7 @@ only section outlines and the title change:
 | --- | --- | --- | --- |
 | `default` | Peers from `darken(cScale<i>, 25)` (15 HSL points under the drawn slot, as `updateColors()` darkens the slot again), slots 1 and 2 from `darken(secondaryColor, 45)` and `darken(tertiaryColor, 40)` | The light rule: 10 points under every slot, so the outlines are a little lighter | D406, D541 |
 | `forest` | Peers from `darken(cScale<i>, 25)`, slots 1 and 2 from the secondary and tertiary colours | The light rule: 10 points under every slot | D406, D541 |
+| `default`, `forest` with `darkMode` | The same peers: v12 derived them in the theme's constructor, before `darkMode` was applied | The dark rule: 10 points over every slot, as in `base` and `neutral`, where v12 switched too | D406, D571 |
 | `redux-dark` | The light branch (the theme sets no `darkMode`): peers 10 points under the slot, so on its black slots the same black | The dark rule: 10 points over every slot, so the outlines show on the dark fills | D406 |
 | `redux-dark-color` | The light branch: peers 10 points under the slot | The dark rule: 10 points over every slot | D406 |
 | `neo-dark` | The light branch: peers 10 points under the slot, so on its black slots the same black | The dark rule: 10 points over every slot | D406 |

@@ -1,0 +1,37 @@
+---
+config:
+  theme: default
+  themeVariables:
+    primaryColor: '#ffcc00'
+    primaryTextColor: '#003366'
+    lineColor: '#008800'
+    secondaryColor: '#99ccff'
+    tertiaryColor: '#ffe6f0'
+    background: '#fff2cc'
+  cynefin:
+    seed: 42
+description: >-
+  baseline/themes/default.mmd, the representative cynefin diagram, under base-colour overrides in
+  the default theme (#1035, D656): the boundaries, arrows and domain labels keep v12 default's own colours, as in v12
+---
+cynefin-beta
+  title Incident response in default
+  complex
+    "Probe the system"
+    "Run safe-to-fail experiments"
+  complicated
+    "Expert analysis"
+  chaotic
+    "Act to stabilise"
+  clear
+    "Follow the runbook"
+  confusion
+    "Unclear ownership"
+    "Conflicting reports"
+    "Missing data"
+    "Stale dashboards"
+  chaotic --> complex : "stabilise"
+  complex --> complicated : "pattern found"
+  complicated --> clear : "codify"
+  clear --> chaotic : "complacency"
+  chaotic --> complicated

@@ -208,7 +208,7 @@ const V12: ReferenceTable = {
  * accounts for it, or by the ticket of spec #1035 that deletes it (D654).
  */
 const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
-  "#1035 T2 (#1039): treemap's variables do not respond to an override as v12's do (D656); T2 deletes this group":
+  "D571, D406: v13's darkMode switches only the derivation rules, so default's and forest's section outlines take the dark rule, lighten(cScale<i>, 10), where v12's constructor values stay":
     [
       ...keys(
         'default',

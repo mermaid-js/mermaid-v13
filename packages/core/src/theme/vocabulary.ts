@@ -235,26 +235,9 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   primaryColor: def('p', 'color', ['core', 'quadrant', 'gitgraph', 'gantt', 'venn']),
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core', 'gantt']),
-  background: def('bg', 'color', ['core', 'packet', 'kanban', 'wardley', 'xychart', 'venn']),
-  primaryTextColor: def('pt', 'color', [
-    'core',
-    'class',
-    'quadrant',
-    'packet',
-    'cynefin',
-    'wardley',
-    'xychart',
-  ]),
-  lineColor: def('l', 'color', [
-    'flowchart',
-    'class',
-    'state',
-    'er',
-    'gitgraph',
-    'radar',
-    'cynefin',
-    'wardley',
-  ]),
+  background: def('bg', 'color', ['core', 'packet', 'kanban', 'xychart', 'venn']),
+  primaryTextColor: def('pt', 'color', ['core', 'class', 'packet']),
+  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er', 'gitgraph', 'radar']),
   // Pie, packet, cynefin, info, sankey, treemap, wardley, xychart and venn draw in the font family
   // but size their text by their own variables or constants (sankey: 14 px; wardley: its config;
   // xychart: its `xyChart` config).
@@ -439,10 +422,10 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   // it. Where v12 keeps a theme's constructor value under an override of the base colour, the
   // theme pins it in `values`, as D570 pinned `mainBkg`; elsewhere, and in `base`, each is its
   // base colour. v13 names; v12 has none.
-  canvasBkg: def('cvb', 'color', ['state']),
-  canvasLineColor: def('cvl', 'color', ['requirement', 'eventmodeling']),
-  canvasTextColor: def('cvt', 'color', []),
-  canvasItemBkg: def('cvi', 'color', []),
+  canvasBkg: def('cvb', 'color', ['state', 'wardley', 'xychart']),
+  canvasLineColor: def('cvl', 'color', ['cynefin', 'wardley', 'eventmodeling', 'requirement']),
+  canvasTextColor: def('cvt', 'color', ['quadrant', 'cynefin', 'wardley', 'xychart']),
+  canvasItemBkg: def('cvi', 'color', ['quadrant']),
   // The band behind a chart's rows and the lines that guide the eye over it (a marker, an
   // outline), which v12's named classic themes keep at their constructor tertiary and line
   // colours under every override (D656, #1041); `base` derives them. v13 names; v12 has none.

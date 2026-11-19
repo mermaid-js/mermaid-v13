@@ -312,28 +312,6 @@ const V12: ReferenceTable = {
  * accounts for it, or by the ticket of spec #1035 that deletes it (D654).
  */
 const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
-  "#1035 T2 (#1039): quadrant's variables do not respond to an override as v12's do (D656); T2 deletes this group":
-    [
-      ...keys(
-        'default',
-        ['primaryColor:light', 'primaryColor:dark'],
-        ['quadrant1Fill', 'quadrant2Fill', 'quadrant3Fill', 'quadrant4Fill']
-      ),
-      ...keys(
-        'default',
-        ['primaryTextColor:light', 'primaryTextColor:dark'],
-        [
-          'quadrant1TextFill',
-          'quadrant2TextFill',
-          'quadrant3TextFill',
-          'quadrant4TextFill',
-          'quadrantPointTextFill',
-          'quadrantXAxisTextFill',
-          'quadrantYAxisTextFill',
-          'quadrantTitleFill',
-        ]
-      ),
-    ],
   "D571: v12's darkMode turns base's primaryTextColor, and the text inks that follow it, to #eee; v13's darkMode switches only the derivation rules":
     [
       ...keys(

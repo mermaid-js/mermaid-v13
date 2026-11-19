@@ -117,19 +117,17 @@ const V12: ReferenceTable = {
  * accounts for it, or by the ticket of spec #1035 that deletes it (D654).
  */
 const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
-  "#1035 T2 (#1039): venn's variables do not respond to an override as v12's do (D656); T2 deletes this group":
+  "#1035 T2 (#1039) pending: default keeps its secondary and tertiary slots under an override of those colours, as v12's do; no shared input is pinned to secondaryColor or tertiaryColor (D656), so these wait for one or a decision":
     [
-      ...keys(
-        'default',
-        ['primaryColor:light', 'primaryColor:dark'],
-        ['venn1', 'venn4', 'venn5', 'venn7']
-      ),
       ...keys(
         'default',
         ['secondaryColor:light', 'secondaryColor:dark'],
         ['venn2', 'venn6', 'venn8']
       ),
       ...keys('default', ['tertiaryColor:light', 'tertiaryColor:dark'], ['venn3']),
+    ],
+  "D415: neutral takes default's slot formula on its own colours (a D541 family-rule approximation), so its slots follow the base colours, where v12's cScale greys stay":
+    [
       ...keys(
         'neutral',
         ['primaryColor:light', 'primaryColor:dark'],
