@@ -19,7 +19,7 @@
 import type { LayoutData, Node as MermaidNode } from '../layoutData.ts';
 import { buildLaneModel } from '../lanes.ts';
 import { RoutedSegmentIndex } from './routedSegmentIndex.ts';
-import { ObstacleLines, firstPipeNear } from './gridSearch.ts';
+import { ObstacleLines, OpenList, firstPipeNear } from './gridSearch.ts';
 import { PRECISION, isDiamondShape, isHexagonShape } from '../config.ts';
 
 const EPS = PRECISION.EPSILON;
@@ -1211,7 +1211,8 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
     // Track the direction we arrived at each node from: 'h' = horizontal, 'v' = vertical, 'n' = start (none)
     const arrivalDir = new Map<string, 'h' | 'v' | 'n'>();
     const openSet = new Set<string>();
-    const openList: { key: string; f: number; pt: Point }[] = [];
+    // v13 (#843): takes entries in the order of a stable sort by `f` (`OpenList`).
+    const openList = new OpenList<Point>();
 
     gScore.set(startKey, 0);
     arrivalDir.set(startKey, 'n'); // start has no arrival direction
@@ -1270,7 +1271,6 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
       const sortedVPipes: readonly Pipe[] = vPipes.sort((a, b) => a.coord - b.coord);
       const hPipesSorted: readonly Pipe[] = hPipes.sort((a, b) => a.coord - b.coord);
       while (openList.length > 0) {
-        openList.sort((a, b) => a.f - b.f);
         const current = openList.shift()!;
         openSet.delete(current.key);
 
@@ -1381,10 +1381,7 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
               openList.push({ key: nKey, f: tentativeG + h, pt: neighbor });
               openSet.add(nKey);
             } else {
-              const idx = openList.findIndex((x) => x.key === nKey);
-              if (idx !== -1) {
-                openList[idx]!.f = tentativeG + h;
-              }
+              openList.setF(nKey, tentativeG + h);
             }
           }
         }

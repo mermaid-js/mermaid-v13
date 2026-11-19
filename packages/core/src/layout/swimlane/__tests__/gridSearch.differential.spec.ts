@@ -2,14 +2,17 @@ import { describe, expect, it } from 'vitest';
 import {
   type ObstacleBox,
   ObstacleLines,
+  type OpenEntry,
+  OpenList,
   type PipeLine,
   firstPipeNear,
 } from '../orthogonalRouter/gridSearch.ts';
 
 /**
- * The router's A* search reads the pipe grid and the node boxes through `gridSearch.ts` (#843).
+ * The router's A* search reads the pipe grid, the node boxes and its open list through `gridSearch.ts` (#843).
  * Each lookup must answer what the scan it replaces answered; the scans are kept here as the
- * router had them inline. Coordinates come from a coarse grid with small offsets, so that pipes
+ * router had them inline.
+ * Coordinates come from a coarse grid with small offsets, so that pipes
  * lie exactly 1 apart, within 1 of each other, and on the edges of boxes.
  */
 
@@ -21,6 +24,13 @@ const CASES = 20_000;
 const MIN_FOUND = 5_000;
 /** Steps a box blocks, likewise: a run blocks about 2,850 of 20,000. */
 const MIN_BLOCKED = 2_000;
+/**
+ * Shifts, shifts with a tie for first, and changes of `f`, in the open-list case: a run has
+ * about 17,300, 4,800 and 17,300.
+ */
+const MIN_SHIFTS = 10_000;
+const MIN_TIES = 2_000;
+const MIN_CHANGES = 10_000;
 
 /** Offsets from a grid line: exact, a hair either side, and either side of the 1 boundary. */
 const OFFSETS = [0, 0.05, -0.05, 0.5, 0.999_999, -0.999_999, 1, -1, 1.000_001, 0.1 + 0.2];
@@ -113,5 +123,56 @@ describe('the A* grid lookups answer as the scans they replace (#843)', () => {
       }
     }
     expect(blocked).toBeGreaterThanOrEqual(MIN_BLOCKED);
+  });
+
+  it('takes entries from the open list in the order the sort before each shift gave', () => {
+    const random = seededRandom(13);
+    // Few distinct costs, so ties are the rule, as on a grid with Manhattan distances.
+    const costs = [10, 20, 20, 30, 35.5, 40, 50, 0.1 + 0.2, 0.3];
+    let shifts = 0;
+    let tiesAtTheFront = 0;
+    let changes = 0;
+    for (let c = 0; c < CASES / 40; c++) {
+      const reference: OpenEntry<number>[] = [];
+      const list = new OpenList<number>();
+      const open = new Set<string>();
+      let next = 0;
+      for (let op = 0; op < 120; op++) {
+        const kind = random(10);
+        if (kind < 4 || open.size === 0) {
+          const key = `k${random(30)}`;
+          if (open.has(key)) {
+            continue;
+          }
+          const f = costs[random(costs.length)]!;
+          const pt = next++;
+          reference.push({ key, f, pt });
+          list.push({ key, f, pt });
+          open.add(key);
+        } else if (kind < 7) {
+          const key = [...open][random(open.size)]!;
+          const f = costs[random(costs.length)]!;
+          const idx = reference.findIndex((x) => x.key === key);
+          if (idx !== -1) {
+            reference[idx]!.f = f;
+          }
+          list.setF(key, f);
+          changes++;
+        } else {
+          reference.sort((a, b) => a.f - b.f);
+          if (reference.length > 1 && reference[0]!.f === reference[1]!.f) tiesAtTheFront++;
+          const expected = reference.shift();
+          const actual = list.shift();
+          expect(actual?.key, `case ${c}.${op}`).toBe(expected?.key);
+          expect(actual?.pt, `case ${c}.${op}`).toBe(expected?.pt);
+          expect(list.length).toBe(reference.length);
+          if (expected) open.delete(expected.key);
+          shifts++;
+        }
+      }
+    }
+    expect(shifts).toBeGreaterThanOrEqual(MIN_SHIFTS);
+    expect(tiesAtTheFront).toBeGreaterThanOrEqual(MIN_TIES);
+    expect(changes).toBeGreaterThanOrEqual(MIN_CHANGES);
   });
 });
