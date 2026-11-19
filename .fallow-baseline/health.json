@@ -597,6 +597,9 @@
     "packages/dev/src/browser/explorer/compare-model.ts": {
       "crap_high": {
         "count": 1
+      },
+      "crap_moderate": {
+        "count": 2
       }
     },
     "packages/dev/src/browser/explorer/file-explorer.ts": {
@@ -683,6 +686,14 @@
     "packages/dev/src/cli/visual-scope.ts": {
       "crap_moderate": {
         "count": 2
+      }
+    },
+    "packages/dev/src/explorer.ts": {
+      "crap_high": {
+        "count": 1
+      },
+      "crap_moderate": {
+        "count": 4
       }
     },
     "packages/dev/src/gallery.ts": {
@@ -1028,7 +1039,7 @@
     },
     "packages/diagram-eventmodeling/src/layout/invariants.ts": {
       "complexity_moderate": {
-        "count": 2
+        "count": 1
       }
     },
     "packages/diagram-eventmodeling/src/parser/lexer.ts": {
@@ -1894,6 +1905,11 @@
         "count": 1
       }
     },
+    "packages/language-server/src/selection.ts": {
+      "crap_high": {
+        "count": 1
+      }
+    },
     "packages/language-server/src/server.ts": {
       "crap_moderate": {
         "count": 1
@@ -1994,7 +2010,7 @@
       }
     },
     "packages/mermaid/src/dom.ts": {
-      "crap_critical": {
+      "crap_high": {
         "count": 1
       }
     },
@@ -2199,8 +2215,8 @@
     "packages/core/src/layout/swimlane/__tests__/graphs.ts:high impact",
     "packages/diagram-flowchart/src/parser/lexer.ts:high impact",
     "packages/core/src/layout/swimlane/swimlane.ts:high impact",
-    "packages/bench/src/pipeline.ts:high impact",
     "packages/diagram-agentflow/src/render/render.ts:hidden coupling",
+    "packages/bench/src/pipeline.ts:high impact",
     "packages/core/src/layout/swimlane/__tests__/ddltGates.ts:high impact",
     "packages/diagram-treeview/src/layout/invariants.ts:hidden coupling",
     "packages/core/src/preprocess/yaml-text.ts:complexity",
@@ -2210,11 +2226,11 @@
     "packages/mermaid/src/slim.ts:high impact",
     "packages/core/src/layout/layered/layered.ts:high impact",
     "packages/conformance/src/runner.ts:high impact",
+    "packages/diagram-er/src/render/render.ts:hidden coupling",
     "packages/diagram-railroad/src/layout/layout.ts:hidden coupling",
     "packages/conformance/src/ascii/structure.ts:high impact",
     "packages/conformance/src/eventmodeling/v13.ts:high impact",
     "packages/conformance/src/ascii/usecase-structure.ts:complexity",
-    "packages/diagram-class/src/render/render.ts:hidden coupling",
     "packages/core/src/theme/theme.ts:high impact",
     "packages/diagram-c4/src/render/paint.ts:hidden coupling",
     "packages/conformance/src/cli/harvest-v12.ts:hidden coupling",
@@ -2276,11 +2292,13 @@
     "packages/diagram-eventmodeling/src/parser/parser.ts:complexity",
     "packages/core/src/layout/swimlane/direction/materializedGeometry.ts:complexity",
     "packages/diagram-block/src/ascii/route.ts:complexity",
+    "packages/diagram-state/src/render/render.ts:hidden coupling",
     "packages/diagram-state/src/layout/prepare.ts:complexity",
     "packages/core/src/theme/specs/neo-dark.ts:hidden coupling",
     "packages/core/src/layout/swimlane/direction/labelAnchoring.ts:complexity",
     "packages/diagram-usecase/src/ascii/draw.ts:complexity",
     "packages/core/src/layout/swimlane/direction/siblingSharedFaceRouting.ts:complexity",
+    "packages/diagram-class/src/render/render.ts:hidden coupling",
     "packages/core/src/text/label.ts:complexity",
     "packages/core/src/layout/swimlane/direction/terminalStub.ts:complexity",
     "packages/diagram-sequence/src/layout/rows.ts:hidden coupling",
