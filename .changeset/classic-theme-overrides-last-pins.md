@@ -5,4 +5,4 @@
 '@mermaid-js/diagram-venn': patch
 ---
 
-In the `default` theme, state transitions (also in `dark`), state composite title strips, colourless sequence `rect` blocks and venn's secondary and tertiary sets keep their colours under a `lineColor`, `mainBkg`, `secondaryColor` or `tertiaryColor` override, as in v12.
+State transitions (in `default` and `dark`), state composite title strips, colourless sequence `rect` blocks and venn's secondary and tertiary sets (in `default`) keep their colours under a `lineColor`, `mainBkg`, `secondaryColor` or `tertiaryColor` override, as in v12.

@@ -6,4 +6,4 @@
 '@mermaid-js/diagram-cynefin': patch
 ---
 
-In the `default` and `dark` themes, quadrant, XY chart, Wardley, venn and cynefin diagrams keep their own colours under a `themeVariables` override of `primaryColor`, `primaryTextColor`, `background` or `lineColor` wherever v12 kept them; set `canvasBkg`, `canvasLineColor`, `canvasTextColor` or `canvasItemBkg` to recolour them.
+Quadrant, XY chart, Wardley, venn and cynefin diagrams keep their colours under a `primaryColor`, `primaryTextColor`, `background` or `lineColor` override in the `default` theme, and Wardley and cynefin lines keep theirs under a `lineColor` override in `dark`, as in v12; set `canvasBkg`, `canvasLineColor`, `canvasTextColor` or `canvasItemBkg` to recolour them.

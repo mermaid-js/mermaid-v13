@@ -235,7 +235,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   primaryColor: def('p', 'color', ['core', 'quadrant', 'gitgraph', 'gantt', 'venn']),
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core', 'gantt']),
-  background: def('bg', 'color', ['core', 'packet', 'kanban', 'xychart', 'venn']),
+  background: def('bg', 'color', ['core', 'packet', 'kanban', 'venn']),
   primaryTextColor: def('pt', 'color', ['core', 'class', 'packet']),
   lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er', 'gitgraph', 'radar']),
   // Pie, packet, cynefin, info, sankey, treemap, wardley, xychart and venn draw in the font family
@@ -437,8 +437,10 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   canvasItemBkg3: def('cv3', 'color', ['sequence']),
   canvasNodeBkg: def('cvn', 'color', ['state']),
   // The band behind a chart's rows and the lines that guide the eye over it (a marker, an
-  // outline), which v12's named classic themes keep at their constructor tertiary and line
-  // colours under every override (D656, #1041); `base` derives them. v13 names; v12 has none.
+  // outline): gantt's section band, its active outline and its `vert` marker. v12's named
+  // classic themes keep them at their constructor tertiary and line colours under every override,
+  // so `default`, `dark`, `forest` and `neutral` pin them in `values` (D656, #1041); `base`
+  // derives them. v13 names; v12 has none.
   bandBkg: def('bnb', 'color', ['gantt']),
   guideLineColor: def('gdl', 'color', ['gantt']),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;

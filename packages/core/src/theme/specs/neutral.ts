@@ -38,8 +38,7 @@ const theme: ThemeSpec = {
     // colour moves them (#773, #798): the node fill, the borders, the inverted text inks, and
     // the error colours, which darkMode leaves alone.
     mainBkg: '#eeeeee',
-    // v12 theme-neutral.js keeps its constructor tertiary and line colours where gantt draws its
-    // section band, the active outline and the `vert` marker, so no override moves them (D656).
+    // v12's constructor tertiary and line colours (`bandBkg`, `guideLineColor` in vocabulary.ts).
     bandBkg: '#eeeeee',
     guideLineColor: '#666666',
     border1: '#999999',

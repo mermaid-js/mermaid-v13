@@ -55,11 +55,15 @@ export const DIAGRAM_TABLES: Readonly<Record<string, DiagramThemeTable | undefin
 /**
  * v12's value of a variable in its resolved `getThemeVariables()`: the flat name, or else, for a
  * table with a `section`, the variable's nested key there (D335): `xyChartTitleColor` is v12's
- * `xyChart.titleColor`.
+ * `xyChart.titleColor`. The tables searched are `DIAGRAM_TABLES`, unless `tables` names them.
  */
-export function v12Value(old: Readonly<Record<string, unknown>>, name: string): unknown {
+export function v12Value(
+  old: Readonly<Record<string, unknown>>,
+  name: string,
+  tables: readonly (DiagramThemeTable | undefined)[] = Object.values(DIAGRAM_TABLES)
+): unknown {
   if (Object.hasOwn(old, name)) return old[name];
-  for (const t of Object.values(DIAGRAM_TABLES)) {
+  for (const t of tables) {
     const nested = t?.vars[name]?.nested;
     if (t?.section === undefined || nested === undefined) continue;
     const block = old[t.section];
@@ -105,8 +109,8 @@ export const VOCABULARY: Readonly<Record<string, ThemeVarEntry>> =
  * palettes and inks of T1a; the muted surface, its border, link ink, text on lines, soft border
  * and frame border of T2; the row fills, link label fill and nested body of T3 (read with
  * `inline()`); the badge and callout of T1b, which gitGraph's commit and tag labels read; the
- * canvas fill, line, text, item fills and node fill, and the band and guide line (#1041), that the named classic themes pin where v12 keeps its
- * constructor value under an override (D656).
+ * canvas fill, line, text, item fills and node fill, and the band and guide line (#1041), that
+ * the named classic themes pin where v12 keeps its constructor value under an override (D656).
  */
 export const D332_INPUTS: readonly string[] = [
   'seriesColorArray',

@@ -48,8 +48,7 @@ const theme: ThemeSpec = {
     // colours), the inverted text inks, and the note and error colours, which darkMode leaves
     // alone. Not the arrowhead: v12's `.marker` draws it in lineColor (D575).
     mainBkg: '#ececff',
-    // v12 theme-default.js keeps its constructor tertiary and line colours where gantt draws its
-    // section band, the active outline and the `vert` marker, so no override moves them (D656).
+    // v12's constructor tertiary and line colours (`bandBkg`, `guideLineColor` in vocabulary.ts).
     bandBkg: '#f9ffec',
     guideLineColor: '#333333',
     border1: '#9370db',

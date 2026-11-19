@@ -15,7 +15,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant, gitgraph, gantt, venn |
 | `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core |
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, gantt, railroad, sequence |
-| `background` | `--mermaid-background` | base | color | | | all | core, packet, kanban, xychart, venn, c4, class |
+| `background` | `--mermaid-background` | base | color | | | all | core, packet, kanban, venn, c4, class |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, packet, railroad, state, usecase |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph, radar, agentflow, architecture, block, c4, ishikawa, railroad, treeview, usecase |
 | `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, mindmap, gitgraph, gantt, kanban, radar, pie, packet, cynefin, info, sankey, treemap, wardley, xychart, venn, agentflow, architecture, block, c4, eventmodeling, ishikawa, railroad, requirement, treeview, usecase |
@@ -88,7 +88,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `frameBorder` | `--mermaid-frameBorder` | derived | color | `softBorder` | `softBorder` | redux-dark, redux-dark-color, forest | sequence |
 | `actorBkg` | `--mermaid-actorBkg` | derived | color | `mainBkg` | `mainBkg` | | sequence, usecase |
 | `actorBorder` | `--mermaid-actorBorder` | derived | color | `inline(softBorder)` | `inline(softBorder)` | | sequence, usecase |
-| `badgeBkg` | `--mermaid-badgeBkg` | derived | color | `ifSet(secondaryColor, adjustHue(primaryColor, -120))` | `ifSet(secondaryColor, adjustHue(primaryColor, -120))` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
+| `badgeBkg` | `--mermaid-badgeBkg` | derived | color | `ifSet(secondaryColor, adjustHue(primaryColor, -120))` | `ifSet(secondaryColor, adjustHue(primaryColor, -120))` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph, venn |
 | `badgeTextColor` | `--mermaid-badgeTextColor` | derived | color | `ifSet(secondaryTextColor, invert(ifSet(secondaryColor, adjustHue(primaryColor, -120))))` | `ifSet(secondaryTextColor, invert(ifSet(secondaryColor, adjustHue(primaryColor, -120))))` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
 | `calloutBkg` | `--mermaid-calloutBkg` | derived | color | `primaryColor` | `primaryColor` | default | gitgraph |
 | `calloutTextColor` | `--mermaid-calloutTextColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default | gitgraph |
@@ -100,8 +100,8 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `canvasBkg` | `--mermaid-canvasBkg` | derived | color | `background` | `background` | default | state, wardley, xychart |
 | `canvasLineColor` | `--mermaid-canvasLineColor` | derived | color | `lineColor` | `lineColor` | default, dark | cynefin, wardley, eventmodeling, requirement, state |
 | `canvasTextColor` | `--mermaid-canvasTextColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default | quadrant, cynefin, wardley, xychart |
-| `canvasItemBkg` | `--mermaid-canvasItemBkg` | derived | color | `primaryColor` | `primaryColor` | default | quadrant |
-| `canvasItemBkg3` | `--mermaid-canvasItemBkg3` | derived | color | `tertiaryColor` | `tertiaryColor` | default | sequence |
+| `canvasItemBkg` | `--mermaid-canvasItemBkg` | derived | color | `primaryColor` | `primaryColor` | default | quadrant, venn |
+| `canvasItemBkg3` | `--mermaid-canvasItemBkg3` | derived | color | `tertiaryColor` | `tertiaryColor` | default | sequence, venn |
 | `canvasNodeBkg` | `--mermaid-canvasNodeBkg` | derived | color | `mainBkg` | `mainBkg` | default | state |
 | `bandBkg` | `--mermaid-bandBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | default, dark, forest, neutral | gantt |
 | `guideLineColor` | `--mermaid-guideLineColor` | derived | color | `lineColor` | `lineColor` | default, dark, forest, neutral | gantt |

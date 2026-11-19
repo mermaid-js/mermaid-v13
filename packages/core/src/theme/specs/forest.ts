@@ -56,8 +56,7 @@ const theme: ThemeSpec = {
     // tertiary one from its primaryColor), and the note and error colours, which darkMode leaves
     // alone.
     mainBkg: '#cde498',
-    // v12 theme-forest.js keeps its constructor tertiary and line colours where gantt draws its
-    // section band, the active outline and the `vert` marker, so no override moves them (D656).
+    // v12's constructor tertiary and line colours (`bandBkg`, `guideLineColor` in vocabulary.ts).
     bandBkg: '#e1efc0',
     guideLineColor: '#000000',
     border1: '#13540c',

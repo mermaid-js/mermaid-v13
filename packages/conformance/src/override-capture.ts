@@ -6,6 +6,7 @@
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DiagramThemeTable } from '@mermaid-js/core/theme';
+import { v12Value } from './diagram-themes.ts';
 import {
   THEMES,
   captureReference,
@@ -48,19 +49,15 @@ export function findTables(src: string, packages: string): TableFile[] {
 }
 
 /**
- * v12's colour of a variable in its resolved theme variables: the flat name, or, for a table with
- * a `section`, the variable's nested key there (D335), as `diagram-themes.ts` `v12Value()` reads it.
+ * v12's colour of a variable in its resolved theme variables, as `diagram-themes.ts` `v12Value()`
+ * reads it from `table`: the flat name, or the variable's nested key in the table's `section`.
  */
 export function v12Colour(
   old: Readonly<Record<string, unknown>>,
   name: string,
   table?: DiagramThemeTable
 ): Colour {
-  if (Object.hasOwn(old, name)) return hex(old[name]);
-  const nested = table?.vars[name]?.nested;
-  const block: unknown = table?.section === undefined ? undefined : old[table.section];
-  if (nested === undefined || typeof block !== 'object' || block === null) return null;
-  return hex((block as Record<string, unknown>)[nested]);
+  return hex(v12Value(old, name, table === undefined ? [] : [table]));
 }
 
 /** A reference table of `names`, from a resolver per classic theme. */

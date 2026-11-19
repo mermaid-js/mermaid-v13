@@ -45,9 +45,10 @@ export const theme: DiagramThemeTable = {
     // misses AA on red. Text on the other bars stays `taskTextColor`, the theme's text.
     // The bars and the third band (`sectionBkgColor2`) read `mainBkg`, which `default`, `forest`,
     // `neutral` and `dark` pin to their primary colour, so an author's `primaryColor` leaves them
-    // alone there, as in v12; `base` derives `mainBkg` from it (D657). The first band reads `bandBkg` and the
-    // lines `guideLineColor`, the tertiary and line colours those four themes pin where v12 keeps
-    // its own under an override (D656); in `base` they are `tertiaryColor` and `lineColor`.
+    // alone there, as in v12; `base` derives `mainBkg` from it (D657). The first band reads
+    // `bandBkg` and the lines `guideLineColor`, the tertiary and line colours those four themes
+    // pin where v12 keeps its own under an override (D656); in `base` they are `tertiaryColor`
+    // and `lineColor`.
     classic: {
       rules: {
         sectionBkgColor: 'bandBkg',

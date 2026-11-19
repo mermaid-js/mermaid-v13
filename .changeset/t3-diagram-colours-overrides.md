@@ -6,4 +6,4 @@
 '@mermaid-js/diagram-eventmodeling': patch
 ---
 
-fix: requirement, sequence, state, architecture and event model colours respond to a `lineColor`, `background` or `mainBkg` override as in v12: requirement and event model lines keep the theme's colour in `default` and `dark`, architecture edges in `dark`, state's composite fill in `default`, and `dark`'s sequence activations follow `mainBkg`.
+Requirement and event model lines (in `default` and `dark`), architecture edges (in `dark`) and state composite fills (in `default`) keep their colours under a `lineColor` or `background` override, and `dark` sequence activations follow `mainBkg`, as in v12.

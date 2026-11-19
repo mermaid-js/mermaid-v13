@@ -3,4 +3,4 @@
 '@mermaid-js/diagram-gantt': patch
 ---
 
-fix: under `default`, `dark`, `forest` and `neutral`, an author's `primaryColor`, `tertiaryColor` or `lineColor` no longer recolours the gantt bars, section bands, active outline and `vert` marker, as in v12; they follow `mainBkg` and the new `bandBkg` and `guideLineColor` theme variables instead.
+Gantt bars, section bands, active outlines and `vert` markers keep their colours under a `primaryColor`, `tertiaryColor` or `lineColor` override in `default`, `dark`, `forest` and `neutral`, as in v12; set `mainBkg`, `bandBkg` or `guideLineColor` to recolour them.
