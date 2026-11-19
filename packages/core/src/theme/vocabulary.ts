@@ -442,6 +442,15 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   rowAltBkg: def('rab', 'color', ['er']),
   linkLabelBkg: def('llb', 'color', ['er']),
   nestedBkg: def('nbk', 'color', ['state']),
+  // Shared inputs that name no diagram (D332, D656): a base colour as a diagram drawn on its own
+  // canvas keeps it, the canvas's fill, its lines and axes, its text, and the fill of an item on
+  // it. Where v12 keeps a theme's constructor value under an override of the base colour, the
+  // theme pins it in `values`, as D570 pinned `mainBkg`; elsewhere, and in `base`, each is its
+  // base colour. v13 names; v12 has none.
+  canvasBkg: def('cvb', 'color', []),
+  canvasLineColor: def('cvl', 'color', []),
+  canvasTextColor: def('cvt', 'color', []),
+  canvasItemBkg: def('cvi', 'color', []),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
   // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.
   useGradient: def('ug', 'flag', ['core']),

@@ -97,6 +97,10 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `rowAltBkg` | `--mermaid-rowAltBkg` | derived | color | `lightenHsl(mainBkg, 5%)` | `darkenHsl(mainBkg, 10%)` | default, dark, forest, neutral | er |
 | `linkLabelBkg` | `--mermaid-linkLabelBkg` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | | er, requirement |
 | `nestedBkg` | `--mermaid-nestedBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | default, dark, forest, neutral | state |
+| `canvasBkg` | `--mermaid-canvasBkg` | derived | color | `background` | `background` | default |  |
+| `canvasLineColor` | `--mermaid-canvasLineColor` | derived | color | `lineColor` | `lineColor` | default, dark |  |
+| `canvasTextColor` | `--mermaid-canvasTextColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default |  |
+| `canvasItemBkg` | `--mermaid-canvasItemBkg` | derived | color | `primaryColor` | `primaryColor` | default |  |
 | `useGradient` | `--mermaid-useGradient` | token | flag | | | all | core |
 | `gradientStart` | `--mermaid-gradientStart` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
 | `gradientStop` | `--mermaid-gradientStop` | derived | color | `secondaryBorderColor` | `secondaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
