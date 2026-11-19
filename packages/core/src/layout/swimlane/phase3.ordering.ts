@@ -293,35 +293,44 @@ function transposeImprove(
     crossingsOfNeighbours(above.get(a)!, above.get(b)!) +
     crossingsOfNeighbours(below.get(a)!, below.get(b)!);
 
-  // Precompute lane membership for same-lane check
-  const laneOf = topLaneOf ? new Map<NodeId, string | null>() : null;
-  if (topLaneOf && laneOf) {
-    for (const id of current) {
-      laneOf.set(id, topLaneOf(id));
-    }
-  }
-
+  const laneOf = lanesOf(current, topLaneOf);
   let improved = true;
   while (improved) {
-    improved = false;
-    for (let i = 0; i + 1 < best.length; i++) {
-      // Only swap nodes in the same lane (or both null-lane)
-      if (laneOf) {
-        const laneA = laneOf.get(best[i]!);
-        const laneB = laneOf.get(best[i + 1]!);
-        if (laneA !== laneB) {
-          continue; // never swap across lane boundaries
-        }
-      }
-
-      const [a, b] = [best[i]!, best[i + 1]!];
-      if (crossingsWhileLeft(b, a) < crossingsWhileLeft(a, b)) {
-        [best[i], best[i + 1]] = [b, a];
-        improved = true;
-      }
-    }
+    improved = swapPass(best, laneOf, crossingsWhileLeft);
   }
   return best;
+}
+
+/** Each node's top lane, for the same-lane check; null when there are no lanes to keep. */
+function lanesOf(
+  nodes: NodeId[],
+  topLaneOf?: (id: NodeId) => string | null
+): Map<NodeId, string | null> | null {
+  return topLaneOf ? new Map(nodes.map((id) => [id, topLaneOf(id)])) : null;
+}
+
+/**
+ * One pass of adjacent swaps over `order`, in place: a swap is made where it lowers the
+ * crossings, between neighbours of the same lane (or both null-lane). Whether any was made.
+ */
+function swapPass(
+  order: NodeId[],
+  laneOf: Map<NodeId, string | null> | null,
+  crossingsWhileLeft: (a: NodeId, b: NodeId) => number
+): boolean {
+  let improved = false;
+  for (let i = 0; i + 1 < order.length; i++) {
+    const a = order[i]!;
+    const b = order[i + 1]!;
+    if (laneOf && laneOf.get(a) !== laneOf.get(b)) {
+      continue; // never swap across lane boundaries
+    }
+    if (crossingsWhileLeft(b, a) < crossingsWhileLeft(a, b)) {
+      [order[i], order[i + 1]] = [b, a];
+      improved = true;
+    }
+  }
+  return improved;
 }
 
 // Sugiyama phase 3: lane-aware median sweeps plus adjacent transpose improvements.
