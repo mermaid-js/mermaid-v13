@@ -1,7 +1,8 @@
 // Ported from v12 `swimlanes/orthogonalRouter/router.ts` at upstream `c9b12739f` (D532). Changed:
 // no anchored nodes (D531); diamond and hexagon checks use the shared classification in
 // `config.ts` (#636), which also takes flowchart v13's canonical names (`diam`, `hex`); types
-// tightened for `noUncheckedIndexedAccess`.
+// tightened for `noUncheckedIndexedAccess`; the A* search reads its grid, boxes and open list
+// through `gridSearch.ts` and its point keys through `pointKeys.ts`, with v12's routes (#843).
 /* eslint-disable complexity, max-depth, max-lines, max-lines-per-function, no-nested-ternary -- v12's file kept whole so upstream fixes port by hand (D532) */
 // cspell:ignore raykov Raykov Wybrow Marriott Stuckey
 

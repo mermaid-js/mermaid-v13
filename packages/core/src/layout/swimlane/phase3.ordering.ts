@@ -1,4 +1,6 @@
-// Ported from v12 `swimlanes/phase3.ordering.ts` at upstream `c9b12739f` (D532).
+// Ported from v12 `swimlanes/phase3.ordering.ts` at upstream `c9b12739f` (D532). Changed (#843),
+// with v12's orders kept: a transpose swap is scored by the crossings of the two nodes it swaps,
+// each layer reads its nodes' edges from lists built once, and a sort takes each median once.
 import { byCodeUnit } from './compare.ts';
 import type { Graph, Layering, OrderedLayers, NodeId, Edge } from './helpers.ts';
 import { buildLayerIndex, countInversions } from './phase0.helpers.ts';
