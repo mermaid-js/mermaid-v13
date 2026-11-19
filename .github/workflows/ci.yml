@@ -15,6 +15,55 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    # What this run has to check (tools/ci/scope.ts). `code`: everything. `docs`: the change
+    # touches only documentation, by the pre-push hook's rule, so only `lint` runs (Prettier
+    # and the generated-file checks) plus, in `docs-tests`, the tests of the code that reads a
+    # changed docs file. Every doubt ends in `code`. The other jobs read `scope` in their `if`.
+    name: Scope
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 5
+    outputs:
+      scope: ${{ steps.scope.outputs.scope }}
+      readers: ${{ steps.scope.outputs.readers }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          # HEAD^1..HEAD is the change: on a PR the checkout is the merge commit.
+          fetch-depth: 2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version-file: '.node-version'
+      - run: pnpm install --frozen-lockfile
+      - id: scope
+        run: pnpm exec tsx tools/ci/scope-cli.ts
+
+  docs-tests:
+    # A `docs` run whose files some code reads (a spec that checks the D-ids in DECISIONS.md,
+    # say): `vitest related` runs the specs among those readers and the specs that import them.
+    name: Tests of code that reads the docs
+    needs: changes
+    if: ${{ needs.changes.outputs.scope == 'docs' && needs.changes.outputs.readers != '' }}
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 20
+    env:
+      READERS: ${{ needs.changes.outputs.readers }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version-file: '.node-version'
+      - run: pnpm install --frozen-lockfile
+      # Unquoted on purpose: one argument per file. The paths come from `git grep` in this
+      # repository and hold no spaces.
+      - run: |
+          # shellcheck disable=SC2086
+          pnpm vitest related --run $READERS
+
   # `pnpm check:static` runs as two parallel jobs, `lint` and `typecheck`, with `build` beside
   # them; the unit tests (the rest of `pnpm check`) run sharded in `tests`. Keep the commands
   # of `lint` and `typecheck` in step with the `check:static` script in package.json: between
@@ -66,6 +115,8 @@ jobs:
 
   typecheck:
     name: Typecheck
+    needs: changes
+    if: ${{ needs.changes.outputs.scope == 'code' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     steps:
@@ -80,6 +131,8 @@ jobs:
 
   build:
     name: Build
+    needs: changes
+    if: ${{ needs.changes.outputs.scope == 'code' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     steps:
@@ -100,6 +153,8 @@ jobs:
     # the base already has are reported, not failed. The tests the change reaches run first with
     # coverage, so CRAP scores use real coverage (their verdict is the `tests` jobs' business).
     name: Structural audit
+    needs: changes
+    if: ${{ needs.changes.outputs.scope == 'code' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 40
     steps:
@@ -129,21 +184,26 @@ jobs:
           pnpm exec fallow audit --base HEAD^1 --quiet --format github-summary >> "$GITHUB_STEP_SUMMARY" || true
 
   checks:
-    # The one check to require on the branch: green only when lint, typecheck, build, the
-    # structural audit and every unit test shard passed. It keeps the name the single job had
-    # before it was split.
+    # The one check to require on the branch: green only when the scope was decided and lint,
+    # typecheck, build, the structural audit, every unit test shard and the docs tests each
+    # passed or were left out by the scope (a `docs` run skips all but lint and the docs
+    # tests). A job that is skipped because `changes` failed does not pass: `changes` itself
+    # must succeed. It keeps the name the single job had before it was split.
     name: Check and build
     if: ${{ always() }}
-    needs: [lint, typecheck, build, structure, tests]
+    needs: [changes, lint, typecheck, build, structure, tests, docs-tests]
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 5
     steps:
       - env:
+          SCOPE: ${{ needs.changes.result }}
+          LINT: ${{ needs.lint.result }}
           RESULTS: ${{ join(needs.*.result, ' ') }}
         run: |
-          echo "lint, typecheck, build, structure, tests: $RESULTS"
+          echo "changes, lint, typecheck, build, structure, tests, docs-tests: $RESULTS"
+          if [ "$SCOPE" != "success" ] || [ "$LINT" != "success" ]; then exit 1; fi
           for result in $RESULTS; do
-            if [ "$result" != "success" ]; then exit 1; fi
+            if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then exit 1; fi
           done
 
   tests:
@@ -151,6 +211,8 @@ jobs:
     # four-fifths of it packages/conformance. Vitest shards by file; each shard runs every
     # project's share, gantt's two zones and the serial language-budget group included.
     name: Unit tests (${{ matrix.shard }}/3)
+    needs: changes
+    if: ${{ needs.changes.outputs.scope == 'code' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     strategy:
@@ -177,6 +239,8 @@ jobs:
     # (bench-nightly.yml, release.yml). On a PR from this repository the result is posted as a
     # PR comment, updated in place on every run; fork PRs get a read-only token and only the artifact.
     name: Bench gates
+    needs: changes
+    if: ${{ needs.changes.outputs.scope == 'code' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     permissions:
@@ -269,6 +333,10 @@ jobs:
     # is not part of `checks`, and the Argos status is not a required check. R-TEST-6: the theme
     # gallery is built from the same fixtures and kept as an artifact.
     name: Visual baseline
+    needs: changes
+    # A docs-only PR still runs: its scope step decides `skip` and tells Argos so, which gives
+    # the PR its Argos status. A docs-only push has no baseline to renew.
+    if: ${{ needs.changes.outputs.scope == 'code' || github.event_name == 'pull_request' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     # Keep this tag in sync with @playwright/test in package.json.
@@ -349,6 +417,8 @@ jobs:
     # and take no screenshots, so they have their own job and their own result. In the
     # Playwright image, like the snapshots, so the measurer specs see the same fonts.
     name: Browser, dev explorer and platform specs
+    needs: changes
+    if: ${{ needs.changes.outputs.scope == 'code' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     # Keep this tag in sync with @playwright/test in package.json.
@@ -381,6 +451,8 @@ jobs:
     # afterMount, from source through e2e/dom's own page server. Chromium only until the POC
     # is done; Firefox and WebKit come back with the rest of the browser matrix.
     name: DOM adapter
+    needs: changes
+    if: ${{ needs.changes.outputs.scope == 'code' }}
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 20
     steps:
@@ -400,6 +472,8 @@ jobs:
     # e2e page server (e2e/smoke/smoke.spec.ts). Deno, the Web Worker, Firefox and WebKit
     # come back after the POC.
     name: Smoke render (${{ matrix.runtime }})
+    needs: changes
+    if: ${{ needs.changes.outputs.scope == 'code' }}
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 20
     strategy:
