@@ -160,6 +160,7 @@ export async function decidedOracle(): Promise<Oracle> {
   const lexer = await loadJisonLexerOracle('requirement');
   return {
     version: oracle.version,
+    detect: (text) => oracle.detect(text),
     parse: (text, config) => lexer.withRules(DECIDED_RULES, () => oracle.parse(text, config)),
   };
 }

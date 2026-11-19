@@ -1297,6 +1297,12 @@ highlightSlice?: string
  * via the `definition` "QuadrantChartConfig".
  */
 export interface QuadrantChartConfig extends BaseDiagramConfig {
+/**
+ * Theme, the CSS style sheet.
+ * You may also use `themeCSS` to override this value.
+ * 
+ */
+theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
 useWidth?: number
 /**
  * When this flag is set to `true`, the height and width is set to 100%
@@ -1385,6 +1391,12 @@ quadrantExternalBorderStrokeWidth?: number
  * via the `definition` "XYChartConfig".
  */
 export interface XYChartConfig extends BaseDiagramConfig {
+/**
+ * Theme, the CSS style sheet.
+ * You may also use `themeCSS` to override this value.
+ * 
+ */
+theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
 useWidth?: number
 /**
  * When this flag is set to `true`, the height and width is set to 100%
@@ -2359,6 +2371,12 @@ nodeColors?: {
  * via the `definition` "PacketDiagramConfig".
  */
 export interface PacketDiagramConfig extends BaseDiagramConfig {
+/**
+ * Theme, the CSS style sheet.
+ * You may also use `themeCSS` to override this value.
+ * 
+ */
+theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
 useWidth?: number
 /**
  * When this flag is set to `true`, the height and width is set to 100%
