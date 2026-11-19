@@ -52,7 +52,7 @@ function bodyOf(b: EmbeddedBlock): BlockBody {
 }
 
 /** Where offset `o` of a body's parsed text is in the whole text. */
-type Pos = (o: number) => number;
+export type Pos = (o: number) => number;
 
 /**
  * `e`, thrown for a block whose parsed body maps to the whole text `source` through `pos`:

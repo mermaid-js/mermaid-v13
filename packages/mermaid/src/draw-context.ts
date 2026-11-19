@@ -125,6 +125,23 @@ function extensionNeeds(
   });
 }
 
+/** The table measurer of `s`'s font tables, once `loadFontTables` has made it (D645). */
+function fontTablesOf(k: Session, s: Snapshot): Measurer | undefined {
+  const tables = s.options.fontTables;
+  return tables && k.fontTables.get(tables);
+}
+
+/**
+ * Loads the font-table chunk and checks `s`'s font tables (D645), only when `fontTables` is set;
+ * a malformed entry rejects with `MermaidError { code: 'SEMANTIC' }`.
+ */
+export async function loadFontTables(k: Session, s: Snapshot): Promise<void> {
+  const tables = s.options.fontTables;
+  if (tables === undefined || fontTablesOf(k, s)) return;
+  const { createTableMeasurer } = await import('@mermaid-js/core/text/font-tables');
+  k.fontTables.set(tables, createTableMeasurer({ faces: tables }));
+}
+
 /** Loads what `a` draws with: layout, themes, plugin and extension resources. */
 export function loadFor(k: Session, a: Analysis, ascii: boolean): Promise<unknown> {
   return Promise.all([
@@ -168,6 +185,7 @@ function instantOf(options: RenderOptions | undefined): number {
  */
 function applyMissingPolicy(
   k: Session,
+  s: Snapshot,
   analysis: Analysis,
   options: RenderOptions | undefined,
   textOutput: boolean,
@@ -181,6 +199,15 @@ function applyMissingPolicy(
       r.kind !== 'iconPack' || k.iconPacks.state(r.name) === 'pending' ? r : []
     ),
   ];
+  const tables = s.options.fontTables;
+  if (!textOutput && tables !== undefined && !fontTablesOf(k, s))
+    missing.push({
+      kind: 'fontTables',
+      name: [tables]
+        .flat()
+        .map((t: { family?: unknown } | null) => t?.family)
+        .join(', '),
+    });
   if (missing.length > 0) {
     if (textOutput || !options?.placeholders) throw new NotLoadedError(missing);
     warn({
@@ -309,7 +336,7 @@ export function contextFor(
   const textOutput = units.id === 'cell';
   const warnings: Warning[] = [...k.skipped, ...prepared.warnings];
   const warn = (w: Warning): void => void warnings.push(toWarning(w, registry.fragments()));
-  const standIns = applyMissingPolicy(k, analysis, options, textOutput, warn);
+  const standIns = applyMissingPolicy(k, s, analysis, options, textOutput, warn);
   const choice = chooseLayout(registry, plugin, config, textOutput, warn);
   // The theme reads the id prefix only for the gradient (D182), after ctx exists.
   const tables = { rules: registry.themeRules(), diagram: plugin.theme };
@@ -326,13 +353,18 @@ export function contextFor(
     config,
     measurer:
       measurer ??
-      selectMeasurer({ measurer: s.options.measurer, deterministic: s.options.deterministic }),
+      selectMeasurer({
+        measurer: s.options.measurer,
+        deterministic: s.options.deterministic,
+        table: fontTablesOf(k, s),
+      }),
     units,
     theme,
     securityLevel: resolveSecurityLevel(config.securityLevel, warn),
     get idPrefix() {
       return (idPrefix ??=
-        options?.id ?? defaultIdPrefix(text, config, optionsKey(s.options), units));
+        options?.id ??
+        defaultIdPrefix(text, config, optionsKey(s.options, fontTablesOf(k, s)), units));
     },
     version: VERSION,
     linkSchemes: s.options.linkSchemes,
