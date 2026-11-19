@@ -629,11 +629,6 @@
       "count": 2
     }
   },
-  "packages/plugin-hand-drawn/src/drawer.ts": {
-    "mermaid/no-module-state": {
-      "count": 1
-    }
-  },
   "packages/plugin-icons/src/icon.ts": {
     "mermaid/no-brand-cast": {
       "count": 1
@@ -651,7 +646,7 @@
   },
   "packages/plugin-math/src/index.ts": {
     "mermaid/no-module-state": {
-      "count": 3
+      "count": 2
     }
   },
   "packages/shared/src/shapes/basic.ts": {

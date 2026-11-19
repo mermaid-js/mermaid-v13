@@ -165,6 +165,7 @@ describe('label icons (D292, D296)', () => {
       warn,
       iconPacks: ready({ fa: staticBellIconPack }),
       scratch: {},
+      standIns: [],
     });
     // The bell is 448 × 512: 20 px tall, 17.5 px wide, its baseline at 17.5 px.
     expect(box).toMatchObject({ width: 17.5, height: 20, baseline: 17.5 });
