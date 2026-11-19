@@ -31,6 +31,11 @@
       "types": "./dist/parser-kit/support.d.ts",
       "default": "./dist/parser-kit/support.js"
     },
+    "./parser-kit/embed-body": {
+      "mermaid-source": "./src/parser-kit/embed-body.ts",
+      "types": "./dist/parser-kit/embed-body.d.ts",
+      "default": "./dist/parser-kit/embed-body.js"
+    },
     "./preprocess": {
       "mermaid-source": "./src/preprocess/index.ts",
       "types": "./dist/preprocess/index.d.ts",

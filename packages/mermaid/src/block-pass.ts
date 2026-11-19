@@ -16,7 +16,7 @@ import {
   type Warning,
 } from '@mermaid-js/core';
 import type { ResolvedConfig, ResolvedSite } from '@mermaid-js/core/config';
-import { blockBody, type BlockBody } from '@mermaid-js/core/parser-kit';
+import { blockBody, type BlockBody } from '@mermaid-js/core/parser-kit/embed-body';
 import type { Diagnostic, EmbeddedBlock, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
