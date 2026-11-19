@@ -286,6 +286,16 @@ describe('workflow branches (R-REL-1)', () => {
     expect(jobs.checks!.steps[0]!.run).toContain('"$SCOPE" != "success"');
   });
 
+  it('runs only the related unit tests when the Scope job says so, and never none (D637)', () => {
+    const jobs = wf('ci.yml').jobs;
+    const run = jobs.tests!.steps.find((s) => (s.run ?? '').includes('pnpm test'))!;
+    expect(run.env?.TESTS).toBe('${{ needs.changes.outputs.tests }}');
+    expect(run.env?.TEST_FILES).toBe('${{ needs.changes.outputs.test_files }}');
+    // The filtered run needs both the mode and a list; anything else is the full run.
+    expect(run.run).toContain('[ "$TESTS" = "related" ] && [ -n "$TEST_FILES" ]');
+    expect(run.run).toContain('pnpm test --shard="$SHARD"\n');
+  });
+
   it('keeps the specs that take no screenshots out of the visual job', () => {
     const run = (jobId: string) =>
       wf('ci.yml')
