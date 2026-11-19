@@ -168,19 +168,35 @@ function reorderLayer(
     return sortByHeuristic(targetLayer, neighborPositions, currIndex);
   }
 
-  // Partition target layer nodes by lane
+  const byLane = nodesByLane(targetLayer, topLaneOf);
+  const result = inLaneOrder(laneOrder, byLane, neighborPositions, currIndex);
+  insertNullLaneNodes(result, byLane.get(null), neighborPositions, currIndex);
+  return result;
+}
+
+/** The nodes of `layer` by their top lane, each lane's in layer order. */
+function nodesByLane(
+  layer: NodeId[],
+  topLaneOf: (id: NodeId) => string | null
+): Map<string | null, NodeId[]> {
   const byLane = new Map<string | null, NodeId[]>();
-  for (const id of targetLayer) {
+  for (const id of layer) {
     const lane = topLaneOf(id);
     const arr = byLane.get(lane) ?? [];
     arr.push(id);
     byLane.set(lane, arr);
   }
+  return byLane;
+}
 
-  // Reorder nodes within each lane independently
+/** The lane-grouped nodes in lane order, each lane's sorted by the median heuristic. */
+function inLaneOrder(
+  laneOrder: string[],
+  byLane: Map<string | null, NodeId[]>,
+  neighborPositions: Map<NodeId, number[]>,
+  currIndex: Map<NodeId, number>
+): NodeId[] {
   const result: NodeId[] = [];
-
-  // First, place lane-grouped nodes in lane order
   for (const lane of laneOrder) {
     const nodesInLane = byLane.get(lane);
     if (!nodesInLane || nodesInLane.length === 0) {
@@ -189,29 +205,36 @@ function reorderLayer(
     const sorted = sortByHeuristic(nodesInLane, neighborPositions, currIndex);
     result.push(...sorted);
   }
-
-  // Then, handle null-lane nodes (long-edge dummies without a parent).
-  // Compute their barycenter and insert them adjacent to the lane whose
-  // center position is closest to their barycenter.
-  const nullNodes = byLane.get(null);
-  if (nullNodes && nullNodes.length > 0) {
-    // Sort null-lane nodes by their barycenter across the full layer
-    const sorted = sortByHeuristic(nullNodes, neighborPositions, currIndex);
-    const barycenterOf = barycenterMemo(neighborPositions);
-
-    // For each null-lane node, find the best insertion position
-    // based on its connections to nodes already in the result
-    for (const nid of sorted) {
-      // Compute the barycenter position of this node's neighbors in the fixed layer
-      const bc = barycenter(neighborPositions.get(nid) ?? []);
-
-      // Find the best insertion point: scan result and insert where the
-      // node's barycenter fits relative to its neighbors
-      result.splice(insertionIndex(bc, result, barycenterOf), 0, nid);
-    }
-  }
-
   return result;
+}
+
+/**
+ * The null-lane nodes (long-edge dummies without a parent), inserted into `result` in place:
+ * sorted by the heuristic, each goes where its barycenter fits among the nodes placed.
+ */
+function insertNullLaneNodes(
+  result: NodeId[],
+  nullNodes: NodeId[] | undefined,
+  neighborPositions: Map<NodeId, number[]>,
+  currIndex: Map<NodeId, number>
+): void {
+  if (!nullNodes || nullNodes.length === 0) {
+    return;
+  }
+  // Sort null-lane nodes by their barycenter across the full layer
+  const sorted = sortByHeuristic(nullNodes, neighborPositions, currIndex);
+  const barycenterOf = barycenterMemo(neighborPositions);
+
+  // For each null-lane node, find the best insertion position
+  // based on its connections to nodes already in the result
+  for (const nid of sorted) {
+    // Compute the barycenter position of this node's neighbors in the fixed layer
+    const bc = barycenter(neighborPositions.get(nid) ?? []);
+
+    // Find the best insertion point: scan result and insert where the
+    // node's barycenter fits relative to its neighbors
+    result.splice(insertionIndex(bc, result, barycenterOf), 0, nid);
+  }
 }
 
 /**
