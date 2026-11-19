@@ -622,6 +622,8 @@ function layOut(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredRes
     [crossings, declared] = reduceCrossings(g, nodes);
     setPositions();
   }
+  // The order is final: from here on the neighbour lists are read left to right.
+  sortNeighbours(g);
   if (opt.orderOnly) {
     // Points are (rank, cross-flow position) pairs.
     const at = position(g, opt);
@@ -1184,12 +1186,10 @@ function sideEnds(
   const { M } = g;
   const start = side === 0 ? g.predStart : g.succStart;
   const list = side === 0 ? g.predE : g.succE;
-  const other = side === 0 ? g.EF : g.ET;
-  const pos = g.pos;
+  // Left to right, ties by segment: the lists are in that order (`sortNeighbours`).
   for (let k = start[v]!; k < start[v + 1]!; k++)
     if (kinds[list[k]!]! !== End.Held) ids.push(list[k]!);
   if (ids.length < 2) return 0;
-  ids.sort((a, b) => pos[other[a]!]! - pos[other[b]!]! || a - b);
   const fill = (share: (leaves: boolean, same: boolean) => number): number => {
     let total = 0;
     room[0] = 0;
@@ -1434,7 +1434,7 @@ function settle(
   free: [Int32Array, Int32Array],
   empty: Uint8Array | undefined
 ): void {
-  const { real, W, EF, ET, EFD, ETD, succStart, succE, predStart, predE, pos, M } = g;
+  const { real, W, EF, ET, EFD, ETD, succStart, succE, predStart, predE, M } = g;
   // Where the end of segment `e` on node `v` should be, from the middle of its side. The edge is
   // followed up from the segment (side 0) or down, past the bends in ranks that hold nothing
   // else, to where it next comes to a point that is held in place or to another node's side.
@@ -1482,7 +1482,6 @@ function settle(
     const span = Math.min(nodes[v]!.span, W[v]!);
     if (span <= 0 || nodes[v]!.kind !== Kind.Node) continue;
     for (let side = 0; side < 2; side++) {
-      const other = side === 0 ? EF : ET;
       const start = side === 0 ? predStart : succStart;
       const list = side === 0 ? predE : succE;
       const ids: number[] = [];
@@ -1490,9 +1489,9 @@ function settle(
       sideEnds(g, v, side, span, side === 0 ? ETK : EFK, ids, room);
       if (ids.length === 0) continue;
       if (ids.length === 1) room[0] = 0;
+      // Left to right, as `ids` is (`sortNeighbours`).
       const all: number[] = [];
       for (let k = start[v]!; k < start[v + 1]!; k++) all.push(list[k]!);
-      all.sort((a, b) => pos[other[a]!]! - pos[other[b]!]! || a - b);
       sides.push({ v, side, span, ids, room, all });
     }
   }
@@ -2537,6 +2536,25 @@ function pullToHeld(
   sweep(2);
 }
 
+// The order of the neighbour lists, once the order of the nodes is final. Each node's segments
+// in `succE` and in `predE` are put in the order of where their other ends sit in the next or the
+// previous rank (`pos`), ties by segment. Nothing reorders the nodes or the lists after this, so
+// what reads them takes that order as given: `position` reads the medians off directly, and
+// `sideEnds` (for `spread` and `settle`) and `settle` take the ends on a side left to right.
+// Called once in `layOut`, between `reduceCrossings` and the first of those.
+function sortNeighbours({ n, EF, ET, succStart, succE, predStart, predE, pos }: Graph): void {
+  const segments = EF.length;
+  const key = i32(segments);
+  for (let e = 0; e < segments; e++) key[e] = pos[ET[e]!]!;
+  for (let v = 0; v < n; v++)
+    if (succStart[v + 1]! - succStart[v]! > 1)
+      sortRange(succE, succStart[v]!, succStart[v + 1]!, key);
+  for (let e = 0; e < segments; e++) key[e] = pos[EF[e]!]!;
+  for (let v = 0; v < n; v++)
+    if (predStart[v + 1]! - predStart[v]! > 1)
+      sortRange(predE, predStart[v]!, predStart[v + 1]!, key);
+}
+
 // Brandes-Köpf horizontal coordinate assignment: four aligned layouts, balanced.
 function position(g: Graph, opt: LayeredOptions): Float64Array {
   const {
@@ -2560,16 +2578,8 @@ function position(g: Graph, opt: LayeredOptions): Float64Array {
   const gap = f64(n);
   for (let i = 0; i < n; i++) gap[i] = halfRoom(g, opt, i);
 
-  // Neighbours in left-to-right order, so the medians can be read off directly.
-  const key = i32(segments);
-  for (let e = 0; e < segments; e++) key[e] = pos[ET[e]!]!;
-  for (let v = 0; v < n; v++)
-    if (succStart[v + 1]! - succStart[v]! > 1)
-      sortRange(succE, succStart[v]!, succStart[v + 1]!, key);
-  for (let e = 0; e < segments; e++) key[e] = pos[EF[e]!]!;
-  for (let v = 0; v < n; v++)
-    if (predStart[v + 1]! - predStart[v]! > 1)
-      sortRange(predE, predStart[v]!, predStart[v + 1]!, key);
+  // The neighbours are in left-to-right order (`sortNeighbours`), so the medians are read off
+  // directly.
 
   // An edge between two real nodes may not cross a dummy-to-dummy segment; mark those that would.
   const conflict = u8(segments);
