@@ -165,46 +165,46 @@ exports[`relation labels in text output (D629) > draws nightly-check/docs/2-cont
                   ┌►│                         │            │       bank, with        │             │    information about    │
                   └┐╰─────────────────────────╯            │      personal bank      │             │       customers,        │
                    │                                       │        accounts         │             │        accounts,        │
-                   │                                       │                         │             │   transactions, etc.    │
-                   │                                       ╰────┬───────────┬───────┬╯             │                         │
-                   │                                            │           │       │              ╰─────────────────────────╯
-                   │                                            │           │       │                ▲
-                   │                                            │           │       │                │
-                   │                                            │           │       │                │
-                   │                                            │          ┌┼───────┼────────────────┘
-                   │┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┄┄┄┄┄┼┼┄┄┄┄┄┄┄┼┄┄┄┄┄ Internet Banking ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
-                   │┆                                           │          │ Uses   │        [CONTAINER]                                                                         ┆
-                   │┆                            ┌─────  Uses   ┘          ││       └────  Uses   ─────────┐                                                                     ┆
-                   │┆                            │      [HTTPS]            ││             [HTTPS]          │                                                                     ┆
-                   │┆                            │                         ││          Uses                │                                                                     ┆
-                   │┆                            ▼              ┌──────────┘▼ [sync/async, XML/HTTPS]      ▼                                                                     ┆
-                   │┆     ╭─────────────────────────╮           │╭─────────────────────────╮             ╭─────────────────────────╮            ╒═════════════════════════╕      ┆
-                   │┆     │                         │           ││                         │             │                         │            │                         │      ┆
-                   │┆     │                         │           ││                         │             │                         │            │                         │      ┆
-                   │┆     │     Single-Page App     │           ││       Mobile App        │             │     Web Application     │            │                         │      ┆
-                   │┆     │       [Container:       │           ││     [Container: C#,     │             │    [Container: Java,    │            │        Database         │      ┆
-                   │┆     │       JavaScript,       │┌──────────┘│        Xamarin]         │             │       Spring MVC]       │            │     [Container: SQL     │      ┆
-                   │┆     │        Angular]         ││           │   Provides a limited    │             │      Delivers the       │            │        Database]        │      ┆
-Sends e-mails using ┆     │    Provides all the     ││           │      subset of the      │             │   static content and    │            │       Stores user       │      ┆
-   [sync, SMTP]     ┆     │    Internet banking     ││           │    Internet banking     │             │      the Internet       │            │      registration       │      ┆
-                   │┆     │    functionality to     ││           │    functionality to     │             │       banking SPA       │            │      information,       │      ┆
-                   │┆     │      customers via      ││           │      customers via      │             │                         │┌──────────►│       hashed auth       │      ┆
-                   │┆     │    their web browser    ││           │      their mobile       │             ╰──────┬──────────────────╯│           │      credentials,       │      ┆
-                   │┆     │                         ││           │         device          │                    │┌──────────────────┘           │    access logs, etc.    │      ┆
-                   │┆     ╰────────────┬────────────╯│           │                         │   ┌────────────────┼┘                              │                         │      ┆
-                   │┆                  │      ▲   ┌──┘           ╰┬────────────────────────╯┌──┼────────────────┘                               │                         │      ┆
-                   │┆                  │      │   │               │┌────── Delivers ────────┘ Reads from and writes to                          ╘═════════════════════════╛      ┆
-                   │┆                  │      └───┼───────────────┼┘                                [sync, JDBC]                                                                 ┆
-                   │┆                Uses         │               │                            │                                                                                 ┆
-                   │┆         [async, JSON/HTTPS] │             Uses                           │                                                                                 ┆
-                   │┆                  │          │      [async, JSON/HTTPS]                   │                                                                                 ┆
-                   │┆                  │          │┌──────────────┘                            │                                                                                 ┆
-                   │┆                  ▼          │▼                                           │                                                                                 ┆
-                   │┆     ╒═══════════════════════╧═╕                                          │                                                                                 ┆
-                   │┆     │                         │                                          │                                                                                 ┆
-                   │┆     │                         │                                          │                                                                                 ┆
-                   │┆     │                         │                                          │                                                                                 ┆
-                   └┼─────┤     API Application     │                                          │                                                                                 ┆
+                   │                                       │                         │           ┌►│   transactions, etc.    │
+                   │                                       ╰────┬───────────┬───────┬╯           │ │                         │
+                   │                                            │           │       │            │ ╰─────────────────────────╯
+                   │                                            │           │       │            │
+                   │                                            │           │       │            │
+                   │                                            │           │       │            │
+                   │                                            │         Uses      │    ┌───────┘
+                   │┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┄┄┼┄┄┄┄┼ Internet Banking ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
+                   │┆                                           │           │       │    └──┐[CONTAINER]                                                                         ┆
+                   │┆                            ┌─────  Uses   ┘           │       └───────┼  Uses   ─────┐                                                                     ┆
+                   │┆                            │      [HTTPS]             │               │ [HTTPS]      │                                                                     ┆
+                   │┆                            │                          │               │              │                                                                     ┆
+                   │┆                            ▼                          ▼               │              ▼                                                                     ┆
+                   │┆     ╭─────────────────────────╮            ╭─────────────────────────╮│            ╭─────────────────────────╮            ╒═════════════════════════╕      ┆
+                   │┆     │                         │            │                         ││            │                         │            │                         │      ┆
+                   │┆     │                         │            │                         ││            │                         │            │                         │      ┆
+                   │┆     │     Single-Page App     │            │       Mobile App        ││            │     Web Application     │            │                         │      ┆
+                   │┆     │       [Container:       │            │     [Container: C#,     ││            │    [Container: Java,    │            │        Database         │      ┆
+                   │┆     │       JavaScript,       │            │        Xamarin]         ││            │       Spring MVC]       │            │     [Container: SQL     │      ┆
+                   │┆     │        Angular]         │            │   Provides a limited    ││            │      Delivers the       │            │        Database]        │      ┆
+Sends e-mails using ┆     │    Provides all the     │            │      subset of the      ││            │   static content and    │            │       Stores user       │      ┆
+   [sync, SMTP]     ┆     │    Internet banking     │            │    Internet banking     ││            │      the Internet       │            │      registration       │      ┆
+                   │┆     │    functionality to     │            │    functionality to     ││            │       banking SPA       │            │      information,       │      ┆
+                   │┆     │      customers via      │            │      customers via      ││            │                         │┌──────────►│       hashed auth       │      ┆
+                   │┆     │    their web browser    │            │      their mobile       ││            ╰──────┬──────────────────╯│           │      credentials,       │      ┆
+                   │┆     │                         │            │         device          │└─┐                 │┌──────────────────┘           │    access logs, etc.    │      ┆
+                   │┆     ╰────────────┬────────────╯            │                         │  │┌────────────────┼┘                              │                         │      ┆
+                   │┆                  │      ▲                  ╰┬────────────────────────╯┌─┼┼────────────────┘                               │                         │      ┆
+                   │┆                  │      │                   │┌────── Delivers ────────┘ │ Reads from and writes to                        ╘═════════════════════════╛      ┆
+                   │┆                  │      └───────────────────┼┘                          │       [sync, JDBC]                                                               ┆
+                   │┆                Uses                         │                           ││                                                                                 ┆
+                   │┆         [async, JSON/HTTPS]               Uses                          ││                                                                                 ┆
+                   │┆                  │                 [async, JSON/HTTPS]                  ││                                                                                 ┆
+                   │┆                  │           ┌──────────────┘             Uses           │                                                                                 ┆
+                   │┆                  ▼           ▼                   [sync/async, XML/HTTPS] │                                                                                 ┆
+                   │┆     ╒═════════════════════════╕                                         ││                                                                                 ┆
+                   │┆     │                         │                                         ││                                                                                 ┆
+                   │┆     │                         │                                         ││                                                                                 ┆
+                   │┆     │                         │                                         ││                                                                                 ┆
+                   └┼─────┤     API Application     ├─────────────────────────────────────────┘│                                                                                 ┆
                     ┆     │    [Container: Java,    ├──────────────────────────────────────────┘                                                                                 ┆
                     ┆     │    Docker Container]    │                                                                                                                            ┆
                     ┆     │    Provides Internet    │                                                                                                                            ┆
