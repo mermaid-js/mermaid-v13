@@ -158,13 +158,15 @@ jobs:
     # branch on a PR, whose checkout is the merge commit; the previous tip on a push). It fails
     # on findings the change introduces: dead code, import cycles, boundary violations (the
     # zones in .fallowrc.json), complexity above the thresholds and new duplication. Findings
-    # the base already has are reported, not failed. The tests the change reaches run first with
-    # coverage, so CRAP scores use real coverage (their verdict is the `tests` jobs' business).
+    # the base already has are reported, not failed. D640: it runs no tests and reads no
+    # coverage, so fallow only estimates CRAP scores. .fallowrc.pr.json extends .fallowrc.json
+    # and makes CRAP findings warnings; every other finding still fails. Exact CRAP, from the
+    # full unit suite's coverage, gates in the nightly run (fallow-nightly.yml).
     name: Structural audit
     needs: changes
     if: ${{ needs.changes.outputs.scope == 'code' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    timeout-minutes: 40
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -175,21 +177,12 @@ jobs:
           cache: pnpm
           node-version-file: '.node-version'
       - run: pnpm install --frozen-lockfile
-      # The timing projects stay out: coverage slows code unevenly and their ratios mean nothing.
-      - name: Coverage of the tests the change reaches
-        continue-on-error: true
-        run: >-
-          pnpm vitest run --changed HEAD^1 --passWithNoTests --coverage
-          --project workspace --project gantt-utc --project gantt-la
       - name: fallow audit
-        run: |
-          if [ -f coverage/coverage-final.json ]; then export FALLOW_COVERAGE=coverage/coverage-final.json; fi
-          pnpm exec fallow audit --base HEAD^1 --quiet --format github-annotations
+        run: pnpm exec fallow audit -c .fallowrc.pr.json --base HEAD^1 --quiet --format github-annotations
       - name: Job summary
         if: ${{ !cancelled() }}
         run: |
-          if [ -f coverage/coverage-final.json ]; then export FALLOW_COVERAGE=coverage/coverage-final.json; fi
-          pnpm exec fallow audit --base HEAD^1 --quiet --format github-summary >> "$GITHUB_STEP_SUMMARY" || true
+          pnpm exec fallow audit -c .fallowrc.pr.json --base HEAD^1 --quiet --format github-summary >> "$GITHUB_STEP_SUMMARY" || true
 
   checks:
     # The one check to require on the branch: green only when the scope was decided and lint,

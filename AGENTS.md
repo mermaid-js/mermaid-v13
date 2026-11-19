@@ -99,7 +99,7 @@ The per-package check does not replace the full gate. Specs that cover every typ
 `git push` runs `tools/pre-push/cli.ts`, which checks what the push changes since it left `mermaid-v13`. It does not run the unit suite or the build: CI does.
 
 - A push that changes only documentation (`*.md`, `docs/`, `v13/docs/`) runs Prettier on those files. Markdown that code reads (snapshots, fixtures, a docs file that source code names) does not count as documentation.
-- Any other push runs these at the same time and reports every failure: ESLint and Prettier on the changed files; cspell, knip and the typecheck over everything; `check:deps`, `check:licenses` and the generated-file check; and CI's structural audit (the tests the change reaches, with coverage, then `fallow audit`). A failing test in the audit is a warning here and a failure in CI.
+- Any other push runs these at the same time and reports every failure: ESLint and Prettier on the changed files; cspell, knip and the typecheck over everything; `check:deps`, `check:licenses` and the generated-file check; and CI's structural audit, which is `fallow audit` without coverage and runs no tests. CRAP findings are warnings there and do not fail the push; the nightly fallow run gates on them (D640).
 - Each check's log is in `node_modules/.cache/pre-push/`. To run some checks again: `pnpm exec tsx tools/pre-push/cli.ts typecheck knip`.
 - `PRE_PUSH_FULL=1 git push` runs the full `pnpm check` instead. Run it, or `pnpm test`, before a push that changes shared code if you do not want to wait for CI to find a failing test.
 
