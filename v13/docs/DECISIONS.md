@@ -4,6 +4,8 @@ Research inputs: `research/` (pele, ondine, mermaid-ascii, mermaid-current, pars
 benchmarks in the sibling `mermaid-v13-approches` repo (README.md, reports/).
 Later decisions supersede earlier ones where they conflict; superseded text is marked.
 
+**This file is closed at D632 (D636).** A later decision is a file of its own in [decisions/](decisions/README.md). Do not add rows here.
+
 ## Round 1 (settled)
 
 | # | Decision |
