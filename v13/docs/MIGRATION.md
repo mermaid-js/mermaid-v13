@@ -150,7 +150,7 @@ test checks them against the mermaid@12 declarations.
 | `registerLayoutLoaders([{ name, loader, algorithm? }])` where the loader returns a DOM renderer | `registerLayoutLoaders([{ name, loader }])` where the loader returns a layout engine `(graph, ctx?) → LayoutModel`; selected with `layout:` | R-LAYOUT-2 |
 | `layout: elk` / `elk.<algorithm>` uses the ELK package | Laid out by `@mermaid-js/layout-elk` once registered (`mermaid.registerLayoutLoaders(elkLayouts)`, as in v12; it registers v12's seven names plus `elk.layered` and `elk.radial`); without it, drawn with the built-in `layered` engine and one `ELK_NOT_INSTALLED` warning naming the package | DESIGN §6.1, D171, D173 |
 | `registerIconPacks([{ name, icons } \| { name, loader }])` | Same call shape and quirks (`name` overrides the pack's `prefix`; a loader may return the pack itself). Packs belong to one `mermaid` object (`createMermaid()`), not the page, and are drawn by `@mermaid-js/plugin-icons`. Loaders run in `prepare()`/`render()` only for a diagram that names their pack, or in the new `preload({ iconPacks })`; a rejecting loader no longer fails the render. See [Icons](#icons) | R-API-2, R-API-3, D290, D294, D299 |
-| `setParseErrorHandler(fn)` gets the raw error | Deprecated; `fn` gets the `MermaidError` of a failed `parse()` | R-API-4 |
+| `setParseErrorHandler(fn)` or `mermaid.parseError = fn` gets the raw error | Both deprecated and still the same hook; `fn` gets the `MermaidError` of a failed `parse()` or `render()`, and of each element `run()` fails to draw | R-API-4 |
 | `initialize()` replaces the site config | Same: it swaps in a new frozen defaults object; renders already started keep the old one | R-ARCH-4, D72 |
 | Integrator options beyond the schema | `initialize()` also takes `measurer`, `deterministic`, `linkSchemes`, `output.cssVariables` and `limits`; diagram text can never set them | R-SEC-5, R-SEC-6 |
 | Text over `maxTextSize` renders a "Maximum text size in diagram exceeded" placeholder diagram; over `maxEdges` throws an `Error` | Both reject with `MermaidError { code: 'LIMIT' }`, as do the new caps (see Limits) | R-SEC-5, D31 |
@@ -272,7 +272,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 
 | Key | Status | Reason | Replacement |
 | --- | --- | --- | --- |
-| `themeVariables.THEME_COLOR_LIMIT` | ignored | The numbered `cScale` palettes always have twelve slots and the git palettes eight, and a diagram cycles through them (D258, D267). |  |
+| `themeVariables.THEME_COLOR_LIMIT` | ignored | The numbered `cScale` palettes always have twelve slots and the git palettes eight, and a diagram cycles through them (D258, D267). v12 built that many `cScale` slots and style rules, and its timeline also took the section colour modulo the limit, so `THEME_COLOR_LIMIT: 3` gave the fourth section the first one's colour. v13's timeline cycles every twelve sections whatever the value. |  |
 | `themeCSS` | removed | v13 output carries no author stylesheet (R-SEC-2). | `themeVariables`, or `--mermaid-*` CSS variables set by the host page |
 | `look` | ignored | `look` is removed (D153): the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. The v12 neo and classic geometry is theme data instead: the redux themes, `neo` and `neo-dark` carry neo geometry and the classic themes carry classic geometry (D152, D181). | `theme`, or the geometry and `dropShadow` theme variables; `handDrawn` comes from the hand-drawn plugin (R-PLUG-8) |
 | `htmlLabels` | removed | Labels are SVG text only; there is no HTML label mode (D5). | none; labels support a markdown subset rendered as SVG text |
@@ -1390,7 +1390,7 @@ rows below are class-specific. Group class names (`clusters`, `edgePaths`, `edge
 | Lollipop interface: a node with an invisible (`opacity: 0`) rect and its label | `<g class="node interface" data-id="interface0" data-ast="i:Name">` holding only the text | Nothing invisible is drawn |
 | Namespace: `<g class="cluster" id>` with `<rect>` and an HTML label | `<g class="cluster namespace" data-id="<qualified id>" data-ast="s:<id>">` with `<rect>` and `<text class="cluster-label">`. A namespace made only as the ancestor of a dotted one (`X` of `namespace X.Y`) has no `namespace` statement of its own, so it has no `data-ast` | Text labels; one `data-ast` per AST node (R-PARSE-8) |
 | Per-class colour through `[data-look][data-color-id].node .outer-path` rules in the `<style>` | `data-color-id` is kept; the colours are presentation attributes on the box and its dividers; an author `style` / `classDef` still wins | No style sheet |
-| `classDef` styles reached a class through the generated `.name > *` CSS rules, even when the class was given after the `classDef` | The `classDef` styles of every CSS class of the class, then its own `style`, as presentation attributes after the allow-list | Unknown properties and unsafe values are dropped with a warning (R-SEC-3) |
+| A `classDef`'s styles were copied into the `style` of each class that already had that CSS class when the `classDef` line was read, and drawn inline on its box. A class given the CSS class after the `classDef` (`class Cat:::pet`, `cssClass "Cat" pet`) got the class name but no styles, and v12 wrote no `.pet` rule, so it was drawn unstyled | The `classDef` styles of every CSS class of the class, then its own `style`, as presentation attributes after the allow-list, whatever the order of the lines: a class given the CSS class after the `classDef` is styled too | Unknown properties and unsafe values are dropped with a warning (R-SEC-3) |
 | Under `look: neo` (the redux family, `neo`, `neo-dark`), the `[data-look=neo]` rules beat a `style` / `classDef` fill and stroke on a class box | `style` and `classDef` fill and stroke on a class box take effect in every theme | D187, D152 |
 | Class ids, labels and member text passed through `sanitizeText` (DOMPurify), so `A : +List<T> items` lost `<T>` | Text is escaped when written, never sanitised: `+List<T> items` is shown as written, and known HTML tags are read as the label subset ([Labels and text](#labels-and-text)). A generic written with `~` is always drawn as written, as in v12, also when its type is named like a tag: `B~U~` draws `B<U>` and `+List~Data~ items` draws `+List<Data> items`, with no `HTML_DROPPED` | R-SEC-1; the flowchart's rule; D619 |
 | `link` / `click … href` as `<a xlink:href>`; tooltip as an HTML hover div; `callback` / `click … call` bound with `bindFunctions` | `<a href target>` inside the node group (URLs that pass `securityLevel`); the tooltip is an SVG `<title>`; callbacks draw nothing (interactions plugin) | R-SVG-4, R-SVG-5 |
@@ -1792,12 +1792,19 @@ e2e fixture, the v12 spec strings and the syntax page; grammar in
 
 ### Packet theme colours
 
-v12 read `themeVariables.packet` (`startByteColor` … `blockFillColor`). v13 keeps that nested
-object and adds a flat name for each key (`packetStartByteColor` … `packetBlockStrokeWidth`, CSS
-`--mermaid-packetStartByteColor`, …); the flat name wins when both are set (D335, D540). An
-author's value wins in every theme, as in v12, and a nested key leaves the others on the
-theme's values. The lengths (10, 12 and 14 px, stroke 1) and the colours in `default`,
-`neutral`, `base`, `dark`, `neo`, `redux` and `redux-color` are v12's. What changed
+v12's packet style sheet read the ten keys of `themeVariables.packet` (`startByteColor` …
+`blockFillColor`), but set in front matter or an `%%{init}%%` directive only four of them took
+effect: `labelColor`, `labelFontSize`, `titleColor` and `titleFontSize`. v12 checks the config
+from the diagram text with `sanitizeDirective`, which deletes every key that is not a key
+somewhere in v12's default config. The other six (`byteFontSize`, `startByteColor`,
+`endByteColor`, `blockStrokeColor`, `blockStrokeWidth`, `blockFillColor`) are not, so v12 dropped
+them and drew the theme's values; `mermaid.initialize()` does not run that check. v13 keeps the
+nested object and adds a flat name for each key (`packetStartByteColor` …
+`packetBlockStrokeWidth`, CSS `--mermaid-packetStartByteColor`, …); the flat name wins when both
+are set (D335, D540). An author's value wins in every theme for all ten keys, also in front
+matter and directives, and a nested key leaves the others on the theme's values. The lengths
+(10, 12 and 14 px, stroke 1) and the colours in `default`, `neutral`, `base`, `dark`, `neo`,
+`redux` and `redux-color` are v12's. What changed
 (`packages/conformance/src/packet/theme.spec.ts` lists each one):
 
 | Themes | v12 | v13 | Why |
@@ -2094,7 +2101,7 @@ Class lists are written with single spaces and no trailing blank.
   labels 25 px inside it, as in v12; a single word wider than that stays whole and overflows the
   column or card, as in v12 (earlier v13 builds split it between characters; the text output
   still does, to keep it in its box). A raw line break inside a quoted label breaks the line,
-  where v12's HTML folded it to a space.
+  as in v12, whose markdown labels turned it into a `<br>` (D641).
 - **Metadata v12 parsed but never drew is still not drawn** (D376), with no warning: an item's
   icon (`::icon()` or `@{ icon }`), and a column's `ticket`, `assigned` and `priority`. It stays
   in the model and the AST.
@@ -2142,7 +2149,7 @@ order. Every column and card carries `data-id` and `data-ast`, its item's AST id
 | Each column and card had `id="<render id>-<item id>"`, which a repeated id duplicated | No element id at all: kanban has no title or description statement, so not even `<render id>-title`/`-desc` | No colliding ids (R-A11Y-1) |
 | Column: `<g class="cluster <classes> section-<k>" id data-look>` with a `<rect>` (a rough `<path>` under `look: handDrawn`) and a `g.cluster-label` around a `<foreignObject>`; an unclassed column wrote the class `undefined` | `<g class="cluster section-<k>[ <classes>]" data-id data-ast>` with the `<rect>` and `<g class="cluster-label">` holding a `<text>` centred on the column; no `undefined` class, no `data-look` | One element per item maps it to its source (R-PARSE-8) |
 | Card: `<g class="node undefined" id>` (or `node <classes>`) with `<rect class="basic label-container __APA__">`, an unclassed priority `<line>` and three labels in `<foreignObject>`s, the ticket's inside `<a class="kanban-ticket-link">` | `<g class="node[ <classes>]" data-id data-ast>` with `<rect class="basic label-container">`, `<line class="kanban-priority">` when there is a bar, then `<g class="label">` for the title, the ticket (inside the link, when there is one) and the assignee, each holding a `<text>`: the title and ticket left-aligned 10 px in from the card's left edge, the assignee right-aligned (`text-anchor="end"`) 10 px in from its right edge; no `undefined`, no `__APA__` | Same |
-| Labels: markdown HTML in `<foreignObject>`, wrapped by the browser; a raw line break in a quoted label folded to a space | `<text>`/`<tspan>` from core's label layout with markdown on, for all four kinds: `**bold**`, `<br>`, entities, math and `fa:` icons work; titles wrap at the column width `W` (columns) and `W − 25` (cards, tickets and assignees); a raw line break in a quoted label breaks the line | R-TEXT-1, D372 |
+| Labels: markdown HTML in `<foreignObject>`, wrapped by the browser; a raw line break in a quoted label became a `<br>` and broke the line | `<text>`/`<tspan>` from core's label layout with markdown on, for all four kinds: `**bold**`, `<br>`, entities, math and `fa:` icons work; titles wrap at the column width `W` (columns) and `W − 25` (cards, tickets and assignees); a raw line break in a quoted label breaks the line, as in v12 | R-TEXT-1, D372, D641 |
 | Ticket link: `xlink:href` set to `ticketBaseUrl.replace('#TICKET#', ticket)` (so `$&` in a ticket expanded to the match), `target="_blank"`, no check (only DOMPurify removed a `javascript:` URL); underlined by `.kanban-ticket-link` in the `<style>` | `<a class="kanban-ticket-link" href target="_blank" rel="noopener noreferrer" text-decoration="underline">`. The first `#TICKET#` is replaced with the ticket taken literally (`$&` stays `$&`), not percent-encoded, and the URL passes the link check (`securityLevel`, `linkSchemes`). A refused URL draws the ticket as plain text with one `URL_REFUSED` warning. No link without a ticket or a `ticketBaseUrl` | R-SEC-4, R-SEC-6, R-SVG-4, D377 |
 | Priority: a 4 px line in `red`, `orange`, `blue` or `lightblue` for `Very High`, `High`, `Low`, `Very Low` (exact case); `Medium`, any other value and a non-string drew the line with no stroke (invisible) | The same four colours, in every theme; anything else draws no line. One `KANBAN_PRIORITY` warning per render names each card value that is none of the four nor `Medium` (a non-string is never one of them), with the cards' AST ids. A column's priority is not drawn or checked | D375, D376 |
 | Colours from the `<style>`: `.section-<k> rect { fill, stroke: lighten(cScale<k+1>, 10) }` (`darken` under `darkMode`), no rule past column 10, so those columns drew black; `.node rect { fill: background; stroke: nodeBorder; stroke-width: 1px }`; HTML labels in `textColor` | Presentation attributes reading `var(--_x)` aliases on the root `style`. Column k fills and strokes `kanbanColumn<(k + 1) mod 12>`, kanban's own theme variable: `cScale<n>` lightened by 10, darkened under a dark theme or `darkMode` (the `dark` trait, so `neo-dark`, which v12 left light, darkens). Columns cycle through the twelve slots and are never black; `cScale<n>` overrides recolour them, and `--mermaid-kanbanColumn<n>` sets one directly. Card rects take `background` and `nodeBorder`, 1 px, `rx`/`ry` 5; column titles and every card label `textColor` | D152, D331, D374 |

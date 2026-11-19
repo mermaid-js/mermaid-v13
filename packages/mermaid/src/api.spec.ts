@@ -601,6 +601,33 @@ describe('plugins and v12 leftovers (R-API-3, R-API-4, R-PLUG-6)', () => {
     expect(seen).toHaveLength(1);
   });
 
+  it('passes a failed render to the parse error handler, the error it rejects with (#757)', async () => {
+    const m = createMermaid();
+    const seen: unknown[] = [];
+    m.setParseErrorHandler((e) => seen.push(e));
+    const error = await rejection(m.render('x', 'flowchart TD\n  A[x'));
+    expect(seen).toEqual([error]);
+    expect(error).toBeInstanceOf(MermaidError);
+    await m.render('y', 'flowchart TD\n  A');
+    expect(seen).toHaveLength(1);
+  });
+
+  it('reads v12 mermaid.parseError, the same hook as setParseErrorHandler (#757)', async () => {
+    const m = createMermaid();
+    expect(m.parseError).toBeUndefined();
+    const seen: [string, MermaidError][] = [];
+    m.parseError = (e) => seen.push(['property', e]);
+    await rejection(m.parse('flowchart TD\n  A[x'));
+    await rejection(m.render('x', 'flowchart TD\n  A[x'));
+    expect(seen.map(([via]) => via)).toEqual(['property', 'property']);
+    const handler = (e: MermaidError): void => void seen.push(['set', e]);
+    m.setParseErrorHandler(handler);
+    expect(m.parseError).toBe(handler);
+    m.parseError = undefined;
+    await rejection(m.parse('flowchart TD\n  A[x'));
+    expect(seen).toHaveLength(2);
+  });
+
   it('parse() resolves the v12 diagram type and the text config', async () => {
     expect(await parse('---\nconfig:\n  theme: dark\n---\ngraph TD\n  A')).toEqual({
       diagramType: 'flowchart-v2',
