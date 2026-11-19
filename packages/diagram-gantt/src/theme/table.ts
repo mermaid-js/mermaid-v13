@@ -4,9 +4,9 @@ import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 /**
  * Gantt's theme table (`DiagramPlugin.theme`, D331, spec #414 T1b). Every colour is v12
  * theme-base's derivation from shared variables and literals (#381, #385), the same in every
- * theme but the classic family's contrast entries below (#801, D574). `vertLineColor` is the redux
- * family's `primaryBorderColor` (v12 theme-base: navy); values only a per-theme literal could
- * give are in the spec #293 notes (GAPS #385).
+ * theme but the classic family's entries below (contrast, #801, D574; bars on `mainBkg`, D657).
+ * `vertLineColor` is the redux family's `primaryBorderColor` (v12 theme-base: navy); values only
+ * a per-theme literal could give are in the spec #293 notes (GAPS #385).
  */
 export const theme: DiagramThemeTable = {
   vars: THEME_VARIABLE_TABLE,
@@ -43,8 +43,14 @@ export const theme: DiagramThemeTable = {
     // in the derivation, for the classic family only (D574). The active outline, the `vert`
     // marker and its label take `lineColor`; text on a critical bar is black where the bar text
     // misses AA on red. Text on the other bars stays `taskTextColor`, the theme's text.
+    // The bars and the alternate band read `mainBkg`, which `default`, `forest`, `neutral` and
+    // `dark` pin to their primary colour, so an author's `primaryColor` leaves them alone there,
+    // as in v12; `base` derives `mainBkg` from it (D657).
     classic: {
       rules: {
+        sectionBkgColor2: 'mainBkg',
+        taskBkgColor: 'mainBkg',
+        activeTaskBkgColor: 'lightenHsl(mainBkg, 23%)',
         activeTaskBorderColor: 'lineColor',
         vertLineColor: 'lineColor',
         critTextColor: 'contrast(critBkgColor, taskTextColor, black)',

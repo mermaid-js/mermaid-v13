@@ -2033,6 +2033,21 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   the bands from `cScale0`/`cScale1`; those are not carried, so gantt colours differ from v12
   most in `default`, `dark`, `forest` and `neutral` (bars are the theme's `primaryColor`, text
   `textColor`). Set the variables in `themeVariables` for v12's look.
+- **Under a `themeVariables` override (D657):** in the classic family the task bars, the
+  active bar and the alternate section band (`taskBkgColor`, `activeTaskBkgColor`,
+  `sectionBkgColor2`) read `mainBkg`. `default`, `dark`, `forest` and `neutral` pin `mainBkg`
+  to their primary colour, so an author's `primaryColor` leaves the bars alone there, as in
+  v12; in `base` it derives from `primaryColor`, so the bars follow it, as in v12. An author's
+  `mainBkg` moves the bars in every classic theme, where v12's `default`, `forest` and
+  `neutral` kept their own (and, under `dark`, the text on the active bar follows that fill).
+  What else still responds differently from v12: under `default`, `dark`, `forest` and
+  `neutral` the first section band (`sectionBkgColor`) follows `tertiaryColor`, and the
+  active bar's outline and the `vert` marker follow `lineColor` (v12 kept its own); under
+  `dark` the alternate band stays white where v12's followed `background`, and done bars
+  follow `mainBkg`; under `neutral` the done bar's outline stays grey where v12's followed
+  `lineColor`; in `base` the active outline and the `vert` marker follow `lineColor` (D574),
+  where v12's followed `primaryColor` and stayed navy. Set the gantt variable itself in
+  `themeVariables` to fix it.
 - **Contrast in the classic themes (D574):** with bars in the pale `primaryColor`, the classic
   family (`default`, `dark`, `forest`, `neutral`, `base`) draws the `vert` marker and its label
   and the active bar's outline in `lineColor`. Text on a critical bar has its own variable,
