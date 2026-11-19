@@ -5,28 +5,25 @@
  * says how. `--check` compares every pasted table with a fresh capture; `--v13` prints (or
  * checks) v13's values instead, as `V13`, for the rebase at 13.0 (D658).
  */
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { THEME_VARIABLES, type DiagramThemeTable } from '@mermaid-js/core/theme';
+import { captureTable, checkPasted, findTables, v12Colour } from '../override-capture.ts';
 import {
   ALL,
   CASES,
   THEMES,
-  captureReference,
   formatReference,
-  hex,
   tableColours,
   v13Resolver,
   type Classic,
   type ReferenceTable,
   type Resolve,
-  type ThemeReference,
 } from '../override-matrix.ts';
 import { loadOracle } from '../oracle.ts';
 
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..');
-const PACKAGES = join(SRC, '../..');
 const V12_VERSION = '12.2.0';
 
 interface Target {
@@ -38,19 +35,10 @@ interface Target {
   readonly spec: string;
 }
 
-/** Every first-party diagram theme table, found from `packages/diagram-<type>/src/theme/table.ts`. */
-async function targets(): Promise<Target[]> {
-  const folders = readdirSync(SRC, { withFileTypes: true }).filter((d) => d.isDirectory());
-  const out: Target[] = [{ type: 'shared', spec: join(SRC, 'theme-overrides.spec.ts') }];
-  for (const dir of readdirSync(PACKAGES).sort()) {
-    const path = join(PACKAGES, dir, 'src/theme/table.ts');
-    if (!dir.startsWith('diagram-') || !existsSync(path)) continue;
-    const name = dir.slice('diagram-'.length);
-    const type = folders.find((f) => f.name.toLowerCase() === name)?.name ?? name;
-    const { theme } = (await import(pathToFileURL(path).href)) as { theme: DiagramThemeTable };
-    out.push({ type, table: theme, spec: join(SRC, type, 'theme-overrides.spec.ts') });
-  }
-  return out;
+const targets: Target[] = [{ type: 'shared', spec: join(SRC, 'theme-overrides.spec.ts') }];
+for (const { type, path } of findTables(SRC, join(SRC, '../..'))) {
+  const { theme } = (await import(pathToFileURL(path).href)) as { theme: DiagramThemeTable };
+  targets.push({ type, table: theme, spec: join(SRC, type, 'theme-overrides.spec.ts') });
 }
 
 interface V12 {
@@ -67,10 +55,7 @@ async function v12(): Promise<V12> {
   return ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
 }
 
-/**
- * v12's colours in one theme, under each label: the flat name, or for a table with a `section`,
- * the variable's nested key there (D335), as `diagram-themes.ts` `v12Value()` reads it.
- */
+/** v12's colours of `names` in one theme, under each label of the matrix. */
 function v12Resolver(
   api: V12,
   theme: Classic,
@@ -83,15 +68,7 @@ function v12Resolver(
       api.mermaidAPI.initialize({ theme, themeVariables: CASES[label] });
       const old = { ...api.mermaidAPI.getConfig().themeVariables };
       api.mermaidAPI.reset();
-      const read = (name: string): unknown => {
-        if (Object.hasOwn(old, name)) return old[name];
-        const nested = table?.vars[name]?.nested;
-        const block = table?.section === undefined ? undefined : old[table.section];
-        return nested !== undefined && block && typeof block === 'object'
-          ? (block as Record<string, unknown>)[nested]
-          : undefined;
-      };
-      return [label, Object.fromEntries(names.map((n) => [n, hex(read(n))]))] as const;
+      return [label, Object.fromEntries(names.map((n) => [n, v12Colour(old, n, table)]))] as const;
     })
   );
   return (label) => at.get(label)!;
@@ -101,71 +78,43 @@ const SHARED_COLOURS = Object.entries(THEME_VARIABLES)
   .filter(([, d]) => d.kind === 'color')
   .map(([name]) => name);
 
-type Source = 'v12' | 'v13';
-
-async function capture(target: Target, source: Source): Promise<ReferenceTable> {
-  const names = target.table ? tableColours(target.table) : SHARED_COLOURS;
-  const api = source === 'v12' ? await v12() : undefined;
-  const out: Partial<Record<Classic, ThemeReference>> = {};
-  for (const theme of THEMES) {
-    const resolve = api
-      ? v12Resolver(api, theme, names, target.table)
-      : await v13Resolver(theme, names, target.table);
-    out[theme] = captureReference(names, resolve);
-  }
-  return out as ReferenceTable;
-}
-
-const isEmpty = (table: ReferenceTable): boolean =>
-  THEMES.every((t) => Object.keys(table[t]).length === 0);
-
-/** Each pasted table against a fresh capture: the problems found, none when all match. */
-async function check(all: readonly Target[], source: Source): Promise<string[]> {
-  const problems: string[] = [];
-  for (const target of all) {
-    const table = await capture(target, source);
-    const has = existsSync(target.spec);
-    if (isEmpty(table)) {
-      if (has) problems.push(`${target.type}: no colour of its table resolves, but it has a spec`);
-      continue;
-    }
-    if (!has) problems.push(`${target.type}: no ${target.spec}`);
-    else if (
-      !readFileSync(target.spec, 'utf8').includes(formatReference(source.toUpperCase(), table))
-    )
-      problems.push(`${target.type}: the pasted table differs from a fresh capture`);
-  }
-  return problems;
-}
-
 const args = process.argv.slice(2);
 const flags = new Set(args.filter((a) => a.startsWith('--')));
 const type = args.find((a) => !a.startsWith('--'));
-const all = await targets();
-const source: Source = flags.has('--v13') ? 'v13' : 'v12';
+const name = flags.has('--v13') ? 'V13' : 'V12';
+const api = name === 'V12' ? await v12() : undefined;
+
+function capture({ table }: Target): Promise<ReferenceTable> {
+  const names = table ? tableColours(table) : SHARED_COLOURS;
+  return captureTable(names, (theme) =>
+    api ? Promise.resolve(v12Resolver(api, theme, names, table)) : v13Resolver(theme, names, table)
+  );
+}
+
+const count = (table: ReferenceTable): number =>
+  THEMES.reduce((sum, t) => sum + Object.keys(table[t]).length, 0);
 
 if (flags.has('--check')) {
-  const problems = await check(all, source);
-  process.stdout.write(
-    problems.length
-      ? `${problems.join('\n')}\n`
-      : `${all.length} tables checked: every pasted table matches\n`
-  );
+  const problems: string[] = [];
+  for (const target of targets) {
+    const spec = existsSync(target.spec) ? readFileSync(target.spec, 'utf8') : undefined;
+    const problem = checkPasted(target.type, await capture(target), spec, name);
+    if (problem) problems.push(problem);
+  }
+  const ok = `${targets.length} tables checked: every pasted table matches\n`;
+  process.stdout.write(problems.length ? `${problems.join('\n')}\n` : ok);
   process.exitCode = problems.length ? 1 : 0;
 } else if (type === undefined) {
-  for (const target of all) {
-    const table = await capture(target, source);
-    const n = THEMES.reduce((sum, t) => sum + Object.keys(table[t]).length, 0);
+  for (const target of targets) {
     process.stdout.write(
-      `${target.type}\t${isEmpty(table) ? 'no colour v12 resolves' : `${n} theme / variable pairs`}\n`
+      `${target.type}\t${count(await capture(target))} theme / variable pairs\n`
     );
   }
 } else {
-  const target = all.find((t) => t.type === type);
-  if (!target) {
-    process.stderr.write(`unknown type ${type}: one of ${all.map((t) => t.type).join(', ')}\n`);
+  const target = targets.find((t) => t.type === type);
+  if (target) process.stdout.write(formatReference(name, await capture(target)));
+  else {
+    process.stderr.write(`unknown type ${type}: one of ${targets.map((t) => t.type).join(', ')}\n`);
     process.exitCode = 2;
-  } else {
-    process.stdout.write(formatReference(source.toUpperCase(), await capture(target, source)));
   }
 }
