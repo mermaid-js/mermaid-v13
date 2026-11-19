@@ -294,7 +294,11 @@ describe('workflow branches (R-REL-1)', () => {
     expect(run.env?.TEST_FILES).toBe('${{ needs.changes.outputs.test_files }}');
     // The filtered run needs both the mode and a list; anything else is the full run.
     expect(run.run).toContain('[ "$TESTS" = "related" ] && [ -n "$TEST_FILES" ]');
-    expect(run.run).toContain('pnpm test --shard="$SHARD"\n');
+    expect(run.run).toContain('pnpm test --shard="$SHARD" $REPORT\n');
+    // REPORT only adds the JSON report of the shard balance (#984), never a file filter.
+    expect(run.env?.REPORT).toBe(
+      '--reporter=default --reporter=json --outputFile.json=unit-durations.json'
+    );
   });
 
   it('keeps the specs that take no screenshots out of the visual job', () => {
