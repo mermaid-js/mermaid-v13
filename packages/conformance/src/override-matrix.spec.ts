@@ -8,6 +8,7 @@ import {
   captureReference,
   findDifferences,
   formatReference,
+  GROUP,
   reconcile,
   referenceAt,
   type Colour,
@@ -34,6 +35,48 @@ describe('the override specs (D654)', () => {
   it.each(SPECS.slice(1))("%s belongs to a diagram package's theme table", (spec) => {
     const type = spec.split('/')[0]!.toLowerCase();
     expect(existsSync(join(PACKAGES, `diagram-${type}`, 'src/theme/table.ts'))).toBe(true);
+  });
+
+  it.each(SPECS)('%s groups each difference under a decision (#1043)', (spec) => {
+    for (const group of differenceGroups(readFileSync(join(SRC, spec), 'utf8'))) {
+      expect(group).toMatch(GROUP);
+    }
+  });
+});
+
+/** The group keys of a spec's `DIFFERENCES`: its lines at two spaces' indent that open a key. */
+function differenceGroups(text: string): string[] {
+  const block = /^const DIFFERENCES\b.*?= \{\n([\s\S]*?)^\};/m.exec(text)?.[1] ?? '';
+  return [...block.matchAll(/^ {2}(?:(["'])(.*?)\1|([\w$]+)):/gm)].map((m) => m[2] ?? m[3]!);
+}
+
+describe('a group of differences (D654, #1043)', () => {
+  it("is read from each key of a spec's DIFFERENCES", () => {
+    const text = [
+      "const V12: ReferenceTable = { 'not: a group': {} };",
+      'const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {',
+      '  "D571: v12\'s darkMode": [',
+      "    'base / darkMode / pie1',",
+      '  ],',
+      "  '#1035 T2 (#1039) pending': [],",
+      '  D351: [],',
+      '};',
+    ].join('\n');
+    expect(differenceGroups(text)).toEqual([
+      "D571: v12's darkMode",
+      '#1035 T2 (#1039) pending',
+      'D351',
+    ]);
+  });
+
+  it('names a decision', () => {
+    expect('D571: why').toMatch(GROUP);
+    expect('D571, D406: why').toMatch(GROUP);
+  });
+
+  it("does not name a ticket: spec #1035's ticket groups are closed (#1043)", () => {
+    expect('#1035 T2 (#1039) pending').not.toMatch(GROUP);
+    expect('#1035 T4').not.toMatch(GROUP);
   });
 });
 

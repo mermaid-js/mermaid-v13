@@ -235,8 +235,11 @@ export async function v13Resolver(
   return (label) => at.get(label)!;
 }
 
-/** A group's key: the decision that accounts for it, or, during spec #1035, the ticket that deletes it. */
-const GROUP = /^(D\d+|#1035 T[1-4])\b/;
+/**
+ * A group's key: the decision that accounts for it, with a MIGRATION row citing it (D654). A
+ * ticket's group (`#1035 T<n>`) is not one: spec #1035 closed them all (#1043).
+ */
+export const GROUP = /^D\d+\b/;
 
 export interface OverrideSpec {
   /** The reference values, pasted from the capture tool. */
@@ -303,7 +306,7 @@ function describeOverrides(
     }
   });
 
-  it('names a decision, or a ticket of spec #1035, for each group (D568, D654)', () => {
+  it('names a decision for each group (D568, D654)', () => {
     for (const why of Object.keys(differences)) expect(why).toMatch(GROUP);
   });
 

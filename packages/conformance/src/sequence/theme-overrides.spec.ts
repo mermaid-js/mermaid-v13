@@ -5,8 +5,8 @@
  * under exactly the overrides that move v12's. v12's values are the literals of `V12`, printed by
  * the capture tool (`override-matrix.ts` says how to run it), so the spec runs without v12. Each
  * difference is listed in `DIFFERENCES` as `theme / override / variable`, under the decision that
- * accounts for it, or the ticket of spec #1035 that deletes it: an unlisted difference fails, and
- * so does a listed one that has gone.
+ * accounts for it (a D-id with a MIGRATION row): an unlisted difference fails, and so does a
+ * listed one that has gone.
  */
 
 import { sequence } from '@mermaid-js/diagram-sequence';
@@ -166,7 +166,7 @@ const V12: ReferenceTable = {
 
 /**
  * Each difference from v12, keyed `theme / override / variable`, grouped by the decision that
- * accounts for it, or by the ticket of spec #1035 that deletes it (D654).
+ * accounts for it (D654).
  */
 const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
   "D576: forest's participant border stays v12's darken(#cde498, 20) (softBorder, pinned), and the lifeline with it, as v12's actorLineColor is its actorBorder; v12 recomputes both from an author's mainBkg":
