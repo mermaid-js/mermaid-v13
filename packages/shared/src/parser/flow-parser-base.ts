@@ -100,7 +100,8 @@ export interface FlowParserEdge {
 /** What the parser asks of a diagram's model builder (v12's DB). */
 export interface FlowParserBuilder {
   readonly direction: string;
-  readonly vertices: ReadonlyMap<string, { readonly ast: AstId }>;
+  /** `ast` is written once more after the document, for a vertex only a `style` line made. */
+  readonly vertices: ReadonlyMap<string, { ast: AstId }>;
   readonly edges: readonly FlowParserEdge[];
   hasEdge(id: string): boolean;
   edgeNamed(id: string): FlowParserEdge | undefined;

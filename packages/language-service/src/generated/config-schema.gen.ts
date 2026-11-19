@@ -173,7 +173,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "ignored",
             "since": "13.0.0",
-            "reason": "The numbered `cScale` palettes always have twelve slots and the git palettes eight, and a diagram cycles through them (D258, D267)."
+            "reason": "The numbered `cScale` palettes always have twelve slots and the git palettes eight, and a diagram cycles through them (D258, D267). v12 built that many `cScale` slots and style rules, and its timeline also took the section colour modulo the limit, so `THEME_COLOR_LIMIT: 3` gave the fourth section the first one's colour. v13's timeline cycles every twelve sections whatever the value."
           }
         },
         "commitLabelColor": {
@@ -1034,14 +1034,14 @@ export const configSchema: ConfigSchema = {
         "default": "(**default**) Link URLs may use `http`, `https`, `mailto` or be relative.",
         "strict": "Only relative link URLs are kept; absolute links are dropped with a warning.",
         "antiscript": "No longer supported; treated as `default`, with a warning.",
-        "loose": "No longer supported; treated as `default`, with a warning.",
+        "loose": "Turns on click callbacks (D554); link URLs follow `default`. No warning (D634).",
         "sandbox": "No longer supported; treated as `default`, with a warning."
       },
       "default": "default",
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose`, `antiscript` and `sandbox` act as `default` with a warning."
+        "reason": "The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose` turns on click callbacks (D554) and acts as `default` for link URLs, with no warning (D634); `antiscript` and `sandbox` act as `default` with a warning."
       }
     },
     "startOnLoad": {
@@ -3793,6 +3793,14 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for quadrant charts (a diagram section beats the top level within a config layer), as in v12."
+          }
+        },
         "useWidth": {
           "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
           "x-mermaid": {
@@ -4141,6 +4149,14 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for XY charts (a diagram section beats the top level within a config layer), as in v12."
+          }
+        },
         "useWidth": {
           "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
           "x-mermaid": {
@@ -4332,7 +4348,8 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin",
           "default": 25,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "diagramPadding": {
@@ -4529,9 +4546,8 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin",
           "default": 25,
           "x-mermaid": {
-            "status": "ignored",
-            "since": "13.0.0",
-            "reason": "The state SVG draws no front-matter `title`, as flowchart's (D122)."
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "arrowMarkerAbsolute": {
@@ -4751,9 +4767,8 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin",
           "default": 25,
           "x-mermaid": {
-            "status": "ignored",
-            "since": "13.0.0",
-            "reason": "The class SVG draws no front-matter `title`, as flowchart's."
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "arrowMarkerAbsolute": {
@@ -6223,7 +6238,8 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin",
           "default": 25,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "subGraphTitleMargin": {
@@ -6698,6 +6714,14 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for packet diagrams (a diagram section beats the top level within a config layer), as in v12."
+          }
+        },
         "useWidth": {
           "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
           "x-mermaid": {

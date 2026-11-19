@@ -3,6 +3,7 @@
   "entry": [
     "tools/check-deps/cli.ts",
     "tools/pre-push/*cli.ts",
+    "tools/ci/*cli.ts",
     "e2e/dom/server.ts",
     "e2e/dom/page.ts",
     "packages/*/src/*/index.ts",
@@ -155,10 +156,21 @@
     "unused-types": "error",
     "unused-enum-members": "error",
     "unused-class-members": "off",
-    "duplicate-exports": "warn",
+    "duplicate-exports": "error",
     "duplicate-export-aliases": "off",
     "dev-dependencies-in-production": "off",
-    "private-type-leaks": "warn"
+    "private-type-leaks": "error",
+    "unused-dev-dependencies": "error",
+    "unused-optional-dependencies": "error",
+    "unused-namespace-members": "error",
+    "type-only-dependencies": "error",
+    "test-only-dependencies": "error",
+    "re-export-cycle": "error",
+    "package-cycle": "error",
+    "stale-suppressions": "error",
+    "unused-catalog-entries": "error",
+    "empty-catalog-groups": "error",
+    "unused-dependency-overrides": "error"
   },
   "duplicates": {
     "ignore": [

@@ -22,7 +22,7 @@ import { defaultIdPrefix } from './config-snapshot.ts';
 import { VERSION } from './version.ts';
 
 const FLOW = 'flowchart LR\n  A[Start] --> B(End)\n';
-/** A v12 diagram with no v13 package: ZenUML, external in v12, so no detector knows it. */
+/** A v12 diagram with no v13 package: ZenUML, external in v12 (D317). */
 const ZENUML = 'zenuml\n  A.method()\n';
 
 async function rejection(p: Promise<unknown>): Promise<MermaidError> {
@@ -86,10 +86,12 @@ describe('render (R-API-1, R-COMPAT-5)', () => {
   });
 
   it('reports a v12 diagram without a v13 package as UNSUPPORTED_DIAGRAM (R-COMPAT-7)', async () => {
-    // Every v12 detector row has a package; a detected type with none is mermaid/slim's case.
-    expect((await rejection(render('x', ZENUML))).code).toBe('UNSUPPORTED_DIAGRAM');
+    // zenuml is detected after every plugin, as a type with no package (D317, #751).
+    const e = await rejection(render('x', ZENUML));
+    expect(e.code).toBe('UNSUPPORTED_DIAGRAM');
+    expect(e.message).toContain('"zenuml"');
     expect(thrown(() => renderSync(ZENUML)).code).toBe('UNSUPPORTED_DIAGRAM');
-    expect(thrown(() => detectType(ZENUML)).code).toBe('UNSUPPORTED_DIAGRAM');
+    expect(detectType(ZENUML)).toBe('zenuml');
   });
 
   it('rejects text no detector knows with UNSUPPORTED_DIAGRAM', async () => {
@@ -325,10 +327,18 @@ describe('securityLevel (R-SEC-4, R-SEC-6, D75)', () => {
 
   it('treats the v12 levels as the default level, with one warning', async () => {
     const m = createMermaid();
-    m.initialize({ securityLevel: 'loose' });
+    m.initialize({ securityLevel: 'antiscript' });
     const result = await m.render('s', text);
     expect(hrefs(result.svg)).toEqual(['https://example.com', '/docs/b']);
     expect(result.warnings.map((w) => w.code)).toEqual(['SECURITY_LEVEL']);
+  });
+
+  it('keeps the default level for links under loose, with no warning (D634)', async () => {
+    const m = createMermaid();
+    m.initialize({ securityLevel: 'loose' });
+    const result = await m.render('s', text);
+    expect(hrefs(result.svg)).toEqual(['https://example.com', '/docs/b']);
+    expect(result.warnings).toEqual([]);
   });
 });
 
@@ -557,6 +567,20 @@ describe('plugins and v12 leftovers (R-API-3, R-API-4, R-PLUG-6)', () => {
     expect(r.svg).toContain('<text>hello world</text>');
   });
 
+  it('lets a third-party diagram claim zenuml, which has no v13 package (D317)', async () => {
+    const m = createMermaid();
+    await m.registerExternalDiagrams([
+      {
+        id: 'zenuml-plugin',
+        detector: (text: string) => /^\s*zenuml/.test(text),
+        loader: async () => {
+          throw new Error('not loaded by detectType');
+        },
+      },
+    ]);
+    expect(m.detectType(ZENUML)).toBe('zenuml-plugin');
+  });
+
   it('says registerIconPacks has no effect while no extension claims icons (D299)', async () => {
     const m = createMermaid();
     m.registerIconPacks([
@@ -577,12 +601,104 @@ describe('plugins and v12 leftovers (R-API-3, R-API-4, R-PLUG-6)', () => {
     expect(seen).toHaveLength(1);
   });
 
+  it('passes a failed render to the parse error handler, the error it rejects with (#757)', async () => {
+    const m = createMermaid();
+    const seen: unknown[] = [];
+    m.setParseErrorHandler((e) => seen.push(e));
+    const error = await rejection(m.render('x', 'flowchart TD\n  A[x'));
+    expect(seen).toEqual([error]);
+    expect(error).toBeInstanceOf(MermaidError);
+    await m.render('y', 'flowchart TD\n  A');
+    expect(seen).toHaveLength(1);
+  });
+
+  it('reads v12 mermaid.parseError, the same hook as setParseErrorHandler (#757)', async () => {
+    const m = createMermaid();
+    expect(m.parseError).toBeUndefined();
+    const seen: [string, MermaidError][] = [];
+    m.parseError = (e) => seen.push(['property', e]);
+    await rejection(m.parse('flowchart TD\n  A[x'));
+    await rejection(m.render('x', 'flowchart TD\n  A[x'));
+    expect(seen.map(([via]) => via)).toEqual(['property', 'property']);
+    const handler = (e: MermaidError): void => void seen.push(['set', e]);
+    m.setParseErrorHandler(handler);
+    expect(m.parseError).toBe(handler);
+    m.parseError = undefined;
+    await rejection(m.parse('flowchart TD\n  A[x'));
+    expect(seen).toHaveLength(2);
+  });
+
+  it('lists v12 detectors with getRegisteredDiagramsMetadata, a registered one last (#764, D643)', async () => {
+    const m = createMermaid();
+    const ids = () => m.getRegisteredDiagramsMetadata().map((d) => d.id);
+    expect(ids().slice(0, 4)).toEqual(['error', '---', 'flowchart-elk', 'mindmap']);
+    expect(ids()).toContain('flowchart-v2');
+    await m.registerExternalDiagrams([
+      { id: 'hello', detector: () => false, loader: () => Promise.reject(new Error('unused')) },
+    ]);
+    expect(ids().at(-1)).toBe('hello');
+    expect(m.getRegisteredDiagramsMetadata()[0]).toEqual({ id: 'error' });
+  });
   it('parse() resolves the v12 diagram type and the text config', async () => {
     expect(await parse('---\nconfig:\n  theme: dark\n---\ngraph TD\n  A')).toEqual({
       diagramType: 'flowchart-v2',
       config: { theme: 'dark' },
       warnings: [],
     });
+  });
+});
+
+describe('v12 init() and startOnLoad (#764, D643)', () => {
+  /** A stand-in `document` for `run()`: no `.mermaid` element, every query recorded. */
+  function fakeDocument(): string[] {
+    const queries: string[] = [];
+    const g = globalThis as { document?: unknown };
+    g.document = { querySelectorAll: (q: string) => (queries.push(q), []) };
+    return queries;
+  }
+  afterEach(() => {
+    delete (globalThis as { document?: unknown }).document;
+  });
+
+  it('init(config, selector) initializes, then runs over the selector', async () => {
+    const queries = fakeDocument();
+    const m = createMermaid();
+    await m.init({ theme: 'dark' }, '.diagram');
+    expect(queries).toEqual(['.diagram']);
+    expect((await m.parse(FLOW)).diagramType).toBe('flowchart-v2');
+    const dark = createMermaid();
+    dark.initialize({ theme: 'dark' });
+    expect((await m.render('a', FLOW)).svg).toBe((await dark.render('a', FLOW)).svg);
+    await m.init();
+    expect(queries).toEqual(['.diagram', '.mermaid']);
+  });
+
+  it('init(config, element | list) runs over those nodes without a query', async () => {
+    const queries = fakeDocument();
+    const seen: unknown[] = [];
+    // Already processed, so run() skips each one after reading the attribute.
+    const node = (): HTMLElement =>
+      ({ nodeType: 1, getAttribute: (a: string) => (seen.push(a), 'true') }) as never;
+    const m = createMermaid();
+    await m.init(undefined, node());
+    await m.init(undefined, [node(), node()]);
+    expect(queries).toEqual([]);
+    expect(seen).toEqual(['data-processed', 'data-processed', 'data-processed']);
+  });
+
+  it('contentLoaded() runs only while the startOnLoad property and config are on', async () => {
+    const queries = fakeDocument();
+    const m = createMermaid();
+    expect(m.startOnLoad).toBe(true);
+    m.startOnLoad = false;
+    m.contentLoaded();
+    m.startOnLoad = true;
+    m.initialize({ startOnLoad: false });
+    m.contentLoaded();
+    expect(queries).toEqual([]);
+    m.initialize({});
+    m.contentLoaded();
+    expect(queries).toEqual(['.mermaid']);
   });
 });
 

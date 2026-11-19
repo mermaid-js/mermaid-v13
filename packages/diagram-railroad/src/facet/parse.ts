@@ -14,7 +14,7 @@
  *
  * A probe parse (completion) gets the parser's result alone.
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
+import { isSpace, Kind } from '@mermaid-js/core/parser-kit';
 import type {
   Diagnostic,
   Range,
@@ -26,7 +26,8 @@ import type { RailroadParseOptions, RailroadParseResult } from '../parser/parser
 import { parseRailroad } from '../parser/parse.ts';
 import { T } from '../parser/tokens.ts';
 import type { RailroadNotation } from '../parser/tokens.ts';
-import { atLineStart, code, isTrivia, notationOf } from './tables.ts';
+import { atLineStart, code } from '@mermaid-js/shared/parser/facet';
+import { isTrivia, notationOf } from './tables.ts';
 
 /** D513's hint codes, and D517's undefined reference. */
 export const RAILROAD_TITLE_PREFIX = 'RAILROAD_TITLE_PREFIX';
@@ -119,7 +120,7 @@ function titleHint(
  */
 function semiHint(text: string, tokens: TokenStream, j: number): Diagnostic | undefined {
   const start = tokens.start[j] ?? 0;
-  if (atLineStart(text, start)) return undefined;
+  if (atLineStart(text, start, isSpace)) return undefined;
   const before = significant(tokens, j, -1);
   if (before < 0 || !ELEMENT_ENDS.includes(tokens.kind[before] ?? Kind.EOF)) return undefined;
   const after = significant(tokens, j, 1);

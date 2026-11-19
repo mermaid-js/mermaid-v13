@@ -112,4 +112,55 @@ describe('eventModelLayoutViolations', () => {
       v.join('\n')
     ).toBe(true);
   });
+  // A, B ->> A, C ->> A ->> B in one lane: C's relation from A skips B and runs under the row.
+  const skipping = model(
+    frame('evt', 'A'),
+    frame('evt', 'B', { sources: ['01'] }),
+    frame('evt', 'C', { sources: ['01', '02'] })
+  );
+  const routed = (): EventModelLayout =>
+    layoutEventModel(skipping, eventModelTestContext(theme, {}, halfEm));
+  type Relation = EventModelLayout['relations'][number];
+  const reroute = (l: EventModelLayout, id: string, f: (r: Relation) => Partial<Relation>) => ({
+    ...l,
+    relations: l.relations.map((r) => (r.id === id ? { ...r, ...f(r) } : r)),
+  });
+
+  it('catches a relation drawn through a box of its lane, along another (#672)', () => {
+    const l = routed();
+    expect(eventModelLayoutViolations(skipping, l)).toEqual([]);
+    expect(l.relations.find((r) => r.id === 'relation:01->03')?.route).toBe('under');
+    // The straight route from A's right edge to C's left: through B, and along A → B.
+    const a = l.boxes[0] as EventModelBoxLayout;
+    const c = l.boxes[2] as EventModelBoxLayout;
+    const tip = { x: c.x, y: c.y + c.height / 2 };
+    const broken = reroute(l, 'relation:01->03', (r) => ({
+      route: 'along',
+      points: [{ x: a.x + a.width, y: a.y + a.height / 2 }, tip],
+      head: [r.head[0], tip, r.head[2]],
+    }));
+    const v = eventModelLayoutViolations(skipping, broken).join('\n');
+    expect(v).toContain('relation relation:01->03 runs through box 1');
+    expect(v).toContain('relations relation:01->02 and relation:01->03 share a run');
+  });
+
+  it('catches a relation within a lane leaving it', () => {
+    const broken = reroute(routed(), 'relation:01->03', (r) => ({
+      points: r.points.map((p, k) => (k === 1 || k === 2 ? { ...p, y: p.y + 100 } : p)),
+    }));
+    expect(eventModelLayoutViolations(skipping, broken)).toContain(
+      'relation relation:01->03 leaves its lane'
+    );
+  });
+
+  it('catches a self loop whose leg is mostly arrowhead', () => {
+    const looped = model(frame('evt', 'E'), frame('ui', 'A', { sources: ['01', '02'] }));
+    const l = layoutEventModel(looped, eventModelTestContext(theme, {}, halfEm));
+    const broken = reroute(l, 'relation:02->02', (r) => ({
+      points: r.points.map((p, k) => (k === 1 || k === 2 ? { ...p, y: p.y - 15 } : p)),
+    }));
+    expect(eventModelLayoutViolations(looped, broken)).toContain(
+      "relation relation:02->02's loop has a leg shorter than twice its head"
+    );
+  });
 });

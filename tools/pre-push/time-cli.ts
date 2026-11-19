@@ -9,7 +9,8 @@
  * For each kind it commits a one-line edit, runs the hooks against the commit it started
  * from, and resets to that commit when it is done. It prints a Markdown table. `pnpm check`
  * does the same work for every push, so it is timed once. The structural audit has a column of
- * its own: vitest's `--changed` can take a minute to work out which tests a change reaches.
+ * its own: it was the slowest check while it ran the tests a change reaches with coverage, and
+ * since D640 it is `fallow audit` alone, so the column shows whether it stays a matter of seconds.
  */
 import { spawnSync } from 'node:child_process';
 import { appendFileSync, readFileSync, rmSync } from 'node:fs';
@@ -18,7 +19,7 @@ import { join } from 'node:path';
 const ROOT = join(import.meta.dirname, '..', '..');
 const TIMINGS = join(ROOT, 'node_modules', '.cache', 'pre-push', 'timings.json');
 /** What a new worktree does not have: the lint caches, the hook's tsc build info, fallow's cache. */
-const CACHES = ['.eslintcache', 'node_modules/.cache', 'coverage', '.fallow'];
+const CACHES = ['.eslintcache', 'node_modules/.cache', '.fallow'];
 
 /** The pushes: a name for the table and the file that gets a one-line edit. */
 const PUSHES: readonly (readonly [string, string, string])[] = [

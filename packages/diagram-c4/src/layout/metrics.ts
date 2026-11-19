@@ -125,6 +125,13 @@ export const C4_METRICS = {
   /** What crossing a line costs an elbow (against its length) and a detour (against its lane steps). */
   elbowCrossingCost: 1e6,
   detourCrossingCost: 8,
+  /**
+   * What a bend costs a path through the channels between shapes (`./channels.ts`, #774), against
+   * its length: a bend fewer is worth about one gap between two columns more.
+   */
+  channelBend: 100,
+  /** What crossing a line already routed costs that path: half a bend, so it mostly breaks ties. */
+  channelCrossing: 50,
 } as const;
 
 /** CSS numeric weights. */

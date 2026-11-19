@@ -85,7 +85,11 @@ for (const bundler of BUNDLERS) {
       // The detector is in the page's own scripts; the entry is not.
       expect(holds(dist, scripts.next(), FIXTURE_DETECTOR)).toBe(true);
 
-      expect(await draw(page, 'flow', FLOWCHART)).toEqual({ type: 'flowchart-v2', warnings: [] });
+      // The page has not set `securityLevel: 'loose'`, so the plugin binds no callback (D554).
+      expect(await draw(page, 'flow', FLOWCHART)).toEqual({
+        type: 'flowchart-v2',
+        warnings: ['CALLBACK_IGNORED'],
+      });
       await page.waitForLoadState('networkidle');
       expect(holds(dist, scripts.all, FIXTURE_ENTRY)).toBe(false);
 
@@ -102,10 +106,9 @@ for (const bundler of BUNDLERS) {
     test('activates the discovered extensions: marks and click callbacks', async ({ page }) => {
       await page.goto(on!.url('/plugin.html'));
       await expect(page.locator('#status')).toHaveText('ready');
-      // Callbacks need `securityLevel: 'loose'` (#697, D554); core still reports that level,
-      // as it treats it as `default` for URLs (D75).
+      // Callbacks need `securityLevel: 'loose'` (#697, D554), which raises no warning (D634).
       await page.evaluate(() => window.loose());
-      expect((await draw(page, 'flow', FLOWCHART)).warnings).toEqual(['SECURITY_LEVEL']);
+      expect((await draw(page, 'flow', FLOWCHART)).warnings).toEqual([]);
       // mermaid-fixture-extension's postRender hook.
       await expect(page.locator('#flow svg.fixture-mark')).toHaveCount(1);
       // plugin-interactions (D169): `click A callback` calls window.callback('A').

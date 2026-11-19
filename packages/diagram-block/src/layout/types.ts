@@ -9,8 +9,6 @@ import type { BlockArrowType, BlockEdge, BlockType } from '../model.ts';
 import type { LeafShape } from '../shapes/leaf.ts';
 import type { Outline, Point } from '../shapes/outline.ts';
 
-export type { Outline, Point } from '../shapes/outline.ts';
-
 export interface Rect {
   readonly x: number;
   readonly y: number;

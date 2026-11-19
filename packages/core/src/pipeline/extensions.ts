@@ -122,13 +122,21 @@ export interface ExtensionPlugin<El = unknown, R = unknown> {
  * context; when it returns true, the writer calls `draw` for every `w.outline(role, tag, attrs)`.
  * `draw` writes its replacement into `sink` and returns true, or returns false and the writer
  * writes the plain `<tag …attrs/>` (after anything `draw` wrote). `attrs` is the diagram's; do
- * not change it. A throw, a tag other than `<g>`/`<path>`, an attribute name off the allow-list,
+ * not change it. `ctx` is the same hook context `active` got, so what a drawer needs for the
+ * render (its config, or what `active` put in `ctx.state`) reaches `draw` without module state
+ * (D655). A throw, a tag other than `<g>`/`<path>`, an attribute name off the allow-list,
  * an `open` without its `close` (or the reverse) within one `draw`, or a result that is not a
  * boolean is `MermaidError('INTERNAL')` naming the extension.
  */
 export interface OutlineDrawer {
   active(ctx: HookContext): boolean;
-  draw(role: OutlineRole, tag: OutlineTag, attrs: Attrs, sink: OutlineSink): boolean;
+  draw(
+    role: OutlineRole,
+    tag: OutlineTag,
+    attrs: Attrs,
+    sink: OutlineSink,
+    ctx: HookContext
+  ): boolean;
 }
 
 /** The drawer one SVG render uses, and the extension it belongs to. */
@@ -337,8 +345,13 @@ function checkOutline(plugin: { id: string }, o: unknown): OutlineDrawer | undef
 /**
  * `drawer.draw` behind a sink that admits `<g>` and `<path>` (the writer checks attribute names),
  * balanced within each call, and with its failures reported as `plugin`'s; `wrote` once it writes.
+ * Each call gets `ctx`, the render's hook context (D655).
  */
-function guardedOutline(plugin: { id: string }, drawer: OutlineDrawer): ActiveOutline {
+function guardedOutline(
+  plugin: { id: string },
+  drawer: OutlineDrawer,
+  ctx: HookContext
+): ActiveOutline {
   const active = { id: plugin.id, wrote: false } as {
     -readonly [K in keyof ActiveOutline]: ActiveOutline[K];
   };
@@ -376,7 +389,7 @@ function guardedOutline(plugin: { id: string }, drawer: OutlineDrawer): ActiveOu
       path: () => w.path(),
     };
     try {
-      const drawn: unknown = drawer.draw(role, tag, attrs, sink);
+      const drawn: unknown = drawer.draw(role, tag, attrs, sink, ctx);
       if (typeof drawn !== 'boolean')
         throw new TypeError(`draw() must return a boolean, got ${typeof drawn}`);
       if (depth !== 0) throw new TypeError(`draw() returned with ${depth} <g> still open`);
@@ -573,15 +586,16 @@ export class HookRunner<El = unknown, R = unknown> {
       if (outline !== null) return outline;
       const p = owner as ExtensionPlugin<El, R>;
       const drawer = this.drawers.get(p) as OutlineDrawer;
+      const c = context(p);
       let on: unknown;
       try {
-        on = drawer.active(context(p));
+        on = drawer.active(c);
         if (typeof on !== 'boolean')
           throw new TypeError(`active() must return a boolean, got ${typeof on}`);
       } catch (e) {
         throw failed(p, 'outline', e);
       }
-      outline = on ? guardedOutline(p, drawer) : undefined;
+      outline = on ? guardedOutline(p, drawer, c) : undefined;
       return outline;
     };
     return {

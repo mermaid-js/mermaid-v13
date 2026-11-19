@@ -145,9 +145,10 @@ describe('class render properties over the corpus', () => {
     for (const c of cases) {
       const { tree } = c.result;
       const root = tree.find({ tag: 'svg' })[0]!;
-      const [, , w, h] = tree.getAttr(root, 'viewBox')!.split(' ').map(Number);
+      // The viewBox starts above the drawing when it holds a front-matter title (D652).
+      const [x, y, w, h] = tree.getAttr(root, 'viewBox')!.split(' ').map(Number);
       const out = extents(tree).filter(
-        (p) => p.x < -0.5 || p.y < -0.5 || p.x > w! + 0.5 || p.y > h! + 0.5
+        (p) => p.x < x! - 0.5 || p.y < y! - 0.5 || p.x > x! + w! + 0.5 || p.y > y! + h! + 0.5
       );
       expect(out.slice(0, 3), c.id).toEqual([]);
     }

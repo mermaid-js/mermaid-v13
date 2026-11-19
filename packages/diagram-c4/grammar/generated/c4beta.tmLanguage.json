@@ -162,24 +162,28 @@
       "name": "constant.language.mermaid-c4beta"
     },
     "rule-35": {
-      "match": "#(?:[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})(?!\\w)",
+      "match": "#(?:[0-9A-Fa-f]{8}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3,4})(?!\\w)",
       "name": "constant.language.mermaid-c4beta"
     },
     "rule-36": {
+      "match": "(?:rgba?|hsla?)\\((?:[^()\\n\\r%]|%(?!%))*\\)",
+      "name": "constant.language.mermaid-c4beta"
+    },
+    "rule-37": {
       "match": "\"(?:[^\"\\\\\\r\\n]|\\\\.)*\"|'(?:[^'\\\\\\r\\n]|\\\\.)*'",
       "name": "string.quoted.mermaid-c4beta"
     },
-    "rule-37": {
+    "rule-38": {
       "match": "(?!(?:accTitle|accDescr)(?!\\w|-\\w))[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*",
       "name": "variable.other.mermaid-c4beta"
     },
-    "rule-38": {
+    "rule-39": {
       "match": "\\r\\n|\\n|\\r"
     },
-    "rule-39": {
+    "rule-40": {
       "match": "[\\t ]+"
     },
-    "rule-40": {
+    "rule-41": {
       "match": "%%[^\\n\\r]*",
       "name": "comment.line.mermaid-c4beta"
     },
@@ -310,6 +314,9 @@
         },
         {
           "include": "#rule-40"
+        },
+        {
+          "include": "#rule-41"
         }
       ]
     },

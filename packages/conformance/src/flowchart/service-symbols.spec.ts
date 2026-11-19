@@ -50,6 +50,9 @@ describe('flowchart definition, references and folding through the service match
     let checked = 0;
     let quotedResolved = 0;
     for await (const item of resolveCorpus({}, PARITY_SUITES)) {
+      // #644: v12's detection first, so only its flowcharts pay for an oracle parse. It is the
+      // type an accepted parse reports, so the same sources reach the checks below.
+      if (!oracle.detect(item.source)?.startsWith('flowchart')) continue;
       const v12 = await oracle.parse(item.source);
       if (!v12.accepted || !v12.diagramType.startsWith('flowchart')) continue;
       const doc = service.update(`corpus:///${item.id}`, item.source);

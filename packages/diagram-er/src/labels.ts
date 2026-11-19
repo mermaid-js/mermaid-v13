@@ -1,4 +1,4 @@
-import { genericType } from './layout/prepare.ts';
+import { typeLabel } from './layout/prepare.ts';
 import type { ErModel } from './parser/index.ts';
 
 /**
@@ -9,7 +9,7 @@ export function erLabels(model: ErModel): readonly string[] {
   return [
     ...model.entities.flatMap((e) => [
       e.alias || e.name,
-      ...e.attributes.flatMap((a) => [genericType(a.type), a.name, a.keys.join(','), a.comment]),
+      ...e.attributes.flatMap((a) => [typeLabel(a.type), a.name, a.keys.join(','), a.comment]),
     ]),
     ...model.relationships.map((r) => r.label),
     ...model.subgraphs.map((s) => s.title),

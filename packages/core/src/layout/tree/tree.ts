@@ -19,6 +19,7 @@ import type {
   RoutePoint,
   Side,
 } from '../types.ts';
+import { checkGraph, checkLabelSizes } from '../check.ts';
 import { titleAlign, titleLow, titlePoint } from '../title.ts';
 
 interface Rect {
@@ -47,47 +48,9 @@ interface Forest {
   readonly order: number[];
 }
 
-function finite(v: number, what: string): void {
-  if (!Number.isFinite(v) || v < 0)
-    throw new RangeError(`layout: ${what} must be a finite number >= 0, got ${v}`);
-}
-
 function check(graph: LayoutGraph): Map<string, number> {
-  const index = new Map<string, number>();
-  const ids = new Set<string>();
-  const add = (id: string, what: string): void => {
-    if (ids.has(id)) throw new Error(`layout: duplicate ${what} id '${id}'`);
-    ids.add(id);
-  };
-  graph.nodes.forEach((n, i) => {
-    add(n.id, 'node');
-    index.set(n.id, i);
-    finite(n.width, `width of node '${n.id}'`);
-    finite(n.height, `height of node '${n.id}'`);
-  });
-  for (const g of graph.groups) {
-    add(g.id, 'group');
-    for (const v of [g.padding.top, g.padding.right, g.padding.bottom, g.padding.left])
-      finite(v, `padding of group '${g.id}'`);
-  }
-  const edges = new Set<string>();
-  for (const e of graph.edges) {
-    if (edges.has(e.id)) throw new Error(`layout: duplicate edge id '${e.id}'`);
-    edges.add(e.id);
-    if (!ids.has(e.source))
-      throw new Error(`layout: edge '${e.id}' has unknown source '${e.source}'`);
-    if (!ids.has(e.target))
-      throw new Error(`layout: edge '${e.id}' has unknown target '${e.target}'`);
-    for (const s of [e.label, e.startLabel, e.endLabel]) {
-      if (!s) continue;
-      finite(s.width, `label width of edge '${e.id}'`);
-      finite(s.height, `label height of edge '${e.id}'`);
-    }
-  }
-  finite(graph.spacing.node, 'spacing.node');
-  finite(graph.spacing.rank, 'spacing.rank');
-  finite(graph.diagramPadding ?? 0, 'diagramPadding');
-  return index;
+  checkGraph(graph, { edge: checkLabelSizes });
+  return new Map(graph.nodes.map((n, i) => [n.id, i]));
 }
 
 /**

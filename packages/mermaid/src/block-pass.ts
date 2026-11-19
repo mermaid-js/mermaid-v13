@@ -16,6 +16,7 @@ import {
   type Warning,
 } from '@mermaid-js/core';
 import type { ResolvedConfig, ResolvedSite } from '@mermaid-js/core/config';
+import { blockBody, type BlockBody } from '@mermaid-js/core/parser-kit/embed-body';
 import type { Diagnostic, EmbeddedBlock, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
@@ -41,16 +42,29 @@ export function blockPrefix(host: string, id: string): string {
   return `${host}-${id.replace(/[^A-Za-z0-9]/gu, part)}`;
 }
 
+const bodies = new WeakMap<EmbeddedBlock, BlockBody>();
+
+/** Block `b`'s body as it is detected, parsed and drawn: its common indentation removed (D633). */
+function bodyOf(b: EmbeddedBlock): BlockBody {
+  let body = bodies.get(b);
+  if (!body) bodies.set(b, (body = blockBody(b.text)));
+  return body;
+}
+
+/** Where offset `o` of a body's parsed text is in the whole text. */
+export type Pos = (o: number) => number;
+
 /**
- * `e`, thrown for a block whose body starts at `at` in `source` (the whole text): positioned in
- * the whole text, so the line and column are the author's. Errors without a position pass.
+ * `e`, thrown for a block whose parsed body maps to the whole text `source` through `pos`:
+ * positioned in the whole text, so the line and column are the author's. Errors without a
+ * position pass.
  */
-export function inOuterText(e: unknown, source: string, at: number): unknown {
+export function inOuterText(e: unknown, source: string, pos: Pos): unknown {
   if (!(e instanceof MermaidError) || e instanceof NotLoadedError) return e;
   if (e.diagnostics.length > 0) {
     const shift = (r: { start: number; end: number }) => ({
-      start: r.start + at,
-      end: r.end + at,
+      start: pos(r.start),
+      end: pos(r.end),
     });
     const moved = e.diagnostics.map(
       (d): Diagnostic => ({
@@ -62,27 +76,32 @@ export function inOuterText(e: unknown, source: string, at: number): unknown {
     return errorFromDiagnostics(source, moved) ?? e;
   }
   if (e.offset === 0 && e.length === 0) return e;
+  const offset = pos(e.offset);
   return new MermaidError(e.code, e.message, {
     source,
-    offset: e.offset + at,
-    length: e.length,
+    offset,
+    length: pos(e.offset + e.length) - offset,
     cause: e,
   });
 }
 
-/** The block's first diagram line (where its type is), after what may come before it. */
-function typeRange(b: EmbeddedBlock, at: number): Range {
-  const from = preprocess(b.text).bodyStart;
+/**
+ * The block's first diagram line (where its type is), after what may come before it, in its
+ * parsed body; `pos` places it elsewhere (the whole text).
+ */
+function typeRange(b: EmbeddedBlock, pos: Pos = (o) => o): Range {
+  const { text } = bodyOf(b);
+  const from = preprocess(text).bodyStart;
   let start = from;
-  for (const l of b.text.slice(from).split('\n')) {
+  for (const l of text.slice(from).split('\n')) {
     const t = l.trim();
     if (t !== '' && !t.startsWith('%%')) {
-      start += at + l.length - l.trimStart().length;
-      return { start, end: start + t.length };
+      start += l.length - l.trimStart().length;
+      return { start: pos(start), end: pos(start + t.length) };
     }
     start += l.length + 1;
   }
-  return { start: at + b.text.length, end: at + b.text.length };
+  return { start: pos(text.length), end: pos(text.length) };
 }
 
 /** An error `code` at `range` in the whole text `root`. */
@@ -90,9 +109,9 @@ function blockError(root: string, code: string, message: string, range: Range): 
   return errorFromDiagnostics(root, [{ severity: 'error', code, message, range }])!;
 }
 
-/** The error for a block whose body does not start with a diagram type. */
-export function noDiagramType(root: string, b: EmbeddedBlock): MermaidError {
-  const range = typeRange(b, b.offset);
+/** The error for a block whose body does not start with a diagram type (placed by `pos`). */
+export function noDiagramType(root: string, b: EmbeddedBlock, pos: Pos): MermaidError {
+  const range = typeRange(b, pos);
   const word = /^[^\s{[(;:]*/.exec(root.slice(range.start, range.end))![0];
   return blockError(
     root,
@@ -361,11 +380,18 @@ interface BlockWarnings {
   readonly warnings: readonly Warning[];
 }
 
-/** Where a block's body is: the whole text, and the offset of the body in it. */
+/**
+ * Where a block's body is: the whole text, the offset of the body as written in it, and (for
+ * a block, D633) where each offset of its parsed body is; without `pos`, `at` plus the offset.
+ */
 interface Place {
   readonly root: string;
   readonly at: number;
+  readonly pos?: Pos;
 }
+
+/** `p`'s offset map into the whole text. */
+const posOf = (p: Place): Pos => p.pos ?? ((o) => p.at + o);
 
 /**
  * A host whose blocks a walk reads: where its text starts in the whole text, its analysis and
@@ -377,7 +403,11 @@ export interface HostAt extends Place {
 }
 
 /** Where the body of `h`'s block `b` is. */
-const placeOf = (h: Place, b: EmbeddedBlock): Place => ({ root: h.root, at: h.at + b.offset });
+function placeOf(h: Place, b: EmbeddedBlock): Place {
+  const host = posOf(h);
+  const body = bodyOf(b);
+  return { root: h.root, at: host(b.offset), pos: (o) => host(b.offset + body.outer(o)) };
+}
 
 /**
  * The types of `host`'s folded blocks by id (#670), each detected from its type line alone: the
@@ -389,8 +419,8 @@ const folds =
     const folded = embedsOf(host.prepared.parse).filter((b) => b.folded);
     if (folded.length === 0) return undefined;
     const typeOf = (b: EmbeddedBlock): string => {
-      const { start, end } = typeRange(b, 0);
-      const line = b.text.slice(start, end);
+      const { start, end } = typeRange(b);
+      const line = bodyOf(b).text.slice(start, end);
       try {
         const { detected } = deps.detect(line, s);
         return detected.id ?? detected.type;
@@ -406,10 +436,10 @@ const folds =
 const unfolded = (host: Analysis): EmbeddedBlock[] =>
   embedsOf(host.prepared.parse).filter((b) => !b.folded);
 
-/** A block whose type this `mermaid` cannot draw: its body at `at`, its type. */
+/** A block whose type this `mermaid` cannot draw: where its body is (`pos`), its type. */
 interface Missing {
   readonly b: EmbeddedBlock;
-  readonly at: number;
+  readonly pos: Pos;
   readonly type: string;
 }
 
@@ -427,7 +457,7 @@ function unavailable(root: string, missing: readonly Missing[]): MermaidError {
       severity: 'error',
       code: 'EMBED_UNAVAILABLE',
       message: `The ${one(m)}, which this mermaid cannot draw: it is ${WHY}.`,
-      range: typeRange(m.b, m.at),
+      range: typeRange(m.b, m.pos),
     })
   );
   if (missing.length > 1)
@@ -472,19 +502,19 @@ function countEdges({ root, at }: Place, b: EmbeddedBlock, a: Analysis, count: C
   );
 }
 
-/** Detects block `b`, its body at `at` in `root` (the whole text), its errors placed there. */
+/** Detects block `b`, its body placed in `root` (the whole text) by `place`, its errors there. */
 function detectBlock(
   deps: Pick<BlockDeps, 'detect'>,
-  { root, at }: Place,
+  place: Place,
   b: EmbeddedBlock,
   s: Snapshot
 ): Detection {
   try {
-    return deps.detect(b.text, s);
+    return deps.detect(bodyOf(b).text, s);
   } catch (e) {
     if (e instanceof MermaidError && e.code === 'UNSUPPORTED_DIAGRAM')
-      throw noDiagramType(root, { ...b, offset: at });
-    throw inOuterText(e, root, at);
+      throw noDiagramType(place.root, b, posOf(place));
+    throw inOuterText(e, place.root, posOf(place));
   }
 }
 
@@ -533,10 +563,10 @@ function analysesOf(deps: BlockDeps) {
   function blockOf(h: HostAt, b: EmbeddedBlock, f: Detection, plugin: AnyPlugin): Analysis {
     let a: Analysis;
     try {
-      a = deps.analyse(b.text, h.s, f, plugin, blockHost(h.a.prepared.config));
+      a = deps.analyse(bodyOf(b).text, h.s, f, plugin, blockHost(h.a.prepared.config));
     } catch (e) {
-      const { root, at } = placeOf(h, b);
-      throw inOuterText(e, root, at);
+      const place = placeOf(h, b);
+      throw inOuterText(e, place.root, posOf(place));
     }
     let map = analyses.get(h.a);
     if (!map) analyses.set(h.a, (map = new Map<string, Analysis>()));
@@ -550,7 +580,7 @@ function analysesOf(deps: BlockDeps) {
   }
 
   const miss = (h: HostAt, b: EmbeddedBlock, f: Detection, missing: Missing[]): undefined =>
-    void missing.push({ b, at: placeOf(h, b).at, type: f.detected.type });
+    void missing.push({ b, pos: posOf(placeOf(h, b)), type: f.detected.type });
 
   async function prepared(
     h: HostAt,
@@ -663,7 +693,7 @@ function walks(deps: BlockDeps): Omit<BlockPass, 'foldedType' | 'lazy'> {
   function drawLevel(h: HostAt, options: Options): DrawBlocks | undefined {
     return drawAll<EmbeddedDiagram>(h, (b, inner, id) => {
       const deeper = drawLevel(inner, options);
-      const drawn = deps.draw(b.text, h.s, options, inner.a, id, deeper);
+      const drawn = deps.draw(bodyOf(b).text, h.s, options, inner.a, id, deeper);
       const { securityLevel, linkSchemes } = drawn;
       const diagram: EmbeddedDiagram = {
         width: drawn.width,
@@ -678,7 +708,8 @@ function walks(deps: BlockDeps): Omit<BlockPass, 'foldedType' | 'lazy'> {
   function textLevel(h: HostAt, options: Options): DrawBlocks<EmbeddedText> | undefined {
     return drawAll<EmbeddedText>(h, (b, inner, id) => {
       const deeper = textLevel(inner, options);
-      const { warnings, ...diagram } = deps.drawText(b, h.s, options, inner.a, id, deeper);
+      const body = { ...b, text: bodyOf(b).text };
+      const { warnings, ...diagram } = deps.drawText(body, h.s, options, inner.a, id, deeper);
       return { diagram, warnings };
     });
   }

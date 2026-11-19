@@ -7,8 +7,8 @@ Agentflow syntax (R-PARSE-9, D54): the normative grammar of `agentflow-beta` dia
 The hand-written parser in `src/parser/` implements it; `tools/gen-grammar` builds a reference
 parser, a sentence generator, highlighters and the syntax reference page from it. mermaid@12
 decides what is valid, this file is fixed to match, and the parser must match this file
-(DESIGN §4.4). It is flowchart's grammar cut down by v12's `agentflow.jison` (D467): `flow`,
-`global` and `connector` in place of `subgraph`, three links, and `%%` comments as tokens.
+(DESIGN §4.4). It is flowchart's grammar cut down by v12's `agentflow.jison` (D467, D595):
+`flow`, `global` and `connector` in place of `subgraph`, three links, and `%%` comments as tokens.
 
 **Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
 matter and `%%{…}%%` directives removed; CRLF read as LF; `="x"` inside an HTML tag read as

@@ -106,8 +106,12 @@ afterEach(async () => {
 describe('mermaid.min.js', () => {
   it('stubs every method of the API at once', async () => {
     const { stub } = await load((d) => `${d}/dist/mermaid.min.js`);
-    for (const name of Object.keys(createMermaid()))
-      expect(typeof stub[name], name).toBe('function');
+    const api: Record<string, unknown> = createMermaid();
+    const methods = Object.keys(api).filter((name) => typeof api[name] === 'function');
+    expect(methods).toContain('render');
+    for (const name of methods) expect(typeof stub[name], name).toBe('function');
+    // v12's `parseError` is a property: set on the stand-in, it is copied, not replayed.
+    expect(stub.parseError).toBeUndefined();
     expect(() => stub.detectType('flowchart')).toThrow(/needs the module loaded/);
   });
 
@@ -149,6 +153,19 @@ describe('mermaid.min.js', () => {
     await stub.render('x');
     expect(g.mermaid!.parseError).toBe(handler);
     expect(g.mermaid).not.toBe(stub);
+  });
+
+  it('defers v12 init() as an async call and copies startOnLoad = false (#764, D643)', async () => {
+    const { stub, calls, settled } = await load((d) => `${d}/dist/mermaid.min.js`);
+    expect(stub.startOnLoad).toBe(true);
+    expect(() => (stub.getRegisteredDiagramsMetadata as () => unknown)()).toThrow(/module loaded/);
+    stub.startOnLoad = false;
+    const done = (stub.init as (c: unknown) => Promise<unknown>)({ theme: 'dark' });
+    expect(done).toBeInstanceOf(Promise);
+    await done;
+    await settled();
+    expect(calls).toEqual([['init', { theme: 'dark' }]]);
+    expect(g.mermaid!.startOnLoad).toBe(false);
   });
 
   it('finds the ESM file under dist/ for a bare package URL (unpkg, jsDelivr)', async () => {

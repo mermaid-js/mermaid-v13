@@ -48,15 +48,55 @@ describe('hopPaths (D537 rules)', () => {
     expect(hopPaths(['M0,50L50,50', 'M50,50L50,100'], 'arc')).toEqual([undefined, undefined]);
   });
 
-  it('shrinks two close hops to share the run, and drops them when there is no room', () => {
+  it('shrinks two close hops to share the run', () => {
     const near = hopPaths([H, 'M45,0L45,100', 'M55,0L55,100'], 'arc')[0]!;
     expect(near).toBe('M0,50L40,50A5,5 0 0,1 50,50L50,50A5,5 0 0,1 60,50L100,50');
-    expect(hopPaths([H, 'M48,0L48,100', 'M52,0L52,100'], 'arc')[0]).toBeUndefined();
   });
 
   it('ignores a line that is not plain absolute path data', () => {
     expect(parsePath('m0,0l10,10')).toBeUndefined();
     expect(hopPaths([H, 'm50,0l0,100'], 'arc')).toEqual([undefined, undefined]);
+  });
+});
+
+/** Vertical lines at each `x`, for crossings on `H`. */
+const verticals = (...xs: number[]): string[] => xs.map((x) => `M${x},0L${x},100`);
+
+describe('hopPaths: crossings too close for a hop each (D650, #793)', () => {
+  it('draws one hop over both, a radius beyond each, as tall as any other', () => {
+    expect(hopPaths([H, ...verticals(48, 52)], 'arc')[0]).toBe(
+      'M0,50L42,50A8,6 0 0,1 58,50L100,50'
+    );
+    expect(hopPaths([H, ...verticals(48, 52)], 'gap')[0]).toBe('M0,50L42,50M58,50L100,50');
+  });
+
+  it('merges every crossing of the cluster, however many', () => {
+    expect(hopPaths([H, ...verticals(46, 50, 54)], 'arc')[0]).toBe(
+      'M0,50L40,50A10,6 0 0,1 60,50L100,50'
+    );
+  });
+
+  it('turns the merged hop with its run', () => {
+    // Two steep lines crossing a later vertical run at y 48 and 52: the vertical one hops.
+    const steep = ['M45,23L55,73', 'M45,27L55,77'];
+    expect(hopPaths([...steep, V], 'arc')[2]).toBe('M50,0L50,42A8,6 90 0,1 50,58L50,100');
+  });
+
+  it('keeps the hops that fit as they are, and fits the merged hop between them', () => {
+    // The hop at 38 shrinks to 5 for its neighbour at 48, as without merging.
+    expect(hopPaths([H, ...verticals(38, 48, 52)], 'arc')[0]).toBe(
+      'M0,50L33,50A5,5 0 0,1 43,50L43,50A7,5 0 0,1 57,50L100,50'
+    );
+    // No room beside the hop at 60: the close pair stays bare, the hop at 60 is drawn.
+    expect(hopPaths([H, ...verticals(48, 52, 60)], 'arc')[0]).toBe(
+      'M0,50L54,50A6,6 0 0,1 66,50L100,50'
+    );
+  });
+
+  it('takes its radius from the room left at the run end', () => {
+    expect(hopPaths(['M0,50L58,50', ...verticals(48, 52)], 'arc')[0]).toBe(
+      'M0,50L44,50A6,4 0 0,1 56,50L58,50'
+    );
   });
 });
 

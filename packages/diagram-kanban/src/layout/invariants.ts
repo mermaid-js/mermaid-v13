@@ -3,19 +3,21 @@
  * graph engine's `validateLayout`. Each is a property of the output: no NaN or Infinity; every
  * column and card of the input laid out, in order; columns apart, left to right; every card
  * inside its column, below the shared title row, and clear of the next; every column title in
- * the title row at its column's top; a card's title above its ticket row; the priority bar's
- * line inside its card (in cells its stroke sits on the card's edge); no box of negative size
- * (pitfall 22); the bounds holding everything drawn (D224). Each violation is one readable
- * line. Comparisons allow a float tolerance.
+ * the title row at its column's top; a card's title above its ticket row; a card's ticket and
+ * assignee clear of each other, and an assignee stacked under its ticket inside the card (D647);
+ * the priority bar's line inside its card (in cells its stroke sits on the card's edge); no box
+ * of negative size (pitfall 22); the bounds holding everything drawn (D224). Each violation is
+ * one readable line. Comparisons allow a float tolerance.
  *
- * Not an invariant, because v12 does it too: a ticket or assignee over 40 px high sticks out of
- * the card's bottom. Nor is a label inside its column or card: a word wider than the wrap width
- * stays whole and overflows, as in v12 (in cells it is split between characters, and a single
- * character can still be wider than a narrow `kanban.sectionWidth` allows).
+ * Not an invariant, because v12 does it too: a ticket or assignee over 40 px high on a shared
+ * row sticks out of the card's bottom. Nor is a label inside its column or card: a word wider
+ * than the wrap width stays whole and overflows, as in v12 (in cells it is split between
+ * characters, and a single character can still be wider than a narrow `kanban.sectionWidth`
+ * allows).
  */
 import type { KanbanLayoutInput } from './input.ts';
 import { drawnRects } from './extent.ts';
-import type { KanbanLayout, Rect } from './types.ts';
+import type { CardLayout, KanbanLayout, Rect } from './types.ts';
 import {
   EPS,
   nonFinite as numbers,
@@ -23,6 +25,21 @@ import {
   rectsOverlap as overlaps,
   within,
 } from '@mermaid-js/shared/testing/layout-invariants';
+
+/**
+ * A card's ticket and assignee are clear of each other: side by side only when they fit, else
+ * the assignee stacked under the ticket and inside the card's bottom (D647).
+ */
+function ticketRowViolations(card: CardLayout, where: string, out: string[]): void {
+  const { ticket, assignee } = card;
+  if (!ticket || !assignee) return;
+  if (overlaps(ticket, assignee)) out.push(`${where}: its ticket and assignee overlap`);
+  else if (
+    assignee.y >= ticket.y + ticket.height - EPS &&
+    assignee.y + assignee.height > card.y + card.height + EPS
+  )
+    out.push(`${where}: its assignee, stacked under the ticket, sticks out of its bottom`);
+}
 
 const contains = (outer: Rect, inner: Rect): boolean =>
   within(inner.x, outer.x, outer.x + outer.width) &&
@@ -92,6 +109,7 @@ export function kanbanLayoutViolations(input: KanbanLayoutInput, layout: KanbanL
       for (const below of [card.ticket, card.assignee])
         if (below && below.y < card.title.y + card.title.height - EPS)
           out.push(`${where}: its ticket row overlaps its title`);
+    ticketRowViolations(card, where, out);
     if (previousCard && previousCard.column === card.column) {
       if (overlaps(previousCard, card)) out.push(`card ${previousCard.ast} overlaps ${card.ast}`);
       if (card.y < previousCard.y + previousCard.height - EPS)

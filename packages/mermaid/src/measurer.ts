@@ -145,6 +145,8 @@ export interface MeasurerOptions {
   measurer?: Measurer;
   /** Forces the table measurer in every environment, even over `measurer` (R-TEXT-7). */
   deterministic?: boolean;
+  /** The table measurer with the integrator's font tables (D645); the built-in one by default. */
+  table?: Measurer;
 }
 
 /**
@@ -152,8 +154,9 @@ export interface MeasurerOptions {
  * else the shared canvas measurer in a browser, else the table measurer.
  */
 export function selectMeasurer(options: MeasurerOptions = {}): Measurer {
-  if (options.deterministic) return tableMeasurer;
+  const table = options.table ?? tableMeasurer;
+  if (options.deterministic) return table;
   if (options.measurer) return options.measurer;
   shared ??= canvasMeasurer() ?? undefined;
-  return shared ?? tableMeasurer;
+  return shared ?? table;
 }

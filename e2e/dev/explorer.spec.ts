@@ -90,7 +90,21 @@ test('the selectors offer only what v13 supports', async ({ page }) => {
       'neo-dark',
       'auto',
     ]);
-  expect(await values('layout')).toEqual(['unset', 'layered']);
+  // Core's `layered`, then every v12 ELK name: the dev build registers @mermaid-js/layout-elk
+  // (#930, D171).
+  expect(await values('layout')).toEqual([
+    'unset',
+    'layered',
+    'elk',
+    'elk.layered',
+    'elk.stress',
+    'elk.force',
+    'elk.mrtree',
+    'elk.sporeOverlap',
+    'elk.box',
+    'elk.rectpacking',
+    'elk.radial',
+  ]);
 });
 
 test('a selector changes the render and survives a reload', async ({ page }) => {

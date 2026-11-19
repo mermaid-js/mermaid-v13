@@ -1,26 +1,27 @@
 /**
  * The C4 tests' context builder, which the layout specs (the package's and the conformance
- * layout corpus) share. It builds what the pipeline builds (`mermaid/src/api.ts`,
- * `core/src/pipeline/draw.ts`): the config core resolves from its defaults, the plugin's section
- * defaults, the source's front matter and directives; and a layout context with a theme and a
- * measurer (the table measurer by default), the warnings collected.
+ * layout corpus) share: the shared test context (`@mermaid-js/shared/testing/test-context`)
+ * with the `c4` section and its generated defaults, and c4's theme table. The layout context
+ * stays here: it is c4's own narrow `C4LayoutContext`, not a render context.
  */
 import type { Warning } from '@mermaid-js/core';
-import {
-  CORE_DEFAULTS,
-  resolveConfig,
-  type ConfigInput,
-  type ResolvedConfig,
-} from '@mermaid-js/core/config';
+import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { Diagnostic } from '@mermaid-js/core/parser-kit';
 import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
-import { createTheme, loadTheme, resolveThemeName, type Theme } from '@mermaid-js/core/theme';
+import { resolveThemeName, type Theme } from '@mermaid-js/core/theme';
+import { namedTestTheme, testConfig } from '@mermaid-js/shared/testing/test-context';
 import { c4ConfigDefaults } from './generated/config-defaults.ts';
 import type { C4LayoutContext } from './layout/layout.ts';
 import type { C4Model } from './model.ts';
 import { parseC4 } from './parser/index.ts';
 import { theme as c4ThemeTable } from './theme/table.ts';
+
+/** The plugin's `configDefaults` as the config layer under the integrator's. */
+export const C4_PLUGIN_DEFAULTS = { c4: c4ConfigDefaults };
+
+/** The config section of a c4-beta source: `c4beta` over `c4`, as the registry chains them (D534). */
+export const C4_BETA_SECTION: readonly string[] = ['c4beta', 'c4'];
 
 /**
  * The config a render of `pre` resolves: core's defaults and the `c4` section's generated
@@ -28,23 +29,12 @@ import { theme as c4ThemeTable } from './theme/table.ts';
  * the front matter and `init` directives. With `beta`, the section is `c4beta` over `c4`, as the
  * registry chains them for a c4-beta source (D534); `c4beta`'s defaults come from core's.
  */
-export function c4TestConfig(
+export const c4TestConfig = (
   pre?: PreprocessResult,
   integrator?: Readonly<Record<string, unknown>>,
   beta = false
-): ResolvedConfig {
-  const directives = (pre?.directives ?? []).flatMap((d) =>
-    d.kind === 'init' && d.args && typeof d.args === 'object' ? [d.args as ConfigInput] : []
-  );
-  return resolveConfig(
-    CORE_DEFAULTS,
-    integrator,
-    pre?.frontMatter?.config,
-    directives,
-    { c4: c4ConfigDefaults },
-    { section: beta ? ['c4beta', 'c4'] : 'c4' }
-  );
-}
+): ResolvedConfig =>
+  testConfig(beta ? C4_BETA_SECTION : 'c4', pre, integrator, undefined, C4_PLUGIN_DEFAULTS);
 
 /** A source parsed: its model, its diagnostics, and the config its text resolves to. */
 export interface ParsedC4 {
@@ -75,6 +65,5 @@ export function c4TestContext(
  * option is (none gives the product default, `redux-color`, D151), with the plugin's table. A
  * layout spec that loads a theme by name alone misses the table and the default.
  */
-export async function c4TestTheme(name?: string): Promise<Theme> {
-  return createTheme(await loadTheme(resolveThemeName(name).name), { diagram: c4ThemeTable });
-}
+export const c4TestTheme = (name?: string): Promise<Theme> =>
+  namedTestTheme(resolveThemeName(name).name, c4ThemeTable);

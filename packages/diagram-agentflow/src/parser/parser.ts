@@ -2,7 +2,8 @@
  * Agentflow parser: recursive descent over the lexer's tokens (`lexer.ts`), producing an
  * {@link AgentflowModel}, the typed AST, symbols, statement spans and diagnostics (DESIGN §4.3).
  *
- * Written from a copy of v13 flowchart's parser (D467), cut down by the diff between v12's
+ * A dialect of the flow family's parser (`FlowParser`), which agentflow shares with flowchart
+ * (D595, amending D467's copy), cut down by the diff between v12's
  * `agentflow.jison` and `flow.jison`: `flow … end` (named, titled, with `@{ … }`, or
  * anonymous), `global … end` and `connector` replace `subgraph`; a `%%` comment is a token that
  * ends a statement (jison's `COMMENT` is a `separator` and a `line`); links are `-->`, `--x`,
@@ -11,7 +12,7 @@
  * An unclosed label or string, which swallows the rest of the text, is reported at its opener
  * and lexing restarts on the following line.
  *
- * Flowchart's parser is ported from Pele's `src/diagrams/flowchart/parser.ts` at 3a2f075
+ * The flow family's parser is ported from Pele's `src/diagrams/flowchart/parser.ts` at 3a2f075
  * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano). Changed: the block rules are
  * agentflow's (`flow`, `global`, `connector`), as above; the rules agentflow shares with
  * flowchart (tokens, errors and recovery, vertices, links, chains, the one-line statements, the

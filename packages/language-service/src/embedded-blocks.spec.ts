@@ -51,6 +51,41 @@ describe('diagnostics inside a block', () => {
     expect(doc.diagnostics()[0]!.range.start).toBe(doc.text.indexOf('--> -->') + 4);
   });
 
+  it('reads an indented body without its common indentation, as the render does (D633)', () => {
+    // eventmodeling closes a data block only on a `}` at column 0 (#750).
+    const ok = open(
+      [
+        'flowchart LR',
+        '  mermaid em["Event model"] {',
+        '    eventmodeling',
+        '    tf 01 cmd Submit [[D]]',
+        '    data D',
+        '    {',
+        '      a: 1',
+        '    }',
+        '  }',
+        '',
+      ].join('\n')
+    );
+    expect(reported(ok)).toEqual([]);
+    const bad = open(
+      [
+        'flowchart LR',
+        '  mermaid x {',
+        '    sequenceDiagram',
+        '      A->>B: hi',
+        '      A->>>B',
+        '  }',
+        '',
+      ].join('\n')
+    );
+    expect(reported(bad)).toEqual([['UNEXPECTED', '>']]);
+    expect(bad.diagnostics()[0]!.range.start).toBe(bad.text.indexOf('>>>') + 2);
+    const word = (doc: DocumentSnapshot, w: string) =>
+      doc.semanticTokens().find((t) => doc.text.slice(t.range.start, t.range.end) === w);
+    expect(word(bad, 'sequenceDiagram')).toBeDefined();
+  });
+
   it('reports a block that does not start with a diagram type at its first line', () => {
     const doc = open(
       ['flowchart LR', '  mermaid fruit {', '    %% a note', '    banana split', '  }', ''].join(

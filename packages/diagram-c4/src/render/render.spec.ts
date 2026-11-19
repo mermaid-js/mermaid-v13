@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import type { OutlineDraw, OutlineRole } from '@mermaid-js/core/svg';
 import { C4_COLOR_INVALID } from '../codes.ts';
 import { c4 } from '../plugin.ts';
+import { fixtureSource } from '../layout/mmd.fixtures.ts';
 import { renderC4ForTest } from './harness.ts';
 
 /** Every `<tag>` start tag's attributes, in document order. */
@@ -264,6 +265,27 @@ UpdateRelStyle(a, s, $lineColor="url(#x)")`;
     expect(elements(group(svg, 'data-id="a" data-ast'), 'rect')[0]!.fill).toBe('#08427B');
     expect(elements(group(svg, 'data-id="s" data-ast'), 'rect')[0]!.fill).toBe('#1168BD');
     expect(byClass(svg, 'path', 'c4-rel')[0]!.stroke).toBe('var(--_c4r)');
+  });
+
+  it('reads an empty UpdateElementStyle slot as not given: the default, with no warning (#774)', async () => {
+    const { svg, warnings } = await renderC4ForTest(
+      fixtureSource('nightly-check/styling/update-element-style-empty-slots')
+    );
+    expect(warnings).toEqual([]);
+    for (const alias of ['a', 'b'])
+      expect(elements(group(svg, `data-id="${alias}" data-ast`), 'rect')[0]).toMatchObject({
+        fill: '#438DD5',
+        stroke: '#3C7FC0',
+      });
+  });
+
+  it('still warns for a non-empty colour the check refuses, beside an empty slot', async () => {
+    const src = `C4Container\nContainer(a, "A")\nUpdateElementStyle(a, , "url(#x)")`;
+    const { warnings } = await renderC4ForTest(src);
+    expect(warnings.map((w) => [w.code, w.message.includes('$fontColor of a')])).toEqual([
+      [C4_COLOR_INVALID, true],
+    ]);
+    expect(warnings[0]!.message).not.toContain('$bgColor');
   });
 });
 
