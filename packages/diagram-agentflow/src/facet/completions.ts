@@ -1,6 +1,6 @@
 /**
  * Agentflow completion (DESIGN §4.5, D95, R-LANG-7), on the flow family's mapping
- * (`@mermaid-js/shared/parser/flow-facet`, which agentflow shares with flowchart, D467): the
+ * (`@mermaid-js/shared/parser/flow-facet`, which agentflow shares with flowchart, D467, D595): the
  * probe's expected kinds and lexer mode mapped to items. Keywords (`flow`, `connector`,
  * `global`, `end` and flowchart's statements) are offered only when the parser tests their kind
  * at the cursor; the token before the cursor tells id kinds apart (a node after a link, a

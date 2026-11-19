@@ -1,6 +1,6 @@
 /**
  * Agentflow hover (DESIGN §4.5, D93), on the flow family's pieces
- * (`@mermaid-js/shared/parser/flow-facet`, shared with flowchart, D467): a node id shows
+ * (`@mermaid-js/shared/parser/flow-facet`, shared with flowchart, D467, D595): a node id shows
  * its kind (`task`, `tool`, …, `connector`), label, drawn shape, flow, classes, metadata and edge
  * counts; a flow id its title, members, view and metadata; a class its `classDef` styles; an
  * edge id its ends and semantic; a link its semantic; a keyword the one-line doc of the grammar
