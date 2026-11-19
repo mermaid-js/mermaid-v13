@@ -65,16 +65,61 @@ export function topLaneHorizontalPadding(lane: Node): number {
   return Math.max(lane.padding ?? MIN_TOP_LANE_HORIZONTAL_PADDING, MIN_TOP_LANE_HORIZONTAL_PADDING);
 }
 
+const DEFAULT_GROUP_PADDING = 20;
+
+/** How far a nested group is drawn past the nodes it holds, beside them across the flow. */
+function nestedSideInset(group: Node): number {
+  const box = group.paddingBox;
+  return box ? Math.max(box.left, box.right) : (group.padding ?? DEFAULT_GROUP_PADDING) / 2;
+}
+
+/** The inset of `group` and the groups above it up to its lane; none if it never reaches one. */
+function insetToLane(
+  group: Node,
+  byId: ReadonlyMap<string, Node>,
+  isLane: (id: string) => boolean
+): number | undefined {
+  const seen = new Set<string>();
+  let inset = 0;
+  for (let current: Node | undefined = group; current; ) {
+    if (isLane(current.id)) {
+      return inset;
+    }
+    if (seen.has(current.id)) {
+      return undefined;
+    }
+    seen.add(current.id);
+    inset += nestedSideInset(current);
+    current = current.parentId === undefined ? undefined : byId.get(current.parentId);
+  }
+  return undefined;
+}
+
+/**
+ * How far the deepest group nested in any lane reaches past the nodes it holds, summed over the
+ * groups between it and its lane. A group that never reaches a lane counts for nothing.
+ */
+function deepestNestedInset(nodes: readonly Node[], isLane: (id: string) => boolean): number {
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const insets = nodes
+    .filter((node) => node.isGroup && !isLane(node.id))
+    .map((group) => insetToLane(group, byId, isLane) ?? 0);
+  return Math.max(0, ...insets);
+}
+
 /**
  * The gap between the nodes of neighbouring lanes in TB and BT: twice the node spacing, but at
- * least the padding both lanes keep around their nodes, so lanes touch instead of overlapping.
+ * least twice the reach of a lane past its nodes, so lanes touch instead of overlapping. The
+ * reach is the largest lane padding plus the deepest nested-group inset found anywhere in the
+ * diagram, and that one gap is used for every seam, not only the one beside the nested group.
  */
 export function topLaneGap(nodes: readonly Node[], nodeSpacing: number): number {
   const model = buildLaneModel([...nodes]);
   const paddings = nodes
     .filter((node) => node.isGroup && model.isLane(node.id))
     .map(topLaneHorizontalPadding);
-  return Math.max(2 * nodeSpacing, 2 * Math.max(0, ...paddings));
+  const reach = Math.max(0, ...paddings) + deepestNestedInset(nodes, model.isLane);
+  return Math.max(2 * nodeSpacing, 2 * reach);
 }
 
 function assignTopLaneTitleRect(lane: Node): void {
