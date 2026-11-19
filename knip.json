@@ -90,6 +90,7 @@
     }
   },
   "ignore": [
+    ".claude/**",
     "tools/**/fixtures/**",
     "packages/diagram-flowchart/scripts/**",
     "e2e/global-teardown.ts",
