@@ -85,7 +85,11 @@ for (const bundler of BUNDLERS) {
       // The detector is in the page's own scripts; the entry is not.
       expect(holds(dist, scripts.next(), FIXTURE_DETECTOR)).toBe(true);
 
-      expect(await draw(page, 'flow', FLOWCHART)).toEqual({ type: 'flowchart-v2', warnings: [] });
+      // The page has not set `securityLevel: 'loose'`, so the plugin binds no callback (D554).
+      expect(await draw(page, 'flow', FLOWCHART)).toEqual({
+        type: 'flowchart-v2',
+        warnings: ['CALLBACK_IGNORED'],
+      });
       await page.waitForLoadState('networkidle');
       expect(holds(dist, scripts.all, FIXTURE_ENTRY)).toBe(false);
 

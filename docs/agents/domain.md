@@ -11,6 +11,7 @@ The approved baseline (always present):
 - **`v13/docs/REQUIREMENTS.md`**: requirements by R-id (`R-<AREA>-<n>`); the glossary is in §3, open items at the end.
 - **`v13/docs/DESIGN.md`**: how v13 is built: packages, interfaces, M1 work breakdown (§15), ADR list (§16).
 - **`v13/docs/DECISIONS.md`**: the decision log by D-id. Later rounds amend earlier rows; an amended row points to its replacement.
+- **`v13/docs/decisions/`**: the decisions after D632, one file each (`D636.md`). `DECISIONS.md` gets no new rows. A new decision that replaces an earlier one says so.
 
 Created lazily (may not exist yet):
 
