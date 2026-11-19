@@ -16,6 +16,14 @@
     "since": "2026-11-11"
   },
   {
+    "id": "e2e/diagrams/flowchart/baseline/embedded/eventmodeling-data-indented.mmd",
+    "inputHash": "sha256:5876113befb0097a",
+    "kind": "accept",
+    "reason": "v12 rejects `mermaid <id> {`; v13 parses an embedded diagram block (ADR-15), its body without the common indentation (D633).",
+    "owner": "D633",
+    "since": "2026-11-19"
+  },
+  {
     "id": "e2e/diagrams/flowchart/baseline/embedded/folded-in-subgraph.mmd",
     "inputHash": "sha256:79ab3db4ba92093c",
     "kind": "accept",
