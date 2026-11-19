@@ -26,8 +26,8 @@ What most integrators have to change:
 3. Click callbacks (`click A callback`, `call fn()`) and `bindFunctions` need
    `@mermaid-js/plugin-interactions`, and callbacks still need `securityLevel: 'loose'`
    ([Click callbacks](#click-callbacks-and-bindfunctions)).
-4. `securityLevel: 'loose'` (and `antiscript`, `sandbox`) now means `default`; `strict` now
-   allows relative links only ([securityLevel](#securitylevel)).
+4. For link URLs, `securityLevel: 'loose'` (and `antiscript`, `sandbox`) now means `default`;
+   `strict` now allows relative links only ([securityLevel](#securitylevel)).
 5. CSS that targets element ids, `<marker>`, `.label-container` or the `<style>` element inside
    the SVG must move to the kept class names and `--mermaid-*` CSS variables
    ([Flowchart SVG structure](#flowchart-svg-structure), [Themes](#themes)).
@@ -162,8 +162,9 @@ test checks them against the mermaid@12 declarations.
 `mailto` and relative link URLs, which is what v12's default `strict` kept. **`strict` now keeps
 relative links only**: an integrator who set `securityLevel: 'strict'` explicitly loses absolute
 links and gets a `URL_REFUSED` warning per dropped link. Set `securityLevel: 'default'` (or
-leave it unset) to keep them. `loose`, `antiscript` and `sandbox` act as `default` with a
-`SECURITY_LEVEL` warning; there is no sandbox iframe mode and no HTML in labels.
+leave it unset) to keep them. `antiscript` and `sandbox` act as `default` with a
+`SECURITY_LEVEL` warning; there is no sandbox iframe mode and no HTML in labels. `loose` acts
+as `default` for link URLs too, with no warning, because it still turns callbacks on (D634).
 
 In v12, `loose` was also what allowed click callbacks and HTML labels. In v13 HTML labels are
 gone. Callbacks need the interactions plugin and, as in v12, `securityLevel: 'loose'` (D554):
@@ -254,8 +255,7 @@ bindFunctions?.(element);
   render adds one `CALLBACK_IGNORED` warning. A callback calls a function on `window` that the
   diagram text names, with arguments the text gives, so set `loose` only for text you trust.
   Links, tooltips and sequence actor menus work under every level.
-- `loose` still adds core's `SECURITY_LEVEL` warning, because for link URLs it is treated as
-  `default`.
+- `loose` adds no warning (D634). For link URLs it is treated as `default`.
 - The plugin does not change the SVG; it adds click listeners to the rendered `g.node[data-id]`
   elements inside the element you pass.
 
@@ -453,7 +453,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `theme` | `"redux-color"` | The default changes from `default` to `redux-color`, the theme v12's flowchart renders by default (D151, amending D55). 13.0 ships the redux family (`redux`, `redux-color`, `redux-dark`, `redux-dark-color`) as real themes, plus `default`, `dark`, `forest`, `neutral`, `base`, `neo` (v12 `theme-neo.js`, D180, D181) and `neo-dark` (v12 `theme-neo-dark.js`, cleaned up into a dark theme, D183). `null` renders `base`, with a `THEME_UNAVAILABLE` warning. |
 | `layout` | `"layered"` | The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 value `dagre` stays valid and maps to `layered` silently. `elk` and `elk.<algorithm>` (and the `flowchart-elk` header) are laid out by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). Other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. A diagram can name its own default engine (D284): mindmap lays out with `tree` (D280, loaded lazily) when no config layer sets `layout`, maps v12's `cose-bilkent` and `tidy-tree` to it silently (D282), honours `layered`, `dagre` and an installed `elk.*`, and draws an unknown or uninstalled name with `tree` and the same warnings; other diagrams do not reach `tree` (D285). Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not: any other name gives one `ASCII_DROPPED` warning (`feature: 'layout'`) and nothing else, and its engine is never loaded (D179). |
 | `maxEdges` | `5000` | The default changes from 500 to 5,000 (D31): one `A & … --> B & …` line multiplies edges, and v13 draws 5,000 quickly. Integrator-only; it sets the `maxEdges` render limit (R-SEC-5); an explicit `limits.maxEdges` wins. Over the limit, render() rejects with a `LIMIT` error. |
-| `securityLevel` | `"default"` | The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose`, `antiscript` and `sandbox` act as `default` with a warning. |
+| `securityLevel` | `"default"` | The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose` turns on click callbacks (D554) and acts as `default` for link URLs, with no warning (D634); `antiscript` and `sandbox` act as `default` with a warning. |
 | `flowchart.curve` | `"rounded"` | The default changes from `basis` to `rounded`, the look of v12's default ELK layout: stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis` to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped routes with right-angle corners (the step in the middle, near the start and near the end of the leg); `rounded` draws straight segments with rounded corners; every other value draws S-curves (the layout engine routes edges, not a d3 curve factory), and a name outside this list also warns `CURVE_UNKNOWN`, once per render (D602). |
 | `sequence.actorFontSize` |  | The default changes: unset, it is the top-level `fontSize` when that is set (D620), else the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
 | `sequence.actorFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. |
@@ -1261,12 +1261,18 @@ keyword; 12.2.0 sends both keywords to the unified one). v13 has one renderer fo
 | `classDef` / `style` as CSS (`.name > * { … !important }`), reaching the composite body but not its title strip | Presentation attributes after the allow-list (R-SEC-3), on a state's shape, on both of a composite's rects, and `color` on the label only | Unknown properties and unsafe values are dropped with a warning |
 | Front-matter `title` drawn as `statediagramTitleText` | Not drawn | As flowchart (D122) |
 
-Colours map to theme variables v13 already has (D152): states `mainBkg` / `nodeBorder` /
-`nodeTextColor` (v12 `stateBkg`, `stateBorder`, the node label colour), start, fork and join
-`lineColor` (v12 `specialStateColor`), the end dot `nodeBorder` (v12 `innerEndBackground`),
-transitions `lineColor` and `arrowheadColor` (v12 `transitionColor`), labels `textColor` on
-`edgeLabelBackground`, composite titles `titleColor`, notes `noteBkgColor` / `noteBorderColor` /
-`noteTextColor`. A composite's title band reads `compositeTitleBackground`, its body
+Colours map to theme variables v13 already has (D152): states `mainBkg` / `nodeBorder` (v12
+`stateBkg`, `stateBorder`), start, fork and join `lineColor` (v12 `specialStateColor`), the end
+dot `nodeBorder` (v12 `innerEndBackground`), transitions `lineColor` and `arrowheadColor` (v12
+`transitionColor`), labels `textColor` on `edgeLabelBackground`, notes `noteBkgColor` /
+`noteBorderColor` / `noteTextColor`. State text reads `stateLabelColor` and composite titles
+`compositeTitleColor`, state's own variables (D638): in the classic themes both follow
+`primaryTextColor`, as v12's `stateLabelColor` did, and setting `stateLabelColor` recolours both;
+in the redux and neo themes they are `nodeTextColor` and `titleColor`. Under `default`, v12
+ignored an author's `primaryTextColor` for state text; v13 applies it. Where v12's classic themes
+used fixed values of their own (`neutral`'s black transitions and outlines and `#222` start dot,
+`dark`'s `#f4f4f4` start dot, black arrowheads in `forest` and `neutral`), v13 draws the shared
+variables above (D639). A composite's title band reads `compositeTitleBackground`, its body
 `compositeBackground`, and a nested composite's body `altBackground`, with v12's values (D120,
 D126, #193, #197; see the theme variable table). The composite outline radius is `radius`; the
 state radius (5), the end-state stroke (2) and the dash patterns are the same in every v12 look,

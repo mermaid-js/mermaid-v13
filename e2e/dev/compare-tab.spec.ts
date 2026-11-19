@@ -79,6 +79,19 @@ test('the left pane renders the dev build, unsaved edits included', async ({ pag
   await expect(svg(page, 'left')).toContainText('Delta');
 });
 
+test('the left pane renders with the e2e page\'s plugins: icons and hand-drawn (#391)', async ({
+  page,
+}) => {
+  await open(page, { version: PINNED });
+  await setText(page, 'flowchart LR\n  A["fa:fa-bell Alert"] --> B[Beta]\n');
+  await expect(svg(page, 'left')).toContainText('Alert');
+  await expect(svg(page, 'left')).not.toContainText('fa:fa-bell');
+  await setText(page, '---\nconfig:\n  look: handDrawn\n---\nstateDiagram-v2\n  [*] --> A\n  A --> B\n');
+  const a = svg(page, 'left').locator('g.node[data-id="A"]');
+  await expect(a.locator('path').first()).toBeAttached();
+  await expect(a.locator('rect')).toHaveCount(0);
+});
+
 test('the panes are sandboxed: an opaque origin that cannot reach the file API', async ({
   page,
 }) => {

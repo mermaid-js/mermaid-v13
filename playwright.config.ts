@@ -21,6 +21,20 @@ function resolveE2EPort(): string {
   return String(9000 + (hash.readUInt16BE(0) % 100));
 }
 
+/**
+ * CI runs the specs besides the fixture snapshots as two parallel jobs (#982): `E2E_PART=platform`
+ * runs only the plugin-platform apps (e2e/platform), which share one workspace build, and
+ * `E2E_PART=rest` runs everything else. Unset, every spec runs, as before. A new spec folder
+ * lands in `rest` without a change here.
+ */
+function resolveE2EPart(): 'platform' | 'rest' | undefined {
+  const part = process.env.E2E_PART;
+  if (part === undefined || part === '') return undefined;
+  if (part === 'platform' || part === 'rest') return part;
+  throw new Error(`E2E_PART must be "platform" or "rest", not "${part}"`);
+}
+
+const part = resolveE2EPart();
 const port = resolveE2EPort();
 process.env.MERMAID_PORT ??= port;
 process.env.MERMAID_DEV_PORT ??= port;
@@ -77,9 +91,22 @@ export default defineConfig({
   },
   projects: [
     // The baseline and browser specs; the smoke render needs the bundle (`smoke:build`).
-    { name: 'chromium', testIgnore: ['**/helpers/**', 'smoke/**', 'dev/**'] },
+    {
+      name: 'chromium',
+      testIgnore: [
+        '**/helpers/**',
+        'smoke/**',
+        'dev/**',
+        ...(part === 'rest' ? ['platform/**'] : []),
+      ],
+      ...(part === 'platform' ? { testMatch: 'platform/*.spec.ts' } : {}),
+    },
     // The dev explorer specs (#64); `pnpm e2e` runs them with `chromium`.
-    { name: 'dev', testMatch: 'dev/**/*.spec.ts' },
+    {
+      name: 'dev',
+      testMatch: 'dev/**/*.spec.ts',
+      ...(part === 'platform' ? { testIgnore: 'dev/**' } : {}),
+    },
     // CI smoke-render, one runtime per job: `--project smoke-<browser>`.
     ...(['chromium', 'firefox', 'webkit'] as const).map((browser) => ({
       name: `smoke-${browser}`,

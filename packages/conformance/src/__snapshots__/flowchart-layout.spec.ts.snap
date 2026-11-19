@@ -23,6 +23,7 @@ exports[`layered over parser-produced flowchart graphs > lays out every corpus g
   "flowchart/baseline/edges/self-loops-and-multi.mmd": 0,
   "flowchart/baseline/edges/two-self-loops.mmd": 0,
   "flowchart/baseline/embedded/class-untitled.mmd": 0,
+  "flowchart/baseline/embedded/eventmodeling-data-indented.mmd": 0,
   "flowchart/baseline/embedded/folded-in-subgraph.mmd": 0,
   "flowchart/baseline/embedded/folded.mmd": 0,
   "flowchart/baseline/embedded/in-subgraph.mmd": 0,

@@ -280,10 +280,25 @@ describe('workflow branches (R-REL-1)', () => {
       expect(jobs[id]!.needs, id).toBe('changes');
     }
     expect(jobs.lint!.if).toBeUndefined();
-    expect(jobs['docs-tests']!.if).toContain("needs.changes.outputs.scope == 'docs'");
+    // Whenever the Scope job names readers: a docs run, or a related run with docs beside source.
+    expect(jobs['docs-tests']!.if).toBe("${{ needs.changes.outputs.readers != '' }}");
     // The required check fails when the scope was not decided, whatever was skipped.
     expect(jobs.checks!.needs).toContain('changes');
     expect(jobs.checks!.steps[0]!.run).toContain('"$SCOPE" != "success"');
+  });
+
+  it('runs only the related unit tests when the Scope job says so, and never none (D637)', () => {
+    const jobs = wf('ci.yml').jobs;
+    const run = jobs.tests!.steps.find((s) => (s.run ?? '').includes('pnpm test'))!;
+    expect(run.env?.TESTS).toBe('${{ needs.changes.outputs.tests }}');
+    expect(run.env?.TEST_FILES).toBe('${{ needs.changes.outputs.test_files }}');
+    // The filtered run needs both the mode and a list; anything else is the full run.
+    expect(run.run).toContain('[ "$TESTS" = "related" ] && [ -n "$TEST_FILES" ]');
+    expect(run.run).toContain('pnpm test --shard="$SHARD" $REPORT\n');
+    // REPORT only adds the JSON report of the shard balance (#984), never a file filter.
+    expect(run.env?.REPORT).toBe(
+      '--reporter=default --reporter=json --outputFile.json=unit-durations.json'
+    );
   });
 
   it('keeps the specs that take no screenshots out of the visual job', () => {

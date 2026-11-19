@@ -115,6 +115,8 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   ),
   critTextColor:
     'D574: v13 ink for text on a critical gantt bar (v12 `.critText0` took taskTextColor); taskTextColor here',
+  compositeTitleColor:
+    'D638: v12 has no variable; it drew composite titles in stateLabelColor; v13 neo takes titleColor',
   erEdgeLabelBackground: 'D628: every edge label is filled with the theme background',
   ...Object.fromEntries(LOOK_GEOMETRY.map((n) => [n, LOOK_GEOMETRY_WHY])),
   ...Object.fromEntries(

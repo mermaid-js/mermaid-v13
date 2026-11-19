@@ -119,6 +119,9 @@ interface Doc {
  * One parse. Each grammar rule is a method; `i` indexes the parser tokens. A rule that fails
  * records a diagnostic and throws {@link STOP}; the statement loop catches it and recovers.
  */
+/** The header keyword at the start of the `stateDiagram` token. */
+const RE_HEADER_KEYWORD = /^stateDiagram(?:-v2)?/i;
+
 class StateParser extends StateCursor {
   private readonly pre: PreprocessResult;
   private readonly ids: ParseState['ids'];
@@ -212,11 +215,15 @@ class StateParser extends StateCursor {
       this.i = sd;
     }
     const j = this.i++;
+    // The token, as v12's `stateDiagram\s+`, may run on over a comment line below it: the
+    // header is the keyword alone.
+    const { start } = this.own(j);
+    const keyword = RE_HEADER_KEYWORD.exec(this.text(j).trim())![0];
     const node: StateHeader = {
       id: this.ids.statement('st'),
       type: 'Header',
-      range: this.own(j),
-      keyword: this.text(j).trim(),
+      range: { start, end: start + keyword.length },
+      keyword,
     };
     out.push(node);
     this.st.statement('header', node.range);

@@ -224,11 +224,11 @@ describe('mermaid render: stderr and exit codes (R-ASCII-4, D85)', () => {
   it.concurrent(
     'exits 1 for a diagram type this build does not have',
     async () => {
-      // ZenUML: a v12 diagram (external there) with no v13 package.
+      // ZenUML: a v12 diagram (external there) with no v13 package (D317).
       const r = await cli(['render', '--format', 'ascii'], 'zenuml\n  A.method()\n');
       expect(r.code).toBe(1);
       expect(r.stdout).toBe('');
-      expect(r.stderr).toContain('No diagram type detected');
+      expect(r.stderr).toContain('Diagram type "zenuml" is not supported');
     },
     T
   );
