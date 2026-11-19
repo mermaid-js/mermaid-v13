@@ -9,14 +9,15 @@
  * colours, the others the border palette.
  */
 import type { RenderContext } from '@mermaid-js/core';
-import type {
-  Length,
-  OutlinePaint,
-  Paint,
-  SafeColor,
-  SafeFilter,
-  SafeValue,
-  ThemeRef,
+import {
+  checkColor,
+  type Length,
+  type OutlinePaint,
+  type Paint,
+  type SafeColor,
+  type SafeFilter,
+  type SafeValue,
+  type ThemeRef,
 } from '@mermaid-js/core/svg';
 import { GIT_PAINT } from './variables.ts';
 
@@ -90,7 +91,7 @@ export interface Paints {
 /** What a theme gives a colour variable it has no value or rule for. */
 const UNSET = 'currentColor';
 /** v12's cherry-pick ink where a theme sets none: white (v12 `isDark ? '#000000' : '#fff'`). */
-const CHERRY_INK = '#ffffff' as SafeColor;
+const CHERRY_INK = checkColor('#ffffff')!;
 
 const flagOf = (theme: Theme, name: string): boolean => theme.value(name) === 'true';
 /** A colour variable, or `fallback` where the theme gives it no value (v12's `??`). */

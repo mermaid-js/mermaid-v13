@@ -1,9 +1,10 @@
 /**
  * Parser-produced layout graphs for the architecture corpus specs (#607): a source is
  * preprocessed, its front matter and directives resolved over the defaults (as a render does),
- * parsed by the v13 parser and measured by `prepareArchitecture`, the builder the plugin calls,
+ * parsed by the v13 parser and measured and laid out by `layoutArchitecture`, as the plugin does,
  * with core's table measurer in the source's theme, built as a render builds it (kanban's test
- * harness): the theme name (`auto` too), `themeVariables` and the config warnings.
+ * harness): the theme name (`auto` too), `themeVariables` and the config warnings. `prepared` is
+ * the views with the graph the engine was given (labels of straight level edges left out).
  */
 import { CORE_DEFAULTS, resolveConfig, type ConfigInput } from '@mermaid-js/core/config';
 import type { LayoutEngine } from '@mermaid-js/core/layout';
@@ -11,8 +12,9 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, resolveThemeName } from '@mermaid-js/core/theme';
 import {
+  architecture,
+  layoutArchitecture,
   parseArchitecture,
-  prepareArchitecture,
   type ArchitectureModel,
   type ArchitecturePrepared,
 } from '@mermaid-js/diagram-architecture';
@@ -38,10 +40,16 @@ export async function architectureLaidOut(
   );
   const warnings: string[] = [];
   const warn = (w: { code: string }): void => void warnings.push(w.code);
-  const config = resolveConfig(CORE_DEFAULTS, {}, pre.frontMatter?.config, directives, undefined, {
-    warn,
-    section: 'architecture',
-  });
+  // The plugin's engine (D284) sits below the user's config, as in a render.
+  const engineDefault = { layout: architecture.layoutEngine.default };
+  const config = resolveConfig(
+    CORE_DEFAULTS,
+    {},
+    pre.frontMatter?.config,
+    directives,
+    engineDefault,
+    { warn, section: 'architecture' }
+  );
   const parse = parseArchitecture(source, { preprocessed: pre });
   if (parse.diagnostics.some((d) => d.severity === 'error')) return undefined;
   const choice = resolveThemeName(config.theme, warn);
@@ -50,7 +58,7 @@ export async function architectureLaidOut(
     dark: choice.dark ? await loadTheme(choice.dark) : undefined,
     warn,
   });
-  const prepared = prepareArchitecture(parse.model, {
+  const { architecture: prepared } = layoutArchitecture(parse.model, {
     config,
     measurer: tableMeasurer,
     theme,

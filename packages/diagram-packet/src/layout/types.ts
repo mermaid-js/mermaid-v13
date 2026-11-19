@@ -57,7 +57,7 @@ export interface PacketPieceLayout {
   /** The rectangle: `bits * bitWidth - paddingX` wide (never below 0, D342), `rowHeight` tall. */
   readonly box: Rect;
   /**
-   * The field's label, centred on the box; its font shrinks when it is wider than the box, down
+   * The field's label, centred on the box; its font shrinks when it is wider or taller than the box, down
    * to the bit-number size, then it overflows (D343).
    */
   readonly label: PlacedLabel;

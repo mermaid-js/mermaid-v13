@@ -1,0 +1,6 @@
+---
+description: Blank terminals draw as 20 × 20 circles as in v12, and a terminal's spaces are drawn as written (#774).
+---
+railroad-beta
+blank = sequence(terminal(" "), terminal("x"), terminal("\t"), terminal(""), terminal("a b"), terminal("a  b")) ;
+spaced = choice(terminal(" a"), terminal("a "), terminal("a\tb")) ;
