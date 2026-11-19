@@ -70,6 +70,8 @@ export abstract class StateLexer {
   /** The next line end a regex `.` stops at, cached for {@link dotEnd} (-2: not looked up). */
   private readonly nextEnd = [-2, -2, -2];
   private readonly dropSpace: boolean;
+  /** Whether a text offset is its source offset: nothing removed, folded or added. */
+  private readonly plain: boolean;
 
   constructor(
     protected readonly src: string,
@@ -95,6 +97,12 @@ export abstract class StateLexer {
     this.n = this.text.length;
     this.p = start;
     this.w = new TokenWriter((((this.len - this.p) / options.charsPerToken) | 0) + 8);
+    this.plain =
+      !this.offsets &&
+      !this.at &&
+      !this.crStart &&
+      this.holes.length === 0 &&
+      this.len === src.length;
   }
 
   /** The text to lex, before line breaks are folded: the view's, unless a lexer rewrites it. */
@@ -207,6 +215,10 @@ export abstract class StateLexer {
    * an opener may end before the blanks it consumed).
    */
   protected emit(kind: number, s: number, end: number, next: number = end): void {
+    if (this.plain) {
+      this.emitPlain(kind, s, end, next);
+      return;
+    }
     let a = this.source(s);
     const last = Math.min(end, this.len);
     let b = last > s ? this.sourceEnd(last - 1) : a;
@@ -219,6 +231,18 @@ export abstract class StateLexer {
       this.trivia(a);
       if (b > a) b = this.dropAt(b);
     }
+    this.w.push(kind, a, b);
+    if (b > this.covered) this.covered = b;
+    this.p = next;
+  }
+
+  /** `emit` where the lexed text is the source: `source` and `sourceEnd` are the identity. */
+  private emitPlain(kind: number, s: number, end: number, next: number): void {
+    // Up to the appended line break.
+    const len = this.len;
+    const a = s < len ? s : len;
+    const last = end < len ? end : len;
+    const b = last > s ? last : a;
     this.w.push(kind, a, b);
     if (b > this.covered) this.covered = b;
     this.p = next;
