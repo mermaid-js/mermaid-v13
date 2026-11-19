@@ -3,6 +3,7 @@
   "entry": [
     "tools/check-deps/cli.ts",
     "tools/pre-push/*cli.ts",
+    "tools/ci/*cli.ts",
     "e2e/dom/server.ts",
     "e2e/dom/page.ts",
     "packages/*/src/*/index.ts",
