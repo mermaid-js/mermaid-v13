@@ -26,7 +26,17 @@ import { checkGraph, checkNodeSpan, finite } from '../check.ts';
 import { BOTTOM, DX, DY, LEFT, placeOnGrid, RIGHT, TOP, type Grid } from './grid.ts';
 import { METRICS as M } from './metrics.ts';
 import { titleAlign, titleLow } from '../title.ts';
-import { clearSpot, hits, route, simplify, Space, toRoute, type Port, type Rect } from './route.ts';
+import {
+  clearSpot,
+  detour,
+  hits,
+  route,
+  simplify,
+  Space,
+  toRoute,
+  type Port,
+  type Rect,
+} from './route.ts';
 
 export { METRICS } from './metrics.ts';
 
@@ -441,7 +451,7 @@ class Pixels {
     this.nodeSpace = new Space(M.gap + mean);
     this.clutter = new Space(M.gap + mean);
     this.lines = new Space(M.gap + mean);
-    for (const r of this.nodeRects) this.nodeSpace.add(r);
+    this.nodeRects.forEach((r, i) => this.nodeSpace.add(r, i));
   }
 
   grow(r: Rect): void {
@@ -502,7 +512,14 @@ class Pixels {
         e.x = Math.min(e.x1, e.x + M.loopPart);
       }
     }
-    const points = simplify(route(s, e));
+    // A run between two bends that would cross a node other than the edge's ends moves off it.
+    const a = this.endA[k]!;
+    const b = this.endB[k]!;
+    const blocked = (r: Rect): Rect | undefined => this.nodeSpace.hit(r, (i) => i === a || i === b);
+    const routed = simplify(route(s, e));
+    const moved = detour(routed, blocked);
+    // Simplified again only when it moved: a second pass folds a loop's out-and-back run.
+    const points = moved === routed ? routed : simplify(moved);
     if (points.length < 4) points.push(e.x, e.y);
     const m = M.routeMargin;
     for (let i = 0; i < points.length; i += 2) {

@@ -5,7 +5,9 @@
 // midway when they face but are offset, and otherwise a detour between or around the two boxes.
 //
 // Changed from Pele: `route` split into one function per case, with the same cases in the same
-// order; route points with an axis; and `clearSpot`, which moves an edge label off any node.
+// order; route points with an axis; `clearSpot`, which moves an edge label off any node; and
+// `detour`, which slides a run of a route with two or more bends off a node it would cross (#767,
+// D507). Pele's router sees only the two end boxes.
 import type { Point, RoutePoint } from '../types.ts';
 import { METRICS } from './metrics.ts';
 
@@ -67,14 +69,15 @@ export class Space {
     }
   }
 
-  /** The first-added rect `r` overlaps, other than those owned by `skip`. */
-  hit(r: Rect, skip = -2): Rect | undefined {
+  /** The first-added rect `r` overlaps, other than those owned by `skip` (or it says to skip). */
+  hit(r: Rect, skip: number | ((owner: number) => boolean) = -2): Rect | undefined {
+    const skips = typeof skip === 'number' ? (o: number) => o === skip : skip;
     let best = -1;
     const [cx0, cy0, cx1, cy1] = this.span(r);
     for (let cx = cx0; cx <= cx1; cx++) {
       for (let cy = cy0; cy <= cy1; cy++) {
         for (const k of this.buckets.get((cx + OFFSET) * SPAN + cy + OFFSET) ?? []) {
-          if ((best < 0 || k < best) && this.owners[k] !== skip && hits(this.rects[k]!, r))
+          if ((best < 0 || k < best) && !skips(this.owners[k]!) && hits(this.rects[k]!, r))
             best = k;
         }
       }
@@ -259,4 +262,56 @@ function runSpot(
     }
   }
   return undefined;
+}
+
+/** The box a run from point `k` to point `k + 1` of `p` covers (flat: no height or no width). */
+function runBox(p: readonly number[], k: number): Rect {
+  const [x0, x1] =
+    p[2 * k]! < p[2 * k + 2]! ? [p[2 * k]!, p[2 * k + 2]!] : [p[2 * k + 2]!, p[2 * k]!];
+  const [y0, y1] =
+    p[2 * k + 1]! < p[2 * k + 3]! ? [p[2 * k + 1]!, p[2 * k + 3]!] : [p[2 * k + 3]!, p[2 * k + 1]!];
+  return { x0, y0, x1, y1 };
+}
+
+/** Which way run `k` of `p` goes along its axis: 1, -1, or 0 when it has no length. */
+const runWay = (p: readonly number[], k: number): number =>
+  Math.sign(p[2 * k + 2]! - p[2 * k]! + p[2 * k + 3]! - p[2 * k + 1]!);
+
+/**
+ * `p` (simplified route points) with each inner run that `blocked` says crosses a node slid
+ * across its direction until it is clear: half a cell gap past the node, or a stub past it, on
+ * the nearer side first. The runs on either side stretch with it; a slide is kept only when they
+ * stay clear and keep their direction. A route with fewer than two bends is returned as it is
+ * (D507 keeps v12's look for those), and so is a run no slide clears.
+ */
+export function detour(p: number[], blocked: (r: Rect) => Rect | undefined): number[] {
+  const n = p.length / 2;
+  if (n < 4) return p;
+  let out = p;
+  for (let k = 1; k <= n - 3; k++) {
+    const b = blocked(runBox(out, k));
+    if (!b) continue;
+    const flat = Math.abs(out[2 * k + 1]! - out[2 * k + 3]!) < 0.01;
+    // The coordinate that slides: y for a flat run, x for an upright one.
+    const c = flat ? 1 : 0;
+    const at = out[2 * k + c]!;
+    const lo = flat ? b.y0 : b.x0;
+    const hi = flat ? b.y1 : b.x1;
+    const { gap, stub } = METRICS;
+    const tries = [hi + gap / 2, lo - gap / 2, hi + stub, lo - stub].sort(
+      (u, v) => Math.abs(u - at) - Math.abs(v - at)
+    );
+    for (const v of tries) {
+      const q = [...out];
+      q[2 * k + c] = v;
+      q[2 * k + 2 + c] = v;
+      const clear = [k - 1, k, k + 1].every((j) => !blocked(runBox(q, j)));
+      const kept = [k - 1, k + 1].every((j) => runWay(q, j) === runWay(out, j));
+      if (clear && kept) {
+        out = q;
+        break;
+      }
+    }
+  }
+  return out;
 }
