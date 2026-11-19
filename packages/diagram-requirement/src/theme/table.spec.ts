@@ -124,20 +124,18 @@ describe('the requirement theme table (D435)', () => {
     ]);
   });
 
-  it("puts relation labels on v12's chip: white or #16141f in redux, edgeLabelBackground elsewhere", async () => {
-    // v12 `.labelBkg` reads `requirementEdgeLabelBackground`, which only the redux themes set.
-    for (const name of ['redux', 'redux-color'])
-      expect((await themed(name)).value('relationLabelBackground'), name).toBe('#ffffff');
-    for (const name of ['redux-dark', 'redux-dark-color'])
-      expect((await themed(name)).value('relationLabelBackground'), name).toBe('#16141f');
-    for (const name of [...CLASSIC, ...NEO]) {
+  it('fills relation labels with edgeLabelBackground, the theme background by default (D628)', async () => {
+    for (const name of [...CLASSIC, ...NEO, ...REDUX]) {
       const t = await themed(name, { edgeLabelBackground: '#abcdef' });
       expect(t.value('relationLabelBackground'), name).toBe('#abcdef');
     }
-    // edgeLabelBackground is the theme background by default (D628).
-    for (const name of ['default', 'dark', 'neo-dark']) {
+    // v12's redux `requirementEdgeLabelBackground` literals are gone: every family takes the
+    // background, redux-dark's #333333 included.
+    for (const name of [...CLASSIC, ...NEO, ...REDUX]) {
       const t = await themed(name);
       expect(t.value('relationLabelBackground'), name).toBe(t.value('background'));
     }
+    const own = await themed('redux-dark', { relationLabelBackground: '#123456' });
+    expect(own.value('relationLabelBackground')).toBe('#123456');
   });
 });

@@ -1,0 +1,20 @@
+---
+description: >-
+  Edge labels as tags inside coloured composites (D628): the label inside the
+  palette-coloured composite and the one inside the styled composite keep the
+  theme background as their fill, as the label outside does.
+config:
+  theme: redux-color
+---
+block
+  columns 2
+  block:one
+    a b
+  end
+  block:two
+    c d
+  end
+  a -- "inside" --> b
+  c -- "also inside" --> d
+  b -- "outside" --> c
+  style two fill:#fde68a,stroke:#b45309

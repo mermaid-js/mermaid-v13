@@ -37,8 +37,9 @@
 - **Theme variables** (D435): `requirementBackground`, `requirementBorderColor`,
   `requirementBorderSize`, `requirementTextColor` and `relationLabelBackground`, which v12
   documented and never read, now take effect, with `relationColor` and `relationLabelColor`
-  added; unset, they draw v12's colours. The redux themes' label chip is white (dark: `#16141f`),
-  as v12 drew it. See [theme-variables.md](./theme-variables.md).
+  added; unset, they draw v12's colours, but for the label tag's fill, which is the theme
+  background in every theme (D628; v12's redux chip was white, dark `#16141f`). See
+  [theme-variables.md](./theme-variables.md).
 - **Boxes** (D436) keep v12's one-column `Key: value` text with no wrapping. A multi-line value
   (a quoted text spanning lines) is stacked line under line, where v12 overlapped it with the
   line above, and a font whose half line passes the 20px padding no longer draws text above
@@ -74,7 +75,7 @@ What changed in the requirement diagram's SVG compared with v12 (DESIGN §7.2, s
 #574). The groups are v12's unified render's (`edgePaths`, `edgeLabels`, `nodes`), and v12's
 class names are kept where the element still exists (`node default <classDef>`, `basic
 label-container outer-path`, `divider`, `relationshipLine`, `edge-thickness-normal`,
-`edge-pattern-solid`/`-dashed`, `edgeLabel`, `labelBkg`, `requirementDiagramTitleText`).
+`edge-pattern-solid`/`-dashed`, `edgeLabel`, `requirementDiagramTitleText`).
 
 | v12 | v13 | Why |
 | --- | --- | --- |
@@ -87,7 +88,8 @@ label-container outer-path`, `divider`, `relationshipLine`, `edge-thickness-norm
 | A relation to a name no box has: an edge with an undefined end | Not drawn; its `<n>` still counts it | D434 |
 | `look: neo`: 2px lines, the chevron at 0.8 in user space, marker strokes and box outline at `strokeWidth`, the gradient on the outline and divider, the drop shadow on the outline | The same, by theme family: the redux and neo themes draw it, the classic themes draw v12 classic (1px lines, a 20 × 20 chevron and r 9 circle with 1px strokes, a 1.3px outline, no shadow). The geometry is `relationStrokeWidth` (lines and marker strokes), `relationArrowScale` and `requirementBorderSize` | D152, D153, D227 |
 | Marker room: none (dagre); markers could overlap the next box | The layout keeps each marker's drawn extent clear, from the theme's marker geometry (21 × 21 classic, 20 × 20 redux and neo, more for a wider `strokeWidth`; marker strokes stop at 8px, the chevron scale at 2) | Spec #520 (marker room from the family tokens) |
-| Edge label `<g class="edgeLabel">` with `<foreignObject>` (`div.labelBkg`, `span.edgeLabel`) | `<g class="edgeLabel" data-id>` with `<rect class="labelBkg">` 4px wider than the text each side and a `<text>` | Text labels; labels carry no `data-ast` (D437) |
+| Edge label `<g class="edgeLabel">` with `<foreignObject>` (`div.labelBkg`, `span.edgeLabel`) | `<g class="edgeLabel" data-id>` with a `<rect>` and a `<text>` | Text labels; labels carry no `data-ast` (D437) |
+| Relation label on a square chip with no border (`relationLabelBackground`, white or `#16141f` in the redux themes) | A tag, the shared edge label: a rounded box (`rx` 6, no `labelBkg` class) with 8 px of room each side and 4 px above and below, filled opaque with `relationLabelBackground` (the theme background unless set, in every theme) and bordered 1 px solid in `relationColor`, solid on the dashed lines. The layout reserves the same box (`labelPatch`). Under `look: handDrawn` the border is sketched | D626, D627, D628, D629, D630 |
 | Edges drawn with `flowchart.curve` (`rounded` by default) | The same curves, through `flowchart.curve` (class's precedent) | |
 | A self-loop drawn with `flowchart.curve` | A self-loop is always `rounded`, whatever the curve | Class's precedent: its legs are too short for the other curves |
 | A `style` / `classDef` `fill` left the text in the theme's ink (`styles2String` sends only `color` and `font-*` to the labels) | A `fill` with no `color` gives the text `theme.ink(fill)`, an ink that reads on it | R-THEME-12, ER's precedent |

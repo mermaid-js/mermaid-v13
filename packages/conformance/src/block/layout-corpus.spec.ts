@@ -52,7 +52,7 @@ describe('block layout invariants on parser-produced fixtures', () => {
         }
       }
     }
-    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(91);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(94);
     expect(blocks).toBeGreaterThan(10_000);
     expect(edges).toBeGreaterThan(300);
     expect(loops).toBeGreaterThan(0);

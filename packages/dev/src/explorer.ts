@@ -33,10 +33,11 @@ export const EXPLORER_ENTRY = join(import.meta.dirname, 'browser', 'explorer', '
 /** The Compare tab's iframe script (`www/dev/compare-pane.html` loads `/build/compare-pane.js`). */
 export const COMPARE_PANE_ENTRY = join(import.meta.dirname, 'browser', 'compare-pane.ts');
 
-/** What a Compare pane loads from this server: its script, the dev bundle and its fonts. */
+/** What a Compare pane loads from this server: its script, the dev bundle, its chunks, fonts. */
 export const COMPARE_PANE_FILES: readonly string[] = [
   '/build/compare-pane.js',
   '/mermaid.esm.mjs',
+  '/chunks/mermaid.esm/',
   '/fonts/',
 ];
 

@@ -1,0 +1,26 @@
+---
+description: >-
+  Edge labels as tags (D626–D629): a plain label, a Markdown label of two lines
+  (usecase keeps a plain `<br/>` as text), a label on a relationship with a
+  `style` stroke, one on a wide relationship and the dashed include and extend
+  labels. Each box is rounded, bordered 1 px solid in its line's colour (the
+  styled one in pink, the wide and dashed ones still 1 px and solid), and
+  filled with the theme background.
+---
+usecase-beta
+  direction LR
+  actor Customer
+  actor Clerk
+  Browse
+  Checkout
+  Payment
+  Coupon
+  Customer -- "plain" ---> Browse
+  Customer -- "`first line
+second line`" ---> Checkout
+  Clerk styledEdge@-- "styled" ---> Checkout
+  Clerk wideEdge@-- "wide" ---> Payment
+  Checkout ..> : include Payment
+  Coupon ..> : extend Checkout
+  style styledEdge stroke:#d6336c
+  style wideEdge stroke-width:4px

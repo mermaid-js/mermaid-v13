@@ -7,7 +7,8 @@
  *
  * The iframe is `sandbox="allow-scripts"`: an opaque origin, so the published mermaid running
  * here can't read or write through the dev server's API. It loads only `/build/compare-pane.js`,
- * `/mermaid.esm.mjs` and `/fonts/` from the server, which send CORS headers for it.
+ * `/mermaid.esm.mjs`, its chunks (`/chunks/mermaid.esm/`) and `/fonts/` from the server, which
+ * send CORS headers for them.
  *
  * Protocol (postMessage to `'*'`, since the pane's origin is opaque; both ends check
  * `event.source` identity):
