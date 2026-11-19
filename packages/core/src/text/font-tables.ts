@@ -1,3 +1,4 @@
+// cspell:words hhea
 // Integrator font tables (D645): checks the entries and builds their table measurer. Loaded only
 // when `fontTables` is set, so it costs the static bundle nothing (R-PERF-1).
 import { MermaidError } from '../pipeline/errors.ts';
