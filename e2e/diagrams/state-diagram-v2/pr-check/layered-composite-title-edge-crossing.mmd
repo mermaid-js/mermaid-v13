@@ -1,0 +1,16 @@
+---
+description: >-
+  Under the layered layout a transition that enters a state two composites deep no longer runs
+  through the composites' title text; each title moves along its band beside the transition (#675).
+  The states of to-nested-descendant (#416) without the transition from Outer to Deeper; with it,
+  Deep sits off the composites' centre and Start --> Deep already passes beside the titles.
+---
+stateDiagram-v2
+  [*] --> Outer
+  state Outer {
+    state Mid {
+      Deep --> Deeper
+    }
+  }
+  Start --> Deep
+  Deeper --> End

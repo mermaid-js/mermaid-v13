@@ -1,7 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { layered, titleCrossings, type LayoutGraph } from '@mermaid-js/core/layout';
+import {
+  layered,
+  titleCrossings,
+  type LayoutGraph,
+  type LayoutModel,
+} from '@mermaid-js/core/layout';
 import { createMermaid } from 'mermaid';
 import { REPO_ROOT } from './index.ts';
 
@@ -23,17 +28,31 @@ async function graphOf(file: string, init: Record<string, unknown> = {}): Promis
   return captured!;
 }
 
+// Moved, not dropped: each title stays on its own band, inside its group.
+function expectTitlesInside(graph: LayoutGraph, model: LayoutModel): void {
+  for (const g of graph.groups) {
+    const box = model.groups.get(g.id)!;
+    expect(Math.abs(box.title.x - box.x) + g.title!.width / 2).toBeLessThanOrEqual(box.width / 2);
+  }
+}
+
 describe('layered keeps routes out of group titles (#675)', () => {
   it('moves each title off the edge that enters its group from above', async () => {
     const graph = await graphOf('flowchart/pr-check/layered-subgraph-title-edge-crossing.mmd');
     expect(graph.groups.map((g) => g.title !== undefined)).toEqual([true, true]);
     const model = layered(graph);
     expect(titleCrossings(graph, model)).toEqual([]);
-    // Moved, not dropped: each title stays on its own band, inside its group.
-    for (const g of graph.groups) {
-      const box = model.groups.get(g.id)!;
-      expect(Math.abs(box.title.x - box.x) + g.title!.width / 2).toBeLessThanOrEqual(box.width / 2);
-    }
+    expectTitlesInside(graph, model);
+  });
+
+  it('moves the title of each nested state composite off the transition into its innermost state', async () => {
+    const graph = await graphOf(
+      'state-diagram-v2/pr-check/layered-composite-title-edge-crossing.mmd'
+    );
+    expect(graph.groups.map((g) => g.title !== undefined)).toEqual([true, true]);
+    const model = layered(graph);
+    expect(titleCrossings(graph, model)).toEqual([]);
+    expectTitlesInside(graph, model);
   });
 
   it('leaves the issue fixture with no edge through a lane title under `layout: layered`', async () => {
