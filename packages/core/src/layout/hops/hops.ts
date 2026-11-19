@@ -6,7 +6,9 @@
  * Crossings are looked for on straight `L` runs only: a corner (`A`, `Q`) or a curve (`C`) is
  * drawn off its route points, so a crossing found there would be somewhere the stroke is not
  * (v12 skips smoothed curves and rounded corners for the same reason). Unlike v12, the corners
- * of an edge that hops keep their rounding: only the run that carries the hop is split.
+ * of an edge that hops keep their rounding: only the run that carries the hop is split. Also
+ * unlike v12, crossings too close for a hop each share one merged hop instead of drawing none
+ * (D656, #793).
  */
 import { pathBuilder } from '../../svg/path.ts';
 import type { PathData } from '../../svg/types.ts';
@@ -103,6 +105,8 @@ interface Hop {
   d: number;
   point: Point;
   r: number;
+  /** Half its length along the run: `r`, or more for a hop merged over close crossings. */
+  w?: number;
 }
 
 /**
@@ -144,6 +148,8 @@ function fitted(hops: Hop[], length: number): Hop[] {
       h.r = Math.min(h.r, Math.min(h.d, length - h.d) - CORNER_JUMP_CLEARANCE);
       return h.r >= min;
     });
+  // The radius each has room for at the run's ends, before its neighbours squeeze it.
+  const room = list.map((h) => h.r);
   for (let k = 0; k < list.length - 1; k++) {
     const gap = list[k + 1]!.d - list[k]!.d;
     if (list[k]!.r + list[k + 1]!.r > gap) {
@@ -151,8 +157,38 @@ function fitted(hops: Hop[], length: number): Hop[] {
       list[k + 1]!.r = Math.min(list[k + 1]!.r, gap / 2);
     }
   }
-  // Checked again: two crossings too close to carry a hop each carry none.
-  return list.filter((h) => h.r >= min);
+  // Neighbours too close to carry a hop each carry one hop over them all (D656, #793; v12 drew
+  // none), from the first crossing less a radius to the last plus one. A squeezed hop always
+  // has a squeezed neighbour, so such a cluster has two or more crossings, and the hops beside
+  // it, which draw as before, bound its radius.
+  const out: Hop[] = [];
+  for (let k = 0; k < list.length; k++) {
+    const first = list[k]!;
+    if (first.r >= min) {
+      out.push(first);
+      continue;
+    }
+    let j = k;
+    while (list[j + 1] && list[j + 1]!.r < min) j++;
+    const last = list[j]!;
+    const before = list[k - 1];
+    const after = list[j + 1];
+    const r = Math.min(
+      room[k]!,
+      room[j]!,
+      before ? first.d - before.d - before.r : JUMP_RADIUS,
+      after ? after.d - last.d - after.r : JUMP_RADIUS
+    );
+    if (r >= min)
+      out.push({
+        d: (first.d + last.d) / 2,
+        point: { x: (first.point.x + last.point.x) / 2, y: (first.point.y + last.point.y) / 2 },
+        r,
+        w: (last.d - first.d) / 2 + r,
+      });
+    k = j;
+  }
+  return out;
 }
 
 /** `commands` with the hops on their `L` runs, as path data, or undefined when none fits. */
@@ -177,10 +213,14 @@ function withHops(
       const sweep = Math.abs(ux) >= Math.abs(uy) ? ux >= 0 : uy >= 0;
       for (const h of fitted(hops.get(index) ?? [], length)) {
         drawn++;
-        b.lineTo(h.point.x - ux * h.r, h.point.y - uy * h.r);
-        const x = h.point.x + ux * h.r;
-        const y = h.point.y + uy * h.r;
-        if (style === 'arc') b.arcTo(h.r, h.r, 0, false, sweep, x, y);
+        const w = h.w ?? h.r;
+        b.lineTo(h.point.x - ux * w, h.point.y - uy * w);
+        const x = h.point.x + ux * w;
+        const y = h.point.y + uy * w;
+        // A merged hop is half an ellipse along the run, as tall as any other hop; one over
+        // crossings at the same point is a plain hop.
+        const turn = w - h.r > ENDPOINT_EPSILON ? (Math.atan(uy / ux) * 180) / Math.PI : 0;
+        if (style === 'arc') b.arcTo(w, h.r, turn, false, sweep, x, y);
         else b.moveTo(x, y);
       }
       b.lineTo(end.x, end.y);
