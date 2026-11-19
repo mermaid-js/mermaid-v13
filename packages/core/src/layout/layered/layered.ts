@@ -2413,16 +2413,25 @@ export function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
     const u = up ? EF[e]! : ET[e]!;
     return offsets && W[u]! > 0 ? pos[u]! + (up ? EFD[e]! : ETD[e]!) / W[u]! : pos[u]!;
   };
-  // Crossings between a and b, assuming a is left of b.
-  const between = (a: number, b: number): number => {
+  // The crossings with a left of b less those with b left of a, counted over the same pairs of
+  // ends in one pass: above 0, putting b left of a saves crossings.
+  const saved = (a: number, b: number): number => {
     let c = 0;
     for (let k = predStart[a]!; k < predStart[a + 1]!; k++) {
       const x = at(predE[k]!, true);
-      for (let j = predStart[b]!; j < predStart[b + 1]!; j++) if (x > at(predE[j]!, true)) c++;
+      for (let j = predStart[b]!; j < predStart[b + 1]!; j++) {
+        const y = at(predE[j]!, true);
+        if (x > y) c++;
+        else if (y > x) c--;
+      }
     }
     for (let k = succStart[a]!; k < succStart[a + 1]!; k++) {
       const x = at(succE[k]!, false);
-      for (let j = succStart[b]!; j < succStart[b + 1]!; j++) if (x > at(succE[j]!, false)) c++;
+      for (let j = succStart[b]!; j < succStart[b + 1]!; j++) {
+        const y = at(succE[j]!, false);
+        if (x > y) c++;
+        else if (y > x) c--;
+      }
     }
     return c;
   };
@@ -2436,7 +2445,7 @@ export function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
           const a = order[i]!;
           const b = order[i + 1]!;
           if (pinOf(a) !== pinOf(b) || (GRP && GRP[a]! !== GRP[b]!)) continue;
-          if (between(b, a) >= between(a, b)) continue;
+          if (saved(a, b) <= 0) continue;
           order[i] = b;
           order[i + 1] = a;
           pos[b] = i - s;
