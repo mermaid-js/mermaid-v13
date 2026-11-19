@@ -1,4 +1,5 @@
-import { createTableMeasurer, Style, type FontKey, type Measurer } from '@mermaid-js/core/text';
+import { createTableMeasurer } from '@mermaid-js/core/font-tables';
+import { Style, type FontKey, type Measurer } from '@mermaid-js/core/text';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // A stand-in browser: an OffscreenCanvas whose measureText gives 10 px per character per

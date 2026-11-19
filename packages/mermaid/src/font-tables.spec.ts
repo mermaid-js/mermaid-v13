@@ -1,7 +1,8 @@
 /**
  * Integrator font tables (D645, DESIGN §5.1): `initialize({ fontTables })` measures with them
- * wherever the table measurer measures, diagram text cannot set them, a malformed entry is a
- * `SEMANTIC` error, and they enter the determinism key by their table measurer's id (R-ARCH-6).
+ * wherever the table measurer measures, diagram text cannot set them, they load with the first
+ * `prepare()`, `render()` or `preload()`, which a malformed entry rejects with a `SEMANTIC` error,
+ * and they enter the determinism key by their table measurer's id (R-ARCH-6).
  */
 import { describe, expect, it } from 'vitest';
 import type { FontTable } from '@mermaid-js/core/text';
@@ -88,29 +89,23 @@ describe('initialize({ fontTables }) (D645)', () => {
     expect(size(await render({ fontTables: [wide()] }))).not.toEqual(size(plain));
   });
 
-  it('rejects a malformed entry at initialize() with a SEMANTIC error naming it', () => {
-    const m = createMermaid();
+  it('rejects a malformed entry at the first prepare() or render(), with a SEMANTIC error naming it', async () => {
     const bad = wide(1000, 1000, { family: 'Acme', regular: 'rs'.repeat(190) });
-    const thrown = (config: InitializeConfig): unknown => {
-      try {
-        m.initialize(config);
-      } catch (e) {
-        return e;
-      }
-      return undefined;
-    };
-    const e = thrown({ fontTables: [wide(), bad] });
-    expect(e).toBeInstanceOf(MermaidError);
-    expect(e).toMatchObject({
+    const m = createMermaid();
+    // initialize() only keeps the tables; they load and are checked with the first prepare().
+    m.initialize({ fontTables: [wide(), bad] });
+    const rejected = m.prepare(FLOW);
+    await expect(rejected).rejects.toBeInstanceOf(MermaidError);
+    await expect(rejected).rejects.toMatchObject({
       code: 'SEMANTIC',
       message: 'Font table 1 ("Acme"): regular must be 382 base-36 digits.',
     });
-    expect(thrown({ fontTables: 'acme' as unknown as FontTable[] })).toMatchObject({
+    await expect(m.render('f', FLOW)).rejects.toMatchObject({ code: 'SEMANTIC' });
+    const other = createMermaid();
+    other.initialize({ fontTables: 'acme' as unknown as FontTable[] });
+    await expect(other.render('f', FLOW)).rejects.toMatchObject({
       code: 'SEMANTIC',
       message: 'Font tables must be a list.',
-    });
-    expect(thrown({ fontTables: [{ ...wide(), regular: '-'.repeat(382) }] })).toMatchObject({
-      code: 'SEMANTIC',
     });
   });
 
@@ -118,10 +113,36 @@ describe('initialize({ fontTables }) (D645)', () => {
     const bad = { ...wide(), family: '' };
     await expect(
       createMermaid().render('f', FLOW, { config: { fontTables: [bad] } })
-    ).rejects.toMatchObject({
-      name: 'MermaidError',
-      code: 'SEMANTIC',
-    });
+    ).rejects.toMatchObject({ name: 'MermaidError', code: 'SEMANTIC' });
+  });
+
+  it('is NOT_LOADED in renderSync before prepare(), like a diagram', async () => {
+    const m = createMermaid();
+    await m.preload({ types: ['flowchart'] });
+    m.initialize({ ...FONT, fontTables: [wide()] });
+    expect(() => m.renderSync(FLOW)).toThrow(
+      expect.objectContaining({
+        code: 'NOT_LOADED',
+        missing: [{ kind: 'fontTables', name: 'Acme' }],
+      })
+    );
+    // With placeholders it draws with the built-in tables and says so.
+    const stand = m.renderSync(FLOW, { placeholders: true });
+    expect(stand.warnings.map((w) => w.code)).toEqual(['PLACEHOLDER']);
+    expect(size(stand)).toEqual(size(await render()));
+    // Text output does not measure with them, so it neither loads nor needs them.
+    await m.prepare(FLOW, { format: 'ascii' });
+    expect(m.renderSync(FLOW, { format: 'ascii' }).text).toContain('Measurements');
+    expect(() => m.renderSync(FLOW)).toThrow(expect.objectContaining({ code: 'NOT_LOADED' }));
+    await m.prepare(FLOW);
+    expect(size(m.renderSync(FLOW))).toEqual(size(await render({ fontTables: [wide()] })));
+  });
+
+  it('loads the initialize() tables with preload()', async () => {
+    const m = createMermaid();
+    m.initialize({ ...FONT, fontTables: [wide()] });
+    await m.preload({ types: ['flowchart'] });
+    expect(size(m.renderSync(FLOW))).toEqual(size(await render({ fontTables: [wide()] })));
   });
 });
 

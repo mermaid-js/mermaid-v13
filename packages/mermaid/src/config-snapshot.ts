@@ -16,12 +16,7 @@ import type { Warning } from '@mermaid-js/core';
 import type { UnitProfile } from '@mermaid-js/core/layout';
 import { resolveLimits, type Limits } from '@mermaid-js/core/limits';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import {
-  createTableMeasurer,
-  tableMeasurer,
-  type FontTable,
-  type Measurer,
-} from '@mermaid-js/core/text';
+import type { FontTable, Measurer } from '@mermaid-js/core/text';
 import type { AnyPlugin, Detected } from './registry.ts';
 
 /** Options only the integrator can set; never read from diagram text (R-SEC-5, R-SEC-6). */
@@ -31,8 +26,9 @@ export interface IntegratorOptions {
   /** Use the metric tables, never the canvas (R-TEXT-7). */
   deterministic?: boolean;
   /**
-   * Font tables the table measurer looks up before its built-in ones (D645, DESIGN §5.1). A
-   * malformed entry throws `MermaidError { code: 'SEMANTIC' }` from `initialize()`.
+   * Font tables the table measurer looks up before its built-in ones (D645, DESIGN §5.1). They
+   * load and are checked with the first `prepare()`, `render()` or `preload()`; a malformed entry
+   * rejects it with `MermaidError { code: 'SEMANTIC' }`.
    */
   fontTables?: readonly FontTable[];
   /** Replaces the default link schemes (http, https, mailto). */
@@ -96,21 +92,13 @@ export interface Snapshot {
   readonly options: Readonly<IntegratorOptions>;
   /** From the integrator's config alone, before any diagram text is read. */
   readonly limits: Readonly<Limits>;
-  /** The table measurer with `options.fontTables` (D645). */
-  readonly table: Measurer;
-}
-
-/** The table measurer for `fontTables`; a malformed entry is a `SEMANTIC` error (D645). */
-function tableFor(fontTables: readonly FontTable[] | undefined): Measurer {
-  return fontTables === undefined ? tableMeasurer : createTableMeasurer({ faces: fontTables });
 }
 
 function withLimits(
   config: Readonly<MermaidConfig>,
-  options: Readonly<IntegratorOptions>,
-  table: Measurer
+  options: Readonly<IntegratorOptions>
 ): Snapshot {
-  return { config, options, limits: resolveLimits(config, options.limits), table };
+  return { config, options, limits: resolveLimits(config, options.limits) };
 }
 
 /** Keys sorted, so equal configs serialise equally whatever their key order. */
@@ -127,14 +115,15 @@ function stableJson(value: unknown): string {
 }
 
 /**
- * A snapshot's integrator options as they enter a key: a measurer counts by its `id`, and font
- * tables by the id of their table measurer (DESIGN §5.1, D645).
+ * Integrator options as they enter a key: a measurer counts by its `id`, and font tables by the
+ * `id` of `table`, their table measurer (DESIGN §5.1, D645).
  */
-export function optionsKey({ options, table }: Snapshot): unknown {
+export function optionsKey(options: Readonly<IntegratorOptions>, table?: Measurer): unknown {
   // Where chunks load from never changes the output.
   const { measurer, cdnBase: _cdnBase, fontTables: _fontTables, ...rest } = options;
   const key: Plain = measurer ? { ...rest, measurer: measurer.id } : rest;
-  return table.id === tableMeasurer.id ? key : { ...key, fontTables: table.id };
+  // No tables, or an empty list, key as before.
+  return table && table.id !== 'table' ? { ...key, fontTables: table.id } : key;
 }
 
 /**
@@ -160,7 +149,7 @@ export function defaultIdPrefix(
 }
 
 /** The frozen snapshot of an `initialize()` config. */
-export function snapshot(input: InitializeConfig = {}, table?: Measurer): Snapshot {
+export function snapshot(input: InitializeConfig = {}): Snapshot {
   const config: Plain = {};
   const options: Plain = {};
   for (const [k, v] of Object.entries(input)) {
@@ -174,20 +163,18 @@ export function snapshot(input: InitializeConfig = {}, table?: Measurer): Snapsh
     if (vars.fontFamily === undefined)
       merged.themeVariables = { ...vars, fontFamily: merged.fontFamily };
   }
-  const frozen = Object.freeze(options) as IntegratorOptions;
-  return withLimits(freeze(merged), frozen, table ?? tableFor(frozen.fontTables));
+  return withLimits(freeze(merged), Object.freeze(options) as IntegratorOptions);
 }
 
 function overlay(base: Snapshot, extra: InitializeConfig): Snapshot {
-  const next = snapshot(extra, extra.fontTables === undefined ? base.table : undefined);
+  const next = snapshot(extra);
   const limits =
     base.options.limits || next.options.limits
       ? { ...base.options.limits, ...next.options.limits }
       : undefined;
   return withLimits(
     freeze(mergeInto(mergeInto({}, base.config as Plain), next.config as Plain)),
-    Object.freeze({ ...base.options, ...next.options, ...(limits ? { limits } : {}) }),
-    next.table
+    Object.freeze({ ...base.options, ...next.options, ...(limits ? { limits } : {}) })
   );
 }
 

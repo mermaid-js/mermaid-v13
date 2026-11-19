@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { Style, type FontKey, type Measurer } from './measurer.ts';
 import { layoutLabel } from './label.ts';
 import { MermaidError } from '../pipeline/errors.ts';
-import { createTableMeasurer, tableMeasurer, type FontTable } from './table.ts';
+import { createTableMeasurer, type FontTable } from './font-tables.ts';
+import { tableMeasurer } from './table.ts';
 
 // Hand-written tables (D645): every advance the same, packed as in `FACES` (191 per weight).
 const packed = (units: number): string => units.toString(36).padStart(2, '0').repeat(191);

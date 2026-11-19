@@ -145,7 +145,7 @@ export interface MeasurerOptions {
   measurer?: Measurer;
   /** Forces the table measurer in every environment, even over `measurer` (R-TEXT-7). */
   deterministic?: boolean;
-  /** The table measurer to use, with the integrator's font tables (D645); the built-in one by default. */
+  /** The table measurer with the integrator's font tables (D645); the built-in one by default. */
   table?: Measurer;
 }
 
