@@ -26,23 +26,48 @@ function barycenter(values: number[]): number {
   return s / values.length;
 }
 
+/** The edges at each node, in edge order: those that leave it and those that enter it. */
+interface EdgesAtNodes {
+  leaving: Map<NodeId, Edge[]>;
+  entering: Map<NodeId, Edge[]>;
+}
+
+function edgesAtNodes(edges: Edge[]): EdgesAtNodes {
+  const leaving = new Map<NodeId, Edge[]>();
+  const entering = new Map<NodeId, Edge[]>();
+  const add = (at: Map<NodeId, Edge[]>, id: NodeId, e: Edge): void => {
+    const list = at.get(id);
+    if (list) {
+      list.push(e);
+    } else {
+      at.set(id, [e]);
+    }
+  };
+  for (const e of edges) {
+    add(leaving, e.src, e);
+    add(entering, e.dst, e);
+  }
+  return { leaving, entering };
+}
+
 function neighborPositionsFor(
   targetNodes: NodeId[],
   fixedIndex: Map<NodeId, number>,
-  edges: Edge[],
+  edges: EdgesAtNodes,
   direction: SweepDirection
 ): Map<NodeId, number[]> {
   const neighborPositions = new Map<NodeId, number[]>();
   for (const v of targetNodes) {
     neighborPositions.set(v, []);
   }
-  for (const e of edges) {
-    if (direction === 'down') {
-      if (fixedIndex.has(e.src) && neighborPositions.has(e.dst)) {
-        neighborPositions.get(e.dst)!.push(fixedIndex.get(e.src)!);
+  // Each node's edges in edge order, so each list is in edge order.
+  for (const [v, positions] of neighborPositions) {
+    const near = direction === 'down' ? edges.entering.get(v) : edges.leaving.get(v);
+    for (const e of near ?? []) {
+      const position = fixedIndex.get(direction === 'down' ? e.src : e.dst);
+      if (position !== undefined) {
+        positions.push(position);
       }
-    } else if (fixedIndex.has(e.dst) && neighborPositions.has(e.src)) {
-      neighborPositions.get(e.src)!.push(fixedIndex.get(e.dst)!);
     }
   }
   return neighborPositions;
@@ -112,7 +137,7 @@ function sortByHeuristic(
 function reorderLayer(
   fixedLayer: NodeId[],
   targetLayer: NodeId[],
-  edges: Edge[],
+  edges: EdgesAtNodes,
   direction: SweepDirection,
   topLaneOf?: (id: NodeId) => string | null,
   laneOrder?: string[]
@@ -209,20 +234,22 @@ function crossingsOfNeighbours(left: readonly number[], right: readonly number[]
   return count;
 }
 
-/** For each node of `layer`, the sorted positions in `other` of the far ends of its `edges`. */
+/** For each node of `layer`, the sorted positions in `other` of the far ends of `edgesOf` it. */
 function farEndPositions(
   layer: NodeId[],
-  edges: Edge[],
-  nearEnd: 'src' | 'dst',
+  edgesOf: Map<NodeId, Edge[]>,
+  farEnd: 'src' | 'dst',
   other: NodeId[]
 ): Map<NodeId, number[]> {
   const otherIndex = buildLayerIndex(other);
-  const farEnd = nearEnd === 'src' ? 'dst' : 'src';
   const positions = new Map<NodeId, number[]>(layer.map((id) => [id, []]));
-  for (const e of edges) {
-    positions.get(e[nearEnd])?.push(otherIndex.get(e[farEnd])!);
-  }
-  for (const list of positions.values()) {
+  for (const [id, list] of positions) {
+    for (const e of edgesOf.get(id) ?? []) {
+      const position = otherIndex.get(e[farEnd]);
+      if (position !== undefined) {
+        list.push(position);
+      }
+    }
     list.sort((a, b) => a - b);
   }
   return positions;
@@ -236,19 +263,13 @@ function farEndPositions(
 function transposeImprove(
   upper: NodeId[],
   current: NodeId[],
-  edges: Edge[],
+  edges: EdgesAtNodes,
   next?: NodeId[],
   topLaneOf?: (id: NodeId) => string | null
 ): NodeId[] {
   const best = [...current];
-  const upperSet = new Set(upper);
-  const layerSet = new Set(current);
-  const nextSet = next ? new Set(next) : null;
-
-  const edgesIn = edges.filter((e) => upperSet.has(e.src) && layerSet.has(e.dst));
-  const edgesOut = nextSet ? edges.filter((e) => layerSet.has(e.src) && nextSet.has(e.dst)) : [];
-  const above = farEndPositions(current, edgesIn, 'dst', upper);
-  const below = farEndPositions(current, edgesOut, 'src', next ?? []);
+  const above = farEndPositions(current, edges.entering, 'src', upper);
+  const below = farEndPositions(current, edges.leaving, 'dst', next ?? []);
   /** The crossings between the edges of `a` and `b` while `a` is left of `b`. */
   const crossingsWhileLeft = (a: NodeId, b: NodeId): number =>
     crossingsOfNeighbours(above.get(a)!, above.get(b)!) +
@@ -297,7 +318,7 @@ export function orderLayers(
 ): OrderedLayers {
   // Start with deterministic initial order per layer (preserve given order)
   const layers = layering.layers.map((l) => [...l]);
-  const edges = gWithDummies.edges;
+  const edges = edgesAtNodes(gWithDummies.edges);
 
   // Compute lane order for lane-aware crossing minimization (Siebenhaller Lemma 4.4)
   const topLaneOf = createTopLaneResolver(gWithDummies);
