@@ -29,11 +29,6 @@
         "count": 1
       }
     },
-    "e2e/platform/harness/chunks.ts": {
-      "crap_moderate": {
-        "count": 2
-      }
-    },
     "e2e/platform/harness/pack.ts": {
       "crap_moderate": {
         "count": 1
@@ -66,14 +61,6 @@
       },
       "crap_moderate": {
         "count": 4
-      }
-    },
-    "packages/bench/src/gates.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
       }
     },
     "packages/bench/src/instruction-counts.ts": {
@@ -323,7 +310,7 @@
     },
     "packages/core/src/layout/compass/compass.ts": {
       "complexity_moderate": {
-        "count": 2
+        "count": 1
       }
     },
     "packages/core/src/layout/compass/grid.ts": {
@@ -339,14 +326,6 @@
     "packages/core/src/layout/hops/hops.ts": {
       "complexity_moderate": {
         "count": 1
-      }
-    },
-    "packages/core/src/layout/layered/compound.ts": {
-      "complexity_critical": {
-        "count": 3
-      },
-      "crap_critical": {
-        "count": 4
       }
     },
     "packages/core/src/layout/layered/layered.ts": {
@@ -387,14 +366,6 @@
       }
     },
     "packages/core/src/layout/swimlane/direction/portSwap.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      }
-    },
-    "packages/core/src/layout/swimlane/direction/siblingSharedFaceRouting.ts": {
       "complexity_critical": {
         "count": 1
       },
@@ -449,7 +420,7 @@
         "count": 1
       },
       "complexity_moderate": {
-        "count": 2
+        "count": 1
       }
     },
     "packages/core/src/layout/validate-grid.ts": {
@@ -458,13 +429,7 @@
       }
     },
     "packages/core/src/layout/validate.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
-      },
-      "crap_critical": {
         "count": 1
       }
     },
@@ -477,17 +442,11 @@
       }
     },
     "packages/core/src/parser-kit/source-view.ts": {
-      "complexity_critical": {
-        "count": 2
-      },
       "complexity_high": {
-        "count": 1
+        "count": 2
       },
       "complexity_moderate": {
-        "count": 2
-      },
-      "crap_critical": {
-        "count": 1
+        "count": 3
       }
     },
     "packages/core/src/pipeline/draw.ts": {
@@ -552,30 +511,24 @@
       }
     },
     "packages/core/src/svg/encode.ts": {
-      "complexity_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/core/src/svg/inert.ts": {
-      "complexity_critical": {
-        "count": 2
-      },
-      "complexity_high": {
-        "count": 2
-      },
-      "crap_critical": {
-        "count": 2
-      }
-    },
-    "packages/core/src/svg/style.ts": {
       "complexity_high": {
         "count": 2
       },
       "complexity_moderate": {
-        "count": 2
-      },
-      "crap_high": {
         "count": 1
+      }
+    },
+    "packages/core/src/svg/style.ts": {
+      "complexity_high": {
+        "count": 1
+      },
+      "complexity_moderate": {
+        "count": 2
       }
     },
     "packages/core/src/svg/tree.ts": {
@@ -604,10 +557,7 @@
         "count": 1
       },
       "complexity_moderate": {
-        "count": 2
-      },
-      "crap_critical": {
-        "count": 1
+        "count": 4
       }
     },
     "packages/core/src/text/table.ts": {
@@ -629,8 +579,11 @@
       }
     },
     "packages/dev/src/browser/compare-pane.ts": {
+      "crap_critical": {
+        "count": 1
+      },
       "crap_high": {
-        "count": 3
+        "count": 2
       },
       "crap_moderate": {
         "count": 1
@@ -678,7 +631,7 @@
         "count": 1
       },
       "crap_moderate": {
-        "count": 7
+        "count": 8
       }
     },
     "packages/dev/src/browser/explorer/tabs/console-panel.ts": {
@@ -705,7 +658,7 @@
         "count": 3
       },
       "crap_high": {
-        "count": 1
+        "count": 2
       },
       "crap_moderate": {
         "count": 5
@@ -727,13 +680,18 @@
         "count": 1
       }
     },
+    "packages/dev/src/cli/visual-scope.ts": {
+      "crap_moderate": {
+        "count": 2
+      }
+    },
     "packages/dev/src/gallery.ts": {
       "complexity_high": {
         "count": 1
       }
     },
     "packages/diagram-agentflow/src/ascii/draw.ts": {
-      "complexity_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
@@ -742,19 +700,8 @@
         "count": 1
       }
     },
-    "packages/diagram-agentflow/src/facet/completions.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "complexity_moderate": {
-        "count": 2
-      }
-    },
     "packages/diagram-agentflow/src/facet/hover.ts": {
       "complexity_moderate": {
-        "count": 2
-      },
-      "crap_high": {
         "count": 1
       }
     },
@@ -771,47 +718,22 @@
         "count": 2
       }
     },
-    "packages/diagram-agentflow/src/parser/base.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
     "packages/diagram-agentflow/src/parser/containment.ts": {
       "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-agentflow/src/parser/lexer.ts": {
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 5
-      },
-      "crap_high": {
         "count": 1
       }
     },
     "packages/diagram-agentflow/src/parser/model.ts": {
       "complexity_high": {
         "count": 2
-      },
-      "complexity_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-agentflow/src/parser/parser.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-agentflow/src/parser/scanner.ts": {
       "complexity_moderate": {
         "count": 1
       }
@@ -824,25 +746,9 @@
         "count": 1
       }
     },
-    "packages/diagram-agentflow/src/parser/statements.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "complexity_moderate": {
-        "count": 3
-      }
-    },
     "packages/diagram-agentflow/src/parser/trailing-commas.ts": {
       "complexity_moderate": {
         "count": 2
-      }
-    },
-    "packages/diagram-agentflow/src/render/edges.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "complexity_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-agentflow/src/render/slots.ts": {
@@ -852,7 +758,7 @@
     },
     "packages/diagram-architecture/src/facet/completions.ts": {
       "complexity_moderate": {
-        "count": 3
+        "count": 2
       }
     },
     "packages/diagram-architecture/src/layout/invariants.ts": {
@@ -865,11 +771,6 @@
     },
     "packages/diagram-architecture/src/layout/prepare.ts": {
       "complexity_high": {
-        "count": 1
-      }
-    },
-    "packages/diagram-architecture/src/parser/convert.ts": {
-      "complexity_moderate": {
         "count": 1
       }
     },
@@ -986,7 +887,7 @@
     },
     "packages/diagram-c4/src/layout/route.ts": {
       "complexity_moderate": {
-        "count": 6
+        "count": 4
       }
     },
     "packages/diagram-c4/src/parser/build.ts": {
@@ -994,10 +895,10 @@
         "count": 1
       },
       "crap_high": {
-        "count": 2
+        "count": 1
       },
       "crap_moderate": {
-        "count": 1
+        "count": 2
       }
     },
     "packages/diagram-c4/src/parser/lexer.ts": {
@@ -1020,11 +921,6 @@
         "count": 3
       }
     },
-    "packages/diagram-class/src/facet/hover.ts": {
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
     "packages/diagram-class/src/layout/box.ts": {
       "complexity_moderate": {
         "count": 1
@@ -1042,9 +938,6 @@
     },
     "packages/diagram-class/src/parser/member.ts": {
       "complexity_high": {
-        "count": 1
-      },
-      "complexity_moderate": {
         "count": 1
       }
     },
@@ -1069,30 +962,9 @@
         "count": 1
       }
     },
-    "packages/diagram-class/src/parser/v12-text.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
     "packages/diagram-class/src/render/render.ts": {
       "complexity_moderate": {
         "count": 2
-      }
-    },
-    "packages/diagram-class/src/render/route.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-cynefin/src/facet/completions.ts": {
-      "complexity_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-cynefin/src/layout/invariants.ts": {
@@ -1100,26 +972,8 @@
         "count": 1
       }
     },
-    "packages/diagram-cynefin/src/parser/convert.ts": {
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
     "packages/diagram-cynefin/src/parser/lexer.ts": {
       "complexity_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-cynefin/src/parser/parser.ts": {
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-er/src/ascii/draw.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
         "count": 1
       }
     },
@@ -1177,11 +1031,6 @@
         "count": 2
       }
     },
-    "packages/diagram-eventmodeling/src/parser/convert.ts": {
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
     "packages/diagram-eventmodeling/src/parser/lexer.ts": {
       "complexity_moderate": {
         "count": 1
@@ -1215,74 +1064,17 @@
         "count": 1
       }
     },
-    "packages/diagram-flowchart/src/ascii/draw.ts": {
-      "complexity_high": {
-        "count": 1
-      }
-    },
     "packages/diagram-flowchart/src/ascii/warnings.ts": {
       "complexity_high": {
         "count": 1
       }
     },
-    "packages/diagram-flowchart/src/facet/completions.ts": {
-      "complexity_high": {
-        "count": 2
-      },
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-flowchart/src/facet/hover.ts": {
-      "complexity_moderate": {
-        "count": 2
-      }
-    },
     "packages/diagram-flowchart/src/parser/lexer.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "complexity_high": {
-        "count": 3
-      },
-      "complexity_moderate": {
-        "count": 6
-      },
-      "crap_critical": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      },
-      "crap_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-flowchart/src/parser/model.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "complexity_moderate": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 1
-      }
-    },
-    "packages/diagram-flowchart/src/parser/parser.ts": {
-      "complexity_high": {
-        "count": 3
-      },
-      "complexity_moderate": {
-        "count": 6
-      }
-    },
-    "packages/diagram-flowchart/src/render/edges.ts": {
       "complexity_high": {
         "count": 1
       },
       "complexity_moderate": {
-        "count": 1
+        "count": 2
       }
     },
     "packages/diagram-flowchart/src/render/lanes.ts": {
@@ -1299,10 +1091,7 @@
       }
     },
     "packages/diagram-flowchart/src/render/render.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
@@ -1372,11 +1161,6 @@
         "count": 2
       }
     },
-    "packages/diagram-gitgraph/src/parser/convert.ts": {
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
     "packages/diagram-gitgraph/src/parser/lexer.ts": {
       "complexity_moderate": {
         "count": 1
@@ -1386,16 +1170,6 @@
       "complexity_high": {
         "count": 1
       },
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-info/src/parser/convert.ts": {
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-info/src/parser/parser.ts": {
       "complexity_moderate": {
         "count": 1
       }
@@ -1473,17 +1247,7 @@
         "count": 1
       }
     },
-    "packages/diagram-kanban/src/parser/lexer.ts": {
-      "complexity_high": {
-        "count": 1
-      }
-    },
     "packages/diagram-kanban/src/parser/parser.ts": {
-      "complexity_moderate": {
-        "count": 2
-      }
-    },
-    "packages/diagram-mindmap/src/facet/completions.ts": {
       "complexity_moderate": {
         "count": 1
       }
@@ -1496,17 +1260,7 @@
         "count": 1
       }
     },
-    "packages/diagram-mindmap/src/parser/lexer.ts": {
-      "complexity_high": {
-        "count": 1
-      }
-    },
     "packages/diagram-mindmap/src/parser/parser.ts": {
-      "complexity_moderate": {
-        "count": 2
-      }
-    },
-    "packages/diagram-mindmap/src/render/harness.ts": {
       "complexity_moderate": {
         "count": 1
       }
@@ -1516,17 +1270,7 @@
         "count": 1
       }
     },
-    "packages/diagram-packet/src/parser/convert.ts": {
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
     "packages/diagram-packet/src/parser/lexer.ts": {
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-packet/src/parser/parser.ts": {
       "complexity_moderate": {
         "count": 1
       }
@@ -1544,17 +1288,7 @@
         "count": 1
       }
     },
-    "packages/diagram-pie/src/parser/convert.ts": {
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
     "packages/diagram-pie/src/parser/lexer.ts": {
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-pie/src/parser/parser.ts": {
       "complexity_moderate": {
         "count": 1
       }
@@ -1564,25 +1298,10 @@
         "count": 1
       }
     },
-    "packages/diagram-quadrant/src/parser/lexer.ts": {
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
     "packages/diagram-quadrant/src/parser/parser.ts": {
       "complexity_high": {
         "count": 1
       },
-      "complexity_moderate": {
-        "count": 2
-      }
-    },
-    "packages/diagram-quadrant/src/parser/v12-text.ts": {
-      "complexity_moderate": {
-        "count": 2
-      }
-    },
-    "packages/diagram-radar/src/facet/completions.ts": {
       "complexity_moderate": {
         "count": 1
       }
@@ -1602,11 +1321,6 @@
         "count": 1
       }
     },
-    "packages/diagram-radar/src/parser/convert.ts": {
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
     "packages/diagram-radar/src/parser/lexer.ts": {
       "complexity_moderate": {
         "count": 1
@@ -1619,7 +1333,7 @@
     },
     "packages/diagram-radar/src/parser/parser.ts": {
       "complexity_moderate": {
-        "count": 2
+        "count": 1
       }
     },
     "packages/diagram-railroad/src/config.ts": {
@@ -1645,11 +1359,6 @@
         "count": 1
       }
     },
-    "packages/diagram-railroad/src/parser/convert.ts": {
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
     "packages/diagram-railroad/src/parser/ebnf/lexer.ts": {
       "complexity_moderate": {
         "count": 1
@@ -1668,17 +1377,9 @@
     "packages/diagram-requirement/src/ascii/draw.ts": {
       "complexity_moderate": {
         "count": 1
-      },
-      "crap_high": {
-        "count": 1
       }
     },
     "packages/diagram-requirement/src/ascii/warnings.ts": {
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-requirement/src/facet/completions.ts": {
       "complexity_moderate": {
         "count": 1
       }
@@ -1694,14 +1395,6 @@
       }
     },
     "packages/diagram-requirement/src/parser/symbols.ts": {
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-requirement/src/render/route.ts": {
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
         "count": 1
       }
@@ -1869,11 +1562,6 @@
         "count": 1
       }
     },
-    "packages/diagram-state/src/render/edges.ts": {
-      "complexity_high": {
-        "count": 1
-      }
-    },
     "packages/diagram-state/src/render/render.ts": {
       "complexity_moderate": {
         "count": 1
@@ -1920,7 +1608,7 @@
       }
     },
     "packages/diagram-treemap/src/facet/completions.ts": {
-      "complexity_high": {
+      "complexity_moderate": {
         "count": 1
       }
     },
@@ -1963,7 +1651,7 @@
         "count": 1
       },
       "complexity_moderate": {
-        "count": 2
+        "count": 1
       }
     },
     "packages/diagram-treemap/src/parser/lexer.ts": {
@@ -1976,22 +1664,12 @@
         "count": 1
       }
     },
-    "packages/diagram-treemap/src/parser/parser.ts": {
-      "complexity_high": {
-        "count": 1
-      }
-    },
     "packages/diagram-treeview/scripts/port-v12-specs.ts": {
       "crap_critical": {
         "count": 1
       }
     },
     "packages/diagram-treeview/src/config.ts": {
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
-    "packages/diagram-treeview/src/facet/completions.ts": {
       "complexity_moderate": {
         "count": 1
       }
@@ -2009,11 +1687,6 @@
     "packages/diagram-treeview/src/parser/box.ts": {
       "complexity_moderate": {
         "count": 2
-      }
-    },
-    "packages/diagram-treeview/src/parser/convert.ts": {
-      "complexity_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-treeview/src/parser/lexer.ts": {
@@ -2044,9 +1717,6 @@
     },
     "packages/diagram-usecase/src/ascii/draw.ts": {
       "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
         "count": 1
       }
     },
@@ -2118,14 +1788,6 @@
         "count": 1
       }
     },
-    "packages/diagram-usecase/src/render/route.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
     "packages/diagram-venn/src/facet/completions.ts": {
       "complexity_high": {
         "count": 1
@@ -2192,19 +1854,9 @@
         "count": 2
       }
     },
-    "packages/diagram-wardley/src/parser/convert.ts": {
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
     "packages/diagram-wardley/src/parser/parser.ts": {
       "complexity_moderate": {
         "count": 3
-      }
-    },
-    "packages/diagram-wardley/src/parser/tables.ts": {
-      "complexity_moderate": {
-        "count": 1
       }
     },
     "packages/diagram-xychart/src/facet/completions.ts": {
@@ -2232,25 +1884,12 @@
         "count": 1
       }
     },
-    "packages/diagram-xychart/src/parser/lexer.ts": {
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
     "packages/diagram-xychart/src/parser/parser.ts": {
       "complexity_high": {
-        "count": 1
-      },
-      "complexity_moderate": {
         "count": 1
       }
     },
     "packages/diagram-xychart/src/parser/v12-text.ts": {
-      "complexity_moderate": {
-        "count": 3
-      }
-    },
-    "packages/language-server/src/discover.ts": {
       "complexity_moderate": {
         "count": 1
       }
@@ -2321,11 +1960,8 @@
       "complexity_critical": {
         "count": 1
       },
-      "complexity_high": {
-        "count": 1
-      },
       "complexity_moderate": {
-        "count": 1
+        "count": 2
       }
     },
     "packages/layout-elk/src/passes.ts": {
@@ -2336,14 +1972,6 @@
     "packages/layout-elk/src/straighten.ts": {
       "complexity_moderate": {
         "count": 2
-      }
-    },
-    "packages/mermaid/src/api.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "complexity_moderate": {
-        "count": 1
       }
     },
     "packages/mermaid/src/cli.ts": {
@@ -2367,16 +1995,6 @@
     },
     "packages/mermaid/src/dom.ts": {
       "crap_critical": {
-        "count": 1
-      }
-    },
-    "packages/mermaid/src/node-scan.ts": {
-      "complexity_moderate": {
-        "count": 1
-      }
-    },
-    "packages/mermaid/src/node.ts": {
-      "complexity_moderate": {
         "count": 1
       }
     },
@@ -2428,7 +2046,7 @@
     },
     "playwright.config.ts": {
       "crap_moderate": {
-        "count": 1
+        "count": 2
       }
     },
     "tools/check-deps/check-deps.ts": {
@@ -2436,19 +2054,22 @@
         "count": 1
       }
     },
+    "tools/ci/durations-cli.ts": {
+      "crap_critical": {
+        "count": 1
+      }
+    },
     "tools/eslint-plugin/index.ts": {
       "complexity_moderate": {
         "count": 1
+      },
+      "crap_high": {
+        "count": 3
       }
     },
     "tools/gen-config/src/generate.ts": {
       "complexity_moderate": {
         "count": 3
-      }
-    },
-    "tools/gen-config/src/registry.ts": {
-      "complexity_moderate": {
-        "count": 1
       }
     },
     "tools/gen-config/src/schema.ts": {
@@ -2488,26 +2109,7 @@
       }
     },
     "tools/gen-grammar/src/ebnf.ts": {
-      "complexity_critical": {
-        "count": 2
-      },
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_critical": {
-        "count": 2
-      }
-    },
-    "tools/gen-grammar/src/generate.ts": {
-      "complexity_high": {
-        "count": 1
-      },
-      "crap_high": {
-        "count": 1
-      }
-    },
-    "tools/gen-grammar/src/highlight-testing.ts": {
-      "complexity_critical": {
+      "complexity_moderate": {
         "count": 1
       }
     },
@@ -2525,10 +2127,7 @@
       }
     },
     "tools/gen-grammar/src/mode-lexer.ts": {
-      "complexity_critical": {
-        "count": 1
-      },
-      "crap_critical": {
+      "complexity_high": {
         "count": 1
       }
     },
@@ -2539,6 +2138,11 @@
     },
     "tools/gen-grammar/src/unicode.ts": {
       "complexity_moderate": {
+        "count": 1
+      }
+    },
+    "tools/pre-push/cli.ts": {
+      "crap_moderate": {
         "count": 1
       }
     },
@@ -2561,9 +2165,6 @@
       }
     },
     "tools/release/src/rehearse-cli.ts": {
-      "crap_high": {
-        "count": 1
-      },
       "crap_moderate": {
         "count": 1
       }
@@ -2575,180 +2176,138 @@
     "packages/language-service-codemirror/src/grammars.ts:coupling",
     "packages/core/src/layout/swimlane/adapter.ts:high impact",
     "packages/core/src/layout/swimlane/phase2.crossLaneAdjust.ts:complexity",
+    "packages/core/src/layout/swimlane/phase0.helpers.ts:high impact",
     "packages/plugin-interactions/src/index.ts:high impact",
-    "packages/core/src/parser-kit/chars.ts:high impact",
     "packages/mermaid/src/registry.ts:high impact",
-    "packages/language-service/src/config/front-matter.ts:high impact",
-    "packages/bench/src/gates.ts:complexity",
-    "tools/gen-grammar/src/ebnf.ts:high impact",
+    "packages/core/src/parser-kit/chars.ts:high impact",
     "packages/bench/src/markdown.ts:high impact",
-    "packages/core/src/svg/style.ts:high impact",
-    "packages/diagram-c4/src/layout/invariants.ts:hidden coupling",
-    "packages/conformance/src/svg-props.ts:high impact",
     "packages/diagram-usecase/src/facet/completions.ts:complexity",
-    "packages/core/src/parser-kit/probe.ts:high impact",
+    "packages/language-service/src/config/front-matter.ts:high impact",
+    "packages/conformance/src/svg-props.ts:high impact",
+    "packages/bench/src/gates.ts:hidden coupling",
     "packages/core/src/layout/layered/index.ts:high impact",
-    "packages/conformance/src/jison/harvest.ts:high impact",
-    "packages/diagram-class/src/language.ts:high impact",
-    "packages/language-service/src/config/schema.ts:high impact",
-    "packages/bench/src/pipeline.ts:high impact",
+    "tools/gen-grammar/src/ebnf.ts:high impact",
     "packages/diagram-venn/src/facet/completions.ts:complexity",
-    "packages/diagram-xychart/src/layout/invariants.ts:high impact",
-    "packages/language-service/src/symbols.ts:high impact",
-    "packages/core/src/layout/swimlane/__tests__/graphs.ts:high impact",
-    "packages/diagram-wardley/src/facet/completions.ts:complexity",
+    "packages/core/src/parser-kit/probe.ts:high impact",
+    "packages/core/src/svg/style.ts:high impact",
     "packages/conformance/src/c4/d452.ts:high impact",
-    "packages/diagram-railroad/src/parser/convert.ts:high impact",
+    "packages/mermaid/src/embeds.ts:circular dependency",
+    "packages/diagram-architecture/src/layout/layout.ts:high impact",
+    "packages/diagram-xychart/src/layout/invariants.ts:complexity",
+    "packages/conformance/src/jison/harvest.ts:high impact",
+    "packages/language-service/src/config/schema.ts:high impact",
+    "packages/core/src/layout/swimlane/__tests__/graphs.ts:high impact",
+    "packages/diagram-flowchart/src/parser/lexer.ts:high impact",
     "packages/core/src/layout/swimlane/swimlane.ts:high impact",
-    "packages/core/src/layout/swimlane/phase4.coordinates.ts:high impact",
+    "packages/bench/src/pipeline.ts:high impact",
+    "packages/diagram-agentflow/src/render/render.ts:hidden coupling",
+    "packages/core/src/layout/swimlane/__tests__/ddltGates.ts:high impact",
+    "packages/diagram-treeview/src/layout/invariants.ts:hidden coupling",
     "packages/core/src/preprocess/yaml-text.ts:complexity",
     "packages/conformance/src/ascii/flow-checks.ts:complexity",
-    "packages/diagram-sequence/src/facet/completions.ts:complexity",
-    "packages/core/src/layout/validate.ts:high impact",
-    "packages/core/src/layout/swimlane/__tests__/ddltGates.ts:high impact",
-    "packages/conformance/src/eventmodeling/v13.ts:high impact",
-    "packages/conformance/src/agentflow/ascii/structure.ts:high impact",
+    "packages/core/src/layout/swimlane/phase4.coordinates.ts:high impact",
+    "packages/diagram-kanban/src/layout/invariants.ts:hidden coupling",
+    "packages/mermaid/src/slim.ts:high impact",
+    "packages/core/src/layout/layered/layered.ts:high impact",
     "packages/conformance/src/runner.ts:high impact",
-    "packages/core/src/layout/validate-grid.ts:high impact",
-    "packages/conformance/src/ascii/structure.ts:high impact",
-    "packages/conformance/src/ascii/usecase-structure.ts:complexity",
-    "packages/core/src/theme/theme.ts:high impact",
-    "packages/diagram-quadrant/src/layout/invariants.ts:high impact",
-    "packages/diagram-agentflow/src/parser/source.ts:high impact",
-    "packages/diagram-usecase/src/ascii/warnings.ts:complexity",
-    "packages/language-service/src/config/completion.ts:complexity",
-    "packages/conformance/src/cli/harvest-v12.ts:hidden coupling",
-    "packages/core/src/layout/swimlane/phase0.helpers.ts:high impact",
-    "packages/diagram-block/src/facet/text.ts:high impact",
-    "packages/conformance/src/ascii/er-structure.ts:high impact",
-    "packages/diagram-class/src/parser/member.ts:high impact",
     "packages/diagram-railroad/src/layout/layout.ts:hidden coupling",
-    "packages/mermaid/src/embeds.ts:circular dependency",
-    "packages/conformance/src/ascii/expected.ts:high impact",
-    "packages/conformance/src/flowchart/grammar/reference.ts:high impact",
-    "packages/diagram-architecture/src/parser/lexer.ts:high impact",
-    "packages/diagram-gitgraph/src/layout/place.ts:high impact",
-    "packages/core/src/config/fragment.ts:high impact",
-    "tools/gen-grammar/src/docs.ts:high impact",
-    "packages/plugin-hand-drawn/src/sketch.ts:high impact",
-    "packages/diagram-requirement/src/facet/names.ts:high impact",
-    "packages/diagram-timeline/src/parser/lexer.ts:high impact",
-    "packages/conformance/src/sequence/path-bounds.ts:high impact",
-    "packages/diagram-flowchart/src/render/render.ts:complexity",
-    "tools/gen-config/src/theme-direction.ts:complexity",
-    "packages/plugin-icons/src/resolve.ts:high impact",
-    "packages/bench/src/ascii-size.ts:high impact",
-    "packages/diagram-architecture/src/layout/invariants.ts:complexity",
-    "packages/diagram-sequence/src/layout/layout.ts:hidden coupling",
+    "packages/conformance/src/ascii/structure.ts:high impact",
+    "packages/conformance/src/eventmodeling/v13.ts:high impact",
+    "packages/conformance/src/ascii/usecase-structure.ts:complexity",
+    "packages/diagram-class/src/render/render.ts:hidden coupling",
+    "packages/core/src/theme/theme.ts:high impact",
+    "packages/diagram-c4/src/render/paint.ts:hidden coupling",
+    "packages/conformance/src/cli/harvest-v12.ts:hidden coupling",
     "packages/diagram-timeline/src/layout/invariants.ts:complexity",
-    "packages/language-service/src/semantic-tokens.ts:high impact",
+    "packages/language-service/src/config/completion.ts:complexity",
+    "packages/diagram-agentflow/src/parser/source.ts:high impact",
+    "packages/layout-elk/src/adapter.ts:complexity",
+    "packages/diagram-gitgraph/src/layout/place.ts:complexity",
+    "packages/diagram-wardley/src/facet/completions.ts:complexity",
+    "packages/core/src/config/fragment.ts:complexity",
+    "packages/diagram-usecase/src/ascii/warnings.ts:complexity",
+    "packages/core/src/layout/validate.ts:high impact",
+    "packages/diagram-architecture/src/parser/lexer.ts:high impact",
+    "packages/diagram-timeline/src/parser/lexer.ts:high impact",
     "packages/core/src/layout/swimlane/direction/endpointClip.ts:high impact",
-    "packages/diagram-radar/src/parser/lexer.ts:high impact",
+    "tools/gen-config/src/theme-direction.ts:complexity",
+    "packages/plugin-hand-drawn/src/sketch.ts:high impact",
+    "packages/core/src/layout/swimlane/direction/geometry.ts:high impact",
+    "packages/shared/src/parser/facet.ts:high impact",
+    "packages/diagram-class/src/parser/member.ts:complexity",
+    "packages/diagram-sequence/src/layout/layout.ts:hidden coupling",
+    "packages/diagram-treemap/src/layout/invariants.ts:complexity",
+    "packages/core/src/parser-kit/positions.ts:high impact",
+    "packages/diagram-architecture/src/layout/invariants.ts:complexity",
+    "packages/bench/src/ascii-size.ts:hidden coupling",
+    "packages/conformance/src/svg-tree.ts:high impact",
+    "packages/conformance/src/sequence/path-bounds.ts:high impact",
+    "packages/plugin-icons/src/resolve.ts:high impact",
+    "packages/shared/src/config/readers.ts:high impact",
+    "packages/core/src/layout/layered/compound-layer.ts:complexity",
+    "packages/diagram-c4/src/facet/args.ts:complexity",
     "packages/diagram-railroad/src/parser/lexer.ts:high impact",
     "packages/diagram-xychart/src/layout/scale.ts:high impact",
-    "packages/core/src/parser-kit/positions.ts:high impact",
     "packages/core/src/svg/url.ts:high impact",
-    "packages/conformance/src/svg-tree.ts:high impact",
-    "e2e/helpers/stepAnimation.ts:high impact",
-    "packages/diagram-packet/src/parser/lexer.ts:high impact",
-    "packages/diagram-pie/src/parser/lexer.ts:high impact",
-    "packages/diagram-usecase/src/parser/json.ts:high impact",
-    "packages/core/src/layout/swimlane/direction/geometry.ts:high impact",
-    "packages/diagram-timeline/src/render/properties.fixtures.ts:complexity",
-    "packages/diagram-treemap/src/layout/invariants.ts:complexity",
     "packages/bench/src/cli/args.ts:high impact",
-    "packages/bench/src/cli/bench.ts:hidden coupling",
-    "tools/check-deps/check-deps.ts:high impact",
-    "packages/core/src/layout/swimlane/__tests__/faceGeometry.ts:high impact",
-    "packages/diagram-gantt/src/dates/dates.ts:high impact",
-    "packages/diagram-agentflow/src/ascii/draw.ts:complexity",
-    "packages/diagram-er/src/ascii/draw.ts:complexity",
-    "packages/diagram-gitgraph/src/parser/lexer.ts:high impact",
-    "packages/diagram-journey/src/parser/lexer.ts:high impact",
-    "packages/diagram-treemap/src/parser/lexer.ts:high impact",
-    "packages/core/src/ascii/canvas.ts:high impact",
-    "packages/diagram-treemap/src/parser/convert.ts:high impact",
-    "packages/diagram-mindmap/src/parser/lexer.ts:high impact",
-    "packages/diagram-eventmodeling/src/layout/invariants.ts:high impact",
-    "packages/diagram-c4/src/facet/args.ts:complexity",
-    "packages/layout-elk/src/adapter.ts:complexity",
-    "packages/core/src/config/resolve.ts:complexity",
-    "packages/core/src/layout/swimlane/laneFit.ts:high impact",
-    "packages/diagram-gitgraph/src/layout/arrows.ts:complexity",
-    "packages/diagram-sankey/src/parser/values.ts:high impact",
-    "packages/dev/src/browser/explorer/compare-model.ts:high impact",
-    "tools/gen-grammar/src/earley.ts:complexity",
-    "packages/diagram-agentflow/src/parser/base.ts:complexity",
-    "packages/conformance/src/langium-lexer.ts:hidden coupling",
-    "packages/core/src/svg/inert.ts:high impact",
-    "packages/diagram-flowchart/src/parser/lexer.ts:high impact",
-    "packages/diagram-class/src/parser/v12-text.ts:high impact",
-    "packages/diagram-class/src/render/route.ts:complexity",
-    "packages/diagram-requirement/src/render/route.ts:complexity",
-    "packages/diagram-usecase/src/ascii/draw.ts:complexity",
-    "packages/diagram-wardley/src/parser/ids.ts:high impact",
-    "tools/release/src/licenses.ts:complexity",
+    "packages/diagram-timeline/src/render/properties.fixtures.ts:complexity",
+    "packages/diagram-usecase/src/parser/json.ts:complexity",
+    "packages/mermaid/src/icon-packs.ts:high impact",
+    "e2e/helpers/stepAnimation.ts:high impact",
     "packages/diagram-railroad/src/layout/invariants.ts:high impact",
+    "packages/diagram-kanban/src/layout/layout.ts:hidden coupling",
+    "packages/bench/src/cli/bench.ts:hidden coupling",
+    "packages/core/src/layout/check.ts:high impact",
+    "tools/check-deps/check-deps.ts:high impact",
+    "packages/core/src/layout/layered/grid-model.ts:complexity",
+    "packages/diagram-treeview/src/layout/layout.ts:hidden coupling",
+    "tools/gen-config/src/generate.ts:high impact",
+    "packages/core/src/ascii/canvas.ts:high impact",
+    "packages/diagram-gitgraph/src/layout/arrows.ts:complexity",
+    "packages/core/src/config/resolve.ts:complexity",
+    "packages/conformance/src/langium-lexer.ts:hidden coupling",
+    "packages/language-service/src/symbols.ts:high impact",
+    "packages/mermaid/src/block-pass.ts:circular dependency",
+    "packages/diagram-c4/src/render/relations.ts:hidden coupling",
     "packages/core/src/preprocess/yaml.ts:complexity",
-    "packages/diagram-c4/src/layout/layout.ts:hidden coupling",
-    "packages/diagram-eventmodeling/src/parser/parser.ts:complexity",
-    "packages/diagram-flowchart/src/render/edges.ts:complexity",
+    "packages/core/src/svg/inert.ts:high impact",
     "packages/core/src/layout/swimlane/orthogonalRouter/router.ts:complexity",
+    "tools/release/src/licenses.ts:complexity",
+    "packages/diagram-eventmodeling/src/parser/parser.ts:complexity",
+    "packages/core/src/layout/swimlane/direction/materializedGeometry.ts:complexity",
     "packages/diagram-block/src/ascii/route.ts:complexity",
     "packages/diagram-state/src/layout/prepare.ts:complexity",
-    "packages/diagram-treemap/src/parser/parser.ts:complexity",
-    "packages/mermaid/src/block-pass.ts:circular dependency",
-    "packages/diagram-agentflow/src/render/edges.ts:complexity",
-    "tools/gen-config/src/emit.ts:high impact",
     "packages/core/src/theme/specs/neo-dark.ts:hidden coupling",
-    "packages/core/src/layout/layered/compound.ts:complexity",
-    "packages/diagram-flowchart/src/parser/model.ts:complexity",
-    "packages/core/src/layout/swimlane/direction/sharedTrackNudging.ts:complexity",
-    "packages/diagram-er/src/parser/lexer.ts:high impact",
-    "packages/diagram-flowchart/src/parser/parser.ts:complexity",
-    "packages/diagram-agentflow/src/parser/lexer.ts:high impact",
+    "packages/core/src/layout/swimlane/direction/labelAnchoring.ts:complexity",
+    "packages/diagram-usecase/src/ascii/draw.ts:complexity",
+    "packages/core/src/layout/swimlane/direction/siblingSharedFaceRouting.ts:complexity",
+    "packages/core/src/text/label.ts:complexity",
+    "packages/core/src/layout/swimlane/direction/terminalStub.ts:complexity",
     "packages/diagram-sequence/src/layout/rows.ts:hidden coupling",
     "packages/core/src/layout/swimlane/phase2.crossCounts.ts:complexity",
-    "packages/diagram-usecase/src/render/route.ts:complexity",
-    "packages/diagram-state/src/parser/lexer.ts:high impact",
     "packages/conformance/src/agentflow/ascii/fuzz.ts:complexity",
-    "tools/gen-grammar/src/highlight-testing.ts:complexity",
-    "packages/core/src/layout/swimlane/direction/labelAnchoring.ts:complexity",
-    "packages/core/src/layout/swimlane/direction/siblingSharedFaceRouting.ts:complexity",
+    "packages/core/src/parser-kit/source-view.ts:complexity",
     "packages/diagram-c4/src/ascii/route.ts:complexity",
     "packages/core/src/theme/specs/redux-dark-color.ts:hidden coupling",
-    "packages/diagram-wardley/src/parser/lexer.ts:high impact",
     "packages/conformance/src/allowlists/allowlists.ts:complexity",
-    "tools/gen-grammar/src/mode-lexer.ts:complexity",
-    "packages/core/src/parser-kit/source-view.ts:complexity",
-    "packages/diagram-sequence/src/parser/lexer.ts:high impact",
-    "packages/core/src/layout/swimlane/direction/terminalStub.ts:complexity",
-    "packages/diagram-gantt/src/parser/lexer.ts:high impact",
-    "packages/core/src/layout/layered/layered.ts:high impact",
     "packages/diagram-sequence/src/layout/metrics.ts:hidden coupling",
-    "packages/diagram-state/src/render/edges.ts:complexity",
-    "packages/core/src/layout/swimlane/direction/validation.ts:complexity",
-    "packages/diagram-venn/src/parser/lexer.ts:high impact",
-    "packages/diagram-block/src/parser/lexer.ts:high impact",
-    "packages/diagram-wardley/src/layout/layout.ts:complexity",
-    "packages/diagram-usecase/src/parser/lexer.ts:complexity",
-    "packages/core/src/layout/swimlane/direction/detourSimplification.ts:complexity",
-    "packages/diagram-treemap/src/layout/tiles.ts:complexity",
-    "packages/core/src/layout/swimlane/direction/materializedGeometry.ts:complexity",
-    "packages/diagram-kanban/src/parser/lexer.ts:high impact",
-    "packages/core/src/text/label.ts:complexity",
-    "packages/diagram-agentflow/src/parser/statements.ts:complexity",
     "packages/diagram-c4/src/parser/build.ts:complexity",
+    "packages/diagram-usecase/src/parser/lexer.ts:complexity",
+    "packages/diagram-timeline/src/layout/lr.ts:hidden coupling",
+    "packages/diagram-wardley/src/layout/layout.ts:complexity",
+    "packages/core/src/layout/swimlane/direction/detourSimplification.ts:complexity",
+    "packages/core/src/layout/swimlane/direction/validation.ts:complexity",
+    "packages/diagram-treemap/src/layout/tiles.ts:complexity",
     "packages/conformance/src/block/v12-layout.ts:complexity",
-    "packages/diagram-c4/src/parser/lexer.ts:complexity",
-    "packages/core/src/ascii/repair.ts:complexity",
+    "packages/diagram-timeline/src/layout/td.ts:hidden coupling",
     "packages/core/src/theme/specs/redux.ts:hidden coupling",
-    "packages/dev/src/browser/explorer/tabs/profile.ts:complexity",
+    "packages/core/src/ascii/repair.ts:complexity",
+    "tools/eslint-plugin/index.ts:untested risk",
     "packages/diagram-venn/src/solver/fmin.ts:complexity",
     "packages/core/src/layout/swimlane/direction/portSwap.ts:complexity",
     "packages/core/src/theme/specs/default.ts:hidden coupling",
-    "packages/core/src/theme/specs/neutral.ts:hidden coupling",
     "packages/core/src/layout/tree/tree.ts:complexity",
+    "packages/core/src/theme/specs/neutral.ts:hidden coupling",
     "packages/core/src/theme/specs/forest.ts:hidden coupling",
     "packages/core/src/theme/specs/dark.ts:hidden coupling"
   ]
