@@ -35,14 +35,14 @@ e2e/diagrams/er-diagram/nightly-check/should-render-empty-subgraphs.mmd 1 88e109
 e2e/diagrams/er-diagram/nightly-check/should-render-entities-and-attributes-with-big-and-small-entity-names.mmd 1 22fa10ad6227f031
 e2e/diagrams/er-diagram/nightly-check/should-render-entities-with-aliases.mmd 1 da63588e8e8f1408
 e2e/diagrams/er-diagram/nightly-check/should-render-entities-with-and-without-attributes.mmd 1 ee4bc5985f80d040
-e2e/diagrams/er-diagram/nightly-check/should-render-entities-with-attributes-that-begin-with-asterisk.mmd 1 949778e2279e9035
-e2e/diagrams/er-diagram/nightly-check/should-render-entities-with-backtick-escaped-attribute-names-containing-special-characters.mmd 1 6cbc3fd34414916a
+e2e/diagrams/er-diagram/nightly-check/should-render-entities-with-attributes-that-begin-with-asterisk.mmd 1 357294941678cb7d
+e2e/diagrams/er-diagram/nightly-check/should-render-entities-with-backtick-escaped-attribute-names-containing-special-characters.mmd 1 6e609f87ebc159ba
 e2e/diagrams/er-diagram/nightly-check/should-render-entities-with-entity-name-aliases.mmd 1 0b2d2613d8aecaef
 e2e/diagrams/er-diagram/nightly-check/should-render-entities-with-generic-and-array-attributes.mmd 1 9d355a80c5bafcd1
 e2e/diagrams/er-diagram/nightly-check/should-render-entities-with-keys-and-comments.mmd 1 b5c9effd8fe5aaac
 e2e/diagrams/er-diagram/nightly-check/should-render-entities-with-keys.mmd 1 48c61de4dc52beb2
 e2e/diagrams/er-diagram/nightly-check/should-render-entities-with-length-in-attributes-type.mmd 1 8b0f6cc8491dad37
-e2e/diagrams/er-diagram/nightly-check/should-render-entities-with-unescaped-attribute-names-or-types-containing-commas-or-periods.mmd 1 c760b7b717384ca3
+e2e/diagrams/er-diagram/nightly-check/should-render-entities-with-unescaped-attribute-names-or-types-containing-commas-or-periods.mmd 1 f884cdefad7c5464
 e2e/diagrams/er-diagram/nightly-check/should-render-er-diagram-with-1-cardinality-alias-before-relationship-operators.mmd 1 b02af305c9c05fda
 e2e/diagrams/er-diagram/nightly-check/should-render-er-diagram-with-1-cardinality-using-all-4-relationship-operator-styles.mmd 1 597a531fd918cfc0
 e2e/diagrams/er-diagram/nightly-check/should-render-er-diagram-with-decimal-numbers-in-relationships.mmd 1 611f1b1ea2fb94e7

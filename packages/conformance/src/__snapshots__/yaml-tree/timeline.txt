@@ -45,6 +45,7 @@ e2e/diagrams/timeline/nightly-check/space-exploration-redux-dark-theme-classic-l
 e2e/diagrams/timeline/nightly-check/space-exploration-redux-dark-theme-neo-look.mmd 1 22f5cb5f3269450c
 e2e/diagrams/timeline/nightly-check/space-exploration-redux-theme-classic-look.mmd 1 4bb536f7f6c401bb
 e2e/diagrams/timeline/nightly-check/space-exploration-redux-theme-neo-look.mmd 1 d5d8a6a58ca0b3c3
+e2e/diagrams/timeline/nightly-check/zero-width-space-kept.mmd 1 8c27313deb7bae72
 e2e/diagrams/timeline/pr-check/1-should-render-a-simple-timeline-with-no-specific-sections.mmd 1 a79eaf61fe58e147
 e2e/diagrams/timeline/pr-check/12-should-render-timeline-with-proper-vertical-line-lengths-for-all-columns.mmd 1 ab6bb1f04b2b1568
 e2e/diagrams/timeline/pr-check/14-should-render-a-vertical-timeline-diagram-with-sections.mmd 1 f03494f4ab10dc65

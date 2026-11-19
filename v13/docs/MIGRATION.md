@@ -1291,7 +1291,8 @@ differences, all checked against v12 over the e2e corpus:
 - A byte order mark (U+FEFF) before the opening `---` is skipped, so the front matter's `title`
   and `config` apply. v12 drew the diagram but ignored the front matter (D642).
 - YAML anchors are rejected, and `__proto__`/`constructor`/`prototype` keys are dropped with a
-  warning.
+  warning. The error says that tags, anchors and aliases are not supported, also for an anchor
+  on a key that holds a nested mapping (`base: &b` over indented keys).
 - A `config` that is not a mapping is ignored with a `FRONT_MATTER_CONFIG` warning.
 - One invalid directive (bad JSON) is dropped with `INVALID_DIRECTIVE`; v12 dropped all of
   them.
@@ -1830,7 +1831,7 @@ v12's.
 | No source mapping | Each field's first `rect.packetBlock` carries `data-ast="field:<start>-<end>"`; every piece's rect carries `data-id="<start>-<end>"` of its field, so the pieces of a field split across rows share one `data-id`. The row `<g>`s carry nothing | One `data-ast` element per AST node (R-PARSE-8, D345, pitfall 12) |
 | `text.packetTitle` always written, empty when the diagram has no title | Written only when there is a title | Nothing invisible is drawn |
 | Labels and the title set with d3 `.text()` and `dominant-baseline="middle"`: `<br>` and tags printed as written, `&amp;` printed literally | Core's label layout ([Labels and text](#labels-and-text)): `<br>` breaks the line into `<tspan>`s, `<b>`/`<i>` render, entities decode; the text is placed by its baseline, centred where v12 centred it. A title of several lines keeps its first line where v12 drew its one line and grows down; a title taller than a row sits below the last row instead of over it. An empty label draws no `<text>` | D343 |
-| A label wider than its field ran over its neighbours | It shrinks to fit (its own `font-size`), down to the bit-number size (10 px), then overflows as in v12; each piece of a split field fits its own label | D343 |
+| A label wider than its field ran over its neighbours | It shrinks to fit (its own `font-size`), down to the bit-number size (10 px), then overflows as in v12; each piece of a split field fits its own label. A label of more `<br>` lines than fit the row's height shrinks the same way, and one that is still too tall at 10 px overflows above and below, centred on its block | D343 |
 | Bit numbers with `dominant-baseline="auto"` | The same baseline, without the attribute (it is the default) | |
 | `viewBox="0 0 <bitWidth × bitsPerRow + 2> <height>"`: a title or label running past it was clipped | The same unless something runs past it: the `viewBox` (and `max-width`, or `width`/`height` with `useMaxWidth: false`) grows to cover everything drawn, half the stroke included, and may start below 0 | D344 |
 | A `paddingX` wider than a piece drew a negative `width` | `width="0"` | D342 |
