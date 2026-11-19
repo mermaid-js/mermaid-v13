@@ -39,9 +39,11 @@ e2e/diagrams/c4/nightly-check/parse-fixes.mmd 1 09288fc7f421550a
 e2e/diagrams/c4/nightly-check/rel-index.mmd 1 883b9385d1b3e25c
 e2e/diagrams/c4/nightly-check/rel-long-forms.mmd 1 f25ca6c2bb888021
 e2e/diagrams/c4/nightly-check/relationships/bidirectional-relationship.mmd 1 6e12e4d94c953f07
+e2e/diagrams/c4/nightly-check/relationships/blocked-diagonal-relations.mmd 1 d81b1eb2a274f585
 e2e/diagrams/c4/nightly-check/relationships/rel-back.mmd 1 669a5a636ce1cf33
 e2e/diagrams/c4/nightly-check/relationships/technology-and-description.mmd 1 da08afbeeda8d591
 e2e/diagrams/c4/nightly-check/sprite-attribute-not-rendered.mmd 1 71b8416973f753ea
+e2e/diagrams/c4/nightly-check/styling/update-element-style-empty-slots.mmd 1 56c517e0ec9c712b
 e2e/diagrams/c4/nightly-check/styling/update-relationship-style.mmd 1 0eb56661982d7a9d
 e2e/diagrams/c4/nightly-check/tags-attribute-not-rendered.mmd 1 11813fe7e055899d
 e2e/diagrams/c4/nightly-check/titles.mmd 1 271701e4e7bd12f2
