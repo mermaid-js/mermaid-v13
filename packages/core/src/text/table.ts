@@ -230,16 +230,25 @@ export function tableMeasurerWith(
   const slice: Slice = (text, from, to, font, style) =>
     tableWidth(faceFor(font.family), text, from, to, font, style);
 
+  // The last font object this measurer gave metrics for, and those metrics: a render lays out
+  // its labels in a few font objects, mostly the same one many times running. Keyed on the object
+  // (a `FontKey` is read-only), not on any text; it keeps that one object and its metrics from one
+  // call to the next, across renders, until another font object is measured.
+  let lastFont: FontKey | undefined;
+  let lastMetrics: VerticalMetrics = { ascent: 0, descent: 0, lineHeight: 0 };
+
   const measurer: Measurer = {
     id,
     width: (text, font, style) => slice(text, 0, text.length, font, style),
     metrics(font: FontKey): VerticalMetrics {
+      if (font === lastFont) return lastMetrics;
       const [ascent, descent, lineHeight] = faceFor(font.family).vertical;
-      return {
+      lastFont = font;
+      return (lastMetrics = {
         ascent: (ascent * font.size) / 1000,
         descent: (descent * font.size) / 1000,
         lineHeight: (lineHeight * font.size) / 1000,
-      };
+      });
     },
   };
   const units: Units = {
