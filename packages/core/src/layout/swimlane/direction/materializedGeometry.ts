@@ -3397,16 +3397,23 @@ export function resolveRenderedOrthogonalCrossings(
 
   // An edge whose ends share a lane, routed out of it, goes back on its best in-lane route. An
   // edge with none keeps the route it has; no other edge moves.
+  // v13 (#843): a round is what `startRound` reads of the routes, so it is built again only once
+  // an edge has moved since the last one.
   const keepSameLaneEdgesInside = (): void => {
+    let roundIsCurrent = false;
     for (const edge of visibleEdges) {
       const band = sharedLaneBand(edge, laneModel, nodeByIdMap);
       if (!band || staysInsideBand(edge.points ?? [], band)) {
         continue;
       }
-      round = startRound();
+      if (!roundIsCurrent) {
+        round = startRound();
+        roundIsCurrent = true;
+      }
       const best = bestInLaneCandidate(edge, band);
       if (best) {
         edge.points = best.map((point) => ({ ...point }));
+        roundIsCurrent = false;
       }
     }
   };
