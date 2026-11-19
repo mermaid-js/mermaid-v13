@@ -87,6 +87,8 @@ export function inheritCrossedDirections(
   };
   for (const [src, dst] of ends) {
     if (src < 0 || dst < 0 || src === dst) continue;
+    // Ends in one group have the same ancestors: nothing is crossed.
+    if (nodes[src]!.parent === nodes[dst]!.parent) continue;
     const a = ancestors(src);
     const b = ancestors(dst);
     for (const g of a) if (!b.has(g)) nodes[g]!.dir = undefined;
