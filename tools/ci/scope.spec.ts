@@ -79,21 +79,46 @@ describe('which unit tests run (D637)', () => {
     expect(on('pull_request', source)).toMatchObject({ scope: 'code', tests: 'related' });
   });
 
+  it('stays related with docs and changesets beside the source, and names their readers', () => {
+    const result = ciScope({
+      event: 'pull_request',
+      files: [...source, '.changeset/quiet-cats.md', 'v13/docs/MIGRATION.md', 'README.md'],
+      readers: ['tools/release/src/changesets.ts', 'tools/gen-config/src/migration.spec.ts'],
+    });
+    expect(result).toMatchObject({ scope: 'code', tests: 'related' });
+    expect(result.readers).toEqual([
+      'tools/gen-config/src/migration.spec.ts',
+      'tools/release/src/changesets.ts',
+    ]);
+  });
+
+  it('runs every test, with no readers, when the search for readers failed', () => {
+    const result = ciScope({
+      event: 'pull_request',
+      files: [...source, '.changeset/quiet-cats.md'],
+      readers: undefined,
+    });
+    expect(result).toMatchObject({ scope: 'code', tests: 'all', readers: [] });
+  });
+
   it('runs every test when any other file changed, and names it', () => {
     for (const file of [
       'packages/conformance/divergences/pie.json',
       'packages/diagram-pie/package.json',
       'packages/diagram-pie/src/__snapshots__/a.spec.ts.snap',
       'e2e/diagrams/pie/pr-check/a.mmd',
-      '.changeset/quiet-cats.md',
+      '.changeset/config.json',
+      '.changeset/pre.json',
       'tools/ci/scope.ts',
       'pnpm-lock.yaml',
       'vitest.config.ts',
       '.github/workflows/ci.yml',
     ]) {
-      const result = on('pull_request', [...source, file]);
+      const result = on('pull_request', [...source, 'README.md', file]);
       expect(result.tests, file).toBe('all');
       expect(result.testsReason, file).toContain(file);
+      // Every test runs, so there is nothing left for docs-tests to add.
+      expect(result.readers, file).toEqual([]);
     }
   });
 
@@ -161,10 +186,7 @@ describe('replay', () => {
       ['e2e/diagrams/pie/pr-check/a.mmd', 'packages/diagram-pie/src/a.ts'],
       ['e2e/diagrams/er/pr-check/b.mmd'],
     ]);
-    expect(result).toMatchObject({ total: 5, docs: 1, related: 1, all: 3 });
-    expect(result.allBecause).toEqual([
-      ['e2e/diagrams', 2],
-      ['.changeset/x.md', 1],
-    ]);
+    expect(result).toMatchObject({ total: 5, docs: 1, related: 2, all: 2 });
+    expect(result.allBecause).toEqual([['e2e/diagrams', 2]]);
   });
 });

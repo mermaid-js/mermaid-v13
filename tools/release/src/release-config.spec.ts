@@ -280,7 +280,8 @@ describe('workflow branches (R-REL-1)', () => {
       expect(jobs[id]!.needs, id).toBe('changes');
     }
     expect(jobs.lint!.if).toBeUndefined();
-    expect(jobs['docs-tests']!.if).toContain("needs.changes.outputs.scope == 'docs'");
+    // Whenever the Scope job names readers: a docs run, or a related run with docs beside source.
+    expect(jobs['docs-tests']!.if).toBe("${{ needs.changes.outputs.readers != '' }}");
     // The required check fails when the scope was not decided, whatever was skipped.
     expect(jobs.checks!.needs).toContain('changes');
     expect(jobs.checks!.steps[0]!.run).toContain('"$SCOPE" != "success"');

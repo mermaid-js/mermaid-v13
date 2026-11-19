@@ -4,8 +4,10 @@
  * - `docs`: only documentation changed, by the pre-push hook's rule (`tools/pre-push/plan.ts`).
  *   Lint runs, and the tests of the code that reads the changed files.
  * - `code` with `tests: 'related'` (D637): a PR that changes only TypeScript source inside
- *   packages. Every job runs, but the unit shards run only the test files the change can reach
- *   (`testFiles`), as make rebuilds only what depends on a changed file.
+ *   packages, with or without docs and changesets beside it. Every job runs, but the unit
+ *   shards run only the test files the change can reach (`testFiles`), as make rebuilds only
+ *   what depends on a changed file, and `docs-tests` runs the tests of the code that reads the
+ *   changed docs and changesets.
  * - `code` with `tests: 'all'`: everything, as before. Every doubt ends here, and so does every
  *   push to mermaid-v13, which is what catches a test a PR wrongly left out.
  *
@@ -18,8 +20,9 @@ export interface CiScope {
   readonly scope: 'code' | 'docs';
   readonly reason: string;
   /**
-   * The source files that name a changed docs file: a `docs` run gives them to
-   * `vitest related`, which runs the specs among them and the specs that import the others.
+   * The source files that name a changed docs file or read the changesets: `docs-tests` gives
+   * them to `vitest related`, which runs the specs among them and the specs that import the
+   * others. Empty when every test runs anyway.
    */
   readonly readers: readonly string[];
   /** What the unit shards run. `none` in a `docs` run, where `docs-tests` runs instead. */
@@ -43,24 +46,46 @@ const code = (reason: string): CiScope => ({
  */
 const PACKAGE_SOURCE = /^packages\/[^/]+\/src\/.+\.ts$/;
 
-/** What the unit shards run for a change that is not docs-only. */
-function testsFor(event: string, files: readonly string[]): Pick<CiScope, 'tests' | 'testsReason'> {
-  if (event !== 'pull_request') {
-    return { tests: 'all', testsReason: `a ${event} run runs every test` };
-  }
-  const other = files.find((file) => !PACKAGE_SOURCE.test(file));
+/** A changeset: release input, read by the release tooling and its tests and by nothing else. */
+const CHANGESET = /^\.changeset\/[^/]+\.md$/;
+
+/**
+ * A file that may sit beside package source in a `related` run: documentation or a changeset.
+ * The tests that depend on one are those of the code that reads it (`readers`), which
+ * `docs-tests` runs.
+ */
+export const isCompanion = (file: string): boolean => isDocsPath(file) || CHANGESET.test(file);
+
+/** Whether `file` is a changeset. */
+export const isChangeset = (file: string): boolean => CHANGESET.test(file);
+
+/** What the unit shards run for a change that is not docs-only, and whose readers to test. */
+function testsFor(
+  event: string,
+  files: readonly string[],
+  readers: readonly string[] | undefined
+): Pick<CiScope, 'tests' | 'testsReason' | 'readers'> {
+  const all = (testsReason: string) => ({ tests: 'all' as const, testsReason, readers: [] });
+  if (event !== 'pull_request') return all(`a ${event} run runs every test`);
+  const other = files.find((file) => !PACKAGE_SOURCE.test(file) && !isCompanion(file));
   if (other !== undefined) {
-    return { tests: 'all', testsReason: `not TypeScript source of a package: ${other}` };
+    return all(`not package source, documentation or a changeset: ${other}`);
   }
-  return { tests: 'related', testsReason: 'only TypeScript source of packages changed' };
+  if (readers === undefined) return all('the search for code that reads the docs failed');
+  return {
+    tests: 'related',
+    testsReason: 'only package source, documentation and changesets changed',
+    readers: [...readers].sort(),
+  };
 }
 
 /** The events whose checkout has the change as `HEAD^1..HEAD`. */
 const DIFFED_EVENTS = ['pull_request', 'push'];
 
 /**
- * `files`: what the change touches. `readers`: the source files that name one of them (see
- * `codeReferencePattern`), or undefined when that search failed. Every doubt ends in `code`.
+ * `files`: what the change touches. `readers`: the source files that name one of its docs
+ * files (see `codeReferencePattern`) or read the changesets, or undefined when that search
+ * failed. Every doubt ends in `code` with every test.
  */
 export function ciScope(input: {
   readonly event: string;
@@ -72,7 +97,7 @@ export function ciScope(input: {
   if (files === undefined || files.length === 0) return code('the changed files are not known');
   const notDocs = files.find((file) => !isDocsPath(file));
   if (notDocs !== undefined) {
-    return { ...code(`not documentation: ${notDocs}`), ...testsFor(event, files) };
+    return { ...code(`not documentation: ${notDocs}`), ...testsFor(event, files, readers) };
   }
   if (readers === undefined) return code('the search for code that reads the docs failed');
   const count = `${files.length} ${files.length === 1 ? 'file' : 'files'}`;

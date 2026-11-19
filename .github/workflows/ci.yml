@@ -46,11 +46,14 @@ jobs:
         run: pnpm exec tsx tools/ci/scope-cli.ts
 
   docs-tests:
-    # A `docs` run whose files some code reads (a spec that checks the D-ids in DECISIONS.md,
-    # say): `vitest related` runs the specs among those readers and the specs that import them.
+    # The tests of the code that reads a changed docs file or the changesets (a spec that
+    # checks the D-ids in DECISIONS.md, the release tooling): `vitest related` runs the specs
+    # among those readers and the specs that import them. It runs in a `docs` run, and in a
+    # `related` run that has docs or changesets beside its source (D637). The Scope job lists
+    # no readers when every test runs anyway.
     name: Tests of code that reads the docs
     needs: changes
-    if: ${{ needs.changes.outputs.scope == 'docs' && needs.changes.outputs.readers != '' }}
+    if: ${{ needs.changes.outputs.readers != '' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     env:

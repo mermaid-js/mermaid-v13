@@ -10,29 +10,30 @@ import { replay } from './scope.ts';
 /** GitHub lists at most this many files of a PR; a longer list is cut and may hide a file. */
 const FILE_LIST_LIMIT = 100;
 
-const count = process.argv[2] ?? '200';
 const repo = process.env.GITHUB_REPOSITORY ?? 'mermaid-js/mermaid-v13';
-const listed = execFileSync(
-  'gh',
-  [
-    'pr',
-    'list',
-    '-R',
-    repo,
-    '--state',
-    'merged',
-    '--base',
-    'mermaid-v13',
-    '--limit',
-    count,
-    '--json',
-    'files',
-  ],
-  { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 }
-);
-const prs = (JSON.parse(listed) as { files: { path: string }[] }[]).map((pr) =>
-  pr.files.map((file) => file.path)
-);
+// `--jq` reduces each PR to its file paths, so the output is the list `replay` takes.
+const prs = JSON.parse(
+  execFileSync(
+    'gh',
+    [
+      'pr',
+      'list',
+      '-R',
+      repo,
+      '--state',
+      'merged',
+      '--base',
+      'mermaid-v13',
+      '--limit',
+      process.argv[2] ?? '200',
+      '--json',
+      'files',
+      '--jq',
+      '[.[] | [.files[].path]]',
+    ],
+    { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 }
+  )
+) as string[][];
 const result = replay(prs);
 const share = (n: number): string => `${n} (${Math.round((100 * n) / Math.max(result.total, 1))}%)`;
 const cut = prs.filter((files) => files.length >= FILE_LIST_LIMIT).length;
@@ -44,7 +45,7 @@ process.stdout.write(
     `  related  ${share(result.related)}   every job, with only the unit tests the change can reach`,
     `  all      ${share(result.all)}   everything`,
     `${cut} of them changed ${FILE_LIST_LIMIT} files or more; GitHub cuts the list there, so one may be misfiled.`,
-    'What sent a PR to "all": the first file that is not package source, by area (PRs):',
+    'What sent a PR to "all": its first file that is not package source, docs or a changeset, by area (PRs):',
     ...result.allBecause.slice(0, 15).map(([area, n]) => `  ${String(n).padStart(4)}  ${area}`),
     '',
   ].join('\n')

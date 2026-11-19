@@ -3,15 +3,16 @@
  * (`scope.ts`) from the change `HEAD^1..HEAD`: on a PR the checkout is the merge commit, so
  * that is the PR; on a push to mermaid-v13 it is what the push added. Writes to GITHUB_OUTPUT:
  * `scope` (`code` or `docs`), `readers` (space-separated source files, for `vitest related`
- * in a `docs` run), `tests` (`all`, `related` or `none`) and `test_files` (space-separated
+ * in `docs-tests`), `tests` (`all`, `related` or `none`) and `test_files` (space-separated
  * test files, for a `related` run). The reasoning goes to the job summary.
  */
 import { spawnSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { codeReferencePattern } from '../pre-push/plan.ts';
+import { codeReferencePattern, isDocsPath } from '../pre-push/plan.ts';
 import {
   ciScope,
+  isChangeset,
   listedFile,
   READS_THE_TREE,
   summarize,
@@ -41,11 +42,18 @@ function grepFiles(args: string[]): string[] | undefined {
   return status === 0 ? lines(stdout) : undefined;
 }
 
-/** The files that name one of `docs`. */
-function readersOf(docs: readonly string[]): string[] | undefined {
-  if (docs.length === 0) return [];
-  const patterns = [...new Set(docs.map(codeReferencePattern))].flatMap((p) => ['-e', p]);
-  return grepFiles([...patterns, '--', '.', ...NOT_CODE]);
+/** A string literal that names the changesets folder: `'.changeset'`, `".changeset/config.json"`. */
+const CHANGESETS_FOLDER = '[\'"`](\\.\\.?/)*\\.changeset[/\'"`]';
+
+/**
+ * The files that read what `changed` holds besides source: those that name one of its docs
+ * files, and, when a changeset changed, those that name the changesets folder.
+ */
+function readersOf(changed: readonly string[]): string[] | undefined {
+  const patterns = [...new Set(changed.filter(isDocsPath).map(codeReferencePattern))];
+  if (changed.some(isChangeset)) patterns.push(CHANGESETS_FOLDER);
+  if (patterns.length === 0) return [];
+  return grepFiles([...patterns.flatMap((p) => ['-e', p]), '--', '.', ...NOT_CODE]);
 }
 
 /**
