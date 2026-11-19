@@ -115,7 +115,14 @@ export abstract class FlowBuilderBase<
   defaultStyle: string[] | undefined;
   accTitle = '';
   accDescr = '';
-  protected readonly edgeById = new Map<string, E>();
+  /**
+   * Edges by id, the first one given it; filled from {@link edges} on lookup, up to
+   * {@link indexed}.
+   */
+  private readonly edgeById = new Map<string, E>();
+  private indexed = 0;
+  /** Whether an edge has its user's id: else every id is generated, and starts with `L_`. */
+  private userIds = false;
   /** Edges so far per start, then per end. */
   private readonly pairCount = new Map<string, Map<string, number>>();
   /** Limits already reported, so a breach is one diagnostic, not one per item. */
@@ -184,12 +191,18 @@ export abstract class FlowBuilderBase<
 
   /** Whether `id` names an edge (`id@`), which v12 never turns into a vertex. */
   hasEdge(id: string): boolean {
-    return this.edgeById.has(id);
+    return this.edgeNamed(id) !== undefined;
   }
 
   /** The edge `id` names (the first one given it), if any. */
   edgeNamed(id: string): E | undefined {
-    return this.edgeById.get(id);
+    if (!this.userIds && !id.startsWith('L_')) return undefined;
+    const { edges, edgeById } = this;
+    for (; this.indexed < edges.length; this.indexed++) {
+      const edge = edges[this.indexed];
+      if (edge && !edgeById.has(edge.id)) edgeById.set(edge.id, edge);
+    }
+    return edgeById.get(id);
   }
 
   // An edge's `@{…}` keys, typed: anything else is dropped with a warning rather than reaching
@@ -249,13 +262,13 @@ export abstract class FlowBuilderBase<
     let ends = this.pairCount.get(start);
     if (!ends) this.pairCount.set(start, (ends = new Map<string, number>()));
     const count = ends.get(end) ?? 0;
-    if (id && !this.edgeById.has(id)) {
+    if (id && !this.hasEdge(id)) {
       edge.id = id;
       edge.isUserDefinedId = true;
+      this.userIds = true;
     } else edge.id = `L_${start}_${end}_${count === 0 ? 0 : count + 1}`;
     this.edges.push(edge);
     ends.set(end, count + 1);
-    if (!this.edgeById.has(edge.id)) this.edgeById.set(edge.id, edge);
   }
 
   /** v12 `addLink`: every start to every end; the user id goes to the last-start/first-end pair. */
@@ -356,7 +369,7 @@ export abstract class FlowBuilderBase<
   setClass(ids: string, className: string): void {
     for (const id of ids.split(',')) {
       this.vertices.get(id)?.classes.push(className);
-      this.edgeById.get(id)?.classes.push(className);
+      this.edgeNamed(id)?.classes.push(className);
       this.container(id)?.classes.push(className);
     }
   }

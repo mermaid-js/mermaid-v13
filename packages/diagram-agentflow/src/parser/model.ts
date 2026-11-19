@@ -432,7 +432,7 @@ export class AgentflowBuilder extends FlowBuilderBase<
       this.reservedAt.push(mark);
       return true;
     }
-    const edge = this.edgeById.get(id);
+    const edge = this.edgeNamed(id);
     if (!edge) return false;
     if (doc) this.edgeData(edge, doc, mark.at);
     return true;
