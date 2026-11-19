@@ -297,3 +297,32 @@ describe('the comparison catches broken fast paths', () => {
     });
   }
 });
+
+/** `escAttr`'s clean-value test with pre-test class `body`, then the reference. */
+function brokenEscAttr(body: string, flags = 'u') {
+  const re = new RegExp(`[${body}]`, flags);
+  return (value: string): string => (re.test(value) ? oldEscAttr(value) : value);
+}
+
+describe('the comparison catches a broken escAttr pre-test', () => {
+  const broken: Record<string, (s: string) => string> = {
+    'a correct copy (control)': brokenEscAttr(`&<>"\\t\\n\\r${INVALID_XML}`),
+    'without the u flag, also correct (control)': brokenEscAttr(`&<>"\\t\\n\\r${INVALID_XML}`, ''),
+    'no tab': brokenEscAttr(`&<>"\\n\\r${INVALID_XML}`),
+    'no CR': brokenEscAttr(`&<>"\\t\\n${INVALID_XML}`),
+    'no LF': brokenEscAttr(`&<>"\\t\\r${INVALID_XML}`),
+    'no quote': brokenEscAttr(`&<>\\t\\n\\r${INVALID_XML}`),
+    'no invalid characters': brokenEscAttr('&<>"\\t\\n\\r'),
+    'no lone surrogates': brokenEscAttr(
+      '&<>"\\t\\n\\r\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f\\ufffe\\uffff'
+    ),
+  };
+
+  for (const [what, candidate] of Object.entries(broken)) {
+    it(what, SLOW, () => {
+      const control = what.endsWith('(control)');
+      const found = mismatches(candidate, oldEscAttr, CORPUS, !control).count;
+      expect(found).toBe(control ? 0 : 1);
+    });
+  }
+});

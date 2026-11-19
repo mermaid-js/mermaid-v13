@@ -62,6 +62,8 @@ export function esc(text: string): string {
 
 const RE_ATTR_WS = /[\t\n\r]/;
 const RE_ATTR_WS_G = /[\t\n\r]/g;
+// What either `esc()` or the tab/LF/CR step would change: a value with none is written as it is.
+const RE_NEEDS_ESC_ATTR = new RegExp(`[&<>"\\t\\n\\r${INVALID_XML}]`, 'u');
 const ATTR_WS: Readonly<Record<string, string>> = { '\t': '&#9;', '\n': '&#10;', '\r': '&#13;' };
 
 /**
@@ -69,6 +71,7 @@ const ATTR_WS: Readonly<Record<string, string>> = { '\t': '&#9;', '\n': '&#10;',
  * references too, since an XML reader turns them into spaces (attribute-value normalisation).
  */
 export function escAttr(value: string): string {
+  if (value.length <= SHORT && !RE_NEEDS_ESC_ATTR.test(value)) return value;
   const e = esc(value);
   return RE_ATTR_WS.test(e) ? e.replace(RE_ATTR_WS_G, (c) => ATTR_WS[c] as string) : e;
 }
