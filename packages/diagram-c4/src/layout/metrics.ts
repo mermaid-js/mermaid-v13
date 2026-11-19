@@ -83,6 +83,11 @@ export const C4_METRICS = {
   /** A label may cover this much of a shape's edge, where there is no text. */
   labelEdge: 8,
   /**
+   * How far a tag keeps from a shape (SVG output, #955 review): a tag's border a pixel from a
+   * shape's reads as touching it.
+   */
+  tagClear: 6,
+  /**
    * v12's arrowhead marker (`M 0 0 L 10 5 L 0 10 z`): 10 long and 10 wide, the one size the
    * renderer draws (`C4_RENDER_METRICS`); labels keep off a square of this half side round its tip.
    */
@@ -103,6 +108,8 @@ export const C4_METRICS = {
   besideSteps: 8,
   /** Steps beside the line per label depth in the finer search (`fineSlide`). */
   fineSplit: 2,
+  /** The same for a tag (SVG output), whose `tagClear` round each shape the coarser steps overshoot. */
+  tagSplit: 4,
   /** What another relation's stretch through a label costs, as a share of the label's area. */
   lineCover: 0.5,
   /** What each step beside the line past the first costs, as a share of `lineCover`'s cost. */

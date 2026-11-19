@@ -12,7 +12,7 @@ import type { Scene } from './context.ts';
 /** What a text is drawn from. */
 export interface TextParts {
   readonly label: PlacedLabel;
-  /** Its class: `c4-name`, `c4-rel-label`, … */
+  /** Its class: `c4-name`, `c4-boundary-label`, … */
   readonly cls: string;
   readonly fill: Paint;
   /** The user's id of what it labels; text never carries `data-ast` (pitfall 12). */

@@ -9,6 +9,9 @@ import { c4LayoutViolations, c4RelationCrossings } from './invariants.ts';
 import { layoutC4 } from './layout.ts';
 import { C4_METRICS as M } from './metrics.ts';
 import { c4RelationPath } from './path.ts';
+import { crosses, lineOf } from './route.ts';
+import { labelBlockers, outlineForm } from './shapes.ts';
+import { rectsOverlap } from '@mermaid-js/shared/testing/layout-invariants';
 import { fixture, fixtureSource, FIXTURES } from './mmd.fixtures.ts';
 import type { C4Layout, C4RelationLayout, PlacedLabel, Point, Rect } from './types.ts';
 
@@ -67,6 +70,13 @@ const right = (r: Rect): number => r.x + r.width;
 const textOf = (l: PlacedLabel): string =>
   l.text.lines.map((line) => line.map((run) => run.text).join('')).join(' ');
 const bottom = (r: Rect): number => r.y + r.height;
+/** Whether a relation's own line runs through its label box (the label sits on its line). */
+const onItsLine = (r: C4RelationLayout): boolean => {
+  const flat = (ps: readonly Point[]): number[] => ps.flatMap((p) => [p.x, p.y]);
+  const box = r.labelBox!;
+  const line = lineOf(flat(r.points), r.controls ? flat(r.controls) : undefined);
+  return crosses(line, { x0: box.x, y0: box.y, x1: box.x + box.width, y1: box.y + box.height });
+};
 
 /**
  * Relations that cross an element on the e2e fixtures (the spec allows listed exceptions): none.
@@ -112,6 +122,50 @@ describe('c4 layout invariants on the e2e fixtures', () => {
         .map((r) => `${path} ${name}: ${r.from} -> ${r.to}`);
       expect(crowded).toEqual(CROWDED_EXCEPTIONS.filter((c) => c.startsWith(`${path} ${name}:`)));
     }
+  });
+
+  /**
+   * Labels whose tag fits on their line between the two shapes (#955 review): each sits on it,
+   * as its bare text did, rather than beside it. A person blocks its head and body, not the empty
+   * corners of its box beside the head.
+   */
+  it.each([
+    ['nightly-check/docs/2-container', 'email_system', 'customer'],
+    ['pr-check/quotes', 'customer', 'shop'],
+    ['pr-check/title-with-hash', 'customer', 'shop'],
+    ['baseline/themes/default', 'customer', 'mail'],
+  ])('puts the label on its line where its tag fits: %s %s -> %s', (path, from, to) => {
+    const { model, config } = fixture(path);
+    for (const [themeName, drawn] of themes) {
+      const layout = layoutC4(model, c4TestContext(config, drawn));
+      expect(onItsLine(rel(layout, from, to)), themeName).toBe(true);
+    }
+  });
+
+  it('keeps every tag `tagClear` from every shape, so that none reads as touching one', () => {
+    const near: string[] = [];
+    for (const [themeName, drawn] of themes)
+      for (const path of FIXTURES) {
+        const { model, config } = fixture(path);
+        const layout = layoutC4(model, c4TestContext(config, drawn));
+        const parts = layout.elements.flatMap((e) =>
+          labelBlockers({ ...e.box, form: outlineForm(e.shape, false) }).map((p) => ({ e, p }))
+        );
+        for (const r of layout.relations) {
+          const box = r.labelBox;
+          if (!box || r.crowded) continue;
+          const grown = {
+            x: box.x - M.tagClear + 1e-6,
+            y: box.y - M.tagClear + 1e-6,
+            width: box.width + 2 * M.tagClear - 2e-6,
+            height: box.height + 2 * M.tagClear - 2e-6,
+          };
+          for (const { e, p } of parts)
+            if (rectsOverlap(grown, p))
+              near.push(`${themeName} ${path}: ${r.from} -> ${r.to} near ${e.alias}`);
+        }
+      }
+    expect(near).toEqual([]);
   });
 
   it('cross no element but the listed relations, in the product default theme and a classic one', () => {
@@ -589,6 +643,15 @@ describe('c4 relations (D455)', () => {
       expect(steps[0]).not.toBe(0);
     });
 
+    it('spaces labelled lines a tag apart where the room allows, each label on its own line', () => {
+      const layout = sound(repeated(ROW, 3));
+      const { gaps } = across(layout);
+      const lines = layout.relations.filter((r) => r.from === 'a' && r.to === 'b');
+      const tag = Math.max(...lines.map((r) => r.labelBox!.height));
+      for (const gap of gaps) expect(gap).toBeGreaterThanOrEqual(tag + 2 * M.besideGap - ROUNDING);
+      for (const r of lines) expect(onItsLine(r)).toBe(true);
+    });
+
     it('limit: past the room the pair shares, keeps them evenly apart, closer than `near`', () => {
       const { gaps } = across(sound(repeated(ROW, PAST_ROOM)));
       expect(gaps).toHaveLength(PAST_ROOM - 1);
@@ -938,6 +1001,24 @@ describe('c4 layout checker', () => {
     const off = { ...r!, start: { ...r!.start, y: r!.start.y - 30 } };
     expect(c4LayoutViolations(model, { ...layout, relations: [off, ...others] }).join()).toMatch(
       /not on the outline/
+    );
+  });
+
+  it("catches a label over another relation's label, and one over a person's head", () => {
+    const { model, layout } = lay(
+      'C4Context\nPerson(p, "P")\nSystem(s, "S")\nSystem(t, "T")\nRel(p, s, "uses")\nRel(s, t, "calls")'
+    );
+    expect(c4LayoutViolations(model, layout)).toEqual([]);
+    const [a, b] = layout.relations as [C4RelationLayout, C4RelationLayout];
+    const piled = { ...layout, relations: [a, { ...b, labelBox: a.labelBox! }] };
+    expect(c4LayoutViolations(model, piled).join()).toMatch(
+      /relation s -> t: its label covers the label of relation p -> s/
+    );
+    const p = el(layout, 'p').box;
+    const onHead = { ...a.labelBox!, x: p.x + p.width / 2 - 10, y: p.y + 10 };
+    const headed = { ...layout, relations: [{ ...a, labelBox: onHead }, b] };
+    expect(c4LayoutViolations(model, headed).join()).toMatch(
+      /relation p -> s: its label covers element p/
     );
   });
 
