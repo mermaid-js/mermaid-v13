@@ -5,8 +5,10 @@ import {
   assertUniqueSnapshotNames,
   buildFixtureTree,
   discoverMmdFixtures,
+  fixedClockFor,
   fixtureBaseName,
   fixturePath,
+  listedFixtures,
   readFixtureMetadata,
   type FixtureTree,
 } from '../helpers/mmd-snapshots.ts';
@@ -15,36 +17,13 @@ import { imgSnapshotTest } from '../helpers/util.ts';
 // Every tier of every fixture folder whose diagram types have a v13 package, as v12
 // develop collects them; the rest join when their package lands (see the helper). CI may
 // set MERMAID_E2E_FIXTURE_TIER to a comma-separated tier list (e.g. 'pr-check') to narrow it.
-const fixtures = await discoverMmdFixtures({ tiers: process.env.MERMAID_E2E_FIXTURE_TIER });
+const discovered = await discoverMmdFixtures({ tiers: process.env.MERMAID_E2E_FIXTURE_TIER });
+// On a PR, CI narrows the run to the fixtures whose SVG the change alters: a file of fixture
+// paths, one a line (MERMAID_E2E_FIXTURE_LIST, written by packages/dev's visual-scope; D631).
+const fixtures = listedFixtures(discovered, process.env.MERMAID_E2E_FIXTURE_LIST);
 // Fail fast if two fixtures would share a screenshot baseline (see helper).
 assertUniqueSnapshotNames(fixtures);
 const fixtureTree = buildFixtureTree(fixtures);
-
-// Gantt fixtures are dated around 1010-10-10 and several of them exercise the
-// today marker, which the renderer places at `new Date()`. Pin the browser
-// clock to that date so the marker lands inside the chart instead of
-// somewhere off-canvas. Keyed by top-level folder (e.g. 'gantt') as the
-// default for the whole diagram type, by a type's tier folder (e.g.
-// 'gantt/baseline'), or by a fixture's full relative path when it needs the
-// marker at a specific spot instead (checked first).
-const FIXED_CLOCKS: Partial<Record<string, string>> = {
-  gantt: '1010-10-10',
-  // The v13 baselines (#385) are dated January 2024.
-  'gantt/baseline': '2024-01-10T12:00:00Z',
-  // Seconds-based dateFormat: lands the marker between the "01" and "02"
-  // tick marks, clear of both the task-start edge and any task boundary.
-  'gantt/pr-check/should-render-a-gantt-diagram-with-a-vert-tag.mmd': '1010-10-10T00:00:01.500Z',
-  // An `after`/`until` naming no task falls back to today: keep today beside the 2013 task.
-  'gantt/nightly-check/should-warn-about-unknown-ids-in-an-after-statement-issue-4121.mmd':
-    '2013-01-10T12:00:00Z',
-  'gantt/nightly-check/should-warn-about-unknown-ids-in-an-until-statement.mmd':
-    '2013-01-10T12:00:00Z',
-};
-
-const fixedClockFor = (relativePath: string): string | undefined => {
-  const [type, tier] = relativePath.split('/');
-  return FIXED_CLOCKS[relativePath] ?? FIXED_CLOCKS[`${type}/${tier}`] ?? FIXED_CLOCKS[type];
-};
 
 const registerFixtureNode = (node: FixtureTree): void => {
   for (const segment of [...node.children.keys()].sort()) {
