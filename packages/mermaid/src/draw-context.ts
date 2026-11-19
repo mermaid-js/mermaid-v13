@@ -324,13 +324,16 @@ export function contextFor(
     config,
     measurer:
       measurer ??
-      selectMeasurer({ measurer: s.options.measurer, deterministic: s.options.deterministic }),
+      selectMeasurer({
+        measurer: s.options.measurer,
+        deterministic: s.options.deterministic,
+        table: s.table,
+      }),
     units,
     theme,
     securityLevel: resolveSecurityLevel(config.securityLevel, warn),
     get idPrefix() {
-      return (idPrefix ??=
-        options?.id ?? defaultIdPrefix(text, config, optionsKey(s.options), units));
+      return (idPrefix ??= options?.id ?? defaultIdPrefix(text, config, optionsKey(s), units));
     },
     version: VERSION,
     linkSchemes: s.options.linkSchemes,

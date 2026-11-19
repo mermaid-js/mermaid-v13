@@ -9,7 +9,7 @@ import { entityAt } from './entities.ts';
 import { PLACEHOLDER, type InlineSpans } from './inline.ts';
 import { SPACE } from '../parser-kit/char-codes.ts';
 import { Style, type FontKey, type Measurer, type StyleBits } from './measurer.ts';
-import { tableMeasurer, tableWidth } from './table.ts';
+import { SLICE, type SliceMeasurer } from './table.ts';
 
 /**
  * A run of text drawn in one style, or an inline box (`kind: 'box'`, D177) whose `text` is its
@@ -652,9 +652,9 @@ function split(
  * spaces, no markup, break hints or other white space (`RE_SLOW`, `RE_OTHER_SPACE`). It makes the
  * same decisions with the same arithmetic in one scan by index, and slices lines from `text`.
  *
- * With the table measurer, a slice's width is its {@link tableWidth}, bit for bit what
- * `measurer.width` returns for the slice, without slicing it or calling the measurer. Any other
- * measurer measures the same strings `wrap` and `finish` do.
+ * With a table measurer, a slice's width is its {@link SLICE} width, bit for bit what
+ * `measurer.width` returns for the slice, without slicing the text. Any other measurer measures
+ * the same strings `wrap` and `finish` do.
  *
  * Passes each line and its width to `out`. Returns false where `wrap` would split a word after a
  * line it has started (only when the words before it measure 0), which the general path then
@@ -711,7 +711,7 @@ function wrapPlain(
 
 /**
  * The widths `wrapPlain` takes of `text`: of spaces and characters (`small` in `wrap`), and of
- * text[from, to). With the table measurer they are the table's, without calling the measurer;
+ * text[from, to). With a table measurer they are its slice widths, without slicing the text;
  * otherwise as in `wrap` and `finish`.
  */
 function plainWidths(
@@ -720,10 +720,11 @@ function plainWidths(
   style: StyleBits,
   measurer: Measurer
 ): [small: Width, width: (from: number, to: number) => number] {
-  if (measurer === tableMeasurer) {
+  const slice = (measurer as Partial<SliceMeasurer>)[SLICE];
+  if (slice) {
     return [
-      (t, s) => tableWidth(t, 0, t.length, font, s),
-      (from, to) => tableWidth(text, from, to, font, style),
+      (t, s) => slice(t, 0, t.length, font, s),
+      (from, to) => slice(text, from, to, font, style),
     ];
   }
   return [

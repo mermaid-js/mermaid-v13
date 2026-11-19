@@ -4,7 +4,8 @@
 export { Style, SMALLER } from './measurer.ts';
 export type { FontKey, Measurer, StyleBits, VerticalMetrics } from './measurer.ts';
 export { DEFAULT_FONT_FAMILY, familyNames, fontSizePx, resolveFontFamily } from './fonts.ts';
-export { tableMeasurer } from './table.ts';
+export { createTableMeasurer, tableMeasurer } from './table.ts';
+export type { FontTable, TableMeasurerOptions } from './table.ts';
 export { layoutLabel } from './label.ts';
 export type { BoxRun, LabelMarkup, LabelOptions, MeasuredLabel, Run } from './label.ts';
 export { decodeEntities, entityAt } from './entities.ts';
