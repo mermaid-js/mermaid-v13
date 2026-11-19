@@ -379,7 +379,7 @@ describe('blank and spaced terminals (#774)', () => {
       ...r,
       boxes: t.find({ class: 'railroad-terminal' }).map((g) => {
         const [rect, text] = kids(t, g);
-        const num = (k: string) => Number(t.getAttr(rect!, k));
+        const num = (k: 'width' | 'height' | 'rx') => Number(t.getAttr(rect!, k));
         return {
           text: text ? textOf(t, text) : '',
           width: num('width'),
