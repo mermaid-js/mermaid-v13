@@ -5,7 +5,9 @@ import type {
   SymbolOccurrence,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
+import { isSpace } from '@mermaid-js/core/parser-kit';
 import {
+  atLineStart,
   classDefHover,
   code,
   covers,
@@ -59,6 +61,17 @@ describe('facet helpers', () => {
     expect(tokenBefore(t, 5)).toBe(1);
     expect(tokenBefore(t, 9)).toBe(2);
     expect(tokenBefore(stream([2]), 1)).toBe(-1);
+  });
+
+  it('atLineStart skips spaces and tabs back to the line start, or what `blank` takes', () => {
+    expect(atLineStart('a\n \tb', 4)).toBe(true);
+    expect(atLineStart('  b', 2)).toBe(true);
+    expect(atLineStart('a b', 2)).toBe(false);
+    expect(atLineStart('a\r\u00a0b', 3)).toBe(false);
+    expect(atLineStart('a\r\u00a0b', 3, isSpace)).toBe(true);
+    // A line break ends the line even where `blank` takes it.
+    expect(atLineStart('a\n\u00a0b', 3, isSpace)).toBe(true);
+    expect(atLineStart('a \u00a0b', 3, isSpace)).toBe(false);
   });
 
   it('statementAt finds the statement holding an offset, its ends included', () => {
