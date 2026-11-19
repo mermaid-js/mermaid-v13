@@ -86,7 +86,9 @@ const RE_OTHER_SPACE = /[^\S ]/;
 const RE_SPACES = /[ \t]+/g;
 const SHY = '\u00ad';
 const ZWJ = '\u200d';
-const RE_HINTS = /[\u00ad\u200b]/g;
+// The soft hyphen is dropped unless a line breaks at it. A zero-width space is a break hint too,
+// but stays in the drawn text, as in v12 (D646).
+const RE_SHY = /\u00ad/g;
 
 // Break between any two Chinese or Japanese characters (Hangul is left out: Korean puts spaces
 // between words). Kinsoku: closing punctuation sticks to the character before it and opening
@@ -576,7 +578,7 @@ function wrap(
           .slice(p, k + 1)
           .join('')
           .trimEnd()
-          .replace(RE_HINTS, '');
+          .replace(RE_SHY, '');
         fits =
           width + measure(part.slice(0, -1) + '-', style) <= max ||
           width + measure(rest, style) <= max;
@@ -759,7 +761,10 @@ function splitWord(
   return rest;
 }
 
-/** Merges same-style pieces, trims the line ends, resolves break hints and measures the runs. */
+/**
+ * Merges same-style pieces, trims the line ends, resolves soft hyphens and measures the runs. A
+ * zero-width space is kept (D646).
+ */
 function finish(line: Piece[], broken: boolean, font: FontKey, measurer: Measurer): Run[] {
   const merged: Piece[] = [];
   for (const piece of line) {
@@ -781,7 +786,7 @@ function finish(line: Piece[], broken: boolean, font: FontKey, measurer: Measure
       runs.push({ ...piece.box, style: piece.style } satisfies BoxRun);
       continue;
     }
-    const text = piece.text.replace(RE_HINTS, '');
+    const text = piece.text.replace(RE_SHY, '');
     if (text === '') continue;
     runs.push(run(text, piece.style, measurer.width(text, font, piece.style)));
   }

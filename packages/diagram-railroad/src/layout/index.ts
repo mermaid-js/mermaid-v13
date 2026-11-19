@@ -9,5 +9,6 @@ export {
   type RailroadLayoutContext,
 } from './layout.ts';
 export { RAILROAD_METRICS } from './metrics.ts';
+export { keepsSpaces } from './text.ts';
 export type { RailroadMetrics } from './metrics.ts';
 export type * from './types.ts';

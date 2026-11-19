@@ -24,7 +24,7 @@ export interface Paints {
  * `currentColor`, as core's DSL: past the end of a palette (an author's shorter list), and for
  * a paint nothing drawn uses, so that its alias is not declared.
  */
-const CURRENT_COLOR = 'currentColor' as Paint;
+const CURRENT_COLOR: Paint = 'currentColor';
 
 /**
  * Every paint the chart uses, read before the root is written so that it declares their

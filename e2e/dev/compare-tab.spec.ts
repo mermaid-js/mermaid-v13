@@ -146,7 +146,16 @@ test('both panes render the same text with the pinned mermaid@12', async ({ page
   await setText(page, 'flowchart LR\n  A[Delta] --> B[Beta]\n');
   for (const side of ['left', 'right'] as const) {
     await expect(svg(page, side)).toContainText('Delta');
+    // The time is the median of five timed renders, with the spread on hover (#358).
+    const time = pane(page, side).locator('[data-testid="render-time"]');
+    await expect(time).toHaveAttribute('data-ms', /^\d/);
+    await expect(time).toHaveAttribute('data-runs', '5');
+    await expect(time).toHaveAttribute('title', /^Median of 5 render\(\) calls.*\(min .+, max .+\)$/);
   }
+  await expect(pane(page, 'left').locator('[data-testid="render-speed"]')).toHaveAttribute(
+    'data-speed',
+    /^(faster|slower|same)$/
+  );
 
   // An error on the npm side shows there too.
   await setText(page, 'this is not a diagram\n');

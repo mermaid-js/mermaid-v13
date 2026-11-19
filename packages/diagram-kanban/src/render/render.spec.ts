@@ -108,6 +108,19 @@ describe('structure (spec #424 Renderer)', () => {
     for (const x of xs) expect(x).toBeCloseTo(card.x + card.width - 10);
   });
 
+  it('draws an assignee that does not fit beside the ticket on the row below it (D647)', async () => {
+    const { svg, layout } = await renderKanbanForTest(
+      "kanban\n  a[Todo]\n    x[Card]@{ ticket: 'MC-12345678901234', assigned: 'Dana Whitfield-Okafor' }"
+    );
+    const card = layout.cards[0]!;
+    const [ticket, assignee] = elements(svg, 'text').slice(-2);
+    expect(assignee!['text-anchor']).toBe('end');
+    expect(Number(assignee!.x)).toBeCloseTo(card.x + card.width - 10);
+    // One line each: the assignee's baseline is a line under the ticket's, inside the card.
+    expect(Number(assignee!.y) - Number(ticket!.y)).toBeCloseTo(card.ticket!.height);
+    expect(Number(assignee!.y)).toBeLessThan(card.y + card.height);
+  });
+
   it('draws an empty board as an empty svg with the 8 px margin box', async () => {
     const { svg } = await renderKanbanForTest('kanban\n');
     expect(svg).toMatch(/viewBox="-8 -8 16 16"/);
