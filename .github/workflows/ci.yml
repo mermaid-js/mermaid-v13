@@ -435,16 +435,24 @@ jobs:
     # editors (e2e/language) and the plugin-platform apps (e2e/platform). They assert behaviour
     # and take no screenshots, so they have their own job and their own result. In the
     # Playwright image, like the snapshots, so the measurer specs see the same fonts.
-    name: Browser, dev explorer and platform specs
+    # Two parts run side by side (#982), picked by E2E_PART in playwright.config.ts: `platform`
+    # (e2e/platform, whose apps share one workspace build, so it is not split further) and
+    # `rest` (everything else, and any new spec folder). Together they run every spec once.
+    name: ${{ matrix.part == 'platform' && 'Platform specs' || 'Browser and dev explorer specs' }}
     needs: changes
     if: ${{ needs.changes.outputs.scope == 'code' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [platform, rest]
     # Keep this tag in sync with @playwright/test in package.json.
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-noble
     env:
       MERMAID_PORT: '9000'
+      E2E_PART: ${{ matrix.part }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
@@ -455,12 +463,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # The Compare tab's CDN specs need cdn.jsdelivr.net and registry.npmjs.org; without them
       # they skip, with a warning annotation and a job summary line giving the reason.
-      - name: Playwright (every spec but the fixture snapshots)
+      - name: Playwright (${{ matrix.part }}; every spec but the fixture snapshots)
         run: pnpm e2e --grep-invert "mmd snapshots"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: ${{ failure() }}
         with:
-          name: playwright-results-e2e
+          name: playwright-results-e2e-${{ matrix.part }}
           path: test-results/
           retention-days: 3
           if-no-files-found: ignore
