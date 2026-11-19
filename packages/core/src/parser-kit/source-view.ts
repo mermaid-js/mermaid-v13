@@ -424,6 +424,13 @@ function isSplit(view: SourceView, start: number, end: number): boolean {
 }
 
 /**
+ * The longest range {@link isPlainRange} checks with a loop. A longer one goes to a regex, which
+ * costs a call and a slice but scans many times faster a character (a 20,000-deep tree view
+ * cooks megabytes of indentation).
+ */
+const LOOP_MAX = 16;
+
+/**
  * Whether `src[start, end)` reads the same cooked, so `cook` can slice it: no removed span, no
  * CR, `#` or masked offset, and with `braceNewline` no `}` in it or right before it.
  */
@@ -431,10 +438,15 @@ export function isPlainRange(src: string, start: number, end: number, view: Sour
   const { mask, braceNewline } = view;
   if (isSplit(view, start, end) || (braceNewline && src.charCodeAt(start - 1) === RBRACE))
     return false;
-  for (let i = start; i < end; i++) {
-    const c = src.charCodeAt(i);
-    if (c === CR || c === HASH || (braceNewline && c === RBRACE) || mask?.[i]) return false;
+  if (end - start > LOOP_MAX) {
+    if ((braceNewline ? /[\r#}]/ : /[\r#]/).test(src.slice(start, end))) return false;
+  } else {
+    for (let i = start; i < end; i++) {
+      const c = src.charCodeAt(i);
+      if (c === CR || c === HASH || (braceNewline && c === RBRACE)) return false;
+    }
   }
+  if (mask) for (let i = start; i < end; i++) if (mask[i]) return false;
   return true;
 }
 
