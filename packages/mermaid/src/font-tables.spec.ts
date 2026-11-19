@@ -107,7 +107,7 @@ describe('initialize({ fontTables }) (D645)', () => {
     });
     expect(thrown({ fontTables: 'acme' as unknown as FontTable[] })).toMatchObject({
       code: 'SEMANTIC',
-      message: 'fontTables must be a list.',
+      message: 'Font tables must be a list.',
     });
     expect(thrown({ fontTables: [{ ...wide(), regular: '-'.repeat(382) }] })).toMatchObject({
       code: 'SEMANTIC',

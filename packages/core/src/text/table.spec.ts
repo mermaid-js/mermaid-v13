@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Style, type FontKey, type Measurer } from './measurer.ts';
 import { layoutLabel } from './label.ts';
+import { MermaidError } from '../pipeline/errors.ts';
 import { createTableMeasurer, tableMeasurer, type FontTable } from './table.ts';
 
 // Hand-written tables (D645): every advance the same, packed as in `FACES` (191 per weight).
@@ -101,10 +102,11 @@ describe('createTableMeasurer', () => {
     );
   });
 
-  it('rejects a malformed entry with a TypeError that names it', () => {
+  it('rejects a malformed entry with a SEMANTIC MermaidError that names it', () => {
     const bad = (entry: unknown, message: RegExp): void => {
       const make = (): unknown => createTableMeasurer({ faces: [ACME, entry as FontTable] });
-      expect(make).toThrow(TypeError);
+      expect(make).toThrow(MermaidError);
+      expect(make).toThrow(expect.objectContaining({ code: 'SEMANTIC' }));
       expect(make).toThrow(message);
     };
     bad(
@@ -113,10 +115,7 @@ describe('createTableMeasurer', () => {
     );
     bad(table('Bad', 500, { regular: '!' + packed(500).slice(1) }), /regular must be 382/);
     bad(table('Bad', 500, { bold: 'zz' }), /^Font table 1 \("Bad"\): bold must be 382/);
-    bad(
-      { ...table('x', 500), family: undefined },
-      /^Font table 1: family must be one font family name/
-    );
+    bad({ ...table('x', 500), family: undefined }, /^Font table 1: family must be one family name/);
     bad(table('', 500), /family must be/);
     bad(table('A, B', 500), /family must be/);
     bad(table('Bad', 500, { format: 2 as 1 }), /^Font table 1 \("Bad"\): format must be 1/);
@@ -125,6 +124,9 @@ describe('createTableMeasurer', () => {
     bad(table('Bad', 500, { ascent: -1 }), /ascent must be a number/);
     bad(table('Bad', 500, { lineGap: Number.NaN }), /lineGap must be a number/);
     bad(null, /^Font table 1: format must be 1/);
+    expect(() => createTableMeasurer({ faces: 'x' as unknown as FontTable[] })).toThrow(
+      'Font tables must be a list.'
+    );
   });
 });
 

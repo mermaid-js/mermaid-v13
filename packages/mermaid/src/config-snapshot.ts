@@ -16,7 +16,6 @@ import type { Warning } from '@mermaid-js/core';
 import type { UnitProfile } from '@mermaid-js/core/layout';
 import { resolveLimits, type Limits } from '@mermaid-js/core/limits';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import { MermaidError } from '@mermaid-js/core';
 import {
   createTableMeasurer,
   tableMeasurer,
@@ -103,13 +102,7 @@ export interface Snapshot {
 
 /** The table measurer for `fontTables`; a malformed entry is a `SEMANTIC` error (D645). */
 function tableFor(fontTables: readonly FontTable[] | undefined): Measurer {
-  if (fontTables === undefined) return tableMeasurer;
-  if (!Array.isArray(fontTables)) throw new MermaidError('SEMANTIC', 'fontTables must be a list.');
-  try {
-    return createTableMeasurer({ faces: fontTables });
-  } catch (e) {
-    throw new MermaidError('SEMANTIC', (e as Error).message, { cause: e });
-  }
+  return fontTables === undefined ? tableMeasurer : createTableMeasurer({ faces: fontTables });
 }
 
 function withLimits(

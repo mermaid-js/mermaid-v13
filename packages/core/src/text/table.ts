@@ -3,7 +3,7 @@
 // (DESIGN §5.1, R-TEXT-6, R-TEXT-7). Sums advance widths from generated font tables.
 // Based on Pele's metricsMeasurer (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
 import { ASCII_MAX, LATIN1_MAX, SPACE } from '../parser-kit/char-codes.ts';
-import { hash36 } from '../svg/style.ts';
+import { MermaidError } from '../pipeline/errors.ts';
 import { familyNames } from './fonts.ts';
 import {
   SMALLER,
@@ -110,16 +110,16 @@ function isPacked(value: unknown): value is string {
 type Entry = Partial<Record<keyof FontTable, unknown>>;
 
 const isNumber = (v: unknown): boolean => typeof v === 'number' && v >= 0 && v < Infinity;
-const NUMBER = 'a number of thousandths of an em, 0 or more';
+const NUMBER = 'a number, 0 or more';
 const PACKED = `${DIGITS} base-36 digits`;
 // Each field's check and what it must be, in the order they are checked.
 const FIELDS: readonly [keyof FontTable, (v: unknown) => unknown, string][] = [
   ['format', (v) => v === 1, '1'],
-  ['family', familyName, 'one font family name'],
+  ['family', familyName, 'one family name'],
   [
     'aliases',
     (v) => v === undefined || (Array.isArray(v) && v.every(familyName)),
-    'a list of font family names',
+    'a list of family names',
   ],
   ['ascent', isNumber, NUMBER],
   ['descent', isNumber, NUMBER],
@@ -128,19 +128,26 @@ const FIELDS: readonly [keyof FontTable, (v: unknown) => unknown, string][] = [
   ['bold', (v) => v === undefined || isPacked(v), PACKED],
 ];
 
-/** `entry` as a row and its names, or a `TypeError` naming the entry and what is wrong. */
+/** `entry` as a row and its names, or a `SEMANTIC` `MermaidError` naming the entry and what is wrong. */
 function checked(entry: FontTable, i: number): [names: string[], row: Row] {
   // An integrator's value: anything at all, whatever its type says.
   const e = ((entry as unknown) ?? {}) as Entry;
   for (const [key, ok, what] of FIELDS) {
     if (ok(e[key])) continue;
     const name = typeof e.family === 'string' ? ` ("${e.family}")` : '';
-    throw new TypeError(`Font table ${i}${name}: ${key} must be ${what}.`);
+    throw new MermaidError('SEMANTIC', `Font table ${i}${name}: ${key} must be ${what}.`);
   }
   const { family, aliases = [], ascent, descent, lineGap } = entry;
   const regular = entry.regular.toLowerCase();
   const names = [family, ...aliases].map(familyName) as string[];
   return [names, [ascent, descent, lineGap, regular, entry.bold?.toLowerCase() ?? regular]];
+}
+
+/** FNV-1a (32-bit) of `text` in base 36, the same on every host (R-ARCH-6). */
+function hash(text: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193);
+  return (h >>> 0).toString(36);
 }
 
 function isWide(c: number): boolean {
@@ -225,11 +232,13 @@ export interface SliceMeasurer extends Measurer {
  * A table measurer (DESIGN §5.1, D645) that looks a family up in `faces` (by family and
  * aliases), then in the built-in tables and their aliases (D644), then falls back to Arial.
  * Its `id` is `table` without faces and `table:<hash of the faces>` with them (R-ARCH-6).
- * Throws a `TypeError` naming the first malformed entry. Each measurer has its own caches.
+ * Throws `MermaidError { code: 'SEMANTIC' }` naming the first malformed entry. Each measurer has its own caches.
  */
 export function createTableMeasurer(options: TableMeasurerOptions = {}): SliceMeasurer {
   const given = new Map<string, Row>();
-  const rows: [string[], Row][] = (options.faces ?? []).map(checked);
+  const { faces: list = [] } = options;
+  if (!Array.isArray(list)) throw new MermaidError('SEMANTIC', 'Font tables must be a list.');
+  const rows: [string[], Row][] = list.map(checked);
   for (const [names, row] of rows) for (const n of names) if (!given.has(n)) given.set(n, row);
   const faces = new Map<string, Face>();
   const stacks = new Map<string, Face>();
@@ -256,7 +265,7 @@ export function createTableMeasurer(options: TableMeasurerOptions = {}): SliceMe
     tableWidth(faceFor(font.family), text, from, to, font, style);
 
   const measurer: Measurer = {
-    id: rows.length ? `table:${hash36(JSON.stringify(rows))}` : 'table',
+    id: rows.length ? `table:${hash(JSON.stringify(rows))}` : 'table',
     width: (text, font, style) => slice(text, 0, text.length, font, style),
     metrics(font: FontKey): VerticalMetrics {
       const [ascent, descent, lineHeight] = faceFor(font.family).vertical;
