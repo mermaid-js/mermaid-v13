@@ -1,6 +1,6 @@
-// The XY chart theme table (spec #426 §Theme, D331, D335, D381, D388, D540, D545), resolved
-// with `createTheme(spec, { diagram: table })` in every theme: the twelve colours follow
-// `primaryTextColor` and `background`, the palette reads `plotColorArray`, and an author sets
+// The XY chart theme table (spec #426 §Theme, D331, D335, D381, D540, D545, D656), resolved
+// with `createTheme(spec, { diagram: table })` in every theme: the twelve colours read the canvas
+// inputs, the palette reads `plotColorArray`, and an author sets
 // either by the flat name or by v12's nested `themeVariables.xyChart` key, the flat name
 // winning. The v12 oracle comparison in all eleven themes is
 // `packages/conformance/src/xychart/theme.spec.ts`.
@@ -47,10 +47,20 @@ describe('xychart theme table', () => {
     ).toEqual(['#ECECFF', '#FFF4DD', '#CDE498', '#EEE', '#3498db']);
   });
 
-  it('follows primaryTextColor and background overrides, under default too (D388)', async () => {
-    const t = await resolve('default', { primaryTextColor: '#102030', background: '#fafafa' });
+  it('follows primaryTextColor and background overrides, but keeps its colours under default (D656)', async () => {
+    const vars = { primaryTextColor: '#102030', background: '#fafafa' };
+    const forest = await resolve('forest', vars);
+    expect(forest.value('xyChartTitleColor')).toBe('#102030');
+    expect(forest.value('xyChartDataLabelColor')).toBe('#102030');
+    expect(forest.value('xyChartBackgroundColor')).toBe('#fafafa');
+    const t = await resolve('default', vars);
+    expect(t.value('xyChartTitleColor')).toBe('#131300');
+    expect(t.value('xyChartBackgroundColor')).toBe('#ffffff');
+  });
+
+  it('follows an author canvasTextColor and canvasBkg in every theme (D656)', async () => {
+    const t = await resolve('default', { canvasTextColor: '#102030', canvasBkg: '#fafafa' });
     expect(t.value('xyChartTitleColor')).toBe('#102030');
-    expect(t.value('xyChartDataLabelColor')).toBe('#102030');
     expect(t.value('xyChartBackgroundColor')).toBe('#fafafa');
   });
 

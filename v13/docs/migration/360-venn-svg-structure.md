@@ -33,7 +33,7 @@ labels and text nodes `vennSetTextColor`. What changed
 | Themes | v12 | v13 | Why |
 | --- | --- | --- | --- |
 | `base`, `forest` | `venn3` darkened `tertiaryColor` by 30 | By 40, as `default`: one classic light formula, so the third set is 10 % darker than in v12. Set `venn3` to draw v12's | D415 |
-| `neutral` | The eight slots were its `cScale` greys (`#555`, `#F4F4F4`, …) | `default`'s formula on neutral's colours. Set `venn1`…`venn8` to draw v12's | D415 |
+| `neutral` | The eight slots were its `cScale` greys (`#555`, `#F4F4F4`, …), which no override of a base colour moved | `default`'s formula on neutral's colours, so the slots follow an author's `primaryColor`, `secondaryColor` or `tertiaryColor`. Set `venn1`…`venn8` to draw v12's | D415 |
 | `default` | `venn3` `#b5ff20`, from the unrounded `tertiaryColor` | `#b9ff20`, from the hex | D333(a) |
 | Every theme | A set label was the circle colour lightened or darkened by 30 in the browser | The same colour, computed when the diagram is drawn: a host's `--mermaid-venn<k>` override, or the dark half of `theme: 'auto'`, does not move it | Labels are a literal colour |
 

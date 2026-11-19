@@ -31,15 +31,19 @@ function perSlot(f: (i: number) => string): Record<string, string> {
   return out;
 }
 
-/** v12 default's eight: `adjust(c, { h, l })`, a hue turn as a literal. */
+/**
+ * v12 default's eight: `adjust(c, { h, l })`, a hue turn as a literal. The primary slots read
+ * `canvasItemBkg`, which `default` pins where v12 keeps its slots under a `primaryColor`
+ * override, and which follows `primaryColor` elsewhere (D656).
+ */
 const DEFAULT_SLOTS: readonly string[] = [
-  'darkenHsl(primaryColor, 30%)',
+  'darkenHsl(canvasItemBkg, 30%)',
   'darkenHsl(secondaryColor, 30%)',
   'darkenHsl(tertiaryColor, 40%)',
-  'literal(darkenHsl(adjustHue(primaryColor, 60), 30%))',
-  'literal(darkenHsl(adjustHue(primaryColor, -60), 30%))',
+  'literal(darkenHsl(adjustHue(canvasItemBkg, 60), 30%))',
+  'literal(darkenHsl(adjustHue(canvasItemBkg, -60), 30%))',
   'literal(darkenHsl(adjustHue(secondaryColor, 60), 30%))',
-  'literal(darkenHsl(adjustHue(primaryColor, 120), 30%))',
+  'literal(darkenHsl(adjustHue(canvasItemBkg, 120), 30%))',
   'literal(darkenHsl(adjustHue(secondaryColor, 120), 30%))',
 ];
 

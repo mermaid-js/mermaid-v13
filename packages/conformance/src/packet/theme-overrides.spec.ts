@@ -89,7 +89,7 @@ const V12: ReferenceTable = {
  * accounts for it, or by the ticket of spec #1035 that deletes it (D654).
  */
 const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
-  "#1035 T2 (#1039): packet's variables do not respond to an override as v12's do (D656); T2 deletes this group":
+  "D541: forest takes the light entry (black on #efefef), as no trait separates it from default, so an override of primaryTextColor or mainBkg leaves it, where v12 forest's block follows them":
     [
       ...keys(
         'forest',

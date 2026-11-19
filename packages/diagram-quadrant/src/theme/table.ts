@@ -7,26 +7,28 @@ import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
  * `quadrant1Fill`, so a theme that pins it moves them too (D232); points default to `textColor`,
  * the colour v12 points showed (D231). The light redux and neo themes derive the fills from
  * v12's literal `#ececfe`, not from `primaryColor` (D232); their dark themes from `primaryColor`.
+ * The fill and the inks read the canvas inputs, which a theme pins where v12 keeps them under a
+ * `primaryColor` or `primaryTextColor` override and which follow those colours elsewhere (D656).
  */
 export const theme: DiagramThemeTable = {
   vars: THEME_VARIABLE_TABLE,
   rules: {
     light: {
-      quadrant1Fill: 'primaryColor',
+      quadrant1Fill: 'canvasItemBkg',
       quadrant2Fill: 'adjust(quadrant1Fill, 5, 5, 5)',
       quadrant3Fill: 'adjust(quadrant1Fill, 10, 10, 10)',
       quadrant4Fill: 'adjust(quadrant1Fill, 15, 15, 15)',
-      quadrant1TextFill: 'primaryTextColor',
-      quadrant2TextFill: 'adjust(primaryTextColor, -5, -5, -5)',
-      quadrant3TextFill: 'adjust(primaryTextColor, -10, -10, -10)',
-      quadrant4TextFill: 'adjust(primaryTextColor, -15, -15, -15)',
+      quadrant1TextFill: 'canvasTextColor',
+      quadrant2TextFill: 'adjust(canvasTextColor, -5, -5, -5)',
+      quadrant3TextFill: 'adjust(canvasTextColor, -10, -10, -10)',
+      quadrant4TextFill: 'adjust(canvasTextColor, -15, -15, -15)',
       quadrantPointFill: 'textColor',
-      quadrantPointTextFill: 'primaryTextColor',
-      quadrantXAxisTextFill: 'primaryTextColor',
-      quadrantYAxisTextFill: 'primaryTextColor',
+      quadrantPointTextFill: 'canvasTextColor',
+      quadrantXAxisTextFill: 'canvasTextColor',
+      quadrantYAxisTextFill: 'canvasTextColor',
       quadrantInternalBorderStrokeFill: 'primaryBorderColor',
       quadrantExternalBorderStrokeFill: 'primaryBorderColor',
-      quadrantTitleFill: 'primaryTextColor',
+      quadrantTitleFill: 'canvasTextColor',
     },
   },
   families: {

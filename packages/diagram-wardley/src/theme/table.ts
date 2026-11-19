@@ -7,9 +7,10 @@ import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
  * rule over the shared vocabulary as v12's classic `wardley` block is
  * (`theme-default.js:356-371`; base, forest and neutral the same; dark `:351-366`):
  *
- * - **light** (every family): the background and the fills `background`; the axes, strokes and
- *   links `lineColor`; the text `primaryTextColor`; the evolution `wardleyEvolutionColor`,
- *   `#dc3545`.
+ * - **light** (every family): the background and the fills `canvasBkg`; the axes, strokes and
+ *   links `canvasLineColor`; the text `canvasTextColor`; the evolution `wardleyEvolutionColor`,
+ *   `#dc3545`. The canvas inputs are `background`, `lineColor` and `primaryTextColor`, except
+ *   where a theme pins them because v12 kept its block under an override of those (D656).
  * - **dark** (a dark theme's own trait, not the author's `darkMode`, which v12's classic block
  *   never read): the fills `mainBkg`, the evolution `#ff6b6b`.
  *
@@ -24,19 +25,19 @@ export const theme: DiagramThemeTable = {
   vars: THEME_VARIABLE_TABLE,
   rules: {
     light: {
-      wardleyBackgroundColor: 'background',
-      wardleyAxisColor: 'lineColor',
-      wardleyAxisTextColor: 'primaryTextColor',
+      wardleyBackgroundColor: 'canvasBkg',
+      wardleyAxisColor: 'canvasLineColor',
+      wardleyAxisTextColor: 'canvasTextColor',
       wardleyGridColor: 'lightgrey',
-      wardleyComponentFill: 'background',
-      wardleyComponentStroke: 'lineColor',
-      wardleyComponentLabelColor: 'primaryTextColor',
-      wardleyLinkStroke: 'lineColor',
+      wardleyComponentFill: 'canvasBkg',
+      wardleyComponentStroke: 'canvasLineColor',
+      wardleyComponentLabelColor: 'canvasTextColor',
+      wardleyLinkStroke: 'canvasLineColor',
       wardleyEvolutionColor: '#dc3545',
       wardleyEvolutionStroke: 'wardleyEvolutionColor',
-      wardleyAnnotationStroke: 'lineColor',
-      wardleyAnnotationTextColor: 'primaryTextColor',
-      wardleyAnnotationFill: 'background',
+      wardleyAnnotationStroke: 'canvasLineColor',
+      wardleyAnnotationTextColor: 'canvasTextColor',
+      wardleyAnnotationFill: 'canvasBkg',
     },
   },
   families: {

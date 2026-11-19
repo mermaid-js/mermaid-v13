@@ -295,27 +295,6 @@ const V12: ReferenceTable = {
  * accounts for it, or by the ticket of spec #1035 that deletes it (D654).
  */
 const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
-  "#1035 T2 (#1039): xychart's variables do not respond to an override as v12's do (D656); T2 deletes this group":
-    [
-      ...keys('default', ['background:light', 'background:dark'], ['xyChartBackgroundColor']),
-      ...keys(
-        'default',
-        ['primaryTextColor:light', 'primaryTextColor:dark'],
-        [
-          'xyChartTitleColor',
-          'xyChartDataLabelColor',
-          'xyChartLegendTextColor',
-          'xyChartXAxisTitleColor',
-          'xyChartXAxisLabelColor',
-          'xyChartXAxisTickColor',
-          'xyChartXAxisLineColor',
-          'xyChartYAxisTitleColor',
-          'xyChartYAxisLabelColor',
-          'xyChartYAxisTickColor',
-          'xyChartYAxisLineColor',
-        ]
-      ),
-    ],
   "D571: v12's darkMode turns base's primaryTextColor, and the text inks that follow it, to #eee; v13's darkMode switches only the derivation rules":
     [
       ...keys(
