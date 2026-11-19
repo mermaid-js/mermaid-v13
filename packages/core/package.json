@@ -56,6 +56,11 @@
       "types": "./dist/layout/compass/index.d.ts",
       "default": "./dist/layout/compass/index.js"
     },
+    "./text/font-tables": {
+      "mermaid-source": "./src/text/font-tables.ts",
+      "types": "./dist/text/font-tables.d.ts",
+      "default": "./dist/text/font-tables.js"
+    },
     "./layout/hops": {
       "mermaid-source": "./src/layout/hops/index.ts",
       "types": "./dist/layout/hops/index.d.ts",

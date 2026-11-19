@@ -140,6 +140,7 @@ function createSession(
     parseErrorHandler: undefined,
     textBackend: undefined,
     blocks: undefined as unknown as BlockLoader,
+    fontTables: new WeakMap(),
   };
   // The block loader's callbacks read the session when a text with a block draws.
   k.blocks = blocksOf(k);

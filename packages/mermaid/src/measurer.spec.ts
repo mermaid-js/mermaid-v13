@@ -1,3 +1,4 @@
+import { createTableMeasurer } from '@mermaid-js/core/text/font-tables';
 import { Style, type FontKey, type Measurer } from '@mermaid-js/core/text';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -113,6 +114,55 @@ describe('selectMeasurer', () => {
       metrics: () => ({ ascent: 1, descent: 0, lineHeight: 1 }),
     };
     expect(selectMeasurer({ measurer: custom, deterministic: true }).id).toBe('table');
+  });
+});
+
+describe('selectMeasurer with font tables (D645)', () => {
+  // Every advance 1000/1000 em, so Brand measures 16 px per character at 16 px.
+  const table = createTableMeasurer({
+    faces: [
+      {
+        format: 1,
+        family: 'Brand',
+        ascent: 900,
+        descent: 100,
+        lineGap: 0,
+        regular: 'rs'.repeat(191),
+      },
+    ],
+  });
+  const custom: Measurer = {
+    id: 'custom',
+    width: (text) => text.length,
+    metrics: () => ({ ascent: 1, descent: 0, lineHeight: 1 }),
+  };
+
+  it('uses the tables wherever it uses the table measurer', async () => {
+    const node = (await freshModule()).selectMeasurer;
+    expect(node({ table })).toBe(table);
+    expect(node({ table, deterministic: true })).toBe(table);
+    expect(node({ table }).width('abcd', brand, 0)).toBe(64);
+    browser.install();
+    const inBrowser = (await freshModule()).selectMeasurer;
+    expect(inBrowser({ table, deterministic: true })).toBe(table);
+    expect(inBrowser({ table, measurer: custom, deterministic: true })).toBe(table);
+  });
+
+  it('keeps the canvas in a browser and the integrator measurer without deterministic', async () => {
+    browser.install();
+    const { selectMeasurer } = await freshModule();
+    expect(selectMeasurer({ table }).id).toBe('canvas');
+    expect(selectMeasurer({ table, measurer: custom })).toBe(custom);
+  });
+
+  it('gives Node widths in a browser under deterministic: true', async () => {
+    const font: FontKey = { family: 'Brand, Arial', size: 13, weight: 700 };
+    const node = (await freshModule()).selectMeasurer({ table, deterministic: true });
+    const nodeWidth = node.width('Hello wörld', font, Style.Bold);
+    browser.install();
+    const inBrowser = (await freshModule()).selectMeasurer({ table, deterministic: true });
+    expect(inBrowser.width('Hello wörld', font, Style.Bold)).toBe(nodeWidth);
+    expect(inBrowser.metrics(font)).toEqual(node.metrics(font));
   });
 });
 
