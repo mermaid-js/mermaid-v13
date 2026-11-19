@@ -256,9 +256,9 @@ jobs:
 
   visual:
     # R-TEST-5, D631: the `pr-check` and `baseline` tiers of the .mmd fixtures whose diagram
-    # types have a v13 package (e2e/helpers/mmd-snapshots.ts) plus the browser adapter specs
-    # (e2e/browser), in the Playwright image so fonts and rendering are fixed. The other two
-    # tiers run every night (visual-nightly.yml).
+    # types have a v13 package (e2e/helpers/mmd-snapshots.ts), in the Playwright image so fonts
+    # and rendering are fixed. Every tier runs each night (visual-nightly.yml). This job only
+    # takes screenshots; the specs that assert behaviour are the `e2e` job below.
     # Screenshots go to Argos, which compares a PR with the newest mermaid-v13 build (R-REL-1)
     # and reports the differences on the PR for a maintainer to approve. Report only: this job
     # is not part of `checks`, and the Argos status is not a required check. R-TEST-6: the theme
@@ -283,11 +283,9 @@ jobs:
           cache: pnpm
           node-version-file: '.node-version'
       - run: pnpm install --frozen-lockfile
-      # `pnpm e2e` also runs the dev explorer specs (e2e/dev, project `dev`; #64). The Compare
-      # tab's CDN specs need cdn.jsdelivr.net and registry.npmjs.org; without them they skip,
-      # with a warning annotation and a job summary line giving the reason.
-      - name: Playwright (baseline, browser and dev explorer specs)
-        run: pnpm e2e
+      # The file comes before `--project`, which would otherwise take it as a project name.
+      - name: Playwright (fixture snapshots)
+        run: pnpm exec playwright test rendering/mmd-snapshots.spec.ts --project chromium
       - name: Upload screenshots to Argos
         if: ${{ !cancelled() && github.event_name != 'merge_group' }}
         env:
@@ -312,6 +310,40 @@ jobs:
         if: ${{ failure() }}
         with:
           name: playwright-results
+          path: test-results/
+          retention-days: 3
+          if-no-files-found: ignore
+
+  e2e:
+    # What `pnpm e2e` runs besides the fixture snapshots: the browser adapter specs
+    # (e2e/browser), the dev explorer specs (e2e/dev, project `dev`; #64), the language-service
+    # editors (e2e/language) and the plugin-platform apps (e2e/platform). They assert behaviour
+    # and take no screenshots, so they have their own job and their own result. In the
+    # Playwright image, like the snapshots, so the measurer specs see the same fonts.
+    name: Browser, dev explorer and platform specs
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 30
+    # Keep this tag in sync with @playwright/test in package.json.
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+    env:
+      MERMAID_PORT: '9000'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version-file: '.node-version'
+      - run: pnpm install --frozen-lockfile
+      # The Compare tab's CDN specs need cdn.jsdelivr.net and registry.npmjs.org; without them
+      # they skip, with a warning annotation and a job summary line giving the reason.
+      - name: Playwright (every spec but the fixture snapshots)
+        run: pnpm e2e --grep-invert "mmd snapshots"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: ${{ failure() }}
+        with:
+          name: playwright-results-e2e
           path: test-results/
           retention-days: 3
           if-no-files-found: ignore
