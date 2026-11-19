@@ -159,7 +159,7 @@ function mark(
 }
 
 /** What the grid is built from: the ends' ports, the shapes, and the lines routed so far. */
-interface Ground {
+export interface Ground {
   readonly starts: readonly Port[];
   readonly ends: readonly Port[];
   readonly blocks: readonly Outline[];

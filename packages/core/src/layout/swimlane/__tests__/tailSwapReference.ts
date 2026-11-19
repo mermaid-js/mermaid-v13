@@ -14,7 +14,8 @@ import {
   segmentHitsAnyRect,
   simplifyPolyline,
 } from '../direction/geometry.ts';
-import type { Point, RectEntry } from '../direction/geometry.ts';
+import type { Point } from '../../types.ts';
+import type { RectEntry } from '../direction/geometry.ts';
 import type { Edge, Node } from '../layoutData.ts';
 
 const EPS = 1e-3;

@@ -64,6 +64,9 @@
     "vscode-languageserver": "^11.0.0"
   },
   "devDependencies": {
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/state": "^6.7.6",
+    "@mermaid-js/language-service-codemirror": "workspace:*",
     "mermaid": "workspace:*",
     "vscode-languageserver-protocol": "3.18.5"
   }

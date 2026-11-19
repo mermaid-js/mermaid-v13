@@ -68,7 +68,7 @@ export function flowLinkAt(
 }
 
 /** What a class hover reads of a model. */
-interface ClassesModel {
+export interface ClassesModel {
   readonly classes: readonly { readonly id: string; readonly styles: readonly string[] }[];
   readonly vertices: readonly { readonly classes: readonly string[] }[];
 }

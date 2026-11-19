@@ -55,7 +55,7 @@ function byName(list: readonly FlowNodeStmt[]): (name: string) => FlowNodeStmt |
 type FlowShapeParts = FlowVertexParts & { label?: FlowLabelNode };
 
 /** What the family's `parse()` tail needs of a model. */
-interface FlowModelLike {
+export interface FlowModelLike {
   readonly callbacks: readonly { readonly range?: Range }[];
   readonly warnings: Diagnostic[];
 }

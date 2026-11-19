@@ -885,6 +885,15 @@ importers:
         specifier: ^11.0.0
         version: 11.0.0
     devDependencies:
+      '@codemirror/language':
+        specifier: ^6.13.1
+        version: 6.13.1
+      '@codemirror/state':
+        specifier: ^6.7.6
+        version: 6.7.6
+      '@mermaid-js/language-service-codemirror':
+        specifier: workspace:*
+        version: link:../language-service-codemirror
       mermaid:
         specifier: workspace:*
         version: link:../mermaid
@@ -1065,9 +1074,6 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
-      '@mermaid-js/language-server':
-        specifier: workspace:*
-        version: link:../language-server
       '@mermaid-js/language-service':
         specifier: workspace:*
         version: link:../language-service
@@ -1083,12 +1089,6 @@ importers:
       tsx:
         specifier: ^4.20.6
         version: 4.20.6
-      vscode-languageserver:
-        specifier: ^11.0.0
-        version: 11.0.0
-      vscode-languageserver-protocol:
-        specifier: 3.18.5
-        version: 3.18.5
 
   packages/language-service/examples/codemirror:
     devDependencies:
