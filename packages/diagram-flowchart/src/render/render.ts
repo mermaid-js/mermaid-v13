@@ -35,7 +35,13 @@ import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
 import { drawIcon, drawImage } from './assets.ts';
-import { arrowheads, marker, markerTrim, type Arrowheads } from '@mermaid-js/shared/svg/arrowheads';
+import {
+  arrowheads,
+  marker,
+  markerTrim,
+  type Arrowheads,
+  type MarkerPaint,
+} from '@mermaid-js/shared/svg/arrowheads';
 import { routePath } from '@mermaid-js/shared/svg/route';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
 import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
@@ -169,7 +175,7 @@ export interface Paints {
    */
   readonly shape: Attrs;
   readonly line: Attrs;
-  readonly head: Attrs;
+  readonly head: MarkerPaint;
   readonly cluster?: { fill: Color; stroke: OutlinePaint; strokeWidth: Length; text: Color };
   /**
    * A lane's border: clusterBorder as a colour, never the gradient (v12's swimlane styles forced
@@ -246,7 +252,7 @@ function paints(theme: ThemeOf, flow: Prepared, lanes: boolean): Paints {
   };
   const line: Attrs = { stroke: node.stroke, 'stroke-width': node.strokeWidth };
   // An arrowhead's paint: these three keys in this order, as an edge with a style writes them.
-  const head: Attrs = { fill: node.arrow, opacity: undefined, 'fill-opacity': undefined };
+  const head: MarkerPaint = { fill: node.arrow, opacity: undefined, 'fill-opacity': undefined };
   return {
     heads,
     node,
@@ -462,7 +468,7 @@ function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
     const style = e.style.shape;
     w.outline('edge', 'path', edgeLine(edge, path.d, style, animateEdge(w, edge)));
     // The head fades with its line: opacity, and stroke-opacity as the head's fill-opacity.
-    const headPaint: Attrs =
+    const headPaint: MarkerPaint =
       style.stroke === undefined &&
       style.opacity === undefined &&
       style['stroke-opacity'] === undefined
