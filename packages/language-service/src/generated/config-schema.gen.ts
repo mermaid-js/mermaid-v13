@@ -173,7 +173,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "ignored",
             "since": "13.0.0",
-            "reason": "The numbered `cScale` palettes always have twelve slots and the git palettes eight, and a diagram cycles through them (D258, D267)."
+            "reason": "The numbered `cScale` palettes always have twelve slots and the git palettes eight, and a diagram cycles through them (D258, D267). v12 built that many `cScale` slots and style rules, and its timeline also took the section colour modulo the limit, so `THEME_COLOR_LIMIT: 3` gave the fourth section the first one's colour. v13's timeline cycles every twelve sections whatever the value."
           }
         },
         "commitLabelColor": {
@@ -3793,6 +3793,14 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for quadrant charts (a diagram section beats the top level within a config layer), as in v12."
+          }
+        },
         "useWidth": {
           "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
           "x-mermaid": {
@@ -4141,6 +4149,14 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for XY charts (a diagram section beats the top level within a config layer), as in v12."
+          }
+        },
         "useWidth": {
           "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
           "x-mermaid": {
@@ -6698,6 +6714,14 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for packet diagrams (a diagram section beats the top level within a config layer), as in v12."
+          }
+        },
         "useWidth": {
           "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
           "x-mermaid": {

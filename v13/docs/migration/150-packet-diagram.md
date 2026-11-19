@@ -28,12 +28,19 @@ e2e fixture, the v12 spec strings and the syntax page; grammar in
 
 ### Packet theme colours
 
-v12 read `themeVariables.packet` (`startByteColor` … `blockFillColor`). v13 keeps that nested
-object and adds a flat name for each key (`packetStartByteColor` … `packetBlockStrokeWidth`, CSS
-`--mermaid-packetStartByteColor`, …); the flat name wins when both are set (D335, D540). An
-author's value wins in every theme, as in v12, and a nested key leaves the others on the
-theme's values. The lengths (10, 12 and 14 px, stroke 1) and the colours in `default`,
-`neutral`, `base`, `dark`, `neo`, `redux` and `redux-color` are v12's. What changed
+v12's packet style sheet read the ten keys of `themeVariables.packet` (`startByteColor` …
+`blockFillColor`), but set in front matter or an `%%{init}%%` directive only four of them took
+effect: `labelColor`, `labelFontSize`, `titleColor` and `titleFontSize`. v12 checks the config
+from the diagram text with `sanitizeDirective`, which deletes every key that is not a key
+somewhere in v12's default config. The other six (`byteFontSize`, `startByteColor`,
+`endByteColor`, `blockStrokeColor`, `blockStrokeWidth`, `blockFillColor`) are not, so v12 dropped
+them and drew the theme's values; `mermaid.initialize()` does not run that check. v13 keeps the
+nested object and adds a flat name for each key (`packetStartByteColor` …
+`packetBlockStrokeWidth`, CSS `--mermaid-packetStartByteColor`, …); the flat name wins when both
+are set (D335, D540). An author's value wins in every theme for all ten keys, also in front
+matter and directives, and a nested key leaves the others on the theme's values. The lengths
+(10, 12 and 14 px, stroke 1) and the colours in `default`, `neutral`, `base`, `dark`, `neo`,
+`redux` and `redux-color` are v12's. What changed
 (`packages/conformance/src/packet/theme.spec.ts` lists each one):
 
 | Themes | v12 | v13 | Why |
