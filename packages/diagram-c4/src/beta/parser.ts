@@ -14,8 +14,17 @@
  */
 import { checkDepth, checkLimit } from '@mermaid-js/core/limits';
 import {
+  APOSTROPHE,
+  COMMA,
+  CR,
+  DQUOTE,
   ExpectedTable,
+  isBlank,
   Kind,
+  LF,
+  LPAREN,
+  PERCENT,
+  RPAREN,
   LineIndex,
   ParseState,
   Probe,
@@ -41,7 +50,7 @@ import type {
   C4BetaStyleNode,
   C4BetaTextNode,
 } from './ast.ts';
-import { buildModel } from './build.ts';
+import { buildModel, type Place } from './build.ts';
 import { lex } from './lexer.ts';
 import * as lists from './probe.ts';
 import type { C4BetaDirection, C4BetaElementKind, C4BetaKind, C4BetaModel } from './model.ts';
@@ -115,6 +124,10 @@ const ONE_PER_LINE = 'put each statement on a line of its own';
 /** Thrown inside the parser after a diagnostic is recorded; caught at statement level. */
 class Stop extends Error {}
 const STOP = new Stop();
+/** Thrown when a `style` value cannot be read: the line is dropped with a warning, not an error. */
+const DROP = new Stop();
+/** How much of an unreadable style value a warning quotes. */
+const QUOTED_VALUE = 24;
 
 /** The statements a body or the top level holds, and the element a body belongs to. */
 interface Frame {
@@ -145,6 +158,8 @@ class C4BetaParser {
   private elementCount = 0;
   private relationCount = 0;
   private styleCount = 0;
+  /** The `style` lines dropped for a value the lexer cannot read (`C4_COLOR_INVALID`). */
+  private readonly unreadable: Place[] = [];
 
   constructor(
     private readonly src: string,
@@ -180,7 +195,7 @@ class C4BetaParser {
       range: { start: this.pre.bodyStart, end: src.length },
       children: this.children,
     };
-    const built = buildModel(ast, state.diagnostics, (at) => this.lineOf(at));
+    const built = buildModel(ast, state.diagnostics, (at) => this.lineOf(at), this.unreadable);
     // In source order (the facet contract, R-LANG-3): the semantic checks run after the parse.
     state.diagnostics.list.sort((a, b) => a.range.start - b.range.start);
     const warnings = state.diagnostics.list.filter((d) => d.severity === 'warning');
@@ -324,9 +339,17 @@ class C4BetaParser {
     try {
       rule();
     } catch (error) {
-      if (error !== STOP) throw error;
-      this.recover(depth);
+      if (error !== STOP && error !== DROP) throw error;
+      if (error === DROP) this.skipLine();
+      else this.recover(depth);
     }
+  }
+
+  /** Skip a dropped line to its line break, which reports nothing more. */
+  private skipLine(): void {
+    const end = skipTo(this.t, this.i, BOUNDARY);
+    this.freezeProbe(end);
+    this.i = end;
   }
 
   // ---- rules --------------------------------------------------------------------------
@@ -657,18 +680,60 @@ class C4BetaParser {
     this.eol();
   }
 
-  /** `id ":" (HEX | id)` */
+  /** `id ":" (HEX | COLOR_FUNCTION | id)` */
   private entry(): C4BetaStyleNode['entries'][number] {
     const key = this.idToken();
     this.expect(T.Colon, 'a style entry is `key:value`, as in `fill:#1f2937`');
     this.tested(lists.VALUE_LIST);
-    const value = this.kind() === T.Hex ? this.i++ : this.idToken();
+    const k = this.kind();
+    if (this.unreadableValue()) this.dropStyle(key);
+    const value = k === T.Hex || k === T.ColorFunction ? this.i++ : this.idToken();
     this.tested(lists.AFTER_ENTRY_LIST);
     return {
       key: this.raw(key),
       value: this.raw(value),
       range: { start: this.range(key).start, end: this.range(value).end },
     };
+  }
+
+  /**
+   * A style value the lexer cannot read: stray characters (`#12`, `(`), or a word they follow
+   * with no blank between (`rgb(1, 2` with no `)`). An unclosed text is an error as elsewhere.
+   */
+  private unreadableValue(): boolean {
+    const glued = ID_KINDS[this.kind()] === 1 && this.t.start[this.i + 1] === this.t.end[this.i];
+    return this.strayAt(this.i) || (glued && this.strayAt(this.i + 1));
+  }
+
+  /** Token `j` is stray characters, not an unclosed text. */
+  private strayAt(j: number): boolean {
+    const c = this.src.charCodeAt(this.t.start[j] ?? 0);
+    return this.kind(j) === Kind.Error && c !== DQUOTE && c !== APOSTROPHE;
+  }
+
+  /** Drop the `style` line whose entry `key` has an unreadable value: one warning names it. */
+  private dropStyle(key: number): never {
+    const start = this.range(key).start;
+    const end = this.valueEnd(this.range().start);
+    const text = this.src.slice(start, end);
+    const quoted = text.length > QUOTED_VALUE ? `${text.slice(0, QUOTED_VALUE)}…` : text;
+    this.unreadable.push({ range: { start, end }, what: `\`${quoted}\`` });
+    throw DROP;
+  }
+
+  /** The end of a style value from `at`: a blank or `,` outside parentheses, `%%` or the line end. */
+  private valueEnd(at: number): number {
+    const { src } = this;
+    let depth = 0;
+    let i = at;
+    for (; i < src.length; i++) {
+      const c = src.charCodeAt(i);
+      if (c === LF || c === CR || (c === PERCENT && src.charCodeAt(i + 1) === PERCENT)) break;
+      if (c === LPAREN) depth++;
+      else if (c === RPAREN) depth--;
+      else if (depth <= 0 && (isBlank(c) || c === COMMA)) break;
+    }
+    return i;
   }
 }
 

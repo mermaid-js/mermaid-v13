@@ -12,7 +12,8 @@
  *   that kind's palette, as the elements do.
  * - then a tag row, named as the author wrote the tag, for each `style` whose target is a tag some element or relation carries, with the
  *   style's `fill` and `stroke` as written; a style for a kind, for a tag nothing carries, or
- *   with neither colour has none. Later statements for one tag override earlier entries.
+ *   with neither colour has none. Later statements for one tag override earlier entries, and a
+ *   value the colour check refuses (a misspelt name) counts as none, as its items draw the theme's.
  * - none at all for `legend off`, or when there is no row to show.
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
@@ -22,6 +23,7 @@ import { placed, type Measure, type Measured } from '../layout/layout.ts';
 import type { C4LegendLayout, C4LegendRow } from '../layout/types.ts';
 import { isExternal, type C4ElementKind } from '../model.ts';
 import { C4_BETA_METRICS as B } from './metrics.ts';
+import { styleColour } from './colour.ts';
 import type { C4BetaElement, C4BetaModel } from './model.ts';
 
 /** The heading of the legend. */
@@ -79,6 +81,10 @@ function tagEntries(model: C4BetaModel): LegendEntry[] {
       if (key === 'fill' || key === 'stroke') colours[key] = value;
     }
     merged.set(style.target, colours);
+  }
+  for (const tag of merged.values()) {
+    if (tag.fill !== undefined && !styleColour(tag.fill)) delete tag.fill;
+    if (tag.stroke !== undefined && !styleColour(tag.stroke)) delete tag.stroke;
   }
   return [...merged]
     .filter(([, tag]) => tag.fill !== undefined || tag.stroke !== undefined)
