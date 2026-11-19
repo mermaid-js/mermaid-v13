@@ -444,7 +444,7 @@ const VARIANTS: readonly Record<string, unknown>[] = [
 
 describe('xychart layout parity with v12', () => {
   it('equals v12 on the e2e corpus, to 0.01 px', async () => {
-    expect(corpus.length).toBe(62);
+    expect(corpus.length).toBe(63);
     const { problems, listed, compared } = await compare(corpus, {});
     expect(problems.slice(0, 30)).toEqual([]);
     // The text baseline's `<br>` labels (D385) and #683's fixture are not compared. v12 wrote the
@@ -457,7 +457,7 @@ describe('xychart layout parity with v12', () => {
       ],
       ['#683 spaced words', ['e2e/diagrams/xychart/pr-check/unquoted-text-keeps-spaces.mmd']],
     ]);
-    expect(compared).toBe(60);
+    expect(compared).toBe(61);
   });
 
   it.each(VARIANTS)('equals v12 on the e2e corpus under %o', async (extra) => {

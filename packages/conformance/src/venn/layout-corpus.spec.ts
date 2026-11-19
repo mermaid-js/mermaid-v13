@@ -53,7 +53,7 @@ describe('venn layout invariants on parser-produced fixtures', () => {
         }
       }
     }
-    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(82);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(83);
     expect(sets).toBeGreaterThan(3000);
     expect(wide).toBeGreaterThan(20);
     expect(texts).toBeGreaterThan(500);
