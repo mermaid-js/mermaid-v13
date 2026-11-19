@@ -17,7 +17,7 @@ import {
   sameAxisSegmentOverlapLength,
   segmentHitsAnyRect,
 } from '../direction/geometry.ts';
-import type { Point, RectEntry } from '../direction/geometry.ts';
+import type { OrthogonalSegment, Point, RectEntry } from '../direction/geometry.ts';
 
 /**
  * The indexes of the crossing cleanup (#687) answer what the walks they replace answer. Each
@@ -85,6 +85,65 @@ describe('the crossing cleanup indexes (#687)', () => {
       }
       // The routes do cross: the comparison is not of zeros.
       expect(crossings).toBeGreaterThan(100);
+    }
+  });
+
+  it('counts a segment asked again, alone or in a route, as it did the first time (#843)', () => {
+    const indexed = routes(31, 60).map((points) =>
+      orthogonalSegmentsForPoints(dedupeConsecutivePoints(points))
+    );
+    const index = buildSegmentCrossingIndex(indexed.flat(), EPSILON);
+    const queried = routes(131, 60).map((points) => orthogonalSegmentsForPoints(points));
+    const first = queried.map((segments) => index.count(segments));
+    let crossings = 0;
+    for (const [i, segments] of queried.entries()) {
+      const walked = indexed.reduce(
+        (sum, other) => sum + countSegmentCrossings(segments, other, EPSILON),
+        0
+      );
+      expect(first[i]).toBe(walked);
+      expect(index.count(segments)).toBe(walked);
+      expect(segments.reduce((sum, segment) => sum + index.count([segment]), 0)).toBe(walked);
+      crossings += walked;
+    }
+    expect(crossings).toBeGreaterThan(100);
+  });
+
+  it('keeps thousands of answers, both zeros and NaN apart, as asking afresh gives them (#843)', () => {
+    const next = sequence(51);
+    // Lines on a fine grid, so that thousands of distinct queries fill and grow the table.
+    const at = (): number => [0, -0, Number.NaN][next(40)] ?? next(400) / 4;
+    const segment = (horizontal: boolean): OrthogonalSegment => {
+      const [line, from, to] = [at(), at(), at()];
+      const [a, b] = horizontal
+        ? [
+            { x: from, y: line },
+            { x: to, y: line },
+          ]
+        : [
+            { x: line, y: from },
+            { x: line, y: to },
+          ];
+      return { index: 0, a, b, horizontal, vertical: !horizontal };
+    };
+    const indexed = Array.from({ length: 300 }, (_, i) => segment(i % 2 === 0));
+    const index = buildSegmentCrossingIndex(indexed, EPSILON);
+    const queried = Array.from({ length: 6000 }, (_, i) => segment(i % 3 !== 0));
+    // And many queries on one span at different lines, so keys that differ in one number share
+    // the table's probe runs.
+    const along = Array.from({ length: 3000 }, (_, i) => ({
+      index: 0,
+      a: { x: 0, y: i / 30 },
+      b: { x: 100, y: i / 30 },
+      horizontal: true,
+      vertical: false,
+    }));
+    for (const pass of [1, 2]) {
+      for (const [i, one] of [...queried, ...along].entries()) {
+        expect(index.count([one]), `pass ${pass}, query ${i}`).toBe(
+          countSegmentCrossings([one], indexed, EPSILON)
+        );
+      }
     }
   });
 

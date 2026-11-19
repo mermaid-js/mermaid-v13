@@ -79,6 +79,103 @@ class StabCounter {
   }
 }
 
+/** The slots a {@link CountTable} starts with: a power of two. */
+const COUNT_TABLE_START = 1024;
+/** Mixing constants for the slot of a key (32-bit odd multipliers, as in MurmurHash3). */
+const MIX_A = 0xcc9e2d51;
+const MIX_B = 0x1b873593;
+/** Scratch views to read a number's 64 bits. */
+const bitsOf = new Float64Array(1);
+const wordsOf = new Uint32Array(bitsOf.buffer);
+
+/** Folds the bits of `value` into `hash`; both zeros fold alike, as they count alike. */
+function mix(hash: number, value: number): number {
+  bitsOf[0] = value === 0 ? 0 : value;
+  const low = Math.imul(hash ^ Math.imul(wordsOf[0]!, MIX_A), MIX_B);
+  const high = Math.imul(((low << 13) | (low >>> 19)) ^ Math.imul(wordsOf[1]!, MIX_A), MIX_B);
+  return (high << 13) | (high >>> 19);
+}
+
+/**
+ * {@link StabCounter.count}'s answers by `after`, `before` and `through`, in an open-addressed
+ * table of typed arrays: a round asks hundreds of thousands of queries, and a table of numbers
+ * gives the collector no objects to trace. A key with NaN is never kept (NaN equals nothing),
+ * so it is counted each time it is asked, to the same answer.
+ */
+class CountTable {
+  private keys = new Float64Array(3 * COUNT_TABLE_START);
+  /** The answer in each slot, or -1 for an empty slot. */
+  private counts = new Int32Array(COUNT_TABLE_START).fill(-1);
+  private used = 0;
+  private readonly counter: StabCounter;
+
+  constructor(counter: StabCounter) {
+    this.counter = counter;
+  }
+
+  count(after: number, before: number, through: number): number {
+    if (hasNaN(after, before, through)) {
+      return this.counter.count(after, before, through);
+    }
+    const slot = this.slotOf(after, before, through);
+    const stored = this.counts[slot]!;
+    if (stored !== -1) {
+      return stored;
+    }
+    const count = this.counter.count(after, before, through);
+    this.store(slot, after, before, through, count);
+    return count;
+  }
+
+  /** The slot that holds the key, or the empty slot where it goes. */
+  private slotOf(after: number, before: number, through: number): number {
+    const mask = this.counts.length - 1;
+    let slot = mix(mix(mix(0, after), before), through) & mask;
+    while (this.counts[slot] !== -1 && !this.holds(slot, after, before, through)) {
+      slot = (slot + 1) & mask;
+    }
+    return slot;
+  }
+
+  private holds(slot: number, after: number, before: number, through: number): boolean {
+    const k = 3 * slot;
+    return this.keys[k] === after && this.keys[k + 1] === before && this.keys[k + 2] === through;
+  }
+
+  private store(slot: number, after: number, before: number, through: number, count: number): void {
+    this.keys[3 * slot] = after;
+    this.keys[3 * slot + 1] = before;
+    this.keys[3 * slot + 2] = through;
+    this.counts[slot] = count;
+    if (++this.used * 2 > this.counts.length) {
+      this.grow();
+    }
+  }
+
+  /** Twice the slots, every answer moved to its slot there. */
+  private grow(): void {
+    const { keys, counts } = this;
+    this.keys = new Float64Array(2 * keys.length);
+    this.counts = new Int32Array(2 * counts.length).fill(-1);
+    for (let old = 0; old < counts.length; old++) {
+      if (counts[old] !== -1) {
+        const after = keys[3 * old]!;
+        const before = keys[3 * old + 1]!;
+        const through = keys[3 * old + 2]!;
+        const slot = this.slotOf(after, before, through);
+        this.keys[3 * slot] = after;
+        this.keys[3 * slot + 1] = before;
+        this.keys[3 * slot + 2] = through;
+        this.counts[slot] = counts[old]!;
+      }
+    }
+  }
+}
+
+/** Whether any of the numbers is NaN, which no key can match. */
+const hasNaN = (a: number, b: number, c: number): boolean =>
+  Number.isNaN(a) || Number.isNaN(b) || Number.isNaN(c);
+
 export interface SegmentCrossingIndex {
   /**
    * The number of pairs of one of `segments` and one indexed segment that
@@ -115,13 +212,20 @@ export function buildSegmentCrossingIndex(
   }
   const horizontals = new StabCounter(horizontal);
   const verticals = new StabCounter(vertical);
+  // A query's count depends on its three numbers alone, so each is counted once (#843).
+  const crossingVerticals = new CountTable(verticals);
+  const crossingHorizontals = new CountTable(horizontals);
   return {
     count(queried) {
       let count = 0;
       for (const { a, b, horizontal: isHorizontal } of queried) {
         count += isHorizontal
-          ? verticals.count(Math.min(a.x, b.x) + epsilon, Math.max(a.x, b.x) - epsilon, a.y)
-          : horizontals.count(Math.min(a.y, b.y) + epsilon, Math.max(a.y, b.y) - epsilon, a.x);
+          ? crossingVerticals.count(Math.min(a.x, b.x) + epsilon, Math.max(a.x, b.x) - epsilon, a.y)
+          : crossingHorizontals.count(
+              Math.min(a.y, b.y) + epsilon,
+              Math.max(a.y, b.y) - epsilon,
+              a.x
+            );
       }
       return count;
     },
