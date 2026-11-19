@@ -1291,7 +1291,8 @@ differences, all checked against v12 over the e2e corpus:
 - A byte order mark (U+FEFF) before the opening `---` is skipped, so the front matter's `title`
   and `config` apply. v12 drew the diagram but ignored the front matter (D642).
 - YAML anchors are rejected, and `__proto__`/`constructor`/`prototype` keys are dropped with a
-  warning.
+  warning. The error says that tags, anchors and aliases are not supported, also for an anchor
+  on a key that holds a nested mapping (`base: &b` over indented keys).
 - A `config` that is not a mapping is ignored with a `FRONT_MATTER_CONFIG` warning.
 - One invalid directive (bad JSON) is dropped with `INVALID_DIRECTIVE`; v12 dropped all of
   them.

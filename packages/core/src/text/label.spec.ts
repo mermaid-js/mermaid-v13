@@ -143,10 +143,23 @@ describe('wrapping (R-TEXT-8)', () => {
     expect(box.widths).toEqual([20, 20, 10]);
   });
 
-  it('breaks at a zero-width space and drops it from the output', () => {
-    // aaaa = 22.24
-    expect(texts(layout('aaaa\u200baaaa', 30))).toEqual(['aaaa', 'aaaa']);
-    expect(texts(layout('aaaa\u200baaaa'))).toEqual(['aaaaaaaa']);
+  // D646: the zero-width space is a break opportunity but stays in the text, as in v12.
+  it('breaks at a zero-width space and keeps it in the output (D646)', () => {
+    // aaaa = 22.24; the zero-width space measures 0
+    const broken = layout('aaaa\u200baaaa', 30);
+    expect(texts(broken)).toEqual(['aaaa\u200b', 'aaaa']);
+    expect(broken.widths).toEqual([22.24, 22.24]);
+    const whole = layout('aaaa\u200baaaa');
+    expect(texts(whole)).toEqual(['aaaa\u200baaaa']);
+    expect(whole.widths).toEqual([44.48]);
+    expect(texts(layout('a\u200bb'))).toEqual(['a\u200bb']);
+  });
+
+  it('keeps a zero-width space inside a styled run (D646)', () => {
+    const box = layoutLabel('**a\u200bb** c', arial, Infinity, tableMeasurer, {
+      markup: 'emphasis',
+    });
+    expect(box.lines[0]?.map((r) => r.text)).toEqual(['a\u200bb', ' c']);
   });
 
   it('breaks at a soft hyphen, which shows as "-" only at the break', () => {

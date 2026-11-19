@@ -53,7 +53,7 @@ describe('timeline layout invariants on parser-produced fixtures', () => {
               );
           }
     }
-    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(59);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(60);
     expect(periods).toBeGreaterThan(1000);
     expect(failures.slice(0, 10)).toEqual([]);
   }, 300_000);
