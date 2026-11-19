@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import { DurationSequencer } from './tools/ci/duration-sequencer.ts';
 
 // Workspace packages resolve to their TypeScript sources via the `mermaid-source` export
 // condition, so no build is needed before testing.
@@ -43,6 +44,9 @@ export default defineConfig({
     // Off unless asked for (`--coverage`). fallow reads the Istanbul JSON for its CRAP scores
     // (#722): the PR's structural audit and the nightly run. A failed test still writes it.
     coverage: { provider: 'v8', reporter: ['json'], reportOnFailure: true },
+    // `--shard=i/n` (CI's unit shards) splits the files by their measured durations, not into
+    // equal counts (#984); tools/ci/test-durations.json holds the durations.
+    sequence: { sequencer: DurationSequencer },
     projects: [
       {
         resolve,

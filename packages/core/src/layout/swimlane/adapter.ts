@@ -10,6 +10,7 @@ import type {
   RoutePoint,
   Side,
 } from '../types.ts';
+import { checkGraph, checkGroupTitle, checkLabelSizes } from '../check.ts';
 import { topLaneHorizontalPadding, topLaneTitleBandHeight } from './helpers.ts';
 import { isPlaced, shiftBeyond } from './laneFit.ts';
 import type { LayoutData, Node, SwimlaneTuning } from './layoutData.ts';
@@ -18,53 +19,13 @@ import { leftTitleBandWidth } from './direction/lrTransform.ts';
 import { placeEndLabels } from './endLabels.ts';
 import { type PlacedBox, placeholderRoute } from './placeholderRoutes.ts';
 
-function finite(v: number, what: string): void {
-  if (!Number.isFinite(v) || v < 0)
-    throw new RangeError(`layout: ${what} must be a finite number >= 0, got ${v}`);
-}
-
 /**
  * Rejects what `tree` and `layered` reject, with their messages: duplicate ids, unknown ends,
  * sizes and spacing that are not finite numbers of at least 0. `grid` is a RangeError: text output lays
  * out with `layered` (D179), so no caller hands this engine character cells.
  */
 function check(graph: LayoutGraph): void {
-  const ids = new Set<string>();
-  const add = (id: string, what: string): void => {
-    if (ids.has(id)) throw new Error(`layout: duplicate ${what} id '${id}'`);
-    ids.add(id);
-  };
-  for (const n of graph.nodes) {
-    add(n.id, 'node');
-    finite(n.width, `width of node '${n.id}'`);
-    finite(n.height, `height of node '${n.id}'`);
-  }
-  for (const g of graph.groups) {
-    add(g.id, 'group');
-    for (const v of [g.padding.top, g.padding.right, g.padding.bottom, g.padding.left])
-      finite(v, `padding of group '${g.id}'`);
-    if (g.title) {
-      finite(g.title.width, `title width of group '${g.id}'`);
-      finite(g.title.height, `title height of group '${g.id}'`);
-    }
-  }
-  const edges = new Set<string>();
-  for (const e of graph.edges) {
-    if (edges.has(e.id)) throw new Error(`layout: duplicate edge id '${e.id}'`);
-    edges.add(e.id);
-    if (!ids.has(e.source))
-      throw new Error(`layout: edge '${e.id}' has unknown source '${e.source}'`);
-    if (!ids.has(e.target))
-      throw new Error(`layout: edge '${e.id}' has unknown target '${e.target}'`);
-    for (const s of [e.label, e.startLabel, e.endLabel]) {
-      if (!s) continue;
-      finite(s.width, `label width of edge '${e.id}'`);
-      finite(s.height, `label height of edge '${e.id}'`);
-    }
-  }
-  finite(graph.spacing.node, 'spacing.node');
-  finite(graph.spacing.rank, 'spacing.rank');
-  finite(graph.diagramPadding ?? 0, 'diagramPadding');
+  checkGraph(graph, { group: checkGroupTitle, edge: checkLabelSizes });
   if (graph.grid !== undefined)
     throw new RangeError(`layout: grid is not supported by swimlane, got ${graph.grid}`);
 }
