@@ -107,8 +107,38 @@ The per-package check does not replace the full gate. Specs that cover every typ
 
 - Test through the public seam, `createMermaid().render()` or `renderSync()`, unless the area has its own seam (lexer parity, layout invariants).
 - Specs are `*.spec.ts` files beside the source. Do not commit `.only`.
-- A change to rendered output needs a `.mmd` fixture under `e2e/diagrams/<type>/`. The corpus and the visual baseline find it there. Put test sources in fixtures, not in string lists inside a spec.
+- A change to rendered output needs a `.mmd` fixture under `e2e/diagrams/<type>/` that shows it. That can be a fixture that already exists. Before you add one, read [Visual tests](#visual-tests). The corpus and the visual baseline find fixtures there. Put test sources in fixtures, not in string lists inside a spec.
 - A change that differs from v12 on purpose is listed, with its reason, in the type's divergences (`packages/conformance/divergences/`) and in the type's fragment under `v13/docs/migration/`.
+
+## Visual tests
+
+### How they work
+
+- **Every fixture is a screenshot.** `e2e/rendering/mmd-snapshots.spec.ts` photographs each `.mmd` file under `e2e/diagrams/<type>/<tier>/`. Nothing lists them. Screenshots are taken in Chromium only and compared by Argos (project `mermaid/mermaid-v13`, D631). The dev explorer (`pnpm dev`) shows the same fixtures that CI photographs.
+- **Tiers.** `pr-check` and `baseline` (about 1,300 fixtures) are photographed on PRs and on every push to `mermaid-v13`. That push build is the baseline that PRs are compared with. `nightly-check` and `visual-check` (about 2,200 more) are photographed only by the nightly build, `nightly` (`visual-nightly.yml`).
+- **A PR photographs only what it changes** (D632). The `visual` job renders all fixtures to SVG in Node twice, once on the PR and once on its base. It photographs only the fixtures whose SVG differs and uploads them as an Argos subset build. If nothing differs, Argos is told to skip and the status is still green. Changed fixtures in the nightly tiers are listed in the job summary and photographed that night.
+- **Full runs.** Every fixture in the PR tiers is photographed when the PR changes the page, the snapshot harness, the Playwright config, the DOM adapter, `package.json` or the job itself. The same happens when the comparison fails, and on a PR with the label `visual: full`. A PR that changes only docs, tests or tools photographs nothing.
+- **Report only.** The job and the Argos status are not required checks. A maintainer approves the differences in Argos. Before you mark a PR ready, open its Argos build and check that your change explains every changed or added image. Give the count in the PR body ("4 added, 0 changed"). A difference you cannot explain is a bug to fix, not one to approve.
+- **Behaviour specs take no screenshots.** The browser, dev explorer and platform specs run in the `e2e` jobs. A spec that asserts behaviour does not also take a screenshot.
+
+### Before you add a visual test
+
+Every fixture costs time on every later run. Each push to `mermaid-v13` photographs the PR tiers again, the nightly photographs everything, and the unit corpus and render-property tests read every `.mmd` file. There are about 3,500 fixtures. Most changes are already shown by one of them, so add a fixture only for something no existing image shows.
+
+1. **See which fixtures your change already affects.** Hash the fixtures before your change and after it, then compare. A run takes about 10 seconds. The command runs in `packages/dev`, so give it absolute paths outside the checkout:
+
+   ```bash
+   h=/tmp/visual-hashes && mkdir -p "$h"
+   pnpm --silent --filter @mermaid-js/dev visual:hashes "$h/before.json"   # before the change, or with it reverted
+   pnpm --silent --filter @mermaid-js/dev visual:hashes "$h/after.json"    # with the change
+   jq -rs '.[0] as $a | .[1] | to_entries[] | select($a[.key] != .value) | .key' "$h/before.json" "$h/after.json"
+   ```
+
+   If that lists fixtures that show what you changed, the change is already covered. Do not add one. The `pr-check` and `baseline` entries in the list are what the PR's Argos build will show. A change in shared code can reach several types. A one-pixel change to the pie legend spacing changed 53 fixtures, two of them flowcharts that embed a pie.
+2. **If nothing changes, extend before you add.** Search the type's folders (`rg -l '<keyword>' e2e/diagrams/<type>`) for a fixture on the same subject. If the new case fits there and the image stays readable, add it to that fixture.
+3. **Only then add a file.** Put it next to the fixtures on the same subject. `pr-check` and `baseline` are photographed on every push, so do not put a fixture there only to get it photographed on your PR. A regression case belongs in `nightly-check`. Two paths that flatten to the same snapshot name (`a/b-c.mmd` and `a/b/c.mmd`) fail at registration.
+4. **Do not use a picture to test a number.** A position, an attribute, a class or a warning is asserted in the package's specs, not in a screenshot.
+5. **Say what covers it.** The PR body names the fixtures that show the change, or says why none of them could.
 
 ## Issues, branches and pull requests
 
