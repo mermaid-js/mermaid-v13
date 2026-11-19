@@ -163,7 +163,8 @@ function instantOf(options: RenderOptions | undefined): number {
 
 /**
  * The missing-resource policy: a text draw or one without `placeholders` throws; otherwise
- * one `PLACEHOLDER` warning names what the draw stands in for.
+ * one `PLACEHOLDER` warning names what the draw stands in for, which it returns, for the inline
+ * providers (`InlineRequest.standIns`, D655).
  */
 function applyMissingPolicy(
   k: Session,
@@ -171,7 +172,7 @@ function applyMissingPolicy(
   options: RenderOptions | undefined,
   textOutput: boolean,
   warn: (w: Warning) => void
-): void {
+): readonly Resource[] {
   const missing = [
     ...missingFor(k.registry, analysis, textOutput),
     // An icon pack is missing only while `pending`: an unregistered one is unresolved (D291),
@@ -190,6 +191,7 @@ function applyMissingPolicy(
     });
   }
   for (const w of packsUnsupported(k.iconPacks, k.hooks.claims())) warn(w);
+  return missing;
 }
 
 /** The layout a draw calls: its engine, its part of the drawing and, when ELK lays out, its name. */
@@ -307,7 +309,7 @@ export function contextFor(
   const textOutput = units.id === 'cell';
   const warnings: Warning[] = [...k.skipped, ...prepared.warnings];
   const warn = (w: Warning): void => void warnings.push(toWarning(w, registry.fragments()));
-  applyMissingPolicy(k, analysis, options, textOutput, warn);
+  const standIns = applyMissingPolicy(k, analysis, options, textOutput, warn);
   const choice = chooseLayout(registry, plugin, config, textOutput, warn);
   // The theme reads the id prefix only for the gradient (D182), after ctx exists.
   const tables = { rules: registry.themeRules(), diagram: plugin.theme };
@@ -316,7 +318,7 @@ export function contextFor(
   // Inline boxes (D177) are SVG only: text output shows every span as written, and warns
   // ASCII_DROPPED once per feature (D179). Glyphs (D293) are SVG only too, absent without an
   // extension that has them, and share the inline spans' once-per-render warnings (D291).
-  const inline = inlineSpans(hooks.inline(), warn, textOutput ? 'ascii' : 'svg', packs);
+  const inline = inlineSpans(hooks.inline(), warn, textOutput ? 'ascii' : 'svg', packs, standIns);
   const icon = textOutput ? undefined : hooks.icon(inline, packs);
   // The blocks (ADR-15) are drawn at the first lookup, with this draw's id prefix.
   const { embed, mounter } = blocks.lookup(drawBlocks, () => ctx.idPrefix, warn);

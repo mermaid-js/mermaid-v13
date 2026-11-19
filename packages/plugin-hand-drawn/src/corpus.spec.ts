@@ -88,15 +88,12 @@ interface Call {
 /** The hand-drawn extension, recording what its drawer gets and writes. */
 function recording(calls: Call[]): ExtensionPlugin {
   const { outline } = handDrawn;
-  let seed = 0;
   return {
     ...handDrawn,
     outline: {
-      active(ctx) {
-        seed = Number((ctx.config as { handDrawnSeed?: number }).handDrawnSeed);
-        return outline!.active(ctx);
-      },
-      draw(role, tag, attrs, sink) {
+      active: (ctx) => outline!.active(ctx),
+      draw(role, tag, attrs, sink, ctx) {
+        const seed = Number((ctx.config as { handDrawnSeed?: number }).handDrawnSeed);
         const drawn: string[] = [];
         const spy: OutlineSink = {
           ...sink,
@@ -108,7 +105,7 @@ function recording(calls: Call[]): ExtensionPlugin {
             sink.leaf(t, a);
           },
         };
-        const done = outline!.draw(role, tag, attrs, spy);
+        const done = outline!.draw(role, tag, attrs, spy, ctx);
         calls.push({ role, tag, attrs, drawn: done ? drawn : [], seed });
         return done;
       },

@@ -4,7 +4,7 @@
  */
 import { checkColor, streamWriter, type Attrs } from '@mermaid-js/core/svg';
 import { describe, expect, it } from 'vitest';
-import { activate, draw } from './drawer.ts';
+import { draw } from './drawer.ts';
 
 const BOX: Attrs = {
   x: 10,
@@ -18,10 +18,9 @@ const BOX: Attrs = {
 };
 
 function sketchLabel(): string {
-  activate({ handDrawn: true, handDrawnSeed: 1 });
   const w = streamWriter();
   w.open('g');
-  expect(draw('label', 'rect', BOX, w)).toBe(true);
+  expect(draw('label', 'rect', BOX, w, { handDrawn: true, handDrawnSeed: 1 })).toBe(true);
   w.close();
   return w.finish();
 }
