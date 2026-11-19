@@ -122,7 +122,7 @@ export const clickCursor = (classes: readonly string[]): 'pointer' | undefined =
   classes.includes('clickable') ? 'pointer' : undefined;
 
 /** A colour written in the source of a renderer, as a paint. */
-export const fixedPaint = (c: string): Paint => checkColor(c) as Paint;
+export const fixedPaint = (c: string): Paint => checkColor(c)!;
 
 export const centreX = (r: { readonly x: number; readonly width: number }): number =>
   r.x + r.width / 2;

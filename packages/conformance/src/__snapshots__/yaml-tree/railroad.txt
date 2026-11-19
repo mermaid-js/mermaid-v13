@@ -27,6 +27,7 @@ e2e/diagrams/railroad/nightly-check/ebnf-empty-diagram.mmd 1 8f39da52c5e0c01d
 e2e/diagrams/railroad/nightly-check/ebnf-exceptions-and-specials.mmd 1 6a98e3c976302f44
 e2e/diagrams/railroad/nightly-check/ebnf-forest-theme.mmd 1 154a42231af2b41f
 e2e/diagrams/railroad/nightly-check/ebnf-optional-postfix-and-define.mmd 1 5dd54151a1c71e67
+e2e/diagrams/railroad/nightly-check/ir-blank-and-spaced-terminals.mmd 1 800bf6f98fb6654e
 e2e/diagrams/railroad/nightly-check/ir-duplicate-and-undefined-rules.mmd 1 9d83ee32e94b68f9
 e2e/diagrams/railroad/nightly-check/ir-empty-diagram.mmd 1 6b701bf96fab9668
 e2e/diagrams/railroad/nightly-check/ir-railroad-config.mmd 1 4ac55e5430e30310

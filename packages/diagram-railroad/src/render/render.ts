@@ -15,12 +15,13 @@
 import type { RenderContext } from '@mermaid-js/core';
 import { num, translate, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
 import { openSvgRoot } from '@mermaid-js/shared/svg/document';
-import type {
-  PlacedText,
-  RailroadExpressionLayout,
-  RailroadLayout,
-  RailroadRuleLayout,
-  TrackPath,
+import {
+  keepsSpaces,
+  type PlacedText,
+  type RailroadExpressionLayout,
+  type RailroadLayout,
+  type RailroadRuleLayout,
+  type TrackPath,
 } from '../layout/index.ts';
 import type { RailroadModel } from '../model.ts';
 import { BOX_PAINT, paints, type Paints } from './paint.ts';
@@ -114,7 +115,12 @@ function drawExpression(parts: Parts, e: RailroadExpressionLayout, translated = 
       stroke: paint.get(keys.stroke),
       'stroke-dasharray': box.dash ? (box.dash.map(num).join(',') as SafeValue) : undefined,
     });
-    drawText(w, e.text, e.ast, { fill: paint.get(keys.text) });
+    // A terminal is drawn with the spaces it was measured with (#774).
+    const literal = e.kind === 'terminal' && keepsSpaces(e.text.text);
+    drawText(w, e.text, e.ast, {
+      fill: paint.get(keys.text),
+      'xml:space': literal ? 'preserve' : undefined,
+    });
   }
   w.close();
 }
