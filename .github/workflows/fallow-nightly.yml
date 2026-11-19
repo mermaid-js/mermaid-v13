@@ -8,10 +8,9 @@ name: Nightly structure
 # on this private repository, so the SARIF stays an artifact.) Also runs on demand.
 #
 # #911 (D652): when the fallow step fails on mermaid-v13 (on the schedule or by hand), one open
-# `nightly-fallow` issue gets the run link and the report (opened when there is none), and a
-# short Slack message names the gates and links both. A later green run comments on that issue
-# and closes it. Neither alert job checks out or runs repository code; only the Slack job sees
-# its token.
+# `nightly-fallow` issue gets the run link and the report (opened when there is none). A later
+# green run comments on that issue and closes it. The issue job checks out and runs no
+# repository code.
 on:
   schedule:
     - cron: '41 3 * * *'
@@ -94,15 +93,12 @@ jobs:
     timeout-minutes: 5
     permissions:
       issues: write
-    outputs:
-      url: ${{ steps.issue.outputs.url }}
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         continue-on-error: true
         with:
           name: fallow-summary
       - name: Open, update or close the nightly-fallow issue
-        id: issue
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -110,12 +106,12 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
-          open=$(gh issue list --state open --label nightly-fallow --limit 1 --json number,url \
-            --jq '.[0] // empty | "\(.number) \(.url)"')
+          open=$(gh issue list --state open --label nightly-fallow --limit 1 --json number \
+            --jq '.[0].number // empty')
           if [ "$OUTCOME" = success ]; then
             if [ -n "$open" ]; then
-              gh issue comment "${open%% *}" --body "The nightly fallow run is green again: $RUN_URL"
-              gh issue close "${open%% *}"
+              gh issue comment "$open" --body "The nightly fallow run is green again: $RUN_URL"
+              gh issue close "$open"
             fi
             exit 0
           fi
@@ -132,53 +128,10 @@ jobs:
           # shellcheck disable=SC2016 # backticks are Markdown, not command substitution
           printf 'The nightly fallow run on `mermaid-v13` failed: %s\n\n%s\n' "$RUN_URL" "$report" > body.md
           if [ -n "$open" ]; then
-            gh issue comment "${open%% *}" --body-file body.md
-            url=${open#* }
+            gh issue comment "$open" --body-file body.md
           else
             gh label create nightly-fallow --color B60205 \
               --description 'The nightly fallow run failed (fallow-nightly.yml)' 2>/dev/null || true
-            url=$(gh issue create --title 'Nightly fallow run is red' --label nightly-fallow \
-              --body-file body.md)
-          fi
-          echo "url=$url" >> "$GITHUB_OUTPUT"
-
-  slack:
-    name: Slack
-    needs: [fallow, tracking-issue]
-    if: ${{ !cancelled() && needs.tracking-issue.result == 'success' && needs.fallow.outputs.outcome == 'failure' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions: {}
-    steps:
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        continue-on-error: true
-        with:
-          name: fallow-summary
-      # The bot token is mermaid-ops's (comp-status). The bot must be in the channel.
-      - name: Post to Slack
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          CHANNEL: ${{ vars.FALLOW_SLACK_CHANNEL_ID }}
-          ISSUE_URL: ${{ needs.tracking-issue.outputs.url }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          set -euo pipefail
-          if [ -z "$SLACK_BOT_TOKEN" ] || [ -z "$CHANNEL" ]; then
-            echo "::notice::Slack skipped: set the SLACK_BOT_TOKEN secret and the FALLOW_SLACK_CHANNEL_ID variable."
-            exit 0
-          fi
-          # fallow's own line: `Gate outcomes: failed <gate> (<count> …), …; passed …`.
-          gates=$(grep -m1 '^Gate outcomes:' fallow-summary.md 2>/dev/null || echo 'Gate outcomes: no report, see the run.')
-          # shellcheck disable=SC2016 # backticks are Markdown, not command substitution
-          text=$(printf '*Nightly fallow is red* on `mermaid-v13`.\n%s\nIssue: %s · Run: %s' \
-            "$gates" "$ISSUE_URL" "$RUN_URL")
-          jq -n --arg channel "$CHANNEL" --arg text "$text" \
-            '{channel: $channel, markdown_text: $text}' > payload.json
-          response=$(curl -sS --fail-with-body -X POST https://slack.com/api/chat.postMessage \
-            -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H 'Content-Type: application/json; charset=utf-8' \
-            --data @payload.json)
-          if [ "$(jq -r '.ok' <<< "$response")" != true ]; then
-            echo "::error::Slack chat.postMessage failed: $(jq -r '.error // "no error field"' <<< "$response")"
-            exit 1
+            gh issue create --title 'Nightly fallow run is red' --label nightly-fallow \
+              --body-file body.md
           fi
