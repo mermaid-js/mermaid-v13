@@ -17,12 +17,17 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { cls, openSvgRoot, textElement, type RootOptions } from '@mermaid-js/shared/svg/document';
+import {
+  cls,
+  openSvgRoot,
+  placeTitle,
+  textElement,
+  titledViewBox,
+  type PlacedTitle,
+} from '@mermaid-js/shared/svg/document';
 import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import { marker, markerTrim } from '@mermaid-js/shared/svg/arrowheads';
 import { routePath } from '@mermaid-js/shared/svg/route';
-import { layoutLabel, type MeasuredLabel } from '@mermaid-js/core/text';
-import { tagsOnly } from '@mermaid-js/core/text/tags-only';
 import type {
   AgentflowEdgeView,
   AgentflowGroupView,
@@ -44,12 +49,7 @@ const DOTTED = '2' as SafeValue;
 /** An edge label's background: padding either side, corner radius. */
 
 /** The front-matter title, measured and placed: centred over the drawing, its baseline up. */
-interface Title {
-  readonly label: MeasuredLabel;
-  readonly x: number;
-  /** Centre of the label box. */
-  readonly y: number;
-}
+type Title = PlacedTitle;
 
 /** What every section of one render draws from. */
 interface Scene {
@@ -103,41 +103,22 @@ export function renderAgentflow(
 }
 
 /**
- * The title (D218, v12 `insertTitle`): `agentflow.titleTopMargin` from its baseline up to the
- * top of the layout's box, centred on it; none for an empty one.
+ * The title (D218, D652, v12 `insertTitle`): `agentflow.titleTopMargin` from its baseline up to
+ * the top of the layout's box, centred on it; none for an empty one.
  */
 function titleOf(
   model: AgentflowModel,
   layout: AgentflowLayout,
   ctx: AgentflowRenderContext
 ): Title | undefined {
-  const text = model.title?.trim();
-  if (!text) return undefined;
-  const font = { family: ctx.theme.value('fontFamily'), size: TITLE_SIZE, weight: 400 };
-  // No inline boxes in the title.
-  const label = layoutLabel(text, font, Infinity, ctx.measurer, { inline: tagsOnly(ctx.inline) });
-  const top = -layout.agentflow.titleTopMargin - label.baseline;
-  return { label, x: layout.width / 2, y: top + label.height / 2 };
-}
-
-/** The drawn box: the layout's, grown to hold the title and the padding around it. */
-function viewBox(layout: AgentflowLayout, title: Title | undefined): RootOptions['viewBox'] {
-  if (!title) return { width: layout.width, height: layout.height };
-  const width = Math.max(1, Math.ceil(layout.width));
-  const height = Math.max(1, Math.ceil(layout.height));
-  const pad = layout.agentflow.graph.diagramPadding ?? 0;
-  const half = title.label.width / 2;
-  const x0 = Math.floor(Math.min(0, title.x - half - pad));
-  const y0 = Math.floor(Math.min(0, title.y - title.label.height / 2 - pad));
-  const x1 = Math.ceil(Math.max(width, title.x + half + pad));
-  return [x0, y0, x1 - x0, height - y0];
+  return placeTitle(model.title, layout.width, layout.agentflow.titleTopMargin, ctx, TITLE_SIZE);
 }
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, paint }: Scene, model: AgentflowModel, title?: Title): void {
   openSvgRoot(w, ctx, {
     name: 'agentflow',
-    viewBox: viewBox(layout, title),
+    viewBox: titledViewBox(layout, title, layout.agentflow.graph.diagramPadding ?? 0),
     maxWidth: ctx.config.agentflow?.useMaxWidth !== false,
     title: model.accTitle,
     desc: model.accDescr,
