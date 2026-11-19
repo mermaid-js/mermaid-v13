@@ -327,10 +327,18 @@ describe('securityLevel (R-SEC-4, R-SEC-6, D75)', () => {
 
   it('treats the v12 levels as the default level, with one warning', async () => {
     const m = createMermaid();
-    m.initialize({ securityLevel: 'loose' });
+    m.initialize({ securityLevel: 'antiscript' });
     const result = await m.render('s', text);
     expect(hrefs(result.svg)).toEqual(['https://example.com', '/docs/b']);
     expect(result.warnings.map((w) => w.code)).toEqual(['SECURITY_LEVEL']);
+  });
+
+  it('keeps the default level for links under loose, with no warning (D634)', async () => {
+    const m = createMermaid();
+    m.initialize({ securityLevel: 'loose' });
+    const result = await m.render('s', text);
+    expect(hrefs(result.svg)).toEqual(['https://example.com', '/docs/b']);
+    expect(result.warnings).toEqual([]);
   });
 });
 

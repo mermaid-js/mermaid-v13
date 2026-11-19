@@ -23,14 +23,15 @@ export interface UrlOptions {
 }
 
 const DEFAULT_SCHEMES: readonly string[] = ['http', 'https', 'mailto'];
-const V12_LEVELS: ReadonlySet<string> = new Set(['loose', 'antiscript', 'sandbox']);
+const V12_LEVELS: ReadonlySet<string> = new Set(['antiscript', 'sandbox']);
 
 /**
- * Maps a configured `securityLevel` to one of the two v13 levels. The other v12 values
- * are treated as the default, with a warning.
+ * Maps a configured `securityLevel` to one of the two v13 levels. `loose` is `default` for
+ * URLs with no warning, since it is what turns click callbacks on (D554, D634); the other v12
+ * values are treated as the default, with a warning.
  */
 export function resolveSecurityLevel(value: unknown, warn?: Warn): SecurityLevel {
-  if (value === undefined || value === 'default') return 'default';
+  if (value === undefined || value === 'default' || value === 'loose') return 'default';
   if (value === 'strict') return 'strict';
   warn?.({
     code: 'SECURITY_LEVEL',

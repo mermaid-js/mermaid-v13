@@ -1034,14 +1034,14 @@ export const configSchema: ConfigSchema = {
         "default": "(**default**) Link URLs may use `http`, `https`, `mailto` or be relative.",
         "strict": "Only relative link URLs are kept; absolute links are dropped with a warning.",
         "antiscript": "No longer supported; treated as `default`, with a warning.",
-        "loose": "No longer supported; treated as `default`, with a warning.",
+        "loose": "Turns on click callbacks (D554); link URLs follow `default`. No warning (D634).",
         "sandbox": "No longer supported; treated as `default`, with a warning."
       },
       "default": "default",
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose`, `antiscript` and `sandbox` act as `default` with a warning."
+        "reason": "The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose` turns on click callbacks (D554) and acts as `default` for link URLs, with no warning (D634); `antiscript` and `sandbox` act as `default` with a warning."
       }
     },
     "startOnLoad": {
