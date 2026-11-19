@@ -74,6 +74,13 @@ const theme: ThemeSpec = {
     border2: '#aaaa33',
     noteTextColor: '#000000',
     noteBorderColor: '#aaaa33',
+    // v12 theme-default.js keeps its constructor background, lineColor, primaryTextColor and
+    // primaryColor where xychart, wardley, cynefin, quadrant, requirement, state and event
+    // modelling read them, so no override of the base colour moves them there (D656).
+    canvasBkg: '#ffffff',
+    canvasLineColor: '#333333',
+    canvasTextColor: '#131300',
+    canvasItemBkg: '#ececff',
   },
   // v12 theme-default derives the ER rows from primaryColor with khroma (D117).
   rules: {
