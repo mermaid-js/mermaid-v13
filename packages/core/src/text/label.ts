@@ -209,7 +209,7 @@ function plainLabel(
   for (let line of slow ? sourceLines(text, options.backslashBreak) : [text]) {
     if (slow) {
       // As `tidy`, which leaves white space other than spaces and tabs: the line must have none.
-      line = line.replace(RE_SPACES, ' ');
+      line = collapsed(line);
       if (RE_OTHER_SPACE.test(line) || marked.test((line = line.trim()))) return undefined;
     }
     if (line === '') push([], 0);
@@ -218,13 +218,19 @@ function plainLabel(
     } else if (
       // A markdown label's lines come from the untrimmed source; keep that to the general path.
       (markup === 'markdown' && src !== text) ||
-      RE_OTHER_SPACE.test(line) ||
+      // A line between breaks has none, as tested above.
+      (!slow && RE_OTHER_SPACE.test(line)) ||
       !wrapPlain(line, font, maxWidth, measurer, options, (t, w) => push([run(t, base, w)], w))
     ) {
       return undefined;
     }
   }
   return [lines, indents, widths];
+}
+
+/** `line` with its runs of spaces and tabs collapsed: only a tab or two spaces in a row change. */
+function collapsed(line: string): string {
+  return line.includes('\t') || line.includes('  ') ? line.replace(RE_SPACES, ' ') : line;
 }
 
 /**

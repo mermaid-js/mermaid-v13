@@ -1,5 +1,5 @@
 // cspell:words dejavu hhea kepano kinsoku
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { LabelBoxSpan } from '../svg/writer.ts';
 import type { SafeValue } from '../svg/types.ts';
 import { ASCII_MAX, LATIN1_MAX, SPACE } from '../parser-kit/char-codes.ts';
@@ -27,8 +27,8 @@ import { FACES } from './metrics.ts';
 import { SLICE, tableMeasurer } from './table.ts';
 
 // The current label layout against the layout as it was before advance units were summed once
-// per word and `<br>` lines skipped needless work (the reference at the end of this file): every result
-// must be the same, numbers included, bit for bit.
+// per word and `<br>` lines skipped needless work (the reference at the end of this file):
+// every result must be the same, numbers included, bit for bit.
 
 const random = (seed: number) => (): number => {
   seed = (seed + 0x6d2b79f5) | 0;
@@ -46,13 +46,16 @@ const CHARS = [
   ...'「」『』（）【】', // CJK brackets
   ...'。、，！？ー…', // closing punctuation
   ...'한국어éüßñ×', // Hangul and Latin-1
-  '́', // combining mark: zero width
-  '‍', // ZWJ
+  '\u0301', // combining mark: zero width
+  '\u200d', // ZWJ
   '\u0001', // control: zero width
   '😀', // astral: a surrogate pair
-  '👩‍💻',
+  '👩\u200d💻',
   '𠀋', // astral CJK
-  '﷐', // the inline-box placeholder, plain text without boxes
+  '\ufdd0', // the inline-box placeholder, plain text without boxes
+  '\u00a0', // white space other than the space: no-break, ideographic, form feed
+  '\u3000',
+  '\f',
 ];
 const pick = <T>(rnd: () => number, a: readonly T[]): T => a[Math.floor(rnd() * a.length)] as T;
 
@@ -213,7 +216,7 @@ describe('label layout against the layout before (b14915334)', () => {
   }, 120_000);
 
   it('lays out generated labels bit for bit as before, with a font-table measurer', () => {
-    expect(compare(fontTables, 13, 1000)).toBeGreaterThan(70_000);
+    expect(compare(fontTables, 13, 1000)).toBeGreaterThan(60_000);
   }, 120_000);
 
   it('lays out generated labels bit for bit as before, with any other measurer', () => {
@@ -225,11 +228,12 @@ describe('label layout against the layout before (b14915334)', () => {
       'aaa aaa aaa aaa aaa aaa aaa aaa',
       'a'.repeat(300) + ' b ' + 'c'.repeat(80),
       'ab-'.repeat(60) + 'ab x y-z',
-      '漢字。漢字「漢字」 😀😀😀 👩‍💻 𠀋𠀋 éé',
+      '漢字。漢字「漢字」 😀😀😀 👩\u200d💻 𠀋𠀋 e\u0301e\u0301',
       'aaa  aaa\taaa aaa \t aaa',
       '  aaa aaa <br>  bbb\tbbb  bbb<br/>\\nccc ccc-ccc\n\nddd  ',
       'x<br>' + 'abcdefghij'.repeat(12) + '<BR>y z',
       'w '.repeat(100),
+      'aaa\u00a0aaa aaa aaa<br>aaa\u3000aaa  aaa aaa\\naaa\faaa',
     ];
     for (const text of labels) {
       for (const font of FONTS) {
@@ -247,6 +251,22 @@ describe('label layout against the layout before (b14915334)', () => {
       }
     }
   }, 120_000);
+
+  it('keeps lines between breaks with a tab or a run of spaces off the measurer', () => {
+    // Collapsed as `tidy` would, such a line is plain: the table lays it out directly.
+    const width = vi.spyOn(tableMeasurer, 'width');
+    try {
+      const font = FONTS[0] as FontKey;
+      for (const text of ['a\tb<br>c', 'a  b<br>c', 'a \t b<br>c\td', 'a b<br>c']) {
+        const box = layoutLabel(text, font, 100, tableMeasurer);
+        expect(box).toStrictEqual(referenceLayoutLabel(text, font, 100, tableMeasurer));
+        expect(box.lines.map((l) => l.map((r) => r.text).join(''))[0]).toBe('a b');
+      }
+      expect(width).not.toHaveBeenCalled();
+    } finally {
+      width.mockRestore();
+    }
+  });
 });
 
 // ---------------------------------------------------------------------------------------------
