@@ -104,13 +104,11 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
    * text and the front-matter config, as v12 gave them.
    */
   const detect = (text: string, pre: PreprocessResult, start: number): FacetEntry | undefined => {
-    const body = text.slice(start);
     let clean: string | undefined;
-    let old: string | undefined;
-    const v12 = () => (old ??= detectText(text, start, pre, { keepLastLineComment: true }));
+    const detects = firstPartyDetects(text, start, pre);
     return entries.find((e) => {
       try {
-        if (firstParty.has(e)) return firstPartyDetects((t) => e.detector(t), body, v12);
+        if (firstParty.has(e)) return detects((t) => e.detector(t));
         return e.detector((clean ??= detectText(text, start, pre)), pre.frontMatter?.config);
       } catch {
         return false;

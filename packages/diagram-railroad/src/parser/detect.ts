@@ -10,12 +10,7 @@
  * parser, as in v12 (D513).
  */
 import { LOWER_A } from '@mermaid-js/core/parser-kit';
-import {
-  detectText,
-  diagramStart,
-  firstPartyDetects,
-  preprocess,
-} from '@mermaid-js/core/preprocess';
+import { diagramStart, firstPartyDetects, preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { RailroadNotation } from './tokens.ts';
 
@@ -46,12 +41,9 @@ export function detectRailroad(
   src: string,
   pre: PreprocessResult = preprocess(src)
 ): RailroadNotation | undefined {
-  const at = diagramStart(src, pre);
-  const body = src.slice(at);
-  let v12: string | undefined;
-  const cut = () => (v12 ??= detectText(src, at, pre, { keepLastLineComment: true }));
+  const detects = firstPartyDetects(src, diagramStart(src, pre), pre);
   for (const [notation, header] of RAILROAD_HEADERS) {
-    if (firstPartyDetects((t) => startsWithIgnoringCase(t, header), body, cut)) return notation;
+    if (detects((t) => startsWithIgnoringCase(t, header))) return notation;
   }
   return undefined;
 }
