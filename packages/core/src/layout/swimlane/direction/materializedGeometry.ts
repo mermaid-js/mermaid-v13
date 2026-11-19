@@ -48,6 +48,7 @@ import type {
   TrackConflictIndex,
 } from './crossingIndex.ts';
 import { EDGE_ROUTING } from '../config.ts';
+import { PointKeys } from '../pointKeys.ts';
 import { buildLaneModel } from '../lanes.ts';
 import {
   crossingPointsBetween,
@@ -2766,14 +2767,18 @@ export function resolveRenderedOrthogonalCrossings(
     }
   };
 
+  // v13 (#843): candidates are told apart by their points to three decimals; the same few
+  // points recur in every candidate, so each point's key is made once.
+  const pointKeys = new PointKeys(3);
+  const pathKey = (path: PointLite[]): string =>
+    path.map((point) => pointKeys.key(point.x, point.y)).join('|');
+
   const dedupeCandidatePaths = (candidates: PointLite[][]): PointLite[][] => {
     const seen = new Set<string>();
     return candidates
       .map((candidate) => dedupeConsecutivePoints(candidate))
       .filter((candidate) => {
-        const key = candidate
-          .map((point) => `${point.x.toFixed(3)},${point.y.toFixed(3)}`)
-          .join('|');
+        const key = pathKey(candidate);
         if (seen.has(key) || candidate.length < 2) {
           return false;
         }
@@ -3018,9 +3023,7 @@ export function resolveRenderedOrthogonalCrossings(
         if (pathHitsNode(edge, segmentsFor(candidate))) {
           return false;
         }
-        const key = candidate
-          .map((point) => `${point.x.toFixed(3)},${point.y.toFixed(3)}`)
-          .join('|');
+        const key = pathKey(candidate);
         if (seen.has(key) || candidate.length < 2) {
           return false;
         }
