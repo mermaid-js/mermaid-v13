@@ -62,9 +62,9 @@ describe('allowlist references', () => {
     ]);
   });
 
-  it('fails a decision id that DECISIONS.md does not have, and an issue the snapshot lacks', () => {
+  it('fails a decision id that the decision log does not have, and an issue the snapshot lacks', () => {
     expect(audit([entry('a', 'D999'), entry('b', '#4242')], none, rules)).toEqual([
-      'divergences: a names D999, which v13/docs/DECISIONS.md does not have',
+      'divergences: a names D999, which the decision log does not have',
       'divergences: b names #4242, which allowlists/issue-states.json does not have (run allowlist:issues --write)',
     ]);
   });
@@ -103,7 +103,7 @@ describe('allowlist references', () => {
       'size budget core: no "decision" (the D-id that sets 94,208 B)',
     ]);
     expect(budgetProblems([budget(94208, 'D8')], text)).toEqual([
-      'size budget core: D8 is not in v13/docs/DECISIONS.md',
+      'size budget core: D8 is not in the decision log',
     ]);
   });
 });
