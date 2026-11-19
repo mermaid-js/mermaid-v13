@@ -295,8 +295,11 @@ jobs:
           ARGOS_TOKEN: ${{ secrets.ARGOS_TOKEN }}
           ARGOS_REFERENCE_BRANCH: mermaid-v13
           ARGOS_PARALLEL_NONCE: ${{ github.run_id }}-${{ github.run_attempt }}
-        # In parts: one upload of this many screenshots is too large for Argos to accept.
-        run: bash .github/scripts/argos-upload.sh e2e/screenshots
+        # In parts: one upload of this many screenshots is too large for Argos to accept. The
+        # version line is for the log, and it is where knip sees that @argos-ci/cli is used.
+        run: |
+          pnpm exec argos --version
+          bash .github/scripts/argos-upload.sh e2e/screenshots
       - name: Build the theme gallery
         run: pnpm --filter @mermaid-js/dev gallery
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
