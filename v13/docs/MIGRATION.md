@@ -1288,6 +1288,8 @@ differences, all checked against v12 over the e2e corpus:
 - A closing `---` at the end of the text without a final newline is accepted.
 - Blank lines before the opening `---` are accepted (v12 `render()` rejected them; `run()`
   trimmed them).
+- A byte order mark (U+FEFF) before the opening `---` is skipped, so the front matter's `title`
+  and `config` apply. v12 drew the diagram but ignored the front matter (D642).
 - YAML anchors are rejected, and `__proto__`/`constructor`/`prototype` keys are dropped with a
   warning.
 - A `config` that is not a mapping is ignored with a `FRONT_MATTER_CONFIG` warning.

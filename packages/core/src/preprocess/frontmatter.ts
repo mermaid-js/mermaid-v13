@@ -1,9 +1,10 @@
 /**
  * The shared front-matter parser (DESIGN §4.1). A line scanner finds the opening `---` on the
  * first non-blank line and the closing `---` at the same indent; the YAML between them is read
- * in place. Nothing is rewritten and every range is an offset into the original source.
+ * in place. Nothing is rewritten and every range is an offset into the original source. A byte
+ * order mark as the first character is skipped, not read as the fence's indent (D642).
  */
-import { CR, LF } from '../parser-kit/char-codes.ts';
+import { BOM, CR, LF } from '../parser-kit/char-codes.ts';
 import { isSpace } from '../parser-kit/chars.ts';
 import type { Diagnostics } from '../parser-kit/diagnostics.ts';
 import type { Range } from '../parser-kit/positions.ts';
@@ -60,8 +61,9 @@ function isFence(src: string, start: number, end: number, indent: string): boole
 
 /** Find, read and interpret the front matter at the start of `src`. */
 export function scanFrontMatter(src: string, diagnostics: Diagnostics): FrontMatterScan {
-  // The opening fence is on the first non-blank line.
-  let lineStart = 0;
+  // The opening fence is on the first non-blank line. A leading BOM is how the file was saved,
+  // not text: skip it, or it would be the fence's indent and no closing `---` would match (D642).
+  let lineStart = src.charCodeAt(0) === BOM ? 1 : 0;
   for (;;) {
     const first = hspace(src, lineStart);
     const nl = newlineAt(src, first);

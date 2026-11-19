@@ -139,6 +139,25 @@ describe('preprocess: front matter', () => {
     expect(body(src)).toBe('\n\ngraph TD\n');
   });
 
+  it('skips a byte order mark before the opening fence (D642)', () => {
+    const src = '\uFEFF---\ntitle: Hello\nconfig:\n  theme: dark\n---\npie\n  "a" : 1\n';
+    const r = preprocess(src);
+    expect(meta(src)).toEqual({ title: 'Hello', config: { theme: 'dark' } });
+    expect(src.slice(r.bodyStart)).toBe('pie\n  "a" : 1\n');
+    expect(r.frontMatter?.range).toEqual({ start: 1, end: src.indexOf('pie') });
+    expect(r.diagnostics).toEqual([]);
+  });
+
+  it('skips only one byte order mark, and only at the start', () => {
+    expect(preprocess('\uFEFF\uFEFF---\ntitle: a\n---\npie\n').frontMatter).toBeUndefined();
+    expect(preprocess('\uFEFF\n---\ntitle: a\n---\npie\n').frontMatter?.title).toBe('a');
+    expect(preprocess('\uFEFFpie\n  "a" : 1\n')).toEqual({
+      bodyStart: 0,
+      directives: [],
+      diagnostics: [],
+    });
+  });
+
   it('does not take `----` or text after the dashes as a fence', () => {
     expect(preprocess('----\nfour dashes\n----\n').frontMatter).toBeUndefined();
     expect(preprocess('--- x\ntitle: a\n---\n').frontMatter).toBeUndefined();
@@ -169,6 +188,13 @@ describe('preprocess: front matter diagnostics are at original positions', () =>
       'The front matter is never closed. Add a line with the same indent and `---` after it.'
     );
     expect(at(src, d?.related?.[0]?.range.start ?? -1)).toEqual({ line: 2, column: 2 });
+  });
+
+  it('points an unclosed fence after a byte order mark at the dashes, past the BOM', () => {
+    const src = '\uFEFF---\ntitle: x\n';
+    const [d] = preprocess(src).diagnostics;
+    expect(d?.message).toBe('The front matter is never closed. Add a line with `---` after it.');
+    expect(d?.related?.[0]?.range).toEqual({ start: 1, end: 4 });
   });
 
   it('reports a YAML error at its own line and column', () => {
