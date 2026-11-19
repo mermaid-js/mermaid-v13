@@ -36,12 +36,13 @@ Pele, in @mermaid-js/diagram-agentflow
 --------------------------------------
 
 The CDN build also bundles @mermaid-js/diagram-agentflow without its legal comments. That
-package's parser/lexer.ts, parser/parser.ts, parser/model.ts and layout/prepare.ts are local
-copies of @mermaid-js/diagram-flowchart's lexer, parser and builder (D467), and its
-layout/shapes.ts and render/shapes.ts outline and draw the shared shapes of @mermaid-js/shared
-(D446, D559) with agentflow's own variants. All are ported from, or based on, Pele
-(https://github.com/obsidianmd/pele) at commit 3a2f075 (release 1.13.0). Pele is used under the
-MIT License:
+package's parser/lexer.ts, parser/parser.ts and parser/model.ts are its dialect of the flow
+family's lexer, parser and model builder, which it shares with @mermaid-js/diagram-flowchart
+through @mermaid-js/shared (D467, D595); its layout/prepare.ts is written from flowchart's
+layout builder; and its layout/shapes.ts and render/shapes.ts outline and draw the shared
+shapes of @mermaid-js/shared (D446, D559) with agentflow's own variants. All are ported from,
+or based on, Pele (https://github.com/obsidianmd/pele) at commit 3a2f075 (release 1.13.0). Pele
+is used under the MIT License:
 
 MIT License
 
