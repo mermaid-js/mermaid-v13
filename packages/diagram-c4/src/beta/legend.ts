@@ -63,6 +63,16 @@ interface TagColours {
   stroke?: string;
 }
 
+/** `tag` without the colours the colour check refuses: its items draw the theme's instead. */
+function drawable(tag: TagColours): TagColours {
+  const { fill, stroke, ...rest } = tag;
+  return {
+    ...rest,
+    ...(fill !== undefined && styleColour(fill) ? { fill } : {}),
+    ...(stroke !== undefined && styleColour(stroke) ? { stroke } : {}),
+  };
+}
+
 /**
  * The tag rows: one per `style` target some element or relation carries, and only for a style
  * with a `fill` or a `stroke`: a swatch shows nothing else yet, so another style's row would be an
@@ -82,11 +92,8 @@ function tagEntries(model: C4BetaModel): LegendEntry[] {
     }
     merged.set(style.target, colours);
   }
-  for (const tag of merged.values()) {
-    if (tag.fill !== undefined && !styleColour(tag.fill)) delete tag.fill;
-    if (tag.stroke !== undefined && !styleColour(tag.stroke)) delete tag.stroke;
-  }
   return [...merged]
+    .map(([label, tag]): [string, TagColours] => [label, drawable(tag)])
     .filter(([, tag]) => tag.fill !== undefined || tag.stroke !== undefined)
     .map(([label, tag]) => ({ label, tag }));
 }
