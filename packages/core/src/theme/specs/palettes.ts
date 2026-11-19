@@ -64,19 +64,27 @@ export const TAILWIND_300: readonly string[] = [
 export const series = (entries: string): readonly string[] => entries.split(' ');
 
 /**
+ * The series tints, slots 12–19 (`fillType0`–`fillType7`): the primary and secondary colours and
+ * their ±64° and 128° turns, which every v12 classic theme recomputes from the base colours, so
+ * each follows an override of its base colour (D656).
+ */
+export const SERIES_TINTS =
+  'primaryColor secondaryColor adjustHue(primaryColor,64) adjustHue(secondaryColor,64) adjustHue(primaryColor,-64) ' +
+  'adjustHue(secondaryColor,-64) adjustHue(primaryColor,128) adjustHue(secondaryColor,128)';
+
+/**
  * The series entries a theme leaves out (D332): v12 `theme-base.js`'s pie and journey colours,
  * derived from the base colours. Slots 0–11 are its `pie1`–`pie12` (the three base colours, khroma
- * `darken` by 10, then hue turns of `primaryColor`), 12–19 its `fillType0`–`fillType7` (the
- * primary and secondary colours and their ±64° and 128° turns). So a theme with only base colours
- * and a family draws every series diagram, its seed pair being `primaryColor` and
- * `secondaryColor`. Every built-in theme writes all twenty entries itself.
+ * `darken` by 10, then hue turns of `primaryColor`), 12–19 its `fillType0`–`fillType7`
+ * (`SERIES_TINTS`). So a theme with only base colours and a family draws every series diagram, its
+ * seed pair being `primaryColor` and `secondaryColor`. Every built-in theme writes all twenty
+ * entries itself.
  */
 export const BASE_SERIES: readonly string[] = series(
   'primaryColor secondaryColor tertiaryColor darkenHsl(primaryColor,10%) darkenHsl(secondaryColor,10%) darkenHsl(tertiaryColor,10%) ' +
     'darkenHsl(adjustHue(primaryColor,60),10%) darkenHsl(adjustHue(primaryColor,-60),10%) adjustHue(primaryColor,120) ' +
     'darkenHsl(adjustHue(primaryColor,60),20%) darkenHsl(adjustHue(primaryColor,-60),20%) darkenHsl(adjustHue(primaryColor,120),10%) ' +
-    'primaryColor secondaryColor adjustHue(primaryColor,64) adjustHue(secondaryColor,64) adjustHue(primaryColor,-64) ' +
-    'adjustHue(secondaryColor,-64) adjustHue(primaryColor,128) adjustHue(secondaryColor,128)'
+    SERIES_TINTS
 );
 
 /**
