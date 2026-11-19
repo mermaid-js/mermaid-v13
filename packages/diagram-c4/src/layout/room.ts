@@ -4,6 +4,7 @@
  */
 import type { RenderContext } from '@mermaid-js/core';
 import { pxProfile } from '@mermaid-js/core/layout';
+import { C4_METRICS as M } from './metrics.ts';
 
 /** The room across (`x`) and down (`y`), in px. */
 export interface LabelRoom {
@@ -15,4 +16,12 @@ export interface LabelRoom {
 export function labelRoomOf(units: RenderContext['units'] | undefined): LabelRoom {
   const { builder, pxPerUnit } = units ?? pxProfile;
   return { x: builder.labelPatch.x * pxPerUnit.x, y: builder.labelPatch.y * pxPerUnit.y };
+}
+
+/**
+ * Classic C4's room: the `labelPatch` where the label is drawn as an edge-label tag; on the cell
+ * profile (text output, which frames its labels itself) the one-cell `textLabelPad` across.
+ */
+export function classicLabelRoom(units: RenderContext['units'] | undefined): LabelRoom {
+  return units?.id === 'cell' ? { x: M.textLabelPad, y: 0 } : labelRoomOf(units);
 }

@@ -91,12 +91,18 @@ export const C4_METRICS = {
   maxOffset: 2000,
   /** Places along a relation to try for its label, nearest the middle first. */
   slide: [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8] as readonly number[],
+  /** The same, half as far apart, for a label the steps of `slide` found no clear spot for. */
+  fineSlide: [
+    0.5, 0.45, 0.55, 0.4, 0.6, 0.35, 0.65, 0.3, 0.7, 0.25, 0.75, 0.2, 0.8,
+  ] as readonly number[],
   /** A label beside a shifted line keeps this far from it. */
   besideGap: 2,
   /** A leaning label moves out by its half height less this. */
   leanSlack: 14,
   /** How far out beside its line a label is tried, in label depths, when the line has no room. */
   besideSteps: 8,
+  /** Steps beside the line per label depth in the finer search (`fineSlide`). */
+  fineSplit: 2,
   /** What another relation's stretch through a label costs, as a share of the label's area. */
   lineCover: 0.5,
   /** What each step beside the line past the first costs, as a share of `lineCover`'s cost. */

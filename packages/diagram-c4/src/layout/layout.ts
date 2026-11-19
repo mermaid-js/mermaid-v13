@@ -36,7 +36,7 @@ import {
 } from './grid.ts';
 import { cellConfig, cellPxMeasurer, cellRoom, type CellSize } from './cells.ts';
 import { C4_METRICS as M, FONT_WEIGHT } from './metrics.ts';
-import { labelRoomOf, type LabelRoom } from './room.ts';
+import { classicLabelRoom, type LabelRoom } from './room.ts';
 import {
   Lanes,
   lineOf,
@@ -264,7 +264,7 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
     config,
     fonts,
     measure,
-    labelRoom: units ? { x: M.textLabelPad, y: 0 } : labelRoomOf(ctx.units),
+    labelRoom: classicLabelRoom(ctx.units),
   });
 
   const title = measure(
@@ -768,30 +768,30 @@ interface Clearest {
  * author's offsets, then none), slid to the spot that covers least of `taken` (Pele
  * `render.ts`), each other relation's stretch through it costing `lineCover` of its area; when
  * that spot still costs anything, also beside the line on either side, a label's depth further
- * out at each step. A spot that covers `forbidden` is never taken while another does not; when
- * none clears it, the one that covers least of it is, and the label is crowded, as it is when
- * the spot taken lies over another relation's line.
+ * out at each step. When no spot is clear, the search runs again with finer steps along the line
+ * (`fineSlide`) and beside it (`fineSplit` per depth), so a label wider than the gaps the coarse
+ * steps try still finds one between them; a label that found a clear spot is not moved. A spot
+ * that covers `forbidden` is never taken while another does not; when none clears it, the one
+ * that covers least of it is, and the label is crowded, as it is when the spot taken lies over
+ * another relation's line.
  */
 function clearest({ r, lw, lh, given, online, keep }: ClearestInput): Clearest {
   let best = { at: M.slide[0]!, dx: given[0], dy: given[1] };
-  let least = Infinity;
-  let worst = Infinity;
-  let crossed = 0;
+  let [least, worst, crossed] = [Infinity, Infinity, 0];
   const perLine = M.lineCover * lw * lh;
-  const done = (): Clearest => ({ ...best, crowded: worst > 0 || crossed > 0 });
-  const tryAt = (px: number, py: number, away = 0): boolean => {
-    for (const t of M.slide) {
-      const x = r.x0 + (r.x1 - r.x0) * t + px;
-      const y = r.y0 + (r.y1 - r.y0) * t + py;
+  // A clear spot's cost: what it covers of `taken`, the lines through it, how far out it is.
+  const costOf = (box: Box, away: number): [number, number] => {
+    const lines = keep.lines.through(keep.own, box.x0, box.y0, box.x1, box.y1);
+    const cover = keep.taken.covered(box.x0, box.y0, box.x1, box.y1);
+    return [lines, cover + (lines + away * M.besideStepCost) * perLine];
+  };
+  const tryAt = (slides: readonly number[], px: number, py: number, away = 0): boolean => {
+    for (const t of slides) {
+      const [x, y] = [r.x0 + (r.x1 - r.x0) * t + px, r.y0 + (r.y1 - r.y0) * t + py];
       const box: Box = { x0: x - lw / 2, y0: y - lh / 2, x1: x + lw / 2, y1: y + lh / 2 };
       const bad = forbidden(keep, box);
       if (bad > worst || (bad === worst && bad > 0)) continue;
-      const lines = bad > 0 ? 0 : keep.lines.through(keep.own, box.x0, box.y0, box.x1, box.y1);
-      const cost =
-        bad > 0
-          ? Infinity
-          : keep.taken.covered(box.x0, box.y0, box.x1, box.y1) +
-            (lines + away * M.besideStepCost) * perLine;
+      const [lines, cost] = bad > 0 ? [0, Infinity] : costOf(box, away);
       if (bad < worst || cost < least) {
         [worst, least, crossed] = [bad, cost, lines];
         best = { at: t, dx: px, dy: py };
@@ -801,8 +801,7 @@ function clearest({ r, lw, lh, given, online, keep }: ClearestInput): Clearest {
     return false;
   };
   // Offsets from the diagram are kept unless a spot on the line itself covers less.
-  const moved = given[0] !== online[0] || given[1] !== online[1];
-  for (const [px, py] of moved ? [given, online] : [given]) if (tryAt(px, py)) return done();
+  const ons = given[0] !== online[0] || given[1] !== online[1] ? [given, online] : [given];
   // Beside the line, on either side, one label depth further out at each step: across the
   // stretch the label sits on (a self-loop's has no length: then up and down).
   const len = Math.hypot(r.x1 - r.x0, r.y1 - r.y0);
@@ -810,14 +809,21 @@ function clearest({ r, lw, lh, given, online, keep }: ClearestInput): Clearest {
   const half = Math.abs(nx) * (lw / 2) + Math.abs(ny) * (lh / 2) + M.besideGap;
   const depth = Math.abs(nx) * lw + Math.abs(ny) * lh;
   const [ax, ay] = [given[0] - online[0], given[1] - online[1]];
-  // Each step past the first costs a share of a line through the label: a label keeps by its
-  // own line rather than move far from it to clear another's.
-  for (let k = 0; k < M.besideSteps && (worst > 0 || k * M.besideStepCost * perLine < least); k++)
-    for (const side of [1, -1]) {
-      const d = side * (half + k * depth);
-      if (tryAt(ax + nx * d, ay + ny * d, k)) return done();
-    }
-  return done();
+  // One pass: `slides` along the line, `split` steps beside it per label depth. Each depth out
+  // past the first costs a share of a line through the label: a label keeps by its own line
+  // rather than move far from it to clear another's.
+  const pass = (slides: readonly number[], split: number): boolean => {
+    for (const [px, py] of ons) if (tryAt(slides, px, py)) return true;
+    const step = (M.besideStepCost * perLine) / split;
+    for (let k = 0; k < M.besideSteps * split && (worst > 0 || k * step < least); k++)
+      for (const side of [1, -1]) {
+        const d = side * (half + (k * depth) / split);
+        if (tryAt(slides, ax + nx * d, ay + ny * d, k / split)) return true;
+      }
+    return false;
+  };
+  if (!pass(M.slide, 1) && (worst > 0 || crossed > 0)) pass(M.fineSlide, M.fineSplit);
+  return { ...best, crowded: worst > 0 || crossed > 0 };
 }
 
 /** A boundary's header box, centred under the frame's top edge; none at the top level. */
