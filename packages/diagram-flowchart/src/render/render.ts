@@ -400,13 +400,26 @@ function edgeClass(edge: EdgeView['edge']): string {
 /** The edge's line: its weight and pattern, then the author's style, then an animation's dashes. */
 function edgeLine(edge: EdgeView['edge'], d: Attrs['d'], style: Attrs, animated: boolean): Attrs {
   const dotted = edge.stroke === 'dotted';
+  const width = edge.stroke === 'thick' ? THICK : undefined;
+  const dash = dotted ? DOTTED : undefined;
+  // v12 drew dotted edges with butt caps; the group's round caps close a 2px dash's gaps.
+  // Animated edges keep round caps, as v12's .edge-animation-* rules set them.
+  const cap = dotted && !animated ? 'butt' : undefined;
+  // The same keys in the same order either way: most edges have no style and no animation, and
+  // an object literal without a spread is built without copying one.
+  if (!animated && isEmpty(style))
+    return {
+      d,
+      'stroke-width': width,
+      'stroke-dasharray': dash,
+      'stroke-linecap': cap,
+      fill: 'none',
+    };
   return {
     d,
-    'stroke-width': edge.stroke === 'thick' ? THICK : undefined,
-    'stroke-dasharray': dotted ? DOTTED : undefined,
-    // v12 drew dotted edges with butt caps; the group's round caps close a 2px dash's gaps.
-    // Animated edges keep round caps, as v12's .edge-animation-* rules set them.
-    'stroke-linecap': dotted && !animated ? 'butt' : undefined,
+    'stroke-width': width,
+    'stroke-dasharray': dash,
+    'stroke-linecap': cap,
     ...style,
     // The moving dashes replace the edge's own pattern and any `linkStyle` one, as in v12.
     ...(animated && { 'stroke-dasharray': ANIMATED_DASH, 'stroke-dashoffset': undefined }),
