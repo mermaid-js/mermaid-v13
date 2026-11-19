@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { ciScope, listedFile, READS_THE_TREE, replay, summarize, testFiles } from './scope.ts';
+import {
+  ciScope,
+  isFixture,
+  isSnapshot,
+  NAMES_THE_CORPUS,
+  READS_THE_TREE,
+  replay,
+  snapshotOwner,
+  summarize,
+  testFiles,
+  type DataReaders,
+} from './scope.ts';
 
 const docs = ['v13/docs/DECISIONS.md'];
 
@@ -105,8 +116,10 @@ describe('which unit tests run (D637)', () => {
     for (const file of [
       'packages/conformance/divergences/pie.json',
       'packages/diagram-pie/package.json',
-      'packages/diagram-pie/src/__snapshots__/a.spec.ts.snap',
-      'e2e/diagrams/pie/pr-check/a.mmd',
+      'e2e/diagrams/pie/pr-check/a.json',
+      'e2e/diagrams/flowchart/hand-drawn.txt',
+      'e2e/rendering/pie/a.mmd',
+      'packages/diagram-pie/__snapshots__/a.spec.ts.snap',
       '.changeset/config.json',
       '.changeset/pre.json',
       'tools/ci/scope.ts',
@@ -149,14 +162,6 @@ describe('which unit tests run (D637)', () => {
     ]);
   });
 
-  it('reads a line of vitest list as its path', () => {
-    expect(listedFile('[workspace] tools/ci/scope.spec.ts')).toBe('tools/ci/scope.spec.ts');
-    expect(listedFile('[gantt-la] packages/diagram-gantt/src/a.spec.ts ')).toBe(
-      'packages/diagram-gantt/src/a.spec.ts'
-    );
-    expect(listedFile('tools/ci/scope.spec.ts')).toBe('tools/ci/scope.spec.ts');
-  });
-
   it('counts a spec as reading the tree when it scans a folder or names a path into src', () => {
     const reads = new RegExp(READS_THE_TREE);
     expect(reads.test('for (const name of readdirSync(dir)) {')).toBe(true);
@@ -177,16 +182,152 @@ describe('which unit tests run (D637)', () => {
   });
 });
 
+describe('fixtures and snapshots in a related run (D648)', () => {
+  const source = ['packages/diagram-pie/src/layout/metrics.ts'];
+  const fixture = 'e2e/diagrams/pie/pr-check/a.mmd';
+  const fileSnapshot = 'packages/conformance/src/__snapshots__/pie-layout.spec.ts.snap';
+  const folderSnapshot = 'packages/conformance/src/__snapshots__/yaml-tree/pie.txt';
+  const corpus = ['packages/conformance/src/corpus.ts', 'packages/dev/src/fixtures.ts'];
+  const data = (over: Partial<DataReaders> = {}): DataReaders => ({
+    owners: new Map([
+      [fileSnapshot, ['packages/conformance/src/pie-layout.spec.ts']],
+      [folderSnapshot, ['packages/conformance/src/yaml-tree.spec.ts']],
+    ]),
+    corpus,
+    deleted: [],
+    ...over,
+  });
+  const on = (files: string[], over?: Partial<DataReaders>, event = 'pull_request') =>
+    ciScope({ event, files, readers: [], data: data(over) });
+
+  it('knows a fixture and a snapshot when it sees one', () => {
+    expect(isFixture(fixture)).toBe(true);
+    expect(isFixture('e2e/diagrams/pie/hand-drawn.txt')).toBe(false);
+    expect(isFixture('dev-diagrams/pie/a.mmd')).toBe(false);
+    expect(isSnapshot(fileSnapshot)).toBe(true);
+    expect(isSnapshot(folderSnapshot)).toBe(true);
+    expect(isSnapshot('packages/conformance/src/er/__snapshots__/er-errors.md')).toBe(true);
+    expect(isSnapshot('packages/conformance/__snapshots__/a.snap')).toBe(false);
+    expect(isSnapshot('e2e/__snapshots__/a.png')).toBe(false);
+  });
+
+  it('finds the owner of a snapshot by its name or by searching its folder', () => {
+    expect(snapshotOwner(fileSnapshot)).toEqual({
+      spec: 'packages/conformance/src/pie-layout.spec.ts',
+    });
+    expect(
+      snapshotOwner('packages/conformance/src/state/__snapshots__/layout.spec.ts.snap')
+    ).toEqual({ spec: 'packages/conformance/src/state/layout.spec.ts' });
+    expect(snapshotOwner(folderSnapshot)).toEqual({
+      dir: 'packages/conformance/src',
+      name: 'yaml-tree',
+    });
+    expect(snapshotOwner('packages/conformance/src/railroad/__snapshots__/ascii/a/b.txt')).toEqual({
+      dir: 'packages/conformance/src/railroad',
+      name: 'ascii',
+    });
+    expect(snapshotOwner('packages/conformance/src/er/__snapshots__/er-errors.md')).toEqual({
+      dir: 'packages/conformance/src/er',
+      name: 'er-errors.md',
+    });
+  });
+
+  it('runs the readers of the corpus when only a fixture changed', () => {
+    expect(on([fixture])).toMatchObject({ scope: 'code', tests: 'related', dataReaders: corpus });
+  });
+
+  it('runs the owner of a snapshot when only a snapshot changed, not the corpus readers', () => {
+    expect(on([folderSnapshot])).toMatchObject({
+      tests: 'related',
+      dataReaders: ['packages/conformance/src/yaml-tree.spec.ts'],
+    });
+  });
+
+  it('joins the owners and the corpus readers beside source, docs and a changeset', () => {
+    const result = on([...source, fixture, fileSnapshot, folderSnapshot, '.changeset/a.md']);
+    expect(result.tests).toBe('related');
+    expect(result.testsReason).toContain('fixtures and snapshots');
+    expect(result.dataReaders).toEqual([
+      'packages/conformance/src/corpus.ts',
+      'packages/conformance/src/pie-layout.spec.ts',
+      'packages/conformance/src/yaml-tree.spec.ts',
+      'packages/dev/src/fixtures.ts',
+    ]);
+    expect(summarize(result, 300)).toContain('related to 4 readers of fixtures and snapshots');
+  });
+
+  it('keeps a source-only run as it was, with no data readers', () => {
+    expect(on(source)).toMatchObject({ tests: 'related', dataReaders: [] });
+    expect(on(source).testsReason).toBe(
+      'only package source, documentation and changesets changed'
+    );
+  });
+
+  it('runs every test for a snapshot no spec is found to own', () => {
+    for (const owners of [new Map(), new Map([[fileSnapshot, []]])]) {
+      const result = on([...source, fileSnapshot], { owners });
+      expect(result).toMatchObject({ tests: 'all', dataReaders: [], readers: [] });
+      expect(result.testsReason).toContain(`no spec is found to own the snapshot: ${fileSnapshot}`);
+    }
+  });
+
+  it('runs every test for a deleted snapshot, whose obsolete entry only a full run reports', () => {
+    const result = on([fileSnapshot], { deleted: [fileSnapshot] });
+    expect(result).toMatchObject({ tests: 'all', dataReaders: [] });
+    expect(result.testsReason).toBe(`a deleted snapshot: ${fileSnapshot}`);
+  });
+
+  it('runs every test when the search for corpus readers failed or found nothing', () => {
+    for (const found of [undefined, []]) {
+      expect(on([fixture], { corpus: found }).tests).toBe('all');
+    }
+    // A snapshot alone does not need the corpus search.
+    expect(on([folderSnapshot], { corpus: undefined }).tests).toBe('related');
+  });
+
+  it('runs every test when the readers are not known at all', () => {
+    const result = ciScope({ event: 'pull_request', files: [fixture], readers: [] });
+    expect(result.tests).toBe('all');
+    expect(result.testsReason).toContain(fixture);
+  });
+
+  it('runs every test for a fixture next to another data file', () => {
+    for (const file of ['e2e/diagrams/pie/hand-drawn.txt', 'e2e/diagrams/pie/a.expected.json']) {
+      const result = on([fixture, file]);
+      expect(result.tests, file).toBe('all');
+      expect(result.testsReason, file).toContain(file);
+    }
+  });
+
+  it('runs every test on a push, fixtures or not', () => {
+    expect(on([fixture, folderSnapshot], {}, 'push')).toMatchObject({
+      tests: 'all',
+      dataReaders: [],
+    });
+  });
+
+  it('names the corpus as its readers do', () => {
+    const names = new RegExp(NAMES_THE_CORPUS);
+    expect(names.test("join(REPO_ROOT, 'e2e/diagrams/pie')")).toBe(true);
+    expect(names.test("join(REPO, 'e2e', 'diagrams')")).toBe(true);
+    expect(names.test("['dev-diagrams', 'e2e']")).toBe(true);
+    expect(names.test("join(ROOT, 'dev-diagrams', 'pie')")).toBe(false);
+    expect(names.test("render('e2e-like')")).toBe(false);
+  });
+});
+
 describe('replay', () => {
   it('counts docs, related and all, and what sent a PR to all', () => {
+    const known = { owners: new Map(), corpus: ['packages/dev/src/fixtures.ts'], deleted: [] };
     const result = replay([
-      ['README.md'],
-      ['packages/diagram-pie/src/a.ts'],
-      ['packages/diagram-pie/src/a.ts', '.changeset/x.md'],
-      ['e2e/diagrams/pie/pr-check/a.mmd', 'packages/diagram-pie/src/a.ts'],
-      ['e2e/diagrams/er/pr-check/b.mmd'],
+      { files: ['README.md'] },
+      { files: ['packages/diagram-pie/src/a.ts'] },
+      { files: ['packages/diagram-pie/src/a.ts', '.changeset/x.md'] },
+      { files: ['e2e/diagrams/pie/pr-check/a.mmd', 'packages/diagram-pie/src/a.ts'] },
+      { files: ['e2e/diagrams/er/pr-check/b.mmd'], data: known },
+      { files: ['e2e/diagrams/er/pr-check/b.json'], data: known },
     ]);
-    expect(result).toMatchObject({ total: 5, docs: 1, related: 2, all: 2 });
+    expect(result).toMatchObject({ total: 6, docs: 1, related: 3, all: 2 });
     expect(result.allBecause).toEqual([['e2e/diagrams', 2]]);
   });
 });

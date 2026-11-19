@@ -29,7 +29,8 @@ export type TokenKind = number;
 export const FIRST_DIAGRAM_KIND = 16;
 
 /**
- * Tokens as parallel arrays: token `i` is `kind[i]`, source `[start[i], end[i])`, `text[i]`.
+ * Tokens as parallel arrays: token `i` is `kind[i]`, source `[start[i], end[i])`; its text is
+ * {@link tokenText}.
  * There are no token objects. Offsets are into the original source.
  */
 export interface TokenStream {

@@ -94,6 +94,35 @@ describe('architecture layout over parser-produced fixtures (#607)', () => {
     expect(count).toBeGreaterThan(100);
   });
 
+  it('routes a run between two bends round every node but its ends (#767, D507)', () => {
+    // Straight and one-bend routes keep v12's line even through a node (D507); a route with two
+    // or more bends goes round. Not vacuous: the corpus has such routes beside nodes.
+    const crossed: string[] = [];
+    let bent = 0;
+    for (const f of fixtures) {
+      for (const edge of f.prepared.graph.edges) {
+        const p = f.layout.edges.get(edge.id)?.points ?? [];
+        if (p.length < 4) continue;
+        bent++;
+        for (let k = 1; k + 2 < p.length; k++) {
+          const [u, v] = [p[k]!, p[k + 1]!];
+          for (const [id, n] of f.layout.nodes) {
+            if (id === edge.source || id === edge.target) continue;
+            const inside =
+              Math.min(u.x, v.x) < n.x + n.width / 2 &&
+              n.x - n.width / 2 < Math.max(u.x, v.x) &&
+              Math.min(u.y, v.y) < n.y + n.height / 2 &&
+              n.y - n.height / 2 < Math.max(u.y, v.y);
+            if (inside) crossed.push(`${f.id}: ${edge.id} x ${id}`);
+          }
+        }
+      }
+    }
+    expect(bent).toBeGreaterThan(20);
+    expect(crossed).toEqual([]);
+    expect(byId('layout-group-edge-detours-round-a-service.mmd').layout.edges.size).toBe(3);
+  });
+
   it('follows bends as written where v12 placed them the wrong way up (research Q5)', () => {
     // v12 12.2.0 put `b` above the a–c row for `a:R -- T:b` and `e` below the d–f row for
     // `d:L -- B:e` (architectureTypes.ts:141; GAPS T3).

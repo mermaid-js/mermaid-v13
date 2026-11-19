@@ -163,7 +163,7 @@ The kit has no grammar abstraction. It is a set of building blocks for hand-writ
 
 | Piece | Shape | Notes |
 | --- | --- | --- |
-| `TokenStream` | parallel arrays `kind: Uint16Array`, `start: Uint32Array`, `end: Uint32Array`, `text: string[]` | No token objects. Kinds are numeric `const` objects (not TS `enum`, per lint rules). |
+| `TokenStream` | parallel arrays `kind: Uint16Array`, `start: Uint32Array`, `end: Uint32Array`, plus the `source` string the offsets point into | No token objects, and no per-token strings: a token's text is `tokenText(tokens, i)`, sliced from `source` on demand (#108). Kinds are numeric `const` objects (not TS `enum`, per lint rules). |
 | `CharClass` | `Uint8Array(128)` tables + Unicode id-letter table (base-36 RLE, generated from `flow.jison`) | Port of Pele's `util/unicode.ts` approach. |
 | `Scanner` | sticky-regex helpers + linear matchers | Regexes on user input must pass a "no nested quantifier" lint (R-PARSE-7). |
 | `Diagnostics` | `{ severity, code, message, range, expected?, related? }[]` | `related` points at the opener of an unclosed construct (R-ERR-2). |
@@ -337,8 +337,9 @@ type StyleBits = number;  // Bold|Italic|Mono|Sub|Sup|Underline
 
 The v12 default is `"trebuchet ms", verdana, arial, sans-serif` (P1). The table measurer needs one concrete table per family, so this design proposes:
 
-- Ship tables for **Trebuchet MS, Verdana and Arial**, regular and bold, printable ASCII plus Latin-1. That is about 190 characters per weight per family, roughly 2 KB gzipped in total.
-- Resolve the first family in the stack that has a table.
+- Ship tables for **Trebuchet MS, Verdana, Arial and Courier New**, regular and bold, printable ASCII plus Latin-1. That is about 190 characters per weight per family, roughly 2 KB gzipped in total.
+- Map the monospace names to the Courier New table (D644): `courier`, `monospace`, `ui-monospace`, and the monospace fonts whose advance is within 1% of Courier New's 600/1000 em (Andale Mono, DejaVu Sans Mono, Liberation Mono, Menlo, Monaco, PT Mono).
+- Resolve the first family in the stack that has a table or maps to one.
 - For an unknown family, fall back to the Arial table.
 - Generate the tables with `tools/gen-metrics` from font files. Font metrics are facts, so no font files are shipped.
 

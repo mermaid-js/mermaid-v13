@@ -41,6 +41,7 @@ export async function d621Oracle(): Promise<Oracle> {
   const lexer = await loadJisonLexerOracle('flowchart');
   return {
     version: oracle.version,
+    detect: (text) => oracle.detect(text),
     parse: (text, config) => lexer.withRules(D621_RULES, () => oracle.parse(text, config)),
   };
 }

@@ -24,7 +24,13 @@ import type {
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { Kind } from '@mermaid-js/core/parser-kit';
-import { matchesTyped, span, tokenBefore } from '@mermaid-js/shared/parser/facet';
+import {
+  insertWithSeparator,
+  matchesTyped,
+  span,
+  tokenBefore,
+  wordRangeOf,
+} from '@mermaid-js/shared/parser/facet';
 import type { C4BetaDocument } from '../beta/ast.ts';
 import type { C4BetaModel } from '../beta/model.ts';
 import { C4BETA_TRIVIA, T } from '../beta/tokens.ts';
@@ -52,18 +58,11 @@ const DIAGRAM_KINDS = ['context', 'container', 'component', 'dynamic', 'deployme
 const ARROW_KINDS: ReadonlySet<number> = new Set(ARROWS.map(([, kind]) => kind));
 
 /** What a statement word inserts: its separator, unless a blank or a `:` follows already. */
-function statementText(label: string, separator: string, after: string): string {
-  if (separator === ' ') return /^[\t ]/.test(after) ? label : `${label} `;
-  if (/^[\t ]*[:{]/.test(after)) return label;
-  return /^[\t ]/.test(after) ? `${label}:` : `${label}: `;
-}
+const statementText = (label: string, separator: string, after: string): string =>
+  insertWithSeparator(label, separator, after, separator === ' ' ? /^[\t ]/ : /^[\t ]*[:{]/);
 
-/** The probed word's range: the prefix, plus the rest of the word after the cursor. */
-function wordRange(text: string, probe: ProbeResult): Range {
-  // A word stops at the first blank, quote, comma, brace or `:` after the cursor.
-  const rest = /^[^\s"',{}:]*/.exec(text.slice(probe.offset))?.[0].length ?? 0;
-  return span(probe.prefix.start, probe.offset + rest);
-}
+/** A character of a word: a word stops at the first blank, quote, comma, brace or `:`. */
+const WORD = /[^\s"',{}:]/;
 
 /** A significant token before the cursor on its line. */
 interface Before {
@@ -243,7 +242,7 @@ export function c4betaCompletions(
   if (probe.mode !== 'INITIAL' || !doc.result.tokens) return [];
   const { text, result } = doc;
   const expected = new Set(probe.expected);
-  const range = wordRange(text, probe);
+  const range = wordRangeOf(text, probe, WORD);
   const typed = text.slice(range.start, probe.offset);
   const items = new Items(range, typed, text.slice(range.end), probe.offset);
   const before = tokensBefore(doc.result.tokens, range.start);

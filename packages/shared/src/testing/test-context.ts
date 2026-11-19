@@ -39,10 +39,11 @@ export type Warn = (w: Warning) => void;
 /**
  * The config a render of `pre` resolves for the diagram whose config section is `section`:
  * core's defaults, then `integrator` as `initialize()` would get it, then the front matter and
- * `init` directives; `below` is the layer under the integrator's (a plugin's engine, D284).
+ * `init` directives; `below` is the layer under the integrator's (a plugin's engine, D284, or its
+ * `configDefaults`). A list of sections is a chained type's, highest first (D534: c4-beta).
  */
 export function testConfig(
-  section: string,
+  section: string | readonly string[],
   pre?: PreprocessResult,
   integrator?: Readonly<Record<string, unknown>>,
   warn?: Warn,

@@ -32,9 +32,11 @@ import {
   Kind,
   LBRACE,
   LF,
+  LPAREN,
   LT,
   PERCENT,
   RBRACE,
+  RPAREN,
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
@@ -70,9 +72,10 @@ const SCANS: ReadonlyMap<number, Scan> = new Map([
 
 const ACC_TITLE = 'accTitle';
 const ACC_DESCR = 'accDescr';
-/** The digits of a short and of a long hex colour. */
-const SHORT_HEX = 3;
-const LONG_HEX = 6;
+/** How many digits a hex colour has: 3 or 6, or 4 or 8 with an alpha. */
+const HEX_DIGITS: ReadonlySet<number> = new Set([3, 4, 6, 8]);
+/** The words that, with a `(` right after them, open a colour function. */
+const COLOR_FUNCTIONS: ReadonlySet<string> = new Set(['rgb', 'rgba', 'hsl', 'hsla']);
 
 /** Lex the c4-beta body `src[from…]`; `directives` are the ranges core found. */
 export function lex(src: string, from: number, directives: readonly Range[]): TokenStream {
@@ -220,14 +223,29 @@ class C4BetaLexer {
     return isWord(src.charCodeAt(p + 3)) ? this.wordEnd(p + 3) : 0;
   }
 
-  /** `#` and three or six hex digits that no word character follows. */
+  /** `#` and 3, 4, 6 or 8 hex digits that no word character follows. */
   private hex(): void {
     const { src, p } = this;
     let i = p + 1;
     while (isHex(src.charCodeAt(i))) i++;
-    const digits = i - p - 1;
-    const ok = (digits === SHORT_HEX || digits === LONG_HEX) && !isWord(src.charCodeAt(i));
+    const ok = HEX_DIGITS.has(i - p - 1) && !isWord(src.charCodeAt(i));
     this.emit(ok ? T.Hex : Kind.Error, ok ? i : p + 1);
+  }
+
+  /**
+   * The end of `rgb(…)`, `rgba(…)`, `hsl(…)` or `hsla(…)` whose name ends at `nameEnd`: its `)`
+   * on the same line, with no `(`, `)` or `%%` before it; 0 when it is not one.
+   */
+  private colorFunctionEnd(nameEnd: number): number {
+    const { src } = this;
+    if (src.charCodeAt(nameEnd) !== LPAREN) return 0;
+    for (let i = nameEnd + 1; i < src.length; i++) {
+      const c = src.charCodeAt(i);
+      if (c === RPAREN) return i + 1;
+      if (c === LPAREN || c === LF || c === CR) return 0;
+      if (c === PERCENT && src.charCodeAt(i + 1) === PERCENT) return 0;
+    }
+    return 0;
   }
 
   /** `-->`, `<--`, `<-->` and `---`; any other `-` or `<` is an error. */
@@ -258,7 +276,9 @@ class C4BetaLexer {
     const end = this.wordEnd(p);
     const text = src.slice(p, end);
     const keyword = KEYWORDS.get(text);
-    if (text === 'title') this.emit(T.Title, this.textEnd(end));
+    const call = COLOR_FUNCTIONS.has(text) ? this.colorFunctionEnd(end) : 0;
+    if (call > 0) this.emit(T.ColorFunction, call);
+    else if (text === 'title') this.emit(T.Title, this.textEnd(end));
     else if (text === ACC_TITLE) this.accTitle(end);
     else if (text === ACC_DESCR) this.accDescr(end);
     else this.emit(keyword ?? T.Id, end);

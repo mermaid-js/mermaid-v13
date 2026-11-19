@@ -17,8 +17,8 @@
   fill property 8:12-8:12 "" -> "fill:"
   stroke property 8:12-8:12 "" -> "stroke:"
   color property 8:12-8:12 "" -> "color:"
-  shape property 8:12-8:12 "" -> "shape:"
   line property 8:12-8:12 "" -> "line:"
+  shape property 8:12-8:12 "" -> "shape:"
 @ 9:13  style team f|
   fill property 9:12-9:13 "f" -> "fill:"
 @ 10:18  style team shape:|
@@ -33,8 +33,8 @@
   fill property 13:23-13:23 "" -> "fill:"
   stroke property 13:23-13:23 "" -> "stroke:"
   color property 13:23-13:23 "" -> "color:"
-  shape property 13:23-13:23 "" -> "shape:"
   line property 13:23-13:23 "" -> "line:"
+  shape property 13:23-13:23 "" -> "shape:"
 @ 14:24  style team fill:#fff, s|
   stroke property 14:23-14:24 "s" -> "stroke:"
   shape property 14:23-14:24 "s" -> "shape:"

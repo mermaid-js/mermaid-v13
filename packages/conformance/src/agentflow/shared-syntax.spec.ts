@@ -4,8 +4,9 @@ import { parseFlowchart } from '@mermaid-js/diagram-flowchart';
 import { loadOracle } from '../oracle.ts';
 
 /**
- * D467: agentflow's lexer and parser are written from a copy of flowchart's, and must not drift
- * from it where the two grammars are the same. v12's `agentflow-flowchart-parity.spec.ts` fed
+ * D595 (amending D467): agentflow's lexer and parser are a dialect of the flow family's, which
+ * agentflow shares with flowchart through `@mermaid-js/shared/parser/flow`, and the two must not
+ * drift apart where the two grammars are the same. v12's `agentflow-flowchart-parity.spec.ts` fed
  * its `SHARED_SYNTAX` bodies to both v12 parsers; this test-only spec feeds them to both v13
  * parsers (and each type to mermaid\@12), which must agree on accept/reject and, where both
  * accept, on the vertices and edges they read.
@@ -25,7 +26,7 @@ const flowchart = (body: string) => parseFlowchart(`flowchart TB\n${body}\n`);
 const accepted = (r: { diagnostics: readonly { severity: string }[] }) =>
   !r.diagnostics.some((d) => d.severity === 'error');
 
-describe('agentflow / flowchart parser parity (D467)', () => {
+describe('agentflow / flowchart parser parity (D467, D595)', () => {
   it.each(SHARED_SYNTAX)('agrees on %j', async (body) => {
     const a = agentflow(body);
     const f = flowchart(body);

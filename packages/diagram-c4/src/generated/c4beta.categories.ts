@@ -46,4 +46,5 @@ export const c4betaCategories = /* @__PURE__ */ kindCategories(T, {
   Hex: 'Constant',
   String: 'String',
   Id: 'Variable',
+  ColorFunction: 'Constant',
 });

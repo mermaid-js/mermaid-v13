@@ -22,6 +22,7 @@ interface Job {
   needs?: string | string[];
   environment?: string | { name: string };
   permissions?: Record<string, string>;
+  container?: { image: string };
   steps: Step[];
 }
 const workflow = parse(readFileSync(join(root, '.github/workflows/release.yml'), 'utf8')) as {
@@ -275,6 +276,7 @@ describe('workflow branches (R-REL-1)', () => {
       'e2e',
       'dom-adapter',
       'smoke-render',
+      'smoke-render-chromium',
     ]) {
       expect(jobs[id]!.if, id).toBe(codeOnly);
       expect(jobs[id]!.needs, id).toBe('changes');
@@ -309,5 +311,17 @@ describe('workflow branches (R-REL-1)', () => {
     expect(run('visual')).toContain('playwright test rendering/mmd-snapshots.spec.ts');
     expect(run('visual')).not.toContain('pnpm e2e');
     expect(run('e2e')).toContain('pnpm e2e --grep-invert "mmd snapshots"');
+  });
+
+  it('runs the browser jobs in the Playwright image of the pinned version, installing no browser (#993)', () => {
+    const jobs = wf('ci.yml').jobs;
+    const pinned = (json('package.json').devDependencies as Record<string, string>)[
+      '@playwright/test'
+    ]!.replace(/^\^/, '');
+    for (const id of ['visual', 'e2e', 'dom-adapter', 'smoke-render-chromium']) {
+      expect(jobs[id]!.container?.image, id).toBe(`mcr.microsoft.com/playwright:v${pinned}-noble`);
+      const runs = jobs[id]!.steps.map((s) => s.run ?? '').join('\n');
+      expect(runs, id).not.toContain('playwright install');
+    }
   });
 });
