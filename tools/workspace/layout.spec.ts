@@ -85,6 +85,7 @@ describe('workspace layout (DESIGN §2)', () => {
         './config/readers',
         './layout',
         './parser/common-values',
+        './parser/display-text',
         './parser/drop',
         './parser/facet',
         './parser/flow',

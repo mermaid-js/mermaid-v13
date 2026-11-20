@@ -26,7 +26,7 @@ import { nameReason, quoteName } from './names.ts';
 import { declarationKind, declaredNodes, ITEMS } from './tables.ts';
 import {
   atLineStart,
-  keywordItem,
+  keywordCompletions,
   statementTokens,
   wordRange,
 } from '@mermaid-js/shared/parser/facet';
@@ -74,13 +74,14 @@ export function wardleyCompletions(
   const lineStart = atLineStart(text, range.start);
   const before = lineBefore(result.tokens, range.start);
   const strategyWritten = before.includes(T.Strategy);
-  const out: CompletionItem[] = [];
-  for (const k of ITEMS) {
-    if (!expected.has(k.kind) || (k.lineStart && !lineStart)) continue;
-    if (k.strategy && strategyWritten) continue;
-    if (!k.label.startsWith(prefix)) continue;
-    out.push(keywordItem(k, range, wardleyDocs[k.kind]));
-  }
+  const out = keywordCompletions(
+    ITEMS,
+    expected,
+    prefix,
+    range,
+    wardleyDocs,
+    (k) => (!k.lineStart || lineStart) && !(k.strategy && strategyWritten)
+  );
   // A reference: after an arrow or flow (not in `evolution`, whose stages are no nodes), or
   // after a keyword that names a node.
   const last = before[0] ?? Kind.EOF;

@@ -6,6 +6,7 @@
  * indents are fine. There are no semantic errors.
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
+import { idEscaper } from '@mermaid-js/shared/parser/support';
 import type { TreeViewModel, TreeViewNode } from '../model.ts';
 import type { TreeViewNodeNode } from './ast.ts';
 import { nodeIcon } from './convert.ts';
@@ -23,10 +24,7 @@ export interface TreeViewParts {
 }
 
 /** `%`, `/` and `@` percent-encoded, so a name path reads back one way. */
-const escapeName = (name: string): string =>
-  /[%/@]/.test(name)
-    ? name.replace(/[%/@]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
-    : name;
+const escapeName = idEscaper('%/@');
 
 type Mutable = { -readonly [K in keyof TreeViewNode]: TreeViewNode[K] } & {
   children: TreeViewNode[];
