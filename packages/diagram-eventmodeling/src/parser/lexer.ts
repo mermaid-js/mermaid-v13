@@ -113,8 +113,6 @@ class EventModelingLexer extends RuleLexer {
   }));
   private readonly blockClosers: Found = { from: -1, at: UNSET };
   private readonly commentEnds: Found = { from: -1, at: UNSET };
-  /** The first `---` line that closes a YAML block (see {@link yaml}). */
-  private readonly yamlClosers: Found = { from: -1, at: UNSET };
 
   /** The end of the rule that matches at `p` (its kind in {@link kind}), or -1. */
   protected scan(p: number): number {
@@ -245,30 +243,6 @@ class EventModelingLexer extends RuleLexer {
   private blockComment(p: number): number {
     const close = this.search(this.commentEnds, p + 2, (from) => this.text.indexOf('*/', from));
     return close < 0 ? -1 : this.match(T.BlockComment, close + 2);
-  }
-
-  /**
-   * EM_YAML: `---[\t ]*\r?\n(?:[\S\s]*?\r?\n)?---(?:\r?\n|(?!\S))`: a closing `---` that ends
-   * at a line break, a `\s` character or the end. The optional group is tried first, so the
-   * first closing line after a line break in the body wins; only without one does a `---` at
-   * the body's start close it.
-   */
-  protected override yaml(p: number): number {
-    const { text } = this;
-    if (!text.startsWith('---', p)) return -1;
-    const b = this.blanks(p + 3);
-    const nl = this.newline(b);
-    if (nl === 0) return -1;
-    const body = b + nl;
-    const k = this.search(this.yamlClosers, body + 1, (from) => {
-      for (let j = text.indexOf('---', from); j !== -1; j = text.indexOf('---', j + 1)) {
-        if (isBreak(text.charCodeAt(j - 1)) && this.closer(j + 3) >= 0) return j;
-      }
-      return -1;
-    });
-    if (k >= 0) return this.match(T.Yaml, this.closer(k + 3));
-    const e = text.startsWith('---', body) ? this.closer(body + 3) : -1;
-    return e >= 0 ? this.match(T.Yaml, e) : -1;
   }
 
   // --- Scans --------------------------------------------------------------------------------
