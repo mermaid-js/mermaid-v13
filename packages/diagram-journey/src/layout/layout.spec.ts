@@ -461,6 +461,19 @@ describe('journeyLayoutViolations', () => {
     ]);
   });
 
+  it('reports NaN in the arrowhead path data', () => {
+    const layout = good();
+    const activity = { ...layout.activity, head: 'M0,0LInfinity,0Z' };
+    expect(journeyLayoutViolations(model, { ...layout, activity } as JourneyLayout)).toEqual([
+      'layout.activity.head is "M0,0LInfinity,0Z"',
+    ]);
+  });
+
+  it('reads author text named NaN or Infinity as text', () => {
+    const named = journey('NaN', section('Infinity'), task('NaN', 3, 'NaN', 'Infinity'));
+    expect(journeyLayoutViolations(named, lay(named))).toEqual([]);
+  });
+
   it('reports a task outside its band, a face off its line and a missing task', () => {
     const layout = good();
     const moved = withTask(layout, 2, { x: layout.tasks[2]!.x + 100 });
