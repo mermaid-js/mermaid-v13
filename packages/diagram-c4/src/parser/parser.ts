@@ -713,7 +713,7 @@ class C4Parser {
       case 'relStyle':
       case 'layout': {
         const node: C4StyleNode = {
-          id: b.ids.style(),
+          id: b.styleId(),
           type: 'Style',
           range: at,
           macro: name,
