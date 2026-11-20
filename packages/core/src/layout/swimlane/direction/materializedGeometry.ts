@@ -922,13 +922,9 @@ export function liftTopLaneTitleBandsAboveRails(
   }
 
   const validTitleRect = (node: MaterializedNode): RectLite | undefined => {
-    const rect = (node as { groupTitleRect?: Partial<RectBounds> }).groupTitleRect;
+    const rect = node.groupTitleRect;
     if (
       !rect ||
-      typeof rect.left !== 'number' ||
-      typeof rect.right !== 'number' ||
-      typeof rect.top !== 'number' ||
-      typeof rect.bottom !== 'number' ||
       !Number.isFinite(rect.left) ||
       !Number.isFinite(rect.right) ||
       !Number.isFinite(rect.top) ||
@@ -947,19 +943,16 @@ export function liftTopLaneTitleBandsAboveRails(
     if (!laneModel.isLane(node.id)) {
       return undefined;
     }
-    const direction = upperCaseDirection(
-      (node as { direction?: unknown }).direction ?? layoutDirection
-    );
+    const direction = upperCaseDirection(node.direction ?? layoutDirection);
     // BT keeps its title band on top (D536), so it is lifted as TB's is.
     if (direction === 'LR' || direction === 'RL') {
       return undefined;
     }
     const rect = validTitleRect(node);
-    const y = (node as { y?: number }).y;
-    const height = (node as { height?: number }).height;
+    const y = node.y;
+    const height = node.height;
     if (
       !rect ||
-      typeof y !== 'number' ||
       typeof height !== 'number' ||
       !Number.isFinite(y) ||
       !Number.isFinite(height) ||
@@ -1015,8 +1008,8 @@ export function liftTopLaneTitleBandsAboveRails(
   }
 
   for (const lane of lanes) {
-    const y = (lane.node as { y?: number }).y;
-    const height = (lane.node as { height?: number }).height;
+    const y = lane.node.y;
+    const height = lane.node.height;
     if (
       typeof y !== 'number' ||
       typeof height !== 'number' ||
@@ -1053,13 +1046,9 @@ export function shiftLeftLaneTitleBandsLeftOfRails(
   }
 
   const validTitleRect = (node: MaterializedNode): RectLite | undefined => {
-    const rect = (node as { groupTitleRect?: Partial<RectBounds> }).groupTitleRect;
+    const rect = node.groupTitleRect;
     if (
       !rect ||
-      typeof rect.left !== 'number' ||
-      typeof rect.right !== 'number' ||
-      typeof rect.top !== 'number' ||
-      typeof rect.bottom !== 'number' ||
       !Number.isFinite(rect.left) ||
       !Number.isFinite(rect.right) ||
       !Number.isFinite(rect.top) ||
@@ -1078,19 +1067,16 @@ export function shiftLeftLaneTitleBandsLeftOfRails(
     if (!laneModel.isLane(node.id)) {
       return undefined;
     }
-    const direction = upperCaseDirection(
-      (node as { direction?: unknown }).direction ?? layoutDirection
-    );
+    const direction = upperCaseDirection(node.direction ?? layoutDirection);
     // RL keeps its title band on the left (D536), so it is shifted as LR's is.
     if (direction !== 'LR' && direction !== 'RL') {
       return undefined;
     }
     const rect = validTitleRect(node);
-    const x = (node as { x?: number }).x;
-    const width = (node as { width?: number }).width;
+    const x = node.x;
+    const width = node.width;
     if (
       !rect ||
-      typeof x !== 'number' ||
       typeof width !== 'number' ||
       !Number.isFinite(x) ||
       !Number.isFinite(width) ||
@@ -1160,8 +1146,8 @@ export function shiftLeftLaneTitleBandsLeftOfRails(
   }
 
   for (const lane of lanes) {
-    const x = (lane.node as { x?: number }).x;
-    const width = (lane.node as { width?: number }).width;
+    const x = lane.node.x;
+    const width = lane.node.width;
     if (
       typeof x !== 'number' ||
       typeof width !== 'number' ||
