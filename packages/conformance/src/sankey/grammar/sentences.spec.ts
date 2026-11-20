@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { buildGenerator } from '@mermaid-js/gen-grammar';
+import { describe, it } from 'vitest';
+import { checkSentences, v12Differs } from '../../grammar-sentences.ts';
 import { loadOracle } from '../../oracle.ts';
 import { sankeyCases, sankeyCorpus } from '../corpus.ts';
 import {
@@ -13,9 +13,6 @@ import {
 /** A leading front-matter block. */
 const FRONT_MATTER = /^---\r?\n[\s\S]*?\r?\n---\r?\n/;
 
-/** Sentences per run; seeds are 1…N, so a failure names a reproducible seed. */
-const SENTENCES = 3000;
-
 /**
  * Grammar differential over generated sentences (R-PARSE-9): random derivations of
  * `grammar/sankey.ebnf`, weighted by how often the corpus uses each rule, with token texts
@@ -27,37 +24,13 @@ describe('sankey grammar differential (generated sentences)', () => {
     const corpus = [...(await sankeyCorpus()), ...sankeyCases()];
     const bodies = new Set(corpus.map((c) => c.source.replace(FRONT_MATTER, '')));
     const model = learnSentenceModel([...bodies]);
-    const generator = buildGenerator(referenceParser(), model);
-    const oracle = await loadOracle();
-    const diffs: string[] = [];
-    let accepted = 0;
-    for (let seed = 1; seed <= SENTENCES; seed++) {
-      const { text } = generator.generate({ seed });
-      const ref = referenceVerdict(text);
-      const hand = handWrittenVerdict(text);
-      if (ref.accepted) accepted++;
-      const id = `seed ${seed} ${JSON.stringify(text)}`;
-      if (ref.accepted !== hand.accepted) {
-        diffs.push(
-          `${id}: grammar ${ref.accepted ? 'accepts' : 'rejects'}, parser ${hand.accepted ? 'accepts' : 'rejects'}`
-        );
-        continue;
-      }
-      if (JSON.stringify(ref.ast) !== JSON.stringify(hand.ast)) {
-        diffs.push(
-          `${id}: AST differs\n  grammar ${JSON.stringify(ref.ast)}\n  parser  ${JSON.stringify(hand.ast)}`
-        );
-      }
-      const v12 = await oracle.parse(text);
-      if (v12Syntax(v12) === !ref.accepted) {
-        diffs.push(
-          `${id}: grammar ${ref.accepted ? 'accepts' : 'rejects'}, mermaid@12 ${ref.accepted ? 'rejects' : 'accepts'}`
-        );
-      }
-    }
-    process.stdout.write(`sankey grammar sentences: ${accepted} of ${SENTENCES} accepted\n`);
-    // Most sentences must be in the language, or the test only checks rejections.
-    expect(accepted).toBeGreaterThan(SENTENCES / 2);
-    expect(diffs.slice(0, 30)).toEqual([]);
+    await checkSentences({
+      name: 'sankey',
+      parser: referenceParser(),
+      model,
+      reference: referenceVerdict,
+      handWritten: handWrittenVerdict,
+      v12: v12Differs(await loadOracle(), v12Syntax),
+    });
   }, 600_000);
 });

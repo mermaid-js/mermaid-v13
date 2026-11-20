@@ -1,8 +1,7 @@
 /** The sequence grammar file, read and built once (dev and CI only). */
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildLexer, parseGrammar } from '@mermaid-js/gen-grammar';
-import type { Grammar, LexToken, MappedText, ModeLexer } from '@mermaid-js/gen-grammar';
+import { loadGrammar, lexGrammar } from '../../grammar-file.ts';
+import type { LoadedGrammar, GrammarTokens } from '../../grammar-file.ts';
 import { REPO_ROOT } from '../../corpus.ts';
 import { classLexerInput } from '../../class/grammar/lexer-input.ts';
 
@@ -11,14 +10,8 @@ export const SEQUENCE_GRAMMAR_PATH = join(
   'packages/diagram-sequence/grammar/sequence.ebnf'
 );
 
-let cached: { grammar: Grammar; lexer: ModeLexer } | undefined;
-
-export function sequenceGrammar(): { grammar: Grammar; lexer: ModeLexer } {
-  if (!cached) {
-    const grammar = parseGrammar(readFileSync(SEQUENCE_GRAMMAR_PATH, 'utf8'));
-    cached = { grammar, lexer: buildLexer(grammar) };
-  }
-  return cached;
+export function sequenceGrammar(): LoadedGrammar {
+  return loadGrammar(SEQUENCE_GRAMMAR_PATH);
 }
 
 /**
@@ -38,18 +31,9 @@ const JISON_NAME: Record<string, string> = {
 /** jison trimmed the image of these (`yytext = yytext.trim()`). */
 const TRIMMED = new Set(['ACTOR', 'INVALID']);
 
-export interface GrammarTokens {
-  input: MappedText;
-  tokens: LexToken[];
-  /** Lexer-input offset where lexing failed. */
-  error: number | undefined;
-}
-
 /** The grammar lexer's tokens for a sequence source. */
 export function grammarTokens(source: string): GrammarTokens {
-  const input = classLexerInput(source);
-  const { tokens, error } = sequenceGrammar().lexer.lex(input.text);
-  return { input, tokens, error };
+  return lexGrammar(sequenceGrammar(), classLexerInput(source));
 }
 
 /** The same tokens as jison `[name, image]` pairs, `['LEXICAL_ERROR', '']` after an error. */

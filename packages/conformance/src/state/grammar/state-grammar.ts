@@ -1,21 +1,14 @@
 /** The state grammar file, read and built once (dev and CI only). */
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildLexer, parseGrammar } from '@mermaid-js/gen-grammar';
-import type { Grammar, LexToken, MappedText, ModeLexer } from '@mermaid-js/gen-grammar';
+import { loadGrammar, lexGrammar } from '../../grammar-file.ts';
+import type { LoadedGrammar, GrammarTokens } from '../../grammar-file.ts';
 import { REPO_ROOT } from '../../corpus.ts';
 import { classLexerInput } from '../../class/grammar/lexer-input.ts';
 
 export const STATE_GRAMMAR_PATH = join(REPO_ROOT, 'packages/diagram-state/grammar/state.ebnf');
 
-let cached: { grammar: Grammar; lexer: ModeLexer } | undefined;
-
-export function stateGrammar(): { grammar: Grammar; lexer: ModeLexer } {
-  if (!cached) {
-    const grammar = parseGrammar(readFileSync(STATE_GRAMMAR_PATH, 'utf8'));
-    cached = { grammar, lexer: buildLexer(grammar) };
-  }
-  return cached;
+export function stateGrammar(): LoadedGrammar {
+  return loadGrammar(STATE_GRAMMAR_PATH);
 }
 
 /** jison names of the terminals whose names are not identifiers or differ in spelling. */
@@ -26,18 +19,9 @@ const JISON_NAME: Record<string, string> = {
   MULTI_WORD_STATE: 'ERROR',
 };
 
-export interface GrammarTokens {
-  input: MappedText;
-  tokens: LexToken[];
-  /** Lexer-input offset where lexing failed. */
-  error: number | undefined;
-}
-
 /** The grammar lexer's tokens for a state source. */
 export function grammarTokens(source: string): GrammarTokens {
-  const input = classLexerInput(source);
-  const { tokens, error } = stateGrammar().lexer.lex(input.text);
-  return { input, tokens, error };
+  return lexGrammar(stateGrammar(), classLexerInput(source));
 }
 
 /**

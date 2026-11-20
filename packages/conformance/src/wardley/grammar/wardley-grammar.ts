@@ -1,8 +1,8 @@
 /** The wardley grammar file, read and built once (dev and CI only). */
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildLexer, parseGrammar } from '@mermaid-js/gen-grammar';
-import type { Grammar, LexToken, MappedText, ModeLexer } from '@mermaid-js/gen-grammar';
+import type { LexToken } from '@mermaid-js/gen-grammar';
+import { loadGrammar, lexGrammar } from '../../grammar-file.ts';
+import type { LoadedGrammar, GrammarTokens } from '../../grammar-file.ts';
 import { REPO_ROOT } from '../../corpus.ts';
 import { classLexerInput } from '../../class/grammar/lexer-input.ts';
 
@@ -11,14 +11,8 @@ export const WARDLEY_GRAMMAR_PATH = join(
   'packages/diagram-wardley/grammar/wardley.ebnf'
 );
 
-let cached: { grammar: Grammar; lexer: ModeLexer } | undefined;
-
-export function wardleyGrammar(): { grammar: Grammar; lexer: ModeLexer } {
-  if (!cached) {
-    const grammar = parseGrammar(readFileSync(WARDLEY_GRAMMAR_PATH, 'utf8'));
-    cached = { grammar, lexer: buildLexer(grammar) };
-  }
-  return cached;
+export function wardleyGrammar(): LoadedGrammar {
+  return loadGrammar(WARDLEY_GRAMMAR_PATH);
 }
 
 /** Chevrotain names (`@mermaid-js/parser@2.0.1`) of the terminals the grammar names otherwise. */
@@ -55,23 +49,13 @@ export const LANGIUM_NAME: Readonly<Record<string, string>> = {
 /** Lexer tokens the parser skips: Langium's hidden group. */
 export const HIDDEN = new Set(['YAML', 'DIRECTIVE', 'COMMENT']);
 
-export interface GrammarTokens {
-  input: MappedText;
-  /** Every token, hidden ones and the final `EOF` included. */
-  tokens: LexToken[];
-  /** Lexer-input offset where lexing failed. */
-  error: number | undefined;
-}
-
 /**
  * The grammar lexer's tokens for a wardley source. Its input is the text v12 handed its parser:
  * v12 ran the same preprocessing and `encodeEntities` for every diagram, so ER's reference
  * builder serves (the grammar-lexer spec checks it against v12's captured text).
  */
 export function grammarTokens(source: string): GrammarTokens {
-  const input = classLexerInput(source);
-  const { tokens, error } = wardleyGrammar().lexer.lex(input.text);
-  return { input, tokens, error };
+  return lexGrammar(wardleyGrammar(), classLexerInput(source));
 }
 
 /** The tokens the reference parser reads: not hidden. */

@@ -5,6 +5,7 @@ import { drawBlockText, type Route, type TextBox } from '@mermaid-js/diagram-blo
 import { createMermaid, MermaidError, type TextRenderResult } from 'mermaid';
 import { blockCases, blockCorpus } from '../block/corpus.ts';
 import { nestedComposites } from './block-fuzz.ts';
+import { sizeFaults } from './flow-checks.ts';
 import type { Charset } from './structure.ts';
 
 // ASCII render properties of the block diagram (#559, D449, D320, R-ASCII-9) over the block
@@ -284,21 +285,7 @@ describe('block ascii corpus properties (#559, D449, R-ASCII-9)', () => {
       });
 
       it('has `rows` lines, none wider than `columns` and one exactly that wide, no trailing spaces', () => {
-        expect(
-          perCharset(of(), (c, cs) => {
-            const { text, rows, columns } = c.out[cs];
-            const lines = text === '' ? [] : text.split('\n');
-            const widest = Math.max(0, ...lines.map(cellWidth));
-            const found: string[] = [];
-            if (lines.length !== rows) found.push(`${lines.length} lines, rows ${rows}`);
-            if (widest !== columns) found.push(`widest ${widest}, columns ${columns}`);
-            lines.forEach((l, i) => {
-              if (/\s$/u.test(l)) found.push(`trailing space on line ${i + 1}`);
-            });
-            if (text.includes('\r')) found.push('\\r in text');
-            return found;
-          })
-        ).toEqual({});
+        expect(perCharset(of(), (c, cs) => sizeFaults(c.out[cs], cellWidth))).toEqual({});
       });
 
       it('uses no Unicode line glyph or arrowhead in ASCII output', () => {

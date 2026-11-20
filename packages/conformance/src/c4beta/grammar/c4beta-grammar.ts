@@ -1,21 +1,15 @@
 /** The c4-beta grammar file, read and built once, and its lexer's tokens (dev and CI only). */
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildLexer, parseGrammar } from '@mermaid-js/gen-grammar';
-import type { Grammar, LexToken, ModeLexer } from '@mermaid-js/gen-grammar';
+import type { LexToken } from '@mermaid-js/gen-grammar';
+import { loadGrammar } from '../../grammar-file.ts';
+import type { LoadedGrammar } from '../../grammar-file.ts';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { REPO_ROOT } from '../../corpus.ts';
 
 export const C4BETA_GRAMMAR_PATH = join(REPO_ROOT, 'packages/diagram-c4/grammar/c4beta.ebnf');
 
-let cached: { grammar: Grammar; lexer: ModeLexer } | undefined;
-
-export function c4betaGrammar(): { grammar: Grammar; lexer: ModeLexer } {
-  if (!cached) {
-    const grammar = parseGrammar(readFileSync(C4BETA_GRAMMAR_PATH, 'utf8'));
-    cached = { grammar, lexer: buildLexer(grammar) };
-  }
-  return cached;
+export function c4betaGrammar(): LoadedGrammar {
+  return loadGrammar(C4BETA_GRAMMAR_PATH);
 }
 
 /** Lexer tokens the parser skips. */
