@@ -34,6 +34,17 @@ export interface GridBox {
 /** An element to place, sized. */
 export interface GridNode extends GridBox {
   readonly index: number;
+  /**
+   * How far below its top the middle of the part relations reach from the side lies, when that
+   * is not its whole box (a person figure's body, D679). A row holding such a shape lines up
+   * every member's middle of that part (another shape's own middle) instead of their tops.
+   */
+  readonly portMiddle?: number;
+  /**
+   * The least gap to the next member of its row, where labelled relations join the two (D679);
+   * the row's own gap when that is wider.
+   */
+  gapAfter?: number;
 }
 
 /** A boundary (or the top level, `index` -1) and what it holds. */
@@ -143,39 +154,91 @@ const flowOf = (group: GridGroup): Flow => FLOWS[group.direction ?? 'TB'];
 
 /**
  * Places boxes in lines from (0, 0): the members left to right in rows (TB), or top to bottom
- * in columns (LR); a reversed flow then mirrors the lines. Returns the width and height they
- * take.
+ * in columns (LR); a reversed flow puts the lines in the opposite order (BT reverses the rows,
+ * RL mirrors the columns). Returns the width and height they take.
  */
 function rows(boxes: readonly GridBox[], layout: Rows, flow: Flow): [number, number] {
-  const size = flow.columns ? columns(boxes, layout) : horizontal(boxes, layout);
-  if (flow.reversed) mirror(boxes, size, flow.columns);
+  if (!flow.columns) return horizontal(boxes, layout, flow.reversed);
+  const size = columns(boxes, layout);
+  if (flow.reversed) mirror(boxes, size);
   return size;
 }
 
-/** The members of each line run left to right and the lines go down. */
+/** A row's members, `from` to `to` (exclusive), and the line they line up on. */
+interface Line {
+  readonly from: number;
+  readonly to: number;
+  /** How far below the row's top the members' port middles lie; undefined: tops line up. */
+  readonly middle: number | undefined;
+  readonly h: number;
+}
+
+/** A member's port middle below its top: its own middle unless it says otherwise. */
+const middleOf = (box: GridBox): number => (box as GridNode).portMiddle ?? box.h / 2;
+
+/**
+ * The row from `from`: its members line up their tops, or, when one has a port middle of its
+ * own (a person, D679), their port middles; it is as tall as that makes it.
+ */
+function lineAt(boxes: readonly GridBox[], from: number, to: number): Line {
+  const members = boxes.slice(from, to);
+  const aligned = members.some((b) => (b as GridNode).portMiddle !== undefined);
+  const middle = aligned ? Math.max(...members.map(middleOf)) : undefined;
+  const h = Math.max(
+    0,
+    ...members.map((b) => (middle === undefined ? 0 : middle - middleOf(b)) + b.h)
+  );
+  return { from, to, middle, h };
+}
+
+/**
+ * The members of each line run left to right, each `gapX` (or its own `gapAfter`) from the
+ * next, and the lines go down, or up when `reversed`. In a reversed row whose tops line up, a
+ * box shorter than its row sits at the row's bottom, as mirrored rows did.
+ */
 function horizontal(
   boxes: readonly GridBox[],
-  { perRow, gapX, gapY, indent }: Rows
+  { perRow, gapX, gapY, indent }: Rows,
+  reversed = false
 ): [number, number] {
   // A negative indent moves the first row right instead, so no row starts left of 0.
   const least = boxes.length > perRow ? Math.min(0, indent) : 0;
+  const lines: Line[] = [];
   let width = 0;
-  let y = 0;
-  for (let from = 0, row = 0; from < boxes.length; from += perRow, row++) {
+  for (let from = 0; from < boxes.length; from += perRow) {
     const to = Math.min(boxes.length, from + perRow);
-    let x = (row === 0 ? 0 : indent) - least;
-    let rowH = 0;
-    for (let i = from; i < to; i++) rowH = Math.max(rowH, boxes[i]!.h);
-    for (let i = from; i < to; i++) {
-      const box = boxes[i]!;
-      box.x = x;
-      box.y = y;
-      x += box.w + gapX;
-    }
-    width = Math.max(width, x - gapX);
-    y += rowH + gapY;
+    width = Math.max(width, placeAcross(boxes, from, to, (from === 0 ? 0 : indent) - least, gapX));
+    lines.push(lineAt(boxes, from, to));
+  }
+  let y = 0;
+  for (const line of reversed ? [...lines].reverse() : lines) {
+    for (let i = line.from; i < line.to; i++) boxes[i]!.y = y + offsetIn(line, boxes[i]!, reversed);
+    y += line.h + gapY;
   }
   return [width, boxes.length > 0 ? y - gapY : 0];
+}
+
+/** Places a row's members across from `x`; returns where its last one ends. */
+function placeAcross(
+  boxes: readonly GridBox[],
+  from: number,
+  to: number,
+  x: number,
+  gapX: number
+): number {
+  let at = x;
+  for (let i = from; i < to; i++) {
+    const box = boxes[i]!;
+    box.x = at;
+    at += box.w + (i + 1 < to ? Math.max(gapX, (box as GridNode).gapAfter ?? 0) : 0);
+  }
+  return at;
+}
+
+/** A member's distance below its row's top. */
+function offsetIn(line: Line, box: GridBox, reversed: boolean): number {
+  if (line.middle !== undefined) return line.middle - middleOf(box);
+  return reversed ? line.h - box.h : 0;
 }
 
 /** `horizontal` with the axes swapped: members top to bottom, lines going right. */
@@ -194,14 +257,11 @@ function columns(boxes: readonly GridBox[], layout: Rows): [number, number] {
 }
 
 /**
- * The lines in the opposite order: the boxes mirrored across the lines' axis within the run's
- * own extent (a box shorter than its line ends up at the line's far side).
+ * The columns in the opposite order: the boxes mirrored across within the run's own extent (a
+ * box narrower than its column ends up at the column's far side).
  */
-function mirror(boxes: readonly GridBox[], [width, height]: [number, number], across: boolean) {
-  for (const box of boxes) {
-    if (across) box.x = width - box.x - box.w;
-    else box.y = height - box.y - box.h;
-  }
+function mirror(boxes: readonly GridBox[], [width]: [number, number]): void {
+  for (const box of boxes) box.x = width - box.x - box.w;
 }
 
 /** Where a group's elements and its child boundaries start inside its contents' area. */

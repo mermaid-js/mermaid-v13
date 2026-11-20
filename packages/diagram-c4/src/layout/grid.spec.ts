@@ -181,4 +181,72 @@ describe('the grid fill order (#730)', () => {
       [SIDE + GAP, 6],
     ]);
   });
+
+  it('moves the first line right instead for a negative nextLinePaddingX, so none starts left of 0', () => {
+    expect(place('TB', 2, 0, { nextLinePaddingX: -6, shapeInRow: 1 }).nodes).toEqual([
+      [6, 0],
+      [0, SIDE + GAP],
+    ]);
+  });
+});
+
+/**
+ * A row holding a shape whose ports are only part of its box (a person's body, D679) lines up
+ * its members' port middles; the gap after a member is its own `gapAfter` where that is wider.
+ */
+describe('the grid lines a row up on its ports, and widens a gap for labels (D679)', () => {
+  /** A tall member whose port middle lies `PORT` below its top, below its own middle. */
+  const TALL = 3 * SIDE;
+  const PORT = 2 * SIDE;
+  const withPerson = (direction?: C4Direction): GridGroup => {
+    const top = group(3, 0, direction);
+    top.nodes[1] = { index: 1, x: 0, y: 0, w: SIDE, h: TALL, portMiddle: PORT };
+    return top;
+  };
+  const middles = (top: GridGroup): number[] =>
+    top.nodes.map((n) => n.y + (n.portMiddle ?? n.h / 2));
+
+  it('puts the middle of every member level with the port middle of the person', () => {
+    const top = withPerson();
+    placeGrid([top], spacing(), () => undefined);
+    expect(middles(top)).toEqual([PORT, PORT, PORT]);
+    // The person's head is the row's top; the others hang lower.
+    expect(top.nodes.map((n) => n.y)).toEqual([PORT - SIDE / 2, 0, PORT - SIDE / 2]);
+    expect(top.h).toBe(TALL);
+  });
+
+  it('keeps the port middles level in BT, where the rows are reversed', () => {
+    const top = withPerson('BT');
+    top.nodes.push(node(3));
+    placeGrid([top], spacing(), () => undefined);
+    const firstRow = middles(top).slice(0, 3);
+    expect(new Set(firstRow).size).toBe(1);
+    // The first row comes last: below the second.
+    expect(top.nodes[0]!.y).toBeGreaterThan(top.nodes[3]!.y);
+  });
+
+  it('keeps the tops level in a row without such a member', () => {
+    const top = group(3, 0);
+    top.nodes[1] = { index: 1, x: 0, y: 0, w: SIDE, h: TALL };
+    placeGrid([top], spacing(), () => undefined);
+    expect(top.nodes.map((n) => n.y)).toEqual([0, 0, 0]);
+  });
+
+  it('widens the gap after a member to its gapAfter, never narrows it', () => {
+    const wide = 5 * GAP;
+    const top = group(3, 0);
+    top.nodes[0]!.gapAfter = wide;
+    top.nodes[1]!.gapAfter = GAP / 2;
+    placeGrid([top], spacing(), () => undefined);
+    expect(top.nodes.map((n) => n.x)).toEqual([0, SIDE + wide, 2 * SIDE + wide + GAP]);
+    expect(top.w).toBe(3 * SIDE + wide + GAP);
+  });
+
+  it('does not carry a gap past the end of a row', () => {
+    const top = group(4, 0);
+    top.nodes[2]!.gapAfter = 5 * GAP;
+    placeGrid([top], spacing(), () => undefined);
+    expect(top.nodes[3]!.x).toBe(0);
+    expect(top.w).toBe(SPAN);
+  });
 });
