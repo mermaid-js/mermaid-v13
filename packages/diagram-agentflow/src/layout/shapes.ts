@@ -30,17 +30,19 @@ import {
   type Span,
 } from '@mermaid-js/shared/shapes/kit';
 import type { AgentflowShape } from '../parser/index.ts';
-import { AGENTFLOW_METRICS, type AgentflowMetrics } from './metrics.ts';
+import { AGENTFLOW_METRICS } from './metrics.ts';
 
 export type { Pads, PadXY } from '@mermaid-js/shared/shapes/kit';
 
 /** Every shape the layout sizes: the vertex shapes and v12's collapsed-flow card. */
 export type LayoutShape = AgentflowShape | 'collapsedGroup';
 
-/** What every shape is measured and outlined with: the theme's padding and the metrics table. */
+/**
+ * What every shape is measured and outlined with: the theme's padding. Its lengths are
+ * `AGENTFLOW_METRICS`, the only set.
+ */
 export interface ShapeGeometry {
   readonly pads: Pads;
-  readonly metrics: AgentflowMetrics;
 }
 
 interface ShapeDef {
@@ -102,7 +104,8 @@ const SHAPES: Readonly<Record<LayoutShape, ShapeDef>> = {
   rounded: {
     shape: rounded,
     radius: (W, H, { pads: p }) => Math.min(p.r, W / 2, H / 2),
-    outline: (W, H, g) => roundedBox(W, H, cornerRadius('rounded', W, H, g), g.metrics.curveSteps),
+    outline: (W, H, g) =>
+      roundedBox(W, H, cornerRadius('rounded', W, H, g), AGENTFLOW_METRICS.curveSteps),
   },
   // v12 subroutine (tool): a square box.
   'fr-rect': { shape: framedRect, outline: (W, H) => roundedBox(W, H, 0, 0) },
@@ -120,11 +123,11 @@ const SHAPES: Readonly<Record<LayoutShape, ShapeDef>> = {
   'lin-doc': {
     shape: linedDocument,
     span: flatSpan,
-    outline: (W, H, { metrics: m }) => {
+    outline: (W, H) => {
       const x = W / 2;
       const base = H / 2 - WAVE.depth;
       const k = 2 * WAVE.control;
-      const n = 2 * m.curveSteps;
+      const n = 2 * AGENTFLOW_METRICS.curveSteps;
       const out: Point[] = [
         { x: -x, y: -H / 2 },
         { x, y: -H / 2 },
@@ -147,9 +150,9 @@ const SHAPES: Readonly<Record<LayoutShape, ShapeDef>> = {
   // v12 collapsedGroup: a rounded card, the label above an indicator row, v12's fixed padding.
   collapsedGroup: {
     shape: collapsedGroup,
-    radius: (W, H, { metrics: m }) => Math.min(m.flowRadius, W / 2, H / 2),
+    radius: (W, H) => Math.min(AGENTFLOW_METRICS.flowRadius, W / 2, H / 2),
     outline: (W, H, g) =>
-      roundedBox(W, H, cornerRadius('collapsedGroup', W, H, g), g.metrics.curveSteps),
+      roundedBox(W, H, cornerRadius('collapsedGroup', W, H, g), AGENTFLOW_METRICS.curveSteps),
   },
 };
 

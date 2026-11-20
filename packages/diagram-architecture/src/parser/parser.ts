@@ -25,30 +25,31 @@
 import {
   APOSTROPHE,
   ASCII_MAX,
-  cook,
   DQUOTE,
   ExpectedTable,
   formatExpected,
   Kind,
   kindSet,
   LBRACKET,
-  LineIndex,
-  ParseState,
-  Probe,
-  significantTokens,
-  sourceView,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
   ParseOptions,
   ParseResult,
   Range,
-  SourceView,
   TokenStream,
-  TokenView,
 } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
+import {
+  accessibilityAsName,
+  RuleParser,
+  TITLE_STATEMENT,
+  textValue,
+  withoutIndent,
+} from '@mermaid-js/shared/parser/rule';
+import type { RuleGrammar, TextValues } from '@mermaid-js/shared/parser/rule';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type { ArchitectureModel, ArchitectureSide } from '../model.ts';
 import type {
   ArchitectureAlignmentNode,
@@ -61,22 +62,14 @@ import type {
   ArchitectureServiceNode,
   ArchitectureStatementNode,
   ArchitectureText,
-  ArchitectureTextNode,
 } from './ast.ts';
-import {
-  accDescrValue,
-  accTitleValue,
-  iconValue,
-  labelValue,
-  stringValue,
-  titleValue,
-} from './convert.ts';
+import { iconValue, labelValue, stringValue } from './convert.ts';
 import { lex } from './lexer.ts';
 import { checkLimits } from './limits.ts';
 import type { ArchitectureLimitOptions } from './limits.ts';
 import { normalise } from './normalise.ts';
 import type { Registered } from './normalise.ts';
-import { ARCHITECTURE_TRIVIA, T } from './tokens.ts';
+import { ARCHITECTURE_TRIVIA, T, TEXT_STATEMENTS } from './tokens.ts';
 
 export interface ArchitectureParseOptions extends ParseOptions, ArchitectureLimitOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
@@ -84,15 +77,6 @@ export interface ArchitectureParseOptions extends ParseOptions, ArchitectureLimi
 }
 
 export type ArchitectureParseResult = ParseResult<ArchitectureModel, ArchitectureDocument>;
-
-/** `title …`, `accTitle: …` and `accDescr …` by token kind: AST type and keyword. */
-const TEXT_STATEMENTS: Readonly<
-  Partial<Record<number, { type: ArchitectureTextNode['type']; word: string }>>
-> = {
-  [T.Title]: { type: 'Title', word: 'title' },
-  [T.AccTitle]: { type: 'AccTitle', word: 'accTitle' },
-  [T.AccDescr]: { type: 'AccDescr', word: 'accDescr' },
-};
 
 /** A kind no token has: "an edge" in messages, where the parser tests for an `ID`. */
 const EDGE = -100;
@@ -210,12 +194,12 @@ function valueStart(
   return { from: k + 1, block: src.charAt(k) === '{' };
 }
 
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
- * instance, so its stack is captured once.
- */
-class Stop extends Error {}
-const STOP = new Stop();
+const GRAMMAR: RuleGrammar = {
+  lex,
+  trivia: ARCHITECTURE_TRIVIA,
+  probeFollows: PROBE_FOLLOWS,
+  probeMode,
+};
 
 /** One id occurrence, resolved to a symbol once the model knows who registered each id. */
 interface Mention {
@@ -236,18 +220,8 @@ export function parseArchitecture(
  * One parse. Each grammar rule is a method that returns what it read; a rule that fails records
  * a diagnostic and throws {@link STOP}, and the statement loop recovers.
  */
-class ArchitectureParser {
-  private readonly pre: PreprocessResult;
-  private readonly view: SourceView;
-  private readonly full: TokenStream;
-  private readonly t: TokenView;
-  private i = 0;
-  private readonly st = new ParseState();
-  private readonly probe: Probe | undefined;
+class ArchitectureParser extends RuleParser<PreprocessResult> {
   private readonly children: ArchitectureStatementNode[] = [];
-  private lines: LineIndex | undefined;
-  /** Mentions per id base (`service:a`, `title`, …), for the `@n` suffixes. */
-  private readonly mentions = new Map<string, number>();
   private readonly groups: ArchitectureGroupNode[] = [];
   private readonly services: ArchitectureServiceNode[] = [];
   private readonly junctions: ArchitectureJunctionNode[] = [];
@@ -263,31 +237,15 @@ class ArchitectureParser {
   /** Ids declared by a statement with a syntax error. */
   private readonly broken = new Set<string>();
   /** The last in-text value of each (v12's Langium assignments: the last one wins). */
-  private title = '';
+  private readonly texts: TextValues = { title: '', accTitle: '', accDescr: '' };
   private titleAstId: AstId | undefined;
-  private accTitle = '';
-  private accDescr = '';
 
   constructor(
-    private readonly src: string,
+    src: string,
     private readonly opts: ArchitectureParseOptions
   ) {
-    const pre = (this.pre = opts.preprocessed ?? preprocess(src));
-    if (!opts.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
-    this.view = sourceView(
-      src,
-      pre.bodyStart,
-      pre.directives.map((d) => d.range)
-    );
-    this.full = lex(src, pre.bodyStart, this.view);
-    this.t = significantTokens(this.full, ARCHITECTURE_TRIVIA);
-    if (opts.probe !== undefined) {
-      const probe = (this.probe = new Probe(src, opts.probe, PROBE_FOLLOWS));
-      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
-      else probe.trivia(this.full);
-      // Ignored when the offset is outside code.
-      probe.lexed(probe.offset, probe.offset, probeMode(src, this.full, probe.offset));
-    }
+    const given = opts.preprocessed;
+    super(src, given ?? preprocess(src), !given, GRAMMAR, opts.probe);
   }
 
   parse(): ArchitectureParseResult {
@@ -306,70 +264,23 @@ class ArchitectureParser {
 
   // ---- tokens -------------------------------------------------------------------------
 
-  private kind(j = this.i): number {
-    return this.t.kind[j] ?? Kind.EOF;
-  }
-
-  private range(j = this.i): Range {
-    return { start: this.t.start[j] ?? 0, end: this.t.end[j] ?? 0 };
-  }
-
-  /** A token's text as v12's lexer read it (removed spans dropped, entities as `&name;`). */
-  private raw(j = this.i): string {
-    const { start, end } = this.range(j);
-    return cook(this.src, start, end, this.view);
-  }
-
-  /**
-   * Probe hook: the parser tests the current token for `kinds` (a constant list), or would
-   * accept them there. Records them when it is the probed token.
-   */
-  private tested(kinds: readonly number[]): void {
-    const p = this.probe;
-    if (p?.isAt(this.t, this.i, this.pre.bodyStart)) p.tested(kinds, this.range().start);
-  }
-
   /** Whether the current token is `kind` (tested with the rest of `want`); consume it if so. */
   private accept(kind: number, want: readonly number[]): number | undefined {
     this.tested(want);
     return this.kind() === kind ? this.i++ : undefined;
   }
 
-  /** Consume a token of `kind` and return its index, or fail with `want` (`[kind]`) expected. */
-  private expect(kind: number, want: readonly number[] = [kind]): number {
+  /** Consume a token of `kind` and return its index, or fail with `want` expected. */
+  private expectOf(kind: number, want: readonly number[]): number {
     this.tested(want);
     if (this.kind() !== kind) this.fail(want);
     return this.i++;
   }
 
-  /**
-   * D508's `<kind>:<name>`, then `@2`, `@3`, … per mention of a kept statement (core's
-   * `AstIds` has the `kind:n` ordinals `align` uses, but no `<kind>:<name>@n` form).
-   */
-  private id(base: string): AstId {
-    const n = (this.mentions.get(base) ?? 0) + 1;
-    this.mentions.set(base, n);
-    return n === 1 ? base : `${base}@${n}`;
-  }
-
   // ---- errors and recovery ------------------------------------------------------------
 
-  private lineOf(at: number): number {
-    return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
-  }
-
-  /** How an error message names the current token. */
-  private found(): string {
-    const k = this.kind();
-    if (k === Kind.EOF) return 'the end of the text';
-    if (k === Kind.Newline) return 'a line break';
-    const text = this.raw().trim();
-    const line = text.split('\n', 1)[0] ?? '';
-    return line.length > 24 || line !== text ? `\`${line.slice(0, 24)}…\`` : `\`${line}\``;
-  }
-
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  private fail(want: readonly number[], hint?: string): never {
+  protected fail(want: readonly number[], hint?: string): never {
     const { st } = this;
     const where = this.range();
     if (this.kind() === Kind.Error) this.badCharacters(where);
@@ -452,20 +363,8 @@ class ArchitectureParser {
   private accessibilityName(where: Range): void {
     const word = this.raw();
     if (word !== 'accDescr' && word !== 'accTitle') return;
-    if (word === 'accDescr' && /^\s*\{/.test(this.src.slice(where.end))) {
-      this.st.diagnostics.error(
-        'UNCLOSED_ACC_DESCR',
-        `Unclosed accessible description: the \`accDescr {\` at line ${this.lineOf(where.start)} has no closing \`}\`. Write \`accDescr { … }\` or \`accDescr: …\`.`,
-        where
-      );
-      throw STOP;
-    }
-    this.st.diagnostics.error(
-      'UNEXPECTED',
-      `Expected \`:\` after \`${word}\`; write it as \`${word}: …\`${word === 'accDescr' ? ' or `accDescr { … }`' : ''}.`,
-      where,
-      { expected: ['`:`'] }
-    );
+    const block = word === 'accDescr' && /^\s*\{/.test(this.src.slice(where.end));
+    accessibilityAsName(this.st.diagnostics, word, block, this.lineOf(where.start), where);
     throw STOP;
   }
 
@@ -562,26 +461,16 @@ class ArchitectureParser {
   }
 
   /** Skip to the line break that ends the statement after an error (R-PARSE-4). */
-  private recover(): void {
-    this.probe?.freeze();
-    for (;;) {
-      const k = this.kind();
-      if (k === Kind.EOF || k === Kind.Newline) return;
-      this.i++;
-    }
+  protected override recover(): void {
+    const id = this.declaring;
+    if (id !== undefined) this.broken.add(id);
+    super.recover();
   }
 
   /** Run one statement rule; on failure, recover. */
-  private statement(rule: () => void): void {
+  protected override statement(rule: () => void): void {
     this.begin();
-    try {
-      rule();
-    } catch (error) {
-      if (error !== STOP) throw error;
-      const id = this.declaring;
-      if (id !== undefined) this.broken.add(id);
-      this.recover();
-    }
+    super.statement(rule);
   }
 
   /** A statement starts at the cursor: no id declared yet. */
@@ -753,12 +642,12 @@ class ArchitectureParser {
     if (next !== T.ArrowGroup && next !== T.Colon) this.accessibilityName(this.range());
     const lhsName = this.name();
     const lhsGroup = this.groupMark(AFTER_LHS_ID);
-    this.expect(T.Colon, lhsGroup ? [T.Colon] : AFTER_LHS_ID);
+    this.expectOf(T.Colon, lhsGroup ? [T.Colon] : AFTER_LHS_ID);
     const lhsSide = this.side();
     const lhsInto = this.accept(T.ArrowInto, AFTER_LHS_SIDE) !== undefined;
     let label: ArchitectureText | undefined;
     if (this.accept(T.DashDash, lhsInto ? [T.DashDash, T.Dash] : AFTER_LHS_SIDE) === undefined) {
-      this.expect(T.Dash, lhsInto ? [T.DashDash, T.Dash] : AFTER_LHS_SIDE);
+      this.expectOf(T.Dash, lhsInto ? [T.DashDash, T.Dash] : AFTER_LHS_SIDE);
       const j = this.expect(T.Label);
       label = { value: labelValue(this.raw(j)), range: this.range(j) };
       this.expect(T.Dash);
@@ -803,7 +692,7 @@ class ArchitectureParser {
 
   /** `ARROW_DIRECTION` */
   private side(want: readonly number[] = [T.Direction]): [ArchitectureSide, Range] {
-    const j = this.expect(T.Direction, want);
+    const j = this.expectOf(T.Direction, want);
     return [this.raw(j) as ArchitectureSide, this.range(j)];
   }
 
@@ -839,14 +728,10 @@ class ArchitectureParser {
   private text(k: number): void {
     const j = this.i++;
     const image = this.raw(j);
-    const { type, word } = TEXT_STATEMENTS[k] ?? { type: 'Title', word: 'title' };
-    const range = this.range(j);
-    while (range.start < range.end && /[\t ]/.test(this.src[range.start] ?? '')) range.start++;
+    const { type, word } = TEXT_STATEMENTS[k] ?? TITLE_STATEMENT;
+    const range = withoutIndent(this.src, this.range(j));
     this.eol();
-    let text: string;
-    if (type === 'Title') text = this.title = titleValue(image);
-    else if (type === 'AccTitle') text = this.accTitle = accTitleValue(image);
-    else text = this.accDescr = accDescrValue(image);
+    const text = (this.texts[word] = textValue(type, image));
     const id = this.id(word);
     if (type === 'Title') this.titleAstId = id;
     this.children.push({ id, type, range, text });
@@ -865,10 +750,10 @@ class ArchitectureParser {
         edges: this.edges,
         alignments: this.alignments,
         broken: this.broken,
-        title: this.title,
+        title: this.texts.title,
         titleAstId: this.titleAstId,
-        accTitle: this.accTitle,
-        accDescr: this.accDescr,
+        accTitle: this.texts.accTitle,
+        accDescr: this.texts.accDescr,
         frontMatterTitle: this.pre.frontMatter?.title,
       },
       diagnostics

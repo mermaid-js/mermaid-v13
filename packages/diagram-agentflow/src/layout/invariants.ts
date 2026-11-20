@@ -11,6 +11,7 @@
 import type { AgentflowModel } from '../parser/index.ts';
 import { frameOutline, outlineDistance } from './ends.ts';
 import type { AgentflowLayout } from './layout.ts';
+import { AGENTFLOW_METRICS } from './metrics.ts';
 import { shapeOutline } from './shapes.ts';
 
 /** One message per problem; an empty list means the layout draws the model as v12 did. */
@@ -76,7 +77,7 @@ function sizesAndEnds(layout: AgentflowLayout): string[] {
   const out: string[] = [];
   const prepared = layout.agentflow;
   // How far an end may lie off its outline: as far as it may lie off a side.
-  const slack = prepared.geometry.metrics.onSide;
+  const slack = AGENTFLOW_METRICS.onSide;
   for (const n of prepared.graph.nodes) {
     const view = prepared.views.get(n.id);
     if (view?.w !== n.width || view.h !== n.height)

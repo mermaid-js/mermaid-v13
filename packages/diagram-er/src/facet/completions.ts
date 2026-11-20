@@ -36,6 +36,7 @@ import {
 import {
   afterDirection,
   atStatementStart as atLineStart,
+  blankGaps,
   CompletionList as Items,
   statementTokens,
   wordRange,
@@ -75,15 +76,11 @@ interface Statement {
 
 function statementBefore(text: string, tokens: TokenStream, at: number): Statement {
   const found = statementTokens(tokens, at, STATEMENT_END, isTrivia);
-  // The lexer skips blanks, so groups are told apart by the text between tokens.
-  let groups = 0;
-  for (let j = 1; j < found.length; j++) {
-    if (/\s/.test(text.slice(tokens.end[found[j - 1]!], tokens.start[found[j]!]))) groups++;
-  }
   return {
     head: tokens.kind[found[0] ?? -1] ?? -1,
     prev: tokens.kind[found[found.length - 1] ?? -1] ?? -1,
-    groups,
+    // The lexer skips blanks, so groups are told apart by the text between tokens.
+    groups: blankGaps(text, tokens, found),
   };
 }
 

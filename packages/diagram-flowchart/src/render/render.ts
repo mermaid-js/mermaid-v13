@@ -32,6 +32,7 @@ import {
   titledViewBox,
 } from '@mermaid-js/shared/svg/document';
 import { edgeLabel } from '@mermaid-js/shared/svg/graph';
+import { nodePaint, plainLine, type NodePaint } from '@mermaid-js/shared/svg/node-paint';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
 import { drawIcon, drawImage } from './assets.ts';
@@ -139,32 +140,6 @@ type ThemeOf = FlowRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
 type Length = ReturnType<ThemeOf['length']>;
 
-/** Node paint: every vertex, and the edges' lines and heads. */
-export interface NodePaint {
-  readonly font: ReturnType<ThemeOf['font']>;
-  readonly fontSize: Length;
-  readonly fill: Color;
-  /** The outline: the theme's gradient when `useGradient` is on (D182), else nodeBorder. */
-  readonly stroke: OutlinePaint;
-  /**
-   * nodeBorder as a colour where the outline is the gradient: a filled part's fill (a dot,
-   * the fork bar), and a one-segment inner line, whose bounding box has no width or height
-   * (shapes.ts `usesPlain`, D185).
-   * Read only when the gradient is on and such a shape is drawn.
-   */
-  readonly plainStroke: Color | undefined;
-  readonly text: Color;
-  readonly strokeWidth: Length;
-  readonly line: Color;
-  readonly arrow: Color;
-  /**
-   * The theme's drop shadow (#85), a CSS filter on node outlines, icons, subgraph rects and the
-   * collapsed card; never on edges, labels or a collapsed card's dots. A theme with `none` (the
-   * classic themes) writes no filter at all.
-   */
-  readonly shadow: ReturnType<ThemeOf['filter']> | undefined;
-}
-
 export interface Paints {
   readonly heads: Arrowheads;
   readonly node: NodePaint;
@@ -205,21 +180,7 @@ function isEmpty(style: Attrs): boolean {
  */
 function paints(theme: ThemeOf, flow: Prepared, lanes: boolean): Paints {
   const heads = arrowheads(theme);
-  const node: NodePaint = {
-    font: theme.font(),
-    fontSize: theme.length('fontSize'),
-    fill: theme.color('mainBkg'),
-    stroke: theme.outline('nodeBorder'),
-    plainStroke:
-      theme.gradient() && flow.nodes.some((v) => usesPlain(v.shape))
-        ? theme.color('nodeBorder')
-        : undefined,
-    text: theme.color('nodeTextColor'),
-    strokeWidth: theme.length('strokeWidth'),
-    line: theme.color('lineColor'),
-    arrow: theme.color('arrowheadColor'),
-    shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
-  };
+  const node = nodePaint(theme, () => flow.nodes.some((v) => usesPlain(v.shape)));
   // Under the swimlane engine loose nodes sit in a lane, which flowchart's model does not have.
   const cluster =
     flow.groups.length > 0 || lanes
@@ -548,10 +509,7 @@ function lineAttrsOf(
   if (paint.collapsedLine && view.shape === 'collapsedGroup') {
     lineAttrs = slot ? { stroke: slot.stroke } : paint.collapsedLine;
   }
-  if (paint.node.plainStroke && lineAttrs.stroke === paint.node.stroke && usesPlain(view.shape)) {
-    lineAttrs = { ...lineAttrs, stroke: paint.node.plainStroke };
-  }
-  return lineAttrs;
+  return plainLine(paint.node, lineAttrs, usesPlain(view.shape));
 }
 
 /** The fill, stroke and inner-line attributes of a node. */

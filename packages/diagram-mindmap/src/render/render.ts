@@ -7,7 +7,7 @@
 // `:::` classes on nodes, `edge section-edge-<n> edge-depth-<d>` on edges (`d` from the raw
 // indent, GAPS #388). Coordinates are absolute; nothing has a transform.
 import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/shared/svg/document';
+import { cls, openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { MindmapLayout } from '../layout/layout.ts';
 import type { MindmapNodeView } from '../layout/prepare.ts';
 import type { MindmapModel } from '../model.ts';
@@ -23,16 +23,6 @@ interface Scene {
   readonly layout: MindmapLayout;
   readonly ctx: MindmapRenderContext;
   readonly paint: Paints;
-}
-
-/** An author's `:::` classes as class names: characters outside `[\w-]` dropped. */
-function userClasses(names: readonly string[]): string {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
 }
 
 /** Writes the whole `<svg>` document for a laid-out mindmap. */
@@ -112,7 +102,7 @@ function drawNode(scene: Scene, v: MindmapNodeView, x: number, y: number): strin
   const n = node.section ?? -1;
   const p = paint.node(node.section);
   w.open('g', {
-    class: `mindmap-node ${node.section === undefined ? 'section-root ' : ''}section-${n}${userClasses(node.classes)}`,
+    class: `mindmap-node ${node.section === undefined ? 'section-root ' : ''}section-${n}${cls(node.classes)}`,
     'data-id': v.id,
     'data-ast': node.ast,
   });

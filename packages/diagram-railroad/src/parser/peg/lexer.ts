@@ -50,7 +50,7 @@ export function lexPeg(src: string, from: number, view: SourceView): TokenStream
 }
 
 class PegLexer extends RailroadLexer {
-  protected scan(p: number, c: number): number {
+  protected scan(p: number, c = this.text.charCodeAt(p)): number {
     if (isIdStart(c)) {
       const e = this.header('railroad-peg-beta', p);
       if (e >= 0) return e;
