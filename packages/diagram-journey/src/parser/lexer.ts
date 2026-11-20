@@ -92,19 +92,8 @@ class JourneyLexer extends StateLexer {
   }
 
   run(probe?: Probe): TokenStream {
-    const { text, n } = this;
     this.trim();
-    // Two loops, so a plain lex does no probe work per step.
-    if (probe === undefined) while (this.p < n) this.step(text.charCodeAt(this.p));
-    else {
-      while (this.p < n) {
-        const before = this.p;
-        const mode = S_NAMES[this.state] ?? '';
-        this.step(text.charCodeAt(this.p));
-        probe.lexed(this.source(before), this.source(this.p), mode);
-      }
-      probe.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
-    }
+    this.loop(probe, S_NAMES);
     // At the end jison tries the rules once more on the empty input: an accessibility state's
     // value rule matches it (empty), INITIAL's `<<EOF>>` does. jison then returns `$end`
     // without trying `<<EOF>>`, but v13 always ends in `EOF` (a gate exclusion).
