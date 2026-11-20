@@ -15,7 +15,8 @@
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { WardleyDiagramConfig } from '@mermaid-js/core/config';
-import { configNumber, shownValue as shown, useMaxWidth } from '@mermaid-js/shared/config/readers';
+import { configRanges, NON_NEGATIVE, useMaxWidth } from '@mermaid-js/shared/config/readers';
+import type { ConfigRange } from '@mermaid-js/shared/config/readers';
 import { WARDLEY_CONFIG_INVALID } from './codes.ts';
 import { wardleyBetaConfigDefaults } from './generated/config-defaults.ts';
 import type { WardleyModel } from './model.ts';
@@ -51,29 +52,21 @@ type LengthKey = Exclude<keyof WardleyLayoutConfig, 'showGrid'>;
 /** The schema's defaults, v12's. */
 const DEFAULTS = wardleyBetaConfigDefaults as WardleyLayoutConfig;
 
-/** Each length's least valid value and how a warning names the range. */
-interface Range {
-  readonly min: number;
-  /** The minimum itself is out of range (`nodeRadius`: 0 draws nothing). */
-  readonly exclusive?: boolean;
-  readonly wants: string;
-}
+const AT_LEAST_1: ConfigRange = { min: 1, wants: 'a number of 1 or more' };
 
-const AT_LEAST_1: Range = { min: 1, wants: 'a number of 1 or more' };
-const AT_LEAST_0: Range = { min: 0, wants: 'a number of 0 or more' };
-
-const RANGES: Readonly<Record<LengthKey, Range>> = {
+/**
+ * Each length's range. `nodeRadius` is above 0 (0 draws nothing): its minimum is the least
+ * number above 0.
+ */
+const RANGES: Readonly<Record<LengthKey, ConfigRange>> = {
   width: AT_LEAST_1,
   height: AT_LEAST_1,
-  padding: AT_LEAST_0,
-  nodeRadius: { min: 0, exclusive: true, wants: 'a number above 0' },
-  nodeLabelOffset: AT_LEAST_0,
-  axisFontSize: AT_LEAST_0,
-  labelFontSize: AT_LEAST_0,
+  padding: NON_NEGATIVE,
+  nodeRadius: { min: Number.MIN_VALUE, wants: 'a number above 0' },
+  nodeLabelOffset: NON_NEGATIVE,
+  axisFontSize: NON_NEGATIVE,
+  labelFontSize: NON_NEGATIVE,
 };
-
-const inRange = (n: number, range: Range): boolean =>
-  range.exclusive ? n > range.min : n >= range.min;
 
 /**
  * The layout's options from the resolved `wardley-beta` section and the map's `size`, each
@@ -85,23 +78,23 @@ export function wardleyLayoutConfig(
   warn: (w: Warning) => void
 ): WardleyLayoutConfig {
   const given = section ?? {};
-  const warned = new Set<LengthKey>();
-  const length = (key: LengthKey): number => {
-    if (!Object.hasOwn(given, key) || given[key] === undefined) return DEFAULTS[key];
-    const n = configNumber(given[key]);
-    if (n !== undefined && inRange(n, RANGES[key])) return n;
-    warned.add(key);
-    warn({
-      code: WARDLEY_CONFIG_INVALID,
-      message: `${WARDLEY_SECTION}.${key} is ${shown(given[key])}, not ${RANGES[key].wants}; using the default ${DEFAULTS[key]}`,
-      path: `${WARDLEY_SECTION}.${key}`,
-    });
-    return DEFAULTS[key];
-  };
+  // The paths of the keys that fell back, each with its warning.
+  const warned = new Set<string | undefined>();
+  const number = configRanges(
+    WARDLEY_SECTION,
+    WARDLEY_CONFIG_INVALID,
+    section,
+    (w) => {
+      warned.add(w.path);
+      warn(w);
+    },
+    true
+  );
+  const length = (key: LengthKey): number => number(key, DEFAULTS[key], RANGES[key]);
   let width = length('width');
   let height = length('height');
   if (size) {
-    const bad = (['width', 'height'] as const).filter((k) => !inRange(size[k], AT_LEAST_1));
+    const bad = (['width', 'height'] as const).filter((k) => !(size[k] >= 1));
     if (!bad.includes('width')) width = size.width;
     if (!bad.includes('height')) height = size.height;
     if (bad.length > 0)
@@ -116,7 +109,7 @@ export function wardleyLayoutConfig(
     height,
     padding: paddingFor(length('padding'), { width, height }, (message) => {
       // One warning per key: a padding already reported falls back without a second.
-      if (!warned.has('padding'))
+      if (!warned.has(`${WARDLEY_SECTION}.padding`))
         warn({ code: WARDLEY_CONFIG_INVALID, message, path: `${WARDLEY_SECTION}.padding` });
     }),
     nodeRadius: length('nodeRadius'),

@@ -81,11 +81,16 @@ export interface TextNode extends AstNode<TextStatement['type']> {
   text: string;
 }
 
-/** The fields of a model that `finish` fills in: the text statements' values and the warnings. */
+/**
+ * The header fields of a model: the text statements' values and the warnings. `finish` fills
+ * them in; a model that a parser builds itself extends this type.
+ */
 export interface TextModelFields {
+  /** The in-text `title` if non-empty, else the front-matter `title` (D218); absent when neither. */
   readonly title?: string;
   readonly accTitle: string;
   readonly accDescr: string;
+  /** Warning diagnostics of the parse (also in `ParseResult.diagnostics`). */
   readonly warnings: readonly Diagnostic[];
 }
 

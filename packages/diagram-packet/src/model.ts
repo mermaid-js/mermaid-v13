@@ -4,7 +4,8 @@
  * the packet tickets: change it only additively, and say so in the run notes
  * (`v13/docs/agents/runs/421/GAPS.md`).
  */
-import type { AstId, Diagnostic } from '@mermaid-js/core/parser-kit';
+import type { AstId } from '@mermaid-js/core/parser-kit';
+import type { TextModelFields } from '@mermaid-js/shared/parser/rule';
 
 /** One `start-end: "label"`, `start: "label"` or `+bits: "label"` field, as written. */
 export interface PacketField {
@@ -30,7 +31,8 @@ export interface PacketPiece {
   readonly end: number;
 }
 
-export interface PacketModel {
+/** The packet model; its `warnings` include `PACKET_TRUNCATED`. */
+export interface PacketModel extends TextModelFields {
   /**
    * Fields in source order. A field with a semantic error (D341) is not in the list, nor one the
    * row cap dropped whole (D342), so every field has at least one piece; a field the cap cut
@@ -41,10 +43,4 @@ export interface PacketModel {
   readonly rows: readonly (readonly PacketPiece[])[];
   /** The `packet.bitsPerRow` the rows were split with (after D342's fallback). */
   readonly bitsPerRow: number;
-  /** The in-text `title` if non-empty, else the front-matter `title` (D218); absent when neither. */
-  readonly title?: string;
-  readonly accTitle: string;
-  readonly accDescr: string;
-  /** Warning diagnostics of the parse (also in `ParseResult.diagnostics`), e.g. `PACKET_TRUNCATED`. */
-  readonly warnings: readonly Diagnostic[];
 }
