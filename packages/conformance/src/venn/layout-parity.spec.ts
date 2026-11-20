@@ -11,6 +11,7 @@ import {
 import {
   parsedVenn,
   seededRandom,
+  VENN_SEED,
   vennTestContext,
   vennTestTheme,
 } from '@mermaid-js/diagram-venn/testing';
@@ -167,7 +168,7 @@ function compare(layout: VennLayout, v12: V12Drawn): Diff {
 /** `run` with `Math.random` drawing v13's fixed-seed sequence (D413). */
 function withSeed<T>(run: () => T): T {
   const random = Math.random;
-  Math.random = seededRandom();
+  Math.random = seededRandom(VENN_SEED);
   try {
     return run();
   } finally {

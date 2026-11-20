@@ -21,7 +21,6 @@ export { intersectionAreaPath } from './regions.ts';
 export type { RegionArc, RegionPath, TextCentre } from './regions.ts';
 export type { Circle, Point } from './circles.ts';
 export type { Area } from './solve.ts';
-export { seededRandom } from './random.ts';
 
 /** The box a solution is scaled into. */
 export interface SolveBox {
