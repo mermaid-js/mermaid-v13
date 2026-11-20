@@ -87,14 +87,16 @@ const ATTRIBUTE_START = [T.AttributeWord, T.BlockStop];
 const AFTER_NAME = [T.AttributeKey, T.AttributeComment, T.AttributeWord, T.BlockStop];
 const COLON_OR_CLASSES = [T.Colon, T.StyleSeparator];
 
-const CARDINALITIES: Record<number, ErCardinality> = {
+/** The cardinality each cardinality token kind reads as (the facet's hover reads it too). */
+export const CARDINALITIES: Readonly<Record<number, ErCardinality>> = {
   [T.ZeroOrOne]: 'zeroOrOne',
   [T.ZeroOrMore]: 'zeroOrMore',
   [T.OneOrMore]: 'oneOrMore',
   [T.OnlyOne]: 'onlyOne',
   [T.MdParent]: 'mdParent',
 };
-const DIRECTION_OF: Record<number, ErDirection> = {
+/** The direction each `direction` token kind sets (the facet's hover reads it too). */
+export const DIRECTION_OF: Readonly<Record<number, ErDirection>> = {
   [T.DirectionTB]: 'TB',
   [T.DirectionBT]: 'BT',
   [T.DirectionRL]: 'RL',
