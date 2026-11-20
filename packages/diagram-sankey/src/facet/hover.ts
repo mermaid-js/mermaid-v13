@@ -11,7 +11,7 @@ import type { SankeyDocument, SankeyField } from '../parser/ast.ts';
 import { SankeyKind as T } from '../parser/tokens.ts';
 import { invalidity, readValue, trailingTextMessage } from '../parser/values.ts';
 import { code } from './tables.ts';
-import { inside } from '@mermaid-js/shared/parser/facet';
+import { inside, keywordHover } from '@mermaid-js/shared/parser/facet';
 
 /** A sum as it reads, without the binary noise of adding decimals (`0.1 + 0.2`). */
 const total = (n: number) => String(Number(n.toPrecision(12)));
@@ -54,14 +54,8 @@ export function sankeyHover(at: HoverTarget, doc: DocumentView<SankeyDocument>):
   if (s?.kind === 'node') return { range: s.range, contents: nodeHover(s.name, model) };
   const t = at.token;
   if (!t) return undefined;
-  if (t.kind === T.Sankey) {
-    const docText = sankeyDocs[T.Sankey];
-    if (docText === undefined) return undefined;
-    return {
-      range: t.range,
-      contents: `**${code(text.slice(t.range.start, t.range.end))}**\n\n${docText}`,
-    };
-  }
+  if (t.kind === T.Sankey)
+    return keywordHover(text, at.offset, t.range, undefined, sankeyDocs[T.Sankey]);
   // A value, bare or quoted.
   for (const link of result.ast.children) {
     if (inside(at.offset, link.value.range))

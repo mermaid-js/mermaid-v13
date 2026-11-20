@@ -8,6 +8,7 @@ Code that Mermaid v13 diagram packages share, kept out of `@mermaid-js/core` so 
 | `/parser/state` | The lexer base for diagrams ported from a v12 jison lexer |
 | `/parser/tree` | The lexer and parser base for the indentation-tree diagrams (mindmap, kanban) |
 | `/parser/tree-facet` | Completion pieces for the same diagrams' `./language` entries |
+| `/parser/line-tokens` | The token view of the parsers that read a statement per line (treeView, treemap), and how their errors quote a token |
 | `/parser/table` | The rule-table lexer for diagrams that run a v12 jison lexer's rules as they are |
 | `/parser/v12-text` | The text a v12 jison lexer saw, with each character's source range |
 | `/parser/support` | The stop sentinel, the "got …" text of an unexpected token and the escaper of names in AST ids |

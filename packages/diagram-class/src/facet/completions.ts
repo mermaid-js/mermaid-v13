@@ -38,7 +38,9 @@ import {
 } from './tables.ts';
 import {
   afterDirection,
+  blankGaps,
   CompletionList as Items,
+  statementTokens,
   wordRunRange,
 } from '@mermaid-js/shared/parser/facet';
 
@@ -69,27 +71,14 @@ interface Statement {
 }
 
 function statementBefore(text: string, tokens: TokenStream, at: number): Statement {
-  const found: number[] = [];
-  for (let i = tokenBefore(tokens, at - 1); i >= 0; i--) {
-    const k = tokens.kind[i]!;
-    // A line break token takes the blanks around it: one with a line break before the cursor
-    // (`\n  |\n`) ends the statement before it; one starting with blanks (`A | \n`) does not.
-    if ((tokens.end[i] ?? 0) > at) {
-      const before = text.slice(tokens.start[i] ?? at, at);
-      if (STATEMENT_END.has(k) && /[\r\n]/.test(before)) break;
-      continue;
-    }
-    if (STATEMENT_END.has(k)) break;
-    if (k === Kind.Comment || k === Kind.Directive || BLANK.has(k)) continue;
-    found.push(i);
-  }
-  found.reverse();
+  // A line break token takes the blanks around it: one with a line break before the cursor
+  // (`\n  |\n`) ends the statement before it; one starting with blanks (`A | \n`) does not.
+  const endsAcross = (i: number) =>
+    STATEMENT_END.has(tokens.kind[i]!) && /[\r\n]/.test(text.slice(tokens.start[i] ?? at, at));
+  const skip = (k: number) => k === Kind.Comment || k === Kind.Directive || BLANK.has(k);
+  const found = statementTokens(tokens, at, STATEMENT_END, skip, endsAcross);
   const kinds = found.map((i) => tokens.kind[i]!);
-  let groups = 0;
-  for (let j = 1; j < found.length; j++) {
-    const gap = text.slice(tokens.end[found[j - 1]!] ?? 0, tokens.start[found[j]!] ?? 0);
-    if (/\s/.test(gap)) groups++;
-  }
+  const groups = blankGaps(text, tokens, found);
   return { kinds, head: kinds[0] ?? -1, prev: kinds[kinds.length - 1] ?? -1, groups };
 }
 

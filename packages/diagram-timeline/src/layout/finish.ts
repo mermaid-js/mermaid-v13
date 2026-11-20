@@ -12,9 +12,9 @@ export function finish(env: Env, layout: Omit<TimelineLayout, 'bounds'>): Timeli
   const drawn = new Bounds();
   const { outline, rule } = env.strokes;
   const box = (r: Rect): void => {
-    v12.rect(r);
+    v12.add(r);
     const o = outline / 2;
-    drawn.rect({ x: r.x - o, y: r.y - o, width: r.width + outline, height: r.height + outline });
+    drawn.add({ x: r.x - o, y: r.y - o, width: r.width + outline, height: r.height + outline });
     drawn.point(r.x, r.y + r.height + rule / 2);
   };
   for (const s of layout.sections) box(s);
@@ -26,10 +26,10 @@ export function finish(env: Env, layout: Omit<TimelineLayout, 'bounds'>): Timeli
     v12.segment(c);
     drawn.stroke(c);
   }
-  if (layout.title) v12.rect(layout.title);
+  if (layout.title) v12.add(layout.title);
   const inner = v12.box({ x: 0, y: 0 });
   const pad = env.padding;
-  drawn.rect({
+  drawn.add({
     x: inner.x - pad,
     y: inner.y - pad,
     width: inner.width + 2 * pad,
