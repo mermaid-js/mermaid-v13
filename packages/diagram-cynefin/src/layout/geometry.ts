@@ -62,11 +62,6 @@ const rectOf = ([x0, x1]: [number, number], [y0, y1]: [number, number]): Rect =>
   height: y1 - y0,
 });
 
-/** `r` grown by `by` on every side. */
-export function grow(r: Rect, by: number): Rect {
-  return { x: r.x - by, y: r.y - by, width: r.width + 2 * by, height: r.height + 2 * by };
-}
-
 /** The box of a cubic curve. */
 export function cubicBox(curve: CubicCurve): Rect {
   const box = new RectUnion();

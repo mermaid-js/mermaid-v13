@@ -14,13 +14,8 @@
  */
 import type { TreemapModel, TreemapNode } from '../model.ts';
 import { TREEMAP_METRICS as M } from './metrics.ts';
-import {
-  grow,
-  type Rect,
-  type TreemapLayout,
-  type TreemapLeafLayout,
-  type TreemapSectionLayout,
-} from './types.ts';
+import type { Rect, TreemapLayout, TreemapLeafLayout, TreemapSectionLayout } from './types.ts';
+import { growRect } from '@mermaid-js/core/layout';
 import {
   numbers,
   rectInside as inside,
@@ -77,11 +72,11 @@ export function treemapLayoutViolations(model: TreemapModel, layout: TreemapLayo
     // d3 tiles the box with the margins less half the padding; each tile is the child's box
     // plus half the padding on each side, rounded edge by edge.
     const total = drawn.reduce((s, c) => s + c.value, 0);
-    const tiles = grow(inner, half);
+    const tiles = growRect(inner, half);
     if (!(total > 0) || !Number.isFinite(total) || tiles.width <= 0 || tiles.height <= 0) return;
     for (const c of withArea) {
       const share = c.value / total;
-      const tile = grow(c.box, half);
+      const tile = growRect(c.box, half);
       const want = share * area(tiles);
       const slack = tile.width + tile.height + 1 + share * (tiles.width + tiles.height + 1);
       if (Math.abs(area(tile) - want) > slack)
@@ -106,9 +101,9 @@ export function treemapLayoutViolations(model: TreemapModel, layout: TreemapLayo
 
   const drawn: [string, Rect][] = [];
   for (const s of layout.sections) {
-    drawn.push([s.node.astId, grow(s.box, M.sectionStroke / 2)], [s.node.astId, s.header]);
+    drawn.push([s.node.astId, growRect(s.box, M.sectionStroke / 2)], [s.node.astId, s.header]);
   }
-  for (const l of layout.leaves) drawn.push([l.node.astId, grow(l.box, M.leafStroke / 2)]);
+  for (const l of layout.leaves) drawn.push([l.node.astId, growRect(l.box, M.leafStroke / 2)]);
   for (const item of items.values())
     for (const text of [item.label, item.valueText])
       if (text) drawn.push([item.node.astId, text.box]);
