@@ -15,13 +15,14 @@ import { drawOutline } from './ascii/outline.ts';
 import { plainLabel, plainTitle } from './labels.ts';
 import type { IshikawaCause, IshikawaModel } from './model.ts';
 import { asciiDropped, emphasised, glyphSetOf } from '@mermaid-js/shared/ascii';
+import type { AsciiDroppedWarning as SharedAsciiDroppedWarning } from '@mermaid-js/shared/ascii';
 
 /** What the hook reads of core's `TextRenderContext`. */
 export type IshikawaAsciiContext = Pick<TextRenderContext, 'config' | 'warn'> &
   Partial<Pick<TextRenderContext, 'inline'>>;
 
 /** One feature kind text output dropped (D82): bold and italic text. */
-export type AsciiDroppedWarning = ReturnType<typeof asciiDropped<'emphasis'>>;
+export type AsciiDroppedWarning = SharedAsciiDroppedWarning<'emphasis'>;
 
 /** The cell measurer ignores the font: one key for every label. */
 const FONT = { family: '', size: 1, weight: 400 } as const;

@@ -2,23 +2,19 @@
 // feature kind, naming the AST ids of what it dropped. A highlight is drawn (its gutter mark,
 // D488) and a directory's bold and a description's italics are the renderer's, not the
 // author's, so none of them is named.
-import type { Warning } from '@mermaid-js/core';
 import type { TreeViewDiagramConfig } from '@mermaid-js/core/config';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import { treeViewOptions } from '../config.ts';
 import { resolveIcon } from '../icons.ts';
 import { highlighted, type TreeViewModel } from '../model.ts';
 import { asciiDropped } from '@mermaid-js/shared/ascii';
+import type { AsciiDroppedWarning as SharedAsciiDroppedWarning } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'icon' | 'style' | 'accessibility';
 
 /** One feature kind text output dropped (D82). */
-export interface AsciiDroppedWarning extends Warning {
-  readonly code: 'ASCII_DROPPED';
-  readonly feature: AsciiDroppedFeature;
-  readonly astIds: readonly string[];
-}
+export type AsciiDroppedWarning = SharedAsciiDroppedWarning<AsciiDroppedFeature>;
 
 const WHAT: Record<AsciiDroppedFeature, string> = {
   icon: 'icons (names kept)',

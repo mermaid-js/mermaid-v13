@@ -3,13 +3,16 @@
 // "one `ASCII_DROPPED`"). Each warning names the AST ids of what it dropped: the elements from
 // the views, and the statements when the AST is given. A `usecase` option text output cannot
 // honour is one more kind (pitfall 22): fonts, colours and the SVG's width and margin.
-import type { Warning } from '@mermaid-js/core';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { UsecaseConfigKey, UsecaseLayoutConfig } from '../config.ts';
 import type { UsecaseModel } from '../model.ts';
 import type { UsecaseNodeView, UsecasePrepared } from '../layout/prepare.ts';
 import { droppedFeatures, emphasised, styled } from '@mermaid-js/shared/ascii';
+import type {
+  AsciiDroppedWarning as SharedAsciiDroppedWarning,
+  AsciiRouteWarning,
+} from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature =
@@ -21,17 +24,9 @@ export type AsciiDroppedFeature =
   | 'accessibility';
 
 /** One feature kind text output dropped (D82). */
-export interface AsciiDroppedWarning extends Warning {
-  readonly code: 'ASCII_DROPPED';
-  readonly feature: AsciiDroppedFeature;
-  readonly astIds: readonly string[];
-}
+export type AsciiDroppedWarning = SharedAsciiDroppedWarning<AsciiDroppedFeature>;
 
-/** Relationships the repair router found no free lane for (D78). */
-export interface AsciiRouteWarning extends Warning {
-  readonly code: 'ASCII_ROUTE';
-  readonly astIds: readonly string[];
-}
+export type { AsciiRouteWarning };
 
 export type AsciiWarning = AsciiDroppedWarning | AsciiRouteWarning;
 
