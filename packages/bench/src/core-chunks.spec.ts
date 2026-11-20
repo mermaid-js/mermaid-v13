@@ -101,9 +101,14 @@ async function measure(stableCore: boolean, stub?: URL, inCore = false): Promise
   };
 }
 
+/** Output files in the entry's static closure, entry first. */
+const coreFiles = (m: Measured): string[] => closureSize(m.bundle).files.map((f) => f.path);
+
 /** Source modules in the entry's static closure. */
 const coreModules = (m: Measured): string[] =>
-  m.bundle.staticClosure.flatMap((f) => m.bundle.graph[f]!.inputs).sort();
+  coreFiles(m)
+    .flatMap((f) => m.bundle.graph[f]!.inputs)
+    .sort();
 
 /** The diagram packages whose lazily loaded entry reaches output file `target` statically. */
 function diagramsLoading(m: Measured, target: string): string[] {
@@ -161,7 +166,7 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
       const files = Object.entries(stable.bundle.graph).filter(([, f]) => f.inputs.some(isEngine));
       expect(files).toHaveLength(1);
       const [path, file] = files[0]!;
-      expect(stable.bundle.staticClosure).not.toContain(path);
+      expect(coreFiles(stable)).not.toContain(path);
       expect(file.inputs.every(isEngine)).toBe(true);
     }
   );
@@ -180,7 +185,7 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
     const files = Object.entries(stable.bundle.graph).filter(([, f]) => f.inputs.some(isCompass));
     expect(files).toHaveLength(1);
     const [path, file] = files[0]!;
-    expect(stable.bundle.staticClosure).not.toContain(path);
+    expect(coreFiles(stable)).not.toContain(path);
     expect(file.inputs.every(isCompass)).toBe(true);
   });
 
@@ -195,7 +200,7 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
     const files = Object.entries(stable.bundle.graph).filter(([, f]) => f.inputs.some(isValues));
     expect(files).toHaveLength(1);
     const [path, file] = files[0]!;
-    expect(stable.bundle.staticClosure).not.toContain(path);
+    expect(coreFiles(stable)).not.toContain(path);
     expect(file.inputs.every(isRuleFamily)).toBe(true);
     expect(diagramsLoading(stable, path)).toEqual(
       [
