@@ -36,6 +36,7 @@ import type { ParseResult, Range, TokenStream, TokenView } from '@mermaid-js/cor
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import * as codes from '../codes.ts';
+import { MentionIds } from '../parser/mention-ids.ts';
 import type { C4ParseOptions } from '../parser/parser.ts';
 import type {
   C4BetaDocument,
@@ -162,7 +163,7 @@ class C4BetaParser {
   private readonly children: C4BetaStatementNode[] = [];
   /** The bodies being read, innermost last. */
   private readonly open: Frame[] = [];
-  private readonly mentions = new Map<string, number>();
+  private readonly ids = new MentionIds();
   /** Probe mode only (R-LANG-7). */
   private readonly probe: Probe | undefined;
   private readonly depths: { depth: number; range: Range }[] = [];
@@ -239,13 +240,6 @@ class C4BetaParser {
   private tested(kinds: readonly number[], j = this.i): void {
     const p = this.probe;
     if (p?.isAt(this.t, j, this.pre.bodyStart)) p.tested(kinds, this.t.start[j] ?? 0);
-  }
-
-  /** `id`, then `id@2`, `id@3`, … */
-  private id(base: string): string {
-    const n = (this.mentions.get(base) ?? 0) + 1;
-    this.mentions.set(base, n);
-    return n === 1 ? base : `${base}@${n}`;
   }
 
   // ---- errors and recovery ------------------------------------------------------------
@@ -508,7 +502,7 @@ class C4BetaParser {
     const name = this.raw(idAt);
     const label = this.quoted(`an element has a name in quotes, as in \`${kind} ${name} "Name"\``);
     const node: C4BetaElementNode = {
-      id: this.id(`element:${name}`),
+      id: this.ids.next(`element:${name}`),
       type: 'Element',
       range: { ...first },
       kind,
@@ -595,7 +589,7 @@ class C4BetaParser {
     this.tested(lists.AFTER_END_LIST);
     const [from, to] = arrow === BETA.ArrowLeft ? [right, left] : [left, right];
     const node: C4BetaRelationNode = {
-      id: this.id(`rel:${this.raw(from)}->${this.raw(to)}`),
+      id: this.ids.next(`rel:${this.raw(from)}->${this.raw(to)}`),
       type: 'Relation',
       range: { ...first },
       from: this.raw(from),
@@ -648,7 +642,7 @@ class C4BetaParser {
     const range = this.range(j);
     const text = textValue(type, this.raw(j));
     const word = type.charAt(0).toLowerCase() + type.slice(1);
-    this.children.push({ id: this.id(word), type, range, text });
+    this.children.push({ id: this.ids.next(word), type, range, text });
     this.state.statement(word, range);
     this.eol();
   }
@@ -659,7 +653,7 @@ class C4BetaParser {
     const direction = DIRECTIONS.get(this.kind());
     if (!direction) this.fail([BETA.Tb], 'write `direction TB`, `BT`, `LR` or `RL`');
     const range = { start: start.start, end: this.range(this.i++).end };
-    this.children.push({ id: this.id('direction'), type: 'Direction', range, direction });
+    this.children.push({ id: this.ids.next('direction'), type: 'Direction', range, direction });
     this.state.statement('direction', range);
     this.eol();
   }
@@ -671,7 +665,7 @@ class C4BetaParser {
       this.fail([BETA.On], 'write `legend on` or `legend off`');
     const on = this.kind() === BETA.On;
     const range = { start: start.start, end: this.range(this.i++).end };
-    this.children.push({ id: this.id('legend'), type: 'Legend', range, on });
+    this.children.push({ id: this.ids.next('legend'), type: 'Legend', range, on });
     this.state.statement('legend', range);
     this.eol();
   }
