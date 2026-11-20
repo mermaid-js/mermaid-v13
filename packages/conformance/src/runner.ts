@@ -18,8 +18,6 @@ export interface RunParityOptions {
   divergences?: Divergence[];
   /** Defaults to the mermaid@12 oracle. */
   oracle?: Oracle;
-  /** Called after each item, e.g. for progress output on large external runs. */
-  onResult?(result: ItemResult): void;
 }
 
 /**
@@ -42,7 +40,6 @@ export async function runParity(options: RunParityOptions): Promise<ParityReport
     const result = await checkItem(item, options.adapters, oracle);
     results.push(result);
     if (result.divergence) observed.push(result.divergence);
-    options.onResult?.(result);
     // Let the event loop breathe on long runs (timers, reporters).
     if (++count % 50 === 0) await new Promise((resolve) => setImmediate(resolve));
   }

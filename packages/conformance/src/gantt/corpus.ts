@@ -5,9 +5,7 @@
  * `e2e/diagrams/gantt/`; text that only matters to the lexer or the parser (rejections, comment
  * and directive forms, CRs) goes in `gantt-cases.json`.
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
+import { corpusJson, fixturesAndSpecs } from '../corpus.ts';
 import { commented } from '../sequence/corpus.ts';
 import { crCut } from '../timeline/corpus.ts';
 import type { CorpusItem } from '../types.ts';
@@ -37,11 +35,7 @@ export const LINE_SEPARATORS: CorpusItem[] = items('line separators', [
 ]);
 
 /** The parser cases of `corpus/gantt-cases.json` (parity, #378; lexer gate, #377). */
-export function ganttCases(): CorpusItem[] {
-  return JSON.parse(
-    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/gantt-cases.json'), 'utf8')
-  ) as CorpusItem[];
-}
+export const ganttCases = (): CorpusItem[] => corpusJson('gantt-cases.json');
 
 /**
  * The e2e fixtures, the v12 spec strings, the parser cases, the line-separator cases, and each
@@ -61,13 +55,4 @@ export async function ganttGateCorpus(): Promise<CorpusItem[]> {
 }
 
 /** The gantt corpus: the e2e fixtures and the v12 spec and syntax-page strings. */
-export async function ganttCorpus(): Promise<CorpusItem[]> {
-  const out: CorpusItem[] = [];
-  for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/gantt'), 'e2e')) {
-    out.push(item);
-  }
-  const specs = JSON.parse(
-    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/gantt-v12-specs.json'), 'utf8')
-  ) as CorpusItem[];
-  return [...out, ...specs];
-}
+export const ganttCorpus = (): Promise<CorpusItem[]> => fixturesAndSpecs('gantt');

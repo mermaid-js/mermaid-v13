@@ -23,18 +23,7 @@ import { createTheme, loadTheme, parseColor, THEME_NAMES } from '@mermaid-js/cor
 import type { Rgba, Theme, ThemeName } from '@mermaid-js/core/theme';
 import { eventmodeling } from '@mermaid-js/diagram-eventmodeling';
 import { describe, expect, it } from 'vitest';
-import { loadOracle } from '../oracle.ts';
-
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
-  };
-}
-
-await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
+import { v12Vars } from '../v12-theme.ts';
 
 /** v12's renderer fallback for each variable, used where the theme sets none. */
 const V12_FALLBACK: Readonly<Record<string, string>> = {
@@ -65,13 +54,6 @@ const CASES: readonly Case[] = [
   ...THEME_NAMES.map((theme) => ({ label: theme, theme })),
   { label: 'base+darkMode', theme: 'base', vars: { darkMode: true } },
 ];
-
-/** v12's resolved theme variables of `theme`, with author `themeVariables`. */
-function v12Vars(theme: string, themeVariables?: object): Record<string, unknown> {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize(themeVariables ? { theme, themeVariables } : { theme });
-  return { ...v12.mermaidAPI.getConfig().themeVariables };
-}
 
 /** What v12's renderer drew for `name`: the theme's value, else its fallback. */
 function v12Paint(vars: Record<string, unknown>, name: string): Rgba | undefined {

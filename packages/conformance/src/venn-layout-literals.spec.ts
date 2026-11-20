@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { REPO_ROOT } from './index.ts';
+import { numericLiterals } from './literals.ts';
 
 // The venn custom layout takes every length from its metrics table (spec #429, pitfall 13): no
 // file in `packages/diagram-venn/src/layout/` but `metrics.ts` holds a length literal. The
@@ -16,15 +17,6 @@ const ALLOWED: Readonly<Record<string, string>> = {
   '4': 'the size v12 gives an added pair, `min(a, b) / 4` (a size, not a length)',
   '1e-6': 'the float tolerance of the invariant checks',
 };
-
-/** The numeric literals in TypeScript source, outside comments and strings. */
-function numericLiterals(source: string): string[] {
-  const code = source
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .replace(/\/\/.*$/gm, ' ')
-    .replace(/'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`|"(?:[^"\\\n]|\\.)*"/g, "''");
-  return code.match(/(?<![\w$.])\d[\d_]*(?:\.\d+)?(?:e[-+]?\d+)?/gi) ?? [];
-}
 
 const DIR = join(REPO_ROOT, 'packages/diagram-venn/src/layout');
 // The table itself, test fixtures and specs are not layout code.

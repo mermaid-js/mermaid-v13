@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -31,6 +32,26 @@ export async function* corpusFromDir(dir: string, idPrefix: string): AsyncGenera
     const rel = relative(dir, file).split(sep).join('/');
     yield { id: `${idPrefix}/${rel}`, source: await readFile(file, 'utf8') };
   }
+}
+
+/** A JSON file of `packages/conformance/corpus/`, by name: a list of corpus items or cases. */
+export const corpusJson = <T = CorpusItem>(name: string): T[] =>
+  JSON.parse(readFileSync(join(REPO_ROOT, 'packages/conformance/corpus', name), 'utf8')) as T[];
+
+/**
+ * A type's corpus: its e2e fixtures (`e2e/diagrams/<dir>`, `dir` defaulting to `type`, ids
+ * prefixed `e2e/`), then `extra`, then the harvested v12 strings of
+ * `corpus/<type>-v12-specs.json`.
+ */
+export async function fixturesAndSpecs(
+  type: string,
+  { dir = type, extra = [] }: { dir?: string; extra?: readonly CorpusItem[] } = {}
+): Promise<CorpusItem[]> {
+  const items: CorpusItem[] = [];
+  for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams', dir), 'e2e')) {
+    items.push(item);
+  }
+  return [...items, ...extra, ...corpusJson(`${type}-v12-specs.json`)];
 }
 
 /**

@@ -6,24 +6,10 @@
  */
 import { THEME_NAMES, createTheme, loadTheme } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
-import { loadOracle } from './oracle.ts';
-
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
-  };
-}
-
-await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
+import { v12Vars } from './v12-theme.ts';
 
 function v12Palette(theme: string): string[] {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize({ theme });
-  const section = v12.mermaidAPI.getConfig().themeVariables.xyChart as Record<string, unknown>;
-  v12.mermaidAPI.reset();
+  const section = v12Vars(theme).xyChart as Record<string, unknown>;
   return String(section.plotColorPalette)
     .split(',')
     .map((c) => c.trim());

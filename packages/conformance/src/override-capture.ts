@@ -7,11 +7,11 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { DiagramThemeTable } from '@mermaid-js/core/theme';
 import { v12Value } from './diagram-themes.ts';
+import { hex } from './hex.ts';
 import {
   THEMES,
   captureReference,
   formatReference,
-  hex,
   type Classic,
   type Colour,
   type ReferenceTable,
@@ -57,7 +57,7 @@ export function v12Colour(
   name: string,
   table?: DiagramThemeTable
 ): Colour {
-  return hex(v12Value(old, name, table === undefined ? [] : [table]));
+  return hex(v12Value(old, name, table === undefined ? [] : [table]), () => null);
 }
 
 /** A reference table of `names`, from a resolver per classic theme. */

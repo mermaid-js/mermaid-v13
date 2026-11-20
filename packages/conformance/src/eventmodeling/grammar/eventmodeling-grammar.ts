@@ -1,15 +1,9 @@
 /** The event modeling grammar file, read and built once (dev and CI only). */
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import {
-  appendMapped,
-  buildLexer,
-  mapped,
-  parseGrammar,
-  replaceMapped,
-  sliceMapped,
-} from '@mermaid-js/gen-grammar';
-import type { Grammar, LexToken, MappedText, ModeLexer } from '@mermaid-js/gen-grammar';
+import { appendMapped, mapped, replaceMapped, sliceMapped } from '@mermaid-js/gen-grammar';
+import type { LexToken, MappedText } from '@mermaid-js/gen-grammar';
+import { loadGrammar, lexGrammar } from '../../grammar-file.ts';
+import type { LoadedGrammar, GrammarTokens } from '../../grammar-file.ts';
 import { REPO_ROOT } from '../../corpus.ts';
 
 export const EVENTMODELING_GRAMMAR_PATH = join(
@@ -17,14 +11,8 @@ export const EVENTMODELING_GRAMMAR_PATH = join(
   'packages/diagram-eventmodeling/grammar/eventmodeling.ebnf'
 );
 
-let cached: { grammar: Grammar; lexer: ModeLexer } | undefined;
-
-export function eventModelingGrammar(): { grammar: Grammar; lexer: ModeLexer } {
-  if (!cached) {
-    const grammar = parseGrammar(readFileSync(EVENTMODELING_GRAMMAR_PATH, 'utf8'));
-    cached = { grammar, lexer: buildLexer(grammar) };
-  }
-  return cached;
+export function eventModelingGrammar(): LoadedGrammar {
+  return loadGrammar(EVENTMODELING_GRAMMAR_PATH);
 }
 
 /** Chevrotain names (`@mermaid-js/parser@2.0.1`) of the terminals the grammar names otherwise. */
@@ -113,19 +101,9 @@ export function eventModelingLexerInput(src: string): MappedText {
   return appendMapped(m, '\n', src.length);
 }
 
-export interface GrammarTokens {
-  input: MappedText;
-  /** Every token, hidden ones and the final `EOF` included. */
-  tokens: LexToken[];
-  /** Lexer-input offset where lexing failed. */
-  error: number | undefined;
-}
-
 /** The grammar lexer's tokens for an event modeling source. */
 export function grammarTokens(source: string): GrammarTokens {
-  const input = eventModelingLexerInput(source);
-  const { tokens, error } = eventModelingGrammar().lexer.lex(input.text);
-  return { input, tokens, error };
+  return lexGrammar(eventModelingGrammar(), eventModelingLexerInput(source));
 }
 
 /** The tokens the reference parser reads: not hidden. */

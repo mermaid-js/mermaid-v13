@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createMermaid, MermaidError } from 'mermaid';
-import { collisions, overlaps, textFaults } from './ascii/checks.ts';
+import { collisions, boxOverlaps, textFaults } from './ascii/checks.ts';
 import { renderAgentflowAscii, type AgentflowAsciiResult } from './ascii/render.ts';
 import { readAgentflow, type Charset } from './ascii/structure.ts';
 import { flowFuzz } from './ascii/fuzz.ts';
@@ -90,7 +90,7 @@ describe(
     // flowchart's subgraphs): those warn `ASCII_ROUTE` (D78) and are counted, not failed.
     it('routes no line through a node, an edge label or a flow title unless it warns ASCII_ROUTE, and overlaps no boxes', () => {
       expect(
-        problems((c, cs) => [...collisions(c.out[cs], true), ...overlaps(c.out[cs].layout)])
+        problems((c, cs) => [...collisions(c.out[cs], true), ...boxOverlaps(c.out[cs].layout)])
       ).toEqual({});
       const warned = cases.filter((c) =>
         c.out.unicode.warnings.some((w) => w.code === 'ASCII_ROUTE')

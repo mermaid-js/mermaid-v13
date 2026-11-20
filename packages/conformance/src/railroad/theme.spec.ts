@@ -21,25 +21,14 @@ import { railroad } from '@mermaid-js/diagram-railroad';
 import {
   THEME_NAMES,
   createTheme,
-  formatColor,
   loadTheme,
-  parseColor,
   type Theme,
   type ThemeName,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
-import { loadOracle } from '../oracle.ts';
+import { v12Vars } from '../v12-theme.ts';
+import { hex } from '../hex.ts';
 
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
-  };
-}
-
-await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
 /** v12's railroad styles (`styles.ts` `getStyles`), from the chunk the oracle's mermaid loads. */
 const chunks = join(
   dirname(createRequire(import.meta.url).resolve('mermaid-v12/package.json')),
@@ -64,12 +53,6 @@ const DRAWN_BY: Readonly<Record<string, readonly [string, string]>> = {
   railroadRuleNameColor: ['.railroad-rule-name', 'fill'],
 };
 
-const hex = (v: unknown): string | undefined => {
-  if (typeof v !== 'string') return undefined;
-  const rgba = parseColor(v.trim());
-  return rgba ? formatColor(rgba) : undefined;
-};
-
 /**
  * The shared variable each railroad variable follows in v12 (`buildThemeDefaults`'s `a ?? b`,
  * read as `a`: every theme writes it) and in v13 (the table's light rule). The terminal fill,
@@ -87,13 +70,6 @@ const SHARED: Readonly<Record<string, string>> = {
   railroadSpecialStroke: 'tertiaryBorderColor',
   railroadRuleNameColor: 'titleColor',
 };
-
-/** v12 12.2.0's resolved `themeVariables` for `theme`. */
-function v12Vars(theme: string): Record<string, unknown> {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize({ theme });
-  return { ...v12.mermaidAPI.getConfig().themeVariables };
-}
 
 /** What v12 12.2.0 draws for each variable in `theme`. */
 function v12Drawn(theme: string): Record<string, string | undefined> {

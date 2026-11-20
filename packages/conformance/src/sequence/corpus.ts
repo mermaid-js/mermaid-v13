@@ -2,9 +2,7 @@
  * The sequence corpora: the e2e fixtures and harvested v12 spec strings, and the lexer gate's
  * set, which adds the cases (`corpus/sequence-cases.json`) and a commented copy of every source.
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
+import { corpusJson, fixturesAndSpecs } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
 
 /**
@@ -14,11 +12,7 @@ import type { CorpusItem } from '../types.ts';
  * directives that start partway through a line (#185) and `#y;` entities wherever a jison token
  * could end inside its placeholder (#208 item 5).
  */
-function sequenceCases(): CorpusItem[] {
-  return JSON.parse(
-    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/sequence-cases.json'), 'utf8')
-  ) as CorpusItem[];
-}
+const sequenceCases = (): CorpusItem[] => corpusJson('sequence-cases.json');
 
 /** The e2e fixtures, the v12 spec strings, the cases, and each of them commented. */
 export async function sequenceGateCorpus(): Promise<CorpusItem[]> {
@@ -30,16 +24,7 @@ export async function sequenceGateCorpus(): Promise<CorpusItem[]> {
 }
 
 /** The sequence corpus: the e2e fixtures and the v12 spec strings. */
-export async function sequenceCorpus(): Promise<CorpusItem[]> {
-  const items: CorpusItem[] = [];
-  for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/sequence'), 'e2e')) {
-    items.push(item);
-  }
-  const specs = JSON.parse(
-    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/sequence-v12-specs.json'), 'utf8')
-  ) as CorpusItem[];
-  return [...items, ...specs];
-}
+export const sequenceCorpus = (): Promise<CorpusItem[]> => fixturesAndSpecs('sequence');
 
 /**
  * `src` with nine comment lines after every line of the body, or one through the middle of a

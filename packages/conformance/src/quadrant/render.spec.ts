@@ -11,7 +11,7 @@ import {
   type QuadrantModel,
 } from '@mermaid-js/diagram-quadrant';
 import { REPO_ROOT, corpusFromDir } from '../index.ts';
-import { quadrantApi } from './render-api.ts';
+import { deterministicApi } from '../render-api.ts';
 
 /**
  * Render properties (DESIGN §13.2, §13.4) over the e2e quadrant corpus (#312), through the
@@ -87,9 +87,9 @@ const cases: Case[] = [];
 const families: Case[] = [];
 
 beforeAll(async () => {
-  recorded = await quadrantApi();
+  recorded = deterministicApi();
   await recorded.registerExternalDiagrams([recorder(hooked)]);
-  streaming = await quadrantApi();
+  streaming = deterministicApi();
   const dir = 'e2e/diagrams/quadrant-chart';
   for await (const item of corpusFromDir(`${REPO_ROOT}/${dir}`, dir)) {
     cases.push({ id: item.id, source: item.source, result: await renderForTest(item.source) });

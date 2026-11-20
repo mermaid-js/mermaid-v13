@@ -3,6 +3,7 @@
  * 12 handed its class lexer, built with v12's own regexes (`preprocess.ts` `cleanupText`,
  * front matter, `directiveRegex`, `cleanupComments`, `encodeEntities`) and mapped back to
  * source offsets. Dev and CI only: an independent reference for the parser's own source view.
+ * v12's preprocessing is the same for every jison type, so every grammar's lexer input is this one.
  * Flowchart's input (`../../flowchart/grammar/lexer-input.ts`) is the same less its parser's
  * `}\s*\n` rewrite, which the class parser did not have.
  */

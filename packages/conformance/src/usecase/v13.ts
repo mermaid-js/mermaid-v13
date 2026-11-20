@@ -4,7 +4,7 @@
  */
 import { detectUsecase, parseUsecase } from '@mermaid-js/diagram-usecase';
 import type { UsecaseModel } from '@mermaid-js/diagram-usecase';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { USECASE_V12_TYPES, usecaseV12Snapshot } from './v12.ts';
 import type { UsecaseSnapshot } from './v12.ts';
@@ -79,13 +79,8 @@ export function usecaseV13Snapshot(model: UsecaseModel): UsecaseSnapshot {
 }
 
 /** v13 parse for parity: the model, or a throw carrying the first error diagnostic. */
-export function parseUsecaseForParity(text: string): UsecaseModel {
-  const pre = preprocess(text);
-  const result = parseUsecase(text, { preprocessed: pre });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((x) => x.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseUsecaseForParity = (text: string): UsecaseModel =>
+  parseForParity(text, parseUsecase);
 
 export const usecaseAdapter: DiagramAdapter<UsecaseModel> = {
   id: 'usecase',

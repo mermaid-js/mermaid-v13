@@ -5,34 +5,21 @@
  * `corpus/railroad-recovery.json` and a CRLF and a commented copy of every source.
  * One corpus holds all four notations (D511); {@link notationOf} routes each source.
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { RailroadNotation } from '@mermaid-js/diagram-railroad/testing';
-import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
+import { corpusJson, fixturesAndSpecs } from '../corpus.ts';
 import { commented } from '../sequence/corpus.ts';
 import type { CorpusItem } from '../types.ts';
 
-const readItems = (file: string) =>
-  JSON.parse(readFileSync(join(REPO_ROOT, file), 'utf8')) as CorpusItem[];
-
 /** The railroad corpus: the e2e fixtures and the harvested v12 spec strings. */
-export async function railroadCorpus(): Promise<CorpusItem[]> {
-  const items: CorpusItem[] = [];
-  for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/railroad'), 'e2e')) {
-    items.push(item);
-  }
-  return [...items, ...readItems('packages/conformance/corpus/railroad-v12-specs.json')];
-}
+export const railroadCorpus = (): Promise<CorpusItem[]> => fixturesAndSpecs('railroad');
 
 /** The hand-written cases: the spec's quirks and rejected inputs, and the rules' corners. */
-export function railroadCases(): CorpusItem[] {
-  return readItems('packages/conformance/corpus/railroad-cases.json');
-}
+export const railroadCases = (): CorpusItem[] => corpusJson('railroad-cases.json');
 
 /** The recovery set (#610): documents with planted errors, per notation (`recovery.spec.ts`). */
 export function railroadRecovery(): CorpusItem[] {
-  return readItems('packages/conformance/corpus/railroad-recovery.json').map(({ id, source }) => ({
+  return corpusJson('railroad-recovery.json').map(({ id, source }) => ({
     id,
     source,
   }));

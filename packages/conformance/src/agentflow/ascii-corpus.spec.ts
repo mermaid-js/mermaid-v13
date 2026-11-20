@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { createMermaid, MermaidError } from 'mermaid';
 import type { CorpusItem } from '../types.ts';
-import { collisions, droppedTwice, overlaps, textFaults } from './ascii/checks.ts';
+import { collisions, droppedTwice, boxOverlaps, textFaults } from './ascii/checks.ts';
 import { renderAgentflowAscii, type AgentflowAsciiResult } from './ascii/render.ts';
 import { readAgentflow, type Charset } from './ascii/structure.ts';
 import { agentflowCases, agentflowCorpus } from './corpus.ts';
@@ -105,7 +105,7 @@ describe('agentflow ascii corpus properties (#551, D469, R-ASCII-9)', { timeout:
   });
 
   it('has no overlapping boxes (nodes apart; a node or flow inside a flow or apart)', () => {
-    expect(problems((c, cs) => overlaps(c.out[cs].layout))).toEqual({});
+    expect(problems((c, cs) => boxOverlaps(c.out[cs].layout))).toEqual({});
   });
 
   it('routes no line through a node, an edge label or a flow title', () => {

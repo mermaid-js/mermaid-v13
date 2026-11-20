@@ -9,32 +9,14 @@ import {
   PALETTE_LIMITS,
   PALETTE_VARIABLES,
   THEME_VARIABLES,
-  formatColor,
   loadTheme,
   parseColor,
-  type NumberedPalette,
-  type Theme,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
-import { D332_INPUTS, VOCABULARY, everyTable, paletteColours, v12Value } from './diagram-themes.ts';
-import { loadOracle } from './oracle.ts';
-
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
-  };
-}
-
-await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
-
-function v12Vars(theme: string): Record<string, unknown> {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize({ theme });
-  return { ...v12.mermaidAPI.getConfig().themeVariables };
-}
+import { D332_INPUTS, VOCABULARY, everyTable } from './diagram-themes.ts';
+import { v12Vars } from './v12-theme.ts';
+import { hex } from './hex.ts';
+import { sameAsV12, v12Palette, v13Value } from './neo-compare.ts';
 
 const OLD = v12Vars('neo');
 const neo = everyTable(await loadTheme('neo'), { cssVariables: false });
@@ -123,41 +105,6 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   ),
 };
 
-const hex = (v: unknown): string | undefined => {
-  if (typeof v !== 'string') return undefined;
-  const rgba = parseColor(v);
-  return rgba ? formatColor(rgba) : undefined;
-};
-
-function v13Value(t: Theme, name: string): string | number {
-  const kind = VOCABULARY[name]?.kind;
-  if (kind === 'padding') return t.padding(name, 15);
-  if (kind === 'length') return t.number(name);
-  return t.value(name);
-}
-
-function same(name: string): boolean {
-  const old = v12Value(OLD, name);
-  if (typeof old !== 'string' && typeof old !== 'number' && typeof old !== 'boolean') return false;
-  const kind = VOCABULARY[name]?.kind;
-  // A diagram's palette variable (xychart's plotColorPalette): v12's comma-separated list.
-  if (kind === 'palette') return paletteColours(old) === paletteColours(neo.palette(name));
-  const now = v13Value(neo, name);
-  if (kind === 'color') return hex(old) !== undefined && hex(old) === hex(now);
-  if (kind === 'length') return Number.parseFloat(String(old)) === now;
-  return String(old).trim() === String(now).trim();
-}
-
-function v12Palette(name: string): string[] {
-  if (NUMBERED_PALETTES.includes(name as never))
-    return Array.from(
-      { length: PALETTE_LIMITS[name as NumberedPalette] },
-      (_, i) => OLD[`${name}${i}`] as string
-    );
-  const list = OLD[name];
-  return Array.isArray(list) ? (list as string[]) : [];
-}
-
 describe('neo against v12 12.2.0 (#225, D151, D181)', () => {
   it('loads v12 neo', () => {
     expect(OLD.fontFamily).toBe('arial, sans-serif');
@@ -165,9 +112,11 @@ describe('neo against v12 12.2.0 (#225, D151, D181)', () => {
   });
 
   it('differs from v12 only where a decision says so', () => {
-    const vocabulary = Object.keys(VOCABULARY).filter((n) => !D332_INPUTS.includes(n) && !same(n));
+    const vocabulary = Object.keys(VOCABULARY).filter(
+      (n) => !D332_INPUTS.includes(n) && !sameAsV12(OLD, neo, n)
+    );
     const palettes = PALETTE_VARIABLES.filter((p) => !D332_INPUTS.includes(p)).filter(
-      (p) => JSON.stringify(v12Palette(p).map(hex)) !== JSON.stringify(neo.palette(p).map(hex))
+      (p) => JSON.stringify(v12Palette(OLD, p).map(hex)) !== JSON.stringify(neo.palette(p).map(hex))
     );
     expect([...vocabulary, ...palettes].sort()).toEqual(Object.keys(DIFFERENCES).sort());
   });

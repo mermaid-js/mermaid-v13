@@ -10,7 +10,7 @@ import {
 } from '@mermaid-js/diagram-packet';
 import { MermaidError, type TextRenderResult } from 'mermaid';
 import { packetGateCorpus } from '../packet/corpus.ts';
-import { packetApi } from '../packet/render-api.ts';
+import { deterministicApi } from '../render-api.ts';
 import type { Charset } from './structure.ts';
 
 // ASCII render properties over the packet gate corpus (e2e fixtures, v12 spec strings and the
@@ -38,8 +38,8 @@ const failed: Record<string, string> = {};
 let rejected = 0;
 
 beforeAll(async () => {
-  const api = await packetApi();
-  const fresh = await packetApi();
+  const api = deterministicApi();
+  const fresh = deterministicApi();
   for (const item of await packetGateCorpus()) {
     if (!detectPacket(item.source)) continue;
     const pre = preprocess(item.source);

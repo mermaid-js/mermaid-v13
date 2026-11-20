@@ -1,41 +1,25 @@
 /** The journey grammar file, read and built once (dev and CI only). */
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildLexer, parseGrammar } from '@mermaid-js/gen-grammar';
-import type { Grammar, LexToken, MappedText, ModeLexer } from '@mermaid-js/gen-grammar';
+import { loadGrammar, lexGrammar } from '../../grammar-file.ts';
+import type { LoadedGrammar, GrammarTokens } from '../../grammar-file.ts';
 import { REPO_ROOT } from '../../corpus.ts';
-import { journeyLexerInput } from './lexer-input.ts';
+import { classLexerInput } from '../../class/grammar/lexer-input.ts';
 
 export const JOURNEY_GRAMMAR_PATH = join(
   REPO_ROOT,
   'packages/diagram-journey/grammar/journey.ebnf'
 );
 
-let cached: { grammar: Grammar; lexer: ModeLexer } | undefined;
-
-export function journeyGrammar(): { grammar: Grammar; lexer: ModeLexer } {
-  if (!cached) {
-    const grammar = parseGrammar(readFileSync(JOURNEY_GRAMMAR_PATH, 'utf8'));
-    cached = { grammar, lexer: buildLexer(grammar) };
-  }
-  return cached;
+export function journeyGrammar(): LoadedGrammar {
+  return loadGrammar(JOURNEY_GRAMMAR_PATH);
 }
 
 /** jison names of the terminals the grammar spells as identifiers. */
 const JISON_NAME: Record<string, string> = { COLON: ':' };
 
-export interface GrammarTokens {
-  input: MappedText;
-  tokens: LexToken[];
-  /** Lexer-input offset where lexing failed. */
-  error: number | undefined;
-}
-
 /** The grammar lexer's tokens for a journey source. */
 export function grammarTokens(source: string): GrammarTokens {
-  const input = journeyLexerInput(source);
-  const { tokens, error } = journeyGrammar().lexer.lex(input.text);
-  return { input, tokens, error };
+  return lexGrammar(journeyGrammar(), classLexerInput(source));
 }
 
 /** The same tokens as jison `[name, image]` pairs, `['INVALID', '']` after a lexical error. */

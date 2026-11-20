@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { REPO_ROOT } from './index.ts';
+import { numericLiterals } from './literals.ts';
 
 // The quadrant layout takes every length from the resolved `quadrantChart` config (spec #289 T3,
 // pitfall 13): no file in `packages/diagram-quadrant/src/layout/` holds a length literal. The
@@ -16,15 +17,6 @@ const ALLOWED: Readonly<Record<string, string>> = {
   '90': 'the y-axis label rotation, in degrees',
   '1e-6': 'the float tolerance of the invariant checks',
 };
-
-/** The numeric literals in TypeScript source, outside comments and strings. */
-function numericLiterals(source: string): string[] {
-  const code = source
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .replace(/\/\/.*$/gm, ' ')
-    .replace(/'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`|"(?:[^"\\\n]|\\.)*"/g, "''");
-  return code.match(/(?<![\w$.])\d[\d_]*(?:\.\d+)?(?:e[-+]?\d+)?/gi) ?? [];
-}
 
 const DIR = join(REPO_ROOT, 'packages/diagram-quadrant/src/layout');
 // Fixtures and specs are not layout code.

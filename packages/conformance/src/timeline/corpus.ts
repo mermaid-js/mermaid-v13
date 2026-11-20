@@ -3,9 +3,7 @@
  * set, which adds the cases (`corpus/timeline-cases.json`) and a commented and CR-cut copy of
  * every source.
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
+import { corpusJson, fixturesAndSpecs } from '../corpus.ts';
 import { commented } from '../sequence/corpus.ts';
 import type { CorpusItem } from '../types.ts';
 
@@ -15,11 +13,7 @@ import type { CorpusItem } from '../types.ts';
  * comments jison's rules skip, case-insensitive keywords, the accessibility states, and
  * directives that start partway through a line (#185).
  */
-export function timelineCases(): CorpusItem[] {
-  return JSON.parse(
-    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/timeline-cases.json'), 'utf8')
-  ) as CorpusItem[];
-}
+export const timelineCases = (): CorpusItem[] => corpusJson('timeline-cases.json');
 
 /**
  * The e2e fixtures, the v12 spec strings, the cases, and each of them commented and CR-cut.
@@ -48,13 +42,4 @@ export function crCut(src: string, removed: string): string {
 }
 
 /** The timeline corpus: the e2e fixtures and the v12 spec and syntax-page strings. */
-export async function timelineCorpus(): Promise<CorpusItem[]> {
-  const items: CorpusItem[] = [];
-  for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/timeline'), 'e2e')) {
-    items.push(item);
-  }
-  const specs = JSON.parse(
-    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/timeline-v12-specs.json'), 'utf8')
-  ) as CorpusItem[];
-  return [...items, ...specs];
-}
+export const timelineCorpus = (): Promise<CorpusItem[]> => fixturesAndSpecs('timeline');

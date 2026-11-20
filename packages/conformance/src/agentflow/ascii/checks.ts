@@ -3,25 +3,15 @@
 // by the repair router (D78).
 import { cellWidth, repairRoutes, routeCollisions } from '@mermaid-js/core/ascii';
 import type { LayoutModel } from '@mermaid-js/core/layout';
+import { sizeFaults } from '../../ascii/flow-checks.ts';
 import type { AgentflowAsciiResult } from './render.ts';
 import { rectOf, type Rect } from './structure.ts';
 
-/** Faults in the text itself: line count, widths, trailing spaces, `\r`. */
-export function textFaults({ text, rows, columns }: AgentflowAsciiResult): string[] {
-  const lines = text === '' ? [] : text.split('\n');
-  const widest = Math.max(0, ...lines.map(cellWidth));
-  const found: string[] = [];
-  if (lines.length !== rows) found.push(`${lines.length} lines, rows ${rows}`);
-  if (widest !== columns) found.push(`widest ${widest}, columns ${columns}`);
-  lines.forEach((l, i) => {
-    if (/\s$/u.test(l)) found.push(`trailing space on line ${i + 1}`);
-  });
-  if (text.includes('\r')) found.push('\\r in text');
-  return found;
-}
+/** Faults in the text itself: line count, widths (the kit's `cellWidth`), trailing spaces, `\r`. */
+export const textFaults = (result: AgentflowAsciiResult): string[] => sizeFaults(result, cellWidth);
 
 /** Boxes that overlap: nodes apart, a node or frame inside a frame or apart. */
-export function overlaps(model: LayoutModel): string[] {
+export function boxOverlaps(model: LayoutModel): string[] {
   const rects: (Rect & { id: string; group: boolean })[] = [
     ...[...model.nodes].map(([id, n]) => ({ id, group: false, ...rectOf(n) })),
     ...[...model.groups].map(([id, g]) => ({ id, group: true, ...rectOf(g) })),
