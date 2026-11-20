@@ -7,7 +7,7 @@ import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { Diagnostic } from '@mermaid-js/core/parser-kit';
 
 /** What a diagram's parser returns: its model and its diagnostics. */
-interface ParseResult<M> {
+export interface ParseResult<M> {
   model: M;
   diagnostics: readonly Diagnostic[];
 }

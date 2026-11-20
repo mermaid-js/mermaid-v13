@@ -11,7 +11,7 @@ import type { ReferenceParser, SentenceModel } from '@mermaid-js/gen-grammar';
 import type { Oracle, OracleResult } from './oracle.ts';
 
 /** One side's verdict on a sentence. */
-interface SentenceVerdict {
+export interface SentenceVerdict {
   accepted: boolean;
   /** The AST shape, when accepted; compared as JSON. */
   ast: unknown;
@@ -19,7 +19,7 @@ interface SentenceVerdict {
   semanticError?: boolean;
 }
 
-interface SentenceDifferential {
+export interface SentenceDifferential {
   /** The type's name, which starts the run's log line. */
   name: string;
   /** The reference parser built from the grammar; the sentences are its derivations. */

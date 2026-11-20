@@ -94,7 +94,7 @@ export interface LangiumLexerOracle {
   lexText(text: string): LangiumLex;
 }
 
-interface ChevrotainToken {
+export interface ChevrotainToken {
   image: string;
   startOffset: number;
   tokenType: { name: string };
@@ -104,7 +104,7 @@ export interface ChevrotainLexResult {
   hidden?: ChevrotainToken[];
   errors: { offset: number }[];
 }
-interface LangiumLexer {
+export interface LangiumLexer {
   tokenize(text: string): ChevrotainLexResult;
 }
 interface LangiumParserV12 {

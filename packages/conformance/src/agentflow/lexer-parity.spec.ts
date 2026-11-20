@@ -3,7 +3,7 @@ import { agentflowTokens, AgentflowTokenKind, JISON_NAMES } from '@mermaid-js/di
 import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonLexerOracle, JisonToken } from '../jison/oracle.ts';
-import { agentflowGateCorpus, VARIANTS } from './corpus.ts';
+import { agentflowGateCorpus, AGENTFLOW_VARIANTS } from './corpus.ts';
 
 /**
  * Lexer-parity gate (parser-method §1, #544): the v13 agentflow lexer emits the same terminals,
@@ -42,7 +42,7 @@ import { agentflowGateCorpus, VARIANTS } from './corpus.ts';
  *   lexer (the model parity of #546 lists it).
  */
 const MERGED = new Set(['TEXT', 'EDGE_TEXT', 'STR', 'MD_STR']);
-const VARIANT = new RegExp(` \\((?:${VARIANTS.map(([s]) => s).join('|')})\\)$`);
+const VARIANT = new RegExp(` \\((?:${AGENTFLOW_VARIANTS.map(([s]) => s).join('|')})\\)$`);
 
 function normalise(tokens: JisonToken[]): JisonToken[] {
   const out: JisonToken[] = [];

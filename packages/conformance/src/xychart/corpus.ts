@@ -3,7 +3,7 @@
  * The XY chart corpora (#507): the e2e fixtures and the strings harvested from v12's
  * `xychart.jison.spec.ts` and syntax page (`corpus/xychart-v12-specs.json`), the lexer and
  * parser cases of `corpus/xychart-cases.json` (the spec's quirks, line-separator and CR cases),
- * and the lexer gate's set, which adds generated variants of every source ({@link VARIANTS}).
+ * and the lexer gate's set, which adds generated variants of every source ({@link XYCHART_VARIANTS}).
  */
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { parseXyChart, xyChartTokens, XyChartTokenKind as T } from '@mermaid-js/diagram-xychart';
@@ -60,7 +60,7 @@ export const paragraphSeparators = separated('\u2029');
  * with fewer than two characters of text and `%%` lines are left as they are, and so is a
  * source without a header line (the shared `midLineDirective` cuts every line of that).
  */
-export const midLineDirective = (src: string): string =>
+const midLineDirective = (src: string): string =>
   body(src, (b) => {
     const lines = b.split('\n');
     const header = lines.findIndex((l) => /^\s*xychart/i.test(l));
@@ -76,7 +76,7 @@ export const midLineDirective = (src: string): string =>
   });
 
 /** The generated variants of each gate source, by id suffix. */
-export const VARIANTS: readonly Variant[] = [
+export const XYCHART_VARIANTS: readonly Variant[] = [
   ['commented', commented],
   ['CR cut', (src: string): string => crCut(src, '%% c')],
   ['CR cut by a directive', (src: string): string => crCut(src, DIRECTIVE)],
@@ -113,10 +113,10 @@ export const xyChartCorpus = (): Promise<CorpusItem[]> => fixturesAndSpecs('xych
 
 /**
  * The e2e fixtures, the v12 spec strings and the cases, and each of them in every variant of
- * {@link VARIANTS} that changes it.
+ * {@link XYCHART_VARIANTS} that changes it.
  */
 export async function xyChartGateCorpus(): Promise<CorpusItem[]> {
-  return withVariants([...(await xyChartCorpus()), ...xyChartCases()], VARIANTS);
+  return withVariants([...(await xyChartCorpus()), ...xyChartCases()], XYCHART_VARIANTS);
 }
 
 /**

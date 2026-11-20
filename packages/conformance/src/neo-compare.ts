@@ -12,7 +12,7 @@ import { VOCABULARY, paletteColours, v12Value } from './diagram-themes.ts';
 import { hex } from './hex.ts';
 
 /** v12's resolved theme variables. */
-type Vars = Readonly<Record<string, unknown>>;
+export type Vars = Readonly<Record<string, unknown>>;
 
 /** `name` in `t`, read as its vocabulary kind. */
 export function v13Value(t: Theme, name: string): string | number {

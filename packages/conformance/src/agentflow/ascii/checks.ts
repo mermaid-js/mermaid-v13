@@ -11,7 +11,7 @@ import { rectOf, type Rect } from './structure.ts';
 export const textFaults = (result: AgentflowAsciiResult): string[] => sizeFaults(result, cellWidth);
 
 /** Boxes that overlap: nodes apart, a node or frame inside a frame or apart. */
-export function overlaps(model: LayoutModel): string[] {
+export function boxOverlaps(model: LayoutModel): string[] {
   const rects: (Rect & { id: string; group: boolean })[] = [
     ...[...model.nodes].map(([id, n]) => ({ id, group: false, ...rectOf(n) })),
     ...[...model.groups].map(([id, g]) => ({ id, group: true, ...rectOf(g) })),

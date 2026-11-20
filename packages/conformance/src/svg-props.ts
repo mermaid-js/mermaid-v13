@@ -86,30 +86,39 @@ export function drawnExtents(tree: SvgView): { x: number; y: number }[] {
   return out;
 }
 
+type Put = (x: number, y: number) => void;
+
+const numbers = (s: string | undefined): number[] =>
+  s === undefined ? [] : (s.match(/-?\d+(?:\.\d+)?(?:e[-+]?\d+)?/g) ?? []).map(Number);
+
+/** Each `x y` pair of a number list. */
+function pairs(p: number[], put: Put): void {
+  for (let i = 0; i + 1 < p.length; i += 2) put(p[i]!, p[i + 1]!);
+}
+
+/** A path's points: each segment's pairs, an arc's end point only. */
+function pathPoints(d: string, put: Put): void {
+  for (const seg of d.match(/[MLCQAZ][^MLCQAZ]*/g) ?? []) {
+    const p = numbers(seg.slice(1));
+    if (seg.startsWith('A')) put(p[5]!, p[6]!);
+    else pairs(p, put);
+  }
+}
+
 /** The points one element of {@link drawnExtents} draws at, in its own user units. */
-function drawnPoints(tree: SvgView, node: SvgElement, put: (x: number, y: number) => void): void {
+function drawnPoints(tree: SvgView, node: SvgElement, put: Put): void {
   const tag = tree.tag(node);
   const at = (name: string): number => Number(tree.getAttr(node, name) ?? 0);
-  const nums = (s: string | undefined): number[] =>
-    s === undefined ? [] : (s.match(/-?\d+(?:\.\d+)?(?:e[-+]?\d+)?/g) ?? []).map(Number);
   if (tag === 'rect' || tag === 'image') {
     put(at('x'), at('y'));
     put(at('x') + at('width'), at('y') + at('height'));
   } else if (tag === 'circle' || tag === 'ellipse') {
-    const rx = tag === 'circle' ? at('r') : at('rx');
-    const ry = tag === 'circle' ? at('r') : at('ry');
+    const [rx, ry] = tag === 'circle' ? [at('r'), at('r')] : [at('rx'), at('ry')];
     put(at('cx') - rx, at('cy') - ry);
     put(at('cx') + rx, at('cy') + ry);
-  } else if (tag === 'polygon' || tag === 'polyline') {
-    const p = nums(tree.getAttr(node, 'points'));
-    for (let i = 0; i + 1 < p.length; i += 2) put(p[i]!, p[i + 1]!);
-  } else if (tag === 'path') {
-    const d = tree.getAttr(node, 'd') ?? '';
-    for (const seg of d.match(/[MLCQAZ][^MLCQAZ]*/g) ?? []) {
-      const p = nums(seg.slice(1));
-      if (seg.startsWith('A')) put(p[5]!, p[6]!);
-      else for (let i = 0; i + 1 < p.length; i += 2) put(p[i]!, p[i + 1]!);
-    }
-  } else if ((tag === 'text' || tag === 'tspan') && tree.getAttr(node, 'x') !== undefined)
+  } else if (tag === 'polygon' || tag === 'polyline')
+    pairs(numbers(tree.getAttr(node, 'points')), put);
+  else if (tag === 'path') pathPoints(tree.getAttr(node, 'd') ?? '', put);
+  else if ((tag === 'text' || tag === 'tspan') && tree.getAttr(node, 'x') !== undefined)
     put(at('x'), at('y'));
 }

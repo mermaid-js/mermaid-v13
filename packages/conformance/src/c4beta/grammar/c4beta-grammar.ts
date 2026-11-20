@@ -15,7 +15,7 @@ export function c4betaGrammar(): LoadedGrammar {
 /** Lexer tokens the parser skips. */
 export const HIDDEN = new Set(['COMMENT']);
 
-export interface GrammarTokens {
+export interface C4BetaGrammarTokens {
   /** The text the lexer read: the source with front matter and directives blanked out. */
   text: string;
   /** Every token, hidden ones and the final `EOF` included. */
@@ -37,7 +37,7 @@ function blanked(src: string, ranges: readonly { start: number; end: number }[])
  * The grammar lexer's tokens for a source. Its input is the source with the front matter and
  * the directives core found blanked out (see the header of `grammar/c4beta.ebnf`).
  */
-export function grammarTokens(source: string): GrammarTokens {
+export function grammarTokens(source: string): C4BetaGrammarTokens {
   const pre = preprocess(source);
   const text = blanked(source, [
     { start: 0, end: pre.bodyStart },
@@ -48,6 +48,6 @@ export function grammarTokens(source: string): GrammarTokens {
 }
 
 /** The tokens the reference parser reads: not hidden. */
-export function parserTokens(t: GrammarTokens): LexToken[] {
+export function parserTokens(t: C4BetaGrammarTokens): LexToken[] {
   return t.tokens.filter((k) => !HIDDEN.has(k.name));
 }

@@ -65,7 +65,7 @@ export const agentflowCases = (): CorpusItem[] => corpusJson('agentflow-cases.js
 export const agentflowCorpus = (): Promise<CorpusItem[]> => fixturesAndSpecs('agentflow');
 
 /** The generated variants of each gate source, by id suffix. */
-export const VARIANTS: readonly Variant[] = [
+export const AGENTFLOW_VARIANTS: readonly Variant[] = [
   ['commented', commented],
   ['CR cut', (src: string): string => crCut(src, '%% c')],
   ['CR cut by a directive', (src: string): string => crCut(src, DIRECTIVE)],
@@ -80,8 +80,8 @@ export const VARIANTS: readonly Variant[] = [
 
 /**
  * The e2e fixtures, the v12 spec strings and the cases, and each of them in every variant of
- * {@link VARIANTS} that changes it.
+ * {@link AGENTFLOW_VARIANTS} that changes it.
  */
 export async function agentflowGateCorpus(): Promise<CorpusItem[]> {
-  return withVariants([...(await agentflowCorpus()), ...agentflowCases()], VARIANTS);
+  return withVariants([...(await agentflowCorpus()), ...agentflowCases()], AGENTFLOW_VARIANTS);
 }

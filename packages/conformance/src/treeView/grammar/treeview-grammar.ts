@@ -26,7 +26,7 @@ export const LANGIUM_NAME: Readonly<Record<string, string>> = {
 /** Lexer tokens the parser skips: Langium's hidden group. */
 export const HIDDEN = new Set(['COMMENT']);
 
-export interface GrammarTokens {
+export interface TreeViewGrammarTokens {
   /**
    * The lexer input; mapped to the source unless the box pass rewrote it (then `boxed`, and
    * its offsets are the rewrite's own).
@@ -47,7 +47,7 @@ export interface GrammarTokens {
  * reference builder serves), then v12's box-drawing pass ({@link boxReference}); the
  * grammar-lexer spec checks it against the text v12's Langium lexer read.
  */
-export function grammarTokens(source: string): GrammarTokens {
+export function grammarTokens(source: string): TreeViewGrammarTokens {
   const pre = classLexerInput(source);
   const box = boxReference(pre.text);
   if (box.kind === 'error') {
@@ -59,6 +59,6 @@ export function grammarTokens(source: string): GrammarTokens {
 }
 
 /** The tokens the reference parser reads: not hidden. */
-export function parserTokens(t: GrammarTokens): LexToken[] {
+export function parserTokens(t: TreeViewGrammarTokens): LexToken[] {
   return t.tokens.filter((k) => !HIDDEN.has(k.name));
 }
