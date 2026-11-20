@@ -34,7 +34,7 @@ import type {
   SequenceLayout,
 } from '../layout/index.ts';
 import { symbolForm } from './symbols.ts';
-import { dirOf } from '@mermaid-js/shared/ascii';
+import { dirOf, drawLineCells, finish } from '@mermaid-js/shared/ascii';
 
 /** A head drawn in one cell: v12's marker families, in text. */
 type Head = 'arrow' | 'open' | 'cross' | 'top' | 'bottom';
@@ -85,17 +85,10 @@ interface Cell {
  */
 function drawRun(canvas: Canvas, glyphs: GlyphSet, cells: readonly Cell[], dotted: boolean): void {
   const last = cells.length - 1;
-  cells.forEach((c, i) => {
-    let arms = 0;
-    if (i > 0) arms |= armOf(dirOf(c, cells[i - 1]!), 1);
-    if (i < last) arms |= armOf(dirOf(c, cells[i + 1]!), 1);
-    if (i === 0 && last > 0) arms |= armOf(dirOf(cells[1]!, c), 1);
-    if (i === last && last > 0) arms |= armOf(dirOf(cells[last - 1]!, c), 1);
-    if (last === 0) arms = armOf(LEFT, 1) | armOf(RIGHT, 1);
-    let glyph = glyphFor(arms, glyphs);
-    if (dotted && arms === (armOf(LEFT, 1) | armOf(RIGHT, 1))) glyph = glyphs.dotted.h;
-    if (dotted && arms === (armOf(UP, 1) | armOf(DOWN, 1))) glyph = glyphs.dotted.v;
-    if (glyph) canvas.draw(c.x, c.y, glyph);
+  const [intoSource, intoTarget] =
+    last > 0 ? [dirOf(cells[1]!, cells[0]!), dirOf(cells[last - 1]!, cells[last]!)] : [LEFT, RIGHT];
+  drawLineCells(canvas, glyphs, cells, intoSource, intoTarget, {
+    dotted: dotted ? glyphs.dotted : undefined,
   });
 }
 
@@ -202,7 +195,7 @@ class Drawing {
     return { ...p, x: p.x + this.dx, y: p.y + this.dy };
   }
 
-  draw(): string {
+  draw(): Canvas {
     this.boxes();
     this.lifelines();
     this.fragments();
@@ -213,7 +206,7 @@ class Drawing {
     const { title } = this.layout;
     if (title) this.labels.push(() => writeLabel(this.canvas, this.at(title)));
     for (const label of this.labels) label();
-    return this.canvas.toString();
+    return this.canvas;
   }
 
   private boxes(): void {
@@ -412,18 +405,10 @@ export function drawSequence(
   options: DrawOptions = {}
 ): string {
   const align = { message: options.messageAlign ?? 'center', note: options.noteAlign ?? 'center' };
-  let lines = new Drawing(layout, glyphs, align).draw().split('\n');
-  const title = options.title;
-  while (lines.length > 0 && lines[0] === '') lines.shift();
-  while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
-  const margin = Math.min(...lines.filter((l) => l !== '').map((l) => l.search(/\S/)));
-  if (margin > 0 && Number.isFinite(margin)) lines = lines.map((l) => l.slice(margin));
-  const text = title?.trim();
-  if (text) {
-    const width = Math.max(0, ...lines.map(cellWidth));
-    const out = new Canvas();
-    drawText(out, Math.max(0, Math.floor((width - cellWidth(text)) / 2)), 0, text);
-    lines.unshift(out.toString(), '');
-  }
-  return lines.join('\n');
+  const canvas = new Drawing(layout, glyphs, align).draw();
+  const body = finish(canvas, undefined);
+  if (!options.title?.trim()) return body;
+  // `finish` puts the title right above the drawing; sequence text has an empty line between.
+  const titled = finish(canvas, options.title);
+  return `${titled.slice(0, titled.length - body.length)}\n${body}`;
 }
