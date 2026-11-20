@@ -48,11 +48,6 @@ interface Tint {
   readonly fill?: Paint;
 }
 
-interface RelationPaint {
-  readonly line: { readonly stroke: Color; readonly strokeWidth: Length };
-  readonly label: { readonly fill: Color; readonly text: Color };
-}
-
 interface Paints {
   readonly font: ReturnType<ThemeOf['font']>;
   readonly fontSize: Length;
@@ -67,8 +62,10 @@ interface Paints {
     /** How far a divider in `stroke` is lifted: `dividerLift` under the gradient, else 0. */
     readonly lift: number;
   };
-  /** Set when there are relations to draw, so its variables are declared only then. */
-  readonly relation?: RelationPaint;
+  /** Set exactly when there are relations, the only time `drawRelation*` runs. */
+  readonly line?: { readonly stroke: Color; readonly strokeWidth: Length };
+  /** Set exactly when there are relations, as `line`. */
+  readonly label?: { readonly fill: Color; readonly text: Color };
   readonly title?: Color;
   readonly slotOf: (slot: number) => Tint | undefined;
 }
@@ -90,16 +87,13 @@ function paints(theme: ThemeOf, p: RequirementPrepared): Paints {
       shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
       lift: theme.gradient() ? M.dividerLift : 0,
     },
-    relation: relations
+    line: relations
+      ? { stroke: theme.color('relationColor'), strokeWidth: theme.length('relationStrokeWidth') }
+      : undefined,
+    label: relations
       ? {
-          line: {
-            stroke: theme.color('relationColor'),
-            strokeWidth: theme.length('relationStrokeWidth'),
-          },
-          label: {
-            fill: theme.color('relationLabelBackground'),
-            text: theme.color('relationLabelColor'),
-          },
+          fill: theme.color('relationLabelBackground'),
+          text: theme.color('relationLabelColor'),
         }
       : undefined,
     // v12's title has no rule of its own: it takes the root's `fill: textColor`.
@@ -131,13 +125,11 @@ export function renderRequirement(
   // around it (`setupViewPortForSVG`; D218, D652).
   const title = p.title && titleAt(p.title, layout.width, M.titleMargin);
   openRoot(scene, model, titledViewBox(layout, title, M.viewBoxPadding));
-  // `relation` is set exactly when `p.relations` is not empty.
-  const rel = scene.paint.relation;
   w.open('g', { class: 'edgePaths', fill: 'none' });
-  if (rel) for (const r of p.relations) drawRelation(scene, rel, r);
+  for (const r of p.relations) drawRelation(scene, r);
   w.close();
   w.open('g', { class: 'edgeLabels' });
-  if (rel) for (const r of p.relations) drawRelationLabel(scene, rel, r);
+  for (const r of p.relations) drawRelationLabel(scene, r);
   w.close();
   w.open('g', { class: 'nodes', fill: scene.paint.box.text });
   for (const box of p.boxes) drawBox(scene, box);
@@ -170,9 +162,10 @@ function openRoot(
   });
 }
 
-function drawRelation({ w, layout, p }: Scene, paint: RelationPaint, r: RelationView): void {
+function drawRelation({ w, layout, p, paint }: Scene, r: RelationView): void {
   const route = layout.edges.get(r.id);
   if (!route || route.points.length < 2) return;
+  const line = paint.line!;
   // A self-loop's legs are short: rounded corners, whatever the curve (as class).
   const path = routePath(w, route.points, r.source === r.target ? 'rounded' : p.curve, 0, 0);
   w.outline('edge', 'path', {
@@ -181,8 +174,8 @@ function drawRelation({ w, layout, p }: Scene, paint: RelationPaint, r: Relation
     'data-id': r.dataId,
     'data-ast': r.id,
     d: path.d,
-    stroke: paint.line.stroke,
-    'stroke-width': paint.line.strokeWidth,
+    stroke: line.stroke,
+    'stroke-width': line.strokeWidth,
     'stroke-dasharray': r.dashed ? DASH : undefined,
   });
   // `sdx`/`edx` point the way a marker points, into the box; the marker is drawn out from it.
@@ -191,20 +184,21 @@ function drawRelation({ w, layout, p }: Scene, paint: RelationPaint, r: Relation
       ? { x: path.sx, y: path.sy, ux: -path.sdx, uy: -path.sdy }
       : { x: path.ex, y: path.ey, ux: -path.edx, uy: -path.edy };
   // A px layout always has the markers it made room for (only a cell layout has none).
-  if (p.markers) drawMarker(w, r.marker, end, paint.line.stroke, p.markers, r.dataId);
+  if (p.markers) drawMarker(w, r.marker, end, line.stroke, p.markers, r.dataId);
 }
 
 /**
  * A relation's label as the shared tag (D626–D628): bordered 1 px solid in the relation colour,
  * solid on dashed lines too, and as large as the room the layout reserved (`labelPatch`, D629).
  */
-function drawRelationLabel({ w, layout, ctx }: Scene, paint: RelationPaint, r: RelationView): void {
+function drawRelationLabel({ w, layout, ctx, paint }: Scene, r: RelationView): void {
   const at = layout.edges.get(r.id)?.label;
   if (!at || r.label.width === 0) return;
+  const label = paint.label!;
   edgeLabel(w, r.label, at, r.dataId, {
-    fill: paint.label.fill,
-    stroke: paint.line.stroke,
-    text: { fill: paint.label.text },
+    fill: label.fill,
+    stroke: paint.line!.stroke,
+    text: { fill: label.text },
     patch: (ctx.units ?? pxProfile).builder.labelPatch,
   });
 }
