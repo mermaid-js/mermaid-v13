@@ -18,6 +18,7 @@ import {
   atLineStart,
   keywordCompletions,
   span,
+  statementKeyword,
   tokenBefore,
   wordRange,
 } from '@mermaid-js/shared/parser/facet';
@@ -37,13 +38,6 @@ interface Item extends TypedKeywordItem {
   readonly lineStart?: true;
 }
 
-const statement = (kind: number, label: string, insert = `${label} `): Item => ({
-  kind,
-  label,
-  item: 'keyword',
-  insert,
-  lineStart: true,
-});
 const op = (kind: number, label: string, detail?: string): Item => ({
   kind,
   label,
@@ -59,11 +53,11 @@ const call = (kind: number, label: string): Item => ({
 
 /** Items every notation has: the header statements. */
 const STATEMENTS: readonly Item[] = [
-  statement(T.Title, 'title'),
-  statement(T.AccTitle, 'accTitle', 'accTitle: '),
+  statementKeyword(T.Title, 'title'),
+  statementKeyword(T.AccTitle, 'accTitle', 'accTitle: '),
   // `accDescr` takes one line or a block: both forms are offered.
-  statement(T.AccDescr, 'accDescr:', 'accDescr: '),
-  statement(T.AccDescr, 'accDescr {', 'accDescr { }'),
+  statementKeyword(T.AccDescr, 'accDescr:', 'accDescr: '),
+  statementKeyword(T.AccDescr, 'accDescr {', 'accDescr { }'),
 ];
 
 /** Each notation's own items, in the order they are offered. */

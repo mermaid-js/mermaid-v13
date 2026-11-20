@@ -4,7 +4,7 @@
  */
 import { Kind } from '@mermaid-js/core/parser-kit';
 import type { TokenStream } from '@mermaid-js/core/parser-kit';
-import { statementTokens } from '@mermaid-js/shared/parser/facet';
+import { statementKeyword, statementTokens } from '@mermaid-js/shared/parser/facet';
 import type { TypedKeywordItem } from '@mermaid-js/shared/parser/facet';
 import type { ArchitectureModel, ArchitectureSide } from '../model.ts';
 import { ARCHITECTURE_TRIVIA, T } from '../parser/tokens.ts';
@@ -21,14 +21,6 @@ export interface KeywordItem extends TypedKeywordItem {
   readonly afterArrow?: true;
 }
 
-const statement = (kind: number, label: string, insert = `${label} `): KeywordItem => ({
-  kind,
-  label,
-  item: 'keyword',
-  insert,
-  lineStart: true,
-});
-
 /** What each side is called in details and hover. */
 export const SIDE_NAMES: Readonly<Record<ArchitectureSide, string>> = {
   L: 'left',
@@ -44,14 +36,14 @@ export const SIDE_NAMES: Readonly<Record<ArchitectureSide, string>> = {
  */
 export const ITEMS: readonly KeywordItem[] = [
   { kind: T.ArchitectureBeta, label: 'architecture-beta', item: 'keyword' },
-  statement(T.Service, 'service'),
-  statement(T.Group, 'group'),
-  statement(T.Junction, 'junction'),
-  statement(T.Align, 'align'),
-  statement(T.Title, 'title'),
-  statement(T.AccTitle, 'accTitle', 'accTitle: '),
-  statement(T.AccDescr, 'accDescr:', 'accDescr: '),
-  statement(T.AccDescr, 'accDescr {', 'accDescr { }'),
+  statementKeyword(T.Service, 'service'),
+  statementKeyword(T.Group, 'group'),
+  statementKeyword(T.Junction, 'junction'),
+  statementKeyword(T.Align, 'align'),
+  statementKeyword(T.Title, 'title'),
+  statementKeyword(T.AccTitle, 'accTitle', 'accTitle: '),
+  statementKeyword(T.AccDescr, 'accDescr:', 'accDescr: '),
+  statementKeyword(T.AccDescr, 'accDescr {', 'accDescr { }'),
   { kind: T.Row, label: 'row', item: 'keyword', insert: 'row ' },
   { kind: T.Column, label: 'column', item: 'keyword', insert: 'column ' },
   { kind: T.In, label: 'in', item: 'keyword', insert: 'in ' },

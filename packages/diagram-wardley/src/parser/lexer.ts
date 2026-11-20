@@ -53,6 +53,7 @@ import {
   LPAREN,
   LT,
   PERCENT,
+  PLUS,
   RBRACE,
   RBRACKET,
   RPAREN,
@@ -66,7 +67,6 @@ import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { KEYWORDS, STRATEGIES, T } from './tokens.ts';
 
 const HEADER = 'wardley-beta';
-const PLUS = 0x2b;
 
 /** The one-character keywords but `-`, by character. */
 const PUNCTUATION: ReadonlyMap<number, number> = new Map([

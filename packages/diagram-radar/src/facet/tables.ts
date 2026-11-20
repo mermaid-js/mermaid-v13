@@ -2,7 +2,7 @@
  * The radar facet's completion table and shared helpers (DESIGN §4.5, D95). Keyword docs are
  * not here: they come from the grammar file (`generated/docs.ts`).
  */
-import type { TypedKeywordItem } from '@mermaid-js/shared/parser/facet';
+import { statementKeyword, type TypedKeywordItem } from '@mermaid-js/shared/parser/facet';
 import type { RadarAxisNode, RadarDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 export { tokenBefore } from '@mermaid-js/shared/parser/facet';
@@ -14,29 +14,21 @@ export interface KeywordItem extends TypedKeywordItem {
   readonly lineStart?: true;
 }
 
-const statement = (kind: number, label: string, insert = `${label} `): KeywordItem => ({
-  kind,
-  label,
-  item: 'keyword',
-  insert,
-  lineStart: true,
-});
-
 /** Everything completion offers but axis names, in the order it is offered. */
 export const ITEMS: readonly KeywordItem[] = [
   { kind: T.RadarBeta, label: 'radar-beta', item: 'keyword' },
-  statement(T.Axis, 'axis'),
-  statement(T.Curve, 'curve'),
-  statement(T.Title, 'title'),
-  statement(T.AccTitle, 'accTitle', 'accTitle: '),
+  statementKeyword(T.Axis, 'axis'),
+  statementKeyword(T.Curve, 'curve'),
+  statementKeyword(T.Title, 'title'),
+  statementKeyword(T.AccTitle, 'accTitle', 'accTitle: '),
   // `accDescr` takes one line or a block: both forms are offered.
-  statement(T.AccDescr, 'accDescr:', 'accDescr: '),
-  statement(T.AccDescr, 'accDescr {', 'accDescr { }'),
-  statement(T.ShowLegend, 'showLegend'),
-  statement(T.Ticks, 'ticks'),
-  statement(T.Max, 'max'),
-  statement(T.Min, 'min'),
-  statement(T.Graticule, 'graticule'),
+  statementKeyword(T.AccDescr, 'accDescr:', 'accDescr: '),
+  statementKeyword(T.AccDescr, 'accDescr {', 'accDescr { }'),
+  statementKeyword(T.ShowLegend, 'showLegend'),
+  statementKeyword(T.Ticks, 'ticks'),
+  statementKeyword(T.Max, 'max'),
+  statementKeyword(T.Min, 'min'),
+  statementKeyword(T.Graticule, 'graticule'),
   { kind: T.Boolean, label: 'true', item: 'constant' },
   { kind: T.Boolean, label: 'false', item: 'constant' },
   { kind: T.GraticuleValue, label: 'circle', item: 'constant' },

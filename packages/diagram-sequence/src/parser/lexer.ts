@@ -37,6 +37,7 @@ import {
   LT,
   PERCENT,
   PIPE,
+  PLUS,
   type Probe,
   RBRACE,
   RPAREN,
@@ -214,8 +215,6 @@ const isMenuStop = (c: number) =>
 
 /** A blank of `((?!\n)\s)`. */
 const isLineBlank = (c: number) => c !== LF && isSpace(c);
-
-const PLUS = 0x2b;
 
 /** How v12's lexer read its text (see `StateLexerOptions`). */
 const OPTIONS: StateLexerOptions = { charsPerToken: 4, crlf: 'keep', dropSpace: false };

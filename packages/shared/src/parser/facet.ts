@@ -414,6 +414,22 @@ export interface TypedKeywordItem extends DetailedKeywordItem {
   readonly item: CompletionKind;
 }
 
+/**
+ * A statement keyword: offered only as the first word of its line (`lineStart`), and inserting
+ * `insert`, by default its label and a blank.
+ */
+export const statementKeyword = (
+  kind: number,
+  label: string,
+  insert = `${label} `
+): TypedKeywordItem & { readonly lineStart: true } => ({
+  kind,
+  label,
+  item: 'keyword',
+  insert,
+  lineStart: true,
+});
+
 /** What {@link keywordItem} reads of a table row. */
 export interface KeywordRow {
   readonly label: string;

@@ -49,6 +49,7 @@ import {
   LBRACKET,
   LF,
   PERCENT,
+  PLUS,
   QUOTE,
   RBRACE,
   RBRACKET,
@@ -67,7 +68,6 @@ const S = { INITIAL: 0, BOL: 1 } as const;
 /** Start condition names by number, as jison names them, for the probe's mode (R-LANG-7). */
 const S_NAMES = ['INITIAL', 'bol'];
 
-const PLUS = 0x2b;
 const APOS = "'";
 
 /** Not in `[^#\n;]` (a title). */
