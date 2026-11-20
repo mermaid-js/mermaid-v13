@@ -26,7 +26,6 @@ import { bisect, conjugateGradient, nelderMead, norm2, zeros, zerosM } from './f
 export interface Area {
   readonly sets: readonly string[];
   readonly size: number;
-  readonly weight?: number;
 }
 
 /** A circle per set id, in venn.js's key order. */
@@ -305,7 +304,7 @@ function greedyLayout(areas: readonly Area[]): Solution {
 
   // map each set to a list of all the other sets that overlap it
   for (const current of pairs) {
-    let weight = current.weight ?? 1.0;
+    let weight = 1;
     const left = current.sets[0]!;
     const right = current.sets[1]!;
 
@@ -401,7 +400,7 @@ function greedyLayout(areas: readonly Area[]): Solution {
 
 /**
  * The squared difference between the overlaps the circles have and the sizes `overlaps` want
- * (sets are skipped), each weighted.
+ * (sets are skipped).
  */
 export function lossFunction(circles: Readonly<Solution>, overlaps: readonly Area[]): number {
   let output = 0;
@@ -417,8 +416,7 @@ export function lossFunction(circles: Readonly<Solution>, overlaps: readonly Are
       overlap = intersectionArea(area.sets.map((d) => circles[d]!));
     }
 
-    const weight = area.weight ?? 1.0;
-    output += weight * (overlap - area.size) * (overlap - area.size);
+    output += (overlap - area.size) * (overlap - area.size);
   }
 
   return output;

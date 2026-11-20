@@ -40,13 +40,9 @@ export interface Solved {
  * Lays out `areas` in `box`. Every set an overlap names must be one of `areas` with a size
  * above 0; no areas give no circles.
  */
-export function solveVenn(
-  areas: readonly Area[],
-  box: SolveBox,
-  random: () => number = seededRandom()
-): Solved {
+export function solveVenn(areas: readonly Area[], box: SolveBox): Solved {
   if (areas.length === 0) return { circles: nullRecord<SetCircle>(), centres: new Map() };
-  const solution = normalizeSolution(fitCircles(areas, { random }), ORIENTATION);
+  const solution = normalizeSolution(fitCircles(areas, { random: seededRandom() }), ORIENTATION);
   const circles = scaleSolution(
     solution as Record<string, Circle>,
     box.width,
