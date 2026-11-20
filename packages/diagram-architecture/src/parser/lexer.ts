@@ -51,7 +51,7 @@ import {
   RPAREN,
 } from '@mermaid-js/core/parser-kit';
 import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
-import { isBreak, RuleLexer, SKIP } from '@mermaid-js/shared/parser/rule';
+import { idEnd, isBreak, RuleLexer, SKIP } from '@mermaid-js/shared/parser/rule';
 import type { RuleLexerOptions } from '@mermaid-js/shared/parser/rule';
 import { KEYWORDS, T } from './tokens.ts';
 
@@ -102,7 +102,7 @@ class ArchitectureLexer extends RuleLexer {
   private common(p: number, c: number): number {
     let e = -1;
     if (c === DQUOTE || c === APOSTROPHE) e = this.string(p, c);
-    if (e < 0 && isWord(c)) e = this.match(T.Id, this.id(p));
+    if (e < 0 && isWord(c)) e = this.match(T.Id, idEnd(this.text, this.n, p));
     if (e < 0 && isBreak(c)) e = this.match(Kind.Newline, p + this.newline(p));
     if (e < 0 && isBlank(c)) e = this.match(SKIP, this.blanks(p));
     if (e < 0 && c === PERCENT && this.text.charCodeAt(p + 1) === PERCENT)
@@ -125,27 +125,7 @@ class ArchitectureLexer extends RuleLexer {
         : this.match(T.Dash, p + 1);
     }
     if (c === COLON) return this.match(T.Colon, p + 1);
-    for (const [word, kind] of KEYWORDS) {
-      if (!this.text.startsWith(word, p)) continue;
-      const q = p + word.length;
-      const end = this.id(p);
-      return end > q ? this.match(T.Id, end) : this.match(kind, q);
-    }
-    return -1;
-  }
-
-  /** ID: `[\w]([-\w]*\w)?` from `p` (a `\w`): the `[-\w]` run without its trailing dashes. */
-  private id(p: number): number {
-    const { text, n } = this;
-    let j = p + 1;
-    let end = j;
-    while (j < n) {
-      const c = text.charCodeAt(j);
-      if (isWord(c)) end = ++j;
-      else if (c === DASH) j++;
-      else break;
-    }
-    return end;
+    return this.keywordOrId(p, KEYWORDS, T.Id);
   }
 
   /** ARCH_ICON: `\([\w-:]+\)`. */
