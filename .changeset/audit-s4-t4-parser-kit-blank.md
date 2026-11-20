@@ -1,5 +1,4 @@
 ---
-'@mermaid-js/core': patch
 '@mermaid-js/diagram-flowchart': patch
 '@mermaid-js/diagram-state': patch
 ---
