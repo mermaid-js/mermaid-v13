@@ -2,7 +2,7 @@
  * The wardley facet's completion table and shared helpers (DESIGN §4.5, D95). Keyword docs are
  * not here: they come from the grammar file (`generated/docs.ts`).
  */
-import type { CompletionKind } from '@mermaid-js/core/parser-kit';
+import type { TypedKeywordItem } from '@mermaid-js/shared/parser/facet';
 import type {
   WardleyAnchorNode,
   WardleyComponentNode,
@@ -19,14 +19,7 @@ export { span } from '@mermaid-js/shared/parser/facet';
 export { code } from '@mermaid-js/shared/parser/facet';
 
 /** An item offered when the parser expects `kind`. */
-export interface KeywordItem {
-  readonly kind: number;
-  readonly label: string;
-  readonly item: CompletionKind;
-  /** Text inserted, when it is not the label. */
-  readonly insert?: string;
-  /** One short line next to the label. */
-  readonly detail?: string;
+export interface KeywordItem extends TypedKeywordItem {
   /** Offered only as the first word of its line (the statements). */
   readonly lineStart?: true;
   /** A `(strategy)`: offered only where a strategy may still come (not after one). */

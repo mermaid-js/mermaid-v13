@@ -3,22 +3,16 @@
  * here: they come from the grammar file (`generated/docs.ts`).
  */
 import { Kind } from '@mermaid-js/core/parser-kit';
-import type { CompletionKind, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { TokenStream } from '@mermaid-js/core/parser-kit';
 import { statementTokens } from '@mermaid-js/shared/parser/facet';
+import type { TypedKeywordItem } from '@mermaid-js/shared/parser/facet';
 import type { ArchitectureModel, ArchitectureSide } from '../model.ts';
 import { ARCHITECTURE_TRIVIA, T } from '../parser/tokens.ts';
 
 const LINE_BREAK = new Set<number>([Kind.Newline]);
 
 /** An item offered when the parser expects `kind`. */
-export interface KeywordItem {
-  readonly kind: number;
-  readonly label: string;
-  readonly item: CompletionKind;
-  /** Text inserted, when it is not the label. */
-  readonly insert?: string;
-  /** One short line next to the label. */
-  readonly detail?: string;
+export interface KeywordItem extends TypedKeywordItem {
   /** Offered only as the first word of its line (the statements). */
   readonly lineStart?: true;
   /** Offered only right after the left-hand side (an arrow that starts with `<`). */

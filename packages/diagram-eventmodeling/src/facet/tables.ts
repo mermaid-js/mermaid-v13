@@ -2,7 +2,7 @@
  * The event modeling facet's completion table and shared helpers (DESIGN §4.5, D95). Keyword
  * docs are not here: they come from the grammar file (`generated/docs.ts`).
  */
-import { type CompletionKind, Kind, type TokenStream } from '@mermaid-js/core/parser-kit';
+import { Kind, type TokenStream } from '@mermaid-js/core/parser-kit';
 import type { EventModelDocument, EventModelFrameNode } from '../parser/ast.ts';
 import {
   DATA_TYPES,
@@ -14,20 +14,14 @@ import {
 } from '../parser/tokens.ts';
 import { defaultLaneLabel } from '../structure.ts';
 import { tokenBefore } from '@mermaid-js/shared/parser/facet';
+import type { TypedKeywordItem } from '@mermaid-js/shared/parser/facet';
 export { inside } from '@mermaid-js/shared/parser/facet';
 export { tokenBefore } from '@mermaid-js/shared/parser/facet';
 export { span } from '@mermaid-js/shared/parser/facet';
 export { code } from '@mermaid-js/shared/parser/facet';
 
 /** An item offered when the parser expects `kind`. */
-export interface KeywordItem {
-  readonly kind: number;
-  readonly label: string;
-  readonly item: CompletionKind;
-  /** Text inserted, when it is not the label. */
-  readonly insert?: string;
-  /** One short line next to the label. */
-  readonly detail?: string;
+export interface KeywordItem extends TypedKeywordItem {
   /**
    * A `title`, `accTitle` or `accDescr`: offered only after a blank that follows an earlier
    * token on its line, the one place the lexer reads them (at a line start they are names).
