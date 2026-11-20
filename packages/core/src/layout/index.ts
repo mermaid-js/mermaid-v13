@@ -41,3 +41,4 @@ export {
   type LayoutMetrics,
   type UnitProfile,
 } from './units.ts';
+export { growRect } from './rect.ts';

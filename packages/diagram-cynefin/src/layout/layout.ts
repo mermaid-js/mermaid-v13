@@ -16,8 +16,9 @@ import type { CynefinDomain, CynefinDomainName, CynefinModel } from '../model.ts
 import { cynefinThemeLengths, type CynefinThemeLengths } from '../theme/lengths.ts';
 import { cliffCurve, confusionEllipse, foldCurve, horizonCurve } from './boundaries.ts';
 import { cynefinOptions, type CynefinOptions } from './config.ts';
-import { cubicBox, grow, mapY, pointsBox, quadBox } from './geometry.ts';
+import { cubicBox, mapY, pointsBox, quadBox } from './geometry.ts';
 import { RectUnion } from '@mermaid-js/shared/layout';
+import { growRect } from '@mermaid-js/core/layout';
 import { DOMAIN_META, domainTitle } from '../domains.ts';
 import { ARROWS, BADGES, FONTS, LABELS, TITLE } from './metrics.ts';
 import { resolveSeed } from './random.ts';
@@ -396,17 +397,17 @@ function boundsOf(l: Omit<CynefinLayout, 'bounds' | 'viewBox'>): CynefinLayout['
   box.add({ x: -p, y: -p, width: l.width + 2 * p, height: l.height + 2 * p });
   for (const q of l.quadrants) box.add(q);
   const ellipse = { x: e.center.x - e.rx, y: e.center.y - e.ry, width: 2 * e.rx, height: 2 * e.ry };
-  box.add(grow(ellipse, e.strokeWidth / 2));
-  box.add(grow(cubicBox(l.boundaries.fold), strokes.boundary / 2));
-  box.add(grow(cubicBox(l.boundaries.horizon), strokes.boundary / 2));
-  box.add(grow(cubicBox(l.boundaries.cliff), strokes.cliff / 2));
+  box.add(growRect(ellipse, e.strokeWidth / 2));
+  box.add(growRect(cubicBox(l.boundaries.fold), strokes.boundary / 2));
+  box.add(growRect(cubicBox(l.boundaries.horizon), strokes.boundary / 2));
+  box.add(growRect(cubicBox(l.boundaries.cliff), strokes.cliff / 2));
   for (const t of [...l.labels, ...l.subtitles]) box.add(t);
   for (const b of l.overflow ? [...l.items, l.overflow] : l.items) {
-    box.add(grow(b, strokes.item / 2));
+    box.add(growRect(b, strokes.item / 2));
     box.add(b.label);
   }
   for (const t of l.transitions) {
-    box.add(grow(quadBox(t.start, t.control, t.end), strokes.arrow / 2));
+    box.add(growRect(quadBox(t.start, t.control, t.end), strokes.arrow / 2));
     box.add(pointsBox(t.head));
     if (t.label) box.add(t.label);
   }

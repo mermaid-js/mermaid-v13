@@ -5,7 +5,8 @@
  * drawn item, label, curve and arrowhead inside the bounds (D361); lengths in px.
  */
 import type { CynefinDomainName, CynefinModel } from '../model.ts';
-import { cubicBox, grow, pointsBox, quadBox } from './geometry.ts';
+import { cubicBox, pointsBox, quadBox } from './geometry.ts';
+import { growRect } from '@mermaid-js/core/layout';
 import { drawnItems } from './layout.ts';
 import { ARROWS, BADGES } from './metrics.ts';
 import type { CynefinBadge, CynefinLayout, Point, Rect } from './types.ts';
@@ -83,23 +84,26 @@ export function cynefinLayoutViolations(model: CynefinModel, layout: CynefinLayo
   };
   const e = layout.confusion;
   inside(
-    grow(
+    growRect(
       { x: e.center.x - e.rx, y: e.center.y - e.ry, width: 2 * e.rx, height: 2 * e.ry },
       e.strokeWidth / 2
     ),
     'the confusion ellipse'
   );
   const { fold, horizon, cliff } = layout.boundaries;
-  inside(grow(cubicBox(fold), layout.strokes.boundary / 2), 'the fold');
-  inside(grow(cubicBox(horizon), layout.strokes.boundary / 2), 'the horizon');
-  inside(grow(cubicBox(cliff), layout.strokes.cliff / 2), 'the cliff');
+  inside(growRect(cubicBox(fold), layout.strokes.boundary / 2), 'the fold');
+  inside(growRect(cubicBox(horizon), layout.strokes.boundary / 2), 'the horizon');
+  inside(growRect(cubicBox(cliff), layout.strokes.cliff / 2), 'the cliff');
   for (const t of [...layout.labels, ...layout.subtitles]) inside(t, `the ${t.domain} text`);
   for (const b of badges(layout)) {
-    inside(grow(b, layout.strokes.item / 2), `a ${b.domain} badge`);
+    inside(growRect(b, layout.strokes.item / 2), `a ${b.domain} badge`);
     inside(b.label, `a ${b.domain} badge's label`);
   }
   for (const t of layout.transitions) {
-    inside(grow(quadBox(t.start, t.control, t.end), layout.strokes.arrow / 2), `${t.ast}'s line`);
+    inside(
+      growRect(quadBox(t.start, t.control, t.end), layout.strokes.arrow / 2),
+      `${t.ast}'s line`
+    );
     inside(pointsBox(t.head), `${t.ast}'s arrowhead`);
     if (t.label) inside(t.label, `${t.ast}'s label`);
   }

@@ -27,16 +27,16 @@ import {
 } from './metrics.ts';
 import { classFont, textWidth, truncate } from './text.ts';
 import { tileTreemap, type Tile } from './tiles.ts';
-import {
-  grow,
-  type Rect,
-  type TreemapLayout,
-  type TreemapLeafLayout,
-  type TreemapSectionLayout,
-  type TreemapText,
-  type TreemapTextAnchor,
+import type {
+  Rect,
+  TreemapLayout,
+  TreemapLeafLayout,
+  TreemapSectionLayout,
+  TreemapText,
+  TreemapTextAnchor,
 } from './types.ts';
 import { RectUnion } from '@mermaid-js/shared/layout';
+import { growRect } from '@mermaid-js/core/layout';
 
 /** What the layout reads from the render context (`warn` for `TREEMAP_CONFIG_INVALID`). */
 export type TreemapLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
@@ -100,13 +100,13 @@ export function layoutTreemap(model: TreemapModel, ctx: TreemapLayoutContext): T
 
   const box = new Box();
   for (const s of sections) {
-    box.add(grow(s.box, M.sectionStroke / 2));
+    box.add(growRect(s.box, M.sectionStroke / 2));
     box.add(s.header);
     if (s.label) box.add(s.label.box);
     if (s.valueText) box.add(s.valueText.box);
   }
   for (const l of leaves) {
-    box.add(grow(l.box, M.leafStroke / 2));
+    box.add(growRect(l.box, M.leafStroke / 2));
     if (l.label) box.add(l.label.box);
     if (l.valueText) box.add(l.valueText.box);
   }
@@ -124,7 +124,7 @@ export function layoutTreemap(model: TreemapModel, ctx: TreemapLayoutContext): T
     sections,
     leaves,
     ...(title ? { title } : {}),
-    bounds: grow(box.rect(), config.diagramPadding),
+    bounds: growRect(box.rect(), config.diagramPadding),
   };
 }
 
