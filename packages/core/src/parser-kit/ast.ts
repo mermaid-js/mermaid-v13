@@ -23,6 +23,12 @@ import type { Range } from './positions.ts';
 export type AstId = string;
 
 /**
+ * The id a lean parse without ids (`LeanParseOptions.astIds` unset) puts in the model where it
+ * would carry an id that only `data-ast` reads. A draw without `data-ast` never writes it.
+ */
+export const NO_AST_ID: AstId = '';
+
+/**
  * Base of every AST node. Diagrams export one interface per node kind that extends this
  * with a literal `type` and their own fields (e.g. `FlowNodeStmt`, `FlowEdge`).
  */

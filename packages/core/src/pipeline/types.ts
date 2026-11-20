@@ -6,7 +6,7 @@ import type { LayoutGraph, LayoutModel } from '../layout/types.ts';
 import type { UnitProfile } from '../layout/units.ts';
 import type { Limits } from '../limits/index.ts';
 import type { AstNode } from '../parser-kit/ast.ts';
-import type { ParseResult } from '../parser-kit/result.ts';
+import type { LeanParseResult, ParseOutput, ParseResult } from '../parser-kit/result.ts';
 import type { PreprocessResult } from '../preprocess/preprocess.ts';
 import type { EmbeddedSvg, OutlinePaint } from '../svg/types.ts';
 import type { SvgFragment, SvgWriter } from '../svg/writer.ts';
@@ -42,6 +42,13 @@ export interface DiagramParseContext {
   readonly claims?: readonly string[];
   /** Integrator limits (R-SEC-5) the parse enforces (edges, nodes, depth); defaults when absent. */
   readonly limits?: Limits;
+  /**
+   * Only the drawing reads this parse: the plugin may parse lean (`LeanParseOptions`) and return
+   * a `LeanParseResult`. A plugin that ignores it and returns a full result is correct too.
+   */
+  readonly lean?: boolean;
+  /** With {@link lean}: the draw writes `data-ast`, so the model needs its AST ids. */
+  readonly astIds?: boolean;
 }
 
 /**
@@ -77,6 +84,11 @@ export interface RenderContext {
   readonly availableWidth?: number;
   /** Integrator-only limits (R-SEC-5): `resolveLimits(initialize config, limits option)`. */
   readonly limits: Limits;
+  /**
+   * `false`: the draw writes no `data-ast` attribute (R-PARSE-8); the writer drops it. Absent or
+   * `true`: it is written as the plugin gives it.
+   */
+  readonly dataAst?: boolean;
   /**
    * The API object's icon packs (D294), for an icons extension's hooks: a view without the
    * loader `ResourceRequest.iconPacks` has, so a draw cannot start one (R-ARCH-6).
@@ -230,10 +242,20 @@ export interface DiagramPlugin<M = unknown, L = unknown> {
    * traits and never by theme name. Core passes it to `createTheme` for the diagram's renders.
    */
   readonly theme?: DiagramThemeTable;
-  /** `text` is the whole source; every range is into it. Never throws. */
-  parse(text: string, ctx: DiagramParseContext): ParseResult<M, AstNode>;
+  /**
+   * `text` is the whole source; every range is into it. Never throws. A `LeanParseResult` only
+   * when `ctx.lean` asks for one.
+   */
+  parse(text: string, ctx: DiagramParseContext): ParseResult<M, AstNode> | LeanParseResult<M>;
+  /**
+   * The plugin's `parse` honours `DiagramParseContext.lean` and `astIds`, and a lean parse
+   * without `astIds` keeps every AST id its drawing reads other than as `data-ast`. `mermaid`
+   * then draws it without `data-ast` unless the integrator or a registered extension needs it
+   * (R-PARSE-8); a plugin without it keeps `data-ast`, as its parse always gives the ids.
+   */
+  readonly leanParse?: boolean;
   /** Resources the parsed diagram needs beyond the plugin and the layout engine. */
-  resources?(parse: ParseResult<M, AstNode>, config: ResolvedConfig): readonly Resource[];
+  resources?(parse: ParseOutput<M>, config: ResolvedConfig): readonly Resource[];
   /**
    * Every text the layout hands to core's label layout for `model`, as written (D176, D178).
    * An extension that loads an engine for a delimiter (math's `$$`) scans these instead of

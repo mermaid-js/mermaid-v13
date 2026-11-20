@@ -36,12 +36,16 @@ export type { KindSet } from './cursor.ts';
 export { syncTo } from './recovery.ts';
 export { significantTokens, skipTo } from './view.ts';
 export type { TokenView } from './view.ts';
-export { AstIds, nodeId } from './ast.ts';
+export { AstIds, NO_AST_ID, nodeId } from './ast.ts';
 export type { AstCallback, AstId, AstMenu, AstNode } from './ast.ts';
+export { leanOf } from './lean.ts';
 export { ParseState } from './result.ts';
 export type {
   EmbeddedBlock,
+  LeanParseOptions,
+  LeanParseResult,
   ParseOptions,
+  ParseOutput,
   ParseResult,
   StatementSpan,
   SymbolOccurrence,

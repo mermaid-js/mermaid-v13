@@ -5,7 +5,7 @@
 import { MermaidError, UnsupportedFormatError } from '@mermaid-js/core';
 import { INTEGRATOR_ONLY_KEYS } from '@mermaid-js/core/config';
 import { loadTheme, resolveThemeName } from '@mermaid-js/core/theme';
-import type { Analysis } from './analysis-cache.ts';
+import type { Analysis, Parsed } from './analysis-cache.ts';
 import { sectionOf } from './analyser.ts';
 import type { ParseOptions, ParseResult12, PreloadRequest } from './api-types.ts';
 import { directiveConfig, mergeInto, type Plain, type Snapshot } from './config-snapshot.ts';
@@ -37,26 +37,32 @@ export function checkFormat(k: Session, text: string, s: Snapshot, f = 'svg'): '
   throw new UnsupportedFormatError(type, f);
 }
 
+/** The analysis of `text` with what it draws with loaded; `full` adds the full parse. */
 export async function prepareWith(
   k: Session,
   text: string,
   s: Snapshot,
-  format?: string
-): Promise<Analysis> {
+  format?: string,
+  full = false
+): Promise<Parsed> {
   const { analyser, registry } = k;
   if (k.discovery.pending) await k.discovery.settle();
   const ascii = checkFormat(k, text, s, format) === 'ascii';
-  let analysis = analyser.cache.get(text, s);
-  if (!analysis) {
+  const hit = analyser.cache.get(text, s);
+  let parsed: Parsed;
+  if (hit) parsed = { analysis: hit, full: full ? hit.full() : undefined };
+  else {
     const f = analyser.detectSupported(text, s, ascii);
-    analysis = analyser.analysisOf(text, s, f, await registry.load(f.detected.id));
+    const plugin = await registry.load(f.detected.id);
+    parsed = analyser.analysisOf(text, s, f, plugin, full || ascii);
   }
+  const { analysis } = parsed;
   if (ascii) await loadText(k, analysis);
   await (
     await k.blocks.load(analysis)
   )?.prepare({ root: text, at: 0, a: analysis, s }, ascii ? 'ascii' : 'svg');
   await Promise.all([loadFor(k, analysis, ascii), ascii || loadFontTables(k, s)]);
-  return analysis;
+  return parsed;
 }
 
 export async function parseText(
@@ -71,7 +77,8 @@ export async function parseText(
     const f = analyser.detectSupported(text, s, false);
     const { detected, pre } = f;
     const plugin = await k.registry.load(detected.id);
-    const a = analyser.cache.get(text, s) ?? analyser.analysisOf(text, s, f, plugin);
+    // A lean parse: what `parse` returns reads no AST (DESIGN §4.2).
+    const a = analyser.cache.get(text, s) ?? analyser.analysisOf(text, s, f, plugin).analysis;
     await (await k.blocks.load(a))?.prepare({ root: text, at: 0, a, s }, undefined);
     const config: Plain = {};
     const front = pre.frontMatter?.config;

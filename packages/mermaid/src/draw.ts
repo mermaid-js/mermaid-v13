@@ -18,7 +18,7 @@ import type {
   TextRenderOptions,
   TextRenderResult,
 } from './api-types.ts';
-import type { Analysis } from './analysis-cache.ts';
+import type { Parsed } from './analysis-cache.ts';
 import type { Bind, DrawBlocks } from './block-pass.ts';
 import type { Snapshot } from './config-snapshot.ts';
 import { contextFor } from './draw-context.ts';
@@ -34,13 +34,13 @@ function analysisFor(
   s: Snapshot,
   options: RenderOptions | undefined,
   ascii: boolean
-): Analysis | RenderResult {
+): Parsed | RenderResult {
   const { analyser } = k;
   const hit = analyser.cache.get(text, s);
-  if (hit) return hit;
+  if (hit) return { analysis: hit };
   const f = analyser.detectSupported(text, s, ascii);
   const plugin = k.registry.plugin(f.detected.id);
-  if (plugin) return analyser.analysisOf(text, s, f, plugin);
+  if (plugin) return analyser.analysisOf(text, s, f, plugin, ascii);
   const missing = new NotLoadedError([{ kind: 'diagram', name: f.detected.id }]);
   if (ascii || !options?.placeholders) throw missing;
   return {
@@ -62,10 +62,12 @@ export function drawAscii(
   text: string,
   s: Snapshot,
   options: RenderOptions | undefined,
-  analysis: Analysis,
+  { analysis, full }: Parsed,
   blocksFor?: (options: TextRenderOptions) => DrawBlocks<EmbeddedText> | undefined
 ): TextRenderResult {
   const { prepared, plugin } = analysis;
+  // Text output reads the AST and the model's AST ids (D82's drop warnings).
+  const parse = full ?? analysis.full();
   k.analyser.checkText(analysis.detected);
   const hook = k.registry.ascii(plugin.id);
   const backend = k.textBackend;
@@ -94,7 +96,7 @@ export function drawAscii(
     text: {
       config: Object.freeze({ ...prepared.config, ascii }),
       ...(title !== undefined ? { title } : {}),
-      ast: prepared.parse.ast,
+      ast: parse.ast,
       ...(embedText ? { embedText } : {}),
     },
   });
@@ -102,13 +104,7 @@ export function drawAscii(
   // D86: postParse and postLayout run (LaidOut.units 'cell'); postRender, afterMount never.
   const textHooks = hooksFor(k, analysis, true);
   const run = textHooks.size === 0 ? undefined : textHooks.start(textCtx, plugin.id);
-  const out = drawText(
-    plugin,
-    hook,
-    prepared.parse.model,
-    textCtx,
-    run ? { run, ast: prepared.parse.ast } : undefined
-  );
+  const out = drawText(plugin, hook, parse.model, textCtx, run && { run, ast: parse.ast });
   warnHtmlDropped(ctx);
   const lines = out === '' ? [] : out.split('\n');
   const columns = lines.reduce((m, l) => Math.max(m, backend.cellWidth(l)), 0);
@@ -142,17 +138,19 @@ export function drawSvg(
   text: string,
   s: Snapshot,
   options: RenderOptions | undefined,
-  a: Analysis,
+  { analysis: a, full }: Parsed,
   blockDraw: DrawBlocks | undefined
 ): SvgDraw {
   const units = { units: pxProfile, width: options?.availableWidth, blocks: blockDraw };
   const { ctx, warnings, mounter } = contextFor(k, text, s, options, a, units);
   const renderHooks = hooksFor(k, a);
   const run = renderHooks.size === 0 ? undefined : renderHooks.start(ctx, a.plugin.id);
-  const { parse } = a.prepared;
+  // A `postParse` hook reads the AST: this draw has the full parse (DESIGN §4.2).
+  const parse = renderHooks.readsAst ? (full ?? a.full()) : a.prepared.parse;
   // D537: the line-hop step, which decides whether this render hops.
   const edges = k.registry.hops(a);
-  const drawn = drawDiagram(a.plugin, parse.model, ctx, run && { run, ast: parse.ast }, edges);
+  const drawHooks = run && { run, ast: parse.lean ? undefined : parse.ast };
+  const drawn = drawDiagram(a.plugin, parse.model, ctx, drawHooks, edges);
   warnHtmlDropped(ctx);
   // Binds the run's interactions, then each block's in its own nested root (#669).
   return { drawn, ctx, warnings, mount: mounter<RenderResult>(run) };
@@ -162,17 +160,19 @@ function drawWith(
   k: Session,
   text: string,
   s: Snapshot,
-  options: RenderOptions | undefined
+  options: RenderOptions | undefined,
+  prepared?: Parsed
 ): RenderResult | TextRenderResult {
   const format = checkFormat(k, text, s, options?.format);
-  const analysis = analysisFor(k, text, s, options, format === 'ascii');
-  if (!('prepared' in analysis)) return analysis;
+  const parsed = prepared ?? analysisFor(k, text, s, options, format === 'ascii');
+  if (!('analysis' in parsed)) return parsed;
+  const { analysis } = parsed;
   if (format === 'ascii')
-    return drawAscii(k, text, s, options, analysis, (o) =>
+    return drawAscii(k, text, s, options, parsed, (o) =>
       k.blocks.of(analysis)?.drawText({ root: text, at: 0, a: analysis, s }, o)
     );
   const blockDraw = k.blocks.of(analysis)?.draw({ root: text, at: 0, a: analysis, s }, options);
-  const { drawn, warnings, mount } = drawSvg(k, text, s, options, analysis, blockDraw);
+  const { drawn, warnings, mount } = drawSvg(k, text, s, options, parsed, blockDraw);
   const result: RenderResult = { ...drawn, diagramType: analysis.prepared.diagramType, warnings };
   // The DOM adapter's afterMount entry point (DESIGN §12.2, §12.3); `run`/`mount` call it.
   const bind = mount(result, true);
@@ -185,10 +185,11 @@ export function draw(
   k: Session,
   text: string,
   s: Snapshot,
-  options: RenderOptions | undefined
+  options: RenderOptions | undefined,
+  prepared?: Parsed
 ): RenderResult | TextRenderResult {
   const queued = k.skipped.length;
-  const result = drawWith(k, text, s, options);
+  const result = drawWith(k, text, s, options, prepared);
   k.skipped.splice(0, queued);
   return result;
 }
