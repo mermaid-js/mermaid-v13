@@ -12,7 +12,7 @@ import { asciiDropped, statements, styled } from '@mermaid-js/shared/ascii';
 import { addsEmphasis } from '@mermaid-js/shared/svg/graph';
 import type {
   AsciiDroppedWarning as SharedAsciiDroppedWarning,
-  AsciiRouteWarning as SharedAsciiRouteWarning,
+  AsciiRouteWarning,
 } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
@@ -34,8 +34,7 @@ export interface AsciiShapeWarning extends FlowWarning {
   readonly astIds: readonly string[];
 }
 
-/** Edges the repair router found no free lane for (D78). */
-export type AsciiRouteWarning = SharedAsciiRouteWarning;
+export type { AsciiRouteWarning };
 
 export type AsciiWarning = AsciiDroppedWarning | AsciiShapeWarning | AsciiRouteWarning;
 

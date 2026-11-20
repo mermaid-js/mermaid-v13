@@ -21,6 +21,7 @@ import {
   AMP,
   BACKSLASH,
   BACKTICK,
+  BANG,
   COLON,
   COMMA,
   DASH,
@@ -94,7 +95,6 @@ const S_NAMES: readonly string[] = Object.keys(S);
  */
 const WORD_KINDS = [T.Title, T.ClassDef, T.Alpha, T.Num, T.UnicodeText, T.ClassName];
 
-const EXCLAMATION = 0x21;
 const DOLLAR = 0x24;
 const APOSTROPHE = 0x27;
 
@@ -179,7 +179,7 @@ const isNewline = (c: number) => c === LF || c === 0x0d;
  */
 function isPunctuation(c: number): boolean {
   return (
-    c === EXCLAMATION ||
+    c === BANG ||
     c === DQUOTE ||
     c === HASH ||
     c === DOLLAR ||
