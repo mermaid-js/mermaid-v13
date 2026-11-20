@@ -1,7 +1,7 @@
 /**
  * Extents of what the layout draws, for its bounds (D361) and the invariants: exact boxes of
  * cubic and quadratic Bézier curves (the curve, not its control polygon, so the bounds grow
- * only where something is drawn), and a box that unions them.
+ * only where something is drawn), and the box of some points.
  */
 import type { CubicCurve, Point, Rect } from './types.ts';
 import { RectUnion } from '@mermaid-js/shared/layout';
@@ -69,7 +69,7 @@ export function grow(r: Rect, by: number): Rect {
 
 /** The box of a cubic curve. */
 export function cubicBox(curve: CubicCurve): Rect {
-  const box = new Box();
+  const box = new RectUnion();
   let p = curve.from;
   for (const s of curve.segments) {
     box.add(
@@ -97,10 +97,7 @@ export function mapY(curve: CubicCurve, f: (y: number) => number): CubicCurve {
 
 /** The box of some points. */
 export function pointsBox(points: readonly Point[]): Rect {
-  const box = new Box();
+  const box = new RectUnion();
   for (const p of points) box.add({ ...p, width: 0, height: 0 });
   return box.rect();
 }
-
-/** The union of rectangles. */
-export class Box extends RectUnion {}

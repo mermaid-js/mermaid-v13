@@ -7,6 +7,7 @@
  * no least width apply.
  */
 import { fromPx, type LayoutGraph, type UnitProfile } from '@mermaid-js/core/layout';
+import { graphSpacing } from '@mermaid-js/shared/layout';
 import type { UsecaseLayoutConfig } from '../config.ts';
 import { ANGLE_QUOTES, ASCII_QUOTES, type Sizing } from '../layout/sizing.ts';
 
@@ -24,27 +25,15 @@ export const CELL = Object.freeze({
 
 /** The graph in cells: on the grid, the spacing an author set converted, the profile's margin. */
 function onGrid(units: UnitProfile, graph: LayoutGraph, config: UsecaseLayoutConfig): LayoutGraph {
-  const { spacing, minSpacing, diagramPadding } = units.builder;
-  // usecase.nodeSpacing runs across the flow, rankSpacing along it.
-  const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
-    node: config.set.has('nodeSpacing')
-      ? fromPx(units, config.nodeSpacing, node, minSpacing.node)
-      : spacing.node,
-    rank: config.set.has('rankSpacing')
-      ? fromPx(units, config.rankSpacing, rank, minSpacing.rank)
-      : spacing.rank,
-    edge: spacing.edge,
-  });
-  const along = graph.direction === 'LR' || graph.direction === 'RL' ? 'x' : 'y';
-  const flow = spacingOn(along, along === 'x' ? 'y' : 'x');
-  // With the spacing, the width budget that turns LR to TB uses (as ER's).
-  const down = spacingOn('y', 'x');
+  // usecase.nodeSpacing runs across the flow, rankSpacing along it; with the spacing, the width
+  // budget that turns LR to TB uses (as ER's).
+  const px = (key: 'nodeSpacing' | 'rankSpacing') =>
+    config.set.has(key) ? config[key] : undefined;
   return {
     ...graph,
-    spacing: flow,
-    ...(down.node !== flow.node || down.rank !== flow.rank ? { turnedSpacing: down } : {}),
+    ...graphSpacing(units, graph.direction, px),
     // Text output trims the empty margin: the profile's own applies (as ER's and the flowchart's).
-    diagramPadding,
+    diagramPadding: units.builder.diagramPadding,
     grid: units.grid,
   };
 }

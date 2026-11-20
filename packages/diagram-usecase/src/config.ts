@@ -17,7 +17,7 @@
 import { checkStyle } from '@mermaid-js/core/svg';
 import { USECASE_CONFIG_IGNORED } from './codes.ts';
 import { usecaseConfigDefaults } from './generated/config-defaults.ts';
-import { NUMERIC } from '@mermaid-js/shared/config/readers';
+import { numericValue, type ConfigLengthWarning } from '@mermaid-js/shared/config/readers';
 
 /** The CSS weights a font key takes, as numbers. */
 export const FONT_WEIGHT = Object.freeze({ normal: 400, bold: 700 });
@@ -93,13 +93,6 @@ export const MAX_LENGTH = 1e4;
 /** The schema's weight pattern (`cssFontWeightPattern`). */
 const WEIGHT = /^(normal|bold|bolder|lighter|inherit|initial|revert|unset|[1-9][0-9]{0,3})$/;
 
-/** A config warning (pitfall 22). */
-export interface ConfigWarning {
-  readonly code: string;
-  readonly message: string;
-  readonly path: string;
-}
-
 /**
  * A CSS `font-weight` (the config's or a style's) as the number a label is measured with:
  * `bold`/`bolder` 700, `normal`/`lighter` 400 (the measurer only tells bold from not), a whole
@@ -115,7 +108,7 @@ export function fontWeight(value: unknown): number | undefined {
 /** The layout's options from the resolved `usecase` section, warning once per key not taken. */
 export function usecaseLayoutConfig(
   section: Readonly<Record<string, unknown>> | undefined,
-  warn?: (warning: ConfigWarning) => void
+  warn?: (warning: ConfigLengthWarning) => void
 ): UsecaseLayoutConfig {
   const given = section ?? {};
   const set = new Set<UsecaseConfigKey>();
@@ -144,7 +137,7 @@ export function usecaseLayoutConfig(
   };
   const length = (key: LengthKey): number =>
     take(key, DEFAULTS[key], String(DEFAULTS[key]), (value) => {
-      const n = typeof value === 'string' && NUMERIC.test(value) ? Number(value) : value;
+      const n = numericValue(value);
       return typeof n === 'number' && Number.isFinite(n) && n >= MINIMUM[key] && n < MAX_LENGTH
         ? n
         : undefined;
