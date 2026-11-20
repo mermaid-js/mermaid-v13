@@ -5,6 +5,7 @@
  * passed rejects with `UNSUPPORTED_DIAGRAM`, as an unported type does in `mermaid`. There is no
  * default instance and nothing runs on page load: call `run()` on your instance.
  */
+import type { PluginFormat } from '@mermaid-js/core';
 import { createMermaid as createInstance, type Mermaid } from './api.ts';
 import { DETECTORS, type FirstPartyDiagramId } from './generated/detectors.gen.ts';
 import type { AnyPlugin, FirstPartyEntry } from './registry.ts';
@@ -65,7 +66,7 @@ function ready(entry: FirstPartyEntry, plugin: AnyPlugin, ascii?: Hook): AnyPlug
   // Without its hook a plugin cannot draw text, whatever its manifest lists.
   const declared: readonly string[] = plugin.formats ?? entry.formats ?? ['svg'];
   const formats = declared.filter(
-    (f): f is 'svg' | 'ascii' => f === 'svg' || (f === 'ascii' && hasHook)
+    (f): f is PluginFormat => f === 'svg' || (f === 'ascii' && hasHook)
   );
   return { ...plugin, ...(ascii ? { ascii } : {}), formats };
 }

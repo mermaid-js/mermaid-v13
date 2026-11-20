@@ -19,7 +19,7 @@ import {
   loadTheme,
   type ThemeSpec,
   type NumberedPalette,
-} from '../../../packages/core/src/theme/index.ts';
+} from '@mermaid-js/core/theme';
 import {
   coreUsers,
   knownNames,

@@ -13,20 +13,19 @@
  * documents. Nothing here throws: every skipped package is reported through `log`.
  */
 import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
 import type { FacetEntry, LanguageFacet } from '@mermaid-js/language-service';
 import { firstPartyFacets } from '@mermaid-js/language-service';
 import {
+  detectorOf,
   FIRST_PARTY_IDS,
+  IMPORT_TIMEOUT_MS,
+  importWithin,
   packageModule,
   scanPlugins,
   type ScannedPackage,
 } from '@mermaid-js/plugin-autoload';
 
 type Detector = FacetEntry['detector'];
-
-/** Default time limit on one detector or language import. */
-const IMPORT_TIMEOUT_MS = 5000;
 
 export interface DiscoverOptions {
   /** Called once per package that is skipped, with the reason. */
@@ -40,22 +39,6 @@ export interface DiscoverOptions {
   owners?: Map<string, string>;
 }
 
-/** `import(url)`, rejected after `ms`. */
-function importWithin(url: string, ms: number): Promise<unknown> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const limit = new Promise<never>((_, fail) => {
-    timer = setTimeout(() => fail(new Error(`timed out after ${ms} ms`)), ms);
-  });
-  return Promise.race([import(url), limit]).finally(() => clearTimeout(timer));
-}
-
-/** The detector a detector module exports: `detector`, else the default export. */
-function detectorOf(module: unknown): Detector | undefined {
-  const m = module as Record<string, unknown> | null;
-  const fn = m?.detector ?? m?.default;
-  return typeof fn === 'function' ? (fn as Detector) : undefined;
-}
-
 /** A scanned diagram package with a `language` entry, ready to be claimed by its id. */
 interface Facet {
   readonly package: string;
@@ -63,25 +46,25 @@ interface Facet {
 }
 
 /**
- * The file URL of a scanned package's `language` module: undefined when it has none (a plugin
+ * The path of a scanned package's `language` module: undefined when it has none (a plugin
  * without editor support), `{ skip }` when it cannot be used. A missing file is kept, so its
  * documents say LANGUAGE_LOAD_FAILED.
  */
-async function languageUrlOf(p: ScannedPackage): Promise<string | { skip: string } | undefined> {
+async function languagePathOf(p: ScannedPackage): Promise<string | { skip: string } | undefined> {
   const language = (p.raw as { language?: unknown }).language;
   if (language === undefined) return undefined;
   if (typeof language !== 'string' || language === '')
     return { skip: '"language" must be a module path' };
   const at = await packageModule(p, language, 'language');
-  if ('file' in at) return pathToFileURL(at.file).href;
-  return at.missing ? pathToFileURL(resolve(p.dir, language)).href : { skip: at.skip };
+  if ('file' in at) return at.file;
+  return at.missing ? resolve(p.dir, language) : { skip: at.skip };
 }
 
 /** The detector of a detector module, imported within `ms`, or why there is none. */
 async function loadDetector(path: string, ms: number): Promise<Detector | { skip: string }> {
   let detector: Detector | undefined;
   try {
-    detector = detectorOf(await importWithin(pathToFileURL(path).href, ms));
+    detector = detectorOf(await importWithin(path, ms));
   } catch (error) {
     const why = error instanceof Error ? error.message : String(error);
     return { skip: `detector failed to load (${why})` };
@@ -95,15 +78,14 @@ async function loadDetector(path: string, ms: number): Promise<Detector | { skip
  */
 async function facetOf(p: ScannedPackage, ms: number): Promise<Facet | string | undefined> {
   if (p.manifest.plugin !== 'diagram') return undefined;
-  const languageUrl = await languageUrlOf(p);
-  if (typeof languageUrl !== 'string') return languageUrl?.skip;
-  // The scan skips a diagram manifest without a detector; this narrows the type.
-  if (p.files.detector === undefined) return 'the manifest has no "detector"';
-  const detector = await loadDetector(p.files.detector, ms);
+  const languagePath = await languagePathOf(p);
+  if (typeof languagePath !== 'string') return languagePath?.skip;
+  // The scan skips a diagram manifest without a detector.
+  const detector = await loadDetector(p.files.detector!, ms);
   if (typeof detector !== 'function') return detector.skip;
   const { id } = p.manifest;
   const load = (): Promise<LanguageFacet> =>
-    importWithin(languageUrl, ms).then((m) => (m as { language?: LanguageFacet }).language!);
+    importWithin(languagePath, ms).then((m) => (m as { language?: LanguageFacet }).language!);
   return { package: p.package, row: { type: id, id, detector, load } };
 }
 

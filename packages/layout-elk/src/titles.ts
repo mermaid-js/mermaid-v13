@@ -241,7 +241,6 @@ export function slideOffTitles(
   titles: readonly Box[],
   nodes: readonly SlideNode[]
 ): string[] {
-  if (titles.length === 0) return [];
   const ctx: Context = { titles, nodes, edges };
   const moved: string[] = [];
   for (const edge of edges) {

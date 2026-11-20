@@ -32,6 +32,7 @@ Code that Mermaid v13 diagram packages share, kept out of `@mermaid-js/core` so 
 | `/testing/layout-invariants` | What the diagrams' layout invariant checks share: the non-finite walk, box containment and overlap, `near`, the tolerance and the way a box is printed. Workspace-only: specs import it, the build and the tarball leave it out |
 | `/testing/test-context` | The config, theme and render context a diagram's tests render with, as the pipeline builds them. Workspace-only |
 | `/testing/render-harness` | `createRenderHarness(plugin, spec)`: a source or a model through the plugin's parse, layout and render, for a package's `render<Type>ForTest`. Workspace-only |
+| `/random` | `seededRandom`, the seeded generator (mulberry32) code uses in place of `Math.random` |
 | `/layout` | Spacing, group padding and bounds helpers for graph layouts |
 | `/ascii` | Line, label, frame and title drawing and the shapes' text forms for ASCII output |
 

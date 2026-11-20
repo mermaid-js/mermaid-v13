@@ -621,7 +621,7 @@
   },
   "packages/mermaid/src/registry.ts": {
     "@typescript-eslint/unbound-method": {
-      "count": 2
+      "count": 1
     }
   },
   "packages/plugin-icons/src/icon.ts": {

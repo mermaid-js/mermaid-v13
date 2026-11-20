@@ -31,6 +31,7 @@ import { outline } from './outline.ts';
 import type { DocumentSymbol } from './outline.ts';
 import type { LineFoldingRange, LineSemanticToken } from './lines.ts';
 import { LineIndex, tooDeep } from '@mermaid-js/core/parser-kit';
+import { noDiagramType } from '@mermaid-js/core/parser-kit/embed-type';
 import { semanticTokens, withBlockTokens } from './semantic-tokens.ts';
 import type { SemanticToken } from './semantic-tokens.ts';
 import { definition, occurrences, prepareRename, references, rename } from './symbols.ts';
@@ -60,20 +61,14 @@ function copyDiagnostic(d: Diagnostic): Diagnostic {
  * The render's error for a block whose body does not start with a diagram type, on the body's
  * first diagram line (from `start` in the body `text`), moved to the outer text by `outer`.
  */
-function noDiagramType(
+function noType(
   block: EmbeddedBlock,
   text: string,
   start: number,
   outer: (at: number) => number
 ): Diagnostic {
   const line = /^[^\r\n]*/.exec(text.slice(start))![0].trimEnd();
-  const word = /^[^\s{[(;:]*/.exec(line)![0];
-  return {
-    severity: 'error',
-    code: 'EMBED_NO_TYPE',
-    message: `The \`mermaid ${block.id}\` block must start with a diagram type, such as \`sequenceDiagram\` or \`classDiagram\`, after any blank lines, comments and front matter${word ? `; \`${word}\` is not a diagram type` : ''}.`,
-    range: moved({ start, end: start + line.length }, outer),
-  };
+  return noDiagramType(block.id, line, moved({ start, end: start + line.length }, outer));
 }
 
 /** `r` placed in the outer text by `outer`. */
@@ -111,7 +106,7 @@ function withBlocks(
     const ctx = Snapshot.contextOf(doc);
     for (const d of doc.diagnostics()) {
       if (ctx.entry === undefined && d.code === 'UNSUPPORTED_DIAGRAM') {
-        out.push(noDiagramType(block, ctx.text, ctx.start, outer));
+        out.push(noType(block, ctx.text, ctx.start, outer));
         continue;
       }
       const copy = copyDiagnostic(d);

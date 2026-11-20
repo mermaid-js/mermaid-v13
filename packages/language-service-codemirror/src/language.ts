@@ -20,7 +20,7 @@ import {
 } from '@codemirror/language';
 import { NodeType, Parser, Tree } from '@lezer/common';
 import type { Input, PartialParse, TreeFragment } from '@lezer/common';
-import { diagramStart, preprocess } from '@mermaid-js/core/preprocess';
+import { diagramStart, firstPartyDetects, preprocess } from '@mermaid-js/core/preprocess';
 import { firstPartyFacets } from '@mermaid-js/language-service';
 import type { FirstPartyFacetId } from '@mermaid-js/language-service';
 import { LEZER_HIGHLIGHTERS } from './grammars.ts';
@@ -72,10 +72,10 @@ function detectId(
   pre: ReturnType<typeof preprocess>
 ): string | undefined {
   if (bodyStart >= text.length) return undefined;
-  const body = text.slice(diagramStart(text, pre));
+  const detects = firstPartyDetects(text, diagramStart(text, pre), pre);
   return firstPartyFacets.find((e) => {
     try {
-      return e.detector(body);
+      return detects((t) => e.detector(t));
     } catch {
       return false;
     }

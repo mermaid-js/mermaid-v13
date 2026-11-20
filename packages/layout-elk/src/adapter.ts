@@ -60,6 +60,7 @@ import type {
   Side,
 } from '@mermaid-js/core/layout';
 import { layered as layeredEngine } from '@mermaid-js/core/layout';
+import { boxExit } from '@mermaid-js/core/layout/box-exit';
 
 import type {
   ElkEdgeSection,
@@ -565,10 +566,7 @@ function border(r: Rect, to: Point): Point {
   const dx = to.x - c.x;
   const dy = to.y - c.y;
   if (dx === 0 && dy === 0) return { x: c.x, y: r.y + r.height };
-  const t = Math.min(
-    dx === 0 ? Infinity : r.width / 2 / Math.abs(dx),
-    dy === 0 ? Infinity : r.height / 2 / Math.abs(dy)
-  );
+  const t = boxExit(r.width / 2, r.height / 2, dx, dy);
   return { x: c.x + dx * t, y: c.y + dy * t };
 }
 

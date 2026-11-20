@@ -16,7 +16,7 @@
  */
 import { readManifest } from '@mermaid-js/core';
 import { FIRST_PARTY_IDS } from './generated/first-party-ids.gen.ts';
-import { IMPORT_TIMEOUT_MS, loadPlugins, type ManifestPlugin } from './load.ts';
+import { loadPlugins, type ManifestPlugin } from './load.ts';
 import { findAppRoot, type ScanWarning } from './scan.ts';
 
 /**
@@ -77,9 +77,9 @@ export async function autoload(
   options: AutoloadOptions = {}
 ): Promise<readonly AutoloadWarning[]> {
   (mermaid as unknown as Record<symbol, unknown>)[AUTOLOADED] = true;
-  const root = await findAppRoot(options.root ?? process.cwd());
+  const at = options.root ?? process.cwd();
+  const root = await findAppRoot(at);
   if (root === undefined) {
-    const at = options.root ?? process.cwd();
     return [
       {
         code: 'PLUGIN_DISCOVERY_NO_PACKAGE_JSON',
@@ -89,7 +89,7 @@ export async function autoload(
   }
   const { plugins, warnings } = await loadPlugins(root, {
     firstPartyIds: FIRST_PARTY_IDS,
-    importTimeoutMs: options.importTimeoutMs ?? IMPORT_TIMEOUT_MS,
+    importTimeoutMs: options.importTimeoutMs,
   });
   const out: AutoloadWarning[] = [...warnings];
   const owners = new Map<string, string>();

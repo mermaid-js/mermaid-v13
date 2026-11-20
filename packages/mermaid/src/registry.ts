@@ -88,7 +88,9 @@ export type ExternalDiagram = AnyPlugin | LazyDiagram | ExtensionPlugin | Manife
 export interface LayoutLoader {
   readonly name: string;
   /** The engine, or a module holding it as `layout` or `default`. */
-  loader(): Promise<LayoutEngine | { layout: LayoutEngine } | { default: LayoutEngine }>;
+  readonly loader: () => Promise<
+    LayoutEngine | { layout: LayoutEngine } | { default: LayoutEngine }
+  >;
   /**
    * The layout plugin's config fragment (D153), known from registration on, before the engine
    * loads. Loaders of one package share one fragment object (one id).
@@ -163,14 +165,6 @@ type Resolved =
   | { readonly extension: ExtensionPlugin }
   | { readonly diagram: Entry }
   | { readonly layouts: readonly LayoutLoader[] };
-
-/** One layout name a discovered package gives. */
-interface DiscoveredLayout {
-  readonly name: string;
-  readonly loader: LayoutLoader['loader'];
-  readonly config?: ConfigFragment;
-  readonly extension?: ExtensionPlugin;
-}
 
 /** The id of an extension (given, or by manifest) without loading it; else undefined. */
 function extensionIdOf(def: ExternalDiagram): string | undefined {
@@ -892,7 +886,7 @@ export class Registry {
    */
   private discoverLayouts(
     pkg: string,
-    loaders: readonly DiscoveredLayout[],
+    loaders: readonly LayoutLoader[],
     known: Set<string>,
     skip: (pkg: string, reason: string) => void
   ): void {

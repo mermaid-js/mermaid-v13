@@ -1,3 +1,5 @@
+import { decodeEntities } from '@mermaid-js/core/text';
+
 /**
  * A small fake DOM for the plugin specs: tests run in Node with no DOM shim (R-ARCH-1). It
  * holds what the plugin touches: attributes, children, siblings, listeners, `style` and
@@ -123,13 +125,6 @@ export class FakeDoc {
   }
 }
 
-const ENTITIES: Readonly<Record<string, string>> = {
-  '&amp;': '&',
-  '&lt;': '<',
-  '&gt;': '>',
-  '&quot;': '"',
-};
-
 /** Parses `svg` into fake elements appended to `parent`, as `parent.innerHTML += svg` would. */
 export function parseInto(parent: FakeEl, svg: string): FakeEl {
   let at = parent;
@@ -142,10 +137,7 @@ export function parseInto(parent: FakeEl, svg: string): FakeEl {
     }
     const el = at.appendChild(parent.ownerDocument.createElement(tag!));
     for (const [, k, v] of rest!.matchAll(/([^\s=]+)="([^"]*)"/g))
-      el.setAttribute(
-        k!,
-        v!.replace(/&(?:amp|lt|gt|quot);/g, (e) => ENTITIES[e]!)
-      );
+      el.setAttribute(k!, decodeEntities(v!));
     if (!selfClose) at = el;
   }
   return parent;
