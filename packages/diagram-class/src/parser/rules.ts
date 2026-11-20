@@ -28,6 +28,7 @@ import {
   LT,
   PERCENT,
   PIPE,
+  PLUS,
   RBRACE,
   RBRACKET,
   RPAREN,
@@ -87,7 +88,6 @@ export interface Rule {
   readonly state: number;
 }
 
-const PLUS = 0x2b;
 const LINE_SEPARATOR = 0x2028;
 const PARAGRAPH_SEPARATOR = 0x2029;
 const isLineSep = (c: number) => c === LF || c === LINE_SEPARATOR || c === PARAGRAPH_SEPARATOR;
