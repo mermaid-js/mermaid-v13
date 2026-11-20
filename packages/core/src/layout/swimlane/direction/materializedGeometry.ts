@@ -37,6 +37,8 @@ import {
   buildSegmentLineIndex,
   buildTrackConflictIndex,
   countCrossingsPerRoute,
+  countCrossingsWithOthersUpTo,
+  countFlaggedSegmentCrossings,
   countSegmentCrossings,
   shapesTouchAtBend,
 } from './crossingIndex.ts';
@@ -47,6 +49,7 @@ import type {
   TrackConflictIndex,
 } from './crossingIndex.ts';
 import { EDGE_ROUTING } from '../config.ts';
+import { PointKeys } from '../pointKeys.ts';
 import { buildLaneModel } from '../lanes.ts';
 import {
   crossingPointsBetween,
@@ -2284,6 +2287,42 @@ export function shortcutRedundantOrthogonalJogs(
   }
 }
 
+/** A candidate reroute of the crossing cleanup, with what its search reads of it. */
+interface Candidate {
+  path: PointLite[];
+  /** The segments of the path without consecutive duplicate points. */
+  rerouted: SegmentLite[];
+  bends: number;
+}
+
+/**
+ * The cleanup's candidates between the sides of two nodes, kept across its calls on one layout
+ * (#843), by the node map the calls share. The key is the two nodes' centres and boxes and the
+ * four outer tracks, written exactly, and that is all the candidates are built from: a node
+ * moved between calls, or other tracks, gives another key. No route holds a candidate's points
+ * (an accepted reroute is a copy), so no later pass can change a kept candidate.
+ */
+const sideCandidatesByLayout = new WeakMap<
+  Map<string, MaterializedNode>,
+  Map<string, Candidate[]>
+>();
+
+/** The side candidates kept for the layout of `nodeByIdMap`: an empty store the first time. */
+function keptSideCandidatesOf(
+  nodeByIdMap: Map<string, MaterializedNode>
+): Map<string, Candidate[]> {
+  let kept = sideCandidatesByLayout.get(nodeByIdMap);
+  if (!kept) {
+    kept = new Map<string, Candidate[]>();
+    sideCandidatesByLayout.set(nodeByIdMap, kept);
+  }
+  return kept;
+}
+
+/** `values` as a key that tells every number apart, the two zeros too. */
+const exactNumbersKey = (values: readonly number[]): string =>
+  values.map((value) => (Object.is(value, -0) ? '-0' : String(value))).join(',');
+
 export function resolveRenderedOrthogonalCrossings(
   edges: MaterializedEdge[],
   nodeByIdMap: Map<string, MaterializedNode>
@@ -2322,14 +2361,6 @@ export function resolveRenderedOrthogonalCrossings(
     /** Built when a candidate is first tested for shared tracks. */
     conflicts?: TrackConflictIndex<MaterializedEdge>;
     candidates: Map<MaterializedEdge, Candidate[]>;
-  }
-
-  /** A candidate reroute, with what the search for one edge's reroute reads of it. */
-  interface Candidate {
-    path: PointLite[];
-    /** The segments of the path without consecutive duplicate points. */
-    rerouted: SegmentLite[];
-    bends: number;
   }
 
   interface PairCandidate {
@@ -2454,11 +2485,42 @@ export function resolveRenderedOrthogonalCrossings(
   const crossingCountBetweenSegments = (
     firstSegments: SegmentLite[],
     secondSegments: SegmentLite[]
-  ): number => countSegmentCrossings(firstSegments, secondSegments, EPS_LOCAL);
+  ): number => countFlaggedSegmentCrossings(firstSegments, secondSegments, EPS_LOCAL);
 
   /** The crossings of a reroute of `edge`, given as segments, with every other edge. */
   const crossingsWithOtherEdges = (edge: MaterializedEdge, segments: SegmentLite[]): number =>
-    round.crossings.count(segments) - crossingCountBetweenSegments(segments, baseSegmentsFor(edge));
+    crossingsWithOtherEdgesUpTo(edge, segments, Number.POSITIVE_INFINITY);
+  /** `crossingsWithOtherEdges` when it is at most `limit`, else a number above `limit`. */
+  const crossingsWithOtherEdgesUpTo = (
+    edge: MaterializedEdge,
+    segments: SegmentLite[],
+    limit: number
+  ): number =>
+    countCrossingsWithOthersUpTo(
+      round.crossings,
+      segments,
+      baseSegmentsFor(edge),
+      EPS_LOCAL,
+      limit
+    );
+
+  /**
+   * All the crossings left if `edge` takes a reroute that crosses the others as `segments` do
+   * (`settled` plus its own), when that few could make it the best so far (`bestCrossings`, one
+   * fewer unless it has fewer bends than `bestBends`); else Infinity, which no test passes.
+   */
+  const crossingsIfBest = (
+    edge: MaterializedEdge,
+    segments: SegmentLite[],
+    candidateBends: number,
+    settled: number,
+    bestCrossings: number,
+    bestBends: number
+  ): number => {
+    const allowed = (candidateBends < bestBends ? bestCrossings : bestCrossings - 1) - settled;
+    const withOthers = crossingsWithOtherEdgesUpTo(edge, segments, allowed);
+    return withOthers > allowed ? Number.POSITIVE_INFINITY : settled + withOthers;
+  };
 
   /** The box around a route; two routes whose boxes are apart do not cross. */
   const extentOf = (points: PointLite[]): RectLite => {
@@ -2736,14 +2798,18 @@ export function resolveRenderedOrthogonalCrossings(
     }
   };
 
+  // v13 (#843): candidates are told apart by their points to three decimals; the same few
+  // points recur in every candidate, so each point's key is made once.
+  const pointKeys = new PointKeys(3);
+  const pathKey = (path: PointLite[]): string =>
+    path.map((point) => pointKeys.key(point.x, point.y)).join('|');
+
   const dedupeCandidatePaths = (candidates: PointLite[][]): PointLite[][] => {
     const seen = new Set<string>();
     return candidates
       .map((candidate) => dedupeConsecutivePoints(candidate))
       .filter((candidate) => {
-        const key = candidate
-          .map((point) => `${point.x.toFixed(3)},${point.y.toFixed(3)}`)
-          .join('|');
+        const key = pathKey(candidate);
         if (seen.has(key) || candidate.length < 2) {
           return false;
         }
@@ -2887,12 +2953,35 @@ export function resolveRenderedOrthogonalCrossings(
 
   // v13 (#687): the candidates between the sides of two nodes depend on the two nodes alone,
   // so they are built once for all rounds and for every edge between the same two nodes.
+  // v13 (#843): and once for both calls on the layout (`sideCandidatesByLayout`).
   const sideCandidates = new Map<NodeInfo, Map<NodeInfo, Candidate[]>>();
+  const builtSideCandidates = keptSideCandidatesOf(nodeByIdMap);
+  const boxOf = ({ cx, cy, rect }: NodeInfo): number[] => [
+    cx,
+    cy,
+    rect.left,
+    rect.top,
+    rect.right,
+    rect.bottom,
+  ];
   const sideCandidatesFor = (srcNode: NodeInfo, dstNode: NodeInfo): Candidate[] => {
     const fromSrc = sideCandidates.get(srcNode) ?? new Map<NodeInfo, Candidate[]>();
     sideCandidates.set(srcNode, fromSrc);
     let candidates = fromSrc.get(dstNode);
-    if (!candidates) {
+    const key = candidates
+      ? ''
+      : exactNumbersKey([
+          ...boxOf(srcNode),
+          ...boxOf(dstNode),
+          activeTracks.top,
+          activeTracks.bottom,
+          activeTracks.left,
+          activeTracks.right,
+        ]);
+    candidates ??= builtSideCandidates.get(key);
+    if (candidates) {
+      fromSrc.set(dstNode, candidates);
+    } else {
       candidates = [];
       for (const srcSide of sides) {
         const srcPort = portForRectSide(srcNode, srcSide);
@@ -2904,25 +2993,47 @@ export function resolveRenderedOrthogonalCrossings(
         }
       }
       fromSrc.set(dstNode, candidates);
+      builtSideCandidates.set(key, candidates);
     }
     return candidates;
   };
 
   /** An edge's candidates for this round: those of its nodes' sides, then those of its route. */
+  // v13 (#843): an edge's candidates depend on its route and the outer tracks, so a later round
+  // takes those of an edge whose points array and tracks are the ones they were built from. The
+  // pass replaces the array of an edge it moves and never edits one in place, so the same array
+  // is the same route (sideCandidateCache.differential.spec.ts checks this).
+  const candidatesByRoute = new Map<
+    MaterializedEdge,
+    { points: PointLite[] | undefined; tracks: Record<RectSide, number>; candidates: Candidate[] }
+  >();
+  /** The candidates kept for `edge`, if its points array and the tracks are those they had. */
+  const keptCandidatesFor = (edge: MaterializedEdge): Candidate[] | undefined => {
+    const kept = candidatesByRoute.get(edge);
+    return kept && kept.points === edge.points && kept.tracks === activeTracks
+      ? kept.candidates
+      : undefined;
+  };
+  /** An edge's candidates built afresh, and kept: those of its nodes' sides, then its route's. */
+  const builtCandidatesFor = (edge: MaterializedEdge): Candidate[] => {
+    const srcId = (edge as { start?: string }).start;
+    const dstId = (edge as { end?: string }).end;
+    const srcNode = srcId ? nodeInfoById.get(srcId) : undefined;
+    const dstNode = dstId ? nodeInfoById.get(dstId) : undefined;
+    const candidates =
+      srcNode && dstNode
+        ? [
+            ...sideCandidatesFor(srcNode, dstNode),
+            ...terminalPreservingOuterTrackCandidates(edge).map(toCandidate),
+          ]
+        : [];
+    candidatesByRoute.set(edge, { points: edge.points, tracks: activeTracks, candidates });
+    return candidates;
+  };
   const candidatesFor = (edge: MaterializedEdge): Candidate[] => {
     let candidates = round.candidates.get(edge);
     if (!candidates) {
-      const srcId = (edge as { start?: string }).start;
-      const dstId = (edge as { end?: string }).end;
-      const srcNode = srcId ? nodeInfoById.get(srcId) : undefined;
-      const dstNode = dstId ? nodeInfoById.get(dstId) : undefined;
-      candidates =
-        srcNode && dstNode
-          ? [
-              ...sideCandidatesFor(srcNode, dstNode),
-              ...terminalPreservingOuterTrackCandidates(edge).map(toCandidate),
-            ]
-          : [];
+      candidates = keptCandidatesFor(edge) ?? builtCandidatesFor(edge);
       round.candidates.set(edge, candidates);
     }
     return candidates;
@@ -2962,9 +3073,7 @@ export function resolveRenderedOrthogonalCrossings(
         if (pathHitsNode(edge, segmentsFor(candidate))) {
           return false;
         }
-        const key = candidate
-          .map((point) => `${point.x.toFixed(3)},${point.y.toFixed(3)}`)
-          .join('|');
+        const key = pathKey(candidate);
         if (seen.has(key) || candidate.length < 2) {
           return false;
         }
@@ -3341,16 +3450,23 @@ export function resolveRenderedOrthogonalCrossings(
 
   // An edge whose ends share a lane, routed out of it, goes back on its best in-lane route. An
   // edge with none keeps the route it has; no other edge moves.
+  // v13 (#843): a round is what `startRound` reads of the routes, so it is built again only once
+  // an edge has moved since the last one.
   const keepSameLaneEdgesInside = (): void => {
+    let roundIsCurrent = false;
     for (const edge of visibleEdges) {
       const band = sharedLaneBand(edge, laneModel, nodeByIdMap);
       if (!band || staysInsideBand(edge.points ?? [], band)) {
         continue;
       }
-      round = startRound();
+      if (!roundIsCurrent) {
+        round = startRound();
+        roundIsCurrent = true;
+      }
       const best = bestInLaneCandidate(edge, band);
       if (best) {
         edge.points = best.map((point) => ({ ...point }));
+        roundIsCurrent = false;
       }
     }
   };
@@ -3375,7 +3491,15 @@ export function resolveRenderedOrthogonalCrossings(
       for (const { path: candidate, rerouted, bends: candidateBends } of candidatesFor(edge)) {
         // v13 (#687): a candidate is tested against the nodes and the other routes only once
         // its counts would make it the best so far; the tests do not depend on each other.
-        const candidateCrossings = settled + crossingsWithOtherEdges(edge, rerouted);
+        // v13 (#843): nor are its crossings counted past the most that could make it so.
+        const candidateCrossings = crossingsIfBest(
+          edge,
+          rerouted,
+          candidateBends,
+          settled,
+          bestCrossings,
+          bestBends
+        );
         const improvesCurrentEdge =
           candidateCrossings < currentCrossings ||
           (candidateCrossings === currentCrossings && candidateBends < currentEdgeBends);

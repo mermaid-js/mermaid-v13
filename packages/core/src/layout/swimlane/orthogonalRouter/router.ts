@@ -1,7 +1,8 @@
 // Ported from v12 `swimlanes/orthogonalRouter/router.ts` at upstream `c9b12739f` (D532). Changed:
 // no anchored nodes (D531); diamond and hexagon checks use the shared classification in
 // `config.ts` (#636), which also takes flowchart v13's canonical names (`diam`, `hex`); types
-// tightened for `noUncheckedIndexedAccess`.
+// tightened for `noUncheckedIndexedAccess`; the A* search reads its grid, boxes and open list
+// through `gridSearch.ts` and its point keys through `pointKeys.ts`, with v12's routes (#843).
 /* eslint-disable complexity, max-depth, max-lines, max-lines-per-function, no-nested-ternary -- v12's file kept whole so upstream fixes port by hand (D532) */
 // cspell:ignore raykov Raykov Wybrow Marriott Stuckey
 
@@ -19,6 +20,8 @@
 import type { LayoutData, Node as MermaidNode } from '../layoutData.ts';
 import { buildLaneModel } from '../lanes.ts';
 import { RoutedSegmentIndex } from './routedSegmentIndex.ts';
+import { ObstacleLines, OpenList, firstPipeNear } from './gridSearch.ts';
+import { PointKeys } from '../pointKeys.ts';
 import { PRECISION, isDiamondShape, isHexagonShape } from '../config.ts';
 
 const EPS = PRECISION.EPSILON;
@@ -236,6 +239,10 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
         visualXHalfExtent: isLR ? h / 2 + padding : w / 2 + padding,
       };
     });
+
+  // v13 (#843): the A* step test reads the boxes by the line it runs on.
+  const obstacleLines = new ObstacleLines(obstacles);
+  const gridKeys = new PointKeys(1);
 
   // Helper to find or create pipe
   const getOrAddPipe = (
@@ -1197,7 +1204,8 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
     // Vertices: All intersections of hPipes and vPipes
     // We run A* on these vertices.
 
-    const getKey = (x: number, y: number) => `${x.toFixed(1)},${y.toFixed(1)}`;
+    // v13 (#843): each point's key is made once, for all edges.
+    const getKey = (x: number, y: number) => gridKeys.key(x, y);
     const startKey = getKey(pSrcAnchor.x, pSrcAnchor.y);
     const endKey = getKey(pDstAnchor.x, pDstAnchor.y);
 
@@ -1207,7 +1215,8 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
     // Track the direction we arrived at each node from: 'h' = horizontal, 'v' = vertical, 'n' = start (none)
     const arrivalDir = new Map<string, 'h' | 'v' | 'n'>();
     const openSet = new Set<string>();
-    const openList: { key: string; f: number; pt: Point }[] = [];
+    // v13 (#843): takes entries in the order of a stable sort by `f` (`OpenList`).
+    const openList = new OpenList<Point>();
 
     gScore.set(startKey, 0);
     arrivalDir.set(startKey, 'n'); // start has no arrival direction
@@ -1261,8 +1270,11 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
 
     // If no direct path found, use A* (existing logic)
     if (foundPath.length === 0) {
+      // v13 (#843): sorted once per edge. `firstPipeNear` reads them as sorted, so nothing adds
+      // to them during the search: they are read-only from here.
+      const sortedVPipes: readonly Pipe[] = vPipes.sort((a, b) => a.coord - b.coord);
+      const hPipesSorted: readonly Pipe[] = hPipes.sort((a, b) => a.coord - b.coord);
       while (openList.length > 0) {
-        openList.sort((a, b) => a.f - b.f);
         const current = openList.shift()!;
         openSet.delete(current.key);
 
@@ -1285,11 +1297,9 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
         const cy = current.pt.y;
 
         // Find adjacent vPipes to cx
-        const sortedVPipes = vPipes.sort((a, b) => a.coord - b.coord);
-        const vIdx = sortedVPipes.findIndex((p) => Math.abs(p.coord - cx) < 1);
+        const vIdx = firstPipeNear(sortedVPipes, cx);
 
-        const hPipesSorted = hPipes.sort((a, b) => a.coord - b.coord);
-        const hIdx = hPipesSorted.findIndex((p) => Math.abs(p.coord - cy) < 1);
+        const hIdx = firstPipeNear(hPipesSorted, cy);
 
         const neighbors: Point[] = [];
 
@@ -1316,18 +1326,14 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
           const minY = Math.min(cy, neighbor.y);
           const maxY = Math.max(cy, neighbor.y);
 
-          const blocked = obstacles.some((obs) => {
-            // Don't block on source or destination nodes - the edge needs to reach them
-            if (obs.nodeId === e.start || obs.nodeId === e.end) {
-              return false;
-            }
-            if (minX !== maxX) {
-              // Horizontal
-              return obs.minY < cy && obs.maxY > cy && obs.maxX > minX && obs.minX < maxX;
-            }
-            // Vertical
-            return obs.minX < cx && obs.maxX > cx && obs.maxY > minY && obs.minY < maxY;
-          });
+          // Don't block on source or destination nodes - the edge needs to reach them
+          const blocked = obstacleLines.blocksStep(
+            cx,
+            cy,
+            [minX, maxX, minY, maxY],
+            e.start,
+            e.end
+          );
 
           if (blocked) {
             continue;
@@ -1379,10 +1385,7 @@ export function routeEdgesOrthogonal(data: LayoutData, direction?: string): Layo
               openList.push({ key: nKey, f: tentativeG + h, pt: neighbor });
               openSet.add(nKey);
             } else {
-              const idx = openList.findIndex((x) => x.key === nKey);
-              if (idx !== -1) {
-                openList[idx]!.f = tentativeG + h;
-              }
+              openList.setF(nKey, tentativeG + h);
             }
           }
         }
