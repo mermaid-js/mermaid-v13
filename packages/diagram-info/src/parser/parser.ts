@@ -31,10 +31,7 @@ import type { InfoDocument, InfoHeaderNode, InfoStatementNode } from './ast.ts';
 import { lex } from './lexer.ts';
 import { INFO_TRIVIA, T } from './tokens.ts';
 
-export interface InfoParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-}
+export type InfoParseOptions = ParseOptions;
 
 export type InfoParseResult = ParseResult<InfoModel, InfoDocument>;
 

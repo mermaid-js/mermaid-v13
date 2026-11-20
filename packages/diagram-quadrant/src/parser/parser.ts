@@ -65,8 +65,6 @@ import { applyStyle } from './styles.ts';
 import { T } from './tokens.ts';
 
 export interface QuadrantParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** The integrator's cap on points (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
   maxNodes?: number;
 }
