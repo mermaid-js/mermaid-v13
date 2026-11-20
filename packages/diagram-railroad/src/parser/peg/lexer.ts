@@ -12,11 +12,13 @@
  */
 import {
   AMP,
+  BANG,
   DASH,
   DOT,
   HASH,
   LPAREN,
   LT,
+  PLUS,
   QUESTION,
   RPAREN,
   SEMI,
@@ -26,9 +28,6 @@ import {
 import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { isIdStart, RailroadLexer } from '../lexer.ts';
 import { T } from '../tokens.ts';
-
-const BANG = 0x21;
-const PLUS = 0x2b;
 
 /** One-character keywords after `<-`, in the grammar's order. */
 const PUNCTUATION: Readonly<Record<number, number>> = {

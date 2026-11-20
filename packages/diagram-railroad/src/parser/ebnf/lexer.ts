@@ -23,6 +23,7 @@ import {
   LBRACKET,
   LPAREN,
   PIPE,
+  PLUS,
   QUESTION,
   RBRACE,
   RBRACKET,
@@ -34,8 +35,6 @@ import {
 import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { isIdStart, RailroadLexer } from '../lexer.ts';
 import { T } from '../tokens.ts';
-
-const PLUS = 0x2b;
 
 /** One-character keywords after `::=`, in the grammar's order, but for the three below. */
 const PUNCTUATION: Readonly<Record<number, number>> = {

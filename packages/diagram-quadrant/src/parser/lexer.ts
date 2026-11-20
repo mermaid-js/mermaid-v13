@@ -37,6 +37,7 @@ import {
   LBRACKET,
   LF,
   PERCENT,
+  PLUS,
   QUESTION,
   RBRACE,
   RBRACKET,
@@ -93,7 +94,6 @@ const S_NAMES: readonly string[] = Object.keys(S);
  */
 const WORD_KINDS = [T.Title, T.ClassDef, T.Alpha, T.Num, T.UnicodeText, T.ClassName];
 
-const PLUS = 0x2b;
 const EXCLAMATION = 0x21;
 const DOLLAR = 0x24;
 const APOSTROPHE = 0x27;
