@@ -18,7 +18,7 @@
 // the output is deterministic (R-ARCH-6). Self-loops keep their layout shape. The search is
 // bounded to a window around the colliding stretch, grown a few times; when no route is found
 // the snapped route is kept and the collision reported.
-import type { LayoutGraph, LayoutModel, Point } from '../layout/types.ts';
+import type { Box, LayoutGraph, LayoutModel, Point } from '../layout/types.ts';
 import { DOWN, DX, DY, INTO, LEFT, RIGHT, UP, opposite } from './directions.ts';
 import { snapRoute } from './snap.ts';
 
@@ -73,13 +73,6 @@ const DEFAULT_MAX_EXPANDED = 1_000_000;
 
 const straight = (arms: number): boolean => arms === VERTICAL || arms === HORIZONTAL;
 
-interface Rect {
-  left: number;
-  top: number;
-  right: number;
-  bottom: number;
-}
-
 interface Owner {
   edge: number;
   arms: number;
@@ -104,7 +97,7 @@ interface EdgeInfo {
 }
 
 /** The cells of a box from its centre and size (validateGrid's convention). */
-function rect(b: { x: number; y: number; width: number; height: number }, grid: number): Rect {
+function rect(b: { x: number; y: number; width: number; height: number }, grid: number): Box {
   return {
     left: Math.round((b.x - b.width / 2) / grid + 0.5),
     top: Math.round((b.y - b.height / 2) / grid + 0.5),
@@ -205,7 +198,7 @@ class Field {
     else if (!list.includes(owner)) list.push(owner);
   }
 
-  private fill(r: Rect, f: (i: number) => void): void {
+  private fill(r: Box, f: (i: number) => void): void {
     for (let y = Math.max(r.top, 0); y <= Math.min(r.bottom, this.height - 1); y++)
       for (let x = Math.max(r.left, 0); x <= Math.min(r.right, this.width - 1); x++)
         f(this.index(x, y));
@@ -408,7 +401,7 @@ interface Search {
 interface Goal {
   t: [number, number];
   tOut: number;
-  window: Rect;
+  window: Box;
   /** The edge's own route before the start and after `t`. */
   own: ReadonlySet<number>;
 }
@@ -623,7 +616,7 @@ function detour(
   const sCell: [number, number] = [path.xs[s]!, path.ys[s]!];
   for (const end of t === n ? [n] : [t, n]) {
     const tOut = end === n ? ctx.edge.tgtArm : step(path.xs, path.ys, end);
-    let box: Rect = { left: sCell[0], top: sCell[1], right: sCell[0], bottom: sCell[1] };
+    let box: Box = { left: sCell[0], top: sCell[1], right: sCell[0], bottom: sCell[1] };
     for (let i = s; i <= end; i++)
       box = {
         left: Math.min(box.left, path.xs[i]!),
@@ -633,7 +626,7 @@ function detour(
       };
     const own = new Set([...out.cells, ...path.cells.slice(end + 1)]);
     for (const margin of windows) {
-      const window: Rect = {
+      const window: Box = {
         left: Math.max(0, box.left - margin),
         top: Math.max(0, box.top - margin),
         right: Math.min(ctx.field.width - 1, box.right + margin),

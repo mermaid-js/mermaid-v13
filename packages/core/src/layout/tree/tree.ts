@@ -19,15 +19,9 @@ import type {
   RoutePoint,
   Side,
 } from '../types.ts';
+import type { Rect } from '../layered/end-markers.ts';
 import { checkGraph, checkLabelSizes } from '../check.ts';
 import { titleAlign, titleLow, titlePoint } from '../title.ts';
-
-interface Rect {
-  x0: number;
-  y0: number;
-  x1: number;
-  y1: number;
-}
 
 /** The forest and every per-node array, indexed by the node's place in `graph.nodes`. */
 interface Forest {

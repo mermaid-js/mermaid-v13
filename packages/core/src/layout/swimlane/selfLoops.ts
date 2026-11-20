@@ -8,6 +8,7 @@
 // - An unlabelled loop takes the first free face across the flow (right or left for TB/BT, bottom
 //   or top for LR/RL), then the face the flow enters by, then the one it leaves by: free means no
 //   other edge ends on it and the loop meets no other node, label or route.
+import type { Box } from '../types.ts';
 import type { LayoutData, Node } from './layoutData.ts';
 
 type Side = 'top' | 'right' | 'bottom' | 'left';
@@ -15,13 +16,6 @@ type Side = 'top' | 'right' | 'bottom' | 'left';
 interface Pt {
   x: number;
   y: number;
-}
-
-interface Rect {
-  left: number;
-  right: number;
-  top: number;
-  bottom: number;
 }
 
 /** How far an unlabelled loop stands off its node. */
@@ -35,20 +29,20 @@ const TOUCH = 1;
 
 const centre = (n: Node): Pt => ({ x: n.x ?? 0, y: n.y ?? 0 });
 
-const rectOf = (n: Node): Rect => {
+const rectOf = (n: Node): Box => {
   const { x, y } = centre(n);
   const [w, h] = [(n.width ?? 0) / 2, (n.height ?? 0) / 2];
   return { left: x - w, right: x + w, top: y - h, bottom: y + h };
 };
 
-const overlaps = (a: Rect, b: Rect): boolean =>
+const overlaps = (a: Box, b: Box): boolean =>
   a.left < b.right - TOUCH &&
   b.left < a.right - TOUCH &&
   a.top < b.bottom - TOUCH &&
   b.top < a.bottom - TOUCH;
 
 /** Whether the segment a–b comes within `TOUCH` of `r`. */
-function segmentMeets(a: Pt, b: Pt, r: Rect): boolean {
+function segmentMeets(a: Pt, b: Pt, r: Box): boolean {
   const s = {
     left: Math.min(a.x, b.x) - TOUCH,
     right: Math.max(a.x, b.x) + TOUCH,
