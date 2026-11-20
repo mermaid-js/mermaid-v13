@@ -33,11 +33,11 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/shared',
       ...diagrams,
       '@mermaid-chart/mermaid',
-      // A dependency of the bundler plugin and the language server: before them.
-      '@mermaid-chart/plugin-autoload',
       // Peer of mermaid (D164): after it.
       '@mermaid-chart/bundler-plugin',
       '@mermaid-chart/language-service',
+      // A dependency of the language server: before it.
+      '@mermaid-chart/plugin-autoload',
       '@mermaid-chart/language-server',
       '@mermaid-chart/language-service-codemirror',
       '@mermaid-chart/language-service-monaco',
