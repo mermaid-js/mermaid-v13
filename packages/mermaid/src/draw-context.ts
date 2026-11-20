@@ -369,6 +369,7 @@ export function contextFor(
     version: VERSION,
     linkSchemes: s.options.linkSchemes,
     limits: s.limits,
+    dataAst: analysis.dataAst,
     now,
     availableWidth: width,
     iconPacks: packs,

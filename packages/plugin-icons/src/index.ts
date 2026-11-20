@@ -30,7 +30,7 @@
  * carries `missing()` results or a render's notes to the draw.
  */
 import type { DiagramIcon, ExtensionPlugin, IconPacks, ResourceRequest } from '@mermaid-js/core';
-import type { ParseResult } from '@mermaid-js/core/parser-kit';
+import type { ParseOutput } from '@mermaid-js/core/parser-kit';
 import type { OutlinePaint, Paint, SvgNode, SvgTree, Transform } from '@mermaid-js/core/svg';
 import type {
   InlineBox,
@@ -97,7 +97,7 @@ function notesOf(scratch: Record<string, unknown>): Notes {
   }) as Notes;
 }
 
-/** Every string in `value` (an AST or a model), for a diagram that lists no labels. */
+/** Every string in `value` (a model), for a diagram that lists no labels. */
 function strings(value: unknown, out: string[]): void {
   const seen = new Set<object>();
   const stack: unknown[] = [value];
@@ -121,14 +121,14 @@ const splitIcon = (icon: DiagramIcon) =>
  * The packs a parsed diagram names: in its labels (else any string it holds) and its shapes, with
  * the fallback each shape is drawn with.
  */
-function packsOf(parse: ParseResult<unknown>, request: ResourceRequest): ReadonlySet<string> {
+function packsOf(parse: ParseOutput<unknown>, request: ResourceRequest): ReadonlySet<string> {
   const cached = packsByParse.get(parse);
   if (cached) return cached;
   let texts: readonly string[];
   if (request.labels) texts = request.labels();
   else {
+    // The parse is lean when nothing of the render reads the AST: its model holds the labels.
     const all: string[] = [];
-    strings(parse.ast, all);
     strings(parse.model, all);
     texts = all;
   }

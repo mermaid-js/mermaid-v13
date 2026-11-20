@@ -22,7 +22,7 @@ import type { ConfigFragment } from '../config/fragment.ts';
 import type { ResolvedConfig } from '../config/resolve.ts';
 import type { LayoutModel } from '../layout/types.ts';
 import type { AstNode } from '../parser-kit/ast.ts';
-import type { ParseResult } from '../parser-kit/result.ts';
+import type { ParseOutput } from '../parser-kit/result.ts';
 import { isAllowedAttr, isAllowedTag } from '../svg/allowlist.ts';
 import type { SvgTree } from '../svg/tree.ts';
 import type { Attrs } from '../svg/types.ts';
@@ -212,8 +212,11 @@ export interface GlyphRequest {
 export interface ExtensionResources {
   /** Every resource it can load; `preload` loads those of a kind it is asked for (`math`). */
   readonly provides: readonly Resource[];
-  /** Those of `provides` that `parse` needs and that have not loaded yet. */
-  missing(parse: ParseResult<unknown>, request: ResourceRequest): readonly Resource[];
+  /**
+   * Those of `provides` that `parse` needs and that have not loaded yet. `parse` is lean when
+   * nothing of this render reads the AST (DESIGN §4.2): read the model, or `request.labels`.
+   */
+  missing(parse: ParseOutput<unknown>, request: ResourceRequest): readonly Resource[];
   /** Loads one of `provides`; once it resolves, `missing` no longer lists it. */
   load(resource: Resource): Promise<void>;
 }
@@ -478,7 +481,7 @@ export class HookRunner<El = unknown, R = unknown> {
    * `iconPack`, which `request.iconPacks` loads (D294): loading an unregistered or `ready` pack
    * does nothing, and a `failed` one runs its loader again.
    */
-  resources(parse: ParseResult<unknown>, request: ResourceRequest): readonly ExtensionNeed[] {
+  resources(parse: ParseOutput<unknown>, request: ResourceRequest): readonly ExtensionNeed[] {
     return this.list.flatMap((p) => {
       const resources = this.loaders.get(p);
       if (!resources) return [];
@@ -547,6 +550,14 @@ export class HookRunner<El = unknown, R = unknown> {
 
   get size(): number {
     return this.list.length;
+  }
+
+  /**
+   * Whether an extension reads the AST (DESIGN §4.2): a `postParse` hook needs the full parse,
+   * and the drawn elements' `data-ast` to find the AST nodes' elements again.
+   */
+  get readsAst(): boolean {
+    return this.list.some((p) => typeof p.postParse === 'function');
   }
 
   /** Every claim of every extension, for `DiagramParseContext.claims`. */

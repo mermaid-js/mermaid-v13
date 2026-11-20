@@ -44,7 +44,7 @@ import {
   type LayoutLoader,
 } from './registry.ts';
 import { DiscoveryQueue, registerSeam } from './seam.ts';
-import { rebuildHooks, type Session } from './session.ts';
+import { hooksFor, rebuildHooks, type Session } from './session.ts';
 
 export type { InitializeConfig, IntegratorOptions } from './config-snapshot.ts';
 export { defaultIdPrefix } from './config-snapshot.ts';
@@ -63,8 +63,8 @@ function blocksOf(k: Session): BlockLoader {
   const { analyser } = k;
   return blockLoader({
     detect: (text, s) => analyser.detect(text, s),
-    analyse: (text, s, { detected, pre }, plugin, host) =>
-      analyser.analyse(text, s, plugin, detected, pre, host),
+    analyse: (text, s, found, plugin, host) =>
+      analyser.analyse(text, s, plugin, found, host).analysis,
     load: (id) => k.registry.load(id),
     loaded: (id) => k.registry.plugin(id),
     resources: async (a, format) => {
@@ -74,14 +74,8 @@ function blocksOf(k: Session): BlockLoader {
     },
     draw: (text, s, options, a, id, inner) => {
       const { now, placeholders } = options ?? {};
-      const { drawn, ctx, warnings, mount } = drawSvg(
-        k,
-        text,
-        s,
-        { id, now, placeholders },
-        a,
-        inner
-      );
+      const drawing = { id, now, placeholders };
+      const { drawn, ctx, warnings, mount } = drawSvg(k, text, s, drawing, { analysis: a }, inner);
       const own = warnings.slice(k.skipped.length);
       return {
         ...drawn,
@@ -96,7 +90,7 @@ function blocksOf(k: Session): BlockLoader {
       if (!analyser.textOf(a)) return k.textBackend!.blockStandIn(a.detected.type, b.id);
       const { now, ascii } = (options ?? {}) as Partial<TextRenderOptions>;
       const call = { format: 'ascii', id, now, ascii } as const;
-      const { warnings, ...drawn } = drawAscii(k, b.text, s, call, a, () => inner);
+      const { warnings, ...drawn } = drawAscii(k, b.text, s, call, { analysis: a }, () => inner);
       return { ...drawn, warnings: warnings.slice(k.skipped.length) };
     },
   });
@@ -111,7 +105,12 @@ function createSession(
   const registry = new Registry(firstParty, firstPartyNames);
   const siteConfigs = new SiteConfigs();
   // The analyser reads the claims of the hooks as they are at each parse.
-  const analyser = new Analyser(registry, siteConfigs, () => k.hooks.claims());
+  const analyser = new Analyser(
+    registry,
+    siteConfigs,
+    () => k.hooks.claims(),
+    (plugin, config) => hooksFor(k, { plugin, prepared: { config } }).readsAst
+  );
   // Discovery (D166): its warnings wait for the next draw that succeeds; a first-use source
   // (the Node scan, T4) runs once, before the first prepare, render, parse or preload.
   const discovery = new DiscoveryQueue(
@@ -167,7 +166,9 @@ export function createMermaid(
 
   async function prepare(text: string, options?: RenderOptions): Promise<Prepared> {
     try {
-      return (await prepareWith(k, text, snapshotFor(options), options?.format)).prepared;
+      const s = snapshotFor(options);
+      const { analysis, full } = await prepareWith(k, text, s, options?.format, true);
+      return { ...analysis.prepared, parse: full ?? analysis.full() };
     } catch (e) {
       throw toMermaidError(e);
     }
@@ -207,8 +208,8 @@ export function createMermaid(
     const options = renderOptions(containerOrOptions);
     const s = snapshotFor(options);
     try {
-      await prepareWith(k, text, s, options?.format);
-      return draw(k, text, s, { ...options, id });
+      const parsed = await prepareWith(k, text, s, options?.format);
+      return draw(k, text, s, { ...options, id }, parsed);
     } catch (e) {
       // v12's render() passed every failure to `parseError` too (#757).
       const error = toMermaidError(e);

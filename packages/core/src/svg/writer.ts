@@ -184,7 +184,15 @@ export interface WriterOptions {
    * every user-space gradient id (D391). `mermaid` when left out.
    */
   readonly idPrefix?: () => string;
+  /** `false`: write no `data-ast` attribute (R-PARSE-8), whatever the caller passes. */
+  readonly dataAst?: boolean;
 }
+
+const AST = 'data-ast';
+
+/** `attrs` without `data-ast`, for a render that draws none. */
+const withoutAst = (attrs: Attrs | undefined): Attrs | undefined =>
+  attrs?.[AST] === undefined ? attrs : { ...attrs, [AST]: undefined };
 
 const NO_ATTRS: Attrs = Object.freeze({});
 
@@ -462,7 +470,8 @@ class Stream implements StreamSvgWriter {
   constructor(
     private readonly gradient: SvgGradient | undefined,
     private readonly draw: OutlineDraw | undefined,
-    private readonly idPrefix: (() => string) | undefined
+    private readonly idPrefix: (() => string) | undefined,
+    private readonly dataAst: boolean
   ) {
     this.ref = refOf(gradient);
   }
@@ -506,11 +515,16 @@ class Stream implements StreamSvgWriter {
     }
   }
 
-  open(tag: AllowedTag, attrs?: Attrs): void {
+  /** Writes `<tag` and its attributes, after the pending start tag's `>`. */
+  private begin(tag: AllowedTag, attrs: Attrs | undefined): void {
     checkTag(tag);
-    const a = this.attrs(tag, attrs);
+    const a = this.attrs(tag, this.dataAst ? attrs : withoutAst(attrs));
     this.flush();
     this.out += '<' + tag + a;
+  }
+
+  open(tag: AllowedTag, attrs?: Attrs): void {
+    this.begin(tag, attrs);
     this.pending = true;
     this.stack.push(tag);
   }
@@ -527,10 +541,8 @@ class Stream implements StreamSvgWriter {
   }
 
   leaf(tag: AllowedTag, attrs?: Attrs): void {
-    checkTag(tag);
-    const a = this.attrs(tag, attrs);
-    this.flush();
-    this.out += '<' + tag + a + '/>';
+    this.begin(tag, attrs);
+    this.out += '/>';
   }
 
   outline(role: OutlineRole, tag: OutlineTag, attrs?: Attrs): void {
@@ -586,7 +598,8 @@ class Tree implements TreeSvgWriter {
   constructor(
     private readonly gradient: SvgGradient | undefined,
     private readonly draw: OutlineDraw | undefined,
-    private readonly idPrefix: (() => string) | undefined
+    private readonly idPrefix: (() => string) | undefined,
+    private readonly dataAst: boolean
   ) {}
 
   linearGradient(g: LinearGradient): GradientRef {
@@ -602,7 +615,8 @@ class Tree implements TreeSvgWriter {
   }
 
   open(tag: AllowedTag, attrs?: Attrs): void {
-    this.stack.push(this.compact.appendElement(this.current, tag, attrs));
+    const own = this.dataAst ? attrs : withoutAst(attrs);
+    this.stack.push(this.compact.appendElement(this.current, tag, own));
   }
 
   close(): void {
@@ -611,7 +625,7 @@ class Tree implements TreeSvgWriter {
   }
 
   leaf(tag: AllowedTag, attrs?: Attrs): void {
-    this.compact.appendElement(this.current, tag, attrs);
+    this.compact.appendElement(this.current, tag, this.dataAst ? attrs : withoutAst(attrs));
   }
 
   plainEdge(attrs: Attrs): void {
@@ -659,10 +673,20 @@ class Tree implements TreeSvgWriter {
 
 /** The default backing: writes straight into a string buffer. */
 export function streamWriter(options?: WriterOptions): StreamSvgWriter {
-  return new Stream(options?.gradient, options?.outline, options?.idPrefix);
+  return new Stream(
+    options?.gradient,
+    options?.outline,
+    options?.idPrefix,
+    options?.dataAst !== false
+  );
 }
 
 /** The tree backing, for when a `postRender` hook is registered. */
 export function treeWriter(options?: WriterOptions): TreeSvgWriter {
-  return new Tree(options?.gradient, options?.outline, options?.idPrefix);
+  return new Tree(
+    options?.gradient,
+    options?.outline,
+    options?.idPrefix,
+    options?.dataAst !== false
+  );
 }

@@ -3,13 +3,26 @@
  * cache of what they made. Every registration drops the cache through `invalidate()`, the one
  * place it is cleared from.
  */
-import { errorFromDiagnostics, UnsupportedFormatError, type Warning } from '@mermaid-js/core';
+import {
+  errorFromDiagnostics,
+  UnsupportedFormatError,
+  type DiagramParseContext,
+  type Warning,
+} from '@mermaid-js/core';
 import { resolveText, type ResolvedConfig } from '@mermaid-js/core/config';
 import type { Diagnostic } from '@mermaid-js/core/parser-kit';
 import { checkSource } from '@mermaid-js/core/limits';
 import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { stageEnd, stageStart } from '@mermaid-js/core/timing';
-import { AnalysisCache, type Analysis, type Detection } from './analysis-cache.ts';
+import {
+  AnalysisCache,
+  dataAstOf,
+  fullParse,
+  parseStep,
+  type Analysis,
+  type Detection,
+  type Parsed,
+} from './analysis-cache.ts';
 import { directiveConfig, type SiteConfigs, type Snapshot } from './config-snapshot.ts';
 import type { BlockHost } from './embeds.ts';
 import { toWarning, unsupportedDiagram } from './errors.ts';
@@ -39,12 +52,14 @@ export class Analyser {
 
   /**
    * `claims`: what the registered extensions claim of a parse, read at each parse because the
-   * hooks are rebuilt after a registration.
+   * hooks are rebuilt after a registration. `readsAst`: whether a `postParse` hook of a render
+   * of `plugin` with `config` reads the AST, so its parse is full (DESIGN §4.2).
    */
   constructor(
     private readonly registry: Registry,
     private readonly siteConfigs: SiteConfigs,
-    private readonly claims: () => readonly string[]
+    private readonly claims: () => readonly string[],
+    private readonly readsAst: (plugin: AnyPlugin, config: ResolvedConfig) => boolean
   ) {}
 
   /** Drops every parsed text: a registration changes how texts detect, resolve and parse. */
@@ -77,42 +92,52 @@ export class Analyser {
     return { config, sources: [hit.site.site, front, ...directives] };
   }
 
-  /** Detect, resolve config and parse with a loaded plugin (DESIGN §3 steps 1–4). */
+  /**
+   * Detect, resolve config and parse with a loaded plugin (DESIGN §3 steps 1–4). The parse is
+   * lean (DESIGN §4.2) unless the call asks for it `full` or a `postParse` hook of the render
+   * reads the AST; a lean parse with an error is parsed again in full for its diagnostics.
+   */
   analyse(
     text: string,
     snap: Snapshot,
     plugin: AnyPlugin,
-    detected: Detected,
-    pre: PreprocessResult,
-    host?: BlockHost
-  ): Analysis {
+    { detected, pre }: Detection,
+    host?: BlockHost,
+    full = false
+  ): Parsed {
     const warnings: Warning[] = [];
     const warn = (w: Warning): void => void warnings.push(toWarning(w, this.registry.fragments()));
     warnOf(pre.diagnostics, warn);
     const { config, sources } = this.layers(pre, snap, plugin, detected, warn, host);
     const t = stageStart();
     const claims = this.claims();
-    const parse = plugin.parse(
-      text,
+    const ctx: DiagramParseContext =
       claims.length > 0
         ? { config, preprocessed: pre, limits: snap.limits, claims }
-        : { config, preprocessed: pre, limits: snap.limits }
-    );
+        : { config, preprocessed: pre, limits: snap.limits };
+    const readsAst = this.readsAst(plugin, config);
+    const dataAst = dataAstOf(snap.options, plugin, readsAst);
+    const parsed = parseStep(plugin, text, ctx, !full && !readsAst, dataAst);
+    const parse = parsed.lean;
     stageEnd('parse', t);
     // A directive inside a block belongs to the block (ADR-15): parse again without it.
     const outside = outsideBlocks(pre, parse);
-    if (outside !== pre) return this.analyse(text, snap, plugin, detected, outside, host);
+    if (outside !== pre)
+      return this.analyse(text, snap, plugin, { detected, pre: outside }, host, full);
     const error = errorFromDiagnostics(text, [...pre.diagnostics, ...parse.diagnostics]);
     if (error) throw error;
     warnOf(parse.diagnostics, warn);
     const title = pre.frontMatter?.title;
-    return {
+    const analysis: Analysis = {
       detected,
       plugin,
       prepared: { diagramType: detected.type, config, parse, warnings },
       ...(title !== undefined ? { title } : {}),
       sources,
+      dataAst,
+      full: () => fullParse(plugin, text, ctx),
     };
+    return { analysis, full: parsed.full };
   }
 
   detect(text: string, s: Snapshot): Detection {
@@ -151,16 +176,20 @@ export class Analyser {
     return { detected: { ...detected, id: detected.id }, pre };
   }
 
-  /** Parses with the loaded `plugin` and caches the analysis (DESIGN §3 steps 2–4). */
+  /**
+   * Parses with the loaded `plugin` and caches the analysis (DESIGN §3 steps 2–4): only its
+   * lean parse; a full parse goes to the call that asked for it.
+   */
   analysisOf(
     text: string,
     s: Snapshot,
-    { detected, pre }: Found,
-    plugin: AnyPlugin | undefined
-  ): Analysis {
-    if (!plugin) throw unsupportedDiagram(detected.type);
-    const analysis = this.analyse(text, s, plugin, detected, pre);
-    this.cache.set(text, s, analysis);
-    return analysis;
+    found: Found,
+    plugin: AnyPlugin | undefined,
+    full = false
+  ): Parsed {
+    if (!plugin) throw unsupportedDiagram(found.detected.type);
+    const parsed = this.analyse(text, s, plugin, found, undefined, full);
+    this.cache.set(text, s, parsed.analysis);
+    return parsed;
   }
 }

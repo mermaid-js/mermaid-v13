@@ -13,7 +13,7 @@
  * Text output (`format: 'ascii'`) draws no inline boxes, so it never asks for the engine (D179).
  */
 import type { ExtensionPlugin, Resource, ResourceRequest } from '@mermaid-js/core';
-import type { ParseResult } from '@mermaid-js/core/parser-kit';
+import type { ParseOutput } from '@mermaid-js/core/parser-kit';
 import { Style, type InlineProvider, type InlineRequest } from '@mermaid-js/core/text';
 import type * as EngineModule from './engine.ts';
 
@@ -45,7 +45,7 @@ function hasPair(text: string): boolean {
   return at >= 0 && text.includes('$$', at + 2);
 }
 
-/** Whether any string in `value` (an AST or a model) has a `$$…$$` pair. */
+/** Whether any string in `value` (a model) has a `$$…$$` pair. */
 function mentionsMath(value: unknown): boolean {
   const seen = new Set<object>();
   const stack: unknown[] = [value];
@@ -70,12 +70,11 @@ const withMath = new WeakMap<object, boolean>();
  * Whether a label of the parsed diagram has a `$$…$$` pair (D178). The diagram's own label
  * list when its plugin gives one; otherwise any string the parse holds (a tooltip or URL too).
  */
-function needsMath(parse: ParseResult<unknown>, request: ResourceRequest): boolean {
+function needsMath(parse: ParseOutput<unknown>, request: ResourceRequest): boolean {
   let found = withMath.get(parse);
   if (found === undefined) {
-    found = request.labels
-      ? request.labels().some(hasPair)
-      : mentionsMath(parse.ast) || mentionsMath(parse.model);
+    // The parse is lean when nothing of the render reads the AST: its model holds the labels.
+    found = request.labels ? request.labels().some(hasPair) : mentionsMath(parse.model);
     withMath.set(parse, found);
   }
   return found;

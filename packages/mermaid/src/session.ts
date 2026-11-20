@@ -9,7 +9,7 @@ import { HookRunner } from '@mermaid-js/core';
 import { layoutName } from './registry.ts';
 import type { Warning } from '@mermaid-js/core';
 import type { Measurer } from '@mermaid-js/core/text';
-import type { ExtensionPlugin, ParseErrorHandler, RenderResult } from './api-types.ts';
+import type { ExtensionPlugin, ParseErrorHandler, Prepared, RenderResult } from './api-types.ts';
 import type { Analysis } from './analysis-cache.ts';
 import type { Analyser } from './analyser.ts';
 import type * as TextModule from './ascii.ts';
@@ -64,10 +64,17 @@ export function rebuildHooks(k: Session): void {
  * that lays it out, if it brought one. Other renders never run a layout's hooks, so with no
  * other extension they keep the stream writer.
  */
-export function hooksFor(k: Session, analysis: Analysis, text = false): Hooks {
+export function hooksFor(
+  k: Session,
+  {
+    plugin,
+    prepared: { config },
+  }: Pick<Analysis, 'plugin'> & { prepared: Pick<Prepared, 'config'> },
+  text = false
+): Hooks {
   // Text output never runs a layout's hooks: no registered engine lays it out (D179).
-  if (text || analysis.plugin.layoutKind !== 'graph') return k.hooks;
-  const own = k.registry.layoutExtension(layoutName(analysis.prepared.config, analysis.plugin));
+  if (text || plugin.layoutKind !== 'graph') return k.hooks;
+  const own = k.registry.layoutExtension(layoutName(config, plugin));
   if (!own) return k.hooks;
   let runner = k.layoutRunners.get(own);
   if (!runner) {
