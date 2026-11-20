@@ -132,6 +132,21 @@ function check(g: LayoutGraph, m: LayoutModel, cells: boolean): void {
       }
     }
   }
+  // The end on the member is apart from every other edge end, so the line is not drawn on top of
+  // another edge into the same side of the member (mermaid-js/mermaid#8824).
+  const apart = cells ? 1 : pxProfile.engine.portPitch;
+  for (const own of g.edges) {
+    if (!own.id.startsWith('own')) continue;
+    const p = m.edges.get(own.id)!.points;
+    const end = own.source === 'G' ? p[p.length - 1]! : p[0]!;
+    for (const [id, o] of m.edges) {
+      if (id === own.id) continue;
+      for (const q of [o.points[0]!, o.points[o.points.length - 1]!]) {
+        const d = Math.hypot(q.x - end.x, q.y - end.y);
+        expect(d, `${own.id} ends ${d} from an end of ${id}`).toBeGreaterThanOrEqual(apart - 1e-6);
+      }
+    }
+  }
 }
 
 describe('layered: the label of an edge between a group and its own member', () => {

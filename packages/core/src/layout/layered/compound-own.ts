@@ -1,7 +1,8 @@
 // Ported from Pele (https://github.com/obsidianmd/pele), src/layout/compound.ts at 3a2f075.
 // Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
 // Changes from Pele: split out of `compound.ts` (D596): the edges between a group and its own member (#198, #415), the band their labels sit in,
-// and the helpers that place them. The algorithm is unchanged.
+// and the helpers that place them. In px, such an edge ends clear of the other lines ending on the member's top
+// (`freeAcross`, mermaid-js/mermaid#8824). Otherwise the algorithm is unchanged.
 // cspell:ignore kepano lnode lnodes cnode
 //
 import type { CEdge, CNode } from './compound.ts';
@@ -168,11 +169,30 @@ export function bandTop(c: Compound, g: CNode): number {
   return c.hooks ? c.hooks.cell : g.padTop;
 }
 
+// Where a line that wants to end at `want` on the top of `member` ends, so that it is not drawn
+// on another line ending there (mermaid-js/mermaid#8824): the first place `pitch` clear of every
+// x in `taken`, in steps of `pitch` from `want` to the right (the labels are on that side), else
+// to the left, no nearer a corner than half a pitch. With no such place it stays at `want`.
+function freeAcross(
+  want: number,
+  taken: readonly number[],
+  pitch: number,
+  member: Pick<CNode, 'x' | 'w'>
+): number {
+  for (const step of [pitch, -pitch]) {
+    let x = want;
+    while (taken.some((t) => Math.abs(t - x) < pitch - 1e-6)) x += step;
+    if (2 * Math.abs(x - member.x) <= member.w - pitch) return x;
+  }
+  return want;
+}
+
 // The routes of the own-member edges: between a group and its own member, either way, down from
 // the group's top to the member's top. On the grid it starts on the group's top border row (half
 // a cell inside it, so the route stays in the drawing), in a cell of the member's side no other
-// edge ends in (D140); clearing the way is the repair router's (#45, D78). In px it starts on the
-// top border, or below the title where the title is in its way.
+// edge ends in (D140); clearing the way is the repair router's (#45, D78). In px it ends on the
+// member's top where no other line ends (`freeAcross`), and starts on the top border, or below the
+// title where the title is in its way.
 export function placeOwnEdges(c: Compound): void {
   const { nodes, edges, hooks, M } = c;
   for (const { ei, group: g, member: m, fromGroup, offset } of c.ownEdges) {
@@ -186,7 +206,14 @@ export function placeOwnEdges(c: Compound): void {
       x = hooks.ownTop(member, edges, M.portPitch);
       frame = group.y - group.h / 2 + hooks.cell;
     } else {
-      x = member.x + offset;
+      // Where the other edges of the member, the own ones placed before this one too, end on its top.
+      const taken = edges.flatMap((o, oi) => {
+        // The end on the member: NaN, so no end, for an edge of another node.
+        let k = o.src === m ? 0 : NaN;
+        if (o.dst === m) k = o.route.length - 3;
+        return oi !== ei && Math.abs(o.route[k + 1]! - top) < 1e-6 ? [o.route[k]!] : [];
+      });
+      x = freeAcross(member.x + offset, taken, M.portPitch, member);
       frame = group.y - group.h / 2;
       const title = Math.max(0, group.minW - 2 * group.padX) / 2;
       // The title's middle: the group's, or `title` in from the padding of the title's side.
