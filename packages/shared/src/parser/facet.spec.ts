@@ -1,15 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import type {
   Diagnostic,
+  DocumentView,
   ProbeResult,
   SymbolOccurrence,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { isSpace } from '@mermaid-js/core/parser-kit';
+import { preprocess } from '@mermaid-js/core/preprocess';
 import {
   atLineStart,
+  blankGaps,
   classDefHover,
   code,
+  completionPlace,
+  configSectionOf,
   covers,
   insertWithSeparator,
   matchesTyped,
@@ -21,6 +26,7 @@ import {
   statementOverlapping,
   statementTokens,
   tokenBefore,
+  trimmed,
   wordRange,
 } from './facet.ts';
 
@@ -215,5 +221,100 @@ describe('matchesTyped', () => {
   it('does not match a label that only contains it, or a longer word', () => {
     expect(matchesTyped('accTitle', 'title')).toBe(false);
     expect(matchesTyped('title', 'titles')).toBe(false);
+  });
+});
+
+describe('completionPlace', () => {
+  /** A document of `text` whose parse kept `toks`. */
+  const doc = (text: string, toks?: TokenStream): DocumentView =>
+    ({ text, result: { tokens: toks } }) as unknown as DocumentView;
+
+  it('is undefined outside INITIAL: inside a statement text or a label nothing is offered', () => {
+    const p = { ...probe(8, 6), mode: 'title' };
+    expect(completionPlace(p, doc('title ab'), /\s/)).toBeUndefined();
+  });
+
+  it('gives the expected kinds, the probed word and the prefix typed so far', () => {
+    // `acc:Title` with the cursor after `ac`: the token runs on to `:`, where `stop` ends it.
+    const text = 'x acc:Title';
+    const p = { ...probe(4, 2), expected: [7, 9, 7] };
+    const at = completionPlace(p, doc(text, tokens([[1, 2, 11]])), /[\s:]/);
+    expect(at).toEqual({ expected: new Set([7, 9]), range: span(2, 5), prefix: 'ac' });
+  });
+
+  it('ends the word at the cursor when no token holds it', () => {
+    const at = completionPlace(probe(3, 0), doc('pie'), /\s/);
+    expect(at).toEqual({ expected: new Set(), range: span(0, 3), prefix: 'pie' });
+  });
+});
+
+describe('helpers several parsers share', () => {
+  it('trimmed drops the blanks at the ends, and keeps a blank range whole with keepBlank', () => {
+    expect(trimmed(' ab \n', span(0, 5))).toEqual(span(1, 3));
+    expect(trimmed(' ab \n', span(0, 5), true)).toEqual(span(1, 3));
+    expect(trimmed('a  \tb', span(1, 4))).toEqual(span(4, 4));
+    expect(trimmed('a  \tb', span(1, 4), true)).toEqual(span(1, 4));
+  });
+
+  it('statementTokens stops at a token running past the cursor when endsAcross says so', () => {
+    // `a b|\nc`, where the line break token (2) takes the blank before it: `a b \n`.
+    const t = tokens([
+      [1, 0, 1],
+      [1, 2, 3],
+      [2, 3, 5],
+      [1, 5, 6],
+    ]);
+    const ends = new Set([2]);
+    expect(statementTokens(t, 4, ends, () => false)).toEqual([0, 1]);
+    expect(
+      statementTokens(
+        t,
+        4,
+        ends,
+        () => false,
+        () => false
+      )
+    ).toEqual([0, 1]);
+    expect(
+      statementTokens(
+        t,
+        4,
+        ends,
+        () => false,
+        (i) => i === 2
+      )
+    ).toEqual([]);
+  });
+
+  it('blankGaps counts the gaps between the listed tokens that hold a blank', () => {
+    // `a b,c d`: every character a token.
+    const t = tokens([
+      [1, 0, 1],
+      [1, 2, 3],
+      [1, 3, 4],
+      [1, 4, 5],
+      [1, 6, 7],
+    ]);
+    expect(blankGaps('a b,c d', t, [0, 1, 2, 3, 4])).toBe(2);
+    expect(blankGaps('a b,c d', t, [1, 2, 3])).toBe(0);
+    expect(blankGaps('a b,c d', t, [0])).toBe(0);
+    expect(blankGaps('a b,c d', t, [])).toBe(0);
+  });
+
+  it('configSectionOf merges the front matter section and then each init section, in order', () => {
+    const src = [
+      '---',
+      'config:',
+      '  packet:',
+      '    a: 1',
+      '    b: 1',
+      '---',
+      '%%{init: {"packet": {"b": 2}}}%%',
+      '%%{init: {"packet": [3]}}%%',
+      'packet',
+    ].join('\n');
+    expect(configSectionOf(preprocess(src), 'packet')).toEqual({ a: 1, b: 2 });
+    expect(configSectionOf(preprocess(src), 'railroad')).toEqual({});
+    expect(configSectionOf(preprocess('packet'), 'packet')).toEqual({});
   });
 });

@@ -26,7 +26,8 @@ import {
   syncTo,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
-import { STOP } from '@mermaid-js/shared/parser/support';
+import { foundText, STOP } from '@mermaid-js/shared/parser/support';
+import { span, trimmed } from '@mermaid-js/shared/parser/facet';
 import type { ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { outerRanges } from '@mermaid-js/shared/parser/table';
@@ -128,8 +129,8 @@ const PROBE_FOLLOWS = kindSet(
   T.AccDescrMultilineEnd
 );
 
-/** A line break, as the line index counts them. */
-const LINE_BREAK = /\r\n?|[\n\u2028\u2029]/;
+/** A line break the line index counts that is not `\n`, the one {@link foundText} cuts at. */
+const OTHER_BREAK = /\r\n?|[\u2028\u2029]/g;
 
 /** Where recovery resumes (R-PARSE-4), and the strings it checks on the way. */
 const RESUME = kindSet(Kind.EOF, ...EOL, T.Str);
@@ -262,18 +263,10 @@ class XyChartParser {
     return this.take();
   }
 
-  /** `[start, end)` without the blanks at either end (unless that leaves nothing). */
-  private trim(start: number, end: number): Range {
-    let s = start;
-    let e = end;
-    while (s < e && /\s/.test(this.src[s] ?? '')) s++;
-    while (e > s && /\s/.test(this.src[e - 1] ?? '')) e--;
-    return s < e ? { start: s, end: e } : { start, end };
-  }
-
   /** The range from token `first` to the last token consumed, quotes and `}` included. */
   private span(first: number): Range {
-    return this.trim(this.outerStart[first] ?? 0, this.outerEnd[this.last] ?? 0);
+    const r = span(this.outerStart[first] ?? 0, this.outerEnd[this.last] ?? 0);
+    return trimmed(this.src, r, true);
   }
 
   /** The kind of the next token after `i` that is not a comment. */
@@ -291,19 +284,17 @@ class XyChartParser {
   }
 
   private here(): Range {
-    return this.trim(this.c.start, this.c.end);
+    return trimmed(this.src, span(this.c.start, this.c.end), true);
   }
 
   /** How an error message names the current token: at most 24 characters of one line. */
   private found(): string {
     const k = this.c.kind;
-    if (k === Kind.EOF || k === T.Eof) return 'the end of the text';
-    if (k === Kind.Newline) return 'a line break';
+    if (k === T.Eof) return 'the end of the text';
     const r = this.here();
     const t = this.src.slice(r.start, r.end).trim() || tokenValue(this.lexed, this.c.pos).trim();
-    const line = t.split(LINE_BREAK, 1)[0] ?? '';
-    const shown = line.slice(0, 24);
-    return shown.length < t.length ? `\`${shown}…\`` : `\`${t}\``;
+    // A text may span lines: quote its first, whatever line break ends it.
+    return foundText(k, t.replace(OTHER_BREAK, '\n'));
   }
 
   /** Report what was found where `names` were expected, then stop the statement. */

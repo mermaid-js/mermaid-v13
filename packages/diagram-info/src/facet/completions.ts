@@ -10,9 +10,9 @@ import { infoDocs } from '../generated/docs.ts';
 import type { InfoDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import {
+  completionPlace,
   keywordCompletions,
   type TypedKeywordItem,
-  wordRange,
 } from '@mermaid-js/shared/parser/facet';
 
 /** Everything completion offers, in the order it is offered. */
@@ -28,10 +28,6 @@ export function infoCompletions(
   probe: ProbeResult,
   doc: DocumentView<InfoDocument>
 ): CompletionItem[] {
-  if (probe.mode !== 'INITIAL') return [];
-  const { text, result } = doc;
-  const expected = new Set(probe.expected);
-  const range = wordRange(text, result.tokens, probe, /[\s:]/);
-  const prefix = text.slice(range.start, probe.offset);
-  return keywordCompletions(ITEMS, expected, prefix, range, infoDocs);
+  const at = completionPlace(probe, doc, /[\s:]/);
+  return at ? keywordCompletions(ITEMS, at.expected, at.prefix, at.range, infoDocs) : [];
 }

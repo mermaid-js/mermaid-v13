@@ -17,6 +17,7 @@
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { checkColor, checkStyle, type SafeColor, type SafeValue } from '@mermaid-js/core/svg';
+import { configSectionOf } from '@mermaid-js/shared/parser/facet';
 import { railroadConfigDefaults } from './generated/config-defaults.ts';
 
 /** The `railroad` lengths the layout reads, every one set. */
@@ -208,18 +209,11 @@ export function railroadConfigWarning(config: RailroadConfig): Warning | undefin
   };
 }
 
-const isRecord = (v: unknown): v is Record<string, unknown> =>
-  typeof v === 'object' && v !== null && !Array.isArray(v);
-
 /**
  * The `railroad` config a source sets itself: its front matter's `config.railroad`, then each
  * `%%{init}%%`'s `railroad`, merged key by key, as the resolved config takes them. For callers
  * that lay out without a resolved config (the layout specs and the conformance layout corpus).
  */
 export function railroadSectionOf(pre: PreprocessResult): Record<string, unknown> {
-  const parts: unknown[] = [pre.frontMatter?.config?.railroad];
-  for (const dir of pre.directives) {
-    if (dir.kind === 'init' && isRecord(dir.args)) parts.push(dir.args.railroad);
-  }
-  return Object.assign({}, ...parts.filter(isRecord)) as Record<string, unknown>;
+  return configSectionOf(pre, 'railroad');
 }

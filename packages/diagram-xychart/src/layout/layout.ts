@@ -23,6 +23,7 @@ import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { Size } from '@mermaid-js/core/layout';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey } from '@mermaid-js/core/text';
+import { RectUnion } from '@mermaid-js/shared/layout';
 import { ignoreWarning, XYCHART_SECTION, xyChartOptions, type XyChartOptions } from '../config.ts';
 import type { XyChartModel, XyChartPlot } from '../model.ts';
 import { Axis, type AxisData } from './axis.ts';
@@ -440,19 +441,11 @@ function fit(start: number, fits: (f: number) => boolean): number {
 
 /** The canvas grown to cover everything drawn, strokes included (D224). */
 function boundsOf(l: UnboundedLayout): Rect {
-  let x0 = 0;
-  let y0 = 0;
-  let x1 = l.width;
-  let y1 = l.height;
-  const add = (r: Rect): void => {
-    x0 = Math.min(x0, r.x);
-    y0 = Math.min(y0, r.y);
-    x1 = Math.max(x1, r.x + r.width);
-    y1 = Math.max(y1, r.y + r.height);
-  };
+  const box = new RectUnion();
+  box.add({ x: 0, y: 0, width: l.width, height: l.height });
   visitDrawn(l, {
-    box: add,
-    dot: (p, w) => add({ x: p.x - w / 2, y: p.y - w / 2, width: w, height: w }),
+    box: (r) => box.add(r),
+    dot: (p, w) => box.add({ x: p.x - w / 2, y: p.y - w / 2, width: w, height: w }),
   });
-  return { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
+  return box.rect();
 }

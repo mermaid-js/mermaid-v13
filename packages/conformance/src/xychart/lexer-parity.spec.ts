@@ -1,7 +1,8 @@
 // cspell:words xychart barchart
 import { describe, expect, it } from 'vitest';
 import { Kind } from '@mermaid-js/core/parser-kit';
-import { JISON_NAMES, lexXyChart, tokenValue } from '@mermaid-js/diagram-xychart';
+import { JISON_NAMES, lexXyChart } from '@mermaid-js/diagram-xychart';
+import { tokenValue } from '@mermaid-js/diagram-xychart/testing';
 import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';

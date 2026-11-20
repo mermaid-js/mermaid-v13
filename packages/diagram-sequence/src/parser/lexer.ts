@@ -32,6 +32,7 @@ import {
   Kind,
   LBRACE,
   LF,
+  LOWER_X,
   LPAREN,
   LT,
   PERCENT,
@@ -42,6 +43,8 @@ import {
   SEMI,
   SLASH,
   type SourceView,
+  SPACE,
+  TAB,
   type TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { lowerCode, StateLexer, type StateLexerOptions } from '@mermaid-js/shared/parser/state';
@@ -207,10 +210,7 @@ const isMenuStop = (c: number) =>
 /** A blank of `((?!\n)\s)`. */
 const isLineBlank = (c: number) => c !== LF && isSpace(c);
 
-const LOWER_X = 0x78;
 const PLUS = 0x2b;
-const SPACE = 0x20;
-const TAB = 0x09;
 
 /**
  * The text the lexer reads, of the same length as the view's text: v12 turned every CRLF and
@@ -248,19 +248,8 @@ class SequenceLexer extends StateLexer {
   }
 
   run(probe?: Probe): TokenStream {
-    const { n } = this;
     this.trim();
-    // Two loops, so a plain lex does no probe work per step.
-    if (probe === undefined) while (this.p < n) this.next();
-    else {
-      while (this.p < n) {
-        const before = this.p;
-        const mode = S_NAMES[this.state] ?? '';
-        this.next();
-        probe.lexed(this.source(before), this.source(this.p), mode);
-      }
-      probe.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
-    }
+    this.loop(probe, S_NAMES);
     // At the end jison tries the rules once more on the empty input.
     const kind = this.endKind();
     if (kind !== -1) this.emit(kind, this.len, this.len);
@@ -269,10 +258,9 @@ class SequenceLexer extends StateLexer {
   }
 
   /** One step: the rule that matches at {@link p}, or an Error token where none does. */
-  private next(): void {
-    if (!this.step(this.text.charCodeAt(this.p))) {
+  protected override step(c: number): void {
+    if (!this.rule(c)) {
       // No rule matches (jison throws): an Error token, then the initial state again.
-      const c = this.text.charCodeAt(this.p);
       this.emit(Kind.Error, this.p, c === LF ? this.p : codePointEnd(this.text, this.p));
       this.stack.length = 0;
       this.state = S.INITIAL;
@@ -331,7 +319,8 @@ class SequenceLexer extends StateLexer {
 
   // --- States -------------------------------------------------------------------------------
 
-  protected step(c: number): boolean {
+  /** The rule of the current start condition that matches at {@link p}, if any. */
+  private rule(c: number): boolean {
     switch (this.state) {
       case S.INITIAL:
         return this.initial(c);

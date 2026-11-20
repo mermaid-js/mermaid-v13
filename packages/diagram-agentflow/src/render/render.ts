@@ -26,14 +26,16 @@ import {
   type PlacedTitle,
 } from '@mermaid-js/shared/svg/document';
 import { edgeLabel } from '@mermaid-js/shared/svg/graph';
+import { plainLine } from '@mermaid-js/shared/svg/node-paint';
 import { marker, markerTrim, type MarkerPaint } from '@mermaid-js/shared/svg/arrowheads';
 import { routePath } from '@mermaid-js/shared/svg/route';
-import type {
-  AgentflowEdgeView,
-  AgentflowGroupView,
-  AgentflowLayout,
-  AgentflowNodeView,
-  AgentflowPrepared,
+import {
+  AGENTFLOW_METRICS,
+  type AgentflowEdgeView,
+  type AgentflowGroupView,
+  type AgentflowLayout,
+  type AgentflowNodeView,
+  type AgentflowPrepared,
 } from '../layout/index.ts';
 import type { AgentflowModel } from '../parser/index.ts';
 import type { AgentflowRenderContext } from './context.ts';
@@ -161,7 +163,7 @@ function drawFrames(scene: Scene, frame: FramePaint): void {
       y: top,
       width: box.width,
       height: box.height,
-      rx: prepared.geometry.metrics.flowRadius,
+      rx: AGENTFLOW_METRICS.flowRadius,
       fill: slot?.fill ?? 'none',
       stroke: slot?.stroke ?? frame.stroke,
       'stroke-width': FRAME_WIDTH,
@@ -261,7 +263,7 @@ function linkOf(ctx: AgentflowRenderContext, view: AgentflowNodeView): SafeUrl |
   const url = view.vertex?.link;
   if (url === undefined) return undefined;
   return checkUrl(url, {
-    securityLevel: ctx.securityLevel ?? 'default',
+    securityLevel: ctx.securityLevel,
     linkSchemes: ctx.linkSchemes,
     warn: (warning) => ctx.warn(warning),
   });
@@ -281,9 +283,7 @@ function outlinePaint({ paint }: Scene, view: AgentflowNodeView, slot: Tint | un
 /** Inner lines follow the outline; the refdoc's rule is plain under the gradient (D185). */
 function linePaint({ paint }: Scene, view: AgentflowNodeView, outline: Attrs): Attrs {
   const line: Attrs = { stroke: outline.stroke, 'stroke-width': outline['stroke-width'] };
-  return paint.node.plainStroke && line.stroke === paint.node.stroke && usesPlain(view.shape)
-    ? { ...line, stroke: paint.node.plainStroke }
-    : line;
+  return plainLine(paint.node, line, usesPlain(view.shape));
 }
 
 /** A vertex (`g.node.default.af-kind-<kind>`) or a collapsed flow's card (`g.node`). */
@@ -313,7 +313,7 @@ function drawNode(scene: Scene, view: AgentflowNodeView, tip?: string): void {
   if (isCard && paint.card) {
     const separator = { stroke: paint.card.separator };
     const dots = { fill: paint.card.dots, filter: paint.node.shadow };
-    drawCardTrim(w, view.w, view.h, separator, dots, prepared.geometry);
+    drawCardTrim(w, view.w, view.h, separator, dots);
   }
   const fill = view.style.shape.fill;
   w.label(view.label, 0, view.dy, {

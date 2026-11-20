@@ -6,6 +6,7 @@
 import type {
   CompletionItem,
   CompletionKind,
+  DocumentView,
   Hover,
   HoverTarget,
   ParseResult,
@@ -15,6 +16,7 @@ import type {
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { isBlank } from '@mermaid-js/core/parser-kit';
+import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 
 export const span = (start: number, end: number): Range => ({ start, end });
 
@@ -24,12 +26,15 @@ export const inside = (offset: number, r: Range): boolean => r.start <= offset &
 /** Whether `r` is not empty and `offset` is in it, ends included: a token a hover may show. */
 export const covers = (offset: number, r: Range): boolean => r.start < r.end && inside(offset, r);
 
-/** `r` without the blanks at its ends. */
-export function trimmed(text: string, r: Range): Range {
+/**
+ * `r` without the blanks at its ends. A range of blanks only comes out empty, or, with
+ * `keepBlank`, as it is.
+ */
+export function trimmed(text: string, r: Range, keepBlank = false): Range {
   let { start, end } = r;
   while (start < end && /\s/.test(text[start]!)) start++;
   while (end > start && /\s/.test(text[end - 1]!)) end--;
-  return span(start, end);
+  return start < end || !keepBlank ? span(start, end) : span(r.start, r.end);
 }
 
 /** Markdown inline code holding `text` as written, whatever backticks it has. */
@@ -121,18 +126,23 @@ export function statementOverlapping<N extends { readonly range: Range }>(
 
 /**
  * The tokens of the statement before `at`, as indexes first to last: those ending at or before
- * `at`, back to the last one whose kind is in `ends`, leaving out those `skip` takes.
+ * `at`, back to the last one whose kind is in `ends`, leaving out those `skip` takes. A token
+ * running past `at` is passed over, unless `endsAcross` says it ends the statement there.
  */
 export function statementTokens(
   tokens: TokenStream,
   at: number,
   ends: ReadonlySet<number>,
-  skip: (kind: number) => boolean
+  skip: (kind: number) => boolean,
+  endsAcross?: (i: number) => boolean
 ): number[] {
   const out: number[] = [];
   for (let i = tokenBefore(tokens, at - 1); i >= 0; i--) {
     const k = tokens.kind[i]!;
-    if ((tokens.end[i] ?? 0) > at) continue;
+    if ((tokens.end[i] ?? 0) > at) {
+      if (endsAcross?.(i)) break;
+      continue;
+    }
     if (ends.has(k)) break;
     if (!skip(k)) out.push(i);
   }
@@ -233,6 +243,36 @@ export function wordRange(
     if (found) end = o + found.index;
   }
   return span(probe.prefix.start, end);
+}
+
+/** Where a keyword completion goes, and what the parser expects there. */
+export interface CompletionPlace {
+  /** The kinds the parser tests at the cursor. */
+  readonly expected: Set<number>;
+  /** The probed word's range ({@link wordRange}). */
+  readonly range: Range;
+  /** The text of `range` before the cursor. */
+  readonly prefix: string;
+}
+
+/**
+ * The start of a keyword completion: `undefined` inside a statement's text or a label (probe
+ * mode other than `INITIAL`), where nothing is offered; else the expected kinds, the probed
+ * word's range (`stop` as in {@link wordRange}) and the prefix typed so far.
+ */
+export function completionPlace(
+  probe: ProbeResult,
+  doc: DocumentView,
+  stop: RegExp
+): CompletionPlace | undefined {
+  if (probe.mode !== 'INITIAL') return undefined;
+  const { text } = doc;
+  const range = wordRange(text, doc.result.tokens, probe, stop);
+  return {
+    expected: new Set(probe.expected),
+    range,
+    prefix: text.slice(range.start, probe.offset),
+  };
 }
 
 /** As {@link wordRange} over a run of adjoining word tokens, stopping at the first blank. */
@@ -488,6 +528,34 @@ export function keywordHover(
   return { range, contents: `**${code(text.slice(range.start, range.end))}**\n\n${docText}` };
 }
 
+// ---- Shared by the parsers and config readers of several types (#1084) ----------------
+
+/**
+ * How many of the gaps between the tokens `list` names (indexes in source order) hold a blank:
+ * the blank-separated groups after the first token, for a lexer that skips blanks.
+ */
+export function blankGaps(text: string, tokens: TokenStream, list: readonly number[]): number {
+  let groups = 0;
+  for (let j = 1; j < list.length; j++) {
+    const gap = text.slice(tokens.end[list[j - 1]!] ?? 0, tokens.start[list[j]!] ?? 0);
+    if (/\s/.test(gap)) groups++;
+  }
+  return groups;
+}
+
+/**
+ * The `name` config section a source sets itself: its front matter's `config.<name>`, then each
+ * `%%{init}%%`'s `<name>`, merged key by key, as the resolved config takes them. For callers
+ * that parse or lay out without a resolved config. `{}` when the source sets none.
+ */
+export function configSectionOf(pre: PreprocessResult, name: string): Record<string, unknown> {
+  const parts: unknown[] = [pre.frontMatter?.config?.[name]];
+  for (const dir of pre.directives) {
+    if (dir.kind === 'init' && isPlain(dir.args)) parts.push(dir.args[name]);
+  }
+  return Object.assign({}, ...parts.filter(isPlain)) as Record<string, unknown>;
+}
+
 /** The `direction` values and what they mean, as ER, class and state offer them (no `TD`). */
 export const DIRECTION_DOCS: readonly (readonly [
   dir: 'TB' | 'BT' | 'LR' | 'RL',
@@ -497,4 +565,4 @@ export const DIRECTION_DOCS: readonly (readonly [
   ['BT', 'bottom to top'],
   ['LR', 'left to right'],
   ['RL', 'right to left'],
-];
+] as const;

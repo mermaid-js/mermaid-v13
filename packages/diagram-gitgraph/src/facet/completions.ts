@@ -14,6 +14,7 @@
  * matched without regard to case.
  */
 import { Kind } from '@mermaid-js/core/parser-kit';
+import { insertWithSeparator } from '@mermaid-js/shared/parser/facet';
 import type {
   CompletionItem,
   DocumentView,
@@ -94,15 +95,10 @@ function tokenEnd(tokens: TokenStream, offset: number): number {
 }
 
 /**
- * The text `item` inserts before `rest` (what follows the replaced word): its separator only
- * when `rest` does not start with a blank or a value (`branch` before ` dev`, `id:` before
- * `"x"`).
+ * What `rest` (the text after the replaced word) opens with when a keyword needs no separator
+ * of its own: a value or a colon (`id:` before `"x"`, `accTitle` before `: x`).
  */
-function insertText(item: KeywordItem, rest: string): string {
-  const sep = item.separator ?? '';
-  if (sep === '' || /^[\t ]*[:{"']/.test(rest) || /^[\t ]/.test(rest)) return item.label;
-  return item.label + sep;
-}
+const OPENS = /^[\t ]*[:{"']/;
 
 /** The branches made before `at`, the main branch first, and the one checked out there. */
 function branchesBefore(
@@ -238,7 +234,7 @@ function keywordCompletions(probe: ProbeResult, text: string): CompletionItem[] 
     out.push({
       label: k.label,
       kind: k.item,
-      insertText: insertText(k, rest),
+      insertText: insertWithSeparator(k.label, k.separator, rest, OPENS),
       range: span(start, end),
       ...(k.detail === undefined ? {} : { detail: k.detail }),
       ...(documentation === undefined ? {} : { documentation }),
