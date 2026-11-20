@@ -6,10 +6,13 @@ import type {
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { isSpace } from '@mermaid-js/core/parser-kit';
+import { preprocess } from '@mermaid-js/core/preprocess';
 import {
   atLineStart,
+  blankGaps,
   classDefHover,
   code,
+  configSectionOf,
   covers,
   insertWithSeparator,
   matchesTyped,
@@ -21,6 +24,7 @@ import {
   statementOverlapping,
   statementTokens,
   tokenBefore,
+  trimmed,
   wordRange,
 } from './facet.ts';
 
@@ -215,5 +219,76 @@ describe('matchesTyped', () => {
   it('does not match a label that only contains it, or a longer word', () => {
     expect(matchesTyped('accTitle', 'title')).toBe(false);
     expect(matchesTyped('title', 'titles')).toBe(false);
+  });
+});
+
+describe('helpers several parsers share', () => {
+  it('trimmed drops the blanks at the ends, and keeps a blank range whole with keepBlank', () => {
+    expect(trimmed(' ab \n', span(0, 5))).toEqual(span(1, 3));
+    expect(trimmed(' ab \n', span(0, 5), true)).toEqual(span(1, 3));
+    expect(trimmed('a  \tb', span(1, 4))).toEqual(span(4, 4));
+    expect(trimmed('a  \tb', span(1, 4), true)).toEqual(span(1, 4));
+  });
+
+  it('statementTokens stops at a token running past the cursor when endsAcross says so', () => {
+    // `a b|\nc`, where the line break token (2) takes the blank before it: `a b \n`.
+    const t = tokens([
+      [1, 0, 1],
+      [1, 2, 3],
+      [2, 3, 5],
+      [1, 5, 6],
+    ]);
+    const ends = new Set([2]);
+    expect(statementTokens(t, 4, ends, () => false)).toEqual([0, 1]);
+    expect(
+      statementTokens(
+        t,
+        4,
+        ends,
+        () => false,
+        () => false
+      )
+    ).toEqual([0, 1]);
+    expect(
+      statementTokens(
+        t,
+        4,
+        ends,
+        () => false,
+        (i) => i === 2
+      )
+    ).toEqual([]);
+  });
+
+  it('blankGaps counts the gaps between the listed tokens that hold a blank', () => {
+    // `a b,c d`: every character a token.
+    const t = tokens([
+      [1, 0, 1],
+      [1, 2, 3],
+      [1, 3, 4],
+      [1, 4, 5],
+      [1, 6, 7],
+    ]);
+    expect(blankGaps('a b,c d', t, [0, 1, 2, 3, 4])).toBe(2);
+    expect(blankGaps('a b,c d', t, [1, 2, 3])).toBe(0);
+    expect(blankGaps('a b,c d', t, [0])).toBe(0);
+    expect(blankGaps('a b,c d', t, [])).toBe(0);
+  });
+
+  it('configSectionOf merges the front matter section and then each init section, in order', () => {
+    const src = [
+      '---',
+      'config:',
+      '  packet:',
+      '    a: 1',
+      '    b: 1',
+      '---',
+      '%%{init: {"packet": {"b": 2}}}%%',
+      '%%{init: {"packet": [3]}}%%',
+      'packet',
+    ].join('\n');
+    expect(configSectionOf(preprocess(src), 'packet')).toEqual({ a: 1, b: 2 });
+    expect(configSectionOf(preprocess(src), 'railroad')).toEqual({});
+    expect(configSectionOf(preprocess('packet'), 'packet')).toEqual({});
   });
 });
