@@ -92,14 +92,13 @@ layout?: string
  * otherwise the later edge does. Only straight runs carry hops: curves
  * and rounded corners are left as drawn, and a crossing too close to a
  * bend gets no hop. `true` and `arc` draw a 6px arc, `gap` breaks the
- * line. Off by default.
+ * line. On by default; `false` draws plain crossings.
  * 
  * A layout engine's own `lineHops` (`swimlane.lineHops`, default `arc`;
  * `elk.lineHops`, default `true`) applies when that engine lays the
- * diagram out, so those layouts hop by default. Precedence: the engine
- * key when set explicitly, then this key when set explicitly, then the
- * engine's default. Setting this key to `false` turns hops off
- * everywhere, engine keys included.
+ * diagram out. Precedence: the engine key when set explicitly, then
+ * this key when set explicitly, then the engine's default. Setting this
+ * key to `false` turns hops off everywhere, engine keys included.
  * 
  */
 lineHops?: (false | true | "arc" | "gap")

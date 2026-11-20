@@ -33,7 +33,6 @@ import {
   builtIn,
   isElkName,
   layoutName,
-  LINE_HOPS,
   type AnyPlugin,
   type LayoutFound,
   type Registry,
@@ -88,9 +87,6 @@ function missingFor(registry: Registry, a: Analysis, text = false): Resource[] {
   // Text output lays out with core's own `layered`, never a registered engine (D179).
   const missing: Resource[] = [];
   if (!text) missingLayout(registry, a, missing);
-  // D537: the line-hop chunk when the shared key turns hops on. An engine whose own `lineHops`
-  // defaults on (`swimlane`, ELK) carries the step, so loading it loads them.
-  if (!text && !registry.hops && config.lineHops) missing.push({ kind: 'layout', name: LINE_HOPS });
   // Text output draws no colours, so it needs no theme (D82).
   if (!text) missingThemes(config, missing);
   for (const r of a.plugin.resources?.(a.prepared.parse, config) ?? []) missing.push(r);

@@ -150,8 +150,8 @@ export function drawSvg(
   const renderHooks = hooksFor(k, a);
   const run = renderHooks.size === 0 ? undefined : renderHooks.start(ctx, a.plugin.id);
   const { parse } = a.prepared;
-  // D537: the line-hop step, when its chunk is loaded and decides that this render hops.
-  const edges = k.registry.hops?.(a);
+  // D537: the line-hop step, which decides whether this render hops.
+  const edges = k.registry.hops(a);
   const drawn = drawDiagram(a.plugin, parse.model, ctx, run && { run, ast: parse.ast }, edges);
   warnHtmlDropped(ctx);
   // Binds the run's interactions, then each block's in its own nested root (#669).

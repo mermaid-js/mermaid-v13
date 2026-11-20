@@ -66,11 +66,9 @@ const elkLayouts: readonly ElkLayoutLoader[] = NAMES.map(([name, algorithm]) => 
   name,
   config: configFragment,
   extension: elkExtension,
-  // The engine carries core's line-hop step (D537), which `elk.lineHops` (default on) needs, so
-  // `preload({ layouts: ['elk'] })` covers `renderSync`.
   loader: async () => {
     engine = await import('./adapter.ts');
-    return Object.assign(engine.elkEngine(algorithm), { lineHops: engine.lineHops });
+    return engine.elkEngine(algorithm);
   },
 }));
 

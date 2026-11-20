@@ -48,8 +48,8 @@
 - **Line hops** (new, D537, #655): with `lineHops: true` (or `'arc'`, `'gap'`), where two
   straight edges cross, the later one draws a 6px hop (`gap`: a break), through core's shared
   edge-path step. A self-loop's curve neither hops nor is hopped over. Edges stay plain under
-  `look: handDrawn` (D447). The shared key defaults to `false`, so existing documents draw as
-  before.
+  `look: handDrawn` (D447). The shared key defaults to `true` (D672), so crossings hop unless a
+  document sets `lineHops: false`.
 - **Text output** (new, D449): `format: 'ascii'` draws block diagrams as text from the lazily
   loaded `@mermaid-js/diagram-block/ascii` entry: boxes on a character grid, composites as
   frames, edges as stepped lines. `block.padding` is ignored there, with no warning. See

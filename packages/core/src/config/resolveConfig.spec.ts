@@ -476,7 +476,7 @@ describe('CORE_DEFAULTS', () => {
       ...v12,
       theme: 'redux-color',
       layout: 'layered',
-      lineHops: false, // new in v13, shared by every edge-drawing diagram (D537)
+      lineHops: true, // new in v13, shared by every edge-drawing diagram (D537), on by default (D672)
       // Core's own swimlane engine: its section's defaults resolve in core (D533, D537).
       swimlane: {
         useMaxWidth: true,

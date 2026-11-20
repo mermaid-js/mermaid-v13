@@ -867,21 +867,20 @@ properties:
       otherwise the later edge does. Only straight runs carry hops: curves
       and rounded corners are left as drawn, and a crossing too close to a
       bend gets no hop. `true` and `arc` draw a 6px arc, `gap` breaks the
-      line. Off by default.
+      line. On by default; `false` draws plain crossings.
 
       A layout engine's own `lineHops` (`swimlane.lineHops`, default `arc`;
       `elk.lineHops`, default `true`) applies when that engine lays the
-      diagram out, so those layouts hop by default. Precedence: the engine
-      key when set explicitly, then this key when set explicitly, then the
-      engine's default. Setting this key to `false` turns hops off
-      everywhere, engine keys included.
+      diagram out. Precedence: the engine key when set explicitly, then
+      this key when set explicitly, then the engine's default. Setting this
+      key to `false` turns hops off everywhere, engine keys included.
     type: [boolean, string]
     enum: [false, true, 'arc', 'gap']
-    default: false
+    default: true
     x-mermaid:
       status: honoured
       since: 13.0.0
-      reason: "New in v13 (D537, #78): one shared key for line hops, which v12 had only under swimlane and ELK. Drawn by a lazily loaded part of core, loaded as the lazy layout `lineHops` when this key is on (the `swimlane` and ELK engines carry it themselves); `renderSync` without it throws `NotLoadedError` for layout `lineHops` (load it with `prepare()` or `preload({ layouts: ['lineHops'] })`)."
+      reason: 'New in v13 (D537, #78): one shared key for line hops, which v12 had only under swimlane and ELK. On by default (D672; D537 had it off), so a crossing in any diagram that draws edges hops unless the author sets `lineHops: false`. Drawn by a part of core, so `render` and `renderSync` need nothing loaded for it.'
   maxTextSize:
     description: The maximum allowed size of the users text diagram
     type: number
