@@ -694,7 +694,7 @@ class QuadrantParser {
 type Mutable<T> = { -readonly [K in keyof T]: T[K] };
 
 /** `pt:<name>`-style id part: `%`, `>`, `@` and `#` percent-encoded. */
-const esc = idEscaper();
+const esc = /* @__PURE__ */ idEscaper();
 
 const label = (t: QuadrantTextNode, suffix = ''): QuadrantText => ({
   text: (t.text + suffix).trim(),
