@@ -29,6 +29,7 @@ import {
   textStatements,
   textValue,
   TITLE_STATEMENT,
+  unclosedLabel,
   withoutIndent,
 } from '@mermaid-js/shared/parser/rule';
 import type {
@@ -311,16 +312,7 @@ class GitGraphParser extends RuleParser<PreprocessResult> {
     const { st } = this;
     const text = this.raw();
     const line = this.lineOf(where.start);
-    if (text.startsWith('"') || text.startsWith("'")) {
-      const q = text[0] ?? '"';
-      st.diagnostics.error(
-        'UNCLOSED_STRING',
-        `Unclosed text: the \`${q}\` at line ${line} has no closing \`${q}\`. Add \`${q}\` after the text.`,
-        where,
-        { expected: [`\`${q}\``] }
-      );
-      throw STOP;
-    }
+    if (unclosedLabel(st.diagnostics, text, line, where, 'text')) throw STOP;
     const shown = text.length > 24 ? `${text.slice(0, 24)}…` : text;
     let why = '';
     if (text.startsWith(';'))
