@@ -51,7 +51,7 @@ beforeAll(async () => {
 describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
   it('takes the entry output for the entry, not the first lazily imported chunk', () => {
     expect(prod.entryFile).toBe('index.js');
-    expect(prod.staticClosure[0]).toBe('index.js');
+    expect(closureSize(prod).files[0]!.path).toBe('index.js');
   });
 
   it('an SVG flowchart render loads no ascii module', () => {

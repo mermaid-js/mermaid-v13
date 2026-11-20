@@ -13,6 +13,7 @@
  * (the spec itself runs in Node, so Vite transforms it as Node code) and torn down by
  * {@link closeV12}.
  */
+import type { Mermaid as MermaidV12 } from 'mermaid-v12';
 import { builtinEnvironments } from 'vitest/runtime';
 
 /** A character's width in em, at the size it is drawn at, and a line's height in px. */
@@ -46,11 +47,6 @@ function fakeBBox(this: Element): Box {
   return { x, y: centre - height / 2, width, height };
 }
 
-interface MermaidV12 {
-  initialize(config: Record<string, unknown>): void;
-  render(id: string, text: string): Promise<{ svg: string }>;
-}
-
 let loading: Promise<MermaidV12> | undefined;
 let teardown: (() => unknown) | undefined;
 
@@ -61,7 +57,7 @@ function load(): Promise<MermaidV12> {
     const svgProto = (globalThis as unknown as { SVGElement: { prototype: object } }).SVGElement
       .prototype;
     Object.assign(svgProto, { getBBox: fakeBBox });
-    const mermaid = ((await import('mermaid-v12')) as unknown as { default: MermaidV12 }).default;
+    const mermaid = (await import('mermaid-v12')).default;
     mermaid.initialize({ startOnLoad: false });
     return mermaid;
   })();
