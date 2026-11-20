@@ -5,14 +5,8 @@
 // other side, or moves further out along the segment past what is in the way; it never covers a
 // node or a group's title. A local copy: importing layered's would pull layered into this chunk.
 import type { LayoutGraph, LayoutModel, Point, RoutePoint, Side, Size } from '../types.ts';
+import type { Rect } from '../layered/end-markers.ts';
 import { pxProfile } from '../units.ts';
-
-interface Rect {
-  x0: number;
-  y0: number;
-  x1: number;
-  y1: number;
-}
 
 const OUTWARD: Readonly<Record<Side, { axis: 'x' | 'y'; sign: number }>> = {
   top: { axis: 'y', sign: -1 },

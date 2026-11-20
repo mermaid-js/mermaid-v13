@@ -4,16 +4,10 @@
 // node, on the border of the node's group). `countCrossings` gives a
 // quality number to record per fixture.
 import type { LayoutGraph, LayoutModel, Point } from './types.ts';
+import type { Rect } from './layered/end-markers.ts';
 
 // How far apart two boxes may overlap, or a point may lie off a box, and still count as clear.
 const SLACK = 0.5;
-
-interface Rect {
-  x0: number;
-  y0: number;
-  x1: number;
-  y1: number;
-}
 
 function rect(b: { x: number; y: number; width: number; height: number }): Rect {
   return {

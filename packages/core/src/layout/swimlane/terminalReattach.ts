@@ -6,6 +6,7 @@
 // the cases found (`pebr-2-edge-intrudes-lane-label`, `pipeline.hoe.lr.spec.ts`); this stays as
 // the guarantee. v12's renderer clipped to the shape anyway; v13's model needs every
 // route to start and end on its boxes, so an end off its box gets a stub from it (`reattach`).
+import type { Box } from '../types.ts';
 import type { LayoutData, Node } from './layoutData.ts';
 
 interface Pt {
@@ -15,13 +16,6 @@ interface Pt {
 
 /** How far off its box an end may be and still count as on it. */
 const ON = 0.5;
-
-interface Box {
-  left: number;
-  right: number;
-  top: number;
-  bottom: number;
-}
 
 const boxOf = (n: Node): Box => {
   const [x, y, w, h] = [n.x ?? 0, n.y ?? 0, (n.width ?? 0) / 2, (n.height ?? 0) / 2];
