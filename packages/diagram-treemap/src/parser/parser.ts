@@ -36,7 +36,7 @@ import {
 } from '@mermaid-js/core/parser-kit';
 import { excerpt, lineTokens } from '@mermaid-js/shared/parser/line-tokens';
 import type { LineTokenView } from '@mermaid-js/shared/parser/line-tokens';
-import { STOP } from '@mermaid-js/shared/parser/support';
+import { foundText, STOP } from '@mermaid-js/shared/parser/support';
 import type {
   AstId,
   Diagnostic,
@@ -232,9 +232,8 @@ class TreemapParser extends RuleParser<PreprocessResult> {
   /** How an error message names the token at `j`. */
   protected override found(j = this.i): string {
     const k = this.kind(j);
-    if (k === Kind.EOF) return 'the end of the text';
     if (k === T.Indentation) return 'a blank';
-    return `\`${excerpt(this.raw(j).trim())}\``;
+    return foundText(k, k === Kind.EOF ? '' : this.raw(j));
   }
 
   /** Record an error at `where` and stop the statement. */

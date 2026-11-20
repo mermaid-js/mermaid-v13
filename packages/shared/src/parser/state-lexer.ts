@@ -14,6 +14,7 @@ import {
   LF,
   localOffset,
   type Probe,
+  scanWhile,
   SourceOffsets,
   type SourceView,
   TokenWriter,
@@ -302,16 +303,12 @@ export abstract class StateLexer {
 
   /** The end of the run of `[\t ]` from `q`. */
   protected blanks(q: number): number {
-    let j = q;
-    while (j < this.n && isBlank(this.text.charCodeAt(j))) j++;
-    return j;
+    return scanWhile(this.text, q, isBlank);
   }
 
   /** The end of the run of `\s` from `q`. */
   protected spaces(q: number): number {
-    let j = q;
-    while (j < this.n && isSpace(this.text.charCodeAt(j))) j++;
-    return j;
+    return scanWhile(this.text, q, isSpace);
   }
 
   /** Whether the case-insensitive literal `word` (lower case) is at `q`. */

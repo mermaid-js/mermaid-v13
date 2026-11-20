@@ -26,9 +26,11 @@ import {
   Kind,
   LBRACE,
   LF,
+  lineEnd as lineEndAt,
   localOffset,
   newlineAt,
   PERCENT,
+  scanWhile,
   SourceOffsets,
   type SourceView,
   type TokenStream,
@@ -338,16 +340,12 @@ export abstract class RuleLexer {
 
   /** The end of the run of `[\t ]` from `q`. */
   protected blanks(q: number): number {
-    let j = q;
-    while (j < this.n && isBlank(this.text.charCodeAt(j))) j++;
-    return j;
+    return scanWhile(this.text, q, isBlank);
   }
 
   /** The end of the run of `\s` from `q`. */
   protected spaces(q: number): number {
-    let j = q;
-    while (j < this.n && isSpace(this.text.charCodeAt(j))) j++;
-    return j;
+    return scanWhile(this.text, q, isSpace);
   }
 
   /** The end of the run of `[0-9]` from `q`, a run scanned once. */
@@ -362,9 +360,7 @@ export abstract class RuleLexer {
 
   /** The end of the run of `[^\n\r]` from `q`. */
   protected lineEnd(q: number): number {
-    let j = q;
-    while (j < this.n && !isBreak(this.text.charCodeAt(j))) j++;
-    return j;
+    return lineEndAt(this.text, q);
   }
 
   /** `[^\n\r]*?(?=%%)|[^\n\r]*` from `q`: the first `%%` on the line, else the line end. */
