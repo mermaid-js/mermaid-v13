@@ -27,6 +27,7 @@ e2e/diagrams/pie/baseline/themes/redux-dark.mmd 1 d6ebca92f098371c
 e2e/diagrams/pie/baseline/themes/redux.mmd 1 9423d267d9b6b723
 e2e/diagrams/pie/nightly-check/dark-theme.mmd 1 7bdd9d68599d5583
 e2e/diagrams/pie/nightly-check/default-theme.mmd 1 f7ee6e01899a32cd
+e2e/diagrams/pie/nightly-check/forest-theme-base-colour-overrides.mmd 1 ba2be8aa27c5d9e4
 e2e/diagrams/pie/nightly-check/forest-theme.mmd 1 c3bc11090a6a9d9e
 e2e/diagrams/pie/nightly-check/highlights-hovered-slice.mmd 1 e0d9c10dfe3d8322
 e2e/diagrams/pie/nightly-check/highlights-specific-slice.mmd 1 2ac089367081f1c8

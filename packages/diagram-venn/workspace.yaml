@@ -73,6 +73,21 @@ credits:
 # can't see; someThemes / authorOnly: table rows that may resolve to `currentColor` (#374).
 theme:
   # `vennPaints` in render/paint.ts reads the slot colours `slotVar(slot)`, `venn${slot + 1}`.
-  dynamicReads: ['venn1', 'venn2', 'venn3', 'venn4', 'venn5', 'venn6', 'venn7', 'venn8']
+  # The classic slot rules (`DEFAULT_SLOTS` in theme/table.ts) read `canvasItemBkg`, `badgeBkg`
+  # and `canvasItemBkg3` inside rule expressions, which the scan does not read (D656).
+  dynamicReads:
+    [
+      'venn1',
+      'venn2',
+      'venn3',
+      'venn4',
+      'venn5',
+      'venn6',
+      'venn7',
+      'venn8',
+      'canvasItemBkg',
+      'badgeBkg',
+      'canvasItemBkg3',
+    ]
   # The slot colours, which redux and neo leave unset as v12 did (the renderer cycles the slots that are set, else the palette, else `primaryColor`, #495).
   someThemes: ['venn1', 'venn2', 'venn3', 'venn4', 'venn5', 'venn6', 'venn7', 'venn8']

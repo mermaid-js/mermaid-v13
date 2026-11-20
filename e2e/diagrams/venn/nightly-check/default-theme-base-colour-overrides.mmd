@@ -1,0 +1,27 @@
+---
+config:
+  theme: default
+  themeVariables:
+    primaryColor: '#ffcc00'
+    primaryTextColor: '#003366'
+    lineColor: '#008800'
+    secondaryColor: '#99ccff'
+    tertiaryColor: '#ffe6f0'
+    background: '#fff2cc'
+description: >-
+  baseline/themes/default.mmd, the representative venn diagram, under base-colour overrides in
+  the default theme (#1035, D656): every slot keeps v12 default's own colour, as in v12
+---
+venn-beta
+  title Team skills
+  set Frontend["Frontend"]: 12
+    text React
+    text "CSS grid"
+  set Backend["Backend"]: 10
+    text Go
+  set Ops["Operations"]: 8
+  union Frontend, Backend["Full stack"]: 4
+  union Backend, Ops: 3
+    text Terraform
+  union Frontend, Ops: 2
+  union Frontend, Backend, Ops["Everything"]: 1

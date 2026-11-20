@@ -82,6 +82,7 @@ exports[`requirement layout over parser-produced fixtures > records the crossing
   "e2e/nightly-check/an-element-with-type-and-docref-neo-look-redux-dark-theme.mmd": 0,
   "e2e/nightly-check/an-element-with-type-and-docref-neo-look-redux-theme.mmd": 0,
   "e2e/nightly-check/comments.mmd": 0,
+  "e2e/nightly-check/dark-theme-base-colour-overrides.mmd": 0,
   "e2e/nightly-check/diagram-with-bt-direction-neo-look-neo-dark-theme.mmd": 0,
   "e2e/nightly-check/diagram-with-bt-direction-neo-look-neo-theme.mmd": 0,
   "e2e/nightly-check/diagram-with-bt-direction-neo-look-redux-color-theme.mmd": 0,

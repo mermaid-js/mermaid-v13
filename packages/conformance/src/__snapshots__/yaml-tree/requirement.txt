@@ -78,6 +78,7 @@ e2e/diagrams/requirement/nightly-check/an-element-with-type-and-docref-neo-look-
 e2e/diagrams/requirement/nightly-check/an-element-with-type-and-docref-neo-look-redux-dark-theme.mmd 1 48b09b71cf5cb33f
 e2e/diagrams/requirement/nightly-check/an-element-with-type-and-docref-neo-look-redux-theme.mmd 1 9a5d1caea1a036e7
 e2e/diagrams/requirement/nightly-check/comments.mmd 1 2512410457be85a5
+e2e/diagrams/requirement/nightly-check/dark-theme-base-colour-overrides.mmd 1 cc47fea029f8a379
 e2e/diagrams/requirement/nightly-check/diagram-with-bt-direction-neo-look-neo-dark-theme.mmd 1 bf9d8b1424934bcd
 e2e/diagrams/requirement/nightly-check/diagram-with-bt-direction-neo-look-neo-theme.mmd 1 430fc9c725d9f66e
 e2e/diagrams/requirement/nightly-check/diagram-with-bt-direction-neo-look-redux-color-theme.mmd 1 006954743bdfb579

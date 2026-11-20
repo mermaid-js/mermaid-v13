@@ -605,8 +605,8 @@ Sequence diagrams (`sequence` section, #145):
 | `base` derives `secondaryColor` and `tertiaryColor` from `primaryColor`, and `lineColor` from `background`, unless the author sets them | The same rules, written as CSS over `--mermaid-primaryColor` and `--mermaid-background`, so a host page's override of either moves them too. Errors are drawn in `tertiaryColor` with `tertiaryTextColor`, and notes stay `#fff5ad` with `#333333` text under `darkMode` and a `primaryTextColor` override, as in v12 | D569 |
 | `default`, `dark`, `forest` and `neutral` set `mainBkg`, their borders, some text inks, the notes and the errors as constructor literals, which an override of a base colour does not move | The same literals (`mainBkg` `#ececff`, `#1f2020`, `#cde498`, `#eeeeee`), so `primaryColor` in `themeVariables` does not repaint their nodes. On a host page `--mermaid-primaryColor` does not either: set `--mermaid-mainBkg` (and `--mermaid-nodeBorder` for the outlines). `dark`'s note and cluster fill follow an author's `mainBkg`, lightened by 16, as v12's `secondBkg`. `base` still derives `mainBkg` from `primaryColor` | D570, R-THEME-3 |
 | `arrowheadColor` in `getThemeVariables()`: `#333333` in `default`, `#d3d3d3` in `dark`, `invert(background)` in `base`; the drawn arrowheads took `lineColor` (`.marker`) | Arrowheads are painted `arrowheadColor`, which follows `lineColor` in `default`, `dark` and `base`, so an author's or host's `lineColor` recolours edges and heads together, as v12 drew them. Set `arrowheadColor` for heads of their own colour. `forest` and `neutral` keep their own (`#008000`, `#333333`) | D575 |
-| `forest`: an author's `mainBkg` moved the sequence participant border (`darken(mainBkg, 20)`) | The border stays `#a6cf47`: set `actorBorder` | D576 |
-| `darkMode: true` turned `base`'s text (`primaryTextColor`, `textColor`, `nodeTextColor`, `scaleLabelColor`) to `#eee`, and `dark`'s and `neutral`'s `scaleLabelColor` to black | `darkMode` switches only the derivation rules; every theme keeps its own text colours (`#333333` in `base`, whose fills stay light; `#d3d3d3` and `#333333` scale labels in `dark` and `neutral`). Set the text variables in `themeVariables` for v12's | D571 |
+| `forest`: an author's `mainBkg` moved the sequence participant border and the lifeline (`darken(mainBkg, 20)`) | Both stay `#a6cf47`: set `actorBorder` (and `actorLineColor` for the lifeline) | D576 |
+| `darkMode: true` turned `base`'s text (`primaryTextColor`, `textColor`, `nodeTextColor`, `scaleLabelColor`) to `#eee`, and `dark`'s and `neutral`'s `scaleLabelColor` to black | `darkMode` switches only the derivation rules; every theme keeps its own text colours (`#333333` in `base`, whose fills stay light; `#d3d3d3` and `#333333` scale labels in `dark` and `neutral`). Set the text variables in `themeVariables` for v12's. Derived fills take the dark rule under `darkMode` too, where v12 kept a value its theme set before `darkMode` applied: ER's `rowOdd` (`forest`, `base`) and gantt's `doneTaskBkgColor` (`default`, `forest`, `neutral`, `base`); set them in `themeVariables` for v12's | D571 |
 | `dark`: edge label fill `#585858` under `#ccc` text (4.43:1), note and secondary text `#b8b6b6` on `#474949` (4.49:1); `base` with a dark `primaryColor` or `mainBkg`: node text stays `#333` | WCAG AA: `dark`'s edge label fill is its background (D628), its note text `#cccccc` and secondary text `#e0dfdf`; under `base` node text turns light (`#f4f4f4`) on a dark `primaryColor` or `mainBkg` | D29, R-THEME-9 |
 | Edge label fill `edgeLabelBackground`: `#e8e8e8cc` (80% alpha) in `default`, `#585858` in `dark`, `#e8e8e8` in `forest`, `#ffffff` in `neutral`, `secondaryColor` elsewhere; ER `tertiaryColor` at half opacity in the classic themes, white or `#16141f` in the redux colour themes; class `mainBkg` | Every edge label is a rounded tag with a 1 px border in its edge's colour, filled opaque with the theme's `background` in every theme, for `edgeLabelBackground`, `erEdgeLabelBackground` and class's labels. Set `edgeLabelBackground` (or `erEdgeLabelBackground` for ER) in `themeVariables` for another fill | D626, D627, D628 |
 | `base`'s borders from khroma's `mkBorder` (saturation −40, lightness −10; +10 under `darkMode`), and its text on secondary and tertiary fills, titles and errors from `invert()` of the fill | Borders mix 15% black into their fill (20% white under `darkMode`): `nodeBorder`, `clusterBorder`, `actorBorder`, `noteBorderColor`, `border2`, the three `*BorderColor` and the gradient stops. `secondaryTextColor`, `tertiaryTextColor`, `titleColor` and `errorTextColor` pick `primaryTextColor` or `background` by contrast. Close to v12, not equal | D71 |
@@ -670,10 +670,10 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `compositionMarkerGap` / `dependencyMarkerGap` | 2.75 / 4 | 0.25 / 1 |
 | `erZeroOrMoreCircleOffset` (ER, centre of a zero-or-more circle from the outline) | 28 | 30 |
 | `rowOdd` / `rowEven` (ER attribute rows) | the entity fill (`mainBkg`): v12 neo leaves rows unfilled | v12's `rowOdd` / `rowEven`, the same colours (khroma's HSL lightening, D117) |
-| `erMarkerFill` (ER zero circles) | `mainBkg` | white |
+| `erMarkerFill` (ER zero circles) | `mainBkg`, as v12 neo's `zero_or_more_neo` and `zero_or_one_neo` | white under every override, as v12 `look: classic` draws it. v12 12.2 and 12.3 default to `look: neo`, which fills the circle with `mainBkg`; `themeVariables.erMarkerFill` brings that back (D152, D153) |
 | `erRowOddTextColor` / `erRowEvenTextColor` (colour: ER attribute text, new in v13) | `nodeTextColor`: the rows show the entity fill, so the text keeps the header ink | the ink against each row's own fill: an author's `nodeTextColor` where it meets AA on the row, else `textColor`, else `background` where that reads better; in CSS the choice follows the row fill (D572) |
-| `compositeBackground` (state) | `background`; `#16141f` on `redux-dark` and `redux-dark-color` | `background` |
-| `compositeTitleBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color`; `mainBkg` on `neo` and `neo-dark` | `mainBkg` |
+| `compositeBackground` (state) | `background`; `#16141f` on `redux-dark` and `redux-dark-color` | `background`; `default` keeps `#ffffff` under a `background` override, as v12 (D656) |
+| `compositeTitleBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color`; `mainBkg` on `neo` and `neo-dark` | `mainBkg`; `default` keeps `#ececff` under a `mainBkg` override, as v12 (D656) |
 | `altBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color`; `#f0f0f0` on `neo`; `#404040` on `neo-dark` (D189) | `#f0f0f0` (`default`, `forest`); `#555555` (`dark`); `#f4f4f4` (`neutral`); `tertiaryColor` (`base`) |
 
 The palette rows apply to the two colour themes only; plain `redux`, `redux-dark`, `neo` and
@@ -1263,16 +1263,17 @@ keyword; 12.2.0 sends both keywords to the unified one). v13 has one renderer fo
 
 Colours map to theme variables v13 already has (D152): states `mainBkg` / `nodeBorder` (v12
 `stateBkg`, `stateBorder`), start, fork and join `lineColor` (v12 `specialStateColor`), the end
-dot `nodeBorder` (v12 `innerEndBackground`), transitions `lineColor` and `arrowheadColor` (v12
-`transitionColor`), labels `textColor` on `edgeLabelBackground`, notes `noteBkgColor` /
-`noteBorderColor` / `noteTextColor`. State text reads `stateLabelColor` and composite titles
+dot `nodeBorder` (v12 `innerEndBackground`), transitions `canvasLineColor` and `arrowheadColor`
+(v12 `transitionColor`; under a `lineColor` override `default` and `dark` keep their transitions
+`#333333` and `#d3d3d3`, as v12 did, D668), labels `textColor` on `edgeLabelBackground`, notes
+`noteBkgColor` / `noteBorderColor` / `noteTextColor`. State text reads `stateLabelColor` and composite titles
 `compositeTitleColor`, state's own variables (D638): in the classic themes both follow
 `primaryTextColor`, as v12's `stateLabelColor` did, and setting `stateLabelColor` recolours both;
 in the redux and neo themes they are `nodeTextColor` and `titleColor`. Under `default`, v12
 ignored an author's `primaryTextColor` for state text; v13 applies it. Where v12's classic themes
 used fixed values of their own (`neutral`'s black transitions and outlines and `#222` start dot,
 `dark`'s `#f4f4f4` start dot, black arrowheads in `forest` and `neutral`), v13 draws the shared
-variables above (D639). A composite's title band reads `compositeTitleBackground`, its body
+variables above (D639, D668). A composite's title band reads `compositeTitleBackground`, its body
 `compositeBackground`, and a nested composite's body `altBackground`, with v12's values (D120,
 D126, #193, #197; see the theme variable table). The composite outline radius is `radius`; the
 state radius (5), the end-state stroke (2) and the dash patterns are the same in every v12 look,
@@ -1420,6 +1421,7 @@ where the element still exists (`node default <classDef>`, `outer-path`, `row-re
 | Crow's foot: a lens marker half covered by the entity box | Only the visible half is drawn, from the outline to the toe 18px out | Same picture without relying on paint order |
 | `md_parent` end (`u`): no marker | No marker (unchanged) | |
 | Edge label `<g class="edgeLabel">` with `<foreignObject>` (`span.edgeLabel`, `div.labelBkg`), on `tertiaryColor` at half opacity in the classic themes | `<g class="edgeLabel" data-id>` with a tag: a `<rect rx="6">` with 8 px of room each side of the text and 4 px above and below, filled opaque with `erEdgeLabelBackground` (the theme background unless set), bordered 1 px solid in the relationship line's colour (`lineColor`) (still 1 px and solid on non-identifying, dashed lines), then a `<text>`; one box around a label of several lines, none for an empty one; the corners are rounded too | Text labels; labels carry no `data-ast`; edge labels are tags (D626–D629) |
+| Relationship labels drawn and measured at 14 px in every theme and look (`.edgeLabel .label { font-size: 14px }`, a rule no other type has) | Drawn and measured at the theme's `fontSize`, like every other label: 16 px with no override, and an author's `themeVariables.fontSize` moves them too, so the label boxes and the layout are larger than v12's | Fonts behave the same in every diagram type (D665) |
 | Subgraph `<g class="cluster" id>` with `<g class="cluster-label">` | `<g class="cluster …" data-id="<name>" data-ast="s:<name>">` with `<rect>` and `<text class="cluster-label">` | |
 | Front-matter `title` drawn as `text.erDiagramTitleText` | The same: centred over the drawing in the root's font and `textColor`, its baseline `er.titleTopMargin` (25) above it, the viewBox grown to hold it with 8 px around | One helper for every type (D652) |
 | Hand-drawn look: background copies of every entity (`<id>-background`) | None (`look` is removed, D153) | |
@@ -1491,11 +1493,12 @@ where the element still exists (`node default <classDef>`, `outer-path`, `row-re
 
 ### Themes
 
-- `fillType0`–`fillType7` are each theme's v12 values, written into the theme. v12 derived
-  them from `primaryColor` and `secondaryColor` with hue turns of ±64° and 128°, so a custom
-  `primaryColor` recoloured every section. In v13 it does not, except on `base`, where
-  `fillType0` and `fillType1` follow `primaryColor` and `secondaryColor` while
-  `fillType2`–`fillType7` keep base's v12 values. Set `fillType<n>` to recolour a section.
+- `fillType0`–`fillType7` are each theme's v12 values. v12 derived them from `primaryColor`
+  and `secondaryColor` with hue turns of ±64° and 128°, so a custom `primaryColor` recoloured
+  every section. The classic themes (`default`, `dark`, `forest`, `neutral`, `base`) keep
+  those rules, so an override recolours the sections as in v12 (D656). The redux and neo
+  themes write their values as fixed colours, which an override of a base colour does not
+  move. Set `fillType<n>` to recolour a section.
 - `faceColor` is `#FFF8DC` in every theme (v12's fallback; no v12 theme set it).
 - `actor0`–`actor5` have no theme value: dots take `journey.actorColours` in every theme,
   redux included, and an author's `actor<n>` wins for n < 6 (D249).
@@ -1632,6 +1635,7 @@ class names are kept where the element still exists: `mindmap-node`, `section-<n
 | `edge-depth-<d>` from the parent's raw indent plus 1 (two-space indents give 1, 3, 5 …); widths from CSS: classic `17 − 3i`, so 11, 8, 5, 2 and 3 px from class 5 on (the browser drops the negative ones), neo `max(10 − 2d, 2)` | The same class numbering and widths, written as `stroke-width` on each edge; with two-space indents classic edges are 11, 5 and 3 px wide, not 11, 8, 5 | P2: author CSS for `edge-depth-<d>` keeps matching (GAPS #388) |
 | Edges `curve: 'basis'` through cose-bilkent's three points, or tidy-tree's elbows | `tree`'s port-to-port routes as one cubic leaving and entering along the ports; `layered` and ELK routes as the basis spline through their points | D280–D282 |
 | A plain node: `defaultMindmapNode` (four rounded corners, flat bottom under `look: neo`) with a `line.node-line-` rule, except `rounded` when the theme name had `redux` | The `mindmapRoundedNodes` and `mindmapOutlinedNodes` theme flags ([Theme geometry](#theme-geometry)); the rule is `line.node-line-<n>` in `cScaleInv<n>`, not drawn under the gradient | D288, D152 |
+| The `line.node-line-<n>` rule under a plain node 3 px wide in `default` only: `base`, `dark`, `forest` and `neutral` set `useGradient`, and `genGradient` writes `stroke-width: 0` for the rule in every look | The rule in all five classic themes, with or without an override: their `useGradient` is off, since in v13 it draws gradient outlines, which v12 drew only under neo. A host stylesheet can set `stroke-width: 0` on `line[class^="node-line-"]` to drop it | D663, D182 |
 | Neo nodes in `[data-look="neo"]` rules by theme name (`redux`, `redux-dark`, `neutral`, `neo-dark`, `includes('redux')`); `filter: url(#<id>-drop-shadow)` on the node's group | The flags and `borderColorArray` decide (`redux` and `redux-dark` carry none); the shadow is the `dropShadow` CSS filter on the shape, so labels are not shadowed. `neutral` is a classic theme, so v12's neo-only `neutral` label rule has nothing to apply to | D152, D153, D227 |
 | Under `useGradient` a second `<linearGradient id="<id>-gradient">`, a duplicate id | One scoped gradient (D182) | Unique ids |
 | `::icon()` parsed and not drawn (the shapes never read `node.icon`) | The slot v12's older renderer reserved (D297); with the icons plugin the glyph, 40 px, in the label's colour (`g.mindmap-icon`); otherwise, or in neither D297 form, the reference as written, smaller to fit 40 px (`text.mindmap-icon`), with one `ICON_NOT_RENDERED` | D286, D291, D297 |
@@ -1723,9 +1727,13 @@ strings; grammar in [syntax/pie.md](./syntax/pie.md)). The differences:
   `pieSectionTextSize`, `pieSectionTextColor`, `pieLegendTextSize`, `pieLegendTextColor`,
   `pieStrokeColor`, `pieStrokeWidth`, `pieOuterStrokeColor`, `pieOuterStrokeWidth` and
   `pieOpacity` keep v12's names and each theme's v12 12.2.0 values
-  ([theme-variables.md](./theme-variables.md)). Slots v12 derives by lightness alone follow the
-  theme's base colours; hue-turned and `cScale` slots are fixed values (but forest's `pie6`, below), so in `redux-color` and
-  `redux-dark-color` a `cScale<n>` override no longer recolours `pie<n+1>` (set `pie<n+1>`).
+  ([theme-variables.md](./theme-variables.md)). The classic themes respond to an override of
+  a base colour as v12's do (D656): `default` keeps all twelve slots, as v12 computed them before
+  the override; `forest` and `base` recompute all twelve, hue turns included; `dark` and
+  `neutral` keep their `cScale` values. In the redux and neo themes, slots v12 derives by
+  lightness alone follow the theme's base colours and hue-turned and `cScale` slots are fixed
+  values, so in `redux-color` and `redux-dark-color` a `cScale<n>` override no longer recolours
+  `pie<n+1>` (set `pie<n+1>`).
   `pieOpacity` is a number from 0 to 1 (D221); any other value is dropped with
   `THEME_VARIABLE_DROPPED`.
 - **`dark` slot 12 (D228):** `dark` and `neutral` keep v12's `cScale` offset (slice *n* takes
@@ -1733,7 +1741,8 @@ strings; grammar in [syntax/pie.md](./syntax/pie.md)). The differences:
   slice drew black; it is now `cScale0`, as in `neutral`.
 - **Rounding artefacts (D333(a)).** Where v12 stepped a slot from its unrounded HSL base colour,
   which lands a few steps off the hex one, v13 derives the slot from the theme's hex base colour
-  by v12's own formula, so it also follows that base colour's override:
+  by v12's own formula (`default` writes the result as a fixed value, which v12 keeps under an
+  override):
 
   | Theme | Variable | v12 12.2.0 | v13 | Why |
   | --- | --- | --- | --- | --- |
@@ -1857,7 +1866,7 @@ and `transform="translate(x,y) rotate(r)"` placement.
 | Labels set as `textContent`: a quoted `<br>`, a raw line break inside quotes, `<b>`/`<i>` and a markdown string's `**` showed literally, entities as written | Core's label layout with no wrap width: every `<br>` form and a raw line break inside a quoted string break the line, `<b>` and `<i>` in a quoted label render bold and italic, other tags are dropped with their text kept (`"<script>x</script>"` draws `x`, where v12 showed the tags), markdown renders, entities decode, and math works (D176). A plain label is still one `<text>`; one with breaks or emphasis is a `<text>` with `<tspan>`s. Every v12 anchor and the square stay where v12 put them, and a label's extra lines grow away from the square: a title's earlier lines go above it, so its last line sits where v12's one line sat; a top x-axis label grows up (the title above it moves up with it); a left y-axis label grows left; bottom and right labels grow down and right. The bounding box grows over them, so `viewBox` can start below 0 | D225, D224 |
 | Points: `fill="hsl(…, NaN%)"` and the same `stroke` (v12's `quadrantPointFill` rule had a precedence bug and a khroma call with no amount), so points showed the root `fill: textColor` and no stroke, even with a `stroke-width`; a user `quadrantPointFill` was ignored | `fill` from `quadrantPointFill`, which defaults to `textColor`: the same look in every theme, and a user value is honoured. A `stroke` is written only when an inline or class `stroke-color` sets one, so `stroke-width` alone still draws no ring; a drawn stroke counts toward the bounding box | D231, D224 |
 | A style colour without `#` (`color: ff0000`) was written as `fill="ff0000"`, which browsers ignore | Written as `fill="#ff0000"` | D235 |
-| Quadrant fills 2–4 derived from `primaryColor` (or `#ECECFE` in `redux`, `redux-color` and `neo`) | Derived from `quadrant1Fill`, which is `primaryColor` (`#ececfe` in those three): the same colours unless an author sets `quadrant1Fill` alone, which now moves 2–4 too. `default` also follows an author `primaryColor`, `primaryTextColor` and `primaryBorderColor`, which v12's `theme-default.js` ignored for the quadrant fills, text fills and borders (it derived them once, in its constructor, before the overrides) | D232 |
+| Quadrant fills 2–4 derived from `primaryColor` (or `#ECECFE` in `redux`, `redux-color` and `neo`) | Derived from `quadrant1Fill`, which is `primaryColor` (`#ececfe` in those three): the same colours unless an author sets `quadrant1Fill` alone, which now moves 2–4 too. `default` keeps its fills and text fills under an author `primaryColor` or `primaryTextColor`, as v12's `theme-default.js` did (it derived them once, in its constructor, before the overrides), but its borders follow an author `primaryBorderColor`, which v12 ignored | D232, D656 |
 | A point whose coordinate lexed but was not a number in [0, 1] (`0x5`, `0a5`) was drawn off the chart or at `NaN` | Left out, with one `QUADRANT_POINT_INVALID` warning per point | D226 |
 | `look: neo` changed nothing in a quadrant chart | Every theme family draws it plain, without gradient, shadow or palette; families differ by colour only | D227 |
 | Border lines in v12's khroma `primaryBorderColor` | Core's `primaryBorderColor`, the border colour of every other type, so some themes change (table below) | R-THEME-11 |
@@ -2031,6 +2040,26 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   the bands from `cScale0`/`cScale1`; those are not carried, so gantt colours differ from v12
   most in `default`, `dark`, `forest` and `neutral` (bars are the theme's `primaryColor`, text
   `textColor`). Set the variables in `themeVariables` for v12's look.
+- **Under a `themeVariables` override (D656, D657):** in the classic family the task bars,
+  the active bar and the third section band (`taskBkgColor`, `activeTaskBkgColor`,
+  `sectionBkgColor2`) read `mainBkg`, the first section band (`sectionBkgColor`) reads
+  `bandBkg`, and the active bar's outline and the `vert` marker read `guideLineColor`.
+  `default`, `dark`, `forest` and `neutral` pin all three to their own primary, tertiary and
+  line colours, so an author's `primaryColor`, `tertiaryColor` or `lineColor` leaves the bars,
+  the band and the outline alone there, as in v12. In `base` they derive from `primaryColor`,
+  `tertiaryColor` and `lineColor`, so they follow them, as in v12, except that the active
+  outline and the `vert` marker follow `lineColor` where v12's followed `primaryColor` and
+  stayed navy (D574). Set `bandBkg` or `guideLineColor` in `themeVariables` to move them.
+- **A `mainBkg` override moves the bars (D657):** an author's `mainBkg` recolours the task
+  bars, the active bar and the third band in every classic theme, where v12's `default`,
+  `forest` and `neutral` kept their own; under `dark` the text on the active bar follows that
+  fill. To darken the bars in the named themes, set `mainBkg`: a dark `primaryColor` with
+  light `textColor` leaves their pale bars alone, so the light text sits on pale bars (v12
+  kept its bars there too, with fixed white text).
+- **Three responses stay v13's (D667):** under `neutral` the done bar's outline stays grey
+  where v12's followed `lineColor`; under `dark` the alternate band stays white where v12's
+  followed `background`, and done bars follow `mainBkg` where v12's stayed light grey. Set
+  `doneTaskBorderColor`, `altSectionBkgColor` or `doneTaskBkgColor` for v12's colours.
 - **Contrast in the classic themes (D574):** with bars in the pale `primaryColor`, the classic
   family (`default`, `dark`, `forest`, `neutral`, `base`) draws the `vert` marker and its label
   and the active bar's outline in `lineColor`. Text on a critical bar has its own variable,
@@ -2061,7 +2090,7 @@ Class lists are written with single spaces and no trailing blank.
 | `todayMarker` written as a `style` attribute with `,` turned into `;` | Split on `,` (the statement stops at `;`, so none reaches the value) and checked: allowed properties become presentation attributes on the line, others are dropped with `STYLE_PROPERTY_DROPPED` | R-SEC-2 |
 | A `transform-origin` attribute on every bar and every excluded-day rect; milestones turned by CSS, `transform: rotate(45deg) scale(0.8, 0.8)` about it | No `transform-origin`. A milestone carries the same geometry as a `transform` attribute about v12's origin (its square's centre; above the marker for a task tagged both `vert` and `milestone`, which keeps both, as in v12) | No CSS in the output |
 | `<g class="grid" transform="translate(leftPadding, h − 50)">` (top axis: `translate(leftPadding, topPadding)`) and d3's `<g class="tick" transform="translate(x, 0)">` per tick | The same elements at absolute coordinates, without `transform` | The renderer writes absolute coordinates |
-| Tick text `fill="#000"` `stroke="none"` `font-size="10"`, overridden by `.grid .tick text { fill: textColor }`; d3's tick lines `stroke="currentColor"` (the page's colour, as v12's `.grid .tick { stroke: gridColor }` matched only the group); d3's axis path, hidden by `.grid path { stroke-width: 0 }`; `shape-rendering: crispEdges` on ticks and `doneCrit` bars | Tick text in `textColor` at 10px; tick lines in `gridColor` at v12's 0.8 opacity; no axis path; no `shape-rendering` | What v12's CSS meant; `shape-rendering` is not an allowed attribute |
+| Tick text `fill="#000"` `stroke="none"` `font-size="10"`, overridden by `.grid .tick text { fill: textColor }`; d3's tick lines `stroke="currentColor"` (the page's colour, as v12's `.grid .tick { stroke: gridColor }` matched only the group); d3's axis path, hidden by `.grid path { stroke-width: 0 }`; `shape-rendering: crispEdges` on ticks and `doneCrit` bars | Tick text in `textColor` at 10px; tick lines in `gridColor` at v12's 0.8 opacity; no axis path; no `shape-rendering` | What v12's CSS meant (D666: set `gridColor` for v12's dark lines); `shape-rendering` is not an allowed attribute |
 | `cursor: pointer` on clickable bars and labels; `text-height` on labels | Dropped; the `clickable` class stays for host CSS | No CSS in the output |
 | A `<text class="titleText">` always, empty without a title | Only when there is a title | Nothing invisible is drawn |
 | An HCL colour scale (`#00B9FA` → `#F95002`) built and never used | Dropped | It never reached the output |
@@ -2251,6 +2280,7 @@ only section outlines and the title change:
 | --- | --- | --- | --- |
 | `default` | Peers from `darken(cScale<i>, 25)` (15 HSL points under the drawn slot, as `updateColors()` darkens the slot again), slots 1 and 2 from `darken(secondaryColor, 45)` and `darken(tertiaryColor, 40)` | The light rule: 10 points under every slot, so the outlines are a little lighter | D406, D541 |
 | `forest` | Peers from `darken(cScale<i>, 25)`, slots 1 and 2 from the secondary and tertiary colours | The light rule: 10 points under every slot | D406, D541 |
+| `default`, `forest` with `darkMode` | The same peers: v12 derived them in the theme's constructor, before `darkMode` was applied | The dark rule: 10 points over every slot, as in `base` and `neutral`, where v12 switched too | D406, D571 |
 | `redux-dark` | The light branch (the theme sets no `darkMode`): peers 10 points under the slot, so on its black slots the same black | The dark rule: 10 points over every slot, so the outlines show on the dark fills | D406 |
 | `redux-dark-color` | The light branch: peers 10 points under the slot | The dark rule: 10 points over every slot | D406 |
 | `neo-dark` | The light branch: peers 10 points under the slot, so on its black slots the same black | The dark rule: 10 points over every slot | D406 |
@@ -2425,7 +2455,7 @@ in `default`, `forest`, `base` and `dark`, and in `neutral` but its grid, are v1
 | `base` | Anchor labels and stage dividers `#000`, annotation markers and box white | Anchor labels `#333333`, dividers `#0b0b0b` (the axis colours), markers and box `#f4f4f4` (`wardleyAnnotationFill`, the background) | D426 |
 | `dark` | Anchor labels and stage dividers `#000` on the `#333` page, annotation markers and box white | Anchor labels `#e0dfdf`, dividers `lightgrey`, markers and box `#1f2020` (`mainBkg`) | D426 |
 | `base` with `darkMode: true` | Labels and annotation text `#eeeeee` | The theme's `primaryTextColor`, `#333333` (core keeps text colours under `darkMode`) | D571 |
-| `default` with an author `background` or `wardleyEvolutionColor` | Ignored: `default` built its `wardley` block before the author's values were applied | The background, fills and trends follow them, as in the other themes | R-THEME-4 |
+| `default` with an author `wardleyEvolutionColor` | Ignored: `default` built its `wardley` block before the author's values were applied | The trends follow it, as in the other themes. An author `background`, `lineColor` or `primaryTextColor` is still ignored in `default`, as in v12 (D656) | R-THEME-4, D656 |
 
 ## Wardley SVG structure
 
@@ -2508,7 +2538,6 @@ eleven themes, but (`packages/conformance/src/xychart/theme.spec.ts` lists each 
 | `redux-dark-color` | No `dataLabelColor`: theme-default's `#131300`. Inside a bar (the default) it reads well on the light plot palette (5.5–18.6:1); outside a bar (`showDataLabelOutsideBar`) it is barely visible on the `#333333` background (1.5:1) | The theme's `primaryTextColor`, `#e0dfdf`: readable outside a bar (9.5:1), but inside one it is about as light as the bar (1.0–1.5:1, 2.5:1 on the ninth colour), so labels inside bars are effectively invisible unless `xyChart.dataLabelColor` or `plotColorPalette` is set | D333(b) |
 | `neo` | No `dataLabelColor`: theme-default's `#131300` | The theme's `primaryTextColor`, `#333333` | D333(b) |
 | `neo-dark` | No `dataLabelColor`: theme-default's `#131300`. Inside a bar (the default) it reads well on the light plot palette (5.5–18.6:1); outside a bar (`showDataLabelOutsideBar`) it is barely visible on the `#333333` background (1.5:1) | The theme's `primaryTextColor`, `#e0dfdf`: readable outside a bar (9.5:1), but inside one it is about as light as the bar (1.0–1.5:1, 2.5:1 on the ninth colour), so labels inside bars are effectively invisible unless `xyChart.dataLabelColor` or `plotColorPalette` is set | D333(b) |
-| `default` with an author `primaryTextColor` or `background` | Ignored: `default` built its `xyChart` block before the author's values were applied | The text, axis and label colours follow `primaryTextColor`, the background follows `background`, as in the other themes; an explicit `xyChart.*` value still wins | D388 |
 
 ## XY chart SVG structure
 
@@ -2590,7 +2619,7 @@ labels and text nodes `vennSetTextColor`. What changed
 | Themes | v12 | v13 | Why |
 | --- | --- | --- | --- |
 | `base`, `forest` | `venn3` darkened `tertiaryColor` by 30 | By 40, as `default`: one classic light formula, so the third set is 10 % darker than in v12. Set `venn3` to draw v12's | D415 |
-| `neutral` | The eight slots were its `cScale` greys (`#555`, `#F4F4F4`, …) | `default`'s formula on neutral's colours. Set `venn1`…`venn8` to draw v12's | D415 |
+| `neutral` | The eight slots were its `cScale` greys (`#555`, `#F4F4F4`, …), which no override of a base colour moved | `default`'s formula on neutral's colours, so the slots follow an author's `primaryColor`, `secondaryColor` or `tertiaryColor`. Set `venn1`…`venn8` to draw v12's | D415 |
 | `default` | `venn3` `#b5ff20`, from the unrounded `tertiaryColor` | `#b9ff20`, from the hex | D333(a) |
 | Every theme | A set label was the circle colour lightened or darkened by 30 in the browser | The same colour, computed when the diagram is drawn: a host's `--mermaid-venn<k>` override, or the dark half of `theme: 'auto'`, does not move it | Labels are a literal colour |
 
@@ -2738,8 +2767,7 @@ why (spec #525). The layout itself is `compass` (D326).
 | A service's label hung from the icon's bottom, its first line's middle 1em below it | The label's box starts at the icon's bottom, as `compass` sized the service (the icon with its label under it), a few px higher | D501 |
 | An arrowhead longer than its end of the line ran past the line's corner, and two heads on a short line (`<-->`) were drawn over each other (a large `iconSize`: the heads are `iconSize / 6`) | A head shrinks until its base stays on its own end segment (with two heads on one segment, until the bases meet), with one `ARCHITECTURE_ARROW_SHRUNK` warning. Never at the default sizes | GAPS #525 T3, T4 |
 | Edges were always drawn from the sides as written | They meet their nodes where the layout engine says (its ports): the same sides under `compass`; under `layout: elk` or another engine that ignores them, the heads and labels follow the line it drew. An edge the engine routes no line for keeps its `path.edge`, with no line, and one `ARCHITECTURE_EDGE_NOT_DRAWN` | D507, D508 |
-| `base` drew edges and arrowheads `#777` and group borders `#000`, literals no other theme had | `base` takes the rule every other theme follows: edges in `lineColor`, borders in v12's group border (below) | D541 |
-| In `dark`, an author's `lineColor` did not reach the edges (the theme reset it to `lightgrey` before setting them) | Edges and arrowheads follow an author's `lineColor` in every theme | No D-id: it follows from architecture's one theme rule (edges read `lineColor`, T4), which `dark` no longer overrides |
+| `base` drew edges and arrowheads `#777` and group borders `#000`, literals no other theme had, which no override moved | `base` takes the rule every other theme follows: edges in `lineColor`, borders in v12's group border (below). So in `base` an author's `lineColor` or `background` moves the edges, and `primaryColor` or `darkMode` the group borders | D541 |
 | Group borders (`archGroupBorderColor`) took the theme's `primaryBorderColor` as each theme's constructor first set it, before the theme recomputed it, so an author's `primaryColor` or `primaryBorderColor` never reached them | The same colour in every theme but `base` (the D332 input `calloutBorder`), and an author's `primaryBorderColor` now recolours them | D541, D332 |
 | v12 drew no line hops in architecture diagrams | `lineHops: true` (or `'arc'`, `'gap'`): where two edges cross, the straight run that gives way draws a 6px hop (`gap`: a break), through core's shared edge-path step. The edges stay plain under `look: handDrawn`. The shared key defaults to `false`, so existing documents draw as before | D537, #655 |
 
@@ -2957,8 +2985,9 @@ Event modeling reads its own 14 flat theme variables, v12's names (`emUiFill`, `
 `emCommandStroke`, `emEventFill`, `emEventStroke`, `emSwimlaneBackgroundOdd`,
 `emSwimlaneBackgroundStroke`, `emRelationStroke`, `emArrowhead`), and one new one, `emTextColor`
 (core's `textColor`), for box and lane text, which v12 left to the page's colour. Every light
-theme of every family draws v12 `default`'s values, relations and arrowheads in `lineColor`; the
-dark themes draw v12 `dark`'s. An author's value is drawn as given in every theme, as in v12; the
+theme of every family draws v12 `default`'s values, relations and arrowheads in the theme's line
+colour (`canvasLineColor`: `lineColor`, which `default` and `dark` keep under an override, as v12
+does, D656); the dark themes draw v12 `dark`'s. An author's value is drawn as given in every theme, as in v12; the
 author's `darkMode` alone keeps the light values, as in v12. What changed
 (`packages/conformance/src/eventmodeling/theme.spec.ts` lists each one):
 
@@ -3224,7 +3253,10 @@ v12's, apart from the two layout fixes of D514.
   `requirementBorderSize`, `requirementTextColor` and `relationLabelBackground`, which v12
   documented and never read, now take effect, with `relationColor` and `relationLabelColor`
   added; unset, they draw v12's colours, but for the label tag's fill, which is the theme
-  background in every theme (D628; v12's redux chip was white, dark `#16141f`). See
+  background in every theme (D628; v12's redux chip was white, dark `#16141f`), so it follows an
+  author's `background`, where v12's kept its own fill or followed `secondaryColor`. The box fill
+  and text follow the overrides v12's drawn box and text follow (`mainBkg`, the text ink), not
+  those of v12's unused `requirementBackground` and `requirementTextColor`. See
   [theme-variables.md](./theme-variables.md).
 - **Boxes** (D436) keep v12's one-column `Key: value` text with no wrapping. A multi-line value
   (a quoted text spanning lines) is stacked line under line, where v12 overlapped it with the

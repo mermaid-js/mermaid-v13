@@ -494,14 +494,14 @@ describe('cynefin render: what is drawn', () => {
     ]);
   });
 
-  it("resolves the theme table: v12 default's colours, derived from lineColor and the text colours", async () => {
+  it("resolves the theme table: v12 default's colours, derived from the canvas line and text colours (D656)", async () => {
     const root = /<svg[^>]*style="([^"]*)"/.exec((await api.render('x', ALL)).svg)![1]!;
     expect(root).toContain('--_cnx:var(--mermaid-cynefinComplexBg,#E8F5E9)');
     expect(root).toContain('--_cnl:var(--mermaid-cynefinCliffColor,#8B0000)');
-    expect(root).toContain('--_cnb:var(--mermaid-cynefinBoundaryColor,var(--_l))');
-    expect(root).toContain('--_cna:var(--mermaid-cynefinArrowColor,var(--_l))');
+    expect(root).toContain('--_cnb:var(--mermaid-cynefinBoundaryColor,var(--_cvl))');
+    expect(root).toContain('--_cna:var(--mermaid-cynefinArrowColor,var(--_cvl))');
     expect(root).toContain('--_cnt:var(--mermaid-cynefinTextColor,var(--_tx))');
-    expect(root).toContain('--_cnn:var(--mermaid-cynefinLabelColor,var(--_pt))');
+    expect(root).toContain('--_cnn:var(--mermaid-cynefinLabelColor,var(--_cvt))');
   });
 
   it("takes v12 dark's literals in every dark theme, the light ones in the others (R-THEME-11)", async () => {
@@ -517,7 +517,7 @@ describe('cynefin render: what is drawn', () => {
     for (const theme of ['neutral', 'base', 'redux', 'neo'] as const) {
       const s = await style(theme);
       expect(s, theme).toContain('--_cnx:var(--mermaid-cynefinComplexBg,#E8F5E9)');
-      expect(s, theme).toContain('--_cnb:var(--mermaid-cynefinBoundaryColor,var(--_l))');
+      expect(s, theme).toContain('--_cnb:var(--mermaid-cynefinBoundaryColor,var(--_cvl))');
     }
     // The author's darkMode is not a dark theme: v12 kept default's literals under it.
     const dm = await cynefinApi({ themeVariables: { darkMode: true } });

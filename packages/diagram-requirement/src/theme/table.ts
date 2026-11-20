@@ -6,8 +6,9 @@ import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
  * mermaid\@12.2.0 draws (D435): the box fill `mainBkg`, its outline `nodeBorder`, its text and
  * the relation label ink `nodeTextColor` where the theme writes one, else `textColor` (v12
  * `.label text, span`: `nodeTextColor || textColor`; equal to v12 in all eleven themes),
- * the lines and markers `lineColor`, the label tag `edgeLabelBackground` where the theme has
- * no `linkLabelBkg` (v12 `.labelBkg`).
+ * the lines and markers `canvasLineColor` (the theme's `lineColor`, which `default` and `dark`
+ * keep under an override as v12's lines do, D656), the label tag `edgeLabelBackground` where the
+ * theme has no `linkLabelBkg` (v12 `.labelBkg`).
  *
  * The families replace v12's `look: neo` branches (D152, D153). Classic is v12 classic: 1.3px
  * box strokes (`userNodeOverrides`), 1px lines (`.relationshipLine`) and a 20 × 20 chevron and
@@ -28,7 +29,7 @@ export const theme: DiagramThemeTable = {
       requirementBorderSize: 'strokeWidth',
       requirementTextColor: 'inline(nodeTextColor, textColor)',
       relationLabelBackground: 'inline(linkLabelBkg, edgeLabelBackground)',
-      relationColor: 'lineColor',
+      relationColor: 'canvasLineColor',
       relationLabelColor: 'inline(nodeTextColor, textColor)',
       relationStrokeWidth: 'strokeWidth',
       relationArrowScale: '1',

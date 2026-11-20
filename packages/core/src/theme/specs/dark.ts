@@ -2,7 +2,7 @@
  * `dark`: v12 `theme-dark.js`.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { INVERTED_SCALE, paletteSlots, series } from './palettes.ts';
+import { INVERTED_SCALE, paletteSlots, series, SERIES_TINTS } from './palettes.ts';
 import { classicGitLabels, darkModeLabels, fixedGit, gitLabelRules } from './scales.ts';
 import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
 
@@ -44,6 +44,9 @@ const theme: ThemeSpec = {
     // colour moves them (#773, #798): the node fill, the borders, the tertiary ink and the link
     // (its lightgrey). Not the arrowhead: v12's `.marker` draws it in lineColor (D575).
     mainBkg: '#1f2020',
+    // v12's constructor tertiary and line colours (`bandBkg`, `guideLineColor` in vocabulary.ts).
+    bandBkg: '#201f1f',
+    guideLineColor: '#d3d3d3',
     border1: '#cccccc',
     primaryBorderColor: '#cccccc',
     secondaryBorderColor: '#2f2f2f',
@@ -70,6 +73,10 @@ const theme: ThemeSpec = {
     // never follow an override: khroma lighten(#1f2020, 5) and darken(#1f2020, 10) (D117).
     rowBkg: '#2c2d2d',
     rowAltBkg: '#060606',
+    // v12 theme-dark.js keeps its constructor lineColor (lightgrey) where wardley, cynefin,
+    // requirement and event modelling draw lines, so a lineColor override does not move them
+    // (D656). Its background, text ink and fill follow their base colours there.
+    canvasLineColor: '#d3d3d3',
   },
   // v12 theme-dark.js: fixed colours after slot 0, which is primaryColor.
   palettes: {
@@ -92,10 +99,11 @@ const theme: ThemeSpec = {
     ],
     cScaleInv: INVERTED_SCALE,
     // v12 theme-dark.js: series colour `i` is `cScale<i>`, so slot 0 is `cScale1`; v12 leaves the
-    // twelfth unset and v13 gives it `cScale0`, as `neutral` has (D228). Then the tints.
+    // twelfth unset and v13 gives it `cScale0`, as `neutral` has (D228). Then the tints,
+    // which v12 recomputes from the base colours (`SERIES_TINTS`, D656).
     seriesColorArray: series(
       '#0b0000 #4d1037 #3f5258 #4f2f1b #6e0a0a #3b0048 #995a01 #154706 #161722 #00296f #01629c #1f2020 ' +
-        '#1f2020 #474949 #1f1f20 #474749 #1f201f #474947 #201f20 #494749'
+        SERIES_TINTS
     ),
     // v12 sets labelTextColor to its mainContrastColor (lightgrey) before the labels.
     cScaleLabel: paletteSlots(() => 'scaleLabelColor'),

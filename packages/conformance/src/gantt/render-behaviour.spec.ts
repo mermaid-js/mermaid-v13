@@ -240,6 +240,21 @@ describe('gantt theme variables (D152, D278)', () => {
     expect(svg).toContain('--_gb0:var(--mermaid-sectionBkgColor,');
   });
 
+  it("draws the tick lines in gridColor at 0.8, not in v12's currentColor (D666)", async () => {
+    const { tree } = await render('a :a1, 2014-01-01, 5d', {
+      themeVariables: { gridColor: '#123456' },
+    });
+    const ticks = byClass(tree, 'g', 'tick');
+    expect(ticks.length).toBeGreaterThan(0);
+    for (const tick of ticks) {
+      const line = tree.children(tick).find((n) => tree.tag(n) === 'line');
+      expect([attr(tree, tick, 'opacity'), attr(tree, line, 'stroke')]).toEqual([
+        '0.8',
+        'var(--_ggc)',
+      ]);
+    }
+  });
+
   it('writes literal colours with cssVariables off', async () => {
     const m = createMermaid();
     m.initialize({

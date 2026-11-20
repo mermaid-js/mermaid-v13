@@ -312,3 +312,13 @@ So **an alpha goes out when the release master merges the Version Packages PR.**
   - `adapters-check.ts`, `adapters-pack-cli.ts`: the editor adapters' pack-and-install checks (fixtures in `tools/release/fixtures/adapters/`); `pnpm exec tsx tools/release/src/adapters-pack-cli.ts` runs them without a registry, in `.tmp/adapters-pack-check/`.
 - `.github/workflows/release-alpha.yml`: the manual release workflow (§5).
 - `.github/workflows/release.yml`: the CI publish-on-merge flow (off).
+
+## 9. At the 13.0 release: v13 becomes the reference (D658)
+
+Until 13.0, `mermaid@12` is the oracle of the conformance specs. With the 13.0 release, v13's own output becomes the reference in every area (syntax, parse results, layout values, theme values), and v12 leaves the tests. Before tagging 13.0:
+
+1. Rebase every spec that compares with v12 on v13's output. For the theme override specs (D654), print v13's tables with the capture tool's `--v13` flag (`packages/conformance/src/override-matrix.ts` says how to run it), paste them over the `V12` literals, and delete the `DIFFERENCES` and `RESPONSE_ONLY` lists: their entries are now the expected values.
+2. Do the same for the other conformance specs, in the forms #1044 plans.
+3. Remove the `mermaid-v12` dependency and `oracle.ts` from `packages/conformance`.
+
+After that, a change to an expected value is reviewed like any other change to output, and needs a decision when it is on purpose.

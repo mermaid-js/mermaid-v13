@@ -114,6 +114,16 @@ export const LIGHT_RULES: ThemeRuleTable = {
   rowAltBkg: 'lightenHsl(mainBkg, 5%)',
   linkLabelBkg: 'edgeLabelBackground',
   nestedBkg: 'tertiaryColor',
+  // Shared inputs (D656): the base colours as a diagram on its own canvas keeps them. A theme
+  // whose v12 constructor value no override moves pins it in `values`.
+  canvasBkg: 'background',
+  canvasLineColor: 'lineColor',
+  canvasTextColor: 'primaryTextColor',
+  canvasItemBkg: 'primaryColor',
+  canvasItemBkg3: 'tertiaryColor',
+  canvasNodeBkg: 'mainBkg',
+  bandBkg: 'tertiaryColor',
+  guideLineColor: 'lineColor',
 };
 
 /** Shared derivation for dark themes. */

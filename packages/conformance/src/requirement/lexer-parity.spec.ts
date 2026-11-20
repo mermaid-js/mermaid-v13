@@ -213,7 +213,7 @@ describe('requirement lexer parity with mermaid@12 (jison)', () => {
     // Every e2e fixture, harvested spec and syntax-page string and case reaches the lexer, but
     // the unclosed-front-matter title case (v12 rejects its front matter), the upper-case
     // header case and the excluded sources.
-    expect(e2e).toBe(196);
+    expect(e2e).toBe(197);
     expect(specs).toBe(48);
     expect(cases).toBe(203);
     // No e2e fixture, harvested string or syntax-page example depends on either decision, but

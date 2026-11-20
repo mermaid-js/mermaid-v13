@@ -28,6 +28,7 @@ e2e/diagrams/gantt/baseline/themes/redux-color.mmd 1 4e653031f5228a2c
 e2e/diagrams/gantt/baseline/themes/redux-dark-color.mmd 1 73b8f8b1861c851f
 e2e/diagrams/gantt/baseline/themes/redux-dark.mmd 1 7c2f0fcd1d82eb21
 e2e/diagrams/gantt/baseline/themes/redux.mmd 1 3528919122d990ba
+e2e/diagrams/gantt/nightly-check/default-theme-base-colour-overrides.mmd 1 c149706f99db43ba
 e2e/diagrams/gantt/nightly-check/handle-multiline-section-titles-with-different-line-breaks.mmd 1 9c4d856ca06c4c4d
 e2e/diagrams/gantt/nightly-check/should-add-1-day-even-on-days-with-25-hours.mmd 1 d1d444f35e6c6ff1
 e2e/diagrams/gantt/nightly-check/should-automatically-add-one-day-to-all-end-dates.mmd 1 e0e09e2172b8c08f

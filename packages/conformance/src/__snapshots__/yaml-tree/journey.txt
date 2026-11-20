@@ -16,6 +16,7 @@ e2e/diagrams/journey/baseline/themes/redux-color.mmd 1 3abf92eaddbc85cf
 e2e/diagrams/journey/baseline/themes/redux-dark-color.mmd 1 61c7d5a9f869dc12
 e2e/diagrams/journey/baseline/themes/redux-dark.mmd 1 b85996e24f05fa9d
 e2e/diagrams/journey/baseline/themes/redux.mmd 1 77182786368bcd86
+e2e/diagrams/journey/nightly-check/default-theme-base-colour-overrides.mmd 1 a71d65f0a44703b1
 e2e/diagrams/journey/nightly-check/left-margin-150px.mmd 1 c012d7b7fb1fd210
 e2e/diagrams/journey/nightly-check/legend-diagram-spacing-long-labels.mmd 1 d7150a74e056d001
 e2e/diagrams/journey/nightly-check/single-word-hyphenation.mmd 1 a205e04077e6bebb

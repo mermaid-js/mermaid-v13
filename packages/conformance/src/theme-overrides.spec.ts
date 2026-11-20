@@ -1,75 +1,438 @@
 /**
  * #796 (spec #795 T0, D568): core's shared colour variables in the five classic themes against v12
- * 12.2.0's resolved `getThemeVariables()` (D151: v12 is the oracle), at the theme values and
- * under one `themeVariables` override at a time: each base colour and `mainBkg` set alone to a
- * light and to a dark probe, and `darkMode`. Every colour variable of core's vocabulary that v12
- * also resolves is compared. Each difference is listed in `DIFFERENCES` as
- * `theme / override / variable`, under the decision that accounts for it (a D-id with a
- * MIGRATION.md row), and the list has to match the differences found exactly: an unlisted
- * difference fails, and so does a listed one that has gone. A ticket that fixes a difference
- * deletes its entries. Built like `theme-palettes.spec.ts`, which covers the palettes.
+ * 12.2.0 (D151: v12 is the oracle), at the theme values and under one `themeVariables` override
+ * at a time: each base colour and `mainBkg` set alone to a light and to a dark test colour, and
+ * `darkMode` (`override-matrix.ts`). Every colour variable of core's vocabulary that v12 also
+ * resolves is compared, as a value under every override. v12's values are the literals of `V12`
+ * (D654), printed by the capture tool (`override-matrix.ts` says how to run it), so the spec
+ * runs without v12. Each difference is listed in `DIFFERENCES` as `theme / override / variable`,
+ * under the decision that accounts for it (a D-id with a MIGRATION.md row), and the list has to
+ * match the differences found exactly: an unlisted difference fails, and so does a listed one
+ * that has gone. A ticket that fixes a difference deletes its entries.
  */
-import {
-  THEME_VARIABLES,
-  createTheme,
-  formatColor,
-  loadTheme,
-  parseColor,
-  type ThemeName,
-} from '@mermaid-js/core/theme';
+import { THEME_VARIABLES } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
 import { D332_INPUTS } from './diagram-themes.ts';
-import { loadOracle } from './oracle.ts';
+import {
+  ALL,
+  THEMES,
+  describeSharedOverrides,
+  keys,
+  type Classic,
+  type ReferenceTable,
+} from './override-matrix.ts';
 
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
-  };
-}
-
-await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
-
-const THEMES = ['default', 'dark', 'forest', 'neutral', 'base'] as const satisfies ThemeName[];
-type Classic = (typeof THEMES)[number];
-
-/**
- * The base colours an author overrides one at a time, each to a light and a dark probe, and
- * `mainBkg`, which the named classic themes pin (D570) and v12 derives some fills from.
- */
-const OVERRIDDEN = [
-  'primaryColor',
-  'secondaryColor',
-  'tertiaryColor',
-  'background',
-  'primaryTextColor',
-  'lineColor',
-  'mainBkg',
-] as const;
-const PROBES = { light: '#ffd966', dark: '#2a4d69' } as const;
-
-/** The overrides by label: `none`, `<variable>:light`, `<variable>:dark` and `darkMode`. */
-const CASES: Readonly<Record<string, Readonly<Record<string, unknown>>>> = {
-  none: {},
-  ...Object.fromEntries(
-    OVERRIDDEN.flatMap((name) =>
-      Object.entries(PROBES).map(([probe, value]) => [`${name}:${probe}`, { [name]: value }])
-    )
-  ),
-  darkMode: { darkMode: true },
+/** v12 12.2.0's shared colours: `capture-theme-overrides.ts shared`. */
+const V12: ReferenceTable = {
+  default: {
+    primaryColor: {
+      none: '#ececff',
+      'primaryColor:light': '#ffd966',
+      'primaryColor:dark': '#2a4d69',
+    },
+    secondaryColor: {
+      none: '#ffffde',
+      'secondaryColor:light': '#ffd966',
+      'secondaryColor:dark': '#2a4d69',
+    },
+    tertiaryColor: {
+      none: '#f9ffec',
+      'tertiaryColor:light': '#ffd966',
+      'tertiaryColor:dark': '#2a4d69',
+    },
+    background: { none: '#ffffff', 'background:light': '#ffd966', 'background:dark': '#2a4d69' },
+    primaryTextColor: {
+      none: '#131300',
+      'primaryTextColor:light': '#ffd966',
+      'primaryTextColor:dark': '#2a4d69',
+    },
+    lineColor: { none: '#333333', 'lineColor:light': '#ffd966', 'lineColor:dark': '#2a4d69' },
+    primaryBorderColor: '#c7c7f1',
+    secondaryBorderColor: '#eeeebc',
+    tertiaryBorderColor: '#e3f1c7',
+    secondaryTextColor: '#000021',
+    tertiaryTextColor: '#060013',
+    textColor: '#333333',
+    mainBkg: { none: '#ececff', 'mainBkg:light': '#ffd966', 'mainBkg:dark': '#2a4d69' },
+    nodeBorder: '#9370db',
+    clusterBkg: '#ffffde',
+    clusterBorder: '#aaaa33',
+    titleColor: '#333333',
+    edgeLabelBackground: '#e8e8e8cc',
+    arrowheadColor: '#333333',
+    defaultLinkColor: {
+      none: '#333333',
+      'lineColor:light': '#ffd966',
+      'lineColor:dark': '#2a4d69',
+    },
+    border1: '#9370db',
+    border2: '#aaaa33',
+    noteBkgColor: '#fff5ad',
+    noteTextColor: '#000000',
+    noteBorderColor: '#aaaa33',
+    errorBkgColor: '#552222',
+    errorTextColor: '#552222',
+    scaleLabelColor: '#000000',
+    actorBkg: { none: '#ececff', 'mainBkg:light': '#ffd966', 'mainBkg:dark': '#2a4d69' },
+    actorBorder: '#9370db',
+    gradientStart: '#c7c7f1',
+    gradientStop: '#eeeebc',
+  },
+  dark: {
+    primaryColor: {
+      none: '#1f2020',
+      'primaryColor:light': '#ffd966',
+      'primaryColor:dark': '#2a4d69',
+    },
+    secondaryColor: {
+      none: '#474949',
+      'secondaryColor:light': '#ffd966',
+      'secondaryColor:dark': '#2a4d69',
+    },
+    tertiaryColor: {
+      none: '#201f1f',
+      'tertiaryColor:light': '#ffd966',
+      'tertiaryColor:dark': '#2a4d69',
+    },
+    background: { none: '#333333', 'background:light': '#ffd966', 'background:dark': '#2a4d69' },
+    primaryTextColor: {
+      none: '#e0dfdf',
+      'primaryTextColor:light': '#ffd966',
+      'primaryTextColor:dark': '#2a4d69',
+    },
+    lineColor: { none: '#d3d3d3', 'lineColor:light': '#ffd966', 'lineColor:dark': '#2a4d69' },
+    primaryBorderColor: '#cccccc',
+    secondaryBorderColor: '#2f2f2f',
+    tertiaryBorderColor: '#060606',
+    secondaryTextColor: '#b8b6b6',
+    tertiaryTextColor: '#dfe0e0',
+    textColor: '#cccccc',
+    mainBkg: { none: '#1f2020', 'mainBkg:light': '#ffd966', 'mainBkg:dark': '#2a4d69' },
+    nodeBorder: '#cccccc',
+    clusterBkg: { none: '#474949', 'mainBkg:light': '#ffedb8', 'mainBkg:dark': '#4178a3' },
+    clusterBorder: '#ffffff40',
+    titleColor: '#f9fffe',
+    edgeLabelBackground: '#585858',
+    arrowheadColor: '#d3d3d3',
+    defaultLinkColor: '#d3d3d3',
+    border1: '#cccccc',
+    border2: '#ffffff40',
+    noteBkgColor: { none: '#474949', 'mainBkg:light': '#ffedb8', 'mainBkg:dark': '#4178a3' },
+    noteTextColor: '#b8b6b6',
+    noteBorderColor: '#2f2f2f',
+    errorBkgColor: '#a44141',
+    errorTextColor: '#dddddd',
+    scaleLabelColor: { none: '#d3d3d3', darkMode: '#000000' },
+    actorBkg: { none: '#1f2020', 'mainBkg:light': '#ffd966', 'mainBkg:dark': '#2a4d69' },
+    actorBorder: '#cccccc',
+    gradientStart: '#cccccc',
+    gradientStop: '#2f2f2f',
+  },
+  forest: {
+    primaryColor: {
+      none: '#cde498',
+      'primaryColor:light': '#ffd966',
+      'primaryColor:dark': '#2a4d69',
+    },
+    secondaryColor: {
+      none: '#cdffb2',
+      'secondaryColor:light': '#ffd966',
+      'secondaryColor:dark': '#2a4d69',
+    },
+    tertiaryColor: {
+      none: '#e1efc0',
+      'tertiaryColor:light': '#ffd966',
+      'tertiaryColor:dark': '#2a4d69',
+    },
+    background: { none: '#ffffff', 'background:light': '#ffd966', 'background:dark': '#2a4d69' },
+    primaryTextColor: {
+      none: '#321b67',
+      'primaryTextColor:light': '#ffd966',
+      'primaryTextColor:dark': '#2a4d69',
+    },
+    lineColor: { none: '#000000', 'lineColor:light': '#ffd966', 'lineColor:dark': '#2a4d69' },
+    primaryBorderColor: '#abb594',
+    secondaryBorderColor: '#b4e599',
+    tertiaryBorderColor: '#c3cab2',
+    secondaryTextColor: '#32004d',
+    tertiaryTextColor: '#321b67',
+    textColor: '#000000',
+    mainBkg: { none: '#cde498', 'mainBkg:light': '#ffd966', 'mainBkg:dark': '#2a4d69' },
+    nodeBorder: '#13540c',
+    clusterBkg: '#cdffb2',
+    clusterBorder: '#6eaa49',
+    titleColor: '#333333',
+    edgeLabelBackground: '#e8e8e8',
+    arrowheadColor: '#008000',
+    defaultLinkColor: {
+      none: '#000000',
+      'lineColor:light': '#ffd966',
+      'lineColor:dark': '#2a4d69',
+    },
+    border1: '#13540c',
+    border2: '#6eaa49',
+    noteBkgColor: '#fff5ad',
+    noteTextColor: '#000000',
+    noteBorderColor: '#6eaa49',
+    errorBkgColor: '#552222',
+    errorTextColor: '#552222',
+    scaleLabelColor: '#000000',
+    actorBkg: { none: '#cde498', 'mainBkg:light': '#ffd966', 'mainBkg:dark': '#2a4d69' },
+    actorBorder: { none: '#a6cf47', 'mainBkg:light': '#ffc000', 'mainBkg:dark': '#0d1820' },
+    gradientStart: '#abb594',
+    gradientStop: '#b4e599',
+  },
+  neutral: {
+    primaryColor: {
+      none: '#eeeeee',
+      'primaryColor:light': '#ffd966',
+      'primaryColor:dark': '#2a4d69',
+    },
+    secondaryColor: {
+      none: '#fcfcfc',
+      'secondaryColor:light': '#ffd966',
+      'secondaryColor:dark': '#2a4d69',
+    },
+    tertiaryColor: {
+      none: '#eeeeee',
+      'tertiaryColor:light': '#ffd966',
+      'tertiaryColor:dark': '#2a4d69',
+    },
+    background: { none: '#ffffff', 'background:light': '#ffd966', 'background:dark': '#2a4d69' },
+    primaryTextColor: {
+      none: '#111111',
+      'primaryTextColor:light': '#ffd966',
+      'primaryTextColor:dark': '#2a4d69',
+    },
+    lineColor: { none: '#666666', 'lineColor:light': '#ffd966', 'lineColor:dark': '#2a4d69' },
+    primaryBorderColor: '#d4d4d4',
+    secondaryBorderColor: '#e3e3e3',
+    tertiaryBorderColor: '#d4d4d4',
+    secondaryTextColor: '#030303',
+    tertiaryTextColor: '#111111',
+    textColor: '#000000',
+    mainBkg: { none: '#eeeeee', 'mainBkg:light': '#ffd966', 'mainBkg:dark': '#2a4d69' },
+    nodeBorder: '#999999',
+    clusterBkg: '#fcfcfc',
+    clusterBorder: '#707070',
+    titleColor: '#333333',
+    edgeLabelBackground: '#ffffff',
+    arrowheadColor: '#333333',
+    defaultLinkColor: {
+      none: '#666666',
+      'lineColor:light': '#ffd966',
+      'lineColor:dark': '#2a4d69',
+    },
+    border1: '#999999',
+    border2: '#707070',
+    noteBkgColor: '#666666',
+    noteTextColor: '#ffffff',
+    noteBorderColor: '#999999',
+    errorBkgColor: '#552222',
+    errorTextColor: '#552222',
+    scaleLabelColor: { none: '#333333', darkMode: '#000000' },
+    actorBkg: { none: '#eeeeee', 'mainBkg:light': '#ffd966', 'mainBkg:dark': '#2a4d69' },
+    actorBorder: '#d4d4d4',
+    gradientStart: '#d4d4d4',
+    gradientStop: '#e3e3e3',
+  },
+  base: {
+    primaryColor: {
+      none: '#fff4dd',
+      'primaryColor:light': '#ffd966',
+      'primaryColor:dark': '#2a4d69',
+    },
+    secondaryColor: {
+      none: '#f4ddff',
+      'primaryColor:light': '#d966ff',
+      'primaryColor:dark': '#4d692a',
+      'secondaryColor:light': '#ffd966',
+      'secondaryColor:dark': '#2a4d69',
+    },
+    tertiaryColor: {
+      none: '#f6f9ff',
+      'primaryColor:light': '#809fff',
+      'primaryColor:dark': '#7b5231',
+      'tertiaryColor:light': '#ffd966',
+      'tertiaryColor:dark': '#2a4d69',
+    },
+    background: { none: '#f4f4f4', 'background:light': '#ffd966', 'background:dark': '#2a4d69' },
+    primaryTextColor: {
+      none: '#333333',
+      'primaryTextColor:light': '#ffd966',
+      'primaryTextColor:dark': '#2a4d69',
+      darkMode: '#eeeeee',
+    },
+    lineColor: {
+      none: '#0b0b0b',
+      'background:light': '#002699',
+      'background:dark': '#d5b296',
+      'lineColor:light': '#ffd966',
+      'lineColor:dark': '#2a4d69',
+    },
+    primaryBorderColor: {
+      none: '#eeddbb',
+      'primaryColor:light': '#d6b85c',
+      'primaryColor:dark': '#2f3031',
+      darkMode: '#ffffff',
+    },
+    secondaryBorderColor: {
+      none: '#ddbbee',
+      'primaryColor:light': '#b85cd6',
+      'primaryColor:dark': '#30312f',
+      'secondaryColor:light': '#d6b85c',
+      'secondaryColor:dark': '#2f3031',
+      darkMode: '#ffffff',
+    },
+    tertiaryBorderColor: {
+      none: '#cfdbf3',
+      'primaryColor:light': '#708bdb',
+      'primaryColor:dark': '#3e3d3b',
+      'tertiaryColor:light': '#d6b85c',
+      'tertiaryColor:dark': '#2f3031',
+      darkMode: '#ffffff',
+    },
+    secondaryTextColor: {
+      none: '#0b2200',
+      'primaryColor:light': '#269900',
+      'primaryColor:dark': '#b296d5',
+      'secondaryColor:light': '#002699',
+      'secondaryColor:dark': '#d5b296',
+    },
+    tertiaryTextColor: {
+      none: '#090600',
+      'primaryColor:light': '#806000',
+      'primaryColor:dark': '#84adce',
+      'tertiaryColor:light': '#002699',
+      'tertiaryColor:dark': '#d5b296',
+    },
+    textColor: {
+      none: '#333333',
+      'primaryTextColor:light': '#ffd966',
+      'primaryTextColor:dark': '#2a4d69',
+      darkMode: '#eeeeee',
+    },
+    mainBkg: {
+      none: '#fff4dd',
+      'primaryColor:light': '#ffd966',
+      'primaryColor:dark': '#2a4d69',
+      'mainBkg:light': '#ffd966',
+      'mainBkg:dark': '#2a4d69',
+    },
+    nodeBorder: {
+      none: '#eeddbb',
+      'primaryColor:light': '#d6b85c',
+      'primaryColor:dark': '#2f3031',
+      darkMode: '#ffffff',
+    },
+    nodeTextColor: {
+      none: '#333333',
+      'primaryTextColor:light': '#ffd966',
+      'primaryTextColor:dark': '#2a4d69',
+      darkMode: '#eeeeee',
+    },
+    clusterBkg: {
+      none: '#f6f9ff',
+      'primaryColor:light': '#809fff',
+      'primaryColor:dark': '#7b5231',
+      'tertiaryColor:light': '#ffd966',
+      'tertiaryColor:dark': '#2a4d69',
+    },
+    clusterBorder: {
+      none: '#cfdbf3',
+      'primaryColor:light': '#708bdb',
+      'primaryColor:dark': '#3e3d3b',
+      'tertiaryColor:light': '#d6b85c',
+      'tertiaryColor:dark': '#2f3031',
+      darkMode: '#ffffff',
+    },
+    titleColor: {
+      none: '#090600',
+      'primaryColor:light': '#806000',
+      'primaryColor:dark': '#84adce',
+      'tertiaryColor:light': '#002699',
+      'tertiaryColor:dark': '#d5b296',
+    },
+    edgeLabelBackground: {
+      none: '#f4ddff',
+      'primaryColor:light': '#d966ff',
+      'primaryColor:dark': '#4d692a',
+      'secondaryColor:light': '#ffd966',
+      'secondaryColor:dark': '#2a4d69',
+      darkMode: '#c244ff',
+    },
+    arrowheadColor: {
+      none: '#0b0b0b',
+      'background:light': '#002699',
+      'background:dark': '#d5b296',
+    },
+    defaultLinkColor: {
+      none: '#0b0b0b',
+      'background:light': '#002699',
+      'background:dark': '#d5b296',
+      'lineColor:light': '#ffd966',
+      'lineColor:dark': '#2a4d69',
+    },
+    border2: {
+      none: '#cfdbf3',
+      'primaryColor:light': '#708bdb',
+      'primaryColor:dark': '#3e3d3b',
+      'tertiaryColor:light': '#d6b85c',
+      'tertiaryColor:dark': '#2f3031',
+      darkMode: '#ffffff',
+    },
+    noteBkgColor: '#fff5ad',
+    noteTextColor: '#333333',
+    noteBorderColor: { none: '#e4db95', darkMode: '#f9f7e6' },
+    errorBkgColor: {
+      none: '#f6f9ff',
+      'primaryColor:light': '#809fff',
+      'primaryColor:dark': '#7b5231',
+      'tertiaryColor:light': '#ffd966',
+      'tertiaryColor:dark': '#2a4d69',
+    },
+    errorTextColor: {
+      none: '#090600',
+      'primaryColor:light': '#806000',
+      'primaryColor:dark': '#84adce',
+      'tertiaryColor:light': '#002699',
+      'tertiaryColor:dark': '#d5b296',
+    },
+    scaleLabelColor: {
+      none: '#333333',
+      'primaryTextColor:light': '#ffd966',
+      'primaryTextColor:dark': '#2a4d69',
+      darkMode: '#eeeeee',
+    },
+    actorBkg: {
+      none: '#fff4dd',
+      'primaryColor:light': '#ffd966',
+      'primaryColor:dark': '#2a4d69',
+      'mainBkg:light': '#ffd966',
+      'mainBkg:dark': '#2a4d69',
+    },
+    actorBorder: {
+      none: '#eeddbb',
+      'primaryColor:light': '#d6b85c',
+      'primaryColor:dark': '#2f3031',
+      darkMode: '#ffffff',
+    },
+    gradientStart: {
+      none: '#eeddbb',
+      'primaryColor:light': '#d6b85c',
+      'primaryColor:dark': '#2f3031',
+      darkMode: '#ffffff',
+    },
+    gradientStop: {
+      none: '#ddbbee',
+      'primaryColor:light': '#b85cd6',
+      'primaryColor:dark': '#30312f',
+      'secondaryColor:light': '#d6b85c',
+      'secondaryColor:dark': '#2f3031',
+      darkMode: '#ffffff',
+    },
+  },
 };
-
-/** Every colour variable in core's vocabulary. */
-const COLOURS = Object.entries(THEME_VARIABLES)
-  .filter(([, d]) => d.kind === 'color')
-  .map(([name]) => name);
-
-const ALL = Object.keys(CASES);
-/** One entry per theme / override / variable: `keys('base', ['primaryColor:dark'], ['mainBkg'])`. */
-const keys = (theme: Classic, cases: readonly string[], names: readonly string[]): string[] =>
-  cases.flatMap((c) => names.map((n) => `${theme} / ${c} / ${n}`));
 
 /**
  * Each difference from v12, keyed `theme / override / variable`, grouped by the decision that
@@ -133,41 +496,10 @@ const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
     [...keys('forest', ['mainBkg:light', 'mainBkg:dark'], ['actorBorder'])],
 };
 
-const LISTED = Object.values(DIFFERENCES).flat();
-
-const hex = (v: unknown): string | undefined => {
-  const rgba = typeof v === 'string' ? parseColor(v) : undefined;
-  return rgba ? formatColor(rgba) : undefined;
-};
-
-function v12Vars(theme: Classic, themeVariables: object): Record<string, unknown> {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize({ theme, themeVariables });
-  const vars = { ...v12.mermaidAPI.getConfig().themeVariables };
-  v12.mermaidAPI.reset();
-  return vars;
-}
-
-interface Compared {
-  /** Colour variables v12 resolves to no colour, so they are not compared. */
-  readonly skipped: string[];
-  /** `theme / override / variable` for each compared variable that differs. */
-  readonly differences: string[];
-}
-
-async function compare(theme: Classic, label: string): Promise<Compared> {
-  const themeVariables = CASES[label]!;
-  const old = v12Vars(theme, themeVariables);
-  const now = createTheme(await loadTheme(theme), { cssVariables: false, themeVariables });
-  const skipped: string[] = [];
-  const differences: string[] = [];
-  for (const name of COLOURS) {
-    const was = hex(old[name]);
-    if (was === undefined) skipped.push(name);
-    else if (hex(now.value(name)) !== was) differences.push(`${theme} / ${label} / ${name}`);
-  }
-  return { skipped, differences };
-}
+/** Every colour variable in core's vocabulary. */
+const COLOURS = Object.entries(THEME_VARIABLES)
+  .filter(([, d]) => d.kind === 'color')
+  .map(([name]) => name);
 
 /**
  * The colour variables v12 does not resolve: v13's shared inputs (D332), `nodeTextColor`, which
@@ -178,29 +510,11 @@ function notInV12(theme: Classic): string[] {
   return [...own, theme === 'base' ? 'border1' : 'nodeTextColor'];
 }
 
-describe('shared colour variables under one override, against v12 12.2.0 (#796, D151)', () => {
-  it('lists each difference once, keyed by a theme, an override and a compared variable', () => {
-    expect(new Set(LISTED).size).toBe(LISTED.length);
-    for (const key of LISTED) {
-      const [theme, label, name] = key.split(' / ');
-      expect(THEMES, key).toContain(theme);
-      expect(ALL, key).toContain(label);
-      expect(COLOURS, key).toContain(name);
-    }
+describe('shared colour variables under one override, against v12 12.2.0 (#796, D151, D654)', () => {
+  it.each(THEMES)('%s: compares every colour v12 resolves', (theme) => {
+    const compared = Object.keys(V12[theme]);
+    expect(COLOURS.filter((n) => !compared.includes(n)).sort()).toEqual(notInV12(theme).sort());
   });
 
-  it('names a decision for each group (D568)', () => {
-    for (const why of Object.keys(DIFFERENCES)) expect(why).toMatch(/^D\d+\b/);
-  });
-
-  describe.each(THEMES)('%s', (theme) => {
-    it.each(ALL)('%s: compares every colour v12 resolves', async (label) => {
-      expect((await compare(theme, label)).skipped.sort()).toEqual(notInV12(theme).sort());
-    });
-
-    it.each(ALL)('%s: differs from v12 only where DIFFERENCES says', async (label) => {
-      const listed = LISTED.filter((k) => k.startsWith(`${theme} / ${label} / `));
-      expect((await compare(theme, label)).differences.sort()).toEqual(listed.sort());
-    });
-  });
+  describeSharedOverrides({ reference: V12, differences: DIFFERENCES });
 });

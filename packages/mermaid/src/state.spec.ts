@@ -196,8 +196,9 @@ describe('state in the neo themes (D182, #234)', () => {
     it(`keeps fills, dividers, transitions and labels plain under ${theme}`, async () => {
       const { svg, tree } = await draw(theme);
       expect(svg).not.toMatch(/fill="url\(/);
-      const line = tree.getAttr(tree.find({ class: 'edgePaths' })[0]!, 'stroke');
-      expect(line).toBe('var(--_l)');
+      // Transitions take the canvas line colour (D668), the start dot and bars lineColor.
+      expect(tree.getAttr(tree.find({ class: 'edgePaths' })[0]!, 'stroke')).toBe('var(--_cvl)');
+      const line = 'var(--_l)';
       const [start] = shapes(tree, byId(tree, 'root_start'));
       expect(attr(tree, start!, 'fill')).toBe(line);
       expect(attr(tree, shapes(tree, byId(tree, 'f'))[0]!, 'fill')).toBe(line);

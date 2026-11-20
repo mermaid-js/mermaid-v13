@@ -32,8 +32,9 @@ Event modeling reads its own 14 flat theme variables, v12's names (`emUiFill`, `
 `emCommandStroke`, `emEventFill`, `emEventStroke`, `emSwimlaneBackgroundOdd`,
 `emSwimlaneBackgroundStroke`, `emRelationStroke`, `emArrowhead`), and one new one, `emTextColor`
 (core's `textColor`), for box and lane text, which v12 left to the page's colour. Every light
-theme of every family draws v12 `default`'s values, relations and arrowheads in `lineColor`; the
-dark themes draw v12 `dark`'s. An author's value is drawn as given in every theme, as in v12; the
+theme of every family draws v12 `default`'s values, relations and arrowheads in the theme's line
+colour (`canvasLineColor`: `lineColor`, which `default` and `dark` keep under an override, as v12
+does, D656); the dark themes draw v12 `dark`'s. An author's value is drawn as given in every theme, as in v12; the
 author's `darkMode` alone keeps the light values, as in v12. What changed
 (`packages/conformance/src/eventmodeling/theme.spec.ts` lists each one):
 
