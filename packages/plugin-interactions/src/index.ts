@@ -19,14 +19,13 @@
  * it still passes the allow-list (R-SEC-2).
  */
 import type { ExtensionPlugin } from '@mermaid-js/core';
-import { nodeId, type AstNode } from '@mermaid-js/core/parser-kit';
-import { callbackArgs } from '@mermaid-js/shared/parser/callback';
+import { callbackArgs, nodeId, type AstNode } from '@mermaid-js/core/parser-kit';
 import { defineFeature, isBag, type AnyFeature } from './feature.ts';
 import { menus } from './menus.ts';
 import { createScope, ownIds, rootsFor } from './scope.ts';
 
-/** v12's argument list of a `call fn(…)`: the shared one (`@mermaid-js/shared/parser/callback`). */
-export { callbackArgs } from '@mermaid-js/shared/parser/callback';
+/** v12's argument list of a `call fn(…)`: core's (`@mermaid-js/core/parser-kit`). */
+export { callbackArgs } from '@mermaid-js/core/parser-kit';
 
 /** One callback to bind: a node id, the function name and its arguments. */
 export interface Binding {

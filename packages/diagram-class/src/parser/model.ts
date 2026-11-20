@@ -11,8 +11,7 @@
  */
 import { idEscaper } from '@mermaid-js/shared/parser/support';
 import type { Dir } from '@mermaid-js/core/layout';
-import type { AstId, Diagnostic, Range } from '@mermaid-js/core/parser-kit';
-import { callbackArgs } from '@mermaid-js/shared/parser/callback';
+import { callbackArgs, type AstId, type Diagnostic, type Range } from '@mermaid-js/core/parser-kit';
 import { readMember } from './member.ts';
 import type { MemberParts } from './member.ts';
 

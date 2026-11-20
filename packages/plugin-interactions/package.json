@@ -28,13 +28,11 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "peerDependencies": {
-    "@mermaid-js/core": "workspace:*",
-    "@mermaid-js/shared": "workspace:*"
+    "@mermaid-js/core": "workspace:*"
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^",
-    "mermaid": "workspace:*",
-    "@mermaid-js/shared": "workspace:^"
+    "mermaid": "workspace:*"
   },
   "mermaid": {
     "plugin": "extension",
