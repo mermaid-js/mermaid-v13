@@ -11,7 +11,6 @@ import {
   capInset,
   centred,
   CORNER,
-  cylinderSize,
   drawCircle,
   drawRect,
   fixed,
@@ -30,6 +29,7 @@ import {
   wave,
   WAVE,
   type Inset,
+  type Pads,
   type Barrel,
   type PolygonShape,
   type Shape,
@@ -83,6 +83,10 @@ function triInset(flip: boolean): Inset {
 const STACK_RECT = 5;
 /** Each layer of a stacked document (v12's `multiWaveEdgedRectangle`, D603). */
 const STACK_DOC = 10;
+
+/** Classic shapes used `flowchart.padding` once; redux keeps explicit shape padding. */
+const classic = (p: Pads): boolean => p.node.x === 2 * p.node.y;
+const classicPad = (p: Pads): number => p.node.x / 2;
 
 /** A sizer whose label also sits `s` left: on the front layer of a stack, as in v12. */
 const leftOf =
@@ -145,7 +149,14 @@ function stackedDocumentBottom(s: number): Inset {
 export const linedCylinder: Shape = {
   inset: capInset,
   span: (W, H, s) => (s ? H - 2 * CORNER - 20 : W * 0.6),
-  size: (tw, th, p) => cylinderSize(tw, th, p.cylinder, 8),
+  size: (tw, th, p) => {
+    const px = classic(p) ? classicPad(p) : p.node.x;
+    const py = classic(p) ? p.node.y : 24;
+    const w = tw + 2 * px;
+    const rx = w / 2;
+    const ry = rx / (2.5 + w / 50);
+    return { w, h: th + ry + 2 * py, dy: 0 };
+  },
   draw: (w, W, H, a, line) => drawCylinder(w, { W, H, extra: 8 }, a, line),
 };
 
@@ -159,7 +170,7 @@ export const ellipse: Shape = {
 export const text: Shape = {
   bare: true,
   span: flat,
-  size: (tw, th) => ({ w: tw + 8, h: th + 8, dy: 0 }),
+  size: (tw, th, p) => ({ w: tw + p.pad, h: th + p.pad, dy: 0 }),
   draw: (w, W, H) => centred(w, W, H, NONE),
 };
 
@@ -246,7 +257,7 @@ export const crossedCircle: Shape = {
   noLabel: true,
   inset: roundInset,
   span: roundSpan,
-  size: /* @__PURE__ */ fixed(44, 44),
+  size: /* @__PURE__ */ fixed(60, 60),
   draw: (w, W, _H, a, line) => {
     const k = (W / 2) * Math.SQRT1_2;
     drawCircle(w, W / 2, a);
@@ -304,7 +315,11 @@ export const linedRect: Shape = {
 export const dividedRect: Shape = {
   plain: true,
   span: flat,
-  size: /* @__PURE__ */ grown(0, 8, 4),
+  size: (tw, th, p) => {
+    const pad = classic(p) ? p.pad : 16;
+    const h = th + pad;
+    return { w: tw + pad, h: h * 1.2, dy: 0 };
+  },
   draw: (w, W, H, a, line) => {
     centred(w, W, H, a);
     lines(w, [-W / 2, -H / 2 + 8, W / 2, -H / 2 + 8], line);
@@ -364,7 +379,11 @@ export const flippedTriangle: Shape = {
 
 export const slopedRect: Shape = {
   inset: (_W, _H, side) => (side === 0 ? 5 : 0),
-  size: /* @__PURE__ */ grown(0, 10, 5),
+  size: (tw, th, p) => {
+    const px = classic(p) ? p.pad : p.node.x;
+    const py = classic(p) ? p.pad : p.node.y;
+    return { w: tw + 2 * px, h: (th + 2 * py) * 1.5, dy: 0 };
+  },
   draw: (w, W, H, a) =>
     poly(w, [-W / 2, -H / 2 + 10, W / 2, -H / 2, W / 2, H / 2, -W / 2, H / 2], a),
 };
@@ -388,8 +407,10 @@ export const delay: Shape = {
 /** v12 `h-cyl`: a cylinder on its side. */
 export const horizontalCylinder: Shape = {
   size: (tw, th, p) => {
-    const h = th + 2 * p.node.y;
-    return { w: tw + 2 * p.node.x + 2 * queueRx(h), h, dy: 0 };
+    const padding = classic(p) ? p.node.y / 2 : 12;
+    const h = th + padding;
+    const rx = h / 2 / (2.5 + h / 50);
+    return { w: tw + rx + padding, h, dy: 0 };
   },
   draw: (w, W, H, a, line) => {
     const ry = H / 2;
@@ -420,7 +441,15 @@ export const curvedTrapezoid: Shape = {
 };
 
 export const bowRect: Shape = {
-  size: /* @__PURE__ */ grown(0, 0, 0, 0.4),
+  size: (tw, th, p) => {
+    const paddingX = classic(p) ? classicPad(p) : p.node.x;
+    const paddingY = p.node.y;
+    const h = th + paddingY;
+    const ry = h / 2;
+    const rx = ry / (2.5 + h / 50);
+    const sagitta = rx;
+    return { w: tw + 2 * paddingX + sagitta, h, dy: 0 };
+  },
   inset: (_W, H, side) => (side === 1 ? H * 0.2 : 0),
   draw: (w, W, H, a) => {
     const x = W / 2;
@@ -498,7 +527,11 @@ export const flag: Shape = {
 
 export const braceLeft: Shape = {
   bare: true,
-  size: /* @__PURE__ */ grown(12, 0),
+  size: (tw, th, p) => ({
+    w: tw + (classic(p) ? classicPad(p) : p.node.x + 2),
+    h: th + p.node.y,
+    dy: 0,
+  }),
   draw: (w, W, H, _a, line) => {
     centred(w, W, H, NONE);
     brace(w, -W / 2 + 12, H, -1, line);
@@ -507,7 +540,11 @@ export const braceLeft: Shape = {
 
 export const braceRight: Shape = {
   bare: true,
-  size: /* @__PURE__ */ grown(12, 0),
+  size: (tw, th, p) => ({
+    w: tw + (classic(p) ? classicPad(p) : 2 * (p.node.x + 2)),
+    h: th + (classic(p) ? p.node.y : 2 * p.node.y),
+    dy: 0,
+  }),
   draw: (w, W, H, _a, line) => {
     centred(w, W, H, NONE);
     brace(w, W / 2 - 12, H, 1, line);
@@ -516,7 +553,11 @@ export const braceRight: Shape = {
 
 export const braces: Shape = {
   bare: true,
-  size: /* @__PURE__ */ grown(24, 0),
+  size: (tw, th, p) => ({
+    w: tw + (classic(p) ? classicPad(p) : 2 * (p.node.x + 2)),
+    h: th + (classic(p) ? p.node.y : 2 * p.node.y),
+    dy: 0,
+  }),
   draw: (w, W, H, _a, line) => {
     centred(w, W, H, NONE);
     brace(w, -W / 2 + 12, H, -1, line);
