@@ -4,7 +4,7 @@
  */
 import { detectWardley, parseWardley } from '@mermaid-js/diagram-wardley';
 import type { WardleyModel } from '@mermaid-js/diagram-wardley';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { WARDLEY_V12_TYPES, wardleyV12Snapshot } from './v12.ts';
 import type { WardleySnapshot } from './v12.ts';
@@ -58,14 +58,8 @@ export function wardleyV13Snapshot(model: WardleyModel): WardleySnapshot {
  * front-matter title is held back, as the oracle holds it back from v12 (see `v12.ts`); the
  * D218 fallback has its own specs (`parser.spec.ts`).
  */
-export function parseWardleyForParity(text: string): WardleyModel {
-  const pre = preprocess(text);
-  const fm = pre.frontMatter && { ...pre.frontMatter, title: undefined };
-  const result = parseWardley(text, { preprocessed: { ...pre, frontMatter: fm } });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((x) => x.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseWardleyForParity = (text: string): WardleyModel =>
+  parseForParity(text, parseWardley, { withoutTitle: true });
 
 export const wardleyAdapter: DiagramAdapter<WardleyModel> = {
   id: 'wardley',

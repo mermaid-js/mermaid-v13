@@ -4,9 +4,7 @@
  * #302), long blank runs and code-unit cases, and a commented and a CRLF copy of every source.
  * The parity, grammar and layout specs of #302 run on it too.
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
+import { corpusJson, fixturesAndSpecs } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
 
 /**
@@ -18,11 +16,7 @@ import type { CorpusItem } from '../types.ts';
  * v12 sorted them by its entity placeholders (`ﬂ°lt¶ß`), v13 by the names as written (a listed
  * divergence, `divergences/`).
  */
-function journeyCases(): CorpusItem[] {
-  return JSON.parse(
-    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/journey-cases.json'), 'utf8')
-  ) as CorpusItem[];
-}
+const journeyCases = (): CorpusItem[] => corpusJson('journey-cases.json');
 
 /** Long blank runs (pitfall 5), generated. */
 function longBlankRuns(): CorpusItem[] {
@@ -76,16 +70,7 @@ function commented(src: string): string {
 }
 
 /** The journey corpus: the e2e fixtures and the v12 spec strings. */
-export async function journeyCorpus(): Promise<CorpusItem[]> {
-  const items: CorpusItem[] = [];
-  for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/journey'), 'e2e')) {
-    items.push(item);
-  }
-  const specs = JSON.parse(
-    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/journey-v12-specs.json'), 'utf8')
-  ) as CorpusItem[];
-  return [...items, ...specs];
-}
+export const journeyCorpus = (): Promise<CorpusItem[]> => fixturesAndSpecs('journey');
 
 /** The lexer gate's set: the corpus and the cases, each also commented and with CRLF. */
 export async function journeyGateCorpus(): Promise<CorpusItem[]> {

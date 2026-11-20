@@ -4,23 +4,12 @@
  * spec's quirks, line separators, other `\s` characters, the parser's cases) and
  * `corpus/eventmodeling-recovery.json`, and a CRLF and a commented copy of every source.
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
+import { corpusJson, fixturesAndSpecs } from '../corpus.ts';
 import { commented } from '../sequence/corpus.ts';
 import type { CorpusItem } from '../types.ts';
 
-const readItems = (file: string) =>
-  JSON.parse(readFileSync(join(REPO_ROOT, file), 'utf8')) as CorpusItem[];
-
 /** The event modeling corpus: the e2e fixtures and the harvested v12 spec strings. */
-export async function eventModelingCorpus(): Promise<CorpusItem[]> {
-  const items: CorpusItem[] = [];
-  for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/eventmodeling'), 'e2e')) {
-    items.push(item);
-  }
-  return [...items, ...readItems('packages/conformance/corpus/eventmodeling-v12-specs.json')];
-}
+export const eventModelingCorpus = (): Promise<CorpusItem[]> => fixturesAndSpecs('eventmodeling');
 
 /**
  * The hand-written cases: the spec's quirks and the rules' other corners, the parser's cases
@@ -28,9 +17,9 @@ export async function eventModelingCorpus(): Promise<CorpusItem[]> {
  * diagnostics `recovery.spec.ts` checks).
  */
 export function eventModelingCases(): CorpusItem[] {
-  const recovery = readItems('packages/conformance/corpus/eventmodeling-recovery.json');
+  const recovery = corpusJson('eventmodeling-recovery.json');
   return [
-    ...readItems('packages/conformance/corpus/eventmodeling-cases.json'),
+    ...corpusJson('eventmodeling-cases.json'),
     ...recovery.map(({ id, source }) => ({ id, source })),
   ];
 }

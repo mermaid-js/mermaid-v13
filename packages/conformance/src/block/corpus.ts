@@ -5,36 +5,20 @@
  * the parser (rejections, comment forms, CRs, line separators) goes in
  * `corpus/block-cases.json`.
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
-import { body, crlf, FRONT_MATTER, tabs } from '../kanban/corpus.ts';
+import { corpusJson, fixturesAndSpecs } from '../corpus.ts';
+import {
+  crlf,
+  DIRECTIVE,
+  FRONT_MATTER,
+  gateVariants,
+  midLineDirective,
+  tabs,
+  withVariants,
+} from '../gate-variants.ts';
+import type { Variant } from '../gate-variants.ts';
 import { commented } from '../sequence/corpus.ts';
 import { crCut } from '../timeline/corpus.ts';
 import type { CorpusItem } from '../types.ts';
-
-/** A directive v12 removes, wherever in a line it is. */
-const DIRECTIVE = '%%{init: {}}%%';
-
-/**
- * A directive through the middle of every line after the header line (pitfall 3): at the
- * middle of the line's text after its indent, moved off a surrogate pair. Lines with fewer
- * than two characters of text, `%%` lines and blank lines are left as they are.
- */
-export const midLineDirective = (src: string): string =>
-  body(src, (b) => {
-    const lines = b.split('\n');
-    const header = lines.findIndex((l) => /^\s*block/.test(l));
-    return lines
-      .map((line, k) => {
-        const text = line.trimStart();
-        if (k <= header || text.length < 2 || text.startsWith('%%')) return line;
-        let at = line.length - text.length + Math.floor(text.length / 2);
-        if (/[\udc00-\udfff]/.test(line.charAt(at))) at++;
-        return line.slice(0, at) + DIRECTIVE + line.slice(at);
-      })
-      .join('\n');
-  });
 
 /**
  * Sequence's `commented` (nine comment lines between lines), except that a body of two lines or
@@ -54,32 +38,19 @@ export function blockCommented(src: string): string {
 }
 
 /** The cases (`corpus/block-cases.json`): each corpus gap, quirk and rejection v12 has. */
-export function blockCases(): CorpusItem[] {
-  return JSON.parse(
-    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/block-cases.json'), 'utf8')
-  ) as CorpusItem[];
-}
+export const blockCases = (): CorpusItem[] => corpusJson('block-cases.json');
 
 /** The block corpus: the e2e fixtures and the v12 spec and syntax-page strings. */
-export async function blockCorpus(): Promise<CorpusItem[]> {
-  const items: CorpusItem[] = [];
-  for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/block'), 'e2e')) {
-    items.push(item);
-  }
-  const specs = JSON.parse(
-    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/block-v12-specs.json'), 'utf8')
-  ) as CorpusItem[];
-  return [...items, ...specs];
-}
+export const blockCorpus = (): Promise<CorpusItem[]> => fixturesAndSpecs('block');
 
 /** The generated variants of each gate source, by id suffix. */
-export const VARIANTS: readonly [suffix: string, make: (src: string) => string][] = [
+export const VARIANTS: readonly Variant[] = [
   ['commented', blockCommented],
   ['CR cut', (src: string): string => crCut(src, '%% c')],
   ['CR cut by a directive', (src: string): string => crCut(src, DIRECTIVE)],
   ['CRLF', crlf],
   ['tabs', tabs],
-  ['mid-line directive', midLineDirective],
+  ['mid-line directive', midLineDirective(/^\s*block/)],
 ];
 
 /**
@@ -87,15 +58,7 @@ export const VARIANTS: readonly [suffix: string, make: (src: string) => string][
  * {@link VARIANTS} that changes it.
  */
 export async function blockGateCorpus(): Promise<CorpusItem[]> {
-  const all = [...(await blockCorpus()), ...blockCases()];
-  const out = [...all];
-  for (const [suffix, make] of VARIANTS) {
-    for (const item of all) {
-      const source = make(item.source);
-      if (source !== item.source) out.push({ id: `${item.id} (${suffix})`, source });
-    }
-  }
-  return out;
+  return withVariants([...(await blockCorpus()), ...blockCases()], VARIANTS);
 }
 
 /** The cases cut off by an unclosed directive, which core reads differently (GAPS #553). */
@@ -115,8 +78,6 @@ export async function blockSyntaxCorpus(): Promise<CorpusItem[]> {
  * directives are left out: the case is a listed divergence of core's directive reading.
  */
 export async function blockParityCorpus(): Promise<CorpusItem[]> {
-  const listed = new Set([...(await blockCorpus()), ...blockCases()].map((c) => c.id));
-  return (await blockSyntaxCorpus())
-    .filter((item) => !listed.has(item.id))
-    .map((item) => ({ id: `block-gate/${item.id}`, source: item.source }));
+  const listed = [...(await blockCorpus()), ...blockCases()];
+  return gateVariants(await blockSyntaxCorpus(), listed, 'block');
 }

@@ -3,9 +3,7 @@
  * which adds the cases (`corpus/pie-cases.json`: the quirks the spec lists, #288, parser and
  * line-separator cases) and a CRLF and a commented copy of every source.
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
+import { corpusJson, fixturesAndSpecs } from '../corpus.ts';
 import { commented } from '../sequence/corpus.ts';
 import type { CorpusItem } from '../types.ts';
 
@@ -16,23 +14,10 @@ import type { CorpusItem } from '../types.ts';
  * end and reports `UNCLOSED_DIRECTIVE`, where v12's directive regex removed the line break after
  * it too, so the specs leave those out).
  */
-function pieCases(): CorpusItem[] {
-  return JSON.parse(
-    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/pie-cases.json'), 'utf8')
-  ) as CorpusItem[];
-}
+const pieCases = (): CorpusItem[] => corpusJson('pie-cases.json');
 
 /** The pie corpus: the e2e fixtures and the harvested v12 spec strings. */
-export async function pieCorpus(): Promise<CorpusItem[]> {
-  const items: CorpusItem[] = [];
-  for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/pie'), 'e2e')) {
-    items.push(item);
-  }
-  const specs = JSON.parse(
-    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/pie-v12-specs.json'), 'utf8')
-  ) as CorpusItem[];
-  return [...items, ...specs];
-}
+export const pieCorpus = (): Promise<CorpusItem[]> => fixturesAndSpecs('pie');
 
 /** The corpus, the cases, and a CRLF and a commented copy of each. */
 export async function pieGateCorpus(): Promise<CorpusItem[]> {

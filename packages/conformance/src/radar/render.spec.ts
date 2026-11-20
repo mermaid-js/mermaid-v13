@@ -13,7 +13,7 @@ import { pathPoints } from '../sequence/path-bounds.ts';
 import { astIndex, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 import { radarCases, radarGateCorpus } from './corpus.ts';
-import { radarApi } from './render-api.ts';
+import { deterministicApi } from '../render-api.ts';
 
 /**
  * Render properties of the radar renderer (spec #422 T4, DESIGN §13.2, §13.4) over the radar
@@ -58,10 +58,10 @@ const skipped: { id: string; reason: string }[] = [];
 let api: Mermaid;
 
 beforeAll(async () => {
-  api = radarApi();
+  api = deterministicApi();
   const corpus = await radarGateCorpus();
   for (const theme of THEMES) {
-    const themed = radarApi({ theme });
+    const themed = deterministicApi({ theme });
     for (const item of corpus) {
       if (!detectRadar(item.source)) continue;
       try {
@@ -137,7 +137,7 @@ describe('radar render properties over the corpus', () => {
 
   it('is deterministic: a fresh API object renders the same bytes (R-ARCH-6)', async () => {
     const fresh = new Map<string, Mermaid>();
-    for (const theme of THEMES) fresh.set(theme, radarApi({ theme }));
+    for (const theme of THEMES) fresh.set(theme, deterministicApi({ theme }));
     for (const c of cases) {
       const again = await fresh.get(c.theme)!.render('mermaid-0', c.source);
       expect(again.svg, c.id).toBe(c.result.svg);
@@ -412,7 +412,7 @@ async function paintsOf(m: Mermaid, src = SIMPLE) {
 }
 
 const literal = (theme: MermaidConfig['theme'], extra: MermaidConfig = {}) =>
-  radarApi({ theme, output: { cssVariables: false }, ...extra } as MermaidConfig);
+  deterministicApi({ theme, output: { cssVariables: false }, ...extra } as MermaidConfig);
 
 describe('radar render: paints (D215, D227, D351–D353, D359)', () => {
   it("paints from radar's theme table, the cScale palette and textColor", async () => {

@@ -13,7 +13,7 @@ import {
 import { astIndex, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 import { treemapCases, treemapGateCorpus } from './corpus.ts';
-import { treemapApi } from './render-api.ts';
+import { deterministicApi } from '../render-api.ts';
 
 /**
  * Render properties of the treemap renderer (spec #428 T4, DESIGN §13.2, §13.4) over the treemap
@@ -55,10 +55,10 @@ const skipped: { id: string; reason: string }[] = [];
 let api: Mermaid;
 
 beforeAll(async () => {
-  api = treemapApi();
+  api = deterministicApi();
   const corpus = await treemapGateCorpus();
   for (const theme of THEMES) {
-    const themed = treemapApi({ theme });
+    const themed = deterministicApi({ theme });
     for (const item of corpus) {
       if (!detectTreemap(item.source)) continue;
       try {
@@ -124,7 +124,7 @@ describe('treemap render properties over the corpus', () => {
 
   it('is deterministic: a fresh API object renders the same bytes (R-ARCH-6)', async () => {
     const fresh = new Map<string, Mermaid>();
-    for (const theme of THEMES) fresh.set(theme, treemapApi({ theme }));
+    for (const theme of THEMES) fresh.set(theme, deterministicApi({ theme }));
     for (const c of cases) {
       const again = await fresh.get(c.theme)!.render('mermaid-0', c.source);
       expect(again.svg, c.id).toBe(c.result.svg);
@@ -394,7 +394,7 @@ describe('treemap render: what is drawn', () => {
 
 describe('treemap render: paints (D215, D227, D404, D406, D407)', () => {
   const literal = (theme: MermaidConfig['theme'], themeVariables?: object) =>
-    treemapApi({
+    deterministicApi({
       theme,
       output: { cssVariables: false },
       ...(themeVariables ? { themeVariables } : {}),

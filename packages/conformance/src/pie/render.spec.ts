@@ -13,7 +13,7 @@ import { pathPoints } from '../sequence/path-bounds.ts';
 import { astIndex, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 import { pieGateCorpus } from './corpus.ts';
-import { pieApi } from './render-api.ts';
+import { deterministicApi } from '../render-api.ts';
 
 /**
  * Render properties of the pie renderer (spec #288 T4, DESIGN §13.2, §13.4) over the pie gate
@@ -56,10 +56,10 @@ const skipped: { id: string; reason: string }[] = [];
 let api: Mermaid;
 
 beforeAll(async () => {
-  api = await pieApi();
+  api = deterministicApi();
   const corpus = await pieGateCorpus();
   for (const theme of THEMES) {
-    const themed = await pieApi({ theme });
+    const themed = deterministicApi({ theme });
     for (const item of corpus) {
       if (!detectPie(item.source)) continue;
       try {
@@ -137,7 +137,7 @@ describe('pie render properties over the corpus', () => {
 
   it('is deterministic: a fresh API object renders the same bytes (R-ARCH-6)', async () => {
     const fresh = new Map<string, Mermaid>();
-    for (const theme of THEMES) fresh.set(theme, await pieApi({ theme }));
+    for (const theme of THEMES) fresh.set(theme, deterministicApi({ theme }));
     for (const c of cases) {
       const again = await fresh.get(c.theme)!.render('mermaid-0', c.source);
       expect(again.svg, c.id).toBe(c.result.svg);
@@ -344,7 +344,7 @@ describe('pie render: what is drawn', () => {
       output: { cssVariables: false },
       themeVariables: { pie2: '#123456', pieOpacity: 0.4, pieStrokeWidth: 5, pieTitleTextSize: 30 },
     } as const;
-    const m = await pieApi(config as MermaidConfig);
+    const m = deterministicApi(config as MermaidConfig);
     const tree = parseSvg((await m.render('x', 'pie title T\n"a": 1\n"b": 1')).svg);
     const [a, b] = slices(tree);
     // dark takes v12's off-by-one cScale: slot 1 is cScale1.

@@ -21,7 +21,7 @@ import { REPO_ROOT } from '../corpus.ts';
 import { astIndex, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 import { eventModelingGateCorpus } from './corpus.ts';
-import { eventModelingApi } from './render-api.ts';
+import { deterministicApi } from '../render-api.ts';
 
 /**
  * Render properties of the event modeling renderer (spec #527 T4, DESIGN §13.2, §13.4) over the
@@ -54,10 +54,10 @@ const skipped: { id: string; reason: string }[] = [];
 let api: Mermaid;
 
 beforeAll(async () => {
-  api = eventModelingApi();
+  api = deterministicApi();
   const corpus = await eventModelingGateCorpus();
   for (const theme of THEMES) {
-    const themed = eventModelingApi({ theme });
+    const themed = deterministicApi({ theme });
     for (const item of corpus) {
       if (!detectEventModeling(item.source)) continue;
       try {
@@ -166,7 +166,7 @@ describe('event modeling render properties over the corpus', () => {
 
   it('is deterministic: a fresh API object renders the same bytes, async and sync (R-ARCH-6)', async () => {
     const fresh = new Map<string, Mermaid>();
-    for (const theme of THEMES) fresh.set(theme, eventModelingApi({ theme }));
+    for (const theme of THEMES) fresh.set(theme, deterministicApi({ theme }));
     for (const c of cases) {
       const again = await fresh.get(c.theme)!.render('mermaid-0', c.source);
       expect(again.svg, c.id).toBe(c.result.svg);
@@ -288,7 +288,7 @@ const render = async (src: string, m: Mermaid = api) => {
 };
 /** Paints as literal colours (`output.cssVariables: false`), in `theme`. */
 const literal = (theme: MermaidConfig['theme'], themeVariables?: object) =>
-  eventModelingApi({
+  deterministicApi({
     theme,
     output: { cssVariables: false },
     ...(themeVariables ? { themeVariables } : {}),
@@ -341,7 +341,7 @@ describe('event modeling render: what is drawn', () => {
 
   it('draws relations as one line, a self relation and one under its row in three, the inferred one without data-ast', async () => {
     // Without line hops (on by default, D672), which add commands where two relations cross.
-    const plain = eventModelingApi({ lineHops: false } as MermaidConfig);
+    const plain = deterministicApi({ lineHops: false } as MermaidConfig);
     const { tree } = await render(fixture('nightly-check/layout-relations.mmd'), plain);
     const paths = tree.find((n, t) => t.getAttr(n, 'class') === 'em-relation');
     // The self loop and 02 → 04, which skips 03 in the Events lane (D659).
@@ -444,7 +444,7 @@ describe('event modeling render: what is drawn', () => {
     const [, , w, h] = attr(tree, root, 'viewBox')!.split(' ');
     expect(attr(tree, root, 'width')).toBe('100%');
     expect(attr(tree, root, 'style')).toContain(`max-width:${w}px`);
-    const fixed = eventModelingApi({ eventmodeling: { useMaxWidth: false } });
+    const fixed = deterministicApi({ eventmodeling: { useMaxWidth: false } });
     const f = await render(src, fixed);
     const froot = f.tree.find({ tag: 'svg' })[0]!;
     expect([attr(f.tree, froot, 'width'), attr(f.tree, froot, 'height')]).toEqual([w, h]);
@@ -452,7 +452,7 @@ describe('event modeling render: what is drawn', () => {
   });
 
   it('warns once and keeps useMaxWidth on for a value that is not a boolean (D226)', async () => {
-    const odd = eventModelingApi({
+    const odd = deterministicApi({
       eventmodeling: { useMaxWidth: 'no' },
     } as unknown as MermaidConfig);
     const r = await render(fixture('pr-check/state-change-pattern.mmd'), odd);
