@@ -9,6 +9,7 @@ import {
   MAX_BLOCK_DEPTH,
   MermaidError,
   NotLoadedError,
+  noDiagramType as noTypeDiagnostic,
   openerRange,
   tooDeep,
   type EmbeddedDiagram,
@@ -113,13 +114,8 @@ function blockError(root: string, code: string, message: string, range: Range): 
 /** The error for a block whose body does not start with a diagram type (placed by `pos`). */
 export function noDiagramType(root: string, b: EmbeddedBlock, pos: Pos): MermaidError {
   const range = typeRange(b, pos);
-  const word = /^[^\s{[(;:]*/.exec(root.slice(range.start, range.end))![0];
-  return blockError(
-    root,
-    'EMBED_NO_TYPE',
-    `The \`mermaid ${b.id}\` block must start with a diagram type, such as \`sequenceDiagram\` or \`classDiagram\`, after any blank lines, comments and front matter${word ? `; \`${word}\` is not a diagram type` : ''}.`,
-    range
-  );
+  const line = root.slice(range.start, range.end);
+  return errorFromDiagnostics(root, [noTypeDiagnostic(b.id, line, range)])!;
 }
 
 /**

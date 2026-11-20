@@ -13,8 +13,8 @@ export {
   type Resource,
 } from './pipeline/errors.ts';
 export { renderErrorSvg, type ErrorSvgContext } from './pipeline/error-svg.ts';
-/** The block nesting limit (ADR-15), shared with the editor through the parser kit. */
-export { MAX_BLOCK_DEPTH, openerRange, tooDeep } from './parser-kit/embed-depth.ts';
+/** The block nesting limit and missing-type errors (ADR-15), shared with the editor through the parser kit. */
+export { MAX_BLOCK_DEPTH, noDiagramType, openerRange, tooDeep } from './parser-kit/embed-depth.ts';
 export {
   drawDiagram,
   drawText,
