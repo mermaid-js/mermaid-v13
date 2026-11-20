@@ -32,16 +32,11 @@ import {
   skipTo,
   kindSet,
 } from '@mermaid-js/core/parser-kit';
-import type {
-  ParseOptions,
-  ParseResult,
-  Range,
-  TokenStream,
-  TokenView,
-} from '@mermaid-js/core/parser-kit';
+import type { ParseResult, Range, TokenStream, TokenView } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import * as codes from '../codes.ts';
+import type { C4ParseOptions } from '../parser/parser.ts';
 import type {
   C4BetaDocument,
   C4BetaElementNode,
@@ -56,14 +51,8 @@ import * as lists from './probe.ts';
 import type { C4BetaDirection, C4BetaElementKind, C4BetaKind, C4BetaModel } from './model.ts';
 import { C4BETA_TRIVIA, DIAGRAM_KINDS, ELEMENT_KINDS, ID_KINDS, BETA } from './tokens.ts';
 
-export interface C4BetaParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-  /** The integrator's caps on elements, relations and nesting (core's defaults when absent). */
-  maxNodes?: number;
-  maxEdges?: number;
-  maxDepth?: number;
-}
+/** The same options as the legacy C4 parse: the preprocess result and the integrator's caps. */
+export type C4BetaParseOptions = C4ParseOptions;
 
 export type C4BetaParseResult = ParseResult<C4BetaModel, C4BetaDocument>;
 
