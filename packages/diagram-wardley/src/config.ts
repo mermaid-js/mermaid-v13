@@ -52,7 +52,10 @@ type LengthKey = Exclude<keyof WardleyLayoutConfig, 'showGrid'>;
 /** The schema's defaults, v12's. */
 const DEFAULTS = wardleyBetaConfigDefaults as WardleyLayoutConfig;
 
-const AT_LEAST_1: ConfigRange = { min: 1, wants: 'a number of 1 or more' };
+/** The least canvas length, the configured `width` and `height`'s and the `size`'s. */
+const MIN_SIZE = 1;
+
+const AT_LEAST_1: ConfigRange = { min: MIN_SIZE, wants: 'a number of 1 or more' };
 
 /**
  * Each length's range. `nodeRadius` is above 0 (0 draws nothing): its minimum is the least
@@ -78,14 +81,14 @@ export function wardleyLayoutConfig(
   warn: (w: Warning) => void
 ): WardleyLayoutConfig {
   const given = section ?? {};
-  // The paths of the keys that fell back, each with its warning.
-  const warned = new Set<string | undefined>();
+  // The warnings the reader raised, each for a key that fell back.
+  let fellBack = 0;
   const number = configRanges(
     WARDLEY_SECTION,
     WARDLEY_CONFIG_INVALID,
     section,
     (w) => {
-      warned.add(w.path);
+      fellBack++;
       warn(w);
     },
     true
@@ -94,7 +97,7 @@ export function wardleyLayoutConfig(
   let width = length('width');
   let height = length('height');
   if (size) {
-    const bad = (['width', 'height'] as const).filter((k) => !(size[k] >= 1));
+    const bad = (['width', 'height'] as const).filter((k) => !(size[k] >= MIN_SIZE));
     if (!bad.includes('width')) width = size.width;
     if (!bad.includes('height')) height = size.height;
     if (bad.length > 0)
@@ -104,12 +107,13 @@ export function wardleyLayoutConfig(
         astIds: [size.astId],
       });
   }
+  const before = fellBack;
   return {
     width,
     height,
     padding: paddingFor(length('padding'), { width, height }, (message) => {
       // One warning per key: a padding already reported falls back without a second.
-      if (!warned.has(`${WARDLEY_SECTION}.padding`))
+      if (fellBack === before)
         warn({ code: WARDLEY_CONFIG_INVALID, message, path: `${WARDLEY_SECTION}.padding` });
     }),
     nodeRadius: length('nodeRadius'),
