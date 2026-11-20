@@ -2,6 +2,7 @@
  * Small plane geometry shared by the layout and its invariants: a text's drawn corners (its box
  * turned about its anchor) and the union box the bounds are grown from.
  */
+import { RectUnion } from '@mermaid-js/shared/layout';
 import type { PlacedText, Point, Rect } from './types.ts';
 
 /** Half a turn, in degrees: a unit, not a length. */
@@ -34,31 +35,19 @@ export function textCorners(t: PlacedText): Point[] {
   return rectCorners(t).map((p) => rotated(p, t.at, t.rotate));
 }
 
-/** The union of what is drawn. */
-export class Box {
-  private x0 = Infinity;
-  private y0 = Infinity;
-  private x1 = -Infinity;
-  private y1 = -Infinity;
-  /** A rectangle; a negative width or height counts from the other side. */
-  add(r: Rect): void {
-    this.point({ x: r.x, y: r.y });
-    this.point({ x: r.x + r.width, y: r.y + r.height });
-  }
+/** The union of what is drawn: shared `RectUnion`, with the shapes wardley adds to it. */
+export class Box extends RectUnion {
   point(point: Point): void {
-    this.x0 = Math.min(this.x0, point.x);
-    this.y0 = Math.min(this.y0, point.y);
-    this.x1 = Math.max(this.x1, point.x);
-    this.y1 = Math.max(this.y1, point.y);
+    this.add({ x: point.x, y: point.y, width: 0, height: 0 });
   }
   /** The square around the disc of radius `r` about `center`. */
-  disc(center: Point, r: number): void {
+  addDisc(center: Point, r: number): void {
     this.add({ x: center.x - r, y: center.y - r, width: 2 * r, height: 2 * r });
   }
   /** A line `width` wide, as the squares about its ends. */
   line(from: Point, to: Point, width: number): void {
-    this.disc(from, width / 2);
-    this.disc(to, width / 2);
+    this.addDisc(from, width / 2);
+    this.addDisc(to, width / 2);
   }
   /** A rectangle outlined `stroke` wide. */
   framed(r: Rect, stroke: number): void {
@@ -67,8 +56,5 @@ export class Box {
   }
   text(t: PlacedText): void {
     for (const p of textCorners(t)) this.point(p);
-  }
-  rect(): Rect {
-    return { x: this.x0, y: this.y0, width: this.x1 - this.x0, height: this.y1 - this.y0 };
   }
 }

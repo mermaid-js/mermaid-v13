@@ -701,11 +701,11 @@ function acceleratorOf({
 /** What a node draws, stroke half-widths included. */
 function addNode(box: Box, node: WardleyNodeLayout): void {
   const stroke = metrics.node.stroke / 2;
-  if (node.glyph !== 'none') box.disc(node.point, node.radius + stroke);
-  if (node.overlay) box.disc(node.point, node.overlay.radius + stroke);
+  if (node.glyph !== 'none') box.addDisc(node.point, node.radius + stroke);
+  if (node.overlay) box.addDisc(node.point, node.overlay.radius + stroke);
   if (node.market)
     for (const dot of node.market.dots)
-      box.disc(dot, node.market.radius + metrics.node.dotStroke / 2);
+      box.addDisc(dot, node.market.radius + metrics.node.dotStroke / 2);
   if (node.inertia) box.line(node.inertia.line.from, node.inertia.line.to, node.inertia.width);
   box.text(node.label);
 }
@@ -740,7 +740,7 @@ function boundsOf(layout: Omit<WardleyLayout, 'bounds'>): WardleyLayout['bounds'
   }
   for (const node of layout.nodes) addNode(box, node);
   for (const a of layout.annotations) {
-    box.disc(a.point, a.radius + metrics.annotation.stroke / 2);
+    box.addDisc(a.point, a.radius + metrics.annotation.stroke / 2);
     box.text(a.label);
   }
   if (layout.annotationsBox) {
@@ -749,7 +749,7 @@ function boundsOf(layout: Omit<WardleyLayout, 'bounds'>): WardleyLayout['bounds'
   }
   for (const n of layout.notes) box.text(n.label);
   for (const a of [...layout.accelerators, ...layout.deaccelerators]) {
-    for (const pt of a.outline) box.disc(pt, metrics.accelerator.stroke / 2);
+    for (const pt of a.outline) box.addDisc(pt, metrics.accelerator.stroke / 2);
     box.text(a.label);
   }
   return box.rect();
