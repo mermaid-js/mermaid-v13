@@ -9,40 +9,16 @@ import {
   THEME_NAMES,
   THEME_VARIABLES,
   createTheme,
-  formatColor,
   loadTheme,
-  parseColor,
   type ThemeName,
 } from '@mermaid-js/core/theme';
 import { DIAGRAM_TABLES } from '../diagram-themes.ts';
 import { describe, expect, it } from 'vitest';
-import { loadOracle } from '../oracle.ts';
-
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
-  };
-}
-
-await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
-
-function v12Vars(theme: string, themeVariables: object = {}): Record<string, unknown> {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize({ theme, themeVariables });
-  return { ...v12.mermaidAPI.getConfig().themeVariables };
-}
+import { v12Vars } from '../v12-theme.ts';
+import { hex } from '../hex.ts';
 
 const VARS = DIAGRAM_TABLES.quadrant!.vars;
 const QUADRANT = Object.keys(VARS);
-
-const hex = (v: unknown): string | undefined => {
-  if (typeof v !== 'string') return undefined;
-  const rgba = parseColor(v);
-  return rgba ? formatColor(rgba) : undefined;
-};
 
 describe('quadrant theme variables against v12 12.2.0', () => {
   it("are the 15 v12 names, in the quadrant package's table, not core's (spec #414 T1)", () => {

@@ -16,16 +16,10 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import {
-  THEME_NAMES,
-  createTheme,
-  formatColor,
-  loadTheme,
-  parseColor,
-  type ThemeName,
-} from '@mermaid-js/core/theme';
+import { THEME_NAMES, createTheme, loadTheme, type ThemeName } from '@mermaid-js/core/theme';
 import { usecase } from '@mermaid-js/diagram-usecase';
 import { usecasePaletteSlots } from '@mermaid-js/diagram-usecase/testing';
+import { hex } from '../hex.ts';
 
 interface V12 {
   mermaidAPI: {
@@ -46,12 +40,6 @@ const chunks = join(dirname(entry), 'chunks/mermaid.core');
 const chunk = readdirSync(chunks).find((f) => /^usecaseDiagram-\w+\.mjs$/.test(f))!;
 const { diagram } = (await import(pathToFileURL(join(chunks, chunk)).href)) as {
   diagram: { styles: (options: Record<string, unknown>) => string };
-};
-
-const hex = (v: unknown): string | undefined => {
-  if (typeof v !== 'string') return undefined;
-  const rgba = parseColor(v.trim());
-  return rgba ? formatColor(rgba) : undefined;
 };
 
 /** v12's style sheet for usecase under `theme` (and `config`), as `mermaidAPI` builds it. */

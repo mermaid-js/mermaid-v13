@@ -9,40 +9,12 @@
  * #385), so a change in either direction fails until the list is updated.
  */
 import { readdirSync, readFileSync } from 'node:fs';
-import {
-  THEME_NAMES,
-  createTheme,
-  formatColor,
-  loadTheme,
-  parseColor,
-  type ThemeName,
-} from '@mermaid-js/core/theme';
+import { THEME_NAMES, createTheme, loadTheme, type ThemeName } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
 import { gantt } from '@mermaid-js/diagram-gantt';
 import { REPO_ROOT } from '../index.ts';
-import { loadOracle } from '../oracle.ts';
-
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
-  };
-}
-
-await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
-
-function v12Vars(theme: string): Record<string, unknown> {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize({ theme });
-  return { ...v12.mermaidAPI.getConfig().themeVariables };
-}
-
-const hex = (v: unknown): string => {
-  const rgba = typeof v === 'string' ? parseColor(v) : undefined;
-  return rgba ? formatColor(rgba) : String(v);
-};
+import { v12Vars } from '../v12-theme.ts';
+import { hex } from '../hex.ts';
 
 const GANTT = [
   'sectionBkgColor',
@@ -165,7 +137,7 @@ describe('gantt theme variables against v12 12.2.0 (#385, D151, D331)', () => {
     const theme = createTheme(await loadTheme(name), { diagram: gantt.theme, cssVariables: false });
     const differs: Record<string, [string, string]> = {};
     for (const v of GANTT) {
-      const pair: [string, string] = [hex(old[v]), hex(theme.value(v))];
+      const pair: [string, string] = [hex(old[v], String), hex(theme.value(v), String)];
       if (pair[0] !== pair[1]) differs[v] = pair;
     }
     expect(differs).toEqual(DIFFERS[name]);
@@ -196,7 +168,7 @@ describe('gantt theme variables against v12 12.2.0 (#385, D151, D331)', () => {
 
   it('v12 draws a clickable label #003163 in every theme: a renderer constant, no variable', () => {
     for (const name of THEME_NAMES)
-      expect(hex(v12Vars(name).taskTextClickableColor)).toBe('#003163');
+      expect(hex(v12Vars(name).taskTextClickableColor, String)).toBe('#003163');
   });
 
   it('names no gantt variable in a theme spec (D331)', () => {

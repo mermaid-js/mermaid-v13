@@ -19,36 +19,17 @@ import { xychart } from '@mermaid-js/diagram-xychart';
 import {
   THEME_NAMES,
   createTheme,
-  formatColor,
   loadTheme,
-  parseColor,
   type Theme,
   type ThemeName,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
 import { flatName, paletteColours } from '../diagram-themes.ts';
-import { loadOracle } from '../oracle.ts';
-
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
-  };
-}
-
-await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
+import { v12Vars } from '../v12-theme.ts';
+import { hex } from '../hex.ts';
 
 type Block = Readonly<Record<string, unknown>>;
 type Vars = Readonly<Record<string, unknown>>;
-
-/** v12's resolved theme variables of `theme`, with author `themeVariables`. */
-function v12Vars(theme: string, themeVariables?: object): Record<string, unknown> {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize(themeVariables ? { theme, themeVariables } : { theme });
-  return { ...v12.mermaidAPI.getConfig().themeVariables };
-}
 
 /** What v12's XY chart drew with: the theme's `xyChart` over theme-default's (`xychartDb.ts:42`). */
 function v12XyChart(theme: string, themeVariables?: object): Block {
@@ -62,11 +43,6 @@ const VARS = xychart.theme.vars;
 const NESTED = Object.entries(VARS).map(([name, v]) => [name, v.nested ?? ''] as const);
 const PALETTE = 'xyChartPlotColorPalette';
 
-const hex = (v: unknown): string | undefined => {
-  if (typeof v !== 'string') return undefined;
-  const rgba = parseColor(v.trim());
-  return rgba ? formatColor(rgba) : undefined;
-};
 const SECTION = xychart.theme.section!;
 
 const v13Theme = async (name: ThemeName, themeVariables?: Vars): Promise<Theme> =>

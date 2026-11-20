@@ -29,13 +29,12 @@
  */
 import {
   createTheme,
-  formatColor,
   loadTheme,
-  parseColor,
   type DiagramThemeTable,
   type ThemeName,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
+import { hex } from './hex.ts';
 
 export const THEMES = [
   'default',
@@ -94,12 +93,6 @@ export type ReferenceTable = Readonly<Record<Classic, ThemeReference>>;
 
 /** The colours of one theme's variables under one label of `CASES`. */
 export type Resolve = (label: string) => Readonly<Record<string, Colour | undefined>>;
-
-/** A value as exact hex, or `null` where it is no colour. */
-export function hex(v: unknown): Colour {
-  const rgba = typeof v === 'string' ? parseColor(v) : undefined;
-  return rgba ? formatColor(rgba) : null;
-}
 
 /** The reference value under one label: the value with no override, unless the label is listed. */
 export function referenceAt(ref: Reference, label: string): Colour {
@@ -229,7 +222,10 @@ export async function v13Resolver(
         themeVariables: CASES[label] as Record<string, unknown>,
         ...(table ? { diagram: table } : {}),
       });
-      return [label, Object.fromEntries(names.map((n) => [n, hex(t.value(n))]))] as const;
+      return [
+        label,
+        Object.fromEntries(names.map((n) => [n, hex(t.value(n), () => null)])),
+      ] as const;
     })
   );
   return (label) => at.get(label)!;
