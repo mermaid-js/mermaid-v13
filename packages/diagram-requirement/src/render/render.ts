@@ -48,6 +48,11 @@ interface Tint {
   readonly fill?: Paint;
 }
 
+interface RelationPaint {
+  readonly line: { readonly stroke: Color; readonly strokeWidth: Length };
+  readonly label: { readonly fill: Color; readonly text: Color };
+}
+
 interface Paints {
   readonly font: ReturnType<ThemeOf['font']>;
   readonly fontSize: Length;
@@ -62,8 +67,8 @@ interface Paints {
     /** How far a divider in `stroke` is lifted: `dividerLift` under the gradient, else 0. */
     readonly lift: number;
   };
-  readonly line?: { readonly stroke: Color; readonly strokeWidth: Length };
-  readonly label?: { readonly fill: Color; readonly text: Color };
+  /** Set when there are relations to draw, so its variables are declared only then. */
+  readonly relation?: RelationPaint;
   readonly title?: Color;
   readonly slotOf: (slot: number) => Tint | undefined;
 }
@@ -85,13 +90,16 @@ function paints(theme: ThemeOf, p: RequirementPrepared): Paints {
       shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
       lift: theme.gradient() ? M.dividerLift : 0,
     },
-    line: relations
-      ? { stroke: theme.color('relationColor'), strokeWidth: theme.length('relationStrokeWidth') }
-      : undefined,
-    label: relations
+    relation: relations
       ? {
-          fill: theme.color('relationLabelBackground'),
-          text: theme.color('relationLabelColor'),
+          line: {
+            stroke: theme.color('relationColor'),
+            strokeWidth: theme.length('relationStrokeWidth'),
+          },
+          label: {
+            fill: theme.color('relationLabelBackground'),
+            text: theme.color('relationLabelColor'),
+          },
         }
       : undefined,
     // v12's title has no rule of its own: it takes the root's `fill: textColor`.
@@ -123,11 +131,13 @@ export function renderRequirement(
   // around it (`setupViewPortForSVG`; D218, D652).
   const title = p.title && titleAt(p.title, layout.width, M.titleMargin);
   openRoot(scene, model, titledViewBox(layout, title, M.viewBoxPadding));
+  // `relation` is set exactly when `p.relations` is not empty.
+  const rel = scene.paint.relation;
   w.open('g', { class: 'edgePaths', fill: 'none' });
-  for (const r of p.relations) drawRelation(scene, r);
+  if (rel) for (const r of p.relations) drawRelation(scene, rel, r);
   w.close();
   w.open('g', { class: 'edgeLabels' });
-  for (const r of p.relations) drawRelationLabel(scene, r);
+  if (rel) for (const r of p.relations) drawRelationLabel(scene, rel, r);
   w.close();
   w.open('g', { class: 'nodes', fill: scene.paint.box.text });
   for (const box of p.boxes) drawBox(scene, box);
@@ -160,9 +170,9 @@ function openRoot(
   });
 }
 
-function drawRelation({ w, layout, p, paint }: Scene, r: RelationView): void {
+function drawRelation({ w, layout, p }: Scene, paint: RelationPaint, r: RelationView): void {
   const route = layout.edges.get(r.id);
-  if (!route || route.points.length < 2 || !paint.line) return;
+  if (!route || route.points.length < 2) return;
   // A self-loop's legs are short: rounded corners, whatever the curve (as class).
   const path = routePath(w, route.points, r.source === r.target ? 'rounded' : p.curve, 0, 0);
   w.outline('edge', 'path', {
@@ -188,9 +198,9 @@ function drawRelation({ w, layout, p, paint }: Scene, r: RelationView): void {
  * A relation's label as the shared tag (D626–D628): bordered 1 px solid in the relation colour,
  * solid on dashed lines too, and as large as the room the layout reserved (`labelPatch`, D629).
  */
-function drawRelationLabel({ w, layout, ctx, paint }: Scene, r: RelationView): void {
+function drawRelationLabel({ w, layout, ctx }: Scene, paint: RelationPaint, r: RelationView): void {
   const at = layout.edges.get(r.id)?.label;
-  if (!at || r.label.width === 0 || !paint.label || !paint.line) return;
+  if (!at || r.label.width === 0) return;
   edgeLabel(w, r.label, at, r.dataId, {
     fill: paint.label.fill,
     stroke: paint.line.stroke,
