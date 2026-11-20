@@ -7,7 +7,8 @@
  */
 import type { Warning } from '@mermaid-js/core';
 import type { RadarDiagramConfig } from '@mermaid-js/core/config';
-import { configNumber, shownValue as shown, useMaxWidth } from '@mermaid-js/shared/config/readers';
+import { configRanges, NON_NEGATIVE, useMaxWidth } from '@mermaid-js/shared/config/readers';
+import type { ConfigRange } from '@mermaid-js/shared/config/readers';
 import { radarConfigDefaults } from './generated/config-defaults.ts';
 
 export const RADAR_CONFIG_INVALID = 'RADAR_CONFIG_INVALID';
@@ -28,26 +29,18 @@ export type RadarLayoutConfig = Required<
   >
 >;
 
-/** A key's schema range and how a warning names it. */
-interface Range {
-  readonly min: number;
-  readonly max: number;
-  readonly wants: string;
-}
-
-const AT_LEAST_1: Range = { min: 1, max: Infinity, wants: 'a number of 1 or more' };
-const AT_LEAST_0: Range = { min: 0, max: Infinity, wants: 'a number of 0 or more' };
+const AT_LEAST_1: ConfigRange = { min: 1, wants: 'a number of 1 or more' };
 
 /** Each key's schema range. */
-const RANGES: Readonly<Record<keyof RadarLayoutConfig, Range>> = {
+const RANGES: Readonly<Record<keyof RadarLayoutConfig, ConfigRange>> = {
   width: AT_LEAST_1,
   height: AT_LEAST_1,
-  marginTop: AT_LEAST_0,
-  marginRight: AT_LEAST_0,
-  marginBottom: AT_LEAST_0,
-  marginLeft: AT_LEAST_0,
-  axisScaleFactor: AT_LEAST_0,
-  axisLabelFactor: AT_LEAST_0,
+  marginTop: NON_NEGATIVE,
+  marginRight: NON_NEGATIVE,
+  marginBottom: NON_NEGATIVE,
+  marginLeft: NON_NEGATIVE,
+  axisScaleFactor: NON_NEGATIVE,
+  axisLabelFactor: NON_NEGATIVE,
   curveTension: { min: 0, max: 1, wants: 'a number from 0 to 1' },
 };
 
@@ -59,18 +52,9 @@ export function radarLayoutConfig(
   warn: (w: Warning) => void
 ): RadarLayoutConfig {
   const out = { ...DEFAULTS };
-  const given = section ?? {};
-  for (const key of Object.keys(RANGES) as (keyof RadarLayoutConfig)[]) {
-    if (!Object.hasOwn(given, key) || given[key] === undefined) continue;
-    const { min, max, wants } = RANGES[key];
-    const n = configNumber(given[key]);
-    if (n !== undefined && n >= min && n <= max) out[key] = n;
-    else
-      warn({
-        code: RADAR_CONFIG_INVALID,
-        message: `radar.${key} is ${shown(given[key])}, not ${wants}; using the default ${DEFAULTS[key]}`,
-      });
-  }
+  const number = configRanges('radar', RADAR_CONFIG_INVALID, section, warn);
+  for (const key of Object.keys(RANGES) as (keyof RadarLayoutConfig)[])
+    out[key] = number(key, DEFAULTS[key], RANGES[key]);
   return out;
 }
 

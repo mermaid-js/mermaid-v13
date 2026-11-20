@@ -38,6 +38,60 @@ export function configNumber(
 export const shownValue = (value: unknown): string =>
   typeof value === 'string' ? `"${value}"` : String(JSON.stringify(value));
 
+/** A number key's range, and what a warning says it takes. */
+export interface ConfigRange {
+  /** The least value taken (default -Infinity). */
+  readonly min?: number;
+  /** The greatest value taken (default Infinity). */
+  readonly max?: number;
+  /** What the key takes, as a warning says it: `a number of 0 or more`. */
+  readonly wants: string;
+}
+
+/** Any finite number. */
+const ANY_NUMBER: ConfigRange = { wants: 'a number' };
+
+/** A finite number of 0 or more. */
+export const NON_NEGATIVE: ConfigRange = { min: 0, wants: 'a number of 0 or more' };
+
+/** The warning `configRanges` raises; `path` only when asked for. */
+export interface ConfigRangeWarning {
+  readonly code: string;
+  readonly message: string;
+  readonly path?: string;
+}
+
+/** A number key's value, or `fallback` when it is unset or not taken. */
+export type ConfigRangeReader = (key: string, fallback: number, range?: ConfigRange) => number;
+
+/**
+ * Reads number keys from the config section `name`: a number, or a string as
+ * {@link rawConfigNumber} reads it, finite and inside the key's range (default any number).
+ * An unset key (undefined, or not the section's own) reads as the fallback. Any other value is
+ * dropped for the fallback, with one `code` warning each time it is read:
+ * `<name>.<key> is <value>, not <wants>; using the default <fallback>`, carrying the key's
+ * path when `withPath` is set.
+ */
+export function configRanges(
+  name: string,
+  code: string,
+  section: Readonly<Record<string, unknown>> | undefined,
+  warn: (warning: ConfigRangeWarning) => void,
+  withPath = false
+): ConfigRangeReader {
+  return (key, fallback, range = ANY_NUMBER) => {
+    if (!section || !Object.hasOwn(section, key) || section[key] === undefined) return fallback;
+    const value = section[key];
+    const n = rawConfigNumber(value);
+    const { min = -Infinity, max = Infinity, wants } = range;
+    if (Number.isFinite(n) && n >= min && n <= max) return n;
+    const path = `${name}.${key}`;
+    const message = `${path} is ${shownValue(value)}, not ${wants}; using the default ${fallback}`;
+    warn(withPath ? { code, message, path } : { code, message });
+    return fallback;
+  };
+}
+
 /** A CSS font weight as a number: `bold` and `bolder` are `bold`, no positive number `normal`. */
 export function fontWeightOf(value: unknown, bold: number, normal: number): number {
   if (value === 'bold' || value === 'bolder') return bold;
