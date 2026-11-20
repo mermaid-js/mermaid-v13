@@ -1,6 +1,6 @@
 /**
  * A seeded generator for code that must not call `Math.random` (R-ARCH-6): the venn solver's
- * start (D413), and the seeded sources of the grammar tool and the conformance fuzzers.
+ * start (D413), the grammar tool's sentence generator and conformance's block ASCII fuzzer.
  * Mulberry32 with its 32 bits of state wrapped on every step; uniform in [0, 1).
  *
  * Core's swimlane ordering keeps its own private copy, since core cannot import this package.
