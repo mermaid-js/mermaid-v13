@@ -20,6 +20,7 @@
  */
 import type { RenderContext } from '@mermaid-js/core';
 import { decodeEntities, type FontKey, type Measurer } from '@mermaid-js/core/text';
+import { RectUnion } from '@mermaid-js/shared/layout';
 import {
   railroadConfig,
   railroadConfigWarning,
@@ -27,7 +28,7 @@ import {
   type RailroadLayoutConfig,
 } from '../config.ts';
 import type { RailroadModel, RailroadNode, RailroadRule } from '../model.ts';
-import { Box, shifted, Track, visitRule } from './geometry.ts';
+import { shifted, Track, visitRule } from './geometry.ts';
 import { drawnText, isBlankText } from './text.ts';
 import { BOLD_WEIGHT, NORMAL_WEIGHT, RAILROAD_METRICS, type RailroadMetrics } from './metrics.ts';
 import type {
@@ -116,7 +117,8 @@ export function layoutRailroad(
   const width = widest + 2 * options.padding;
   const height = y + options.padding;
 
-  const box = new Box().add({ x: 0, y: 0, width, height });
+  const box = new RectUnion();
+  box.add({ x: 0, y: 0, width, height });
   const half = options.strokeWidth / 2;
   for (const r of rules) {
     visitRule(r, (d) => void box.add(d.stroked ? shifted(d.rect, 0, 0, half) : d.rect));

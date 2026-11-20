@@ -1,7 +1,8 @@
 /**
  * What the layout and its invariants both need: a path builder in v12's argument order, the
- * union of rectangles, and a walk over a rule's drawn parts in diagram coordinates.
+ * box around a path, and a walk over a rule's drawn parts in diagram coordinates.
  */
+import { RectUnion } from '@mermaid-js/shared/layout';
 import type {
   Point,
   RailroadExpressionLayout,
@@ -36,27 +37,6 @@ export function pathPoints(path: TrackPath): Point[] {
   return [path.start, ...path.segments];
 }
 
-/** The union of rectangles; empty until one is added. */
-export class Box {
-  private x0 = Infinity;
-  private y0 = Infinity;
-  private x1 = -Infinity;
-  private y1 = -Infinity;
-  add(r: Rect): this {
-    this.x0 = Math.min(this.x0, r.x);
-    this.y0 = Math.min(this.y0, r.y);
-    this.x1 = Math.max(this.x1, r.x + r.width);
-    this.y1 = Math.max(this.y1, r.y + r.height);
-    return this;
-  }
-  get empty(): boolean {
-    return this.x0 > this.x1;
-  }
-  rect(): Rect {
-    return { x: this.x0, y: this.y0, width: this.x1 - this.x0, height: this.y1 - this.y0 };
-  }
-}
-
 /** `r` moved by (`dx`, `dy`) and grown by `grow` on every side. */
 export function shifted(r: Rect, dx: number, dy: number, grow = 0): Rect {
   return {
@@ -72,7 +52,7 @@ export function shifted(r: Rect, dx: number, dy: number, grow = 0): Rect {
  * the box of the points.
  */
 export function pathBox(path: TrackPath): Rect {
-  const box = new Box();
+  const box = new RectUnion();
   for (const p of pathPoints(path)) box.add({ x: p.x, y: p.y, width: 0, height: 0 });
   return box.rect();
 }
