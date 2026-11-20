@@ -8,24 +8,17 @@
  * markup gone, a `<br>` a space. Bold and italic are dropped with one `ASCII_DROPPED` warning
  * (D82); math and icons are shown as written, with core's own `ASCII_DROPPED` warnings.
  */
-import type { TextRenderContext, Warning } from '@mermaid-js/core';
+import type { TextRenderContext } from '@mermaid-js/core';
 import { cellMeasurer } from '@mermaid-js/core/ascii';
 import { layoutLabel, type LabelOptions } from '@mermaid-js/core/text';
 import { drawOutline } from './ascii/outline.ts';
 import { plainLabel, plainTitle } from './labels.ts';
 import type { IshikawaCause, IshikawaModel } from './model.ts';
-import { emphasised, glyphSetOf } from '@mermaid-js/shared/ascii';
+import { asciiDropped, emphasised, glyphSetOf } from '@mermaid-js/shared/ascii';
 
 /** What the hook reads of core's `TextRenderContext`. */
 export type IshikawaAsciiContext = Pick<TextRenderContext, 'config' | 'warn'> &
   Partial<Pick<TextRenderContext, 'inline'>>;
-
-/** One feature kind text output dropped (D82). */
-export interface AsciiDroppedWarning extends Warning {
-  readonly code: 'ASCII_DROPPED';
-  readonly feature: 'emphasis';
-  readonly astIds: readonly string[];
-}
 
 /** The cell measurer ignores the font: one key for every label. */
 const FONT = { family: '', size: 1, weight: 400 } as const;
@@ -59,12 +52,6 @@ export function ascii(model: IshikawaModel, _layout: unknown, ctx: IshikawaAscii
     glyphs,
     title
   );
-  if (dropped.length > 0)
-    ctx.warn({
-      code: 'ASCII_DROPPED',
-      feature: 'emphasis',
-      astIds: dropped,
-      message: 'Text output has no bold and italic text; dropped.',
-    } satisfies AsciiDroppedWarning);
+  if (dropped.length > 0) ctx.warn(asciiDropped('emphasis', dropped, 'bold and italic text'));
   return text;
 }
