@@ -21,13 +21,13 @@
  * edge's `path`; labels carry `data-id` only.
  */
 import { translate, type Attrs, type CheckedStyle, type SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/shared/svg/document';
+import { openSvgRoot, type PaletteTint } from '@mermaid-js/shared/svg/document';
 import type { BlockLayout, BlockNodeLayout, PlacedLabel } from '../layout/types.ts';
 import { isComposite, type Block, type BlockModel } from '../model.ts';
 import { drawShape } from '../shapes/draw.ts';
 import type { BlockRenderContext } from './context.ts';
 import { drawEdge, drawEdgeLabel } from './edges.ts';
-import { paints, type Paints, type Tint } from './paint.ts';
+import { paints, type Paints } from './paint.ts';
 
 /** What every section of one render draws from. */
 export interface Scene {
@@ -107,7 +107,7 @@ function nodeClass(block: Block): string {
 function outlinePaint(
   paint: Paints,
   style: CheckedStyle,
-  slot: Tint | undefined,
+  slot: PaletteTint | undefined,
   composite: boolean
 ): Attrs {
   const frame = composite && !slot ? paint.composite : undefined;

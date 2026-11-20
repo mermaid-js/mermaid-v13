@@ -15,7 +15,6 @@ import {
   translate,
   type Attrs,
   type OutlinePaint,
-  type Paint,
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
@@ -25,6 +24,8 @@ import {
   textElement,
   placeTitle,
   titledViewBox,
+  paletteSlots,
+  type PaletteTint,
 } from '@mermaid-js/shared/svg/document';
 import type {
   StateEdgeView,
@@ -52,12 +53,6 @@ const DIVIDER_DASH = '10 10' as SafeValue;
 type ThemeOf = StateRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
 type Length = ReturnType<ThemeOf['length']>;
-
-interface Tint {
-  readonly id: `color-${number}`;
-  readonly stroke: Paint;
-  readonly fill?: Paint;
-}
 
 /** Every theme variable the body uses, looked up before the root is written (rootStyle). */
 interface Paints {
@@ -99,7 +94,7 @@ interface Paints {
   readonly folded?: { readonly ink: Color; readonly muted: Color };
   readonly edgeLabel?: { fill: Color; text: Color };
   /** The palette slot of each composite and region; empty when the theme has no palette. */
-  readonly slots: ReadonlyMap<string, Tint>;
+  readonly slots: ReadonlyMap<string, PaletteTint>;
 }
 
 /**
@@ -109,22 +104,19 @@ interface Paints {
  * slot but is not painted; its regions share its slot. The fill comes from `bkgColorArray`
  * only when that is not empty, so `redux-dark-color` colours borders only.
  */
-function paletteSlots(theme: ThemeOf, model: StateModel, s: StatePrepared): Map<string, Tint> {
-  const slots = new Map<string, Tint>();
-  const border = theme.palette('borderColorArray');
-  if (border.length === 0) return slots;
-  const bkg = theme.palette('bkgColorArray');
+function compositeSlots(
+  theme: ThemeOf,
+  model: StateModel,
+  s: StatePrepared
+): Map<string, PaletteTint> {
+  const slots = new Map<string, PaletteTint>();
+  const slotOf = paletteSlots(theme);
   let next = 0;
   for (const st of model.states) {
     if (st.kind !== 'composite') continue;
-    const order = next++;
+    const tint = slotOf(next++);
+    if (!tint) return slots;
     if (st.classes.length > 0 || st.styles.length > 0) continue;
-    const slot = order % border.length;
-    const tint: Tint = {
-      id: `color-${slot}`,
-      stroke: border[slot]!,
-      fill: bkg.length > 0 ? bkg[order % bkg.length] : undefined,
-    };
     slots.set(st.id, tint);
     for (const r of s.regions.get(st.id) ?? []) slots.set(r, tint);
   }
@@ -181,7 +173,7 @@ function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
     note,
     folded,
     edgeLabel: labelPaint,
-    slots: paletteSlots(theme, model, s),
+    slots: compositeSlots(theme, model, s),
   };
 }
 

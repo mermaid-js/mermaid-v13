@@ -16,7 +16,6 @@ import {
   translate,
   type Attrs,
   type OutlinePaint,
-  type Paint,
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
@@ -30,6 +29,7 @@ import {
   textElement,
   placeTitle,
   titledViewBox,
+  type PaletteTint,
 } from '@mermaid-js/shared/svg/document';
 import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import { nodePaint, plainLine, type NodePaint } from '@mermaid-js/shared/svg/node-paint';
@@ -130,12 +130,6 @@ function inset(
   return p;
 }
 
-export interface Tint {
-  readonly id: `color-${number}`;
-  readonly stroke: Paint;
-  readonly fill?: Paint;
-}
-
 type ThemeOf = FlowRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
 type Length = ReturnType<ThemeOf['length']>;
@@ -162,7 +156,7 @@ export interface Paints {
   /** Folded blocks (#670): the icon's filled nodes and the type's muted grey. */
   readonly folded?: { readonly ink: Color; readonly muted: Color };
   /** A subgraph's palette slot from its source order (a lane's too, the default lane's included). */
-  readonly slotOf: (view: Pick<NodeView, 'order'>) => Tint | undefined;
+  readonly slotOf: (view: Pick<NodeView, 'order'>) => PaletteTint | undefined;
   /** `text` is the label paint of an edge without a text style. */
   readonly edgeLabel?: { fill: Color; text: Attrs };
 }
@@ -200,7 +194,7 @@ function paints(theme: ThemeOf, flow: Prepared, lanes: boolean): Paints {
     ? { ink: theme.color('nodeBorder'), muted: theme.color('mutedBorder') }
     : undefined;
   const slot = paletteSlots(theme);
-  const slotOf = (view: Pick<NodeView, 'order'>): Tint | undefined =>
+  const slotOf = (view: Pick<NodeView, 'order'>): PaletteTint | undefined =>
     view.order === undefined ? undefined : slot(view.order);
   const labelPaint = flow.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('edgeLabelBackground'), text: { fill: theme.color('textColor') } }
@@ -480,7 +474,7 @@ function nodeClass(view: NodeView): string {
 }
 
 /** The outline attributes of a node, from its palette slot and its style. */
-function shapeAttrsOf(paint: Scene['paint'], view: NodeView, slot: Tint | undefined): Attrs {
+function shapeAttrsOf(paint: Scene['paint'], view: NodeView, slot: PaletteTint | undefined): Attrs {
   // A collapsed subgraph takes its palette slot; the author's style still wins (spread after).
   if (slot === undefined && isEmpty(view.style.shape)) return paint.shape;
   return {
@@ -499,7 +493,7 @@ function shapeAttrsOf(paint: Scene['paint'], view: NodeView, slot: Tint | undefi
 function lineAttrsOf(
   paint: Scene['paint'],
   view: NodeView,
-  slot: Tint | undefined,
+  slot: PaletteTint | undefined,
   shapeAttrs: Attrs
 ): Attrs {
   const plain = slot === undefined && isEmpty(view.style.shape);
@@ -516,7 +510,7 @@ function lineAttrsOf(
 function nodeAttrs(
   paint: Scene['paint'],
   view: NodeView,
-  slot: Tint | undefined
+  slot: PaletteTint | undefined
 ): { shapeAttrs: Attrs; lineAttrs: Attrs } {
   const shapeAttrs = shapeAttrsOf(paint, view, slot);
   return { shapeAttrs, lineAttrs: lineAttrsOf(paint, view, slot, shapeAttrs) };

@@ -4,14 +4,8 @@
 // palette (`borderColorArray`, `bkgColorArray`), the participant corner (`actorRadius`) and the
 // shadow (`dropShadow`).
 import type { RenderContext } from '@mermaid-js/core';
-import {
-  checkColor,
-  checkStyle,
-  type Attrs,
-  type Paint,
-  type SafeValue,
-} from '@mermaid-js/core/svg';
-import { paletteSlots } from '@mermaid-js/shared/svg/document';
+import { checkColor, checkStyle, type Attrs, type SafeValue } from '@mermaid-js/core/svg';
+import { paletteSlots, type PaletteTint } from '@mermaid-js/shared/svg/document';
 import type { FontKey } from '@mermaid-js/core/text';
 import { fontsOf } from '../layout/env.ts';
 import type { SequenceLayout } from '../layout/index.ts';
@@ -20,14 +14,6 @@ type Theme = RenderContext['theme'];
 type Color = ReturnType<Theme['color']>;
 type Length = ReturnType<Theme['length']>;
 type Shadow = ReturnType<Theme['filter']>;
-
-/** A participant's palette slot (v12 `paletteColor`, by declaration order). */
-export interface Tint {
-  readonly id: `color-${number}`;
-  readonly stroke: Paint;
-  /** Undefined when the fill palette is empty (`redux-dark-color`): the theme fill stays. */
-  readonly fill?: Paint;
-}
 
 export interface ActorPaint {
   readonly fill: Color;
@@ -68,7 +54,7 @@ export interface Paints {
    * theme has none (the classic themes), so no `filter` attribute is written.
    */
   readonly shadow?: Shadow;
-  readonly slotOf: (index: number) => Tint | undefined;
+  readonly slotOf: (index: number) => PaletteTint | undefined;
   readonly fonts: SectionFonts;
 }
 

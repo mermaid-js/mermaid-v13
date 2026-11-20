@@ -12,7 +12,6 @@ import {
   type Attrs,
   type CheckedStyle,
   type OutlinePaint,
-  type Paint,
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
@@ -24,6 +23,7 @@ import {
   textElement,
   placeTitle,
   titledViewBox,
+  type PaletteTint,
 } from '@mermaid-js/shared/svg/document';
 import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import { routePath } from '@mermaid-js/shared/svg/route';
@@ -53,12 +53,6 @@ type ThemeOf = ClassRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
 type Length = ReturnType<ThemeOf['length']>;
 
-interface Tint {
-  readonly id: `color-${number}`;
-  readonly stroke: Paint;
-  readonly fill?: Paint;
-}
-
 /** Every theme variable the body uses, looked up before the root is written. */
 interface Paints {
   readonly font: ReturnType<ThemeOf['font']>;
@@ -86,7 +80,7 @@ interface Paints {
   readonly edgeLabel?: Color;
   /** Multiplicities' font size (`classTerminalFontSize`, v12 11px). */
   readonly terminalSize?: Length;
-  readonly slotOf: (order: number) => Tint | undefined;
+  readonly slotOf: (order: number) => PaletteTint | undefined;
 }
 
 function paints(theme: ThemeOf, p: ClassPrepared): Paints {
