@@ -40,6 +40,7 @@ import {
   AT,
   BACKSLASH,
   BACKTICK,
+  BANG,
   CARET,
   COLON,
   COMMA,
@@ -70,6 +71,7 @@ import {
   LT,
   PERCENT,
   PIPE,
+  PLUS,
   QUESTION,
   QUOTE,
   RBRACE,
@@ -95,9 +97,7 @@ const SKIP = -1;
 /** A memo not set yet. */
 const UNSET = -2;
 
-const BANG = 0x21;
 const DOLLAR = 0x24;
-const PLUS = 0x2b;
 const LOWER_J = 0x6a;
 /** The bit that makes an ASCII letter lower case. */
 const CASE_BIT = 0x20;

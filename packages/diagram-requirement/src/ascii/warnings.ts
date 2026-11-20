@@ -2,26 +2,21 @@
 // feature kind, as ER's. Each names the AST ids of what it dropped: the boxes from the views,
 // and the statements when the AST is given.
 import type { AstNode } from '@mermaid-js/core/parser-kit';
-import type { Warning } from '@mermaid-js/core';
 import { requirementCurve, type RequirementPrepared } from '../layout/prepare.ts';
 import type { RequirementModel } from '../model.ts';
 import { droppedFeatures, emphasised, styled } from '@mermaid-js/shared/ascii';
+import type {
+  AsciiDroppedWarning as SharedAsciiDroppedWarning,
+  AsciiRouteWarning,
+} from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'curve' | 'emphasis' | 'accessibility';
 
 /** One feature kind text output dropped (D82). */
-export interface AsciiDroppedWarning extends Warning {
-  readonly code: 'ASCII_DROPPED';
-  readonly feature: AsciiDroppedFeature;
-  readonly astIds: readonly string[];
-}
+export type AsciiDroppedWarning = SharedAsciiDroppedWarning<AsciiDroppedFeature>;
 
-/** Relations the repair router found no free lane for (D78). */
-export interface AsciiRouteWarning extends Warning {
-  readonly code: 'ASCII_ROUTE';
-  readonly astIds: readonly string[];
-}
+export type { AsciiRouteWarning };
 
 export type AsciiWarning = AsciiDroppedWarning | AsciiRouteWarning;
 

@@ -33,7 +33,12 @@ import {
   TAB,
   type TokenStream,
 } from '@mermaid-js/core/parser-kit';
-import { lowerCode, StateLexer, type StateLexerOptions } from '@mermaid-js/shared/parser/state';
+import {
+  lexerText,
+  lowerCode,
+  StateLexer,
+  type StateLexerOptions,
+} from '@mermaid-js/shared/parser/state';
 import { T } from './tokens.ts';
 
 // Start conditions of timeline.jison.
@@ -50,21 +55,6 @@ const S_NAMES = ['INITIAL', 'acc_title', 'acc_descr', 'acc_descr_multiline'];
 const LOWER_A = 0x61;
 const LOWER_S = 0x73;
 const LOWER_T = 0x74;
-
-/**
- * The text the lexer reads, of the same length as the view's text: v12 turned every CRLF and
- * CR into LF before lexing, so a CRLF reads as two LFs (every rule treats a run of line breaks
- * as one, except a single `\s` or a `[^\}]`, which the lexer steps over as a pair) and a lone
- * CR as LF; each `#name;` entity is `ﬂ`, the name and `¶`, so no rule takes its `#` (v12's
- * placeholders).
- */
-function lexerText(text: string): string {
-  let out = text.includes('\r')
-    ? text.replace(/\r\n?/g, (m) => (m.length === 2 ? '\n\n' : '\n'))
-    : text;
-  if (out.includes('#')) out = out.replace(/#(\w+);/g, (_, name: string) => `ﬂ${name}¶`);
-  return out;
-}
 
 /** How v12's lexer read its text (see `StateLexerOptions`). */
 const OPTIONS: StateLexerOptions = { charsPerToken: 8, crlf: 'keep', dropSpace: true };
@@ -85,6 +75,13 @@ class TimelineLexer extends StateLexer {
   /** Source offset where the last `acc…` keyword's value mode starts (after `:` or `{`). */
   private valueAt = 0;
 
+  /**
+   * The text the lexer reads, of the same length as the view's text: v12 turned every CRLF and
+   * CR into LF before lexing, so a CRLF reads as two LFs (every rule treats a run of line breaks
+   * as one, except a single `\s` or a `[^\}]`, which the lexer steps over as a pair) and a lone
+   * CR as LF; each `#name;` entity is `ﬂ`, the name and `¶`, so no rule takes its `#` (v12's
+   * placeholders).
+   */
   protected override prepare(text: string): string {
     return lexerText(text);
   }

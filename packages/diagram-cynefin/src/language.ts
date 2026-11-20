@@ -11,13 +11,13 @@
  * so `isValidId` takes no new name. Domain blocks (from the name to the
  * last item) and `accDescr { … }` fold from the parser's statement spans.
  */
+import { formatList } from '@mermaid-js/core/parser-kit';
 import type { LanguageFacet } from '@mermaid-js/core/parser-kit';
 import { cynefinCompletions } from './facet/completions.ts';
 import { cynefinHover } from './facet/hover.ts';
 import { cynefinCategories } from './generated/categories.ts';
 import { CYNEFIN_DOMAIN_NAMES } from './model.ts';
 import { parseCynefin } from './parser/index.ts';
-import { listOf } from './parser/parser.ts';
 import type { CynefinDocument } from './parser/index.ts';
 
 export { cynefinCategories } from './generated/categories.ts';
@@ -25,7 +25,7 @@ export { cynefinDocs } from './generated/docs.ts';
 export { CynefinTokenKind, cynefinTokens, detectCynefin, parseCynefin } from './parser/index.ts';
 export type * from './parser/index.ts';
 
-const FIXED = `Domain names are fixed: a cynefin diagram has the five domains ${listOf(CYNEFIN_DOMAIN_NAMES.map((n) => `\`${n}\``))}, so a domain cannot be renamed.`;
+const FIXED = `Domain names are fixed: a cynefin diagram has the five domains ${formatList(CYNEFIN_DOMAIN_NAMES.map((n) => `\`${n}\``))}, so a domain cannot be renamed.`;
 
 /** The cynefin facet. */
 export const cynefinLanguage: LanguageFacet<CynefinDocument> = {

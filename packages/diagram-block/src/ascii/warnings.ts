@@ -11,16 +11,16 @@ import type { BlockText } from './grid.ts';
 import { textLabel } from './grid.ts';
 import type { InlineSpans } from '@mermaid-js/core/text';
 import { asciiDropped } from '@mermaid-js/shared/ascii';
+import type {
+  AsciiDroppedWarning as SharedAsciiDroppedWarning,
+  AsciiRouteWarning,
+} from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'emphasis';
 
 /** One feature kind text output dropped (D82). */
-export interface AsciiDroppedWarning extends Warning {
-  readonly code: 'ASCII_DROPPED';
-  readonly feature: AsciiDroppedFeature;
-  readonly astIds: readonly string[];
-}
+export type AsciiDroppedWarning = SharedAsciiDroppedWarning<AsciiDroppedFeature>;
 
 /** The blocks drawn as plain boxes because their shape has no text form (D82). */
 export interface AsciiShapeWarning extends Warning {
@@ -29,11 +29,7 @@ export interface AsciiShapeWarning extends Warning {
   readonly astIds: readonly string[];
 }
 
-/** Edges no free route was found for: drawn across what is there (D78's code). */
-export interface AsciiRouteWarning extends Warning {
-  readonly code: 'ASCII_ROUTE';
-  readonly astIds: readonly string[];
-}
+export type { AsciiRouteWarning };
 
 export type AsciiWarning = AsciiDroppedWarning | AsciiShapeWarning | AsciiRouteWarning;
 

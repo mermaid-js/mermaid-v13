@@ -47,7 +47,12 @@ import {
   TAB,
   type TokenStream,
 } from '@mermaid-js/core/parser-kit';
-import { lowerCode, StateLexer, type StateLexerOptions } from '@mermaid-js/shared/parser/state';
+import {
+  lexerText,
+  lowerCode,
+  StateLexer,
+  type StateLexerOptions,
+} from '@mermaid-js/shared/parser/state';
 import { T } from './tokens.ts';
 
 // Start conditions of sequenceDiagram.jison (`CONFIG_DATA` is declared there, never entered).
@@ -212,21 +217,6 @@ const isLineBlank = (c: number) => c !== LF && isSpace(c);
 
 const PLUS = 0x2b;
 
-/**
- * The text the lexer reads, of the same length as the view's text: v12 turned every CRLF and
- * CR into LF before lexing, so a CRLF reads as two LFs (every rule treats a run of line breaks
- * as one, except the single `\s` after `title`, which the lexer steps over as a pair) and a
- * lone CR as LF; each `#name;` entity is `ﬂ`, the name and `¶`, so no rule takes its `#` or `;`
- * (v12's placeholders).
- */
-function lexerText(text: string): string {
-  let out = text.includes('\r')
-    ? text.replace(/\r\n?/g, (m) => (m.length === 2 ? '\n\n' : '\n'))
-    : text;
-  if (out.includes('#')) out = out.replace(/#(\w+);/g, (_, name: string) => `ﬂ${name}¶`);
-  return out;
-}
-
 /** How v12's lexer read its text (see `StateLexerOptions`). */
 const OPTIONS: StateLexerOptions = { charsPerToken: 4, crlf: 'keep', dropSpace: false };
 
@@ -243,6 +233,13 @@ export function lex(src: string, from: number, view: SourceView, probe?: Probe):
  * Each start condition is a method named after it.
  */
 class SequenceLexer extends StateLexer {
+  /**
+   * The text the lexer reads, of the same length as the view's text: v12 turned every CRLF and
+   * CR into LF before lexing, so a CRLF reads as two LFs (every rule treats a run of line breaks
+   * as one, except the single `\s` after `title`, which the lexer steps over as a pair) and a
+   * lone CR as LF; each `#name;` entity is `ﬂ`, the name and `¶`, so no rule takes its `#` or `;`
+   * (v12's placeholders).
+   */
   protected override prepare(text: string): string {
     return lexerText(text);
   }

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { Canvas, drawText } from '@mermaid-js/core/ascii';
-import { droppedFeatures, trimmed } from './diagram.ts';
+import type { Warning } from '@mermaid-js/core';
+import { asciiDropped, asciiRoute, droppedFeatures, trimmed } from './diagram.ts';
+import type { AsciiDroppedWarning, AsciiRouteWarning } from './diagram.ts';
 
 const WHAT = { style: 'colours and styles', curve: 'edge curves', accessibility: 'accTitle' };
 const STATEMENTS = { style: ['Style', 'ClassDef'], accessibility: ['AccTitle'] };
@@ -53,6 +55,39 @@ describe('droppedFeatures', () => {
     expect(dropped.warnings(undefined, { curve: ' (curve)' })[0]?.message).toBe(
       'Text output has no edge curves (curve); dropped.'
     );
+  });
+});
+
+describe('the ASCII warning types', () => {
+  it('asciiDropped gives an AsciiDroppedWarning of its feature kinds, which is a Warning', () => {
+    const dropped: AsciiDroppedWarning<'style' | 'curve'> = asciiDropped<'style' | 'curve'>(
+      'style',
+      ['A'],
+      'colours',
+      ' (fill)'
+    );
+    const warning: Warning = dropped;
+    expect(warning).toEqual({
+      code: 'ASCII_DROPPED',
+      feature: 'style',
+      astIds: ['A'],
+      message: 'Text output has no colours (fill); dropped.',
+    });
+  });
+
+  it('asciiRoute gives an AsciiRouteWarning naming each edge once, or nothing', () => {
+    const route: AsciiRouteWarning | undefined = asciiRoute(
+      [{ edge: 'e1' }, { edge: 'e2' }, { edge: 'e1' }],
+      'edges',
+      (edge) => [edge, `${edge}:label`]
+    );
+    const warning: Warning | undefined = route;
+    expect(warning).toEqual({
+      code: 'ASCII_ROUTE',
+      astIds: ['e1', 'e1:label', 'e2', 'e2:label'],
+      message: 'No free lane for edges e1, e2; their lines touch other lines or text.',
+    });
+    expect(asciiRoute([], 'edges')).toBeUndefined();
   });
 });
 

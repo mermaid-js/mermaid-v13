@@ -123,3 +123,9 @@ export function formatExpected(names: readonly string[]): string {
   if (names.length < 2) return names[0] ?? 'something else';
   return `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}`;
 }
+
+/** `a`, `a and b`, `a, b and c`. */
+export function formatList(names: readonly string[]): string {
+  if (names.length < 2) return names.join('');
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}

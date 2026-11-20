@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { Diagnostics, ExpectedTable, FIRST_DIAGRAM_KIND, formatExpected, Kind } from './index.ts';
+import {
+  Diagnostics,
+  ExpectedTable,
+  FIRST_DIAGRAM_KIND,
+  formatExpected,
+  formatList,
+  Kind,
+} from './index.ts';
 
 const T = {
   Id: FIRST_DIAGRAM_KIND,
@@ -108,5 +115,12 @@ describe('Expected', () => {
     expect(formatExpected(['a'])).toBe('a');
     expect(formatExpected(['a', 'b'])).toBe('a or b');
     expect(formatExpected(['a', 'b', 'c'])).toBe('a, b or c');
+  });
+
+  it('joins a list of names with `and`', () => {
+    expect(formatList([])).toBe('');
+    expect(formatList(['a'])).toBe('a');
+    expect(formatList(['a', 'b'])).toBe('a and b');
+    expect(formatList(['`a`', '`b`', '`c`', '`d`'])).toBe('`a`, `b`, `c` and `d`');
   });
 });

@@ -10,6 +10,10 @@ import { textForm } from './shapes.ts';
 import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
 import { asciiDropped, statements, styled } from '@mermaid-js/shared/ascii';
 import { addsEmphasis } from '@mermaid-js/shared/svg/graph';
+import type {
+  AsciiDroppedWarning as SharedAsciiDroppedWarning,
+  AsciiRouteWarning,
+} from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature =
@@ -21,11 +25,7 @@ export type AsciiDroppedFeature =
   | 'accessibility';
 
 /** One feature kind text output dropped (D82). */
-export interface AsciiDroppedWarning extends FlowWarning {
-  readonly code: 'ASCII_DROPPED';
-  readonly feature: AsciiDroppedFeature;
-  readonly astIds: readonly string[];
-}
+export type AsciiDroppedWarning = SharedAsciiDroppedWarning<AsciiDroppedFeature>;
 
 /** The shapes drawn as plain boxes because they have no text form (D82). */
 export interface AsciiShapeWarning extends FlowWarning {
@@ -34,11 +34,7 @@ export interface AsciiShapeWarning extends FlowWarning {
   readonly astIds: readonly string[];
 }
 
-/** Edges the repair router found no free lane for (D78). */
-export interface AsciiRouteWarning extends FlowWarning {
-  readonly code: 'ASCII_ROUTE';
-  readonly astIds: readonly string[];
-}
+export type { AsciiRouteWarning };
 
 export type AsciiWarning = AsciiDroppedWarning | AsciiShapeWarning | AsciiRouteWarning;
 

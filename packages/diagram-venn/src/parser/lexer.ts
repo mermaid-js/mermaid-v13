@@ -56,7 +56,7 @@ import {
   SEMI,
   UNDERSCORE,
 } from '@mermaid-js/core/parser-kit';
-import { lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
+import { entityPlaceholders, lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
 import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import type { StateLexerOptions } from '@mermaid-js/shared/parser/state';
 import { T } from './tokens.ts';
@@ -168,8 +168,7 @@ class VennLexer extends StateLexer {
       parts.push(out.slice(run));
       out = parts.join('');
     }
-    if (out.includes('#')) out = out.replace(/#(\w+);/g, (_, name: string) => `ﬂ${name}¶`);
-    return out;
+    return entityPlaceholders(out);
   }
 
   run(modeAt?: number): TokenStream {
