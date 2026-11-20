@@ -7,6 +7,7 @@
 // lanes. Every search is charged to a budget (R-SEC-5); past it, or with no way through, the line
 // is the routed points stepped as they are (the guide the search follows).
 import { DX, DY, opposite, type CellRect, type Dir } from '@mermaid-js/core/ascii';
+import { cellsOf } from '@mermaid-js/shared/ascii';
 import { sameCell, type Cell, type CellSet } from './grid.ts';
 
 /** One relation to route: its two end cells, the way each goes into its shape, the routed points. */
@@ -225,22 +226,6 @@ function search(req: RouteRequest, field: RouteField, budget: RouteBudget): Cell
   return out.reverse();
 }
 
-/** Every cell along `points`, in order (each pair level or upright). */
-function cellsAlong(points: readonly Cell[]): Cell[] {
-  const out: Cell[] = [points[0]!];
-  for (let i = 0; i + 1 < points.length; i++) {
-    const b = points[i + 1]!;
-    let c = out[out.length - 1]!;
-    while (!sameCell(c, b)) {
-      const step =
-        b.x !== c.x ? { x: Math.sign(b.x - c.x), y: 0 } : { x: 0, y: Math.sign(b.y - c.y) };
-      c = { x: c.x + step.x, y: c.y + step.y };
-      out.push(c);
-    }
-  }
-  return out;
-}
-
 /**
  * The routed points stepped as they are, as corners: each pair that is neither level nor upright
  * gets an L, or a Z when it is the only pair and both ends leave level (or both upright): the
@@ -272,5 +257,5 @@ export function routeLine(req: RouteRequest, field: RouteField, budget: RouteBud
   if (sameCell(req.start, req.end)) return [req.start];
   // The search follows the routed points stepped; a straight route's diagonal would draw a stair.
   const corners = steppedCorners(req);
-  return search({ ...req, guide: corners }, field, budget) ?? cellsAlong(corners);
+  return search({ ...req, guide: corners }, field, budget) ?? cellsOf(corners);
 }
