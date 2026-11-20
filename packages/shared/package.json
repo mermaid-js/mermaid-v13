@@ -141,11 +141,6 @@
       "types": "./dist/config/readers.d.ts",
       "default": "./dist/config/readers.js"
     },
-    "./config/font-family": {
-      "mermaid-source": "./src/config/font-family.ts",
-      "types": "./dist/config/font-family.d.ts",
-      "default": "./dist/config/font-family.js"
-    },
     "./svg/document": {
       "mermaid-source": "./src/svg/document.ts",
       "types": "./dist/svg/document.d.ts",

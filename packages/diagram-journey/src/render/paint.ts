@@ -3,8 +3,13 @@
 // is a theme variable, a config colour the author set, or one of v12's fixed greys (D245);
 // nothing depends on a theme name or `look` (D152), and there is no shadow or gradient (D227).
 import type { RenderContext, Warning } from '@mermaid-js/core';
-import { checkColor, type Attrs, type Paint, type SafeValue } from '@mermaid-js/core/svg';
-import { checkFontFamily } from '@mermaid-js/shared/config/font-family';
+import {
+  checkColor,
+  checkStyle,
+  type Attrs,
+  type Paint,
+  type SafeValue,
+} from '@mermaid-js/core/svg';
 import { fixedPaint } from '@mermaid-js/shared/svg/document';
 import type { FontKey } from '@mermaid-js/core/text';
 import { fontsOf } from '../layout/env.ts';
@@ -73,7 +78,10 @@ function authorActor(theme: Theme, slot: number): Paint | undefined {
 /** Font attributes for labels measured in `f`; empty where the root's font applies. */
 function fontAttrs(f: FontKey, family: string, size: number): Attrs {
   return {
-    'font-family': f.family === family ? undefined : checkFontFamily(f.family),
+    'font-family':
+      f.family === family
+        ? undefined
+        : (checkStyle(['font-family:' + f.family]).text['font-family'] as SafeValue | undefined),
     'font-size': f.size === size ? undefined : f.size,
     'font-weight': f.weight === FONT_WEIGHT.normal ? undefined : (String(f.weight) as SafeValue),
   };

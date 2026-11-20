@@ -2,8 +2,8 @@
  * What every step of the journey layout shares: the metrics, the fonts and a label measurer.
  */
 import type { RenderContext } from '@mermaid-js/core';
+import { checkStyle } from '@mermaid-js/core/svg';
 import { fontSizePx, layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
-import { configFontFamily } from '@mermaid-js/shared/config/font-family';
 import { FONT_WEIGHT, journeyMetrics, TITLE_FONT, type JourneyMetrics } from './metrics.ts';
 
 /** What the layout reads from the render context. */
@@ -42,7 +42,18 @@ export function fontsOf(
   const cfg = (ctx.config.journey ?? {}) as Readonly<Record<string, unknown>>;
   const family = ctx.theme.value('fontFamily');
   const size = ctx.theme.number('fontSize');
-  const familyOf = (key: string): string => configFontFamily(cfg, 'journey', key, warn) ?? family;
+  const familyOf = (key: string): string => {
+    const f = cfg[key];
+    if (typeof f !== 'string' || f.trim() === '') return family;
+    const safe = checkStyle(['font-family:' + f]).text['font-family'] as string | undefined;
+    if (safe === undefined)
+      warn?.({
+        code: 'STYLE_VALUE_DROPPED',
+        message: `Dropped journey.${key} ${JSON.stringify(f)}: it is not a font family Mermaid allows`,
+        path: `journey.${key}`,
+      });
+    return safe ?? family;
+  };
   const sizeOf = (key: string, fallback: number): number => {
     const s = fontSizePx(cfg[key], size);
     return s !== undefined && s > 0 ? s : fallback;

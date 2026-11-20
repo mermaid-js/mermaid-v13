@@ -20,4 +20,4 @@
 '@mermaid-js/diagram-xychart': patch
 ---
 
-refactor: diagrams use the shared `Rect` layout type and one shared check for the font families their config sets. Output is unchanged.
+refactor: diagrams use the shared `Rect` layout type. Output is unchanged.

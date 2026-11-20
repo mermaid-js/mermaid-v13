@@ -84,7 +84,6 @@ describe('workspace layout (DESIGN §2)', () => {
     expect(Object.keys(readPackage('packages/shared').exports ?? {}).sort()).toEqual(
       [
         './ascii',
-        './config/font-family',
         './config/readers',
         './layout',
         './parser/common-values',

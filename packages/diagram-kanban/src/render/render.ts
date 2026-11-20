@@ -6,8 +6,7 @@
  * absolute (v12's: columns from `−1.5 W`), and the viewBox is the layout's bounds (D224, D378).
  * Columns and cards go through `w.outline` (hand-drawn, D379); the priority bar does not.
  */
-import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
-import { checkFontFamily } from '@mermaid-js/shared/config/font-family';
+import { checkStyle, type Attrs, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
 import { centreX, centreY, cls, openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { FontKey, Run } from '@mermaid-js/core/text';
 import type { CardLayout, ColumnLayout, KanbanLayout, PlacedLabel } from '../layout/index.ts';
@@ -74,7 +73,10 @@ function openRoot({ w, layout, ctx }: Scene): void {
  * through the pipeline), else the layout's font as literals.
  */
 function fontAttrs(f: FontKey, theme: KanbanRenderContext['theme']): Attrs {
-  const family = f.family === theme.value('fontFamily') ? theme.font() : checkFontFamily(f.family);
+  const family =
+    f.family === theme.value('fontFamily')
+      ? theme.font()
+      : (checkStyle(['font-family:' + f.family]).text['font-family'] as SafeValue | undefined);
   const size = f.size === theme.number('fontSize') ? theme.length('fontSize') : f.size;
   return { 'font-family': family, 'font-size': size };
 }

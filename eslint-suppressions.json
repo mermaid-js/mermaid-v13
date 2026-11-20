@@ -418,7 +418,7 @@
   },
   "packages/diagram-c4/src/render/text.ts": {
     "mermaid/no-brand-cast": {
-      "count": 1
+      "count": 2
     }
   },
   "packages/diagram-class/src/render/render.ts": {
@@ -487,10 +487,15 @@
   },
   "packages/diagram-journey/src/render/paint.ts": {
     "mermaid/no-brand-cast": {
-      "count": 1
+      "count": 2
     }
   },
   "packages/diagram-journey/src/render/render.ts": {
+    "mermaid/no-brand-cast": {
+      "count": 1
+    }
+  },
+  "packages/diagram-kanban/src/render/render.ts": {
     "mermaid/no-brand-cast": {
       "count": 1
     }
@@ -527,7 +532,7 @@
   },
   "packages/diagram-sequence/src/render/paint.ts": {
     "mermaid/no-brand-cast": {
-      "count": 1
+      "count": 2
     }
   },
   "packages/diagram-sequence/src/render/render.ts": {
