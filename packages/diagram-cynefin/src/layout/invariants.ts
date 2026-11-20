@@ -6,7 +6,7 @@
  */
 import type { CynefinDomainName, CynefinModel } from '../model.ts';
 import { cubicBox, pointsBox, quadBox } from './geometry.ts';
-import { growRect } from '@mermaid-js/shared/layout';
+import { growRect } from '@mermaid-js/core/layout';
 import { drawnItems } from './layout.ts';
 import { ARROWS, BADGES } from './metrics.ts';
 import type { CynefinBadge, CynefinLayout, Point, Rect } from './types.ts';

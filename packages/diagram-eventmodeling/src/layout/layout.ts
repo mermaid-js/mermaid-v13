@@ -54,7 +54,8 @@ import type {
   Point,
   Rect,
 } from './types.ts';
-import { growRect, unionRects } from '@mermaid-js/shared/layout';
+import { unionRects } from '@mermaid-js/shared/layout';
+import { growRect } from '@mermaid-js/core/layout';
 
 /**
  * What the layout reads from the render context (`warn` for `EVENTMODELING_CONFIG_INVALID`,

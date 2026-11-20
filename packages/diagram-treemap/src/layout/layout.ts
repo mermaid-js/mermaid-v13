@@ -35,7 +35,8 @@ import type {
   TreemapText,
   TreemapTextAnchor,
 } from './types.ts';
-import { growRect, RectUnion } from '@mermaid-js/shared/layout';
+import { RectUnion } from '@mermaid-js/shared/layout';
+import { growRect } from '@mermaid-js/core/layout';
 
 /** What the layout reads from the render context (`warn` for `TREEMAP_CONFIG_INVALID`). */
 export type TreemapLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &

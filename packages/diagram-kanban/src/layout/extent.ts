@@ -3,7 +3,8 @@
  * invariants' containment check both read.
  */
 import type { KanbanLayout, Rect } from './types.ts';
-import { growRect, unionRects } from '@mermaid-js/shared/layout';
+import { unionRects } from '@mermaid-js/shared/layout';
+import { growRect } from '@mermaid-js/core/layout';
 
 /** Every drawn part's box, outlines included. */
 export function drawnRects(layout: Pick<KanbanLayout, 'columns' | 'cards' | 'stroke'>): Rect[] {

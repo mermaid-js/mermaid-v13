@@ -17,7 +17,8 @@ import { cynefinThemeLengths, type CynefinThemeLengths } from '../theme/lengths.
 import { cliffCurve, confusionEllipse, foldCurve, horizonCurve } from './boundaries.ts';
 import { cynefinOptions, type CynefinOptions } from './config.ts';
 import { cubicBox, mapY, pointsBox, quadBox } from './geometry.ts';
-import { growRect, RectUnion } from '@mermaid-js/shared/layout';
+import { RectUnion } from '@mermaid-js/shared/layout';
+import { growRect } from '@mermaid-js/core/layout';
 import { DOMAIN_META, domainTitle } from '../domains.ts';
 import { ARROWS, BADGES, FONTS, LABELS, TITLE } from './metrics.ts';
 import { resolveSeed } from './random.ts';
