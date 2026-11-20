@@ -10,7 +10,7 @@ import { layoutC4 } from './layout.ts';
 import { C4_METRICS as M } from './metrics.ts';
 import { c4RelationPath } from './path.ts';
 import { crosses, lineOf } from './route.ts';
-import { labelBlockers, outlineForm } from './shapes.ts';
+import { labelBlockers, outlineForm, personParts } from './shapes.ts';
 import { rectsOverlap } from '@mermaid-js/shared/testing/layout-invariants';
 import { fixture, fixtureSource, FIXTURES } from './mmd.fixtures.ts';
 import type { C4Layout, C4RelationLayout, PlacedLabel, Point, Rect } from './types.ts';
@@ -986,6 +986,48 @@ describe('c4 person figure (#683)', () => {
     expect(wide.r).toBe(80);
   });
 
+  /** The middle of a person's body, and of a box. */
+  const bodyMiddle = (layout: C4Layout, alias: string): number => {
+    const { body } = personParts(el(layout, alias).box);
+    return body.y + body.height / 2;
+  };
+  const middle = (r: Rect): number => r.y + r.height / 2;
+
+  it.each([
+    ['TB', ''],
+    ['BT', 'direction BT\n'],
+  ])('lines a neighbour up with the body and ends the relation there (D679): %s', (_d, dir) => {
+    const layout = sound(`C4Context\n${dir}Person(p, "P")\nSystem(s, "S")\nRel(p, s, "uses")`);
+    expect(middle(el(layout, 's').box)).toBeCloseTo(bodyMiddle(layout, 'p'), 9);
+    const { body } = personParts(el(layout, 'p').box);
+    const r = rel(layout, 'p', 's');
+    expect(r.start.y).toBeGreaterThan(body.y);
+    expect(r.start.y).toBeLessThan(bottom(body));
+  });
+
+  it('spreads lines beside a person over its body, none on its head (D679)', () => {
+    const src = 'C4Context\nPerson(p, "P")\nSystem(s, "S")\n';
+    const many = Array.from({ length: 12 }, (_, i) => `Rel(p, s, "r${i}")`).join('\n');
+    const layout = sound(src + many);
+    const { body } = personParts(el(layout, 'p').box);
+    for (const r of layout.relations) expect(r.start.y).toBeGreaterThan(body.y);
+  });
+
+  it('still ends a line from above on the head, the top of the figure (D679)', () => {
+    const layout = sound(
+      'C4Context\nUpdateLayoutConfig($c4ShapeInRow="1")\nSystem(s, "S")\nPerson(p, "P")\nRel(s, p, "uses")'
+    );
+    const { head } = personParts(el(layout, 'p').box);
+    expect(rel(layout, 's', 'p').end.y).toBeCloseTo(head.cy - head.r, 6);
+  });
+
+  it('keeps a row without a person top-aligned, as v12 did', () => {
+    const layout = sound(
+      'C4Context\nSystem(a, "A")\nSystem(b, "B", "A description long enough to wrap onto two lines")'
+    );
+    expect(el(layout, 'a').box.y).toBe(el(layout, 'b').box.y);
+  });
+
   it('keeps a relation end on the head and body outline', () => {
     // `sound` runs the invariants: every end on its outline.
     person('C4Context\nPerson(p, "P")\nSystem(s, "S")\nRel(s, p, "uses")\nRel(p, s, "pays")');
@@ -1046,6 +1088,22 @@ describe('c4 layout checker', () => {
     const off = { ...r!, start: { ...r!.start, y: r!.start.y - 30 } };
     expect(c4LayoutViolations(model, { ...layout, relations: [off, ...others] }).join()).toMatch(
       /not on the outline/
+    );
+  });
+
+  it("catches a relation that ends on a person's head beside its body (D679)", () => {
+    const { model, layout } = lay('C4Context\nPerson(p, "P")\nSystem(s, "S")\nRel(p, s, "uses")');
+    const { head, body } = personParts(el(layout, 'p').box);
+    const onHead = { ...layout.relations[0]!.start, x: head.cx + head.r, y: head.cy };
+    // The system level with the body, so that a line could have reached it.
+    const elements = layout.elements.map((e) =>
+      e.alias === 's' ? { ...e, box: { ...e.box, y: body.y } } : e
+    );
+    const moved = { ...layout.relations[0]!, start: onHead };
+    const relations = [{ ...moved, points: [onHead, ...moved.points.slice(1)] }];
+    const broken = { ...layout, elements, relations };
+    expect(c4LayoutViolations(model, broken)).toContain(
+      'relation p -> s: it ends on the head of p'
     );
   });
 

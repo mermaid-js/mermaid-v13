@@ -45,6 +45,7 @@ import { Lanes, lineOf, pointsOf, route, Work, type Route } from './route.ts';
 import {
   labelBlockers,
   outlineForm,
+  portMiddle,
   shapeOf,
   shapeSize,
   type Outline,
@@ -414,7 +415,10 @@ function elementNode(
   textH += Math.max(0, count - 1) * M.sectionGap;
   const form = shapeOf(element);
   const size = shapeSize(form, tw, textH, room);
+  // A person drawn as a figure lines its row up on its body (D679); text output keeps the tops.
+  const port = room.figure && form === 'person' ? portMiddle(form, size.w, size.h) : undefined;
   return {
+    ...(port === undefined ? {} : { portMiddle: port }),
     index,
     element,
     form,

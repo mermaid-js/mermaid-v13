@@ -16,7 +16,7 @@
 // cspell:ignore kepano
 import { channelPath, type Port, type Taken } from './channels.ts';
 import { C4_METRICS as M } from './metrics.ts';
-import { hit, hitRect, insideAlong, sidesOf, type Outline, type Sides } from './shapes.ts';
+import { hit, hitRect, insideAlong, portBox, sidesOf, type Outline, type Sides } from './shapes.ts';
 import type { C4RouteKind, Point } from './types.ts';
 
 /** A routed relation: its corners, the stretch its label may sit on, and how to place it. */
@@ -117,9 +117,12 @@ function nestedLine(outer: Outline, inner: Outline, down: boolean, shift: number
 
 /**
  * The line between the middles of a and b before any shift. Shapes that share a column or a
- * row are joined by an upright or level line through the shared span.
+ * row are joined by an upright or level line through the shared span. Each shape offers its
+ * {@link portBox}: a person beside another shape is joined at its body (D679).
  */
-function baseLine(a: Outline, b: Outline): Line {
+function baseLine(outlineA: Outline, outlineB: Outline): Line {
+  const a = portBox(outlineA);
+  const b = portBox(outlineB);
   const x0 = Math.max(a.x, b.x);
   const x1 = Math.min(a.x + a.width, b.x + b.width);
   const y0 = Math.max(a.y, b.y);
@@ -161,7 +164,8 @@ function connect(a: Outline, b: Outline, shift: number): Line {
  * How far the straight line between a and b can move to either side and still meet both
  * outlines: the room the relations between them share (#680). It is how far each point the line
  * runs from (a shape's middle, or the middle of the span two shapes share) can move across the
- * line and stay inside its outline, the lesser of the two, less `portInset`. Between nested
+ * line and stay inside its {@link portBox} (a person's body, D679), the lesser of the two, less
+ * `portInset`. Between nested
  * boxes, along the side the short line leaves, from the middle of the inner box.
  */
 export function pairRoom(a: Outline, b: Outline): number {
@@ -176,8 +180,8 @@ export function pairRoom(a: Outline, b: Outline): number {
   const line = baseLine(a, b);
   const n = unitNormal(line);
   const reach = Math.min(
-    ...insideAlong(a, { x: line[0], y: line[1] }, n),
-    ...insideAlong(b, { x: line[2], y: line[3] }, n)
+    ...insideAlong(portBox(a), { x: line[0], y: line[1] }, n),
+    ...insideAlong(portBox(b), { x: line[2], y: line[3] }, n)
   );
   return Math.max(0, reach - M.portInset);
 }
@@ -352,11 +356,17 @@ function across(lo: number, hi: number): number[] {
   return out;
 }
 
-/** Ports along a side of `box`, clear of its corners: along y on the left and right, else along x. */
+/**
+ * Ports along a side of `box`, clear of its corners: along y on the left and right (on its
+ * {@link portBox}, a person's body, D679), else along x. A `want` outside the side moves to its
+ * nearest end.
+ */
 function portsOn(lanes: Lanes, box: Outline, side: Side, want: number): number[] {
-  return side === SIDE.left || side === SIDE.right
-    ? lanes.ports(box, side, want, [box.y + M.portInset, box.y + box.height - M.portInset])
-    : lanes.ports(box, side, want, [box.x + M.portInset, box.x + box.width - M.portInset]);
+  const upright = side === SIDE.left || side === SIDE.right;
+  const port = upright ? portBox(box) : box;
+  const lo = upright ? port.y + M.portInset : port.x + M.portInset;
+  const hi = upright ? port.y + port.height - M.portInset : port.x + port.width - M.portInset;
+  return lanes.ports(box, side, Math.min(hi, Math.max(lo, want)), [lo, hi]);
 }
 
 function elbow(

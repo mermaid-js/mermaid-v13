@@ -4,7 +4,8 @@
  * the layout is sound; each entry names a broken rule: a number that is not finite; elements
  * that overlap, stand outside their boundary's frame (below its header) or overlap a frame they
  * are not in; a boundary outside its parent's; sibling boundaries that overlap; a header
- * outside its frame; a relation whose ends are not on its shapes' outlines; in a careful layout,
+ * outside its frame; a relation whose ends are not on its shapes' outlines, or that ends on a
+ * person's head beside its body (D679); in a careful layout,
  * a label box not marked `crowded` over its own arrowheads, any element (#542) or another
  * relation's line (#522 final review); anything drawn outside the bounds, or the bounds outside
  * the canvas. `c4LayoutViolations` is exported from `@mermaid-js/diagram-c4/testing`.
@@ -14,7 +15,7 @@
 import type { C4Model } from '../model.ts';
 import { C4_METRICS as M } from './metrics.ts';
 import { crosses, lineOf } from './route.ts';
-import { labelBlockers, onOutline, outlineForm, type Outline } from './shapes.ts';
+import { labelBlockers, onOutline, outlineForm, personParts, type Outline } from './shapes.ts';
 import type { C4Layout, C4RelationLayout, Point, Rect } from './types.ts';
 import {
   EPS,
@@ -79,6 +80,7 @@ export function c4LayoutViolations(model: C4Model, layout: C4Layout): string[] {
   checkElements(model, layout, out);
   checkBoundaries(model, layout, out);
   checkRelations(model, layout, out);
+  checkPersonEnds(layout, out);
   if (layout.careful) checkLabels(layout, out);
   checkBounds(layout, out);
   out.push(...legendViolations(layout));
@@ -187,6 +189,49 @@ function checkRelations(model: C4Model, layout: C4Layout, out: string[]): void {
           out.push(`${name}: a bent stretch is slanted`);
       }
   }
+}
+
+/**
+ * D679: a relation beside a person ends on its body. An end on the head (above the body's top)
+ * that leaves sideways, where the shape at the other end is beside the person and level with
+ * some of its body, is a fault: that line could have reached the body. A line that leaves the
+ * head upwards (round something in the way) is not. A person on the cell profile is a box.
+ */
+function checkPersonEnds(layout: C4Layout, out: string[]): void {
+  if (layout.cell !== undefined) return;
+  const endOf = endBoxes(layout);
+  for (const r of layout.relations) {
+    if (r.from === r.to) continue;
+    const n = r.points.length;
+    const ends: [string, Point, Point, string][] = [
+      [r.from, r.points[0]!, r.points[1]!, r.to],
+      [r.to, r.points[n - 1]!, r.points[n - 2]!, r.from],
+    ];
+    for (const [alias, at, next, other] of ends)
+      if (headEnd(endOf(alias), [at, next], endOf(other)))
+        out.push(`relation ${r.from} -> ${r.to}: it ends on the head of ${alias}`);
+  }
+}
+
+/**
+ * Whether the stretch from `at` (towards `next`) leaves `person`'s head sideways while `other`
+ * stands beside it, level with its body.
+ */
+function headEnd(
+  person: Outline | undefined,
+  [at, next]: readonly [Point, Point],
+  other: Outline | undefined
+): boolean {
+  if (person?.form !== 'person' || !other) return false;
+  const { body } = personParts(person);
+  const sideways = Math.abs(next.x - at.x) > Math.abs(next.y - at.y);
+  return at.y < body.y - EPS && sideways && besideBody(person, body, other);
+}
+
+/** Whether `other` stands beside `person`, level with some of its `body`. */
+function besideBody(person: Rect, body: Rect, other: Rect): boolean {
+  const beside = other.x >= person.x + person.width || other.x + other.width <= person.x;
+  return beside && other.y < body.y + body.height && other.y + other.height > body.y;
 }
 
 /** The polyline a relation's label box is checked against (`lineOf`), as x, y pairs. */

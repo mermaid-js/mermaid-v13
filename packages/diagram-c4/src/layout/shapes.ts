@@ -100,6 +100,26 @@ export function labelBlockers(box: Outline): Rect[] {
   ];
 }
 
+/**
+ * The part of a shape relations leave and reach from the side (D679): a person drawn as a
+ * figure offers its body, so that a line beside it ends on the body, not the head; any other
+ * shape (and a person on the cell profile, a box) offers its whole box. Ends are still clipped to
+ * the real outline.
+ */
+export function portBox(box: Outline): Outline {
+  if (box.form !== 'person') return box;
+  return { ...personParts(box).body, form: 'rounded' };
+}
+
+/**
+ * How far below a shape's top the middle of its {@link portBox} lies, for a shape `h` high and
+ * `w` wide drawn as `form`: the line a row of shapes holding a person lines up on (D679).
+ */
+export function portMiddle(form: Outline['form'], w: number, h: number): number {
+  const port = portBox({ x: 0, y: 0, width: w, height: h, form });
+  return port.y + port.height / 2;
+}
+
 /** A shape's size around a text block `tw` × `th`, and where the text's centre sits from the box's. */
 export interface ShapeSize {
   readonly w: number;
