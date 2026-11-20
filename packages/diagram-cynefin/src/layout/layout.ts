@@ -16,7 +16,8 @@ import type { CynefinDomain, CynefinDomainName, CynefinModel } from '../model.ts
 import { cynefinThemeLengths, type CynefinThemeLengths } from '../theme/lengths.ts';
 import { cliffCurve, confusionEllipse, foldCurve, horizonCurve } from './boundaries.ts';
 import { cynefinOptions, type CynefinOptions } from './config.ts';
-import { Box, cubicBox, grow, mapY, pointsBox, quadBox } from './geometry.ts';
+import { cubicBox, grow, mapY, pointsBox, quadBox } from './geometry.ts';
+import { RectUnion } from '@mermaid-js/shared/layout';
 import { DOMAIN_META, domainTitle } from '../domains.ts';
 import { ARROWS, BADGES, FONTS, LABELS, TITLE } from './metrics.ts';
 import { resolveSeed } from './random.ts';
@@ -391,7 +392,7 @@ function titleOf(env: Env, title: string): PlacedLabel {
 /** v12's viewBox in content space, grown over everything drawn, strokes included (D361). */
 function boundsOf(l: Omit<CynefinLayout, 'bounds' | 'viewBox'>): CynefinLayout['bounds'] {
   const { padding: p, strokes, confusion: e } = l;
-  const box = new Box();
+  const box = new RectUnion();
   box.add({ x: -p, y: -p, width: l.width + 2 * p, height: l.height + 2 * p });
   for (const q of l.quadrants) box.add(q);
   const ellipse = { x: e.center.x - e.rx, y: e.center.y - e.ry, width: 2 * e.rx, height: 2 * e.ry };
