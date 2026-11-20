@@ -23,6 +23,7 @@ import {
   readsBackAt,
   span,
   statementAt,
+  statementKeyword,
   statementOverlapping,
   statementTokens,
   tokenBefore,
@@ -316,5 +317,21 @@ describe('helpers several parsers share', () => {
     expect(configSectionOf(preprocess(src), 'packet')).toEqual({ a: 1, b: 2 });
     expect(configSectionOf(preprocess(src), 'railroad')).toEqual({});
     expect(configSectionOf(preprocess('packet'), 'packet')).toEqual({});
+  });
+});
+
+describe('statementKeyword', () => {
+  it('is a line-start keyword that inserts its label and a blank', () => {
+    expect(statementKeyword(7, 'title')).toEqual({
+      kind: 7,
+      label: 'title',
+      item: 'keyword',
+      insert: 'title ',
+      lineStart: true,
+    });
+  });
+
+  it('inserts the text given in place of the label', () => {
+    expect(statementKeyword(3, 'accDescr {', 'accDescr { }').insert).toBe('accDescr { }');
   });
 });
