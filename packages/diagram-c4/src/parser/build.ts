@@ -8,6 +8,7 @@
 import { idEscaper } from '@mermaid-js/shared/parser/support';
 import type { AstId, ParseState, Range } from '@mermaid-js/core/parser-kit';
 import * as codes from '../codes.ts';
+import { MentionIds } from './mention-ids.ts';
 import {
   C4_ELEMENT_KINDS,
   C4_NODE_KINDS,
@@ -92,15 +93,8 @@ const toInt = (text: string): number => parseInt(text);
 const esc = /* @__PURE__ */ idEscaper();
 
 /** D458's AST ids. */
-class Ids {
-  private readonly seen = new Map<string, number>();
+class Ids extends MentionIds {
   private styles = 0;
-
-  private next(base: string): AstId {
-    const n = (this.seen.get(base) ?? 0) + 1;
-    this.seen.set(base, n);
-    return n === 1 ? base : `${base}@${n}`;
-  }
 
   element(alias: string): AstId {
     return this.next(`element:${esc(alias)}`);
