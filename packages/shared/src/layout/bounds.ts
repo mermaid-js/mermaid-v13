@@ -20,18 +20,13 @@ export class RectUnion {
     this.x1 = Math.max(this.x1, r.x + r.width);
     this.y1 = Math.max(this.y1, r.y + r.height);
   }
-  rect(): { x: number; y: number; width: number; height: number } {
+  rect(): Rect {
     return { x: this.x0, y: this.y0, width: this.x1 - this.x0, height: this.y1 - this.y0 };
   }
 }
 
 /** The smallest rectangle holding every one of `rects`; a zero box at the origin for none. */
-export function unionRects(rects: readonly Rect[]): {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-} {
+export function unionRects(rects: readonly Rect[]): Rect {
   if (rects.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
   const box = new RectUnion();
   for (const r of rects) box.add(r);

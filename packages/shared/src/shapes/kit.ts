@@ -7,6 +7,7 @@
 // cspell:ignore kepano
 import type { Attrs, OutlineRole, PathData, SvgWriter } from '@mermaid-js/core/svg';
 import type { Theme } from '@mermaid-js/core/theme';
+import type { Rect } from '../layout/bounds.ts';
 
 /** Padding added across (`x`) and down (`y`). */
 export interface PadXY {
@@ -183,11 +184,7 @@ export function cylinderSize(tw: number, th: number, pad: PadXY, extra = 0, leas
 }
 
 /** A rectangle by its top left corner and size, corners rounded by `rx`. */
-export interface RectAt {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
+export interface RectAt extends Rect {
   readonly rx?: number;
 }
 

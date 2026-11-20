@@ -6,6 +6,7 @@
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
+import type { Rect } from '@mermaid-js/shared/layout';
 import type { C4BetaElementKind } from '../beta/model.ts';
 import type { C4ElementKind, C4NodeKind } from '../model.ts';
 
@@ -14,10 +15,7 @@ export interface Point {
   readonly y: number;
 }
 
-export interface Rect extends Point {
-  readonly width: number;
-  readonly height: number;
-}
+export type { Rect };
 
 /**
  * A measured label, its box and the font it was measured in, which is the font it is drawn in

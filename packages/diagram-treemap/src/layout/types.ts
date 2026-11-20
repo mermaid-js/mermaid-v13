@@ -5,14 +5,10 @@
  * is. Rectangles have their top-left corner at `x`, `y`.
  */
 import type { FontKey } from '@mermaid-js/core/text';
+import type { Rect } from '@mermaid-js/shared/layout';
 import type { TreemapNode } from '../model.ts';
 
-export interface Rect {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
+export type { Rect };
 
 /** `r` grown by `by` on every side (a stroke's outer half, or a padding band). */
 export function grow(r: Rect, by: number): Rect {

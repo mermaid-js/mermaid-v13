@@ -10,6 +10,7 @@
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey } from '@mermaid-js/core/text';
+import type { Rect } from '@mermaid-js/shared/layout';
 import type { RailroadConfig } from '../config.ts';
 import type { RailroadNodeKind } from '../model.ts';
 import type { RailroadMetrics } from './metrics.ts';
@@ -19,11 +20,7 @@ export interface Point {
   readonly y: number;
 }
 
-/** Top-left corner, width and height. */
-export interface Rect extends Point {
-  readonly width: number;
-  readonly height: number;
-}
+export type { Rect };
 
 /** A straight piece of track to (`x`, `y`): v12's `L`. */
 export interface TrackLine extends Point {

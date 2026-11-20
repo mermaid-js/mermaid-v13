@@ -6,17 +6,10 @@
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
+import type { Rect } from '@mermaid-js/shared/layout';
 import type { PacketConfig } from '../config.ts';
 
-export interface Point {
-  readonly x: number;
-  readonly y: number;
-}
-
-export interface Rect extends Point {
-  readonly width: number;
-  readonly height: number;
-}
+export type { Rect };
 
 /**
  * A measured label and the box it takes. Draw it with `SvgWriter.label()` at the box's centre,

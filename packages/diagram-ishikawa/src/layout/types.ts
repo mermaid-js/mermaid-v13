@@ -7,6 +7,7 @@
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
+import type { Rect } from '@mermaid-js/shared/layout';
 import type { IshikawaSide } from '../model.ts';
 
 export interface Point {
@@ -14,10 +15,7 @@ export interface Point {
   readonly y: number;
 }
 
-export interface Rect extends Point {
-  readonly width: number;
-  readonly height: number;
-}
+export type { Rect };
 
 /** A line from `(x1, y1)`, where a bone starts, to `(x2, y2)`. */
 export interface Segment {

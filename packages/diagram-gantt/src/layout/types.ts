@@ -5,12 +5,8 @@
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
-export interface Rect {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
+import type { Rect } from '@mermaid-js/shared/layout';
+export type { Rect };
 
 /** Where a task's label sits, by v12's rule; it gives the text anchor. */
 export type LabelSide = 'inside' | 'right' | 'left';
