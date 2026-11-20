@@ -4,4 +4,4 @@
 '@mermaid-js/diagram-timeline': patch
 ---
 
-refactor: gantt, quadrant and timeline use shared helpers for bounds, quote handling, completion items and layout checks; rendered output is unchanged.
+Internal cleanup: Gantt, quadrant and timeline diagrams now use shared helpers for bounding boxes, quoted text, editor completions and layout checks; no change to rendered diagrams.

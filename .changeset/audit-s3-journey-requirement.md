@@ -3,4 +3,4 @@
 '@mermaid-js/diagram-requirement': patch
 ---
 
-Journey and requirement lexers use the shared lexer loop; journey's layout check no longer flags an actor or task named `NaN`.
+Internal cleanup: journey and requirement diagrams now use the shared lexer loop; no change to rendered diagrams. Journey's layout check no longer reports an actor or task named `NaN` as a broken number.

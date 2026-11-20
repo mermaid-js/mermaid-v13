@@ -3,4 +3,4 @@
 '@mermaid-js/diagram-sankey': patch
 ---
 
-refactor: Wardley maps and sankey diagrams use the shared bounds and keyword-hover helpers; output is unchanged.
+Internal cleanup: Wardley maps and sankey diagrams now use shared helpers for bounding boxes and keyword hovers; no change to rendered diagrams.

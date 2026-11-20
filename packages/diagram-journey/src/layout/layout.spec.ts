@@ -469,6 +469,14 @@ describe('journeyLayoutViolations', () => {
     ]);
   });
 
+  it("reports NaN in a face's mouth path data", () => {
+    const layout = good();
+    const face = { ...layout.tasks[1]!.face, mouthPath: 'M0,0QNaN,2 4,0' };
+    expect(journeyLayoutViolations(model, withTask(layout, 1, { face }))).toEqual([
+      'layout.tasks[1].face.mouthPath is "M0,0QNaN,2 4,0"',
+    ]);
+  });
+
   it('reads author text named NaN or Infinity as text', () => {
     const named = journey('NaN', section('Infinity'), task('NaN', 3, 'NaN', 'Infinity'));
     expect(journeyLayoutViolations(named, lay(named))).toEqual([]);

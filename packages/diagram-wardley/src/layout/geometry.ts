@@ -35,19 +35,23 @@ export function textCorners(t: PlacedText): Point[] {
   return rectCorners(t).map((p) => rotated(p, t.at, t.rotate));
 }
 
-/** The union of what is drawn: shared `RectUnion`, with the shapes wardley adds to it. */
+/**
+ * The union of what is drawn: shared `RectUnion`, with the shapes wardley adds to it.
+ * Every size added is at least 0 (canvas at least 1, radii above 0, positive metrics), so no
+ * rectangle runs backwards.
+ */
 export class Box extends RectUnion {
   point(point: Point): void {
     this.add({ x: point.x, y: point.y, width: 0, height: 0 });
   }
   /** The square around the disc of radius `r` about `center`. */
-  addDisc(center: Point, r: number): void {
+  disc(center: Point, r: number): void {
     this.add({ x: center.x - r, y: center.y - r, width: 2 * r, height: 2 * r });
   }
   /** A line `width` wide, as the squares about its ends. */
   line(from: Point, to: Point, width: number): void {
-    this.addDisc(from, width / 2);
-    this.addDisc(to, width / 2);
+    this.disc(from, width / 2);
+    this.disc(to, width / 2);
   }
   /** A rectangle outlined `stroke` wide. */
   framed(r: Rect, stroke: number): void {
