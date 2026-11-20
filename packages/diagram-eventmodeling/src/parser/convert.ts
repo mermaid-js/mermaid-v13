@@ -14,37 +14,9 @@
  * run inside a line, so it is written out by hand here.
  */
 export { accDescrValue, accTitleValue, titleValue } from '@mermaid-js/shared/parser/rule';
-import { AMP, cook, HASH, LBRACE } from '@mermaid-js/core/parser-kit';
-import type { SourceView } from '@mermaid-js/core/parser-kit';
-import { decodeEntities } from '@mermaid-js/core/text';
+export { displayText } from '@mermaid-js/shared/parser/display-text';
+import { LBRACE } from '@mermaid-js/core/parser-kit';
 import { expandTabs } from '../tabs.ts';
-
-/**
- * The text of the source range `[start, end)` as v12 drew it: v12's lexer's text (`cook()`),
- * with each `#name;` / `#123;` code written as its character. v12 turned a code into a
- * placeholder and its renderer turned that into `&name;` in the page, which showed the
- * character; `cook()` gives it as `&name;`, so the range is cooked in pieces between the
- * author's own `&`s, and only the references inside a piece (`cook()`'s) are decoded. A name
- * core does not know (`#y;`) stays `&y;`.
- */
-export function displayText(src: string, start: number, end: number, view: SourceView): string {
-  if (!has(src, start, end, HASH)) return cook(src, start, end, view);
-  let out = '';
-  let from = start;
-  for (let p = start; p < end; p++) {
-    if (src.charCodeAt(p) !== AMP) continue;
-    // The `&` itself through cook(), which drops it inside a removed span.
-    out += decodeEntities(cook(src, from, p, view)) + cook(src, p, p + 1, view);
-    from = p + 1;
-  }
-  return out + decodeEntities(cook(src, from, end, view));
-}
-
-/** Whether `src[start…end)` holds the character `c` (a scan of the range only, R-PARSE-7). */
-function has(src: string, start: number, end: number, c: number): boolean {
-  for (let i = start; i < end; i++) if (src.charCodeAt(i) === c) return true;
-  return false;
-}
 
 /**
  * D523: a data token's text: between the braces (`{ … }`, the first and the last) or the quotes
