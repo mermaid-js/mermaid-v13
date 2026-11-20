@@ -1,8 +1,9 @@
 /** The treeView grammar file, read and built once (dev and CI only). */
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildLexer, mapped, parseGrammar } from '@mermaid-js/gen-grammar';
-import type { Grammar, LexToken, MappedText, ModeLexer } from '@mermaid-js/gen-grammar';
+import { mapped } from '@mermaid-js/gen-grammar';
+import type { LexToken, MappedText } from '@mermaid-js/gen-grammar';
+import { loadGrammar } from '../../grammar-file.ts';
+import type { LoadedGrammar } from '../../grammar-file.ts';
 import { REPO_ROOT } from '../../corpus.ts';
 import { classLexerInput } from '../../class/grammar/lexer-input.ts';
 import { boxReference } from './box-reference.ts';
@@ -12,14 +13,8 @@ export const TREEVIEW_GRAMMAR_PATH = join(
   'packages/diagram-treeview/grammar/treeview.ebnf'
 );
 
-let cached: { grammar: Grammar; lexer: ModeLexer } | undefined;
-
-export function treeViewGrammar(): { grammar: Grammar; lexer: ModeLexer } {
-  if (!cached) {
-    const grammar = parseGrammar(readFileSync(TREEVIEW_GRAMMAR_PATH, 'utf8'));
-    cached = { grammar, lexer: buildLexer(grammar) };
-  }
-  return cached;
+export function treeViewGrammar(): LoadedGrammar {
+  return loadGrammar(TREEVIEW_GRAMMAR_PATH);
 }
 
 /** Chevrotain names (`@mermaid-js/parser@2.0.1`) of the terminals the grammar names otherwise. */

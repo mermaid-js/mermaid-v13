@@ -13,6 +13,7 @@ import { DIAGRAM_TABLES } from './diagram-themes.ts';
 import { flowchart, type FlowModel, type FlowRenderContext } from '@mermaid-js/diagram-flowchart';
 import { createMermaid, MermaidError, type Prepared } from 'mermaid';
 import { REPO_ROOT, corpusFromDir } from './index.ts';
+import { layoutLengths } from './layout-lengths.ts';
 
 // The flowchart graph builder takes every length from the unit profile (#43, D77, R-ARCH-3).
 // The graphs are built through the plugin's `layout` with a context that carries the profile
@@ -52,42 +53,13 @@ async function build(prepared: Prepared, units: UnitProfile): Promise<LayoutGrap
   return graph!;
 }
 
-/** Every length in the graph, with a path for the failure message. */
-function lengths(g: LayoutGraph): [string, number][] {
-  const out: [string, number][] = [];
-  const put = (path: string, v: number | undefined): void => {
-    if (v !== undefined) out.push([path, v]);
-  };
-  for (const n of g.nodes) {
-    put(`node ${n.id} width`, n.width);
-    put(`node ${n.id} height`, n.height);
-    put(`node ${n.id} span`, n.span);
-  }
-  for (const gr of g.groups) {
-    for (const side of ['top', 'right', 'bottom', 'left'] as const)
-      put(`group ${gr.id} padding.${side}`, gr.padding[side]);
-    put(`group ${gr.id} title.width`, gr.title?.width);
-    put(`group ${gr.id} title.height`, gr.title?.height);
-  }
-  for (const e of g.edges) {
-    put(`edge ${e.id} label.width`, e.label?.width);
-    put(`edge ${e.id} label.height`, e.label?.height);
-  }
-  put('spacing.node', g.spacing.node);
-  put('spacing.rank', g.spacing.rank);
-  put('spacing.edge', g.spacing.edge);
-  put('diagramPadding', g.diagramPadding);
-  put('headRoom', g.headRoom);
-  return out;
-}
-
 describe('flowchart graph builder with the cell profile', () => {
   it('gives every LayoutGraph length as a whole number of cells over the corpus', async () => {
     expect(corpus.length).toBeGreaterThan(300);
     const bad: string[] = [];
     for (const { id, prepared } of corpus) {
       const g = await build(prepared, cellProfile());
-      for (const [path, v] of lengths(g))
+      for (const [path, v] of layoutLengths(g, { span: true }))
         if (!Number.isInteger(v) || v < 0) bad.push(`${id}: ${path} = ${v}`);
     }
     expect(bad).toEqual([]);

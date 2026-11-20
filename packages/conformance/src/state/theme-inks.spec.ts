@@ -10,22 +10,12 @@
  * applied, so there the override never reaches state text; the other four classic themes follow
  * it, and v13 follows it in all five (D638).
  */
-import { createTheme, formatColor, loadTheme, parseColor } from '@mermaid-js/core/theme';
+import { createTheme, loadTheme } from '@mermaid-js/core/theme';
 import type { ThemeName } from '@mermaid-js/core/theme';
 import { state } from '@mermaid-js/diagram-state';
 import { describe, expect, it } from 'vitest';
-import { loadOracle } from '../oracle.ts';
-
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
-  };
-}
-
-await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
+import { v12Vars } from '../v12-theme.ts';
+import { hex } from '../hex.ts';
 
 const THEMES = ['default', 'dark', 'forest', 'neutral', 'base'] as const satisfies ThemeName[];
 
@@ -41,17 +31,8 @@ const DIFFERENCES: ReadonlySet<string> = new Set([
   'default / primaryTextColor:dark',
 ]);
 
-const hex = (v: unknown): string | undefined => {
-  const rgba = typeof v === 'string' ? parseColor(v) : undefined;
-  return rgba ? formatColor(rgba) : undefined;
-};
-
 function v12Label(theme: string, themeVariables: object): string | undefined {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize({ theme, themeVariables });
-  const value = v12.mermaidAPI.getConfig().themeVariables.stateLabelColor;
-  v12.mermaidAPI.reset();
-  return hex(value);
+  return hex(v12Vars(theme, themeVariables).stateLabelColor);
 }
 
 describe('state text and composite-title inks against v12 (#827, D638)', () => {

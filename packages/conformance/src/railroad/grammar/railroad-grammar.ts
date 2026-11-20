@@ -2,11 +2,11 @@
  * The four railroad grammar files (D512), read and built once each (dev and CI only), and how
  * their tokens are named in `@mermaid-js/parser@2.0.1`.
  */
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Kind } from '@mermaid-js/core/parser-kit';
-import { buildLexer, parseGrammar } from '@mermaid-js/gen-grammar';
-import type { Grammar, LexToken, MappedText, ModeLexer } from '@mermaid-js/gen-grammar';
+import type { LexToken } from '@mermaid-js/gen-grammar';
+import { lexGrammar, loadGrammar } from '../../grammar-file.ts';
+import type { GrammarTokens, LoadedGrammar } from '../../grammar-file.ts';
 import { LANGIUM_NAMES, NOTATION_KINDS } from '@mermaid-js/diagram-railroad/testing';
 import type { RailroadNotation } from '@mermaid-js/diagram-railroad/testing';
 import { REPO_ROOT } from '../../corpus.ts';
@@ -27,9 +27,7 @@ export const GRAMMAR_FILE: Readonly<Record<RailroadNotation, string>> = {
   railroadPeg: 'railroad-peg.ebnf',
 };
 
-interface Built {
-  grammar: Grammar;
-  lexer: ModeLexer;
+interface Built extends LoadedGrammar {
   /** Grammar terminal → Chevrotain token name. */
   names: Readonly<Record<string, string>>;
   /** Grammar terminals the parser skips: Langium's hidden group. */
@@ -45,7 +43,7 @@ export function railroadGrammar(notation: RailroadNotation): Built {
   let built = cache.get(notation);
   if (!built) {
     const path = join(REPO_ROOT, 'packages/diagram-railroad/grammar', GRAMMAR_FILE[notation]);
-    const grammar = parseGrammar(readFileSync(path, 'utf8'));
+    const { grammar, lexer } = loadGrammar(path);
     const langium = LANGIUM_NAMES[notation];
     const byKey = new Map(
       Object.entries(NOTATION_KINDS[notation]).map(([key, kind]) => [fold(key), kind])
@@ -64,18 +62,10 @@ export function railroadGrammar(notation: RailroadNotation): Built {
       names[terminal] = name;
       if (/YAML|DIRECTIVE|COMMENT/.test(terminal)) hidden.add(terminal);
     }
-    built = { grammar, lexer: buildLexer(grammar), names, hidden };
+    built = { grammar, lexer, names, hidden };
     cache.set(notation, built);
   }
   return built;
-}
-
-export interface GrammarTokens {
-  input: MappedText;
-  /** Every token, hidden ones and the final `EOF` included. */
-  tokens: LexToken[];
-  /** Lexer-input offset where lexing failed. */
-  error: number | undefined;
 }
 
 /**
@@ -84,9 +74,7 @@ export interface GrammarTokens {
  * reference builder serves (the grammar-lexer spec checks it against v12's captured text).
  */
 export function grammarTokens(notation: RailroadNotation, source: string): GrammarTokens {
-  const input = classLexerInput(source);
-  const { tokens, error } = railroadGrammar(notation).lexer.lex(input.text);
-  return { input, tokens, error };
+  return lexGrammar(railroadGrammar(notation), classLexerInput(source));
 }
 
 /** The tokens the reference parser reads: not hidden. */

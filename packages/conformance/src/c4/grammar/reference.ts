@@ -16,7 +16,7 @@ import { C4_NAME_RESERVED, C4_UNKNOWN_END, parseC4 } from '@mermaid-js/diagram-c
 import type { C4StatementNode } from '@mermaid-js/diagram-c4';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { c4Grammar, grammarTokens } from './c4-grammar.ts';
-import type { GrammarTokens } from './c4-grammar.ts';
+import type { GrammarTokens } from '../../grammar-file.ts';
 
 /** A comparable AST: type, source range (blanks trimmed off both ends) and children. */
 export interface Shape {

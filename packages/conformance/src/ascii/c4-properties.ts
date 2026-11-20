@@ -11,6 +11,7 @@ import type { C4Layout, PlacedLabel, Rect } from '@mermaid-js/diagram-c4';
 import { c4AsciiDrawing, c4CellRect } from '@mermaid-js/diagram-c4/testing';
 import { createMermaid, MermaidError } from 'mermaid';
 import { renderC4Ascii, type C4AsciiResult, type C4Charset } from '../c4/ascii-render.ts';
+import { sizeFaults } from './flow-checks.ts';
 
 // ASCII render properties of C4 and c4-beta (#545, D459, R-ASCII-9; spec #730 T7) over a corpus
 // (legacy C4: e2e fixtures, v12 spec and syntax-page strings, the cases file; c4-beta: the
@@ -411,19 +412,7 @@ const labelsCheck = (c: Case, cs: C4Charset): unknown[] => {
 };
 
 /** Has `rows` lines, none wider than `columns` and one exactly that wide, no trailing spaces. */
-const sizeCheck = (c: Case, cs: C4Charset): unknown[] => {
-  const { text, rows, columns } = c.out[cs];
-  const lines = text === '' ? [] : text.split('\n');
-  const widest = Math.max(0, ...lines.map(cellWidth));
-  const found: string[] = [];
-  if (lines.length !== rows) found.push(`${lines.length} lines, rows ${rows}`);
-  if (widest !== columns) found.push(`widest ${widest}, columns ${columns}`);
-  lines.forEach((l, i) => {
-    if (/\s$/u.test(l)) found.push(`trailing space on line ${i + 1}`);
-  });
-  if (text.includes('\r')) found.push('\\r in text');
-  return found;
-};
+const sizeCheck = (c: Case, cs: C4Charset): unknown[] => sizeFaults(c.out[cs], cellWidth);
 
 /** Uses no Unicode line glyph or ellipsis in ASCII output. */
 const plainCheck = (c: Case, cs: C4Charset): unknown[] => {

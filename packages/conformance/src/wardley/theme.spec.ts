@@ -35,35 +35,16 @@ import { wardley } from '@mermaid-js/diagram-wardley';
 import {
   THEME_NAMES,
   createTheme,
-  formatColor,
   loadTheme,
-  parseColor,
   type Theme,
   type ThemeName,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
-import { loadOracle } from '../oracle.ts';
-
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
-  };
-}
-
-await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
+import { v12Vars } from '../v12-theme.ts';
+import { hex } from '../hex.ts';
 
 type Block = Readonly<Record<string, unknown>>;
 type Vars = Readonly<Record<string, unknown>>;
-
-/** v12's resolved theme variables of `theme`, with author `themeVariables`. */
-function v12Vars(theme: string, themeVariables?: object): Record<string, unknown> {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize(themeVariables ? { theme, themeVariables } : { theme });
-  return { ...v12.mermaidAPI.getConfig().themeVariables };
-}
 
 /** v12's renderer fallback for each nested key (`wardleyRenderer.ts:31-50`). */
 const FALLBACK: Readonly<Record<string, (vars: Vars) => unknown>> = {
@@ -83,12 +64,6 @@ const FALLBACK: Readonly<Record<string, (vars: Vars) => unknown>> = {
 
 const VARS = wardley.theme.vars;
 const NAMES = Object.keys(VARS);
-
-const hex = (v: unknown): string | undefined => {
-  if (typeof v !== 'string') return undefined;
-  const rgba = parseColor(v);
-  return rgba ? formatColor(rgba) : undefined;
-};
 
 /** The colour v12 drew for each flat variable in `theme` with author `themeVariables`. */
 function v12Wardley(theme: string, themeVariables?: object): Record<string, string | undefined> {

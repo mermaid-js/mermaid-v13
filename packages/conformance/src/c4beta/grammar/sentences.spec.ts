@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { buildGenerator } from '@mermaid-js/gen-grammar';
+import { describe, it } from 'vitest';
+import { checkSentences } from '../../grammar-sentences.ts';
 import { c4betaCorpus } from '../corpus.ts';
 import {
   handWrittenVerdict,
@@ -8,9 +8,6 @@ import {
   referenceVerdict,
 } from './reference.ts';
 
-/** Sentences per run; seeds are 1…N, so a failure names a reproducible seed. */
-const SENTENCES = 3000;
-
 /**
  * Grammar differential over generated sentences (R-PARSE-9): random derivations of
  * `grammar/c4beta.ebnf`, weighted by how often the corpus uses each rule, with token texts drawn
@@ -18,29 +15,14 @@ const SENTENCES = 3000;
  * and AST shape.
  */
 describe('c4-beta grammar differential (generated sentences)', () => {
-  it('agrees on generated sentences', () => {
+  it('agrees on generated sentences', async () => {
     const model = learnSentenceModel(c4betaCorpus().map((c) => c.source));
-    const generator = buildGenerator(referenceParser(), model);
-    const diffs: string[] = [];
-    let accepted = 0;
-    for (let seed = 1; seed <= SENTENCES; seed++) {
-      const { text } = generator.generate({ seed });
-      const ref = referenceVerdict(text);
-      const hand = handWrittenVerdict(text);
-      if (ref.accepted) accepted++;
-      const id = `seed ${seed} ${JSON.stringify(text)}`;
-      if (ref.accepted !== hand.accepted) {
-        diffs.push(
-          `${id}: grammar ${ref.accepted ? 'accepts' : 'rejects'}, parser ${hand.accepted ? 'accepts' : 'rejects'}`
-        );
-      } else if (JSON.stringify(ref.ast) !== JSON.stringify(hand.ast)) {
-        diffs.push(
-          `${id}: AST differs\n  grammar ${JSON.stringify(ref.ast)}\n  parser  ${JSON.stringify(hand.ast)}`
-        );
-      }
-    }
-    process.stdout.write(`c4-beta grammar sentences: ${accepted} of ${SENTENCES} accepted\n`);
-    expect(accepted).toBeGreaterThan(SENTENCES / 2);
-    expect(diffs.slice(0, 30)).toEqual([]);
+    await checkSentences({
+      name: 'c4-beta',
+      parser: referenceParser(),
+      model,
+      reference: referenceVerdict,
+      handWritten: handWrittenVerdict,
+    });
   }, 600_000);
 });
