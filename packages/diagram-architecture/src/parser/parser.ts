@@ -41,8 +41,14 @@ import type {
 } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import { RuleParser } from '@mermaid-js/shared/parser/rule';
-import type { RuleGrammar } from '@mermaid-js/shared/parser/rule';
+import {
+  accessibilityAsName,
+  RuleParser,
+  TITLE_STATEMENT,
+  textValue,
+  withoutIndent,
+} from '@mermaid-js/shared/parser/rule';
+import type { RuleGrammar, TextValues } from '@mermaid-js/shared/parser/rule';
 import { STOP } from '@mermaid-js/shared/parser/support';
 import type { ArchitectureModel, ArchitectureSide } from '../model.ts';
 import type {
@@ -56,22 +62,14 @@ import type {
   ArchitectureServiceNode,
   ArchitectureStatementNode,
   ArchitectureText,
-  ArchitectureTextNode,
 } from './ast.ts';
-import {
-  accDescrValue,
-  accTitleValue,
-  iconValue,
-  labelValue,
-  stringValue,
-  titleValue,
-} from './convert.ts';
+import { iconValue, labelValue, stringValue } from './convert.ts';
 import { lex } from './lexer.ts';
 import { checkLimits } from './limits.ts';
 import type { ArchitectureLimitOptions } from './limits.ts';
 import { normalise } from './normalise.ts';
 import type { Registered } from './normalise.ts';
-import { ARCHITECTURE_TRIVIA, T } from './tokens.ts';
+import { ARCHITECTURE_TRIVIA, T, TEXT_STATEMENTS } from './tokens.ts';
 
 export interface ArchitectureParseOptions extends ParseOptions, ArchitectureLimitOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
@@ -79,15 +77,6 @@ export interface ArchitectureParseOptions extends ParseOptions, ArchitectureLimi
 }
 
 export type ArchitectureParseResult = ParseResult<ArchitectureModel, ArchitectureDocument>;
-
-/** `title …`, `accTitle: …` and `accDescr …` by token kind: AST type and keyword. */
-const TEXT_STATEMENTS: Readonly<
-  Partial<Record<number, { type: ArchitectureTextNode['type']; word: string }>>
-> = {
-  [T.Title]: { type: 'Title', word: 'title' },
-  [T.AccTitle]: { type: 'AccTitle', word: 'accTitle' },
-  [T.AccDescr]: { type: 'AccDescr', word: 'accDescr' },
-};
 
 /** A kind no token has: "an edge" in messages, where the parser tests for an `ID`. */
 const EDGE = -100;
@@ -248,10 +237,8 @@ class ArchitectureParser extends RuleParser<PreprocessResult> {
   /** Ids declared by a statement with a syntax error. */
   private readonly broken = new Set<string>();
   /** The last in-text value of each (v12's Langium assignments: the last one wins). */
-  private title = '';
+  private readonly texts: TextValues = { title: '', accTitle: '', accDescr: '' };
   private titleAstId: AstId | undefined;
-  private accTitle = '';
-  private accDescr = '';
 
   constructor(
     src: string,
@@ -376,20 +363,8 @@ class ArchitectureParser extends RuleParser<PreprocessResult> {
   private accessibilityName(where: Range): void {
     const word = this.raw();
     if (word !== 'accDescr' && word !== 'accTitle') return;
-    if (word === 'accDescr' && /^\s*\{/.test(this.src.slice(where.end))) {
-      this.st.diagnostics.error(
-        'UNCLOSED_ACC_DESCR',
-        `Unclosed accessible description: the \`accDescr {\` at line ${this.lineOf(where.start)} has no closing \`}\`. Write \`accDescr { … }\` or \`accDescr: …\`.`,
-        where
-      );
-      throw STOP;
-    }
-    this.st.diagnostics.error(
-      'UNEXPECTED',
-      `Expected \`:\` after \`${word}\`; write it as \`${word}: …\`${word === 'accDescr' ? ' or `accDescr { … }`' : ''}.`,
-      where,
-      { expected: ['`:`'] }
-    );
+    const block = word === 'accDescr' && /^\s*\{/.test(this.src.slice(where.end));
+    accessibilityAsName(this.st.diagnostics, word, block, this.lineOf(where.start), where);
     throw STOP;
   }
 
@@ -753,14 +728,10 @@ class ArchitectureParser extends RuleParser<PreprocessResult> {
   private text(k: number): void {
     const j = this.i++;
     const image = this.raw(j);
-    const { type, word } = TEXT_STATEMENTS[k] ?? { type: 'Title', word: 'title' };
-    const range = this.range(j);
-    while (range.start < range.end && /[\t ]/.test(this.src[range.start] ?? '')) range.start++;
+    const { type, word } = TEXT_STATEMENTS[k] ?? TITLE_STATEMENT;
+    const range = withoutIndent(this.src, this.range(j));
     this.eol();
-    let text: string;
-    if (type === 'Title') text = this.title = titleValue(image);
-    else if (type === 'AccTitle') text = this.accTitle = accTitleValue(image);
-    else text = this.accDescr = accDescrValue(image);
+    const text = (this.texts[word] = textValue(type, image));
     const id = this.id(word);
     if (type === 'Title') this.titleAstId = id;
     this.children.push({ id, type, range, text });
@@ -779,10 +750,10 @@ class ArchitectureParser extends RuleParser<PreprocessResult> {
         edges: this.edges,
         alignments: this.alignments,
         broken: this.broken,
-        title: this.title,
+        title: this.texts.title,
         titleAstId: this.titleAstId,
-        accTitle: this.accTitle,
-        accDescr: this.accDescr,
+        accTitle: this.texts.accTitle,
+        accDescr: this.texts.accDescr,
         frontMatterTitle: this.pre.frontMatter?.title,
       },
       diagnostics
