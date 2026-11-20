@@ -93,6 +93,12 @@ const leftOf =
   (size: Sizer, s: number): Sizer =>
   (tw, th, p) => ({ ...size(tw, th, p), dx: -s });
 
+const braceSideSize: Sizer = (tw, th, p) => ({
+  w: tw + (classic(p) ? classicPad(p) : 2 * (p.node.x + 2)),
+  h: th + (classic(p) ? p.node.y : 2 * p.node.y),
+  dy: 0,
+});
+
 /**
  * Three layers, back to front, each `s` further left and down: layer `i` covers x from
  * `-W/2 + (2-i)s` to `W/2 - i s` and y from `-H/2 + i s` to `H/2 - (2-i)s - drop` (`drop`: how
@@ -540,11 +546,7 @@ export const braceLeft: Shape = {
 
 export const braceRight: Shape = {
   bare: true,
-  size: (tw, th, p) => ({
-    w: tw + (classic(p) ? classicPad(p) : 2 * (p.node.x + 2)),
-    h: th + (classic(p) ? p.node.y : 2 * p.node.y),
-    dy: 0,
-  }),
+  size: braceSideSize,
   draw: (w, W, H, _a, line) => {
     centred(w, W, H, NONE);
     brace(w, W / 2 - 12, H, 1, line);
@@ -553,11 +555,7 @@ export const braceRight: Shape = {
 
 export const braces: Shape = {
   bare: true,
-  size: (tw, th, p) => ({
-    w: tw + (classic(p) ? classicPad(p) : 2 * (p.node.x + 2)),
-    h: th + (classic(p) ? p.node.y : 2 * p.node.y),
-    dy: 0,
-  }),
+  size: braceSideSize,
   draw: (w, W, H, _a, line) => {
     centred(w, W, H, NONE);
     brace(w, -W / 2 + 12, H, -1, line);

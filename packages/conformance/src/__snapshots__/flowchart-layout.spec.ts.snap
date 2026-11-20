@@ -100,6 +100,8 @@ exports[`layered over parser-produced flowchart graphs > lays out every corpus g
   "flowchart/baseline/shapes/person.mmd": 0,
   "flowchart/baseline/shapes/rect.mmd": 0,
   "flowchart/baseline/shapes/rounded.mmd": 0,
+  "flowchart/baseline/shapes/sizing-classic.mmd": 0,
+  "flowchart/baseline/shapes/sizing-redux.mmd": 0,
   "flowchart/baseline/shapes/sl-rect.mmd": 0,
   "flowchart/baseline/shapes/sm-circ.mmd": 0,
   "flowchart/baseline/shapes/st-rect.mmd": 0,
