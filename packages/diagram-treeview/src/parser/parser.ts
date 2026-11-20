@@ -75,8 +75,6 @@ import { normalise } from './normalise.ts';
 import { HEADER, T } from './tokens.ts';
 
 export interface TreeViewParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** The integrator's cap on nodes (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
   maxNodes?: number;
   /** How deep a node may sit under a top one (core `DEFAULT_LIMITS.maxDepth` when absent). */

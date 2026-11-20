@@ -66,8 +66,6 @@ import type { Lexed } from './lexer.ts';
 import { T } from './tokens.ts';
 
 export interface IshikawaParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /**
    * One `info` `ISHIKAWA_INDENT_CLAMPED` at each clamped cause, in place of the one warning
    * listing them all (D496): what an editor shows (spec #519 "Language facet").

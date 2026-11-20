@@ -53,8 +53,6 @@ import { SankeyKind as T } from './tokens.ts';
 import { drawable, invalidity, readValue, trailingTextMessage, type ReadValue } from './values.ts';
 
 export interface SankeyParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** The integrator's node cap (R-SEC-5): one `NODE_LIMIT` error past it. None when absent. */
   maxNodes?: number;
   /** The integrator's link cap (R-SEC-5): one `EDGE_LIMIT` error past it. None when absent. */

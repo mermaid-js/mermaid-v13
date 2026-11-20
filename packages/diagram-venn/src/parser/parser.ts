@@ -90,8 +90,6 @@ import { warnVenn } from './warnings.ts';
 import type { Sourced } from './warnings.ts';
 
 export interface VennParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /**
    * The editor's diagnostics (the language facet, #498): `VENN_UNKNOWN_TARGET` once per id a
    * `text` or `style` names that nothing declares (once per statement naming an undeclared

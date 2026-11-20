@@ -115,8 +115,6 @@ import {
 import { T } from './tokens.ts';
 
 export interface RequirementParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /**
    * Entries `style`, `class` and `classDef` statements may add to boxes and classes before
    * the model records the overflow (`styleCopies`, D433); default `MAX_STYLE_COPIES`.

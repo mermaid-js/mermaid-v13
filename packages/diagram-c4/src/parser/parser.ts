@@ -76,10 +76,7 @@ import { SLOT_TABLES } from './slots.ts';
 import type { SlotTable } from './slots.ts';
 import { HEADERS, T } from './tokens.ts';
 
-export interface C4ParseOptions extends ParseOptions, C4LimitOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-}
+export interface C4ParseOptions extends ParseOptions, C4LimitOptions {}
 
 export type C4ParseResult = ParseResult<C4Model, C4Document>;
 

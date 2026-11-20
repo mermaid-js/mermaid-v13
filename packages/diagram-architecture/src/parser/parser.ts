@@ -71,10 +71,7 @@ import { normalise } from './normalise.ts';
 import type { Registered } from './normalise.ts';
 import { ARCHITECTURE_TRIVIA, T, TEXT_STATEMENTS } from './tokens.ts';
 
-export interface ArchitectureParseOptions extends ParseOptions, ArchitectureLimitOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-}
+export interface ArchitectureParseOptions extends ParseOptions, ArchitectureLimitOptions {}
 
 export type ArchitectureParseResult = ParseResult<ArchitectureModel, ArchitectureDocument>;
 

@@ -36,8 +36,6 @@ import { build } from './tree.ts';
 import type { Draft } from './tree.ts';
 
 export interface RailroadParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /**
    * The notation to read the text as; by default the one its header names (`detectRailroad`),
    * IR when it names none.

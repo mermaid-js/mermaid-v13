@@ -56,8 +56,6 @@ import { classWords, FIRST_LINE, isBlockData, isLineBreak } from './text.ts';
 import { T } from './tokens.ts';
 
 export interface KanbanParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** Item cap, columns and cards together (core `DEFAULT_LIMITS.maxNodes`, R-SEC-5). */
   maxNodes?: number;
 }

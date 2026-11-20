@@ -70,8 +70,6 @@ import { lex } from './lexer.ts';
 import { CYNEFIN_TRIVIA, T } from './tokens.ts';
 
 export interface CynefinParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** The integrator's cap on items (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
   maxNodes?: number;
   /** The integrator's cap on transitions (core `DEFAULT_LIMITS.maxEdges` when absent). */

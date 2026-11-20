@@ -56,8 +56,6 @@ import { lex } from './lexer.ts';
 import { GITGRAPH_TRIVIA, T } from './tokens.ts';
 
 export interface GitGraphParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** `gitGraph.mainBranchName`: the branch that exists before the first statement. */
   mainBranchName?: string;
   /** `gitGraph.mainBranchOrder`: its place among the branches. */
