@@ -7,7 +7,12 @@
 import type { RadarModel } from '../model.ts';
 import { RADAR_METRICS, RADAR_SLOTS } from './metrics.ts';
 import type { Point, RadarLayout, Rect } from './types.ts';
-import { EPS, nonFinite as finite } from '@mermaid-js/shared/testing/layout-invariants';
+import {
+  EPS,
+  nonFinite as finite,
+  rectInside,
+  rectsOverlap,
+} from '@mermaid-js/shared/testing/layout-invariants';
 
 const TAU = 2 * Math.PI;
 
@@ -90,14 +95,7 @@ export function radarLayoutViolations(model: RadarModel, layout: RadarLayout): s
 
   // Everything drawn inside the bounds (D354).
   const inside = (r: Rect, what: string): void => {
-    const b = layout.bounds;
-    if (
-      r.x < b.x - tol ||
-      r.y < b.y - tol ||
-      r.x + r.width > b.x + b.width + tol ||
-      r.y + r.height > b.y + b.height + tol
-    )
-      out.push(`${what} is outside the bounds`);
+    if (!rectInside(r, layout.bounds, tol)) out.push(`${what} is outside the bounds`);
   };
   const discBox = (c: Point, r: number): Rect => ({
     x: c.x - r,
@@ -154,14 +152,9 @@ function legendViolations(
   });
 
   // No legend row meets an axis label (D614, #846): touching edges are clear.
-  const meets = (a: Rect, b: Rect): boolean =>
-    a.x < b.x + b.width - tol &&
-    b.x < a.x + a.width - tol &&
-    a.y < b.y + b.height - tol &&
-    b.y < a.y + a.height - tol;
   for (const r of legend)
     for (const s of spokes)
-      if (meets(r.swatch, s.label) || meets(r.label, s.label))
+      if (rectsOverlap(r.swatch, s.label, tol) || rectsOverlap(r.label, s.label, tol))
         out.push(`legend row ${r.index} meets spoke ${s.index}'s label`);
 }
 
