@@ -41,6 +41,7 @@ import {
   sourceView,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
+import { trimmed } from '@mermaid-js/shared/parser/facet';
 import { STOP } from '@mermaid-js/shared/parser/support';
 import type {
   ParseOptions,
@@ -372,14 +373,6 @@ class C4Parser {
       if (k !== Kind.Comment && k !== Kind.Directive) return k;
     }
     return Kind.EOF;
-  }
-
-  /** `r` without the blanks at its ends (by the source). */
-  private trimmed(r: Range): Range {
-    let { start, end } = r;
-    while (start < end && /\s/.test(this.src.charAt(start))) start++;
-    while (end > start && /\s/.test(this.src.charAt(end - 1))) end--;
-    return { start, end };
   }
 
   /**
@@ -761,7 +754,7 @@ class C4Parser {
         out.push(this.unquoted());
         c.next();
       } else if (k === T.AttributeEmpty) {
-        out.push({ value: '', range: this.trimmed(c.range) });
+        out.push({ value: '', range: trimmed(this.src, c.range) });
         c.next();
       } else if (k === T.QuoteOpen) out.push(this.quoted());
       else if (k === T.KeyStart) out.push(this.named());
@@ -774,7 +767,7 @@ class C4Parser {
   /** An unquoted argument (the current token); a `"` in it is warned about (#681). */
   private unquoted(): Arg {
     const { cursor: c } = this;
-    const arg = { value: this.text(c.pos).trim(), range: this.trimmed(c.range) };
+    const arg = { value: this.text(c.pos).trim(), range: trimmed(this.src, c.range) };
     if (arg.value.includes('"')) this.quoteInArgument(arg.range);
     return arg;
   }
