@@ -35,13 +35,14 @@
  * the later statements of a merged one, and `style:<n>` for the n-th `Update…` statement. Each
  * model item carries its first statement's id.
  */
+import type { Dir } from '@mermaid-js/core/layout';
 import type { AstId, Diagnostic } from '@mermaid-js/core/parser-kit';
 
 /** The five headers. */
 export type C4Type = 'C4Context' | 'C4Container' | 'C4Component' | 'C4Dynamic' | 'C4Deployment';
 
 /** A fill order (#730): a line of members is a row in TB and BT, a column in LR and RL. */
-export type C4Direction = 'TB' | 'BT' | 'LR' | 'RL';
+export type C4Direction = Dir;
 
 /**
  * The ten base element kinds, each with an `external_` twin (v12 `C4_ELEMENT_TYPES`): the one

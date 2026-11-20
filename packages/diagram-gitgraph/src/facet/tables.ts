@@ -2,20 +2,16 @@
  * The gitGraph facet's completion tables and shared helpers (DESIGN §4.5, D95). Keyword docs
  * are not here: they come from the grammar file (`generated/docs.ts`).
  */
-import type { CompletionKind } from '@mermaid-js/core/parser-kit';
+import type { TypedKeywordItem } from '@mermaid-js/shared/parser/facet';
 import { T } from '../parser/tokens.ts';
 export { lineBefore } from '@mermaid-js/shared/parser/facet';
 export { span } from '@mermaid-js/shared/parser/facet';
 export { code } from '@mermaid-js/shared/parser/facet';
 
 /** An item offered when the parser expects `kind`. */
-export interface KeywordItem {
-  readonly kind: number;
-  readonly label: string;
-  readonly item: CompletionKind;
+export interface KeywordItem extends TypedKeywordItem {
   /** What follows the label when the text after it holds no blank (`branch `, `id: `). */
   readonly separator?: string;
-  readonly detail?: string;
 }
 
 /** The header, offered where the parser expects it (an empty text). */

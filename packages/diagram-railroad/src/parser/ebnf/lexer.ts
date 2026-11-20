@@ -58,7 +58,7 @@ export function lexEbnf(src: string, from: number, view: SourceView): TokenStrea
 }
 
 class EbnfLexer extends RailroadLexer {
-  protected scan(p: number, c: number): number {
+  protected scan(p: number, c = this.text.charCodeAt(p)): number {
     if (isIdStart(c)) {
       const e = this.header('railroad-ebnf-beta', p);
       if (e >= 0) return e;

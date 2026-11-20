@@ -63,14 +63,3 @@ export const corners = (r: Rect): [Point, Point] => [
   { x: r.x, y: r.y },
   { x: r.x + r.width, y: r.y + r.height },
 ];
-
-/** `p` is inside `r`, within `eps`. */
-export const inside = (p: Point, r: Rect, eps: number): boolean =>
-  p.x >= r.x - eps && p.y >= r.y - eps && p.x <= r.x + r.width + eps && p.y <= r.y + r.height + eps;
-
-/** `a` and `b` overlap by more than `eps` both ways. */
-export const overlaps = (a: Rect, b: Rect, eps: number): boolean =>
-  a.x < b.x + b.width - eps &&
-  b.x < a.x + a.width - eps &&
-  a.y < b.y + b.height - eps &&
-  b.y < a.y + a.height - eps;

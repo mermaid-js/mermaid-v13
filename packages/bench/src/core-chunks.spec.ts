@@ -27,6 +27,13 @@ import { closureSize, flowchartClosureSize } from './size-budget.ts';
  * minifier-name noise. One more shared chunk costs about 300–450 B.
  */
 const ROW_ALLOWANCE = 64;
+/**
+ * Loaded growth for a stub that imports only `@mermaid-js/core/parser-kit`, gzip bytes. Since
+ * #1066 every parser that loads the lazy parser-kit modules also loads
+ * `shared/parser/support.ts`, so esbuild ships them in one chunk; the stub splits it again
+ * (measured 215 B).
+ */
+const PARSER_KIT_LOADED_ALLOWANCE = 240;
 
 const ENTRY = fileURLToPath(new URL('../../mermaid/src/cdn.ts', import.meta.url));
 const REGISTRY = fileURLToPath(
@@ -182,16 +189,19 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
     expect(file.inputs.every(isCompass)).toBe(true);
   });
 
-  // #818 (D559): `@mermaid-js/shared/parser/common-values` is a lazy chunk of its own, loaded by
-  // the diagrams ported from a langium grammar and by no other diagram.
-  it('keeps the common.langium value readers in a lazy chunk of their own', () => {
+  // #818 (D559): `@mermaid-js/shared/parser/common-values` is lazy, out of core, and loaded by the
+  // diagrams ported from a langium grammar and by no other diagram. Since #1066 every one of them
+  // loads `@mermaid-js/shared/parser/rule` too, so esbuild puts the readers in the rule chunk.
+  it('keeps the common.langium value readers lazy, in the rule chunk', () => {
     const isValues = (input: string) => input.endsWith('shared/src/parser/common-values.ts');
+    const isRuleFamily = (input: string) =>
+      isValues(input) || /shared\/src\/parser\/rule(?:-[a-z]+)?\.ts$/.test(input);
     expect(coreModules(stable).filter(isValues)).toEqual([]);
     const files = Object.entries(stable.bundle.graph).filter(([, f]) => f.inputs.some(isValues));
     expect(files).toHaveLength(1);
     const [path, file] = files[0]!;
     expect(coreFiles(stable)).not.toContain(path);
-    expect(file.inputs.every(isValues)).toBe(true);
+    expect(file.inputs.every(isRuleFamily)).toBe(true);
     expect(diagramsLoading(stable, path)).toEqual(
       [
         'architecture',
@@ -215,7 +225,7 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
     expect(next.files, 'core files').toBe(stable.files);
     expect(next.core - stable.core, 'core growth, gzip bytes').toBeLessThanOrEqual(ROW_ALLOWANCE);
     expect(next.loaded - stable.loaded, 'loaded growth, gzip bytes').toBeLessThanOrEqual(
-      ROW_ALLOWANCE
+      s === 'parser-kit only' ? PARSER_KIT_LOADED_ALLOWANCE : ROW_ALLOWANCE
     );
   });
 

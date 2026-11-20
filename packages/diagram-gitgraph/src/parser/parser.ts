@@ -270,13 +270,6 @@ class GitGraphParser extends RuleParser<PreprocessResult> {
 
   // ---- tokens -------------------------------------------------------------------------
 
-  /** `base@2`, `base@3`, … for the second and later mentions of `base`. */
-  private mention(base: string): AstId {
-    const n = (this.mentions.get(base) ?? 0) + 1;
-    this.mentions.set(base, n);
-    return n === 1 ? base : `${base}@${n}`;
-  }
-
   /** `base#k`: the k-th id handed out for `base`. */
   private ordinal(base: string): AstId {
     const n = (this.ordinals.get(base) ?? 0) + 1;
@@ -296,9 +289,8 @@ class GitGraphParser extends RuleParser<PreprocessResult> {
   /** Report what was found where one of `want` was expected, then stop the statement. */
   protected fail(want: readonly number[], hint?: string): never {
     const { st } = this;
-    const where = this.range();
     // `title` and the accessibility tokens take the blanks before them.
-    while (where.start < where.end && /[\t ]/.test(this.src[where.start] ?? '')) where.start++;
+    const where = withoutIndent(this.src, this.range());
     if (this.kind() === Kind.Error) this.badCharacters(where);
     st.diagnostics.unexpected(
       'UNEXPECTED',
@@ -484,7 +476,8 @@ class GitGraphParser extends RuleParser<PreprocessResult> {
     this.tested(TYPES);
     const k = this.kind();
     if (!TYPES.includes(k)) this.fail(TYPES);
-    return WRITTEN_TYPES[this.raw(this.i++)] ?? 'NORMAL';
+    // The kind check above leaves only `NORMAL`, `REVERSE` and `HIGHLIGHT`, all in the table.
+    return WRITTEN_TYPES[this.raw(this.i++)]!;
   }
 
   /** `Commit: "commit" ("id:" STRING | "msg:"? STRING | "tag:" STRING | "type:" type)* EOL` */
@@ -514,7 +507,7 @@ class GitGraphParser extends RuleParser<PreprocessResult> {
     }
     const range = { start: keyword.start, end: this.lastEnd() };
     this.eol(T.Commit, COMMIT_OPTIONS);
-    const astId = commitId?.value ? this.mention(`c:${esc(commitId.value)}`) : this.ordinal('c');
+    const astId = commitId?.value ? this.id(`c:${esc(commitId.value)}`) : this.ordinal('c');
     const node: GitCommitNode = {
       id: astId,
       type: 'Commit',
@@ -551,7 +544,7 @@ class GitGraphParser extends RuleParser<PreprocessResult> {
     const range = { start: keyword.start, end: this.lastEnd() };
     this.eol(T.Branch, order === undefined ? [T.Order] : []);
     const base = `b:${esc(name.value)}`;
-    const id = this.mention(base);
+    const id = this.id(base);
     this.children.push({
       id,
       type: 'Branch',

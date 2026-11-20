@@ -1,5 +1,5 @@
 export { layoutRequirement, type RequirementLayout } from './layout.ts';
-export type { RequirementLayoutWarning, RequirementRenderContext } from './context.ts';
+export type { RequirementRenderContext } from './context.ts';
 export type {
   BoxMeasures,
   BoxView,

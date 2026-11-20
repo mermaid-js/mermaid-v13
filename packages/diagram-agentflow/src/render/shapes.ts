@@ -16,6 +16,7 @@
 import type { Attrs, SafeValue, SvgWriter } from '@mermaid-js/core/svg';
 import { lines, RULE, wave, WAVE } from '@mermaid-js/shared/shapes/kit';
 import {
+  AGENTFLOW_METRICS,
   cornerRadius,
   sharedShape,
   type LayoutShape,
@@ -99,10 +100,9 @@ export function drawCardTrim(
   W: number,
   H: number,
   separator: Attrs,
-  dots: Attrs,
-  g: ShapeGeometry
+  dots: Attrs
 ): void {
-  const m = g.metrics.card;
+  const m = AGENTFLOW_METRICS.card;
   const sy = H / 2 - m.pad - m.row;
   w.outline('divider', 'line', {
     class: 'collapsed-separator',
