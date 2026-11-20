@@ -1,6 +1,6 @@
 import type { DiagramParseContext, DiagramPlugin } from '@mermaid-js/core';
 import type { SvgWriter } from '@mermaid-js/core/svg';
-import { resolveLimits, type Limits } from '@mermaid-js/core/limits';
+import { resolveLimits } from '@mermaid-js/core/limits';
 import { layoutClass, type ClassLayout } from './layout/index.ts';
 import { detectClass, parseClass } from './parser/index.ts';
 import type { ClassModel, ClassParseResult } from './parser/index.ts';
@@ -9,10 +9,6 @@ import { renderClass } from './render/render.ts';
 import { configDefaults } from './config-defaults.ts';
 import { classLabels } from './labels.ts';
 import { theme } from './theme/table.ts';
-
-/** The pipeline's limits, or the ones the integrator config implies (`maxEdges`). */
-const limits = (ctx: DiagramParseContext): Readonly<Limits> =>
-  ctx.limits ?? resolveLimits(ctx.config);
 
 /**
  * The class diagram plugin (DESIGN §12.1). Its id is its config section, `class`. `parse` takes
@@ -28,7 +24,7 @@ export const classDiagram = {
   configDefaults: configDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectClass(text) !== undefined,
   parse: (text: string, ctx: DiagramParseContext): ClassParseResult => {
-    const caps = limits(ctx);
+    const caps = ctx.limits ?? resolveLimits(ctx.config);
     return parseClass(text, {
       preprocessed: ctx.preprocessed,
       maxEdges: caps.maxEdges,
