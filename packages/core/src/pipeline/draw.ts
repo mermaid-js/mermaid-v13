@@ -28,8 +28,16 @@ export interface Drawn {
 /** What {@link drawDiagram} needs to run extension hooks. */
 export interface DrawHooks {
   readonly run: HookRun;
-  /** The parse result's AST, handed to `postParse`. */
-  readonly ast: AstNode;
+  /**
+   * The full parse's AST, handed to `postParse`: given whenever an extension has that hook
+   * (`HookRunner.readsAst`). A lean parse has none, and then no `postParse` runs.
+   */
+  readonly ast?: AstNode;
+}
+
+/** `postParse` on the AST (DESIGN §12.2): only data for the hooks, never for the drawing. */
+function postParse(hooks: DrawHooks | undefined): void {
+  if (hooks?.ast) hooks.run.postParse(hooks.ast);
 }
 
 // The root's viewBox is `0 0 W H` (DESIGN §7.2).
@@ -66,8 +74,7 @@ export function drawDiagram<M, L>(
   let svg: string;
   try {
     const run = hooks?.run;
-    // The AST is data for hooks only; the renderer draws the model (DESIGN §12.2).
-    if (run && hooks) run.postParse(hooks.ast);
+    postParse(hooks);
     let t = stageStart();
     const layout = laidOut(plugin, model, ctx, run);
     stageEnd('layout', t);
@@ -78,9 +85,11 @@ export function drawDiagram<M, L>(
     const outline = run?.outline();
     // Read only when a renderer asks for a user-space gradient (D391).
     const idPrefix = () => ctx.idPrefix;
+    // `ctx.dataAst: false` drops `data-ast` from what the plugin writes (R-PARSE-8).
+    const dataAst = ctx.dataAst !== false;
     const options = outline
-      ? { gradient, idPrefix, outline: outline.draw }
-      : { gradient, idPrefix };
+      ? { gradient, idPrefix, dataAst, outline: outline.draw }
+      : { gradient, idPrefix, dataAst };
     if (run?.editsTree) {
       const w = edges(treeWriter(options));
       plugin.render(model, layout, ctx, w);
@@ -138,7 +147,7 @@ export function drawText<M, L>(
 ): string {
   let text: string;
   try {
-    if (hooks?.run) hooks.run.postParse(hooks.ast);
+    postParse(hooks);
     const run = hooks?.run;
     let t = stageStart();
     const layout = laidOut(plugin, model, ctx, run);

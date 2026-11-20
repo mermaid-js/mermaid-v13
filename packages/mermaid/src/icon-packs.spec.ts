@@ -28,7 +28,7 @@ function icons(log: string[]): ExtensionPlugin {
       provides: [],
       missing(parse, { iconPacks, format }) {
         if (format !== 'svg') return [];
-        return named(JSON.stringify(parse.ast), iconPacks.names())
+        return named(JSON.stringify(parse.model), iconPacks.names())
           .filter((name) => iconPacks.state(name) !== 'ready')
           .map((name) => ({ kind: 'iconPack', name }) as const);
       },

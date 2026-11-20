@@ -10,7 +10,10 @@ import { describe, expect, it } from 'vitest';
 import { defaultIdPrefix, optionsKey } from './config-snapshot.ts';
 import { createMermaid } from './index.ts';
 
-/** The keys of the old literal, in its order; text output appends its own after them. */
+/**
+ * The keys of the old literal, in its order, with `dataAst` (#839) after `limits`; text output
+ * appends its own after them.
+ */
 const OLD_KEYS = [
   'config',
   'measurer',
@@ -21,6 +24,7 @@ const OLD_KEYS = [
   'version',
   'linkSchemes',
   'limits',
+  'dataAst',
   'now',
   'availableWidth',
   'iconPacks',
