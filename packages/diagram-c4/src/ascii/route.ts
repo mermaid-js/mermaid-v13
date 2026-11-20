@@ -6,7 +6,7 @@
 // along a frame and a run along another line cost extra, so lines keep few corners and their own
 // lanes. Every search is charged to a budget (R-SEC-5); past it, or with no way through, the line
 // is the routed points stepped as they are (the guide the search follows).
-import { DX, DY, opposite, type CellRect, type Dir } from '@mermaid-js/core/ascii';
+import { DX, DY, Heap, opposite, type CellRect, type Dir } from '@mermaid-js/core/ascii';
 import { cellsOf } from '@mermaid-js/shared/ascii';
 import { sameCell, type Cell, type CellSet } from './grid.ts';
 
@@ -90,57 +90,6 @@ function guideDistance(x: number, y: number, guide: readonly Cell[]): number {
   return best;
 }
 
-/** A binary min-heap of keys by cost, ties by key (so the search is deterministic). */
-class Heap {
-  private readonly costs: number[] = [];
-  private readonly keys: number[] = [];
-
-  get size(): number {
-    return this.keys.length;
-  }
-
-  private less(i: number, j: number): boolean {
-    const a = this.costs[i]!;
-    const b = this.costs[j]!;
-    return a < b || (a === b && this.keys[i]! < this.keys[j]!);
-  }
-
-  private swap(i: number, j: number): void {
-    [this.costs[i], this.costs[j]] = [this.costs[j]!, this.costs[i]!];
-    [this.keys[i], this.keys[j]] = [this.keys[j]!, this.keys[i]!];
-  }
-
-  push(cost: number, key: number): void {
-    this.costs.push(cost);
-    this.keys.push(key);
-    for (let i = this.keys.length - 1; i > 0; ) {
-      const up = (i - 1) >> 1;
-      if (!this.less(i, up)) break;
-      this.swap(i, up);
-      i = up;
-    }
-  }
-
-  pop(): number {
-    const top = this.keys[0]!;
-    const last = this.keys.length - 1;
-    this.swap(0, last);
-    this.costs.pop();
-    this.keys.pop();
-    for (let i = 0; ; ) {
-      const l = 2 * i + 1;
-      const r = l + 1;
-      let m = i;
-      if (l < last && this.less(l, m)) m = l;
-      if (r < last && this.less(r, m)) m = r;
-      if (m === i) break;
-      this.swap(i, m);
-      i = m;
-    }
-    return top;
-  }
-}
-
 /** A step of the search: onto cell (x, y), going `d`. */
 interface Step {
   readonly x: number;
@@ -181,7 +130,8 @@ function search(req: RouteRequest, field: RouteField, budget: RouteBudget): Cell
   const cost = new Map<number, number>();
   const parent = new Map<number, number>();
   const closed = new Set<number>();
-  const open = new Heap();
+  // Equal costs come out by key, so the search is deterministic.
+  const open = new Heap('item');
   const first = keyOf(start.x, start.y, opposite(req.startInto));
   cost.set(first, 0);
   open.push(remaining(start.x, start.y), first);
