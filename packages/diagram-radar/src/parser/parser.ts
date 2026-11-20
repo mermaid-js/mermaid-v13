@@ -62,8 +62,6 @@ import { lex } from './lexer.ts';
 import { PREFIX_KEYWORDS, RADAR_TRIVIA, T, TEXT_STATEMENTS } from './tokens.ts';
 
 export interface RadarParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** The integrator's cap on axes and curves (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
   maxNodes?: number;
 }

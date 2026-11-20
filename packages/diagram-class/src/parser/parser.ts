@@ -14,7 +14,6 @@ import { Kind, inKindSet, isLineEnd, isSpace, nodeId } from '@mermaid-js/core/pa
 import type { ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { LIMIT_CODES, checkLimit } from '@mermaid-js/core/limits';
 import type { Limits } from '@mermaid-js/core/limits';
-import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type {
   ClassAnnotationStmt,
   ClassDocument,
@@ -78,8 +77,6 @@ import type { Frame, Name } from './tables.ts';
 export interface ClassParseOptions
   extends ParseOptions,
     Partial<Pick<Limits, 'maxEdges' | 'maxNodes' | 'maxDepth'>> {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** Features claimed by extension plugins; `callbacks` silences `CALLBACK_IGNORED`. */
   claims?: readonly string[];
 }

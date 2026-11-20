@@ -57,8 +57,6 @@ import {
 import { eventModelingView } from './view.ts';
 
 export interface EventModelParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** The integrator's cap on frames (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
   maxNodes?: number;
   /** The integrator's cap on relations (a frame's sources) (core `DEFAULT_LIMITS.maxEdges` when absent). */

@@ -39,7 +39,7 @@ import { excerpt, lineTokens } from '@mermaid-js/shared/parser/line-tokens';
 import type { LineTokenView } from '@mermaid-js/shared/parser/line-tokens';
 import { STOP } from '@mermaid-js/shared/parser/support';
 import { textProbeMode } from '@mermaid-js/shared/parser/rule';
-import type { TextStatement as SharedTextStatement } from '@mermaid-js/shared/parser/rule';
+import type { TextStatement } from '@mermaid-js/shared/parser/rule';
 import type {
   AstId,
   Diagnostic,
@@ -75,8 +75,6 @@ import { normalise } from './normalise.ts';
 import { HEADER, T } from './tokens.ts';
 
 export interface TreeViewParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** The integrator's cap on nodes (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
   maxNodes?: number;
   /** How deep a node may sit under a top one (core `DEFAULT_LIMITS.maxDepth` when absent). */
@@ -116,13 +114,13 @@ const AFTER_BLANK = [...NAME, ...TEXT];
  */
 const PROBE_FOLLOWS = /* @__PURE__ */ kindSet(T.Indentation, T.QuotedName, T.IconAnnotation);
 
-/** A text statement: its AST type, its keyword and its value conversion. */
-interface TextStatement extends SharedTextStatement {
+/** A text statement with its value conversion. */
+interface ConvertedTextStatement extends TextStatement {
   readonly value: (image: string) => string;
 }
 
 /** Each text statement by its token kind. */
-const TEXT_STATEMENTS: Readonly<Partial<Record<number, TextStatement>>> = {
+const TEXT_STATEMENTS: Readonly<Partial<Record<number, ConvertedTextStatement>>> = {
   [T.Title]: { type: 'Title', word: TITLE, value: titleValue },
   [T.AccTitle]: { type: 'AccTitle', word: ACC_TITLE, value: accTitleValue },
   [T.AccDescr]: { type: 'AccDescr', word: ACC_DESCR, value: accDescrValue },
@@ -469,7 +467,7 @@ class TreeViewParser {
   }
 
   /** `(ACC_DESCR | ACC_TITLE | TITLE)`: the last of each wins; only before the first node. */
-  private textStatement({ type, word, value }: TextStatement): void {
+  private textStatement({ type, word, value }: ConvertedTextStatement): void {
     if (this.started) this.lateText(word);
     const j = this.i++;
     const image = this.text(j);

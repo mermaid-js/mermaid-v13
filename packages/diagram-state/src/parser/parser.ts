@@ -95,10 +95,7 @@ import { T } from './tokens.ts';
  */
 export interface StateParseOptions
   extends ParseOptions,
-    Partial<Pick<Limits, 'maxEdges' | 'maxNodes' | 'maxDepth'>> {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-}
+    Partial<Pick<Limits, 'maxEdges' | 'maxNodes' | 'maxDepth'>> {}
 
 export type StateParseResult = ParseResult<StateModel, StateDocument>;
 

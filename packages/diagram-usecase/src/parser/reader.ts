@@ -44,10 +44,7 @@ import { EXPECTED, KEYWORD_LINE, LINE_END, PROBE_FOLLOWS, WORD_KINDS } from './t
 import { shown } from './text.ts';
 import { LABEL_TEXT, T } from './tokens.ts';
 
-export interface UsecaseParseOptions extends ParseOptions, UsecaseLimitOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-}
+export interface UsecaseParseOptions extends ParseOptions, UsecaseLimitOptions {}
 
 /**
  * Thrown inside the parser after a diagnostic is recorded; caught at statement level, which

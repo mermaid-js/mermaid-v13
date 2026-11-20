@@ -41,8 +41,6 @@ import { lex } from './lexer.ts';
 import { PACKET_TRIVIA, T } from './tokens.ts';
 
 export interface PacketParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /**
    * The resolved `packet` config section (`ctx.config.packet`): rows are split at
    * `bitsPerRow`, and invalid lengths fall back with a warning (D342). Defaults when absent.
