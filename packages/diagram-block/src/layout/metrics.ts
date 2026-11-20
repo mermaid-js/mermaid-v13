@@ -28,8 +28,6 @@ export interface BlockMetrics {
    * depth d 2^d times, so the grid is v12's wherever composites nest at most 4 deep.
    */
   readonly maxSizings: number;
-  /** A styled `font-size` at or past this is ignored (flowchart's bound on a label's font). */
-  readonly maxFontSize: number;
   /**
    * The largest `block.padding` laid out (D445, D226): a larger one is cut to it with one
    * `BLOCK_CONFIG_INVALID` warning, so a padding of 1e9 cannot draw a viewBox 1e9 wide.
@@ -44,7 +42,6 @@ export const BLOCK_METRICS: BlockMetrics = {
   loopAngle: 30,
   loopReach: 24,
   maxSizings: 16,
-  maxFontSize: 1000,
   maxPadding: 1000,
 };
 

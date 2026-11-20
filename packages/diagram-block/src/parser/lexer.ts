@@ -152,7 +152,7 @@ function rewrite(kind: number, text: string): string {
 const OPTIONS: StateLexerOptions = { charsPerToken: 4, crlf: 'fold', dropSpace: true };
 
 /**
- * Lex the block body `src[from…]`. `from` and `view` come from `blockView` (`./index.ts`). With
+ * Lex the block body `src[from…]`. `from` and `view` are shared `bodyView`'s `bodyStart` and `view`. With
  * a `probe`, the start condition at the probe's offset is recorded as its mode.
  */
 export function lex(src: string, from: number, view: SourceView, probe?: Probe): Lexed {

@@ -18,7 +18,7 @@ import {
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
 import type { PacketModel, PacketPiece } from '../model.ts';
-import { cut, emphasised } from '@mermaid-js/shared/ascii';
+import { cut, emphasised, wrapTitle } from '@mermaid-js/shared/ascii';
 
 /** Columns a bit takes; a piece of `n` bits is `COLUMNS * n + 1` wide, borders included. */
 const COLUMNS = 2;
@@ -137,22 +137,6 @@ export function drawPacket(model: PacketModel, options: DrawOptions): Drawn {
   return { text: finish(canvas, title, options.maxWidth), emphasis };
 }
 
-// Greedy word wrap to `width` cells; a word longer than that keeps a line of its own.
-function wrap(text: string, width: number): string[] {
-  if (cellWidth(text) <= width) return [text];
-  const out: string[] = [];
-  let line = '';
-  for (const word of text.split(/\s+/)) {
-    const next = line === '' ? word : `${line} ${word}`;
-    if (line !== '' && cellWidth(next) > width) {
-      out.push(line);
-      line = word;
-    } else line = next;
-  }
-  if (line !== '') out.push(line);
-  return out;
-}
-
 /** The rows' text with the title's lines centred under them. */
 function finish(canvas: Canvas, title: MeasuredLabel | undefined, maxWidth?: number): string {
   const body = canvas.toString();
@@ -161,7 +145,7 @@ function finish(canvas: Canvas, title: MeasuredLabel | undefined, maxWidth?: num
   const width = Math.max(0, ...lines.map(cellWidth));
   const wrapped = plainLines(title).flatMap((line) => {
     const t = line.trim();
-    return maxWidth === undefined ? [t] : wrap(t, Math.max(width, maxWidth));
+    return maxWidth === undefined ? [t] : wrapTitle(t, Math.max(width, maxWidth));
   });
   const out = new Canvas();
   wrapped.forEach((line, i) =>

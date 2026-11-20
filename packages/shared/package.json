@@ -51,6 +51,11 @@
       "types": "./dist/parser/common-values.d.ts",
       "default": "./dist/parser/common-values.js"
     },
+    "./parser/display-text": {
+      "mermaid-source": "./src/parser/display-text.ts",
+      "types": "./dist/parser/display-text.d.ts",
+      "default": "./dist/parser/display-text.js"
+    },
     "./parser/seen-tokens": {
       "mermaid-source": "./src/parser/seen-tokens.ts",
       "types": "./dist/parser/seen-tokens.d.ts",
@@ -115,6 +120,11 @@
       "mermaid-source": "./src/shapes/extended.ts",
       "types": "./dist/shapes/extended.d.ts",
       "default": "./dist/shapes/extended.js"
+    },
+    "./random": {
+      "mermaid-source": "./src/random.ts",
+      "types": "./dist/random.d.ts",
+      "default": "./dist/random.js"
     },
     "./layout": {
       "mermaid-source": "./src/layout/index.ts",

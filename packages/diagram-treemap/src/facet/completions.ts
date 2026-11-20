@@ -19,7 +19,7 @@ import type { TreemapModel } from '../model.ts';
 import type { TreemapDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { type ItemPlace, ITEMS, tokenBefore } from './tables.ts';
-import { atLineStart, keywordItem, wordRange } from '@mermaid-js/shared/parser/facet';
+import { atLineStart, keywordCompletions, wordRange } from '@mermaid-js/shared/parser/facet';
 
 /** The kind of the token that ends right at `at` (no blank between), if any. */
 function gluedBefore(tokens: TokenStream | undefined, at: number): number | undefined {
@@ -48,15 +48,18 @@ export function treemapCompletions(
     lineStart,
     afterName: !lineStart,
   };
-  const out: CompletionItem[] = [];
   const classes = (result.model as TreemapModel).classes.map((c) => c.name);
-  for (const k of ITEMS) {
-    if (!expected.has(k.kind) || !placed[k.place]) continue;
+  const out = keywordCompletions(
+    ITEMS,
+    expected,
+    prefix,
+    range,
+    treemapDocs,
     // `:::` goes right after the name, with no blank (D401).
-    if (k.kind === T.StyleSeparator && before !== T.String) continue;
-    if (!k.label.startsWith(prefix)) continue;
-    out.push(keywordItem(k, range, treemapDocs[k.kind]));
-    if (k.kind !== T.StyleSeparator) continue;
+    (k) => placed[k.place] && (k.kind !== T.StyleSeparator || before === T.String)
+  );
+  // `:::`, the last row, is followed by `:::name` for each class.
+  if (out.at(-1)?.label === ':::') {
     for (const name of classes) {
       out.push({ label: `:::${name}`, kind: 'class', insertText: `:::${name}`, range });
     }

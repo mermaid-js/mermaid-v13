@@ -11,7 +11,8 @@
  */
 import type { Circle } from './circles.ts';
 import { normalizeSolution, ORIENTATION, scaleSolution, type SetCircle } from './normalize.ts';
-import { seededRandom } from './random.ts';
+import { seededRandom } from '@mermaid-js/shared/random';
+import { VENN_SEED } from './random.ts';
 import { computeTextCentres, type TextCentre } from './regions.ts';
 import { nullRecord } from '../model.ts';
 import { fitCircles, type Area } from './solve.ts';
@@ -42,7 +43,10 @@ export interface Solved {
  */
 export function solveVenn(areas: readonly Area[], box: SolveBox): Solved {
   if (areas.length === 0) return { circles: nullRecord<SetCircle>(), centres: new Map() };
-  const solution = normalizeSolution(fitCircles(areas, { random: seededRandom() }), ORIENTATION);
+  const solution = normalizeSolution(
+    fitCircles(areas, { random: seededRandom(VENN_SEED) }),
+    ORIENTATION
+  );
   const circles = scaleSolution(
     solution as Record<string, Circle>,
     box.width,

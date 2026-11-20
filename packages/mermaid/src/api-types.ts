@@ -4,6 +4,7 @@
 import type {
   ExtensionPlugin as CoreExtensionPlugin,
   MermaidError,
+  PluginFormat,
   Warning,
 } from '@mermaid-js/core';
 import type { MermaidConfig, ResolvedConfig } from '@mermaid-js/core/config';
@@ -26,7 +27,7 @@ export interface RenderOptions {
    * Output format (R-ASCII-4, D80): `svg` (default) or `ascii`, text drawn in character cells
    * for the types whose manifest lists it (`supportsFormat`).
    */
-  format?: 'svg' | 'ascii';
+  format?: PluginFormat;
   /**
    * Width in px the drawing should fit (R-LAYOUT-5): graph layouts tighten their spacing and
    * may turn LR into TB. Off by default; `mount(…, { availableWidth: true })` passes the
@@ -129,7 +130,7 @@ export interface PreloadRequest {
   layouts?: readonly string[];
   themes?: readonly string[];
   /** `'ascii'` also loads each type's text entry, for `renderSync(…, { format: 'ascii' })`. */
-  formats?: readonly ('svg' | 'ascii')[];
+  formats?: readonly PluginFormat[];
   /**
    * Runs these packs' loaders (`registerIconPacks`), for `renderSync` with their icons (D294).
    * An unregistered name is ignored; a rejecting loader does not reject (D299).

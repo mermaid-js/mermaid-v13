@@ -94,17 +94,17 @@ export interface LangiumLexerOracle {
   lexText(text: string): LangiumLex;
 }
 
-interface ChevrotainToken {
+export interface ChevrotainToken {
   image: string;
   startOffset: number;
   tokenType: { name: string };
 }
-interface ChevrotainLexResult {
+export interface ChevrotainLexResult {
   tokens: ChevrotainToken[];
   hidden?: ChevrotainToken[];
   errors: { offset: number }[];
 }
-interface LangiumLexer {
+export interface LangiumLexer {
   tokenize(text: string): ChevrotainLexResult;
 }
 interface LangiumParserV12 {
@@ -257,15 +257,20 @@ async function load(descriptor: LangiumLexerDescriptor): Promise<LangiumLexerOra
   return {
     trace,
     input,
-    lexText: (text) => lexWith(lexer, text, false),
+    lexText: (text) => chevrotainLex(lexer, text, false),
     async lex(source) {
       const text = await input(source);
-      return text === undefined ? undefined : lexWith(lexer, text, true);
+      return text === undefined ? undefined : chevrotainLex(lexer, text, true);
     },
   };
 }
 
-function lexWith(lexer: LangiumLexer, input: string, clip: boolean): LangiumLex {
+/**
+ * Lex `input` with a Chevrotain lexer: the tokens and hidden tokens before the first error, and
+ * with `clip` the `\n` v12 appended taken off the image of the token that ends the input. The
+ * usecase lexer oracle uses it too.
+ */
+export function chevrotainLex(lexer: LangiumLexer, input: string, clip: boolean): LangiumLex {
   const result = lexer.tokenize(input);
   let errorAt: number | undefined;
   for (const e of result.errors)

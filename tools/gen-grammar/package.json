@@ -45,6 +45,7 @@
     "@mermaid-js/diagram-venn": "workspace:^",
     "@mermaid-js/diagram-wardley": "workspace:^",
     "@mermaid-js/diagram-xychart": "workspace:^",
+    "@mermaid-js/shared": "workspace:^",
     "vscode-oniguruma": "2.0.1",
     "vscode-textmate": "9.2.0"
   }

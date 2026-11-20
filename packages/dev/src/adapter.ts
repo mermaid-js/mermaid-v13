@@ -13,7 +13,6 @@
  * And `@mermaid-js/plugin-hand-drawn`: `look: handDrawn` (or `handDrawn: true`) sketches the
  * outlines of flowchart, class, state and ER (D300); without it the look would only warn.
  */
-import type { Measurer } from '@mermaid-js/core/text';
 import { createMermaid, type RenderResult } from 'mermaid';
 import { registerDevPlugins } from './plugins.ts';
 
@@ -24,9 +23,9 @@ export interface RenderOptions {
   readonly idPrefix?: string;
   /**
    * `table` (default): the deterministic table measurer, so browser and Node output match.
-   * `canvas`: what `render()` picks in a browser (the canvas measurer). Or a custom measurer.
+   * `canvas`: what `render()` picks in a browser (the canvas measurer).
    */
-  readonly measurer?: 'table' | 'canvas' | Measurer;
+  readonly measurer?: 'table' | 'canvas';
   /** `output.cssVariables`. Default true. */
   readonly cssVariables?: boolean;
 }
@@ -50,7 +49,6 @@ export async function renderDiagram(
     config: {
       ...options.config,
       deterministic: m === 'table',
-      ...(typeof m === 'object' ? { measurer: m } : {}),
       ...(options.cssVariables === undefined
         ? {}
         : { output: { cssVariables: options.cssVariables } }),

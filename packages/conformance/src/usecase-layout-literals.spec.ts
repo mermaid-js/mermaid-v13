@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { REPO_ROOT } from './index.ts';
+import { numericLiterals } from './literals.ts';
 
 // The usecase graph builder takes every length from its px metrics table, the config or core's
 // px profile (pitfall 13, spec #517 T3): no file in `packages/diagram-usecase/src/layout/` but
@@ -15,15 +16,6 @@ const ALLOWED: Readonly<Record<string, string>> = {
   '0.5': "the half-pixel slack of the invariant checks (core validateLayout's)",
   '1e-9': 'the float tolerance of a step along a segment (clip.ts)',
 };
-
-/** The numeric literals in TypeScript source, outside comments and strings. */
-function numericLiterals(source: string): string[] {
-  const code = source
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .replace(/\/\/.*$/gm, ' ')
-    .replace(/'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`|"(?:[^"\\\n]|\\.)*"/g, "''");
-  return code.match(/(?<![\w$.])\d[\d_]*(?:\.\d+)?(?:e[-+]?\d+)?/gi) ?? [];
-}
 
 const DIR = join(REPO_ROOT, 'packages/diagram-usecase/src/layout');
 // The table itself and specs are not layout code.

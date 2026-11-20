@@ -10,6 +10,7 @@
  * order (-1 at the top level).
  */
 import type { LayoutModel, RoutePoint } from '@mermaid-js/core/layout';
+import { unionRects } from '@mermaid-js/shared/layout';
 import { placed, stackSections, type Measured } from '../layout/layout.ts';
 import { C4_METRICS as M } from '../layout/metrics.ts';
 import type { LabelRoom } from '../layout/room.ts';
@@ -211,17 +212,6 @@ function relationOut(
   };
 }
 
-const union = (a: Rect, b: Rect): Rect => {
-  const x = Math.min(a.x, b.x);
-  const y = Math.min(a.y, b.y);
-  return {
-    x,
-    y,
-    width: Math.max(a.x + a.width, b.x + b.width) - x,
-    height: Math.max(a.y + a.height, b.y + b.height) - y,
-  };
-};
-
 /** The scene of `laid`, the engine's answer for `p.graph`. */
 export function placeC4Beta(p: C4BetaPrepared, laid: LayoutModel): C4Layout {
   const [x0, y0, x1, y1] = extent(p, laid);
@@ -240,10 +230,7 @@ export function placeC4Beta(p: C4BetaPrepared, laid: LayoutModel): C4Layout {
   const legend =
     p.legend && placeLegend(p.legend, margin, content.y + content.height + B.legendGap);
   const legendRow = legend ? B.legendGap + legend.box.height : 0;
-  const drawn = [title, legend?.box].reduce<Rect>(
-    (all, box) => (box ? union(all, box) : all),
-    content
-  );
+  const drawn = unionRects([content, ...[title, legend?.box].filter((box) => box !== undefined)]);
   const relations = p.edges.flatMap((edge) => relationOut(edge, laid, shift, p.labelRoom) ?? []);
   return {
     width: contentW + 2 * margin,

@@ -10,10 +10,11 @@
 import { gzipSync } from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { chromium, firefox, webkit, type Page } from '@playwright/test';
-import { build, type Plugin } from 'esbuild';
+import { build } from 'esbuild';
 import type { LiteElement } from '@mathjax/src/js/adaptors/lite/Element.js';
-import { streamWriter, type SvgWriter } from '@mermaid-js/core/svg';
-import type { InlineBox, SvgFragment } from '@mermaid-js/core/text';
+import { streamWriter, writeFragment } from '@mermaid-js/core/svg';
+import type { InlineBox } from '@mermaid-js/core/text';
+import { texDefaultFont } from './bundle.ts';
 import { corpus, extra } from './corpus.ts';
 
 // Timed first, so that nothing else has loaded MathJax yet.
@@ -27,38 +28,13 @@ const firstCallMs = performance.now() - firstStart;
 const EX = 8;
 const RUNS = 5;
 const formulas = [...corpus, ...extra];
-/**
- * MathJax's SVG output imports its default font (New Computer Modern) through the
- * `#default-font/*` package import; MathJax's own builds alias it. This points it at the TeX font.
- */
-const texDefaultFont: Plugin = {
-  name: 'tex-default-font',
-  setup(b) {
-    b.onResolve({ filter: /^#default-font\// }, (args) =>
-      b.resolve(args.path.replace('#default-font/', '@mathjax/mathjax-tex-font/js/'), {
-        kind: args.kind,
-        resolveDir: args.resolveDir,
-      })
-    );
-  },
-};
 const out = (line: unknown) => process.stdout.write(`${JSON.stringify(line)}\n`);
-
-function write(w: SvgWriter, node: SvgFragment): void {
-  if (!node.children?.length) return w.leaf(node.tag, node.attrs);
-  w.open(node.tag, node.attrs);
-  for (const child of node.children) {
-    if (typeof child === 'string') w.text(child);
-    else write(w, child);
-  }
-  w.close();
-}
 
 /** The box as a standalone SVG document, through core's writer. */
 function svgDocument(box: InlineBox): string {
   const w = streamWriter();
   w.open('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: [0, 0, box.width, box.height] });
-  write(w, box.node);
+  writeFragment(w, box.node);
   w.close();
   return w.finish();
 }

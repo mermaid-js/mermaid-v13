@@ -4,7 +4,7 @@ import {
   assertInert,
   streamWriter,
   treeWriter,
-  type SvgWriter,
+  writeFragment,
 } from '@mermaid-js/core/svg';
 import { describe, expect, it, vi } from 'vitest';
 import { corpus, extra, katex } from '../scripts/corpus.ts';
@@ -13,24 +13,13 @@ import { MathError, typeset } from './engine.ts';
 
 const EX = 8;
 
-/** Replays a fragment through a writer, as core's box drawing (#237) does. */
-function write(w: SvgWriter, node: SvgFragment): void {
-  if (!node.children?.length) return w.leaf(node.tag, node.attrs);
-  w.open(node.tag, node.attrs);
-  for (const child of node.children) {
-    if (typeof child === 'string') w.text(child);
-    else write(w, child);
-  }
-  w.close();
-}
-
 function document(box: InlineBox, backing: 'stream' | 'tree' = 'stream'): string {
   const w = backing === 'stream' ? streamWriter() : treeWriter();
   w.open('svg', {
     xmlns: 'http://www.w3.org/2000/svg',
     viewBox: [0, 0, box.width, box.height],
   });
-  write(w, box.node);
+  writeFragment(w, box.node);
   w.close();
   return w.finish();
 }

@@ -1,8 +1,9 @@
 /** The sankey grammar file, read and built once (dev and CI only). */
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildLexer, parseGrammar, replaceMapped, sliceMapped } from '@mermaid-js/gen-grammar';
-import type { Grammar, LexToken, MappedText, ModeLexer } from '@mermaid-js/gen-grammar';
+import { replaceMapped, sliceMapped } from '@mermaid-js/gen-grammar';
+import type { MappedText } from '@mermaid-js/gen-grammar';
+import { loadGrammar, lexGrammar } from '../../grammar-file.ts';
+import type { LoadedGrammar, GrammarTokens } from '../../grammar-file.ts';
 import { classLexerInput } from '../../class/grammar/lexer-input.ts';
 import { REPO_ROOT } from '../../corpus.ts';
 import { LEXICAL_ERROR } from '../../jison/oracle.ts';
@@ -10,21 +11,8 @@ import type { JisonToken } from '../../jison/oracle.ts';
 
 export const SANKEY_GRAMMAR_PATH = join(REPO_ROOT, 'packages/diagram-sankey/grammar/sankey.ebnf');
 
-let cached: { grammar: Grammar; lexer: ModeLexer } | undefined;
-
-export function sankeyGrammar(): { grammar: Grammar; lexer: ModeLexer } {
-  if (!cached) {
-    const grammar = parseGrammar(readFileSync(SANKEY_GRAMMAR_PATH, 'utf8'));
-    cached = { grammar, lexer: buildLexer(grammar) };
-  }
-  return cached;
-}
-
-export interface GrammarTokens {
-  input: MappedText;
-  tokens: LexToken[];
-  /** Lexer-input offset where lexing failed. */
-  error: number | undefined;
+export function sankeyGrammar(): LoadedGrammar {
+  return loadGrammar(SANKEY_GRAMMAR_PATH);
 }
 
 /**
@@ -56,9 +44,7 @@ export function sankeyLexerInput(source: string): MappedText {
 
 /** The grammar lexer's tokens for a sankey source. */
 export function grammarTokens(source: string): GrammarTokens {
-  const input = sankeyLexerInput(source);
-  const { tokens, error } = sankeyGrammar().lexer.lex(input.text);
-  return { input, tokens, error };
+  return lexGrammar(sankeyGrammar(), sankeyLexerInput(source));
 }
 
 const TEXT = new Set(['NON_ESCAPED_TEXT', 'ESCAPED_TEXT']);

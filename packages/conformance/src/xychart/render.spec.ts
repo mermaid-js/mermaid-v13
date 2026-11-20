@@ -13,7 +13,7 @@ import { astIndex, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgView } from '../svg-tree.ts';
 import type { CorpusItem } from '../types.ts';
 import { xyChartCases, xyChartCorpus } from './corpus.ts';
-import { xyChartApi } from './render-api.ts';
+import { deterministicApi } from '../render-api.ts';
 
 /**
  * Render properties and the AST round-trip of the XY chart (spec #426 T4, DESIGN §13.2, §13.4,
@@ -192,7 +192,7 @@ describe('xychart through the public API (#513)', () => {
   const version = (svg: string) => svg.replace(/ data-mermaid-version="[^"]*"/, '');
 
   it('renders each case byte for byte as the plugin seam does, and rejects the same sources', async () => {
-    const apis = new Map(THEMES.map((theme) => [theme, xyChartApi({ theme })]));
+    const apis = new Map(THEMES.map((theme) => [theme, deterministicApi({ theme })]));
     // The seam leaves a directive core's preprocessing reports to the parser; the API rejects
     // an unclosed one before it parses (UNCLOSED_DIRECTIVE, the T2 choice, `divergences/`).
     const unclosed: string[] = [];

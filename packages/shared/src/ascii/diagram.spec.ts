@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { droppedFeatures } from './diagram.ts';
+import { Canvas, drawText } from '@mermaid-js/core/ascii';
+import { droppedFeatures, trimmed } from './diagram.ts';
 
 const WHAT = { style: 'colours and styles', curve: 'edge curves', accessibility: 'accTitle' };
 const STATEMENTS = { style: ['Style', 'ClassDef'], accessibility: ['AccTitle'] };
@@ -52,5 +53,22 @@ describe('droppedFeatures', () => {
     expect(dropped.warnings(undefined, { curve: ' (curve)' })[0]?.message).toBe(
       'Text output has no edge curves (curve); dropped.'
     );
+  });
+});
+
+describe('trimmed', () => {
+  it('drops the blank rows at the ends and the common left margin, and says how many', () => {
+    const canvas = new Canvas();
+    drawText(canvas, 4, 2, 'ab');
+    drawText(canvas, 3, 4, 'c');
+    expect(trimmed(canvas)).toEqual({ text: ' ab\n\nc', top: 2, left: 3 });
+  });
+
+  it('reads drawn text as a canvas', () => {
+    expect(trimmed('\n\n  x\n   y\n\n')).toEqual({ text: 'x\n y', top: 2, left: 2 });
+  });
+
+  it('gives the empty string for an empty drawing', () => {
+    expect(trimmed(new Canvas()).text).toBe('');
   });
 });

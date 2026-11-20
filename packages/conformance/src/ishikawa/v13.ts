@@ -4,7 +4,7 @@
  */
 import { detectIshikawa, parseIshikawa } from '@mermaid-js/diagram-ishikawa';
 import type { IshikawaCause, IshikawaModel } from '@mermaid-js/diagram-ishikawa';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { ISHIKAWA_V12_TYPES, ishikawaV12Snapshot } from './v12.ts';
 import type { IshikawaSnapshot } from './v12.ts';
@@ -34,13 +34,8 @@ export function ishikawaV13Snapshot(model: IshikawaModel): IshikawaSnapshot {
 }
 
 /** v13 parse for parity: the model, or a throw carrying the first error diagnostic. */
-export function parseIshikawaForParity(text: string): IshikawaModel {
-  const pre = preprocess(text);
-  const result = parseIshikawa(text, { preprocessed: pre });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((x) => x.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseIshikawaForParity = (text: string): IshikawaModel =>
+  parseForParity(text, parseIshikawa);
 
 export const ishikawaAdapter: DiagramAdapter<IshikawaModel> = {
   id: 'ishikawa',

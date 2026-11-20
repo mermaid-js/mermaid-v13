@@ -35,6 +35,7 @@
  */
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
 import {
+  firstHole,
   Kind,
   kindSet,
   LineIndex,
@@ -50,6 +51,7 @@ import type {
   ParseOptions,
   ParseResult,
   Range,
+  SourceView,
   StatementSpan,
 } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
@@ -255,8 +257,8 @@ class MentionIds {
 class BlockParser {
   private readonly pre: PreprocessResult;
   private readonly lexed: Lexed;
-  /** What v12's preprocessing removed (comments, directives, a dropped `;`), in source order. */
-  private readonly holes: readonly Hole[];
+  /** Its holes are what v12's preprocessing removed (comments, directives, a dropped `;`). */
+  private readonly view: SourceView;
   private readonly st = new ParseState();
   private readonly c: TokenCursor;
   /** Probe mode only (R-LANG-7). */
@@ -278,12 +280,11 @@ class BlockParser {
   ) {
     const pre = (this.pre = options.preprocessed ?? preprocess(src));
     if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
-    const view = sourceView(
+    const view = (this.view = sourceView(
       src,
       pre.bodyStart,
       pre.directives.map((d) => d.range)
-    );
-    this.holes = view.holes;
+    ));
     if (options.probe === undefined) {
       this.lexed = lex(src, pre.bodyStart, view);
       this.c = new TokenCursor(this.lexed.tokens, SKIPPED);
@@ -361,19 +362,10 @@ class BlockParser {
     return e;
   }
 
-  /** The removed span holding source offset `at`, if any (binary search). */
+  /** The removed span holding source offset `at`, if any. */
   private holeAt(at: number): Hole | undefined {
-    const hs = this.holes;
-    let lo = 0;
-    let hi = hs.length - 1;
-    while (lo <= hi) {
-      const mid = (lo + hi) >> 1;
-      const h = hs[mid] as Hole;
-      if (at < h.start) hi = mid - 1;
-      else if (at >= h.end) lo = mid + 1;
-      else return h;
-    }
-    return undefined;
+    const h = this.view.holes[firstHole(this.view, at)];
+    return h && h.start <= at ? h : undefined;
   }
 
   private get frame(): Frame {

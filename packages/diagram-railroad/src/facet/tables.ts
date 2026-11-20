@@ -52,7 +52,7 @@ export const NOTATION_DOCS: Readonly<
 
 /** The notation a parse read its text in (the model always has one). */
 export function notationOf(model: unknown): RailroadNotation {
-  return (model as Partial<RailroadModel> | undefined)?.notation ?? 'railroad';
+  return (model as RailroadModel).notation;
 }
 
 /** Where a rule is defined: the rule itself, or the first line of one that fails to parse. */

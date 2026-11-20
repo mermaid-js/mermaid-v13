@@ -14,20 +14,10 @@
  * - the plain themes write no palette slot at all.
  */
 import { describe, expect, it } from 'vitest';
-import {
-  THEME_NAMES,
-  createTheme,
-  formatColor,
-  loadTheme,
-  parseColor,
-} from '@mermaid-js/core/theme';
+import { THEME_NAMES, createTheme, loadTheme } from '@mermaid-js/core/theme';
 import { createMermaid, type InitializeConfig } from 'mermaid';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
-
-const hex = (v: string | undefined): string | undefined => {
-  const rgba = v === undefined ? undefined : parseColor(v);
-  return rgba ? formatColor(rgba) : v;
-};
+import { hex } from '../hex.ts';
 
 interface Palette {
   readonly border: string[];
@@ -39,10 +29,10 @@ interface Palette {
 async function paletteOf(name: (typeof THEME_NAMES)[number]): Promise<Palette> {
   const theme = createTheme(await loadTheme(name), { cssVariables: false });
   return {
-    border: theme.palette('borderColorArray').map((c) => hex(String(c))!),
-    bkg: theme.palette('bkgColorArray').map((c) => hex(String(c))!),
-    clusterBkg: hex(String(theme.value('clusterBkg')))!,
-    clusterBorder: hex(String(theme.value('clusterBorder')))!,
+    border: theme.palette('borderColorArray').map((c) => hex(String(c), (x) => x)),
+    bkg: theme.palette('bkgColorArray').map((c) => hex(String(c), (x) => x)),
+    clusterBkg: hex(String(theme.value('clusterBkg')), (x) => x),
+    clusterBorder: hex(String(theme.value('clusterBorder')), (x) => x),
   };
 }
 
@@ -78,7 +68,10 @@ function laneOf(tree: SvgView, id: string) {
   )[0]!;
   const half = (cls: string) => {
     const r = tree.children(el).find((k) => classesOf(tree, k).includes(cls))!;
-    return { stroke: hex(tree.getAttr(r, 'stroke')), fill: hex(tree.getAttr(r, 'fill')) };
+    return {
+      stroke: hex(tree.getAttr(r, 'stroke'), (x) => x),
+      fill: hex(tree.getAttr(r, 'fill'), (x) => x),
+    };
   };
   return {
     slot: tree.getAttr(el, 'data-color-id'),
@@ -118,7 +111,7 @@ describe.each(COLOUR_THEMES)('%s lane palette', (theme) => {
     expect(classesOf(tree, nested)).toEqual(['cluster']);
     expect(tree.getAttr(nested, 'data-color-id')).toBe('color-1');
     const rect = tree.children(nested).find((k) => tree.tag(k) === 'rect')!;
-    expect(hex(tree.getAttr(rect, 'stroke'))).toBe(border[1]);
+    expect(hex(tree.getAttr(rect, 'stroke'), (x) => x)).toBe(border[1]);
   });
 
   it('lets the author’s style win over the palette', async () => {

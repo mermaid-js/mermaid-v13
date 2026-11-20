@@ -6,6 +6,7 @@
 import { parseAgentflow, semanticModel } from '@mermaid-js/diagram-agentflow';
 import type { AgentflowModel } from '@mermaid-js/diagram-agentflow';
 import { diagramStart, preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { AGENTFLOW_V12_TYPES, agentflowV12Snapshot, sortDiagnostics } from './v12.ts';
 import type { AgentflowSnapshot } from './v12.ts';
@@ -38,13 +39,8 @@ export function agentflowV13Snapshot(model: AgentflowModel): AgentflowSnapshot {
 }
 
 /** v13 parse for parity: the model, or a throw carrying the first error diagnostic. */
-export function parseAgentflowForParity(text: string): AgentflowModel {
-  const pre = preprocess(text);
-  const result = parseAgentflow(text, { preprocessed: pre });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((d) => d.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseAgentflowForParity = (text: string): AgentflowModel =>
+  parseForParity(text, parseAgentflow);
 
 /** v12's `afDetector`: `agentflow-beta` after the front matter, directives and comments. */
 export function detectAgentflow(text: string): boolean {

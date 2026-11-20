@@ -8,6 +8,7 @@ import { join, relative, sep } from 'node:path';
 import { THEME_NAMES, type ThemeName } from '@mermaid-js/core/theme';
 import { supportsFormat } from 'mermaid';
 import { supportedFixtureFolders, supportedTypesOf } from './fixture-discovery.ts';
+import { sourceTheme } from './source-theme.ts';
 
 export const REPO_ROOT = join(import.meta.dirname, '..', '..', '..');
 const DIAGRAMS_DIR = join(REPO_ROOT, 'e2e', 'diagrams');
@@ -61,5 +62,5 @@ export function galleryFixtures(
 
 /** Whether the fixture picks its own theme (front matter or init directive). */
 export function setsTheme(source: string): boolean {
-  return /^\s*theme:\s*\S/m.test(source) || /%%\{\s*init:[^}]*['"]theme['"]/.test(source);
+  return sourceTheme(source) !== undefined;
 }

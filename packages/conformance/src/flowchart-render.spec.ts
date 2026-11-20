@@ -1,12 +1,11 @@
 import { join } from 'node:path';
-import { SaxesParser } from 'saxes';
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { AstNode } from '@mermaid-js/core/parser-kit';
 import { assertInert } from '@mermaid-js/core/svg';
 import { V12_XSS_CASES } from '@mermaid-js/core/svg/testing';
 import type { FlowModel } from '@mermaid-js/diagram-flowchart';
 import { createMermaid, MermaidError, type Prepared, type RenderResult } from 'mermaid';
 import { REPO_ROOT, corpusFromDir } from './index.ts';
+import { astIndex, drawnExtents, wellFormed } from './svg-props.ts';
 import {
   inEmbedded,
   parseSvg,
@@ -57,70 +56,6 @@ beforeAll(async () => {
   }
 }, 120_000);
 
-function wellFormed(svg: string): string | undefined {
-  const parser = new SaxesParser({ xmlns: true });
-  let problem: string | undefined;
-  parser.on('error', (e) => (problem ??= e.message));
-  parser.write(svg).close();
-  return problem;
-}
-
-// Every coordinate an element draws at, in root user units (translate() only, as written).
-function extents(tree: SvgTree): { x: number; y: number }[] {
-  const out: { x: number; y: number }[] = [];
-  const nums = (s: string | undefined): number[] =>
-    s === undefined ? [] : (s.match(/-?\d+(?:\.\d+)?(?:e[-+]?\d+)?/g) ?? []).map(Number);
-  const walk = (node: SvgNode, dx: number, dy: number): void => {
-    const tag = tree.tag(node);
-    if (tag === undefined && node !== tree.root) return;
-    // An embedded diagram (ADR-15) has its own viewBox: its box is what the host drew.
-    if (tag === 'svg' && node.parent?.tag !== undefined) return;
-    const at = (name: Parameters<SvgTree['getAttr']>[1]): number =>
-      Number(tree.getAttr(node, name) ?? 0);
-    const t = tree.getAttr(node, 'transform');
-    const m = t ? /^translate\((-?[\d.]+),(-?[\d.]+)\)/.exec(t) : null;
-    if (m) {
-      dx += Number(m[1]);
-      dy += Number(m[2]);
-    }
-    const put = (x: number, y: number): void => void out.push({ x: x + dx, y: y + dy });
-    if (tag === 'rect' || tag === 'image') {
-      put(at('x'), at('y'));
-      put(at('x') + at('width'), at('y') + at('height'));
-    } else if (tag === 'circle' || tag === 'ellipse') {
-      const rx = tag === 'circle' ? at('r') : at('rx');
-      const ry = tag === 'circle' ? at('r') : at('ry');
-      put(at('cx') - rx, at('cy') - ry);
-      put(at('cx') + rx, at('cy') + ry);
-    } else if (tag === 'polygon' || tag === 'polyline') {
-      const p = nums(tree.getAttr(node, 'points'));
-      for (let i = 0; i + 1 < p.length; i += 2) put(p[i]!, p[i + 1]!);
-    } else if (tag === 'path') {
-      // Absolute commands only (PathBuilder writes no others); arcs keep their end points.
-      const d = tree.getAttr(node, 'd') ?? '';
-      for (const seg of d.match(/[MLCQAZ][^MLCQAZ]*/g) ?? []) {
-        const p = nums(seg.slice(1));
-        if (seg.startsWith('A')) put(p[5]!, p[6]!);
-        else for (let i = 0; i + 1 < p.length; i += 2) put(p[i]!, p[i + 1]!);
-      }
-    } else if ((tag === 'text' || tag === 'tspan') && tree.getAttr(node, 'x') !== undefined)
-      put(at('x'), at('y'));
-    for (const c of tree.children(node)) walk(c, dx, dy);
-  };
-  walk(tree.root, 0, 0);
-  return out;
-}
-
-function astIndex(ast: AstNode): Map<string, AstNode> {
-  const index = new Map<string, AstNode>();
-  const visit = (n: AstNode): void => {
-    index.set(n.id, n);
-    for (const c of n.children ?? []) visit(c);
-  };
-  visit(ast);
-  return index;
-}
-
 // An embedded diagram's elements (ADR-15) carry its own AST ids.
 const astElements = (tree: SvgTree): SvgNode[] =>
   tree.find((n, t) => t.getAttr(n, 'data-ast') !== undefined && !inEmbedded(n));
@@ -158,7 +93,7 @@ describe('flowchart render properties over the e2e corpus', () => {
       const root = tree.find({ tag: 'svg' })[0]!;
       // The viewBox starts above the drawing when it holds a front-matter title (D652).
       const [x, y, w, h] = tree.getAttr(root, 'viewBox')!.split(' ').map(Number);
-      const out = extents(tree).filter(
+      const out = drawnExtents(tree).filter(
         (p) => p.x < x! - 0.5 || p.y < y! - 0.5 || p.x > x! + w! + 0.5 || p.y > y! + h! + 0.5
       );
       expect(out.slice(0, 3), c.id).toEqual([]);

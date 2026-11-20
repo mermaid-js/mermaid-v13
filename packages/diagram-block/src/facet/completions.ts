@@ -22,7 +22,6 @@
 import { Kind } from '@mermaid-js/core/parser-kit';
 import type {
   CompletionItem,
-  CompletionKind,
   DocumentView,
   ProbeResult,
   Range,
@@ -34,7 +33,7 @@ import type { BlockDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { DIRECTIONS, LINKS, SHAPES } from './tables.ts';
 import { LINE_BREAK, lineBefore, runAround, span, tokenAt } from './text.ts';
-import { tokenBefore as lastToken } from '@mermaid-js/shared/parser/facet';
+import { CompletionList, tokenBefore as lastToken } from '@mermaid-js/shared/parser/facet';
 
 const BLANK = /^[\t ]*$/;
 /** An id character (the id rule's class). */
@@ -95,41 +94,12 @@ function tokenBefore(tokens: TokenStream, at: number): number {
   return -1;
 }
 
-/** Items for one range, kept in order with no label twice, filtered by what was typed. */
-class Items {
-  readonly list: CompletionItem[] = [];
-  private readonly seen = new Set<string>();
-
-  constructor(
-    private readonly typed: string,
-    private readonly range: Range
-  ) {}
-
-  add(
-    label: string,
-    kind: CompletionKind,
-    extra: { insertText?: string; detail?: string; documentation?: string | undefined } = {}
-  ): void {
-    if (this.seen.has(label) || !label.startsWith(this.typed)) return;
-    this.seen.add(label);
-    const { insertText = label, detail, documentation } = extra;
-    this.list.push({
-      label,
-      kind,
-      insertText,
-      range: this.range,
-      ...(detail === undefined ? {} : { detail }),
-      ...(documentation === undefined ? {} : { documentation }),
-    });
-  }
-}
-
 /**
  * The block ids of `doc`, first use first, with their labels when they differ, but not one
  * whose only occurrence is `skip` (the word being typed), and only `\w+` ones when `words`.
  */
 function blockIds(
-  items: Items,
+  items: CompletionList,
   doc: DocumentView<BlockDocument>,
   skip: Range,
   words = false
@@ -172,13 +142,13 @@ function linkRest(text: string, at: number, closing: boolean): CompletionItem[] 
   if (!/^(?:<|[xo<]?[-=])/.test(typed) || BLANK.test(before.slice(0, k))) return undefined;
   let end = at;
   while (end < text.length && /[-=.>xo]/.test(text.charAt(end))) end++;
-  return linkItems(new Items(typed, span(at - typed.length, end)), closing);
+  return linkItems(new CompletionList(typed, span(at - typed.length, end)), closing);
 }
 
-function linkItems(items: Items, closing: boolean): CompletionItem[] {
+function linkItems(items: CompletionList, closing: boolean): CompletionItem[] {
   for (const [link, detail] of LINKS) {
     if (closing && link.startsWith('<')) continue;
-    items.add(link, 'operator', { detail, documentation: blockDocs[T.Link] });
+    items.keyword({ label: link, detail }, blockDocs[T.Link], 'operator');
   }
   return items.list;
 }
@@ -186,16 +156,16 @@ function linkItems(items: Items, closing: boolean): CompletionItem[] {
 /** A block arrow's directions, for the word at `at` in its `(…)`. */
 function directionItems(text: string, at: number): CompletionItem[] {
   const word = runAround(text, at, LETTER);
-  const items = new Items(text.slice(word.start, at), word);
+  const items = new CompletionList(text.slice(word.start, at), word);
   for (const [dir, detail] of DIRECTIONS)
-    items.add(dir, 'constant', { detail, documentation: blockDocs[T.Dir] });
+    items.keyword({ label: dir, detail }, blockDocs[T.Dir], 'constant');
   return items.list;
 }
 
 /** The ids `class` and `style` name, for the `\w` run at `at` in their id list. */
 function targetItems(doc: DocumentView<BlockDocument>, at: number): CompletionItem[] {
   const word = runAround(doc.text, at, WORD_CHAR);
-  const items = new Items(doc.text.slice(word.start, at), word);
+  const items = new CompletionList(doc.text.slice(word.start, at), word);
   blockIds(items, doc, word, true);
   return items.list;
 }
@@ -206,7 +176,7 @@ function targetItems(doc: DocumentView<BlockDocument>, at: number): CompletionIt
  */
 function classItems(doc: DocumentView<BlockDocument>, token: Range, at: number): CompletionItem[] {
   const word = runAround(doc.text, at, /\S/, token.start, token.end);
-  const items = new Items(doc.text.slice(word.start, at), word);
+  const items = new CompletionList(doc.text.slice(word.start, at), word);
   for (const s of doc.result.symbols) {
     if (s.kind !== 'class') continue;
     if (token.start <= s.range.start && s.range.end <= token.end) continue;
@@ -242,7 +212,7 @@ function inClassOrStyle(
 }
 
 /** The shapes of the block `id`, the id as the label (`a["a"]`, `a{"a"}`, …). */
-function shapes(items: Items, id: string, prefix: string): void {
+function shapes(items: CompletionList, id: string, prefix: string): void {
   for (const [open, close, type] of SHAPES)
     items.add(`${prefix}${open}"${id}"${close}`, 'shape', { detail: type });
 }
@@ -278,20 +248,20 @@ export function blockCompletions(
   const typed = text.slice(probe.prefix.start, offset);
   // After a labelled edge's text: what closes it.
   if (mode === 'LLABEL' && typed === '' && probe.expected.includes(T.Link))
-    return linkItems(new Items('', span(offset, offset)), true);
+    return linkItems(new CompletionList('', span(offset, offset)), true);
   if (mode !== 'INITIAL' || LINE_BREAK.test(typed)) return [];
   const count = COLUMNS_ARG.exec(lineBefore(text, offset, true));
   if (count) {
     const at = offset - (count[1] ?? '').length;
-    const items = new Items(count[1] ?? '', span(at, runAround(text, offset, LETTER).end));
-    items.add('auto', 'constant', { documentation: blockDocs[T.Columns] });
+    const items = new CompletionList(count[1] ?? '', span(at, runAround(text, offset, LETTER).end));
+    items.keyword({ label: 'auto' }, blockDocs[T.Columns], 'constant');
     return items.list;
   }
   const expected = new Set(probe.expected);
   if (expected.has(T.Block) && !result.statements.some((s) => s.kind === 'header')) {
-    const items = new Items(typed, runAround(text, offset, /[\w-]/, probe.prefix.start));
+    const items = new CompletionList(typed, runAround(text, offset, /[\w-]/, probe.prefix.start));
     for (const header of ['block', 'block-beta'])
-      items.add(header, 'keyword', { documentation: blockDocs[T.Block] });
+      items.keyword({ label: header }, blockDocs[T.Block]);
     return items.list;
   }
   return expected.has(T.NodeId) ? codeItems(probe, doc, tokens, expected) : [];
@@ -311,7 +281,7 @@ function codeItems(
   const prev = tokenBefore(tokens, start);
   const prevKind = prev < 0 ? Kind.EOF : (tokens.kind[prev] ?? Kind.EOF);
   const word = runAround(text, offset, ID_CHAR, start);
-  const items = new Items(typed, word);
+  const items = new CompletionList(typed, word);
   const id = shapeable(doc, tokens, word);
   // `block:` takes a new id: its shapes only.
   if (prevKind === T.IdBlock) {
@@ -325,14 +295,13 @@ function codeItems(
     const before = text.slice(tokens.start[prev] ?? 0, tokens.end[prev] ?? 0);
     if (prevKind === T.NodeId && expected.has(T.NodeDStart) && !KEYWORD_WORDS.has(before))
       shapes(items, before, '');
-    items.add('space', 'keyword', { documentation: blockDocs[T.SpaceBlock] });
+    items.keyword({ label: 'space' }, blockDocs[T.SpaceBlock]);
     blockIds(items, doc, word);
     return items.list;
   }
   if (expected.has(T.Columns)) {
-    for (const [label, insertText, kind] of KEYWORDS)
-      items.add(label, 'keyword', { insertText, documentation: blockDocs[kind] });
-    if (expected.has(T.End)) items.add('end', 'keyword', { documentation: blockDocs[T.End] });
+    for (const [label, insert, kind] of KEYWORDS) items.keyword({ label, insert }, blockDocs[kind]);
+    if (expected.has(T.End)) items.keyword({ label: 'end' }, blockDocs[T.End]);
   }
   blockIds(items, doc, word);
   if (id !== undefined) shapes(items, id, id);

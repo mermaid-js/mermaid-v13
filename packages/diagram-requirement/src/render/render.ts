@@ -62,7 +62,9 @@ interface Paints {
     /** How far a divider in `stroke` is lifted: `dividerLift` under the gradient, else 0. */
     readonly lift: number;
   };
+  /** Set exactly when there are relations, the only time `drawRelation*` runs. */
   readonly line?: { readonly stroke: Color; readonly strokeWidth: Length };
+  /** Set exactly when there are relations, as `line`. */
   readonly label?: { readonly fill: Color; readonly text: Color };
   readonly title?: Color;
   readonly slotOf: (slot: number) => Tint | undefined;
@@ -162,7 +164,8 @@ function openRoot(
 
 function drawRelation({ w, layout, p, paint }: Scene, r: RelationView): void {
   const route = layout.edges.get(r.id);
-  if (!route || route.points.length < 2 || !paint.line) return;
+  if (!route || route.points.length < 2) return;
+  const line = paint.line!;
   // A self-loop's legs are short: rounded corners, whatever the curve (as class).
   const path = routePath(w, route.points, r.source === r.target ? 'rounded' : p.curve, 0, 0);
   w.outline('edge', 'path', {
@@ -171,8 +174,8 @@ function drawRelation({ w, layout, p, paint }: Scene, r: RelationView): void {
     'data-id': r.dataId,
     'data-ast': r.id,
     d: path.d,
-    stroke: paint.line.stroke,
-    'stroke-width': paint.line.strokeWidth,
+    stroke: line.stroke,
+    'stroke-width': line.strokeWidth,
     'stroke-dasharray': r.dashed ? DASH : undefined,
   });
   // `sdx`/`edx` point the way a marker points, into the box; the marker is drawn out from it.
@@ -181,7 +184,7 @@ function drawRelation({ w, layout, p, paint }: Scene, r: RelationView): void {
       ? { x: path.sx, y: path.sy, ux: -path.sdx, uy: -path.sdy }
       : { x: path.ex, y: path.ey, ux: -path.edx, uy: -path.edy };
   // A px layout always has the markers it made room for (only a cell layout has none).
-  if (p.markers) drawMarker(w, r.marker, end, paint.line.stroke, p.markers, r.dataId);
+  if (p.markers) drawMarker(w, r.marker, end, line.stroke, p.markers, r.dataId);
 }
 
 /**
@@ -190,11 +193,12 @@ function drawRelation({ w, layout, p, paint }: Scene, r: RelationView): void {
  */
 function drawRelationLabel({ w, layout, ctx, paint }: Scene, r: RelationView): void {
   const at = layout.edges.get(r.id)?.label;
-  if (!at || r.label.width === 0 || !paint.label || !paint.line) return;
+  if (!at || r.label.width === 0) return;
+  const label = paint.label!;
   edgeLabel(w, r.label, at, r.dataId, {
-    fill: paint.label.fill,
-    stroke: paint.line.stroke,
-    text: { fill: paint.label.text },
+    fill: label.fill,
+    stroke: paint.line!.stroke,
+    text: { fill: label.text },
     patch: (ctx.units ?? pxProfile).builder.labelPatch,
   });
 }

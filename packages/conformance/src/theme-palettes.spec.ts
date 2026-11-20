@@ -8,41 +8,23 @@ import {
   THEME_NAMES,
   contrastRatio,
   createTheme,
-  formatColor,
   loadTheme,
   parseColor,
   type ThemeName,
 } from '@mermaid-js/core/theme';
 import { DIAGRAM_TABLES } from './diagram-themes.ts';
 import { describe, expect, it } from 'vitest';
-import { loadOracle } from './oracle.ts';
-
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
-  };
-}
-
-await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
+import { v12Vars } from './v12-theme.ts';
+import { hex } from './hex.ts';
 
 const PALETTES = ['cScale', 'cScaleInv', 'cScaleLabel'] as const;
 type Palettes = Record<(typeof PALETTES)[number], string[]>;
 
-function hex(v: unknown): string {
-  const rgba = typeof v === 'string' ? parseColor(v) : undefined;
-  return rgba ? formatColor(rgba) : String(v);
-}
-
 function v12Palettes(theme: string, themeVariables: object = {}): Palettes {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize({ theme, themeVariables });
-  const vars = v12.mermaidAPI.getConfig().themeVariables;
-  v12.mermaidAPI.reset();
+  const vars = v12Vars(theme, themeVariables);
   const out = {} as Palettes;
-  for (const p of PALETTES) out[p] = Array.from({ length: 12 }, (_, i) => hex(vars[`${p}${i}`]));
+  for (const p of PALETTES)
+    out[p] = Array.from({ length: 12 }, (_, i) => hex(vars[`${p}${i}`], String));
   return out;
 }
 
@@ -52,7 +34,7 @@ async function v13Palettes(theme: ThemeName, themeVariables?: object): Promise<P
     themeVariables: themeVariables as Record<string, unknown>,
   });
   const out = {} as Palettes;
-  for (const p of PALETTES) out[p] = t.palette(p).map(hex);
+  for (const p of PALETTES) out[p] = t.palette(p).map((c) => hex(c, String));
   return out;
 }
 
@@ -123,7 +105,8 @@ describe('cScale, cScaleInv and cScaleLabel against v12 12.2.0 (#338, D258)', ()
             createTheme(await loadTheme(theme), {
               diagram: DIAGRAM_TABLES.sequence,
               cssVariables: false,
-            }).value('labelTextColor')
+            }).value('labelTextColor'),
+            String
           )
         )
       );

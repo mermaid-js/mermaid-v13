@@ -9,6 +9,8 @@ export { drawBox, drawText } from './draw.ts';
 export type { BoxOptions, CellRect } from './draw.ts';
 export { armOf, ascii, glyphFor, junction, sideOf, unicode } from './glyphs.ts';
 export type { CardinalityGlyphs, GlyphSet, Sides, Stroke } from './glyphs.ts';
+export { Heap } from './heap.ts';
+export type { HeapTies } from './heap.ts';
 export { repairRoutes, routeCollisions } from './repair.ts';
 export type { Collision, CollisionKind, RepairOptions, RepairResult } from './repair.ts';
 export { asciiOptions } from './options.ts';

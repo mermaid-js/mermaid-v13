@@ -8,7 +8,7 @@ import { astIndex, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 import type { CorpusItem } from '../types.ts';
 import { gitGraphGateCorpus } from './corpus.ts';
-import { gitApi } from './render-api.ts';
+import { deterministicApi } from '../render-api.ts';
 
 /**
  * Render properties and the AST round-trip of gitGraph (spec #292 T4, DESIGN §13.2, §13.4,
@@ -52,7 +52,7 @@ let corpus: CorpusItem[];
 beforeAll(async () => {
   corpus = await gitGraphGateCorpus();
   for (const theme of THEMES) {
-    const m = gitApi({ theme } as MermaidConfig);
+    const m = deterministicApi({ theme } as MermaidConfig);
     for (const item of corpus) {
       if (rejected.has(item.id)) continue;
       try {
@@ -183,7 +183,7 @@ describe('gitGraph render properties over the gate corpus', () => {
 
   it('is deterministic: a fresh API object renders the same bytes (D260, R-ARCH-6)', async () => {
     const fresh = new Map<string, Mermaid>();
-    for (const theme of THEMES) fresh.set(theme, gitApi({ theme } as MermaidConfig));
+    for (const theme of THEMES) fresh.set(theme, deterministicApi({ theme } as MermaidConfig));
     for (const c of cases)
       expect((await fresh.get(c.theme)!.render(PREFIX, c.source)).svg, c.id).toBe(c.svg);
   }, 600_000);

@@ -10,7 +10,7 @@ import {
   parseEventModel,
 } from '@mermaid-js/diagram-eventmodeling';
 import type { EventModel } from '@mermaid-js/diagram-eventmodeling';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { EVENTMODELING_V12_TYPES, eventModelingV12Snapshot, plain } from './v12.ts';
 import type { EventModelSnapshot } from './v12.ts';
@@ -62,14 +62,8 @@ export function eventModelingV13Snapshot(model: EventModel): EventModelSnapshot 
  * front-matter title is held back, as the oracle holds it back from v12 (see `v12.ts`); the
  * D218 fallback has its own specs (`parser.spec.ts`).
  */
-export function parseEventModelForParity(text: string): EventModel {
-  const pre = preprocess(text);
-  const fm = pre.frontMatter && { ...pre.frontMatter, title: undefined };
-  const result = parseEventModel(text, { preprocessed: { ...pre, frontMatter: fm } });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((x) => x.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseEventModelForParity = (text: string): EventModel =>
+  parseForParity(text, parseEventModel, { withoutTitle: true });
 
 export const eventModelingAdapter: DiagramAdapter<EventModel> = {
   id: 'eventmodeling',

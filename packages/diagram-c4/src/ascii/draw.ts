@@ -34,6 +34,7 @@ import {
   type Dir,
   type GlyphSet,
 } from '@mermaid-js/core/ascii';
+import { dirOf, trimmed } from '@mermaid-js/shared/ascii';
 import type {
   C4BoundaryLayout,
   C4ElementLayout,
@@ -220,11 +221,6 @@ function cover(set: CellSet, texts: readonly Written[]): void {
     const width = cellWidth(t.text);
     for (let i = 0; i < width; i++) set.add(t.x + i, t.y);
   }
-}
-
-/** The way from `a` to the neighbouring cell `b`. */
-function dirOf(a: Cell, b: Cell): Dir {
-  return DIRS.find((d) => a.x + DX[d] === b.x && a.y + DY[d] === b.y) ?? 0;
 }
 
 /**
@@ -693,19 +689,4 @@ export function drawC4(layout: C4Layout, glyphs: GlyphSet, budget = ROUTE_BUDGET
     labels: labels.map(shift),
     headers: headers.map((h) => shift({ x: h.x, y: h.y, width: cellWidth(h.text), height: 1 })),
   };
-}
-
-/** The canvas as text without its empty margin, and where that text starts. */
-function trimmed(canvas: Canvas): { text: string; left: number; top: number } {
-  let lines = canvas.toString().split('\n');
-  let top = 0;
-  while (lines.length > 0 && lines[0] === '') {
-    lines.shift();
-    top++;
-  }
-  while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
-  const margin = Math.min(...lines.filter((l) => l !== '').map((l) => l.search(/\S/)));
-  const left = margin > 0 && Number.isFinite(margin) ? margin : 0;
-  if (left > 0) lines = lines.map((l) => l.slice(left));
-  return { text: lines.join('\n'), left, top };
 }

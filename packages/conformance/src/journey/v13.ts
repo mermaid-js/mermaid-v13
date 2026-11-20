@@ -4,7 +4,7 @@
  */
 import { detectJourney, parseJourney } from '@mermaid-js/diagram-journey';
 import type { JourneyModel } from '@mermaid-js/diagram-journey';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { JOURNEY_V12_TYPES, journeyV12Snapshot } from './v12.ts';
 import type { JourneySnapshot } from './v12.ts';
@@ -30,14 +30,8 @@ export function journeyV13Snapshot(model: JourneyModel): JourneySnapshot {
  * front-matter title is held back, as the oracle never passes front matter to v12; the D218
  * fallback has its own specs in the journey package.
  */
-export function parseJourneyForParity(text: string): JourneyModel {
-  const pre = preprocess(text);
-  const fm = pre.frontMatter && { ...pre.frontMatter, title: undefined };
-  const result = parseJourney(text, { preprocessed: { ...pre, frontMatter: fm } });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((d) => d.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseJourneyForParity = (text: string): JourneyModel =>
+  parseForParity(text, parseJourney, { withoutTitle: true });
 
 export const journeyAdapter: DiagramAdapter<JourneyModel> = {
   id: 'journey',

@@ -26,7 +26,7 @@ function shapeFiles(type: string): string[] {
 
 describe('shared shape chunks (#822)', () => {
   it("keeps every shape file out of core's static closure", () => {
-    const inputs = bundle.staticClosure.flatMap((f) => bundle.graph[f]!.inputs);
+    const inputs = closureSize(bundle).files.flatMap((f) => bundle.graph[f.path]!.inputs);
     expect(inputs.length).toBeGreaterThan(0);
     expect(inputs.filter((p) => p.startsWith('packages/shared/src/shapes/'))).toEqual([]);
   });

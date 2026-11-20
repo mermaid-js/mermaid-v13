@@ -7,7 +7,7 @@
  * preview.
  */
 import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
-import { code, inside, plural, span } from '@mermaid-js/shared/parser/facet';
+import { code, inside, keywordHover, plural } from '@mermaid-js/shared/parser/facet';
 import type { C4BetaDocument, C4BetaStyleNode } from '../beta/ast.ts';
 import type { C4BetaElement, C4BetaModel } from '../beta/model.ts';
 import { VALUE_WORDS } from '../beta/probe.ts';
@@ -81,15 +81,11 @@ function styleHover(
   return keyDoc === undefined ? undefined : { range, contents: `**${code(word)}**\n\n${keyDoc}` };
 }
 
-/** The range of the keyword a token is: only the keyword of a statement that holds its text. */
-function keywordRange(text: string, t: { kind: number; range: Range }): Range {
-  const word = VALUE_WORDS[t.kind];
-  if (word === undefined) return t.range;
-  const blanks = /^[\t ]*/.exec(text.slice(t.range.start, t.range.end))?.[0].length ?? 0;
-  return span(t.range.start + blanks, t.range.start + blanks + word.length);
-}
-
-/** The doc of a keyword: a diagram kind after the header, an element kind, or the grammar's. */
+/**
+ * The doc of a keyword token: a diagram kind after the header, an element kind, or the grammar's.
+ * A statement token that holds its text too (`VALUE_WORDS`) is never a diagram kind, so its whole
+ * range gives the same doc as its keyword's.
+ */
 function keywordDoc(doc: DocumentView<C4BetaDocument>, kind: number, range: Range) {
   const header = doc.result.ast.children.find((n) => n.type === 'Header');
   const afterHeader =
@@ -97,16 +93,6 @@ function keywordDoc(doc: DocumentView<C4BetaDocument>, kind: number, range: Rang
   const written = doc.text.slice(range.start, range.end);
   if (afterHeader && DIAGRAM_KIND_DOCS[written] !== undefined) return DIAGRAM_KIND_DOCS[written];
   return ELEMENT_INFO.find((i) => i.token === kind)?.doc ?? c4betaDocs[kind];
-}
-
-/** The keyword the token is, with the doc it has. */
-function keywordHover(doc: DocumentView<C4BetaDocument>, at: HoverTarget): Hover | undefined {
-  const t = at.token;
-  if (!t) return undefined;
-  const range = keywordRange(doc.text, t);
-  const docText = inside(at.offset, range) ? keywordDoc(doc, t.kind, range) : undefined;
-  if (docText === undefined) return undefined;
-  return { range, contents: `**${code(doc.text.slice(range.start, range.end))}**\n\n${docText}` };
 }
 
 export function c4betaHover(at: HoverTarget, doc: DocumentView<C4BetaDocument>): Hover | undefined {
@@ -120,5 +106,15 @@ export function c4betaHover(at: HoverTarget, doc: DocumentView<C4BetaDocument>):
       contents: `**${code(`:::${name}`)}**\n\n${tagFacts(doc, name, false)}`,
     };
   }
-  return (token && styleHover(doc, at, token)) ?? keywordHover(doc, at);
+  if (!token) return undefined;
+  return (
+    styleHover(doc, at, token) ??
+    keywordHover(
+      doc.text,
+      at.offset,
+      token.range,
+      VALUE_WORDS[token.kind],
+      keywordDoc(doc, token.kind, token.range)
+    )
+  );
 }

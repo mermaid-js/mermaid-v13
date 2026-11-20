@@ -26,8 +26,9 @@ beforeAll(async () => {
 describe('core size budget (R-PERF-8, D161)', () => {
   it('measures the entry static closure only, with no diagram chunk', () => {
     expect(core.size.source).toBe('static');
-    expect(core.size.files.map((f) => f.path)).toEqual(core.bundle.staticClosure);
-    const lazy = core.bundle.files.filter((f) => !core.bundle.staticClosure.includes(f.path));
+    const closure = core.size.files.map((f) => f.path);
+    expect(closure[0]).toBe(core.bundle.entryFile);
+    const lazy = core.bundle.files.filter((f) => !closure.includes(f.path));
     expect(lazy.length).toBeGreaterThan(0);
   });
 
@@ -56,7 +57,7 @@ describe('core size budget (R-PERF-8, D161)', () => {
   it('sizes the loaded fallback as the entry closure plus the flowchart chunk closure', () => {
     const loaded = flowchartClosureSize(core.bundle);
     const paths = loaded.files.map((f) => f.path);
-    expect(paths).toEqual(expect.arrayContaining(core.bundle.staticClosure));
+    expect(paths).toEqual(expect.arrayContaining(core.size.files.map((f) => f.path)));
     expect(paths).toContain(chunkOf(core.bundle, FLOWCHART_ENTRY));
     expect(loaded.gzip).toBeGreaterThan(core.size.gzip);
   });

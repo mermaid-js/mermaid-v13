@@ -9,14 +9,10 @@
 // `detour`, which slides a run of a route with two or more bends off a node it would cross (#767,
 // D507). Pele's router sees only the two end boxes.
 import type { Point, RoutePoint } from '../types.ts';
+import type { Rect } from '../layered/end-markers.ts';
 import { METRICS } from './metrics.ts';
 
-export interface Rect {
-  x0: number;
-  y0: number;
-  x1: number;
-  y1: number;
-}
+export type { Rect };
 
 export interface Port extends Rect {
   // Where the end is, and its side's outward normal. The rect is the box the route has to stay

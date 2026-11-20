@@ -36,6 +36,11 @@
       "types": "./dist/parser-kit/embed-body.d.ts",
       "default": "./dist/parser-kit/embed-body.js"
     },
+    "./parser-kit/embed-type": {
+      "mermaid-source": "./src/parser-kit/embed-type.ts",
+      "types": "./dist/parser-kit/embed-type.d.ts",
+      "default": "./dist/parser-kit/embed-type.js"
+    },
     "./preprocess": {
       "mermaid-source": "./src/preprocess/index.ts",
       "types": "./dist/preprocess/index.d.ts",
@@ -45,6 +50,11 @@
       "mermaid-source": "./src/layout/index.ts",
       "types": "./dist/layout/index.d.ts",
       "default": "./dist/layout/index.js"
+    },
+    "./layout/box-exit": {
+      "mermaid-source": "./src/layout/box-exit.ts",
+      "types": "./dist/layout/box-exit.d.ts",
+      "default": "./dist/layout/box-exit.js"
     },
     "./layout/tree": {
       "mermaid-source": "./src/layout/tree/index.ts",

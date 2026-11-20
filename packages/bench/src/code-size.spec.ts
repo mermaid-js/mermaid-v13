@@ -79,7 +79,6 @@ function handBuiltBundle(): Bundle {
     outdir: '/out',
     entryFile: 'index.js',
     files: Object.entries(gzip).map(([path, g]) => ({ path, raw: g * 3, gzip: g, brotli: g })),
-    staticClosure: ['index.js', 'chunks/core.js'],
     graph: {
       'index.js': {
         entryPoint: 'packages/mermaid/src/cdn.ts',

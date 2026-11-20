@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { relative } from 'node:path';
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 import { build } from 'esbuild';
-import type { BuildOptions, Metafile, Plugin } from 'esbuild';
+import type { BuildOptions, Plugin } from 'esbuild';
 import { stableCorePlan, stableCorePlugin } from './stable-chunks.ts';
 import type { SizeSummary, SizedFile } from './report.ts';
 
@@ -41,8 +41,6 @@ export interface Bundle {
   entryFile: string;
   /** Every output file (entry and lazily imported chunks) with raw, gzip-9 and brotli-11 sizes. */
   files: SizedFile[];
-  /** Output files reachable from the entry through static imports only, entry first. */
-  staticClosure: string[];
   /** The import graph between output files (paths relative to `outdir`), for format splits. */
   graph: Record<string, OutputNode>;
 }
@@ -110,20 +108,6 @@ export function sizeOf(path: string, bytes: Buffer): SizedFile {
   };
 }
 
-function staticClosure(meta: Metafile, outdir: string, entryOut: string): string[] {
-  const seen: string[] = [];
-  const visit = (path: string) => {
-    const rel = relative(outdir, path);
-    if (seen.includes(rel)) return;
-    seen.push(rel);
-    for (const imp of meta.outputs[path]?.imports ?? []) {
-      if (imp.kind === 'import-statement' && !imp.external) visit(imp.path);
-    }
-  };
-  visit(entryOut);
-  return seen;
-}
-
 export async function bundle({
   entry,
   outdir,
@@ -170,18 +154,6 @@ export async function bundle({
       abs(result.metafile.outputs[p].entryPoint) === abs(entry)
   );
   if (entryOut === undefined) throw new Error(`esbuild produced no entry output for ${entry}`);
-  const meta: Metafile = {
-    inputs: result.metafile.inputs,
-    outputs: Object.fromEntries(
-      Object.entries(result.metafile.outputs).map(([p, o]) => [
-        abs(p),
-        {
-          ...o,
-          imports: o.imports.map((i) => ({ ...i, path: i.external ? i.path : abs(i.path) })),
-        },
-      ])
-    ),
-  };
   const files = outputs.map((p) => sizeOf(relative(outdir, abs(p)), readFileSync(abs(p))));
   const graph: Record<string, OutputNode> = {};
   for (const p of outputs) {
@@ -203,7 +175,6 @@ export async function bundle({
     outdir,
     entryFile: relative(outdir, abs(entryOut)),
     files,
-    staticClosure: staticClosure(meta, outdir, abs(entryOut)),
     graph,
   };
 }

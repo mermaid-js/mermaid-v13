@@ -6,7 +6,7 @@ import { tokenValue } from '@mermaid-js/diagram-xychart/testing';
 import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
-import { VARIANTS, xyChartGateCorpus } from './corpus.ts';
+import { XYCHART_VARIANTS, xyChartGateCorpus } from './corpus.ts';
 
 /**
  * Lexer-parity gate (#507, parser-method §1, D212): the v13 XY chart lexer emits the same
@@ -19,7 +19,7 @@ import { VARIANTS, xyChartGateCorpus } from './corpus.ts';
  * glued comments, number forms, both orientations, `;`, plot before axis, missing band values,
  * duplicate categories, reversed ranges, `accTitle`/`accDescr`; unclosed and odd directives,
  * U+2028/U+2029, CR and error cases), each again in every generated variant that changes it
- * (`VARIANTS`: comment lines added or one through the middle of a short body, every line break
+ * (`XYCHART_VARIANTS`: comment lines added or one through the middle of a short body, every line break
  * a CR followed by a removed comment or directive line, CRLF, U+2028 or U+2029 before every
  * line break, a directive through the middle of every line).
  *
@@ -60,7 +60,7 @@ function v13Tokens(source: string): JisonToken[] {
 
 const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
 
-const VARIANT = new RegExp(` \\((?:${VARIANTS.map(([s]) => s).join('|')})\\)$`);
+const VARIANT = new RegExp(` \\((?:${XYCHART_VARIANTS.map(([s]) => s).join('|')})\\)$`);
 
 describe('xychart lexer parity with mermaid@12 (jison)', () => {
   it('emits the same tokens over the e2e fixtures, the v12 spec strings, the cases and their variants', async () => {

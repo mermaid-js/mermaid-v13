@@ -13,8 +13,6 @@ import {
   type ThemeOptions,
   type ThemeSpec,
   type ThemeVarEntry,
-  formatColor,
-  parseColor,
 } from '@mermaid-js/core/theme';
 import { classDiagram } from '@mermaid-js/diagram-class';
 import { er } from '@mermaid-js/diagram-er';
@@ -30,6 +28,7 @@ import { sequence } from '@mermaid-js/diagram-sequence';
 import { state } from '@mermaid-js/diagram-state';
 import { timeline } from '@mermaid-js/diagram-timeline';
 import { xychart } from '@mermaid-js/diagram-xychart';
+import { hex } from './hex.ts';
 
 const table = (plugin: Pick<DiagramPlugin, 'id' | 'theme'>): DiagramThemeTable | undefined =>
   plugin.theme;
@@ -86,12 +85,7 @@ export function paletteColours(v: unknown): string {
   let items: readonly unknown[] = [];
   if (typeof v === 'string') items = v.split(',');
   else if (Array.isArray(v)) items = v as unknown[];
-  return items
-    .map((c) => {
-      const rgba = typeof c === 'string' ? parseColor(c.trim()) : undefined;
-      return rgba ? formatColor(rgba) : String(c);
-    })
-    .join(',');
+  return items.map((c) => hex(c, String)).join(',');
 }
 
 /** Every variable a render can read: core's vocabulary and every table's `vars`. */

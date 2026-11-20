@@ -17,12 +17,14 @@ import {
   drawText,
   glyphFor,
   LEFT,
+  opposite,
   RIGHT,
   UP,
   type Dir,
   type GlyphSet,
   type Stroke,
 } from '@mermaid-js/core/ascii';
+import { dirOf } from '@mermaid-js/shared/ascii';
 import { cellText } from '../layout/cells.ts';
 import type {
   Point,
@@ -72,17 +74,11 @@ class Track {
   }
 }
 
-/** The direction from cell `a` to cell `b` on one row or column. */
-function towards(ax: number, ay: number, bx: number, by: number): Dir {
-  if (ay === by) return bx > ax ? RIGHT : LEFT;
-  return by > ay ? DOWN : UP;
-}
-
 /** A straight piece from `a` to `b` (cells, on one row or column). */
 function line(track: Track, ax: number, ay: number, bx: number, by: number): void {
   if (ax === bx && ay === by) return;
-  const d = towards(ax, ay, bx, by);
-  const back = towards(bx, by, ax, ay);
+  const d = dirOf({ x: ax, y: ay }, { x: bx, y: by });
+  const back = opposite(d);
   const steps = Math.abs(bx - ax) + Math.abs(by - ay);
   const dx = Math.sign(bx - ax);
   const dy = Math.sign(by - ay);

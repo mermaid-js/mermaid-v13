@@ -18,30 +18,15 @@
  */
 import { createRequire } from 'node:module';
 import { describe, expect, it } from 'vitest';
-import {
-  THEME_NAMES,
-  createTheme,
-  formatColor,
-  loadTheme,
-  parseColor,
-  type ThemeName,
-} from '@mermaid-js/core/theme';
+import { THEME_NAMES, createTheme, loadTheme, type ThemeName } from '@mermaid-js/core/theme';
 import { venn } from '@mermaid-js/diagram-venn';
 import { createMermaid } from 'mermaid';
 import { vennPaints } from '@mermaid-js/diagram-venn/testing';
+import { hex } from '../hex.ts';
 import { loadOracle } from '../oracle.ts';
-
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { theme?: string; themeVariables: Record<string, unknown> };
-  };
-  parse(text: string): Promise<unknown>;
-}
+import { v12, v12Vars } from '../v12-theme.ts';
 
 const oracle = await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
 /** khroma, as v12 resolves it (a dependency of `mermaid@12.2.0`, not of conformance). */
 const khroma = createRequire(createRequire(import.meta.url).resolve('mermaid-v12'))('khroma') as {
   isDark(c: string): boolean;
@@ -52,18 +37,6 @@ const khroma = createRequire(createRequire(import.meta.url).resolve('mermaid-v12
 const SLOTS = 8;
 /** Set indexes 0–9: the eight slots and two past them, where v12 starts again at `venn1`. */
 const INDEXES = Array.from({ length: SLOTS + 2 }, (_, i) => i);
-
-function v12Vars(theme: string, themeVariables?: object): Record<string, unknown> {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize(themeVariables ? { theme, themeVariables } : { theme });
-  return { ...v12.mermaidAPI.getConfig().themeVariables };
-}
-
-const hex = (v: unknown): string | undefined => {
-  if (typeof v !== 'string') return undefined;
-  const rgba = parseColor(v);
-  return rgba ? formatColor(rgba) : undefined;
-};
 
 /** What v12 draws: each set's circle and label colour, the title and the set ink. */
 function v12Drawn(vars: Record<string, unknown>): Record<string, string | undefined> {

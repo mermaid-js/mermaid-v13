@@ -31,7 +31,7 @@
     Name: STRING | ID | NAME_WITH_SPACES     WN: WARDLEY_NUMBER     C: WN | INT
 */
 import { formatExpected, Kind } from '@mermaid-js/core/parser-kit';
-import { STOP } from '@mermaid-js/shared/parser/support';
+import { foundText, STOP } from '@mermaid-js/shared/parser/support';
 import {
   accessibilityAsName,
   RuleParser,
@@ -247,12 +247,7 @@ class WardleyParser extends RuleParser<PreprocessResult> {
 
   /** How an error message names the token at `j`. */
   protected override found(j = this.i): string {
-    const k = this.kind(j);
-    if (k === Kind.EOF) return 'the end of the text';
-    if (k === Kind.Newline) return 'a line break';
-    const text = this.displayed(j).trim();
-    const line = text.split('\n', 1)[0] ?? '';
-    return line.length > 24 || line !== text ? `\`${line.slice(0, 24)}…\`` : `\`${line}\``;
+    return foundText(this.kind(j), this.displayed(j));
   }
 
   /** Report what was found where one of `want` was expected, then stop the statement. */

@@ -11,6 +11,7 @@
  */
 import { detectClass, memberText, parseClass } from '@mermaid-js/diagram-class';
 import type { ClassMember, ClassModel } from '@mermaid-js/diagram-class';
+import { modelOrThrow } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { CLASS_V12_TYPES, classV12Snapshot } from './v12.ts';
 import type { ClassMemberSnapshot, ClassSnapshot } from './v12.ts';
@@ -78,12 +79,7 @@ export function classV13Snapshot(model: ClassModel): ClassSnapshot {
 }
 
 /** v13 parse for parity: the model, or a throw carrying the first error diagnostic. */
-export function parseClassForParity(text: string): ClassModel {
-  const result = parseClass(text);
-  const error = result.diagnostics.find((d) => d.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseClassForParity = (text: string): ClassModel => modelOrThrow(parseClass(text));
 
 export const classAdapter: DiagramAdapter<ClassModel> = {
   id: 'class',

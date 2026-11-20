@@ -173,15 +173,30 @@ export function wrapTitle(text: string, width: number): string[] {
 }
 
 /**
+ * A drawing (a canvas, or its text) without its empty margin: the blank rows at the ends and
+ * the common left margin dropped. `top` and `left` are how many rows and columns that took.
+ */
+export function trimmed(drawn: Canvas | string): { text: string; top: number; left: number } {
+  let lines = String(drawn).split('\n');
+  let top = 0;
+  while (lines.length > 0 && lines[0] === '') {
+    lines.shift();
+    top++;
+  }
+  while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
+  const margin = Math.min(...lines.filter((l) => l !== '').map((l) => l.search(/\S/)));
+  const left = margin > 0 && Number.isFinite(margin) ? margin : 0;
+  if (left > 0) lines = lines.map((l) => l.slice(left));
+  return { text: lines.join('\n'), top, left };
+}
+
+/**
  * The drawing as text: blank rows at the ends and the common left margin dropped, the title
  * centred over it on the first lines.
  */
 export function finish(canvas: Canvas, title: string | undefined, maxWidth?: number): string {
-  let lines = canvas.toString().split('\n');
-  while (lines.length > 0 && lines[0] === '') lines.shift();
-  while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
-  const margin = Math.min(...lines.filter((l) => l !== '').map((l) => l.search(/\S/)));
-  if (margin > 0 && Number.isFinite(margin)) lines = lines.map((l) => l.slice(margin));
+  const body = trimmed(canvas).text;
+  const lines = body === '' ? [] : body.split('\n');
   const text = title?.trim();
   if (text) {
     const width = Math.max(0, ...lines.map(cellWidth));

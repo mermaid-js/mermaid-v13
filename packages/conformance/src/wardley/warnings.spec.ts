@@ -8,7 +8,7 @@ import {
 } from '@mermaid-js/diagram-wardley';
 import { MermaidError } from 'mermaid';
 import { wardleyCases, wardleyCorpus } from './corpus.ts';
-import { wardleyApi } from './render-api.ts';
+import { deterministicApi } from '../render-api.ts';
 
 /**
  * The parser's D425 and D428 warnings through the public `render()`: `RenderResult.warnings`
@@ -28,7 +28,7 @@ function fixture(name: string): string {
 }
 
 const warningsOf = async (name: string) =>
-  (await wardleyApi().render('w', fixture(name))).warnings.map(({ code, astIds }) => ({
+  (await deterministicApi().render('w', fixture(name))).warnings.map(({ code, astIds }) => ({
     code,
     astIds,
   }));
@@ -59,7 +59,7 @@ describe('wardley parser warnings name their statements in render() (D425, D428)
   });
 
   it('an error code reaches render() in the SYNTAX error’s diagnostics', async () => {
-    const e = await wardleyApi()
+    const e = await deterministicApi()
       .render('w', fixture('parser-range-anchor'))
       .then(
         () => undefined,

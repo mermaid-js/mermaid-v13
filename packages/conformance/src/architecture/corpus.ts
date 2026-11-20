@@ -4,14 +4,11 @@
  * quirks, line separators, one case per v12 DB check) and the parser's recovery set
  * (`corpus/architecture-recovery.json`, #599), and a CRLF and a commented copy of every source.
  */
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
+import { corpusJson, fixturesAndSpecs, REPO_ROOT } from '../corpus.ts';
 import { commented } from '../sequence/corpus.ts';
 import type { CorpusItem } from '../types.ts';
-
-const readItems = (file: string) =>
-  JSON.parse(readFileSync(join(REPO_ROOT, file), 'utf8')) as CorpusItem[];
 
 /**
  * The number of `.mmd` fixtures under `e2e/diagrams/architecture/`, every tier and the
@@ -24,13 +21,7 @@ export const E2E_FIXTURES = readdirSync(join(REPO_ROOT, 'e2e/diagrams/architectu
 }).filter((f) => f.endsWith('.mmd')).length;
 
 /** The architecture corpus: the e2e fixtures and the harvested v12 spec strings. */
-export async function architectureCorpus(): Promise<CorpusItem[]> {
-  const items: CorpusItem[] = [];
-  for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/architecture'), 'e2e')) {
-    items.push(item);
-  }
-  return [...items, ...readItems('packages/conformance/corpus/architecture-v12-specs.json')];
-}
+export const architectureCorpus = (): Promise<CorpusItem[]> => fixturesAndSpecs('architecture');
 
 /**
  * The hand-written cases: the spec's quirks and the rules' other corners, one case per v12 DB
@@ -38,9 +29,9 @@ export async function architectureCorpus(): Promise<CorpusItem[]> {
  * checks).
  */
 export function architectureCases(): CorpusItem[] {
-  const recovery = readItems('packages/conformance/corpus/architecture-recovery.json');
+  const recovery = corpusJson('architecture-recovery.json');
   return [
-    ...readItems('packages/conformance/corpus/architecture-cases.json'),
+    ...corpusJson('architecture-cases.json'),
     ...recovery.map(({ id, source }) => ({ id, source })),
   ];
 }

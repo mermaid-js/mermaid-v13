@@ -15,9 +15,7 @@ import {
   DY,
   glyphFor,
   INTO,
-  junction,
   LEFT,
-  opposite,
   RIGHT,
   sideOf,
   UP,
@@ -36,7 +34,14 @@ import type {
   UsecasePrepared,
   UseCaseView,
 } from '../layout/prepare.ts';
-import { cellRect, cellsOf, drawLineCells, finish, writeLabel } from '@mermaid-js/shared/ascii';
+import {
+  cellRect,
+  cellsOf,
+  drawLineCells,
+  finish,
+  tee,
+  writeLabel,
+} from '@mermaid-js/shared/ascii';
 
 /** The actor's figure (D478), the same in both charsets. */
 const FIGURE = [' O ', '/|\\', '/ \\'] as const;
@@ -50,13 +55,11 @@ interface UsecaseGlyphs {
   readonly triangle?: Sides;
   /** A Markdown list's bullet as written; undefined keeps the label's own. */
   readonly bullet?: string;
-  /** Where a line leaves a box, the tee merges into a border junction already drawn there. */
-  readonly mergeTees: boolean;
 }
 
 const USECASE_GLYPHS: Readonly<Record<GlyphSet['name'], UsecaseGlyphs>> = {
-  unicode: { triangle: { up: '△', down: '▽', left: '◁', right: '▷' }, mergeTees: true },
-  ascii: { bullet: '-', mergeTees: false },
+  unicode: { triangle: { up: '△', down: '▽', left: '◁', right: '▷' } },
+  ascii: { bullet: '-' },
 };
 
 interface End {
@@ -132,17 +135,9 @@ function drawMarker(canvas: Canvas, glyphs: GlyphSet, end: End): void {
  * The border glyph where a line leaves a box: a tee with its stem towards the line. A use case's
  * `(` or `)` (`[`, `]`) stays: the line ends next to it.
  */
-function tee(canvas: Canvas, glyphs: GlyphSet, end: End): void {
-  const x = end.cell.x + DX[end.into];
-  const y = end.cell.y + DY[end.into];
-  const was = canvas.get(x, y);
-  if ('()[]'.includes(was)) return;
-  const out = opposite(end.into);
-  const fallback = sideOf(glyphs.tee, out);
-  if (!USECASE_GLYPHS[glyphs.name].mergeTees) return void canvas.set(x, y, fallback);
-  const stub = glyphFor(armOf(out, 1), glyphs)!;
-  const merged = junction(was, stub);
-  canvas.set(x, y, merged === stub ? fallback : merged);
+function leave(canvas: Canvas, glyphs: GlyphSet, end: End): void {
+  const was = canvas.get(end.cell.x + DX[end.into], end.cell.y + DY[end.into]);
+  if (!'()[]'.includes(was)) tee(canvas, glyphs.tee, glyphs.name === 'unicode', end);
 }
 
 /**
@@ -396,7 +391,7 @@ export function drawUsecase(
     const actor = prepared.nodes.get(placed.node)?.kind === 'actor';
     const end = actor && box ? runOnToActor(canvas, glyphs, placed, cellRect(box)) : placed;
     if (end.marker !== 'none') drawMarker(canvas, glyphs, end);
-    else if (!actor) tee(canvas, glyphs, end);
+    else if (!actor) leave(canvas, glyphs, end);
   }
 
   return finish(canvas, options.title, options.maxWidth);

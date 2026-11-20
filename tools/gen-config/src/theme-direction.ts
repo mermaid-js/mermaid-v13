@@ -28,13 +28,14 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import ts from 'typescript';
 import {
-  THEME_FAMILIES,
+  PALETTE_VARIABLES,
+  parseColor,
   type DiagramThemeTable,
   type DiagramThemeVarDef,
-} from '../../../packages/core/src/theme/diagram.ts';
+} from '@mermaid-js/core/theme';
+import { THEME_FAMILIES } from '../../../packages/core/src/theme/diagram.ts';
 import { parseRule, ruleRefs, type Expr } from '../../../packages/core/src/theme/dsl.ts';
-import { parseColor } from '../../../packages/core/src/theme/color.ts';
-import { PALETTE_SLOT, PALETTE_VARIABLES } from '../../../packages/core/src/theme/vocabulary.ts';
+import { PALETTE_SLOT } from '../../../packages/core/src/theme/vocabulary.ts';
 
 /** One source file of a runtime import graph: its absolute path and its text. */
 export interface SourceFile {

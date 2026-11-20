@@ -46,8 +46,11 @@ export const IMPORT_TIMEOUT_MS = 5000;
 const importFile = (path: string): Promise<unknown> =>
   import(/* webpackIgnore: true */ /* @vite-ignore */ pathToFileURL(path).href);
 
-/** `importFile(path)`, rejected after `ms`. */
-function importWithin(path: string, ms: number): Promise<unknown> {
+/**
+ * The module at `path` (a file on disk), imported at run time and rejected after `ms`. The
+ * language server imports its plugins' modules through it too.
+ */
+export function importWithin(path: string, ms: number): Promise<unknown> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const limit = new Promise<never>((_, fail) => {
     timer = setTimeout(() => fail(new Error(`timed out after ${ms} ms`)), ms);
@@ -56,12 +59,14 @@ function importWithin(path: string, ms: number): Promise<unknown> {
   return Promise.race([importFile(path), limit]).finally(() => clearTimeout(timer));
 }
 
-type Detector = (text: string, config?: Readonly<Record<string, unknown>>) => boolean;
-
-function detectorOf(module: unknown): Detector | undefined {
+/**
+ * The function a detector module exports: `detector`, else the default export; undefined when
+ * neither is a function. The language server and the bundler plugin pick it the same way.
+ */
+export function detectorOf(module: unknown): ManifestPlugin['detector'] {
   const m = module as Record<string, unknown> | null;
   const fn = m?.detector ?? m?.default;
-  return typeof fn === 'function' ? (fn as Detector) : undefined;
+  return typeof fn === 'function' ? (fn as ManifestPlugin['detector']) : undefined;
 }
 
 /** A layout's `config` module: the fragment (`config`, else default) and its `extension`, if any. */
@@ -104,10 +109,10 @@ async function layoutPlugin(p: ScannedPackage, ms: number): Promise<ManifestPlug
 /** A diagram package: its detector now, its entry (and `ascii` entry) on first detection. */
 async function diagramPlugin(p: ScannedPackage, ms: number): Promise<ManifestPlugin | Skipped> {
   const { entry, ascii } = p.files;
-  if (p.files.detector === undefined) return skip(p, 'the manifest has no "detector"');
-  let detector: Detector | undefined;
+  let detector: ManifestPlugin['detector'];
   try {
-    detector = detectorOf(await importWithin(p.files.detector, ms));
+    // The scan skips a diagram manifest without a detector.
+    detector = detectorOf(await importWithin(p.files.detector!, ms));
   } catch (error) {
     return skip(p, `detector failed to load (${reason(error)})`);
   }

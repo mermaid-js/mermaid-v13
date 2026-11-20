@@ -1,8 +1,8 @@
 /**
- * The timing loop both environments use: the browser page (`harness.ts`) and the Node child
- * process (`node/runner.ts`). Only `renderOnce` differs: the page also puts the SVG in the
- * document and forces layout, Node stops at the SVG string. No DOM or Node APIs here.
+ * The timing loop of the browser page (`harness.ts`). `renderOnce` is the page's: it also puts
+ * the SVG in the document and forces layout. No DOM or Node APIs here.
  */
+import { errorText } from '../pipeline.ts';
 import type { Stage } from '../report.ts';
 import { STAGES } from '../report.ts';
 import type { Adapter } from './adapters.ts';
@@ -17,7 +17,6 @@ export interface SampleOptions {
   /** Renders `source` once and returns the elapsed ms. Throws when the renderer fails. */
   renderOnce(source: string): Promise<number>;
   adapter: Adapter;
-  errorText(e: unknown): string;
   /** Runs after every attempt, failed or not (the page clears its stage). */
   cleanup?(): void;
 }
@@ -57,7 +56,7 @@ export async function sample(
     }
     return { ok: true, firstMs, samples, batch, stageSamples };
   } catch (e) {
-    return { ok: false, error: o.errorText(e) };
+    return { ok: false, error: errorText(e) };
   } finally {
     o.cleanup?.();
   }

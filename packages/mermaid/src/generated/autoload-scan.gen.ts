@@ -30,7 +30,8 @@ export interface ScannedPackage {
   readonly manifest: PluginManifest;
   /**
    * Absolute real paths of the manifest's `entry`, `detector` and `ascii` modules, and of a
-   * layout manifest's `config` module (D177).
+   * layout manifest's `config` module (D177). A diagram package always has a `detector`: the
+   * scan skips a diagram manifest without one.
    */
   readonly files: {
     readonly entry: string;
