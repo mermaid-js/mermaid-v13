@@ -64,7 +64,6 @@ import {
   SEMI,
   type SourceView,
   SPACE,
-  TAB,
   type TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { StateLexer, type StateLexerOptions } from '@mermaid-js/shared/parser/state';
@@ -247,20 +246,13 @@ class C4Lexer extends StateLexer {
    */
   private directionToken(c: number, p: number): boolean {
     if (c !== LOWER_D || !this.startsWith(DIRECTION, p)) return false;
-    const value = this.blankRun(p + DIRECTION.length);
+    const value = this.blanks(p + DIRECTION.length);
     if (value === p + DIRECTION.length || isWord(this.text.charCodeAt(value + 2))) return false;
     const word = this.text.slice(value, value + 2);
     const rule = DIRECTIONS.find(([name]) => name === word);
     if (!rule) return false;
     this.emit(rule[1], p, value + 2);
     return true;
-  }
-
-  /** The end of the run of blanks (`[ \t]+`) from `q`. */
-  private blankRun(q: number): number {
-    let j = q;
-    while (this.text.charCodeAt(j) === SPACE || this.text.charCodeAt(j) === TAB) j++;
-    return j;
   }
 
   /** Whether `word` is at `q`. */
@@ -303,10 +295,10 @@ class C4Lexer extends StateLexer {
         this.stringKvValue(c);
         return;
       case S.ACC_TITLE:
-        this.pop(T.AccTitleValue, this.find('\n', this.p));
+        this.pop(T.AccTitleValue, this.lineEnd(this.p));
         return;
       case S.ACC_DESCR:
-        this.pop(T.AccDescrValue, this.find('\n', this.p));
+        this.pop(T.AccDescrValue, this.lineEnd(this.p));
         return;
       default:
         this.accDescrMultiline(c);
@@ -324,7 +316,7 @@ class C4Lexer extends StateLexer {
     // `%%[^\n]*`: a comment. v12's `(\r?\n?)+` after it ate the line breaks; D452 leaves
     // them to `NEWLINE`.
     if (c === PERCENT && text.charCodeAt(p + 1) === PERCENT) {
-      this.emit(Kind.Comment, p, this.find('\n', p + 2));
+      this.emit(Kind.Comment, p, this.lineEnd(p + 2));
       return;
     }
     if (isSpace(c)) {
