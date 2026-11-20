@@ -13,7 +13,7 @@
  * the complex leaf label truncated with `...`.
  */
 import type { RenderContext } from '@mermaid-js/core';
-import type { FontKey, Measurer } from '@mermaid-js/core/text';
+import { decodeEntities, type FontKey, type Measurer } from '@mermaid-js/core/text';
 import { treemapLayoutConfig, type TreemapLayoutConfig } from '../config.ts';
 import { treemapValueFormat } from '../format/index.ts';
 import { classStyles, type TreemapModel } from '../model.ts';
@@ -25,7 +25,7 @@ import {
   TREEMAP_METRICS as M,
   type LeafFit,
 } from './metrics.ts';
-import { classFont, plainText, textWidth, truncate } from './text.ts';
+import { classFont, textWidth, truncate } from './text.ts';
 import { tileTreemap, type Tile } from './tiles.ts';
 import {
   grow,
@@ -208,7 +208,7 @@ function sectionOf(
     : box.width - M.sectionLabelX - M.sectionLabelRightPad;
   const text = truncate(
     frame.measurer,
-    plainText(node.name),
+    decodeEntities(node.name),
     labelFont,
     Math.max(M.sectionLabelMinWidth, space)
   );
@@ -304,7 +304,7 @@ function fitLeaf(
     weight: NORMAL_WEIGHT,
   });
   const font = (size: number): FontKey => ({ ...start, size });
-  const name = plainText(t.node!.name);
+  const name = decodeEntities(t.node!.name);
   const valueSize = (size: number): number =>
     Math.max(fit.minValueSize, Math.min(fit.valueSize, Math.round(size * M.valueScale)));
 
@@ -353,7 +353,7 @@ function fitLeaf(
  */
 function titleOf(title: string, width: number, frame: Frame): TreemapText {
   return placed(
-    plainText(title),
+    decodeEntities(title),
     { family: frame.family, size: frame.titleSize, weight: NORMAL_WEIGHT },
     frame.measurer,
     { x: width / 2, y: frame.band / 2, anchor: 'middle', baseline: 'middle' }

@@ -16,7 +16,7 @@
 export { accDescrValue, accTitleValue, titleValue } from '@mermaid-js/shared/parser/rule';
 import { AMP, cook, HASH, LBRACE } from '@mermaid-js/core/parser-kit';
 import type { SourceView } from '@mermaid-js/core/parser-kit';
-import { entityAt } from '@mermaid-js/core/text';
+import { decodeEntities } from '@mermaid-js/core/text';
 import { expandTabs } from '../tabs.ts';
 
 /**
@@ -34,32 +34,16 @@ export function displayText(src: string, start: number, end: number, view: Sourc
   for (let p = start; p < end; p++) {
     if (src.charCodeAt(p) !== AMP) continue;
     // The `&` itself through cook(), which drops it inside a removed span.
-    out += decodeReferences(cook(src, from, p, view)) + cook(src, p, p + 1, view);
+    out += decodeEntities(cook(src, from, p, view)) + cook(src, p, p + 1, view);
     from = p + 1;
   }
-  return out + decodeReferences(cook(src, from, end, view));
+  return out + decodeEntities(cook(src, from, end, view));
 }
 
 /** Whether `src[start…end)` holds the character `c` (a scan of the range only, R-PARSE-7). */
 function has(src: string, start: number, end: number, c: number): boolean {
   for (let i = start; i < end; i++) if (src.charCodeAt(i) === c) return true;
   return false;
-}
-
-/** Every character reference core knows in `text`, as its character. */
-function decodeReferences(text: string): string {
-  let i = text.indexOf('&');
-  if (i < 0) return text;
-  let out = '';
-  let from = 0;
-  for (; i >= 0; i = text.indexOf('&', i + 1)) {
-    const ref = entityAt(text, i);
-    if (ref === undefined) continue;
-    out += text.slice(from, i) + ref[0];
-    from = i + ref[1];
-    i = from - 1;
-  }
-  return out + text.slice(from);
 }
 
 /**
