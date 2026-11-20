@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Canvas } from './canvas.ts';
-import { drawBox, drawText, type BoxOptions } from './draw.ts';
+import { drawBox, drawFrame, drawText, type BoxOptions } from './draw.ts';
 import { ascii, unicode, type GlyphSet } from './glyphs.ts';
 
 const box = (glyphs: GlyphSet, options?: BoxOptions, width = 7, height = 3): string => {
@@ -76,5 +76,21 @@ describe('drawBox (D82 forms)', () => {
   it('draws nothing smaller than 2 × 2', () => {
     expect(box(unicode, undefined, 1, 3)).toBe('');
     expect(box(unicode, undefined, 2, 2)).toBe('┌┐\n└┘');
+  });
+});
+
+describe('drawFrame', () => {
+  it('draws a rectangle in one stroke', () => {
+    const canvas = new Canvas();
+    drawFrame(canvas, unicode.dotted, { x: 0, y: 0, width: 5, height: 3 });
+    expect(canvas.toString()).toBe('┌┄┄┄┐\n┆   ┆\n└┄┄┄┘');
+  });
+
+  it('merges with what is drawn', () => {
+    const canvas = new Canvas();
+    canvas.draw(2, 0, '│');
+    canvas.draw(2, 1, '│');
+    drawFrame(canvas, unicode.solid, { x: 0, y: 1, width: 5, height: 3 });
+    expect(canvas.toString()).toBe('  │\n┌─┼─┐\n│   │\n└───┘');
   });
 });

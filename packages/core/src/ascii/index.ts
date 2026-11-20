@@ -5,7 +5,7 @@
 export { Canvas } from './canvas.ts';
 export { DOWN, DX, DY, INTO, LEFT, RIGHT, UP, opposite } from './directions.ts';
 export type { Dir } from './directions.ts';
-export { drawBox, drawText } from './draw.ts';
+export { drawBox, drawFrame, drawText } from './draw.ts';
 export type { BoxOptions, CellRect } from './draw.ts';
 export { armOf, ascii, glyphFor, junction, sideOf, unicode } from './glyphs.ts';
 export type { CardinalityGlyphs, GlyphSet, Sides, Stroke } from './glyphs.ts';

@@ -24,6 +24,7 @@ import {
   DX,
   DY,
   drawBox,
+  drawFrame,
   drawText,
   glyphFor,
   graphemes,
@@ -137,26 +138,6 @@ interface Pen {
   readonly budget: RouteBudget;
   /** Whether a label may be wrapped narrower than the layout's lines (`C4Layout.labelsWrap`). */
   readonly wrap: boolean;
-}
-
-/** A frame: dashed rules for a boundary, solid for a deployment node. */
-function drawFrame(pen: Pen, r: CellRect, dashed: boolean): void {
-  const { canvas, glyphs } = pen;
-  const s = dashed ? glyphs.dotted : glyphs.solid;
-  const right = r.x + r.width - 1;
-  const bottom = r.y + r.height - 1;
-  for (let i = r.x + 1; i < right; i++) {
-    canvas.draw(i, r.y, s.h);
-    canvas.draw(i, bottom, s.h);
-  }
-  for (let j = r.y + 1; j < bottom; j++) {
-    canvas.draw(r.x, j, s.v);
-    canvas.draw(right, j, s.v);
-  }
-  canvas.draw(r.x, r.y, s.tl);
-  canvas.draw(right, r.y, s.tr);
-  canvas.draw(r.x, bottom, s.bl);
-  canvas.draw(right, bottom, s.br);
 }
 
 /** `lines` centred across `r` from row `top`, each cut to the room inside its border. */
@@ -596,7 +577,7 @@ export function drawC4(layout: C4Layout, glyphs: GlyphSet, budget = ROUTE_BUDGET
   const frames = layout.boundaries.map((b) => grid.rect(b.box));
   layout.boundaries.forEach((b, k) => {
     const r = frames[k]!;
-    drawFrame(pen, r, b.nodeKind === undefined);
+    drawFrame(pen.canvas, b.nodeKind === undefined ? pen.glyphs.dotted : pen.glyphs.solid, r);
     pen.frameCells.border(r);
     const right = r.x + r.width - 1;
     const bottom = r.y + r.height - 1;
