@@ -39,6 +39,7 @@ import type {
   TokenView,
 } from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS } from '@mermaid-js/core/limits';
+import type { Limits } from '@mermaid-js/core/limits';
 import { parseYaml, preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult, YamlMap } from '@mermaid-js/core/preprocess';
 import type { FlowLabelNode, FlowLabelText, FlowLabelType, FlowStatement } from './flow-ast.ts';
@@ -46,11 +47,10 @@ import type { FlowKinds } from './flow-kinds.ts';
 import type { FlowTables } from './flow-tables.ts';
 
 /** The parse options every dialect has. */
-export interface FlowParseOptionsBase extends ParseOptions {
+/** `maxDepth` caps block nesting, core's `DEFAULT_LIMITS.maxDepth` when unset. */
+export interface FlowParseOptionsBase extends ParseOptions, Partial<Pick<Limits, 'maxDepth'>> {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
-  /** Block nesting cap (core `DEFAULT_LIMITS.maxDepth`). */
-  maxDepth?: number;
   /** Features claimed by extension plugins; `callbacks` silences `CALLBACK_IGNORED`. */
   claims?: readonly string[];
 }
@@ -148,11 +148,9 @@ export interface FlowParserDialect<B extends FlowParserBuilder, O extends FlowPa
 }
 
 /** The `maxNodes`, `maxEdges` and `inheritDir` a builder is made with, from the parse options. */
-export function flowBuilderLimits(options: {
-  maxEdges?: number;
-  maxNodes?: number;
-  inheritDir?: boolean;
-}): { maxEdges: number; maxNodes: number; inheritDir: boolean } {
+export function flowBuilderLimits(
+  options: Partial<Pick<Limits, 'maxEdges' | 'maxNodes'>> & { inheritDir?: boolean }
+): { maxEdges: number; maxNodes: number; inheritDir: boolean } {
   return {
     maxEdges: options.maxEdges ?? DEFAULT_LIMITS.maxEdges,
     maxNodes: options.maxNodes ?? DEFAULT_LIMITS.maxNodes,

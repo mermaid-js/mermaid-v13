@@ -34,6 +34,7 @@
  * decision point (`expected.ts`); its mode is the lexer's start condition. Recovery stops it.
  */
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
+import type { Limits } from '@mermaid-js/core/limits';
 import {
   firstHole,
   Kind,
@@ -113,15 +114,15 @@ import * as EXPECTED from './expected.ts';
 import { esc, shapeType } from './text.ts';
 import { T } from './tokens.ts';
 
-export interface BlockParseOptions extends ParseOptions {
+/**
+ * The caps, each core's `DEFAULT_LIMITS` value when unset: edges (`maxEdges`), blocks, spaces and
+ * composites (`maxNodes`, R-SEC-5) and composite nesting (`maxDepth`).
+ */
+export interface BlockParseOptions
+  extends ParseOptions,
+    Partial<Pick<Limits, 'maxEdges' | 'maxNodes' | 'maxDepth'>> {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
-  /** Block cap: blocks, spaces and composites (core `DEFAULT_LIMITS.maxNodes`, R-SEC-5). */
-  maxNodes?: number;
-  /** Edge cap (core `DEFAULT_LIMITS.maxEdges`). */
-  maxEdges?: number;
-  /** How deep composites may nest (core `DEFAULT_LIMITS.maxDepth`). */
-  maxDepth?: number;
 }
 
 export type BlockParseResult = ParseResult<BlockModel, BlockDocument>;

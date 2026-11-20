@@ -18,14 +18,13 @@ import {
   Kind,
   kindSet,
   LineIndex,
-  nodeId,
   ParseState,
   Probe,
   ProbeCursor,
   syncTo,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
-import { foundText, STOP } from '@mermaid-js/shared/parser/support';
+import { foundText, idEscaper, STOP } from '@mermaid-js/shared/parser/support';
 import { span, trimmed } from '@mermaid-js/shared/parser/facet';
 import type {
   ParseOptions,
@@ -697,7 +696,7 @@ class QuadrantParser {
 type Mutable<T> = { -readonly [K in keyof T]: T[K] };
 
 /** `pt:<name>`-style id part: `%`, `>`, `@` and `#` percent-encoded. */
-const esc = (name: string): string => nodeId(name).slice(2);
+const esc = idEscaper();
 
 const label = (t: QuadrantTextNode, suffix = ''): QuadrantText => ({
   text: (t.text + suffix).trim(),

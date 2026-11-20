@@ -5,7 +5,7 @@
 // Changed: the box takes its rectangle instead of reading grid columns, draws the label-free
 // frame only, merges its border with what is already drawn, and has the D82 forms.
 import type { Canvas } from './canvas.ts';
-import { glyphFor, type GlyphSet } from './glyphs.ts';
+import { glyphFor, type GlyphSet, type Stroke } from './glyphs.ts';
 import { graphemes } from './measurer.ts';
 
 /**
@@ -49,6 +49,29 @@ export interface BoxOptions {
   readonly marks?: Partial<Record<'top' | 'right' | 'bottom' | 'left', string>>;
   /** A marker one cell right of the top-left corner, such as `+` for a collapsed group. */
   readonly marker?: string;
+}
+
+/**
+ * Draws `rect`'s border in the one `stroke` (its `h` along the top and bottom, `v` down the
+ * sides, then the four corners), merging with what is drawn. Unlike {@link drawBox} it takes
+ * any stroke, such as a dotted one, and has no forms or size floor.
+ */
+export function drawFrame(canvas: Canvas, stroke: Stroke, rect: CellRect): void {
+  const { x, y } = rect;
+  const right = x + rect.width - 1;
+  const bottom = y + rect.height - 1;
+  for (let i = x + 1; i < right; i++) {
+    canvas.draw(i, y, stroke.h);
+    canvas.draw(i, bottom, stroke.h);
+  }
+  for (let j = y + 1; j < bottom; j++) {
+    canvas.draw(x, j, stroke.v);
+    canvas.draw(right, j, stroke.v);
+  }
+  canvas.draw(x, y, stroke.tl);
+  canvas.draw(right, y, stroke.tr);
+  canvas.draw(x, bottom, stroke.bl);
+  canvas.draw(right, bottom, stroke.br);
 }
 
 /**
