@@ -32,6 +32,7 @@ import type {
   Rect,
 } from './types.ts';
 import { RectUnion } from '@mermaid-js/shared/layout';
+import { discBox, extraLines } from '@mermaid-js/shared/layout/geometry';
 
 /** What the layout reads from the render context. */
 export type RadarLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
@@ -159,7 +160,7 @@ export function layoutRadar(model: RadarModel, ctx: RadarLayoutContext): RadarLa
   // The title (`:41-45`): middle-anchored at the canvas top, `hanging`.
   const title = titleText && placeAt(titleText, { x: center.x, y: 0 }, 'middle', 'hanging');
 
-  const box = new Box();
+  const box = new RectUnion();
   box.add({
     x: 0,
     y: 0,
@@ -168,19 +169,19 @@ export function layoutRadar(model: RadarModel, ctx: RadarLayoutContext): RadarLa
   });
   const ringStroke = strokes.graticule / 2;
   for (const ring of rings)
-    if (ring.points.length === 0) box.addDisc(center, ring.radius + ringStroke);
-    else for (const corner of ring.points) box.addDisc(corner, ringStroke);
+    if (ring.points.length === 0) box.add(discBox(center, ring.radius + ringStroke));
+    else for (const corner of ring.points) box.add(discBox(corner, ringStroke));
   for (const spoke of spokes) {
-    box.addDisc(center, strokes.axis / 2);
-    box.addDisc(spoke.end, strokes.axis / 2);
+    box.add(discBox(center, strokes.axis / 2));
+    box.add(discBox(spoke.end, strokes.axis / 2));
     box.add(spoke.label);
   }
   // A Bézier segment stays inside the hull of its control points.
   for (const curve of curves) {
-    for (const point of curve.points) box.addDisc(point, strokes.curve / 2);
+    for (const point of curve.points) box.add(discBox(point, strokes.curve / 2));
     for (const segment of curve.segments) {
-      box.addDisc(segment.c1, strokes.curve / 2);
-      box.addDisc(segment.c2, strokes.curve / 2);
+      box.add(discBox(segment.c1, strokes.curve / 2));
+      box.add(discBox(segment.c2, strokes.curve / 2));
     }
   }
   for (const row of legend) {
@@ -327,11 +328,6 @@ function placeAt(
   return { x, y, width: text.width, height: text.height, text };
 }
 
-/** How much taller than one line a label is: 0 for one line (or none). */
-function extraLines(text: MeasuredLabel): number {
-  return Math.max(0, text.height - text.lineHeight);
-}
-
 /**
  * The source of a markdown string (D355), written as in flowcharts: a backtick and a double
  * quote around it. A label comes without its quotes, so the backticks are enough.
@@ -340,11 +336,3 @@ function markdownString(text: string): string | undefined {
   return RE_MARKDOWN.exec(text.trim())?.[2];
 }
 const RE_MARKDOWN = /^("?)`([^]*)`\1$/;
-
-/** The union of what is drawn. */
-class Box extends RectUnion {
-  /** The square around the disc of radius `r` about `center`. */
-  addDisc(center: Point, r: number): void {
-    this.add({ x: center.x - r, y: center.y - r, width: 2 * r, height: 2 * r });
-  }
-}

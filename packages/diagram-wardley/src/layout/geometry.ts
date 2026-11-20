@@ -3,6 +3,7 @@
  * turned about its anchor) and the union box the bounds are grown from.
  */
 import { RectUnion } from '@mermaid-js/shared/layout';
+import { discBox } from '@mermaid-js/shared/layout/geometry';
 import type { PlacedText, Point, Rect } from './types.ts';
 
 /** Half a turn, in degrees: a unit, not a length. */
@@ -46,7 +47,7 @@ export class Box extends RectUnion {
   }
   /** The square around the disc of radius `r` about `center`. */
   disc(center: Point, r: number): void {
-    this.add({ x: center.x - r, y: center.y - r, width: 2 * r, height: 2 * r });
+    this.add(discBox(center, r));
   }
   /** A line `width` wide, as the squares about its ends. */
   line(from: Point, to: Point, width: number): void {

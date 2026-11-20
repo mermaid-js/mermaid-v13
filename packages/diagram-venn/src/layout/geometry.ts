@@ -2,6 +2,7 @@
  * Rectangle and circle helpers the layout and its invariants share: overlap, the box about a
  * circle, and everything a layout draws as boxes in the diagram frame (what `bounds` covers).
  */
+import { discBox } from '@mermaid-js/shared/layout/geometry';
 import type { Circle, Rect, VennLayout } from './types.ts';
 
 /** Whether `a` and `b` overlap by more than `eps` (touching is not overlapping). */
@@ -12,10 +13,7 @@ export const overlaps = (a: Rect, b: Rect, eps = 0): boolean =>
   b.y < a.y + a.height - eps;
 
 /** The square about `c`, its radius grown by `grow`. */
-export const circleBox = (c: Readonly<Circle>, grow = 0): Rect => {
-  const r = c.radius + grow;
-  return { x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r };
-};
+export const circleBox = (c: Readonly<Circle>, grow = 0): Rect => discBox(c, c.radius + grow);
 
 /** What a layout draws: everything but the bounds. */
 export type LayoutDrawing = Pick<

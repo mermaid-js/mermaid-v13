@@ -5,6 +5,7 @@
  */
 import type { Size } from '@mermaid-js/core/layout';
 import type { FontKey } from '@mermaid-js/core/text';
+import { extraLines } from '@mermaid-js/shared/layout/geometry';
 import type { XyChartOptions } from '../config.ts';
 import type { XyChartModel, XyChartPlot } from '../model.ts';
 import { XYCHART_METRICS } from './metrics.ts';
@@ -18,9 +19,6 @@ interface LegendEntry {
   readonly plot: XyChartPlot;
   readonly text: Measured;
 }
-
-/** How much taller than one line a text is: 0 for one line. */
-const extraLines = (m: Measured): number => Math.max(0, m.height - m.lineHeight);
 
 /**
  * v12 `ChartLegend`: the named plots, right of the plot, dropped whole when it does not fit.

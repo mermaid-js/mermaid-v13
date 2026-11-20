@@ -18,6 +18,7 @@ import { cliffCurve, confusionEllipse, foldCurve, horizonCurve } from './boundar
 import { cynefinOptions, type CynefinOptions } from './config.ts';
 import { cubicBox, grow, mapY, pointsBox, quadBox } from './geometry.ts';
 import { RectUnion } from '@mermaid-js/shared/layout';
+import { extraLines } from '@mermaid-js/shared/layout/geometry';
 import { DOMAIN_META, domainTitle } from '../domains.ts';
 import { ARROWS, BADGES, FONTS, LABELS, TITLE } from './metrics.ts';
 import { resolveSeed } from './random.ts';
@@ -442,11 +443,6 @@ function arrowhead(
 function centered(text: MeasuredLabel, cx: number, cy: number): PlacedLabel {
   const { width, height } = text;
   return { x: cx - width / 2, y: cy - height / 2, width, height, text };
-}
-
-/** How much taller than one line a label is: 0 for one line, or none. */
-function extraLines(text: MeasuredLabel): number {
-  return Math.max(0, text.height - text.lineHeight);
 }
 
 /**

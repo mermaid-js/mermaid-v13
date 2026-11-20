@@ -3,6 +3,7 @@
  * satisfy for the model it was laid out from. Empty when the layout is sound; each entry names
  * a broken rule.
  */
+import { discBox } from '@mermaid-js/shared/layout/geometry';
 import type { PieModel } from '../model.ts';
 import { pieSum } from '../shares.ts';
 import { MIN_PERCENT, PERCENT, PIE_COLOURS as COLOURS } from './metrics.ts';
@@ -73,15 +74,9 @@ export function pieLayoutViolations(model: PieModel, layout: PieLayout): string[
   const inside = (r: Rect, what: string): void => {
     if (!rectInside(r, layout.bounds)) out.push(`${what} is outside the bounds`);
   };
-  const disc = (c: Point, r: number): Rect => ({
-    x: c.x - r,
-    y: c.y - r,
-    width: 2 * r,
-    height: 2 * r,
-  });
-  inside(disc(center, layout.outerRadius + layout.outerStrokeWidth / 2), 'the outer circle');
+  inside(discBox(center, layout.outerRadius + layout.outerStrokeWidth / 2), 'the outer circle');
   const scale = slices.some((s) => s.highlighted) ? layout.highlightScale : 1;
-  inside(disc(center, (layout.radius + layout.strokeWidth / 2) * scale), 'the slices');
+  inside(discBox(center, (layout.radius + layout.strokeWidth / 2) * scale), 'the slices');
   for (const s of slices) inside(s.percent, `slice ${s.index}'s percentage`);
   for (const r of legend) {
     inside(r.swatch, `legend row ${r.index}'s swatch`);

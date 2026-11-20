@@ -24,6 +24,7 @@ import {
 } from './metrics.ts';
 import type { PieLayout, PieLegendRow, PieSliceLayout, PlacedLabel, Point } from './types.ts';
 import { RectUnion } from '@mermaid-js/shared/layout';
+import { discBox, extraLines } from '@mermaid-js/shared/layout/geometry';
 
 /** What the layout reads from the render context. */
 export type PieLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
@@ -132,16 +133,16 @@ export function layoutPie(model: PieModel, ctx: PieLayoutContext): PieLayout {
     title && placed(title, titleX - title.width / 2, m.height / 2 - m.titleY - extraLines(title));
 
   const outerRadius = m.radius + outerStrokeWidth / 2;
-  const box = new Box();
+  const box = new RectUnion();
   // v12's viewBox: the chart and legend, widened only for the title.
   const titleWidth = title?.width ?? 0;
   box.add({ x: 0, y: 0, width: chartWidth, height: chartHeight });
   box.add({ x: titleX - titleWidth / 2, y: 0, width: titleWidth, height: 0 });
   // What is drawn: the outer circle, the slices (a highlighted one scaled), labels and swatches.
-  box.circle(center, outerRadius + outerStrokeWidth / 2);
-  box.circle(center, m.radius + strokeWidth / 2);
+  box.add(discBox(center, outerRadius + outerStrokeWidth / 2));
+  box.add(discBox(center, m.radius + strokeWidth / 2));
   if (slices.some((s) => s.highlighted))
-    box.circle(center, (m.radius + strokeWidth / 2) * m.highlightScale);
+    box.add(discBox(center, (m.radius + strokeWidth / 2) * m.highlightScale));
   for (const s of slices) box.add(s.percent);
   for (const r of legend) {
     box.add(r.swatch);
@@ -284,19 +285,7 @@ function markdownString(text: string): string | undefined {
 }
 const RE_MARKDOWN = /^("?)`([^]*)`\1$/;
 
-/** How much taller than one line a label is: 0 for one line (or none), as v12 drew every label. */
-function extraLines(text: MeasuredLabel): number {
-  return Math.max(0, text.height - text.lineHeight);
-}
-
 /** A label whose first baseline is at (`x`, `baseline`), its left edge at `x`. */
 function placed(text: MeasuredLabel, x: number, baseline: number): PlacedLabel {
   return { x, y: baseline - text.baseline, width: text.width, height: text.height, text };
-}
-
-/** The union of what is drawn. */
-class Box extends RectUnion {
-  circle(c: Point, r: number): void {
-    this.add({ x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r });
-  }
 }

@@ -4,6 +4,7 @@
  * names a broken rule. Exported from `@mermaid-js/diagram-radar/testing` for the conformance
  * corpus spec.
  */
+import { discBox } from '@mermaid-js/shared/layout/geometry';
 import type { RadarModel } from '../model.ts';
 import { RADAR_METRICS, RADAR_SLOTS } from './metrics.ts';
 import type { Point, RadarLayout, Rect } from './types.ts';
@@ -97,12 +98,6 @@ export function radarLayoutViolations(model: RadarModel, layout: RadarLayout): s
   const inside = (r: Rect, what: string): void => {
     if (!rectInside(r, layout.bounds, tol)) out.push(`${what} is outside the bounds`);
   };
-  const discBox = (c: Point, r: number): Rect => ({
-    x: c.x - r,
-    y: c.y - r,
-    width: 2 * r,
-    height: 2 * r,
-  });
   const { axis, curve, graticule } = layout.strokes;
   rings.forEach((r, i) => {
     if (r.points.length === 0) inside(discBox(center, r.radius + graticule / 2), `ring ${i + 1}`);

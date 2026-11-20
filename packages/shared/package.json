@@ -131,6 +131,11 @@
       "types": "./dist/layout/index.d.ts",
       "default": "./dist/layout/index.js"
     },
+    "./layout/geometry": {
+      "mermaid-source": "./src/layout/geometry.ts",
+      "types": "./dist/layout/geometry.d.ts",
+      "default": "./dist/layout/geometry.js"
+    },
     "./ascii": {
       "mermaid-source": "./src/ascii/index.ts",
       "types": "./dist/ascii/index.d.ts",

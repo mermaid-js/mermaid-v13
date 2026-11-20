@@ -34,6 +34,7 @@ Code that Mermaid v13 diagram packages share, kept out of `@mermaid-js/core` so 
 | `/testing/render-harness` | `createRenderHarness(plugin, spec)`: a source or a model through the plugin's parse, layout and render, for a package's `render<Type>ForTest`. Workspace-only |
 | `/random` | `seededRandom`, the seeded generator (mulberry32) code uses in place of `Math.random` |
 | `/layout` | Spacing, group padding and bounds helpers for graph layouts |
+| `/layout/geometry` | Plane geometry the custom layouts share: the square around a disc (`discBox`) and how much taller than one line a label is (`extraLines`) |
 | `/ascii` | Line, label, frame and title drawing and the shapes' text forms for ASCII output |
 
 A subpath is one file or one family that always loads together: a barrel over files with different users would make every importer load all of them, because the bundler splits per file.
