@@ -16,10 +16,5 @@ import { swimlaneLayout } from './swimlane.ts';
  */
 export const swimlane: LayoutEngine = (graph, ctx) => swimlaneLayout(graph, ctx?.config?.swimlane);
 
-/**
- * The engine as the registry's loader reads a module (`layout`), and core's line-hop step, which
- * `swimlane.lineHops` (default `arc`) needs: loading the engine loads hops too, so
- * `preload({ layouts: ['swimlane'] })` covers `renderSync` (D537).
- */
+/** The engine as the registry's loader reads a module (`layout`). */
 export { swimlane as layout };
-export { lineHops } from '../hops/style.ts';

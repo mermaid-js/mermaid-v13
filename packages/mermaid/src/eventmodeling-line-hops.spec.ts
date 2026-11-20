@@ -28,15 +28,15 @@ async function render(lineHops?: boolean | 'arc' | 'gap'): Promise<string> {
 }
 
 describe('lineHops on event modeling relations (D537)', () => {
-  it('draws no hop by default, and the same as lineHops: false', async () => {
-    const plain = await render();
+  it('hops by default (D672), and draws no hop with lineHops: false', async () => {
+    const plain = await render(false);
     expect(relations(plain)).toHaveLength(5);
     expect(plain).not.toMatch(ARC);
-    expect(await render(false)).toBe(plain);
+    expect(await render()).toBe(await render(true));
   });
 
   it('hops the later relation over the one it crosses, with lineHops: true', async () => {
-    const plain = relations(await render());
+    const plain = relations(await render(false));
     const svg = await render(true);
     assertInert(svg);
     const hopped = relations(svg);

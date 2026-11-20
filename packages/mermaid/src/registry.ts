@@ -13,7 +13,7 @@ import {
 } from '@mermaid-js/core';
 import { checkFragment, type ConfigFragment, type ResolvedConfig } from '@mermaid-js/core/config';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
-import type { lineHops as LineHops } from '@mermaid-js/core/layout/hops';
+import { lineHops } from '@mermaid-js/core/layout/hops';
 import {
   detectText,
   diagramStart,
@@ -87,10 +87,7 @@ export type ExternalDiagram = AnyPlugin | LazyDiagram | ExtensionPlugin | Manife
 /** `registerLayoutLoaders` input (R-LAYOUT-2): an engine `(graph, ctx?) → LayoutModel`. */
 export interface LayoutLoader {
   readonly name: string;
-  /**
-   * The engine, or a module holding it as `layout` or `default`. A module may also carry core's
-   * line-hop step as `lineHops` (D537), registered with it.
-   */
+  /** The engine, or a module holding it as `layout` or `default`. */
   loader(): Promise<LayoutEngine | { layout: LayoutEngine } | { default: LayoutEngine }>;
   /**
    * The layout plugin's config fragment (D153), known from registration on, before the engine
@@ -215,16 +212,12 @@ const ZENUML = /^\s*zenuml/;
 
 export const builtIn = (name: string): boolean => FIRST_PARTY_LAYOUTS.has(name);
 
-/** Core's line-hop chunk, loaded as a lazy layout (D537): `preload({ layouts: ['lineHops'] })`. */
-export const LINE_HOPS = 'lineHops';
-
 /**
- * Lazy chunks loaded under a layout name that are no engine: core's line-hop step and
- * flowchart's lane part, the one part `layoutParts` may name (`layoutPart`, first-party only,
- * #651). Never a `layout` (`find`), and no loader replaces them
- * (`registerLayouts`; discovery refuses every `LAZY_LAYOUTS` name).
+ * Lazy chunks loaded under a layout name that are no engine: flowchart's lane part, the one
+ * part `layoutParts` may name (`layoutPart`, first-party only, #651). Never a `layout` (`find`),
+ * and no loader replaces them (`registerLayouts`; discovery refuses every `LAZY_LAYOUTS` name).
  */
-const NOT_ENGINES: ReadonlySet<string> = new Set([LINE_HOPS, 'flowchartLanes']);
+const NOT_ENGINES: ReadonlySet<string> = new Set(['flowchartLanes']);
 
 /**
  * First-party engines loaded on first use (D280, D284), each its own chunk outside core's
@@ -239,8 +232,6 @@ const LAZY_LAYOUTS = new Map<string, LayoutLoader['loader']>([
   // `layoutParts` asks for with `swimlane`, so a plain flowchart and other diagrams never load
   // it (R-PERF-1).
   ['flowchartLanes', () => import('@mermaid-js/diagram-flowchart/lanes') as never],
-  // Not an engine (`NOT_ENGINES`): core's line-hop step (D537), loaded the same way.
-  [LINE_HOPS, () => import('@mermaid-js/core/layout/hops') as never],
 ]);
 
 /**
@@ -1023,8 +1014,8 @@ export class Registry {
     return part === 'flowchartLanes' ? [part, this.layouts.get(part)] : [];
   }
 
-  /** Core's line-hop step (D537), once loaded: by itself, or with an engine that carries it. */
-  hops: typeof LineHops | undefined;
+  /** Core's line-hop step (D537), part of core since D672. */
+  readonly hops = lineHops;
 
   /** Loads `name` once; an engine whose loader was replaced while it loaded is dropped. */
   loadLayout(name: string): Promise<void> {
@@ -1034,8 +1025,6 @@ export class Registry {
     if (inflight?.loader === loader) return inflight.pending;
     const pending: Promise<void> = loader()
       .then((m) => {
-        // An engine module that carries core's line-hop step (D537) registers it too.
-        this.hops ??= (m as { lineHops?: typeof LineHops }).lineHops;
         const engine = unwrap<LayoutEngine>(m);
         if (typeof engine !== 'function') throw new TypeError(`Layout "${name}" loaded no engine`);
         if (this.layoutLoader(name) === loader) this.layouts.set(name, engine);

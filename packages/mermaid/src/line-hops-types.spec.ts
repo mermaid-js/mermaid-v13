@@ -49,10 +49,10 @@ describe.each(TYPES)('lineHops in $type (#655, D537)', ({ dir, line }) => {
     expect(on.svg.replace(/ d="[^"]+"/g, '')).toBe(off.svg.replace(/ d="[^"]+"/g, ''));
   });
 
-  it('is off by default, and `gap` breaks the run instead of bumping it', async () => {
+  it('is on by default (D672), and `gap` breaks the run instead of bumping it', async () => {
     const m = createMermaid();
     const unset = (await m.render('d', withHops(ON))).svg;
-    expect(unset).toBe((await m.render('d', withHops(ON, 'false'))).svg);
+    expect(unset).toBe((await m.render('d', ON)).svg);
     const gap = (await m.render('d', withHops(ON, 'gap'))).svg;
     expect(gap).not.toBe(unset);
     expect(gap).not.toMatch(ARC);

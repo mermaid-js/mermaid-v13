@@ -867,7 +867,7 @@ export const configSchema: ConfigSchema = {
       }
     },
     "lineHops": {
-      "description": "Draws edge crossings as small arcs (\"hops\") or breaks in the line, so it\nis clear which line passes over which where two edges meet. Every\ndiagram that draws edges reads it.\n\nOf a horizontal and a vertical run, the horizontal one gives way;\notherwise the later edge does. Only straight runs carry hops: curves\nand rounded corners are left as drawn, and a crossing too close to a\nbend gets no hop. `true` and `arc` draw a 6px arc, `gap` breaks the\nline. Off by default.\n\nA layout engine's own `lineHops` (`swimlane.lineHops`, default `arc`;\n`elk.lineHops`, default `true`) applies when that engine lays the\ndiagram out, so those layouts hop by default. Precedence: the engine\nkey when set explicitly, then this key when set explicitly, then the\nengine's default. Setting this key to `false` turns hops off\neverywhere, engine keys included.\n",
+      "description": "Draws edge crossings as small arcs (\"hops\") or breaks in the line, so it\nis clear which line passes over which where two edges meet. Every\ndiagram that draws edges reads it.\n\nOf a horizontal and a vertical run, the horizontal one gives way;\notherwise the later edge does. Only straight runs carry hops: curves\nand rounded corners are left as drawn, and a crossing too close to a\nbend gets no hop. `true` and `arc` draw a 6px arc, `gap` breaks the\nline. On by default; `false` draws plain crossings.\n\nA layout engine's own `lineHops` (`swimlane.lineHops`, default `arc`;\n`elk.lineHops`, default `true`) applies when that engine lays the\ndiagram out. Precedence: the engine key when set explicitly, then\nthis key when set explicitly, then the engine's default. Setting this\nkey to `false` turns hops off everywhere, engine keys included.\n",
       "type": [
         "boolean",
         "string"
@@ -878,11 +878,11 @@ export const configSchema: ConfigSchema = {
         "arc",
         "gap"
       ],
-      "default": false,
+      "default": true,
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "New in v13 (D537, #78): one shared key for line hops, which v12 had only under swimlane and ELK. Drawn by a lazily loaded part of core, loaded as the lazy layout `lineHops` when this key is on (the `swimlane` and ELK engines carry it themselves); `renderSync` without it throws `NotLoadedError` for layout `lineHops` (load it with `prepare()` or `preload({ layouts: ['lineHops'] })`)."
+        "reason": "New in v13 (D537, #78): one shared key for line hops, which v12 had only under swimlane and ELK. On by default (D672; D537 had it off), so a crossing in any diagram that draws edges hops unless the author sets `lineHops: false`. Drawn by a part of core, so `render` and `renderSync` need nothing loaded for it."
       }
     },
     "maxTextSize": {

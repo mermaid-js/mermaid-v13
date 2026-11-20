@@ -285,6 +285,7 @@ e2e/diagrams/flowchart/nightly-check/icon/07-should-render-registered-icons-on-t
 e2e/diagrams/flowchart/nightly-check/icon/08-should-render-icons-from-fontawesome-library-on-theme-forest.mmd 1 582bafddd7fac07f
 e2e/diagrams/flowchart/nightly-check/icon/09-should-render-icons-from-fontawesome-library-on-theme-neutral.mmd 1 da60d0004e723710
 e2e/diagrams/flowchart/nightly-check/icon/10-should-render-registered-icons-on-theme-neutral.mmd 1 29f9f2f3b88a8ae1
+e2e/diagrams/flowchart/nightly-check/layered/subgraph-to-member-edge.mmd 1 e60d4e064690d273
 e2e/diagrams/flowchart/nightly-check/redux-color-subgraphs/01-should-render-subgraphs-subgraph-containers.mmd 1 50e6d2f5bfb0336d
 e2e/diagrams/flowchart/nightly-check/redux-color-subgraphs/02-should-render-nested-subgraph-containers.mmd 1 a98d439021cfcc73
 e2e/diagrams/flowchart/nightly-check/redux-color-subgraphs/03-should-render-collapsed-subgraph-containers.mmd 3 ea7fe308947e34eb

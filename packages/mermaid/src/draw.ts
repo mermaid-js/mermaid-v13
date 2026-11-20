@@ -147,8 +147,8 @@ export function drawSvg(
   const run = renderHooks.size === 0 ? undefined : renderHooks.start(ctx, a.plugin.id);
   // A `postParse` hook reads the AST: this draw has the full parse (DESIGN §4.2).
   const parse = renderHooks.readsAst ? (full ?? a.full()) : a.prepared.parse;
-  // D537: the line-hop step, when its chunk is loaded and decides that this render hops.
-  const edges = k.registry.hops?.(a);
+  // D537: the line-hop step, which decides whether this render hops.
+  const edges = k.registry.hops(a);
   const drawHooks = run && { run, ast: parse.lean ? undefined : parse.ast };
   const drawn = drawDiagram(a.plugin, parse.model, ctx, drawHooks, edges);
   warnHtmlDropped(ctx);

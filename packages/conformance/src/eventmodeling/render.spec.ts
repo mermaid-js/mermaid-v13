@@ -90,7 +90,9 @@ function extents(tree: SvgView): { x: number; y: number; tag: string }[] {
     if (tag === undefined && node !== tree.root) return;
     const at = (name: string): number => Number(tree.getAttr(node, name) ?? 0);
     const put = (x: number, y: number): void => void out.push({ x, y, tag: tag ?? '' });
-    const pairs = (s: string): void => {
+    const pairs = (data: string): void => {
+      // A line hop's arc (D537) has no point but its end: drop its radii, rotation and flags.
+      const s = data.replace(/A[^A-Za-z]*?([-\d.]+,[-\d.]+)(?=[A-Za-z]|$)/g, 'L$1');
       const n = s.match(/-?[\d.]+(?:e-?\d+)?/g)?.map(Number) ?? [];
       for (let i = 0; i + 1 < n.length; i += 2) put(n[i]!, n[i + 1]!);
     };
@@ -338,7 +340,9 @@ describe('event modeling render: what is drawn', () => {
   });
 
   it('draws relations as one line, a self relation and one under its row in three, the inferred one without data-ast', async () => {
-    const { tree } = await render(fixture('nightly-check/layout-relations.mmd'));
+    // Without line hops (on by default, D672), which add commands where two relations cross.
+    const plain = eventModelingApi({ lineHops: false } as MermaidConfig);
+    const { tree } = await render(fixture('nightly-check/layout-relations.mmd'), plain);
     const paths = tree.find((n, t) => t.getAttr(n, 'class') === 'em-relation');
     // The self loop and 02 → 04, which skips 03 in the Events lane (D659).
     const bent = ['relation:06->06', 'relation:02->04'];

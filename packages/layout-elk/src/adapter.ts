@@ -61,8 +61,6 @@ import type {
 } from '@mermaid-js/core/layout';
 import { layered as layeredEngine } from '@mermaid-js/core/layout';
 
-/** Core's line-hop step (D537), loaded with the engine: see `index.ts`. */
-export { lineHops } from '@mermaid-js/core/layout/hops';
 import type {
   ElkEdgeSection,
   ElkExtendedEdge,
