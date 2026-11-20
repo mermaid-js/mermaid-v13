@@ -10,6 +10,8 @@ import {
   HIGH_SURROGATE_LAST,
   LOW_SURROGATE_FIRST,
   LOW_SURROGATE_LAST,
+  SPACE,
+  TAB,
 } from './char-codes.ts';
 import { UNICODE_LETTERS } from './unicode-table.ts';
 
@@ -60,7 +62,7 @@ export function isSpace(c: number): boolean {
 
 /** Space or tab. */
 export function isBlank(c: number): boolean {
-  return c === 32 || c === 9;
+  return c === SPACE || c === TAB;
 }
 
 /** A line terminator: what regex `.` does not match. */
