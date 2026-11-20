@@ -260,7 +260,7 @@ export class FlowBuilder extends FlowBuilderBase<
       return;
     }
 
-    const edge = this.edgeById.get(id);
+    const edge = this.edgeNamed(id);
     if (edge) {
       this.edgeTarget(edge, doc, at);
       return;

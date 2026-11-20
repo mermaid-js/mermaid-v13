@@ -148,7 +148,8 @@ const FEATURES: readonly Feature[] = [
   {
     // D296: v12's prefixes plus `fad`, with no left boundary (`sofa:fa-x` matches). The icons
     // extension's provider has the same regex (`plugin-icons/src/index.ts` `LABEL`): keep them
-    // equal. Not shared, since an exported constant costs core bytes (R-PERF-8).
+    // equal. Not shared, since an exported constant costs core bytes (R-PERF-8). `extract`
+    // looks for `:fa-` (and `$$`) before it looks for spans: keep that with these.
     // cspell:disable-next-line
     pattern: /(fa[bdklrs]?):fa-([\w-]+)/,
     warning: {
@@ -250,6 +251,8 @@ export function inlineSpans(
     dropped: new Set(),
     notRendered: (feature) => notDrawn.has(feature),
     extract(raw, font, measurer) {
+      // Without a provider, only a feature's span can be found, and each holds `$$` or `:fa-`.
+      if (finders.length === 0 && !raw.includes('$$') && !raw.includes(':fa-')) return undefined;
       // The spans that may be boxed: a label holding a placeholder character boxes none.
       const blocked = RE_PLACEHOLDER.test(raw);
       const spans: Found<InlineProvider>[] = [];

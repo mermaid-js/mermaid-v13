@@ -104,8 +104,8 @@ function isZeroWidth(c: number): boolean {
 }
 
 /**
- * The width of `text[from, to)` in face `f`: `(units * size) / 1000`, where `units` sums integer
- * advances, so label layout can measure a slice of a label without slicing it.
+ * The width of `text[from, to)` in face `f`: its {@link tableUnits} at its {@link tableSize}, so
+ * label layout can measure a slice of a label without slicing it.
  */
 function tableWidth(
   f: Face,
@@ -115,26 +115,56 @@ function tableWidth(
   font: FontKey,
   style: StyleBits
 ): number {
+  return unitsWidth(tableUnits(f, text, from, to, font, style), tableSize(font, style));
+}
+
+/** The px size the table measures `style` at: smaller for sub- and superscript. */
+function tableSize(font: FontKey, style: StyleBits): number {
+  return style & (Style.Sub | Style.Sup) ? font.size / SMALLER : font.size;
+}
+
+/**
+ * The px width of `units` advance units at `size` px: the one place a table measurer scales, so
+ * a width from units added up elsewhere is bit for bit the width of the text they sum.
+ */
+export function unitsWidth(units: number, size: number): number {
+  return (units * size) / 1000;
+}
+
+/**
+ * The advance units face `f` sums for `text[from, to)`, in thousandths of an em. They are
+ * integers, and integers well below 2^53 add up exactly, so the units of a slice are the sum of
+ * the units of its parts in any order.
+ */
+function tableUnits(
+  f: Face,
+  text: string,
+  from: number,
+  to: number,
+  font: FontKey,
+  style: StyleBits
+): number {
   const mono = (style & Style.Mono) !== 0;
-  const size = style & (Style.Sub | Style.Sup) ? font.size / SMALLER : font.size;
   const bold = (style & Style.Bold) !== 0 || font.weight >= 600;
   const table = bold ? f.bold : f.regular;
   const other = bold ? f.boldDefault : f.regularDefault;
   let units = 0;
   for (let i = from; i < to; i++) {
     const c = text.charCodeAt(i);
-    if (c >= SPACE && c < ASCII_MAX) {
-      units += mono ? 600 : (table[c - SPACE] ?? other);
-      continue;
-    }
-    if (isZeroWidth(c)) continue;
-    if (isWide(c)) units += mono ? 1200 : 1000;
-    else if (mono) units += 600;
-    else if (c < ASCII_MAX) units += table[c - 0x20] ?? other;
-    else if (c <= LATIN1_MAX) units += table[c - 0xa0 + LATIN1_AT] ?? other;
-    else units += other;
+    if (c >= SPACE && c < ASCII_MAX) units += mono ? 600 : (table[c - SPACE] ?? other);
+    else units += advance(c, mono, table, other);
   }
-  return (units * size) / 1000;
+  return units;
+}
+
+/** The advance units of `c`, outside printable ASCII, in `table` (`other` where it has none). */
+function advance(c: number, mono: boolean, table: Uint16Array, other: number): number {
+  if (isZeroWidth(c)) return 0;
+  if (isWide(c)) return mono ? 1200 : 1000;
+  if (mono) return 600;
+  if (c < ASCII_MAX) return table[c - 0x20] ?? other;
+  if (c <= LATIN1_MAX) return table[c - 0xa0 + LATIN1_AT] ?? other;
+  return other;
 }
 
 /** Measures `text[from, to)` as `width` measures that slice, bit for bit, without slicing it. */
@@ -149,9 +179,23 @@ export type Slice = (
 /** Where a table measurer keeps its {@link Slice}, so label layout can find it (D645). */
 export const SLICE: unique symbol = Symbol('slice');
 
+/**
+ * A table measurer's advance units: `units` sums them for `text[from, to)` and `size` is the px
+ * size it measures a style at. Its {@link Slice} is {@link unitsWidth} of the two, so label layout
+ * can add up the units of a line's words and scale them once, bit for bit the line's width.
+ */
+export interface Units {
+  readonly units: Slice;
+  readonly size: (font: FontKey, style: StyleBits) => number;
+}
+
+/** Where a table measurer keeps its {@link Units}. */
+export const UNITS: unique symbol = Symbol('units');
+
 /** A measurer that can measure part of a string; every table measurer is one. */
 export interface SliceMeasurer extends Measurer {
   readonly [SLICE]: Slice;
+  readonly [UNITS]: Units;
 }
 
 /**
@@ -186,20 +230,37 @@ export function tableMeasurerWith(
   const slice: Slice = (text, from, to, font, style) =>
     tableWidth(faceFor(font.family), text, from, to, font, style);
 
+  // The last font object this measurer gave metrics for, and those metrics: a render lays out
+  // its labels in a few font objects, mostly the same one many times running. Keyed on the object
+  // (a `FontKey` is read-only), not on any text; it keeps that one object and its metrics from one
+  // call to the next, across renders, until another font object is measured.
+  let lastFont: FontKey | undefined;
+  let lastMetrics: VerticalMetrics = { ascent: 0, descent: 0, lineHeight: 0 };
+
   const measurer: Measurer = {
     id,
     width: (text, font, style) => slice(text, 0, text.length, font, style),
     metrics(font: FontKey): VerticalMetrics {
+      if (font === lastFont) return lastMetrics;
       const [ascent, descent, lineHeight] = faceFor(font.family).vertical;
-      return {
+      lastFont = font;
+      return (lastMetrics = {
         ascent: (ascent * font.size) / 1000,
         descent: (descent * font.size) / 1000,
         lineHeight: (lineHeight * font.size) / 1000,
-      };
+      });
     },
   };
+  const units: Units = {
+    units: (text, from, to, font, style) =>
+      tableUnits(faceFor(font.family), text, from, to, font, style),
+    size: tableSize,
+  };
   // Not enumerable: a spread copy with its own `width` must not be measured by the slice.
-  return Object.defineProperty(measurer, SLICE, { value: slice }) as SliceMeasurer;
+  return Object.defineProperties(measurer, {
+    [SLICE]: { value: slice },
+    [UNITS]: { value: units },
+  }) as SliceMeasurer;
 }
 
 /** The table measurer with the built-in tables only. */

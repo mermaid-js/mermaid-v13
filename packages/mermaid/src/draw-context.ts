@@ -349,6 +349,8 @@ export function contextFor(
   const icon = textOutput ? undefined : hooks.icon(inline, packs);
   // The blocks (ADR-15) are drawn at the first lookup, with this draw's id prefix.
   const { embed, mounter } = blocks.lookup(drawBlocks, () => ctx.idPrefix, warn);
+  // `null` too, as `??` read it when the prefix was always a getter.
+  const id = options?.id ?? undefined;
   const ctx: DrawContext = {
     config,
     measurer:
@@ -361,11 +363,9 @@ export function contextFor(
     units,
     theme,
     securityLevel: resolveSecurityLevel(config.securityLevel, warn),
-    get idPrefix() {
-      return (idPrefix ??=
-        options?.id ??
-        defaultIdPrefix(text, config, optionsKey(s.options, fontTablesOf(k, s)), units));
-    },
+    // A given id is the prefix itself. A getter in this literal would leave V8 holding the
+    // context in dictionary mode, and every read of it during the draw would pay for that.
+    idPrefix: id as string,
     version: VERSION,
     linkSchemes: s.options.linkSchemes,
     limits: s.limits,
@@ -382,5 +382,18 @@ export function contextFor(
     // Spread into the literal, not over `ctx`: a spread would run the lazy idPrefix getter.
     ...textOnly,
   };
+  // Without one, the default prefix hashes the text, so it is worked out at the first read.
+  if (id === undefined)
+    Object.defineProperty(ctx, 'idPrefix', {
+      get: () =>
+        (idPrefix ??= defaultIdPrefix(
+          text,
+          config,
+          optionsKey(s.options, fontTablesOf(k, s)),
+          units
+        )),
+      enumerable: true,
+      configurable: true,
+    });
   return { ctx, warnings, mounter };
 }

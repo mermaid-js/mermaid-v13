@@ -45,15 +45,21 @@ export function detectText(
 }
 
 /**
- * Whether a first-party row matches: `test` on the raw `body` (the text from the diagram's
- * start) first; when the body holds a `%%`, also on the text with comments cut as v12's
- * detection cut them (`v12Text`, {@link detectText} with `keepLastLineComment`), so a header
- * with a comment right after it and a body below matches as in v12.
+ * A first-party row's test (D89, #469): `test` on the raw body (`src` from `start`, the
+ * diagram's start) first; when the body holds a `%%`, also on the text with comments cut as
+ * v12's detection cut them ({@link detectText} with `keepLastLineComment`), so a header with a
+ * comment right after it and a body below matches as in v12. Made once a detection, so the body
+ * is searched for `%%` once and the cut text built on first use, whatever the rows tried.
  */
 export function firstPartyDetects(
-  test: (text: string) => boolean,
-  body: string,
-  v12Text: () => string
-): boolean {
-  return test(body) || (body.includes('%%') && test(v12Text()));
+  src: string,
+  start: number,
+  pre: PreprocessResult
+): (test: (text: string) => boolean) => boolean {
+  const body = src.slice(start);
+  const comments = body.includes('%%');
+  let cut: string | undefined;
+  return (test) =>
+    test(body) ||
+    (comments && test((cut ??= detectText(src, start, pre, { keepLastLineComment: true }))));
 }

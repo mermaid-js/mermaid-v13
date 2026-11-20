@@ -114,7 +114,10 @@ export interface LayeredResult {
   declared?: number;
 }
 
-/** The fields of {@link LNode} and {@link LEdge} that `layered` reads. The others are its output. */
+/**
+ * The fields of {@link LNode} and {@link LEdge} that `layered` reads. The others are its output.
+ * `layoutInputs` reads these fields itself, in this order; inputs.spec.ts holds the two to each other.
+ */
 export const NODE_INPUTS = [
   'w',
   'h',
@@ -140,9 +143,23 @@ export const EDGE_INPUTS = [
 
 /** Every input `layered` reads from `nodes` and `edges`. Equal inputs and options give equal layouts. */
 export function layoutInputs(nodes: readonly LNode[], edges: readonly LEdge[]): number[] {
+  // The fields of NODE_INPUTS and EDGE_INPUTS, in that order, read directly (inputs.spec.ts).
   const inputs: number[] = [];
-  for (const n of nodes) for (const f of NODE_INPUTS) inputs.push(n[f]);
-  for (const e of edges) for (const f of EDGE_INPUTS) inputs.push(+e[f]);
+  for (const n of nodes) inputs.push(n.w, n.h, n.kind, n.pin, n.hint, n.key, n.span);
+  for (const e of edges)
+    inputs.push(
+      e.tail,
+      e.head,
+      e.minlen,
+      e.labelW,
+      e.labelH,
+      e.tailDx,
+      e.headDx,
+      +e.tailFixed,
+      +e.headFixed,
+      e.tailEnd,
+      e.headEnd
+    );
   return inputs;
 }
 
@@ -171,6 +188,10 @@ export function ledge(tail: number, head: number, minlen = 1, labelW = 0, labelH
 }
 
 const MAX_SWEEPS = 24;
+
+// Up to this many ends in a gap, `crossed` counts pair by pair rather than with the tree: fewer
+// steps for the few ends most gaps have. Exported for tests, which pin it.
+export const FEW_ENDS = 16;
 
 // An edge gets a bend point in every rank it skips. Past this many, the longest edges are
 // drawn as one direct curve instead, which keeps huge graphs from exhausting time and memory.
@@ -622,6 +643,8 @@ function layOut(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredRes
     [crossings, declared] = reduceCrossings(g, nodes);
     setPositions();
   }
+  // The order is final: from here on the neighbour lists are read left to right.
+  sortNeighbours(g);
   if (opt.orderOnly) {
     // Points are (rank, cross-flow position) pairs.
     const at = position(g, opt);
@@ -994,7 +1017,8 @@ interface Pieces {
   wide: number[];
 }
 
-interface Graph {
+// Exported for tests.
+export interface Graph {
   n: number;
   real: number;
   maxRank: number;
@@ -1121,20 +1145,19 @@ export function rank(nodes: LNode[], edges: LEdge[], step: number): void {
       const v = topo[q]!;
       const ins = inStart[v + 1]! - inStart[v]!;
       const outs = outStart[v + 1]! - outStart[v]!;
-      if (ins === 0 && outs === 0) continue;
-      let lo = -Infinity;
-      let hi = Infinity;
-      for (let k = inStart[v]!; k < inStart[v + 1]!; k++) {
-        const ei = inE[k]!;
-        lo = Math.max(lo, r[from[ei]!]! + len[ei]!);
-      }
-      for (let k = outStart[v]!; k < outStart[v + 1]!; k++) {
-        const ei = outE[k]!;
-        hi = Math.min(hi, r[to[ei]!]! - len[ei]!);
-      }
-      let next = r[v]!;
-      if (outs > ins && hi !== Infinity) next = hi;
-      else if (ins > outs && lo !== -Infinity) next = lo;
+      // Only the side with more edges is read, and it has one at least.
+      if (ins === outs) continue;
+      let next = outs > ins ? Infinity : -Infinity;
+      if (outs > ins)
+        for (let k = outStart[v]!; k < outStart[v + 1]!; k++) {
+          const ei = outE[k]!;
+          next = Math.min(next, r[to[ei]!]! - len[ei]!);
+        }
+      else
+        for (let k = inStart[v]!; k < inStart[v + 1]!; k++) {
+          const ei = inE[k]!;
+          next = Math.max(next, r[from[ei]!]! + len[ei]!);
+        }
       if (next !== r[v]!) {
         r[v] = next;
         changed = true;
@@ -1184,12 +1207,10 @@ function sideEnds(
   const { M } = g;
   const start = side === 0 ? g.predStart : g.succStart;
   const list = side === 0 ? g.predE : g.succE;
-  const other = side === 0 ? g.EF : g.ET;
-  const pos = g.pos;
+  // Left to right, ties by segment: the lists are in that order (`sortNeighbours`).
   for (let k = start[v]!; k < start[v + 1]!; k++)
     if (kinds[list[k]!]! !== End.Held) ids.push(list[k]!);
   if (ids.length < 2) return 0;
-  ids.sort((a, b) => pos[other[a]!]! - pos[other[b]!]! || a - b);
   const fill = (share: (leaves: boolean, same: boolean) => number): number => {
     let total = 0;
     room[0] = 0;
@@ -1434,7 +1455,7 @@ function settle(
   free: [Int32Array, Int32Array],
   empty: Uint8Array | undefined
 ): void {
-  const { real, W, EF, ET, EFD, ETD, succStart, succE, predStart, predE, pos, M } = g;
+  const { real, W, EF, ET, EFD, ETD, succStart, succE, predStart, predE, M } = g;
   // Where the end of segment `e` on node `v` should be, from the middle of its side. The edge is
   // followed up from the segment (side 0) or down, past the bends in ranks that hold nothing
   // else, to where it next comes to a point that is held in place or to another node's side.
@@ -1482,7 +1503,6 @@ function settle(
     const span = Math.min(nodes[v]!.span, W[v]!);
     if (span <= 0 || nodes[v]!.kind !== Kind.Node) continue;
     for (let side = 0; side < 2; side++) {
-      const other = side === 0 ? EF : ET;
       const start = side === 0 ? predStart : succStart;
       const list = side === 0 ? predE : succE;
       const ids: number[] = [];
@@ -1490,9 +1510,9 @@ function settle(
       sideEnds(g, v, side, span, side === 0 ? ETK : EFK, ids, room);
       if (ids.length === 0) continue;
       if (ids.length === 1) room[0] = 0;
+      // Left to right, as `ids` is (`sortNeighbours`).
       const all: number[] = [];
       for (let k = start[v]!; k < start[v + 1]!; k++) all.push(list[k]!);
-      all.sort((a, b) => pos[other[a]!]! - pos[other[b]!]! || a - b);
       sides.push({ v, side, span, ids, room, all });
     }
   }
@@ -2154,8 +2174,36 @@ export function groupArranger(
   };
 }
 
-// Returns [final crossings, crossings before grouping or reordering].
-function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
+// The pairs out of order in `targets[0..t)`: the crossings in a gap between two ranks, where
+// `places` is how many places its ends may take in the lower rank. Few ends are counted pair by
+// pair, more with an accumulator tree, which `tree` (at least twice `places` long, rounded up to
+// a power of two) holds. Exported for tests.
+export function crossed(targets: Int32Array, t: number, places: number, tree: Int32Array): number {
+  let total = 0;
+  if (t <= FEW_ENDS) {
+    for (let a = 1; a < t; a++) {
+      const x = targets[a]!;
+      for (let b = 0; b < a; b++) if (targets[b]! > x) total++;
+    }
+    return total;
+  }
+  let leaves = 1;
+  while (leaves < places) leaves <<= 1;
+  tree.fill(0, 0, 2 * leaves);
+  for (let k = 0; k < t; k++) {
+    let i = targets[k]! + leaves;
+    tree[i]!++;
+    while (i > 1) {
+      if ((i & 1) === 0) total += tree[i + 1]!;
+      i >>= 1;
+      tree[i]!++;
+    }
+  }
+  return total;
+}
+
+// Returns [final crossings, crossings before grouping or reordering]. Exported for tests.
+export function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
   const {
     n,
     real,
@@ -2264,19 +2312,7 @@ function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
           targets.subarray(t0, t).sort();
         }
       }
-      if (t < 2) continue;
-      let leaves = 1;
-      while (leaves < southLen) leaves <<= 1;
-      tree.fill(0, 0, 2 * leaves);
-      for (let k = 0; k < t; k++) {
-        let i = targets[k]! + leaves;
-        tree[i]!++;
-        while (i > 1) {
-          if ((i & 1) === 0) total += tree[i + 1]!;
-          i >>= 1;
-          tree[i]!++;
-        }
-      }
+      total += crossed(targets, t, southLen, tree);
     }
     return total;
   };
@@ -2376,16 +2412,25 @@ function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
     const u = up ? EF[e]! : ET[e]!;
     return offsets && W[u]! > 0 ? pos[u]! + (up ? EFD[e]! : ETD[e]!) / W[u]! : pos[u]!;
   };
-  // Crossings between a and b, assuming a is left of b.
-  const between = (a: number, b: number): number => {
+  // The crossings with a left of b less those with b left of a, counted over the same pairs of
+  // ends in one pass: above 0, putting b left of a saves crossings.
+  const saved = (a: number, b: number): number => {
     let c = 0;
     for (let k = predStart[a]!; k < predStart[a + 1]!; k++) {
       const x = at(predE[k]!, true);
-      for (let j = predStart[b]!; j < predStart[b + 1]!; j++) if (x > at(predE[j]!, true)) c++;
+      for (let j = predStart[b]!; j < predStart[b + 1]!; j++) {
+        const y = at(predE[j]!, true);
+        if (x > y) c++;
+        else if (y > x) c--;
+      }
     }
     for (let k = succStart[a]!; k < succStart[a + 1]!; k++) {
       const x = at(succE[k]!, false);
-      for (let j = succStart[b]!; j < succStart[b + 1]!; j++) if (x > at(succE[j]!, false)) c++;
+      for (let j = succStart[b]!; j < succStart[b + 1]!; j++) {
+        const y = at(succE[j]!, false);
+        if (x > y) c++;
+        else if (y > x) c--;
+      }
     }
     return c;
   };
@@ -2399,7 +2444,7 @@ function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
           const a = order[i]!;
           const b = order[i + 1]!;
           if (pinOf(a) !== pinOf(b) || (GRP && GRP[a]! !== GRP[b]!)) continue;
-          if (between(b, a) >= between(a, b)) continue;
+          if (saved(a, b) <= 0) continue;
           order[i] = b;
           order[i + 1] = a;
           pos[b] = i - s;
@@ -2537,6 +2582,25 @@ function pullToHeld(
   sweep(2);
 }
 
+// The order of the neighbour lists, once the order of the nodes is final. Each node's segments
+// in `succE` and in `predE` are put in the order of where their other ends sit in the next or the
+// previous rank (`pos`), ties by segment. Nothing reorders the nodes or the lists after this, so
+// what reads them takes that order as given: `position` reads the medians off directly, and
+// `sideEnds` (for `spread` and `settle`) and `settle` take the ends on a side left to right.
+// Called once in `layOut`, between `reduceCrossings` and the first of those.
+function sortNeighbours({ n, EF, ET, succStart, succE, predStart, predE, pos }: Graph): void {
+  const segments = EF.length;
+  const key = i32(segments);
+  for (let e = 0; e < segments; e++) key[e] = pos[ET[e]!]!;
+  for (let v = 0; v < n; v++)
+    if (succStart[v + 1]! - succStart[v]! > 1)
+      sortRange(succE, succStart[v]!, succStart[v + 1]!, key);
+  for (let e = 0; e < segments; e++) key[e] = pos[EF[e]!]!;
+  for (let v = 0; v < n; v++)
+    if (predStart[v + 1]! - predStart[v]! > 1)
+      sortRange(predE, predStart[v]!, predStart[v + 1]!, key);
+}
+
 // Brandes-Köpf horizontal coordinate assignment: four aligned layouts, balanced.
 function position(g: Graph, opt: LayeredOptions): Float64Array {
   const {
@@ -2560,16 +2624,8 @@ function position(g: Graph, opt: LayeredOptions): Float64Array {
   const gap = f64(n);
   for (let i = 0; i < n; i++) gap[i] = halfRoom(g, opt, i);
 
-  // Neighbours in left-to-right order, so the medians can be read off directly.
-  const key = i32(segments);
-  for (let e = 0; e < segments; e++) key[e] = pos[ET[e]!]!;
-  for (let v = 0; v < n; v++)
-    if (succStart[v + 1]! - succStart[v]! > 1)
-      sortRange(succE, succStart[v]!, succStart[v + 1]!, key);
-  for (let e = 0; e < segments; e++) key[e] = pos[EF[e]!]!;
-  for (let v = 0; v < n; v++)
-    if (predStart[v + 1]! - predStart[v]! > 1)
-      sortRange(predE, predStart[v]!, predStart[v + 1]!, key);
+  // The neighbours are in left-to-right order (`sortNeighbours`), so the medians are read off
+  // directly.
 
   // An edge between two real nodes may not cross a dummy-to-dummy segment; mark those that would.
   const conflict = u8(segments);

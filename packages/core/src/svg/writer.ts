@@ -7,7 +7,7 @@ import { BLANK_REL, GRADIENT_FIXED, PLAIN_ATTRS, TEXT_HOLDERS } from './allowlis
 import { checkName, checkTag, formatChecked } from './encode.ts';
 import { esc, escAttr, num } from './escape.ts';
 import { isBuilt, pathBuilder, transforms, translate, type PathBuilder } from './path.ts';
-import { checkColor, hash36, styleScope } from './style.ts';
+import { checkColor, hash36, rootStyleAttr, styleScope } from './style.ts';
 import { CompactTree, type SvgTree } from './tree.ts';
 import type {
   AllowedTag,
@@ -187,6 +187,13 @@ export interface WriterOptions {
 }
 
 const NO_ATTRS: Attrs = Object.freeze({});
+
+/**
+ * The stream writer's `PLAIN_ATTRS`: the same names, each with its keywords (`k`) and its text up
+ * to the value (`p`, ` name="`), so one lookup both passes the name and writes it. Made once at
+ * load from `PLAIN_ATTRS`, so it holds exactly its names; private to this writer.
+ */
+const PLAIN = new Map([...PLAIN_ATTRS].map(([n, k]) => [n, { k, p: ` ${n}="` }]));
 
 /** `outline` on either backing: the drawer's replacement, or the plain leaf. */
 function writeOutline(
@@ -473,8 +480,8 @@ class Stream implements StreamSvgWriter {
       const raw = (attrs as Record<string, unknown>)[name];
       // `formatValue`, with the name looked up once for both its checks and its keywords.
       if (raw === undefined) continue;
-      const keywords = PLAIN_ATTRS.get(name);
-      if (keywords === undefined) checkName(tag, name);
+      const known = PLAIN.get(name);
+      if (known === undefined) checkName(tag, name);
       let value = formatChecked(name, raw);
       if (this.ref !== undefined && value === this.ref && (name === 'stroke' || name === 'fill'))
         this.referred = true;
@@ -482,8 +489,11 @@ class Stream implements StreamSvgWriter {
         value = BLANK_REL;
         rel = true;
       }
-      const plain = unescaped(name, raw, value, keywords);
-      s += ' ' + name + '="' + (plain ? value : escAttr(value)) + '"';
+      const plain = unescaped(name, raw, value, known?.k);
+      s +=
+        (known?.p ?? ' ' + name + '="') +
+        (plain ? value : (name === 'style' && rootStyleAttr(value)) || escAttr(value)) +
+        '"';
     }
     if (blank && !rel) s += ' rel="' + BLANK_REL + '"';
     return s;

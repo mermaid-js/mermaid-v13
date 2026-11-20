@@ -191,12 +191,14 @@ function titleBand(
 }
 
 // The groups as laid out. The title sits midway down the padding of its side (`bands`), in the
-// middle or `padX` in from the side it is at.
+// middle or `padX` in from the side it is at. Each group's model is also added to `boxes`, in the
+// order of the groups.
 function groupModels(
   graph: LayoutGraph,
   cgroups: CNode[],
   bands: number[],
-  pad: number
+  pad: number,
+  boxes: LayoutModelNode[]
 ): Map<string, LayoutModelGroup> {
   const groups = new Map<string, LayoutModelGroup>();
   graph.groups.forEach((g, j) => {
@@ -208,7 +210,9 @@ function groupModels(
       x: x + c.titleSide * (c.w / 2 - c.padX - width / 2),
       y: y + (c.titleLow ? 1 : -1) * (c.h / 2 - bands[j]! / 2 - height / 2),
     };
-    groups.set(g.id, { x, y, width: c.w, height: c.h, title });
+    const b = { x, y, width: c.w, height: c.h, title };
+    groups.set(g.id, b);
+    boxes.push(b);
   });
   return groups;
 }
@@ -228,15 +232,13 @@ function reserveLoop(c: CNode, below: boolean, label: number, round: boolean, M:
 // The direction of the nearest group around node `i` that names one.
 function directionOf(cnodes: CNode[], i: number): Dir | undefined {
   let dir: Dir | undefined;
-  const seen = new Set<number>();
+  // At most one step per node: a cycle of parents ends the search as a repeat would.
   for (
-    let p = cnodes[i]!.parent;
-    p >= 0 && dir === undefined && !seen.has(p);
-    p = cnodes[p]!.parent
-  ) {
-    seen.add(p);
+    let p = cnodes[i]!.parent, steps = 0;
+    p >= 0 && dir === undefined && steps < cnodes.length;
+    p = cnodes[p]!.parent, steps++
+  )
     dir = cnodes[p]!.dir;
-  }
   return dir;
 }
 
@@ -318,18 +320,19 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
       );
       loopSide[src] = below ? 2 : 1;
     }
-    return {
+    const ce: CEdge = {
       src,
       dst,
       minlen: Math.max(1, Math.round(e.minLen)),
       labelW,
       labelH,
-      ...(e.startLabel ? { start: { ...e.startLabel, along: before(graph, e, false) + gap } } : {}),
-      ...(e.endLabel ? { end: { ...e.endLabel, along: before(graph, e, true) + gap } } : {}),
       route: [],
       labelX: 0,
       labelY: 0,
     };
+    if (e.startLabel) ce.start = { ...e.startLabel, along: before(graph, e, false) + gap };
+    if (e.endLabel) ce.end = { ...e.endLabel, along: before(graph, e, true) + gap };
+    return ce;
   });
 
   const routing = graph.routing ?? 'curved';
@@ -350,11 +353,13 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
   const margin = hooks ? Math.ceil(graph.diagramPadding ?? 0) : (graph.diagramPadding ?? 0);
   const pad = margin - cell / 2; // on the grid, a coordinate is a cell index (D78)
   const nodes = new Map<string, LayoutModelNode>();
+  // The boxes of the nodes, then the groups, by index: what `box` gives, for reading only.
+  const boxes: LayoutModelNode[] = [];
   graph.nodes.forEach((n, i) => {
     const c = cnodes[i]!;
-    nodes.set(n.id, { x: c.x + pad, y: c.y + pad, width: n.width, height: n.height });
+    nodes.set(n.id, (boxes[i] = { x: c.x + pad, y: c.y + pad, width: n.width, height: n.height }));
   });
-  const groups = groupModels(graph, cnodes.slice(nodeCount), bands, pad);
+  const groups = groupModels(graph, cnodes.slice(nodeCount), bands, pad, boxes);
 
   const box = (i: number): LayoutModelNode => {
     const c = cnodes[i]!;
@@ -388,8 +393,8 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
     // On the grid an edge between a group and its own member runs down from the group's top
     // border into the member's top (compound.ts), whatever side the ends lie nearest.
     const own = hooks?.isOwnEdge(cnodes, src, dst) === true;
-    const source = own ? 'top' : sideOf(box(src), points[0], flowEnd(rootDir));
-    const target = own ? 'top' : sideOf(box(dst), points[points.length - 1], flowStart(rootDir));
+    const source = own ? 'top' : sideOf(boxes[src]!, points[0], flowEnd(rootDir));
+    const target = own ? 'top' : sideOf(boxes[dst]!, points[points.length - 1], flowStart(rootDir));
     const model: LayoutModelEdge = {
       points: hooks ? hooks.ontoCells(points, source, target) : points,
       ports: { source, target },

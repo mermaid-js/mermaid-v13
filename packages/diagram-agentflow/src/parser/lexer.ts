@@ -65,6 +65,18 @@ export interface LinkEnds {
   dotted: number;
 }
 
+const KEYWORDS = /* @__PURE__ */ flowKeywords([
+  ['agentflow-beta', T.Graph, 'graph'],
+  ['connector', T.Connector],
+  ['global', T.Global, 'blanks'],
+  ['end', T.End, 'blanks'],
+  ['style', T.Style],
+  ['default', T.Default],
+  ['linkStyle', T.LinkStyle],
+  ['interpolate', T.Interpolate],
+  ['flow', T.Flow],
+]);
+
 /**
  * How v12's lexer read an agentflow: untrimmed (leading blanks and comments are tokens), about
  * three characters a token, comments left in the text (a label run ends at `%%`). `global` and
@@ -73,18 +85,8 @@ export interface LinkEnds {
 const DIALECT: FlowLexerDialect = {
   kinds: T,
   // v12's agentflow.jison kept 12.2.0's LINK_ID: brackets do not end a link id (D621).
-  chars: /* @__PURE__ */ flowChars(true, false),
-  keywords: /* @__PURE__ */ flowKeywords([
-    ['agentflow-beta', T.Graph, 'graph'],
-    ['connector', T.Connector],
-    ['global', T.Global, 'blanks'],
-    ['end', T.End, 'blanks'],
-    ['style', T.Style],
-    ['default', T.Default],
-    ['linkStyle', T.LinkStyle],
-    ['interpolate', T.Interpolate],
-    ['flow', T.Flow],
-  ]),
+  chars: /* @__PURE__ */ flowChars(true, false, KEYWORDS),
+  keywords: KEYWORDS,
   charsPerToken: 3,
   trim: false,
 };

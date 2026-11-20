@@ -27,7 +27,7 @@ import {
 } from './compound-state.ts';
 import { IN_LINE } from './crossings.ts';
 import type { GridHooks } from './grid.ts';
-import { orient, rank, type LEdge, type LNode, type LayeredResult } from './layered.ts';
+import { orient, type LEdge, type LNode, type LayeredResult } from './layered.ts';
 
 const isVertical = (level: Level): boolean => level.dir === 'TB' || level.dir === 'BT';
 
@@ -55,7 +55,6 @@ function rankParents(c: Compound): void {
     if (!needed) continue;
     const { lnodes, ledges } = buildLayer(c, level, false);
     orient(lnodes, ledges);
-    rank(lnodes, ledges, 1);
     const start = startSide(level.dir);
     level.edges.forEach((le, i) => {
       const e = edges[le.e]!;

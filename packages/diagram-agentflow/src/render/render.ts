@@ -26,7 +26,7 @@ import {
   type PlacedTitle,
 } from '@mermaid-js/shared/svg/document';
 import { edgeLabel } from '@mermaid-js/shared/svg/graph';
-import { marker, markerTrim } from '@mermaid-js/shared/svg/arrowheads';
+import { marker, markerTrim, type MarkerPaint } from '@mermaid-js/shared/svg/arrowheads';
 import { routePath } from '@mermaid-js/shared/svg/route';
 import type {
   AgentflowEdgeView,
@@ -222,7 +222,7 @@ function drawEdge({ w, layout, paint }: Scene, e: AgentflowEdgeView): void {
     fill: 'none',
   });
   // The head fades with its line: opacity, and stroke-opacity as the head's fill-opacity.
-  const headPaint: Attrs = {
+  const headPaint: MarkerPaint = {
     fill: e.style.shape.stroke ?? paint.node.arrow,
     opacity: e.style.shape.opacity,
     'fill-opacity': e.style.shape['stroke-opacity'],

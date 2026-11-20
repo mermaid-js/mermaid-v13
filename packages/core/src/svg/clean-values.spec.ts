@@ -278,6 +278,15 @@ describe('a value cannot be passed off as built', () => {
     expect(isBuilt(first)).toBe(false);
     expect(isBuilt(translate(9, 9))).toBe(true);
   });
+
+  it('knows each of the last four, wherever the newest sits in the ring', () => {
+    for (let start = 0; start < 8; start++) {
+      const made = [0, 1, 2, 3].map((i) => translate(100 + start, i));
+      for (const v of made) expect(isBuilt(v), `${start} ${v}`).toBe(true);
+      expect(isBuilt(translate(200 + start, 0) + ' ')).toBe(false);
+      translate(-1, start); // moves the newest one place on
+    }
+  });
 });
 
 describe('transforms() joins caller strings, so its result is never trusted', () => {
@@ -369,9 +378,25 @@ describe('name checks resolved once give the same answers', () => {
     'toString',
     'hasOwnProperty',
     '',
+    // One character off a name the writers know, and the keys of a Map and its entries.
+    'Fill',
+    'FILL',
+    ' fill',
+    'fill ',
+    'fill"',
+    'fill="x" onload',
+    'class=',
+    'd\x00',
+    'size',
+    'get',
+    'has',
+    'k',
+    'p',
+    'valueOf',
   ];
 
   it('for every element and name, as formatValue and the writers', () => {
+    let accepted = 0;
     for (const tag of TAGS) {
       expect(error(() => checkTag(tag)) === undefined, tag).toBe(isAllowedTag(tag));
       if (!isAllowedTag(tag)) continue;
@@ -386,8 +411,17 @@ describe('name checks resolved once give the same answers', () => {
         const attrs = JSON.parse(`{${JSON.stringify(name)}:"x"}`) as Attrs;
         expect(error(() => write(streamWriter, (w) => w.leaf(tag as 'g', attrs)))).toBe(want);
         expect(error(() => write(treeWriter, (w) => w.leaf(tag as 'g', attrs)))).toBe(want);
+        if (want !== undefined) continue;
+        // An accepted name is written as itself, the same on both backings.
+        const [stream, tree] = both((w) => w.leaf(tag as 'g', attrs));
+        expect(stream, `<${tag} ${name}>`).toContain(` ${name}="x"`);
+        expect(stream.split('="').length, `<${tag} ${name}>`).toBe(2);
+        expect(tree).toBe(stream);
+        accepted++;
       }
     }
+    // Every name the writers know without checks, on each element that takes them all.
+    expect(accepted).toBeGreaterThan(PLAIN_ATTRS.size * 10);
   });
 
   it('for names inherited from the prototype', () => {

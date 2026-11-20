@@ -35,8 +35,14 @@ import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
 import { drawIcon, drawImage } from './assets.ts';
-import { arrowheads, marker, markerTrim, type Arrowheads } from '@mermaid-js/shared/svg/arrowheads';
-import { routePath } from '@mermaid-js/shared/svg/route';
+import {
+  arrowheads,
+  marker,
+  markerTrim,
+  type Arrowheads,
+  type MarkerPaint,
+} from '@mermaid-js/shared/svg/arrowheads';
+import { drawRoute } from '@mermaid-js/shared/svg/route';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
 import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
 
@@ -169,7 +175,7 @@ export interface Paints {
    */
   readonly shape: Attrs;
   readonly line: Attrs;
-  readonly head: Attrs;
+  readonly head: MarkerPaint;
   readonly cluster?: { fill: Color; stroke: OutlinePaint; strokeWidth: Length; text: Color };
   /**
    * A lane's border: clusterBorder as a colour, never the gradient (v12's swimlane styles forced
@@ -246,7 +252,7 @@ function paints(theme: ThemeOf, flow: Prepared, lanes: boolean): Paints {
   };
   const line: Attrs = { stroke: node.stroke, 'stroke-width': node.strokeWidth };
   // An arrowhead's paint: these three keys in this order, as an edge with a style writes them.
-  const head: Attrs = { fill: node.arrow, opacity: undefined, 'fill-opacity': undefined };
+  const head: MarkerPaint = { fill: node.arrow, opacity: undefined, 'fill-opacity': undefined };
   return {
     heads,
     node,
@@ -272,6 +278,20 @@ export interface Scene {
   readonly warn: Warn;
   /** The lane drawer, on a render the `swimlane` layout laid out (D535, D536). */
   readonly lanes: LaneDrawer | undefined;
+  /**
+   * `theme.ink` by fill, for this render only: nodes styled alike share a fill. It lives and
+   * dies with the scene, so nothing in it outlives the render or meets another theme.
+   */
+  readonly inks: Map<string, ReturnType<FlowRenderContext['theme']['ink']>>;
+}
+
+type Ink = ReturnType<ThemeOf['ink']>;
+
+/** `theme.ink(fill)`, worked out once per fill in a render (`ink` reads only the theme). */
+function inkOf({ ctx, inks }: Scene, fill: string): Ink {
+  let ink = inks.get(fill);
+  if (ink === undefined && !inks.has(fill)) inks.set(fill, (ink = ctx.theme.ink(fill)));
+  return ink;
 }
 
 /** Writes the whole `<svg>` document for a laid-out flowchart. */
@@ -292,6 +312,7 @@ export function renderFlowchart(
     paint: paints(ctx.theme, flow, !!lanes),
     warn: (warning) => ctx.warn(warning),
     lanes,
+    inks: new Map(),
   };
   const conf = ctx.config.flowchart;
   // v12's `flowchartTitleText`: 18 px in `textColor`, `titleTopMargin` above the drawing (D652).
@@ -400,13 +421,26 @@ function edgeClass(edge: EdgeView['edge']): string {
 /** The edge's line: its weight and pattern, then the author's style, then an animation's dashes. */
 function edgeLine(edge: EdgeView['edge'], d: Attrs['d'], style: Attrs, animated: boolean): Attrs {
   const dotted = edge.stroke === 'dotted';
+  const width = edge.stroke === 'thick' ? THICK : undefined;
+  const dash = dotted ? DOTTED : undefined;
+  // v12 drew dotted edges with butt caps; the group's round caps close a 2px dash's gaps.
+  // Animated edges keep round caps, as v12's .edge-animation-* rules set them.
+  const cap = dotted && !animated ? 'butt' : undefined;
+  // The same keys in the same order either way: most edges have no style and no animation, and
+  // an object literal without a spread is built without copying one.
+  if (!animated && isEmpty(style))
+    return {
+      d,
+      'stroke-width': width,
+      'stroke-dasharray': dash,
+      'stroke-linecap': cap,
+      fill: 'none',
+    };
   return {
     d,
-    'stroke-width': edge.stroke === 'thick' ? THICK : undefined,
-    'stroke-dasharray': dotted ? DOTTED : undefined,
-    // v12 drew dotted edges with butt caps; the group's round caps close a 2px dash's gaps.
-    // Animated edges keep round caps, as v12's .edge-animation-* rules set them.
-    'stroke-linecap': dotted && !animated ? 'butt' : undefined,
+    'stroke-width': width,
+    'stroke-dasharray': dash,
+    'stroke-linecap': cap,
     ...style,
     // The moving dashes replace the edge's own pattern and any `linkStyle` one, as in v12.
     ...(animated && { 'stroke-dasharray': ANIMATED_DASH, 'stroke-dashoffset': undefined }),
@@ -424,7 +458,8 @@ function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
     const { views, pads } = flow;
     points[0] = inset(points[0]!, views.get(e.source), layout.nodes.get(e.source), pads);
     points[last] = inset(points[last]!, views.get(e.target), layout.nodes.get(e.target), pads);
-    const path = routePath(
+    // The copy is handed over: the route drawing works in it, without copies of its own.
+    const path = drawRoute(
       w,
       points,
       e.source === e.target ? 'rounded' : e.curve,
@@ -434,7 +469,7 @@ function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
     const style = e.style.shape;
     w.outline('edge', 'path', edgeLine(edge, path.d, style, animateEdge(w, edge)));
     // The head fades with its line: opacity, and stroke-opacity as the head's fill-opacity.
-    const headPaint: Attrs =
+    const headPaint: MarkerPaint =
       style.stroke === undefined &&
       style.opacity === undefined &&
       style['stroke-opacity'] === undefined
@@ -595,7 +630,7 @@ function drawFoldedNode({ w, paint }: Scene, view: NodeView): void {
 }
 
 function drawNode(scene: Scene, view: NodeView, tip?: string): void {
-  const { w, layout, ctx, paint, warn } = scene;
+  const { w, layout, paint, warn } = scene;
   const box = layout.nodes.get(view.id);
   if (!box) return;
   const v = view.vertex;
@@ -625,7 +660,7 @@ function drawNode(scene: Scene, view: NodeView, tip?: string): void {
   const fill = view.style.shape.fill;
   const ink =
     fill && shapeFilled(view.shape) && !v?.img && !v?.icon && !block
-      ? ctx.theme.ink(fill)
+      ? inkOf(scene, fill)
       : undefined;
   // No attributes at all writes the same label as `{ fill: undefined }`.
   w.label(

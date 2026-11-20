@@ -182,6 +182,9 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
   return { graph, groups, nodes, edges, views, pads: m.pads };
 }
 
+/** The classes every vertex's style starts from. */
+const NODE_CLASSES = ['default', 'node'] as const;
+
 /** One view per drawn subgraph and vertex, measured; clusters sorted outermost first. */
 function nodeViews(
   model: FlowModel,
@@ -192,8 +195,10 @@ function nodeViews(
   const views = new Map<string, NodeView>();
   const groups: NodeView[] = [];
   const nodes: NodeView[] = [];
-  // Every view is measured below; until then it holds the empty label.
+  // Every view is measured and styled below; until then it holds the empty label and the style
+  // of no declarations, looked up once (it gives no warning).
   const empty = m.label('', false, m.font, 0);
+  const unstyled = m.styleOf([]);
   const blank = (id: string, ast: string, group: boolean, shape: string): NodeView => ({
     id,
     ast,
@@ -204,7 +209,7 @@ function nodeViews(
     h: 0,
     dy: 0,
     dx: 0,
-    style: m.styleOf([]),
+    style: unstyled,
     classes: [],
     parent: nest.parentOf.get(id),
     depth: nest.depthOf(id),
@@ -242,7 +247,10 @@ function nodeViews(
       if (text) view.embedText = text;
     }
     view.classes = v.classes;
-    view.style = m.styleOf(['default', 'node', ...v.classes], v.styles);
+    view.style = m.styleOf(
+      v.classes.length === 0 ? NODE_CLASSES : [...NODE_CLASSES, ...v.classes],
+      v.styles
+    );
     views.set(v.id, view);
     nodes.push(view);
   }
@@ -357,7 +365,12 @@ function edgeViews(
     for (let n = 2; ids.has(id); n++) id = `${e.id}#${n}`;
     ids.add(id);
     const [start, end] = arrows(e.type, e.stroke);
-    const style = m.styleOf(e.classes, [...(model.defaultStyle ?? []), ...(e.style ?? [])]);
+    const style = m.styleOf(
+      e.classes,
+      model.defaultStyle || e.style
+        ? [...(model.defaultStyle ?? []), ...(e.style ?? [])]
+        : undefined
+    );
     // Measured in the font the label is drawn in, as node labels are.
     const [f, bits] = textStyle(style, m.font);
     edges.push({

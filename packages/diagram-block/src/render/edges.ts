@@ -5,9 +5,14 @@
  * leaves: v12 never sketched them (D447).
  */
 import { pxProfile } from '@mermaid-js/core/layout';
-import { marker, markerTrim, type LineEnd } from '@mermaid-js/shared/svg/arrowheads';
+import {
+  marker,
+  markerTrim,
+  type LineEnd,
+  type MarkerPaint,
+} from '@mermaid-js/shared/svg/arrowheads';
 import { edgeLabel } from '@mermaid-js/shared/svg/graph';
-import type { Attrs, PathData, SvgWriter } from '@mermaid-js/core/svg';
+import type { PathData, SvgWriter } from '@mermaid-js/core/svg';
 import type { BlockEdgeLayout, PlacedLabel } from '../layout/types.ts';
 import type { Point } from '../shapes/outline.ts';
 import { BLOCK_RENDER } from './metrics.ts';
@@ -95,7 +100,7 @@ export function drawEdge({ w, paint }: Scene, e: BlockEdgeLayout): void {
     // round caps would close.
     'stroke-linecap': dotted ? 'butt' : 'round',
   });
-  const head: Attrs = { fill: edge.arrow };
+  const head: MarkerPaint = { fill: edge.arrow };
   marker(w, e.arrowTypeStart, path.start, head, heads);
   marker(w, e.arrowTypeEnd, path.end, head, heads);
 }

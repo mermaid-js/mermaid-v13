@@ -145,16 +145,15 @@ interface Entry extends Detected {
    */
   readonly rowFormats?: readonly string[];
   /**
-   * `body` is the text from the diagram's start (front matter, leading directives and comments
-   * skipped). `clean` is the text third-party detectors are given and `v12` the one first-party
-   * rows fall back to (core's `detectText`, without and with `keepLastLineComment`). Both are
-   * built on first use.
+   * `firstParty` is core's `firstPartyDetects` for the source: a first-party row's test on the
+   * text from the diagram's start (front matter, leading directives and comments skipped), then
+   * on v12's comment-cut text. `clean` is the text third-party detectors are given (core's
+   * `detectText`), built on first use.
    */
   readonly detect: (
-    body: string,
+    firstParty: (test: (text: string) => boolean) => boolean,
     clean: () => string,
-    config: Readonly<Record<string, unknown>> | undefined,
-    v12: () => string
+    config: Readonly<Record<string, unknown>> | undefined
   ) => boolean;
   readonly load?: () => Promise<AnyPlugin>;
   readonly loadAscii?: () => Promise<AnyAsciiHook>;
@@ -478,8 +477,7 @@ export class Registry {
         id: e.id,
         formats: e.formats ?? [],
         rowFormats: e.formats,
-        detect: (body, _clean, _config, v12) =>
-          firstPartyDetects((text) => e.pattern.test(text), body, v12),
+        detect: (detects) => detects((text) => e.pattern.test(text)),
       });
     }
   }
@@ -548,7 +546,8 @@ export class Registry {
   detect(src: string, pre: PreprocessResult, config?: Readonly<Record<string, unknown>>): Detected {
     const start = diagramStart(src, pre);
     const body = src.slice(start);
-    if (body.trimStart().toLowerCase().startsWith('---')) {
+    // No character lower-cases to a `-`, so the start is tested as written.
+    if (body.trimStart().startsWith('---')) {
       throw new MermaidError(
         'SYNTAX',
         'Diagrams beginning with --- are not valid. If you were trying to use a YAML front-matter, ' +
@@ -556,14 +555,15 @@ export class Registry {
         { source: src, offset: start, length: 3 }
       );
     }
-    if (body.trim().toLowerCase() === 'error') return { type: 'error', id: undefined };
+    // `body.trim().toLowerCase() === 'error'` without lower-casing the body: `\s` is what `trim`
+    // removes, and only ASCII letters fold to `e`, `r` and `o` under `/i`.
+    if (/^\s*error\s*$/i.test(body)) return { type: 'error', id: undefined };
     let clean: string | undefined;
     const cleaned = () => (clean ??= detectText(src, start, pre));
-    let old: string | undefined;
-    const v12 = () => (old ??= detectText(src, start, pre, { keepLastLineComment: true }));
+    const detects = firstPartyDetects(src, start, pre);
     for (const e of this.detectionOrder()) {
       // The entry itself: its type, id, section and layout (D534).
-      if (e.detect(body, cleaned, config, v12)) return e;
+      if (e.detect(detects, cleaned, config)) return e;
     }
     // D317: a v12 type with no v13 package, known after every plugin, so a plugin can claim it.
     if (ZENUML.test(body)) return { type: 'zenuml', id: undefined };
@@ -1062,7 +1062,7 @@ function diagramEntry(
     type: def.id,
     id: def.id,
     formats: def.formats ?? ['svg'],
-    detect: (_body, clean, config) => def.detector(clean(), config),
+    detect: (_firstParty, clean, config) => def.detector(clean(), config),
     load,
     ...(isPlugin ? { eager: def as AnyPlugin } : {}),
     ...(loadAscii ? { loadAscii } : {}),

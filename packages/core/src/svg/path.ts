@@ -47,7 +47,9 @@ function built<T extends string>(value: T): T {
  * from anywhere else is the same characters and just as safe.
  */
 export function isBuilt(value: string): boolean {
-  return BUILT.includes(value);
+  // The newest first: a `d` or `transform` is nearly always written right after it is built.
+  // Only the order of the comparisons changes; the answer is `BUILT.includes(value)`.
+  return BUILT[nextBuilt] === value || BUILT.includes(value);
 }
 
 class Builder implements PathBuilder {

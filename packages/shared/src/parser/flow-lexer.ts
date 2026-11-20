@@ -73,7 +73,9 @@ import {
   FLOW_STATE_NAMES,
   LINK_ID_STOP,
   isNl,
+  KEYWORD_START,
   NODE,
+  PUNCTUATION_START,
   SHAPE_DATA_STOP,
   TEXT_STOP,
   TRAP_STOP,
@@ -394,7 +396,7 @@ export abstract class FlowLexer extends StateLexer {
   }
 
   // mermaid@12.2.0's LINK_ID is `[^\s\"]+\@(?=[^\{\"])`; 12.3.0's flowchart also stops the run at
-  // `[ ] ( ) { } |`, the LINK_ID_STOP of `flowChars(…, bracketsEndLinkId)` (D621).
+  // `[ ] ( ) { } |`, the LINK_ID_STOP of `flowChars(…, bracketsEndLinkId, …)` (D621).
   private isRunBreak(ch: number, q: number): boolean {
     if (hasClass(this.chars, ch, LINK_ID_STOP)) return true;
     return (ch === DQUOTE && this.isQuote(q)) || isSpace(ch);
@@ -441,16 +443,17 @@ export abstract class FlowLexer extends StateLexer {
     return false;
   }
 
-  /** The INITIAL rules, in jison's order. A dialect may put rules of its own before them. */
+  /**
+   * The INITIAL rules, in jison's order, each skipped where `c` cannot start it. A dialect may
+   * put rules of its own before them.
+   */
   protected initial(c: number): boolean {
-    return (
-      this.keyword(c) ||
-      this.direction() ||
-      this.linkId(c) ||
-      this.punctuation(c) ||
-      this.blankRule(c) ||
-      this.word(c)
-    );
+    const r = c > ASCII_MAX ? 0 : (this.chars[c] ?? 0);
+    if ((r & KEYWORD_START) !== 0 && this.keyword(c)) return true;
+    if (this.direction() || this.linkId(c)) return true;
+    if ((r & PUNCTUATION_START) !== 0 && this.punctuation(c)) return true;
+    // A character outside ASCII may be a blank too.
+    return ((c > ASCII_MAX || isSpace(c)) && this.blankRule(c)) || this.word(c);
   }
 
   /** The keyword rules, picked by their first character: the family's, then the dialect's. */

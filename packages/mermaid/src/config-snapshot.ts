@@ -233,7 +233,8 @@ export type Sections = string | readonly string[] | undefined;
  */
 export function directiveConfig(pre: PreprocessResult, section: Sections): ConfigInput[] {
   const out: ConfigInput[] = [];
-  const [first, last] = [section ?? []].flat();
+  if (pre.directives.length === 0) return out;
+  const [first, last] = typeof section === 'string' ? [section] : (section ?? []);
   // A chain's first section is a schema section (gen-config checks the manifest's `section`).
   const own = (KEY_TREE as Record<string, Plain>)[first!]!;
   for (const d of pre.directives) {
@@ -269,7 +270,10 @@ export interface SiteConfig {
  * once, and its warnings replayed.
  */
 export class SiteConfigs {
-  private bySnapshot = new WeakMap<Snapshot, WeakMap<AnyPlugin, Map<string, SiteConfig>>>();
+  private bySnapshot = new WeakMap<
+    Snapshot,
+    WeakMap<AnyPlugin, Map<string, Map<string, SiteConfig>>>
+  >();
   private fragments: readonly ConfigFragment[] = [];
 
   get(
@@ -286,9 +290,11 @@ export class SiteConfigs {
     let byPlugin = this.bySnapshot.get(snap);
     if (!byPlugin) this.bySnapshot.set(snap, (byPlugin = new WeakMap()));
     let byType = byPlugin.get(plugin);
-    if (!byType) byPlugin.set(plugin, (byType = new Map<string, SiteConfig>()));
-    const key = `${String(section)}\0${detected.type}`;
-    let hit = byType.get(key);
+    if (!byType) byPlugin.set(plugin, (byType = new Map<string, Map<string, SiteConfig>>()));
+    let bySection = byType.get(detected.type);
+    if (!bySection) byType.set(detected.type, (bySection = new Map<string, SiteConfig>()));
+    const key = String(section);
+    let hit = bySection.get(key);
     if (!hit) {
       const pluginDefaults: Plain = {};
       // The plugin's defaults go to its own section; a type's own section (D534) sits over
@@ -309,7 +315,7 @@ export class SiteConfigs {
         ...(fragments.length > 0 ? { fragments } : {}),
       });
       hit = { site, warnings: recorded };
-      byType.set(key, hit);
+      bySection.set(key, hit);
     }
     return hit;
   }
