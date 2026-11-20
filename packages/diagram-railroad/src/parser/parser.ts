@@ -297,7 +297,11 @@ export abstract class RailroadParser extends RuleParser<PreprocessResult> {
    * Report what was found where one of `want` was expected, then stop the rule. `where` is the
    * current token, or the gap after the last one where the rule was cut short.
    */
-  protected fail(want: readonly number[], hint?: string, where: Range = this.range()): never {
+  protected override fail(
+    want: readonly number[],
+    hint?: string,
+    where: Range = this.range()
+  ): never {
     if (this.kind() === Kind.Error) this.badCharacters(this.range());
     const d = this.st.diagnostics.unexpected(
       'UNEXPECTED',

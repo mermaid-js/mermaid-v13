@@ -141,10 +141,6 @@ class PieParser extends RuleParser<PreprocessResult> {
 
   // ---- errors and recovery ------------------------------------------------------------
 
-  protected fail(want: readonly number[], hint?: string): never {
-    return this.unexpected(want, hint);
-  }
-
   /** Text no token rule matched: an unclosed string or `accDescr {`, or stray characters. */
   protected override unmatched(where: Range): never {
     const { st } = this;

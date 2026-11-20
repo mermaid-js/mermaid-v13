@@ -105,10 +105,6 @@ class TestParser extends RuleParser<PreprocessResult> {
     return this.finish({ count: this.children.length }, this.texts, this.children, {});
   }
 
-  protected fail(want: readonly number[], hint?: string): never {
-    return this.unexpected(want, hint);
-  }
-
   protected override unmatched(where: Range, want: readonly number[]): void {
     if (this.mode === 'default') return super.unmatched(where, want);
     this.unmatchedCalls.push({ where, want });

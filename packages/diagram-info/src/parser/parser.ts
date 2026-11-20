@@ -99,10 +99,6 @@ class InfoParser extends RuleParser<PreprocessResult> {
 
   // ---- errors and recovery ------------------------------------------------------------
 
-  protected fail(want: readonly number[], hint?: string): never {
-    return this.unexpected(want, hint);
-  }
-
   /** Text no token rule matched: an unclosed `accDescr {`, `accTitle` without `:`, or a word. */
   protected override unmatched(where: Range): never {
     const { st } = this;

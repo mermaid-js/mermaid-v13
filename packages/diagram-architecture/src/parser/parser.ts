@@ -280,7 +280,7 @@ class ArchitectureParser extends RuleParser<PreprocessResult> {
   // ---- errors and recovery ------------------------------------------------------------
 
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  protected fail(want: readonly number[], hint?: string): never {
+  protected override fail(want: readonly number[], hint?: string): never {
     const { st } = this;
     const where = this.range();
     if (this.kind() === Kind.Error) this.badCharacters(where);

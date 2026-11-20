@@ -244,7 +244,7 @@ class TreemapParser extends RuleParser<PreprocessResult> {
   }
 
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  protected fail(want: readonly number[], hint?: string): never {
+  protected override fail(want: readonly number[], hint?: string): never {
     const where = this.range();
     const k = this.kind();
     if (k === Kind.Error) this.badCharacters(where);

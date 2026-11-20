@@ -295,7 +295,7 @@ class EventModelParser extends RuleParser<PreprocessResult> {
   }
 
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  protected fail(want: readonly number[], hint?: string): never {
+  protected override fail(want: readonly number[], hint?: string): never {
     if (this.kind() === Kind.Error) this.badCharacters();
     const names = EXPECTED.names(want);
     const why = hint ?? this.explain(want);
