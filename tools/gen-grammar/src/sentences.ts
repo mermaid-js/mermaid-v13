@@ -46,11 +46,12 @@ export interface Sentence {
 
 export interface GenerateOptions {
   seed: number;
-  /** Nesting depth after which only the shortest productions are chosen. */
-  maxDepth?: number;
-  /** Cap on tokens per sentence (later productions take the shortest way out). */
-  maxTokens?: number;
 }
+
+/** Nesting depth after which only the shortest productions are chosen. */
+const MAX_DEPTH = 12;
+/** Cap on tokens per sentence (later productions take the shortest way out). */
+const MAX_TOKENS = 400;
 
 /** A small seeded PRNG (mulberry32). */
 function rng(seed: number): () => number {
@@ -92,7 +93,7 @@ export function buildGenerator(parser: ReferenceParser, model: SentenceModel): S
   const start = parser.start;
 
   return {
-    generate({ seed, maxDepth = 12, maxTokens = 400 }) {
+    generate({ seed }) {
       const random = rng(seed);
       const out: string[] = [];
       let steps = 0;
@@ -113,7 +114,7 @@ export function buildGenerator(parser: ReferenceParser, model: SentenceModel): S
         const prods = byLhs.get(sym) ?? [];
         let choices = prods;
         steps++;
-        if (depth > maxDepth || out.length > maxTokens || steps > maxTokens * 4) {
+        if (depth > MAX_DEPTH || out.length > MAX_TOKENS || steps > MAX_TOKENS * 4) {
           const best = Math.min(...prods.map(prodHeight));
           choices = prods.filter((p) => prodHeight(p) === best);
         }

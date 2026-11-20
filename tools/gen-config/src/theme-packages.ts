@@ -15,8 +15,8 @@ import type {
   DiagramThemeTable,
   DiagramThemeVar,
   DiagramThemeVarDef,
-} from '../../../packages/core/src/theme/diagram.ts';
-import type { ThemeVarEntry } from '../../../packages/core/src/theme/vocabulary.ts';
+  ThemeVarEntry,
+} from '@mermaid-js/core/theme';
 import { readWiring } from '../../workspace/diagrams.ts';
 
 /** The repository's `packages/` directory, where the `diagram-*` packages are. */

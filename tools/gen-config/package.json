@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "devDependencies": {
+    "@mermaid-js/core": "workspace:^",
     "json-schema-to-typescript": "^15.0.4",
     "yaml": "^2.9.0"
   }
