@@ -8,6 +8,12 @@ import type { SvgFragment } from '@mermaid-js/core/text';
 import { describe, expect, it } from 'vitest';
 import { renderMindmapForTest } from './harness.ts';
 
+/** What the stand-in lookup reads of its options. */
+interface Options {
+  readonly paint?: OutlinePaint;
+  readonly pending?: true;
+}
+
 interface Asked {
   name: string;
   size: number;
@@ -16,19 +22,24 @@ interface Asked {
 
 /**
  * A resolver that draws every name but `<pack>:nope` (null: unresolved) and those of packs `later` and
- * `other` (`undefined`: a placeholder, or no glyph for it).
+ * `other` (`undefined`: no glyph for it). As core's lookup does, it gives `'pending'` (a placeholder)
+ * for a name of a pack in `loading` when the caller asks with `pending: true`.
  */
-function resolver(asked: Asked[] = []): NonNullable<RenderContext['icon']> {
-  return (name, size, options) => {
+function resolver(
+  asked: Asked[] = [],
+  loading: readonly string[] = []
+): NonNullable<RenderContext['icon']> {
+  return ((name: string, size: number, options?: Options) => {
     asked.push({ name, size, paint: options?.paint });
     if (name.endsWith(':nope')) return null;
+    if (options?.pending && loading.includes(name.slice(0, name.indexOf(':')))) return 'pending';
     if (/^(later|other):/.test(name)) return undefined;
     const glyph: SvgFragment = {
       tag: 'rect',
       attrs: { class: 'fixture-glyph', width: size, height: size },
     };
     return glyph;
-  };
+  }) as NonNullable<RenderContext['icon']>;
 }
 
 /** Registered packs in the given states (`RenderContext.iconPacks`, D294). */
@@ -108,7 +119,7 @@ describe('::icon() glyphs (D297)', () => {
     const src = 'mindmap\nroot\n  a\n  ::icon(later:fire)\n';
     const r = await renderMindmapForTest(src, {
       config: THEMED,
-      icon: resolver(),
+      icon: resolver([], ['later']),
       iconPacks: packs({ later: 'pending' }),
     });
     expect(r.svg).not.toMatch(/mindmap-icon/);
