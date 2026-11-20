@@ -114,9 +114,9 @@ export function envOf(ctx: TimelineLayoutContext): Env {
     size: fontSize,
     weight: weightOf(ctx.theme.value('fontWeight'), WEIGHT_BOLD, WEIGHT_NORMAL),
   };
-  const titleSize = fontSizePx(m.common.titleFontSize, fontSize) ?? fontSize;
+  const titleSize = fontSizePx(m.common.titleFontSize, fontSize)!;
   const refSize = m.common.titleReferenceFontSize;
-  const titleRefSize = fontSizePx(m.common.titleFontSize, refSize) ?? refSize;
+  const titleRefSize = fontSizePx(m.common.titleFontSize, refSize)!;
   const stroke = scaleColors(ctx.theme) ? undefined : ctx.theme.number('strokeWidth');
   return {
     m,
