@@ -5,7 +5,6 @@ import type { AstId } from '@mermaid-js/core/parser-kit';
 import {
   fromPx,
   pxProfile,
-  type Dir,
   type EndMarker,
   type LayoutEdge,
   type LayoutGraph,
@@ -156,8 +155,6 @@ const GROUP_PAD = 16;
 export type ClassCurve = CurveKind;
 
 export const classCurve = curveKind;
-
-const DIRS: ReadonlySet<string> = new Set(['TB', 'BT', 'LR', 'RL']);
 
 /** What the view builders share. */
 interface Build {
@@ -409,7 +406,7 @@ function layoutGraph(
   parts: Pick<ClassPrepared, 'boxes' | 'notes' | 'interfaces' | 'groups' | 'edges'>
 ): LayoutGraph {
   const b = units.builder;
-  const direction: Dir = DIRS.has(model.direction) ? (model.direction as Dir) : 'TB';
+  const direction = model.direction;
   const fromConfig = (key: string, fallback: number, axis: 'x' | 'y', min: number): number => {
     const v = configLength(key);
     return v === undefined ? fallback : fromPx(units, v, axis, min);
