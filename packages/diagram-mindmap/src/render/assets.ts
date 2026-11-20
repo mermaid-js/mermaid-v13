@@ -32,7 +32,10 @@ export function drawIcon(
   paint: Paint
 ): boolean {
   const name = mindmapIconName(reference);
-  const glyph = name === undefined ? undefined : ctx.icon?.(name, icon.glyph, { paint });
+  const glyph =
+    name === undefined ? undefined : ctx.icon?.(name, icon.glyph, { paint, pending: true });
+  // A placeholder while its pack is loading (D294, D299): the slot is left empty.
+  if (glyph === 'pending') return false;
   if (glyph) {
     const half = icon.glyph / 2;
     w.open('g', { class: 'mindmap-icon', transform: translate(at.x - half, at.y - half) });
@@ -40,10 +43,6 @@ export function drawIcon(
     w.close();
     return false;
   }
-  // `undefined` is a placeholder only while the API knows the pack is loading (D294, D299).
-  const pack = name?.slice(0, name.indexOf(':'));
-  if (glyph === undefined && pack && ctx.icon && ctx.iconPacks?.state(pack) === 'pending')
-    return false;
   w.label(icon.text, at.x, at.y, { class: 'mindmap-icon', fill: paint, 'font-size': icon.size });
   return glyph !== null;
 }

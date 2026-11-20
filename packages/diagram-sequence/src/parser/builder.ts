@@ -41,7 +41,7 @@ export interface BuilderSink {
   error(code: string, message: string, range: Range): void;
   warn(code: string, message: string, range: Range): void;
   /** A redeclaration reset the menus merged into `id` so far (v12 wrote a new record). */
-  menusReset?(id: string): void;
+  menusReset(id: string): void;
 }
 
 /** The caps a builder checks, one call per item added (D608); core's defaults when absent. */
@@ -93,7 +93,7 @@ export class SequenceBuilder {
 
   constructor(
     private readonly sink: BuilderSink,
-    private readonly caps: BuilderCaps = {}
+    private readonly caps: BuilderCaps
   ) {}
 
   private get list(): SequenceStatement[] {
@@ -122,9 +122,7 @@ export class SequenceBuilder {
       );
     }
     this.lastCreated = { id: parts.id, range: parts.range };
-    this.add(parts);
-    const p = this.participants.get(parts.id);
-    if (p) p.createAst = parts.ast;
+    this.add(parts).createAst = parts.ast;
   }
 
   /** `destroy A`: the next message must come from or go to it. */
@@ -161,7 +159,8 @@ export class SequenceBuilder {
     return old.box ?? current;
   }
 
-  private add(parts: DeclareParts): void {
+  /** Adds or redeclares a participant; returns its record. */
+  private add(parts: DeclareParts): Participant {
     const { id } = parts;
     const kind = parts.dataType ?? parts.kind;
     let description = this.description(parts);
@@ -170,7 +169,7 @@ export class SequenceBuilder {
     if (old) {
       // v12 moves a known participant into the open box even when nothing else changes.
       setBox(old, boxIndex);
-      if (description === undefined) return;
+      if (description === undefined) return old;
     }
     // v12: no type (a mention, `create destroy …`) resets the description to the id.
     if (kind === undefined) description = undefined;
@@ -178,7 +177,7 @@ export class SequenceBuilder {
     // v12 wrote a new record: the menus merged so far are gone.
     delete p.links;
     delete p.properties;
-    if (old) this.sink.menusReset?.(id);
+    if (old) this.sink.menusReset(id);
     p.label = description?.text ?? id;
     p.kind = kind ?? 'participant';
     if (description?.wrap !== undefined) p.wrap = description.wrap;
@@ -192,6 +191,7 @@ export class SequenceBuilder {
       checkLimit(this.sink, 'maxNodes', size, this.caps.maxNodes, 'participants', parts.range);
     }
     this.currentBox?.participants.push(id);
+    return p;
   }
 
   /** Merge actor menu data into `id` (v12 `insertLinks`/`insertProperties`). */
@@ -199,8 +199,8 @@ export class SequenceBuilder {
     id: string,
     data: { links?: Record<string, unknown>; properties?: Record<string, unknown> }
   ): void {
-    const p = this.participants.get(id);
-    if (!p) return;
+    // The parser mentions `id` before its menu, so the participant exists.
+    const p = this.participants.get(id)!;
     if (data.links) p.links = { ...p.links, ...data.links };
     if (data.properties) p.properties = { ...p.properties, ...data.properties };
   }

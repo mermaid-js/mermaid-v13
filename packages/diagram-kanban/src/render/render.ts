@@ -7,12 +7,11 @@
  * Columns and cards go through `w.outline` (hand-drawn, D379); the priority bar does not.
  */
 import { checkStyle, type Attrs, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
-import { centreX, centreY, openSvgRoot } from '@mermaid-js/shared/svg/document';
+import { centreX, centreY, cls, openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { FontKey, Run } from '@mermaid-js/core/text';
 import type { CardLayout, ColumnLayout, KanbanLayout, PlacedLabel } from '../layout/index.ts';
 import type { KanbanItem, KanbanModel } from '../model.ts';
 import type { KanbanRenderContext } from './context.ts';
-import { userClasses } from './classes.ts';
 import { ticketUrl } from './links.ts';
 import { paints, PRIORITY_COLORS, type CardPaint, type Paints } from './paint.ts';
 import { priorityWarning } from './priority.ts';
@@ -86,11 +85,11 @@ function fontAttrs(f: FontKey, theme: KanbanRenderContext['theme']): Attrs {
 function drawLabel(
   w: SvgWriter,
   label: PlacedLabel,
-  cls: string,
+  className: string,
   fill: Attrs['fill'],
   left: boolean
 ): void {
-  w.open('g', { class: cls, fill });
+  w.open('g', { class: className, fill });
   w.label(left ? { ...label.text, left: true } : label.text, centreX(label), centreY(label));
   w.close();
 }
@@ -107,7 +106,7 @@ function drawColumns(scene: Scene): void {
 function drawColumn({ w, layout, paint, items }: Scene, c: ColumnLayout): void {
   const item = itemOf(items, c.ast);
   w.open('g', {
-    class: `cluster section-${c.ordinal}${userClasses(item.classes)}`,
+    class: `cluster section-${c.ordinal}${cls(item.classes)}`,
     'data-id': c.ast,
     'data-ast': c.ast,
   });
@@ -184,7 +183,7 @@ function drawCard(scene: Scene, card: CardLayout, rect: CardPaint): void {
   const { w, layout, ctx, items } = scene;
   const item = itemOf(items, card.ast);
   w.open('g', {
-    class: `node${userClasses(item.classes)}`,
+    class: `node${cls(item.classes)}`,
     'data-id': card.ast,
     'data-ast': card.ast,
   });

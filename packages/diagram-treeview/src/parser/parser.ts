@@ -36,6 +36,8 @@ import {
   Probe,
   sourceView,
 } from '@mermaid-js/core/parser-kit';
+import { excerpt, lineTokens } from '@mermaid-js/shared/parser/line-tokens';
+import type { LineTokenView } from '@mermaid-js/shared/parser/line-tokens';
 import { STOP } from '@mermaid-js/shared/parser/support';
 import type {
   AstId,
@@ -153,10 +155,6 @@ function probeMode(src: string, tokens: TokenStream, o: number): string {
   return o > k && (o < end || !block) ? word : 'INITIAL';
 }
 
-/** Trivia of the parser's view: the lexer's trivia and the line breaks. */
-const isTrivia = (k: number) =>
-  k === Kind.Comment || k === Kind.Directive || k === Kind.Space || k === Kind.Newline;
-
 /** A text statement: its AST type, its keyword and its value conversion. */
 interface TextStatement {
   type: 'Title' | 'AccTitle' | 'AccDescr';
@@ -192,15 +190,6 @@ const MARK_EXAMPLE: Readonly<Record<(typeof MARKS)[number], string>> = {
   'icon(': 'icon(file)',
 };
 
-/** The longest text an error message quotes. */
-const EXCERPT = 24;
-
-/** The first line of `text`, at most {@link EXCERPT} characters, with `…` when anything is cut. */
-function excerpt(text: string): string {
-  const line = text.split('\n', 1)[0] ?? '';
-  return line.length > EXCERPT || line !== text ? `${line.slice(0, EXCERPT)}…` : line;
-}
-
 const bySource = (x: Diagnostic, y: Diagnostic) => x.range.start - y.range.start;
 
 /** Parse a treeView. Never throws: problems are error diagnostics. */
@@ -211,43 +200,6 @@ export function parseTreeView(
   return new TreeViewParser(src, options).parse();
 }
 
-/** The parser's tokens: the significant ones, where each is in the stream, and line starts. */
-interface LineView {
-  readonly kind: Uint16Array;
-  readonly start: Uint32Array;
-  readonly end: Uint32Array;
-  /** The token's index in the lexer's stream (for its text). */
-  readonly index: Uint32Array;
-  /** 1 when a line break comes between the token and the significant one before it. */
-  readonly lineStart: Uint8Array;
-  readonly length: number;
-}
-
-function lineView(stream: TokenStream): LineView {
-  let n = 0;
-  for (let j = 0; j < stream.length; j++) if (!isTrivia(stream.kind[j] ?? Kind.EOF)) n++;
-  const kind = new Uint16Array(n);
-  const start = new Uint32Array(n);
-  const end = new Uint32Array(n);
-  const index = new Uint32Array(n);
-  const lineStart = new Uint8Array(n);
-  let o = 0;
-  let line = 1;
-  for (let j = 0; j < stream.length; j++) {
-    const k = stream.kind[j] ?? Kind.EOF;
-    if (k === Kind.Newline) line = 1;
-    if (isTrivia(k)) continue;
-    kind[o] = k;
-    start[o] = stream.start[j] ?? 0;
-    end[o] = stream.end[j] ?? 0;
-    index[o] = j;
-    lineStart[o] = line;
-    line = 0;
-    o++;
-  }
-  return { kind, start, end, index, lineStart, length: n };
-}
-
 /**
  * One parse. Each grammar rule is a method that returns what it read; a rule that fails
  * records a diagnostic and throws {@link STOP}, and the statement loop recovers.
@@ -255,7 +207,7 @@ function lineView(stream: TokenStream): LineView {
 class TreeViewParser {
   private readonly pre: PreprocessResult;
   private readonly lexed: TreeViewLex;
-  private readonly t: LineView;
+  private readonly t: LineTokenView;
   private i = 0;
   /** Where the statement that failed stopped. */
   private failedAt = 0;
@@ -294,7 +246,7 @@ class TreeViewParser {
       pre.directives.map((d) => d.range)
     );
     this.lexed = lex(src, pre.bodyStart, view);
-    this.t = lineView(this.lexed.tokens);
+    this.t = lineTokens(this.lexed.tokens);
     if (opts.probe !== undefined) {
       const tokens = this.lexed.tokens;
       const probe = (this.probe = new Probe(src, opts.probe, PROBE_FOLLOWS));

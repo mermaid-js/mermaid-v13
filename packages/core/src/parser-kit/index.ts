@@ -52,9 +52,11 @@ export type {
 } from './result.ts';
 export {
   cook,
+  cut,
   DROP,
   firstHole,
   localOffset,
+  markDroppedSemicolons,
   QUOTE,
   SourceOffsets,
   sourceView,

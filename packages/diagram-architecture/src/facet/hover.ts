@@ -15,19 +15,12 @@ import type {
   ArchitectureEdgeEnd,
   ArchitectureEdgeNode,
 } from '../parser/ast.ts';
-import { T } from '../parser/tokens.ts';
+import { T, TEXT_STATEMENTS } from '../parser/tokens.ts';
 import { elementOf, SIDE_NAMES } from './tables.ts';
 import { code, inside, keywordHover } from '@mermaid-js/shared/parser/facet';
 
 /** Tokens with a doc that hover leaves alone: ids and text. */
 const NO_DOC = new Set<number>([T.String, T.Id, T.Icon, T.Label]);
-
-/** `title`, `accTitle` and `accDescr` tokens hold their text: only the keyword is hovered. */
-const TEXT_WORDS: Readonly<Partial<Record<number, string>>> = {
-  [T.Title]: 'title',
-  [T.AccTitle]: 'accTitle',
-  [T.AccDescr]: 'accDescr',
-};
 
 /** What `id` is, for an edge end: its kind and the id in code, or that nothing has the id. */
 function named(model: ArchitectureModel, id: string): string {
@@ -116,5 +109,11 @@ export function architectureHover(
     return { range: t.range, contents: idHover(model, text.slice(t.range.start, t.range.end)) };
   }
   if (!t || NO_DOC.has(t.kind)) return undefined;
-  return keywordHover(text, at.offset, t.range, TEXT_WORDS[t.kind], architectureDocs[t.kind]);
+  return keywordHover(
+    text,
+    at.offset,
+    t.range,
+    TEXT_STATEMENTS[t.kind]?.word,
+    architectureDocs[t.kind]
+  );
 }

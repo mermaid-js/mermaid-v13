@@ -218,7 +218,7 @@ function drawTitle(scene: Scene): void {
   if (!t) return;
   const { common } = TIMELINE_METRICS;
   const fontSize = scene.ctx.theme.number('fontSize');
-  const size = fontSizePx(common.titleFontSize, fontSize) ?? fontSize;
+  const size = fontSizePx(common.titleFontSize, fontSize)!;
   scene.w.label({ ...t.text, left: true }, t.x + t.text.width / 2, t.y + t.height / 2, {
     class: 'timeline-title',
     fill: scene.paint.title,

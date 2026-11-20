@@ -6,13 +6,11 @@
 // agentflow shape has a text form (`shapes.ts`), so there is no `ASCII_SHAPE`.
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
-import type { CheckedStyle } from '@mermaid-js/core/svg';
-import { Style, type MeasuredLabel } from '@mermaid-js/core/text';
 import { agentflowConfigDefaults } from '../generated/config-defaults.ts';
 import {
   type AgentflowPrepared,
   type AgentflowWarning,
-  emphasisBits,
+  addsEmphasis,
   numericValue,
   TITLE_MARGIN_DEFAULTS,
 } from '../layout/index.ts';
@@ -92,12 +90,6 @@ export function undrawnConfig(config: ResolvedConfig): string[] {
   return out;
 }
 
-// Bold or italic the label has beyond what its style asked for.
-function emphasised(label: MeasuredLabel, style: CheckedStyle): boolean {
-  const mask = (Style.Bold | Style.Italic) & ~emphasisBits(style);
-  return label.lines.some((line) => line.some((run) => (run.style & mask) !== 0));
-}
-
 type Found = Partial<Record<AsciiDroppedFeature, Set<string>>>;
 
 // Which features the drawing uses, with the AST ids of the elements that use them.
@@ -109,11 +101,11 @@ function features(model: AgentflowModel, prepared: AgentflowPrepared, config: Re
   };
   for (const v of [...prepared.groups, ...prepared.nodes]) {
     if (styled(v.style)) add('style', v.ast);
-    if (emphasised(v.label, v.style)) add('emphasis', v.ast);
+    if (addsEmphasis(v.label, v.style)) add('emphasis', v.ast);
   }
   for (const e of prepared.edges) {
     if (styled(e.style)) add('style', e.edge.ast);
-    if (emphasised(e.label, e.style)) add('emphasis', e.edge.ast);
+    if (addsEmphasis(e.label, e.style)) add('emphasis', e.edge.ast);
     if ((e.edge.interpolate ?? model.defaultInterpolate) !== undefined) add('curve', e.edge.ast);
     if (e.edge.animate === true || e.edge.animation !== undefined) add('animation', e.edge.ast);
   }

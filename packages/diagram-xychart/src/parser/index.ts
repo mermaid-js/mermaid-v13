@@ -19,10 +19,8 @@ export {
 export type { XyChartParseOptions, XyChartParseResult } from './parser.ts';
 export { detectXyChart } from './detect.ts';
 export type * from './ast.ts';
-export { tokenValue } from '@mermaid-js/shared/parser/v12-text';
 export { JISON_NAMES, T as XyChartTokenKind } from './tokens.ts';
 export type { XyChartLex } from './lexer.ts';
-export type { V12Text } from '@mermaid-js/shared/parser/v12-text';
 
 /**
  * A token of this diagram: its `kind` is a `T` kind or a shared `Kind`, its `text` as v12's

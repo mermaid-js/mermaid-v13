@@ -33,7 +33,7 @@ export function lexIr(src: string, from: number, view: SourceView): TokenStream 
 }
 
 class IrLexer extends RailroadLexer {
-  protected scan(p: number, c: number): number {
+  protected scan(p: number, c = this.text.charCodeAt(p)): number {
     if (isIdStart(c)) {
       const e = this.header('railroad-beta', p);
       if (e >= 0) return e;

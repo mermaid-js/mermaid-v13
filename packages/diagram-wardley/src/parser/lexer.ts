@@ -60,7 +60,7 @@ import {
   SLASH,
   UNDERSCORE,
 } from '@mermaid-js/core/parser-kit';
-import { isBreak, RuleLexer, SKIP } from '@mermaid-js/shared/parser/rule';
+import { idEnd, isBreak, RuleLexer, SKIP } from '@mermaid-js/shared/parser/rule';
 import type { RuleLexerOptions } from '@mermaid-js/shared/parser/rule';
 import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { KEYWORDS, STRATEGIES, T } from './tokens.ts';
@@ -140,7 +140,7 @@ class WardleyLexer extends RuleLexer {
     let e = -1;
     if (isDigit(c)) e = this.int(p);
     if (e < 0 && (c === DQUOTE || c === APOSTROPHE)) e = this.string(p, c);
-    if (e < 0 && isWord(c)) e = this.match(T.Id, this.id(p));
+    if (e < 0 && isWord(c)) e = this.match(T.Id, idEnd(this.text, this.n, p));
     if (e < 0 && isBreak(c)) e = this.match(Kind.Newline, p + this.newline(p));
     if (e < 0 && c === PERCENT && this.text.charCodeAt(p + 1) === PERCENT) {
       e = this.directive(p);
@@ -245,20 +245,6 @@ class WardleyLexer extends RuleLexer {
     const d = this.digits(p);
     if (text.charCodeAt(d) !== DOT) return this.match(T.Int, d);
     return d - p >= 2 ? this.match(T.Int, d - 1) : -1;
-  }
-
-  /** ID: `[\w]([-\w]*\w)?` from `p` (a `\w`): the `[-\w]` run without its trailing dashes. */
-  private id(p: number): number {
-    const { text, n } = this;
-    let j = p + 1;
-    let end = j;
-    while (j < n) {
-      const c = text.charCodeAt(j);
-      if (isWord(c)) end = ++j;
-      else if (c === DASH) j++;
-      else break;
-    }
-    return end;
   }
 
   // --- Scans --------------------------------------------------------------------------------

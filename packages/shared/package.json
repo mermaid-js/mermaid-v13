@@ -61,6 +61,11 @@
       "types": "./dist/parser/facet.d.ts",
       "default": "./dist/parser/facet.js"
     },
+    "./parser/line-tokens": {
+      "mermaid-source": "./src/parser/line-tokens.ts",
+      "types": "./dist/parser/line-tokens.d.ts",
+      "default": "./dist/parser/line-tokens.js"
+    },
     "./parser/tree-facet": {
       "mermaid-source": "./src/parser/tree-facet.ts",
       "types": "./dist/parser/tree-facet.d.ts",
@@ -85,6 +90,11 @@
       "mermaid-source": "./src/svg/graph.ts",
       "types": "./dist/svg/graph.d.ts",
       "default": "./dist/svg/graph.js"
+    },
+    "./svg/node-paint": {
+      "mermaid-source": "./src/svg/node-paint.ts",
+      "types": "./dist/svg/node-paint.d.ts",
+      "default": "./dist/svg/node-paint.js"
     },
     "./svg/route": {
       "mermaid-source": "./src/svg/route.ts",

@@ -16,6 +16,7 @@
  * stack and the layout is linear in the rows and the text.
  */
 import type { RenderContext } from '@mermaid-js/core';
+import { RectUnion } from '@mermaid-js/shared/layout';
 import { decodeEntities, Style, type FontKey, type StyleBits } from '@mermaid-js/core/text';
 import { treeViewOptions, type TreeViewOptions } from '../config.ts';
 import { resolveIcon } from '../icons.ts';
@@ -239,20 +240,12 @@ function boundsOf(
   width: number,
   height: number
 ): Rect {
+  const box = new RectUnion();
   // `0 -` keeps a 0 thickness at 0, not -0.
-  let x0 = 0 - thickness / 2;
-  let y0 = 0;
-  let x1 = x0 + width;
-  let y1 = height;
-  const add = (r: Rect): void => {
-    x0 = Math.min(x0, r.x);
-    y0 = Math.min(y0, r.y);
-    x1 = Math.max(x1, r.x + r.width);
-    y1 = Math.max(y1, r.y + r.height);
-  };
-  for (const r of rows) for (const e of rowExtents(r)) add(e);
-  for (const l of lines) add(lineBox(l, thickness));
-  return { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
+  box.add({ x: 0 - thickness / 2, y: 0, width, height });
+  for (const r of rows) for (const e of rowExtents(r)) box.add(e);
+  for (const l of lines) box.add(lineBox(l, thickness));
+  return box.rect();
 }
 
 /**
