@@ -25,14 +25,6 @@ export function boxUnion(boxes: readonly Rect[]): Rect {
   return pointsBox(boxes.flatMap(corners));
 }
 
-/** `box` grown by `d` on every side. */
-export const grown = (box: Rect, d: number): Rect => ({
-  x: box.x - d,
-  y: box.y - d,
-  width: box.width + 2 * d,
-  height: box.height + 2 * d,
-});
-
 /** A segment's box. */
 export const segmentBox = (s: Segment): Rect => pointsBox(ends(s));
 

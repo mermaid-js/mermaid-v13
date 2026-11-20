@@ -20,7 +20,8 @@ import { fromPx, type UnitProfile } from '@mermaid-js/core/layout';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import { isBarPriority } from '../priority.ts';
 import type { KanbanLayoutContext } from './context.ts';
-import { drawnRects, inflate, union } from './extent.ts';
+import { drawnRects, union } from './extent.ts';
+import { growRect } from '@mermaid-js/shared/layout/geometry';
 import type { KanbanLayoutCard, KanbanLayoutInput } from './input.ts';
 import {
   CELL_UNITS,
@@ -244,6 +245,6 @@ export function layoutKanban(input: KanbanLayoutInput, ctx: KanbanLayoutContext)
     stroke,
     columns,
     cards,
-    bounds: inflate(union(drawnRects({ columns, cards, stroke })), env.padding),
+    bounds: growRect(union(drawnRects({ columns, cards, stroke })), env.padding),
   };
 }

@@ -18,7 +18,8 @@
  * own decision. {@link ishikawaLabelOverlaps} reports them.
  */
 import { sideOf, type IshikawaModel } from '../model.ts';
-import { corners, ends, grown, segmentBox } from './geometry.ts';
+import { corners, ends, segmentBox } from './geometry.ts';
+import { growRect } from '@mermaid-js/shared/layout/geometry';
 import type {
   IshikawaBone,
   IshikawaCauseLayout,
@@ -154,7 +155,7 @@ function boxesClear(
   out: string[]
 ): void {
   // The spine as drawn; a box only touching its centre line from one side clears it.
-  const band = grown(segmentBox(spine), spine.stroke / 2);
+  const band = growRect(segmentBox(spine), spine.stroke / 2);
   for (const c of causesOf(layout)) {
     if (overlapsHead(c.box, head, eps)) {
       out.push(`${c.ast}'s box ${printed(c.box)} overlaps the head`);

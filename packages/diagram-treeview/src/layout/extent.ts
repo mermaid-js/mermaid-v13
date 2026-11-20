@@ -4,11 +4,7 @@
  */
 import { TREEVIEW_METRICS as M } from './metrics.ts';
 import type { Rect, TreeViewLine, TreeViewRow, TreeViewText } from './types.ts';
-
-/** The extent of `r` grown by `by` on every side (a stroke's outer half). */
-function grow(r: Rect, by: number): Rect {
-  return { x: r.x - by, y: r.y - by, width: r.width + 2 * by, height: r.height + 2 * by };
-}
+import { growRect } from '@mermaid-js/shared/layout/geometry';
 
 /** A text's extent: `width` from its `x`, `height` around its `y`. */
 function textBox(t: TreeViewText): Rect {
@@ -30,6 +26,6 @@ export function rowExtents(r: TreeViewRow): Rect[] {
   const out = [textBox(r.label)];
   if (r.icon) out.push(r.icon.box);
   if (r.description) out.push(textBox(r.description));
-  if (r.highlight) out.push(grow(r.highlight.box, M.highlightStroke / 2));
+  if (r.highlight) out.push(growRect(r.highlight.box, M.highlightStroke / 2));
   return out;
 }

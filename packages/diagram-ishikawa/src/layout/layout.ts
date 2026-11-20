@@ -40,7 +40,8 @@ import {
   type IshikawaModel,
   type IshikawaSide,
 } from '../model.ts';
-import { boxUnion, grown, pointsBox, quadBox, segmentBox } from './geometry.ts';
+import { boxUnion, pointsBox, quadBox, segmentBox } from './geometry.ts';
+import { growRect } from '@mermaid-js/shared/layout/geometry';
 import { ISHIKAWA_METRICS as m } from './metrics.ts';
 import { horizontal, sign } from './side.ts';
 import type {
@@ -108,7 +109,7 @@ function layout(model: IshikawaModel, ctx: IshikawaLayoutContext, fix: boolean):
       sides: { upper: m.spineBase, lower: m.spineBase },
       fonts,
       padding,
-      bounds: grown(boxUnion([]), padding),
+      bounds: growRect(boxUnion([]), padding),
     };
   }
 
@@ -155,7 +156,7 @@ function layout(model: IshikawaModel, ctx: IshikawaLayoutContext, fix: boolean):
     sides,
     fonts,
     padding,
-    bounds: grown(boxUnion(drawnBoxes(drawing)), padding),
+    bounds: growRect(boxUnion(drawnBoxes(drawing)), padding),
   };
 }
 
@@ -454,15 +455,15 @@ function drawnBoxes(drawing: {
   readonly pairs: readonly IshikawaPairLayout[];
 }): Rect[] {
   const { spine, head, pairs } = drawing;
-  const out: Rect[] = [grown(segmentBox(spine), spine.stroke / 2)];
-  out.push(grown(quadBox(head.bottom, head.control, head.top), head.stroke / 2), head.label);
+  const out: Rect[] = [growRect(segmentBox(spine), spine.stroke / 2)];
+  out.push(growRect(quadBox(head.bottom, head.control, head.top), head.stroke / 2), head.label);
   const boneBoxes = (b: IshikawaBone): Rect[] => [
-    grown(segmentBox(b), b.stroke / 2),
+    growRect(segmentBox(b), b.stroke / 2),
     pointsBox([b.arrow.tip, b.arrow.left, b.arrow.right]),
   ];
   for (const pair of pairs) {
     for (const c of pair.causes) {
-      out.push(...boneBoxes(c.bone), grown(c.box, c.boxStroke / 2), c.label);
+      out.push(...boneBoxes(c.bone), growRect(c.box, c.boxStroke / 2), c.label);
       for (const s of c.subCauses) out.push(...boneBoxes(s.bone), s.label);
     }
   }

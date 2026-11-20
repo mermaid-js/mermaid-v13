@@ -55,6 +55,7 @@ import type {
   Rect,
 } from './types.ts';
 import { unionRects } from '@mermaid-js/shared/layout';
+import { growRect } from '@mermaid-js/shared/layout/geometry';
 
 /**
  * What the layout reads from the render context (`warn` for `EVENTMODELING_CONFIG_INVALID`,
@@ -173,7 +174,7 @@ export function layoutEventModel(
     boxes,
     relations,
     padding,
-    bounds: inflate(union(drawn(lanes, boxes, relations)), padding),
+    bounds: growRect(union(drawn(lanes, boxes, relations)), padding),
   };
 }
 
@@ -448,10 +449,3 @@ export function drawn(
 }
 
 const union = unionRects;
-
-const inflate = (r: Rect, by: number): Rect => ({
-  x: r.x - by,
-  y: r.y - by,
-  width: r.width + 2 * by,
-  height: r.height + 2 * by,
-});
