@@ -7,7 +7,7 @@
  * This file is the wiring: the session state (`session.ts`), the analyser (`analyser.ts`), the
  * draw context (`draw-context.ts`), the draw (`draw.ts`) and the loads (`prepare.ts`).
  */
-import { HookRunner } from '@mermaid-js/core';
+import { HookRunner, type PluginFormat } from '@mermaid-js/core';
 import type { MermaidConfig } from '@mermaid-js/core/config';
 import type {
   ParseErrorHandler,
@@ -249,7 +249,7 @@ export function createMermaid(
    * Whether `type` can draw `format`. Synchronous: it neither runs nor waits for plugin
    * discovery (`await preload()` first for discovered types).
    */
-  function supportsFormat(type: string, format: 'svg' | 'ascii'): boolean {
+  function supportsFormat(type: string, format: PluginFormat): boolean {
     return registry.formats(type).includes(format);
   }
 

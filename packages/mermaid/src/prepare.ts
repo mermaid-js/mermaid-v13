@@ -2,7 +2,7 @@
  * The async side of one API object (DESIGN §3): `prepare`, `parse` and `preload` load what a
  * text needs, so the synchronous draw in `draw.ts` finds it ready.
  */
-import { MermaidError, UnsupportedFormatError } from '@mermaid-js/core';
+import { MermaidError, UnsupportedFormatError, type PluginFormat } from '@mermaid-js/core';
 import { INTEGRATOR_ONLY_KEYS } from '@mermaid-js/core/config';
 import { loadTheme, resolveThemeName } from '@mermaid-js/core/theme';
 import type { Analysis, Parsed } from './analysis-cache.ts';
@@ -26,7 +26,7 @@ export async function loadText(k: Session, a: Analysis): Promise<void> {
 }
 
 /** `svg` or `ascii`; anything else is an `UnsupportedFormatError` in both phases (D80). */
-export function checkFormat(k: Session, text: string, s: Snapshot, f = 'svg'): 'svg' | 'ascii' {
+export function checkFormat(k: Session, text: string, s: Snapshot, f = 'svg'): PluginFormat {
   if (f === 'svg' || f === 'ascii') return f;
   let type = 'unknown';
   try {

@@ -13,6 +13,7 @@ import {
   tooDeep,
   type EmbeddedDiagram,
   type EmbeddedText,
+  type PluginFormat,
   type Warning,
 } from '@mermaid-js/core';
 import type { ResolvedConfig, ResolvedSite } from '@mermaid-js/core/config';
@@ -330,9 +331,6 @@ export interface BlockText extends EmbeddedText {
   readonly warnings: readonly Warning[];
 }
 
-/** What a block pass loads resources for: an SVG draw or text output. */
-export type BlockFormat = 'svg' | 'ascii';
-
 /** The render options a block draw passes on. */
 type Options = RenderOptions | undefined;
 
@@ -351,7 +349,7 @@ export interface BlockDeps {
   load(id: string): Promise<AnyPlugin | undefined>;
   loaded(id: string): AnyPlugin | undefined;
   /** Loads what `a` draws with in `format` (layout, themes, extension resources, text entry). */
-  resources(a: Analysis, format: BlockFormat): Promise<unknown>;
+  resources(a: Analysis, format: PluginFormat): Promise<unknown>;
   /** Draws `a`, its ids prefixed `id`, with `blocks` for its own blocks. */
   draw(
     text: string,
@@ -529,7 +527,7 @@ export interface BlockPass {
    * Loads and parses `h`'s blocks and theirs, and with `resources` what each one draws with in
    * that format.
    */
-  prepare(h: HostAt, resources: BlockFormat | undefined): Promise<void>;
+  prepare(h: HostAt, resources: PluginFormat | undefined): Promise<void>;
   /** `h`'s blocks drawn for its lookup (undefined when it has none). */
   draw(h: HostAt, options: Options): DrawBlocks | undefined;
   /** The types of `host`'s folded blocks by id (undefined when it has none), #670. */
@@ -640,7 +638,7 @@ function walks(deps: BlockDeps): Omit<BlockPass, 'foldedType' | 'lazy'> {
   /** Prepares `h`'s blocks and theirs, nested `depth` levels down. */
   async function prepareLevel(
     h: HostAt,
-    walk: Walk & { readonly resources: BlockFormat | undefined },
+    walk: Walk & { readonly resources: PluginFormat | undefined },
     depth: number
   ): Promise<void> {
     for (const b of unfolded(h.a)) {
@@ -652,7 +650,7 @@ function walks(deps: BlockDeps): Omit<BlockPass, 'foldedType' | 'lazy'> {
     }
   }
 
-  async function prepare(h: HostAt, resources: BlockFormat | undefined): Promise<void> {
+  async function prepare(h: HostAt, resources: PluginFormat | undefined): Promise<void> {
     const walk = { ...walkFrom(h), resources };
     await prepareLevel(h, walk, 1);
     checkMissing(h.root, walk.missing);
