@@ -5,76 +5,39 @@
  * lexer or the parser (rejections, comment forms, blanks, line separators, CRs) goes in
  * `corpus/requirement-cases.json`.
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
+import { corpusJson, fixturesAndSpecs } from '../corpus.ts';
+import { body, crlf, DIRECTIVE, midLineDirective, tabs, withVariants } from '../gate-variants.ts';
+import type { Variant } from '../gate-variants.ts';
 import { loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonRule } from '../jison/oracle.ts';
 import { loadOracle } from '../oracle.ts';
 import type { Oracle } from '../oracle.ts';
-import { body, crlf, tabs } from '../kanban/corpus.ts';
 import { commented } from '../sequence/corpus.ts';
 import { crCut } from '../timeline/corpus.ts';
 import type { CorpusItem } from '../types.ts';
 
-/** A directive v12 removes, wherever in a line it is. */
-const DIRECTIVE = '%%{init: {}}%%';
-
 /** The header line: v12's detector `/^\s*requirement(Diagram)?/` (case-sensitive). */
 const HEADER = /^\s*requirement/;
-
-/**
- * A directive through the middle of every line after the header line (pitfall 3): at the
- * middle of the line's text after its indent, moved off a surrogate pair. Lines with fewer
- * than two characters of text, `%%` lines and blank lines are left as they are.
- */
-export const midLineDirective = (src: string): string =>
-  body(src, (b) => {
-    const lines = b.split('\n');
-    const header = lines.findIndex((l) => HEADER.test(l));
-    return lines
-      .map((line, k) => {
-        const text = line.trimStart();
-        if (k <= header || text.length < 2 || text.startsWith('%%')) return line;
-        let at = line.length - text.length + Math.floor(text.length / 2);
-        if (/[\udc00-\udfff]/.test(line.charAt(at))) at++;
-        return line.slice(0, at) + DIRECTIVE + line.slice(at);
-      })
-      .join('\n');
-  });
 
 /** A blank before every line break of the body, and at its end (D431's case everywhere). */
 export const trailingBlanks = (src: string): string =>
   body(src, (b) => b.replace(/\r?\n/g, ' $&') + ' ');
 
 /** The cases (`corpus/requirement-cases.json`): each corpus gap, quirk and rejection v12 has. */
-export function requirementCases(): CorpusItem[] {
-  return JSON.parse(
-    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/requirement-cases.json'), 'utf8')
-  ) as CorpusItem[];
-}
+export const requirementCases = (): CorpusItem[] => corpusJson('requirement-cases.json');
 
 /** The requirement corpus: the e2e fixtures and the v12 spec and syntax-page strings. */
-export async function requirementCorpus(): Promise<CorpusItem[]> {
-  const items: CorpusItem[] = [];
-  for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/requirement'), 'e2e')) {
-    items.push(item);
-  }
-  const specs = JSON.parse(
-    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/requirement-v12-specs.json'), 'utf8')
-  ) as CorpusItem[];
-  return [...items, ...specs];
-}
+export const requirementCorpus = (): Promise<CorpusItem[]> => fixturesAndSpecs('requirement');
 
 /** The generated variants of each gate source, by id suffix. */
-export const VARIANTS: readonly [suffix: string, make: (src: string) => string][] = [
+export const VARIANTS: readonly Variant[] = [
   ['commented', commented],
   ['CR cut', (src: string): string => crCut(src, '%% c')],
   ['CR cut by a directive', (src: string): string => crCut(src, DIRECTIVE)],
   ['CRLF', crlf],
   ['tabs', tabs],
   ['trailing blanks', trailingBlanks],
-  ['mid-line directive', midLineDirective],
+  ['mid-line directive', midLineDirective(HEADER)],
 ];
 
 /**
@@ -82,15 +45,7 @@ export const VARIANTS: readonly [suffix: string, make: (src: string) => string][
  * {@link VARIANTS} that changes it.
  */
 export async function requirementGateCorpus(): Promise<CorpusItem[]> {
-  const all = [...(await requirementCorpus()), ...requirementCases()];
-  const out = [...all];
-  for (const [suffix, make] of VARIANTS) {
-    for (const item of all) {
-      const source = make(item.source);
-      if (source !== item.source) out.push({ id: `${item.id} (${suffix})`, source });
-    }
-  }
-  return out;
+  return withVariants([...(await requirementCorpus()), ...requirementCases()], VARIANTS);
 }
 
 // --- The two decided lexer changes, applied to v12's own lexer -------------------------------

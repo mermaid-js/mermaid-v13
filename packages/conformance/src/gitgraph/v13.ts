@@ -10,7 +10,7 @@
  */
 import { detectGitGraph, parseGitGraph } from '@mermaid-js/diagram-gitgraph';
 import type { GitCommitType, GitModel } from '@mermaid-js/diagram-gitgraph';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { byName, GITGRAPH_V12_TYPES, gitGraphV12Snapshot, normaliseIds } from './v12.ts';
 import type { GitCommitSnapshot, GitSnapshot } from './v12.ts';
@@ -74,12 +74,9 @@ export function gitGraphV13Snapshot(model: GitModel): GitSnapshot {
  * neither (see `v12.ts`); `config-parity.spec.ts` covers `mainBranchName`/`mainBranchOrder`.
  */
 export function parseGitGraphForParity(text: string, config: GitParityConfig = {}): GitModel {
-  const pre = preprocess(text);
-  const fm = pre.frontMatter && { ...pre.frontMatter, title: undefined };
-  const result = parseGitGraph(text, { ...config, preprocessed: { ...pre, frontMatter: fm } });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((x) => x.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
+  return parseForParity(text, (t, options) => parseGitGraph(t, { ...config, ...options }), {
+    withoutTitle: true,
+  });
 }
 
 export interface GitParityConfig {

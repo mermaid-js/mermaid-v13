@@ -16,31 +16,18 @@
  * not usecase sources; `header-not-usecase` covers them. `usecase.spec.ts`'s templates build
  * models, not sources.
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
+import { corpusJson, fixturesAndSpecs } from '../corpus.ts';
 import { commented } from '../sequence/corpus.ts';
 import { crCut } from '../timeline/corpus.ts';
 import type { CorpusItem } from '../types.ts';
 
 const H = 'usecase-beta\n';
 
-const readItems = (file: string) =>
-  JSON.parse(readFileSync(join(REPO_ROOT, file), 'utf8')) as CorpusItem[];
-
 /** The usecase corpus: the e2e fixtures and the harvested v12 spec strings. */
-export async function usecaseCorpus(): Promise<CorpusItem[]> {
-  const items: CorpusItem[] = [];
-  for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/usecase'), 'e2e')) {
-    items.push(item);
-  }
-  return [...items, ...readItems('packages/conformance/corpus/usecase-v12-specs.json')];
-}
+export const usecaseCorpus = (): Promise<CorpusItem[]> => fixturesAndSpecs('usecase');
 
 /** The hand-written cases of `corpus/usecase-cases.json`. */
-export function usecaseCases(): CorpusItem[] {
-  return readItems('packages/conformance/corpus/usecase-cases.json');
-}
+export const usecaseCases = (): CorpusItem[] => corpusJson('usecase-cases.json');
 
 // U+2028 and U+2029: `\s` and `trim()` take them, `[^\n\r]` and the line-start checks do not;
 // v12's comment removal (`^`, multiline) starts a line after them.

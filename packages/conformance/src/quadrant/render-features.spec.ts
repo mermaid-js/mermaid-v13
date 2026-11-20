@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { MermaidError, UnsupportedFormatError, type Mermaid } from 'mermaid';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { parseQuadrant, quadrant } from '@mermaid-js/diagram-quadrant';
-import { quadrantApi } from './render-api.ts';
+import { deterministicApi } from '../render-api.ts';
 
 /**
  * What the quadrant renderer draws (#312, spec #289 T4), through the public `render()`: v12's
@@ -13,8 +13,8 @@ let api: Mermaid;
 /** Writes literal colours (`output.cssVariables: false`). */
 let literal: Mermaid;
 beforeAll(async () => {
-  api = await quadrantApi();
-  literal = await quadrantApi({ output: { cssVariables: false } });
+  api = deterministicApi();
+  literal = deterministicApi({ output: { cssVariables: false } });
 });
 
 const render = async (body: string, config = '', m = api): Promise<string> => {

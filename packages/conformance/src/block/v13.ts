@@ -5,7 +5,7 @@
  */
 import { detectBlock, parseBlock } from '@mermaid-js/diagram-block';
 import type { Block, BlockModel } from '@mermaid-js/diagram-block';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { BLOCK_V12_TYPES, blockV12Snapshot, IdNumbering, renumber } from './v12.ts';
 import type { BlockSnapshot, BlockSnapshotNode } from './v12.ts';
@@ -57,13 +57,7 @@ export function blockV13Snapshot(model: BlockModel): BlockSnapshot {
 }
 
 /** v13 parse for parity: the model, or a throw carrying the first error diagnostic. */
-export function parseBlockForParity(text: string): BlockModel {
-  const pre = preprocess(text);
-  const result = parseBlock(text, { preprocessed: pre });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((d) => d.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseBlockForParity = (text: string): BlockModel => parseForParity(text, parseBlock);
 
 export const blockAdapter: DiagramAdapter<BlockModel> = {
   id: 'block',

@@ -4,6 +4,7 @@
  */
 import { detectQuadrant, parseQuadrant } from '@mermaid-js/diagram-quadrant';
 import type { QuadrantModel, QuadrantText } from '@mermaid-js/diagram-quadrant';
+import { modelOrThrow } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { QUADRANT_V12_TYPES, quadrantV12Snapshot } from './v12.ts';
 import type { QuadrantSnapshot } from './v12.ts';
@@ -34,12 +35,8 @@ export function quadrantV13Snapshot(model: QuadrantModel): QuadrantSnapshot {
 }
 
 /** v13 parse for parity: the model, or a throw carrying the first error diagnostic. */
-export function parseQuadrantForParity(text: string): QuadrantModel {
-  const result = parseQuadrant(text);
-  const error = result.diagnostics.find((d) => d.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseQuadrantForParity = (text: string): QuadrantModel =>
+  modelOrThrow(parseQuadrant(text));
 
 export const quadrantAdapter: DiagramAdapter<QuadrantModel> = {
   id: 'quadrant',

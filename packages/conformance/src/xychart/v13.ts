@@ -4,6 +4,7 @@
  */
 import { detectXyChart, parseXyChart } from '@mermaid-js/diagram-xychart';
 import type { XyChartModel } from '@mermaid-js/diagram-xychart';
+import { modelOrThrow } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { XYCHART_V12_TYPES, xyChartV12Snapshot } from './v12.ts';
 import type { XyChartSnapshot } from './v12.ts';
@@ -35,12 +36,8 @@ export function xyChartV13Snapshot(model: XyChartModel): XyChartSnapshot {
 }
 
 /** v13 parse for parity: the model, or a throw carrying the first error diagnostic. */
-export function parseXyChartForParity(text: string): XyChartModel {
-  const result = parseXyChart(text);
-  const error = result.diagnostics.find((d) => d.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseXyChartForParity = (text: string): XyChartModel =>
+  modelOrThrow(parseXyChart(text));
 
 export const xyChartAdapter: DiagramAdapter<XyChartModel> = {
   id: 'xychart',

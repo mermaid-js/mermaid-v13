@@ -4,7 +4,7 @@
  */
 import { detectSankey, parseSankey } from '@mermaid-js/diagram-sankey';
 import type { SankeyModel } from '@mermaid-js/diagram-sankey';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { SANKEY_V12_TYPES, sankeyV12Snapshot } from './v12.ts';
 import type { SankeySnapshot } from './v12.ts';
@@ -17,13 +17,8 @@ export function sankeyV13Snapshot(model: SankeyModel): SankeySnapshot {
 }
 
 /** v13 parse for parity: the model, or a throw carrying the first error diagnostic. */
-export function parseSankeyForParity(text: string): SankeyModel {
-  const pre = preprocess(text);
-  const result = parseSankey(text, { preprocessed: pre });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((d) => d.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseSankeyForParity = (text: string): SankeyModel =>
+  parseForParity(text, parseSankey);
 
 export const sankeyAdapter: DiagramAdapter<SankeyModel> = {
   id: 'sankey',

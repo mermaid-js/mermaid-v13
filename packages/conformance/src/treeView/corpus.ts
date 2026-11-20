@@ -5,14 +5,11 @@
  * `corpus/treeView-cases.json` (the spec's quirks, the box pass's corners and errors) and
  * {@link LINE_SEPARATORS}, and a CRLF and a commented copy of every source.
  */
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync } from 'node:fs';
 import { join, sep } from 'node:path';
-import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
+import { corpusJson, fixturesAndSpecs, REPO_ROOT } from '../corpus.ts';
 import { commented } from '../sequence/corpus.ts';
 import type { CorpusItem } from '../types.ts';
-
-const readItems = (file: string) =>
-  JSON.parse(readFileSync(join(REPO_ROOT, file), 'utf8')) as CorpusItem[];
 
 const H = 'treeView-beta\n';
 
@@ -72,13 +69,8 @@ export function treeViewE2eIds(): string[] {
 export const TREEVIEW_E2E_AT_LEAST = 15 + 8 + 30 + 26 + 18;
 
 /** The treeView corpus: the e2e fixtures and the harvested v12 spec strings. */
-export async function treeViewCorpus(): Promise<CorpusItem[]> {
-  const items: CorpusItem[] = [];
-  for await (const item of corpusFromDir(join(REPO_ROOT, E2E_DIR), 'e2e')) {
-    items.push(item);
-  }
-  return [...items, ...readItems('packages/conformance/corpus/treeView-v12-specs.json')];
-}
+export const treeViewCorpus = (): Promise<CorpusItem[]> =>
+  fixturesAndSpecs('treeView', { dir: 'tree-view' });
 
 /**
  * The hand-written cases: the spec's quirks, the box pass's corners and its errors
@@ -87,8 +79,8 @@ export async function treeViewCorpus(): Promise<CorpusItem[]> {
  */
 export function treeViewCases(): CorpusItem[] {
   return [
-    ...readItems('packages/conformance/corpus/treeView-cases.json'),
-    ...readItems('packages/conformance/corpus/treeView-recovery.json').map(({ id, source }) => ({
+    ...corpusJson('treeView-cases.json'),
+    ...corpusJson('treeView-recovery.json').map(({ id, source }) => ({
       id,
       source,
     })),

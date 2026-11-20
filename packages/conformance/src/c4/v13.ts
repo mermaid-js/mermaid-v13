@@ -6,7 +6,7 @@
  */
 import { detectC4, parentAlias, parseC4 } from '@mermaid-js/diagram-c4';
 import type { C4Boundary, C4Element, C4Extra, C4Model, C4Relation } from '@mermaid-js/diagram-c4';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { C4_V12_TYPES, c4V12Snapshot } from './v12.ts';
 import type { C4Fields, C4Snapshot } from './v12.ts';
@@ -91,13 +91,7 @@ export function c4V13Snapshot(model: C4Model): C4Snapshot {
  * front-matter title is the model's when the text has none (D453), where v12 ignored it (its DB
  * has no `setDiagramTitle`): a listed divergence.
  */
-export function parseC4ForParity(text: string): C4Model {
-  const pre = preprocess(text);
-  const result = parseC4(text, { preprocessed: pre });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((d) => d.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseC4ForParity = (text: string): C4Model => parseForParity(text, parseC4);
 
 export const c4Adapter: DiagramAdapter<C4Model> = {
   id: 'c4',
