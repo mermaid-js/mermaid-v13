@@ -14,7 +14,6 @@
 import type { RenderContext } from '@mermaid-js/core';
 import type { SafeColor } from '@mermaid-js/core/svg';
 import type { FontKey } from '@mermaid-js/core/text';
-import { unionRects } from '@mermaid-js/shared/layout';
 import { sankeyLayoutConfig, type SankeyLayoutConfig } from '../config.ts';
 import type { SankeyModel } from '../model.ts';
 import { d3Sankey, type D3LinkInput, type D3Node } from './d3-sankey.ts';
@@ -52,6 +51,22 @@ function centralLayer(nodes: readonly D3Node[]): number {
       layer = node.layer;
     }
   return layer;
+}
+
+/** The smallest box holding every one of `boxes`; all 0 when there is none. */
+function union(boxes: readonly Rect[]): Rect {
+  if (boxes.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
+  let left = Infinity;
+  let top = Infinity;
+  let right = -Infinity;
+  let bottom = -Infinity;
+  for (const b of boxes) {
+    left = Math.min(left, b.x);
+    top = Math.min(top, b.y);
+    right = Math.max(right, b.x + b.width);
+    bottom = Math.max(bottom, b.y + b.height);
+  }
+  return { x: left, y: top, width: right - left, height: bottom - top };
 }
 
 /** Lays out a sankey diagram in px. */
@@ -187,6 +202,6 @@ export function layoutSankey(model: SankeyModel, ctx: SankeyLayoutContext): Sank
     linkColor: config.linkColor,
     useMaxWidth: config.useMaxWidth,
     font,
-    bounds: unionRects(boxes),
+    bounds: union(boxes),
   };
 }
