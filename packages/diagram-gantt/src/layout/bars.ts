@@ -162,7 +162,7 @@ export function barsOf(c: Chart): GanttBar[] {
     const rect = rectOf(c, span);
     const label = labelOf(c, span);
     // The rectangle as written, and (a milestone) as v12's CSS turns it.
-    c.bounds.rect(rect);
+    c.bounds.add(rect);
     const pivot = span.milestone ? pivotOf(c, span) : undefined;
     if (pivot) turned(c, rect, pivot);
     const href = span.clickable ? clicks.links.get(t.task.id) : undefined;

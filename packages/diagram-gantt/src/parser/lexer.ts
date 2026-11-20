@@ -45,12 +45,11 @@ import {
   LOWER_S,
   LPAREN,
   PERCENT,
-  QUOTE,
   RBRACE,
   RPAREN,
   SEMI,
-  SourceOffsets,
 } from '@mermaid-js/core/parser-kit';
+import { tagQuotes } from '@mermaid-js/shared/parser/drop';
 import { lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
 import type { Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import type { StateLexerOptions } from '@mermaid-js/shared/parser/state';
@@ -140,17 +139,10 @@ const WEEKENDS: readonly (readonly [day: string, kind: number])[] = [
  * (v12's placeholders); a `"` v12 turned into `'` (an HTML attribute quote) is `'`.
  */
 function lexerText(view: SourceView): string {
-  const { text, mask } = view;
-  let out = text.includes('\r')
-    ? text.replace(/\r\n?/g, (m) => (m.length === 2 ? '\n\n' : '\n'))
-    : text;
+  // The quotes first: neither replacement after it changes the length or touches a `"`.
+  let out = tagQuotes(view);
+  if (out.includes('\r')) out = out.replace(/\r\n?/g, (m) => (m.length === 2 ? '\n\n' : '\n'));
   if (out.includes('#')) out = out.replace(/#(\w+);/g, (_, name: string) => `ﬂ${name}¶`);
-  if (mask && out.includes('"')) {
-    const offsets = view.runs && new SourceOffsets(view.runs);
-    out = out.replace(/"/g, (q, i: number) =>
-      ((mask[offsets ? offsets.source(i) : i] ?? 0) & QUOTE) !== 0 ? "'" : q
-    );
-  }
   return out;
 }
 

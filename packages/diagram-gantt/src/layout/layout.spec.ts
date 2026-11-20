@@ -446,7 +446,7 @@ describe('the invariants', () => {
       ...layout,
       bars: [{ ...a!, x: NaN }, b!],
     };
-    expect(ganttLayoutViolations(broken)).toEqual(['layout.bars.0.x is NaN']);
+    expect(ganttLayoutViolations(broken)).toEqual(['layout.bars[0].x is NaN']);
     const off: GanttLayout = {
       ...layout,
       bars: [
