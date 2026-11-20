@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import type { ConfigRangeWarning } from './readers.ts';
+import type { ConfigLengthWarning, ConfigRangeWarning } from './readers.ts';
 import {
   configNumber,
   configRanges,
+  lengthReader,
   NON_NEGATIVE,
   rawConfigNumber,
   useMaxWidth,
@@ -77,5 +78,29 @@ describe('configRanges', () => {
       },
     ]);
     expect(configRanges('x', 'X', undefined, () => expect.fail())('w', 5)).toBe(5);
+  });
+});
+
+describe('lengthReader', () => {
+  it('takes a finite number at least min, nothing else, and warns when a set value is dropped', () => {
+    const warnings: ConfigLengthWarning[] = [];
+    const length = lengthReader('GIT_CONFIG_IGNORED', (w) => warnings.push(w));
+    expect(length(12, 8, 'gitGraph.padding')).toBe(12);
+    expect(length(undefined, 8, 'gitGraph.padding')).toBe(8);
+    expect(length('20', 8, 'gitGraph.padding')).toBe(8);
+    expect(length(0, 2, 'gitGraph.styles', 1)).toBe(2);
+    expect(warnings).toEqual([
+      {
+        code: 'GIT_CONFIG_IGNORED',
+        message: 'Ignored gitGraph.padding: it is not a number of at least 0; using 8',
+        path: 'gitGraph.padding',
+      },
+      {
+        code: 'GIT_CONFIG_IGNORED',
+        message: 'Ignored gitGraph.styles: it is not a number of at least 1; using 2',
+        path: 'gitGraph.styles',
+      },
+    ]);
+    expect(lengthReader('X', undefined)(Infinity, 3, 'x')).toBe(3);
   });
 });

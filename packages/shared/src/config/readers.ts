@@ -129,6 +129,31 @@ export interface ConfigLengthWarning {
   readonly path: string;
 }
 
+/** A length read by {@link lengthReader}: `value`, or `fallback` when it is unset or not taken. */
+export type LengthReader = (value: unknown, fallback: number, path: string, min?: number) => number;
+
+/**
+ * Reads config lengths that must be numbers: a finite number at least `min` (default 0) is
+ * taken, and nothing else, not even a numeric string. A set value that is not taken reads as
+ * the fallback, with one `code` warning each time it is read:
+ * `Ignored <path>: it is not a number of at least <min>; using <fallback>`.
+ */
+export function lengthReader(
+  code: string,
+  warn: ((warning: ConfigLengthWarning) => void) | undefined
+): LengthReader {
+  return (value, fallback, path, min = 0) => {
+    if (typeof value === 'number' && Number.isFinite(value) && value >= min) return value;
+    if (value !== undefined)
+      warn?.({
+        code,
+        message: `Ignored ${path}: it is not a number of at least ${min}; using ${fallback}`,
+        path,
+      });
+    return fallback;
+  };
+}
+
 /** A key's length in px, or undefined when it is unset (or no length and has no default). */
 export type ConfigLength = (key: string) => number | undefined;
 
