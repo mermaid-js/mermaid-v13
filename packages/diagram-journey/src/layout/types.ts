@@ -5,20 +5,14 @@
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { PathData } from '@mermaid-js/core/svg';
-import type { MeasuredLabel } from '@mermaid-js/core/text';
-import type { Rect } from '@mermaid-js/shared/layout';
+import type { PlacedLabel, Rect } from '@mermaid-js/shared/layout';
 
-export type { Rect };
+export type { PlacedLabel, Rect };
 
 export interface Circle {
   readonly cx: number;
   readonly cy: number;
   readonly r: number;
-}
-
-/** A measured label and the box it is drawn in: the label's own size, at its place. */
-export interface PlacedLabel extends Rect {
-  readonly text: MeasuredLabel;
 }
 
 /** A dot in an actor's colour: in the legend, or on a task. */

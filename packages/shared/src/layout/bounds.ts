@@ -1,4 +1,5 @@
 /** The union of rectangles: what a custom layout's `bounds` are built from. */
+import type { MeasuredLabel } from '@mermaid-js/core/text';
 
 /** A rectangle by its top-left corner. */
 export interface Rect {
@@ -6,6 +7,11 @@ export interface Rect {
   readonly y: number;
   readonly width: number;
   readonly height: number;
+}
+
+/** A measured label and the box it is drawn in: the label's own size, at its place. */
+export interface PlacedLabel extends Rect {
+  readonly text: MeasuredLabel;
 }
 
 /** The union of the rectangles added so far. */

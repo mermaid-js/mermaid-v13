@@ -4,21 +4,16 @@
  * `y`; outlines are in their block's frame, about its centre (`../shapes/outline.ts`).
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
-import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
+import type { FontKey } from '@mermaid-js/core/text';
+import type { PlacedLabel as Label, Rect } from '@mermaid-js/shared/layout';
 import type { BlockArrowType, BlockEdge, BlockType } from '../model.ts';
 import type { LeafShape } from '../shapes/leaf.ts';
 import type { Outline, Point } from '../shapes/outline.ts';
 
-export interface Rect {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
+export type { Rect };
 
 /** A measured label and its box; its first baseline is at `y + text.baseline`. */
-export interface PlacedLabel extends Rect {
-  readonly text: MeasuredLabel;
+export interface PlacedLabel extends Label {
   /** The font it was measured in, so is drawn in (pitfall 16). */
   readonly font: FontKey;
 }
