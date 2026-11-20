@@ -6,6 +6,7 @@
 import type {
   CompletionItem,
   CompletionKind,
+  DocumentView,
   Hover,
   HoverTarget,
   ParseResult,
@@ -233,6 +234,36 @@ export function wordRange(
     if (found) end = o + found.index;
   }
   return span(probe.prefix.start, end);
+}
+
+/** Where a keyword completion goes, and what the parser expects there. */
+export interface CompletionPlace {
+  /** The kinds the parser tests at the cursor. */
+  readonly expected: Set<number>;
+  /** The probed word's range ({@link wordRange}). */
+  readonly range: Range;
+  /** The text of `range` before the cursor. */
+  readonly prefix: string;
+}
+
+/**
+ * The start of a keyword completion: `undefined` inside a statement's text or a label (probe
+ * mode other than `INITIAL`), where nothing is offered; else the expected kinds, the probed
+ * word's range (`stop` as in {@link wordRange}) and the prefix typed so far.
+ */
+export function completionPlace(
+  probe: ProbeResult,
+  doc: DocumentView,
+  stop: RegExp
+): CompletionPlace | undefined {
+  if (probe.mode !== 'INITIAL') return undefined;
+  const { text } = doc;
+  const range = wordRange(text, doc.result.tokens, probe, stop);
+  return {
+    expected: new Set(probe.expected),
+    range,
+    prefix: text.slice(range.start, probe.offset),
+  };
 }
 
 /** As {@link wordRange} over a run of adjoining word tokens, stopping at the first blank. */
