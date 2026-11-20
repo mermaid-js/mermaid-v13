@@ -4,7 +4,8 @@
  * entities are the layout's). The family is the theme's variable when the label was measured
  * in the theme font, else the checked config family as written.
  */
-import { checkStyle, type Attrs, type Paint, type SafeValue } from '@mermaid-js/core/svg';
+import type { Attrs, Paint, SafeValue } from '@mermaid-js/core/svg';
+import { checkFontFamily } from '@mermaid-js/shared/config/font-family';
 import { FONT_WEIGHT } from '../layout/metrics.ts';
 import type { PlacedLabel } from '../layout/types.ts';
 import type { Scene } from './context.ts';
@@ -22,10 +23,7 @@ export interface TextParts {
 /** The font attributes of `label`, beside the root's family. */
 export function fontAttrs(scene: Scene, label: PlacedLabel): Attrs {
   const { font } = label;
-  const family =
-    font.family === scene.family
-      ? undefined
-      : (checkStyle(['font-family:' + font.family]).text['font-family'] as SafeValue | undefined);
+  const family = font.family === scene.family ? undefined : checkFontFamily(font.family);
   let weight: Attrs['font-weight'];
   if (font.weight >= FONT_WEIGHT.bold) weight = 'bold';
   else if (font.weight !== FONT_WEIGHT.normal) weight = String(font.weight) as SafeValue;

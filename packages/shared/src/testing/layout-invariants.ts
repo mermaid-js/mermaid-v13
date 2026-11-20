@@ -6,13 +6,7 @@
  * its package.
  */
 
-/** A box by its top-left corner and size. */
-export interface Rect {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
+import type { Rect } from '../layout/bounds.ts';
 
 /** Slack of the layout invariants: rounding, not layout, may be off by this much. */
 export const EPS = 1e-6;

@@ -4,13 +4,8 @@
 // palette (`borderColorArray`, `bkgColorArray`), the participant corner (`actorRadius`) and the
 // shadow (`dropShadow`).
 import type { RenderContext } from '@mermaid-js/core';
-import {
-  checkColor,
-  checkStyle,
-  type Attrs,
-  type Paint,
-  type SafeValue,
-} from '@mermaid-js/core/svg';
+import { checkColor, type Attrs, type Paint, type SafeValue } from '@mermaid-js/core/svg';
+import { checkFontFamily } from '@mermaid-js/shared/config/font-family';
 import { paletteSlots } from '@mermaid-js/shared/svg/document';
 import type { FontKey } from '@mermaid-js/core/text';
 import { fontsOf } from '../layout/env.ts';
@@ -78,10 +73,7 @@ const NORMAL = 400;
 // on the section's group, so labels are drawn in the font they were measured in.
 function fontAttrs(f: FontKey, family: string, size: number): Attrs {
   return {
-    'font-family':
-      f.family === family
-        ? undefined
-        : (checkStyle(['font-family:' + f.family]).text['font-family'] as SafeValue | undefined),
+    'font-family': f.family === family ? undefined : checkFontFamily(f.family),
     'font-size': f.size === size ? undefined : f.size,
     'font-weight': f.weight === NORMAL ? undefined : (String(f.weight) as SafeValue),
   };

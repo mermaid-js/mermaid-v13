@@ -4,7 +4,6 @@
  */
 import type { SequenceDiagramConfig } from '@mermaid-js/core/config';
 import type { RenderContext } from '@mermaid-js/core';
-import { checkStyle } from '@mermaid-js/core/svg';
 import { fontSizePx, layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import {
   ARROW_HEADS,
@@ -18,6 +17,7 @@ import {
 import { FONT_WEIGHT, sequenceMetrics, type SequenceMetrics } from './metrics.ts';
 import type { PlacedLabel } from './types.ts';
 import { fontWeightOf as weightOf } from '@mermaid-js/shared/config/readers';
+import { configFontFamily } from '@mermaid-js/shared/config/font-family';
 
 /** What the layout reads from the render context. */
 export type SequenceLayoutContext = Pick<
@@ -127,21 +127,9 @@ export function fontsOf(
   const text = root !== undefined && root > 0 ? root : size;
   // Family keys inherit the Mermaid font; size and weight keys apply when set.
   const font = (prefix: string): FontKey => {
-    const key = `${prefix}FontFamily`;
-    const f = seq[key];
-    let safe: string | undefined;
-    if (typeof f === 'string' && f.trim() !== '') {
-      safe = checkStyle(['font-family:' + f]).text['font-family'] as string | undefined;
-      if (safe === undefined)
-        warn?.({
-          code: 'STYLE_VALUE_DROPPED',
-          message: `Dropped sequence.${key} ${JSON.stringify(f)}: it is not a font family Mermaid allows`,
-          path: `sequence.${key}`,
-        });
-    }
     const s = fontSizePx(seq[`${prefix}FontSize`], size);
     return {
-      family: safe ?? family,
+      family: configFontFamily(seq, 'sequence', `${prefix}FontFamily`, warn) ?? family,
       size: s !== undefined && s > 0 ? s : text,
       weight: weightOf(seq[`${prefix}FontWeight`], FONT_WEIGHT.bold, FONT_WEIGHT.normal),
     };

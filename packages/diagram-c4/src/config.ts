@@ -17,7 +17,7 @@
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { C4DiagramConfig } from '@mermaid-js/core/config';
 import { configNumber, fontWeightOf as weightOf } from '@mermaid-js/shared/config/readers';
-import { checkStyle } from '@mermaid-js/core/svg';
+import { configFontFamily } from '@mermaid-js/shared/config/font-family';
 import { fontSizePx, type FontKey } from '@mermaid-js/core/text';
 import { c4betaConfigDefaults, c4ConfigDefaults } from './generated/config-defaults.ts';
 import { FONT_WEIGHT } from './layout/metrics.ts';
@@ -173,21 +173,9 @@ export function c4Fonts(
   const font = (prefix: string): FontKey => {
     // A size that is not one falls back to the key's own default (14; 12 for `message`).
     const size = Number(c4Default(`${prefix}FontSize` as keyof C4DiagramConfig));
-    const key = `${prefix}FontFamily`;
-    const f = c4[key];
-    let safe: string | undefined;
-    if (typeof f === 'string' && f.trim() !== '') {
-      safe = checkStyle(['font-family:' + f]).text['font-family'] as string | undefined;
-      if (safe === undefined)
-        warn({
-          code: 'STYLE_VALUE_DROPPED',
-          message: `Dropped c4.${key} ${JSON.stringify(f)}: it is not a font family Mermaid allows`,
-          path: `c4.${key}`,
-        });
-    }
     const s = fontSizePx(c4[`${prefix}FontSize`], size);
     return {
-      family: safe ?? family,
+      family: configFontFamily(c4, 'c4', `${prefix}FontFamily`, warn) ?? family,
       size: s !== undefined && s > 0 ? s : size,
       weight: weightOf(c4[`${prefix}FontWeight`], FONT_WEIGHT.bold, FONT_WEIGHT.normal),
     };

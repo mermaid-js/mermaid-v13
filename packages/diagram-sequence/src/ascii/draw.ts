@@ -24,6 +24,7 @@ import {
   type Dir,
   type GlyphSet,
 } from '@mermaid-js/core/ascii';
+import type { Point } from '@mermaid-js/core/layout';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import { ARROW_HEADS, type ArrowHead } from '../model.ts';
 import type {
@@ -74,10 +75,7 @@ function headGlyph(glyphs: GlyphSet, head: Head, d: Dir): string {
   }
 }
 
-interface Cell {
-  readonly x: number;
-  readonly y: number;
-}
+type Cell = Readonly<Point>;
 
 /** Draws a run of cells as one line; a one-cell run is a horizontal stroke. */
 function drawRun(canvas: Canvas, glyphs: GlyphSet, cells: readonly Cell[], dotted: boolean): void {

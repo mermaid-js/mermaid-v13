@@ -6,13 +6,9 @@
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { PathData } from '@mermaid-js/core/svg';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
+import type { Rect } from '@mermaid-js/shared/layout';
 
-export interface Rect {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
+export type { Rect };
 
 export interface Circle {
   readonly cx: number;
