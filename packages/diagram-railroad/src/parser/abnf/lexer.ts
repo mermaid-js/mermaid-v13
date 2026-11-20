@@ -58,7 +58,7 @@ export function lexAbnf(src: string, from: number, view: SourceView): TokenStrea
 }
 
 class AbnfLexer extends RailroadLexer {
-  protected rule(p: number, c: number): number {
+  protected scan(p: number, c = this.text.charCodeAt(p)): number {
     if (isLetter(c)) {
       const e = this.header('railroad-abnf-beta', p);
       if (e >= 0) return e;
@@ -71,7 +71,7 @@ class AbnfLexer extends RailroadLexer {
     const kind = PUNCTUATION[c];
     if (kind !== undefined) return this.match(kind, p + 1);
     if (isLetter(c)) {
-      const e = this.accessibilityAt(p);
+      const e = this.accessibility(p);
       if (e >= 0) return e;
       let j = p + 1;
       while (j < this.n && isNamePart(this.text.charCodeAt(j))) j++;

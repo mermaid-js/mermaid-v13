@@ -74,16 +74,6 @@ export abstract class RailroadLexer extends RuleLexer {
     super(src, from, { ...view, text: placeholders(view.text) }, OPTIONS);
   }
 
-  protected scan(p: number): number {
-    return this.rule(p, this.text.charCodeAt(p));
-  }
-
-  /**
-   * The end of the token type that matches at `p` (its kind set with {@link match}), or -1.
-   * `c` is the character at `p`.
-   */
-  protected abstract rule(p: number, c: number): number;
-
   // --- Rules every grammar has --------------------------------------------------------------
 
   /** The header keyword `word(?:(?=%%)|(?!\S))`, as {@link T.Header}. */

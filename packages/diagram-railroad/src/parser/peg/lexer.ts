@@ -50,7 +50,7 @@ export function lexPeg(src: string, from: number, view: SourceView): TokenStream
 }
 
 class PegLexer extends RailroadLexer {
-  protected rule(p: number, c: number): number {
+  protected scan(p: number, c = this.text.charCodeAt(p)): number {
     if (isIdStart(c)) {
       const e = this.header('railroad-peg-beta', p);
       if (e >= 0) return e;
@@ -59,7 +59,7 @@ class PegLexer extends RailroadLexer {
     const kind = PUNCTUATION[c];
     if (kind !== undefined) return this.match(kind, p + 1);
     if (isIdStart(c)) {
-      const e = this.accessibilityAt(p);
+      const e = this.accessibility(p);
       if (e >= 0) return e;
       return this.match(T.Id, this.idEnd(p));
     }
