@@ -2,7 +2,7 @@
  * Drawing glue the graph diagrams share: the edge label as a tag and the text style a label is
  * measured with.
  */
-import { type FontKey, fontSizePx, Style } from '@mermaid-js/core/text';
+import { type FontKey, fontSizePx, type MeasuredLabel, Style } from '@mermaid-js/core/text';
 import type { Attrs, CheckedStyle, LabelBox, SvgWriter } from '@mermaid-js/core/svg';
 
 /** An edge label's corner radius (D626). */
@@ -63,6 +63,12 @@ export function emphasisBits(style: CheckedStyle): number {
   const weight = t['font-weight'];
   const bold = weight === 'bold' || weight === 'bolder' || Number(weight) >= 600;
   return (bold ? Style.Bold : 0) | (t['font-style'] === 'italic' ? Style.Italic : 0);
+}
+
+/** Whether `label` has bold or italic text beyond what `style` asks for. */
+export function addsEmphasis(label: MeasuredLabel, style: CheckedStyle): boolean {
+  const mask = (Style.Bold | Style.Italic) & ~emphasisBits(style);
+  return label.lines.some((line) => line.some((run) => (run.style & mask) !== 0));
 }
 
 /**

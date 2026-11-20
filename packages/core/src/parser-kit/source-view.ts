@@ -120,8 +120,11 @@ export function sourceView(
   };
 }
 
-/** `src` without the removed spans (which may overlap), and where each kept run was. */
-function cut(src: string, removed: readonly Hole[]): Pick<SourceView, 'text' | 'runs'> {
+/**
+ * `src` without the removed spans (sorted by start; they may overlap), and where each kept run
+ * was: the `text` and `runs` of a {@link SourceView} over those holes.
+ */
+export function cut(src: string, removed: readonly Hole[]): Pick<SourceView, 'text' | 'runs'> {
   if (removed.length === 0) return { text: src, runs: undefined };
   const parts: string[] = [];
   const runs = new Uint32Array(2 * removed.length + 2);
@@ -288,11 +291,12 @@ function dropLastSemicolon(
 
 /**
  * `style.*:\S*#.*;` then `classDef.*:\S*#.*;` (each global, `.` stops at line ends): the
- * match ends at the line's last `;`, which `encodeEntities` cut off. `t` is the text with
- * directives and comments cut out, as v12 had it by then; `source` maps its offsets back, and
- * the mask is marked at source offsets.
+ * match ends at the line's last `;`, which `encodeEntities` cut off. `t` is the text v12 had by
+ * then (here, with directives and comments cut out); `source` maps its offsets back, `mark`
+ * sets a {@link DROP} bit at a source offset, and `current` is the mask marked so far, so a `;`
+ * already dropped is skipped.
  */
-function markDroppedSemicolons(
+export function markDroppedSemicolons(
   t: string,
   from: number,
   source: (i: number) => number,

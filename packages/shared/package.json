@@ -86,6 +86,11 @@
       "types": "./dist/svg/graph.d.ts",
       "default": "./dist/svg/graph.js"
     },
+    "./svg/node-paint": {
+      "mermaid-source": "./src/svg/node-paint.ts",
+      "types": "./dist/svg/node-paint.d.ts",
+      "default": "./dist/svg/node-paint.js"
+    },
     "./svg/route": {
       "mermaid-source": "./src/svg/route.ts",
       "types": "./dist/svg/route.d.ts",

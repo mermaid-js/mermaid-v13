@@ -11,6 +11,7 @@ import type { AgentflowModel } from '../parser/index.ts';
 import type { AgentflowLayoutContext } from './context.ts';
 import { endOnOutline, frameOutline, memberToFrame, within, type EndBox } from './ends.ts';
 import { prepareAgentflow, type AgentflowPrepared } from './prepare.ts';
+import { AGENTFLOW_METRICS } from './metrics.ts';
 import { shapeOutline } from './shapes.ts';
 
 /** The engine's layout with the measured views it was built from. */
@@ -73,7 +74,7 @@ function endsOnOutlines(
     ends.set(id, end);
     return end;
   };
-  const onSide = prepared.geometry.metrics.onSide;
+  const onSide = AGENTFLOW_METRICS.onSide;
   const edges = new Map<string, LayoutModelEdge>();
   for (const e of prepared.edges) {
     const route = laid.edges.get(e.id);

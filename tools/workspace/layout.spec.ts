@@ -104,6 +104,7 @@ describe('workspace layout (DESIGN §2)', () => {
         './svg/arrowheads',
         './svg/document',
         './svg/graph',
+        './svg/node-paint',
         './svg/route',
         './testing/layout-invariants',
         './testing/parser-reference',
