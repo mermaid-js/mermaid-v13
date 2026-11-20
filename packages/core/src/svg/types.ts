@@ -96,8 +96,8 @@ export interface AttrTypes {
   cx: number;
   cy: number;
   r: number;
-  rx: number;
-  ry: number;
+  rx: Length;
+  ry: Length;
   dx: number;
   dy: number;
   d: PathData;
