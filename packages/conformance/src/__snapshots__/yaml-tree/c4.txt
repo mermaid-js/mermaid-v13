@@ -2,6 +2,7 @@ e2e/diagrams/c4/baseline/config/palette-and-fonts.mmd 1 0547ba6c1fc2bf01
 e2e/diagrams/c4/baseline/config/rows-and-fixed-width.mmd 1 43b1af1840ffdfaa
 e2e/diagrams/c4/baseline/diagram-types/deployment.mmd 1 4ae5fcea9ac5fa3c
 e2e/diagrams/c4/baseline/diagram-types/dynamic.mmd 1 9a7c605ea03f90c2
+e2e/diagrams/c4/baseline/edge-labels/tags.mmd 1 521e4797ba5cbdcc
 e2e/diagrams/c4/baseline/handdrawn/default.mmd 1 e4994f03f9a61db0
 e2e/diagrams/c4/baseline/handdrawn/neo-dark.mmd 1 e57625cdd3822c5d
 e2e/diagrams/c4/baseline/handdrawn/neo.mmd 1 d3fa3d2fb757e48f

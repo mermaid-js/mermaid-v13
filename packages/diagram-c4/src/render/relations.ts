@@ -2,18 +2,22 @@
  * A C4 relation drawn (spec #522 §Renderer, D455): its routed line as one `path` (the layout's
  * `c4RelationPath`, stopped short under the arrowheads), the arrowheads inline after it as
  * v12's triangles (no `<marker>`, DESIGN §7.1), then its label and the italic `[techn]` below
- * it on a box of the page's `background`, as Pele draws them: the layout places a label on its
- * line where it covers least (D455), so the box keeps the line from running through the text
- * (v12 drew no box; its labels sat beside a curve). The relation's `descr` is the group's SVG
- * `<title>`. Relations are not sketched (D301).
+ * it as one edge-label tag (D626): bordered in the line's colour (D627), on the page's
+ * `background` (D628), the box the layout placed (`labelBox`, room from `labelPatch`, D629).
+ * The layout places a label on its line where it covers least (D455), so the box keeps the line
+ * from running through the text (v12 drew no box; its labels sat beside a curve). The
+ * relation's `descr` is the group's SVG `<title>`. Relations are not sketched (D301); the tag's
+ * border is, as every edge label's (D630).
  */
-import type { Paint, PathData, SvgWriter } from '@mermaid-js/core/svg';
+import type { LabelBox, Paint, PathData, SvgWriter } from '@mermaid-js/core/svg';
+import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import { c4RelationPath } from '../layout/path.ts';
-import type { C4RelationEnd, C4RelationLayout } from '../layout/types.ts';
+import { labelRoomOf } from '../layout/room.ts';
+import type { C4RelationEnd, C4RelationLayout, PlacedLabel } from '../layout/types.ts';
 import { C4_RELATION_KINDS, type C4RelationKind } from '../model.ts';
 import type { Scene } from './context.ts';
 import { C4_RENDER_METRICS as R } from './metrics.ts';
-import { drawText } from './text.ts';
+import { fontAttrs } from './text.ts';
 
 /** v12's relation kinds; any other kind a `$type` set draws as `rel`. */
 const RELATION_KINDS: ReadonlySet<string> = new Set(C4_RELATION_KINDS);
@@ -47,13 +51,42 @@ export function drawRelation(scene: Scene, rel: C4RelationLayout): void {
   });
   if (rel.startArrow) arrowhead(w, rel.start, colours.head);
   if (rel.endArrow) arrowhead(w, rel.end, colours.head);
-  if (colours.text && colours.labelBkg) {
-    labelBox(w, rel, colours.labelBkg);
-    const fill = colours.text;
-    if (rel.label) drawText(scene, { label: rel.label, cls: 'c4-rel-label', fill, dataId });
-    if (rel.techn) drawText(scene, { label: rel.techn, cls: 'c4-rel-techn', fill, dataId });
-  }
+  const lines = [rel.label, rel.techn].filter((l): l is PlacedLabel => l !== undefined);
+  const box = rel.labelBox;
+  if (colours.text && colours.labelBkg && box && lines.length > 0)
+    edgeLabel(w, stacked(lines), { x: box.x + box.width / 2, y: box.y + box.height / 2 }, dataId, {
+      fill: colours.labelBkg,
+      stroke: colours.stroke,
+      text: { fill: colours.text, ...fontAttrs(scene, lines[0]!) },
+      patch: labelRoomOf(scene.ctx.units),
+    });
   w.close();
+}
+
+/**
+ * The label and `[techn]` as one block, each line centred as when they were drawn apart: the
+ * lines one under the other (same font, so the same line height and baseline), as wide as the
+ * wider. C4 text is plain (no bullets), so every line is centred. Per-line baselines (an inline
+ * box grew a line) carry over, moved down by the lines above.
+ */
+function stacked(parts: readonly PlacedLabel[]): LabelBox & { readonly width: number } {
+  const first = parts[0]!.text;
+  const baselines: number[] = [];
+  let top = 0;
+  for (const { text } of parts) {
+    text.lines.forEach((_, i) =>
+      baselines.push(top + (text.baselines?.[i] ?? i * text.lineHeight + text.baseline))
+    );
+    top += text.height;
+  }
+  return {
+    lines: parts.flatMap((p) => p.text.lines),
+    lineHeight: first.lineHeight,
+    baseline: first.baseline,
+    height: top,
+    width: Math.max(...parts.map((p) => p.text.width)),
+    ...(parts.some((p) => p.text.baselines) ? { baselines } : {}),
+  };
 }
 
 /** The line, from outline to outline, stopped under the arrowheads at its ends. */
@@ -85,19 +118,4 @@ function arrowhead(w: SvgWriter, end: C4RelationEnd, fill: Paint): void {
     .close()
     .done();
   w.leaf('path', { class: 'marker', d, fill, stroke: 'none' });
-}
-
-/** The label's box, as the layout placed it (`labelBox`). */
-function labelBox(w: SvgWriter, rel: C4RelationLayout, fill: Paint): void {
-  const box = rel.labelBox;
-  if (!box) return;
-  w.leaf('rect', {
-    class: 'c4-rel-label-box',
-    x: box.x,
-    y: box.y,
-    width: box.width,
-    height: box.height,
-    fill,
-    stroke: 'none',
-  });
 }

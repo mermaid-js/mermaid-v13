@@ -1,3 +1,4 @@
+e2e/diagrams/c4beta/baseline/edge-labels/tags.mmd 1 66c88c4defc32bdb
 e2e/diagrams/c4beta/baseline/handdrawn/default.mmd 1 1a177867174bf5e0
 e2e/diagrams/c4beta/baseline/handdrawn/neo-dark.mmd 1 b2edbaa1a4bd6f5a
 e2e/diagrams/c4beta/baseline/handdrawn/neo.mmd 1 8873f855f0de67d5

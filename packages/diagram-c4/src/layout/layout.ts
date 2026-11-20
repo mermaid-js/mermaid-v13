@@ -36,18 +36,12 @@ import {
 } from './grid.ts';
 import { cellConfig, cellPxMeasurer, cellRoom, type CellSize } from './cells.ts';
 import { C4_METRICS as M, FONT_WEIGHT } from './metrics.ts';
-import {
-  Lanes,
-  lineOf,
-  pairRoom,
-  pointsOf,
-  route,
-  Work,
-  type LoopPlace,
-  type Route,
-} from './route.ts';
+import { classicLabelRoom, type LabelRoom } from './room.ts';
+import { pairPlaces } from './pairs.ts';
+import { Lanes, lineOf, pointsOf, route, Work, type Route } from './route.ts';
 import {
   hitRect,
+  labelBlockers,
   outlineForm,
   shapeOf,
   shapeSize,
@@ -263,6 +257,8 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
     config,
     fonts,
     measure,
+    labelRoom: classicLabelRoom(ctx.units),
+    tags: units === undefined,
   });
 
   const title = measure(
@@ -434,9 +430,11 @@ interface Routed {
   readonly endArrow: boolean;
   readonly label?: Measured;
   readonly techn?: Measured;
-  /** The label box's centre and top. */
+  /** The label box's centre and top, and its size (zero without a label). */
   readonly cx: number;
   readonly top: number;
+  readonly lw: number;
+  readonly lh: number;
   /** No spot kept the label off its arrowheads, the shapes and the headers. */
   readonly crowded?: true;
 }
@@ -455,6 +453,16 @@ interface RouteInput extends Measuring {
   readonly shapes: readonly Outline[];
   readonly frames: readonly Outline[];
   readonly order: readonly Group[];
+  /**
+   * The room a label's box adds round its stacked texts, in px: the `labelPatch` (D629) where
+   * the box is drawn as an edge-label tag; text output keeps `textLabelPad` across.
+   */
+  readonly labelRoom: LabelRoom;
+  /**
+   * Whether labels are drawn as edge-label tags (SVG output). Text output frames its labels
+   * itself and keeps the placement it had before the tags (`textLabelPad`).
+   */
+  readonly tags: boolean;
 }
 
 /**
@@ -524,52 +532,6 @@ class Lines {
   }
 }
 
-/** Where a relation runs among the others between the same two shapes. */
-interface Place {
-  /** How far it moves sideways, along its own normal. */
-  readonly shift: number;
-  /** A self-loop's place among the loops on its shape. */
-  readonly loop?: LoopPlace;
-}
-
-/**
- * Where each relation runs among the others between the same two shapes (#680). A self-loop
- * gets its place among the loops on its shape. Any other relation moves sideways (along its own
- * normal), in either direction: none for the only one, else the group spread in steps of
- * `2 * pairShift` about the middle, the first statement's side first. A pair with one relation
- * each way keeps `pairShift` to either side of the middle, as before repeated relations were
- * kept. Where the room the two shapes share (`pairRoom`) holds fewer steps, the steps shrink to
- * fit it: past `2 * room / near + 1` relations they are closer than `near` and read as one band.
- */
-function pairPlaces(drawn: readonly { a: Outline; b: Outline }[]): Place[] {
-  interface Between {
-    a: Outline;
-    b: Outline;
-    count: number;
-    step?: number;
-  }
-  const groups = new Map<Outline, Map<Outline, Between>>();
-  // Each relation's group and its place in it, counted as the group fills.
-  const places = drawn.map(({ a, b }): [Between, number] => {
-    let g = groups.get(a)?.get(b) ?? groups.get(b)?.get(a);
-    if (!g) {
-      g = { a, b, count: 0 };
-      let ends = groups.get(a);
-      if (!ends) groups.set(a, (ends = new Map<Outline, Between>()));
-      ends.set(b, g);
-    }
-    return [g, g.count++];
-  });
-  return drawn.map(({ a }, k): Place => {
-    const [g, nth] = places[k]!;
-    if (g.a === g.b) return { shift: 0, loop: { nth, count: g.count } };
-    if (g.count < 2) return { shift: 0 };
-    g.step ??= Math.min(2 * M.pairShift, (2 * pairRoom(g.a, g.b)) / (g.count - 1));
-    const side = ((g.count - 1) / 2 - nth) * g.step;
-    return { shift: a === g.a ? side : -side };
-  });
-}
-
 /** Routes every relation with known ends in model order, then places their labels (Pele `render.ts`). */
 function routeAll(input: RouteInput): RoutedAll {
   const { model, endOf, shapes, frames, order } = input;
@@ -580,16 +542,23 @@ function routeAll(input: RouteInput): RoutedAll {
     if (!a || !b) return;
     drawn.push({ rel, index, a, b });
   });
-  const places = pairPlaces(drawn);
+  // A one-line tag's height and a gap either side: the step between tagged lines side by side.
+  const line = input.measure('X', input.fonts.message, Infinity);
+  const tagStep = input.tags && line ? line.text.height + input.labelRoom.y + 2 * M.besideGap : 0;
+  const places = pairPlaces(drawn, tagStep);
   // The comparisons are counted as they are made: once the budget is spent, the relations still
   // to route go straight and the labels still to place sit at their middle, in model order.
   const work = new Work(input.budget);
   let careful = true;
   const taken = new Taken(work);
-  // What a label must never cover: every shape's whole box and every boundary header.
+  // What a label must never cover: every shape (a person's head and body) and every boundary
+  // header; with tags, also every label placed before it.
   const blocked = new Taken(work);
-  for (const s of shapes) blocked.add(s.x, s.y, s.x + s.width, s.y + s.height);
-  for (const s of shapes)
+  const parts = shapes.flatMap(labelBlockers);
+  const clear = input.tags ? M.tagClear : 0;
+  for (const s of parts)
+    blocked.add(s.x - clear, s.y - clear, s.x + s.width + clear, s.y + s.height + clear);
+  for (const s of parts)
     taken.add(
       s.x + M.labelEdge,
       s.y + M.labelEdge,
@@ -601,11 +570,10 @@ function routeAll(input: RouteInput): RoutedAll {
   for (const f of frames) lanes.frame(f);
   const routes = drawn.map(({ rel, a, b }, k) => {
     if (work.done) careful = false;
-    const r = route(a, b, {
-      ...(places[k] ?? { shift: 0 }),
-      ...(work.done ? {} : { others: shapes }),
-      lanes,
-    });
+    const place = places[k] ?? { shift: 0 };
+    const routed = route(a, b, { ...place, ...(work.done ? {} : { others: shapes }), lanes });
+    // A straight line spaced a tag from the next keeps its label on it (#955 review).
+    const r = place.spaced && routed.kind === 'line' ? { ...routed, nx: 0, ny: 0 } : routed;
     const startArrow = rel.kind === 'birel' || rel.kind === 'rel_b';
     const endArrow = rel.kind !== 'rel_b';
     const p = r.points;
@@ -628,7 +596,9 @@ function routeAll(input: RouteInput): RoutedAll {
   const list = drawn.map(({ rel, index }, k): Routed => {
     const { r, startArrow, endArrow, heads } = routes[k]!;
     if (work.done) careful = false;
-    const keep = work.done ? undefined : { taken, blocked, heads, lines, own: k, work };
+    const keep = work.done
+      ? undefined
+      : { taken, blocked, heads, lines, own: k, work, tags: input.tags };
     const placedLabel = placeLabel({ rel, index, r, input, keep });
     return { rel, index, route: r, startArrow, endArrow, ...placedLabel };
   });
@@ -660,6 +630,8 @@ interface Keep {
   readonly lines: Lines;
   readonly own: number;
   readonly work: Work;
+  /** Labels are drawn as tags (`RouteInput.tags`): placed labels block, and on the line comes first. */
+  readonly tags: boolean;
 }
 
 /** A label box, x0, y0, x1, y1. */
@@ -668,6 +640,16 @@ interface Box {
   readonly y0: number;
   readonly x1: number;
   readonly y1: number;
+}
+
+/**
+ * A placed label, for the labels after it: one to cover least of, and with tags one never to
+ * cover, since a tag is opaque (#955 review).
+ */
+function keepOff(keep: Keep | undefined, { x0, y0, x1, y1 }: Box): void {
+  if (!keep) return;
+  keep.taken.add(x0, y0, x1, y1);
+  if (keep.tags) keep.blocked.add(x0, y0, x1, y1);
 }
 
 /** How much of a label box it must not cover: `blocked`, and its own heads. */
@@ -695,13 +677,14 @@ function placeLabel({
   r,
   input,
   keep,
-}: LabelInput): Pick<Routed, 'label' | 'techn' | 'cx' | 'top' | 'crowded'> {
-  const { model, config, fonts, measure } = input;
+}: LabelInput): Pick<Routed, 'label' | 'techn' | 'cx' | 'top' | 'lw' | 'lh' | 'crowded'> {
+  const { model, config, fonts, measure, labelRoom } = input;
   const room = config.wrapAll ? r.room : Infinity;
   const label = measure(relationLabelText(model, rel, index), fonts.message, room);
   const techn = measure(relationTechnText(rel), fonts.message, room, Style.Italic);
-  const [lw, lh] = labelSize({ label, techn });
-  if (lh === 0) return { cx: r.x0, top: r.y0 };
+  if (!label && !techn) return { cx: r.x0, top: r.y0, lw: 0, lh: 0 };
+  const lw = Math.max(label?.text.width ?? 0, techn?.text.width ?? 0) + labelRoom.x;
+  const lh = (label?.text.height ?? 0) + (techn?.text.height ?? 0) + labelRoom.y;
 
   const beside = Math.abs(r.nx) * (lw / 2) + Math.abs(r.ny) * (lh / 2) + M.besideGap;
   const aside = r.lean ? Math.max(0, Math.min(r.lean, beside - M.leanSlack)) : beside;
@@ -720,12 +703,14 @@ function placeLabel({
     }));
   const cx = r.x0 + (r.x1 - r.x0) * at + dx;
   const top = r.y0 + (r.y1 - r.y0) * at + dy - lh / 2;
-  keep?.taken.add(cx - lw / 2, top, cx + lw / 2, top + lh);
+  keepOff(keep, { x0: cx - lw / 2, y0: top, x1: cx + lw / 2, y1: top + lh });
   return {
     ...(label ? { label } : {}),
     ...(techn ? { techn } : {}),
     cx,
     top,
+    lw,
+    lh,
     ...(crowded ? { crowded: true as const } : {}),
   };
 }
@@ -753,33 +738,34 @@ interface Clearest {
 
 /**
  * Where along the line, and how far off it, a `lw` × `lh` label goes. First on the line (the
- * author's offsets, then none), slid to the spot that covers least of `taken` (Pele
- * `render.ts`), each other relation's stretch through it costing `lineCover` of its area; when
- * that spot still costs anything, also beside the line on either side, a label's depth further
- * out at each step. A spot that covers `forbidden` is never taken while another does not; when
- * none clears it, the one that covers least of it is, and the label is crowded, as it is when
- * the spot taken lies over another relation's line.
+ * author's offsets, then none; a tag pushed beside its line also tries the line itself), slid to
+ * the spot that covers least of `taken` (Pele `render.ts`), each other relation's stretch through
+ * it costing `lineCover` of its area; a tag then also tries the finer steps of `fineSlide` on the
+ * line, so that one fitting between the shapes stays on it (#955 review); when that spot still
+ * costs anything, also beside the line on either side, a label's depth further out at each step. When no spot is clear, the search runs again with finer steps along the line
+ * (`fineSlide`) and beside it (`fineSplit` per depth), so a label wider than the gaps the coarse
+ * steps try still finds one between them; a label that found a clear spot is not moved. A spot
+ * that covers `forbidden` is never taken while another does not; when none clears it, the one
+ * that covers least of it is, and the label is crowded, as it is when the spot taken lies over
+ * another relation's line.
  */
 function clearest({ r, lw, lh, given, online, keep }: ClearestInput): Clearest {
   let best = { at: M.slide[0]!, dx: given[0], dy: given[1] };
-  let least = Infinity;
-  let worst = Infinity;
-  let crossed = 0;
+  let [least, worst, crossed] = [Infinity, Infinity, 0];
   const perLine = M.lineCover * lw * lh;
-  const done = (): Clearest => ({ ...best, crowded: worst > 0 || crossed > 0 });
-  const tryAt = (px: number, py: number, away = 0): boolean => {
-    for (const t of M.slide) {
-      const x = r.x0 + (r.x1 - r.x0) * t + px;
-      const y = r.y0 + (r.y1 - r.y0) * t + py;
+  // A clear spot's cost: what it covers of `taken`, the lines through it, how far out it is.
+  const costOf = (box: Box, away: number): [number, number] => {
+    const lines = keep.lines.through(keep.own, box.x0, box.y0, box.x1, box.y1);
+    const cover = keep.taken.covered(box.x0, box.y0, box.x1, box.y1);
+    return [lines, cover + (lines + away * M.besideStepCost) * perLine];
+  };
+  const tryAt = (slides: readonly number[], px: number, py: number, away = 0): boolean => {
+    for (const t of slides) {
+      const [x, y] = [r.x0 + (r.x1 - r.x0) * t + px, r.y0 + (r.y1 - r.y0) * t + py];
       const box: Box = { x0: x - lw / 2, y0: y - lh / 2, x1: x + lw / 2, y1: y + lh / 2 };
       const bad = forbidden(keep, box);
       if (bad > worst || (bad === worst && bad > 0)) continue;
-      const lines = bad > 0 ? 0 : keep.lines.through(keep.own, box.x0, box.y0, box.x1, box.y1);
-      const cost =
-        bad > 0
-          ? Infinity
-          : keep.taken.covered(box.x0, box.y0, box.x1, box.y1) +
-            (lines + away * M.besideStepCost) * perLine;
+      const [lines, cost] = bad > 0 ? [0, Infinity] : costOf(box, away);
       if (bad < worst || cost < least) {
         [worst, least, crossed] = [bad, cost, lines];
         best = { at: t, dx: px, dy: py };
@@ -788,9 +774,13 @@ function clearest({ r, lw, lh, given, online, keep }: ClearestInput): Clearest {
     }
     return false;
   };
-  // Offsets from the diagram are kept unless a spot on the line itself covers less.
-  const moved = given[0] !== online[0] || given[1] !== online[1];
-  for (const [px, py] of moved ? [given, online] : [given]) if (tryAt(px, py)) return done();
+  // Offsets from the diagram are kept unless a spot on the line itself covers less. A tag pushed
+  // beside its line (another relation runs the opposite way) also tries the line itself, which
+  // lines spaced a tag apart leave clear.
+  const same = (p: readonly [number, number], q: readonly [number, number]): boolean =>
+    p[0] === q[0] && p[1] === q[1];
+  const ons = same(given, online) ? [given] : [given, online];
+  if (keep.tags && !ons.some((p) => same(p, [0, 0]))) ons.push([0, 0]);
   // Beside the line, on either side, one label depth further out at each step: across the
   // stretch the label sits on (a self-loop's has no length: then up and down).
   const len = Math.hypot(r.x1 - r.x0, r.y1 - r.y0);
@@ -798,14 +788,30 @@ function clearest({ r, lw, lh, given, online, keep }: ClearestInput): Clearest {
   const half = Math.abs(nx) * (lw / 2) + Math.abs(ny) * (lh / 2) + M.besideGap;
   const depth = Math.abs(nx) * lw + Math.abs(ny) * lh;
   const [ax, ay] = [given[0] - online[0], given[1] - online[1]];
-  // Each step past the first costs a share of a line through the label: a label keeps by its
-  // own line rather than move far from it to clear another's.
-  for (let k = 0; k < M.besideSteps && (worst > 0 || k * M.besideStepCost * perLine < least); k++)
-    for (const side of [1, -1]) {
-      const d = side * (half + k * depth);
-      if (tryAt(ax + nx * d, ay + ny * d, k)) return done();
-    }
-  return done();
+  // One pass: `slides` along the line, `split` steps beside it per label depth. Each depth out
+  // past the first costs a share of a line through the label: a label keeps by its own line
+  // rather than move far from it to clear another's.
+  const onLine = (slides: readonly number[]): boolean =>
+    ons.some(([px, py]) => tryAt(slides, px, py));
+  const pass = (slides: readonly number[], split: number): boolean => {
+    // A tag tries the finer places on its line before any beside it (#955 review): one that fits
+    // between the shapes stays on its line, where its bare text sat.
+    const finer = keep.tags && slides !== M.fineSlide;
+    if (onLine(slides) || (finer && onLine(M.fineSlide))) return true;
+    const step = (M.besideStepCost * perLine) / split;
+    for (let k = 0; k < M.besideSteps * split && (worst > 0 || k * step < least); k++)
+      for (const side of [1, -1]) {
+        const d = side * (half + (k * depth) / split);
+        if (tryAt(slides, ax + nx * d, ay + ny * d, k / split)) return true;
+      }
+    return false;
+  };
+  // A tag the coarse search put a whole depth or more beside its line also tries the finer
+  // steps beside it, so that it keeps `tagClear` from the shapes without floating a depth out.
+  const far = keep.tags && least > 0;
+  if (!pass(M.slide, 1) && (worst > 0 || crossed > 0 || far))
+    pass(M.fineSlide, keep.tags ? M.tagSplit : M.fineSplit);
+  return { ...best, crowded: worst > 0 || crossed > 0 };
 }
 
 /** A boundary's header box, centred under the frame's top edge; none at the top level. */
@@ -832,12 +838,6 @@ interface Shift {
   readonly oy: number;
 }
 
-/** A label's box: the label and `[techn]` stacked, with the label pad across. */
-function labelSize(r: { readonly label?: Measured; readonly techn?: Measured }): [number, number] {
-  const lw = Math.max(r.label?.text.width ?? 0, r.techn?.text.width ?? 0) + M.labelPad;
-  return [lw, (r.label?.text.height ?? 0) + (r.techn?.text.height ?? 0)];
-}
-
 /** Everything drawn, in the grid's frame: x0, y0, x1, y1 (zeros when nothing is). */
 function extent(p: Parts): [number, number, number, number] {
   let x0 = Infinity;
@@ -855,10 +855,7 @@ function extent(p: Parts): [number, number, number, number] {
   for (const r of p.relations.list) {
     const pts = [...r.route.points, ...(r.route.controls ?? [])];
     for (let i = 0; i < pts.length; i += 2) grow(pts[i]!, pts[i + 1]!);
-    if (r.label || r.techn) {
-      const [lw, lh] = labelSize(r);
-      grow(r.cx - lw / 2, r.top, lw, lh);
-    }
+    if (r.label || r.techn) grow(r.cx - r.lw / 2, r.top, r.lw, r.lh);
   }
   return x0 === Infinity ? [0, 0, 0, 0] : [x0, y0, x1, y1];
 }
@@ -916,6 +913,20 @@ function boundaryOut(g: Group, s: Shift): C4BoundaryLayout {
   };
 }
 
+/** A label box at (`cx`, `top`): the label and `[techn]` stacked in its middle; none without. */
+function labelOut(r: Routed, cx: number, top: number): Partial<C4RelationLayout> {
+  const { label, techn, lw, lh } = r;
+  if (!label && !techn) return {};
+  const labelH = label?.text.height ?? 0;
+  const textTop = top + (lh - labelH - (techn?.text.height ?? 0)) / 2;
+  const at = (m: Measured, y: number): PlacedLabel => placed(m, cx - m.text.width / 2, y);
+  return {
+    ...(label ? { label: at(label, textTop) } : {}),
+    ...(techn ? { techn: at(techn, textTop + labelH) } : {}),
+    labelBox: { x: cx - lw / 2, y: top, width: lw, height: lh },
+  };
+}
+
 /** A relation's layout. */
 function relationOut(r: Routed, { ox, oy }: Shift): C4RelationLayout {
   const at = (q: Point): Point => ({ x: q.x + ox, y: q.y + oy });
@@ -923,12 +934,6 @@ function relationOut(r: Routed, { ox, oy }: Shift): C4RelationLayout {
   const c = r.route.controls ? pointsOf(r.route.controls).map(at) : [];
   const first = pts[0]!;
   const last = pts[pts.length - 1]!;
-  const top = r.top + oy;
-  const cx = r.cx + ox;
-  const label = r.label && placed(r.label, cx - r.label.text.width / 2, top);
-  const technTop = top + (r.label?.text.height ?? 0);
-  const techn = r.techn && placed(r.techn, cx - r.techn.text.width / 2, technTop);
-  const [lw, lh] = labelSize(r);
   return {
     ast: r.rel.ast,
     index: r.index,
@@ -942,9 +947,7 @@ function relationOut(r: Routed, { ox, oy }: Shift): C4RelationLayout {
     end: { ...last, dx: r.route.edx, dy: r.route.edy },
     startArrow: r.startArrow,
     endArrow: r.endArrow,
-    ...(label ? { label } : {}),
-    ...(techn ? { techn } : {}),
-    ...(label || techn ? { labelBox: { x: cx - lw / 2, y: top, width: lw, height: lh } } : {}),
+    ...labelOut(r, r.cx + ox, r.top + oy),
     ...(r.crowded ? { crowded: true as const } : {}),
   };
 }

@@ -36,6 +36,8 @@ e2e/diagrams/usecase/nightly-check/18-direction-right-to-left.mmd 1 2e29a6d6e8a8
 e2e/diagrams/usecase/nightly-check/19-association-label-semantics.mmd 1 bdccbf6a80129479
 e2e/diagrams/usecase/nightly-check/20-full-featured-order-system.mmd 5 1736ce68107c77b4
 e2e/diagrams/usecase/nightly-check/21-note-on-boundary-member.mmd 1 8718e2e2abf62ef5
+e2e/diagrams/usecase/nightly-check/650-actors-spread-20-100.mmd 1 3ed1af6211382106
+e2e/diagrams/usecase/nightly-check/650-actors-spread-5-25.mmd 1 dc319464bf424386
 e2e/diagrams/usecase/nightly-check/parser-ast-ids.mmd 1 32029d59aae95818
 e2e/diagrams/usecase/nightly-check/parser-front-matter-title.mmd 1 b071edbe914f7720
 e2e/diagrams/usecase/nightly-check/parser-json-rows.mmd 1 36799ee2a5f37c7d

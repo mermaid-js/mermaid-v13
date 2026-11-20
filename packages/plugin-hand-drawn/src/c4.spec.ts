@@ -2,8 +2,9 @@
  * C4 with the hand-drawn look (D301, D307, #542), through `createMermaid().render()` and the real
  * drawer: C4 draws each element's outline through `w.outline` (`node`) and the cylinder's and
  * the queue's rims and `fr-rect`'s frame lines (`divider`), so each element is sketched in every
- * theme family, as v12 sketched elements only. Boundaries, relations, arrowheads, label boxes
- * and text are written as before.
+ * theme family, as v12 sketched elements only. A relation label's tag is an outline of role
+ * `label`, so its border is sketched too, as every edge label's (D630). Boundaries, relation
+ * lines (D301), arrowheads and text are written as before.
  */
 import { createMermaid } from 'mermaid';
 import { describe, expect, it } from 'vitest';
@@ -42,24 +43,32 @@ const PLAIN = [
   /<g class="c4-boundary[^"]*"[^>]*><rect [^>]*\/>/g,
   /<path class="c4-rel [^>]*\/>/g,
   /<path class="marker"[^>]*\/>/g,
-  /<rect class="c4-rel-label-box"[^>]*\/>/g,
   /<text[^>]*>[^<]*/g,
 ];
 
 describe('C4 hand-drawn (D301, D307)', () => {
-  it.each(FAMILIES)('sketches every element and keeps the rest plain in %s', async (theme) => {
-    const plain = await render(theme);
-    const r = await render(theme, 'handDrawn');
-    expect(r.warnings).toEqual([]);
-    const ids = ['user', 'web', 'db', 'q', 'fr'];
-    // The plain render draws each element's outline as a shape; the sketch, as a group of paths.
-    expect(Object.keys(elements(plain.svg)).sort()).toEqual([...ids].sort());
-    expect(Object.values(elements(plain.svg))).not.toContain('g');
-    expect(elements(r.svg)).toEqual(Object.fromEntries(ids.map((id) => [id, 'g'])));
-    for (const re of PLAIN) expect(all(r.svg, re), String(re)).toEqual(all(plain.svg, re));
-    // The bounds come from the layout, not the sketch.
-    expect(/viewBox="[^"]*"/.exec(r.svg)![0]).toBe(/viewBox="[^"]*"/.exec(plain.svg)![0]);
-  });
+  it.each(FAMILIES)(
+    'sketches every element and label tag and keeps the rest plain in %s',
+    async (theme) => {
+      const plain = await render(theme);
+      const r = await render(theme, 'handDrawn');
+      expect(r.warnings).toEqual([]);
+      const ids = ['user', 'web', 'db', 'q', 'fr'];
+      // The plain render draws each element's outline as a shape; the sketch, as a group of paths.
+      expect(Object.keys(elements(plain.svg)).sort()).toEqual([...ids].sort());
+      expect(Object.values(elements(plain.svg))).not.toContain('g');
+      expect(elements(r.svg)).toEqual(Object.fromEntries(ids.map((id) => [id, 'g'])));
+      for (const re of PLAIN) expect(all(r.svg, re), String(re)).toEqual(all(plain.svg, re));
+      // Each relation label's tag: a rect in the plain render, a sketch (a group of paths) here.
+      const tags = (svg: string) => all(svg, /<g class="edgeLabel" [^>]*><(\w+)/g);
+      expect(tags(plain.svg)).toHaveLength(2);
+      expect(tags(plain.svg).every((t) => t.endsWith('<rect'))).toBe(true);
+      expect(tags(r.svg)).toHaveLength(2);
+      expect(tags(r.svg).every((t) => t.endsWith('<g'))).toBe(true);
+      // The bounds come from the layout, not the sketch.
+      expect(/viewBox="[^"]*"/.exec(r.svg)![0]).toBe(/viewBox="[^"]*"/.exec(plain.svg)![0]);
+    }
+  );
 
   it('draws the same sketch on every render (R-ARCH-6)', async () => {
     expect((await render('redux', 'handDrawn')).svg).toBe((await render('redux', 'handDrawn')).svg);

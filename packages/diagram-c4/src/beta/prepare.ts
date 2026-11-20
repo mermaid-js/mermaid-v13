@@ -12,6 +12,8 @@ import type {
   LayoutNode,
   UnitProfile,
 } from '@mermaid-js/core/layout';
+import { pxProfile } from '@mermaid-js/core/layout';
+import { labelledEdge } from '@mermaid-js/shared/layout';
 import { Style, type FontKey } from '@mermaid-js/core/text';
 import {
   c4betaDiagramPadding,
@@ -24,6 +26,7 @@ import {
 } from '../config.ts';
 import { cellConfig, cellPxMeasurer, cellRoom, type CellSize } from '../layout/cells.ts';
 import { C4_METRICS as M, FONT_WEIGHT } from '../layout/metrics.ts';
+import { labelRoomOf, type LabelRoom } from '../layout/room.ts';
 import { shapeSize, type ShapeRoom } from '../layout/shapes.ts';
 import {
   measureSections,
@@ -87,6 +90,8 @@ export interface C4BetaPrepared {
    * cells (`grid: 1`); `placeC4Beta` reads the engine's answer back at this size (`./cells.ts`).
    */
   readonly cell?: CellSize;
+  /** The room a relation's label box adds to its text, in px: the profile's `labelPatch` (D629). */
+  readonly labelRoom: LabelRoom;
   /** Set when text output leaves out a legend the diagram would show. */
   readonly legendDropped?: true;
 }
@@ -235,15 +240,18 @@ function measureEdge(relation: C4BetaRelation, index: number, m: Measuring): Bet
   };
 }
 
-/** The size of a relation's label block: the two texts stacked, `labelPad` wider than the wider. */
+/** No room round a label block: the engine's graph adds the profile's `labelPatch` itself. */
+const NO_ROOM: LabelRoom = { x: 0, y: 0 };
+
+/** The size of a relation's label block: the two texts stacked, with `room` round them. */
 export function labelBlock(
   edge: Pick<BetaEdge, 'label' | 'techn'>,
-  pad: number = M.labelPad
+  room: LabelRoom = NO_ROOM
 ): LayoutEdge['label'] {
   if (!edge.label && !edge.techn) return undefined;
   return {
-    width: Math.max(edge.label?.text.width ?? 0, edge.techn?.text.width ?? 0) + pad,
-    height: (edge.label?.text.height ?? 0) + (edge.techn?.text.height ?? 0),
+    width: Math.max(edge.label?.text.width ?? 0, edge.techn?.text.width ?? 0) + room.x,
+    height: (edge.label?.text.height ?? 0) + (edge.techn?.text.height ?? 0) + room.y,
   };
 }
 
@@ -282,16 +290,9 @@ function pxGraph(
     direction: model.direction,
     nodes,
     groups,
-    edges: edges.map((e) => {
-      const label = labelBlock(e);
-      return {
-        id: e.id,
-        source: e.relation.from,
-        target: e.relation.to,
-        minLen: 1,
-        ...(label ? { label } : {}),
-      };
-    }),
+    edges: edges.map((e) =>
+      labelledEdge(pxProfile.builder, e.id, e.relation.from, e.relation.to, labelBlock(e), 1)
+    ),
     spacing: { node: B.nodeSpacing, rank: B.rankSpacing, edge: B.edgeSpacing },
     routing: 'stepped',
     headRoom: M.arrow + B.arrowGap,
@@ -362,7 +363,7 @@ function graphOf(
     id: e.id,
     from: e.relation.from,
     to: e.relation.to,
-    block: labelBlock(e, 0),
+    block: labelBlock(e),
   }));
   const { availableWidth } = ctx;
   return cellGraph(
@@ -393,6 +394,7 @@ export function prepareC4Beta(model: C4BetaModel, ctx: C4BetaLayoutContext): C4B
     ...(legend ? { legend } : {}),
     diagramPadding: graph.diagramPadding ?? c4betaDiagramPadding(ctx.config),
     config: measuring.config,
+    labelRoom: labelRoomOf(units),
     ...(units ? { cell: units.pxPerUnit } : {}),
     ...(units && entries.length > 0 ? { legendDropped: true as const } : {}),
   };

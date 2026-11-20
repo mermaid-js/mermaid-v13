@@ -110,6 +110,25 @@ describe('inline boxes from an extension (D177)', () => {
     expect(r.svg).not.toContain('$$');
   });
 
+  it('c4: stacks a relation’s [techn] under a label a box made taller, in one tag (D626)', async () => {
+    const { m, ready } = api(math);
+    await ready;
+    const src = 'C4Context\nPerson(a, "A")\nSystem(b, "B")\nRel(a, b, "Pays $$abcd$$", "JSON")';
+    const r = await m.render('x', src);
+    expect(codes(r.warnings)).toEqual([]);
+    const tag = r.svg.slice(r.svg.indexOf('<g class="edgeLabel"'));
+    // The box carries the label's paint, so its group has a fill before the transform.
+    const top = +/<g [^>]*transform="translate\(-?[\d.]+,(-?[\d.]+)\)"><g><rect /.exec(tag)![1]!;
+    const [label, techn] = baselines(tag) as [number, number];
+    const [, y, height] = /<rect [^>]*\sy="([\d.]+)" width="[\d.]+" height="([\d.]+)"/.exec(tag)!;
+    // The label's line sits on the box's baseline, the box inside the tag, [techn] below it.
+    expect(top + 20).toBeCloseTo(label, 1);
+    expect(top).toBeGreaterThanOrEqual(+y!);
+    expect(techn).toBeGreaterThan(top + 30);
+    expect(techn).toBeLessThan(+y! + +height!);
+    expect(tag).toMatch(/<tspan x="[\d.]+" y="[\d.]+" font-style="italic">\[JSON\]</);
+  });
+
   it('wraps a box as one piece at several widths', async () => {
     const label = 'flowchart LR\n  A["aaaa $$wxyz$$ aaaa"]';
     const rows: number[] = [];

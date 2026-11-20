@@ -66,7 +66,8 @@ describe('c4-beta render properties over the accepted corpus', () => {
       'class="node c4-shape c4-external_system c4-external"',
       'class="c4-boundary"',
       '<path class="marker"',
-      'class="c4-rel-techn"',
+      '<g class="edgeLabel"',
+      'font-style="italic">[',
       'class="c4-title"',
     ])
       expect(all, part).toContain(part);

@@ -46,7 +46,8 @@ function relation(svg: string, id: string) {
     stroke: /stroke="([^"]+)"/.exec(line)![1],
     dash: /stroke-dasharray="([^"]+)"/.exec(line)?.[1],
     head: /<path class="marker"[^>]*? fill="([^"]+)"/.exec(g)![1],
-    text: /class="c4-rel-label"[^>]*? fill="([^"]+)"/.exec(g)![1],
+    text: /<g class="edgeLabel"[^>]*><rect[^>]*><text[^>]*? fill="([^"]+)"/.exec(g)![1],
+    border: /<g class="edgeLabel"[^>]*><rect[^>]*? stroke="([^"]+)"/.exec(g)![1],
   };
 }
 
@@ -175,10 +176,12 @@ describe('what a style paints on a relation', () => {
       dash: undefined,
       head: '#0a7a3d',
       text: '#14532d',
+      border: '#0a7a3d',
     });
     const plain = relation(svg, 'b->c');
     expect(plain.stroke).not.toBe('#0a7a3d');
     expect(plain.text).toBe(plain.stroke);
+    expect(plain.border).toBe(plain.stroke);
   });
 
   it('dashes the line for `line`: 3 for dashed, 2 for dotted, none for solid', async () => {
@@ -193,6 +196,8 @@ describe('what a style paints on a relation', () => {
     );
     expect(relation(svg, 'a->b').dash).toBe('3');
     expect(relation(svg, 'a->c').dash).toBe('2');
+    // The label's border takes the line's colour, never its dashes (D627).
+    expect(svg).not.toMatch(/<g class="edgeLabel"[^>]*><rect[^>]*stroke-dasharray/);
     expect(relation(svg, 'b->c').dash).toBeUndefined();
   });
 

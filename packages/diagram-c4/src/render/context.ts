@@ -6,12 +6,13 @@ import type { Paints } from './paint.ts';
 /**
  * What the C4 renderer reads from the render context: the config (`c4.useMaxWidth` and the
  * element palette), the theme, the id prefix and version for the root, and `warn` for
- * `C4_COLOR_INVALID`.
+ * `C4_COLOR_INVALID`; the unit profile, for the room round a relation's label (D629).
  */
 export type C4RenderContext = Pick<
   RenderContext,
   'config' | 'theme' | 'idPrefix' | 'version' | 'warn'
->;
+> &
+  Partial<Pick<RenderContext, 'units'>>;
 
 /**
  * What the painters read of a diagram's model (spec #730: they take this and a paint table, not

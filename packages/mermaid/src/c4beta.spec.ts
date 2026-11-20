@@ -64,12 +64,16 @@ describe('c4-beta through the public API (spec #730)', () => {
   it('numbers the steps of a dynamic diagram', async () => {
     const r = await createMermaid().render('c1', fixture('dynamic-steps.mmd'));
     const all = texts(r.svg);
+    // A step's label and its technology are one text (D626): the label comes first.
     for (const step of [
       '1. Enters credentials',
       '3. Looks up the user',
       '5. Returns a session token',
     ])
-      expect(all).toContain(step);
+      expect(
+        all.some((t) => t.startsWith(step)),
+        step
+      ).toBe(true);
   });
 
   it('renders every fixture, with the warnings the spec expects and no others', async () => {

@@ -85,6 +85,21 @@ export function personParts({ x, y, width: w, height: h }: Rect, figure = true):
   };
 }
 
+/**
+ * What of a shape a relation label must not cover: its box, or for a person drawn as a figure
+ * its head's square and its body, so that a label may sit in the empty corners beside the head
+ * (#955 review). On the cell profile a person is a box with a head row (`person-box`) and blocks
+ * its whole box, as text output frames it.
+ */
+export function labelBlockers(box: Outline): Rect[] {
+  if (box.form !== 'person') return [box];
+  const { head, body } = personParts(box);
+  return [
+    { x: head.cx - head.r, y: head.cy - head.r, width: 2 * head.r, height: 2 * head.r },
+    body,
+  ];
+}
+
 /** A shape's size around a text block `tw` × `th`, and where the text's centre sits from the box's. */
 export interface ShapeSize {
   readonly w: number;
