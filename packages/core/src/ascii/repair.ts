@@ -20,6 +20,7 @@
 // the snapped route is kept and the collision reported.
 import type { LayoutGraph, LayoutModel, Point } from '../layout/types.ts';
 import { DOWN, DX, DY, INTO, LEFT, RIGHT, UP, opposite } from './directions.ts';
+import { Heap } from './heap.ts';
 import { snapRoute } from './snap.ts';
 
 /** What a route ran into. */
@@ -299,71 +300,6 @@ function corners(path: Path): Point[] {
     out.push({ x: path.xs[i]!, y: path.ys[i]! });
   }
   return out;
-}
-
-/** A binary min-heap of states, ties broken by insertion order. */
-class Heap {
-  private readonly keys: number[] = [];
-  private readonly order: number[] = [];
-  private readonly items: number[] = [];
-  private count = 0;
-
-  get size(): number {
-    return this.items.length;
-  }
-
-  push(key: number, item: number): void {
-    this.keys.push(key);
-    this.order.push(this.count++);
-    this.items.push(item);
-    let i = this.items.length - 1;
-    while (i > 0) {
-      const p = (i - 1) >> 1;
-      if (!this.less(i, p)) break;
-      this.swap(i, p);
-      i = p;
-    }
-  }
-
-  pop(): number {
-    const top = this.items[0]!;
-    const last = this.items.length - 1;
-    this.swap(0, last);
-    this.keys.pop();
-    this.order.pop();
-    this.items.pop();
-    let i = 0;
-    for (;;) {
-      const l = 2 * i + 1;
-      const r = l + 1;
-      let m = i;
-      if (l < this.items.length && this.less(l, m)) m = l;
-      if (r < this.items.length && this.less(r, m)) m = r;
-      if (m === i) break;
-      this.swap(i, m);
-      i = m;
-    }
-    return top;
-  }
-
-  private less(a: number, b: number): boolean {
-    const ka = this.keys[a]!;
-    const kb = this.keys[b]!;
-    return ka < kb || (ka === kb && this.order[a]! < this.order[b]!);
-  }
-
-  private swap(a: number, b: number): void {
-    const { keys, order, items } = this;
-    const k = keys[a]!;
-    keys[a] = keys[b]!;
-    keys[b] = k;
-    const o = order[a]!;
-    order[a] = order[b]!;
-    order[b] = o;
-    const t = items[a]!;
-    items[a] = items[b]!;
-    items[b] = t;
-  }
 }
 
 /**

@@ -16,6 +16,7 @@ import {
   type Measurer,
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
+import { unionRects } from '@mermaid-js/shared/layout';
 import { C4_BOUNDARY_CYCLE } from '../codes.ts';
 import { c4Fonts, c4LayoutConfig, type C4Fonts, type C4LayoutConfig } from '../config.ts';
 import {
@@ -976,18 +977,9 @@ function assemble(p: Parts): C4Layout {
     boundaries: p.order.filter((g) => g.index >= 0).map((g) => boundaryOut(g, shift)),
     elements: p.nodes.map((n) => elementOut(n, shift)),
     relations: p.relations.list.map((r) => relationOut(r, shift)),
-    bounds: title ? union(content, title) : content,
+    bounds: title ? unionRects([content, title]) : content,
     careful: p.relations.careful,
     ...(p.config.wrapAll ? { labelsWrap: true as const } : {}),
     ...(p.cell ? { cell: p.cell } : {}),
   };
-}
-
-/** Two boxes together. */
-function union(a: Rect, b: Rect): Rect {
-  const x = Math.min(a.x, b.x);
-  const y = Math.min(a.y, b.y);
-  const right = Math.max(a.x + a.width, b.x + b.width);
-  const bottom = Math.max(a.y + a.height, b.y + b.height);
-  return { x, y, width: right - x, height: bottom - y };
 }

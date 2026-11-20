@@ -15,6 +15,7 @@ import {
   DOWN,
   DX,
   DY,
+  Heap,
   LEFT,
   opposite,
   RIGHT,
@@ -209,54 +210,6 @@ function offMiddle(r: CellRect, x: number, y: number): number {
   return M.offMiddle * (across ? Math.abs(x - midX) : Math.abs(y - midY));
 }
 
-/** A binary min-heap of (cost, state). */
-class Heap {
-  private readonly f: number[] = [];
-  private readonly s: number[] = [];
-  get size(): number {
-    return this.f.length;
-  }
-  push(f: number, s: number): void {
-    const a = this.f;
-    const b = this.s;
-    let i = a.length;
-    a.push(f);
-    b.push(s);
-    while (i > 0) {
-      const p = (i - 1) >> 1;
-      if (a[p]! <= f) break;
-      a[i] = a[p]!;
-      b[i] = b[p]!;
-      i = p;
-    }
-    a[i] = f;
-    b[i] = s;
-  }
-  pop(): number {
-    const a = this.f;
-    const b = this.s;
-    const top = b[0]!;
-    const f = a.pop()!;
-    const s = b.pop()!;
-    const n = a.length;
-    if (n > 0) {
-      let i = 0;
-      for (;;) {
-        let c = 2 * i + 1;
-        if (c >= n) break;
-        if (c + 1 < n && a[c + 1]! < a[c]!) c++;
-        if (a[c]! >= f) break;
-        a[i] = a[c]!;
-        b[i] = b[c]!;
-        i = c;
-      }
-      a[i] = f;
-      b[i] = s;
-    }
-    return top;
-  }
-}
-
 interface Window {
   readonly x0: number;
   readonly y0: number;
@@ -326,7 +279,8 @@ function search(board: Board, q: Search): Found {
     const lx = l % ww;
     return board.at(win.x0 + lx, win.y0 + (l - lx) / ww);
   };
-  const heap = new Heap();
+  // Equal costs stay as the heap holds them, the order this search has always had.
+  const heap = new Heap('none');
   const { goalRect: r } = q;
   const h = (x: number, y: number): number =>
     Math.max(0, r.x - 1 - x, x - r.x - r.width) + Math.max(0, r.y - 1 - y, y - r.y - r.height);

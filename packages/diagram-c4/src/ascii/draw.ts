@@ -34,6 +34,7 @@ import {
   type Dir,
   type GlyphSet,
 } from '@mermaid-js/core/ascii';
+import { dirOf } from '@mermaid-js/shared/ascii';
 import type {
   C4BoundaryLayout,
   C4ElementLayout,
@@ -220,11 +221,6 @@ function cover(set: CellSet, texts: readonly Written[]): void {
     const width = cellWidth(t.text);
     for (let i = 0; i < width; i++) set.add(t.x + i, t.y);
   }
-}
-
-/** The way from `a` to the neighbouring cell `b`. */
-function dirOf(a: Cell, b: Cell): Dir {
-  return DIRS.find((d) => a.x + DX[d] === b.x && a.y + DY[d] === b.y) ?? 0;
 }
 
 /**
