@@ -1,0 +1,51 @@
+---
+config:
+  theme: dark
+  themeVariables:
+    primaryColor: '#ffcc00'
+    primaryTextColor: '#003366'
+    lineColor: '#008800'
+    secondaryColor: '#99ccff'
+    tertiaryColor: '#ffe6f0'
+    background: '#fff2cc'
+description: >-
+  baseline/themes/default.mmd, the representative requirement diagram, under base-colour overrides in the dark theme
+  (#1035, D656): the relation lines and markers keep v12 dark's #d3d3d3 under the lineColor override
+  (canvasLineColor), as in v12
+---
+requirementDiagram
+
+  requirement test_req {
+    id: 1
+    text: the test text.
+    risk: high
+    verifymethod: test
+  }
+
+  functionalRequirement test_req2 {
+    id: 1.1
+    text: the second test text.
+    risk: low
+    verifymethod: inspection
+  }
+
+  performanceRequirement test_req3 {
+    id: 1.2
+    text: the third test text.
+    risk: medium
+    verifymethod: demonstration
+  }
+
+  element test_entity {
+    type: simulation
+  }
+
+  element test_entity2 {
+    type: word doc
+    docRef: reqs/test_entity
+  }
+
+  test_entity - satisfies -> test_req2
+  test_req - traces -> test_req2
+  test_req - contains -> test_req3
+  test_entity2 - verifies -> test_req

@@ -32,7 +32,9 @@ e2e/diagrams/sequence/baseline/themes/redux-color.mmd 2 2b5c18fb96b55cd6
 e2e/diagrams/sequence/baseline/themes/redux-dark-color.mmd 2 171c8c60f2cd706b
 e2e/diagrams/sequence/baseline/themes/redux-dark.mmd 2 ff62660689b553bb
 e2e/diagrams/sequence/baseline/themes/redux.mmd 2 8c1c4ae9fc80ba7f
+e2e/diagrams/sequence/nightly-check/dark-theme-base-colour-overrides.mmd 2 5321daaa097c28c2
 e2e/diagrams/sequence/nightly-check/dark-theme.mmd 1 4cff0f136587964c
+e2e/diagrams/sequence/nightly-check/default-theme-base-colour-overrides.mmd 2 fd762fcd069aa0fe
 e2e/diagrams/sequence/nightly-check/default-theme.mmd 1 7025f117935ce9cb
 e2e/diagrams/sequence/nightly-check/forest-theme.mmd 1 ef97896f6a944414
 e2e/diagrams/sequence/nightly-check/front-matter-title.mmd 1 eb39adc4bc5ce601

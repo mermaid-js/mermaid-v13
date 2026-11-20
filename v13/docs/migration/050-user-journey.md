@@ -63,11 +63,12 @@
 
 ### Themes
 
-- `fillType0`–`fillType7` are each theme's v12 values, written into the theme. v12 derived
-  them from `primaryColor` and `secondaryColor` with hue turns of ±64° and 128°, so a custom
-  `primaryColor` recoloured every section. In v13 it does not, except on `base`, where
-  `fillType0` and `fillType1` follow `primaryColor` and `secondaryColor` while
-  `fillType2`–`fillType7` keep base's v12 values. Set `fillType<n>` to recolour a section.
+- `fillType0`–`fillType7` are each theme's v12 values. v12 derived them from `primaryColor`
+  and `secondaryColor` with hue turns of ±64° and 128°, so a custom `primaryColor` recoloured
+  every section. The classic themes (`default`, `dark`, `forest`, `neutral`, `base`) keep
+  those rules, so an override recolours the sections as in v12 (D656). The redux and neo
+  themes write their values as fixed colours, which an override of a base colour does not
+  move. Set `fillType<n>` to recolour a section.
 - `faceColor` is `#FFF8DC` in every theme (v12's fallback; no v12 theme set it).
 - `actor0`–`actor5` have no theme value: dots take `journey.actorColours` in every theme,
   redux included, and an author's `actor<n>` wins for n < 6 (D249).

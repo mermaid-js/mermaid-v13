@@ -68,10 +68,16 @@ describe('the state theme table (#414 T3)', () => {
   });
 
   it('derives the body from background, the classic strip from mainBkg, base nesting from tertiaryColor', async () => {
-    const body = await themed('default', { background: '#abcdef' });
+    const body = await themed('forest', { background: '#abcdef' });
     expect(body.value('compositeBackground')).toBe('#abcdef');
-    const strip = await themed('default', { mainBkg: '#123456' });
+    // `default` keeps v12's `#ffffff` body under a `background` override (`canvasBkg`, D656).
+    const kept = await themed('default', { background: '#abcdef' });
+    expect(kept.value('compositeBackground')).toBe('#ffffff');
+    const strip = await themed('forest', { mainBkg: '#123456' });
     expect(strip.value('compositeTitleBackground')).toBe('#123456');
+    // `default` keeps v12's `#ececff` strip under a `mainBkg` override (`canvasNodeBkg`, D656).
+    const keptStrip = await themed('default', { mainBkg: '#123456' });
+    expect(keptStrip.value('compositeTitleBackground')).toBe('#ececff');
     const nested = await themed('base', { tertiaryColor: '#c0ffee' });
     expect(nested.value('altBackground')).toBe('#c0ffee');
   });

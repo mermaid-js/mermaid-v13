@@ -391,7 +391,7 @@ describe('theme table (D331, D541)', () => {
     const border = attrs(r.svg, /<rect class="node-bkg"([^>]*)\/>/);
     expect(border.stroke).toBe('var(--_agc)');
     expect(border['stroke-width']).toBe('var(--_agw)');
-    expect(r.svg).toContain('--_aec:var(--mermaid-archEdgeColor,var(--_l))');
+    expect(r.svg).toContain('--_aec:var(--mermaid-archEdgeColor,var(--_dl))');
     expect(r.svg).toContain('--_aew:var(--mermaid-archEdgeWidth,3px)');
     expect(r.svg).toContain('--_agw:var(--mermaid-archGroupBorderWidth,2px)');
     // v12's constructor-time border (`#c7c7f1` in default), not today's primaryBorderColor.

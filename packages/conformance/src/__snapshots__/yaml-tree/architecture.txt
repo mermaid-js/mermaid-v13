@@ -5,6 +5,7 @@ e2e/diagrams/architecture/baseline/themes/default.mmd 1 638d0de937b08876
 e2e/diagrams/architecture/baseline/themes/neo-dark.mmd 1 4d9422c4bff54925
 e2e/diagrams/architecture/baseline/themes/neo.mmd 1 c473052e7c03c179
 e2e/diagrams/architecture/baseline/themes/redux.mmd 1 02b93c4e64e65804
+e2e/diagrams/architecture/nightly-check/dark-theme-base-colour-overrides.mmd 1 f1ed8182ef7b6763
 e2e/diagrams/architecture/nightly-check/layout-bends-follow-written-sides.mmd 1 78e61f6ce9f02c6e
 e2e/diagrams/architecture/nightly-check/layout-dagre-ranks-services-and-attaches-lines-on-named-sides.mmd 1 b86f9aa443844eb9
 e2e/diagrams/architecture/nightly-check/layout-group-edge-detours-round-a-service.mmd 1 a08a9122ac5839b5

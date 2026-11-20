@@ -70,6 +70,12 @@ describe('theme vocabulary usedBy (#207)', () => {
     expect([...reads].filter((name) => !listed.includes(name)).sort()).toEqual([]);
   });
 
+  // An element's `class: 'background'` (xychart's background rect) is an SVG class, not a read:
+  // xychart's background is `canvasBkg` (D656).
+  it('counts no SVG class name as a read', () => {
+    expect(READS.get('xychart')!.has('background')).toBe(false);
+  });
+
   // packages/conformance/src/neo-theme.spec.ts keeps `border1` because nothing reads it (D152);
   // core's own `usedBy` no longer lists every reader, so the reads check it here.
   it('reads border1 nowhere (neo-theme.spec, D152)', () => {

@@ -1,0 +1,27 @@
+---
+config:
+  theme: default
+  themeVariables:
+    primaryColor: '#ffcc00'
+    primaryTextColor: '#003366'
+    lineColor: '#008800'
+    secondaryColor: '#99ccff'
+    tertiaryColor: '#ffe6f0'
+    background: '#fff2cc'
+description: >-
+  baseline/themes/default.mmd, the representative quadrant chart, under base-colour overrides in
+  the default theme (#1035, D656): the quadrant fills and text keep v12 default's own colours, as in v12
+---
+quadrantChart
+  title Reach and engagement of campaigns
+  x-axis Low Reach --> High Reach
+  y-axis Low Engagement --> High Engagement
+  quadrant-1 We should expand
+  quadrant-2 Need to promote
+  quadrant-3 Re-evaluate
+  quadrant-4 May be improved
+  Campaign A: [0.3, 0.6]
+  Campaign B: [0.45, 0.23]
+  Campaign C:::hot: [0.57, 0.69]
+  Campaign D: [0.78, 0.34] radius: 8, color: #2f9e44
+  classDef hot color: #e8590c, radius: 9

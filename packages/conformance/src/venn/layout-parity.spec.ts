@@ -348,7 +348,7 @@ describe('venn layout parity with venn.js 2.0.0 (D411, D412)', () => {
         );
     }
     expect(failures.slice(0, 10)).toEqual([]);
-    expect(compared).toBe(181);
+    expect(compared).toBe(182);
   }, 120_000);
 
   it('equals venn.js on four to six sets when venn.js draws the same fixed-seed sequence (D413)', () => {

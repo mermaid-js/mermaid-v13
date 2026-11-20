@@ -115,14 +115,14 @@ describe('quadrant theme variables against v12 12.2.0', () => {
     }
   );
 
-  it('follow a user primaryColor in default, where v12 kept its own (MIGRATION)', async () => {
+  it('keep their own fills under a user primaryColor in default, as v12 does (D656)', async () => {
     const both = await userPrimary('default');
     // v12 theme-default.js derives them once in its constructor, before the overrides arrive.
     expect(both[0]).toEqual({ quadrant1Fill: '#ececff' });
-    expect(both[4]).toEqual({ quadrant1Fill: '#336699' });
+    expect(both.slice(4)).toEqual(both.slice(0, 4));
   });
 
-  it('follow a user primaryTextColor and primaryBorderColor in default, where v12 did not', async () => {
+  it('keep the text fills under a user primaryTextColor in default, as v12 does (D656), and follow primaryBorderColor, where v12 did not', async () => {
     const vars = { primaryTextColor: '#112233', primaryBorderColor: '#445566' };
     const old = v12Vars('default', vars);
     const theme = createTheme(await loadTheme('default'), {
@@ -132,7 +132,7 @@ describe('quadrant theme variables against v12 12.2.0', () => {
     });
     for (const n of ['quadrant1TextFill', 'quadrantTitleFill', 'quadrantPointTextFill']) {
       expect(hex(old[n]), n).toBe('#131300');
-      expect(theme.value(n), n).toBe('#112233');
+      expect(theme.value(n), n).toBe('#131300');
     }
     expect(hex(old.quadrantExternalBorderStrokeFill)).toBe('#c7c7f1');
     expect(theme.value('quadrantExternalBorderStrokeFill')).toBe('#445566');

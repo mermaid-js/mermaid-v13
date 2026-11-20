@@ -8,6 +8,7 @@ e2e/diagrams/wardley/baseline/themes/neo-dark.mmd 1 f345a746cbf216d1
 e2e/diagrams/wardley/baseline/themes/neo.mmd 1 ca2feb8898448962
 e2e/diagrams/wardley/baseline/themes/redux-dark.mmd 1 7444ddd2115c14a7
 e2e/diagrams/wardley/baseline/themes/redux.mmd 1 28e1e76fb2d47d21
+e2e/diagrams/wardley/nightly-check/default-theme-base-colour-overrides.mmd 1 c0732d053e18ef04
 e2e/diagrams/wardley/nightly-check/parser-front-matter-title.mmd 1 af81ff844b23b8c7
 e2e/diagrams/wardley/nightly-check/render-front-matter-title.mmd 1 d6d3e2cb3ecda0d8
 e2e/diagrams/wardley/pr-check/1-should-render-tea-shop.mmd 1 cc4d3aab9f4467a2

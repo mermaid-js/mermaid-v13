@@ -26,9 +26,10 @@
  * Under author overrides of shared variables, each of `OVERRIDES` lists in `differs`, as exactly,
  * where core's own derivations (not wardley's table) give another colour than v12's (GAPS, the T4
  * review): base's `primaryTextColor` is fixed where v12 derived it from `darkMode` (D571), and
- * v12's `default` built its `wardley` block in its constructor, before an author's `background`
- * or `wardleyEvolutionColor` was applied, so it ignored both. Base's `lineColor` follows
- * `background` (#797) and dark's `mainBkg` is pinned (#798), both as in v12.
+ * v12's `default` built its `wardley` block in its constructor, before an author's
+ * `wardleyEvolutionColor` was applied, so it ignored it. Its `background` it ignored too, and
+ * v13's `default` pins `canvasBkg` (D656). Base's `lineColor` follows `background` (#797) and
+ * dark's `mainBkg` is pinned (#798), both as in v12.
  */
 import { wardley } from '@mermaid-js/diagram-wardley';
 import {
@@ -203,15 +204,8 @@ const OVERRIDES: readonly Override[] = [
   },
   // dark pins v12's mainBkg #1f2020 (#798), so primaryColor leaves the fills as v12 did.
   { label: 'dark + primaryColor', theme: 'dark', vars: { primaryColor: '#123456' }, differs: {} },
-  {
-    label: 'default + background',
-    theme: 'default',
-    vars: { background: '#abcdef' },
-    differs: each(
-      ['wardleyBackgroundColor', 'wardleyComponentFill', 'wardleyAnnotationFill'],
-      'v12 default built its wardley block before the author’s background was applied, so ignored it; v13 follows it'
-    ),
-  },
+  // default pins canvasBkg, so background leaves the canvas and fills as v12 did (D656).
+  { label: 'default + background', theme: 'default', vars: { background: '#abcdef' }, differs: {} },
   {
     label: 'default + wardleyEvolutionColor',
     theme: 'default',

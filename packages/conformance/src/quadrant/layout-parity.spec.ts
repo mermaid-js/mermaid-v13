@@ -153,8 +153,8 @@ function differences(a: unknown, b: unknown): string[] {
 describe('quadrant layout parity with v12 getQuadrantData()', () => {
   it('equals v12 on the corpus, to 0.01 px', async () => {
     const items = await corpus();
-    // v12's 14 e2e fixtures and the 18 baselines (#317 and later).
-    expect(items.length).toBe(14 + 18);
+    // v12's 14 e2e fixtures, the 18 baselines (#317 and later) and #1039's override fixture.
+    expect(items.length).toBe(14 + 18 + 1);
     const problems: string[] = [];
     // A source with a listed model divergence draws other text than v12 by design (D561).
     const divergent = modelDivergenceIds(fileURLToPath(DIVERGENCES_DIR));

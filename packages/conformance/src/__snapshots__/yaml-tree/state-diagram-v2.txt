@@ -71,6 +71,7 @@ e2e/diagrams/state-diagram-v2/nightly-check/concurrent-states-neo-look-neo-theme
 e2e/diagrams/state-diagram-v2/nightly-check/concurrent-states-neo-look-redux-dark-theme.mmd 1 313aee2b92d852cf
 e2e/diagrams/state-diagram-v2/nightly-check/concurrent-states-neo-look-redux-theme.mmd 1 166610c656612e1f
 e2e/diagrams/state-diagram-v2/nightly-check/dark-theme.mmd 1 a9d637abedcc290e
+e2e/diagrams/state-diagram-v2/nightly-check/default-theme-base-colour-overrides.mmd 1 775b45b0f12edae8
 e2e/diagrams/state-diagram-v2/nightly-check/default-theme.mmd 1 1b8e779d56a4340b
 e2e/diagrams/state-diagram-v2/nightly-check/elk/elk-composite-entry-default-centering.mmd 1 0c8016e866e16424
 e2e/diagrams/state-diagram-v2/nightly-check/elk/elk-notes-keep-their-layout.mmd 1 e25f65932b4eaa42

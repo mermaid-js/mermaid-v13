@@ -98,7 +98,7 @@ describe('xychart lexer parity with mermaid@12 (jison)', () => {
     }
     process.stdout.write(`xychart lexer parity: ${compared} of ${items.length} sources lexed\n`);
     // Every e2e fixture, harvested string and case reaches the lexer, but the listed cases.
-    expect(e2e).toBe(62);
+    expect(e2e).toBe(63);
     expect(specs).toBe(70);
     expect(cases).toBe(141);
     expect(undetected.sort()).toEqual([...NOT_DETECTED.keys()].sort());

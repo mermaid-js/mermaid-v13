@@ -2,7 +2,7 @@
  * `default`: v12's classic lavender theme (`theme-default.js`).
  */
 import type { ThemeSpec } from '../spec.ts';
-import { paletteSlots, series } from './palettes.ts';
+import { paletteSlots, series, SERIES_TINTS } from './palettes.ts';
 import { gitSources } from './scales.ts';
 import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
 
@@ -48,6 +48,9 @@ const theme: ThemeSpec = {
     // colours), the inverted text inks, and the note and error colours, which darkMode leaves
     // alone. Not the arrowhead: v12's `.marker` draws it in lineColor (D575).
     mainBkg: '#ececff',
+    // v12's constructor tertiary and line colours (`bandBkg`, `guideLineColor` in vocabulary.ts).
+    bandBkg: '#f9ffec',
+    guideLineColor: '#333333',
     border1: '#9370db',
     primaryBorderColor: '#c7c7f1',
     secondaryBorderColor: '#eeeebc',
@@ -74,6 +77,16 @@ const theme: ThemeSpec = {
     border2: '#aaaa33',
     noteTextColor: '#000000',
     noteBorderColor: '#aaaa33',
+    // v12 theme-default.js keeps its constructor background, lineColor, primaryTextColor,
+    // primaryColor, tertiaryColor and mainBkg where xychart, wardley, cynefin, quadrant,
+    // requirement, state, event modelling, sequence and venn read them, so no override of the
+    // base colour moves them there (D656).
+    canvasBkg: '#ffffff',
+    canvasLineColor: '#333333',
+    canvasTextColor: '#131300',
+    canvasItemBkg: '#ececff',
+    canvasItemBkg3: '#f9ffec',
+    canvasNodeBkg: '#ececff',
   },
   // v12 theme-default derives the ER rows from primaryColor with khroma (D117).
   rules: {
@@ -94,12 +107,13 @@ const theme: ThemeSpec = {
       '#ECECFF #8493A6 #FFC3A0 #DCDDE1 #B8E994 #D1A36F #C3CDE6 #FFB6C1 #496078 #F8F3E3'
     ),
     // v12 theme-default.js: the base colours, tertiary −40, primary −10, secondary −30, tertiary
-    // −20, then hue turns. Slots 2 and 5 derive from the hex tertiary colour, where v12 darkened
-    // its unrounded HSL one, a few steps off (D333(a): #b9ff20 against v12's #b5ff20). Then the
-    // tints (±64° and 128° turns of the primary and secondary colours).
+    // −20, then hue turns, which v12 keeps under an override of a base colour, so they are its
+    // resolved values (D656). Slots 2 and 5 are darkened from the hex tertiary colour, where v12
+    // darkened its unrounded HSL one, a few steps off (D333(a): #b9ff20 against v12's #b5ff20).
+    // Then the tints, which v12 recomputes (`SERIES_TINTS`).
     seriesColorArray: series(
-      'primaryColor secondaryColor darkenHsl(tertiaryColor,40%) darkenHsl(primaryColor,10%) darkenHsl(secondaryColor,30%) darkenHsl(tertiaryColor,20%) #ff86ff #20ffff #ff2020 #ff20ff #20ff8f #ff5353 ' +
-        '#ececff #ffffde #ffecfe #deffe0 #ecfffe #ffdee0 #ffefec #defbff'
+      '#ececff #ffffde #b9ff20 #b9b9ff #ffff45 #d9ff86 #ff86ff #20ffff #ff2020 #ff20ff #20ff8f #ff5353 ' +
+        SERIES_TINTS
     ),
     cScale: [
       '#8686ff',
