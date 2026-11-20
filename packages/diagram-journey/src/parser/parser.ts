@@ -32,6 +32,7 @@ import {
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
 import { STOP } from '@mermaid-js/shared/parser/support';
+import { span, trimmed } from '@mermaid-js/shared/parser/facet';
 import type {
   AstId,
   ParseOptions,
@@ -163,18 +164,9 @@ class JourneyParser {
     return cook(this.src, this.start(j), this.end(j), this.view);
   }
 
-  /** `[start, end)` without the blanks at either end (unless that leaves nothing). */
-  private trim(start: number, end: number): Range {
-    let s = start;
-    let e = end;
-    while (s < e && /\s/.test(this.src[s] ?? '')) s++;
-    while (e > s && /\s/.test(this.src[e - 1] ?? '')) e--;
-    return s < e ? { start: s, end: e } : { start, end };
-  }
-
-  /** The range of tokens `a` to `b`, blanks off both ends. */
+  /** The range of tokens `a` to `b`, blanks off both ends (unless that leaves nothing). */
   private span(a: number, b = a): Range {
-    return this.trim(this.start(a), this.end(b));
+    return trimmed(this.src, span(this.start(a), this.end(b)), true);
   }
 
   /** The nearest token before (`dir` -1) or after (+1) `j` that is not a comment, or -1. */

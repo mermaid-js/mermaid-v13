@@ -38,6 +38,8 @@ import {
   SEMI,
   sourceView,
 } from '@mermaid-js/core/parser-kit';
+import { excerpt, lineTokens } from '@mermaid-js/shared/parser/line-tokens';
+import type { LineTokenView } from '@mermaid-js/shared/parser/line-tokens';
 import { STOP } from '@mermaid-js/shared/parser/support';
 import type {
   AstId,
@@ -114,10 +116,6 @@ const CLASS = [T.StyleSeparator];
  */
 const PROBE_FOLLOWS = kindSet(T.StyleSeparator, T.Separator, T.Comma, T.Indentation, T.String);
 
-/** Trivia of the parser's view: the lexer's trivia and the line breaks. */
-const isTrivia = (k: number) =>
-  k === Kind.Comment || k === Kind.Directive || k === Kind.Space || k === Kind.Newline;
-
 /** Each text statement's AST type and keyword. */
 const TEXT_STATEMENTS = /* @__PURE__ */ textStatements(T.Title, T.AccTitle, T.AccDescr);
 
@@ -151,51 +149,9 @@ const EXPECTED = new ExpectedTable([
   ['the end of the text', [Kind.EOF]],
 ]);
 
-/** The longest text an error message quotes. */
-const EXCERPT = 24;
-
-/** The first line of `text`, at most {@link EXCERPT} characters, with `…` when anything is cut. */
-function excerpt(text: string): string {
-  const line = text.split('\n', 1)[0] ?? '';
-  return line.length > EXCERPT || line !== text ? `${line.slice(0, EXCERPT)}…` : line;
-}
-
 /** Parse a treemap. Never throws: problems are error diagnostics. */
 export function parseTreemap(src: string, options: TreemapParseOptions = {}): TreemapParseResult {
   return new TreemapParser(src, options).parse();
-}
-
-/** The parser's tokens: the significant ones, and whether a line break comes before each. */
-interface LineView {
-  readonly kind: Uint16Array;
-  readonly start: Uint32Array;
-  readonly end: Uint32Array;
-  /** 1 when a line break comes between the token and the significant one before it. */
-  readonly lineStart: Uint8Array;
-  readonly length: number;
-}
-
-function lineView(stream: TokenStream): LineView {
-  let n = 0;
-  for (let j = 0; j < stream.length; j++) if (!isTrivia(stream.kind[j] ?? Kind.EOF)) n++;
-  const kind = new Uint16Array(n);
-  const start = new Uint32Array(n);
-  const end = new Uint32Array(n);
-  const lineStart = new Uint8Array(n);
-  let o = 0;
-  let line = 1;
-  for (let j = 0; j < stream.length; j++) {
-    const k = stream.kind[j] ?? Kind.EOF;
-    if (k === Kind.Newline) line = 1;
-    if (isTrivia(k)) continue;
-    kind[o] = k;
-    start[o] = stream.start[j] ?? 0;
-    end[o] = stream.end[j] ?? 0;
-    lineStart[o] = line;
-    line = 0;
-    o++;
-  }
-  return { kind, start, end, lineStart, length: n };
 }
 
 /**
@@ -206,7 +162,7 @@ class TreemapParser {
   private readonly pre: PreprocessResult;
   private readonly view: SourceView;
   private readonly full: TokenStream;
-  private readonly t: LineView;
+  private readonly t: LineTokenView;
   private i = 0;
   /** Where the statement that failed stopped. */
   private failedAt = 0;
@@ -240,7 +196,7 @@ class TreemapParser {
       pre.directives.map((d) => d.range)
     );
     this.full = lex(src, pre.bodyStart, this.view);
-    this.t = lineView(this.full);
+    this.t = lineTokens(this.full);
     if (opts.probe !== undefined) {
       const probe = (this.probe = new Probe(src, opts.probe, PROBE_FOLLOWS));
       if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');

@@ -203,11 +203,11 @@ export function layoutLR(env: Env, model: TimelineModel): TimelineLayout {
         width: span - lr.sectionTrim + 2 * lr.padding,
         height: sectionHeights[k]!,
       };
-      const band = new Bounds().rect(box);
+      const band = new Bounds().add(box);
       for (const i of own) {
         const p = periods[i]!;
-        band.rect(p);
-        for (const e of p.events) band.rect(e);
+        band.add(p);
+        for (const e of p.events) band.add(e);
         band.segment(connectors[i]!);
       }
       return {
@@ -224,10 +224,10 @@ export function layoutLR(env: Env, model: TimelineModel): TimelineLayout {
 
   // v12's `getBBox` before the title and the axis: what the title and axis are placed from.
   const content = new Bounds();
-  for (const s of sections) content.rect(s);
+  for (const s of sections) content.add(s);
   for (const p of periods) {
-    content.rect(p);
-    for (const e of p.events) content.rect(e);
+    content.add(p);
+    for (const e of p.events) content.add(e);
   }
   for (const c of connectors) content.segment(c);
   const box = content.box({ x: left, y: top });
