@@ -24,27 +24,11 @@
     QualifiedName : ID ('.' ID)*
 */
 import { checkLimit } from '@mermaid-js/core/limits';
-import {
-  ExpectedTable,
-  formatExpected,
-  Kind,
-  kindSet,
-  LineIndex,
-  ParseState,
-  Probe,
-  significantTokens,
-  skipTo,
-} from '@mermaid-js/core/parser-kit';
+import { ExpectedTable, formatExpected, Kind, kindSet, skipTo } from '@mermaid-js/core/parser-kit';
 import { STOP } from '@mermaid-js/shared/parser/support';
-import type {
-  AstId,
-  ParseOptions,
-  ParseResult,
-  Range,
-  SourceView,
-  TokenStream,
-  TokenView,
-} from '@mermaid-js/core/parser-kit';
+import { RuleParser } from '@mermaid-js/shared/parser/rule';
+import type { RuleGrammar } from '@mermaid-js/shared/parser/rule';
+import type { ParseOptions, ParseResult, TokenStream } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { EVENTMODELING_DUPLICATE_FRAME } from '../codes.ts';
@@ -184,6 +168,14 @@ function probeMode(src: string, tokens: TokenStream, o: number): string {
   return 'INITIAL';
 }
 
+const GRAMMAR: RuleGrammar<PreprocessResult> = {
+  view: (src, pre) => eventModelingView(src, pre).view,
+  lex,
+  trivia: EVENTMODELING_TRIVIA,
+  probeFollows: PROBE_FOLLOWS,
+  probeMode,
+};
+
 /** v12's text-statement words, which v12 lexes as a name at a line start. */
 const TEXT_WORDS = Object.values(TEXT_WORD);
 
@@ -221,22 +213,14 @@ export function parseEventModel(
  * One parse. Each grammar rule is a method that returns what it read; a rule that fails
  * records a diagnostic and throws {@link STOP}, and the statement loop recovers.
  */
-class EventModelParser {
-  private readonly pre: PreprocessResult;
-  private readonly view: SourceView;
-  private readonly full: TokenStream;
-  private readonly t: TokenView;
-  private i = 0;
-  private readonly st = new ParseState();
-  private readonly probe: Probe | undefined;
+class EventModelParser extends RuleParser<PreprocessResult> {
   private readonly children: EventModelStatementNode[] = [];
   private readonly frames: ParsedFrame[] = [];
   /** The relations (`->>` sources) read so far (the edge cap counts them). */
   private relations = 0;
   private readonly stepKinds = new Map<EventModelGwtStepNode, EventModelKind>();
-  private lines: LineIndex | undefined;
-  /** Mentions per id base (`frame:01`, `title`, …), for the `@n` suffixes. */
-  private readonly mentions = new Map<string, number>();
+  /** Where the statement being read started (its first token). */
+  private from = 0;
   /** Frame ids read so far (duplicates are v12's thrown error). */
   private readonly frameIds = new Set<string>();
   /** Ids of frames that failed after their id was read. */
@@ -248,23 +232,16 @@ class EventModelParser {
   private accDescr: EventModelTextNode | undefined;
 
   constructor(
-    private readonly src: string,
+    src: string,
     private readonly opts: EventModelParseOptions
   ) {
-    const pre = (this.pre = opts.preprocessed ?? preprocess(src));
-    if (!opts.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
-    this.view = eventModelingView(src, pre).view;
-    this.full = lex(src, pre.bodyStart, this.view);
-    this.t = significantTokens(this.full, EVENTMODELING_TRIVIA);
-    if (opts.probe !== undefined) {
-      const probe = (this.probe = new Probe(src, opts.probe, PROBE_FOLLOWS));
-      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
-      else probe.trivia(this.full);
-      const mode = probeMode(src, this.full, probe.offset);
-      if (mode === 'comment' || mode === 'yaml') probe.outside(mode);
-      // Ignored when the offset is outside code.
-      else probe.lexed(probe.offset, probe.offset, mode);
-    }
+    const given = opts.preprocessed;
+    super(src, given ?? preprocess(src), !given, GRAMMAR, opts.probe);
+    // `comment` and `yaml` are not code (v12 hid both): the probe is outside them. The set-up
+    // took the mode from `probeMode` with `lexed` (or from a `%%` comment, already outside), and
+    // `outside` after `lexed` leaves the probe as `outside` alone would.
+    const probe = this.probe;
+    if (probe && (probe.mode === 'comment' || probe.mode === 'yaml')) probe.outside(probe.mode);
   }
 
   parse(): EventModelParseResult {
@@ -292,35 +269,16 @@ class EventModelParser {
 
   // ---- tokens -------------------------------------------------------------------------
 
-  private kind(j = this.i): number {
-    return this.t.kind[j] ?? Kind.EOF;
-  }
-
-  private range(j = this.i): Range {
-    return { start: this.t.start[j] ?? 0, end: this.t.end[j] ?? 0 };
-  }
-
   /** A token's text as v12's lexer read it, `#name;` codes as their characters. */
   private displayed(j = this.i): string {
     const { start, end } = this.range(j);
     return displayText(this.src, start, end, this.view);
   }
 
-  /**
-   * Probe hook: the parser tests the token at `j` for `kinds` (a constant list), or would accept
-   * them there. Records them when it is the probed token; a plain parse does nothing.
-   */
-  private tested(kinds: readonly number[], j = this.i): void {
-    const p = this.probe;
-    if (p === undefined) return;
-    if (p.isAt(this.t, j, this.pre.bodyStart)) p.tested(kinds, this.t.start[j] ?? 0);
-  }
-
   /** Consume a token of `kind` and return its text and range, or fail. */
-  private expect(kind: number, hint?: string): EventModelText {
-    if (this.probe !== undefined) this.tested([kind]);
-    if (this.kind() !== kind) this.fail([kind], hint);
-    return this.text();
+  private expectText(kind: number, hint?: string): EventModelText {
+    const j = this.expect(kind, hint);
+    return { value: this.displayed(j), range: this.range(j) };
   }
 
   /** The current token's text and range; consumes it. */
@@ -336,21 +294,10 @@ class EventModelParser {
     return this.t.end[this.i - 1] ?? 0;
   }
 
-  /** `id`, then `id@2`, `id@3`, … */
-  private id(base: string): AstId {
-    const n = (this.mentions.get(base) ?? 0) + 1;
-    this.mentions.set(base, n);
-    return n === 1 ? base : `${base}@${n}`;
-  }
-
   // ---- errors and recovery ------------------------------------------------------------
 
-  private lineOf(at: number): number {
-    return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
-  }
-
-  /** How an error message names the token at `j`. */
-  private found(j = this.i): string {
+  /** How an error message names the token at `j` (its text as {@link displayed}). */
+  protected override found(j = this.i): string {
     if (this.kind(j) === Kind.EOF) return 'the end of the text';
     const text = this.displayed(j).trim();
     const line = text.split('\n', 1)[0] ?? '';
@@ -358,7 +305,7 @@ class EventModelParser {
   }
 
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  private fail(want: readonly number[], hint?: string): never {
+  protected fail(want: readonly number[], hint?: string): never {
     if (this.kind() === Kind.Error) this.badCharacters();
     const names = EXPECTED.names(want);
     const why = hint ?? this.explain(want);
@@ -443,20 +390,21 @@ class EventModelParser {
   }
 
   /** Run one statement rule; on failure, skip to the next statement start (R-PARSE-4). */
-  private statement(rule: () => void): void {
-    const from = this.i;
-    try {
-      rule();
-    } catch (error) {
-      if (error !== STOP) throw error;
-      this.probe?.freeze();
-      if (this.pending !== undefined) this.failedIds.add(this.pending);
-      this.pending = undefined;
-      // Resume at the failing token when it starts a statement (`->> tf 02 cmd B`), else after
-      // it. A failure on the statement's first token always moves on.
-      const resume = this.i > from && this.startsStatement(this.i);
-      this.i = skipTo(this.t, resume ? this.i : Math.max(this.i + 1, from + 1), STARTS_SET);
-    }
+  protected override statement(rule: () => void): void {
+    this.from = this.i;
+    super.statement(rule);
+  }
+
+  /** Skip to the next statement start after a failure (R-PARSE-4). */
+  protected override recover(): void {
+    const { from } = this;
+    this.probe?.freeze();
+    if (this.pending !== undefined) this.failedIds.add(this.pending);
+    this.pending = undefined;
+    // Resume at the failing token when it starts a statement (`->> tf 02 cmd B`), else after
+    // it. A failure on the statement's first token always moves on.
+    const resume = this.i > from && this.startsStatement(this.i);
+    this.i = skipTo(this.t, resume ? this.i : Math.max(this.i + 1, from + 1), STARTS_SET);
   }
 
   /**
@@ -506,7 +454,7 @@ class EventModelParser {
     else if (k === T.Data) this.dataBlock();
     else if (k === T.Note) this.note();
     else if (k === T.Gwt) this.gwt();
-    else if (k === T.Title || k === T.AccTitle || k === T.AccDescr) this.textStatement(k);
+    else if (k === T.Title || k === T.AccTitle || k === T.AccDescr) this.textLine(k);
     else this.fail(AFTER_STATEMENT);
   }
 
@@ -526,13 +474,13 @@ class EventModelParser {
 
   /** `QualifiedName: ID ('.' ID)*` */
   private qualifiedName(): EventModelText {
-    const first = this.expect(T.Id);
+    const first = this.expectText(T.Id);
     let value = first.value;
     for (;;) {
       this.tested(DOT);
       if (this.kind() !== T.Dot) break;
       this.i++;
-      value += `.${this.expect(T.Id, 'a name goes after each `.`').value}`;
+      value += `.${this.expectText(T.Id, 'a name goes after each `.`').value}`;
     }
     return { value, range: { start: first.range.start, end: this.end() } };
   }
@@ -548,7 +496,7 @@ class EventModelParser {
       type = this.text();
       this.expect(T.Backtick);
     }
-    const token = this.expect(kind);
+    const token = this.expectText(kind);
     const node: EventModelDataNode = { text: dataText(token.value), range: token.range };
     if (type) node.type = type;
     return node;
@@ -561,7 +509,7 @@ class EventModelParser {
   private frame(): void {
     const k = this.kind();
     const keyword = this.text();
-    const frame = this.expect(T.FrameId);
+    const frame = this.expectText(T.FrameId);
     this.pending = frame.value;
     // Reported when read (a later syntax error in the frame is its own), reserved only once the
     // frame is complete: a frame that fails reaches no model and takes no id.
@@ -583,7 +531,7 @@ class EventModelParser {
       this.tested(ARROW);
       if (this.kind() !== T.Arrow) break;
       const arrow = this.range(this.i++).start;
-      const source = this.expect(T.FrameId);
+      const source = this.expectText(T.FrameId);
       node.children.push({
         id: '',
         type: 'Source',
@@ -603,7 +551,7 @@ class EventModelParser {
     this.tested(OPEN_REF);
     if (this.kind() === T.OpenRef) {
       this.i++;
-      node.dataRef = this.expect(T.Id);
+      node.dataRef = this.expectText(T.Id);
       this.expect(T.CloseRef);
     }
     this.tested(INLINE_DATA);
@@ -647,7 +595,7 @@ class EventModelParser {
   /** `'data' ID ('`' DataType '`')? DATA_BLOCK` */
   private dataBlock(): void {
     const start = this.range(this.i++).start;
-    const name = this.expect(T.Id);
+    const name = this.expectText(T.Id);
     const data = this.data(T.DataBlock);
     const range = { start, end: this.end() };
     this.done({ id: this.id(`data:${name.value}`), type: 'Data', range, name, data }, 'data');
@@ -656,7 +604,7 @@ class EventModelParser {
   /** `'note' FID ('`' DataType '`')? DATA_BLOCK` */
   private note(): void {
     const start = this.range(this.i++).start;
-    const frame = this.expect(T.FrameId);
+    const frame = this.expectText(T.FrameId);
     const data = this.data(T.DataBlock);
     const range = { start, end: this.end() };
     this.done({ id: this.id(`note:${frame.value}`), type: 'Note', range, frame, data }, 'note');
@@ -665,7 +613,7 @@ class EventModelParser {
   /** `'gwt' FID 'given' Step+ ('when' Step+)? 'then' Step+` */
   private gwt(): void {
     const start = this.range(this.i++).start;
-    const frame = this.expect(T.FrameId);
+    const frame = this.expectText(T.FrameId);
     this.expect(T.Given);
     const given = this.steps();
     let when: EventModelGwtStepNode[] = [];
@@ -688,7 +636,7 @@ class EventModelParser {
     const out: EventModelGwtStepNode[] = [];
     do {
       const { text, kind } = this.kindOf();
-      const step = { kind: text, name: this.expect(T.Id) };
+      const step = { kind: text, name: this.expectText(T.Id) };
       this.stepKinds.set(step, kind);
       out.push(step);
       this.tested(KIND_LIST);
@@ -697,7 +645,7 @@ class EventModelParser {
   }
 
   /** `title …`, `accTitle: …`, `accDescr …` (the last of each wins, as Langium assigns). */
-  private textStatement(k: number): void {
+  private textLine(k: number): void {
     const token = this.text();
     // The image keeps the blanks before the keyword (EM_TITLE's `[\t ]*`); the node does not.
     const lead = token.value.length - token.value.trimStart().length;

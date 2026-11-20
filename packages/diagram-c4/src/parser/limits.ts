@@ -1,18 +1,16 @@
 /** The integrator's limits on a C4 diagram (R-SEC-5, #721). */
 import { checkDepth, checkLimit } from '@mermaid-js/core/limits';
+import type { Limits } from '@mermaid-js/core/limits';
 import type { AstId, Diagnostics, Range } from '@mermaid-js/core/parser-kit';
 import type { C4Model } from '../model.ts';
 import type { C4StatementNode } from './ast.ts';
 
-/** The limits a parse takes; each defaults to core's limit of that name (a parse outside a render). */
-export interface C4LimitOptions {
-  /** The integrator's cap on elements and boundaries together, deployment nodes included (`maxNodes`). */
-  maxNodes?: number;
-  /** The integrator's cap on relations (`maxEdges`). */
-  maxEdges?: number;
-  /** The integrator's cap on how many boundaries one may sit in (`maxDepth`). */
-  maxDepth?: number;
-}
+/**
+ * The limits a parse takes; each defaults to core's limit of that name (a parse outside a render).
+ * `maxNodes` counts elements and boundaries together, deployment nodes included; `maxEdges`
+ * counts relations; `maxDepth` is how many boundaries one may sit in.
+ */
+export type C4LimitOptions = Partial<Pick<Limits, 'maxNodes' | 'maxEdges' | 'maxDepth'>>;
 
 /** A boundary's range runs to its `}`: its macro and arguments, where a cap is reported. */
 function opening(s: C4StatementNode): Range {

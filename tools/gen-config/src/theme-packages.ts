@@ -163,11 +163,15 @@ function sharedEntries(): Map<string, string> {
   );
 }
 
-/** The text of every `@mermaid-js/shared` file that `text` imports, directly or through one. */
+/**
+ * The text of every `@mermaid-js/shared` file that `text` imports, directly or through one. A
+ * type-only import (`import type …`) is erased, so it runs nothing and reads no variable.
+ */
 function sharedSources(text: string): string[] {
   const entries = sharedEntries();
   const seen = new Set<string>();
-  const queue = [...text.matchAll(/'@mermaid-js\/shared\/([\w/-]+)'/g)].flatMap((m) => {
+  const runtime = text.replace(/^import type [^;]*;/gm, '');
+  const queue = [...runtime.matchAll(/'@mermaid-js\/shared\/([\w/-]+)'/g)].flatMap((m) => {
     const entry = PER_EXPORT.has(m[1]!) ? undefined : entries.get(m[1]!);
     return entry === undefined ? [] : [entry];
   });

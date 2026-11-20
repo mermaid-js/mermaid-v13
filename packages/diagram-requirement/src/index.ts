@@ -34,7 +34,6 @@ export type {
   RelationView,
   RequirementCurve,
   RequirementLayout,
-  RequirementLayoutWarning,
   RequirementPrepared,
   RequirementRenderContext,
 } from './layout/index.ts';

@@ -17,6 +17,6 @@ export function layoutEr(model: ErModel, ctx: ErRenderContext): ErLayout {
   return { ...laid, er: prepared };
 }
 
-export type { ErRenderContext, ErWarning } from './context.ts';
+export type { ErRenderContext } from './context.ts';
 export type { Band, EdgeView, EntityView, ErPrepared, GroupView, RowView } from './prepare.ts';
 export { genericType, prepareEr } from './prepare.ts';
