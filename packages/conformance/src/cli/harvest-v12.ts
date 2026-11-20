@@ -19,12 +19,9 @@
  * files are `mermaid@12.2.0`'s (D316; the tag is not in this repo); its syntax pages add a
  * `description:` front matter.
  */
-import { execFileSync } from 'node:child_process';
 import { realpathSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { REPO_ROOT } from '../corpus.ts';
-import { V12_COMMIT } from '../jison/harvest.ts';
+import { LITERAL, V12_COMMIT, git, harvestPath, unescape } from '../jison/harvest.ts';
 import { HARVESTS, rowOf } from '../tables.ts';
 import type { CorpusItem } from '../types.ts';
 
@@ -44,34 +41,9 @@ export interface Harvest {
  */
 export type HarvestType = string;
 
-/** Where `harvest-v12.ts <type>` writes the type's corpus. */
-export const harvestPath = (type: HarvestType): string =>
-  join(REPO_ROOT, 'packages/conformance/corpus', `${type}-v12-specs.json`);
+/** Where `harvest-v12.ts <type>` writes the type's corpus: where the jison types' go too. */
+export { harvestPath };
 
-const ESCAPES: Record<string, string> = {
-  n: '\n',
-  r: '\r',
-  t: '\t',
-  b: '\b',
-  f: '\f',
-  v: '\v',
-  0: '\0',
-};
-
-/** The value of a JS string literal's body: its escapes decoded, line continuations dropped. */
-function unescape(raw: string): string {
-  return raw.replace(/\\(u\{[\da-f]+\}|u[\da-f]{4}|x[\da-f]{2}|\r\n|[\s\S])/gi, (_, e: string) => {
-    if (/^[ux]/i.test(e) && e.length > 1)
-      return String.fromCodePoint(parseInt(e.replace(/[ux{}]/gi, ''), 16));
-    if (e === '\n' || e === '\r\n' || e === '\r') return '';
-    return ESCAPES[e] ?? e;
-  });
-}
-
-const git = (...args: string[]) =>
-  execFileSync('git', ['-C', REPO_ROOT, ...args], { encoding: 'utf8', maxBuffer: 1 << 26 });
-
-const LITERAL = /`((?:[^`\\]|\\.)*)`|'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"/g;
 const FENCE = /```mermaid(?:-example)?\n([\s\S]*?)```/g;
 const HTML_COMMENT = /<!--[\s\S]*?-->/g;
 /** The end of the text before a test's title. */

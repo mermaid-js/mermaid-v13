@@ -4,6 +4,7 @@ import type { LayoutModel } from '@mermaid-js/core/layout';
 import { createMermaid, MermaidError } from 'mermaid';
 import { usecaseCases, usecaseCorpus } from '../usecase/corpus.ts';
 import type { CorpusItem } from '../types.ts';
+import { sizeFaults } from './flow-checks.ts';
 import type { Charset } from './structure.ts';
 import { readUsecase, rectOf, type Rect } from './usecase-structure.ts';
 import { renderUsecaseAscii, type UsecaseAsciiResult } from './usecase-render.ts';
@@ -195,21 +196,7 @@ describe('usecase ascii corpus properties (#569, D478, R-ASCII-9)', { timeout: 1
   });
 
   it('has `rows` lines, none wider than `columns` and one exactly that wide, no trailing spaces', () => {
-    expect(
-      problems((c, cs) => {
-        const { text, rows, columns } = c.out[cs];
-        const lines = text === '' ? [] : text.split('\n');
-        const widest = Math.max(0, ...lines.map(cellWidth));
-        const found: string[] = [];
-        if (lines.length !== rows) found.push(`${lines.length} lines, rows ${rows}`);
-        if (widest !== columns) found.push(`widest ${widest}, columns ${columns}`);
-        lines.forEach((l, i) => {
-          if (/\s$/u.test(l)) found.push(`trailing space on line ${i + 1}`);
-        });
-        if (text.includes('\r')) found.push('\\r in text');
-        return found;
-      })
-    ).toEqual({});
+    expect(problems((c, cs) => sizeFaults(c.out[cs], cellWidth))).toEqual({});
   });
 
   it('uses no Unicode line or marker glyph in ascii output', () => {
