@@ -3,6 +3,7 @@
  * derivations of the reference grammar, depth-bounded, with production weights and token
  * texts learnt from a corpus. Deterministic for a given seed. Dev and CI only.
  */
+import { seededRandom } from '@mermaid-js/shared/random';
 import type { ParseNode, Production, ReferenceParser } from './earley.ts';
 
 /** What a corpus teaches the generator. */
@@ -53,18 +54,6 @@ const MAX_DEPTH = 12;
 /** Cap on tokens per sentence (later productions take the shortest way out). */
 const MAX_TOKENS = 400;
 
-/** A small seeded PRNG (mulberry32). */
-function rng(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
 export interface SentenceGenerator {
   generate(options: GenerateOptions): Sentence;
 }
@@ -94,7 +83,7 @@ export function buildGenerator(parser: ReferenceParser, model: SentenceModel): S
 
   return {
     generate({ seed }) {
-      const random = rng(seed);
+      const random = seededRandom(seed);
       const out: string[] = [];
       let steps = 0;
       const pick = <T>(items: T[], weight: (x: T) => number): T => {
