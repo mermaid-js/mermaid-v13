@@ -20,6 +20,9 @@ import { asciiDropped, emphasised, glyphSetOf } from '@mermaid-js/shared/ascii';
 export type IshikawaAsciiContext = Pick<TextRenderContext, 'config' | 'warn'> &
   Partial<Pick<TextRenderContext, 'inline'>>;
 
+/** One feature kind text output dropped (D82): bold and italic text. */
+export type AsciiDroppedWarning = ReturnType<typeof asciiDropped<'emphasis'>>;
+
 /** The cell measurer ignores the font: one key for every label. */
 const FONT = { family: '', size: 1, weight: 400 } as const;
 
