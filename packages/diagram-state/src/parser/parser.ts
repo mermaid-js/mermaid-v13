@@ -174,7 +174,7 @@ class StateParser extends StateCursor {
     this.document(undefined, { items, nodes: children });
     applyFolds(this.folds, this.embeds, this.blocks, this.report);
     const warnings = () => st.diagnostics.list.filter((d) => d.severity === 'warning');
-    const model = this.db.build(items, []);
+    const model = this.db.build(items);
     undrawnNotices(this.st.diagnostics, model, this.declared, this.clicks);
     model.warnings = warnings();
     const title = this.pre.frontMatter?.title;
