@@ -143,8 +143,7 @@ class WardleyLexer extends RuleLexer {
     if (e < 0 && isWord(c)) e = this.match(T.Id, idEnd(this.text, this.n, p));
     if (e < 0 && isBreak(c)) e = this.match(Kind.Newline, p + this.newline(p));
     if (e < 0 && c === PERCENT && this.text.charCodeAt(p + 1) === PERCENT) {
-      e = this.directive(p);
-      if (e < 0) e = this.match(Kind.Comment, this.lineEnd(p + 2));
+      e = this.directiveOrComment(p);
     }
     return e;
   }
