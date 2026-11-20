@@ -20,7 +20,7 @@ import {
   type Dir,
   type GlyphSet,
 } from '@mermaid-js/core/ascii';
-import { boxForm, drawLineCells, tee } from '@mermaid-js/shared/ascii';
+import { boxForm, drawLineCells, tee, trimmed } from '@mermaid-js/shared/ascii';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { InlineSpans } from '@mermaid-js/core/text';
 import type { BlockArrowType, BlockModel, BlockType } from '../model.ts';
@@ -387,19 +387,4 @@ export function drawBlock(model: BlockModel, options: BlockDrawOptions): BlockDr
     routed.map(({ edge, route: r }) => [edge.ast, { ...r, cells: r.cells.map(back) }])
   );
   return { text, grid, routes, origin: { x: A - left, y: A - top }, forced };
-}
-
-/** The canvas as text without its empty margin, and how many lines and columns that took. */
-function trimmed(canvas: Canvas): { text: string; top: number; left: number } {
-  let lines = canvas.toString().split('\n');
-  let top = 0;
-  while (lines.length > 0 && lines[0] === '') {
-    lines.shift();
-    top++;
-  }
-  while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
-  const blank = Math.min(...lines.filter((l) => l !== '').map((l) => l.search(/\S/)));
-  const left = blank > 0 && Number.isFinite(blank) ? blank : 0;
-  if (left > 0) lines = lines.map((l) => l.slice(left));
-  return { text: lines.join('\n'), top, left };
 }
