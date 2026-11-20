@@ -487,3 +487,14 @@ export function keywordHover(
   if (offset < range.start || offset > range.end || docText === undefined) return undefined;
   return { range, contents: `**${code(text.slice(range.start, range.end))}**\n\n${docText}` };
 }
+
+/** The `direction` values and what they mean, as ER, class and state offer them (no `TD`). */
+export const DIRECTION_DOCS: readonly (readonly [
+  dir: 'TB' | 'BT' | 'LR' | 'RL',
+  meaning: string,
+])[] = [
+  ['TB', 'top to bottom'],
+  ['BT', 'bottom to top'],
+  ['LR', 'left to right'],
+  ['RL', 'right to left'],
+];

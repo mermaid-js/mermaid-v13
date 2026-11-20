@@ -3,13 +3,15 @@
  * is offered as, and what cardinalities, lines and keys mean. Keyword docs are not here: they
  * come from the grammar file (`generated/docs.ts`).
  */
-import type { ErCardinality, ErDirection } from '../parser/model.ts';
+import type { ErCardinality } from '../parser/model.ts';
 import { T } from '../parser/tokens.ts';
 import type { KeywordItem } from '@mermaid-js/shared/parser/facet';
 export type { KeywordItem } from '@mermaid-js/shared/parser/facet';
 export { plural } from '@mermaid-js/shared/parser/facet';
 export { span } from '@mermaid-js/shared/parser/facet';
 export { code } from '@mermaid-js/shared/parser/facet';
+/** Directions and what they mean. */
+export { DIRECTION_DOCS as DIRECTIONS } from '@mermaid-js/shared/parser/facet';
 /** The cardinality and the direction each token kind means, as the parser reads them. */
 export {
   CARDINALITIES as CARDINALITY_KINDS,
@@ -30,14 +32,6 @@ export const KEYWORDS: readonly KeywordItem[] = [
   { kind: T.DirectionBT, label: 'direction BT' },
   { kind: T.DirectionLR, label: 'direction LR' },
   { kind: T.DirectionRL, label: 'direction RL' },
-];
-
-/** Directions and what they mean. */
-export const DIRECTIONS: readonly (readonly [dir: ErDirection, meaning: string])[] = [
-  ['TB', 'top to bottom'],
-  ['BT', 'bottom to top'],
-  ['LR', 'left to right'],
-  ['RL', 'right to left'],
 ];
 
 /** What each cardinality allows, as hover and completion details say it. */
