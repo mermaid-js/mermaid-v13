@@ -46,6 +46,11 @@
       "types": "./dist/parser/drop.d.ts",
       "default": "./dist/parser/drop.js"
     },
+    "./parser/callback": {
+      "mermaid-source": "./src/parser/callback.ts",
+      "types": "./dist/parser/callback.d.ts",
+      "default": "./dist/parser/callback.js"
+    },
     "./parser/common-values": {
       "mermaid-source": "./src/parser/common-values.ts",
       "types": "./dist/parser/common-values.d.ts",

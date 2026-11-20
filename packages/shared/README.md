@@ -14,6 +14,7 @@ Code that Mermaid v13 diagram packages share, kept out of `@mermaid-js/core` so 
 | `/parser/support` | The stop sentinel, the "got …" text of an unexpected token and the escaper of names in AST ids |
 | `/parser/generic-types` | v12's `parseGenericTypes`, which class and ER diagrams run over a type's `~…~` generics |
 | `/parser/drop` | Offset helpers both lexer families use |
+| `/parser/callback` | v12's argument list of a `call fn(…)` click callback, for class diagrams and the interactions plugin |
 | `/parser/common-values` | The values of `common.langium`'s strings, `title`, `accTitle` and `accDescr`, for the diagrams that do not load `/parser/rule` |
 | `/parser/seen-tokens` | The token list of a langium-family diagram's lexer as v12's lexer saw it, for the language service and lexer-parity specs |
 | `/parser/facet` | Completion and hover helpers for a diagram's `./language` entry |
