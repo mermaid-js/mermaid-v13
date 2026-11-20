@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type {
   Diagnostic,
+  DocumentView,
   ProbeResult,
   SymbolOccurrence,
   TokenStream,
@@ -12,6 +13,7 @@ import {
   blankGaps,
   classDefHover,
   code,
+  completionPlace,
   configSectionOf,
   covers,
   insertWithSeparator,
@@ -219,6 +221,30 @@ describe('matchesTyped', () => {
   it('does not match a label that only contains it, or a longer word', () => {
     expect(matchesTyped('accTitle', 'title')).toBe(false);
     expect(matchesTyped('title', 'titles')).toBe(false);
+  });
+});
+
+describe('completionPlace', () => {
+  /** A document of `text` whose parse kept `toks`. */
+  const doc = (text: string, toks?: TokenStream): DocumentView =>
+    ({ text, result: { tokens: toks } }) as unknown as DocumentView;
+
+  it('is undefined outside INITIAL: inside a statement text or a label nothing is offered', () => {
+    const p = { ...probe(8, 6), mode: 'title' };
+    expect(completionPlace(p, doc('title ab'), /\s/)).toBeUndefined();
+  });
+
+  it('gives the expected kinds, the probed word and the prefix typed so far', () => {
+    // `acc:Title` with the cursor after `ac`: the token runs on to `:`, where `stop` ends it.
+    const text = 'x acc:Title';
+    const p = { ...probe(4, 2), expected: [7, 9, 7] };
+    const at = completionPlace(p, doc(text, tokens([[1, 2, 11]])), /[\s:]/);
+    expect(at).toEqual({ expected: new Set([7, 9]), range: span(2, 5), prefix: 'ac' });
+  });
+
+  it('ends the word at the cursor when no token holds it', () => {
+    const at = completionPlace(probe(3, 0), doc('pie'), /\s/);
+    expect(at).toEqual({ expected: new Set(), range: span(0, 3), prefix: 'pie' });
   });
 });
 

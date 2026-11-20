@@ -2,7 +2,7 @@
  * The treemap facet's completion table and shared helpers (DESIGN §4.5, D95). Keyword docs are
  * not here: they come from the grammar file (`generated/docs.ts`).
  */
-import type { CompletionKind } from '@mermaid-js/core/parser-kit';
+import type { TypedKeywordItem } from '@mermaid-js/shared/parser/facet';
 import { T } from '../parser/tokens.ts';
 export { inside } from '@mermaid-js/shared/parser/facet';
 export { tokenBefore } from '@mermaid-js/shared/parser/facet';
@@ -12,14 +12,8 @@ export { code } from '@mermaid-js/shared/parser/facet';
 export type ItemPlace = 'header' | 'lineStart' | 'afterName';
 
 /** An item offered when the parser expects `kind`. */
-export interface KeywordItem {
-  readonly kind: number;
-  readonly label: string;
-  readonly item: CompletionKind;
+export interface KeywordItem extends TypedKeywordItem {
   readonly place: ItemPlace;
-  /** Text inserted, when it is not the label. */
-  readonly insert?: string;
-  readonly detail?: string;
 }
 
 const statement = (kind: number, label: string, insert: string): KeywordItem => ({

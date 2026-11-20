@@ -9,6 +9,7 @@
  * - relations in statement order. `a <-- b` is stored as `b → a`, so ranks follow meaning;
  * - AST ids: `element:<id>`, `rel:<from>-><to>` with `@2`, `@3` for repeats, `style:<n>`.
  */
+import type { Dir } from '@mermaid-js/core/layout';
 import type { AstId, Diagnostic } from '@mermaid-js/core/parser-kit';
 
 /** What follows `c4-beta`; `context` when it is left out. */
@@ -23,7 +24,7 @@ export type C4BetaElementKind =
   | 'deploymentNode'
   | 'infrastructureNode';
 
-export type C4BetaDirection = 'TB' | 'BT' | 'LR' | 'RL';
+export type C4BetaDirection = Dir;
 
 /** Whether a relation's end carries an arrowhead. */
 export type C4BetaHead = 'none' | 'arrow';

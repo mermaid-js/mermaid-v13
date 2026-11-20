@@ -9,7 +9,7 @@ import type { CompletionItem, DocumentView, ProbeResult } from '@mermaid-js/core
 import { pieDocs } from '../generated/docs.ts';
 import type { PieDocument } from '../parser/ast.ts';
 import { HEADER_LINE, ITEMS } from './tables.ts';
-import { keywordCompletions, wordRange } from '@mermaid-js/shared/parser/facet';
+import { completionPlace, keywordCompletions } from '@mermaid-js/shared/parser/facet';
 
 /** Whether `at` is on the `pie` line, after `pie` (and `showData`). */
 function onHeaderLine(text: string, at: number): boolean {
@@ -22,12 +22,10 @@ export function pieCompletions(
   probe: ProbeResult,
   doc: DocumentView<PieDocument>
 ): CompletionItem[] {
-  if (probe.mode !== 'INITIAL') return [];
-  const { text, result } = doc;
-  const expected = new Set(probe.expected);
-  const range = wordRange(text, result.tokens, probe, /[\s"':]/);
-  const prefix = text.slice(range.start, probe.offset);
-  const header = onHeaderLine(text, range.start);
+  const at = completionPlace(probe, doc, /[\s"':]/);
+  if (!at) return [];
+  const { expected, range, prefix } = at;
+  const header = onHeaderLine(doc.text, range.start);
   return keywordCompletions(
     ITEMS,
     expected,

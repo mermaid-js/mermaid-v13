@@ -16,7 +16,7 @@ import { radarDocs } from '../generated/docs.ts';
 import type { RadarDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { declaredAxes, ITEMS, tokenBefore } from './tables.ts';
-import { atLineStart, keywordCompletions, wordRange } from '@mermaid-js/shared/parser/facet';
+import { atLineStart, completionPlace, keywordCompletions } from '@mermaid-js/shared/parser/facet';
 
 /** Whether `at` is inside a curve's `{ }`: the last brace before it is a `{`. */
 function inBraces(tokens: TokenStream | undefined, at: number): boolean {
@@ -34,12 +34,11 @@ export function radarCompletions(
   probe: ProbeResult,
   doc: DocumentView<RadarDocument>
 ): CompletionItem[] {
-  if (probe.mode !== 'INITIAL') return [];
-  const { text, result } = doc;
-  const expected = new Set(probe.expected);
-  const range = wordRange(text, result.tokens, probe, /[\s"':,[\]{}]/);
-  const prefix = text.slice(range.start, probe.offset);
-  const lineStart = atLineStart(text, range.start);
+  const at = completionPlace(probe, doc, /[\s"':,[\]{}]/);
+  if (!at) return [];
+  const { expected, range, prefix } = at;
+  const { result } = doc;
+  const lineStart = atLineStart(doc.text, range.start);
   const out = keywordCompletions(
     ITEMS,
     expected,

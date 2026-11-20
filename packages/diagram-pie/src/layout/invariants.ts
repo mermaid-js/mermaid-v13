@@ -7,7 +7,12 @@ import type { PieModel } from '../model.ts';
 import { pieSum } from '../shares.ts';
 import { MIN_PERCENT, PERCENT, PIE_COLOURS as COLOURS } from './metrics.ts';
 import type { PieLayout, Point, Rect } from './types.ts';
-import { EPS, nonFinite as finite } from '@mermaid-js/shared/testing/layout-invariants';
+import {
+  EPS,
+  nonFinite as finite,
+  rectInside,
+  rectsOverlap,
+} from '@mermaid-js/shared/testing/layout-invariants';
 
 const TAU = 2 * Math.PI;
 
@@ -66,14 +71,7 @@ export function pieLayoutViolations(model: PieModel, layout: PieLayout): string[
 
   // Everything drawn inside the bounds (D224).
   const inside = (r: Rect, what: string): void => {
-    const b = layout.bounds;
-    if (
-      r.x < b.x - EPS ||
-      r.y < b.y - EPS ||
-      r.x + r.width > b.x + b.width + EPS ||
-      r.y + r.height > b.y + b.height + EPS
-    )
-      out.push(`${what} is outside the bounds`);
+    if (!rectInside(r, layout.bounds)) out.push(`${what} is outside the bounds`);
   };
   const disc = (c: Point, r: number): Rect => ({
     x: c.x - r,
@@ -131,12 +129,7 @@ function overPie({ legend, center }: PieLayout): boolean {
 /** Two boxes with some area in common; an empty label (no lines) overlaps nothing. */
 function overlap(a: Rect, b: Rect): boolean {
   if (a.width <= 0 || a.height <= 0 || b.width <= 0 || b.height <= 0) return false;
-  return (
-    a.x < b.x + b.width - EPS &&
-    b.x < a.x + a.width - EPS &&
-    a.y < b.y + b.height - EPS &&
-    b.y < a.y + a.height - EPS
-  );
+  return rectsOverlap(a, b);
 }
 
 /** A non-empty box reaches into the disc of radius `r` about `c`. */
