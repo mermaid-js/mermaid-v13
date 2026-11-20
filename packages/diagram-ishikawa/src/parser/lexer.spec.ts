@@ -1,13 +1,14 @@
 // cspell:words SPACELINE SPACELIST
 import { describe, expect, it } from 'vitest';
 import { Kind } from '@mermaid-js/core/parser-kit';
-import { ishikawaTokens, ishikawaView, JISON_NAMES } from './index.ts';
+import { bodyView } from '@mermaid-js/shared/parser/seen-tokens';
+import { ishikawaTokens, JISON_NAMES } from './index.ts';
 import { lex } from './lexer.ts';
 import { T } from './tokens.ts';
 
 /** Every token of `src`, trivia and `Kind.EOF` included, as source ranges. */
 const stream = (src: string) => {
-  const { from, view } = ishikawaView(src);
+  const { bodyStart: from, view } = bodyView(src);
   const s = lex(src, from, view).tokens;
   return Array.from({ length: s.length }, (_, j) => ({
     kind: s.kind[j] ?? Kind.EOF,

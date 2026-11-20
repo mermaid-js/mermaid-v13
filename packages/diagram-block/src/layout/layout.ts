@@ -12,7 +12,7 @@ import type { RenderContext, Warning } from '@mermaid-js/core';
 import { pxProfile } from '@mermaid-js/core/layout';
 import { BLOCK_CONFIG_INVALID } from '../codes.ts';
 import { checkStyle } from '@mermaid-js/core/svg';
-import { fontSizePx, layoutLabel, Style, type FontKey } from '@mermaid-js/core/text';
+import { layoutLabel, type FontKey } from '@mermaid-js/core/text';
 import { isComposite, type Block, type BlockEdge, type BlockModel } from '../model.ts';
 import { themePads, type Pads } from '@mermaid-js/shared/shapes/kit';
 import { clipOutline, outlineExtent, type Point } from '../shapes/outline.ts';
@@ -28,6 +28,7 @@ import type {
   Rect,
 } from './types.ts';
 import { shownValue as shown } from '@mermaid-js/shared/config/readers';
+import { textStyle } from '@mermaid-js/shared/svg/graph';
 
 /** What the layout reads from the render context (`warn` for `BLOCK_CONFIG_INVALID`). */
 export type BlockLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
@@ -102,17 +103,7 @@ function fonts(model: BlockModel, ctx: BlockLayoutContext) {
     let hit = cache.get(key);
     if (!hit) {
       // Only the font is read here; #556 checks the style again to draw it, and warns there.
-      const t = checkStyle(decls).text;
-      const weight = t['font-weight'];
-      const bold = weight === 'bold' || weight === 'bolder' || Number(weight) >= 600;
-      const bits = (bold ? Style.Bold : 0) | (t['font-style'] === 'italic' ? Style.Italic : 0);
-      const size = fontSizePx(t['font-size'], base.size);
-      hit = [
-        size !== undefined && size > 0 && size < BLOCK_METRICS.maxFontSize
-          ? { ...base, size }
-          : base,
-        bits,
-      ];
+      hit = textStyle(checkStyle(decls), base);
       cache.set(key, hit);
     }
     return hit;
