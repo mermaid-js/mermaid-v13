@@ -46,8 +46,10 @@ import type { FlowLabelNode, FlowLabelText, FlowLabelType, FlowStatement } from 
 import type { FlowKinds } from './flow-kinds.ts';
 import type { FlowTables } from './flow-tables.ts';
 
-/** The parse options every dialect has. */
-/** `maxDepth` caps block nesting, core's `DEFAULT_LIMITS.maxDepth` when unset. */
+/**
+ * The parse options every dialect has. `maxDepth` caps block nesting, core's
+ * `DEFAULT_LIMITS.maxDepth` when unset.
+ */
 export interface FlowParseOptionsBase extends ParseOptions, Partial<Pick<Limits, 'maxDepth'>> {
   /** Features claimed by extension plugins; `callbacks` silences `CALLBACK_IGNORED`. */
   claims?: readonly string[];
