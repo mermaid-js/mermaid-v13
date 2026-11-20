@@ -1,7 +1,7 @@
 /**
  * A binary min-heap of numeric items by numeric key, the open list of the grid searches that route
  * lines (core's route repair, and the diagrams' own routers). Exported from `@mermaid-js/core/ascii`
- * (D673).
+ * (D674).
  */
 
 /**
