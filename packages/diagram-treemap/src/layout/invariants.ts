@@ -15,7 +15,7 @@
 import type { TreemapModel, TreemapNode } from '../model.ts';
 import { TREEMAP_METRICS as M } from './metrics.ts';
 import type { Rect, TreemapLayout, TreemapLeafLayout, TreemapSectionLayout } from './types.ts';
-import { growRect } from '@mermaid-js/shared/layout/geometry';
+import { growRect } from '@mermaid-js/shared/layout';
 import {
   numbers,
   rectInside as inside,

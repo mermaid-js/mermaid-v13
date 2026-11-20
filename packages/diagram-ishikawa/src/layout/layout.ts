@@ -41,7 +41,7 @@ import {
   type IshikawaSide,
 } from '../model.ts';
 import { boxUnion, pointsBox, quadBox, segmentBox } from './geometry.ts';
-import { growRect } from '@mermaid-js/shared/layout/geometry';
+import { growRect } from '@mermaid-js/shared/layout';
 import { ISHIKAWA_METRICS as m } from './metrics.ts';
 import { horizontal, sign } from './side.ts';
 import type {

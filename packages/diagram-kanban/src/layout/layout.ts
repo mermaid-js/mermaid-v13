@@ -21,7 +21,7 @@ import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/
 import { isBarPriority } from '../priority.ts';
 import type { KanbanLayoutContext } from './context.ts';
 import { drawnRects, union } from './extent.ts';
-import { growRect } from '@mermaid-js/shared/layout/geometry';
+import { growRect } from '@mermaid-js/shared/layout';
 import type { KanbanLayoutCard, KanbanLayoutInput } from './input.ts';
 import {
   CELL_UNITS,

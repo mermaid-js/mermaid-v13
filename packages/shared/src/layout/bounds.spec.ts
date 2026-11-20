@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { growRect } from './geometry.ts';
+import { growRect } from './bounds.ts';
 
 describe('growRect', () => {
   it('grows the rectangle by the same amount on every side', () => {

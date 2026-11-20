@@ -19,7 +19,7 @@
  */
 import { sideOf, type IshikawaModel } from '../model.ts';
 import { corners, ends, segmentBox } from './geometry.ts';
-import { growRect } from '@mermaid-js/shared/layout/geometry';
+import { growRect } from '@mermaid-js/shared/layout';
 import type {
   IshikawaBone,
   IshikawaCauseLayout,

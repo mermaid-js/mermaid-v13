@@ -4,7 +4,7 @@
  */
 import { TREEVIEW_METRICS as M } from './metrics.ts';
 import type { Rect, TreeViewLine, TreeViewRow, TreeViewText } from './types.ts';
-import { growRect } from '@mermaid-js/shared/layout/geometry';
+import { growRect } from '@mermaid-js/shared/layout';
 
 /** A text's extent: `width` from its `x`, `height` around its `y`. */
 function textBox(t: TreeViewText): Rect {
