@@ -23,35 +23,16 @@ import { parseIshikawa } from './parser/index.ts';
 /** The config a render of `pre` resolves under `integrator`, as `initialize()` would get it. */
 export const ishikawaTestConfig = (
   pre?: PreprocessResult,
-  integrator?: Readonly<Record<string, unknown>>,
-  warn?: (w: Warning) => void
-): ResolvedConfig => testConfig('ishikawa', pre, integrator, warn);
+  integrator?: Readonly<Record<string, unknown>>
+): ResolvedConfig => testConfig('ishikawa', pre, integrator);
 
 /** The theme `config` names (core's default with none). */
-export const ishikawaTestTheme = (
-  config: ResolvedConfig = ishikawaTestConfig(),
-  warn?: (w: Warning) => void,
-  idPrefix = TEST_ID_PREFIX
-): Promise<Theme> => testTheme(config, { idPrefix, ...(warn ? { warn } : {}) });
-
-/** What {@link ishikawaRenderContext} takes besides the config and the theme. */
-export interface IshikawaContextOptions {
-  readonly measurer?: Measurer;
-  readonly idPrefix?: string;
-  readonly warn: (w: Warning) => void;
-}
-
-/** The render context the pipeline would give ishikawa under `config` and `theme`. */
-export const ishikawaRenderContext = (
-  config: ResolvedConfig,
-  theme: Theme,
-  options: IshikawaContextOptions
-): RenderContext =>
-  testRenderContext(config, theme, { ...options, layout: selfLaidOut('ishikawa') });
+export const ishikawaTestTheme = (config: ResolvedConfig = ishikawaTestConfig()): Promise<Theme> =>
+  testTheme(config, { idPrefix: TEST_ID_PREFIX });
 
 /**
- * {@link ishikawaRenderContext} over `theme`, with core's defaults and the `ishikawa` section
- * `section` as given, for the layout specs; warnings go to `warnings`.
+ * The render context the pipeline would give ishikawa over `theme`, with core's defaults and the
+ * `ishikawa` section `section` as given, for the layout specs; warnings go to `warnings`.
  */
 export const ishikawaTestContext = (
   theme: Theme,
@@ -59,17 +40,16 @@ export const ishikawaTestContext = (
   warnings: Warning[] = [],
   measurer?: Measurer
 ): RenderContext =>
-  ishikawaRenderContext(defaultsWith('ishikawa', section), theme, {
+  testRenderContext(defaultsWith('ishikawa', section), theme, {
     ...(measurer ? { measurer } : {}),
     warn: (w) => void warnings.push(w),
+    layout: selfLaidOut('ishikawa'),
   });
 
 /** A source parsed: its model, its diagnostics, and the config its text sets. */
 export interface ParsedIshikawa {
   readonly model: IshikawaModel;
   readonly diagnostics: readonly Diagnostic[];
-  /** The config the source resolves: core's defaults, its front matter and directives. */
-  readonly resolved: ResolvedConfig;
   /** What the front matter and `init` directives set in the `ishikawa` section, as resolved. */
   readonly config: Readonly<Record<string, unknown>>;
 }
@@ -83,7 +63,6 @@ export function parsedIshikawa(src: string): ParsedIshikawa {
   return {
     model,
     diagnostics,
-    resolved,
     config: (section ?? {}) as Readonly<Record<string, unknown>>,
   };
 }

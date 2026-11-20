@@ -3,13 +3,20 @@
  * is offered as, and what cardinalities, lines and keys mean. Keyword docs are not here: they
  * come from the grammar file (`generated/docs.ts`).
  */
-import type { ErCardinality, ErDirection } from '../parser/model.ts';
+import type { ErCardinality } from '../parser/model.ts';
 import { T } from '../parser/tokens.ts';
 import type { KeywordItem } from '@mermaid-js/shared/parser/facet';
 export type { KeywordItem } from '@mermaid-js/shared/parser/facet';
 export { plural } from '@mermaid-js/shared/parser/facet';
 export { span } from '@mermaid-js/shared/parser/facet';
 export { code } from '@mermaid-js/shared/parser/facet';
+/** Directions and what they mean. */
+export { DIRECTION_DOCS as DIRECTIONS } from '@mermaid-js/shared/parser/facet';
+/** The cardinality and the direction each token kind means, as the parser reads them. */
+export {
+  CARDINALITIES as CARDINALITY_KINDS,
+  DIRECTION_OF as DIRECTION_KINDS,
+} from '../parser/parser.ts';
 
 /** Statement keywords, in the order they are offered. */
 export const KEYWORDS: readonly KeywordItem[] = [
@@ -27,21 +34,6 @@ export const KEYWORDS: readonly KeywordItem[] = [
   { kind: T.DirectionRL, label: 'direction RL' },
 ];
 
-/** Directions and what they mean. */
-export const DIRECTIONS: readonly (readonly [dir: ErDirection, meaning: string])[] = [
-  ['TB', 'top to bottom'],
-  ['BT', 'bottom to top'],
-  ['LR', 'left to right'],
-  ['RL', 'right to left'],
-];
-
-export const DIRECTION_KINDS: Readonly<Record<number, ErDirection>> = {
-  [T.DirectionTB]: 'TB',
-  [T.DirectionBT]: 'BT',
-  [T.DirectionLR]: 'LR',
-  [T.DirectionRL]: 'RL',
-};
-
 /** What each cardinality allows, as hover and completion details say it. */
 export const CARDINALITY_MEANING: Readonly<Record<ErCardinality, string>> = {
   zeroOrOne: 'zero or one',
@@ -49,14 +41,6 @@ export const CARDINALITY_MEANING: Readonly<Record<ErCardinality, string>> = {
   oneOrMore: 'one or more',
   onlyOne: 'exactly one',
   mdParent: 'the parent of a parent–child relationship',
-};
-
-export const CARDINALITY_KINDS: Readonly<Record<number, ErCardinality>> = {
-  [T.ZeroOrOne]: 'zeroOrOne',
-  [T.ZeroOrMore]: 'zeroOrMore',
-  [T.OneOrMore]: 'oneOrMore',
-  [T.OnlyOne]: 'onlyOne',
-  [T.MdParent]: 'mdParent',
 };
 
 /** Cardinality symbols written before the line (`A |o--`), as the lexer reads them. */

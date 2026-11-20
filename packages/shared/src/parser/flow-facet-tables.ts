@@ -4,7 +4,7 @@
  * (`generated/docs.ts`).
  */
 import type { FlowchartDiagramConfig } from '@mermaid-js/core/config';
-import type { KeywordItem } from './facet.ts';
+import { DIRECTION_DOCS, type KeywordItem } from './facet.ts';
 import type { FlowKinds } from './flow-kinds.ts';
 
 /**
@@ -40,12 +40,10 @@ export function flowKeywordItems(
 /** Header directions and what they mean (v12 reads `TD` as `TB`). */
 export const FLOW_DIRECTION_DOCS: readonly (readonly [dir: string, meaning: string])[] =
   /* @__PURE__ */ Object.freeze([
-    ['TB', 'top to bottom'],
+    ...DIRECTION_DOCS.slice(0, 1),
     ['TD', 'top down (same as TB)'],
-    ['BT', 'bottom to top'],
-    ['LR', 'left to right'],
-    ['RL', 'right to left'],
-  ] as const);
+    ...DIRECTION_DOCS.slice(1),
+  ]);
 
 /** A `flowchart.curve` value: the generated config type, from the config schema's enum. */
 export type FlowCurve = NonNullable<FlowchartDiagramConfig['curve']>;

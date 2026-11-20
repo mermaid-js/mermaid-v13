@@ -22,6 +22,7 @@ import {
   DASH,
   DQUOTE,
   HASH,
+  isBlank,
   isDigit,
   isLineEnd,
   isSpace,
@@ -36,8 +37,6 @@ import {
   RBRACKET,
   scanWhile,
   SEMI,
-  SPACE,
-  TAB,
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
 import type { Probe, TokenStream } from '@mermaid-js/core/parser-kit';
@@ -120,8 +119,6 @@ export interface Lexed {
 
 export const NO_VIEW = 0xffffffff;
 
-/** A blank within a line. */
-const isBlank = (c: number): boolean => c === SPACE || c === TAB;
 const LOWER_M = 0x6d;
 
 /**

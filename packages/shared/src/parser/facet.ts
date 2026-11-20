@@ -555,3 +555,14 @@ export function configSectionOf(pre: PreprocessResult, name: string): Record<str
   }
   return Object.assign({}, ...parts.filter(isPlain)) as Record<string, unknown>;
 }
+
+/** The `direction` values and what they mean, as ER, class and state offer them (no `TD`). */
+export const DIRECTION_DOCS: readonly (readonly [
+  dir: 'TB' | 'BT' | 'LR' | 'RL',
+  meaning: string,
+])[] = [
+  ['TB', 'top to bottom'],
+  ['BT', 'bottom to top'],
+  ['LR', 'left to right'],
+  ['RL', 'right to left'],
+] as const;

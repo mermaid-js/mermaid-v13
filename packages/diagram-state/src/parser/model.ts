@@ -257,7 +257,7 @@ export class StateBuilder {
     this.accDescr = text.replace(/\n\s+/g, '\n');
   }
 
-  build(root: Item[], warnings: Diagnostic[]): StateModel {
+  build(root: Item[]): StateModel {
     const top: StateItem = {
       stmt: 'state',
       id: 'root',
@@ -306,7 +306,7 @@ export class StateBuilder {
       links: this.links,
       accTitle: this.accTitle,
       accDescr: this.accDescr,
-      warnings,
+      warnings: [],
     };
   }
 

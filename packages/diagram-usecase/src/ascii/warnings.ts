@@ -9,7 +9,7 @@ import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { UsecaseConfigKey, UsecaseLayoutConfig } from '../config.ts';
 import type { UsecaseModel } from '../model.ts';
 import type { UsecaseNodeView, UsecasePrepared } from '../layout/prepare.ts';
-import { asciiDropped, emphasised, statements, styled } from '@mermaid-js/shared/ascii';
+import { droppedFeatures, emphasised, styled } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature =
@@ -105,11 +105,8 @@ export function asciiWarnings(
   prepared: UsecasePrepared,
   ast?: AstNode
 ): AsciiWarning[] {
-  const found: Partial<Record<AsciiDroppedFeature, Set<string>>> = {};
-  const add: Add = (feature, id) => {
-    const ids = (found[feature] ??= new Set());
-    if (id) ids.add(id);
-  };
+  const dropped = droppedFeatures(FEATURE_TEXT, STATEMENTS);
+  const { add } = dropped;
   nodeFeatures(prepared, add);
   for (const b of prepared.boundaries) {
     if (styled(b.style)) add('style', b.id);
@@ -124,17 +121,5 @@ export function asciiWarnings(
   const undrawn = undrawnConfig(prepared.config);
   if (undrawn.length > 0) add('config');
   if (model.accTitle || model.accDescr) add('accessibility');
-  const stmts = new Map<string, string[]>();
-  statements(ast, stmts);
-  const out: AsciiWarning[] = [];
-  for (const feature of Object.keys(FEATURE_TEXT) as AsciiDroppedFeature[]) {
-    // A statement alone is enough: a `classDef` nothing uses still has no text form.
-    for (const kind of STATEMENTS[feature] ?? [])
-      for (const id of stmts.get(kind) ?? []) add(feature, id);
-    const ids = found[feature];
-    if (!ids) continue;
-    const keys = feature === 'config' ? ` (${undrawn.join(', ')})` : '';
-    out.push(asciiDropped(feature, [...ids], FEATURE_TEXT[feature], keys));
-  }
-  return out;
+  return dropped.warnings(ast, { config: ` (${undrawn.join(', ')})` });
 }
