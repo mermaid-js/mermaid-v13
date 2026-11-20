@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Attrs, PathData, SafeColor, SafeValue } from '@mermaid-js/core/svg';
-import { pathBuilder } from '@mermaid-js/core/svg';
+import { checkLength, pathBuilder } from '@mermaid-js/core/svg';
 import roughModule from 'roughjs';
 import type { Drawable, Options } from 'roughjs/bin/core.js';
 import { sketch, strokeLineDash, type SketchOptions } from './sketch.ts';
@@ -95,6 +95,26 @@ const optionSets: [string, SketchOptions][] = [
 ];
 
 describe('sketch (H1)', () => {
+  it('uses checked px radii for a rounded hand-drawn rectangle', () => {
+    const attrs: Attrs = {
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 40,
+      rx: checkLength('5px'),
+      ...paint,
+    };
+    const out = sketch('rect', attrs, NODE, 42);
+    expect(out?.map(({ set, attrs: { d } }) => ({ set, d }))).toEqual(
+      oracle(
+        gen.path(
+          'M 15 20 H 105 A 5 5 0 0 1 110 25 V 55 A 5 5 0 0 1 105 60 H 15 A 5 5 0 0 1 10 55 V 25 A 5 5 0 0 1 15 20 Z',
+          v12({ seed: 42 })
+        )
+      )
+    );
+  });
+
   it("sketches a rect as roughjs's rectangle: hachure, then the outline", () => {
     const attrs: Attrs = { x: 10, y: 20, width: 120, height: 40, fill: FILL, stroke: STROKE };
     const out = sketch('rect', attrs, NODE, 42);
