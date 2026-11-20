@@ -185,12 +185,17 @@ export function someString(value: unknown, test: (text: string) => boolean): boo
       if (test(v)) return true;
     } else if (typeof v === 'object' && v !== null && !seen.has(v)) {
       seen.add(v);
-      if (v instanceof Map) for (const [k, x] of v) stack.push(k, x);
-      else if (v instanceof Set) for (const x of v) stack.push(x);
-      else for (const x of Object.values(v)) stack.push(x);
+      pushChildren(stack, v);
     }
   }
   return false;
+}
+
+/** Pushes what `v` holds: a Map's keys and values, a Set's members, an object's values. */
+function pushChildren(stack: unknown[], v: object): void {
+  if (v instanceof Map) for (const [k, x] of v) stack.push(k, x);
+  else if (v instanceof Set) for (const x of v) stack.push(x);
+  else for (const x of Object.values(v)) stack.push(x);
 }
 
 /**
