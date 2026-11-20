@@ -103,7 +103,7 @@ const PROBE_FOLLOWS = kindSet(
 );
 
 /** `title`, `accTitle` and `accDescr` by token kind; a keyword is also its probe mode. */
-const TEXTS = /* @__PURE__ */ textStatements(T.Title, T.AccTitle, T.AccDescr);
+export const TEXTS = /* @__PURE__ */ textStatements(T.Title, T.AccTitle, T.AccDescr);
 
 /**
  * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the

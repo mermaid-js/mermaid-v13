@@ -26,9 +26,9 @@
 import { checkLimit } from '@mermaid-js/core/limits';
 import { ExpectedTable, formatExpected, Kind, kindSet, skipTo } from '@mermaid-js/core/parser-kit';
 import { STOP } from '@mermaid-js/shared/parser/support';
-import { RuleParser } from '@mermaid-js/shared/parser/rule';
+import { RuleParser, textProbeMode, textStatements } from '@mermaid-js/shared/parser/rule';
 import type { RuleGrammar } from '@mermaid-js/shared/parser/rule';
-import type { ParseOptions, ParseResult, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { ParseOptions, ParseResult } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { EVENTMODELING_DUPLICATE_FRAME } from '../codes.ts';
@@ -132,40 +132,30 @@ function dataEnd(src: string, start: number, end: number, kind: number): number 
  * block; `title`, `accTitle` or `accDescr` past the keyword of that statement;
  * else `INITIAL` (code).
  */
-function probeMode(src: string, tokens: TokenStream, o: number): string {
-  for (let j = 0; j < tokens.length; j++) {
-    const start = tokens.start[j] ?? 0;
-    const end = tokens.end[j] ?? 0;
-    if (start >= o) break;
-    if (end < o) continue;
-    const kind = tokens.kind[j] ?? Kind.EOF;
-    // At its end, a `//` comment holds the offset (its line break is not in it); a closed
-    // `/* *\/` or data token does not.
-    if (kind === T.LineComment) return 'comment';
-    if (kind === T.BlockComment) {
-      if (o < end) return 'comment';
-      continue;
-    }
-    // A `---` block, up to its closing `---` (its token takes the line break after it).
-    if (kind === T.Yaml) {
-      if (o < start + src.slice(start, end).lastIndexOf('---') + 3) return 'yaml';
-      continue;
-    }
-    // Data up to its closer: a block's token also takes the line break after its `}`.
-    if (kind === T.DataInline || kind === T.DataBlock) {
-      if (o < dataEnd(src, start, end, kind)) return 'data';
-      continue;
-    }
-    const word = TEXT_WORD[kind];
-    if (word === undefined) continue;
-    let k = start;
-    while (src.charAt(k) === ' ' || src.charAt(k) === '\t') k++;
-    k += word.length;
-    // A block `accDescr { … }` ends at its `}`; the other values run to the line end.
-    const block = kind === T.AccDescr && /^\s*\{/.test(src.slice(k, end));
-    if (o > k && (o < end || !block)) return word;
+const probeMode = /* @__PURE__ */ textProbeMode({
+  texts: /* @__PURE__ */ textStatements(T.Title, T.AccTitle, T.AccDescr),
+  accDescr: T.AccDescr,
+  other: hiddenMode,
+});
+
+/**
+ * The comment, YAML and data modes, for the token `[start, end)` of `kind` that holds `o`;
+ * undefined where the token gives none.
+ */
+function hiddenMode(src: string, kind: number, start: number, end: number, o: number) {
+  // At its end, a `//` comment holds the offset (its line break is not in it); a closed
+  // `/* *\/` or data token does not.
+  if (kind === T.LineComment) return 'comment';
+  if (kind === T.BlockComment) return o < end ? 'comment' : undefined;
+  // A `---` block, up to its closing `---` (its token takes the line break after it).
+  if (kind === T.Yaml) {
+    return o < start + src.slice(start, end).lastIndexOf('---') + 3 ? 'yaml' : undefined;
   }
-  return 'INITIAL';
+  // Data up to its closer: a block's token also takes the line break after its `}`.
+  if (kind === T.DataInline || kind === T.DataBlock) {
+    return o < dataEnd(src, start, end, kind) ? 'data' : undefined;
+  }
+  return undefined;
 }
 
 const GRAMMAR: RuleGrammar<PreprocessResult> = {

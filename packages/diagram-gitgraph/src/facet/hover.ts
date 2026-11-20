@@ -9,8 +9,9 @@ import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-k
 import { gitgraphDocs } from '../generated/docs.ts';
 import type { GitCommit, GitModel } from '../model.ts';
 import type { GitGraphDocument, GitStatementNode, GitValue } from '../parser/ast.ts';
+import { TEXTS } from '../parser/parser.ts';
 import { T } from '../parser/tokens.ts';
-import { code, TEXT_WORDS } from './tables.ts';
+import { code } from './tables.ts';
 import { inside, keywordHover } from '@mermaid-js/shared/parser/facet';
 const plural = (n: number, word: string) =>
   n === 0 ? `no ${word}s` : `${n} ${word}${n === 1 ? '' : 's'}`;
@@ -112,5 +113,6 @@ export function gitGraphHover(
   }
   const t = at.token;
   if (!t || NO_DOC.has(t.kind)) return undefined;
-  return keywordHover(text, at.offset, t.range, TEXT_WORDS[t.kind], gitgraphDocs[t.kind]);
+  // A token that holds the text after its keyword (`title Release`): the keyword only.
+  return keywordHover(text, at.offset, t.range, TEXTS[t.kind]?.word, gitgraphDocs[t.kind]);
 }

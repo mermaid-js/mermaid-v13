@@ -19,16 +19,10 @@
  */
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
 import { Kind, kindSet } from '@mermaid-js/core/parser-kit';
-import type {
-  ExpectedTable,
-  ParseOptions,
-  ParseResult,
-  Range,
-  TokenStream,
-} from '@mermaid-js/core/parser-kit';
+import type { ExpectedTable, ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import { RuleParser } from '@mermaid-js/shared/parser/rule';
+import { RuleParser, textProbeMode, textStatements } from '@mermaid-js/shared/parser/rule';
 import type { RuleGrammar } from '@mermaid-js/shared/parser/rule';
 import { STOP } from '@mermaid-js/shared/parser/support';
 import type { RailroadModel, RailroadRule } from '../model.ts';
@@ -98,18 +92,8 @@ const NESTING_GUARD = 500;
  */
 export const RULE_START = -1;
 
-/** The keyword of each header statement token, also its probe mode. */
-const VALUE_WORDS: Readonly<Record<number, string>> = {
-  [T.Title]: 'title',
-  [T.AccTitle]: 'accTitle',
-  [T.AccDescr]: 'accDescr',
-};
-
-const KIND_OF: Readonly<Record<number, RailroadTextNode['type']>> = {
-  [T.Title]: 'Title',
-  [T.AccTitle]: 'AccTitle',
-  [T.AccDescr]: 'AccDescr',
-};
+/** Each header statement by token kind: its AST type and its keyword, also its probe mode. */
+const TEXTS = /* @__PURE__ */ textStatements(T.Title, T.AccTitle, T.AccDescr);
 
 /**
  * Kinds a probe's cursor follows rather than extends: punctuation and strings (right after
@@ -145,24 +129,11 @@ const PROBE_FOLLOWS = kindSet(
  * mode names what the offset is in: `title`, `accTitle` or `accDescr` past that keyword,
  * `string` inside a string (closed or not), else `INITIAL` (code).
  */
-function probeMode(src: string, tokens: TokenStream, o: number): string {
-  for (let j = 0; j < tokens.length; j++) {
-    const start = tokens.start[j] ?? 0;
-    const end = tokens.end[j] ?? 0;
-    if (start >= o) break;
-    if (end < o) continue;
-    const kind = tokens.kind[j] ?? Kind.EOF;
-    const c = src[start];
-    if (kind === T.String && o < end) return 'string';
-    if (kind === Kind.Error && (c === '"' || c === "'")) return 'string';
-    const word = VALUE_WORDS[kind];
-    if (!word) continue;
-    const k = start + word.length;
-    const block = kind === T.AccDescr && /^\s*\{/.test(src.slice(k, end));
-    if (o > k && (o < end || !block)) return word;
-  }
-  return 'INITIAL';
-}
+const probeMode = /* @__PURE__ */ textProbeMode({
+  texts: TEXTS,
+  accDescr: T.AccDescr,
+  string: T.String,
+});
 
 /** The notation's lexer and tables, as the shared rule parser uses them. */
 function grammar(notation: RailroadNotation): RuleGrammar {
@@ -364,7 +335,7 @@ export abstract class RailroadParser extends RuleParser<PreprocessResult> {
       if (EMPTY_ENDS.includes(k) || this.startsRule()) return 'an alternative cannot be empty';
     }
     if (TEXT.includes(k)) {
-      return `\`${VALUE_WORDS[k] ?? 'title'}\` goes on its own line after \`${this.headerWord}\`, before the rules`;
+      return `\`${TEXTS[k]?.word ?? 'title'}\` goes on its own line after \`${this.headerWord}\`, before the rules`;
     }
     if (k === T.Header) return `a diagram has one \`${this.headerWord}\`, at its start`;
     return undefined;
@@ -507,13 +478,13 @@ export abstract class RailroadParser extends RuleParser<PreprocessResult> {
   private text(k: number): void {
     const j = this.i++;
     const image = this.raw(j);
-    const type = KIND_OF[k] ?? 'Title';
+    const type = TEXTS[k]?.type ?? 'Title';
     const range = this.range(j);
     let text: string;
     if (type === 'Title') text = this.title = titleValue(this.notation, image);
     else if (type === 'AccTitle') text = this.accTitle = accTitleValue(image);
     else text = this.accDescr = accDescrValue(image);
-    const word = VALUE_WORDS[k] ?? 'title';
+    const word = TEXTS[k]?.word ?? 'title';
     const node: RailroadTextNode = { id: this.id(word), type, range, text };
     this.children.push(node);
     this.st.statement(word, range);
