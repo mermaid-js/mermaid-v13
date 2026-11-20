@@ -1,15 +1,14 @@
 /** The integrator's limits on a Wardley map (R-SEC-5, #698). */
 import { checkLimit } from '@mermaid-js/core/limits';
+import type { Limits } from '@mermaid-js/core/limits';
 import type { Diagnostics, Range } from '@mermaid-js/core/parser-kit';
 import type { WardleyStatementNode } from './ast.ts';
 
-/** The limits a parse takes; each defaults to core's limit of that name (a parse outside a render). */
-export interface WardleyLimitOptions {
-  /** The integrator's cap on anchors and components, a pipeline's included (`maxNodes`). */
-  maxNodes?: number;
-  /** The integrator's cap on links (`maxEdges`). */
-  maxEdges?: number;
-}
+/**
+ * The limits a parse takes; each defaults to core's limit of that name (a parse outside a render).
+ * `maxNodes` caps anchors and components, a pipeline's included; `maxEdges` caps links.
+ */
+export type WardleyLimitOptions = Partial<Pick<Limits, 'maxNodes' | 'maxEdges'>>;
 
 /** What each limit counts, as its message names it. */
 const WHAT = { maxNodes: 'anchors and components', maxEdges: 'links' } as const;

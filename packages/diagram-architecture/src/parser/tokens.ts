@@ -5,6 +5,7 @@
  * (TS enums are banned).
  */
 import { FIRST_DIAGRAM_KIND, Kind, kindSet } from '@mermaid-js/core/parser-kit';
+import { textStatements } from '@mermaid-js/shared/parser/rule';
 
 const F = FIRST_DIAGRAM_KIND;
 
@@ -109,3 +110,9 @@ export const LANGIUM_NAMES: Readonly<Record<number, string>> = {
   [T.Label]: 'ARCH_TITLE',
   [Kind.Error]: 'LEXICAL_ERROR',
 };
+
+/**
+ * `title …`, `accTitle: …` and `accDescr …` by token kind: what the parser (statements, AST
+ * ids, probe modes) and hover (only the keyword is hovered) read.
+ */
+export const TEXT_STATEMENTS = /* @__PURE__ */ textStatements(T.Title, T.AccTitle, T.AccDescr);
