@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { REPO_ROOT } from './index.ts';
+import { numericLiterals } from './literals.ts';
 
 // The sankey custom layout takes every length from its metrics table (spec #427, pitfall 13): no
 // file in `packages/diagram-sankey/src/layout/` but `metrics.ts` holds a length literal. The
@@ -15,15 +16,6 @@ const ALLOWED: Readonly<Record<string, string>> = {
   '1022': 'the smallest binary exponent of a normal double (scaling flows exactly)',
   '1023': 'the largest binary exponent of a double',
 };
-
-/** The numeric literals in TypeScript source, outside comments and strings. */
-function numericLiterals(source: string): string[] {
-  const code = source
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .replace(/\/\/.*$/gm, ' ')
-    .replace(/'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`|"(?:[^"\\\n]|\\.)*"/g, "''");
-  return code.match(/(?<![\w$.])\d[\d_]*(?:\.\d+)?(?:e[-+]?\d+)?/gi) ?? [];
-}
 
 const DIR = join(REPO_ROOT, 'packages/diagram-sankey/src/layout');
 // The table itself and specs are not layout code.

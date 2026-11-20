@@ -20,7 +20,8 @@ export function harvestPath(type: JisonType): string {
   return join(REPO_ROOT, 'packages/conformance/corpus', `${type}-v12-specs.json`);
 }
 
-const git = (...args: string[]) =>
+/** `git -C <repo root> …`, its output as text. */
+export const git = (...args: string[]): string =>
   execFileSync('git', ['-C', REPO_ROOT, ...args], { encoding: 'utf8', maxBuffer: 1 << 26 });
 
 /** True when the v12 history the harvest reads is in this clone (a shallow one lacks it). */
@@ -104,7 +105,8 @@ export function harvest(type: JisonType): CorpusItem[] {
 
 // --- literals --------------------------------------------------------------------------------
 
-const LITERAL = /`((?:[^`\\]|\\.)*)`|'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"/g;
+/** A JS string literal: its body is group 1 (template), 2 (single) or 3 (double quotes). */
+export const LITERAL = /`((?:[^`\\]|\\.)*)`|'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"/g;
 
 const SIMPLE: Record<string, string> = {
   n: '\n',

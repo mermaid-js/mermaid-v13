@@ -1,11 +1,11 @@
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cellWidth, repairRoutes, routeCollisions } from '@mermaid-js/core/ascii';
-import type { LayoutModel } from '@mermaid-js/core/layout';
 import { parseEr } from '@mermaid-js/diagram-er';
 import { REPO_ROOT, corpusFromDir } from '../corpus.ts';
 import { renderErAscii, type ErAsciiResult, type ErCellLayout } from './er-render.ts';
 import { erExpectedOf, readErStructure } from './er-structure.ts';
+import { overlaps } from './flow-checks.ts';
 import type { Charset } from './structure.ts';
 
 // ASCII render properties over the in-repo ER corpus, in both charsets (#136, D87, D109,
@@ -143,43 +143,3 @@ describe('er ascii corpus properties (D87, R-ASCII-9)', () => {
     ).toEqual({});
   });
 });
-
-interface Rect {
-  id: string;
-  group: boolean;
-  x0: number;
-  y0: number;
-  x1: number;
-  y1: number;
-}
-
-/** Cells a centred box covers, the grid model's convention (`LayoutGraph.grid`). */
-const rect = (
-  id: string,
-  group: boolean,
-  b: { x: number; y: number; width: number; height: number }
-): Rect => ({
-  id,
-  group,
-  x0: Math.round(b.x - b.width / 2 + 0.5),
-  y0: Math.round(b.y - b.height / 2 + 0.5),
-  x1: Math.round(b.x + b.width / 2 - 0.5),
-  y1: Math.round(b.y + b.height / 2 - 0.5),
-});
-
-function overlaps(model: LayoutModel): string[] {
-  const rects = [
-    ...[...model.nodes].map(([id, n]) => rect(id, false, n)),
-    ...[...model.groups].map(([id, g]) => rect(id, true, g)),
-  ];
-  const apart = (a: Rect, b: Rect) => a.x1 < b.x0 || b.x1 < a.x0 || a.y1 < b.y0 || b.y1 < a.y0;
-  const within = (a: Rect, b: Rect) =>
-    b.group && a.x0 > b.x0 && a.x1 < b.x1 && a.y0 > b.y0 && a.y1 < b.y1;
-  const found: string[] = [];
-  rects.forEach((a, i) => {
-    for (const b of rects.slice(i + 1)) {
-      if (!apart(a, b) && !within(a, b) && !within(b, a)) found.push(`${a.id} × ${b.id}`);
-    }
-  });
-  return found;
-}
