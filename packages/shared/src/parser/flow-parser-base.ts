@@ -49,8 +49,6 @@ import type { FlowTables } from './flow-tables.ts';
 /** The parse options every dialect has. */
 /** `maxDepth` caps block nesting, core's `DEFAULT_LIMITS.maxDepth` when unset. */
 export interface FlowParseOptionsBase extends ParseOptions, Partial<Pick<Limits, 'maxDepth'>> {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** Features claimed by extension plugins; `callbacks` silences `CALLBACK_IGNORED`. */
   claims?: readonly string[];
 }

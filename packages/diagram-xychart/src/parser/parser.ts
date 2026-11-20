@@ -53,8 +53,6 @@ import { T } from './tokens.ts';
 import { v12Text } from './v12-text.ts';
 
 export interface XyChartParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** The integrator's cap on data points, every plot's together (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
   maxNodes?: number;
 }
