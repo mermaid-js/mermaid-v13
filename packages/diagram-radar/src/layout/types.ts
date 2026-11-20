@@ -6,8 +6,8 @@
  * are radians clockwise from 3 o'clock (SVG's y points down), so spoke 0 is at `−π/2`.
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
-import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
-import type { Rect } from '@mermaid-js/shared/layout';
+import type { FontKey } from '@mermaid-js/core/text';
+import type { PlacedLabel, Rect } from '@mermaid-js/shared/layout';
 import type { RadarOptions } from '../model.ts';
 
 export interface Point {
@@ -15,12 +15,7 @@ export interface Point {
   readonly y: number;
 }
 
-export type { Rect };
-
-/** A measured label and its box; its first baseline is at `y + text.baseline`. */
-export interface PlacedLabel extends Rect {
-  readonly text: MeasuredLabel;
-}
+export type { PlacedLabel, Rect };
 
 /** v12's `text-anchor` and `dominant-baseline` for a label at a point. */
 export type RadarTextAnchor = 'start' | 'middle' | 'end';

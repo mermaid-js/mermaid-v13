@@ -5,15 +5,10 @@
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
-import type { Rect } from '@mermaid-js/shared/layout';
+import type { PlacedLabel, Rect } from '@mermaid-js/shared/layout';
 import type { ArrowKind, FragmentKind, ParticipantKind } from '../model.ts';
 
-export type { Rect };
-
-/** A measured label and the box it is drawn in: the label's own size, at its place. */
-export interface PlacedLabel extends Rect {
-  readonly text: MeasuredLabel;
-}
+export type { PlacedLabel, Rect };
 
 export interface ParticipantLayout {
   readonly id: string;

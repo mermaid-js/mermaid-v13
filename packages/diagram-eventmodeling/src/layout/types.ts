@@ -3,27 +3,16 @@
  * (`layoutKind: 'custom'`, spec #527 T3), in px, absolute. Rectangles have their top-left corner
  * at `x`, `y`. Colours are left to the renderer (#606).
  */
+import type { Point as CorePoint } from '@mermaid-js/core/layout';
 import type { AstId } from '@mermaid-js/core/parser-kit';
-import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
+import type { FontKey } from '@mermaid-js/core/text';
+import type { PlacedLabel, Rect } from '@mermaid-js/shared/layout';
 import type { EventModelKind } from '../model.ts';
 import type { EventModelBand } from '../structure.ts';
 
-export interface Point {
-  readonly x: number;
-  readonly y: number;
-}
+export type { PlacedLabel, Rect };
 
-export interface Rect {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
-
-/** A measured label and the box it is drawn in: the label's own size, at its place. */
-export interface PlacedLabel extends Rect {
-  readonly text: MeasuredLabel;
-}
+export type Point = Readonly<CorePoint>;
 
 export interface EventModelLaneLayout extends Rect {
   /** v12's swimlane index (0, 100, 200, or a namespace lane's after them). */
