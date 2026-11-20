@@ -2,8 +2,9 @@
  * The scaffolding the recursive-descent parsers of the langium-family diagrams share: the
  * source view, lex and probe set-up, the token cursor, probe bookkeeping, AST ids counted by
  * base name, statement-level error recovery and the end of a parse. A diagram's parser extends
- * {@link RuleParser} and writes its rules and its `fail`, which can be {@link RuleParser.unexpected}.
- * The tables of `unexpected`, `lineEnd` and `textStatement` come from its {@link RuleGrammar}.
+ * {@link RuleParser} and writes its rules; its `fail` is {@link RuleParser.unexpected} unless it
+ * overrides it. The tables of `unexpected`, `lineEnd` and `textStatement` come from its
+ * {@link RuleGrammar}.
  */
 import {
   type AstId,
@@ -192,14 +193,20 @@ export abstract class RuleParser<Pre extends RuleParserPre = RuleParserPre> {
     return foundText(k, k === Kind.EOF || k === Kind.Newline ? '' : this.raw());
   }
 
-  /** Report what was found where one of `want` was expected, then stop the statement. */
-  protected abstract fail(want: readonly number[], hint?: string): never;
+  /**
+   * Report what was found where one of `want` was expected, then stop the statement. By default
+   * {@link unexpected}, which a diagram tunes through its {@link unmatched} and
+   * {@link failHint} hooks; a diagram whose errors read otherwise overrides it.
+   */
+  protected fail(want: readonly number[], hint?: string): never {
+    return this.unexpected(want, hint);
+  }
 
   /**
-   * A `fail` that most diagrams can use: report what was found where one of `want` was expected,
-   * then stop the statement. `names` are what is reported as expected: the grammar's `expected`
-   * table names `want` by default. Text no token rule matched goes to {@link unmatched} first,
-   * and `hint` defaults to {@link failHint}.
+   * The default {@link fail}: report what was found where one of `want` was expected, then stop
+   * the statement. `names` are what is reported as expected: the grammar's `expected` table
+   * names `want` by default. Text no token rule matched goes to {@link unmatched} first, and
+   * `hint` defaults to {@link failHint}.
    */
   protected unexpected(
     want: readonly number[],
