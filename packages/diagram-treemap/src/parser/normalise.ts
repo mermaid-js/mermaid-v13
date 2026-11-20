@@ -7,6 +7,7 @@
  * semantic errors; D402's one warning lists the values v12 read as `NaN` or not as written.
  */
 import type { AstId, Diagnostics } from '@mermaid-js/core/parser-kit';
+import { idEscaper } from '@mermaid-js/shared/parser/support';
 import type { TreemapClass, TreemapModel, TreemapNode } from '../model.ts';
 import type { TreemapClassDefNode, TreemapLeafNode, TreemapRowNode } from './ast.ts';
 import { isPlainNumber } from './convert.ts';
@@ -36,10 +37,7 @@ export interface ClassDefRead {
 }
 
 /** `%`, `/` and `@` percent-encoded, so a name path reads back one way. */
-const escapeName = (name: string): string =>
-  /[%/@]/.test(name)
-    ? name.replace(/[%/@]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
-    : name;
+const escapeName = idEscaper('%/@');
 
 /** Mutable while the tree is built; frozen into a {@link TreemapNode}. */
 interface Building {
