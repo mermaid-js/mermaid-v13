@@ -6,7 +6,7 @@
  * than as core's preprocess locates them. Outside quotes no jison rule takes a placeholder's
  * first character, so it is a lexical error there. Every step is a linear scan (R-PARSE-7).
  */
-import { COLON, isSpace, isWord, RBRACE } from '@mermaid-js/core/parser-kit';
+import { COLON, isSpace, isWord, RBRACE, scanWhile } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { v12Text as sharedV12Text } from '@mermaid-js/shared/parser/v12-text';
 import type { V12Text } from '@mermaid-js/shared/parser/v12-text';
@@ -32,15 +32,15 @@ export function v12Text(src: string, from: number): V12Text {
 function v12Directives(src: string, from: number): Range[] {
   const out: Range[] = [];
   for (let at = src.indexOf('%%{', from); at !== -1; ) {
-    const nameStart = skipBlanks(src, at + 3);
-    const nameEnd = skipWord(src, nameStart);
+    const nameStart = scanWhile(src, at + 3, isSpace);
+    const nameEnd = scanWhile(src, nameStart, isWord);
     if (nameEnd === nameStart) {
       at = src.indexOf('%%{', at + 1);
       continue;
     }
-    const colon = skipBlanks(src, nameEnd);
-    let i = skipBlanks(src, src.charCodeAt(colon) === COLON ? colon + 1 : nameEnd);
-    const word = skipWord(src, i);
+    const colon = scanWhile(src, nameEnd, isSpace);
+    let i = scanWhile(src, src.charCodeAt(colon) === COLON ? colon + 1 : nameEnd, isSpace);
+    const word = scanWhile(src, i, isWord);
     if (word > i) i = word;
     else {
       for (let c = src.charCodeAt(i); i < src.length; c = src.charCodeAt(++i)) {
@@ -48,22 +48,10 @@ function v12Directives(src: string, from: number): Range[] {
         if (c === RBRACE && src.startsWith('%%', i + 1)) break;
       }
     }
-    i = skipBlanks(src, i);
+    i = scanWhile(src, i, isSpace);
     if (src.charCodeAt(i) === RBRACE && src.startsWith('%%', i + 1)) i += 3;
     out.push({ start: at, end: i });
     at = src.indexOf('%%{', i);
   }
   return out;
-}
-
-/** End of the run of `\s` from `i`. */
-function skipBlanks(src: string, i: number): number {
-  while (i < src.length && isSpace(src.charCodeAt(i))) i++;
-  return i;
-}
-
-/** End of the run of `\w` from `i`. */
-function skipWord(src: string, i: number): number {
-  while (i < src.length && isWord(src.charCodeAt(i))) i++;
-  return i;
 }

@@ -58,7 +58,7 @@ export function lexAbnf(src: string, from: number, view: SourceView): TokenStrea
 }
 
 class AbnfLexer extends RailroadLexer {
-  protected scan(p: number, c: number): number {
+  protected scan(p: number, c = this.text.charCodeAt(p)): number {
     if (isLetter(c)) {
       const e = this.header('railroad-abnf-beta', p);
       if (e >= 0) return e;

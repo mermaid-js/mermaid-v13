@@ -49,7 +49,7 @@ import {
   RBRACE,
   RBRACKET,
 } from '@mermaid-js/core/parser-kit';
-import { isBreak, RuleLexer, SKIP } from '@mermaid-js/shared/parser/rule';
+import { idEnd, isBreak, RuleLexer, SKIP } from '@mermaid-js/shared/parser/rule';
 import type { RuleLexerOptions } from '@mermaid-js/shared/parser/rule';
 import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { PREFIX_KEYWORDS, T } from './tokens.ts';
@@ -114,7 +114,7 @@ class RadarLexer extends RuleLexer {
     if (e < 0) e = this.accessibility(p);
     if (e < 0 && isDigit(c)) e = this.number(p);
     if (e < 0 && (c === DQUOTE || c === APOSTROPHE)) e = this.string(p, c);
-    if (e < 0 && isWord(c)) e = this.match(T.Id, this.id(p));
+    if (e < 0 && isWord(c)) e = this.match(T.Id, idEnd(this.text, this.n, p));
     if (e < 0 && isBreak(c)) e = this.match(Kind.Newline, p + newlineAt(this.text, p));
     if (e < 0 && isBlank(c)) e = this.match(SKIP, this.blanks(p));
     if (e < 0 && c === DASH) e = this.yaml(p);
@@ -141,13 +141,7 @@ class RadarLexer extends RuleLexer {
       const ok = q >= this.n || isSpace(c) || (c === PERCENT && text.charCodeAt(q + 1) === PERCENT);
       return ok ? this.match(T.RadarBeta, q) : -1;
     }
-    for (const [word, kind] of WORDS) {
-      if (!text.startsWith(word, p)) continue;
-      const q = p + word.length;
-      const end = this.id(p);
-      return end > q ? this.match(T.Id, end) : this.match(kind, q);
-    }
-    return -1;
+    return this.keywordOrId(p, WORDS, T.Id);
   }
 
   /** GRATICULE (`circle|polygon`) and BOOLEAN (`true|false`): no boundary, no longer name. */
@@ -174,19 +168,5 @@ class RadarLexer extends RuleLexer {
     if (text.charCodeAt(p) === DIGIT_0) return this.match(T.Number, p + 1);
     if (text.charCodeAt(d) !== DOT) return this.match(T.Number, d);
     return d - p >= 2 ? this.match(T.Number, d - 1) : -1;
-  }
-
-  /** ID: `[\w]([-\w]*\w)?` from `p` (a `\w`): the `[-\w]` run without its trailing dashes. */
-  private id(p: number): number {
-    const { text, n } = this;
-    let j = p + 1;
-    let end = j;
-    while (j < n) {
-      const c = text.charCodeAt(j);
-      if (isWord(c)) end = ++j;
-      else if (c === DASH) j++;
-      else break;
-    }
-    return end;
   }
 }

@@ -15,6 +15,7 @@ import {
   rawConfigNumber as configNumber,
   shownValue as shown,
 } from '@mermaid-js/shared/config/readers';
+import { configSectionOf } from '@mermaid-js/shared/parser/facet';
 
 export interface PacketConfig {
   readonly rowHeight: number;
@@ -102,9 +103,6 @@ export function packetConfig(section: Readonly<Record<string, unknown>> | undefi
   return { config: Object.freeze(out) as unknown as PacketConfig, problems };
 }
 
-const isRecord = (v: unknown): v is Record<string, unknown> =>
-  typeof v === 'object' && v !== null && !Array.isArray(v);
-
 /**
  * The `packet` config a source sets itself: its front matter's `config.packet`, then each
  * `%%{init}%%`'s `packet`, merged key by key, as the renderer's resolved config takes them.
@@ -112,10 +110,6 @@ const isRecord = (v: unknown): v is Record<string, unknown> =>
  * none) and conformance (the oracle applies neither). `undefined` when the source sets none.
  */
 export function packetSectionOf(pre: PreprocessResult): Record<string, unknown> | undefined {
-  const parts: unknown[] = [pre.frontMatter?.config?.packet];
-  for (const dir of pre.directives) {
-    if (dir.kind === 'init' && isRecord(dir.args)) parts.push(dir.args.packet);
-  }
-  const section = Object.assign({}, ...parts.filter(isRecord)) as Record<string, unknown>;
+  const section = configSectionOf(pre, 'packet');
   return Object.keys(section).length > 0 ? section : undefined;
 }

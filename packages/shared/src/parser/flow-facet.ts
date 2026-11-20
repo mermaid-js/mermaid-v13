@@ -19,4 +19,5 @@ export {
   flowTokenHover,
 } from './flow-hover.ts';
 export type { FlowTokenHoverDialect } from './flow-hover.ts';
-export { flowNameReason } from './flow-names.ts';
+export { flowIdCheck } from './flow-names.ts';
+export type { FlowIdDialect } from './flow-names.ts';

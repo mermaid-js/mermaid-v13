@@ -59,11 +59,10 @@ function splitArgs(args: string): string[] {
  */
 export function callbackArgs(id: string, args: string | undefined): string[] {
   if (args === undefined) return [id];
-  const list = splitArgs(args).map((a) => {
+  return splitArgs(args).map((a) => {
     const item = a.trim();
     return item.startsWith('"') && item.endsWith('"') ? item.slice(1, -1) : item;
   });
-  return list.length === 0 ? [id] : list;
 }
 
 /**

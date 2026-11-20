@@ -13,18 +13,24 @@ import { journeyMetrics } from './metrics.ts';
 import type { Circle, JourneyLayout, Rect } from './types.ts';
 import {
   EPS,
+  nonFinite,
   rectsOverlap as overlaps,
   within,
 } from '@mermaid-js/shared/testing/layout-invariants';
 
-function numbers(value: unknown, path: string, out: string[]): void {
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value)) out.push(`${path} is ${value}`);
-  } else if (typeof value === 'string') {
-    if (/NaN|Infinity/.test(value)) out.push(`${path} is ${JSON.stringify(value)}`);
-  } else if (Array.isArray(value)) value.forEach((v, i) => numbers(v, `${path}[${i}]`, out));
-  else if (value && typeof value === 'object')
-    for (const [k, v] of Object.entries(value)) numbers(v, `${path}.${k}`, out);
+/**
+ * Every number in `layout` is finite, and so is every number written in path data (the faces'
+ * mouths and the arrowhead). Author text (an actor or task named `NaN`) is not checked.
+ */
+function numbers(layout: JourneyLayout, out: string[]): void {
+  nonFinite(layout, 'layout', out);
+  const paths: [string, string][] = layout.tasks.map((t, i) => [
+    `layout.tasks[${i}].face.mouthPath`,
+    t.face.mouthPath,
+  ]);
+  paths.push(['layout.activity.head', layout.activity.head]);
+  for (const [path, d] of paths)
+    if (/NaN|Infinity/.test(d)) out.push(`${path} is ${JSON.stringify(d)}`);
 }
 const contains = (outer: Rect, inner: Rect): boolean =>
   within(inner.x, outer.x, outer.x + outer.width) &&
@@ -75,7 +81,7 @@ function rowsApart(layout: JourneyLayout, out: string[]): void {
 /** Every invariant `layout` breaks for `model`, one line each; empty when it holds them all. */
 export function journeyLayoutViolations(model: JourneyModel, layout: JourneyLayout): string[] {
   const out: string[] = [];
-  numbers(layout, 'layout', out);
+  numbers(layout, out);
   if (out.length > 0) return out;
 
   if (layout.tasks.length !== model.tasks.length)

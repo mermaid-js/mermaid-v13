@@ -10,7 +10,7 @@ function drain(entries: readonly [number, number][], ties?: HeapTies): number[] 
   return out;
 }
 
-describe('Heap (D673)', () => {
+describe('Heap (D674)', () => {
   it('pops the items by key, the least first', () => {
     const keys = [5, 3, 9, 1, 7, 2, 8, 0, 6, 4];
     expect(drain(keys.map((k) => [k, k * 10]))).toEqual(

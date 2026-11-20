@@ -8,6 +8,7 @@ Code that Mermaid v13 diagram packages share, kept out of `@mermaid-js/core` so 
 | `/parser/state` | The lexer base for diagrams ported from a v12 jison lexer |
 | `/parser/tree` | The lexer and parser base for the indentation-tree diagrams (mindmap, kanban) |
 | `/parser/tree-facet` | Completion pieces for the same diagrams' `./language` entries |
+| `/parser/line-tokens` | The token view of the parsers that read a statement per line (treeView, treemap), and how their errors quote a token |
 | `/parser/table` | The rule-table lexer for diagrams that run a v12 jison lexer's rules as they are |
 | `/parser/v12-text` | The text a v12 jison lexer saw, with each character's source range |
 | `/parser/support` | The stop sentinel, the "got …" text of an unexpected token and the escaper of names in AST ids |
@@ -25,6 +26,7 @@ Code that Mermaid v13 diagram packages share, kept out of `@mermaid-js/core` so 
 | `/svg/route` | Edge paths for graph diagrams |
 | `/svg/arrowheads` | Arrowhead markers and the trim they need |
 | `/svg/graph` | The edge label drawn as a tag (a rounded, bordered box sized by `labelPatch`) and the text style a label is measured with |
+| `/svg/node-paint` | The node paint flowchart and agentflow draw vertices and edges with, and the plain stroke an inner line takes under a gradient |
 | `/config/readers` | Readers for config numbers, lengths and `useMaxWidth` |
 | `/testing/layout-invariants` | What the diagrams' layout invariant checks share: the non-finite walk, box containment and overlap, `near`, the tolerance and the way a box is printed. Workspace-only: specs import it, the build and the tarball leave it out |
 | `/testing/test-context` | The config, theme and render context a diagram's tests render with, as the pipeline builds them. Workspace-only |

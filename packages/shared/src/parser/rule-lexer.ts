@@ -14,6 +14,7 @@ import {
   codePointEnd,
   COLON,
   CR,
+  DASH,
   DQUOTE,
   firstHole,
   type Hole,
@@ -21,6 +22,7 @@ import {
   isDigit,
   isLineEnd,
   isSpace,
+  isWord,
   Kind,
   LBRACE,
   LF,
@@ -41,6 +43,22 @@ export const UNSET = -2;
 
 /** Not in `[^\n\r]`. */
 export const isBreak = (c: number): boolean => c === LF || c === CR;
+
+/**
+ * Langium's ID, `[\w]([-\w]*\w)?`, from `p` (a `\w`) in `text[0, n)`: the end of the `[-\w]`
+ * run without its trailing dashes.
+ */
+export function idEnd(text: string, n: number, p: number): number {
+  let j = p + 1;
+  let end = j;
+  while (j < n) {
+    const c = text.charCodeAt(j);
+    if (isWord(c)) end = ++j;
+    else if (c === DASH) j++;
+    else break;
+  }
+  return end;
+}
 
 /** What a diagram tells {@link RuleLexer}: its kinds for the shared terminals, and its sizes. */
 export interface RuleLexerOptions {
@@ -156,6 +174,24 @@ export abstract class RuleLexer {
   protected boundary(q: number): boolean {
     const c = this.text.charCodeAt(q);
     return q >= this.n || isSpace(c) || (c === PERCENT && this.text.charCodeAt(q + 1) === PERCENT);
+  }
+
+  /**
+   * The first of `words` that starts at `p`, unless an ID (`id`'s kind, see {@link idEnd})
+   * matches longer there (Chevrotain's `LONGER_ALT`): then the ID. -1 when none starts there.
+   */
+  protected keywordOrId(
+    p: number,
+    words: readonly (readonly [word: string, kind: number])[],
+    id: number
+  ): number {
+    for (const [word, kind] of words) {
+      if (!this.text.startsWith(word, p)) continue;
+      const q = p + word.length;
+      const end = idEnd(this.text, this.n, p);
+      return end > q ? this.match(id, end) : this.match(kind, q);
+    }
+    return -1;
   }
 
   /** `word(?:(?=%%)|(?!\S))`. */

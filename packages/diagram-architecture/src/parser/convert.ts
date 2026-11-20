@@ -2,14 +2,10 @@
  * Value conversion as v12 ran it (parser-method §3): `ArchitectureValueConverter` for icons and
  * labels, Langium's default string converter for a text icon, and `common/valueConverter.ts` for
  * `title`, `accTitle` and `accDescr`, then commonDb's setters. Every input is a token's text as
- * v12's lexer read it (`cook()`ed). The common ones are `@mermaid-js/shared/parser/common-values`.
+ * v12's lexer read it (`cook()`ed). The common ones are `@mermaid-js/shared/parser/common-values`
+ * (the parser reads the three text values through `textValue`).
  */
-export {
-  accDescrValue,
-  accTitleValue,
-  stringValue,
-  titleValue,
-} from '@mermaid-js/shared/parser/common-values';
+export { stringValue } from '@mermaid-js/shared/parser/common-values';
 
 /** ARCH_ICON, `(name)`: `input.replace(/[()]/g, '').trim()`; only the outer two can be there. */
 export function iconValue(image: string): string {
