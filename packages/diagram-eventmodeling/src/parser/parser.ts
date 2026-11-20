@@ -454,7 +454,7 @@ class EventModelParser extends RuleParser<PreprocessResult> {
     else if (k === T.Data) this.dataBlock();
     else if (k === T.Note) this.note();
     else if (k === T.Gwt) this.gwt();
-    else if (k === T.Title || k === T.AccTitle || k === T.AccDescr) this.textStatement(k);
+    else if (k === T.Title || k === T.AccTitle || k === T.AccDescr) this.textLine(k);
     else this.fail(AFTER_STATEMENT);
   }
 
@@ -645,7 +645,7 @@ class EventModelParser extends RuleParser<PreprocessResult> {
   }
 
   /** `title …`, `accTitle: …`, `accDescr …` (the last of each wins, as Langium assigns). */
-  private textStatement(k: number): void {
+  private textLine(k: number): void {
     const token = this.text();
     // The image keeps the blanks before the keyword (EM_TITLE's `[\t ]*`); the node does not.
     const lead = token.value.length - token.value.trimStart().length;
