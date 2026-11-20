@@ -10,7 +10,7 @@ import type { Grammar, LexToken, MappedText, ModeLexer } from '@mermaid-js/gen-g
 import { LANGIUM_NAMES, NOTATION_KINDS } from '@mermaid-js/diagram-railroad/testing';
 import type { RailroadNotation } from '@mermaid-js/diagram-railroad/testing';
 import { REPO_ROOT } from '../../corpus.ts';
-import { erLexerInput } from '../../er/grammar/lexer-input.ts';
+import { classLexerInput } from '../../class/grammar/lexer-input.ts';
 
 export const NOTATIONS: readonly RailroadNotation[] = [
   'railroad',
@@ -84,7 +84,7 @@ export interface GrammarTokens {
  * reference builder serves (the grammar-lexer spec checks it against v12's captured text).
  */
 export function grammarTokens(notation: RailroadNotation, source: string): GrammarTokens {
-  const input = erLexerInput(source);
+  const input = classLexerInput(source);
   const { tokens, error } = railroadGrammar(notation).lexer.lex(input.text);
   return { input, tokens, error };
 }

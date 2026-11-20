@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { buildLexer, parseGrammar } from '@mermaid-js/gen-grammar';
 import type { Grammar, LexToken, MappedText, ModeLexer } from '@mermaid-js/gen-grammar';
 import { REPO_ROOT } from '../../corpus.ts';
-import { erLexerInput } from './lexer-input.ts';
+import { classLexerInput } from '../../class/grammar/lexer-input.ts';
 
 export const ER_GRAMMAR_PATH = join(REPO_ROOT, 'packages/diagram-er/grammar/er.ebnf');
 
@@ -38,7 +38,7 @@ export interface GrammarTokens {
 
 /** The grammar lexer's tokens for an ER source. */
 export function grammarTokens(source: string): GrammarTokens {
-  const input = erLexerInput(source);
+  const input = classLexerInput(source);
   const { tokens, error } = erGrammar().lexer.lex(input.text);
   return { input, tokens, error };
 }

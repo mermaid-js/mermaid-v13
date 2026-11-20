@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { buildLexer, mapped, parseGrammar } from '@mermaid-js/gen-grammar';
 import type { Grammar, LexToken, MappedText, ModeLexer } from '@mermaid-js/gen-grammar';
 import { REPO_ROOT } from '../../corpus.ts';
-import { erLexerInput } from '../../er/grammar/lexer-input.ts';
+import { classLexerInput } from '../../class/grammar/lexer-input.ts';
 import { boxReference } from './box-reference.ts';
 
 export const TREEVIEW_GRAMMAR_PATH = join(
@@ -53,7 +53,7 @@ export interface GrammarTokens {
  * grammar-lexer spec checks it against the text v12's Langium lexer read.
  */
 export function grammarTokens(source: string): GrammarTokens {
-  const pre = erLexerInput(source);
+  const pre = classLexerInput(source);
   const box = boxReference(pre.text);
   if (box.kind === 'error') {
     return { input: pre, boxed: false, boxError: box.message, tokens: [], error: 0 };

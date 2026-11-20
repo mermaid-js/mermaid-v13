@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { buildLexer, parseGrammar } from '@mermaid-js/gen-grammar';
 import type { Grammar, LexToken, MappedText, ModeLexer } from '@mermaid-js/gen-grammar';
 import { REPO_ROOT } from '../../corpus.ts';
-import { quadrantLexerInput } from './lexer-input.ts';
+import { classLexerInput } from '../../class/grammar/lexer-input.ts';
 
 export const QUADRANT_GRAMMAR_PATH = join(
   REPO_ROOT,
@@ -37,7 +37,7 @@ export interface GrammarTokens {
 
 /** The grammar lexer's tokens for a quadrant source. */
 export function grammarTokens(source: string): GrammarTokens {
-  const input = quadrantLexerInput(source);
+  const input = classLexerInput(source);
   const { tokens, error } = quadrantGrammar().lexer.lex(input.text);
   return { input, tokens, error };
 }

@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { buildLexer, parseGrammar } from '@mermaid-js/gen-grammar';
 import type { Grammar, LexToken, MappedText, ModeLexer } from '@mermaid-js/gen-grammar';
 import { REPO_ROOT } from '../../corpus.ts';
-import { erLexerInput } from '../../er/grammar/lexer-input.ts';
+import { classLexerInput } from '../../class/grammar/lexer-input.ts';
 
 export const GITGRAPH_GRAMMAR_PATH = join(
   REPO_ROOT,
@@ -58,7 +58,7 @@ export interface GrammarTokens {
  * builder serves (the grammar-lexer spec checks it against v12's captured text).
  */
 export function grammarTokens(source: string): GrammarTokens {
-  const input = erLexerInput(source);
+  const input = classLexerInput(source);
   const { tokens, error } = gitGraphGrammar().lexer.lex(input.text);
   return { input, tokens, error };
 }
