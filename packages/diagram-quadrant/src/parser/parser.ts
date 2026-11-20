@@ -14,6 +14,7 @@
  * {@link ProbeCursor} records what the parser tests at the probed offset (R-LANG-7, D95).
  */
 import { checkLimit } from '@mermaid-js/core/limits';
+import type { Limits } from '@mermaid-js/core/limits';
 import {
   Kind,
   kindSet,
@@ -64,10 +65,11 @@ import type { QuadrantLex } from './lexer.ts';
 import { applyStyle } from './styles.ts';
 import { T } from './tokens.ts';
 
-export interface QuadrantParseOptions extends ParseOptions {
-  /** The integrator's cap on points (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
-  maxNodes?: number;
-}
+/**
+ * `maxNodes` is the integrator's cap on points (core `DEFAULT_LIMITS.maxNodes` when absent,
+ * R-SEC-5).
+ */
+export interface QuadrantParseOptions extends ParseOptions, Partial<Pick<Limits, 'maxNodes'>> {}
 
 export type QuadrantParseResult = ParseResult<QuadrantModel, QuadrantDocument>;
 
