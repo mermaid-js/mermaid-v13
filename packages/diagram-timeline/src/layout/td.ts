@@ -72,7 +72,7 @@ export function layoutTD(env: Env, model: TimelineModel): TimelineLayout {
       const height = Math.max(env.boxHeight(label, td.padding), sectionHeight);
       const width = sectionWrap + overflow(label, sectionWrap) + pad2;
       header = { x: axisX - leftWidth, y, width, height };
-      band.rect(header);
+      band.add(header);
       rowsTop = y + height + td.sectionTaskGap;
     }
     g.periods.forEach((i, j) => {
@@ -100,7 +100,7 @@ export function layoutTD(env: Env, model: TimelineModel): TimelineLayout {
           event: k,
           slot,
         });
-        band.rect(box);
+        band.add(box);
         ey += height + td.eventGap;
         return box;
       });
@@ -118,7 +118,7 @@ export function layoutTD(env: Env, model: TimelineModel): TimelineLayout {
         height: taskHeight,
         events,
       };
-      band.rect(period);
+      band.add(period);
       periods[i] = period;
       if (header) {
         // The section spans a period or an event widened past it (D558).
@@ -147,15 +147,15 @@ export function layoutTD(env: Env, model: TimelineModel): TimelineLayout {
 
   // v12's `getBBox` before the title, then with it: the axis ends below all of it.
   const content = new Bounds();
-  for (const s of sections) content.rect(s);
+  for (const s of sections) content.add(s);
   for (const p of periods) {
-    content.rect(p);
-    for (const e of p.events) content.rect(e);
+    content.add(p);
+    for (const e of p.events) content.add(e);
   }
   for (const c of connectors) content.segment(c);
   const box = content.box({ x: left, y: top });
   const title = titleAt(env, heading, box.width / 2 - env.leftMargin);
-  if (title) content.rect(title);
+  if (title) content.add(title);
   const all = content.box({ x: left, y: top });
   // v12 starts the axis 2 font sizes above the content, through a title wider than half the
   // content; it starts below the title instead.

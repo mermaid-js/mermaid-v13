@@ -70,7 +70,7 @@ export function layoutGantt(model: GanttModel, ctx: GanttLayoutContext): GanttLa
     ...axes,
     ...(today ? { today } : {}),
     ...(title ? { title } : {}),
-    bounds: c.bounds.box(),
+    bounds: c.bounds.rect(),
   };
 }
 

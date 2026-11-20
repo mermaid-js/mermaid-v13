@@ -180,8 +180,6 @@ export function lex(src: string, from: number, view: SourceView, probe?: Probe):
  * One lex. Offsets are into {@link text}, v12's text; {@link emit} maps them to the source.
  */
 class RequirementLexer extends StateLexer {
-  /** jison's condition stack. */
-  protected override readonly stack: number[] = [S.INITIAL];
   /**
    * Whether everything consumed since the last line break (or the start) is blank: the next
    * token starts a line (D431, D432). What jison had matched so far ends in a line break and
@@ -217,20 +215,11 @@ class RequirementLexer extends StateLexer {
   }
 
   run(probe?: Probe): TokenStream {
-    const { n } = this;
     this.trim();
-    if (probe) {
-      while (this.p < n) {
-        const mode = S_NAMES[this.top()] ?? '';
-        const before = this.p;
-        this.step();
-        probe.lexed(this.source(before), this.source(this.p), mode);
-      }
-      probe.lexed(this.src.length, this.src.length, S_NAMES[this.top()] ?? '');
-    } else while (this.p < n) this.step();
+    this.loop(probe, S_NAMES);
     // jison's last match, on the empty rest of the input.
     const end = this.len;
-    switch (this.top()) {
+    switch (this.state) {
       case S.INITIAL:
         this.emit(T.Eof, end, end);
         break;
@@ -251,10 +240,6 @@ class RequirementLexer extends StateLexer {
     }
     this.trivia(this.src.length + 1);
     return this.w.finish(this.src);
-  }
-
-  private top(): number {
-    return this.stack[this.stack.length - 1] ?? S.INITIAL;
   }
 
   // --- Offsets and output -------------------------------------------------------------------
@@ -303,17 +288,16 @@ class RequirementLexer extends StateLexer {
 
   // --- Rules --------------------------------------------------------------------------------
 
-  protected step(): void {
-    const { text, p } = this;
-    const c = text.charCodeAt(p);
-    switch (this.top()) {
+  protected step(c: number): void {
+    const { p } = this;
+    switch (this.state) {
       case S.INITIAL:
         this.initial(c);
         return;
       case S.STRING:
         // `["]` pops; `[^"]*` is the string.
         if (c === DQUOTE) {
-          this.stack.pop();
+          this.popState();
           this.emit(T.Quote, p, p + 1);
         } else this.emit(T.QString, p, this.quote(p));
         return;
@@ -323,15 +307,15 @@ class RequirementLexer extends StateLexer {
       case S.ACC_TITLE:
       case S.ACC_DESCR: {
         // `(?!\n|;|#)*[^\n]*` (jison compiled the lookahead to nothing), then back.
-        const kind = this.top() === S.ACC_TITLE ? T.AccTitleValue : T.AccDescrValue;
-        this.stack.pop();
+        const kind = this.state === S.ACC_TITLE ? T.AccTitleValue : T.AccDescrValue;
+        this.popState();
         this.emit(kind, p, this.lineEnd(p));
         return;
       }
       default:
         // acc_descr_multiline: `[\}]` pops (no token); `[^\}]*` is the value.
         if (c === RBRACE) {
-          this.stack.pop();
+          this.popState();
           this.emit(T.AccDescrClose, p, p + 1);
         } else this.emit(T.AccDescrMultilineValue, p, this.brace(p));
     }
@@ -401,7 +385,7 @@ class RequirementLexer extends StateLexer {
         else this.emit(T.Line, p, p + 1);
         return true;
       case DQUOTE:
-        this.stack.push(S.STRING);
+        this.pushState(S.STRING);
         this.emit(T.Quote, p, p + 1);
         return true;
       case COMMA:
@@ -455,12 +439,12 @@ class RequirementLexer extends StateLexer {
     const j = this.spaces(p + 8);
     const mark = text.charCodeAt(j);
     if (mark === COLON) {
-      this.stack.push(title ? S.ACC_TITLE : S.ACC_DESCR);
+      this.pushState(title ? S.ACC_TITLE : S.ACC_DESCR);
       this.emit(title ? T.AccTitle : T.AccDescr, p, this.spaces(j + 1));
       return true;
     }
     if (mark === LBRACE && !title) {
-      this.stack.push(S.ACC_DESCR_MULTILINE);
+      this.pushState(S.ACC_DESCR_MULTILINE);
       this.emit(T.AccDescrOpen, p, this.spaces(j + 1));
       return true;
     }
@@ -494,7 +478,7 @@ class RequirementLexer extends StateLexer {
     const { text, p } = this;
     for (const [word, kind] of list) {
       if (!this.literal(word, p) || isWord(text.charCodeAt(p + word.length))) continue;
-      if (BEGINS_STYLE.has(kind)) this.stack.push(S.STYLE);
+      if (BEGINS_STYLE.has(kind)) this.pushState(S.STYLE);
       this.emit(kind, p, p + word.length);
       return true;
     }
@@ -534,11 +518,11 @@ class RequirementLexer extends StateLexer {
         return;
       }
       case DQUOTE:
-        this.stack.push(S.STRING);
+        this.pushState(S.STRING);
         this.emit(T.Quote, p, p + 1);
         return;
       case LF:
-        this.stack.pop();
+        this.popState();
         this.emit(T.StyleEnd, p, p + 1);
         return;
       case COMMA:
