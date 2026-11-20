@@ -7,6 +7,7 @@ import { createTheme, isThemeName, loadTheme } from '@mermaid-js/core/theme';
 import { renderDiagram } from './adapter.ts';
 import { asHostText } from './host-text.ts';
 import { M1_THEMES, setsTheme, type Fixture } from './fixtures.ts';
+import { sourceTheme } from './source-theme.ts';
 
 export interface GalleryOptions {
   /** Shown in the title; the alpha the gallery is published for. */
@@ -56,8 +57,8 @@ figure svg{max-width:420px;height:auto}
 pre{font-size:12px;overflow:auto}
 `;
 
-/** The theme a fixture picks in its front matter (`own` when it can't be read). */
-const ownTheme = (source: string): string => /^\s*theme:\s*([\w-]+)/m.exec(source)?.[1] ?? 'own';
+/** The theme a fixture picks in its front matter or an init directive (`own` when none). */
+const ownTheme = (source: string): string => sourceTheme(source) ?? 'own';
 
 export async function buildGallery(
   fixtures: readonly Fixture[],
