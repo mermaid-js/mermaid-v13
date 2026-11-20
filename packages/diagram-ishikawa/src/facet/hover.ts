@@ -11,26 +11,12 @@ import { ISHIKAWA_INDENT_CLAMPED } from '../codes.ts';
 import { ishikawaDocs } from '../generated/docs.ts';
 import { causeCount, sideOf, type IshikawaCause, type IshikawaModel } from '../model.ts';
 import { positionOf } from '../parser/ast-ids.ts';
-import type { IshikawaDocument, IshikawaLineNode } from '../parser/ast.ts';
+import type { IshikawaDocument } from '../parser/ast.ts';
 import { code } from './tables.ts';
+import { statementOverlapping } from '@mermaid-js/shared/parser/facet';
 
 const plural = (n: number, one: string, many = `${one}s`) =>
   `${n === 0 ? 'no' : n} ${n === 1 ? one : many}`;
-
-/** The line holding `at` (AST nodes are in source order and never overlap). */
-function lineAt(doc: DocumentView<IshikawaDocument>, at: number): IshikawaLineNode | undefined {
-  const nodes = doc.result.ast.children;
-  let lo = 0;
-  let hi = nodes.length - 1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    const n = nodes[mid]!;
-    if (n.range.end < at) lo = mid + 1;
-    else if (n.range.start > at) hi = mid - 1;
-    else return n;
-  }
-  return undefined;
-}
 
 function effectHover(model: IshikawaModel, text: string): string {
   const top = model.causes.length;
@@ -97,7 +83,7 @@ export function ishikawaHover(
     const { start, end } = t.range;
     return { range: t.range, contents: `**${code(doc.text.slice(start, end))}**\n\n${docText}` };
   }
-  const line = lineAt(doc, at.offset);
+  const line = statementOverlapping(doc.result.ast.children, at.offset);
   if (!line) return undefined;
   const contents =
     line.type === 'Effect'

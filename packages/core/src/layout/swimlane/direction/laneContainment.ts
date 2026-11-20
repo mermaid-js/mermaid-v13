@@ -4,7 +4,8 @@
 import type { Node } from '../layoutData.ts';
 import type { LaneModel } from '../lanes.ts';
 import { rectOfNodeBounds } from './geometry.ts';
-import type { Point, RectBounds } from './geometry.ts';
+import type { Point } from '../../types.ts';
+import type { RectBounds } from './geometry.ts';
 
 /** How far a route may stray past its lane's border and still count as inside it (px). */
 const BAND_TOLERANCE = 0.5;

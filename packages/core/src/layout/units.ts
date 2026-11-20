@@ -138,7 +138,7 @@ export const pxProfile: UnitProfile = freeze({
     nodePad: { x: 16, y: 12 },
     groupPad: 20,
     titlePad: 16,
-    labelPatch: { x: 12, y: 4 },
+    labelPatch: { x: 16, y: 8 },
     headRoom: 7,
     wrapWidth: 200,
     edgeWrap: 200,

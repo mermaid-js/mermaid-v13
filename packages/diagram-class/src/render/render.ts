@@ -3,7 +3,7 @@
 // renderer does; every class, member, relationship, namespace, note and interface drawn from
 // the AST is one element with `data-id` and `data-ast` (R-SVG-2, -3, R-PARSE-8). What the
 // boxes hold and where is `ClassLayout.class` (#155); this file only paints it.
-import type { LayoutModelNode } from '@mermaid-js/core/layout';
+import { pxProfile, type LayoutModelNode } from '@mermaid-js/core/layout';
 import {
   checkLinkTarget,
   checkStyle,
@@ -16,8 +16,16 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { cls, openSvgRoot, paletteSlots, textElement } from '@mermaid-js/shared/svg/document';
-import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
+import {
+  clickCursor,
+  cls,
+  openSvgRoot,
+  paletteSlots,
+  textElement,
+  placeTitle,
+  titledViewBox,
+} from '@mermaid-js/shared/svg/document';
+import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import { routePath } from '@mermaid-js/shared/svg/route';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type {
@@ -118,7 +126,8 @@ function paints(theme: ThemeOf, p: ClassPrepared): Paints {
   const terminalSize = p.edges.some((e) => e.startLabel ?? e.endLabel)
     ? theme.length('classTerminalFontSize')
     : undefined;
-  const edgeLabel = labelled ? theme.color('mainBkg') : undefined;
+  // The theme background, as every edge label's fill (D628).
+  const labelFill = labelled ? theme.color('background') : undefined;
   return {
     font: theme.font(),
     fontSize: theme.length('fontSize'),
@@ -131,7 +140,7 @@ function paints(theme: ThemeOf, p: ClassPrepared): Paints {
     note,
     cluster,
     text,
-    edgeLabel,
+    edgeLabel: labelFill,
     terminalSize,
     slotOf: paletteSlots(theme),
   };
@@ -155,7 +164,16 @@ export function renderClass(
 ): void {
   const p = layout.class ?? prepareClass(model, ctx);
   const scene: Scene = { w, layout, p, ctx, paint: paints(ctx.theme, p) };
-  openRoot(scene, model);
+  // v12's `classDiagramTitleText`: the root's size in `textColor`, `titleTopMargin` above the drawing (D652).
+  const title = placeTitle(
+    model.title,
+    layout.width,
+    ctx.config.class?.titleTopMargin ?? 25,
+    ctx,
+    ctx.theme.number('fontSize')
+  );
+  const ink = title && ctx.theme.color('textColor');
+  openRoot(scene, model, titledViewBox(layout, title, 8));
   if (scene.paint.cluster) drawNamespaces(scene);
   // One `data-id` per relationship, on its line, its label and its multiplicities.
   const idOf = edgeIds(model);
@@ -169,24 +187,24 @@ export function renderClass(
   for (const view of p.notes) drawNote(scene, view);
   for (const view of p.interfaces) drawInterface(scene, view);
   w.close();
+  if (title && ink)
+    w.label(title.label, title.x, title.y, { class: 'classDiagramTitleText', fill: ink });
   w.close();
 }
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
-function openRoot({ w, layout, ctx, paint }: Scene, model: ClassModel): void {
-  const { config } = ctx;
-  const width = Math.max(1, Math.ceil(layout.width));
-  const height = Math.max(1, Math.ceil(layout.height));
-  const maxWidth = config.class?.useMaxWidth !== false;
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
+function openRoot(
+  { w, ctx, paint }: Scene,
+  model: ClassModel,
+  viewBox: ReturnType<typeof titledViewBox>
+): void {
   openSvgRoot(w, ctx, {
     name: 'class',
     roleDescription: 'classDiagram',
-    viewBox: [0, 0, width, height],
-    maxWidth,
-    title,
-    desc,
+    viewBox,
+    maxWidth: ctx.config.class?.useMaxWidth !== false,
+    title: model.accTitle,
+    desc: model.accDescr,
     attrs: {
       'font-family': paint.font,
       'font-size': paint.fontSize,
@@ -311,14 +329,16 @@ function drawEdges(scene: Scene, idOf: (e: ClassEdgeView) => string): void {
   w.close();
 }
 
-function drawEdgeLabels({ w, layout, paint }: Scene, e: ClassEdgeView, id: string): void {
+function drawEdgeLabels({ w, layout, ctx, paint }: Scene, e: ClassEdgeView, id: string): void {
   const at = layout.edges.get(e.layoutId);
   if (!at) return;
+  // The middle label is a tag bordered in the line colour (D626, D627); the ends stay plain.
   if (e.label && at.label && paint.edgeLabel)
-    labelOnBox(w, e.label, at.label, id, {
+    edgeLabel(w, e.label, at.label, id, {
       fill: paint.edgeLabel,
+      stroke: paint.line,
       text: { fill: paint.text },
-      rx: 3,
+      patch: (ctx.units ?? pxProfile).builder.labelPatch,
     });
   const ends: [MeasuredLabel | undefined, { x: number; y: number } | undefined][] = [
     [e.startLabel, at.startLabel],
@@ -368,6 +388,7 @@ function drawClass(
     'data-ast': view.ast,
     'data-color-id': slot?.id,
     transform: translate(at.x, at.y),
+    cursor: clickCursor(node.classes),
   });
   if (node.tooltip) textElement(w, 'title', node.tooltip);
   const warn = ctx.warn.bind(ctx);

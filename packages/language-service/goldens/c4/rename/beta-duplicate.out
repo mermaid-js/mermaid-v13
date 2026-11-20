@@ -1,0 +1,7 @@
+@ 3:9  person u|ser "User"
+  prepare: 3:8-3:12 "user"; rename to "gateway":
+  c4-beta
+  %% rename-to: gateway
+  person gateway "User"
+  person gateway "Again"
+  gateway --> gateway

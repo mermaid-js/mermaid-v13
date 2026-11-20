@@ -134,7 +134,6 @@
     "packages/diagram-block/src/v12-specs/blockColorIndex.spec.ts > rejects a look that would break out of the selector",
     "packages/diagram-block/src/v12-specs/blockDB.spec.ts > block db runtime config",
     "packages/diagram-er/src/v12-specs/erDiagram.spec.ts > [skipped test] can contain àáâäæãåā",
-    "packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts > edge ids attached to the preceding node (#7032)",
     "packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts > it should handle huge diagrams",
     "packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts > should order edges for the step animation",
     "packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts > should give step edges the default step duration",

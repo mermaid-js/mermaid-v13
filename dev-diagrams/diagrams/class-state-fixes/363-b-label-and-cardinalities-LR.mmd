@@ -1,0 +1,11 @@
+---
+title: '#363 the same relations, left to right'
+description:
+  Fixed when no cardinality touches a relation label or an arrowhead in LR
+  either.
+---
+classDiagram
+  direction LR
+  Customer "1" --> "*" Ticket : buys a long relationship label
+  Student "1" --> "1..*" Course : enrolls in
+  Galaxy --> "many" Star : contains

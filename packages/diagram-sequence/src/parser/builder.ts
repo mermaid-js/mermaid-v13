@@ -16,6 +16,7 @@
  * - `activate`, `deactivate` and `destroy` do not add a participant (v12 adds one only for
  *   declarations and for message, note and menu statements).
  */
+import { checkLimit } from '@mermaid-js/core/limits';
 import type { AstId, Diagnostic, Range } from '@mermaid-js/core/parser-kit';
 import type {
   FragmentKind,
@@ -41,6 +42,14 @@ export interface BuilderSink {
   warn(code: string, message: string, range: Range): void;
   /** A redeclaration reset the menus merged into `id` so far (v12 wrote a new record). */
   menusReset?(id: string): void;
+}
+
+/** The caps a builder checks, one call per item added (D608); core's defaults when absent. */
+export interface BuilderCaps {
+  /** Participant cap (core `DEFAULT_LIMITS.maxNodes`). */
+  maxNodes?: number | undefined;
+  /** Message cap (core `DEFAULT_LIMITS.maxEdges`); notes do not count. */
+  maxEdges?: number | undefined;
 }
 
 /** A participant statement's parts (pitfall 10: more than four parameters). */
@@ -76,11 +85,16 @@ export class SequenceBuilder {
   private readonly gone = new Set<string>();
   /** Open activations per participant, over the whole diagram so far (v12 `activationCount`). */
   private readonly active = new Map<string, number>();
+  /** Messages so far, blocks included, for the `maxEdges` cap. */
+  private messages = 0;
   title: string | undefined;
   accTitle = '';
   accDescr = '';
 
-  constructor(private readonly sink: BuilderSink) {}
+  constructor(
+    private readonly sink: BuilderSink,
+    private readonly caps: BuilderCaps = {}
+  ) {}
 
   private get list(): SequenceStatement[] {
     return this.lists[this.lists.length - 1] as SequenceStatement[];
@@ -174,6 +188,8 @@ export class SequenceBuilder {
       const destroyAst = this.pendingDestroyAst.get(id);
       if (destroyAst !== undefined) p.destroyAst = destroyAst;
       this.participants.set(id, p);
+      const { size } = this.participants;
+      checkLimit(this.sink, 'maxNodes', size, this.caps.maxNodes, 'participants', parts.range);
     }
     this.currentBox?.participants.push(id);
   }
@@ -240,6 +256,8 @@ export class SequenceBuilder {
     if (this.gone.has(m.from) || this.gone.has(m.to)) this.afterDestroy(m, range);
     if (ends !== undefined) this.gone.add(ends);
     this.list.push(m);
+    this.messages++;
+    checkLimit(this.sink, 'maxEdges', this.messages, this.caps.maxEdges, 'messages', range);
   }
 
   private afterDestroy(m: SequenceMessage, range: Range): void {

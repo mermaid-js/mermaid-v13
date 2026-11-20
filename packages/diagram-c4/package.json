@@ -27,9 +27,7 @@
       "default": "./dist/language.js"
     },
     "./testing": {
-      "mermaid-source": "./src/testing.ts",
-      "types": "./dist/testing.d.ts",
-      "default": "./dist/testing.js"
+      "mermaid-source": "./src/testing.ts"
     }
   },
   "files": [
@@ -56,8 +54,14 @@
     "plugin": "diagram",
     "id": "c4",
     "types": [
-      "c4"
+      "c4",
+      "c4beta"
     ],
+    "typeOptions": {
+      "c4beta": {
+        "section": "c4beta"
+      }
+    },
     "formats": [
       "svg",
       "ascii"

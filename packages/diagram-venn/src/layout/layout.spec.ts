@@ -187,6 +187,24 @@ describe('venn layout: labels and text nodes (D414)', () => {
     expect(t!.grid.y).toBeCloseTo(t!.inner.y - t!.grid.height / 2 + offset, 9);
   });
 
+  it('moves a text grid down by what its label of several lines reaches below one line (D613)', () => {
+    // #770: a `<br>` label (two lines) and a wrapped one (three), one text node each.
+    const { layout } = laid(`${LAYOUT}/label-lines-above-text-nodes`);
+    expect(layout.textAreas.map((t) => t.sets.join('+'))).toEqual(['A', 'B']);
+    expect(layout.areas.map((a) => a.label!.text.lines.length)).toEqual([2, 3]);
+    for (const t of layout.textAreas) {
+      const label = layout.areas.find((a) => a.sets.join('+') === t.sets.join('+'))!.label!;
+      const below = label.y + label.height - (Math.floor(t.inner.y) + label.text.lineHeight / 2);
+      expect(below).toBeGreaterThan(0);
+      // v12's offsets (the label's, and 30s for two nodes or fewer), then the label's extra lines.
+      const offset = Math.min(16, t.inner.radius / 4) + 15 + below;
+      expect(t.grid.y).toBeCloseTo(t.inner.y - t.grid.height / 2 + offset, 9);
+      for (const n of t.nodes) {
+        expect(n.label.y).toBeGreaterThanOrEqual(label.y + label.height);
+      }
+    }
+  });
+
   it('draws no text node whose area is not drawn', () => {
     const { layout } = laid(`${LAYOUT}/text-in-undrawn-areas`);
     expect(layout.textAreas.map((t) => t.sets.join('+'))).toEqual(['B']);

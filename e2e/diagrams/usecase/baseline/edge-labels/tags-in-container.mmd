@@ -1,0 +1,17 @@
+---
+description: >-
+  Edge labels as tags inside a coloured system boundary (D628): the label
+  inside the boundary keeps the theme background as its fill, as the label
+  outside does.
+config:
+  theme: redux-color
+---
+usecase-beta
+  direction LR
+  actor Customer
+  systemBoundary shop["Shop"]
+    Browse
+    Checkout
+  end
+  Customer -- "outside" ---> Browse
+  Browse -- "inside" ---> Checkout

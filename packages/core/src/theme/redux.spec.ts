@@ -101,7 +101,7 @@ describe('the redux family (D151)', () => {
       expect(t.value('clusterBkg')).toBe('#1e1a2e');
       expect(t.value('clusterBorder')).toBe('#bdbccc');
       expect(t.value('lineColor')).toBe('#cccccc');
-      expect(t.value('edgeLabelBackground')).toBe('#474949');
+      expect(t.value('edgeLabelBackground')).toBe('#333333');
       expect(t.value('noteBkgColor')).toBe('#fef9c3');
       expect(t.number('strokeWidth')).toBe(2);
     }

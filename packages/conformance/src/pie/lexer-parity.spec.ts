@@ -125,7 +125,7 @@ describe('pie lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () => {
       `pie lexer parity: ${compared} of ${items.length} sources lexed by v12, ${errors} with a lexer error\n`
     );
     // Every e2e fixture reaches the pie lexer.
-    expect(e2e).toBe(50);
+    expect(e2e).toBe(52);
     expect(compared).toBeGreaterThan(450);
     expect(diffs).toEqual([]);
   }, 120_000);

@@ -88,249 +88,285 @@ interface Tok {
 
 const PUNCT = new Set(['=', '|', '(', ')', '[', ']', '{', '}', ';', '*', '+', '?', '-']);
 
-function tokenize(src: string): { toks: Tok[]; fileDoc: string | undefined } {
-  const toks: Tok[] = [];
-  let doc: string | undefined;
-  let fileDoc: string | undefined;
-  let line = 1;
-  let i = 0;
-  const err = (msg: string): never => {
-    throw new SyntaxError(`grammar line ${line}: ${msg}`);
-  };
-  const push = (k: Tok['k'], v: string) => {
-    const t: Tok = { k, v, line };
-    if (doc !== undefined) t.doc = doc;
-    doc = undefined;
-    toks.push(t);
-  };
-  while (i < src.length) {
-    const c = src[i] ?? '';
-    if (c === '\n') {
-      line++;
-      i++;
-      continue;
-    }
-    if (/\s/.test(c)) {
-      i++;
-      continue;
-    }
-    if (src.startsWith('(*', i)) {
-      const e = src.indexOf('*)', i + 2);
-      if (e < 0) err('unclosed comment');
-      const body = src.slice(i + 2, e);
-      if (body.startsWith('*')) {
-        const text = body
-          .slice(1)
-          .split('\n')
-          .map((l) => l.trim())
-          .join('\n')
-          .trim();
-        if (toks.length === 0 && fileDoc === undefined) fileDoc = text;
-        else doc = text;
-      }
-      for (const ch of body) if (ch === '\n') line++;
-      i = e + 2;
-      continue;
-    }
-    if (c === '@') {
-      const m = /^@[A-Za-z][\w-]*/.exec(src.slice(i));
-      if (!m) err('expected a name after @');
-      push('at', (m as RegExpExecArray)[0].slice(1));
-      i += (m as RegExpExecArray)[0].length;
-      continue;
-    }
-    if (c === '<') {
-      const e = src.indexOf('>', i);
-      if (e < 0) err('unclosed <modes>');
-      push('modes', src.slice(i + 1, e));
-      i = e + 1;
-      continue;
-    }
-    if (c === '/') {
-      let j = i + 1;
-      let cls = false;
-      for (; j < src.length; j++) {
-        const d = src[j];
-        if (d === '\\') j++;
-        else if (d === '[') cls = true;
-        else if (d === ']') cls = false;
-        else if (d === '/' && !cls) break;
-      }
-      if (j >= src.length) err('unclosed regex');
-      // A long regex may be broken over lines: a line break and the indent after it vanish.
-      const body = src.slice(i + 1, j);
-      push('regex', body.replace(/\n\s*/g, ''));
-      for (const ch of body) if (ch === '\n') line++;
-      i = j + 1;
-      continue;
-    }
-    if (c === ':') {
-      const m = /^:([A-Za-z][\w.-]*)/.exec(src.slice(i));
-      if (!m) err('expected a scope after :');
-      push('scope', (m as RegExpExecArray)[1] ?? '');
-      i += (m as RegExpExecArray)[0].length;
-      continue;
-    }
-    const w = /^[A-Za-z_][\w-]*(?:\([\w-]*\))?/.exec(src.slice(i));
-    if (w) {
-      push('word', w[0]);
-      i += w[0].length;
-      continue;
-    }
-    if (PUNCT.has(c)) {
-      push('punct', c);
-      i++;
-      continue;
-    }
-    err(`unexpected character ${JSON.stringify(c)}`);
+/** The scanner's position: what `tokenize` threads through its per-token helpers. */
+interface Scan {
+  readonly src: string;
+  readonly toks: Tok[];
+  doc: string | undefined;
+  fileDoc: string | undefined;
+  line: number;
+  i: number;
+}
+
+function scanErr(st: Scan, msg: string): never {
+  throw new SyntaxError(`grammar line ${st.line}: ${msg}`);
+}
+
+function scanPush(st: Scan, k: Tok['k'], v: string): void {
+  const t: Tok = { k, v, line: st.line };
+  if (st.doc !== undefined) t.doc = st.doc;
+  st.doc = undefined;
+  st.toks.push(t);
+}
+
+function countLines(st: Scan, body: string): void {
+  for (const ch of body) if (ch === '\n') st.line++;
+}
+
+/** `(* … *)`; a `(** … *)` one is a doc comment for the next token (or the file's title). */
+function scanComment(st: Scan): void {
+  const e = st.src.indexOf('*)', st.i + 2);
+  if (e < 0) scanErr(st, 'unclosed comment');
+  const body = st.src.slice(st.i + 2, e);
+  if (body.startsWith('*')) {
+    const text = body
+      .slice(1)
+      .split('\n')
+      .map((l) => l.trim())
+      .join('\n')
+      .trim();
+    if (st.toks.length === 0 && st.fileDoc === undefined) st.fileDoc = text;
+    else st.doc = text;
   }
-  return { toks, fileDoc };
+  countLines(st, body);
+  st.i = e + 2;
+}
+
+function scanAt(st: Scan): void {
+  const m = /^@[A-Za-z][\w-]*/.exec(st.src.slice(st.i));
+  if (!m) scanErr(st, 'expected a name after @');
+  scanPush(st, 'at', m[0].slice(1));
+  st.i += m[0].length;
+}
+
+function scanModes(st: Scan): void {
+  const e = st.src.indexOf('>', st.i);
+  if (e < 0) scanErr(st, 'unclosed <modes>');
+  scanPush(st, 'modes', st.src.slice(st.i + 1, e));
+  st.i = e + 1;
+}
+
+function scanRegex(st: Scan): void {
+  const { src } = st;
+  let j = st.i + 1;
+  let cls = false;
+  for (; j < src.length; j++) {
+    const d = src[j];
+    if (d === '\\') j++;
+    else if (d === '[') cls = true;
+    else if (d === ']') cls = false;
+    else if (d === '/' && !cls) break;
+  }
+  if (j >= src.length) scanErr(st, 'unclosed regex');
+  // A long regex may be broken over lines: a line break and the indent after it vanish.
+  const body = src.slice(st.i + 1, j);
+  scanPush(st, 'regex', body.replace(/\n\s*/g, ''));
+  countLines(st, body);
+  st.i = j + 1;
+}
+
+function scanScope(st: Scan): void {
+  const m = /^:([A-Za-z][\w.-]*)/.exec(st.src.slice(st.i));
+  if (!m) scanErr(st, 'expected a scope after :');
+  scanPush(st, 'scope', m[1] ?? '');
+  st.i += m[0].length;
+}
+
+function scanWordOrPunct(st: Scan, c: string): void {
+  const w = /^[A-Za-z_][\w-]*(?:\([\w-]*\))?/.exec(st.src.slice(st.i));
+  if (w) {
+    scanPush(st, 'word', w[0]);
+    st.i += w[0].length;
+  } else if (PUNCT.has(c)) {
+    scanPush(st, 'punct', c);
+    st.i++;
+  } else {
+    scanErr(st, `unexpected character ${JSON.stringify(c)}`);
+  }
+}
+
+function tokenize(src: string): { toks: Tok[]; fileDoc: string | undefined } {
+  const st: Scan = { src, toks: [], doc: undefined, fileDoc: undefined, line: 1, i: 0 };
+  while (st.i < src.length) {
+    const c = src[st.i] ?? '';
+    if (c === '\n') {
+      st.line++;
+      st.i++;
+    } else if (/\s/.test(c)) st.i++;
+    else if (src.startsWith('(*', st.i)) scanComment(st);
+    else if (c === '@') scanAt(st);
+    else if (c === '<') scanModes(st);
+    else if (c === '/') scanRegex(st);
+    else if (c === ':') scanScope(st);
+    else scanWordOrPunct(st, c);
+  }
+  return { toks: st.toks, fileDoc: st.fileDoc };
 }
 
 const ACTIONS = new Set(['pop', 'empty', 'fold', 'attach-next', 'attach-prev']);
+const CLOSER: Readonly<Record<string, string>> = { '(': ')', '[': ']', '{': '}' };
 
-/** Parse a grammar file. Throws a SyntaxError with the line on malformed input. */
-export function parseGrammar(src: string): Grammar {
-  const { toks, fileDoc } = tokenize(src);
-  let p = 0;
-  const peek = () => toks[p];
-  const err = (msg: string, t = peek()): never => {
-    throw new SyntaxError(`grammar line ${t?.line ?? '?'}: ${msg}`);
-  };
-  const expectPunct = (v: string) => {
-    const t = peek();
-    if (t?.k !== 'punct' || t.v !== v) err(`expected \`${v}\``);
-    p++;
-  };
+/** Recursive descent over the token list; the lexer and grammar sections fill the lists. */
+class GrammarParser {
+  readonly toks: Tok[];
+  p = 0;
+  readonly modes: string[] = [];
+  ignoreCase = false;
+  readonly lexRules: LexRule[] = [];
+  readonly triviaRules: LexRule[] = [];
+  readonly tokens: string[] = [];
+  readonly rules: GrammarRule[] = [];
 
-  const modes: string[] = [];
-  let ignoreCase = false;
-  const lexRules: LexRule[] = [];
-  const triviaRules: LexRule[] = [];
-  const tokens: string[] = [];
-  const rules: GrammarRule[] = [];
-  let section: 'lexer' | 'trivia' | 'grammar' | undefined;
-
-  while (p < toks.length) {
-    const t = toks[p] as Tok;
-    if (t.k === 'at' && (t.v === 'lexer' || t.v === 'trivia' || t.v === 'grammar')) {
-      section = t.v;
-      p++;
-      continue;
-    }
-    if (section === undefined) err('expected @lexer, @trivia or @grammar');
-    if (section === 'lexer' || section === 'trivia') {
-      if (t.k === 'at' && t.v === 'modes') {
-        p++;
-        while (peek()?.k === 'word') modes.push((toks[p++] as Tok).v);
-        expectPunct(';');
-        continue;
-      }
-      if (t.k === 'at' && t.v === 'options') {
-        p++;
-        while (peek()?.k === 'word') {
-          const o = toks[p++] as Tok;
-          if (o.v === 'case-insensitive') ignoreCase = true;
-          else err(`unknown lexer option \`${o.v}\``, o);
-        }
-        expectPunct(';');
-        continue;
-      }
-      const doc = t.doc;
-      let ruleModes = ['INITIAL'];
-      if (t.k === 'modes') {
-        ruleModes = t.v.split(',').map((m) => m.trim());
-        p++;
-      }
-      const nameTok = peek();
-      let name: string | undefined;
-      if (nameTok?.k === 'word') name = nameTok.v;
-      else if (!(nameTok?.k === 'punct' && nameTok.v === '-')) err('expected a token name or -');
-      p++;
-      const re = peek();
-      if (re?.k !== 'regex') err('expected /regex/');
-      p++;
-      const actions: LexAction[] = [];
-      let scope: string | undefined;
-      while (peek()?.k === 'word' || peek()?.k === 'scope') {
-        const a = toks[p++] as Tok;
-        if (a.k === 'scope') {
-          scope = a.v;
-          continue;
-        }
-        const m = /^(push|push-once)\(([\w-]+)\)$/.exec(a.v);
-        if (m) actions.push({ op: m[1] as 'push', mode: m[2] ?? '' });
-        else if (ACTIONS.has(a.v)) actions.push({ op: a.v as LexAction['op'] });
-        else err(`unknown lexer action \`${a.v}\``, a);
-      }
-      expectPunct(';');
-      for (const m of ruleModes) {
-        if (m !== '*' && m !== 'INITIAL' && !modes.includes(m)) err(`unknown mode \`${m}\``, t);
-      }
-      for (const a of actions) {
-        if (a.mode !== undefined && !modes.includes(a.mode)) err(`unknown mode \`${a.mode}\``, t);
-      }
-      try {
-        new RegExp((re as Tok).v, 'y');
-      } catch (e) {
-        err(`bad regex: ${(e as Error).message}`, re);
-      }
-      const into = section === 'trivia' ? triviaRules : lexRules;
-      if (section === 'lexer' && name !== undefined && !tokens.includes(name)) tokens.push(name);
-      into.push({
-        index: into.length,
-        modes: ruleModes,
-        name,
-        pattern: (re as Tok).v,
-        actions,
-        scope,
-        doc,
-      });
-      continue;
-    }
-    // grammar rule
-    if (t.k !== 'word') err('expected a rule name');
-    p++;
-    let ast: string | undefined;
-    if (peek()?.k === 'at') ast = (toks[p++] as Tok).v;
-    expectPunct('=');
-    const body = alt();
-    expectPunct(';');
-    rules.push({ name: t.v, ast, body, doc: t.doc });
+  constructor(toks: Tok[]) {
+    this.toks = toks;
   }
 
-  function alt(): Expr {
-    const alts = [seq()];
-    while (peek()?.k === 'punct' && peek()?.v === '|') {
-      p++;
-      alts.push(seq());
+  peek(): Tok | undefined {
+    return this.toks[this.p];
+  }
+
+  err(msg: string, t = this.peek()): never {
+    throw new SyntaxError(`grammar line ${t?.line ?? '?'}: ${msg}`);
+  }
+
+  expectPunct(v: string): void {
+    const t = this.peek();
+    if (t?.k !== 'punct' || t.v !== v) this.err(`expected \`${v}\``);
+    this.p++;
+  }
+
+  /** `@modes a b;` or `@options case-insensitive;`; false when `t` is neither. */
+  directive(t: Tok): boolean {
+    if (t.k !== 'at' || (t.v !== 'modes' && t.v !== 'options')) return false;
+    this.p++;
+    while (this.peek()?.k === 'word') {
+      const o = this.toks[this.p++] as Tok;
+      if (t.v === 'modes') this.modes.push(o.v);
+      else if (o.v === 'case-insensitive') this.ignoreCase = true;
+      else this.err(`unknown lexer option \`${o.v}\``, o);
+    }
+    this.expectPunct(';');
+    return true;
+  }
+
+  /** The actions and scope after a lexer rule's regex. */
+  lexTail(): { actions: LexAction[]; scope: string | undefined } {
+    const actions: LexAction[] = [];
+    let scope: string | undefined;
+    while (this.peek()?.k === 'word' || this.peek()?.k === 'scope') {
+      const a = this.toks[this.p++] as Tok;
+      if (a.k === 'scope') {
+        scope = a.v;
+        continue;
+      }
+      const m = /^(push|push-once)\(([\w-]+)\)$/.exec(a.v);
+      if (m) actions.push({ op: m[1] as 'push', mode: m[2] ?? '' });
+      else if (ACTIONS.has(a.v)) actions.push({ op: a.v as LexAction['op'] });
+      else this.err(`unknown lexer action \`${a.v}\``, a);
+    }
+    return { actions, scope };
+  }
+
+  /** The modes a lexer rule is active in, and the token that follows its `<modes>` prefix. */
+  ruleModes(t: Tok): string[] {
+    if (t.k !== 'modes') return ['INITIAL'];
+    this.p++;
+    return t.v.split(',').map((m) => m.trim());
+  }
+
+  /** Every mode a rule names (its own and its `push` targets) is declared. */
+  checkModes(t: Tok, ruleModes: string[], actions: LexAction[]): void {
+    for (const m of ruleModes) {
+      if (m !== '*' && m !== 'INITIAL' && !this.modes.includes(m)) {
+        this.err(`unknown mode \`${m}\``, t);
+      }
+    }
+    for (const a of actions) {
+      if (a.mode !== undefined && !this.modes.includes(a.mode)) {
+        this.err(`unknown mode \`${a.mode}\``, t);
+      }
+    }
+  }
+
+  /** One `<modes> NAME /regex/ actions :scope;` rule of the lexer or trivia section. */
+  lexRule(t: Tok, section: 'lexer' | 'trivia'): void {
+    const doc = t.doc;
+    const ruleModes = this.ruleModes(t);
+    const nameTok = this.peek();
+    let name: string | undefined;
+    if (nameTok?.k === 'word') name = nameTok.v;
+    else if (!(nameTok?.k === 'punct' && nameTok.v === '-')) this.err('expected a token name or -');
+    this.p++;
+    const re = this.peek();
+    if (re?.k !== 'regex') this.err('expected /regex/');
+    this.p++;
+    const { actions, scope } = this.lexTail();
+    this.expectPunct(';');
+    this.checkModes(t, ruleModes, actions);
+    try {
+      new RegExp(re.v, 'y');
+    } catch (e) {
+      this.err(`bad regex: ${(e as Error).message}`, re);
+    }
+    const into = section === 'trivia' ? this.triviaRules : this.lexRules;
+    if (section === 'lexer' && name !== undefined && !this.tokens.includes(name)) {
+      this.tokens.push(name);
+    }
+    into.push({
+      index: into.length,
+      modes: ruleModes,
+      name,
+      pattern: re.v,
+      actions,
+      scope,
+      doc,
+    });
+  }
+
+  grammarRule(t: Tok): void {
+    if (t.k !== 'word') this.err('expected a rule name');
+    this.p++;
+    let ast: string | undefined;
+    if (this.peek()?.k === 'at') ast = (this.toks[this.p++] as Tok).v;
+    this.expectPunct('=');
+    const body = this.alt();
+    this.expectPunct(';');
+    this.rules.push({ name: t.v, ast, body, doc: t.doc });
+  }
+
+  alt(): Expr {
+    const alts = [this.seq()];
+    while (this.peek()?.k === 'punct' && this.peek()?.v === '|') {
+      this.p++;
+      alts.push(this.seq());
     }
     return alts.length === 1 ? (alts[0] as Expr) : { t: 'alt', alts };
   }
-  function seq(): Expr {
+
+  /** `( … )`, `[ … ]` or `{ … }`: a group, an option or a repetition. */
+  group(t: Tok): Expr {
+    this.p++;
+    const inner = this.alt();
+    this.expectPunct(CLOSER[t.v] ?? '');
+    if (t.v === '(') return inner;
+    return t.v === '[' ? { t: 'opt', e: inner } : { t: 'rep', e: inner, min: 0 };
+  }
+
+  seq(): Expr {
     const items: Expr[] = [];
     for (;;) {
-      const t = peek();
+      const t = this.peek();
       if (!t) break;
       let e: Expr;
       if (t.k === 'word') {
-        p++;
+        this.p++;
         e = { t: 'sym', name: t.v };
       } else if (t.k === 'punct' && (t.v === '(' || t.v === '[' || t.v === '{')) {
-        p++;
-        const inner = alt();
-        const close = t.v === '(' ? ')' : t.v === '[' ? ']' : '}';
-        expectPunct(close);
-        e =
-          t.v === '('
-            ? inner
-            : t.v === '['
-              ? { t: 'opt', e: inner }
-              : { t: 'rep', e: inner, min: 0 };
+        e = this.group(t);
       } else break;
-      const q = peek();
+      const q = this.peek();
       if (q?.k === 'punct' && (q.v === '*' || q.v === '+' || q.v === '?')) {
-        p++;
+        this.p++;
         e = q.v === '?' ? { t: 'opt', e } : { t: 'rep', e, min: q.v === '+' ? 1 : 0 };
       }
       items.push(e);
@@ -338,16 +374,39 @@ export function parseGrammar(src: string): Grammar {
     return items.length === 1 ? (items[0] as Expr) : { t: 'seq', items };
   }
 
-  const first = rules[0];
+  run(): void {
+    let section: 'lexer' | 'trivia' | 'grammar' | undefined;
+    while (this.p < this.toks.length) {
+      const t = this.toks[this.p] as Tok;
+      if (t.k === 'at' && (t.v === 'lexer' || t.v === 'trivia' || t.v === 'grammar')) {
+        section = t.v;
+        this.p++;
+      } else if (section === undefined) {
+        this.err('expected @lexer, @trivia or @grammar');
+      } else if (section === 'grammar') {
+        this.grammarRule(t);
+      } else if (!this.directive(t)) {
+        this.lexRule(t, section);
+      }
+    }
+  }
+}
+
+/** Parse a grammar file. Throws a SyntaxError with the line on malformed input. */
+export function parseGrammar(src: string): Grammar {
+  const { toks, fileDoc } = tokenize(src);
+  const parser = new GrammarParser(toks);
+  parser.run();
+  const first = parser.rules[0];
   if (!first) throw new SyntaxError('grammar: no grammar rules');
   const g: Grammar = {
     doc: fileDoc,
-    modes,
-    ignoreCase,
-    lexRules,
-    triviaRules,
-    tokens,
-    rules,
+    modes: parser.modes,
+    ignoreCase: parser.ignoreCase,
+    lexRules: parser.lexRules,
+    triviaRules: parser.triviaRules,
+    tokens: parser.tokens,
+    rules: parser.rules,
     start: first.name,
   };
   checkGrammar(g);

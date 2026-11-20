@@ -18,7 +18,8 @@
  * render naming each.
  */
 import type { Warning } from '@mermaid-js/core';
-import { checkColor, type Paint } from '@mermaid-js/core/svg';
+import { checkColor, type Paint, type SafeValue } from '@mermaid-js/core/svg';
+import { parseColor, type Rgba } from '@mermaid-js/core/theme';
 import { C4_COLOR_INVALID } from '../codes.ts';
 import { c4Default, c4Section } from '../config.ts';
 import type { C4Layout } from '../layout/types.ts';
@@ -36,7 +37,7 @@ function defaultPaint(key: `${C4ElementKind}_${Part}_color`): Paint {
 }
 
 /** v12's element text (`c4ShapeAdapter.ts`). */
-const ELEMENT_TEXT = checkColor('#FFFFFF') as Paint;
+export const ELEMENT_TEXT = checkColor('#FFFFFF') as Paint;
 
 /** An element's outline and text. */
 export interface ElementPaint {
@@ -58,6 +59,14 @@ export interface RelationPaint {
   readonly head: Paint;
   readonly text?: Paint;
   readonly labelBkg?: Paint;
+  /** The line's `stroke-dasharray`; undefined for a solid line. */
+  readonly dash?: SafeValue;
+}
+
+/** The legend's text, and each row's swatch by its place in the layout's rows. */
+export interface LegendPaint {
+  readonly text: Paint;
+  readonly rows: readonly { readonly fill: Paint; readonly stroke: Paint }[];
 }
 
 export interface Paints {
@@ -68,17 +77,19 @@ export interface Paints {
   /** By the relation's index in `C4Model.relations`. */
   readonly relations: ReadonlyMap<number, RelationPaint>;
   readonly title?: Paint;
+  /** Set with the layout's legend. */
+  readonly legend?: LegendPaint;
 }
 
 /** A dropped colour: where it was given (a `$name` of an item, or a config key) and its value. */
-interface Dropped {
+export interface Dropped {
   readonly where: string;
   readonly value: string;
   readonly ast?: string;
 }
 
 /** Checks author and config colours, collecting what it drops; reads theme colours once. */
-class Colours {
+export class Colours {
   readonly dropped: Dropped[] = [];
   private readonly read = new Map<string, Paint>();
 
@@ -91,12 +102,22 @@ class Colours {
     return paint;
   }
 
-  /** `value` if the colour check allows it; else undefined, and `where` noted when one was given. */
+  /** The theme variable `name` as a colour, for measuring; undefined if it is not one. */
+  themeRgba(name: string): Rgba | undefined {
+    return parseColor(this.ctx.theme.value(name));
+  }
+
+  /**
+   * `value` if the colour check allows it; else undefined, and `where` noted when one was given.
+   * An empty value is not given: v12 reads an empty positional slot (`UpdateElementStyle(a,,,…)`)
+   * as "the default", so it draws the default with no warning (#774).
+   */
   checked(value: unknown, where: string, ast?: string): Paint | undefined {
-    if (value === undefined) return undefined;
+    if (value === undefined || value === '') return undefined;
     const colour = typeof value === 'string' ? checkColor(value) : undefined;
-    if (colour === undefined)
-      this.dropped.push({ where, value: JSON.stringify(value), ...(ast ? { ast } : {}) });
+    const given = JSON.stringify(value);
+    if (colour === undefined && !this.dropped.some((d) => d.where === where && d.value === given))
+      this.dropped.push({ where, value: given, ...(ast ? { ast } : {}) });
     return colour;
   }
 }
@@ -137,20 +158,20 @@ function boundaryPaints(
   return out;
 }
 
-function elementPaints(
-  model: C4Model,
-  layout: C4Layout,
+/**
+ * The config palette of an element kind, `[bg, border]`: each key checked once, for the kinds
+ * drawn. A key the config leaves unset is the default already; a refused one draws the default.
+ */
+export function kindPalette(
   ctx: C4RenderContext,
   colours: Colours
-): Map<number, ElementPaint> {
-  // The config palette: each key checked once, for the kinds drawn.
+): (kind: C4ElementKind) => readonly [Paint, Paint] {
   const section = c4Section(ctx.config);
   const palette = new Map<C4ElementKind, readonly [Paint, Paint]>();
-  const kindPaint = (kind: C4ElementKind): readonly [Paint, Paint] => {
+  return (kind) => {
     let got = palette.get(kind);
     if (!got) {
       const key = (part: Part): `${C4ElementKind}_${Part}_color` => `${kind}_${part}_color`;
-      // A key the config leaves unset is the default already; a refused one draws the default.
       const paint = (part: Part): Paint =>
         colours.checked(section[key(part)], `c4.${key(part)}`) ?? defaultPaint(key(part));
       got = [paint('bg'), paint('border')];
@@ -158,6 +179,15 @@ function elementPaints(
     }
     return got;
   };
+}
+
+function elementPaints(
+  model: C4Model,
+  layout: C4Layout,
+  ctx: C4RenderContext,
+  colours: Colours
+): Map<number, ElementPaint> {
+  const kindPaint = kindPalette(ctx, colours);
   const out = new Map<number, ElementPaint>();
   for (const e of layout.elements) {
     const { alias, ast, bgColor, borderColor, fontColor } = model.elements[e.index]!;
@@ -196,7 +226,7 @@ function relationPaints(
 }
 
 /** The one `C4_COLOR_INVALID` of a render, naming every dropped value. */
-function colourWarning(dropped: readonly Dropped[]): Warning {
+export function colourWarning(dropped: readonly Dropped[]): Warning {
   const astIds = [...new Set(dropped.flatMap((d) => (d.ast ? [d.ast] : [])))];
   const config = dropped.find((d) => d.ast === undefined);
   return {

@@ -1,0 +1,52 @@
+/**
+ * `pnpm --filter @mermaid-js/dev visual:replay [count]`: what the visual job's path rules
+ * (`visual-scope.ts`) would have decided for the last `count` (default 200) PRs merged into
+ * mermaid-v13. The retro on running too much (D632): a rising share of `full` means a rule is
+ * too wide. `compare` PRs photograph only what they change, which this cannot tell from the
+ * file list. Needs `gh`, logged in.
+ */
+import { execFileSync } from 'node:child_process';
+import { replayPaths } from '../visual-scope.ts';
+
+/** GitHub lists at most this many files of a PR; a longer list is cut and may hide a rule's match. */
+const FILE_LIST_LIMIT = 100;
+
+const count = process.argv[2] ?? '200';
+const repo = process.env.GITHUB_REPOSITORY ?? 'mermaid-js/mermaid-v13';
+const listed = execFileSync(
+  'gh',
+  [
+    'pr',
+    'list',
+    '-R',
+    repo,
+    '--state',
+    'merged',
+    '--base',
+    'mermaid-v13',
+    '--limit',
+    count,
+    '--json',
+    'number,files',
+  ],
+  { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 }
+);
+const prs = (JSON.parse(listed) as { files: { path: string }[] }[]).map((pr) =>
+  pr.files.map((file) => file.path)
+);
+const replay = replayPaths(prs);
+const share = (n: number): string => `${n} (${Math.round((100 * n) / Math.max(replay.total, 1))}%)`;
+const cut = prs.filter((files) => files.length >= FILE_LIST_LIMIT).length;
+
+process.stdout.write(
+  [
+    `The last ${replay.total} PRs merged into mermaid-v13, by the path rules alone:`,
+    `  full     ${share(replay.full)}   every fixture photographed`,
+    `  compare  ${share(replay.compare)}   only the fixtures the PR renders differently`,
+    `  skip     ${share(replay.skip)}   nothing photographed`,
+    `${cut} of them changed ${FILE_LIST_LIMIT} files or more; GitHub cuts the list there, so a rule may have matched unseen.`,
+    'Files that forced a full run (PRs):',
+    ...replay.fullBecause.slice(0, 15).map(([file, n]) => `  ${String(n).padStart(4)}  ${file}`),
+    '',
+  ].join('\n')
+);

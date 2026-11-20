@@ -46,139 +46,213 @@ function onBorder(r: Rect, p: Point): boolean {
   return near(r, p) && (at(p.x, r.x0) || at(p.x, r.x1) || at(p.y, r.y0) || at(p.y, r.y1));
 }
 
-/** Returns one message per problem; an empty list means the model is valid for the graph. */
-export function validateLayout(graph: LayoutGraph, model: LayoutModel): string[] {
-  const problems: string[] = [];
-  const bad = (v: number): boolean => !Number.isFinite(v);
-  if (bad(model.width) || bad(model.height) || model.width < 0 || model.height < 0) {
-    problems.push(`drawing width/height not finite: ${model.width} x ${model.height}`);
-  }
-  const page: Rect = { x0: 0, y0: 0, x1: model.width, y1: model.height };
+interface Box {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
-  // Boxes by id, with the chain of groups each sits in.
-  const boxes = new Map<string, Rect>();
-  const parent = new Map<string, string | undefined>();
-  const place = (
-    kind: string,
-    id: string,
-    b: { x: number; y: number; width: number; height: number } | undefined,
-    up: string | undefined
-  ): void => {
-    if (!b) {
-      problems.push(`missing ${kind} '${id}'`);
-      return;
-    }
-    if ([b.x, b.y, b.width, b.height].some(bad)) {
-      problems.push(`${kind} '${id}' has a non-finite coordinate`);
-      return;
-    }
-    const r = rect(b);
-    if (!contains(page, r)) problems.push(`${kind} '${id}' lies outside the drawing`);
-    boxes.set(id, r);
-    parent.set(id, up);
-  };
-  for (const n of graph.nodes) place('node', n.id, model.nodes.get(n.id), n.parent);
-  for (const g of graph.groups) {
-    const placed = model.groups.get(g.id);
-    place('group', g.id, placed, g.parent);
+/** What the invariant checks share: the findings so far, and the placed boxes. */
+interface Check {
+  readonly graph: LayoutGraph;
+  readonly model: LayoutModel;
+  readonly problems: string[];
+  readonly page: Rect;
+  readonly boxes: Map<string, Rect>;
+  readonly parent: Map<string, string | undefined>;
+  readonly groupIds: Set<string>;
+}
+
+interface PlacedLabel {
+  edge: string;
+  name: string;
+  r: Rect;
+}
+
+interface Size {
+  width: number;
+  height: number;
+}
+
+const bad = (v: number): boolean => !Number.isFinite(v);
+
+function checkDrawingSize(c: Check): void {
+  const { width, height } = c.model;
+  if (bad(width) || bad(height) || width < 0 || height < 0) {
+    c.problems.push(`drawing width/height not finite: ${width} x ${height}`);
+  }
+}
+
+// Records the box of a node or group, with the group it sits in.
+function place(
+  c: Check,
+  kind: string,
+  id: string,
+  b: Box | undefined,
+  up: string | undefined
+): void {
+  if (!b) {
+    c.problems.push(`missing ${kind} '${id}'`);
+    return;
+  }
+  if ([b.x, b.y, b.width, b.height].some(bad)) {
+    c.problems.push(`${kind} '${id}' has a non-finite coordinate`);
+    return;
+  }
+  const r = rect(b);
+  if (!contains(c.page, r)) c.problems.push(`${kind} '${id}' lies outside the drawing`);
+  c.boxes.set(id, r);
+  c.parent.set(id, up);
+}
+
+function checkBoxes(c: Check): void {
+  for (const n of c.graph.nodes) place(c, 'node', n.id, c.model.nodes.get(n.id), n.parent);
+  for (const g of c.graph.groups) {
+    const placed = c.model.groups.get(g.id);
+    place(c, 'group', g.id, placed, g.parent);
     if (placed && (bad(placed.title.x) || bad(placed.title.y))) {
-      problems.push(`group '${g.id}' title has a non-finite coordinate`);
+      c.problems.push(`group '${g.id}' title has a non-finite coordinate`);
     }
   }
-  const groupIds = new Set(graph.groups.map((g) => g.id));
-  const ancestors = (id: string): Set<string> => {
-    const out = new Set<string>();
-    for (
-      let p = parent.get(id);
-      p !== undefined && groupIds.has(p) && !out.has(p);
-      p = parent.get(p)
-    ) {
-      out.add(p);
-    }
-    return out;
-  };
+}
 
-  const ids = [...boxes.keys()];
-  const chains = new Map(ids.map((id) => [id, ancestors(id)]));
+function ancestors(c: Check, id: string): Set<string> {
+  const out = new Set<string>();
+  for (
+    let p = c.parent.get(id);
+    p !== undefined && c.groupIds.has(p) && !out.has(p);
+    p = c.parent.get(p)
+  ) {
+    out.add(p);
+  }
+  return out;
+}
+
+// Groups hold their members.
+function checkMembers(c: Check, ids: string[], chains: Map<string, Set<string>>): void {
   for (const id of ids) {
     for (const g of chains.get(id)!) {
-      if (!contains(boxes.get(g)!, boxes.get(id)!))
-        problems.push(`'${id}' lies outside its group '${g}'`);
+      if (!contains(c.boxes.get(g)!, c.boxes.get(id)!))
+        c.problems.push(`'${id}' lies outside its group '${g}'`);
     }
   }
+}
+
+// Boxes that are not nested in one another do not overlap.
+function checkOverlaps(c: Check, ids: string[], chains: Map<string, Set<string>>): void {
   for (let i = 0; i < ids.length; i++) {
     for (let j = i + 1; j < ids.length; j++) {
       const a = ids[i]!;
       const b = ids[j]!;
       if (chains.get(a)!.has(b) || chains.get(b)!.has(a)) continue;
-      if (overlaps(boxes.get(a)!, boxes.get(b)!)) problems.push(`'${a}' and '${b}' overlap`);
+      if (overlaps(c.boxes.get(a)!, c.boxes.get(b)!)) c.problems.push(`'${a}' and '${b}' overlap`);
     }
   }
+}
 
-  // Every placed label, for the check that end labels keep clear of other edges' labels.
-  const placedLabels: { edge: string; name: string; r: Rect }[] = [];
-  for (const e of graph.edges) {
-    const placed = model.edges.get(e.id);
-    if (!placed) {
-      problems.push(`missing edge '${e.id}'`);
-      continue;
-    }
-    const badPoint = (p: Point | undefined): boolean => !!p && (bad(p.x) || bad(p.y));
-    if (
-      placed.points.some(badPoint) ||
-      [placed.label, placed.startLabel, placed.endLabel].some(badPoint)
-    ) {
-      problems.push(`edge '${e.id}' has a non-finite coordinate`);
-      continue;
-    }
-    if (placed.points.length < 2) {
-      problems.push(`edge '${e.id}' has fewer than two points`);
-      continue;
-    }
-    for (const p of placed.points) {
-      if (!near(page, p)) {
-        problems.push(`edge '${e.id}' runs outside the drawing`);
-        break;
-      }
-    }
-    // An end meets its own box. A `border` end on a node (D501) meets the border of the group
-    // the node sits in instead: on that box's boundary, not anywhere inside it.
-    const meets = (id: string, border: boolean | undefined, p: Point): boolean => {
-      const up = border && !groupIds.has(id) ? parent.get(id) : undefined;
-      const group = up !== undefined && groupIds.has(up) ? boxes.get(up) : undefined;
-      if (group) return onBorder(group, p);
-      const own = boxes.get(id);
-      return !own || near(own, p);
-    };
-    if (!meets(e.source, e.border?.source, placed.points[0]!))
-      problems.push(`edge '${e.id}' does not start at its source`);
-    if (!meets(e.target, e.border?.target, placed.points[placed.points.length - 1]!))
-      problems.push(`edge '${e.id}' does not end at its target`);
-    // The middle label, then the end labels (D102), which also keep clear of the edge's others.
-    const labels: [string, Rect][] = [];
-    for (const [name, size, at] of [
-      ['label', e.label, placed.label],
-      ['start label', e.startLabel, placed.startLabel],
-      ['end label', e.endLabel, placed.endLabel],
-    ] as const) {
-      if (!size) continue;
-      if (!at) {
-        problems.push(`edge '${e.id}' has a ${name} but no ${name} position`);
-        continue;
-      }
-      const r = rect({ ...at, ...size });
-      for (const n of graph.nodes) {
-        const b = boxes.get(n.id);
-        if (b && overlaps(r, b)) problems.push(`${name} of edge '${e.id}' overlaps node '${n.id}'`);
-      }
-      for (const [other, o] of labels) {
-        if (overlaps(r, o)) problems.push(`${name} of edge '${e.id}' overlaps its ${other}`);
-      }
-      labels.push([name, r]);
-      placedLabels.push({ edge: e.id, name, r });
+function checkNesting(c: Check): void {
+  const ids = [...c.boxes.keys()];
+  const chains = new Map(ids.map((id) => [id, ancestors(c, id)]));
+  checkMembers(c, ids, chains);
+  checkOverlaps(c, ids, chains);
+}
+
+const badPoint = (p: Point | undefined): boolean => !!p && (bad(p.x) || bad(p.y));
+
+// An edge is placed, finite, of two points or more and inside the drawing; false when the
+// first of these it fails ends the edge's checks.
+function checkEdgeShape(c: Check, e: LayoutGraph['edges'][number]): boolean {
+  const placed = c.model.edges.get(e.id);
+  if (!placed) {
+    c.problems.push(`missing edge '${e.id}'`);
+    return false;
+  }
+  if (
+    placed.points.some(badPoint) ||
+    [placed.label, placed.startLabel, placed.endLabel].some(badPoint)
+  ) {
+    c.problems.push(`edge '${e.id}' has a non-finite coordinate`);
+    return false;
+  }
+  if (placed.points.length < 2) {
+    c.problems.push(`edge '${e.id}' has fewer than two points`);
+    return false;
+  }
+  for (const p of placed.points) {
+    if (!near(c.page, p)) {
+      c.problems.push(`edge '${e.id}' runs outside the drawing`);
+      break;
     }
   }
-  // An end label (D102) keeps clear of the labels of every other edge too.
+  return true;
+}
+
+// An end meets its own box. A `border` end on a node (D501) meets the border of the group
+// the node sits in instead: on that box's boundary, not anywhere inside it.
+function meets(c: Check, id: string, border: boolean | undefined, p: Point): boolean {
+  const up = border && !c.groupIds.has(id) ? c.parent.get(id) : undefined;
+  const group = up !== undefined && c.groupIds.has(up) ? c.boxes.get(up) : undefined;
+  if (group) return onBorder(group, p);
+  const own = c.boxes.get(id);
+  return !own || near(own, p);
+}
+
+function checkEdgeEnds(c: Check, e: LayoutGraph['edges'][number]): void {
+  const points = c.model.edges.get(e.id)!.points;
+  if (!meets(c, e.source, e.border?.source, points[0]!))
+    c.problems.push(`edge '${e.id}' does not start at its source`);
+  if (!meets(c, e.target, e.border?.target, points[points.length - 1]!))
+    c.problems.push(`edge '${e.id}' does not end at its target`);
+}
+
+// One label of an edge: placed, and clear of the nodes and of the edge's labels so far.
+function checkLabel(
+  c: Check,
+  e: LayoutGraph['edges'][number],
+  name: string,
+  size: Size | undefined,
+  at: Point | undefined,
+  labels: [string, Rect][]
+): Rect | undefined {
+  if (!size) return undefined;
+  if (!at) {
+    c.problems.push(`edge '${e.id}' has a ${name} but no ${name} position`);
+    return undefined;
+  }
+  const r = rect({ ...at, ...size });
+  for (const n of c.graph.nodes) {
+    const b = c.boxes.get(n.id);
+    if (b && overlaps(r, b)) c.problems.push(`${name} of edge '${e.id}' overlaps node '${n.id}'`);
+  }
+  for (const [other, o] of labels) {
+    if (overlaps(r, o)) c.problems.push(`${name} of edge '${e.id}' overlaps its ${other}`);
+  }
+  return r;
+}
+
+// The middle label, then the end labels (D102), which also keep clear of the edge's others.
+function checkEdgeLabels(
+  c: Check,
+  e: LayoutGraph['edges'][number],
+  placedLabels: PlacedLabel[]
+): void {
+  const placed = c.model.edges.get(e.id)!;
+  const labels: [string, Rect][] = [];
+  for (const [name, size, at] of [
+    ['label', e.label, placed.label],
+    ['start label', e.startLabel, placed.startLabel],
+    ['end label', e.endLabel, placed.endLabel],
+  ] as const) {
+    const r = checkLabel(c, e, name, size, at, labels);
+    if (!r) continue;
+    labels.push([name, r]);
+    placedLabels.push({ edge: e.id, name, r });
+  }
+}
+
+// An end label (D102) keeps clear of the labels of every other edge too.
+function checkLabelClashes(c: Check, placedLabels: PlacedLabel[]): void {
   for (let j = 0; j < placedLabels.length; j++) {
     for (let i = 0; i < j; i++) {
       const a = placedLabels[j]!;
@@ -186,10 +260,35 @@ export function validateLayout(graph: LayoutGraph, model: LayoutModel): string[]
       if (a.edge === b.edge || (a.name === 'label' && b.name === 'label')) continue;
       if (!overlaps(a.r, b.r)) continue;
       const [x, y] = a.name === 'label' ? [b, a] : [a, b];
-      problems.push(`${x.name} of edge '${x.edge}' overlaps ${y.name} of edge '${y.edge}'`);
+      c.problems.push(`${x.name} of edge '${x.edge}' overlaps ${y.name} of edge '${y.edge}'`);
     }
   }
-  return problems;
+}
+
+/** Returns one message per problem; an empty list means the model is valid for the graph. */
+export function validateLayout(graph: LayoutGraph, model: LayoutModel): string[] {
+  const c: Check = {
+    graph,
+    model,
+    problems: [],
+    page: { x0: 0, y0: 0, x1: model.width, y1: model.height },
+    // Boxes by id, with the group each sits in.
+    boxes: new Map(),
+    parent: new Map(),
+    groupIds: new Set(graph.groups.map((g) => g.id)),
+  };
+  checkDrawingSize(c);
+  checkBoxes(c);
+  checkNesting(c);
+  // Every placed label, for the check that end labels keep clear of other edges' labels.
+  const placedLabels: PlacedLabel[] = [];
+  for (const e of graph.edges) {
+    if (!checkEdgeShape(c, e)) continue;
+    checkEdgeEnds(c, e);
+    checkEdgeLabels(c, e, placedLabels);
+  }
+  checkLabelClashes(c, placedLabels);
+  return c.problems;
 }
 
 function cross(a: Point, b: Point, c: Point, d: Point): boolean {

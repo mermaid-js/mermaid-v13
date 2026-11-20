@@ -99,7 +99,7 @@ function points(tree: SvgView): { x: number; y: number }[] {
 
 describe('xychart render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, with bars, lines, legends and data labels', () => {
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(60);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(63);
     // Every e2e fixture renders; the cases file holds the rejections.
     expect([...rejected].filter((id) => id.startsWith('e2e/'))).toEqual([]);
     expect(rejected.size).toBeLessThan(corpus.length / 2);

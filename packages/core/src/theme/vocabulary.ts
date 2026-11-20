@@ -235,34 +235,9 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   primaryColor: def('p', 'color', ['core', 'quadrant', 'gitgraph', 'gantt', 'venn']),
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core', 'gantt']),
-  background: def('bg', 'color', [
-    'core',
-    'state',
-    'packet',
-    'kanban',
-    'wardley',
-    'xychart',
-    'venn',
-  ]),
-  primaryTextColor: def('pt', 'color', [
-    'core',
-    'class',
-    'quadrant',
-    'packet',
-    'cynefin',
-    'wardley',
-    'xychart',
-  ]),
-  lineColor: def('l', 'color', [
-    'flowchart',
-    'class',
-    'state',
-    'er',
-    'gitgraph',
-    'radar',
-    'cynefin',
-    'wardley',
-  ]),
+  background: def('bg', 'color', ['core', 'packet', 'kanban', 'venn']),
+  primaryTextColor: def('pt', 'color', ['core', 'class', 'packet']),
+  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er', 'gitgraph', 'radar']),
   // Pie, packet, cynefin, info, sankey, treemap, wardley, xychart and venn draw in the font family
   // but size their text by their own variables or constants (sankey: 14 px; wardley: its config;
   // xychart: its `xyChart` config).
@@ -442,6 +417,32 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   rowAltBkg: def('rab', 'color', ['er']),
   linkLabelBkg: def('llb', 'color', ['er']),
   nestedBkg: def('nbk', 'color', ['state']),
+  // Shared inputs that name no diagram (D332, D656): a base colour as a diagram drawn on its own
+  // canvas keeps it, the canvas's fill, its lines and axes, its text, and the fill of an item on
+  // it. Where v12 keeps a theme's constructor value under an override of the base colour, the
+  // theme pins it in `values`, as D570 pinned `mainBkg`; elsewhere, and in `base`, each is its
+  // base colour. v13 names; v12 has none.
+  canvasBkg: def('cvb', 'color', ['state', 'wardley', 'xychart']),
+  canvasLineColor: def('cvl', 'color', [
+    'cynefin',
+    'wardley',
+    'eventmodeling',
+    'requirement',
+    'state',
+  ]),
+  canvasTextColor: def('cvt', 'color', ['quadrant', 'cynefin', 'wardley', 'xychart']),
+  canvasItemBkg: def('cvi', 'color', ['quadrant']),
+  // The third item fill (the tertiary colour) and a node's fill (`mainBkg`), which only
+  // `default` pins (D656, #1035). The second item fill is `badgeBkg`, which has that shape.
+  canvasItemBkg3: def('cv3', 'color', ['sequence']),
+  canvasNodeBkg: def('cvn', 'color', ['state']),
+  // The band behind a chart's rows and the lines that guide the eye over it (a marker, an
+  // outline): gantt's section band, its active outline and its `vert` marker. v12's named
+  // classic themes keep them at their constructor tertiary and line colours under every override,
+  // so `default`, `dark`, `forest` and `neutral` pin them in `values` (D656, #1041); `base`
+  // derives them. v13 names; v12 has none.
+  bandBkg: def('bnb', 'color', ['gantt']),
+  guideLineColor: def('gdl', 'color', ['gantt']),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
   // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.
   useGradient: def('ug', 'flag', ['core']),

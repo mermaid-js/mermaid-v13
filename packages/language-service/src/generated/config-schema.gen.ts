@@ -42,7 +42,7 @@ export const configSchema: ConfigSchema = {
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground` / `tertiaryColor` at half opacity (v12's `.labelBkg`, D572); `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; timeline `timelineRadius` 0 / 5, `timelineLabelOffset` padding / 0.5 × padding, `timelineEventLabelShift` 3 / 0, `timelineScaleColors` false / true (the neo themes take the classic timeline values, D227); gitGraph `gitCommitRadius` 7 / 10, `gitLaneShift` 9 / 0, `gitBranchLabelPaddingX` / `gitBranchLabelPaddingY` 16 / 12 and 0, `gitBranchLabelRadius` 0 / 4, `gitBranchLabelShiftX` 11 / 0, `gitBranchLabelOffsetY` 22 / 0, `gitArrowWidth` 2 / 8, `gitHighlightInnerSize` 8 / 12, `gitMergeRadius` 5 / 6, `gitReverseCrossSize` 4 / 5, `gitCherryPickDotRadius` 2.5 / 2.75, `gitPaletteColors` false / true, `commitLineColor` `#BDBCCC` / `lineColor` (the neo themes take the classic gitGraph values, D266), `gitNodeColors` true / false (true in the neo themes); `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. The quadrant chart's 15 colours (`quadrant1Fill`–`quadrant4Fill`, `quadrant1TextFill`–`quadrant4TextFill`, `quadrantPointFill`, `quadrantPointTextFill`, `quadrantXAxisTextFill`, `quadrantYAxisTextFill`, `quadrantInternalBorderStrokeFill`, `quadrantExternalBorderStrokeFill`, `quadrantTitleFill`) follow v12's rules in every theme: `quadrant1Fill` `#ececfe` in `redux`, `redux-color` and `neo` / `primaryColor`; fills 2–4 add 5, 10 and 15 to each RGB channel of `quadrant1Fill` and text fills 2–4 take 5, 10 and 15 off `primaryTextColor` (D232); `quadrantPointFill` `textColor` (D231); the other text fills `primaryTextColor`; both borders `primaryBorderColor`. The XY chart's 13 (`xyChartBackgroundColor`, `xyChartTitleColor`, `xyChartDataLabelColor`, `xyChartLegendTextColor`, the x and y axis `TitleColor`, `LabelColor`, `TickColor` and `LineColor`, `xyChartPlotColorPalette`; nested as v12's `xyChart.*`) are the same rules in both families: the background `background`, the other colours `primaryTextColor`, the palette `plotColorArray` (each theme's own ten, D381). The usecase diagram's eight (`usecaseActorBkg`, `usecaseActorBorder`, `usecaseBkg`, `usecaseBorder`, `usecaseBoundaryBkg`, `usecaseBoundaryBorder`, `usecaseIncludeLine`, `usecaseExtendLine`) are the same rules in both families, keyed by the palette, not the family (D474): where the theme or the author carries a palette, `borderColorArray` slots 5, 1, 10 and 2 for the actor and use case borders and the include and extend lines and `bkgColorArray` slots 5 and 1 for the two fills (an empty `bkgColorArray`, as `redux-dark-color`'s, keeps the fallback); else `actorBkg`, `actorBorder`, `mainBkg`, `nodeBorder` and `lineColor`; the boundaries `clusterBkg` and `clusterBorder` (redux-color's own boundary grey `#FAFAFC` is not kept, D541). \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`, `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value. As in v12, `base` derives `secondaryColor` and `tertiaryColor` from `primaryColor` and `lineColor` from `background` unless they are set (D569), arrowheads follow `lineColor` in `default`, `dark` and `base` (D575), and `default`, `dark`, `forest` and `neutral` pin v12's `mainBkg` and other constructor colours, so `primaryColor` (or `--mermaid-primaryColor`) does not repaint their nodes: set `mainBkg` (D570)."
+        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; timeline `timelineRadius` 0 / 5, `timelineLabelOffset` padding / 0.5 × padding, `timelineEventLabelShift` 3 / 0, `timelineScaleColors` false / true (the neo themes take the classic timeline values, D227); gitGraph `gitCommitRadius` 7 / 10, `gitLaneShift` 9 / 0, `gitBranchLabelPaddingX` / `gitBranchLabelPaddingY` 16 / 12 and 0, `gitBranchLabelRadius` 0 / 4, `gitBranchLabelShiftX` 11 / 0, `gitBranchLabelOffsetY` 22 / 0, `gitArrowWidth` 2 / 8, `gitHighlightInnerSize` 8 / 12, `gitMergeRadius` 5 / 6, `gitReverseCrossSize` 4 / 5, `gitCherryPickDotRadius` 2.5 / 2.75, `gitPaletteColors` false / true, `commitLineColor` `#BDBCCC` / `lineColor` (the neo themes take the classic gitGraph values, D266), `gitNodeColors` true / false (true in the neo themes); `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. The quadrant chart's 15 colours (`quadrant1Fill`–`quadrant4Fill`, `quadrant1TextFill`–`quadrant4TextFill`, `quadrantPointFill`, `quadrantPointTextFill`, `quadrantXAxisTextFill`, `quadrantYAxisTextFill`, `quadrantInternalBorderStrokeFill`, `quadrantExternalBorderStrokeFill`, `quadrantTitleFill`) follow v12's rules in every theme: `quadrant1Fill` `#ececfe` in `redux`, `redux-color` and `neo` / `primaryColor`; fills 2–4 add 5, 10 and 15 to each RGB channel of `quadrant1Fill` and text fills 2–4 take 5, 10 and 15 off `primaryTextColor` (D232); `quadrantPointFill` `textColor` (D231); the other text fills `primaryTextColor`; both borders `primaryBorderColor`. The XY chart's 13 (`xyChartBackgroundColor`, `xyChartTitleColor`, `xyChartDataLabelColor`, `xyChartLegendTextColor`, the x and y axis `TitleColor`, `LabelColor`, `TickColor` and `LineColor`, `xyChartPlotColorPalette`; nested as v12's `xyChart.*`) are the same rules in both families: the background `background`, the other colours `primaryTextColor`, the palette `plotColorArray` (each theme's own ten, D381). The usecase diagram's eight (`usecaseActorBkg`, `usecaseActorBorder`, `usecaseBkg`, `usecaseBorder`, `usecaseBoundaryBkg`, `usecaseBoundaryBorder`, `usecaseIncludeLine`, `usecaseExtendLine`) are the same rules in both families, keyed by the palette, not the family (D474): where the theme or the author carries a palette, `borderColorArray` slots 5, 1, 10 and 2 for the actor and use case borders and the include and extend lines and `bkgColorArray` slots 5 and 1 for the two fills (an empty `bkgColorArray`, as `redux-dark-color`'s, keeps the fallback); else `actorBkg`, `actorBorder`, `mainBkg`, `nodeBorder` and `lineColor`; the boundaries `clusterBkg` and `clusterBorder` (redux-color's own boundary grey `#FAFAFC` is not kept, D541). \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`, `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value. As in v12, `base` derives `secondaryColor` and `tertiaryColor` from `primaryColor` and `lineColor` from `background` unless they are set (D569), arrowheads follow `lineColor` in `default`, `dark` and `base` (D575), and `default`, `dark`, `forest` and `neutral` pin v12's `mainBkg` and other constructor colours, so `primaryColor` (or `--mermaid-primaryColor`) does not repaint their nodes: set `mainBkg` (D570)."
       },
       "type": "object",
       "additionalProperties": true,
@@ -173,7 +173,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "ignored",
             "since": "13.0.0",
-            "reason": "The numbered `cScale` palettes always have twelve slots and the git palettes eight, and a diagram cycles through them (D258, D267)."
+            "reason": "The numbered `cScale` palettes always have twelve slots and the git palettes eight, and a diagram cycles through them (D258, D267). v12 built that many `cScale` slots and style rules, and its timeline also took the section colour modulo the limit, so `THEME_COLOR_LIMIT: 3` gave the fourth section the first one's colour. v13's timeline cycles every twelve sections whatever the value."
           }
         },
         "commitLabelColor": {
@@ -381,7 +381,7 @@ export const configSchema: ConfigSchema = {
           }
         },
         "erEdgeLabelBackground": {
-          "description": "ER diagrams: background of relationship labels. In the classic themes `tertiaryColor`\nat half opacity, as v12 (D572).\n",
+          "description": "ER diagrams: background of relationship labels. `edgeLabelBackground` unless set, which\nis the theme's `background` in every theme (D628).\n",
           "type": "string",
           "x-mermaid": {
             "status": "honoured",
@@ -1034,14 +1034,14 @@ export const configSchema: ConfigSchema = {
         "default": "(**default**) Link URLs may use `http`, `https`, `mailto` or be relative.",
         "strict": "Only relative link URLs are kept; absolute links are dropped with a warning.",
         "antiscript": "No longer supported; treated as `default`, with a warning.",
-        "loose": "No longer supported; treated as `default`, with a warning.",
+        "loose": "Turns on click callbacks (D554); link URLs follow `default`. No warning (D634).",
         "sandbox": "No longer supported; treated as `default`, with a warning."
       },
       "default": "default",
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose`, `antiscript` and `sandbox` act as `default` with a warning."
+        "reason": "The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose` turns on click callbacks (D554) and acts as `default` for link URLs, with no warning (D634); `antiscript` and `sandbox` act as `default` with a warning."
       }
     },
     "startOnLoad": {
@@ -1055,7 +1055,7 @@ export const configSchema: ConfigSchema = {
       }
     },
     "discovery": {
-      "description": "Plugin auto-discovery (D164, D165): before the first render, `mermaid` registers the\nplugins found in the app's own `node_modules`, by the Node/SSR scan or, in a bundled\napp, by `@mermaid-js/bundler-plugin`'s build-time list. Set `false` to turn both off.\nIt does not cover the CDN `globalThis.mermaidPlugins` queue (D167): a script that\npushes itself there always registers. Integrator-only: diagram text cannot set it.\n",
+      "description": "Plugin auto-discovery (D164, D165, D589): before the first render, `mermaid` registers\nthe plugins the app declares in its own `package.json` and has installed in its own\n`node_modules`, by the Node/SSR scan or, in a bundled app, by\n`@mermaid-js/bundler-plugin`'s build-time list. Set `false` to turn both off.\nIt does not cover the CDN `globalThis.mermaidPlugins` queue (D167): a script that\npushes itself there always registers. Integrator-only: diagram text cannot set it.\n",
       "type": "boolean",
       "x-mermaid": {
         "status": "honoured",
@@ -1284,6 +1284,13 @@ export const configSchema: ConfigSchema = {
         "since": "13.0.0"
       }
     },
+    "c4beta": {
+      "$ref": "#/$defs/C4BetaDiagramConfig",
+      "x-mermaid": {
+        "status": "honoured",
+        "since": "13.0.0"
+      }
+    },
     "sankey": {
       "$ref": "#/$defs/SankeyDiagramConfig",
       "x-mermaid": {
@@ -1378,18 +1385,19 @@ export const configSchema: ConfigSchema = {
     },
     "fontSize": {
       "type": "number",
-      "default": 16,
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "Read by timeline, as v12's renderer read it: each box is `fontSize × 0.55` px taller than its text, and the TD axis starts `2 × fontSize` above the content and ends `0.5 × fontSize + 20` below it. Text is drawn at `themeVariables.fontSize`; no other type reads this key."
+        "reason": "The documented default changes from 16 to none (D620), so a diagram can tell \"not set\" from 16: the resolved config (`CORE_DEFAULTS`, `prepare().config`) no longer holds `fontSize` unless a layer sets it. Read by sequence and timeline only, as in v12. Sequence: a set value sizes actor, message and note text where the `sequence.*FontSize` key is unset, and wins over `themeVariables.fontSize`; a CSS length such as `24px` works as for the per-key keys; the title stays at the theme's size. Timeline, as v12's renderer read it, with 16 when unset: each box is `fontSize × 0.55` px taller than its text, and the TD axis starts `2 × fontSize` above the content and ends `0.5 × fontSize + 20` below it; its text is drawn at `themeVariables.fontSize`."
       }
     },
     "markdownAutoWrap": {
       "type": "boolean",
       "default": true,
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0",
+        "reason": "Set to `false`, a flowchart markdown label (node, subgraph and edge) breaks only at its own line breaks, as v12 did for HTML labels. No other diagram type reads this key."
       }
     },
     "suppressErrorRendering": {
@@ -3785,6 +3793,14 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for quadrant charts (a diagram section beats the top level within a config layer), as in v12."
+          }
+        },
         "useWidth": {
           "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
           "x-mermaid": {
@@ -4133,6 +4149,14 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for XY charts (a diagram section beats the top level within a config layer), as in v12."
+          }
+        },
         "useWidth": {
           "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
           "x-mermaid": {
@@ -4324,7 +4348,8 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin",
           "default": 25,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "diagramPadding": {
@@ -4521,9 +4546,8 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin",
           "default": 25,
           "x-mermaid": {
-            "status": "ignored",
-            "since": "13.0.0",
-            "reason": "The state SVG draws no front-matter `title`, as flowchart's (D122)."
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "arrowMarkerAbsolute": {
@@ -4743,9 +4767,8 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin",
           "default": 25,
           "x-mermaid": {
-            "status": "ignored",
-            "since": "13.0.0",
-            "reason": "The class SVG draws no front-matter `title`, as flowchart's."
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "arrowMarkerAbsolute": {
@@ -5807,7 +5830,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect."
+            "reason": "The default changes: unset, it is the top-level `fontSize` when that is set (D620), else the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect."
           }
         },
         "actorFontFamily": {
@@ -5840,7 +5863,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect."
+            "reason": "The default changes: unset, it is the top-level `fontSize` when that is set (D620), else the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect."
           }
         },
         "noteFontFamily": {
@@ -5887,7 +5910,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect."
+            "reason": "The default changes: unset, it is the top-level `fontSize` when that is set (D620), else the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect."
           }
         },
         "messageFontFamily": {
@@ -6215,7 +6238,8 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin",
           "default": 25,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "subGraphTitleMargin": {
@@ -6243,6 +6267,23 @@ export const configSchema: ConfigSchema = {
           },
           "x-mermaid": {
             "status": "pending"
+          }
+        },
+        "subGraphTitlePosition": {
+          "description": "Where the title of a subgraph sits: at the top or the bottom of the subgraph, and at\nthe left, the middle or the right. A subgraph can set its own with\n`id@{ titlePosition: bottom-left }`.\n\nWhen unset, the title is at the top in the middle (at the top left with the `compass`\nlayout). Swimlane lanes, collapsed subgraphs and text output keep their own placement.\n",
+          "type": "string",
+          "enum": [
+            "top-left",
+            "top-center",
+            "top-right",
+            "bottom-left",
+            "bottom-center",
+            "bottom-right"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "New in v13 (mermaid-js/mermaid#2977). Any other value draws with the default and adds one `FLOWCHART_CONFIG_IGNORED` warning."
           }
         },
         "arrowMarkerAbsolute": {
@@ -6318,7 +6359,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "The default changes from `basis` to `rounded`, the look of v12's default ELK layout: stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis` to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped routes; `rounded` draws straight segments with rounded corners; every other value draws S-curves (the layout engine routes edges, not a d3 curve factory)."
+            "reason": "The default changes from `basis` to `rounded`, the look of v12's default ELK layout: stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis` to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped routes with right-angle corners (the step in the middle, near the start and near the end of the leg); `rounded` draws straight segments with rounded corners; every other value draws S-curves (the layout engine routes edges, not a d3 curve factory), and a name outside this list also warns `CURVE_UNKNOWN`, once per render (D602)."
           }
         },
         "padding": {
@@ -6421,6 +6462,102 @@ export const configSchema: ConfigSchema = {
         "justify": "Like `left`, except that nodes without any outgoing links are moved to the far right."
       },
       "default": "justify"
+    },
+    "C4BetaDiagramConfig": {
+      "title": "C4 Beta Diagram Config",
+      "allOf": [
+        {
+          "$ref": "#/$defs/BaseDiagramConfig"
+        }
+      ],
+      "description": "The object containing configurations specific for c4-beta diagrams (spec #730). The type\nreads this section over the `c4` section (D534): a key both have (`theme`, `useMaxWidth`)\ntakes the `c4` value unless this section sets it. `diagramPadding` is c4-beta's own. Shape\nmetrics and fonts are still read from `c4`.\n",
+      "type": "object",
+      "unevaluatedProperties": false,
+      "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the C4 renderer never did."
+          }
+        },
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for c4-beta diagrams (a diagram section beats the top level within a config layer)."
+          }
+        },
+        "layout": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "c4-beta lays out with core's `layered` engine, called directly (`layoutKind: 'custom'`); neither the top-level nor a c4-beta-scoped `layout` changes it."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As `c4.useMaxWidth`: true draws `width=\"100%\"` and a `max-width`; false draws the diagram at its own `width` and `height`. A `c4.useMaxWidth` applies to c4-beta when this key is not set."
+          }
+        },
+        "diagramPadding": {
+          "description": "The margin round the drawing, on all four sides, in pixels. It is the room between\nthe canvas edge and the nearest element, boundary, relation or title.\n",
+          "type": "number",
+          "minimum": 0,
+          "default": 10,
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The canvas grows by twice the change on each axis. A value that is not a finite number of at least 0 draws the default 10."
+          }
+        },
+        "showStereotypes": {
+          "description": "Whether an element shows its type line (`[Person]`, `[Software System]`, `[Container: Rust]`)\nabove its name. `false` hides it on every element; use `hideStereotypes` to hide it on some\nkinds only.\n",
+          "type": "boolean",
+          "default": true,
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A hidden line takes no room: the element is shorter by the line and the gap under it. A technology stays, as `[Rust]`. A value that is not a boolean shows the line."
+          }
+        },
+        "hideStereotypes": {
+          "description": "The element kinds whose type line is hidden while `showStereotypes` is on, for example\n`[person]`. Unset hides none.\n",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "person",
+              "softwareSystem",
+              "container",
+              "component",
+              "infrastructureNode"
+            ]
+          },
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "A kind not in the list keeps its line. An entry that is not a kind of element that has a type line is ignored; a value that is not a list hides none. A boundary (`group`, `deploymentNode`, or an element with children) has no type line to hide. Lists from `initialize()`, front matter and directives are joined, as v12 joined arrays (R-CONF), so a diagram can hide more kinds than the integrator did but cannot show one again, and an empty list changes nothing."
+          }
+        },
+        "personWrappingWidth": {
+          "description": "The width in pixels at which a person's name, type line and description wrap. Unset, a\nperson wraps at the width every c4-beta element wraps at, `c4.width` less twice\n`c4.c4ShapePadding` (176 px by default).\n",
+          "type": "number",
+          "minimum": 0,
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's 120 px suits its narrower person shape; here a person's box is as wide as the other elements', so 120 would wrap text inside a box that fits it. Unset keeps the width of every other kind, so existing diagrams do not change. A smaller value wraps sooner; a larger one lets the text run wider and the shape grows to hold it. Read when the text wraps (`wrap`, default on); at least 32 px is used. A value that is not a finite number of at least 0 is treated as unset."
+          }
+        }
+      }
     },
     "SankeyDiagramConfig": {
       "title": "Sankey Diagram Config",
@@ -6577,6 +6714,14 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "theme": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `theme` for packet diagrams (a diagram section beats the top level within a config layer), as in v12."
+          }
+        },
         "useWidth": {
           "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
           "x-mermaid": {

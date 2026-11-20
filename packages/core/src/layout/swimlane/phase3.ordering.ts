@@ -1,4 +1,6 @@
-// Ported from v12 `swimlanes/phase3.ordering.ts` at upstream `c9b12739f` (D532).
+// Ported from v12 `swimlanes/phase3.ordering.ts` at upstream `c9b12739f` (D532). Changed (#843),
+// with v12's orders kept: a transpose swap is scored by the crossings of the two nodes it swaps,
+// each layer reads its nodes' edges from lists built once, and a sort takes each median once.
 import { byCodeUnit } from './compare.ts';
 import type { Graph, Layering, OrderedLayers, NodeId, Edge } from './helpers.ts';
 import { buildLayerIndex, countInversions } from './phase0.helpers.ts';
@@ -26,23 +28,48 @@ function barycenter(values: number[]): number {
   return s / values.length;
 }
 
+/** The edges at each node, in edge order: those that leave it and those that enter it. */
+interface EdgesAtNodes {
+  leaving: Map<NodeId, Edge[]>;
+  entering: Map<NodeId, Edge[]>;
+}
+
+function edgesAtNodes(edges: Edge[]): EdgesAtNodes {
+  const leaving = new Map<NodeId, Edge[]>();
+  const entering = new Map<NodeId, Edge[]>();
+  const add = (at: Map<NodeId, Edge[]>, id: NodeId, e: Edge): void => {
+    const list = at.get(id);
+    if (list) {
+      list.push(e);
+    } else {
+      at.set(id, [e]);
+    }
+  };
+  for (const e of edges) {
+    add(leaving, e.src, e);
+    add(entering, e.dst, e);
+  }
+  return { leaving, entering };
+}
+
 function neighborPositionsFor(
   targetNodes: NodeId[],
   fixedIndex: Map<NodeId, number>,
-  edges: Edge[],
+  edges: EdgesAtNodes,
   direction: SweepDirection
 ): Map<NodeId, number[]> {
   const neighborPositions = new Map<NodeId, number[]>();
   for (const v of targetNodes) {
     neighborPositions.set(v, []);
   }
-  for (const e of edges) {
-    if (direction === 'down') {
-      if (fixedIndex.has(e.src) && neighborPositions.has(e.dst)) {
-        neighborPositions.get(e.dst)!.push(fixedIndex.get(e.src)!);
+  // Each node's edges in edge order, so each list is in edge order.
+  for (const [v, positions] of neighborPositions) {
+    const near = direction === 'down' ? edges.entering.get(v) : edges.leaving.get(v);
+    for (const e of near ?? []) {
+      const position = fixedIndex.get(direction === 'down' ? e.src : e.dst);
+      if (position !== undefined) {
+        positions.push(position);
       }
-    } else if (fixedIndex.has(e.dst) && neighborPositions.has(e.src)) {
-      neighborPositions.get(e.src)!.push(fixedIndex.get(e.dst)!);
     }
   }
   return neighborPositions;
@@ -93,9 +120,11 @@ function sortByHeuristic(
   neighborPositions: Map<NodeId, number[]>,
   currentLayerIndex: Map<NodeId, number>
 ): NodeId[] {
+  // The comparator reads each node's median from here.
+  const medians = new Map(nodes.map((id) => [id, median(neighborPositions.get(id) ?? [])]));
   return [...nodes].sort((a, b) => {
-    const sa = median(neighborPositions.get(a) ?? []);
-    const sb = median(neighborPositions.get(b) ?? []);
+    const sa = medians.get(a)!;
+    const sb = medians.get(b)!;
     if (sa === sb) {
       return currentOrderTieBreak(a, b, currentLayerIndex);
     }
@@ -109,10 +138,23 @@ function sortByHeuristic(
   });
 }
 
+/** Each node's barycenter, computed when first asked for and kept. */
+function barycenterMemo(neighborPositions: Map<NodeId, number[]>): (id: NodeId) => number {
+  const known = new Map<NodeId, number>();
+  return (id) => {
+    let bc = known.get(id);
+    if (bc === undefined) {
+      bc = barycenter(neighborPositions.get(id) ?? []);
+      known.set(id, bc);
+    }
+    return bc;
+  };
+}
+
 function reorderLayer(
   fixedLayer: NodeId[],
   targetLayer: NodeId[],
-  edges: Edge[],
+  edges: EdgesAtNodes,
   direction: SweepDirection,
   topLaneOf?: (id: NodeId) => string | null,
   laneOrder?: string[]
@@ -126,19 +168,35 @@ function reorderLayer(
     return sortByHeuristic(targetLayer, neighborPositions, currIndex);
   }
 
-  // Partition target layer nodes by lane
+  const byLane = nodesByLane(targetLayer, topLaneOf);
+  const result = inLaneOrder(laneOrder, byLane, neighborPositions, currIndex);
+  insertNullLaneNodes(result, byLane.get(null), neighborPositions, currIndex);
+  return result;
+}
+
+/** The nodes of `layer` by their top lane, each lane's in layer order. */
+function nodesByLane(
+  layer: NodeId[],
+  topLaneOf: (id: NodeId) => string | null
+): Map<string | null, NodeId[]> {
   const byLane = new Map<string | null, NodeId[]>();
-  for (const id of targetLayer) {
+  for (const id of layer) {
     const lane = topLaneOf(id);
     const arr = byLane.get(lane) ?? [];
     arr.push(id);
     byLane.set(lane, arr);
   }
+  return byLane;
+}
 
-  // Reorder nodes within each lane independently
+/** The lane-grouped nodes in lane order, each lane's sorted by the median heuristic. */
+function inLaneOrder(
+  laneOrder: string[],
+  byLane: Map<string | null, NodeId[]>,
+  neighborPositions: Map<NodeId, number[]>,
+  currIndex: Map<NodeId, number>
+): NodeId[] {
   const result: NodeId[] = [];
-
-  // First, place lane-grouped nodes in lane order
   for (const lane of laneOrder) {
     const nodesInLane = byLane.get(lane);
     if (!nodesInLane || nodesInLane.length === 0) {
@@ -147,28 +205,36 @@ function reorderLayer(
     const sorted = sortByHeuristic(nodesInLane, neighborPositions, currIndex);
     result.push(...sorted);
   }
-
-  // Then, handle null-lane nodes (long-edge dummies without a parent).
-  // Compute their barycenter and insert them adjacent to the lane whose
-  // center position is closest to their barycenter.
-  const nullNodes = byLane.get(null);
-  if (nullNodes && nullNodes.length > 0) {
-    // Sort null-lane nodes by their barycenter across the full layer
-    const sorted = sortByHeuristic(nullNodes, neighborPositions, currIndex);
-
-    // For each null-lane node, find the best insertion position
-    // based on its connections to nodes already in the result
-    for (const nid of sorted) {
-      // Compute the barycenter position of this node's neighbors in the fixed layer
-      const bc = barycenter(neighborPositions.get(nid) ?? []);
-
-      // Find the best insertion point: scan result and insert where the
-      // node's barycenter fits relative to its neighbors
-      result.splice(insertionIndex(bc, result, neighborPositions), 0, nid);
-    }
-  }
-
   return result;
+}
+
+/**
+ * The null-lane nodes (long-edge dummies without a parent), inserted into `result` in place:
+ * sorted by the heuristic, each goes where its barycenter fits among the nodes placed.
+ */
+function insertNullLaneNodes(
+  result: NodeId[],
+  nullNodes: NodeId[] | undefined,
+  neighborPositions: Map<NodeId, number[]>,
+  currIndex: Map<NodeId, number>
+): void {
+  if (!nullNodes || nullNodes.length === 0) {
+    return;
+  }
+  // Sort null-lane nodes by their barycenter across the full layer
+  const sorted = sortByHeuristic(nullNodes, neighborPositions, currIndex);
+  const barycenterOf = barycenterMemo(neighborPositions);
+
+  // For each null-lane node, find the best insertion position
+  // based on its connections to nodes already in the result
+  for (const nid of sorted) {
+    // Compute the barycenter position of this node's neighbors in the fixed layer
+    const bc = barycenter(neighborPositions.get(nid) ?? []);
+
+    // Find the best insertion point: scan result and insert where the
+    // node's barycenter fits relative to its neighbors
+    result.splice(insertionIndex(bc, result, barycenterOf), 0, nid);
+  }
 }
 
 /**
@@ -178,13 +244,13 @@ function reorderLayer(
 function insertionIndex(
   bc: number,
   result: NodeId[],
-  neighborPositions: Map<NodeId, number[]>
+  barycenterOf: (id: NodeId) => number
 ): number {
   if (!isFinite(bc)) {
     return result.length;
   }
   for (const [i, rid] of result.entries()) {
-    const rBc = barycenter(neighborPositions.get(rid) ?? []);
+    const rBc = barycenterOf(rid);
     if (bc < rBc) {
       return i;
     }
@@ -192,65 +258,102 @@ function insertionIndex(
   return result.length;
 }
 
+/**
+ * The crossings between the edges at two neighbours of a layer, the one with `left` ends to the
+ * left of the one with `right` ends: the pairs with an end in `left` past an end in `right`. Both
+ * hold the positions of the edges' other ends, sorted.
+ */
+function crossingsOfNeighbours(left: readonly number[], right: readonly number[]): number {
+  let count = 0;
+  let below = 0;
+  for (const position of left) {
+    while (below < right.length && right[below]! < position) {
+      below++;
+    }
+    count += below;
+  }
+  return count;
+}
+
+/** For each node of `layer`, the sorted positions in `other` of the far ends of `edgesOf` it. */
+function farEndPositions(
+  layer: NodeId[],
+  edgesOf: Map<NodeId, Edge[]>,
+  farEnd: 'src' | 'dst',
+  other: NodeId[]
+): Map<NodeId, number[]> {
+  const otherIndex = buildLayerIndex(other);
+  const positions = new Map<NodeId, number[]>(layer.map((id) => [id, []]));
+  for (const [id, list] of positions) {
+    for (const e of edgesOf.get(id) ?? []) {
+      const position = otherIndex.get(e[farEnd]);
+      if (position !== undefined) {
+        list.push(position);
+      }
+    }
+    list.sort((a, b) => a - b);
+  }
+  return positions;
+}
+
+/**
+ * Adjacent swaps within a layer while one lowers the crossings with the layers on both sides.
+ * Swapping two neighbours changes only the crossings between their own edges, so a swap is
+ * scored by those (`crossingsOfNeighbours`).
+ */
 function transposeImprove(
   upper: NodeId[],
   current: NodeId[],
-  edges: Edge[],
+  edges: EdgesAtNodes,
   next?: NodeId[],
   topLaneOf?: (id: NodeId) => string | null
 ): NodeId[] {
   const best = [...current];
-  const upperSet = new Set(upper);
-  const layerSet = new Set(current);
-  const nextSet = next ? new Set(next) : null;
+  const above = farEndPositions(current, edges.entering, 'src', upper);
+  const below = farEndPositions(current, edges.leaving, 'dst', next ?? []);
+  /** The crossings between the edges of `a` and `b` while `a` is left of `b`. */
+  const crossingsWhileLeft = (a: NodeId, b: NodeId): number =>
+    crossingsOfNeighbours(above.get(a)!, above.get(b)!) +
+    crossingsOfNeighbours(below.get(a)!, below.get(b)!);
 
-  const edgesIn = edges.filter((e) => upperSet.has(e.src) && layerSet.has(e.dst));
-  const edgesOut = nextSet
-    ? edges.filter((e) => layerSet.has(e.src) && nextSet.has(e.dst))
-    : undefined;
-
-  const crossingScore = (order: NodeId[]): number => {
-    let score = countCrossingsBetweenAdjacent(upper, order, edgesIn);
-    if (edgesOut && next) {
-      score += countCrossingsBetweenAdjacent(order, next, edgesOut);
-    }
-    return score;
-  };
-
-  // Precompute lane membership for same-lane check
-  const laneOf = topLaneOf ? new Map<NodeId, string | null>() : null;
-  if (topLaneOf && laneOf) {
-    for (const id of current) {
-      laneOf.set(id, topLaneOf(id));
-    }
-  }
-
+  const laneOf = lanesOf(current, topLaneOf);
   let improved = true;
-  let bestScore = crossingScore(best);
   while (improved) {
-    improved = false;
-    for (let i = 0; i + 1 < best.length; i++) {
-      // Only swap nodes in the same lane (or both null-lane)
-      if (laneOf) {
-        const laneA = laneOf.get(best[i]!);
-        const laneB = laneOf.get(best[i + 1]!);
-        if (laneA !== laneB) {
-          continue; // never swap across lane boundaries
-        }
-      }
-
-      const prev = bestScore;
-      [best[i], best[i + 1]] = [best[i + 1]!, best[i]!];
-      const nextScore = crossingScore(best);
-      if (nextScore < prev) {
-        bestScore = nextScore;
-        improved = true;
-      } else {
-        [best[i], best[i + 1]] = [best[i + 1]!, best[i]!];
-      }
-    }
+    improved = swapPass(best, laneOf, crossingsWhileLeft);
   }
   return best;
+}
+
+/** Each node's top lane, for the same-lane check; null when there are no lanes to keep. */
+function lanesOf(
+  nodes: NodeId[],
+  topLaneOf?: (id: NodeId) => string | null
+): Map<NodeId, string | null> | null {
+  return topLaneOf ? new Map(nodes.map((id) => [id, topLaneOf(id)])) : null;
+}
+
+/**
+ * One pass of adjacent swaps over `order`, in place: a swap is made where it lowers the
+ * crossings, between neighbours of the same lane (or both null-lane). Whether any was made.
+ */
+function swapPass(
+  order: NodeId[],
+  laneOf: Map<NodeId, string | null> | null,
+  crossingsWhileLeft: (a: NodeId, b: NodeId) => number
+): boolean {
+  let improved = false;
+  for (let i = 0; i + 1 < order.length; i++) {
+    const a = order[i]!;
+    const b = order[i + 1]!;
+    if (laneOf && laneOf.get(a) !== laneOf.get(b)) {
+      continue; // never swap across lane boundaries
+    }
+    if (crossingsWhileLeft(b, a) < crossingsWhileLeft(a, b)) {
+      [order[i], order[i + 1]] = [b, a];
+      improved = true;
+    }
+  }
+  return improved;
 }
 
 // Sugiyama phase 3: lane-aware median sweeps plus adjacent transpose improvements.
@@ -265,7 +368,7 @@ export function orderLayers(
 ): OrderedLayers {
   // Start with deterministic initial order per layer (preserve given order)
   const layers = layering.layers.map((l) => [...l]);
-  const edges = gWithDummies.edges;
+  const edges = edgesAtNodes(gWithDummies.edges);
 
   // Compute lane order for lane-aware crossing minimization (Siebenhaller Lemma 4.4)
   const topLaneOf = createTopLaneResolver(gWithDummies);

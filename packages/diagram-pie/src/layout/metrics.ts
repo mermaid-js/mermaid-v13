@@ -36,6 +36,8 @@ export interface PieMetrics {
   readonly legendTextY: number;
   /** The right-hand legend's left edge, right of the centre: `12 * 18`. */
   readonly rightLegendX: number;
+  /** D616: between a legend column's longest label and the next column's swatches, one row: 22. */
+  readonly columnGap: number;
   /** The title's first baseline, above the canvas centre: `(450 - 50) / 2`. */
   readonly titleY: number;
   /** The highlighted slice's scale about the centre (D222). */
@@ -52,6 +54,7 @@ export const PIE_METRICS: PieMetrics = {
   legendTextX: LEGEND_RECT_SIZE + LEGEND_SPACING,
   legendTextY: LEGEND_RECT_SIZE - LEGEND_SPACING,
   rightLegendX: RIGHT_LEGEND_SWATCHES * LEGEND_RECT_SIZE,
+  columnGap: LEGEND_RECT_SIZE + LEGEND_SPACING,
   titleY: (HEIGHT - TITLE_GAP) / 2,
   highlightScale: HIGHLIGHT_SCALE,
 };

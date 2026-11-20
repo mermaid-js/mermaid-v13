@@ -3,7 +3,7 @@
 // (`relationshipLine`, `outer-path`, `row-rect-odd`/`-even`, `attribute-*`, `divider`); every
 // entity, attribute row, relationship and subgraph is one element with `data-id` and
 // `data-ast` (R-SVG-2, R-PARSE-8). Colours and sizes come from theme variables only (D152).
-import type { LayoutModelNode } from '@mermaid-js/core/layout';
+import { pxProfile, type LayoutModelNode } from '@mermaid-js/core/layout';
 import {
   translate,
   type Attrs,
@@ -12,8 +12,14 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { cls, openSvgRoot, paletteSlots } from '@mermaid-js/shared/svg/document';
-import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
+import {
+  cls,
+  openSvgRoot,
+  paletteSlots,
+  placeTitle,
+  titledViewBox,
+} from '@mermaid-js/shared/svg/document';
+import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { ErLayout } from '../layout/layout.ts';
 import type { ErRenderContext } from '../layout/context.ts';
@@ -130,7 +136,7 @@ function paints(theme: ThemeOf, er: ErPrepared): Paints {
           text: theme.color('titleColor'),
         }
       : undefined;
-  const edgeLabel = er.edges.some((e) => e.label.width > 0)
+  const labelPaint = er.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('erEdgeLabelBackground'), text: theme.color('textColor') }
     : undefined;
   return {
@@ -140,7 +146,7 @@ function paints(theme: ThemeOf, er: ErPrepared): Paints {
     line,
     ends,
     cluster,
-    edgeLabel,
+    edgeLabel: labelPaint,
     slotOf: paletteSlots(theme),
   };
 }
@@ -196,7 +202,16 @@ export function renderEr(
     padX: er.pad.x,
     ends: edgeEnds(er, layout),
   };
-  openRoot(scene, model);
+  // v12's `erDiagramTitleText`: the root's size in `textColor`, `titleTopMargin` above the drawing (D652).
+  const title = placeTitle(
+    model.title,
+    layout.width,
+    ctx.config.er?.titleTopMargin ?? 25,
+    ctx,
+    ctx.theme.number('fontSize')
+  );
+  const ink = title && ctx.theme.color('textColor');
+  openRoot(scene, model, titledViewBox(layout, title, 8));
   // v12 numbers edge ids by the relationship's place among all of them.
   const order = new Map(model.relationships.map((r, i) => [r, i]));
   if (scene.paint.cluster) drawClusters(scene);
@@ -210,23 +225,23 @@ export function renderEr(
   w.open('g', { class: 'nodes', fill: scene.paint.table.text });
   for (const view of er.entities) drawEntity(scene, view);
   w.close();
+  if (title && ink)
+    w.label(title.label, title.x, title.y, { class: 'erDiagramTitleText', fill: ink });
   w.close();
 }
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
-function openRoot({ w, layout, ctx, paint }: Scene, model: ErModel): void {
-  const { config } = ctx;
-  const width = Math.max(1, Math.ceil(layout.width));
-  const height = Math.max(1, Math.ceil(layout.height));
-  const maxWidth = config.er?.useMaxWidth !== false;
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
+function openRoot(
+  { w, ctx, paint }: Scene,
+  model: ErModel,
+  viewBox: ReturnType<typeof titledViewBox>
+): void {
   openSvgRoot(w, ctx, {
     name: 'er erDiagram',
-    viewBox: [0, 0, width, height],
-    maxWidth,
-    title,
-    desc,
+    viewBox,
+    maxWidth: ctx.config.er?.useMaxWidth !== false,
+    title: model.accTitle,
+    desc: model.accDescr,
     attrs: {
       'font-family': paint.font,
       'font-size': paint.fontSize,
@@ -309,11 +324,17 @@ function drawEdge({ w, layout, paint, ends }: Scene, e: EdgeView, i: number): vo
   w.close();
 }
 
-function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView, i: number): void {
+/** A relationship's label as a tag, bordered in the relationship line's colour (D626, D627). */
+function drawEdgeLabel({ w, layout, ctx, paint }: Scene, e: EdgeView, i: number): void {
   const at = layout.edges.get(e.id)?.label;
-  if (!at || e.label.width === 0) return;
+  if (!at || e.label.width === 0 || !paint.line) return;
   const { fill, text } = paint.edgeLabel!;
-  labelOnBox(w, e.label, at, edgeDataId(e, i), { fill, text: { fill: text } });
+  edgeLabel(w, e.label, at, edgeDataId(e, i), {
+    fill,
+    stroke: paint.line.stroke,
+    text: { fill: text },
+    patch: (ctx.units ?? pxProfile).builder.labelPatch,
+  });
 }
 
 function drawEntity(scene: Scene, view: EntityView): void {

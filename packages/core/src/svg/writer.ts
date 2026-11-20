@@ -3,11 +3,11 @@
  * two backings with byte-identical output: streaming into a string (default) and the
  * compact tree used when a `postRender` hook is registered.
  */
-import { BLANK_REL, GRADIENT_FIXED, TEXT_HOLDERS } from './allowlist.ts';
-import { checkTag, formatValue } from './encode.ts';
+import { BLANK_REL, GRADIENT_FIXED, PLAIN_ATTRS, TEXT_HOLDERS } from './allowlist.ts';
+import { checkName, checkTag, formatChecked } from './encode.ts';
 import { esc, escAttr, num } from './escape.ts';
-import { pathBuilder, transforms, translate, type PathBuilder } from './path.ts';
-import { checkColor, hash36, styleScope } from './style.ts';
+import { isBuilt, pathBuilder, transforms, translate, type PathBuilder } from './path.ts';
+import { checkColor, hash36, rootStyleAttr, styleScope } from './style.ts';
 import { CompactTree, type SvgTree } from './tree.ts';
 import type {
   AllowedTag,
@@ -94,9 +94,10 @@ export interface LabelBox {
 
 /**
  * What an outline draws (D302): a node's shape, a part of one (a compartment, an underlay), a
- * divider line inside a node, a small mark (a dot, a cross), a group's frame, or an edge line.
+ * divider line inside a node, a small mark (a dot, a cross), a group's frame, an edge line, or
+ * the box of an edge label (D630).
  */
-export type OutlineRole = 'node' | 'part' | 'divider' | 'mark' | 'group' | 'edge';
+export type OutlineRole = 'node' | 'part' | 'divider' | 'mark' | 'group' | 'edge' | 'label';
 
 /** The elements an outline can be. */
 export type OutlineTag = 'rect' | 'circle' | 'ellipse' | 'polygon' | 'line' | 'path';
@@ -131,8 +132,8 @@ export interface SvgWriter {
   leaf(tag: AllowedTag, attrs?: Attrs): void;
   /**
    * A shape outline (D302): exactly `leaf(tag, attrs)` unless an extension's drawer is active,
-   * which may draw it another way (hand-drawn). Arrowheads, label backgrounds and text are not
-   * outlines.
+   * which may draw it another way (hand-drawn). Arrowheads and text are not outlines; an edge
+   * label's box is, as role `label` (D630).
    */
   outline(role: OutlineRole, tag: OutlineTag, attrs?: Attrs): void;
   /**
@@ -194,6 +195,13 @@ const withoutAst = (attrs: Attrs | undefined): Attrs | undefined =>
   attrs?.[AST] === undefined ? attrs : { ...attrs, [AST]: undefined };
 
 const NO_ATTRS: Attrs = Object.freeze({});
+
+/**
+ * The stream writer's `PLAIN_ATTRS`: the same names, each with its keywords (`k`) and its text up
+ * to the value (`p`, ` name="`), so one lookup both passes the name and writes it. Made once at
+ * load from `PLAIN_ATTRS`, so it holds exactly its names; private to this writer.
+ */
+const PLAIN = new Map([...PLAIN_ATTRS].map(([n, k]) => [n, { k, p: ` ${n}="` }]));
 
 /** `outline` on either backing: the drawer's replacement, or the plain leaf. */
 function writeOutline(
@@ -431,6 +439,26 @@ function writeLabel(
   w.close();
 }
 
+/**
+ * Whether the stream writer may write attribute `name`'s `value` (formatted from `raw`) without
+ * escaping it: numbers and number lists (formatted through `num()`, except that a `viewBox`
+ * array's own `map` would be called; an array is not re-checked here), the attribute's
+ * code-constant keywords (checked at load), and path data and transforms equal to ones built
+ * from numbers in `path.ts`. Every other value, whoever supplied it, is escaped.
+ */
+function unescaped(
+  name: string,
+  raw: unknown,
+  value: string,
+  keywords: ReadonlySet<string> | undefined
+): boolean {
+  return (
+    typeof raw !== 'string' ||
+    (!!keywords?.size && keywords.has(value)) ||
+    ((name === 'd' || name === 'transform') && isBuilt(value))
+  );
+}
+
 class Stream implements StreamSvgWriter {
   private out = '';
   private readonly stack: string[] = [];
@@ -459,17 +487,22 @@ class Stream implements StreamSvgWriter {
     let rel = false;
     for (const name in attrs) {
       const raw = (attrs as Record<string, unknown>)[name];
-      let value = formatValue(tag, name, raw);
-      if (value === undefined) continue;
+      // `formatValue`, with the name looked up once for both its checks and its keywords.
+      if (raw === undefined) continue;
+      const known = PLAIN.get(name);
+      if (known === undefined) checkName(tag, name);
+      let value = formatChecked(name, raw);
       if (this.ref !== undefined && value === this.ref && (name === 'stroke' || name === 'fill'))
         this.referred = true;
       if (name === 'rel' && blank) {
         value = BLANK_REL;
         rel = true;
       }
-      // Numbers and number lists format to digits, signs, points, commas and spaces only.
-      const plain = typeof raw === 'number' || Array.isArray(raw);
-      s += ' ' + name + '="' + (plain ? value : escAttr(value)) + '"';
+      const plain = unescaped(name, raw, value, known?.k);
+      s +=
+        (known?.p ?? ' ' + name + '="') +
+        (plain ? value : (name === 'style' && rootStyleAttr(value)) || escAttr(value)) +
+        '"';
     }
     if (blank && !rel) s += ' rel="' + BLANK_REL + '"';
     return s;

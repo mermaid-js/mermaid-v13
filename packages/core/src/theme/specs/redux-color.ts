@@ -18,8 +18,6 @@ import redux, { NEO_GIT, NEO_GIT_DARK_MODE } from './redux.ts';
 const theme: ThemeSpec = {
   ...redux,
   name: 'redux-color',
-  // v12 draws ER edge labels on a plain fill (`erEdgeLabelBackground`) in the colour themes only.
-  values: { ...redux.values, linkLabelBkg: '#ffffff' },
   palettes: {
     plotColorArray: BASE_PLOT,
     borderColorArray: TAILWIND_400,

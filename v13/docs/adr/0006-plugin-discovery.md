@@ -41,8 +41,8 @@ skipped with a `PLUGIN_SKIPPED` warning, never a thrown error.
 | Path | Mechanism | D-id |
 | --- | --- | --- |
 | First-party | `mermaid` depends on every `@mermaid-js/diagram-*`; a generated table holds each detector and a lazy `import()`. Bundlers split per type. | D40, R-PLUG-4 |
-| Node / SSR | The `node` export condition of `mermaid` scans on first use, on by default. Root: the nearest `package.json` at or above `process.cwd()`; only its `node_modules` top level and `@scope` folders, never ancestors; 5 s per discovery-time import; skips go to the first render and an optional `log`. `initialize({ discovery: false })` turns it off. | D165 |
-| Bundlers | `@mermaid-js/bundler-plugin` (unplugin), one line per bundler, runs the same scan at build time and replaces `mermaid/discovered` with the list. `mermaid` keeps first-party dependencies only. | D164 |
+| Node / SSR | The `node` export condition of `mermaid` scans on first use, on by default. Root: the nearest `package.json` at or above `process.cwd()`; only the packages it declares (`dependencies`, `devDependencies`, `optionalDependencies`, `peerDependencies`), looked up in its own `node_modules`, never ancestors (D589); 5 s per discovery-time import; skips go to the first render and an optional `log`. `initialize({ discovery: false })` turns it off. | D165, D589 |
+| Bundlers | `@mermaid-js/bundler-plugin` (unplugin), one line per bundler, runs the same scan at build time, so it too finds only the app's declared packages, and replaces `mermaid/discovered` with the list. `mermaid` keeps first-party dependencies only. | D164, D589 |
 | CDN | ESM build with per-type chunks plus a classic loader `mermaid.min.js` (D162); chunks load only from `cdnBase` or the loader's `data-cdn-base` (D163, D41). Third-party scripts push onto `globalThis.mermaidPlugins`, in either load order, each with its npm `package` name (it sets the D166 order). | D162, D163, D167 |
 | Explicit | `registerExternalDiagrams()`, always available. | R-PLUG-6 |
 
@@ -65,8 +65,11 @@ discovery still in flight for a bounded time, then renders without it (`PLUGIN_D
 ## Consequences
 
 - Output does not depend on the file system, the package manager or the order CDN scripts load
-  in (R-ARCH-6); a new package can never change how an existing first-party text is read.
-- An app's own install is trusted (unlike an opened clone, D157), so Node and bundler discovery
+  in (R-ARCH-6), for the set of plugins as well as their order: discovery reads only the
+  packages the app's `package.json` declares, so a package npm or Yarn hoists as someone
+  else's dependency is never found (D589). A new package can never change how an existing
+  first-party text is read.
+- An app's own declared dependencies are trusted (unlike an opened clone, D157), so Node and bundler discovery
   run package code: detectors at discovery, entries on first use.
 - `renderSync`, `detectType` and `supportsFormat` do not wait for first-use discovery; callers
   `await preload()` first.

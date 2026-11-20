@@ -12,8 +12,9 @@ import { withoutEmbedded } from './svg-tree.ts';
  * #340), kanban its columns and cards (D379, #459), and venn its circles and filled overlaps
  * (D319, #501); each type's case is its `src/<type>/outline.ts`. With T0's fixture drawer over
  * each type's corpus: every role the type has reaches the drawer, every shape does (only
- * arrowheads, label backgrounds, kanban's priority bar, venn's unfilled overlaps and debug
- * shapes, and text stay plain), and no arrowhead or text does.
+ * arrowheads, kanban's priority bar, venn's unfilled overlaps and debug shapes, the label boxes
+ * of the types that still draw their own, and text stay plain), and no arrowhead or text does.
+ * An edge label drawn by the shared tag reaches the drawer as role `label` (D630).
  */
 
 interface Call {
@@ -29,11 +30,8 @@ const TYPES = [...OUTLINE_CASES].flatMap(([type, { dirs, roles, plain }]) =>
 
 /** `<g class="outline-…">` around its one path: what the fixture drew. */
 const OUTLINED = /<g class="outline-[a-z]+"><path [^>]*\/><\/g>/g;
-/** What stays plain: arrowheads (a `marker` class on the leaf), label backgrounds. */
-const PLAIN = [
-  /<(?:path|circle) class="marker[^"]*"[^>]*\/>/g,
-  /<g class="edgeLabel"[^>]*><rect [^>]*\/>/g,
-];
+/** What stays plain: arrowheads (a `marker` class on the leaf). */
+const PLAIN = [/<(?:path|circle) class="marker[^"]*"[^>]*\/>/g];
 const SHAPE = /<(rect|circle|ellipse|polygon|line|path)\b[^>]*>/;
 const count = (s: string, re: RegExp): number => s.match(re)?.length ?? 0;
 
@@ -92,7 +90,7 @@ describe('the outlining types draw through the hook (D302, #340, #459, #501)', (
           }
           await drawn.prepare(item.source, { id: 'm' });
           const svg = withoutEmbedded(drawn.renderSync(item.source, { id: 'm' }).svg);
-          // Arrowheads, label backgrounds and text are written as before.
+          // Arrowheads and text are written as before.
           for (const re of [...PLAIN, ...own, /<text\b/g, /<tspan\b/g])
             expect(count(svg, re), `${item.id}: ${String(re)}`).toBe(count(expected, re));
           expect(ends(svg), item.id).toEqual(ends(expected));

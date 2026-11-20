@@ -238,9 +238,6 @@ function label(w: SvgWriter, p: PlacedLabel, attrs: Attrs, box: LabelBox = p.tex
 /** The `<svg>` root with its title (R-A11Y-1, D133, D492). */
 function openRoot(model: IshikawaModel, { w, layout }: Scene, ctx: IshikawaRenderContext): void {
   const { theme, config } = ctx;
-  const { x, y } = layout.bounds;
-  const width = Math.max(1, Math.ceil(layout.bounds.width));
-  const height = Math.max(1, Math.ceil(layout.bounds.height));
   const maxWidth = ishikawaUseMaxWidth(
     config.ishikawa as Readonly<Record<string, unknown>> | undefined
   );
@@ -250,7 +247,7 @@ function openRoot(model: IshikawaModel, { w, layout }: Scene, ctx: IshikawaRende
   const font = theme.font();
   openSvgRoot(w, ctx, {
     name: 'ishikawa',
-    viewBox: [x, y, width, height],
+    viewBox: layout.bounds,
     maxWidth,
     title,
     attrs: { 'font-family': font },

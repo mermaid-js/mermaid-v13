@@ -64,6 +64,8 @@ const V12: Readonly<Record<string, SketchOptions>> = {
   },
   // edges.js: { roughness: 0.3 }
   edge: { roughness: 0.3, fillStyle: 'hachure', fillWeight: -1, hachureGap: -1 },
+  // No v12 counterpart: an edge label's box, its border sketched and its fill solid (D630).
+  label: { roughness: 0.7, fillStyle: 'solid', fillWeight: -1, hachureGap: -1 },
 };
 
 function v12Options(role: OutlineRole, attrs: Attrs): SketchOptions {
@@ -86,15 +88,12 @@ interface Call {
 /** The hand-drawn extension, recording what its drawer gets and writes. */
 function recording(calls: Call[]): ExtensionPlugin {
   const { outline } = handDrawn;
-  let seed = 0;
   return {
     ...handDrawn,
     outline: {
-      active(ctx) {
-        seed = Number((ctx.config as { handDrawnSeed?: number }).handDrawnSeed);
-        return outline!.active(ctx);
-      },
-      draw(role, tag, attrs, sink) {
+      active: (ctx) => outline!.active(ctx),
+      draw(role, tag, attrs, sink, ctx) {
+        const seed = Number((ctx.config as { handDrawnSeed?: number }).handDrawnSeed);
         const drawn: string[] = [];
         const spy: OutlineSink = {
           ...sink,
@@ -106,7 +105,7 @@ function recording(calls: Call[]): ExtensionPlugin {
             sink.leaf(t, a);
           },
         };
-        const done = outline!.draw(role, tag, attrs, spy);
+        const done = outline!.draw(role, tag, attrs, spy, ctx);
         calls.push({ role, tag, attrs, drawn: done ? drawn : [], seed });
         return done;
       },
@@ -177,7 +176,15 @@ describe('the hand-drawn corpus', () => {
       expect(drawn, `${role} ${tag}`).toEqual(expected);
       if (drawn.length > 0) roles.add(role);
     }
-    expect([...roles].sort()).toEqual(['divider', 'edge', 'group', 'mark', 'node', 'part']);
+    expect([...roles].sort()).toEqual([
+      'divider',
+      'edge',
+      'group',
+      'label',
+      'mark',
+      'node',
+      'part',
+    ]);
   }, 120_000);
 });
 

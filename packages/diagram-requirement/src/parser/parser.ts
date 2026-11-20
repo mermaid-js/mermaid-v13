@@ -122,6 +122,10 @@ export interface RequirementParseOptions extends ParseOptions {
    * the model records the overflow (`styleCopies`, D433); default `MAX_STYLE_COPIES`.
    */
   maxStyleCopies?: number;
+  /** Requirement and element cap (core `DEFAULT_LIMITS.maxNodes`, D608). */
+  maxNodes?: number;
+  /** Relationship cap (core `DEFAULT_LIMITS.maxEdges`, D608). */
+  maxEdges?: number;
 }
 
 export type RequirementParseResult = ParseResult<RequirementModel, RequirementDocument>;
@@ -199,9 +203,7 @@ class RequirementParser {
       this.c = new ProbeCursor(this.lexed.tokens, probe);
     }
     this.mark = this.c.pos;
-    this.db = new RequirementBuilder(
-      options.maxStyleCopies !== undefined ? { maxStyleCopies: options.maxStyleCopies } : {}
-    );
+    this.db = new RequirementBuilder(options, this.st.diagnostics);
   }
 
   parse(): RequirementParseResult {

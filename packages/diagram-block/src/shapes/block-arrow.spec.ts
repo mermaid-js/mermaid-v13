@@ -1,7 +1,8 @@
 // v12's `rendering-util/rendering-elements/shapes/blockArrow.spec.ts` (fa796a943), ported as is:
 // the sixteen point sets, the axis shorthands and the natural width. Only the imports differ.
 import { describe, expect, it } from 'vitest';
-import { getArrowPoints, type ArrowDirection as Direction, type Point } from './block-arrow.ts';
+import { getArrowPoints, type ArrowDirection as Direction } from './block-arrow.ts';
+import type { Point } from './outline.ts';
 
 const bbox = { width: 100, height: 20 };
 const node = { padding: 10 };

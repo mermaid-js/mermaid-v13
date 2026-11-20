@@ -1,0 +1,14 @@
+---
+config:
+  theme: default
+  c4beta:
+    useMaxWidth: false
+description: >-
+  c4beta.useMaxWidth false: the SVG is drawn at its own width and height, with no max-width
+  style. A c4.useMaxWidth reaches c4-beta only while c4beta does not set it
+---
+c4-beta context
+title Ledger - System Context
+person clerk "Ledger Clerk" "Posts journal entries."
+softwareSystem ledger "Ledger" "Keeps the books."
+clerk --> ledger : "Posts entries using" "HTTPS"

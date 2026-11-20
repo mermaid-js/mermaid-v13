@@ -42,8 +42,9 @@ export interface CardLayout extends Rect {
   /** Left-aligned, under the title; undefined without a ticket. */
   readonly ticket?: PlacedLabel;
   /**
-   * Right-aligned on the ticket's row: the box's right edge is `labelInset` in from the card's,
-   * and the renderer ends each line there (`text-anchor="end"`); undefined without an assignee.
+   * Right-aligned on the ticket's row, or on a row of its own under the ticket when the two do
+   * not fit side by side (D647): the box's right edge is `labelInset` in from the card's, and
+   * the renderer ends each line there (`text-anchor="end"`); undefined without an assignee.
    */
   readonly assignee?: PlacedLabel;
   /** Undefined unless the priority is one of the four (D375). */

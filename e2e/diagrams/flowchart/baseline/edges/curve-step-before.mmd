@@ -1,0 +1,12 @@
+---
+description: stepBefore curve, right-angle corners, the step in its own place (#356)
+config:
+  flowchart:
+    curve: stepBefore
+---
+flowchart TD
+  A --> B
+  A --> C
+  B --> D
+  C --> D
+  A --> D

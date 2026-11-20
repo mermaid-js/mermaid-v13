@@ -38,17 +38,6 @@ export const C4_METRICS = {
   /** v12 `c4ShapeAdapter.ts`: `rx`/`ry` 12 on rounded and `fr-rect` elements. */
   shapeRadius: 12,
   /**
-   * The person figure (#683, as v12's fix mermaid-js/mermaid#8322; c4model.com's proportions):
-   * a head of radius `personHeadRatio` × the width, held between `personHeadMin` and
-   * `personHeadMax`, overlapping the body by `personOverlap` × its radius; the body at least
-   * `personBodyRatio` × the width tall.
-   */
-  personHeadRatio: 0.23,
-  personHeadMin: 16,
-  personHeadMax: 80,
-  personOverlap: 0.27,
-  personBodyRatio: 0.6,
-  /**
    * The person in the text output's cell layout, drawn as a box: v12 12.2.0's head of radius 13
    * centred 14 below the top, in a row 26 high over the body.
    */
@@ -127,6 +116,13 @@ export const C4_METRICS = {
   /** What crossing a line costs an elbow (against its length) and a detour (against its lane steps). */
   elbowCrossingCost: 1e6,
   detourCrossingCost: 8,
+  /**
+   * What a bend costs a path through the channels between shapes (`./channels.ts`, #774), against
+   * its length: a bend fewer is worth about one gap between two columns more.
+   */
+  channelBend: 100,
+  /** What crossing a line already routed costs that path: half a bend, so it mostly breaks ties. */
+  channelCrossing: 50,
 } as const;
 
 /** CSS numeric weights. */

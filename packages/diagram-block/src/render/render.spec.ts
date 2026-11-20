@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert, type OutlineRole } from '@mermaid-js/core/svg';
 import { outlineFixture } from '@mermaid-js/core/svg/testing';
+import { pxProfile } from '@mermaid-js/core/layout';
 import { fixtureSource } from '../layout/mmd.fixtures.ts';
 import { renderBlockForTest } from './harness.ts';
 
@@ -121,9 +122,50 @@ describe('block SVG structure (v12 class names)', () => {
     expect(svg.match(/<circle class="marker"/g)).toHaveLength(1);
     // The label: g.edgeLabel with data-id only, on edgeLabelBackground, after the edges.
     expect(svg).toMatch(
-      /<g class="edgeLabel" data-id="1-b-c"><rect [^>]*fill="var\(--_el\)"\/><text [^>]*>lbl<\/text><\/g>/
+      /<g class="edgeLabel" data-id="1-b-c"><rect [^>]*fill="var\(--_el\)"[^>]*\/><text [^>]*>lbl<\/text><\/g>/
     );
     expect(svg.match(/data-ast=/g)).toHaveLength(4 + 5);
+  });
+
+  it('draws each edge label as a tag bordered 1 px solid in its edge colour (D626, D627)', async () => {
+    // Plain, two-line, thick and dotted labels.
+    const { svg, layout } = await render(fixtureSource('baseline/edge-labels/tags')!, {
+      themeVariables: { lineColor: '#d6336c' },
+    });
+    const edges = tags(svg).filter((t) => t.includes('flowchart-link'));
+    const boxes = svg
+      .split('<g class="edgeLabel"')
+      .slice(1)
+      .map((part) => tags(part).find((t) => t.startsWith('<rect '))!);
+    const labelled = layout.edges.filter((e) => e.label);
+    const patch = pxProfile.builder.labelPatch;
+    expect(boxes).toHaveLength(4);
+    expect(edges.map((t) => attr(t, 'class'))).toContain(
+      'edge-thickness-thick edge-pattern-solid flowchart-link'
+    );
+    expect(edges.map((t) => attr(t, 'class'))).toContain(
+      'edge-thickness-normal edge-pattern-dotted flowchart-link'
+    );
+    boxes.forEach((box, i) => {
+      expect(attr(box, 'rx')).toBe('6');
+      expect(attr(box, 'stroke')).toBe(attr(edges[i]!, 'stroke'));
+      expect(attr(box, 'stroke-width')).toBe('1');
+      expect(attr(box, 'stroke-dasharray')).toBeUndefined();
+      const label = labelled[i]!.label!;
+      // The box is the label plus the px profile's labelPatch (D629), and the room the layout
+      // reserved for it.
+      expect(Number(attr(box, 'width'))).toBeCloseTo(label.text.width + patch.x);
+      expect(Number(attr(box, 'height'))).toBeCloseTo(label.text.height + patch.y);
+      expect(Number(attr(box, 'width'))).toBeCloseTo(label.width);
+    });
+  });
+
+  it('draws no box and reserves no room for a whitespace-only edge label (D626)', async () => {
+    const { svg, layout } = await render('block\n  a b\n  a -- " " --> b\n');
+    expect(svg).not.toContain('<g class="edgeLabel"');
+    expect(layout.edges[0]!.label).toBeUndefined();
+    const bare = await render('block\n  a b\n  a --> b\n');
+    expect(layout.bounds).toEqual(bare.layout.bounds);
   });
 
   it('draws a self-loop as a cubic from the outline back to it', async () => {

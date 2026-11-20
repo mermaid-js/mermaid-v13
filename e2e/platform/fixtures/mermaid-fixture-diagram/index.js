@@ -1,45 +1,14 @@
 /**
- * The fixture diagram plugin (DESIGN §12.1): `fixturebox <label>` draws one box. It imports
- * nothing, so it installs without any other package.
+ * The fixture diagram package's main export (D586, R-PLUG-3): a lazy descriptor. The app
+ * registers it with `registerExternalDiagrams([box])`. The detector comes from its own small
+ * module and is imported eagerly; the entry is behind `import()`, so a bundler puts it in its own
+ * chunk and it loads on the first render of a `fixturebox` diagram.
  */
 import { detector } from './detector.js';
 
-const WIDTH = 120;
-const HEIGHT = 40;
-
-export const fixturebox = {
+export default {
   id: 'fixturebox',
-  layoutKind: 'custom',
-  formats: ['svg'],
   detector,
-  parse(text) {
-    const label = text.replace(/^\s*fixturebox\b/, '').trim() || 'fixture';
-    return {
-      model: { label },
-      ast: { id: 'fixturebox', type: 'FixtureBox', range: { start: 0, end: text.length } },
-      diagnostics: [],
-      symbols: [],
-      statements: [],
-    };
-  },
-  render(model, _layout, ctx, w) {
-    w.open('svg', {
-      xmlns: 'http://www.w3.org/2000/svg',
-      id: ctx.idPrefix,
-      viewBox: [0, 0, WIDTH, HEIGHT],
-      class: 'fixturebox',
-    });
-    w.leaf('rect', {
-      x: 1,
-      y: 1,
-      width: WIDTH - 2,
-      height: HEIGHT - 2,
-      fill: 'none',
-      stroke: 'black',
-    });
-    w.open('text', { x: WIDTH / 2, y: HEIGHT / 2, 'text-anchor': 'middle' });
-    w.text(model.label);
-    w.close();
-    w.close();
-  },
+  formats: ['svg'],
+  loader: () => import('./entry.js'),
 };

@@ -1,0 +1,8 @@
+@ 3:12  container 3|ds "3-D Secure"
+  prepare: 3:11-3:14 "3ds"; rename to "2fa-app":
+  c4-beta
+  %% rename-to: 2fa-app
+  container 2fa-app "3-D Secure"
+  container a-b "A-B"
+  2fa-app --> a-b
+  a-b --> 2fa-app

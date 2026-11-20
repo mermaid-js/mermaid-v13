@@ -80,6 +80,8 @@ const AGREES_WITH_JS_YAML: [string, unknown][] = [
   ['a: [1 2]', { a: ['1 2'] }],
 ];
 
+const NO_ANCHORS = 'tags, anchors and aliases (`!`, `&`, `*`) are not supported';
+
 /** Inputs js-yaml rejects, with the text the error should point at. */
 const REJECTED_BY_JS_YAML: [src: string, at: string][] = [
   ['!!!', '!!!'],
@@ -277,6 +279,15 @@ describe('js-yaml parity found by fuzzing (#17)', () => {
     ['k: a\n\tb\n', 'tab characters must not be used in indentation', '2:1'],
     // An indented `---` is text, not a document marker.
     ['config:\n  a:\n    b: 1\n ---\n', 'bad indentation of a mapping entry', '4:2'],
+    // An anchor over a nested block mapping gets the same message as an inline one (#774).
+    ['base: &b dark\n', NO_ANCHORS, '1:7'],
+    ['base: &b\n  theme: dark\n', NO_ANCHORS, '1:7'],
+    ['base: &b # c\n\n  theme: dark\n', NO_ANCHORS, '1:7'],
+    ['a: 1\nbase: &b\n  theme: dark\n  look: neo\n', NO_ANCHORS, '2:7'],
+    ['- &b\n  theme: dark\n', NO_ANCHORS, '1:3'],
+    // Only there: an alias or a tag over a block keeps the continuation line's error.
+    ['base: *b\n  theme: dark\n', 'bad indentation of a mapping entry', '2:3'],
+    ['base: !t\n  theme: dark\n', 'bad indentation of a mapping entry', '2:3'],
   ])('rejects %j: %s', (src, reason, at) => {
     const r = parseYaml(src);
     expect(r.value).toBeNull();

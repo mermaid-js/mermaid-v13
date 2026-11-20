@@ -22,13 +22,18 @@ import type {
   ProbeResult,
   Range,
 } from '@mermaid-js/core/parser-kit';
+import {
+  insertWithSeparator,
+  lineBefore,
+  matchesTyped,
+  span,
+} from '@mermaid-js/shared/parser/facet';
 import { c4Docs } from '../generated/docs.ts';
 import type { C4Document, C4StatementNode } from '../parser/ast.ts';
 import { HEADERS, KEYWORDS, T } from '../parser/tokens.ts';
 import { callAt } from './args.ts';
 import type { CallAt, WrittenArg } from './args.ts';
 import { SLOT_TABLES } from '../parser/slots.ts';
-import { lineBefore, span } from './markdown.ts';
 import { signature } from './tables.ts';
 
 const BLANK = /^[\t ]*$/;
@@ -48,9 +53,6 @@ const STATEMENTS: readonly (readonly [label: string, kind: number, separator: st
 /** Slots a `$name` is not offered for: the ones a statement writes by position. */
 const POSITIONAL = new Set(['label', 'index']);
 
-const matches = (label: string, typed: string) =>
-  label.toLowerCase().startsWith(typed.toLowerCase());
-
 /**
  * What a title or accessibility keyword inserts before `after` (the text following the word
  * replaced): its separator, unless one is there already. A `title` at its line's end stands
@@ -58,8 +60,7 @@ const matches = (label: string, typed: string) =>
  */
 function statementText(label: string, separator: string, after: string): string {
   if (separator === ' ') return /^[^\t \n\r]/.test(after) ? `${label} ` : label;
-  if (/^[\t ]*[:{]/.test(after)) return label;
-  return /^[\t ]/.test(after) ? label + separator.trimEnd() : label + separator;
+  return insertWithSeparator(label, separator, after, /^[\t ]*[:{]/);
 }
 
 /**
@@ -81,7 +82,7 @@ function keywordItems(
   const paren = text.charAt(range.end) === '(';
   const out: CompletionItem[] = [];
   for (const [name, kind] of headers ? HEADER_NAMES : MACRO_NAMES) {
-    if (!matches(name, typed)) continue;
+    if (!matchesTyped(name, typed)) continue;
     const documentation = c4Docs[kind];
     const table = SLOT_TABLES.get(kind);
     out.push({
@@ -96,7 +97,7 @@ function keywordItems(
   if (headers) return out;
   const after = text.slice(range.end);
   for (const [label, kind, separator] of STATEMENTS) {
-    if (!expected.has(kind) || !matches(label, typed)) continue;
+    if (!expected.has(kind) || !matchesTyped(label, typed)) continue;
     const documentation = c4Docs[kind];
     out.push({
       label,
@@ -135,7 +136,7 @@ function nameItems({ call, arg, name, text, at }: NameAt) {
   });
   return slots
     .filter((s) => s.role === 'text' && !POSITIONAL.has(s.name) && !given.has(s.name))
-    .filter((s) => matches(s.name, typed))
+    .filter((s) => matchesTyped(s.name, typed))
     .map(
       (s): CompletionItem => ({
         label: s.name,
@@ -192,7 +193,7 @@ function aliasItems(call: CallAt, doc: DocumentView<C4Document>, at: number): Co
   if (!place) return [];
   const out: CompletionItem[] = [];
   for (const [name, { kind, macro }] of aliases(doc)) {
-    if (!matches(name, place.typed)) continue;
+    if (!matchesTyped(name, place.typed)) continue;
     // A name the slot cannot hold as it is written there.
     if (place.quoted ? name.includes('"') : /[,)\n\r]|^[\t "$]/.test(name)) continue;
     const item: CompletionKind = kind === 'element' ? 'node' : 'subgraph';

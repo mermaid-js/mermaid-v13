@@ -8,12 +8,20 @@
  * their label in the top border, relations stepped lines along the routed points with their
  * label at the middle and arrowheads. Config colours and fonts are ignored without a warning
  * (D459); a drawing wider than `ascii.maxWidth` is not folded: the API adds `ASCII_TOO_WIDE`.
+ *
+ * c4-beta (spec #730 T7) is drawn the same way: `beta/layout.ts` lays it out on the engine's grid
+ * and hands this hook the scene, in the same px-over-cells form. What it cannot show is dropped
+ * with `ASCII_DROPPED`, as for legacy C4: the `style` colours and line, `accTitle` and
+ * `accDescr`, and the legend, whose swatches key colours. Colours and fonts from the config and
+ * the theme are ignored without a warning (D459), a cylinder is drawn as caps and a person as
+ * a rounded box.
  */
 import type { TextRenderContext } from '@mermaid-js/core';
 import type { C4Layout } from './layout/index.ts';
 import type { C4Model } from './model.ts';
+import { isC4Beta, type C4BetaModel } from './beta/model.ts';
 import { drawC4, ROUTE_BUDGET } from './ascii/draw.ts';
-import { asciiWarnings } from './ascii/warnings.ts';
+import { asciiWarnings, asciiWarningsBeta } from './ascii/warnings.ts';
 import { glyphSetOf } from '@mermaid-js/shared/ascii';
 
 export type { AsciiDroppedFeature, AsciiDroppedWarning, AsciiWarning } from './ascii/warnings.ts';
@@ -29,9 +37,12 @@ export type C4AsciiContext = Pick<TextRenderContext, 'config' | 'warn'> &
  * profile's 8 × 16 px a cell, its text cut to its boxes. The entry does not import the layout,
  * so the SVG chunk is not split for it.
  */
-export function ascii(model: C4Model, layout: C4Layout, ctx: C4AsciiContext): string {
+export function ascii(model: C4Model | C4BetaModel, layout: C4Layout, ctx: C4AsciiContext): string {
   const glyphs = glyphSetOf(ctx.config);
-  for (const w of asciiWarnings(model, layout)) ctx.warn(w);
+  const warnings = isC4Beta(model)
+    ? asciiWarningsBeta(model, layout)
+    : asciiWarnings(model, layout);
+  for (const w of warnings) ctx.warn(w);
   // R-SEC-5, D542: capped by the integrator's limit, as the SVG layout's budget is.
   const budget = Math.min(ROUTE_BUDGET, ctx.limits?.maxLayoutWork ?? Infinity);
   return drawC4(layout, glyphs, budget).text;

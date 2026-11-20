@@ -171,6 +171,32 @@ export function formatRenderMs(ms: number): string {
   return `${ms.toFixed(2)} ms`;
 }
 
+/**
+ * How many timed `render()` calls a pane makes per text (#358). One sample understated v13 a
+ * lot (1.4× shown, 35× measured), since both iframes render at the same moment.
+ */
+export const TIMED_RENDERS = 5;
+
+/** A pane's timed renders of one text, summed up for its chips. */
+export interface RenderTimes {
+  /** The middle time; the mean of the middle two for an even count. */
+  readonly median: number;
+  readonly min: number;
+  readonly max: number;
+  /** How many times went in. */
+  readonly runs: number;
+}
+
+/** The median, min and max of `times`; `undefined` when there is no finite time. */
+export function summarizeRenderTimes(times: readonly number[]): RenderTimes | undefined {
+  const sorted = times.filter((t) => Number.isFinite(t)).sort((a, b) => a - b);
+  const n = sorted.length;
+  if (n === 0) return undefined;
+  const mid = Math.floor(n / 2);
+  const median = n % 2 === 1 ? sorted[mid]! : (sorted[mid - 1]! + sorted[mid]!) / 2;
+  return { median, min: sorted[0]!, max: sorted[n - 1]!, runs: n };
+}
+
 /** Within this factor of each other, two render times count as the same speed. */
 const SAME_SPEED = 1.05;
 

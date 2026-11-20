@@ -16,24 +16,22 @@ import { C4_METRICS as M } from './metrics.ts';
 import { crosses, lineOf } from './route.ts';
 import { onOutline, outlineForm, type Outline } from './shapes.ts';
 import type { C4Layout, C4RelationLayout, Point, Rect } from './types.ts';
-import { nonFinite as finite } from '@mermaid-js/shared/layout/invariants';
+import {
+  EPS,
+  nonFinite as finite,
+  rectInside,
+  rectsOverlap as overlap,
+} from '@mermaid-js/shared/testing/layout-invariants';
 
-/** Float tolerance of the checks, in px. */
-const EPS = 1e-6;
 /** How far an end may lie off its outline, in px. */
 const END_TOL = 0.01;
 
+/** Whether `inner` lies in `outer`, from `top` down (a frame below its header). */
 const inside = (outer: Rect, inner: Rect, top = outer.y): boolean =>
-  inner.x >= outer.x - EPS &&
-  inner.y >= top - EPS &&
-  inner.x + inner.width <= outer.x + outer.width + EPS &&
-  inner.y + inner.height <= outer.y + outer.height + EPS;
-
-const overlap = (a: Rect, b: Rect): boolean =>
-  a.x < b.x + b.width - EPS &&
-  b.x < a.x + a.width - EPS &&
-  a.y < b.y + b.height - EPS &&
-  b.y < a.y + a.height - EPS;
+  rectInside(
+    inner,
+    top === outer.y ? outer : { ...outer, y: top, height: outer.y + outer.height - top }
+  );
 
 /** Pairs of boxes that overlap, by a sweep along x. */
 function overlapping<T>(items: readonly T[], box: (t: T) => Rect): [T, T][] {
@@ -83,6 +81,7 @@ export function c4LayoutViolations(model: C4Model, layout: C4Layout): string[] {
   checkRelations(model, layout, out);
   if (layout.careful) checkLabels(layout, out);
   checkBounds(layout, out);
+  out.push(...legendViolations(layout));
   return out;
 }
 
@@ -244,6 +243,35 @@ function checkBounds(layout: C4Layout, out: string[]): void {
     if (!inside(bounds, box)) out.push(`${name} is outside the bounds`);
   if (!inside({ x: 0, y: 0, width: layout.width, height: layout.height }, bounds))
     out.push('the bounds are outside the canvas');
+}
+
+/**
+ * c4-beta's legend: inside the bounds, holding its heading and every swatch and label, and
+ * clear of everything else drawn: elements, boundaries, relation lines and labels, the title.
+ */
+export function legendViolations(layout: C4Layout): string[] {
+  const { legend } = layout;
+  if (!legend) return [];
+  const out: string[] = [];
+  if (!inside(layout.bounds, legend.box)) out.push('the legend is outside the bounds');
+  const parts = [legend.title, ...legend.rows.flatMap((r) => [r.swatch, r.label])];
+  if (parts.some((part) => !inside(legend.box, part)))
+    out.push('the legend holds less than it draws');
+  const { x, y, width, height } = legend.box;
+  const area = { x0: x, y0: y, x1: x + width, y1: y + height };
+  const others: [string, Rect][] = [
+    ...layout.elements.map((e): [string, Rect] => [`element ${e.alias}`, e.box]),
+    ...layout.boundaries.map((b): [string, Rect] => [`boundary ${b.alias}`, b.box]),
+    ...layout.relations.flatMap((r): [string, Rect][] =>
+      r.labelBox ? [[`the label of ${r.from} -> ${r.to}`, r.labelBox]] : []
+    ),
+    ...(layout.title ? [['the title', layout.title] as [string, Rect]] : []),
+  ];
+  for (const [name, box] of others)
+    if (overlap(legend.box, box)) out.push(`the legend overlaps ${name}`);
+  for (const r of layout.relations)
+    if (crosses(lineOfLayout(r), area)) out.push(`the legend covers relation ${r.from} -> ${r.to}`);
+  return out;
 }
 
 /**

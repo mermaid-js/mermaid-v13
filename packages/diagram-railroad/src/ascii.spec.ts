@@ -1,7 +1,7 @@
 // cspell:words nonterminal
 import { describe, expect, it } from 'vitest';
 import { draw, mainRowClashes, text } from './ascii/railroad.fixtures.ts';
-import { railroadLayoutViolations } from './layout/index.ts';
+import { railroadLayoutViolations } from './layout/invariants.ts';
 import { parseRailroad } from './parser/index.ts';
 
 // Railroad's `ascii` hook (#617, D518, D320, R-ASCII-5, R-ASCII-6), through the `./ascii` entry

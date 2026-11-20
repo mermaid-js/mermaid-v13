@@ -1,0 +1,15 @@
+@ 11:11  capi --> a|pi : "api" "api" :::api
+  prepare: 11:10-11:13 "api"; rename to "gateway":
+  c4-beta
+  %% rename-to: gateway
+  container ap "Ap"
+  container gateway "API" "api"
+  container api2 "API 2"
+  container capi "capi"
+  container a-api "a-api"
+  container api-b "api-b"
+  ap --> gateway
+  gateway --> api2
+  capi --> gateway : "api" "api" :::api
+  a-api --> api-b
+  title api

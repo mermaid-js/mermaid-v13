@@ -11,7 +11,8 @@ import {
   sameAxisSegmentsOverlap,
   segmentHitsAnyRect,
 } from './geometry.ts';
-import type { Point, RectBounds, RectEntry, RectSide } from './geometry.ts';
+import type { Point } from '../../types.ts';
+import type { RectBounds, RectEntry, RectSide } from './geometry.ts';
 
 /**
  * The faces and routes the passes that move a terminal leg agree on: whether a face is free,

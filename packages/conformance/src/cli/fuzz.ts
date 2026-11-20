@@ -13,6 +13,7 @@
  */
 import { writeFileSync } from 'node:fs';
 import { formatFailure, fuzzFlowchart, fuzzOracle } from '../fuzz/run.ts';
+import { reportJson } from '../fuzz/report-json.ts';
 
 const env = process.env;
 const seed = env.FUZZ_SEED ? Number(env.FUZZ_SEED) : Date.now() % 2_147_483_647;
@@ -30,7 +31,7 @@ const report = await fuzzFlowchart({
   count,
   only,
   onCase: env.FUZZ_CURRENT
-    ? (index, source) => writeFileSync(env.FUZZ_CURRENT!, JSON.stringify({ seed, index, source }))
+    ? (index, source) => writeFileSync(env.FUZZ_CURRENT!, reportJson({ seed, index, source }))
     : undefined,
 });
 const seconds = ((performance.now() - started) / 1000).toFixed(1);
@@ -38,7 +39,7 @@ process.stdout.write(
   `fuzz: ${report.count} inputs in ${seconds} s, ${JSON.stringify(report.outcomes)}, ${report.failures.length} failures\n`
 );
 for (const f of report.failures) process.stdout.write(formatFailure(f) + '\n');
-if (env.FUZZ_REPORT) writeFileSync(env.FUZZ_REPORT, JSON.stringify(report, null, 2) + '\n');
+if (env.FUZZ_REPORT) writeFileSync(env.FUZZ_REPORT, reportJson(report, 2) + '\n');
 if (env.FUZZ_ORACLE && only === undefined) {
   const oracle = await fuzzOracle(seed, Number(env.FUZZ_ORACLE));
   process.stdout.write(
@@ -46,7 +47,7 @@ if (env.FUZZ_ORACLE && only === undefined) {
   );
   for (const c of oracle.clusters) process.stdout.write(`  ${c.count}x ${c.title}\n`);
   if (env.FUZZ_ORACLE_REPORT) {
-    writeFileSync(env.FUZZ_ORACLE_REPORT, JSON.stringify(oracle, null, 2) + '\n');
+    writeFileSync(env.FUZZ_ORACLE_REPORT, reportJson(oracle, 2) + '\n');
   }
 }
 process.exitCode = report.failures.length > 0 ? 1 : 0;

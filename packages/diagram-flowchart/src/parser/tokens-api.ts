@@ -1,19 +1,17 @@
-import { cook, Kind } from '@mermaid-js/core/parser-kit';
-import type { Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
+import { COMMENTS, cooked, keptTokens } from '@mermaid-js/shared/parser/seen-tokens';
+import type { SeenToken } from '@mermaid-js/shared/parser/seen-tokens';
 import { flowSourceView, lex } from './lexer.ts';
 
-export interface FlowToken {
-  /** A `T` kind or a shared `Kind`. */
-  kind: number;
-  /** The token's text as v12's lexer saw it (entities, CRLF and removed spans applied). */
-  text: string;
-  range: Range;
-}
+/**
+ * A token of this diagram: its `kind` is a `T` kind or a shared `Kind`, its `text` as v12's
+ * lexer saw it (entities, CRLF and removed spans applied).
+ */
+export type FlowToken = SeenToken;
 
 /**
- * The significant flowchart tokens of `src` (comments and directives left out), for editors
- * and for the lexer-parity gate.
+ * The significant flowchart tokens of `src` (comments and directives left out; the list ends
+ * with the final `Kind.EOF`), for editors and for the lexer-parity gate.
  */
 export function flowchartTokens(src: string): FlowToken[] {
   const pre = preprocess(src);
@@ -23,13 +21,5 @@ export function flowchartTokens(src: string): FlowToken[] {
     pre.directives.map((d) => d.range)
   );
   const stream = lex(src, pre.bodyStart, view);
-  const out: FlowToken[] = [];
-  for (let j = 0; j < stream.length; j++) {
-    const kind = stream.kind[j] ?? Kind.EOF;
-    if (kind === Kind.Comment || kind === Kind.Directive) continue;
-    const start = stream.start[j] ?? 0;
-    const end = stream.end[j] ?? 0;
-    out.push({ kind, text: cook(src, start, end, view), range: { start, end } });
-  }
-  return out;
+  return keptTokens(stream, COMMENTS, cooked(src, stream, view), { eof: true });
 }

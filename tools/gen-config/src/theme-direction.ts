@@ -85,17 +85,40 @@ const FAMILIES: ReadonlySet<string> = new Set(THEME_FAMILIES);
 /** The shared palettes, which only a `palette` variable's rule may name whole (D545). */
 const PALETTES: ReadonlySet<string> = new Set(PALETTE_VARIABLES);
 
-function literals(file: SourceFile, visit: (node: ts.StringLiteralLike) => void): void {
-  const sf = ts.createSourceFile(file.path, file.text, ts.ScriptTarget.Latest, true);
+/**
+ * A file's syntax nodes in tree order. Rules 1 and 2 each read a file twice, so each takes the
+ * nodes once per file and hands them to both readers: parsing and walking the repository's 1,400
+ * files is the check's time. Nothing keeps them past the file.
+ */
+function nodesOf(file: SourceFile): readonly ts.Node[] {
+  const all: ts.Node[] = [];
   const walk = (node: ts.Node): void => {
+    all.push(node);
+    ts.forEachChild(node, walk);
+  };
+  walk(ts.createSourceFile(file.path, file.text, ts.ScriptTarget.Latest, true));
+  return all;
+}
+
+function literals(nodes: readonly ts.Node[], visit: (node: ts.StringLiteralLike) => void): void {
+  for (const node of nodes) {
     if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) visit(node);
     else if (ts.isTemplateExpression(node)) {
       visit(node.head as unknown as ts.StringLiteralLike);
       for (const span of node.templateSpans) visit(span.literal as unknown as ts.StringLiteralLike);
     }
-    ts.forEachChild(node, walk);
-  };
-  walk(sf);
+  }
+}
+
+/** Every read of `<…theme>.name` in a file. */
+function themeNameReads(nodes: readonly ts.Node[], visit: () => void): void {
+  for (const node of nodes)
+    if (
+      ts.isPropertyAccessExpression(node) &&
+      node.name.text === 'name' &&
+      /theme$/i.test(node.expression.getText())
+    )
+      visit();
 }
 
 /**
@@ -103,9 +126,8 @@ function literals(file: SourceFile, visit: (node: ts.StringLiteralLike) => void)
  * shorthand property (`{ pie1 }`) and a property access (`t.vars.pie1`). Quoted keys are string
  * literals, which {@link literals} visits; comments are not part of the tree.
  */
-function propertyNames(file: SourceFile, visit: (name: string) => void): void {
-  const sf = ts.createSourceFile(file.path, file.text, ts.ScriptTarget.Latest, true);
-  const walk = (node: ts.Node): void => {
+function propertyNames(nodes: readonly ts.Node[], visit: (name: string) => void): void {
+  for (const node of nodes) {
     if (
       (ts.isPropertyAssignment(node) || ts.isShorthandPropertyAssignment(node)) &&
       ts.isIdentifier(node.name)
@@ -113,9 +135,7 @@ function propertyNames(file: SourceFile, visit: (name: string) => void): void {
       visit(node.name.text);
     else if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.name))
       visit(node.name.text);
-    ts.forEachChild(node, walk);
-  };
-  walk(sf);
+  }
 }
 
 /** Whether a literal is compared with, or looked up beside, an expression naming a theme. */
@@ -268,10 +288,11 @@ export function checkThemeDirection(input: DirectionInput): Violation[] {
       out.push({ rule: 'core-names-diagram', where, name: word });
   };
   for (const file of input.core) {
-    literals(file, (node) => {
+    const nodes = nodesOf(file);
+    literals(nodes, (node) => {
       for (const word of node.text.split(/[^A-Za-z0-9_]+/)) named(file.path, word);
     });
-    propertyNames(file, (word) => named(file.path, word));
+    propertyNames(nodes, (word) => named(file.path, word));
   }
 
   // 2. Diagrams name no theme.
@@ -279,27 +300,20 @@ export function checkThemeDirection(input: DirectionInput): Violation[] {
   for (const [type, files] of Object.entries(input.diagrams))
     for (const file of files) {
       if (/[\\/]src[\\/]generated[\\/]/.test(file.path)) continue;
-      literals(file, (node) => {
+      const nodes = nodesOf(file);
+      literals(nodes, (node) => {
         const text = node.text.trim();
         if (isFallback(node)) return;
         if (themes.has(text) && (!WORDS.has(text) || comparedWithTheme(node)))
           out.push({ rule: 'diagram-names-theme', where: `${type}: ${file.path}`, name: text });
       });
-      const sf = ts.createSourceFile(file.path, file.text, ts.ScriptTarget.Latest, true);
-      const walk = (node: ts.Node): void => {
-        if (
-          ts.isPropertyAccessExpression(node) &&
-          node.name.text === 'name' &&
-          /theme$/i.test(node.expression.getText())
-        )
-          out.push({
-            rule: 'diagram-names-theme',
-            where: `${type}: ${file.path}`,
-            name: 'theme.name',
-          });
-        ts.forEachChild(node, walk);
-      };
-      walk(sf);
+      themeNameReads(nodes, () =>
+        out.push({
+          rule: 'diagram-names-theme',
+          where: `${type}: ${file.path}`,
+          name: 'theme.name',
+        })
+      );
     }
 
   // 3. A table reads shared names, palette slots and its own (and a `palette` variable's rule a

@@ -1,0 +1,4 @@
+@ 1:11  c4-beta co|
+  context keyword 1:9-1:11 "co" -> "context"
+  container keyword 1:9-1:11 "co" -> "container"
+  component keyword 1:9-1:11 "co" -> "component"

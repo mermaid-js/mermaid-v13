@@ -2,7 +2,7 @@
  * `forest`: v12 `theme-forest.js`.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { paletteSlots, series } from './palettes.ts';
+import { paletteSlots, series, SERIES_TINTS } from './palettes.ts';
 import {
   classicGitLabels,
   darkenedScale,
@@ -56,6 +56,9 @@ const theme: ThemeSpec = {
     // tertiary one from its primaryColor), and the note and error colours, which darkMode leaves
     // alone.
     mainBkg: '#cde498',
+    // v12's constructor tertiary and line colours (`bandBkg`, `guideLineColor` in vocabulary.ts).
+    bandBkg: '#e1efc0',
+    guideLineColor: '#000000',
     border1: '#13540c',
     primaryBorderColor: '#abb594',
     secondaryBorderColor: '#b4e599',
@@ -80,7 +83,6 @@ const theme: ThemeSpec = {
     clusterBkg: '#cdffb2',
     clusterBorder: '#6eaa49',
     titleColor: '#333333',
-    edgeLabelBackground: '#e8e8e8',
     arrowheadColor: '#008000',
     border2: '#6eaa49',
     noteTextColor: '#000000',
@@ -106,10 +108,13 @@ const theme: ThemeSpec = {
     cScaleLabel: paletteSlots(() => 'scaleLabelColor'),
     // v12 theme-forest.js: the base colours, primary and secondary −30, the tertiary colour turned
     // by 40° and −40 (derived from the hex tertiary colour, where v12 stepped its unrounded HSL
-    // one, D333(a)), then hue turns; then the tints, v12's resolved values.
+    // one, D333(a)), then hue turns of the primary colour, all of which v12 recomputes under an
+    // override of a base colour (D656); then the tints (`SERIES_TINTS`).
     seriesColorArray: series(
-      'primaryColor secondaryColor tertiaryColor darkenHsl(primaryColor,30%) darkenHsl(secondaryColor,30%) darkenHsl(adjustHue(tertiaryColor,40),40%) #70d990 #d99070 #98cde4 #1a6330 #63301a #1a4d63 ' +
-        '#cde498 #cdffb2 #98e4b4 #b2ffe9 #e4aa98 #ffdfb2 #98c3e4 #b2c3ff'
+      'primaryColor secondaryColor tertiaryColor darkenHsl(primaryColor,30%) darkenHsl(secondaryColor,30%) darkenHsl(adjustHue(tertiaryColor,40),40%) ' +
+        'darkenHsl(adjustHue(primaryColor,60),10%) darkenHsl(adjustHue(primaryColor,-60),10%) adjustHue(primaryColor,120) ' +
+        'darkenHsl(adjustHue(primaryColor,60),50%) darkenHsl(adjustHue(primaryColor,-60),50%) darkenHsl(adjustHue(primaryColor,120),50%) ' +
+        SERIES_TINTS
     ),
     // v12: git darkened by 25 (lightened under darkMode), labels 0 and 3 inverted; the label is
     // v12's `labelTextColor`, which forest sets to its label ink (`scaleLabelColor`, D334).

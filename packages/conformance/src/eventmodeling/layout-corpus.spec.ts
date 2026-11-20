@@ -61,11 +61,11 @@ describe('event modeling layout invariants on parser-produced fixtures', () => {
             );
         }
     }
-    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(38);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(39);
     expect(boxes).toBeGreaterThan(10_000);
     // Every route and clipping are exercised.
     expect(clipped).toBeGreaterThan(0);
-    for (const route of ['down', 'up', 'along', 'self'])
+    for (const route of ['down', 'up', 'along', 'under', 'self'])
       expect(routes.get(route)).toBeGreaterThan(0);
     expect(failures.slice(0, 10)).toEqual([]);
   }, 120_000);

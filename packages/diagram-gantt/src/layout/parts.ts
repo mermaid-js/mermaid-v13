@@ -116,6 +116,8 @@ export function excludesOf(c: Chart, warn: Warn, steps: Steps): Rect[] {
   const x = (t: number): number => c.scale(t) + env.leftPadding;
   const y = env.gridLineStartPadding;
   const height = c.h - env.topPadding - env.gridLineStartPadding;
+  const plotLeft = env.leftPadding;
+  const plotRight = env.leftPadding + c.plotWidth;
   const out: Rect[] = [];
   let run: [Date, Date] | undefined;
   const cost = dayCost(model.dateFormat);
@@ -131,10 +133,15 @@ export function excludesOf(c: Chart, warn: Warn, steps: Steps): Rect[] {
     from.setHours(0, 0, 0, 0);
     const to = new Date(run[1]);
     to.setHours(23, 59, 59, 999);
-    const r = { x: x(from.getTime()), y, width: x(to.getTime()) - x(from.getTime()), height };
+    run = undefined;
+    // Clamped to the plot: v12 draws a run that starts before the first task outside its
+    // viewBox, where it is clipped; growing the bounds to it would shift the chart.
+    const left = Math.max(x(from.getTime()), plotLeft);
+    const right = Math.min(x(to.getTime()), plotRight);
+    if (right <= left) continue;
+    const r = { x: left, y, width: right - left, height };
     c.bounds.rect(r);
     out.push(r);
-    run = undefined;
   }
   return out;
 }

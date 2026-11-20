@@ -1,0 +1,8 @@
+---
+description: href nodes carry a pointer cursor; a plain node does not (#355, D605)
+---
+flowchart LR
+  A[Link] --> B[Link with tip]
+  B --> C[Plain]
+  click A "https://example.com" "to A"
+  click B href "https://example.com/b" "to B"

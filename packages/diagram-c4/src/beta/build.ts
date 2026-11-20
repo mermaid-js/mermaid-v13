@@ -9,7 +9,9 @@
  *   is left out; ends resolve after the whole text, so a relation may come before its elements;
  * - a technology on a person or a software system, `instances` off a deployment node, a step
  *   outside a `dynamic` diagram and a style entry the renderer has no use for are dropped, each
- *   with a warning.
+ *   with a warning;
+ * - a `style` line whose value the lexer cannot read (`fill:#12`) is dropped by the parser, which
+ *   hands it here for one `C4_COLOR_INVALID` warning (D635).
  */
 import type { Diagnostics, Range } from '@mermaid-js/core/parser-kit';
 import * as codes from '../codes.ts';
@@ -28,30 +30,56 @@ import type {
   C4BetaStyle,
 } from './model.ts';
 
-/** The keys of a `style` entry, and the values the ones with a fixed set take. */
-const STYLE_KEYS: Readonly<Record<string, readonly string[] | undefined>> = {
+/** The keys of a `style` entry, and the values the ones with a fixed set take; the rest take a colour. */
+export const STYLE_KEYS: Readonly<Record<string, readonly string[] | undefined>> = {
   fill: undefined,
   stroke: undefined,
   color: undefined,
-  shape: ['cylinder'],
   line: ['solid', 'dashed', 'dotted'],
+  shape: ['cylinder'],
 };
+
+/** The colour forms a style value may take (D635), for the `C4_COLOR_INVALID` messages. */
+export const COLOUR_FORMS =
+  'a colour is a CSS colour name, `currentColor`, `#` and 3, 4, 6 or 8 hex digits, or `rgb(…)`, `rgba(…)`, `hsl(…)` or `hsla(…)`';
+
+/** The words in backticks, joined by commas and `last` before the final one. */
+const listed = (words: readonly string[], last: string): string => {
+  const quoted = words.map((w) => `\`${w}\``);
+  return quoted.length < 2
+    ? quoted.join('')
+    : `${quoted.slice(0, -1).join(', ')} ${last} ${quoted.at(-1)}`;
+};
+
+/** What each style key takes, from {@link STYLE_KEYS}: "`fill`, `stroke` and `color` take a colour; …". */
+function styleKeysText(): string {
+  const keys = Object.entries(STYLE_KEYS);
+  const colours = keys.filter(([, values]) => !values).map(([key]) => key);
+  const fixed = keys.flatMap(([key, values]) =>
+    values ? [`\`${key}\` takes ${listed(values, 'or')}`] : []
+  );
+  return [`${listed(colours, 'and')} take a colour`, ...fixed].join('; ');
+}
 /** Kinds that have no technology. */
 const NO_TECHNOLOGY: ReadonlySet<string> = new Set(['person', 'softwareSystem']);
 
 /** What a warning names: the place, and what it says about it. */
-interface Place {
+export interface Place {
   range: Range;
   what: string;
 }
 
-/** Build the model of `doc`; `lineOf` turns an offset into a line number for messages. */
+/**
+ * Build the model of `doc`; `lineOf` turns an offset into a line number for messages, and
+ * `unreadable` are the `style` lines the parser dropped for a value it cannot read.
+ */
 export function buildModel(
   doc: C4BetaDocument,
   diagnostics: Diagnostics,
-  lineOf: (at: number) => number
+  lineOf: (at: number) => number,
+  unreadable: readonly Place[] = []
 ): Omit<C4BetaModel, 'warnings'> {
-  return new Builder(doc, diagnostics, lineOf).build();
+  return new Builder(doc, diagnostics, lineOf, unreadable).build();
 }
 
 class Builder {
@@ -74,7 +102,8 @@ class Builder {
   constructor(
     private readonly doc: C4BetaDocument,
     private readonly diagnostics: Diagnostics,
-    private readonly lineOf: (at: number) => number
+    private readonly lineOf: (at: number) => number,
+    private readonly unreadable: readonly Place[]
   ) {}
 
   build(): Omit<C4BetaModel, 'warnings'> {
@@ -104,8 +133,13 @@ class Builder {
     );
     this.warn(
       codes.C4BETA_STYLE_IGNORED,
-      'These style entries are ignored: a key is `fill`, `stroke`, `color`, `shape` or `line`',
+      `These style entries are ignored (${styleKeysText()})`,
       this.dropped.style
+    );
+    this.warn(
+      codes.C4_COLOR_INVALID,
+      `These style lines are not drawn, as a value is not a colour (${COLOUR_FORMS})`,
+      this.unreadable
     );
     return {
       kind: this.kind,
@@ -139,7 +173,8 @@ class Builder {
       return ok;
     });
     const kept = entries.map(({ key, value }) => ({ key, value }));
-    this.styles.push({ target: node.target, entries: kept, ast: node.id });
+    const line = this.lineOf(node.range.start);
+    this.styles.push({ target: node.target, entries: kept, line, ast: node.id });
   }
 
   /** The elements in statement order, a parent before its children, on a stack. */

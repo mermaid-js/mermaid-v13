@@ -13,7 +13,7 @@
  */
 import { codePointEnd, Kind, TokenWriter } from '@mermaid-js/core/parser-kit';
 import type { Hole, Probe } from '@mermaid-js/core/parser-kit';
-import { A, CONDITIONS, RULES, S } from './rules.ts';
+import { A, RULES, rulesAt, S } from './rules.ts';
 import type { Rule, Scan } from './rules.ts';
 import type { V12Lex, V12Text } from '@mermaid-js/shared/parser/v12-text';
 
@@ -110,7 +110,7 @@ class ClassLexer {
   /** Apply the first matching rule of the current state at `p`: the new offset, or -1. */
   private step(p: number): number {
     const state = this.stack[this.stack.length - 1] ?? S.INITIAL;
-    for (const k of CONDITIONS[state] ?? []) {
+    for (const k of rulesAt(state, this.scan.text.charCodeAt(p))) {
       const rule = RULES[k] as Rule;
       const e = rule.match(this.scan, p);
       if (e < 0) continue;

@@ -237,6 +237,55 @@ function mayDropSemicolons(src: string, from: number, holed: boolean): boolean {
   );
 }
 
+/** Whether source offset `source(x)` is already cut by the mask `m`. */
+function isGone(m: Uint8Array | undefined, source: (i: number) => number, x: number): boolean {
+  return m !== undefined && ((m[source(x)] ?? 0) & DROP) !== 0;
+}
+
+/**
+ * The `#` of the first `:\S*#` in `t[from, le)` that the mask has not cut, or -1: a space
+ * between the `:` and the `#` resets the colon.
+ */
+function findHashAfterColon(
+  t: string,
+  from: number,
+  le: number,
+  source: (i: number) => number,
+  m: Uint8Array | undefined
+): number {
+  let colon = false;
+  for (let j = from; j < le; j++) {
+    const c = t.charCodeAt(j);
+    if (isGone(m, source, j)) continue;
+    if (c === COLON) colon = true;
+    else if (c === HASH && colon) return j;
+    else if (isSpace(c)) colon = false;
+  }
+  return -1;
+}
+
+/**
+ * One `style.*:\S*#.*;` match of `t[from, le)`: the line's last `;` after the `#` is marked
+ * as dropped.
+ */
+function dropLastSemicolon(
+  t: string,
+  from: number,
+  le: number,
+  source: (i: number) => number,
+  mark: (i: number, bit: number) => void,
+  m: Uint8Array | undefined
+): void {
+  const hash = findHashAfterColon(t, from, le, source, m);
+  if (hash < 0) return;
+  for (let j = le - 1; j > hash; j--) {
+    if (t.charCodeAt(j) === SEMI && !isGone(m, source, j)) {
+      mark(source(j), DROP);
+      break;
+    }
+  }
+}
+
 /**
  * `style.*:\S*#.*;` then `classDef.*:\S*#.*;` (each global, `.` stops at line ends): the
  * match ends at the line's last `;`, which `encodeEntities` cut off. `t` is the text with
@@ -262,26 +311,7 @@ function markDroppedSemicolons(
       if ((next[w] ?? 0) !== -1 && (next[w] ?? 0) < ls) next[w] = t.indexOf(word, ls);
       const k = next[w] ?? -1;
       if (k === -1 || k >= le) continue;
-      const m = current();
-      const gone = (x: number) => m !== undefined && ((m[source(x)] ?? 0) & DROP) !== 0;
-      let colon = false;
-      let hash = -1;
-      for (let j = k + word.length; j < le; j++) {
-        const c = t.charCodeAt(j);
-        if (gone(j)) continue;
-        if (c === COLON) colon = true;
-        else if (c === HASH && colon) {
-          hash = j;
-          break;
-        } else if (isSpace(c)) colon = false;
-      }
-      if (hash < 0) continue;
-      for (let j = le - 1; j > hash; j--) {
-        if (t.charCodeAt(j) === SEMI && !gone(j)) {
-          mark(source(j), DROP);
-          break;
-        }
-      }
+      dropLastSemicolon(t, k + word.length, le, source, mark, current());
     }
     if (le >= t.length) break;
     ls = le + (t.charCodeAt(le) === CR && t.charCodeAt(le + 1) === LF ? 2 : 1);
@@ -386,6 +416,40 @@ function holes(src: string, from: number, directives: readonly Range[]): Hole[] 
   return directives.length === 0 ? out : withDirectives(out, directives, from);
 }
 
+// A removed span inside the range, or right before it (then the text before is not src's).
+function isSplit(view: SourceView, start: number, end: number): boolean {
+  const removed = view.holes;
+  const k = firstHole(view, start);
+  return (removed[k]?.start ?? end) < end || (k > 0 && removed[k - 1]?.end === start);
+}
+
+/**
+ * The longest range {@link isPlainRange} checks with a loop. A longer one goes to a regex, which
+ * costs a call and a slice but scans many times faster a character (a 20,000-deep tree view
+ * cooks megabytes of indentation).
+ */
+const LOOP_MAX = 16;
+
+/**
+ * Whether `src[start, end)` reads the same cooked, so `cook` can slice it: no removed span, no
+ * CR, `#` or masked offset, and with `braceNewline` no `}` in it or right before it.
+ */
+export function isPlainRange(src: string, start: number, end: number, view: SourceView): boolean {
+  const { mask, braceNewline } = view;
+  if (isSplit(view, start, end) || (braceNewline && src.charCodeAt(start - 1) === RBRACE))
+    return false;
+  if (end - start > LOOP_MAX) {
+    if ((braceNewline ? /[\r#}]/ : /[\r#]/).test(src.slice(start, end))) return false;
+  } else {
+    for (let i = start; i < end; i++) {
+      const c = src.charCodeAt(i);
+      if (c === CR || c === HASH || (braceNewline && c === RBRACE)) return false;
+    }
+  }
+  if (mask) for (let i = start; i < end; i++) if (mask[i]) return false;
+  return true;
+}
+
 /**
  * The text v12's parser saw for the source range `[start, end)` (one label or value), with
  * entity placeholders already decoded back to `&name;` / `&#123;` as v12's renderer did. A
@@ -393,47 +457,27 @@ function holes(src: string, from: number, directives: readonly Range[]): Hole[] 
  * Removed spans inside the range are skipped, and `}\s*\n` collapses when the view asks for it.
  */
 export function cook(src: string, start: number, end: number, view: SourceView): string {
+  if (isPlainRange(src, start, end, view)) return src.slice(start, end);
   const { text, mask, braceNewline } = view;
-  const removed = view.holes;
-  const k = firstHole(view, start);
-  // A removed span inside the range, or right before it (then the text before is not src's).
-  const split = (removed[k]?.start ?? end) < end || (k > 0 && removed[k - 1]?.end === start);
-  if (
-    !split &&
-    !(braceNewline ? /[\r#}]/ : /[\r#]/).test(src.slice(start, end)) &&
-    (!braceNewline || src.charCodeAt(start - 1) !== RBRACE) &&
-    !masked(mask, start, end)
-  )
-    return src.slice(start, end);
   const from = localOffset(view, start);
   const to = localOffset(view, end);
   const offsets = view.runs ? new SourceOffsets(view.runs, from) : undefined;
   let out = '';
   for (let i = from; i < to; i++) {
     const c = text.charCodeAt(i);
-    if (((mask?.[offsets ? offsets.source(i) : i] ?? 0) & QUOTE) !== 0) {
+    if (isQuoted(mask, offsets, i)) {
       out += "'";
       continue;
     }
     if (c === CR) {
       out += '\n';
-      // A CRLF in the source; a CR and an LF that a removed span left side by side were two
-      // line ends to v12, which turned CRs into LFs before removing anything.
-      if (
-        text.charCodeAt(i + 1) === LF &&
-        (!offsets || offsets.source(i + 1) === offsets.source(i) + 1)
-      )
-        i++;
+      i = crEnd(text, offsets, i);
       continue;
     }
     if (c === HASH) {
-      let j = i + 1;
-      while (j < to && isWord(text.charCodeAt(j))) j++;
-      if (j > i + 1 && j < to && text.charCodeAt(j) === SEMI) {
-        const name = text.slice(i + 1, j);
-        // A name core cannot decode stays `#name;`, as the author wrote it (D561); v12 drew `&name;`.
-        const ref = /^\d+$/.test(name) ? `&#${name};` : `&${name};`;
-        out += ref[1] === '#' || entityAt(ref, 0) ? ref : `#${name};`;
+      const j = entityEnd(text, i, to);
+      if (j > 0) {
+        out += entityRef(text.slice(i + 1, j));
         i = j;
         continue;
       }
@@ -442,30 +486,86 @@ export function cook(src: string, start: number, end: number, view: SourceView):
       braceNewline &&
       (c === RBRACE || (i === from && text.charCodeAt(i - 1) === RBRACE && isSpace(c)))
     ) {
-      const at = c === RBRACE ? i + 1 : i;
       if (c === RBRACE) out += '}';
-      let j = at;
-      let nl = -1;
-      while (j < to && isSpace(text.charCodeAt(j))) {
-        if (isNl(text.charCodeAt(j))) nl = j;
-        j++;
-      }
-      // v12 appended a line break, so blanks up to the end of the text reach one too; the
-      // final line break itself belongs to no source text.
-      if (j >= text.length) {
-        i = j - 1;
+      const r = braceBlanks(text, i, to, c === RBRACE);
+      if (r !== NO_BRACE_CASE) {
+        if (r < NO_BRACE_CASE) out += '\n';
+        i = r < NO_BRACE_CASE ? NO_BRACE_CASE - 1 - r : r;
         continue;
       }
-      if (nl >= 0) {
-        out += '\n';
-        i = text.charCodeAt(nl) === CR && text.charCodeAt(nl + 1) === LF ? nl + 1 : nl;
-        continue;
-      }
-      if (c === RBRACE) continue;
     }
     out += text[i];
   }
   return out;
+}
+
+/** `braceBlanks`: the caller's character is not handled here, so it is copied. */
+const NO_BRACE_CASE = -1;
+
+function isQuoted(
+  mask: Uint8Array | undefined,
+  offsets: SourceOffsets | undefined,
+  i: number
+): boolean {
+  return ((mask?.[offsets ? offsets.source(i) : i] ?? 0) & QUOTE) !== 0;
+}
+
+/**
+ * The index of the last character a CR at `i` consumes. A CRLF in the source takes the LF too;
+ * a CR and an LF that a removed span left side by side were two line ends to v12, which turned
+ * CRs into LFs before removing anything.
+ */
+function crEnd(text: string, offsets: SourceOffsets | undefined, i: number): number {
+  return text.charCodeAt(i + 1) === LF &&
+    (!offsets || offsets.source(i + 1) === offsets.source(i) + 1)
+    ? i + 1
+    : i;
+}
+
+/** The index of the `;` that closes the `#name` entity at `i` (below `to`), or -1. */
+function entityEnd(text: string, i: number, to: number): number {
+  let j = i + 1;
+  while (j < to && isWord(text.charCodeAt(j))) j++;
+  return j > i + 1 && j < to && text.charCodeAt(j) === SEMI ? j : -1;
+}
+
+/** `#name;` as v12 drew it: `&#123;` or `&name;`. */
+function entityRef(name: string): string {
+  // A name core cannot decode stays `#name;`, as the author wrote it (D561); v12 drew `&name;`.
+  const ref = /^\d+$/.test(name) ? `&#${name};` : `&${name};`;
+  return ref[1] === '#' || entityAt(ref, 0) ? ref : `#${name};`;
+}
+
+function blanksEnd(text: string, from: number, to: number): number {
+  let j = from;
+  while (j < to && isSpace(text.charCodeAt(j))) j++;
+  return j;
+}
+
+/** The last line break of `text[from, to)`, or -1. */
+function lastNewline(text: string, from: number, to: number): number {
+  for (let j = to - 1; j >= from; j--) if (isNl(text.charCodeAt(j))) return j;
+  return -1;
+}
+
+/**
+ * The blanks after a `}` (`brace`, at `i`) or at the start of a range that follows one. Returns
+ * the index to continue from (`i` itself when the blanks are kept), `NO_BRACE_CASE` when the
+ * character is to be copied, or, for a collapsed line break to emit, `NO_BRACE_CASE - 1 - k`
+ * for the index `k` to continue from.
+ */
+function braceBlanks(text: string, i: number, to: number, brace: boolean): number {
+  const at = brace ? i + 1 : i;
+  const j = blanksEnd(text, at, to);
+  const nl = lastNewline(text, at, j);
+  // v12 appended a line break, so blanks up to the end of the text reach one too; the
+  // final line break itself belongs to no source text.
+  if (j >= text.length) return j - 1;
+  if (nl >= 0) {
+    const k = text.charCodeAt(nl) === CR && text.charCodeAt(nl + 1) === LF ? nl + 1 : nl;
+    return NO_BRACE_CASE - 1 - k;
+  }
+  return brace ? i : NO_BRACE_CASE;
 }
 
 /** The first offset into `view.text` whose source offset is at or after `at`. */
@@ -498,10 +598,4 @@ export function firstHole(view: SourceView, at: number): number {
     else hi = mid;
   }
   return lo;
-}
-
-function masked(mask: Uint8Array | undefined, start: number, end: number): boolean {
-  if (!mask) return false;
-  for (let i = start; i < end; i++) if (mask[i]) return true;
-  return false;
 }

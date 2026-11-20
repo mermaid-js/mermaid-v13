@@ -9,33 +9,32 @@
  * - boxes' x order follows the frames' order;
  * - each relation starts on its source box's edge and ends on its target's, and a self loop's
  *   ends meet no other relation's;
+ * - no relation within a lane enters a box other than its ends, and no two relations share a
+ *   run (D659; a relation between lanes keeps v12's one segment, which may cross a box);
+ * - a relation within a lane stays inside the lane, and a self loop's legs are at least twice
+ *   the head long (D659);
  * - each box's name and data lie inside the box;
  * - everything drawn lies inside `bounds`.
  */
 import type { EventModel } from '../model.ts';
 import { eventModelStructure } from '../structure.ts';
 import { drawn } from './layout.ts';
-import type { EventModelLayout, Point, Rect } from './types.ts';
-import { numbers, rectInside as inside } from '@mermaid-js/shared/layout/invariants';
-
-const EPS = 1e-6;
-
-const show = (r: Rect): string => `(${r.x}, ${r.y}, ${r.width} × ${r.height})`;
-
-function overlap(a: Rect, b: Rect): boolean {
-  return (
-    a.x < b.x + b.width - EPS &&
-    b.x < a.x + a.width - EPS &&
-    a.y < b.y + b.height - EPS &&
-    b.y < a.y + a.height - EPS
-  );
-}
+import { EVENTMODELING_METRICS as M } from './metrics.ts';
+import type { EventModelLayout, EventModelRelationLayout, Point, Rect } from './types.ts';
+import {
+  EPS,
+  near,
+  numbers,
+  rectInside as inside,
+  rectsOverlap as overlap,
+  rectText as show,
+  within,
+} from '@mermaid-js/shared/testing/layout-invariants';
 
 /** On the rectangle's outline (within the tolerance). */
 function onEdge(p: Point, r: Rect): boolean {
-  const near = (a: number, b: number): boolean => Math.abs(a - b) <= EPS;
-  const inX = p.x >= r.x - EPS && p.x <= r.x + r.width + EPS;
-  const inY = p.y >= r.y - EPS && p.y <= r.y + r.height + EPS;
+  const inX = within(p.x, r.x, r.x + r.width);
+  const inY = within(p.y, r.y, r.y + r.height);
   return (
     (inX && (near(p.y, r.y) || near(p.y, r.y + r.height))) ||
     (inY && (near(p.x, r.x) || near(p.x, r.x + r.width)))
@@ -103,8 +102,53 @@ function placementViolations({ lanes, boxes }: EventModelLayout, out: string[]):
   }
 }
 
+/** The segment from `p` to `q` passes through the inside of `r` (Liang–Barsky clipping). */
+function enters(p: Point, q: Point, r: Rect): boolean {
+  let t0 = 0;
+  let t1 = 1;
+  const dx = q.x - p.x;
+  const dy = q.y - p.y;
+  const sides: [number, number][] = [
+    [-dx, p.x - (r.x + EPS)],
+    [dx, r.x + r.width - EPS - p.x],
+    [-dy, p.y - (r.y + EPS)],
+    [dy, r.y + r.height - EPS - p.y],
+  ];
+  for (const [d, room] of sides) {
+    if (d === 0) {
+      if (room < 0) return false;
+    } else if (d < 0) t0 = Math.max(t0, room / d);
+    else t1 = Math.min(t1, room / d);
+  }
+  return t1 - t0 > EPS;
+}
+
+type Segment = readonly [Point, Point];
+const segments = (r: EventModelRelationLayout): Segment[] =>
+  r.points.slice(1).map((q, k) => [r.points[k] as Point, q]);
+
+/** Two segments on one line that overlap for more than a point. */
+function shareRun([a, b]: Segment, [c, d]: Segment): boolean {
+  const ux = b.x - a.x;
+  const uy = b.y - a.y;
+  const length = Math.hypot(ux, uy);
+  if (length <= EPS) return false;
+  // Both of the other segment's ends on this one's line …
+  const off = (p: Point): number => Math.abs(ux * (p.y - a.y) - uy * (p.x - a.x)) / length;
+  if (off(c) > EPS || off(d) > EPS) return false;
+  // … and their spans along it overlapping.
+  const along = (p: Point): number => (ux * (p.x - a.x) + uy * (p.y - a.y)) / length;
+  const lo = Math.max(0, Math.min(along(c), along(d)));
+  const hi = Math.min(length, Math.max(along(c), along(d)));
+  return hi - lo > EPS;
+}
+
+/** The segment's x extent. */
+const xs = ([p, q]: Segment): [number, number] => [Math.min(p.x, q.x), Math.max(p.x, q.x)];
+
 /** Each relation runs from its source's edge to its target's, its head at the end. */
-function relationViolations({ boxes, relations }: EventModelLayout, out: string[]): void {
+function relationViolations(layout: EventModelLayout, out: string[]): void {
+  const { boxes, relations } = layout;
   for (const r of relations) {
     const s = boxes[r.source];
     const t = boxes[r.target];
@@ -118,15 +162,23 @@ function relationViolations({ boxes, relations }: EventModelLayout, out: string[
     if (!onEdge(end, t)) out.push(`relation ${r.id} ends off its target's edge`);
     if (r.head[1].x !== end.x || r.head[1].y !== end.y)
       out.push(`relation ${r.id}'s head is not at its end`);
+    if (s.lane === t.lane) laneViolations(r, layout.lanes[s.lane], out);
   }
-  // A self loop's ends meet no other relation's end on its box, so no two heads overlap there.
-  // (Relations between lanes into one box share v12's anchor, as v12 drew them.)
+  throughViolations(layout, out);
+  sharedRunViolations(relations, out);
+  loopEndViolations(relations, out);
+}
+
+/**
+ * A self loop's ends meet no other relation's end on its box, so no two heads overlap there.
+ * (Relations between lanes into one box share v12's anchor, as v12 drew them.)
+ */
+function loopEndViolations(relations: readonly EventModelRelationLayout[], out: string[]): void {
   const ends = (r: EventModelLayout['relations'][number]): Point[] => [
     r.points[0] as Point,
     r.points[r.points.length - 1] as Point,
   ];
-  const same = (a: Point, b: Point): boolean =>
-    Math.abs(a.x - b.x) <= EPS && Math.abs(a.y - b.y) <= EPS;
+  const same = (a: Point, b: Point): boolean => near(a.x, b.x) && near(a.y, b.y);
   for (const loop of relations) {
     if (loop.source !== loop.target) continue;
     for (const r of relations) {
@@ -135,4 +187,76 @@ function relationViolations({ boxes, relations }: EventModelLayout, out: string[
         out.push(`relation ${loop.id} meets ${r.id} at an end`);
     }
   }
+}
+
+/** A relation within a lane stays in it, and a self loop's legs are twice its head (D659). */
+function laneViolations(r: EventModelRelationLayout, lane: Rect | undefined, out: string[]): void {
+  const dot = (p: Point): Rect => ({ ...p, width: 0, height: 0 });
+  if (!lane || ![...r.points, ...r.head].every((p) => inside(dot(p), lane)))
+    out.push(`relation ${r.id} leaves its lane`);
+  if (r.source !== r.target) return;
+  for (const [p, q] of [r.points.slice(0, 2), r.points.slice(-2)] as [Point, Point][])
+    if (Math.hypot(q.x - p.x, q.y - p.y) < 2 * M.headLength - EPS)
+      out.push(`relation ${r.id}'s loop has a leg shorter than twice its head`);
+}
+
+/**
+ * No relation within a lane passes through a box other than its own two (D659). A relation
+ * between lanes is v12's one segment from anchor to anchor (D521), which may cross a box of a
+ * lane between or beside them, so it is left out. Boxes come in x order, so each segment meets
+ * only the boxes from the first that may reach its left end to the last that starts before its
+ * right end.
+ */
+function throughViolations({ boxes, relations }: EventModelLayout, out: string[]): void {
+  let widest = 0;
+  for (const b of boxes) widest = Math.max(widest, b.width);
+  for (const r of relations) {
+    if (boxes[r.source]?.lane !== boxes[r.target]?.lane) continue;
+    for (const seg of segments(r))
+      for (const k of crossed(seg, boxes, widest))
+        if (k !== r.source && k !== r.target) out.push(`relation ${r.id} runs through box ${k}`);
+  }
+}
+
+/** The boxes `seg` passes through the inside of; none is wider than `widest`. */
+function crossed(seg: Segment, boxes: readonly Rect[], widest: number): number[] {
+  const [lo, hi] = xs(seg);
+  const out: number[] = [];
+  for (let k = firstFrom(boxes, lo - widest); k < boxes.length; k++) {
+    const b = boxes[k] as Rect;
+    if (b.x >= hi) break;
+    if (enters(seg[0], seg[1], b)) out.push(k);
+  }
+  return out;
+}
+
+/**
+ * No two relations run along one line together (D659). Segments are swept left to right: only
+ * those whose x extents meet can share a run.
+ */
+function sharedRunViolations(relations: readonly EventModelRelationLayout[], out: string[]): void {
+  const id = (i: number): string => (relations[i] as EventModelRelationLayout).id;
+  const all = relations.flatMap((r, i) => segments(r).map((seg) => ({ i, seg, x: xs(seg) })));
+  all.sort((p, q) => p.x[0] - q.x[0]);
+  const open: typeof all = [];
+  for (const cur of all) {
+    for (let k = open.length - 1; k >= 0; k--)
+      if ((open[k] as (typeof all)[number]).x[1] < cur.x[0] - EPS) open.splice(k, 1);
+    for (const other of open)
+      if (other.i !== cur.i && shareRun(other.seg, cur.seg))
+        out.push(`relations ${id(other.i)} and ${id(cur.i)} share a run`);
+    open.push(cur);
+  }
+}
+
+/** The first box whose x is at least `x` (boxes come in x order). */
+function firstFrom(boxes: readonly Rect[], x: number): number {
+  let lo = 0;
+  let hi = boxes.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if ((boxes[mid] as Rect).x < x) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
 }

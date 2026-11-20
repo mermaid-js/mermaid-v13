@@ -99,6 +99,8 @@ class ClassParser extends ParserBase {
     this.mentionIds();
     const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
     const model = db.model(warnings);
+    const title = this.pre.frontMatter?.title;
+    if (title) model.title = title;
     if (model.callbacks.length > 0 && !options.claims?.includes('callbacks')) {
       const first = model.callbacks[0];
       model.warnings.push(
@@ -200,8 +202,13 @@ class ClassParser extends ParserBase {
       ...(endLabel ? { endLabel: endLabel.text } : {}),
       ...(label ? { label: label.text } : {}),
     });
-    if (!had[0] && db.has(first.id)) this.checkNodes(first.range);
-    if (!had[1] && db.has(second.id)) this.checkNodes(second.range);
+    // Check each new class with the count it had when it was added (#748): `checkLimit` expects
+    // one call per class, so when the relation made both ends, the first is checked at one less.
+    // `A --> A` makes one class.
+    const madeFirst = !had[0] && db.has(first.id);
+    const madeSecond = first.id !== second.id && !had[1] && db.has(second.id);
+    if (madeFirst) this.checkNodes(first.range, db.classCount - (madeSecond ? 1 : 0));
+    if (madeSecond) this.checkNodes(second.range);
     checkLimit(
       st.diagnostics,
       'maxEdges',

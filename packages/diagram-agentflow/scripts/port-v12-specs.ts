@@ -32,7 +32,7 @@ export const NOT_PORTED: Record<string, string> = {
   'conformance/runner.spec.ts':
     "tests v12's fixture runner, replaced by packages/conformance/src/agentflow/fixtures.spec.ts",
   'parser/agentflow-flowchart-parity.spec.ts':
-    "imports v12's flowchart parser: its SHARED_SYNTAX parity is conformance's agentflow/shared-syntax.spec.ts (D467)",
+    "imports v12's flowchart parser: its SHARED_SYNTAX parity is conformance's agentflow/shared-syntax.spec.ts (D467, D595)",
 };
 
 const DB_API =

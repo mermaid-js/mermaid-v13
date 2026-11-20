@@ -13,7 +13,7 @@ export {
 } from './parser/index.ts';
 export type * from './parser/index.ts';
 export type * from './model.ts';
-export { kanbanLayoutInput, kanbanLayoutViolations, layoutKanban } from './layout/index.ts';
+export { kanbanLayoutInput, layoutKanban } from './layout/index.ts';
 export type * from './layout/index.ts';
 export { renderKanban } from './render/render.ts';
 export type { KanbanRenderContext } from './render/context.ts';

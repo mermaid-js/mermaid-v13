@@ -11,6 +11,9 @@ const FILES = {
   // The `[` on line 3 is never closed: UNCLOSED at 3:10.
   'a/error.mmd': 'flowchart LR\n  A --> B\n  B --> C[oops\n',
   'a/ok.mmd': 'flowchart LR\n  A[Alpha] --> B[Beta]\n',
+  // The e2e page's plugins (#391): `fa:fa-bell` is in the static packs, `look: handDrawn` sketches.
+  'a/icon.mmd': 'flowchart LR\n  A["fa:fa-bell Alert"] --> B[Beta]\n',
+  'a/hand.mmd': '---\nconfig:\n  look: handDrawn\n---\nstateDiagram-v2\n  [*] --> A\n  A --> B\n',
 };
 
 let explorer: ExplorerServer;
@@ -31,10 +34,26 @@ const logs = (page: Page) => tab(page).locator('dev-console-panel .logline');
 test('a render warning is listed with its code and message', async ({ page }) => {
   await page.goto(explorer.url('a/warn.mmd'));
   await expect(diagramSvg(page)).toContainText('User');
-  const warning = messages(page).filter({ hasText: 'without an icons extension' });
+  // The icons extension is registered (#391); `fa` has no `user` in the static packs.
+  const warning = messages(page).filter({ hasText: 'has no icon "user"' });
   await expect(warning).toHaveCount(1);
   await expect(warning).toHaveAttribute('data-severity', 'warning');
   await expect(warning).toContainText('ICON_NOT_RENDERED');
+});
+
+test('renders with the e2e page\'s plugins: icons from the static packs (#391)', async ({ page }) => {
+  await page.goto(explorer.url('a/icon.mmd'));
+  await expect(diagramSvg(page)).toContainText('Alert');
+  await expect(diagramSvg(page)).not.toContainText('fa:fa-bell');
+  await expect(messages(page).filter({ hasText: 'ICON_NOT_RENDERED' })).toHaveCount(0);
+});
+
+test('renders with the e2e page\'s plugins: look handDrawn is sketched (#391)', async ({ page }) => {
+  await page.goto(explorer.url('a/hand.mmd'));
+  const a = diagramSvg(page).locator('g.node[data-id="A"]');
+  await expect(a.locator('path').first()).toBeAttached();
+  await expect(a.locator('rect')).toHaveCount(0);
+  await expect(messages(page).filter({ hasText: 'LOOK_REMOVED' })).toHaveCount(0);
 });
 
 test('a syntax error lists its diagnostic at line:column; clicking opens Code there', async ({

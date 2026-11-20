@@ -1,0 +1,13 @@
+---
+description: >-
+  UpdateElementStyle with its colour slots left empty and only the
+  technology given (#774): an empty slot means the default, as in v12,
+  so both containers keep their default colours and no colour warning
+  is raised.
+---
+C4Container
+title UpdateElementStyle with empty slots
+Container(a, "A", "orig")
+Container(b, "B")
+UpdateElementStyle(a,,,,,,,"NewTech")
+UpdateElementStyle(b,,,)

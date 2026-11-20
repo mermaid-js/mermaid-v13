@@ -1,0 +1,16 @@
+c4-beta dynamic
+person user "User"
+softwareSystem shop "Shop" {
+  container api "API"
+  container db "DB"
+}
+user |
+user -|
+user --> |
+user --> a|
+user --> api : "Calls" |
+user <-- d|
+1: |
+2: us|
+api --- db : "Reads" "SQL" |
+api --> db :::a|

@@ -106,7 +106,10 @@ describe('event modeling theme table', () => {
     expect(t.value('emSwimlaneBackgroundOdd')).toBe('#123456');
     expect(t.value('emEventFill')).toBe('#abcdef');
     expect(t.value('emTextColor')).toBe('#ff0000');
-    const author = await resolve('default', { lineColor: '#00ff00' });
+    const author = await resolve('forest', { lineColor: '#00ff00' });
     near(author.rgba('emRelationStroke'), [0, 255, 0]);
+    // `default` keeps v12's `#333333` under a `lineColor` override (`canvasLineColor`, D656).
+    const kept = await resolve('default', { lineColor: '#00ff00' });
+    near(kept.rgba('emRelationStroke'), [0x33, 0x33, 0x33]);
   });
 });

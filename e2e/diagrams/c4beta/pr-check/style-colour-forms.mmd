@@ -1,0 +1,22 @@
+---
+config:
+  theme: default
+description: >-
+  every colour form a style value takes: `#rgba`, `#rrggbbaa`, rgb(), rgba(), hsl(), hsla() and
+  currentColor; the `#12` line is dropped with C4_COLOR_INVALID and the rest is drawn
+---
+c4-beta container
+container a "Alpha short" :::short
+container b "Alpha long" :::long
+container c "RGB" :::rgb
+container d "HSL" :::hsl
+container e "Unreadable" :::bad
+a --> b : "Calls" :::tinted
+c --> d : "Calls" :::text
+style short fill:#cf0a, stroke:#a00
+style long fill:#ff000080, stroke:#7f1d1dcc
+style rgb fill:rgb(185,28,28), stroke:rgba(127, 29, 29, 0.8)
+style hsl fill:hsl(210 80% 85%), stroke:hsla(210, 80%, 30%, 0.9)
+style bad fill:#12
+style tinted stroke:rgb(37 99 235 / 60%)
+style text color:currentColor

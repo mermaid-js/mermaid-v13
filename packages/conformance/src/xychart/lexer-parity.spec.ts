@@ -12,7 +12,7 @@ import { VARIANTS, xyChartGateCorpus } from './corpus.ts';
  * terminals, with the same images, as mermaid 12.2.0's `xychart.jison` lexer on the text v12
  * lexed (`loadJisonLexerOracle('xychart')`).
  *
- * Corpus (`corpus.ts`, {@link xyChartGateCorpus}): the 60 e2e fixtures (the 11 baselines included), the 70 harvested v12
+ * Corpus (`corpus.ts`, {@link xyChartGateCorpus}): the 62 e2e fixtures (the 11 baselines included), the 70 harvested v12
  * spec and syntax-page strings and the 141 cases of `corpus/xychart-cases.json` (the spec's
  * quirks: uppercase keywords, `xychartx`, `barchart`, unquoted text, the unreachable `MD_STR`,
  * glued comments, number forms, both orientations, `;`, plot before axis, missing band values,
@@ -98,7 +98,7 @@ describe('xychart lexer parity with mermaid@12 (jison)', () => {
     }
     process.stdout.write(`xychart lexer parity: ${compared} of ${items.length} sources lexed\n`);
     // Every e2e fixture, harvested string and case reaches the lexer, but the listed cases.
-    expect(e2e).toBe(60);
+    expect(e2e).toBe(63);
     expect(specs).toBe(70);
     expect(cases).toBe(141);
     expect(undetected.sort()).toEqual([...NOT_DETECTED.keys()].sort());

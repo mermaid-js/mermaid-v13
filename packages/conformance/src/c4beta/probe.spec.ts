@@ -13,7 +13,6 @@ interface Verdict {
 
 const ACCEPT: Verdict = { errors: [] };
 const UNEXPECTED: Verdict = { errors: ['UNEXPECTED'] };
-const UNEXPECTED_CHAR: Verdict = { errors: ['UNEXPECTED_CHARACTER'] };
 
 /**
  * The 37 probes of spec #730, each with the verdict the spec gives. The `.mmd` files were run
@@ -26,10 +25,7 @@ const EXPECTED: Record<string, Verdict & { differs?: string }> = {
   'b03-kind-keywords-as-ids': ACCEPT,
   'b04-nesting-deployment': ACCEPT,
   'b05-empty-braces-and-group': ACCEPT,
-  'b06-four-arrows': {
-    ...UNEXPECTED_CHAR,
-    differs: '`---` is ticket T4; accepted by the prototype',
-  },
+  'b06-four-arrows': ACCEPT,
   'b07-dynamic-steps': ACCEPT,
   'b08-style-values': { errors: [], warnings: ['C4BETA_STYLE_IGNORED'] },
   'b09-multi-tags-external-boundary': ACCEPT,
@@ -39,7 +35,10 @@ const EXPECTED: Record<string, Verdict & { differs?: string }> = {
   'b13-unknown-header-kind': { errors: ['C4BETA_UNKNOWN_DIAGRAM_KIND'] },
   'b14-relation-inside-body': UNEXPECTED,
   'b15-children-one-line': UNEXPECTED,
-  'b16-arrow-without-spaces': UNEXPECTED_CHAR,
+  'b16-arrow-without-spaces': {
+    ...ACCEPT,
+    differs: 'an id never contains `--`, so `a---b` splits (oddity 1)',
+  },
   'b17-digit-leading-id': { ...ACCEPT, differs: 'an id may start with a digit (oddity 2)' },
   'b18-keyword-ids': { errors: ['UNEXPECTED', 'UNEXPECTED'] },
   'b19-unknown-end': {

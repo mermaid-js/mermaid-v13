@@ -1,0 +1,10 @@
+---
+description: >-
+  #774: a long label on a level (R-L) edge is wrapped to the line's length and hung under its
+  middle, as v12 does (D507); the two services stay the default cell gap apart instead of the
+  gap stretching to fit the label on one line.
+---
+architecture-beta
+  service a(server)[A]
+  service b(database)[B]
+  a:R -[this is a very long edge label that must wrap somewhere]- L:b

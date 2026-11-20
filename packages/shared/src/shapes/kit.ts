@@ -74,6 +74,8 @@ export interface ShapeSize {
   readonly h: number;
   /** Shift of the label from the shape's centre. */
   readonly dy: number;
+  /** Shift of the label sideways from the shape's centre; none when absent. */
+  readonly dx?: number;
 }
 
 /** A shape's size about a label box `tw` × `th`. */
@@ -311,3 +313,36 @@ export const queuePath = (w: SvgWriter, { left, right, top, bottom, rx, ry }: Ba
 /** The inner side of a queue's right cap. */
 export const queueRim = (w: SvgWriter, { right, top, bottom, rx, ry }: Barrel): PathData =>
   w.path().moveTo(right, top).arcTo(rx, ry, 0, false, false, right, bottom).done();
+
+/**
+ * The person figure, which flowchart's `person` shape and C4's person share: a head over a body
+ * in c4model.com's proportions (#683, as v12's fix mermaid-js/mermaid#8322). The head's radius is HEAD × the body's width, held between HEAD_MIN
+ * and HEAD_MAX (a body widened by a long label keeps a person-sized head), and overlaps the body
+ * by OVERLAP × itself; the body is at least BODY × its width tall. The label is centred on the
+ * part of the body the head does not cover, one head radius below the shape's centre.
+ */
+const HEAD = 0.23;
+const HEAD_MIN = 16;
+const HEAD_MAX = 80;
+const OVERLAP = 0.27;
+const BODY = 0.6;
+
+/** The head's radius for a body `W` wide. */
+export const personHead = (W: number): number => Math.min(HEAD_MAX, Math.max(HEAD_MIN, W * HEAD));
+
+/** How far below the figure's top its body starts, for a head of radius `r`. */
+export const personNeck = (r: number): number => 2 * r - r * OVERLAP;
+
+/** The figure's height around a padded label `W` wide and `h` high, and the label's shift. */
+export function personSize(W: number, h: number): { h: number; dy: number } {
+  const r = personHead(W);
+  const overlap = r * OVERLAP;
+  const body = Math.max(overlap + h, W * BODY);
+  return { h: body + 2 * r - overlap, dy: r };
+}
+
+/** The head's radius and the body's top (from the centre) of a figure `W` × `H`. */
+export function personFigure(W: number, H: number): { r: number; bodyTop: number } {
+  const r = personHead(W);
+  return { r, bodyTop: -H / 2 + 2 * r - r * OVERLAP };
+}

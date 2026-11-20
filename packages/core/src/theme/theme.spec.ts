@@ -89,7 +89,8 @@ describe('createTheme: base derives by rule (#797, v12 theme-base)', () => {
     expect(t.value('secondaryColor')).toBe('#66cc33');
     expect(t.value('tertiaryColor')).toBe('#d1a347');
     expect(t.value('clusterBkg')).toBe('#d1a347');
-    expect(t.value('edgeLabelBackground')).toBe('#66cc33');
+    // Edge labels sit on the background, whatever primaryColor is (D628).
+    expect(t.value('edgeLabelBackground')).toBe(t.value('background'));
   });
 
   it('inverts background for lineColor and arrowheadColor', () => {
@@ -206,6 +207,82 @@ describe('createTheme: the named classic themes pin v12 constructor values (#798
     const own = createTheme(await loadTheme('dark'), { cssVariables: false });
     expect(['noteBkgColor', 'clusterBkg'].map(own.value)).toEqual(['#474949', '#474949']);
   });
+
+  // D656: the canvas inputs carry a base colour as v12 12.2.0's diagrams keep it. Where v12 keeps
+  // the constructor value under an override of the base colour, the theme pins it (`default`
+  // all four, `dark` the line); elsewhere, and in `base`, the input follows the base colour.
+  const OVERRIDE = '#ffcc00';
+  const CANVAS: readonly [input: string, base: string, ThemeName, pinned: string | null][] = [
+    ['canvasBkg', 'background', 'default', '#ffffff'],
+    ['canvasBkg', 'background', 'dark', null],
+    ['canvasBkg', 'background', 'forest', null],
+    ['canvasBkg', 'background', 'neutral', null],
+    ['canvasBkg', 'background', 'base', null],
+    ['canvasLineColor', 'lineColor', 'default', '#333333'],
+    ['canvasLineColor', 'lineColor', 'dark', '#d3d3d3'],
+    ['canvasLineColor', 'lineColor', 'forest', null],
+    ['canvasLineColor', 'lineColor', 'neutral', null],
+    ['canvasLineColor', 'lineColor', 'base', null],
+    ['canvasTextColor', 'primaryTextColor', 'default', '#131300'],
+    ['canvasTextColor', 'primaryTextColor', 'dark', null],
+    ['canvasTextColor', 'primaryTextColor', 'forest', null],
+    ['canvasTextColor', 'primaryTextColor', 'neutral', null],
+    ['canvasTextColor', 'primaryTextColor', 'base', null],
+    ['canvasItemBkg', 'primaryColor', 'default', '#ececff'],
+    ['canvasItemBkg', 'primaryColor', 'dark', null],
+    ['canvasItemBkg', 'primaryColor', 'forest', null],
+    ['canvasItemBkg', 'primaryColor', 'neutral', null],
+    ['canvasItemBkg', 'primaryColor', 'base', null],
+    // The third item fill and the node fill (#1035): only `default` keeps them.
+    ['canvasItemBkg3', 'tertiaryColor', 'default', '#f9ffec'],
+    ['canvasItemBkg3', 'tertiaryColor', 'dark', null],
+    ['canvasItemBkg3', 'tertiaryColor', 'forest', null],
+    ['canvasItemBkg3', 'tertiaryColor', 'neutral', null],
+    ['canvasItemBkg3', 'tertiaryColor', 'base', null],
+    ['canvasNodeBkg', 'mainBkg', 'default', '#ececff'],
+    ['canvasNodeBkg', 'mainBkg', 'dark', null],
+    ['canvasNodeBkg', 'mainBkg', 'forest', null],
+    ['canvasNodeBkg', 'mainBkg', 'neutral', null],
+    ['canvasNodeBkg', 'mainBkg', 'base', null],
+    // The band and guide inputs (D656, #1041): v12's named classic themes keep their gantt
+    // section band and outline/marker colours under every override, so all four pin them.
+    ['bandBkg', 'tertiaryColor', 'default', '#f9ffec'],
+    ['bandBkg', 'tertiaryColor', 'dark', '#201f1f'],
+    ['bandBkg', 'tertiaryColor', 'forest', '#e1efc0'],
+    ['bandBkg', 'tertiaryColor', 'neutral', '#eeeeee'],
+    ['bandBkg', 'tertiaryColor', 'base', null],
+    ['guideLineColor', 'lineColor', 'default', '#333333'],
+    ['guideLineColor', 'lineColor', 'dark', '#d3d3d3'],
+    ['guideLineColor', 'lineColor', 'forest', '#000000'],
+    ['guideLineColor', 'lineColor', 'neutral', '#666666'],
+    ['guideLineColor', 'lineColor', 'base', null],
+  ];
+
+  it.each(CANVAS)(
+    '%s is the theme’s %s with no override, and under its override (%s) keeps %s',
+    async (input, baseName, name, pinned) => {
+      const own = createTheme(await loadTheme(name), { cssVariables: false });
+      const t = createTheme(await loadTheme(name), {
+        cssVariables: false,
+        themeVariables: { [baseName]: OVERRIDE },
+      });
+      expect(own.value(input)).toBe(own.value(baseName));
+      expect(t.value(input)).toBe(pinned ?? OVERRIDE);
+    }
+  );
+
+  it.each(CANVAS.filter(([, , name]) => name === 'default'))(
+    'default keeps %s (from %s) under a mainBkg override and takes the author’s own value',
+    async (input, _base, name, pinned) => {
+      const spec = await loadTheme(name);
+      const kept = createTheme(spec, {
+        cssVariables: false,
+        themeVariables: { mainBkg: OVERRIDE },
+      });
+      const own = createTheme(spec, { cssVariables: false, themeVariables: { [input]: OVERRIDE } });
+      expect([kept.value(input), own.value(input)]).toEqual([pinned, OVERRIDE]);
+    }
+  );
 
   it('keeps the error and note colours under darkMode, as v12', async () => {
     const t = createTheme(await loadTheme('forest'), {

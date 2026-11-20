@@ -22,14 +22,10 @@ type Engine = typeof EngineModule;
 /** The resource this plugin loads: the MathJax engine. */
 const TEX: Resource = { kind: 'math', name: 'tex' };
 
+// Kept module state, lazy-load handle: the engine module once imported, the same for every render.
 let engine: Engine | undefined;
+// Kept module state, lazy-load handle: the pending import, so the engine downloads once.
 let loading: Promise<void> | undefined;
-/**
- * Whether the last `missing()` reported the engine. The API asks `missing()` right before it
- * draws, synchronously, so while drawing this says whether the render already knows the engine
- * is missing (and, with `placeholders`, has warned `PLACEHOLDER` for it).
- */
-let reported = false;
 
 function load(): Promise<void> {
   loading ??= import('./engine.ts').then(
@@ -99,9 +95,10 @@ const provider: InlineProvider = {
   close: '$$',
   box(tex, request) {
     if (!engine) {
-      // With placeholders the API has warned about the engine already; otherwise this is label
-      // text the parse does not hold, so prepare() could not know to load the engine.
-      if (!reported)
+      // A render drawn with placeholders for the engine has warned PLACEHOLDER for it already
+      // (D655); otherwise this is label text the parse does not hold, so prepare() could not
+      // know to load the engine.
+      if (!request.standIns.some((r) => r.kind === TEX.kind && r.name === TEX.name))
         request.warn({
           code: 'MATH_NOT_RENDERED',
           message:
@@ -133,8 +130,9 @@ export const math: ExtensionPlugin = {
   resources: {
     provides: [TEX],
     missing(parse, request) {
-      reported = request.format === 'svg' && engine === undefined && needsMath(parse, request);
-      return reported ? [TEX] : [];
+      return request.format === 'svg' && engine === undefined && needsMath(parse, request)
+        ? [TEX]
+        : [];
     },
     load,
   },

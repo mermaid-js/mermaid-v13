@@ -1,7 +1,8 @@
 /**
  * Agentflow lexer: a state machine mirroring the start conditions of v12's `agentflow.jison`
- * (DESIGN §4.3). Written from a copy of v13 flowchart's lexer (D467, itself a port of Pele's,
- * MIT), cut down by the jison diff between `agentflow.jison` and `flow.jison`:
+ * (DESIGN §4.3). A dialect of the flow family's lexer, which agentflow shares with flowchart
+ * (D595, amending D467's copy; itself a port of Pele's, MIT), cut down by the jison diff between
+ * `agentflow.jison` and `flow.jison`:
  * - no `subgraph`, `graph`, `flowchart` or `swimlane-beta`; `agentflow-beta` opens the
  *   direction state, and `flow`, `connector`, `global\b[ \t]*` and `end\b[ \t]*` are keywords;
  * - links are `--+[x>]`, `--` (opening edge text, closed by `--+[x>]`) and `-.+-` only: no
@@ -64,6 +65,18 @@ export interface LinkEnds {
   dotted: number;
 }
 
+const KEYWORDS = /* @__PURE__ */ flowKeywords([
+  ['agentflow-beta', T.Graph, 'graph'],
+  ['connector', T.Connector],
+  ['global', T.Global, 'blanks'],
+  ['end', T.End, 'blanks'],
+  ['style', T.Style],
+  ['default', T.Default],
+  ['linkStyle', T.LinkStyle],
+  ['interpolate', T.Interpolate],
+  ['flow', T.Flow],
+]);
+
 /**
  * How v12's lexer read an agentflow: untrimmed (leading blanks and comments are tokens), about
  * three characters a token, comments left in the text (a label run ends at `%%`). `global` and
@@ -71,18 +84,9 @@ export interface LinkEnds {
  */
 const DIALECT: FlowLexerDialect = {
   kinds: T,
-  chars: /* @__PURE__ */ flowChars(true),
-  keywords: /* @__PURE__ */ flowKeywords([
-    ['agentflow-beta', T.Graph, 'graph'],
-    ['connector', T.Connector],
-    ['global', T.Global, 'blanks'],
-    ['end', T.End, 'blanks'],
-    ['style', T.Style],
-    ['default', T.Default],
-    ['linkStyle', T.LinkStyle],
-    ['interpolate', T.Interpolate],
-    ['flow', T.Flow],
-  ]),
+  // v12's agentflow.jison kept 12.2.0's LINK_ID: brackets do not end a link id (D621).
+  chars: /* @__PURE__ */ flowChars(true, false, KEYWORDS),
+  keywords: KEYWORDS,
   charsPerToken: 3,
   trim: false,
 };

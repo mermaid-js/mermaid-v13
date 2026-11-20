@@ -100,7 +100,8 @@ export interface FlowParserEdge {
 /** What the parser asks of a diagram's model builder (v12's DB). */
 export interface FlowParserBuilder {
   readonly direction: string;
-  readonly vertices: ReadonlyMap<string, { readonly ast: AstId }>;
+  /** `ast` is written once more after the document, for a vertex only a `style` line made. */
+  readonly vertices: ReadonlyMap<string, { ast: AstId }>;
   readonly edges: readonly FlowParserEdge[];
   hasEdge(id: string): boolean;
   edgeNamed(id: string): FlowParserEdge | undefined;
@@ -138,6 +139,12 @@ export interface FlowParserDialect<B extends FlowParserBuilder, O extends FlowPa
   builder(options: O, diagnostics: Diagnostics): B;
   /** v12's `destructLink`: an arrow's text, and the text that opened its label if any. */
   destructLink(end: string, start?: string): FlowLinkInfo;
+  /**
+   * v12 12.3.0's `node shapeData spaceList` (D621): blanks after `@{ … }` may end the node, so
+   * an edge id, a link or the end of the statement may follow them. Off, as in 12.2.0, only
+   * `&` and another node may.
+   */
+  readonly blanksAfterData: boolean;
 }
 
 /** The `maxNodes`, `maxEdges` and `inheritDir` a builder is made with, from the parse options. */

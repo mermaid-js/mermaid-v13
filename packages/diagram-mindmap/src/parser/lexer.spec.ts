@@ -117,3 +117,33 @@ describe('line breaks and the rules jison returns no token for', () => {
     }
   });
 });
+
+// v12's `cleanupText` turned `="x"` into `='x'` inside a tag before lexing (D114), so the
+// quotes of an attribute do not end a quoted label (#837).
+describe('attribute quotes in a tag inside a quoted label', () => {
+  const SHAPES = [
+    ['[', ']'],
+    ['(', ')'],
+    ['((', '))'],
+    ['))', '(('],
+    [')', '('],
+    ['{{', '}}'],
+  ] as const;
+  const LABEL = '<span style="color:red">red</span> text';
+  const LEXED = "<span style='color:red'>red</span> text";
+
+  for (const [open, close] of SHAPES) {
+    for (const [what, quoted] of [
+      ['a string', `"${LABEL}"`],
+      ['a markdown string', `"\`${LABEL}\`"`],
+    ] as const) {
+      it(`lexes ${what} in ${open}…${close} as one text, root and child`, () => {
+        const src = `mindmap\n  root${open}${quoted}${close}\n    a${open}${quoted}${close}\n`;
+        expect(of(src, Kind.Error)).toEqual([]);
+        expect(of(src, T.NodeDescr).map((t) => t.text)).toEqual([LEXED, LEXED]);
+        // One character for one: the ranges are the source's.
+        expect(slices(src, T.NodeDescr).map(([, s]) => s)).toEqual([LABEL, LABEL]);
+      });
+    }
+  }
+});

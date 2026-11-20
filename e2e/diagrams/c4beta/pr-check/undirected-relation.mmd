@@ -1,0 +1,16 @@
+---
+description: >-
+  `---` is a relation with no arrowhead at either end. Written without spaces, `a---b` splits
+  into the id a, the arrow and the id b, as `a-->b` does.
+---
+c4-beta container
+person user "User"
+softwareSystem shop "Shop" {
+  container web "Web shop" "" "TypeScript"
+  container db "Orders" "" "PostgreSQL"
+}
+softwareSystem mail "Mail" :::external
+user---web : "Browses"
+web --- db : "Shares data with" "SQL"
+db --> mail : "Sends receipts through"
+mail <--> user : "Talks to"

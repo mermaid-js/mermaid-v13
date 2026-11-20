@@ -3,7 +3,7 @@
 // (c) 2026 kepano): `marker`, `markerTrim`. The fill-aware casings are left out.
 // cspell:ignore kepano
 import type { Theme } from '@mermaid-js/core/theme';
-import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
+import type { AllowedAttr, Attrs, SvgWriter } from '@mermaid-js/core/svg';
 
 /**
  * Arrowhead geometry for one render, from the theme (D152). A gap is the space between the
@@ -54,6 +54,17 @@ export function markerTrim(type: string, g: Arrowheads): number {
   return 0;
 }
 
+/** The attributes a marker takes from its paint; no other attribute may be given. */
+export type MarkerPaintKey = 'fill' | 'opacity' | 'fill-opacity';
+
+/**
+ * An end marker's paint: its colour as `fill`, and the `opacity` and `fill-opacity` it fades
+ * with. Typed so that any other attribute is refused, not silently left out: the point head
+ * writes these three by name, in this order, not the whole object.
+ */
+export type MarkerPaint = Pick<Attrs, MarkerPaintKey> &
+  Readonly<Partial<Record<Exclude<AllowedAttr, MarkerPaintKey>, never>>>;
+
 /**
  * Draws a v12 end marker for a line that meets the node outline at `end` (x, y), pointing
  * along (dx, dy). The marker sits its gap before the outline; `paint` gives its colour as
@@ -64,7 +75,7 @@ export function marker(
   w: SvgWriter,
   type: string,
   { x, y, dx, dy }: LineEnd,
-  paint: Attrs,
+  paint: MarkerPaint,
   g: Arrowheads,
   fade = false
 ): void {
@@ -83,7 +94,15 @@ export function marker(
       .lineTo(baseX - acrossX, baseY - acrossY)
       .close()
       .done();
-    w.leaf('path', { class: 'marker', d, ...paint, stroke: 'none' });
+    // By name, not spread: a literal the engine builds with a fixed shape (see `MarkerPaint`).
+    w.leaf('path', {
+      class: 'marker',
+      d,
+      fill: paint.fill,
+      opacity: paint.opacity,
+      'fill-opacity': paint['fill-opacity'],
+      stroke: 'none',
+    });
   } else if (type === 'arrow_circle') {
     const r = g.circleSize / 2;
     const back = g.circleGap + r;

@@ -11,4 +11,7 @@ export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   compositeBackground: { alias: 'cbg', kind: 'color', usedBy: ['state'] },
   compositeTitleBackground: { alias: 'ctb', kind: 'color', usedBy: ['state'] },
   altBackground: { alias: 'alb', kind: 'color', usedBy: ['state'] },
+  // State text and composite titles (D638, #827): v12's `stateLabelColor` drew both.
+  stateLabelColor: { alias: 'stx', kind: 'color', usedBy: ['state'] },
+  compositeTitleColor: { alias: 'ctc', kind: 'color', usedBy: ['state'] },
 };

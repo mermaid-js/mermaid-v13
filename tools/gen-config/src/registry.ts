@@ -32,6 +32,9 @@ export const V12_DETECTORS: readonly (readonly [string, string, string])[] = [
   ['mindmap', '^\\s*mindmap', ''],
   ['architecture', '^\\s*architecture', ''],
   ['agentflow', '^\\s*agentflow-beta\\b', ''],
+  // c4-beta (spec #730): a type v12 12.2.0 lacks, so `detection.spec.ts` has no oracle for it. It
+  // sits before `c4`, as the prototype orders them. The pattern and D451's are disjoint.
+  ['c4beta', '^\\s*c4-beta(?![\\w-])', ''],
   // D451: all five headers anchored and word-bounded (v12 anchored only `C4Context`).
   ['c4', '^\\s*C4(Context|Container|Component|Dynamic|Deployment)\\b', ''],
   ['kanban', '^\\s*kanban', ''],
@@ -88,8 +91,9 @@ export interface DiagramManifest {
   readonly section?: string;
   /**
    * Per-type options, by v12 type (D534): `section`, the config section the type reads on top of
-   * the package's own (`swimlane` for `swimlane-beta`), and `layout`, the type's default layout
-   * (`elk` for `flowchart-elk`), below every config layer.
+   * the package's own (`swimlane` for `swimlane-beta`), `layout`, the type's default layout
+   * (`elk` for `flowchart-elk`), below every config layer, and `formats`, the type's output formats
+   * when it draws fewer than the package.
    */
   readonly typeOptions?: Readonly<Record<string, TypeOptions>>;
 }
@@ -98,7 +102,19 @@ export interface DiagramManifest {
 export interface TypeOptions {
   readonly section?: string;
   readonly layout?: string;
+  readonly formats?: readonly string[];
 }
+
+/** The output formats of `type`: its own `typeOptions` entry's, else the package's. */
+export function formatsOf(m: ManifestSource, type: string): readonly string[] {
+  return m.manifest.typeOptions?.[type]?.formats ?? m.manifest.formats;
+}
+
+/** A row's `formats: [...]` literal. */
+const formatsLiteral = (m: ManifestSource, type: string): string =>
+  formatsOf(m, type)
+    .map((f) => `'${f}'`)
+    .join(', ');
 
 /** A row's `section` and `layout` fields, from the manifest's options for `type`. */
 function typeFields(m: ManifestSource, type: string): string[] {
@@ -197,6 +213,27 @@ function knownLayout(name: string): boolean {
   return engines.has(name);
 }
 
+/** Throws when a manifest's `typeOptions` name a type it lacks, an unknown section or an unknown layout. */
+function checkTypeOptions(m: ManifestSource): void {
+  for (const [type, o] of Object.entries(m.manifest.typeOptions ?? {})) {
+    if (!m.manifest.types.includes(type))
+      throw new Error(`${m.name}: typeOptions names "${type}", which is not one of its types`);
+    if (o.section !== undefined && !schemaSections().has(o.section))
+      throw new Error(
+        `${m.name}: typeOptions.${type}.section "${o.section}" is not a config section`
+      );
+    if (o.layout !== undefined && !knownLayout(o.layout))
+      throw new Error(`${m.name}: typeOptions.${type}.layout "${o.layout}" is not a known layout`);
+    if (o.formats !== undefined) checkTypeFormats(m, type, o.formats);
+  }
+}
+
+/** Throws unless a type's own `formats` are some of its package's, at least one. */
+function checkTypeFormats(m: ManifestSource, type: string, formats: readonly string[]): void {
+  if (formats.length === 0 || formats.some((f) => !m.manifest.formats.includes(f)))
+    throw new Error(`${m.name}: typeOptions.${type}.formats must be some of the package's formats`);
+}
+
 /** The manifest serving each v12 type; throws on a type v12 does not have. */
 function manifestsByType(manifests: readonly ManifestSource[]): Map<string, ManifestSource> {
   const byType = new Map<string, ManifestSource>();
@@ -207,18 +244,7 @@ function manifestsByType(manifests: readonly ManifestSource[]): Map<string, Mani
       }
       byType.set(type, m);
     }
-    for (const [type, o] of Object.entries(m.manifest.typeOptions ?? {})) {
-      if (!m.manifest.types.includes(type))
-        throw new Error(`${m.name}: typeOptions names "${type}", which is not one of its types`);
-      if (o.section !== undefined && !schemaSections().has(o.section))
-        throw new Error(
-          `${m.name}: typeOptions.${type}.section "${o.section}" is not a config section`
-        );
-      if (o.layout !== undefined && !knownLayout(o.layout))
-        throw new Error(
-          `${m.name}: typeOptions.${type}.layout "${o.layout}" is not a known layout`
-        );
-    }
+    checkTypeOptions(m);
   }
   return byType;
 }
@@ -239,7 +265,7 @@ export function generateRegistry(manifests: readonly ManifestSource[]): string {
       lines.push(`  { type: '${type}', pattern: ${pattern} },`);
       continue;
     }
-    const formats = m.manifest.formats.map((f) => `'${f}'`).join(', ');
+    const formats = formatsLiteral(m, type);
     lines.push(
       `  {`,
       `    type: '${type}',`,
@@ -336,6 +362,7 @@ export function generateDetectors(manifests: readonly ManifestSource[]): string 
     '/** First-party detectors in v12 detection order, without loaders (`mermaid/slim`). */',
     'export const DETECTORS: readonly FirstPartyEntry[] = [',
   ];
+  const ids: string[] = [];
   for (const [type, source, flags] of V12_DETECTORS) {
     const m = byType.get(type);
     const pattern = `/${source}/${flags}`;
@@ -343,7 +370,8 @@ export function generateDetectors(manifests: readonly ManifestSource[]): string 
       lines.push(`  { type: '${type}', pattern: ${pattern} },`);
       continue;
     }
-    const formats = m.manifest.formats.map((f) => `'${f}'`).join(', ');
+    if (!ids.includes(m.manifest.id)) ids.push(m.manifest.id);
+    const formats = formatsLiteral(m, type);
     const extra = typeFields(m, type)
       .map((f) => `, ${f}`)
       .join('');
@@ -351,6 +379,40 @@ export function generateDetectors(manifests: readonly ManifestSource[]): string 
       `  { type: '${type}', pattern: ${pattern}, id: '${m.manifest.id}', formats: [${formats}]${extra} },`
     );
   }
-  lines.push('];', '');
+  lines.push(
+    '];',
+    '',
+    '/** The ids of the first-party diagram plugins: the keys of `createMermaid({ diagrams })` in `mermaid/slim`. */',
+    `export type FirstPartyDiagramId = ${ids.map((id) => `'${id}'`).join(' | ') || 'never'};`,
+    ''
+  );
   return lines.join('\n');
+}
+
+export const FIRST_PARTY_IDS_PATH = join(
+  ROOT,
+  'packages/plugin-autoload/src/generated/first-party-ids.gen.ts'
+);
+
+/**
+ * `@mermaid-js/plugin-autoload`'s list of `mermaid`'s own diagram ids (D589): a
+ * `@mermaid-js/*` package whose diagram manifest has one of them is left out of the scan
+ * silently. The ids of the detector table, once each, in v12 order.
+ */
+export function generateFirstPartyIds(manifests: readonly ManifestSource[]): string {
+  const byType = manifestsByType(manifests);
+  const ids = new Set<string>();
+  for (const [type] of V12_DETECTORS) {
+    const id = byType.get(type)?.manifest.id;
+    if (id !== undefined) ids.add(id);
+  }
+  return [
+    '// Generated by `pnpm gen:registry` (tools/gen-config/src/registry.ts). Do not edit.',
+    '',
+    "/** The plugin ids of `mermaid`'s first-party diagrams (the scan leaves their packages out). */",
+    'export const FIRST_PARTY_IDS: readonly string[] = [',
+    ...[...ids].map((id) => `  '${id}',`),
+    '];',
+    '',
+  ].join('\n');
 }

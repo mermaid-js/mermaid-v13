@@ -5,9 +5,14 @@
  * takes falls through to esbuild, which bundles the `entries` from source on request and
  * serves `www/` statically.
  *
- * It also builds mermaid (with plugin-interactions) from source as one ESM file at
- * `/mermaid.esm.mjs`. With `watch`, a change under any `packages/<name>/src` (or `www/`)
- * rebuilds both contexts and broadcasts on `GET /events`; `/dev/reload.js` reloads a page then.
+ * It also builds mermaid (with plugin-interactions) from source as ESM at `/mermaid.esm.mjs`,
+ * split as production splits it: what loads lazily there (diagram types, ELK) is a chunk under
+ * `/chunks/mermaid.esm/` here, fetched on first use. With `watch`, a change under any
+ * `packages/<name>/src` (or `www/`) rebuilds both contexts and broadcasts on `GET /events`;
+ * `/dev/reload.js` reloads a page then.
+ *
+ * Source maps are linked, not inline. Text goes out gzip-compressed to a browser that asks, and
+ * content-hashed chunks are cached as immutable (`transfer.ts`, #958).
  *
  * Extend it by passing `routes` (and `entries` for another page script) to `startServer`, or
  * by adding to `builtInRoutes` in `routes.ts`.
@@ -15,12 +20,20 @@
 import { createServer, request, type IncomingMessage, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { networkInterfaces } from 'node:os';
-import { join } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import { context, type BuildOptions } from 'esbuild';
 import { REPO_ROOT } from './fixtures.ts';
 import { listenUrls } from './listen.ts';
 import { createEventHub, watchSources, type ReloadEvent, type SourceWatcher } from './live.ts';
 import { builtInRoutes, type Route } from './routes.ts';
+import {
+  IMMUTABLE,
+  relay,
+  REVALIDATE,
+  sendServed,
+  servedFile,
+  type ServedFile,
+} from './transfer.ts';
 
 export type { ReloadEvent } from './live.ts';
 
@@ -109,7 +122,8 @@ const shared: BuildOptions = {
   format: 'esm',
   target: 'es2022',
   conditions: ['mermaid-source'],
-  sourcemap: 'inline',
+  // Linked: a browser fetches a map only when its devtools are open.
+  sourcemap: 'linked',
   logLevel: 'warning',
 };
 
@@ -123,46 +137,63 @@ export async function startServer(port: number, options: ServerOptions = {}): Pr
     },
     outdir: join(WWW, 'build'),
     splitting: true,
+    // Under one folder, so their content-hashed names can be cached as immutable.
+    chunkNames: 'chunks/[name]-[hash]',
   });
   const esb = await ctx.serve({ servedir: WWW, host: '127.0.0.1' });
 
-  // mermaid + plugin-interactions as one file (no splitting, so no chunk URLs to serve). Stage
-  // timing (`@mermaid-js/core/timing`) is on in this bundle only, for the Profile tab; the
-  // production bundles never define the flag, so theirs stays off.
+  // mermaid + plugin-interactions, split like production: the entry, and its chunks under
+  // `chunks/mermaid.esm/`. Stage timing (`@mermaid-js/core/timing`) is on in this bundle only,
+  // for the Profile tab; the production bundles never define the flag, so theirs stays off.
+  // Split or not, the bundle holds one copy of core.
   const mermaidCtx = await context({
     ...shared,
-    entryPoints: [options.bundleEntry ?? join(BROWSER, 'mermaid.ts')],
-    outfile: join(WWW, 'mermaid.esm.mjs'),
+    entryPoints: { 'mermaid.esm': options.bundleEntry ?? join(BROWSER, 'mermaid.ts') },
+    outdir: WWW,
+    splitting: true,
+    chunkNames: 'chunks/mermaid.esm/[name]-[hash]',
+    outExtension: { '.js': '.mjs' },
     define: { __MERMAID_BENCH__: 'true' },
   });
-  let bundle: { code?: Uint8Array; error?: string } = {};
+  // Served by pathname. The previous build's files stay, so a page that loaded that build can
+  // still fetch the chunks it has not used yet; its entry is replaced.
+  let bundle: { files: Map<string, ServedFile>; error?: string } = { files: new Map() };
+  let lastBuild = new Map<string, ServedFile>();
   const buildMermaid = async (): Promise<void> => {
     try {
       const result = await mermaidCtx.rebuild();
-      bundle = { code: result.outputFiles?.[0]?.contents };
+      const files = new Map<string, ServedFile>();
+      for (const out of result.outputFiles ?? []) {
+        const pathname = '/' + relative(WWW, out.path).split(sep).join('/');
+        const type = pathname.endsWith('.map') ? 'application/json' : 'text/javascript';
+        const cache = pathname.startsWith('/chunks/') && !pathname.endsWith('.map');
+        files.set(pathname, servedFile(type, out.contents, cache ? IMMUTABLE : REVALIDATE));
+      }
+      bundle = { files: new Map([...lastBuild, ...files]) };
+      lastBuild = files;
     } catch (error) {
-      bundle = { error: error instanceof Error ? error.message : String(error) };
+      bundle = { ...bundle, error: error instanceof Error ? error.message : String(error) };
       report('mermaid build failed', error);
     }
   };
   await buildMermaid();
+  const serveBundle: Route['handle'] = async (req, res, url) => {
+    const file = bundle.files.get(url.pathname);
+    if (file && !(url.pathname === '/mermaid.esm.mjs' && bundle.error)) {
+      await sendServed(req, res, file);
+      return;
+    }
+    const failed = url.pathname === '/mermaid.esm.mjs';
+    res.writeHead(failed ? 500 : 404, { 'content-type': 'text/plain' });
+    res.end(failed ? (bundle.error ?? 'mermaid bundle not built') : 'not found');
+  };
 
   const hub = createEventHub();
   const own: Route[] = [
     hub.route,
-    {
-      path: '/mermaid.esm.mjs',
-      method: 'GET',
-      handle: (_req, res) => {
-        if (!bundle.code) {
-          res.writeHead(500, { 'content-type': 'text/plain' });
-          res.end(bundle.error ?? 'mermaid bundle not built');
-          return;
-        }
-        res.writeHead(200, { 'content-type': 'text/javascript', 'cache-control': 'no-store' });
-        res.end(bundle.code);
-      },
-    },
+    // The entry and its map (`/mermaid.esm.mjs.map`), and its chunks.
+    { path: '/mermaid.esm.mjs', prefix: true, method: 'GET', handle: serveBundle },
+    { path: '/chunks/mermaid.esm/', prefix: true, method: 'GET', handle: serveBundle },
     {
       path: '/dev/reload.js',
       method: 'GET',
@@ -206,10 +237,8 @@ export async function startServer(port: number, options: ServerOptions = {}): Pr
         // (another hostname or the IP) would get 403. Name esbuild's own address instead.
         headers: { ...req.headers, host: `127.0.0.1:${esb.port}` },
       },
-      (upstream) => {
-        res.writeHead(upstream.statusCode ?? 502, upstream.headers);
-        upstream.pipe(res);
-      }
+      (upstream) =>
+        relay(req, upstream, res, path?.startsWith('/build/chunks/') ? IMMUTABLE : undefined)
     );
     proxied.on('error', () => {
       res.writeHead(502);

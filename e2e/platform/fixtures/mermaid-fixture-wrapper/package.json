@@ -1,0 +1,18 @@
+{
+  "name": "mermaid-fixture-wrapper",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Test fixture: a package that is not a Mermaid plugin but depends on one (mermaid-fixture-diagram), so npm hoists that plugin into an app that never declares it (D589).",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js"
+  ],
+  "dependencies": {
+    "mermaid-fixture-diagram": "1.0.0"
+  }
+}

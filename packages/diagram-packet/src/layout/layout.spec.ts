@@ -5,7 +5,8 @@ import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { PacketModel } from '../model.ts';
 import { packet as plugin } from '../plugin.ts';
 import { FIXTURES, model, REGISTER } from './fixtures.ts';
-import { layoutPacket, packetLayoutViolations, type PacketLayout } from './index.ts';
+import { layoutPacket, type PacketLayout } from './index.ts';
+import { packetLayoutViolations } from './invariants.ts';
 
 let spec: ThemeSpec;
 beforeAll(async () => {
@@ -229,6 +230,41 @@ describe('packet layout: labels wider than their field (D343)', () => {
   it('never grows a label when the bit numbers are larger than the labels', () => {
     const l = lay(model([[0, 0, 'abcdefgh']]), {}, { packetByteFontSize: 20 });
     expect(l.rows[0]!.pieces[0]!.label.font.size).toBe(12);
+  });
+});
+
+describe('packet layout: labels taller than their row (D343, #774)', () => {
+  // A 16-bit piece is 507 px wide, so only the height binds. A line is 1.2 of the size: 14.4 px
+  // at 12 px, 12 px at 10 px.
+  const tall = (lines: number, packet: Readonly<PacketDiagramConfig> = {}) =>
+    lay(model([[0, 15, Array.from({ length: lines }, (_, i) => `l${i}`).join('<br>')]]), packet)
+      .rows[0]!.pieces[0]!.label;
+
+  it('keeps the label size while the lines fit the row', () => {
+    // Two lines are 28.8 px, inside the 32 px row.
+    const l = tall(2);
+    expect(l.font.size).toBe(12);
+    expect(l.height).toBeCloseTo(28.8);
+  });
+
+  it('shrinks a label of more lines than fit until it fits the row', () => {
+    // Three lines are 43.2 px at 12 px; a 40 px row fits them at 11.11 px.
+    const l = tall(3, { rowHeight: 40 });
+    expect(l.font.size).toBeCloseTo(100 / 9);
+    expect(l.height).toBeCloseTo(40);
+  });
+
+  it('stops at the bit-number size, then overflows the row, centred on it', () => {
+    // Four lines are 48 px at 10 px, 8 px past the 32 px row (top at y 15) on each side.
+    const l = tall(4);
+    expect([l.font.size, l.height, l.y]).toEqual([10, 48, 15 - 8]);
+  });
+
+  it('shrinks by the larger of the two overflows', () => {
+    // A 27 px one-bit piece: "abcd<br>abcd<br>abcd" is 24 px wide and 43.2 px tall at 12 px.
+    const l = lay(model([[0, 0, 'abcd<br>abcd<br>abcd']]), { rowHeight: 40 }).rows[0]!.pieces[0]!
+      .label;
+    expect(l.font.size).toBeCloseTo(100 / 9);
   });
 });
 

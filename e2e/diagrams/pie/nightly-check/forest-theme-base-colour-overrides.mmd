@@ -1,0 +1,29 @@
+---
+config:
+  theme: forest
+  themeVariables:
+    primaryColor: '#ffcc00'
+    primaryTextColor: '#003366'
+    lineColor: '#008800'
+    secondaryColor: '#99ccff'
+    tertiaryColor: '#ffe6f0'
+    background: '#fff2cc'
+description: >-
+  baseline/themes/forest.mmd, the representative pie chart, under base-colour overrides in the forest theme
+  (#1035, D656): slices 7-12 are recomputed from the primaryColor override, and the first six follow the
+  base colours, as in v12
+---
+pie showData
+  title Twelve slices in forest
+  "One" : 22
+  "Two" : 20
+  "Three" : 18
+  "Four" : 16
+  "Five" : 14
+  "Six" : 12
+  "Seven" : 11
+  "Eight" : 10
+  "Nine" : 9
+  "Ten" : 8
+  "Eleven" : 7
+  "Twelve" : 6

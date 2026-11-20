@@ -186,10 +186,11 @@ describe('gantt theme variables against v12 12.2.0 (#385, D151, D331)', () => {
       );
   });
 
-  it('outlines the active bar in lineColor in the classic themes (D574)', async () => {
+  // The line colour as the named themes pin it where v12 keeps its own (`guideLineColor`, D656).
+  it('outlines the active bar in the line colour in the classic themes (D574, D656)', async () => {
     for (const name of CLASSIC)
       expect(await css(name, 'activeTaskBorderColor'), name).toBe(
-        'var(--mermaid-activeTaskBorderColor,var(--_l))'
+        'var(--mermaid-activeTaskBorderColor,var(--_gdl))'
       );
   });
 

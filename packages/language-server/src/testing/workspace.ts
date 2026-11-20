@@ -2,7 +2,7 @@
  * Temporary workspaces with a `node_modules` of third-party language facets, broken ones
  * included, for the discovery specs.
  */
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -47,13 +47,25 @@ export function facetPackage(name: string, id: string, word = id): PackageFiles 
       },
     }),
     'detector.js': detectorSource(word),
+    'index.js': 'export default {};\n',
     'language.js': FAKE_FACET,
   };
 }
 
-/** A temp directory with `node_modules/<name>/…` for each package; returns its path. */
-export function workspace(packages: Readonly<Record<string, PackageFiles>>): string {
+/**
+ * A temp directory with `node_modules/<name>/…` for each package and a package.json declaring
+ * them all (discovery reads only declared packages, D589), or none with `manifest: false`;
+ * returns its path.
+ */
+export function workspace(
+  packages: Readonly<Record<string, PackageFiles>>,
+  { manifest = true }: { readonly manifest?: boolean } = {}
+): string {
   const root = mkdtempSync(join(tmpdir(), 'mermaid-lsp-'));
+  if (manifest) {
+    const dependencies = Object.fromEntries(Object.keys(packages).map((name) => [name, '1.0.0']));
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ name: 'w', dependencies }));
+  }
   for (const [name, files] of Object.entries(packages)) {
     const dir = join(root, 'node_modules', name);
     for (const [file, text] of Object.entries(files)) {
@@ -62,6 +74,30 @@ export function workspace(packages: Readonly<Record<string, PackageFiles>>): str
       writeFileSync(join(dir, file), text);
     }
     mkdirSync(dir, { recursive: true });
+  }
+  return root;
+}
+
+/** A file's text, or a symbolic link to a path relative to the link's own directory. */
+export type Entry = string | { readonly link: string } | undefined;
+
+/** `files` with every path under `dir`. */
+export function under(dir: string, files: PackageFiles): Record<string, Entry> {
+  return Object.fromEntries(Object.entries(files).map(([file, text]) => [join(dir, file), text]));
+}
+
+/**
+ * A temp directory with each entry by relative path (`undefined` leaves one out), such as a
+ * pnpm workspace whose packages link their dependencies from `node_modules/.pnpm`; returns its
+ * path.
+ */
+export function tree(entries: Readonly<Record<string, Entry>>): string {
+  const root = mkdtempSync(join(tmpdir(), 'mermaid-lsp-'));
+  for (const [path, entry] of Object.entries(entries)) {
+    if (entry === undefined) continue;
+    mkdirSync(join(root, path, '..'), { recursive: true });
+    if (typeof entry === 'string') writeFileSync(join(root, path), entry);
+    else symlinkSync(entry.link, join(root, path));
   }
   return root;
 }

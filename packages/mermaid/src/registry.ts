@@ -140,16 +140,20 @@ export interface SkippedPlugin {
 interface Entry extends Detected {
   readonly formats: readonly string[];
   /**
-   * `body` is the text from the diagram's start (front matter, leading directives and comments
-   * skipped). `clean` is the text third-party detectors are given and `v12` the one first-party
-   * rows fall back to (core's `detectText`, without and with `keepLastLineComment`). Both are
-   * built on first use.
+   * A first-party row's own formats, which bound its plugin's: a type can draw fewer formats
+   * than the package that serves it (a manifest's `typeOptions` `formats`).
+   */
+  readonly rowFormats?: readonly string[];
+  /**
+   * `firstParty` is core's `firstPartyDetects` for the source: a first-party row's test on the
+   * text from the diagram's start (front matter, leading directives and comments skipped), then
+   * on v12's comment-cut text. `clean` is the text third-party detectors are given (core's
+   * `detectText`), built on first use.
    */
   readonly detect: (
-    body: string,
+    firstParty: (test: (text: string) => boolean) => boolean,
     clean: () => string,
-    config: Readonly<Record<string, unknown>> | undefined,
-    v12: () => string
+    config: Readonly<Record<string, unknown>> | undefined
   ) => boolean;
   readonly load?: () => Promise<AnyPlugin>;
   readonly loadAscii?: () => Promise<AnyAsciiHook>;
@@ -202,6 +206,12 @@ export interface Detected {
 
 /** Names the built-in engine answers to silently (DESIGN §6.1): `layered` and v12's `dagre`. */
 const FIRST_PARTY_LAYOUTS: ReadonlySet<string> = new Set(['layered', 'dagre']);
+
+/**
+ * v12's zenuml detector (`@mermaid-js/mermaid-zenuml`). zenuml has no v13 package (D317), so it
+ * is detected as a type without one and rejected with `UNSUPPORTED_DIAGRAM` (R-COMPAT-7).
+ */
+const ZENUML = /^\s*zenuml/;
 
 export const builtIn = (name: string): boolean => FIRST_PARTY_LAYOUTS.has(name);
 
@@ -466,8 +476,8 @@ export class Registry {
         ...e,
         id: e.id,
         formats: e.formats ?? [],
-        detect: (body, _clean, _config, v12) =>
-          firstPartyDetects((text) => e.pattern.test(text), body, v12),
+        rowFormats: e.formats,
+        detect: (detects) => detects((text) => e.pattern.test(text)),
       });
     }
   }
@@ -527,11 +537,17 @@ export class Registry {
     return (this.order = out);
   }
 
+  /** The v12 type of every registered entry, in detection order. */
+  types(): string[] {
+    return this.detectionOrder().map((e) => e.type);
+  }
+
   /** The diagram type of `src`, or throws `MermaidError` (v12 order; first match wins). */
   detect(src: string, pre: PreprocessResult, config?: Readonly<Record<string, unknown>>): Detected {
     const start = diagramStart(src, pre);
     const body = src.slice(start);
-    if (body.trimStart().toLowerCase().startsWith('---')) {
+    // No character lower-cases to a `-`, so the start is tested as written.
+    if (body.trimStart().startsWith('---')) {
       throw new MermaidError(
         'SYNTAX',
         'Diagrams beginning with --- are not valid. If you were trying to use a YAML front-matter, ' +
@@ -539,15 +555,18 @@ export class Registry {
         { source: src, offset: start, length: 3 }
       );
     }
-    if (body.trim().toLowerCase() === 'error') return { type: 'error', id: undefined };
+    // `body.trim().toLowerCase() === 'error'` without lower-casing the body: `\s` is what `trim`
+    // removes, and only ASCII letters fold to `e`, `r` and `o` under `/i`.
+    if (/^\s*error\s*$/i.test(body)) return { type: 'error', id: undefined };
     let clean: string | undefined;
     const cleaned = () => (clean ??= detectText(src, start, pre));
-    let old: string | undefined;
-    const v12 = () => (old ??= detectText(src, start, pre, { keepLastLineComment: true }));
+    const detects = firstPartyDetects(src, start, pre);
     for (const e of this.detectionOrder()) {
       // The entry itself: its type, id, section and layout (D534).
-      if (e.detect(body, cleaned, config, v12)) return e;
+      if (e.detect(detects, cleaned, config)) return e;
     }
+    // D317: a v12 type with no v13 package, known after every plugin, so a plugin can claim it.
+    if (ZENUML.test(body)) return { type: 'zenuml', id: undefined };
     throw new MermaidError(
       'UNSUPPORTED_DIAGRAM',
       `No diagram type detected matching given configuration for text: ${body.slice(0, 200)}`,
@@ -572,7 +591,8 @@ export class Registry {
     const match = (e: Entry): boolean => e.type === typeOrId || e.id === typeOrId;
     const explicit = this.external.find(match);
     if (explicit) return explicit;
-    const first = this.entries.find(match);
+    // A type finds its own row before a row whose plugin id it is (`c4` after `c4beta`).
+    const first = this.entries.find((e) => e.type === typeOrId) ?? this.entries.find(match);
     if (first) return this.replacementOf(first) ?? first;
     return this.replaced.get(typeOrId) ?? this.discoveredFor(match);
   }
@@ -598,12 +618,18 @@ export class Registry {
     return pending;
   }
 
+  /** `typeOrId`'s entry, unless its row draws no text (a type without its plugin's ascii). */
+  private textEntryFor(typeOrId: string): Entry | undefined {
+    const entry = this.entryFor(typeOrId);
+    return entry?.rowFormats?.includes('ascii') === false ? undefined : entry;
+  }
+
   /**
    * Loads the text-output hook of `typeOrId` (D76, only for `format: 'ascii'`): the plugin's
    * own `ascii` method, else its lazily loaded `ascii` entry. Undefined when it has neither.
    */
   async loadAscii(typeOrId: string): Promise<AnyAsciiHook | undefined> {
-    const entry = this.entryFor(typeOrId);
+    const entry = this.textEntryFor(typeOrId);
     const id = entry?.id;
     if (!entry || id === undefined) return undefined;
     const have = this.ascii(id);
@@ -631,7 +657,9 @@ export class Registry {
   formats(typeOrId: string): readonly string[] {
     const entry = this.entryFor(typeOrId);
     if (!entry?.id) return [];
-    return this.plugins.get(entry.id)?.formats ?? entry.formats;
+    const all = this.plugins.get(entry.id)?.formats ?? entry.formats;
+    const row = entry.rowFormats;
+    return row ? all.filter((f) => row.includes(f)) : all;
   }
 
   /** Forgets what was loaded for `id`; an eager entry is ready again at once. */
@@ -1034,7 +1062,7 @@ function diagramEntry(
     type: def.id,
     id: def.id,
     formats: def.formats ?? ['svg'],
-    detect: (_body, clean, config) => def.detector(clean(), config),
+    detect: (_firstParty, clean, config) => def.detector(clean(), config),
     load,
     ...(isPlugin ? { eager: def as AnyPlugin } : {}),
     ...(loadAscii ? { loadAscii } : {}),

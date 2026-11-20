@@ -70,21 +70,15 @@ export function renderGantt(
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, model }: Scene): void {
   const { theme, config } = ctx;
-  const { x, y } = layout.bounds;
-  const width = Math.max(1, Math.ceil(layout.bounds.width));
-  const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = (config.gantt as { useMaxWidth?: unknown } | undefined)?.useMaxWidth !== false;
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
   const font = theme.font();
   const fontSize = theme.length('fontSize');
   openSvgRoot(w, ctx, {
     name: 'gantt',
-    viewBox: [x, y, width, height],
-    maxWidth,
-    title,
-    desc,
+    viewBox: layout.bounds,
+    maxWidth: (config.gantt as { useMaxWidth?: unknown } | undefined)?.useMaxWidth !== false,
+    title: model.accTitle,
+    desc: model.accDescr,
     attrs: {
       'font-family': font,
       'font-size': fontSize,
@@ -232,6 +226,7 @@ function drawBar({ w, paint }: Scene, b: GanttBar, i: number): void {
   const o = b.pivot;
   w.leaf('rect', {
     class: barClass(b),
+    cursor: b.clickable ? 'pointer' : undefined,
     'data-id': b.id,
     'data-ast': b.ast,
     x: b.x,
@@ -259,6 +254,7 @@ function drawBar({ w, paint }: Scene, b: GanttBar, i: number): void {
 function drawLabel({ w, layout, paint }: Scene, b: GanttBar, i: number): void {
   drawText(w, b.label, {
     class: labelClass(b),
+    cursor: b.clickable ? 'pointer' : undefined,
     'data-id': b.id,
     fill: paint.labels[i],
     'font-size': b.kind === 'vert' ? M.vertFontSize : layout.fontSize,

@@ -548,7 +548,8 @@ describe('flowchart render: features', () => {
       return tree.getAttr(tree.children(byAst(tree, 'e:A>C')[0]!)[0]!, 'd')!;
     };
     expect(await d('linear')).not.toMatch(/[CQ]/);
-    expect(await d('step')).toMatch(/Q/);
+    expect(await d('step')).toMatch(/L.*L.*L/);
+    expect(await d('step')).not.toMatch(/[CQ]/);
     expect(await d('basis')).toMatch(/C/);
   });
 

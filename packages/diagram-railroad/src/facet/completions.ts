@@ -8,29 +8,26 @@
  * of IR's `nonterminal("…")`. Nothing is offered in other strings, in a statement's text or
  * outside code.
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
+import { isSpace, Kind } from '@mermaid-js/core/parser-kit';
 import type {
   CompletionItem,
   CompletionKind,
   DocumentView,
   ProbeResult,
   Range,
-  TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import type { RailroadDocument } from '../parser/ast.ts';
 import { RAILROAD_HEADERS } from '../parser/detect.ts';
 import { T } from '../parser/tokens.ts';
 import type { RailroadNotation } from '../parser/tokens.ts';
+import { atLineStart, span, tokenBefore, wordRange } from '@mermaid-js/shared/parser/facet';
 import {
-  atLineStart,
   block,
   NOTATION_DOCS,
   notationOf,
   ruleDefinitions,
   ruleFirstLine,
-  span,
   isTrivia,
-  tokenBefore,
 } from './tables.ts';
 
 /** An item offered when the parser expects `kind`. */
@@ -120,18 +117,8 @@ const ITEMS: Readonly<Record<RailroadNotation, readonly Item[]>> = {
   ],
 };
 
-/** The probed word's range: the prefix, plus the rest of the word after the cursor. */
-function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeResult): Range {
-  const o = probe.offset;
-  let end = o;
-  const i = tokens ? tokenBefore(tokens, o) : -1;
-  if (tokens && i >= 0 && (tokens.start[i] ?? 0) < o && o < (tokens.end[i] ?? 0))
-    end = tokens.end[i] ?? o;
-  // A word stops at the first blank, quote or punctuation after the cursor.
-  const stop = /[^\w-]/.exec(text.slice(o, end));
-  if (stop) end = o + stop.index;
-  return span(probe.prefix.start, end);
-}
+/** A word stops at the first blank, quote or punctuation after the cursor. */
+const WORD_STOP = /[^\w-]/;
 
 /** The defined rules whose name starts with `prefix`, as items written by `write`. */
 function ruleItems(
@@ -193,9 +180,9 @@ export function railroadCompletions(
   if (probe.mode === 'string' && notation === 'railroad') return irReferenceItems(probe, doc);
   if (probe.mode !== 'INITIAL') return [];
   const expected = new Set(probe.expected);
-  const range = wordRange(text, result.tokens, probe);
+  const range = wordRange(text, result.tokens, probe, WORD_STOP);
   const prefix = text.slice(range.start, probe.offset);
-  const lineStart = atLineStart(text, range.start);
+  const lineStart = atLineStart(text, range.start, isSpace);
   const docs = NOTATION_DOCS[notation];
   const out: CompletionItem[] = [];
   const offer = (k: Item, table = docs) => {

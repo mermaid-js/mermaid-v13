@@ -105,8 +105,9 @@ export interface XyBarPlotLayout {
   /** One per data point with a value, in data order. */
   readonly bars: readonly XyBar[];
   /**
-   * `showDataLabel`: one label per bar with an area, each the plot's own value (D382), all at
-   * one font size (v12's); none when no bar has room (D383 `XYCHART_LABEL_TOO_SMALL`).
+   * `showDataLabel`: one label per bar with room for it, each the plot's own value (D382), all
+   * at one font size, the smallest that fits them (D611); none when no bar has room
+   * (`XYCHART_LABEL_TOO_SMALL`).
    */
   readonly dataLabels: readonly XyText[];
 }

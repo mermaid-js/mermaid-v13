@@ -4,7 +4,7 @@
  * layout invariants (#490). They live outside the runtime entry, so the chunk mermaid loads for a
  * wardley render stays small (D217).
  */
-export { wardleyLabelOverlaps, wardleyLayoutViolations } from './layout/index.ts';
+export { wardleyLabelOverlaps, wardleyLayoutViolations } from './layout/invariants.ts';
 export {
   LANGIUM_NAMES,
   WARDLEY_TRIVIA,

@@ -20,8 +20,6 @@ function opening(s: C4StatementNode): Range {
   return { start, end: s.args[s.args.length - 1]?.range.end ?? start + s.macro.length };
 }
 
-type Parts = Pick<C4Model, 'elements' | 'boundaries' | 'relations'>;
-
 /**
  * Reports each cap once, at the first statement over it. Read from the statements in source
  * order once the parse is done (the caller keeps the diagnostics in source order), and only
@@ -32,7 +30,7 @@ type Parts = Pick<C4Model, 'elements' | 'boundaries' | 'relations'>;
  */
 export function checkLimits(
   statements: readonly C4StatementNode[],
-  model: Parts,
+  model: Pick<C4Model, 'elements' | 'boundaries' | 'relations'>,
   limits: C4LimitOptions,
   diagnostics: Diagnostics
 ): void {

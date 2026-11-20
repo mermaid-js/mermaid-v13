@@ -14,8 +14,6 @@ export interface ArchitectureLimitOptions {
   maxDepth?: number;
 }
 
-type Parts = Pick<ArchitectureModel, 'groups' | 'services' | 'junctions' | 'edges'>;
-
 /**
  * Reports each cap once, at the first statement over it. Read from the statements in source
  * order once the model is built (the caller keeps the diagnostics in source order), and only
@@ -24,7 +22,7 @@ type Parts = Pick<ArchitectureModel, 'groups' | 'services' | 'junctions' | 'edge
  */
 export function checkLimits(
   statements: readonly ArchitectureStatementNode[],
-  model: Parts,
+  model: Pick<ArchitectureModel, 'groups' | 'services' | 'junctions' | 'edges'>,
   limits: ArchitectureLimitOptions,
   diagnostics: Diagnostics
 ): void {

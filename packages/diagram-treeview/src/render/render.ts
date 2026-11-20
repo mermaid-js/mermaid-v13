@@ -137,17 +137,14 @@ function openRoot(
 ): void {
   const { theme, config } = ctx;
   const { x, y, width, height } = layout.bounds;
-  const maxWidth = treeViewUseMaxWidth(config.treeView);
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
   openSvgRoot(w, ctx, {
     name: 'treeView',
     viewBox: [x, y, width, height],
-    maxWidth,
-    title,
-    desc,
+    maxWidth: treeViewUseMaxWidth(config.treeView),
+    title: model.accTitle,
+    desc: model.accDescr,
     attrs: { 'font-family': font },
   });
 }

@@ -7,7 +7,6 @@ import { type CompletionKind, Kind, type TokenStream } from '@mermaid-js/core/pa
 import type { VennDocument, VennSetNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { tokenBefore } from '@mermaid-js/shared/parser/facet';
-export { tokenBefore } from '@mermaid-js/shared/parser/facet';
 export { span } from '@mermaid-js/shared/parser/facet';
 export { code } from '@mermaid-js/shared/parser/facet';
 

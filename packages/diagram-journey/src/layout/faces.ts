@@ -13,9 +13,9 @@ export function mouthOf(score: number): Mouth {
   return 'flat';
 }
 
-/** The y of a face's centre for a score already drawn to the scale. */
-export const faceY = (m: JourneyMetrics, drawn: number): number =>
-  m.faceTop + (SCORE.max - drawn) * m.faceStep;
+/** The y of a face's centre for a score already drawn to the scale, `drop` below v12's (D615). */
+export const faceY = (m: JourneyMetrics, drawn: number, drop = 0): number =>
+  m.faceTop + drop + (SCORE.max - drawn) * m.faceStep;
 
 /** The y of the lowest face place, where every task line ends. */
 export const lineEnd = (m: JourneyMetrics): number => faceY(m, SCORE.min);
@@ -37,8 +37,8 @@ function arcBand(m: JourneyMetrics, cx: number, cy: number, from: 1 | -1): PathD
     .done();
 }
 
-export function faceOf(m: JourneyMetrics, cx: number, score: number): FaceLayout {
-  const cy = faceY(m, drawnScore(score));
+export function faceOf(m: JourneyMetrics, cx: number, score: number, drop = 0): FaceLayout {
+  const cy = faceY(m, drawnScore(score), drop);
   const mouth = mouthOf(score);
   let mouthPath: PathData;
   if (mouth === 'smile') mouthPath = arcBand(m, cx, cy + m.smileDrop, 1);

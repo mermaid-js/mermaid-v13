@@ -61,6 +61,8 @@ export interface C4BetaRelation {
 export interface C4BetaStyle {
   readonly target: string;
   readonly entries: readonly { readonly key: string; readonly value: string }[];
+  /** The statement's line, for the messages that name it. */
+  readonly line: number;
   readonly ast: AstId;
 }
 
@@ -76,4 +78,13 @@ export interface C4BetaModel {
   readonly relations: readonly C4BetaRelation[];
   readonly styles: readonly C4BetaStyle[];
   readonly warnings: readonly Diagnostic[];
+}
+
+/**
+ * Whether `model` is c4-beta's rather than legacy C4's (one `c4` plugin parses both, spec #730):
+ * by its `kind`, which only c4-beta's model has. Other fields either model may gain do not change
+ * the answer.
+ */
+export function isC4Beta(model: object): model is C4BetaModel {
+  return 'kind' in model;
 }

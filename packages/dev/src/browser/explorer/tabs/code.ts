@@ -1,7 +1,11 @@
 /**
  * The Code tab (`dev-tab-code`, v12 `code-editor.ts`): CodeMirror 6 with
- * `codemirror-lang-mermaid` over the open file's text.
+ * `@mermaid-js/language-service-codemirror` over the open file's text. That is the language
+ * service the LSP server serves too, so the tab shows its diagnostics (lint gutter and
+ * underlines), completion, hover, folding and semantic tokens for every first-party type.
  *
+ * - The editor mounts at once with plain text; the language attaches when `mermaid()` has
+ *   preloaded the facets (`[data-language]` on the mount: `loading`, `ready` or `failed`).
  * - Edits go to `ctx.setText`, so the shell re-renders them before they are saved.
  * - Save (the button, or Mod-s anywhere while the tab shows) calls `ctx.save()`. The status
  *   (`[data-status]`) is `saved`, `dirty`, `saving` or `conflict`; `conflict` (the file
@@ -12,9 +16,11 @@
  *
  * See `./context.ts` for what the shell passes in.
  */
+import { completionKeymap } from '@codemirror/autocomplete';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
-import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
-import { EditorSelection, EditorState, Prec } from '@codemirror/state';
+import { foldGutter, foldKeymap, HighlightStyle, syntaxHighlighting } from '@codemirror/language';
+import { lintGutter } from '@codemirror/lint';
+import { Compartment, EditorSelection, EditorState, Prec } from '@codemirror/state';
 import {
   drawSelection,
   EditorView,
@@ -25,65 +31,25 @@ import {
   lineNumbers,
 } from '@codemirror/view';
 import { tags as t } from '@lezer/highlight';
-import {
-  flowchartTags,
-  ganttTags,
-  journeyTags,
-  mermaid,
-  mermaidTags,
-  mindmapTags,
-  pieTags,
-  requirementTags,
-  sequenceTags,
-} from 'codemirror-lang-mermaid';
+import { createLanguageService, type LanguageService } from '@mermaid-js/language-service';
+import { mermaid } from '@mermaid-js/language-service-codemirror';
 import { css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { ViewerTabElement, type ViewerContext } from './context.ts';
 
-/** v12's palette, unchanged. */
+/**
+ * v12's palette over the tags the adapter's first-paint highlighters emit. It takes
+ * precedence over the adapter's light `defaultHighlightStyle` fallback.
+ */
 const highlightStyle = HighlightStyle.define([
-  {
-    tag: [mermaidTags.diagramName, flowchartTags.diagramName],
-    color: '#c4b5fd',
-    fontWeight: '600',
-  },
-  {
-    tag: [t.keyword, flowchartTags.keyword, ganttTags.keyword, journeyTags.keyword],
-    color: '#7dd3fc',
-  },
-  { tag: [t.controlKeyword, sequenceTags.keyword2], color: '#fbbf24' },
-  { tag: [t.modifier, flowchartTags.orientation, sequenceTags.position], color: '#c084fc' },
-  {
-    tag: [t.variableName, flowchartTags.nodeId, sequenceTags.nodeText, journeyTags.actor],
-    color: '#93c5fd',
-  },
-  {
-    tag: [
-      t.string,
-      flowchartTags.nodeText,
-      flowchartTags.nodeEdgeText,
-      pieTags.titleText,
-      journeyTags.text,
-      requirementTags.quotedString,
-      ganttTags.string,
-    ],
-    color: '#86efac',
-  },
-  {
-    tag: [t.number, flowchartTags.number, pieTags.number, requirementTags.number],
-    color: '#fca5a5',
-  },
-  {
-    tag: [t.contentSeparator, flowchartTags.link, flowchartTags.nodeEdge, sequenceTags.arrow],
-    color: '#f59e0b',
-  },
-  {
-    tag: [t.lineComment, flowchartTags.lineComment, pieTags.lineComment],
-    color: '#64748b',
-    fontStyle: 'italic',
-  },
-  { tag: [mindmapTags.lineText1, mindmapTags.lineText4], color: '#86efac' },
-  { tag: [mindmapTags.lineText2, mindmapTags.lineText5], color: '#f9a8d4' },
-  { tag: mindmapTags.lineText3, color: '#fbbf24' },
+  { tag: t.keyword, color: '#7dd3fc' },
+  { tag: t.meta, color: '#c4b5fd', fontWeight: '600' },
+  { tag: [t.variableName, t.function(t.variableName)], color: '#93c5fd' },
+  { tag: t.constant(t.name), color: '#c084fc' },
+  { tag: t.string, color: '#86efac' },
+  { tag: t.number, color: '#fca5a5' },
+  { tag: t.operator, color: '#f59e0b' },
+  { tag: t.punctuation, color: '#94a3b8' },
+  { tag: t.lineComment, color: '#64748b', fontStyle: 'italic' },
 ]);
 
 const editorTheme = EditorView.theme(
@@ -110,9 +76,29 @@ const editorTheme = EditorView.theme(
     '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
       backgroundColor: 'rgb(56 189 248 / 25%)',
     },
+    // The adapter's semantic-token colours are for a light editor.
+    '.cm-mermaid-node': { color: '#93c5fd' },
+    '.cm-mermaid-subgraph': { color: '#c4b5fd' },
+    '.cm-mermaid-class': { color: '#fdba74' },
+    '.cm-tooltip': {
+      color: 'var(--sl-color-neutral-900)',
+      backgroundColor: 'var(--sl-color-neutral-100)',
+      border: '1px solid var(--sl-color-neutral-300)',
+      borderRadius: '6px',
+      fontSize: '12px',
+    },
+    '.cm-tooltip-autocomplete > ul > li[aria-selected]': {
+      color: 'var(--sl-color-neutral-0)',
+      backgroundColor: 'var(--sl-color-primary-600)',
+    },
   },
   { dark: true }
 );
+
+/** One language service for every Code tab the page mounts; each editor has its own uri. */
+let languageService: LanguageService | undefined;
+
+export type LanguageStatus = 'loading' | 'ready' | 'failed';
 
 export type CodeStatus = 'saved' | 'dirty' | 'saving' | 'conflict';
 
@@ -130,6 +116,7 @@ export class CodeTab extends ViewerTabElement {
   static override properties = {
     ...ViewerTabElement.properties,
     saving: { state: true },
+    languageStatus: { state: true },
   };
 
   static override styles = css`
@@ -189,8 +176,10 @@ export class CodeTab extends ViewerTabElement {
   `;
 
   declare saving: boolean;
+  declare languageStatus: LanguageStatus;
 
   #view: EditorView | undefined;
+  readonly #language = new Compartment();
   /** Set while the editor is being given the shell's text, so it isn't echoed back. */
   #syncing = false;
   #revealSeq = 0;
@@ -199,6 +188,7 @@ export class CodeTab extends ViewerTabElement {
   constructor() {
     super();
     this.saving = false;
+    this.languageStatus = 'loading';
   }
 
   /** The cursor, 1-based; `undefined` before the editor mounts. */
@@ -273,9 +263,11 @@ export class CodeTab extends ViewerTabElement {
         drawSelection(),
         EditorState.allowMultipleSelections.of(true),
         highlightActiveLine(),
-        mermaid(),
+        foldGutter(),
+        lintGutter(),
+        this.#language.of([]),
         syntaxHighlighting(highlightStyle),
-        keymap.of([...defaultKeymap, ...historyKeymap]),
+        keymap.of([...defaultKeymap, ...historyKeymap, ...foldKeymap, ...completionKeymap]),
         EditorView.lineWrapping,
         editorTheme,
         EditorView.updateListener.of((update) => {
@@ -283,6 +275,20 @@ export class CodeTab extends ViewerTabElement {
         }),
       ],
     });
+    void this.#attachLanguage();
+  }
+
+  /** Waits for the service's facets (no top-level await: see the adapter's README). */
+  async #attachLanguage(): Promise<void> {
+    try {
+      const extension = await mermaid({ service: (languageService ??= createLanguageService()) });
+      if (!this.#view) return;
+      this.#view.dispatch({ effects: this.#language.reconfigure(extension) });
+      this.languageStatus = 'ready';
+    } catch (error) {
+      console.error('[dev] the Mermaid language service failed to load', error);
+      this.languageStatus = 'failed';
+    }
   }
 
   protected override updated(changed: PropertyValues<this>): void {
@@ -355,7 +361,7 @@ export class CodeTab extends ViewerTabElement {
             <sl-button size="small" @click=${() => void ctx.revert()}>Revert</sl-button>
           </div>`
         : nothing}
-      <div class="mount"></div>
+      <div class="mount" data-language=${this.languageStatus}></div>
     `;
   }
 }

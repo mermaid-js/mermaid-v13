@@ -14,6 +14,7 @@
  *
  * Every collection keeps insertion order.
  */
+import { checkLimit } from '@mermaid-js/core/limits';
 import type { AstId, Diagnostic, Range } from '@mermaid-js/core/parser-kit';
 
 export type StateDirection = 'TB' | 'BT' | 'RL' | 'LR';
@@ -107,6 +108,8 @@ export interface StateModel {
   notes: StateNote[];
   classes: StateClass[];
   links: StateLink[];
+  /** The front-matter `title`, drawn above the diagram (D652); absent when there is none. */
+  title?: string;
   accTitle: string;
   accDescr: string;
   warnings: Diagnostic[];
@@ -200,6 +203,10 @@ const KINDS: Readonly<Record<string, StateKind>> = {
 export interface BuildContext {
   error(code: string, message: string, range: Range): void;
   warn(code: string, message: string, range: Range): void;
+  /** State cap (core `DEFAULT_LIMITS.maxNodes`): start and end dots, forks and choices count. */
+  maxNodes?: number | undefined;
+  /** Transition cap (core `DEFAULT_LIMITS.maxEdges`). */
+  maxEdges?: number | undefined;
 }
 
 /** A region's model id. */
@@ -234,6 +241,8 @@ export class StateBuilder {
   private readonly transitions: StateTransition[] = [];
   private readonly notes: StateNote[] = [];
   private edgeCount = 0;
+  /** States made so far that the model draws, for the `maxNodes` cap. */
+  private states = 0;
   private emptyRegionWarned = false;
   private accTitle = '';
   private accDescr = '';
@@ -456,6 +465,7 @@ export class StateBuilder {
       else if (stmt.stmt === 'relation') {
         this.fetch(stmt.state1, item);
         this.fetch(stmt.state2, item);
+        const range = { start: stmt.state1.range.start, end: stmt.state2.range.end };
         this.transitions.push({
           id: `edge${this.edgeCount++}`,
           ast: stmt.ast,
@@ -463,6 +473,8 @@ export class StateBuilder {
           to: stmt.state2.id,
           label: stmt.description ?? '',
         });
+        const count = this.transitions.length;
+        checkLimit(this.ctx, 'maxEdges', count, this.ctx.maxEdges, 'transitions', range);
       }
     }
   }
@@ -471,6 +483,7 @@ export class StateBuilder {
   private node(item: StateItem, parent: StateItem | undefined): void {
     const { id } = item;
     let rec = this.records.get(id);
+    let drawn = false;
     if (!rec) {
       let shape: string | undefined = RECT;
       if (item.start === true) shape = 'stateStart';
@@ -489,11 +502,14 @@ export class StateBuilder {
         styles: entry ? [...entry.styles] : [],
       };
       this.records.set(id, rec);
-      if (id !== '' && id !== '</join></fork>' && id !== '</choice>') this.nodes.push(rec);
+      drawn = id !== '' && id !== '</join></fork>' && id !== '</choice>';
+      if (drawn) this.nodes.push(rec);
     }
     if (item.embed || rec.embed) this.blockMention(rec, item);
     this.describe(rec, item.description);
     if (!rec.isGroup && item.doc) this.group(rec, item, parent);
+    // One check per state the model draws (D608); a region is not a state.
+    if (drawn && !rec.region) this.countState(item.range);
     if (item.doc || (item.description && item.description !== '')) rec.content = true;
     if (parent && parent.id !== 'root' && !this.holds(id, parent.id)) rec.parent = parent.id;
     if (item.note) {
@@ -501,6 +517,11 @@ export class StateBuilder {
       this.notes.push({ ast: item.note.ast, target: id, side, text: item.note.text });
       this.edgeCount++;
     }
+  }
+
+  private countState(range: Range): void {
+    this.states++;
+    checkLimit(this.ctx, 'maxNodes', this.states, this.ctx.maxNodes, 'states', range);
   }
 
   /**

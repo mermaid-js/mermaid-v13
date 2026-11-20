@@ -8,6 +8,7 @@ import type { SvgWriter } from '@mermaid-js/core/svg';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
 import { addDiscovered, discoverOnFirstUse, type DiscoveredPlugin } from './discovery.ts';
 import { createMermaid, type ExternalDiagram, type LazyDiagram } from './index.ts';
+import { Registry } from './registry.ts';
 import { createMermaid as createSlim } from './slim.ts';
 
 const FLOW = 'flowchart LR\n  A --> B\n';
@@ -520,5 +521,22 @@ describe('integration review fixes (#218)', () => {
     expect(r.svg).toContain('mine: box x');
     expect(r.warnings.map((w) => w.code)).toEqual(['EXPLICIT']);
     expect(loads).toEqual([]);
+  });
+});
+
+// A type can draw fewer formats than the package that serves it: the row's own `formats` (a
+// manifest's `typeOptions` entry) bound the plugin's, and a row without ascii loads no text hook.
+describe('a first-party row with fewer formats than its plugin', () => {
+  const rows = [
+    { type: 'wide', pattern: /^wide/, id: 'pkg', formats: ['svg', 'ascii'] },
+    { type: 'narrow', pattern: /^narrow/, id: 'pkg', formats: ['svg'] },
+  ];
+
+  it('answers formats and loadAscii by type', async () => {
+    const registry = new Registry(rows.map((r) => ({ ...r, loadAscii: async () => () => 'text' })));
+    expect(registry.formats('wide')).toEqual(['svg', 'ascii']);
+    expect(registry.formats('narrow')).toEqual(['svg']);
+    expect(registry.formats('pkg')).toEqual(['svg', 'ascii']);
+    expect(await registry.loadAscii('narrow')).toBeUndefined();
   });
 });

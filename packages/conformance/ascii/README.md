@@ -101,3 +101,12 @@ a relationship and a line cell between them fit. `expected.txt` files are writte
 `vitest run -u packages/conformance/src/ascii/er-goldens.spec.ts` and reviewed by hand.
 ER entries in `ascii-divergences.json` have fixtures under `er/` or `er-ascii/`; each suite
 reads only its own groups' entries.
+
+## c4-beta goldens
+
+`c4beta/` holds the reviewed text drawings of c4-beta (spec #730 T7): one folder for each probe of
+`src/c4beta/cases` and each grammar document the parser accepts, with `expected.txt` (Unicode) and
+`expected.ascii.txt`. They have no upstream file and no copy of the input: the source is the probe
+itself, and a rejected probe has no folder. `src/c4beta/ascii-goldens.spec.ts` compares them
+exactly, and `src/c4beta/ascii-corpus.spec.ts` runs the C4 text properties over the same sources
+and `e2e/diagrams/c4beta`.

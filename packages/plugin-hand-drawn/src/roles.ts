@@ -30,6 +30,12 @@ export const COMPOSITE: SketchOptions = {
   hachureGap: -1,
 };
 
+/**
+ * An edge label's box (D630, no v12 counterpart: v12 never sketched it): the border sketched as
+ * a node's outline, the fill plain (solid, never hachure), as a state composite's.
+ */
+export const LABEL: SketchOptions = { ...COMPOSITE };
+
 /** v12 `solidStateFill`: state start and end, choice, fork and join. */
 export const MARK: SketchOptions = {
   roughness: 0.7,
@@ -59,6 +65,8 @@ export function optionsFor(role: OutlineRole, attrs: Attrs): SketchOptions {
       return MARK;
     case 'edge':
       return EDGE;
+    case 'label':
+      return LABEL;
     case 'part':
       return COMPOSITE_PART.test(attrs.class ?? '') ? COMPOSITE : NODE;
     case 'node':

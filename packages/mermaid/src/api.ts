@@ -3,42 +3,13 @@
  * `detectType`, `preload`, `supportsFormat` and the register functions. Each API object owns
  * one Registry and one frozen defaults snapshot; `initialize` swaps the snapshot, so a render
  * in flight keeps the one it started with (R-ARCH-4, D72).
+ *
+ * This file is the wiring: the session state (`session.ts`), the analyser (`analyser.ts`), the
+ * draw context (`draw-context.ts`), the draw (`draw.ts`) and the loads (`prepare.ts`).
  */
-import {
-  drawDiagram,
-  drawText,
-  errorFromDiagnostics,
-  HookRunner,
-  MermaidError,
-  NotLoadedError,
-  renderErrorSvg,
-  UnsupportedFormatError,
-  type DiagramParseContext,
-  type EmbeddedText,
-  type TextRenderContext,
-  type Warning,
-} from '@mermaid-js/core';
-import {
-  INTEGRATOR_ONLY_KEYS,
-  resolveText,
-  type MermaidConfig,
-  type ResolvedConfig,
-} from '@mermaid-js/core/config';
-import {
-  cellProfile,
-  layered,
-  pxProfile,
-  type LayoutEngine,
-  type UnitProfile,
-} from '@mermaid-js/core/layout';
-import { checkSource } from '@mermaid-js/core/limits';
-import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
-import { resolveSecurityLevel } from '@mermaid-js/core/svg';
-import { inlineSpans, type Measurer } from '@mermaid-js/core/text';
-import { loadTheme, resolveThemeName } from '@mermaid-js/core/theme';
-import { stageEnd, stageStart } from '@mermaid-js/core/timing';
+import { HookRunner } from '@mermaid-js/core';
+import type { MermaidConfig } from '@mermaid-js/core/config';
 import type {
-  ExtensionPlugin,
   ParseErrorHandler,
   ParseOptions,
   ParseResult12,
@@ -50,56 +21,30 @@ import type {
   TextRenderOptions,
   TextRenderResult,
 } from './api-types.ts';
-import type * as TextModule from './ascii.ts';
+import { Analyser } from './analyser.ts';
 import {
-  defaultIdPrefix,
-  directiveConfig,
   isPlain,
-  mergeInto,
-  optionsKey,
   Overlays,
   SiteConfigs,
   snapshot,
   type InitializeConfig,
-  type Plain,
   type Snapshot,
 } from './config-snapshot.ts';
+import { createDomAdapter, v12Init } from './dom.ts';
+import { blockLoader, type BlockLoader } from './embeds.ts';
+import { loadFor } from './draw-context.ts';
+import { draw, drawAscii, drawSvg } from './draw.ts';
+import { toMermaidError } from './errors.ts';
+import { iconPackRegistry, type IconLoader } from './icon-packs.ts';
+import { loadText, parseText, preload, prepareWith } from './prepare.ts';
 import {
-  AnalysisCache,
-  dataAstOf,
-  fullParse,
-  parseStep,
-  type Analysis,
-  type Detection,
-  type Parsed,
-} from './analysis-cache.ts';
-import { createDomAdapter } from './dom.ts';
-import type { DrawBlocks } from './block-pass.ts';
-import { blockLoader, outsideBlocks, type BlockHost } from './embeds.ts';
-import {
-  toMermaidError,
-  toWarning,
-  unsupportedDiagram,
-  warnHtmlDropped,
-  type DrawContext,
-} from './errors.ts';
-import { iconPackRegistry, packsUnsupported, type IconLoader } from './icon-packs.ts';
-import { selectMeasurer } from './measurer.ts';
-import {
-  builtIn,
-  isElkName,
   Registry,
-  type AnyPlugin,
-  layoutName,
-  type LayoutFound,
-  type Detected,
   type ExternalDiagram,
   type FirstPartyEntry,
   type LayoutLoader,
 } from './registry.ts';
-import { loadResources, missingFor, themeFor } from './draw-resources.ts';
 import { DiscoveryQueue, registerSeam } from './seam.ts';
-import { VERSION } from './version.ts';
+import { hooksFor, rebuildHooks, type Session } from './session.ts';
 
 export type { InitializeConfig, IntegratorOptions } from './config-snapshot.ts';
 export { defaultIdPrefix } from './config-snapshot.ts';
@@ -110,22 +55,95 @@ function renderOptions(arg: unknown): RenderOptions | undefined {
   return arg as RenderOptions;
 }
 
-type TextBackend = typeof TextModule;
-
-/** What `detect` found, for a type with a plugin package. */
-interface Found {
-  readonly detected: Detected & { readonly id: string };
-  readonly pre: PreprocessResult;
+/**
+ * Embedded diagrams (ADR-15): a host's blocks, parsed and drawn before the host draws. The
+ * pass is a chunk of its own, loaded for the first text with a block (D553).
+ */
+function blocksOf(k: Session): BlockLoader {
+  const { analyser } = k;
+  return blockLoader({
+    detect: (text, s) => analyser.detect(text, s),
+    analyse: (text, s, found, plugin, host) =>
+      analyser.analyse(text, s, plugin, found, host).analysis,
+    load: (id) => k.registry.load(id),
+    loaded: (id) => k.registry.plugin(id),
+    resources: async (a, format) => {
+      if (format === 'svg') return loadFor(k, a, false);
+      // A block without text output is a stand-in, which needs nothing loaded.
+      if (analyser.textOf(a)) await Promise.all([loadText(k, a), loadFor(k, a, true)]);
+    },
+    draw: (text, s, options, a, id, inner) => {
+      const { now, placeholders } = options ?? {};
+      const drawing = { id, now, placeholders };
+      const { drawn, ctx, warnings, mount } = drawSvg(k, text, s, drawing, { analysis: a }, inner);
+      const own = warnings.slice(k.skipped.length);
+      return {
+        ...drawn,
+        securityLevel: ctx.securityLevel,
+        linkSchemes: ctx.linkSchemes,
+        warnings: own,
+        // A block binds in its own root, so its ids never meet the host's or another block's.
+        bind: mount({ ...drawn, diagramType: a.prepared.diagramType, warnings: own }),
+      };
+    },
+    drawText: (b, s, options, a, id, inner) => {
+      if (!analyser.textOf(a)) return k.textBackend!.blockStandIn(a.detected.type, b.id);
+      const { now, ascii } = (options ?? {}) as Partial<TextRenderOptions>;
+      const call = { format: 'ascii', id, now, ascii } as const;
+      const { warnings, ...drawn } = drawAscii(k, b.text, s, call, { analysis: a }, () => inner);
+      return { ...drawn, warnings: warnings.slice(k.skipped.length) };
+    },
+  });
 }
 
-/** How a render measures and sizes: px for SVG, cells for text (D77, D84). */
-interface Units {
-  readonly units: UnitProfile;
-  readonly measurer?: Measurer;
-  /** `availableWidth` in the profile's units. */
-  readonly width?: number;
-  /** Text output: the config with its `ascii` section, and what the text entry reads besides. */
-  readonly text?: Pick<TextRenderContext, 'config' | 'title' | 'ast' | 'embedText'>;
+/** The state of one API object, with discovery and the blocks wired to it. */
+function createSession(
+  firstParty: readonly FirstPartyEntry[],
+  firstPartyNames: readonly { readonly type: string; readonly id?: string }[] | undefined,
+  iconPacks: Session['iconPacks']
+): Session {
+  const registry = new Registry(firstParty, firstPartyNames);
+  const siteConfigs = new SiteConfigs();
+  // The analyser reads the claims of the hooks as they are at each parse.
+  const analyser = new Analyser(
+    registry,
+    siteConfigs,
+    () => k.hooks.claims(),
+    (plugin, config) => hooksFor(k, { plugin, prepared: { config } }).readsAst
+  );
+  // Discovery (D166): its warnings wait for the next draw that succeeds; a first-use source
+  // (the Node scan, T4) runs once, before the first prepare, render, parse or preload.
+  const discovery = new DiscoveryQueue(
+    (list) =>
+      registry.registerDiscovered(list).then((warnings) => {
+        rebuildHooks(k);
+        return warnings;
+      }),
+    () => analyser.invalidate(),
+    () => k.site.config
+  );
+  const k: Session = {
+    registry,
+    analyser,
+    discovery,
+    skipped: discovery.skipped,
+    siteConfigs,
+    iconPacks,
+    // What a draw reads: the packs without their loader, so a draw cannot start one (R-ARCH-6).
+    packs: (({ load: _, ...rest }) => rest)(iconPacks),
+    overlays: new Overlays(),
+    layoutRunners: new Map(),
+    hooks: new HookRunner<Element, RenderResult>(),
+    extensionList: [],
+    site: snapshot(),
+    parseErrorHandler: undefined,
+    textBackend: undefined,
+    blocks: undefined as unknown as BlockLoader,
+    fontTables: new WeakMap(),
+  };
+  // The block loader's callbacks read the session when a text with a block draws.
+  k.blocks = blocksOf(k);
+  return k;
 }
 
 /**
@@ -137,600 +155,23 @@ export function createMermaid(
   firstParty: readonly FirstPartyEntry[],
   firstPartyNames?: readonly { readonly type: string; readonly id?: string }[]
 ) {
-  const registry = new Registry(firstParty, firstPartyNames);
-  // Rebuilt after each registration, so hooks run in D166 order whenever plugins arrived.
-  let hooks = new HookRunner<Element, RenderResult>();
-  // Every registered extension in hook order, for the per-layout runners below.
-  let extensionList: readonly ExtensionPlugin[] = [];
-  // `hooks` plus one layout loader's extension, per extension (D174), rebuilt on registration.
-  const layoutRunners = new Map<ExtensionPlugin, HookRunner<Element, RenderResult>>();
-  const rebuildHooks = (): void => {
-    const next = new HookRunner<Element, RenderResult>();
-    extensionList = registry.extensions();
-    for (const e of extensionList) next.register(e);
-    hooks = next;
-    layoutRunners.clear();
-  };
-  /**
-   * The hooks of a render: the registered extensions, plus the extension of the layout loader
-   * that lays it out, if it brought one. Other renders never run a layout's hooks, so with no
-   * other extension they keep the stream writer.
-   */
-  const hooksFor = (
-    {
-      plugin,
-      prepared: { config },
-    }: Pick<Analysis, 'plugin'> & { prepared: Pick<Prepared, 'config'> },
-    text = false
-  ): HookRunner<Element, RenderResult> => {
-    // Text output never runs a layout's hooks: no registered engine lays it out (D179).
-    if (text || plugin.layoutKind !== 'graph') return hooks;
-    const own = registry.layoutExtension(layoutName(config, plugin));
-    if (!own) return hooks;
-    let runner = layoutRunners.get(own);
-    if (!runner) {
-      runner = new HookRunner<Element, RenderResult>();
-      for (const e of extensionList) runner.register(e);
-      runner.register(own);
-      layoutRunners.set(own, runner);
-    }
-    return runner;
-  };
-  // Discovery (D166): its warnings wait for the next draw that succeeds; a first-use source
-  // (the Node scan, T4) runs once, before the first prepare, render, parse or preload.
-  const discovery = new DiscoveryQueue(
-    (list) =>
-      registry.registerDiscovered(list).then((warnings) => {
-        rebuildHooks();
-        return warnings;
-      }),
-    () => cache.clear(),
-    () => site.config
-  );
-  const skipped = discovery.skipped;
-  let site: Snapshot = snapshot();
-  let parseErrorHandler: ParseErrorHandler | undefined;
-  // One pack registry per API object (D294); an icons extension reads it, keeping no state.
   const [iconPacks, registerPacks] = iconPackRegistry();
-  // What a draw reads: the packs without their loader, so a draw cannot start one (R-ARCH-6).
-  const { load: _, ...packs } = iconPacks;
-  const cache = new AnalysisCache<Analysis>();
-  const siteConfigs = new SiteConfigs();
-  const overlays = new Overlays();
-  // `core/ascii`'s cell measurer and width, loaded by the first text `prepare` (D87).
-  let textBackend: TextBackend | undefined;
-
-  // A type may read its own section on top of its plugin's (`swimlane` over `flowchart`,
-  // D534): both are given, highest first.
-  function sectionOf(detected: Detected, plugin?: AnyPlugin) {
-    const own = plugin?.configSection ?? plugin?.id ?? detected.id;
-    return detected.section && detected.section !== own ? [detected.section, own!] : own;
-  }
-
-  /**
-   * Detect, resolve config and parse with a loaded plugin (DESIGN §3 steps 1–4). The parse is
-   * lean (DESIGN §4.2) unless the call asks for it `full` or a `postParse` hook of the render
-   * reads the AST; a lean parse with an error is parsed again in full for its diagnostics.
-   */
-  function analyse(
-    text: string,
-    snap: Snapshot,
-    plugin: AnyPlugin,
-    { detected, pre }: Detection,
-    host?: BlockHost,
-    full = false
-  ): Parsed {
-    const warnings: Warning[] = [];
-    const warn = (w: Warning): void => void warnings.push(toWarning(w, registry.fragments()));
-    for (const d of pre.diagnostics) if (d.severity === 'warning') warn(d);
-    const section = sectionOf(detected, plugin);
-    let front = pre.frontMatter?.config;
-    let directives = directiveConfig(pre, section);
-    const hit = siteConfigs.get(snap, plugin, detected, section, registry.fragments());
-    for (const w of hit.warnings) warn(w);
-    // An embedded diagram (ADR-15) sets only its own options, with one warning for the rest.
-    if (host) ({ front, directives } = host.layers(front, directives, hit.site, warn));
-    // An embedded diagram starts from its host's config, and takes its theme.
-    let config: ResolvedConfig = resolveText(hit.site, front, directives, {
-      warn,
-      under: host?.config,
-    });
-    if (host) config = host.resolve(config, [section ?? []].flat());
-    const t = stageStart();
-    const claims = hooks.claims();
-    const ctx: DiagramParseContext =
-      claims.length > 0
-        ? { config, preprocessed: pre, limits: snap.limits, claims }
-        : { config, preprocessed: pre, limits: snap.limits };
-    const readsAst = hooksFor({ plugin, prepared: { config } }).readsAst;
-    const dataAst = dataAstOf(snap.options, plugin, readsAst);
-    const parsed = parseStep(plugin, text, ctx, !full && !readsAst, dataAst);
-    const parse = parsed.lean;
-    stageEnd('parse', t);
-    // A directive inside a block belongs to the block (ADR-15): parse again without it.
-    const outside = outsideBlocks(pre, parse);
-    if (outside !== pre) return analyse(text, snap, plugin, { detected, pre: outside }, host, full);
-    const error = errorFromDiagnostics(text, [...pre.diagnostics, ...parse.diagnostics]);
-    if (error) throw error;
-    for (const d of parse.diagnostics) if (d.severity === 'warning') warn(d);
-    const title = pre.frontMatter?.title;
-    const analysis: Analysis = {
-      detected,
-      plugin,
-      prepared: { diagramType: detected.type, config, parse, warnings },
-      ...(title !== undefined ? { title } : {}),
-      sources: [hit.site.site, front, ...directives],
-      dataAst,
-      full: () => fullParse(plugin, text, ctx),
-    };
-    return { analysis, full: parsed.full };
-  }
-
-  function detect(text: string, s: Snapshot): Detection {
-    // DESIGN §3 step 1: the source limit, before the text is read at all.
-    checkSource(text, s.limits);
-    const pre = preprocess(text);
-    const error = errorFromDiagnostics(
-      text,
-      pre.diagnostics.filter((d) => d.severity === 'error')
-    );
-    if (error) throw error;
-    return {
-      detected: registry.detect(text, pre, s.config as Readonly<Record<string, unknown>>),
-      pre,
-    };
-  }
-
-  /** `detect`, for a type with a plugin package that can draw `ascii` when that is asked for. */
-  function detectSupported(text: string, s: Snapshot, ascii: boolean): Found {
-    const { detected, pre } = detect(text, s);
-    if (detected.id === undefined) throw unsupportedDiagram(detected.type);
-    if (ascii) checkText(detected);
-    return { detected: { ...detected, id: detected.id }, pre };
-  }
-
-  /**
-   * Parses with the loaded `plugin` and caches the analysis (DESIGN §3 steps 2–4): only its
-   * lean parse; a full parse goes to the call that asked for it.
-   */
-  function analysisOf(
-    text: string,
-    s: Snapshot,
-    found: Found,
-    plugin: AnyPlugin | undefined,
-    full = false
-  ): Parsed {
-    if (!plugin) throw unsupportedDiagram(found.detected.type);
-    const parsed = analyse(text, s, plugin, found, undefined, full);
-    cache.set(text, s, parsed.analysis);
-    return parsed;
-  }
-
-  // Embedded diagrams (ADR-15): a host's blocks, parsed and drawn before the host draws. The
-  // pass is a chunk of its own, loaded for the first text with a block (D553).
-  const blocks = blockLoader({
-    detect,
-    analyse: (text, s, found, plugin, host) => analyse(text, s, plugin, found, host).analysis,
-    load: (id) => registry.load(id),
-    loaded: (id) => registry.plugin(id),
-    resources: async (a, format) => {
-      if (format === 'svg') return loadFor(a, false);
-      // A block without text output is a stand-in, which needs nothing loaded.
-      if (textOf(a)) await Promise.all([loadText(a), loadFor(a, true)]);
-    },
-    draw: (text, s, options, a, id, inner) => {
-      const { now, placeholders } = options ?? {};
-      const drawing = { id, now, placeholders };
-      const { drawn, ctx, warnings, mount } = drawSvg(text, s, drawing, { analysis: a }, inner);
-      const own = warnings.slice(skipped.length);
-      return {
-        ...drawn,
-        securityLevel: ctx.securityLevel,
-        linkSchemes: ctx.linkSchemes,
-        warnings: own,
-        // A block binds in its own root, so its ids never meet the host's or another block's.
-        bind: mount({ ...drawn, diagramType: a.prepared.diagramType, warnings: own }),
-      };
-    },
-    drawText: (b, s, options, a, id, inner) => {
-      if (!textOf(a)) return textBackend!.blockStandIn(a.detected.type, b.id);
-      const { now, ascii } = (options ?? {}) as Partial<TextRenderOptions>;
-      const call = { format: 'ascii', id, now, ascii } as const;
-      const { warnings, ...drawn } = drawAscii(b.text, s, call, { analysis: a }, () => inner);
-      return { ...drawn, warnings: warnings.slice(skipped.length) };
-    },
-  });
+  const k = createSession(firstParty, firstPartyNames, iconPacks);
+  const { registry, analyser } = k;
 
   function snapshotFor(options?: RenderOptions): Snapshot {
     const extra = options?.config;
-    return extra ? overlays.get(site, extra) : site;
-  }
-
-  /** Whether `a`'s type has text output (R-ASCII-5, D80). */
-  const textOf = (a: { detected: Detected }): boolean =>
-    a.detected.id !== undefined && registry.formats(a.detected.id).includes('ascii');
-
-  /** Throws `UnsupportedFormatError` unless `detected` declares ascii (R-ASCII-5, D80). */
-  function checkText(detected: Detected): void {
-    if (!textOf({ detected })) throw new UnsupportedFormatError(detected.type, 'ascii');
-  }
-
-  /** Loads the ascii entry and the text backend (D76, D80): only for `format: 'ascii'`. */
-  async function loadText(a: Analysis): Promise<void> {
-    checkText(a.detected);
-    const [hook, backend] = await Promise.all([
-      registry.loadAscii(a.plugin.id),
-      textBackend ?? import('./ascii.ts'),
-    ]);
-    textBackend = backend;
-    if (!hook) throw new UnsupportedFormatError(a.detected.type, 'ascii');
-  }
-
-  /** `svg` or `ascii`; anything else is an `UnsupportedFormatError` in both phases (D80). */
-  function checkFormat(text: string, s: Snapshot, f = 'svg'): 'svg' | 'ascii' {
-    if (f === 'svg' || f === 'ascii') return f;
-    let type = 'unknown';
-    try {
-      type = detect(text, s).detected.type;
-    } catch {
-      // The format error wins over whatever else is wrong with the text.
-    }
-    throw new UnsupportedFormatError(type, f);
-  }
-
-  /** What the registered extensions still need for `a` (R-API-2, D178): `math`, say. */
-  function extensionNeeds(a: Analysis, ascii: boolean) {
-    if (hooks.size === 0) return [];
-    const { parse, config } = a.prepared;
-    const { plugin } = a;
-    return hooks.resources(parse, {
-      iconPacks,
-      config,
-      format: ascii ? 'ascii' : 'svg',
-      labels: plugin.labels && (() => plugin.labels!(parse.model)),
-      icons: plugin.icons && (() => plugin.icons!(parse.model)),
-    });
-  }
-
-  /** The analysis of `text` with what it draws with loaded; `full` adds the full parse. */
-  async function prepareWith(
-    text: string,
-    s: Snapshot,
-    format?: string,
-    full = false
-  ): Promise<Parsed> {
-    if (discovery.pending) await discovery.settle();
-    const ascii = checkFormat(text, s, format) === 'ascii';
-    const hit = cache.get(text, s);
-    let parsed: Parsed;
-    if (hit) parsed = { analysis: hit, full: full ? hit.full() : undefined };
-    else {
-      const f = detectSupported(text, s, ascii);
-      parsed = analysisOf(text, s, f, await registry.load(f.detected.id), full || ascii);
-    }
-    const { analysis } = parsed;
-    if (ascii) await loadText(analysis);
-    await (
-      await blocks.load(analysis)
-    )?.prepare({ root: text, at: 0, a: analysis, s }, ascii ? 'ascii' : 'svg');
-    await loadFor(analysis, ascii);
-    return parsed;
-  }
-
-  /** Loads what `a` draws with: layout, themes, plugin and extension resources. */
-  function loadFor(a: Analysis, ascii: boolean): Promise<unknown> {
-    return Promise.all([
-      loadResources(registry, missingFor(registry, a, ascii)),
-      ...extensionNeeds(a, ascii).map((n) => n.load()),
-    ]);
+    return extra ? k.overlays.get(k.site, extra) : k.site;
   }
 
   async function prepare(text: string, options?: RenderOptions): Promise<Prepared> {
     try {
-      const { analysis, full } = await prepareWith(
-        text,
-        snapshotFor(options),
-        options?.format,
-        true
-      );
+      const s = snapshotFor(options);
+      const { analysis, full } = await prepareWith(k, text, s, options?.format, true);
       return { ...analysis.prepared, parse: full ?? analysis.full() };
     } catch (e) {
       throw toMermaidError(e);
     }
-  }
-
-  /** The cached or fresh analysis of `text`, or a placeholder svg for an unloaded plugin. */
-  function analysisFor(
-    text: string,
-    s: Snapshot,
-    options: RenderOptions | undefined,
-    ascii: boolean
-  ): Parsed | RenderResult {
-    const hit = cache.get(text, s);
-    if (hit) return { analysis: hit };
-    const f = detectSupported(text, s, ascii);
-    const plugin = registry.plugin(f.detected.id);
-    if (plugin) return analysisOf(text, s, f, plugin, ascii);
-    const missing = new NotLoadedError([{ kind: 'diagram', name: f.detected.id }]);
-    if (ascii || !options?.placeholders) throw missing;
-    return {
-      svg: renderErrorSvg(missing, { version: VERSION }),
-      diagramType: f.detected.type,
-      width: 0,
-      height: 0,
-      warnings: [...skipped, { code: 'PLACEHOLDER', message: missing.message }],
-    };
-  }
-
-  /**
-   * The render context of one draw, the warnings sink it writes to, and the binders of the
-   * blocks it drew (#669).
-   */
-  function contextFor(
-    text: string,
-    s: Snapshot,
-    options: RenderOptions | undefined,
-    analysis: Analysis,
-    { units, measurer, width, text: textOnly }: Units,
-    drawBlocks?: DrawBlocks
-  ) {
-    const { prepared, plugin } = analysis;
-    const { config } = prepared;
-    // A usage error, as a bad `limits` option is: `+now` of a bad Date or a string is NaN.
-    const now = +(options?.now ?? Date.now());
-    if (!Number.isFinite(now))
-      throw new TypeError(`RenderOptions.now is no instant: ${String(options?.now)}`);
-    const textOutput = units.id === 'cell';
-    const warnings: Warning[] = [...skipped, ...prepared.warnings];
-    const warn = (w: Warning): void => void warnings.push(toWarning(w, registry.fragments()));
-    const missing = [
-      ...missingFor(registry, analysis, textOutput),
-      // An icon pack is missing only while `pending`: an unregistered one is unresolved (D291),
-      // and so is a `failed` one until the next prepare() retries it (D299).
-      ...extensionNeeds(analysis, textOutput).flatMap(({ resource: r }) =>
-        r.kind !== 'iconPack' || iconPacks.state(r.name) === 'pending' ? r : []
-      ),
-    ];
-    if (missing.length > 0) {
-      if (textOutput || !options?.placeholders) throw new NotLoadedError(missing);
-      warn({
-        code: 'PLACEHOLDER',
-        message: `Drawn with stand-ins for what is not loaded: ${missing
-          .map((r) => `${r.kind} "${r.name}"`)
-          .join(', ')}.`,
-      });
-    }
-    for (const w of packsUnsupported(iconPacks, hooks.claims())) warn(w);
-    let engine: LayoutEngine | undefined, part: unknown;
-    let elkName: string | undefined;
-    if (plugin.layoutKind === 'graph') {
-      const asked = layoutName(config, plugin);
-      // D179: no other engine knows cells (ELK ignores `grid`), so the name only warns. Text
-      // output never loads it, and gives no ELK_NOT_INSTALLED or LAYOUT_UNKNOWN for it.
-      if (textOutput && !builtIn(asked)) {
-        warn({
-          code: 'ASCII_DROPPED',
-          feature: 'layout',
-          message: `Text output lays out with the built-in layered engine; layout "${asked}" is not used.`,
-        });
-      }
-      // Text output: core's `layered` itself, even when a loader replaced the name for SVG.
-      const name = textOutput ? 'layered' : asked;
-      const found = textOutput
-        ? ({ engine: layered, state: 'ready' } as LayoutFound)
-        : registry.layout(name, plugin.layoutEngine);
-      const using = `using the built-in ${found.standIn ?? 'layered'} engine`;
-      // Only when ELK lays the graph out: with LAYOUT_UNKNOWN or ELK_NOT_INSTALLED, layered
-      // draws every group, as that warning says.
-      if (isElkName(name) && (found.state === 'ready' || found.state === 'missing')) elkName = name;
-      if (found.state === 'unknown') {
-        warn({
-          code: 'LAYOUT_UNKNOWN',
-          message: `Unknown layout "${name}"; ${using}.`,
-        });
-      } else if (found.state === 'elk') {
-        // D173: `mermaid` names the package; core never does (D153).
-        warn({
-          code: 'ELK_NOT_INSTALLED',
-          message: `Layout "${name}" needs @mermaid-js/layout-elk, which is not registered; ${using}.`,
-        });
-      }
-      engine = found.engine;
-      // The layout's part of the drawing (`layoutParts`), only when that layout lays it out:
-      // ready (a stand-in engine never is).
-      if (found.state === 'ready') part = registry.layoutPart(plugin, name)[1];
-    }
-    // The theme reads the id prefix only for the gradient (D182), after ctx exists.
-    const tables = { rules: registry.themeRules(), diagram: plugin.theme };
-    const theme = themeFor(config, s, warn, tables, () => ctx.idPrefix);
-    let idPrefix: string | undefined;
-    // Inline boxes (D177) are SVG only: text output shows every span as written, and warns
-    // ASCII_DROPPED once per feature (D179). Glyphs (D293) are SVG only too, absent without an
-    // extension that has them, and share the inline spans' once-per-render warnings (D291).
-    const inline = inlineSpans(hooks.inline(), warn, textOutput ? 'ascii' : 'svg', packs);
-    const icon = textOutput ? undefined : hooks.icon(inline, packs);
-    // The blocks (ADR-15) are drawn at the first lookup, with this draw's id prefix.
-    const { embed, mounter } = blocks.lookup(drawBlocks, () => ctx.idPrefix, warn);
-    const ctx: DrawContext = {
-      config,
-      measurer:
-        measurer ??
-        selectMeasurer({ measurer: s.options.measurer, deterministic: s.options.deterministic }),
-      units,
-      theme,
-      securityLevel: resolveSecurityLevel(config.securityLevel, warn),
-      get idPrefix() {
-        return (idPrefix ??=
-          options?.id ?? defaultIdPrefix(text, config, optionsKey(s.options), units));
-      },
-      version: VERSION,
-      linkSchemes: s.options.linkSchemes,
-      limits: s.limits,
-      dataAst: analysis.dataAst,
-      now,
-      availableWidth: width,
-      iconPacks: packs,
-      layoutPart: part,
-      layout: (graph) => {
-        if (!engine) throw new TypeError(`${plugin.id} has no graph layout`);
-        // D174: `@{ algorithm }` is parsed but not applied yet. `mermaid` says so, not the engine
-        // (which has no warning channel), once per render.
-        if (elkName !== undefined) {
-          const asked = [...new Set(graph.groups.flatMap((g) => g.algorithm ?? []))];
-          if (asked.length > 0) {
-            warn({
-              code: 'ELK_ALGORITHM_IGNORED',
-              message: `Per-group layout algorithms (@{ algorithm }) are not applied yet: ${asked.join(', ')}. Those groups are laid out with "${elkName}".`,
-            });
-            elkName = undefined;
-          }
-        }
-        return engine(
-          width !== undefined && graph.availableWidth === undefined
-            ? { ...graph, availableWidth: width }
-            : graph,
-          { config }
-        );
-      },
-      inline,
-      icon,
-      embed,
-      foldedType: blocks.foldedType(analysis, s),
-      warn,
-      // Spread into the literal, not over `ctx`: a spread would run the lazy idPrefix getter.
-      ...textOnly,
-    };
-    return { ctx, warnings, mounter };
-  }
-
-  /**
-   * Text output (DESIGN §6.3): cell layout, the ascii hook, columns and rows (D80, D84).
-   * `blocksFor` draws the blocks (ADR-15) with the options it is given: this draw's charset and
-   * padding, never its width (only the outermost drawing is fitted to `maxWidth`).
-   */
-  function drawAscii(
-    text: string,
-    s: Snapshot,
-    options: RenderOptions | undefined,
-    { analysis, full }: Parsed,
-    blocksFor?: (options: TextRenderOptions) => DrawBlocks<EmbeddedText> | undefined
-  ): TextRenderResult {
-    const { prepared, plugin } = analysis;
-    // Text output reads the AST and the model's AST ids (D82's drop warnings).
-    const parse = full ?? analysis.full();
-    checkText(analysis.detected);
-    const hook = registry.ascii(plugin.id);
-    const backend = textBackend;
-    if (!hook || !backend)
-      throw new NotLoadedError([{ kind: 'diagram', name: `${plugin.id}/ascii` }]);
-    const explicit = (options as TextRenderOptions | undefined)?.ascii;
-    const { charset, padding, maxWidth } = backend.asciiOptions(prepared.config, explicit);
-    const { title } = analysis;
-    // The diagram's text entry reads the section from the config: hand it the resolved one.
-    const ascii = Object.freeze({
-      charset,
-      padding,
-      ...(maxWidth === undefined ? {} : { maxWidth }),
-    });
-    // The blocks (ADR-15), drawn in this charset and padding at the first lookup.
-    const inner = blocksFor?.({ format: 'ascii', now: options?.now, ascii: { charset, padding } });
-    const { embed: embedText } = blocks.lookup(
-      inner,
-      () => ctx.idPrefix,
-      (w) => ctx.warn(w)
-    );
-    const { ctx, warnings } = contextFor(text, s, options, analysis, {
-      units: cellProfile(padding),
-      measurer: backend.cellMeasurer,
-      width: maxWidth,
-      text: {
-        config: Object.freeze({ ...prepared.config, ascii }),
-        ...(title !== undefined ? { title } : {}),
-        ast: parse.ast,
-        ...(embedText ? { embedText } : {}),
-      },
-    });
-    const textCtx = ctx as TextRenderContext;
-    // D86: postParse and postLayout run (LaidOut.units 'cell'); postRender, afterMount never.
-    const textHooks = hooksFor(analysis, true);
-    const run = textHooks.size === 0 ? undefined : textHooks.start(textCtx, plugin.id);
-    const out = drawText(plugin, hook, parse.model, textCtx, run && { run, ast: parse.ast });
-    warnHtmlDropped(ctx);
-    const lines = out === '' ? [] : out.split('\n');
-    const columns = lines.reduce((m, l) => Math.max(m, backend.cellWidth(l)), 0);
-    // D84: never cropped; say so when it still does not fit.
-    if (maxWidth !== undefined && columns > maxWidth)
-      ctx.warn({
-        code: 'ASCII_TOO_WIDE',
-        message: `The drawing is ${columns} columns wide; ascii.maxWidth is ${maxWidth}.`,
-      });
-    return {
-      format: 'ascii',
-      text: out,
-      columns,
-      rows: lines.length,
-      diagramType: prepared.diagramType,
-      warnings,
-    };
-  }
-
-  /** `drawWith`; the queued discovery warnings leave the queue only once a draw has them. */
-  function draw(
-    text: string,
-    s: Snapshot,
-    options: RenderOptions | undefined,
-    prepared?: Parsed
-  ): RenderResult | TextRenderResult {
-    const queued = skipped.length;
-    const result = drawWith(text, s, options, prepared);
-    skipped.splice(0, queued);
-    return result;
-  }
-
-  function drawWith(
-    text: string,
-    s: Snapshot,
-    options: RenderOptions | undefined,
-    prepared?: Parsed
-  ): RenderResult | TextRenderResult {
-    const format = checkFormat(text, s, options?.format);
-    const parsed = prepared ?? analysisFor(text, s, options, format === 'ascii');
-    if (!('analysis' in parsed)) return parsed;
-    const { analysis } = parsed;
-    if (format === 'ascii')
-      return drawAscii(text, s, options, parsed, (o) =>
-        blocks.of(analysis)?.drawText({ root: text, at: 0, a: analysis, s }, o)
-      );
-    const blockDraw = blocks.of(analysis)?.draw({ root: text, at: 0, a: analysis, s }, options);
-    const { drawn, warnings, mount } = drawSvg(text, s, options, parsed, blockDraw);
-    const result: RenderResult = { ...drawn, diagramType: analysis.prepared.diagramType, warnings };
-    // The DOM adapter's afterMount entry point (DESIGN §12.2, §12.3); `run`/`mount` call it.
-    const bind = mount(result, true);
-    if (bind) result.bindFunctions = bind;
-    return result;
-  }
-
-  /** One SVG draw of `a`, with its blocks (ADR-15) drawn at the first lookup. */
-  function drawSvg(
-    text: string,
-    s: Snapshot,
-    options: RenderOptions | undefined,
-    { analysis: a, full }: Parsed,
-    blockDraw: DrawBlocks | undefined
-  ) {
-    const units = { units: pxProfile, width: options?.availableWidth };
-    const { ctx, warnings, mounter } = contextFor(text, s, options, a, units, blockDraw);
-    const renderHooks = hooksFor(a);
-    const run = renderHooks.size === 0 ? undefined : renderHooks.start(ctx, a.plugin.id);
-    // A `postParse` hook reads the AST: this draw has the full parse (DESIGN §4.2).
-    const parse = renderHooks.readsAst ? (full ?? a.full()) : a.prepared.parse;
-    // D537: the line-hop step, when its chunk is loaded and decides that this render hops.
-    const edges = registry.hops?.(a);
-    const drawHooks = run && { run, ast: parse.lean ? undefined : parse.ast };
-    const drawn = drawDiagram(a.plugin, parse.model, ctx, drawHooks, edges);
-    warnHtmlDropped(ctx);
-    // Binds the run's interactions, then each block's in its own nested root (#669).
-    return { drawn, ctx, warnings, mount: mounter<RenderResult>(run) };
   }
 
   /**
@@ -741,7 +182,7 @@ export function createMermaid(
   function renderSync(text: string, options?: SvgRenderOptions): RenderResult;
   function renderSync(text: string, options?: RenderOptions): RenderResult | TextRenderResult {
     try {
-      return draw(text, snapshotFor(options), options);
+      return draw(k, text, snapshotFor(options), options);
     } catch (e) {
       throw toMermaidError(e);
     }
@@ -767,10 +208,13 @@ export function createMermaid(
     const options = renderOptions(containerOrOptions);
     const s = snapshotFor(options);
     try {
-      const parsed = await prepareWith(text, s, options?.format);
-      return draw(text, s, { ...options, id }, parsed);
+      const parsed = await prepareWith(k, text, s, options?.format);
+      return draw(k, text, s, { ...options, id }, parsed);
     } catch (e) {
-      throw toMermaidError(e);
+      // v12's render() passed every failure to `parseError` too (#757).
+      const error = toMermaidError(e);
+      k.parseErrorHandler?.(error);
+      throw error;
     }
   }
 
@@ -780,38 +224,11 @@ export function createMermaid(
   ): Promise<ParseResult12 | false>;
   async function parse(text: string, parseOptions?: ParseOptions): Promise<ParseResult12>;
   async function parse(text: string, parseOptions?: ParseOptions): Promise<ParseResult12 | false> {
-    if (discovery.pending) await discovery.settle();
-    const s = site;
-    try {
-      const f = detectSupported(text, s, false);
-      const { detected, pre } = f;
-      const plugin = await registry.load(detected.id);
-      // A lean parse: what `parse` returns reads no AST (DESIGN §4.2).
-      const a = cache.get(text, s) ?? analysisOf(text, s, f, plugin).analysis;
-      await (await blocks.load(a))?.prepare({ root: text, at: 0, a, s }, undefined);
-      const config: Plain = {};
-      const front = pre.frontMatter?.config;
-      for (const c of [
-        ...(front ? [front] : []),
-        ...directiveConfig(outsideBlocks(pre, a.prepared.parse), sectionOf(detected, plugin)),
-      ])
-        mergeInto(config, c as Plain);
-      for (const key of INTEGRATOR_ONLY_KEYS) delete config[key];
-      return {
-        diagramType: a.prepared.diagramType,
-        config: config as ParseResult12['config'],
-        warnings: [...a.prepared.warnings],
-      };
-    } catch (e) {
-      if (parseOptions?.suppressErrors) return false;
-      const error = toMermaidError(e);
-      parseErrorHandler?.(error);
-      throw error;
-    }
+    return parseText(k, text, parseOptions);
   }
 
   function initialize(config: InitializeConfig): void {
-    site = snapshot(config);
+    k.site = snapshot(config);
   }
 
   /**
@@ -822,48 +239,7 @@ export function createMermaid(
     // v12 passed `config` to detectors; v13 detectors get the `initialize()` config.
     void config;
     try {
-      return detect(text, site).detected.type;
-    } catch (e) {
-      throw toMermaidError(e);
-    }
-  }
-
-  async function preload(req: PreloadRequest): Promise<void> {
-    if (discovery.pending) await discovery.settle();
-    const tasks: Promise<unknown>[] = [];
-    const ascii = req.formats?.includes('ascii');
-    if (ascii) tasks.push(import('./ascii.ts').then((b) => void (textBackend = b)));
-    for (const t of req.types ?? []) {
-      tasks.push(
-        registry.load(t).then((p) => {
-          if (!p)
-            throw new MermaidError('UNSUPPORTED_DIAGRAM', `Diagram type "${t}" is not supported.`);
-          // The plugin's own default engine (D284), or the type's (D534), comes with it.
-          const layout = registry.layoutOf(t) ?? p.layoutEngine?.default;
-          return Promise.all(
-            [layout, registry.layoutPart(p, layout!)[0]].map((n) => n && registry.loadLayout(n))
-          );
-        })
-      );
-      if (ascii)
-        tasks.push(
-          registry.loadAscii(t).then((hook) => {
-            if (!hook) throw new UnsupportedFormatError(t, 'ascii');
-          })
-        );
-    }
-    for (const l of req.layouts ?? []) tasks.push(registry.loadLayout(l));
-    // `auto` needs its dark spec too.
-    for (const name of req.themes ?? []) {
-      const choice = resolveThemeName(name);
-      tasks.push(loadTheme(choice.name));
-      if (choice.dark) tasks.push(loadTheme(choice.dark));
-    }
-    // Extensions' resources by kind: `math: true` loads what a math extension provides (D178).
-    if (req.math) for (const n of hooks.provided('math')) tasks.push(n.load());
-    for (const name of req.iconPacks ?? []) tasks.push(iconPacks.load(name));
-    try {
-      await Promise.all(tasks);
+      return analyser.detect(text, k.site).detected.type;
     } catch (e) {
       throw toMermaidError(e);
     }
@@ -887,24 +263,24 @@ export function createMermaid(
     diagrams: readonly ExternalDiagram[],
     { lazyLoad = true, replace = false }: { lazyLoad?: boolean; replace?: boolean } = {}
   ): Promise<void> {
-    cache.clear();
+    analyser.invalidate();
     try {
       await registry.registerExternal(diagrams, lazyLoad, replace);
     } finally {
-      rebuildHooks();
+      rebuildHooks(k);
       // Again after the await, as `DiscoveryQueue.add` does: a render while it was pending
       // resolved its config without the new fragments and hooks.
-      cache.clear();
+      analyser.invalidate();
     }
   }
 
   function registerLayoutLoaders(loaders: readonly LayoutLoader[]): void {
     const before = registry.fragments();
     const hooked = registry.registerLayouts(loaders);
-    layoutRunners.clear();
+    k.layoutRunners.clear();
     // A new fragment changes how config resolves, and a new hook how texts draw: parsed texts
     // must resolve again.
-    if (registry.fragments() !== before || hooked) cache.clear();
+    if (registry.fragments() !== before || hooked) analyser.invalidate();
   }
 
   /**
@@ -915,24 +291,50 @@ export function createMermaid(
    */
   const registerIconPacks: (packs: readonly IconLoader[]) => void = registerPacks;
 
-  /** @deprecated Catch the `MermaidError` that `parse()` rejects with instead. */
+  /**
+   * @deprecated Catch the `MermaidError` that `parse()` or `render()` rejects with instead.
+   * The same hook as `mermaid.parseError = handler`, as in v12.
+   */
   function setParseErrorHandler(handler: ParseErrorHandler): void {
-    parseErrorHandler = handler;
+    k.parseErrorHandler = handler;
   }
 
   // The DOM adapter (run, mount) reads the defaults at the start of each call, like render.
-  const { run, mount, contentLoaded } = createDomAdapter({
+  const {
+    run,
+    mount,
+    contentLoaded: startOnLoadRun,
+  } = createDomAdapter({
     prepare,
     renderSync,
-    siteConfig: () => site.config,
-    onParseError: (error) => parseErrorHandler?.(error),
+    siteConfig: () => k.site.config,
+    onParseError: (error) => k.parseErrorHandler?.(error),
   });
 
+  /**
+   * @deprecated Use `detectType(text)` and `supportsFormat(type, format)`. v12's list of
+   * detectors: `[{ id }]` with each v12 type in detection order, after v12's `error` and `---`.
+   * Synchronous, so a discovered type is listed only after an awaited `preload()` or render.
+   */
+  function getRegisteredDiagramsMetadata(): { id: string }[] {
+    return ['error', '---', ...registry.types()].map((id) => ({ id }));
+  }
+
+  /** v12's `contentLoaded`: `run()` on page load unless `startOnLoad` is off, here or in config. */
+  function contentLoaded(): void {
+    if (api.startOnLoad) startOnLoadRun();
+  }
+
   const api = {
+    /**
+     * @deprecated Use `initialize({ startOnLoad: false })`. v12's property: `false` stops the
+     * page-load `run()` as the config key does.
+     */
+    startOnLoad: true as boolean,
     render,
     prepare,
     renderSync,
-    preload,
+    preload: (req: PreloadRequest) => preload(k, req),
     parse,
     initialize,
     run,
@@ -944,8 +346,22 @@ export function createMermaid(
     registerLayoutLoaders,
     registerIconPacks,
     setParseErrorHandler,
+    /** @deprecated Use `initialize(config)`, then `run({ querySelector, nodes })` (D643). */
+    init: v12Init(initialize, run),
+    /** @deprecated Use `detectType(text)` and `supportsFormat(type, format)` (D643). */
+    getRegisteredDiagramsMetadata,
+    /**
+     * @deprecated v12's hook, the one `setParseErrorHandler` sets: called with the
+     * `MermaidError` of a failed `parse()`, `render()` or `run()` element (R-API-4, #757).
+     */
+    get parseError(): ParseErrorHandler | undefined {
+      return k.parseErrorHandler;
+    },
+    set parseError(handler: ParseErrorHandler | undefined) {
+      k.parseErrorHandler = handler;
+    },
   };
-  registerSeam(api, discovery);
+  registerSeam(api, k.discovery);
   return api;
 }
 

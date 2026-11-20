@@ -43,7 +43,7 @@ export interface Paints {
 }
 
 /** `currentColor`, for a paint nothing drawn uses, so that its alias is not declared. */
-const UNUSED = 'currentColor' as Paint;
+const UNUSED: Paint = 'currentColor';
 
 /**
  * Every paint the map uses, read before the root is written so that it declares their

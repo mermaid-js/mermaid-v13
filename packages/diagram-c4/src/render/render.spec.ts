@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import type { OutlineDraw, OutlineRole } from '@mermaid-js/core/svg';
 import { C4_COLOR_INVALID } from '../codes.ts';
 import { c4 } from '../plugin.ts';
+import { fixtureSource } from '../layout/mmd.fixtures.ts';
 import { renderC4ForTest } from './harness.ts';
 
 /** Every `<tag>` start tag's attributes, in document order. */
@@ -265,6 +266,27 @@ UpdateRelStyle(a, s, $lineColor="url(#x)")`;
     expect(elements(group(svg, 'data-id="s" data-ast'), 'rect')[0]!.fill).toBe('#1168BD');
     expect(byClass(svg, 'path', 'c4-rel')[0]!.stroke).toBe('var(--_c4r)');
   });
+
+  it('reads an empty UpdateElementStyle slot as not given: the default, with no warning (#774)', async () => {
+    const { svg, warnings } = await renderC4ForTest(
+      fixtureSource('nightly-check/styling/update-element-style-empty-slots')
+    );
+    expect(warnings).toEqual([]);
+    for (const alias of ['a', 'b'])
+      expect(elements(group(svg, `data-id="${alias}" data-ast`), 'rect')[0]).toMatchObject({
+        fill: '#438DD5',
+        stroke: '#3C7FC0',
+      });
+  });
+
+  it('still warns for a non-empty colour the check refuses, beside an empty slot', async () => {
+    const src = `C4Container\nContainer(a, "A")\nUpdateElementStyle(a, , "url(#x)")`;
+    const { warnings } = await renderC4ForTest(src);
+    expect(warnings.map((w) => [w.code, w.message.includes('$fontColor of a')])).toEqual([
+      [C4_COLOR_INVALID, true],
+    ]);
+    expect(warnings[0]!.message).not.toContain('$bgColor');
+  });
 });
 
 describe('boundaries', () => {
@@ -338,6 +360,17 @@ describe('relations (D455)', () => {
     const { svg } = await renderC4ForTest(src);
     expect(svg).toContain('>1: first<');
     expect(svg).toContain('>2: second<');
+  });
+
+  it('draws and numbers every C4Dynamic step, also steps between the same pair (#680)', async () => {
+    const src = `C4Dynamic\nPerson(a, "A")\nSystem(b, "B")\nRel(a, b, "one")\nRel(b, a, "two")\nRel(a, b, "three")\nRel(a, b, "four")\nRel(b, a, "five")`;
+    const { svg } = await renderC4ForTest(src);
+    for (const label of ['1: one', '2: two', '3: three', '4: four', '5: five'])
+      expect(svg).toContain(`>${label}<`);
+    // Their lines are side by side, not on top of each other.
+    const ds = byClass(svg, 'path', 'c4-rel').map((p) => p.d);
+    expect(ds).toHaveLength(5);
+    expect(new Set(ds).size).toBe(5);
   });
 
   it('takes UpdateRelStyle’s colours for the line and its text, not its heads', async () => {

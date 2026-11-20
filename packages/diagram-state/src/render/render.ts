@@ -7,7 +7,7 @@
 // `state/render-theme-names.spec.ts`).
 import { pxProfile } from '@mermaid-js/core/layout';
 import { arrowheads, marker, markerTrim, type Arrowheads } from '@mermaid-js/shared/svg/arrowheads';
-import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
+import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import { routePath } from '@mermaid-js/shared/svg/route';
 import {
   checkLinkTarget,
@@ -19,7 +19,13 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { cls, openSvgRoot, textElement } from '@mermaid-js/shared/svg/document';
+import {
+  cls,
+  openSvgRoot,
+  textElement,
+  placeTitle,
+  titledViewBox,
+} from '@mermaid-js/shared/svg/document';
 import type {
   StateEdgeView,
   StateGroupView,
@@ -69,7 +75,12 @@ interface Paints {
    */
   readonly plainBorder: Color;
   readonly text: Color;
-  /** Transitions, their arrowheads and the filled pseudo-states' fill. */
+  /**
+   * Transitions and their label borders: the canvas line colour, which `default` and `dark` pin
+   * where v12 keeps its transitions under a lineColor override (D668).
+   */
+  readonly transition: Color;
+  /** The filled pseudo-states' fill. */
   readonly line: Color;
   /** The start dot's, fork and join bars' and end ring's stroke: lineColor or the gradient. */
   readonly lineOutline: OutlinePaint;
@@ -131,7 +142,8 @@ function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
     // with the gradient; lookups in the old order so other themes' roots are unchanged.
     border: theme.outline('nodeBorder'),
     plainBorder: theme.color('nodeBorder'),
-    text: theme.color('nodeTextColor'),
+    text: theme.color('stateLabelColor'),
+    transition: theme.color('canvasLineColor'),
     line: theme.color('lineColor'),
     lineOutline: theme.outline('lineColor'),
     arrow: theme.color('arrowheadColor'),
@@ -145,7 +157,7 @@ function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
           title: theme.color('compositeTitleBackground'),
           body: theme.color('compositeBackground'),
           alt: theme.color('altBackground'),
-          text: theme.color('titleColor'),
+          text: theme.color('compositeTitleColor'),
           radius: theme.number('radius'),
         }
       : undefined;
@@ -156,14 +168,21 @@ function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
         text: theme.color('noteTextColor'),
       }
     : undefined;
-  const edgeLabel = s.edges.some((e) => e.label.width > 0)
+  const labelPaint = s.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
     : undefined;
   // Read here, not in core, so the theme inventory lists the diagrams that use them.
   const folded = s.nodes.some((v) => v.block === 'folded')
     ? { ink: theme.color('nodeBorder'), muted: theme.color('mutedBorder') }
     : undefined;
-  return { ...node, composite, note, folded, edgeLabel, slots: paletteSlots(theme, model, s) };
+  return {
+    ...node,
+    composite,
+    note,
+    folded,
+    edgeLabel: labelPaint,
+    slots: paletteSlots(theme, model, s),
+  };
 }
 
 /** What every section of one render draws from. */
@@ -199,12 +218,21 @@ export function renderState(
     paint: paints(ctx.theme, model, s),
     warn: (warning) => ctx.warn(warning),
   };
-  openRoot(scene, model);
+  // v12's `statediagramTitleText`: 18 px in `textColor`, `titleTopMargin` above the drawing (D652).
+  const title = placeTitle(
+    model.title,
+    layout.width,
+    ctx.config.state?.titleTopMargin ?? 25,
+    ctx,
+    18
+  );
+  const ink = title && ctx.theme.color('textColor');
+  openRoot(scene, model, titledViewBox(layout, title, 8));
   drawClusters(scene);
   w.open('g', {
     class: 'edgePaths',
     fill: 'none',
-    stroke: scene.paint.line,
+    stroke: scene.paint.transition,
     'stroke-width': scene.paint.strokeWidth,
     'stroke-linecap': 'round',
   });
@@ -218,24 +246,28 @@ export function renderState(
   w.open('g', { class: 'nodes', fill: scene.paint.text });
   for (const view of s.nodes) drawNode(scene, view, view.state && links.get(view.state.id));
   w.close();
+  if (title && ink)
+    w.label(title.label, title.x, title.y, {
+      class: 'statediagramTitleText',
+      fill: ink,
+      'font-size': 18,
+    });
   w.close();
 }
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
-function openRoot({ w, layout, ctx, paint }: Scene, model: StateModel): void {
-  const { config } = ctx;
-  const width = Math.max(1, Math.ceil(layout.width));
-  const height = Math.max(1, Math.ceil(layout.height));
-  const maxWidth = config.state?.useMaxWidth !== false;
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
+function openRoot(
+  { w, ctx, paint }: Scene,
+  model: StateModel,
+  viewBox: ReturnType<typeof titledViewBox>
+): void {
   openSvgRoot(w, ctx, {
     name: 'state statediagram',
     roleDescription: 'stateDiagram',
-    viewBox: [0, 0, width, height],
-    maxWidth,
-    title,
-    desc,
+    viewBox,
+    maxWidth: ctx.config.state?.useMaxWidth !== false,
+    title: model.accTitle,
+    desc: model.accDescr,
     attrs: {
       'font-family': paint.font,
       'font-size': paint.fontSize,
@@ -392,11 +424,17 @@ function drawEdge({ w, layout, paint }: Scene, e: StateEdgeView): void {
   w.close();
 }
 
-function drawEdgeLabel({ w, layout, paint }: Scene, e: StateEdgeView): void {
+/** A transition's label as a tag, bordered in the transitions' line colour (D626, D627). */
+function drawEdgeLabel({ w, layout, ctx, paint }: Scene, e: StateEdgeView): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
   const { fill, text } = paint.edgeLabel!;
-  labelOnBox(w, e.label, at, e.id, { fill, text: { fill: text }, rx: 3 });
+  edgeLabel(w, e.label, at, e.id, {
+    fill,
+    stroke: paint.transition,
+    text: { fill: text },
+    patch: (ctx.units ?? pxProfile).builder.labelPatch,
+  });
 }
 
 function nodeClass(view: StateNodeView): string {

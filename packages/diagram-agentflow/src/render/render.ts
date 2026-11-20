@@ -17,12 +17,17 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { cls, openSvgRoot, textElement } from '@mermaid-js/shared/svg/document';
-import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
-import { marker, markerTrim } from '@mermaid-js/shared/svg/arrowheads';
+import {
+  cls,
+  openSvgRoot,
+  placeTitle,
+  textElement,
+  titledViewBox,
+  type PlacedTitle,
+} from '@mermaid-js/shared/svg/document';
+import { edgeLabel } from '@mermaid-js/shared/svg/graph';
+import { marker, markerTrim, type MarkerPaint } from '@mermaid-js/shared/svg/arrowheads';
 import { routePath } from '@mermaid-js/shared/svg/route';
-import { layoutLabel, type MeasuredLabel } from '@mermaid-js/core/text';
-import { tagsOnly } from '@mermaid-js/core/text/tags-only';
 import type {
   AgentflowEdgeView,
   AgentflowGroupView,
@@ -44,12 +49,7 @@ const DOTTED = '2' as SafeValue;
 /** An edge label's background: padding either side, corner radius. */
 
 /** The front-matter title, measured and placed: centred over the drawing, its baseline up. */
-interface Title {
-  readonly label: MeasuredLabel;
-  readonly x: number;
-  /** Centre of the label box. */
-  readonly y: number;
-}
+type Title = PlacedTitle;
 
 /** What every section of one render draws from. */
 interface Scene {
@@ -80,7 +80,7 @@ export function renderAgentflow(
     order: flowOrder(model),
   };
   openRoot(scene, model, title);
-  const { frame, edgeLabel, title: ink } = scene.paint;
+  const { frame, edgeLabel: labelPaint, title: ink } = scene.paint;
   if (frame) drawFrames(scene, frame);
   w.open('g', {
     class: 'edgePaths',
@@ -92,7 +92,7 @@ export function renderAgentflow(
   for (const e of prepared.edges) drawEdge(scene, e);
   w.close();
   w.open('g', { class: 'edgeLabels' });
-  if (edgeLabel) for (const e of prepared.edges) drawEdgeLabel(scene, e, edgeLabel);
+  if (labelPaint) for (const e of prepared.edges) drawEdgeLabel(scene, e, labelPaint);
   w.close();
   const tips = new Map(model.tooltips);
   w.open('g', { class: 'nodes', fill: scene.paint.node.text });
@@ -103,52 +103,25 @@ export function renderAgentflow(
 }
 
 /**
- * The title (D218, v12 `insertTitle`): `agentflow.titleTopMargin` from its baseline up to the
- * top of the layout's box, centred on it; none for an empty one.
+ * The title (D218, D652, v12 `insertTitle`): `agentflow.titleTopMargin` from its baseline up to
+ * the top of the layout's box, centred on it; none for an empty one.
  */
 function titleOf(
   model: AgentflowModel,
   layout: AgentflowLayout,
   ctx: AgentflowRenderContext
 ): Title | undefined {
-  const text = model.title?.trim();
-  if (!text) return undefined;
-  const font = { family: ctx.theme.value('fontFamily'), size: TITLE_SIZE, weight: 400 };
-  // No inline boxes in the title.
-  const label = layoutLabel(text, font, Infinity, ctx.measurer, { inline: tagsOnly(ctx.inline) });
-  const top = -layout.agentflow.titleTopMargin - label.baseline;
-  return { label, x: layout.width / 2, y: top + label.height / 2 };
-}
-
-/** The drawn box: the layout's, grown to hold the title and the padding around it. */
-function viewBox(
-  layout: AgentflowLayout,
-  title: Title | undefined
-): [number, number, number, number] {
-  const width = Math.max(1, Math.ceil(layout.width));
-  const height = Math.max(1, Math.ceil(layout.height));
-  if (!title) return [0, 0, width, height];
-  const pad = layout.agentflow.graph.diagramPadding ?? 0;
-  const half = title.label.width / 2;
-  const x0 = Math.floor(Math.min(0, title.x - half - pad));
-  const y0 = Math.floor(Math.min(0, title.y - title.label.height / 2 - pad));
-  const x1 = Math.ceil(Math.max(width, title.x + half + pad));
-  return [x0, y0, x1 - x0, height - y0];
+  return placeTitle(model.title, layout.width, layout.agentflow.titleTopMargin, ctx, TITLE_SIZE);
 }
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, paint }: Scene, model: AgentflowModel, title?: Title): void {
-  const { config } = ctx;
-  const box = viewBox(layout, title);
-  const maxWidth = config.agentflow?.useMaxWidth !== false;
-  const acc = model.accTitle.trim();
-  const desc = model.accDescr.trim();
   openSvgRoot(w, ctx, {
     name: 'agentflow',
-    viewBox: box,
-    maxWidth,
-    title: acc,
-    desc,
+    viewBox: titledViewBox(layout, title, layout.agentflow.graph.diagramPadding ?? 0),
+    maxWidth: ctx.config.agentflow?.useMaxWidth !== false,
+    title: model.accTitle,
+    desc: model.accDescr,
     attrs: {
       'font-family': paint.node.font,
       'font-size': paint.node.fontSize,
@@ -249,7 +222,7 @@ function drawEdge({ w, layout, paint }: Scene, e: AgentflowEdgeView): void {
     fill: 'none',
   });
   // The head fades with its line: opacity, and stroke-opacity as the head's fill-opacity.
-  const headPaint: Attrs = {
+  const headPaint: MarkerPaint = {
     fill: e.style.shape.stroke ?? paint.node.arrow,
     opacity: e.style.shape.opacity,
     'fill-opacity': e.style.shape['stroke-opacity'],
@@ -260,13 +233,19 @@ function drawEdge({ w, layout, paint }: Scene, e: AgentflowEdgeView): void {
   marker(w, e.end, end, headPaint, paint.heads, true);
 }
 
-function drawEdgeLabel({ w, layout }: Scene, e: AgentflowEdgeView, paint: LabelPaint): void {
+/** An edge's label as a tag, bordered in the edge's own stroke (D626, D627). */
+function drawEdgeLabel(
+  { w, layout, ctx, paint: { node } }: Scene,
+  e: AgentflowEdgeView,
+  paint: LabelPaint
+): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
-  labelOnBox(w, e.label, at, e.edge.id, {
+  edgeLabel(w, e.label, at, e.edge.id, {
     fill: paint.fill,
+    stroke: e.style.shape.stroke ?? node.line,
     text: { fill: paint.text, ...e.style.text },
-    rx: 3,
+    patch: (ctx.units ?? pxProfile).builder.labelPatch,
   });
 }
 

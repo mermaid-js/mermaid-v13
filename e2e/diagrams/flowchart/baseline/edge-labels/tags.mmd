@@ -1,0 +1,15 @@
+---
+description: >-
+  Edge labels as tags (D626–D629): a plain label, a label of two lines, a label
+  on an edge with a linkStyle stroke, and labels on a thick and on a dotted
+  edge. Each box is rounded, bordered 1 px solid in its edge's colour (the
+  linkStyle one in pink, the thick and dotted ones still 1 px and solid), and
+  filled with the theme background.
+---
+flowchart LR
+  A -->|plain| B
+  B -->|"first line<br/>second line"| C
+  C -->|styled| D
+  D ==>|thick| E
+  E -.->|dotted| F
+  linkStyle 2 stroke:#d6336c

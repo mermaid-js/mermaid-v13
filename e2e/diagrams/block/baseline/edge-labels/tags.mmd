@@ -1,0 +1,14 @@
+---
+description: >-
+  Edge labels as tags (D626–D629): a plain label, a label of two lines, and
+  labels on a thick and on a dotted edge. Each box is rounded, bordered 1 px
+  solid in the line colour (the thick and dotted ones still 1 px and solid),
+  and filled with the theme background. Block has no edge style statement.
+---
+block
+  columns 5
+  a b c d e
+  a -- "plain" --> b
+  b -- "first line<br/>second line" --> c
+  c == "thick" ==> d
+  d -. "dotted" .-> e

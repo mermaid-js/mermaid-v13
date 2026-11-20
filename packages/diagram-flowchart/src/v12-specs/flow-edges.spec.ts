@@ -6,7 +6,6 @@
 // cspell:disable
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import flow, { cleanupComments, FlowDB, getConfig, log, setConfig } from './adapter.ts';
-// skipped: edge ids attached to the preceding node (#7032) — v12 behaviour added after mermaid@12.2.0, the oracle, which rejects this input; it arrives with the oracle bump (R-COMPAT-8)
 
 setConfig({
   securityLevel: 'strict',
@@ -163,7 +162,7 @@ A@{ shape: 'rect' }
   });
 
   // Issue #7032: edge id (`e1@`) written right after a node with square brackets or shape data
-  describe.skip('edge ids attached to the preceding node (#7032)', function () {
+  describe('edge ids attached to the preceding node (#7032)', function () {
     const cases = [
       { name: 'square brackets + space before edge id', graph: 'A[bla] e1@--> B' },
       { name: 'square brackets + no space before edge id', graph: 'A[bla]e1@--> B' },

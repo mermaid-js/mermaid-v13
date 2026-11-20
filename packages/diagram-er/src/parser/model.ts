@@ -7,6 +7,7 @@
  * …), with v12's ordering and lookup rules, so the conformance suite can compare the two.
  */
 import { ID_RESERVED, idEscaper } from '@mermaid-js/shared/parser/support';
+import { checkLimit } from '@mermaid-js/core/limits';
 import type { AstId, Diagnostic, Range } from '@mermaid-js/core/parser-kit';
 
 /** How many of an entity one end of a relationship allows. */
@@ -97,6 +98,8 @@ export interface ErModel {
   /** In the order their `end` was read (inner subgraphs first). */
   subgraphs: ErSubgraph[];
   classes: ErClass[];
+  /** The front-matter `title`, drawn above the diagram (D652); absent when there is none. */
+  title?: string;
   accTitle: string;
   accDescr: string;
   /** Warning diagnostics of the parse (also in `ParseResult.diagnostics`). */
@@ -139,8 +142,8 @@ export class ErBuilder {
   addEntity(name: string, id: AstId, range: Range, alias = ''): ErEntity | undefined {
     let e = this.entities.get(name);
     if (!e) {
-      if (this.entities.size >= this.options.maxNodes) {
-        this.limit('NODE_LIMIT', `more than ${this.options.maxNodes} entities`, range);
+      if (this.entities.size + 1 > this.options.maxNodes) {
+        this.limit('maxNodes', this.entities.size + 1, 'entities', range);
         return undefined;
       }
       e = { id, name, alias, attributes: [], classes: [], styles: [] };
@@ -159,8 +162,8 @@ export class ErBuilder {
   }
 
   addRelationship(rel: ErRelationship, range: Range): void {
-    if (this.relationships.length >= this.options.maxEdges) {
-      this.limit('EDGE_LIMIT', `more than ${this.options.maxEdges} relationships`, range);
+    if (this.relationships.length + 1 > this.options.maxEdges) {
+      this.limit('maxEdges', this.relationships.length + 1, 'relationships', range);
       return;
     }
     this.relationships.push(rel);
@@ -248,9 +251,14 @@ export class ErBuilder {
     return model;
   }
 
-  private limit(code: string, what: string, range: Range): void {
+  /**
+   * The first entity or relationship over its cap, `count` with it: reported once, in core's
+   * words, and the render fails with `LIMIT` (nothing is drawn). The one before was within the
+   * cap, so core's `checkLimit` reports it.
+   */
+  private limit(limit: 'maxNodes' | 'maxEdges', count: number, what: string, range: Range): void {
     if (this.limited) return;
     this.limited = true;
-    this.options.error(code, `The diagram has ${what}, the limit; the rest were left out.`, range);
+    checkLimit(this.options, limit, count, this.options[limit], what, range);
   }
 }

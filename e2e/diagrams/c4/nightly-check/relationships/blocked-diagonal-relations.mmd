@@ -1,0 +1,22 @@
+---
+description: >-
+  A three-by-three grid with relations across it (#774): a2 -> c2 is
+  upright and goes round B2 in one lane, and the diagonals a1 -> c3 and
+  a3 -> c1, which no elbow of two bends can clear, go round B2 too
+  instead of straight through it.
+---
+C4Container
+title Blocked diagonal relations
+UpdateLayoutConfig($c4ShapeInRow="3")
+Container(a1, "A1")
+Container(a2, "A2")
+Container(a3, "A3")
+Container(b1, "B1")
+Container(b2, "B2")
+Container(b3, "B3")
+Container(c1, "C1")
+Container(c2, "C2")
+Container(c3, "C3")
+Rel(a1, c3, "diagonal")
+Rel(a2, c2, "down")
+Rel(a3, c1, "diagonal")

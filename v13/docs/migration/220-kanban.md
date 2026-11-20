@@ -33,7 +33,7 @@
   labels 25 px inside it, as in v12; a single word wider than that stays whole and overflows the
   column or card, as in v12 (earlier v13 builds split it between characters; the text output
   still does, to keep it in its box). A raw line break inside a quoted label breaks the line,
-  where v12's HTML folded it to a space.
+  as in v12, whose markdown labels turned it into a `<br>` (D641).
 - **Metadata v12 parsed but never drew is still not drawn** (D376), with no warning: an item's
   icon (`::icon()` or `@{ icon }`), and a column's `ticket`, `assigned` and `priority`. It stays
   in the model and the AST.
@@ -41,6 +41,11 @@
   bar in `red`, `orange`, `blue` and `lightblue` in every theme. Anything else draws no bar
   (v12 drew one with no stroke), and one `KANBAN_PRIORITY` warning per render names the card
   values that are none of those four nor `Medium`.
+- **Ticket and assignee** (D647): a card's ticket and assignee that do not fit side by side
+  are drawn on two rows, the assignee under the ticket and still right-aligned, and the card
+  grows to hold them, as the text output does. v12 drew them on one row whatever their widths,
+  so long ones were drawn over each other. A pair that fits keeps v12's row and card height
+  ([Kanban SVG structure](#kanban-svg-structure)).
 - **Ticket links** (D377) pass the link check, and a refused URL draws the ticket as plain text
   with a `URL_REFUSED` warning; the first `#TICKET#` is replaced with the ticket taken literally
   ([Kanban SVG structure](#kanban-svg-structure)).

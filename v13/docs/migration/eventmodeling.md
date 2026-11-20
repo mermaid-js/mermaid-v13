@@ -15,7 +15,7 @@ placement constants are kept (spec #527). What changes:
 | `title`, `accTitle` and `accDescr` values kept their keyword, `:` and blanks | The keyword, `:` and surrounding blanks are stripped, as for every other type; `accTitle` and `accDescr` become the SVG's `<title>` and `<desc>`. The `title` is not drawn, as in v12 | D524, D218 |
 | Box sizes from 16 px bold trebuchet markup strings, a box with data at a third of its width | Boxes sized from the name and data measured in the theme's font (each `clamp(text + 20, 80, 450) + 20` wide, `clamp(text + 20, 80, 750) + 20` high, v12's bounds), so boxes and every later x differ | D521 |
 | A box could overlap or touch (less than 10 px from) its lane's previous box | It moves right to 10 px past it; later boxes follow | D521 |
-| A relation within a lane ran from one box's middle through both boxes; a frame named as its own source drew a line through its box | A relation within a lane runs from the source's right edge to the target's left edge; a self relation loops over the box's top right corner | D521 |
+| A relation within a lane ran from one box's middle through both boxes, and through every box between them; a frame named as its own source drew a line through its box | A relation to the next box of its lane runs from the source's right edge to the target's left edge. One that skips boxes of its lane runs under the row, from the source's bottom to the target's bottom, overlapping ones 10 px apart. A self relation loops under the box's bottom right corner. A lane that holds such a route or loop is taller, so the lanes below it move down; box tops in their lane stay | D521, D659 |
 | Text past the greatest box height (750 px) was clipped by the `foreignObject`, mid-line | Lines past it are left out, data lines first, then name lines | Spec #527 T3 |
 | Lanes reached 15 px past the rightmost box, unless an earlier box ended right of the last one | Lanes reach 25 px past the rightmost box | Spec #527 T3 |
 | Notes, `gwt` blocks and entities were parsed and not drawn | The same: in the model and the language service, not drawn | D526 |
@@ -32,8 +32,9 @@ Event modeling reads its own 14 flat theme variables, v12's names (`emUiFill`, `
 `emCommandStroke`, `emEventFill`, `emEventStroke`, `emSwimlaneBackgroundOdd`,
 `emSwimlaneBackgroundStroke`, `emRelationStroke`, `emArrowhead`), and one new one, `emTextColor`
 (core's `textColor`), for box and lane text, which v12 left to the page's colour. Every light
-theme of every family draws v12 `default`'s values, relations and arrowheads in `lineColor`; the
-dark themes draw v12 `dark`'s. An author's value is drawn as given in every theme, as in v12; the
+theme of every family draws v12 `default`'s values, relations and arrowheads in the theme's line
+colour (`canvasLineColor`: `lineColor`, which `default` and `dark` keep under an override, as v12
+does, D656); the dark themes draw v12 `dark`'s. An author's value is drawn as given in every theme, as in v12; the
 author's `darkMode` alone keeps the light values, as in v12. What changed
 (`packages/conformance/src/eventmodeling/theme.spec.ts` lists each one):
 
@@ -57,7 +58,7 @@ relations) are kept.
 | Box text in a `foreignObject` holding XHTML `div`s and `span`s | SVG `<text>` and `<tspan>` through core label layout: the bold name centred, the data in mono, left-aligned, its indentation kept; data is text, never HTML | R-SEC-2, D523 |
 | Lane labels as HTML-less `<text>` at (30, `y + 30`) in the page's colour | `<text>` start-anchored at the same point, bold, filled `emTextColor` | D527 |
 | Text at v12's 16 px | Text in `emTextColor` at the theme's `fontSize` | D527 |
-| A self relation drew a straight line through its box | A 4-point path over the box's top right corner; every other relation is `M…L…`, as v12, ending at its head's tip | D521 |
+| A self relation drew a straight line through its box | A 4-point path under the box's bottom right corner, as is a relation under its row (one that skips boxes of its lane); every other relation is `M…L…`, as v12, ending at its head's tip | D521, D659 |
 | No source mapping | `data-id` on every element; `data-ast` on each `g.em-box` (`frame:<id>`) and each `path.em-relation` drawn for a `->>` (`relation:<source>-><target>`, the first `->>` of that source). A source repeated in one frame (`->> 01 ->> 01`) draws one path; the AST nodes of its repeats (`relation:01->02@2`, …) are not drawn. Lanes (`lane:<index>`) and inferred relations carry `data-id` only | R-PARSE-8, D528 |
 | `rgb(250,250,250)`, `rgb(240,240,240)` and `white` paints | The same colours as hex | |
 | `look: neo` and the redux themes: the same model as the classic themes | The same: event modeling differs between families by colour only | D227 |

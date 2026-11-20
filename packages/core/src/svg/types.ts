@@ -84,6 +84,8 @@ export interface AttrTypes {
   style: StyleText;
   transform: Transform;
   'pointer-events': 'none' | 'all' | 'visiblePainted';
+  /** `pointer` only: the mark of a clickable node (D605). */
+  cursor: 'pointer';
   // geometry
   x: number;
   y: number;
@@ -137,6 +139,14 @@ export interface AttrTypes {
   href: SafeUrl;
   target: LinkTarget;
   rel: 'noopener noreferrer';
+  // an animated edge's `<animate>` (D606)
+  /** `stroke-dashoffset` only: the one property a diagram may animate. */
+  attributeName: 'stroke-dashoffset';
+  from: number;
+  to: number;
+  /** Seconds. */
+  dur: number;
+  repeatCount: 'indefinite';
 }
 
 export type AllowedAttr = keyof AttrTypes;
@@ -159,7 +169,8 @@ export type AllowedTag =
   | 'a'
   | 'title'
   | 'desc'
-  | 'image';
+  | 'image'
+  | 'animate';
 
 /**
  * The gradient's elements (D182). They are on the allow-list, but only the writer emits them,

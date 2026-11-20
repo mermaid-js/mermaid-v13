@@ -55,7 +55,7 @@ function byName(list: readonly FlowNodeStmt[]): (name: string) => FlowNodeStmt |
 type FlowShapeParts = FlowVertexParts & { label?: FlowLabelNode };
 
 /** What the family's `parse()` tail needs of a model. */
-interface FlowModelLike {
+export interface FlowModelLike {
   readonly callbacks: readonly { readonly range?: Range }[];
   readonly warnings: Diagnostic[];
 }
@@ -114,9 +114,21 @@ export abstract class FlowParser<
 
   // ---- vertices and chains ------------------------------------------------------------
 
+  /**
+   * Vertices a `style` line made, by name, with that line's AST id, until a node mention names
+   * them. One that no mention names takes the line's id, so its `data-ast` is in the AST (#987).
+   */
+  private readonly styledOnly = new Map<string, AstId>();
+
   /** A vertex's AST id is its first mention's: `n:<name>`. */
   protected nodeAst(name: string): AstId {
     return this.db.vertices.get(name)?.ast ?? nodeId(name);
+  }
+
+  /** The AST id of a node mention of `name` (`n:<name>`, `n:<name>@2`, …). */
+  protected nodeMention(name: string): AstId {
+    this.styledOnly.delete(name);
+    return this.ids.node(name);
   }
 
   /** A mention that may create the vertex: its definition when it does. */
@@ -160,7 +172,7 @@ export abstract class FlowParser<
     const [name, nameRange] = this.idString();
     this.nodeSymbol(name, nameRange);
     const node: FlowNodeStmt = {
-      id: this.ids.node(name),
+      id: this.nodeMention(name),
       type: 'Node',
       range: nameRange,
       name,
@@ -298,7 +310,8 @@ export abstract class FlowParser<
 
   /**
    * The blanks at the cursor and a ` & ` after them: whether another node follows. `afterData`
-   * is whether the node before had `@{ … }`, which only `&` may follow on its line.
+   * is whether the node before had `@{ … }`, which only `&` may follow on its line unless the
+   * dialect's `blanksAfterData` is on.
    */
   private ampersand(afterData: boolean): boolean {
     const { T, tb } = this;
@@ -308,8 +321,9 @@ export abstract class FlowParser<
     } while (this.kind() === T.Space);
     this.tested(tb.AMP);
     if (this.kind() !== T.Amp) {
-      // Blanks after `@{ … }` must lead to `&` (v12 drops them before a line break).
-      if (afterData)
+      // In 12.2.0's grammar blanks after `@{ … }` must lead to `&` (v12 drops them before a line
+      // break); 12.3.0's flowchart lets them end the node (D621).
+      if (afterData && !this.dialect.blanksAfterData)
         this.fail(
           [T.Amp],
           `after ${tb.dataName} \`@{ … }\` only \`&\` and another node may follow on the line`
@@ -611,8 +625,11 @@ export abstract class FlowParser<
         refList.push(id);
         this.expect(T.Space);
         const styles = this.stylesOpt();
+        const known = db.vertices.has(id);
         db.addVertex(id, this.nodeAst(id), r, { styles });
-        out.push(this.simple('Style', from, refList));
+        const stmt = this.simple('Style', from, refList);
+        if (!known && db.vertices.has(id)) this.styledOnly.set(id, stmt.id);
+        out.push(stmt);
         this.separator();
         return NO_ITEMS;
       }
@@ -722,6 +739,10 @@ export abstract class FlowParser<
       }
     }
     this.closeOpenBlocks();
+    for (const [name, ast] of this.styledOnly) {
+      const vertex = this.db.vertices.get(name);
+      if (vertex) vertex.ast = ast;
+    }
   }
 
   /** What starts with the token kind `t` at the cursor: an `end`, a blank, a block or a statement. */

@@ -4,10 +4,8 @@
  * ticks ascending, and the bounds covering every bar and band (D224). Returns the violations,
  * an empty list when the layout holds.
  */
-import type { GanttAxis, GanttBar, GanttLayout, Rect } from './types.ts';
-
-/** Rounding slack, px. */
-const EPS = 1e-6;
+import { EPS, rectInside as inside } from '@mermaid-js/shared/testing/layout-invariants';
+import type { GanttAxis, GanttBar, GanttLayout } from './types.ts';
 
 function nonFinite(value: unknown, path: string, out: string[]): void {
   if (typeof value === 'number') {
@@ -17,12 +15,6 @@ function nonFinite(value: unknown, path: string, out: string[]): void {
   if (value === null || typeof value !== 'object') return;
   for (const [k, v] of Object.entries(value)) nonFinite(v, `${path}.${k}`, out);
 }
-
-const inside = (r: Rect, b: Rect): boolean =>
-  r.x >= b.x - EPS &&
-  r.y >= b.y - EPS &&
-  r.x + r.width <= b.x + b.width + EPS &&
-  r.y + r.height <= b.y + b.height + EPS;
 
 const what = (bar: GanttBar): string => `${bar.kind} "${bar.id}"`;
 

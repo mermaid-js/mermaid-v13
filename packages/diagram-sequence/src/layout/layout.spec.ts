@@ -6,8 +6,10 @@ import { cellProfile, pxProfile, type UnitProfile } from '@mermaid-js/core/layou
 import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { SequenceModel } from '../model.ts';
-import { FIXTURES, hello, model as modelOf, msg, p as part } from './fixtures.ts';
-import { layoutSequence, sequenceLayoutViolations, type SequenceLayout } from './index.ts';
+import { FIXTURES, hello, model as modelOf, msg, note, p as part } from './fixtures.ts';
+import { fontsOf } from './env.ts';
+import { layoutSequence, type SequenceLayout } from './index.ts';
+import { sequenceLayoutViolations } from './invariants.ts';
 import { sequence as diagramPlugin } from '../plugin.ts';
 
 /** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
@@ -196,6 +198,47 @@ describe('sequence layout in px follows v12', () => {
   it('numbers messages from autonumber until it is turned off', () => {
     const l = lay(FIXTURES.numbersAndWrap!);
     expect(l.messages.map((m) => m.number?.value)).toEqual([10, 15, undefined, undefined]);
+  });
+});
+
+describe('the top-level fontSize (D620, #765)', () => {
+  const withNote = modelOf(
+    [part('A'), part('B')],
+    [msg('A', 'B', 'Hello'), note('over', ['A', 'B'], 'a note')]
+  );
+  const ctxOf = (root: Partial<ResolvedConfig>, sequence: Record<string, unknown> = {}) => ({
+    config: { ...root, sequence } as ResolvedConfig,
+    theme: createTheme(specs.get('default')!, { diagram: diagramTheme }),
+  });
+  const layRoot = (root: Partial<ResolvedConfig>, sequence: Record<string, unknown> = {}) =>
+    layoutSequence(withNote, {
+      ...ctxOf(root, sequence),
+      measurer: tableMeasurer,
+      units: pxProfile,
+      warn: () => {},
+    });
+  const sizes = (root: Partial<ResolvedConfig>, sequence: Record<string, unknown> = {}) => {
+    const f = fontsOf(ctxOf(root, sequence));
+    return [f.actor.size, f.message.size, f.note.size, f.title.size];
+  };
+
+  it('sizes actor, message and note text when no per-key size is set; the title keeps the theme size', () => {
+    expect(sizes({})).toEqual([16, 16, 16, 16]);
+    expect(sizes({ fontSize: 24 })).toEqual([24, 24, 24, 16]);
+    expect(layRoot({ fontSize: 24 })).toEqual(
+      layRoot({}, { actorFontSize: 24, messageFontSize: 24, noteFontSize: 24 })
+    );
+    expect(layRoot({ fontSize: 24 }).bounds.height).toBeGreaterThan(layRoot({}).bounds.height);
+  });
+
+  it('gives way to a set sequence.*FontSize key', () => {
+    expect(sizes({ fontSize: 24 }, { messageFontSize: 12 })).toEqual([24, 12, 24, 16]);
+  });
+
+  it('reads a CSS length as the per-key keys do, and ignores a value that is no size', () => {
+    expect(sizes({ fontSize: '24px' as unknown as number })).toEqual([24, 24, 24, 16]);
+    expect(sizes({ fontSize: 'big' as unknown as number })).toEqual([16, 16, 16, 16]);
+    expect(sizes({ fontSize: 0 })).toEqual([16, 16, 16, 16]);
   });
 });
 

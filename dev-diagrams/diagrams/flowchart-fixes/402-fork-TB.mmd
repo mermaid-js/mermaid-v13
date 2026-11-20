@@ -1,0 +1,11 @@
+---
+title: '#402 fork bar in TB'
+description:
+  Fixed when the bar lies across the flow - horizontal in TB/BT, vertical in
+  LR/RL - and edges cross its long side.
+---
+flowchart TB
+  A --> F@{ shape: fork } --> B
+  F --> C
+  D --> J@{ shape: join }
+  B --> J

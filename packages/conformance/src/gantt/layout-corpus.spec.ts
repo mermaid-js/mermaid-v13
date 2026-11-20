@@ -4,12 +4,8 @@ import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import { MAX_STEPS } from '@mermaid-js/core/limits';
-import {
-  ganttLayoutViolations,
-  layoutGantt,
-  parseGantt,
-  schedule,
-} from '@mermaid-js/diagram-gantt';
+import { layoutGantt, parseGantt, schedule } from '@mermaid-js/diagram-gantt';
+import { ganttLayoutViolations } from '@mermaid-js/diagram-gantt/testing';
 import type { CorpusItem } from '../types.ts';
 import { ganttGateCorpus } from './corpus.ts';
 import { scheduleFuzz } from './fuzz.ts';
@@ -73,7 +69,7 @@ describe('gantt layout invariants on parser-produced models', () => {
               failures.push(`${item.id}: repeated warnings ${codes.join(', ')}`);
           }
     }
-    expect(corpus.filter((i) => i.id.startsWith('e2e') && !i.id.endsWith(')')).length).toBe(95);
+    expect(corpus.filter((i) => i.id.startsWith('e2e') && !i.id.endsWith(')')).length).toBe(96);
     expect(laid).toBeGreaterThan(5000);
     expect(bars).toBeGreaterThan(20000);
     expect(failures.slice(0, 10)).toEqual([]);

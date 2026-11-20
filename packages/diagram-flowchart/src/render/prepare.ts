@@ -7,6 +7,7 @@ import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { graphSpacing, groupPadding, labelledEdge, sideways } from '@mermaid-js/shared/layout';
 import type { CheckedStyle } from '@mermaid-js/core/svg';
+import { arrowheads, markerTrim } from '@mermaid-js/shared/svg/arrowheads';
 import { styleCache } from '@mermaid-js/shared/svg/document';
 import {
   FOLDED_TYPE_SIZE,
@@ -19,7 +20,7 @@ import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/
 import type { FlowModel, FlowModelEdge, FlowVertex } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { FlowRenderContext } from './context.ts';
-import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
+import { curveReporter, curveRouting, LEAD, type CurveKind } from '@mermaid-js/shared/svg/route';
 import { dirOf, nesting, type Nesting } from './nesting.ts';
 import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
 import { assetSize } from './assets.ts';
@@ -33,6 +34,7 @@ import {
   type Pads,
 } from './shapes.ts';
 import { themePads } from '@mermaid-js/shared/shapes/kit';
+import { titlePositions } from './title-position.ts';
 
 export interface NodeView {
   id: string;
@@ -45,6 +47,8 @@ export interface NodeView {
   h: number;
   /** Label shift from the centre. */
   dy: number;
+  /** Label shift sideways from the centre. */
+  dx: number;
   style: CheckedStyle;
   classes: string[];
   parent?: string;
@@ -121,6 +125,8 @@ interface Measure {
     max: number,
     bits?: number
   ) => MeasuredLabel;
+  /** `curveKind` for this render: an unknown name warns once (D602). */
+  readonly curveOf: (curve: string | undefined) => CurveKind;
   readonly styleOf: (classes: readonly string[], own?: readonly string[]) => CheckedStyle;
 }
 
@@ -149,8 +155,20 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     minWidth: length('minNodeWidth') ?? 0,
     // This is the only place the builder looks at which profile it has.
     cells: units.id === 'cell',
+    // `markdownAutoWrap: false` breaks a markdown label only where its source does (v12).
     label: (text, markdown, f, max, bits = 0) =>
-      layoutLabel(text, f, max, measurer, { markdown, style: bits, inline }),
+      layoutLabel(
+        text,
+        f,
+        markdown && ctx.config.markdownAutoWrap === false ? Infinity : max,
+        measurer,
+        {
+          markdown,
+          style: bits,
+          inline,
+        }
+      ),
+    curveOf: curveReporter((w) => ctx.warn(w)),
     styleOf: styleCache(
       new Map(model.classes.map((c) => [c.id, [...c.styles, ...c.textStyles]])),
       ctx.warn
@@ -164,6 +182,9 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
   return { graph, groups, nodes, edges, views, pads: m.pads };
 }
 
+/** The classes every vertex's style starts from. */
+const NODE_CLASSES = ['default', 'node'] as const;
+
 /** One view per drawn subgraph and vertex, measured; clusters sorted outermost first. */
 function nodeViews(
   model: FlowModel,
@@ -174,8 +195,10 @@ function nodeViews(
   const views = new Map<string, NodeView>();
   const groups: NodeView[] = [];
   const nodes: NodeView[] = [];
-  // Every view is measured below; until then it holds the empty label.
+  // Every view is measured and styled below; until then it holds the empty label and the style
+  // of no declarations, looked up once (it gives no warning).
   const empty = m.label('', false, m.font, 0);
+  const unstyled = m.styleOf([]);
   const blank = (id: string, ast: string, group: boolean, shape: string): NodeView => ({
     id,
     ast,
@@ -185,7 +208,8 @@ function nodeViews(
     w: 0,
     h: 0,
     dy: 0,
-    style: m.styleOf([]),
+    dx: 0,
+    style: unstyled,
     classes: [],
     parent: nest.parentOf.get(id),
     depth: nest.depthOf(id),
@@ -223,7 +247,10 @@ function nodeViews(
       if (text) view.embedText = text;
     }
     view.classes = v.classes;
-    view.style = m.styleOf(['default', 'node', ...v.classes], v.styles);
+    view.style = m.styleOf(
+      v.classes.length === 0 ? NODE_CLASSES : [...NODE_CLASSES, ...v.classes],
+      v.styles
+    );
     views.set(v.id, view);
     nodes.push(view);
   }
@@ -231,7 +258,10 @@ function nodeViews(
     const sg = subgraphs.get(view.id);
     const v = view.vertex;
     if (sg) measureNode(view, sg.title, sg.labelType === 'markdown', m);
-    else if (v) measureNode(view, v.text, v.labelType === 'markdown', m, v);
+    else if (v) {
+      measureNode(view, v.text, v.labelType === 'markdown', m, v);
+      turnBar(view, nest.flowDir(view.id), m.cells);
+    }
   }
   for (const view of groups) {
     const sg = subgraphs.get(view.id)!;
@@ -241,6 +271,9 @@ function nodeViews(
   groups.sort((g, h) => g.depth - h.depth);
   return { views, groups, nodes };
 }
+
+/** A size's label shift sideways, none when it has no `dx`. */
+const labelDx = (s: { dx?: number }): number => s.dx ?? 0;
 
 function measureNode(
   view: NodeView,
@@ -304,6 +337,12 @@ function measureNode(
   view.w = s.w;
   view.h = s.h;
   view.dy = s.dy;
+  view.dx = labelDx(s);
+}
+
+/** A fork or join bar lies across the flow: 10 × 70 where it runs sideways (v12, D604). */
+function turnBar(view: NodeView, flow: Dir, cells: boolean): void {
+  if (view.shape === 'fork' && !cells && sideways(flow)) [view.w, view.h] = [view.h, view.w];
 }
 
 /** One view per drawn edge; edges into a collapsed subgraph end at it, and a loop it hides goes. */
@@ -326,7 +365,12 @@ function edgeViews(
     for (let n = 2; ids.has(id); n++) id = `${e.id}#${n}`;
     ids.add(id);
     const [start, end] = arrows(e.type, e.stroke);
-    const style = m.styleOf(e.classes, [...(model.defaultStyle ?? []), ...(e.style ?? [])]);
+    const style = m.styleOf(
+      e.classes,
+      model.defaultStyle || e.style
+        ? [...(model.defaultStyle ?? []), ...(e.style ?? [])]
+        : undefined
+    );
     // Measured in the font the label is drawn in, as node labels are.
     const [f, bits] = textStyle(style, m.font);
     edges.push({
@@ -338,7 +382,7 @@ function edgeViews(
       style,
       start,
       end,
-      curve: curveKind(e.interpolate ?? model.defaultInterpolate ?? flow.curve),
+      curve: m.curveOf(e.interpolate ?? model.defaultInterpolate ?? flow.curve),
     });
   }
   return edges;
@@ -363,10 +407,21 @@ function layoutGraph(
     return px === undefined ? fallback : fromPx(units, px, axis, min);
   };
   // Node spacing runs across the flow and rank spacing along it.
-  const spacing = graphSpacing(units, rootDir, length);
+  // D601: a literal rank gap stays literal, but never below an arrowhead and its lead, so the
+  // edge between two subframes stays visible (#399).
+  const head = markerTrim('arrow_point', arrowheads(m.ctx.theme)) + LEAD;
+  const spacing = graphSpacing(
+    units,
+    rootDir,
+    length,
+    fromPx(units, head, sideways(rootDir) ? 'x' : 'y')
+  );
   // How edges are routed follows the diagram's default curve: `linkStyle default interpolate`
   // first, then config, as each edge's own drawing does.
-  const curve = curveKind(model.defaultInterpolate ?? flow.curve);
+  const curve = m.curveOf(model.defaultInterpolate ?? flow.curve);
+  const titleAt = titlePositions(m.cells ? undefined : flow.subGraphTitlePosition, (w) =>
+    m.ctx.warn(w)
+  );
   const graph: LayoutGraph = {
     direction: rootDir,
     nodes: nodes.map((n): LayoutNode => {
@@ -380,10 +435,19 @@ function layoutGraph(
     }),
     groups: groups.map((g): LayoutGroup => {
       const titled = g.label.height > 0;
+      const padding = groupPadding(b, titled);
+      // Text output keeps the title on the top border (D82).
+      const at =
+        titled && !m.cells
+          ? titleAt(nest.subgraphs.get(g.id)?.metadata?.titlePosition, g.id, g.ast)
+          : undefined;
+      // The title's room goes with it: a title at the bottom has it below the content.
+      const low = at?.startsWith('bottom');
       const group: LayoutGroup = {
         id: g.id,
-        padding: groupPadding(b, titled),
+        padding: low ? { ...padding, top: padding.bottom, bottom: padding.top } : padding,
       };
+      if (at) group.titlePosition = at;
       if (titled) group.title = { width: g.label.width, height: g.label.height };
       if (g.parent !== undefined) group.parent = g.parent;
       const d = dirOf(nest.subgraphs.get(g.id)?.dir);
