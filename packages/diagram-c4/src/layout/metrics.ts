@@ -88,6 +88,11 @@ export const C4_METRICS = {
    */
   tagClear: 6,
   /**
+   * D679: a pixel more than a tag needs at each end of its line, so that a tag that just fits
+   * between two shapes is not pushed off its line by rounding.
+   */
+  tagSlack: 1,
+  /**
    * v12's arrowhead marker (`M 0 0 L 10 5 L 0 10 z`): 10 long and 10 wide, the one size the
    * renderer draws (`C4_RENDER_METRICS`); labels keep off a square of this half side round its tip.
    */

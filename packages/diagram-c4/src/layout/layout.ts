@@ -39,6 +39,7 @@ import { cellConfig, cellPxMeasurer, cellRoom, type CellSize } from './cells.ts'
 import { C4_METRICS as M, FONT_WEIGHT } from './metrics.ts';
 import { classicLabelRoom, type LabelRoom } from './room.ts';
 import { pairPlaces } from './pairs.ts';
+import { widenForLabels } from './gaps.ts';
 import { Lines, placeLabel, Taken, type LabelSpot } from './labels.ts';
 import { Lanes, lineOf, pointsOf, route, Work, type Route } from './route.ts';
 import {
@@ -202,6 +203,9 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
   );
   const order = groupsOf(model, nodes, setup.warn);
   const spacing = gridSpacing(model, config);
+  const labelRoom = classicLabelRoom(ctx.units);
+  // Tags (SVG output) widen the gaps they sit in (D679); text output keeps the grid's.
+  if (!units) widenForLabels(order, nodes, spacing.shapeInRow, { ...setup, model, labelRoom });
   placeGrid(order, spacing, (g, contentW) =>
     header(g as Group, contentW, { config, fonts, measure })
   );
@@ -216,7 +220,7 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
     config,
     fonts,
     measure,
-    labelRoom: classicLabelRoom(ctx.units),
+    labelRoom,
     tags: units === undefined,
   });
 

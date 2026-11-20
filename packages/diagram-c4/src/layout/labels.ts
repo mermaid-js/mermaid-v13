@@ -177,6 +177,39 @@ function forbidden(keep: Keep, { x0, y0, x1, y1 }: Box): number {
   return area;
 }
 
+/** A relation's label and `[techn]` measured, and the size of the tag round them. */
+export interface MeasuredLabel {
+  readonly label: Measured | undefined;
+  readonly techn: Measured | undefined;
+  readonly lw: number;
+  readonly lh: number;
+}
+
+const widthOf = (m: Measured | undefined): number => m?.text.width ?? 0;
+const heightOf = (m: Measured | undefined): number => m?.text.height ?? 0;
+
+/**
+ * A relation's label and `[techn]`, measured as they are drawn: wrapped at `room` (the room its
+ * line leaves) when every text wraps; none when it has neither.
+ */
+export function measureLabel(
+  { model, config, fonts, measure, labelRoom }: LabelSetup,
+  rel: C4Relation,
+  index: number,
+  room: number
+): MeasuredLabel | undefined {
+  const wrap = config.wrapAll ? room : Infinity;
+  const label = measure(relationLabelText(model, rel, index), fonts.message, wrap);
+  const techn = measure(relationTechnText(rel), fonts.message, wrap, Style.Italic);
+  if (!label && !techn) return undefined;
+  return {
+    label,
+    techn,
+    lw: Math.max(widthOf(label), widthOf(techn)) + labelRoom.x,
+    lh: heightOf(label) + heightOf(techn) + labelRoom.y,
+  };
+}
+
 /**
  * A relation's label and `[techn]`, measured and placed along its line (Pele `render.ts`): on
  * the line, or beside it when another relation runs the opposite way, moved by the author's
@@ -184,13 +217,9 @@ function forbidden(keep: Keep, { x0, y0, x1, y1 }: Box): number {
  * after routing, as Pele does: its wrap width (the route's `room`) depends on the line it sits on.
  */
 export function placeLabel({ rel, index, r, input, keep }: LabelInput): LabelSpot {
-  const { model, config, fonts, measure, labelRoom } = input;
-  const room = config.wrapAll ? r.room : Infinity;
-  const label = measure(relationLabelText(model, rel, index), fonts.message, room);
-  const techn = measure(relationTechnText(rel), fonts.message, room, Style.Italic);
-  if (!label && !techn) return { cx: r.x0, top: r.y0, lw: 0, lh: 0 };
-  const lw = Math.max(label?.text.width ?? 0, techn?.text.width ?? 0) + labelRoom.x;
-  const lh = (label?.text.height ?? 0) + (techn?.text.height ?? 0) + labelRoom.y;
+  const measured = measureLabel(input, rel, index, r.room);
+  if (!measured) return { cx: r.x0, top: r.y0, lw: 0, lh: 0 };
+  const { label, techn, lw, lh } = measured;
 
   const beside = Math.abs(r.nx) * (lw / 2) + Math.abs(r.ny) * (lh / 2) + M.besideGap;
   const aside = r.lean ? Math.max(0, Math.min(r.lean, beside - M.leanSlack)) : beside;

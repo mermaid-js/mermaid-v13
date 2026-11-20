@@ -903,6 +903,51 @@ describe('c4 wrapping (the root wrap wins over c4.wrap; relations and boundaries
  * 12.2.0's head was a fixed 13 px in a 26 px row over a body as tall as its text, so a one-line
  * person was a small head on a wide flat box.
  */
+/**
+ * D679: two row neighbours joined by labelled relations stand far enough apart for the widest
+ * tag between them to sit on its line, clear of the arrowheads and the shapes at both ends.
+ */
+describe('c4 gaps for labels between row neighbours (D679)', () => {
+  /** A tag's clearance at each end of its line: the arrowhead's square or `tagClear`, and a pixel. */
+  const END = Math.max(M.arrow, M.tagClear) + M.tagSlack;
+  const gapOf = (layout: C4Layout, a: string, b: string): number =>
+    el(layout, b).box.x - right(el(layout, a).box);
+  const WIDE = 'Reads every order and writes it back';
+
+  it('widens the gap to the widest tag between them and its clearance at both ends', () => {
+    const layout = sound(`C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel(a, b, "${WIDE}")`);
+    const r = rel(layout, 'a', 'b');
+    expect(gapOf(layout, 'a', 'b')).toBeCloseTo(r.labelBox!.width + 2 * END, 9);
+    expect(onItsLine(r)).toBe(true);
+  });
+
+  it('keeps 2·c4ShapeMargin where the tag fits, and with no label', () => {
+    const short = sound('C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel(a, b, "x")');
+    const none = sound('C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel(a, b, "")');
+    for (const layout of [short, none]) expect(gapOf(layout, 'a', 'b')).toBe(100);
+  });
+
+  it('widens only the gap the relation crosses, in its own row', () => {
+    const layout = sound(
+      `C4Context\nUpdateLayoutConfig($c4ShapeInRow="2")\nSystem(a, "A")\nSystem(b, "B")\nSystem(c, "C")\nSystem(d, "D")\nRel(a, b, "${WIDE}")`
+    );
+    expect(gapOf(layout, 'a', 'b')).toBeGreaterThan(100);
+    expect(gapOf(layout, 'c', 'd')).toBe(100);
+  });
+
+  it('takes the techn line when it is the wider', () => {
+    const layout = sound(`C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel(a, b, "x", "${WIDE}")`);
+    expect(gapOf(layout, 'a', 'b')).toBeCloseTo(rel(layout, 'a', 'b').labelBox!.width + 2 * END, 9);
+  });
+
+  it('limit: leaves a gap across a boundary edge as it is', () => {
+    const layout = sound(
+      `C4Context\nSystem(a, "A")\nBoundary(g, "G") {\nSystem(b, "B")\n}\nRel(a, b, "${WIDE}")`
+    );
+    expect(frame(layout, 'g').box.y).toBeGreaterThan(bottom(el(layout, 'a').box));
+  });
+});
+
 describe('c4 person figure (#683)', () => {
   const person = (src: string, alias = 'p') => {
     const layout = sound(src, { measurer: grid });
