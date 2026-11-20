@@ -33,7 +33,7 @@ export function lexIr(src: string, from: number, view: SourceView): TokenStream 
 }
 
 class IrLexer extends RailroadLexer {
-  protected scan(p: number, c: number): number {
+  protected rule(p: number, c: number): number {
     if (isIdStart(c)) {
       const e = this.header('railroad-beta', p);
       if (e >= 0) return e;
@@ -50,7 +50,7 @@ class IrLexer extends RailroadLexer {
     if (c === COMMA) return this.match(T.Comma, p + 1);
     if (c === RPAREN) return this.match(T.RParen, p + 1);
     if (isIdStart(c)) {
-      const e = this.accessibility(p);
+      const e = this.accessibilityAt(p);
       if (e >= 0) return e;
       return this.match(T.Id, this.idEnd(p));
     }

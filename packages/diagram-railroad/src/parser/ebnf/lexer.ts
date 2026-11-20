@@ -58,7 +58,7 @@ export function lexEbnf(src: string, from: number, view: SourceView): TokenStrea
 }
 
 class EbnfLexer extends RailroadLexer {
-  protected scan(p: number, c: number): number {
+  protected rule(p: number, c: number): number {
     if (isIdStart(c)) {
       const e = this.header('railroad-ebnf-beta', p);
       if (e >= 0) return e;
@@ -79,7 +79,7 @@ class EbnfLexer extends RailroadLexer {
     const kind = PUNCTUATION[c];
     if (kind !== undefined) return this.match(kind, p + 1);
     if (isIdStart(c)) {
-      const e = this.accessibility(p);
+      const e = this.accessibilityAt(p);
       if (e >= 0) return e;
       return this.match(T.Id, this.idEnd(p));
     }
