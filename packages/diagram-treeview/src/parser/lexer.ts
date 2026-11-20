@@ -187,18 +187,18 @@ class TreeViewLexer {
     const tokens = this.w.finish(this.src);
     this.record(-1, -1);
     const { src, view, rewrite, starts, ends, len } = this;
-    const fromRewrite = (s: number, e: number) =>
-      ampEntities((rewrite?.text ?? '').slice(s, Math.min(e, len)));
+    const fromRewrite = (r: BoxRewrite, s: number, e: number) =>
+      ampEntities(r.text.slice(s, Math.min(e, len)));
     return {
       tokens,
       box: this.box,
       text: (j) => {
         const s = starts[j] ?? -1;
-        if (rewrite && s >= 0) return fromRewrite(s, ends[j] ?? s);
+        if (rewrite && s >= 0) return fromRewrite(rewrite, s, ends[j] ?? s);
         return cook(src, tokens.start[j] ?? 0, tokens.end[j] ?? 0, view);
       },
       before: (j) => {
-        if (rewrite) return fromRewrite(0, Math.max(0, starts[j] ?? 0));
+        if (rewrite) return fromRewrite(rewrite, 0, Math.max(0, starts[j] ?? 0));
         return cook(src, this.from, tokens.start[j] ?? 0, view).trimStart();
       },
       source: (v) => (this.offsets ? this.offsets.source(v) : v),

@@ -90,6 +90,7 @@ describe('workspace layout (DESIGN §2)', () => {
         './parser/flow',
         './parser/flow-facet',
         './parser/generic-types',
+        './parser/line-tokens',
         './parser/rule',
         './parser/seen-tokens',
         './parser/state',

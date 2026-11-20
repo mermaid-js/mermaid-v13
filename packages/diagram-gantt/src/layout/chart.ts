@@ -96,7 +96,7 @@ export function chartOf(env: Env, model: GanttModel, plan: Schedule): Chart {
       return i === undefined ? 0 : i % env.numberSectionStyles;
     },
     scale: scaleOf(domain, plotWidth),
-    bounds: new Bounds().rect({ x: 0, y: 0, width: w, height: h }),
+    bounds: new Bounds().point(0, 0).point(w, h),
   };
 }
 
