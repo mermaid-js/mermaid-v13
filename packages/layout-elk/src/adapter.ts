@@ -59,7 +59,8 @@ import type {
   RoutePoint,
   Side,
 } from '@mermaid-js/core/layout';
-import { boxExit, layered as layeredEngine } from '@mermaid-js/core/layout';
+import { layered as layeredEngine } from '@mermaid-js/core/layout';
+import { boxExit } from '@mermaid-js/core/layout/box-exit';
 
 import type {
   ElkEdgeSection,

@@ -1,6 +1,6 @@
 /**
- * Embedded diagram blocks (ADR-15): the nesting limit and the missing diagram type, which the
- * render (through the core entry) and the editor (through the parser kit) both report.
+ * Embedded diagram blocks (ADR-15): the nesting limit, which the render (through the core
+ * entry) and the editor (through the parser kit) both report.
  */
 import type { Diagnostic } from './diagnostics.ts';
 import type { Range } from './positions.ts';
@@ -23,20 +23,5 @@ export function tooDeep(text: string, id: string, at: number): Diagnostic {
     code: 'EMBED_DEPTH',
     message: `The \`mermaid ${id}\` block is nested more than ${MAX_BLOCK_DEPTH} deep.`,
     range: openerRange(text, at),
-  };
-}
-
-/**
- * The error for block `id` whose body does not start with a diagram type: `line` is its first
- * diagram line (after blank lines, comments and front matter), at `range`. The render and the
- * editor each find that line in their own text.
- */
-export function noDiagramType(id: string, line: string, range: Range): Diagnostic {
-  const word = /^[^\s{[(;:]*/.exec(line)![0];
-  return {
-    severity: 'error',
-    code: 'EMBED_NO_TYPE',
-    message: `The \`mermaid ${id}\` block must start with a diagram type, such as \`sequenceDiagram\` or \`classDiagram\`, after any blank lines, comments and front matter${word ? `; \`${word}\` is not a diagram type` : ''}.`,
-    range,
   };
 }

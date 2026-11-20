@@ -30,7 +30,6 @@ export {
   V12_SPACING,
   type SpacingConfig,
 } from './layered/index.ts';
-export { boxExit } from './box-exit.ts';
 export { countCrossings, validateLayout } from './validate.ts';
 export { validateGrid } from './validate-grid.ts';
 export {

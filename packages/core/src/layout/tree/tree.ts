@@ -19,7 +19,6 @@ import type {
   RoutePoint,
   Side,
 } from '../types.ts';
-import { boxExit } from '../box-exit.ts';
 import { checkGraph, checkLabelSizes } from '../check.ts';
 import { titleAlign, titleLow, titlePoint } from '../title.ts';
 
@@ -375,8 +374,10 @@ function groupBoxes(graph: LayoutGraph, boxes: Map<string, Rect>, below: number)
 function exit(r: Rect, dx: number, dy: number): { p: RoutePoint; side: Side } {
   const hw = (r.x1 - r.x0) / 2;
   const hh = (r.y1 - r.y0) / 2;
-  const t = boxExit(hw, hh, dx, dy);
-  const flat = dx !== 0 && t === hw / Math.abs(dx);
+  const tx = dx === 0 ? Infinity : hw / Math.abs(dx);
+  const ty = dy === 0 ? Infinity : hh / Math.abs(dy);
+  const flat = tx <= ty;
+  const t = Math.min(tx, ty);
   let side: Side = dy > 0 ? 'bottom' : 'top';
   if (flat) side = dx > 0 ? 'right' : 'left';
   return { p: { x: r.x0 + hw + t * dx, y: r.y0 + hh + t * dy, axis: flat ? 'h' : 'v' }, side };

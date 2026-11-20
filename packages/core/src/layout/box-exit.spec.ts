@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { boxExit } from './index.ts';
+import { boxExit } from './box-exit.ts';
 
 describe('boxExit', () => {
   it('leaves through the side the ray reaches first', () => {

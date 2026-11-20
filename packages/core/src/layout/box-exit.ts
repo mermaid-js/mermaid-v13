@@ -1,4 +1,7 @@
 /**
+ * `@mermaid-js/core/layout/box-exit`, a subpath of its own so that it loads only with the
+ * code that clips at a box (block's shapes, ELK), not with `layered`.
+ *
  * How far along the ray `(dx, dy)` from the centre of an axis-aligned box of half sizes `hw`
  * and `hh` it leaves the box, in multiples of `(dx, dy)`. A zero component never reaches the
  * sides parallel to it (no 0 / 0 for a box of no width or height); with both zero the result

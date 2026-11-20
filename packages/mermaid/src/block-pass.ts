@@ -9,7 +9,6 @@ import {
   MAX_BLOCK_DEPTH,
   MermaidError,
   NotLoadedError,
-  noDiagramType as noTypeDiagnostic,
   openerRange,
   tooDeep,
   type EmbeddedDiagram,
@@ -20,6 +19,7 @@ import {
 import type { ResolvedConfig, ResolvedSite } from '@mermaid-js/core/config';
 import { blockBody, type BlockBody } from '@mermaid-js/core/parser-kit/embed-body';
 import type { Diagnostic, EmbeddedBlock, ParseOutput, Range } from '@mermaid-js/core/parser-kit';
+import { noDiagramType as noTypeDiagnostic } from '@mermaid-js/core/parser-kit/embed-type';
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { embeddedSvg, type SecurityLevel } from '@mermaid-js/core/svg';

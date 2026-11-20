@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { noDiagramType } from './embed-depth.ts';
+import { noDiagramType } from './embed-type.ts';
 
 describe('noDiagramType', () => {
   const range = { start: 10, end: 20 };

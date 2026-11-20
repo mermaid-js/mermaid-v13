@@ -11,7 +11,7 @@
  * {@link clipOutline} is where a ray from the centre leaves the outline: edges are clipped there
  * (D441). {@link outlineDistance} is how far a point is from the outline, for the invariants.
  */
-import { boxExit } from '@mermaid-js/core/layout';
+import { boxExit } from '@mermaid-js/core/layout/box-exit';
 
 export interface Point {
   readonly x: number;
