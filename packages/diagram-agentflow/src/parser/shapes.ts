@@ -1,13 +1,17 @@
 /**
- * Agentflow's shape vocabulary, from v12's `agentflow/shapes.ts` (`fa796a943`, D462) and the
- * shape names v12.2 accepts in `@{ shape }` (`rendering-elements/shapes.ts`, the list flowchart
- * v13 keeps; copied, never imported: D467).
+ * Agentflow's shape vocabulary, from v12's `agentflow/shapes.ts` (`fa796a943`, D462). The
+ * shape names v12.2 accepts in `@{ shape }` (`rendering-elements/shapes.ts`) are the flow
+ * family's, shared with flowchart (`@mermaid-js/shared/parser/flow`, D595).
  *
  * A vertex's v12 type (a bracket shape such as `square`, or a `@{ shape }` name) resolves
  * through {@link SHAPE_ALIASES}; the resolved name gives its kind ({@link vertexKind}) and the
  * shape it is drawn with ({@link drawnShape}). v12 drew a removed or unsupported shape as the
  * rounded default and reported it (`SHAPE_REMOVED`, `SHAPE_UNSUPPORTED`).
  */
+
+import { isValidShape } from '@mermaid-js/shared/parser/flow';
+
+export { isValidShape } from '@mermaid-js/shared/parser/flow';
 
 /** v0.8.1's aliases (§4.3.2); `lean_right` is the fix after mermaid\@12.2.0 (D462). */
 export const SHAPE_ALIASES: ReadonlyMap<string, string> = /* @__PURE__ */ new Map([
@@ -97,39 +101,6 @@ export function drawnShape(type: string | undefined): ShapeCheck {
   return allowed === undefined
     ? { shape: 'rounded', name, problem: 'unsupported' }
     : { shape: allowed, name };
-}
-
-/** v12.2's shape names, aliases included, as `@{ shape }` accepts them. */
-const SHAPE_NAMES =
-  'rect proc process rectangle squareRect note rounded event roundedRect state stadium ' +
-  'terminal pill fr-rect subprocess subproc framed-rectangle subroutine cyl db database ' +
-  'cylinder circle circ diam decision diamond question hex hexagon prepare lean-r lean-right ' +
-  'in-out lean_right lean-l lean-left out-in lean_left trap-b priority trapezoid-bottom ' +
-  'trapezoid trap-t manual trapezoid-top inv-trapezoid inv_trapezoid dbl-circ double-circle ' +
-  'doublecircle notch-rect card notched-rectangle lin-rect lined-rectangle lined-process ' +
-  'lin-proc shaded-process sm-circ start small-circle stateStart fr-circ stop framed-circle ' +
-  'stateEnd fork join forkJoin hourglass collate brace comment brace-l bolt com-link ' +
-  'lightning-bolt doc document delay half-rounded-rectangle h-cyl das horizontal-cylinder ' +
-  'lin-cyl disk lined-cylinder curv-trap curved-trapezoid display div-rect div-proc ' +
-  'divided-rectangle divided-process tri extract triangle win-pane internal-storage ' +
-  'window-pane f-circ junction filled-circle notch-pent loop-limit notched-pentagon flip-tri ' +
-  'manual-file flipped-triangle sl-rect manual-input sloped-rectangle docs documents st-doc ' +
-  'stacked-document st-rect procs processes stacked-rectangle bow-rect stored-data ' +
-  'bow-tie-rectangle cross-circ summary crossed-circle tag-doc tagged-document tag-rect ' +
-  'tagged-rectangle tag-proc tagged-process flag paper-tape odd rect_left_inv_arrow lin-doc ' +
-  'lined-document datastore data-store folder directory bucket console browser person bang ' +
-  'cloud text brace-r braces choice composite rectWithTitle labelRect block_arrow ' +
-  'collapsedGroup iconSquare iconCircle icon iconRounded imageSquare anchor kanbanItem ' +
-  'mindmapCircle defaultMindmapNode classBox erBox requirementBox usecaseActor ' +
-  'usecaseActorHollow usecaseActorAwesome usecaseActorIcon usecaseBusiness usecaseEllipse ' +
-  'usecaseJsonTable bpmn-start bpmn-intermediate bpmn-boundary bpmn-end bpmn-gateway ' +
-  'bpmn-activity bpmn-data bpmn-data-store bpmn-annotation';
-
-const SHAPES: ReadonlySet<string> = /* @__PURE__ */ new Set(SHAPE_NAMES.split(' '));
-
-/** Whether v12's `isValidShape` knows the resolved name `name`. */
-export function isValidShape(name: string): boolean {
-  return SHAPES.has(name);
 }
 
 /**

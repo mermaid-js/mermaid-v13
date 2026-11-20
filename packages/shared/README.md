@@ -26,6 +26,7 @@ Code that Mermaid v13 diagram packages share, kept out of `@mermaid-js/core` so 
 | `/svg/route` | Edge paths for graph diagrams |
 | `/svg/arrowheads` | Arrowhead markers and the trim they need |
 | `/svg/graph` | The edge label drawn as a tag (a rounded, bordered box sized by `labelPatch`) and the text style a label is measured with |
+| `/svg/node-paint` | The node paint flowchart and agentflow draw vertices and edges with, and the plain stroke an inner line takes under a gradient |
 | `/config/readers` | Readers for config numbers, lengths and `useMaxWidth` |
 | `/testing/layout-invariants` | What the diagrams' layout invariant checks share: the non-finite walk, box containment and overlap, `near`, the tolerance and the way a box is printed. Workspace-only: specs import it, the build and the tarball leave it out |
 | `/testing/test-context` | The config, theme and render context a diagram's tests render with, as the pipeline builds them. Workspace-only |

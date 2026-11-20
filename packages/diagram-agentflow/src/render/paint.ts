@@ -11,29 +11,12 @@ import type { OutlinePaint } from '@mermaid-js/core/svg';
 import type { AgentflowPrepared } from '../layout/index.ts';
 import type { AgentflowRenderContext } from './context.ts';
 import { arrowheads, type Arrowheads } from '@mermaid-js/shared/svg/arrowheads';
+import { nodePaint, type NodePaint } from '@mermaid-js/shared/svg/node-paint';
 import { usesPlain } from './shapes.ts';
 import type { Palette } from './slots.ts';
 
 type ThemeOf = AgentflowRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
-type Length = ReturnType<ThemeOf['length']>;
-
-/** Vertex and card outlines, and the edges' lines and heads. */
-export interface NodePaint {
-  readonly font: ReturnType<ThemeOf['font']>;
-  readonly fontSize: Length;
-  readonly fill: Color;
-  /** The outline: the theme's gradient when `useGradient` is on (D182), else nodeBorder. */
-  readonly stroke: OutlinePaint;
-  /** nodeBorder as a colour, for the refdoc's rule under the gradient (D185). */
-  readonly plainStroke: Color | undefined;
-  readonly text: Color;
-  readonly strokeWidth: Length;
-  readonly line: Color;
-  readonly arrow: Color;
-  /** The theme's drop shadow (`dropShadow`), on outlines and frames; none in classic themes. */
-  readonly shadow: ReturnType<ThemeOf['filter']> | undefined;
-}
 
 /** A flow's frame (`nodeBorder` stroke, as v12's neo rule drew it) and its title. */
 export interface FramePaint {
@@ -65,21 +48,7 @@ export interface Paints {
 /** The paints of one render, in the order their aliases are declared. */
 export function paints(theme: ThemeOf, prepared: AgentflowPrepared, titled: boolean): Paints {
   const heads = arrowheads(theme);
-  const node: NodePaint = {
-    font: theme.font(),
-    fontSize: theme.length('fontSize'),
-    fill: theme.color('mainBkg'),
-    stroke: theme.outline('nodeBorder'),
-    plainStroke:
-      theme.gradient() && prepared.nodes.some((v) => usesPlain(v.shape))
-        ? theme.color('nodeBorder')
-        : undefined,
-    text: theme.color('nodeTextColor'),
-    strokeWidth: theme.length('strokeWidth'),
-    line: theme.color('lineColor'),
-    arrow: theme.color('arrowheadColor'),
-    shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
-  };
+  const node = nodePaint(theme, () => prepared.nodes.some((v) => usesPlain(v.shape)));
   const frame =
     prepared.groups.length > 0
       ? { stroke: theme.outline('nodeBorder'), text: theme.color('titleColor') }
