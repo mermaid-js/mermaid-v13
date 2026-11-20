@@ -29,6 +29,7 @@ import {
   STYLE_TEXT_PROPERTIES,
   checkColor,
   checkFilter,
+  checkLength,
   styleSheetProblem,
 } from './style.ts';
 import type { EmbeddedSvg } from './types.ts';
@@ -316,6 +317,10 @@ const among =
 
 const sizeRule: AttrRule = (_tag, name, value) =>
   RE_NUMBER.test(value) || RE_PERCENT.test(value) ? undefined : `${name}="${value}" is not a size`;
+const radiusRule: AttrRule = (_tag, name, value) =>
+  RE_NUMBER.test(value) || checkLength(value) !== undefined
+    ? undefined
+    : `${name}="${value}" is not a length`;
 
 const xmlnsRule: AttrRule = (tag, _name, value) =>
   tag === 'svg' && value === SVG_NS ? undefined : `xmlns="${value}" on <${tag}>`;
@@ -354,6 +359,8 @@ const styleRule: AttrRule = (_tag, name, value) => {
 const ATTR_RULES: ReadonlyMap<string, AttrRule> = new Map<string, AttrRule>([
   ['width', sizeRule],
   ['height', sizeRule],
+  ['rx', radiusRule],
+  ['ry', radiusRule],
   ['xmlns', xmlnsRule],
   ['href', hrefRule],
   ['target', among(LINK_TARGETS)],

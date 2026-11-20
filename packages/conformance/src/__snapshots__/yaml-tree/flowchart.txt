@@ -464,7 +464,7 @@ e2e/diagrams/flowchart/visual-check/57-handle-nested-subgraphs-with-outgoing-lin
 e2e/diagrams/flowchart/visual-check/57-handle-nested-subgraphs-with-outgoing-links-4.mmd 1 853d23e1a636ed45
 e2e/diagrams/flowchart/visual-check/57-x-handle-nested-subgraphs-with-outgoing-links-5.mmd 1 b2be9cb96c9f76d6
 e2e/diagrams/flowchart/visual-check/58-handle-styling-with-style-expressions-2.mmd 1 d4695fc2128f01c9
-e2e/diagrams/flowchart/visual-check/58-handle-styling-with-style-expressions.mmd 1 bf01159a9cdd7037
+e2e/diagrams/flowchart/visual-check/58-handle-styling-with-style-expressions.mmd 1 acfad1f97982f292
 e2e/diagrams/flowchart/visual-check/5824-should-be-able-to-render-string-and-markdown-labels.mmd 1 ad5043903d256723
 e2e/diagrams/flowchart/visual-check/59-handle-styling-of-subgraphs-and-links.mmd 1 5d0f6201ec671fcd
 e2e/diagrams/flowchart/visual-check/5a-should-render-flowchart-with-edge-labels-centered-when-htmllabels-is-false.mmd 1 0fb92325c4c9c99a

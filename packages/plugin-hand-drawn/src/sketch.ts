@@ -62,6 +62,11 @@ function roundedRectPath(x: number, y: number, w: number, h: number, r: number):
     .join(' ');
 }
 
+function radius(value: Attrs['rx'] | undefined): number {
+  const n = typeof value === 'number' ? value : Number.parseFloat(value ?? '');
+  return Number.isFinite(n) ? Math.max(0, n) : 0;
+}
+
 /**
  * The seed roughjs gets for a `handDrawnSeed` (D304): `seed | 0`, so a non-zero seed gives
  * v12's sketch, and 0 is 2147483647, because roughjs uses `Math.random` for seed 0 (D300).
@@ -99,7 +104,7 @@ function rect(a: Attrs, o: Options): Drawable | undefined {
   const x = a.x ?? 0;
   const y = a.y ?? 0;
   // SVG clamps a corner radius to half the side; one radius, as v12's rounded shapes.
-  const r = Math.min(a.rx ?? a.ry ?? 0, w / 2, h / 2);
+  const r = Math.min(radius(a.rx ?? a.ry), w / 2, h / 2);
   return r > 0
     ? generator.path(roundedRectPath(x, y, w, h, r), o)
     : generator.rectangle(x, y, w, h, o);

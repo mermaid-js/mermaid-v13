@@ -157,8 +157,6 @@ export const NUMERIC_ATTRS: ReadonlySet<string> = new Set([
   'cx',
   'cy',
   'r',
-  'rx',
-  'ry',
   'dx',
   'dy',
   'stroke-miterlimit',

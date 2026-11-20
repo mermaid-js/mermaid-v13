@@ -228,6 +228,8 @@ const PROPERTIES: Readonly<Record<string, readonly [Kind, Target]>> = {
   fill: ['color', 'shape'],
   stroke: ['color', 'shape'],
   'stroke-width': ['length', 'shape'],
+  rx: ['length', 'shape'],
+  ry: ['length', 'shape'],
   'stroke-dasharray': ['dash', 'shape'],
   'stroke-dashoffset': ['length', 'shape'],
   'stroke-opacity': ['opacity', 'shape'],
