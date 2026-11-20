@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { droppedFeatures } from './dropped.ts';
+import { droppedFeatures } from './diagram.ts';
 
 const WHAT = { style: 'colours and styles', curve: 'edge curves', accessibility: 'accTitle' };
 const STATEMENTS = { style: ['Style', 'ClassDef'], accessibility: ['AccTitle'] };
