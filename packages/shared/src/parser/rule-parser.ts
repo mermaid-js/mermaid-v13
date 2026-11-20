@@ -39,11 +39,26 @@ export interface RuleParserPre {
   readonly diagnostics: readonly Diagnostic[];
 }
 
-/** One diagram's lexer and tables, as {@link RuleParser} uses them. */
-export interface RuleGrammar {
+/**
+ * One diagram's lexer and tables, as {@link RuleParser} uses them. `Pre` is the preprocess
+ * result the parser reads (see {@link RuleGrammar.view}).
+ */
+export interface RuleGrammar<Pre extends RuleParserPre = RuleParserPre> {
+  /**
+   * The source view the lexer reads `src` through. Optional: by default core's `sourceView`
+   * of the body with the directives cut. A diagram whose v12 lexer read other text (event
+   * modeling keeps the `%%` comment lines) makes its own.
+   */
+  view?(src: string, pre: Pre): SourceView;
   lex(src: string, from: number, view: SourceView): TokenStream;
   /** The kinds the parser never sees. */
   readonly trivia: KindSet;
+  /**
+   * The token view the rules see (`t`), made from every token and {@link RuleGrammar.trivia}.
+   * Optional: by default core's `significantTokens`. A diagram that also needs to know where
+   * lines start (treemap reads `lineTokens`) makes its own, and narrows `t` to its type.
+   */
+  tokens?(full: TokenStream, trivia: KindSet): TokenView;
   /** Where {@link RuleParser.recover} stops (default: a line break or the end). */
   readonly boundary?: KindSet;
   /** The kinds a probe at the end of a token still belongs to (see `Probe`). */
@@ -104,17 +119,19 @@ export abstract class RuleParser<Pre extends RuleParserPre = RuleParserPre> {
     protected readonly src: string,
     protected readonly pre: Pre,
     own: boolean,
-    grammar: RuleGrammar,
+    grammar: RuleGrammar<Pre>,
     probeAt: number | undefined
   ) {
     if (own) this.st.diagnostics.list.push(...pre.diagnostics);
-    this.view = sourceView(
-      src,
-      pre.bodyStart,
-      pre.directives.map((d) => d.range)
-    );
+    this.view = grammar.view
+      ? grammar.view(src, pre)
+      : sourceView(
+          src,
+          pre.bodyStart,
+          pre.directives.map((d) => d.range)
+        );
     this.full = grammar.lex(src, pre.bodyStart, this.view);
-    this.t = significantTokens(this.full, grammar.trivia);
+    this.t = (grammar.tokens ?? significantTokens)(this.full, grammar.trivia);
     this.boundary = grammar.boundary ?? LINE_BOUNDARY;
     this.grammar = grammar;
     if (probeAt !== undefined) {
@@ -149,7 +166,8 @@ export abstract class RuleParser<Pre extends RuleParserPre = RuleParserPre> {
 
   /** Consume a token of `kind` (its index), or fail. */
   protected expect(kind: number, hint?: string): number {
-    this.tested([kind]);
+    // A plain parse builds no probe list.
+    if (this.probe !== undefined) this.tested([kind]);
     if (this.kind() !== kind) this.fail([kind], hint);
     return this.i++;
   }
