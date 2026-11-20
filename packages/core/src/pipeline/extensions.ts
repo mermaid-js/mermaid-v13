@@ -172,6 +172,33 @@ export interface ResourceRequest {
 }
 
 /**
+ * Whether `test` holds for any string in `value` (a parse's model), for an extension whose
+ * {@link ResourceRequest} has no `labels`. It walks objects, arrays, Maps (keys and values) and
+ * Sets once each, depth first, and stops at the first string `test` accepts.
+ */
+export function someString(value: unknown, test: (text: string) => boolean): boolean {
+  const seen = new Set<object>();
+  const stack: unknown[] = [value];
+  while (stack.length > 0) {
+    const v = stack.pop();
+    if (typeof v === 'string') {
+      if (test(v)) return true;
+    } else if (typeof v === 'object' && v !== null && !seen.has(v)) {
+      seen.add(v);
+      pushChildren(stack, v);
+    }
+  }
+  return false;
+}
+
+/** Pushes what `v` holds: a Map's keys and values, a Set's members, an object's values. */
+function pushChildren(stack: unknown[], v: object): void {
+  if (v instanceof Map) for (const [k, x] of v) stack.push(k, x);
+  else if (v instanceof Set) for (const x of v) stack.push(x);
+  else for (const x of Object.values(v)) stack.push(x);
+}
+
+/**
  * An extension's glyphs (D293). `glyph` runs while a diagram draws, so it is synchronous; a glyph
  * whose data loads later is `undefined` until it has loaded, and its extension asks `prepare()`
  * for that data as a resource.
