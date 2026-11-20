@@ -94,9 +94,20 @@ const CROSSING_EXCEPTIONS: string[] = [];
  * depths out, which costs more than the crossing. (The docs' container example's
  * `backend_api -> banking_system` was listed too, until the person figure, #683, moved its rows.)
  */
+/** The gap between row neighbours: `2·c4ShapeMargin` at its default, 50 (D454). */
+const SHAPE_GAP = 100;
+
 const CROWDED_EXCEPTIONS = [
   'baseline/config/rows-and-fixed-width table: c -> d',
   'baseline/config/rows-and-fixed-width grid: c -> d',
+  // D679: eight lines between two systems 70 px tall stand closer than half a tag apart, so no
+  // rule holds their tags on them: each leaves its line, with either measurer, and is crowded.
+  ...['table', 'grid'].flatMap((name) =>
+    [
+      ...['ledger -> billing', 'ledger -> billing', 'billing -> ledger', 'ledger -> billing'],
+      ...['billing -> ledger', 'ledger -> billing', 'billing -> ledger', 'ledger -> billing'],
+    ].map((r) => `pr-check/repeated-relations-room ${name}: ${r}`)
+  ),
 ];
 
 describe('c4 layout invariants on the e2e fixtures', () => {
@@ -737,6 +748,79 @@ describe('c4 relations (D455)', () => {
     });
   });
 
+  /**
+   * D679: lines closer than a tag but at least half a tag apart keep their tags on them by
+   * staggering: each tag sits at the end of its line, alternately at one shape and the other, so
+   * neighbouring tags stand side by side; the gap between the shapes holds the two widest.
+   */
+  describe('staggered tags on lines closer than a tag (D679)', () => {
+    const END = Math.max(M.arrow, M.tagClear) + M.tagSlack;
+    /** Lines between two systems 70 px tall closer than half a tag apart. */
+    const SQUEEZED_LINES = 8;
+    const pair = (layout: C4Layout): C4RelationLayout[] =>
+      layout.relations.filter((r) => r.from !== r.to);
+    const overlaps = (list: readonly C4RelationLayout[]): string[] =>
+      list.flatMap((r, i) =>
+        list
+          .slice(i + 1)
+          .filter((o) => rectsOverlap(r.labelBox!, o.labelBox!))
+          .map((o) => `${textOf(r.label!)} x ${textOf(o.label!)}`)
+      );
+
+    it('puts every tag of repeated-steps on its own line, the ends on the body, none over another', () => {
+      const { model, config } = fixture('pr-check/repeated-steps');
+      for (const [themeName, drawn] of themes) {
+        const layout = layoutC4(model, c4TestContext(config, drawn));
+        expect(c4LayoutViolations(model, layout), themeName).toEqual([]);
+        const lines = pair(layout);
+        expect(lines).toHaveLength(5);
+        const { body } = personParts(el(layout, 'customer').box);
+        for (const r of lines) {
+          const end = r.from === 'customer' ? r.start : r.end;
+          expect(end.y, `${themeName} ${textOf(r.label!)}`).toBeGreaterThan(body.y);
+          expect(onItsLine(r), `${themeName} ${textOf(r.label!)}`).toBe(true);
+          expect(r.crowded, themeName).toBeUndefined();
+        }
+        expect(overlaps(lines), themeName).toEqual([]);
+      }
+    });
+
+    it('widens the gap to the widest tag at each end, side by side', () => {
+      const labels = ['a much longer first label', 'b', 'c three', 'd', 'e five'];
+      const src =
+        'C4Context\nSystem(a, "A")\nSystem(b, "B")\n' +
+        labels.map((l) => `Rel(a, b, "${l}")`).join('\n');
+      const layout = sound(src);
+      const widths = pair(layout).map((r) => r.labelBox!.width);
+      const widest = (parity: number): number =>
+        Math.max(...widths.filter((_, i) => i % 2 === parity));
+      const gap = el(layout, 'b').box.x - right(el(layout, 'a').box);
+      expect(gap).toBeCloseTo(widest(0) + widest(1) + 2 * END + M.tagClear, 9);
+      for (const r of pair(layout)) expect(onItsLine(r)).toBe(true);
+      expect(overlaps(pair(layout))).toEqual([]);
+    });
+
+    it('leaves a tag the author moved off its line where it was put, not crowded', () => {
+      const rels = Array.from({ length: SQUEEZED_LINES }, (_, i) => `Rel(a, b, "r${i}")`).join(
+        '\n'
+      );
+      const moved = 'UpdateRelStyle(a, b, $offsetY="-60")';
+      const layout = sound(`C4Context\nSystem(a, "A")\nSystem(b, "B")\n${rels}\n${moved}`);
+      for (const r of pair(layout)) expect(r.crowded).toBeUndefined();
+    });
+
+    it('limit: lines closer than half a tag are not staggered, and keep the one-tag gap', () => {
+      // Eight lines between two systems side by side: closer than half a tag.
+      const rels = Array.from({ length: SQUEEZED_LINES }, (_, i) => `Rel(a, b, "r${i}")`).join(
+        '\n'
+      );
+      const layout = sound(`C4Context\nSystem(a, "A")\nSystem(b, "B")\n${rels}`);
+      const widest = Math.max(...pair(layout).map((r) => r.labelBox!.width));
+      const gap = el(layout, 'b').box.x - right(el(layout, 'a').box);
+      expect(gap).toBeCloseTo(Math.max(SHAPE_GAP, widest + 2 * END), 9);
+    });
+  });
+
   describe('self-loops that repeat a shape (#680)', () => {
     /** More loops than fit their ends `near` apart on a system's right side (5). */
     const PAST_ROOM = 7;
@@ -924,7 +1008,7 @@ describe('c4 gaps for labels between row neighbours (D679)', () => {
   it('keeps 2·c4ShapeMargin where the tag fits, and with no label', () => {
     const short = sound('C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel(a, b, "x")');
     const none = sound('C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel(a, b, "")');
-    for (const layout of [short, none]) expect(gapOf(layout, 'a', 'b')).toBe(100);
+    for (const layout of [short, none]) expect(gapOf(layout, 'a', 'b')).toBe(SHAPE_GAP);
   });
 
   it('widens only the gap the relation crosses, in its own row', () => {
@@ -932,7 +1016,7 @@ describe('c4 gaps for labels between row neighbours (D679)', () => {
       `C4Context\nUpdateLayoutConfig($c4ShapeInRow="2")\nSystem(a, "A")\nSystem(b, "B")\nSystem(c, "C")\nSystem(d, "D")\nRel(a, b, "${WIDE}")`
     );
     expect(gapOf(layout, 'a', 'b')).toBeGreaterThan(100);
-    expect(gapOf(layout, 'c', 'd')).toBe(100);
+    expect(gapOf(layout, 'c', 'd')).toBe(SHAPE_GAP);
   });
 
   it('takes the techn line when it is the wider', () => {
@@ -1006,8 +1090,10 @@ describe('c4 person figure (#683)', () => {
   });
 
   it('spreads lines beside a person over its body, none on its head (D679)', () => {
+    /** More lines than fit `near` apart on a 70 px system's side. */
+    const PAST_BODY = 12;
     const src = 'C4Context\nPerson(p, "P")\nSystem(s, "S")\n';
-    const many = Array.from({ length: 12 }, (_, i) => `Rel(p, s, "r${i}")`).join('\n');
+    const many = Array.from({ length: PAST_BODY }, (_, i) => `Rel(p, s, "r${i}")`).join('\n');
     const layout = sound(src + many);
     const { body } = personParts(el(layout, 'p').box);
     for (const r of layout.relations) expect(r.start.y).toBeGreaterThan(body.y);

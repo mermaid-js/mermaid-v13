@@ -10,7 +10,8 @@ import type { C4Model, C4Relation } from '../model.ts';
 import type { Measure, Measured } from './layout.ts';
 import { C4_METRICS as M } from './metrics.ts';
 import type { LabelRoom } from './room.ts';
-import type { Route, Work } from './route.ts';
+import type { Place, Stagger } from './pairs.ts';
+import { crosses, lineOf, type Route, type Work } from './route.ts';
 import { hitRect } from './shapes.ts';
 
 /** A relation's drawn label: C4Dynamic numbers its relations in model order, from 1 (v12). */
@@ -128,6 +129,8 @@ export interface LabelInput {
   readonly input: LabelSetup;
   /** What the label should keep off; undefined once the budget is spent. */
   readonly keep: Keep | undefined;
+  /** Where its line runs among the others between the same two shapes (`pairPlaces`). */
+  readonly place?: Place | undefined;
 }
 
 /** What a label keeps off while it is placed. */
@@ -216,26 +219,11 @@ export function measureLabel(
  * offsets; with `taken`, slid to the spot that covers least of it (and added to it). Measured
  * after routing, as Pele does: its wrap width (the route's `room`) depends on the line it sits on.
  */
-export function placeLabel({ rel, index, r, input, keep }: LabelInput): LabelSpot {
+export function placeLabel({ rel, index, r, input, keep, place }: LabelInput): LabelSpot {
   const measured = measureLabel(input, rel, index, r.room);
   if (!measured) return { cx: r.x0, top: r.y0, lw: 0, lh: 0 };
   const { label, techn, lw, lh } = measured;
-
-  const beside = Math.abs(r.nx) * (lw / 2) + Math.abs(r.ny) * (lh / 2) + M.besideGap;
-  const aside = r.lean ? Math.max(0, Math.min(r.lean, beside - M.leanSlack)) : beside;
-  let dx = r.nx * aside + offset(rel.offsetX);
-  let dy = r.ny * aside + offset(rel.offsetY);
-  let at = M.slide[0]!;
-  let crowded = false;
-  if (keep)
-    ({ at, dx, dy, crowded } = clearest({
-      r,
-      lw,
-      lh,
-      given: [dx, dy],
-      online: [r.nx * aside, r.ny * aside],
-      keep,
-    }));
+  const { at, dx, dy, crowded } = spotOf({ rel, r, lw, lh, keep, place });
   const cx = r.x0 + (r.x1 - r.x0) * at + dx;
   const top = r.y0 + (r.y1 - r.y0) * at + dy - lh / 2;
   keepOff(keep, { x0: cx - lw / 2, y0: top, x1: cx + lw / 2, y1: top + lh });
@@ -249,6 +237,104 @@ export function placeLabel({ rel, index, r, input, keep }: LabelInput): LabelSpo
     ...(crowded ? { crowded: true as const } : {}),
   };
 }
+
+/** What finding the spot of a `lw` × `lh` label on its line `r` reads. */
+interface SpotInput {
+  readonly rel: C4Relation;
+  readonly r: Route;
+  readonly lw: number;
+  readonly lh: number;
+  readonly keep: Keep | undefined;
+  readonly place: Place | undefined;
+}
+
+/**
+ * Where a label goes: beside its line when another runs the opposite way, moved by the author's
+ * offsets; with `keep`, a staggered tag at its end of the line when that is clear (D679), else
+ * the spot that covers least ({@link clearest}). A tag on one of several lines between two
+ * shapes (`place.tagged`) that ends up off its line is crowded (D679): there was no room for it.
+ */
+function spotOf({ rel, r, lw, lh, keep, place }: SpotInput): Clearest {
+  const beside = Math.abs(r.nx) * (lw / 2) + Math.abs(r.ny) * (lh / 2) + M.besideGap;
+  const aside = r.lean ? Math.max(0, Math.min(r.lean, beside - M.leanSlack)) : beside;
+  const online: [number, number] = [r.nx * aside, r.ny * aside];
+  const given: [number, number] = [
+    online[0] + offset(rel.offsetX),
+    online[1] + offset(rel.offsetY),
+  ];
+  if (!keep) return { at: M.slide[0]!, dx: given[0], dy: given[1], crowded: false };
+  const spot =
+    staggeredSpot(r, lw, lh, keep, staggerEnd(rel, place)) ??
+    clearest({ r, lw, lh, given, online, keep });
+  return offItsLine(rel, place, r, boxOf(r, spot, lw, lh)) ? { ...spot, crowded: true } : spot;
+}
+
+/** The end a staggered tag keeps to; none when not staggered or moved by the author's offsets. */
+const staggerEnd = (rel: C4Relation, place: Place | undefined): Stagger | undefined =>
+  rel.offsetX || rel.offsetY ? undefined : place?.stagger;
+
+/**
+ * Whether a tag that belongs on its line (`place.tagged`, D679) left it; one the author moved
+ * with offsets left it on purpose.
+ */
+const offItsLine = (rel: C4Relation, place: Place | undefined, r: Route, box: Box): boolean =>
+  place?.tagged === true && !rel.offsetX && !rel.offsetY && !onOwnLine(r, box);
+
+/** How far a tag keeps from each end of its line: the arrowhead's square or `tagClear`, and a pixel (D679). */
+export const tagEndClear = (): number => Math.max(M.arrow, M.tagClear) + M.tagSlack;
+
+/** The step between two tagged lines side by side: a one-line tag's height and a `besideGap` either side. */
+export function tagStepOf({ measure, fonts, labelRoom }: LabelSetup): number {
+  const line = measure('X', fonts.message, Infinity);
+  return line ? line.text.height + labelRoom.y + 2 * M.besideGap : 0;
+}
+
+/**
+ * The step a relation's tag needs between its line and the next (D679): its height and a
+ * `besideGap` either side, at least `base` (a one-line tag's, {@link tagStepOf}).
+ */
+export const stepFor = (base: number, measured: MeasuredLabel | undefined): number =>
+  Math.max(base, (measured?.lh ?? 0) + 2 * M.besideGap);
+
+/**
+ * A staggered tag's spot (D679): on its line, `tagEndClear` from the end it keeps to; none for a
+ * tag not staggered or moved by the author's offsets, one too long for its line, or one whose
+ * spot is not clear.
+ */
+function staggeredSpot(
+  r: Route,
+  lw: number,
+  lh: number,
+  keep: Keep,
+  end: Stagger | undefined
+): Clearest | undefined {
+  if (!end) return undefined;
+  const [dx, dy] = [r.x1 - r.x0, r.y1 - r.y0];
+  const len = Math.hypot(dx, dy);
+  const t = (tagEndClear() + (Math.abs(dx) * lw + Math.abs(dy) * lh) / len / 2) / len;
+  if (!(t <= 1 / 2)) return undefined;
+  const spot = { at: end === 'start' ? t : 1 - t, dx: 0, dy: 0, crowded: false };
+  return isClear(keep, boxOf(r, spot, lw, lh)) ? spot : undefined;
+}
+
+/** The label box at a spot on `r`. */
+function boxOf(r: Route, { at, dx, dy }: Clearest, lw: number, lh: number): Box {
+  const x = r.x0 + (r.x1 - r.x0) * at + dx;
+  const y = r.y0 + (r.y1 - r.y0) * at + dy;
+  return { x0: x - lw / 2, y0: y - lh / 2, x1: x + lw / 2, y1: y + lh / 2 };
+}
+
+/** Whether a label box covers nothing it should keep off, nor another relation's line. */
+function isClear(keep: Keep, box: Box): boolean {
+  return (
+    forbidden(keep, box) === 0 &&
+    keep.taken.covered(box.x0, box.y0, box.x1, box.y1) === 0 &&
+    keep.lines.through(keep.own, box.x0, box.y0, box.x1, box.y1) === 0
+  );
+}
+
+/** Whether a relation's own line runs through its label box. */
+const onOwnLine = (r: Route, box: Box): boolean => crosses(lineOf(r.points, r.controls), box);
 
 /** What finding a label's spot reads. */
 interface ClearestInput {

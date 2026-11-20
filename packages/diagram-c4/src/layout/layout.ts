@@ -40,7 +40,15 @@ import { C4_METRICS as M, FONT_WEIGHT } from './metrics.ts';
 import { classicLabelRoom, type LabelRoom } from './room.ts';
 import { pairPlaces } from './pairs.ts';
 import { widenForLabels } from './gaps.ts';
-import { Lines, placeLabel, Taken, type LabelSpot } from './labels.ts';
+import {
+  Lines,
+  measureLabel,
+  placeLabel,
+  stepFor,
+  Taken,
+  tagStepOf,
+  type LabelSpot,
+} from './labels.ts';
 import { Lanes, lineOf, pointsOf, route, Work, type Route } from './route.ts';
 import {
   labelBlockers,
@@ -206,7 +214,7 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
   const spacing = gridSpacing(model, config);
   const labelRoom = classicLabelRoom(ctx.units);
   // Tags (SVG output) widen the gaps they sit in (D679); text output keeps the grid's.
-  if (!units) widenForLabels(order, nodes, spacing.shapeInRow, { ...setup, model, labelRoom });
+  if (!units) widenForLabels(order, nodes, { ...setup, model, labelRoom });
   placeGrid(order, spacing, (g, contentW) =>
     header(g as Group, contentW, { config, fonts, measure })
   );
@@ -492,20 +500,37 @@ interface RouteInput extends Measuring {
   readonly tags: boolean;
 }
 
+/** A relation with both ends drawn, and the outlines of its ends. */
+interface Drawn {
+  readonly rel: C4Relation;
+  readonly index: number;
+  readonly a: Outline;
+  readonly b: Outline;
+  /** The step its tag needs from the next line (0 without tags). */
+  readonly tagStep: number;
+}
+
+/** A relation's line, its arrowheads, and their tips (x, y pairs) for the labels to keep off. */
+interface Arrowed {
+  readonly r: Route;
+  readonly startArrow: boolean;
+  readonly endArrow: boolean;
+  readonly heads: readonly number[];
+}
+
 /** Routes every relation with known ends in model order, then places their labels (Pele `render.ts`). */
 function routeAll(input: RouteInput): RoutedAll {
   const { model, endOf, shapes, frames, order } = input;
-  const drawn: { rel: C4Relation; index: number; a: Outline; b: Outline }[] = [];
+  // With tags, each line keeps its tag's height from the next where the room allows (D679).
+  const base = input.tags ? tagStepOf(input) : 0;
+  const drawn: Drawn[] = [];
   model.relations.forEach((rel, index) => {
     const a = endOf(rel.from);
     const b = endOf(rel.to);
-    if (!a || !b) return;
-    drawn.push({ rel, index, a, b });
+    const tagStep = base && stepFor(base, measureLabel(input, rel, index, M.narrow));
+    if (a && b) drawn.push({ rel, index, a, b, tagStep });
   });
-  // A one-line tag's height and a gap either side: the step between tagged lines side by side.
-  const line = input.measure('X', input.fonts.message, Infinity);
-  const tagStep = input.tags && line ? line.text.height + input.labelRoom.y + 2 * M.besideGap : 0;
-  const places = pairPlaces(drawn, tagStep);
+  const places = pairPlaces(drawn);
   // The comparisons are counted as they are made: once the budget is spent, the relations still
   // to route go straight and the labels still to place sit at their middle, in model order.
   const work = new Work(input.budget);
@@ -514,8 +539,54 @@ function routeAll(input: RouteInput): RoutedAll {
   // What a label must never cover: every shape (a person's head and body) and every boundary
   // header; with tags, also every label placed before it.
   const blocked = new Taken(work);
+  keepOffShapes(shapes, input.tags, taken, blocked);
+  // Every line is routed before any label is placed, so that labels can keep off the arrowheads.
+  const lanes = new Lanes(work);
+  for (const f of frames) lanes.frame(f);
+  const routes = drawn.map((d, k): Arrowed => {
+    if (work.done) careful = false;
+    const place = places[k] ?? { shift: 0 };
+    const routed = route(d.a, d.b, { ...place, ...(work.done ? {} : { others: shapes }), lanes });
+    // A straight line spaced a tag from the next keeps its label on it (#955 review).
+    const r = place.spaced && routed.kind === 'line' ? { ...routed, nx: 0, ny: 0 } : routed;
+    return arrowsOf(d.rel, r, taken);
+  });
+  const lines = new Lines(work);
+  routes.forEach(({ r }, k) => lines.add(k, lineOf(r.points, r.controls)));
+  keepOffHeaders(order, taken, blocked);
+
+  const list = drawn.map(({ rel, index }, k): Routed => {
+    const { r, startArrow, endArrow, heads } = routes[k]!;
+    if (work.done) careful = false;
+    const keep = work.done
+      ? undefined
+      : { taken, blocked, heads, lines, own: k, work, tags: input.tags };
+    const placedLabel = placeLabel({ rel, index, r, input, keep, place: places[k] });
+    return { rel, index, route: r, startArrow, endArrow, ...placedLabel };
+  });
+  return { list, careful };
+}
+
+/** A relation's arrowheads on its routed line `r`, their squares added to what labels cover least of. */
+function arrowsOf(rel: C4Relation, r: Route, taken: Taken): Arrowed {
+  const startArrow = rel.kind === 'birel' || rel.kind === 'rel_b';
+  const endArrow = rel.kind !== 'rel_b';
+  const p = r.points;
+  const n = p.length;
+  const heads: number[] = [];
+  if (startArrow) heads.push(p[0]!, p[1]!);
+  if (endArrow) heads.push(p[n - 2]!, p[n - 1]!);
+  for (let i = 0; i < heads.length; i += 2) taken.around(heads[i]!, heads[i + 1]!, M.arrow);
+  return { r, startArrow, endArrow, heads };
+}
+
+/**
+ * The shapes, for the labels: each whole (with tags, grown by `tagClear`) is blocked, and each
+ * but its edges is what they cover least of.
+ */
+function keepOffShapes(shapes: readonly Outline[], tags: boolean, taken: Taken, blocked: Taken) {
   const parts = shapes.flatMap(labelBlockers);
-  const clear = input.tags ? M.tagClear : 0;
+  const clear = tags ? M.tagClear : 0;
   for (const s of parts)
     blocked.add(s.x - clear, s.y - clear, s.x + s.width + clear, s.y + s.height + clear);
   for (const s of parts)
@@ -525,44 +596,16 @@ function routeAll(input: RouteInput): RoutedAll {
       s.x + s.width - M.labelEdge,
       s.y + s.height - M.labelEdge
     );
-  // Every line is routed before any label is placed, so that labels can keep off the arrowheads.
-  const lanes = new Lanes(work);
-  for (const f of frames) lanes.frame(f);
-  const routes = drawn.map(({ rel, a, b }, k) => {
-    if (work.done) careful = false;
-    const place = places[k] ?? { shift: 0 };
-    const routed = route(a, b, { ...place, ...(work.done ? {} : { others: shapes }), lanes });
-    // A straight line spaced a tag from the next keeps its label on it (#955 review).
-    const r = place.spaced && routed.kind === 'line' ? { ...routed, nx: 0, ny: 0 } : routed;
-    const startArrow = rel.kind === 'birel' || rel.kind === 'rel_b';
-    const endArrow = rel.kind !== 'rel_b';
-    const p = r.points;
-    const n = p.length;
-    const heads: number[] = [];
-    if (startArrow) heads.push(p[0]!, p[1]!);
-    if (endArrow) heads.push(p[n - 2]!, p[n - 1]!);
-    for (let i = 0; i < heads.length; i += 2) taken.around(heads[i]!, heads[i + 1]!, M.arrow);
-    return { r, startArrow, endArrow, heads };
-  });
-  const lines = new Lines(work);
-  routes.forEach(({ r }, k) => lines.add(k, lineOf(r.points, r.controls)));
+}
+
+/** Every boundary header, blocked for the labels. */
+function keepOffHeaders(order: readonly Group[], taken: Taken, blocked: Taken): void {
   for (const g of order) {
     const box = headerBox(g);
     if (!box) continue;
     taken.add(box.x, box.y, box.x + box.width, box.y + box.height);
     blocked.add(box.x, box.y, box.x + box.width, box.y + box.height);
   }
-
-  const list = drawn.map(({ rel, index }, k): Routed => {
-    const { r, startArrow, endArrow, heads } = routes[k]!;
-    if (work.done) careful = false;
-    const keep = work.done
-      ? undefined
-      : { taken, blocked, heads, lines, own: k, work, tags: input.tags };
-    const placedLabel = placeLabel({ rel, index, r, input, keep });
-    return { rel, index, route: r, startArrow, endArrow, ...placedLabel };
-  });
-  return { list, careful };
 }
 
 /** A boundary's header box, centred under the frame's top edge; none at the top level. */
