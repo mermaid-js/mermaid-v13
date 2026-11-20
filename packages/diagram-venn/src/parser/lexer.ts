@@ -117,7 +117,7 @@ export interface Lexed {
 const OPTIONS: StateLexerOptions = { charsPerToken: 4, crlf: 'fold', dropSpace: true };
 
 /**
- * Lex the venn body `src[from…]`. `from` and `view` come from `vennView` (`./index.ts`). With
+ * Lex the venn body `src[from…]`. `from` and `view` are shared `bodyView`'s `bodyStart` and `view`. With
  * `modeAt` (a probe's offset, R-LANG-7), the start condition there is {@link Lexed.mode}.
  */
 export function lex(src: string, from: number, view: SourceView, modeAt?: number): Lexed {
