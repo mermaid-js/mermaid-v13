@@ -11,6 +11,7 @@ commit 3a2f075 (release 1.13.0): its C4 grid (src/diagrams/c4/layout.ts), relati
 and what changed. Pele is used under the MIT License:
 
   src/layout/grid.ts
+  src/layout/labels.ts
   src/layout/layout.ts
   src/layout/metrics.ts
   src/layout/path.ts
