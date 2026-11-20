@@ -64,7 +64,7 @@ import {
   sourceView,
   SPACE,
 } from '@mermaid-js/core/parser-kit';
-import { lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
+import { entityPlaceholders, lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
 import type { Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import type { StateLexerOptions } from '@mermaid-js/shared/parser/state';
 import { preprocess } from '@mermaid-js/core/preprocess';
@@ -210,8 +210,7 @@ class RequirementLexer extends StateLexer {
       parts.push(out.slice(run));
       out = parts.join('');
     }
-    if (out.includes('#')) out = out.replace(/#(\w+);/g, (_, name: string) => `ﬂ${name}¶`);
-    return out;
+    return entityPlaceholders(out);
   }
 
   run(probe?: Probe): TokenStream {

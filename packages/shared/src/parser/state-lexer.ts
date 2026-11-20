@@ -42,6 +42,24 @@ const DOT_ENDS = ['\n', '\u2028', '\u2029'] as const;
 /** ASCII lower case of a character code. */
 export const lowerCode = (c: number): number => (c >= 65 && c <= 90 ? c + 32 : c);
 
+/**
+ * `text` with each `#name;` entity as `ﬂ`, the name and `¶`, of the same length, so no rule
+ * takes its `#` or `;`: v12's `encodeEntities` placeholders (`ﬂ°name¶ß`), which hold neither.
+ */
+export function entityPlaceholders(text: string): string {
+  return text.includes('#') ? text.replace(/#(\w+);/g, (_, name: string) => `ﬂ${name}¶`) : text;
+}
+
+/**
+ * The text a `crlf: 'keep'` lexer reads (its {@link StateLexer.prepare}), of the same length
+ * as `text`: v12 turned every CRLF and CR into LF before lexing, so each CR is an LF here (a
+ * CRLF reads as two LFs, a lone CR as one), and each entity is its placeholder
+ * ({@link entityPlaceholders}).
+ */
+export function lexerText(text: string): string {
+  return entityPlaceholders(text.includes('\r') ? text.replace(/\r/g, '\n') : text);
+}
+
 /** One lex. Offsets are into {@link text}, v12's text; {@link emit} maps them to the source. */
 export abstract class StateLexer {
   /** The text v12 lexed, plus the line break v12 appended. */
