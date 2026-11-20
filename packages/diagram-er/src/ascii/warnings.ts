@@ -1,9 +1,9 @@
 // What ER text output cannot show (D82, R-ASCII-5): one `ASCII_DROPPED` warning per feature
 // kind. Each names the AST ids of what it dropped: the elements from the model, and the
 // statements when the AST is given.
+import type { Warning } from '@mermaid-js/core';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import type { ErModel } from '../parser/index.ts';
-import type { ErWarning } from '../layout/context.ts';
 import type { ErPrepared } from '../layout/prepare.ts';
 import { asciiDropped, statements, styled } from '@mermaid-js/shared/ascii';
 
@@ -11,14 +11,14 @@ import { asciiDropped, statements, styled } from '@mermaid-js/shared/ascii';
 export type AsciiDroppedFeature = 'style' | 'accessibility';
 
 /** One feature kind text output dropped (D82). */
-export interface AsciiDroppedWarning extends ErWarning {
+export interface AsciiDroppedWarning extends Warning {
   readonly code: 'ASCII_DROPPED';
   readonly feature: AsciiDroppedFeature;
   readonly astIds: readonly string[];
 }
 
 /** Relationships the repair router found no free lane for (D78). */
-export interface AsciiRouteWarning extends ErWarning {
+export interface AsciiRouteWarning extends Warning {
   readonly code: 'ASCII_ROUTE';
   readonly astIds: readonly string[];
 }

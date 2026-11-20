@@ -7,14 +7,7 @@
 import type { Paint, SvgWriter } from '@mermaid-js/core/svg';
 import type { Theme } from '@mermaid-js/core/theme';
 import type { RelationType } from '../parser/index.ts';
-
-/** Where a line meets a node outline, and the unit direction it travels there. */
-export interface LineEnd {
-  readonly x: number;
-  readonly y: number;
-  readonly dx: number;
-  readonly dy: number;
-}
+import type { LineEnd } from '@mermaid-js/shared/svg/arrowheads';
 
 /** One render's marker geometry and paint. */
 export interface Markers {
