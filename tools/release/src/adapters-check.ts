@@ -10,6 +10,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { build } from 'esbuild';
 import type { Metafile } from 'esbuild';
+import { staticClosure } from '../../../packages/bench/src/stable-chunks.ts';
 import { firstPartyFacets } from '../../../packages/language-service/src/generated/facets.gen.ts';
 
 export const ADAPTERS = [
@@ -67,19 +68,6 @@ function exec(cmd: string, argv: string[], cwd: string): string {
   }
 }
 
-/** Output files the entry loads through static imports, itself included. */
-function eagerOutputs(meta: Metafile, entry: string): Set<string> {
-  const seen = new Set<string>();
-  const visit = (out: string) => {
-    if (seen.has(out)) return;
-    seen.add(out);
-    for (const i of meta.outputs[out]?.imports ?? [])
-      if (i.kind === 'import-statement' && !i.external) visit(i.path);
-  };
-  visit(entry);
-  return seen;
-}
-
 /**
  * What is wrong with the grammar files in a code-split bundle (D134), or nothing: each of
  * `grammars` (a file whose input path ends with `file`, of type `id`) must be in exactly one
@@ -95,7 +83,7 @@ export function lazyGrammarProblems(
   const problems: string[] = [];
   const grammarsIn = (out: string) =>
     Object.keys(meta.outputs[out]?.inputs ?? {}).filter(isGrammar);
-  for (const out of eagerOutputs(meta, entry))
+  for (const out of staticClosure(meta, entry))
     if (grammarsIn(out).length > 0)
       problems.push(`${out} loads ${grammarsIn(out).join(', ')} eagerly`);
   for (const { id, file } of grammars) {

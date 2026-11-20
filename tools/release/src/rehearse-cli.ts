@@ -28,6 +28,7 @@ import { dirname, join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { build } from 'esbuild';
 import { parseArgs } from '../../../packages/bench/src/cli/args.ts';
+import { staticClosure } from '../../../packages/bench/src/stable-chunks.ts';
 import { ADAPTER_FIXTURES, ADAPTERS, adapterChecks, FACET_PEERS } from './adapters-check.ts';
 import { pendingChangesets } from './changesets.ts';
 import { withDependents } from './preflight.ts';
@@ -192,13 +193,7 @@ async function bundleSize(dir: string, entry: string): Promise<{ initial: number
   const outputs = result.metafile.outputs;
   // Every dynamic-import target is an entry point too; the page's own is the one named `entry`.
   const entryOut = Object.keys(outputs).find((k) => outputs[k]!.entryPoint === entry)!;
-  const eager = new Set<string>();
-  const visit = (file: string): void => {
-    if (eager.has(file)) return;
-    eager.add(file);
-    for (const i of outputs[file]!.imports) if (i.kind === 'import-statement') visit(i.path);
-  };
-  visit(entryOut);
+  const eager = new Set(staticClosure(result.metafile, entryOut));
   let initial = 0;
   let lazy = 0;
   for (const file of Object.keys(outputs)) {
