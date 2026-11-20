@@ -3,21 +3,15 @@
 // an arrowhead on each pointing side, then the edges as stepped lines (`route.ts`) with tees
 // where they leave a box and their arrowheads, circles or crosses next to it, and last the edge
 // labels, on their own line where it runs straight and has room, else on free cells beside it,
-// never on a frame or a box (pitfall 20). Glyphs come from core's text-grid kit (`armOf`,
-// `sideOf`, `glyphFor`, `junction`, pitfall 21).
+// never on a frame or a box (pitfall 20). Lines and tees are the shared text kit's
+// (`drawLineCells`, `tee`), over core's glyphs (pitfall 21).
 import {
-  armOf,
   Canvas,
   cellWidth,
   drawBox,
   drawText,
-  DX,
-  DY,
   DOWN,
-  glyphFor,
-  junction,
   LEFT,
-  opposite,
   RIGHT,
   sideOf,
   UP,
@@ -26,6 +20,7 @@ import {
   type Dir,
   type GlyphSet,
 } from '@mermaid-js/core/ascii';
+import { boxForm, drawLineCells, tee } from '@mermaid-js/shared/ascii';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { InlineSpans } from '@mermaid-js/core/text';
 import type { BlockArrowType, BlockModel, BlockType } from '../model.ts';
@@ -35,25 +30,28 @@ import { BLOCK_TEXT_METRICS, type TextSpacing } from './metrics.ts';
 import type { Point } from '../shapes/outline.ts';
 import { Board, route, Use, type EndSpec, type Route, type UseOf } from './route.ts';
 
-/** The text form of each block type that has one (D82's table, as flowchart's). */
-const FORMS: Partial<Record<BlockType, (g: GlyphSet) => BoxOptions>> = {
-  na: () => ({}),
-  square: () => ({}),
-  round: () => ({ form: 'rounded' }),
-  circle: () => ({ form: 'rounded' }),
-  stadium: () => ({ form: 'rounded' }),
-  diamond: (g) => {
-    const m = g.name === 'unicode' ? '◇' : '*';
-    return { marks: { top: m, right: m, bottom: m, left: m } };
-  },
-  hexagon: () => ({ marks: { left: '<', right: '>' } }),
-  subroutine: () => ({ form: 'double-side' }),
-  cylinder: () => ({ form: 'caps' }),
+/** The flowchart shape whose text form each block type takes, for those that have one (D82). */
+const TEXT_SHAPE: Partial<Record<BlockType, string>> = {
+  na: 'rect',
+  square: 'rect',
+  round: 'rounded',
+  circle: 'circle',
+  stadium: 'stadium',
+  diamond: 'diam',
+  hexagon: 'hex',
+  subroutine: 'fr-rect',
+  cylinder: 'cyl',
+};
+
+/** The text form of a block type, or undefined when it has none. */
+const textForm = (type: BlockType, g: GlyphSet): BoxOptions | undefined => {
+  const shape = TEXT_SHAPE[type];
+  return shape === undefined ? undefined : boxForm(shape, g);
 };
 
 /** Whether `type` has a text form of its own; the others are plain boxes (`ASCII_SHAPE`). */
 export const hasTextForm = (type: BlockType): boolean =>
-  type === 'block_arrow' || type === 'composite' || FORMS[type] !== undefined;
+  type === 'block_arrow' || type === 'composite' || TEXT_SHAPE[type] !== undefined;
 
 /** The direction of each side a block arrow points to. */
 const SIDE_DIR: Readonly<Record<ArrowSide, Dir>> = { up: UP, right: RIGHT, down: DOWN, left: LEFT };
@@ -84,7 +82,7 @@ function formOf(box: TextBox, g: GlyphSet): BoxOptions {
     }
     return { marks };
   }
-  return FORMS[box.type]?.(g) ?? {};
+  return textForm(box.type, g) ?? {};
 }
 
 /** The cells of `r`'s side marks (where no line may leave the box). */
@@ -219,47 +217,23 @@ function routeEdges(sc: Scene, model: BlockModel): { routed: Routed[]; forced: A
   return { routed, forced };
 }
 
-function dirTo(a: Point, b: Point): Dir {
-  if (b.x !== a.x) return b.x > a.x ? RIGHT : LEFT;
-  return b.y > a.y ? DOWN : UP;
-}
-
 /** One edge's line, its tees and its end markers. */
 function drawLine(sc: Scene, { edge: e, route: r }: Routed): void {
   const { canvas, glyphs } = sc;
   const weight = e.thickness === 'thick' ? 2 : 1;
-  const dotted = e.pattern === 'dotted';
-  const last = r.cells.length - 1;
-  const across = armOf(LEFT, weight) | armOf(RIGHT, weight);
-  const down = armOf(UP, weight) | armOf(DOWN, weight);
-  r.cells.forEach((c, i) => {
-    let arms = 0;
-    if (i > 0) arms |= armOf(dirTo(c, r.cells[i - 1]!), weight);
-    if (i < last) arms |= armOf(dirTo(c, r.cells[i + 1]!), weight);
-    if (i === 0) arms |= armOf(r.startInto, weight);
-    if (i === last) arms |= armOf(r.endInto, weight);
-    let glyph = glyphFor(arms, glyphs);
-    if (dotted && arms === across) glyph = glyphs.dotted.h;
-    if (dotted && arms === down) glyph = glyphs.dotted.v;
-    if (glyph) canvas.draw(c.x, c.y, glyph);
-  });
+  const dotted = e.pattern === 'dotted' ? glyphs.dotted : undefined;
+  drawLineCells(canvas, glyphs, r.cells, r.startInto, r.endInto, { dotted, weight });
   // A tee where the line meets a border, unless a marker sits at that end.
-  const tee = (c: Point, into: Dir): void => {
-    const x = c.x + DX[into];
-    const y = c.y + DY[into];
-    const out = opposite(into);
-    const stub = glyphFor(armOf(out, weight), glyphs)!;
-    const merged = junction(canvas.get(x, y), stub);
-    canvas.set(x, y, merged === stub ? sideOf(glyphs.tee, out) : merged);
-  };
+  const merge = glyphs.name === 'unicode';
+  const last = r.cells.length - 1;
   const first = r.cells[0]!;
   const end = r.cells[last]!;
   const startMark = markerOf(e.arrowTypeStart, r.startInto, glyphs);
   const endMark = markerOf(e.arrowTypeEnd, r.endInto, glyphs);
   if (startMark && last > 0) canvas.set(first.x, first.y, startMark);
-  else tee(first, r.startInto);
+  else tee(canvas, glyphs.tee, merge, { cell: first, into: r.startInto }, weight);
   if (endMark) canvas.set(end.x, end.y, endMark);
-  else tee(end, r.endInto);
+  else tee(canvas, glyphs.tee, merge, { cell: end, into: r.endInto }, weight);
 }
 
 /** A candidate place for a label: its first cell and how far it is from the line's middle. */
