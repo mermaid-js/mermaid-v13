@@ -3,21 +3,17 @@
 // and fonts are ignored without one (D459); the diagram's own are not: `UpdateElementStyle`'s and
 // `UpdateRelStyle`'s colours, `UpdateRelStyle`'s label offsets (the label stays at the middle of
 // its line), a relation's description (the SVG's tooltip), and `accTitle` / `accDescr`.
-import type { Warning } from '@mermaid-js/core';
 import type { C4Layout } from '../layout/index.ts';
 import type { C4Model } from '../model.ts';
 import type { C4BetaModel } from '../beta/model.ts';
 import { asciiDropped } from '@mermaid-js/shared/ascii';
+import type { AsciiDroppedWarning as SharedAsciiDroppedWarning } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'offset' | 'tooltip' | 'accessibility' | 'legend';
 
 /** One feature kind text output dropped (D82). */
-export interface AsciiDroppedWarning extends Warning {
-  readonly code: 'ASCII_DROPPED';
-  readonly feature: AsciiDroppedFeature;
-  readonly astIds: readonly string[];
-}
+export type AsciiDroppedWarning = SharedAsciiDroppedWarning<AsciiDroppedFeature>;
 
 export type AsciiWarning = AsciiDroppedWarning;
 

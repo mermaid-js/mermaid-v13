@@ -3,6 +3,7 @@
  * the line and its tees, labels, the title, and the `ASCII_DROPPED` warning. Every `diagram-*`
  * ASCII path used to carry a copy; where the copies differed, the difference is a parameter.
  */
+import type { Warning } from '@mermaid-js/core';
 import type { Point } from '@mermaid-js/core/layout';
 import { type MeasuredLabel, Style } from '@mermaid-js/core/text';
 import {
@@ -236,13 +237,26 @@ export function statements(
     statements(child as Parameters<typeof statements>[0], out);
 }
 
+/** One feature kind (of a diagram's kinds `F`) that text output dropped (D82). */
+export interface AsciiDroppedWarning<F extends string> extends Warning {
+  readonly code: 'ASCII_DROPPED';
+  readonly feature: F;
+  readonly astIds: readonly string[];
+}
+
+/** Edges the repair router found no free lane for (D78). */
+export interface AsciiRouteWarning extends Warning {
+  readonly code: 'ASCII_ROUTE';
+  readonly astIds: readonly string[];
+}
+
 /** One `ASCII_DROPPED` warning (D82): text output has no `what`. `keys` names what, in brackets. */
 export function asciiDropped<F extends string>(
   feature: F,
   astIds: readonly string[],
   what: string,
   keys = ''
-): { code: 'ASCII_DROPPED'; feature: F; astIds: readonly string[]; message: string } {
+): AsciiDroppedWarning<F> {
   return {
     code: 'ASCII_DROPPED',
     feature,
@@ -264,7 +278,7 @@ export function asciiRoute(
   unresolved: readonly { readonly edge: string }[],
   noun: string,
   astIds: (edge: string) => string | readonly string[] = (edge) => edge
-): { code: 'ASCII_ROUTE'; astIds: string[]; message: string } | undefined {
+): AsciiRouteWarning | undefined {
   if (unresolved.length === 0) return undefined;
   const edges = [...new Set(unresolved.map((c) => c.edge))];
   return {
@@ -289,7 +303,7 @@ export interface DroppedFeatures<F extends string> {
   warnings(
     ast: Parameters<typeof statements>[0],
     keys?: Readonly<Partial<Record<F, string>>>
-  ): ReturnType<typeof asciiDropped<F>>[];
+  ): AsciiDroppedWarning<F>[];
 }
 
 /**
@@ -311,7 +325,7 @@ export function droppedFeatures<F extends string>(
     warnings(ast, keys) {
       const stmts = new Map<string, string[]>();
       statements(ast, stmts);
-      const out: ReturnType<typeof asciiDropped<F>>[] = [];
+      const out: AsciiDroppedWarning<F>[] = [];
       for (const feature of Object.keys(what) as F[]) {
         for (const kind of statementKinds[feature] ?? [])
           for (const id of stmts.get(kind) ?? []) add(feature, id);

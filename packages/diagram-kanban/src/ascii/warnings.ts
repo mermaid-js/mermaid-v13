@@ -9,16 +9,13 @@ import { kanbanBoardOrder, type KanbanModel } from '../model.ts';
 import { cls } from '@mermaid-js/shared/svg/document';
 import { ticketUrl, type LinkContext } from '../render/links.ts';
 import { asciiDropped, emphasised } from '@mermaid-js/shared/ascii';
+import type { AsciiDroppedWarning as SharedAsciiDroppedWarning } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'emphasis' | 'link';
 
 /** One feature kind text output dropped (D82). */
-export interface AsciiDroppedWarning extends Warning {
-  readonly code: 'ASCII_DROPPED';
-  readonly feature: AsciiDroppedFeature;
-  readonly astIds: readonly string[];
-}
+export type AsciiDroppedWarning = SharedAsciiDroppedWarning<AsciiDroppedFeature>;
 
 export type AsciiWarning = AsciiDroppedWarning;
 

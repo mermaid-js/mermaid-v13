@@ -9,13 +9,16 @@ import type { AstNode } from '@mermaid-js/core/parser-kit';
 import { agentflowConfigDefaults } from '../generated/config-defaults.ts';
 import {
   type AgentflowPrepared,
-  type AgentflowWarning,
   addsEmphasis,
   numericValue,
   TITLE_MARGIN_DEFAULTS,
 } from '../layout/index.ts';
 import type { AgentflowModel } from '../parser/index.ts';
 import { asciiDropped, statements, styled } from '@mermaid-js/shared/ascii';
+import type {
+  AsciiDroppedWarning as SharedAsciiDroppedWarning,
+  AsciiRouteWarning as SharedAsciiRouteWarning,
+} from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature =
@@ -28,17 +31,10 @@ export type AsciiDroppedFeature =
   | 'accessibility';
 
 /** One feature kind text output dropped (D82). */
-export interface AsciiDroppedWarning extends AgentflowWarning {
-  readonly code: 'ASCII_DROPPED';
-  readonly feature: AsciiDroppedFeature;
-  readonly astIds: readonly string[];
-}
+export type AsciiDroppedWarning = SharedAsciiDroppedWarning<AsciiDroppedFeature>;
 
 /** Edges the repair router found no free lane for (D78). */
-export interface AsciiRouteWarning extends AgentflowWarning {
-  readonly code: 'ASCII_ROUTE';
-  readonly astIds: readonly string[];
-}
+export type AsciiRouteWarning = SharedAsciiRouteWarning;
 
 export type AsciiWarning = AsciiDroppedWarning | AsciiRouteWarning;
 
