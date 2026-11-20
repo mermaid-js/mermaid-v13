@@ -24,7 +24,7 @@ import { defineFeature, isBag, type AnyFeature } from './feature.ts';
 import { menus } from './menus.ts';
 import { createScope, ownIds, rootsFor } from './scope.ts';
 
-/** v12's argument list of a `call fn(…)`: core's (`@mermaid-js/core/parser-kit`). */
+/** v12's argument list of a `call fn(…)`: core's (`@mermaid-js/core/parser-kit`, D675). */
 export { callbackArgs } from '@mermaid-js/core/parser-kit';
 
 /** One callback to bind: a node id, the function name and its arguments. */

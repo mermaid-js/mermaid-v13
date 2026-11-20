@@ -60,7 +60,7 @@ export interface AstCallback {
  * (`/,(?=(?:(?:[^"]*"){2})*[^"]*$)/`, here a linear scan), each item trimmed and stripped of
  * one pair of surrounding quotes (a lone `"` both starts and ends with one, so it becomes `''`,
  * as v12's `substr(1, length - 2)` gave); `[id]`, the element's id, when there are no
- * arguments.
+ * arguments (D675).
  */
 export function callbackArgs(id: string, args: string | undefined): string[] {
   if (args === undefined) return [id];
