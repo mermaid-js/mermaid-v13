@@ -3,7 +3,7 @@
  * from the grammar file (`generated/docs.ts`); the words inside a task's data and a setting's
  * value, which no token of their own holds, are documented here.
  */
-import type { CompletionKind } from '@mermaid-js/core/parser-kit';
+import type { TypedKeywordItem } from '@mermaid-js/shared/parser/facet';
 import type { GanttModel, GanttTag, GanttTask } from '../model.ts';
 import { clickTargets, lastById } from '../ids.ts';
 import { T } from '../parser/tokens.ts';
@@ -12,17 +12,13 @@ export { span } from '@mermaid-js/shared/parser/facet';
 export { code } from '@mermaid-js/shared/parser/facet';
 
 /** An item offered when the parser expects `kind`. */
-export interface KeywordItem {
-  readonly kind: number;
-  readonly label: string;
-  readonly item: CompletionKind;
+export interface KeywordItem extends TypedKeywordItem {
   /** What follows the label when the text after it holds none (`section `, `accTitle: `). */
   readonly separator?: string;
   /** What the author types next, for the lexer check: `x` unless set. */
   readonly sample?: string;
   /** The token kinds the inserted text may lex as, when not just `kind`. */
   readonly reads?: readonly number[];
-  readonly detail?: string;
 }
 
 /** The header, offered where the parser expects it (an empty text). */

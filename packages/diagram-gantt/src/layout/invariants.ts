@@ -4,27 +4,23 @@
  * ticks ascending, and the bounds covering every bar and band (D224). Returns the violations,
  * an empty list when the layout holds.
  */
-import { EPS, rectInside as inside } from '@mermaid-js/shared/testing/layout-invariants';
+import {
+  EPS,
+  nonFinite,
+  rectInside as inside,
+  within,
+} from '@mermaid-js/shared/testing/layout-invariants';
 import type { GanttAxis, GanttBar, GanttLayout } from './types.ts';
-
-function nonFinite(value: unknown, path: string, out: string[]): void {
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value)) out.push(`${path} is ${value}`);
-    return;
-  }
-  if (value === null || typeof value !== 'object') return;
-  for (const [k, v] of Object.entries(value)) nonFinite(v, `${path}.${k}`, out);
-}
 
 const what = (bar: GanttBar): string => `${bar.kind} "${bar.id}"`;
 
 /** A bar's x extent must lie in the plot; a milestone's centre and a marker's x must. */
 function inPlot(l: GanttLayout, bar: GanttBar): boolean {
   const end = l.plot.x + l.plot.width;
-  const within = (x: number): boolean => x >= l.plot.x - EPS && x <= end + EPS;
-  if (bar.kind === 'vert') return within(bar.x);
-  if (bar.kind === 'milestone') return within(bar.x + bar.width / 2);
-  return within(bar.x) && within(bar.x + bar.width);
+  const at = (x: number): boolean => within(x, l.plot.x, end);
+  if (bar.kind === 'vert') return at(bar.x);
+  if (bar.kind === 'milestone') return at(bar.x + bar.width / 2);
+  return at(bar.x) && at(bar.x + bar.width);
 }
 
 function barViolations(l: GanttLayout, out: string[]): void {
