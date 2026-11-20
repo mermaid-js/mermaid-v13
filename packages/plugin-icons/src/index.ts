@@ -29,7 +29,13 @@
  * value is a function of its key alone, so dropping any entry changes no output, and nothing
  * carries `missing()` results or a render's notes to the draw.
  */
-import type { DiagramIcon, ExtensionPlugin, IconPacks, ResourceRequest } from '@mermaid-js/core';
+import {
+  someString,
+  type DiagramIcon,
+  type ExtensionPlugin,
+  type IconPacks,
+  type ResourceRequest,
+} from '@mermaid-js/core';
 import type { ParseOutput } from '@mermaid-js/core/parser-kit';
 import type { OutlinePaint, Paint, SvgNode, SvgTree, Transform } from '@mermaid-js/core/svg';
 import type {
@@ -97,22 +103,6 @@ function notesOf(scratch: Record<string, unknown>): Notes {
   }) as Notes;
 }
 
-/** Every string in `value` (a model), for a diagram that lists no labels. */
-function strings(value: unknown, out: string[]): void {
-  const seen = new Set<object>();
-  const stack: unknown[] = [value];
-  while (stack.length > 0) {
-    const v = stack.pop();
-    if (typeof v === 'string') out.push(v);
-    else if (typeof v === 'object' && v !== null && !seen.has(v)) {
-      seen.add(v);
-      if (v instanceof Map) for (const [k, x] of v) stack.push(k, x);
-      else if (v instanceof Set) for (const x of v) stack.push(x);
-      else for (const x of Object.values(v)) stack.push(x);
-    }
-  }
-}
-
 /** A glyph name as `DiagramPlugin.icons` lists it, split into its pack and icon. */
 const splitIcon = (icon: DiagramIcon) =>
   typeof icon === 'string' ? iconName(icon) : iconName(icon.name, icon.fallbackPrefix);
@@ -124,16 +114,14 @@ const splitIcon = (icon: DiagramIcon) =>
 function packsOf(parse: ParseOutput<unknown>, request: ResourceRequest): ReadonlySet<string> {
   const cached = packsByParse.get(parse);
   if (cached) return cached;
-  let texts: readonly string[];
-  if (request.labels) texts = request.labels();
-  else {
-    // The parse is lean when nothing of the render reads the AST: its model holds the labels.
-    const all: string[] = [];
-    strings(parse.model, all);
-    texts = all;
-  }
   const found = new Set<string>();
-  for (const text of texts) for (const m of text.matchAll(LABELS)) found.add(m[1]!);
+  const scan = (text: string): boolean => {
+    for (const m of text.matchAll(LABELS)) found.add(m[1]!);
+    return false;
+  };
+  if (request.labels) request.labels().forEach(scan);
+  // The parse is lean when nothing of the render reads the AST: its model holds the labels.
+  else someString(parse.model, scan);
   for (const icon of request.icons?.() ?? []) {
     const n = splitIcon(icon);
     if (n) found.add(n.prefix);
