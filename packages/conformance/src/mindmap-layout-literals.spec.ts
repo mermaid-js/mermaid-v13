@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { REPO_ROOT } from './index.ts';
+import { numericLiterals } from './literals.ts';
 
 // The mindmap graph builder takes every length from its metrics table (pitfall 13, spec #294
 // T3): no file in `packages/diagram-mindmap/src/layout/` but `metrics.ts` and `outline.ts`
@@ -12,15 +13,6 @@ const ALLOWED: Readonly<Record<string, string>> = {
   '2': 'both sides of a box; halving',
   '1e-6': 'the float tolerance of the invariant checks',
 };
-
-/** The numeric literals in TypeScript source, outside comments and strings. */
-function numericLiterals(source: string): string[] {
-  const code = source
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .replace(/\/\/.*$/gm, ' ')
-    .replace(/'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`|"(?:[^"\\\n]|\\.)*"/g, "''");
-  return code.match(/(?<![\w$.])\d[\d_]*(?:\.\d+)?(?:e[-+]?\d+)?/gi) ?? [];
-}
 
 const DIR = join(REPO_ROOT, 'packages/diagram-mindmap/src/layout');
 // The table, the outlines' proportions, test fixtures and specs are not layout code.
