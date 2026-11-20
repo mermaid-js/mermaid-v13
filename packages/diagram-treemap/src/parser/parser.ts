@@ -72,8 +72,6 @@ import type { ClassDefRead } from './normalise.ts';
 import { T } from './tokens.ts';
 
 export interface TreemapParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** The integrator's cap on sections and leaves (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
   maxNodes?: number;
   /** How deep a row may sit under a top one (core `DEFAULT_LIMITS.maxDepth` when absent). */
@@ -244,7 +242,7 @@ class TreemapParser extends RuleParser<PreprocessResult> {
   }
 
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  protected fail(want: readonly number[], hint?: string): never {
+  protected override fail(want: readonly number[], hint?: string): never {
     const where = this.range();
     const k = this.kind();
     if (k === Kind.Error) this.badCharacters(where);

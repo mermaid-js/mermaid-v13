@@ -72,8 +72,6 @@ import { lex } from './lexer.ts';
 import { CYNEFIN_TRIVIA, T } from './tokens.ts';
 
 export interface CynefinParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** The integrator's cap on items (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
   maxNodes?: number;
   /** The integrator's cap on transitions (core `DEFAULT_LIMITS.maxEdges` when absent). */
@@ -236,7 +234,7 @@ class CynefinParser extends RuleParser<PreprocessResult> {
   // ---- errors and recovery ------------------------------------------------------------
 
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  protected fail(want: readonly number[], hint?: string): never {
+  protected override fail(want: readonly number[], hint?: string): never {
     const state = this.st;
     const where = this.range();
     if (this.kind() === Kind.Error) {

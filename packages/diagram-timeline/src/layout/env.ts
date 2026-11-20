@@ -7,7 +7,7 @@ import { fontSizePx, layoutLabel, type FontKey, type MeasuredLabel } from '@merm
 import type { TimelineModel, TimelinePeriod } from '../model.ts';
 import { TIMELINE_METRICS, type TimelineMetrics } from './metrics.ts';
 import type { Arrowhead, PlacedLabel, Point, Rect, TimelineLine } from './types.ts';
-import { fontWeightOf as weightOf } from '@mermaid-js/shared/config/readers';
+import { fontWeightOf as weightOf, lengthReader } from '@mermaid-js/shared/config/readers';
 import { RectUnion } from '@mermaid-js/shared/layout';
 
 /** What the layout reads from the render context. */
@@ -19,26 +19,6 @@ const TIMELINE_CONFIG_IGNORED = 'TIMELINE_CONFIG_IGNORED';
 
 const WEIGHT_NORMAL = 400;
 const WEIGHT_BOLD = 700;
-
-/**
- * A config length: the value when it is a finite number at least 0, else the default, with a
- * warning when the key is set (core's config resolution checks no value types).
- */
-function lengthOf(
-  value: unknown,
-  fallback: number,
-  path: string,
-  warn: TimelineLayoutContext['warn']
-): number {
-  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) return value;
-  if (value !== undefined)
-    warn?.({
-      code: TIMELINE_CONFIG_IGNORED,
-      message: `Ignored ${path}: it is not a number of at least 0; using ${fallback}`,
-      path,
-    });
-  return fallback;
-}
 
 export interface Env {
   readonly m: TimelineMetrics;
@@ -107,8 +87,9 @@ const plain = (text: string): string => text.replace(RE_NOT_BREAK, '&lt;');
 export function envOf(ctx: TimelineLayoutContext): Env {
   const m = TIMELINE_METRICS;
   const conf = ctx.config.timeline ?? {};
+  const lengthOf = lengthReader(TIMELINE_CONFIG_IGNORED, ctx.warn);
   const fontSize = ctx.theme.number('fontSize');
-  const formulaSize = lengthOf(ctx.config.fontSize, m.common.fontSize, 'fontSize', ctx.warn);
+  const formulaSize = lengthOf(ctx.config.fontSize, m.common.fontSize, 'fontSize');
   const family = ctx.theme.value('fontFamily');
   const font: FontKey = {
     family,
@@ -122,8 +103,8 @@ export function envOf(ctx: TimelineLayoutContext): Env {
   return {
     m,
     fontSize: formulaSize,
-    leftMargin: lengthOf(conf.leftMargin, m.common.leftMargin, 'timeline.leftMargin', ctx.warn),
-    padding: lengthOf(conf.padding, m.common.padding, 'timeline.padding', ctx.warn),
+    leftMargin: lengthOf(conf.leftMargin, m.common.leftMargin, 'timeline.leftMargin'),
+    padding: lengthOf(conf.padding, m.common.padding, 'timeline.padding'),
     multicolor: conf.disableMulticolor !== true,
     axisWidth: stroke ?? m.common.axisWidth,
     connectorWidth: stroke ?? m.common.connectorWidth,

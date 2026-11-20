@@ -6,7 +6,7 @@ import type { RenderContext } from '@mermaid-js/core';
 import { decodeEntities, type FontKey } from '@mermaid-js/core/text';
 import { GIT_GEOMETRY, GIT_METRICS, type GitGeometry, type GitMetrics } from './metrics.ts';
 import type { GitText, Point, Rect, Transform } from './types.ts';
-import { fontWeightOf as weightOf } from '@mermaid-js/shared/config/readers';
+import { fontWeightOf as weightOf, lengthReader } from '@mermaid-js/shared/config/readers';
 
 /** What the layout reads from the render context. */
 export type GitLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
@@ -17,22 +17,6 @@ const GIT_CONFIG_IGNORED = 'GIT_CONFIG_IGNORED';
 
 const WEIGHT_NORMAL = 400;
 const WEIGHT_BOLD = 700;
-
-function lengthOf(
-  value: unknown,
-  fallback: number,
-  path: string,
-  warn: GitLayoutContext['warn']
-): number {
-  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) return value;
-  if (value !== undefined)
-    warn?.({
-      code: GIT_CONFIG_IGNORED,
-      message: `Ignored ${path}: it is not a number of at least 0; using ${fallback}`,
-      path,
-    });
-  return fallback;
-}
 
 /** The geometry variables (D152), as the layout uses them. */
 export function geometryOf(theme: GitLayoutContext['theme']): GitGeometry {
@@ -77,6 +61,7 @@ export interface Env {
 export function envOf(ctx: GitLayoutContext): Env {
   const m = GIT_METRICS;
   const conf = (ctx.config.gitGraph ?? {}) as Readonly<Record<string, unknown>>;
+  const lengthOf = lengthReader(GIT_CONFIG_IGNORED, ctx.warn);
   const { theme, measurer } = ctx;
   const family = theme.value('fontFamily');
   const weight = weightOf(theme.value('fontWeight'), WEIGHT_BOLD, WEIGHT_NORMAL);
@@ -94,14 +79,12 @@ export function envOf(ctx: GitLayoutContext): Env {
     titleTopMargin: lengthOf(
       conf.titleTopMargin,
       m.common.titleTopMargin,
-      'gitGraph.titleTopMargin',
-      ctx.warn
+      'gitGraph.titleTopMargin'
     ),
     diagramPadding: lengthOf(
       conf.diagramPadding,
       m.common.diagramPadding,
-      'gitGraph.diagramPadding',
-      ctx.warn
+      'gitGraph.diagramPadding'
     ),
     lineWidth: theme.number('strokeWidth'),
     fonts: {

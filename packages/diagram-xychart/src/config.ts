@@ -15,7 +15,7 @@
 import type { Warning } from '@mermaid-js/core';
 import type { XYChartAxisConfig, XYChartConfig } from '@mermaid-js/core/config';
 import { xyChartConfigDefaults } from './generated/config-defaults.ts';
-import { configNumber } from '@mermaid-js/shared/config/readers';
+import { configRanges } from '@mermaid-js/shared/config/readers';
 export { configNumber } from '@mermaid-js/shared/config/readers';
 
 export const XYCHART_CONFIG_INVALID = 'XYCHART_CONFIG_INVALID';
@@ -91,12 +91,13 @@ function invalid(warn: Warn, path: string, value: unknown, wants: string, fallba
 function read<T extends object>(defaults: T, given: unknown, path: string, warn: Warn): T {
   const out: Record<string, unknown> = { ...(defaults as Record<string, unknown>) };
   if (!given || typeof given !== 'object') return out as T;
+  const section = given as Record<string, unknown>;
+  const number = configRanges(path, XYCHART_CONFIG_INVALID, section, warn, true);
   for (const [key, d] of Object.entries(defaults)) {
-    const v = (given as Record<string, unknown>)[key];
+    const v = section[key];
     if (v === undefined) continue;
-    const n = typeof d === 'number' ? configNumber(v) : undefined;
-    if (typeof d === 'boolean' && typeof v === 'boolean') out[key] = v;
-    else if (n !== undefined) out[key] = n;
+    if (typeof d === 'number') out[key] = number(key, d);
+    else if (typeof d === 'boolean' && typeof v === 'boolean') out[key] = v;
     else invalid(warn, `${path}.${key}`, v, `a ${typeof d}`, `the default ${String(d)}`);
   }
   return out as T;

@@ -31,10 +31,7 @@ import type { InfoDocument, InfoHeaderNode, InfoStatementNode } from './ast.ts';
 import { lex } from './lexer.ts';
 import { INFO_TRIVIA, T } from './tokens.ts';
 
-export interface InfoParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-}
+export type InfoParseOptions = ParseOptions;
 
 export type InfoParseResult = ParseResult<InfoModel, InfoDocument>;
 
@@ -98,10 +95,6 @@ class InfoParser extends RuleParser<PreprocessResult> {
   }
 
   // ---- errors and recovery ------------------------------------------------------------
-
-  protected fail(want: readonly number[], hint?: string): never {
-    return this.unexpected(want, hint);
-  }
 
   /** Text no token rule matched: an unclosed `accDescr {`, `accTitle` without `:`, or a word. */
   protected override unmatched(where: Range): never {

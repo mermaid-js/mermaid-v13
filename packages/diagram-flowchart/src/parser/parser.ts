@@ -26,7 +26,6 @@ import type {
 } from '@mermaid-js/core/parser-kit';
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import { isYamlMap } from '@mermaid-js/core/preprocess';
-import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { flowBuilderLimits, FlowParser, flowTables } from '@mermaid-js/shared/parser/flow';
 import type { FlowDocItem, FlowParserDialect, FlowShapeData } from '@mermaid-js/shared/parser/flow';
 import type {
@@ -43,8 +42,6 @@ import type { FlowModel } from './model.ts';
 import { T } from './tokens.ts';
 
 export interface FlowParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** Edge cap (core `DEFAULT_LIMITS.maxEdges`, 5,000; v12's `maxEdges` was 500). */
   maxEdges?: number;
   /** Vertex cap (core `DEFAULT_LIMITS.maxNodes`). */

@@ -17,6 +17,7 @@
  * value is a semantic error with v12's message, and the statement goes on.
  */
 import { checkLimit } from '@mermaid-js/core/limits';
+import type { Limits } from '@mermaid-js/core/limits';
 import { ExpectedTable, Kind, kindSet } from '@mermaid-js/core/parser-kit';
 import { ID_CONTROL, ID_RESERVED, idEscaper, STOP } from '@mermaid-js/shared/parser/support';
 import {
@@ -36,12 +37,11 @@ import { labelValue } from './convert.ts';
 import { lex } from './lexer.ts';
 import { PIE_TRIVIA, T } from './tokens.ts';
 
-export interface PieParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-  /** The integrator's cap on sections (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
-  maxNodes?: number;
-}
+/**
+ * `maxNodes` is the integrator's cap on sections (core `DEFAULT_LIMITS.maxNodes` when absent,
+ * R-SEC-5).
+ */
+export interface PieParseOptions extends ParseOptions, Partial<Pick<Limits, 'maxNodes'>> {}
 
 export type PieParseResult = ParseResult<PieModel, PieDocument>;
 
@@ -140,10 +140,6 @@ class PieParser extends RuleParser<PreprocessResult> {
   }
 
   // ---- errors and recovery ------------------------------------------------------------
-
-  protected fail(want: readonly number[], hint?: string): never {
-    return this.unexpected(want, hint);
-  }
 
   /** Text no token rule matched: an unclosed string or `accDescr {`, or stray characters. */
   protected override unmatched(where: Range): never {

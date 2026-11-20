@@ -63,16 +63,6 @@ export const TYPE_ITEMS: readonly KeywordItem[] = [
 ];
 
 /**
- * Tokens that hold the text after their keyword (`title Release`, `accTitle: …`): hover
- * explains the keyword only.
- */
-export const TEXT_WORDS: Readonly<Partial<Record<number, string>>> = {
-  [T.Title]: 'title',
-  [T.AccTitle]: 'accTitle',
-  [T.AccDescr]: 'accDescr',
-};
-
-/**
  * `value` as a quoted text that reads back as it (`\` escapes the next character): in
  * `prefer` (`"` or `'`), else in the other quote when the value holds `prefer`, else in
  * `prefer` with escapes.

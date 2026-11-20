@@ -41,8 +41,6 @@ import { lex } from './lexer.ts';
 import { PACKET_TRIVIA, T } from './tokens.ts';
 
 export interface PacketParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /**
    * The resolved `packet` config section (`ctx.config.packet`): rows are split at
    * `bitsPerRow`, and invalid lengths fall back with a warning (D342). Defaults when absent.
@@ -186,10 +184,6 @@ class PacketParser extends RuleParser<PreprocessResult> {
 
   // ---- errors and recovery ------------------------------------------------------------
 
-  protected fail(want: readonly number[], hint?: string, names?: string[]): never {
-    return this.unexpected(want, hint, names);
-  }
-
   /**
    * Text no token rule matched: an unclosed string or `accDescr {`, an unquoted label, or stray
    * characters. `want` is what the parser expected there.
@@ -259,7 +253,7 @@ class PacketParser extends RuleParser<PreprocessResult> {
       const text = TEXTS[k];
       this.statement(() => {
         if (text) this.textStatement(text, this.texts, this.children);
-        else this.fail(DOC, undefined, EXPECTED_LINE.names(DOC));
+        else this.unexpected(DOC, undefined, EXPECTED_LINE.names(DOC));
       });
     }
   }

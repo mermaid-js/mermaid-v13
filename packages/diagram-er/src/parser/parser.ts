@@ -26,6 +26,7 @@ import {
 import { STOP } from '@mermaid-js/shared/parser/support';
 import type { ParseOptions, ParseResult, Range, StatementSpan } from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
+import type { Limits } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type {
@@ -45,16 +46,13 @@ import { attributeId, ErBuilder } from './model.ts';
 import type { ErAttribute, ErCardinality, ErDirection, ErDocItem, ErModel } from './model.ts';
 import { T } from './tokens.ts';
 
-export interface ErParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-  /** Entity cap (core `DEFAULT_LIMITS.maxNodes`). */
-  maxNodes?: number;
-  /** Relationship cap (core `DEFAULT_LIMITS.maxEdges`). */
-  maxEdges?: number;
-  /** Subgraph nesting cap (core `DEFAULT_LIMITS.maxDepth`). */
-  maxDepth?: number;
-}
+/**
+ * The caps, each core's `DEFAULT_LIMITS` value when unset: relationships (`maxEdges`), entities
+ * (`maxNodes`) and subgraph nesting (`maxDepth`).
+ */
+export interface ErParseOptions
+  extends ParseOptions,
+    Partial<Pick<Limits, 'maxEdges' | 'maxNodes' | 'maxDepth'>> {}
 
 export type ErParseResult = ParseResult<ErModel, ErDocument>;
 

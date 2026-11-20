@@ -56,8 +56,6 @@ import { lex } from './lexer.ts';
 import { GITGRAPH_TRIVIA, T } from './tokens.ts';
 
 export interface GitGraphParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** `gitGraph.mainBranchName`: the branch that exists before the first statement. */
   mainBranchName?: string;
   /** `gitGraph.mainBranchOrder`: its place among the branches. */
@@ -103,7 +101,7 @@ const PROBE_FOLLOWS = kindSet(
 );
 
 /** `title`, `accTitle` and `accDescr` by token kind; a keyword is also its probe mode. */
-const TEXTS = /* @__PURE__ */ textStatements(T.Title, T.AccTitle, T.AccDescr);
+export const TEXTS = /* @__PURE__ */ textStatements(T.Title, T.AccTitle, T.AccDescr);
 
 /**
  * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the
@@ -288,7 +286,7 @@ class GitGraphParser extends RuleParser<PreprocessResult> {
   // ---- errors and recovery ------------------------------------------------------------
 
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  protected fail(want: readonly number[], hint?: string): never {
+  protected override fail(want: readonly number[], hint?: string): never {
     const { st } = this;
     // `title` and the accessibility tokens take the blanks before them.
     const where = withoutIndent(this.src, this.range());

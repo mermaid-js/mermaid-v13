@@ -37,7 +37,7 @@ import {
   sourceView,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
-import { STOP } from '@mermaid-js/shared/parser/support';
+import { foundText, STOP } from '@mermaid-js/shared/parser/support';
 import type { ParseOptions, ParseResult, Range, StatementSpan } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
@@ -53,8 +53,6 @@ import { SankeyKind as T } from './tokens.ts';
 import { drawable, invalidity, readValue, trailingTextMessage, type ReadValue } from './values.ts';
 
 export interface SankeyParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** The integrator's node cap (R-SEC-5): one `NODE_LIMIT` error past it. None when absent. */
   maxNodes?: number;
   /** The integrator's link cap (R-SEC-5): one `EDGE_LIMIT` error past it. None when absent. */
@@ -115,8 +113,6 @@ const EMPTY_QUOTES_HINT = 'a quoted field may not be empty';
 const ASCII_HINT = 'sankey text takes printable ASCII characters only';
 const ENTITY_HINT = 'sankey text takes printable ASCII characters only, and no `#…;` entities';
 
-/** The first line of a text, for messages. */
-const FIRST_LINE = /^[^\n]*/;
 /** An entity as v12 encoded it: `#name;` or `#123;`. */
 const ENTITY = /^#\w+;/;
 /** The keywords of other diagrams' title statements, as a field's first word. */
@@ -264,11 +260,9 @@ class SankeyParser {
     if (k === Kind.EOF || k === T.Eof) return 'the end of the text';
     if (k === Kind.Newline) return 'a line break';
     if (k === Kind.Error) return foundCharacters(this.src.slice(c.start, c.end));
-    const t = this.raw(c.pos).trim();
-    if (t === '') return this.raw(c.pos) === '' ? 'the end of the text' : 'blanks';
-    const line = FIRST_LINE.exec(t)?.[0] ?? '';
-    const cut = line.length > 24 ? line.slice(0, 24) : line;
-    return cut.length < t.length ? `\`${cut}…\`` : `\`${cut}\``;
+    const raw = this.raw(c.pos);
+    if (raw.trim() === '') return raw === '' ? 'the end of the text' : 'blanks';
+    return foundText(k, raw);
   }
 
   /** The hint for the token at the cursor, else `fallback`. */

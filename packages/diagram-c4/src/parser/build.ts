@@ -8,6 +8,7 @@
 import { idEscaper } from '@mermaid-js/shared/parser/support';
 import type { AstId, ParseState, Range } from '@mermaid-js/core/parser-kit';
 import * as codes from '../codes.ts';
+import { MentionIds } from './mention-ids.ts';
 import {
   C4_ELEMENT_KINDS,
   C4_NODE_KINDS,
@@ -91,34 +92,6 @@ const toInt = (text: string): number => parseInt(text);
 /** `%`, `>`, `@` and `#` percent-encoded. */
 const esc = /* @__PURE__ */ idEscaper();
 
-/** D458's AST ids. */
-class Ids {
-  private readonly seen = new Map<string, number>();
-  private styles = 0;
-
-  private next(base: string): AstId {
-    const n = (this.seen.get(base) ?? 0) + 1;
-    this.seen.set(base, n);
-    return n === 1 ? base : `${base}@${n}`;
-  }
-
-  element(alias: string): AstId {
-    return this.next(`element:${esc(alias)}`);
-  }
-
-  boundary(alias: string): AstId {
-    return this.next(`boundary:${esc(alias)}`);
-  }
-
-  relation(from: string, to: string): AstId {
-    return this.next(`rel:${esc(from)}->${esc(to)}`);
-  }
-
-  style(): AstId {
-    return `style:${++this.styles}`;
-  }
-}
-
 /** What an element or boundary statement added: its AST id and alias. */
 export interface Added {
   ast: AstId;
@@ -154,7 +127,9 @@ export interface RelationParts {
 
 /** One parse's model, built statement by statement. */
 export class C4Builder {
-  readonly ids = new Ids();
+  /** D458's AST ids. */
+  private readonly ids = new MentionIds();
+  private styles = 0;
   readonly elements: OpenElement[] = [];
   readonly boundaries: OpenBoundary[] = [];
   readonly relations: OpenRelation[] = [];
@@ -453,7 +428,7 @@ export class C4Builder {
       if (written !== undefined) this.elementIndex.set(alias, i);
     }
     const item: Item = { type: 'element', bag: this.elements[i] as OpenElement, index: i };
-    const ast = this.ids.element(alias);
+    const ast = this.ids.next(`element:${esc(alias)}`);
     if (first) item.bag.ast = ast;
     const { table } = parts;
     if (written === undefined && args[0]) this.named(item, args[0], table.setAfter);
@@ -492,7 +467,7 @@ export class C4Builder {
       if (name !== undefined) this.boundaryIndex.set(alias, i);
     }
     const item: Item = { type: 'boundary', bag: this.boundaries[i] as OpenBoundary, index: i };
-    const ast = this.ids.boundary(alias);
+    const ast = this.ids.next(`boundary:${esc(alias)}`);
     if (first) item.bag.ast = ast;
     if (name === undefined && args[0]) this.named(item, args[0], last);
     if (!(first && this.renames(args, alias))) this.definition(alias, args[0], 'boundary', first);
@@ -519,7 +494,7 @@ export class C4Builder {
     const known = fromWritten !== undefined && toWritten !== undefined;
     // Each statement is a relation of its own (#680).
     const i = this.relations.length;
-    const ast = this.ids.relation(from, to);
+    const ast = this.ids.next(`rel:${esc(from)}->${esc(to)}`);
     this.relations.push({ ast, kind: parts.kind, from, to, label: '', extra: [] });
     this.relationAt.push(parts.at);
     if (known) this.between(from, to).push(i);
@@ -531,6 +506,11 @@ export class C4Builder {
     this.label(item, args[2], REL.setAfter);
     this.rest(item, args, { table: REL, from: 3 });
     return { ast, alias: from, from, to };
+  }
+
+  /** The next `style:<n>` AST id. */
+  styleId(): AstId {
+    return `style:${++this.styles}`;
   }
 
   /**

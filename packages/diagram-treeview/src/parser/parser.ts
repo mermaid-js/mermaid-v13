@@ -22,7 +22,6 @@
  */
 import { checkDepth, checkLimit } from '@mermaid-js/core/limits';
 import {
-  APOSTROPHE,
   DQUOTE,
   ExpectedTable,
   formatExpected,
@@ -39,6 +38,8 @@ import {
 import { excerpt, lineTokens } from '@mermaid-js/shared/parser/line-tokens';
 import type { LineTokenView } from '@mermaid-js/shared/parser/line-tokens';
 import { STOP } from '@mermaid-js/shared/parser/support';
+import { textProbeMode } from '@mermaid-js/shared/parser/rule';
+import type { TextStatement } from '@mermaid-js/shared/parser/rule';
 import type {
   AstId,
   Diagnostic,
@@ -47,7 +48,6 @@ import type {
   ParseResult,
   Range,
   StatementSpan,
-  TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
@@ -75,8 +75,6 @@ import { normalise } from './normalise.ts';
 import { HEADER, T } from './tokens.ts';
 
 export interface TreeViewParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** The integrator's cap on nodes (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
   maxNodes?: number;
   /** How deep a node may sit under a top one (core `DEFAULT_LIMITS.maxDepth` when absent). */
@@ -116,54 +114,13 @@ const AFTER_BLANK = [...NAME, ...TEXT];
  */
 const PROBE_FOLLOWS = /* @__PURE__ */ kindSet(T.Indentation, T.QuotedName, T.IconAnnotation);
 
-/**
- * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the mode
- * names what the offset is in: `string` inside a quoted name (closed or not), `title`,
- * `accTitle` or `accDescr` past the keyword of that statement, `description` past the `##` of a
- * description, else `INITIAL` (code).
- */
-function probeMode(src: string, tokens: TokenStream, o: number): string {
-  // The one token that may hold `o`: the last starting before it (tokens do not overlap).
-  let lo = 0;
-  let hi = tokens.length - 1;
-  let j = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if ((tokens.start[mid] ?? 0) < o) {
-      j = mid;
-      lo = mid + 1;
-    } else hi = mid - 1;
-  }
-  const start = tokens.start[j] ?? 0;
-  const end = tokens.end[j] ?? 0;
-  if (j < 0 || end < o) return 'INITIAL';
-  const kind = tokens.kind[j] ?? Kind.EOF;
-  const c = src.charCodeAt(start);
-  if (kind === T.QuotedName && o < end) return 'string';
-  // An unclosed name is an error token from its quote on.
-  if (kind === Kind.Error && (c === DQUOTE || c === APOSTROPHE)) return 'string';
-  if (kind === T.DescAnnotation) {
-    return o >= src.indexOf('##', start) + 2 ? 'description' : 'INITIAL';
-  }
-  const word = textKeyword(kind);
-  if (word === undefined) return 'INITIAL';
-  let k = start;
-  while (isBlank(src.charCodeAt(k))) k++;
-  k += word.length;
-  // A block `accDescr { … }` ends at its `}`; the other values run to the line end.
-  const block = kind === T.AccDescr && /^\s*\{/.test(src.slice(k, end));
-  return o > k && (o < end || !block) ? word : 'INITIAL';
-}
-
-/** A text statement: its AST type, its keyword and its value conversion. */
-interface TextStatement {
-  type: 'Title' | 'AccTitle' | 'AccDescr';
-  word: string;
-  value: (image: string) => string;
+/** A text statement with its value conversion. */
+interface ConvertedTextStatement extends TextStatement {
+  readonly value: (image: string) => string;
 }
 
 /** Each text statement by its token kind. */
-const TEXT_STATEMENTS: Readonly<Partial<Record<number, TextStatement>>> = {
+const TEXT_STATEMENTS: Readonly<Partial<Record<number, ConvertedTextStatement>>> = {
   [T.Title]: { type: 'Title', word: TITLE, value: titleValue },
   [T.AccTitle]: { type: 'AccTitle', word: ACC_TITLE, value: accTitleValue },
   [T.AccDescr]: { type: 'AccDescr', word: ACC_DESCR, value: accDescrValue },
@@ -173,6 +130,22 @@ const TEXT_STATEMENTS: Readonly<Partial<Record<number, TextStatement>>> = {
 export function textKeyword(kind: number): string | undefined {
   return TEXT_STATEMENTS[kind]?.word;
 }
+
+/**
+ * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the mode
+ * names what the offset is in: `string` inside a quoted name (closed or not), `title`,
+ * `accTitle` or `accDescr` past the keyword of that statement, `description` past the `##` of a
+ * description, else `INITIAL` (code).
+ */
+const probeMode = /* @__PURE__ */ textProbeMode({
+  texts: TEXT_STATEMENTS,
+  accDescr: T.AccDescr,
+  string: T.QuotedName,
+  other: (src, kind, start, _end, o) => {
+    if (kind !== T.DescAnnotation) return undefined;
+    return o >= src.indexOf('##', start) + 2 ? 'description' : 'INITIAL';
+  },
+});
 
 /** Human names for what the parser expects (R-ERR-2, R-ERR-5). */
 const EXPECTED = new ExpectedTable([
@@ -494,7 +467,7 @@ class TreeViewParser {
   }
 
   /** `(ACC_DESCR | ACC_TITLE | TITLE)`: the last of each wins; only before the first node. */
-  private textStatement({ type, word, value }: TextStatement): void {
+  private textStatement({ type, word, value }: ConvertedTextStatement): void {
     if (this.started) this.lateText(word);
     const j = this.i++;
     const image = this.text(j);

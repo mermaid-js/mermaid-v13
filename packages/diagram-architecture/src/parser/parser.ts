@@ -71,10 +71,7 @@ import { normalise } from './normalise.ts';
 import type { Registered } from './normalise.ts';
 import { ARCHITECTURE_TRIVIA, T, TEXT_STATEMENTS } from './tokens.ts';
 
-export interface ArchitectureParseOptions extends ParseOptions, ArchitectureLimitOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-}
+export interface ArchitectureParseOptions extends ParseOptions, ArchitectureLimitOptions {}
 
 export type ArchitectureParseResult = ParseResult<ArchitectureModel, ArchitectureDocument>;
 
@@ -280,7 +277,7 @@ class ArchitectureParser extends RuleParser<PreprocessResult> {
   // ---- errors and recovery ------------------------------------------------------------
 
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  protected fail(want: readonly number[], hint?: string): never {
+  protected override fail(want: readonly number[], hint?: string): never {
     const { st } = this;
     const where = this.range();
     if (this.kind() === Kind.Error) this.badCharacters(where);

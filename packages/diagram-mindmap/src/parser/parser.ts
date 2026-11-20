@@ -57,8 +57,6 @@ import { KINDS, lex } from './lexer.ts';
 import { T } from './tokens.ts';
 
 export interface MindmapParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** How sections are assigned (`mindmap.colorBy`); `'branch'` when absent. */
   colorBy?: MindmapColorBy;
   /** Node cap (core `DEFAULT_LIMITS.maxNodes`, R-SEC-5). */

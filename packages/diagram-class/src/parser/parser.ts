@@ -13,7 +13,7 @@
 import { Kind, inKindSet, isLineEnd, isSpace, nodeId } from '@mermaid-js/core/parser-kit';
 import type { ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { LIMIT_CODES, checkLimit } from '@mermaid-js/core/limits';
-import type { PreprocessResult } from '@mermaid-js/core/preprocess';
+import type { Limits } from '@mermaid-js/core/limits';
 import type {
   ClassAnnotationStmt,
   ClassDocument,
@@ -70,15 +70,13 @@ import {
 } from './tables.ts';
 import type { Frame, Name } from './tables.ts';
 
-export interface ClassParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-  /** Relationship cap (core `DEFAULT_LIMITS.maxEdges`). */
-  maxEdges?: number;
-  /** Class cap (core `DEFAULT_LIMITS.maxNodes`). */
-  maxNodes?: number;
-  /** Namespace nesting cap (core `DEFAULT_LIMITS.maxDepth`). */
-  maxDepth?: number;
+/**
+ * The caps, each core's `DEFAULT_LIMITS` value when unset: relationships (`maxEdges`), classes
+ * (`maxNodes`) and namespace nesting (`maxDepth`).
+ */
+export interface ClassParseOptions
+  extends ParseOptions,
+    Partial<Pick<Limits, 'maxEdges' | 'maxNodes' | 'maxDepth'>> {
   /** Features claimed by extension plugins; `callbacks` silences `CALLBACK_IGNORED`. */
   claims?: readonly string[];
 }

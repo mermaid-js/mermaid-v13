@@ -14,18 +14,18 @@
  * {@link ProbeCursor} records what the parser tests at the probed offset (R-LANG-7, D95).
  */
 import { checkLimit } from '@mermaid-js/core/limits';
+import type { Limits } from '@mermaid-js/core/limits';
 import {
   Kind,
   kindSet,
   LineIndex,
-  nodeId,
   ParseState,
   Probe,
   ProbeCursor,
   syncTo,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
-import { foundText, STOP } from '@mermaid-js/shared/parser/support';
+import { foundText, idEscaper, STOP } from '@mermaid-js/shared/parser/support';
 import { span, trimmed } from '@mermaid-js/shared/parser/facet';
 import type {
   ParseOptions,
@@ -65,12 +65,11 @@ import type { QuadrantLex } from './lexer.ts';
 import { applyStyle } from './styles.ts';
 import { T } from './tokens.ts';
 
-export interface QuadrantParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-  /** The integrator's cap on points (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
-  maxNodes?: number;
-}
+/**
+ * `maxNodes` is the integrator's cap on points (core `DEFAULT_LIMITS.maxNodes` when absent,
+ * R-SEC-5).
+ */
+export interface QuadrantParseOptions extends ParseOptions, Partial<Pick<Limits, 'maxNodes'>> {}
 
 export type QuadrantParseResult = ParseResult<QuadrantModel, QuadrantDocument>;
 
@@ -697,7 +696,7 @@ class QuadrantParser {
 type Mutable<T> = { -readonly [K in keyof T]: T[K] };
 
 /** `pt:<name>`-style id part: `%`, `>`, `@` and `#` percent-encoded. */
-const esc = (name: string): string => nodeId(name).slice(2);
+const esc = /* @__PURE__ */ idEscaper();
 
 const label = (t: QuadrantTextNode, suffix = ''): QuadrantText => ({
   text: (t.text + suffix).trim(),

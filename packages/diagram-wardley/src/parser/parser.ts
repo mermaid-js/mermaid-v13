@@ -251,7 +251,11 @@ class WardleyParser extends RuleParser<PreprocessResult> {
   }
 
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  protected fail(want: readonly number[], hint?: string, names = EXPECTED.names(want)): never {
+  protected override fail(
+    want: readonly number[],
+    hint?: string,
+    names = EXPECTED.names(want)
+  ): never {
     if (this.kind() === Kind.Error) this.badCharacters(this.range());
     this.accessibilityName();
     this.report(want, hint, names);

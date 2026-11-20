@@ -22,6 +22,7 @@ import type {
   Range,
 } from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
+import type { Limits } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type {
@@ -88,16 +89,13 @@ import { StateCursor, STOP } from './cursor.ts';
 import { terminals } from './terminals.ts';
 import { T } from './tokens.ts';
 
-export interface StateParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-  /** Composite nesting cap (core `DEFAULT_LIMITS.maxDepth`). */
-  maxDepth?: number;
-  /** State cap (core `DEFAULT_LIMITS.maxNodes`, D608). */
-  maxNodes?: number;
-  /** Transition cap (core `DEFAULT_LIMITS.maxEdges`, D608). */
-  maxEdges?: number;
-}
+/**
+ * The caps, each core's `DEFAULT_LIMITS` value when unset: transitions (`maxEdges`), states
+ * (`maxNodes`) and composite nesting (`maxDepth`), D608.
+ */
+export interface StateParseOptions
+  extends ParseOptions,
+    Partial<Pick<Limits, 'maxEdges' | 'maxNodes' | 'maxDepth'>> {}
 
 export type StateParseResult = ParseResult<StateModel, StateDocument>;
 

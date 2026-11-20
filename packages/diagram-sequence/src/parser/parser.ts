@@ -28,6 +28,7 @@ import type {
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
+import type { Limits } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type {
@@ -103,16 +104,13 @@ import type { Wrapped } from './normalise.ts';
 import { T } from './tokens.ts';
 import { TokenRules } from './rules.ts';
 
-export interface SequenceParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-  /** Block nesting cap (core `DEFAULT_LIMITS.maxDepth`). */
-  maxDepth?: number;
-  /** Participant cap (core `DEFAULT_LIMITS.maxNodes`, D608). */
-  maxNodes?: number;
-  /** Message cap (core `DEFAULT_LIMITS.maxEdges`, D608); notes do not count. */
-  maxEdges?: number;
-}
+/**
+ * The caps, each core's `DEFAULT_LIMITS` value when unset: messages, notes not counted
+ * (`maxEdges`), participants (`maxNodes`) and block nesting (`maxDepth`), D608.
+ */
+export interface SequenceParseOptions
+  extends ParseOptions,
+    Partial<Pick<Limits, 'maxEdges' | 'maxNodes' | 'maxDepth'>> {}
 
 export type SequenceParseResult = ParseResult<SequenceModel, SequenceDocument>;
 

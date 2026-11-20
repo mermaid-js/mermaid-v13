@@ -33,7 +33,6 @@ import { STOP } from '@mermaid-js/shared/parser/support';
 import type { AstId, ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import { isYamlMap, parseYaml } from '@mermaid-js/core/preprocess';
-import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { flowBuilderLimits, FlowParser } from '@mermaid-js/shared/parser/flow';
 import type {
   FlowDocItem,
@@ -60,8 +59,6 @@ import { stripLineTrailingCommas } from './trailing-commas.ts';
 import { T } from './tokens.ts';
 
 export interface AgentflowParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /**
    * v12's `maxTextSize` (the site config's): past it v12 parsed the text without its comments
    * (`agentflowSourceView`).

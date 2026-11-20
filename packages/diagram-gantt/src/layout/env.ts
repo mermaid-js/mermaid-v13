@@ -12,6 +12,7 @@ import {
   type FontKey,
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
+import { lengthReader } from '@mermaid-js/shared/config/readers';
 import { GANTT_METRICS, type GanttMetrics } from './metrics.ts';
 
 /** What the layout reads from the render context. */
@@ -64,14 +65,6 @@ function warnIgnored(warn: Warn, path: string, fallback: unknown, why: string): 
   });
 }
 
-/** A config length: a finite number at least `min`, else the default (with a warning when set). */
-function lengthOf(value: unknown, fallback: number, path: string, warn: Warn, min = 0): number {
-  if (typeof value === 'number' && Number.isFinite(value) && value >= min) return value;
-  if (value !== undefined)
-    warnIgnored(warn, path, fallback, `it is not a number of at least ${min}`);
-  return fallback;
-}
-
 /** A font size: a number, or a CSS size v12 wrote into `font-size` (`'14px'`, `'11'`). */
 function sizeOf(value: unknown, fallback: number, base: number, path: string, warn: Warn): number {
   if (value === undefined) return fallback;
@@ -110,6 +103,7 @@ export function envOf(ctx: GanttLayoutContext): Env {
   const d = m.defaults;
   const conf = (ctx.config.gantt ?? {}) as Record<string, unknown>;
   const warn = ctx.warn;
+  const lengthOf = lengthReader(GANTT_CONFIG_IGNORED, warn);
   const base = ctx.theme.number('fontSize');
   const family = ctx.theme.value('fontFamily');
   const fontSize = sizeOf(conf.fontSize, d.fontSize, base, 'fontSize', warn);
@@ -126,7 +120,7 @@ export function envOf(ctx: GanttLayoutContext): Env {
   const available = ctx.availableWidth;
   let width =
     available !== undefined && Number.isFinite(available) && available > 0 ? available : m.width;
-  if (useWidth !== undefined) width = lengthOf(useWidth, width, 'useWidth', warn);
+  if (useWidth !== undefined) width = lengthOf(useWidth, width, 'gantt.useWidth');
   const fonts = {
     task: font(fontSize),
     section: font(sectionFontSize),
@@ -146,20 +140,19 @@ export function envOf(ctx: GanttLayoutContext): Env {
     });
   return {
     m,
-    titleTopMargin: lengthOf(conf.titleTopMargin, d.titleTopMargin, 'titleTopMargin', warn),
-    barHeight: lengthOf(conf.barHeight, d.barHeight, 'barHeight', warn),
-    barGap: lengthOf(conf.barGap, d.barGap, 'barGap', warn),
-    topPadding: lengthOf(conf.topPadding, d.topPadding, 'topPadding', warn),
-    rightPadding: lengthOf(conf.rightPadding, d.rightPadding, 'rightPadding', warn),
-    leftPadding: lengthOf(conf.leftPadding, d.leftPadding, 'leftPadding', warn),
+    titleTopMargin: lengthOf(conf.titleTopMargin, d.titleTopMargin, 'gantt.titleTopMargin'),
+    barHeight: lengthOf(conf.barHeight, d.barHeight, 'gantt.barHeight'),
+    barGap: lengthOf(conf.barGap, d.barGap, 'gantt.barGap'),
+    topPadding: lengthOf(conf.topPadding, d.topPadding, 'gantt.topPadding'),
+    rightPadding: lengthOf(conf.rightPadding, d.rightPadding, 'gantt.rightPadding'),
+    leftPadding: lengthOf(conf.leftPadding, d.leftPadding, 'gantt.leftPadding'),
     gridLineStartPadding: lengthOf(
       conf.gridLineStartPadding,
       d.gridLineStartPadding,
-      'gridLineStartPadding',
-      warn
+      'gantt.gridLineStartPadding'
     ),
     numberSectionStyles: Math.floor(
-      lengthOf(conf.numberSectionStyles, d.numberSectionStyles, 'numberSectionStyles', warn, 1)
+      lengthOf(conf.numberSectionStyles, d.numberSectionStyles, 'gantt.numberSectionStyles', 1)
     ),
     fontSize,
     sectionFontSize,
