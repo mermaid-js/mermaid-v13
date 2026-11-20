@@ -8,7 +8,6 @@ import {
   translate,
   type Attrs,
   type OutlinePaint,
-  type Paint,
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
@@ -18,6 +17,7 @@ import {
   paletteSlots,
   placeTitle,
   titledViewBox,
+  type PaletteTint,
 } from '@mermaid-js/shared/svg/document';
 import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
@@ -36,12 +36,6 @@ const CELL_CLASSES = ['attribute-type', 'attribute-name', 'attribute-keys', 'att
 type ThemeOf = ErRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
 type Length = ReturnType<ThemeOf['length']>;
-
-interface Tint {
-  readonly id: `color-${number}`;
-  readonly stroke: Paint;
-  readonly fill?: Paint;
-}
 
 interface TablePaint {
   readonly fill: Color;
@@ -74,7 +68,7 @@ interface Paints {
   readonly ends?: EndPaint;
   readonly cluster?: { fill: Color; stroke: OutlinePaint; strokeWidth: Length; text: Color };
   readonly edgeLabel?: { fill: Color; text: Color };
-  readonly slotOf: (order: number) => Tint | undefined;
+  readonly slotOf: (order: number) => PaletteTint | undefined;
 }
 
 /**
@@ -404,7 +398,7 @@ function rowPaint<F>(
 function drawRows(
   { w, paint, padX }: Scene,
   view: EntityView,
-  slot: Tint | undefined,
+  slot: PaletteTint | undefined,
   left: number,
   top: number,
   text: Attrs

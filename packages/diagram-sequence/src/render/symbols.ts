@@ -7,7 +7,8 @@
 import type { Attrs, Paint, SvgWriter } from '@mermaid-js/core/svg';
 import type { ParticipantKind } from '../model.ts';
 import type { ParticipantLayout, SequenceMetrics } from '../layout/index.ts';
-import type { ActorPaint, Paints, Tint } from './paint.ts';
+import type { PaletteTint } from '@mermaid-js/shared/svg/document';
+import type { ActorPaint, Paints } from './paint.ts';
 import { placePoints } from './arrows.ts';
 
 /** What one symbol is drawn from. */
@@ -17,7 +18,7 @@ export interface SymbolScene {
   /** Top of the box this symbol is drawn in: the header or the mirrored footer. */
   readonly y: number;
   readonly paint: ActorPaint;
-  readonly tint: Tint | undefined;
+  readonly tint: PaletteTint | undefined;
   readonly shadow: Paints['shadow'];
   /** The px metrics the symbols share with the layout. */
   readonly m: Pick<SequenceMetrics, 'stackOffset' | 'figureRadius' | 'figureLabelHeight'>;

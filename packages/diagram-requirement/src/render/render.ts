@@ -9,7 +9,6 @@ import {
   translate,
   type Attrs,
   type OutlinePaint,
-  type Paint,
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
@@ -20,6 +19,7 @@ import {
   paletteSlots,
   titleAt,
   titledViewBox,
+  type PaletteTint,
 } from '@mermaid-js/shared/svg/document';
 import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import { routePath } from '@mermaid-js/shared/svg/route';
@@ -42,12 +42,6 @@ type ThemeOf = RequirementRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
 type Length = ReturnType<ThemeOf['length']>;
 
-interface Tint {
-  readonly id: `color-${number}`;
-  readonly stroke: Paint;
-  readonly fill?: Paint;
-}
-
 interface Paints {
   readonly font: ReturnType<ThemeOf['font']>;
   readonly fontSize: Length;
@@ -67,7 +61,7 @@ interface Paints {
   /** Set exactly when there are relations, as `line`. */
   readonly label?: { readonly fill: Color; readonly text: Color };
   readonly title?: Color;
-  readonly slotOf: (slot: number) => Tint | undefined;
+  readonly slotOf: (slot: number) => PaletteTint | undefined;
 }
 
 /**

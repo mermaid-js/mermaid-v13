@@ -15,7 +15,7 @@
  *   (redux-dark-color's is: it colours outlines only). An author's `classDef` / `style` wins.
  */
 import type { Paint } from '@mermaid-js/core/svg';
-import { paletteSlots } from '@mermaid-js/shared/svg/document';
+import { paletteSlots, type PaletteTint } from '@mermaid-js/shared/svg/document';
 import type { UsecasePrepared } from '../layout/prepare.ts';
 import type { UsecaseModel } from '../model.ts';
 import type { UsecaseRenderContext } from './context.ts';
@@ -27,13 +27,6 @@ type Length = ReturnType<ThemeOf['length']>;
 export interface Fill {
   readonly fill: Paint;
   readonly stroke: Paint;
-}
-
-/** A palette slot: its id, its border, and its fill when `bkgColorArray` has one. */
-export interface Tint {
-  readonly id: `color-${number}`;
-  readonly stroke: Paint;
-  readonly fill?: Paint;
 }
 
 /** Labels: the fill of their text. */
@@ -48,7 +41,7 @@ export interface Paints {
   /** `colorScheme: rotate`: actors and use cases take their slot's colours. */
   readonly rotate: boolean;
   /** The slot of the n-th counted element, or undefined without a palette. */
-  readonly slotOf: (n: number) => Tint | undefined;
+  readonly slotOf: (n: number) => PaletteTint | undefined;
   /** Actor glyphs (and labels, in `text`). */
   readonly actor?: Fill & Ink;
   readonly usecase?: Fill & Ink;

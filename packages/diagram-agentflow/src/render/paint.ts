@@ -12,6 +12,7 @@ import type { AgentflowPrepared } from '../layout/index.ts';
 import type { AgentflowRenderContext } from './context.ts';
 import { arrowheads, type Arrowheads } from '@mermaid-js/shared/svg/arrowheads';
 import { nodePaint, type NodePaint } from '@mermaid-js/shared/svg/node-paint';
+import { paletteSlots } from '@mermaid-js/shared/svg/document';
 import { usesPlain } from './shapes.ts';
 import type { Palette } from './slots.ts';
 
@@ -57,7 +58,8 @@ export function paints(theme: ThemeOf, prepared: AgentflowPrepared, titled: bool
     ? { separator: theme.color('flowContainerStroke'), dots: theme.color('nodeBorder') }
     : undefined;
   const border = theme.palette('borderColorArray');
-  const palette = border.length > 0 ? { border, bkg: theme.palette('bkgColorArray') } : undefined;
+  const palette =
+    border.length > 0 ? { size: border.length, slotOf: paletteSlots(theme) } : undefined;
   const edgeLabel = prepared.edges.some((e) => e.label.width > 0)
     ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
     : undefined;

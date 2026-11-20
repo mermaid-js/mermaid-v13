@@ -23,6 +23,7 @@ import {
   placeTitle,
   textElement,
   titledViewBox,
+  type PaletteTint,
   type PlacedTitle,
 } from '@mermaid-js/shared/svg/document';
 import { edgeLabel } from '@mermaid-js/shared/svg/graph';
@@ -41,7 +42,7 @@ import type { AgentflowModel } from '../parser/index.ts';
 import type { AgentflowRenderContext } from './context.ts';
 import { paints, type FramePaint, type LabelPaint, type Paints } from './paint.ts';
 import { drawCardTrim, shapeDrawer, usesPlain } from './shapes.ts';
-import { flowOrder, flowTint, kindTint, type Tint } from './slots.ts';
+import { flowOrder, flowTint, kindTint } from './slots.ts';
 
 /** v12's frame (`clusters.js` `flowGroup`) stroke width; its corner radius is the metrics'. */
 const FRAME_WIDTH = 0.75;
@@ -132,7 +133,7 @@ function openRoot({ w, layout, ctx, paint }: Scene, model: AgentflowModel, title
 }
 
 /** A flow's tint, or a collapsed card's (its flow's), under a palette. */
-function flowSlot({ paint, order }: Scene, id: string): Tint | undefined {
+function flowSlot({ paint, order }: Scene, id: string): PaletteTint | undefined {
   const n = order.get(id);
   return paint.palette && n !== undefined ? flowTint(paint.palette, n) : undefined;
 }
@@ -252,7 +253,7 @@ function drawEdgeLabel(
 }
 
 /** A vertex's kind tint or a card's flow tint, under a palette. */
-function nodeTint(scene: Scene, view: AgentflowNodeView): Tint | undefined {
+function nodeTint(scene: Scene, view: AgentflowNodeView): PaletteTint | undefined {
   if (view.shape === 'collapsedGroup') return flowSlot(scene, view.id);
   const palette = scene.paint.palette;
   return palette && view.vertex ? kindTint(palette, view.vertex.kind) : undefined;
@@ -270,7 +271,11 @@ function linkOf(ctx: AgentflowRenderContext, view: AgentflowNodeView): SafeUrl |
 }
 
 /** The outline's paint: the slot over the theme's, the author's style last. */
-function outlinePaint({ paint }: Scene, view: AgentflowNodeView, slot: Tint | undefined): Attrs {
+function outlinePaint(
+  { paint }: Scene,
+  view: AgentflowNodeView,
+  slot: PaletteTint | undefined
+): Attrs {
   return {
     fill: slot?.fill ?? paint.node.fill,
     stroke: slot?.stroke ?? paint.node.stroke,

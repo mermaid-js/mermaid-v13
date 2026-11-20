@@ -9,7 +9,7 @@
  */
 import type { Warning } from '@mermaid-js/core';
 import type { CheckedStyle, OutlinePaint, Paint } from '@mermaid-js/core/svg';
-import { paletteSlots, styleCache } from '@mermaid-js/shared/svg/document';
+import { paletteSlots, styleCache, type PaletteTint } from '@mermaid-js/shared/svg/document';
 import type { Theme } from '@mermaid-js/core/theme';
 import { isComposite, type Block, type BlockModel } from '../model.ts';
 import { arrowheads, type Arrowheads } from '@mermaid-js/shared/svg/arrowheads';
@@ -18,13 +18,6 @@ import { BLOCK_RENDER } from './metrics.ts';
 type Length = ReturnType<Theme['length']>;
 type Font = ReturnType<Theme['font']>;
 type Filter = ReturnType<Theme['filter']>;
-
-/** A composite's palette slot (v12 `genColor`): its `data-color-id` and colours. */
-export interface Tint {
-  readonly id: `color-${number}`;
-  readonly stroke: Paint;
-  readonly fill?: Paint;
-}
 
 /** The paint of every block's outline and label. */
 export interface NodePaint {
@@ -77,7 +70,7 @@ export interface Paints {
   readonly node: NodePaint;
   readonly edge: EdgePaint;
   /** A composite's palette slot from its `colorIndex`, or undefined with no palette. */
-  readonly slotOf: (colorIndex: number | undefined) => Tint | undefined;
+  readonly slotOf: (colorIndex: number | undefined) => PaletteTint | undefined;
   /**
    * The paint of a composite without a palette slot; undefined where the theme carries a
    * palette or turns `blockCompositeClusterPaint` off, or the diagram has no composite, so no
