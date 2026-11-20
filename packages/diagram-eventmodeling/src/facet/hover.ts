@@ -9,6 +9,7 @@
  * something no statement declares (no symbol, D528) says so. A keyword shows the one-line doc
  * of the grammar file (`generated/docs.ts`). Never a preview.
  */
+import { formatList } from '@mermaid-js/core/parser-kit';
 import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
 import { firstFrameAt } from '../frames.ts';
 import { eventmodelingDocs } from '../generated/docs.ts';
@@ -16,7 +17,7 @@ import type { EventModel, EventModelFrame } from '../model.ts';
 import type { EventModelDocument } from '../parser/ast.ts';
 import { T, TEXT_WORD } from '../parser/tokens.ts';
 import { type EventModelRelation, eventModelStructure } from '../structure.ts';
-import { code, inside, list } from './tables.ts';
+import { code, inside } from './tables.ts';
 import { keywordHover } from '@mermaid-js/shared/parser/facet';
 
 /** Tokens with a doc that hover leaves alone: names, ids, data and punctuation. */
@@ -74,7 +75,7 @@ function frameHover(id: string, model: EventModel): string {
       `Source, inferred (no \`->>\`): ${named(inferred)}, the nearest earlier frame in another lane.`
     );
   } else if (into.length > 0) {
-    lines.push(`Sources (\`->>\`): ${list(into.map(named))}.`);
+    lines.push(`Sources (\`->>\`): ${formatList(into.map(named))}.`);
   } else if (frame.sources.length === 0) {
     lines.push(noSource(at, frame));
   }
@@ -83,9 +84,9 @@ function frameHover(id: string, model: EventModel): string {
   if (notDrawn.length > 0) {
     const why = (s: string) =>
       `${code(s)} (${firstAt.has(s) ? 'it comes later' : 'no frame has it'})`;
-    lines.push(`Named but not drawn: ${list(notDrawn.map(why))}.`);
+    lines.push(`Named but not drawn: ${formatList(notDrawn.map(why))}.`);
   }
-  if (targets.length > 0) lines.push(`Source of ${list(targets.map(frameLabel))}.`);
+  if (targets.length > 0) lines.push(`Source of ${formatList(targets.map(frameLabel))}.`);
   return lines.join('\n\n');
 }
 
@@ -103,7 +104,7 @@ function dataHover(name: string, model: EventModel): string {
   const shown = model.frames.filter((f) => f.dataRef === name);
   lines.push(
     shown.length > 0
-      ? `Shown by ${list(shown.map(frameLabel))}.`
+      ? `Shown by ${formatList(shown.map(frameLabel))}.`
       : `No frame shows it: a frame does with ${code(`[[${name}]]`)}.`
   );
   return lines.join('\n\n');
@@ -120,7 +121,7 @@ function entityHover(name: string, model: EventModel): string {
   const frames = [...new Set(gwts.map((g) => g.frame))];
   lines.push(
     frames.length > 0
-      ? `Named by the \`gwt\` of ${list(frames.map((f) => `frame ${code(f)}`))}.`
+      ? `Named by the \`gwt\` of ${formatList(frames.map((f) => `frame ${code(f)}`))}.`
       : 'No `gwt` step names it.'
   );
   return lines.join('\n\n');

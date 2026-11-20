@@ -21,6 +21,7 @@
  * styles (`classDef c …` on 300,000 lines), more than a call's arguments may be.
  */
 import { checkLimit } from '@mermaid-js/core/limits';
+import { formatList } from '@mermaid-js/core/parser-kit';
 import type { AstId, Range, RelatedInfo } from '@mermaid-js/core/parser-kit';
 import {
   MAX_STYLE_COPIES,
@@ -146,10 +147,7 @@ const EMPTY_ELEMENT: ElementFields = { type: '', docRef: '' };
 const LOST_NAMES_SHOWN = 5;
 
 /** `"a"`, `"a" and "b"`, `"a", "b" and "c"`. */
-function quotedList(names: readonly string[]): string {
-  const q = names.map((n) => `"${n}"`);
-  return q.length < 2 ? (q[0] ?? '') : `${q.slice(0, -1).join(', ')} and ${q[q.length - 1]}`;
-}
+const quotedList = (names: readonly string[]): string => formatList(names.map((n) => `"${n}"`));
 
 export class RequirementBuilder {
   private readonly requirements = new Map<string, Writable<Requirement>>();

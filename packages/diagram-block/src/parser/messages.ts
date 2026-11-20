@@ -2,7 +2,7 @@
  * Every message the block parser writes (R-ERR-5: Mermaid terms, never a token or rule name):
  * the names of what was expected, the hints after them, and the messages of its own codes.
  */
-import { listOf } from './text.ts';
+import { formatList } from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
 
 /** What a closer the opener reads best with is, for messages (any closer parses, as in v12). */
@@ -168,7 +168,7 @@ export const depthLimitMessage = (max: number): string =>
 /** D443: `style` naming ids no statement declares (each in backticks). */
 export function styleUnknownMessage(ids: readonly string[]): string {
   const one = ids.length === 1;
-  return `\`style\` names ${one ? 'a block' : 'blocks'} the diagram does not have: ${listOf(ids.map((id) => `\`${id}\``))}. Declare ${one ? 'it' : 'them'}, or check the spelling.`;
+  return `\`style\` names ${one ? 'a block' : 'blocks'} the diagram does not have: ${formatList(ids.map((id) => `\`${id}\``))}. Declare ${one ? 'it' : 'them'}, or check the spelling.`;
 }
 export const styledHere = (id: string): string => `\`${id}\` is styled here`;
 

@@ -87,9 +87,3 @@ export function classStyles(css: string): { styles: string[]; textStyles: string
  */
 /** An id as it goes into an AST id. */
 export const esc = /* @__PURE__ */ idEscaper(`${ID_RESERVED}${ID_CONTROL}`);
-
-/** `a`, `a and b`, `a, b and c`. */
-export function listOf(parts: readonly string[]): string {
-  if (parts.length < 2) return parts.join('');
-  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1] ?? ''}`;
-}

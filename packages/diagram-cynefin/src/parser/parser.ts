@@ -33,6 +33,8 @@ import {
   type AstId,
   ExpectedTable,
   Kind,
+  formatExpected,
+  formatList,
   kindSet,
   type ParseOptions,
   type ParseResult,
@@ -102,17 +104,8 @@ const PROBE_FOLLOWS = kindSet(T.Colon, T.Arrow, T.String);
 /** `title`, `accTitle` and `accDescr` by token kind. */
 const TEXTS = /* @__PURE__ */ textStatements(T.Title, T.AccTitle, T.AccDescr);
 
-/** `a`, `a and b`, `a, b and c` (or `or`). */
-export function listOf(parts: readonly string[], conjunction = 'and'): string {
-  if (parts.length < 2) return parts.join('');
-  return `${parts.slice(0, -1).join(', ')} ${conjunction} ${parts[parts.length - 1] ?? ''}`;
-}
-
 /** The domain names quoted and joined with `or`, for messages. */
-const DOMAIN_LIST = listOf(
-  CYNEFIN_DOMAIN_NAMES.map((n) => `\`${n}\``),
-  'or'
-);
+const DOMAIN_LIST = formatExpected(CYNEFIN_DOMAIN_NAMES.map((n) => `\`${n}\``));
 
 /** Human names for what the parser expects (R-ERR-2, R-ERR-5). */
 const EXPECTED = new ExpectedTable([
@@ -514,7 +507,7 @@ class CynefinParser extends RuleParser<PreprocessResult> {
     const verb = replaced.length === 1 ? 'is' : 'are';
     this.st.diagnostics.warning(
       'CYNEFIN_DUPLICATE_DOMAIN',
-      `Only the last block of a domain is drawn: ${listOf(named)} ${verb} replaced by a later block, and ${replaced.length === 1 ? 'its' : 'their'} items are not drawn. Put all the items of a domain in one block.`,
+      `Only the last block of a domain is drawn: ${formatList(named)} ${verb} replaced by a later block, and ${replaced.length === 1 ? 'its' : 'their'} items are not drawn. Put all the items of a domain in one block.`,
       first.nameRange
     );
   }
@@ -528,7 +521,7 @@ class CynefinParser extends RuleParser<PreprocessResult> {
     );
     this.st.diagnostics.warning(
       'CYNEFIN_SELF_LOOP',
-      `A transition from a domain to itself is not drawn: ${listOf(named)}. A transition goes from one domain to another.`,
+      `A transition from a domain to itself is not drawn: ${formatList(named)}. A transition goes from one domain to another.`,
       first.range
     );
   }

@@ -97,9 +97,3 @@ export function kindsBefore(tokens: TokenStream | undefined, at: number, n: numb
   }
   return out;
 }
-
-/** `a`, `a and b`, `a, b and c`. */
-export function list(items: readonly string[]): string {
-  if (items.length < 2) return items.join('');
-  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1] ?? ''}`;
-}

@@ -51,9 +51,3 @@ export function isBareId(name: string): boolean {
 export function idText(name: string): string {
   return isBareId(name) ? name : `"${name}"`;
 }
-
-/** `a`, `a and b`, `a, b and c`. */
-export function listOf(parts: readonly string[]): string {
-  if (parts.length < 2) return parts.join('');
-  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1] ?? ''}`;
-}

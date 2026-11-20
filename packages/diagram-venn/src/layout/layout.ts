@@ -15,11 +15,12 @@
  * down below it.
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
+import { formatList } from '@mermaid-js/core/parser-kit';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import { VENN_ZERO_SET } from '../codes.ts';
 import { vennLayoutConfig } from '../config.ts';
 import { idsKey, pairwiseRule, setIdOf, type VennModel, type VennSubset } from '../model.ts';
-import { idText, listOf } from '../parser/text.ts';
+import { idText } from '../parser/text.ts';
 import { laidOutSize } from '../sizes.ts';
 import {
   intersectionAreaPath,
@@ -187,7 +188,7 @@ function drawnAreas(model: VennModel, warn: (w: Warning) => void): Datum[] {
     if (id !== undefined && s.size === 0) zero.add(id);
   }
   if (zero.size > 0) {
-    const ids = listOf([...zero].map((id) => `\`${idText(id)}\``));
+    const ids = formatList([...zero].map((id) => `\`${idText(id)}\``));
     const one = zero.size === 1;
     warn({
       code: VENN_ZERO_SET,

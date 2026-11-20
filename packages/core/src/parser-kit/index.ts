@@ -26,7 +26,13 @@ export { closingLine, endsInBrace, openerBrace } from './embed-block.ts';
 export { MAX_BLOCK_DEPTH, openerRange, tooDeep } from './embed-depth.ts';
 export { LineIndex } from './positions.ts';
 export type { Position, Range } from './positions.ts';
-export { Diagnostics, ExpectedTable, formatExpected, MAX_EXPECTED } from './diagnostics.ts';
+export {
+  Diagnostics,
+  ExpectedTable,
+  formatExpected,
+  formatList,
+  MAX_EXPECTED,
+} from './diagnostics.ts';
 export type { Diagnostic, DiagnosticExtra, RelatedInfo, Severity } from './diagnostics.ts';
 export { formatDiagnostic } from './format.ts';
 export { inKindSet, kindSet, ProbeCursor, TokenCursor, TRIVIA } from './cursor.ts';
