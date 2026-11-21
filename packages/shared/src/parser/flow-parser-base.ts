@@ -40,22 +40,22 @@ import type {
   TokenView,
 } from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS } from '@mermaid-js/core/limits';
+import type { Limits } from '@mermaid-js/core/limits';
 import { parseYaml, preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult, YamlMap } from '@mermaid-js/core/preprocess';
 import type { FlowLabelNode, FlowLabelText, FlowLabelType, FlowStatement } from './flow-ast.ts';
 import type { FlowKinds } from './flow-kinds.ts';
 import type { FlowTables } from './flow-tables.ts';
 
-/** The parse options every dialect has. */
 /**
- * A dialect's parse options. `lean` is not among them: a dialect that offers a lean parse
- * (flowchart) adds `lean` and `astIds` to its own, and the parse state reads them from there.
+ * The parse options every dialect has. `maxDepth` caps block nesting, core's
+ * `DEFAULT_LIMITS.maxDepth` when unset. `lean` is not among them: a dialect that offers a lean
+ * parse (flowchart) adds `lean` and `astIds` to its own, and the parse state reads them from
+ * there.
  */
-export interface FlowParseOptionsBase extends Omit<ParseOptions, 'lean'> {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-  /** Block nesting cap (core `DEFAULT_LIMITS.maxDepth`). */
-  maxDepth?: number;
+export interface FlowParseOptionsBase
+  extends Omit<ParseOptions, 'lean'>,
+    Partial<Pick<Limits, 'maxDepth'>> {
   /** Features claimed by extension plugins; `callbacks` silences `CALLBACK_IGNORED`. */
   claims?: readonly string[];
 }
@@ -105,7 +105,8 @@ export interface FlowParserEdge {
 /** What the parser asks of a diagram's model builder (v12's DB). */
 export interface FlowParserBuilder {
   readonly direction: string;
-  readonly vertices: ReadonlyMap<string, { readonly ast: AstId }>;
+  /** `ast` is written once more after the document, for a vertex only a `style` line made. */
+  readonly vertices: ReadonlyMap<string, { ast: AstId }>;
   readonly edges: readonly FlowParserEdge[];
   hasEdge(id: string): boolean;
   edgeNamed(id: string): FlowParserEdge | undefined;
@@ -144,6 +145,12 @@ export interface FlowParserDialect<B extends FlowParserBuilder, O extends FlowPa
   /** v12's `destructLink`: an arrow's text, and the text that opened its label if any. */
   destructLink(end: string, start?: string): FlowLinkInfo;
   /**
+   * v12 12.3.0's `node shapeData spaceList` (D621): blanks after `@{ … }` may end the node, so
+   * an edge id, a link or the end of the statement may follow them. Off, as in 12.2.0, only
+   * `&` and another node may.
+   */
+  readonly blanksAfterData: boolean;
+  /**
    * How a parse with `options` runs (DESIGN §4.2): lean when it returns `LeanParseOptions`.
    * A dialect without it (agentflow) always parses in full.
    */
@@ -151,11 +158,9 @@ export interface FlowParserDialect<B extends FlowParserBuilder, O extends FlowPa
 }
 
 /** The `maxNodes`, `maxEdges` and `inheritDir` a builder is made with, from the parse options. */
-export function flowBuilderLimits(options: {
-  maxEdges?: number;
-  maxNodes?: number;
-  inheritDir?: boolean;
-}): { maxEdges: number; maxNodes: number; inheritDir: boolean } {
+export function flowBuilderLimits(
+  options: Partial<Pick<Limits, 'maxEdges' | 'maxNodes'>> & { inheritDir?: boolean }
+): { maxEdges: number; maxNodes: number; inheritDir: boolean } {
   return {
     maxEdges: options.maxEdges ?? DEFAULT_LIMITS.maxEdges,
     maxNodes: options.maxNodes ?? DEFAULT_LIMITS.maxNodes,

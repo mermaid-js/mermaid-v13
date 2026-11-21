@@ -1,0 +1,24 @@
+---
+description: >-
+  Markup, entities and both quote kinds in every text c4-beta draws or
+  writes as an attribute or accessible text: title, accTitle, a multi-line
+  accDescr, names, a description, a technology, instances and a relation
+  label. The person colour from the c4 section is legacy C4's: c4-beta
+  never reads it, so the person keeps its theme colours and nothing is
+  written from the key or warned of.
+config:
+  c4:
+    person_bg_color: 'red" onload="alert(1)'
+---
+c4-beta deployment
+title <script>alert(1)</script> "Title" & 'more'
+accTitle: <b onmouseover="x()">Acc</b> "title" & 'more'
+accDescr {
+  </desc><script>alert(2)</script>
+  "Description" & 'more' <img src=x onerror=y()>
+}
+person user "<svg onload=z()>User</svg>" "Says \"hi\" & 'bye'"
+deploymentNode node "Node <i>one</i>" "Runs it" "<a href='javascript:q()'>Tech</a>" instances "<b>3</b> & \"x\"" {
+  container api "API &lt;b&gt;" "Serves </text><text>orders" "Kotlin <br> JVM"
+}
+user --> api : "Calls <script>s()</script> \"now\"" "HTTPS & 'TLS'"

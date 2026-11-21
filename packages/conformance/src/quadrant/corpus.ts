@@ -8,9 +8,7 @@
  * comment lines added (v12 removed them before lexing, pitfall 3). The lexer
  * gate, the grammar lexer gate and the grammar differential run over it.
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
+import { corpusJson, fixturesAndSpecs } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
 import { LEXICAL_ERROR } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
@@ -184,23 +182,11 @@ export const QUIRKS: Quirk[] = [
  * (that spec has no diagram sources), lexer cases for every jison rule and state edge and
  * preprocessing shapes, and line-separator and CRLF cases.
  */
-export function quadrantCases(): CorpusItem[] {
-  return JSON.parse(
-    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/quadrant-cases.json'), 'utf8')
-  ) as CorpusItem[];
-}
+export const quadrantCases = (): CorpusItem[] => corpusJson('quadrant-cases.json');
 
 /** The e2e fixtures and the v12 spec strings. */
-export async function quadrantCorpus(): Promise<CorpusItem[]> {
-  const items: CorpusItem[] = [];
-  for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/quadrant-chart'), 'e2e')) {
-    items.push(item);
-  }
-  const specs = JSON.parse(
-    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/quadrant-v12-specs.json'), 'utf8')
-  ) as CorpusItem[];
-  return [...items, ...specs];
-}
+export const quadrantCorpus = (): Promise<CorpusItem[]> =>
+  fixturesAndSpecs('quadrant', { dir: 'quadrant-chart' });
 
 /**
  * Cases left out of the gate: v12's directive regex removes an unclosed `%%{` and everything

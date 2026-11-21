@@ -3,7 +3,8 @@ import type { SafeColor } from '@mermaid-js/core/svg';
 import type { Theme } from '@mermaid-js/core/theme';
 import { parseSankey } from '../parser/index.ts';
 import { sankeyTestContext, sankeyTestTheme } from '../test-context.ts';
-import { layoutSankey, sankeyLayoutViolations, type SankeyLayout } from './index.ts';
+import { layoutSankey, type SankeyLayout } from './index.ts';
+import { sankeyLayoutViolations } from './invariants.ts';
 import { TABLEAU10 } from './metrics.ts';
 
 let theme: Theme;

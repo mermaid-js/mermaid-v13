@@ -11,32 +11,49 @@
  * cspell:ignore kepano
  */
 import type { Point } from '@mermaid-js/core/layout';
-import { collapsedGroup, linedDocument } from '@mermaid-js/shared/shapes/extended';
-import { diamond, framedRect, hexagon, leanRight, rounded } from '@mermaid-js/shared/shapes/basic';
 import {
+  collapsedGroup,
+  diamond,
+  framedRect,
+  hexagon,
+  leanRight,
+  linedDocument,
+  rounded,
+} from '@mermaid-js/shared/shapes/basic';
+import {
+  flat as flatSpan,
   WAVE,
   type Pads,
   type PolygonShape,
   type Shape,
   type ShapeSize,
+  type Span,
 } from '@mermaid-js/shared/shapes/kit';
 import type { AgentflowShape } from '../parser/index.ts';
-import type { AgentflowMetrics } from './metrics.ts';
+import { AGENTFLOW_METRICS } from './metrics.ts';
 
 export type { Pads, PadXY } from '@mermaid-js/shared/shapes/kit';
 
 /** Every shape the layout sizes: the vertex shapes and v12's collapsed-flow card. */
 export type LayoutShape = AgentflowShape | 'collapsedGroup';
 
-/** What every shape is measured and outlined with: the theme's padding and the metrics table. */
+/**
+ * What every shape is measured and outlined with: the theme's padding. Its lengths are
+ * `AGENTFLOW_METRICS`, the only set.
+ */
 export interface ShapeGeometry {
   readonly pads: Pads;
-  readonly metrics: AgentflowMetrics;
 }
 
 interface ShapeDef {
-  /** The shared shape it is sized as, and edges spread along. */
+  /** The shared shape it is sized as, and edges spread along unless `span` says otherwise. */
   readonly shape: Shape;
+  /**
+   * The stretch of a side edge ends spread along, where it differs from the shared shape's.
+   * Every end is moved onto the outline (`ends.ts`), so ends may spread along a slant or a
+   * wave, which flowchart's drawing cannot follow (#674).
+   */
+  readonly span?: Span;
   outline(W: number, H: number, g: ShapeGeometry): Point[];
   /** The corner radius of a rounded outline; none for the others. */
   radius?(W: number, H: number, g: ShapeGeometry): number;
@@ -87,23 +104,30 @@ const SHAPES: Readonly<Record<LayoutShape, ShapeDef>> = {
   rounded: {
     shape: rounded,
     radius: (W, H, { pads: p }) => Math.min(p.r, W / 2, H / 2),
-    outline: (W, H, g) => roundedBox(W, H, cornerRadius('rounded', W, H, g), g.metrics.curveSteps),
+    outline: (W, H, g) =>
+      roundedBox(W, H, cornerRadius('rounded', W, H, g), AGENTFLOW_METRICS.curveSteps),
   },
   // v12 subroutine (tool): a square box.
   'fr-rect': { shape: framedRect, outline: (W, H) => roundedBox(W, H, 0, 0) },
-  // v12 lean-right (input): the top left and bottom right corners cut in.
-  'lean-r': polygon(leanRight),
+  // v12 lean-right (input): the top left and bottom right corners cut in. Its slanted sides
+  // spread ends too, an eighth of the side kept clear at each corner.
+  'lean-r': {
+    ...polygon(leanRight),
+    span: (W, H, sideways) =>
+      sideways ? H * AGENTFLOW_METRICS.slantSpan : (leanRight.span?.(W, H, false) ?? 0),
+  },
   // v12 question (decision): a square rhombus.
   diam: polygon(diamond),
-  // v12 lined document (refdoc): a box whose bottom is a wave. Edges meet the middle of each
-  // side: the wave has no flat stretch to spread along.
+  // v12 lined document (refdoc): a box whose bottom is a wave. Ends spread as on a box; one on
+  // the bottom lands on the wave.
   'lin-doc': {
     shape: linedDocument,
-    outline: (W, H, { metrics: m }) => {
+    span: flatSpan,
+    outline: (W, H) => {
       const x = W / 2;
       const base = H / 2 - WAVE.depth;
       const k = 2 * WAVE.control;
-      const n = 2 * m.curveSteps;
+      const n = 2 * AGENTFLOW_METRICS.curveSteps;
       const out: Point[] = [
         { x: -x, y: -H / 2 },
         { x, y: -H / 2 },
@@ -126,9 +150,9 @@ const SHAPES: Readonly<Record<LayoutShape, ShapeDef>> = {
   // v12 collapsedGroup: a rounded card, the label above an indicator row, v12's fixed padding.
   collapsedGroup: {
     shape: collapsedGroup,
-    radius: (W, H, { metrics: m }) => Math.min(m.flowRadius, W / 2, H / 2),
+    radius: (W, H) => Math.min(AGENTFLOW_METRICS.flowRadius, W / 2, H / 2),
     outline: (W, H, g) =>
-      roundedBox(W, H, cornerRadius('collapsedGroup', W, H, g), g.metrics.curveSteps),
+      roundedBox(W, H, cornerRadius('collapsedGroup', W, H, g), AGENTFLOW_METRICS.curveSteps),
   },
 };
 
@@ -143,7 +167,7 @@ export const shapeSize = (
 ): ShapeSize => SHAPES[shape].shape.size(tw, th, g.pads);
 
 export const shapeSpan = (shape: LayoutShape, W: number, H: number, sideways: boolean): number =>
-  Math.max(0, SHAPES[shape].shape.span?.(W, H, sideways) ?? 0);
+  Math.max(0, (SHAPES[shape].span ?? SHAPES[shape].shape.span)?.(W, H, sideways) ?? 0);
 
 /** The corner radius of a rounded shape's outline (the task box and the card), else 0. */
 export const cornerRadius = (shape: LayoutShape, W: number, H: number, g: ShapeGeometry): number =>

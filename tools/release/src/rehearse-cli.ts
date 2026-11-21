@@ -28,10 +28,11 @@ import { dirname, join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { build } from 'esbuild';
 import { parseArgs } from '../../../packages/bench/src/cli/args.ts';
+import { staticClosure } from '../../../packages/bench/src/stable-chunks.ts';
 import { ADAPTER_FIXTURES, ADAPTERS, adapterChecks, FACET_PEERS } from './adapters-check.ts';
 import { pendingChangesets } from './changesets.ts';
 import { withDependents } from './preflight.ts';
-import { packAll, publishAll, publishedPackages } from './publish.ts';
+import { packAll, publishAll, publishedPackages, type PackedTarball } from './publish.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
 const FIXTURES = join(import.meta.dirname, '..', 'fixtures', 'rehearsal');
@@ -192,13 +193,7 @@ async function bundleSize(dir: string, entry: string): Promise<{ initial: number
   const outputs = result.metafile.outputs;
   // Every dynamic-import target is an entry point too; the page's own is the one named `entry`.
   const entryOut = Object.keys(outputs).find((k) => outputs[k]!.entryPoint === entry)!;
-  const eager = new Set<string>();
-  const visit = (file: string): void => {
-    if (eager.has(file)) return;
-    eager.add(file);
-    for (const i of outputs[file]!.imports) if (i.kind === 'import-statement') visit(i.path);
-  };
-  visit(entryOut);
+  const eager = new Set(staticClosure(result.metafile, entryOut));
   let initial = 0;
   let lazy = 0;
   for (const file of Object.keys(outputs)) {
@@ -212,10 +207,23 @@ async function bundleSize(dir: string, entry: string): Promise<{ initial: number
 
 const kb = (n: number) => `${(n / 1024).toFixed(1)} KB gz`;
 
-async function main(): Promise<void> {
-  log(`Rehearsal in ${work}`);
+/** What the phases of the rehearsal hand to each other. */
+interface Packed {
+  repo: string;
+  version: string;
+  tarballs: PackedTarball[];
+}
+interface LocalRegistry {
+  npmrc: string;
+  npmEnv: Record<string, string>;
+}
+interface Install {
+  full: string;
+  fullSize: { initial: number; lazy: number };
+}
 
-  step('Version and build a copy of the working tree, as a release does');
+/** A copy of the working tree, versioned and built as a release does. */
+function buildCopy(): { repo: string; version: string } {
   const repo = join(work, 'repo');
   copyWorkingTree(repo);
   run('pnpm', ['install', '--frozen-lockfile', '--prefer-offline'], repo);
@@ -232,8 +240,11 @@ async function main(): Promise<void> {
     }
   ).version;
   log(`  mermaid under test: ${version}`);
+  return { repo, version };
+}
 
-  step('Pack for npm (alpha-version, exact-range and workspace-leak gates)');
+/** Pack for npm; the tarballs, after the checks on them. */
+function packCopy(repo: string, version: string): PackedTarball[] {
   const tarballs = packAll(repo, { target: 'public', outDir: join(work, 'tarballs') });
   for (const t of tarballs) log(`  packed ${t.name}@${t.version}`);
   check('every tarball has README.md and LICENSE', () => {
@@ -247,8 +258,11 @@ async function main(): Promise<void> {
     const out = run('node', [join(repo, 'packages/mermaid/dist/cli.js'), '--version'], repo).trim();
     assert(out === version, `bin says ${out}`);
   });
+  return tarballs;
+}
 
-  step(`Publish to a local Verdaccio (${registry}), tag v13-alpha`);
+/** Start Verdaccio and publish the tarballs to it. */
+async function publishLocal(tarballs: PackedTarball[]): Promise<LocalRegistry> {
   const token = await startVerdaccio(join(work, 'verdaccio'));
   const host = registry.replace(/^https?:/, '');
   const npmrc = `registry=${registry}\n${host}:_authToken=${token}\n`;
@@ -266,8 +280,11 @@ async function main(): Promise<void> {
     provenance: false,
   });
   for (const p of published) log(`  published ${p}`);
+  return { npmrc, npmEnv };
+}
 
-  step('Registry state');
+/** Registry state after the first publish. */
+function checkRegistry({ version, tarballs }: Packed, { npmEnv }: LocalRegistry): void {
   const tagsOf = (name: string) =>
     JSON.parse(
       run('npm', ['view', name, 'dist-tags', '--json', '--registry', registry], work, npmEnv)
@@ -291,8 +308,13 @@ async function main(): Promise<void> {
       );
       return JSON.stringify(tags);
     });
+}
 
-  step('Scenario "everything": npm install mermaid@v13-alpha');
+/** The "everything" scenario: `npm install mermaid@v13-alpha`. */
+async function scenarioEverything(
+  { version, tarballs }: Packed,
+  { npmrc, npmEnv }: LocalRegistry
+): Promise<Install> {
   const full = consumer('full', npmrc);
   run(
     'npm',
@@ -355,8 +377,14 @@ async function main(): Promise<void> {
     fullSize = await bundleSize(full, 'bundle-full.mjs');
     return `initial ${kb(fullSize.initial)}, lazy chunks ${kb(fullSize.lazy)}`;
   });
+  return { full, fullSize };
+}
 
-  step('Scenario "pick your diagrams": mermaid/slim + @mermaid-js/diagram-flowchart');
+/** The "pick your diagrams" scenario: `mermaid/slim` and the flowchart package. */
+async function scenarioSlim(
+  { npmrc, npmEnv }: LocalRegistry,
+  { fullSize }: Install
+): Promise<void> {
   const slim = consumer('slim', npmrc);
   run(
     'npm',
@@ -394,8 +422,13 @@ async function main(): Promise<void> {
       slim
     );
   });
+}
 
-  step('Scenario "editor adapters": the CodeMirror and Monaco adapters (#174)');
+/** The "editor adapters" scenario (#174). */
+async function scenarioAdapters(
+  { tarballs }: Packed,
+  { npmrc, npmEnv }: LocalRegistry
+): Promise<void> {
   const editors = consumer('adapters', npmrc);
   cpSync(ADAPTER_FIXTURES, editors, { recursive: true });
   run(
@@ -417,8 +450,14 @@ async function main(): Promise<void> {
     tsc: join(ROOT, 'node_modules/typescript/bin/tsc'),
   }))
     await checkAsync(c.name, async () => c.run());
+}
 
-  step('Second release: a flowchart-only changeset ships flowchart and mermaid, nothing else');
+/** The second release: a flowchart-only changeset, and an upgrade of the "everything" install. */
+function secondRelease(
+  { repo, tarballs }: Packed,
+  { npmEnv }: LocalRegistry,
+  { full }: Install
+): void {
   const before = new Map(tarballs.map((t) => [t.name, t.version]));
   writeFileSync(
     join(repo, '.changeset', 'rehearsal-flowchart.md'),
@@ -479,6 +518,34 @@ async function main(): Promise<void> {
       .join(', ');
   });
   check('guide snippets after the upgrade', () => run(nodes[0]!, ['full.mjs'], full).trim());
+}
+
+async function main(): Promise<void> {
+  log(`Rehearsal in ${work}`);
+
+  step('Version and build a copy of the working tree, as a release does');
+  const { repo, version } = buildCopy();
+
+  step('Pack for npm (alpha-version, exact-range and workspace-leak gates)');
+  const packed: Packed = { repo, version, tarballs: packCopy(repo, version) };
+
+  step(`Publish to a local Verdaccio (${registry}), tag v13-alpha`);
+  const local = await publishLocal(packed.tarballs);
+
+  step('Registry state');
+  checkRegistry(packed, local);
+
+  step('Scenario "everything": npm install mermaid@v13-alpha');
+  const install = await scenarioEverything(packed, local);
+
+  step('Scenario "pick your diagrams": mermaid/slim + @mermaid-js/diagram-flowchart');
+  await scenarioSlim(local, install);
+
+  step('Scenario "editor adapters": the CodeMirror and Monaco adapters (#174)');
+  await scenarioAdapters(packed, local);
+
+  step('Second release: a flowchart-only changeset ships flowchart and mermaid, nothing else');
+  secondRelease(packed, local, install);
 }
 
 try {

@@ -62,8 +62,6 @@ import { lex } from './lexer.ts';
 import { PREFIX_KEYWORDS, RADAR_TRIVIA, T, TEXT_STATEMENTS } from './tokens.ts';
 
 export interface RadarParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** The integrator's cap on axes and curves (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
   maxNodes?: number;
 }
@@ -79,7 +77,6 @@ const HEAD = [T.RadarBeta, T.RadarBetaColon, Kind.Newline];
 const LINE_END = [Kind.Newline, Kind.EOF];
 const STARTS_SET = kindSet(...STARTS);
 /** What line breaks may be followed by, inside a curve's `{ }` and elsewhere (probe lists). */
-const NEWLINE_ONLY = [Kind.Newline];
 const BEFORE_ENTRIES = [Kind.Newline, T.Number, T.Id];
 const BEFORE_DETAILED = [Kind.Newline, T.Id];
 const BEFORE_NUMBER = [Kind.Newline, T.Number];
@@ -199,7 +196,7 @@ class RadarParser extends RuleParser<PreprocessResult> {
    * what may follow them, tested at each: on a blank line inside `{ }` the cursor is at a line
    * break, where an entry may be typed.
    */
-  private newlines(next: readonly number[] = NEWLINE_ONLY): void {
+  private newlines(next: readonly number[]): void {
     for (;;) {
       this.tested(next);
       if (this.kind() !== Kind.Newline) return;
@@ -210,7 +207,7 @@ class RadarParser extends RuleParser<PreprocessResult> {
   // ---- errors and recovery ------------------------------------------------------------
 
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  protected fail(want: readonly number[], hint?: string): never {
+  protected override fail(want: readonly number[], hint?: string): never {
     const { st } = this;
     const where = this.range();
     if (this.kind() === Kind.Error) this.badCharacters(where);
@@ -348,11 +345,7 @@ class RadarParser extends RuleParser<PreprocessResult> {
 
   /** `NEWLINE* ("radar-beta" | "radar-beta:" | "radar-beta" ":")` */
   private header(): void {
-    for (;;) {
-      this.tested(HEAD);
-      if (this.kind() !== Kind.Newline) break;
-      this.i++;
-    }
+    this.newlines(HEAD);
     const k = this.kind();
     if (k !== T.RadarBeta && k !== T.RadarBetaColon) {
       this.fail([T.RadarBeta], 'a radar chart starts with `radar-beta`');

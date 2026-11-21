@@ -5,25 +5,15 @@
  * their top-left corner at `x`, `y`. Angles are radians clockwise from 12 o'clock, as d3's.
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
-import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
+import type { FontKey } from '@mermaid-js/core/text';
+import type { PlacedLabel, Rect } from '@mermaid-js/shared/layout';
 
 export interface Point {
   readonly x: number;
   readonly y: number;
 }
 
-export interface Rect extends Point {
-  readonly width: number;
-  readonly height: number;
-}
-
-/**
- * A measured label and the box it is drawn in. v12 placed its text by the first baseline, so
- * that baseline is at `y + text.baseline`.
- */
-export interface PlacedLabel extends Rect {
-  readonly text: MeasuredLabel;
-}
+export type { PlacedLabel, Rect };
 
 export interface PieSliceLayout {
   /** The section's index in `PieModel.sections`. */

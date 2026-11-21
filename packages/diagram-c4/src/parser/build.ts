@@ -8,6 +8,7 @@
 import { idEscaper } from '@mermaid-js/shared/parser/support';
 import type { AstId, ParseState, Range } from '@mermaid-js/core/parser-kit';
 import * as codes from '../codes.ts';
+import { MentionIds } from './mention-ids.ts';
 import {
   C4_ELEMENT_KINDS,
   C4_NODE_KINDS,
@@ -15,6 +16,7 @@ import {
   type C4Element,
   type C4ElementKind,
   type C4Extra,
+  type C4Direction,
   type C4Model,
   type C4NodeKind,
   type C4Relation,
@@ -90,34 +92,6 @@ const toInt = (text: string): number => parseInt(text);
 /** `%`, `>`, `@` and `#` percent-encoded. */
 const esc = /* @__PURE__ */ idEscaper();
 
-/** D458's AST ids. */
-class Ids {
-  private readonly seen = new Map<string, number>();
-  private styles = 0;
-
-  private next(base: string): AstId {
-    const n = (this.seen.get(base) ?? 0) + 1;
-    this.seen.set(base, n);
-    return n === 1 ? base : `${base}@${n}`;
-  }
-
-  element(alias: string): AstId {
-    return this.next(`element:${esc(alias)}`);
-  }
-
-  boundary(alias: string): AstId {
-    return this.next(`boundary:${esc(alias)}`);
-  }
-
-  relation(from: string, to: string): AstId {
-    return this.next(`rel:${esc(from)}->${esc(to)}`);
-  }
-
-  style(): AstId {
-    return `style:${++this.styles}`;
-  }
-}
-
 /** What an element or boundary statement added: its AST id and alias. */
 export interface Added {
   ast: AstId;
@@ -153,17 +127,21 @@ export interface RelationParts {
 
 /** One parse's model, built statement by statement. */
 export class C4Builder {
-  readonly ids = new Ids();
+  /** D458's AST ids. */
+  private readonly ids = new MentionIds();
+  private styles = 0;
   readonly elements: OpenElement[] = [];
   readonly boundaries: OpenBoundary[] = [];
   readonly relations: OpenRelation[] = [];
   shapeInRow: number | undefined;
   boundaryInRow: number | undefined;
-  /** Each relation's first statement, for the unknown-end check. */
+  private topDirection: C4Direction | undefined;
+  /** Each relation's statement, for the unknown-end check. */
   private readonly relationAt: Range[] = [];
   private readonly elementIndex = new Map<string, number>();
   private readonly boundaryIndex = new Map<string, number>();
-  private readonly relationIndex = new Map<string, Map<string, number>>();
+  /** The relations between each pair of ends, by statement order (a pair can have several). */
+  private readonly relationIndex = new Map<string, Map<string, number[]>>();
   /** Relation ends and style targets, resolved to a namespace at the end. */
   private readonly refs: { name: string; range: Range }[] = [];
   /** Each item's `extra` names, by name: where in `extra` each is. */
@@ -282,17 +260,26 @@ export class C4Builder {
     bag.parent = parent;
   }
 
-  /** A relation's ends, re-indexed: a later statement with them merges into it. */
+  /** The relations between `from` and `to` written so far, in statement order. */
+  private between(from: string, to: string): number[] {
+    let ends = this.relationIndex.get(from);
+    if (!ends) this.relationIndex.set(from, (ends = new Map<string, number[]>()));
+    let list = ends.get(to);
+    if (!list) ends.set(to, (list = []));
+    return list;
+  }
+
+  /** A relation's ends, re-indexed: it is found by the new pair from now on. */
   private relationEnds(i: number, from: string, to: string): void {
     const r = this.relations[i] as OpenRelation;
-    const ends = this.relationIndex.get(r.from);
-    if (ends?.get(r.to) === i) ends.delete(r.to);
+    const old = this.between(r.from, r.to);
+    const was = old.indexOf(i);
+    if (was !== -1) old.splice(was, 1);
     r.from = from;
     r.to = to;
-    let next = this.relationIndex.get(from);
-    if (!next) this.relationIndex.set(from, (next = new Map<string, number>()));
-    const other = next.get(to);
-    if (other === undefined || other > i) next.set(to, i);
+    const next = this.between(from, to);
+    const at = next.findIndex((other) => other > i);
+    next.splice(at === -1 ? next.length : at, 0, i);
   }
 
   /** A named argument: on a relation an offset is a number; any other name sets its field. */
@@ -441,7 +428,7 @@ export class C4Builder {
       if (written !== undefined) this.elementIndex.set(alias, i);
     }
     const item: Item = { type: 'element', bag: this.elements[i] as OpenElement, index: i };
-    const ast = this.ids.element(alias);
+    const ast = this.ids.next(`element:${esc(alias)}`);
     if (first) item.bag.ast = ast;
     const { table } = parts;
     if (written === undefined && args[0]) this.named(item, args[0], table.setAfter);
@@ -480,7 +467,7 @@ export class C4Builder {
       if (name !== undefined) this.boundaryIndex.set(alias, i);
     }
     const item: Item = { type: 'boundary', bag: this.boundaries[i] as OpenBoundary, index: i };
-    const ast = this.ids.boundary(alias);
+    const ast = this.ids.next(`boundary:${esc(alias)}`);
     if (first) item.bag.ast = ast;
     if (name === undefined && args[0]) this.named(item, args[0], last);
     if (!(first && this.renames(args, alias))) this.definition(alias, args[0], 'boundary', first);
@@ -505,22 +492,13 @@ export class C4Builder {
     const from = fromWritten ?? '';
     const to = toWritten ?? '';
     const known = fromWritten !== undefined && toWritten !== undefined;
-    let i = known ? this.relationIndex.get(from)?.get(to) : undefined;
-    const first = i === undefined;
-    if (i === undefined) {
-      i = this.relations.length;
-      this.relations.push({ ast: '', kind: parts.kind, from, to, label: '', extra: [] });
-      this.relationAt.push(parts.at);
-      if (known) {
-        let ends = this.relationIndex.get(from);
-        if (!ends) this.relationIndex.set(from, (ends = new Map<string, number>()));
-        ends.set(to, i);
-      }
-    }
+    // Each statement is a relation of its own (#680).
+    const i = this.relations.length;
+    const ast = this.ids.next(`rel:${esc(from)}->${esc(to)}`);
+    this.relations.push({ ast, kind: parts.kind, from, to, label: '', extra: [] });
+    this.relationAt.push(parts.at);
+    if (known) this.between(from, to).push(i);
     const item: Item = { type: 'relation', bag: this.relations[i] as OpenRelation, index: i };
-    const ast = this.ids.relation(from, to);
-    if (first) item.bag.ast = ast;
-    item.bag.kind = parts.kind;
     if (fromWritten === undefined) this.named(item, args[0], REL.setAfter);
     if (toWritten === undefined) this.named(item, args[1], REL.setAfter);
     this.ref(from, args[0]);
@@ -528,6 +506,11 @@ export class C4Builder {
     this.label(item, args[2], REL.setAfter);
     this.rest(item, args, { table: REL, from: 3 });
     return { ast, alias: from, from, to };
+  }
+
+  /** The next `style:<n>` AST id. */
+  styleId(): AstId {
+    return `style:${++this.styles}`;
   }
 
   /**
@@ -551,7 +534,7 @@ export class C4Builder {
   }
 
   /**
-   * `UpdateRelStyle(from, to, textColor?, lineColor?, offsetX?, offsetY?)`: on the relation
+   * `UpdateRelStyle(from, to, textColor?, lineColor?, offsetX?, offsetY?)`: on every relation
    * between them, nothing when there is none yet (as v12). The offset slots read a number,
    * whatever a named argument there names (v12 `parseInt`ed both).
    */
@@ -560,10 +543,17 @@ export class C4Builder {
     if (!from || !to || from.name !== undefined || to.name !== undefined) return;
     this.ref(from.value, from);
     this.ref(to.value, to);
-    const i = this.relationIndex.get(from.value)?.get(to.value);
-    if (i === undefined) return;
-    const item: Item = { type: 'relation', bag: this.relations[i] as OpenRelation, index: i };
-    this.rest(item, args, { table: REL_STYLE, from: 2, to: 4 });
+    // Every relation between the pair written so far (#680), listed before any is styled: a
+    // `$from` or `$to` among the arguments moves each out of that list.
+    for (const i of [...(this.relationIndex.get(from.value)?.get(to.value) ?? [])]) {
+      const item: Item = { type: 'relation', bag: this.relations[i] as OpenRelation, index: i };
+      this.rest(item, args, { table: REL_STYLE, from: 2, to: 4 });
+      this.relStyleOffsets(item, args);
+    }
+  }
+
+  /** The offset slots of `UpdateRelStyle` on `item`. */
+  private relStyleOffsets(item: Item & { type: 'relation' }, args: readonly Arg[]): void {
     for (let k = 4; k < REL_STYLE.slots.length; k++) {
       const arg = args[k];
       if (arg === undefined) continue;
@@ -612,14 +602,24 @@ export class C4Builder {
     }
   }
 
-  /** The model's items and row counts. */
-  model(): Pick<C4Model, 'elements' | 'boundaries' | 'relations' | 'shapeInRow' | 'boundaryInRow'> {
+  /** A `direction` statement: boundary `index`'s (-1: the top level's, none when it failed). */
+  direction(index: number, direction: C4Direction): void {
+    if (index === -1) this.topDirection = direction;
+    else if (this.boundaries[index]) this.boundaries[index].direction = direction;
+  }
+
+  /** The model's items, row counts and top-level direction. */
+  model(): Pick<
+    C4Model,
+    'elements' | 'boundaries' | 'relations' | 'shapeInRow' | 'boundaryInRow' | 'direction'
+  > {
     return {
       elements: this.elements,
       boundaries: this.boundaries,
       relations: this.relations,
       ...(this.shapeInRow !== undefined && { shapeInRow: this.shapeInRow }),
       ...(this.boundaryInRow !== undefined && { boundaryInRow: this.boundaryInRow }),
+      ...(this.topDirection !== undefined && { direction: this.topDirection }),
     };
   }
 }

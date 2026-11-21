@@ -3,6 +3,7 @@
  * the line and its tees, labels, the title, and the `ASCII_DROPPED` warning. Every `diagram-*`
  * ASCII path used to carry a copy; where the copies differed, the difference is a parameter.
  */
+import type { Warning } from '@mermaid-js/core';
 import type { Point } from '@mermaid-js/core/layout';
 import { type MeasuredLabel, Style } from '@mermaid-js/core/text';
 import {
@@ -173,15 +174,30 @@ export function wrapTitle(text: string, width: number): string[] {
 }
 
 /**
+ * A drawing (a canvas, or its text) without its empty margin: the blank rows at the ends and
+ * the common left margin dropped. `top` and `left` are how many rows and columns that took.
+ */
+export function trimmed(drawn: Canvas | string): { text: string; top: number; left: number } {
+  let lines = String(drawn).split('\n');
+  let top = 0;
+  while (lines.length > 0 && lines[0] === '') {
+    lines.shift();
+    top++;
+  }
+  while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
+  const margin = Math.min(...lines.filter((l) => l !== '').map((l) => l.search(/\S/)));
+  const left = margin > 0 && Number.isFinite(margin) ? margin : 0;
+  if (left > 0) lines = lines.map((l) => l.slice(left));
+  return { text: lines.join('\n'), top, left };
+}
+
+/**
  * The drawing as text: blank rows at the ends and the common left margin dropped, the title
  * centred over it on the first lines.
  */
 export function finish(canvas: Canvas, title: string | undefined, maxWidth?: number): string {
-  let lines = canvas.toString().split('\n');
-  while (lines.length > 0 && lines[0] === '') lines.shift();
-  while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
-  const margin = Math.min(...lines.filter((l) => l !== '').map((l) => l.search(/\S/)));
-  if (margin > 0 && Number.isFinite(margin)) lines = lines.map((l) => l.slice(margin));
+  const body = trimmed(canvas).text;
+  const lines = body === '' ? [] : body.split('\n');
   const text = title?.trim();
   if (text) {
     const width = Math.max(0, ...lines.map(cellWidth));
@@ -221,13 +237,26 @@ export function statements(
     statements(child as Parameters<typeof statements>[0], out);
 }
 
+/** One feature kind (of a diagram's kinds `F`) that text output dropped (D82). */
+export interface AsciiDroppedWarning<F extends string> extends Warning {
+  readonly code: 'ASCII_DROPPED';
+  readonly feature: F;
+  readonly astIds: readonly string[];
+}
+
+/** Edges the repair router found no free lane for (D78). */
+export interface AsciiRouteWarning extends Warning {
+  readonly code: 'ASCII_ROUTE';
+  readonly astIds: readonly string[];
+}
+
 /** One `ASCII_DROPPED` warning (D82): text output has no `what`. `keys` names what, in brackets. */
 export function asciiDropped<F extends string>(
   feature: F,
   astIds: readonly string[],
   what: string,
   keys = ''
-): { code: 'ASCII_DROPPED'; feature: F; astIds: readonly string[]; message: string } {
+): AsciiDroppedWarning<F> {
   return {
     code: 'ASCII_DROPPED',
     feature,
@@ -249,12 +278,61 @@ export function asciiRoute(
   unresolved: readonly { readonly edge: string }[],
   noun: string,
   astIds: (edge: string) => string | readonly string[] = (edge) => edge
-): { code: 'ASCII_ROUTE'; astIds: string[]; message: string } | undefined {
+): AsciiRouteWarning | undefined {
   if (unresolved.length === 0) return undefined;
   const edges = [...new Set(unresolved.map((c) => c.edge))];
   return {
     code: 'ASCII_ROUTE',
     astIds: edges.flatMap(astIds),
     message: `No free lane for ${noun} ${edges.join(', ')}; their lines touch other lines or text.`,
+  };
+}
+
+// The `ASCII_DROPPED` collector that a diagram's `asciiWarnings` fills: the diagram probes its
+// own features, and the statements behind each kind are added from the AST.
+
+/** What {@link droppedFeatures} collects into. */
+export interface DroppedFeatures<F extends string> {
+  /** Text output drops `feature`; `id`, when given, is the AST id of what uses it. */
+  readonly add: (feature: F, id?: string) => void;
+  /**
+   * One `ASCII_DROPPED` warning per kind found, in the order of the `what` table, with the
+   * ids of `ast`'s statements of that kind after the ids added. A statement alone is enough:
+   * a `classDef` nothing uses still has no text form. `keys` names what a kind dropped.
+   */
+  warnings(
+    ast: Parameters<typeof statements>[0],
+    keys?: Readonly<Partial<Record<F, string>>>
+  ): AsciiDroppedWarning<F>[];
+}
+
+/**
+ * A collector of the features one drawing uses that text output drops. `what` says what each
+ * kind is, as its warning names it; `statementKinds` the AST node types behind each kind.
+ */
+export function droppedFeatures<F extends string>(
+  what: Readonly<Record<F, string>>,
+  statementKinds: Readonly<Partial<Record<F, readonly string[]>>>
+): DroppedFeatures<F> {
+  const found = new Map<F, Set<string>>();
+  const add = (feature: F, id?: string): void => {
+    let ids = found.get(feature);
+    if (!ids) found.set(feature, (ids = new Set()));
+    if (id) ids.add(id);
+  };
+  return {
+    add,
+    warnings(ast, keys) {
+      const stmts = new Map<string, string[]>();
+      statements(ast, stmts);
+      const out: AsciiDroppedWarning<F>[] = [];
+      for (const feature of Object.keys(what) as F[]) {
+        for (const kind of statementKinds[feature] ?? [])
+          for (const id of stmts.get(kind) ?? []) add(feature, id);
+        const ids = found.get(feature);
+        if (ids) out.push(asciiDropped(feature, [...ids], what[feature], keys?.[feature]));
+      }
+      return out;
+    },
   };
 }

@@ -26,6 +26,7 @@ import {
 import { STOP } from '@mermaid-js/shared/parser/support';
 import type { ParseOptions, ParseResult, Range, StatementSpan } from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
+import type { Limits } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type {
@@ -45,16 +46,13 @@ import { attributeId, ErBuilder } from './model.ts';
 import type { ErAttribute, ErCardinality, ErDirection, ErDocItem, ErModel } from './model.ts';
 import { T } from './tokens.ts';
 
-export interface ErParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-  /** Entity cap (core `DEFAULT_LIMITS.maxNodes`). */
-  maxNodes?: number;
-  /** Relationship cap (core `DEFAULT_LIMITS.maxEdges`). */
-  maxEdges?: number;
-  /** Subgraph nesting cap (core `DEFAULT_LIMITS.maxDepth`). */
-  maxDepth?: number;
-}
+/**
+ * The caps, each core's `DEFAULT_LIMITS` value when unset: relationships (`maxEdges`), entities
+ * (`maxNodes`) and subgraph nesting (`maxDepth`).
+ */
+export interface ErParseOptions
+  extends ParseOptions,
+    Partial<Pick<Limits, 'maxEdges' | 'maxNodes' | 'maxDepth'>> {}
 
 export type ErParseResult = ParseResult<ErModel, ErDocument>;
 
@@ -87,14 +85,16 @@ const ATTRIBUTE_START = [T.AttributeWord, T.BlockStop];
 const AFTER_NAME = [T.AttributeKey, T.AttributeComment, T.AttributeWord, T.BlockStop];
 const COLON_OR_CLASSES = [T.Colon, T.StyleSeparator];
 
-const CARDINALITIES: Record<number, ErCardinality> = {
+/** The cardinality each cardinality token kind reads as (the facet's hover reads it too). */
+export const CARDINALITIES: Readonly<Record<number, ErCardinality>> = {
   [T.ZeroOrOne]: 'zeroOrOne',
   [T.ZeroOrMore]: 'zeroOrMore',
   [T.OneOrMore]: 'oneOrMore',
   [T.OnlyOne]: 'onlyOne',
   [T.MdParent]: 'mdParent',
 };
-const DIRECTION_OF: Record<number, ErDirection> = {
+/** The direction each `direction` token kind sets (the facet's hover reads it too). */
+export const DIRECTION_OF: Readonly<Record<number, ErDirection>> = {
   [T.DirectionTB]: 'TB',
   [T.DirectionBT]: 'BT',
   [T.DirectionRL]: 'RL',
@@ -255,6 +255,8 @@ class ErParser {
     this.document();
     const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
     const model = this.db.model(warnings);
+    const title = this.pre.frontMatter?.title;
+    if (title) model.title = title;
     const ast: ErDocument = {
       id: 'doc',
       type: 'Document',

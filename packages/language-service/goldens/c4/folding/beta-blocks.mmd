@@ -1,0 +1,16 @@
+c4-beta
+accDescr {
+  Who talks to whom
+}
+person user "User"
+softwareSystem shop "Shop" {
+  container api "API"
+  group inner "Inner" {
+    component handler "Handler"
+  }
+  container empty "Empty" {}
+}
+deploymentNode dc "DC" {
+  infrastructureNode lb "LB"
+}
+user --> api

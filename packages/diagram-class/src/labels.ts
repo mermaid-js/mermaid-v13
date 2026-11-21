@@ -1,6 +1,6 @@
 import { classTitle } from './layout/box.ts';
 import type { ClassModel } from './parser/model.ts';
-import { memberDisplay } from './parser/member.ts';
+import { memberLabel } from './parser/member.ts';
 
 /**
  * Every text the layout lays out as a label (`DiagramPlugin.labels`, D178), as it measures
@@ -12,7 +12,7 @@ export function classLabels(model: ClassModel): readonly string[] {
   for (const ns of model.namespaces) out.push(ns.label, ns.id);
   for (const node of model.classes) {
     out.push(classTitle(node), ...node.annotations.map((a) => `«${a}»`));
-    for (const m of [...node.attributes, ...node.methods]) out.push(memberDisplay(m).displayText);
+    for (const m of [...node.attributes, ...node.methods]) out.push(memberLabel(m));
   }
   for (const note of model.notes) out.push(note.text);
   for (const iface of model.interfaces) out.push(iface.label);

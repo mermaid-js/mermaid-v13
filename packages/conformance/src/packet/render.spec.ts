@@ -11,7 +11,7 @@ import {
 import { astIndex, extents, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 import { packetGateCorpus } from './corpus.ts';
-import { packetApi } from './render-api.ts';
+import { deterministicApi } from '../render-api.ts';
 
 /**
  * Render properties of the packet renderer (spec #421 T4, DESIGN §13.2, §13.4) over the packet
@@ -51,10 +51,10 @@ const skipped: { id: string; reason: string }[] = [];
 let api: Mermaid;
 
 beforeAll(async () => {
-  api = await packetApi();
+  api = deterministicApi();
   const corpus = await packetGateCorpus();
   for (const theme of THEMES) {
-    const themed = await packetApi({ theme, ...UNCAPPED });
+    const themed = deterministicApi({ theme, ...UNCAPPED });
     for (const item of corpus) {
       if (!detectPacket(item.source)) continue;
       try {
@@ -120,7 +120,7 @@ describe('packet render properties over the corpus', { timeout: 120_000 }, () =>
 
   it('is deterministic: a fresh API object renders the same bytes (R-ARCH-6)', async () => {
     const fresh = new Map<string, Mermaid>();
-    for (const theme of THEMES) fresh.set(theme, await packetApi({ theme, ...UNCAPPED }));
+    for (const theme of THEMES) fresh.set(theme, deterministicApi({ theme, ...UNCAPPED }));
     for (const c of cases) {
       const again = await fresh.get(c.theme)!.render('mermaid-0', c.source);
       expect(again.svg, c.id).toBe(c.result.svg);
@@ -349,7 +349,7 @@ describe('packet render: theme', () => {
   };
   const SRC = 'packet\ntitle T\n0-15: "a"';
   const render = async (config: MermaidConfig) =>
-    paints(parseSvg((await (await packetApi(config)).render('x', SRC)).svg));
+    paints(parseSvg((await deterministicApi(config).render('x', SRC)).svg));
 
   it('paints from packet’s variables, as CSS variables by default', async () => {
     expect(await render({})).toEqual({

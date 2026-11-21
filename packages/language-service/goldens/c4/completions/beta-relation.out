@@ -1,0 +1,30 @@
+@ 7:6  user |
+  --> operator (from the first to the second) 7:6-7:6 "" -> "-->"
+  <-- operator (from the second to the first) 7:6-7:6 "" -> "<--"
+  <--> operator (both ways) 7:6-7:6 "" -> "<-->"
+  --- operator (no arrowhead) 7:6-7:6 "" -> "---"
+@ 8:7  user -|
+  --> operator (from the first to the second) 8:6-8:7 "-" -> "-->"
+  --- operator (no arrowhead) 8:6-8:7 "-" -> "---"
+@ 9:10  user --> |
+  user node (person "User") 9:10-9:10 "" -> "user"
+  shop node (softwareSystem "Shop") 9:10-9:10 "" -> "shop"
+  api node (container "API") 9:10-9:10 "" -> "api"
+  db node (container "DB") 9:10-9:10 "" -> "db"
+@ 10:11  user --> a|
+  api node (container "API") 10:10-10:11 "a" -> "api"
+@ 11:24  user --> api : "Calls" |
+  :::a class (tag) 11:24-11:24 "" -> ":::a"
+@ 12:11  user <-- d|
+  db node (container "DB") 12:10-12:11 "d" -> "db"
+@ 13:4  1: |
+  user node (person "User") 13:4-13:4 "" -> "user"
+  shop node (softwareSystem "Shop") 13:4-13:4 "" -> "shop"
+  api node (container "API") 13:4-13:4 "" -> "api"
+  db node (container "DB") 13:4-13:4 "" -> "db"
+@ 14:6  2: us|
+  user node (person "User") 14:4-14:6 "us" -> "user"
+@ 15:28  api --- db : "Reads" "SQL" |
+  :::a class (tag) 15:28-15:28 "" -> ":::a"
+@ 16:16  api --> db :::a|
+  none

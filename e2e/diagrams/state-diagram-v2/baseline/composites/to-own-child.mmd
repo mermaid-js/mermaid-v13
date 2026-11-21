@@ -1,0 +1,12 @@
+---
+description: >-
+  transitions between a composite and a state inside it, both ways, drawn as visible arrows
+  distinct from the composite's own transitions (#416)
+---
+stateDiagram-v2
+  state Comp {
+    [*] --> Inner
+    Inner --> Done
+  }
+  Comp --> Inner
+  Inner --> Comp

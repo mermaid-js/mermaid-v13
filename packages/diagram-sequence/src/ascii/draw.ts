@@ -24,6 +24,7 @@ import {
   type Dir,
   type GlyphSet,
 } from '@mermaid-js/core/ascii';
+import type { Point } from '@mermaid-js/core/layout';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import { ARROW_HEADS, type ArrowHead } from '../model.ts';
 import type {
@@ -34,7 +35,7 @@ import type {
   SequenceLayout,
 } from '../layout/index.ts';
 import { symbolForm } from './symbols.ts';
-import { dirOf } from '@mermaid-js/shared/ascii';
+import { dirOf, drawLineCells } from '@mermaid-js/shared/ascii';
 
 /** A head drawn in one cell: v12's marker families, in text. */
 type Head = 'arrow' | 'open' | 'cross' | 'top' | 'bottom';
@@ -74,28 +75,15 @@ function headGlyph(glyphs: GlyphSet, head: Head, d: Dir): string {
   }
 }
 
-interface Cell {
-  readonly x: number;
-  readonly y: number;
-}
+type Cell = Readonly<Point>;
 
-/**
- * Draws a run of cells as one line: each cell gets arms to its neighbours, the ends also the
- * arm that carries the line on, so a straight run is `─` to the end and a turn is a corner.
- */
+/** Draws a run of cells as one line; a one-cell run is a horizontal stroke. */
 function drawRun(canvas: Canvas, glyphs: GlyphSet, cells: readonly Cell[], dotted: boolean): void {
   const last = cells.length - 1;
-  cells.forEach((c, i) => {
-    let arms = 0;
-    if (i > 0) arms |= armOf(dirOf(c, cells[i - 1]!), 1);
-    if (i < last) arms |= armOf(dirOf(c, cells[i + 1]!), 1);
-    if (i === 0 && last > 0) arms |= armOf(dirOf(cells[1]!, c), 1);
-    if (i === last && last > 0) arms |= armOf(dirOf(cells[last - 1]!, c), 1);
-    if (last === 0) arms = armOf(LEFT, 1) | armOf(RIGHT, 1);
-    let glyph = glyphFor(arms, glyphs);
-    if (dotted && arms === (armOf(LEFT, 1) | armOf(RIGHT, 1))) glyph = glyphs.dotted.h;
-    if (dotted && arms === (armOf(UP, 1) | armOf(DOWN, 1))) glyph = glyphs.dotted.v;
-    if (glyph) canvas.draw(c.x, c.y, glyph);
+  const [intoSource, intoTarget] =
+    last > 0 ? [dirOf(cells[1]!, cells[0]!), dirOf(cells[last - 1]!, cells[last]!)] : [LEFT, RIGHT];
+  drawLineCells(canvas, glyphs, cells, intoSource, intoTarget, {
+    dotted: dotted ? glyphs.dotted : undefined,
   });
 }
 

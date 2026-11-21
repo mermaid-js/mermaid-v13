@@ -5,7 +5,7 @@
 import { detectTreemap, parseTreemap } from '@mermaid-js/diagram-treemap';
 import { classStyles } from '@mermaid-js/diagram-treemap/testing';
 import type { TreemapModel, TreemapNode } from '@mermaid-js/diagram-treemap';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { TREEMAP_V12_TYPES, treemapV12Snapshot } from './v12.ts';
 import type { TreemapNodeSnapshot, TreemapSnapshot } from './v12.ts';
@@ -38,14 +38,8 @@ export function treemapV13Snapshot(model: TreemapModel): TreemapSnapshot {
  * front-matter title is held back, as the oracle holds it back from v12 (see `v12.ts`); the
  * D218 fallback has its own specs in `parser.spec.ts`.
  */
-export function parseTreemapForParity(text: string): TreemapModel {
-  const pre = preprocess(text);
-  const fm = pre.frontMatter && { ...pre.frontMatter, title: undefined };
-  const result = parseTreemap(text, { preprocessed: { ...pre, frontMatter: fm } });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((x) => x.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseTreemapForParity = (text: string): TreemapModel =>
+  parseForParity(text, parseTreemap, { withoutTitle: true });
 
 export const treemapAdapter: DiagramAdapter<TreemapModel> = {
   id: 'treemap',

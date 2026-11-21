@@ -32,7 +32,7 @@ import {
   skipTo,
   sourceView,
 } from '@mermaid-js/core/parser-kit';
-import { idEscaper, STOP } from '@mermaid-js/shared/parser/support';
+import { foundText, idEscaper, STOP } from '@mermaid-js/shared/parser/support';
 import type {
   AstId,
   Range,
@@ -399,14 +399,11 @@ class GanttParser {
   /** How an error message names the current token. */
   private found(): string {
     const k = this.kind();
-    if (k === Kind.EOF || k === T.Eof) return 'the end of the text';
-    if (k === Kind.Newline) return 'a line break';
-    // One line of it: a bare `title` or `section` takes the next line.
-    const text = this.raw().trim();
-    if (text === '') return 'the end of the text';
-    const line = /^[^\n\r]*/.exec(text)?.[0] ?? '';
-    const cut = line.length > 24 ? line.slice(0, 24) : line;
-    return cut.length < text.length ? `\`${cut}…\`` : `\`${text}\``;
+    if (k === Kind.EOF || k === Kind.Newline) return foundText(k, '');
+    // jison's `EOF`, and a token with no text, are the end; a cooked text has no CR, so its
+    // first line ends at an LF (a bare `title` or `section` takes the next line).
+    const raw = this.raw();
+    return k === T.Eof || raw.trim() === '' ? 'the end of the text' : foundText(k, raw);
   }
 
   /** Report what was found where `names` were expected, then stop the statement. */

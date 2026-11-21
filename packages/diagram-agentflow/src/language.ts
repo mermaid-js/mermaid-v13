@@ -1,9 +1,10 @@
 /**
  * Agentflow language facet (`@mermaid-js/diagram-agentflow/language`, DESIGN §4.5, R-LANG-8,
- * D89): the parser entry and the tables the language service needs, written from a copy of
- * flowchart's facet (D467). Nothing reachable from here imports the layout, the renderer, the
- * theme table or the plugin; the import-boundary lint and the bench's language bundle spec hold
- * that in place (`languageBundle` in `workspace.yaml`).
+ * D89): the parser entry and the tables the language service needs, on the flow family's facet
+ * (`@mermaid-js/shared/parser/flow-facet`), which agentflow shares with flowchart (D595).
+ * Nothing reachable from here imports the layout, the renderer, the theme table or the plugin;
+ * the import-boundary lint and the bench's language bundle spec hold that in place
+ * (`languageBundle` in `workspace.yaml`).
  *
  * Symbols (D468): vertex, connector and flow ids share one name space (`node` and `subgraph`,
  * as flowchart groups them), class names are `class` symbols and edge ids `edge` symbols.
@@ -15,8 +16,7 @@ import { agentflowCategories } from './generated/categories.ts';
 import { agentflowTokens, parseAgentflow, RESERVED_ID } from './parser/index.ts';
 import type { AgentflowDocument } from './parser/index.ts';
 import { T } from './parser/tokens.ts';
-import { readsBack, shapeReason } from '@mermaid-js/shared/parser/facet';
-import { flowNameReason } from '@mermaid-js/shared/parser/flow-facet';
+import { flowIdCheck } from '@mermaid-js/shared/parser/flow-facet';
 
 export { agentflowCategories } from './generated/categories.ts';
 export { agentflowDocs } from './generated/docs.ts';
@@ -47,36 +47,20 @@ const KEYWORDS = new Set<number>([
 ]);
 
 /**
- * Why `name` cannot be an agentflow node, connector or flow id, or `undefined` when it can:
- * the parser must read `name` alone on a line as one node whose id is exactly `name`.
+ * Why `name` cannot be an agentflow node, connector or flow id, class name or edge id, or
+ * `undefined` when it can. A flow id is checked as a node id: edges and `style` name it as one.
  */
-function invalidIdReason(name: string): string | undefined {
-  const shape = shapeReason(name, 'An id');
-  if (shape) return shape;
-  if (name === RESERVED_ID) {
-    return `'${RESERVED_ID}' is reserved: agentflow keeps it for its connectors and draws no node for it.`;
-  }
-  const text = `${HEADER}${name}\n`;
-  // Tokens that start inside the name (`end` takes its line break with it).
-  const tokens = agentflowTokens(text).filter(
-    (t) => t.range.start >= HEADER.length && t.range.start < HEADER.length + name.length
-  );
-  if (tokens.some((t) => LINKS.has(t.kind))) return `'${name}' contains an arrow.`;
-  if (tokens.length === 1 && KEYWORDS.has(tokens[0]!.kind)) return `'${name}' is a keyword.`;
-  return readsBack(parseAgentflow(text), HEADER.length, name, 'node')
-    ? undefined
-    : `'${name}' is not a node id.`;
-}
-
-/**
- * Why `name` cannot be a symbol of `kind` (`node`/`subgraph`, `class`, `edge`), if it cannot.
- * A flow id is checked as a node id: edges and `style` name it as one.
- */
-function invalidReason(name: string, kind = 'node'): string | undefined {
-  if (kind === 'class' || kind === 'edge')
-    return flowNameReason(name, kind, HEADER, parseAgentflow);
-  return invalidIdReason(name);
-}
+const invalidReason = flowIdCheck({
+  header: HEADER,
+  tokens: agentflowTokens,
+  parse: parseAgentflow,
+  links: LINKS,
+  keywords: KEYWORDS,
+  reserved: (name) =>
+    name === RESERVED_ID
+      ? `'${RESERVED_ID}' is reserved: agentflow keeps it for its connectors and draws no node for it.`
+      : undefined,
+});
 
 /** The agentflow facet. */
 export const agentflowLanguage: LanguageFacet<AgentflowDocument> = {

@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { buildGenerator } from '@mermaid-js/gen-grammar';
+import { describe, it } from 'vitest';
+import { checkSentences, v12Differs } from '../../grammar-sentences.ts';
 import { loadOracle } from '../../oracle.ts';
 import { agentflowCases, agentflowCorpus } from '../corpus.ts';
 import {
@@ -9,9 +9,6 @@ import {
   referenceParser,
   referenceVerdict,
 } from './reference.ts';
-
-/** Sentences per run; seeds are 1…N, so a failure names a reproducible seed. */
-const SENTENCES = 3000;
 
 /** A lone `%` in a label: v13 reads it as text (D463), mermaid\@12.2.0 failed to lex it. */
 const LONE_PERCENT = /(?<!%)%(?!%)/;
@@ -26,41 +23,19 @@ describe('agentflow grammar differential (generated sentences)', () => {
   it('agrees on generated sentences', async () => {
     const corpus = [...(await agentflowCorpus()), ...agentflowCases()];
     const model = learnSentenceModel(corpus.map((c) => c.source));
-    const generator = buildGenerator(referenceParser(), model);
-    const oracle = await loadOracle();
-    const diffs: string[] = [];
-    let accepted = 0;
-    for (let seed = 1; seed <= SENTENCES; seed++) {
-      const { text } = generator.generate({ seed });
-      const ref = referenceVerdict(text);
-      const hand = handWrittenVerdict(text);
-      if (ref.accepted) accepted++;
-      const id = `seed ${seed} ${JSON.stringify(text)}`;
-      // A failed check beyond the syntax (bad YAML, a link index) rejects the text anyway and
-      // may cut its statement short; only the syntax is compared.
-      if (hand.semanticError) continue;
-      if (ref.accepted !== hand.accepted) {
-        diffs.push(
-          `${id}: grammar ${ref.accepted ? 'accepts' : 'rejects'}, parser ${hand.accepted ? 'accepts' : 'rejects'}`
-        );
-        continue;
-      }
-      if (JSON.stringify(ref.ast) !== JSON.stringify(hand.ast)) {
-        diffs.push(
-          `${id}: AST differs\n  grammar ${JSON.stringify(ref.ast)}\n  parser  ${JSON.stringify(hand.ast)}`
-        );
-      }
-      const v12 = await oracle.parse(text);
-      if (v12Syntax(v12) === !ref.accepted && !(ref.accepted && LONE_PERCENT.test(text))) {
-        diffs.push(
-          `${id}: grammar ${ref.accepted ? 'accepts' : 'rejects'}, mermaid@12 ${ref.accepted ? 'rejects' : 'accepts'}`
-        );
-      }
-    }
-    process.stdout.write(`agentflow grammar sentences: ${accepted} of ${SENTENCES} accepted\n`);
-    // Many sentences must be in the language, or the test only checks rejections. About half
-    // are: corpus texts drawn for one token often lex as others once joined.
-    expect(accepted).toBeGreaterThan(SENTENCES * 0.4);
-    expect(diffs.slice(0, 30)).toEqual([]);
+    const v12 = v12Differs(await loadOracle(), v12Syntax);
+    await checkSentences({
+      name: 'agentflow',
+      parser: referenceParser(),
+      model,
+      reference: referenceVerdict,
+      handWritten: handWrittenVerdict,
+      syntaxOnly: true,
+      v12: (text, accepted) =>
+        accepted && LONE_PERCENT.test(text) ? Promise.resolve(undefined) : v12(text, accepted),
+      // Many sentences must be in the language, or the test only checks rejections. About half
+      // are: corpus texts drawn for one token often lex as others once joined.
+      minAccepted: 0.4,
+    });
   }, 600_000);
 });

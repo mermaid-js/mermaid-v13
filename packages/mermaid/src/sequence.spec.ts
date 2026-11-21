@@ -49,13 +49,16 @@ describe('sequence through the public API (#145)', () => {
     expect(result.text).toContain('Hello');
   });
 
-  it('draws a front-matter title in text only; the SVG leaves it out, as flowchart (D122)', async () => {
+  it('draws a front-matter title as a title statement when the text has none (D218, D652)', async () => {
     const m = createMermaid();
-    const src = `---\ntitle: Front Title\n---\n${SEQ}`;
-    expect((await m.render('s', src)).svg).not.toContain('Front Title');
-    expect((await m.render('s', src, { format: 'ascii' })).text).toContain('Front Title');
-    const stated = (await m.render('s', SEQ.replace('\n', '\n  title Stated\n'))).svg;
-    expect(stated).toContain('class="sequenceTitle"');
+    m.initialize({ deterministic: true });
+    const front = `---\ntitle: Front Title\n---\n${SEQ}`;
+    const stated = (title: string) => SEQ.replace('\n', `\n  title ${title}\n`);
+    expect((await m.render('s', front)).svg).toBe((await m.render('s', stated('Front Title'))).svg);
+    expect((await m.render('s', front, { format: 'ascii' })).text).toContain('Front Title');
+    const both = (await m.render('s', `---\ntitle: Front Title\n---\n${stated('Stated')}`)).svg;
+    expect(both).toContain('Stated');
+    expect(both).not.toContain('Front Title');
   });
 
   it('honours the sequence section from config', async () => {

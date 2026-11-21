@@ -2,13 +2,17 @@
 
 exports[`requirement layout over parser-produced fixtures > records the crossings layered draws 1`] = `
 {
+  "e2e/baseline/edge-labels/tags-line-color.mmd": 0,
+  "e2e/baseline/edge-labels/tags.mmd": 0,
   "e2e/baseline/handdrawn/default.mmd": 0,
   "e2e/baseline/handdrawn/neo-dark.mmd": 0,
   "e2e/baseline/handdrawn/neo.mmd": 0,
   "e2e/baseline/handdrawn/redux.mmd": 0,
   "e2e/baseline/relations/all-kinds-lr.mmd": 0,
+  "e2e/baseline/relations/two-self-loops.mmd": 0,
   "e2e/baseline/styles/classes-and-title.mmd": 0,
   "e2e/baseline/text/backticks-and-emphasis.mmd": 0,
+  "e2e/baseline/text/emphasis-beside-code-span.mmd": 0,
   "e2e/baseline/themes/default.mmd": 0,
   "e2e/baseline/themes/neo-dark.mmd": 0,
   "e2e/baseline/themes/neo.mmd": 0,
@@ -78,6 +82,7 @@ exports[`requirement layout over parser-produced fixtures > records the crossing
   "e2e/nightly-check/an-element-with-type-and-docref-neo-look-redux-dark-theme.mmd": 0,
   "e2e/nightly-check/an-element-with-type-and-docref-neo-look-redux-theme.mmd": 0,
   "e2e/nightly-check/comments.mmd": 0,
+  "e2e/nightly-check/dark-theme-base-colour-overrides.mmd": 0,
   "e2e/nightly-check/diagram-with-bt-direction-neo-look-neo-dark-theme.mmd": 0,
   "e2e/nightly-check/diagram-with-bt-direction-neo-look-neo-theme.mmd": 0,
   "e2e/nightly-check/diagram-with-bt-direction-neo-look-redux-color-theme.mmd": 0,
@@ -107,6 +112,7 @@ exports[`requirement layout over parser-produced fixtures > records the crossing
   "e2e/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-elk-layout.mmd": 0,
   "e2e/nightly-check/edge-labels-correctly-when-flowchart-htmllabels-is-false-handdrawn-look.mmd": 0,
   "e2e/nightly-check/html-dropped-title.mmd": 0,
+  "e2e/nightly-check/monospace-font-family-issue-759.mmd": 0,
   "e2e/nightly-check/multi-line-text.mmd": 0,
   "e2e/nightly-check/relationship-using-reverse-arrow-direction-neo-look-neo-dark-theme.mmd": 0,
   "e2e/nightly-check/relationship-using-reverse-arrow-direction-neo-look-neo-theme.mmd": 0,

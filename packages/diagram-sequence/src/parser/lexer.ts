@@ -32,19 +32,28 @@ import {
   Kind,
   LBRACE,
   LF,
+  LOWER_X,
   LPAREN,
   LT,
   PERCENT,
   PIPE,
+  PLUS,
   type Probe,
   RBRACE,
   RPAREN,
   SEMI,
   SLASH,
   type SourceView,
+  SPACE,
+  TAB,
   type TokenStream,
 } from '@mermaid-js/core/parser-kit';
-import { lowerCode, StateLexer, type StateLexerOptions } from '@mermaid-js/shared/parser/state';
+import {
+  lexerText,
+  lowerCode,
+  StateLexer,
+  type StateLexerOptions,
+} from '@mermaid-js/shared/parser/state';
 import { T } from './tokens.ts';
 
 // Start conditions of sequenceDiagram.jison (`CONFIG_DATA` is declared there, never entered).
@@ -207,26 +216,6 @@ const isMenuStop = (c: number) =>
 /** A blank of `((?!\n)\s)`. */
 const isLineBlank = (c: number) => c !== LF && isSpace(c);
 
-const LOWER_X = 0x78;
-const PLUS = 0x2b;
-const SPACE = 0x20;
-const TAB = 0x09;
-
-/**
- * The text the lexer reads, of the same length as the view's text: v12 turned every CRLF and
- * CR into LF before lexing, so a CRLF reads as two LFs (every rule treats a run of line breaks
- * as one, except the single `\s` after `title`, which the lexer steps over as a pair) and a
- * lone CR as LF; each `#name;` entity is `ﬂ`, the name and `¶`, so no rule takes its `#` or `;`
- * (v12's placeholders).
- */
-function lexerText(text: string): string {
-  let out = text.includes('\r')
-    ? text.replace(/\r\n?/g, (m) => (m.length === 2 ? '\n\n' : '\n'))
-    : text;
-  if (out.includes('#')) out = out.replace(/#(\w+);/g, (_, name: string) => `ﬂ${name}¶`);
-  return out;
-}
-
 /** How v12's lexer read its text (see `StateLexerOptions`). */
 const OPTIONS: StateLexerOptions = { charsPerToken: 4, crlf: 'keep', dropSpace: false };
 
@@ -243,24 +232,20 @@ export function lex(src: string, from: number, view: SourceView, probe?: Probe):
  * Each start condition is a method named after it.
  */
 class SequenceLexer extends StateLexer {
+  /**
+   * The text the lexer reads, of the same length as the view's text: v12 turned every CRLF and
+   * CR into LF before lexing, so a CRLF reads as two LFs (every rule treats a run of line breaks
+   * as one, except the single `\s` after `title`, which the lexer steps over as a pair) and a
+   * lone CR as LF; each `#name;` entity is `ﬂ`, the name and `¶`, so no rule takes its `#` or `;`
+   * (v12's placeholders).
+   */
   protected override prepare(text: string): string {
     return lexerText(text);
   }
 
   run(probe?: Probe): TokenStream {
-    const { n } = this;
     this.trim();
-    // Two loops, so a plain lex does no probe work per step.
-    if (probe === undefined) while (this.p < n) this.next();
-    else {
-      while (this.p < n) {
-        const before = this.p;
-        const mode = S_NAMES[this.state] ?? '';
-        this.next();
-        probe.lexed(this.source(before), this.source(this.p), mode);
-      }
-      probe.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
-    }
+    this.loop(probe, S_NAMES);
     // At the end jison tries the rules once more on the empty input.
     const kind = this.endKind();
     if (kind !== -1) this.emit(kind, this.len, this.len);
@@ -269,10 +254,9 @@ class SequenceLexer extends StateLexer {
   }
 
   /** One step: the rule that matches at {@link p}, or an Error token where none does. */
-  private next(): void {
-    if (!this.step(this.text.charCodeAt(this.p))) {
+  protected override step(c: number): void {
+    if (!this.rule(c)) {
       // No rule matches (jison throws): an Error token, then the initial state again.
-      const c = this.text.charCodeAt(this.p);
       this.emit(Kind.Error, this.p, c === LF ? this.p : codePointEnd(this.text, this.p));
       this.stack.length = 0;
       this.state = S.INITIAL;
@@ -331,7 +315,8 @@ class SequenceLexer extends StateLexer {
 
   // --- States -------------------------------------------------------------------------------
 
-  protected step(c: number): boolean {
+  /** The rule of the current start condition that matches at {@link p}, if any. */
+  private rule(c: number): boolean {
     switch (this.state) {
       case S.INITIAL:
         return this.initial(c);

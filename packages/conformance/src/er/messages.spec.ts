@@ -45,6 +45,16 @@ const FRAGMENTS_MORE = [
   '=',
 ];
 
+/**
+ * The message without the author's own text: a backticked span that quotes the source (`ErDiagram`
+ * written as a name, or the quoted form a message suggests for it) is the author's word, not a
+ * token kind that happens to share its spelling.
+ */
+const ownWords = (message: string, source: string): string =>
+  message.replace(/`"?([^`"]+)"?`/g, (span: string, text: string) =>
+    source.includes(text) ? '' : span
+  );
+
 describe('ER error messages', () => {
   it('never name a token or grammar rule', async () => {
     const corpus = (await erCorpus()).map((c) => c.source);
@@ -55,7 +65,7 @@ describe('ER error messages', () => {
       const src = next();
       for (const d of parseEr(src).diagnostics) {
         if (d.severity === 'error') errors++;
-        if (BANNED.test(d.message) || d.expected?.some((e) => BANNED.test(e))) {
+        if (BANNED.test(ownWords(d.message, src)) || d.expected?.some((e) => BANNED.test(e))) {
           bad.push(`${JSON.stringify(src)}: ${d.message}`);
         }
       }

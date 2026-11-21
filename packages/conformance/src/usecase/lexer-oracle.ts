@@ -18,6 +18,8 @@ import { readFileSync, realpathSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { chevrotainLex } from '../langium-lexer.ts';
+import type { ChevrotainLexResult } from '../langium-lexer.ts';
 import { loadOracle } from '../oracle.ts';
 
 /** A Chevrotain token as the gate compares it: its token type's name and its image. */
@@ -55,15 +57,6 @@ export interface UsecaseLexerOracle {
   lexText(text: string): UsecaseLex;
 }
 
-interface ChevrotainToken {
-  image: string;
-  startOffset: number;
-  tokenType: { name: string };
-}
-interface ChevrotainLexResult {
-  tokens: ChevrotainToken[];
-  errors: { offset: number }[];
-}
 interface ChevrotainLexer {
   lexerDefinition?: { modes?: { defaultMode?: readonly { name?: string }[] } };
   tokenize: (this: ChevrotainLexer, text: string, mode?: string) => ChevrotainLexResult;
@@ -144,31 +137,10 @@ async function load(): Promise<UsecaseLexerOracle> {
     async input(source) {
       return (await capture(source))?.text;
     },
-    lexText: (text) => lexWith(lexer, text, false),
+    lexText: (text) => chevrotainLex(lexer, text, false),
     async lex(source) {
       const got = await capture(source);
-      return got === undefined ? undefined : lexWith(got.lexer, got.text, true);
+      return got === undefined ? undefined : chevrotainLex(got.lexer, got.text, true);
     },
   };
-}
-
-function lexWith(lexer: ChevrotainLexer, input: string, clip: boolean): UsecaseLex {
-  const result = lexer.tokenize(input);
-  let errorAt: number | undefined;
-  for (const e of result.errors) {
-    if (errorAt === undefined || e.offset < errorAt) errorAt = e.offset;
-  }
-  const out: UsecaseLex = {
-    input,
-    tokens: result.tokens
-      .filter((t) => errorAt === undefined || t.startOffset < errorAt)
-      .map((t) => {
-        const end = t.startOffset + t.image.length;
-        const image =
-          clip && end === input.length && t.image.endsWith('\n') ? t.image.slice(0, -1) : t.image;
-        return [t.tokenType.name, image];
-      }),
-  };
-  if (errorAt !== undefined) out.errorAt = errorAt;
-  return out;
 }

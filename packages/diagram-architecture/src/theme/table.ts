@@ -6,7 +6,9 @@ import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
  * rule, which dark themes inherit, as v12 set the five variables in every theme file (D227: the
  * families differ through the shared vocabulary only).
  *
- * - The edge and its arrowheads: `lineColor`, as v12's `updateColors` set them.
+ * - The edge and its arrowheads: `lineColor`, as v12's `updateColors` set them. In the classic
+ *   family `defaultLinkColor`, which is `lineColor` except where `dark` pins v12's `#d3d3d3`:
+ *   v12's `dark` keeps its edges under a `lineColor` override, the other themes follow it (D656).
  * - The group border: v12 copied `primaryBorderColor` in each theme's constructor, before the
  *   theme recomputed it, so it drew the constructor's border. `calloutBorder` is that colour
  *   (the D332 input gitGraph's tags read: the author's `primaryBorderColor`, else v12's resolved
@@ -29,5 +31,12 @@ export const theme: DiagramThemeTable = {
       archGroupBorderColor: 'inline(calloutBorder, primaryBorderColor)',
     },
   },
-  families: { classic: WIDTHS, redux: WIDTHS, neo: { fallback: 'redux' } },
+  families: {
+    classic: {
+      ...WIDTHS,
+      rules: { archEdgeColor: 'defaultLinkColor', archEdgeArrowColor: 'defaultLinkColor' },
+    },
+    redux: WIDTHS,
+    neo: { fallback: 'redux' },
+  },
 };

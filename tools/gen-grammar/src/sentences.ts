@@ -3,6 +3,7 @@
  * derivations of the reference grammar, depth-bounded, with production weights and token
  * texts learnt from a corpus. Deterministic for a given seed. Dev and CI only.
  */
+import { seededRandom } from '@mermaid-js/shared/random';
 import type { ParseNode, Production, ReferenceParser } from './earley.ts';
 
 /** What a corpus teaches the generator. */
@@ -46,23 +47,12 @@ export interface Sentence {
 
 export interface GenerateOptions {
   seed: number;
-  /** Nesting depth after which only the shortest productions are chosen. */
-  maxDepth?: number;
-  /** Cap on tokens per sentence (later productions take the shortest way out). */
-  maxTokens?: number;
 }
 
-/** A small seeded PRNG (mulberry32). */
-function rng(seed: number): () => number {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+/** Nesting depth after which only the shortest productions are chosen. */
+const MAX_DEPTH = 12;
+/** Cap on tokens per sentence (later productions take the shortest way out). */
+const MAX_TOKENS = 400;
 
 export interface SentenceGenerator {
   generate(options: GenerateOptions): Sentence;
@@ -92,8 +82,8 @@ export function buildGenerator(parser: ReferenceParser, model: SentenceModel): S
   const start = parser.start;
 
   return {
-    generate({ seed, maxDepth = 12, maxTokens = 400 }) {
-      const random = rng(seed);
+    generate({ seed }) {
+      const random = seededRandom(seed);
       const out: string[] = [];
       let steps = 0;
       const pick = <T>(items: T[], weight: (x: T) => number): T => {
@@ -113,7 +103,7 @@ export function buildGenerator(parser: ReferenceParser, model: SentenceModel): S
         const prods = byLhs.get(sym) ?? [];
         let choices = prods;
         steps++;
-        if (depth > maxDepth || out.length > maxTokens || steps > maxTokens * 4) {
+        if (depth > MAX_DEPTH || out.length > MAX_TOKENS || steps > MAX_TOKENS * 4) {
           const best = Math.min(...prods.map(prodHeight));
           choices = prods.filter((p) => prodHeight(p) === best);
         }

@@ -7,7 +7,7 @@
  */
 import { detectRequirement, parseRequirement } from '@mermaid-js/diagram-requirement';
 import type { RequirementModel } from '@mermaid-js/diagram-requirement';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { REQUIREMENT_V12_TYPES, requirementV12Snapshot } from './v12.ts';
 import type { RequirementSnapshot } from './v12.ts';
@@ -49,13 +49,8 @@ export function requirementV13Snapshot(model: RequirementModel): RequirementSnap
 }
 
 /** v13 parse for parity: the model, or a throw carrying the first error diagnostic. */
-export function parseRequirementForParity(text: string): RequirementModel {
-  const pre = preprocess(text);
-  const result = parseRequirement(text, { preprocessed: pre });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((d) => d.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseRequirementForParity = (text: string): RequirementModel =>
+  parseForParity(text, parseRequirement);
 
 export const requirementAdapter: DiagramAdapter<RequirementModel> = {
   id: 'requirement',

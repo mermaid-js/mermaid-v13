@@ -45,13 +45,12 @@ import {
   LOWER_S,
   LPAREN,
   PERCENT,
-  QUOTE,
   RBRACE,
   RPAREN,
   SEMI,
-  SourceOffsets,
 } from '@mermaid-js/core/parser-kit';
-import { lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
+import { tagQuotes } from '@mermaid-js/shared/parser/drop';
+import { lexerText, lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
 import type { Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import type { StateLexerOptions } from '@mermaid-js/shared/parser/state';
 import { T } from './tokens.ts';
@@ -132,28 +131,6 @@ const WEEKENDS: readonly (readonly [day: string, kind: number])[] = [
   ['saturday', T.WeekendSaturday],
 ];
 
-/**
- * The text the lexer reads, of the same length as the view's text: v12 turned every CRLF and
- * CR into LF before lexing, so a CRLF reads as two LFs (every rule treats a run of line breaks
- * as one, except a single `\s`, `[\s\n]` or `[^\}]`, which the lexer steps over as a pair) and
- * a lone CR as LF; each `#name;` entity is `ﬂ`, the name and `¶`, so no rule takes its `#`
- * (v12's placeholders); a `"` v12 turned into `'` (an HTML attribute quote) is `'`.
- */
-function lexerText(view: SourceView): string {
-  const { text, mask } = view;
-  let out = text.includes('\r')
-    ? text.replace(/\r\n?/g, (m) => (m.length === 2 ? '\n\n' : '\n'))
-    : text;
-  if (out.includes('#')) out = out.replace(/#(\w+);/g, (_, name: string) => `ﬂ${name}¶`);
-  if (mask && out.includes('"')) {
-    const offsets = view.runs && new SourceOffsets(view.runs);
-    out = out.replace(/"/g, (q, i: number) =>
-      ((mask[offsets ? offsets.source(i) : i] ?? 0) & QUOTE) !== 0 ? "'" : q
-    );
-  }
-  return out;
-}
-
 /** How v12's lexer read its text (see `StateLexerOptions`). */
 const OPTIONS: StateLexerOptions = { charsPerToken: 8, crlf: 'keep', dropSpace: true };
 
@@ -170,8 +147,16 @@ export function lex(src: string, from: number, view: SourceView, probe?: Probe):
  * Each start condition is a method named after it.
  */
 class GanttLexer extends StateLexer {
+  /**
+   * The text the lexer reads, of the same length as the view's text: v12 turned every CRLF and
+   * CR into LF before lexing, so a CRLF reads as two LFs (every rule treats a run of line breaks
+   * as one, except a single `\s`, `[\s\n]` or `[^\}]`, which the lexer steps over as a pair) and
+   * a lone CR as LF; each `#name;` entity is `ﬂ`, the name and `¶`, so no rule takes its `#`
+   * (v12's placeholders); a `"` v12 turned into `'` (an HTML attribute quote) is `'`.
+   */
   protected override prepare(text: string, view: SourceView): string {
-    return lexerText(view);
+    // The quotes first: neither replacement after it changes the length or touches a `"`.
+    return lexerText(tagQuotes(view));
   }
 
   run(probe?: Probe): TokenStream {

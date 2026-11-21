@@ -33,10 +33,11 @@ export const EXPLORER_ENTRY = join(import.meta.dirname, 'browser', 'explorer', '
 /** The Compare tab's iframe script (`www/dev/compare-pane.html` loads `/build/compare-pane.js`). */
 export const COMPARE_PANE_ENTRY = join(import.meta.dirname, 'browser', 'compare-pane.ts');
 
-/** What a Compare pane loads from this server: its script, the dev bundle and its fonts. */
+/** What a Compare pane loads from this server: its script, the dev bundle, its chunks, fonts. */
 export const COMPARE_PANE_FILES: readonly string[] = [
   '/build/compare-pane.js',
   '/mermaid.esm.mjs',
+  '/chunks/mermaid.esm/',
   '/fonts/',
 ];
 
@@ -151,11 +152,13 @@ async function holdsDiagrams(dir: string): Promise<boolean> {
   return false;
 }
 
-export function explorerRoutes(root: string, options: ExplorerOptions = {}): Route[] {
-  const folders = foldersOf(root, options);
+type Folders = (() => readonly string[]) | undefined;
+type Within = (requested: string | null) => { abs: string; rel: string };
+type MmdTarget = (res: ServerResponse, url: URL) => { abs: string; rel: string } | undefined;
 
-  /** `resolveWithin`, refusing a path into a top-level folder that isn't listed. */
-  const within = (requested: string | null): { abs: string; rel: string } => {
+/** `resolveWithin`, refusing a path into a top-level folder that isn't listed. */
+function withinFolders(root: string, folders: Folders): Within {
+  return (requested) => {
     const target = resolveWithin(root, requested);
     const top = target.rel.split('/')[0]!;
     const nested = target.rel.includes('/') || !target.rel.endsWith('.mmd');
@@ -164,9 +167,11 @@ export function explorerRoutes(root: string, options: ExplorerOptions = {}): Rou
     }
     return target;
   };
+}
 
-  /** A `.mmd` path below the root, or a 400 (answered here) and `undefined`. */
-  const mmd = (res: ServerResponse, url: URL): { abs: string; rel: string } | undefined => {
+/** A `.mmd` path below the root, or a 400 (answered here) and `undefined`. */
+function mmdTarget(within: Within): MmdTarget {
+  return (res, url) => {
     try {
       const target = within(url.searchParams.get('path'));
       if (!target.abs.endsWith('.mmd')) {
@@ -179,9 +184,152 @@ export function explorerRoutes(root: string, options: ExplorerOptions = {}): Rou
       return undefined;
     }
   };
-  const isFile = async (abs: string): Promise<boolean> =>
-    (await stat(abs).catch(() => undefined))?.isFile() ?? false;
+}
 
+const isFile = async (abs: string): Promise<boolean> =>
+  (await stat(abs).catch(() => undefined))?.isFile() ?? false;
+
+/** The vendored Shoelace theme and icons. */
+function shoelaceRoute(): Route {
+  return {
+    path: '/dev/vendor/shoelace/',
+    prefix: true,
+    method: 'GET',
+    handle: (_req, res, url) => {
+      const rel = decodeURIComponent(url.pathname.slice('/dev/vendor/shoelace/'.length));
+      let abs: string;
+      try {
+        abs = resolveWithin(SHOELACE, rel).abs;
+      } catch {
+        abs = '';
+      }
+      const type = CONTENT_TYPES[extname(abs)];
+      if (!abs || !type) {
+        res.writeHead(404);
+        res.end();
+        return;
+      }
+      sendFile(res, abs, type);
+    },
+  };
+}
+
+/** `GET /dev/api/files`: the listing of one folder. */
+function filesRoute(root: string, folders: Folders, within: Within): Route {
+  return {
+    path: '/dev/api/files',
+    method: 'GET',
+    handle: async (_req, res, url) => {
+      let dir: { abs: string; rel: string };
+      try {
+        dir = within(url.searchParams.get('path'));
+      } catch {
+        refuse(res, 'Invalid path');
+        return;
+      }
+      const listed = await readdir(dir.abs, { withFileTypes: true }).catch(() => undefined);
+      if (!listed) {
+        refuse(res, 'Not a directory');
+        return;
+      }
+      const allowed = dir.rel === '' && folders ? new Set(folders()) : undefined;
+      const entry = (name: string, kind: ExplorerEntry['kind']): ExplorerEntry => ({
+        name,
+        kind,
+        path: dir.rel ? `${dir.rel}/${name}` : name,
+      });
+      const candidates = listed
+        .filter((d) => d.isDirectory() && (!allowed || allowed.has(d.name)))
+        .map((d) => d.name);
+      const shown = await Promise.all(candidates.map((n) => holdsDiagrams(join(dir.abs, n))));
+      const dirs = candidates.filter((_, i) => shown[i]).sort(byName);
+      const files = listed
+        .filter((d) => d.isFile() && d.name.endsWith('.mmd'))
+        .map((d) => d.name)
+        .sort(byName);
+      json(res, 200, {
+        root: eventRoot(root),
+        path: dir.rel,
+        entries: [...dirs.map((n) => entry(n, 'dir')), ...files.map((n) => entry(n, 'file'))],
+      });
+    },
+  };
+}
+
+/** `GET /dev/api/file`: the text of one `.mmd` file. */
+function fileGetRoute(mmd: MmdTarget): Route {
+  return {
+    path: '/dev/api/file',
+    method: 'GET',
+    handle: async (_req, res, url) => {
+      const target = mmd(res, url);
+      if (!target) return;
+      if (!(await isFile(target.abs))) {
+        refuse(res, 'Not a file');
+        return;
+      }
+      res.writeHead(200, {
+        'content-type': 'text/plain; charset=utf-8',
+        'cache-control': 'no-store',
+      });
+      res.end(await readFile(target.abs, 'utf8'));
+    },
+  };
+}
+
+/** `POST /dev/api/file`: create a `.mmd` file, never overwriting. */
+function filePostRoute(mmd: MmdTarget): Route {
+  return {
+    path: '/dev/api/file',
+    method: 'POST',
+    handle: async (req, res, url) => {
+      if (!sameOriginWrite(req)) return forbid(res);
+      const target = mmd(res, url);
+      if (!target) return;
+      const body = await readBody(req, res);
+      if (body === undefined) return;
+      const content = body.length > 0 ? body : NEW_DIAGRAM;
+      await mkdir(dirname(target.abs), { recursive: true });
+      try {
+        // `wx`: never overwrite, even if the file appears meanwhile.
+        await writeFile(target.abs, content, { encoding: 'utf8', flag: 'wx' });
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
+          json(res, 409, { error: 'File already exists' });
+          return;
+        }
+        throw error;
+      }
+      json(res, 201, { path: target.rel, bytes: Buffer.byteLength(content) });
+    },
+  };
+}
+
+/** `PUT /dev/api/file`: overwrite an existing `.mmd` file. */
+function filePutRoute(mmd: MmdTarget): Route {
+  return {
+    path: '/dev/api/file',
+    method: 'PUT',
+    handle: async (req, res, url) => {
+      if (!sameOriginWrite(req)) return forbid(res);
+      const target = mmd(res, url);
+      if (!target) return;
+      if (!(await isFile(target.abs))) {
+        refuse(res, 'Not a file');
+        return;
+      }
+      const body = await readBody(req, res);
+      if (body === undefined) return;
+      await writeFile(target.abs, body, 'utf8');
+      json(res, 200, { path: target.rel, bytes: Buffer.byteLength(body) });
+    },
+  };
+}
+
+function explorerRoutes(root: string, options: ExplorerOptions = {}): Route[] {
+  const folders = foldersOf(root, options);
+  const within = withinFolders(root, folders);
+  const mmd = mmdTarget(within);
   return [
     {
       path: '/dev',
@@ -190,27 +338,7 @@ export function explorerRoutes(root: string, options: ExplorerOptions = {}): Rou
         res.end();
       },
     },
-    {
-      path: '/dev/vendor/shoelace/',
-      prefix: true,
-      method: 'GET',
-      handle: (_req, res, url) => {
-        const rel = decodeURIComponent(url.pathname.slice('/dev/vendor/shoelace/'.length));
-        let abs: string;
-        try {
-          abs = resolveWithin(SHOELACE, rel).abs;
-        } catch {
-          abs = '';
-        }
-        const type = CONTENT_TYPES[extname(abs)];
-        if (!abs || !type) {
-          res.writeHead(404);
-          res.end();
-          return;
-        }
-        sendFile(res, abs, type);
-      },
-    },
+    shoelaceRoute(),
     {
       // No CORS preflight is ever granted, so a cross-site page can't send the write header.
       path: '/dev/api/',
@@ -218,102 +346,10 @@ export function explorerRoutes(root: string, options: ExplorerOptions = {}): Rou
       method: 'OPTIONS',
       handle: (_req, res) => forbid(res),
     },
-    {
-      path: '/dev/api/files',
-      method: 'GET',
-      handle: async (_req, res, url) => {
-        let dir: { abs: string; rel: string };
-        try {
-          dir = within(url.searchParams.get('path'));
-        } catch {
-          refuse(res, 'Invalid path');
-          return;
-        }
-        const listed = await readdir(dir.abs, { withFileTypes: true }).catch(() => undefined);
-        if (!listed) {
-          refuse(res, 'Not a directory');
-          return;
-        }
-        const allowed = dir.rel === '' && folders ? new Set(folders()) : undefined;
-        const entry = (name: string, kind: ExplorerEntry['kind']): ExplorerEntry => ({
-          name,
-          kind,
-          path: dir.rel ? `${dir.rel}/${name}` : name,
-        });
-        const candidates = listed
-          .filter((d) => d.isDirectory() && (!allowed || allowed.has(d.name)))
-          .map((d) => d.name);
-        const shown = await Promise.all(candidates.map((n) => holdsDiagrams(join(dir.abs, n))));
-        const dirs = candidates.filter((_, i) => shown[i]).sort(byName);
-        const files = listed
-          .filter((d) => d.isFile() && d.name.endsWith('.mmd'))
-          .map((d) => d.name)
-          .sort(byName);
-        json(res, 200, {
-          root: eventRoot(root),
-          path: dir.rel,
-          entries: [...dirs.map((n) => entry(n, 'dir')), ...files.map((n) => entry(n, 'file'))],
-        });
-      },
-    },
-    {
-      path: '/dev/api/file',
-      method: 'GET',
-      handle: async (_req, res, url) => {
-        const target = mmd(res, url);
-        if (!target) return;
-        if (!(await isFile(target.abs))) {
-          refuse(res, 'Not a file');
-          return;
-        }
-        res.writeHead(200, {
-          'content-type': 'text/plain; charset=utf-8',
-          'cache-control': 'no-store',
-        });
-        res.end(await readFile(target.abs, 'utf8'));
-      },
-    },
-    {
-      path: '/dev/api/file',
-      method: 'POST',
-      handle: async (req, res, url) => {
-        if (!sameOriginWrite(req)) return forbid(res);
-        const target = mmd(res, url);
-        if (!target) return;
-        const body = await readBody(req, res);
-        if (body === undefined) return;
-        const content = body.length > 0 ? body : NEW_DIAGRAM;
-        await mkdir(dirname(target.abs), { recursive: true });
-        try {
-          // `wx`: never overwrite, even if the file appears meanwhile.
-          await writeFile(target.abs, content, { encoding: 'utf8', flag: 'wx' });
-        } catch (error) {
-          if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
-            json(res, 409, { error: 'File already exists' });
-            return;
-          }
-          throw error;
-        }
-        json(res, 201, { path: target.rel, bytes: Buffer.byteLength(content) });
-      },
-    },
-    {
-      path: '/dev/api/file',
-      method: 'PUT',
-      handle: async (req, res, url) => {
-        if (!sameOriginWrite(req)) return forbid(res);
-        const target = mmd(res, url);
-        if (!target) return;
-        if (!(await isFile(target.abs))) {
-          refuse(res, 'Not a file');
-          return;
-        }
-        const body = await readBody(req, res);
-        if (body === undefined) return;
-        await writeFile(target.abs, body, 'utf8');
-        json(res, 200, { path: target.rel, bytes: Buffer.byteLength(body) });
-      },
-    },
+    filesRoute(root, folders, within),
+    fileGetRoute(mmd),
+    filePostRoute(mmd),
+    filePutRoute(mmd),
   ];
 }
 

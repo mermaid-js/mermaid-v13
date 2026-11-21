@@ -15,6 +15,7 @@ import { ganttCategories } from './generated/categories.ts';
 import { parseGantt } from './parser/index.ts';
 import type { GanttDocument } from './parser/index.ts';
 import { NEVER_STORED } from './ids.ts';
+import { probeText, readsBackAt } from '@mermaid-js/shared/parser/facet';
 
 export { ganttCategories } from './generated/categories.ts';
 export { ganttDocs } from './generated/docs.ts';
@@ -34,20 +35,8 @@ const ID_LINES = ['a :@, 2024-01-01, 1d', 'click @ href "u"'];
  * task symbol named `name` at each spot, with no error. One parse of all the lines together.
  */
 function readsBack(name: string): boolean {
-  let text = 'gantt\n';
-  const spots: number[] = [];
-  for (const line of ID_LINES) {
-    spots.push(text.length + line.indexOf('@'));
-    text += `${line.replace('@', () => name)}\n`;
-  }
-  const { diagnostics, symbols } = parseGantt(text);
-  if (diagnostics.some((d) => d.severity === 'error')) return false;
-  const ids = symbols.filter((s) => s.kind === 'task' && s.name === name);
-  if (ids.length !== spots.length) return false;
-  return spots.every((at, i) => {
-    const s = ids[i];
-    return s !== undefined && s.range.start === at && s.range.end === at + name.length;
-  });
+  const { text, spots } = probeText('gantt\n', ID_LINES, name);
+  return readsBackAt(parseGantt(text), spots, name, 'task', 0);
 }
 
 /** Why `name` cannot be a task id, if it cannot. */

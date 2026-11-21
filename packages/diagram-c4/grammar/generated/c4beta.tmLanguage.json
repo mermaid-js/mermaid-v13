@@ -134,48 +134,56 @@
       "name": "keyword.operator.mermaid-c4beta"
     },
     "rule-28": {
+      "match": "---(?![->])",
+      "name": "keyword.operator.mermaid-c4beta"
+    },
+    "rule-29": {
       "match": ":::[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*",
       "name": "variable.other.mermaid-c4beta"
     },
-    "rule-29": {
+    "rule-30": {
       "match": ":",
       "name": "punctuation.definition.mermaid-c4beta"
     },
-    "rule-30": {
+    "rule-31": {
       "match": ",",
       "name": "punctuation.definition.mermaid-c4beta"
     },
-    "rule-31": {
+    "rule-32": {
       "match": "\\{",
       "name": "punctuation.definition.mermaid-c4beta"
     },
-    "rule-32": {
+    "rule-33": {
       "match": "\\}",
       "name": "punctuation.definition.mermaid-c4beta"
     },
-    "rule-33": {
+    "rule-34": {
       "match": "(?<=(?:^|[\\n\\r])[\\t ]*)[0-9]+(?=[\\t ]*:)",
       "name": "constant.language.mermaid-c4beta"
     },
-    "rule-34": {
-      "match": "#(?:[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})(?!\\w)",
+    "rule-35": {
+      "match": "#(?:[0-9A-Fa-f]{8}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3,4})(?!\\w)",
       "name": "constant.language.mermaid-c4beta"
     },
-    "rule-35": {
+    "rule-36": {
+      "match": "(?:rgba?|hsla?)\\((?:[^()\\n\\r%]|%(?!%))*\\)",
+      "name": "constant.language.mermaid-c4beta"
+    },
+    "rule-37": {
       "match": "\"(?:[^\"\\\\\\r\\n]|\\\\.)*\"|'(?:[^'\\\\\\r\\n]|\\\\.)*'",
       "name": "string.quoted.mermaid-c4beta"
     },
-    "rule-36": {
+    "rule-38": {
       "match": "(?!(?:accTitle|accDescr)(?!\\w|-\\w))[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*",
       "name": "variable.other.mermaid-c4beta"
     },
-    "rule-37": {
+    "rule-39": {
       "match": "\\r\\n|\\n|\\r"
     },
-    "rule-38": {
+    "rule-40": {
       "match": "[\\t ]+"
     },
-    "rule-39": {
+    "rule-41": {
       "match": "%%[^\\n\\r]*",
       "name": "comment.line.mermaid-c4beta"
     },
@@ -303,6 +311,12 @@
         },
         {
           "include": "#rule-39"
+        },
+        {
+          "include": "#rule-40"
+        },
+        {
+          "include": "#rule-41"
         }
       ]
     },

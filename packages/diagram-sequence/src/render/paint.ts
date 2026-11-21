@@ -4,8 +4,8 @@
 // palette (`borderColorArray`, `bkgColorArray`), the participant corner (`actorRadius`) and the
 // shadow (`dropShadow`).
 import type { RenderContext } from '@mermaid-js/core';
-import { checkStyle, type Attrs, type Paint, type SafeValue } from '@mermaid-js/core/svg';
-import { paletteSlots } from '@mermaid-js/shared/svg/document';
+import { checkColor, checkStyle, type Attrs, type SafeValue } from '@mermaid-js/core/svg';
+import { paletteSlots, type PaletteTint } from '@mermaid-js/shared/svg/document';
 import type { FontKey } from '@mermaid-js/core/text';
 import { fontsOf } from '../layout/env.ts';
 import type { SequenceLayout } from '../layout/index.ts';
@@ -14,14 +14,6 @@ type Theme = RenderContext['theme'];
 type Color = ReturnType<Theme['color']>;
 type Length = ReturnType<Theme['length']>;
 type Shadow = ReturnType<Theme['filter']>;
-
-/** A participant's palette slot (v12 `paletteColor`, by declaration order). */
-export interface Tint {
-  readonly id: `color-${number}`;
-  readonly stroke: Paint;
-  /** Undefined when the fill palette is empty (`redux-dark-color`): the theme fill stays. */
-  readonly fill?: Paint;
-}
 
 export interface ActorPaint {
   readonly fill: Color;
@@ -52,15 +44,17 @@ export interface Paints {
     readonly title: Color;
   };
   readonly activation?: { readonly fill: Color; readonly stroke: Color; readonly opaque: Color };
-  /** `rect` blocks and participant boxes (v12 `g rect.rect`). */
-  readonly rect?: { readonly fill: Color; readonly stroke: Color; readonly text: Color };
+  /** Participant boxes (v12 `drawBox`). */
+  readonly box?: { readonly stroke: Color; readonly text: Color };
+  /** The fill of a `rect` block written without a colour (v12 `rectBkgColor`). */
+  readonly rect?: Color;
   readonly title?: Color;
   /**
    * The theme's drop shadow, a CSS filter (v12 neo `url(#…-drop-shadow)`); undefined when the
    * theme has none (the classic themes), so no `filter` attribute is written.
    */
   readonly shadow?: Shadow;
-  readonly slotOf: (index: number) => Tint | undefined;
+  readonly slotOf: (index: number) => PaletteTint | undefined;
   readonly fonts: SectionFonts;
 }
 
@@ -124,14 +118,14 @@ export function paints(ctx: Pick<RenderContext, 'theme' | 'config'>, l: Sequence
             opaque: theme.color('mainBkg'),
           }
         : undefined,
-    rect:
-      l.rects.length > 0 || l.boxes.length > 0
-        ? {
-            fill: theme.color('actorBkg'),
-            stroke: theme.color('nodeBorder'),
-            text: theme.color('textColor'),
-          }
+    box:
+      l.boxes.length > 0
+        ? { stroke: theme.color('nodeBorder'), text: theme.color('textColor') }
         : undefined,
+    // Looked up only when a `rect` takes it: one with no colour, or a refused one.
+    rect: l.rects.some((r) => r.color.trim() === '' || !checkColor(r.color))
+      ? theme.color('rectBkgColor')
+      : undefined,
     title: l.title ? theme.color('textColor') : undefined,
     shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
     slotOf: paletteSlots(theme),

@@ -1,0 +1,22 @@
+   Ledger - System Context
+
+╭─────────────────────────╮
+│                         │
+│                         │
+│                         │
+│      Ledger Clerk       │
+│        [Person]         │
+│ Posts journal entries.  │
+╰────────────┬────────────╯
+             │
+             │
+    Posts entries using
+          [HTTPS]
+             │
+             ▼
+╭─────────────────────────╮
+│                         │
+│         Ledger          │
+│    [Software System]    │
+│    Keeps the books.     │
+╰─────────────────────────╯

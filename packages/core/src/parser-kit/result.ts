@@ -8,6 +8,7 @@ import type { AstNode } from './ast.ts';
 import { Diagnostics } from './diagnostics.ts';
 import type { Diagnostic } from './diagnostics.ts';
 import type { Range } from './positions.ts';
+import type { PreprocessResult } from '../preprocess/preprocess.ts';
 import type { Probe, ProbeResult } from './probe.ts';
 import type { TokenStream } from './tokens.ts';
 
@@ -29,6 +30,8 @@ export interface StatementSpan {
 }
 
 export interface ParseOptions {
+  /** The preprocess result for this text; computed (and its diagnostics kept) when absent (D677). */
+  preprocessed?: PreprocessResult;
   /** Also return the token stream (`config.internal.keepTokens`; for editors). */
   keepTokens?: boolean;
   /** Record what the parser would accept at this UTF-16 offset (R-LANG-7, D95). */

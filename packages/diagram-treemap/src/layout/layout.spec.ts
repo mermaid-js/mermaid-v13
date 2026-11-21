@@ -2,6 +2,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Theme } from '@mermaid-js/core/theme';
 import { treemapTestTheme } from '../test-context.ts';
+import type { TreemapNode } from '../model.ts';
 import { context, leaf, model, section } from './fixtures.ts';
 import { layoutTreemap } from './index.ts';
 
@@ -118,6 +119,38 @@ describe('layoutTreemap', () => {
       ['t', 1, 2, 2],
       ['', 2, 0, 3],
     ]);
+  });
+
+  describe('section fills cycle through slots 1 to 12, never the root slot 0 (D612, #844)', () => {
+    /** `n` sections, each with one leaf, named `S0`…: the hidden root takes slot 0 first. */
+    const sections = (n: number): TreemapNode[] =>
+      Array.from({ length: n }, (_, i) => section(`S${i}`, leaf(`a${i}`, 1)));
+    const cycle = (n: number): number[] => Array.from({ length: n }, (_, i) => (i % 12) + 1);
+
+    it('gives the 13th section slot 1, and its leaf the same; a top-level leaf keeps 0 (D404)', () => {
+      const l = layoutTreemap(model([...sections(13), leaf('top', 1)]), context(theme));
+      expect(l.sections.map((s) => s.fill)).toEqual(cycle(13));
+      expect(l.sections[12]).toMatchObject({ colorKey: 'S12', fill: 1 });
+      expect(l.leaves.find((x) => x.node.name === 'a12')!.fill).toBe(1);
+      expect(l.leaves.find((x) => x.node.name === 'top')).toMatchObject({ colorKey: '', fill: 0 });
+    });
+
+    it('cycles 26 sections twice round 1 to 12, then 1 and 2', () => {
+      const l = layoutTreemap(model(sections(26)), context(theme));
+      expect(l.sections.map((s) => s.fill)).toEqual(cycle(26));
+      expect(l.leaves.map((x) => x.fill)).not.toContain(0);
+    });
+
+    it('counts a nested section as the 13th name: 12 top-level sections and one nested', () => {
+      const roots = [section('S0', section('Sub', leaf('x', 1))), ...sections(12).slice(1)];
+      const l = layoutTreemap(model(roots), context(theme));
+      // Breadth first: the root, S0…S11 (slots 1…12), then Sub, the 13th name.
+      expect(l.sections.map((s) => [s.node.name, s.fill])).toEqual([
+        ...Array.from({ length: 12 }, (_, i) => [`S${i}`, i + 1]),
+        ['Sub', 1],
+      ]);
+      expect(l.leaves.find((x) => x.node.name === 'x')).toMatchObject({ colorKey: 'Sub', fill: 1 });
+    });
   });
 
   it('formats values with valueFormat, and hides them under showValues: false', () => {

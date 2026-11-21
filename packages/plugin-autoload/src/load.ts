@@ -1,0 +1,163 @@
+/// <reference types="node" />
+/**
+ * Loading what the scan found (D589): each scanned package becomes the plugin
+ * `registerExternalDiagrams` takes, a `ManifestPlugin` (DESIGN §12.1), with its discovery-time
+ * modules imported here under a time limit: a diagram's `detector`, a layout's `config`, an
+ * extension's entry. A diagram's own entry (and its `ascii` entry) loads on first detection,
+ * with no limit: a slow entry delays that render, never fails it. Nothing here throws: a
+ * package that fails gives a `PLUGIN_SKIPPED` warning naming it.
+ *
+ * This file is also copied into `mermaid` (`pnpm gen:registry` writes
+ * `packages/mermaid/src/generated/autoload-load.gen.ts`), for its first-use Node discovery,
+ * until spec #867's ticket 4 removes it. Edit it here only.
+ */
+import { pathToFileURL } from 'node:url';
+import type { ExtensionPlugin } from '@mermaid-js/core';
+import type { ConfigFragment } from '@mermaid-js/core/config';
+import { scanPlugins, type ScannedPackage, type ScanWarning } from './scan.ts';
+
+/**
+ * What `registerExternalDiagrams` takes for a package described by its `mermaid` manifest: the
+ * shape of `mermaid`'s `ManifestPlugin` (DESIGN §12.1), spelled out here so this package needs
+ * no import from `mermaid`. `mermaid` accepts it as it is; the specs pass a real instance.
+ */
+export interface ManifestPlugin {
+  /** The `mermaid` value of the plugin's package.json. */
+  readonly manifest: unknown;
+  /** The detector module's function (diagrams only). */
+  readonly detector?: (text: string, config?: Readonly<Record<string, unknown>>) => boolean;
+  /** Imports the manifest's `entry`. */
+  load(): Promise<unknown>;
+  /** Imports the manifest's `ascii` entry (diagrams with one). */
+  readonly loadAscii?: () => Promise<unknown>;
+  /** The fragment a layout's `config` module exports. */
+  readonly config?: ConfigFragment;
+  /** The extension a layout's `config` module exports as `extension`. */
+  readonly extension?: ExtensionPlugin;
+}
+
+/** Default time limit on one discovery-time import (a detector or an extension entry), in ms. */
+export const IMPORT_TIMEOUT_MS = 5000;
+
+/**
+ * A real runtime `import()` of a file found on disk. The magic comments keep webpack and Vite
+ * from trying to resolve it at build time.
+ */
+const importFile = (path: string): Promise<unknown> =>
+  import(/* webpackIgnore: true */ /* @vite-ignore */ pathToFileURL(path).href);
+
+/**
+ * The module at `path` (a file on disk), imported at run time and rejected after `ms`. The
+ * language server imports its plugins' modules through it too.
+ */
+export function importWithin(path: string, ms: number): Promise<unknown> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const limit = new Promise<never>((_, fail) => {
+    timer = setTimeout(() => fail(new Error(`timed out after ${ms} ms`)), ms);
+    timer.unref();
+  });
+  return Promise.race([importFile(path), limit]).finally(() => clearTimeout(timer));
+}
+
+/**
+ * The function a detector module exports: `detector`, else the default export; undefined when
+ * neither is a function. The language server and the bundler plugin pick it the same way.
+ */
+export function detectorOf(module: unknown): ManifestPlugin['detector'] {
+  const m = module as Record<string, unknown> | null;
+  const fn = m?.detector ?? m?.default;
+  return typeof fn === 'function' ? (fn as ManifestPlugin['detector']) : undefined;
+}
+
+/** A layout's `config` module: the fragment (`config`, else default) and its `extension`, if any. */
+function configModuleOf(module: unknown): { config: unknown; extension: unknown } {
+  const m = module as Record<string, unknown> | null;
+  return { config: m?.config ?? m?.default, extension: m?.extension };
+}
+
+/** A package that could not be loaded, as the scan's own skips are reported. */
+type Skipped = Extract<ScanWarning, { code: 'PLUGIN_SKIPPED' }>;
+
+const reason = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
+const skip = (p: ScannedPackage, why: string): Skipped => ({
+  code: 'PLUGIN_SKIPPED',
+  message: `${p.package}: ${why}`,
+  package: p.package,
+});
+
+/** A layout package: its `config` module now, its entry when a diagram names a layout (D177). */
+async function layoutPlugin(p: ScannedPackage, ms: number): Promise<ManifestPlugin | Skipped> {
+  let config: unknown;
+  let extension: unknown;
+  if (p.files.config !== undefined) {
+    try {
+      ({ config, extension } = configModuleOf(await importWithin(p.files.config, ms)));
+    } catch (error) {
+      return skip(p, `config failed to load (${reason(error)})`);
+    }
+    if (config === undefined) return skip(p, 'the config module exports no fragment');
+  }
+  return {
+    manifest: p.raw,
+    load: () => importFile(p.files.entry),
+    ...(config === undefined ? {} : { config: config as ConfigFragment }),
+    ...(extension === undefined ? {} : { extension: extension as ExtensionPlugin }),
+  };
+}
+
+/** A diagram package: its detector now, its entry (and `ascii` entry) on first detection. */
+async function diagramPlugin(p: ScannedPackage, ms: number): Promise<ManifestPlugin | Skipped> {
+  const { entry, ascii } = p.files;
+  let detector: ManifestPlugin['detector'];
+  try {
+    // The scan skips a diagram manifest without a detector.
+    detector = detectorOf(await importWithin(p.files.detector!, ms));
+  } catch (error) {
+    return skip(p, `detector failed to load (${reason(error)})`);
+  }
+  if (!detector) return skip(p, 'the detector module exports no function');
+  return {
+    manifest: p.raw,
+    detector,
+    load: () => importFile(entry),
+    ...(ascii === undefined ? {} : { loadAscii: () => importFile(ascii) }),
+  };
+}
+
+/** One scanned package as a plugin; a module that fails to load gives a skip warning. */
+function toPlugin(p: ScannedPackage, ms: number): Promise<ManifestPlugin | Skipped> {
+  // The extension entry loads when it registers (its activation): under the time limit.
+  if (p.manifest.plugin === 'extension')
+    return Promise.resolve({ manifest: p.raw, load: () => importWithin(p.files.entry, ms) });
+  return p.manifest.plugin === 'layout' ? layoutPlugin(p, ms) : diagramPlugin(p, ms);
+}
+
+export interface LoadOptions {
+  /** First-party diagram ids to leave out silently (see `ScanOptions.firstPartyIds`). */
+  readonly firstPartyIds?: Iterable<string>;
+  /** Time limit on each discovery-time import, in ms (default 5000). */
+  readonly importTimeoutMs?: number;
+}
+
+export interface Loaded {
+  /** The plugins, sorted by package name in code-unit order (R-ARCH-6). */
+  readonly plugins: readonly { readonly package: string; readonly plugin: ManifestPlugin }[];
+  /** The scan's warnings (a root warning first), then the packages that failed to load. */
+  readonly warnings: readonly ScanWarning[];
+}
+
+/** `scanPlugins(root)` and the discovery-time imports of what it found. Never rejects. */
+export async function loadPlugins(root: string, options: LoadOptions = {}): Promise<Loaded> {
+  const ms = options.importTimeoutMs ?? IMPORT_TIMEOUT_MS;
+  const { packages, warnings } = await scanPlugins(root, {
+    firstPartyIds: options.firstPartyIds ?? [],
+  });
+  const loaded = await Promise.all(packages.map((p) => toPlugin(p, ms)));
+  const plugins: { package: string; plugin: ManifestPlugin }[] = [];
+  const skipped: Skipped[] = [];
+  for (const [i, result] of loaded.entries())
+    if ('manifest' in result) plugins.push({ package: packages[i]!.package, plugin: result });
+    else skipped.push(result);
+  return { plugins, warnings: [...warnings, ...skipped] };
+}

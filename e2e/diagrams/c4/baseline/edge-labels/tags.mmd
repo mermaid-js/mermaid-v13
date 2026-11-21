@@ -1,0 +1,19 @@
+---
+description: >-
+  Relation labels as tags (D626–D630): a plain label, a label with its
+  [technology] in italic under it in the same box, a label of two lines, and a
+  label on a relation UpdateRelStyle colours. Each box is rounded, bordered
+  1 px solid in its relation's colour (the styled one in pink), and filled
+  with the theme background.
+---
+C4Context
+Person(a, "Customer")
+System(b, "Web shop")
+System(c, "Payments")
+System(d, "Warehouse")
+System(e, "Courier")
+Rel(a, b, "plain")
+Rel(b, c, "Charges", "JSON/HTTPS")
+Rel(b, d, "first line<br/>second line")
+Rel(d, e, "styled")
+UpdateRelStyle(d, e, $lineColor="#d6336c", $textColor="#d6336c")

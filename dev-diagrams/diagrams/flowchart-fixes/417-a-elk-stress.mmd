@@ -1,0 +1,17 @@
+---
+title: '#417 elk.stress'
+description:
+  Needs the ELK layouts registered. Fixed when no two nodes overlap and every
+  edge is visible, also inside the subgraph.
+config:
+  layout: elk.stress
+---
+flowchart TB
+  A --> B
+  A --> C
+  B --> D
+  B --> E
+  C --> F
+  subgraph G [Group]
+    E --> H
+  end

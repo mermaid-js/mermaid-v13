@@ -1,0 +1,7 @@
+node 3:3-3:4 "A" in 3:3-4:20
+node 4:14-4:15 "B" in 3:3-4:20
+subgraph 6:12-6:14 "S1" in 6:3-11:6 block
+  node 7:11-7:12 "C" in 7:5-7:12
+  subgraph 8:14-8:16 "S2" in 8:5-10:8 block
+    node 9:7-9:8 "D" in 9:7-9:14
+class 12:12-12:15 "hot" in 12:3-12:25

@@ -38,17 +38,6 @@ export const C4_METRICS = {
   /** v12 `c4ShapeAdapter.ts`: `rx`/`ry` 12 on rounded and `fr-rect` elements. */
   shapeRadius: 12,
   /**
-   * The person figure (#683, as v12's fix mermaid-js/mermaid#8322; c4model.com's proportions):
-   * a head of radius `personHeadRatio` × the width, held between `personHeadMin` and
-   * `personHeadMax`, overlapping the body by `personOverlap` × its radius; the body at least
-   * `personBodyRatio` × the width tall.
-   */
-  personHeadRatio: 0.23,
-  personHeadMin: 16,
-  personHeadMax: 80,
-  personOverlap: 0.27,
-  personBodyRatio: 0.6,
-  /**
    * The person in the text output's cell layout, drawn as a box: v12 12.2.0's head of radius 13
    * centred 14 below the top, in a row 26 high over the body.
    */
@@ -76,8 +65,11 @@ export const C4_METRICS = {
   /** Label widths that fit the gap between two columns, and where there is room to spare. */
   narrow: 88,
   wide: 160,
-  /** The space a label's box adds to the width of its text. */
-  labelPad: 8,
+  /**
+   * Text output: the room across a relation label's text, in px (one cell). The text drawing
+   * frames the label itself (`ascii/draw.ts`); the SVG's tag takes the `labelPatch` (D629).
+   */
+  textLabelPad: 8,
   /** Parallel stretches closer than this read as one line; a line this close to a frame, as part of it. */
   near: 6,
   frameNear: 3,
@@ -91,6 +83,11 @@ export const C4_METRICS = {
   /** A label may cover this much of a shape's edge, where there is no text. */
   labelEdge: 8,
   /**
+   * How far a tag keeps from a shape (SVG output, #955 review): a tag's border a pixel from a
+   * shape's reads as touching it.
+   */
+  tagClear: 6,
+  /**
    * v12's arrowhead marker (`M 0 0 L 10 5 L 0 10 z`): 10 long and 10 wide, the one size the
    * renderer draws (`C4_RENDER_METRICS`); labels keep off a square of this half side round its tip.
    */
@@ -99,12 +96,20 @@ export const C4_METRICS = {
   maxOffset: 2000,
   /** Places along a relation to try for its label, nearest the middle first. */
   slide: [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8] as readonly number[],
+  /** The same, half as far apart, for a label the steps of `slide` found no clear spot for. */
+  fineSlide: [
+    0.5, 0.45, 0.55, 0.4, 0.6, 0.35, 0.65, 0.3, 0.7, 0.25, 0.75, 0.2, 0.8,
+  ] as readonly number[],
   /** A label beside a shifted line keeps this far from it. */
   besideGap: 2,
   /** A leaning label moves out by its half height less this. */
   leanSlack: 14,
   /** How far out beside its line a label is tried, in label depths, when the line has no room. */
   besideSteps: 8,
+  /** Steps beside the line per label depth in the finer search (`fineSlide`). */
+  fineSplit: 2,
+  /** The same for a tag (SVG output), whose `tagClear` round each shape the coarser steps overshoot. */
+  tagSplit: 4,
   /** What another relation's stretch through a label costs, as a share of the label's area. */
   lineCover: 0.5,
   /** What each step beside the line past the first costs, as a share of `lineCover`'s cost. */
@@ -127,6 +132,13 @@ export const C4_METRICS = {
   /** What crossing a line costs an elbow (against its length) and a detour (against its lane steps). */
   elbowCrossingCost: 1e6,
   detourCrossingCost: 8,
+  /**
+   * What a bend costs a path through the channels between shapes (`./channels.ts`, #774), against
+   * its length: a bend fewer is worth about one gap between two columns more.
+   */
+  channelBend: 100,
+  /** What crossing a line already routed costs that path: half a bend, so it mostly breaks ties. */
+  channelCrossing: 50,
 } as const;
 
 /** CSS numeric weights. */

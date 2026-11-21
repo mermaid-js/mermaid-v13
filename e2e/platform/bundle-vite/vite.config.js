@@ -10,7 +10,7 @@ export default defineConfig({
     // The test maps each chunk to the packages in it through its source map.
     sourcemap: true,
     rolldownOptions: {
-      input: { flowchart: 'flowchart.html', all: 'all.html', plugin: 'plugin.html' },
+      input: { flowchart: 'flowchart.html', all: 'all.html', plugin: 'plugin.html', explicit: 'explicit.html' },
     },
   },
 });

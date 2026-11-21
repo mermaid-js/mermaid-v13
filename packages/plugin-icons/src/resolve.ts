@@ -14,33 +14,8 @@ import type { IconifyAlias, IconifyIcon, IconifyJSON } from '@mermaid-js/core';
 
 export type { IconifyAlias, IconifyIcon, IconifyJSON };
 
-/** Dimensions an icon, an alias or a whole pack may set. */
-interface IconifyDimensions {
-  readonly left?: number;
-  readonly top?: number;
-  readonly width?: number;
-  readonly height?: number;
-}
-
-/** Rotation (quarter turns) and flips an icon or alias may set. */
-interface IconifyTransformations {
-  readonly rotate?: number;
-  readonly hFlip?: boolean;
-  readonly vFlip?: boolean;
-}
-
-/** A resolved icon: every dimension and transformation filled in. */
-export interface IconData {
-  readonly body: string;
-  readonly left: number;
-  readonly top: number;
-  readonly width: number;
-  readonly height: number;
-  /** Quarter turns clockwise, 0–3. */
-  readonly rotate: number;
-  readonly hFlip: boolean;
-  readonly vFlip: boolean;
-}
+/** A resolved icon: every dimension and transformation filled in; `rotate` is 0–3 quarter turns. */
+export type IconData = Required<IconifyIcon>;
 
 /** The SVG box an icon draws in, and the transform its body takes inside it. */
 export interface IconBox {
@@ -107,8 +82,7 @@ export function getIcon(pack: IconifyJSON, name: string): IconData | undefined {
   let vFlip = false;
   const dims: { left?: number; top?: number; width?: number; height?: number } = {};
   for (const n of names) {
-    const props: IconifyDimensions & IconifyTransformations =
-      iconOf(pack, n) ?? (aliasOf(pack, n) as IconifyAlias);
+    const props: Omit<IconifyIcon, 'body'> = iconOf(pack, n) ?? (aliasOf(pack, n) as IconifyAlias);
     rotate = (rotate + quarterTurns(props.rotate)) % 4;
     hFlip = hFlip !== Boolean(props.hFlip);
     vFlip = vFlip !== Boolean(props.vFlip);

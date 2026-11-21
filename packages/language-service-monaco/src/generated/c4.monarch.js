@@ -36,25 +36,25 @@ export default {
         }
       ],
       [
-        ".*direction\\s+TB[^\\n]*",
+        "direction[ \\t]+TB\\b",
         {
           "token": "keyword"
         }
       ],
       [
-        ".*direction\\s+BT[^\\n]*",
+        "direction[ \\t]+BT\\b",
         {
           "token": "keyword"
         }
       ],
       [
-        ".*direction\\s+RL[^\\n]*",
+        "direction[ \\t]+RL\\b",
         {
           "token": "keyword"
         }
       ],
       [
-        ".*direction\\s+LR[^\\n]*",
+        "direction[ \\t]+LR\\b",
         {
           "token": "keyword"
         }

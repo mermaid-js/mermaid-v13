@@ -14,6 +14,7 @@ import {
   LF,
   localOffset,
   type Probe,
+  scanWhile,
   SourceOffsets,
   type SourceView,
   TokenWriter,
@@ -40,6 +41,24 @@ const DOT_ENDS = ['\n', '\u2028', '\u2029'] as const;
 
 /** ASCII lower case of a character code. */
 export const lowerCode = (c: number): number => (c >= 65 && c <= 90 ? c + 32 : c);
+
+/**
+ * `text` with each `#name;` entity as `ﬂ`, the name and `¶`, of the same length, so no rule
+ * takes its `#` or `;`: v12's `encodeEntities` placeholders (`ﬂ°name¶ß`), which hold neither.
+ */
+export function entityPlaceholders(text: string): string {
+  return text.includes('#') ? text.replace(/#(\w+);/g, (_, name: string) => `ﬂ${name}¶`) : text;
+}
+
+/**
+ * The text a `crlf: 'keep'` lexer reads (its {@link StateLexer.prepare}), of the same length
+ * as `text`: v12 turned every CRLF and CR into LF before lexing, so each CR is an LF here (a
+ * CRLF reads as two LFs, a lone CR as one), and each entity is its placeholder
+ * ({@link entityPlaceholders}).
+ */
+export function lexerText(text: string): string {
+  return entityPlaceholders(text.includes('\r') ? text.replace(/\r/g, '\n') : text);
+}
 
 /** One lex. Offsets are into {@link text}, v12's text; {@link emit} maps them to the source. */
 export abstract class StateLexer {
@@ -70,6 +89,8 @@ export abstract class StateLexer {
   /** The next line end a regex `.` stops at, cached for {@link dotEnd} (-2: not looked up). */
   private readonly nextEnd = [-2, -2, -2];
   private readonly dropSpace: boolean;
+  /** Whether a text offset is its source offset: nothing removed, folded or added. */
+  private readonly plain: boolean;
 
   constructor(
     protected readonly src: string,
@@ -95,6 +116,12 @@ export abstract class StateLexer {
     this.n = this.text.length;
     this.p = start;
     this.w = new TokenWriter((((this.len - this.p) / options.charsPerToken) | 0) + 8);
+    this.plain =
+      !this.offsets &&
+      !this.at &&
+      !this.crStart &&
+      this.holes.length === 0 &&
+      this.len === src.length;
   }
 
   /** The text to lex, before line breaks are folded: the view's, unless a lexer rewrites it. */
@@ -207,6 +234,10 @@ export abstract class StateLexer {
    * an opener may end before the blanks it consumed).
    */
   protected emit(kind: number, s: number, end: number, next: number = end): void {
+    if (this.plain) {
+      this.emitPlain(kind, s, end, next);
+      return;
+    }
     let a = this.source(s);
     const last = Math.min(end, this.len);
     let b = last > s ? this.sourceEnd(last - 1) : a;
@@ -219,6 +250,18 @@ export abstract class StateLexer {
       this.trivia(a);
       if (b > a) b = this.dropAt(b);
     }
+    this.w.push(kind, a, b);
+    if (b > this.covered) this.covered = b;
+    this.p = next;
+  }
+
+  /** `emit` where the lexed text is the source: `source` and `sourceEnd` are the identity. */
+  private emitPlain(kind: number, s: number, end: number, next: number): void {
+    // Up to the appended line break.
+    const len = this.len;
+    const a = s < len ? s : len;
+    const last = end < len ? end : len;
+    const b = last > s ? last : a;
     this.w.push(kind, a, b);
     if (b > this.covered) this.covered = b;
     this.p = next;
@@ -278,16 +321,12 @@ export abstract class StateLexer {
 
   /** The end of the run of `[\t ]` from `q`. */
   protected blanks(q: number): number {
-    let j = q;
-    while (j < this.n && isBlank(this.text.charCodeAt(j))) j++;
-    return j;
+    return scanWhile(this.text, q, isBlank);
   }
 
   /** The end of the run of `\s` from `q`. */
   protected spaces(q: number): number {
-    let j = q;
-    while (j < this.n && isSpace(this.text.charCodeAt(j))) j++;
-    return j;
+    return scanWhile(this.text, q, isSpace);
   }
 
   /** Whether the case-insensitive literal `word` (lower case) is at `q`. */

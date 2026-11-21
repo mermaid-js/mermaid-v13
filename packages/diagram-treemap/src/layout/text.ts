@@ -3,22 +3,8 @@
  * in (pitfall 16), with v12's fitting rules (`renderer.ts:240-292`, `:381-523`) in place of
  * `getComputedTextLength()`.
  */
-import { entityAt, fontSizePx, Style, type FontKey, type Measurer } from '@mermaid-js/core/text';
+import { fontSizePx, Style, type FontKey, type Measurer } from '@mermaid-js/core/text';
 import { BOLD_WEIGHT, MAX_WEIGHT, NORMAL_WEIGHT } from './metrics.ts';
-
-/** A name as drawn: character references decoded, tags left as text (D405). */
-export function plainText(text: string): string {
-  if (!text.includes('&')) return text;
-  let out = '';
-  for (let i = 0; i < text.length; ) {
-    const entity = text[i] === '&' ? entityAt(text, i) : undefined;
-    if (entity) {
-      out += entity[0];
-      i += entity[1];
-    } else out += text[i++];
-  }
-  return out;
-}
 
 /** CSS weights for a `font-weight` value; undefined for what is not one. */
 function weightOf(value: string | undefined): number | undefined {

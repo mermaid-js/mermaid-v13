@@ -177,7 +177,7 @@ export function sequenceV13Snapshot(parity: SequenceParity): SequenceSnapshot {
     destroyed: model.participants
       .filter((p) => p.destroyAst !== undefined)
       .map((p) => [p.id, p.destroyedBy === undefined ? null : (index.get(p.destroyedBy) ?? null)]),
-    // The oracle applies no front matter when it parses (as for `wrap`), so no front matter title.
+    // The oracle applies no front matter when it parses (as for `wrap`): see the parse below.
     title: model.title ?? '',
     accTitle: model.accTitle,
     accDescr: model.accDescr,
@@ -187,7 +187,10 @@ export function sequenceV13Snapshot(parity: SequenceParity): SequenceSnapshot {
 /** v13 parse for parity: the result, or a throw carrying the first error diagnostic. */
 export function parseSequenceForParity(text: string): SequenceParity {
   const pre = preprocess(text);
-  const result = parseSequence(text, { preprocessed: pre });
+  // The oracle applies no front matter when it parses, so the parse leaves out the front-matter
+  // title that v13 draws when the text has none (D652).
+  const fm = pre.frontMatter && (({ title: _, ...rest }) => rest)(pre.frontMatter);
+  const result = parseSequence(text, { preprocessed: fm ? { ...pre, frontMatter: fm } : pre });
   const error = [...pre.diagnostics, ...result.diagnostics].find((d) => d.severity === 'error');
   if (error) throw new Error(`${error.code}: ${error.message}`);
   return { result };

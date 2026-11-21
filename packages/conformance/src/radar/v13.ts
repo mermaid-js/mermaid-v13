@@ -4,7 +4,7 @@
  */
 import { detectRadar, parseRadar } from '@mermaid-js/diagram-radar';
 import type { RadarModel } from '@mermaid-js/diagram-radar';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { RADAR_V12_TYPES, radarV12Snapshot } from './v12.ts';
 import type { RadarSnapshot } from './v12.ts';
@@ -29,14 +29,8 @@ export function radarV13Snapshot(model: RadarModel): RadarSnapshot {
  * front-matter title is held back, as the oracle holds it back from v12 (see `v12.ts`); the
  * D218 fallback has its own specs in the radar package.
  */
-export function parseRadarForParity(text: string): RadarModel {
-  const pre = preprocess(text);
-  const fm = pre.frontMatter && { ...pre.frontMatter, title: undefined };
-  const result = parseRadar(text, { preprocessed: { ...pre, frontMatter: fm } });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((x) => x.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseRadarForParity = (text: string): RadarModel =>
+  parseForParity(text, parseRadar, { withoutTitle: true });
 
 export const radarAdapter: DiagramAdapter<RadarModel> = {
   id: 'radar',

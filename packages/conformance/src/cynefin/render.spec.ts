@@ -14,7 +14,7 @@ import { pathPoints } from '../sequence/path-bounds.ts';
 import { wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 import { cynefinGateCorpus } from './corpus.ts';
-import { cynefinApi } from './render-api.ts';
+import { deterministicApi } from '../render-api.ts';
 
 /**
  * Render properties of the cynefin renderer (spec #423 T4, DESIGN §13.2, §13.4) over the
@@ -53,10 +53,10 @@ const skipped: { id: string; reason: string }[] = [];
 let api: Mermaid;
 
 beforeAll(async () => {
-  api = await cynefinApi();
+  api = deterministicApi();
   const corpus = await cynefinGateCorpus();
   for (const theme of THEMES) {
-    const themed = await cynefinApi({ theme });
+    const themed = deterministicApi({ theme });
     for (const item of corpus) {
       if (!detectCynefin(item.source)) continue;
       try {
@@ -168,7 +168,7 @@ describe('cynefin render properties over the corpus', () => {
 
   it('is deterministic: a fresh API object renders the same bytes (R-ARCH-6)', async () => {
     const fresh = new Map<string, Mermaid>();
-    for (const theme of THEMES) fresh.set(theme, await cynefinApi({ theme }));
+    for (const theme of THEMES) fresh.set(theme, deterministicApi({ theme }));
     for (const c of cases) {
       const again = await fresh.get(c.theme)!.render('mermaid-0', c.source);
       expect(again.svg, c.id).toBe(c.result.svg);
@@ -494,20 +494,20 @@ describe('cynefin render: what is drawn', () => {
     ]);
   });
 
-  it("resolves the theme table: v12 default's colours, derived from lineColor and the text colours", async () => {
+  it("resolves the theme table: v12 default's colours, derived from the canvas line and text colours (D656)", async () => {
     const root = /<svg[^>]*style="([^"]*)"/.exec((await api.render('x', ALL)).svg)![1]!;
     expect(root).toContain('--_cnx:var(--mermaid-cynefinComplexBg,#E8F5E9)');
     expect(root).toContain('--_cnl:var(--mermaid-cynefinCliffColor,#8B0000)');
-    expect(root).toContain('--_cnb:var(--mermaid-cynefinBoundaryColor,var(--_l))');
-    expect(root).toContain('--_cna:var(--mermaid-cynefinArrowColor,var(--_l))');
+    expect(root).toContain('--_cnb:var(--mermaid-cynefinBoundaryColor,var(--_cvl))');
+    expect(root).toContain('--_cna:var(--mermaid-cynefinArrowColor,var(--_cvl))');
     expect(root).toContain('--_cnt:var(--mermaid-cynefinTextColor,var(--_tx))');
-    expect(root).toContain('--_cnn:var(--mermaid-cynefinLabelColor,var(--_pt))');
+    expect(root).toContain('--_cnn:var(--mermaid-cynefinLabelColor,var(--_cvt))');
   });
 
   it("takes v12 dark's literals in every dark theme, the light ones in the others (R-THEME-11)", async () => {
     const style = async (theme: MermaidConfig['theme']) =>
       /<svg[^>]*style="([^"]*)"/.exec(
-        (await (await cynefinApi({ theme })).render('x', ALL)).svg
+        (await deterministicApi({ theme }).render('x', ALL)).svg
       )![1]!;
     for (const theme of ['dark', 'redux-dark', 'redux-dark-color', 'neo-dark'] as const) {
       const s = await style(theme);
@@ -517,10 +517,10 @@ describe('cynefin render: what is drawn', () => {
     for (const theme of ['neutral', 'base', 'redux', 'neo'] as const) {
       const s = await style(theme);
       expect(s, theme).toContain('--_cnx:var(--mermaid-cynefinComplexBg,#E8F5E9)');
-      expect(s, theme).toContain('--_cnb:var(--mermaid-cynefinBoundaryColor,var(--_l))');
+      expect(s, theme).toContain('--_cnb:var(--mermaid-cynefinBoundaryColor,var(--_cvl))');
     }
     // The author's darkMode is not a dark theme: v12 kept default's literals under it.
-    const dm = await cynefinApi({ themeVariables: { darkMode: true } });
+    const dm = deterministicApi({ themeVariables: { darkMode: true } });
     expect((await dm.render('x', ALL)).svg).toContain(
       '--_cnx:var(--mermaid-cynefinComplexBg,#E8F5E9)'
     );
@@ -529,7 +529,7 @@ describe('cynefin render: what is drawn', () => {
   it.each(['default', 'dark', 'redux'] as const)(
     'honours themeVariables.cynefin.* and the flat names in %s, the flat name winning (D335, D540)',
     async (theme) => {
-      const m = await cynefinApi({
+      const m = deterministicApi({
         theme,
         themeVariables: {
           cynefinClearBg: '#010203',

@@ -1,0 +1,33 @@
+---
+config:
+  theme: dark
+  themeVariables:
+    primaryColor: '#ffcc00'
+    primaryTextColor: '#003366'
+    lineColor: '#008800'
+    secondaryColor: '#99ccff'
+    tertiaryColor: '#ffe6f0'
+    background: '#fff2cc'
+description: >-
+  baseline/themes/dark.mmd, the representative sequence diagram, under base-colour overrides in the dark theme
+  (#1035, D656): the activation keeps lighten(mainBkg, 16) under the secondaryColor override, as in v12
+---
+sequenceDiagram
+  autonumber
+  actor U as User
+  participant W as Web
+  participant D@{ "type": "database" }
+  box Back end
+    participant A as API
+  end
+  U->>+W: open
+  W->>A: request
+  alt found
+    A->>D: query
+    D-->>A: rows
+  else missing
+    A--xW: not found
+  end
+  note over W,A: retries once
+  A-)W: event
+  W-->>-U: page

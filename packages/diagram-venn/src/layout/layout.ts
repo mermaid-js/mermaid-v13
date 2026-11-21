@@ -15,11 +15,12 @@
  * down below it.
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
+import { formatList } from '@mermaid-js/core/parser-kit';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import { VENN_ZERO_SET } from '../codes.ts';
 import { vennLayoutConfig } from '../config.ts';
 import { idsKey, pairwiseRule, setIdOf, type VennModel, type VennSubset } from '../model.ts';
-import { idText, listOf } from '../parser/text.ts';
+import { idText } from '../parser/text.ts';
 import { laidOutSize } from '../sizes.ts';
 import {
   intersectionAreaPath,
@@ -122,6 +123,7 @@ export function layoutVenn(model: VennModel, ctx: VennLayoutContext): VennLayout
   for (const d of drawn) byKey.set(idsKey(d.sets), d);
   const textAreas = textAreasOf(model, byKey, solved, {
     scale,
+    labels,
     font: fonts.text,
     measure,
     styles,
@@ -186,7 +188,7 @@ function drawnAreas(model: VennModel, warn: (w: Warning) => void): Datum[] {
     if (id !== undefined && s.size === 0) zero.add(id);
   }
   if (zero.size > 0) {
-    const ids = listOf([...zero].map((id) => `\`${idText(id)}\``));
+    const ids = formatList([...zero].map((id) => `\`${idText(id)}\``));
     const one = zero.size === 1;
     warn({
       code: VENN_ZERO_SET,
@@ -345,12 +347,19 @@ function placeCentred(text: MeasuredLabel, x: number, y: number): PlacedLabel {
 /** What the text grid reads. */
 interface GridParts {
   readonly scale: number;
+  /** The placed labels, by area: a grid moves down below its own (D613). */
+  readonly labels: ReadonlyMap<string, PlacedLabel | undefined>;
   readonly font: FontKey;
   readonly measure: Measure;
   readonly styles: ReadonlyMap<string, VennStyleProperties>;
 }
 
-/** v12 `renderTextNodes`: each area's text nodes in a grid about its text centre. */
+/**
+ * v12 `renderTextNodes`: each area's text nodes in a grid about its text centre. The grid also
+ * moves down by what the area's placed label reaches below a one-line label centred where
+ * {@link placeLabels} centres it (D613, #770): v12 drew every label on one line, and its offset
+ * is for that line.
+ */
 function textAreasOf(
   model: VennModel,
   byKey: ReadonlyMap<string, Datum>,
@@ -389,8 +398,9 @@ function textAreasOf(
       ? Math.min(m.labelOffsetMax * scale, innerRadius * m.labelOffsetFactor)
       : 0;
     const fewOffset = nodes.length <= m.fewNodes ? m.fewNodesOffset * scale : 0;
+    const linesOffset = belowOneLine(parts.labels.get(key), centre);
     const startX = centre.x - innerWidth / 2;
-    const startY = centre.y - innerHeight / 2 + labelOffsetBase + fewOffset;
+    const startY = centre.y - innerHeight / 2 + labelOffsetBase + fewOffset + linesOffset;
     const cols = Math.max(1, Math.ceil(Math.sqrt(nodes.length)));
     const rows = Math.max(1, Math.ceil(nodes.length / cols));
     const cellWidth = innerWidth / cols;
@@ -427,4 +437,14 @@ function textAreasOf(
     });
   }
   return out;
+}
+
+/**
+ * How far `label`'s bottom lies below that of a one-line label centred on the floored `centre`,
+ * as {@link placeLabels} centres it; 0 for a one-line label in its place, or no label.
+ */
+function belowOneLine(label: PlacedLabel | undefined, centre: Point): number {
+  if (!label) return 0;
+  const oneLine = Math.floor(centre.y) + label.text.lineHeight / 2;
+  return Math.max(0, label.y + label.height - oneLine);
 }

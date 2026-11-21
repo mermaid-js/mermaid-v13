@@ -2,7 +2,7 @@
  * The wardley facet's completion table and shared helpers (DESIGN §4.5, D95). Keyword docs are
  * not here: they come from the grammar file (`generated/docs.ts`).
  */
-import type { CompletionKind } from '@mermaid-js/core/parser-kit';
+import { statementKeyword, type TypedKeywordItem } from '@mermaid-js/shared/parser/facet';
 import type {
   WardleyAnchorNode,
   WardleyComponentNode,
@@ -15,32 +15,16 @@ import type {
 import { KEYWORD_STARTS } from '../parser/tables.ts';
 import { KEYWORDS, STRATEGIES, T, TEXT_STATEMENTS } from '../parser/tokens.ts';
 export { inside } from '@mermaid-js/shared/parser/facet';
-export { tokenBefore } from '@mermaid-js/shared/parser/facet';
 export { span } from '@mermaid-js/shared/parser/facet';
 export { code } from '@mermaid-js/shared/parser/facet';
 
 /** An item offered when the parser expects `kind`. */
-export interface KeywordItem {
-  readonly kind: number;
-  readonly label: string;
-  readonly item: CompletionKind;
-  /** Text inserted, when it is not the label. */
-  readonly insert?: string;
-  /** One short line next to the label. */
-  readonly detail?: string;
+export interface KeywordItem extends TypedKeywordItem {
   /** Offered only as the first word of its line (the statements). */
   readonly lineStart?: true;
   /** A `(strategy)`: offered only where a strategy may still come (not after one). */
   readonly strategy?: true;
 }
-
-const statement = (kind: number, label: string, insert = `${label} `): KeywordItem => ({
-  kind,
-  label,
-  item: 'keyword',
-  insert,
-  lineStart: true,
-});
 
 const operator = (kind: number, label: string, detail: string): KeywordItem => ({
   kind,
@@ -65,12 +49,12 @@ const STATEMENT_KEYWORDS = KEYWORDS.filter(([, k]) => KEYWORD_STARTS.includes(k)
  */
 export const ITEMS: readonly KeywordItem[] = [
   { kind: T.WardleyBeta, label: 'wardley-beta', item: 'keyword' },
-  statement(T.Title, textWord(T.Title)),
-  statement(T.AccTitle, textWord(T.AccTitle), `${textWord(T.AccTitle)}: `),
+  statementKeyword(T.Title, textWord(T.Title)),
+  statementKeyword(T.AccTitle, textWord(T.AccTitle), `${textWord(T.AccTitle)}: `),
   // `accDescr` takes one line or a block: both forms are offered.
-  statement(T.AccDescr, `${textWord(T.AccDescr)}:`, `${textWord(T.AccDescr)}: `),
-  statement(T.AccDescr, `${textWord(T.AccDescr)} {`, `${textWord(T.AccDescr)} { }`),
-  ...STATEMENT_KEYWORDS.map(([w, k]) => statement(k, w)),
+  statementKeyword(T.AccDescr, `${textWord(T.AccDescr)}:`, `${textWord(T.AccDescr)}: `),
+  statementKeyword(T.AccDescr, `${textWord(T.AccDescr)} {`, `${textWord(T.AccDescr)} { }`),
+  ...STATEMENT_KEYWORDS.map(([w, k]) => statementKeyword(k, w)),
   { kind: T.Label, label: word(T.Label), item: 'keyword', insert: `${word(T.Label)} ` },
   ...STRATEGIES.map(
     (s): KeywordItem => ({ kind: T.LParen, label: `(${s})`, item: 'constant', strategy: true })

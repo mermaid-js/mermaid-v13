@@ -1,0 +1,23 @@
+@ 4:10  person p |
+  none
+@ 5:14  person q "Q" |
+  :::external class (tag) 5:14-5:14 "" -> ":::external"
+  :::team class (tag) 5:14-5:14 "" -> ":::team"
+@ 6:21  person r "R" "Desc" |
+  :::external class (tag) 6:21-6:21 "" -> ":::external"
+  :::team class (tag) 6:21-6:21 "" -> ":::team"
+@ 7:31  container s "S" "Desc" "Tech" |
+  :::external class (tag) 7:31-7:31 "" -> ":::external"
+  :::team class (tag) 7:31-7:31 "" -> ":::team"
+@ 8:45  container u "U" "Desc" "Tech" instances "2" |
+  :::external class (tag) 8:45-8:45 "" -> ":::external"
+  :::team class (tag) 8:45-8:45 "" -> ":::team"
+@ 9:39  container v "V" "Desc" "Tech" :::team |
+  :::external class (tag) 9:39-9:39 "" -> ":::external"
+  :::team class (tag) 9:39-9:39 "" -> ":::team"
+@ 10:39  deploymentNode w "W" "Desc" "Tech" ins|
+  instances keyword 10:36-10:39 "ins" -> "instances "
+@ 11:36  deploymentNode x "X" "Desc" "Tech" |
+  instances keyword 11:36-11:36 "" -> "instances "
+  :::external class (tag) 11:36-11:36 "" -> ":::external"
+  :::team class (tag) 11:36-11:36 "" -> ":::team"

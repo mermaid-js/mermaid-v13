@@ -8,6 +8,7 @@ import type { SankeyLabelStyle, SankeyNodeAlignment } from '@mermaid-js/core/con
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { SafeColor } from '@mermaid-js/core/svg';
 import type { FontKey } from '@mermaid-js/core/text';
+import type { Rect } from '@mermaid-js/shared/layout';
 
 /**
  * `nodeAlignment` (the schema's `SankeyNodeAlignment`): d3-sankey's `sankeyLeft`, `sankeyRight`,
@@ -26,10 +27,7 @@ export interface Point {
   readonly y: number;
 }
 
-export interface Rect extends Point {
-  readonly width: number;
-  readonly height: number;
-}
+export type { Rect };
 
 /** A node's label (D395): one line of plain text, measured. */
 export interface SankeyLabel {

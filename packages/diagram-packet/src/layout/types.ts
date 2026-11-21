@@ -5,25 +5,17 @@
  * `y`.
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
-import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
+import type { FontKey } from '@mermaid-js/core/text';
+import type { PlacedLabel as Label, Rect } from '@mermaid-js/shared/layout';
 import type { PacketConfig } from '../config.ts';
 
-export interface Point {
-  readonly x: number;
-  readonly y: number;
-}
-
-export interface Rect extends Point {
-  readonly width: number;
-  readonly height: number;
-}
+export type { Rect };
 
 /**
  * A measured label and the box it takes. Draw it with `SvgWriter.label()` at the box's centre,
  * in `font`.
  */
-export interface PlacedLabel extends Rect {
-  readonly text: MeasuredLabel;
+export interface PlacedLabel extends Label {
   readonly font: FontKey;
 }
 
@@ -57,7 +49,7 @@ export interface PacketPieceLayout {
   /** The rectangle: `bits * bitWidth - paddingX` wide (never below 0, D342), `rowHeight` tall. */
   readonly box: Rect;
   /**
-   * The field's label, centred on the box; its font shrinks when it is wider than the box, down
+   * The field's label, centred on the box; its font shrinks when it is wider or taller than the box, down
    * to the bit-number size, then it overflows (D343).
    */
   readonly label: PlacedLabel;

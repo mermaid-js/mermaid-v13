@@ -1,24 +1,31 @@
 /**
  * Test harness (`@mermaid-js/diagram-agentflow/testing`): renders an agentflow source through
- * the plugin's own seam, `parse` → `layout` → `render`, with a render context built as the
- * pipeline builds one (kanban's harness; `mermaid/src/api.ts` `themeFor`,
- * `core/src/pipeline/draw.ts`): core's config defaults under the integrator's config and the
- * source's front matter and directives, the theme with the plugin's table, its `themeVariables`
- * and its dark half for `theme: 'auto'`, the inline spans of the given providers (math, D176),
- * the table measurer, and the stream writer with the theme's gradient and an optional outline
- * drawer (D302). `mermaid` renders agentflow through the registry from #550 on.
+ * the plugin's own seam, `parse` → `layout` → `render`, with the config, theme and render
+ * context of the shared test context (`@mermaid-js/shared/testing/test-context`, as the pipeline
+ * builds them). Agentflow keeps its own wrapper rather than one call to the shared render
+ * harness: the conformance layout specs read its parse step on its own (`parseAgentflowForTest`,
+ * with the parse's diagnostics among the warnings), and the inline spans come from the given
+ * providers (math, D176). `mermaid` renders agentflow through the registry from #550 on.
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
-import { CORE_DEFAULTS, resolveConfig, type ConfigInput } from '@mermaid-js/core/config';
-import { layered, pxProfile, type LayoutGraph, type LayoutModel } from '@mermaid-js/core/layout';
+import type { ResolvedConfig } from '@mermaid-js/core/config';
+import { layered, type LayoutGraph, type LayoutModel } from '@mermaid-js/core/layout';
 import { resolveLimits, type Limits } from '@mermaid-js/core/limits';
 import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { streamWriter, type OutlineDraw } from '@mermaid-js/core/svg';
-import { inlineSpans, tableMeasurer, type Measurer } from '@mermaid-js/core/text';
-import { createTheme, loadTheme, resolveThemeName, type Theme } from '@mermaid-js/core/theme';
+import { inlineSpans, type Measurer } from '@mermaid-js/core/text';
+import type { Theme } from '@mermaid-js/core/theme';
+import {
+  testConfig,
+  testRenderContext,
+  testTheme,
+  TEST_ID_PREFIX,
+} from '@mermaid-js/shared/testing/test-context';
 import type { AgentflowLayout } from '../layout/index.ts';
 import type { AgentflowDocument, AgentflowModel, AgentflowParseResult } from '../parser/index.ts';
 import { agentflow } from '../plugin.ts';
+
+export { TEST_VERSION } from '@mermaid-js/shared/testing/test-context';
 
 /** An extension's inline provider (`ExtensionPlugin.inline`), as `inlineSpans` takes it. */
 type InlineProvider = Parameters<typeof inlineSpans>[0][number];
@@ -47,7 +54,7 @@ export interface RenderedAgentflow {
   readonly model: AgentflowModel;
   readonly ast: AgentflowDocument;
   readonly layout: AgentflowLayout;
-  readonly config: ReturnType<typeof resolveConfig>;
+  readonly config: ResolvedConfig;
   /** The parse's warnings, then the render's. */
   readonly warnings: readonly Warning[];
   /** The render's gradient id, or false when the theme draws none (for `assertInert`). */
@@ -55,8 +62,6 @@ export interface RenderedAgentflow {
   /** Whether the SVG carries a `theme: 'auto'` style sheet (for `assertInert`). */
   readonly themeStyle: boolean;
 }
-
-export const TEST_VERSION = '13.0.0-alpha.0';
 
 export interface ParseAgentflowOptions {
   /** Integrator config, as `initialize()` would get it. */
@@ -71,7 +76,7 @@ export interface ParsedAgentflow {
   /** Core's preprocess of the source: its diagnostics are not the parse's. */
   readonly preprocessed: PreprocessResult;
   readonly parse: AgentflowParseResult;
-  readonly config: ReturnType<typeof resolveConfig>;
+  readonly config: ResolvedConfig;
   readonly limits: Readonly<Limits>;
   /** The source's theme (agentflow's own, v12 `redux-color`, unless one is named), with the table. */
   readonly theme: Theme;
@@ -80,11 +85,9 @@ export interface ParsedAgentflow {
 }
 
 /**
- * The plugin's parse path as the pipeline runs it: core's config defaults under the
- * integrator's config and the source's front matter and directives (the `agentflow` section's
- * scoped keys), the limits that config implies, `agentflow.parse`, and the theme with the
- * plugin's table, its `themeVariables` and its dark half for `theme: 'auto'`. Never throws on
- * a parse error: `parse.diagnostics` has it.
+ * The plugin's parse path as the pipeline runs it: the config (the `agentflow` section's scoped
+ * keys), the limits that config implies, `agentflow.parse`, and the theme with the plugin's
+ * table. Never throws on a parse error: `parse.diagnostics` has it.
  */
 export async function parseAgentflowForTest(
   source: string,
@@ -93,17 +96,7 @@ export async function parseAgentflowForTest(
   const warnings: Warning[] = [];
   const warn = (w: Warning): void => void warnings.push(w);
   const pre = preprocess(source);
-  const directives = pre.directives.flatMap((d) =>
-    d.kind === 'init' && d.args && typeof d.args === 'object' ? [d.args as ConfigInput] : []
-  );
-  const config = resolveConfig(
-    CORE_DEFAULTS,
-    options.config,
-    pre.frontMatter?.config,
-    directives,
-    undefined,
-    { warn, section: 'agentflow' }
-  );
+  const config = testConfig('agentflow', pre, options.config, warn);
   const limits = resolveLimits(config);
   const parse = agentflow.parse(source, {
     config,
@@ -112,15 +105,8 @@ export async function parseAgentflowForTest(
     ...(options.claims ? { claims: options.claims } : {}),
   });
   for (const d of parse.diagnostics) warn({ code: d.code, message: d.message });
-  const idPrefix = options.idPrefix ?? 'mermaid-0';
-  const choice = resolveThemeName(config.theme, warn);
-  const theme = createTheme(await loadTheme(choice.name), {
-    themeVariables: config.themeVariables as Record<string, unknown> | undefined,
-    dark: choice.dark ? await loadTheme(choice.dark) : undefined,
-    diagram: agentflow.theme,
-    warn,
-    idPrefix: () => idPrefix,
-  });
+  const idPrefix = options.idPrefix ?? TEST_ID_PREFIX;
+  const theme = await testTheme(config, { diagram: agentflow.theme, idPrefix, warn });
   return { preprocessed: pre, parse, config, limits, theme, warnings };
 }
 
@@ -129,25 +115,18 @@ export async function renderAgentflowForTest(
   source: string,
   options: RenderAgentflowOptions = {}
 ): Promise<RenderedAgentflow> {
-  const { parse, config, limits, theme, warnings } = await parseAgentflowForTest(source, options);
+  const { parse, config, theme, warnings } = await parseAgentflowForTest(source, options);
   const error = parse.diagnostics.find((d) => d.severity === 'error');
   if (error) throw new Error(`agentflow parse error: ${error.message}`);
   const warn = (w: Warning): void => void warnings.push(w);
-  const idPrefix = options.idPrefix ?? 'mermaid-0';
-  const ctx: RenderContext = {
-    config,
-    measurer: options.measurer ?? tableMeasurer,
-    units: pxProfile,
-    theme,
-    securityLevel: options.securityLevel ?? 'default',
+  const idPrefix = options.idPrefix ?? TEST_ID_PREFIX;
+  const ctx = testRenderContext(config, theme, {
+    ...options,
     idPrefix,
-    version: TEST_VERSION,
-    layout: options.layout ?? ((graph) => layered(graph)),
-    limits,
-    inline: inlineSpans(options.inline ?? [], warn),
     warn,
-    ...(options.linkSchemes ? { linkSchemes: options.linkSchemes } : {}),
-  };
+    layout: options.layout ?? ((graph) => layered(graph)),
+    inline: inlineSpans(options.inline ?? [], warn),
+  });
   const layout = agentflow.layout(parse.model, ctx);
   const gradient = theme.gradient();
   const w = streamWriter({ gradient, outline: options.outline });

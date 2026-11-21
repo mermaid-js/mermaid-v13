@@ -41,6 +41,10 @@ import {
   WEEKENDS,
 } from './tables.ts';
 import type { KeywordItem } from './tables.ts';
+import { insertWithSeparator } from '@mermaid-js/shared/parser/facet';
+
+/** What already opens a keyword's value after it: no separator is inserted before it. */
+const OPENS = /^[\t ]*[:{"]/;
 
 const TRIVIA = new Set<number>([Kind.Comment, Kind.Directive, Kind.Space, Kind.Newline]);
 
@@ -92,17 +96,6 @@ function lastWord(text: string, chars: RegExp): string {
   return text.slice(start);
 }
 
-/**
- * The text `item` inserts before `rest` (what follows the replaced word): its separator only
- * when `rest` does not already hold one.
- */
-function insertText(item: KeywordItem, rest: string): string {
-  const sep = item.separator ?? '';
-  if (sep === '' || /^[\t ]*[:{"]/.test(rest)) return item.label;
-  if (/^[\t ]/.test(rest)) return item.label + sep.trimEnd();
-  return item.label + sep;
-}
-
 /** The keywords of `items` the parser expects and v12 would read as typed at `start`. */
 function keywords(
   items: readonly KeywordItem[],
@@ -120,7 +113,7 @@ function keywords(
   const out: CompletionItem[] = [];
   for (const k of items) {
     if (!expected.has(k.kind) || !k.label.toLowerCase().startsWith(prefix)) continue;
-    const insert = insertText(k, rest);
+    const insert = insertWithSeparator(k.label, k.separator, rest, OPENS);
     const sample = `${insert}${/[ :"]$/.test(insert) ? (k.sample ?? 'x') : ''}${restOfLine}`;
     const t = firstToken(sample);
     if (!t || t.start !== 0 || !(k.reads ?? [k.kind]).includes(t.kind)) continue;

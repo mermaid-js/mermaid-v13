@@ -84,6 +84,18 @@ describe('kanban parser: columns and cards', () => {
     ]);
   });
 
+  it('reads a double-quoted attribute in a tag of a quoted label as v12 (#837, D114)', () => {
+    const label = '<span style="color:red">red</span> text';
+    const lexed = "<span style='color:red'>red</span> text";
+    const r = parseKanban(`kanban\n  a["${label}"]\n    b("${label}")\n    c["\`${label}\`"]`);
+    expect(r.diagnostics).toEqual([]);
+    expect(r.model.items.map((i) => [i.id, i.label])).toEqual([
+      ['a', lexed],
+      ['b', lexed],
+      ['c', lexed],
+    ]);
+  });
+
   it('puts classes and icons on the last item; a later one replaces them', () => {
     const m = model(
       'kanban\n  a[The root]\n  :::m-4 p-8\n  ::icon(bomb)\n    b\n    :::x\n    :::y z'
@@ -144,6 +156,17 @@ describe('kanban parser: shape data', () => {
     expect(m.items.slice(1).map((i) => [i.icon, i.assigned, i.label])).toEqual([
       ['star', 'knsv', 'b'],
       [undefined, undefined, 'x<br/>y'],
+    ]);
+  });
+
+  it('reads a double-quoted attribute in a tag of the data as v12 (#837, D114)', () => {
+    // v12 turned the attribute's quotes into `'` before lexing, so they open no quoted run.
+    const m = model(
+      'kanban\n  a\n    b@{ ticket: "<span class="k">T-1</span>", label: <b id="x">y</b> }'
+    );
+    expect([m.items[1]?.ticket, m.items[1]?.label]).toEqual([
+      "<span class='k'>T-1</span>",
+      "<b id='x'>y</b>",
     ]);
   });
 

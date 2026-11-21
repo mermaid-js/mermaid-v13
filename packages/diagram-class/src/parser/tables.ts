@@ -1,5 +1,6 @@
 import { ExpectedTable, isSpace, Kind, kindSet, TRIVIA } from '@mermaid-js/core/parser-kit';
 import { Stop, STOP } from '@mermaid-js/shared/parser/support';
+import type { Dir } from '@mermaid-js/core/layout';
 import type { KindSet, ParseState, Range } from '@mermaid-js/core/parser-kit';
 import type { ClassNamespaceStmt } from './ast.ts';
 import type { ClassLex } from './lexer.ts';
@@ -85,7 +86,7 @@ export const NS_ITEM_KINDS = [T.Class, T.NoteFor, T.Note, T.Namespace];
 export const NS_BODY_KINDS = [...NS_ITEM_KINDS, T.StructStop];
 export const NS_FIRST_KINDS = [...NS_BODY_KINDS, Kind.Newline];
 
-export const DIRECTIONS: Readonly<Record<number, string>> = {
+export const DIRECTIONS: Readonly<Record<number, Dir>> = {
   [T.DirectionTB]: 'TB',
   [T.DirectionBT]: 'BT',
   [T.DirectionRL]: 'RL',

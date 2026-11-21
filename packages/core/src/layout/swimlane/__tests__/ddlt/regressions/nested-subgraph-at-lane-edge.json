@@ -1,0 +1,110 @@
+{
+  "tuning": {
+    "ignoreCrossLaneEdges": true,
+    "optimizeRanksByCrossings": true,
+    "automaticLaneOrdering": false
+  },
+  "graph": {
+    "direction": "TB",
+    "nodes": [
+      {
+        "id": "a",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "G",
+        "span": 128
+      },
+      {
+        "id": "b",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "L2",
+        "span": 128
+      }
+    ],
+    "groups": [
+      {
+        "id": "L1",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 9.338,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "L2",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 9.338,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "G",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 31.906,
+          "height": 16.1
+        },
+        "parent": "L1"
+      }
+    ],
+    "edges": [
+      {
+        "id": "L_a_b_0",
+        "source": "a",
+        "target": "b",
+        "minLen": 1
+      }
+    ],
+    "spacing": {
+      "node": 10,
+      "rank": 50,
+      "edge": 20
+    },
+    "diagramPadding": 8,
+    "routing": "stepped",
+    "headRoom": 7,
+    "metrics": {
+      "portPitch": 16,
+      "minPitch": 8,
+      "portSep": 20,
+      "trackMargin": 18,
+      "trackPitch": 10,
+      "trackSpread": 14,
+      "levelMargin": 28,
+      "levelPitch": 12,
+      "levelLead": 12,
+      "levelClear": 8,
+      "levelTouch": 4,
+      "snap": 12,
+      "bendSnap": 24,
+      "leanClear": 40,
+      "fan": 24,
+      "loop": 26,
+      "loopGap": 6,
+      "loopLabel": 28,
+      "corner": 12,
+      "turnBreakpoint": 640,
+      "endLabelAlong": 4,
+      "endLabelAcross": 6
+    }
+  }
+}

@@ -22,7 +22,6 @@
  */
 import { checkDepth, checkLimit } from '@mermaid-js/core/limits';
 import {
-  APOSTROPHE,
   DQUOTE,
   ExpectedTable,
   formatExpected,
@@ -36,7 +35,11 @@ import {
   Probe,
   sourceView,
 } from '@mermaid-js/core/parser-kit';
+import { excerpt, lineTokens } from '@mermaid-js/shared/parser/line-tokens';
+import type { LineTokenView } from '@mermaid-js/shared/parser/line-tokens';
 import { STOP } from '@mermaid-js/shared/parser/support';
+import { textProbeMode } from '@mermaid-js/shared/parser/rule';
+import type { TextStatement } from '@mermaid-js/shared/parser/rule';
 import type {
   AstId,
   Diagnostic,
@@ -45,7 +48,6 @@ import type {
   ParseResult,
   Range,
   StatementSpan,
-  TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
@@ -73,8 +75,6 @@ import { normalise } from './normalise.ts';
 import { HEADER, T } from './tokens.ts';
 
 export interface TreeViewParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** The integrator's cap on nodes (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
   maxNodes?: number;
   /** How deep a node may sit under a top one (core `DEFAULT_LIMITS.maxDepth` when absent). */
@@ -114,58 +114,13 @@ const AFTER_BLANK = [...NAME, ...TEXT];
  */
 const PROBE_FOLLOWS = /* @__PURE__ */ kindSet(T.Indentation, T.QuotedName, T.IconAnnotation);
 
-/**
- * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the mode
- * names what the offset is in: `string` inside a quoted name (closed or not), `title`,
- * `accTitle` or `accDescr` past the keyword of that statement, `description` past the `##` of a
- * description, else `INITIAL` (code).
- */
-function probeMode(src: string, tokens: TokenStream, o: number): string {
-  // The one token that may hold `o`: the last starting before it (tokens do not overlap).
-  let lo = 0;
-  let hi = tokens.length - 1;
-  let j = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if ((tokens.start[mid] ?? 0) < o) {
-      j = mid;
-      lo = mid + 1;
-    } else hi = mid - 1;
-  }
-  const start = tokens.start[j] ?? 0;
-  const end = tokens.end[j] ?? 0;
-  if (j < 0 || end < o) return 'INITIAL';
-  const kind = tokens.kind[j] ?? Kind.EOF;
-  const c = src.charCodeAt(start);
-  if (kind === T.QuotedName && o < end) return 'string';
-  // An unclosed name is an error token from its quote on.
-  if (kind === Kind.Error && (c === DQUOTE || c === APOSTROPHE)) return 'string';
-  if (kind === T.DescAnnotation) {
-    return o >= src.indexOf('##', start) + 2 ? 'description' : 'INITIAL';
-  }
-  const word = textKeyword(kind);
-  if (word === undefined) return 'INITIAL';
-  let k = start;
-  while (isBlank(src.charCodeAt(k))) k++;
-  k += word.length;
-  // A block `accDescr { … }` ends at its `}`; the other values run to the line end.
-  const block = kind === T.AccDescr && /^\s*\{/.test(src.slice(k, end));
-  return o > k && (o < end || !block) ? word : 'INITIAL';
-}
-
-/** Trivia of the parser's view: the lexer's trivia and the line breaks. */
-const isTrivia = (k: number) =>
-  k === Kind.Comment || k === Kind.Directive || k === Kind.Space || k === Kind.Newline;
-
-/** A text statement: its AST type, its keyword and its value conversion. */
-interface TextStatement {
-  type: 'Title' | 'AccTitle' | 'AccDescr';
-  word: string;
-  value: (image: string) => string;
+/** A text statement with its value conversion. */
+interface ConvertedTextStatement extends TextStatement {
+  readonly value: (image: string) => string;
 }
 
 /** Each text statement by its token kind. */
-const TEXT_STATEMENTS: Readonly<Partial<Record<number, TextStatement>>> = {
+const TEXT_STATEMENTS: Readonly<Partial<Record<number, ConvertedTextStatement>>> = {
   [T.Title]: { type: 'Title', word: TITLE, value: titleValue },
   [T.AccTitle]: { type: 'AccTitle', word: ACC_TITLE, value: accTitleValue },
   [T.AccDescr]: { type: 'AccDescr', word: ACC_DESCR, value: accDescrValue },
@@ -175,6 +130,22 @@ const TEXT_STATEMENTS: Readonly<Partial<Record<number, TextStatement>>> = {
 export function textKeyword(kind: number): string | undefined {
   return TEXT_STATEMENTS[kind]?.word;
 }
+
+/**
+ * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the mode
+ * names what the offset is in: `string` inside a quoted name (closed or not), `title`,
+ * `accTitle` or `accDescr` past the keyword of that statement, `description` past the `##` of a
+ * description, else `INITIAL` (code).
+ */
+const probeMode = /* @__PURE__ */ textProbeMode({
+  texts: TEXT_STATEMENTS,
+  accDescr: T.AccDescr,
+  string: T.QuotedName,
+  other: (src, kind, start, _end, o) => {
+    if (kind !== T.DescAnnotation) return undefined;
+    return o >= src.indexOf('##', start) + 2 ? 'description' : 'INITIAL';
+  },
+});
 
 /** Human names for what the parser expects (R-ERR-2, R-ERR-5). */
 const EXPECTED = new ExpectedTable([
@@ -192,15 +163,6 @@ const MARK_EXAMPLE: Readonly<Record<(typeof MARKS)[number], string>> = {
   'icon(': 'icon(file)',
 };
 
-/** The longest text an error message quotes. */
-const EXCERPT = 24;
-
-/** The first line of `text`, at most {@link EXCERPT} characters, with `…` when anything is cut. */
-function excerpt(text: string): string {
-  const line = text.split('\n', 1)[0] ?? '';
-  return line.length > EXCERPT || line !== text ? `${line.slice(0, EXCERPT)}…` : line;
-}
-
 const bySource = (x: Diagnostic, y: Diagnostic) => x.range.start - y.range.start;
 
 /** Parse a treeView. Never throws: problems are error diagnostics. */
@@ -211,43 +173,6 @@ export function parseTreeView(
   return new TreeViewParser(src, options).parse();
 }
 
-/** The parser's tokens: the significant ones, where each is in the stream, and line starts. */
-interface LineView {
-  readonly kind: Uint16Array;
-  readonly start: Uint32Array;
-  readonly end: Uint32Array;
-  /** The token's index in the lexer's stream (for its text). */
-  readonly index: Uint32Array;
-  /** 1 when a line break comes between the token and the significant one before it. */
-  readonly lineStart: Uint8Array;
-  readonly length: number;
-}
-
-function lineView(stream: TokenStream): LineView {
-  let n = 0;
-  for (let j = 0; j < stream.length; j++) if (!isTrivia(stream.kind[j] ?? Kind.EOF)) n++;
-  const kind = new Uint16Array(n);
-  const start = new Uint32Array(n);
-  const end = new Uint32Array(n);
-  const index = new Uint32Array(n);
-  const lineStart = new Uint8Array(n);
-  let o = 0;
-  let line = 1;
-  for (let j = 0; j < stream.length; j++) {
-    const k = stream.kind[j] ?? Kind.EOF;
-    if (k === Kind.Newline) line = 1;
-    if (isTrivia(k)) continue;
-    kind[o] = k;
-    start[o] = stream.start[j] ?? 0;
-    end[o] = stream.end[j] ?? 0;
-    index[o] = j;
-    lineStart[o] = line;
-    line = 0;
-    o++;
-  }
-  return { kind, start, end, index, lineStart, length: n };
-}
-
 /**
  * One parse. Each grammar rule is a method that returns what it read; a rule that fails
  * records a diagnostic and throws {@link STOP}, and the statement loop recovers.
@@ -255,7 +180,7 @@ function lineView(stream: TokenStream): LineView {
 class TreeViewParser {
   private readonly pre: PreprocessResult;
   private readonly lexed: TreeViewLex;
-  private readonly t: LineView;
+  private readonly t: LineTokenView;
   private i = 0;
   /** Where the statement that failed stopped. */
   private failedAt = 0;
@@ -294,7 +219,7 @@ class TreeViewParser {
       pre.directives.map((d) => d.range)
     );
     this.lexed = lex(src, pre.bodyStart, view);
-    this.t = lineView(this.lexed.tokens);
+    this.t = lineTokens(this.lexed.tokens);
     if (opts.probe !== undefined) {
       const tokens = this.lexed.tokens;
       const probe = (this.probe = new Probe(src, opts.probe, PROBE_FOLLOWS));
@@ -542,7 +467,7 @@ class TreeViewParser {
   }
 
   /** `(ACC_DESCR | ACC_TITLE | TITLE)`: the last of each wins; only before the first node. */
-  private textStatement({ type, word, value }: TextStatement): void {
+  private textStatement({ type, word, value }: ConvertedTextStatement): void {
     if (this.started) this.lateText(word);
     const j = this.i++;
     const image = this.text(j);

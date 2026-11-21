@@ -2,20 +2,16 @@
 // warning per feature kind. `accTitle` and `accDescr` name their statements; the `railroad`
 // colours and font, and the px lengths set to anything but their defaults, are config, with no
 // statement to name. The title is drawn by neither output (D218), so it is not named.
-import type { Warning } from '@mermaid-js/core';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import { configLength, RAILROAD_COLOUR_KEYS, RAILROAD_LAYOUT_DEFAULTS } from '../config.ts';
 import type { RailroadModel } from '../model.ts';
+import type { AsciiDroppedWarning as SharedAsciiDroppedWarning } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'lengths' | 'accessibility';
 
 /** One feature kind text output dropped (D82). */
-export interface AsciiDroppedWarning extends Warning {
-  readonly code: 'ASCII_DROPPED';
-  readonly feature: AsciiDroppedFeature;
-  readonly astIds: readonly string[];
-}
+export type AsciiDroppedWarning = SharedAsciiDroppedWarning<AsciiDroppedFeature>;
 
 const WHAT: Record<AsciiDroppedFeature, string> = {
   style: 'colours or fonts',

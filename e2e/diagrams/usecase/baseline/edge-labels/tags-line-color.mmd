@@ -1,0 +1,15 @@
+---
+description: >-
+  Edge labels as tags (D627): with the line colour set, every association's
+  label is bordered in it.
+config:
+  themeVariables:
+    lineColor: '#d6336c'
+---
+usecase-beta
+  direction LR
+  actor Customer
+  Browse
+  Checkout
+  Customer -- "browses" ---> Browse
+  Customer -- "buys" ---> Checkout

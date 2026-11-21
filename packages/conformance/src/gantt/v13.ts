@@ -6,7 +6,7 @@
  */
 import { detectGantt, parseGantt, schedule } from '@mermaid-js/diagram-gantt';
 import type { GanttModel } from '@mermaid-js/diagram-gantt';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { GANTT_PARITY_NOW } from './oracle-env.ts';
 import { GANTT_V12_TYPES, ganttV12Snapshot } from './v12.ts';
@@ -65,12 +65,9 @@ export function ganttV13Snapshot(model: GanttModel): GanttSnapshot {
  * schedule's error at {@link GANTT_PARITY_NOW} (D274: layout rejects it as SEMANTIC).
  */
 export function parseGanttForParity(text: string): GanttModel {
-  const pre = preprocess(text);
-  const result = parseGantt(text, { preprocessed: pre });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((d) => d.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  schedule(result.model, { now: GANTT_PARITY_NOW });
-  return result.model;
+  const model = parseForParity(text, parseGantt);
+  schedule(model, { now: GANTT_PARITY_NOW });
+  return model;
 }
 
 export const ganttAdapter: DiagramAdapter<GanttModel> = {

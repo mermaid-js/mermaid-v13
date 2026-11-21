@@ -9,6 +9,7 @@
     "bench": "tsx --conditions=mermaid-source src/cli/bench.ts",
     "pr": "tsx --conditions=mermaid-source src/cli/pr.ts",
     "gates": "tsx --conditions=mermaid-source src/cli/gates.ts",
+    "size-report": "tsx --conditions=mermaid-source src/cli/size-report.ts",
     "typecheck": "tsc -p tsconfig.json",
     "language": "tsx --conditions=mermaid-source src/cli/language.ts",
     "language:sequence": "tsx --conditions=mermaid-source src/cli/language-sequence.ts",
@@ -59,6 +60,7 @@
     "mermaid-v12": "npm:mermaid@^12.2.0",
     "mermaid-v12-frozen": "npm:mermaid@12.2.0",
     "pele": "^1.13.0",
-    "tsx": "^4.20.6"
+    "tsx": "^4.20.6",
+    "typescript": "~6.0.3"
   }
 }

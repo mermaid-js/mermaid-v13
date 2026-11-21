@@ -18,27 +18,13 @@
  * left out of the model.
  */
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
-import {
-  cook,
-  Kind,
-  kindSet,
-  LineIndex,
-  ParseState,
-  Probe,
-  significantTokens,
-  sourceView,
-} from '@mermaid-js/core/parser-kit';
-import type {
-  ExpectedTable,
-  ParseOptions,
-  ParseResult,
-  Range,
-  SourceView,
-  TokenStream,
-  TokenView,
-} from '@mermaid-js/core/parser-kit';
+import { Kind, kindSet } from '@mermaid-js/core/parser-kit';
+import type { ExpectedTable, ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
+import { RuleParser, textProbeMode, textStatements } from '@mermaid-js/shared/parser/rule';
+import type { RuleGrammar } from '@mermaid-js/shared/parser/rule';
+import { STOP } from '@mermaid-js/shared/parser/support';
 import type { RailroadModel, RailroadRule } from '../model.ts';
 import type { RailroadDocument, RailroadStatementNode, RailroadTextNode } from './ast.ts';
 import { accDescrValue, accTitleValue, stringValue, titleValue } from './convert.ts';
@@ -50,8 +36,6 @@ import { build } from './tree.ts';
 import type { Draft } from './tree.ts';
 
 export interface RailroadParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /**
    * The notation to read the text as; by default the one its header names (`detectRailroad`),
    * IR when it names none.
@@ -77,13 +61,6 @@ export type RailroadParseResult = ParseResult<RailroadModel, RailroadDocument>;
 
 /** `rule` symbols' kind (D517). */
 export const RULE_SYMBOL = 'rule';
-
-/**
- * Thrown inside the parser after a diagnostic is recorded; caught at rule level. One instance,
- * so its stack is captured once.
- */
-class Stop extends Error {}
-export const STOP = new Stop();
 
 const TEXT = [T.Title, T.AccTitle, T.AccDescr];
 /** What ends an alternative: found where an element should start, the alternative is empty. */
@@ -113,18 +90,8 @@ const NESTING_GUARD = 500;
  */
 export const RULE_START = -1;
 
-/** The keyword of each header statement token, also its probe mode. */
-const VALUE_WORDS: Readonly<Record<number, string>> = {
-  [T.Title]: 'title',
-  [T.AccTitle]: 'accTitle',
-  [T.AccDescr]: 'accDescr',
-};
-
-const KIND_OF: Readonly<Record<number, RailroadTextNode['type']>> = {
-  [T.Title]: 'Title',
-  [T.AccTitle]: 'AccTitle',
-  [T.AccDescr]: 'AccDescr',
-};
+/** Each header statement by token kind: its AST type and its keyword, also its probe mode. */
+const TEXTS = /* @__PURE__ */ textStatements(T.Title, T.AccTitle, T.AccDescr);
 
 /**
  * Kinds a probe's cursor follows rather than extends: punctuation and strings (right after
@@ -160,44 +127,31 @@ const PROBE_FOLLOWS = kindSet(
  * mode names what the offset is in: `title`, `accTitle` or `accDescr` past that keyword,
  * `string` inside a string (closed or not), else `INITIAL` (code).
  */
-function probeMode(src: string, tokens: TokenStream, o: number): string {
-  for (let j = 0; j < tokens.length; j++) {
-    const start = tokens.start[j] ?? 0;
-    const end = tokens.end[j] ?? 0;
-    if (start >= o) break;
-    if (end < o) continue;
-    const kind = tokens.kind[j] ?? Kind.EOF;
-    const c = src[start];
-    if (kind === T.String && o < end) return 'string';
-    if (kind === Kind.Error && (c === '"' || c === "'")) return 'string';
-    const word = VALUE_WORDS[kind];
-    if (!word) continue;
-    const k = start + word.length;
-    const block = kind === T.AccDescr && /^\s*\{/.test(src.slice(k, end));
-    if (o > k && (o < end || !block)) return word;
-  }
-  return 'INITIAL';
+const probeMode = /* @__PURE__ */ textProbeMode({
+  texts: TEXTS,
+  accDescr: T.AccDescr,
+  string: T.String,
+});
+
+/** The notation's lexer and tables, as the shared rule parser uses them. */
+function grammar(notation: RailroadNotation): RuleGrammar {
+  return {
+    lex: LEXERS[notation],
+    trivia: RAILROAD_TRIVIA,
+    probeFollows: PROBE_FOLLOWS,
+    probeMode,
+  };
 }
 
 /**
  * One parse of one notation. Each grammar rule is a method that returns what it read; a rule
  * that fails records a diagnostic and throws {@link STOP}, and the rule loop recovers.
  */
-export abstract class RailroadParser {
-  protected readonly pre: PreprocessResult;
-  private readonly view: SourceView;
-  protected readonly full: TokenStream;
-  protected readonly t: TokenView;
-  protected i = 0;
-  protected readonly st = new ParseState();
-  private readonly probe: Probe | undefined;
+export abstract class RailroadParser extends RuleParser<PreprocessResult> {
   private readonly children: RailroadStatementNode[] = [];
   private readonly rules: RailroadRule[] = [];
-  private lines: LineIndex | undefined;
   /** Rules per name so far, for the ids' `@n` and duplicate warnings, and the first's line. */
   private readonly named = new Map<string, { count: number; line: number }>();
-  /** Header statements per kind so far, for their ids' `@n`. */
-  private readonly texts = new Map<string, number>();
   private readonly maxDepth: number;
   /** Groups and calls open around the current token, for {@link NESTING_GUARD}. */
   private nest = 0;
@@ -218,7 +172,7 @@ export abstract class RailroadParser {
   protected abstract readonly expected: ExpectedTable;
 
   constructor(
-    protected readonly src: string,
+    src: string,
     protected readonly notation: RailroadNotation,
     private readonly options: RailroadParseOptions,
     /**
@@ -227,23 +181,15 @@ export abstract class RailroadParser {
      */
     computed?: PreprocessResult
   ) {
+    super(
+      src,
+      options.preprocessed ?? computed ?? preprocess(src),
+      !options.preprocessed,
+      grammar(notation),
+      options.probe
+    );
     this.headerWord = RAILROAD_HEADERS.find(([n]) => n === notation)?.[1] ?? 'railroad-beta';
     this.maxDepth = options.maxDepth ?? DEFAULT_LIMITS.maxDepth;
-    const pre = (this.pre = options.preprocessed ?? computed ?? preprocess(src));
-    if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
-    this.view = sourceView(
-      src,
-      pre.bodyStart,
-      pre.directives.map((d) => d.range)
-    );
-    this.full = LEXERS[notation](src, pre.bodyStart, this.view);
-    this.t = significantTokens(this.full, RAILROAD_TRIVIA);
-    if (options.probe !== undefined) {
-      const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
-      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
-      else probe.trivia(this.full);
-      probe.lexed(probe.offset, probe.offset, probeMode(src, this.full, probe.offset));
-    }
   }
 
   parse(): RailroadParseResult {
@@ -276,43 +222,13 @@ export abstract class RailroadParser {
 
   // ---- tokens -------------------------------------------------------------------------
 
-  protected kind(j = this.i): number {
-    return this.t.kind[j] ?? Kind.EOF;
-  }
-
-  protected range(j = this.i): Range {
-    return { start: this.t.start[j] ?? 0, end: this.t.end[j] ?? 0 };
-  }
-
   protected span(from: number, to: number): Range {
     return { start: this.range(from).start, end: this.range(to).end };
-  }
-
-  /** A token's text as v12's lexer read it (removed spans dropped, entities decoded). */
-  protected raw(j = this.i): string {
-    const { start, end } = this.range(j);
-    return cook(this.src, start, end, this.view);
   }
 
   /** Whether token `j` is a name followed by the notation's `=`: the start of a rule. */
   protected startsRule(j = this.i): boolean {
     return this.kind(j) === T.Id && this.defines.includes(this.kind(j + 1));
-  }
-
-  /**
-   * Probe hook: the parser tests the current token for `kinds` (a constant list), or would
-   * accept them there. Records them when it is the probed token.
-   */
-  protected tested(kinds: readonly number[]): void {
-    const p = this.probe;
-    if (p?.isAt(this.t, this.i, this.pre.bodyStart)) p.tested(kinds, this.range().start);
-  }
-
-  /** Consume a token of `kind` and return its index, or fail. */
-  protected expect(kind: number): number {
-    this.tested([kind]);
-    if (this.kind() !== kind) this.fail([kind]);
-    return this.i++;
   }
 
   /**
@@ -375,23 +291,15 @@ export abstract class RailroadParser {
 
   // ---- errors and recovery ------------------------------------------------------------
 
-  protected lineOf(at: number): number {
-    return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
-  }
-
-  /** How an error message names the current token. */
-  private found(): string {
-    if (this.kind() === Kind.EOF) return 'the end of the text';
-    const text = this.raw().trim();
-    const line = text.split('\n', 1)[0] ?? '';
-    return line.length > 24 || line !== text ? `\`${line.slice(0, 24)}…\`` : `\`${line}\``;
-  }
-
   /**
    * Report what was found where one of `want` was expected, then stop the rule. `where` is the
    * current token, or the gap after the last one where the rule was cut short.
    */
-  protected fail(want: readonly number[], hint?: string, where: Range = this.range()): never {
+  protected override fail(
+    want: readonly number[],
+    hint?: string,
+    where: Range = this.range()
+  ): never {
     if (this.kind() === Kind.Error) this.badCharacters(this.range());
     const d = this.st.diagnostics.unexpected(
       'UNEXPECTED',
@@ -429,7 +337,7 @@ export abstract class RailroadParser {
       if (EMPTY_ENDS.includes(k) || this.startsRule()) return 'an alternative cannot be empty';
     }
     if (TEXT.includes(k)) {
-      return `\`${VALUE_WORDS[k] ?? 'title'}\` goes on its own line after \`${this.headerWord}\`, before the rules`;
+      return `\`${TEXTS[k]?.word ?? 'title'}\` goes on its own line after \`${this.headerWord}\`, before the rules`;
     }
     if (k === T.Header) return `a diagram has one \`${this.headerWord}\`, at its start`;
     return undefined;
@@ -482,7 +390,7 @@ export abstract class RailroadParser {
    * Skip to where the next rule can start (R-PARSE-4): past the next `;`, or at a name followed
    * by `=` (the rule before it lacks its `;`), or the end.
    */
-  private recover(): void {
+  protected override recover(): void {
     this.probe?.freeze();
     const names = this.skipNames;
     this.skipNames = false;
@@ -513,16 +421,6 @@ export abstract class RailroadParser {
         });
     } else if (k === T.Id) {
       this.reference(this.raw(), { start: Math.max(0, r.start - 1), end: r.end });
-    }
-  }
-
-  /** Run one rule of the grammar; on failure, recover. */
-  private statement(rule: () => void): void {
-    try {
-      rule();
-    } catch (error) {
-      if (error !== STOP) throw error;
-      this.recover();
     }
   }
 
@@ -582,16 +480,14 @@ export abstract class RailroadParser {
   private text(k: number): void {
     const j = this.i++;
     const image = this.raw(j);
-    const type = KIND_OF[k] ?? 'Title';
+    const type = TEXTS[k]?.type ?? 'Title';
     const range = this.range(j);
     let text: string;
     if (type === 'Title') text = this.title = titleValue(this.notation, image);
     else if (type === 'AccTitle') text = this.accTitle = accTitleValue(image);
     else text = this.accDescr = accDescrValue(image);
-    const word = VALUE_WORDS[k] ?? 'title';
-    const n = (this.texts.get(word) ?? 0) + 1;
-    this.texts.set(word, n);
-    const node: RailroadTextNode = { id: n === 1 ? word : `${word}@${n}`, type, range, text };
+    const word = TEXTS[k]?.word ?? 'title';
+    const node: RailroadTextNode = { id: this.id(word), type, range, text };
     this.children.push(node);
     this.st.statement(word, range);
   }

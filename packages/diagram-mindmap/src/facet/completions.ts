@@ -26,72 +26,32 @@ import { mindmapDocs } from '../generated/docs.ts';
 import type { MindmapDocument } from '../parser/ast.ts';
 import { mindmapTokens } from '../parser/index.ts';
 import { T } from '../parser/tokens.ts';
-import { CLOSER_OF, lineAfter, lineBefore, SHAPES, span } from './tables.ts';
+import { CLOSER_OF, SHAPES, span } from './tables.ts';
+import {
+  classItems,
+  type OutlineKinds,
+  outlineKeywords,
+  statementStartWord,
+  tokenAt,
+} from '@mermaid-js/shared/parser/tree-facet';
+import { lineAfter } from '@mermaid-js/shared/parser/facet';
 
 const BLANK = /^[\t ]*$/;
-/** A class word's end: the blanks a `:::` line is split at. */
-const CLASS_BLANK = /[\t\n\f\r ]/;
-
-/**
- * The index of the last token of `kinds` in `tokens` that holds `at` (starts at or before it,
- * ends at or after it), or -1.
- */
-function tokenAt(tokens: TokenStream, at: number, kinds: readonly number[]): number {
-  let found = -1;
-  for (let j = 0; j < tokens.length; j++) {
-    if ((tokens.start[j] ?? 0) > at) break;
-    if (at <= (tokens.end[j] ?? 0) && kinds.includes(tokens.kind[j] ?? Kind.EOF)) found = j;
-  }
-  return found;
-}
-
-/**
- * The class names used in `doc`, first use first, but not those of `line` (the `:::` line
- * being written) other than `word` (the one at the cursor, which an item may replace).
- */
-function classNames(doc: DocumentView<MindmapDocument>, line: Range, word: Range): string[] {
-  const out = new Set<string>();
-  const taken = new Set<string>();
-  for (const s of doc.result.symbols) {
-    if (s.kind !== 'class') continue;
-    const inLine = line.start <= s.range.start && s.range.end <= line.end;
-    const atCursor = s.range.start === word.start && s.range.end === word.end;
-    if (inLine && !atCursor) taken.add(s.name);
-    else if (!inLine) out.add(s.name);
-  }
-  return [...out].filter((name) => !taken.has(name));
-}
-
-/** The class names for the word at the cursor in a `:::` line, or undefined when not in one. */
-function classItems(
-  doc: DocumentView<MindmapDocument>,
-  tokens: TokenStream,
-  at: number
-): CompletionItem[] | undefined {
-  const { text } = doc;
-  const j = tokenAt(tokens, at, [T.Class, T.ClassStart]);
-  if (j < 0) return undefined;
-  const start = tokens.start[j] ?? 0;
-  const end = tokens.end[j] ?? 0;
-  // `:::` itself: the cursor is in it, not after it.
-  if (tokens.kind[j] === T.ClassStart && at < end) return undefined;
-  let from = at;
-  while (from > start && !CLASS_BLANK.test(text.charAt(from - 1))) from--;
-  let to = at;
-  while (to < end && !CLASS_BLANK.test(text.charAt(to))) to++;
-  if (tokens.kind[j] === T.ClassStart) from = to = at;
-  const prefix = text.slice(from, at);
-  const range = span(from, to);
-  return classNames(doc, span(start, end), range)
-    .filter((name) => name.startsWith(prefix))
-    .map((name) => ({ label: name, kind: 'class', insertText: name, range }));
-}
+/** The kinds of a `:::` class list. */
+const CLASSES = { start: T.ClassStart, names: T.Class };
+/** The keywords at a statement start. */
+const KINDS: OutlineKinds = {
+  header: [T.Mindmap, 'mindmap'],
+  nodeId: T.NodeId,
+  iconStart: T.IconStart,
+  classStart: T.ClassStart,
+};
 
 /** The closer of the shape the cursor is in, after its text at the end of the line. */
 function closerItems(probe: ProbeResult, tokens: TokenStream, text: string): CompletionItem[] {
   const expected = new Set(probe.expected);
   if (!expected.has(T.NodeDEnd) && !expected.has(T.NodeDescr)) return [];
-  if (!BLANK.test(lineAfter(text, probe.offset))) return [];
+  if (!BLANK.test(lineAfter(text, probe.offset, true))) return [];
   let open = -1;
   for (let j = 0; j < tokens.length && (tokens.end[j] ?? 0) <= probe.offset; j++) {
     if (tokens.kind[j] === T.NodeDStart) open = j;
@@ -166,44 +126,19 @@ export function mindmapCompletions(
   const { mode, offset } = probe;
   if (mode === 'NODE') return closerItems(probe, tokens, text);
   if (mode !== 'INITIAL' && mode !== 'CLASS') return [];
-  const classes = classItems(doc, tokens, offset);
+  const classes = classItems(text, tokens, result.symbols, offset, CLASSES);
   if (classes) return classes;
   if (mode !== 'INITIAL') return [];
 
   const expected = new Set(probe.expected);
-  const start = probe.prefix.start;
-  const prefix = text.slice(start, offset);
-  if (!BLANK.test(lineBefore(text, start, true)) || /[\n\r]/.test(prefix)) return [];
-  const lower = prefix.toLowerCase();
-  const word = /^[^\s()[\]{}]*/.exec(text.slice(offset))?.[0] ?? '';
-  const range = span(start, prefix === '' ? offset : offset + word.length);
-  const out: CompletionItem[] = [];
-  const keyword = (
-    label: string,
-    insertText: string,
-    kind: number,
-    item: 'keyword' | 'operator'
-  ) => {
-    if (!label.toLowerCase().startsWith(lower)) return;
-    const documentation = mindmapDocs[kind];
-    out.push({
-      label,
-      kind: item,
-      insertText,
-      range,
-      ...(documentation === undefined ? {} : { documentation }),
-    });
-  };
-  if (expected.has(T.Mindmap)) {
-    keyword('mindmap', 'mindmap', T.Mindmap, 'keyword');
-    return out;
-  }
-  if (!expected.has(T.NodeId)) return out;
+  const at = statementStartWord(text, probe, /^[^\s()[\]{}]*/);
+  if (!at) return [];
+  const start = at.range.start;
+  const { prefix } = at;
   // The decorations of the node above: none before the first node (an error in v12).
-  if (result.ast.children.some((n) => n.range.end <= start)) {
-    keyword('::icon()', '::icon()', T.IconStart, 'operator');
-    keyword(':::', ':::', T.ClassStart, 'operator');
-  }
+  const afterNode = result.ast.children.some((n) => n.range.end <= start);
+  const out = outlineKeywords(at, expected, KINDS, mindmapDocs, afterNode);
+  if (expected.has(T.Mindmap) || !expected.has(T.NodeId)) return out;
   // An id that ends its line: the shapes around it.
   const j = tokenAt(tokens, offset, [T.NodeId]);
   const id = prefix.trimEnd();
@@ -213,7 +148,7 @@ export function mindmapCompletions(
     id !== '' &&
     id === prefix &&
     !id.startsWith(':') &&
-    BLANK.test(lineAfter(text, offset))
+    BLANK.test(lineAfter(text, offset, true))
   ) {
     out.push(...shapeItems(id, span(start, offset)));
   }

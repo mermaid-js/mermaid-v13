@@ -35,7 +35,7 @@
 import { inKindSet, Kind, kindSet } from '@mermaid-js/core/parser-kit';
 import { STOP } from '@mermaid-js/shared/parser/support';
 import type { ParseOptions, ParseResult, Range, StatementSpan } from '@mermaid-js/core/parser-kit';
-import { CLOSERS, treeGrammar, TreeParser } from '@mermaid-js/shared/parser/tree';
+import { holesIn, treeGrammar, TreeParser } from '@mermaid-js/shared/parser/tree';
 import { isYamlMap, parseYaml, preprocess } from '@mermaid-js/core/preprocess';
 import type {
   PreprocessResult,
@@ -51,13 +51,11 @@ import type { KanbanData, KanbanDecoration, KanbanDocument, KanbanItemNode } fro
 import { KINDS, lex } from './lexer.ts';
 import { checkNodeLimit } from './limits.ts';
 import type { Lexed } from './lexer.ts';
-import { holesIn, sourceOffset, wordIn } from './symbols.ts';
+import { sourceOffset, wordIn } from './symbols.ts';
 import { classWords, FIRST_LINE, isBlockData, isLineBreak } from './text.ts';
 import { T } from './tokens.ts';
 
 export interface KanbanParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** Item cap, columns and cards together (core `DEFAULT_LIMITS.maxNodes`, R-SEC-5). */
   maxNodes?: number;
 }
@@ -105,7 +103,6 @@ const PROBE_FOLLOWS = kindSet(
 /** The kinds jison names `SHAPE_DATA`. */
 const SHAPE_DATA = kindSet(T.ShapeDataStart, T.ShapeData, T.ShapeDataQuote, T.ShapeDataStr);
 
-const TEXT = ['the text of the item'];
 const ONE_HEADER = '`kanban` starts the diagram and comes only once';
 const BRACE_HINT = 'a `{` starts a shape only as `{{text}}`, and shape data as `@{ … }`';
 const AT_HINT = 'an `@` starts shape data only as `@{ … }`';
@@ -119,6 +116,7 @@ const GRAMMAR = /* @__PURE__ */ treeGrammar<Lexed>({
   header: ['`kanban`'],
   headerHint: 'a kanban board starts with `kanban`',
   statement: ['an item such as `todo` or `id[text]`', 'a `::icon(…)` or `:::class` line'],
+  shapeText: ['the text of the item'],
   decorationHint: 'an `::icon(…)` or `:::class` goes on a line of its own, after its item',
   oneNodeHint: 'each item goes on a line of its own',
   afterBlankHint:
@@ -210,21 +208,10 @@ class KanbanParser extends TreeParser<Lexed, PreprocessResult> {
     this.start();
     this.document();
     if (this.columnSpan) this.st.endStatement(this.columnSpan, this.src.length);
-    const { st, pre, src } = this;
     // A misplaced indent is reported when the item after it is read: keep source order.
-    st.diagnostics.list.sort((a, b) => a.range.start - b.range.start);
-    const model: KanbanModel = {
-      items: this.items,
-      columns: this.columns,
-      warnings: st.diagnostics.list.filter((d) => d.severity === 'warning'),
-    };
-    const ast: KanbanDocument = {
-      id: 'doc',
-      type: 'Document',
-      range: { start: pre.bodyStart, end: src.length },
-      children: this.children,
-    };
-    return st.result(model, ast, this.c.tokens, this.options, this.probe);
+    this.st.diagnostics.list.sort((a, b) => a.range.start - b.range.start);
+    const model = { items: this.items, columns: this.columns };
+    return this.finish(model, this.children, this.options);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -335,14 +322,8 @@ class KanbanParser extends TreeParser<Lexed, PreprocessResult> {
   /** `node [ shapeData ]`: `nodeWithId` (an id, then an optional shape) or `nodeWithoutId`. */
   protected node(indent: number): void {
     const { c } = this;
-    let nodeId: string | undefined;
     const first = c.pos;
-    if (c.kind === T.NodeId) {
-      const j = c.next();
-      nodeId = this.raw(j);
-      this.idSymbol(nodeId, j);
-      c.tested(AFTER_ID);
-    }
+    const nodeId = this.nodeId(AFTER_ID);
     const parts: ItemParts = {
       nodeId,
       text: nodeId ?? '',
@@ -368,30 +349,19 @@ class KanbanParser extends TreeParser<Lexed, PreprocessResult> {
 
   /** `NODE_DSTART NODE_DESCR NODE_DEND`, into `parts` as far as it gets. */
   private shape(parts: ItemParts): void {
-    const { c } = this;
-    const open = c.next();
-    const opener = this.raw(open);
-    parts.range = { start: parts.range.start, end: this.range(open).end };
-    c.tested(T.NodeDescr);
-    if (c.kind !== T.NodeDescr) {
-      if (c.kind === Kind.EOF) this.endsOpen();
-      this.fail(TEXT);
-    }
-    const text = c.next();
+    const { opener, text } = this.shapeOpen(parts);
     parts.text = this.raw(text);
-    parts.range = { start: parts.range.start, end: this.range(text).end };
-    c.tested(T.NodeDEnd);
-    if (c.kind !== T.NodeDEnd) {
-      const closer = `\`${CLOSERS[opener] ?? ')'}\``;
-      // v12's `<NODE>.+` at a `}`: the rest of the line is text, and so is all after it up to a
-      // closer, maybe the rest of the board.
-      if (this.raw(text).startsWith('}')) this.swallowed(closer, text);
-      if (c.kind === T.NodeDescr && this.raw(c.pos).startsWith('}')) this.swallowed(closer, c.pos);
-      if (c.kind === Kind.EOF) this.endsOpen();
-      this.fail([closer]);
-    }
-    const close = c.next();
-    parts.range = { start: parts.range.start, end: this.range(close).end };
+    this.shapeClose(parts, opener, text);
+  }
+
+  /**
+   * v12's `<NODE>.+` at a `}`: the rest of the line is text, and so is all after it up to a
+   * closer, maybe the rest of the board.
+   */
+  protected override unclosedShape(closer: string, text: number): void {
+    const { c } = this;
+    if (this.raw(text).startsWith('}')) this.swallowed(closer, text);
+    if (c.kind === T.NodeDescr && this.raw(c.pos).startsWith('}')) this.swallowed(closer, c.pos);
   }
 
   /**

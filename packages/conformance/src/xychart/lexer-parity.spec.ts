@@ -1,24 +1,25 @@
 // cspell:words xychart barchart
 import { describe, expect, it } from 'vitest';
 import { Kind } from '@mermaid-js/core/parser-kit';
-import { JISON_NAMES, lexXyChart, tokenValue } from '@mermaid-js/diagram-xychart';
+import { JISON_NAMES, lexXyChart } from '@mermaid-js/diagram-xychart';
+import { tokenValue } from '@mermaid-js/diagram-xychart/testing';
 import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonToken } from '../jison/oracle.ts';
-import { VARIANTS, xyChartGateCorpus } from './corpus.ts';
+import { XYCHART_VARIANTS, xyChartGateCorpus } from './corpus.ts';
 
 /**
  * Lexer-parity gate (#507, parser-method §1, D212): the v13 XY chart lexer emits the same
  * terminals, with the same images, as mermaid 12.2.0's `xychart.jison` lexer on the text v12
  * lexed (`loadJisonLexerOracle('xychart')`).
  *
- * Corpus (`corpus.ts`, {@link xyChartGateCorpus}): the 60 e2e fixtures (the 11 baselines included), the 70 harvested v12
+ * Corpus (`corpus.ts`, {@link xyChartGateCorpus}): the 62 e2e fixtures (the 11 baselines included), the 70 harvested v12
  * spec and syntax-page strings and the 141 cases of `corpus/xychart-cases.json` (the spec's
  * quirks: uppercase keywords, `xychartx`, `barchart`, unquoted text, the unreachable `MD_STR`,
  * glued comments, number forms, both orientations, `;`, plot before axis, missing band values,
  * duplicate categories, reversed ranges, `accTitle`/`accDescr`; unclosed and odd directives,
  * U+2028/U+2029, CR and error cases), each again in every generated variant that changes it
- * (`VARIANTS`: comment lines added or one through the middle of a short body, every line break
+ * (`XYCHART_VARIANTS`: comment lines added or one through the middle of a short body, every line break
  * a CR followed by a removed comment or directive line, CRLF, U+2028 or U+2029 before every
  * line break, a directive through the middle of every line).
  *
@@ -59,7 +60,7 @@ function v13Tokens(source: string): JisonToken[] {
 
 const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
 
-const VARIANT = new RegExp(` \\((?:${VARIANTS.map(([s]) => s).join('|')})\\)$`);
+const VARIANT = new RegExp(` \\((?:${XYCHART_VARIANTS.map(([s]) => s).join('|')})\\)$`);
 
 describe('xychart lexer parity with mermaid@12 (jison)', () => {
   it('emits the same tokens over the e2e fixtures, the v12 spec strings, the cases and their variants', async () => {
@@ -98,7 +99,7 @@ describe('xychart lexer parity with mermaid@12 (jison)', () => {
     }
     process.stdout.write(`xychart lexer parity: ${compared} of ${items.length} sources lexed\n`);
     // Every e2e fixture, harvested string and case reaches the lexer, but the listed cases.
-    expect(e2e).toBe(60);
+    expect(e2e).toBe(63);
     expect(specs).toBe(70);
     expect(cases).toBe(141);
     expect(undetected.sort()).toEqual([...NOT_DETECTED.keys()].sort());

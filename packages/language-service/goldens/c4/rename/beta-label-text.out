@@ -1,0 +1,10 @@
+@ 6:11  container |api "api" "api" "api" :::api
+  prepare: 6:11-6:14 "api"; rename to "gateway":
+  c4-beta
+  %% rename-to: gateway
+  accTitle: api
+  accDescr: api
+  person user "api" "api" "api"
+  container gateway "api" "api" "api" :::api
+  style api fill:#fff
+  user --> gateway : "api" "api" :::api

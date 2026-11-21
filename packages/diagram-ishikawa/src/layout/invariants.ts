@@ -18,7 +18,8 @@
  * own decision. {@link ishikawaLabelOverlaps} reports them.
  */
 import { sideOf, type IshikawaModel } from '../model.ts';
-import { corners, ends, grown, inside, overlaps, segmentBox } from './geometry.ts';
+import { corners, ends, segmentBox } from './geometry.ts';
+import { growRect } from '@mermaid-js/core/layout';
 import type {
   IshikawaBone,
   IshikawaCauseLayout,
@@ -28,13 +29,16 @@ import type {
   Rect,
   Segment,
 } from './types.ts';
-import { numbers } from '@mermaid-js/shared/layout/invariants';
-
-const EPS = 1e-6;
+import {
+  EPS,
+  numbers,
+  rectText,
+  rectsOverlap,
+  within,
+} from '@mermaid-js/shared/testing/layout-invariants';
 
 /** A rectangle as a violation message prints it. */
-const printed = (r: Rect): string =>
-  `(${r.x.toFixed(2)}, ${r.y.toFixed(2)}, ${r.width.toFixed(2)} × ${r.height.toFixed(2)})`;
+const printed = (r: Rect): string => rectText(r, 2);
 
 /** The causes in source order. */
 const causesOf = (layout: IshikawaLayout): IshikawaCauseLayout[] =>
@@ -52,8 +56,9 @@ export function ishikawaLayoutViolations(model: IshikawaModel, layout: IshikawaL
   alternating(model, layout, out);
   if (layout.spine) bonesOnParents(layout, layout.spine, eps, out);
   if (layout.head && layout.spine) boxesClear(layout, layout.head, layout.spine, eps, out);
+  const b = layout.bounds;
   for (const [what, p] of drawnPoints(layout)) {
-    if (!inside(p, layout.bounds, eps)) {
+    if (!within(p.x, b.x, b.x + b.width, eps) || !within(p.y, b.y, b.y + b.height, eps)) {
       out.push(
         `${what} (${p.x.toFixed(2)}, ${p.y.toFixed(2)}) is outside ${printed(layout.bounds)}`
       );
@@ -150,13 +155,13 @@ function boxesClear(
   out: string[]
 ): void {
   // The spine as drawn; a box only touching its centre line from one side clears it.
-  const band = grown(segmentBox(spine), spine.stroke / 2);
+  const band = growRect(segmentBox(spine), spine.stroke / 2);
   for (const c of causesOf(layout)) {
     if (overlapsHead(c.box, head, eps)) {
       out.push(`${c.ast}'s box ${printed(c.box)} overlaps the head`);
     }
     const crosses = c.box.y < spine.y1 - eps && c.box.y + c.box.height > spine.y1 + eps;
-    if (crosses && overlaps(c.box, band, eps)) {
+    if (crosses && rectsOverlap(c.box, band, eps)) {
       out.push(`${c.ast}'s box ${printed(c.box)} overlaps the spine`);
     }
   }
@@ -201,7 +206,7 @@ export function ishikawaLabelOverlaps(layout: IshikawaLayout): string[] {
     for (let j = i + 1; j < boxes.length; j++) {
       const [a, ra] = boxes[i]!;
       const [b, rb] = boxes[j]!;
-      if (overlaps(ra, rb, EPS)) out.push(`${a} and ${b}`);
+      if (rectsOverlap(ra, rb, EPS)) out.push(`${a} and ${b}`);
     }
   }
   return out;

@@ -2,9 +2,8 @@
  * Sankey values as v12 read them: `parseFloat` of the trimmed value field (`sankey.jison`'s
  * record action), and what D394 does with them.
  */
-import { DASH, DOT, isDigit, LOWER_E } from '@mermaid-js/core/parser-kit';
+import { DASH, DOT, isDigit, LOWER_E, PLUS } from '@mermaid-js/core/parser-kit';
 
-const PLUS = 0x2b;
 const UPPER_E = 0x45;
 
 const isSign = (c: number) => c === PLUS || c === DASH;

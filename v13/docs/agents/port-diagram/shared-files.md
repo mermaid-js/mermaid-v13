@@ -26,11 +26,12 @@ Until wave 3, every port edited the same ~60 shared files: package lists, table 
 | jison / Langium lexer / v12 harvest rows | `packages/conformance/src/<type>/tables.ts`, `export const jison \| langium \| harvest = { <name>: … }` | `src/tables.ts` (was `JISON_TYPES`, `LANGIUM_LEXERS`, `HARVESTS`, and the smoke spec's list) |
 | Divergences | `packages/conformance/divergences/<type>.json` | `loadDivergences(DIVERGENCES_DIR)` (was `divergences.json`) |
 | Outline (hand-drawn hook) cases | `packages/conformance/src/<type>/outline.ts`, `export const outline` | outline specs |
-| YAML front-matter digests | written by `CI= vitest run packages/conformance/src/yaml-tree.spec.ts` to `src/__snapshots__/yaml-tree/<folder>.txt` | yaml-tree spec |
+| YAML front-matter digests | one line per fixture, written by `pnpm vitest run packages/conformance/src/yaml-tree.spec.ts -u` to `src/__snapshots__/yaml-tree/<folder>.txt`; a new fixture passes unpinned until then | yaml-tree spec |
 | Hand-drawn: sketched or not | `e2e/diagrams/<folder>/hand-drawn.txt`, first line `sketched` or `unsketched` | hand-drawn and dev specs (was `TYPES`, `UNSKETCHED`, the dev adapter's list) |
 | A test only your type needs in a shared spec | its own spec file, e.g. `packages/plugin-hand-drawn/src/<type>.spec.ts` | vitest |
 | Editor first-paint sample, adapters-agree document | `packages/diagram-<type>/grammar/<type>.sample.mmd`, `<type>.agree.mmd`, then `vitest run packages/language-service-codemirror -u` (writes `src/__highlights__/<id>.txt`) | highlighter, adapters-agree and e2e language specs (were `DOCS` / `TYPE_DOCS`) |
 | v12 spec harvest | run `pnpm --filter @mermaid-js/conformance harvest:v12 <type>`; add no script | — |
+| Build config; what conformance imports from your package for tests (token names, invariants, a render harness) | `tsconfig.build.json`: a copy of `DIAGRAM_BUILD_CONFIG` (`tools/workspace/published-files.ts`); `src/testing.ts`, exported as `"./testing": { "mermaid-source": "./src/testing.ts" }` and no other condition. Import test support only from specs and `testing.ts`, never from a barrel a published entry loads. The build compiles `src/*.ts` and what those files import, so every published export must point at a top-level `src/*.ts` file. Build test support from the shared kits, not a copy: `render/harness.ts` is one `createRenderHarness(plugin, spec)` call (`@mermaid-js/shared/testing/render-harness`), `test-context.ts` calls `@mermaid-js/shared/testing/test-context`, and `layout/invariants.ts` imports the shared checks from `@mermaid-js/shared/testing/layout-invariants` (#817) | `published-files.spec.ts`: the build compiles exactly what the published entries reach, so test support is never in the tarball (#816); the release drops `./testing` from the published manifest |
 | Per-type bench CLI | `packages/bench/src/cli/language-<type>.ts`, run with `pnpm --filter @mermaid-js/bench exec tsx --conditions=mermaid-source src/cli/language-<type>.ts`; add no script | — |
 
 `workspace.yaml` is not published (it is not in the package's `files`), and an unknown key in it fails every tool that reads it (`tools/workspace/diagrams.ts`), so a typo cannot silently drop you from a table.
@@ -59,7 +60,7 @@ It stays out of everything that registers or publishes a diagram until the manif
    - Lines in shared specs (type lists, `TYPE_DOCS`, per-type `it`s): drop the list lines; samples → `grammar/<type>.sample.mmd` / `.agree.mmd`; a type-only `it` → your own spec file; your `goldens/<id>/completions/empty.*` → delete.
    - Hand-drawn: add `e2e/diagrams/<folder>/hand-drawn.txt`.
 3. Not at T5 yet? Make sure your package has a `workspace.yaml` (see above), or `pnpm regen` drops your conformance dependency.
-4. Run `pnpm regen`, then `CI= vitest run packages/conformance/src/yaml-tree.spec.ts` and `vitest run packages/language-service-codemirror -u`, and review what they wrote.
+4. Run `pnpm regen`, then `pnpm vitest run packages/conformance/src/yaml-tree.spec.ts -u` and `vitest run packages/language-service-codemirror -u`, and review what they wrote.
 5. Run your scoped checks, then `pnpm check`.
 
 Per in-flight port:

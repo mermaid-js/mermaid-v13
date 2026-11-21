@@ -17,17 +17,15 @@
  * value is a semantic error with v12's message, and the statement goes on.
  */
 import { checkLimit } from '@mermaid-js/core/limits';
+import type { Limits } from '@mermaid-js/core/limits';
 import { ExpectedTable, Kind, kindSet } from '@mermaid-js/core/parser-kit';
 import { ID_CONTROL, ID_RESERVED, idEscaper, STOP } from '@mermaid-js/shared/parser/support';
 import {
   RuleParser,
   textProbeMode,
   textStatements,
-  textValue,
-  TITLE_STATEMENT,
   unclosedLabel,
   unreadAccessibility,
-  withoutIndent,
 } from '@mermaid-js/shared/parser/rule';
 import type { ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import type { RuleGrammar, TextValues } from '@mermaid-js/shared/parser/rule';
@@ -39,12 +37,11 @@ import { labelValue } from './convert.ts';
 import { lex } from './lexer.ts';
 import { PIE_TRIVIA, T } from './tokens.ts';
 
-export interface PieParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-  /** The integrator's cap on sections (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
-  maxNodes?: number;
-}
+/**
+ * `maxNodes` is the integrator's cap on sections (core `DEFAULT_LIMITS.maxNodes` when absent,
+ * R-SEC-5).
+ */
+export interface PieParseOptions extends ParseOptions, Partial<Pick<Limits, 'maxNodes'>> {}
 
 export type PieParseResult = ParseResult<PieModel, PieDocument>;
 
@@ -52,7 +49,6 @@ const TEXT = [T.Title, T.AccTitle, T.AccDescr];
 const STATEMENT = [T.String, ...TEXT];
 const DOC = [...STATEMENT, Kind.Newline, Kind.EOF];
 const AFTER_PIE = [T.ShowData, ...DOC];
-const LINE_END = [Kind.Newline, Kind.EOF];
 const HEAD = [T.Pie, Kind.Newline];
 
 /**
@@ -101,6 +97,9 @@ const GRAMMAR: RuleGrammar = {
     accDescr: T.AccDescr,
     string: T.String,
   }),
+  expected: EXPECTED,
+  statements: STATEMENT,
+  onePerLine: ONE_PER_LINE,
 };
 
 /**
@@ -127,27 +126,10 @@ class PieParser extends RuleParser<PreprocessResult> {
   }
 
   parse(): PieParseResult {
-    const { st, src } = this;
     this.statement(() => this.header());
     this.document();
-    const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
-    // D218: the in-text title if non-empty, else the front-matter one.
-    const title = this.texts.title || this.pre.frontMatter?.title;
-    const model: PieModel = Object.freeze({
-      showData: this.showData,
-      sections: Object.freeze(this.sections),
-      ...(title ? { title } : {}),
-      accTitle: this.texts.accTitle,
-      accDescr: this.texts.accDescr,
-      warnings: Object.freeze(warnings),
-    });
-    const ast: PieDocument = {
-      id: 'doc',
-      type: 'Document',
-      range: { start: this.pre.bodyStart, end: src.length },
-      children: this.children,
-    };
-    return st.result(model, ast, this.full, this.options, this.probe);
+    const fields = { showData: this.showData, sections: Object.freeze(this.sections) };
+    return this.finish(fields, this.texts, this.children, this.options);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -159,24 +141,8 @@ class PieParser extends RuleParser<PreprocessResult> {
 
   // ---- errors and recovery ------------------------------------------------------------
 
-  /** Report what was found where one of `want` was expected, then stop the statement. */
-  protected fail(want: readonly number[], hint?: string): never {
-    const { st } = this;
-    const where = this.range();
-    if (this.kind() === Kind.Error) this.badCharacters(where);
-    st.diagnostics.unexpected(
-      'UNEXPECTED',
-      where,
-      EXPECTED.names(want),
-      this.found(),
-      undefined,
-      hint ?? this.explain()
-    );
-    throw STOP;
-  }
-
   /** Text no token rule matched: an unclosed string or `accDescr {`, or stray characters. */
-  private badCharacters(where: Range): never {
+  protected override unmatched(where: Range): never {
     const { st } = this;
     const text = this.raw();
     const line = this.lineOf(where.start);
@@ -192,7 +158,7 @@ class PieParser extends RuleParser<PreprocessResult> {
     throw STOP;
   }
 
-  private explain(): string | undefined {
+  protected override failHint(): string | undefined {
     const k = this.kind();
     if (k === T.Number) return 'a value has no leading zeros, and only one per section';
     if (k === T.ShowData) return '`showData` goes on the `pie` line, right after `pie`';
@@ -231,21 +197,13 @@ class PieParser extends RuleParser<PreprocessResult> {
         this.i++;
         continue;
       }
+      const text = TEXTS[k];
       this.statement(() => {
         if (k === T.String) this.section();
-        else if (TEXT.includes(k)) this.text(k);
+        else if (text) this.textStatement(text, this.texts, this.children);
         else this.fail(DOC);
       });
     }
-  }
-
-  /** `EOL: NEWLINE+ | EOF` (the loop takes the line breaks after the first). */
-  private eol(): void {
-    this.tested(LINE_END);
-    const k = this.kind();
-    if (k === Kind.EOF) return;
-    if (k !== Kind.Newline) this.fail(LINE_END, STATEMENT.includes(k) ? ONE_PER_LINE : undefined);
-    this.i++;
   }
 
   /** `PieSection: STRING ":" NUMBER_PIE EOL` */
@@ -302,17 +260,6 @@ class PieParser extends RuleParser<PreprocessResult> {
         this.sections.push(section);
       }
     }
-    this.eol();
-  }
-
-  /** `(ACC_DESCR | ACC_TITLE | TITLE) EOL` */
-  private text(k: number): void {
-    const j = this.i++;
-    const { type, word } = TEXTS[k] ?? TITLE_STATEMENT;
-    const range = withoutIndent(this.src, this.range(j));
-    const text = (this.texts[word] = textValue(type, this.raw(j)));
-    this.children.push({ id: this.id(word), type, range, text });
-    this.st.statement(word, range);
-    this.eol();
+    this.lineEnd();
   }
 }

@@ -1,7 +1,5 @@
 /**
- * D537: which line hops a render draws. Core's static part only asks "could hops be on?"
- * (`config.lineHops` or the laying-out engine's section's `lineHops`) to load this chunk; the
- * precedence is decided here.
+ * D537: which line hops a render draws. The precedence is decided here.
  */
 import type { ResolvedConfig } from '../../config/resolve.ts';
 import type { EdgeStep } from '../../pipeline/draw.ts';
@@ -24,7 +22,7 @@ const setIn = (layers: readonly Layer[], pick: (l: Layer) => unknown): boolean =
  * `layers` are the author's config layers (`initialize()`, front matter, directives), which tell
  * a value the author set from a default. In order: a shared `false` the author set turns hops off
  * everywhere; else the engine's key the author set; the shared key the author set; the engine's
- * default; the shared default, `false`.
+ * default; the shared default, `true` (D672).
  */
 export function hopStyle(
   config: ResolvedConfig,
@@ -48,9 +46,8 @@ export function hopStyle(
  * The draw step's writer wrapper for a render (`drawDiagram`'s `edges`), from `mermaid`'s analysis
  * of it (the resolved config, the author's config layers, the plugin), or undefined when it
  * draws no hops (see {@link hopStyle}). A graph diagram's layout, through the
- * plugin's aliases, names the engine section (`elk` for `elk.stress`). `mermaid` loads it as the
- * layout registry's `lineHops`: from this chunk, or from an engine module that re-exports it
- * (`swimlane`, ELK).
+ * plugin's aliases, names the engine section (`elk` for `elk.stress`). `mermaid` imports it
+ * statically (D672).
  */
 export function lineHops({
   prepared: { config },

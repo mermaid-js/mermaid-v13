@@ -7,6 +7,7 @@
  * maps back to a source range; the source is never rewritten. Linear (R-PARSE-7).
  */
 import {
+  APOSTROPHE,
   CR,
   isSpace,
   LF,
@@ -16,8 +17,6 @@ import {
   sourceView,
 } from '@mermaid-js/core/parser-kit';
 import type { Hole, Range } from '@mermaid-js/core/parser-kit';
-
-const APOSTROPHE = 39;
 
 export interface StateView {
   /** The text v12's lexer saw, entities still as `#name;`, plus the appended `\n`. */

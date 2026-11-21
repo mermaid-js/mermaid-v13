@@ -1,0 +1,17 @@
+@ 2:11  direction |
+  TB constant 2:11-2:11 "" -> "TB"
+  BT constant 2:11-2:11 "" -> "BT"
+  LR constant 2:11-2:11 "" -> "LR"
+  RL constant 2:11-2:11 "" -> "RL"
+@ 3:12  direction L|
+  LR constant 3:11-3:12 "L" -> "LR"
+@ 4:8  legend |
+  on constant 4:8-4:8 "" -> "on"
+  off constant 4:8-4:8 "" -> "off"
+@ 5:9  legend o|
+  on constant 5:8-5:9 "o" -> "on"
+  off constant 5:8-5:9 "o" -> "off"
+@ 6:4  dir|
+  direction keyword 6:1-6:4 "dir" -> "direction "
+@ 7:4  leg|
+  legend keyword 7:1-7:4 "leg" -> "legend "

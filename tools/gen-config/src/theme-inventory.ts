@@ -19,7 +19,7 @@ import {
   loadTheme,
   type ThemeSpec,
   type NumberedPalette,
-} from '../../../packages/core/src/theme/index.ts';
+} from '@mermaid-js/core/theme';
 import {
   coreUsers,
   knownNames,
@@ -102,7 +102,9 @@ export async function themeInventory(packages: readonly ThemePackage[] = []): Pr
   const base = new Set<string>(BASE_VARIABLES);
   const tokens = new Set<string>(TOKEN_VARIABLES);
   const rows = Object.entries(THEME_VARIABLES).map(([name, def]) => {
-    const role = base.has(name) ? 'base' : tokens.has(name) ? 'token' : 'derived';
+    let role = 'derived';
+    if (base.has(name)) role = 'base';
+    else if (tokens.has(name)) role = 'token';
     const setBy =
       role === 'derived'
         ? specs

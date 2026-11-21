@@ -16,7 +16,7 @@ import { boxesByName, boxNamed } from '../parser/boxes.ts';
 import type { RelationNode, RequirementDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { RELATIONSHIPS, code, plural, spelling } from './tables.ts';
-import { trimmed } from '@mermaid-js/shared/parser/facet';
+import { classDefHover, covers, symbolHoverOf, trimmed } from '@mermaid-js/shared/parser/facet';
 
 const fieldList = (fields: readonly (readonly [key: string, value: string])[]): string => {
   const set = fields.filter(([, v]) => v !== '');
@@ -65,19 +65,12 @@ function boxHover(name: string, kind: string, model: RequirementModel): string |
 
 function classHover(name: string, model: RequirementModel): string {
   const c = model.classes.find((x) => x.name === name);
-  let styles = 'No `classDef` defines it.';
-  if (c !== undefined) {
-    styles =
-      c.styles.length === 0
-        ? 'Its `classDef` sets no styles.'
-        : code(`classDef ${name} ${c.styles.join(',')}`);
-  }
   const boxes = [...model.requirements, ...model.elements];
   const used =
     name === 'default'
       ? 'Applies to every box.'
       : `Used by ${plural(boxes.filter((b) => b.classes.includes(name)).length, 'box', 'boxes')}`;
-  return `**class** ${code(name)}\n\n${styles}\n\n${used}`;
+  return classDefHover('class', name, c?.styles, used);
 }
 
 function symbolHover(s: SymbolOccurrence, model: RequirementModel): string | undefined {
@@ -95,16 +88,12 @@ export function requirementHover(
 ): Hover | undefined {
   const { text, result } = doc;
   const model = result.model as RequirementModel;
-  if (at.symbol) {
-    const contents = symbolHover(at.symbol, model);
-    if (contents !== undefined) return { range: at.symbol.range, contents };
-  }
+  const symbol = symbolHoverOf(at, (s) => symbolHover(s, model));
+  if (symbol) return symbol;
   const t = at.token;
   if (!t) return undefined;
   const range = trimmed(text, t.range);
-  if (at.offset < range.start || at.offset > range.end || range.start === range.end) {
-    return undefined;
-  }
+  if (!covers(at.offset, range)) return undefined;
   const docText = requirementDocs[t.kind];
   if (docText === undefined) return undefined;
   const word = text.slice(range.start, range.end);

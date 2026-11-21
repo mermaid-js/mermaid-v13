@@ -42,18 +42,7 @@ import {
   type ThemeName,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
-import { loadOracle } from '../oracle.ts';
-
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
-  };
-}
-
-await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
+import { v12Vars } from '../v12-theme.ts';
 
 /** v12's treemap diagram module (the chunk holding `src/diagrams/treemap/styles.ts`). */
 async function v12TreemapStyles(): Promise<(options: object) => string> {
@@ -82,13 +71,6 @@ const CASES: readonly Case[] = [
   ...THEME_NAMES.map((theme) => ({ label: theme, theme })),
   { label: 'base+darkMode', theme: 'base', vars: { darkMode: true } },
 ];
-
-/** v12's resolved theme variables of `theme`, with author `themeVariables`. */
-function v12Vars(theme: string, themeVariables?: object): Record<string, unknown> {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize(themeVariables ? { theme, themeVariables } : { theme });
-  return { ...v12.mermaidAPI.getConfig().themeVariables };
-}
 
 /** v12's `.treemapTitle` fill and font size (its `styles()` reads the current config too). */
 function v12Title(theme: string, themeVariables?: object): { fill: string; size: string } {

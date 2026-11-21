@@ -7,6 +7,7 @@ import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import { ascii } from './ascii.ts';
 import { c4CellRect, drawC4 } from './ascii/draw.ts';
 import { layoutC4, type C4Layout } from './layout/index.ts';
+import { fixture } from './layout/mmd.fixtures.ts';
 import { c4TestContext, parsedC4 } from './test-context.ts';
 
 /**
@@ -96,6 +97,22 @@ describe('the C4 ascii hook (#545)', () => {
     expect(drawing.text).toContain('Skips');
   });
 
+  it('draws every relation between a pair, each with its label (#680)', () => {
+    const src = [
+      'C4Context',
+      'System(a, "A")',
+      'System(b, "B")',
+      'Rel(a, b, "Pushes")',
+      'BiRel(a, b, "Reconciles")',
+      'Rel(b, a, "Replies")',
+    ].join('\n');
+    const { parsed, ctx } = context(src);
+    const laid = layoutC4(parsed.model, { ...ctx, measurer: cellMeasurer, units: cellProfile() });
+    const drawing = drawC4(laid, unicode);
+    expect(drawing.lines).toHaveLength(3);
+    for (const label of ['Pushes', 'Reconciles', 'Replies']) expect(drawing.text).toContain(label);
+  });
+
   it('cuts a line wider than its box with …', () => {
     const { parsed, ctx } = context(SRC);
     const laid = layoutC4(parsed.model, { ...ctx, measurer: cellMeasurer, units: cellProfile() });
@@ -153,5 +170,29 @@ describe('the C4 ascii hook (#545)', () => {
     const limits = { ...DEFAULT_LIMITS, maxLayoutWork: 0 };
     const capped = ascii(parsed.model, laid, { config: ctx.config, warn: () => undefined, limits });
     expect(capped).toBe(drawC4(laid, unicode, 0).text);
+  });
+});
+
+/**
+ * The text output of the fixtures whose labels a wider box would move: a relation label in text
+ * output keeps one cell of room across, as before the SVG's tag took the `labelPatch` (D629).
+ * Pinned from the output before that change.
+ */
+const LABEL_ROOM_FIXTURES = [
+  'nightly-check/c4-4-should-render-a-simple-c4dynamic-diagram',
+  'nightly-check/docs/2-container',
+  'nightly-check/docs/4-dynamic',
+  'pr-check/repeated-relations-room',
+];
+
+describe('relation labels in text output (D629)', () => {
+  it.each(LABEL_ROOM_FIXTURES)('draws %s as before the edge-label tags', (path) => {
+    const { model, config } = fixture(path);
+    const ctx = c4TestContext(config, theme, []);
+    for (const padding of ['compact', 'roomy'] as const) {
+      const units = cellProfile(padding);
+      const laid = layoutC4(model, { ...ctx, measurer: cellMeasurer, units });
+      expect(ascii(model, laid, { config, warn: () => undefined })).toMatchSnapshot(padding);
+    }
   });
 });

@@ -60,7 +60,8 @@ export const LIGHT_RULES: ThemeRuleTable = {
   clusterBkg: 'tertiaryColor',
   clusterBorder: 'tertiaryBorderColor',
   titleColor: 'contrast(clusterBkg, textColor, background)',
-  edgeLabelBackground: 'secondaryColor',
+  // Every edge label's fill is the background it sits on (D628).
+  edgeLabelBackground: 'background',
   arrowheadColor: 'lineColor',
   defaultLinkColor: 'lineColor',
   border1: 'primaryBorderColor',
@@ -113,6 +114,16 @@ export const LIGHT_RULES: ThemeRuleTable = {
   rowAltBkg: 'lightenHsl(mainBkg, 5%)',
   linkLabelBkg: 'edgeLabelBackground',
   nestedBkg: 'tertiaryColor',
+  // Shared inputs (D656): the base colours as a diagram on its own canvas keeps them. A theme
+  // whose v12 constructor value no override moves pins it in `values`.
+  canvasBkg: 'background',
+  canvasLineColor: 'lineColor',
+  canvasTextColor: 'primaryTextColor',
+  canvasItemBkg: 'primaryColor',
+  canvasItemBkg3: 'tertiaryColor',
+  canvasNodeBkg: 'mainBkg',
+  bandBkg: 'tertiaryColor',
+  guideLineColor: 'lineColor',
 };
 
 /** Shared derivation for dark themes. */
@@ -121,7 +132,6 @@ export const DARK_RULES: ThemeRuleTable = {
   primaryBorderColor: 'mix(primaryColor, white, 20%)',
   secondaryBorderColor: 'mix(secondaryColor, white, 20%)',
   tertiaryBorderColor: 'mix(tertiaryColor, white, 20%)',
-  edgeLabelBackground: 'mix(secondaryColor, black, 30%)',
   noteBkgColor: 'secondaryColor',
   noteBorderColor: 'mix(noteBkgColor, white, 30%)',
   errorBkgColor: '#a44141',

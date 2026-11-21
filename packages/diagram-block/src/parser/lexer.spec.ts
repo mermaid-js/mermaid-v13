@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { Kind } from '@mermaid-js/core/parser-kit';
-import { blockTokens, blockView, JISON_NAMES } from './index.ts';
+import { bodyView } from '@mermaid-js/shared/parser/seen-tokens';
+import { blockTokens, JISON_NAMES } from './index.ts';
 import { lex } from './lexer.ts';
 import { T } from './tokens.ts';
 
 const stream = (src: string) => {
-  const { from, view } = blockView(src);
+  const { bodyStart: from, view } = bodyView(src);
   const s = lex(src, from, view).tokens;
   return Array.from({ length: s.length }, (_, j) => ({
     kind: s.kind[j] ?? Kind.EOF,

@@ -46,6 +46,7 @@ const NAMES: readonly (readonly [string, ElkAlgorithm])[] = [
   ['elk.radial', 'radial'],
 ];
 /** The engine module, once a loader has imported it (the hooks below wait for it). */
+// Kept module state, lazy-load handle: the engine module once a loader has imported it.
 let engine: typeof Engine | undefined;
 
 /**
@@ -65,11 +66,9 @@ const elkLayouts: readonly ElkLayoutLoader[] = NAMES.map(([name, algorithm]) => 
   name,
   config: configFragment,
   extension: elkExtension,
-  // The engine carries core's line-hop step (D537), which `elk.lineHops` (default on) needs, so
-  // `preload({ layouts: ['elk'] })` covers `renderSync`.
   loader: async () => {
     engine = await import('./adapter.ts');
-    return Object.assign(engine.elkEngine(algorithm), { lineHops: engine.lineHops });
+    return engine.elkEngine(algorithm);
   },
 }));
 

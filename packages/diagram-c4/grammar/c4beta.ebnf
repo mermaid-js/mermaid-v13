@@ -7,7 +7,8 @@ decide the syntax, and the parser must match this file (DESIGN §4.4). Where the
 differs, the spec lists why.
 
 **Lexer input.** The lexer reads the diagram body: front matter removed, `%%{…}%%` directives
-blanked out. A statement ends at a line break; `%%` starts a comment outside strings. Words are
+blanked out. Before the header, any whitespace regex `\s` matches is a blank (a byte-order mark,
+a no-break space), as the detector reads it; after it, only tabs and spaces. A statement ends at a line break; `%%` starts a comment outside strings. Words are
 case-sensitive. An id is words of letters, digits and `_` joined by single `-`, so `a-->b`
 reads as `a`, `-->`, `b`. Only `title`, `accTitle`, `accDescr`, `direction`, `legend` and
 `style` are reserved: every other word, element kinds included, may be an id. A step (`2:`) is
@@ -75,6 +76,9 @@ ARROW_RIGHT           /-->/                               :operator ;
 ARROW_LEFT            /<--(?!>)/                          :operator ;
 (** `<-->`: a relation that points both ways. *)
 ARROW_BOTH            /<-->/                              :operator ;
+(** `---`: a relation with no arrowhead, drawn between the two elements as it is written. `----` and `--->` are not
+undirected arrows. *)
+ARROW_UNDIRECTED      /---(?![->])/                       :operator ;
 (** `:::team`: a tag on an element or a relation. *)
 TAG                   /:::[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*/ :variable ;
 COLON                 /:/                                 :punctuation ;
@@ -84,8 +88,12 @@ RBRACE                /\}/                                :punctuation ;
 (** `2:`: the step of a relation in a dynamic diagram: digits and a colon, at the start of a
 line. The colon is a token of its own. *)
 STEP                  /(?<=(?:^|[\n\r])[\t ]*)[0-9]+(?=[\t ]*:)/ :constant ;
-(** `#1f2937`: a colour of a style, three or six hex digits. *)
-HEX                   /#(?:[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})(?!\w)/ :constant ;
+(** `#1f2937`: a colour of a style, `#` and 3, 4, 6 or 8 hex digits; with 4 or 8, the last one or
+two are the alpha. *)
+HEX                   /#(?:[0-9A-Fa-f]{8}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3,4})(?!\w)/ :constant ;
+(** `rgb(255, 0, 0)`: a colour of a style, `rgb(…)`, `rgba(…)`, `hsl(…)` or `hsla(…)` on one line.
+What is inside has no `(`, `)` or `%%`. *)
+COLOR_FUNCTION        /(?:rgba?|hsla?)\((?:[^()\n\r%]|%(?!%))*\)/ :constant ;
 (** `"Ledger"` or `'Ledger'`: text. `\` escapes the next character. A string ends on its line. *)
 STRING                /"(?:[^"\\\r\n]|\\.)*"|'(?:[^'\\\r\n]|\\.)*'/ :string ;
 (** An id: words of letters, digits and `_` joined by single `-`. The reserved words `title`,
@@ -123,9 +131,11 @@ AccDescr @AccDescr = ACC_DESCR ;
 Direction @Direction = DIRECTION ( TB | BT | LR | RL ) ;
 (** `legend off`: shows or hides the legend. *)
 Legend @Legend = LEGEND ( ON | OFF ) ;
-(** `style store shape:cylinder, fill:#1f2937`: the target is a tag or an element kind. *)
+(** `style store shape:cylinder, fill:#1f2937`: the target is a tag or an element kind. A colour
+that is a word must be a CSS colour name or `currentColor`, or it is dropped with a warning; a
+line with a value the lexer cannot read, such as `#12`, is dropped with a warning, not an error. *)
 Style @Style = STYLE id entry { COMMA entry } ;
-entry = id COLON ( HEX | id ) ;
+entry = id COLON ( HEX | COLOR_FUNCTION | id ) ;
 
 (** `container api "API" "Serves orders." "Kotlin" :::team`: an element with a name, a
 description and a technology, `instances` for a deployment node, tags, and a body of elements
@@ -138,7 +148,7 @@ body = LBRACE ( RBRACE | NEWLINE { NEWLINE | Element NEWLINE } RBRACE ) ;
 (** `2: api --> db : "Reads" "SQL" :::async`: a relation, its step (dynamic diagrams), its
 description and technology, and tags. *)
 Relation @Relation = [ STEP COLON ] id arrow id [ COLON STRING [ STRING ] ] { TAG } ;
-arrow = ARROW_RIGHT | ARROW_LEFT | ARROW_BOTH ;
+arrow = ARROW_RIGHT | ARROW_LEFT | ARROW_BOTH | ARROW_UNDIRECTED ;
 
 (** Any word but the six reserved ones. *)
 id = ID | HEADER | CONTEXT | CONTAINER | COMPONENT | DYNAMIC | DEPLOYMENT | PERSON

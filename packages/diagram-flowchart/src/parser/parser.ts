@@ -28,7 +28,6 @@ import type {
 } from '@mermaid-js/core/parser-kit';
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import { isYamlMap } from '@mermaid-js/core/preprocess';
-import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { flowBuilderLimits, FlowParser, flowTables } from '@mermaid-js/shared/parser/flow';
 import type { FlowDocItem, FlowParserDialect, FlowShapeData } from '@mermaid-js/shared/parser/flow';
 import type {
@@ -45,8 +44,6 @@ import type { FlowModel } from './model.ts';
 import { T } from './tokens.ts';
 
 export interface FlowParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** Edge cap (core `DEFAULT_LIMITS.maxEdges`, 5,000; v12's `maxEdges` was 500). */
   maxEdges?: number;
   /** Vertex cap (core `DEFAULT_LIMITS.maxNodes`). */
@@ -125,6 +122,8 @@ const DIALECT: FlowParserDialect<FlowBuilder, AnyFlowOptions> = {
       },
     }),
   destructLink,
+  // v12 12.3.0's `node shapeData spaceList` (D621); swimlane-beta shares it.
+  blanksAfterData: true,
   mode: ({ lean, astIds }) => (lean ? { lean, astIds } : undefined),
 };
 
@@ -166,6 +165,8 @@ class FlowchartParser extends FlowParser<FlowBuilder, AnyFlowOptions, FlowOwnStm
     db.finish();
     const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
     const result = this.outcome(db.model(warnings));
+    const title = this.pre.frontMatter?.title;
+    if (title) result.model.title = title;
     if (db.embeds.length > 0) result.embeds = db.embeds;
     result.edgeCount = result.model.edges.length;
     return result;
@@ -248,7 +249,8 @@ class FlowchartParser extends FlowParser<FlowBuilder, AnyFlowOptions, FlowOwnStm
     const r = this.span(from);
     st.statement('embed', r);
     const stmt: FlowEmbedStmt = {
-      id: this.ids.statement('embed'),
+      // The block is a mention of its node (D69), as state's is: `n:<id>`, or `@2` after one.
+      id: this.nodeMention(name),
       type: 'Embed',
       range: r,
       name,

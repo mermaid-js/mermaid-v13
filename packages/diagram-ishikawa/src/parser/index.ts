@@ -2,9 +2,9 @@
  * The ishikawa parser's public surface: the parser, detection, and the lexer gated against
  * v12's jison lexer.
  */
-import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
-import type { Range, SourceView } from '@mermaid-js/core/parser-kit';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { TRIVIA } from '@mermaid-js/core/parser-kit';
+import { bodyView, keptTokens } from '@mermaid-js/shared/parser/seen-tokens';
+import type { SeenToken } from '@mermaid-js/shared/parser/seen-tokens';
 import { lex } from './lexer.ts';
 
 export { JISON_NAMES, T as IshikawaTokenKind } from './tokens.ts';
@@ -13,48 +13,15 @@ export type { IshikawaParseOptions, IshikawaParseResult } from './parser.ts';
 export { detectIshikawa } from './detect.ts';
 export type * from './ast.ts';
 
-export interface IshikawaToken {
-  /** An `IshikawaTokenKind` or a shared `Kind`. */
-  kind: number;
-  /** The token's text as v12's parser read it (`Lexed.text` in `./lexer.ts`). */
-  text: string;
-  range: Range;
-}
-
-/**
- * Where the ishikawa body of `src` starts and its source view (what v12's preprocessing
- * removed and rewrote), as {@link lex} takes them.
- */
-export function ishikawaView(src: string): { from: number; view: SourceView } {
-  const pre = preprocess(src);
-  const view = sourceView(
-    src,
-    pre.bodyStart,
-    pre.directives.map((d) => d.range)
-  );
-  return { from: pre.bodyStart, view };
-}
+/** A token of this diagram: its `kind` is an `IshikawaTokenKind` or a shared `Kind`. */
+export type IshikawaToken = SeenToken;
 
 /**
  * The significant ishikawa tokens of `src` (trivia left out), for editors and for the
  * lexer-parity gate.
  */
 export function ishikawaTokens(src: string): IshikawaToken[] {
-  const { from, view } = ishikawaView(src);
-  const lexed = lex(src, from, view);
-  const { tokens } = lexed;
-  const out: IshikawaToken[] = [];
-  for (let j = 0; j < tokens.length; j++) {
-    const kind = tokens.kind[j] ?? Kind.EOF;
-    if (
-      kind === Kind.Comment ||
-      kind === Kind.Directive ||
-      kind === Kind.Space ||
-      kind === Kind.EOF
-    )
-      continue;
-    const range = { start: tokens.start[j] ?? 0, end: tokens.end[j] ?? 0 };
-    out.push({ kind, text: lexed.text(j), range });
-  }
-  return out;
+  const { bodyStart, view } = bodyView(src);
+  const lexed = lex(src, bodyStart, view);
+  return keptTokens(lexed.tokens, TRIVIA, (j) => lexed.text(j));
 }

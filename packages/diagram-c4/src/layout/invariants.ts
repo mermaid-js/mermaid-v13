@@ -14,26 +14,24 @@
 import type { C4Model } from '../model.ts';
 import { C4_METRICS as M } from './metrics.ts';
 import { crosses, lineOf } from './route.ts';
-import { onOutline, outlineForm, type Outline } from './shapes.ts';
+import { labelBlockers, onOutline, outlineForm, type Outline } from './shapes.ts';
 import type { C4Layout, C4RelationLayout, Point, Rect } from './types.ts';
-import { nonFinite as finite } from '@mermaid-js/shared/layout/invariants';
+import {
+  EPS,
+  nonFinite as finite,
+  rectInside,
+  rectsOverlap as overlap,
+} from '@mermaid-js/shared/testing/layout-invariants';
 
-/** Float tolerance of the checks, in px. */
-const EPS = 1e-6;
 /** How far an end may lie off its outline, in px. */
 const END_TOL = 0.01;
 
+/** Whether `inner` lies in `outer`, from `top` down (a frame below its header). */
 const inside = (outer: Rect, inner: Rect, top = outer.y): boolean =>
-  inner.x >= outer.x - EPS &&
-  inner.y >= top - EPS &&
-  inner.x + inner.width <= outer.x + outer.width + EPS &&
-  inner.y + inner.height <= outer.y + outer.height + EPS;
-
-const overlap = (a: Rect, b: Rect): boolean =>
-  a.x < b.x + b.width - EPS &&
-  b.x < a.x + a.width - EPS &&
-  a.y < b.y + b.height - EPS &&
-  b.y < a.y + a.height - EPS;
+  rectInside(
+    inner,
+    top === outer.y ? outer : { ...outer, y: top, height: outer.y + outer.height - top }
+  );
 
 /** Pairs of boxes that overlap, by a sweep along x. */
 function overlapping<T>(items: readonly T[], box: (t: T) => Rect): [T, T][] {
@@ -83,6 +81,7 @@ export function c4LayoutViolations(model: C4Model, layout: C4Layout): string[] {
   checkRelations(model, layout, out);
   if (layout.careful) checkLabels(layout, out);
   checkBounds(layout, out);
+  out.push(...legendViolations(layout));
   return out;
 }
 
@@ -92,19 +91,27 @@ function checkElements(model: C4Model, layout: C4Layout, out: string[]): void {
   const frames = new Map(layout.boundaries.map((b) => [b.index, b]));
   for (const e of layout.elements) {
     if (!(e.box.width > 0 && e.box.height > 0)) out.push(`element ${e.alias} has no area`);
-    const parent = model.elements[e.index]?.parent ?? -1;
-    if (parent >= 0) {
-      const frame = frames.get(parent);
-      if (!frame) out.push(`element ${e.alias}: its boundary is not drawn`);
-      else if (!inside(frame.box, e.box, frame.box.y + frame.head))
-        out.push(`element ${e.alias} is outside boundary ${frame.alias}`);
-    }
+    checkInFrame(e, model.elements[e.index]?.parent ?? -1, frames, out);
     for (const s of [e.name, e.type, e.descr])
       if (s && !inside(e.box, s)) out.push(`element ${e.alias}: its text is outside its shape`);
   }
   for (const [a, b] of overlapping(layout.elements, (e) => e.box))
     out.push(`elements ${a.alias} and ${b.alias} overlap`);
   checkForeignFrames(model, layout, out);
+}
+
+/** An element in a boundary (`parent`, -1 for none): that boundary is drawn and holds it. */
+function checkInFrame(
+  e: C4Layout['elements'][number],
+  parent: number,
+  frames: ReadonlyMap<number, C4Layout['boundaries'][number]>,
+  out: string[]
+): void {
+  if (parent < 0) return;
+  const frame = frames.get(parent);
+  if (!frame) out.push(`element ${e.alias}: its boundary is not drawn`);
+  else if (!inside(frame.box, e.box, frame.box.y + frame.head))
+    out.push(`element ${e.alias} is outside boundary ${frame.alias}`);
 }
 
 /** The drawn boundaries holding boundary `index`, itself included, through the drawn parents. */
@@ -187,8 +194,9 @@ const lineOfLayout = (r: C4RelationLayout): number[] =>
   lineOf(flat(r.points), r.controls ? flat(r.controls) : undefined);
 
 /**
- * In a careful layout, no label box covers its own arrowheads, any element or another
- * relation's line, unless the layout marks it `crowded` (no spot cleared them).
+ * In a careful layout, no label box covers its own arrowheads, any element (a person's head or
+ * body: the corners of its box beside the head are empty), another relation's line or another
+ * relation's label, unless the layout marks it `crowded` (no spot cleared them).
  */
 function checkLabels(layout: C4Layout, out: string[]): void {
   const square = (p: Point): Rect => ({
@@ -197,8 +205,12 @@ function checkLabels(layout: C4Layout, out: string[]): void {
     width: 2 * M.arrow,
     height: 2 * M.arrow,
   });
-  const lines = new Map(layout.relations.map((r) => [r.index, lineOfLayout(r)]));
-  const byIndex = new Map(layout.relations.map((r) => [r.index, `${r.from} -> ${r.to}`]));
+  const cell = layout.cell !== undefined;
+  const blockers = layout.elements.map((e) => ({
+    alias: e.alias,
+    parts: labelBlockers({ ...e.box, form: outlineForm(e.shape, cell) }),
+  }));
+  const others = otherRelations(layout);
   for (const r of layout.relations) {
     const box = r.labelBox;
     if (!box || r.crowded) continue;
@@ -208,8 +220,25 @@ function checkLabels(layout: C4Layout, out: string[]): void {
       (r.endArrow && overlap(box, square(r.end)))
     )
       out.push(`${name}: its label covers its own arrowhead`);
-    for (const e of layout.elements)
-      if (overlap(box, e.box)) out.push(`${name}: its label covers element ${e.alias}`);
+    for (const e of blockers)
+      if (e.parts.some((part) => overlap(box, part)))
+        out.push(`${name}: its label covers element ${e.alias}`);
+    for (const fault of others(r, box)) out.push(`${name}: ${fault}`);
+  }
+}
+
+/**
+ * What of the other relations a label box covers: their labels not marked `crowded` (a crowded
+ * label over this one is the one excused), and their lines.
+ */
+function otherRelations(layout: C4Layout): (r: C4RelationLayout, box: Rect) => string[] {
+  const lines = new Map(layout.relations.map((r) => [r.index, lineOfLayout(r)]));
+  const byIndex = new Map(layout.relations.map((r) => [r.index, `${r.from} -> ${r.to}`]));
+  return (r, box) => {
+    const out: string[] = [];
+    for (const o of layout.relations)
+      if (o !== r && o.labelBox && !o.crowded && overlap(box, o.labelBox))
+        out.push(`its label covers the label of relation ${byIndex.get(o.index)}`);
     // The box less the tolerance: a line along its edge does not run through it.
     const inner = {
       x0: box.x + EPS,
@@ -219,8 +248,9 @@ function checkLabels(layout: C4Layout, out: string[]): void {
     };
     for (const [k, o] of lines.entries())
       if (k !== r.index && crosses(o, inner))
-        out.push(`${name}: its label is over the line of relation ${byIndex.get(k)}`);
-  }
+        out.push(`its label is over the line of relation ${byIndex.get(k)}`);
+    return out;
+  };
 }
 
 /** Everything a relation draws: its line or loop, and its label box. */
@@ -244,6 +274,35 @@ function checkBounds(layout: C4Layout, out: string[]): void {
     if (!inside(bounds, box)) out.push(`${name} is outside the bounds`);
   if (!inside({ x: 0, y: 0, width: layout.width, height: layout.height }, bounds))
     out.push('the bounds are outside the canvas');
+}
+
+/**
+ * c4-beta's legend: inside the bounds, holding its heading and every swatch and label, and
+ * clear of everything else drawn: elements, boundaries, relation lines and labels, the title.
+ */
+export function legendViolations(layout: C4Layout): string[] {
+  const { legend } = layout;
+  if (!legend) return [];
+  const out: string[] = [];
+  if (!inside(layout.bounds, legend.box)) out.push('the legend is outside the bounds');
+  const parts = [legend.title, ...legend.rows.flatMap((r) => [r.swatch, r.label])];
+  if (parts.some((part) => !inside(legend.box, part)))
+    out.push('the legend holds less than it draws');
+  const { x, y, width, height } = legend.box;
+  const area = { x0: x, y0: y, x1: x + width, y1: y + height };
+  const others: [string, Rect][] = [
+    ...layout.elements.map((e): [string, Rect] => [`element ${e.alias}`, e.box]),
+    ...layout.boundaries.map((b): [string, Rect] => [`boundary ${b.alias}`, b.box]),
+    ...layout.relations.flatMap((r): [string, Rect][] =>
+      r.labelBox ? [[`the label of ${r.from} -> ${r.to}`, r.labelBox]] : []
+    ),
+    ...(layout.title ? [['the title', layout.title] as [string, Rect]] : []),
+  ];
+  for (const [name, box] of others)
+    if (overlap(legend.box, box)) out.push(`the legend overlaps ${name}`);
+  for (const r of layout.relations)
+    if (crosses(lineOfLayout(r), area)) out.push(`the legend covers relation ${r.from} -> ${r.to}`);
+  return out;
 }
 
 /**

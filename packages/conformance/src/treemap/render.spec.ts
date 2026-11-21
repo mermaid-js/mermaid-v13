@@ -13,7 +13,7 @@ import {
 import { astIndex, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 import { treemapCases, treemapGateCorpus } from './corpus.ts';
-import { treemapApi } from './render-api.ts';
+import { deterministicApi } from '../render-api.ts';
 
 /**
  * Render properties of the treemap renderer (spec #428 T4, DESIGN §13.2, §13.4) over the treemap
@@ -55,10 +55,10 @@ const skipped: { id: string; reason: string }[] = [];
 let api: Mermaid;
 
 beforeAll(async () => {
-  api = treemapApi();
+  api = deterministicApi();
   const corpus = await treemapGateCorpus();
   for (const theme of THEMES) {
-    const themed = treemapApi({ theme });
+    const themed = deterministicApi({ theme });
     for (const item of corpus) {
       if (!detectTreemap(item.source)) continue;
       try {
@@ -124,7 +124,7 @@ describe('treemap render properties over the corpus', () => {
 
   it('is deterministic: a fresh API object renders the same bytes (R-ARCH-6)', async () => {
     const fresh = new Map<string, Mermaid>();
-    for (const theme of THEMES) fresh.set(theme, treemapApi({ theme }));
+    for (const theme of THEMES) fresh.set(theme, deterministicApi({ theme }));
     for (const c of cases) {
       const again = await fresh.get(c.theme)!.render('mermaid-0', c.source);
       expect(again.svg, c.id).toBe(c.result.svg);
@@ -394,7 +394,7 @@ describe('treemap render: what is drawn', () => {
 
 describe('treemap render: paints (D215, D227, D404, D406, D407)', () => {
   const literal = (theme: MermaidConfig['theme'], themeVariables?: object) =>
-    treemapApi({
+    deterministicApi({
       theme,
       output: { cssVariables: false },
       ...(themeVariables ? { themeVariables } : {}),
@@ -452,6 +452,23 @@ describe('treemap render: paints (D215, D227, D404, D406, D407)', () => {
       .map((r) => attr(tree, r, 'fill'));
     // A (3), B (2), A (1): both A take cScale0, B cScale1.
     expect(fills).toEqual(['#555555', '#f4f4f4', '#555555']);
+  });
+
+  it('fills and strokes the 13th section and later ones, cycling cScale0 to 11 (D612, #844)', async () => {
+    const { tree } = await render(probe('thirteen-sections'), literal('default'));
+    const rects = byClass(tree, 'treemapSection').filter((n) => tree.tag(n) === 'rect');
+    expect(rects).toHaveLength(14);
+    const paints = rects.map((r) => [attr(tree, r, 'fill'), attr(tree, r, 'stroke')]);
+    for (const [i, [fill, stroke]] of paints.entries()) {
+      expect(fill, `section ${i + 1}`).not.toBe('transparent');
+      expect(stroke, `section ${i + 1}`).not.toBe('transparent');
+    }
+    // Twelve colours, then round again: the 13th takes the 1st's, the 14th the 2nd's.
+    expect(new Set(paints.slice(0, 12).map(([fill]) => fill)).size).toBe(12);
+    expect(paints.slice(12)).toEqual(paints.slice(0, 2));
+    // The 13th section's leaf takes its parent's fill.
+    const leaf = rectOf(tree, groupOf(tree, 'a12'));
+    expect(attr(tree, leaf, 'fill')).toBe(paints[12]![0]);
   });
 
   it("writes classDef styles over v12's own: shape styles on the rect, text styles on the text", async () => {

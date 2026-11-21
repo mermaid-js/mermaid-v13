@@ -22,7 +22,7 @@
   7:1-7:16 "System_Boundary"
   | **`System_Boundary`**
   |
-  | `Boundary(alias, "Label") { … }` and the other boundaries and deployment nodes: their statements go between `{` and `}`, the first an element, relation or style. The `{` ends the macro's line or starts the next.
+  | `Boundary(alias, "Label") { … }` and the other boundaries and deployment nodes: their statements go between `{` and `}`, the first an element, relation or style (a `direction` may come before it). The `{` ends the macro's line or starts the next.
 @ 8:12  Container|Db(db, "DB")
   8:3-8:14 "ContainerDb"
   | **`ContainerDb`**

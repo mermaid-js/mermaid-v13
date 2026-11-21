@@ -10,6 +10,7 @@ import {
 } from '@mermaid-js/diagram-packet';
 import type { PacketModel } from '@mermaid-js/diagram-packet';
 import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { PACKET_V12_TYPES, packetV12Snapshot } from './v12.ts';
 import type { PacketPieceSnapshot, PacketSnapshot } from './v12.ts';
@@ -44,15 +45,11 @@ export const packetSection = (text: string): Record<string, unknown> | undefined
  * D218 fallback has its own specs in the packet package.
  */
 export function parsePacketForParity(text: string): PacketModel {
-  const pre = preprocess(text);
-  const fm = pre.frontMatter && { ...pre.frontMatter, title: undefined };
-  const result = parsePacket(text, {
-    preprocessed: { ...pre, frontMatter: fm },
-    config: packetSection(text),
-  });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((x) => x.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
+  return parseForParity(
+    text,
+    (t, options) => parsePacket(t, { ...options, config: packetSection(t) }),
+    { withoutTitle: true }
+  );
 }
 
 export const packetAdapter: DiagramAdapter<PacketModel> = {

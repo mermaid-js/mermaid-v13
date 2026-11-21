@@ -1,13 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { SaxesParser } from 'saxes';
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { AstNode } from '@mermaid-js/core/parser-kit';
 import { assertInert } from '@mermaid-js/core/svg';
 import type { ClassModel } from '@mermaid-js/diagram-class';
 import { createMermaid, MermaidError, type Prepared, type RenderResult } from 'mermaid';
 import { REPO_ROOT, corpusFromDir } from './index.ts';
-import { parseSvg, type SvgElement as SvgNode, type SvgView as SvgTree } from './svg-tree.ts';
+import { astIndex, extents, wellFormed } from './svg-props.ts';
+import { parseSvg, type SvgView as SvgTree } from './svg-tree.ts';
 import type { CorpusItem } from './types.ts';
 
 /**
@@ -59,61 +58,6 @@ beforeAll(async () => {
   }
 }, 240_000);
 
-function wellFormed(svg: string): string | undefined {
-  const parser = new SaxesParser({ xmlns: true });
-  let problem: string | undefined;
-  parser.on('error', (e) => (problem ??= e.message));
-  parser.write(svg).close();
-  return problem;
-}
-
-// Every coordinate an element draws at, in root user units (translate() only, as written).
-function extents(tree: SvgTree): { x: number; y: number }[] {
-  const out: { x: number; y: number }[] = [];
-  const nums = (s: string | undefined): number[] =>
-    s === undefined ? [] : (s.match(/-?\d+(?:\.\d+)?(?:e[-+]?\d+)?/g) ?? []).map(Number);
-  const walk = (node: SvgNode, dx: number, dy: number): void => {
-    const tag = tree.tag(node);
-    if (tag === undefined && node !== tree.root) return;
-    const at = (name: string): number => Number(tree.getAttr(node, name) ?? 0);
-    const t = tree.getAttr(node, 'transform');
-    const m = t ? /^translate\((-?[\d.]+),(-?[\d.]+)\)/.exec(t) : null;
-    if (m) {
-      dx += Number(m[1]);
-      dy += Number(m[2]);
-    }
-    const put = (x: number, y: number): void => void out.push({ x: x + dx, y: y + dy });
-    if (tag === 'rect') {
-      put(at('x'), at('y'));
-      put(at('x') + at('width'), at('y') + at('height'));
-    } else if (tag === 'circle') {
-      put(at('cx') - at('r'), at('cy') - at('r'));
-      put(at('cx') + at('r'), at('cy') + at('r'));
-    } else if (tag === 'path') {
-      const d = tree.getAttr(node, 'd') ?? '';
-      for (const seg of d.match(/[MLCQAZ][^MLCQAZ]*/g) ?? []) {
-        const p = nums(seg.slice(1));
-        if (seg.startsWith('A')) put(p[5]!, p[6]!);
-        else for (let i = 0; i + 1 < p.length; i += 2) put(p[i]!, p[i + 1]!);
-      }
-    } else if ((tag === 'text' || tag === 'tspan') && tree.getAttr(node, 'x') !== undefined)
-      put(at('x'), at('y'));
-    for (const c of tree.children(node)) walk(c, dx, dy);
-  };
-  walk(tree.root, 0, 0);
-  return out;
-}
-
-function astIndex(ast: AstNode): Map<string, AstNode> {
-  const index = new Map<string, AstNode>();
-  const visit = (n: AstNode): void => {
-    index.set(n.id, n);
-    for (const c of n.children ?? []) visit(c);
-  };
-  visit(ast);
-  return index;
-}
-
 describe('class render properties over the corpus', () => {
   it('renders the corpus', () => {
     expect(cases.length).toBeGreaterThan(590);
@@ -145,9 +89,10 @@ describe('class render properties over the corpus', () => {
     for (const c of cases) {
       const { tree } = c.result;
       const root = tree.find({ tag: 'svg' })[0]!;
-      const [, , w, h] = tree.getAttr(root, 'viewBox')!.split(' ').map(Number);
+      // The viewBox starts above the drawing when it holds a front-matter title (D652).
+      const [x, y, w, h] = tree.getAttr(root, 'viewBox')!.split(' ').map(Number);
       const out = extents(tree).filter(
-        (p) => p.x < -0.5 || p.y < -0.5 || p.x > w! + 0.5 || p.y > h! + 0.5
+        (p) => p.x < x! - 0.5 || p.y < y! - 0.5 || p.x > x! + w! + 0.5 || p.y > y! + h! + 0.5
       );
       expect(out.slice(0, 3), c.id).toEqual([]);
     }

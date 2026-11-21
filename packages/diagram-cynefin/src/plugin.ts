@@ -12,7 +12,7 @@ import { cynefinConfigDefaults } from './generated/config-defaults.ts';
 /**
  * The cynefin plugin (DESIGN §12.1, spec #423): `layoutKind: 'custom'` with its own
  * `CynefinLayout`. `parse` takes the whole source; `layout` measures and places everything on
- * v12's fixed canvas (D361); `render` writes the whole `<svg>` document. SVG only (D320). The
+ * v12's fixed canvas (D361), a row taller when its list needs it (D617); `render` writes the whole `<svg>` document. SVG only (D320). The
  * registry loads it from the package's `mermaid` manifest (#469); `configDefaults` are the
  * `cynefin` section's generated defaults, and `theme` is the diagram's own theme table
  * (`theme/table.ts`, D331).

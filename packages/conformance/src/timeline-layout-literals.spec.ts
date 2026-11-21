@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { REPO_ROOT } from './index.ts';
+import { numericLiterals } from './literals.ts';
 
 // The timeline custom layout takes every length from its metrics table (pitfall 13, spec #291
 // T3): no file in `packages/diagram-timeline/src/layout/` but `metrics.ts` holds a length
@@ -14,15 +15,6 @@ const ALLOWED: Readonly<Record<string, string>> = {
   '700': 'the bold font weight',
   '1e-6': 'the float tolerance of the invariant checks',
 };
-
-/** The numeric literals in TypeScript source, outside comments and strings. */
-function numericLiterals(source: string): string[] {
-  const code = source
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .replace(/\/\/.*$/gm, ' ')
-    .replace(/'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`|"(?:[^"\\\n]|\\.)*"/g, "''");
-  return code.match(/(?<![\w$.])\d[\d_]*(?:\.\d+)?(?:e[-+]?\d+)?/gi) ?? [];
-}
 
 const DIR = join(REPO_ROOT, 'packages/diagram-timeline/src/layout');
 // The table itself, test fixtures and specs are not layout code.

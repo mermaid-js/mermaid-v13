@@ -25,23 +25,51 @@ export interface PathBuilder {
   done(): PathData;
 }
 
+/**
+ * The last few values this module built (path data from `done()`, and `translate`, `rotate`,
+ * `scale`), so the stream writer can tell a value it need not escape (`isBuilt`). Each is made
+ * only of `num()` output (digits, `.`, `-`, `e`/`+` for huge numbers, and `Infinity` for finite
+ * values above about 1.8e306, whose hundredths overflow), command letters, commas, spaces and
+ * parentheses. Module-private: only this module writes it, and only with strings it built from
+ * numbers. `transforms()` must never be recorded: it joins strings its caller supplies (the
+ * writer passes a caller's `transform` through it for boxed labels).
+ */
+const BUILT: string[] = ['', '', '', ''];
+let nextBuilt = 0;
+
+function built<T extends string>(value: T): T {
+  return (BUILT[(nextBuilt = (nextBuilt + 1) & 3)] = value);
+}
+
+/**
+ * Whether `value` equals one of the last four values this module built from numbers, so
+ * escaping would leave it unchanged. String equality compares content, so an equal string
+ * from anywhere else is the same characters and just as safe.
+ */
+export function isBuilt(value: string): boolean {
+  // The newest first: a `d` or `transform` is nearly always written right after it is built.
+  // Only the order of the comparisons changes; the answer is `BUILT.includes(value)`.
+  return BUILT[nextBuilt] === value || BUILT.includes(value);
+}
+
 class Builder implements PathBuilder {
-  private d = '';
+  // A private field: only this class's methods can append to it, and only from numbers.
+  #d = '';
   moveTo(x: number, y: number): PathBuilder {
-    this.d += 'M' + num(x) + ',' + num(y);
+    this.#d += 'M' + num(x) + ',' + num(y);
     return this;
   }
   lineTo(x: number, y: number): PathBuilder {
-    this.d += 'L' + num(x) + ',' + num(y);
+    this.#d += 'L' + num(x) + ',' + num(y);
     return this;
   }
   curveTo(x1: number, y1: number, x2: number, y2: number, x: number, y: number): PathBuilder {
-    this.d +=
+    this.#d +=
       'C' + num(x1) + ',' + num(y1) + ' ' + num(x2) + ',' + num(y2) + ' ' + num(x) + ',' + num(y);
     return this;
   }
   quadTo(x1: number, y1: number, x: number, y: number): PathBuilder {
-    this.d += 'Q' + num(x1) + ',' + num(y1) + ' ' + num(x) + ',' + num(y);
+    this.#d += 'Q' + num(x1) + ',' + num(y1) + ' ' + num(x) + ',' + num(y);
     return this;
   }
   arcTo(
@@ -53,7 +81,7 @@ class Builder implements PathBuilder {
     x: number,
     y: number
   ): PathBuilder {
-    this.d +=
+    this.#d +=
       'A' +
       num(rx) +
       ',' +
@@ -71,11 +99,11 @@ class Builder implements PathBuilder {
     return this;
   }
   close(): PathBuilder {
-    this.d += 'Z';
+    this.#d += 'Z';
     return this;
   }
   done(): PathData {
-    return this.d as PathData;
+    return built(this.#d as PathData);
   }
 }
 
@@ -84,19 +112,19 @@ export function pathBuilder(): PathBuilder {
 }
 
 export function translate(x: number, y: number): Transform {
-  return `translate(${num(x)},${num(y)})` as Transform;
+  return built(`translate(${num(x)},${num(y)})` as Transform);
 }
 
 export function rotate(angle: number, cx?: number, cy?: number): Transform {
-  return (
-    cx === undefined || cy === undefined
+  return built(
+    (cx === undefined || cy === undefined
       ? `rotate(${num(angle)})`
-      : `rotate(${num(angle)},${num(cx)},${num(cy)})`
-  ) as Transform;
+      : `rotate(${num(angle)},${num(cx)},${num(cy)})`) as Transform
+  );
 }
 
 export function scale(sx: number, sy: number = sx): Transform {
-  return `scale(${num(sx)},${num(sy)})` as Transform;
+  return built(`scale(${num(sx)},${num(sy)})` as Transform);
 }
 
 /** Several transforms applied in order, as one attribute value. */

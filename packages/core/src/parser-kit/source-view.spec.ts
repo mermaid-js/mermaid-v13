@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { cook, DROP, firstHole, localOffset, QUOTE, SourceOffsets, sourceView } from './index.ts';
+import type { SourceView } from './index.ts';
+import { isPlainRange } from './source-view.ts';
 
 describe('sourceView', () => {
   it('cuts line comments out of the text and records them as holes', () => {
@@ -137,6 +139,77 @@ describe('cook', () => {
     // v12 turned the CR into an LF before it removed the comment line.
     const src = 'a\r%% c\n\nb\r\nc';
     expect(cook(src, 0, src.length, sourceView(src, 0, []))).toBe('a\n\nb\nc');
+  });
+});
+
+/** `isPlainRange` as it was, with a slice and a regex: the reference for the character loop. */
+function isPlainRangeByRegex(src: string, start: number, end: number, view: SourceView): boolean {
+  const { mask, braceNewline, holes } = view;
+  const k = firstHole(view, start);
+  const split = (holes[k]?.start ?? end) < end || (k > 0 && holes[k - 1]?.end === start);
+  return (
+    !split &&
+    !(braceNewline ? /[\r#}]/ : /[\r#]/).test(src.slice(start, end)) &&
+    (!braceNewline || src.charCodeAt(start - 1) !== 0x7d) &&
+    !(mask?.subarray(start, end).some((b) => b !== 0) ?? false)
+  );
+}
+
+describe('isPlainRange', () => {
+  // Pieces that touch every condition: removed spans, CR, `#` and entities, `}` before line
+  // breaks, tag quotes and dropped semicolons (the mask), and Unicode blanks.
+  const pieces = [
+    'a',
+    'B c',
+    ' ',
+    '\t',
+    '\n',
+    '\r',
+    '\r\n',
+    '#',
+    '#amp;',
+    '#35;',
+    '}',
+    '} \n',
+    '{',
+    '%%',
+    '%% c\n',
+    '%%{init: {}}%%',
+    '<b c="d">',
+    '"',
+    ';',
+    'style A fill:#f00;',
+    'classDef x f:#0f0;',
+    '\u00a0',
+    '\ufeff',
+    '\u2028',
+    '\u3000',
+    'é',
+  ];
+  let seed = 7;
+  const next = (n: number) => {
+    seed = (Math.imul(seed, 1103515245) + 12345) >>> 0;
+    return (seed >>> 8) % n;
+  };
+
+  it('agrees with the regex check on every range of generated sources', () => {
+    let ranges = 0;
+    for (let t = 0; t < 400; t++) {
+      let src = '';
+      for (let j = next(9); j >= 0; j--) src += pieces[next(pieces.length)];
+      for (const braceNewline of [false, true]) {
+        const from = next(Math.min(src.length, 4) + 1);
+        const view = sourceView(src, from, directivesOf(src), { braceNewline });
+        for (let start = from; start <= src.length; start++) {
+          for (let end = start; end <= src.length; end++) {
+            ranges++;
+            if (isPlainRange(src, start, end, view) !== isPlainRangeByRegex(src, start, end, view))
+              expect.fail(`${JSON.stringify(src)} [${start}, ${end}) braceNewline ${braceNewline}`);
+          }
+        }
+      }
+    }
+    expect(ranges).toBeGreaterThan(50_000);
   });
 });
 

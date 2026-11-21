@@ -16,7 +16,6 @@ import {
   type DocumentView,
   Kind,
   type ProbeResult,
-  type Range,
   type TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { wardleyDocs } from '../generated/docs.ts';
@@ -24,8 +23,15 @@ import type { WardleyDocument } from '../parser/ast.ts';
 import { NAME_SET } from '../parser/tables.ts';
 import { T, WARDLEY_TRIVIA } from '../parser/tokens.ts';
 import { nameReason, quoteName } from './names.ts';
-import { declarationKind, declaredNodes, ITEMS, span, tokenBefore } from './tables.ts';
-import { atLineStart, keywordItem } from '@mermaid-js/shared/parser/facet';
+import { declarationKind, declaredNodes, ITEMS } from './tables.ts';
+import {
+  atLineStart,
+  keywordCompletions,
+  statementTokens,
+  wordRange,
+} from '@mermaid-js/shared/parser/facet';
+
+const LINE_BREAK = new Set<number>([Kind.Newline]);
 
 /** Tokens after which a node name is a reference: arrows, flows and the referring keywords. */
 const BEFORE_REFERENCE = new Set<number>([
@@ -39,37 +45,21 @@ const BEFORE_REFERENCE = new Set<number>([
 ]);
 
 /**
- * The probed word's range: the prefix, plus the rest of the word after the cursor, to the
- * first blank, line break, quote or punctuation (a name's inner blanks are part of it).
+ * Where the word at the cursor stops: at the first blank, line break, quote or punctuation (a
+ * name's inner blanks are part of it).
  */
-function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeResult): Range {
-  const o = probe.offset;
-  let end = o;
-  const i = tokens ? tokenBefore(tokens, o) : -1;
-  if (tokens && i >= 0 && (tokens.start[i] ?? 0) < o && o < (tokens.end[i] ?? 0)) {
-    end = tokens.end[i] ?? o;
-    const stop = (tokens.kind[i] === T.Name ? /[\r\n]/ : /[\s"':;,()[\]{}]/).exec(
-      text.slice(o, end)
-    );
-    if (stop) end = o + stop.index;
-  }
-  return span(probe.prefix.start, end);
-}
+const wordStop = (kind: number) => (kind === T.Name ? /[\r\n]/ : /[\s"':;,()[\]{}]/);
 
 /**
  * The significant tokens of the line before `at`, last first: the kinds that decide which
  * items fit (the token just before, and the statement's first).
  */
 function lineBefore(tokens: TokenStream | undefined, at: number): number[] {
-  const out: number[] = [];
-  if (!tokens) return out;
-  for (let j = tokenBefore(tokens, at); j >= 0; j--) {
-    if ((tokens.end[j] ?? 0) > at || (tokens.start[j] ?? 0) >= at) continue;
-    const k = tokens.kind[j] ?? Kind.EOF;
-    if (k === Kind.Newline) break;
-    if (WARDLEY_TRIVIA[k] !== 1) out.push(k);
-  }
-  return out;
+  if (!tokens) return [];
+  const trivia = (k: number) => WARDLEY_TRIVIA[k] === 1;
+  return statementTokens(tokens, at, LINE_BREAK, trivia)
+    .map((j) => tokens.kind[j]!)
+    .reverse();
 }
 
 export function wardleyCompletions(
@@ -79,18 +69,19 @@ export function wardleyCompletions(
   if (probe.mode !== 'INITIAL') return [];
   const { text, result } = doc;
   const expected = new Set(probe.expected);
-  const range = wordRange(text, result.tokens, probe);
+  const range = wordRange(text, result.tokens, probe, wordStop);
   const prefix = text.slice(range.start, probe.offset);
   const lineStart = atLineStart(text, range.start);
   const before = lineBefore(result.tokens, range.start);
   const strategyWritten = before.includes(T.Strategy);
-  const out: CompletionItem[] = [];
-  for (const k of ITEMS) {
-    if (!expected.has(k.kind) || (k.lineStart && !lineStart)) continue;
-    if (k.strategy && strategyWritten) continue;
-    if (!k.label.startsWith(prefix)) continue;
-    out.push(keywordItem(k, range, wardleyDocs[k.kind]));
-  }
+  const out = keywordCompletions(
+    ITEMS,
+    expected,
+    prefix,
+    range,
+    wardleyDocs,
+    (k) => (!k.lineStart || lineStart) && !(k.strategy && strategyWritten)
+  );
   // A reference: after an arrow or flow (not in `evolution`, whose stages are no nodes), or
   // after a keyword that names a node.
   const last = before[0] ?? Kind.EOF;

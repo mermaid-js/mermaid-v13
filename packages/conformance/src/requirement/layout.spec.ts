@@ -237,7 +237,7 @@ function problems(layout: RequirementLayout): string[] {
     if (!onOutline(from, pts[0]!)) out.push(`relation '${e.id}' does not start on its outline`);
     if (!onOutline(to, pts.at(-1)!)) out.push(`relation '${e.id}' does not end on its outline`);
     const [end, next] = e.markerAt === 'source' ? [pts[0]!, pts[1]!] : [pts.at(-1)!, pts.at(-2)!];
-    const room = markerRect(end, next, markerRoom(p.markers));
+    const room = markerRect(end, next, markerRoom(p.markers!));
     const drawn = drawnRect(e.marker, end, next, p.markers!);
     for (const [id, r] of boxes) {
       if (overlaps(room, r)) out.push(`the marker room of '${e.id}' overlaps box '${id}'`);

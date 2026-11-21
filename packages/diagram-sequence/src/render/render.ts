@@ -85,21 +85,15 @@ export function renderSequence(
 /** The `<svg>` root with its title and description (R-A11Y-1). */
 function openRoot({ w, layout, ctx, model }: Scene): void {
   const { theme, config } = ctx;
-  const { x, y } = layout.bounds;
-  const width = Math.max(1, Math.ceil(layout.bounds.width));
-  const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = config.sequence?.useMaxWidth !== false;
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares their aliases.
   const font = theme.font();
   const fontSize = theme.length('fontSize');
   openSvgRoot(w, ctx, {
     name: 'sequence',
-    viewBox: [x, y, width, height],
-    maxWidth,
-    title,
-    desc,
+    viewBox: layout.bounds,
+    maxWidth: config.sequence?.useMaxWidth !== false,
+    title: model.accTitle,
+    desc: model.accDescr,
     attrs: {
       'font-family': font,
       'font-size': fontSize,
@@ -123,13 +117,13 @@ function authorColor(scene: Scene, color: string, ast: string, fallback: Paint):
 /** `box` groups behind their participants (v12 `drawBox`). */
 function drawBoxes(scene: Scene): void {
   const { w, layout, paint } = scene;
-  const rect = paint.rect!;
+  const boxPaint = paint.box!;
   w.open('g', { class: 'boxes' });
-  for (const box of layout.boxes) drawBox(scene, box, rect);
+  for (const box of layout.boxes) drawBox(scene, box, boxPaint);
   w.close();
 }
 
-function drawBox(scene: Scene, box: BoxLayout, rect: NonNullable<Paints['rect']>): void {
+function drawBox(scene: Scene, box: BoxLayout, boxPaint: NonNullable<Paints['box']>): void {
   const { w, paint } = scene;
   w.open('g', { class: 'box', 'data-id': box.ast, 'data-ast': box.ast });
   w.leaf('rect', {
@@ -139,20 +133,23 @@ function drawBox(scene: Scene, box: BoxLayout, rect: NonNullable<Paints['rect']>
     width: box.width,
     height: box.height,
     fill: box.color === undefined ? 'none' : authorColor(scene, box.color, box.ast, 'none'),
-    stroke: rect.stroke,
+    stroke: boxPaint.stroke,
     filter: paint.shadow,
   });
   if (box.label)
     w.label(box.label.text, centreX(box.label), centreY(box.label), {
       class: 'text',
       'data-id': box.ast,
-      fill: rect.text,
+      fill: boxPaint.text,
       ...paint.fonts.message,
     });
   w.close();
 }
 
-/** `rect` background blocks (v12 `drawBackgroundRect`). */
+/**
+ * `rect` background blocks (v12 `drawBackgroundRect`): filled, with no stroke and no shadow. v12's
+ * `g rect.rect` style never matched them, as they sit directly under the `<svg>`.
+ */
 function drawRects(scene: Scene): void {
   const { w, layout } = scene;
   w.open('g', { class: 'rects' });
@@ -162,7 +159,6 @@ function drawRects(scene: Scene): void {
 
 function drawRect(scene: Scene, r: RectLayout): void {
   const { w, paint } = scene;
-  const rect = paint.rect!;
   w.leaf('rect', {
     class: 'rect',
     'data-id': r.ast,
@@ -171,9 +167,7 @@ function drawRect(scene: Scene, r: RectLayout): void {
     y: r.y,
     width: r.width,
     height: r.height,
-    fill: authorColor(scene, r.color, r.ast, rect.fill),
-    stroke: rect.stroke,
-    filter: paint.shadow,
+    fill: authorColor(scene, r.color, r.ast, paint.rect ?? 'none'),
   });
 }
 

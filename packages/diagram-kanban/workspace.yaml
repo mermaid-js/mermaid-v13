@@ -52,7 +52,7 @@ grammars:
           terminal: SHAPE_DATA
         ShapeDataStr:
           mode: shapeDataStr
-          pattern: '[^"]+'
+          pattern: '(?:<\w+\b(?:[^<>"=]|=(?!")|="[^<>"]*")*>|[^"])+'
           terminal: SHAPE_DATA
       # A `%%` comment v12 left and a blank run are both SPACELINE; `@{` and the text between
       # quotes are Meta, the quoted values String.

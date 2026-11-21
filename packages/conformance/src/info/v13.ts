@@ -4,7 +4,7 @@
  */
 import { detectInfo, parseInfo } from '@mermaid-js/diagram-info';
 import type { InfoModel } from '@mermaid-js/diagram-info';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { INFO_V12_TYPES, infoV12Snapshot } from './v12.ts';
 import type { InfoSnapshot } from './v12.ts';
@@ -14,13 +14,7 @@ export function infoV13Snapshot(_model: InfoModel): InfoSnapshot {
 }
 
 /** v13 parse for parity: the model, or a throw carrying the first error diagnostic. */
-export function parseInfoForParity(text: string): InfoModel {
-  const pre = preprocess(text);
-  const result = parseInfo(text, { preprocessed: pre });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((x) => x.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseInfoForParity = (text: string): InfoModel => parseForParity(text, parseInfo);
 
 export const infoAdapter: DiagramAdapter<InfoModel> = {
   id: 'info',

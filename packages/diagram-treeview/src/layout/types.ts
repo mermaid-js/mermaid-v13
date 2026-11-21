@@ -5,14 +5,10 @@
  * renderer reads the model). Rectangles have their top-left corner at `x`, `y`.
  */
 import type { FontKey, StyleBits } from '@mermaid-js/core/text';
+import type { Rect } from '@mermaid-js/shared/layout';
 import type { TreeViewNode } from '../model.ts';
 
-export interface Rect {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
+export type { Rect };
 
 /**
  * One line of plain text (D484), measured in `font` and `style` (`Style.Bold` for a directory's

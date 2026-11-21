@@ -15,6 +15,7 @@ import {
   type CellRect,
   type GlyphSet,
 } from '@mermaid-js/core/ascii';
+import { trimmed } from '@mermaid-js/shared/ascii';
 import type { KanbanLayout, PlacedLabel, Rect } from '../layout/index.ts';
 import type { KanbanPriority } from '../priority.ts';
 
@@ -143,15 +144,5 @@ export function drawKanban(layout: KanbanLayout, glyphs: GlyphSet): string {
       [card.assignee, 'right'],
     ] as const)
       if (label) writeLabel(canvas, label, at(label.x, ox), at(label.y, oy), glyphs, align);
-  return trimmed(canvas);
-}
-
-/** The canvas as text without its empty margin. */
-function trimmed(canvas: Canvas): string {
-  let lines = canvas.toString().split('\n');
-  while (lines.length > 0 && lines[0] === '') lines.shift();
-  while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
-  const margin = Math.min(...lines.filter((l) => l !== '').map((l) => l.search(/\S/)));
-  if (margin > 0 && Number.isFinite(margin)) lines = lines.map((l) => l.slice(margin));
-  return lines.join('\n');
+  return trimmed(canvas).text;
 }

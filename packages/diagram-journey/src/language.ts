@@ -16,7 +16,7 @@ import { forService } from './facet/symbols.ts';
 import { journeyCategories } from './generated/categories.ts';
 import { parseJourney } from './parser/index.ts';
 import type { JourneyDocument, JourneyParseOptions, JourneyParseResult } from './parser/index.ts';
-import { shapeReason } from '@mermaid-js/shared/parser/facet';
+import { probeText, readsBackAt, shapeReason } from '@mermaid-js/shared/parser/facet';
 
 export { journeyCategories } from './generated/categories.ts';
 export { journeyDocs } from './generated/docs.ts';
@@ -53,21 +53,9 @@ const NOUNS: Readonly<Record<string, string>> = {
 
 /** Whether `name`, written for `@` in each of `lines`, reads back as one `kind` symbol there. */
 function readsBack(name: string, kind: string, lines: readonly string[]): boolean {
-  let text = 'journey\n';
-  const spots: number[] = [];
-  for (const line of lines) {
-    spots.push(text.length + line.indexOf('@'));
-    text += `${line.replace('@', () => name)}\n`;
-  }
-  const { diagnostics, symbols } = parseJourneyForService(text);
-  if (diagnostics.some((d) => d.severity === 'error')) return false;
-  const mine = symbols.filter((s) => s.kind === kind);
+  const { text, spots } = probeText('journey\n', lines, name);
   const others = kind === 'actor' ? lines.join('').split(/[ZY]/).length - 1 : 0;
-  if (mine.length !== spots.length + others) return false;
-  return spots.every((at) => {
-    const hits = mine.filter((s) => s.range.start === at);
-    return hits.length === 1 && hits[0]!.name === name && hits[0]!.range.end === at + name.length;
-  });
+  return readsBackAt(parseJourneyForService(text), spots, name, kind, others);
 }
 
 /** Why `name` cannot be a name of `kind` (an actor when omitted), if it cannot. */

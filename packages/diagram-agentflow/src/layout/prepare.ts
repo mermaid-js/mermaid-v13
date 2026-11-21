@@ -25,7 +25,7 @@ import { graphSpacing, groupPadding, labelledEdge, sideways } from '@mermaid-js/
 import type { AgentflowDiagramConfig } from '@mermaid-js/core/config';
 import type { CheckedStyle } from '@mermaid-js/core/svg';
 import { styleCache } from '@mermaid-js/shared/svg/document';
-import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
+import { curveReporter, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type {
@@ -38,7 +38,7 @@ import { layoutDir } from '../parser/index.ts';
 import { configLengths, type ConfigLength } from './config-length.ts';
 import type { AgentflowLayoutContext } from './context.ts';
 import { agentflowConfigDefaults } from '../generated/config-defaults.ts';
-import { AGENTFLOW_METRICS, FLOWCHART_LENGTH_DEFAULTS, TITLE_MARGIN_DEFAULTS } from './metrics.ts';
+import { FLOWCHART_LENGTH_DEFAULTS, TITLE_MARGIN_DEFAULTS } from './metrics.ts';
 import { shapeSize, shapeSpan, type LayoutShape, type ShapeGeometry } from './shapes.ts';
 import { themePads } from '@mermaid-js/shared/shapes/kit';
 
@@ -104,7 +104,7 @@ export interface AgentflowPrepared {
   edges: AgentflowEdgeView[];
   /** Every node view by id. */
   views: ReadonlyMap<string, AgentflowNodeView>;
-  /** The theme's padding and the metrics table the shapes were sized with. */
+  /** The theme's padding the shapes were sized with. */
   geometry: ShapeGeometry;
   /** `flowchart.subGraphTitleMargin` (D466): room above and below each flow title. */
   titleMargin: { readonly top: number; readonly bottom: number };
@@ -130,6 +130,8 @@ interface Measure {
   readonly geometry: ShapeGeometry;
   /** The diagram's curve: `linkStyle default interpolate`, else `flowchart.curve`. */
   readonly curve: CurveKind;
+  /** `curveKind` for this render: an unknown name warns once (D602). */
+  readonly curveOf: (curve: string | undefined) => CurveKind;
   readonly wrap: number;
   readonly minWidth: number;
   readonly edgeWrap: number;
@@ -170,6 +172,8 @@ export function prepareAgentflow(
     size: theme.number('fontSize'),
     weight: 400,
   };
+  const curveOf = curveReporter((w) => ctx.warn(w));
+  const curve = curveOf(model.defaultInterpolate ?? flowchart?.curve);
   const m: Measure = {
     ctx,
     units,
@@ -177,8 +181,9 @@ export function prepareAgentflow(
     // This is the only place the builder looks at which profile it has (flowchart's rule).
     cells: units.id === 'cell',
     font,
-    geometry: { pads: themePads(theme, flowchartLength('padding')), metrics: AGENTFLOW_METRICS },
-    curve: curveKind(model.defaultInterpolate ?? flowchart?.curve),
+    geometry: { pads: themePads(theme, flowchartLength('padding')) },
+    curve,
+    curveOf,
     wrap: fromPx(units, agentflowLength('wrappingWidth'), 'x') || units.builder.wrapWidth,
     minWidth: fromPx(units, agentflowLength('minNodeWidth'), 'x'),
     edgeWrap: units.builder.edgeWrap,
@@ -382,7 +387,7 @@ function edgeViews(
       style,
       start,
       end,
-      curve: e.interpolate !== undefined ? curveKind(e.interpolate) : m.curve,
+      curve: e.interpolate !== undefined ? m.curveOf(e.interpolate) : m.curve,
     });
   }
   return edges;

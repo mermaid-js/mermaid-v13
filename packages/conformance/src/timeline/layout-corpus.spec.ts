@@ -3,11 +3,8 @@ import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import { DIAGRAM_TABLES } from '../diagram-themes.ts';
-import {
-  layoutTimeline,
-  parseTimeline,
-  timelineLayoutViolations,
-} from '@mermaid-js/diagram-timeline';
+import { layoutTimeline, parseTimeline } from '@mermaid-js/diagram-timeline';
+import { timelineLayoutViolations } from '@mermaid-js/diagram-timeline/testing';
 import type { TimelineModel } from '@mermaid-js/diagram-timeline';
 import type { CorpusItem } from '../types.ts';
 import { timelineGateCorpus } from './corpus.ts';
@@ -56,7 +53,7 @@ describe('timeline layout invariants on parser-produced fixtures', () => {
               );
           }
     }
-    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(59);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(60);
     expect(periods).toBeGreaterThan(1000);
     expect(failures.slice(0, 10)).toEqual([]);
   }, 300_000);

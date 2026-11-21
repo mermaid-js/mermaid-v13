@@ -1,0 +1,11 @@
+c4-beta
+%% rename-to: platform
+person user "User"
+softwareSystem sh|op "Shop" {
+  group inner "Inner" {
+    container api "API"
+  }
+}
+user --> shop
+shop --> inner
+inner --> shop : "Reports"

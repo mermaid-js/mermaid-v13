@@ -4,6 +4,14 @@
  * backtracking regex for methods; this is a linear scan with the same result (R-PARSE-7).
  */
 import { isLineEnd } from '@mermaid-js/core/parser-kit';
+import {
+  LITERAL,
+  parseGenericTypes,
+  REFERENCES,
+  type Brackets,
+} from '@mermaid-js/shared/parser/generic-types';
+
+export { parseGenericTypes };
 
 export type Visibility = '' | '#' | '+' | '~' | '-';
 /** `$` static (underlined), `*` abstract (italic), `''` none. */
@@ -123,63 +131,6 @@ export function readMember(line: string): MemberLine {
   return text ? { member: attribute(text) } : undefined;
 }
 
-const tildes = (s: string): number => {
-  let n = 0;
-  for (const c of s) if (c === '~') n++;
-  return n;
-};
-
-/** v12 `processSet`: the `~`s paired from both ends inwards become `<` … `>`. */
-function processSet(input: string): string {
-  const count = tildes(input);
-  if (count <= 1) return input;
-  let text = input;
-  let lead = false;
-  if (count % 2 !== 0 && text.startsWith('~')) {
-    text = text.substring(1);
-    lead = true;
-  }
-  const at: number[] = [];
-  for (let i = 0; i < text.length; i++) if (text[i] === '~') at.push(i);
-  const chars = text.split('');
-  for (let k = 0; k < at.length - 1 - k; k++) {
-    chars[at[k] ?? 0] = '<';
-    chars[at[at.length - 1 - k] ?? 0] = '>';
-  }
-  return (lead ? '~' : '') + chars.join('');
-}
-
-/**
- * v12 `parseGenericTypes`: `List~int~` → `List<int>`, `Map~K, V~` → `Map<K, V>`. Commas split
- * the text into sets, joined again when the sets on both sides of a comma hold one `~` each.
- */
-export function parseGenericTypes(input: string): string {
-  const sets: string[] = [];
-  let from = 0;
-  for (let i = 0; i <= input.length; i++) {
-    if (i === input.length || input[i] === ',') {
-      sets.push(input.slice(from, i));
-      if (i < input.length) sets.push(',');
-      from = i + 1;
-    }
-  }
-  const out: string[] = [];
-  for (let i = 0; i < sets.length; i++) {
-    let set = sets[i] ?? '';
-    if (set === ',' && i > 0 && i + 1 < sets.length) {
-      const prev = sets[i - 1] ?? '';
-      const next = sets[i + 1] ?? '';
-      if (tildes(prev) === 1 && tildes(next) === 1) {
-        set = prev + ',' + next;
-        i++;
-        out.pop();
-      }
-    }
-    out.push(processSet(set));
-  }
-  return out.join('');
-}
-
 /** The CSS v12 gave each classifier (`parseClassifier`). */
 const CLASSIFIER_CSS: Readonly<Record<Classifier, string>> = {
   '': '',
@@ -187,16 +138,28 @@ const CLASSIFIER_CSS: Readonly<Record<Classifier, string>> = {
   $: 'text-decoration:underline;',
 };
 
+/** A member's text with each generic's `~ … ~` as `brackets`. */
+function shown(m: MemberParts, brackets: Brackets): string {
+  let text = m.visibility + parseGenericTypes(m.name, brackets);
+  if (m.kind === 'method') {
+    text += `(${parseGenericTypes(m.parameters.trim(), brackets)})`;
+    if (m.returnType) text += ' : ' + parseGenericTypes(m.returnType, brackets);
+  }
+  return text.trim();
+}
+
 /** The text v12's renderer drew for a member, and the CSS of its classifier (`getDisplayDetails`). */
 export function memberDisplay(m: MemberParts): { displayText: string; cssStyle: string } {
-  let displayText = m.visibility + parseGenericTypes(m.name);
-  if (m.kind === 'method') {
-    displayText += `(${parseGenericTypes(m.parameters.trim())})`;
-    if (m.returnType) displayText += ' : ' + parseGenericTypes(m.returnType);
-  }
-  const cssStyle = CLASSIFIER_CSS[m.classifier];
-  return { displayText: displayText.trim(), cssStyle };
+  return { displayText: shown(m, LITERAL), cssStyle: CLASSIFIER_CSS[m.classifier] };
 }
+
+/**
+ * A member row's text as the label layout reads it: {@link memberDisplay}'s text with the
+ * brackets of each generic as `&lt;` and `&gt;`, as v12 wrote them (`ClassMember.text`), so
+ * `+List~Data~ items` draws `+List<Data> items` (D619). Unlike v12, a tag the author typed
+ * (`<br>`, `<b>`) is still read as markup (D564).
+ */
+export const memberLabel = (m: MemberParts): string => shown(m, REFERENCES);
 
 /**
  * v12 `ClassMember.text`: the member's text with `<` and `>` escaped, visibility first

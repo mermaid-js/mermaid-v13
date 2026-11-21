@@ -20,10 +20,10 @@ export interface Paints {
 }
 
 /** v12's first fill and stroke colour, which the hidden root's `''` takes (D404). */
-const TRANSPARENT = checkColor('transparent') as Paint;
+const TRANSPARENT: Paint = checkColor('transparent')!;
 
 /** `currentColor`, as core's DSL: past the end of a palette (an author's shorter list). */
-const CURRENT_COLOR = 'currentColor' as Paint;
+const CURRENT_COLOR: Paint = 'currentColor';
 
 /**
  * Every paint the treemap uses, read before the root is written so that it declares their

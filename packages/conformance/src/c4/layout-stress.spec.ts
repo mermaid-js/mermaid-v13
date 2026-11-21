@@ -89,6 +89,17 @@ const SHAPES: [string, (n: number) => string, number, boolean][] = [
     true,
   ],
   [
+    // Every statement is a relation of its own (#680); 4,800 at the large size, under maxEdges.
+    'relations that repeat one pair',
+    (n) => {
+      let s = C + 'System(a, "A")\nSystem(b, "B")\n';
+      for (let i = 0; i < n; i++) s += `Rel(a, b, "r${i}")\n`;
+      return s;
+    },
+    600,
+    true,
+  ],
+  [
     // 800 elements and 560 relations at the large size: 560 · (800 + 1,680) = 1,388,800.
     'long relations across a grid, under the old estimate',
     (n) => {

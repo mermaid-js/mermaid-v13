@@ -5,7 +5,8 @@ import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { PieModel } from '../model.ts';
 import { FIXTURES, model } from './fixtures.ts';
-import { layoutPie, pieLayoutViolations, type PieLayout } from './index.ts';
+import { layoutPie, type PieLayout } from './index.ts';
+import { pieLayoutViolations } from './invariants.ts';
 import { pie as diagramPlugin } from '../plugin.ts';
 
 /** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
@@ -320,15 +321,94 @@ describe('pie layout: labels of several lines and markdown strings (D225)', () =
   });
 });
 
-describe('pie layout: bounds cover what is drawn (D224)', () => {
-  it('grows past v12’s canvas for 30 rows', () => {
+describe('pie layout: a legend taller than the canvas breaks into columns (D616)', () => {
+  // `many` has 30 rows of 22 px, labels "Section 1" … "Section 30", the longest 100 px wide.
+  // A column holds 20 rows (440 px of the 450 px canvas); columns are a label and a row apart:
+  // 22 + 100 + 22 = 144 px.
+  const columnsOf = (l: PieLayout): number[] => [...new Set(l.legend.map((r) => r.swatch.x))];
+
+  it('right: 20 rows a column, centred on the canvas, the viewBox widened for the columns', () => {
     const l = lay(FIXTURES.many!);
-    // 30 rows centred on y = 225 start at 225 - 330 = -105.
+    expect(columnsOf(l)).toEqual([441, 441 + 144]);
+    expect(l.legend.slice(0, 20).every((r) => r.swatch.x === 441)).toBe(true);
+    // The tallest column (440 px) is centred on y = 225; the second starts at the same top.
+    expect(l.legend[0]!.swatch.y).toBe(5);
+    expect(l.legend[19]!.swatch.y).toBe(5 + 19 * 22);
+    expect(l.legend[20]!.swatch.y).toBe(5);
+    expect(l.legend[29]!.swatch.y).toBe(5 + 9 * 22);
+    expect(l.center).toEqual({ x: 225, y: 225 });
+    // v12's canvas height; 450 + 40, a column of 144, then the last column's swatch and label.
+    expect(l.bounds).toEqual({ x: 0, y: 0, width: 490 + 144 + 22 + 100, height: 450 });
+  });
+
+  it('left: the pie moves right by every column, and the title centres on the pie', () => {
+    const l = lay({ ...FIXTURES.many!, title: 'Pets' }, { legendPosition: 'left' });
+    expect(columnsOf(l)).toEqual([18, 18 + 144]);
+    expect(l.center).toEqual({ x: 225 + 144 + 100 + 22, y: 225 });
+    expect(l.title!.x + l.title!.width / 2).toBe(l.center.x);
+    expect(l.bounds.width).toBe(490 + 144 + 22 + 100);
+    expect(pieLayoutViolations(FIXTURES.many!, l)).toEqual([]);
+  });
+
+  it('top: columns of 440 px from the pie top, the pie moved down by one column', () => {
+    const l = lay(FIXTURES.many!, { legendPosition: 'top' });
+    expect(columnsOf(l)).toEqual([225 - (144 + 100) / 2 - 22, 225 - (144 + 100) / 2 - 22 + 144]);
+    expect(l.legend[0]!.swatch.y).toBe(40);
+    expect(l.legend[20]!.swatch.y).toBe(40);
+    expect(l.center).toEqual({ x: 225, y: 225 + 440 + 22 });
+    expect(l.bounds.height).toBe(450 + 440);
+  });
+
+  it('bottom: columns of 440 px a row under the pie', () => {
+    const l = lay(FIXTURES.many!, { legendPosition: 'bottom' });
+    expect(columnsOf(l)).toHaveLength(2);
+    expect(l.legend[0]!.swatch.y).toBe(432);
+    expect(l.legend[20]!.swatch.y).toBe(432);
+    expect(l.bounds.height).toBe(450 + 440);
+  });
+
+  it('the invariants accept a new column, and catch a row back over its column', () => {
+    const l = lay(FIXTURES.many!);
+    expect(pieLayoutViolations(FIXTURES.many!, l)).toEqual([]);
+    const row = l.legend[20]!;
+    const back = { ...row, swatch: { ...row.swatch, x: 441 } };
+    const broken: PieLayout = { ...l, legend: l.legend.map((r, i) => (i === 20 ? back : r)) };
+    expect(pieLayoutViolations(FIXTURES.many!, broken)).toContain('legend rows 19 and 20 overlap');
+  });
+
+  it('center: one column, as v12 drew it', () => {
+    const l = lay(FIXTURES.many!, { legendPosition: 'center' });
+    expect(columnsOf(l)).toHaveLength(1);
+    // 30 rows centred on y = 225 start at 225 - 330 = -105 (D224 grows the bounds).
     expect(l.bounds.y).toBe(-105);
     // The last row's top is 533; its label's line (20.4 px) starts 0.4 px below that.
     expect(l.bounds.y + l.bounds.height).toBeCloseTo(533 + 0.4 + 20.4);
   });
 
+  it('keeps a legend that fits the canvas in one column: 20 rows of one line', () => {
+    const rows = model(Array.from({ length: 20 }, (_, i) => [`S${i}`, 1] as const));
+    for (const legendPosition of ['right', 'left', 'top', 'bottom'] as const) {
+      const l = lay(rows, { legendPosition });
+      expect(columnsOf(l)).toHaveLength(1);
+    }
+    expect(lay(rows).legend[0]!.swatch.y).toBe(5);
+  });
+
+  it('breaks on the rows’ height, not their count: rows of several lines fill a column sooner', () => {
+    // 15 rows of three lines (22 + 2 * 20.4 = 62.8 px): 7 fit in 450 px, the 8th starts a column.
+    const tall = model(Array.from({ length: 15 }, (_, i) => [`A${i}<br>b<br>c`, 1] as const));
+    const l = lay(tall);
+    const xs = l.legend.map((r) => r.swatch.x);
+    expect(xs.slice(0, 7).every((x) => x === xs[0])).toBe(true);
+    expect(xs[7]).toBeGreaterThan(xs[0]!);
+    expect(columnsOf(l)).toHaveLength(3);
+    expect(l.legend[7]!.swatch.y).toBe(l.legend[0]!.swatch.y);
+    for (const legendPosition of POSITIONS)
+      expect(pieLayoutViolations(tall, lay(tall, { legendPosition }))).toEqual([]);
+  });
+});
+
+describe('pie layout: bounds cover what is drawn (D224)', () => {
   it('grows left for a title or a centred legend wider than the canvas', () => {
     const l = lay(FIXTURES.wide!, { legendPosition: 'top' });
     const longest = l.legend[0]!.label.width;

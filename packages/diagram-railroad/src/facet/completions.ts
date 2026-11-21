@@ -8,50 +8,36 @@
  * of IR's `nonterminal("…")`. Nothing is offered in other strings, in a statement's text or
  * outside code.
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
-import type {
-  CompletionItem,
-  CompletionKind,
-  DocumentView,
-  ProbeResult,
-  Range,
-  TokenStream,
-} from '@mermaid-js/core/parser-kit';
+import { isSpace, Kind } from '@mermaid-js/core/parser-kit';
+import type { CompletionItem, DocumentView, ProbeResult, Range } from '@mermaid-js/core/parser-kit';
 import type { RailroadDocument } from '../parser/ast.ts';
 import { RAILROAD_HEADERS } from '../parser/detect.ts';
 import { T } from '../parser/tokens.ts';
 import type { RailroadNotation } from '../parser/tokens.ts';
 import {
   atLineStart,
+  keywordCompletions,
+  span,
+  statementKeyword,
+  tokenBefore,
+  wordRange,
+} from '@mermaid-js/shared/parser/facet';
+import type { TypedKeywordItem } from '@mermaid-js/shared/parser/facet';
+import {
   block,
   NOTATION_DOCS,
   notationOf,
   ruleDefinitions,
   ruleFirstLine,
-  span,
   isTrivia,
-  tokenBefore,
 } from './tables.ts';
 
 /** An item offered when the parser expects `kind`. */
-interface Item {
-  readonly kind: number;
-  readonly label: string;
-  readonly item: CompletionKind;
-  /** Text inserted, when it is not the label. */
-  readonly insert?: string;
+interface Item extends TypedKeywordItem {
   /** Offered only as the first word of its line (the header statements). */
   readonly lineStart?: true;
-  readonly detail?: string;
 }
 
-const statement = (kind: number, label: string, insert = `${label} `): Item => ({
-  kind,
-  label,
-  item: 'keyword',
-  insert,
-  lineStart: true,
-});
 const op = (kind: number, label: string, detail?: string): Item => ({
   kind,
   label,
@@ -67,11 +53,11 @@ const call = (kind: number, label: string): Item => ({
 
 /** Items every notation has: the header statements. */
 const STATEMENTS: readonly Item[] = [
-  statement(T.Title, 'title'),
-  statement(T.AccTitle, 'accTitle', 'accTitle: '),
+  statementKeyword(T.Title, 'title'),
+  statementKeyword(T.AccTitle, 'accTitle', 'accTitle: '),
   // `accDescr` takes one line or a block: both forms are offered.
-  statement(T.AccDescr, 'accDescr:', 'accDescr: '),
-  statement(T.AccDescr, 'accDescr {', 'accDescr { }'),
+  statementKeyword(T.AccDescr, 'accDescr:', 'accDescr: '),
+  statementKeyword(T.AccDescr, 'accDescr {', 'accDescr { }'),
 ];
 
 /** Each notation's own items, in the order they are offered. */
@@ -120,18 +106,8 @@ const ITEMS: Readonly<Record<RailroadNotation, readonly Item[]>> = {
   ],
 };
 
-/** The probed word's range: the prefix, plus the rest of the word after the cursor. */
-function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeResult): Range {
-  const o = probe.offset;
-  let end = o;
-  const i = tokens ? tokenBefore(tokens, o) : -1;
-  if (tokens && i >= 0 && (tokens.start[i] ?? 0) < o && o < (tokens.end[i] ?? 0))
-    end = tokens.end[i] ?? o;
-  // A word stops at the first blank, quote or punctuation after the cursor.
-  const stop = /[^\w-]/.exec(text.slice(o, end));
-  if (stop) end = o + stop.index;
-  return span(probe.prefix.start, end);
-}
+/** A word stops at the first blank, quote or punctuation after the cursor. */
+const WORD_STOP = /[^\w-]/;
 
 /** The defined rules whose name starts with `prefix`, as items written by `write`. */
 function ruleItems(
@@ -193,33 +169,31 @@ export function railroadCompletions(
   if (probe.mode === 'string' && notation === 'railroad') return irReferenceItems(probe, doc);
   if (probe.mode !== 'INITIAL') return [];
   const expected = new Set(probe.expected);
-  const range = wordRange(text, result.tokens, probe);
+  const range = wordRange(text, result.tokens, probe, WORD_STOP);
   const prefix = text.slice(range.start, probe.offset);
-  const lineStart = atLineStart(text, range.start);
+  const lineStart = atLineStart(text, range.start, isSpace);
   const docs = NOTATION_DOCS[notation];
   const out: CompletionItem[] = [];
-  const offer = (k: Item, table = docs) => {
-    if (!expected.has(k.kind) || (k.lineStart && !lineStart)) return;
-    if (!k.label.startsWith(prefix)) return;
-    const documentation = table[k.kind];
-    out.push({
-      label: k.label,
-      kind: k.item,
-      insertText: k.insert ?? k.label,
-      range,
-      ...(k.detail === undefined ? {} : { detail: k.detail }),
-      ...(documentation === undefined ? {} : { documentation }),
-    });
-  };
+  const offer = (table: readonly Item[], tableDocs = docs) =>
+    out.push(
+      ...keywordCompletions(
+        table,
+        expected,
+        prefix,
+        range,
+        tableDocs,
+        (k) => !k.lineStart || lineStart
+      )
+    );
   // Any of the four headers, each with its notation's doc: the text may be on its way to
   // another notation.
   for (const [n, header] of RAILROAD_HEADERS)
-    offer({ kind: T.Header, label: header, item: 'keyword' }, NOTATION_DOCS[n]);
+    offer([{ kind: T.Header, label: header, item: 'keyword' }], NOTATION_DOCS[n]);
   // Where the header goes, only the header: the parser reads on past a missing one, but
   // nothing else may come first.
   if (expected.has(T.Header)) return out;
-  for (const k of STATEMENTS) offer(k);
-  for (const k of ITEMS[notation]) offer(k);
+  offer(STATEMENTS);
+  offer(ITEMS[notation]);
   if (notation === 'railroad' && expected.has(T.KwNonterminal)) {
     out.push(...ruleItems(doc, prefix, range, (n) => `nonterminal("${n}")`));
   } else if (expected.has(T.Id) && expected.has(T.String)) {

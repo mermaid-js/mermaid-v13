@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { journey } from '@mermaid-js/diagram-journey';
@@ -146,6 +147,31 @@ describe('user journeys through the public API (#327)', () => {
   it('warns once for scores outside 0-5 (D226)', async () => {
     const { warnings } = await createMermaid().render('j', 'journey\n  A: 7: Me\n  B: x: Me\n');
     expect(warnings.map((w) => w.code)).toEqual(['JOURNEY_SCORE']);
+  });
+
+  it('keeps tall labels clear of the rows below them (D615, #769)', async () => {
+    const source = readFileSync(
+      new URL('../../../e2e/diagrams/journey/baseline/text/tall-labels.mmd', import.meta.url),
+      'utf8'
+    );
+    const { svg, warnings } = await createMermaid().render('j', source);
+    expect(warnings).toEqual([]);
+    const title = /<text class="journey-title"[^>]*>(.*?)<\/text>/s.exec(svg)![1]!;
+    const baselines = [...title.matchAll(/<tspan [^>]*y="([-\d.]+)"/g)].map((m) => Number(m[1]));
+    expect(baselines).toHaveLength(3);
+    expect(baselines.at(-1)).toBe(25);
+    const rect = /<rect x="[^"]*" y="([-\d.]+)" width="[^"]*" height="([\d.]+)"/g;
+    const boxes = [...svg.matchAll(rect)].map((m) => ({
+      y: Number(m[1]),
+      bottom: Number(m[1]) + Number(m[2]),
+    }));
+    // Bands are drawn first, at v12's y 50; the tall section's band is the first.
+    const band = boxes[0];
+    const task = boxes.find((b) => b.y !== 50);
+    expect(band!.y).toBe(50);
+    expect(task!.y).toBeGreaterThanOrEqual(band!.bottom + 10);
+    const arrow = Number(/class="activity-line" x1="[^"]*" y1="([\d.]+)"/.exec(svg)![1]);
+    expect(arrow).toBeGreaterThan(task!.bottom + 2);
   });
 
   it('renders through mermaid/slim with the journey plugin passed in, alike', async () => {

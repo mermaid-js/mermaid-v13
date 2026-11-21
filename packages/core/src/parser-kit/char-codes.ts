@@ -7,6 +7,7 @@ export const TAB = 0x09;
 export const LF = 0x0a;
 export const CR = 0x0d;
 export const SPACE = 0x20;
+export const BANG = 0x21;
 export const DQUOTE = 0x22;
 export const HASH = 0x23;
 export const PERCENT = 0x25;
@@ -15,6 +16,7 @@ export const APOSTROPHE = 0x27;
 export const LPAREN = 0x28;
 export const RPAREN = 0x29;
 export const STAR = 0x2a;
+export const PLUS = 0x2b;
 export const COMMA = 0x2c;
 export const DASH = 0x2d;
 export const DOT = 0x2e;
@@ -63,6 +65,8 @@ export const HIGH_SURROGATE_FIRST = 0xd800;
 export const HIGH_SURROGATE_LAST = 0xdbff;
 export const LOW_SURROGATE_FIRST = 0xdc00;
 export const LOW_SURROGATE_LAST = 0xdfff;
+/** U+FEFF, the byte order mark (also ZERO WIDTH NO-BREAK SPACE). */
+export const BOM = 0xfeff;
 /** U+FFFE, a byte-swapped byte order mark and a non-character. */
 export const REVERSED_BOM = 0xfffe;
 /** U+FFFF, the last BMP code unit and a non-character. */

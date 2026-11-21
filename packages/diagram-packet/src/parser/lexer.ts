@@ -37,13 +37,12 @@ import {
   Kind,
   newlineAt,
   PERCENT,
+  PLUS,
 } from '@mermaid-js/core/parser-kit';
 import { isBreak, RuleLexer, SKIP } from '@mermaid-js/shared/parser/rule';
 import type { RuleLexerOptions } from '@mermaid-js/shared/parser/rule';
 import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
-
-const PLUS = 0x2b;
 
 /** The shared terminals' kinds, and about how many characters one token takes. */
 const OPTIONS: RuleLexerOptions = {

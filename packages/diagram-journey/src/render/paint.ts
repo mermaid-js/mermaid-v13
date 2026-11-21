@@ -157,13 +157,13 @@ export function paints(ctx: PaintContext, l: JourneyLayout): Paints {
   const f = fontsOf(ctx);
   return {
     text,
-    fillOf: (slot) => fills.get(slot) ?? text,
+    fillOf: (slot) => fills.get(slot)!,
     labelOf: (band) =>
       band === undefined || !sectionColours || sectionColours.length === 0
         ? text
         : sectionColours[band % sectionColours.length]!,
     face: l.tasks.length > 0 ? theme.color('faceColor') : text,
-    actorOf: (slot) => actors.get(slot) ?? text,
+    actorOf: (slot) => actors.get(slot)!,
     title,
     fonts: {
       task: fontAttrs(f.task, family, size),

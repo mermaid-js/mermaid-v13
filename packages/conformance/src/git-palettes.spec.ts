@@ -4,49 +4,20 @@
  * `getThemeVariables()` (D151: v12 is the oracle). The theme values match in every theme, and
  * under base-colour, `darkMode` and numbered overrides they follow v12's rule.
  */
-import {
-  THEME_NAMES,
-  createTheme,
-  formatColor,
-  loadTheme,
-  parseColor,
-  type ThemeName,
-} from '@mermaid-js/core/theme';
+import { THEME_NAMES, createTheme, loadTheme, type ThemeName } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
 import { gitGraph } from '@mermaid-js/diagram-gitgraph';
-import { loadOracle } from './oracle.ts';
-
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
-  };
-}
-
-await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
+import { v12Vars } from './v12-theme.ts';
+import { hex } from './hex.ts';
 
 const PALETTES = ['git', 'gitInv', 'gitBranchLabel'] as const;
 type Palettes = Record<(typeof PALETTES)[number], string[]>;
 
-function hex(v: unknown): string {
-  const rgba = typeof v === 'string' ? parseColor(v) : undefined;
-  return rgba ? formatColor(rgba) : String(v);
-}
-
-function v12Vars(theme: string, themeVariables: object = {}): Record<string, unknown> {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize({ theme, themeVariables });
-  const vars = { ...v12.mermaidAPI.getConfig().themeVariables };
-  v12.mermaidAPI.reset();
-  return vars;
-}
-
 function v12Palettes(theme: string, themeVariables: object = {}): Palettes {
   const vars = v12Vars(theme, themeVariables);
   const out = {} as Palettes;
-  for (const p of PALETTES) out[p] = Array.from({ length: 8 }, (_, i) => hex(vars[`${p}${i}`]));
+  for (const p of PALETTES)
+    out[p] = Array.from({ length: 8 }, (_, i) => hex(vars[`${p}${i}`], String));
   return out;
 }
 
@@ -61,7 +32,7 @@ async function v13Theme(theme: ThemeName, themeVariables?: object) {
 async function v13Palettes(theme: ThemeName, themeVariables?: object): Promise<Palettes> {
   const t = await v13Theme(theme, themeVariables);
   const out = {} as Palettes;
-  for (const p of PALETTES) out[p] = t.palette(p).map(hex);
+  for (const p of PALETTES) out[p] = t.palette(p).map((c) => hex(c, String));
   return out;
 }
 
@@ -130,7 +101,7 @@ const LABEL_SIZES = ['commitLabelFontSize', 'tagLabelFontSize'] as const;
 async function v13Labels(theme: ThemeName, themeVariables?: object) {
   const t = await v13Theme(theme, themeVariables);
   return {
-    ...Object.fromEntries(LABEL_COLOURS.map((n) => [n, hex(t.value(n))])),
+    ...Object.fromEntries(LABEL_COLOURS.map((n) => [n, hex(t.value(n), String)])),
     ...Object.fromEntries(LABEL_SIZES.map((n) => [n, t.number(n)])),
   };
 }
@@ -138,7 +109,7 @@ async function v13Labels(theme: ThemeName, themeVariables?: object) {
 function v12Labels(theme: string, themeVariables: object = {}) {
   const vars = v12Vars(theme, themeVariables);
   return {
-    ...Object.fromEntries(LABEL_COLOURS.map((n) => [n, hex(vars[n])])),
+    ...Object.fromEntries(LABEL_COLOURS.map((n) => [n, hex(vars[n], String)])),
     ...Object.fromEntries(LABEL_SIZES.map((n) => [n, Number.parseFloat(String(vars[n]))])),
   };
 }

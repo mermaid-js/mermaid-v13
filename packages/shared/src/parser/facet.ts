@@ -6,24 +6,35 @@
 import type {
   CompletionItem,
   CompletionKind,
+  DocumentView,
   Hover,
+  HoverTarget,
   ParseResult,
   ProbeResult,
   Range,
+  SymbolOccurrence,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
+import { isBlank } from '@mermaid-js/core/parser-kit';
+import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 
 export const span = (start: number, end: number): Range => ({ start, end });
 
 /** Whether `offset` is in `r`, ends included. */
 export const inside = (offset: number, r: Range): boolean => r.start <= offset && offset <= r.end;
 
-/** `r` without the blanks at its ends. */
-export function trimmed(text: string, r: Range): Range {
+/** Whether `r` is not empty and `offset` is in it, ends included: a token a hover may show. */
+export const covers = (offset: number, r: Range): boolean => r.start < r.end && inside(offset, r);
+
+/**
+ * `r` without the blanks at its ends. A range of blanks only comes out empty, or, with
+ * `keepBlank`, as it is.
+ */
+export function trimmed(text: string, r: Range, keepBlank = false): Range {
   let { start, end } = r;
   while (start < end && /\s/.test(text[start]!)) start++;
   while (end > start && /\s/.test(text[end - 1]!)) end--;
-  return span(start, end);
+  return start < end || !keepBlank ? span(start, end) : span(r.start, r.end);
 }
 
 /** Markdown inline code holding `text` as written, whatever backticks it has. */
@@ -38,25 +49,116 @@ export function code(text: string): string {
 export const plural = (n: number, one: string, many = `${one}s`): string =>
   `${n} ${n === 1 ? one : many}`;
 
+/**
+ * The hover of a style class: `**<title>** name`, its `classDef` (`styles`, undefined when no
+ * `classDef` defines it), then `used`, the line saying what uses it.
+ */
+export function classDefHover(
+  title: string,
+  name: string,
+  styles: readonly string[] | undefined,
+  used: string
+): string {
+  let def = 'No `classDef` defines it.';
+  if (styles !== undefined) {
+    def =
+      styles.length === 0
+        ? 'Its `classDef` sets no styles.'
+        : code(`classDef ${name} ${styles.join(',')}`);
+  }
+  return `**${title}** ${code(name)}\n\n${def}\n\n${used}`;
+}
+
 export const isPlain = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** The `click … href` link targets. */
 export const LINK_TARGETS: readonly string[] = ['_self', '_blank', '_parent', '_top'] as const;
 
-/** Index of the last token of `tokens` starting at or before `offset`, or -1. */
-export function tokenBefore(tokens: TokenStream, offset: number): number {
+/** Index of the last of `length` items whose start (`startOf`) is at or before `offset`, or -1. */
+function lastAtOrBefore(length: number, startOf: (i: number) => number, offset: number): number {
   let lo = 0;
-  let hi = tokens.length - 1;
+  let hi = length - 1;
   let found = -1;
   while (lo <= hi) {
     const mid = (lo + hi) >> 1;
-    if ((tokens.start[mid] ?? 0) <= offset) {
+    if (startOf(mid) <= offset) {
       found = mid;
       lo = mid + 1;
     } else hi = mid - 1;
   }
   return found;
+}
+
+/**
+ * Index of the last token of `tokens` starting (or, with `edge` `end`, ending) at or before
+ * `offset`, or -1.
+ */
+export function tokenBefore(
+  tokens: TokenStream,
+  offset: number,
+  edge: 'start' | 'end' = 'start'
+): number {
+  const at = tokens[edge];
+  return lastAtOrBefore(tokens.length, (i) => at[i] ?? 0, offset);
+}
+
+/**
+ * A statement of `list` (in source order, never overlapping) whose range holds `at`, its ends
+ * included, found by bisection: where two ranges touch at `at`, the one the bisection meets
+ * first (unlike {@link statementAt}, which takes the later one).
+ */
+export function statementOverlapping<N extends { readonly range: Range }>(
+  list: readonly N[],
+  at: number
+): N | undefined {
+  let lo = 0;
+  let hi = list.length - 1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    const n = list[mid]!;
+    if (n.range.end < at) lo = mid + 1;
+    else if (n.range.start > at) hi = mid - 1;
+    else return n;
+  }
+  return undefined;
+}
+
+/**
+ * The tokens of the statement before `at`, as indexes first to last: those ending at or before
+ * `at`, back to the last one whose kind is in `ends`, leaving out those `skip` takes. A token
+ * running past `at` is passed over, unless `endsAcross` says it ends the statement there.
+ */
+export function statementTokens(
+  tokens: TokenStream,
+  at: number,
+  ends: ReadonlySet<number>,
+  skip: (kind: number) => boolean,
+  endsAcross?: (i: number) => boolean
+): number[] {
+  const out: number[] = [];
+  for (let i = tokenBefore(tokens, at - 1); i >= 0; i--) {
+    const k = tokens.kind[i]!;
+    if ((tokens.end[i] ?? 0) > at) {
+      if (endsAcross?.(i)) break;
+      continue;
+    }
+    if (ends.has(k)) break;
+    if (!skip(k)) out.push(i);
+  }
+  return out.reverse();
+}
+
+/**
+ * The statement of `list` (in source order, never overlapping) whose range holds `offset`, its
+ * ends included: the last one starting at or before it.
+ */
+export function statementAt<N extends { readonly range: Range }>(
+  list: readonly N[],
+  offset: number
+): N | undefined {
+  const n = list[lastAtOrBefore(list.length, (i) => list[i]?.range.start ?? 0, offset)];
+  return n && offset <= n.range.end ? n : undefined;
 }
 
 const ASCII_BREAK = /[\n\r]/;
@@ -70,11 +172,29 @@ export function lineBefore(text: string, at: number, unicode = false): string {
   return text.slice(start, at);
 }
 
-/** Whether only spaces and tabs are between `at` and the start of its line. */
-export function atLineStart(text: string, at: number): boolean {
-  let i = at;
-  while (i > 0 && (text.charAt(i - 1) === ' ' || text.charAt(i - 1) === '\t')) i--;
-  return i === 0 || text.charAt(i - 1) === '\n' || text.charAt(i - 1) === '\r';
+/** The text of `at`'s line from `at` on. `unicode`: U+2028 and U+2029 end a line too. */
+export function lineAfter(text: string, at: number, unicode = false): string {
+  const lineBreak = unicode ? UNICODE_BREAK : ASCII_BREAK;
+  let end = at;
+  while (end < text.length && !lineBreak.test(text.charAt(end))) end++;
+  return text.slice(at, end);
+}
+
+/**
+ * Whether only blanks are between `at` and the start of its line (LF or CR ends a line). A
+ * blank is a space or a tab, or what `blank` takes (railroad's `isSpace`, any `\s`).
+ */
+export function atLineStart(
+  text: string,
+  at: number,
+  blank: (code: number) => boolean = isBlank
+): boolean {
+  for (let i = at - 1; i >= 0; i--) {
+    const c = text.charAt(i);
+    if (c === '\n' || c === '\r') return true;
+    if (!blank(text.charCodeAt(i))) return false;
+  }
+  return true;
 }
 
 /** As {@link atLineStart} over any blank, where `opener` (`{`, `;`) starts a statement too. */
@@ -97,13 +217,14 @@ export function afterDirection(text: string, at: number, ignoreCase = false): bo
 /**
  * The probed word's range: the prefix, plus the rest of the token the cursor is inside (when
  * `isWord` takes its kind; every kind without it), up to the first match of `stop` after the
- * cursor.
+ * cursor. A function `stop` picks the pattern by the kind of that token; `undefined` keeps the
+ * whole token.
  */
 export function wordRange(
   text: string,
   tokens: TokenStream | undefined,
   probe: ProbeResult,
-  stop: RegExp,
+  stop: RegExp | ((kind: number) => RegExp | undefined),
   isWord?: (kind: number) => boolean
 ): Range {
   const o = probe.offset;
@@ -115,11 +236,43 @@ export function wordRange(
     (tokens.start[i] ?? 0) < o &&
     o < (tokens.end[i] ?? 0) &&
     (!isWord || isWord(tokens.kind[i]!))
-  )
+  ) {
     end = tokens.end[i] ?? o;
-  const found = stop.exec(text.slice(o, end));
-  if (found) end = o + found.index;
+    const pattern = typeof stop === 'function' ? stop(tokens.kind[i]!) : stop;
+    const found = pattern?.exec(text.slice(o, end));
+    if (found) end = o + found.index;
+  }
   return span(probe.prefix.start, end);
+}
+
+/** Where a keyword completion goes, and what the parser expects there. */
+export interface CompletionPlace {
+  /** The kinds the parser tests at the cursor. */
+  readonly expected: Set<number>;
+  /** The probed word's range ({@link wordRange}). */
+  readonly range: Range;
+  /** The text of `range` before the cursor. */
+  readonly prefix: string;
+}
+
+/**
+ * The start of a keyword completion: `undefined` inside a statement's text or a label (probe
+ * mode other than `INITIAL`), where nothing is offered; else the expected kinds, the probed
+ * word's range (`stop` as in {@link wordRange}) and the prefix typed so far.
+ */
+export function completionPlace(
+  probe: ProbeResult,
+  doc: DocumentView,
+  stop: RegExp
+): CompletionPlace | undefined {
+  if (probe.mode !== 'INITIAL') return undefined;
+  const { text } = doc;
+  const range = wordRange(text, doc.result.tokens, probe, stop);
+  return {
+    expected: new Set(probe.expected),
+    range,
+    prefix: text.slice(range.start, probe.offset),
+  };
 }
 
 /** As {@link wordRange} over a run of adjoining word tokens, stopping at the first blank. */
@@ -177,22 +330,69 @@ export function shapeReason(
 
 /**
  * Whether a parse read exactly one symbol of `kind`, named `name`, at `at`, and no error: the
- * read-back check of a new name written into a probe text.
+ * read-back check of a new name written into a probe text ({@link readsBackAt} at one spot).
  */
-export function readsBack(
+export const readsBack = (
   result: Pick<ParseResult<unknown>, 'diagnostics' | 'symbols'>,
   at: number,
   name: string,
   kind: string
+): boolean => readsBackAt(result, [at], name, kind, 0);
+
+/**
+ * A read-back probe: `header`, then each of `lines` with its `@` written as `name`, one per
+ * line, and where each `@` landed.
+ */
+export function probeText(
+  header: string,
+  lines: readonly string[],
+  name: string
+): { text: string; spots: number[] } {
+  let text = header;
+  const spots: number[] = [];
+  for (const line of lines) {
+    spots.push(text.length + line.indexOf('@'));
+    text += `${line.replace('@', () => name)}\n`;
+  }
+  return { text, spots };
+}
+
+/**
+ * Whether a probe parse read, with no error, exactly one `kind` symbol at each of `spots`, named
+ * `name` and spanning it. `others` is how many more `kind` symbols the parse holds, so that
+ * nothing else read as the kind; `null` counts none, for a probe whose other names vary.
+ */
+export function readsBackAt(
+  result: Pick<ParseResult<unknown>, 'diagnostics' | 'symbols'>,
+  spots: readonly number[],
+  name: string,
+  kind: string,
+  others: number | null
 ): boolean {
-  const hits = result.symbols.filter((s) => s.kind === kind);
-  return (
-    !result.diagnostics.some((d) => d.severity === 'error') &&
-    hits.length === 1 &&
-    hits[0]!.name === name &&
-    hits[0]!.range.start === at &&
-    hits[0]!.range.end === at + name.length
-  );
+  if (result.diagnostics.some((d) => d.severity === 'error')) return false;
+  const mine = result.symbols.filter((s) => s.kind === kind);
+  if (others !== null && mine.length !== spots.length + others) return false;
+  return spots.every((at) => {
+    const hits = mine.filter((s) => s.range.start === at);
+    return hits.length === 1 && hits[0]!.name === name && hits[0]!.range.end === at + name.length;
+  });
+}
+
+/**
+ * The text a keyword written with `separator` (`: `, ` `) inserts before `rest`, the text after
+ * the word it replaces: no separator when `rest` opens with one already (`opens`), and the
+ * separator without its trailing blank when `rest` starts with a blank.
+ */
+export function insertWithSeparator(
+  label: string,
+  separator: string | undefined,
+  rest: string,
+  opens: RegExp
+): string {
+  const sep = separator ?? '';
+  if (sep === '' || opens.test(rest)) return label;
+  if (/^[\t ]/.test(rest)) return label + sep.trimEnd();
+  return label + sep;
 }
 
 /** An item offered when the parser expects `kind`. */
@@ -214,8 +414,24 @@ export interface TypedKeywordItem extends DetailedKeywordItem {
   readonly item: CompletionKind;
 }
 
+/**
+ * A statement keyword: offered only as the first word of its line (`lineStart`), and inserting
+ * `insert`, by default its label and a blank.
+ */
+export const statementKeyword = (
+  kind: number,
+  label: string,
+  insert = `${label} `
+): TypedKeywordItem & { readonly lineStart: true } => ({
+  kind,
+  label,
+  item: 'keyword',
+  insert,
+  lineStart: true,
+});
+
 /** What {@link keywordItem} reads of a table row. */
-interface KeywordRow {
+export interface KeywordRow {
   readonly label: string;
   readonly item?: CompletionKind;
   readonly insert?: string;
@@ -260,6 +476,10 @@ export function keywordCompletions<K extends KeywordRow & { readonly kind: numbe
   return out;
 }
 
+/** Whether `label` starts with what was `typed`, ignoring case. */
+export const matchesTyped = (label: string, typed: string): boolean =>
+  label.toLowerCase().startsWith(typed.toLowerCase());
+
 /** The items of one completion request: prefix-filtered, each label once, in the order added. */
 export class CompletionList {
   readonly list: CompletionItem[] = [];
@@ -273,9 +493,7 @@ export class CompletionList {
   ) {}
 
   add(label: string, kind: CompletionKind, extra: Partial<CompletionItem> = {}): void {
-    const starts = this.foldCase
-      ? label.toLowerCase().startsWith(this.prefix.toLowerCase())
-      : label.startsWith(this.prefix);
+    const starts = this.foldCase ? matchesTyped(label, this.prefix) : label.startsWith(this.prefix);
     if (!starts || this.seen.has(label)) return;
     this.seen.add(label);
     this.list.push({ label, kind, insertText: label, range: this.range, ...extra });
@@ -293,6 +511,16 @@ export class CompletionList {
       ...(documentation === undefined ? {} : { documentation }),
     });
   }
+}
+
+/** The hover of the symbol under the cursor, when `describe` has something to say about it. */
+export function symbolHoverOf(
+  at: HoverTarget,
+  describe: (s: SymbolOccurrence) => string | undefined
+): Hover | undefined {
+  const s = at.symbol;
+  const contents = s && describe(s);
+  return s && contents !== undefined ? { range: s.range, contents } : undefined;
 }
 
 /**
@@ -315,3 +543,42 @@ export function keywordHover(
   if (offset < range.start || offset > range.end || docText === undefined) return undefined;
   return { range, contents: `**${code(text.slice(range.start, range.end))}**\n\n${docText}` };
 }
+
+// ---- Shared by the parsers and config readers of several types (#1084) ----------------
+
+/**
+ * How many of the gaps between the tokens `list` names (indexes in source order) hold a blank:
+ * the blank-separated groups after the first token, for a lexer that skips blanks.
+ */
+export function blankGaps(text: string, tokens: TokenStream, list: readonly number[]): number {
+  let groups = 0;
+  for (let j = 1; j < list.length; j++) {
+    const gap = text.slice(tokens.end[list[j - 1]!] ?? 0, tokens.start[list[j]!] ?? 0);
+    if (/\s/.test(gap)) groups++;
+  }
+  return groups;
+}
+
+/**
+ * The `name` config section a source sets itself: its front matter's `config.<name>`, then each
+ * `%%{init}%%`'s `<name>`, merged key by key, as the resolved config takes them. For callers
+ * that parse or lay out without a resolved config. `{}` when the source sets none.
+ */
+export function configSectionOf(pre: PreprocessResult, name: string): Record<string, unknown> {
+  const parts: unknown[] = [pre.frontMatter?.config?.[name]];
+  for (const dir of pre.directives) {
+    if (dir.kind === 'init' && isPlain(dir.args)) parts.push(dir.args[name]);
+  }
+  return Object.assign({}, ...parts.filter(isPlain)) as Record<string, unknown>;
+}
+
+/** The `direction` values and what they mean, as ER, class and state offer them (no `TD`). */
+export const DIRECTION_DOCS: readonly (readonly [
+  dir: 'TB' | 'BT' | 'LR' | 'RL',
+  meaning: string,
+])[] = [
+  ['TB', 'top to bottom'],
+  ['BT', 'bottom to top'],
+  ['LR', 'left to right'],
+  ['RL', 'right to left'],
+] as const;

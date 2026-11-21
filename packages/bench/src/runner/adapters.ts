@@ -4,6 +4,7 @@
  * the browser, from its file in Node.
  */
 import type { StageClock } from '@mermaid-js/core/timing';
+import type { Mermaid as Mermaid12 } from 'mermaid-v12';
 import { findRender, svgOf } from '../pipeline.ts';
 import type { RenderFn } from '../pipeline.ts';
 import type { RendererId, Stage } from '../report.ts';
@@ -56,11 +57,6 @@ function v13(id: 'v13' | 'v13-stages' | 'v13-base', load: Loader): Adapter {
       },
     }),
   };
-}
-
-interface Mermaid12 {
-  initialize(config: Record<string, unknown>): void;
-  render(id: string, text: string): Promise<{ svg: string }>;
 }
 
 function v12(id: 'v12-frozen' | 'v12-current', load: Loader): Adapter {

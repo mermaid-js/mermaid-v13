@@ -13,7 +13,7 @@ import {
 } from '@mermaid-js/core';
 import { checkFragment, type ConfigFragment, type ResolvedConfig } from '@mermaid-js/core/config';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
-import type { lineHops as LineHops } from '@mermaid-js/core/layout/hops';
+import { lineHops } from '@mermaid-js/core/layout/hops';
 import {
   detectText,
   diagramStart,
@@ -87,11 +87,10 @@ export type ExternalDiagram = AnyPlugin | LazyDiagram | ExtensionPlugin | Manife
 /** `registerLayoutLoaders` input (R-LAYOUT-2): an engine `(graph, ctx?) → LayoutModel`. */
 export interface LayoutLoader {
   readonly name: string;
-  /**
-   * The engine, or a module holding it as `layout` or `default`. A module may also carry core's
-   * line-hop step as `lineHops` (D537), registered with it.
-   */
-  loader(): Promise<LayoutEngine | { layout: LayoutEngine } | { default: LayoutEngine }>;
+  /** The engine, or a module holding it as `layout` or `default`. */
+  readonly loader: () => Promise<
+    LayoutEngine | { layout: LayoutEngine } | { default: LayoutEngine }
+  >;
   /**
    * The layout plugin's config fragment (D153), known from registration on, before the engine
    * loads. Loaders of one package share one fragment object (one id).
@@ -140,16 +139,20 @@ export interface SkippedPlugin {
 interface Entry extends Detected {
   readonly formats: readonly string[];
   /**
-   * `body` is the text from the diagram's start (front matter, leading directives and comments
-   * skipped). `clean` is the text third-party detectors are given and `v12` the one first-party
-   * rows fall back to (core's `detectText`, without and with `keepLastLineComment`). Both are
-   * built on first use.
+   * A first-party row's own formats, which bound its plugin's: a type can draw fewer formats
+   * than the package that serves it (a manifest's `typeOptions` `formats`).
+   */
+  readonly rowFormats?: readonly string[];
+  /**
+   * `firstParty` is core's `firstPartyDetects` for the source: a first-party row's test on the
+   * text from the diagram's start (front matter, leading directives and comments skipped), then
+   * on v12's comment-cut text. `clean` is the text third-party detectors are given (core's
+   * `detectText`), built on first use.
    */
   readonly detect: (
-    body: string,
+    firstParty: (test: (text: string) => boolean) => boolean,
     clean: () => string,
-    config: Readonly<Record<string, unknown>> | undefined,
-    v12: () => string
+    config: Readonly<Record<string, unknown>> | undefined
   ) => boolean;
   readonly load?: () => Promise<AnyPlugin>;
   readonly loadAscii?: () => Promise<AnyAsciiHook>;
@@ -162,14 +165,6 @@ type Resolved =
   | { readonly extension: ExtensionPlugin }
   | { readonly diagram: Entry }
   | { readonly layouts: readonly LayoutLoader[] };
-
-/** One layout name a discovered package gives. */
-interface DiscoveredLayout {
-  readonly name: string;
-  readonly loader: LayoutLoader['loader'];
-  readonly config?: ConfigFragment;
-  readonly extension?: ExtensionPlugin;
-}
 
 /** The id of an extension (given, or by manifest) without loading it; else undefined. */
 function extensionIdOf(def: ExternalDiagram): string | undefined {
@@ -203,18 +198,20 @@ export interface Detected {
 /** Names the built-in engine answers to silently (DESIGN §6.1): `layered` and v12's `dagre`. */
 const FIRST_PARTY_LAYOUTS: ReadonlySet<string> = new Set(['layered', 'dagre']);
 
+/**
+ * v12's zenuml detector (`@mermaid-js/mermaid-zenuml`). zenuml has no v13 package (D317), so it
+ * is detected as a type without one and rejected with `UNSUPPORTED_DIAGRAM` (R-COMPAT-7).
+ */
+const ZENUML = /^\s*zenuml/;
+
 export const builtIn = (name: string): boolean => FIRST_PARTY_LAYOUTS.has(name);
 
-/** Core's line-hop chunk, loaded as a lazy layout (D537): `preload({ layouts: ['lineHops'] })`. */
-export const LINE_HOPS = 'lineHops';
-
 /**
- * Lazy chunks loaded under a layout name that are no engine: core's line-hop step and
- * flowchart's lane part, the one part `layoutParts` may name (`layoutPart`, first-party only,
- * #651). Never a `layout` (`find`), and no loader replaces them
- * (`registerLayouts`; discovery refuses every `LAZY_LAYOUTS` name).
+ * Lazy chunks loaded under a layout name that are no engine: flowchart's lane part, the one
+ * part `layoutParts` may name (`layoutPart`, first-party only, #651). Never a `layout` (`find`),
+ * and no loader replaces them (`registerLayouts`; discovery refuses every `LAZY_LAYOUTS` name).
  */
-const NOT_ENGINES: ReadonlySet<string> = new Set([LINE_HOPS, 'flowchartLanes']);
+const NOT_ENGINES: ReadonlySet<string> = new Set(['flowchartLanes']);
 
 /**
  * First-party engines loaded on first use (D280, D284), each its own chunk outside core's
@@ -229,8 +226,6 @@ const LAZY_LAYOUTS = new Map<string, LayoutLoader['loader']>([
   // `layoutParts` asks for with `swimlane`, so a plain flowchart and other diagrams never load
   // it (R-PERF-1).
   ['flowchartLanes', () => import('@mermaid-js/diagram-flowchart/lanes') as never],
-  // Not an engine (`NOT_ENGINES`): core's line-hop step (D537), loaded the same way.
-  [LINE_HOPS, () => import('@mermaid-js/core/layout/hops') as never],
 ]);
 
 /**
@@ -466,8 +461,8 @@ export class Registry {
         ...e,
         id: e.id,
         formats: e.formats ?? [],
-        detect: (body, _clean, _config, v12) =>
-          firstPartyDetects((text) => e.pattern.test(text), body, v12),
+        rowFormats: e.formats,
+        detect: (detects) => detects((text) => e.pattern.test(text)),
       });
     }
   }
@@ -527,11 +522,17 @@ export class Registry {
     return (this.order = out);
   }
 
+  /** The v12 type of every registered entry, in detection order. */
+  types(): string[] {
+    return this.detectionOrder().map((e) => e.type);
+  }
+
   /** The diagram type of `src`, or throws `MermaidError` (v12 order; first match wins). */
   detect(src: string, pre: PreprocessResult, config?: Readonly<Record<string, unknown>>): Detected {
     const start = diagramStart(src, pre);
     const body = src.slice(start);
-    if (body.trimStart().toLowerCase().startsWith('---')) {
+    // No character lower-cases to a `-`, so the start is tested as written.
+    if (body.trimStart().startsWith('---')) {
       throw new MermaidError(
         'SYNTAX',
         'Diagrams beginning with --- are not valid. If you were trying to use a YAML front-matter, ' +
@@ -539,15 +540,18 @@ export class Registry {
         { source: src, offset: start, length: 3 }
       );
     }
-    if (body.trim().toLowerCase() === 'error') return { type: 'error', id: undefined };
+    // `body.trim().toLowerCase() === 'error'` without lower-casing the body: `\s` is what `trim`
+    // removes, and only ASCII letters fold to `e`, `r` and `o` under `/i`.
+    if (/^\s*error\s*$/i.test(body)) return { type: 'error', id: undefined };
     let clean: string | undefined;
     const cleaned = () => (clean ??= detectText(src, start, pre));
-    let old: string | undefined;
-    const v12 = () => (old ??= detectText(src, start, pre, { keepLastLineComment: true }));
+    const detects = firstPartyDetects(src, start, pre);
     for (const e of this.detectionOrder()) {
       // The entry itself: its type, id, section and layout (D534).
-      if (e.detect(body, cleaned, config, v12)) return e;
+      if (e.detect(detects, cleaned, config)) return e;
     }
+    // D317: a v12 type with no v13 package, known after every plugin, so a plugin can claim it.
+    if (ZENUML.test(body)) return { type: 'zenuml', id: undefined };
     throw new MermaidError(
       'UNSUPPORTED_DIAGRAM',
       `No diagram type detected matching given configuration for text: ${body.slice(0, 200)}`,
@@ -572,7 +576,8 @@ export class Registry {
     const match = (e: Entry): boolean => e.type === typeOrId || e.id === typeOrId;
     const explicit = this.external.find(match);
     if (explicit) return explicit;
-    const first = this.entries.find(match);
+    // A type finds its own row before a row whose plugin id it is (`c4` after `c4beta`).
+    const first = this.entries.find((e) => e.type === typeOrId) ?? this.entries.find(match);
     if (first) return this.replacementOf(first) ?? first;
     return this.replaced.get(typeOrId) ?? this.discoveredFor(match);
   }
@@ -598,12 +603,18 @@ export class Registry {
     return pending;
   }
 
+  /** `typeOrId`'s entry, unless its row draws no text (a type without its plugin's ascii). */
+  private textEntryFor(typeOrId: string): Entry | undefined {
+    const entry = this.entryFor(typeOrId);
+    return entry?.rowFormats?.includes('ascii') === false ? undefined : entry;
+  }
+
   /**
    * Loads the text-output hook of `typeOrId` (D76, only for `format: 'ascii'`): the plugin's
    * own `ascii` method, else its lazily loaded `ascii` entry. Undefined when it has neither.
    */
   async loadAscii(typeOrId: string): Promise<AnyAsciiHook | undefined> {
-    const entry = this.entryFor(typeOrId);
+    const entry = this.textEntryFor(typeOrId);
     const id = entry?.id;
     if (!entry || id === undefined) return undefined;
     const have = this.ascii(id);
@@ -631,7 +642,9 @@ export class Registry {
   formats(typeOrId: string): readonly string[] {
     const entry = this.entryFor(typeOrId);
     if (!entry?.id) return [];
-    return this.plugins.get(entry.id)?.formats ?? entry.formats;
+    const all = this.plugins.get(entry.id)?.formats ?? entry.formats;
+    const row = entry.rowFormats;
+    return row ? all.filter((f) => row.includes(f)) : all;
   }
 
   /** Forgets what was loaded for `id`; an eager entry is ready again at once. */
@@ -873,7 +886,7 @@ export class Registry {
    */
   private discoverLayouts(
     pkg: string,
-    loaders: readonly DiscoveredLayout[],
+    loaders: readonly LayoutLoader[],
     known: Set<string>,
     skip: (pkg: string, reason: string) => void
   ): void {
@@ -995,8 +1008,8 @@ export class Registry {
     return part === 'flowchartLanes' ? [part, this.layouts.get(part)] : [];
   }
 
-  /** Core's line-hop step (D537), once loaded: by itself, or with an engine that carries it. */
-  hops: typeof LineHops | undefined;
+  /** Core's line-hop step (D537), part of core since D672. */
+  readonly hops = lineHops;
 
   /** Loads `name` once; an engine whose loader was replaced while it loaded is dropped. */
   loadLayout(name: string): Promise<void> {
@@ -1006,8 +1019,6 @@ export class Registry {
     if (inflight?.loader === loader) return inflight.pending;
     const pending: Promise<void> = loader()
       .then((m) => {
-        // An engine module that carries core's line-hop step (D537) registers it too.
-        this.hops ??= (m as { lineHops?: typeof LineHops }).lineHops;
         const engine = unwrap<LayoutEngine>(m);
         if (typeof engine !== 'function') throw new TypeError(`Layout "${name}" loaded no engine`);
         if (this.layoutLoader(name) === loader) this.layouts.set(name, engine);
@@ -1034,7 +1045,7 @@ function diagramEntry(
     type: def.id,
     id: def.id,
     formats: def.formats ?? ['svg'],
-    detect: (_body, clean, config) => def.detector(clean(), config),
+    detect: (_firstParty, clean, config) => def.detector(clean(), config),
     load,
     ...(isPlugin ? { eager: def as AnyPlugin } : {}),
     ...(loadAscii ? { loadAscii } : {}),

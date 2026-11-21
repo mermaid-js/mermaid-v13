@@ -6,7 +6,8 @@
 import { detectKanban, parseKanban } from '@mermaid-js/diagram-kanban';
 import { kanbanBoardOrder } from '@mermaid-js/diagram-kanban/testing';
 import type { KanbanItem, KanbanModel } from '@mermaid-js/diagram-kanban';
-import { parseYaml, preprocess } from '@mermaid-js/core/preprocess';
+import { parseYaml } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { KANBAN_V12_TYPES, kanbanV12Snapshot } from './v12.ts';
 import type { KanbanItemSnapshot, KanbanSnapshot } from './v12.ts';
@@ -40,13 +41,8 @@ export function kanbanV13Snapshot(model: KanbanModel): KanbanSnapshot {
 }
 
 /** v13 parse for parity: the model, or a throw carrying the first error diagnostic. */
-export function parseKanbanForParity(text: string): KanbanModel {
-  const pre = preprocess(text);
-  const result = parseKanban(text, { preprocessed: pre });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((d) => d.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseKanbanForParity = (text: string): KanbanModel =>
+  parseForParity(text, parseKanban);
 
 export const kanbanAdapter: DiagramAdapter<KanbanModel> = {
   id: 'kanban',

@@ -2,7 +2,7 @@
  * `pnpm gen:theme` writes the theme tables and the variable inventory;
  * `pnpm gen:theme --check` fails instead when any of them is stale.
  */
-import { THEME_VARIABLES } from '../../../packages/core/src/theme/index.ts';
+import { THEME_VARIABLES } from '@mermaid-js/core/theme';
 import { emit } from './emit.ts';
 import { INVENTORY_PATH, TABLE_PATH, themeInventory, themeTable } from './theme-inventory.ts';
 import {

@@ -1,0 +1,13 @@
+c4-beta
+%% rename-to: gateway
+container ap "Ap"
+container api "API" "api"
+container api2 "API 2"
+container capi "capi"
+container a-api "a-api"
+container api-b "api-b"
+ap --> api
+api --> api2
+capi --> a|pi : "api" "api" :::api
+a-api --> api-b
+title api

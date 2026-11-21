@@ -48,7 +48,7 @@ const Y_AXIS: AxisNames = {
  * `currentColor`, as core's DSL: past the end of an empty palette, and for a paint nothing drawn
  * uses, so that its alias is not declared.
  */
-const CURRENT_COLOR = 'currentColor' as Paint;
+const CURRENT_COLOR: Paint = 'currentColor';
 
 /** The axis's colours, each read only when the axis draws that part. */
 function axisPaints(theme: Theme, a: XyAxisLayout, names: AxisNames): AxisPaints {

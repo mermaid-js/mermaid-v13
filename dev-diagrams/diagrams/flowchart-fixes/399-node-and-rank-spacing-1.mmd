@@ -1,0 +1,22 @@
+---
+title: '#399 nodeSpacing and rankSpacing 1'
+description:
+  Today the two frames touch and the X to Y arrowhead is hidden in a 1 px gap. Fixed when the X to Y edge and its arrowhead are visible between the frames, while the gaps stay as small as that allows.
+config:
+  flowchart:
+    nodeSpacing: 1
+    rankSpacing: 1
+---
+flowchart LR
+  X --> Y
+  subgraph X
+    direction LR
+    A
+    C
+  end
+  subgraph Y
+    B
+    D
+  end
+  E --> F
+  E --> G

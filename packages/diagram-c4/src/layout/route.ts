@@ -5,13 +5,18 @@
  * between columns or rows, or a detour lane round the shapes in the way; ports spread along a
  * side, reverse pairs shifted apart, self-loops on the right side.
  *
+ * Added in the port (#774): a diagonal line that no elbow clears takes a path through the
+ * channels between the shapes (`./channels.ts`) instead of going straight through them. Only a
+ * spent work budget leaves it straight.
+ *
  * Changed in the port: it returns plain data (corners and the label stretch; the renderer draws
  * the path, `./path.ts`), lengths come from the metrics table, outlines are `./shapes.ts`'s
  * (rounded corners included), and the path's arrowhead trims are left to the renderer.
  */
 // cspell:ignore kepano
+import { channelPath, type Port, type Taken } from './channels.ts';
 import { C4_METRICS as M } from './metrics.ts';
-import { hit, hitRect, sidesOf, type Outline, type Sides } from './shapes.ts';
+import { hit, hitRect, insideAlong, sidesOf, type Outline, type Sides } from './shapes.ts';
 import type { C4RouteKind, Point } from './types.ts';
 
 /** A routed relation: its corners, the stretch its label may sit on, and how to place it. */
@@ -72,47 +77,61 @@ function contains(outer: Outline, inner: Outline): boolean {
 const cx = (b: Outline): number => b.x + b.width / 2;
 const cy = (b: Outline): number => b.y + b.height / 2;
 
-/** The straight line from a to b: x, y of its start, then of its end. */
-function connect(a: Outline, b: Outline, shift: number): [number, number, number, number] {
-  const ax = cx(a);
-  const ay = cy(a);
-  const bx = cx(b);
-  const by = cy(b);
-  const down = contains(a, b);
-  if (down || contains(b, a)) {
-    // One holds the other: a short line from the nearest side of the outer box.
-    const outer = down ? a : b;
-    const inner = down ? b : a;
-    const ix = cx(inner);
-    const iy = cy(inner);
-    const left = inner.x - outer.x;
-    const right = outer.x + outer.width - inner.x - inner.width;
-    const top = inner.y - outer.y;
-    const bottom = outer.y + outer.height - inner.y - inner.height;
-    const least = Math.min(left, right, top, bottom);
-    let ox = ix;
-    let oy = least === bottom ? outer.y + outer.height : outer.y;
-    if (least === left || least === right) {
-      ox = least === left ? outer.x : outer.x + outer.width;
-      oy = iy;
-    }
-    const t = Math.min(hit(inner, { x: ox, y: oy }, { x: ix, y: iy }), 1);
-    const mx = ox + (ix - ox) * t;
-    const my = oy + (iy - oy) * t;
-    return down ? [ox, oy, mx, my] : [mx, my, ox, oy];
-  }
+/** A straight line: x, y of its start, then of its end. */
+type Line = [number, number, number, number];
 
-  let px = ax;
-  let py = ay;
-  let qx = bx;
-  let qy = by;
-  // Shapes that share a column or a row are joined by an upright or level line through the shared span.
+/** Where on the outer box's nearest side a short line to the inner box starts. */
+function nearestSide(outer: Outline, inner: Outline): [number, number] {
+  const left = inner.x - outer.x;
+  const right = outer.x + outer.width - inner.x - inner.width;
+  const top = inner.y - outer.y;
+  const bottom = outer.y + outer.height - inner.y - inner.height;
+  const least = Math.min(left, right, top, bottom);
+  if (least === left || least === right)
+    return [least === left ? outer.x : outer.x + outer.width, cy(inner)];
+  return [cx(inner), least === bottom ? outer.y + outer.height : outer.y];
+}
+
+/** The unit normal of a line, to the left of its way in the drawing; a point reads as level. */
+function unitNormal([px, py, qx, qy]: Line): Point {
+  const len = Math.hypot(qx - px, qy - py) || 1;
+  return { x: -(qy - py) / len, y: (qx - px) / len };
+}
+
+/**
+ * One box holds the other: a short line from the nearest side of the outer box, moved along
+ * that side by `shift` (the outer box is `a` when `down`).
+ */
+function nestedLine(outer: Outline, inner: Outline, down: boolean, shift: number): Line {
+  const [ox, oy] = nearestSide(outer, inner);
+  const n = unitNormal([ox, oy, cx(inner), cy(inner)]);
+  // `shift` is across the way from a to b, which runs out of the inner box when it is a.
+  const s = down ? shift : -shift;
+  const [sx, sy] = [ox + n.x * s, oy + n.y * s];
+  const [ix, iy] = [cx(inner) + n.x * s, cy(inner) + n.y * s];
+  const t = Math.min(hit(inner, { x: sx, y: sy }, { x: ix, y: iy }), 1);
+  const mx = sx + (ix - sx) * t;
+  const my = sy + (iy - sy) * t;
+  return down ? [sx, sy, mx, my] : [mx, my, sx, sy];
+}
+
+/**
+ * The line between the middles of a and b before any shift. Shapes that share a column or a
+ * row are joined by an upright or level line through the shared span.
+ */
+function baseLine(a: Outline, b: Outline): Line {
   const x0 = Math.max(a.x, b.x);
   const x1 = Math.min(a.x + a.width, b.x + b.width);
   const y0 = Math.max(a.y, b.y);
   const y1 = Math.min(a.y + a.height, b.y + b.height);
-  if (x0 < x1) px = qx = (x0 + x1) / 2;
-  else if (y0 < y1) py = qy = (y0 + y1) / 2;
+  if (x0 < x1) return [(x0 + x1) / 2, cy(a), (x0 + x1) / 2, cy(b)];
+  if (y0 < y1) return [cx(a), (y0 + y1) / 2, cx(b), (y0 + y1) / 2];
+  return [cx(a), cy(a), cx(b), cy(b)];
+}
+
+/** The straight line from a to b, shifted sideways by `shift` while it still meets both. */
+function apartLine(a: Outline, b: Outline, shift: number): Line {
+  let [px, py, qx, qy] = baseLine(a, b);
   const len = Math.hypot(qx - px, qy - py) || 1;
   const nx = (-(qy - py) / len) * shift;
   const ny = ((qx - px) / len) * shift;
@@ -124,14 +143,43 @@ function connect(a: Outline, b: Outline, shift: number): [number, number, number
     qx += nx;
     qy += ny;
   } else {
-    px = ax;
-    py = ay;
-    qx = bx;
-    qy = by;
+    [px, py, qx, qy] = [cx(a), cy(a), cx(b), cy(b)];
     ta = Math.min(hit(a, { x: qx, y: qy }, { x: px, y: py }), 1);
     tb = Math.min(hit(b, { x: px, y: py }, { x: qx, y: qy }), 1);
   }
   return [qx + (px - qx) * ta, qy + (py - qy) * ta, px + (qx - px) * tb, py + (qy - py) * tb];
+}
+
+/** The straight line from a to b. */
+function connect(a: Outline, b: Outline, shift: number): Line {
+  const down = contains(a, b);
+  if (down || contains(b, a)) return nestedLine(down ? a : b, down ? b : a, down, shift);
+  return apartLine(a, b, shift);
+}
+
+/**
+ * How far the straight line between a and b can move to either side and still meet both
+ * outlines: the room the relations between them share (#680). It is how far each point the line
+ * runs from (a shape's middle, or the middle of the span two shapes share) can move across the
+ * line and stay inside its outline, the lesser of the two, less `portInset`. Between nested
+ * boxes, along the side the short line leaves, from the middle of the inner box.
+ */
+export function pairRoom(a: Outline, b: Outline): number {
+  const down = contains(a, b);
+  if (down || contains(b, a)) {
+    const inner = down ? b : a;
+    const middle = { x: cx(inner), y: cy(inner) };
+    const [ox, oy] = nearestSide(down ? a : b, inner);
+    const n = unitNormal([ox, oy, middle.x, middle.y]);
+    return Math.max(0, Math.min(...insideAlong(inner, middle, n)) - M.portInset);
+  }
+  const line = baseLine(a, b);
+  const n = unitNormal(line);
+  const reach = Math.min(
+    ...insideAlong(a, { x: line[0], y: line[1] }, n),
+    ...insideAlong(b, { x: line[2], y: line[3] }, n)
+  );
+  return Math.max(0, reach - M.portInset);
 }
 
 /** The sides of a box a line leaves or reaches. */
@@ -244,6 +292,11 @@ export class Lanes {
       if (clear) out.push(at);
     }
     return out.length ? out : [want];
+  }
+
+  /** The stretches taken so far (`./channels.ts`'s `Taken`). */
+  get stretches(): Taken {
+    return { upright: this.upright, level: this.level };
   }
 
   claim(box: Outline, side: Side, at: number): void {
@@ -393,11 +446,39 @@ function elbow(
   return bent(points, 2, { room: upright ? M.narrow : M.wide });
 }
 
-/** A self-loop on the right side of `a`, its ends on the outline. */
-function loop(a: Outline): Route {
-  const spread = Math.max(0, Math.min(a.height / 2 - M.loopSpreadInset, M.loopSpread));
+/** A self-loop's place among the self-loops on its shape: the `nth` (from 0) of `count`. */
+export interface LoopPlace {
+  readonly nth: number;
+  readonly count: number;
+}
+
+const ONE_LOOP: LoopPlace = { nth: 0, count: 1 };
+
+/**
+ * Where on `a`'s right side its self-loops end: the middle, and how far from it either way. One
+ * loop alone sits at the middle of the box. Several share the stretch the outline has down the
+ * side, measured `shapeRadius` in from it (a person's body, not its head) (#680). Both keep
+ * `loopSpreadInset` clear of the ends.
+ */
+function loopStretch(a: Outline, count: number): [number, number] {
+  if (count === 1) return [cy(a), Math.max(0, a.height / 2 - M.loopSpreadInset)];
+  const at = { x: a.x + a.width - M.shapeRadius, y: cy(a) };
+  const [up, down] = insideAlong(a, at, { x: 0, y: 1 });
+  return [cy(a) + (down - up) / 2, Math.max(0, (up + down) / 2 - M.loopSpreadInset)];
+}
+
+/**
+ * A self-loop on the right side of `a`, its ends on the outline. With several loops on one
+ * shape (#680), each takes a stretch of the side of its own, the first at the top: their ends
+ * are spread evenly down the side, and no loop is taller than one alone. Past
+ * `half / near + 1/2` loops (`half` from {@link loopStretch}), their ends are closer than `near`.
+ */
+function loop(a: Outline, { nth, count }: LoopPlace): Route {
+  const [middle, half] = loopStretch(a, count);
+  // A loop's ends are `2 * spread` apart, and so is the next loop's first end from its last.
+  const spread = Math.min(half / (2 * count - 1), M.loopSpread);
   const x = a.x + a.width;
-  const y = cy(a);
+  const y = middle + (4 * nth - 2 * (count - 1)) * spread;
   const far = x + M.loop;
   const endAt = (yy: number): number =>
     far + (cx(a) - far) * Math.min(hit(a, { x: far, y: yy }, { x: cx(a), y: yy }), 1);
@@ -428,38 +509,59 @@ function loop(a: Outline): Route {
 /** How a relation is routed: its sideways shift, the shapes to steer clear of, and the lanes taken. */
 export interface RouteOptions {
   readonly shift: number;
+  /** A self-loop's place among the loops on its shape; the only one when left out. */
+  readonly loop?: LoopPlace;
   /** Undefined once the budget is spent: the line goes straight. */
   readonly others?: readonly Outline[];
   readonly lanes: Lanes;
 }
 
 /**
- * Routes a relation from a to b. `shift` moves the line sideways when another runs the opposite
- * way. `others` are the shapes to steer clear of; undefined skips that check (over the budget).
- * `lanes` holds what the routes before it take up, so that this one keeps apart from them.
+ * Routes a relation from a to b. `shift` moves the line sideways, off the others between the
+ * same two shapes; it stays within their `pairRoom`. `loop` places a self-loop among the others
+ * on its shape. `others` are the shapes to steer clear of; undefined skips that check (over the
+ * budget). `lanes` holds what the routes before it take up, so that this one keeps apart from them.
  */
-export function route(a: Outline, b: Outline, { shift, others, lanes }: RouteOptions): Route {
-  if (a === b) return loop(a);
+export function route(a: Outline, b: Outline, options: RouteOptions): Route {
+  const { shift, others, lanes } = options;
+  if (a === b) return loop(a, options.loop ?? ONE_LOOP);
+  const line = connect(a, b, shift);
+  return (others && around({ a, b, others, lanes, line })) ?? straight(line, shift, lanes);
+}
 
-  const [sx, sy, ex, ey] = connect(a, b, shift);
-  const upright = sx === ex;
-  const level = sy === ey;
+/** What going round the shapes in a straight line's way reads. */
+interface Around {
+  readonly a: Outline;
+  readonly b: Outline;
+  readonly others: readonly Outline[];
+  readonly lanes: Lanes;
+  readonly line: Line;
+}
+
+/**
+ * The way round the shapes in the way of the straight line from a to b: a detour for an upright
+ * or level line, else an elbow, else a path through the channels between the shapes. Undefined
+ * when nothing is in the way, when one holds the other, when no path is clear, or once the budget
+ * is spent.
+ */
+function around({ a, b, others, lanes, line }: Around): Route | undefined {
+  const [sx, sy, ex, ey] = line;
   const inTheWay = (o: Outline): boolean =>
     o !== a && o !== b && hitRect(sidesOf(o), { x: sx, y: sy }, { x: ex - sx, y: ey - sy }) <= 1;
-  if (others) lanes.work.charge(others.length);
-  const blocked =
-    others !== undefined && !contains(a, b) && !contains(b, a) && others.some(inTheWay);
-  if (others && blocked && !upright && !level) {
-    const around = elbow(a, b, others, lanes);
-    if (around) return around;
-  }
-  if (others && blocked && (upright || level))
-    return detour({ a, b, others, lanes, upright, line: [sx, sy, ex, ey], inTheWay });
+  lanes.work.charge(others.length);
+  if (contains(a, b) || contains(b, a) || !others.some(inTheWay)) return undefined;
+  const upright = sx === ex;
+  if (upright || sy === ey) return detour({ a, b, others, lanes, upright, line, inTheWay });
+  return elbow(a, b, others, lanes) ?? channel(a, b, others, lanes);
+}
 
+/** The straight line as a route, its label pushed to the side of `shift`. */
+function straight(line: Line, shift: number, lanes: Lanes): Route {
+  const [sx, sy, ex, ey] = line;
   const len = Math.hypot(ex - sx, ey - sy) || 1;
   const dx = (ex - sx) / len;
   const dy = (ey - sy) / len;
-  if (upright || level) lanes.take([sx, sy, ex, ey]);
+  if (sx === ex || sy === ey) lanes.take([sx, sy, ex, ey]);
   return {
     kind: 'line',
     points: [sx, sy, ex, ey],
@@ -471,8 +573,8 @@ export function route(a: Outline, b: Outline, { shift, others, lanes }: RouteOpt
     y0: sy,
     x1: ex,
     y1: ey,
-    nx: shift ? -dy : 0,
-    ny: shift ? dx : 0,
+    nx: Math.sign(shift) * -dy,
+    ny: Math.sign(shift) * dx,
     lean: 0,
     room: Math.abs(dx) > Math.abs(dy) ? M.narrow : M.wide,
   };
@@ -587,6 +689,94 @@ function detour({ a, b, others, lanes, upright, line, inTheWay }: Detour): Route
   lanes.claim(a, side, p0);
   lanes.claim(b, side, p1);
   return bent(points, 2, upright ? { nx: sign, lean: M.lean, room: M.narrow } : { room: M.wide });
+}
+
+/** Where on `side` of `box` a line towards `to` would leave: a quarter of the way from the middle. */
+function portToward(lanes: Lanes, box: Outline, side: Side, to: Outline): Port & { at: number } {
+  const sideways = side === SIDE.left || side === SIDE.right;
+  const want = sideways
+    ? cy(box) + (Math.sign(cy(to) - cy(box)) * box.height) / 4
+    : cx(box) + (Math.sign(cx(to) - cx(box)) * box.width) / 4;
+  const at = portsOn(lanes, box, side, want)[0]!;
+  if (side === SIDE.left) return { x: box.x, y: at, dx: -1, dy: 0, at };
+  if (side === SIDE.right) return { x: box.x + box.width, y: at, dx: 1, dy: 0, at };
+  if (side === SIDE.top) return { x: at, y: box.y, dx: 0, dy: -1, at };
+  return { x: at, y: box.y + box.height, dx: 0, dy: 1, at };
+}
+
+/**
+ * Each stretch of a path but its first and last moved off the lanes other routes took, a lane
+ * step at a time either way while the path stays clear of the shapes, as a detour's lane moves.
+ */
+function settle(
+  path: number[],
+  others: readonly Outline[],
+  ends: [Outline, Outline],
+  lanes: Lanes
+): number[] {
+  let points = path;
+  for (let i = 2; i + 4 < points.length; i += 2) {
+    const upright = points[i] === points[i + 2];
+    const c = upright ? 0 : 1;
+    const at = points[i + c]!;
+    const [s0, s1] = [points[i + 1 - c]!, points[i + 3 - c]!];
+    if (lanes.free(upright, at, s0, s1)) continue;
+    for (let k = 1; k <= 2 * M.laneTries; k++) {
+      const moved = at + (k & 1 ? 1 : -1) * Math.ceil(k / 2) * M.laneStep;
+      const tried = [...points];
+      tried[i + c] = moved;
+      tried[i + 2 + c] = moved;
+      if (clearOf(tried, others, ends, lanes.work) && lanes.free(upright, moved, s0, s1)) {
+        points = tried;
+        break;
+      }
+    }
+  }
+  return points;
+}
+
+/** The end of the stretch from (px, py) into `box` along `port`'s line, on the box's outline. */
+function onOutline(box: Outline, port: Port, px: number, py: number): [number, number] {
+  const qx = port.dx ? cx(box) : px;
+  const qy = port.dx ? py : cy(box);
+  const t = Math.min(hit(box, { x: px, y: py }, { x: qx, y: qy }), 1);
+  return [px + (qx - px) * t, py + (qy - py) * t];
+}
+
+/**
+ * A path from a to b through the channels between the shapes (`./channels.ts`), for a diagonal
+ * line that no elbow clears (#774). It may leave and reach any side, at the port an elbow would
+ * take there; its stretches move off the lanes other routes took; its label sits on its longest
+ * stretch between two bends. Undefined when no path is clear, or once the budget is spent.
+ */
+function channel(
+  a: Outline,
+  b: Outline,
+  others: readonly Outline[],
+  lanes: Lanes
+): Route | undefined {
+  const sides: Side[] = [SIDE.left, SIDE.right, SIDE.top, SIDE.bottom];
+  const starts = sides.map((side) => portToward(lanes, a, side, b));
+  const ends = sides.map((side) => portToward(lanes, b, side, a));
+  const blocks = [...others, ...[a, b].filter((o) => !others.includes(o))];
+  const found = channelPath({ starts, ends, blocks, taken: lanes.stretches }, lanes.work);
+  if (!found) return undefined;
+  const points = settle(found.points, others, [a, b], lanes);
+  const n = points.length;
+  const start = starts[found.start]!;
+  const end = ends[found.end]!;
+  [points[0], points[1]] = onOutline(a, start, points[2]!, points[3]!);
+  [points[n - 2], points[n - 1]] = onOutline(b, end, points[n - 4]!, points[n - 3]!);
+  if (!clearOf(points, others, [a, b], lanes.work)) return undefined;
+  lanes.take(points);
+  lanes.claim(a, sides[found.start]!, start.at);
+  lanes.claim(b, sides[found.end]!, end.at);
+  // The label's stretch: the longest between two bends, or the longest of all on a path of two.
+  let along = n > 6 ? 2 : 0;
+  const length = (i: number): number =>
+    Math.abs(points[i + 2]! - points[i]!) + Math.abs(points[i + 3]! - points[i + 1]!);
+  for (let i = along; i + (n > 6 ? 6 : 4) <= n; i += 2) if (length(i) > length(along)) along = i;
+  return bent(points, along, { room: points[along] === points[along + 2] ? M.narrow : M.wide });
 }
 
 /** The corners of a route as points. */

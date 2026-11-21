@@ -5,8 +5,10 @@
  * keyed by theme trait, never by theme name:
  *
  * - **light** (every family, the fallback): v12 `default`'s five backgrounds and cliff, the
- *   boundaries and arrows in `lineColor`, text in `textColor`, labels in `primaryTextColor`;
- *   the five lengths as tokens of every family. This is v12 in `default`, `neutral` and `base`.
+ *   boundaries and arrows in `canvasLineColor`, text in `textColor`, labels in
+ *   `canvasTextColor`; the five lengths as tokens of every family. This is v12 in `default`,
+ *   `neutral` and `base`. The canvas inputs are `lineColor` and `primaryTextColor`, except where
+ *   a theme pins them because v12 keeps its block under an override of those (D656).
  * - **dark** (a dark theme's own trait, not the author's `darkMode`, as v12's literals did not
  *   follow it): v12 `dark`'s five backgrounds and cliff, over the light entries.
  *
@@ -29,11 +31,11 @@ export const theme: DiagramThemeTable = {
       cynefinChaoticBg: '#FBE9E7',
       cynefinClearBg: '#FFF8E1',
       cynefinConfusionBg: '#F3E5F5',
-      cynefinBoundaryColor: 'lineColor',
+      cynefinBoundaryColor: 'canvasLineColor',
       cynefinCliffColor: '#8B0000',
-      cynefinArrowColor: 'lineColor',
+      cynefinArrowColor: 'canvasLineColor',
       cynefinTextColor: 'textColor',
-      cynefinLabelColor: 'primaryTextColor',
+      cynefinLabelColor: 'canvasTextColor',
     },
   },
   families: {

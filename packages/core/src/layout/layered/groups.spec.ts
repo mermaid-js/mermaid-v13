@@ -65,6 +65,27 @@ describe('layered: groups', () => {
     expect(m.edges.get('a-b')!.ports).toEqual({ source: 'bottom', target: 'top' });
   });
 
+  // #650: Brandes-Köpf lines up one bend with the group, so the nodes outside used to stack in
+  // the middle of its side. `pullToHeld` moves each one across from the members it links to.
+  it('puts nodes outside a group across from the members they link to', () => {
+    const members = Array.from({ length: 12 }, (_, i) => box(`u${i}`, 'g'));
+    const outside = ['a0', 'a1', 'a2', 'a3'];
+    const g: LayoutGraph = {
+      direction: 'LR',
+      nodes: [...outside.map((id) => box(id)), ...members],
+      edges: members.map((u, i) => link(outside[i % 4]!, u.id)),
+      groups: [{ id: 'g', padding: pad }],
+      spacing: { node: 50, rank: 50, edge: 20 },
+    };
+    const m = layered(g);
+    expect(validateLayout(g, m)).toEqual([]);
+    for (const id of outside) {
+      const ys = g.edges.filter((e) => e.source === id).map((e) => m.nodes.get(e.target)!.y);
+      expect(m.nodes.get(id)!.y, id).toBeGreaterThanOrEqual(Math.min(...ys));
+      expect(m.nodes.get(id)!.y, id).toBeLessThanOrEqual(Math.max(...ys));
+    }
+  });
+
   // #405, #415: an unlabelled edge between a group and its own member is laid out inside the
   // group, from its border (on top, below its title), not drawn between the two middles.
   it.each([

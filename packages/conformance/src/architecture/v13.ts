@@ -5,7 +5,7 @@
  */
 import { detectArchitecture, parseArchitecture } from '@mermaid-js/diagram-architecture';
 import type { ArchitectureModel } from '@mermaid-js/diagram-architecture';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { ARCHITECTURE_V12_TYPES, architectureV12Snapshot } from './v12.ts';
 import type { ArchitectureSnapshot } from './v12.ts';
@@ -44,14 +44,8 @@ export function architectureV13Snapshot(model: ArchitectureModel): ArchitectureS
  * front-matter title is held back, as the oracle holds it back from v12 (see `v12.ts`); the
  * D218 fallback has its own specs in the architecture package.
  */
-export function parseArchitectureForParity(text: string): ArchitectureModel {
-  const pre = preprocess(text);
-  const fm = pre.frontMatter && { ...pre.frontMatter, title: undefined };
-  const result = parseArchitecture(text, { preprocessed: { ...pre, frontMatter: fm } });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((x) => x.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseArchitectureForParity = (text: string): ArchitectureModel =>
+  parseForParity(text, parseArchitecture, { withoutTitle: true });
 
 export const architectureAdapter: DiagramAdapter<ArchitectureModel> = {
   id: 'architecture',

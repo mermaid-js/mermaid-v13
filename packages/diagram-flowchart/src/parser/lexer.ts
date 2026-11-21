@@ -19,6 +19,7 @@ import {
   DQUOTE,
   EQUALS,
   hasClass,
+  isBlank,
   isSpace,
   Kind,
   LF,
@@ -67,10 +68,19 @@ const RE_INVIS_LINK = /\s*~~~+\s*/y;
 const RE_SPACE = /[^\S\n\r]+/y;
 
 const LOWER_M = 0x6d;
-const TAB = 0x09;
-const SPACE = 0x20;
-/** A blank within a line. */
-const isBlank = (c: number) => c === SPACE || c === TAB;
+
+const KEYWORDS = /* @__PURE__ */ flowKeywords([
+  ['style', T.Style],
+  ['swimlane-beta', T.Graph, 'graph'],
+  ['subgraph', T.Subgraph],
+  ['default', T.Default],
+  ['linkStyle', T.LinkStyle],
+  ['interpolate', T.Interpolate],
+  ['flowchart-elk', T.Graph, 'graph'],
+  ['flowchart', T.Graph, 'graph'],
+  ['graph', T.Graph, 'graph'],
+  ['end', T.End, 'spaces'],
+]);
 
 /**
  * How v12's lexer read a flowchart: trimmed, about four characters a token, comments removed
@@ -78,19 +88,9 @@ const isBlank = (c: number) => c === SPACE || c === TAB;
  */
 const DIALECT: FlowLexerDialect = {
   kinds: T,
-  chars: /* @__PURE__ */ flowChars(false),
-  keywords: /* @__PURE__ */ flowKeywords([
-    ['style', T.Style],
-    ['swimlane-beta', T.Graph, 'graph'],
-    ['subgraph', T.Subgraph],
-    ['default', T.Default],
-    ['linkStyle', T.LinkStyle],
-    ['interpolate', T.Interpolate],
-    ['flowchart-elk', T.Graph, 'graph'],
-    ['flowchart', T.Graph, 'graph'],
-    ['graph', T.Graph, 'graph'],
-    ['end', T.End, 'spaces'],
-  ]),
+  // A link id ends at `[ ] ( ) { } |`, as in v12 12.3.0 (D621); swimlane-beta shares it.
+  chars: /* @__PURE__ */ flowChars(false, true, KEYWORDS),
+  keywords: KEYWORDS,
   charsPerToken: 4,
   trim: true,
 };

@@ -7,16 +7,13 @@ import type { SequenceLayout } from '../layout/index.ts';
 import type { ParticipantKind, SequenceModel, SequenceStatement } from '../model.ts';
 import { symbolForm } from './symbols.ts';
 import { asciiDropped, emphasised } from '@mermaid-js/shared/ascii';
+import type { AsciiDroppedWarning as SharedAsciiDroppedWarning } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'emphasis' | 'link' | 'accessibility';
 
 /** One feature kind text output dropped (D82). */
-export interface AsciiDroppedWarning extends Warning {
-  readonly code: 'ASCII_DROPPED';
-  readonly feature: AsciiDroppedFeature;
-  readonly astIds: readonly string[];
-}
+export type AsciiDroppedWarning = SharedAsciiDroppedWarning<AsciiDroppedFeature>;
 
 /** The participant symbols drawn as plain boxes because they have no text form (D82). */
 export interface AsciiShapeWarning extends Warning {

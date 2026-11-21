@@ -10,5 +10,5 @@ export * from './parser/index.ts';
 export * from './layout/index.ts';
 // Renderer (#156): the whole `<svg>` through the SvgWriter, and the plugin (registered in #157).
 export { renderClass } from './render/render.ts';
-export type { ClassRenderContext, ClassWarning } from './render/context.ts';
+export type { ClassRenderContext } from './render/context.ts';
 export { classDiagram } from './plugin.ts';

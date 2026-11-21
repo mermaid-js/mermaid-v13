@@ -115,13 +115,15 @@ import {
 import { T } from './tokens.ts';
 
 export interface RequirementParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /**
    * Entries `style`, `class` and `classDef` statements may add to boxes and classes before
    * the model records the overflow (`styleCopies`, D433); default `MAX_STYLE_COPIES`.
    */
   maxStyleCopies?: number;
+  /** Requirement and element cap (core `DEFAULT_LIMITS.maxNodes`, D608). */
+  maxNodes?: number;
+  /** Relationship cap (core `DEFAULT_LIMITS.maxEdges`, D608). */
+  maxEdges?: number;
 }
 
 export type RequirementParseResult = ParseResult<RequirementModel, RequirementDocument>;
@@ -199,9 +201,7 @@ class RequirementParser {
       this.c = new ProbeCursor(this.lexed.tokens, probe);
     }
     this.mark = this.c.pos;
-    this.db = new RequirementBuilder(
-      options.maxStyleCopies !== undefined ? { maxStyleCopies: options.maxStyleCopies } : {}
-    );
+    this.db = new RequirementBuilder(options, this.st.diagnostics);
   }
 
   parse(): RequirementParseResult {

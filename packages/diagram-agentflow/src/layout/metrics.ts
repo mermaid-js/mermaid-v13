@@ -19,9 +19,6 @@ export const TITLE_MARGIN_DEFAULTS: Readonly<Record<'top' | 'bottom', number>> =
   bottom: 0,
 });
 
-/** Config lengths at or above this are not taken (the cap flowchart's builder has). */
-export const MAX_CONFIG_LENGTH = 1e4;
-
 export interface AgentflowMetrics {
   /**
    * v12's flow corner radius (`clusters.js` `flowGroup`): the expanded frame's, and the
@@ -43,6 +40,11 @@ export interface AgentflowMetrics {
   readonly curveSteps: number;
   /** How far an edge end may sit off a box side and still count as on it. */
   readonly onSide: number;
+  /**
+   * The share of a slanted side (the input shape's, sideways to the flow) that edge ends spread
+   * along: an eighth kept clear at each cut corner (#674).
+   */
+  readonly slantSpan: number;
 }
 
 /**
@@ -60,4 +62,5 @@ export const AGENTFLOW_METRICS: AgentflowMetrics = Object.freeze({
   }),
   curveSteps: 8,
   onSide: 0.5,
+  slantSpan: 0.75,
 });

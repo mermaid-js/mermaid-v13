@@ -4,7 +4,7 @@
  */
 import { detectMindmap, mindmapSections, parseMindmap } from '@mermaid-js/diagram-mindmap';
 import type { MindmapModel } from '@mermaid-js/diagram-mindmap';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { MINDMAP_V12_TYPES, mindmapV12Snapshot } from './v12.ts';
 import type { MindmapSnapshot } from './v12.ts';
@@ -28,13 +28,8 @@ export function mindmapV13Snapshot(model: MindmapModel): MindmapSnapshot {
 }
 
 /** v13 parse for parity: the model, or a throw carrying the first error diagnostic. */
-export function parseMindmapForParity(text: string): MindmapModel {
-  const pre = preprocess(text);
-  const result = parseMindmap(text, { preprocessed: pre });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((d) => d.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseMindmapForParity = (text: string): MindmapModel =>
+  parseForParity(text, parseMindmap);
 
 export const mindmapAdapter: DiagramAdapter<MindmapModel> = {
   id: 'mindmap',

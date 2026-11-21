@@ -39,7 +39,8 @@ export function bandsOf(c: Chart): GanttBand[] {
       height: c.gap,
       slot: c.slot(c.names[t.index]!),
     };
-    c.bounds.rect(band);
+    // Its corners, not `add`: a `rightPadding` past twice the width makes the width negative.
+    c.bounds.point(band.x, band.y).point(band.x + band.width, band.y + band.height);
     out.push(band);
   }
   return out;
@@ -66,7 +67,7 @@ export function sectionsOf(c: Chart): GanttSectionLabel[] {
     // Each line is centred on its own baseline (`alignment-baseline: central`), 1em apart.
     const pitch = (Math.max(1, text.lines.length) - 1) * lineHeight;
     const top = y - pitch / 2 - text.lineHeight / 2;
-    c.bounds.rect({
+    c.bounds.add({
       x: env.m.sectionX,
       y: top,
       width: text.width,
@@ -116,6 +117,8 @@ export function excludesOf(c: Chart, warn: Warn, steps: Steps): Rect[] {
   const x = (t: number): number => c.scale(t) + env.leftPadding;
   const y = env.gridLineStartPadding;
   const height = c.h - env.topPadding - env.gridLineStartPadding;
+  const plotLeft = env.leftPadding;
+  const plotRight = env.leftPadding + c.plotWidth;
   const out: Rect[] = [];
   let run: [Date, Date] | undefined;
   const cost = dayCost(model.dateFormat);
@@ -131,10 +134,15 @@ export function excludesOf(c: Chart, warn: Warn, steps: Steps): Rect[] {
     from.setHours(0, 0, 0, 0);
     const to = new Date(run[1]);
     to.setHours(23, 59, 59, 999);
-    const r = { x: x(from.getTime()), y, width: x(to.getTime()) - x(from.getTime()), height };
-    c.bounds.rect(r);
-    out.push(r);
     run = undefined;
+    // Clamped to the plot: v12 draws a run that starts before the first task outside its
+    // viewBox, where it is clipped; growing the bounds to it would shift the chart.
+    const left = Math.max(x(from.getTime()), plotLeft);
+    const right = Math.min(x(to.getTime()), plotRight);
+    if (right <= left) continue;
+    const r = { x: left, y, width: right - left, height };
+    c.bounds.add(r);
+    out.push(r);
   }
   return out;
 }
@@ -172,7 +180,7 @@ function ticksFor(c: Chart, warn: Warn): GanttTick[] {
 function axisBounds(c: Chart, axis: GanttAxis, ascent: number, lineHeight: number): void {
   for (const t of axis.ticks) {
     c.bounds.point(t.x, axis.y1).point(t.x, axis.y2);
-    c.bounds.rect({
+    c.bounds.add({
       x: t.x - t.width / 2,
       y: axis.labelY - ascent,
       width: t.width,

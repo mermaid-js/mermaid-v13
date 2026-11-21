@@ -1,0 +1,20 @@
+---
+description: >-
+  Relation labels as tags (D626–D629): the dashed `<<kind>>` lines and the
+  solid `contains` line each carry a rounded box bordered 1 px solid in the
+  relation colour and filled with the theme background. Requirement has no
+  free label text, no edge style and no container.
+---
+requirementDiagram
+  requirement a {
+    id: 1
+  }
+  requirement b {
+    id: 2
+  }
+  element c {
+    type: system
+  }
+  a - contains -> b
+  c - satisfies -> a
+  b - traces -> c

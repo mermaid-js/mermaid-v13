@@ -1,0 +1,224 @@
+{
+  "tuning": {
+    "ignoreCrossLaneEdges": true,
+    "optimizeRanksByCrossings": true,
+    "automaticLaneOrdering": false
+  },
+  "graph": {
+    "direction": "LR",
+    "nodes": [
+      {
+        "id": "A1",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Dep1",
+        "span": 16.1
+      },
+      {
+        "id": "A2",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Dep1",
+        "span": 16.1
+      },
+      {
+        "id": "A3",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Dep1",
+        "span": 16.1
+      },
+      {
+        "id": "B1",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Dep2",
+        "span": 16.1
+      },
+      {
+        "id": "B2",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Dep2",
+        "span": 16.1
+      },
+      {
+        "id": "B3",
+        "width": 152,
+        "height": 40.1,
+        "shape": "rect",
+        "parent": "Dep2",
+        "span": 16.1
+      }
+    ],
+    "groups": [
+      {
+        "id": "Dep1",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 33.46,
+          "height": 16.1
+        }
+      },
+      {
+        "id": "Dep2",
+        "padding": {
+          "top": 16,
+          "right": 20,
+          "bottom": 20,
+          "left": 20
+        },
+        "title": {
+          "width": 33.46,
+          "height": 16.1
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "L_A1_B2_0",
+        "source": "A1",
+        "target": "B2",
+        "minLen": 1
+      },
+      {
+        "id": "L_A1_B3_0",
+        "source": "A1",
+        "target": "B3",
+        "minLen": 1
+      },
+      {
+        "id": "L_A2_B1_0",
+        "source": "A2",
+        "target": "B1",
+        "minLen": 1
+      },
+      {
+        "id": "L_A2_B2_0",
+        "source": "A2",
+        "target": "B2",
+        "minLen": 1
+      },
+      {
+        "id": "L_A2_B3_0",
+        "source": "A2",
+        "target": "B3",
+        "minLen": 1
+      },
+      {
+        "id": "L_A3_B1_0",
+        "source": "A3",
+        "target": "B1",
+        "minLen": 1
+      },
+      {
+        "id": "L_A3_B2_0",
+        "source": "A3",
+        "target": "B2",
+        "minLen": 1
+      },
+      {
+        "id": "L_A3_B3_0",
+        "source": "A3",
+        "target": "B3",
+        "minLen": 1
+      },
+      {
+        "id": "L_B1_A1_0",
+        "source": "B1",
+        "target": "A1",
+        "minLen": 1
+      },
+      {
+        "id": "L_A1_A2_0",
+        "source": "A1",
+        "target": "A2",
+        "minLen": 1
+      },
+      {
+        "id": "L_A1_A3_0",
+        "source": "A1",
+        "target": "A3",
+        "minLen": 1
+      },
+      {
+        "id": "L_B2_A1_0",
+        "source": "B2",
+        "target": "A1",
+        "minLen": 1
+      },
+      {
+        "id": "L_B2_A2_0",
+        "source": "B2",
+        "target": "A2",
+        "minLen": 1
+      },
+      {
+        "id": "L_B2_A3_0",
+        "source": "B2",
+        "target": "A3",
+        "minLen": 1
+      },
+      {
+        "id": "L_B3_A1_0",
+        "source": "B3",
+        "target": "A1",
+        "minLen": 1
+      },
+      {
+        "id": "L_B3_A2_0",
+        "source": "B3",
+        "target": "A2",
+        "minLen": 1
+      },
+      {
+        "id": "L_B3_A3_0",
+        "source": "B3",
+        "target": "A3",
+        "minLen": 1
+      }
+    ],
+    "spacing": {
+      "node": 50,
+      "rank": 50,
+      "edge": 20
+    },
+    "diagramPadding": 8,
+    "routing": "stepped",
+    "headRoom": 7,
+    "metrics": {
+      "portPitch": 16,
+      "minPitch": 8,
+      "portSep": 20,
+      "trackMargin": 18,
+      "trackPitch": 10,
+      "trackSpread": 14,
+      "levelMargin": 28,
+      "levelPitch": 12,
+      "levelLead": 12,
+      "levelClear": 8,
+      "levelTouch": 4,
+      "snap": 12,
+      "bendSnap": 24,
+      "leanClear": 40,
+      "fan": 24,
+      "loop": 26,
+      "loopGap": 6,
+      "loopLabel": 28,
+      "corner": 12,
+      "turnBreakpoint": 640,
+      "endLabelAlong": 4,
+      "endLabelAcross": 6
+    }
+  }
+}

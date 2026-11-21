@@ -4,6 +4,7 @@
  */
 import { detectState, parseState } from '@mermaid-js/diagram-state';
 import type { StateModel } from '@mermaid-js/diagram-state';
+import { modelOrThrow } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { STATE_V12_TYPES, stateV12Snapshot, userClasses } from './v12.ts';
 import type { StateSnapshot } from './v12.ts';
@@ -35,12 +36,7 @@ export function stateV13Snapshot(model: StateModel): StateSnapshot {
 }
 
 /** v13 parse for parity: the model, or a throw carrying the first error diagnostic. */
-export function parseStateForParity(text: string): StateModel {
-  const result = parseState(text);
-  const error = result.diagnostics.find((d) => d.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseStateForParity = (text: string): StateModel => modelOrThrow(parseState(text));
 
 export const stateAdapter: DiagramAdapter<StateModel> = {
   id: 'state',

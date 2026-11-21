@@ -11,9 +11,9 @@ import type { TreemapModel } from '../model.ts';
 import type { TreemapDocument, TreemapLeafNode, TreemapRowNode } from '../parser/ast.ts';
 import { isPlainNumber } from '../parser/convert.ts';
 import { T } from '../parser/tokens.ts';
-import { code, inside, statementAt } from './tables.ts';
+import { code, inside } from './tables.ts';
 import { drawnValue, type Values, valuesOf } from './values.ts';
-import { keywordHover } from '@mermaid-js/shared/parser/facet';
+import { keywordHover, statementAt } from '@mermaid-js/shared/parser/facet';
 
 /** Tokens that hold the statement's text too: only their keyword is hovered. */
 const KEYWORD_WORDS: Readonly<Partial<Record<number, string>>> = {
@@ -66,7 +66,7 @@ export function treemapHover(
       contents: classHover(at.symbol.name, result.model as TreemapModel),
     };
   }
-  const n = statementAt(result.ast, at.offset);
+  const n = statementAt(result.ast.children, at.offset);
   if (n?.type === 'Section' || n?.type === 'Leaf') {
     const v = valuesOf(text, result);
     if (inside(at.offset, n.nameRange)) return { range: n.nameRange, contents: rowHover(n, v) };

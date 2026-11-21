@@ -12,6 +12,7 @@ import {
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { ConfigSchema } from './config/schema.ts';
 import { MAX_BLOCK_DEPTH } from '@mermaid-js/core/parser-kit';
+import { blockBody } from '@mermaid-js/core/parser-kit/embed-body';
 import type { DocumentContext } from './context.ts';
 import type { FacetEntry } from './facets.ts';
 import { firstPartyFacets } from './generated/facets.gen.ts';
@@ -103,13 +104,11 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
    * text and the front-matter config, as v12 gave them.
    */
   const detect = (text: string, pre: PreprocessResult, start: number): FacetEntry | undefined => {
-    const body = text.slice(start);
     let clean: string | undefined;
-    let old: string | undefined;
-    const v12 = () => (old ??= detectText(text, start, pre, { keepLastLineComment: true }));
+    const detects = firstPartyDetects(text, start, pre);
     return entries.find((e) => {
       try {
-        if (firstParty.has(e)) return firstPartyDetects((t) => e.detector(t), body, v12);
+        if (firstParty.has(e)) return detects((t) => e.detector(t));
         return e.detector((clean ??= detectText(text, start, pre)), pre.frontMatter?.config);
       } catch {
         return false;
@@ -186,11 +185,16 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
       loadError: state !== undefined && 'failed' in state ? state.failed : undefined,
       notLoaded: entry?.load !== undefined && state === undefined,
       available: entry === undefined ? available() : [],
-      embeds: (result?.embeds ?? []).map((block) => ({
-        block,
-        doc:
-          depth < MAX_BLOCK_DEPTH ? build(`${uri}#${block.id}`, block.text, depth + 1) : undefined,
-      })),
+      embeds: (result?.embeds ?? []).map((block) => {
+        // The body as the render reads it: its common indentation removed (D633).
+        const body = blockBody(block.text);
+        return {
+          block,
+          doc:
+            depth < MAX_BLOCK_DEPTH ? build(`${uri}#${block.id}`, body.text, depth + 1) : undefined,
+          outer: (o: number) => block.offset + body.outer(o),
+        };
+      }),
     };
     return createSnapshot(Object.freeze(context), at);
   };

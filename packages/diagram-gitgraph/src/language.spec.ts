@@ -157,6 +157,14 @@ describe('gitGraph completions (D95)', () => {
     expect(edits('gitGraph\n  acc¦Descr {\n x\n }')).toEqual([['accDescr', 'accDescr']]);
   });
 
+  it('keeps the colon of `accTitle` and `accDescr` before a blank, and drops only its blank', () => {
+    expect(edits('gitGraph\n  acc¦ My title')).toEqual([
+      ['acc', 'accTitle:'],
+      ['acc', 'accDescr:'],
+    ]);
+    expect(edits('gitGraph\n  bra¦ dev')).toEqual([['bra', 'branch']]);
+  });
+
   it("offers each statement's options", () => {
     expect(complete('gitGraph\ncommit ¦')).toEqual(['id:', 'msg:', 'tag:', 'type:']);
     expect(complete('gitGraph\ncommit id:"A" ¦')).toEqual(['id:', 'msg:', 'tag:', 'type:']);

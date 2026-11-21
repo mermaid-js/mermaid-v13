@@ -13,8 +13,6 @@ import {
   type ThemeOptions,
   type ThemeSpec,
   type ThemeVarEntry,
-  formatColor,
-  parseColor,
 } from '@mermaid-js/core/theme';
 import { classDiagram } from '@mermaid-js/diagram-class';
 import { er } from '@mermaid-js/diagram-er';
@@ -30,6 +28,7 @@ import { sequence } from '@mermaid-js/diagram-sequence';
 import { state } from '@mermaid-js/diagram-state';
 import { timeline } from '@mermaid-js/diagram-timeline';
 import { xychart } from '@mermaid-js/diagram-xychart';
+import { hex } from './hex.ts';
 
 const table = (plugin: Pick<DiagramPlugin, 'id' | 'theme'>): DiagramThemeTable | undefined =>
   plugin.theme;
@@ -55,11 +54,15 @@ export const DIAGRAM_TABLES: Readonly<Record<string, DiagramThemeTable | undefin
 /**
  * v12's value of a variable in its resolved `getThemeVariables()`: the flat name, or else, for a
  * table with a `section`, the variable's nested key there (D335): `xyChartTitleColor` is v12's
- * `xyChart.titleColor`.
+ * `xyChart.titleColor`. The tables searched are `DIAGRAM_TABLES`, unless `tables` names them.
  */
-export function v12Value(old: Readonly<Record<string, unknown>>, name: string): unknown {
+export function v12Value(
+  old: Readonly<Record<string, unknown>>,
+  name: string,
+  tables: readonly (DiagramThemeTable | undefined)[] = Object.values(DIAGRAM_TABLES)
+): unknown {
   if (Object.hasOwn(old, name)) return old[name];
-  for (const t of Object.values(DIAGRAM_TABLES)) {
+  for (const t of tables) {
     const nested = t?.vars[name]?.nested;
     if (t?.section === undefined || nested === undefined) continue;
     const block = old[t.section];
@@ -82,12 +85,7 @@ export function paletteColours(v: unknown): string {
   let items: readonly unknown[] = [];
   if (typeof v === 'string') items = v.split(',');
   else if (Array.isArray(v)) items = v as unknown[];
-  return items
-    .map((c) => {
-      const rgba = typeof c === 'string' ? parseColor(c.trim()) : undefined;
-      return rgba ? formatColor(rgba) : String(c);
-    })
-    .join(',');
+  return items.map((c) => hex(c, String)).join(',');
 }
 
 /** Every variable a render can read: core's vocabulary and every table's `vars`. */
@@ -104,7 +102,9 @@ export const VOCABULARY: Readonly<Record<string, ThemeVarEntry>> =
  * leave these out of their v12 comparison rather than listing them in `DIFFERENCES`. The
  * palettes and inks of T1a; the muted surface, its border, link ink, text on lines, soft border
  * and frame border of T2; the row fills, link label fill and nested body of T3 (read with
- * `inline()`); the badge and callout of T1b, which gitGraph's commit and tag labels read.
+ * `inline()`); the badge and callout of T1b, which gitGraph's commit and tag labels read; the
+ * canvas fill, line, text, item fills and node fill, and the band and guide line (#1041), that
+ * the named classic themes pin where v12 keeps its constructor value under an override (D656).
  */
 export const D332_INPUTS: readonly string[] = [
   'seriesColorArray',
@@ -126,6 +126,14 @@ export const D332_INPUTS: readonly string[] = [
   'rowAltBkg',
   'linkLabelBkg',
   'nestedBkg',
+  'canvasBkg',
+  'canvasLineColor',
+  'canvasTextColor',
+  'canvasItemBkg',
+  'canvasItemBkg3',
+  'canvasNodeBkg',
+  'bandBkg',
+  'guideLineColor',
 ];
 
 /**

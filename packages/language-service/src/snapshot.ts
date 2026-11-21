@@ -27,8 +27,11 @@ import { hover } from './hover.ts';
 import { deepFreeze } from './freeze.ts';
 import type { FoldingRange } from './folding.ts';
 import { lineFoldingRanges, lineSemanticTokens } from './lines.ts';
+import { outline } from './outline.ts';
+import type { DocumentSymbol } from './outline.ts';
 import type { LineFoldingRange, LineSemanticToken } from './lines.ts';
 import { LineIndex, tooDeep } from '@mermaid-js/core/parser-kit';
+import { noDiagramType } from '@mermaid-js/core/parser-kit/embed-type';
 import { semanticTokens, withBlockTokens } from './semantic-tokens.ts';
 import type { SemanticToken } from './semantic-tokens.ts';
 import { definition, occurrences, prepareRename, references, rename } from './symbols.ts';
@@ -56,21 +59,23 @@ function copyDiagnostic(d: Diagnostic): Diagnostic {
 
 /**
  * The render's error for a block whose body does not start with a diagram type, on the body's
- * first diagram line (from `start` in the body `text`), moved to the outer text.
+ * first diagram line (from `start` in the body `text`), moved to the outer text by `outer`.
  */
-function noDiagramType(block: EmbeddedBlock, text: string, start: number): Diagnostic {
+function noType(
+  block: EmbeddedBlock,
+  text: string,
+  start: number,
+  outer: (at: number) => number
+): Diagnostic {
   const line = /^[^\r\n]*/.exec(text.slice(start))![0].trimEnd();
-  const word = /^[^\s{[(;:]*/.exec(line)![0];
-  return {
-    severity: 'error',
-    code: 'EMBED_NO_TYPE',
-    message: `The \`mermaid ${block.id}\` block must start with a diagram type, such as \`sequenceDiagram\` or \`classDiagram\`, after any blank lines, comments and front matter${word ? `; \`${word}\` is not a diagram type` : ''}.`,
-    range: shifted({ start, end: start + line.length }, block.offset),
-  };
+  return noDiagramType(block.id, line, moved({ start, end: start + line.length }, outer));
 }
 
-/** `r` moved by `by`. */
-const shifted = (r: Range, by: number): Range => ({ start: r.start + by, end: r.end + by });
+/** `r` placed in the outer text by `outer`. */
+const moved = (r: Range, outer: (at: number) => number): Range => ({
+  start: outer(r.start),
+  end: outer(r.end),
+});
 
 /**
  * `host`'s diagnostics with each block's own (ADR-15) moved to the outer text, in source
@@ -85,7 +90,7 @@ function withBlocks(
   if (embeds.length === 0) return host;
   const out: Diagnostic[] = [];
   let i = 0;
-  for (const { block, doc } of embeds) {
+  for (const { block, doc, outer } of embeds) {
     if (!doc) {
       // Its opening line starts before the body: it goes before the host's at that line.
       const deep = tooDeep(text, block.id, block.offset);
@@ -101,13 +106,13 @@ function withBlocks(
     const ctx = Snapshot.contextOf(doc);
     for (const d of doc.diagnostics()) {
       if (ctx.entry === undefined && d.code === 'UNSUPPORTED_DIAGRAM') {
-        out.push(noDiagramType(block, ctx.text, ctx.start));
+        out.push(noType(block, ctx.text, ctx.start, outer));
         continue;
       }
-      const moved = copyDiagnostic(d);
-      moved.range = shifted(d.range, block.offset);
-      if (moved.related) for (const r of moved.related) r.range = shifted(r.range, block.offset);
-      out.push(moved);
+      const copy = copyDiagnostic(d);
+      copy.range = moved(d.range, outer);
+      if (copy.related) for (const r of copy.related) r.range = moved(r.range, outer);
+      out.push(copy);
     }
   }
   return [...out, ...host.slice(i)];
@@ -141,6 +146,12 @@ export interface DocumentSnapshot {
   prepareRename(offset: number): PrepareRenameResult;
   /** Edits renaming the name at `offset` everywhere, or why not (invalid id, clash). */
   rename(offset: number, newName: string): RenameResult;
+  /**
+   * Every symbol once, at its definition (where `definition` goes), nested by the statements
+   * holding the definitions (a subgraph, a composite state), in source order: the outline
+   * (D580). Empty without a facet.
+   */
+  symbols(): readonly DocumentSymbol[];
   /** Folding ranges as offsets (statement kind, `frontMatter`, `directive`). */
   foldingRanges(): readonly FoldingRange[];
   /** The folding ranges by line, as editors fold them (closing `end`/`---` line visible). */
@@ -320,6 +331,24 @@ class Snapshot implements DocumentSnapshot {
     return rename(this.#context, this.#occurrences(), offset, newName);
   }
 
+  /**
+   * The outline (D580). A malformed third-party parse (statements that are not spans) gives
+   * what can be read of it, and nothing rather than a throw (R-LANG-4).
+   */
+  symbols(): readonly DocumentSymbol[] {
+    return this.#memo('symbols', () => {
+      try {
+        return outline(
+          this.#context,
+          this.#occurrences(),
+          this.#context.facet?.declaredOnly === true
+        );
+      } catch {
+        return [];
+      }
+    });
+  }
+
   foldingRanges(): readonly FoldingRange[] {
     return this.#memo('folding', () => foldingRanges(this.#context));
   }
@@ -336,9 +365,16 @@ class Snapshot implements DocumentSnapshot {
     return this.#memo('semanticTokens', () =>
       withBlockTokens(
         semanticTokens(this.#context, this.#occurrences()),
-        this.#context.embeds.flatMap(({ block, doc }) =>
+        this.#context.embeds.flatMap(({ block, doc, outer }) =>
           doc
-            ? [{ offset: block.offset, length: block.text.length, tokens: doc.semanticTokens() }]
+            ? [
+                {
+                  offset: block.offset,
+                  length: block.text.length,
+                  tokens: doc.semanticTokens(),
+                  outer,
+                },
+              ]
             : []
         )
       )

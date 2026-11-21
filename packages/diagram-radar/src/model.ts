@@ -3,7 +3,8 @@
  * frozen data in source order (R-ARCH-7). Shared contract of the radar tickets: change it only
  * additively, and say so in the run notes (`v13/docs/agents/runs/422/GAPS.md`).
  */
-import type { AstId, Diagnostic } from '@mermaid-js/core/parser-kit';
+import type { AstId } from '@mermaid-js/core/parser-kit';
+import type { TextModelFields } from '@mermaid-js/shared/parser/rule';
 
 /** One `axis id["Label"]`. Duplicate names are all kept, as in v12. */
 export interface RadarAxis {
@@ -54,23 +55,17 @@ export interface RadarOptions {
   readonly graticule: 'circle' | 'polygon';
 }
 
-export interface RadarModel {
+export interface RadarModel extends TextModelFields {
   /** Axes in source order (v12 sets axes before curves, whatever the text order). */
   readonly axes: readonly RadarAxis[];
   /** Curves in source order. */
   readonly curves: readonly RadarCurve[];
   readonly options: RadarOptions;
-  /** The in-text `title` if non-empty, else the front-matter `title` (D218); absent when neither. */
-  readonly title?: string;
   /**
    * The AST id of the `title` statement the title comes from (`title`, `title@2`, …), which the
    * drawn title carries as `data-ast`; absent for a front-matter title or none.
    */
   readonly titleAstId?: AstId;
-  readonly accTitle: string;
-  readonly accDescr: string;
-  /** Warning diagnostics of the parse (also in `ParseResult.diagnostics`). */
-  readonly warnings: readonly Diagnostic[];
 }
 
 /**

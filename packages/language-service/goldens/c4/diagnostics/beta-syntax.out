@@ -1,0 +1,10 @@
+1:9-1:18 "landscape" error C4BETA_UNKNOWN_DIAGRAM_KIND: Unknown diagram kind `landscape`: use `context`, `container`, `component`, `dynamic` or `deployment`.
+2:12-3:1 "\n" error UNEXPECTED: Expected a name in quotes, as in `"Payments"`, got a line break; an element has a name in quotes, as in `person user "Name"`.
+3:8-3:14 "\"User\"" error UNEXPECTED: Expected an id, got `"User"`.
+4:30-4:31 "3" error UNEXPECTED: Expected a name in quotes, as in `"Payments"`, got `3`; `instances` takes a number in quotes, as in `instances "3"`.
+5:6-5:7 "-" error UNEXPECTED_CHARACTER: Unexpected character `-`; an arrow is `-->`, `<--` or `<-->`.
+6:19-6:27 "cylinder" error UNEXPECTED: Expected `:` and a label, got `cylinder`; a style entry is `key:value`, as in `fill:#1f2937`.
+7:11-7:13 "up" error UNEXPECTED: Expected a direction such as `LR`, got `up`; write `direction TB`, `BT`, `LR` or `RL`.
+8:8-8:13 "maybe" error UNEXPECTED: Expected `on` or `off`, got `maybe`; write `legend on` or `legend off`.
+10:16-10:20 "shop" error UNCLOSED_BLOCK: Unclosed body: the `{` of `shop` at line 10 has no closing `}`.
+11:3-11:7 "user" error UNEXPECTED: Expected an element such as `person` or `}`, got `user`; a body holds elements only; relations, styles and the rest go outside.

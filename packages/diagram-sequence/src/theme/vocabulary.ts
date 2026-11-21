@@ -17,6 +17,8 @@ export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   activationBkgColor: { alias: 'acb', kind: 'color', usedBy: ['sequence'] },
   activationBorderColor: { alias: 'acr', kind: 'color', usedBy: ['sequence'] },
   sequenceNumberColor: { alias: 'snc', kind: 'color', usedBy: ['sequence'] },
+  // The fill of a `rect` block written without a colour (v12 `rectBkgColor`).
+  rectBkgColor: { alias: 'rcb', kind: 'color', usedBy: ['sequence'] },
   // Geometry (v12 `look: neo` / classic, #194), read as numbers at render time.
   actorRadius: { alias: 'arx', kind: 'length', usedBy: ['sequence'] },
   actorGlyphBand: { alias: 'agb', kind: 'length', usedBy: ['sequence'] },

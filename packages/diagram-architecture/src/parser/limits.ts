@@ -1,20 +1,16 @@
 /** The integrator's limits on an architecture diagram (R-SEC-5, #721). */
 import { checkDepth, checkLimit } from '@mermaid-js/core/limits';
+import type { Limits } from '@mermaid-js/core/limits';
 import type { AstId, Diagnostics, Range } from '@mermaid-js/core/parser-kit';
 import type { ArchitectureModel } from '../model.ts';
 import type { ArchitectureStatementNode } from './ast.ts';
 
-/** The limits a parse takes; each defaults to core's limit of that name (a parse outside a render). */
-export interface ArchitectureLimitOptions {
-  /** The integrator's cap on groups, services and junctions together (`maxNodes`). */
-  maxNodes?: number;
-  /** The integrator's cap on edges (`maxEdges`). */
-  maxEdges?: number;
-  /** The integrator's cap on how deep one may sit under a top-level group (`maxDepth`). */
-  maxDepth?: number;
-}
-
-type Parts = Pick<ArchitectureModel, 'groups' | 'services' | 'junctions' | 'edges'>;
+/**
+ * The limits a parse takes; each defaults to core's limit of that name (a parse outside a render).
+ * `maxNodes` caps groups, services and junctions together; `maxEdges` caps edges; `maxDepth`
+ * caps how deep one may sit under a top-level group.
+ */
+export type ArchitectureLimitOptions = Partial<Pick<Limits, 'maxNodes' | 'maxEdges' | 'maxDepth'>>;
 
 /**
  * Reports each cap once, at the first statement over it. Read from the statements in source
@@ -24,7 +20,7 @@ type Parts = Pick<ArchitectureModel, 'groups' | 'services' | 'junctions' | 'edge
  */
 export function checkLimits(
   statements: readonly ArchitectureStatementNode[],
-  model: Parts,
+  model: Pick<ArchitectureModel, 'groups' | 'services' | 'junctions' | 'edges'>,
   limits: ArchitectureLimitOptions,
   diagnostics: Diagnostics
 ): void {

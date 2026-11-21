@@ -1,24 +1,21 @@
 // What the kanban text output cannot show (D82, R-ASCII-5): one `ASCII_DROPPED` warning per
 // feature kind, naming the AST ids of the items it dropped it for, in board order. Each rule is
-// the SVG renderer's own: `userClasses` for the classes it writes and `ticketUrl` for the links
+// the SVG renderer's own: shared `cls` for the classes it writes and `ticketUrl` for the links
 // it draws. Column colours come from the theme, not the author, so they are not named; icons
 // are drawn by neither output (D376).
 import type { Warning } from '@mermaid-js/core';
 import type { KanbanLayout, PlacedLabel } from '../layout/index.ts';
 import { kanbanBoardOrder, type KanbanModel } from '../model.ts';
-import { userClasses } from '../render/classes.ts';
+import { cls } from '@mermaid-js/shared/svg/document';
 import { ticketUrl, type LinkContext } from '../render/links.ts';
 import { asciiDropped, emphasised } from '@mermaid-js/shared/ascii';
+import type { AsciiDroppedWarning as SharedAsciiDroppedWarning } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'emphasis' | 'link';
 
 /** One feature kind text output dropped (D82). */
-export interface AsciiDroppedWarning extends Warning {
-  readonly code: 'ASCII_DROPPED';
-  readonly feature: AsciiDroppedFeature;
-  readonly astIds: readonly string[];
-}
+export type AsciiDroppedWarning = SharedAsciiDroppedWarning<AsciiDroppedFeature>;
 
 export type AsciiWarning = AsciiDroppedWarning;
 
@@ -58,7 +55,7 @@ export function asciiWarnings(
   for (const item of kanbanBoardOrder(model)) {
     const drawn = drawnAs.get(item.ast);
     if (!drawn) continue;
-    if (userClasses(item.classes) !== '') found.style.push(item.ast);
+    if (cls(item.classes) !== '') found.style.push(item.ast);
     if (drawn.labels.some((l) => emphasised(l?.text))) found.emphasis.push(item.ast);
     // As `drawCard`: a drawn ticket whose URL passes the check is a link.
     if (drawn.ticket && ticketUrl(item.ticket, linkCtx)) found.link.push(item.ast);

@@ -8,6 +8,7 @@
  */
 import type { RenderContext } from '@mermaid-js/core';
 import type { FontKey } from '@mermaid-js/core/text';
+import type { Rect } from '@mermaid-js/shared/layout';
 
 /** v12's canvas and text position (`infoRenderer.ts`), in px. */
 export const INFO_METRICS = {
@@ -20,12 +21,7 @@ export const INFO_METRICS = {
   weight: 400,
 } as const;
 
-export interface Rect {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
+export type { Rect };
 
 export interface InfoLayout {
   /** `v<version>`: the version of the `mermaid` package that renders it (#420 Q1). */

@@ -12,7 +12,12 @@
  *
  * Text output (`format: 'ascii'`) draws no inline boxes, so it never asks for the engine (D179).
  */
-import type { ExtensionPlugin, Resource, ResourceRequest } from '@mermaid-js/core';
+import {
+  someString,
+  type ExtensionPlugin,
+  type Resource,
+  type ResourceRequest,
+} from '@mermaid-js/core';
 import type { ParseOutput } from '@mermaid-js/core/parser-kit';
 import { Style, type InlineProvider, type InlineRequest } from '@mermaid-js/core/text';
 import type * as EngineModule from './engine.ts';
@@ -22,14 +27,10 @@ type Engine = typeof EngineModule;
 /** The resource this plugin loads: the MathJax engine. */
 const TEX: Resource = { kind: 'math', name: 'tex' };
 
+// Kept module state, lazy-load handle: the engine module once imported, the same for every render.
 let engine: Engine | undefined;
+// Kept module state, lazy-load handle: the pending import, so the engine downloads once.
 let loading: Promise<void> | undefined;
-/**
- * Whether the last `missing()` reported the engine. The API asks `missing()` right before it
- * draws, synchronously, so while drawing this says whether the render already knows the engine
- * is missing (and, with `placeholders`, has warned `PLACEHOLDER` for it).
- */
-let reported = false;
 
 function load(): Promise<void> {
   loading ??= import('./engine.ts').then(
@@ -49,24 +50,6 @@ function hasPair(text: string): boolean {
   return at >= 0 && text.includes('$$', at + 2);
 }
 
-/** Whether any string in `value` (a model) has a `$$…$$` pair. */
-function mentionsMath(value: unknown): boolean {
-  const seen = new Set<object>();
-  const stack: unknown[] = [value];
-  while (stack.length > 0) {
-    const v = stack.pop();
-    if (typeof v === 'string') {
-      if (hasPair(v)) return true;
-    } else if (typeof v === 'object' && v !== null && !seen.has(v)) {
-      seen.add(v);
-      if (v instanceof Map) for (const [k, x] of v) stack.push(k, x);
-      else if (v instanceof Set) for (const x of v) stack.push(x);
-      else for (const x of Object.values(v)) stack.push(x);
-    }
-  }
-  return false;
-}
-
 /** Per parse (the API caches it with the analysis), so `renderSync` does not walk it again. */
 const withMath = new WeakMap<object, boolean>();
 
@@ -78,7 +61,7 @@ function needsMath(parse: ParseOutput<unknown>, request: ResourceRequest): boole
   let found = withMath.get(parse);
   if (found === undefined) {
     // The parse is lean when nothing of the render reads the AST: its model holds the labels.
-    found = request.labels ? request.labels().some(hasPair) : mentionsMath(parse.model);
+    found = request.labels ? request.labels().some(hasPair) : someString(parse.model, hasPair);
     withMath.set(parse, found);
   }
   return found;
@@ -99,9 +82,10 @@ const provider: InlineProvider = {
   close: '$$',
   box(tex, request) {
     if (!engine) {
-      // With placeholders the API has warned about the engine already; otherwise this is label
-      // text the parse does not hold, so prepare() could not know to load the engine.
-      if (!reported)
+      // A render drawn with placeholders for the engine has warned PLACEHOLDER for it already
+      // (D655); otherwise this is label text the parse does not hold, so prepare() could not
+      // know to load the engine.
+      if (!request.standIns.some((r) => r.kind === TEX.kind && r.name === TEX.name))
         request.warn({
           code: 'MATH_NOT_RENDERED',
           message:
@@ -133,8 +117,9 @@ export const math: ExtensionPlugin = {
   resources: {
     provides: [TEX],
     missing(parse, request) {
-      reported = request.format === 'svg' && engine === undefined && needsMath(parse, request);
-      return reported ? [TEX] : [];
+      return request.format === 'svg' && engine === undefined && needsMath(parse, request)
+        ? [TEX]
+        : [];
     },
     load,
   },

@@ -22,6 +22,8 @@ describe('checkStyle', () => {
         'fill:#f9f',
         'stroke:#333',
         'stroke-width:4px',
+        'rx:10',
+        'ry:5px',
         'stroke-dasharray: 5, 5',
         'color:red',
         'font-weight:bold',
@@ -33,6 +35,8 @@ describe('checkStyle', () => {
       fill: '#f9f',
       stroke: '#333',
       'stroke-width': '4px',
+      rx: '10',
+      ry: '5px',
       'stroke-dasharray': '5 5',
       opacity: '0.5',
     });
@@ -96,6 +100,8 @@ describe('checkStyle', () => {
   it('drops unsafe values for every other property', () => {
     for (const prop of [
       'stroke-width',
+      'rx',
+      'ry',
       'stroke-dasharray',
       'font-size',
       'font-family',

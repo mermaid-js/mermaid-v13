@@ -5,24 +5,14 @@
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { PathData } from '@mermaid-js/core/svg';
-import type { MeasuredLabel } from '@mermaid-js/core/text';
+import type { PlacedLabel, Rect } from '@mermaid-js/shared/layout';
 
-export interface Rect {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
+export type { PlacedLabel, Rect };
 
 export interface Circle {
   readonly cx: number;
   readonly cy: number;
   readonly r: number;
-}
-
-/** A measured label and the box it is drawn in: the label's own size, at its place. */
-export interface PlacedLabel extends Rect {
-  readonly text: MeasuredLabel;
 }
 
 /** A dot in an actor's colour: in the legend, or on a task. */
@@ -106,7 +96,7 @@ export interface JourneyLayout {
   /** One per model task, in model order. */
   readonly tasks: readonly TaskLayout[];
   readonly activity: ActivityLine;
-  /** Drawn bold at (`left`, v12's baseline 25). */
+  /** Drawn bold at `left`, its last baseline at v12's 25; extra lines go up (D615). */
   readonly title?: PlacedLabel;
   /** The x tasks start at: `leftMargin`, or past the legend when it is wider (D242). */
   readonly left: number;

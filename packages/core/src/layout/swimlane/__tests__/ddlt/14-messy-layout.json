@@ -503,8 +503,8 @@
         "target": "8",
         "minLen": 1,
         "label": {
-          "width": 36.122,
-          "height": 20.1
+          "width": 40.122,
+          "height": 24.1
         }
       },
       {
@@ -519,8 +519,8 @@
         "target": "9",
         "minLen": 1,
         "label": {
-          "width": 29.892,
-          "height": 20.1
+          "width": 33.891999999999996,
+          "height": 24.1
         }
       },
       {
@@ -667,8 +667,8 @@
         "target": "33",
         "minLen": 1,
         "label": {
-          "width": 83.582,
-          "height": 20.1
+          "width": 87.582,
+          "height": 24.1
         }
       },
       {
@@ -677,8 +677,8 @@
         "target": "33a",
         "minLen": 1,
         "label": {
-          "width": 48.568,
-          "height": 20.1
+          "width": 52.568,
+          "height": 24.1
         }
       },
       {
@@ -687,8 +687,8 @@
         "target": "33b",
         "minLen": 1,
         "label": {
-          "width": 78.906,
-          "height": 20.1
+          "width": 82.906,
+          "height": 24.1
         }
       },
       {
@@ -709,8 +709,8 @@
         "target": "35",
         "minLen": 1,
         "label": {
-          "width": 48.568,
-          "height": 20.1
+          "width": 52.568,
+          "height": 24.1
         }
       },
       {

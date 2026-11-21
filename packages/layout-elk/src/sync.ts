@@ -62,8 +62,11 @@ function fakeWorkerConstructor(): FakeWorkerConstructor {
   return ctor as FakeWorkerConstructor;
 }
 
+// Kept module state, lazy-load handle: elkjs's in-process worker, created once.
 let worker: FakeWorker | undefined;
+// Kept module state, the worker's synchronous reply, cleared before and after each dispatch.
 let answer: Answer | undefined;
+// Kept module state, request ids, matched to replies only; they never reach a layout.
 let nextId = 0;
 
 /** GWT keeps a nested Java exception under `__java$exception`; flatten it as `ELK` does. */

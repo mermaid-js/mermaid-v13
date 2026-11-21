@@ -191,7 +191,9 @@ export function resolveSite(
       )
     : APPEARANCE_KEYS;
   const layers = {
-    base: deepFreeze(base),
+    // A copy: `base` grew key by key and may hold its keys in V8's slow dictionary mode, which
+    // every `resolveText` would pay for when it copies the base.
+    base: deepFreeze({ ...base }),
     site: deepFreeze(site),
     plugin: deepFreeze(plugin),
     defaults: deepFreeze(looks.strip(coreDefaults)),
@@ -330,18 +332,9 @@ function resolveAppearance(
   layers: Plain[],
   { sections, keys }: Pick<ResolvedSite, 'keys' | 'sections'>
 ) {
-  const scopedOf = (layer: Plain, s: string): Plain | undefined => {
-    const value = layer[s];
-    return isPlainObject(value) ? value : undefined;
-  };
   for (const key of keys) {
     const top = APPEARANCE_KEYS.includes(key);
-    const value = layers
-      .flatMap((layer) => [
-        ...sections.map((s) => scopedOf(layer, s)?.[key]),
-        top ? layer[key] : undefined,
-      ])
-      .find((v) => (top ? typeof v === 'string' : v !== undefined));
+    const value = appearanceOf(layers, sections, key, top);
     if (value === undefined) continue;
     if (top) config[key] = value;
     // A chained type's keys (`ResolvedSite.keys`) are written into every section.
@@ -351,6 +344,28 @@ function resolveAppearance(
         config[s] = { ...scoped, [key]: value };
     }
   }
+}
+
+function scopedOf(layer: Plain, s: string): Plain | undefined {
+  const value = layer[s];
+  return isPlainObject(value) ? value : undefined;
+}
+
+/** The first value of `key` in `layers`, each layer's sections before its top level. */
+function appearanceOf(
+  layers: readonly Plain[],
+  sections: readonly string[],
+  key: string,
+  top: boolean
+): unknown {
+  for (const layer of layers) {
+    for (const s of sections) {
+      const v = scopedOf(layer, s)?.[key];
+      if (top ? typeof v === 'string' : v !== undefined) return v;
+    }
+    if (top && typeof layer[key] === 'string') return layer[key];
+  }
+  return undefined;
 }
 
 /** Copies `input`, checking every key against the schema tree and sanitising diagram text. */

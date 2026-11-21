@@ -331,14 +331,15 @@ describe('class render: themes (D152, R-THEME-11)', () => {
     expect(attr(tree, rect, 'filter')).toBeUndefined();
   });
 
-  it('puts relationship labels on mainBkg in every theme, as v12 did', async () => {
+  it('puts relationship labels on the theme background in every theme (D628)', async () => {
     const label = async (theme: string) => {
       const m = createMermaid();
       m.initialize({ deterministic: true, theme, output: { cssVariables: false } } as never);
       const tree = parseSvg((await m.render('x', src)).svg);
       return attr(tree, tree.find({ class: 'edgeLabel' })[0]!.children[0]!, 'fill');
     };
-    expect(await label('default')).toBe('#ececff');
+    expect(await label('default')).toBe('#ffffff');
+    expect(await label('dark')).toBe('#333333');
     expect(await label('redux')).toBe('#ffffff');
   });
 

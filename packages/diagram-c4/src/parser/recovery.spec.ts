@@ -55,18 +55,18 @@ const CASES: Case[] = [
     keeps: ['a', 'b', 'd'],
   },
   {
-    name: 'a direction line and a label holding `direction TB`',
-    lines: ['C4Context', 'direction LR', P('a'), 'Person(b, "the direction TB")', P('c')],
+    name: 'a direction with text after it, and a bad value',
+    lines: ['C4Context', 'direction LR then more', P('a'), 'direction XY', P('b')],
     errors: [
-      [codes.C4_DIRECTION, 2],
-      [codes.C4_DIRECTION, 4],
+      ['UNEXPECTED', 2],
+      ['UNEXPECTED', 4],
     ],
-    keeps: ['a', 'c'],
+    keeps: ['a', 'b'],
   },
   {
     name: 'a direction on the header line',
     lines: ['C4Context direction TB', P('a')],
-    errors: [[codes.C4_DIRECTION, 1]],
+    errors: [['UNEXPECTED', 1]],
     keeps: ['a'],
   },
   {

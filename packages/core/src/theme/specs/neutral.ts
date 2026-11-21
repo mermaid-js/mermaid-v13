@@ -2,7 +2,7 @@
  * `neutral`: v12 `theme-neutral.js`, greys for print.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { INVERTED_SCALE, paletteSlots, series } from './palettes.ts';
+import { INVERTED_SCALE, paletteSlots, series, SERIES_TINTS } from './palettes.ts';
 import { darkModeLabels, fixedGit, gitLabelRules } from './scales.ts';
 import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
 
@@ -38,6 +38,9 @@ const theme: ThemeSpec = {
     // colour moves them (#773, #798): the node fill, the borders, the inverted text inks, and
     // the error colours, which darkMode leaves alone.
     mainBkg: '#eeeeee',
+    // v12's constructor tertiary and line colours (`bandBkg`, `guideLineColor` in vocabulary.ts).
+    bandBkg: '#eeeeee',
+    guideLineColor: '#666666',
     border1: '#999999',
     primaryBorderColor: '#d4d4d4',
     secondaryBorderColor: '#e3e3e3',
@@ -61,7 +64,6 @@ const theme: ThemeSpec = {
     clusterBkg: '#fcfcfc',
     clusterBorder: '#707070',
     titleColor: '#333333',
-    edgeLabelBackground: '#ffffff',
     arrowheadColor: '#333333',
     border2: '#707070',
     noteBkgColor: '#666666',
@@ -93,10 +95,10 @@ const theme: ThemeSpec = {
     ],
     cScaleInv: INVERTED_SCALE,
     // v12 theme-neutral.js: series colour `i` is `cScale<i>`, the twelfth `cScale0`; then the
-    // tints.
+    // tints, which v12 recomputes from the base colours (`SERIES_TINTS`, D656).
     seriesColorArray: series(
       '#f4f4f4 #555555 #bbbbbb #777777 #999999 #dddddd #ffffff #dddddd #bbbbbb #999999 #777777 #555555 ' +
-        '#eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc'
+        SERIES_TINTS
     ),
     // v12 sets labelTextColor to its own text colour (#333) before the labels.
     cScaleLabel: paletteSlots((i) => (i === 0 || i === 2 ? 'cScale1' : 'scaleLabelColor')),

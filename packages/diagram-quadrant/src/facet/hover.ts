@@ -9,6 +9,7 @@ import { quadrantDocs } from '../generated/docs.ts';
 import type { QuadrantClassDefNode, QuadrantDocument, QuadrantPointNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { code, plural, QUADRANT_PLACES, trimmed } from './tables.ts';
+import { covers } from '@mermaid-js/shared/parser/facet';
 
 /** Glue tokens that hover as the keyword they belong to. */
 const DOC_KIND: Readonly<Record<number, number>> = {
@@ -53,9 +54,7 @@ export function quadrantHover(
   const t = at.token;
   if (!t) return undefined;
   const range = trimmed(text, t.range);
-  if (at.offset < range.start || at.offset > range.end || range.start === range.end) {
-    return undefined;
-  }
+  if (!covers(at.offset, range)) return undefined;
   const kind = DOC_KIND[t.kind] ?? t.kind;
   const docText = quadrantDocs[kind];
   if (docText === undefined) return undefined;

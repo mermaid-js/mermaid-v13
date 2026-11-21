@@ -29,6 +29,7 @@ import {
   textStatements,
   textValue,
   TITLE_STATEMENT,
+  unclosedLabel,
   withoutIndent,
 } from '@mermaid-js/shared/parser/rule';
 import type {
@@ -55,8 +56,6 @@ import { lex } from './lexer.ts';
 import { GITGRAPH_TRIVIA, T } from './tokens.ts';
 
 export interface GitGraphParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** `gitGraph.mainBranchName`: the branch that exists before the first statement. */
   mainBranchName?: string;
   /** `gitGraph.mainBranchOrder`: its place among the branches. */
@@ -102,7 +101,7 @@ const PROBE_FOLLOWS = kindSet(
 );
 
 /** `title`, `accTitle` and `accDescr` by token kind; a keyword is also its probe mode. */
-const TEXTS = /* @__PURE__ */ textStatements(T.Title, T.AccTitle, T.AccDescr);
+export const TEXTS = /* @__PURE__ */ textStatements(T.Title, T.AccTitle, T.AccDescr);
 
 /**
  * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the
@@ -270,13 +269,6 @@ class GitGraphParser extends RuleParser<PreprocessResult> {
 
   // ---- tokens -------------------------------------------------------------------------
 
-  /** `base@2`, `base@3`, … for the second and later mentions of `base`. */
-  private mention(base: string): AstId {
-    const n = (this.mentions.get(base) ?? 0) + 1;
-    this.mentions.set(base, n);
-    return n === 1 ? base : `${base}@${n}`;
-  }
-
   /** `base#k`: the k-th id handed out for `base`. */
   private ordinal(base: string): AstId {
     const n = (this.ordinals.get(base) ?? 0) + 1;
@@ -294,11 +286,10 @@ class GitGraphParser extends RuleParser<PreprocessResult> {
   // ---- errors and recovery ------------------------------------------------------------
 
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  protected fail(want: readonly number[], hint?: string): never {
+  protected override fail(want: readonly number[], hint?: string): never {
     const { st } = this;
-    const where = this.range();
     // `title` and the accessibility tokens take the blanks before them.
-    while (where.start < where.end && /[\t ]/.test(this.src[where.start] ?? '')) where.start++;
+    const where = withoutIndent(this.src, this.range());
     if (this.kind() === Kind.Error) this.badCharacters(where);
     st.diagnostics.unexpected(
       'UNEXPECTED',
@@ -319,16 +310,7 @@ class GitGraphParser extends RuleParser<PreprocessResult> {
     const { st } = this;
     const text = this.raw();
     const line = this.lineOf(where.start);
-    if (text.startsWith('"') || text.startsWith("'")) {
-      const q = text[0] ?? '"';
-      st.diagnostics.error(
-        'UNCLOSED_STRING',
-        `Unclosed text: the \`${q}\` at line ${line} has no closing \`${q}\`. Add \`${q}\` after the text.`,
-        where,
-        { expected: [`\`${q}\``] }
-      );
-      throw STOP;
-    }
+    if (unclosedLabel(st.diagnostics, text, line, where, 'text')) throw STOP;
     const shown = text.length > 24 ? `${text.slice(0, 24)}…` : text;
     let why = '';
     if (text.startsWith(';'))
@@ -484,7 +466,8 @@ class GitGraphParser extends RuleParser<PreprocessResult> {
     this.tested(TYPES);
     const k = this.kind();
     if (!TYPES.includes(k)) this.fail(TYPES);
-    return WRITTEN_TYPES[this.raw(this.i++)] ?? 'NORMAL';
+    // The kind check above leaves only `NORMAL`, `REVERSE` and `HIGHLIGHT`, all in the table.
+    return WRITTEN_TYPES[this.raw(this.i++)]!;
   }
 
   /** `Commit: "commit" ("id:" STRING | "msg:"? STRING | "tag:" STRING | "type:" type)* EOL` */
@@ -514,7 +497,7 @@ class GitGraphParser extends RuleParser<PreprocessResult> {
     }
     const range = { start: keyword.start, end: this.lastEnd() };
     this.eol(T.Commit, COMMIT_OPTIONS);
-    const astId = commitId?.value ? this.mention(`c:${esc(commitId.value)}`) : this.ordinal('c');
+    const astId = commitId?.value ? this.id(`c:${esc(commitId.value)}`) : this.ordinal('c');
     const node: GitCommitNode = {
       id: astId,
       type: 'Commit',
@@ -551,7 +534,7 @@ class GitGraphParser extends RuleParser<PreprocessResult> {
     const range = { start: keyword.start, end: this.lastEnd() };
     this.eol(T.Branch, order === undefined ? [T.Order] : []);
     const base = `b:${esc(name.value)}`;
-    const id = this.mention(base);
+    const id = this.id(base);
     this.children.push({
       id,
       type: 'Branch',

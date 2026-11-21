@@ -22,9 +22,13 @@ strings; grammar in [syntax/pie.md](./syntax/pie.md)). The differences:
   `pieSectionTextSize`, `pieSectionTextColor`, `pieLegendTextSize`, `pieLegendTextColor`,
   `pieStrokeColor`, `pieStrokeWidth`, `pieOuterStrokeColor`, `pieOuterStrokeWidth` and
   `pieOpacity` keep v12's names and each theme's v12 12.2.0 values
-  ([theme-variables.md](./theme-variables.md)). Slots v12 derives by lightness alone follow the
-  theme's base colours; hue-turned and `cScale` slots are fixed values (but forest's `pie6`, below), so in `redux-color` and
-  `redux-dark-color` a `cScale<n>` override no longer recolours `pie<n+1>` (set `pie<n+1>`).
+  ([theme-variables.md](./theme-variables.md)). The classic themes respond to an override of
+  a base colour as v12's do (D656): `default` keeps all twelve slots, as v12 computed them before
+  the override; `forest` and `base` recompute all twelve, hue turns included; `dark` and
+  `neutral` keep their `cScale` values. In the redux and neo themes, slots v12 derives by
+  lightness alone follow the theme's base colours and hue-turned and `cScale` slots are fixed
+  values, so in `redux-color` and `redux-dark-color` a `cScale<n>` override no longer recolours
+  `pie<n+1>` (set `pie<n+1>`).
   `pieOpacity` is a number from 0 to 1 (D221); any other value is dropped with
   `THEME_VARIABLE_DROPPED`.
 - **`dark` slot 12 (D228):** `dark` and `neutral` keep v12's `cScale` offset (slice *n* takes
@@ -32,7 +36,8 @@ strings; grammar in [syntax/pie.md](./syntax/pie.md)). The differences:
   slice drew black; it is now `cScale0`, as in `neutral`.
 - **Rounding artefacts (D333(a)).** Where v12 stepped a slot from its unrounded HSL base colour,
   which lands a few steps off the hex one, v13 derives the slot from the theme's hex base colour
-  by v12's own formula, so it also follows that base colour's override:
+  by v12's own formula (`default` writes the result as a fixed value, which v12 keeps under an
+  override):
 
   | Theme | Variable | v12 12.2.0 | v13 | Why |
   | --- | --- | --- | --- | --- |

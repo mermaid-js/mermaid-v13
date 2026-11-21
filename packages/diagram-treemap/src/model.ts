@@ -3,7 +3,8 @@
  * Plain, frozen data in source order (R-ARCH-7). Shared contract of the treemap tickets: change
  * it only additively, and say so in the run notes (`v13/docs/agents/runs/428/GAPS.md`).
  */
-import type { AstId, Diagnostic } from '@mermaid-js/core/parser-kit';
+import type { AstId } from '@mermaid-js/core/parser-kit';
+import type { TextModelFields } from '@mermaid-js/shared/parser/rule';
 
 /**
  * One row of the tree: a section (`"name"`) or a leaf (`"name": value`), as v12's
@@ -49,19 +50,13 @@ export interface TreemapClass {
   readonly astId: AstId;
 }
 
-export interface TreemapModel {
+export interface TreemapModel extends TextModelFields {
   /** The rows at the top, in source order (v12's `getRoot().children`); several are allowed. */
   readonly roots: readonly TreemapNode[];
   /** Classes in the order of their first `classDef`, defined before or after their use. */
   readonly classes: readonly TreemapClass[];
-  /** The in-text `title` if non-empty, else the front-matter `title` (D218); absent when neither. */
-  readonly title?: string;
   /** The AST id of the `title` statement the title comes from; absent for a front-matter title. */
   readonly titleAstId?: AstId;
-  readonly accTitle: string;
-  readonly accDescr: string;
-  /** Warning diagnostics of the parse (also in `ParseResult.diagnostics`). */
-  readonly warnings: readonly Diagnostic[];
 }
 
 /**

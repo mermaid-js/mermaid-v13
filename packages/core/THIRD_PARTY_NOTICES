@@ -12,6 +12,15 @@ used under the MIT License:
   src/layout/compass/grid.ts
   src/layout/compass/route.ts
   src/layout/layered/compound.ts
+  src/layout/layered/compound-layer.ts
+  src/layout/layered/compound-levels.ts
+  src/layout/layered/compound-own.ts
+  src/layout/layered/compound-place.ts
+  src/layout/layered/compound-state.ts
+  src/layout/layered/crossings.ts
+  src/layout/layered/grid-layout.ts
+  src/layout/layered/grid-model.ts
+  src/layout/layered/grid.ts
   src/layout/layered/index.ts
   src/layout/layered/layered.ts
   src/layout/tree/tree.ts

@@ -29,7 +29,12 @@ import {
   type SourceView,
   type TokenStream,
 } from '@mermaid-js/core/parser-kit';
-import { lowerCode, StateLexer, type StateLexerOptions } from '@mermaid-js/shared/parser/state';
+import {
+  lexerText,
+  lowerCode,
+  StateLexer,
+  type StateLexerOptions,
+} from '@mermaid-js/shared/parser/state';
 import { T } from './tokens.ts';
 
 // Start conditions of journey.jison (all exclusive).
@@ -58,19 +63,6 @@ const LOWER_J = 0x6a;
 const LOWER_S = 0x73;
 const LOWER_T = 0x74;
 
-/**
- * The text the lexer reads, of the same length as the view's text: v12 turned every CRLF and
- * CR into LF before lexing, so every CR reads as LF (a CRLF as two, which every rule treats as
- * one run except a single `\s` and the character before `%%`, where the lexer steps over the
- * pair); each `#name;` entity is `ﬂ`, the name and `¶`, so no rule takes its `#` or `;` (v12's
- * placeholders).
- */
-function lexerText(text: string): string {
-  let out = text.includes('\r') ? text.replace(/\r/g, '\n') : text;
-  if (out.includes('#')) out = out.replace(/#(\w+);/g, (_, name: string) => `ﬂ${name}¶`);
-  return out;
-}
-
 /** How v12's lexer read its text (see `StateLexerOptions`). */
 const OPTIONS: StateLexerOptions = { charsPerToken: 8, crlf: 'keep', dropSpace: false };
 
@@ -87,24 +79,20 @@ export function lex(src: string, from: number, view: SourceView, probe?: Probe):
  * Each start condition is a method named after it.
  */
 class JourneyLexer extends StateLexer {
+  /**
+   * The text the lexer reads, of the same length as the view's text: v12 turned every CRLF and
+   * CR into LF before lexing, so every CR reads as LF (a CRLF as two, which every rule treats as
+   * one run except a single `\s` and the character before `%%`, where the lexer steps over the
+   * pair); each `#name;` entity is `ﬂ`, the name and `¶`, so no rule takes its `#` or `;` (v12's
+   * placeholders).
+   */
   protected override prepare(text: string): string {
     return lexerText(text);
   }
 
   run(probe?: Probe): TokenStream {
-    const { text, n } = this;
     this.trim();
-    // Two loops, so a plain lex does no probe work per step.
-    if (probe === undefined) while (this.p < n) this.step(text.charCodeAt(this.p));
-    else {
-      while (this.p < n) {
-        const before = this.p;
-        const mode = S_NAMES[this.state] ?? '';
-        this.step(text.charCodeAt(this.p));
-        probe.lexed(this.source(before), this.source(this.p), mode);
-      }
-      probe.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
-    }
+    this.loop(probe, S_NAMES);
     // At the end jison tries the rules once more on the empty input: an accessibility state's
     // value rule matches it (empty), INITIAL's `<<EOF>>` does. jison then returns `$end`
     // without trying `<<EOF>>`, but v13 always ends in `EOF` (a gate exclusion).
