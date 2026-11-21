@@ -767,6 +767,8 @@ describe('c4 relations (D455)', () => {
    */
   describe('staggered tags on lines closer than a tag (D679)', () => {
     const END = Math.max(M.arrow, M.tagClear) + M.tagSlack;
+    /** Rounding in the spot arithmetic, far below a pixel. */
+    const FLUSH = 1e-6;
     /** Lines between two systems 70 px tall closer than half a tag apart. */
     const SQUEEZED_LINES = 8;
     const pair = (layout: C4Layout): C4RelationLayout[] =>
@@ -795,6 +797,58 @@ describe('c4 relations (D455)', () => {
         }
         expect(overlaps(lines), themeName).toEqual([]);
       }
+    });
+
+    it('sets each staggered tag at the end it keeps to, tagEndClear from it, the first at its start', () => {
+      const { model, config } = fixture('pr-check/repeated-steps');
+      const layout = layoutC4(model, c4TestContext(config, theme));
+      const flush = pair(layout).map((r) => {
+        const [x0, x1] = [Math.min(r.start.x, r.end.x), Math.max(r.start.x, r.end.x)];
+        const box = r.labelBox!;
+        const atLeft = Math.abs(box.x - (x0 + END)) < FLUSH;
+        const atRight = Math.abs(right(box) - (x1 - END)) < FLUSH;
+        // Which end of its own line it keeps to: its start or its end.
+        const leftIsStart = r.start.x < r.end.x;
+        return atLeft
+          ? leftIsStart
+            ? 'start'
+            : 'end'
+          : atRight
+            ? leftIsStart
+              ? 'end'
+              : 'start'
+            : 'loose';
+      });
+      // Statement order spreads the lines; each tag keeps to the other shape than the line before.
+      expect(flush).toEqual(['start', 'start', 'start', 'end', 'end']);
+    });
+
+    it('keeps the tags of two-line labels on their lines and apart (repeated-relations)', () => {
+      const { model, config } = fixture('pr-check/repeated-relations');
+      for (const [themeName, drawn] of themes) {
+        const layout = layoutC4(model, c4TestContext(config, drawn));
+        for (const r of pair(layout)) expect(onItsLine(r), themeName).toBe(true);
+        expect(overlaps(pair(layout)), themeName).toEqual([]);
+      }
+    });
+
+    it('spaces unlabelled lines between two shapes a one-line tag and two besideGaps apart', () => {
+      const labelled = sound('C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel(a, b, "x")');
+      const oneLine = rel(labelled, 'a', 'b').labelBox!.height + 2 * M.besideGap;
+      const bare = sound('C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel(a, b, "")\nRel(a, b, "")');
+      const [p, q] = pair(bare);
+      expect(Math.abs(p!.start.y - q!.start.y)).toBeCloseTo(oneLine, 9);
+    });
+
+    it('stands three labelled lines in one column where they fit: the gap holds the widest tag', () => {
+      const src =
+        'C4Context\nSystem(a, "A", "A description long enough to wrap onto a few lines of text")\n' +
+        'System(b, "B", "A description long enough to wrap onto a few lines of text")\n' +
+        'Rel(a, b, "a rather wide first label")\nRel(a, b, "two")\nRel(a, b, "three")';
+      const layout = sound(src);
+      const widest = Math.max(...pair(layout).map((r) => r.labelBox!.width));
+      const gap = el(layout, 'b').box.x - right(el(layout, 'a').box);
+      expect(gap).toBeCloseTo(widest + 2 * END, 9);
     });
 
     it('widens the gap to the widest tag at each end, side by side', () => {
@@ -921,6 +975,13 @@ describe('c4 relations (D455)', () => {
       ).toBeUndefined();
   });
 
+  it('draws no tag for a relation without a label or techn, and one for a techn alone', () => {
+    const bare = sound('C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel(a, b, "")');
+    expect(rel(bare, 'a', 'b').labelBox).toBeUndefined();
+    const techn = sound('C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel(a, b, "", "JSON")');
+    expect(rel(techn, 'a', 'b').labelBox!.width).toBeGreaterThan(0);
+  });
+
   it('moves a label by UpdateRelStyle offsets when no spot on the line covers less', () => {
     const src = 'C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel(a, b, "x")';
     // From the element's top: the canvas grows for the moved label.
@@ -955,6 +1016,8 @@ describe('c4 relations (D455)', () => {
     expect(lastBent).toBeLessThan(n - 1);
     expect(layout.relations.slice(lastBent + 1).every((r) => r.route !== 'bent')).toBe(true);
     expect(c4LayoutViolations(model, layout)).toEqual([]);
+    // Past the budget a label sits at its middle, and is not called crowded.
+    expect(layout.relations.at(-1)!.crowded).toBeUndefined();
     // Counted, not timed: the same layout every time.
     expect(layoutC4(model, c4TestContext(config, theme))).toEqual(layout);
   });
@@ -1057,6 +1120,12 @@ describe('c4 gaps for labels between row neighbours (D679)', () => {
   it('takes the techn line when it is the wider', () => {
     const layout = sound(`C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel(a, b, "x", "${WIDE}")`);
     expect(gapOf(layout, 'a', 'b')).toBeCloseTo(rel(layout, 'a', 'b').labelBox!.width + 2 * END, 9);
+  });
+
+  it('leaves the gap of unlabelled neighbours as the config sets it, even at 0', () => {
+    const src = 'C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel(a, b, "")';
+    const layout = sound(src, { integrator: { c4: { c4ShapeMargin: 0 } } });
+    expect(gapOf(layout, 'a', 'b')).toBe(0);
   });
 
   it('limit: leaves a gap across a boundary edge as it is', () => {
@@ -1226,6 +1295,81 @@ describe('c4 layout checker', () => {
     expect(c4LayoutViolations(model, broken)).toContain(
       'relation p -> s: it ends on the head of p'
     );
+  });
+
+  describe("a relation end on a person's head (D679)", () => {
+    const beside = 'C4Context\nPerson(p, "P")\nSystem(s, "S")\nRel(s, p, "uses")';
+    /** The layout with its relation's END moved onto the head, arriving from `from`, and s moved. */
+    const ending = (
+      from: 'left' | 'right' | 'above',
+      sBox: (body: Rect, person: Rect) => Partial<Rect>
+    ) => {
+      const { model, layout } = lay(beside);
+      const person = el(layout, 'p').box;
+      const { head, body } = personParts(person);
+      const at = {
+        x: head.cx + (from === 'left' ? -head.r : from === 'right' ? head.r : 0),
+        y: from === 'above' ? head.cy - head.r : head.cy,
+      };
+      const before = {
+        x: from === 'above' ? at.x : from === 'left' ? at.x - 50 : at.x + 50,
+        y: from === 'above' ? at.y - 50 : at.y,
+      };
+      const elements = layout.elements.map((e) =>
+        e.alias === 's' ? { ...e, box: { ...e.box, ...sBox(body, person) } } : e
+      );
+      const r = layout.relations[0]!;
+      const relations = [{ ...r, end: { ...r.end, ...at }, points: [before, at] }];
+      return c4LayoutViolations(model, { ...layout, elements, relations });
+    };
+    const FAULT = 'relation s -> p: it ends on the head of p';
+
+    it('catches one at the end of a line from the side, the shape beside the body', () => {
+      expect(ending('right', (body, person) => ({ x: right(person) + 10, y: body.y }))).toContain(
+        FAULT
+      );
+      expect(
+        ending('left', (body, person) => ({ x: person.x - 300, width: 200, y: body.y }))
+      ).toContain(FAULT);
+    });
+
+    it('counts a shape touching the person on either side as beside it, one overlapping it as not', () => {
+      expect(ending('right', (body, person) => ({ x: right(person), y: body.y }))).toContain(FAULT);
+      expect(
+        ending('left', (body, person) => ({ x: person.x - 200, width: 200, y: body.y }))
+      ).toContain(FAULT);
+      expect(ending('right', (body, person) => ({ x: person.x + 10, y: body.y }))).not.toContain(
+        FAULT
+      );
+    });
+
+    it('counts a shape touching the body only at its top or bottom edge as not level with it', () => {
+      expect(
+        ending('right', (body, person) => ({ x: right(person) + 10, y: body.y - 50, height: 50 }))
+      ).not.toContain(FAULT);
+      expect(
+        ending('right', (body, person) => ({ x: right(person) + 10, y: bottom(body) }))
+      ).not.toContain(FAULT);
+    });
+
+    it('lets a line from above end on the head', () => {
+      expect(
+        ending('above', (body, person) => ({ x: right(person) + 10, y: body.y }))
+      ).not.toContain(FAULT);
+    });
+
+    it('lets it be where the shape is not beside the body: level with the head only, or above it', () => {
+      expect(
+        ending('right', (_body, person) => ({
+          x: right(person) + 10,
+          y: person.y - 200,
+          height: 100,
+        }))
+      ).not.toContain(FAULT);
+      expect(
+        ending('right', (body, person) => ({ x: person.x + 10, y: bottom(body) + 50 }))
+      ).not.toContain(FAULT);
+    });
   });
 
   it("catches a label over another relation's label, and one over a person's head", () => {
