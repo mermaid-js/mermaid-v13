@@ -12,7 +12,12 @@ import { cynefinDocs } from '../generated/docs.ts';
 import type { CynefinDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 import { ITEMS, LINE_START } from './tables.ts';
-import { keywordItem, lineBefore, wordRange } from '@mermaid-js/shared/parser/facet';
+import {
+  atLineStart,
+  keywordCompletions,
+  lineBefore,
+  wordRange,
+} from '@mermaid-js/shared/parser/facet';
 
 export function cynefinCompletions(
   probe: ProbeResult,
@@ -24,16 +29,18 @@ export function cynefinCompletions(
   const range = wordRange(text, result.tokens, probe, /[\s"':]/);
   const prefix = text.slice(range.start, probe.offset);
   const before = lineBefore(text, range.start);
-  const lineStart = /^[\t ]*$/.test(before);
+  const lineStart = atLineStart(text, range.start);
   // After `-->`: the source domain, which completion leaves out.
   const source = /([a-z]+)[\t ]*-->[\t ]*$/.exec(before)?.[1];
   const afterArrow = source !== undefined;
-  const out: CompletionItem[] = [];
-  for (const k of ITEMS) {
-    if (!expected.has(k.kind) || !k.label.startsWith(prefix)) continue;
-    if (k.kind === T.DomainName && k.label === source) continue;
-    if (LINE_START.has(k.kind) && !lineStart && !(k.kind === T.DomainName && afterArrow)) continue;
-    out.push(keywordItem(k, range, cynefinDocs[k.kind]));
-  }
-  return out;
+  return keywordCompletions(
+    ITEMS,
+    expected,
+    prefix,
+    range,
+    cynefinDocs,
+    (k) =>
+      !(k.kind === T.DomainName && k.label === source) &&
+      (!LINE_START.has(k.kind) || lineStart || (k.kind === T.DomainName && afterArrow))
+  );
 }

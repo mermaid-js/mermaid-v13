@@ -7,7 +7,7 @@ import type {
   LayoutModelNode,
   RoutePoint,
 } from '@mermaid-js/core/layout';
-import { layered } from '@mermaid-js/core/layout';
+import { layered, pxProfile } from '@mermaid-js/core/layout';
 import { drawFolded } from '@mermaid-js/core/svg/folded';
 import { drawFramed } from '@mermaid-js/core/svg/framed';
 import {
@@ -16,17 +16,34 @@ import {
   translate,
   type Attrs,
   type OutlinePaint,
-  type Paint,
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { cls, openSvgRoot, paletteSlots, textElement } from '@mermaid-js/shared/svg/document';
-import { edgeLabel as labelOnBox } from '@mermaid-js/shared/svg/graph';
+import {
+  ANIMATED_DASH,
+  animateEdge,
+  clickCursor,
+  cls,
+  openSvgRoot,
+  paletteSlots,
+  textElement,
+  placeTitle,
+  titledViewBox,
+  type PaletteTint,
+} from '@mermaid-js/shared/svg/document';
+import { edgeLabel } from '@mermaid-js/shared/svg/graph';
+import { nodePaint, plainLine, type NodePaint } from '@mermaid-js/shared/svg/node-paint';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
 import { drawIcon, drawImage } from './assets.ts';
-import { arrowheads, marker, markerTrim, type Arrowheads } from '@mermaid-js/shared/svg/arrowheads';
-import { routePath } from '@mermaid-js/shared/svg/route';
+import {
+  arrowheads,
+  marker,
+  markerTrim,
+  type Arrowheads,
+  type MarkerPaint,
+} from '@mermaid-js/shared/svg/arrowheads';
+import { drawRoute } from '@mermaid-js/shared/svg/route';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
 import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
 
@@ -113,45 +130,21 @@ function inset(
   return p;
 }
 
-export interface Tint {
-  readonly id: `color-${number}`;
-  readonly stroke: Paint;
-  readonly fill?: Paint;
-}
-
 type ThemeOf = FlowRenderContext['theme'];
 type Color = ReturnType<ThemeOf['color']>;
 type Length = ReturnType<ThemeOf['length']>;
 
-/** Node paint: every vertex, and the edges' lines and heads. */
-export interface NodePaint {
-  readonly font: ReturnType<ThemeOf['font']>;
-  readonly fontSize: Length;
-  readonly fill: Color;
-  /** The outline: the theme's gradient when `useGradient` is on (D182), else nodeBorder. */
-  readonly stroke: OutlinePaint;
-  /**
-   * nodeBorder as a colour where the outline is the gradient: a filled part's fill (a dot,
-   * the fork bar), and a one-segment inner line, whose bounding box has no width or height
-   * (shapes.ts `usesPlain`, D185).
-   * Read only when the gradient is on and such a shape is drawn.
-   */
-  readonly plainStroke: Color | undefined;
-  readonly text: Color;
-  readonly strokeWidth: Length;
-  readonly line: Color;
-  readonly arrow: Color;
-  /**
-   * The theme's drop shadow (#85), a CSS filter on node outlines, icons, subgraph rects and the
-   * collapsed card; never on edges, labels or a collapsed card's dots. A theme with `none` (the
-   * classic themes) writes no filter at all.
-   */
-  readonly shadow: ReturnType<ThemeOf['filter']> | undefined;
-}
-
 export interface Paints {
   readonly heads: Arrowheads;
   readonly node: NodePaint;
+  /**
+   * Shared by every element that has no palette slot or style of its own, so those write the
+   * same attributes, in the same order, without a new object each: a node's outline paint and
+   * its inner lines, and an arrowhead's paint.
+   */
+  readonly shape: Attrs;
+  readonly line: Attrs;
+  readonly head: MarkerPaint;
   readonly cluster?: { fill: Color; stroke: OutlinePaint; strokeWidth: Length; text: Color };
   /**
    * A lane's border: clusterBorder as a colour, never the gradient (v12's swimlane styles forced
@@ -163,8 +156,15 @@ export interface Paints {
   /** Folded blocks (#670): the icon's filled nodes and the type's muted grey. */
   readonly folded?: { readonly ink: Color; readonly muted: Color };
   /** A subgraph's palette slot from its source order (a lane's too, the default lane's included). */
-  readonly slotOf: (view: Pick<NodeView, 'order'>) => Tint | undefined;
-  readonly edgeLabel?: { fill: Color; text: Color };
+  readonly slotOf: (view: Pick<NodeView, 'order'>) => PaletteTint | undefined;
+  /** `text` is the label paint of an edge without a text style. */
+  readonly edgeLabel?: { fill: Color; text: Attrs };
+}
+
+/** Whether a checked style sets nothing (prepare shares one object per distinct class list). */
+function isEmpty(style: Attrs): boolean {
+  for (const _name in style) return false;
+  return true;
 }
 
 /**
@@ -174,21 +174,7 @@ export interface Paints {
  */
 function paints(theme: ThemeOf, flow: Prepared, lanes: boolean): Paints {
   const heads = arrowheads(theme);
-  const node: NodePaint = {
-    font: theme.font(),
-    fontSize: theme.length('fontSize'),
-    fill: theme.color('mainBkg'),
-    stroke: theme.outline('nodeBorder'),
-    plainStroke:
-      theme.gradient() && flow.nodes.some((v) => usesPlain(v.shape))
-        ? theme.color('nodeBorder')
-        : undefined,
-    text: theme.color('nodeTextColor'),
-    strokeWidth: theme.length('strokeWidth'),
-    line: theme.color('lineColor'),
-    arrow: theme.color('arrowheadColor'),
-    shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
-  };
+  const node = nodePaint(theme, () => flow.nodes.some((v) => usesPlain(v.shape)));
   // Under the swimlane engine loose nodes sit in a lane, which flowchart's model does not have.
   const cluster =
     flow.groups.length > 0 || lanes
@@ -208,12 +194,33 @@ function paints(theme: ThemeOf, flow: Prepared, lanes: boolean): Paints {
     ? { ink: theme.color('nodeBorder'), muted: theme.color('mutedBorder') }
     : undefined;
   const slot = paletteSlots(theme);
-  const slotOf = (view: Pick<NodeView, 'order'>): Tint | undefined =>
+  const slotOf = (view: Pick<NodeView, 'order'>): PaletteTint | undefined =>
     view.order === undefined ? undefined : slot(view.order);
-  const edgeLabel = flow.edges.some((e) => e.label.width > 0)
-    ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
+  const labelPaint = flow.edges.some((e) => e.label.width > 0)
+    ? { fill: theme.color('edgeLabelBackground'), text: { fill: theme.color('textColor') } }
     : undefined;
-  return { heads, node, cluster, laneStroke, collapsedLine, folded, slotOf, edgeLabel };
+  const shape: Attrs = {
+    fill: node.fill,
+    stroke: node.stroke,
+    'stroke-width': node.strokeWidth,
+    filter: node.shadow,
+  };
+  const line: Attrs = { stroke: node.stroke, 'stroke-width': node.strokeWidth };
+  // An arrowhead's paint: these three keys in this order, as an edge with a style writes them.
+  const head: MarkerPaint = { fill: node.arrow, opacity: undefined, 'fill-opacity': undefined };
+  return {
+    heads,
+    node,
+    shape,
+    line,
+    head,
+    cluster,
+    laneStroke,
+    collapsedLine,
+    folded,
+    slotOf,
+    edgeLabel: labelPaint,
+  };
 }
 
 /** What every section of one render draws from. */
@@ -226,6 +233,20 @@ export interface Scene {
   readonly warn: Warn;
   /** The lane drawer, on a render the `swimlane` layout laid out (D535, D536). */
   readonly lanes: LaneDrawer | undefined;
+  /**
+   * `theme.ink` by fill, for this render only: nodes styled alike share a fill. It lives and
+   * dies with the scene, so nothing in it outlives the render or meets another theme.
+   */
+  readonly inks: Map<string, ReturnType<FlowRenderContext['theme']['ink']>>;
+}
+
+type Ink = ReturnType<ThemeOf['ink']>;
+
+/** `theme.ink(fill)`, worked out once per fill in a render (`ink` reads only the theme). */
+function inkOf({ ctx, inks }: Scene, fill: string): Ink {
+  let ink = inks.get(fill);
+  if (ink === undefined && !inks.has(fill)) inks.set(fill, (ink = ctx.theme.ink(fill)));
+  return ink;
 }
 
 /** Writes the whole `<svg>` document for a laid-out flowchart. */
@@ -246,8 +267,13 @@ export function renderFlowchart(
     paint: paints(ctx.theme, flow, !!lanes),
     warn: (warning) => ctx.warn(warning),
     lanes,
+    inks: new Map(),
   };
-  openRoot(scene, model);
+  const conf = ctx.config.flowchart;
+  // v12's `flowchartTitleText`: 18 px in `textColor`, `titleTopMargin` above the drawing (D652).
+  const title = placeTitle(model.title, layout.width, conf?.titleTopMargin ?? 25, ctx, 18);
+  const ink = title && ctx.theme.color('textColor');
+  openRoot(scene, model, titledViewBox(layout, title, conf?.diagramPadding ?? 8));
   if (scene.paint.cluster) drawClusters(scene);
   w.open('g', {
     class: 'edgePaths',
@@ -265,23 +291,28 @@ export function renderFlowchart(
   w.open('g', { class: 'nodes', fill: scene.paint.node.text });
   for (const view of flow.nodes) drawNode(scene, view, tips.get(view.id));
   w.close();
+  if (title && ink) {
+    w.label(title.label, title.x, title.y, {
+      class: 'flowchartTitleText',
+      fill: ink,
+      'font-size': 18,
+    });
+  }
   w.close();
 }
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
-function openRoot({ w, layout, ctx, paint }: Scene, model: FlowModel): void {
-  const { config } = ctx;
-  const width = Math.max(1, Math.ceil(layout.width));
-  const height = Math.max(1, Math.ceil(layout.height));
-  const maxWidth = config.flowchart?.useMaxWidth !== false;
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
+function openRoot(
+  { w, ctx, paint }: Scene,
+  model: FlowModel,
+  viewBox: ReturnType<typeof titledViewBox>
+): void {
   openSvgRoot(w, ctx, {
     name: 'flowchart',
-    viewBox: [0, 0, width, height],
-    maxWidth,
-    title,
-    desc,
+    viewBox,
+    maxWidth: ctx.config.flowchart?.useMaxWidth !== false,
+    title: model.accTitle,
+    desc: model.accDescr,
     attrs: {
       'font-family': paint.node.font,
       'font-size': paint.node.fontSize,
@@ -342,6 +373,36 @@ function edgeClass(edge: EdgeView['edge']): string {
   return 'edge flowchart-link' + look + animation + cls(edge.classes);
 }
 
+/** The edge's line: its weight and pattern, then the author's style, then an animation's dashes. */
+function edgeLine(edge: EdgeView['edge'], d: Attrs['d'], style: Attrs, animated: boolean): Attrs {
+  const dotted = edge.stroke === 'dotted';
+  const width = edge.stroke === 'thick' ? THICK : undefined;
+  const dash = dotted ? DOTTED : undefined;
+  // v12 drew dotted edges with butt caps; the group's round caps close a 2px dash's gaps.
+  // Animated edges keep round caps, as v12's .edge-animation-* rules set them.
+  const cap = dotted && !animated ? 'butt' : undefined;
+  // The same keys in the same order either way: most edges have no style and no animation, and
+  // an object literal without a spread is built without copying one.
+  if (!animated && isEmpty(style))
+    return {
+      d,
+      'stroke-width': width,
+      'stroke-dasharray': dash,
+      'stroke-linecap': cap,
+      fill: 'none',
+    };
+  return {
+    d,
+    'stroke-width': width,
+    'stroke-dasharray': dash,
+    'stroke-linecap': cap,
+    ...style,
+    // The moving dashes replace the edge's own pattern and any `linkStyle` one, as in v12.
+    ...(animated && { 'stroke-dasharray': ANIMATED_DASH, 'stroke-dashoffset': undefined }),
+    fill: 'none',
+  };
+}
+
 function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
   const edge = e.edge;
   const route = layout.edges.get(e.id);
@@ -352,30 +413,27 @@ function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
     const { views, pads } = flow;
     points[0] = inset(points[0]!, views.get(e.source), layout.nodes.get(e.source), pads);
     points[last] = inset(points[last]!, views.get(e.target), layout.nodes.get(e.target), pads);
-    const path = routePath(
+    // The copy is handed over: the route drawing works in it, without copies of its own.
+    const path = drawRoute(
       w,
       points,
       e.source === e.target ? 'rounded' : e.curve,
       markerTrim(e.start, paint.heads),
       markerTrim(e.end, paint.heads)
     );
-    w.outline('edge', 'path', {
-      d: path.d,
-      'stroke-width': edge.stroke === 'thick' ? THICK : undefined,
-      'stroke-dasharray': edge.stroke === 'dotted' ? DOTTED : undefined,
-      // v12 drew dotted edges with butt caps; the group's round caps close a 2px dash's gaps.
-      // Animated edges keep round caps, as v12's .edge-animation-* rules set them.
-      'stroke-linecap':
-        edge.stroke === 'dotted' && !edge.animate && !edge.animation ? 'butt' : undefined,
-      ...e.style.shape,
-      fill: 'none',
-    });
+    const style = e.style.shape;
+    w.outline('edge', 'path', edgeLine(edge, path.d, style, animateEdge(w, edge)));
     // The head fades with its line: opacity, and stroke-opacity as the head's fill-opacity.
-    const headPaint: Attrs = {
-      fill: e.style.shape.stroke ?? paint.node.arrow,
-      opacity: e.style.shape.opacity,
-      'fill-opacity': e.style.shape['stroke-opacity'],
-    };
+    const headPaint: MarkerPaint =
+      style.stroke === undefined &&
+      style.opacity === undefined &&
+      style['stroke-opacity'] === undefined
+        ? paint.head
+        : {
+            fill: style.stroke ?? paint.node.arrow,
+            opacity: style.opacity,
+            'fill-opacity': style['stroke-opacity'],
+          };
     marker(
       w,
       e.start,
@@ -394,11 +452,18 @@ function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
   w.close();
 }
 
-function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView): void {
+/** An edge's label as a tag, bordered in the edge's own stroke (D626, D627). */
+function drawEdgeLabel({ w, layout, ctx, paint }: Scene, e: EdgeView): void {
   const at = layout.edges.get(e.id)?.label;
   if (!at || e.label.width === 0) return;
   const { fill, text } = paint.edgeLabel!;
-  labelOnBox(w, e.label, at, e.edge.id, { fill, text: { fill: text, ...e.style.text }, rx: 3 });
+  const own = isEmpty(e.style.text) ? text : { fill: text.fill, ...e.style.text };
+  edgeLabel(w, e.label, at, e.edge.id, {
+    fill,
+    stroke: e.style.shape.stroke ?? paint.node.line,
+    text: own,
+    patch: (ctx.units ?? pxProfile).builder.labelPatch,
+  });
 }
 
 /** A node's own classes: a collapsed subgraph's card, a block (ADR-15), or a plain node. */
@@ -408,16 +473,120 @@ function nodeClass(view: NodeView): string {
   return view.block === 'folded' ? 'node embed folded' : 'node embed';
 }
 
-function drawNode(
-  { w, layout, flow, ctx, paint, warn }: Scene,
+/** The outline attributes of a node, from its palette slot and its style. */
+function shapeAttrsOf(paint: Scene['paint'], view: NodeView, slot: PaletteTint | undefined): Attrs {
+  // A collapsed subgraph takes its palette slot; the author's style still wins (spread after).
+  if (slot === undefined && isEmpty(view.style.shape)) return paint.shape;
+  return {
+    fill: slot?.fill ?? paint.node.fill,
+    stroke: slot?.stroke ?? paint.node.stroke,
+    'stroke-width': paint.node.strokeWidth,
+    filter: paint.node.shadow,
+    ...view.style.shape,
+  };
+}
+
+/**
+ * Inner lines follow the outline, except a collapsed card's separator and dots, which take
+ * the palette slot's border or else clusterBorder.
+ */
+function lineAttrsOf(
+  paint: Scene['paint'],
   view: NodeView,
-  tip?: string
+  slot: PaletteTint | undefined,
+  shapeAttrs: Attrs
+): Attrs {
+  const plain = slot === undefined && isEmpty(view.style.shape);
+  let lineAttrs: Attrs = plain
+    ? paint.line
+    : { stroke: shapeAttrs.stroke, 'stroke-width': shapeAttrs['stroke-width'] };
+  if (paint.collapsedLine && view.shape === 'collapsedGroup') {
+    lineAttrs = slot ? { stroke: slot.stroke } : paint.collapsedLine;
+  }
+  return plainLine(paint.node, lineAttrs, usesPlain(view.shape));
+}
+
+/** The fill, stroke and inner-line attributes of a node. */
+function nodeAttrs(
+  paint: Scene['paint'],
+  view: NodeView,
+  slot: PaletteTint | undefined
+): { shapeAttrs: Attrs; lineAttrs: Attrs } {
+  const shapeAttrs = shapeAttrsOf(paint, view, slot);
+  return { shapeAttrs, lineAttrs: lineAttrsOf(paint, view, slot, shapeAttrs) };
+}
+
+/** A block's border and transparent background, which set a block apart from a subgraph. */
+function blockFrame(paint: Scene['paint'], view: NodeView): Attrs {
+  return {
+    fill: 'none',
+    stroke: paint.node.stroke,
+    'stroke-width': paint.node.strokeWidth,
+    ...view.style.shape,
+  };
+}
+
+/** The picture of a node that is not a folded block: block frame, image, icon or shape. */
+function drawNodeBody(
+  { w, flow, ctx, paint, warn }: Scene,
+  view: NodeView,
+  attrs: { shapeAttrs: Attrs; lineAttrs: Attrs }
 ): void {
+  const v = view.vertex;
+  if (view.block) {
+    drawFramed(
+      w,
+      { width: view.w, height: view.h },
+      view.label.height,
+      view.embed ?? null,
+      blockFrame(paint, view)
+    );
+  } else if (v?.img) drawImage(w, view, v.img, ctx.securityLevel ?? 'default', warn);
+  else if (v?.icon) {
+    // D298: the glyph takes the author's stroke, else nodeBorder (`node.stroke`, the gradient
+    // under neo).
+    drawIcon(w, view, attrs.shapeAttrs, view.style.shape.stroke ?? paint.node.stroke, ctx);
+  } else {
+    drawShape({
+      kind: view.shape,
+      w,
+      width: view.w,
+      height: view.h,
+      attrs: attrs.shapeAttrs,
+      lines: attrs.lineAttrs,
+      pads: flow.pads,
+    });
+  }
+}
+
+/** The checked link of a node, or undefined when it has none or the level refuses it. */
+function nodeHref({ ctx, warn }: Scene, v: NodeView['vertex']): ReturnType<typeof checkUrl> {
+  if (v?.link === undefined) return undefined;
+  return checkUrl(v.link, {
+    securityLevel: ctx.securityLevel ?? 'default',
+    linkSchemes: ctx.linkSchemes,
+    warn,
+  });
+}
+
+/** A folded block: its frame, mark and title. */
+function drawFoldedNode({ w, paint }: Scene, view: NodeView): void {
+  const frame = blockFrame(paint, view);
+  const { type, label } = view.fold!;
+  drawFolded(w, { width: view.w, height: view.h }, view.label, label!, type.length, {
+    frame,
+    mark: frame.stroke ?? paint.node.stroke,
+    ...paint.folded!,
+    title: view.style.text,
+  });
+}
+
+function drawNode(scene: Scene, view: NodeView, tip?: string): void {
+  const { w, layout, paint, warn } = scene;
   const box = layout.nodes.get(view.id);
   if (!box) return;
   const v = view.vertex;
   const slot = paint.slotOf(view);
-  const securityLevel = ctx.securityLevel ?? 'default';
   const { block } = view;
   w.open('g', {
     class: nodeClass(view) + cls(view.classes),
@@ -428,68 +597,30 @@ function drawNode(
     // A block is one image to assistive technology, named by its title (ADR-15).
     role: block ? 'img' : undefined,
     'aria-label': block ? v?.text || view.id : undefined,
+    cursor: clickCursor(view.classes),
   });
   if (tip) textElement(w, 'title', tip);
-  const href =
-    v?.link === undefined
-      ? undefined
-      : checkUrl(v.link, { securityLevel, linkSchemes: ctx.linkSchemes, warn });
+  const href = nodeHref(scene, v);
   if (href) w.open('a', { href, target: checkLinkTarget(v?.linkTarget, warn) });
-  // A collapsed subgraph takes its palette slot; the author's style still wins (spread after).
-  const shapeAttrs: Attrs = {
-    fill: slot?.fill ?? paint.node.fill,
-    stroke: slot?.stroke ?? paint.node.stroke,
-    'stroke-width': paint.node.strokeWidth,
-    filter: paint.node.shadow,
-    ...view.style.shape,
-  };
-  // Inner lines follow the outline, except a collapsed card's separator and dots, which take
-  // the palette slot's border or else clusterBorder.
-  let lineAttrs: Attrs = {
-    stroke: shapeAttrs.stroke,
-    'stroke-width': shapeAttrs['stroke-width'],
-  };
-  if (paint.collapsedLine && view.shape === 'collapsedGroup') {
-    lineAttrs = slot ? { stroke: slot.stroke } : paint.collapsedLine;
+  if (block === 'folded') {
+    drawFoldedNode(scene, view);
+    if (href) w.close();
+    w.close();
+    return;
   }
-  if (paint.node.plainStroke && lineAttrs.stroke === paint.node.stroke && usesPlain(view.shape)) {
-    lineAttrs = { ...lineAttrs, stroke: paint.node.plainStroke };
-  }
-  if (block) {
-    // A border and a transparent background, which set a block apart from a subgraph.
-    const frame: Attrs = {
-      fill: 'none',
-      stroke: paint.node.stroke,
-      'stroke-width': paint.node.strokeWidth,
-      ...view.style.shape,
-    };
-    if (block === 'folded') {
-      const { type, label } = view.fold!;
-      drawFolded(w, { width: view.w, height: view.h }, view.label, label!, type.length, {
-        frame,
-        mark: frame.stroke ?? paint.node.stroke,
-        ...paint.folded!,
-        title: view.style.text,
-      });
-      if (href) w.close();
-      w.close();
-      return;
-    }
-    drawFramed(w, { width: view.w, height: view.h }, view.label.height, view.embed ?? null, frame);
-  } else if (v?.img) drawImage(w, view, v.img, securityLevel, warn);
-  else if (v?.icon) {
-    // D298: the glyph takes the author's stroke, else nodeBorder (`node.stroke`, the gradient
-    // under neo).
-    drawIcon(w, view, shapeAttrs, view.style.shape.stroke ?? paint.node.stroke, ctx);
-  } else drawShape(view.shape, w, view.w, view.h, shapeAttrs, lineAttrs, flow.pads);
+  drawNodeBody(scene, view, nodeAttrs(paint, view, slot));
   const fill = view.style.shape.fill;
-  w.label(view.label, 0, view.dy, {
-    fill:
-      fill && shapeFilled(view.shape) && !v?.img && !v?.icon && !block
-        ? ctx.theme.ink(fill)
-        : undefined,
-    ...view.style.text,
-  });
+  const ink =
+    fill && shapeFilled(view.shape) && !v?.img && !v?.icon && !block
+      ? inkOf(scene, fill)
+      : undefined;
+  // No attributes at all writes the same label as `{ fill: undefined }`.
+  w.label(
+    view.label,
+    view.dx,
+    view.dy,
+    ink === undefined && isEmpty(view.style.text) ? undefined : { fill: ink, ...view.style.text }
+  );
   if (href) w.close();
   w.close();
 }

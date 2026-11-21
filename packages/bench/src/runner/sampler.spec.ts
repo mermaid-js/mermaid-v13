@@ -3,12 +3,11 @@ import type { Adapter } from './adapters.ts';
 import { sample } from './sampler.ts';
 
 const adapter: Adapter = { init: () => Promise.resolve(), render: () => Promise.resolve('<svg/>') };
-const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 describe('sample', () => {
   it('batches renders faster than 2 ms so each sample lasts at least that long', async () => {
     const reply = await sample(
-      { renderOnce: () => Promise.resolve(0.1), adapter, errorText },
+      { renderOnce: () => Promise.resolve(0.1), adapter },
       'flowchart LR\n A --> B',
       3,
       1000
@@ -22,7 +21,7 @@ describe('sample', () => {
 
   it('stops warm samples once the budget is spent, after at least one', async () => {
     const reply = await sample(
-      { renderOnce: () => new Promise((r) => setTimeout(() => r(5), 5)), adapter, errorText },
+      { renderOnce: () => new Promise((r) => setTimeout(() => r(5), 5)), adapter },
       's',
       10,
       1
@@ -36,14 +35,13 @@ describe('sample', () => {
       {
         renderOnce: () => Promise.reject(new Error('Expected a node id')),
         adapter,
-        errorText,
         cleanup: () => cleaned++,
       },
       's',
       3,
       1000
     );
-    expect(reply).toEqual({ ok: false, error: 'Expected a node id' });
+    expect(reply).toEqual({ ok: false, error: 'Error: Expected a node id' });
     expect(cleaned).toBe(1);
   });
 
@@ -51,7 +49,7 @@ describe('sample', () => {
     let n = 0;
     const staged: Adapter = { ...adapter, takeStages: () => (n++ % 2 ? { parse: 0.4 } : {}) };
     const reply = await sample(
-      { renderOnce: () => Promise.resolve(3), adapter: staged, errorText },
+      { renderOnce: () => Promise.resolve(3), adapter: staged },
       's',
       2,
       1000

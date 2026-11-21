@@ -31,18 +31,7 @@ import {
   type ThemeName,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
-import { loadOracle } from '../oracle.ts';
-
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
-  };
-}
-
-await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
+import { v12Vars } from '../v12-theme.ts';
 
 /** v12's treeView diagram module (the chunk holding `src/diagrams/treeView/styles.ts`). */
 async function v12TreeViewStyles(): Promise<(options: object) => string> {
@@ -84,13 +73,6 @@ const WHERE: Readonly<Record<string, readonly [string, string]>> = {
 };
 const NAMES = Object.keys(WHERE);
 const COLOURS = NAMES.filter((n) => n !== 'treeViewLabelFontSize');
-
-/** v12's resolved theme variables of `theme`, with author `themeVariables`. */
-function v12Vars(theme: string, themeVariables?: object): Record<string, unknown> {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize(themeVariables ? { theme, themeVariables } : { theme });
-  return { ...v12.mermaidAPI.getConfig().themeVariables };
-}
 
 /** v12's value of each variable, read back from the CSS its `styles()` writes for the theme. */
 function v12Styles(theme: string, themeVariables?: object): Record<string, string> {

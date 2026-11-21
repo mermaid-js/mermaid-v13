@@ -6,12 +6,8 @@ import { cellProfile, pxProfile } from '@mermaid-js/core/layout';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import { EDGE_CASES, gridMeasurer, kanban, parsed } from './fixtures.ts';
-import {
-  kanbanLayoutViolations,
-  layoutKanban,
-  type KanbanLayout,
-  type KanbanLayoutInput,
-} from './index.ts';
+import { layoutKanban, type KanbanLayout, type KanbanLayoutInput } from './index.ts';
+import { kanbanLayoutViolations } from './invariants.ts';
 
 /** The parsed layout input of a board. */
 const board = (...lines: string[]): KanbanLayoutInput => parsed(kanban(...lines)).input;
@@ -162,6 +158,84 @@ describe('kanban layout: the shared title row', () => {
     const layout = lay(board('  a[A]', '  b[B]'));
     expect(layout.titleRow).toBe(25);
     expect(layout.columns.map((c) => c.height)).toEqual([50, 50]);
+  });
+});
+
+// D647: a ticket and an assignee that do not fit side by side on one row are stacked, as the
+// text output does. With `gridMeasurer` (8 px a character) the row is the card's 185 less 10 at
+// each side: 165 px. Twenty characters (160 px) fit; twenty-one (168 px) do not.
+describe('kanban layout: a ticket and an assignee that do not fit side by side (D647)', () => {
+  const card = (ticket: string, assigned: string) =>
+    lay(board('  a[Todo]', `    x[Card]@{ ticket: '${ticket}', assigned: '${assigned}' }`))
+      .cards[0]!;
+
+  it('keeps a pair that fits on one row, at v12 geometry', () => {
+    // 'MC-1234567' and 'Dana Smith' are 10 characters each: 160 px of the 165.
+    const c = card('MC-1234567', 'Dana Smith');
+    // As card b of v12's render: 24 + 20 + 24 / 2 high, the title 10 − 24 / 4 below the top.
+    expect(c.height).toBe(56);
+    expect(c.title!.y - c.y).toBe(4);
+    expect(c.ticket!.y).toBe(c.assignee!.y);
+    expect(c.ticket!.x + c.ticket!.width).toBeLessThanOrEqual(c.assignee!.x);
+  });
+
+  it('stacks them when they fill the row: the assignee under the ticket, still right-aligned', () => {
+    // One character more: 168 px.
+    const c = card('MC-12345678', 'Dana Smith');
+    expect(c.ticket!.x).toBe(c.x + 10);
+    expect(c.assignee!.y).toBe(c.ticket!.y + c.ticket!.height);
+    expect(c.assignee!.x + c.assignee!.width).toBe(c.x + c.width - 10);
+    // Each a row of its own: the card grows by both, the title stays 10 below its top, and
+    // the assignee ends 10 above its bottom.
+    expect(c.title!.y - c.y).toBe(10);
+    expect(c.height).toBe(24 + 20 + 24 + 24);
+    expect(c.assignee!.y + c.assignee!.height).toBe(c.y + c.height - 10);
+  });
+
+  it("holds #774's card: both wrapped, on rows of their own, inside the card", () => {
+    const input = board(
+      '  long[Column]',
+      "    a[Card]@{ assigned: 'A very long assignee name that goes on', ticket: 'VERY-LONG-TICKET-NUMBER-12345' }"
+    );
+    const layout = lay(input);
+    const c = layout.cards[0]!;
+    const { ticket, assignee } = c;
+    expect(ticket!.text.lines.length).toBe(2);
+    expect(assignee!.text.lines.length).toBe(2);
+    expect(assignee!.y).toBe(ticket!.y + ticket!.height);
+    for (const label of [ticket!, assignee!]) {
+      expect(label.x).toBeGreaterThanOrEqual(c.x);
+      expect(label.x + label.width).toBeLessThanOrEqual(c.x + c.width);
+      expect(label.y + label.height).toBeLessThanOrEqual(c.y + c.height);
+    }
+    expect(kanbanLayoutViolations(input, layout)).toEqual([]);
+    // The column grows with its card.
+    expect(layout.columns[0]!.height).toBe(c.height + 5 + 30);
+  });
+
+  it('moves the next card down by what the card grew', () => {
+    const input = board(
+      '  a[Todo]',
+      "    x[Card]@{ ticket: 'MC-12345678', assigned: 'Dana Smith' }",
+      '    y[Next]'
+    );
+    const [x, y] = lay(input).cards;
+    expect(y!.y).toBe(x!.y + x!.height + 5);
+  });
+
+  it('stacks in cells by the same rule', () => {
+    const input = board(
+      '  a[Todo]',
+      "    x[Card]@{ ticket: 'MC-1234567890', assigned: 'Dana Smith' }"
+    );
+    const c = layoutKanban(input, {
+      config: {} as ResolvedConfig,
+      measurer: cellMeasurer,
+      units: cellProfile(),
+      theme: createTheme(spec),
+      warn: () => {},
+    }).cards[0]!;
+    expect(c.assignee!.y).toBe(c.ticket!.y + c.ticket!.height);
   });
 });
 
@@ -318,6 +392,24 @@ describe('kanban layout invariants', () => {
     expect(kanbanLayoutViolations(input, { ...good, titleRow: NaN })).toEqual([
       'layout.titleRow is NaN',
     ]);
+  });
+
+  it('catches a ticket and assignee drawn over each other, or stacked out of the card', () => {
+    const input = board('  a[A]', "    x[Card]@{ ticket: 'MC-12345678', assigned: 'Dana Smith' }");
+    const good = lay(input);
+    const c = good.cards[0]!;
+    const { ticket, assignee } = c;
+    const withCard = (card: KanbanLayout['cards'][number]): KanbanLayout => ({
+      ...good,
+      cards: [card],
+    });
+    expect(kanbanLayoutViolations(input, good)).toEqual([]);
+    expect(
+      kanbanLayoutViolations(input, withCard({ ...c, assignee: { ...assignee!, y: ticket!.y } }))
+    ).toContain(`card ${c.ast}: its ticket and assignee overlap`);
+    expect(kanbanLayoutViolations(input, withCard({ ...c, height: c.height - 20 }))).toContain(
+      `card ${c.ast}: its assignee, stacked under the ticket, sticks out of its bottom`
+    );
   });
 });
 

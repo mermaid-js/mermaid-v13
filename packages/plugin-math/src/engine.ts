@@ -70,9 +70,11 @@ interface Engine {
   readonly forget: () => void;
 }
 
+// Kept module state, lazy-load handle: MathJax, started once; typeset() forgets its widths per call.
 let engine: Engine | undefined;
 
 /** How the current `typeset` call measures text the font lacks, and its math em in px. */
+// Kept module state, set and cleared inside one synchronous typeset() call, for MathJax's measure callback.
 let measuring:
   | { readonly measure: NonNullable<TypesetOptions['measure']>; readonly em: number }
   | undefined;

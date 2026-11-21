@@ -8,6 +8,7 @@ import {
   APOSTROPHE,
   type Diagnostics,
   DQUOTE,
+  isBlank,
   Kind,
   type Range,
   type TokenStream,
@@ -55,11 +56,9 @@ export function textValue(type: TextStatement['type'], image: string): string {
 /** `range` without the blanks it starts with (a text statement's token takes its indent). */
 export function withoutIndent(src: string, range: Range): Range {
   let { start } = range;
-  while (start < range.end && isIndent(src.charCodeAt(start))) start++;
+  while (start < range.end && isBlank(src.charCodeAt(start))) start++;
   return { start, end: range.end };
 }
-
-const isIndent = (c: number): boolean => c === 0x09 || c === 0x20;
 
 /** What {@link textProbeMode} reads of a diagram's tokens. */
 export interface ProbeModes {
@@ -145,7 +144,7 @@ function inTextValue(
   mayBlock: boolean
 ): boolean {
   let k = t.start;
-  while (isIndent(src.charCodeAt(k))) k++;
+  while (isBlank(src.charCodeAt(k))) k++;
   k += word.length;
   if (o <= k) return false;
   return o < t.end || !(mayBlock && /^\s*\{/.test(src.slice(k, t.end)));
@@ -156,18 +155,20 @@ function inTextValue(
  * closing quote. Whether it did.
  *
  * @param line - The 1-based line of `where`.
+ * @param noun - What the message calls the quoted text (`label`, or gitGraph's `text`).
  */
 export function unclosedLabel(
   diagnostics: Diagnostics,
   text: string,
   line: number,
-  where: Range
+  where: Range,
+  noun = 'label'
 ): boolean {
   if (!text.startsWith('"') && !text.startsWith("'")) return false;
   const q = text[0] ?? '"';
   diagnostics.error(
     'UNCLOSED_STRING',
-    `Unclosed label: the \`${q}\` at line ${line} has no closing \`${q}\`. Add \`${q}\` after the label.`,
+    `Unclosed ${noun}: the \`${q}\` at line ${line} has no closing \`${q}\`. Add \`${q}\` after the ${noun}.`,
     where,
     { expected: [`\`${q}\``] }
   );

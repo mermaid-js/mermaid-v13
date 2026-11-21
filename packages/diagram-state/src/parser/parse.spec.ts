@@ -306,6 +306,19 @@ describe('state symbols and statement spans', () => {
     expect(r.symbols[0]?.range.start).toBe('stateDiagram-v2\n  A -->\n  '.length);
   });
 
+  it('gives the header the keyword alone, not an indented comment line after it', () => {
+    for (const [src, keyword] of [
+      ['stateDiagram\n  %% c\n  A', 'stateDiagram'],
+      ['stateDiagram-v2\n  \n  %% c\n  A', 'stateDiagram-v2'],
+      ['stateDiagram\n%% c\nA', 'stateDiagram'],
+    ] as const) {
+      const header = parseState(src).ast.children[0] as AstNode & { keyword?: string };
+      expect(header.type, src).toBe('Header');
+      expect(header.range, src).toEqual({ start: 0, end: keyword.length });
+      expect(header.keyword, src).toBe(keyword);
+    }
+  });
+
   it('records no span for a click statement that fails at its line end', () => {
     const r = parseState('stateDiagram-v2\n  A\n  click A "u" "t" B\n  C\n');
     expect(r.statements.map((s) => s.kind)).toEqual(['header', 'state', 'state']);

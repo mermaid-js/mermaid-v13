@@ -13,7 +13,7 @@
  * the complex leaf label truncated with `...`.
  */
 import type { RenderContext } from '@mermaid-js/core';
-import type { FontKey, Measurer } from '@mermaid-js/core/text';
+import { decodeEntities, type FontKey, type Measurer } from '@mermaid-js/core/text';
 import { treemapLayoutConfig, type TreemapLayoutConfig } from '../config.ts';
 import { treemapValueFormat } from '../format/index.ts';
 import { classStyles, type TreemapModel } from '../model.ts';
@@ -25,18 +25,18 @@ import {
   TREEMAP_METRICS as M,
   type LeafFit,
 } from './metrics.ts';
-import { classFont, plainText, textWidth, truncate } from './text.ts';
+import { classFont, textWidth, truncate } from './text.ts';
 import { tileTreemap, type Tile } from './tiles.ts';
-import {
-  grow,
-  type Rect,
-  type TreemapLayout,
-  type TreemapLeafLayout,
-  type TreemapSectionLayout,
-  type TreemapText,
-  type TreemapTextAnchor,
+import type {
+  Rect,
+  TreemapLayout,
+  TreemapLeafLayout,
+  TreemapSectionLayout,
+  TreemapText,
+  TreemapTextAnchor,
 } from './types.ts';
 import { RectUnion } from '@mermaid-js/shared/layout';
+import { growRect } from '@mermaid-js/core/layout';
 
 /** What the layout reads from the render context (`warn` for `TREEMAP_CONFIG_INVALID`). */
 export type TreemapLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
@@ -79,8 +79,10 @@ export function layoutTreemap(model: TreemapModel, ctx: TreemapLayoutContext): T
   const fit = complex ? M.complex : M.simple;
 
   // v12's ordinal scales take slots in first-lookup order: every section's fill (the hidden
-  // root's `''` first, breadth first), then the labels of the sections and of the leaves.
-  const fills = new Ordinal(FILL_SLOTS);
+  // root's `''` first, breadth first), then the labels of the sections and of the leaves. The
+  // root keeps fill slot 0 and the sections cycle through 1…12, where v12 wrapped the 13th
+  // name onto the root's `transparent` (D612).
+  const fills = new Ordinal(FILL_SLOTS, 1);
   const labels = new Ordinal(LABEL_SLOTS);
   for (const t of tree.branches) fills.slot(t.node?.name ?? '');
   for (const t of tree.branches) if (t.node) labels.slot(t.node.name);
@@ -98,13 +100,13 @@ export function layoutTreemap(model: TreemapModel, ctx: TreemapLayoutContext): T
 
   const box = new Box();
   for (const s of sections) {
-    box.add(grow(s.box, M.sectionStroke / 2));
+    box.add(growRect(s.box, M.sectionStroke / 2));
     box.add(s.header);
     if (s.label) box.add(s.label.box);
     if (s.valueText) box.add(s.valueText.box);
   }
   for (const l of leaves) {
-    box.add(grow(l.box, M.leafStroke / 2));
+    box.add(growRect(l.box, M.leafStroke / 2));
     if (l.label) box.add(l.label.box);
     if (l.valueText) box.add(l.valueText.box);
   }
@@ -122,7 +124,7 @@ export function layoutTreemap(model: TreemapModel, ctx: TreemapLayoutContext): T
     sections,
     leaves,
     ...(title ? { title } : {}),
-    bounds: grow(box.rect(), config.diagramPadding),
+    bounds: growRect(box.rect(), config.diagramPadding),
   };
 }
 
@@ -206,7 +208,7 @@ function sectionOf(
     : box.width - M.sectionLabelX - M.sectionLabelRightPad;
   const text = truncate(
     frame.measurer,
-    plainText(node.name),
+    decodeEntities(node.name),
     labelFont,
     Math.max(M.sectionLabelMinWidth, space)
   );
@@ -302,7 +304,7 @@ function fitLeaf(
     weight: NORMAL_WEIGHT,
   });
   const font = (size: number): FontKey => ({ ...start, size });
-  const name = plainText(t.node!.name);
+  const name = decodeEntities(t.node!.name);
   const valueSize = (size: number): number =>
     Math.max(fit.minValueSize, Math.min(fit.valueSize, Math.round(size * M.valueScale)));
 
@@ -351,24 +353,32 @@ function fitLeaf(
  */
 function titleOf(title: string, width: number, frame: Frame): TreemapText {
   return placed(
-    plainText(title),
+    decodeEntities(title),
     { family: frame.family, size: frame.titleSize, weight: NORMAL_WEIGHT },
     frame.measurer,
     { x: width / 2, y: frame.band / 2, anchor: 'middle', baseline: 'middle' }
   );
 }
 
-/** d3's `scaleOrdinal` with an implicit domain: a key's slot is its first-lookup index mod n. */
+/**
+ * d3's `scaleOrdinal` with an implicit domain: a key's slot is its first-lookup index mod n.
+ * The first `reserved` keys keep their own slots and the rest cycle through the slots past
+ * them, so the fills' slot 0 (`transparent`) stays the hidden root's (D612).
+ */
 class Ordinal {
   private readonly index = new Map<string, number>();
-  constructor(private readonly n: number) {}
+  constructor(
+    private readonly n: number,
+    private readonly reserved = 0
+  ) {}
   slot(key: string): number {
     let i = this.index.get(key);
     if (i === undefined) {
       i = this.index.size;
       this.index.set(key, i);
     }
-    return i % this.n;
+    const r = this.reserved;
+    return i < r ? i : r + ((i - r) % (this.n - r));
   }
 }
 

@@ -76,9 +76,12 @@ describe('HTML_DROPPED (R-TEXT-3, D566)', () => {
     for (const messages of out.dropped) expect(messages[0]).toContain('<script>, <style>');
   });
 
-  it('keeps the rest of a class member whose generic type is named Style or Script', async () => {
-    const { svg } = await svgOf('class-diagram/nightly-check/generics-named-style-and-script.mmd');
-    expect(drawn(svg)).toEqual(['Sheet', '+List items', '+run(Map m) : void']);
+  it('draws a class member whose generic type is named Style or Script as written (D619)', async () => {
+    const { svg, warnings } = await svgOf(
+      'class-diagram/nightly-check/generics-named-style-and-script.mmd'
+    );
+    expect(drawn(svg)).toEqual(['Sheet', '+List<Style> items', '+run(Map<Script> m) : void']);
+    expect(dropped(warnings)).toEqual([]);
   });
 
   it('keeps text that only starts like <script> or <style>, with what follows', async () => {

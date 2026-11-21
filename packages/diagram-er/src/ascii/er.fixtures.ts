@@ -1,6 +1,6 @@
 // Test helper: renders an ER diagram to text through the `./ascii` entry, as a pipeline does
 // (parse → cell layout → `ascii` hook), with the table measurer in the context.
-import type { DiagramPlugin } from '@mermaid-js/core';
+import type { DiagramPlugin, Warning } from '@mermaid-js/core';
 import { cellMeasurer } from '@mermaid-js/core/ascii';
 import { CORE_DEFAULTS, resolveConfig, type ResolvedConfig } from '@mermaid-js/core/config';
 import { cellProfile } from '@mermaid-js/core/layout';
@@ -10,7 +10,7 @@ import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import { ascii, type ErAsciiContext } from '../ascii.ts';
 import { erConfigDefaults } from '../generated/config-defaults.ts';
 import { parseEr } from '../parser/index.ts';
-import { layoutEr, type ErLayout, type ErWarning } from '../layout/layout.ts';
+import { layoutEr, type ErLayout } from '../layout/layout.ts';
 import { er as diagramPlugin } from '../plugin.ts';
 
 /** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
@@ -18,7 +18,7 @@ const { theme: diagramTheme }: Pick<DiagramPlugin, 'id' | 'theme'> = diagramPlug
 
 export interface Drawn {
   text: string;
-  warnings: ErWarning[];
+  warnings: Warning[];
   layout: ErLayout;
 }
 
@@ -54,7 +54,7 @@ export async function draw(src: string, options: DrawOptions = {}): Promise<Draw
     ascii: { ...(resolved as { ascii?: object }).ascii, ...section },
   } as unknown as ResolvedConfig;
   const parse = parseEr(src, { preprocessed: pre });
-  const warnings: ErWarning[] = [];
+  const warnings: Warning[] = [];
   theme ??= createTheme(await loadTheme(classic), { diagram: diagramTheme });
   const units = cellProfile(config.ascii?.padding);
   const ctx: ErAsciiContext = {

@@ -161,8 +161,8 @@
         "target": "details",
         "minLen": 1,
         "label": {
-          "width": 27.567999999999998,
-          "height": 20.1
+          "width": 31.567999999999998,
+          "height": 24.1
         }
       },
       {
@@ -177,8 +177,8 @@
         "target": "roadmap",
         "minLen": 1,
         "label": {
-          "width": 33.784,
-          "height": 20.1
+          "width": 37.784,
+          "height": 24.1
         }
       },
       {
@@ -205,8 +205,8 @@
         "target": "purchase",
         "minLen": 1,
         "label": {
-          "width": 27.567999999999998,
-          "height": 20.1
+          "width": 31.567999999999998,
+          "height": 24.1
         }
       },
       {

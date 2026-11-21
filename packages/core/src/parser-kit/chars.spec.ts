@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BANG,
   charTable,
   codePointEnd,
   hasClass,
@@ -11,7 +12,14 @@ import {
   isSpace,
   isUnicodeLetter,
   isWord,
+  PLUS,
 } from './index.ts';
+
+describe('char codes', () => {
+  it('names the codes of `!` and `+`', () => {
+    expect(String.fromCharCode(BANG, PLUS)).toBe('!+');
+  });
+});
 
 const code = (s: string) => s.charCodeAt(0);
 

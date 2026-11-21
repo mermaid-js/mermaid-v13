@@ -16,8 +16,12 @@ import type {
 import { sankeyDocs } from '../generated/docs.ts';
 import type { SankeyDocument } from '../parser/ast.ts';
 import { SankeyKind as T } from '../parser/tokens.ts';
+import { keywordCompletions } from '@mermaid-js/shared/parser/facet';
 import { fieldText, isFieldBlank, withFieldBlanks } from './names.ts';
 import { fieldAt, sourceName, span, tokenBefore } from './tables.ts';
+
+/** The one keyword: the header. */
+const KEYWORDS = [{ kind: T.Sankey, label: 'sankey' }] as const;
 
 /**
  * The probed word's range: the prefix, plus the rest of the field's text after the cursor on
@@ -65,17 +69,7 @@ export function sankeyCompletions(
   const { text, result } = doc;
   const range = wordRange(text, result.tokens, probe);
   const prefix = text.slice(range.start, probe.offset);
-  const out: CompletionItem[] = [];
-  if (expected.has(T.Sankey) && 'sankey'.startsWith(prefix)) {
-    const documentation = sankeyDocs[T.Sankey];
-    out.push({
-      label: 'sankey',
-      kind: 'keyword',
-      insertText: 'sankey',
-      range,
-      ...(documentation === undefined ? {} : { documentation }),
-    });
-  }
+  const out = keywordCompletions(KEYWORDS, expected, prefix, range, sankeyDocs);
   const quoted = expected.has(T.EscapedText);
   const tokens = result.tokens;
   if (!tokens || !(quoted || expected.has(T.Text))) return out;

@@ -13,22 +13,15 @@
 // (R-SEC-2), so each element carries v12's computed values as presentation attributes. What
 // every element shares (the stroke width, the font family and size) is written once on the root.
 import type { RenderContext } from '@mermaid-js/core';
+import { num, translate, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
+import { openSvgRoot } from '@mermaid-js/shared/svg/document';
 import {
-  num,
-  px,
-  styleScope,
-  styleText,
-  themeStyleSheet,
-  translate,
-  type SafeValue,
-  type SvgWriter,
-} from '@mermaid-js/core/svg';
-import type {
-  PlacedText,
-  RailroadExpressionLayout,
-  RailroadLayout,
-  RailroadRuleLayout,
-  TrackPath,
+  keepsSpaces,
+  type PlacedText,
+  type RailroadExpressionLayout,
+  type RailroadLayout,
+  type RailroadRuleLayout,
+  type TrackPath,
 } from '../layout/index.ts';
 import type { RailroadModel } from '../model.ts';
 import { BOX_PAINT, paints, type Paints } from './paint.ts';
@@ -122,7 +115,12 @@ function drawExpression(parts: Parts, e: RailroadExpressionLayout, translated = 
       stroke: paint.get(keys.stroke),
       'stroke-dasharray': box.dash ? (box.dash.map(num).join(',') as SafeValue) : undefined,
     });
-    drawText(w, e.text, e.ast, { fill: paint.get(keys.text) });
+    // A terminal is drawn with the spaces it was measured with (#774).
+    const literal = e.kind === 'terminal' && keepsSpaces(e.text.text);
+    drawText(w, e.text, e.ast, {
+      fill: paint.get(keys.text),
+      'xml:space': literal ? 'preserve' : undefined,
+    });
   }
   w.close();
 }
@@ -171,40 +169,23 @@ function openRoot(
 ): void {
   const { theme } = ctx;
   const { font, useMaxWidth: maxWidth } = layout.config;
-  const prefix = ctx.idPrefix;
   const { x, y, width, height } = layout.bounds;
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
   // The config's family and size where usable, else the theme's variables, so a host's
   // `--mermaid-fontFamily` and `--mermaid-fontSize` reach them (read before the root style is
   // written, so it declares their aliases).
   const family = font.family ?? theme.font();
   const size = font.size ?? theme.length('fontSize');
-  const auto = theme.autoDeclarations();
-  w.open('svg', {
-    xmlns: 'http://www.w3.org/2000/svg',
-    class: 'mermaid mermaid-railroad railroad-diagram',
+  openSvgRoot(w, ctx, {
+    name: 'railroad railroad-diagram',
+    roleDescription: model.notation,
     viewBox: [x, y, width, height],
-    width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : height,
-    role: 'img',
-    'aria-roledescription': model.notation,
-    'aria-labelledby': title ? `${prefix}-title` : undefined,
-    'aria-describedby': desc ? `${prefix}-desc` : undefined,
-    'data-mermaid-version': ctx.version,
-    'data-p': auto ? styleScope(prefix) : undefined,
-    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
-    'font-family': family,
-    'font-size': size,
-    'stroke-width': layout.config.lengths.strokeWidth,
+    maxWidth,
+    title: model.accTitle,
+    desc: model.accDescr,
+    attrs: {
+      'font-family': family,
+      'font-size': size,
+      'stroke-width': layout.config.lengths.strokeWidth,
+    },
   });
-  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix), auto.light, auto.dark));
-  if (title) textElement(w, 'title', title, `${prefix}-title`);
-  if (desc) textElement(w, 'desc', desc, `${prefix}-desc`);
-}
-
-function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: string): void {
-  w.open(tag, { id });
-  w.text(text);
-  w.close();
 }

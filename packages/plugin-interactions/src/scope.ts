@@ -3,6 +3,7 @@
  * element, and the groups of each element in one svg. Two diagrams on a page can use the same
  * element ids (`data-id` is the name as written), so nothing here looks outside one svg.
  */
+import { decodeEntities } from '@mermaid-js/core/text';
 
 /** One svg's binding: what each feature added, undone by `teardown`. */
 export interface Scope {
@@ -51,18 +52,9 @@ function holders(nodes: readonly Element[], top: Element): Set<Element> {
   return out;
 }
 
-const ENTITIES: Readonly<Record<string, string>> = {
-  '&amp;': '&',
-  '&lt;': '<',
-  '&gt;': '>',
-  '&quot;': '"',
-};
-
-/** The `data-id` values of an svg string, in document order (attribute values as `esc` wrote them). */
+/** The `data-id` values of an svg string, in document order, decoded as the DOM reads them. */
 function dataIds(svg: string): string[] {
-  return [...svg.matchAll(/\sdata-id="([^"]*)"/g)].map(([, v]) =>
-    v!.replace(/&(?:amp|lt|gt|quot);/g, (e) => ENTITIES[e]!)
-  );
+  return [...svg.matchAll(/\sdata-id="([^"]*)"/g)].map(([, v]) => decodeEntities(v!));
 }
 
 /**

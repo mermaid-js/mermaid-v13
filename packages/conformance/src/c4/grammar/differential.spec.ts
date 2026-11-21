@@ -3,7 +3,7 @@ import { detectC4 } from '@mermaid-js/diagram-c4';
 import { loadJisonLexerOracle } from '../../jison/oracle.ts';
 import { loadOracle } from '../../oracle.ts';
 import { c4GateCorpus } from '../corpus.ts';
-import { lexingExclusion } from '../d452.ts';
+import { lexingExclusion, usesDirection } from '../d452.ts';
 import { handWrittenVerdict, referenceVerdict, v12Syntax } from './reference.ts';
 
 /**
@@ -14,6 +14,7 @@ import { handWrittenVerdict, referenceVerdict, v12Syntax } from './reference.ts'
  *
  * The comparison with mermaid\@12 leaves out, with the reason:
  * - D452's lexing changes (`d452.ts`, the lexer gate's exclusions): the grammar lexes as v13;
+ * - sources with a `direction` statement (#730, amending D452): v12 has none and refuses them;
  * - sources v12 stopped for a reason beyond its syntax (`v12Syntax`): an unknown relation end
  *   (D457; the hand-written parser reports it as a semantic error), `$__proto__`'s `TypeError`
  *   (D452), `setDirection is not a function`.
@@ -38,7 +39,7 @@ describe('c4 grammar differential', () => {
       const excluded = (await lexingExclusion(lexer, item.source)) !== undefined;
       if (excluded) lexing++;
       const v12 = await oracle.parse(item.source);
-      if (!excluded && v12Syntax(v12) === !ref.accepted) {
+      if (!excluded && !usesDirection(item.source) && v12Syntax(v12) === !ref.accepted) {
         diffs.push(
           `${item.id}: grammar ${ref.accepted ? 'accepts' : 'rejects'}, mermaid@12 ${ref.accepted ? 'rejects' : 'accepts'}`
         );

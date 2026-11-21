@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { bundle } from './build.ts';
+import { closureSize } from './size-budget.ts';
 
 const entry = new URL('./__fixtures__/timed-pipeline.ts', import.meta.url).pathname;
 const out = () => mkdtempSync(join(tmpdir(), 'mermaid-bench-'));
@@ -31,7 +32,7 @@ describe('bench builds', () => {
   it('sizes the static import closure separately from lazily loaded chunks', async () => {
     const prod = await bundle({ entry, outdir: out(), bench: false });
     expect(prod.files.length).toBe(2);
-    expect(prod.staticClosure).toEqual([prod.entryFile]);
+    expect(closureSize(prod).files.map((f) => f.path)).toEqual([prod.entryFile]);
     const [entryFile, chunk] = [
       prod.files.find((f) => f.path === prod.entryFile)!,
       prod.files.find((f) => f.path !== prod.entryFile)!,

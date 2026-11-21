@@ -49,10 +49,10 @@ describe.each(TYPES)('lineHops in $type (#655, D537)', ({ dir, line }) => {
     expect(on.svg.replace(/ d="[^"]+"/g, '')).toBe(off.svg.replace(/ d="[^"]+"/g, ''));
   });
 
-  it('is off by default, and `gap` breaks the run instead of bumping it', async () => {
+  it('is on by default (D672), and `gap` breaks the run instead of bumping it', async () => {
     const m = createMermaid();
     const unset = (await m.render('d', withHops(ON))).svg;
-    expect(unset).toBe((await m.render('d', withHops(ON, 'false'))).svg);
+    expect(unset).toBe((await m.render('d', ON)).svg);
     const gap = (await m.render('d', withHops(ON, 'gap'))).svg;
     expect(gap).not.toBe(unset);
     expect(gap).not.toMatch(ARC);
@@ -60,27 +60,32 @@ describe.each(TYPES)('lineHops in $type (#655, D537)', ({ dir, line }) => {
   });
 });
 
-describe("lineHops in #655's class sample", () => {
+describe("lineHops in #655's class sample (#793, D650)", () => {
   // A to C's horizontal run crosses B to D and B to F, whose runs leave B 5px apart: too close
-  // for two hops, so neither is drawn (D537, the rule `hopPaths` keeps from v12). Without B to F,
-  // the crossing hops (the class fixture above).
-  const SAMPLE = `---
-config:
-  lineHops: true
----
-classDiagram
- A --> D
- B --> C
- A --> C
- B --> D
- E --> C
- A --> F
- B --> F`;
+  // for a hop each, so the two share one merged hop, as tall as a plain hop and wider. Without
+  // B to F, the crossing hops plainly (the class fixture above).
+  const SAMPLE = readFileSync(
+    new URL(
+      '../../../e2e/diagrams/class-diagram/nightly-check/line-hops-close-crossings.mmd',
+      import.meta.url
+    ),
+    'utf8'
+  );
 
-  it('draws no hop where two crossings on one run are 5px apart', async () => {
+  it('draws one merged hop over two crossings 5px apart, and only that', async () => {
     const m = createMermaid();
-    const on = (await m.render('d', SAMPLE)).svg;
-    expect(on).not.toMatch(ARC);
-    expect(on).toBe((await m.render('d', withHops(SAMPLE, 'false'))).svg);
+    const on = await m.render('d', SAMPLE);
+    const off = await m.render('d', withHops(SAMPLE, 'false'));
+    expect(on.warnings).toEqual([]);
+    assertInert(on.svg);
+    const hopped = paths(on.svg);
+    const plain = paths(off.svg);
+    const changed = hopped.filter((d, i) => d !== plain[i]);
+    expect(changed).toHaveLength(1);
+    // Corners are 5px arcs; the hop is the one arc as tall as a hop, and wider than one.
+    const hops = [...changed[0]!.matchAll(/A([\d.]+),6 0 0,[01] /g)];
+    expect(hops).toHaveLength(1);
+    expect(Number(hops[0]![1])).toBeGreaterThan(8);
+    expect(on.svg.replace(/ d="[^"]+"/g, '')).toBe(off.svg.replace(/ d="[^"]+"/g, ''));
   });
 });

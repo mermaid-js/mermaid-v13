@@ -57,18 +57,13 @@ export function renderSankey(
  */
 function openRoot(model: SankeyModel, { w, layout }: Scene, ctx: SankeyRenderContext): void {
   const { theme } = ctx;
-  const { x, y } = layout.bounds;
-  const width = Math.max(1, Math.ceil(layout.bounds.width));
-  const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = layout.useMaxWidth;
-  const title = model.title?.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
   openSvgRoot(w, ctx, {
     name: 'sankey',
-    viewBox: [x, y, width, height],
-    maxWidth,
-    title,
+    viewBox: layout.bounds,
+    maxWidth: layout.useMaxWidth,
+    title: model.title,
     attrs: { 'font-family': font },
   });
 }

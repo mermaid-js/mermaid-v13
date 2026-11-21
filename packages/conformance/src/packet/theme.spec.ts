@@ -22,25 +22,13 @@ import { packet } from '@mermaid-js/diagram-packet';
 import {
   THEME_NAMES,
   createTheme,
-  formatColor,
   loadTheme,
-  parseColor,
   type Theme,
   type ThemeName,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
-import { loadOracle } from '../oracle.ts';
-
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
-  };
-}
-
-await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
+import { v12Vars } from '../v12-theme.ts';
+import { hex } from '../hex.ts';
 
 /** v12's packet diagram module (the chunk holding `src/diagrams/packet/styles.ts`). */
 async function v12PacketStyles(): Promise<(options: object) => string> {
@@ -58,12 +46,6 @@ async function v12PacketStyles(): Promise<(options: object) => string> {
   return mod.diagram.styles;
 }
 const styles = await v12PacketStyles();
-
-function v12Vars(theme: string, themeVariables?: object): Record<string, unknown> {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize(themeVariables ? { theme, themeVariables } : { theme });
-  return { ...v12.mermaidAPI.getConfig().themeVariables };
-}
 
 /** v12's style key → the selector and property its CSS writes it to (`styles.ts:21-43`). */
 const CSS: Readonly<Record<string, readonly [selector: string, property: string]>> = {
@@ -105,12 +87,6 @@ const NAMES = Object.keys(VARS);
 const isColour = (name: string): boolean => VARS[name]?.kind === 'color';
 const COLOURS = NAMES.filter(isColour);
 const LENGTHS = NAMES.filter((n) => !isColour(n));
-
-const hex = (v: unknown): string | undefined => {
-  if (typeof v !== 'string') return undefined;
-  const rgba = parseColor(v);
-  return rgba ? formatColor(rgba) : undefined;
-};
 
 /** v13's value of a flat variable in v12's terms: hex for a colour, px number for a length. */
 function v13Value(t: Theme, name: string): string | number | undefined {

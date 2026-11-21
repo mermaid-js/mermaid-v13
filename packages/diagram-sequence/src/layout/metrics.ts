@@ -10,15 +10,13 @@
  * kept at least at the profile's minimum, as the flowchart builder does (`fromPx`).
  */
 import type { SequenceDiagramConfig } from '@mermaid-js/core/config';
-import { fromPx, type UnitProfile } from '@mermaid-js/core/layout';
+import { fromPx, type Point, type UnitProfile } from '@mermaid-js/core/layout';
 import type { Theme } from '@mermaid-js/core/theme';
 import type { ParticipantKind } from '../model.ts';
 import { configNumber } from '@mermaid-js/shared/config/readers';
 
-export interface XY {
-  readonly x: number;
-  readonly y: number;
-}
+/** A horizontal and a vertical length. */
+export type XY = Readonly<Point>;
 
 /** Lengths that `sequence` config can set (v12 key names). */
 export interface ConfigLengths {

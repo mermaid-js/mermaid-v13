@@ -35,6 +35,8 @@
 //    to let curves that cross do so at a clear angle.
 
 import { pxProfile, type LayoutMetrics } from '../units.ts';
+import { copy, f64, i32, scratch, u8 } from './scratch.ts';
+import type { GridHooks } from './grid.ts';
 
 export const Kind = { Node: 0, Dummy: 1, Label: 2, StartPort: 3, EndPort: 4 } as const;
 export type Kind = (typeof Kind)[keyof typeof Kind];
@@ -98,9 +100,10 @@ export interface LayeredOptions {
   orderOnly?: boolean;
   // The length constants (D77); the px profile's when absent.
   metrics?: LayoutMetrics;
-  // Grid quantum (D78, D140). Box edges land on whole multiples of it and every line (edge ends,
-  // bends, tracks) on the middle of a cell, and each end on a side gets a cell of its own.
-  grid?: number;
+  // The grid mode (D78, D140), absent in px. Box edges land on whole multiples of its cell and
+  // every line (edge ends, bends, tracks) on the middle of a cell, and each end on a side gets a
+  // cell of its own. `layered` and `compoundLayout` call a hook where a mode differs.
+  grid?: GridHooks;
 }
 
 export interface LayeredResult {
@@ -111,7 +114,10 @@ export interface LayeredResult {
   declared?: number;
 }
 
-/** The fields of {@link LNode} and {@link LEdge} that `layered` reads. The others are its output. */
+/**
+ * The fields of {@link LNode} and {@link LEdge} that `layered` reads. The others are its output.
+ * `layoutInputs` reads these fields itself, in this order; inputs.spec.ts holds the two to each other.
+ */
 export const NODE_INPUTS = [
   'w',
   'h',
@@ -137,9 +143,23 @@ export const EDGE_INPUTS = [
 
 /** Every input `layered` reads from `nodes` and `edges`. Equal inputs and options give equal layouts. */
 export function layoutInputs(nodes: readonly LNode[], edges: readonly LEdge[]): number[] {
+  // The fields of NODE_INPUTS and EDGE_INPUTS, in that order, read directly (inputs.spec.ts).
   const inputs: number[] = [];
-  for (const n of nodes) for (const f of NODE_INPUTS) inputs.push(n[f]);
-  for (const e of edges) for (const f of EDGE_INPUTS) inputs.push(+e[f]);
+  for (const n of nodes) inputs.push(n.w, n.h, n.kind, n.pin, n.hint, n.key, n.span);
+  for (const e of edges)
+    inputs.push(
+      e.tail,
+      e.head,
+      e.minlen,
+      e.labelW,
+      e.labelH,
+      e.tailDx,
+      e.headDx,
+      +e.tailFixed,
+      +e.headFixed,
+      e.tailEnd,
+      e.headEnd
+    );
   return inputs;
 }
 
@@ -168,6 +188,10 @@ export function ledge(tail: number, head: number, minlen = 1, labelW = 0, labelH
 }
 
 const MAX_SWEEPS = 24;
+
+// Up to this many ends in a gap, `crossed` counts pair by pair rather than with the tree: fewer
+// steps for the few ends most gaps have. Exported for tests, which pin it.
+export const FEW_ENDS = 16;
 
 // An edge gets a bend point in every rank it skips. Past this many, the longest edges are
 // drawn as one direct curve instead, which keeps huge graphs from exhausting time and memory.
@@ -293,7 +317,37 @@ function sortByBary(
   if (from !== list) for (let i = 0; i < count; i++) list[i] = from[i]!;
 }
 
+// Sorts `order[s..e)` by key, keeping the given order between equal keys (the sort is stable),
+// and leaves a layer already in that order as it is. Does nothing and returns false for a layer
+// of fewer than two nodes or with a NaN key. Exported for tests.
+export function sortLayer(
+  order: Int32Array,
+  s: number,
+  e: number,
+  key: (v: number) => number
+): boolean {
+  if (e - s < 2) return false;
+  let sorted = true;
+  for (let i = s, last = -Infinity; i < e; i++) {
+    const k = key(order[i]!);
+    if (Number.isNaN(k)) return false;
+    if (k < last) sorted = false;
+    last = k;
+  }
+  if (!sorted)
+    order.set(
+      Array.from(order.subarray(s, e)).sort((a, b) => key(a) - key(b)),
+      s
+    );
+  return true;
+}
+
+// Its scratch arrays live until it returns (see scratch.ts); none is kept in what it gives back.
 export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredResult {
+  return scratch(() => layOut(nodes, edges, opt));
+}
+
+function layOut(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredResult {
   const M = opt.metrics ?? pxProfile.engine;
   const real = nodes.length;
   if (real === 0) return { width: 0, height: 0 };
@@ -325,14 +379,14 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   orient(nodes, edges);
   rank(nodes, edges, step);
 
-  const span = new Int32Array(m);
+  const span = i32(m);
   let dummies = 0;
   for (let ei = 0; ei < m; ei++) {
     const e = edges[ei]!;
     span[ei] = Math.abs(nodes[e.head]!.rank - nodes[e.tail]!.rank);
     if (span[ei]! > 1) dummies += span[ei]! - 1;
   }
-  const direct = new Uint8Array(m);
+  const direct = u8(m);
   if (dummies > MAX_DUMMIES) {
     const longest: number[] = [];
     for (let ei = 0; ei < m; ei++) if (span[ei]! > 1) longest.push(ei);
@@ -345,10 +399,10 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   }
 
   const n = real + dummies;
-  const W = new Float64Array(n);
-  const H = new Float64Array(n);
-  const KIND = new Uint8Array(n);
-  const RANK = new Int32Array(n);
+  const W = f64(n);
+  const H = f64(n);
+  const KIND = u8(n);
+  const RANK = i32(n);
   let maxRank = 0;
   for (let i = 0; i < real; i++) {
     const node = nodes[i]!;
@@ -362,26 +416,26 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   // The graph that gets ordered and positioned: every edge cut into rank-to-rank segments.
   let segments = 0;
   for (let ei = 0; ei < m; ei++) if (!direct[ei]!) segments += span[ei]!;
-  const EF = new Int32Array(segments);
-  const ET = new Int32Array(segments);
-  const EFD = new Float64Array(segments);
-  const ETD = new Float64Array(segments);
-  const firstDummy = new Int32Array(m).fill(-1);
+  const EF = i32(segments);
+  const ET = i32(segments);
+  const EFD = f64(segments);
+  const ETD = f64(segments);
+  const firstDummy = i32(m).fill(-1);
   // Which way the edges with a label in each rank head: 1 down, 2 up, 3 both.
-  const heads = new Uint8Array(maxRank + 1);
-  const labelNode = new Int32Array(m).fill(-1);
+  const heads = u8(maxRank + 1);
+  const labelNode = i32(m).fill(-1);
   let spans = false;
   for (let i = 0; i < real; i++)
     if (nodes[i]!.span > 0 && nodes[i]!.kind === Kind.Node) spans = true;
   // What each segment's end is to the node it meets, for the ends that may move along the node's side.
-  const EFK = spans ? new Uint8Array(segments) : undefined;
-  const ETK = spans ? new Uint8Array(segments) : undefined;
-  const firstSeg = new Int32Array(m).fill(-1);
-  const lastSeg = new Int32Array(m).fill(-1);
+  const EFK = spans ? u8(segments) : undefined;
+  const ETK = spans ? u8(segments) : undefined;
+  const firstSeg = i32(m).fill(-1);
+  const lastSeg = i32(m).fill(-1);
   // Segment ends held where their offset puts them (grid mode moves only the others).
-  const EFH = new Uint8Array(segments);
-  const ETH = new Uint8Array(segments);
-  const KEY = new Float64Array(n).fill(NaN);
+  const EFH = u8(segments);
+  const ETH = u8(segments);
+  const KEY = f64(n).fill(NaN);
   for (let i = 0; i < real; i++) KEY[i] = nodes[i]!.key;
   let offsets = false;
   {
@@ -450,7 +504,7 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   let GRP: Int32Array | undefined;
   if (opt.groups) {
     const { of, parent } = opt.groups;
-    GRP = new Int32Array(n);
+    GRP = i32(n);
     for (let i = 0; i < real; i++) GRP[i] = of[i]!;
     const depth = (gr: number): number => {
       let d = 0;
@@ -476,8 +530,8 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
     }
   }
 
-  const succStart = new Int32Array(n + 1);
-  const predStart = new Int32Array(n + 1);
+  const succStart = i32(n + 1);
+  const predStart = i32(n + 1);
   for (let e = 0; e < segments; e++) {
     succStart[EF[e]! + 1]!++;
     predStart[ET[e]! + 1]!++;
@@ -486,30 +540,30 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
     succStart[i + 1]! += succStart[i]!;
     predStart[i + 1]! += predStart[i]!;
   }
-  const succE = new Int32Array(segments);
-  const predE = new Int32Array(segments);
+  const succE = i32(segments);
+  const predE = i32(segments);
   {
-    const sf = succStart.slice(0, n);
-    const pf = predStart.slice(0, n);
+    const sf = copy(succStart, n);
+    const pf = copy(predStart, n);
     for (let e = 0; e < segments; e++) {
       succE[sf[EF[e]!]!++] = e;
       predE[pf[ET[e]!]!++] = e;
     }
   }
 
-  const layerStart = new Int32Array(maxRank + 2);
+  const layerStart = i32(maxRank + 2);
   for (let i = 0; i < n; i++) layerStart[RANK[i]! + 1]!++;
   for (let r = 0; r <= maxRank; r++) layerStart[r + 1]! += layerStart[r]!;
-  const order = new Int32Array(n);
-  const pos = new Int32Array(n);
+  const order = i32(n);
+  const pos = i32(n);
 
   // Initial order: depth-first from the top so that subtrees start out contiguous.
   {
-    const byRank = new Int32Array(n);
-    const fill = layerStart.slice(0, maxRank + 1);
+    const byRank = i32(n);
+    const fill = copy(layerStart, maxRank + 1);
     for (let i = 0; i < n; i++) byRank[fill[RANK[i]!]!++] = i;
     for (let r = 0; r <= maxRank; r++) fill[r] = layerStart[r]!;
-    const visited = new Uint8Array(n);
+    const visited = u8(n);
     const stack: number[] = [];
     for (let k = 0; k < n; k++) {
       if (visited[byRank[k]!]!) continue;
@@ -527,18 +581,8 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
     }
   }
 
-  const sortRank = (r: number, key: (v: number) => number): boolean => {
-    const s = layerStart[r]!;
-    const e = layerStart[r + 1]!;
-    if (e - s < 2) return false;
-    for (let i = s; i < e; i++) if (Number.isNaN(key(order[i]!))) return false;
-    const layer = Array.from(order.subarray(s, e));
-    const index = new Map<number, number>();
-    layer.forEach((v, i) => index.set(v, i));
-    layer.sort((a, b) => key(a) - key(b) || index.get(a)! - index.get(b)!);
-    order.set(layer, s);
-    return true;
-  };
+  const sortRank = (r: number, key: (v: number) => number): boolean =>
+    sortLayer(order, layerStart[r]!, layerStart[r + 1]!, key);
   for (let r = 0; r <= maxRank; r++) sortRank(r, (v) => KEY[v]!);
 
   let pinned = false;
@@ -554,7 +598,7 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
     }
   }
   // Preserve port order to avoid crossings outside the group.
-  const fixed = new Uint8Array(maxRank + 1);
+  const fixed = u8(maxRank + 1);
   const hint = (v: number): number =>
     v < real && (nodes[v]!.kind === Kind.StartPort || nodes[v]!.kind === Kind.EndPort)
       ? nodes[v]!.hint
@@ -599,6 +643,8 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
     [crossings, declared] = reduceCrossings(g, nodes);
     setPositions();
   }
+  // The order is final: from here on the neighbour lists are read left to right.
+  sortNeighbours(g);
   if (opt.orderOnly) {
     // Points are (rank, cross-flow position) pairs.
     const at = position(g, opt);
@@ -620,6 +666,7 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   if (EFK && ETK) spread(g, nodes, EFK, ETK);
 
   const xs = position(g, opt);
+  if (!opt.grid) pullToHeld(g, opt, xs, EFH, ETH);
 
   const empty = emptyRanks(g);
   if (EFK && ETK) {
@@ -627,36 +674,20 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
     alignLabels(g, nodes, xs, free, opt, empty);
     settle(g, nodes, xs, EFK, ETK, free, empty);
     snap(g, xs, empty, opt);
-    for (let ei = 0; ei < m; ei++) {
-      if (direct[ei]!) continue;
-      const e = edges[ei]!;
-      const aDx = EFD[firstSeg[ei]!]!;
-      const bDx = ETD[lastSeg[ei]!]!;
-      e.tailDx = e.reversed ? bDx : aDx;
-      e.headDx = e.reversed ? aDx : bDx;
-    }
+    writeBackEnds(edges, direct, firstSeg, lastSeg, g);
   }
 
   alignPorts(g, xs, empty);
-  const grid = opt.grid !== undefined && opt.grid > 0 ? opt.grid : 0;
+  const hooks = opt.grid;
   // In grid mode a label's line runs through the middle of a cell inside the label's box, and the
   // box itself sits on the grid: `labelAt` holds the box's middle.
-  const labelAt = grid ? onGrid(g, nodes, xs, EFH, ETH, grid) : undefined;
-  if (grid) {
-    for (let ei = 0; ei < m; ei++) {
-      if (direct[ei]!) continue;
-      const e = edges[ei]!;
-      const aDx = EFD[firstSeg[ei]!]!;
-      const bDx = ETD[lastSeg[ei]!]!;
-      e.tailDx = e.reversed ? bDx : aDx;
-      e.headDx = e.reversed ? aDx : bDx;
-    }
-  }
+  const labelAt = hooks?.cross(g, nodes, xs, EFH, ETH);
+  if (labelAt) writeBackEnds(edges, direct, firstSeg, lastSeg, g);
 
   // A rank that holds nothing but the bends of edges is only there because some other edge has a
   // label or a twin. Its bends move onto the straight line between the ends of their edges, and
   // one that gets there is left out of the route, so that the edge is drawn as a single curve.
-  const onLine = new Uint8Array(n);
+  const onLine = u8(n);
   if (empty && !opt.tracks)
     straighten(g, xs, empty, firstDummy, span, opt.apart ? 0 : opt.edgeSep, onLine);
   if (!opt.tracks) pastLabels(g, xs, firstDummy, span, opt.edgeSep, onLine);
@@ -664,12 +695,12 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   // With `tracks`, every piece that does not run straight gets a track to run across on at
   // right angles. Otherwise, where edges spread along their nodes, a piece gets one only if it
   // needs a level to turn onto. `pieceStart` gives every edge's run of pieces.
-  const pieceStart = new Int32Array(m + 1);
+  const pieceStart = i32(m + 1);
   const pieces: Pieces | undefined =
     opt.tracks || (EFK && !opt.straight)
       ? { from: [], to: [], rank: [], lower: [], track: [], levels: [], wide: [] }
       : undefined;
-  const trackCount = new Int32Array(maxRank + 1);
+  const trackCount = i32(maxRank + 1);
   if (pieces) {
     for (let ei = 0; ei < m; ei++) {
       pieceStart[ei] = pieces.from.length;
@@ -715,24 +746,24 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   const startRanks = portOnly(0, Kind.StartPort) ? step : 0;
   const endRanks = portOnly(maxRank, Kind.EndPort) ? step : 0;
   // The longest way across that any edge travels in the gap below each rank.
-  const run = new Float64Array(maxRank + 1);
+  const run = f64(maxRank + 1);
   for (let e = 0; e < segments; e++) {
     const across = Math.abs(xs[EF[e]!]! + EFD[e]! - xs[ET[e]!]! - ETD[e]!);
     if (across > run[RANK[EF[e]!]!]!) run[RANK[EF[e]!]!] = across;
   }
-  const bandTop = new Float64Array(maxRank + 1);
-  const bandBottom = new Float64Array(maxRank + 1);
+  const bandTop = f64(maxRank + 1);
+  const bandBottom = f64(maxRank + 1);
   const usual = (r: number): number =>
     (r < startRanks || r >= maxRank - endRanks ? opt.portSep : opt.rankSep) / step;
   // The room under each rank. Edges that are not cut into pieces need more where they run far across.
-  const gapUnder = new Float64Array(maxRank + 1);
+  const gapUnder = f64(maxRank + 1);
   for (let r = 0; r < maxRank; r++) {
     gapUnder[r] = pieces
       ? usual(r)
       : Math.max(usual(r), Math.min((MAX_GAP * opt.rankSep) / step, run[r]! * MIN_SLOPE));
   }
   // A rank between two ranks of nodes, which holds labels and bends only.
-  const between = new Uint8Array(maxRank + 1).fill(1);
+  const between = u8(maxRank + 1).fill(1);
   for (let i = 0; i < real; i++) between[RANK[i]!] = 0;
   for (let r = 1; r < maxRank; r++) {
     if (opt.tracks || !between[r]! || (heads[r]! !== 1 && heads[r]! !== 2)) continue;
@@ -753,9 +784,9 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   const margin = opt.tracks ? M.trackMargin : M.levelMargin;
   const leastPitch = opt.tracks ? M.trackPitch : M.levelPitch;
   const mostPitch = opt.tracks ? M.trackSpread : M.levelPitch;
-  const below = new Int32Array(maxRank + 1);
+  const below = i32(maxRank + 1);
   if (pieces) {
-    const room = new Float64Array(maxRank + 1);
+    const room = f64(maxRank + 1);
     for (let r = 0; r < maxRank; r++) {
       if (empty?.[r]) continue;
       let next = r + 1;
@@ -767,7 +798,7 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
       pieces.wide.push(
         Math.abs(pieces.from[k]! - pieces.to[k]!) > LEVEL_WIDE * room[pieces.rank[k]!]! ? 1 : 0
       );
-    const tall = new Float64Array(maxRank + 1);
+    const tall = f64(maxRank + 1);
     assignTracks(pieces, trackCount, !opt.tracks, room, tall, M);
     for (let r = 0; r < maxRank; r++) {
       if (trackCount[r]! > 0)
@@ -777,7 +808,7 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
     }
   }
   roomForEnds(edges, RANK, direct, empty, gapUnder);
-  if (grid) for (let r = 0; r < maxRank; r++) gapUnder[r] = ceilTo(gapUnder[r]!, grid);
+  if (hooks) for (let r = 0; r < maxRank; r++) gapUnder[r] = hooks.ceil(gapUnder[r]!);
   let y = 0;
   for (let r = 0; r <= maxRank; r++) {
     let h = 0;
@@ -797,27 +828,11 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
     return (top + bottom) / 2 + (onTrack - (count - 1) / 2) * pitch;
   };
   // In grid mode each track of a gap takes a row of its own, clear of the rows the ends use.
-  const rows = new Map<number, number[]>();
-  const gridTrack = (r: number, count: number, onTrack: number): number => {
-    const key = r * 65536 + count;
-    let list = rows.get(key);
-    if (!list) {
-      list = [];
-      const lo = bandBottom[r]! + 1.5 * grid;
-      const hi = bandTop[below[r]!]! - 1.5 * grid;
-      for (let t = 0; t < count; t++) {
-        const at = Math.min(Math.max(midCell(trackAt(r, count, t), grid), lo), hi);
-        list.push(t > 0 && at < list[t - 1]! + grid ? list[t - 1]! + grid : at);
-      }
-      for (let t = count - 1; t >= 0; t--) if (list[t]! > hi) list[t] = hi - (count - 1 - t) * grid;
-      rows.set(key, list);
-    }
-    return list[onTrack]!;
-  };
+  const gridRow = hooks?.tracks(bandTop, bandBottom, below, trackAt);
   const trackY = (piece: number, onTrack = pieces!.track[piece]!): number => {
     const r = pieces!.rank[piece]!;
     const count = opt.tracks ? trackCount[r]! : pieces!.levels[piece]!;
-    return grid ? gridTrack(r, count, onTrack) : trackAt(r, count, onTrack);
+    return gridRow ? gridRow(r, count, onTrack) : trackAt(r, count, onTrack);
   };
 
   let minX = Infinity;
@@ -827,16 +842,16 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
     if (xs[i]! - half < minX) minX = xs[i]! - half;
     if (xs[i]! + half > maxX) maxX = xs[i]! + half;
   }
-  if (grid) {
-    minX = floorTo(minX, grid);
-    maxX = ceilTo(maxX, grid);
+  if (hooks) {
+    minX = hooks.floor(minX);
+    maxX = hooks.ceil(maxX);
   }
   // Where edges spread along their nodes, a rank whose nodes only send edges on stands on one
   // line, and a rank whose nodes only receive them hangs from one, so that the edges of nodes of
   // different heights set out from, or arrive at, the same level. In any other rank the nodes
   // are centered.
-  const arrives = new Uint8Array(maxRank + 1);
-  const leaves = new Uint8Array(maxRank + 1);
+  const arrives = u8(maxRank + 1);
+  const leaves = u8(maxRank + 1);
   for (let i = 0; i < real; i++) {
     if (KIND[i]! !== Kind.Node || !EFK) continue;
     if (predStart[i + 1]! > predStart[i]!) arrives[RANK[i]!] = 1;
@@ -849,9 +864,8 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
     if (KIND[i]! === Kind.Node && leaves[r]! && !arrives[r]!) node.y = bandBottom[r]! - node.h / 2;
     else if (KIND[i]! === Kind.Node && arrives[r]! && !leaves[r]!)
       node.y = bandTop[r]! + node.h / 2;
-    else if (grid)
-      node.y =
-        bandTop[r]! + floorTo((bandBottom[r]! - bandTop[r]! - node.h) / 2, grid) + node.h / 2;
+    else if (hooks)
+      node.y = bandTop[r]! + hooks.floor((bandBottom[r]! - bandTop[r]! - node.h) / 2) + node.h / 2;
     else node.y = (bandTop[r]! + bandBottom[r]!) / 2;
   }
 
@@ -903,10 +917,9 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
     if (ln >= 0) {
       e.labelX = (labelAt ? labelAt[ln]! : xs[ln]!) - minX;
       e.labelY = (bandTop[RANK[ln]!]! + bandBottom[RANK[ln]!]!) / 2;
-      if (grid) {
+      if (hooks) {
         const top = bandTop[RANK[ln]!]!;
-        e.labelY =
-          top + floorTo((bandBottom[RANK[ln]!]! - top - e.labelH) / 2, grid) + e.labelH / 2;
+        e.labelY = top + hooks.floor((bandBottom[RANK[ln]!]! - top - e.labelH) / 2) + e.labelH / 2;
       }
     } else if (e.labelW > 0) {
       e.labelX = (pts[0]! + pts[pts.length - 2]!) / 2;
@@ -915,6 +928,24 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   }
 
   return { width: maxX - minX, height };
+}
+
+// Writes the offsets the ends settled on back to the edges that run through segments.
+function writeBackEnds(
+  edges: readonly LEdge[],
+  direct: Uint8Array,
+  firstSeg: Int32Array,
+  lastSeg: Int32Array,
+  { EFD, ETD }: Graph
+): void {
+  for (let ei = 0; ei < edges.length; ei++) {
+    if (direct[ei]!) continue;
+    const e = edges[ei]!;
+    const aDx = EFD[firstSeg[ei]!]!;
+    const bDx = ETD[lastSeg[ei]!]!;
+    e.tailDx = e.reversed ? bDx : aDx;
+    e.headDx = e.reversed ? aDx : bDx;
+  }
 }
 
 // Edge-end labels (D102) sit beside an edge next to its ends, each in the stretch of gaps between
@@ -970,96 +1001,6 @@ function roomForEnds(
   });
 }
 
-// Grid helpers (D78): `dropNoise` drops float noise so that values that agree keep agreeing,
-// `floorTo`/`ceilTo` round to the grid, `edgeOn` puts a box edge on it and `midCell` puts a
-// line in the middle of a cell (ties go up, so equal inputs give equal cells).
-const dropNoise = (v: number): number => Math.round(v * 1e6) / 1e6;
-export const floorTo = (v: number, grid: number): number => grid * Math.floor(dropNoise(v / grid));
-const ceilTo = (v: number, grid: number): number => grid * Math.ceil(dropNoise(v / grid));
-export const edgeOn = (v: number, grid: number): number => grid * Math.round(dropNoise(v / grid));
-export const midCell = (v: number, grid: number): number =>
-  grid * (Math.round(dropNoise(v / grid - 0.5)) + 0.5);
-
-// Puts the cross-flow positions on the grid (D78, D140): box edges on it, bends and port nodes
-// on the middle of a cell, and each edge end on a cell of its own along its node's side (see
-// `spreadOnGrid`). Returns the middle of each label's box.
-function onGrid(
-  g: Graph,
-  nodes: LNode[],
-  xs: Float64Array,
-  EFH: Uint8Array,
-  ETH: Uint8Array,
-  grid: number
-): Float64Array {
-  const { n, real, W, KIND, EFD, ETD, succStart, succE, predStart, predE, M } = g;
-  const was = Float64Array.from(xs);
-  const labelAt = new Float64Array(n);
-  for (let i = 0; i < n; i++) {
-    if (KIND[i]! === Kind.Label) {
-      xs[i] = midCell(was[i]!, grid);
-      labelAt[i] = edgeOn(xs[i]! - W[i]! / 2, grid) + W[i]! / 2;
-    } else if (W[i]! > 0) xs[i] = edgeOn(was[i]! - W[i]! / 2, grid) + W[i]! / 2;
-    else xs[i] = midCell(was[i]!, grid);
-  }
-  const pitch = Math.max(grid, edgeOn(M.portPitch, grid));
-  for (let v = 0; v < real; v++) {
-    if (W[v]! <= 0 || nodes[v]!.kind !== Kind.Node) continue;
-    // The box itself, not the room laid out for it: a self-loop widens that (span = box less
-    // its corners).
-    const half = Math.min(W[v]! / 2, nodes[v]!.span / 2 + M.corner);
-    const lo = xs[v]! - half + 1.5 * grid;
-    const hi = Math.max(lo, xs[v]! + half - 1.5 * grid);
-    for (let side = 0; side < 2; side++) {
-      const start = side === 0 ? predStart : succStart;
-      const list = side === 0 ? predE : succE;
-      const dx = side === 0 ? ETD : EFD;
-      const held = side === 0 ? ETH : EFH;
-      const ends: number[] = [];
-      for (let k = start[v]!; k < start[v + 1]!; k++) ends.push(list[k]!);
-      if (ends.length === 0) continue;
-      const want = (e: number): number => midCell(was[v]! + dx[e]!, grid);
-      ends.sort((a, b) => want(a) - want(b) || dx[a]! - dx[b]! || a - b);
-      // A held end moves with its node: its offset leads to a cell the caller placed.
-      const fixed = ends.map((e) => held[e]! === 1);
-      const at = ends.map((e, i) =>
-        fixed[i] ? xs[v]! + dx[e]! : Math.min(Math.max(want(e), lo), hi)
-      );
-      spreadOnGrid(at, fixed, lo, hi, pitch, grid);
-      ends.forEach((e, i) => (dx[e] = at[i]! - xs[v]!));
-    }
-  }
-  return labelAt;
-}
-
-// Spreads the ends along one side, in order, between the cells `lo` and `hi` (the side less its
-// corners): at `pitch` where every free end fits between the held ones, else one cell apart
-// (D140; the caller grows a side that is still too short and lays out again).
-function spreadOnGrid(
-  at: number[],
-  fixed: boolean[],
-  lo: number,
-  hi: number,
-  pitch: number,
-  grid: number
-): void {
-  const fits = (step: number): { fit: number[]; ok: boolean } => {
-    const fit = [...at];
-    for (let i = 1; i < fit.length; i++)
-      if (!fixed[i] && fit[i]! < fit[i - 1]! + step) fit[i] = fit[i - 1]! + step;
-    let ok = true;
-    for (let i = fit.length - 1; i >= 0; i--) {
-      if (fixed[i]) continue;
-      const cap = i + 1 < fit.length ? Math.min(hi, fit[i + 1]! - step) : hi;
-      fit[i] = Math.min(fit[i]!, cap);
-      if (fit[i]! < lo || (i > 0 && fit[i]! < fit[i - 1]! + step)) ok = false;
-    }
-    return { fit, ok };
-  };
-  const wide = pitch > grid ? fits(pitch) : undefined;
-  const { fit } = wide?.ok ? wide : fits(grid);
-  for (let i = 0; i < at.length; i++) if (!fixed[i]) at[i] = Math.max(lo, Math.min(hi, fit[i]!));
-}
-
 // The pieces of edges that each cross one gap: where they leave the rank above and reach the
 // one below, the rank above, the bend they end at (or -1 at the edge's last node), and the
 // track they run across on (or -1 when they have none). Where only some pieces are given a
@@ -1076,7 +1017,8 @@ interface Pieces {
   wide: number[];
 }
 
-interface Graph {
+// Exported for tests.
+export interface Graph {
   n: number;
   real: number;
   maxRank: number;
@@ -1107,20 +1049,20 @@ interface Graph {
 export function orient(nodes: LNode[], edges: LEdge[]): void {
   const n = nodes.length;
   const m = edges.length;
-  const start = new Int32Array(n + 1);
+  const start = i32(n + 1);
   for (let i = 0; i < m; i++) {
     const e = edges[i]!;
     e.reversed = nodes[e.head]!.kind === Kind.StartPort || nodes[e.tail]!.kind === Kind.EndPort;
     if (!e.reversed) start[e.tail + 1]!++;
   }
   for (let i = 0; i < n; i++) start[i + 1]! += start[i]!;
-  const out = new Int32Array(start[n]!);
+  const out = i32(start[n]!);
   {
-    const fill = start.slice(0, n);
+    const fill = copy(start, n);
     for (let i = 0; i < m; i++) if (!edges[i]!.reversed) out[fill[edges[i]!.tail]!++] = i;
   }
-  const state = new Uint8Array(n);
-  const cursor = start.slice(0, n);
+  const state = u8(n);
+  const cursor = copy(start, n);
   const stack: number[] = [];
   for (let root = 0; root < n; root++) {
     if (state[root]! !== 0) continue;
@@ -1147,11 +1089,11 @@ export function orient(nodes: LNode[], edges: LEdge[]): void {
 export function rank(nodes: LNode[], edges: LEdge[], step: number): void {
   const n = nodes.length;
   const m = edges.length;
-  const from = new Int32Array(m);
-  const to = new Int32Array(m);
-  const len = new Int32Array(m);
-  const outStart = new Int32Array(n + 1);
-  const inStart = new Int32Array(n + 1);
+  const from = i32(m);
+  const to = i32(m);
+  const len = i32(m);
+  const outStart = i32(n + 1);
+  const inStart = i32(n + 1);
   for (let i = 0; i < m; i++) {
     const e = edges[i]!;
     const a = e.reversed ? e.head : e.tail;
@@ -1166,23 +1108,23 @@ export function rank(nodes: LNode[], edges: LEdge[], step: number): void {
     outStart[i + 1]! += outStart[i]!;
     inStart[i + 1]! += inStart[i]!;
   }
-  const outE = new Int32Array(m);
-  const inE = new Int32Array(m);
+  const outE = i32(m);
+  const inE = i32(m);
   {
-    const of = outStart.slice(0, n);
-    const inf = inStart.slice(0, n);
+    const of = copy(outStart, n);
+    const inf = copy(inStart, n);
     for (let i = 0; i < m; i++) {
       outE[of[from[i]!]!++] = i;
       inE[inf[to[i]!]!++] = i;
     }
   }
 
-  const r = new Int32Array(n);
+  const r = i32(n);
   // Start ports go above every node later, so they don't push their targets down a rank.
   for (let i = 0; i < n; i++) if (nodes[i]!.kind === Kind.StartPort) r[i] = -step;
-  const indeg = new Int32Array(n);
+  const indeg = i32(n);
   for (let i = 0; i < n; i++) indeg[i] = inStart[i + 1]! - inStart[i]!;
-  const topo = new Int32Array(n);
+  const topo = i32(n);
   let count = 0;
   for (let i = 0; i < n; i++) if (indeg[i]! === 0) topo[count++] = i;
   for (let q = 0; q < count; q++) {
@@ -1203,20 +1145,19 @@ export function rank(nodes: LNode[], edges: LEdge[], step: number): void {
       const v = topo[q]!;
       const ins = inStart[v + 1]! - inStart[v]!;
       const outs = outStart[v + 1]! - outStart[v]!;
-      if (ins === 0 && outs === 0) continue;
-      let lo = -Infinity;
-      let hi = Infinity;
-      for (let k = inStart[v]!; k < inStart[v + 1]!; k++) {
-        const ei = inE[k]!;
-        lo = Math.max(lo, r[from[ei]!]! + len[ei]!);
-      }
-      for (let k = outStart[v]!; k < outStart[v + 1]!; k++) {
-        const ei = outE[k]!;
-        hi = Math.min(hi, r[to[ei]!]! - len[ei]!);
-      }
-      let next = r[v]!;
-      if (outs > ins && hi !== Infinity) next = hi;
-      else if (ins > outs && lo !== -Infinity) next = lo;
+      // Only the side with more edges is read, and it has one at least.
+      if (ins === outs) continue;
+      let next = outs > ins ? Infinity : -Infinity;
+      if (outs > ins)
+        for (let k = outStart[v]!; k < outStart[v + 1]!; k++) {
+          const ei = outE[k]!;
+          next = Math.min(next, r[to[ei]!]! - len[ei]!);
+        }
+      else
+        for (let k = inStart[v]!; k < inStart[v + 1]!; k++) {
+          const ei = inE[k]!;
+          next = Math.max(next, r[from[ei]!]! + len[ei]!);
+        }
       if (next !== r[v]!) {
         r[v] = next;
         changed = true;
@@ -1266,12 +1207,10 @@ function sideEnds(
   const { M } = g;
   const start = side === 0 ? g.predStart : g.succStart;
   const list = side === 0 ? g.predE : g.succE;
-  const other = side === 0 ? g.EF : g.ET;
-  const pos = g.pos;
+  // Left to right, ties by segment: the lists are in that order (`sortNeighbours`).
   for (let k = start[v]!; k < start[v + 1]!; k++)
     if (kinds[list[k]!]! !== End.Held) ids.push(list[k]!);
   if (ids.length < 2) return 0;
-  ids.sort((a, b) => pos[other[a]!]! - pos[other[b]!]! || a - b);
   const fill = (share: (leaves: boolean, same: boolean) => number): number => {
     let total = 0;
     room[0] = 0;
@@ -1366,7 +1305,7 @@ function alignPorts(g: Graph, xs: Float64Array, empty: Uint8Array | undefined): 
 // the other. An end that has a side to itself keeps to the middle; ends that share one cannot
 // all be there, so those may move.
 function freeEnds(g: Graph, EFK: Uint8Array, ETK: Uint8Array): [Int32Array, Int32Array] {
-  const free: [Int32Array, Int32Array] = [new Int32Array(g.n), new Int32Array(g.n)];
+  const free: [Int32Array, Int32Array] = [i32(g.n), i32(g.n)];
   for (let e = 0; e < g.EF.length; e++) {
     if (ETK[e]! !== End.Held) free[0][g.ET[e]!]!++;
     if (EFK[e]! !== End.Held) free[1][g.EF[e]!]!++;
@@ -1455,7 +1394,7 @@ function alignLabels(
       Math.max(lo, Math.min(hi, choices[0]!))
     );
   };
-  const done = new Uint8Array(n);
+  const done = u8(n);
   const chain: number[] = [];
   for (let r = 1; r < maxRank; r++) {
     for (let i = layerStart[r]!; i < layerStart[r + 1]!; i++) {
@@ -1516,7 +1455,7 @@ function settle(
   free: [Int32Array, Int32Array],
   empty: Uint8Array | undefined
 ): void {
-  const { real, W, EF, ET, EFD, ETD, succStart, succE, predStart, predE, pos, M } = g;
+  const { real, W, EF, ET, EFD, ETD, succStart, succE, predStart, predE, M } = g;
   // Where the end of segment `e` on node `v` should be, from the middle of its side. The edge is
   // followed up from the segment (side 0) or down, past the bends in ranks that hold nothing
   // else, to where it next comes to a point that is held in place or to another node's side.
@@ -1564,7 +1503,6 @@ function settle(
     const span = Math.min(nodes[v]!.span, W[v]!);
     if (span <= 0 || nodes[v]!.kind !== Kind.Node) continue;
     for (let side = 0; side < 2; side++) {
-      const other = side === 0 ? EF : ET;
       const start = side === 0 ? predStart : succStart;
       const list = side === 0 ? predE : succE;
       const ids: number[] = [];
@@ -1572,9 +1510,9 @@ function settle(
       sideEnds(g, v, side, span, side === 0 ? ETK : EFK, ids, room);
       if (ids.length === 0) continue;
       if (ids.length === 1) room[0] = 0;
+      // Left to right, as `ids` is (`sortNeighbours`).
       const all: number[] = [];
       for (let k = start[v]!; k < start[v + 1]!; k++) all.push(list[k]!);
-      all.sort((a, b) => pos[other[a]!]! - pos[other[b]!]! || a - b);
       sides.push({ v, side, span, ids, room, all });
     }
   }
@@ -1668,7 +1606,7 @@ function snap(
   }
   const off = (k: number): number => xs[b[k]!]! + db[k]! - xs[a[k]!]! - da[k]!;
   // The nodes in line with each other move as one.
-  const block = new Int32Array(n);
+  const block = i32(n);
   const members: number[][] = [];
   for (let i = 0; i < n; i++) {
     block[i] = i;
@@ -1740,7 +1678,7 @@ function snap(
 // Marks the ranks that hold nothing but the bends of edges, if there are any.
 function emptyRanks(g: Graph): Uint8Array | undefined {
   const { maxRank, KIND, layerStart, order } = g;
-  const empty = new Uint8Array(maxRank + 1);
+  const empty = u8(maxRank + 1);
   let any = false;
   for (let r = 1; r < maxRank; r++) {
     let only = layerStart[r + 1]! > layerStart[r]!;
@@ -1783,8 +1721,8 @@ function assignTracks(
   }
   if (byRank.size === 0) return;
   // The pieces are compared pair by pair, so where each begins and ends across the flow is worked out once.
-  const LO = new Float64Array(total);
-  const HI = new Float64Array(total);
+  const LO = f64(total);
+  const HI = f64(total);
   for (let k = 0; k < total; k++) {
     LO[k] = Math.min(from[k]!, to[k]!);
     HI[k] = Math.max(from[k]!, to[k]!);
@@ -1848,7 +1786,7 @@ function assignTracks(
       // above[j] lists the pieces that should be above list[j]. The order follows as many of
       // these as it can: a piece is placed once all that should be above it are, and when
       // none is free, the one with the fewest still waiting.
-      const waiting = new Int32Array(count);
+      const waiting = i32(count);
       const after: number[][] = [];
       for (let i = 0; i < count; i++) {
         above.push([]);
@@ -1870,7 +1808,7 @@ function assignTracks(
         after[first]!.push(second);
         waiting[second]!++;
       }
-      const placed = new Uint8Array(count);
+      const placed = u8(count);
       sequence = [];
       for (let done = 0; done < count; done++) {
         let pick = -1;
@@ -1902,8 +1840,8 @@ function assignTracks(
       track[k] = t;
       if (t >= rows) rows = t + 1;
     }
-    const first = new Int32Array(count).fill(rows);
-    const last = new Int32Array(count).fill(-1);
+    const first = i32(count).fill(rows);
+    const last = i32(count).fill(-1);
     for (let i = 0; i < count; i++) {
       const root = find(i);
       first[root] = Math.min(first[root]!, track[list[i]!]!);
@@ -2025,10 +1963,10 @@ function straighten(
 ): void {
   const { maxRank, EF, ET, EFD, ETD, succStart, succE, predStart, predE, layerStart, order } = g;
 
-  const want = new Float64Array(xs.length);
+  const want = f64(xs.length);
   // The points that each bend's edge runs between, across the ranks that hold only bends.
-  const from = new Float64Array(xs.length);
-  const to = new Float64Array(xs.length);
+  const from = f64(xs.length);
+  const to = f64(xs.length);
   for (let ei = 0; ei < firstDummy.length; ei++) {
     const d0 = firstDummy[ei]!;
     if (d0 < 0) continue;
@@ -2114,7 +2052,7 @@ function pastLabels(
     layerStart,
     order,
   } = g;
-  const labelled = new Uint8Array(maxRank + 1);
+  const labelled = u8(maxRank + 1);
   let any = false;
   for (let r = 1; r < maxRank; r++) {
     let labels = false;
@@ -2166,8 +2104,106 @@ function pastLabels(
   }
 }
 
-// Returns [final crossings, crossings before grouping or reordering].
-function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
+// Keep groups contiguous, ordering each by its mean key. Exported for tests.
+export function groupArranger(
+  n: number,
+  layerStart: Int32Array,
+  order: Int32Array,
+  pos: Int32Array,
+  GRP: Int32Array | undefined,
+  groupParent: Int32Array | undefined
+): (r: number, key: Float64Array) => void {
+  const groups = groupParent ? groupParent.length : 0;
+  const depth = i32(groups);
+  for (let gr = 0; gr < groups; gr++) for (let p = gr; p >= 0; p = groupParent![p]!) depth[gr]!++;
+  const groupSum = f64(groups);
+  const groupCount = i32(groups);
+  const groupFirst = i32(groups);
+  return (r: number, key: Float64Array): void => {
+    const s = layerStart[r]!;
+    const e = layerStart[r + 1]!;
+    let odd = false;
+    for (let i = s; i < e; i++) {
+      for (let gr = GRP![order[i]!]!; gr >= 0; gr = groupParent![gr]!) {
+        groupSum[gr] = 0;
+        groupCount[gr] = 0;
+      }
+    }
+    for (let i = s; i < e; i++) {
+      const v = order[i]!;
+      if (key[v]! - key[v]! !== 0) odd = true;
+      for (let gr = GRP![v]!; gr >= 0; gr = groupParent![gr]!) {
+        if (groupCount[gr]! === 0) groupFirst[gr] = i;
+        groupSum[gr]! += key[v]!;
+        groupCount[gr]!++;
+      }
+    }
+    // Compare siblings in their nearest common group; group items use n + group ID.
+    const value = (item: number): number =>
+      item >= n ? groupSum[item - n]! / groupCount[item - n]! : key[item]!;
+    const first = (item: number): number => (item >= n ? groupFirst[item - n]! : s + pos[item]!);
+    const compare = (a: number, b: number): number => {
+      let ia = a;
+      let ib = b;
+      let ca = GRP![a]!;
+      let cb = GRP![b]!;
+      let da = ca < 0 ? 0 : depth[ca]!;
+      let db = cb < 0 ? 0 : depth[cb]!;
+      for (; da > db; da--) {
+        ia = n + ca;
+        ca = groupParent![ca]!;
+      }
+      for (; db > da; db--) {
+        ib = n + cb;
+        cb = groupParent![cb]!;
+      }
+      while (ca !== cb) {
+        ia = n + ca;
+        ca = groupParent![ca]!;
+        ib = n + cb;
+        cb = groupParent![cb]!;
+      }
+      return value(ia) - value(ib) || first(ia) - first(ib);
+    };
+    // A row that is one wide, or already in the order the sort would give, is left as it is.
+    // Non-finite keys always take the sort.
+    let k = s + 1;
+    while (k < e && compare(order[k - 1]!, order[k]!) < 0) k++;
+    if (k < e || odd) order.set(Array.from(order.subarray(s, e)).sort(compare), s);
+    for (let i = s; i < e; i++) pos[order[i]!] = i - s;
+  };
+}
+
+// The pairs out of order in `targets[0..t)`: the crossings in a gap between two ranks, where
+// `places` is how many places its ends may take in the lower rank. Few ends are counted pair by
+// pair, more with an accumulator tree, which `tree` (at least twice `places` long, rounded up to
+// a power of two) holds. Exported for tests.
+export function crossed(targets: Int32Array, t: number, places: number, tree: Int32Array): number {
+  let total = 0;
+  if (t <= FEW_ENDS) {
+    for (let a = 1; a < t; a++) {
+      const x = targets[a]!;
+      for (let b = 0; b < a; b++) if (targets[b]! > x) total++;
+    }
+    return total;
+  }
+  let leaves = 1;
+  while (leaves < places) leaves <<= 1;
+  tree.fill(0, 0, 2 * leaves);
+  for (let k = 0; k < t; k++) {
+    let i = targets[k]! + leaves;
+    tree[i]!++;
+    while (i > 1) {
+      if ((i & 1) === 0) total += tree[i + 1]!;
+      i >>= 1;
+      tree[i]!++;
+    }
+  }
+  return total;
+}
+
+// Returns [final crossings, crossings before grouping or reordering]. Exported for tests.
+export function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
   const {
     n,
     real,
@@ -2193,12 +2229,12 @@ function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
   for (let r = 0; r <= maxRank; r++) widest = Math.max(widest, layerStart[r + 1]! - layerStart[r]!);
   if (widest < 2) return [0, 0];
   // With offsets, edges that reach one node at different offsets take separate places along it.
-  const place = offsets ? new Int32Array(EF.length) : undefined;
+  const place = offsets ? i32(EF.length) : undefined;
   // Local offset indices and counts do not depend on node order.
-  const placeIn = new Int32Array(place ? EF.length : 0);
-  const places = new Int32Array(place ? n : 0);
+  const placeIn = i32(place ? EF.length : 0);
+  const places = i32(place ? n : 0);
   const leaving = place ? succE.slice() : succE;
-  const mixed = new Uint8Array(place ? n : 0);
+  const mixed = u8(place ? n : 0);
   if (place) {
     const arriving = predE.slice();
     const byOffset = (list: Int32Array, from: number, to: number, dx: Float64Array): boolean => {
@@ -2222,8 +2258,8 @@ function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
   }
   let size = 1;
   while (size < (place ? widest + EF.length : widest)) size <<= 1;
-  const tree = new Int32Array(2 * size);
-  const targets = new Int32Array(EF.length);
+  const tree = i32(2 * size);
+  const targets = i32(EF.length);
 
   const count = (): number => {
     let total = 0;
@@ -2276,85 +2312,19 @@ function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
           targets.subarray(t0, t).sort();
         }
       }
-      if (t < 2) continue;
-      let leaves = 1;
-      while (leaves < southLen) leaves <<= 1;
-      tree.fill(0, 0, 2 * leaves);
-      for (let k = 0; k < t; k++) {
-        let i = targets[k]! + leaves;
-        tree[i]!++;
-        while (i > 1) {
-          if ((i & 1) === 0) total += tree[i + 1]!;
-          i >>= 1;
-          tree[i]!++;
-        }
-      }
+      total += crossed(targets, t, southLen, tree);
     }
     return total;
   };
 
   const declared = count();
-  const bary = new Float64Array(n);
-  const moving = new Int32Array(widest);
-  const spare = new Int32Array(widest);
+  const bary = f64(n);
+  const moving = i32(widest);
+  const spare = i32(widest);
 
-  // Keep groups contiguous, ordering each by its mean key.
-  const groups = groupParent ? groupParent.length : 0;
-  const depth = new Int32Array(groups);
-  for (let gr = 0; gr < groups; gr++) for (let p = gr; p >= 0; p = groupParent![p]!) depth[gr]!++;
-  const groupSum = new Float64Array(groups);
-  const groupCount = new Int32Array(groups);
-  const groupFirst = new Int32Array(groups);
-  const arrange = (r: number, key: Float64Array): void => {
-    const s = layerStart[r]!;
-    const e = layerStart[r + 1]!;
-    for (let i = s; i < e; i++) {
-      for (let gr = GRP![order[i]!]!; gr >= 0; gr = groupParent![gr]!) {
-        groupSum[gr] = 0;
-        groupCount[gr] = 0;
-      }
-    }
-    for (let i = s; i < e; i++) {
-      const v = order[i]!;
-      for (let gr = GRP![v]!; gr >= 0; gr = groupParent![gr]!) {
-        if (groupCount[gr]! === 0) groupFirst[gr] = i;
-        groupSum[gr]! += key[v]!;
-        groupCount[gr]!++;
-      }
-    }
-    // Compare siblings in their nearest common group; group items use n + group ID.
-    const value = (item: number): number =>
-      item >= n ? groupSum[item - n]! / groupCount[item - n]! : key[item]!;
-    const first = (item: number): number => (item >= n ? groupFirst[item - n]! : s + pos[item]!);
-    const compare = (a: number, b: number): number => {
-      let ia = a;
-      let ib = b;
-      let ca = GRP![a]!;
-      let cb = GRP![b]!;
-      let da = ca < 0 ? 0 : depth[ca]!;
-      let db = cb < 0 ? 0 : depth[cb]!;
-      for (; da > db; da--) {
-        ia = n + ca;
-        ca = groupParent![ca]!;
-      }
-      for (; db > da; db--) {
-        ib = n + cb;
-        cb = groupParent![cb]!;
-      }
-      while (ca !== cb) {
-        ia = n + ca;
-        ca = groupParent![ca]!;
-        ib = n + cb;
-        cb = groupParent![cb]!;
-      }
-      return value(ia) - value(ib) || first(ia) - first(ib);
-    };
-    const row = Array.from(order.subarray(s, e)).sort(compare);
-    order.set(row, s);
-    for (let i = s; i < e; i++) pos[order[i]!] = i - s;
-  };
+  const arrange = groupArranger(n, layerStart, order, pos, GRP, groupParent);
   if (GRP) {
-    const at = new Float64Array(n);
+    const at = f64(n);
     for (let r = 0; r <= maxRank; r++) {
       for (let i = layerStart[r]!; i < layerStart[r + 1]!; i++) at[order[i]!] = i - layerStart[r]!;
       arrange(r, at);
@@ -2442,16 +2412,25 @@ function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
     const u = up ? EF[e]! : ET[e]!;
     return offsets && W[u]! > 0 ? pos[u]! + (up ? EFD[e]! : ETD[e]!) / W[u]! : pos[u]!;
   };
-  // Crossings between a and b, assuming a is left of b.
-  const between = (a: number, b: number): number => {
+  // The crossings with a left of b less those with b left of a, counted over the same pairs of
+  // ends in one pass: above 0, putting b left of a saves crossings.
+  const saved = (a: number, b: number): number => {
     let c = 0;
     for (let k = predStart[a]!; k < predStart[a + 1]!; k++) {
       const x = at(predE[k]!, true);
-      for (let j = predStart[b]!; j < predStart[b + 1]!; j++) if (x > at(predE[j]!, true)) c++;
+      for (let j = predStart[b]!; j < predStart[b + 1]!; j++) {
+        const y = at(predE[j]!, true);
+        if (x > y) c++;
+        else if (y > x) c--;
+      }
     }
     for (let k = succStart[a]!; k < succStart[a + 1]!; k++) {
       const x = at(succE[k]!, false);
-      for (let j = succStart[b]!; j < succStart[b + 1]!; j++) if (x > at(succE[j]!, false)) c++;
+      for (let j = succStart[b]!; j < succStart[b + 1]!; j++) {
+        const y = at(succE[j]!, false);
+        if (x > y) c++;
+        else if (y > x) c--;
+      }
     }
     return c;
   };
@@ -2465,7 +2444,7 @@ function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
           const a = order[i]!;
           const b = order[i + 1]!;
           if (pinOf(a) !== pinOf(b) || (GRP && GRP[a]! !== GRP[b]!)) continue;
-          if (between(b, a) >= between(a, b)) continue;
+          if (saved(a, b) <= 0) continue;
           order[i] = b;
           order[i + 1] = a;
           pos[b] = i - s;
@@ -2541,6 +2520,87 @@ function halfRoom(g: Graph, opt: LayeredOptions, v: number): number {
   return g.W[v]! / 2 + (g.KIND[v]! === Kind.Node ? opt.nodeSep : opt.edgeSep) / 2;
 }
 
+// Pulls what leads to a held end towards it (#650, new in v13). Brandes-Köpf lines up only one
+// bend with each node, so the ends held along a group's side leave the rest of their bends
+// packed together, and the nodes they come from stacked in the middle of the side. Sweeping up
+// the ranks from the held heads, then down from the held tails: a bend, or a node with no edges
+// on the far side, moves to the median of where its edges end on the near side, when one of
+// those is held or was pulled in the same sweep. A rank with something more than `IN_LINE` out
+// of place is then placed again, in order and no closer than `position` keeps it: each node goes
+// as far towards its place as it can pushed from the left, and from the right, and takes the
+// middle of the two.
+function pullToHeld(
+  g: Graph,
+  opt: LayeredOptions,
+  xs: Float64Array,
+  EFH: Uint8Array,
+  ETH: Uint8Array
+): void {
+  if (!EFH.includes(1) && !ETH.includes(1)) return;
+  const { maxRank, KIND, EF, ET, EFD, ETD, succStart, succE, predStart, predE } = g;
+  const { layerStart, order } = g;
+  const pulled = u8(g.n);
+  const gap = (i: number): number => halfRoom(g, opt, order[i - 1]!) + halfRoom(g, opt, order[i]!);
+  const sweep = (bit: number): void => {
+    const down = bit > 1;
+    // The side the pull comes from, and the one a node must have no edges on to be pulled.
+    const [from, list, other, held, away] = down
+      ? [predStart, predE, EF, EFH, succStart]
+      : [succStart, succE, ET, ETH, predStart];
+    for (let step = 1; step <= maxRank; step++) {
+      const s = layerStart[down ? step : maxRank - step]!;
+      const end = layerStart[(down ? step : maxRank - step) + 1]!;
+      const lo: number[] = [];
+      let any = false;
+      for (let i = s; i < end; i++) {
+        const v = order[i]!;
+        lo.push(xs[v]!);
+        if (pulled[v] || KIND[v]! > Kind.Label || (!KIND[v] && away[v + 1]! > away[v]!)) continue;
+        const ends: number[] = [];
+        let pull = false;
+        for (let k = from[v]!; k < from[v + 1]!; k++) {
+          const e = list[k]!;
+          const w = other[e]!;
+          if (held[e] || pulled[w] === bit) pull = true;
+          ends.push(xs[w]! + (down ? EFD[e]! - ETD[e]! : ETD[e]! - EFD[e]!));
+        }
+        if (!pull) continue;
+        ends.sort((a, b) => a - b);
+        lo[i - s] = (ends[(ends.length - 1) >> 1]! + ends[ends.length >> 1]!) / 2;
+        pulled[v] = bit;
+        if (Math.abs(lo[i - s]! - xs[v]!) > IN_LINE) any = true;
+      }
+      if (!any) continue;
+      const hi = [...lo];
+      for (let i = s + 1; i < end; i++) lo[i - s] = Math.max(lo[i - s]!, lo[i - s - 1]! + gap(i));
+      for (let i = end - 1; i > s; i--)
+        hi[i - s - 1] = Math.min(hi[i - s - 1]!, hi[i - s]! - gap(i));
+      for (let i = s; i < end; i++) xs[order[i]!] = (lo[i - s]! + hi[i - s]!) / 2;
+    }
+  };
+  sweep(1);
+  sweep(2);
+}
+
+// The order of the neighbour lists, once the order of the nodes is final. Each node's segments
+// in `succE` and in `predE` are put in the order of where their other ends sit in the next or the
+// previous rank (`pos`), ties by segment. Nothing reorders the nodes or the lists after this, so
+// what reads them takes that order as given: `position` reads the medians off directly, and
+// `sideEnds` (for `spread` and `settle`) and `settle` take the ends on a side left to right.
+// Called once in `layOut`, between `reduceCrossings` and the first of those.
+function sortNeighbours({ n, EF, ET, succStart, succE, predStart, predE, pos }: Graph): void {
+  const segments = EF.length;
+  const key = i32(segments);
+  for (let e = 0; e < segments; e++) key[e] = pos[ET[e]!]!;
+  for (let v = 0; v < n; v++)
+    if (succStart[v + 1]! - succStart[v]! > 1)
+      sortRange(succE, succStart[v]!, succStart[v + 1]!, key);
+  for (let e = 0; e < segments; e++) key[e] = pos[EF[e]!]!;
+  for (let v = 0; v < n; v++)
+    if (predStart[v + 1]! - predStart[v]! > 1)
+      sortRange(predE, predStart[v]!, predStart[v + 1]!, key);
+}
+
 // Brandes-Köpf horizontal coordinate assignment: four aligned layouts, balanced.
 function position(g: Graph, opt: LayeredOptions): Float64Array {
   const {
@@ -2561,22 +2621,14 @@ function position(g: Graph, opt: LayeredOptions): Float64Array {
     pos,
   } = g;
   const segments = EF.length;
-  const gap = new Float64Array(n);
+  const gap = f64(n);
   for (let i = 0; i < n; i++) gap[i] = halfRoom(g, opt, i);
 
-  // Neighbours in left-to-right order, so the medians can be read off directly.
-  const key = new Int32Array(segments);
-  for (let e = 0; e < segments; e++) key[e] = pos[ET[e]!]!;
-  for (let v = 0; v < n; v++)
-    if (succStart[v + 1]! - succStart[v]! > 1)
-      sortRange(succE, succStart[v]!, succStart[v + 1]!, key);
-  for (let e = 0; e < segments; e++) key[e] = pos[EF[e]!]!;
-  for (let v = 0; v < n; v++)
-    if (predStart[v + 1]! - predStart[v]! > 1)
-      sortRange(predE, predStart[v]!, predStart[v + 1]!, key);
+  // The neighbours are in left-to-right order (`sortNeighbours`), so the medians are read off
+  // directly.
 
   // An edge between two real nodes may not cross a dummy-to-dummy segment; mark those that would.
-  const conflict = new Uint8Array(segments);
+  const conflict = u8(segments);
   for (let r = 1; r <= maxRank; r++) {
     const prevLen = layerStart[r]! - layerStart[r - 1]!;
     const s = layerStart[r]!;
@@ -2608,19 +2660,19 @@ function position(g: Graph, opt: LayeredOptions): Float64Array {
   }
 
   const results: Float64Array[] = [];
-  const root = new Int32Array(n);
-  const align = new Int32Array(n);
+  const root = i32(n);
+  const align = i32(n);
   // Offset of each node from its block's root, so that aligned edges meet at their attachment points.
-  const shift = new Float64Array(n);
-  const eFrom = new Int32Array(n);
-  const eTo = new Int32Array(n);
-  const eW = new Float64Array(n);
-  const indeg = new Int32Array(n);
-  const outStart = new Int32Array(n + 1);
-  const outE = new Int32Array(n);
-  const fill = new Int32Array(n);
-  const topo = new Int32Array(n);
-  const x = new Float64Array(n);
+  const shift = f64(n);
+  const eFrom = i32(n);
+  const eTo = i32(n);
+  const eW = f64(n);
+  const indeg = i32(n);
+  const outStart = i32(n + 1);
+  const outE = i32(n);
+  const fill = i32(n);
+  const topo = i32(n);
+  const x = f64(n);
 
   for (let variant = 0; variant < 4; variant++) {
     const up = variant < 2;
@@ -2712,7 +2764,7 @@ function position(g: Graph, opt: LayeredOptions): Float64Array {
       }
       if (min !== Infinity && min > x[v]!) x[v] = min;
     }
-    const xs = new Float64Array(n);
+    const xs = f64(n);
     for (let i = 0; i < n; i++) xs[i] = (right ? -x[root[i]!]! : x[root[i]!]!) + shift[i]!;
     results.push(xs);
   }
@@ -2745,7 +2797,7 @@ function position(g: Graph, opt: LayeredOptions): Float64Array {
     }
   }
 
-  const out = new Float64Array(n);
+  const out = f64(n);
   for (let i = 0; i < n; i++) {
     let a = results[0]![i]!;
     let b = results[1]![i]!;

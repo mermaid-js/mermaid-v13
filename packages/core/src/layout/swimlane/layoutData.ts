@@ -4,14 +4,6 @@
 // ported files keep v12's shape and names (D532) and upstream fixes come over by hand.
 import type { Box, Dir, Point, Size } from '../types.ts';
 
-/** A rectangle by its sides, as v12's `groupTitleRect`. */
-export interface Rect {
-  left: number;
-  right: number;
-  top: number;
-  bottom: number;
-}
-
 /**
  * A node, a group (lane or nested box), or an edge-label node. `x`/`y` are centres. A group's
  * `padding` is v12's single number; `paddingBox` is the `LayoutGroup`'s, which a nested group's
@@ -36,8 +28,8 @@ export interface Node {
   /** Rank and place in it, written back after ordering. */
   layer?: number;
   order?: number;
-  /** A lane's title band, which the engine reserves inside the lane box (D536). */
-  groupTitleRect?: Rect;
+  /** A lane's title band, which the engine reserves inside the lane box (D536), as v12's `groupTitleRect`. */
+  groupTitleRect?: Box;
   swimlaneContentTop?: number;
   direction?: Dir;
   /** `swimlane` on a lane, as v12 marks it. */
@@ -72,8 +64,9 @@ export interface LayoutData {
   edges: Edge[];
   direction: Dir;
   /**
-   * The lanes in the order the phases placed them across the flow (source order, or the
-   * automatic order), written by `runSwimlaneLayoutCore`.
+   * The lanes across the flow, written by `runSwimlaneLayoutCore`: the lanes with nodes in the
+   * order the phases placed them (source order, or the automatic order), and each empty lane
+   * beside the lanes declared next to it.
    */
   laneOrder?: string[];
   config: {

@@ -4,6 +4,7 @@
  */
 import { detectEr, parseEr } from '@mermaid-js/diagram-er';
 import type { ErModel } from '@mermaid-js/diagram-er';
+import { modelOrThrow } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { ER_V12_TYPES, erV12Snapshot } from './v12.ts';
 import type { ErSnapshot } from './v12.ts';
@@ -48,12 +49,7 @@ export function erV13Snapshot(model: ErModel): ErSnapshot {
 }
 
 /** v13 parse for parity: the model, or a throw carrying the first error diagnostic. */
-export function parseErForParity(text: string): ErModel {
-  const result = parseEr(text);
-  const error = result.diagnostics.find((d) => d.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseErForParity = (text: string): ErModel => modelOrThrow(parseEr(text));
 
 export const erAdapter: DiagramAdapter<ErModel> = {
   id: 'er',

@@ -74,14 +74,12 @@ function openRoot({ w, layout, p, ctx, paint, model }: Scene): { width: number; 
   const width = Math.max(1, Math.ceil(Math.max(layout.width, titleWidth(p))));
   const height = Math.max(1, Math.ceil(layout.height + band));
   const maxWidth = p.config.useMaxWidth;
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
   openSvgRoot(w, ctx, {
     name: 'usecase',
     viewBox: [0, 0, width, height],
     maxWidth,
-    title,
-    desc,
+    title: model.accTitle,
+    desc: model.accDescr,
     attrs: {
       'font-family': paint.font,
       'font-size': paint.fontSize,

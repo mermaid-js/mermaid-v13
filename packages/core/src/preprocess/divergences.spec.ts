@@ -86,6 +86,7 @@ const FENCE_CORPUS: string[] = [
   '---\rtitle: CR only\r---\rgraph TD\r',
   '--- \ntitle: a\n--- x\n---\ngraph TD\n',
   '---\ntitle: a\n---graph TD\n',
+  '\uFEFF---\ntitle: after a byte order mark\n---\ngraph TD\n',
 ];
 
 interface Divergence {
@@ -112,6 +113,11 @@ const FENCE_DIVERGENCES: Divergence[] = [
   {
     input: '  \n---\ntitle: after a blank line with spaces\n---\ngraph TD\n',
     decision: 'As above: a whitespace-only first line before the opener. Accept-only change.',
+  },
+  {
+    input: '\uFEFF---\ntitle: after a byte order mark\n---\ngraph TD\n',
+    decision:
+      "v12's `\\s` reads a leading BOM as the opener's indent, so no closing `---` matches; v12 later trims the BOM away and draws the diagram without its front matter (#766). v13 skips one BOM at offset 0 and reads the front matter, so `title` and `config` apply (D642).",
   },
 ];
 

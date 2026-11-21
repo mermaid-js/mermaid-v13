@@ -19,6 +19,13 @@ import { lex } from '../parser/lexer.ts';
 import { T } from '../parser/tokens.ts';
 import { DIRECTION_ITEMS, HEADER_ITEMS, lineBefore, span, STATEMENT_ITEMS } from './tables.ts';
 import type { KeywordItem } from './tables.ts';
+import { insertWithSeparator } from '@mermaid-js/shared/parser/facet';
+
+/**
+ * What already opens a keyword's value after it, so no separator is inserted (`section` before
+ * ` Web`, `accTitle` before `: x`; `accDescr` before ` {` keeps the block).
+ */
+const OPENS = /^[\t ]*[:{]/;
 
 const HEADER_LINE = /^[\t ]*timeline[\t ]+$/i;
 const TRIVIA = new Set<number>([Kind.Comment, Kind.Directive, Kind.Space]);
@@ -39,18 +46,6 @@ function tokenAt(text: string, offset: number): { kind: number; start: number } 
     if (offset < (t.end[j] ?? 0)) return { kind, start };
   }
   return undefined;
-}
-
-/**
- * The text `item` inserts before `rest` (what follows the replaced word): its separator only
- * when `rest` does not already hold one (`section` before ` Web`, `accTitle` before `: x`;
- * `accDescr` before ` {` keeps the block).
- */
-function insertText(item: KeywordItem, rest: string): string {
-  const sep = item.separator ?? '';
-  if (sep === '' || /^[\t ]*[:{]/.test(rest)) return item.label;
-  if (/^[\t ]/.test(rest)) return item.label + sep.trimEnd();
-  return item.label + sep;
 }
 
 export function timelineCompletions(
@@ -80,7 +75,7 @@ export function timelineCompletions(
   const out: CompletionItem[] = [];
   for (const k of items) {
     if (!expected.has(k.kind) || !k.label.toLowerCase().startsWith(prefix)) continue;
-    const insert = insertText(k, rest);
+    const insert = insertWithSeparator(k.label, k.separator, rest, OPENS);
     // What v12 would read: a statement's text stands in for what the author types next.
     const sample = `${head}${insert}${/[ :]$/.test(insert) ? 'x' : ''}${rest}`;
     const t = tokenAt(sample, start);

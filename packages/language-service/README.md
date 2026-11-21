@@ -1,6 +1,6 @@
 # @mermaid-js/language-service
 
-An editor-agnostic language service for Mermaid: diagnostics, go to definition, references, rename, hover, completion (front-matter `config:` included), folding, semantic tokens, and a cursor ↔ AST map for live previews. It has no runtime dependencies. `@mermaid-js/core` is a peer, and each diagram's language support (its _facet_) is an optional peer that loads on `preload()`.
+An editor-agnostic language service for Mermaid: diagnostics, go to definition, references, rename, hover, completion (front-matter `config:` included), an outline, folding, semantic tokens, and a cursor ↔ AST map for live previews. It has no runtime dependencies. `@mermaid-js/core` is a peer, and each diagram's language support (its _facet_) is an optional peer that loads on `preload()`.
 
 Use it directly, or through an adapter: `@mermaid-js/language-server` for any LSP editor, `@mermaid-js/language-service-codemirror` for CodeMirror 6, `@mermaid-js/language-service-monaco` for Monaco.
 
@@ -20,6 +20,7 @@ const doc = service.update('file:///a.mmd', text); // synchronous, complete, imm
 doc.diagnostics();
 doc.completions(offset);
 doc.rename(offset, 'NewName'); // { edits } or { refused: reason }
+doc.symbols(); // the outline: each symbol once, at its definition, nested by subgraph
 doc.lineFoldingRanges(); // folds by line, as editors show them
 doc.lineSemanticTokens(); // tokens cut per line
 ```
@@ -27,6 +28,10 @@ doc.lineSemanticTokens(); // tokens cut per line
 Call `preload()` (or `preload({ types: ['flowchart'] })`) once, before the first `update`. A type whose facet is not loaded gets a `LANGUAGE_NOT_LOADED` diagnostic and generic features only; a facet that fails to load gets `LANGUAGE_LOAD_FAILED`, and one whose parser throws gets `LANGUAGE_FACET_FAILED`. A facet whose `hover`, `completions` or `isValidId` throws gives no hover, no items and a rename refusal that names the failure: no query throws. `preload` never rejects.
 
 Positions are UTF-16 offsets into the whole text (front matter included). `doc.lines()` converts to 0-based line and column.
+
+## Mermaid in Markdown
+
+The service reads Mermaid text only. For a Markdown document, `mermaidFences(markdown)` lists its Mermaid fences (backtick or tilde, any indent) as `{ start, text }`. Give each `text` to `update` under a uri of its own, add `start` to every offset that comes back, and subtract it from every offset you send. The language server does this when a client opts in with `mermaid.markdown`.
 
 ## Third-party diagram types
 

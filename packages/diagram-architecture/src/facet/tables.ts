@@ -3,19 +3,16 @@
  * here: they come from the grammar file (`generated/docs.ts`).
  */
 import { Kind } from '@mermaid-js/core/parser-kit';
-import type { CompletionKind, Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { TokenStream } from '@mermaid-js/core/parser-kit';
+import { statementKeyword, statementTokens } from '@mermaid-js/shared/parser/facet';
+import type { TypedKeywordItem } from '@mermaid-js/shared/parser/facet';
 import type { ArchitectureModel, ArchitectureSide } from '../model.ts';
 import { ARCHITECTURE_TRIVIA, T } from '../parser/tokens.ts';
 
+const LINE_BREAK = new Set<number>([Kind.Newline]);
+
 /** An item offered when the parser expects `kind`. */
-export interface KeywordItem {
-  readonly kind: number;
-  readonly label: string;
-  readonly item: CompletionKind;
-  /** Text inserted, when it is not the label. */
-  readonly insert?: string;
-  /** One short line next to the label. */
-  readonly detail?: string;
+export interface KeywordItem extends TypedKeywordItem {
   /** Offered only as the first word of its line (the statements). */
   readonly lineStart?: true;
   /** Offered only right after the left-hand side (an arrow that starts with `<`). */
@@ -23,14 +20,6 @@ export interface KeywordItem {
   /** Offered only after `--` or `-[label]-` (the right-hand arrowhead). */
   readonly afterArrow?: true;
 }
-
-const statement = (kind: number, label: string, insert = `${label} `): KeywordItem => ({
-  kind,
-  label,
-  item: 'keyword',
-  insert,
-  lineStart: true,
-});
 
 /** What each side is called in details and hover. */
 export const SIDE_NAMES: Readonly<Record<ArchitectureSide, string>> = {
@@ -47,14 +36,14 @@ export const SIDE_NAMES: Readonly<Record<ArchitectureSide, string>> = {
  */
 export const ITEMS: readonly KeywordItem[] = [
   { kind: T.ArchitectureBeta, label: 'architecture-beta', item: 'keyword' },
-  statement(T.Service, 'service'),
-  statement(T.Group, 'group'),
-  statement(T.Junction, 'junction'),
-  statement(T.Align, 'align'),
-  statement(T.Title, 'title'),
-  statement(T.AccTitle, 'accTitle', 'accTitle: '),
-  statement(T.AccDescr, 'accDescr:', 'accDescr: '),
-  statement(T.AccDescr, 'accDescr {', 'accDescr { }'),
+  statementKeyword(T.Service, 'service'),
+  statementKeyword(T.Group, 'group'),
+  statementKeyword(T.Junction, 'junction'),
+  statementKeyword(T.Align, 'align'),
+  statementKeyword(T.Title, 'title'),
+  statementKeyword(T.AccTitle, 'accTitle', 'accTitle: '),
+  statementKeyword(T.AccDescr, 'accDescr:', 'accDescr: '),
+  statementKeyword(T.AccDescr, 'accDescr {', 'accDescr { }'),
   { kind: T.Row, label: 'row', item: 'keyword', insert: 'row ' },
   { kind: T.Column, label: 'column', item: 'keyword', insert: 'column ' },
   { kind: T.In, label: 'in', item: 'keyword', insert: 'in ' },
@@ -123,48 +112,13 @@ export function elementOf(model: ArchitectureModel, id: string): Element | undef
   return junction && { kind: 'junction', element: junction };
 }
 
-/** Index of the last token of `tokens` starting at or before `offset`, or -1. */
-export function tokenBefore(tokens: TokenStream, offset: number): number {
-  let lo = 0;
-  let hi = tokens.length - 1;
-  let found = -1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    if ((tokens.start[mid] ?? 0) <= offset) {
-      found = mid;
-      lo = mid + 1;
-    } else hi = mid - 1;
-  }
-  return found;
-}
-
 /**
  * The indexes of the significant tokens of the line before `at` that end at or before it, first
  * to last, without the `architecture-beta` header (the first statement may share its line).
  * Token indexes, unlike other facets' text-based `lineBefore`.
  */
 export function lineTokens(tokens: TokenStream | undefined, at: number): number[] {
-  const out: number[] = [];
-  if (!tokens) return out;
-  for (let j = tokenBefore(tokens, at); j >= 0; j--) {
-    if ((tokens.end[j] ?? 0) > at || (tokens.start[j] ?? 0) >= at) continue;
-    const k = tokens.kind[j] ?? Kind.EOF;
-    if (k === Kind.Newline) break;
-    if (ARCHITECTURE_TRIVIA[k] !== 1) out.push(j);
-  }
-  out.reverse();
+  if (!tokens) return [];
+  const out = statementTokens(tokens, at, LINE_BREAK, (k) => ARCHITECTURE_TRIVIA[k] === 1);
   return tokens.kind[out[0] ?? -1] === T.ArchitectureBeta ? out.slice(1) : out;
 }
-
-/** Markdown inline code holding `text` as written, whatever backticks it has. */
-export function code(text: string): string {
-  const runs = text.match(/`+/g) ?? [];
-  const fence = '`'.repeat(Math.max(0, ...runs.map((r) => r.length)) + 1);
-  const pad = text.startsWith('`') || text.endsWith('`') || text === '' ? ' ' : '';
-  return `${fence}${pad}${text}${pad}${fence}`;
-}
-
-export const span = (start: number, end: number): Range => ({ start, end });
-
-/** Whether `offset` is in `r`, its ends included. */
-export const inside = (offset: number, r: Range): boolean => r.start <= offset && offset <= r.end;

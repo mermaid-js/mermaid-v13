@@ -1,0 +1,9 @@
+---
+description: >-
+  two self-relationships with multiplicities on one class (#768, D618): the
+  second is mirrored to the far side, its end labels and marker with it
+---
+classDiagram
+  Node "1" --> "0..*" Node : children
+  Node "1" ..> "1" Node : parent
+  Node --> Tree : root of

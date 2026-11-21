@@ -37,6 +37,7 @@ import {
   PERCENT,
   PIPE,
   RBRACE,
+  scanWhile,
   SEMI,
   isDigit,
   isLetter,
@@ -116,8 +117,8 @@ function opener(prefix: string, mark: number, kind: number, begin: number): Rule
     match: (lx, i) => {
       let j = word.match(lx, i);
       if (j < 0) return -1;
-      j = lx.spaces(j);
-      return lx.text.charCodeAt(j) === mark ? lx.spaces(j + 1) : -1;
+      j = scanWhile(lx.text, j, isSpace);
+      return lx.text.charCodeAt(j) === mark ? scanWhile(lx.text, j + 1, isSpace) : -1;
     },
   };
 }
@@ -182,7 +183,11 @@ const INITIAL_RULES: readonly Rule[] = [
   { ...lit('classDef', T.ClassDef), begin: S.style }, // 41
   lit('class', T.Class), // 42
   lit('subgraph', T.Subgraph), // 43
-  { first: 'eE', kind: T.End, match: (lx, i) => (END.match(lx, i) < 0 ? -1 : lx.spaces(i + 3)) }, // 44
+  {
+    first: 'eE',
+    kind: T.End,
+    match: (lx, i) => (END.match(lx, i) < 0 ? -1 : scanWhile(lx.text, i + 3, isSpace)),
+  }, // 44
   lit('one or zero', T.ZeroOrOne), // 45
   lit('one or more', T.OneOrMore), // 46
   lit('one or many', T.OneOrMore), // 47
@@ -360,7 +365,7 @@ class Lexer {
   private block(i: number): number {
     const t = this.text;
     const c = t.charCodeAt(i);
-    if (isSpace(c)) return this.spaces(i); // `\s+`
+    if (isSpace(c)) return scanWhile(this.text, i, isSpace); // `\s+`
     // `\b((?:PK)|(?:FK)|(?:UK))\b`
     const c0 = lower(c);
     if (
@@ -402,7 +407,7 @@ class Lexer {
       return this.emit(Kind.Newline, i, j);
     }
     // `\s+` takes line breaks after a blank too, and the state goes on.
-    if (isSpace(c)) return this.spaces(i);
+    if (isSpace(c)) return scanWhile(this.text, i, isSpace);
     if (c === COLON) return this.emit(T.Colon, i, i + 1);
     if (c === COMMA) return this.emit(T.Comma, i, i + 1);
     if (c === HASH) return this.emit(T.Brkt, i, i + 1);
@@ -413,13 +418,6 @@ class Lexer {
     }
     if (c === SEMI) return this.emit(T.Semi, i, i + 1);
     return this.emit(Kind.Error, i, codePointEnd(t, i));
-  }
-
-  /** The end of `\s*` from `i`. */
-  spaces(i: number): number {
-    let j = i;
-    while (j < this.n && isSpace(this.text.charCodeAt(j))) j++;
-    return j;
   }
 
   /** `"[^"%\r\n\v\b\\]+"` at `i`, or -1. */
@@ -465,7 +463,7 @@ class Lexer {
 
   /** After the `1` at `i`: `\s+[A-Za-z_"']` or `\s+[0-9]`. */
   oneBeforeWord(i: number): boolean {
-    const j = this.spaces(i + 1);
+    const j = scanWhile(this.text, i + 1, isSpace);
     if (j === i + 1) return false;
     const c = this.text.charCodeAt(j);
     return isWord(c) || c === DQUOTE || c === APOSTROPHE;
@@ -500,7 +498,7 @@ class Lexer {
     this.dirLast.fill(-1);
     for (let k = i; k + 9 <= le; k++) {
       if (lower(t.charCodeAt(k)) !== 100 || DIRECTION.match(this, k) < 0) continue;
-      const w = this.spaces(k + 9);
+      const w = scanWhile(this.text, k + 9, isSpace);
       if (w === k + 9) continue;
       const pair = String.fromCharCode(lower(t.charCodeAt(w)), lower(t.charCodeAt(w + 1)));
       const dir = DIRECTIONS.indexOf(pair);
@@ -535,7 +533,7 @@ class Lexer {
   private nextSpace(i: number): number {
     if (!(this.spaceFrom <= i && i <= this.spaceAt)) {
       this.spaceFrom = i;
-      this.spaceAt = this.scanTo(i, isSpace);
+      this.spaceAt = scanWhile(this.text, i, (c) => !isSpace(c));
     }
     return this.spaceAt;
   }
@@ -543,7 +541,7 @@ class Lexer {
   private lastTildeOnLine(i: number): number {
     if (!(this.lineFrom <= i && i <= this.lineAt)) {
       this.lineFrom = i;
-      this.lineAt = this.scanTo(i, isLineEnd);
+      this.lineAt = scanWhile(this.text, i, (c) => !isLineEnd(c));
       this.lastTildeLine = -1;
     }
     if (this.lastTildeLine !== this.lineAt) {
@@ -551,12 +549,6 @@ class Lexer {
       this.lastTilde = this.lineAt > 0 ? this.text.lastIndexOf('~', this.lineAt - 1) : -1;
     }
     return this.lastTilde >= i ? this.lastTilde : -1;
-  }
-
-  private scanTo(i: number, pred: (c: number) => boolean): number {
-    let j = i;
-    while (j < this.n && !pred(this.text.charCodeAt(j))) j++;
-    return j;
   }
 }
 

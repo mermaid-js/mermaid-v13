@@ -5,7 +5,7 @@
  * v12's `sanitizeText` runs when SVG is written, not here.
  */
 // cspell:words currentcolor accentcolor accentcolortext activetext buttonborder canvastext linktext marktext selecteditem selecteditemtext visitedtext threeddarkshadow threedface threedhighlight threedlightshadow threedshadow
-import { isSpace, LPAREN } from '@mermaid-js/core/parser-kit';
+import { isLineEnd, isSpace, isWord, LPAREN } from '@mermaid-js/core/parser-kit';
 import { decodePlaceholders } from '@mermaid-js/core/parser-kit/support';
 import { isYamlMap, parseYaml } from '@mermaid-js/core/preprocess';
 import { isNamedColor } from './colors.ts';
@@ -90,10 +90,6 @@ export function isCssColor(c: string): boolean {
   return /^[a-z]+$/.test(lower) && isNamedColor(lower);
 }
 
-const isWordChar = (c: number) =>
-  (c >= 48 && c <= 57) || (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c === 95;
-const isLineTerminator = (c: number) => c === 10 || c === 13 || c === 0x2028 || c === 0x2029;
-
 export interface BoxData {
   /** Undefined when the box has no title. */
   text?: string;
@@ -111,7 +107,7 @@ export function parseBoxData(str: string): BoxData {
   let color = 'transparent';
   let title: string | undefined;
   let line = true;
-  for (let i = 0; i < str.length; i++) if (isLineTerminator(str.charCodeAt(i))) line = false;
+  for (let i = 0; i < str.length; i++) if (isLineEnd(str.charCodeAt(i))) line = false;
   if (line) {
     let split = -1;
     const fn = /^(?:rgba?|hsla?)/.exec(str);
@@ -123,7 +119,7 @@ export function parseBoxData(str: string): BoxData {
     }
     if (split < 0) {
       split = 0;
-      while (split < str.length && isWordChar(str.charCodeAt(split))) split++;
+      while (split < str.length && isWord(str.charCodeAt(split))) split++;
     }
     const head = str.slice(0, split);
     const tail = str.slice(split);

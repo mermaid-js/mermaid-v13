@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Mermaid, MermaidConfig } from 'mermaid';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
-import { gitApi } from './render-api.ts';
+import { deterministicApi } from '../render-api.ts';
 
 /**
  * What the gitGraph renderer draws (spec #292 T4), through `render()` and the generated
@@ -12,7 +12,7 @@ import { gitApi } from './render-api.ts';
  */
 let api: Mermaid;
 beforeAll(() => {
-  api = gitApi();
+  api = deterministicApi();
 });
 
 /** Node colours an author sets, so the literal output shows which one a part took. */
@@ -40,7 +40,7 @@ const GIT = {
 const draw = async (src: string, m: Mermaid = api): Promise<SvgView> =>
   parseSvg((await m.render('g', src)).svg);
 const literal = (theme: string, extra: Record<string, unknown> = {}): Mermaid =>
-  gitApi({
+  deterministicApi({
     theme,
     output: { cssVariables: false },
     themeVariables: { ...NODE, ...GIT, ...extra },

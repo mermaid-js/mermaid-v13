@@ -19,51 +19,19 @@
  * it still passes the allow-list (R-SEC-2).
  */
 import type { ExtensionPlugin } from '@mermaid-js/core';
-import { nodeId, type AstNode } from '@mermaid-js/core/parser-kit';
+import { callbackArgs, nodeId, type AstNode } from '@mermaid-js/core/parser-kit';
 import { defineFeature, isBag, type AnyFeature } from './feature.ts';
 import { menus } from './menus.ts';
 import { createScope, ownIds, rootsFor } from './scope.ts';
+
+/** v12's argument list of a `call fn(…)`: core's (`@mermaid-js/core/parser-kit`, D675). */
+export { callbackArgs } from '@mermaid-js/core/parser-kit';
 
 /** One callback to bind: a node id, the function name and its arguments. */
 export interface Binding {
   readonly id: string;
   readonly name: string;
   readonly args: readonly string[];
-}
-
-/**
- * v12 split at each comma followed by an even number of `"` up to the end
- * (`/,(?=(?:(?:[^"]*"){2})*[^"]*$)/`); this is the same split as a linear scan.
- */
-function splitArgs(args: string): string[] {
-  let after = 0;
-  for (const c of args) if (c === '"') after++;
-  const out: string[] = [];
-  let from = 0;
-  for (let i = 0; i < args.length; i++) {
-    const c = args[i];
-    if (c === '"') after--;
-    else if (c === ',' && after % 2 === 0) {
-      out.push(args.slice(from, i));
-      from = i + 1;
-    }
-  }
-  out.push(args.slice(from));
-  return out;
-}
-
-/**
- * v12's argument list: split on commas outside double quotes, trim, drop one pair of
- * surrounding quotes (a lone `"` both starts and ends with one, so it becomes `''`, as v12's
- * `substr(1, -1)` gave); no arguments means the node id.
- */
-export function callbackArgs(id: string, args: string | undefined): string[] {
-  if (args === undefined) return [id];
-  const list = splitArgs(args).map((a) => {
-    const item = a.trim();
-    return item.startsWith('"') && item.endsWith('"') ? item.slice(1, -1) : item;
-  });
-  return list.length === 0 ? [id] : list;
 }
 
 /**

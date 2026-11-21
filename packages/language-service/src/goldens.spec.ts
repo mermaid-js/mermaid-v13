@@ -14,7 +14,10 @@ import { UNLISTED_FACETS } from './testing/unlisted-facets.ts';
 
 const ROOT = join(import.meta.dirname, '..', 'goldens');
 const service = createLanguageService({ facets: UNLISTED_FACETS });
-beforeAll(() => service.preload());
+// Loading every facet takes a few seconds, more on a loaded machine. check-generated runs this
+// spec beside other checks and reads a timeout as stale goldens (#879), so the hook has a minute,
+// not vitest's default of 10 s.
+beforeAll(() => service.preload(), 60_000);
 
 const cases = goldenCases(ROOT);
 for (const diagram of [...new Set(cases.map((c) => c.diagram))]) {

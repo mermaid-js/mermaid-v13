@@ -14,15 +14,18 @@ import {
   cellWidth,
   DOWN,
   drawBox,
+  drawFrame,
   drawText,
   glyphFor,
   LEFT,
+  opposite,
   RIGHT,
   UP,
   type Dir,
   type GlyphSet,
   type Stroke,
 } from '@mermaid-js/core/ascii';
+import { dirOf } from '@mermaid-js/shared/ascii';
 import { cellText } from '../layout/cells.ts';
 import type {
   Point,
@@ -72,17 +75,11 @@ class Track {
   }
 }
 
-/** The direction from cell `a` to cell `b` on one row or column. */
-function towards(ax: number, ay: number, bx: number, by: number): Dir {
-  if (ay === by) return bx > ax ? RIGHT : LEFT;
-  return by > ay ? DOWN : UP;
-}
-
 /** A straight piece from `a` to `b` (cells, on one row or column). */
 function line(track: Track, ax: number, ay: number, bx: number, by: number): void {
   if (ax === bx && ay === by) return;
-  const d = towards(ax, ay, bx, by);
-  const back = towards(bx, by, ax, ay);
+  const d = dirOf({ x: ax, y: ay }, { x: bx, y: by });
+  const back = opposite(d);
   const steps = Math.abs(bx - ax) + Math.abs(by - ay);
   const dx = Math.sign(bx - ax);
   const dy = Math.sign(by - ay);
@@ -126,22 +123,6 @@ function path(track: Track, p: TrackPath, ox: number, oy: number, dy: number): v
   }
 }
 
-/** A frame in `stroke`, merging with what is drawn. */
-function frame(canvas: Canvas, stroke: Stroke, x0: number, y0: number, x1: number, y1: number) {
-  for (let x = x0 + 1; x < x1; x++) {
-    canvas.draw(x, y0, stroke.h);
-    canvas.draw(x, y1, stroke.h);
-  }
-  for (let y = y0 + 1; y < y1; y++) {
-    canvas.draw(x0, y, stroke.v);
-    canvas.draw(x1, y, stroke.v);
-  }
-  canvas.draw(x0, y0, stroke.tl);
-  canvas.draw(x1, y0, stroke.tr);
-  canvas.draw(x0, y1, stroke.bl);
-  canvas.draw(x1, y1, stroke.br);
-}
-
 /** A terminal's, nonterminal's or special's box and text at (`ox`, `oy`). */
 function leaf(
   canvas: Canvas,
@@ -155,10 +136,10 @@ function leaf(
   const [x0, y0] = cell({ x: ox + box.x, y: oy + box.y }, dy);
   const [x1, y1] = cell({ x: ox + box.x + box.width, y: oy + box.y + box.height }, dy);
   const rect = { x: x0, y: y0, width: x1 - x0 + 1, height: y1 - y0 + 1 };
-  if (e.kind === 'special') frame(canvas, glyphs.dotted, x0, y0, x1, y1);
+  if (e.kind === 'special') drawFrame(canvas, glyphs.dotted, rect);
   else if (e.kind === 'nonterminal' || glyphs.name === 'unicode')
     drawBox(canvas, glyphs, rect, { form: e.kind === 'terminal' ? 'rounded' : 'square' });
-  else frame(canvas, { ...glyphs.solid, ...ASCII_TERMINAL }, x0, y0, x1, y1);
+  else drawFrame(canvas, { ...glyphs.solid, ...ASCII_TERMINAL }, rect);
   if (!e.text) return;
   const text = cellText(e.text.text);
   const [, row] = cell({ x: 0, y: oy + e.text.y }, dy);

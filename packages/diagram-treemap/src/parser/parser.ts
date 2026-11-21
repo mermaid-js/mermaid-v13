@@ -24,39 +24,36 @@
 import { checkDepth, checkLimit } from '@mermaid-js/core/limits';
 import {
   ASCII_MAX,
-  cook,
   ExpectedTable,
   formatExpected,
   isSpace,
   Kind,
   kindSet,
-  LineIndex,
   localOffset,
-  ParseState,
   PERCENT,
-  Probe,
   SEMI,
-  sourceView,
+  TRIVIA,
 } from '@mermaid-js/core/parser-kit';
-import { STOP } from '@mermaid-js/shared/parser/support';
+import { excerpt, lineTokens } from '@mermaid-js/shared/parser/line-tokens';
+import type { LineTokenView } from '@mermaid-js/shared/parser/line-tokens';
+import { foundText, STOP } from '@mermaid-js/shared/parser/support';
 import type {
   AstId,
   Diagnostic,
   ParseOptions,
   ParseResult,
   Range,
-  SourceView,
   StatementSpan,
-  TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import {
+  RuleParser,
   textProbeMode,
   textStatements,
   textValue,
   TITLE_STATEMENT,
   withoutIndent,
 } from '@mermaid-js/shared/parser/rule';
-import type { TextValues } from '@mermaid-js/shared/parser/rule';
+import type { RuleGrammar, TextValues } from '@mermaid-js/shared/parser/rule';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type { TreemapModel } from '../model.ts';
@@ -75,8 +72,6 @@ import type { ClassDefRead } from './normalise.ts';
 import { T } from './tokens.ts';
 
 export interface TreemapParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
   /** The integrator's cap on sections and leaves (core `DEFAULT_LIMITS.maxNodes` when absent, R-SEC-5). */
   maxNodes?: number;
   /** How deep a row may sit under a top one (core `DEFAULT_LIMITS.maxDepth` when absent). */
@@ -114,10 +109,6 @@ const CLASS = [T.StyleSeparator];
  */
 const PROBE_FOLLOWS = kindSet(T.StyleSeparator, T.Separator, T.Comma, T.Indentation, T.String);
 
-/** Trivia of the parser's view: the lexer's trivia and the line breaks. */
-const isTrivia = (k: number) =>
-  k === Kind.Comment || k === Kind.Directive || k === Kind.Space || k === Kind.Newline;
-
 /** Each text statement's AST type and keyword. */
 const TEXT_STATEMENTS = /* @__PURE__ */ textStatements(T.Title, T.AccTitle, T.AccDescr);
 
@@ -138,6 +129,18 @@ const probeMode = /* @__PURE__ */ textProbeMode({
   },
 });
 
+/**
+ * The rules read {@link lineTokens}: the significant tokens without the line breaks, each
+ * saying whether it starts a line.
+ */
+const GRAMMAR: RuleGrammar = {
+  lex,
+  trivia: TRIVIA,
+  tokens: lineTokens,
+  probeFollows: PROBE_FOLLOWS,
+  probeMode,
+};
+
 /** Human names for what the parser expects (R-ERR-2, R-ERR-5). */
 const EXPECTED = new ExpectedTable([
   ['`treemap`', [T.TreemapKeyword]],
@@ -151,71 +154,23 @@ const EXPECTED = new ExpectedTable([
   ['the end of the text', [Kind.EOF]],
 ]);
 
-/** The longest text an error message quotes. */
-const EXCERPT = 24;
-
-/** The first line of `text`, at most {@link EXCERPT} characters, with `…` when anything is cut. */
-function excerpt(text: string): string {
-  const line = text.split('\n', 1)[0] ?? '';
-  return line.length > EXCERPT || line !== text ? `${line.slice(0, EXCERPT)}…` : line;
-}
-
 /** Parse a treemap. Never throws: problems are error diagnostics. */
 export function parseTreemap(src: string, options: TreemapParseOptions = {}): TreemapParseResult {
   return new TreemapParser(src, options).parse();
-}
-
-/** The parser's tokens: the significant ones, and whether a line break comes before each. */
-interface LineView {
-  readonly kind: Uint16Array;
-  readonly start: Uint32Array;
-  readonly end: Uint32Array;
-  /** 1 when a line break comes between the token and the significant one before it. */
-  readonly lineStart: Uint8Array;
-  readonly length: number;
-}
-
-function lineView(stream: TokenStream): LineView {
-  let n = 0;
-  for (let j = 0; j < stream.length; j++) if (!isTrivia(stream.kind[j] ?? Kind.EOF)) n++;
-  const kind = new Uint16Array(n);
-  const start = new Uint32Array(n);
-  const end = new Uint32Array(n);
-  const lineStart = new Uint8Array(n);
-  let o = 0;
-  let line = 1;
-  for (let j = 0; j < stream.length; j++) {
-    const k = stream.kind[j] ?? Kind.EOF;
-    if (k === Kind.Newline) line = 1;
-    if (isTrivia(k)) continue;
-    kind[o] = k;
-    start[o] = stream.start[j] ?? 0;
-    end[o] = stream.end[j] ?? 0;
-    lineStart[o] = line;
-    line = 0;
-    o++;
-  }
-  return { kind, start, end, lineStart, length: n };
 }
 
 /**
  * One parse. Each grammar rule is a method that returns what it read; a rule that fails
  * records a diagnostic and throws {@link STOP}, and the statement loop recovers.
  */
-class TreemapParser {
-  private readonly pre: PreprocessResult;
-  private readonly view: SourceView;
-  private readonly full: TokenStream;
-  private readonly t: LineView;
-  private i = 0;
+class TreemapParser extends RuleParser<PreprocessResult> {
+  /** The tokens the rules see: {@link GRAMMAR}'s `tokens` makes them. */
+  declare protected readonly t: LineTokenView;
+  /** Where the statement being read started (its first token). */
+  private from = 0;
   /** Where the statement that failed stopped. */
   private failedAt = 0;
-  private readonly st = new ParseState();
-  private readonly probe: Probe | undefined;
   private readonly children: TreemapStatementNode[] = [];
-  private lines: LineIndex | undefined;
-  /** Mentions per id base (`classDef:a`, `title`, …), for the `@n` suffixes. */
-  private readonly mentions = new Map<string, number>();
   private readonly rows: TreemapRowNode[] = [];
   /** The statement span of each of {@link rows}. */
   private readonly rowSpans: StatementSpan[] = [];
@@ -229,25 +184,11 @@ class TreemapParser {
   private titleAstId: AstId | undefined;
 
   constructor(
-    private readonly src: string,
+    src: string,
     private readonly opts: TreemapParseOptions
   ) {
-    const pre = (this.pre = opts.preprocessed ?? preprocess(src));
-    if (!opts.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
-    this.view = sourceView(
-      src,
-      pre.bodyStart,
-      pre.directives.map((d) => d.range)
-    );
-    this.full = lex(src, pre.bodyStart, this.view);
-    this.t = lineView(this.full);
-    if (opts.probe !== undefined) {
-      const probe = (this.probe = new Probe(src, opts.probe, PROBE_FOLLOWS));
-      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
-      else probe.trivia(this.full);
-      // Ignored when the offset is outside code.
-      probe.lexed(probe.offset, probe.offset, probeMode(src, this.full, probe.offset));
-    }
+    const given = opts.preprocessed;
+    super(src, given ?? preprocess(src), !given, GRAMMAR, opts.probe);
   }
 
   parse(): TreemapParseResult {
@@ -267,23 +208,9 @@ class TreemapParser {
 
   // ---- tokens -------------------------------------------------------------------------
 
-  private kind(j = this.i): number {
-    return this.t.kind[j] ?? Kind.EOF;
-  }
-
-  private range(j = this.i): Range {
-    return { start: this.t.start[j] ?? 0, end: this.t.end[j] ?? 0 };
-  }
-
   /** Whether a line break comes before the token at `j`. */
   private startsLine(j = this.i): boolean {
     return this.t.lineStart[j] === 1;
-  }
-
-  /** A token's text as v12's lexer read it (removed spans dropped, entities decoded). */
-  private raw(j = this.i): string {
-    const { start, end } = this.range(j);
-    return cook(this.src, start, end, this.view);
   }
 
   /**
@@ -298,43 +225,13 @@ class TreemapParser {
       .replace(/\r\n?/g, '\n');
   }
 
-  /**
-   * Probe hook: the parser tests the token at `j` for `kinds` (a constant list), or would accept
-   * them there. Records them when it is the probed token.
-   */
-  private tested(kinds: readonly number[], j = this.i): void {
-    const p = this.probe;
-    if (p === undefined) return;
-    if (p.isAt(this.t, j, this.pre.bodyStart)) p.tested(kinds, this.t.start[j] ?? 0);
-  }
-
-  /** Consume a token of `kind` and return its index, or fail. */
-  private expect(kind: number, hint?: string): number {
-    // A plain parse builds no probe list.
-    if (this.probe !== undefined) this.tested([kind]);
-    if (this.kind() !== kind) this.fail([kind], hint);
-    return this.i++;
-  }
-
-  /** `id`, then `id@2`, `id@3`, … */
-  private id(base: string): AstId {
-    const n = (this.mentions.get(base) ?? 0) + 1;
-    this.mentions.set(base, n);
-    return n === 1 ? base : `${base}@${n}`;
-  }
-
   // ---- errors and recovery ------------------------------------------------------------
 
-  private lineOf(at: number): number {
-    return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
-  }
-
   /** How an error message names the token at `j`. */
-  private found(j = this.i): string {
+  protected override found(j = this.i): string {
     const k = this.kind(j);
-    if (k === Kind.EOF) return 'the end of the text';
     if (k === T.Indentation) return 'a blank';
-    return `\`${excerpt(this.raw(j).trim())}\``;
+    return foundText(k, k === Kind.EOF ? '' : this.raw(j));
   }
 
   /** Record an error at `where` and stop the statement. */
@@ -345,7 +242,7 @@ class TreemapParser {
   }
 
   /** Report what was found where one of `want` was expected, then stop the statement. */
-  private fail(want: readonly number[], hint?: string): never {
+  protected override fail(want: readonly number[], hint?: string): never {
     const where = this.range();
     const k = this.kind();
     if (k === Kind.Error) this.badCharacters(where);
@@ -476,7 +373,8 @@ class TreemapParser {
    * failed (or the indent before it) when it starts one and the statement read something before
    * it, else the first after it.
    */
-  private recover(from: number): void {
+  protected override recover(): void {
+    const { from } = this;
     this.probe?.freeze();
     let j = this.failedAt > from ? this.failedAt : from + 1;
     // The indent of a row on the next line, which the failed statement took as its own blank.
@@ -489,14 +387,9 @@ class TreemapParser {
   }
 
   /** Run one statement rule; on failure, recover. */
-  private statement(rule: () => void): void {
-    const from = this.i;
-    try {
-      rule();
-    } catch (error) {
-      if (error !== STOP) throw error;
-      this.recover(from);
-    }
+  protected override statement(rule: () => void): void {
+    this.from = this.i;
+    super.statement(rule);
   }
 
   // ---- rules --------------------------------------------------------------------------

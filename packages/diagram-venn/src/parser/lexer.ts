@@ -49,6 +49,7 @@ import {
   LBRACKET,
   LF,
   PERCENT,
+  PLUS,
   QUOTE,
   RBRACE,
   RBRACKET,
@@ -56,7 +57,7 @@ import {
   SEMI,
   UNDERSCORE,
 } from '@mermaid-js/core/parser-kit';
-import { lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
+import { entityPlaceholders, lowerCode, StateLexer } from '@mermaid-js/shared/parser/state';
 import type { SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import type { StateLexerOptions } from '@mermaid-js/shared/parser/state';
 import { T } from './tokens.ts';
@@ -67,7 +68,6 @@ const S = { INITIAL: 0, BOL: 1 } as const;
 /** Start condition names by number, as jison names them, for the probe's mode (R-LANG-7). */
 const S_NAMES = ['INITIAL', 'bol'];
 
-const PLUS = 0x2b;
 const APOS = "'";
 
 /** Not in `[^#\n;]` (a title). */
@@ -117,7 +117,7 @@ export interface Lexed {
 const OPTIONS: StateLexerOptions = { charsPerToken: 4, crlf: 'fold', dropSpace: true };
 
 /**
- * Lex the venn body `src[from…]`. `from` and `view` come from `vennView` (`./index.ts`). With
+ * Lex the venn body `src[from…]`. `from` and `view` are shared `bodyView`'s `bodyStart` and `view`. With
  * `modeAt` (a probe's offset, R-LANG-7), the start condition there is {@link Lexed.mode}.
  */
 export function lex(src: string, from: number, view: SourceView, modeAt?: number): Lexed {
@@ -168,8 +168,7 @@ class VennLexer extends StateLexer {
       parts.push(out.slice(run));
       out = parts.join('');
     }
-    if (out.includes('#')) out = out.replace(/#(\w+);/g, (_, name: string) => `ﬂ${name}¶`);
-    return out;
+    return entityPlaceholders(out);
   }
 
   run(modeAt?: number): TokenStream {

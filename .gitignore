@@ -72,6 +72,7 @@ generated/
 !packages/diagram-*/src/theme/generated/
 !packages/mermaid/src/generated/
 !packages/language-service/src/generated/
+!packages/plugin-autoload/src/generated/
 !packages/layout-elk/src/generated/
 !packages/plugin-hand-drawn/src/generated/
 # The adapters' per-type Lezer parsers and Monarch files (#35, D134), checked by freshness specs
@@ -80,6 +81,8 @@ generated/
 
 
 /assistant/
+# Local output of the mermaid-docs skills (architecture docs, health reports)
+/.mermaid/
 # Project skills are shared (v13/docs/RELEASING.md uses release-alpha); the rest of .claude stays
 # local. `!/.claude/` first, so a global `.claude` ignore can't hide the skills.
 !/.claude/

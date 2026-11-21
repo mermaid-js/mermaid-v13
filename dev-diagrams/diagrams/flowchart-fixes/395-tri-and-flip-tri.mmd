@@ -1,0 +1,12 @@
+---
+title: '#395 tri and flip-tri shapes'
+description:
+  Fixed when both triangles are about as tall as they are wide, each label sits
+  inside the wide part of its triangle (the base for tri, the top for flip-tri),
+  and every edge ends on the outline. Today they are about 230 x 58.
+---
+flowchart LR
+  In --> T@{ shape: tri, label: "Triangle" } --> Out
+  In2 --> F@{ shape: flip-tri, label: "Flipped Triangle" } --> Out2
+  F --> Out3
+  F --> Out4

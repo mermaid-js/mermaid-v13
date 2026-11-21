@@ -13,13 +13,8 @@
  * And `@mermaid-js/plugin-hand-drawn`: `look: handDrawn` (or `handDrawn: true`) sketches the
  * outlines of flowchart, class, state and ER (D300); without it the look would only warn.
  */
-import type { Measurer } from '@mermaid-js/core/text';
-import elkLayouts from '@mermaid-js/layout-elk';
-import handDrawn from '@mermaid-js/plugin-hand-drawn';
-import icons from '@mermaid-js/plugin-icons';
-import math from '@mermaid-js/plugin-math';
 import { createMermaid, type RenderResult } from 'mermaid';
-import { iconPacks } from './icon-packs.ts';
+import { registerDevPlugins } from './plugins.ts';
 
 export interface RenderOptions {
   /** Integrator config, as `initialize()` gets it. The diagram's own front matter wins. */
@@ -28,9 +23,9 @@ export interface RenderOptions {
   readonly idPrefix?: string;
   /**
    * `table` (default): the deterministic table measurer, so browser and Node output match.
-   * `canvas`: what `render()` picks in a browser (the canvas measurer). Or a custom measurer.
+   * `canvas`: what `render()` picks in a browser (the canvas measurer).
    */
-  readonly measurer?: 'table' | 'canvas' | Measurer;
+  readonly measurer?: 'table' | 'canvas';
   /** `output.cssVariables`. Default true. */
   readonly cssVariables?: boolean;
 }
@@ -41,9 +36,8 @@ export interface RenderOutput {
 }
 
 const mermaid = createMermaid();
-mermaid.registerLayoutLoaders(elkLayouts);
-const registered = mermaid.registerExternalDiagrams([math, icons, handDrawn]);
-mermaid.registerIconPacks(iconPacks);
+// The same plugins as the Dev Explorer (`plugins.ts`, #391).
+const registered = registerDevPlugins(mermaid);
 
 export async function renderDiagram(
   text: string,
@@ -55,7 +49,6 @@ export async function renderDiagram(
     config: {
       ...options.config,
       deterministic: m === 'table',
-      ...(typeof m === 'object' ? { measurer: m } : {}),
       ...(options.cssVariables === undefined
         ? {}
         : { output: { cssVariables: options.cssVariables } }),

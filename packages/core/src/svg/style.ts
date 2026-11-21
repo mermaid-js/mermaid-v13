@@ -4,7 +4,7 @@
  * else is dropped with a warning. Also the constructors for the branded colour, length and
  * theme-reference values.
  */
-import { RE_INVALID_XML, num } from './escape.ts';
+import { RE_INVALID_XML, escAttr, num } from './escape.ts';
 import type {
   Attrs,
   SafeColor,
@@ -228,6 +228,8 @@ const PROPERTIES: Readonly<Record<string, readonly [Kind, Target]>> = {
   fill: ['color', 'shape'],
   stroke: ['color', 'shape'],
   'stroke-width': ['length', 'shape'],
+  rx: ['length', 'shape'],
+  ry: ['length', 'shape'],
   'stroke-dasharray': ['dash', 'shape'],
   'stroke-dashoffset': ['length', 'shape'],
   'stroke-opacity': ['opacity', 'shape'],
@@ -250,45 +252,48 @@ export const STYLE_PROPERTIES: ReadonlySet<string> = new Set(
   Object.keys(PROPERTIES).filter((p) => p !== BLEND)
 );
 
+type ValueCheck = (v: string, lower: string) => string | undefined;
+
+/** The lower-cased value when it is one of `set`. */
+const oneOf =
+  (set: ReadonlySet<string>): ValueCheck =>
+  (_v, lower) =>
+    set.has(lower) ? lower : undefined;
+
+const FONT_STYLES: ReadonlySet<string> = new Set(['normal', 'italic', 'oblique']);
+const LINE_CAPS: ReadonlySet<string> = new Set(['butt', 'round', 'square']);
+const LINE_JOINS: ReadonlySet<string> = new Set(['miter', 'round', 'bevel']);
+
+/** Each kind's check: the value as it may be written, or undefined when it is not allowed. */
+const VALUE_CHECKS: Readonly<Record<Kind, ValueCheck>> = {
+  blend: oneOf(BLEND_MODES),
+  color: checkColor,
+  length: checkLength,
+  size: (v, lower) => (FONT_SIZES.has(lower) ? lower : checkLength(v)),
+  spacing: (v, lower) => (lower === 'normal' ? lower : checkLength(v)),
+  opacity: (v) => (RE_NUMBER.test(v) ? v : undefined),
+  dash: (v, lower) => {
+    if (lower === 'none') return lower;
+    const parts = v.split(/[\s,]+/).filter((p) => p !== '');
+    return parts.length > 0 && parts.length <= 32 && parts.every((p) => RE_LENGTH.test(p))
+      ? parts.join(' ')
+      : undefined;
+  },
+  weight: oneOf(WEIGHTS),
+  fontStyle: oneOf(FONT_STYLES),
+  family: (v) => (RE_FAMILY.test(v) ? v : undefined),
+  decoration: (_v, lower) => {
+    const words = lower.split(/\s+/);
+    return words.length <= 3 && words.every((w) => DECORATIONS.has(w))
+      ? words.join(' ')
+      : undefined;
+  },
+  cap: oneOf(LINE_CAPS),
+  join: oneOf(LINE_JOINS),
+};
+
 function checkValue(kind: Kind, v: string): string | undefined {
-  const lower = v.toLowerCase();
-  switch (kind) {
-    case 'blend':
-      return BLEND_MODES.has(lower) ? lower : undefined;
-    case 'color':
-      return checkColor(v);
-    case 'length':
-      return checkLength(v);
-    case 'size':
-      return FONT_SIZES.has(lower) ? lower : checkLength(v);
-    case 'spacing':
-      return lower === 'normal' ? lower : checkLength(v);
-    case 'opacity':
-      return RE_NUMBER.test(v) ? v : undefined;
-    case 'dash': {
-      if (lower === 'none') return lower;
-      const parts = v.split(/[\s,]+/).filter((p) => p !== '');
-      return parts.length > 0 && parts.length <= 32 && parts.every((p) => RE_LENGTH.test(p))
-        ? parts.join(' ')
-        : undefined;
-    }
-    case 'weight':
-      return WEIGHTS.has(lower) ? lower : undefined;
-    case 'fontStyle':
-      return lower === 'normal' || lower === 'italic' || lower === 'oblique' ? lower : undefined;
-    case 'family':
-      return RE_FAMILY.test(v) ? v : undefined;
-    case 'decoration': {
-      const words = lower.split(/\s+/);
-      return words.length <= 3 && words.every((w) => DECORATIONS.has(w))
-        ? words.join(' ')
-        : undefined;
-    }
-    case 'cap':
-      return lower === 'butt' || lower === 'round' || lower === 'square' ? lower : undefined;
-    case 'join':
-      return lower === 'miter' || lower === 'round' || lower === 'bevel' ? lower : undefined;
-  }
+  return VALUE_CHECKS[kind](v, v.toLowerCase());
 }
 
 /** Checked style declarations, split by what they apply to, as presentation attributes. */
@@ -389,8 +394,41 @@ export function styleText(
       throw new TypeError(`Unsafe style value for ${prop}`);
     out += (out === '' ? '' : ';') + prop + ':' + text;
   }
-  if (tail) out += (out === '' ? '' : ';') + tail;
+  if (tail) {
+    const head = out === '' ? '' : out + ';';
+    out = head + tail;
+    if (tail === noted?.text) {
+      attrOut = out;
+      attrForm = (head === '' ? '' : escAttr(head)) + (noted.attr ??= escAttr(tail));
+    }
+  }
   return out as StyleText;
+}
+
+/** A theme's root text and, once a `styleText` that ends with it has needed it, its `escAttr`. */
+export interface NotedText {
+  readonly text: StyleText;
+  attr?: string;
+}
+
+// The root text a theme returned last, and the last `styleText` that ended with it, with its
+// `escAttr`: what the stream writer writes for that `style` value. Escaping is the same
+// character by character (`head` is free of invalid characters and ends with `;`), so the
+// escaped head and the escaped tail make up the escaped whole. Module-private; `attrForm` is
+// only ever `escAttr(attrOut)`, so an equal value from anywhere gets its own escaped form.
+let noted: NotedText | undefined;
+let attrOut: string | undefined;
+let attrForm = '';
+
+/** Marks `n.text` as the tail the next root `styleText` reads; returns the text. */
+export function noteRootText(n: NotedText): StyleText {
+  noted = n;
+  return n.text;
+}
+
+/** `escAttr(value)` when `value` is the last root style `styleText` built, else undefined. */
+export function rootStyleAttr(value: string): string | undefined {
+  return value === attrOut ? attrForm : undefined;
 }
 
 const RE_SCOPE = /^[A-Za-z_][\w-]{0,63}$/;

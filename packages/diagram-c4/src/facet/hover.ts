@@ -14,9 +14,8 @@ import { nameRoute, SLOT_TABLES } from '../parser/slots.ts';
 import type { SlotTable } from '../parser/slots.ts';
 import { KEYWORDS } from '../parser/tokens.ts';
 import { callAt } from './args.ts';
-import { code, span } from './markdown.ts';
 import { RELATION_TYPE_DOC, SLOT_DOCS } from './tables.ts';
-import { plural } from '@mermaid-js/shared/parser/facet';
+import { code, plural, span, statementOverlapping } from '@mermaid-js/shared/parser/facet';
 
 const IGNORED = 'This one is ignored.';
 const SET_AFTER =
@@ -37,20 +36,11 @@ interface ArgAt {
 
 /** The macro statement whose arguments hold `at`, at any depth. */
 function statementAt(list: readonly C4StatementNode[], at: number): C4StatementNode | undefined {
-  let lo = 0;
-  let hi = list.length - 1;
-  while (lo <= hi) {
-    const mid = (lo + hi) >> 1;
-    const n = list[mid]!;
-    if (n.range.end < at) lo = mid + 1;
-    else if (n.range.start > at) hi = mid - 1;
-    else {
-      const last = n.args[n.args.length - 1];
-      if (n.type !== 'Boundary' || (last !== undefined && at <= last.range.end)) return n;
-      return statementAt(n.children, at);
-    }
-  }
-  return undefined;
+  const n = statementOverlapping(list, at);
+  if (!n) return undefined;
+  const last = n.args[n.args.length - 1];
+  if (n.type !== 'Boundary' || (last !== undefined && at <= last.range.end)) return n;
+  return statementAt(n.children, at);
 }
 
 /** The argument at `at` in a parsed statement. */
@@ -102,7 +92,7 @@ function fromTokens(doc: DocumentView<C4Document>, at: number): ArgAt | undefine
 }
 
 /** One line, cut at 40 characters. */
-function short(text: string): string {
+export function short(text: string): string {
   const line = /^[^\n\r]*/.exec(text.trim())?.[0] ?? '';
   return line.length > 40 || line.length < text.trim().length ? `${line.slice(0, 40)}…` : line;
 }

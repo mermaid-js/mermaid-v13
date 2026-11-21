@@ -24,6 +24,7 @@ import {
   DX,
   DY,
   drawBox,
+  drawFrame,
   drawText,
   glyphFor,
   graphemes,
@@ -34,6 +35,7 @@ import {
   type Dir,
   type GlyphSet,
 } from '@mermaid-js/core/ascii';
+import { dirOf, trimmed } from '@mermaid-js/shared/ascii';
 import type {
   C4BoundaryLayout,
   C4ElementLayout,
@@ -138,26 +140,6 @@ interface Pen {
   readonly wrap: boolean;
 }
 
-/** A frame: dashed rules for a boundary, solid for a deployment node. */
-function drawFrame(pen: Pen, r: CellRect, dashed: boolean): void {
-  const { canvas, glyphs } = pen;
-  const s = dashed ? glyphs.dotted : glyphs.solid;
-  const right = r.x + r.width - 1;
-  const bottom = r.y + r.height - 1;
-  for (let i = r.x + 1; i < right; i++) {
-    canvas.draw(i, r.y, s.h);
-    canvas.draw(i, bottom, s.h);
-  }
-  for (let j = r.y + 1; j < bottom; j++) {
-    canvas.draw(r.x, j, s.v);
-    canvas.draw(right, j, s.v);
-  }
-  canvas.draw(r.x, r.y, s.tl);
-  canvas.draw(right, r.y, s.tr);
-  canvas.draw(r.x, bottom, s.bl);
-  canvas.draw(right, bottom, s.br);
-}
-
 /** `lines` centred across `r` from row `top`, each cut to the room inside its border. */
 function centred(pen: Pen, r: CellRect, lines: readonly string[], top: number): Written[] {
   return lines.map((line, k) => {
@@ -220,11 +202,6 @@ function cover(set: CellSet, texts: readonly Written[]): void {
     const width = cellWidth(t.text);
     for (let i = 0; i < width; i++) set.add(t.x + i, t.y);
   }
-}
-
-/** The way from `a` to the neighbouring cell `b`. */
-function dirOf(a: Cell, b: Cell): Dir {
-  return DIRS.find((d) => a.x + DX[d] === b.x && a.y + DY[d] === b.y) ?? 0;
 }
 
 /**
@@ -600,7 +577,7 @@ export function drawC4(layout: C4Layout, glyphs: GlyphSet, budget = ROUTE_BUDGET
   const frames = layout.boundaries.map((b) => grid.rect(b.box));
   layout.boundaries.forEach((b, k) => {
     const r = frames[k]!;
-    drawFrame(pen, r, b.nodeKind === undefined);
+    drawFrame(pen.canvas, b.nodeKind === undefined ? pen.glyphs.dotted : pen.glyphs.solid, r);
     pen.frameCells.border(r);
     const right = r.x + r.width - 1;
     const bottom = r.y + r.height - 1;
@@ -693,19 +670,4 @@ export function drawC4(layout: C4Layout, glyphs: GlyphSet, budget = ROUTE_BUDGET
     labels: labels.map(shift),
     headers: headers.map((h) => shift({ x: h.x, y: h.y, width: cellWidth(h.text), height: 1 })),
   };
-}
-
-/** The canvas as text without its empty margin, and where that text starts. */
-function trimmed(canvas: Canvas): { text: string; left: number; top: number } {
-  let lines = canvas.toString().split('\n');
-  let top = 0;
-  while (lines.length > 0 && lines[0] === '') {
-    lines.shift();
-    top++;
-  }
-  while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
-  const margin = Math.min(...lines.filter((l) => l !== '').map((l) => l.search(/\S/)));
-  const left = margin > 0 && Number.isFinite(margin) ? margin : 0;
-  if (left > 0) lines = lines.map((l) => l.slice(left));
-  return { text: lines.join('\n'), left, top };
 }

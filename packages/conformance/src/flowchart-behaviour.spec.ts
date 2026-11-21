@@ -311,6 +311,17 @@ describe('flowchart render: nodes, edges and clusters', () => {
     expect(warnings.map((w) => w.code)).toContain('STYLE_PROPERTY_DROPPED');
   });
 
+  it('applies rx and ry from classDef and style to node outlines', async () => {
+    const { tree, warnings } = await draw(
+      'flowchart LR\n  A:::rounded --> B\n  classDef rounded rx:10,ry:10px\n  style B rx:5'
+    );
+    const shapeOf = (id: string) => tree.children(byAst(tree, `n:${id}`)[0]!)[0]!;
+    expect(tree.getAttr(shapeOf('A'), 'rx')).toBe('10');
+    expect(tree.getAttr(shapeOf('A'), 'ry')).toBe('10px');
+    expect(tree.getAttr(shapeOf('B'), 'rx')).toBe('5');
+    expect(warnings).toEqual([]);
+  });
+
   it('wraps a node with click href in a link and its tooltip in a title', async () => {
     const { tree } = await draw(
       'flowchart TD\n  A --> B\n  click A "https://example.com" "Go there" _blank'
@@ -555,7 +566,8 @@ describe('flowchart render: features', () => {
       return tree.getAttr(tree.children(byAst(tree, 'e:A>C')[0]!)[0]!, 'd')!;
     };
     expect(await d('linear')).not.toMatch(/[CQ]/);
-    expect(await d('step')).toMatch(/Q/);
+    expect(await d('step')).toMatch(/L.*L.*L/);
+    expect(await d('step')).not.toMatch(/[CQ]/);
     expect(await d('basis')).toMatch(/C/);
   });
 

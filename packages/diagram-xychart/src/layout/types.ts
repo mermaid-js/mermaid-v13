@@ -10,6 +10,7 @@
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
+import type { Rect } from '@mermaid-js/shared/layout';
 import type { XyChartOrientation, XyChartPlotKind } from '../model.ts';
 
 export interface Point {
@@ -17,10 +18,7 @@ export interface Point {
   readonly y: number;
 }
 
-export interface Rect extends Point {
-  readonly width: number;
-  readonly height: number;
-}
+export type { Rect };
 
 /** A straight stroke from `(x1, y1)` to `(x2, y2)`. */
 export interface Segment {
@@ -105,8 +103,9 @@ export interface XyBarPlotLayout {
   /** One per data point with a value, in data order. */
   readonly bars: readonly XyBar[];
   /**
-   * `showDataLabel`: one label per bar with an area, each the plot's own value (D382), all at
-   * one font size (v12's); none when no bar has room (D383 `XYCHART_LABEL_TOO_SMALL`).
+   * `showDataLabel`: one label per bar with room for it, each the plot's own value (D382), all
+   * at one font size, the smallest that fits them (D611); none when no bar has room
+   * (`XYCHART_LABEL_TOO_SMALL`).
    */
   readonly dataLabels: readonly XyText[];
 }

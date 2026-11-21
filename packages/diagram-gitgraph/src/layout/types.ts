@@ -6,6 +6,7 @@
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey } from '@mermaid-js/core/text';
+import type { Rect } from '@mermaid-js/shared/layout';
 import type { GitCommitType, GitDirection } from '../model.ts';
 
 export interface Point {
@@ -13,10 +14,7 @@ export interface Point {
   readonly y: number;
 }
 
-export interface Rect extends Point {
-  readonly width: number;
-  readonly height: number;
-}
+export type { Rect };
 
 /** SVG `translate(dx, dy) rotate(angle, cx, cy)`: rotate about (cx, cy), then move. */
 export interface Transform {

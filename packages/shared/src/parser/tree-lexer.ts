@@ -2,10 +2,10 @@
  * The lexer of the indentation-tree diagrams (mindmap, kanban): a state machine mirroring the
  * start conditions and rule order of v12's `mindmap.jison`, which `kanban.jison` forks (it adds
  * `@{ … }` shape data), modelled on the timeline lexer (parser-method §1):
- * - it lexes the text v12 lexed, with comments and directives cut out (`sourceView`) and line
- *   breaks as v12 had them (CRLF and CR as LF), and maps each token back to its range in the
- *   source, which is never rewritten. A token that runs over a removed span is one token whose
- *   range covers it;
+ * - it lexes the text v12 lexed, with comments and directives cut out (`sourceView`), a tag's
+ *   `="x"` as `='x'` (D114) and line breaks as v12 had them (CRLF and CR as LF), and maps each
+ *   token back to its range in the source, which is never rewritten. A token that runs over a
+ *   removed span is one token whose range covers it;
  * - comments and directives are trivia tokens, each with its own range, in source order; so is
  *   a dropped `;` that no token took (`Space`).
  *
@@ -35,6 +35,7 @@ import {
   COLON,
   DASH,
   DQUOTE,
+  FIRST_DIAGRAM_KIND,
   isLineEnd,
   isSpace,
   isWord,
@@ -51,7 +52,79 @@ import {
   type SourceView,
   type TokenStream,
 } from '@mermaid-js/core/parser-kit';
+import { tagQuotes } from './drop.ts';
 import { lowerCode, StateLexer, type StateLexerOptions } from './state-lexer.ts';
+
+const F = FIRST_DIAGRAM_KIND;
+
+/**
+ * The kinds every indentation-tree diagram numbers the same (`kanban.jison` forks
+ * `mindmap.jison`): its keyword is `FIRST_DIAGRAM_KIND`, these follow, and its own kinds (shape
+ * data, `Eof`) come after them. A diagram's `T` table names each one.
+ */
+export const TREE_BASE_KINDS = {
+  /**
+   * `\s*%%.*` (a `%%` that v12's comment removal left: mid-line, or a bare `%%` line, with the
+   * blanks and line breaks before it), or `[\s]+[\n]`: blanks up to the last line break of
+   * their run. One token either way.
+   */
+  SpaceLine: F + 1,
+  /** `[\s]+` holding no line break: the indent before a node. */
+  SpaceList: F + 2,
+  /**
+   * A node id: `[^\(\[\n\)\{\}]+` (blanks, `:`, `%`, `]` and quotes included), and kanban's
+   * stops at `@` too.
+   */
+  NodeId: F + 3,
+  /** A shape opener: `-)`, `(-`, `))`, `)`, `((`, `{{`, `(` or `[`. */
+  NodeDStart: F + 4,
+  /**
+   * A node's text: inside the shape (`[^\)\]\(\}]+`, line breaks included, or a `}` and the
+   * rest of its line), or the inside of a quoted or markdown (quote and backtick) string.
+   */
+  NodeDescr: F + 5,
+  /** A shape closer: `))`, `)`, `]`, `}}`, `(-`, `-)`, `((` or `(`. */
+  NodeDEnd: F + 6,
+  /** `::icon(` (jison returns no token for it). */
+  IconStart: F + 7,
+  /** `[^\)]+` after `::icon(`, line breaks included. */
+  Icon: F + 8,
+  /** The `)` closing `::icon(` (jison returns no token for it). */
+  IconEnd: F + 9,
+  /** `:::` (jison returns no token for it). */
+  ClassStart: F + 10,
+  /** `.+` after `:::`: the rest of the line. */
+  Class: F + 11,
+  /** The line break right after a bare `:::` (jison returns no token for it). */
+  ClassEnd: F + 12,
+  /** `"` opening a string in a shape (jison returns no token for it). */
+  StringStart: F + 13,
+  /** `"` closing it (jison returns no token for it). */
+  StringEnd: F + 14,
+  /** A quote then a backtick, opening a markdown string in a shape (jison returns no token for it). */
+  MdStringStart: F + 15,
+  /** A backtick then a quote, closing it (jison returns no token for it). */
+  MdStringEnd: F + 16,
+} as const;
+
+/**
+ * The jison terminal each of {@link TREE_BASE_KINDS} stands for, where it has one, and the
+ * shared kinds': a run of line breaks is `Kind.Newline` (jison's `NL`) and `LEXICAL_ERROR`
+ * marks where jison threw. A diagram adds its keyword and its own kinds (dev and test use:
+ * the lexer-parity gates compare token streams by these names; never shown to users, R-ERR-5).
+ */
+export const TREE_JISON_NAMES: Readonly<Record<number, string>> = /* @__PURE__ */ Object.freeze({
+  [TREE_BASE_KINDS.SpaceLine]: 'SPACELINE',
+  [TREE_BASE_KINDS.SpaceList]: 'SPACELIST',
+  [TREE_BASE_KINDS.NodeId]: 'NODE_ID',
+  [TREE_BASE_KINDS.NodeDStart]: 'NODE_DSTART',
+  [TREE_BASE_KINDS.NodeDescr]: 'NODE_DESCR',
+  [TREE_BASE_KINDS.NodeDEnd]: 'NODE_DEND',
+  [TREE_BASE_KINDS.Icon]: 'ICON',
+  [TREE_BASE_KINDS.Class]: 'CLASS',
+  [Kind.Newline]: 'NL',
+  [Kind.Error]: 'LEXICAL_ERROR',
+});
 
 /**
  * The token kinds of one indentation-tree diagram, as its own table names them: the terminals
@@ -191,6 +264,11 @@ class TreeLexer extends StateLexer {
   ) {
     super(src, from, view, OPTIONS);
     this.wordStart = word.charCodeAt(0);
+  }
+
+  /** v12's text: `="x"` inside a tag as `='x'` (`cleanupText`, D114), one character for one. */
+  protected override viewText(view: SourceView): string {
+    return view.mask ? tagQuotes(view) : view.text;
   }
 
   run(probe?: Probe): TokenStream {

@@ -1,0 +1,10 @@
+---
+title: '#357 markdownAutoWrap false'
+description:
+  Fixed when the long markdown label stays on one line. With the default
+  (markdownAutoWrap true) it would wrap.
+config:
+  markdownAutoWrap: false
+---
+flowchart LR
+  A["`A very long markdown label that should not wrap at all`"] --> B

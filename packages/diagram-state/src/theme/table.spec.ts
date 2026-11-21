@@ -9,7 +9,13 @@ import { describe, expect, it } from 'vitest';
 import { state } from '../plugin.ts';
 
 const { theme: table }: Pick<DiagramPlugin, 'id' | 'theme'> = state;
-const OWN = ['compositeBackground', 'compositeTitleBackground', 'altBackground'];
+const OWN = [
+  'compositeBackground',
+  'compositeTitleBackground',
+  'altBackground',
+  'stateLabelColor',
+  'compositeTitleColor',
+];
 
 const themed = async (name: string, themeVariables?: Record<string, unknown>) =>
   createTheme(await loadTheme(name as 'default'), {
@@ -62,12 +68,54 @@ describe('the state theme table (#414 T3)', () => {
   });
 
   it('derives the body from background, the classic strip from mainBkg, base nesting from tertiaryColor', async () => {
-    const body = await themed('default', { background: '#abcdef' });
+    const body = await themed('forest', { background: '#abcdef' });
     expect(body.value('compositeBackground')).toBe('#abcdef');
-    const strip = await themed('default', { mainBkg: '#123456' });
+    // `default` keeps v12's `#ffffff` body under a `background` override (`canvasBkg`, D656).
+    const kept = await themed('default', { background: '#abcdef' });
+    expect(kept.value('compositeBackground')).toBe('#ffffff');
+    const strip = await themed('forest', { mainBkg: '#123456' });
     expect(strip.value('compositeTitleBackground')).toBe('#123456');
+    // `default` keeps v12's `#ececff` strip under a `mainBkg` override (`canvasNodeBkg`, D656).
+    const keptStrip = await themed('default', { mainBkg: '#123456' });
+    expect(keptStrip.value('compositeTitleBackground')).toBe('#ececff');
     const nested = await themed('base', { tertiaryColor: '#c0ffee' });
     expect(nested.value('altBackground')).toBe('#c0ffee');
+  });
+
+  // D638, #827: v12 drew state text and composite titles in `stateLabelColor`, which fell to
+  // `primaryTextColor` in every classic theme (`stateBkg` was still unset when it ran). The
+  // redux and neo families keep `nodeTextColor` and `titleColor`.
+  it.each([
+    ['default', '#131300', '#131300'],
+    ['dark', '#e0dfdf', '#e0dfdf'],
+    ['forest', '#321b67', '#321b67'],
+    ['neutral', '#111111', '#111111'],
+    ['base', '#333333', '#333333'],
+    ['redux', '#28253d', '#28253d'],
+    ['redux-color', '#28253d', '#28253d'],
+    ['redux-dark', '#e0dfdf', '#dfe0e0'],
+    ['redux-dark-color', '#e0dfdf', '#dfe0e0'],
+    ['neo', '#333333', '#000000'],
+    ['neo-dark', '#e0dfdf', '#dfe0e0'],
+  ] as const)(
+    '%s: stateLabelColor %s, compositeTitleColor %s (D638)',
+    async (name, text, title) => {
+      const t = await themed(name);
+      expect(t.value('stateLabelColor')).toBe(text);
+      expect(t.value('compositeTitleColor')).toBe(title);
+    }
+  );
+
+  it('follows primaryTextColor in the classic family, and stateLabelColor recolours titles (D638)', async () => {
+    const t = await themed('neutral', { primaryTextColor: '#123456' });
+    expect(t.value('stateLabelColor')).toBe('#123456');
+    expect(t.value('compositeTitleColor')).toBe('#123456');
+    const own = await themed('default', { stateLabelColor: '#654321' });
+    expect(own.value('compositeTitleColor')).toBe('#654321');
+    // The other families read nodeTextColor and titleColor, whatever those follow.
+    const redux = await themed('redux', { nodeTextColor: '#123456', titleColor: '#abcdef' });
+    expect(redux.value('stateLabelColor')).toBe('#123456');
+    expect(redux.value('compositeTitleColor')).toBe('#abcdef');
   });
 
   it('takes themeVariables overrides', async () => {

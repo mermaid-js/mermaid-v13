@@ -7,7 +7,7 @@ import {
   ALIGNED_CENTRE_TOLERANCE,
   straightenAlignedCrossLaneEdges,
 } from '../direction/alignedEdgeStraightening.ts';
-import type { Point } from '../direction/geometry.ts';
+import type { Point } from '../../types.ts';
 import { postProcessSwimlaneLayout } from '../postProcessing.ts';
 
 const SIZE = 100;

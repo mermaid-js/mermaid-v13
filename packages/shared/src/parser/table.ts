@@ -29,6 +29,7 @@ import {
   PERCENT,
   type Probe,
   RBRACE,
+  scanWhile,
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
 import type { V12Lex, V12Text } from './v12-text.ts';
@@ -103,9 +104,7 @@ export function literal(x: Scan, word: string, p: number): number {
 
 /** End of the run of `\s` from `p`. */
 export function blanks(x: Scan, p: number): number {
-  let j = p;
-  while (j < x.n && isSpace(x.text.charCodeAt(j))) j++;
-  return j;
+  return scanWhile(x.text, p, isSpace);
 }
 
 /** The first LF at or after `p` (`[^\n]*` ends there), else the end. */

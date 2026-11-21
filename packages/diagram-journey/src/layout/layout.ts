@@ -9,7 +9,9 @@
  * bands gap by `taskMargin`, the margin grows past a legend wider than it with no threshold
  * jump, a label taller than its box grows the box downward, and the bounds are what is drawn
  * (D224). A task or section name keeps a word wider than its box whole and the box widens to
- * hold it, moving the tasks after it along (D558).
+ * hold it, moving the tasks after it along (D558). A title of several lines grows upward from its
+ * last baseline at 25; a grown band moves the task row down, and a grown band or task moves the
+ * activity line and the faces down (D615).
  */
 import { pathBuilder } from '@mermaid-js/core/svg';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
@@ -137,19 +139,38 @@ function widthsOf(
   return { names, widths, runs };
 }
 
+/** How far a label taller than `height` grows its box: the tallest one's overflow, else 0. */
+const growth = (labels: Iterable<MeasuredLabel>, height: number): number => {
+  let most = 0;
+  for (const l of labels) most = Math.max(most, l.height - height);
+  return most;
+};
+
+/**
+ * How far the rows below the bands move down (D615): the task row by the tallest band's growth,
+ * the activity line and the faces by that plus the tallest task's growth. Both are 0 when every
+ * label fits its box, so such a layout keeps v12's rows.
+ */
+interface Drops {
+  readonly tasks: number;
+  readonly faces: number;
+}
+
 /** v12 `drawTasks`: a band per run of tasks under one section name, a box per task. */
 function tasksOf(
   model: JourneyModel,
   env: Env,
   left: number,
   slots: ReadonlyMap<string, number>
-): { bands: BandLayout[]; tasks: TaskLayout[] } {
+): { bands: BandLayout[]; tasks: TaskLayout[]; drops: Drops } {
   const { m } = env;
-  const taskY = m.taskRows * m.height + m.diagramMarginY;
-  const bands: BandLayout[] = [];
-  const tasks: TaskLayout[] = [];
   const all = model.tasks;
   const { names, widths, runs } = widthsOf(model, env);
+  const bandGrowth = growth(runs.values(), m.height);
+  const drops = { tasks: bandGrowth, faces: bandGrowth + growth(names, m.height) };
+  const taskY = m.taskRows * m.height + m.diagramMarginY + drops.tasks;
+  const bands: BandLayout[] = [];
+  const tasks: TaskLayout[] = [];
   let band: number | undefined;
   let slot = 0;
   let x = left;
@@ -177,7 +198,8 @@ function tasksOf(
     }
     const name = names[i]!;
     const width = widths[i]!;
-    // A label taller than the box grows it downward; the top edge, its dots and the face stay.
+    // A label taller than the box grows it downward; the line, the face and the arrow move down
+    // with the tallest box (D615).
     const box = { x, y: taskY, width, height: Math.max(m.height, name.height) };
     const cx = x + width / 2;
     const label = centred(name, box);
@@ -204,24 +226,32 @@ function tasksOf(
       ...(band === undefined ? {} : { band }),
       ...(label ? { label } : {}),
       drawnScore: drawnScore(t.score),
-      line: { x: cx, y1: taskY, y2: Math.max(lineEnd(m), taskY) },
-      face: faceOf(m, cx, t.score),
+      line: { x: cx, y1: taskY, y2: Math.max(lineEnd(m) + drops.faces, taskY) },
+      face: faceOf(m, cx, t.score, drops.faces),
       dots,
     });
     x += width + m.taskMargin;
   });
-  return { bands, tasks };
+  return { bands, tasks, drops };
 }
 
-/** The arrow under the tasks: from `left` to a task margin past the last task (v12's marker). */
-function activityOf(env: Env, left: number, tasks: readonly TaskLayout[]): ActivityLine {
+/**
+ * The arrow under the tasks: from `left` to a task margin past the last task (v12's marker),
+ * `drop` below v12's place (D615).
+ */
+function activityOf(
+  env: Env,
+  left: number,
+  tasks: readonly TaskLayout[],
+  drop: number
+): ActivityLine {
   const { m } = env;
   const lastTask = tasks.at(-1);
   const end = lastTask ? lastTask.x + lastTask.width : left;
   const w = m.activityStroke;
   const tip = end + m.taskMargin;
   const x2 = tip - m.headReach * w;
-  const y = m.activityRows * m.height;
+  const y = m.activityRows * m.height + drop;
   const back = x2 - m.headBack * w;
   const head = pathBuilder()
     .moveTo(back, y - m.headHalf * w)
@@ -232,13 +262,17 @@ function activityOf(env: Env, left: number, tasks: readonly TaskLayout[]): Activ
   return { y, x1: left, x2, strokeWidth: w, head };
 }
 
+/** The title, its last baseline at v12's 25: a title of several lines grows upward (D615). */
 function titleOf(model: JourneyModel, env: Env, left: number): PlacedLabel | undefined {
   if (model.title === undefined) return undefined;
   const text = env.measure(model.title, env.fonts.title, Infinity);
-  if (text.lines.length === 0) return undefined;
+  const last = text.lines.length - 1;
+  if (last < 0) return undefined;
+  const baseline = (i: number): number =>
+    text.baselines?.[i] ?? i * text.lineHeight + text.baseline;
   return {
     x: left,
-    y: env.m.titleBaseline - text.baseline,
+    y: env.m.titleBaseline - text.baseline - (baseline(last) - baseline(0)),
     width: text.width,
     height: text.height,
     text,
@@ -258,8 +292,8 @@ export function layoutJourney(model: JourneyModel, ctx: JourneyLayoutContext): J
     slots.size === 0
       ? m.leftMargin
       : Math.max(m.leftMargin, m.legendTextX + inset + widest + inset);
-  const { bands, tasks } = tasksOf(model, env, left, slots);
-  const activity = activityOf(env, left, tasks);
+  const { bands, tasks, drops } = tasksOf(model, env, left, slots);
+  const activity = activityOf(env, left, tasks, drops.faces);
   const title = titleOf(model, env, left);
   const drawn = { legend, bands, tasks, activity, left, ...(title ? { title } : {}) };
   const box = union(drawnRects(m, drawn));

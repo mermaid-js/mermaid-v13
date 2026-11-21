@@ -40,7 +40,9 @@ describe('resolveConfig precedence (mirrors v12 config.spec.ts)', () => {
   it('returns the defaults when nothing else is given', () => {
     const { config, warnings } = resolve();
     expect(config.theme).toBe('redux-color');
-    expect(config.fontSize).toBe(16);
+    // No default since D620, so a diagram can tell "not set" from 16.
+    expect(config.fontSize).toBeUndefined();
+    expect('fontSize' in config).toBe(false);
     expect(config.securityLevel).toBe('default');
     expect(warnings).toEqual([]);
   });
@@ -474,7 +476,7 @@ describe('CORE_DEFAULTS', () => {
       ...v12,
       theme: 'redux-color',
       layout: 'layered',
-      lineHops: false, // new in v13, shared by every edge-drawing diagram (D537)
+      lineHops: true, // new in v13, shared by every edge-drawing diagram (D537), on by default (D672)
       // Core's own swimlane engine: its section's defaults resolve in core (D533, D537).
       swimlane: {
         useMaxWidth: true,
@@ -487,6 +489,7 @@ describe('CORE_DEFAULTS', () => {
       },
       securityLevel: 'default',
       maxEdges: 5000,
+      fontSize: undefined, // no default, so "not set" can be told from 16 (D620)
       look: undefined, // removed, no default (D153)
       handDrawnSeed: undefined, // the hand-drawn plugin's own key (D303)
     });

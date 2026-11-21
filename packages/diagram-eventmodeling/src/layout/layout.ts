@@ -16,10 +16,11 @@
  *
  * Changed, as decided: each box at `max(stagger, lane.r + 10)`, so boxes never overlap (D521); a
  * relation within a lane from the source's right edge to the target's left edge, at each box's
- * middle (D521); box text is the bold name and the data in mono, as written (D523), wrapped at
+ * middle (D521), and one that skips a box of its lane under the row instead (D659, `under.ts`),
+ * the lanes holding one grown to fit while every box keeps v12's top; box text is the bold name and the data in mono, as written (D523), wrapped at
  * 430, measured with the theme font; the margin is `eventmodeling.padding` around what is drawn
- * (D224). New: a frame that names itself as its source gets a loop over its box's top right
- * corner, clear of the other relations' ends (v12 drew a line through the box), and text past the
+ * (D224). New: a frame that names itself as its source gets a loop under its box's bottom right
+ * corner, clear of the other relations' ends (D659; v12 drew a line through the box), and text past the
  * greatest box height is left out and flagged (v12 clipped it).
  */
 import type { RenderContext } from '@mermaid-js/core';
@@ -42,6 +43,7 @@ import {
   SOURCE_ANCHOR,
   TARGET_ANCHOR,
 } from './metrics.ts';
+import { planUnder, type UnderRoute } from './under.ts';
 import type {
   EventModelBoxLayout,
   EventModelLaneLayout,
@@ -53,6 +55,7 @@ import type {
   Rect,
 } from './types.ts';
 import { unionRects } from '@mermaid-js/shared/layout';
+import { growRect } from '@mermaid-js/core/layout';
 
 /**
  * What the layout reads from the render context (`warn` for `EVENTMODELING_CONFIG_INVALID`,
@@ -129,11 +132,16 @@ export function layoutEventModel(
   let maxR = 0;
   for (const b of sized) maxR = Math.max(maxR, b.x + b.width + M.boxPadding);
 
+  // The routes under a row (D659), in depths below the lane top, so their lanes can grow.
+  const under = planUnder(structure.relations, sized, structure.lanes.length);
+
   // Lanes: stacked in index order.
   const lanes: EventModelLaneLayout[] = [];
   let y = 0;
   for (const [k, lane] of structure.lanes.entries()) {
-    const height = Math.max(M.laneMinHeight, laneTallest[k] ?? 0) + 2 * M.lanePadding;
+    // A lane holding a route under its row or a self loop reaches `lanePadding` below it (D659).
+    const fit = Math.max(M.laneMinHeight, laneTallest[k] ?? 0) + 2 * M.lanePadding;
+    const height = Math.max(fit, (under.depth[k] as number) + M.lanePadding);
     const text = env.label(lane.label, Infinity, Style.Bold);
     const labelAt = { x: M.laneLabelX, y: y + M.laneLabelY };
     lanes.push({
@@ -156,7 +164,9 @@ export function layoutEventModel(
     return { ...b, y: top, ...placeText(texts[k] as BoxText, { ...b, y: top }) };
   });
 
-  const relations = structure.relations.map((r) => relationOf(r, boxes, lanes));
+  const relations = structure.relations.map((r, k) =>
+    relationOf(r, boxes, lanes, under.routes.get(k))
+  );
   return {
     font,
     radius: M.radius,
@@ -164,7 +174,7 @@ export function layoutEventModel(
     boxes,
     relations,
     padding,
-    bounds: inflate(union(drawn(lanes, boxes, relations)), padding),
+    bounds: growRect(union(drawn(lanes, boxes, relations)), padding),
   };
 }
 
@@ -334,38 +344,13 @@ function placeText(
 function relationOf(
   r: EventModelRelation,
   boxes: readonly EventModelBoxLayout[],
-  lanes: readonly EventModelLaneLayout[]
+  lanes: readonly EventModelLaneLayout[],
+  below: UnderRoute | undefined
 ): EventModelRelationLayout {
   const s = boxes[r.source] as EventModelBoxLayout;
   const t = boxes[r.target] as EventModelBoxLayout;
-  let route: EventModelRoute;
-  let points: Point[];
-  if (r.source === r.target) {
-    route = 'self';
-    // Over the top right corner, clear of the anchors of the relations between lanes.
-    const to = s.x + s.width - M.selfLoopInset;
-    const from = to - M.selfLoopWidth;
-    const over = s.y - M.selfLoopRise;
-    points = [
-      { x: from, y: s.y },
-      { x: from, y: over },
-      { x: to, y: over },
-      { x: to, y: s.y },
-    ];
-  } else if (s.lane === t.lane) {
-    route = 'along';
-    points = [
-      { x: s.x + s.width, y: s.y + s.height / 2 },
-      { x: t.x, y: t.y + t.height / 2 },
-    ];
-  } else {
-    const up = (lanes[s.lane]?.y ?? 0) > (lanes[t.lane]?.y ?? 0);
-    route = up ? 'up' : 'down';
-    points = [
-      { x: s.x + share(s.width, SOURCE_ANCHOR), y: up ? s.y : s.y + s.height },
-      { x: t.x + share(t.width, TARGET_ANCHOR), y: up ? t.y + t.height : t.y },
-    ];
-  }
+  const laneTop = lanes[s.lane]?.y ?? 0;
+  const [route, points] = bentRoute(r, s, t, laneTop, below) ?? straightRoute(s, t, lanes);
   return {
     source: r.source,
     target: r.target,
@@ -376,6 +361,59 @@ function relationOf(
     points,
     head: headOf(points),
   };
+}
+
+type Routed = [EventModelRoute, Point[]];
+
+/** A self loop, or a relation under its row (D659); `undefined` for any other. */
+function bentRoute(
+  r: EventModelRelation,
+  s: Rect,
+  t: Rect,
+  laneTop: number,
+  below: UnderRoute | undefined
+): Routed | undefined {
+  if (r.source === r.target) {
+    // Under the bottom right corner, clear of the anchors of the relations between lanes.
+    const to = s.x + s.width - M.selfLoopInset;
+    return ['self', underRow(s, s, to - M.selfLoopWidth, to, s.y + s.height + M.selfLoopDepth)];
+  }
+  if (!below) return undefined;
+  return ['under', underRow(s, t, below.from, below.to, laneTop + below.depth)];
+}
+
+/** A relation to the next box of its lane (`along`, D521), or between lanes (v12's segment). */
+function straightRoute(
+  s: EventModelBoxLayout,
+  t: EventModelBoxLayout,
+  lanes: readonly EventModelLaneLayout[]
+): Routed {
+  if (s.lane === t.lane)
+    return [
+      'along',
+      [
+        { x: s.x + s.width, y: s.y + s.height / 2 },
+        { x: t.x, y: t.y + t.height / 2 },
+      ],
+    ];
+  const up = (lanes[s.lane]?.y ?? 0) > (lanes[t.lane]?.y ?? 0);
+  return [
+    up ? 'up' : 'down',
+    [
+      { x: s.x + share(s.width, SOURCE_ANCHOR), y: up ? s.y : s.y + s.height },
+      { x: t.x + share(t.width, TARGET_ANCHOR), y: up ? t.y + t.height : t.y },
+    ],
+  ];
+}
+
+/** Down from the source's bottom at `from`, across at `channel`, up into the target's at `to`. */
+function underRow(s: Rect, t: Rect, from: number, to: number, channel: number): Point[] {
+  return [
+    { x: from, y: s.y + s.height },
+    { x: from, y: channel },
+    { x: to, y: channel },
+    { x: to, y: t.y + t.height },
+  ];
 }
 
 /** v12's arrowhead (`0 0, 10 3.5, 0 7`, tip at the line's end) along the last segment. */
@@ -411,10 +449,3 @@ export function drawn(
 }
 
 const union = unionRects;
-
-const inflate = (r: Rect, by: number): Rect => ({
-  x: r.x - by,
-  y: r.y - by,
-  width: r.width + 2 * by,
-  height: r.height + 2 * by,
-});

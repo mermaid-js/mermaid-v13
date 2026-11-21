@@ -7,7 +7,7 @@
 // `:::` classes on nodes, `edge section-edge-<n> edge-depth-<d>` on edges (`d` from the raw
 // indent, GAPS #388). Coordinates are absolute; nothing has a transform.
 import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
-import { openSvgRoot } from '@mermaid-js/shared/svg/document';
+import { cls, openSvgRoot } from '@mermaid-js/shared/svg/document';
 import type { MindmapLayout } from '../layout/layout.ts';
 import type { MindmapNodeView } from '../layout/prepare.ts';
 import type { MindmapModel } from '../model.ts';
@@ -23,16 +23,6 @@ interface Scene {
   readonly layout: MindmapLayout;
   readonly ctx: MindmapRenderContext;
   readonly paint: Paints;
-}
-
-/** An author's `:::` classes as class names: characters outside `[\w-]` dropped. */
-function userClasses(names: readonly string[]): string {
-  let out = '';
-  for (const n of names) {
-    const c = n.replace(/[^\w-]/g, '');
-    if (c) out += ' ' + c;
-  }
-  return out;
 }
 
 /** Writes the whole `<svg>` document for a laid-out mindmap. */
@@ -53,15 +43,12 @@ export function renderMindmap(
 /** The `<svg>` root. Mindmap has no title or description (v12's grammar has none). */
 function openRoot({ w, layout, ctx }: Scene): void {
   const { theme, config } = ctx;
-  const width = Math.max(1, Math.ceil(layout.width));
-  const height = Math.max(1, Math.ceil(layout.height));
-  const maxWidth = config.mindmap?.useMaxWidth !== false;
   const font = theme.font();
   const fontSize = theme.length('fontSize');
   openSvgRoot(w, ctx, {
     name: 'mindmap',
-    viewBox: [0, 0, width, height],
-    maxWidth,
+    viewBox: { width: layout.width, height: layout.height },
+    maxWidth: config.mindmap?.useMaxWidth !== false,
     attrs: {
       'font-family': font,
       'font-size': fontSize,
@@ -115,7 +102,7 @@ function drawNode(scene: Scene, v: MindmapNodeView, x: number, y: number): strin
   const n = node.section ?? -1;
   const p = paint.node(node.section);
   w.open('g', {
-    class: `mindmap-node ${node.section === undefined ? 'section-root ' : ''}section-${n}${userClasses(node.classes)}`,
+    class: `mindmap-node ${node.section === undefined ? 'section-root ' : ''}section-${n}${cls(node.classes)}`,
     'data-id': v.id,
     'data-ast': node.ast,
   });

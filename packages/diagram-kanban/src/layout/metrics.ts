@@ -144,14 +144,20 @@ export interface MetaRow {
   readonly grow: number;
   /** The share of the row's height the title moves up by (v12: a quarter). */
   readonly lift: number;
-  /** A ticket and assignee that do not fit side by side go on rows of their own (v12 overlaps them). */
-  readonly stack: boolean;
 }
 
-export const PX_META_ROW: MetaRow = { grow: 0.5, lift: 0.25, stack: false };
+export const PX_META_ROW: MetaRow = { grow: 0.5, lift: 0.25 };
 
 /** In cells the row is a row of its own, under the title and inside the card's border. */
-export const CELL_META_ROW: MetaRow = { grow: 1, lift: 0, stack: true };
+export const CELL_META_ROW: MetaRow = { grow: 1, lift: 0 };
+
+/**
+ * A ticket and an assignee that do not fit side by side go on rows of their own, the ticket's
+ * above the assignee's, in every profile (D647; v12 drew them over each other). The two rows are
+ * rows of their own as in cells: the card grows by both in full and the title stays
+ * `cardPadY` below its top, so the card holds them.
+ */
+export const STACKED_META_ROW: MetaRow = { grow: 1, lift: 0 };
 
 /** What one unit profile lays out with: its lengths and its ticket row. */
 export interface KanbanUnits {

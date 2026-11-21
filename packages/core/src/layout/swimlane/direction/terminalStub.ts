@@ -16,7 +16,7 @@ import {
   sameY,
   segmentHitsAnyRect,
 } from './geometry.ts';
-import type { Point } from './geometry.ts';
+import type { Point } from '../../types.ts';
 
 /**
  * Iter 16 — collapse a short terminal stub at an edge's destination by

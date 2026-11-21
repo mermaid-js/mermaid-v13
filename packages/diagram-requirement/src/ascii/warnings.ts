@@ -2,26 +2,21 @@
 // feature kind, as ER's. Each names the AST ids of what it dropped: the boxes from the views,
 // and the statements when the AST is given.
 import type { AstNode } from '@mermaid-js/core/parser-kit';
-import type { RequirementLayoutWarning } from '../layout/context.ts';
 import { requirementCurve, type RequirementPrepared } from '../layout/prepare.ts';
 import type { RequirementModel } from '../model.ts';
-import { asciiDropped, emphasised, statements, styled } from '@mermaid-js/shared/ascii';
+import { droppedFeatures, emphasised, styled } from '@mermaid-js/shared/ascii';
+import type {
+  AsciiDroppedWarning as SharedAsciiDroppedWarning,
+  AsciiRouteWarning,
+} from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'style' | 'curve' | 'emphasis' | 'accessibility';
 
 /** One feature kind text output dropped (D82). */
-export interface AsciiDroppedWarning extends RequirementLayoutWarning {
-  readonly code: 'ASCII_DROPPED';
-  readonly feature: AsciiDroppedFeature;
-  readonly astIds: readonly string[];
-}
+export type AsciiDroppedWarning = SharedAsciiDroppedWarning<AsciiDroppedFeature>;
 
-/** Relations the repair router found no free lane for (D78). */
-export interface AsciiRouteWarning extends RequirementLayoutWarning {
-  readonly code: 'ASCII_ROUTE';
-  readonly astIds: readonly string[];
-}
+export type { AsciiRouteWarning };
 
 export type AsciiWarning = AsciiDroppedWarning | AsciiRouteWarning;
 
@@ -33,10 +28,8 @@ const WHAT: Record<AsciiDroppedFeature, string> = {
 };
 
 // The statements behind each feature kind (`RequirementSimpleKind`).
-const STATEMENTS: Record<AsciiDroppedFeature, readonly string[]> = {
+const STATEMENTS: Partial<Record<AsciiDroppedFeature, readonly string[]>> = {
   style: ['Style', 'ClassDef', 'Class'],
-  curve: [],
-  emphasis: [],
   accessibility: ['AccTitle', 'AccDescr'],
 };
 
@@ -54,11 +47,8 @@ export function asciiWarnings(
   ast?: AstNode,
   curve?: string
 ): AsciiWarning[] {
-  const found: Partial<Record<AsciiDroppedFeature, Set<string>>> = {};
-  const add = (feature: AsciiDroppedFeature, id?: string): void => {
-    const ids = (found[feature] ??= new Set());
-    if (id) ids.add(id);
-  };
+  const dropped = droppedFeatures(WHAT, STATEMENTS);
+  const { add } = dropped;
   for (const v of prepared.boxes) {
     if (styled(v.style)) add('style', v.id);
     if (v.lines.some((l) => emphasised(l.label))) add('emphasis', v.id);
@@ -66,16 +56,5 @@ export function asciiWarnings(
   for (const r of prepared.relations) if (emphasised(r.label)) add('emphasis', r.id);
   if (curve !== undefined && !SQUARE.has(requirementCurve(curve))) add('curve');
   if (model.accTitle || model.accDescr) add('accessibility');
-  const stmts = new Map<string, string[]>();
-  statements(ast, stmts);
-  const out: AsciiWarning[] = [];
-  for (const feature of Object.keys(WHAT) as AsciiDroppedFeature[]) {
-    // A statement alone is enough: a `classDef` no box uses still has no text form.
-    for (const kind of STATEMENTS[feature])
-      for (const id of stmts.get(kind) ?? []) add(feature, id);
-    const ids = found[feature];
-    if (!ids) continue;
-    out.push(asciiDropped(feature, [...ids], WHAT[feature]));
-  }
-  return out;
+  return dropped.warnings(ast);
 }

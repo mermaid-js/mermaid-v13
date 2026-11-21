@@ -3,14 +3,17 @@
 // of what it dropped: the elements from the model, and the statements when the AST is given.
 import type { GlyphSet } from '@mermaid-js/core/ascii';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
-import type { CheckedStyle } from '@mermaid-js/core/svg';
-import { Style, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowWarning } from '../render/context.ts';
 import type { NodeView, Prepared } from '../render/prepare.ts';
 import { textForm } from './shapes.ts';
 import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
 import { asciiDropped, statements, styled } from '@mermaid-js/shared/ascii';
+import { addsEmphasis } from '@mermaid-js/shared/svg/graph';
+import type {
+  AsciiDroppedWarning as SharedAsciiDroppedWarning,
+  AsciiRouteWarning,
+} from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature =
@@ -22,11 +25,7 @@ export type AsciiDroppedFeature =
   | 'accessibility';
 
 /** One feature kind text output dropped (D82). */
-export interface AsciiDroppedWarning extends FlowWarning {
-  readonly code: 'ASCII_DROPPED';
-  readonly feature: AsciiDroppedFeature;
-  readonly astIds: readonly string[];
-}
+export type AsciiDroppedWarning = SharedAsciiDroppedWarning<AsciiDroppedFeature>;
 
 /** The shapes drawn as plain boxes because they have no text form (D82). */
 export interface AsciiShapeWarning extends FlowWarning {
@@ -35,11 +34,7 @@ export interface AsciiShapeWarning extends FlowWarning {
   readonly astIds: readonly string[];
 }
 
-/** Edges the repair router found no free lane for (D78). */
-export interface AsciiRouteWarning extends FlowWarning {
-  readonly code: 'ASCII_ROUTE';
-  readonly astIds: readonly string[];
-}
+export type { AsciiRouteWarning };
 
 export type AsciiWarning = AsciiDroppedWarning | AsciiShapeWarning | AsciiRouteWarning;
 
@@ -64,16 +59,6 @@ const STATEMENTS: Record<AsciiDroppedFeature, readonly string[]> = {
   accessibility: ['AccTitle', 'AccDescr'],
 };
 
-// Bold or italic the label has beyond what its style asked for.
-function emphasised(label: MeasuredLabel, style: CheckedStyle): boolean {
-  const weight = style.text['font-weight'];
-  const base =
-    (weight === 'bold' || weight === 'bolder' || Number(weight) >= 600 ? Style.Bold : 0) |
-    (style.text['font-style'] === 'italic' ? Style.Italic : 0);
-  const mask = (Style.Bold | Style.Italic) & ~base;
-  return label.lines.some((line) => line.some((run) => (run.style & mask) !== 0));
-}
-
 type Found = Record<AsciiDroppedFeature, Set<string> | undefined>;
 
 // Which features the drawing uses, with the AST ids of the elements that use them.
@@ -94,12 +79,12 @@ function features(model: FlowModel, flow: Prepared, curve: string | undefined): 
   const astOf = new Map(views.map((v) => [v.id, v.ast]));
   for (const v of views) {
     if (styled(v.style)) add('style', v.ast);
-    if (emphasised(v.label, v.style)) add('emphasis', v.ast);
+    if (addsEmphasis(v.label, v.style)) add('emphasis', v.ast);
     if (v.vertex?.img || v.vertex?.icon) add('image', v.ast);
   }
   for (const e of flow.edges) {
     if (styled(e.style)) add('style', e.edge.ast);
-    if (emphasised(e.label, e.style)) add('emphasis', e.edge.ast);
+    if (addsEmphasis(e.label, e.style)) add('emphasis', e.edge.ast);
     if ((e.edge.interpolate ?? model.defaultInterpolate) !== undefined) add('curve', e.edge.ast);
   }
   // A curve set in config (site, front matter or directive) draws every edge with it in SVG.

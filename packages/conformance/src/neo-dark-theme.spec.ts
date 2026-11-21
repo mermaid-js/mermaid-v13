@@ -11,33 +11,15 @@ import {
   PALETTE_LIMITS,
   PALETTE_VARIABLES,
   contrastRatio,
-  formatColor,
   loadTheme,
   parseColor,
   type Rgba,
-  type NumberedPalette,
-  type Theme,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
-import { D332_INPUTS, VOCABULARY, everyTable, paletteColours, v12Value } from './diagram-themes.ts';
-import { loadOracle } from './oracle.ts';
-
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
-  };
-}
-
-await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
-
-function v12Vars(theme: string): Record<string, unknown> {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize({ theme });
-  return { ...v12.mermaidAPI.getConfig().themeVariables };
-}
+import { D332_INPUTS, VOCABULARY, everyTable } from './diagram-themes.ts';
+import { v12Vars } from './v12-theme.ts';
+import { hex } from './hex.ts';
+import { sameAsV12, v12Palette, v13Value } from './neo-compare.ts';
 
 const OLD = v12Vars('neo-dark');
 const spec = await loadTheme('neo-dark');
@@ -75,7 +57,6 @@ const DARK_DERIVED = [
   'tertiaryBorderColor',
   'clusterBorder',
   'noteBorderColor',
-  'edgeLabelBackground',
 ] as const;
 
 const DARK_WHY = 'D183: derived with the dark rules; v12 never set darkMode';
@@ -102,8 +83,8 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   requirementBackground: 'D435, D541: v12 resolved primaryColor; it drew the box in mainBkg',
   requirementBorderSize:
     "D435, D541, D183: v12 resolved '1' and drew strokeWidth (1 in v12 neo-dark); v13 strokeWidth is 2",
-  relationLabelBackground:
-    'D435, D541, D183: edgeLabelBackground, as v12 drew it; v13 neo-dark derives it darker (DARK_RULES)',
+  relationLabelBackground: 'D628: every edge label is filled with the theme background',
+  edgeLabelBackground: 'D628: every edge label is filled with the theme background',
   // v13 variables for what v12 decides by look or by theme name.
   rowOdd: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
   rowEven: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
@@ -116,8 +97,9 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   ),
   critTextColor:
     'D574: v13 ink for text on a critical gantt bar (v12 `.critText0` took taskTextColor); taskTextColor here',
-  erEdgeLabelBackground:
-    'D152, D183: v12 ER labels use edgeLabelBackground outside its COLOR_THEMES; it is dark-derived',
+  compositeTitleColor:
+    'D638: v12 has no variable; it drew composite titles in stateLabelColor; v13 neo takes titleColor',
+  erEdgeLabelBackground: 'D628: every edge label is filled with the theme background',
   ...Object.fromEntries(LOOK_GEOMETRY.map((n) => [n, LOOK_GEOMETRY_WHY])),
   ...Object.fromEntries(
     TIMELINE.map((n) => [n, 'D227: v12 has no variable; theme neo drew classic timeline boxes'])
@@ -132,41 +114,6 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   ),
 };
 
-const hex = (v: unknown): string | undefined => {
-  if (typeof v !== 'string') return undefined;
-  const rgba = parseColor(v);
-  return rgba ? formatColor(rgba) : undefined;
-};
-
-function v13Value(t: Theme, name: string): string | number {
-  const kind = VOCABULARY[name]?.kind;
-  if (kind === 'padding') return t.padding(name, 15);
-  if (kind === 'length') return t.number(name);
-  return t.value(name);
-}
-
-function same(name: string): boolean {
-  const old = v12Value(OLD, name);
-  if (typeof old !== 'string' && typeof old !== 'number' && typeof old !== 'boolean') return false;
-  const kind = VOCABULARY[name]?.kind;
-  // A diagram's palette variable (xychart's plotColorPalette): v12's comma-separated list.
-  if (kind === 'palette') return paletteColours(old) === paletteColours(neoDark.palette(name));
-  const now = v13Value(neoDark, name);
-  if (kind === 'color') return hex(old) !== undefined && hex(old) === hex(now);
-  if (kind === 'length') return Number.parseFloat(String(old)) === now;
-  return String(old).trim() === String(now).trim();
-}
-
-function v12Palette(name: string): string[] {
-  if (NUMBERED_PALETTES.includes(name as never))
-    return Array.from(
-      { length: PALETTE_LIMITS[name as NumberedPalette] },
-      (_, i) => OLD[`${name}${i}`] as string
-    );
-  const list = OLD[name];
-  return Array.isArray(list) ? (list as string[]) : [];
-}
-
 describe('neo-dark against v12 12.2.0 (#227, D151, D181, D183)', () => {
   it('loads v12 neo-dark, which never set darkMode', () => {
     expect(OLD.fontFamily).toBe('arial, sans-serif');
@@ -176,9 +123,12 @@ describe('neo-dark against v12 12.2.0 (#227, D151, D181, D183)', () => {
   });
 
   it('differs from v12 only where a decision says so', () => {
-    const vocabulary = Object.keys(VOCABULARY).filter((n) => !D332_INPUTS.includes(n) && !same(n));
+    const vocabulary = Object.keys(VOCABULARY).filter(
+      (n) => !D332_INPUTS.includes(n) && !sameAsV12(OLD, neoDark, n)
+    );
     const palettes = PALETTE_VARIABLES.filter((p) => !D332_INPUTS.includes(p)).filter(
-      (p) => JSON.stringify(v12Palette(p).map(hex)) !== JSON.stringify(neoDark.palette(p).map(hex))
+      (p) =>
+        JSON.stringify(v12Palette(OLD, p).map(hex)) !== JSON.stringify(neoDark.palette(p).map(hex))
     );
     expect([...vocabulary, ...palettes].sort()).toEqual(Object.keys(DIFFERENCES).sort());
   });
@@ -189,9 +139,11 @@ describe('neo-dark against v12 12.2.0 (#227, D151, D181, D183)', () => {
       expect(Object.hasOwn(spec.values ?? {}, name), name).toBe(false);
       expect(Object.hasOwn(spec.rules ?? {}, name), name).toBe(false);
     }
-    expect(DARK_RULES.edgeLabelBackground).toBe('mix(secondaryColor, black, 30%)');
+    expect(DARK_RULES.secondaryBorderColor).toBe('mix(secondaryColor, white, 20%)');
     expect(neoDark.value('clusterBorder')).toBe(neoDark.value('tertiaryBorderColor'));
-    expect(neoDark.value('erEdgeLabelBackground')).toBe(neoDark.value('edgeLabelBackground'));
+    // Edge labels sit on the background in every theme (D628).
+    expect(neoDark.value('edgeLabelBackground')).toBe(neoDark.value('background'));
+    expect(neoDark.value('erEdgeLabelBackground')).toBe(neoDark.value('background'));
   });
 
   it('meets AA with the smallest change to v12 secondaryTextColor (D183, R-THEME-9)', () => {

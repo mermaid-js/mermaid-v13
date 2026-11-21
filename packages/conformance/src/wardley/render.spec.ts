@@ -22,7 +22,7 @@ import { pathPoints } from '../sequence/path-bounds.ts';
 import { astIndex, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 import { wardleyCases, wardleyCorpus, wardleyGateCorpus } from './corpus.ts';
-import { wardleyApi } from './render-api.ts';
+import { deterministicApi } from '../render-api.ts';
 
 /**
  * Render properties of the wardley renderer (spec #430 T4, DESIGN §13.2, §13.4) over the wardley
@@ -83,11 +83,11 @@ let api: Mermaid;
 let layoutTheme: Theme;
 
 beforeAll(async () => {
-  api = wardleyApi();
+  api = deterministicApi();
   layoutTheme = createTheme(await loadTheme('default'), { diagram: wardley.theme });
   const corpus = await wardleyGateCorpus();
   for (const theme of THEMES) {
-    const themed = wardleyApi({ theme });
+    const themed = deterministicApi({ theme });
     for (const item of corpus) {
       if (!detectWardley(item.source)) continue;
       try {
@@ -181,7 +181,7 @@ describe('wardley render properties over the corpus', () => {
 
   it('is deterministic: a fresh API object renders the same bytes (R-ARCH-6)', async () => {
     const fresh = new Map<string, Mermaid>();
-    for (const theme of THEMES) fresh.set(theme, wardleyApi({ theme }));
+    for (const theme of THEMES) fresh.set(theme, deterministicApi({ theme }));
     for (const c of cases) {
       const again = await fresh.get(c.theme)!.render('mermaid-0', c.source);
       expect(again.svg, c.id).toBe(c.result.svg);
@@ -512,7 +512,7 @@ describe('wardley render: what is drawn', () => {
     expect([0, 0, 900, 600].map(String)).toEqual(
       ['x', 'y', 'width', 'height'].map((k) => attr(wide.tree, bg, k))
     );
-    const fixed = wardleyApi({
+    const fixed = deterministicApi({
       'wardley-beta': { useMaxWidth: false, showGrid: true },
     } as MermaidConfig);
     const { tree } = await render('wardley-beta\ncomponent A [0.5, 0.5]', fixed);
@@ -565,7 +565,7 @@ async function paintsOf(m: Mermaid, src = probe('everything')) {
 }
 
 const literal = (theme: MermaidConfig['theme'], extra: MermaidConfig = {}) =>
-  wardleyApi({ theme, output: { cssVariables: false }, ...extra } as MermaidConfig);
+  deterministicApi({ theme, output: { cssVariables: false }, ...extra } as MermaidConfig);
 
 describe('wardley render: paints (D215, D227, D426, D540)', () => {
   it("paints from wardley's theme table", async () => {
@@ -591,7 +591,7 @@ describe('wardley render: paints (D215, D227, D426, D540)', () => {
     const { svg } = await render(probe('everything'));
     expect(svg).toContain('--_wes:var(--mermaid-wardleyEvolutionStroke,var(--_wec))');
     expect(svg).toContain('--_wec:var(--mermaid-wardleyEvolutionColor,#dc3545)');
-    expect(svg).toContain('--_wax:var(--mermaid-wardleyAxisColor,var(--_l))');
+    expect(svg).toContain('--_wax:var(--mermaid-wardleyAxisColor,var(--_cvl))');
     // No paint nothing uses: no grid without showGrid.
     expect(svg).not.toContain('--_wgr');
   });

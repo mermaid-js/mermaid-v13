@@ -25,7 +25,7 @@ describe('quadrantLayoutViolations', () => {
     const l = full();
     const broken: QuadrantLayout = { ...l, points: [{ ...l.points[0]!, cy: Number.NaN }] };
     expect(quadrantLayoutViolations(broken)).toEqual([
-      'points[0].cy is not a finite number',
+      'layout.points[0].cy is NaN',
       'point pt:A lies outside the square',
     ]);
   });

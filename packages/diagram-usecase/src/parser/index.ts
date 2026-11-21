@@ -2,10 +2,10 @@
  * The usecase parser's public surface: the parser, model builder and AST (#563), detection, and
  * the lexer gated against v12's Chevrotain lexer (#562).
  */
-import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
+import { Kind } from '@mermaid-js/core/parser-kit';
 import type { Range, SourceView } from '@mermaid-js/core/parser-kit';
 import { decodePlaceholders } from '@mermaid-js/core/parser-kit/support';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { bodyView } from '@mermaid-js/shared/parser/seen-tokens';
 import { lex } from './lexer.ts';
 
 export { lex, lexText } from './lexer.ts';
@@ -50,13 +50,8 @@ export interface UsecaseView {
  * source view over the body with default options (v12 ran every shared rewrite).
  */
 export function usecaseView(src: string): UsecaseView {
-  const pre = preprocess(src);
-  const view = sourceView(
-    src,
-    pre.bodyStart,
-    pre.directives.map((d) => d.range)
-  );
-  return { bodyStart: pre.bodyStart, view };
+  const { bodyStart, view } = bodyView(src);
+  return { bodyStart, view };
 }
 
 /**
@@ -65,6 +60,10 @@ export function usecaseView(src: string): UsecaseView {
  * characters, then lexing goes on). The spans v12 removed before lexing (comment lines,
  * directives) are left out, and so is the final `EOF`. The last `Newline` is the zero-width
  * one at the end of the source, for the line break v12 appended.
+ *
+ * Not `keptTokens` from `@mermaid-js/shared/parser/seen-tokens`: each token also carries `at`,
+ * its index into the text v12 lexed, which the shared `SeenToken` does not have. A per-token
+ * builder in the shared helper for this one list would cost more than the loop (#907).
  */
 export function usecaseTokens(src: string): UsecaseToken[] {
   const { bodyStart, view } = usecaseView(src);

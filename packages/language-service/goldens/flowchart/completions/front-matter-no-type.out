@@ -34,6 +34,7 @@
   kanban property (object) 3:3-3:5 "se" -> "kanban:\n    "
   gitGraph property (object) 3:3-3:5 "se" -> "gitGraph:\n    "
   c4 property (object) 3:3-3:5 "se" -> "c4:\n    "
+  c4beta property (object) 3:3-3:5 "se" -> "c4beta:\n    "
   sankey property (object) 3:3-3:5 "se" -> "sankey:\n    "
   packet property (object) 3:3-3:5 "se" -> "packet:\n    "
   block property (object) 3:3-3:5 "se" -> "block:\n    "

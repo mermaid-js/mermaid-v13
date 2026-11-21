@@ -43,6 +43,7 @@ import {
   LBRACE,
   LBRACKET,
   LF,
+  PLUS,
   RBRACE,
   RBRACKET,
   SEMI,
@@ -110,8 +111,6 @@ const MODE_WORD_KINDS = [
   T.Num,
   T.NumberWithDecimal,
 ];
-
-const PLUS = 0x2b;
 
 const isNewline = (c: number) => c === LF || c === CR;
 

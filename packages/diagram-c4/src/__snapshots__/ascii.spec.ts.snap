@@ -1,0 +1,373 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`relation labels in text output (D629) > draws nightly-check/c4-4-should-render-a-simple-c4dynamic-diagram as before the edge-label tags > compact 1`] = `
+"        Dynamic diagram for Internet Banking System - API Application
+
+╒═════════════════════════╕             ╭─────────────────────────╮
+│                         │             │                         │
+│                         │             │       Single-Page       │
+│                         │             │       Application       │
+│        Database         │             │ [Container: JavaScript  │
+│ [Container: Relational  │             │      and Angular]       │
+│    Database Schema]     │             │   Provides all of the   │
+│       Stores user       │             │    Internet banking     │
+│      registration       │             │    functionality to     │
+│   information, hashed   │             │   customers via their   │
+│     authentication      │             │      web browser.       │
+│   credentials, access   │             ╰────────────────┬────────╯
+│       logs, etc.        │                              │
+│                         │                              │
+╘═════════════════════════╛                              │
+                 ▲                                       │
+                 │                           1: Submits credentials to
+                 │                                 [JSON/HTTPS]
+┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┄┄┄┄┄┄┄┄ API Application ┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
+┆                │                [CONTAINER]            │                    ┆
+┆ 3: select * from users where username = ?              │                    ┆
+┆                  [JDBC]                                │                    ┆
+┆                │                                       │                    ┆
+┆                │                                       ▼                    ┆
+┆      ╭─────────┴───────────────╮            ╭─────────────────────────╮     ┆
+┆      │                         │            │                         │     ┆
+┆      │   Security Component    │            │   Sign In Controller    │     ┆
+┆      │   [Component: Spring    │            │ [Component: Spring MVC  │     ┆
+┆      │          Bean]          │  2: Calls… │    Rest Controller]     │     ┆
+┆      │ Provides functionality  │◄───────────┤  Allows users to sign   │     ┆
+┆      │ Related to signing in,  │            │   in to the Internet    │     ┆
+┆      │   changing passwords,   │            │     Banking System.     │     ┆
+┆      │          etc.           │            ╰─────────────────────────╯     ┆
+┆      ╰─────────────────────────╯                                            ┆
+┆                                                                             ┆
+┆                                                                             ┆
+└┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘"
+`;
+
+exports[`relation labels in text output (D629) > draws nightly-check/c4-4-should-render-a-simple-c4dynamic-diagram as before the edge-label tags > roomy 1`] = `
+"        Dynamic diagram for Internet Banking System - API Application
+
+╒═════════════════════════╕             ╭─────────────────────────╮
+│                         │             │                         │
+│                         │             │                         │
+│                         │             │       Single-Page       │
+│                         │             │       Application       │
+│        Database         │             │       [Container:       │
+│       [Container:       │             │     JavaScript and      │
+│       Relational        │             │        Angular]         │
+│    Database Schema]     │             │     Provides all of     │
+│       Stores user       │             │      the Internet       │
+│      registration       │             │         banking         │
+│      information,       │             │    functionality to     │
+│         hashed          │             │      customers via      │
+│     authentication      │             │   their web browser.    │
+│      credentials,       │             │                         │
+│    access logs, etc.    │             ╰────────────────┬────────╯
+│                         │                              │
+│                         │                              │
+╘═════════════════════════╛                              │
+                 ▲                                       │
+                 │                           1: Submits credentials to
+                 │                                 [JSON/HTTPS]
+┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┄┄┄┄┄┄┄┄ API Application ┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
+┆                │                [CONTAINER]            │                    ┆
+┆ 3: select * from users where username = ?              │                    ┆
+┆                  [JDBC]                                │                    ┆
+┆                │                                       │                    ┆
+┆                │                                       ▼                    ┆
+┆      ╭─────────┴───────────────╮            ╭─────────────────────────╮     ┆
+┆      │                         │            │                         │     ┆
+┆      │                         │            │                         │     ┆
+┆      │   Security Component    │            │   Sign In Controller    │     ┆
+┆      │   [Component: Spring    │            │   [Component: Spring    │     ┆
+┆      │          Bean]          │            │        MVC Rest         │     ┆
+┆      │        Provides         │  2: Calls… │       Controller]       │     ┆
+┆      │      functionality      │◄───────────┤     Allows users to     │     ┆
+┆      │   Related to signing    │            │     sign in to the      │     ┆
+┆      │      in, changing       │            │    Internet Banking     │     ┆
+┆      │     passwords, etc.     │            │         System.         │     ┆
+┆      │                         │            │                         │     ┆
+┆      ╰─────────────────────────╯            ╰─────────────────────────╯     ┆
+┆                                                                             ┆
+┆                                                                             ┆
+└┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘"
+`;
+
+exports[`relation labels in text output (D629) > draws nightly-check/docs/2-container as before the edge-label tags > compact 1`] = `
+"                                                                    Container diagram for Internet Banking System
+
+                    ╭─────────────────────────╮            ╭─────────────────────────╮             ╭─────────────────────────╮
+                    │                         │            │                         │             │                         │
+                    │      E-Mail System      │            │                         │             │    Mainframe Banking    │
+                    │    [Software System]    │ Sends e-m… │                         │             │         System          │
+                    │ The internal Microsoft  ├───────────►│        Customer         │             │    [Software System]    │
+                  ┌►│     Exchange system     │            │        [Person]         │             │ Stores all of the core  │
+                  └┐╰─────────────────────────╯            │    A customer of the    │             │   banking information   │
+                   │                                       │   bank, with personal   │             │    about customers,     │
+                   │                                       │      bank accounts      │             │        accounts,        │
+                   │                                       ╰─────┬──────────┬──────┬─╯           ┌►│   transactions, etc.    │
+                   │                                             │          │      │             │ ╰─────────────────────────╯
+                   │                                            ┌┼──────────┼──────┼─────────────┘
+                   │                                            ││          │      │
+                   │                              Uses           │          │      │
+                   │                     [sync/async, XML/HTTPS] │        Uses     │
+                   │┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┼┼┄┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┄┼┄┄┄┄┄┄ Internet Banking ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
+                   │┆                                           ││          │      │         [CONTAINER]                                                                         ┆
+                   │┆                           ┌──────  Uses   ┼┘          │      └─────  Uses   ──────────┐                                                                    ┆
+                   │┆                           │       [HTTPS] │           │             [HTTPS]           │                                                                    ┆
+                   │┆                           │               │           │                               │                                                                    ┆
+                   │┆                           ▼               │           ▼                               ▼                                                                    ┆
+                   │┆     ╭─────────────────────────╮           │╭─────────────────────────╮             ╭─────────────────────────╮            ╒═════════════════════════╕      ┆
+                   │┆     │                         │           ││                         │             │                         │            │                         │      ┆
+                   │┆     │     Single-Page App     │           ││       Mobile App        │             │     Web Application     │            │                         │      ┆
+                   │┆     │       [Container:       │           ││     [Container: C#,     │             │    [Container: Java,    │            │        Database         │      ┆
+                   │┆     │  JavaScript, Angular]   │           ││        Xamarin]         │             │       Spring MVC]       │            │     [Container: SQL     │      ┆
+Sends e-mails using ┆     │    Provides all the     │           ││   Provides a limited    │             │   Delivers the static   │            │        Database]        │      ┆
+   [sync, SMTP]     ┆     │    Internet banking     │           ││ subset of the Internet  │             │     content and the     │            │       Stores user       │      ┆
+                   │┆     │    functionality to     │           ││  banking functionality  │             │  Internet banking SPA   │            │      registration       │      ┆
+                   │┆     │   customers via their   │           ││ to customers via their  │             ╰──────┬──────────────────╯            │   information, hashed   │      ┆
+                   │┆     │       web browser       │           ││      mobile device      │                    │┌─────────────────────────────►│    auth credentials,    │      ┆
+                   │┆     ╰────────────┬────────────╯           │╰──┬──────────────────────╯                    ││                              │    access logs, etc.    │      ┆
+                   │┆                  │      ▲                 └┐  │┌──── Delivers ────────────────────────────┘│                              │                         │      ┆
+                   │┆                  │      └──────────────────┼──┼┘                         ┌─────────────────┘                              ╘═════════════════════════╛      ┆
+                   │┆                  │                         │  │              Reads from and writes to                                                                      ┆
+                   │┆                Uses                        │  │                    [sync, JDBC]                                                                            ┆
+                   │┆         [async, JSON/HTTPS]                │        Uses                 │                                                                                 ┆
+                   │┆                  │                         │ [async, JSON/HTTPS]         │                                                                                 ┆
+                   │┆                  │          ┌──────────────┼──┘                          │                                                                                 ┆
+                   │┆                  ▼          ▼              │                             │                                                                                 ┆
+                   │┆     ╒═════════════════════════╕            │                             │                                                                                 ┆
+                   │┆     │                         │            │                             │                                                                                 ┆
+                   │┆     │                         │            │                             │                                                                                 ┆
+                   └┼─────┤     API Application     ├────────────┘                             │                                                                                 ┆
+                    ┆     │    [Container: Java,    ├──────────────────────────────────────────┘                                                                                 ┆
+                    ┆     │    Docker Container]    │                                                                                                                            ┆
+                    ┆     │    Provides Internet    │                                                                                                                            ┆
+                    ┆     │  banking functionality  │                                                                                                                            ┆
+                    ┆     │         via API         │                                                                                                                            ┆
+                    ┆     │                         │                                                                                                                            ┆
+                    ┆     ╘═════════════════════════╛                                                                                                                            ┆
+                    ┆                                                                                                                                                            ┆
+                    ┆                                                                                                                                                            ┆
+                    ┆                                                                                                                                                            ┆
+                    └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘"
+`;
+
+exports[`relation labels in text output (D629) > draws nightly-check/docs/2-container as before the edge-label tags > roomy 1`] = `
+"                                                                    Container diagram for Internet Banking System
+
+                    ╭─────────────────────────╮            ╭─────────────────────────╮             ╭─────────────────────────╮
+                    │                         │            │                         │             │                         │
+                    │                         │            │                         │             │                         │
+                    │      E-Mail System      │            │                         │             │    Mainframe Banking    │
+                    │    [Software System]    │ Sends e-m… │                         │             │         System          │
+                    │      The internal       ├───────────►│        Customer         │             │    [Software System]    │
+                    │   Microsoft Exchange    │            │        [Person]         │             │    Stores all of the    │
+                    │         system          │            │    A customer of the    │             │      core banking       │
+                  ┌►│                         │            │       bank, with        │             │    information about    │
+                  └┐╰─────────────────────────╯            │      personal bank      │             │       customers,        │
+                   │                                       │        accounts         │             │        accounts,        │
+                   │                                       │                         │           ┌►│   transactions, etc.    │
+                   │                                       ╰────┬───────────┬───────┬╯           │ │                         │
+                   │                                            │           │       │            │ ╰─────────────────────────╯
+                   │                                            │           │       │            │
+                   │                                            │           │       │            │
+                   │                                            │           │       │            │
+                   │                                            │         Uses      │    ┌───────┘
+                   │┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┄┄┼┄┄┄┄┼ Internet Banking ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
+                   │┆                                           │           │       │    └──┐[CONTAINER]                                                                         ┆
+                   │┆                            ┌─────  Uses   ┘           │       └───────┼  Uses   ─────┐                                                                     ┆
+                   │┆                            │      [HTTPS]             │               │ [HTTPS]      │                                                                     ┆
+                   │┆                            │                          │               │              │                                                                     ┆
+                   │┆                            ▼                          ▼               │              ▼                                                                     ┆
+                   │┆     ╭─────────────────────────╮            ╭─────────────────────────╮│            ╭─────────────────────────╮            ╒═════════════════════════╕      ┆
+                   │┆     │                         │            │                         ││            │                         │            │                         │      ┆
+                   │┆     │                         │            │                         ││            │                         │            │                         │      ┆
+                   │┆     │     Single-Page App     │            │       Mobile App        ││            │     Web Application     │            │                         │      ┆
+                   │┆     │       [Container:       │            │     [Container: C#,     ││            │    [Container: Java,    │            │        Database         │      ┆
+                   │┆     │       JavaScript,       │            │        Xamarin]         ││            │       Spring MVC]       │            │     [Container: SQL     │      ┆
+                   │┆     │        Angular]         │            │   Provides a limited    ││            │      Delivers the       │            │        Database]        │      ┆
+Sends e-mails using ┆     │    Provides all the     │            │      subset of the      ││            │   static content and    │            │       Stores user       │      ┆
+   [sync, SMTP]     ┆     │    Internet banking     │            │    Internet banking     ││            │      the Internet       │            │      registration       │      ┆
+                   │┆     │    functionality to     │            │    functionality to     ││            │       banking SPA       │            │      information,       │      ┆
+                   │┆     │      customers via      │            │      customers via      ││            │                         │┌──────────►│       hashed auth       │      ┆
+                   │┆     │    their web browser    │            │      their mobile       ││            ╰──────┬──────────────────╯│           │      credentials,       │      ┆
+                   │┆     │                         │            │         device          │└─┐                 │┌──────────────────┘           │    access logs, etc.    │      ┆
+                   │┆     ╰────────────┬────────────╯            │                         │  │┌────────────────┼┘                              │                         │      ┆
+                   │┆                  │      ▲                  ╰┬────────────────────────╯┌─┼┼────────────────┘                               │                         │      ┆
+                   │┆                  │      │                   │┌────── Delivers ────────┘ │ Reads from and writes to                        ╘═════════════════════════╛      ┆
+                   │┆                  │      └───────────────────┼┘                          │       [sync, JDBC]                                                               ┆
+                   │┆                Uses                         │                           ││                                                                                 ┆
+                   │┆         [async, JSON/HTTPS]               Uses                          ││                                                                                 ┆
+                   │┆                  │                 [async, JSON/HTTPS]                  ││                                                                                 ┆
+                   │┆                  │           ┌──────────────┘             Uses           │                                                                                 ┆
+                   │┆                  ▼           ▼                   [sync/async, XML/HTTPS] │                                                                                 ┆
+                   │┆     ╒═════════════════════════╕                                         ││                                                                                 ┆
+                   │┆     │                         │                                         ││                                                                                 ┆
+                   │┆     │                         │                                         ││                                                                                 ┆
+                   │┆     │                         │                                         ││                                                                                 ┆
+                   └┼─────┤     API Application     ├─────────────────────────────────────────┘│                                                                                 ┆
+                    ┆     │    [Container: Java,    ├──────────────────────────────────────────┘                                                                                 ┆
+                    ┆     │    Docker Container]    │                                                                                                                            ┆
+                    ┆     │    Provides Internet    │                                                                                                                            ┆
+                    ┆     │         banking         │                                                                                                                            ┆
+                    ┆     │    functionality via    │                                                                                                                            ┆
+                    ┆     │           API           │                                                                                                                            ┆
+                    ┆     │                         │                                                                                                                            ┆
+                    ┆     │                         │                                                                                                                            ┆
+                    ┆     ╘═════════════════════════╛                                                                                                                            ┆
+                    ┆                                                                                                                                                            ┆
+                    ┆                                                                                                                                                            ┆
+                    ┆                                                                                                                                                            ┆
+                    └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘"
+`;
+
+exports[`relation labels in text output (D629) > draws nightly-check/docs/4-dynamic as before the edge-label tags > compact 1`] = `
+"        Dynamic diagram for Internet Banking System - API Application
+
+╒═════════════════════════╕             ╭─────────────────────────╮
+│                         │             │                         │
+│                         │             │       Single-Page       │
+│                         │             │       Application       │
+│        Database         │             │ [Container: JavaScript  │
+│ [Container: Relational  │             │      and Angular]       │
+│    Database Schema]     │             │   Provides all of the   │
+│       Stores user       │             │    Internet banking     │
+│      registration       │             │    functionality to     │
+│   information, hashed   │             │   customers via their   │
+│     authentication      │             │      web browser.       │
+│   credentials, access   │             ╰────────────────┬────────╯
+│       logs, etc.        │                              │
+│                         │                              │
+╘═════════════════════════╛                              │
+                 ▲                                       │
+                 │                           1: Submits credentials to
+                 │                                 [JSON/HTTPS]
+┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┄┄┄┄┄┄┄┄ API Application ┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
+┆                │                [CONTAINER]            │                    ┆
+┆ 3: select * from users where username = ?              │                    ┆
+┆                  [JDBC]                                │                    ┆
+┆                │                                       │                    ┆
+┆                │                                       ▼                    ┆
+┆      ╭─────────┴───────────────╮            ╭─────────────────────────╮     ┆
+┆      │                         │            │                         │     ┆
+┆      │   Security Component    │            │   Sign In Controller    │     ┆
+┆      │   [Component: Spring    │            │ [Component: Spring MVC  │     ┆
+┆      │          Bean]          │  2: Calls… │    Rest Controller]     │     ┆
+┆      │ Provides functionality  │◄───────────┤  Allows users to sign   │     ┆
+┆      │ Related to signing in,  │            │   in to the Internet    │     ┆
+┆      │   changing passwords,   │            │     Banking System.     │     ┆
+┆      │          etc.           │            ╰─────────────────────────╯     ┆
+┆      ╰─────────────────────────╯                                            ┆
+┆                                                                             ┆
+┆                                                                             ┆
+└┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘"
+`;
+
+exports[`relation labels in text output (D629) > draws nightly-check/docs/4-dynamic as before the edge-label tags > roomy 1`] = `
+"        Dynamic diagram for Internet Banking System - API Application
+
+╒═════════════════════════╕             ╭─────────────────────────╮
+│                         │             │                         │
+│                         │             │                         │
+│                         │             │       Single-Page       │
+│                         │             │       Application       │
+│        Database         │             │       [Container:       │
+│       [Container:       │             │     JavaScript and      │
+│       Relational        │             │        Angular]         │
+│    Database Schema]     │             │     Provides all of     │
+│       Stores user       │             │      the Internet       │
+│      registration       │             │         banking         │
+│      information,       │             │    functionality to     │
+│         hashed          │             │      customers via      │
+│     authentication      │             │   their web browser.    │
+│      credentials,       │             │                         │
+│    access logs, etc.    │             ╰────────────────┬────────╯
+│                         │                              │
+│                         │                              │
+╘═════════════════════════╛                              │
+                 ▲                                       │
+                 │                           1: Submits credentials to
+                 │                                 [JSON/HTTPS]
+┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┄┄┄┄┄┄┄┄ API Application ┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
+┆                │                [CONTAINER]            │                    ┆
+┆ 3: select * from users where username = ?              │                    ┆
+┆                  [JDBC]                                │                    ┆
+┆                │                                       │                    ┆
+┆                │                                       ▼                    ┆
+┆      ╭─────────┴───────────────╮            ╭─────────────────────────╮     ┆
+┆      │                         │            │                         │     ┆
+┆      │                         │            │                         │     ┆
+┆      │   Security Component    │            │   Sign In Controller    │     ┆
+┆      │   [Component: Spring    │            │   [Component: Spring    │     ┆
+┆      │          Bean]          │            │        MVC Rest         │     ┆
+┆      │        Provides         │  2: Calls… │       Controller]       │     ┆
+┆      │      functionality      │◄───────────┤     Allows users to     │     ┆
+┆      │   Related to signing    │            │     sign in to the      │     ┆
+┆      │      in, changing       │            │    Internet Banking     │     ┆
+┆      │     passwords, etc.     │            │         System.         │     ┆
+┆      │                         │            │                         │     ┆
+┆      ╰─────────────────────────╯            ╰─────────────────────────╯     ┆
+┆                                                                             ┆
+┆                                                                             ┆
+└┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘"
+`;
+
+exports[`relation labels in text output (D629) > draws pr-check/repeated-relations-room as before the edge-label tags > compact 1`] = `
+"                               Repeated relations in little room
+                                   ┌──── 8 ───┐
+                                   │  ┌─ 7 ──┐│
+        ╭─────────────────────────╮│┌─┼ 6 ──┐├┘╭─────────────────────────╮ Retries
+        │                         ├┘│┌┼─ 5 ─┼┼►│                         ├─┐
+        │         Ledger          ├◄┼┼┴ 4 ──┴┼►┤         Billing         │◄┤
+        │    [Software System]    ├◄┼┴─ 1 ───┼►┤    [Software System]    │◄┘
+        ╰─────────────────────────╯└┼── 2 ───┘│╰─────────────────────────╯ Reconciles
+                                    └─── 3 ───┘
+
+
+
+        ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ Bank ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
+        ┆              [system]               ┆
+        ┆                                     ┆
+        ┆                                     ┆
+Reports ┆                                     ┆
+     ┌──┼┐ Counts                             ┆
+     │┌─┼┼──┐ ╭─────────────────────────╮     ┆
+     └┼►┆└──┼─┤          Vault          │     ┆
+      └─┤   └►│    [Software System]    │     ┆
+       ┌┤   ┌►│                         │     ┆
+       └┼───┘ ╰─────────────────────────╯     ┆
+        ┆ Opens                               ┆
+        ┆                                     ┆
+        └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘"
+`;
+
+exports[`relation labels in text output (D629) > draws pr-check/repeated-relations-room as before the edge-label tags > roomy 1`] = `
+"                               Repeated relations in little room
+
+
+        ╭─────────────────────────╮┌─── 8 ───┐ ╭─────────────────────────╮
+        │                         ├┘┌─── 7 ──┼►│                         │ Retries
+        │                         ├◄┴── 6 ───┴►┤                         ├─┐
+        │         Ledger          │◄──── 5 ────┤         Billing         │◄┘
+        │    [Software System]    ├──── 4 ────►│    [Software System]    │◄┐ Reconciles
+        │                         ├◄┬── 1 ───┬►┤                         │◄┘
+        ╰─────────────────────────╯└┼── 2 ───┘│╰─────────────────────────╯
+                                    └─── 3 ───┘
+
+
+
+        ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ Bank ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
+        ┆              [system]               ┆
+        ┆                                     ┆
+        ┆                                     ┆
+        ┆                                     ┆
+Reports ┆                                     ┆
+     ┌──┼┐    ╭─────────────────────────╮     ┆
+     │┌─┼┼──┐ │                         │     ┆
+     └┼►┆└──┼─┤          Vault          │     ┆
+      └─┤   └►│    [Software System]    │     ┆
+Counts ┌┤   ┌►│                         │     ┆
+       └┼───┘ ╰─────────────────────────╯     ┆
+        ┆ Opens                               ┆
+        ┆                                     ┆
+        └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘"
+`;

@@ -51,8 +51,6 @@ export const REQUIREMENT_METRICS = Object.freeze({
   titleMargin: 25,
   /** Around the drawing (`setupViewPortForSVG(svg, 8, …)`). */
   viewBoxPadding: 8,
-  /** Room left and right of a relation label on its chip (ER's and the flowchart's). */
-  labelPad: 4,
   /** A font size a style sets is taken below this, in px (ER's cap). */
   maxFontSize: 1000,
 });
@@ -125,10 +123,7 @@ export function markerGeometry(theme: { number(name: string): number }): MarkerG
  * circle reaches its centre plus its radius and half the stroke; its plus lies inside it, and it
  * is never scaled (v12 neo drew it at r 9).
  */
-export function markerExtent(
-  marker: 'contains' | 'arrow',
-  g: MarkerGeometry = CLASSIC_MARKERS
-): MarkerExtent {
+export function markerExtent(marker: 'contains' | 'arrow', g: MarkerGeometry): MarkerExtent {
   if (marker === 'contains') {
     const r = M.circle.r + g.stroke / 2;
     return { length: M.circle.cx + r, width: 2 * r };
@@ -151,7 +146,7 @@ export function markerExtent(
  * circle with its 2px stroke); a wider `strokeWidth` widens the room with the strokes, up to
  * the cap.
  */
-export function markerRoom(g: MarkerGeometry = CLASSIC_MARKERS): MarkerExtent {
+export function markerRoom(g: MarkerGeometry): MarkerExtent {
   const a = markerExtent('arrow', g);
   const c = markerExtent('contains', g);
   // Rounded to 1e-9 first, so 20 computed as 20.000000000000004 stays 20.

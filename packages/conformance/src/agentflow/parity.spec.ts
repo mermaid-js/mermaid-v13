@@ -4,7 +4,7 @@ import { loadDivergences } from '../divergences.ts';
 import { DIVERGENCES_DIR } from '../registry.ts';
 import { runParity } from '../runner.ts';
 import type { CorpusItem, ObservedDivergence } from '../types.ts';
-import { agentflowGateCorpus, VARIANTS } from './corpus.ts';
+import { agentflowGateCorpus, AGENTFLOW_VARIANTS } from './corpus.ts';
 import { agentflowAdapter } from './v13.ts';
 
 /**
@@ -24,7 +24,7 @@ import { agentflowAdapter } from './v13.ts';
  * - core's YAML reader rejects anchors and aliases, which js-yaml resolved (listed for the
  *   source in `divergences/agentflow.json`, spec #523).
  */
-const VARIANT = new RegExp(` \\((${VARIANTS.map(([s]) => s).join('|')})\\)$`);
+const VARIANT = new RegExp(` \\((${AGENTFLOW_VARIANTS.map(([s]) => s).join('|')})\\)$`);
 
 const LONE_PERCENT = new Set(
   ['diamond', 'pipe', 'round', 'text', 'text-end', 'text-start', 'trap', 'two'].map(

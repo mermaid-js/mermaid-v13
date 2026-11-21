@@ -125,6 +125,40 @@ test.describe('run()', () => {
     expect(ids.text).toBe('a & b');
   });
 
+  test('v12 init(config, element, callback) renders that element only (#764, D643)', async ({
+    page,
+  }) => {
+    await open(page);
+    await addPres(page, [VALID, VALID]);
+    const calls = await page.evaluate(async () => {
+      const seen: string[] = [];
+      const el = document.getElementById('d1');
+      if (!el) throw new Error('no #d1');
+      await window.mermaid.init({ theme: 'dark' }, el, (id) => seen.push(id));
+      return seen;
+    });
+    expect(calls).toHaveLength(1);
+    await expect(page.locator('#d1 > svg.mermaid-flowchart')).toHaveCount(1);
+    await expect(page.locator('#d0 > svg')).toHaveCount(0);
+  });
+
+  test('the v12 startOnLoad property stops contentLoaded() (#764, D643)', async ({ page }) => {
+    await open(page);
+    await addPres(page, [VALID]);
+    // run() marks an element `data-processed` before its first await, so a run would show here.
+    const processed = await page.evaluate(() => {
+      window.mermaid.startOnLoad = false;
+      window.mermaid.contentLoaded();
+      return document.getElementById('d0')?.getAttribute('data-processed');
+    });
+    expect(processed).toBeNull();
+    await page.evaluate(() => {
+      window.mermaid.startOnLoad = true;
+      window.mermaid.contentLoaded();
+    });
+    await expect(page.locator('#d0 > svg.mermaid-flowchart')).toHaveCount(1);
+  });
+
   test('runs extension afterMount hooks after the SVG is in the element', async ({ page }) => {
     await open(page);
     await addPres(page, [VALID]);

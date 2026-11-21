@@ -14,9 +14,11 @@ import {
   checkColor,
   checkFilter,
   checkStyle,
+  noteRootText,
   splitTopLevel,
   styleScope,
   styleText,
+  type NotedText,
 } from '../svg/style.ts';
 import type {
   GradientRef,
@@ -759,9 +761,15 @@ interface ThemeParts {
   /** `defs` as a map, for the lookups every themed value makes. */
   byName: ReadonlyMap<string, ThemeVarEntry>;
   /** `rootStyleText()` by the aliases used, in the order they were first used. */
-  rootTexts: Map<string, StyleText>;
+  rootTexts: RootTexts;
   /** Each padding variable read so far: a multiple of the diagram's padding, or px. */
   paddings: Map<string, { readonly scale: boolean; readonly n: number }>;
+}
+
+/** `rootStyleText()` by the names used: one step per name, in the order they were first used. */
+interface RootTexts {
+  text?: NotedText;
+  readonly next: Map<string, RootTexts>;
 }
 
 /** Literal values and tokens from a diagram table's family entries. */
@@ -884,7 +892,7 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
       : undefined,
     palettes: new Map(),
     byName: new Map(Object.entries(defs)),
-    rootTexts: new Map(),
+    rootTexts: { next: new Map() },
     paddings: new Map(),
   };
   if (plain) level.set(keys[3]!, parts);
@@ -1001,13 +1009,15 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
     rootStyle: () => (vars ? decls(main, used, night ? false : undefined) : {}),
     rootStyleText() {
       if (!vars) return '' as StyleText;
-      const key = [...used].join(',');
-      let text = rootTexts.get(key);
-      if (text === undefined) {
-        text = styleText(decls(main, used, night ? false : undefined));
-        rootTexts.set(key, text);
+      // A walk down the names used, not a key joined from them on every render.
+      let at = rootTexts;
+      for (const name of used) {
+        let next = at.next.get(name);
+        if (!next) at.next.set(name, (next = { next: new Map() }));
+        at = next;
       }
-      return text;
+      at.text ??= { text: styleText(decls(main, used, night ? false : undefined)) };
+      return noteRootText(at.text);
     },
     autoDeclarations: () =>
       vars && night

@@ -6,6 +6,8 @@
  * state (e.g. Compare's `left`/`right`/`diff`), with keys of their own. The shell owns `path`,
  * `file`, `tab`, `theme` and `layout`, and the `devExplorer.viewer.*` keys it writes below.
  */
+import { loadTheme, THEME_NAMES } from '@mermaid-js/core/theme';
+import { sourceTheme } from '../../source-theme.ts';
 import type { InitializeConfig } from '../mermaid.ts';
 
 export type ViewerTab = 'diagram' | 'code' | 'profile' | 'compare';
@@ -103,14 +105,19 @@ export function renderConfig(settings: RenderSettings): InitializeConfig {
   };
 }
 
-const DARK_THEMES = new Set(['dark']);
+/** The shipped themes whose spec is dark (`dark: true`), read as the gallery reads it. */
+const DARK_THEMES = new Set<string>(
+  (
+    await Promise.all(THEME_NAMES.map(async (name) => ((await loadTheme(name)).dark ? [name] : [])))
+  ).flat()
+);
 
 /**
  * The theme a render most likely uses, for the canvas background only: the selected one, else
- * a `theme:` in the front matter or an init directive.
+ * the one the text picks in its front matter or an init directive.
  */
 export function effectiveTheme(theme: string | undefined, source: string): string | undefined {
-  return theme ?? /["']?\btheme["']?\s*:\s*["']?([\w-]+)/.exec(source)?.[1];
+  return theme ?? sourceTheme(source);
 }
 
 export const isDarkTheme = (theme: string | undefined): boolean =>

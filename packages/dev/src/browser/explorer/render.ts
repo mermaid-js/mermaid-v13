@@ -15,7 +15,7 @@ import { renderConfig, type RenderSettings } from './settings.ts';
 /** The dev bundle's module (`src/browser/mermaid.ts`). */
 export type DevBundle = typeof DevBundleModule;
 
-/** One build: the module and a `createMermaid()` instance with the interactions plugin. */
+/** One build: the module and a `createMermaid()` instance set up as the e2e page's (#391). */
 export interface DevMermaid {
   readonly build: number;
   readonly module: DevBundle;
@@ -61,8 +61,7 @@ const loaded = createBuildCache(async (build): Promise<DevMermaid> => {
   const url = `/mermaid.esm.mjs?build=${build}`;
   const module = (await import(/* @vite-ignore */ url)) as DevBundle;
   const instance = module.createMermaid();
-  instance.registerLayoutLoaders(module.devLayoutLoaders);
-  await instance.registerExternalDiagrams([module.interactions]);
+  await module.setUpDevMermaid(instance);
   return { build, module, instance };
 });
 

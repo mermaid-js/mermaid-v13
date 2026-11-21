@@ -5,39 +5,11 @@
  * which no v12 theme overrides; `actor0`–`actor5` have no value in any theme (D249), so the
  * renderer uses `journey.actorColours`.
  */
-import {
-  THEME_NAMES,
-  createTheme,
-  formatColor,
-  loadTheme,
-  parseColor,
-} from '@mermaid-js/core/theme';
+import { THEME_NAMES, createTheme, loadTheme } from '@mermaid-js/core/theme';
 import { DIAGRAM_TABLES } from '../diagram-themes.ts';
 import { describe, expect, it } from 'vitest';
-import { loadOracle } from '../oracle.ts';
-
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
-  };
-}
-
-await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
-
-function v12Vars(theme: string): Record<string, unknown> {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize({ theme });
-  return { ...v12.mermaidAPI.getConfig().themeVariables };
-}
-
-const hex = (v: unknown): string | undefined => {
-  if (typeof v !== 'string') return undefined;
-  const rgba = parseColor(v);
-  return rgba ? formatColor(rgba) : undefined;
-};
+import { v12Vars } from '../v12-theme.ts';
+import { hex } from '../hex.ts';
 
 const FILLS = Array.from({ length: 8 }, (_, i) => `fillType${i}`);
 const ACTORS = Array.from({ length: 6 }, (_, i) => `actor${i}`);
@@ -71,9 +43,7 @@ describe('journey theme variables against v12 12.2.0 (#327, D249)', () => {
 
   it('base: fillType0 and fillType1 follow a custom primaryColor and secondaryColor, as v12', async () => {
     const themeVariables = { primaryColor: '#1d3557', secondaryColor: '#a8dadc' };
-    v12.mermaidAPI.reset();
-    v12.mermaidAPI.initialize({ theme: 'base', themeVariables });
-    const old = v12.mermaidAPI.getConfig().themeVariables;
+    const old = v12Vars('base', themeVariables);
     const theme = createTheme(await loadTheme('base'), {
       diagram: DIAGRAM_TABLES.journey,
       themeVariables,

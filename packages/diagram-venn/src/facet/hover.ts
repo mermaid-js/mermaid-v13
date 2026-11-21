@@ -8,11 +8,12 @@
  * - any keyword: the one-line doc of the grammar file (`generated/docs.ts`).
  * Never a preview.
  */
+import { formatList } from '@mermaid-js/core/parser-kit';
 import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-kit';
 import { vennDocs } from '../generated/docs.ts';
 import { idsKey, setIdOf, type VennModel } from '../model.ts';
 import type { VennDocument } from '../parser/ast.ts';
-import { idText, listOf } from '../parser/text.ts';
+import { idText } from '../parser/text.ts';
 import { T } from '../parser/tokens.ts';
 import { code, setsByName, span, STYLE_KEYS } from './tables.ts';
 import { inside } from '@mermaid-js/shared/parser/facet';
@@ -55,7 +56,7 @@ function setHover(model: VennModel, ast: VennDocument, name: string): string {
       seen.add(key);
       listed.push(`${union(s.sets)} (size ${size(s.size)})`);
     }
-    parts.push(`In ${listOf(listed)}.`);
+    parts.push(`In ${formatList(listed)}.`);
   }
   return parts.join('\n\n');
 }

@@ -181,8 +181,9 @@ describe('event modeling lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)
     expect(accepted).toEqual([]);
     expect(unreached.sort()).toEqual([...NOT_REACHED.keys()].sort());
     expect(headerKept).toEqual([]);
-    // Every e2e fixture reaches the lexer: 25 through #604, 8 baselines from #611.
-    expect(e2e).toBe(38);
+    // Every e2e fixture reaches the lexer: 25 through #604, 8 baselines from #611, the later
+    // ones and #1035's override fixture.
+    expect(e2e).toBe(39);
     expect(compared).toBe(items.length - NOT_REACHED.size);
   }, 300_000);
 });

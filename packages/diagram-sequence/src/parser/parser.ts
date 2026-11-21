@@ -28,6 +28,7 @@ import type {
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
+import type { Limits } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type {
@@ -103,12 +104,13 @@ import type { Wrapped } from './normalise.ts';
 import { T } from './tokens.ts';
 import { TokenRules } from './rules.ts';
 
-export interface SequenceParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-  /** Block nesting cap (core `DEFAULT_LIMITS.maxDepth`). */
-  maxDepth?: number;
-}
+/**
+ * The caps, each core's `DEFAULT_LIMITS` value when unset: messages, notes not counted
+ * (`maxEdges`), participants (`maxNodes`) and block nesting (`maxDepth`), D608.
+ */
+export interface SequenceParseOptions
+  extends ParseOptions,
+    Partial<Pick<Limits, 'maxEdges' | 'maxNodes' | 'maxDepth'>> {}
 
 export type SequenceParseResult = ParseResult<SequenceModel, SequenceDocument>;
 
@@ -175,19 +177,22 @@ class SequenceParser extends TokenRules {
     if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
     this.ids = this.st.ids;
     const diagnostics = this.st.diagnostics;
-    this.db = new SequenceBuilder({
-      error: (code, message, range) => {
-        diagnostics.error(code, message, range);
+    this.db = new SequenceBuilder(
+      {
+        error: (code, message, range) => {
+          diagnostics.error(code, message, range);
+        },
+        warn: (code, message, range) => {
+          diagnostics.warning(code, message, range);
+        },
+        // The plugin sees what the model keeps: menus before the reset are no longer emitted.
+        menusReset: (id) => {
+          for (const node of this.menus.get(id) ?? []) delete node.menu;
+          this.menus.delete(id);
+        },
       },
-      warn: (code, message, range) => {
-        diagnostics.warning(code, message, range);
-      },
-      // The plugin sees what the model keeps: menus before the reset are no longer emitted.
-      menusReset: (id) => {
-        for (const node of this.menus.get(id) ?? []) delete node.menu;
-        this.menus.delete(id);
-      },
-    });
+      { maxNodes: options.maxNodes, maxEdges: options.maxEdges }
+    );
     this.maxDepth = options.maxDepth ?? DEFAULT_LIMITS.maxDepth;
     if (probe) {
       if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
@@ -200,6 +205,8 @@ class SequenceParser extends TokenRules {
     this.header();
     this.document();
     const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
+    // D218, D652: the front-matter title where the in-text `title` goes, when the text has none.
+    if (!db.title && this.pre.frontMatter?.title) db.title = this.pre.frontMatter.title;
     const model = db.model(warnings);
     const ast: SequenceDocument = {
       id: 'doc',

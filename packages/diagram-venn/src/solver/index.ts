@@ -11,7 +11,8 @@
  */
 import type { Circle } from './circles.ts';
 import { normalizeSolution, ORIENTATION, scaleSolution, type SetCircle } from './normalize.ts';
-import { seededRandom } from './random.ts';
+import { seededRandom } from '@mermaid-js/shared/random';
+import { VENN_SEED } from './random.ts';
 import { computeTextCentres, type TextCentre } from './regions.ts';
 import { nullRecord } from '../model.ts';
 import { fitCircles, type Area } from './solve.ts';
@@ -20,7 +21,6 @@ export { intersectionAreaPath } from './regions.ts';
 export type { RegionArc, RegionPath, TextCentre } from './regions.ts';
 export type { Circle, Point } from './circles.ts';
 export type { Area } from './solve.ts';
-export { seededRandom } from './random.ts';
 
 /** The box a solution is scaled into. */
 export interface SolveBox {
@@ -40,13 +40,12 @@ export interface Solved {
  * Lays out `areas` in `box`. Every set an overlap names must be one of `areas` with a size
  * above 0; no areas give no circles.
  */
-export function solveVenn(
-  areas: readonly Area[],
-  box: SolveBox,
-  random: () => number = seededRandom()
-): Solved {
+export function solveVenn(areas: readonly Area[], box: SolveBox): Solved {
   if (areas.length === 0) return { circles: nullRecord<SetCircle>(), centres: new Map() };
-  const solution = normalizeSolution(fitCircles(areas, { random }), ORIENTATION);
+  const solution = normalizeSolution(
+    fitCircles(areas, { random: seededRandom(VENN_SEED) }),
+    ORIENTATION
+  );
   const circles = scaleSolution(
     solution as Record<string, Circle>,
     box.width,

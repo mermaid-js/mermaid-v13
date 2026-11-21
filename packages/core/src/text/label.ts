@@ -7,7 +7,9 @@ import type { LabelBox, LabelBoxSpan, LabelSpan } from '../svg/writer.ts';
 import type { SafeValue } from '../svg/types.ts';
 import { entityAt } from './entities.ts';
 import { PLACEHOLDER, type InlineSpans } from './inline.ts';
+import { SPACE } from '../parser-kit/char-codes.ts';
 import { Style, type FontKey, type Measurer, type StyleBits } from './measurer.ts';
+import { SLICE, UNITS, unitsWidth, type SliceMeasurer, type Units } from './table.ts';
 
 /**
  * A run of text drawn in one style, or an inline box (`kind: 'box'`, D177) whose `text` is its
@@ -79,10 +81,14 @@ interface Piece {
 // Anything that needs more than measuring once: markup, entities, escapes, explicit breaks,
 // runs of white space and break hints.
 const RE_SLOW = /[<&*_`\\\n\r\t\u00ad\u200b]| {2}/;
+// White space other than the space: a plain label with any wraps on the general path.
+const RE_OTHER_SPACE = /[^\S ]/;
 const RE_SPACES = /[ \t]+/g;
 const SHY = '\u00ad';
 const ZWJ = '\u200d';
-const RE_HINTS = /[\u00ad\u200b]/g;
+// The soft hyphen is dropped unless a line breaks at it. A zero-width space is a break hint too,
+// but stays in the drawn text, as in v12 (D646).
+const RE_SHY = /\u00ad/g;
 
 // Break between any two Chinese or Japanese characters (Hangul is left out: Korean puts spaces
 // between words). Kinsoku: closing punctuation sticks to the character before it and opening
@@ -132,13 +138,11 @@ export function layoutLabel(
   const text = src.trim();
   if (text === '') return box([], [], []);
 
+  const plain = spans ? undefined : plainLabel(src, text, font, maxWidth, measurer, options);
+  if (plain) return box(...plain);
+
   const markup = options.markdown ? 'markdown' : options.markup;
   const markdown = markup === 'markdown';
-  if (!spans && !RE_SLOW.test(text) && !(markdown && RE_BULLET.test(text))) {
-    const width = measurer.width(text, font, base);
-    if (width <= maxWidth) return box([[run(text, base, width)]], [0], [width]);
-  }
-
   const lines: Run[][] = [];
   const indents: number[] = [];
   const widths: number[] = [];
@@ -169,6 +173,64 @@ export function layoutLabel(
     }
   }
   return box(lines, indents, widths);
+}
+
+/**
+ * Lays out a label without inline boxes as the general path does, or returns undefined for it:
+ * a plain label, or a label not markdown whose source lines (`sourceLines`) are plain once `tidy`
+ * has collapsed and trimmed their spaces. In such a line a backtick and a backslash are text, and
+ * so are `*` and `_` in the `plain` mode. Each line is laid out by `wrapPlain`. A plain label that
+ * fits is measured once instead; a line between breaks is not, as `wrap` adds up the widths of
+ * its words and a measurer need not be additive.
+ */
+function plainLabel(
+  src: string,
+  text: string,
+  font: FontKey,
+  maxWidth: number,
+  measurer: Measurer,
+  options: LabelOptions
+): [Run[][], number[], number[]] | undefined {
+  const markup = options.markdown ? 'markdown' : options.markup;
+  const base = options.style ?? 0;
+  const slow = RE_SLOW.test(text);
+  if (markup === 'markdown' && (slow || RE_BULLET.test(text))) return undefined;
+  // What else `RE_SLOW` finds in a line that `inline` reads as more than text.
+  const marked = markup === 'emphasis' ? /[<&*_\u00ad\u200b]/ : /[<&\u00ad\u200b]/;
+  const lines: Run[][] = [];
+  const indents: number[] = [];
+  const widths: number[] = [];
+  const push = (runs: Run[], width: number): void => {
+    lines.push(runs);
+    indents.push(0);
+    widths.push(width);
+  };
+  let width: number;
+  for (let line of slow ? sourceLines(text, options.backslashBreak) : [text]) {
+    if (slow) {
+      // As `tidy`, which leaves white space other than spaces and tabs: the line must have none.
+      line = collapsed(line);
+      if (RE_OTHER_SPACE.test(line) || marked.test((line = line.trim()))) return undefined;
+    }
+    if (line === '') push([], 0);
+    else if (!slow && (width = measurer.width(line, font, base)) <= maxWidth) {
+      push([run(line, base, width)], width);
+    } else if (
+      // A markdown label's lines come from the untrimmed source; keep that to the general path.
+      (markup === 'markdown' && src !== text) ||
+      // A line between breaks has none, as tested above.
+      (!slow && RE_OTHER_SPACE.test(line)) ||
+      !wrapPlain(line, font, maxWidth, measurer, options, (t, w) => push([run(t, base, w)], w))
+    ) {
+      return undefined;
+    }
+  }
+  return [lines, indents, widths];
+}
+
+/** `line` with its runs of spaces and tabs collapsed: only a tab or two spaces in a row change. */
+function collapsed(line: string): string {
+  return line.includes('\t') || line.includes('  ') ? line.replace(RE_SPACES, ' ') : line;
 }
 
 /**
@@ -212,12 +274,14 @@ const RE_MD_BREAK = /<br\s*\/?>|\r\n?/gi;
 // After `RE_MD_BREAK` has made every `<br>` and line end a `\n`.
 const RE_PLAIN_BREAK = /\\n|\n/i;
 
-/** Lines of a plain or emphasis label. Without `backslashBreak` a written `\n` stays text. */
-function plainLines(text: string, backslashBreak = true): SourceLine[] {
-  return text
-    .replace(RE_MD_BREAK, '\n')
-    .split(backslashBreak ? RE_PLAIN_BREAK : '\n')
-    .map((source) => ({ source }));
+/** Source lines of a plain or emphasis label. Without `backslashBreak` a written `\n` stays text. */
+function sourceLines(text: string, backslashBreak = true): string[] {
+  return text.replace(RE_MD_BREAK, '\n').split(backslashBreak ? RE_PLAIN_BREAK : '\n');
+}
+
+/** Lines of a plain or emphasis label, as `sourceLines`. */
+function plainLines(text: string, backslashBreak?: boolean): SourceLine[] {
+  return sourceLines(text, backslashBreak).map((source) => ({ source }));
 }
 
 /**
@@ -278,6 +342,31 @@ interface Tags {
 
 const RE_ESCAPABLE = /[!-/:-@[-`{-~]/;
 const RE_WORD = /\w/;
+
+/** The HTML subset tag that starts at `i`, or undefined. */
+function tagAt(source: string, i: number): RegExpExecArray | undefined {
+  RE_TAG.lastIndex = i;
+  const m = RE_TAG.exec(source);
+  const tag = m?.[2]?.toLowerCase();
+  return m && tag !== undefined && HTML_TAGS.has(tag) ? m : undefined;
+}
+
+/**
+ * The length (1, or 2 for bold) of the emphasis mark `ch` at `i` when it opens or closes
+ * emphasis, given the bits `marked` already open; 0 when it is plain text.
+ */
+function emphasisAt(source: string, i: number, ch: string, marked: number): number {
+  const double = source[i + 1] === ch;
+  const len = double ? 2 : 1;
+  const prev = source[i - 1] ?? ' ';
+  const next = source[i + len] ?? ' ';
+  const opening = (marked & (double ? Style.Bold : Style.Italic)) === 0;
+  const can = opening
+    ? next.trim() !== '' && source.includes(double ? ch + ch : ch, i + len + 1)
+    : prev.trim() !== '';
+  const intraWord = ch === '_' && RE_WORD.test(prev) && RE_WORD.test(next);
+  return can && !intraWord ? len : 0;
+}
 
 /**
  * Splits one line of source into styled pieces: HTML subset tags and character references, in
@@ -342,11 +431,9 @@ function inline(
       continue;
     }
     if (ch === '<') {
-      RE_TAG.lastIndex = i;
-      const m = RE_TAG.exec(source);
-      const tag = m?.[2]?.toLowerCase();
-      if (m && tag !== undefined && HTML_TAGS.has(tag)) {
-        count(tag, m[1] === '/' ? -1 : 1);
+      const m = tagAt(source, i);
+      if (m) {
+        count((m[2] as string).toLowerCase(), m[1] === '/' ? -1 : 1);
         i += m[0].length;
         continue;
       }
@@ -371,18 +458,10 @@ function inline(
         continue;
       }
     } else if (emphasis && (ch === '*' || ch === '_')) {
-      const double = source[i + 1] === ch;
-      const bit = double ? Style.Bold : Style.Italic;
-      const len = double ? 2 : 1;
-      const prev = source[i - 1] ?? ' ';
-      const next = source[i + len] ?? ' ';
-      const opening = (marked & bit) === 0;
-      const can = opening
-        ? next.trim() !== '' && source.includes(double ? ch + ch : ch, i + len + 1)
-        : prev.trim() !== '';
-      const intraWord = ch === '_' && RE_WORD.test(prev) && RE_WORD.test(next);
-      if (can && !intraWord) {
-        marked = opening ? marked | bit : marked & ~bit;
+      const len = emphasisAt(source, i, ch, marked);
+      if (len > 0) {
+        const bit = len === 2 ? Style.Bold : Style.Italic;
+        marked = (marked & bit) === 0 ? marked | bit : marked & ~bit;
         restyle();
         i += len;
         continue;
@@ -428,25 +507,32 @@ function lineWidth(runs: Run[]): number {
 const RE_BEFORE_HYPHEN = /[\p{L}\p{N}]/u;
 const RE_AFTER_HYPHEN = /\p{L}/u;
 
+/**
+ * The end of the first piece of `s[from, to)`, a part of `RE_PIECE`: after its first hyphen that
+ * is a break opportunity, or `to`.
+ */
+function hyphenEnd(s: string, from: number, to: number): number {
+  for (let at = from + 1; at + 1 < to; at++) {
+    if (
+      s[at] === '-' &&
+      RE_BEFORE_HYPHEN.test(s[at - 1] as string) &&
+      RE_AFTER_HYPHEN.test(s[at + 1] as string)
+    ) {
+      return at + 1;
+    }
+  }
+  return to;
+}
+
 /** Splits pieces after each hyphen that is a break opportunity, in one scan of the text. */
 function hyphenBreaks(parts: string[]): string[] {
-  let out: string[] | undefined;
-  for (let i = 0; i < parts.length; i++) {
-    const part = parts[i] as string;
-    let from = 0;
-    for (let at = part.indexOf('-', 1); at !== -1; at = part.indexOf('-', at + 1)) {
-      if (
-        RE_BEFORE_HYPHEN.test(part[at - 1] as string) &&
-        RE_AFTER_HYPHEN.test(part[at + 1] ?? '')
-      ) {
-        out ??= parts.slice(0, i);
-        out.push(part.slice(from, at + 1));
-        from = at + 1;
-      }
+  const out: string[] = [];
+  for (const part of parts) {
+    for (let from = 0, to = 0; from < part.length; from = to) {
+      out.push(part.slice(from, (to = hyphenEnd(part, from, part.length))));
     }
-    if (out) out.push(from === 0 ? part : part.slice(from));
   }
-  return out ?? parts;
+  return out;
 }
 
 /**
@@ -498,7 +584,7 @@ function wrap(
           .slice(p, k + 1)
           .join('')
           .trimEnd()
-          .replace(RE_HINTS, '');
+          .replace(RE_SHY, '');
         fits =
           width + measure(part.slice(0, -1) + '-', style) <= max ||
           width + measure(rest, style) <= max;
@@ -569,7 +655,147 @@ function split(
   return chunk;
 }
 
-/** Merges same-style pieces, trims the line ends, resolves break hints and measures the runs. */
+/**
+ * `wrap` and `finish` for a plain label: trimmed, one source line, words separated by single
+ * spaces, no markup, break hints or other white space (`RE_SLOW`, `RE_OTHER_SPACE`). It makes the
+ * same decisions with the same arithmetic in one scan by index, and slices lines from `text`.
+ *
+ * With a table measurer, a slice's width is its {@link SLICE} width, bit for bit what
+ * `measurer.width` returns for the slice, without slicing the text. Each word's advance
+ * {@link UNITS} are summed once: a line's units are its words' and the spaces' between them,
+ * which add up exactly, scaled once by `unitsWidth` as the slice width scales the line's slice.
+ * Any other measurer measures the same strings `wrap` and `finish` do.
+ *
+ * Passes each line and its width to `out`. Returns false where `wrap` would split a word after a
+ * line it has started (only when the words before it measure 0), which the general path then
+ * lays out.
+ */
+function wrapPlain(
+  text: string,
+  font: FontKey,
+  max: number,
+  measurer: Measurer,
+  options: LabelOptions,
+  out: (text: string, width: number) => void
+): boolean {
+  const style = options.style ?? 0;
+  const [small, width] = plainWidths(text, font, style, measurer);
+  // Without a table measurer every count of units and the size are 0, so each width below is
+  // measured (`unitsWidth(...) || width(...)`, and `small` for a space). With one, measuring
+  // gives the same number, and it is measured only where the units' width is 0 or NaN.
+  const table = (measurer as Partial<SliceMeasurer>)[UNITS] ?? NO_UNITS;
+  const size = table.size(font, style);
+  const spaceUnits = table.units(' ', 0, 1, font, style);
+  const space = unitsWidth(spaceUnits, size);
+  // Emits text[from, to) as a line.
+  const emit = (from: number, to: number): void => out(text.slice(from, to), width(from, to));
+  // As in `wrap`, where a word never has white space before it here (the text is trimmed and
+  // each word takes the space after it), so its `lead` is 0. The current line is
+  // text[start, end), `line` wide with the space after it; it has a word where `end > start`.
+  // Before its first word, `start` is where that word starts and `end`, the end of the line
+  // before (0 for the first line), is at most `start`.
+  // With a table measurer it has `units`, and `gap` is the units of the space after it: both 0
+  // before its first word. Lines are emitted in place: a closure that read these would hold them
+  // in its context, slower here.
+  let line = 0;
+  let start = 0;
+  let end = 0;
+  let units = 0;
+  let gap = 0;
+  let part = 0;
+  let i = 0;
+  while (i < text.length) {
+    // `RE_PIECE` matches the word at i (not a space; a plain label has no break hints) with the
+    // one space after it, if any: a CJK word can end without one. `hyphenBreaks` splits it after
+    // its hyphens that are break opportunities, into pieces without a space after them.
+    if (i >= part) part = pieceEnd(text, i);
+    const next = hyphenEnd(text, i, part);
+    // Without the space after it: `next - core` is 1 where the piece has one, else 0.
+    const core = next - Number(text.charCodeAt(next - 1) === SPACE);
+    const coreUnits = table.units(text, i, core, font, style);
+    const coreWidth = unitsWidth(coreUnits, size) || width(i, core);
+    if (!(line + coreWidth <= max) && line > 0) {
+      out(text.slice(start, end), unitsWidth(units, size) || width(start, end));
+      start = i;
+      line = 0;
+      units = 0;
+      gap = 0;
+    }
+    if (options.keepWords || line !== 0 || !(coreWidth > max)) {
+      units += gap + coreUnits;
+      line += coreWidth + (next === core ? 0 : space || small(' ', style));
+    } else if (end > start) {
+      return false;
+    } else {
+      start = splitWord(text.slice(i, next), i, style, small, max, emit);
+      line = width(start, next);
+      units = table.units(text, start, core, font, style);
+    }
+    gap = (next - core) * spaceUnits;
+    end = core;
+    i = next;
+  }
+  out(text.slice(start, end), unitsWidth(units, size) || width(start, end));
+  return true;
+}
+
+/** The {@link UNITS} `wrapPlain` takes for a measurer without them: none, at size 0. */
+const NO_UNITS: Units = { units: () => 0, size: () => 0 };
+
+/**
+ * The widths `wrapPlain` takes of `text`: of spaces and characters (`small` in `wrap`), and of
+ * text[from, to). With a table measurer they are its slice widths, without slicing the text;
+ * otherwise as in `wrap` and `finish`.
+ */
+function plainWidths(
+  text: string,
+  font: FontKey,
+  style: StyleBits,
+  measurer: Measurer
+): [small: Width, width: (from: number, to: number) => number] {
+  const slice = (measurer as Partial<SliceMeasurer>)[SLICE];
+  if (slice) {
+    return [
+      (t, s) => slice(t, 0, t.length, font, s),
+      (from, to) => slice(text, from, to, font, style),
+    ];
+  }
+  return [
+    smallWidths((t, s) => measurer.width(t, font, s)),
+    (from, to) => measurer.width(text.slice(from, to), font, style),
+  ];
+}
+
+/** Where the `RE_PIECE` match at `at` ends. */
+function pieceEnd(text: string, at: number): number {
+  RE_PIECE.lastIndex = at;
+  RE_PIECE.test(text);
+  return RE_PIECE.lastIndex;
+}
+
+/**
+ * `split`s `word`, wider than the line, and emits its full lines from `from` on. Returns where
+ * the rest, which starts the next line, begins.
+ */
+function splitWord(
+  word: string,
+  from: number,
+  style: StyleBits,
+  small: Width,
+  max: number,
+  emit: (from: number, to: number) => void
+): number {
+  const full: Piece[][] = [];
+  const rest = from + word.length - split(word, style, small, max, full).length;
+  let at = from;
+  for (const [chunk] of full) emit(at, (at += (chunk as Piece).text.length));
+  return rest;
+}
+
+/**
+ * Merges same-style pieces, trims the line ends, resolves soft hyphens and measures the runs. A
+ * zero-width space is kept (D646).
+ */
 function finish(line: Piece[], broken: boolean, font: FontKey, measurer: Measurer): Run[] {
   const merged: Piece[] = [];
   for (const piece of line) {
@@ -591,7 +817,7 @@ function finish(line: Piece[], broken: boolean, font: FontKey, measurer: Measure
       runs.push({ ...piece.box, style: piece.style } satisfies BoxRun);
       continue;
     }
-    const text = piece.text.replace(RE_HINTS, '');
+    const text = piece.text.replace(RE_SHY, '');
     if (text === '') continue;
     runs.push(run(text, piece.style, measurer.width(text, font, piece.style)));
   }

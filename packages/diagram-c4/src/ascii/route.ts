@@ -6,7 +6,8 @@
 // along a frame and a run along another line cost extra, so lines keep few corners and their own
 // lanes. Every search is charged to a budget (R-SEC-5); past it, or with no way through, the line
 // is the routed points stepped as they are (the guide the search follows).
-import { DX, DY, opposite, type CellRect, type Dir } from '@mermaid-js/core/ascii';
+import { DX, DY, Heap, opposite, type CellRect, type Dir } from '@mermaid-js/core/ascii';
+import { cellsOf } from '@mermaid-js/shared/ascii';
 import { sameCell, type Cell, type CellSet } from './grid.ts';
 
 /** One relation to route: its two end cells, the way each goes into its shape, the routed points. */
@@ -89,57 +90,6 @@ function guideDistance(x: number, y: number, guide: readonly Cell[]): number {
   return best;
 }
 
-/** A binary min-heap of keys by cost, ties by key (so the search is deterministic). */
-class Heap {
-  private readonly costs: number[] = [];
-  private readonly keys: number[] = [];
-
-  get size(): number {
-    return this.keys.length;
-  }
-
-  private less(i: number, j: number): boolean {
-    const a = this.costs[i]!;
-    const b = this.costs[j]!;
-    return a < b || (a === b && this.keys[i]! < this.keys[j]!);
-  }
-
-  private swap(i: number, j: number): void {
-    [this.costs[i], this.costs[j]] = [this.costs[j]!, this.costs[i]!];
-    [this.keys[i], this.keys[j]] = [this.keys[j]!, this.keys[i]!];
-  }
-
-  push(cost: number, key: number): void {
-    this.costs.push(cost);
-    this.keys.push(key);
-    for (let i = this.keys.length - 1; i > 0; ) {
-      const up = (i - 1) >> 1;
-      if (!this.less(i, up)) break;
-      this.swap(i, up);
-      i = up;
-    }
-  }
-
-  pop(): number {
-    const top = this.keys[0]!;
-    const last = this.keys.length - 1;
-    this.swap(0, last);
-    this.costs.pop();
-    this.keys.pop();
-    for (let i = 0; ; ) {
-      const l = 2 * i + 1;
-      const r = l + 1;
-      let m = i;
-      if (l < last && this.less(l, m)) m = l;
-      if (r < last && this.less(r, m)) m = r;
-      if (m === i) break;
-      this.swap(i, m);
-      i = m;
-    }
-    return top;
-  }
-}
-
 /** A step of the search: onto cell (x, y), going `d`. */
 interface Step {
   readonly x: number;
@@ -180,7 +130,8 @@ function search(req: RouteRequest, field: RouteField, budget: RouteBudget): Cell
   const cost = new Map<number, number>();
   const parent = new Map<number, number>();
   const closed = new Set<number>();
-  const open = new Heap();
+  // Equal costs come out by key, so the search is deterministic.
+  const open = new Heap('item');
   const first = keyOf(start.x, start.y, opposite(req.startInto));
   cost.set(first, 0);
   open.push(remaining(start.x, start.y), first);
@@ -225,22 +176,6 @@ function search(req: RouteRequest, field: RouteField, budget: RouteBudget): Cell
   return out.reverse();
 }
 
-/** Every cell along `points`, in order (each pair level or upright). */
-function cellsAlong(points: readonly Cell[]): Cell[] {
-  const out: Cell[] = [points[0]!];
-  for (let i = 0; i + 1 < points.length; i++) {
-    const b = points[i + 1]!;
-    let c = out[out.length - 1]!;
-    while (!sameCell(c, b)) {
-      const step =
-        b.x !== c.x ? { x: Math.sign(b.x - c.x), y: 0 } : { x: 0, y: Math.sign(b.y - c.y) };
-      c = { x: c.x + step.x, y: c.y + step.y };
-      out.push(c);
-    }
-  }
-  return out;
-}
-
 /**
  * The routed points stepped as they are, as corners: each pair that is neither level nor upright
  * gets an L, or a Z when it is the only pair and both ends leave level (or both upright): the
@@ -272,5 +207,5 @@ export function routeLine(req: RouteRequest, field: RouteField, budget: RouteBud
   if (sameCell(req.start, req.end)) return [req.start];
   // The search follows the routed points stepped; a straight route's diagonal would draw a stair.
   const corners = steppedCorners(req);
-  return search({ ...req, guide: corners }, field, budget) ?? cellsAlong(corners);
+  return search({ ...req, guide: corners }, field, budget) ?? cellsOf(corners);
 }

@@ -9,40 +9,16 @@ import {
   THEME_NAMES,
   THEME_VARIABLES,
   createTheme,
-  formatColor,
   loadTheme,
-  parseColor,
   type ThemeName,
 } from '@mermaid-js/core/theme';
 import { DIAGRAM_TABLES } from '../diagram-themes.ts';
 import { describe, expect, it } from 'vitest';
-import { loadOracle } from '../oracle.ts';
-
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
-  };
-}
-
-await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
-
-function v12Vars(theme: string, themeVariables: object = {}): Record<string, unknown> {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize({ theme, themeVariables });
-  return { ...v12.mermaidAPI.getConfig().themeVariables };
-}
+import { v12Vars } from '../v12-theme.ts';
+import { hex } from '../hex.ts';
 
 const VARS = DIAGRAM_TABLES.quadrant!.vars;
 const QUADRANT = Object.keys(VARS);
-
-const hex = (v: unknown): string | undefined => {
-  if (typeof v !== 'string') return undefined;
-  const rgba = parseColor(v);
-  return rgba ? formatColor(rgba) : undefined;
-};
 
 describe('quadrant theme variables against v12 12.2.0', () => {
   it("are the 15 v12 names, in the quadrant package's table, not core's (spec #414 T1)", () => {
@@ -115,14 +91,14 @@ describe('quadrant theme variables against v12 12.2.0', () => {
     }
   );
 
-  it('follow a user primaryColor in default, where v12 kept its own (MIGRATION)', async () => {
+  it('keep their own fills under a user primaryColor in default, as v12 does (D656)', async () => {
     const both = await userPrimary('default');
     // v12 theme-default.js derives them once in its constructor, before the overrides arrive.
     expect(both[0]).toEqual({ quadrant1Fill: '#ececff' });
-    expect(both[4]).toEqual({ quadrant1Fill: '#336699' });
+    expect(both.slice(4)).toEqual(both.slice(0, 4));
   });
 
-  it('follow a user primaryTextColor and primaryBorderColor in default, where v12 did not', async () => {
+  it('keep the text fills under a user primaryTextColor in default, as v12 does (D656), and follow primaryBorderColor, where v12 did not', async () => {
     const vars = { primaryTextColor: '#112233', primaryBorderColor: '#445566' };
     const old = v12Vars('default', vars);
     const theme = createTheme(await loadTheme('default'), {
@@ -132,7 +108,7 @@ describe('quadrant theme variables against v12 12.2.0', () => {
     });
     for (const n of ['quadrant1TextFill', 'quadrantTitleFill', 'quadrantPointTextFill']) {
       expect(hex(old[n]), n).toBe('#131300');
-      expect(theme.value(n), n).toBe('#112233');
+      expect(theme.value(n), n).toBe('#131300');
     }
     expect(hex(old.quadrantExternalBorderStrokeFill)).toBe('#c7c7f1');
     expect(theme.value('quadrantExternalBorderStrokeFill')).toBe('#445566');

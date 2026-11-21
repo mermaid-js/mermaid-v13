@@ -8,6 +8,7 @@ import { radar as plugin } from '../plugin.ts';
 import { parseRadar } from '../parser/index.ts';
 import { FIXTURES, axis, curve, model } from './fixtures.ts';
 import { layoutRadar, type RadarLayout } from './index.ts';
+import type { Rect } from './types.ts';
 
 let spec: ThemeSpec;
 beforeAll(async () => {
@@ -41,6 +42,10 @@ function lay(
 }
 
 const abc = ['A', 'B', 'C'].map((n) => axis(n));
+
+/** Two boxes share area (touching edges do not count). */
+const meets = (a: Rect, b: Rect): boolean =>
+  a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 
 describe('radar layout: the frame, worked from v12 renderer.ts', () => {
   it('centres the chart on the 700 px canvas with radius 300', () => {
@@ -275,6 +280,31 @@ describe('radar layout: legend and title', () => {
   it('a legend label of several lines pushes the next rows down by its extra lines', () => {
     const l = lay(model(abc, [curve('a', [1, 2, 3], 'One<br>Two'), curve('b', [1, 2, 3])]));
     expect(l.legend[1]!.swatch.y - l.legend[0]!.swatch.y).toBeCloseTo(20 + 14.4);
+  });
+
+  it('moves the whole legend right of an axis label a row meets, rows kept (#846, D614)', () => {
+    // Eight axes: "Axis label 1" at 45° is start-anchored at x ≈ 575.6 and 120 px wide, so at
+    // v12's x of 612.5 legend row 1 (y 107.5) sits on it.
+    const l = lay(FIXTURES.legendOnLabel!);
+    const label = l.spokes[1]!.label;
+    const right = label.x + label.width;
+    expect(right).toBeGreaterThan(350 + 262.5);
+    expect(l.legend.map((r) => [r.swatch.x, r.swatch.y])).toEqual([
+      [right + 4, 87.5],
+      [right + 4, 107.5],
+    ]);
+    expect(l.legend[0]!.label.x).toBe(right + 4 + 16);
+    for (const row of l.legend)
+      for (const spoke of l.spokes) {
+        expect(meets(row.swatch, spoke.label)).toBe(false);
+        expect(meets(row.label, spoke.label)).toBe(false);
+      }
+    expect(l.bounds.x + l.bounds.width).toBeGreaterThanOrEqual(l.legend[0]!.label.x + 10);
+  });
+
+  it('keeps v12’s legend position when no row meets an axis label (D614)', () => {
+    const l = lay(FIXTURES.ninjas!);
+    expect(l.legend.every((r) => r.swatch.x === 350 + 262.5)).toBe(true);
   });
 
   it('the title: middle-anchored on the centre at the canvas top, in fontSize', () => {

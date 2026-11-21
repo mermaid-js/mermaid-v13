@@ -22,6 +22,7 @@ import type {
   Range,
 } from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
+import type { Limits } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type {
@@ -82,17 +83,19 @@ import {
 import { keyOf, trimColon } from './names.ts';
 import type { Scope } from './names.ts';
 import { clickInComposite, ignoredInComposite, scaleIgnored, undrawnNotices } from './notices.ts';
+import type { Declared } from './notices.ts';
 import { splitRegions } from './regions.ts';
 import { StateCursor, STOP } from './cursor.ts';
 import { terminals } from './terminals.ts';
 import { T } from './tokens.ts';
 
-export interface StateParseOptions extends ParseOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-  /** Composite nesting cap (core `DEFAULT_LIMITS.maxDepth`). */
-  maxDepth?: number;
-}
+/**
+ * The caps, each core's `DEFAULT_LIMITS` value when unset: transitions (`maxEdges`), states
+ * (`maxNodes`) and composite nesting (`maxDepth`), D608.
+ */
+export interface StateParseOptions
+  extends ParseOptions,
+    Partial<Pick<Limits, 'maxEdges' | 'maxNodes' | 'maxDepth'>> {}
 
 export type StateParseResult = ParseResult<StateModel, StateDocument>;
 
@@ -114,6 +117,9 @@ interface Doc {
  * One parse. Each grammar rule is a method; `i` indexes the parser tokens. A rule that fails
  * records a diagnostic and throws {@link STOP}; the statement loop catches it and recovers.
  */
+/** The header keyword at the start of the `stateDiagram` token. */
+const RE_HEADER_KEYWORD = /^stateDiagram(?:-v2)?/i;
+
 class StateParser extends StateCursor {
   private readonly pre: PreprocessResult;
   private readonly ids: ParseState['ids'];
@@ -122,7 +128,11 @@ class StateParser extends StateCursor {
   /** Region ordinals handed out per composite name. */
   private readonly regionCount = new Map<string, number>();
   /** `state X` lines on their own, which v12 does not draw unless X is mentioned elsewhere. */
-  private readonly declared: [string, Range][] = [];
+  private readonly declared: Declared[] = [];
+  /** The token of the last `state X` word, to join the words of one line (#362). */
+  private lastDeclared = -1;
+  /** Where that line's first word starts. */
+  private firstWord = 0;
   private readonly clicks: [string, Range][] = []; // top-level `click` targets
   /** Embedded diagram blocks (ADR-15), for `ParseResult.embeds`. */
   private readonly embeds: EmbeddedBlock[] = [];
@@ -147,6 +157,8 @@ class StateParser extends StateCursor {
     this.db = new StateBuilder({
       error: (code, message, range) => void diagnostics.error(code, message, range),
       warn: (code, message, range) => void diagnostics.warning(code, message, range),
+      maxNodes: options.maxNodes,
+      maxEdges: options.maxEdges,
     });
     this.maxDepth = options.maxDepth ?? DEFAULT_LIMITS.maxDepth;
     probe?.trivia(this.all);
@@ -160,9 +172,11 @@ class StateParser extends StateCursor {
     this.document(undefined, { items, nodes: children });
     applyFolds(this.folds, this.embeds, this.blocks, this.report);
     const warnings = () => st.diagnostics.list.filter((d) => d.severity === 'warning');
-    const model = this.db.build(items, []);
+    const model = this.db.build(items);
     undrawnNotices(this.st.diagnostics, model, this.declared, this.clicks);
     model.warnings = warnings();
+    const title = this.pre.frontMatter?.title;
+    if (title) model.title = title;
     const ast: StateDocument = {
       id: 'doc',
       type: 'Document',
@@ -201,11 +215,15 @@ class StateParser extends StateCursor {
       this.i = sd;
     }
     const j = this.i++;
+    // The token, as v12's `stateDiagram\s+`, may run on over a comment line below it: the
+    // header is the keyword alone.
+    const { start } = this.own(j);
+    const keyword = RE_HEADER_KEYWORD.exec(this.text(j).trim())![0];
     const node: StateHeader = {
       id: this.ids.statement('st'),
       type: 'Header',
-      range: this.own(j),
-      keyword: this.text(j).trim(),
+      range: { start, end: start + keyword.length },
+      keyword,
     };
     out.push(node);
     this.st.statement('header', node.range);
@@ -300,11 +318,11 @@ class StateParser extends StateCursor {
           return this.composite(scope, doc, from, name, from, undefined);
         }
         // `state X` alone: jison's action returns the name, which v12 then ignores.
-        const node = this.stateNode(from, name, this.own(from), scope);
+        const node = this.stateNode(from, name, this.own(from), scope, undefined, true);
         node.declaredOnly = true;
         nodes.push(node);
         this.st.statement('state', node.range);
-        this.declared.push([name, node.range]);
+        this.declare(from, name, node.range);
         items.push(NOOP);
         return;
       }
@@ -428,16 +446,43 @@ class StateParser extends StateCursor {
     }
   }
 
+  /**
+   * Record the `state X` word at token `j`. v12's lexer reads each word of `state A B` (or
+   * `state A: text`) as its own `state X`, and so does v13; a word right after another on the
+   * same line joins that line's record, so the line gets one warning (#362, D609).
+   */
+  private declare(j: number, name: string, range: Range): void {
+    const prev = this.declared.at(-1);
+    const own = this.own(j);
+    if (
+      prev &&
+      this.lastDeclared === j - 1 &&
+      !this.src.slice(prev.range.end, own.start).includes('\n')
+    ) {
+      prev.range = { start: prev.range.start, end: own.end };
+      prev.words = this.src.slice(this.firstWord, own.end);
+    } else {
+      this.declared.push({ name, range });
+      this.firstWord = own.start;
+    }
+    this.lastDeclared = j;
+  }
+
   /** A state mention's AST node, `n:<name>` (or the scoped id of `[*]`). */
   private stateNode(
     j: number,
     name: string,
     nameRange: Range,
     scope: Scope | undefined,
-    end?: boolean
+    end?: boolean,
+    declared?: boolean
   ): StateStmt {
     const ast = this.ids.node(keyOf(name, scope, end));
-    if (name !== '[*]') {
+    if (declared && name.length > 1 && name.endsWith(':')) {
+      // `state X:` as in `state X: text` (#362, D609): the symbol is `X`, the state the
+      // warning names, so a rename keeps the colon and the line's warning.
+      this.symbol(name.slice(0, -1), 'state', { ...nameRange, end: nameRange.end - 1 });
+    } else if (name !== '[*]') {
       this.symbol(name, 'state', nameRange);
     }
     return { id: ast, type: 'State', range: this.span(j), name, nameRange };

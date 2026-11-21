@@ -44,8 +44,8 @@ describe('label modes per diagram type (#763, D564)', () => {
       'C',
       'D',
       'E',
-      'F',
-      'first line / second **line**',
+      'first line',
+      'second **line**',
       '- note item',
       'a `note` in backticks',
     ]);

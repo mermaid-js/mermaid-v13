@@ -1,15 +1,15 @@
 /**
- * The three adapters show one document the same way: Monaco (this package), the LSP server
- * (in process, over a stream pair) and CodeMirror give the same folds by line and the same
- * semantic tokens by line, all from the service's `lineFoldingRanges`/`lineSemanticTokens`.
+ * The three adapters show one document the same way: Monaco (this package) and CodeMirror give
+ * the same folds by line and the same semantic tokens by line, both from the service's
+ * `lineFoldingRanges`/`lineSemanticTokens`. `language-server`'s `adapters-agree.spec.ts` holds
+ * the LSP server to CodeMirror the same way (this package may not import the server: the
+ * `language-server` zone in .fallowrc.json), so the three agree.
  * Before semantic tokens arrive, the two editors paint each diagram type with its own
  * generated grammar (D134): CodeMirror's Lezer parser and Monaco's Monarch tokens give the
  * same category to every character of the diagram, one document per v13 type.
  */
-import { PassThrough } from 'node:stream';
 import { foldable } from '@codemirror/language';
 import { EditorState } from '@codemirror/state';
-import { startServer } from '@mermaid-js/language-server';
 import {
   loadHighlighter,
   mermaid,
@@ -19,14 +19,7 @@ import {
 import { LineIndex, SEMANTIC_TOKEN_LEGEND } from '@mermaid-js/language-service';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type * as Monaco from 'monaco-editor';
-import { createConnection } from 'vscode-languageserver/node';
-import {
-  createProtocolConnection,
-  StreamMessageReader,
-  StreamMessageWriter,
-} from 'vscode-languageserver-protocol/node';
-import type { FoldingRange, SemanticTokens } from 'vscode-languageserver-protocol';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { fakeMonaco } from './testing/fake-monaco.ts';
 import { monarchTokens } from './testing/monarch.ts';
 import { registerMermaid } from './index.ts';
@@ -94,7 +87,7 @@ async function monarchCategories(id: string, text: string): Promise<string[]> {
 const types: readonly string[] = SEMANTIC_TOKEN_LEGEND.types;
 const modifiers: readonly string[] = SEMANTIC_TOKEN_LEGEND.modifiers;
 
-/** `line:char+length type mods`, 0-based, from LSP/Monaco-encoded data. */
+/** `line:char+length type mods`, 0-based, from Monaco-encoded data. */
 function decode(data: ArrayLike<number>): string[] {
   const out: string[] = [];
   let line = 0;
@@ -107,46 +100,6 @@ function decode(data: ArrayLike<number>): string[] {
     out.push(`${line}:${char}+${data[i + 2]} ${[types[data[i + 3]!], ...mods].join(' ')}`);
   }
   return out;
-}
-
-async function lspView(text: string): Promise<{ folds: string[]; tokens: string[] }> {
-  const toServer = new PassThrough();
-  const toClient = new PassThrough();
-  const server = createConnection(
-    new StreamMessageReader(toServer),
-    new StreamMessageWriter(toClient)
-  );
-  startServer(server, { facets: [] });
-  const client = createProtocolConnection(
-    new StreamMessageReader(toClient),
-    new StreamMessageWriter(toServer)
-  );
-  client.listen();
-  try {
-    await client.sendRequest('initialize', { processId: null, rootUri: null, capabilities: {} });
-    await client.sendNotification('initialized', {});
-    const uri = 'file:///agree.mmd';
-    const published = new Promise<void>((done) =>
-      client.onNotification('textDocument/publishDiagnostics', () => done())
-    );
-    await client.sendNotification('textDocument/didOpen', {
-      textDocument: { uri, languageId: 'mermaid', version: 1, text },
-    });
-    await published;
-    const folds = await client.sendRequest<FoldingRange[]>('textDocument/foldingRange', {
-      textDocument: { uri },
-    });
-    const tokens = await client.sendRequest<SemanticTokens>('textDocument/semanticTokens/full', {
-      textDocument: { uri },
-    });
-    return {
-      folds: folds.map((f) => `${f.startLine}-${f.endLine}`),
-      tokens: decode(tokens.data),
-    };
-  } finally {
-    client.dispose();
-    server.dispose();
-  }
 }
 
 async function monacoView(text: string): Promise<{ folds: string[]; tokens: string[] }> {
@@ -191,39 +144,35 @@ async function codeMirrorView(text: string): Promise<{ folds: string[]; tokens: 
   return { folds, tokens };
 }
 
-describe('Monaco, the LSP server and CodeMirror agree', () => {
-  let lsp: { folds: string[]; tokens: string[] };
+describe('Monaco and CodeMirror agree', () => {
+  let monaco: { folds: string[]; tokens: string[] };
   beforeAll(async () => {
-    lsp = await lspView(DOC);
+    monaco = await monacoView(DOC);
   }, 30_000);
-  afterAll(() => undefined);
 
   it('on the folds by line, closing lines visible', async () => {
     // Front matter (keeps `---`), accDescr (keeps `}`), the label chain, the subgraph
     // (keeps `end`) and the multi-line `@{ }`.
-    expect(lsp.folds).toEqual(['0-3', '6-8', '10-11', '12-15', '14-15']);
-    expect((await monacoView(DOC)).folds).toEqual(lsp.folds);
-    expect((await codeMirrorView(DOC)).folds).toEqual(lsp.folds);
+    expect(monaco.folds).toEqual(['0-3', '6-8', '10-11', '12-15', '14-15']);
+    expect((await codeMirrorView(DOC)).folds).toEqual(monaco.folds);
   });
 
   it('on the semantic tokens by line', async () => {
-    expect(lsp.tokens.length).toBeGreaterThan(20);
+    expect(monaco.tokens.length).toBeGreaterThan(20);
     // A continuation piece starts after the indentation (`two` at column 5, not 0).
-    expect(lsp.tokens).toContain('11:5+3 string');
-    expect((await monacoView(DOC)).tokens).toEqual(lsp.tokens);
-    expect((await codeMirrorView(DOC)).tokens).toEqual(lsp.tokens);
+    expect(monaco.tokens).toContain('11:5+3 string');
+    expect((await codeMirrorView(DOC)).tokens).toEqual(monaco.tokens);
   });
 });
 
 describe.each(Object.entries(DOCS).filter(([id]) => id !== 'flowchart'))(
-  'Monaco, the LSP server and CodeMirror agree on a %s document',
+  'Monaco and CodeMirror agree on a %s document',
   (_id, text) => {
     it('on the folds and the semantic tokens by line', async () => {
-      const lspSide = await lspView(text);
-      expect(lspSide.folds.length).toBeGreaterThan(0);
-      expect(lspSide.tokens.length).toBeGreaterThan(5);
-      expect(await monacoView(text)).toEqual(lspSide);
-      expect(await codeMirrorView(text)).toEqual(lspSide);
+      const monacoSide = await monacoView(text);
+      expect(monacoSide.folds.length).toBeGreaterThan(0);
+      expect(monacoSide.tokens.length).toBeGreaterThan(5);
+      expect(await codeMirrorView(text)).toEqual(monacoSide);
     }, 30_000);
   }
 );

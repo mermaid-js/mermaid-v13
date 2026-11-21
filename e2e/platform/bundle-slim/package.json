@@ -1,0 +1,26 @@
+{
+  "name": "platform-bundle-slim",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Bundle test app (spec #867, D587): a mermaid/slim page with eight lazy diagrams, built with esbuild.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "@mermaid-js/core": "13.0.0-alpha.0",
+    "@mermaid-js/shared": "13.0.0-alpha.0",
+    "@mermaid-js/diagram-class": "13.0.0-alpha.0",
+    "@mermaid-js/diagram-er": "13.0.0-alpha.0",
+    "@mermaid-js/diagram-flowchart": "13.0.0-alpha.0",
+    "@mermaid-js/diagram-journey": "13.0.0-alpha.0",
+    "@mermaid-js/diagram-pie": "13.0.0-alpha.0",
+    "@mermaid-js/diagram-sequence": "13.0.0-alpha.0",
+    "@mermaid-js/diagram-state": "13.0.0-alpha.0",
+    "@mermaid-js/diagram-timeline": "13.0.0-alpha.0",
+    "mermaid": "13.0.0-alpha.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

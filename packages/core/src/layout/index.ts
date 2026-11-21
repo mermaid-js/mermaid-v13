@@ -21,6 +21,7 @@ export type {
   RoutePoint,
   Side,
   Size,
+  TitlePosition,
 } from './types.ts';
 export {
   layered,
@@ -40,3 +41,4 @@ export {
   type LayoutMetrics,
   type UnitProfile,
 } from './units.ts';
+export { growRect } from './rect.ts';

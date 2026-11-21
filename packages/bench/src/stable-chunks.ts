@@ -38,8 +38,11 @@ export interface StableCorePlan {
 
 const realOf = (workingDir: string, p: string): string => realpathSync(resolve(workingDir, p));
 
-/** Output files reachable from `root` through static imports (metafile output keys). */
-function staticClosure(meta: Metafile, root: string): string[] {
+/**
+ * Output files reachable from `root` through static imports (metafile output keys), `root`
+ * first. External imports are not followed.
+ */
+export function staticClosure(meta: Metafile, root: string): string[] {
   const seen = new Set<string>();
   const visit = (out: string): void => {
     if (seen.has(out)) return;

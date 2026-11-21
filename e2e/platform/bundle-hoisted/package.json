@@ -1,0 +1,18 @@
+{
+  "name": "platform-bundle-hoisted",
+  "version": "0.0.0",
+  "private": true,
+  "description": "D589 bundle test app: installed with npm, it declares mermaid-fixture-wrapper, which depends on mermaid-fixture-diagram, so npm hoists the fixture diagram the app never declares. Builds the bundle-pages plugin page with esbuild and the Mermaid bundler plugin.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "mermaid": "13.0.0-alpha.0",
+    "mermaid-fixture-wrapper": "1.0.0"
+  },
+  "devDependencies": {
+    "@mermaid-js/bundler-plugin": "13.0.0-alpha.0",
+    "esbuild": "0.28.2"
+  }
+}

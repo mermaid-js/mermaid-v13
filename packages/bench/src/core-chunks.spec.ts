@@ -27,6 +27,13 @@ import { closureSize, flowchartClosureSize } from './size-budget.ts';
  * minifier-name noise. One more shared chunk costs about 300–450 B.
  */
 const ROW_ALLOWANCE = 64;
+/**
+ * Loaded growth for a stub that imports only `@mermaid-js/core/parser-kit`, gzip bytes. Since
+ * #1066 every parser that loads the lazy parser-kit modules also loads
+ * `shared/parser/support.ts`, so esbuild ships them in one chunk; the stub splits it again
+ * (measured 215 B).
+ */
+const PARSER_KIT_LOADED_ALLOWANCE = 240;
 
 const ENTRY = fileURLToPath(new URL('../../mermaid/src/cdn.ts', import.meta.url));
 const REGISTRY = fileURLToPath(
@@ -94,9 +101,30 @@ async function measure(stableCore: boolean, stub?: URL, inCore = false): Promise
   };
 }
 
+/** Output files in the entry's static closure, entry first. */
+const coreFiles = (m: Measured): string[] => closureSize(m.bundle).files.map((f) => f.path);
+
 /** Source modules in the entry's static closure. */
 const coreModules = (m: Measured): string[] =>
-  m.bundle.staticClosure.flatMap((f) => m.bundle.graph[f]!.inputs).sort();
+  coreFiles(m)
+    .flatMap((f) => m.bundle.graph[f]!.inputs)
+    .sort();
+
+/** The diagram packages whose lazily loaded entry reaches output file `target` statically. */
+function diagramsLoading(m: Measured, target: string): string[] {
+  const reaches = (path: string, seen = new Set<string>()): boolean => {
+    if (path === target) return true;
+    if (seen.has(path)) return false;
+    seen.add(path);
+    const imports = m.bundle.graph[path]?.imports ?? [];
+    return imports.some((i) => i.kind === 'static' && reaches(i.path, seen));
+  };
+  const types = Object.entries(m.bundle.graph).flatMap(([path, f]) => {
+    const type = /diagram-([\w-]+)\//.exec(f.entryPoint ?? '')?.[1];
+    return type && reaches(path) ? [type] : [];
+  });
+  return [...new Set(types)].sort();
+}
 
 const stubs = Object.keys(STUBS) as Stub[];
 let stable: Measured;
@@ -138,23 +166,16 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
       const files = Object.entries(stable.bundle.graph).filter(([, f]) => f.inputs.some(isEngine));
       expect(files).toHaveLength(1);
       const [path, file] = files[0]!;
-      expect(stable.bundle.staticClosure).not.toContain(path);
+      expect(coreFiles(stable)).not.toContain(path);
       expect(file.inputs.every(isEngine)).toBe(true);
     }
   );
 
-  // D537 (maintainer, 2026-11-08, "Lazy chunk for hops"): line hops stay out of core. The swimlane
-  // engine carries them too, so they may share a lazy chunk with their own entry, never with core
-  // or another engine.
-  it('keeps the line-hop code out of core, in lazy chunks of its own', () => {
+  // D672: line hops are on by default, so their code is part of core (D537 had it in a lazy
+  // chunk), and `renderSync` draws them with nothing to preload.
+  it('keeps the line-hop code in core', () => {
     const isHops = (input: string) => input.includes('core/src/layout/hops/');
-    expect(coreModules(stable).filter(isHops)).toEqual([]);
-    const files = Object.entries(stable.bundle.graph).filter(([, f]) => f.inputs.some(isHops));
-    expect(files.length).toBeGreaterThan(0);
-    for (const [path, file] of files) {
-      expect(stable.bundle.staticClosure).not.toContain(path);
-      expect(file.inputs.every(isHops), path).toBe(true);
-    }
+    expect(coreModules(stable).filter(isHops).length).toBeGreaterThan(0);
   });
 
   // D326, D327: `compass` too, and any graph type may select it.
@@ -164,8 +185,39 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
     const files = Object.entries(stable.bundle.graph).filter(([, f]) => f.inputs.some(isCompass));
     expect(files).toHaveLength(1);
     const [path, file] = files[0]!;
-    expect(stable.bundle.staticClosure).not.toContain(path);
+    expect(coreFiles(stable)).not.toContain(path);
     expect(file.inputs.every(isCompass)).toBe(true);
+  });
+
+  // #818 (D559): `@mermaid-js/shared/parser/common-values` is lazy, out of core, and loaded by the
+  // diagrams ported from a langium grammar and by no other diagram. Since #1066 every one of them
+  // loads `@mermaid-js/shared/parser/rule` too, so esbuild puts the readers in the rule chunk.
+  it('keeps the common.langium value readers lazy, in the rule chunk', () => {
+    const isValues = (input: string) => input.endsWith('shared/src/parser/common-values.ts');
+    const isRuleFamily = (input: string) =>
+      isValues(input) || /shared\/src\/parser\/rule(?:-[a-z]+)?\.ts$/.test(input);
+    expect(coreModules(stable).filter(isValues)).toEqual([]);
+    const files = Object.entries(stable.bundle.graph).filter(([, f]) => f.inputs.some(isValues));
+    expect(files).toHaveLength(1);
+    const [path, file] = files[0]!;
+    expect(coreFiles(stable)).not.toContain(path);
+    expect(file.inputs.every(isRuleFamily)).toBe(true);
+    expect(diagramsLoading(stable, path)).toEqual(
+      [
+        'architecture',
+        'cynefin',
+        'eventmodeling',
+        'gitgraph',
+        'info',
+        'packet',
+        'pie',
+        'radar',
+        'railroad',
+        'treemap',
+        'treeview',
+        'wardley',
+      ].sort()
+    );
   });
 
   it.each(stubs)('grows core by the registry row only for one more lazy diagram (%s)', (s) => {
@@ -173,7 +225,7 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
     expect(next.files, 'core files').toBe(stable.files);
     expect(next.core - stable.core, 'core growth, gzip bytes').toBeLessThanOrEqual(ROW_ALLOWANCE);
     expect(next.loaded - stable.loaded, 'loaded growth, gzip bytes').toBeLessThanOrEqual(
-      ROW_ALLOWANCE
+      s === 'parser-kit only' ? PARSER_KIT_LOADED_ALLOWANCE : ROW_ALLOWANCE
     );
   });
 

@@ -5,6 +5,10 @@
  * unset in a render (whose resolved config carries the defaults), with one `FLOWCHART_CONFIG_IGNORED` warning per
  * key, however often the key is read. The config resolver checks no value types, so a directive
  * can set any of these.
+ *
+ * A deliberate copy of `configLengths` in `@mermaid-js/shared/config/readers` (#821): importing
+ * that chunk adds about 420 B gz to a flowchart page's loaded size (R-PERF-1), more than the
+ * copy weighs here. Keep the two in step.
  */
 
 /** A config length the layout can't honour (pitfall 22): it draws with the default instead. */

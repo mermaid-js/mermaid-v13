@@ -4,7 +4,7 @@
  */
 import { detectVenn, parseVenn } from '@mermaid-js/diagram-venn';
 import type { VennModel } from '@mermaid-js/diagram-venn';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { VENN_V12_TYPES, vennV12Snapshot } from './v12.ts';
 import type { VennSnapshot } from './v12.ts';
@@ -24,14 +24,8 @@ export function vennV13Snapshot(model: VennModel): VennSnapshot {
  * fallback has its own specs in the venn package. The title compared is the model's, so the last
  * one wins and D416 removes one pair of quotes: a quoted title is a listed divergence.
  */
-export function parseVennForParity(text: string): VennModel {
-  const pre = preprocess(text);
-  const fm = pre.frontMatter && { ...pre.frontMatter, title: undefined };
-  const result = parseVenn(text, { preprocessed: { ...pre, frontMatter: fm } });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((x) => x.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseVennForParity = (text: string): VennModel =>
+  parseForParity(text, parseVenn, { withoutTitle: true });
 
 export const vennAdapter: DiagramAdapter<VennModel> = {
   id: 'venn',

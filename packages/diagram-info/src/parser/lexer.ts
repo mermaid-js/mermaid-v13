@@ -58,8 +58,7 @@ class InfoLexer extends RuleLexer {
     if (e < 0 && isBlank(c)) e = this.match(SKIP, this.blanks(p));
     if (e < 0 && c === DASH) e = this.yaml(p);
     if (e < 0 && c === PERCENT && this.text.charCodeAt(p + 1) === PERCENT) {
-      e = this.directive(p);
-      if (e < 0) e = this.match(Kind.Comment, this.lineEnd(p + 2));
+      e = this.directiveOrComment(p);
     }
     return e;
   }

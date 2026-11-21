@@ -5,14 +5,9 @@
  * source.
  */
 // cspell:words ntitle ntitlex ncommit nbranch nmerge ncheckout gitgraph Graphx NORMALx LRx titled pickx Titlex über
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
+import { corpusJson, fixturesAndSpecs } from '../corpus.ts';
 import { commented } from '../sequence/corpus.ts';
 import type { CorpusItem } from '../types.ts';
-import { GITGRAPH_HARVEST } from './harvest.ts';
-
-const GITGRAPH_CASES = join(REPO_ROOT, 'packages/conformance/corpus/gitGraph-cases.json');
 
 // U+2028 and U+2029: `\s` and v12's comment removal (`^`, multiline) treat them as line
 // terminators; NEWLINE, `[^\n\r]` and `\w` do not, and STRING's `\\.` stops at them.
@@ -148,9 +143,7 @@ export const QUIRKS: CorpusItem[] = [
  * checks, keywords as branch names, and several errors in one text. The cases v12 renders are
  * e2e fixtures (`e2e/diagrams/git/nightly-check/98-…` to `128-…`).
  */
-export function gitGraphCases(): CorpusItem[] {
-  return JSON.parse(readFileSync(GITGRAPH_CASES, 'utf8')) as CorpusItem[];
-}
+export const gitGraphCases = (): CorpusItem[] => corpusJson('gitGraph-cases.json');
 
 /**
  * Unclosed `%%{` directives. Core's preprocess ends one at its line end and reports
@@ -164,14 +157,8 @@ export const UNCLOSED_DIRECTIVES: CorpusItem[] = [
 ].map((source, k) => ({ id: `unclosed directive ${k}`, source }));
 
 /** The gitGraph corpus: the e2e fixtures and the harvested v12 spec strings. */
-export async function gitGraphCorpus(): Promise<CorpusItem[]> {
-  const items: CorpusItem[] = [];
-  for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/git'), 'e2e')) {
-    items.push(item);
-  }
-  const specs = JSON.parse(readFileSync(GITGRAPH_HARVEST, 'utf8')) as CorpusItem[];
-  return [...items, ...specs];
-}
+export const gitGraphCorpus = (): Promise<CorpusItem[]> =>
+  fixturesAndSpecs('gitGraph', { dir: 'git' });
 
 /** The corpus, the rejected cases, the cases above, and a CRLF and a commented copy of each. */
 export async function gitGraphGateCorpus(): Promise<CorpusItem[]> {

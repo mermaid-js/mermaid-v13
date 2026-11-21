@@ -10,6 +10,7 @@
 import { sanitizeUrl } from '@braintree/sanitize-url';
 import { detectFlowchart, parseFlowchart } from '@mermaid-js/diagram-flowchart';
 import type { FlowModel } from '@mermaid-js/diagram-flowchart';
+import { modelOrThrow } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { FLOWCHART_V12_TYPES, flowchartV12Snapshot } from './v12.ts';
 import type { FlowSnapshot } from './v12.ts';
@@ -67,12 +68,8 @@ export function flowchartV13Snapshot(model: FlowModel): FlowSnapshot {
 }
 
 /** v13 parse for parity: the model, or a throw carrying the first error diagnostic. */
-export function parseFlowchartForParity(text: string): FlowModel {
-  const result = parseFlowchart(text);
-  const error = result.diagnostics.find((d) => d.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseFlowchartForParity = (text: string): FlowModel =>
+  modelOrThrow(parseFlowchart(text));
 
 export const flowchartAdapter: DiagramAdapter<FlowModel> = {
   id: 'flowchart',

@@ -1,20 +1,16 @@
 // What packet text output cannot show (D82, R-ASCII-5): one `ASCII_DROPPED` warning per feature
 // kind, naming the AST ids of what it dropped.
-import type { Warning } from '@mermaid-js/core';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import type { PacketModel } from '../model.ts';
 import type { Emphasis } from './draw.ts';
 import { asciiDropped } from '@mermaid-js/shared/ascii';
+import type { AsciiDroppedWarning as SharedAsciiDroppedWarning } from '@mermaid-js/shared/ascii';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature = 'emphasis' | 'accessibility';
 
 /** One feature kind text output dropped (D82). */
-export interface AsciiDroppedWarning extends Warning {
-  readonly code: 'ASCII_DROPPED';
-  readonly feature: AsciiDroppedFeature;
-  readonly astIds: readonly string[];
-}
+export type AsciiDroppedWarning = SharedAsciiDroppedWarning<AsciiDroppedFeature>;
 
 const WHAT: Record<AsciiDroppedFeature, string> = {
   emphasis: 'bold and italic text',

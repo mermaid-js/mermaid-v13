@@ -9,6 +9,7 @@
  * - relations in statement order. `a <-- b` is stored as `b → a`, so ranks follow meaning;
  * - AST ids: `element:<id>`, `rel:<from>-><to>` with `@2`, `@3` for repeats, `style:<n>`.
  */
+import type { Dir } from '@mermaid-js/core/layout';
 import type { AstId, Diagnostic } from '@mermaid-js/core/parser-kit';
 
 /** What follows `c4-beta`; `context` when it is left out. */
@@ -23,7 +24,7 @@ export type C4BetaElementKind =
   | 'deploymentNode'
   | 'infrastructureNode';
 
-export type C4BetaDirection = 'TB' | 'BT' | 'LR' | 'RL';
+export type C4BetaDirection = Dir;
 
 /** Whether a relation's end carries an arrowhead. */
 export type C4BetaHead = 'none' | 'arrow';
@@ -61,6 +62,8 @@ export interface C4BetaRelation {
 export interface C4BetaStyle {
   readonly target: string;
   readonly entries: readonly { readonly key: string; readonly value: string }[];
+  /** The statement's line, for the messages that name it. */
+  readonly line: number;
   readonly ast: AstId;
 }
 
@@ -76,4 +79,13 @@ export interface C4BetaModel {
   readonly relations: readonly C4BetaRelation[];
   readonly styles: readonly C4BetaStyle[];
   readonly warnings: readonly Diagnostic[];
+}
+
+/**
+ * Whether `model` is c4-beta's rather than legacy C4's (one `c4` plugin parses both, spec #730):
+ * by its `kind`, which only c4-beta's model has. Other fields either model may gain do not change
+ * the answer.
+ */
+export function isC4Beta(model: object): model is C4BetaModel {
+  return 'kind' in model;
 }

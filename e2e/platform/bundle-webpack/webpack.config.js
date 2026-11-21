@@ -9,6 +9,8 @@ export default {
     'src/flowchart': './src/flowchart.js',
     'src/all': './src/all.js',
     'src/plugin': './src/plugin.js',
+    // The persistent-cache test removes the fixture package, which this page imports.
+    ...(process.env.MERMAID_CACHE === '1' ? {} : { 'src/explicit': './src/explicit.js' }),
   },
   plugins: process.env.MERMAID_PLUGIN === 'off' ? [] : [mermaid()],
   output: {

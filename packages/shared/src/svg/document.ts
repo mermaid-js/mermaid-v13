@@ -1,5 +1,6 @@
 /**
- * The `<svg>` document root and small renderer helpers every diagram shares.
+ * The `<svg>` document root, the front-matter title over it, and small renderer helpers every
+ * diagram shares.
  */
 import {
   checkColor,
@@ -14,11 +15,18 @@ import type {
   CheckedStyle,
   Paint,
   SafeColor,
+  SafeValue,
   StyleText,
   SvgWriter,
   ThemeRef,
   Warn,
 } from '@mermaid-js/core/svg';
+import {
+  layoutLabel,
+  type InlineSpans,
+  type MeasuredLabel,
+  type Measurer,
+} from '@mermaid-js/core/text';
 
 /** The part of a render context the root reads. `idPrefix` is read only when an id is written. */
 export interface RootContext {
@@ -35,16 +43,27 @@ export interface RootContext {
   readonly version?: string | undefined;
 }
 
+/** A drawing's extent, as a layout gives it. */
+export interface Bounds {
+  readonly x?: number;
+  readonly y?: number;
+  readonly width: number;
+  readonly height: number;
+}
+
 export interface RootOptions {
   /** The class after `mermaid mermaid-`: the diagram's name, then any v12 class it keeps. */
   readonly name: string;
   /** `aria-roledescription`; the first word of `name` when omitted. */
   readonly roleDescription?: string;
-  /** `[x, y, width, height]`, already rounded. */
-  readonly viewBox: readonly [number, number, number, number];
+  /**
+   * `[x, y, width, height]`, already rounded; or the drawing's bounds, whose width and height
+   * are rounded up to whole pixels, at least 1 (`x` and `y` default to 0).
+   */
+  readonly viewBox: readonly [number, number, number, number] | Bounds;
   /** `useMaxWidth`: full width up to the drawing's, else the drawing's own size. */
   readonly maxWidth: boolean;
-  /** The accessible title and description, trimmed; an empty one is not written. */
+  /** The accessible title and description, written trimmed; a blank one is not written. */
   readonly title?: string | undefined;
   readonly desc?: string | undefined;
   /** Attributes the drawing inherits (font, fill…), written after `style`. */
@@ -66,16 +85,21 @@ export function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, i
 export function openSvgRoot(w: SvgWriter, ctx: RootContext, o: RootOptions): void {
   const { theme } = ctx;
   const prefix = (): string => ctx.idPrefix ?? 'mermaid';
-  const width = o.viewBox[2];
+  const b = o.viewBox;
+  const up = (n: number): number => Math.max(1, Math.ceil(n));
+  const viewBox = 'width' in b ? ([b.x ?? 0, b.y ?? 0, up(b.width), up(b.height)] as const) : b;
+  const width = viewBox[2];
   const auto = theme.autoDeclarations();
-  const { title, desc, maxWidth } = o;
+  const { maxWidth } = o;
+  const title = o.title?.trim();
+  const desc = o.desc?.trim();
   const space = o.name.indexOf(' ');
   w.open('svg', {
     xmlns: 'http://www.w3.org/2000/svg',
     class: `mermaid mermaid-${o.name}`,
-    viewBox: o.viewBox,
+    viewBox,
     width: maxWidth ? '100%' : width,
-    height: maxWidth ? undefined : o.viewBox[3],
+    height: maxWidth ? undefined : viewBox[3],
     role: 'img',
     'aria-roledescription': o.roleDescription ?? (space < 0 ? o.name : o.name.slice(0, space)),
     'aria-labelledby': title ? `${prefix()}-title` : undefined,
@@ -100,8 +124,12 @@ export function cls(names: readonly string[]): string {
   return out;
 }
 
+/** The pointer cursor of a clickable node: its classes include `clickable` (#355, D605). */
+export const clickCursor = (classes: readonly string[]): 'pointer' | undefined =>
+  classes.includes('clickable') ? 'pointer' : undefined;
+
 /** A colour written in the source of a renderer, as a paint. */
-export const fixedPaint = (c: string): Paint => checkColor(c) as Paint;
+export const fixedPaint = (c: string): Paint => checkColor(c)!;
 
 export const centreX = (r: { readonly x: number; readonly width: number }): number =>
   r.x + r.width / 2;
@@ -160,4 +188,95 @@ export function styleCache(
     if (!style) styles.set(key, (style = checkStyle(decls, warn)));
     return style;
   };
+}
+
+/** An edge that may carry v12's `animate` or `animation` metadata. */
+export interface AnimatedEdge {
+  readonly animate?: boolean;
+  readonly animation?: string;
+}
+
+/** v12's `.edge-animation-*` dash pattern: it replaces the edge's own (`!important`). */
+export const ANIMATED_DASH = '9,5' as SafeValue;
+
+/**
+ * Animates the open edge group as v12's `.edge-animation-fast|slow` did, and says whether it
+ * did: the dash pattern runs from offset 900 to 0, linearly and forever, in 20 s (`fast`, and a
+ * bare `animate`) or 50 s (`slow`). An `<animate>` and no keyframes, which would need a `<style>`
+ * (R-SEC-2, D606). `stroke-dashoffset` is inherited, so every line in the group moves, in any
+ * look; the caller gives its line `ANIMATED_DASH` and round caps.
+ */
+export function animateEdge(w: SvgWriter, edge: AnimatedEdge): boolean {
+  if (!edge.animate && edge.animation === undefined) return false;
+  w.leaf('animate', {
+    attributeName: 'stroke-dashoffset',
+    from: 900,
+    to: 0,
+    dur: edge.animation === 'slow' ? 50 : 20,
+    repeatCount: 'indefinite',
+  });
+  return true;
+}
+
+// The front-matter `title` over a drawing, as v12's `insertTitle` placed it (D652): centred
+// over the drawing, its baseline `titleTopMargin` above the drawing's top, and the viewBox grown
+// to hold it with the diagram's padding around it. The title is plain text: an inline tag in it
+// is dropped and reported, as core's `tagsOnly` does for every title (D566), here without that
+// file's chunk on the flowchart path (R-PERF-1). It is not the accessible name (D133).
+
+/** A laid-out title and its centre. */
+export interface PlacedTitle {
+  readonly label: MeasuredLabel;
+  readonly x: number;
+  readonly y: number;
+}
+
+/** The part of a render context a title reads. */
+export interface TitleContext {
+  readonly theme: { value(name: 'fontFamily'): string };
+  readonly measurer: Measurer;
+  readonly inline?: InlineSpans | undefined;
+}
+
+/**
+ * `text` laid out in the theme's font family at `size` px, centred over
+ * a drawing `width` wide whose top is at 0, its baseline `topMargin` above it. Undefined for a
+ * missing or blank title.
+ */
+export function placeTitle(
+  text: string | undefined,
+  width: number,
+  topMargin: number,
+  ctx: TitleContext,
+  size: number
+): PlacedTitle | undefined {
+  const t = text?.trim();
+  if (!t) return undefined;
+  const font = { family: ctx.theme.value('fontFamily'), size, weight: 400 };
+  const label = layoutLabel(t, font, Infinity, ctx.measurer, {
+    inline: ctx.inline && { ...ctx.inline, extract: () => undefined },
+  });
+  return titleAt(label, width, topMargin);
+}
+
+/** A title laid out already, centred over a drawing `width` wide, its baseline `topMargin` above. */
+export function titleAt(label: MeasuredLabel, width: number, topMargin: number): PlacedTitle {
+  return { label, x: width / 2, y: label.height / 2 - topMargin - label.baseline };
+}
+
+/**
+ * The viewBox of a drawing `box` from the origin, grown to hold `title` with `pad` around it:
+ * `[x, y, width, height]` in whole pixels. The box itself without a title.
+ */
+export function titledViewBox(
+  box: Bounds,
+  title: PlacedTitle | undefined,
+  pad: number
+): Bounds | readonly [number, number, number, number] {
+  if (!title) return { width: box.width, height: box.height };
+  const half = title.label.width / 2;
+  const x0 = Math.floor(Math.min(0, title.x - half - pad));
+  const y0 = Math.floor(Math.min(0, title.y - title.label.height / 2 - pad));
+  const x1 = Math.ceil(Math.max(Math.max(1, Math.ceil(box.width)), title.x + half + pad));
+  return [x0, y0, x1 - x0, Math.max(1, Math.ceil(box.height)) - y0];
 }

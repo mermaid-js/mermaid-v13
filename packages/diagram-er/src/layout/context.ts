@@ -1,18 +1,9 @@
+import type { Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { LayoutGraph, LayoutModel, UnitProfile } from '@mermaid-js/core/layout';
 import type { Limits } from '@mermaid-js/core/limits';
 import type { InlineSpans, Measurer } from '@mermaid-js/core/text';
 import type { Theme } from '@mermaid-js/core/theme';
-
-/** A warning the layout raises (style checks). */
-export interface ErWarning {
-  readonly code: string;
-  readonly message: string;
-  /** Config key path, for config warnings. */
-  readonly path?: string;
-  /** AST ids of what the warning is about. */
-  readonly astIds?: readonly string[];
-}
 
 /**
  * What the ER layout and render stages read (DESIGN §3 `RenderContext`). The pipeline's `RenderContext`
@@ -25,7 +16,8 @@ export interface ErRenderContext {
   readonly units?: UnitProfile;
   /** One render's theme: its font is the one every label is measured in. */
   readonly theme: Theme;
-  warn(warning: ErWarning): void;
+  /** The layout's warnings (style checks). */
+  warn(warning: Warning): void;
   /** The layout engine named by `layout` config. Defaults to core's `layered`. */
   layout?(graph: LayoutGraph): LayoutModel;
   /** Integrator limits (R-SEC-5); the parse took its caps from the same object. */

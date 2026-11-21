@@ -444,15 +444,20 @@ const VARIANTS: readonly Record<string, unknown>[] = [
 
 describe('xychart layout parity with v12', () => {
   it('equals v12 on the e2e corpus, to 0.01 px', async () => {
-    expect(corpus.length).toBe(60);
+    expect(corpus.length).toBe(63);
     const { problems, listed, compared } = await compare(corpus, {});
     expect(problems.slice(0, 30)).toEqual([]);
-    // The text baseline's `<br>` labels (D385) and #683's fixture are not compared.
+    // The text baseline's `<br>` labels (D385) and #683's fixture are not compared. v12 wrote the
+    // automatic-range fixture's data labels at a size under 1; v13 draws those that fit (D611).
     expect([...listed]).toEqual([
       ['D385 line break', ['e2e/diagrams/xychart/baseline/text/labels.mmd']],
+      [
+        'D383 label too small',
+        ['e2e/diagrams/xychart/nightly-check/data-labels-auto-range-vertical.mmd'],
+      ],
       ['#683 spaced words', ['e2e/diagrams/xychart/pr-check/unquoted-text-keeps-spaces.mmd']],
     ]);
-    expect(compared).toBe(58);
+    expect(compared).toBe(61);
   });
 
   it.each(VARIANTS)('equals v12 on the e2e corpus under %o', async (extra) => {

@@ -5,7 +5,6 @@ import type { AstId } from '@mermaid-js/core/parser-kit';
 import {
   fromPx,
   pxProfile,
-  type Dir,
   type EndMarker,
   type LayoutEdge,
   type LayoutGraph,
@@ -157,8 +156,6 @@ export type ClassCurve = CurveKind;
 
 export const classCurve = curveKind;
 
-const DIRS: ReadonlySet<string> = new Set(['TB', 'BT', 'LR', 'RL']);
-
 /** What the view builders share. */
 interface Build {
   readonly model: ClassModel;
@@ -243,7 +240,7 @@ export function prepare(model: ClassModel, ctx: ClassLayoutContext): ClassPrepar
   const notes = noteViews(padding ?? NOTE_PAD, build, edges);
   const interfaces = model.interfaces.map((iface) => interfaceView(iface, build));
   edges.push(...relationEdges(build));
-  const curve = classCurve(ctx.config.flowchart?.curve ?? 'rounded');
+  const curve = classCurve(ctx.config.flowchart?.curve ?? 'rounded', (w) => ctx.warn?.(w));
   const graph = layoutGraph(model, ctx, units, curve, length, {
     boxes,
     notes,
@@ -409,7 +406,7 @@ function layoutGraph(
   parts: Pick<ClassPrepared, 'boxes' | 'notes' | 'interfaces' | 'groups' | 'edges'>
 ): LayoutGraph {
   const b = units.builder;
-  const direction: Dir = DIRS.has(model.direction) ? (model.direction as Dir) : 'TB';
+  const direction = model.direction;
   const fromConfig = (key: string, fallback: number, axis: 'x' | 'y', min: number): number => {
     const v = configLength(key);
     return v === undefined ? fallback : fromPx(units, v, axis, min);
@@ -467,9 +464,8 @@ function layoutGraph(
               },
             }
           : {}),
-        // Multiplicities need no room of their own: the engine puts them `endLabelAcross` off
-        // the line, which clears their own end's marker (12 px across), and past every edge's
-        // markers, which it is told about (#201).
+        // Multiplicities need no room of their own: the engine puts them past their own end's
+        // marker and clear of every edge's markers, which it is told about (#201, D607).
         ...(e.startLabel ? { startLabel: size(e.startLabel) } : {}),
         ...(e.endLabel ? { endLabel: size(e.endLabel) } : {}),
         ...(marker(e.startMarker) ? { startMarker: marker(e.startMarker)! } : {}),

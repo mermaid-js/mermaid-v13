@@ -50,11 +50,9 @@ describe('lineHops on a flowchart with crossing edges (D537)', () => {
     expect(on.svg.replace(/ d="[^"]+"/g, '')).toBe(off.svg.replace(/ d="[^"]+"/g, ''));
   });
 
-  it('is off by default: the same drawing as `lineHops: false`', async () => {
+  it('is on by default (D672): the same drawing as `lineHops: true`', async () => {
     const m = createMermaid();
-    expect((await m.render('d', withHops())).svg).toBe(
-      (await m.render('d', withHops('false'))).svg
-    );
+    expect((await m.render('d', withHops())).svg).toBe((await m.render('d', ON)).svg);
   });
 
   it('`true` and `arc` draw the same; `gap` breaks the line instead', async () => {

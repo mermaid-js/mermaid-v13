@@ -82,12 +82,10 @@ function entryOf(p: ScannedPackage, index: number): { imports: string[]; expr: s
   }
   const ascii =
     p.files.ascii === undefined ? '' : `, loadAscii: () => import(${spec(p.files.ascii)})`;
-  // No detector path: the registry skips the package with its own PLUGIN_SKIPPED message.
-  if (p.files.detector === undefined)
-    return { imports: [], expr: `{ ${head}, plugin: { ${manifest}, ${load}${ascii} } }` };
   const name = `detector${index}`;
   return {
-    imports: [`import * as ${name} from ${spec(p.files.detector)};`],
+    // The scan skips a diagram manifest without a detector.
+    imports: [`import * as ${name} from ${spec(p.files.detector!)};`],
     expr: `{ ${head}, plugin: { ${manifest}, detector: pick(${name}), ${load}${ascii} } }`,
   };
 }

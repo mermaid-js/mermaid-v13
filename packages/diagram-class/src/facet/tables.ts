@@ -12,6 +12,8 @@ export { plural } from '@mermaid-js/shared/parser/facet';
 export { tokenBefore } from '@mermaid-js/shared/parser/facet';
 export { span } from '@mermaid-js/shared/parser/facet';
 export { code } from '@mermaid-js/shared/parser/facet';
+/** `direction` values and what they mean (class diagrams have no `TD`). */
+export { DIRECTION_DOCS as DIRECTIONS } from '@mermaid-js/shared/parser/facet';
 
 /** Statement and clause keywords, in the order they are offered. */
 export const KEYWORDS: readonly KeywordItem[] = [
@@ -34,14 +36,6 @@ export const KEYWORDS: readonly KeywordItem[] = [
   { kind: T.DirectionBT, label: 'direction BT' },
   { kind: T.DirectionLR, label: 'direction LR' },
   { kind: T.DirectionRL, label: 'direction RL' },
-];
-
-/** `direction` values and what they mean (class diagrams have no `TD`). */
-export const DIRECTIONS: readonly (readonly [dir: string, meaning: string])[] = [
-  ['TB', 'top to bottom'],
-  ['BT', 'bottom to top'],
-  ['LR', 'left to right'],
-  ['RL', 'right to left'],
 ];
 
 /** Annotations the class diagram documentation names (`<<interface>>`); any word is accepted. */

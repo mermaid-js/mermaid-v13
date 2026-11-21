@@ -1,22 +1,14 @@
 // Ported from v12 `swimlanes/direction/geometry.ts` at upstream `c9b12739f` (D532). Changed: types
 // tightened for `noUncheckedIndexedAccess`; v12 `Edge`/`Node` are the engine's `layoutData.ts`
-// types.
+// types; v12's `Point` is the engine's `types.ts` one (#911: one exported `Point` in core).
 /* eslint-disable complexity -- v12's file kept whole so upstream fixes port by hand (D532) */
-const EPS = 1e-3;
+import type { Box, Point } from '../../types.ts';
 
-export interface Point {
-  x: number;
-  y: number;
-}
+const EPS = 1e-3;
 
 export type RectSide = 'top' | 'bottom' | 'left' | 'right';
 
-export interface RectBounds {
-  left: number;
-  right: number;
-  top: number;
-  bottom: number;
-}
+export type RectBounds = Box;
 
 export interface RectEntry {
   id: string;

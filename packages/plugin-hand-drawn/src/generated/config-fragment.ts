@@ -147,6 +147,12 @@ export const configFragment: ConfigFragment = {
       "value": true
     },
     {
+      "from": "c4beta.look",
+      "when": "handDrawn",
+      "to": "handDrawn",
+      "value": true
+    },
+    {
       "from": "sankey.look",
       "when": "handDrawn",
       "to": "handDrawn",

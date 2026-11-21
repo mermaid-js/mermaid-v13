@@ -5,7 +5,7 @@
   "description": "R-PLUG-4 bundle test app (spec #218, T3, T5): the bundle-pages built with Rollup.",
   "type": "module",
   "scripts": {
-    "build": "rollup -c --silent && node -e \"for (const p of ['flowchart', 'all', 'plugin']) require('fs').copyFileSync(p + '.html', 'dist/' + p + '.html')\""
+    "build": "rollup -c --silent && node -e \"for (const p of ['flowchart', 'all', 'plugin', 'explicit']) require('fs').copyFileSync(p + '.html', 'dist/' + p + '.html')\""
   },
   "dependencies": {
     "@mermaid-js/core": "13.0.0-alpha.0",

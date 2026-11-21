@@ -19,9 +19,8 @@ import type { TreeViewDocument } from '../parser/ast.ts';
 import { writtenName } from '../parser/convert.ts';
 import { textKeyword } from '../parser/parser.ts';
 import { T } from '../parser/tokens.ts';
-import { inside, statementAt } from './ranges.ts';
 import { iconOptionsOf, pathOf, treeOf } from './tree.ts';
-import { code, keywordHover } from '@mermaid-js/shared/parser/facet';
+import { code, inside, keywordHover, statementAt } from '@mermaid-js/shared/parser/facet';
 
 /** The keyword of a token that holds more than it (a text statement, `:::name`). */
 const keywordOf = (kind: number): string | undefined =>
@@ -50,7 +49,7 @@ export function treeViewHover(
   doc: DocumentView<TreeViewDocument>
 ): Hover | undefined {
   const { text, result } = doc;
-  const n = statementAt(result.ast, at.offset);
+  const n = statementAt(result.ast.children, at.offset);
   if (n?.type === 'Node') {
     const tree = treeOf(result);
     const node = tree.nodes.get(n.id);

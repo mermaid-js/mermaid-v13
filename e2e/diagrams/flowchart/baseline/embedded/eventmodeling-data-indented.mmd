@@ -1,0 +1,16 @@
+---
+description: >-
+  an event model whose data block closes on its own line, embedded with the body indented as
+  the docs write it; the block drops the common indentation before it is parsed (D633, #750)
+---
+flowchart LR
+  Order --> em
+  mermaid em["Event model"] {
+    eventmodeling
+    tf 01 cmd Submit [[D]]
+    data D
+    {
+      a: 1
+    }
+  }
+  em --> Done

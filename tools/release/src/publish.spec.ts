@@ -36,6 +36,8 @@ describe('packAll (this workspace)', () => {
       // Peer of mermaid (D164): after it.
       '@mermaid-chart/bundler-plugin',
       '@mermaid-chart/language-service',
+      // A dependency of the language server: before it.
+      '@mermaid-chart/plugin-autoload',
       '@mermaid-chart/language-server',
       '@mermaid-chart/language-service-codemirror',
       '@mermaid-chart/language-service-monaco',
@@ -67,6 +69,33 @@ describe('packAll (this workspace)', () => {
     );
     const outDir = mkdtempSync(join(tmpdir(), 'release-pack-'));
     expect(() => packAll(fake, { target: 'public', outDir })).toThrow(/not an alpha prerelease/);
+  });
+
+  it('refuses a tarball with test support in it, as a stale dist from an older build has (#816)', () => {
+    const fake = mkdtempSync(join(tmpdir(), 'release-root-'));
+    const dir = join(fake, 'packages', 'diagram-x');
+    mkdirSync(join(dir, 'dist', 'layout'), { recursive: true });
+    writeFileSync(join(fake, 'LICENSE'), 'MIT\n');
+    writeFileSync(
+      join(dir, 'package.json'),
+      JSON.stringify({
+        name: '@mermaid-js/diagram-x',
+        version: '13.0.0-alpha.1',
+        files: ['dist'],
+        exports: { '.': './dist/index.js', './testing': { 'mermaid-source': './src/testing.ts' } },
+      })
+    );
+    writeFileSync(join(dir, 'dist', 'index.js'), 'export {};\n');
+    writeFileSync(join(dir, 'dist', 'layout', 'index.js'), 'export {};\n');
+    const outDir = mkdtempSync(join(tmpdir(), 'release-pack-'));
+    expect(packAll(fake, { target: 'public', outDir }).map((p) => p.name)).toEqual([
+      '@mermaid-js/diagram-x',
+    ]);
+    writeFileSync(join(dir, 'dist', 'layout', 'invariants.js'), 'export {};\n');
+    writeFileSync(join(dir, 'dist', 'testing.js'), 'export {};\n');
+    expect(() => packAll(fake, { target: 'public', outDir })).toThrow(
+      /TEST SUPPORT in @mermaid-js\/diagram-x.*\n(?:.*\n)*.*dist\/layout\/invariants\.js/
+    );
   });
 });
 

@@ -1,10 +1,17 @@
-// cspell:words kepano
+// cspell:words dejavu hhea kepano
 // Table measurer: the Node/worker default and the `deterministic: true` measurer
 // (DESIGN §5.1, R-TEXT-6, R-TEXT-7). Sums advance widths from generated font tables.
 // Based on Pele's metricsMeasurer (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
 import { ASCII_MAX, LATIN1_MAX, SPACE } from '../parser-kit/char-codes.ts';
 import { familyNames } from './fonts.ts';
-import { SMALLER, Style, type FontKey, type Measurer, type VerticalMetrics } from './measurer.ts';
+import {
+  SMALLER,
+  Style,
+  type FontKey,
+  type Measurer,
+  type StyleBits,
+  type VerticalMetrics,
+} from './measurer.ts';
 import { FACES } from './metrics.ts';
 
 interface Face {
@@ -18,6 +25,23 @@ interface Face {
 }
 
 const FALLBACK = 'arial';
+/**
+ * Names measured with the Courier New row (D644): Courier, the generic monospace families, and
+ * the monospace fonts whose advance is within 1% of Courier New's 600/1000 em, as read from
+ * their font files (Menlo and DejaVu Sans Mono 602, the others 600).
+ */
+const MONO_FACE = 'courier new';
+const ALIASES: ReadonlySet<string> = new Set([
+  'courier',
+  'monospace',
+  'ui-monospace',
+  'andale mono',
+  'dejavu sans mono',
+  'liberation mono',
+  'menlo',
+  'monaco',
+  'pt mono',
+]);
 // Table index of a code point: printable ASCII, then Latin-1 from U+00A0.
 const LATIN1_AT = 0x7f - 0x20;
 
@@ -33,40 +57,24 @@ function meanLower(table: Uint16Array): number {
   return Math.round(sum / 26);
 }
 
-const faces = new Map<string, Face>();
-const stacks = new Map<string, Face>();
-
-function face(name: string): Face | undefined {
-  let f = faces.get(name);
-  if (f) return f;
-  const row = FACES[name];
-  if (!row) return undefined;
-  const [ascent, descent, lineGap, regular, bold] = row;
+function toFace([ascent, descent, lineGap, regular, bold]: Row): Face {
   const r = unpack(regular);
   const b = unpack(bold);
-  f = {
+  return {
     regular: r,
     bold: b,
     regularDefault: meanLower(r),
     boldDefault: meanLower(b),
     vertical: [ascent, descent, ascent + descent + lineGap],
   };
-  faces.set(name, f);
-  return f;
 }
 
-function faceFor(stack: string): Face {
-  let f = stacks.get(stack);
-  if (f) return f;
-  for (const name of familyNames(stack)) {
-    f = face(name);
-    if (f) break;
-  }
-  f ??= face(FALLBACK) as Face;
-  if (stacks.size >= 256) stacks.clear();
-  stacks.set(stack, f);
-  return f;
-}
+/** A face's row as in `FACES`: ascent, descent, line gap, regular and bold advances. */
+export type Row = readonly [number, number, number, string, string];
+
+/** The built-in row for a family name, through the monospace aliases (D644). */
+export const builtInRow = (name: string): Row | undefined =>
+  FACES[ALIASES.has(name) ? MONO_FACE : name];
 
 function isWide(c: number): boolean {
   return (
@@ -95,37 +103,165 @@ function isZeroWidth(c: number): boolean {
   );
 }
 
-export const tableMeasurer: Measurer = {
-  id: 'table',
-  width(text, font, style) {
-    const mono = (style & Style.Mono) !== 0;
-    const size = style & (Style.Sub | Style.Sup) ? font.size / SMALLER : font.size;
-    const f = faceFor(font.family);
-    const bold = (style & Style.Bold) !== 0 || font.weight >= 600;
-    const table = bold ? f.bold : f.regular;
-    const other = bold ? f.boldDefault : f.regularDefault;
-    let units = 0;
-    for (let i = 0; i < text.length; i++) {
-      const c = text.charCodeAt(i);
-      if (c >= SPACE && c < ASCII_MAX) {
-        units += mono ? 600 : (table[c - SPACE] ?? other);
-        continue;
-      }
-      if (isZeroWidth(c)) continue;
-      if (isWide(c)) units += mono ? 1200 : 1000;
-      else if (mono) units += 600;
-      else if (c < ASCII_MAX) units += table[c - 0x20] ?? other;
-      else if (c <= LATIN1_MAX) units += table[c - 0xa0 + LATIN1_AT] ?? other;
-      else units += other;
-    }
-    return (units * size) / 1000;
-  },
-  metrics(font: FontKey): VerticalMetrics {
-    const [ascent, descent, lineHeight] = faceFor(font.family).vertical;
-    return {
-      ascent: (ascent * font.size) / 1000,
-      descent: (descent * font.size) / 1000,
-      lineHeight: (lineHeight * font.size) / 1000,
-    };
-  },
-};
+/**
+ * The width of `text[from, to)` in face `f`: its {@link tableUnits} at its {@link tableSize}, so
+ * label layout can measure a slice of a label without slicing it.
+ */
+function tableWidth(
+  f: Face,
+  text: string,
+  from: number,
+  to: number,
+  font: FontKey,
+  style: StyleBits
+): number {
+  return unitsWidth(tableUnits(f, text, from, to, font, style), tableSize(font, style));
+}
+
+/** The px size the table measures `style` at: smaller for sub- and superscript. */
+function tableSize(font: FontKey, style: StyleBits): number {
+  return style & (Style.Sub | Style.Sup) ? font.size / SMALLER : font.size;
+}
+
+/**
+ * The px width of `units` advance units at `size` px: the one place a table measurer scales, so
+ * a width from units added up elsewhere is bit for bit the width of the text they sum.
+ */
+export function unitsWidth(units: number, size: number): number {
+  return (units * size) / 1000;
+}
+
+/**
+ * The advance units face `f` sums for `text[from, to)`, in thousandths of an em. They are
+ * integers, and integers well below 2^53 add up exactly, so the units of a slice are the sum of
+ * the units of its parts in any order.
+ */
+function tableUnits(
+  f: Face,
+  text: string,
+  from: number,
+  to: number,
+  font: FontKey,
+  style: StyleBits
+): number {
+  const mono = (style & Style.Mono) !== 0;
+  const bold = (style & Style.Bold) !== 0 || font.weight >= 600;
+  const table = bold ? f.bold : f.regular;
+  const other = bold ? f.boldDefault : f.regularDefault;
+  let units = 0;
+  for (let i = from; i < to; i++) {
+    const c = text.charCodeAt(i);
+    if (c >= SPACE && c < ASCII_MAX) units += mono ? 600 : (table[c - SPACE] ?? other);
+    else units += advance(c, mono, table, other);
+  }
+  return units;
+}
+
+/** The advance units of `c`, outside printable ASCII, in `table` (`other` where it has none). */
+function advance(c: number, mono: boolean, table: Uint16Array, other: number): number {
+  if (isZeroWidth(c)) return 0;
+  if (isWide(c)) return mono ? 1200 : 1000;
+  if (mono) return 600;
+  if (c < ASCII_MAX) return table[c - 0x20] ?? other;
+  if (c <= LATIN1_MAX) return table[c - 0xa0 + LATIN1_AT] ?? other;
+  return other;
+}
+
+/** Measures `text[from, to)` as `width` measures that slice, bit for bit, without slicing it. */
+export type Slice = (
+  text: string,
+  from: number,
+  to: number,
+  font: FontKey,
+  style: StyleBits
+) => number;
+
+/** Where a table measurer keeps its {@link Slice}, so label layout can find it (D645). */
+export const SLICE: unique symbol = Symbol('slice');
+
+/**
+ * A table measurer's advance units: `units` sums them for `text[from, to)` and `size` is the px
+ * size it measures a style at. Its {@link Slice} is {@link unitsWidth} of the two, so label layout
+ * can add up the units of a line's words and scale them once, bit for bit the line's width.
+ */
+export interface Units {
+  readonly units: Slice;
+  readonly size: (font: FontKey, style: StyleBits) => number;
+}
+
+/** Where a table measurer keeps its {@link Units}. */
+export const UNITS: unique symbol = Symbol('units');
+
+/** A measurer that can measure part of a string; every table measurer is one. */
+export interface SliceMeasurer extends Measurer {
+  readonly [SLICE]: Slice;
+  readonly [UNITS]: Units;
+}
+
+/**
+ * A table measurer (DESIGN §5.1) that measures a family with the row `row` gives for it, else
+ * with Arial's, with caches of its own. `id` enters the determinism key (R-ARCH-6).
+ */
+export function tableMeasurerWith(
+  row: (name: string) => Row | undefined,
+  id: string
+): SliceMeasurer {
+  const faces = new Map<string, Face>();
+  const stacks = new Map<string, Face>();
+
+  const face = (name: string): Face | undefined => {
+    let f = faces.get(name);
+    if (f) return f;
+    const r = row(name);
+    if (r) faces.set(name, (f = toFace(r)));
+    return f;
+  };
+
+  const faceFor = (stack: string): Face => {
+    let f = stacks.get(stack);
+    if (f) return f;
+    for (const name of familyNames(stack)) if ((f = face(name))) break;
+    f ??= face(FALLBACK) as Face;
+    if (stacks.size >= 256) stacks.clear();
+    stacks.set(stack, f);
+    return f;
+  };
+
+  const slice: Slice = (text, from, to, font, style) =>
+    tableWidth(faceFor(font.family), text, from, to, font, style);
+
+  // The last font object this measurer gave metrics for, and those metrics: a render lays out
+  // its labels in a few font objects, mostly the same one many times running. Keyed on the object
+  // (a `FontKey` is read-only), not on any text; it keeps that one object and its metrics from one
+  // call to the next, across renders, until another font object is measured.
+  let lastFont: FontKey | undefined;
+  let lastMetrics: VerticalMetrics = { ascent: 0, descent: 0, lineHeight: 0 };
+
+  const measurer: Measurer = {
+    id,
+    width: (text, font, style) => slice(text, 0, text.length, font, style),
+    metrics(font: FontKey): VerticalMetrics {
+      if (font === lastFont) return lastMetrics;
+      const [ascent, descent, lineHeight] = faceFor(font.family).vertical;
+      lastFont = font;
+      return (lastMetrics = {
+        ascent: (ascent * font.size) / 1000,
+        descent: (descent * font.size) / 1000,
+        lineHeight: (lineHeight * font.size) / 1000,
+      });
+    },
+  };
+  const units: Units = {
+    units: (text, from, to, font, style) =>
+      tableUnits(faceFor(font.family), text, from, to, font, style),
+    size: tableSize,
+  };
+  // Not enumerable: a spread copy with its own `width` must not be measured by the slice.
+  return Object.defineProperties(measurer, {
+    [SLICE]: { value: slice },
+    [UNITS]: { value: units },
+  }) as SliceMeasurer;
+}
+
+/** The table measurer with the built-in tables only. */
+export const tableMeasurer: SliceMeasurer = tableMeasurerWith(builtInRow, 'table');

@@ -1,0 +1,10 @@
+---
+description: >-
+  state text, transition text and notes with a code span still read the bold
+  and italic outside the span; the span draws its backticks and the stars
+  inside it as written (#836, D610)
+---
+stateDiagram-v2
+  s1 : **bold** and `code`
+  s1 --> s2 : *italic* beside `**not bold**`
+  note right of s2 : `x_1` and __bold__

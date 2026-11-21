@@ -8,7 +8,7 @@
 import type { Warning } from '@mermaid-js/core';
 import { quadrantChartConfigDefaults } from './generated/config-defaults.ts';
 import type { QuadrantLayoutConfig } from './layout/index.ts';
-import { configNumber, shownValue as shown } from '@mermaid-js/shared/config/readers';
+import { configRanges, NON_NEGATIVE, shownValue as shown } from '@mermaid-js/shared/config/readers';
 
 type NumberKey = {
   [K in keyof QuadrantLayoutConfig]: QuadrantLayoutConfig[K] extends number ? K : never;
@@ -54,12 +54,8 @@ export function quadrantLayoutConfig(
   const out: Record<string, unknown> = { ...DEFAULTS };
   const given = section ?? {};
   const set = (key: string): boolean => Object.hasOwn(given, key) && given[key] !== undefined;
-  for (const key of NUMBERS) {
-    if (!set(key)) continue;
-    const n = configNumber(given[key], 0);
-    if (n === undefined) warn(invalid(key, given[key], 'a number of 0 or more', DEFAULTS[key]));
-    else out[key] = n;
-  }
+  const number = configRanges('quadrantChart', 'QUADRANT_CONFIG_INVALID', given, warn);
+  for (const key of NUMBERS) out[key] = number(key, DEFAULTS[key], NON_NEGATIVE);
   for (const [key, sides] of Object.entries(SIDES)) {
     if (!set(key)) continue;
     const v = given[key];

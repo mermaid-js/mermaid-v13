@@ -186,6 +186,38 @@ describe('block types that cannot be drawn', () => {
     }
   });
 
+  it('names every zenuml block as unavailable, not as an unknown type (D317, #751)', async () => {
+    const zen = [
+      'flowchart LR',
+      '  mermaid a["A"] {',
+      '    zenuml',
+      '      A.m()',
+      '  }',
+      '  mermaid b["B"] {',
+      '    zenuml',
+      '      B.m()',
+      '  }',
+    ].join('\n');
+    for (const e of [
+      await rejection(createMermaid().render('host', zen)),
+      await rejection(createMermaid().parse(zen)),
+    ]) {
+      expect(e.code).toBe('UNSUPPORTED_DIAGRAM');
+      expect(e.message).not.toContain('is not a diagram type');
+      for (const name of ['mermaid a', 'mermaid b', '"zenuml"']) expect(e.message).toContain(name);
+      expect(e.diagnostics.map((d) => d.code)).toEqual(['EMBED_UNAVAILABLE', 'EMBED_UNAVAILABLE']);
+      expect([e.line, e.column]).toEqual([3, 5]);
+    }
+  });
+
+  it('still calls an unknown word in a block not a diagram type', async () => {
+    const e = await rejection(
+      createMermaid().render('host', 'flowchart LR\n  mermaid a {\n    notADiagram\n  }')
+    );
+    expect(e.diagnostics.map((d) => d.code)).toEqual(['EMBED_NO_TYPE']);
+    expect(e.message).toContain('`notADiagram` is not a diagram type');
+  });
+
   it('needs the block pass loaded for renderSync (D553)', async () => {
     const m = createSlim({ diagrams: [flowchart] });
     await m.prepare('flowchart LR\n  A');

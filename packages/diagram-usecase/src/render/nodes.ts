@@ -23,7 +23,8 @@ import {
 } from './glyphs.ts';
 import { DRAW } from './metrics.ts';
 import { actorName, jsonName, noteName, useCaseName } from './accessible-names.ts';
-import { need, type Fill, type Tint } from './paint.ts';
+import type { PaletteTint } from '@mermaid-js/shared/svg/document';
+import { need, type Fill } from './paint.ts';
 import { cls, type Scene } from './scene.ts';
 import { PX } from '../layout/metrics.ts';
 
@@ -55,7 +56,7 @@ export function drawNodes(scene: Scene): void {
 }
 
 /** The outline's fill and stroke: the slot's under `rotate`, else the role's; style wins. */
-function shapeOf(scene: Scene, role: Fill, slot: Tint | undefined, style: Attrs): Attrs {
+function shapeOf(scene: Scene, role: Fill, slot: PaletteTint | undefined, style: Attrs): Attrs {
   const tint = scene.paint.rotate ? slot : undefined;
   return {
     fill: tint?.fill ?? role.fill,
@@ -89,7 +90,7 @@ interface NodeGroup {
   readonly id: string;
   readonly ast: string;
   readonly name: string;
-  readonly slot?: Tint;
+  readonly slot?: PaletteTint;
 }
 
 /** Opens the group a node is drawn in, centred on its box; its box, or undefined when unplaced. */
@@ -112,7 +113,7 @@ const actorClasses = (a: UsecaseActor): string =>
   `node default usecase-actor usecase-actor-${a.type}${a.business ? ' usecase-business' : ''}${cls(a.classes)}`;
 
 /** An actor: the glyph, the stereotype and the name under it. True when its icon was missed. */
-function drawActor(scene: Scene, view: ActorView, slot: Tint | undefined): boolean {
+function drawActor(scene: Scene, view: ActorView, slot: PaletteTint | undefined): boolean {
   const { w, paint } = scene;
   const a = view.actor;
   const box = openNode(scene, {
@@ -212,7 +213,7 @@ const useCaseClasses = (v: UseCaseView): string => {
 };
 
 /** A use case: the oval or box, a business oval's mark, the stereotype over the label. */
-function drawUseCase(scene: Scene, view: UseCaseView, slot: Tint | undefined): void {
+function drawUseCase(scene: Scene, view: UseCaseView, slot: PaletteTint | undefined): void {
   const { w, paint } = scene;
   const u = view.useCase;
   const box = openNode(scene, {

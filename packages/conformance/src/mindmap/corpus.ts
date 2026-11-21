@@ -3,9 +3,7 @@
  * lexer gate's set, which adds the cases (`corpus/mindmap-cases.json`) and a commented and two
  * CR-cut copies of every source.
  */
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
+import { corpusJson, fixturesAndSpecs } from '../corpus.ts';
 import { commented } from '../sequence/corpus.ts';
 import { crCut } from '../timeline/corpus.ts';
 import type { CorpusItem } from '../types.ts';
@@ -17,23 +15,10 @@ import type { CorpusItem } from '../types.ts';
  * icons and classes, the comments v12's removal left, CRs, entities, the keyword, empty bodies)
  * and directives that start partway through a line (#185).
  */
-export function mindmapCases(): CorpusItem[] {
-  return JSON.parse(
-    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/mindmap-cases.json'), 'utf8')
-  ) as CorpusItem[];
-}
+export const mindmapCases = (): CorpusItem[] => corpusJson('mindmap-cases.json');
 
 /** The mindmap corpus: the e2e fixtures and the v12 spec and syntax-page strings. */
-export async function mindmapCorpus(): Promise<CorpusItem[]> {
-  const items: CorpusItem[] = [];
-  for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/mindmap'), 'e2e')) {
-    items.push(item);
-  }
-  const specs = JSON.parse(
-    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/mindmap-v12-specs.json'), 'utf8')
-  ) as CorpusItem[];
-  return [...items, ...specs];
-}
+export const mindmapCorpus = (): Promise<CorpusItem[]> => fixturesAndSpecs('mindmap');
 
 /**
  * The e2e fixtures, the v12 spec strings, the cases, and each of them commented and CR-cut (by a

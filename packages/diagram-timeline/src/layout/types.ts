@@ -5,14 +5,10 @@
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
+import type { Rect } from '@mermaid-js/shared/layout';
 import type { TimelineDirection } from '../model.ts';
 
-export interface Rect {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
+export type { Rect };
 
 export interface Point {
   readonly x: number;

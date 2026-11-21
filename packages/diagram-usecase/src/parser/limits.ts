@@ -11,18 +11,14 @@ export interface UsecaseLimitOptions {
   maxEdges?: number;
 }
 
-interface Placed {
-  readonly range: Range;
-}
-
 /**
  * Reports each cap once, at the first one over it in source order. Read from the resolved model
  * (an element is one node however often it is named, at the first place that makes it), so it
  * runs once the model is built; the caller keeps the diagnostics in source order.
  */
 export function checkLimits(
-  nodes: readonly Placed[],
-  relationships: readonly Placed[],
+  nodes: readonly { readonly range: Range }[],
+  relationships: readonly { readonly range: Range }[],
   limits: UsecaseLimitOptions,
   report: BuildReport
 ): void {

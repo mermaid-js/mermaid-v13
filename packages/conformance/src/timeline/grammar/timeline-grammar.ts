@@ -1,8 +1,7 @@
 /** The timeline grammar file, read and built once (dev and CI only). */
-import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildLexer, parseGrammar } from '@mermaid-js/gen-grammar';
-import type { Grammar, LexToken, MappedText, ModeLexer } from '@mermaid-js/gen-grammar';
+import { loadGrammar, lexGrammar, jisonImages } from '../../grammar-file.ts';
+import type { LoadedGrammar, GrammarTokens } from '../../grammar-file.ts';
 import { classLexerInput } from '../../class/grammar/lexer-input.ts';
 import { REPO_ROOT } from '../../corpus.ts';
 
@@ -11,21 +10,8 @@ export const TIMELINE_GRAMMAR_PATH = join(
   'packages/diagram-timeline/grammar/timeline.ebnf'
 );
 
-let cached: { grammar: Grammar; lexer: ModeLexer } | undefined;
-
-export function timelineGrammar(): { grammar: Grammar; lexer: ModeLexer } {
-  if (!cached) {
-    const grammar = parseGrammar(readFileSync(TIMELINE_GRAMMAR_PATH, 'utf8'));
-    cached = { grammar, lexer: buildLexer(grammar) };
-  }
-  return cached;
-}
-
-export interface GrammarTokens {
-  input: MappedText;
-  tokens: LexToken[];
-  /** Lexer-input offset where lexing failed. */
-  error: number | undefined;
+export function timelineGrammar(): LoadedGrammar {
+  return loadGrammar(TIMELINE_GRAMMAR_PATH);
 }
 
 /**
@@ -33,9 +19,7 @@ export interface GrammarTokens {
  * of `grammar/timeline.ebnf`): v12's preprocessing is the same for every jison type.
  */
 export function grammarTokens(source: string): GrammarTokens {
-  const input = classLexerInput(source);
-  const { tokens, error } = timelineGrammar().lexer.lex(input.text);
-  return { input, tokens, error };
+  return lexGrammar(timelineGrammar(), classLexerInput(source));
 }
 
 /** `accDescr {` and its `}`: jison matched them and returned no token. */
@@ -48,14 +32,7 @@ const NO_JISON_TOKEN = new Set(['acc_descr_multiline', 'acc_descr_multiline_end'
  * the last non-empty token that ends at the end of the input.
  */
 export function asJison(t: GrammarTokens): [string, string][] {
-  const images = t.tokens.map((k) => k.text);
-  for (let k = t.tokens.length - 1; k >= 0; k--) {
-    const tok = t.tokens[k];
-    if (!tok || tok.end < t.input.text.length) break;
-    if (tok.start === tok.end) continue;
-    if (tok.text.endsWith('\n')) images[k] = tok.text.slice(0, -1);
-    break;
-  }
+  const images = jisonImages(t);
   const out: [string, string][] = [];
   t.tokens.forEach((k, i) => {
     if (!NO_JISON_TOKEN.has(k.name)) out.push([k.name, images[i] ?? '']);

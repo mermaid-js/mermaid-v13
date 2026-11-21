@@ -137,4 +137,51 @@ describe('inline boxes in label layout (D177)', () => {
     layout('price $$5', Infinity, [], false, warnings);
     expect(warnings).toEqual([]);
   });
+
+  it('without a provider finds the same spans and warns the same as with one that finds none', () => {
+    // A provider that never matches makes `extract` look for spans in every label.
+    const never: InlineProvider = { pattern: /(?!)/, box: () => undefined };
+    const pieces = [
+      'a',
+      ' ',
+      '$',
+      '$$',
+      'fa',
+      ':',
+      'fa-',
+      'fab',
+      'x',
+      'FA',
+      '-',
+      'fa:fa-x',
+      ':fa-x',
+      '\ufdd0',
+      '😀',
+    ];
+    let seed = 7;
+    const rnd = (): number => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+    for (let k = 0; k < 300; k++) {
+      const without: Warning[] = [];
+      const withNone: Warning[] = [];
+      const a = inlineSpans([], (w) => void without.push(w));
+      const b = inlineSpans([never], (w) => void withNone.push(w));
+      for (let n = 0; n < 5; n++) {
+        let raw = '';
+        for (let i = Math.floor(rnd() * 12); i > 0; i--)
+          raw += pieces[Math.floor(rnd() * pieces.length)];
+        expect(a.extract(raw, arial, tableMeasurer), raw).toEqual(
+          b.extract(raw, arial, tableMeasurer)
+        );
+      }
+      expect(without).toEqual(withNone);
+      expect(['math', 'icon'].map((f) => a.notRendered(f))).toEqual(
+        ['math', 'icon'].map((f) => b.notRendered(f))
+      );
+    }
+    // With a provider, its spans are found whatever they hold.
+    const bracket: InlineProvider = { open: '[[', close: ']]', box: fixture().box };
+    expect(inlineSpans([bracket], () => {}).extract('a [[x]]', arial, tableMeasurer)?.source).toBe(
+      'a \ufdd0'
+    );
+  });
 });

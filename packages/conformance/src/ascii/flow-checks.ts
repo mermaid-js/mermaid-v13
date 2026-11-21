@@ -1,24 +1,34 @@
 // Flowchart text-output checks shared by the corpus specs that draw through flowchart's `ascii`
 // hook (`corpus.spec.ts`, `swimlane-corpus.spec.ts`): the text's size against `rows`/`columns`,
-// boxes overlapping in the cell layout, and what sits on a group frame (pitfall 20).
+// boxes overlapping in the cell layout, and what sits on a group frame (pitfall 20). The size
+// and overlap checks serve the other types' ASCII suites too.
 import { cellWidth } from '@mermaid-js/core/ascii';
 import type { LayoutModel, Point } from '@mermaid-js/core/layout';
 import type { TextRenderResult } from 'mermaid';
 import type { CellLayout } from './render.ts';
 import type { Charset } from './structure.ts';
 
-/** `rows` lines, none wider than `columns` and one exactly that wide, no trailing spaces. */
-export function sizeFaults({ text, rows, columns }: TextRenderResult): string[] {
+/** A line's width in cells, measured apart from the API's `cellWidth` where that is possible. */
+function flowWidth(line: string): number {
+  // A line of printable ASCII, box drawing and the arrowhead/marker shapes is one column per
+  // code point. Lines with other text (CJK, emoji, combining marks) fall back to `cellWidth`;
+  // there the check is a contract check of `columns` against the kit's own measure, whose
+  // widths have table tests in core/ascii (measurer.spec.ts, R-ASCII-3).
+  return /^[\x20-\x7e─-◿✕]*$/u.test(line) ? [...line].length : cellWidth(line);
+}
+
+/**
+ * `rows` lines, none wider than `columns` and one exactly that wide, no trailing spaces, no
+ * `\r`. `width` measures a line: flowchart's own measure by default, the kit's `cellWidth` for
+ * the suites that pass it.
+ */
+export function sizeFaults(
+  { text, rows, columns }: Pick<TextRenderResult, 'text' | 'rows' | 'columns'>,
+  width: (line: string) => number = flowWidth
+): string[] {
   // An empty diagram (`graph TD;`) is no lines: rows 0, columns 0.
   const lines = text === '' ? [] : text.split('\n');
-  // Measured apart from the API's `cellWidth` where that is possible: a line of printable
-  // ASCII, box drawing and the arrowhead/marker shapes is one column per code point.
-  // Lines with other text (CJK, emoji, combining marks) fall back to `cellWidth`; there
-  // the check is a contract check of `columns` against the kit's own measure, whose
-  // widths have table tests in core/ascii (measurer.spec.ts, R-ASCII-3).
-  const narrow = /^[\x20-\x7e─-◿✕]*$/u;
-  const width = (l: string) => (narrow.test(l) ? [...l].length : cellWidth(l));
-  const widest = Math.max(0, ...lines.map(width));
+  const widest = Math.max(0, ...lines.map((l) => width(l)));
   const found: string[] = [];
   if (lines.length !== rows) found.push(`${lines.length} lines, rows ${rows}`);
   if (widest !== columns) found.push(`widest ${widest}, columns ${columns}`);

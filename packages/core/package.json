@@ -31,10 +31,15 @@
       "types": "./dist/parser-kit/support.d.ts",
       "default": "./dist/parser-kit/support.js"
     },
-    "./parser-kit/facet": {
-      "mermaid-source": "./src/parser-kit/facet.ts",
-      "types": "./dist/parser-kit/facet.d.ts",
-      "default": "./dist/parser-kit/facet.js"
+    "./parser-kit/embed-body": {
+      "mermaid-source": "./src/parser-kit/embed-body.ts",
+      "types": "./dist/parser-kit/embed-body.d.ts",
+      "default": "./dist/parser-kit/embed-body.js"
+    },
+    "./parser-kit/embed-type": {
+      "mermaid-source": "./src/parser-kit/embed-type.ts",
+      "types": "./dist/parser-kit/embed-type.d.ts",
+      "default": "./dist/parser-kit/embed-type.js"
     },
     "./preprocess": {
       "mermaid-source": "./src/preprocess/index.ts",
@@ -46,6 +51,11 @@
       "types": "./dist/layout/index.d.ts",
       "default": "./dist/layout/index.js"
     },
+    "./layout/box-exit": {
+      "mermaid-source": "./src/layout/box-exit.ts",
+      "types": "./dist/layout/box-exit.d.ts",
+      "default": "./dist/layout/box-exit.js"
+    },
     "./layout/tree": {
       "mermaid-source": "./src/layout/tree/index.ts",
       "types": "./dist/layout/tree/index.d.ts",
@@ -55,6 +65,11 @@
       "mermaid-source": "./src/layout/compass/index.ts",
       "types": "./dist/layout/compass/index.d.ts",
       "default": "./dist/layout/compass/index.js"
+    },
+    "./text/font-tables": {
+      "mermaid-source": "./src/text/font-tables.ts",
+      "types": "./dist/text/font-tables.d.ts",
+      "default": "./dist/text/font-tables.js"
     },
     "./layout/hops": {
       "mermaid-source": "./src/layout/hops/index.ts",
@@ -70,11 +85,6 @@
       "mermaid-source": "./src/svg/index.ts",
       "types": "./dist/svg/index.d.ts",
       "default": "./dist/svg/index.js"
-    },
-    "./svg/document": {
-      "mermaid-source": "./src/svg/document.ts",
-      "types": "./dist/svg/document.d.ts",
-      "default": "./dist/svg/document.js"
     },
     "./svg/folded": {
       "mermaid-source": "./src/svg/folded.ts",
@@ -115,11 +125,6 @@
       "mermaid-source": "./src/config/index.ts",
       "types": "./dist/config/index.d.ts",
       "default": "./dist/config/index.js"
-    },
-    "./config/readers": {
-      "mermaid-source": "./src/config/readers.ts",
-      "types": "./dist/config/readers.d.ts",
-      "default": "./dist/config/readers.js"
     },
     "./limits": {
       "mermaid-source": "./src/limits/index.ts",

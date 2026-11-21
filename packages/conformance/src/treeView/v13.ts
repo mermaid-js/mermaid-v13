@@ -4,7 +4,7 @@
  */
 import { detectTreeView, parseTreeView } from '@mermaid-js/diagram-treeview';
 import type { TreeViewModel } from '@mermaid-js/diagram-treeview';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { TREEVIEW_V12_TYPES, treeViewV12Snapshot } from './v12.ts';
 import type { TreeViewSnapshot } from './v12.ts';
@@ -30,14 +30,8 @@ export function treeViewV13Snapshot(model: TreeViewModel): TreeViewSnapshot {
  * v13 parse for parity: the model, or a throw carrying the first error diagnostic. The
  * front-matter title is held back, as the oracle holds it back from v12 (see `v12.ts`).
  */
-export function parseTreeViewForParity(text: string): TreeViewModel {
-  const pre = preprocess(text);
-  const fm = pre.frontMatter && { ...pre.frontMatter, title: undefined };
-  const result = parseTreeView(text, { preprocessed: { ...pre, frontMatter: fm } });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((x) => x.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseTreeViewForParity = (text: string): TreeViewModel =>
+  parseForParity(text, parseTreeView, { withoutTitle: true });
 
 export const treeViewAdapter: DiagramAdapter<TreeViewModel> = {
   id: 'treeView',

@@ -162,3 +162,12 @@ describe('the Lezer language (#21 grammar)', () => {
     expect(all.filter(([c]) => old.has(c)).length).toBeGreaterThan(all.length / 3);
   }, 20_000);
 });
+
+describe('first-paint detection', () => {
+  beforeAll(() => loadHighlighter('cynefin'));
+
+  it('detects a header with a comment right after it, as the service does', () => {
+    // v12 cut each `%%` comment before its detectors ran, so `cynefin-beta%% c` is a cynefin.
+    expect(spans('cynefin-beta%% c\ncomplex\n  "a"\n')).not.toEqual([]);
+  });
+});

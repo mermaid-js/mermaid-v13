@@ -57,6 +57,7 @@ function readIconOptions(text: string): TreeViewIconOptions {
   };
 }
 
+// Kept module state, a one-entry cache of readIconOptions(), a pure function of the text.
 let lastText: string | undefined;
 let lastOptions: TreeViewIconOptions | undefined;
 

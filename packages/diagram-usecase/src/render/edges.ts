@@ -3,10 +3,13 @@
  * relationship is a `g.relationship.relationship-<type>` with the line through
  * `w.outline('edge', …)` (D302) and its markers as paths; include, extend and note lines are
  * dashed 3 (`styles.ts`), include and extend in their own colours. An author's `classDef` /
- * `style` on a relationship wins, and its markers take its stroke. Animation is a class only, as
- * in the flowchart: the keyframes would need a `<style>` (out of scope, spec #517).
+ * `style` on a relationship wins, and its markers take its stroke. An animated relationship moves
+ * as in the flowchart (`animateEdge`, D606).
  */
+import { ANIMATED_DASH, animateEdge } from '@mermaid-js/shared/svg/document';
+import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import { routePath } from '@mermaid-js/shared/svg/route';
+import { pxProfile } from '@mermaid-js/core/layout';
 import type { Attrs, Paint, SafeValue } from '@mermaid-js/core/svg';
 import { noteEdgeId, type RelationEdgeView, type UsecaseEdgeView } from '../layout/prepare.ts';
 import type { UsecaseRelationship } from '../model.ts';
@@ -79,11 +82,14 @@ function drawEdge(scene: Scene, e: UsecaseEdgeView): void {
       markerTrim(ends.start),
       markerTrim(ends.end)
     );
+    const animated = e.kind === 'relation' && animateEdge(w, e.relationship);
     w.outline('edge', 'path', {
       d: path.d,
       'stroke-dasharray': e.dotted ? DASH : undefined,
       ...lineAttrs(scene, e),
       ...e.style.shape,
+      // The moving dashes replace the line's own pattern and an author's, as in v12.
+      ...(animated && { 'stroke-dasharray': ANIMATED_DASH, 'stroke-dashoffset': undefined }),
       fill: 'none',
     });
     const head = {
@@ -107,27 +113,28 @@ export function drawEdgeLabels(scene: Scene): void {
   w.close();
 }
 
-function drawEdgeLabel({ w, layout, paint, fontOf }: Scene, e: RelationEdgeView): void {
+/**
+ * A relationship's label as the shared tag (D626–D628): bordered in the line's own colour (an
+ * author's stroke, else include's or extend's, else the edge line) and as large as the room the
+ * layout gave it (`labelPatch`, D629).
+ */
+function drawEdgeLabel(scene: Scene, e: RelationEdgeView): void {
+  const { w, layout, paint, fontOf, ctx } = scene;
   const at = layout.edges.get(e.id)?.label;
   const label = e.label;
   if (!at || !label || label.width === 0) return;
   const bg = need(paint.edgeLabel, 'edge label');
-  const width = label.width + 2 * DRAW.edgeLabelPad;
-  w.open('g', { class: 'edgeLabel', 'data-id': e.relationship.id });
-  w.leaf('rect', {
-    class: 'labelBkg',
-    x: at.x - width / 2,
-    y: at.y - label.height / 2,
-    width,
-    height: label.height,
+  const r = e.relationship;
+  edgeLabel(w, label, at, r.id, {
     fill: bg.fill,
+    stroke: e.style.shape.stroke ?? lineColour(scene, r) ?? need(paint.edges, 'edge').line,
+    text: {
+      class: 'relationship-label',
+      'data-id': r.id,
+      fill: bg.text,
+      ...fontOf(e.font),
+      ...e.style.text,
+    },
+    patch: (ctx.units ?? pxProfile).builder.labelPatch,
   });
-  w.label(label, at.x, at.y, {
-    class: 'relationship-label',
-    'data-id': e.relationship.id,
-    fill: bg.text,
-    ...fontOf(e.font),
-    ...e.style.text,
-  });
-  w.close();
 }

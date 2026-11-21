@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { SaxesParser } from 'saxes';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { createMermaid, type ExtensionPlugin } from 'mermaid';
+import { createMermaid, type ExtensionPlugin, type MermaidConfig } from 'mermaid';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import { assertInert, type SvgNode, type SvgTree } from '@mermaid-js/core/svg';
 import { V12_XSS_CASES } from '@mermaid-js/core/svg/testing';
@@ -221,9 +221,10 @@ describe('state render properties over both e2e corpora', () => {
     for (const c of cases) {
       const { tree } = c.result;
       const root = tree.find({ tag: 'svg' })[0]!;
-      const [, , w, h] = tree.getAttr(root, 'viewBox')!.split(' ').map(Number);
+      // The viewBox starts above the drawing when it holds a front-matter title (D652).
+      const [x, y, w, h] = tree.getAttr(root, 'viewBox')!.split(' ').map(Number);
       const out = extents(tree).filter(
-        (p) => p.x < -0.5 || p.y < -0.5 || p.x > w! + 0.5 || p.y > h! + 0.5
+        (p) => p.x < x! - 0.5 || p.y < y! - 0.5 || p.x > x! + w! + 0.5 || p.y > y! + h! + 0.5
       );
       if (out.length > 0) outside.push(c.id);
     }
@@ -272,6 +273,30 @@ describe('state render properties over both e2e corpora', () => {
       );
       expect(lines.length, c.id).toBe(layout.dividers.length);
     }
+  });
+});
+
+describe('state render: transition colour under a lineColor override (D668)', () => {
+  // v12 sets `transitionColor` once, before an author's overrides in `default` and `dark`, so
+  // their transitions keep #333333 and #d3d3d3; `forest` and `base` recompute it from lineColor.
+  const source = 'stateDiagram-v2\n  [*] --> A\n  A --> B : go';
+  const draw = async (theme: MermaidConfig['theme'], themeVariables: Record<string, string>) => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true, theme, themeVariables, output: { cssVariables: false } });
+    const { svg } = await m.render('x', source);
+    return {
+      line: /<g class="edgePaths"[^>]* stroke="([^"]+)"/.exec(svg)?.[1],
+      label: /<g class="edgeLabel"[^>]*><rect [^>]* stroke="([^"]+)"/.exec(svg)?.[1],
+    };
+  };
+
+  it.each([
+    ['default', '#333333'],
+    ['dark', '#d3d3d3'],
+    ['forest', '#ffd966'],
+    ['base', '#ffd966'],
+  ] as const)('%s draws its transitions and their label borders %s', async (theme, want) => {
+    expect(await draw(theme, { lineColor: '#ffd966' })).toEqual({ line: want, label: want });
   });
 });
 

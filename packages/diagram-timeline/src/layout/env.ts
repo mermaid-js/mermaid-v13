@@ -7,7 +7,8 @@ import { fontSizePx, layoutLabel, type FontKey, type MeasuredLabel } from '@merm
 import type { TimelineModel, TimelinePeriod } from '../model.ts';
 import { TIMELINE_METRICS, type TimelineMetrics } from './metrics.ts';
 import type { Arrowhead, PlacedLabel, Point, Rect, TimelineLine } from './types.ts';
-import { fontWeightOf as weightOf } from '@mermaid-js/shared/config/readers';
+import { fontWeightOf as weightOf, lengthReader } from '@mermaid-js/shared/config/readers';
+import { RectUnion } from '@mermaid-js/shared/layout';
 
 /** What the layout reads from the render context. */
 export type TimelineLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
@@ -18,26 +19,6 @@ const TIMELINE_CONFIG_IGNORED = 'TIMELINE_CONFIG_IGNORED';
 
 const WEIGHT_NORMAL = 400;
 const WEIGHT_BOLD = 700;
-
-/**
- * A config length: the value when it is a finite number at least 0, else the default, with a
- * warning when the key is set (core's config resolution checks no value types).
- */
-function lengthOf(
-  value: unknown,
-  fallback: number,
-  path: string,
-  warn: TimelineLayoutContext['warn']
-): number {
-  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) return value;
-  if (value !== undefined)
-    warn?.({
-      code: TIMELINE_CONFIG_IGNORED,
-      message: `Ignored ${path}: it is not a number of at least 0; using ${fallback}`,
-      path,
-    });
-  return fallback;
-}
 
 export interface Env {
   readonly m: TimelineMetrics;
@@ -106,23 +87,24 @@ const plain = (text: string): string => text.replace(RE_NOT_BREAK, '&lt;');
 export function envOf(ctx: TimelineLayoutContext): Env {
   const m = TIMELINE_METRICS;
   const conf = ctx.config.timeline ?? {};
+  const lengthOf = lengthReader(TIMELINE_CONFIG_IGNORED, ctx.warn);
   const fontSize = ctx.theme.number('fontSize');
-  const formulaSize = lengthOf(ctx.config.fontSize, m.common.fontSize, 'fontSize', ctx.warn);
+  const formulaSize = lengthOf(ctx.config.fontSize, m.common.fontSize, 'fontSize');
   const family = ctx.theme.value('fontFamily');
   const font: FontKey = {
     family,
     size: fontSize,
     weight: weightOf(ctx.theme.value('fontWeight'), WEIGHT_BOLD, WEIGHT_NORMAL),
   };
-  const titleSize = fontSizePx(m.common.titleFontSize, fontSize) ?? fontSize;
+  const titleSize = fontSizePx(m.common.titleFontSize, fontSize)!;
   const refSize = m.common.titleReferenceFontSize;
-  const titleRefSize = fontSizePx(m.common.titleFontSize, refSize) ?? refSize;
+  const titleRefSize = fontSizePx(m.common.titleFontSize, refSize)!;
   const stroke = scaleColors(ctx.theme) ? undefined : ctx.theme.number('strokeWidth');
   return {
     m,
     fontSize: formulaSize,
-    leftMargin: lengthOf(conf.leftMargin, m.common.leftMargin, 'timeline.leftMargin', ctx.warn),
-    padding: lengthOf(conf.padding, m.common.padding, 'timeline.padding', ctx.warn),
+    leftMargin: lengthOf(conf.leftMargin, m.common.leftMargin, 'timeline.leftMargin'),
+    padding: lengthOf(conf.padding, m.common.padding, 'timeline.padding'),
     multicolor: conf.disableMulticolor !== true,
     axisWidth: stroke ?? m.common.axisWidth,
     connectorWidth: stroke ?? m.common.connectorWidth,
@@ -212,22 +194,17 @@ export function line(
 export const overflow = (label: MeasuredLabel, wrap: number): number =>
   Math.max(0, label.width - wrap);
 
-/** A growing bounding box. */
-export class Bounds {
-  private x1 = Infinity;
-  private y1 = Infinity;
-  private x2 = -Infinity;
-  private y2 = -Infinity;
-
+/**
+ * A growing bounding box: shared `RectUnion`, every shape added as its corner points, so a
+ * negative width or height counts from the other side.
+ */
+export class Bounds extends RectUnion {
   point(x: number, y: number): this {
-    this.x1 = Math.min(this.x1, x);
-    this.y1 = Math.min(this.y1, y);
-    this.x2 = Math.max(this.x2, x);
-    this.y2 = Math.max(this.y2, y);
+    super.add({ x, y, width: 0, height: 0 });
     return this;
   }
 
-  rect(r: Rect): this {
+  override add(r: Rect): this {
     return this.point(r.x, r.y).point(r.x + r.width, r.y + r.height);
   }
 
@@ -249,13 +226,12 @@ export class Bounds {
   }
 
   get empty(): boolean {
-    return this.x1 > this.x2;
+    return this.rect().width < 0;
   }
 
   /** The box; a point at `origin` when nothing was added. */
   box(origin: Point): Rect {
-    if (this.empty) return { x: origin.x, y: origin.y, width: 0, height: 0 };
-    return { x: this.x1, y: this.y1, width: this.x2 - this.x1, height: this.y2 - this.y1 };
+    return this.empty ? { x: origin.x, y: origin.y, width: 0, height: 0 } : this.rect();
   }
 }
 

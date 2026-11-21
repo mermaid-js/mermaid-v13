@@ -9,8 +9,6 @@
  * the field it names (v12 stored the raw argument there); the slot is left empty.
  */
 export const C4_NAMED_ARGUMENT_MOVED = 'C4_NAMED_ARGUMENT_MOVED';
-/** D452: a line holding `direction TB`, `BT`, `RL` or `LR` (v12 threw `setDirection`). */
-export const C4_DIRECTION = 'C4_DIRECTION';
 /**
  * D452: a `$__proto__` argument (v12 threw a `TypeError`), kept as an unknown name, as Pele keeps
  * it (a warning: Pele accepts it).
@@ -67,3 +65,8 @@ export const C4BETA_INSTANCES_DROPPED = 'C4BETA_INSTANCES_DROPPED';
 export const C4BETA_STEP_IGNORED = 'C4BETA_STEP_IGNORED';
 /** c4-beta: a `style` entry with an unknown key or a value its key does not take (dropped). */
 export const C4BETA_STYLE_IGNORED = 'C4BETA_STYLE_IGNORED';
+/**
+ * c4-beta: a `layout` other than `layered` or v12's `dagre`. c4-beta is laid out by core's
+ * `layered` engine whatever `layout` names (spec #730, Q2); the diagram is drawn the same.
+ */
+export const C4BETA_LAYOUT_IGNORED = 'C4BETA_LAYOUT_IGNORED';

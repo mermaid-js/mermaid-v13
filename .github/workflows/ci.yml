@@ -15,6 +15,63 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    # What this run has to check (tools/ci/scope.ts). `code`: everything. `docs`: the change
+    # touches only documentation, by the pre-push hook's rule, so only `lint` runs (Prettier
+    # and the generated-file checks) plus, in `docs-tests`, the tests of the code that reads a
+    # changed docs file. On a PR that changes only TypeScript source of packages, `.mmd`
+    # fixtures and vitest snapshots (besides docs and changesets), `tests` is `related` and
+    # `test_files` lists the unit tests the change can reach (D637, D648); the unit shards run
+    # those. Every doubt ends in `code` with every test. The other jobs read these outputs.
+    name: Scope
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 5
+    outputs:
+      scope: ${{ steps.scope.outputs.scope }}
+      readers: ${{ steps.scope.outputs.readers }}
+      tests: ${{ steps.scope.outputs.tests }}
+      test_files: ${{ steps.scope.outputs.test_files }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          # HEAD^1..HEAD is the change: on a PR the checkout is the merge commit.
+          fetch-depth: 2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version-file: '.node-version'
+      - run: pnpm install --frozen-lockfile
+      - id: scope
+        run: pnpm exec tsx tools/ci/scope-cli.ts
+
+  docs-tests:
+    # The tests of the code that reads a changed docs file or the changesets (a spec that
+    # checks the D-ids in DECISIONS.md, the release tooling): `vitest related` runs the specs
+    # among those readers and the specs that import them. It runs in a `docs` run, and in a
+    # `related` run that has docs or changesets beside its source (D637). The Scope job lists
+    # no readers when every test runs anyway.
+    name: Tests of code that reads the docs
+    needs: changes
+    if: ${{ needs.changes.outputs.readers != '' }}
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 20
+    env:
+      READERS: ${{ needs.changes.outputs.readers }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version-file: '.node-version'
+      - run: pnpm install --frozen-lockfile
+      # Unquoted on purpose: one argument per file. The paths come from `git grep` in this
+      # repository and hold no spaces.
+      - run: |
+          # shellcheck disable=SC2086
+          pnpm vitest related --run $READERS
+
   # `pnpm check:static` runs as two parallel jobs, `lint` and `typecheck`, with `build` beside
   # them; the unit tests (the rest of `pnpm check`) run sharded in `tests`. Keep the commands
   # of `lint` and `typecheck` in step with the `check:static` script in package.json: between
@@ -66,6 +123,8 @@ jobs:
 
   typecheck:
     name: Typecheck
+    needs: changes
+    if: ${{ needs.changes.outputs.scope == 'code' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     steps:
@@ -80,6 +139,8 @@ jobs:
 
   build:
     name: Build
+    needs: changes
+    if: ${{ needs.changes.outputs.scope == 'code' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     steps:
@@ -95,13 +156,20 @@ jobs:
   structure:
     # #722: `fallow audit` on the files this change touches, against the base (HEAD^1: the base
     # branch on a PR, whose checkout is the merge commit; the previous tip on a push). It fails
-    # on findings the change introduces: dead code, import cycles, boundary violations (the
-    # zones in .fallowrc.json), complexity above the thresholds and new duplication. Findings
-    # the base already has are reported, not failed. The tests the change reaches run first with
-    # coverage, so CRAP scores use real coverage (their verdict is the `tests` jobs' business).
+    # on findings the change introduces: dead code (every dead-code rule in .fallowrc.json is
+    # `error`, private type leaks and duplicate exports among them), import cycles, boundary
+    # violations (the zones in .fallowrc.json) and cyclomatic or cognitive complexity above the
+    # thresholds. Findings the base already has are reported, not failed. Two kinds only warn:
+    # D640: it runs no tests and reads no coverage, so fallow only estimates CRAP scores, and
+    # .fallowrc.pr.json makes CRAP findings warnings; exact CRAP, from the full unit suite's
+    # coverage, gates in the nightly run (fallow-nightly.yml). D664: new duplication warns,
+    # because fallow 3.41's audit has no setting that fails on an introduced clone group; the
+    # nightly fails on it, so a deliberate clone goes into .fallow-baseline/dupes.json in its PR.
     name: Structural audit
+    needs: changes
+    if: ${{ needs.changes.outputs.scope == 'code' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    timeout-minutes: 40
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
@@ -112,51 +180,57 @@ jobs:
           cache: pnpm
           node-version-file: '.node-version'
       - run: pnpm install --frozen-lockfile
-      # The timing projects stay out: coverage slows code unevenly and their ratios mean nothing.
-      - name: Coverage of the tests the change reaches
-        continue-on-error: true
-        run: >-
-          pnpm vitest run --changed HEAD^1 --passWithNoTests --coverage
-          --project workspace --project gantt-utc --project gantt-la
       - name: fallow audit
-        run: |
-          if [ -f coverage/coverage-final.json ]; then export FALLOW_COVERAGE=coverage/coverage-final.json; fi
-          pnpm exec fallow audit --base HEAD^1 --quiet --format github-annotations
+        run: pnpm exec fallow audit -c .fallowrc.pr.json --base HEAD^1 --quiet --format github-annotations
       - name: Job summary
         if: ${{ !cancelled() }}
         run: |
-          if [ -f coverage/coverage-final.json ]; then export FALLOW_COVERAGE=coverage/coverage-final.json; fi
-          pnpm exec fallow audit --base HEAD^1 --quiet --format github-summary >> "$GITHUB_STEP_SUMMARY" || true
+          pnpm exec fallow audit -c .fallowrc.pr.json --base HEAD^1 --quiet --format github-summary >> "$GITHUB_STEP_SUMMARY" || true
 
   checks:
-    # The one check to require on the branch: green only when lint, typecheck, build, the
-    # structural audit and every unit test shard passed. It keeps the name the single job had
-    # before it was split.
+    # The one check to require on the branch: green only when the scope was decided and lint,
+    # typecheck, build, the structural audit, every unit test shard and the docs tests each
+    # passed or were left out by the scope (a `docs` run skips all but lint and the docs
+    # tests). A job that is skipped because `changes` failed does not pass: `changes` itself
+    # must succeed. It keeps the name the single job had before it was split.
     name: Check and build
     if: ${{ always() }}
-    needs: [lint, typecheck, build, structure, tests]
+    needs: [changes, lint, typecheck, build, structure, tests, docs-tests]
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 5
     steps:
       - env:
+          SCOPE: ${{ needs.changes.result }}
+          LINT: ${{ needs.lint.result }}
           RESULTS: ${{ join(needs.*.result, ' ') }}
         run: |
-          echo "lint, typecheck, build, structure, tests: $RESULTS"
+          echo "changes, lint, typecheck, build, structure, tests, docs-tests: $RESULTS"
+          if [ "$SCOPE" != "success" ] || [ "$LINT" != "success" ]; then exit 1; fi
           for result in $RESULTS; do
-            if [ "$result" != "success" ]; then exit 1; fi
+            if [ "$result" != "success" ] && [ "$result" != "skipped" ]; then exit 1; fi
           done
 
   tests:
     # `pnpm test` (the rest of `pnpm check`) split across runners: about 13 minutes on one 4-vCPU runner, CPU-bound,
     # four-fifths of it packages/conformance. Vitest shards by file; each shard runs every
     # project's share, gantt's two zones and the serial language-budget group included.
-    name: Unit tests (${{ matrix.shard }}/3)
+    # Six shards, filled by measured duration rather than equal file counts (#984,
+    # tools/ci/duration-sequencer.ts). Each shard uploads a JSON report as `unit-durations-<n>`;
+    # tools/ci/durations-cli.ts turns a run's six reports into tools/ci/test-durations.json.
+    # A `related` run (D637) gives vitest the Scope job's list of test files: those the import
+    # graph finds affected by the change, the owners of changed snapshots and the readers of
+    # the e2e corpus when a fixture changed (D648), and those that read the tree without
+    # importing it. A push to mermaid-v13 always runs every test, which catches one a PR
+    # wrongly left out.
+    name: Unit tests (${{ matrix.shard }}/6)
+    needs: changes
+    if: ${{ needs.changes.outputs.scope == 'code' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        shard: [1, 2, 3, 4, 5, 6]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
@@ -165,7 +239,32 @@ jobs:
           cache: pnpm
           node-version-file: '.node-version'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm test --shard=${{ matrix.shard }}/3
+      - name: Unit tests
+        env:
+          TESTS: ${{ needs.changes.outputs.tests }}
+          TEST_FILES: ${{ needs.changes.outputs.test_files }}
+          SHARD: ${{ matrix.shard }}/6
+          # The default reporter for the log, and a JSON report of each file's duration.
+          REPORT: --reporter=default --reporter=json --outputFile.json=unit-durations.json
+        # TEST_FILES is unquoted on purpose: one argument per file. The paths come from git
+        # and vitest in this repository and hold no spaces. An empty list would mean no
+        # filter, so every test: the Scope job never reports `related` with an empty list,
+        # and this step runs them all if it ever does.
+        # REPORT is unquoted too: it holds three options.
+        run: |
+          # shellcheck disable=SC2086
+          if [ "$TESTS" = "related" ] && [ -n "$TEST_FILES" ]; then
+            pnpm test --shard="$SHARD" $REPORT --passWithNoTests $TEST_FILES
+          else
+            pnpm test --shard="$SHARD" $REPORT
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: ${{ !cancelled() }}
+        with:
+          name: unit-durations-${{ matrix.shard }}
+          path: unit-durations.json
+          retention-days: 14
+          if-no-files-found: ignore
 
   bench:
     # R-TEST-7, the PR check (packages/bench/src/pr-check.ts), about two minutes:
@@ -177,6 +276,8 @@ jobs:
     # (bench-nightly.yml, release.yml). On a PR from this repository the result is posted as a
     # PR comment, updated in place on every run; fork PRs get a read-only token and only the artifact.
     name: Bench gates
+    needs: changes
+    if: ${{ needs.changes.outputs.scope == 'code' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 20
     permissions:
@@ -255,14 +356,24 @@ jobs:
           fi
 
   visual:
-    # R-TEST-5: every .mmd tier of the fixture folders whose diagram types have a v13 package
-    # (e2e/helpers/mmd-snapshots.ts) plus the browser adapter specs (e2e/browser), in the
-    # Playwright image so fonts and rendering are fixed.
-    # Screenshots go to Argos, which compares them with the mermaid-v13 baseline on PRs (R-REL-1). R-TEST-6: the
-    # theme gallery is built from the same fixtures and kept as an artifact.
+    # R-TEST-5, D631: the `pr-check` and `baseline` tiers of the .mmd fixtures whose diagram
+    # types have a v13 package (e2e/helpers/mmd-snapshots.ts), in the Playwright image so fonts
+    # and rendering are fixed. Every tier runs each night (visual-nightly.yml). This job only
+    # takes screenshots; the specs that assert behaviour are the `e2e` job below.
+    # A push photographs every fixture of the two tiers: that build is the baseline. A PR
+    # photographs only the fixtures it renders differently (packages/dev's visual-scope: every
+    # fixture is rendered to SVG in Node on the PR and on its base, and the hashes compared) and
+    # uploads them as an Argos subset build, which is never a baseline; with none, it tells
+    # Argos to skip. The label `visual: full` on the PR photographs everything.
+    # Screenshots go to Argos, which compares a PR with the newest mermaid-v13 build (R-REL-1)
+    # and reports the differences on the PR for a maintainer to approve. Report only: this job
+    # is not part of `checks`, and the Argos status is not a required check. R-TEST-6: the theme
+    # gallery is built from the same fixtures and kept as an artifact.
     name: Visual baseline
-    # Paused until the baseline settles: set the repository variable VISUAL_BASELINE to 'true'.
-    if: vars.VISUAL_BASELINE == 'true'
+    needs: changes
+    # A docs-only PR still runs: its scope step decides `skip` and tells Argos so, which gives
+    # the PR its Argos status. A docs-only push has no baseline to renew.
+    if: ${{ needs.changes.outputs.scope == 'code' || github.event_name == 'pull_request' }}
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     # Keep this tag in sync with @playwright/test in package.json.
@@ -271,26 +382,55 @@ jobs:
     env:
       RUN_VISUAL_TEST: 'true'
       MERMAID_PORT: '9000'
+      # A push to mermaid-v13 runs the same tiers as a PR, so the two builds hold the same
+      # screenshots and Argos can tell a removed fixture from one that did not run.
+      MERMAID_E2E_FIXTURE_TIER: pr-check,baseline
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          # HEAD^1 is the base the scope step compares with: the base branch on a PR (HEAD is
+          # the merge commit).
+          fetch-depth: 2
       - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
       - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           cache: pnpm
           node-version-file: '.node-version'
       - run: pnpm install --frozen-lockfile
-      # `pnpm e2e` also runs the dev explorer specs (e2e/dev, project `dev`; #64). The Compare
-      # tab's CDN specs need cdn.jsdelivr.net and registry.npmjs.org; without them they skip,
-      # with a warning annotation and a job summary line giving the reason.
-      - name: Playwright (baseline, browser and dev explorer specs)
-        run: pnpm e2e
-      - name: Upload screenshots to Argos
-        if: ${{ !cancelled() && github.event_name != 'merge_group' }}
+      # Outputs `mode` (full, subset or skip) and, for subset, `list`: the file of fixtures to
+      # photograph. The job summary says which and why. A failed comparison ends in `full`.
+      - name: Decide what to photograph
+        id: scope
         env:
+          VISUAL_PR: ${{ github.event.pull_request.number }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: pnpm --silent --filter @mermaid-js/dev visual:scope
+      # The file comes before `--project`, which would otherwise take it as a project name.
+      - name: Playwright (fixture snapshots)
+        if: ${{ steps.scope.outputs.mode != 'skip' }}
+        env:
+          MERMAID_E2E_FIXTURE_LIST: ${{ steps.scope.outputs.list }}
+        run: pnpm exec playwright test rendering/mmd-snapshots.spec.ts --project chromium
+      - name: Upload screenshots to Argos
+        if: ${{ !cancelled() && steps.scope.outputs.mode != 'skip' && github.event_name != 'merge_group' }}
+        env:
+          # 'true' or 'false', never empty: the CLI reads anything but 'false' as true.
+          ARGOS_SUBSET: ${{ steps.scope.outputs.mode == 'subset' }}
           # Empty on forks; Argos falls back to tokenless upload for public repositories.
           ARGOS_TOKEN: ${{ secrets.ARGOS_TOKEN }}
           ARGOS_REFERENCE_BRANCH: mermaid-v13
-        run: pnpm exec argos upload e2e/screenshots
+          ARGOS_PARALLEL_NONCE: ${{ github.run_id }}-${{ github.run_attempt }}
+        # In parts: one upload of this many screenshots is too large for Argos to accept. The
+        # version line is for the log, and it is where knip sees that @argos-ci/cli is used.
+        run: |
+          pnpm exec argos --version
+          bash .github/scripts/argos-upload.sh e2e/screenshots
+      # Nothing to photograph: Argos still gets a build, so the PR has a green Argos status.
+      - name: Tell Argos there is nothing to compare
+        if: ${{ steps.scope.outputs.mode == 'skip' && github.event_name == 'pull_request' }}
+        env:
+          ARGOS_TOKEN: ${{ secrets.ARGOS_TOKEN }}
+        run: pnpm exec argos skip
       - name: Build the theme gallery
         run: pnpm --filter @mermaid-js/dev gallery
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -307,13 +447,30 @@ jobs:
           retention-days: 3
           if-no-files-found: ignore
 
-  dom-adapter:
-    # #16 (R-API-6/7, R-ERR-3, R-THEME-3, R-TEXT-5): run(), mount(), the error image and
-    # afterMount, from source through e2e/dom's own page server. Chromium only until the POC
-    # is done; Firefox and WebKit come back with the rest of the browser matrix.
-    name: DOM adapter
-    runs-on: blacksmith-2vcpu-ubuntu-2404
-    timeout-minutes: 20
+  e2e:
+    # What `pnpm e2e` runs besides the fixture snapshots: the browser adapter specs
+    # (e2e/browser), the dev explorer specs (e2e/dev, project `dev`; #64), the language-service
+    # editors (e2e/language) and the plugin-platform apps (e2e/platform). They assert behaviour
+    # and take no screenshots, so they have their own job and their own result. In the
+    # Playwright image, like the snapshots, so the measurer specs see the same fonts.
+    # Two parts run side by side (#982), picked by E2E_PART in playwright.config.ts: `platform`
+    # (e2e/platform, whose apps share one workspace build, so it is not split further) and
+    # `rest` (everything else, and any new spec folder). Together they run every spec once.
+    name: ${{ matrix.part == 'platform' && 'Platform specs' || 'Browser and dev explorer specs' }}
+    needs: changes
+    if: ${{ needs.changes.outputs.scope == 'code' }}
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [platform, rest]
+    # Keep this tag in sync with @playwright/test in package.json.
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+    env:
+      MERMAID_PORT: '9000'
+      E2E_PART: ${{ matrix.part }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
@@ -322,21 +479,76 @@ jobs:
           cache: pnpm
           node-version-file: '.node-version'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm e2e:dom --project=chromium
+      # The Compare tab's CDN specs need cdn.jsdelivr.net and registry.npmjs.org; without them
+      # they skip, with a warning annotation and a job summary line giving the reason.
+      - name: Playwright (${{ matrix.part }}; every spec but the fixture snapshots)
+        run: pnpm e2e --grep-invert "mmd snapshots"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: ${{ failure() }}
+        with:
+          name: playwright-results-e2e-${{ matrix.part }}
+          path: test-results/
+          retention-days: 3
+          if-no-files-found: ignore
 
-  smoke-render:
-    # Each target renders a fixture through the public `mermaid` package. node20 runs the
-    # source through tsx; chromium loads the BUILT package as one bundled ES module from the
-    # e2e page server (e2e/smoke/smoke.spec.ts). Deno, the Web Worker, Firefox and WebKit
-    # come back after the POC.
-    name: Smoke render (${{ matrix.runtime }})
+  dom-adapter:
+    # #16 (R-API-6/7, R-ERR-3, R-THEME-3, R-TEXT-5): run(), mount(), the error image and
+    # afterMount, from source through e2e/dom's own page server. Chromium only until the POC
+    # is done; Firefox and WebKit come back with the rest of the browser matrix.
+    name: DOM adapter
+    needs: changes
+    if: ${{ needs.changes.outputs.scope == 'code' }}
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        runtime: [node20, chromium]
+    # In the Playwright image, like `e2e`: Chromium and its system packages are in the image,
+    # so the job installs no browser (#993). Keep this tag in sync with @playwright/test in
+    # package.json.
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version-file: '.node-version'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm e2e:dom --project=chromium
+
+  # Each target renders a fixture through the public `mermaid` package. Deno, the Web Worker,
+  # Firefox and WebKit come back after the POC. The two targets are separate jobs because only
+  # chromium runs in the Playwright image (#993).
+  smoke-render:
+    # node20 runs the source through tsx, on Node 20 and without a browser.
+    name: Smoke render (node20)
+    needs: changes
+    if: ${{ needs.changes.outputs.scope == 'code' }}
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version: '20'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @mermaid-js/conformance smoke
+
+  smoke-render-chromium:
+    # chromium loads the BUILT package as one bundled ES module from the e2e page server
+    # (e2e/smoke/smoke.spec.ts). In the Playwright image, like `e2e`, so it installs no browser.
+    # It builds `mermaid` and the packages it depends on, not every package: the Build job
+    # builds them all. It does not take Build's output instead: `needs: build` would put
+    # Build's whole job (about 45 s) in front of this one to save its 40 s of building (#993).
+    name: Smoke render (chromium)
+    needs: changes
+    if: ${{ needs.changes.outputs.scope == 'code' }}
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 20
+    # Keep this tag in sync with @playwright/test in package.json.
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
     env:
       MERMAID_PORT: '9000'
     steps:
@@ -345,15 +557,11 @@ jobs:
       - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           cache: pnpm
-          node-version: ${{ matrix.runtime == 'node20' && '20' || '' }}
-          node-version-file: ${{ matrix.runtime != 'node20' && '.node-version' || '' }}
+          node-version-file: '.node-version'
       - run: pnpm install --frozen-lockfile
-      - if: matrix.runtime == 'node20'
-        run: pnpm --filter @mermaid-js/conformance smoke
-      - if: matrix.runtime == 'chromium'
-        name: Build the package and the smoke bundle, then render in Chromium
+      - name: Build the package and the smoke bundle
         run: |
-          pnpm build
+          pnpm --filter "mermaid..." run build
           pnpm --filter @mermaid-js/dev smoke:build
-          pnpm exec playwright install --with-deps chromium
-          pnpm exec playwright test --project smoke-chromium -g "main thread"
+      - name: Render in Chromium
+        run: pnpm exec playwright test --project smoke-chromium -g "main thread"

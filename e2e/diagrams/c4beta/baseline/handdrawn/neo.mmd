@@ -1,0 +1,26 @@
+---
+config:
+  theme: neo
+  look: handDrawn
+  handDrawnSeed: 1
+description: >-
+  one representative c4-beta diagram, hand-drawn in the neo theme (D301, D307, spec #730 T2): each
+  element outline sketched through w.outline in the theme's `c4<Kind>Border`; boundaries,
+  relations, arrowheads, label boxes and text plain
+---
+c4-beta container
+title Ledger - Containers
+legend on
+person clerk "Ledger Clerk" "Posts journal entries."
+softwareSystem erp "ERP" "Holds the chart of accounts." :::external
+softwareSystem bank "Bank" "Settles payments."
+softwareSystem ledger "Ledger" {
+  container api "Ledger API" "Keeps the books." "Rust"
+  component posting "Posting" "Validates and posts entries." "Rust"
+}
+infrastructureNode proxy "Proxy" "Terminates TLS." "nginx"
+clerk --> api : "Posts entries using" "HTTPS"
+api --> posting : "Calls"
+api --> erp : "Reads accounts from"
+api --> bank : "Settles with"
+proxy --> api : "Forwards to"

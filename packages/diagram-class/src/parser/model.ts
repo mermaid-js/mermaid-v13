@@ -10,7 +10,8 @@
  * could not read) the builder reports an error instead.
  */
 import { idEscaper } from '@mermaid-js/shared/parser/support';
-import type { AstId, Diagnostic, Range } from '@mermaid-js/core/parser-kit';
+import type { Dir } from '@mermaid-js/core/layout';
+import { callbackArgs, type AstId, type Diagnostic, type Range } from '@mermaid-js/core/parser-kit';
 import { readMember } from './member.ts';
 import type { MemberParts } from './member.ts';
 
@@ -146,7 +147,9 @@ export interface ClassCallback {
 
 export interface ClassModel {
   /** `TB`, `BT`, `LR` or `RL`. */
-  direction: string;
+  direction: Dir;
+  /** The front-matter `title`, drawn above the diagram (D652); absent when there is none. */
+  title?: string;
   accTitle: string;
   accDescr: string;
   classes: ClassNode[];
@@ -192,34 +195,6 @@ export function splitClassName(raw: string): { id: string; type: string } {
   return { id: parts[0] ?? '', type: parts[1] ?? '' };
 }
 
-/**
- * v12 `setClickFunc`'s argument list: `args` split at every comma followed by an even number
- * of `"` (outside quotes), each item trimmed and stripped of one pair of surrounding quotes;
- * `[id]` when there are no arguments.
- */
-export function callbackArgs(args: string | undefined, id: string): string[] {
-  if (args === undefined) return [id];
-  let quotes = 0;
-  for (const c of args) if (c === '"') quotes++;
-  const out: string[] = [];
-  let from = 0;
-  let seen = 0;
-  for (let i = 0; i < args.length; i++) {
-    const c = args[i];
-    if (c === '"') seen++;
-    else if (c === ',' && (quotes - seen) % 2 === 0) {
-      out.push(args.slice(from, i));
-      from = i + 1;
-    }
-  }
-  out.push(args.slice(from));
-  return out.map((a) => {
-    const item = a.trim();
-    // `substr(1, length - 2)`: a lone `"` gives `''`.
-    return item.startsWith('"') && item.endsWith('"') ? item.slice(1, -1) : item;
-  });
-}
-
 const escMember = /* @__PURE__ */ idEscaper();
 
 /**
@@ -239,7 +214,7 @@ export class ClassBuilder {
   private readonly styleClasses = new Map<string, ClassStyleClass>();
   private readonly callbacks: ClassCallback[] = [];
   private readonly memberCount = new Map<string, number>();
-  private direction = 'TB';
+  private direction: Dir = 'TB';
   private accTitle = '';
   private accDescr = '';
 
@@ -430,7 +405,7 @@ export class ClassBuilder {
       const id = splitClassName(part).id;
       const node = this.classes.get(id);
       if (!node) continue;
-      this.callbacks.push({ id, name, args: callbackArgs(args, id), range });
+      this.callbacks.push({ id, name, args: callbackArgs(id, args), range });
       node.haveCallback = true;
     }
     this.setCssClass(ids, 'clickable');
@@ -443,7 +418,7 @@ export class ClassBuilder {
     for (const s of styles) node.styles.push(...s.split(','));
   }
 
-  setDirection(dir: string): void {
+  setDirection(dir: Dir): void {
     this.direction = dir;
   }
 

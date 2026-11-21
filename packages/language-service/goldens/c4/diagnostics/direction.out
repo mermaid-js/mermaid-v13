@@ -1,2 +1,2 @@
-2:1-2:13 "direction LR" error C4_DIRECTION: C4 has no `direction` statement: elements are laid out in statement order. A line holding `direction TB`, `BT`, `RL` or `LR` is read as one, even inside a label; reword it.
-3:1-3:47 "Container(c, \"Says direction TB in its label\")" error C4_DIRECTION: C4 has no `direction` statement: elements are laid out in statement order. A line holding `direction TB`, `BT`, `RL` or `LR` is read as one, even inside a label; reword it.
+2:1-2:2 "d" error UNEXPECTED: Expected an element such as `Person(alias, "Label")`, a relation such as `Rel(from, to, "Label")`, a boundary such as `Boundary(alias, "Label") {` or a `title`, `accTitle:` or `accDescr` line, got `d`; write `direction TB`, `BT`, `LR` or `RL`, alone on a line.
+4:14-4:15 "t" error UNEXPECTED: Expected a line break, got `t`.

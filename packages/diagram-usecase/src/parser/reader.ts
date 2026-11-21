@@ -30,6 +30,7 @@ import type {
   TokenView,
 } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
+import { foundText } from '@mermaid-js/shared/parser/support';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import {
   USECASE_UNCLOSED_JSON,
@@ -43,10 +44,7 @@ import { EXPECTED, KEYWORD_LINE, LINE_END, PROBE_FOLLOWS, WORD_KINDS } from './t
 import { shown } from './text.ts';
 import { LABEL_TEXT, T } from './tokens.ts';
 
-export interface UsecaseParseOptions extends ParseOptions, UsecaseLimitOptions {
-  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
-  preprocessed?: PreprocessResult;
-}
+export interface UsecaseParseOptions extends ParseOptions, UsecaseLimitOptions {}
 
 /**
  * Thrown inside the parser after a diagnostic is recorded; caught at statement level, which
@@ -285,16 +283,6 @@ export abstract class UsecaseReader {
     return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
   }
 
-  /** How an error message names the token at `j`. */
-  protected found(j = this.i): string {
-    const k = this.kind(j);
-    if (k === Kind.EOF) return 'the end of the text';
-    if (k === Kind.Newline) return 'a line break';
-    const text = shown(this.raw(j)).trim();
-    const line = text.split('\n', 1)[0] ?? '';
-    return line.length > 24 || line !== text ? `\`${line.slice(0, 24)}…\`` : `\`${line}\``;
-  }
-
   /** Report what was found where one of `want` was expected, then stop the statement. */
   protected fail(want: readonly number[], hint?: string, names?: string[]): never {
     this.unexpected({ from: this.i, at: this.i, want, hint, names });
@@ -325,7 +313,7 @@ export abstract class UsecaseReader {
     const names = p.names ?? EXPECTED.names(p.want);
     const why = p.hint ?? this.hint(at, p.want);
     const range = { start: this.range(from).start, end: this.range(at).end };
-    const found = `${this.found(at)}${why ? `; ${why}` : ''}`;
+    const found = `${foundText(this.kind(at), shown(this.raw(at)))}${why ? `; ${why}` : ''}`;
     this.st.diagnostics.unexpected('UNEXPECTED', range, names, found);
   }
 

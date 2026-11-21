@@ -1,0 +1,17 @@
+---
+description:
+  Under the ELK layout the subgraph titles follow flowchart.subGraphTitlePosition too, here
+  in the bottom right corner of each subgraph (mermaid-js/mermaid#2977).
+config:
+  layout: elk
+  flowchart:
+    subGraphTitlePosition: bottom-right
+---
+flowchart TB
+    subgraph intake ["Stage 1: Intake"]
+        A["Receive the order"]
+    end
+    subgraph stock ["Stage 2: Stock"]
+        B["Reserve the items"] --> B2["Pack the items"]
+    end
+    A -->|"Orders team"| B

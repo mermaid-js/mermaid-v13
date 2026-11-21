@@ -233,6 +233,9 @@ importers:
       tsx:
         specifier: ^4.20.6
         version: 4.20.6
+      typescript:
+        specifier: ~6.0.3
+        version: 6.0.3
 
   packages/bundler-plugin:
     dependencies:
@@ -366,6 +369,9 @@ importers:
       '@mermaid-js/plugin-math':
         specifier: workspace:^
         version: link:../plugin-math
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
       '@types/js-yaml':
         specifier: ^4.0.9
         version: 4.0.9
@@ -395,12 +401,18 @@ importers:
 
   packages/dev:
     devDependencies:
+      '@codemirror/autocomplete':
+        specifier: ^6.18.0
+        version: 6.20.4
       '@codemirror/commands':
         specifier: ^6.11.1
         version: 6.11.1
       '@codemirror/language':
         specifier: ^6.13.1
         version: 6.13.1
+      '@codemirror/lint':
+        specifier: ^6.8.0
+        version: 6.9.7
       '@codemirror/state':
         specifier: ^6.7.6
         version: 6.7.6
@@ -410,15 +422,27 @@ importers:
       '@fontsource/noto-sans-sc':
         specifier: ^5.3.1
         version: 5.3.1
+      '@lezer/common':
+        specifier: ^1.5.4
+        version: 1.5.4
       '@lezer/highlight':
         specifier: ^1.2.5
         version: 1.2.5
+      '@lezer/lr':
+        specifier: 1.4.2
+        version: 1.4.2
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/language-service':
+        specifier: workspace:^
+        version: link:../language-service
+      '@mermaid-js/language-service-codemirror':
+        specifier: workspace:^
+        version: link:../language-service-codemirror
       '@mermaid-js/layout-elk':
         specifier: workspace:^
         version: link:../layout-elk
@@ -443,9 +467,6 @@ importers:
       chokidar:
         specifier: ^5.0.0
         version: 5.0.0
-      codemirror-lang-mermaid:
-        specifier: ^0.5.0
-        version: 0.5.0
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
@@ -653,6 +674,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../shared
 
   packages/diagram-requirement:
     devDependencies:
@@ -857,13 +881,40 @@ importers:
       '@mermaid-js/language-service':
         specifier: workspace:*
         version: link:../language-service
+      '@mermaid-js/plugin-autoload':
+        specifier: workspace:*
+        version: link:../plugin-autoload
       vscode-languageserver:
         specifier: ^11.0.0
         version: 11.0.0
     devDependencies:
+      '@codemirror/language':
+        specifier: ^6.13.1
+        version: 6.13.1
+      '@codemirror/state':
+        specifier: ^6.7.6
+        version: 6.7.6
+      '@mermaid-js/language-service-codemirror':
+        specifier: workspace:*
+        version: link:../language-service-codemirror
+      mermaid:
+        specifier: workspace:*
+        version: link:../mermaid
       vscode-languageserver-protocol:
         specifier: 3.18.5
         version: 3.18.5
+
+  packages/language-server/examples/vscode:
+    devDependencies:
+      '@types/vscode':
+        specifier: 1.91.0
+        version: 1.91.0
+      esbuild:
+        specifier: ^0.25.12
+        version: 0.25.12
+      vscode-languageclient:
+        specifier: 11.0.0
+        version: 11.0.0
 
   packages/language-service:
     devDependencies:
@@ -1026,9 +1077,6 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
-      '@mermaid-js/language-server':
-        specifier: workspace:*
-        version: link:../language-server
       '@mermaid-js/language-service':
         specifier: workspace:*
         version: link:../language-service
@@ -1044,12 +1092,6 @@ importers:
       tsx:
         specifier: ^4.20.6
         version: 4.20.6
-      vscode-languageserver:
-        specifier: ^11.0.0
-        version: 11.0.0
-      vscode-languageserver-protocol:
-        specifier: 3.18.5
-        version: 3.18.5
 
   packages/language-service/examples/codemirror:
     devDependencies:
@@ -1245,6 +1287,16 @@ importers:
         specifier: ^4.20.6
         version: 4.20.6
 
+  packages/plugin-autoload:
+    dependencies:
+      '@mermaid-js/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      mermaid:
+        specifier: workspace:*
+        version: link:../mermaid
+
   packages/plugin-hand-drawn:
     dependencies:
       roughjs:
@@ -1275,6 +1327,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/plugin-autoload':
+        specifier: workspace:*
+        version: link:../plugin-autoload
       esbuild:
         specifier: ^0.25.12
         version: 0.25.12
@@ -1320,6 +1375,9 @@ importers:
 
   tools/gen-config:
     devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../../packages/core
       json-schema-to-typescript:
         specifier: ^15.0.4
         version: 15.0.4
@@ -1428,6 +1486,9 @@ importers:
       '@mermaid-js/diagram-xychart':
         specifier: workspace:^
         version: link:../../packages/diagram-xychart
+      '@mermaid-js/shared':
+        specifier: workspace:^
+        version: link:../../packages/shared
       vscode-oniguruma:
         specifier: 2.0.1
         version: 2.0.1
@@ -3107,6 +3168,9 @@ packages:
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
 
+  '@types/vscode@1.91.0':
+    resolution: {integrity: sha512-PgPr+bUODjG3y+ozWUCyzttqR9EHny9sPAfJagddQjDwdtf66y2sDKJMnFZRuzBA2YtBGASqJGPil8VDUPvO6A==}
+
   '@typescript-eslint/eslint-plugin@8.43.0':
     resolution: {integrity: sha512-8tg+gt7ENL7KewsKMKDHXR1vm8tt9eMxjJBYINf6swonlWgkYn5NwyIgXpbbDxTNU5DgpDFfj95prcTq2clIQQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
@@ -3593,9 +3657,6 @@ packages:
   cli-truncate@5.0.0:
     resolution: {integrity: sha512-ds7u02fPOOBpcUl2VSjLF3lfnAik9u7Zt0BTaaAQlT5RtABALl4cvpJHthXx+rM50J4gSfXKPH5Tix/tfdefUQ==}
     engines: {node: '>=20'}
-
-  codemirror-lang-mermaid@0.5.0:
-    resolution: {integrity: sha512-Taw/2gPCyNArQJCxIP/HSUif+3zrvD+6Ugt7KJZ2dUKou/8r3ZhcfG8krNTZfV2iu8AuGnymKuo7bLPFyqsh/A==}
 
   color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
@@ -5771,11 +5832,18 @@ packages:
     resolution: {integrity: sha512-USSfxg0vDIpTQqlQBGxF3mBARyoS8cU7LHLpbYNh6dOJt32dlskxPWB0Irrh5TllTmyf7oNLAvqDqzklbwwnpA==}
     engines: {node: '>=14.17.0'}
 
+  vscode-languageclient@11.0.0:
+    resolution: {integrity: sha512-kVyeGLfyd1M74PbMNPfFkgRnhMYgnt6YGc5uXr/tNMzCpfZ0wFtfiqmqX1M05kkdNgV0HSozEUPvgggJbyIAYw==}
+    engines: {vscode: ^1.91.0}
+
   vscode-languageserver-protocol@3.18.5:
     resolution: {integrity: sha512-FW4fBMzZ99N8xeob4py0l050wgCoRgTpEq5Xcsb9lM1bc29UKGR/wSV+4knaqFxssFHajy7OzNiKP/m3U1ZEuA==}
 
   vscode-languageserver-textdocument@1.0.12:
     resolution: {integrity: sha512-cxWNPesCnQCcMPeenjKKsOCKQZ/L6Tv19DTRIGuLWe32lyzWhihGVJ/rcckZXJxfdKCFvRLS3fpBIsV/ZGX4zA==}
+
+  vscode-languageserver-textdocument@1.0.16:
+    resolution: {integrity: sha512-qeNEuOi9a3qkqRf7Gfez2WL2VwlBTLCNekHBGO9kxPVUp9XuY15yfTJ9jwvOwKI0I2MhUUfZq95NSp+LK1CLQg==}
 
   vscode-languageserver-types@3.18.5:
     resolution: {integrity: sha512-kPd6+JQNz3HMJvjKlqUxERSlZHAntl/aGpsk7ImwIh0ewDKDcjgAEyVSYciPiOJD3ftbK9IrfiqUeTZLSbCizw==}
@@ -7367,6 +7435,8 @@ snapshots:
 
   '@types/trusted-types@2.0.7': {}
 
+  '@types/vscode@1.91.0': {}
+
   '@typescript-eslint/eslint-plugin@8.43.0(@typescript-eslint/parser@8.43.0(eslint@9.35.0(jiti@2.6.1))(typescript@6.0.3))(eslint@9.35.0(jiti@2.6.1))(typescript@6.0.3)':
     dependencies:
       '@eslint-community/regexpp': 4.12.1
@@ -7856,12 +7926,6 @@ snapshots:
     dependencies:
       slice-ansi: 7.1.2
       string-width: 8.1.0
-
-  codemirror-lang-mermaid@0.5.0:
-    dependencies:
-      '@codemirror/language': 6.13.1
-      '@lezer/highlight': 1.2.5
-      '@lezer/lr': 1.4.2
 
   color-convert@2.0.1:
     dependencies:
@@ -10220,12 +10284,21 @@ snapshots:
 
   vscode-jsonrpc@10.0.0: {}
 
+  vscode-languageclient@11.0.0:
+    dependencies:
+      minimatch: 10.2.6
+      semver: 7.8.5
+      vscode-languageserver-protocol: 3.18.5
+      vscode-languageserver-textdocument: 1.0.16
+
   vscode-languageserver-protocol@3.18.5:
     dependencies:
       vscode-jsonrpc: 10.0.0
       vscode-languageserver-types: 3.18.5
 
   vscode-languageserver-textdocument@1.0.12: {}
+
+  vscode-languageserver-textdocument@1.0.16: {}
 
   vscode-languageserver-types@3.18.5: {}
 

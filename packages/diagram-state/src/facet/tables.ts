@@ -10,6 +10,8 @@ export { plural } from '@mermaid-js/shared/parser/facet';
 export { tokenBefore } from '@mermaid-js/shared/parser/facet';
 export { span } from '@mermaid-js/shared/parser/facet';
 export { code } from '@mermaid-js/shared/parser/facet';
+/** Directions and what they mean (state has no `TD`). */
+export { DIRECTION_DOCS as DIRECTIONS } from '@mermaid-js/shared/parser/facet';
 
 /** Statement keywords, in the order they are offered. */
 export const KEYWORDS: readonly KeywordItem[] = [
@@ -31,14 +33,6 @@ export const KEYWORDS: readonly KeywordItem[] = [
 
 /** The two headers (D101: one package, both keywords). */
 export const HEADERS = ['stateDiagram-v2', 'stateDiagram'];
-
-/** Directions and what they mean (state has no `TD`). */
-export const DIRECTIONS: readonly (readonly [dir: string, meaning: string])[] = [
-  ['TB', 'top to bottom'],
-  ['BT', 'bottom to top'],
-  ['LR', 'left to right'],
-  ['RL', 'right to left'],
-];
 
 /** Pseudo-state markers after `state <name> `, both spellings. */
 export const MARKERS: readonly (readonly [angle: string, square: string, kind: string])[] = [

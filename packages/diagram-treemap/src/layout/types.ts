@@ -5,19 +5,10 @@
  * is. Rectangles have their top-left corner at `x`, `y`.
  */
 import type { FontKey } from '@mermaid-js/core/text';
+import type { Rect } from '@mermaid-js/shared/layout';
 import type { TreemapNode } from '../model.ts';
 
-export interface Rect {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
-
-/** `r` grown by `by` on every side (a stroke's outer half, or a padding band). */
-export function grow(r: Rect, by: number): Rect {
-  return { x: r.x - by, y: r.y - by, width: r.width + 2 * by, height: r.height + 2 * by };
-}
+export type { Rect };
 
 /** v12's `text-anchor` and `dominant-baseline` for a text at its point. */
 export type TreemapTextAnchor = 'start' | 'middle' | 'end';
@@ -55,8 +46,9 @@ interface TreemapItem {
   readonly colorKey: string;
   /**
    * v12's slot in the fill range `['transparent', cScale0…cScale11]` and the stroke range
-   * `['transparent', cScalePeer0…11]` (the same domain): the first-lookup index of `colorKey`
-   * mod 13, the hidden root's `''` first. 0 is `transparent`.
+   * `['transparent', cScalePeer0…11]` (the same domain), by the first-lookup index of
+   * `colorKey`, the hidden root's `''` first: 0 is the root's, `transparent`; every later name
+   * cycles through 1…12 (D612; v12 took the index mod 13, so its 13th name was transparent).
    */
   readonly fill: number;
   /** v12's slot in `cScaleLabel0…11`: the first-lookup index of the item's own name, mod 12. */

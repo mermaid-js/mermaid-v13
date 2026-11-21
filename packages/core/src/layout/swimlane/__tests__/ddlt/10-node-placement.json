@@ -133,8 +133,8 @@
         "target": "D1",
         "minLen": 1,
         "label": {
-          "width": 36.122,
-          "height": 20.1
+          "width": 40.122,
+          "height": 24.1
         }
       },
       {
@@ -161,8 +161,8 @@
         "target": "T4",
         "minLen": 1,
         "label": {
-          "width": 29.892,
-          "height": 20.1
+          "width": 33.891999999999996,
+          "height": 24.1
         }
       },
       {
@@ -171,8 +171,8 @@
         "target": "D2",
         "minLen": 1,
         "label": {
-          "width": 29.892,
-          "height": 20.1
+          "width": 33.891999999999996,
+          "height": 24.1
         }
       },
       {
@@ -181,8 +181,8 @@
         "target": "T6",
         "minLen": 1,
         "label": {
-          "width": 36.122,
-          "height": 20.1
+          "width": 40.122,
+          "height": 24.1
         }
       },
       {

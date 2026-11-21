@@ -3,7 +3,7 @@ import { agentflowTokens, AgentflowTokenKind, JISON_NAMES } from '@mermaid-js/di
 import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonLexerOracle, JisonToken } from '../jison/oracle.ts';
-import { agentflowGateCorpus, VARIANTS } from './corpus.ts';
+import { agentflowGateCorpus, AGENTFLOW_VARIANTS } from './corpus.ts';
 
 /**
  * Lexer-parity gate (parser-method §1, #544): the v13 agentflow lexer emits the same terminals,
@@ -42,7 +42,7 @@ import { agentflowGateCorpus, VARIANTS } from './corpus.ts';
  *   lexer (the model parity of #546 lists it).
  */
 const MERGED = new Set(['TEXT', 'EDGE_TEXT', 'STR', 'MD_STR']);
-const VARIANT = new RegExp(` \\((?:${VARIANTS.map(([s]) => s).join('|')})\\)$`);
+const VARIANT = new RegExp(` \\((?:${AGENTFLOW_VARIANTS.map(([s]) => s).join('|')})\\)$`);
 
 function normalise(tokens: JisonToken[]): JisonToken[] {
   const out: JisonToken[] = [];
@@ -170,7 +170,7 @@ describe('agentflow lexer parity with mermaid@12 (jison)', () => {
     ).toEqual([]);
     // Every e2e fixture, every harvested spec and syntax-page string and every case but one
     // reaches the lexer.
-    expect({ e2e, specs, cases }).toEqual({ e2e: 69, specs: 179, cases: 253 });
+    expect({ e2e, specs, cases }).toEqual({ e2e: 71, specs: 179, cases: 253 });
     // D463: the cases with a lone `%` in a text or trapezoid label, in each variant that keeps
     // it; a lone `%` elsewhere (ellipse and edge text, ids, strings, shape data) and `%%` in a
     // label lex as in v12.

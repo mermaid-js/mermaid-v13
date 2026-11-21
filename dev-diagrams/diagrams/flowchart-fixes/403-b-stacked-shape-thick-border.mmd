@@ -1,0 +1,8 @@
+---
+title: '#403 stacked shape with a thick dashed border'
+description:
+  Fixed when three stacked boxes are visible, not one dashed box.
+---
+flowchart LR
+  A --> P@{ shape: procs, label: "Stacked processes" }
+  style P stroke-width:4px,stroke-dasharray:5

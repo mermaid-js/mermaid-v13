@@ -1,0 +1,19 @@
+---
+description: >-
+  c4-beta relation labels as tags (D626–D630): a plain label, a label with its
+  technology in italic under it in the same box, a label of two lines, and a
+  label on a relation a style strokes. Each box is rounded, bordered 1 px
+  solid in its relation's colour (the styled one in pink), and filled with the
+  theme background.
+---
+c4-beta container
+style hot stroke:#d6336c
+person a "Customer"
+container b "Web shop"
+container c "Payments"
+container d "Warehouse"
+container e "Courier"
+a --> b : "plain"
+b --> c : "Charges" "JSON/HTTPS"
+b --> d : "first line<br/>second line"
+d --> e : "styled" :::hot

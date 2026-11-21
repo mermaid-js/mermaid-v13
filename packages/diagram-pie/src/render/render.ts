@@ -107,20 +107,14 @@ function drawPie(layout: PieLayout, paint: Paints, w: SvgWriter): void {
 /** The `<svg>` root with its title and description (R-A11Y-1, D133). */
 function openRoot(model: PieModel, layout: PieLayout, ctx: PieRenderContext, w: SvgWriter): void {
   const { theme, config } = ctx;
-  const { x, y } = layout.bounds;
-  const width = Math.max(1, Math.ceil(layout.bounds.width));
-  const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = config.pie?.useMaxWidth !== false;
-  const title = model.accTitle.trim();
-  const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.
   const font = theme.font();
   openSvgRoot(w, ctx, {
     name: 'pie',
-    viewBox: [x, y, width, height],
-    maxWidth,
-    title,
-    desc,
+    viewBox: layout.bounds,
+    maxWidth: config.pie?.useMaxWidth !== false,
+    title: model.accTitle,
+    desc: model.accDescr,
     attrs: { 'font-family': font },
   });
 }

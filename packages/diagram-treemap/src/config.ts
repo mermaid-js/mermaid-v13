@@ -14,7 +14,8 @@
 import type { Warning } from '@mermaid-js/core';
 import type { TreemapDiagramConfig } from '@mermaid-js/core/config';
 import {
-  rawConfigNumber as configNumber,
+  configRanges,
+  NON_NEGATIVE,
   shownValue as shown,
   useMaxWidth,
 } from '@mermaid-js/shared/config/readers';
@@ -55,12 +56,8 @@ export function treemapLayoutConfig(
       code: TREEMAP_CONFIG_INVALID,
       message: `treemap.${key} is ${shown(given[key])}, not ${wants}; using the default ${shown(used)}`,
     });
-  for (const key of LENGTHS) {
-    if (given[key] === undefined) continue;
-    const n = configNumber(given[key]);
-    if (Number.isFinite(n) && n >= 0) out[key] = n;
-    else invalid(key, 'a number of 0 or more', d[key]);
-  }
+  const number = configRanges('treemap', TREEMAP_CONFIG_INVALID, given, warn);
+  for (const key of LENGTHS) out[key] = number(key, d[key], NON_NEGATIVE);
   return { ...out, ...treemapValueOptions(given, invalid) };
 }
 

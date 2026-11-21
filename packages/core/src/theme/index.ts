@@ -5,10 +5,14 @@ export {
   composite,
   contrastRatio,
   formatColor,
+  hslToRgb,
   invertColor,
   luminance,
   mixColors,
   parseColor,
+  rgbToHsl,
+  shiftHsl,
+  type Hsl,
   type Rgba,
 } from './color.ts';
 export { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './spec.ts';

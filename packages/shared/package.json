@@ -36,15 +36,45 @@
       "types": "./dist/parser/v12-text.d.ts",
       "default": "./dist/parser/v12-text.js"
     },
+    "./parser/generic-types": {
+      "mermaid-source": "./src/parser/generic-types.ts",
+      "types": "./dist/parser/generic-types.d.ts",
+      "default": "./dist/parser/generic-types.js"
+    },
     "./parser/drop": {
       "mermaid-source": "./src/parser/drop.ts",
       "types": "./dist/parser/drop.d.ts",
       "default": "./dist/parser/drop.js"
     },
+    "./parser/common-values": {
+      "mermaid-source": "./src/parser/common-values.ts",
+      "types": "./dist/parser/common-values.d.ts",
+      "default": "./dist/parser/common-values.js"
+    },
+    "./parser/display-text": {
+      "mermaid-source": "./src/parser/display-text.ts",
+      "types": "./dist/parser/display-text.d.ts",
+      "default": "./dist/parser/display-text.js"
+    },
+    "./parser/seen-tokens": {
+      "mermaid-source": "./src/parser/seen-tokens.ts",
+      "types": "./dist/parser/seen-tokens.d.ts",
+      "default": "./dist/parser/seen-tokens.js"
+    },
     "./parser/facet": {
       "mermaid-source": "./src/parser/facet.ts",
       "types": "./dist/parser/facet.d.ts",
       "default": "./dist/parser/facet.js"
+    },
+    "./parser/line-tokens": {
+      "mermaid-source": "./src/parser/line-tokens.ts",
+      "types": "./dist/parser/line-tokens.d.ts",
+      "default": "./dist/parser/line-tokens.js"
+    },
+    "./parser/tree-facet": {
+      "mermaid-source": "./src/parser/tree-facet.ts",
+      "types": "./dist/parser/tree-facet.d.ts",
+      "default": "./dist/parser/tree-facet.js"
     },
     "./parser/flow": {
       "mermaid-source": "./src/parser/flow.ts",
@@ -66,6 +96,11 @@
       "types": "./dist/svg/graph.d.ts",
       "default": "./dist/svg/graph.js"
     },
+    "./svg/node-paint": {
+      "mermaid-source": "./src/svg/node-paint.ts",
+      "types": "./dist/svg/node-paint.d.ts",
+      "default": "./dist/svg/node-paint.js"
+    },
     "./svg/route": {
       "mermaid-source": "./src/svg/route.ts",
       "types": "./dist/svg/route.d.ts",
@@ -86,6 +121,11 @@
       "types": "./dist/shapes/extended.d.ts",
       "default": "./dist/shapes/extended.js"
     },
+    "./random": {
+      "mermaid-source": "./src/random.ts",
+      "types": "./dist/random.d.ts",
+      "default": "./dist/random.js"
+    },
     "./layout": {
       "mermaid-source": "./src/layout/index.ts",
       "types": "./dist/layout/index.d.ts",
@@ -101,11 +141,6 @@
       "types": "./dist/config/readers.d.ts",
       "default": "./dist/config/readers.js"
     },
-    "./layout/invariants": {
-      "mermaid-source": "./src/layout/invariants.ts",
-      "types": "./dist/layout/invariants.d.ts",
-      "default": "./dist/layout/invariants.js"
-    },
     "./svg/document": {
       "mermaid-source": "./src/svg/document.ts",
       "types": "./dist/svg/document.d.ts",
@@ -115,6 +150,18 @@
       "mermaid-source": "./src/parser/support.ts",
       "types": "./dist/parser/support.d.ts",
       "default": "./dist/parser/support.js"
+    },
+    "./testing/layout-invariants": {
+      "mermaid-source": "./src/testing/layout-invariants.ts"
+    },
+    "./testing/parser-reference": {
+      "mermaid-source": "./src/testing/parser-reference.ts"
+    },
+    "./testing/render-harness": {
+      "mermaid-source": "./src/testing/render-harness.ts"
+    },
+    "./testing/test-context": {
+      "mermaid-source": "./src/testing/test-context.ts"
     }
   },
   "files": [

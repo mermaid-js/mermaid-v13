@@ -5,22 +5,13 @@
  * `W·k + 5(k − 1)` and every column's top is at `−1.5 W`. Colours are left to the renderer.
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
-import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
+import type { FontKey } from '@mermaid-js/core/text';
+import type { PlacedLabel, Rect } from '@mermaid-js/shared/layout';
 import type { KanbanPriority } from '../priority.ts';
 
 export type { KanbanPriority };
 
-export interface Rect {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
-
-/** A measured label and the box it is drawn in: the label's own size, at its place. */
-export interface PlacedLabel extends Rect {
-  readonly text: MeasuredLabel;
-}
+export type { PlacedLabel, Rect };
 
 /** The priority bar on a card's left edge: a vertical line `width` wide, centred on `x`. */
 export interface PriorityBar {
@@ -42,8 +33,9 @@ export interface CardLayout extends Rect {
   /** Left-aligned, under the title; undefined without a ticket. */
   readonly ticket?: PlacedLabel;
   /**
-   * Right-aligned on the ticket's row: the box's right edge is `labelInset` in from the card's,
-   * and the renderer ends each line there (`text-anchor="end"`); undefined without an assignee.
+   * Right-aligned on the ticket's row, or on a row of its own under the ticket when the two do
+   * not fit side by side (D647): the box's right edge is `labelInset` in from the card's, and
+   * the renderer ends each line there (`text-anchor="end"`); undefined without an assignee.
    */
   readonly assignee?: PlacedLabel;
   /** Undefined unless the priority is one of the four (D375). */

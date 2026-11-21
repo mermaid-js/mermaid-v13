@@ -12,43 +12,24 @@
  * them out take the theme's own `primaryTextColor` where v12 drew theme-default's `#131300`.
  * Author overrides: a nested `themeVariables.xyChart` key wins key by key as in v12 (D335),
  * colours and the palette (a string or an array) alike; the flat name wins over it (D540); a
- * shared `primaryTextColor` or `background` override moves every derived colour in every theme,
- * `default` included (D388), where v12's `default` kept its block (`OVERRIDES`).
+ * shared `primaryTextColor` or `background` override moves the derived colours as in v12: in
+ * every theme but `default`, which keeps its block (D656, replacing D388; `OVERRIDES` lists none).
  */
 import { xychart } from '@mermaid-js/diagram-xychart';
 import {
   THEME_NAMES,
   createTheme,
-  formatColor,
   loadTheme,
-  parseColor,
   type Theme,
   type ThemeName,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
 import { flatName, paletteColours } from '../diagram-themes.ts';
-import { loadOracle } from '../oracle.ts';
-
-interface V12 {
-  mermaidAPI: {
-    reset(): void;
-    initialize(config: object): void;
-    getConfig(): { themeVariables: Record<string, unknown> };
-  };
-}
-
-await loadOracle();
-const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
+import { v12Vars } from '../v12-theme.ts';
+import { hex } from '../hex.ts';
 
 type Block = Readonly<Record<string, unknown>>;
 type Vars = Readonly<Record<string, unknown>>;
-
-/** v12's resolved theme variables of `theme`, with author `themeVariables`. */
-function v12Vars(theme: string, themeVariables?: object): Record<string, unknown> {
-  v12.mermaidAPI.reset();
-  v12.mermaidAPI.initialize(themeVariables ? { theme, themeVariables } : { theme });
-  return { ...v12.mermaidAPI.getConfig().themeVariables };
-}
 
 /** What v12's XY chart drew with: the theme's `xyChart` over theme-default's (`xychartDb.ts:42`). */
 function v12XyChart(theme: string, themeVariables?: object): Block {
@@ -62,11 +43,6 @@ const VARS = xychart.theme.vars;
 const NESTED = Object.entries(VARS).map(([name, v]) => [name, v.nested ?? ''] as const);
 const PALETTE = 'xyChartPlotColorPalette';
 
-const hex = (v: unknown): string | undefined => {
-  if (typeof v !== 'string') return undefined;
-  const rgba = parseColor(v.trim());
-  return rgba ? formatColor(rgba) : undefined;
-};
 const SECTION = xychart.theme.section!;
 
 const v13Theme = async (name: ThemeName, themeVariables?: Vars): Promise<Theme> =>
@@ -105,28 +81,17 @@ async function differing(name: ThemeName, themeVariables?: Vars): Promise<string
   return NESTED.filter(([n, key]) => v13Of(theme, n) !== v12Of(old, key, n)).map(([n]) => n);
 }
 
-/** Shared-variable overrides and the variables in which v13 differs from v12, with why. */
-const D388 =
-  'D388: v12’s theme-default derived its xyChart block before the overrides; v13 follows them in default too';
+/**
+ * Shared-variable overrides and the variables in which v13 differs from v12, with why. None since
+ * D656: `default` keeps its block under both overrides, as v12's does.
+ */
 const OVERRIDES: readonly {
   readonly theme: ThemeName;
   readonly vars: Vars;
   readonly differ: Readonly<Record<string, string>>;
-}[] = [
-  {
-    theme: 'default',
-    vars: { primaryTextColor: '#102030' },
-    differ: Object.fromEntries(
-      NESTED.filter(([n]) => n !== PALETTE && n !== 'xyChartBackgroundColor').map(([n]) => [
-        n,
-        D388,
-      ])
-    ),
-  },
-  { theme: 'default', vars: { background: '#fafafa' }, differ: { xyChartBackgroundColor: D388 } },
-];
+}[] = [];
 
-describe('xychart theme variables against v12 12.2.0 (#513, D333(b), D335, D381, D388, D540)', () => {
+describe('xychart theme variables against v12 12.2.0 (#513, D333(b), D335, D381, D540, D656)', () => {
   it("covers v12's thirteen xyChart keys, each a flat xyChart variable nested under `xyChart`", () => {
     const keys = Object.keys(v12Vars('default').xyChart as Block).sort();
     expect(NESTED.map(([, key]) => key).sort()).toEqual(keys);
@@ -198,7 +163,7 @@ describe('xychart theme variables against v12 12.2.0 (#513, D333(b), D335, D381,
   );
 
   it.each(THEME_NAMES.map((n) => [n]))(
-    '%s: shared primaryTextColor and background overrides, against v12 (D388)',
+    '%s: shared primaryTextColor and background overrides, against v12 (D656)',
     async (name) => {
       for (const vars of [{ primaryTextColor: '#102030' }, { background: '#fafafa' }]) {
         const listed = OVERRIDES.find(

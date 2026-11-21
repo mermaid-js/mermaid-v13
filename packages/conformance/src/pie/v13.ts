@@ -4,7 +4,7 @@
  */
 import { detectPie, parsePie } from '@mermaid-js/diagram-pie';
 import type { PieModel } from '@mermaid-js/diagram-pie';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { PIE_V12_TYPES, pieV12Snapshot } from './v12.ts';
 import type { PieSnapshot } from './v12.ts';
@@ -24,14 +24,8 @@ export function pieV13Snapshot(model: PieModel): PieSnapshot {
  * front-matter title is held back, as the oracle holds it back from v12 (see `v12.ts`); the
  * D218 fallback has its own specs in the pie package.
  */
-export function parsePieForParity(text: string): PieModel {
-  const pre = preprocess(text);
-  const fm = pre.frontMatter && { ...pre.frontMatter, title: undefined };
-  const result = parsePie(text, { preprocessed: { ...pre, frontMatter: fm } });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((x) => x.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parsePieForParity = (text: string): PieModel =>
+  parseForParity(text, parsePie, { withoutTitle: true });
 
 export const pieAdapter: DiagramAdapter<PieModel> = {
   id: 'pie',

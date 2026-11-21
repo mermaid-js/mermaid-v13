@@ -2,6 +2,8 @@
   "$schema": "./node_modules/fallow/schema.json",
   "entry": [
     "tools/check-deps/cli.ts",
+    "tools/pre-push/*cli.ts",
+    "tools/ci/*cli.ts",
     "e2e/dom/server.ts",
     "e2e/dom/page.ts",
     "packages/*/src/*/index.ts",
@@ -40,6 +42,9 @@
     "e2e/rendering/common-tests/**"
   ],
   "ignoreExportsUsedInFile": true,
+  "resolve": {
+    "conditions": ["mermaid-source"]
+  },
   "workspaces": {
     "settings": {
       "packages/bench": {
@@ -95,6 +100,10 @@
         "patterns": ["packages/bundler-plugin/**"]
       },
       {
+        "name": "language-server",
+        "patterns": ["packages/language-server/**"]
+      },
+      {
         "name": "language",
         "patterns": ["packages/language-*/**"]
       },
@@ -135,6 +144,10 @@
       {
         "from": "language",
         "allow": ["core", "package", "language", "shared"]
+      },
+      {
+        "from": "language-server",
+        "allow": ["core", "package", "language", "shared", "mermaid"]
       }
     ]
   },
@@ -143,10 +156,21 @@
     "unused-types": "error",
     "unused-enum-members": "error",
     "unused-class-members": "off",
-    "duplicate-exports": "warn",
+    "duplicate-exports": "error",
     "duplicate-export-aliases": "off",
     "dev-dependencies-in-production": "off",
-    "private-type-leaks": "warn"
+    "private-type-leaks": "error",
+    "unused-dev-dependencies": "error",
+    "unused-optional-dependencies": "error",
+    "unused-namespace-members": "error",
+    "type-only-dependencies": "error",
+    "test-only-dependencies": "error",
+    "re-export-cycle": "error",
+    "package-cycle": "error",
+    "stale-suppressions": "error",
+    "unused-catalog-entries": "error",
+    "empty-catalog-groups": "error",
+    "unused-dependency-overrides": "error"
   },
   "duplicates": {
     "ignore": [

@@ -13,17 +13,11 @@
  * the list has to match the differences found exactly.
  */
 import { describe, expect, it } from 'vitest';
-import {
-  THEME_NAMES,
-  createTheme,
-  formatColor,
-  loadTheme,
-  parseColor,
-  type ThemeName,
-} from '@mermaid-js/core/theme';
+import { THEME_NAMES, createTheme, loadTheme, type ThemeName } from '@mermaid-js/core/theme';
 import type { Attrs, OutlineDraw } from '@mermaid-js/core/svg';
 import { agentflow } from '@mermaid-js/diagram-agentflow';
 import { renderAgentflowForTest } from '@mermaid-js/diagram-agentflow/testing';
+import { hex } from '../hex.ts';
 
 const SOURCE = `agentflow-beta TB
   flow outer["Outer"]
@@ -229,11 +223,6 @@ const DIFFERENCES: Readonly<Record<string, string>> = Object.fromEntries<string>
   ],
 ]);
 
-const hex = (v: string): string => {
-  const c = parseColor(v);
-  return c ? formatColor(c) : v;
-};
-
 /** The start-tag attributes of the first `<tag>` in `svg` from the tag that holds `from` on. */
 function first(svg: string, tag: string, from: string): Record<string, string> {
   const at = svg.lastIndexOf('<', svg.indexOf(from));
@@ -264,7 +253,7 @@ async function v13(name: ThemeName): Promise<Paint> {
     if (v === undefined) return 'none';
     if (v.startsWith('url(')) return 'gradient';
     const alias = /^var\(--_([\w-]+)\)$/.exec(v)?.[1];
-    return alias ? hex(theme.value(aliases.get(alias)!)) : hex(v);
+    return alias ? hex(theme.value(aliases.get(alias)!), (x) => x) : hex(v, (x) => x);
   };
   const paint = (v: Attrs['stroke']): string => resolve(v);
   const task = first(r.svg, 'rect', 'data-id="t2"');

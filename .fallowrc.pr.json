@@ -1,0 +1,7 @@
+{
+  "$schema": "./node_modules/fallow/schema.json",
+  // D640: the PR structural audit (ci.yml `structure`, the pre-push hook) runs without
+  // coverage, so CRAP is only an estimate there and warns. The nightly reads .fallowrc.json.
+  "extends": "./.fallowrc.json",
+  "rules": { "complexity-crap": "warn" }
+}

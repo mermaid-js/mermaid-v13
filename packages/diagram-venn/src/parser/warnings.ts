@@ -4,6 +4,7 @@
  * `VENN_UNKNOWN_TARGET` (a text node or style naming nothing drawn) and `VENN_EMPTY` (no set,
  * and no error). They read the model as built, with where each entry came from.
  */
+import { formatList } from '@mermaid-js/core/parser-kit';
 import type { Diagnostics, Range } from '@mermaid-js/core/parser-kit';
 import { VENN_DUPLICATE, VENN_EMPTY, VENN_INVALID_SIZE, VENN_UNKNOWN_TARGET } from '../codes.ts';
 import {
@@ -15,7 +16,7 @@ import {
 } from '../model.ts';
 import { invalidSize } from '../sizes.ts';
 import type { VennName } from './ast.ts';
-import { idText, listOf } from './text.ts';
+import { idText } from './text.ts';
 
 /** A model entry with the statement it came from. */
 export interface Sourced<V> {
@@ -78,7 +79,7 @@ function duplicates(d: Diagnostics, { subsets }: WarningInput, at: At): void {
   const verb = repeats.length === 1 ? 'repeats an earlier one' : 'repeat earlier ones';
   d.warning(
     VENN_DUPLICATE,
-    `A set or overlap is declared more than once: ${listOf(repeats.map(at))} ${verb}. Each copy is drawn, and the last size counts; declare each once.`,
+    `A set or overlap is declared more than once: ${formatList(repeats.map(at))} ${verb}. Each copy is drawn, and the last size counts; declare each once.`,
     first.range
   );
 }
@@ -98,7 +99,7 @@ function sizes(d: Diagnostics, { subsets }: WarningInput, at: At): void {
     : 'Use a size of 0 or more.';
   d.warning(
     VENN_INVALID_SIZE,
-    `${what} is laid out as 0: ${listOf(bad.map(at))}. ${use}`,
+    `${what} is laid out as 0: ${formatList(bad.map(at))}. ${use}`,
     first.range
   );
 }
@@ -140,7 +141,7 @@ function unknownTargets(d: Diagnostics, input: WarningInput, at: At): void {
   const verb = named.length === 1 ? 'names' : 'name';
   d.warning(
     VENN_UNKNOWN_TARGET,
-    `Not drawn: ${listOf(named.map(at))} ${verb} no declared set, overlap or text node. Declare it with \`set\` or \`union\`.`,
+    `Not drawn: ${formatList(named.map(at))} ${verb} no declared set, overlap or text node. Declare it with \`set\` or \`union\`.`,
     first.range
   );
 }

@@ -37,6 +37,7 @@ export {
   type LaidOut,
   type OutlineDrawer,
   type ResourceRequest,
+  someString,
 } from './pipeline/extensions.ts';
 export type {
   IconifyAlias,

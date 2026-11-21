@@ -6,7 +6,7 @@
  */
 import { detectTimeline, parseTimeline } from '@mermaid-js/diagram-timeline';
 import type { TimelineModel } from '@mermaid-js/diagram-timeline';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseForParity } from '../parity-parse.ts';
 import type { DiagramAdapter } from '../types.ts';
 import { TIMELINE_V12_TYPES, timelineV12Snapshot } from './v12.ts';
 import type { TimelineSnapshot } from './v12.ts';
@@ -27,13 +27,8 @@ export function timelineV13Snapshot(model: TimelineModel): TimelineSnapshot {
 }
 
 /** v13 parse for parity: the model, or a throw carrying the first error diagnostic. */
-export function parseTimelineForParity(text: string): TimelineModel {
-  const pre = preprocess(text);
-  const result = parseTimeline(text, { preprocessed: pre });
-  const error = [...pre.diagnostics, ...result.diagnostics].find((d) => d.severity === 'error');
-  if (error) throw new Error(`${error.code}: ${error.message}`);
-  return result.model;
-}
+export const parseTimelineForParity = (text: string): TimelineModel =>
+  parseForParity(text, parseTimeline);
 
 export const timelineAdapter: DiagramAdapter<TimelineModel> = {
   id: 'timeline',

@@ -24,7 +24,7 @@ export const listWriter =
     writeLabel(canvas, label, x, y, width, glyphs.name === 'ascii' ? '-' : undefined);
 
 /** What a frame or an edge label is drawn from. */
-interface Labelled {
+export interface Labelled {
   readonly id: string;
   readonly label: MeasuredLabel;
 }

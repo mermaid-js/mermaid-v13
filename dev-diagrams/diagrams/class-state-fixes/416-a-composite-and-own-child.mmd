@@ -1,0 +1,13 @@
+---
+title: '#416 transitions between a composite and its own child'
+description:
+  Fixed when Comp --> Inner and Inner --> Comp are two separate, clearly visible
+  arrows between the frame of Comp and Inner.
+---
+stateDiagram-v2
+  state Comp {
+    [*] --> Inner
+    Inner --> Done
+  }
+  Comp --> Inner
+  Inner --> Comp

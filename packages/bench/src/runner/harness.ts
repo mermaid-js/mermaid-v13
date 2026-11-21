@@ -74,7 +74,6 @@ const ready: Promise<ReadyInfo> = (async () => {
 const sampler = {
   renderOnce,
   adapter,
-  errorText,
   cleanup: () => {
     stage.innerHTML = '';
   },

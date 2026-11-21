@@ -18,6 +18,7 @@ import { createTheme, loadTheme } from '@mermaid-js/core/theme';
 import { DIAGRAM_TABLES } from './diagram-themes.ts';
 import { detectEr, layoutEr, parseEr, type ErModel } from '@mermaid-js/diagram-er';
 import { REPO_ROOT, corpusFromDir } from './index.ts';
+import { layoutLengths } from './layout-lengths.ts';
 
 // DDLT-style checks on parser-produced ER graphs (DESIGN §6.2, #132): every e2e ER fixture the
 // v13 parser accepts, measured and built by the ER graph builder under the px and the cell unit
@@ -54,34 +55,6 @@ function build(model: ErModel, units: UnitProfile): { graph: LayoutGraph; laid: 
     },
   });
   return { graph: graph!, laid: laid! };
-}
-
-/** Every length the builder writes into the graph, with a path for the failure message. */
-function lengths(g: LayoutGraph): [string, number][] {
-  const out: [string, number][] = [];
-  const put = (path: string, v: number | undefined): void => {
-    if (v !== undefined) out.push([path, v]);
-  };
-  for (const n of g.nodes) {
-    put(`node ${n.id} width`, n.width);
-    put(`node ${n.id} height`, n.height);
-  }
-  for (const gr of g.groups) {
-    for (const side of ['top', 'right', 'bottom', 'left'] as const)
-      put(`group ${gr.id} padding.${side}`, gr.padding[side]);
-    put(`group ${gr.id} title.width`, gr.title?.width);
-    put(`group ${gr.id} title.height`, gr.title?.height);
-  }
-  for (const e of g.edges) {
-    put(`edge ${e.id} label.width`, e.label?.width);
-    put(`edge ${e.id} label.height`, e.label?.height);
-  }
-  put('spacing.node', g.spacing.node);
-  put('spacing.rank', g.spacing.rank);
-  put('spacing.edge', g.spacing.edge);
-  put('diagramPadding', g.diagramPadding);
-  put('headRoom', g.headRoom);
-  return out;
 }
 
 describe('layered over parser-produced ER graphs', () => {
@@ -132,7 +105,7 @@ describe('layered over parser-produced ER graphs', () => {
   it('gives every LayoutGraph length as a whole number of cells', () => {
     const bad: string[] = [];
     for (const { id, model } of models) {
-      for (const [path, v] of lengths(build(model, cellProfile()).graph))
+      for (const [path, v] of layoutLengths(build(model, cellProfile()).graph))
         if (!Number.isInteger(v) || v < 0) bad.push(`${id}: ${path} = ${v}`);
     }
     expect(bad).toEqual([]);

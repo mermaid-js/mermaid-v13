@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import type { OutlineDraw, OutlineRole } from '@mermaid-js/core/svg';
 import { C4_COLOR_INVALID } from '../codes.ts';
 import { c4 } from '../plugin.ts';
+import { fixtureSource } from '../layout/mmd.fixtures.ts';
 import { renderC4ForTest } from './harness.ts';
 
 /** Every `<tag>` start tag's attributes, in document order. */
@@ -265,6 +266,27 @@ UpdateRelStyle(a, s, $lineColor="url(#x)")`;
     expect(elements(group(svg, 'data-id="s" data-ast'), 'rect')[0]!.fill).toBe('#1168BD');
     expect(byClass(svg, 'path', 'c4-rel')[0]!.stroke).toBe('var(--_c4r)');
   });
+
+  it('reads an empty UpdateElementStyle slot as not given: the default, with no warning (#774)', async () => {
+    const { svg, warnings } = await renderC4ForTest(
+      fixtureSource('nightly-check/styling/update-element-style-empty-slots')
+    );
+    expect(warnings).toEqual([]);
+    for (const alias of ['a', 'b'])
+      expect(elements(group(svg, `data-id="${alias}" data-ast`), 'rect')[0]).toMatchObject({
+        fill: '#438DD5',
+        stroke: '#3C7FC0',
+      });
+  });
+
+  it('still warns for a non-empty colour the check refuses, beside an empty slot', async () => {
+    const src = `C4Container\nContainer(a, "A")\nUpdateElementStyle(a, , "url(#x)")`;
+    const { warnings } = await renderC4ForTest(src);
+    expect(warnings.map((w) => [w.code, w.message.includes('$fontColor of a')])).toEqual([
+      [C4_COLOR_INVALID, true],
+    ]);
+    expect(warnings[0]!.message).not.toContain('$bgColor');
+  });
 });
 
 describe('boundaries', () => {
@@ -327,10 +349,33 @@ describe('relations (D455)', () => {
     expect(rel).toMatch(
       /^<g class="c4-relation" data-id="a-&gt;b"><title>Reads the accounts<\/title><path class="c4-rel c4-rel-rel"/
     );
-    expect(byClass(rel, 'text', 'c4-rel-label')).toHaveLength(1);
-    expect(rel).toContain('font-style="italic">[HTTPS]<');
-    // Text sits on a box of the page's background, which the line does not run through.
-    expect(byClass(rel, 'rect', 'c4-rel-label-box')[0]).toMatchObject({ fill: 'var(--_bg)' });
+    // One text for both lines: the label, then [techn] in italic under it.
+    const tag = group(rel, 'class="edgeLabel"');
+    expect(elements(tag, 'text')).toHaveLength(1);
+    expect(tag).toMatch(/>Uses<\/tspan><tspan [^>]*font-style="italic">\[HTTPS\]</);
+  });
+
+  it('draws the label as the shared tag (D626–D629): the relation’s stroke, 1 px solid, radius 6, on the page’s background, the box the layout placed', async () => {
+    const src = `C4Context\nPerson(a, "A")\nSystem(b, "B")\nRel(a, b, "Uses", "HTTPS")`;
+    const { svg, layout } = await renderC4ForTest(src);
+    const rel = group(svg, 'class="c4-relation"');
+    const line = byClass(rel, 'path', 'c4-rel')[0]!;
+    const tag = group(rel, 'class="edgeLabel"');
+    expect(tag).toMatch(/^<g class="edgeLabel" data-id="a-&gt;b">/);
+    const box = elements(tag, 'rect')[0]!;
+    expect(box).toMatchObject({
+      rx: '6',
+      fill: 'var(--_bg)',
+      stroke: line.stroke,
+      'stroke-width': '1',
+    });
+    expect(box['stroke-dasharray']).toBeUndefined();
+    // The box drawn is the box the layout kept the other labels and the shapes off.
+    const placed = layout.relations[0]!.labelBox!;
+    expect([box.x, box.y, box.width, box.height].map(Number)).toEqual(
+      [placed.x, placed.y, placed.width, placed.height].map((v) => +v.toFixed(2))
+    );
+    expect(svg).not.toMatch(/c4-rel-label|c4-rel-techn/);
   });
 
   it('numbers C4Dynamic’s relations in model order', async () => {
@@ -340,13 +385,26 @@ describe('relations (D455)', () => {
     expect(svg).toContain('>2: second<');
   });
 
+  it('draws and numbers every C4Dynamic step, also steps between the same pair (#680)', async () => {
+    const src = `C4Dynamic\nPerson(a, "A")\nSystem(b, "B")\nRel(a, b, "one")\nRel(b, a, "two")\nRel(a, b, "three")\nRel(a, b, "four")\nRel(b, a, "five")`;
+    const { svg } = await renderC4ForTest(src);
+    for (const label of ['1: one', '2: two', '3: three', '4: four', '5: five'])
+      expect(svg).toContain(`>${label}<`);
+    // Their lines are side by side, not on top of each other.
+    const ds = byClass(svg, 'path', 'c4-rel').map((p) => p.d);
+    expect(ds).toHaveLength(5);
+    expect(new Set(ds).size).toBe(5);
+  });
+
   it('takes UpdateRelStyle’s colours for the line and its text, not its heads', async () => {
     const src = `C4Context\nPerson(a, "A")\nSystem(b, "B")\nRel(a, b, "Uses", "HTTPS")\nUpdateRelStyle(a, b, $textColor="blue", $lineColor="red")`;
     const { svg } = await renderC4ForTest(src);
     expect(byClass(svg, 'path', 'c4-rel')[0]!.stroke).toBe('red');
     expect(byClass(svg, 'path', 'marker')[0]!.fill).toBe('var(--_tx)');
-    expect(byClass(svg, 'text', 'c4-rel-label')[0]!.fill).toBe('blue');
-    expect(byClass(svg, 'text', 'c4-rel-techn')[0]!.fill).toBe('blue');
+    const tag = group(svg, 'class="edgeLabel"');
+    expect(elements(tag, 'text')[0]!.fill).toBe('blue');
+    // The tag's border follows the line (D627).
+    expect(elements(tag, 'rect')[0]!.stroke).toBe('red');
   });
 });
 
@@ -424,7 +482,7 @@ describe('fonts (pitfall 16)', () => {
     // The theme's family is the root's: a text measured in it names none.
     const system = byClass(group(svg, 'data-id="s" data-ast'), 'text', 'c4-name')[0]!;
     expect(system['font-family']).toBeUndefined();
-    expect(byClass(svg, 'text', 'c4-rel-label')[0]!['font-size']).toBe('9');
+    expect(elements(group(svg, 'class="edgeLabel"'), 'text')[0]!['font-size']).toBe('9');
   });
 });
 

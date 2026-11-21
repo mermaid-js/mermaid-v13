@@ -26,7 +26,13 @@ export { closingLine, endsInBrace, openerBrace } from './embed-block.ts';
 export { MAX_BLOCK_DEPTH, openerRange, tooDeep } from './embed-depth.ts';
 export { LineIndex } from './positions.ts';
 export type { Position, Range } from './positions.ts';
-export { Diagnostics, ExpectedTable, formatExpected, MAX_EXPECTED } from './diagnostics.ts';
+export {
+  Diagnostics,
+  ExpectedTable,
+  formatExpected,
+  formatList,
+  MAX_EXPECTED,
+} from './diagnostics.ts';
 export type { Diagnostic, DiagnosticExtra, RelatedInfo, Severity } from './diagnostics.ts';
 export { formatDiagnostic } from './format.ts';
 export { inKindSet, kindSet, ProbeCursor, TokenCursor, TRIVIA } from './cursor.ts';
@@ -36,7 +42,7 @@ export type { KindSet } from './cursor.ts';
 export { syncTo } from './recovery.ts';
 export { significantTokens, skipTo } from './view.ts';
 export type { TokenView } from './view.ts';
-export { AstIds, NO_AST_ID, nodeId } from './ast.ts';
+export { AstIds, callbackArgs, NO_AST_ID, nodeId } from './ast.ts';
 export type { AstCallback, AstId, AstMenu, AstNode } from './ast.ts';
 export { leanOf } from './lean.ts';
 export { ParseState } from './result.ts';
@@ -52,9 +58,11 @@ export type {
 } from './result.ts';
 export {
   cook,
+  cut,
   DROP,
   firstHole,
   localOffset,
+  markDroppedSemicolons,
   QUOTE,
   SourceOffsets,
   sourceView,

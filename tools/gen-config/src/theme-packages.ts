@@ -15,8 +15,8 @@ import type {
   DiagramThemeTable,
   DiagramThemeVar,
   DiagramThemeVarDef,
-} from '../../../packages/core/src/theme/diagram.ts';
-import type { ThemeVarEntry } from '../../../packages/core/src/theme/vocabulary.ts';
+  ThemeVarEntry,
+} from '@mermaid-js/core/theme';
 import { readWiring } from '../../workspace/diagrams.ts';
 
 /** The repository's `packages/` directory, where the `diagram-*` packages are. */
@@ -163,11 +163,15 @@ function sharedEntries(): Map<string, string> {
   );
 }
 
-/** The text of every `@mermaid-js/shared` file that `text` imports, directly or through one. */
+/**
+ * The text of every `@mermaid-js/shared` file that `text` imports, directly or through one. A
+ * type-only import (`import type …`) is erased, so it runs nothing and reads no variable.
+ */
 function sharedSources(text: string): string[] {
   const entries = sharedEntries();
   const seen = new Set<string>();
-  const queue = [...text.matchAll(/'@mermaid-js\/shared\/([\w/-]+)'/g)].flatMap((m) => {
+  const runtime = text.replace(/^import type [^;]*;/gm, '');
+  const queue = [...runtime.matchAll(/'@mermaid-js\/shared\/([\w/-]+)'/g)].flatMap((m) => {
     const entry = PER_EXPORT.has(m[1]!) ? undefined : entries.get(m[1]!);
     return entry === undefined ? [] : [entry];
   });
@@ -190,8 +194,9 @@ function sharedSources(text: string): string[] {
  * (`theme.color('lineColor')`) or a local helper over one (`n('extensionMarkerGap')`), or
  * through a table of names (`glyphBand: 'actorGlyphBand'`), or in a table rule as `inline(name)`
  * (D332) or `slot(palette, n, name)` (D474), which reads both; a var's `nested:` key is v12's
- * name, not a read. Names the package builds at run time are its `workspace.yaml`
- * `theme.dynamicReads`. Only names in `known` (core's and every package's vocabulary) count.
+ * name and an element's `class:` an SVG class, not a read. Names the package builds at run time
+ * are its `workspace.yaml` `theme.dynamicReads`. Only names in `known` (core's and every
+ * package's vocabulary) count.
  */
 export function themeReads(
   packages: readonly Pick<ThemePackage, 'type' | 'dir' | 'dynamicReads'>[],
@@ -203,7 +208,9 @@ export function themeReads(
     // A read made on the package's behalf by `@mermaid-js/shared` code is the package's read.
     const text = [...own, ...sharedSources(own.join('\n'))].join('\n');
     const names = [
-      ...[...text.matchAll(/(?:\b\w+\(|\b(?!nested\b)\w+:)\s*'(\w+)'/g)].map((m) => m[1]!),
+      ...[...text.matchAll(/(?:\b\w+\(|\b(?!(?:nested|class)\b)\w+:)\s*'(\w+)'/g)].map(
+        (m) => m[1]!
+      ),
       // A table rule's `inline(name)` or `inline(name, fallback)`: a shared input read as the
       // theme wrote it (D332).
       ...[...text.matchAll(/\binline\((\w+)[,)]/g)].map((m) => m[1]!),

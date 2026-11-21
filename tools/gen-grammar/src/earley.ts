@@ -120,20 +120,22 @@ export function buildParser(g: Grammar): ReferenceParser {
       ks.add(id);
       (sets[k] as [Production, number, number][]).push([p, dot, origin]);
     };
+    const complete = (k: number, p: Production, origin: number) => {
+      const done = completed[k] as Map<string, Set<number>>;
+      const origins = done.get(p.lhs) ?? new Set<number>();
+      origins.add(origin);
+      done.set(p.lhs, origins);
+      for (const [q, qd, qo] of sets[origin] as [Production, number, number][]) {
+        if (q.rhs[qd] === p.lhs) addItem(k, q, qd + 1, qo);
+      }
+    };
     for (const p of byLhs.get(g.start) ?? []) addItem(0, p, 0, 0);
     for (let k = 0; k <= n; k++) {
       const set = sets[k] as [Production, number, number][];
       for (const [p, dot, origin] of set) {
         const next = p.rhs[dot];
         if (next === undefined) {
-          // complete
-          const done = completed[k] as Map<string, Set<number>>;
-          const origins = done.get(p.lhs) ?? new Set<number>();
-          origins.add(origin);
-          done.set(p.lhs, origins);
-          for (const [q, qd, qo] of sets[origin] as [Production, number, number][]) {
-            if (q.rhs[qd] === p.lhs) addItem(k, q, qd + 1, qo);
-          }
+          complete(k, p, origin);
         } else if (tokens.has(next)) {
           if (k < n && names[k] === next) addItem(k + 1, p, dot + 1, origin);
         } else {

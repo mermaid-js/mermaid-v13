@@ -3,17 +3,10 @@
 // and a box of width w centred at x covers the cells from x − w/2 + ½ to x + w/2 − ½. On top
 // of `validateLayout`: boxes and routes on whole cells inside the drawing, square segments, and
 // every edge end in a cell of its own, just outside a non-corner cell of its node's side.
-import type { LayoutGraph, LayoutModel, Point, Side } from './types.ts';
+import type { Box, LayoutGraph, LayoutModel, Point, Side } from './types.ts';
 import { validateLayout } from './validate.ts';
 
-interface Cells {
-  left: number;
-  top: number;
-  right: number;
-  bottom: number;
-}
-
-function cells(b: { x: number; y: number; width: number; height: number }, grid: number): Cells {
+function cells(b: { x: number; y: number; width: number; height: number }, grid: number): Box {
   return {
     left: b.x - b.width / 2 + grid / 2,
     top: b.y - b.height / 2 + grid / 2,
@@ -22,12 +15,12 @@ function cells(b: { x: number; y: number; width: number; height: number }, grid:
   };
 }
 
-function inside(c: Cells, p: Point): boolean {
+function inside(c: Box, p: Point): boolean {
   return p.x >= c.left && p.x <= c.right && p.y >= c.top && p.y <= c.bottom;
 }
 
 // Whether `p` is the cell just outside `side` of `c`, next to one of the side's non-corner cells.
-function offSide(c: Cells, side: Side, p: Point, grid: number): boolean {
+function offSide(c: Box, side: Side, p: Point, grid: number): boolean {
   if (side === 'top' || side === 'bottom') {
     const row = side === 'top' ? c.top - grid : c.bottom + grid;
     return p.y === row && p.x > c.left && p.x < c.right;
@@ -41,13 +34,13 @@ export function validateGrid(graph: LayoutGraph, model: LayoutModel): string[] {
   const out = validateLayout(graph, model);
   const grid = graph.grid ?? 1;
   const whole = (v: number): boolean => Number.isInteger(v / grid);
-  const page: Cells = {
+  const page: Box = {
     left: 0,
     top: 0,
     right: model.width - grid,
     bottom: model.height - grid,
   };
-  const boxes = new Map<string, Cells>();
+  const boxes = new Map<string, Box>();
   for (const [id, b] of [...model.nodes, ...model.groups]) {
     const c = cells(b, grid);
     if (![c.left, c.top, c.right, c.bottom].every(whole)) out.push(`box '${id}' is off the grid`);

@@ -1,0 +1,23 @@
+---
+description: >-
+  C4Context with `direction BT` at the top level: TB with the lines in the opposite order, so the first statement comes last. Six systems and a
+  boundary of two, three to a line; the boundary is a child boundary, so it
+  sits where the child boundaries go for this direction. Companion to the
+  other direction fixtures of the same diagram.
+---
+C4Context
+title Fill order BT
+direction BT
+System(a, "A")
+System(b, "B")
+System(c, "C")
+System(d, "D")
+System(e, "E")
+System(f, "F")
+Boundary(g, "Boundary") {
+  System(h, "H")
+  System(i, "I")
+}
+Rel(a, d, "Uses")
+Rel(c, h, "Calls")
+UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")

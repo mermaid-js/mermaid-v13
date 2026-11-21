@@ -25,13 +25,15 @@
  * - the bounding box is the canvas grown over everything drawn (D224), worked out here from the
  *   primitives, half the stroke included;
  * - with a measurer: every text measures what it says, the rule name at the bold weight (D514),
- *   and each box is its text plus `padding` on every side.
+ *   and each box is its text plus `padding` on every side; in px a blank terminal measures
+ *   nothing and a terminal's tab or line break measures as the space it is drawn as (#774).
  */
 import { decodeEntities, type Measurer } from '@mermaid-js/core/text';
 import type { RailroadLayoutConfig } from '../config.ts';
 import type { RailroadModel, RailroadNode } from '../model.ts';
 import { visitExpressions } from './geometry.ts';
 import { BOLD_WEIGHT, CELL_MAIN_CLEARANCE, metricsFor, type RailroadMetrics } from './metrics.ts';
+import { drawnText, isBlankText } from './text.ts';
 import type {
   Point,
   RailroadExpressionLayout,
@@ -40,10 +42,14 @@ import type {
   Rect,
   TrackPath,
 } from './types.ts';
+import {
+  EPS,
+  near,
+  nonFinite,
+  rectInside as inside,
+  rectsOverlap as overlap,
+} from '@mermaid-js/shared/testing/layout-invariants';
 
-const EPS = 1e-6;
-
-const near = (a: number, b: number): boolean => Math.abs(a - b) <= EPS;
 const same = (p: Point, x: number, y: number): boolean => near(p.x, x) && near(p.y, y);
 const last = (path: TrackPath): Point => path.segments[path.segments.length - 1] ?? path.start;
 const pathPoints = (path: TrackPath): Point[] => [path.start, ...path.segments];
@@ -54,29 +60,6 @@ const box0 = (e: RailroadExpressionLayout): Rect => ({
   width: e.width,
   height: e.up + e.down,
 });
-
-/** Whether two rectangles share more than an edge. */
-const overlap = (a: Rect, b: Rect): boolean =>
-  a.x < b.x + b.width - EPS &&
-  b.x < a.x + a.width - EPS &&
-  a.y < b.y + b.height - EPS &&
-  b.y < a.y + a.height - EPS;
-
-const inside = (r: Rect, outer: Rect): boolean =>
-  r.x >= outer.x - EPS &&
-  r.y >= outer.y - EPS &&
-  r.x + r.width <= outer.x + outer.width + EPS &&
-  r.y + r.height <= outer.y + outer.height + EPS;
-
-/** Every non-finite number in `value`, by path. */
-function nonFinite(value: unknown, at: string, out: string[]): void {
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value)) out.push(`${at} is ${value}`);
-  } else if (Array.isArray(value)) value.forEach((v, i) => nonFinite(v, `${at}[${i}]`, out));
-  else if (typeof value === 'object' && value !== null) {
-    for (const [k, v] of Object.entries(value)) nonFinite(v, `${at}.${k}`, out);
-  }
-}
 
 const childrenOf = (n: RailroadNode): readonly RailroadNode[] => {
   switch (n.type) {
@@ -435,13 +418,18 @@ function measuredViolations(
   }
   const p = layout.config.lengths.padding;
   const lineHeight = measurer.metrics(text).lineHeight;
+  const px = layout.units !== 'cell';
   const walk = (e: RailroadExpressionLayout) => {
     if (e.text && e.box) {
-      const w = measurer.width(e.text.text, text, 0);
+      // A terminal in px measures as drawn, a blank one as nothing (#774).
+      const literal = px && e.kind === 'terminal';
+      const blank = literal && isBlankText(e.text.text);
+      const drawn = literal ? drawnText(e.text.text) : e.text.text;
+      const w = blank ? 0 : measurer.width(drawn, text, 0);
       if (!near(e.text.box.width, w) || !near(e.box.width, w + 2 * p)) {
         out.push(`${e.ast}: its text measures ${w}, the box is ${e.box.width} wide`);
       }
-      if (!near(e.box.height, lineHeight + 2 * p))
+      if (!near(e.box.height, (blank ? 0 : lineHeight) + 2 * p))
         out.push(`${e.ast}: the box is not one line high`);
     }
     e.children.forEach(walk);

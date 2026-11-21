@@ -4,7 +4,7 @@
  * (`generated/docs.ts`).
  */
 import type { FlowchartDiagramConfig } from '@mermaid-js/core/config';
-import type { KeywordItem } from './facet.ts';
+import { DIRECTION_DOCS, type KeywordItem } from './facet.ts';
 import type { FlowKinds } from './flow-kinds.ts';
 
 /**
@@ -40,18 +40,16 @@ export function flowKeywordItems(
 /** Header directions and what they mean (v12 reads `TD` as `TB`). */
 export const FLOW_DIRECTION_DOCS: readonly (readonly [dir: string, meaning: string])[] =
   /* @__PURE__ */ Object.freeze([
-    ['TB', 'top to bottom'],
+    ...DIRECTION_DOCS.slice(0, 1),
     ['TD', 'top down (same as TB)'],
-    ['BT', 'bottom to top'],
-    ['LR', 'left to right'],
-    ['RL', 'right to left'],
-  ] as const);
+    ...DIRECTION_DOCS.slice(1),
+  ]);
 
 /** A `flowchart.curve` value: the generated config type, from the config schema's enum. */
-type Curve = NonNullable<FlowchartDiagramConfig['curve']>;
+export type FlowCurve = NonNullable<FlowchartDiagramConfig['curve']>;
 
 /**
- * Every curve, in the schema's order. A record over {@link Curve} so typecheck fails when the
+ * Every curve, in the schema's order. A record over {@link FlowCurve} so typecheck fails when the
  * schema's `flowchart.curve` enum gains or loses a value and this does not follow.
  */
 const CURVE_SET = {
@@ -68,10 +66,10 @@ const CURVE_SET = {
   stepAfter: true,
   stepBefore: true,
   rounded: true,
-} as const satisfies Readonly<Record<Curve, true>>;
+} as const satisfies Readonly<Record<FlowCurve, true>>;
 
 /** Curve names (`linkStyle … interpolate`, edge `curve:`): the config schema's `flowchart.curve`. */
-export const FLOW_CURVES = /* @__PURE__ */ Object.keys(CURVE_SET) as readonly Curve[];
+export const FLOW_CURVES = /* @__PURE__ */ Object.keys(CURVE_SET) as readonly FlowCurve[];
 
 /** Keys of an edge's `@{ … }` data that the model reads, with the values it accepts. */
 export const FLOW_EDGE_DATA: Readonly<Record<string, readonly string[]>> =

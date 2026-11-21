@@ -24,7 +24,8 @@ export const handDrawn: ExtensionPlugin = {
   config: configFragment,
   outline: {
     active: (ctx) => activate(ctx.config as Readonly<Record<string, unknown>>),
-    draw,
+    draw: (role, tag, attrs, sink, ctx) =>
+      draw(role, tag, attrs, sink, ctx.config as Readonly<Record<string, unknown>>),
   },
   postLayout(laidOut, ctx) {
     if (laidOut.units === 'cell' && (ctx.config as { handDrawn?: unknown }).handDrawn === true)
@@ -39,7 +40,7 @@ export const handDrawn: ExtensionPlugin = {
 
 export default handDrawn;
 
-export { EDGE, GROUP, MARK, NODE, COMPOSITE, optionsFor } from './roles.ts';
+export { EDGE, GROUP, LABEL, MARK, NODE, COMPOSITE, optionsFor } from './roles.ts';
 export {
   roughSeed,
   sketch,

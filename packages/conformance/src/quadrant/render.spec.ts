@@ -11,7 +11,7 @@ import {
   type QuadrantModel,
 } from '@mermaid-js/diagram-quadrant';
 import { REPO_ROOT, corpusFromDir } from '../index.ts';
-import { quadrantApi } from './render-api.ts';
+import { deterministicApi } from '../render-api.ts';
 
 /**
  * Render properties (DESIGN §13.2, §13.4) over the e2e quadrant corpus (#312), through the
@@ -87,9 +87,9 @@ const cases: Case[] = [];
 const families: Case[] = [];
 
 beforeAll(async () => {
-  recorded = await quadrantApi();
+  recorded = deterministicApi();
   await recorded.registerExternalDiagrams([recorder(hooked)]);
-  streaming = await quadrantApi();
+  streaming = deterministicApi();
   const dir = 'e2e/diagrams/quadrant-chart';
   for await (const item of corpusFromDir(`${REPO_ROOT}/${dir}`, dir)) {
     cases.push({ id: item.id, source: item.source, result: await renderForTest(item.source) });
@@ -155,9 +155,9 @@ function astIndex(ast: AstNode): Map<string, AstNode> {
 
 describe('quadrant render properties over the e2e corpus', () => {
   it('renders the corpus in four families', () => {
-    // v12's 14 e2e fixtures and the 18 baselines (#317 and later).
-    expect(cases).toHaveLength(14 + 18);
-    expect(families).toHaveLength((14 + 18) * FAMILIES.length);
+    // v12's 14 e2e fixtures, the 18 baselines (#317 and later) and #1039's override fixture.
+    expect(cases).toHaveLength(14 + 18 + 1);
+    expect(families).toHaveLength((14 + 18 + 1) * FAMILIES.length);
   });
 
   it('writes well-formed XML that passes the allow-list', () => {

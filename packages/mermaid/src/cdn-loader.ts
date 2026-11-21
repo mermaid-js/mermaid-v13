@@ -10,8 +10,9 @@
  * `/`. Until that resolves, `globalThis.mermaid` is a stand-in with every method of the
  * API: calls are recorded and replayed on the module strictly in call order (an async one
  * returns a promise of the real result); the synchronous ones that return a value
- * (`renderSync`, `detectType`, `supportsFormat`, `mount`) throw. Properties set on the
- * stand-in (v12's `mermaid.parseError = …`) are copied onto the module. A replayed call that
+ * (`renderSync`, `detectType`, `supportsFormat`, `mount`, `getRegisteredDiagramsMetadata`) throw.
+ * Properties set on the stand-in (v12's `mermaid.parseError = …`, `mermaid.startOnLoad = false`)
+ * are copied onto the module; `startOnLoad` starts `true`, as on the module. A replayed call that
  * throws is logged and the rest still run; with `startOnLoad`, the page's diagrams render once
  * both the page and the module have loaded. No imports: this file is the whole loader.
  */
@@ -26,6 +27,7 @@ const DEFERRED = [
   'preload',
   'parse',
   'run',
+  'init',
   'registerExternalDiagrams',
   'initialize',
   'registerLayoutLoaders',
@@ -33,7 +35,13 @@ const DEFERRED = [
   'setParseErrorHandler',
   'contentLoaded',
 ];
-const SYNC = ['renderSync', 'detectType', 'supportsFormat', 'mount'];
+const SYNC = [
+  'renderSync',
+  'detectType',
+  'supportsFormat',
+  'mount',
+  'getRegisteredDiagramsMetadata',
+];
 
 interface Call {
   readonly name: string;
@@ -66,7 +74,7 @@ function esmUrl(tag: HTMLScriptElement): string {
 const script = document.currentScript as HTMLScriptElement | null;
 if (!script?.src) throw new Error('mermaid.min.js must be loaded by a <script src> tag');
 
-const ASYNC = new Set(DEFERRED.slice(0, 6));
+const ASYNC = new Set(DEFERRED.slice(0, 7));
 let real: Api | undefined;
 const calls: Call[] = [];
 const stub: Api = {};
@@ -118,5 +126,7 @@ for (const name of SYNC)
       `mermaid.${name}() needs the module loaded: await mermaid.render() or run() first`
     );
   };
+
+stub.startOnLoad = true;
 
 (globalThis as { mermaid?: unknown }).mermaid = stub;
