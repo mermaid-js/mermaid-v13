@@ -1,5 +1,10 @@
 export { parseFlowchart } from './parser.ts';
-export type { FlowParseOptions, FlowParseResult } from './parser.ts';
+export type {
+  FlowLeanOptions,
+  FlowParseOptions,
+  FlowParseResult,
+  LeanFlowParseResult,
+} from './parser.ts';
 export { detectFlowchart } from './detect.ts';
 export { flowchartTokens } from './tokens-api.ts';
 export type { FlowToken } from './tokens-api.ts';

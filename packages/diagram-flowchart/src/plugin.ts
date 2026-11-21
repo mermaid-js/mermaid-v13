@@ -3,7 +3,7 @@ import type { SvgWriter } from '@mermaid-js/core/svg';
 import { resolveLimits, type Limits } from '@mermaid-js/core/limits';
 import { flowchartConfigDefaults } from './generated/config-defaults.ts';
 import { detectFlowchart, parseFlowchart } from './parser/index.ts';
-import type { FlowModel, FlowParseResult } from './parser/index.ts';
+import type { FlowModel, FlowParseResult, LeanFlowParseResult } from './parser/index.ts';
 import type { FlowRenderContext } from './render/context.ts';
 import { layoutFlowchart, renderFlowchart, type FlowLayout } from './render/render.ts';
 import { flowchartIcons, flowchartLabels } from './labels.ts';
@@ -27,17 +27,23 @@ export const flowchart = {
   layoutParts: new Map([['swimlane', 'flowchartLanes']]) as ReadonlyMap<string, string>,
   configDefaults: flowchartConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectFlowchart(text) !== undefined,
-  parse: (text: string, ctx: DiagramParseContext): FlowParseResult => {
+  parse: (text: string, ctx: DiagramParseContext): FlowParseResult | LeanFlowParseResult => {
     const caps = limits(ctx);
-    return parseFlowchart(text, {
+    const options = {
       preprocessed: ctx.preprocessed,
       maxEdges: caps.maxEdges,
       maxNodes: caps.maxNodes,
       maxDepth: caps.maxDepth,
       inheritDir: ctx.config.flowchart?.inheritDir,
       claims: ctx.claims,
-    });
+    };
+    return ctx.lean
+      ? parseFlowchart(text, { ...options, lean: true, astIds: ctx.astIds })
+      : parseFlowchart(text, options);
   },
+  // Its drawing reads AST ids only for `data-ast` (and the swimlane warnings' subgraph ids,
+  // which a lean parse keeps).
+  leanParse: true,
   labels: flowchartLabels,
   icons: flowchartIcons,
   layout: (model: FlowModel, ctx: FlowRenderContext): FlowLayout => layoutFlowchart(model, ctx),

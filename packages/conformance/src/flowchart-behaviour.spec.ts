@@ -22,7 +22,9 @@ async function draw(
   options: { config?: InitializeConfig; idPrefix?: string } = {}
 ): Promise<RenderResult & { tree: SvgView }> {
   const m = createMermaid();
-  m.initialize({ deterministic: true, ...options.config });
+  // Elements are found by their AST ids: `data-ast`, which a flowchart draws only when asked.
+  const { output, ...config } = options.config ?? {};
+  m.initialize({ deterministic: true, ...config, output: { dataAst: true, ...output } });
   const result = await m.render(options.idPrefix ?? 'mermaid-0', text);
   return { ...result, tree: parseSvg(result.svg) };
 }
@@ -491,7 +493,12 @@ describe('flowchart render: features', () => {
     it('ends an edge that reaches a rounded corner on the curve, not the layout box', async () => {
       // A postLayout hook brings the edge down 3px in from the card's top-right corner.
       const m = createMermaid();
-      m.initialize({ deterministic: true, theme: 'redux', themeVariables: { arrowheadGap: 0 } });
+      m.initialize({
+        deterministic: true,
+        output: { dataAst: true },
+        theme: 'redux',
+        themeVariables: { arrowheadGap: 0 },
+      });
       await m.registerExternalDiagrams([
         {
           id: 'to-the-corner',

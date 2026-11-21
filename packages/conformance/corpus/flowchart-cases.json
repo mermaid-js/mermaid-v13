@@ -114,5 +114,10 @@
   {
     "id": "flowchart-cases/skipped appended newline 1",
     "source": "flowchart LR\nA-->B\nclick "
+  },
+  {
+    "id": "flowchart-cases/style before mention 0",
+    "note": "A style line makes the vertex and a later mention names it (#987): its AST id is the mention's `n:A`, in a lean parse with ids too.",
+    "source": "flowchart LR\n  style A fill:#f00\n  A-->B"
   }
 ]

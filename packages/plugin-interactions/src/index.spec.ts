@@ -96,6 +96,8 @@ describe('interactions plugin (R-PLUG-9, R-SVG-5, D47)', () => {
 
   it('leaves the svg unchanged and inside the allow-list (R-SEC-2)', async () => {
     const plain = createMermaid();
+    // Registered, the plugin reads the AST, which turns `data-ast` on: its only mark on the svg.
+    plain.initialize({ output: { dataAst: true } });
     const m = createMermaid();
     m.initialize({ securityLevel: 'loose' });
     await m.registerExternalDiagrams([interactions]);

@@ -12,7 +12,10 @@ import { EditorView, keymap, lineNumbers } from '@codemirror/view';
 import { mermaid, selectAst } from '@mermaid-js/language-service-codemirror';
 import { createLanguageService } from '@mermaid-js/language-service';
 import type { AstId } from '@mermaid-js/language-service';
-import { render } from 'mermaid';
+import { initialize, render } from 'mermaid';
+
+// The preview maps elements to AST nodes through `data-ast`, which mermaid draws only on request.
+initialize({ output: { dataAst: true } });
 
 const INITIAL = `flowchart LR
   A[Start] --> B{Ready?}

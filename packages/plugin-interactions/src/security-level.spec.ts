@@ -38,7 +38,9 @@ const SOURCES: readonly (readonly [string, string])[] = [
 /** Renders `text` under `level` (unset when `undefined`), with or without the plugin. */
 async function render(text: string, level: string | undefined, plugin = true) {
   const m = createMermaid();
-  if (level !== undefined) m.initialize({ securityLevel: level } as Config);
+  // Registered, the plugin reads the AST, which turns `data-ast` on: its only mark on the svg.
+  const output = plugin ? {} : { output: { dataAst: true } };
+  m.initialize({ ...(level === undefined ? {} : { securityLevel: level }), ...output } as Config);
   if (plugin) await m.registerExternalDiagrams([interactions]);
   return m.render('d', text, { now: NOW });
 }

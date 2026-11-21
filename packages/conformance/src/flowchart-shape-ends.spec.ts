@@ -87,7 +87,8 @@ function offOutline(layers: Pt[][], p: Pt): number {
 describe('flowchart tri, flip-tri, procs and docs edge ends (#395, #403)', () => {
   it('ends every edge on the drawn outline within 1 px', async () => {
     const m = createMermaid();
-    m.initialize({ deterministic: true });
+    // Edges are found by their AST ids: `data-ast`, which a flowchart draws only when asked.
+    m.initialize({ deterministic: true, output: { dataAst: true } });
     const { svg } = await m.render('mermaid-0', readFileSync(FIXTURE, 'utf8'));
     const nodes = new Map<string, { at: Pt; layers: Pt[][] }>();
     for (const n of svg.matchAll(

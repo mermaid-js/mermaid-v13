@@ -33,7 +33,8 @@ const skipped: { id: string; reason: string }[] = [];
 
 function api() {
   const m = createMermaid();
-  m.initialize({ deterministic: true });
+  // The round trip reads `data-ast`, which a flowchart draws only when asked (R-PARSE-8).
+  m.initialize({ deterministic: true, output: { dataAst: true } });
   return m;
 }
 

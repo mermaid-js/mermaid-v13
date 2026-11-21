@@ -16,6 +16,7 @@ import type {
   AstId,
   AstNode,
   Diagnostic,
+  LeanParseResult,
   ParseResult,
   Range,
 } from '@mermaid-js/core/parser-kit';
@@ -39,6 +40,9 @@ import type {
   FlowVertexParts,
 } from './flow-parser-base.ts';
 import { FLOW_DIRECTIONS, NO_ITEMS } from './flow-tables.ts';
+
+/** `NO_AST_ID`: the id a lean parse without ids gives where only `data-ast` reads one. */
+const NO_ID: AstId = '';
 
 /**
  * The first node statement of `list` with a name: a scan for short lists, a map for the long
@@ -122,17 +126,22 @@ export abstract class FlowParser<
 
   /** A vertex's AST id is its first mention's: `n:<name>`. */
   protected nodeAst(name: string): AstId {
+    if (!this.st.astIds) return NO_ID;
     return this.db.vertices.get(name)?.ast ?? nodeId(name);
   }
 
-  /** The AST id of a node mention of `name` (`n:<name>`, `n:<name>@2`, …). */
+  /**
+   * The AST id of a node mention of `name` (`n:<name>`, `n:<name>@2`, …); in a lean parse, which
+   * makes no AST node, `NO_ID`.
+   */
   protected nodeMention(name: string): AstId {
     this.styledOnly.delete(name);
-    return this.ids.node(name);
+    return this.st.lean ? NO_ID : this.ids.node(name);
   }
 
   /** A mention that may create the vertex: its definition when it does. */
   protected nodeSymbol(name: string, r: Range): void {
+    if (this.st.lean) return;
     // An edge id (`e1@{ … }`) names the edge: v12 never makes it a vertex.
     if (this.namesEdge(name)) return this.edgeSymbol(name, r);
     const creates = !this.db.vertices.has(name) && this.creates(name);
@@ -409,10 +418,10 @@ export abstract class FlowParser<
         starts: names,
         ends: nextNames,
         info,
-        astFor: (a, b) => ids.edge(a, b),
+        astFor: this.st.astIds ? (a, b) => ids.edge(a, b) : () => NO_ID,
         at: linkRange,
       });
-      this.edgeNodes(before, stmt, next, linkRange, label, chain);
+      if (!this.st.lean) this.edgeNodes(before, stmt, next, linkRange, label, chain);
       if (collect) later.push(nextNames);
       stmt = next;
       names = nextNames;
@@ -601,11 +610,26 @@ export abstract class FlowParser<
     return this.expectStr();
   }
 
-  private simple(k: FlowSimpleKind, from: number, refsOut: string[]): FlowSimpleStmt {
-    const r = this.span(from);
+  /**
+   * A statement with no name of its own, as an AST node in `out`, and its id. A lean parse makes
+   * no node, but with ids it counts the statement as the full one does: the model may read the
+   * id (a `style` line's, #987).
+   */
+  private simple(
+    k: FlowSimpleKind,
+    from: number,
+    refsOut: string[],
+    out: FlowStatement<X>[],
+    callback?: AstCallback
+  ): AstId {
     const name = k.charAt(0).toLowerCase() + k.slice(1);
+    if (this.st.lean) return this.st.astIds ? this.ids.statement(name) : NO_ID;
+    const r = this.span(from);
     this.st.statement(name, r);
-    return { id: this.ids.statement(name), type: k, range: r, refs: refsOut };
+    const stmt: FlowSimpleStmt = { id: this.ids.statement(name), type: k, range: r, refs: refsOut };
+    if (callback !== undefined) stmt.callback = callback;
+    out.push(stmt);
+    return stmt.id;
   }
 
   /** One statement. Returns what v12's grammar adds to an enclosing block's list. */
@@ -627,15 +651,14 @@ export abstract class FlowParser<
         const styles = this.stylesOpt();
         const known = db.vertices.has(id);
         db.addVertex(id, this.nodeAst(id), r, { styles });
-        const stmt = this.simple('Style', from, refList);
-        if (!known && db.vertices.has(id)) this.styledOnly.set(id, stmt.id);
-        out.push(stmt);
+        const ast = this.simple('Style', from, refList, out);
+        if (!known && db.vertices.has(id)) this.styledOnly.set(id, ast);
         this.separator();
         return NO_ITEMS;
       }
       case T.LinkStyle:
         this.linkStyleStatement();
-        out.push(this.simple('LinkStyle', from, refList));
+        this.simple('LinkStyle', from, refList, out);
         this.separator();
         return NO_ITEMS;
       case T.ClassDef: {
@@ -646,7 +669,7 @@ export abstract class FlowParser<
         const styles = this.stylesOpt();
         this.refs(id, r, refList, (part, pr) => st.symbol(part, 'class', pr, 'def'));
         db.addClass(id, styles);
-        out.push(this.simple('ClassDef', from, refList));
+        this.simple('ClassDef', from, refList, out);
         this.separator();
         return NO_ITEMS;
       }
@@ -660,15 +683,12 @@ export abstract class FlowParser<
         st.symbol(cls, 'class', cr, 'ref');
         refList.push(cls);
         db.setClass(targets, cls);
-        out.push(this.simple('Class', from, refList));
+        this.simple('Class', from, refList, out);
         this.separator();
         return NO_ITEMS;
       }
       case T.Click: {
-        const callback = this.clickStatement(refList);
-        const stmt = this.simple('Click', from, refList);
-        if (callback !== undefined) stmt.callback = callback;
-        out.push(stmt);
+        this.simple('Click', from, refList, out, this.clickStatement(refList));
         this.separator();
         return NO_ITEMS;
       }
@@ -679,7 +699,7 @@ export abstract class FlowParser<
       case T.DirectionTD:
         // The token runs to the line end.
         this.i++;
-        out.push(this.simple('Direction', from, refList));
+        this.simple('Direction', from, refList, out);
         return { stmt: 'dir', value: FLOW_DIRECTIONS[t - T.DirectionTB] ?? 'TB' };
       default:
         // An id starts a chain; the kinds below are none of an id's.
@@ -707,7 +727,7 @@ export abstract class FlowParser<
       value = this.raw(this.i++).trim();
       db.setAccDescription(value);
     } else return undefined;
-    out.push(this.simple(t === T.AccTitle ? 'AccTitle' : 'AccDescr', from, []));
+    this.simple(t === T.AccTitle ? 'AccTitle' : 'AccDescr', from, [], out);
     return value;
   }
 
@@ -716,9 +736,11 @@ export abstract class FlowParser<
     const from = this.i;
     const children: FlowChainStmt['children'] = [];
     const nodes = this.vertexStatement(collect, children);
-    const r = this.span(from);
-    this.st.statement('chain', r);
-    out.push({ id: this.ids.statement('chain'), type: 'Chain', range: r, children });
+    if (!this.st.lean) {
+      const r = this.span(from);
+      this.st.statement('chain', r);
+      out.push({ id: this.ids.statement('chain'), type: 'Chain', range: r, children });
+    }
     this.separator();
     return nodes;
   }
@@ -855,6 +877,31 @@ export abstract class FlowParser<
    */
   protected result<M extends FlowModelLike>(model: M): ParseResult<M, FlowDocumentNode<X>> {
     const { st, src, options } = this;
+    this.warnCallbacks(model);
+    const ast: FlowDocumentNode<X> = {
+      id: 'doc',
+      type: 'Document',
+      range: { start: this.pre.bodyStart, end: src.length },
+      children: this.children,
+    };
+    return st.result(model, ast, this.fullTokens, options, this.probe);
+  }
+
+  /**
+   * The parse result for `model` in either mode (DESIGN §4.2): {@link result}, or in a lean
+   * parse the model and the diagnostics, `CALLBACK_IGNORED` included.
+   */
+  protected outcome<M extends FlowModelLike>(
+    model: M
+  ): ParseResult<M, FlowDocumentNode<X>> | LeanParseResult<M> {
+    if (!this.st.lean) return this.result(model);
+    this.warnCallbacks(model);
+    return this.st.leanResult(model);
+  }
+
+  /** `CALLBACK_IGNORED` when `model` has callbacks nothing claims. */
+  private warnCallbacks(model: FlowModelLike): void {
+    const { st, options } = this;
     if (model.callbacks.length > 0 && !options.claims?.includes('callbacks')) {
       const first = model.callbacks[0];
       const d = st.diagnostics.warning(
@@ -864,13 +911,6 @@ export abstract class FlowParser<
       );
       model.warnings.push(d);
     }
-    const ast: FlowDocumentNode<X> = {
-      id: 'doc',
-      type: 'Document',
-      range: { start: this.pre.bodyStart, end: src.length },
-      children: this.children,
-    };
-    return st.result(model, ast, this.fullTokens, options, this.probe);
   }
 }
 

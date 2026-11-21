@@ -19,7 +19,9 @@ const DIAG = Math.hypot(TW, TH);
 
 async function draw(text: string, config: InitializeConfig = {}): Promise<SvgView> {
   const m = createMermaid();
+  // Elements are found by their AST ids: `data-ast`, which a flowchart draws only when asked.
   m.initialize({
+    output: { dataAst: true },
     measurer: {
       id: 'fixed-10',
       width: (t) => t.length * CHAR,
