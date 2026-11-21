@@ -214,7 +214,7 @@ export function layoutC4(model: C4Model, ctx: C4LayoutContext): C4Layout {
   const spacing = gridSpacing(model, config);
   const labelRoom = classicLabelRoom(ctx.units);
   // Tags (SVG output) widen the gaps they sit in (D679); text output keeps the grid's.
-  if (!units) widenForLabels(order, nodes, { ...setup, model, labelRoom });
+  if (!units) widenForLabels(order, nodes, { ...setup, model, labelRoom, tags: true });
   placeGrid(order, spacing, (g, contentW) =>
     header(g as Group, contentW, { config, fonts, measure })
   );

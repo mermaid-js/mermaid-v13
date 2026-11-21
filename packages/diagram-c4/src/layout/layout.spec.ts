@@ -94,12 +94,24 @@ const CROSSING_EXCEPTIONS: string[] = [];
  * depths out, which costs more than the crossing. (The docs' container example's
  * `backend_api -> banking_system` was listed too, until the person figure, #683, moved its rows.)
  */
+/**
+ * Tags the placement leaves straddling their own line (D679), as `path measurer: from -> to`:
+ * blocked-diagonal's a2 to c2, whose search found no spot on or beside its line. Tags the author
+ * moved with `UpdateRelStyle` offsets are where the author put them (D455), never crowded.
+ */
+const STRADDLING = [
+  'nightly-check/relationships/blocked-diagonal-relations table: a2 -> c2',
+  'nightly-check/relationships/blocked-diagonal-relations grid: a2 -> c2',
+];
+
 /** The gap between row neighbours: `2·c4ShapeMargin` at its default, 50 (D454). */
 const SHAPE_GAP = 100;
 
 const CROWDED_EXCEPTIONS = [
   'baseline/config/rows-and-fixed-width table: c -> d',
   'baseline/config/rows-and-fixed-width grid: c -> d',
+  // D679: tags the placement leaves straddling their own line.
+  ...STRADDLING,
   // D679: eight lines between two systems 70 px tall stand closer than half a tag apart, so no
   // rule holds their tags on them: each leaves its line, with either measurer, and is crowded.
   ...['table', 'grid'].flatMap((name) =>
@@ -884,6 +896,29 @@ describe('c4 relations (D455)', () => {
     // x is on the top level's row, above the boundary: the line leaves the frame's top.
     expect(rel(layout, 'b', 'x').start.y).toBeCloseTo(frame(layout, 'b').box.y);
     expect(rel(layout, 's', 'b').points).toHaveLength(2);
+  });
+
+  it('marks a tag the placement leaves straddling its own line crowded (D679)', () => {
+    const { model, config } = fixture('nightly-check/relationships/blocked-diagonal-relations');
+    for (const [themeName, drawn] of themes)
+      expect(
+        rel(layoutC4(model, c4TestContext(config, drawn)), 'a2', 'c2').crowded,
+        themeName
+      ).toBe(true);
+  });
+
+  it("leaves a tag the author's offset puts across its line where it is, not crowded (D455)", () => {
+    const src = 'C4Context\nSystem(a, "A")\nSystem(b, "B")\nRel(a, b, "x")';
+    // The author's offset moves the tag half its height off its line: the line runs through it.
+    const moved = rel(sound(src + '\nUpdateRelStyle(a, b, $offsetY="5")'), 'a', 'b');
+    expect(onItsLine(moved)).toBe(true);
+    expect(moved.crowded).toBeUndefined();
+    const { model, config } = fixture('nightly-check/docs/1-system-context');
+    for (const [themeName, drawn] of themes)
+      expect(
+        rel(layoutC4(model, c4TestContext(config, drawn)), 'SystemC', 'customerA').crowded,
+        themeName
+      ).toBeUndefined();
   });
 
   it('moves a label by UpdateRelStyle offsets when no spot on the line covers less', () => {

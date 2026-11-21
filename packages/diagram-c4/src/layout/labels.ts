@@ -36,6 +36,8 @@ export interface LabelSetup {
   readonly measure: Measure;
   /** The room a label's box adds round its texts (`RouteInput.labelRoom`). */
   readonly labelRoom: LabelRoom;
+  /** Labels are drawn as edge-label tags (SVG output), not as framed text (`RouteInput.tags`). */
+  readonly tags: boolean;
 }
 
 /** A relation's label and `[techn]`, measured, and where their box goes. */
@@ -223,7 +225,7 @@ export function placeLabel({ rel, index, r, input, keep, place }: LabelInput): L
   const measured = measureLabel(input, rel, index, r.room);
   if (!measured) return { cx: r.x0, top: r.y0, lw: 0, lh: 0 };
   const { label, techn, lw, lh } = measured;
-  const { at, dx, dy, crowded } = spotOf({ rel, r, lw, lh, keep, place });
+  const { at, dx, dy, crowded } = spotOf({ rel, r, lw, lh, keep, place, tags: input.tags });
   const cx = r.x0 + (r.x1 - r.x0) * at + dx;
   const top = r.y0 + (r.y1 - r.y0) * at + dy - lh / 2;
   keepOff(keep, { x0: cx - lw / 2, y0: top, x1: cx + lw / 2, y1: top + lh });
@@ -246,6 +248,8 @@ interface SpotInput {
   readonly lh: number;
   readonly keep: Keep | undefined;
   readonly place: Place | undefined;
+  /** Labels are drawn as tags (`LabelSetup.tags`). */
+  readonly tags: boolean;
 }
 
 /**
@@ -254,7 +258,7 @@ interface SpotInput {
  * the spot that covers least ({@link clearest}). A tag on one of several lines between two
  * shapes (`place.tagged`) that ends up off its line is crowded (D679): there was no room for it.
  */
-function spotOf({ rel, r, lw, lh, keep, place }: SpotInput): Clearest {
+function spotOf({ rel, r, lw, lh, keep, place, tags }: SpotInput): Clearest {
   const beside = Math.abs(r.nx) * (lw / 2) + Math.abs(r.ny) * (lh / 2) + M.besideGap;
   const aside = r.lean ? Math.max(0, Math.min(r.lean, beside - M.leanSlack)) : beside;
   const online: [number, number] = [r.nx * aside, r.ny * aside];
@@ -266,19 +270,57 @@ function spotOf({ rel, r, lw, lh, keep, place }: SpotInput): Clearest {
   const spot =
     staggeredSpot(r, lw, lh, keep, staggerEnd(rel, place)) ??
     clearest({ r, lw, lh, given, online, keep });
-  return offItsLine(rel, place, r, boxOf(r, spot, lw, lh)) ? { ...spot, crowded: true } : spot;
+  return crowdedAt(rel, place, r, boxOf(r, spot, lw, lh), tags) ? { ...spot, crowded: true } : spot;
 }
 
 /** The end a staggered tag keeps to; none when not staggered or moved by the author's offsets. */
 const staggerEnd = (rel: C4Relation, place: Place | undefined): Stagger | undefined =>
-  rel.offsetX || rel.offsetY ? undefined : place?.stagger;
+  movedByAuthor(rel) ? undefined : place?.stagger;
+
+/** Whether a tag that belongs on its line (`place.tagged`, D679) left it. */
+const offItsLine = (place: Place | undefined, r: Route, box: Box): boolean =>
+  place?.tagged === true && !onOwnLine(r, box);
 
 /**
- * Whether a tag that belongs on its line (`place.tagged`, D679) left it; one the author moved
- * with offsets left it on purpose.
+ * Whether a tag straddles its own line (D679): the line runs through the tag but not through
+ * its middle, so the tag is neither on its line nor beside it. A tag is opaque, so the line
+ * seems to end at its border.
  */
-const offItsLine = (rel: C4Relation, place: Place | undefined, r: Route, box: Box): boolean =>
-  place?.tagged === true && !rel.offsetX && !rel.offsetY && !onOwnLine(r, box);
+const straddles = (r: Route, box: Box): boolean =>
+  onOwnLine(r, box) &&
+  distanceToLine(r, (box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2) > M.onLineTolerance;
+
+/** Whether the author moved a relation's label with `UpdateRelStyle` offsets (D455). */
+const movedByAuthor = (rel: C4Relation): boolean => Boolean(rel.offsetX) || Boolean(rel.offsetY);
+
+/**
+ * Whether a placed tag is crowded: off the line it belongs on, or left straddling its line by
+ * the placement. A tag the author moved is where the author put it (D455), never crowded.
+ */
+const crowdedAt = (
+  rel: C4Relation,
+  place: Place | undefined,
+  r: Route,
+  box: Box,
+  tags: boolean
+): boolean => tags && !movedByAuthor(rel) && (offItsLine(place, r, box) || straddles(r, box));
+
+/** How far (x, y) lies from the nearest stretch of a relation's own line. */
+function distanceToLine(r: Route, x: number, y: number): number {
+  const line = lineOf(r.points, r.controls);
+  let least = Infinity;
+  for (let i = 2; i < line.length; i += 2)
+    least = Math.min(least, toSegment(x, y, line.slice(i - 2, i + 2)));
+  return least;
+}
+
+/** How far (x, y) lies from the segment `[px, py, qx, qy]`. */
+function toSegment(x: number, y: number, [px, py, qx, qy]: readonly number[]): number {
+  const [dx, dy] = [qx! - px!, qy! - py!];
+  const len2 = dx * dx + dy * dy;
+  const t = len2 > 0 ? Math.max(0, Math.min(1, ((x - px!) * dx + (y - py!) * dy) / len2)) : 0;
+  return Math.hypot(x - (px! + t * dx), y - (py! + t * dy));
+}
 
 /** How far a tag keeps from each end of its line: the arrowhead's square or `tagClear`, and a pixel (D679). */
 export const tagEndClear = (): number => Math.max(M.arrow, M.tagClear) + M.tagSlack;

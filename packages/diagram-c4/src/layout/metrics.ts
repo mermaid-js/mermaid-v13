@@ -93,6 +93,11 @@ export const C4_METRICS = {
    */
   tagSlack: 1,
   /**
+   * D679: how far a tag's middle may lie off its own line and still sit on it, in px: float
+   * rounding only. Farther, with the line through the tag, the tag straddles its line.
+   */
+  onLineTolerance: 1e-6,
+  /**
    * v12's arrowhead marker (`M 0 0 L 10 5 L 0 10 z`): 10 long and 10 wide, the one size the
    * renderer draws (`C4_RENDER_METRICS`); labels keep off a square of this half side round its tip.
    */
