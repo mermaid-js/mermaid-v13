@@ -1,11 +1,12 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Warning } from '@mermaid-js/core';
 import { DEFAULT_LIMITS } from '@mermaid-js/core/limits';
-import type { Measurer } from '@mermaid-js/core/text';
+import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import { C4_BOUNDARY_CYCLE } from '../codes.ts';
 import { c4TestContext, c4TestTheme, parsedC4 } from '../test-context.ts';
 import { c4LayoutViolations, c4RelationCrossings } from './invariants.ts';
+import { tagEndClear } from './labels.ts';
 import { layoutC4 } from './layout.ts';
 import { C4_METRICS as M } from './metrics.ts';
 import { c4RelationPath } from './path.ts';
@@ -91,7 +92,8 @@ const CROSSING_EXCEPTIONS: string[] = [];
  * before labels kept off other lines. In `rows-and-fixed-width`, `b -> p`'s upright lane runs
  * down the middle of the gap between `c` and `d`, past both rows: `Moves to` fills too much of
  * that gap to clear it on its line, and beside it clears the lane only below `c`, three label
- * depths out, which costs more than the crossing. (The docs' container example's
+ * depths out, which costs more than the crossing. Under the grid measurer the gap `c -> d`'s
+ * tag widens (D679) holds it clear of the lane. (The docs' container example's
  * `backend_api -> banking_system` was listed too, until the person figure, #683, moved its rows.)
  */
 /**
@@ -109,7 +111,6 @@ const SHAPE_GAP = 100;
 
 const CROWDED_EXCEPTIONS = [
   'baseline/config/rows-and-fixed-width table: c -> d',
-  'baseline/config/rows-and-fixed-width grid: c -> d',
   // D679: tags the placement leaves straddling their own line.
   ...STRADDLING,
   // D679: eight lines between two systems 70 px tall stand closer than half a tag apart, so no
@@ -766,7 +767,7 @@ describe('c4 relations (D455)', () => {
    * neighbouring tags stand side by side; the gap between the shapes holds the two widest.
    */
   describe('staggered tags on lines closer than a tag (D679)', () => {
-    const END = Math.max(M.arrow, M.tagClear) + M.tagSlack;
+    const END = tagEndClear();
     /** Rounding in the spot arithmetic, far below a pixel. */
     const FLUSH = 1e-6;
     /** Lines between two systems 70 px tall closer than half a tag apart. */
@@ -850,6 +851,66 @@ describe('c4 relations (D455)', () => {
       const gap = el(layout, 'b').box.x - right(el(layout, 'a').box);
       expect(gap).toBeCloseTo(widest + 2 * END, 9);
     });
+
+    /**
+     * The table measurer's text a few px narrower, as a browser's canvas measures it (about
+     * 2.5 px over a 110 px label): the clearance must not rest on one measurer's widths.
+     */
+    const CANVAS_SHARE = 0.98;
+    const narrower: Measurer = {
+      ...tableMeasurer,
+      id: 'c4-narrower',
+      width: (text, font, style) => tableMeasurer.width(text, font, style) * CANVAS_SHARE,
+    };
+    /** The arrowhead triangle at a relation end, as the renderer draws it: `arrow` long and wide. */
+    const head = (end: C4RelationLayout['end']): Point[] => {
+      const len = Math.hypot(end.dx, end.dy) || 1;
+      const [ux, uy] = [end.dx / len, end.dy / len];
+      const [bx, by] = [end.x - ux * M.arrow, end.y - uy * M.arrow];
+      const half = M.arrow / 2;
+      return [
+        { x: end.x, y: end.y },
+        { x: bx - uy * half, y: by + ux * half },
+        { x: bx + uy * half, y: by - ux * half },
+      ];
+    };
+    /** The least distance from a box to a triangle's outline, sampled finely along its sides. */
+    const SAMPLES = 400;
+    const boxToTriangle = (b: Rect, tri: Point[]): number => {
+      let least = Infinity;
+      tri.forEach((p, i) => {
+        const q = tri[(i + 1) % tri.length]!;
+        for (let k = 0; k <= SAMPLES; k++) {
+          const [x, y] = [p.x + ((q.x - p.x) * k) / SAMPLES, p.y + ((q.y - p.y) * k) / SAMPLES];
+          const dx = Math.max(b.x - x, 0, x - right(b));
+          const dy = Math.max(b.y - y, 0, y - bottom(b));
+          least = Math.min(least, Math.hypot(dx, dy));
+        }
+      });
+      return least;
+    };
+
+    it.each(['pr-check/repeated-steps', 'pr-check/repeated-relations'])(
+      'keeps every tag of %s tagClear from every arrowhead, under three measurers',
+      (path) => {
+        const { model, config } = fixture(path);
+        for (const [name, measurer] of [
+          ['table', undefined],
+          ['grid', grid],
+          ['narrower', narrower],
+        ] as const) {
+          const layout = layoutC4(model, c4TestContext(config, theme, [], measurer));
+          const heads = layout.relations.flatMap((r) => [
+            ...(r.startArrow ? [head(r.start)] : []),
+            ...(r.endArrow ? [head(r.end)] : []),
+          ]);
+          for (const r of pair(layout)) {
+            const gap = Math.min(...heads.map((h) => boxToTriangle(r.labelBox!, h)));
+            expect(gap, `${name} ${textOf(r.label!)}`).toBeGreaterThanOrEqual(M.tagClear);
+          }
+        }
+      }
+    );
 
     it('widens the gap to the widest tag at each end, side by side', () => {
       const labels = ['a much longer first label', 'b', 'c three', 'd', 'e five'];
@@ -1091,7 +1152,7 @@ describe('c4 wrapping (the root wrap wins over c4.wrap; relations and boundaries
  */
 describe('c4 gaps for labels between row neighbours (D679)', () => {
   /** A tag's clearance at each end of its line: the arrowhead's square or `tagClear`, and a pixel. */
-  const END = Math.max(M.arrow, M.tagClear) + M.tagSlack;
+  const END = tagEndClear();
   const gapOf = (layout: C4Layout, a: string, b: string): number =>
     el(layout, b).box.x - right(el(layout, a).box);
   const WIDE = 'Reads every order and writes it back';

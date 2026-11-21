@@ -322,8 +322,12 @@ function toSegment(x: number, y: number, [px, py, qx, qy]: readonly number[]): n
   return Math.hypot(x - (px! + t * dx), y - (py! + t * dy));
 }
 
-/** How far a tag keeps from each end of its line: the arrowhead's square or `tagClear`, and a pixel (D679). */
-export const tagEndClear = (): number => Math.max(M.arrow, M.tagClear) + M.tagSlack;
+/**
+ * How far a tag keeps from each end of its line, from the line's end (D679): the arrowhead's
+ * length, then `tagClear` beyond it, as from a shape, and a pixel. A line without an arrowhead
+ * at that end keeps the same room, for a neighbouring line's arrowhead may sit level with it.
+ */
+export const tagEndClear = (): number => M.arrow + M.tagClear + M.tagSlack;
 
 /** The step between two tagged lines side by side: a one-line tag's height and a `besideGap` either side. */
 export function tagStepOf({ measure, fonts, labelRoom }: LabelSetup): number {
