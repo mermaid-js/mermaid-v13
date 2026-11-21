@@ -17,11 +17,10 @@ import { stageEnd, stageStart } from '@mermaid-js/core/timing';
 import {
   AnalysisCache,
   dataAstOf,
-  fullParse,
+  fullSource,
   parseStep,
   type Analysis,
   type Detection,
-  type Parsed,
 } from './analysis-cache.ts';
 import { directiveConfig, type SiteConfigs, type Snapshot } from './config-snapshot.ts';
 import type { BlockHost } from './embeds.ts';
@@ -104,7 +103,7 @@ export class Analyser {
     { detected, pre }: Detection,
     host?: BlockHost,
     full = false
-  ): Parsed {
+  ): Analysis {
     const warnings: Warning[] = [];
     const warn = (w: Warning): void => void warnings.push(toWarning(w, this.registry.fragments()));
     warnOf(pre.diagnostics, warn);
@@ -135,9 +134,9 @@ export class Analyser {
       ...(title !== undefined ? { title } : {}),
       sources,
       dataAst,
-      full: () => fullParse(plugin, text, ctx),
+      full: fullSource(plugin, text, ctx, parsed.full),
     };
-    return { analysis, full: parsed.full };
+    return analysis;
   }
 
   detect(text: string, s: Snapshot): Detection {
@@ -177,8 +176,8 @@ export class Analyser {
   }
 
   /**
-   * Parses with the loaded `plugin` and caches the analysis (DESIGN §3 steps 2–4): only its
-   * lean parse; a full parse goes to the call that asked for it.
+   * Parses with the loaded `plugin` and caches the analysis (DESIGN §3 steps 2–4): its lean
+   * parse, and a full one only as `Analysis.full` hands it out.
    */
   analysisOf(
     text: string,
@@ -186,10 +185,10 @@ export class Analyser {
     found: Found,
     plugin: AnyPlugin | undefined,
     full = false
-  ): Parsed {
+  ): Analysis {
     if (!plugin) throw unsupportedDiagram(found.detected.type);
-    const parsed = this.analyse(text, s, plugin, found, undefined, full);
-    this.cache.set(text, s, parsed.analysis);
-    return parsed;
+    const analysis = this.analyse(text, s, plugin, found, undefined, full);
+    this.cache.set(text, s, analysis);
+    return analysis;
   }
 }

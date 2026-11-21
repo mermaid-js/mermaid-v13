@@ -134,14 +134,23 @@ describe('full parses', () => {
     expect(lean.calls).toEqual([fullCall, fullCall]);
   });
 
-  it('parses in full for a postParse hook, on every draw, and then draws data-ast', async () => {
+  it('parses in full for a postParse hook, keeps it, and then draws data-ast', async () => {
     const asts: AstNode[] = [];
     const hook: ExtensionPlugin = { id: 'hook', postParse: (ast) => (asts.push(ast), ast) };
     const { m, lean } = await api({}, [hook]);
     expect((await m.render('x', 'lean')).svg).toMatch(AST_ATTR);
-    expect(m.renderSync('lean').svg).toMatch(AST_ATTR);
-    expect(asts.map((a) => a.id)).toEqual(['doc', 'doc']);
-    expect(lean.calls).toEqual([fullCall, fullCall]);
+    // A cached text draws again with the full parse its entry keeps: no parse.
+    for (let i = 0; i < 3; i++) expect(m.renderSync('lean').svg).toMatch(AST_ATTR);
+    expect(asts.map((a) => a.id)).toEqual(['doc', 'doc', 'doc', 'doc']);
+    expect(lean.calls).toEqual([fullCall]);
+  });
+
+  it('keeps no full parse in an entry that no reader of the AST asked for', async () => {
+    const { m, lean } = await api();
+    for (let i = 0; i < 3; i++) await m.prepare('lean');
+    m.renderSync('lean');
+    // prepare() hands out a full parse of its own each time; the entry stays lean.
+    expect(lean.calls).toEqual([fullCall, fullCall, fullCall]);
   });
 
   it('parses lean for an extension without postParse, and draws no data-ast for it', async () => {

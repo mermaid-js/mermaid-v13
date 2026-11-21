@@ -63,8 +63,7 @@ function blocksOf(k: Session): BlockLoader {
   const { analyser } = k;
   return blockLoader({
     detect: (text, s) => analyser.detect(text, s),
-    analyse: (text, s, found, plugin, host) =>
-      analyser.analyse(text, s, plugin, found, host).analysis,
+    analyse: (text, s, found, plugin, host) => analyser.analyse(text, s, plugin, found, host),
     load: (id) => k.registry.load(id),
     loaded: (id) => k.registry.plugin(id),
     resources: async (a, format) => {
@@ -75,7 +74,7 @@ function blocksOf(k: Session): BlockLoader {
     draw: (text, s, options, a, id, inner) => {
       const { now, placeholders } = options ?? {};
       const drawing = { id, now, placeholders };
-      const { drawn, ctx, warnings, mount } = drawSvg(k, text, s, drawing, { analysis: a }, inner);
+      const { drawn, ctx, warnings, mount } = drawSvg(k, text, s, drawing, a, inner);
       const own = warnings.slice(k.skipped.length);
       return {
         ...drawn,
@@ -90,7 +89,7 @@ function blocksOf(k: Session): BlockLoader {
       if (!analyser.textOf(a)) return k.textBackend!.blockStandIn(a.detected.type, b.id);
       const { now, ascii } = (options ?? {}) as Partial<TextRenderOptions>;
       const call = { format: 'ascii', id, now, ascii } as const;
-      const { warnings, ...drawn } = drawAscii(k, b.text, s, call, { analysis: a }, () => inner);
+      const { warnings, ...drawn } = drawAscii(k, b.text, s, call, a, () => inner);
       return { ...drawn, warnings: warnings.slice(k.skipped.length) };
     },
   });
@@ -167,8 +166,8 @@ export function createMermaid(
   async function prepare(text: string, options?: RenderOptions): Promise<Prepared> {
     try {
       const s = snapshotFor(options);
-      const { analysis, full } = await prepareWith(k, text, s, options?.format, true);
-      return { ...analysis.prepared, parse: full ?? analysis.full() };
+      const analysis = await prepareWith(k, text, s, options?.format, true);
+      return { ...analysis.prepared, parse: analysis.full() };
     } catch (e) {
       throw toMermaidError(e);
     }
@@ -208,8 +207,8 @@ export function createMermaid(
     const options = renderOptions(containerOrOptions);
     const s = snapshotFor(options);
     try {
-      const parsed = await prepareWith(k, text, s, options?.format);
-      return draw(k, text, s, { ...options, id }, parsed);
+      await prepareWith(k, text, s, options?.format);
+      return draw(k, text, s, { ...options, id });
     } catch (e) {
       // v12's render() passed every failure to `parseError` too (#757).
       const error = toMermaidError(e);
