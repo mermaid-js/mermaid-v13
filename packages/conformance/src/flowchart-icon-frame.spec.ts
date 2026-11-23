@@ -4,12 +4,13 @@ import { describe, expect, it } from 'vitest';
 import { createMermaid, type ExtensionPlugin, type InitializeConfig } from 'mermaid';
 import { REPO_ROOT } from './index.ts';
 
-// Icon frames have room around the glyph (#1150, decision 5 of spec #1163): square and rounded
-// frames are the glyph's square plus `flowchart.padding` (v12's `iconSquare`, `iconRounded`),
-// rounded corners 5; the circle is the glyph's diagonal plus that padding, tighter than v12's
-// diagonal + 40. The label sits 8 px from a frame (v12), and edges end on the frame.
+// Icon frames have room around the glyph (#1150, D685): square and rounded frames are the
+// glyph's square plus half of `flowchart.padding` (v12's `iconSquare` and `iconRounded` add all
+// of it), rounded corners 5; the circle is the glyph's diagonal plus half the padding, tighter
+// than v12's diagonal + 40. The label sits 8 px from a frame (v12), and edges end on the frame.
 const FIXTURE = join(REPO_ROOT, 'e2e/diagrams/flowchart/baseline/icons/default.mmd');
 const PAD = 15; // flowchart.padding default
+const ROOM = PAD / 4; // on each side of the glyph
 
 /** A glyph that fills the square it is asked for, so where it lands is visible. */
 const glyphs: ExtensionPlugin = {
@@ -85,37 +86,37 @@ function room({ frame, glyph: [gx, gy, size] }: IconNode): number[] {
 }
 
 describe('flowchart icon frames (#1150)', () => {
-  it('pads square and rounded frames by flowchart.padding on every side, rounded corners 5', async () => {
+  it('pads square and rounded frames by a quarter of flowchart.padding a side, rounded corners 5', async () => {
     const all = nodes(await draw());
     for (const id of ['square', 'rounded', 'aws']) {
       const node = all.get(id)!;
       expect(node.frame?.kind, id).toBe('rect');
-      for (const side of room(node)) expect(side, id).toBeCloseTo(PAD / 2, 6);
+      for (const side of room(node)) expect(side, id).toBeCloseTo(ROOM, 6);
     }
     expect(all.get('rounded')!.frame!.rx).toBe(5);
     expect(all.get('square')!.frame!.rx).toBeNaN();
   });
 
-  it('makes the circle the glyph diagonal plus flowchart.padding, centred on the glyph', async () => {
+  it('makes the circle the glyph diagonal plus half of flowchart.padding, centred on the glyph', async () => {
     const all = nodes(await draw());
     for (const id of ['circle', 'styled']) {
       const { frame, glyph } = all.get(id)!;
       const [gx, gy, size] = glyph;
       const [l, t, r] = frame!.box;
       const radius = (r - l) / 2;
-      expect(2 * radius, id).toBeCloseTo(size * Math.SQRT2 + PAD, 1);
+      expect(2 * radius, id).toBeCloseTo(size * Math.SQRT2 + PAD / 2, 1);
       expect(gx + size / 2, id).toBeCloseTo((l + r) / 2, 6);
       expect(gy + size / 2, id).toBeCloseTo(t + radius, 2);
-      // The glyph's corners lie inside the circle, half the padding to spare.
-      expect(radius - (size * Math.SQRT2) / 2, id).toBeCloseTo(PAD / 2, 1);
+      // The glyph's corners lie inside the circle, a quarter of the padding to spare.
+      expect(radius - (size * Math.SQRT2) / 2, id).toBeCloseTo(ROOM, 1);
     }
   });
 
   it('follows a custom flowchart.padding', async () => {
     const all = nodes(await draw({ flowchart: { padding: 30 } }));
-    for (const side of room(all.get('square')!)) expect(side).toBeCloseTo(15, 6);
+    for (const side of room(all.get('square')!)) expect(side).toBeCloseTo(7.5, 6);
     const [l, , r] = all.get('circle')!.frame!.box;
-    expect(r - l).toBeCloseTo(48 * Math.SQRT2 + 30, 1);
+    expect(r - l).toBeCloseTo(48 * Math.SQRT2 + 15, 1);
   });
 
   it('keeps the label 8 px from a frame, 2 px more than from a bare glyph', async () => {

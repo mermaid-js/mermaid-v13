@@ -148,8 +148,8 @@ describe('an icon that is not drawn (D298, D299)', () => {
     const source = 'flowchart LR\n  A@{ icon: "fa:bell", form: square }';
     const r = m.renderSync(source, { placeholders: true });
     expect(codes(r)).toEqual(['PLACEHOLDER']);
-    // The frame of a 48 px icon, flowchart.padding (15) around it (#1150).
-    expect(r.svg).toContain('<rect x="-31.5" y="-31.5" width="63" height="63"');
+    // The frame of a 48 px icon, half of flowchart.padding (15) around it (#1150).
+    expect(r.svg).toContain('<rect x="-27.75" y="-27.75" width="55.5" height="55.5"');
     expect(r.svg).not.toContain('M0 0H1V24z');
   });
 

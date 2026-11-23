@@ -30,15 +30,16 @@ const asset = (v: number | undefined, fallback: number): number =>
   v !== undefined && v > 0 && v <= 4000 ? v : fallback;
 
 /**
- * The square an icon's frame fills (#1150, decision 5 of spec #1163): the glyph's square plus
- * `pad` (`flowchart.padding`, v12's `iconSquare` and `iconRounded`) for `square` and `rounded`;
- * for `circle`, the diameter, the glyph's diagonal plus `pad` (tighter than v12's diagonal + 40).
- * An icon without a frame, and an image, keep their asset's height.
+ * The square an icon's frame fills (#1150, D685): the glyph's square plus half of `pad`
+ * (`flowchart.padding`, so a quarter of it on each side) for `square` and `rounded`; for
+ * `circle`, the diameter, the glyph's diagonal plus half of `pad`. v12 added all of `pad`
+ * (`iconSquare`, `iconRounded`) and the diagonal plus 40. An icon without a frame, and an image,
+ * keep their asset's height.
  */
 function frameSize(v: AssetNode, pad: number): number {
   const size = asset(v.assetHeight, v.img ? IMG : ICON);
   if (!framed(v)) return size;
-  return v.form === 'circle' ? size * Math.SQRT2 + pad : size + pad;
+  return (v.form === 'circle' ? size * Math.SQRT2 : size) + pad / 2;
 }
 
 const framed = (v: AssetNode): boolean =>
@@ -94,7 +95,7 @@ export function drawImage(
  * fill) and the glyph takes `paint`, which the extension applies (`GlyphOptions.paint`): its
  * `color`, or under `useGradient` the gradient on its `currentColor` paints. Without one the frame
  * keeps its outline, as before the icons plugin. The glyph is a square of `assetHeight`, and the
- * frame leaves `pad` (`flowchart.padding`) around it ({@link frameSize}), while `assetSize`
+ * frame leaves half of `pad` (`flowchart.padding`) around it ({@link frameSize}), while `assetSize`
  * widens the box to `assetWidth`. Not drawn (no extension has glyphs, one gave `null`, or none
  * has this one), it warns as {@link iconMissed}; a placeholder (`'pending'`, D299) draws the
  * frame alone, quietly.
