@@ -809,12 +809,19 @@ function layOut(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredRes
       );
     const tall = f64(maxRank + 1);
     assignTracks(pieces, trackCount, !opt.tracks, room, tall, M);
+    const grow = f64(maxRank + 1);
     for (let r = 0; r < maxRank; r++) {
       if (trackCount[r]! > 0)
-        gapUnder[r]! += Math.max(0, 2 * margin + (trackCount[r]! - 1) * leastPitch - room[r]!);
+        grow[r] = Math.max(0, 2 * margin + (trackCount[r]! - 1) * leastPitch - room[r]!);
       else if (tall[r]! > 0)
-        gapUnder[r]! += Math.max(0, Math.min(MAX_GAP * opt.rankSep, tall[r]!) - room[r]!);
+        grow[r] = Math.max(0, Math.min(MAX_GAP * opt.rankSep, tall[r]!) - room[r]!);
     }
+    // Tracks grow both gaps of a rank of labels and bends alike, so its labels stay where they
+    // were put between their nodes (D682, D684). Not on the grid, whose gaps are whole cells.
+    if (opt.tracks && !hooks)
+      for (let r = 1; r < maxRank; r++)
+        if (between[r]) grow[r - 1] = grow[r] = Math.max(grow[r - 1]!, grow[r]!);
+    for (let r = 0; r < maxRank; r++) gapUnder[r]! += grow[r]!;
   }
   roomForEnds(edges, RANK, direct, empty, gapUnder);
   if (hooks) for (let r = 0; r < maxRank; r++) gapUnder[r] = hooks.ceil(gapUnder[r]!);
