@@ -244,6 +244,9 @@ describe('the graph', () => {
     expect(lay(src, { flowchart: { curve: 'linear' } }).graph.routing).toBe('straight');
     expect(lay(src, { flowchart: { curve: 'basis' } }).graph.routing).toBe('curved');
     expect(lay(src, { flowchart: { curve: 'step' } }).layout.requirement!.curve).toBe('step');
+    // An unknown name is drawn as an unset one (D681).
+    const bogus = { flowchart: { curve: 'bogus' } } as unknown as MermaidConfig;
+    expect(lay(src, bogus).layout.requirement!.curve).toBe(lay(src).layout.requirement!.curve);
   });
 
   it('sizes self-loops and port pitch for the markers', () => {

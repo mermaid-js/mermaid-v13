@@ -1,0 +1,15 @@
+---
+description: >-
+  an unknown per-edge curve name (`linkStyle 0 interpolate bogus`) draws that edge with the
+  default curve, rounded, while the other edges keep the diagram's `basis`, with one
+  CURVE_UNKNOWN warning (#1158, D681)
+config:
+  flowchart:
+    curve: basis
+---
+flowchart TD
+  A --> B
+  A --> C
+  B --> D
+  C --> D
+  linkStyle 0 interpolate bogus

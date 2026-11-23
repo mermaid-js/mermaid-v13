@@ -13,7 +13,12 @@ import {
   type UnitProfile,
 } from '@mermaid-js/core/layout';
 import { graphSpacing } from '@mermaid-js/shared/layout';
-import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
+import {
+  curveKind,
+  curveRouting,
+  DEFAULT_CURVE,
+  type CurveKind,
+} from '@mermaid-js/shared/svg/route';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import {
   namespaceGroups,
@@ -240,7 +245,7 @@ export function prepare(model: ClassModel, ctx: ClassLayoutContext): ClassPrepar
   const notes = noteViews(padding ?? NOTE_PAD, build, edges);
   const interfaces = model.interfaces.map((iface) => interfaceView(iface, build));
   edges.push(...relationEdges(build));
-  const curve = classCurve(ctx.config.flowchart?.curve ?? 'rounded', (w) => ctx.warn?.(w));
+  const curve = classCurve(ctx.config.flowchart?.curve ?? DEFAULT_CURVE, (w) => ctx.warn?.(w));
   const graph = layoutGraph(model, ctx, units, curve, length, {
     boxes,
     notes,

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_CURVE } from '@mermaid-js/shared/svg/route';
 import { flowchartConfigDefaults } from './index.ts';
 
 describe('flowchartConfigDefaults', () => {
@@ -23,5 +24,9 @@ describe('flowchartConfigDefaults', () => {
       stepNumbers: false,
       inheritDir: false,
     });
+  });
+
+  it('name the curve an unknown curve name falls back to (D681)', () => {
+    expect(DEFAULT_CURVE).toBe(flowchartConfigDefaults.curve);
   });
 });
