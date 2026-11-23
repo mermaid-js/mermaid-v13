@@ -10,7 +10,12 @@ import {
   type UnitProfile,
 } from '@mermaid-js/core/layout';
 import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
-import { curveKind, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
+import {
+  curveKind,
+  curveRouting,
+  DEFAULT_CURVE,
+  type CurveKind,
+} from '@mermaid-js/shared/svg/route';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
 import { layoutLabel, Style, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import { tagsOnly } from '@mermaid-js/core/text/tags-only';
@@ -403,7 +408,7 @@ export function prepareRequirement(
       dashed: !contains,
     });
   });
-  const curve = requirementCurve(ctx.config.flowchart?.curve ?? 'rounded', (w) => ctx.warn(w));
+  const curve = requirementCurve(ctx.config.flowchart?.curve ?? DEFAULT_CURVE, (w) => ctx.warn(w));
   // The marker geometry and its room are the px drawing's; text output draws its own marks.
   let graph: LayoutGraph;
   let markers: MarkerGeometry | undefined;

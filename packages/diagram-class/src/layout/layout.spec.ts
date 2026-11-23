@@ -290,6 +290,9 @@ note "floating"`);
     expect([basis.curve, basis.graph.routing]).toEqual(['curved', 'curved']);
     const step = (await lay(src, { flowchart: { curve: 'stepAfter' } })).class!;
     expect([step.curve, step.graph.routing]).toEqual(['stepAfter', 'stepped']);
+    // An unknown name is drawn as an unset one (D681).
+    const bogus = (await lay(src, { flowchart: { curve: 'bogus' } })).class!;
+    expect([bogus.curve, bogus.graph.routing]).toEqual([plain.curve, plain.graph.routing]);
   });
 
   it('keeps an interface in the namespace of its class', async () => {

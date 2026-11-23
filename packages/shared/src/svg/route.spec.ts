@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { RoutePoint } from '@mermaid-js/core/layout';
 import { streamWriter } from '@mermaid-js/core/svg';
-import { curveKind, curveReporter, routePath, type CurveKind } from './route.ts';
+import { curveKind, curveReporter, DEFAULT_CURVE, routePath, type CurveKind } from './route.ts';
 
 const down = (x: number, y: number): RoutePoint => ({ x, y, axis: 'v' });
 const side = (x: number, y: number): RoutePoint => ({ x, y, axis: 'h' });
@@ -101,7 +101,7 @@ describe('routePath step curves (#356, D602)', () => {
   });
 });
 
-describe('curveKind (#356, D602)', () => {
+describe('curveKind (#356, D602, D681)', () => {
   it('returns each known name unchanged and warns for none', () => {
     const seen: unknown[] = [];
     for (const k of ['linear', 'step', 'stepBefore', 'stepAfter', 'rounded']) {
@@ -112,17 +112,19 @@ describe('curveKind (#356, D602)', () => {
     expect(seen).toEqual([]);
   });
 
-  it('draws an unknown name curved and reports it as CURVE_UNKNOWN', () => {
+  it('draws an unknown name with the default curve and reports it as CURVE_UNKNOWN (D681)', () => {
     const seen: { code: string; message: string }[] = [];
-    expect(curveKind('bogus', (w) => seen.push(w))).toBe('curved');
+    expect(DEFAULT_CURVE).toBe('rounded');
+    expect(curveKind('bogus', (w) => seen.push(w))).toBe(DEFAULT_CURVE);
     expect(seen).toHaveLength(1);
     expect(seen[0]!.code).toBe('CURVE_UNKNOWN');
     expect(seen[0]!.message).toContain('bogus');
+    expect(seen[0]!.message).toContain('rounded');
     expect(seen[0]).not.toHaveProperty('path');
   });
 
   it('stays silent without a sink', () => {
-    expect(curveKind('bogus')).toBe('curved');
+    expect(curveKind('bogus')).toBe(DEFAULT_CURVE);
   });
 });
 

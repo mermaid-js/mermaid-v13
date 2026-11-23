@@ -37,9 +37,15 @@ const isStepped = (kind: string): kind is 'step' | 'stepBefore' | 'stepAfter' =>
   kind === 'step' || kind === 'stepBefore' || kind === 'stepAfter';
 
 /**
- * The curve kind for a v12 `curve` name. A name that is not drawn otherwise is drawn `curved`:
- * a d3 curve factory name (`basis`, `cardinal`, …) silently, any other name with a
- * `CURVE_UNKNOWN` warning to `warn` (D602). Use {@link curveReporter} to warn once per name.
+ * The curve an unknown name is drawn with: `flowchart.curve`'s default (the schema's, pinned to
+ * it by a spec in diagram-flowchart), which class and requirement also take when it is unset.
+ */
+export const DEFAULT_CURVE = 'rounded' satisfies CurveKind;
+
+/**
+ * The curve kind for a v12 `curve` name. A d3 curve factory name (`basis`, `cardinal`, …) is
+ * drawn `curved`, as is an unset name. Any other name is drawn with {@link DEFAULT_CURVE} and
+ * reported to `warn` as `CURVE_UNKNOWN` (D602, D681). Use {@link curveReporter} to warn once per name.
  */
 export function curveKind(curve: string | undefined, warn?: (warning: Warning) => void): CurveKind {
   if (curve === undefined || D3_CURVES.has(curve)) return 'curved';
@@ -47,9 +53,9 @@ export function curveKind(curve: string | undefined, warn?: (warning: Warning) =
   if (isStepped(curve)) return curve;
   warn?.({
     code: 'CURVE_UNKNOWN',
-    message: `Unknown curve "${curve}": edges are drawn with S-curves (curve: basis)`,
+    message: `Unknown curve "${curve}": edges are drawn with the default curve (curve: ${DEFAULT_CURVE})`,
   });
-  return 'curved';
+  return DEFAULT_CURVE;
 }
 
 /** {@link curveKind} for one render: each unknown name is reported once, however many edges use it. */

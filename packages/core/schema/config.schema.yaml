@@ -5119,8 +5119,9 @@ $defs:
             to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped
             routes with right-angle corners (the step in the middle, near the start and near the end of the leg);
             `rounded` draws straight segments with rounded corners; every other value draws
-            S-curves (the layout engine routes edges, not a d3 curve factory), and a name outside
-            this list also warns `CURVE_UNKNOWN`, once per render (D602).
+            S-curves (the layout engine routes edges, not a d3 curve factory). A name outside
+            this list is drawn with the default, `rounded`, and warns `CURVE_UNKNOWN` once per
+            render (D602, D681); v12 drew it as `basis`.
 
       padding:
         description: |
