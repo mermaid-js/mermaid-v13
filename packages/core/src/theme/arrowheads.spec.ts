@@ -64,3 +64,22 @@ describe('arrowhead geometry per theme (D152)', () => {
     expect(t.rootStyle()).toEqual({});
   });
 });
+
+describe('arrowhead colour per theme (#1161, D680)', () => {
+  it.each(THEME_NAMES)('follows lineColor in %s', async (name) => {
+    const t = createTheme(await loadTheme(name));
+    expect(t.value('arrowheadColor')).toBe(t.value('lineColor'));
+    const moved = createTheme(await loadTheme(name), { themeVariables: { lineColor: '#aa3300' } });
+    expect(moved.value('arrowheadColor')).toBe('#aa3300');
+  });
+
+  it.each(['forest', 'neutral'] as const)(
+    "keeps an author's arrowheadColor in %s",
+    async (name) => {
+      const t = createTheme(await loadTheme(name), {
+        themeVariables: { arrowheadColor: '#123456' },
+      });
+      expect(t.value('arrowheadColor')).toBe('#123456');
+    }
+  );
+});
