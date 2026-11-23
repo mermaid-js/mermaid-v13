@@ -33,7 +33,7 @@ import {
   type ShapeSize,
   type Pads,
 } from './shapes.ts';
-import { themePads } from '@mermaid-js/shared/shapes/kit';
+import { themePads, type Frame } from '@mermaid-js/shared/shapes/kit';
 import { titlePositions } from './title-position.ts';
 
 export interface NodeView {
@@ -49,6 +49,8 @@ export interface NodeView {
   dy: number;
   /** Label shift sideways from the centre. */
   dx: number;
+  /** The frame the shape's size gave, where its box does not fix it (the cloud's). */
+  frame?: Frame | undefined;
   style: CheckedStyle;
   classes: string[];
   parent?: string;
@@ -338,6 +340,7 @@ function measureNode(
   view.h = s.h;
   view.dy = s.dy;
   view.dx = labelDx(s);
+  view.frame = s.frame;
 }
 
 /** A fork or join bar lies across the flow: 10 × 70 where it runs sideways (v12, D604). */

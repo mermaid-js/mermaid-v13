@@ -29,8 +29,9 @@ export type {
   MindmapNodeView,
   MindmapPrepared,
 } from './layout/prepare.ts';
-export { cloudOutline, bangOutline } from './layout/outline.ts';
-export type { Outline, OutlineArc } from './layout/outline.ts';
+export { cloudOutline } from '@mermaid-js/shared/shapes/outline';
+export { bangOutline } from './layout/outline.ts';
+export type { Outline, OutlineArc } from '@mermaid-js/shared/shapes/outline';
 export { renderMindmap } from './render/render.ts';
 export type { MindmapRenderContext } from './render/context.ts';
 export { ICON_NOT_RENDERED } from './render/assets.ts';

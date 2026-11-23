@@ -45,7 +45,7 @@ import {
 } from '@mermaid-js/shared/svg/arrowheads';
 import { drawRoute } from '@mermaid-js/shared/svg/route';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
-import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
+import { drawShape, framed, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
 
 /** The flowchart's layout: the engine's LayoutModel, plus the measured views when they are fresh. */
 export interface FlowLayout extends LayoutModel {
@@ -111,7 +111,7 @@ const DOTTED = '2' as SafeValue;
 const outlineInset = (view: NodeView, side: number, t: number, pads: Pads): number =>
   view.vertex?.icon
     ? iconInset(view, side, t, pads.pad)
-    : shapeInset(view.shape, view.w, view.h, side, t, pads);
+    : shapeInset(view.shape, view.w, view.h, side, t, framed(pads, view.frame));
 
 // Moves a route end from the node's box onto the outline of the shape drawn in it.
 function inset(
@@ -568,6 +568,7 @@ function drawNodeBody(
       attrs: attrs.shapeAttrs,
       lines: attrs.lineAttrs,
       pads: flow.pads,
+      frame: view.frame,
     });
   }
 }

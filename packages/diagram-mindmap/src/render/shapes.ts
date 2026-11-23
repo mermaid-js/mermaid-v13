@@ -35,7 +35,7 @@ function plainPath(w: SvgWriter, x0: number, y0: number, x1: number, y1: number,
   return p.close().done();
 }
 
-/** A cloud's or a bang's arcs (`layout/outline.ts`), moved to the frame's centre. */
+/** A cloud's or a bang's arcs (`@mermaid-js/shared/shapes/outline`, `layout/outline.ts`), moved to the frame's centre. */
 function arcPath(w: SvgWriter, v: MindmapNodeView, x: number, y: number) {
   const o = v.outline!;
   const p = w.path().moveTo(x + o.start.x, y + o.start.y);

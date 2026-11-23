@@ -768,7 +768,8 @@ lines are drawn in plain `nodeBorder`: the rules of a lined document and a lined
 rectangle (v12 stroked them with the gradient), the `fr-circ` inner dot, the `f-circ` and
 `browser` lines, the dashed divider between state concurrency regions (v12 dashed
 each region's frame with the gradient) and a described state's divider. Class dividers are
-lifted 0.01 so they take the gradient (v12 0.001) (D185).
+lifted 0.01 so they take the gradient (v12 0.001) (D185). The `browser` dots and address bar and
+the `console` prompt are plain `nodeBorder` too, as v12 drew them in every look (D683).
 No node part is filled with the gradient: the flowchart fork and join bar is stroked with it and
 filled in plain `nodeBorder`, the same colour as the `lineColor` v12 neo filled it with (D185).
 

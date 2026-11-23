@@ -6,7 +6,7 @@
  */
 import type { LayoutGraph, LayoutModel } from '@mermaid-js/core/layout';
 import type { MindmapLayout } from './layout.ts';
-import { outlineBox } from './outline.ts';
+import { outlineBox } from '@mermaid-js/shared/shapes/outline';
 import type { MindmapNodeView } from './prepare.ts';
 
 // Floating-point noise, not a length.

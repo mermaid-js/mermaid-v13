@@ -23,6 +23,7 @@ Code that Mermaid v13 diagram packages share, kept out of `@mermaid-js/core` so 
 | `/shapes/kit` | Shape types, paddings, sizers and path builders, and the person figure's proportions |
 | `/shapes/basic` | The node shapes several diagrams draw, one export per shape: the bracket-syntax shapes, the lined document and the collapsed-group card |
 | `/shapes/extended` | The node shapes only flowchart draws |
+| `/shapes/outline` | v12's cloud outline as elliptical arcs, the box an outline covers and its points, for mindmap and flowchart |
 | `/svg/document` | The SVG root, title and description, the front-matter title over the drawing (`placeTitle`, `titledViewBox`), class lists, palette slots, the style cache, the clickable cursor (`clickCursor`) and the edge animation (`animateEdge`) every renderer uses |
 | `/svg/route` | Edge paths for graph diagrams |
 | `/svg/arrowheads` | Arrowhead markers and the trim they need |

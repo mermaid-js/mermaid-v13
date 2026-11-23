@@ -1011,7 +1011,10 @@ describe('flowchart render: neo gradient (D182, #229)', () => {
     const browserDots = tree
       .children(byAst(tree, 'n:W')[0]!)
       .filter((c) => tree.tag(c) === 'circle');
-    expect(browserDots.map((c) => tree.getAttr(c, 'stroke'))).toEqual(Array(3).fill('#000000'));
+    // v12's browser dots: filled nodeBorder, no stroke (D683).
+    expect(browserDots.map((c) => [tree.getAttr(c, 'fill'), tree.getAttr(c, 'stroke')])).toEqual(
+      Array(3).fill(['#000000', 'none'])
+    );
   });
 
   it("lets the author's style and classDef strokes win over the gradient", async () => {
