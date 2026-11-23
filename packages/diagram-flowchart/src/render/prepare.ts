@@ -326,7 +326,7 @@ function measureNode(
     const { width, height } = foldedSize(view.label, fold.label, fold.type.length);
     s = { w: width, h: height, dy: 0 };
   } else if (block) s = embedSize(view.embed, lw, lh);
-  else if (v?.img || v?.icon) s = assetSize(v, lw, lh);
+  else if (v?.img || v?.icon) s = assetSize(v, lw, lh, m.pads.pad);
   else
     s = shapeSize(
       view.shape,

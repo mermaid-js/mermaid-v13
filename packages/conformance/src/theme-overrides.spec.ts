@@ -492,6 +492,8 @@ const DIFFERENCES: Readonly<Record<string, readonly string[]>> = {
         keys(theme, ['lineColor:light', 'lineColor:dark'], ['arrowheadColor'])
       ),
     ],
+  "D680 (#1161): forest's and neutral's arrowheadColor follows lineColor too, as v12's .marker paints arrowheads; v12's getThemeVariables() keeps forest's #008000 and neutral's #333333, which reached only the legacy .arrowheadPath, so the variable differs and the render matches":
+    [...keys('forest', ALL, ['arrowheadColor']), ...keys('neutral', ALL, ['arrowheadColor'])],
   "D576: forest's sequence participant border stays v12's darken(#cde498, 20) (softBorder, pinned); v12 recomputes it from an author's mainBkg":
     [...keys('forest', ['mainBkg:light', 'mainBkg:dark'], ['actorBorder'])],
 };

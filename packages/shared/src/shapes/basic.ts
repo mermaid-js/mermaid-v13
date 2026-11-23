@@ -31,6 +31,7 @@ import {
   RULE,
   wave,
   WAVE,
+  waveDip,
   type Barrel,
   type Inset,
   type Pads,
@@ -166,7 +167,8 @@ export const hexagon: PolygonShape = {
 
 /** v12 `rect_left_inv_arrow` (`> ]`). */
 export const odd: PolygonShape = {
-  inset: (_W, H, side) => (side === 3 ? H / 4 : 0),
+  // The notch on the left is H / 4 deep at the middle and runs out at the corners.
+  inset: (_W, H, side, t) => (side === 3 ? (H / 4) * (1 - Math.min(1, (2 * Math.abs(t)) / H)) : 0),
   span: /* @__PURE__ */ flatAcross(() => 0),
   size: /* @__PURE__ */ padded((p) => p.odd, 0, 0.25),
   points: (W, H) => {
@@ -177,14 +179,27 @@ export const odd: PolygonShape = {
   draw: (w, W, H, a, _l, p) => poly(w, odd.points(W, H, p), a),
 };
 
-const leanInset: Inset = (_W, H, side) => (side & 1 ? H / 8 : 0);
 const lean: Sizer = /* @__PURE__ */ padded((p) => p.lean, 0, 0.5);
 
 /** Which corners of a box are cut in, clockwise from the top left. */
 type Cuts = readonly [tl: boolean, tr: boolean, br: boolean, bl: boolean];
 
+/**
+ * How far a slanted side is inside the box at `t`: H / 4 at a cut corner, nothing at the other,
+ * in a straight line between them.
+ */
+function leanInset([tl, tr, br, bl]: Cuts): Inset {
+  return (_W, H, side, t) => {
+    if (!(side & 1)) return 0;
+    const down = Math.min(1, Math.max(0, t / H + 0.5));
+    const [top, bottom] = side === 1 ? [tr, br] : [tl, bl];
+    return (H / 4) * ((top ? 1 - down : 0) + (bottom ? down : 0));
+  };
+}
+
 /** A box with some corners cut in by a quarter of its height: the lean and trapezoid shapes. */
-function slanted([tl, tr, br, bl]: Cuts, size = lean): PolygonShape {
+function slanted(cuts: Cuts, size = lean): PolygonShape {
+  const [tl, tr, br, bl] = cuts;
   const points = (W: number, H: number): number[] => {
     const s = H / 4;
     const l = -W / 2;
@@ -201,7 +216,7 @@ function slanted([tl, tr, br, bl]: Cuts, size = lean): PolygonShape {
     ];
   };
   return {
-    inset: leanInset,
+    inset: leanInset(cuts),
     span: flatAcross((H) => H / 4),
     size,
     points,
@@ -221,8 +236,9 @@ export const trapezoidTop: PolygonShape = /* @__PURE__ */ slanted(
   /* @__PURE__ */ padded((p) => p.lean, 0, 0.5, true)
 );
 
-/** A document's wave: its outline is 10 inside the box along the bottom. */
-export const waveInset: Inset = (_W, _H, side) => (side === 2 ? 10 : 0);
+/** A document's wave: its outline is about 10 inside the box along the bottom. */
+export const waveInset: Inset = (W, _H, side, t) =>
+  side === 2 ? WAVE.depth - waveDip(t, W / 2) : 0;
 // A rounded corner of radius r on a side of length `len`: how far in the outline is at `t`.
 const cornerInset = (len: number, t: number, r: number): number => {
   const k = Math.abs(t) - (len / 2 - r);
@@ -240,6 +256,7 @@ const cardRadius = (W: number, H: number, p: Pads): number => Math.min(p.r, W / 
 export const linedDocument: Shape = {
   plain: true,
   inset: waveInset,
+  span: flat,
   size: /* @__PURE__ */ grown(RULE, WAVE.depth, -WAVE.depth / 2),
   draw: (w, W, H, a, line) => {
     wave(w, W, H, a);

@@ -8,6 +8,7 @@ import { translate, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
 import { drawCylinder, rhombusInset, rhombusPoints, waveInset } from './basic.ts';
 import {
   box,
+  bulge,
   capInset,
   centred,
   CORNER,
@@ -22,6 +23,7 @@ import {
   personFigure,
   personSize,
   poly,
+  polygonInset,
   queuePath,
   queueRim,
   queueRx,
@@ -29,12 +31,14 @@ import {
   roundSpan,
   wave,
   WAVE,
+  waveDip,
   type Inset,
   type Barrel,
   type PolygonShape,
   type Shape,
   type ShapeSize,
   type Sizer,
+  type Span,
 } from './kit.ts';
 
 function brace(w: SvgWriter, x: number, H: number, dir: number, line: Attrs): void {
@@ -132,10 +136,8 @@ function stackedDocumentBottom(s: number): Inset {
     let lowest = -Infinity;
     for (let i = 0; i < 3; i++) {
       const x = at - (1 - i) * s;
-      const u = Math.abs(x) / half;
-      if (u > 1) continue;
-      const dip = 2 * WAVE.control * u * (1 - u) * (x > 0 ? -1 : 1);
-      lowest = Math.max(lowest, H / 2 - WAVE.depth - (2 - i) * s + dip);
+      if (Math.abs(x) > half) continue;
+      lowest = Math.max(lowest, H / 2 - WAVE.depth - (2 - i) * s + waveDip(x, half));
     }
     return H / 2 - lowest;
   };
@@ -199,10 +201,13 @@ export const framedCircle: Shape = {
   },
 };
 
+/** A small shape's span: 4 kept clear at each end, so edges on a short side still separate. */
+const narrow: Span = (W, H, s) => (s ? H : W) - 8;
+
 export const fork: Shape = {
   noLabel: true,
   plain: true,
-  span: (W, H, s) => (s ? H : W) - 8,
+  span: narrow,
   // v12 forkJoin is 70 × 10 (D604); a diagram that flows sideways swaps the two.
   size: /* @__PURE__ */ fixed(70, 10),
   // v12 forkJoin: filled plain, stroked like the outline.
@@ -210,36 +215,46 @@ export const fork: Shape = {
     centred(w, W, H, { ...line, stroke: a.stroke, fill: line.stroke, filter: a.filter }, 2),
 };
 
+const hourglassPoints = (W: number, H: number): number[] => [
+  -W / 2,
+  -H / 2,
+  W / 2,
+  -H / 2,
+  -W / 2,
+  H / 2,
+  W / 2,
+  H / 2,
+];
+
 export const hourglass: Shape = {
   noLabel: true,
-  inset: (W, _H, side) => (side & 1 ? W / 2 : 0),
+  inset: /* @__PURE__ */ polygonInset(hourglassPoints),
+  span: narrow,
   size: /* @__PURE__ */ fixed(32, 40),
-  draw: (w, W, H, a) => poly(w, [-W / 2, -H / 2, W / 2, -H / 2, -W / 2, H / 2, W / 2, H / 2], a),
+  draw: (w, W, H, a) => poly(w, hourglassPoints(W, H), a),
 };
+
+const boltPoints = (W: number, H: number): number[] => [
+  W * 0.15,
+  -H / 2,
+  -W / 2,
+  H * 0.08,
+  -W * 0.05,
+  H * 0.08,
+  -W * 0.15,
+  H / 2,
+  W / 2,
+  -H * 0.08,
+  W * 0.05,
+  -H * 0.08,
+];
 
 export const bolt: Shape = {
   noLabel: true,
   size: /* @__PURE__ */ fixed(36, 56),
-  inset: (W, _H, side) => (side & 1 ? W / 4 : 0),
-  draw: (w, W, H, a) =>
-    poly(
-      w,
-      [
-        W * 0.15,
-        -H / 2,
-        -W / 2,
-        H * 0.08,
-        -W * 0.05,
-        H * 0.08,
-        -W * 0.15,
-        H / 2,
-        W / 2,
-        -H * 0.08,
-        W * 0.05,
-        -H * 0.08,
-      ],
-      a
-    ),
+  inset: /* @__PURE__ */ polygonInset(boltPoints),
+  span: roundSpan,
+  draw: (w, W, H, a) => poly(w, boltPoints(W, H), a),
 };
 
 export const crossedCircle: Shape = {
@@ -258,6 +273,7 @@ export const crossedCircle: Shape = {
 export const choice: PolygonShape = {
   noLabel: true,
   inset: rhombusInset,
+  span: roundSpan,
   size: /* @__PURE__ */ fixed(28, 28),
   points: rhombusPoints,
   draw: (w, W, H, a) => poly(w, rhombusPoints(W, H), a),
@@ -352,24 +368,35 @@ export const stackedRect: Shape = {
 
 export const triangle: Shape = {
   inset: /* @__PURE__ */ triInset(false),
+  span: flat,
   size: (tw, th, p) => triSize(tw, th, false, p.pad),
   draw: (w, W, H, a) => poly(w, [0, -H / 2, W / 2, H / 2, -W / 2, H / 2], a),
 };
 
 export const flippedTriangle: Shape = {
   inset: /* @__PURE__ */ triInset(true),
+  span: flat,
   size: (tw, th, p) => triSize(tw, th, true, p.pad),
   draw: (w, W, H, a) => poly(w, [-W / 2, -H / 2, W / 2, -H / 2, 0, H / 2], a),
 };
 
 export const slopedRect: Shape = {
-  inset: (_W, _H, side) => (side === 0 ? 5 : 0),
+  // The top falls 10 from left to right: 5 inside the box at the middle.
+  inset: (W, _H, side, t) => (side ? 0 : 5 - (10 * Math.max(-W / 2, Math.min(W / 2, t))) / W),
+  span: flat,
   size: /* @__PURE__ */ grown(0, 10, 5),
   draw: (w, W, H, a) =>
     poly(w, [-W / 2, -H / 2 + 10, W / 2, -H / 2, W / 2, H / 2, -W / 2, H / 2], a),
 };
 
 export const delay: Shape = {
+  // The right end is a half circle of radius H / 2.
+  inset: (W, H, side, t) => {
+    const r = H / 2;
+    if (side === 3) return 0;
+    return side === 1 ? bulge(t, r, r) : bulge(Math.max(0, t - W / 2 + r), r, r);
+  },
+  span: flat,
   size: /* @__PURE__ */ grown(0, 0, 0, 0.25),
   draw: (w, W, H, a) => {
     const r = H / 2;
@@ -387,6 +414,12 @@ export const delay: Shape = {
 
 /** v12 `h-cyl`: a cylinder on its side. */
 export const horizontalCylinder: Shape = {
+  // The caps, left and right, are half ellipses `queueRx` deep.
+  inset: (W, H, side, t) => {
+    const rx = queueRx(H);
+    return side & 1 ? bulge(t, H / 2, rx) : bulge(Math.max(0, Math.abs(t) - W / 2 + rx), rx, H / 2);
+  },
+  span: (W, H, s) => (s ? H * 0.6 : W - 2 * CORNER),
   size: (tw, th, p) => {
     const h = th + 2 * p.node.y;
     return { w: tw + 2 * p.node.x + 2 * queueRx(h), h, dy: 0 };
@@ -401,6 +434,15 @@ export const horizontalCylinder: Shape = {
 };
 
 export const curvedTrapezoid: Shape = {
+  // A point on the left, `k` deep, and a half ellipse `k` deep on the right.
+  inset: (W, H, side, t) => {
+    const k = H * 0.3;
+    const x = W / 2;
+    const y = H / 2;
+    if (side & 1) return side === 1 ? bulge(t, y, k) : k * Math.min(1, Math.abs(t) / y);
+    return t < k - x ? Math.min(y, (y * (k - x - t)) / k) : bulge(Math.max(0, t - x + k), k, y);
+  },
+  span: flat,
   size: /* @__PURE__ */ grown(0, 0, 0, 0.6),
   draw: (w, W, H, a) => {
     const x = W / 2;
@@ -421,7 +463,13 @@ export const curvedTrapezoid: Shape = {
 
 export const bowRect: Shape = {
   size: /* @__PURE__ */ grown(0, 0, 0, 0.4),
-  inset: (_W, H, side) => (side === 1 ? H * 0.2 : 0),
+  // Both ends are half ellipses `k` deep, bowed out on the left and in on the right.
+  inset: (W, H, side, t) => {
+    const k = H * 0.2;
+    if (side & 1) return side === 1 ? k - bulge(t, H / 2, k) : bulge(t, H / 2, k);
+    return bulge(Math.min(0, t + W / 2 - k), k, H / 2);
+  },
+  span: flat,
   draw: (w, W, H, a) => {
     const x = W / 2;
     const y = H / 2;
@@ -442,12 +490,14 @@ export const bowRect: Shape = {
 /** v12 `doc`: a box whose bottom is a wave. */
 export const doc: Shape = {
   inset: waveInset,
+  span: flat,
   size: /* @__PURE__ */ grown(0, 10, -5),
   draw: (w, W, H, a) => wave(w, W, H, a),
 };
 
 export const taggedDocument: Shape = {
   inset: waveInset,
+  span: flat,
   size: /* @__PURE__ */ grown(0, 10, -5),
   draw: (w, W, H, a, line) => {
     wave(w, W, H, a);
@@ -459,6 +509,7 @@ const sidesOfDocuments = /* @__PURE__ */ stackInset(STACK_DOC, WAVE.depth);
 const bottomOfDocuments = /* @__PURE__ */ stackedDocumentBottom(STACK_DOC);
 
 export const stackedDocument: Shape = {
+  span: (W, H, s) => (s ? H : W) - 2 * CORNER - 2 * STACK_DOC,
   inset: (W, H, side, t, p) =>
     side === 2 ? bottomOfDocuments(W, H, side, t, p) : sidesOfDocuments(W, H, side, t, p),
   size: /* @__PURE__ */ leftOf(
@@ -476,7 +527,12 @@ export const stackedDocument: Shape = {
 };
 
 export const flag: Shape = {
-  inset: (_W, _H, side) => (side & 1 ? 0 : 8),
+  // The waves are 8 inside the box and rise and fall 5 about that, as `waveDip` for a control of 10.
+  inset: (W, _H, side, t) => {
+    const u = Math.min(1, (2 * Math.abs(t)) / W);
+    return side & 1 ? 0 : 8 + 20 * u * (1 - u) * ((side === 0) === t < 0 ? -1 : 1);
+  },
+  span: flat,
   size: /* @__PURE__ */ grown(0, 16),
   draw: (w, W, H, a) => {
     const x = W / 2;
@@ -498,6 +554,7 @@ export const flag: Shape = {
 
 export const braceLeft: Shape = {
   bare: true,
+  span: flat,
   size: /* @__PURE__ */ grown(12, 0),
   draw: (w, W, H, _a, line) => {
     centred(w, W, H, NONE);
@@ -507,6 +564,7 @@ export const braceLeft: Shape = {
 
 export const braceRight: Shape = {
   bare: true,
+  span: flat,
   size: /* @__PURE__ */ grown(12, 0),
   draw: (w, W, H, _a, line) => {
     centred(w, W, H, NONE);
@@ -516,6 +574,7 @@ export const braceRight: Shape = {
 
 export const braces: Shape = {
   bare: true,
+  span: flat,
   size: /* @__PURE__ */ grown(24, 0),
   draw: (w, W, H, _a, line) => {
     centred(w, W, H, NONE);
@@ -533,19 +592,28 @@ export const datastore: Shape = {
   },
 };
 
+const folderPoints = (W: number, H: number): number[] => {
+  const x = W / 2;
+  const y = H / 2;
+  const tab = Math.min(W * 0.4, 48);
+  return [-x, -y, -x + tab, -y, -x + tab + 8, -y + 8, x, -y + 8, x, y, -x, y];
+};
+
 export const folder: Shape = {
+  inset: /* @__PURE__ */ polygonInset(folderPoints),
+  span: flat,
   size: (tw, th, p) => ({ w: Math.max(tw + 2 * p.node.x, 64), h: th + 2 * p.node.y + 8, dy: 4 }),
-  draw: (w, W, H, a) => {
-    const x = W / 2;
-    const y = H / 2;
-    const tab = Math.min(W * 0.4, 48);
-    poly(w, [-x, -y, -x + tab, -y, -x + tab + 8, -y + 8, x, -y + 8, x, y, -x, y], a);
-  },
+  draw: (w, W, H, a) => poly(w, folderPoints(W, H), a),
 };
 
 export const bucket: Shape = {
   size: /* @__PURE__ */ grown(20, 10, 3),
-  inset: (_W, H, side) => (side & 1 ? H / 12 : 0),
+  // Rims 5 deep, the sides drawn in by H / 6 from the top rim to the bottom one.
+  inset: (W, H, side, t) => {
+    if (side & 1) return (Math.min(1, Math.max(0, (t + H / 2 - 5) / (H - 10))) * H) / 6;
+    return bulge(t, side ? W / 2 - H / 6 : W / 2, 5);
+  },
+  span: (W, H, s) => (s ? H : W - H / 3) - 2 * CORNER,
   draw: (w, W, H, a, line) => {
     const x = W / 2;
     const y = H / 2;
@@ -594,6 +662,18 @@ export const browser: Shape = {
 
 // A head over a body in c4model.com's proportions (#683, `person.ts`).
 export const person: Shape = {
+  // Ends on top spread over the head, ends on the sides along the body and into its top corners.
+  inset: (W, H, side, t) => {
+    const { r, bodyTop } = personFigure(W, H);
+    const k = Math.min(CORNER, bodyTop + CORNER - t);
+    if (side & 1) return k > 0 ? CORNER - Math.sqrt(CORNER * CORNER - k * k) : 0;
+    if (side) return 0;
+    return Math.abs(t) < r ? bulge(t, r, r) : bodyTop + H / 2;
+  },
+  span: (W, H, s) => {
+    const { r, bodyTop } = personFigure(W, H);
+    return s ? -2 * bodyTop - CORNER : 1.2 * r;
+  },
   size: (tw, th, p) => {
     const w = Math.max(tw + 2 * p.node.x, 56);
     return { w, ...personSize(w, th + 2 * p.node.y) };
@@ -605,18 +685,22 @@ export const person: Shape = {
   },
 };
 
+function bangPoints(W: number, H: number): number[] {
+  const pts: number[] = [];
+  for (let i = 0; i < 28; i++) {
+    const angle = (Math.PI * i) / 14 - Math.PI / 2;
+    const k = i % 2 === 0 ? 1 : 0.82;
+    pts.push(Math.cos(angle) * (W / 2) * k, Math.sin(angle) * (H / 2) * k);
+  }
+  return pts;
+}
+
 export const bang: Shape = {
   size: /* @__PURE__ */ grown(28, 24),
-  inset: () => 3,
-  draw: (w, W, H, a) => {
-    const pts: number[] = [];
-    for (let i = 0; i < 28; i++) {
-      const angle = (Math.PI * i) / 14 - Math.PI / 2;
-      const k = i % 2 === 0 ? 1 : 0.82;
-      pts.push(Math.cos(angle) * (W / 2) * k, Math.sin(angle) * (H / 2) * k);
-    }
-    poly(w, pts, a);
-  },
+  // Ends stop on the polygon through the spikes' tips, so an arrowhead never reaches into a notch.
+  inset: /* @__PURE__ */ polygonInset((W, H) => bangPoints(W, H).filter((_, i) => i % 4 < 2)),
+  span: roundSpan,
+  draw: (w, W, H, a) => poly(w, bangPoints(W, H), a),
 };
 
 export const cloud: Shape = {

@@ -290,9 +290,9 @@ describe('the glyph slot (D293)', () => {
     expect(codes(r.warnings)).toEqual([]);
     const drawn = [...r.svg.matchAll(RE_GLYPH)];
     expect(drawn).toHaveLength(1);
-    // The frame's top-left corner.
-    const frame = /<rect x="(-?[\d.]+)" y="(-?[\d.]+)" width="64" height="64"/.exec(r.svg)!;
-    expect(drawn[0]!.slice(1, 3)).toEqual([frame[1], frame[2]]);
+    // Centred in the frame, which leaves half of flowchart.padding (15) around it (#1150).
+    const frame = /<rect x="(-?[\d.]+)" y="(-?[\d.]+)" width="71.5" height="71.5"/.exec(r.svg)!;
+    expect(drawn[0]!.slice(1, 3).map(Number)).toEqual([+frame[1]! + 3.75, +frame[2]! + 3.75]);
   });
 
   it("keeps the provider's fitting exact, as for a 2048-unit pack", async () => {

@@ -622,3 +622,70 @@ describe('straightenEdgeTerminals keeps labels off other edges (#8368)', () => {
     expect(edges[1]!.points).toEqual(forward().points);
   });
 });
+
+// ── render.spec.ts › straightenEdgeTerminals keeps the labels of a bidirectional pair apart ──
+// (v12 4e923dff0a, mermaid-js/mermaid#8580; v13 #1162). v12 refuses a plain overlap, the
+// default here; the engine passes `spacing.edge` as the least gap (`edge-clearance.spec.ts`).
+describe('straightenEdgeTerminals keeps the labels of a bidirectional pair apart', () => {
+  // The routes ELK produced for a one-line `A --> B` label and a two-line `B --> A` label in a
+  // larger diagram from the issue (default preset), before straightening. ELK leaves the two
+  // runs ~52px apart so the labels fit; straightening both pulls them onto the port rows, ~29px
+  // apart.
+  const forward = () => ({
+    id: 'L_A_B_0',
+    label: 'Pending records',
+    x: 2367.185691833496,
+    y: 38.324344635009766,
+    width: 152.53125,
+    height: 21,
+    points: [
+      { x: 2227.185691833496, y: 50.71622975667318 },
+      { x: 2247.185691833496, y: 50.71622975667318 },
+      { x: 2247.185691833496, y: 38.824344635009766 },
+      { x: 2487.185691833496, y: 38.824344635009766 },
+      { x: 2487.185691833496, y: 57.40767796834311 },
+      { x: 2507.185691833496, y: 57.40767796834311 },
+    ],
+  });
+  const back = () => ({
+    id: 'L_B_A_0',
+    label: 'Stores the reply or retry status',
+    x: 2367.185691833496,
+    y: 90.82434463500977,
+    width: 200,
+    height: 42,
+    points: [
+      { x: 2507.185691833496, y: 72.74101130167644 },
+      { x: 2487.185691833496, y: 72.74101130167644 },
+      { x: 2487.185691833496, y: 91.32434463500977 },
+      { x: 2247.185691833496, y: 91.32434463500977 },
+      { x: 2247.185691833496, y: 79.43245951334636 },
+      { x: 2227.185691833496, y: 79.43245951334636 },
+    ],
+  });
+  type Edge = ReturnType<typeof forward>;
+
+  const straightenAndProject = (edges: Edge[]) => {
+    for (const { edge, runs } of straightenEdgeTerminals(edges)) {
+      const projected = projectLabelOntoStraightenedRun({ x: edge.x, y: edge.y }, runs);
+      if (projected) [edge.x, edge.y] = [projected.x, projected.y];
+    }
+  };
+
+  const labelsOverlap = (a: Edge, b: Edge) =>
+    Math.abs(a.x - b.x) < (a.width + b.width) / 2 &&
+    Math.abs(a.y - b.y) < (a.height + b.height) / 2;
+
+  it.each([
+    ['forward first', () => [forward(), back()]],
+    ['back first', () => [back(), forward()]],
+  ])('does not straighten one run so far that the labels collide (%s)', (_, make) => {
+    const edges = make();
+    straightenAndProject(edges);
+
+    expect(labelsOverlap(edges[0]!, edges[1]!)).toBe(false);
+    // Only one of the pair can still be straightened.
+    expect(edges[0]!.points).not.toEqual(make()[0]!.points);
+    expect(edges[1]!.points).toEqual(make()[1]!.points);
+  });
+});

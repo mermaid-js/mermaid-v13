@@ -188,14 +188,23 @@ export const labelBox = (c: P, size: { width: number; height: number }): Box => 
   y2: c.y + size.height / 2,
 });
 
+/** Whether two boxes are closer than `gap` on both axes (with no gap: whether they overlap). */
+const tooClose = (a: Box, b: Box, gap: number): boolean =>
+  a.x1 < b.x2 + gap && b.x1 < a.x2 + gap && a.y1 < b.y2 + gap && b.y1 < a.y2 + gap;
+
 /**
  * Straightens the step on every edge that has one, unless that adds a crossing with another
- * edge or puts a label over an edge (net counts, both directions). Runs over the finished
- * layout because the decision needs the other edges. Writes each changed edge's `points` and
- * returns, per changed edge, the runs that moved; the caller carries its label along.
+ * edge, puts a label over an edge, or brings two labels closer than `labelGap` (net counts, both
+ * directions). The last is v12's label-against-label term (mermaid-js/mermaid#8580), with the gap
+ * the built-in engine keeps between labels (`spacing.edge`, #1162): of a bidirectional labelled
+ * pair whose runs both close in on their port rows, the second keeps its step. Runs over the
+ * finished layout because the decision needs the other edges. Writes each changed edge's
+ * `points` and returns, per changed edge, the runs that moved; the caller carries its label
+ * along.
  */
 export function straightenEdgeTerminals<E extends StraightenEdge>(
-  edges: E[]
+  edges: E[],
+  labelGap = 0
 ): { edge: E; runs: StraightenedRun[] }[] {
   const routes = edges.map((edge) => edge.points);
   const labels = edges.map((edge) =>
@@ -209,6 +218,8 @@ export function straightenEdgeTerminals<E extends StraightenEdge>(
       !!box && route.some((p, i) => i < route.length - 1 && segmentHitsBox(p, route[i + 1]!, box))
     );
   };
+  const crowds = (a: (typeof labels)[number], b: (typeof labels)[number]) =>
+    !!a && !!b && tooClose(labelBox(a.centre, a.size), labelBox(b.centre, b.size), labelGap);
   const changed: { edge: E; runs: StraightenedRun[] }[] = [];
   for (const [index, edge] of edges.entries()) {
     const original = routes[index]!;
@@ -227,9 +238,14 @@ export function straightenEdgeTerminals<E extends StraightenEdge>(
       if (other === index || route.length < 2) continue;
       before += crossingCount(original, route);
       after += crossingCount(candidate, route);
-      coveredBefore += Number(covers(route, label)) + Number(covers(original, labels[other]));
+      coveredBefore +=
+        Number(covers(route, label)) +
+        Number(covers(original, labels[other])) +
+        Number(crowds(label, labels[other]));
       coveredAfter +=
-        Number(covers(route, candidateLabel)) + Number(covers(candidate, labels[other]));
+        Number(covers(route, candidateLabel)) +
+        Number(covers(candidate, labels[other])) +
+        Number(crowds(candidateLabel, labels[other]));
     }
     if (after > before || coveredAfter > coveredBefore) continue;
     edge.points = candidate;

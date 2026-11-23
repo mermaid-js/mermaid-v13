@@ -136,7 +136,7 @@ e2e/diagrams/flowchart/baseline/text/unicode.mmd 1 e9185ced13a22421
 e2e/diagrams/flowchart/baseline/text/wrapping-markdown.mmd 1 c1f994f384d42554
 e2e/diagrams/flowchart/baseline/text/wrapping.mmd 1 19cbb61f6b5a9da9
 e2e/diagrams/flowchart/baseline/themes/base-dark-background.mmd 1 56073cc255f52aa7
-e2e/diagrams/flowchart/baseline/themes/base-primary-only.mmd 1 e148ec61d58a9da1
+e2e/diagrams/flowchart/baseline/themes/base-primary-only.mmd 1 b0ec4c0a50ce916c
 e2e/diagrams/flowchart/baseline/themes/base.mmd 1 42a35cf4b0ecf70d
 e2e/diagrams/flowchart/baseline/themes/dark.mmd 1 a047b08c0a390cee
 e2e/diagrams/flowchart/baseline/themes/default.mmd 1 e540a5a5973591e3
@@ -165,7 +165,7 @@ e2e/diagrams/flowchart/nightly-check/dagre/2388-dagre-handling-default-in-the-no
 e2e/diagrams/flowchart/nightly-check/dagre/2824-dagre-clipping-of-edges.mmd 1 37f79d9edd6f1562
 e2e/diagrams/flowchart/nightly-check/dagre/3-dagre-a-link-with-correct-arrowhead-to-a-subgraph.mmd 1 966cc35925c05189
 e2e/diagrams/flowchart/nightly-check/dagre/4-dagre-length-of-edges.mmd 1 264bd723ae5f7324
-e2e/diagrams/flowchart/nightly-check/dagre/5-dagre-should-render-escaped-without-html-labels.mmd 1 d9fbe200b9fca2fa
+e2e/diagrams/flowchart/nightly-check/dagre/5-dagre-should-render-escaped-without-html-labels.mmd 1 482a076a74158f77
 e2e/diagrams/flowchart/nightly-check/dagre/50-dagre-handle-nested-subgraphs-in-reverse-order.mmd 1 bbd48c0e390decc4
 e2e/diagrams/flowchart/nightly-check/dagre/51-dagre-handle-nested-subgraphs-in-reverse-order.mmd 1 5d696dc32f8b69b6
 e2e/diagrams/flowchart/nightly-check/dagre/52-dagre-handle-nested-subgraphs-in-several-levels.mmd 1 ff272f265071d477
@@ -242,7 +242,7 @@ e2e/diagrams/flowchart/nightly-check/handdrawn/handle-styling-with-style-express
 e2e/diagrams/flowchart/nightly-check/handdrawn/keep-node-label-text-if-already-defined-when-a-style-is-applied.mmd 1 3821138ee023c6b8
 e2e/diagrams/flowchart/nightly-check/handdrawn/multiple-nodes-and-chaining-in-one-statement-2.mmd 1 2aabaf0d79b984ea
 e2e/diagrams/flowchart/nightly-check/handdrawn/multiple-nodes-and-chaining-in-one-statement.mmd 1 4d3294816a8b1f30
-e2e/diagrams/flowchart/nightly-check/handdrawn/possibility-to-style-text-color-of-nodes-and-subgraphs-as-well-as-apply-classes-to-subgraphs.mmd 1 3d75e52745919ef4
+e2e/diagrams/flowchart/nightly-check/handdrawn/possibility-to-style-text-color-of-nodes-and-subgraphs-as-well-as-apply-classes-to-subgraphs.mmd 1 8794902de5cc396d
 e2e/diagrams/flowchart/nightly-check/handdrawn/render-a-simple-flowchart-with-nodespacing-set-to-100.mmd 1 1693564cf8b34094
 e2e/diagrams/flowchart/nightly-check/handdrawn/render-a-simple-flowchart-with-rankspacing-set-to-100.mmd 1 156dd2aec980bb53
 e2e/diagrams/flowchart/nightly-check/handdrawn/render-cylindrical-shape.mmd 1 ffb6c9b0275b619b
@@ -251,7 +251,7 @@ e2e/diagrams/flowchart/nightly-check/handdrawn/render-stadium-shape.mmd 1 b2159e
 e2e/diagrams/flowchart/nightly-check/handdrawn/render-subroutine-shape.mmd 1 501edf01139da1b1
 e2e/diagrams/flowchart/nightly-check/handdrawn/set-text-color-of-nodes-and-links-according-to-styles-when-html-labels-are-disabled.mmd 1 d10072f56c0bd158
 e2e/diagrams/flowchart/nightly-check/handdrawn/set-text-color-of-nodes-and-links-according-to-styles-when-html-labels-are-enabled.mmd 1 77aefd20a8bbf799
-e2e/diagrams/flowchart/nightly-check/handdrawn/should-be-able-to-style-default-node-independently.mmd 1 d16b610d25e6248f
+e2e/diagrams/flowchart/nightly-check/handdrawn/should-be-able-to-style-default-node-independently.mmd 1 98f4f2196fbd8858
 e2e/diagrams/flowchart/nightly-check/handdrawn/should-honor-minimum-edge-length-as-specified-by-the-user.mmd 1 54ae534362772aa1
 e2e/diagrams/flowchart/nightly-check/handdrawn/should-not-slice-off-edges-that-are-to-the-left-of-the-left-most-vertex.mmd 1 9545a2547d5edf1d
 e2e/diagrams/flowchart/nightly-check/handdrawn/should-redirect-a-collapsed-subgraph-using-the-handdrawn-look.mmd 3 5dd368a7e1250e39
@@ -265,7 +265,7 @@ e2e/diagrams/flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-
 e2e/diagrams/flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-with-line-breaks.mmd 1 1bde527849a55cac
 e2e/diagrams/flowchart/nightly-check/handdrawn/should-render-a-simple-flowchart-with-trapezoid-and-inverse-trapezoid-vertex-options.mmd 1 493403fd95901ce5
 e2e/diagrams/flowchart/nightly-check/handdrawn/should-render-color-of-styled-nodes.mmd 1 2c0a1640c4228a33
-e2e/diagrams/flowchart/nightly-check/handdrawn/should-render-escaped-without-html-labels.mmd 1 16a1dcc71e7f61c1
+e2e/diagrams/flowchart/nightly-check/handdrawn/should-render-escaped-without-html-labels.mmd 1 349d48b35fd51786
 e2e/diagrams/flowchart/nightly-check/handdrawn/should-render-hexagons.mmd 1 40b1b9e93b63dd54
 e2e/diagrams/flowchart/nightly-check/handdrawn/should-render-labels-with-numbers-at-the-start.mmd 1 5f2dc41908b2f76f
 e2e/diagrams/flowchart/nightly-check/handdrawn/should-render-non-escaped-with-html-labels.mmd 1 6cb6309c2b0d0ea9
@@ -445,14 +445,14 @@ e2e/diagrams/flowchart/visual-check/3258-should-render-subgraphs-with-main-graph
 e2e/diagrams/flowchart/visual-check/33-should-render-a-simple-flowchart-with-diagrampadding-set-to-0.mmd 1 872e94ac2d52d246
 e2e/diagrams/flowchart/visual-check/34-testing-the-label-width-in-percy.mmd 1 e325dec763da8b3a
 e2e/diagrams/flowchart/visual-check/35-should-honor-minimum-edge-length-as-specified-by-the-user.mmd 1 e83cac6e51e9c2d7
-e2e/diagrams/flowchart/visual-check/36-should-render-escaped-without-html-labels.mmd 1 64d735c2f1ddbf23
+e2e/diagrams/flowchart/visual-check/36-should-render-escaped-without-html-labels.mmd 1 a0a09f2441c8f666
 e2e/diagrams/flowchart/visual-check/37-should-render-non-escaped-with-html-labels.mmd 1 61410199dd243352
 e2e/diagrams/flowchart/visual-check/4-length-of-edges.mmd 1 82115d7ca565296c
 e2e/diagrams/flowchart/visual-check/4-should-render-a-simple-flowchart-with-trapezoid-and-inverse-trapezoid-vertex-options.mmd 1 28779dc809018b9e
 e2e/diagrams/flowchart/visual-check/4023-should-render-html-labels-with-images-and-or-text-correctly.mmd 1 c8565d01a0d3be95
 e2e/diagrams/flowchart/visual-check/4439-should-render-the-graph-even-if-some-images-are-missing.mmd 1 6c7a486089e054fd
 e2e/diagrams/flowchart/visual-check/4b-labeled-open-edges-should-not-have-arrowheads.mmd 1 4def8652d9d63f9a
-e2e/diagrams/flowchart/visual-check/5-should-render-escaped-without-html-labels.mmd 1 852068ef20d45175
+e2e/diagrams/flowchart/visual-check/5-should-render-escaped-without-html-labels.mmd 1 fac66d2fcfe33ba9
 e2e/diagrams/flowchart/visual-check/5-should-style-nodes-via-a-class.mmd 1 1eae3d8b916032ec
 e2e/diagrams/flowchart/visual-check/50-handle-nested-subgraphs-in-reverse-order.mmd 1 3b753649929b6e85
 e2e/diagrams/flowchart/visual-check/5059-should-render-when-subgraph-contains-only-subgraphs-has-link-to-outside-and-itself-is-part-of-a-link.mmd 1 9112183b0b8d7f12
