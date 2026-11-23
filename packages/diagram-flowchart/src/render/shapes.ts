@@ -63,7 +63,7 @@ import {
   trapezoidBottom,
   trapezoidTop,
 } from '@mermaid-js/shared/shapes/basic';
-import type { Pads, Shape, ShapeSize } from '@mermaid-js/shared/shapes/kit';
+import type { Frame, FramedPads, Pads, Shape, ShapeSize } from '@mermaid-js/shared/shapes/kit';
 import { SHAPE_GROUPS } from '../parser/shapes.ts';
 
 export type { Pads, ShapeSize };
@@ -146,17 +146,23 @@ export interface ShapeDraw {
   readonly attrs: Attrs;
   readonly lines: Attrs;
   readonly pads: Pads;
+  /** The frame the size gave, for a shape whose box does not fix it (the cloud's). */
+  readonly frame?: Frame;
 }
 
+/** The pads with the frame a shape's size gave, where it gave one (the cloud's). */
+export const framed = (pads: Pads, frame: Frame | undefined): FramedPads =>
+  frame ? { ...pads, frame } : pads;
+
 export const drawShape = (d: ShapeDraw): void =>
-  def(d.kind).draw(d.w, d.width, d.height, d.attrs, d.lines, d.pads);
+  def(d.kind).draw(d.w, d.width, d.height, d.attrs, d.lines, framed(d.pads, d.frame));
 export const shapeInset = (
   shape: string,
   W: number,
   H: number,
   side: number,
   t: number,
-  p: Pads
+  p: FramedPads
 ): number => def(shape).inset?.(W, H, side, t, p) ?? 0;
 export const shapeSpan = (shape: string, W: number, H: number, sideways: boolean): number =>
   Math.max(0, def(shape).span?.(W, H, sideways) ?? 0);

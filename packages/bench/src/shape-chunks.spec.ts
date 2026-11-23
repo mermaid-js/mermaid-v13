@@ -32,7 +32,11 @@ describe('shared shape chunks (#822)', () => {
   });
 
   it('loads every shape file for flowchart, which can name any shape', () => {
-    expect(shapeFiles('flowchart')).toEqual(['basic.ts', 'extended.ts', 'kit.ts']);
+    expect(shapeFiles('flowchart')).toEqual(['basic.ts', 'extended.ts', 'kit.ts', 'outline.ts']);
+  });
+
+  it("loads only the cloud's outline for mindmap, which shares it with flowchart (D683)", () => {
+    expect(shapeFiles('mindmap')).toEqual(['outline.ts']);
   });
 
   it('loads no extended shape for agentflow and block, which draw only basic ones', () => {

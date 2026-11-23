@@ -70,6 +70,16 @@ export function themePads(theme: Theme, pad: number): Pads {
   };
 }
 
+/**
+ * The frame round the label that a shape's outline is drawn about, where the box alone does not
+ * fix it: v12's cloud bulges out of its frame, and boxes of one size hold clouds of up to three
+ * frames.
+ */
+export interface Frame {
+  readonly w: number;
+  readonly h: number;
+}
+
 export interface ShapeSize {
   readonly w: number;
   readonly h: number;
@@ -77,6 +87,13 @@ export interface ShapeSize {
   readonly dy: number;
   /** Shift of the label sideways from the shape's centre; none when absent. */
   readonly dx?: number;
+  /** The frame, for a shape whose box does not fix it; a diagram passes it back in {@link FramedPads}. */
+  readonly frame?: Frame;
+}
+
+/** The pads a shape is drawn and its edges are ended with, and the frame its size gave. */
+export interface FramedPads extends Pads {
+  readonly frame?: Frame;
 }
 
 /** A shape's size about a label box `tw` × `th`. */
@@ -84,9 +101,16 @@ export type Sizer = (tw: number, th: number, p: Pads) => ShapeSize;
 /**
  * Draws a `W` × `H` shape centred on the origin: `a` paints its outline, `line` its inner lines.
  */
-export type Drawer = (w: SvgWriter, W: number, H: number, a: Attrs, line: Attrs, p: Pads) => void;
+export type Drawer = (
+  w: SvgWriter,
+  W: number,
+  H: number,
+  a: Attrs,
+  line: Attrs,
+  p: FramedPads
+) => void;
 /** Distance from the box to the outline on a side (0 top, 1 right, 2 bottom, 3 left), `t` along the side. */
-export type Inset = (W: number, H: number, side: number, t: number, p: Pads) => number;
+export type Inset = (W: number, H: number, side: number, t: number, p: FramedPads) => number;
 /** How much of a side edges may spread along (top/bottom, or left/right when sideways). */
 export type Span = (W: number, H: number, sideways: boolean) => number;
 
@@ -137,7 +161,7 @@ export const flatAcross =
  * follows a slant, a notch or a point wherever along the side an end is.
  */
 export const polygonInset =
-  (points: (W: number, H: number, p: Pads) => number[]): Inset =>
+  (points: (W: number, H: number, p: FramedPads) => number[]): Inset =>
   (W, H, side, t, p) => {
     const c = points(W, H, p);
     // `u` indexes the coordinate along the side, `u ^ 1` the one across it.

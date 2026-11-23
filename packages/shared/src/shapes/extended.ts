@@ -4,8 +4,9 @@
 // from Pele's src/svg/shapes.ts @ 3a2f075 (https://github.com/obsidianmd/pele, MIT, (c) 2026
 // kepano), with v12's shape names and the theme's padding and radius tokens.
 // cspell:ignore kepano
-import { translate, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
+import { checkStyle, translate, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
 import { drawCylinder, rhombusInset, rhombusPoints, waveInset } from './basic.ts';
+import { cloudOutline, outlineBox, outlinePoints, type Box, type Outline } from './outline.ts';
 import {
   box,
   bulge,
@@ -34,6 +35,7 @@ import {
   waveDip,
   type Inset,
   type Barrel,
+  type Frame,
   type PolygonShape,
   type Shape,
   type ShapeSize,
@@ -189,15 +191,15 @@ export const filledCircle: Shape = {
     }),
 };
 
+/** v12 `stateEnd` as flowchart drew it: a ring 14 across round one 5 across, both hollow (D683). */
 export const framedCircle: Shape = {
   noLabel: true,
-  plain: true,
   inset: roundInset,
   span: roundSpan,
-  size: /* @__PURE__ */ fixed(18, 18),
-  draw: (w, W, _H, a, line) => {
+  size: /* @__PURE__ */ fixed(14, 14),
+  draw: (w, W, _H, a) => {
     drawCircle(w, W / 2, a);
-    drawCircle(w, W / 2 - 4, { ...line, fill: line.stroke }, 'part');
+    drawCircle(w, (W * 5) / 28, { ...a, filter: undefined }, 'part');
   },
 };
 
@@ -206,13 +208,11 @@ const narrow: Span = (W, H, s) => (s ? H : W) - 8;
 
 export const fork: Shape = {
   noLabel: true,
-  plain: true,
   span: narrow,
   // v12 forkJoin is 70 × 10 (D604); a diagram that flows sideways swaps the two.
   size: /* @__PURE__ */ fixed(70, 10),
-  // v12 forkJoin: filled plain, stroked like the outline.
-  draw: (w, W, H, a, line) =>
-    centred(w, W, H, { ...line, stroke: a.stroke, fill: line.stroke, filter: a.filter }, 2),
+  // v12 flowcharts drew the bar hollow, with square corners, as any outline (D683).
+  draw: (w, W, H, a) => centred(w, W, H, a),
 };
 
 const hourglassPoints = (W: number, H: number): number[] => [
@@ -526,29 +526,39 @@ export const stackedDocument: Shape = {
   },
 };
 
+/**
+ * v12 `waveRectangle`: a body `h = th + pad` high whose top and bottom are each one sine cycle
+ * `h / 8` deep (`H / 12` in its `1.5 h` box), the top right bulging up and the bottom left down.
+ * How far both lines are above where they cross the sides, at `x`.
+ */
+const flagWave = (W: number, H: number, x: number): number =>
+  (H / 12) * Math.sin((2 * Math.PI * x) / W);
+
+/** v12's 50 steps along each side. */
+const FLAG_STEPS = 50;
+
 export const flag: Shape = {
-  // The waves are 8 inside the box and rise and fall 5 about that, as `waveDip` for a control of 10.
-  inset: (W, _H, side, t) => {
-    const u = Math.min(1, (2 * Math.abs(t)) / W);
-    return side & 1 ? 0 : 8 + 20 * u * (1 - u) * ((side === 0) === t < 0 ? -1 : 1);
+  // `a` (H / 12) at the side's middle, rising and falling `a` about it.
+  inset: (W, H, side, t) => {
+    const a = H / 12;
+    const at = Math.min(W / 2, Math.max(-W / 2, t));
+    return side & 1 ? 0 : a + (side ? 1 : -1) * flagWave(W, H, at);
   },
-  span: flat,
-  size: /* @__PURE__ */ grown(0, 16),
+  // The sides are `2a` shorter than the box.
+  span: (W, H, s) => (s ? H - H / 6 : W) - 2 * CORNER,
+  size: (tw, th, p) => ({ w: tw + 2 * p.pad, h: 1.5 * (th + p.pad), dy: 0 }),
   draw: (w, W, H, a) => {
-    const x = W / 2;
-    const y = H / 2 - 8;
-    const q = W / 4;
-    const d = w
-      .path()
-      .moveTo(-x, -y)
-      .quadTo(-x + q, -y - 10, 0, -y)
-      .quadTo(x - q, -y + 10, x, -y)
-      .lineTo(x, y)
-      .quadTo(x - q, y + 10, 0, y)
-      .quadTo(-x + q, y - 10, -x, y)
-      .close()
-      .done();
-    w.outline('node', 'path', { d, ...a });
+    const y = H / 2 - H / 12;
+    const points: number[] = [];
+    for (let i = 0; i <= FLAG_STEPS; i++) {
+      const x = -W / 2 + (W * i) / FLAG_STEPS;
+      points.push(x, y - flagWave(W, H, x));
+    }
+    for (let i = 0; i <= FLAG_STEPS; i++) {
+      const x = W / 2 - (W * i) / FLAG_STEPS;
+      points.push(x, -y - flagWave(W, H, x));
+    }
+    poly(w, points, a);
   },
 };
 
@@ -636,27 +646,53 @@ export const bucket: Shape = {
   },
 };
 
+/** v12's console and browser windows: rounded 12, at least 90 wide, `band` over the label. */
+const windowSize =
+  (band: number): Sizer =>
+  (tw, th, p) => ({ w: Math.max(tw + 2 * p.pad, 90), h: th + 2 * p.pad + band, dy: band / 2 });
+
+/** v12 `consoleWindow`: the prompt `>_` in the top left, as text in the border colour. */
 export const terminal: Shape = {
+  plain: true,
   span: flat,
-  size: (tw, th, p) => ({ w: Math.max(tw + 2 * p.node.x, 72), h: th + 2 * p.node.y + 12, dy: 6 }),
+  size: /* @__PURE__ */ windowSize(20),
   draw: (w, W, H, a, line) => {
-    const x = -W / 2;
-    const y = -H / 2;
-    centred(w, W, H, a);
-    // prettier-ignore
-    lines(w, [x, y + 12, -x, y + 12, x + 7, y + 4, x + 10, y + 6.5, x + 10, y + 6.5, x + 7, y + 9, x + 13, y + 9, x + 17, y + 9], line);
+    centred(w, W, H, a, 12);
+    w.open('text', {
+      x: -W / 2 + 12,
+      y: -H / 2 + 16,
+      ...checkStyle(['font-family:monospace']).text,
+      'font-weight': 'bold',
+      'font-size': 14,
+      fill: line.stroke,
+    });
+    w.text('>_');
+    w.close();
   },
 };
 
+/** v12 `browser`: an 18 high bar of three dots and an address bar, in the border colour. */
 export const browser: Shape = {
   plain: true,
   span: flat,
-  size: (tw, th, p) => ({ w: Math.max(tw + 2 * p.node.x, 72), h: th + 2 * p.node.y + 12, dy: 6 }),
+  size: /* @__PURE__ */ windowSize(18),
   draw: (w, W, H, a, line) => {
-    centred(w, W, H, a);
-    lines(w, [-W / 2, -H / 2 + 12, W / 2, -H / 2 + 12], line);
+    const x = -W / 2;
+    const y = -H / 2;
+    centred(w, W, H, a, 12);
+    lines(w, [x, y + 18, -x, y + 18], line);
     for (let i = 0; i < 3; i++)
-      drawCircle(w, 1.5, { ...line, fill: 'none' }, 'mark', -W / 2 + 8 + i * 7, -H / 2 + 6);
+      drawCircle(w, 2.5, { fill: line.stroke, stroke: 'none' }, 'mark', x + 12 + i * 9, y + 9);
+    w.outline('divider', 'rect', {
+      x: x + 44,
+      y: y + 4,
+      width: Math.max(W - 56, 10),
+      height: 10,
+      rx: 3,
+      ...line,
+      fill: 'none',
+      opacity: 0.6,
+    });
   },
 };
 
@@ -703,22 +739,34 @@ export const bang: Shape = {
   draw: (w, W, H, a) => poly(w, bangPoints(W, H), a),
 };
 
+/** v12's cloud round a frame and how far it moves to centre the box it covers at 0. */
+function placedCloud({ w, h }: Frame): { o: Outline; b: Box; dx: number; dy: number } {
+  const o = cloudOutline(w, h);
+  const b = outlineBox(o);
+  return { o, b, dx: -(b.x0 + b.x1) / 2, dy: -(b.y0 + b.y1) / 2 };
+}
+
+/**
+ * v12 `cloud`: ten arcs round the label and its padding (the frame), which bulge out of it; the
+ * node is the box they cover, the label at the frame's centre (as mindmap's cloud, D683). Edge
+ * ends stop on the arcs, each in 16 straight pieces (under 0.2 off them). Without a frame, the
+ * box is taken for one.
+ */
 export const cloud: Shape = {
-  size: /* @__PURE__ */ grown(32, 24),
-  inset: (_W, _H, side) => (side & 1 ? 2 : 1),
-  draw: (w, W, H, a) => {
-    const x = W / 2;
-    const y = H / 2;
-    const r = y * 0.55;
-    const d = w
-      .path()
-      .moveTo(-x + r, y)
-      .arcTo(r, r, 0, false, true, -x + r * 0.6, -y * 0.1)
-      .arcTo(x * 0.42, y * 0.7, 0, false, true, -x * 0.1, -y * 0.72)
-      .arcTo(x * 0.4, y * 0.62, 0, false, true, x * 0.62, -y * 0.42)
-      .arcTo(r * 1.05, r * 1.05, 0, false, true, x - r, y)
-      .close()
-      .done();
-    w.outline('node', 'path', { d, ...a });
+  size: (tw, th, p) => {
+    const frame = { w: tw + p.pad, h: th + p.pad };
+    const { b, dx, dy } = placedCloud(frame);
+    return { w: b.x1 - b.x0, h: b.y1 - b.y0, dx, dy, frame };
+  },
+  inset: /* @__PURE__ */ polygonInset((W, H, p) => {
+    const { o, dx, dy } = placedCloud(p.frame ?? { w: W, h: H });
+    return outlinePoints(o, 16, dx, dy);
+  }),
+  span: roundSpan,
+  draw: (w, W, H, a, _line, p) => {
+    const { o, dx, dy } = placedCloud(p.frame ?? { w: W, h: H });
+    const d = w.path().moveTo(o.start.x + dx, o.start.y + dy);
+    for (const c of o.arcs) d.arcTo(c.rx, c.ry, c.rotation, c.large, c.sweep, c.x + dx, c.y + dy);
+    w.outline('node', 'path', { d: d.close().done(), ...a });
   },
 };

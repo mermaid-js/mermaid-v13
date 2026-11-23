@@ -12,7 +12,13 @@ import type { MindmapModel, MindmapShape } from '../model.ts';
 import type { MindmapLayoutContext } from './context.ts';
 import { MINDMAP_METRICS, type ShapeMetrics } from './metrics.ts';
 import { v12Label } from '@mermaid-js/core/text/v12-label';
-import { bangOutline, cloudOutline, outlineBox, type Outline, type Point } from './outline.ts';
+import { bangOutline } from './outline.ts';
+import {
+  cloudOutline,
+  outlineBox,
+  type Outline,
+  type Point,
+} from '@mermaid-js/shared/shapes/outline';
 import { NUMERIC } from '@mermaid-js/shared/config/readers';
 
 /** A config value the layout can't honour (pitfall 22): it lays out with the default instead. */

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { streamWriter, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
+import { checkColor, streamWriter, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
+import { cloudOutline, outlineBox } from '@mermaid-js/shared/shapes/outline';
 import { shapeNames } from '../parser/shapes.ts';
 import {
   canonicalShape,
@@ -8,8 +9,10 @@ import {
   shapeInset,
   shapeSize,
   shapeSpan,
+  framed,
   type Pads,
 } from './shapes.ts';
+import type { Frame } from '@mermaid-js/shared/shapes/kit';
 
 const xy = { x: 16, y: 8 };
 const PADS: Pads = {
@@ -96,9 +99,9 @@ describe('the person shape (#683)', () => {
 type Pt = readonly [number, number];
 
 /** The closed outlines a shape's markup draws, every layer as one polygon (waves flattened). */
-function outlines(kind: string, W: number, H: number): Pt[][] {
+function outlines(kind: string, W: number, H: number, frame?: Frame): Pt[][] {
   const w = streamWriter();
-  drawShape({ kind, w, width: W, height: H, attrs: {}, lines: {}, pads: PADS });
+  drawShape({ kind, w, width: W, height: H, attrs: {}, lines: {}, pads: PADS, frame });
   const svg = w.finish();
   const shift: Pt[] = [[0, 0]];
   const polygons: Pt[][] = [];
@@ -211,8 +214,8 @@ function against(poly: Pt[], p: Pt): { dist: number; inside: boolean } {
 }
 
 /** Where an edge meeting `side` of the box at `t` ends once the shape's inset is applied. */
-function edgeEnd(kind: string, W: number, H: number, side: number, t: number): Pt {
-  const a = shapeInset(kind, W, H, side, t, PADS);
+function edgeEnd(kind: string, W: number, H: number, side: number, t: number, frame?: Frame): Pt {
+  const a = shapeInset(kind, W, H, side, t, framed(PADS, frame));
   if (side === 0) return [t, -H / 2 + a];
   if (side === 2) return [t, H / 2 - a];
   return side === 1 ? [W / 2 - a, t] : [-W / 2 + a, t];
@@ -336,18 +339,18 @@ const CORNER = 12;
 /** The layout's pitches between ends on one side (`portPitch`, `minPitch`, core `units.ts`). */
 const PORT_PITCH = 16;
 const MIN_PITCH = 8;
-/** Drawn shapes whose ends stay at the middle of a side: a point, and B4's (#1167) new cloud. */
-const UNSPREAD = ['anchor', 'cloud'];
+/** Drawn shapes whose ends stay at the middle of a side: a point. */
+const UNSPREAD = ['anchor'];
 /** The shapes #1157 and #1164 give a span, and the slanted family's sideways one (#1149). */
 const SPREAD = [
   ...['hourglass', 'bolt', 'tri', 'flip-tri', 'sl-rect', 'h-cyl', 'delay', 'curv-trap'],
   ...['bow-rect', 'doc', 'tag-doc', 'lin-doc', 'docs', 'flag', 'folder', 'bucket', 'person'],
-  ...['bang', 'choice', 'brace', 'brace-r', 'braces'],
+  ...['bang', 'choice', 'brace', 'brace-r', 'braces', 'cloud', 'browser', 'console'],
   ...['lean-r', 'lean-l', 'trap-b', 'trap-t', 'odd'],
 ];
 
 describe('edge ends spread along every shape (#1149, #1157, #1164)', () => {
-  it('gives every drawn shape a span both ways but a point and the cloud', () => {
+  it('gives every drawn shape a span both ways but a point', () => {
     const drawn = [...new Set(shapeNames().map(canonicalShape))].filter(isDrawnShape);
     const none = drawn.filter((kind) => {
       const { w, h } = shapeSize(kind, 80, 20, PADS);
@@ -365,7 +368,7 @@ describe('edge ends spread along every shape (#1149, #1157, #1164)', () => {
   )(
     'ends two edges on one side of %s apart and every end on the outline, sideways %s, label %s × %s',
     (kind, sideways, tw, th) => {
-      const { w: W, h: H } = shapeSize(kind, tw, th, PADS);
+      const { w: W, h: H, frame } = shapeSize(kind, tw, th, PADS);
       const span = shapeSpan(kind, W, H, sideways);
       // Two edges on a side get places at least `minPitch` apart, where the side has room for
       // that past its corners (a lean shape 33.6 high gives 9.6, decision 2 of #1163).
@@ -373,16 +376,16 @@ describe('edge ends spread along every shape (#1149, #1157, #1164)', () => {
       if (room) expect(span).toBeGreaterThanOrEqual(MIN_PITCH);
       const pitch = Math.min(PORT_PITCH, span);
       // A bang's ends stop on the polygon through its spikes' tips, not in the notches.
-      const drawn = outlines(kind, W, H);
+      const drawn = outlines(kind, W, H, frame);
       const layers = kind === 'bang' ? [drawn[0]!.filter((_, i) => i % 2 === 0)] : drawn;
       const bad: string[] = [];
       for (const side of sideways ? [1, 3] : [0, 2]) {
-        const [a, b] = [-pitch / 2, pitch / 2].map((t) => edgeEnd(kind, W, H, side, t));
+        const [a, b] = [-pitch / 2, pitch / 2].map((t) => edgeEnd(kind, W, H, side, t, frame));
         if (room && Math.hypot(a![0] - b![0], a![1] - b![1]) < MIN_PITCH)
           bad.push(`side ${side} shared`);
         for (let k = -5; k <= 5; k++) {
           const t = (k / 10) * span;
-          if (!onOutline(layers, edgeEnd(kind, W, H, side, t)))
+          if (!onOutline(layers, edgeEnd(kind, W, H, side, t, frame)))
             bad.push(`side ${side} t ${t.toFixed(1)}`);
         }
       }
@@ -398,4 +401,154 @@ describe('edge ends spread along every shape (#1149, #1157, #1164)', () => {
       expect(against(outlines('bolt', W, H)[0]!, [x, y]).dist).toBeLessThan(1e-9);
     }
   );
+});
+
+const FILL = checkColor('#ffffff')!;
+const INK = checkColor('#333333')!;
+
+/** The elements a shape writes, in order, with their attributes and text. */
+function elements(kind: string, tw: number, th: number) {
+  const size = shapeSize(kind, tw, th, PADS);
+  const w = streamWriter();
+  drawShape({
+    kind,
+    w,
+    width: size.w,
+    height: size.h,
+    attrs: { fill: FILL, stroke: INK, 'stroke-width': 2 },
+    lines: { stroke: INK, 'stroke-width': 2 },
+    pads: PADS,
+    frame: size.frame,
+  });
+  const els = [...w.finish().matchAll(/<(\w+)([^>]*?)\/?>([^<]*)/g)].map(
+    ([, tag, attrs, text]) => ({
+      tag: tag!,
+      text: text!,
+      ...Object.fromEntries(
+        [...attrs!.matchAll(/([\w:-]+)="([^"]*)"/g)].map(([, k, v]) => [k!, v!])
+      ),
+    })
+  ) as ({ tag: string; text: string } & Record<string, string>)[];
+  return { size, els };
+}
+
+/** The box a set of polygons covers. */
+function boxOf(polys: Pt[][]) {
+  const xs = polys.flat().map((p) => p[0]);
+  const ys = polys.flat().map((p) => p[1]);
+  return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
+}
+
+// v12 at 63333fd8db (`browser.ts`, `console.ts`, `cloud.ts`, `waveRectangle.ts`, `forkJoin.ts`,
+// `stateEnd.ts`), with v12's `padding` (15, PADS.pad) round the label; fork and fr-circ hollow,
+// as v12 flowcharts showed them (decision 4 of #1163).
+describe('the v12 look of browser, cloud, console, flag, fork and fr-circ (#1152, #1167)', () => {
+  it('browser: rounded 12, at least 90 wide, an 18 high bar with three dots and an address bar', () => {
+    const { size, els } = elements('browser', 40, 20);
+    expect(size).toEqual({ w: 90, h: 68, dy: 9 });
+    expect(shapeSize('browser', 200, 20, PADS).w).toBe(230);
+    const [frame, bar, ...rest] = els;
+    expect(frame).toMatchObject({
+      tag: 'rect',
+      x: '-45',
+      y: '-34',
+      width: '90',
+      height: '68',
+      rx: '12',
+    });
+    expect(bar).toMatchObject({ tag: 'path', d: 'M-45,-16L45,-16', stroke: '#333333' });
+    const dots = rest.filter((e) => e.tag === 'circle');
+    expect(dots.map((d) => [d.cx, d.cy, d.r, d.fill, d.stroke])).toEqual(
+      ['-33', '-24', '-15'].map((cx) => [cx, '-25', '2.5', '#333333', 'none'])
+    );
+    expect(rest.at(-1)).toMatchObject({
+      tag: 'rect',
+      x: '-1',
+      y: '-30',
+      width: '34',
+      height: '10',
+      rx: '3',
+      fill: 'none',
+      stroke: '#333333',
+      opacity: '0.6',
+    });
+  });
+
+  it('console: rounded 12, at least 90 wide, a 20 high glyph band, `>_` as monospace text', () => {
+    const { size, els } = elements('console', 40, 20);
+    expect(size).toEqual({ w: 90, h: 70, dy: 10 });
+    expect(els.map((e) => e.tag)).toEqual(['rect', 'text']);
+    expect(els[0]).toMatchObject({ x: '-45', y: '-35', width: '90', height: '70', rx: '12' });
+    expect(els[1]).toMatchObject({
+      x: '-33',
+      y: '-19',
+      'font-family': 'monospace',
+      'font-weight': 'bold',
+      'font-size': '14',
+      fill: '#333333',
+      text: '&gt;_',
+    });
+  });
+
+  it("cloud: v12's ten arcs round the label and its padding, the node the box they cover", () => {
+    const { size, els } = elements('cloud', 40, 20);
+    const box = outlineBox(cloudOutline(55, 35));
+    expect(size.w).toBeCloseTo(box.x1 - box.x0, 9);
+    expect(size.h).toBeCloseTo(box.y1 - box.y0, 9);
+    // The label stays at the frame's centre.
+    expect(size.dx).toBeCloseTo(-(box.x0 + box.x1) / 2, 9);
+    expect(size.dy).toBeCloseTo(-(box.y0 + box.y1) / 2, 9);
+    expect(els).toHaveLength(1);
+    expect(els[0]!.d!.match(/A/g)).toHaveLength(10);
+    const drawn = boxOf(outlines('cloud', size.w, size.h, size.frame));
+    for (const [k, v] of Object.entries({
+      x0: -size.w / 2,
+      x1: size.w / 2,
+      y0: -size.h / 2,
+      y1: size.h / 2,
+    }))
+      expect(Math.abs(drawn[k as keyof typeof drawn] - v), k).toBeLessThan(0.5);
+  });
+
+  it('flag: one sine cycle top and bottom, amplitude an eighth of the padded height', () => {
+    const { size } = elements('flag', 40, 20);
+    // 40 + 2 · 15 wide; the waves are h / 8 = 35 / 8 deep about a body 35 · 1.25 high.
+    expect(size).toEqual({ w: 70, h: 52.5, dy: 0 });
+    const [poly] = outlines('flag', size.w, size.h);
+    const a = 35 / 8;
+    // v12's 50 steps a side: the point nearest `x` (1.4 apart here).
+    const yAt = (pts: Pt[], x: number, top: boolean) =>
+      pts.find((p) => Math.abs(p[0] - x) <= 0.7 && p[1] < 0 === top)![1];
+    // The top right bulges up to the box, the bottom left down to it.
+    expect(yAt(poly!, 17.5, true)).toBeCloseTo(-26.25, 1);
+    expect(yAt(poly!, -17.5, true)).toBeCloseTo(-26.25 + 2 * a, 1);
+    expect(yAt(poly!, -17.5, false)).toBeCloseTo(26.25, 1);
+    expect(yAt(poly!, 35, true)).toBeCloseTo(-26.25 + a, 1);
+    expect(shapeInset('flag', size.w, size.h, 0, 17.5, PADS)).toBeCloseTo(0, 9);
+    expect(shapeInset('flag', size.w, size.h, 0, -17.5, PADS)).toBeCloseTo(2 * a, 9);
+    expect(shapeInset('flag', size.w, size.h, 2, 17.5, PADS)).toBeCloseTo(2 * a, 9);
+  });
+
+  it('fork: a 70 × 10 bar with square corners, filled and stroked as the outline', () => {
+    const { size, els } = elements('fork', 0, 0);
+    expect(size).toEqual({ w: 70, h: 10, dy: 0 });
+    expect(els).toHaveLength(1);
+    expect(els[0]).toMatchObject({
+      tag: 'rect',
+      width: '70',
+      height: '10',
+      fill: '#ffffff',
+      stroke: '#333333',
+    });
+    expect(els[0]!.rx).toBeUndefined();
+  });
+
+  it('fr-circ: a circle 14 across round one 5 across, both hollow', () => {
+    const { size, els } = elements('fr-circ', 0, 0);
+    expect(size).toEqual({ w: 14, h: 14, dy: 0 });
+    expect(els.map((e) => [e.tag, e.r, e.fill, e.stroke])).toEqual([
+      ['circle', '7', '#ffffff', '#333333'],
+      ['circle', '2.5', '#ffffff', '#333333'],
+    ]);
+  });
 });

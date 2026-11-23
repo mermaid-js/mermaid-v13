@@ -969,13 +969,13 @@ describe('flowchart render: neo gradient (D182, #229)', () => {
     });
   });
 
-  it('fills the fork and join bar plainly, never with the gradient', async () => {
+  it('draws the fork and join bar hollow, stroked with the gradient as any outline (D683)', async () => {
     const { tree } = await draw('flowchart LR\n  a@{ shape: fork }\n  b@{ shape: join }', {
       config: { theme: 'neo', output: { cssVariables: false } } as InitializeConfig,
     });
     for (const id of ['a', 'b']) {
       const bar = tree.children(byAst(tree, `n:${id}`)[0]!).find((c) => tree.tag(c) === 'rect')!;
-      expect(tree.getAttr(bar, 'fill'), id).toBe('#000000');
+      expect(tree.getAttr(bar, 'fill'), id).toBe('#ffffff');
       expect(tree.getAttr(bar, 'stroke'), id).toBe(URL);
     }
   });
@@ -1011,7 +1011,10 @@ describe('flowchart render: neo gradient (D182, #229)', () => {
     const browserDots = tree
       .children(byAst(tree, 'n:W')[0]!)
       .filter((c) => tree.tag(c) === 'circle');
-    expect(browserDots.map((c) => tree.getAttr(c, 'stroke'))).toEqual(Array(3).fill('#000000'));
+    // v12's browser dots: filled nodeBorder, no stroke (D683).
+    expect(browserDots.map((c) => [tree.getAttr(c, 'fill'), tree.getAttr(c, 'stroke')])).toEqual(
+      Array(3).fill(['#000000', 'none'])
+    );
   });
 
   it("lets the author's style and classDef strokes win over the gradient", async () => {
