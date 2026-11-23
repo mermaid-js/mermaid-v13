@@ -14,7 +14,7 @@ e2e/diagrams/flowchart/baseline/edges/double-arrow-point.mmd 1 80b50c122c407993
 e2e/diagrams/flowchart/baseline/edges/edge-id-after-node.mmd 4 6fc262b5a54647dd
 e2e/diagrams/flowchart/baseline/edges/labels.mmd 1 abc73b1b37edf181
 e2e/diagrams/flowchart/baseline/edges/lengths.mmd 1 2bab3613899a27d1
-e2e/diagrams/flowchart/baseline/edges/line-hops-off.mmd 1 a5514433dcb5c84d
+e2e/diagrams/flowchart/baseline/edges/line-hops-off.mmd 1 f13e32e598b20da1
 e2e/diagrams/flowchart/baseline/edges/line-hops-on.mmd 1 7303999469c843dc
 e2e/diagrams/flowchart/baseline/edges/self-loops-and-multi.mmd 1 03db2c358cbefa21
 e2e/diagrams/flowchart/baseline/edges/two-self-loops.mmd 1 3c75985308d66fea

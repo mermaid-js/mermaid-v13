@@ -1,6 +1,6 @@
 // D537 (#78): event modeling relations go through core's shared edge-path step
 // (`outline('edge', 'path', …)`), so the shared `lineHops` key hops one relation over another
-// where they cross, and the default (`false`) draws them as before.
+// where they cross, and the default (`false`, D689) draws them as before.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
@@ -19,20 +19,26 @@ const relations = (svg: string): string[] =>
   [...svg.matchAll(/<path class="em-relation"[^>]* d="([^"]+)"/g)].map((m) => m[1]!);
 const ARC = /A6,6 0 0,[01] /g;
 
+/** The fixture, which sets `lineHops: true`, with `lineHops` set to `value`, or left out. */
 async function render(lineHops?: boolean | 'arc' | 'gap'): Promise<string> {
+  const source = SOURCE.replace(
+    / {2}lineHops: true\n/,
+    lineHops === undefined ? '' : `  lineHops: ${lineHops}\n`
+  );
+  expect(source === SOURCE).toBe(lineHops === true);
   const m = createMermaid();
-  m.initialize({ deterministic: true, ...(lineHops === undefined ? {} : { lineHops }) } as never);
-  const r = await m.render('hops', SOURCE);
+  m.initialize({ deterministic: true });
+  const r = await m.render('hops', source);
   expect(r.warnings).toEqual([]);
   return r.svg;
 }
 
 describe('lineHops on event modeling relations (D537)', () => {
-  it('hops by default (D672), and draws no hop with lineHops: false', async () => {
+  it('draws no hop by default (D689), the same as with lineHops: false', async () => {
     const plain = await render(false);
     expect(relations(plain)).toHaveLength(5);
     expect(plain).not.toMatch(ARC);
-    expect(await render()).toBe(await render(true));
+    expect(await render()).toBe(plain);
   });
 
   it('hops the later relation over the one it crosses, with lineHops: true', async () => {

@@ -171,8 +171,8 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
     }
   );
 
-  // D672: line hops are on by default, so their code is part of core (D537 had it in a lazy
-  // chunk), and `renderSync` draws them with nothing to preload.
+  // D672: line hops' code is part of core (D537 had it in a lazy chunk), so `renderSync` draws
+  // them with nothing to preload. The shared key is off by default (D689).
   it('keeps the line-hop code in core', () => {
     const isHops = (input: string) => input.includes('core/src/layout/hops/');
     expect(coreModules(stable).filter(isHops).length).toBeGreaterThan(0);

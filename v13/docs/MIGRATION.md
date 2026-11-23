@@ -876,7 +876,7 @@ classes works the same with the look on.
 | --- | --- | --- |
 | Default layout `elk` (12.2.0), formerly `dagre` | Default `layered`, the engine built into core | DESIGN §6.1 |
 | `layout: dagre`, `layout: elk`, `elk.<algorithm>`, `flowchart-elk` header | `dagre` is drawn with `layered`, silently. The ELK names and the `flowchart-elk` header are drawn with `layered` and one `ELK_NOT_INSTALLED` warning until `@mermaid-js/layout-elk` is registered | R-PLUG-8, D173 |
-| Crossing edges hopped only under ELK, the default layout of 12.2.0, and swimlane (`elk.lineHops`, `swimlane.lineHops`); `dagre` and the diagrams with a layout of their own drew them plainly | Line hops are on by default in every diagram that draws edges, under every layout: where two straight runs cross, the one that gives way draws a 6px arc. The top-level `lineHops` sets it (`true`, `'arc'`, `'gap'`, `false`), and `lineHops: false` draws crossings plainly, as v12 did. The hop code is part of core, so `renderSync` needs nothing loaded for it | D537, D672 |
+| Crossing edges hopped only under ELK, the default layout of 12.2.0, and swimlane (`elk.lineHops`, `swimlane.lineHops`); `dagre` and the diagrams with a layout of their own drew them plainly | Line hops are available in every diagram that draws edges, under every layout, and off by default: crossings draw plainly, as under v12's `dagre`, unless a config layer sets the top-level `lineHops` (`true`, `'arc'`, `'gap'`). With it on, where two straight runs cross, the one that gives way draws a 6px arc. The engines that hopped in v12 still do by default: swimlane (`swimlane.lineHops: arc`) and ELK (`elk.lineHops: true`), unless the author sets `lineHops: false`. The hop code is part of core, so `renderSync` needs nothing loaded for it | D537, D672, D689 |
 | An unknown layout name falls back to `dagre` with a console warning | Falls back to `layered` with a `LAYOUT_UNKNOWN` warning | R-ERR-4 |
 | Mindmap lays out with `cose-bilkent` (not deterministic), or `tidy-tree` with its plugin; `mindmap.layoutAlgorithm` is never read | Mindmap lays out with `tree`, core's two-sided tidy tree (loaded lazily), when no config sets `layout`. `cose-bilkent` and `tidy-tree` map to `tree` silently; `layered`, `dagre` and an installed `elk.*` are honoured; an unknown or uninstalled name draws with `tree` and warns. The mindmap key `layoutAlgorithm` is ignored | D280–D285 |
 | `nodeSpacing`, `rankSpacing`, `diagramPadding` | Honoured with v12's defaults (50, 50, 8) | |
@@ -918,7 +918,7 @@ the passes (D174). Parity is with v12's ELK options, not its pixels.
 | Class `nodeSpacing` and `rankSpacing` were read from the `state` section (falling back to 50), and `class.diagramPadding` was ignored (8 px) | `class.nodeSpacing`, `class.rankSpacing` and `class.diagramPadding` are honoured, with v12's effective defaults (50, 50, 8) | spec #126 |
 | Class edges followed `flowchart.curve` (a d3 curve factory) | Still follow `flowchart.curve`, read as for flowcharts: `rounded` (the default) and `step`/`stepBefore`/`stepAfter` are right-angle routes, `linear` straight segments, every other value S-curves | spec #126 |
 | A lollipop interface was a top-level node, outside its class's namespace | It sits in the namespace of its class | spec #126 |
-| `lineHops` on crossing relations | Core's shared edge-path step draws them, under `layered` and `layout: elk` alike: where a straight run crosses another relation, the run that gives way draws a 6px hop (`gap`: a break). The relations leaving one side of a class are about 5px apart (3px under ELK), so a run that crosses two of them crosses at points too close to carry a hop each, and neither hops, by the same rule as for every diagram (`hopPaths`). The shared key defaults to `true` (D672) | D537, D672, #655 |
+| `lineHops` on crossing relations | Core's shared edge-path step draws them, under `layered` and `layout: elk` alike: where a straight run crosses another relation, the run that gives way draws a 6px hop (`gap`: a break). The relations leaving one side of a class are about 5px apart (3px under ELK), so a run that crosses two of them crosses at points too close to carry a hop each, and neither hops, by the same rule as for every diagram (`hopPaths`). The shared key defaults to `false` (D689), so crossings hop only where a document turns hops on | D537, D689, #655 |
 
 ### Class diagram config
 
@@ -2777,7 +2777,7 @@ why (spec #525). The layout itself is `compass` (D326).
 | Edges were always drawn from the sides as written | They meet their nodes where the layout engine says (its ports): the same sides under `compass`; under `layout: elk` or another engine that ignores them, the heads and labels follow the line it drew. An edge the engine routes no line for keeps its `path.edge`, with no line, and one `ARCHITECTURE_EDGE_NOT_DRAWN` | D507, D508 |
 | `base` drew edges and arrowheads `#777` and group borders `#000`, literals no other theme had, which no override moved | `base` takes the rule every other theme follows: edges in `lineColor`, borders in v12's group border (below). So in `base` an author's `lineColor` or `background` moves the edges, and `primaryColor` or `darkMode` the group borders | D541 |
 | Group borders (`archGroupBorderColor`) took the theme's `primaryBorderColor` as each theme's constructor first set it, before the theme recomputed it, so an author's `primaryColor` or `primaryBorderColor` never reached them | The same colour in every theme but `base` (the D332 input `calloutBorder`), and an author's `primaryBorderColor` now recolours them | D541, D332 |
-| v12 drew no line hops in architecture diagrams | `lineHops: true` (or `'arc'`, `'gap'`): where two edges cross, the straight run that gives way draws a 6px hop (`gap`: a break), through core's shared edge-path step. The edges stay plain under `look: handDrawn`. The shared key defaults to `true` (D672), so crossings hop unless a document sets `lineHops: false` | D537, #655 |
+| v12 drew no line hops in architecture diagrams | `lineHops: true` (or `'arc'`, `'gap'`): where two edges cross, the straight run that gives way draws a 6px hop (`gap`: a break), through core's shared edge-path step. The edges stay plain under `look: handDrawn`. The shared key defaults to `false` (D689), so crossings hop only where a document turns hops on | D537, #655 |
 
 ## Architecture SVG structure
 
@@ -2851,8 +2851,8 @@ then `g.architecture-groups` with each group's `rect.node-bkg`; labels in
 - **Line hops** (new, D537, #655): with `lineHops: true` (or `'arc'`, `'gap'`), where two
   straight edges cross, the later one draws a 6px hop (`gap`: a break), through core's shared
   edge-path step. A self-loop's curve neither hops nor is hopped over. Edges stay plain under
-  `look: handDrawn` (D447). The shared key defaults to `true` (D672), so crossings hop unless a
-  document sets `lineHops: false`.
+  `look: handDrawn` (D447). The shared key defaults to `false` (D689), so crossings hop only
+  where a document turns hops on.
 - **Text output** (new, D449): `format: 'ascii'` draws block diagrams as text from the lazily
   loaded `@mermaid-js/diagram-block/ascii` entry: boxes on a character grid, composites as
   frames, edges as stepped lines. `block.padding` is ignored there, with no warning. See
@@ -2925,7 +2925,7 @@ D455). What changes (spec #522):
 | Each relation one fixed curve, with no work to limit | The router and label placement count their comparisons against `min(2,000,000, limits.maxLayoutWork)` (1,500,000 by default, R-SEC-5); once spent, the remaining relations are drawn straight with their labels at the middle, never an error | D455, for the maintainer |
 | Every `*FontFamily` defaulted to `"Open Sans", sans-serif` | Unset, the theme's `fontFamily` ([Changed defaults](#changed-defaults)); a set family the style check refuses is dropped with a `STYLE_VALUE_DROPPED` warning | Sequence's precedent |
 | `format: 'ascii'`: no text output | Text output (`@mermaid-js/diagram-c4/ascii`, loaded only for text): the SVG's grid on a character grid, laid out with every text measured in cells of 8 × 16 px. Elements are boxes with the name, `[Kind]` and description (rounded corners, a cylinder's caps, `fr-rect`'s double sides; a line wider than its box cut with `…`, `...` in the ascii charset); boundaries dashed frames, deployment nodes solid ones, with the label in the top border; relations stepped lines routed on the grid round elements and header text, following the routed points, with the label at or beside the middle (with both `wrap` flags set, wrapped narrower where the gap is small; else on one line, cut with `…` where it does not fit) and arrowheads. Config colours and fonts are ignored without a warning; `UpdateElementStyle`/`UpdateRelStyle` colours and offsets, a relation's description and `accTitle`/`accDescr` give one `ASCII_DROPPED` each; a `c4ShapePadding` under 16 or a `c4ShapeMargin` under 32 is raised with `C4_CONFIG_IGNORED`; `ascii.padding: roomy` adds a row round each element's text. Never cropped and never reflowed (the grid is the SVG's): `ASCII_TOO_WIDE` past `ascii.maxWidth`; see [ASCII output](./ascii.md#c4-diagrams) | D459, D320, R-ASCII-5 |
-| v12 drew no line hops in C4 diagrams | `lineHops: true` (or `'arc'`, `'gap'`): where two relation lines cross on straight runs, the later one draws a 6px hop (`gap`: a break), through core's shared edge-path step; a relation the router draws as a curve neither hops nor is hopped over there. Relation lines stay plain under `look: handDrawn`. The shared key defaults to `true` (D672), so crossings hop unless a document sets `lineHops: false` | D537, #655 |
+| v12 drew no line hops in C4 diagrams | `lineHops: true` (or `'arc'`, `'gap'`): where two relation lines cross on straight runs, the later one draws a 6px hop (`gap`: a break), through core's shared edge-path step; a relation the router draws as a curve neither hops nor is hopped over there. Relation lines stay plain under `look: handDrawn`. The shared key defaults to `false` (D689), so crossings hop only where a document turns hops on | D537, #655 |
 
 ## C4 SVG structure
 
@@ -2983,7 +2983,7 @@ placement constants are kept (spec #527). What changes:
 | An `eventmodeling.padding` that was not a number was used as given | A number of 0 or more, or a numeric string as its number; anything else (or a value so large the drawing would not stay finite) draws with 30 and one `EVENTMODELING_CONFIG_INVALID` warning. A `useMaxWidth` that is not `true` or `false` draws as `true`, with the same warning | D226 |
 | `eventmodeling.rowHeight` (default 32) and `eventmodeling.useWidth` were never read | Accepted and ignored, with no warning ([Config](#config)) | |
 | `look: handDrawn` (top level or `eventmodeling.look`): v12 never sketched an event model | Without `@mermaid-js/plugin-hand-drawn`, `look` is ignored with one `LOOK_REMOVED` warning, as in every section. With the plugin, `look: handDrawn` sketches the event model: lanes, boxes and relations are drawn with roughjs, as other edge diagrams are; the arrowheads and the text are drawn as before. A visible change from v12, which drew it plainly (option A, decided by the maintainer on 2026-11-10, with D537's line hops; the D-id is the maintainer's to number) | D301, D303, D537 |
-| `lineHops: true` (or `'arc'`, `'gap'`) on crossing relations | New in v13 (D537): event modeling relations go through core's shared edge-path step, so where two cross the later one draws a 6px hop. The shared key defaults to `true` (D672), so crossings hop unless a document sets `lineHops: false`. v12 had no hops for event models | D537 |
+| `lineHops: true` (or `'arc'`, `'gap'`) on crossing relations | New in v13 (D537): event modeling relations go through core's shared edge-path step, so where two cross the later one draws a 6px hop. The shared key defaults to `false` (D689), so crossings hop only where a document turns hops on. v12 had no hops for event models | D537 |
 | `format: 'ascii'`: no text output | Throws `UnsupportedFormatError` | D320, R-ASCII-5 |
 
 ### Event modeling theme colours
@@ -3082,8 +3082,8 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   set), the same inside a coloured lane. Edges reserve the matching room.
 - **Line hops** (D537). Crossing edges hop by default under the swimlane engine
   (`swimlane.lineHops`, default `arc`; `gap` cuts the run that gives way instead, `false` draws
-  it unbroken), as in v12. The shared top-level `lineHops` is new and on by default (D672):
-  `lineHops: false` turns hops off everywhere, swimlane included, and an author's `swimlane.lineHops` beats the top-level
+  it unbroken), as in v12. The shared top-level `lineHops` is new and off by default (D689),
+  so it changes nothing here unless set: `lineHops: false` turns hops off everywhere, swimlane included, and an author's `swimlane.lineHops` beats the top-level
   key under this engine. Crossings are found on straight runs only, as in v12: a rounded corner
   or a smoothed curve is never hopped, and unlike v12 the corners of an edge that hops keep
   their rounding. Also unlike v12, crossings on one run too close for a hop each (closer than
