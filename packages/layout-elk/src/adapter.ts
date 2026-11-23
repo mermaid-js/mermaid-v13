@@ -73,7 +73,7 @@ import type {
 import { sideOf, type Rect } from './geometry.ts';
 import { elkConfigOf, groupOptions, rootOptions, type ElkConfig } from './options.ts';
 import { findCyclicEntryNodes, findSubgraphFeedbackEdges } from './passes.ts';
-import { crowdedEnds, type Pinned } from './spread.ts';
+import { crowdedEnds, LAST_LEG, type Pinned } from './spread.ts';
 import { projectLabelOntoStraightenedRun, straightenEdgeTerminals } from './straighten.ts';
 import { slideOffTitles, type SlideEdge, type SlideNode } from './titles.ts';
 import { layoutSync } from './sync.ts';
@@ -422,6 +422,9 @@ export function toElkGraph(
     'elk.spacing.nodeNode': String(graph.spacing.node),
     'elk.layered.spacing.nodeNodeBetweenLayers': String(graph.spacing.rank),
     'elk.spacing.edgeEdge': String(graph.spacing.edge),
+    // Where an edge turns between two layers, at least an arrowhead's last leg from either node
+    // (#1160): ELK's default, 10, is shorter than the arrowhead.
+    'elk.layered.spacing.edgeNodeBetweenLayers': String(LAST_LEG),
     ...edgeLengthOptions(algorithm, clearEdgeLength(graph)),
   };
   const pad = graph.diagramPadding ?? 0;
@@ -702,7 +705,7 @@ function straighten(graph: LayoutGraph, built: Built, routes: Routes): Map<strin
     const c = placedByElk && e.label ? elkLabel(built, e.id, 'label') : undefined;
     return { id: e.id, points, ...(c && e.label ? { ...c, label: true, ...e.label } : {}) };
   });
-  for (const { edge, runs } of straightenEdgeTerminals(items)) {
+  for (const { edge, runs } of straightenEdgeTerminals(items, graph.spacing.edge)) {
     routes.get(edge.id)!.points = edge.points;
     if (edge.x === undefined || edge.y === undefined) continue;
     const moved = projectLabelOntoStraightenedRun({ x: edge.x, y: edge.y }, runs);

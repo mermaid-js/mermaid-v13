@@ -23,6 +23,16 @@ import { sideOf, type Rect } from './geometry.ts';
 export const ARROWHEAD_WIDTH = 12.78;
 
 /**
+ * How long the last leg of a route has to be for the arrowhead at its end (#1160): what the
+ * renderer trims for the default point arrowhead (shared `markerTrim`: gap 4 + length 10.5 - 1),
+ * the straight `LEAD` it draws before a marker (6) and a full corner of the `rounded` curve (5).
+ * A shorter leg is trimmed past its corner and doubles back into the head. A constant for the
+ * same reason as `ARROWHEAD_WIDTH` (D154); the built-in engine keeps the trim and lead as its
+ * least rank gap (D601).
+ */
+export const LAST_LEG = 13.5 + 6 + 5;
+
+/**
  * Fewer arrowheads than this are left to ELK, as v12 leaves them: spreading every join would
  * move a great many diagrams that were not asked to change.
  */

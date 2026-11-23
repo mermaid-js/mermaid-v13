@@ -415,6 +415,7 @@ exports[`layered over parser-produced flowchart graphs > lays out every corpus g
   "flowchart/pr-check/60-handle-styling-for-all-node-shapes.mmd": 0,
   "flowchart/pr-check/7-markdown-label-html-false.mmd": 0,
   "flowchart/pr-check/8368-elk-label-parallel-edge.mmd": 0,
+  "flowchart/pr-check/8580-elk-bidirectional-label-overlap.mmd": 0,
   "flowchart/pr-check/circle-content-sizing.mmd": 0,
   "flowchart/pr-check/edge-animation.mmd": 0,
   "flowchart/pr-check/elk-fan-in-arrowheads.mmd": 0,
