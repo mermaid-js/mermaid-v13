@@ -174,7 +174,7 @@ function toCEdge(graph: LayoutGraph, e: LayoutEdge, src: number, dst: number, ga
     labelX: 0,
     labelY: 0,
   };
-  if (e.heads) ce.heads = (e.heads.target ? 1 : 0) | (e.heads.source ? 2 : 0);
+  if (e.heads) ce.heads = +e.heads.target | (2 * +e.heads.source);
   if (e.startLabel) ce.start = { ...e.startLabel, along: before(graph, e, false) + gap };
   if (e.endLabel) ce.end = { ...e.endLabel, along: before(graph, e, true) + gap };
   return ce;
