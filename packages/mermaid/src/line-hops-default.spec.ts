@@ -1,5 +1,6 @@
-// D672: line hops are part of core and on by default (D537 had the shared `lineHops` off and
-// the hop step in a lazy chunk), so `renderSync` draws them with nothing to preload.
+// D689 (#1191): the shared `lineHops` key is off by default again (D672 had it on), so a render
+// that sets no `lineHops` draws plain crossings. The hop step stays part of core (D672), so
+// `renderSync` draws hops with nothing to preload when a config layer turns them on.
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createMermaid } from './index.ts';
@@ -13,24 +14,32 @@ const ON = fixture('line-hops-on');
 const OFF = fixture('line-hops-off');
 const HOP = 'A6,6';
 
-describe('line hops by default (D672)', () => {
-  it('renderSync draws hops with only the diagram type loaded', async () => {
+describe('line hops by default (D689)', () => {
+  it('draws no hop where two straight runs cross when no config layer sets `lineHops`', async () => {
+    const unset = ON.replace('  lineHops: true\n', '');
+    expect(unset).not.toBe(ON);
+    const m = createMermaid();
+    const plain = await m.render('d', unset);
+    expect(plain.warnings).toEqual([]);
+    expect(plain.svg).not.toContain(HOP);
+    expect(plain.svg).toBe((await m.render('d', OFF.replace('  lineHops: false\n', ''))).svg);
+    expect((await m.render('d', ON)).svg).toContain(HOP);
+  });
+
+  it('hops with `lineHops: true` from initialize() as well as front matter', async () => {
+    const unset = ON.replace('  lineHops: true\n', '');
+    const m = createMermaid();
+    m.initialize({ lineHops: true });
+    expect((await m.render('d', unset)).svg).toBe((await createMermaid().render('d', ON)).svg);
+  });
+
+  it('renderSync draws hops with only the diagram type loaded (D672)', async () => {
     const m = createMermaid();
     await m.preload({ types: ['flowchart'] });
     const r = m.renderSync(ON, { id: 'd' });
     expect(r.warnings).toEqual([]);
     expect(r.svg).toContain(HOP);
     expect(r.svg).toBe((await createMermaid().render('d', ON)).svg);
-  });
-
-  it('hops with no `lineHops` in any config layer, and not with `lineHops: false`', async () => {
-    const unset = ON.replace('  lineHops: true\n', '');
-    expect(unset).not.toBe(ON);
-    const m = createMermaid();
-    expect((await m.render('d', unset)).svg).toBe((await m.render('d', ON)).svg);
-    expect((await m.render('d', OFF)).svg).not.toContain(HOP);
-    m.initialize({ lineHops: false });
-    expect((await m.render('d', unset)).svg).not.toContain(HOP);
   });
 
   it('is no layout: `layout: lineHops` is LAYOUT_UNKNOWN', async () => {

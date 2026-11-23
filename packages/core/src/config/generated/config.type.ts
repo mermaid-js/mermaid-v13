@@ -92,7 +92,7 @@ layout?: string
  * otherwise the later edge does. Only straight runs carry hops: curves
  * and rounded corners are left as drawn, and a crossing too close to a
  * bend gets no hop. `true` and `arc` draw a 6px arc, `gap` breaks the
- * line. On by default; `false` draws plain crossings.
+ * line. Off by default (`false`), which draws plain crossings.
  * 
  * A layout engine's own `lineHops` (`swimlane.lineHops`, default `arc`;
  * `elk.lineHops`, default `true`) applies when that engine lays the

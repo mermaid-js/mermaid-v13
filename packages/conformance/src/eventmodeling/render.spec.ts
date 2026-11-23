@@ -340,7 +340,8 @@ describe('event modeling render: what is drawn', () => {
   });
 
   it('draws relations as one line, a self relation and one under its row in three, the inferred one without data-ast', async () => {
-    // Without line hops (on by default, D672), which add commands where two relations cross.
+    // Without line hops, which add commands where two relations cross. They are off by default
+    // (D689); the explicit `false` keeps this independent of the default.
     const plain = deterministicApi({ lineHops: false } as MermaidConfig);
     const { tree } = await render(fixture('nightly-check/layout-relations.mmd'), plain);
     const paths = tree.find((n, t) => t.getAttr(n, 'class') === 'em-relation');

@@ -22,7 +22,7 @@ const setIn = (layers: readonly Layer[], pick: (l: Layer) => unknown): boolean =
  * `layers` are the author's config layers (`initialize()`, front matter, directives), which tell
  * a value the author set from a default. In order: a shared `false` the author set turns hops off
  * everywhere; else the engine's key the author set; the shared key the author set; the engine's
- * default; the shared default, `true` (D672).
+ * default; the shared default, `false` (D689; D672 had `true`).
  */
 export function hopStyle(
   config: ResolvedConfig,

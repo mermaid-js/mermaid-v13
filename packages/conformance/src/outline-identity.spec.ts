@@ -63,7 +63,7 @@ const tree: ExtensionPlugin = { id: 'tree', postRender: () => {} };
 
 async function api(make: () => ReturnType<typeof createMermaid>, ...extensions: ExtensionPlugin[]) {
   const m = make();
-  // Hops off unless a fixture turns them on (they are on by default, D672): see below.
+  // Hops off unless a fixture turns them on (the default since D689, kept explicit): see below.
   m.initialize({ deterministic: true, lineHops: false });
   await m.registerExternalDiagrams(extensions);
   return m;

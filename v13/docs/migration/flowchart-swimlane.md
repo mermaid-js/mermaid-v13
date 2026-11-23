@@ -56,8 +56,8 @@ top-level subgraph is a lane, and nodes outside every subgraph go to one default
   set), the same inside a coloured lane. Edges reserve the matching room.
 - **Line hops** (D537). Crossing edges hop by default under the swimlane engine
   (`swimlane.lineHops`, default `arc`; `gap` cuts the run that gives way instead, `false` draws
-  it unbroken), as in v12. The shared top-level `lineHops` is new and on by default (D672):
-  `lineHops: false` turns hops off everywhere, swimlane included, and an author's `swimlane.lineHops` beats the top-level
+  it unbroken), as in v12. The shared top-level `lineHops` is new and off by default (D689),
+  so it changes nothing here unless set: `lineHops: false` turns hops off everywhere, swimlane included, and an author's `swimlane.lineHops` beats the top-level
   key under this engine. Crossings are found on straight runs only, as in v12: a rounded corner
   or a smoothed curve is never hopped, and unlike v12 the corners of an edge that hops keep
   their rounding. Also unlike v12, crossings on one run too close for a hop each (closer than
