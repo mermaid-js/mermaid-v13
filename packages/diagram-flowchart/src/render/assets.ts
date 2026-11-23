@@ -11,28 +11,52 @@ import type { FlowRenderContext, FlowWarning } from './context.ts';
 import type { NodeView } from './prepare.ts';
 import type { ShapeSize } from './shapes.ts';
 
-/** An image or icon node's asset and label, in px (`img`, `icon`, `assetWidth`, `pos`). */
+/** An image or icon node's asset, frame and label, in px (`img`, `form`, `assetWidth`, `pos`). */
 export interface AssetNode {
   img?: string;
   assetWidth?: number;
   assetHeight?: number;
   pos?: string;
+  form?: string;
 }
 
 const IMG = 80;
 const ICON = 48;
+const GAP = 6;
+const FRAME_GAP = 8;
+/** A rounded frame's corner radius (v12's `iconRounded`). */
+const ROUNDED = 5;
 const asset = (v: number | undefined, fallback: number): number =>
   v !== undefined && v > 0 && v <= 4000 ? v : fallback;
 
-/** The box of an image or icon node: the asset with its label above or below it. */
-export function assetSize(v: AssetNode, tw: number, th: number): ShapeSize {
+/**
+ * The square an icon's frame fills (#1150, decision 5 of spec #1163): the glyph's square plus
+ * `pad` (`flowchart.padding`, v12's `iconSquare` and `iconRounded`) for `square` and `rounded`;
+ * for `circle`, the diameter, the glyph's diagonal plus `pad` (tighter than v12's diagonal + 40).
+ * An icon without a frame, and an image, keep their asset's height.
+ */
+function frameSize(v: AssetNode, pad: number): number {
+  const size = asset(v.assetHeight, v.img ? IMG : ICON);
+  if (!framed(v)) return size;
+  return v.form === 'circle' ? size * Math.SQRT2 + pad : size + pad;
+}
+
+const framed = (v: AssetNode): boolean =>
+  !v.img && (v.form === 'circle' || v.form === 'square' || v.form === 'rounded');
+
+/**
+ * The box of an image or icon node: the asset, or an icon's frame, with its label above or below
+ * it, 6 px apart, or 8 from a frame (v12's label padding). `pad` is `flowchart.padding`.
+ */
+export function assetSize(v: AssetNode, tw: number, th: number, pad: number): ShapeSize {
   const aw = asset(v.assetWidth, v.img ? IMG : ICON);
-  const ah = asset(v.assetHeight, v.img ? IMG : ICON);
+  const ah = frameSize(v, pad);
+  const gap = framed(v) ? FRAME_GAP : GAP;
   const top = v.pos === 't';
   return {
-    w: Math.max(aw, tw + 8),
-    h: ah + (th > 0 ? th + 6 : 0),
-    dy: th > 0 ? (top ? -ah / 2 : ah / 2) - (top ? 3 : -3) : 0,
+    w: Math.max(aw, framed(v) ? ah : 0, tw + 8),
+    h: ah + (th > 0 ? th + gap : 0),
+    dy: th > 0 ? ((top ? -1 : 1) * (ah + gap)) / 2 : 0,
   };
 }
 
@@ -66,43 +90,82 @@ export function drawImage(
 
 /**
  * The frame, when the icon has a form, then the glyph an extension has for it (D293, the context's
- * `icon`), in the frame's square. With the glyph (D298) the frame is borderless (its stroke is its
+ * `icon`), centred in the frame. With the glyph (D298) the frame is borderless (its stroke is its
  * fill) and the glyph takes `paint`, which the extension applies (`GlyphOptions.paint`): its
  * `color`, or under `useGradient` the gradient on its `currentColor` paints. Without one the frame
- * keeps its outline, as before the icons plugin. The frame is a square of `assetHeight`, while
- * `assetSize` widens the box to `assetWidth`. Not drawn (no extension has glyphs, one gave
- * `null`, or none has this one), it warns as {@link iconMissed}; a placeholder (`'pending'`, D299)
- * draws the frame alone, quietly.
+ * keeps its outline, as before the icons plugin. The glyph is a square of `assetHeight`, and the
+ * frame leaves `pad` (`flowchart.padding`) around it ({@link frameSize}), while `assetSize`
+ * widens the box to `assetWidth`. Not drawn (no extension has glyphs, one gave `null`, or none
+ * has this one), it warns as {@link iconMissed}; a placeholder (`'pending'`, D299) draws the
+ * frame alone, quietly.
  */
 export function drawIcon(
   w: SvgWriter,
   view: NodeView,
   a: Attrs,
   paint: OutlinePaint,
-  ctx: FlowRenderContext
+  ctx: FlowRenderContext,
+  pad: number
 ): void {
   const v = view.vertex!;
   const size = asset(v.assetHeight, ICON);
-  const top = assetTop(view, size);
+  const box = frameSize(v, pad);
+  const top = assetTop(view, box);
   const found = ctx.icon?.(v.icon!, size, { paint, pending: true });
   if (found === null || found === undefined) iconMissed(ctx, found);
   const glyph = found === 'pending' ? undefined : found;
   const f: Attrs = glyph ? { ...a, stroke: a.fill } : a;
-  if (v.form === 'circle') w.outline('node', 'circle', { cy: top + size / 2, r: size / 2, ...f });
-  else if (v.form === 'square' || v.form === 'rounded') {
+  if (v.form === 'circle') w.outline('node', 'circle', { cy: top + box / 2, r: box / 2, ...f });
+  else if (framed(v)) {
     w.outline('node', 'rect', {
-      x: -size / 2,
+      x: -box / 2,
       y: top,
-      width: size,
-      height: size,
-      rx: v.form === 'rounded' ? 8 : undefined,
+      width: box,
+      height: box,
+      rx: v.form === 'rounded' ? ROUNDED : undefined,
       ...f,
     });
   }
   if (!glyph) return;
-  w.open('g', { transform: translate(-size / 2, top) });
+  w.open('g', { transform: translate(-size / 2, top + (box - size) / 2) });
   writeFragment(w, glyph);
   w.close();
+}
+
+/** The label's band, from the frame (`top` to `bottom`) to the far side of the box; none without a label. */
+function labelBand(view: NodeView, top: number, bottom: number): [number, number] | undefined {
+  if (view.label.height === 0) return undefined;
+  return view.vertex?.pos === 't' ? [-view.h / 2, top] : [bottom, view.h / 2];
+}
+
+/**
+ * How far an edge end on a side of a framed icon's box (0 top, 1 right, 2 bottom, 3 left), `t`
+ * along the side from its middle, moves in to meet the frame: the outline is the frame and the
+ * label's band, the box's full width, as v12's icon outline polygon. An end beside the frame on
+ * the label's side reaches the label band; an icon without a frame keeps its box (0).
+ */
+export function iconInset(view: NodeView, side: number, t: number, pad: number): number {
+  const v = view.vertex!;
+  if (!framed(v)) return 0;
+  const box = frameSize(v, pad);
+  const r = box / 2;
+  const cy = assetTop(view, box) + r;
+  const half = view.h / 2;
+  const band = labelBand(view, cy - r, cy + r);
+  // Half the frame's chord on the line `d` from its centre, or undefined if the line misses it.
+  const chord = (d: number): number | undefined => {
+    if (Math.abs(d) > r) return undefined;
+    return v.form === 'circle' ? Math.sqrt(r * r - d * d) : r;
+  };
+  if (side & 1) {
+    const c = chord(t - cy);
+    const inBand = band !== undefined && t >= band[0] && t <= band[1];
+    return c === undefined || inBand ? 0 : view.w / 2 - c;
+  }
+  const c = chord(t);
+  const ys = [...(c === undefined ? [] : [cy - c, cy + c]), ...(band ?? [])];
+  if (ys.length === 0) return 0;
+  return side === 0 ? Math.min(...ys) + half : half - Math.max(...ys);
 }
 
 /**

@@ -35,7 +35,7 @@ import { edgeLabel } from '@mermaid-js/shared/svg/graph';
 import { nodePaint, plainLine, type NodePaint } from '@mermaid-js/shared/svg/node-paint';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
-import { drawIcon, drawImage } from './assets.ts';
+import { drawIcon, drawImage, iconInset } from './assets.ts';
 import {
   arrowheads,
   marker,
@@ -107,6 +107,12 @@ export function layoutFlowchart(model: FlowModel, ctx: FlowRenderContext): FlowL
 const THICK = 3.5;
 const DOTTED = '2' as SafeValue;
 
+// From the node's box to the outline drawn in it; an icon's frame (#1150) is not in the table.
+const outlineInset = (view: NodeView, side: number, t: number, pads: Pads): number =>
+  view.vertex?.icon
+    ? iconInset(view, side, t, pads.pad)
+    : shapeInset(view.shape, view.w, view.h, side, t, pads);
+
 // Moves a route end from the node's box onto the outline of the shape drawn in it.
 function inset(
   p: RoutePoint,
@@ -119,12 +125,12 @@ function inset(
   const dy = p.y - box.y;
   if (Math.abs(Math.abs(dy) - box.height / 2) < 0.5) {
     const side = dy < 0 ? 0 : 2;
-    const a = shapeInset(view.shape, view.w, view.h, side, dx, pads) + (box.height - view.h) / 2;
+    const a = outlineInset(view, side, dx, pads) + (box.height - view.h) / 2;
     return { ...p, y: p.y + (side === 0 ? a : -a) };
   }
   if (Math.abs(Math.abs(dx) - box.width / 2) < 0.5) {
     const side = dx < 0 ? 3 : 1;
-    const a = shapeInset(view.shape, view.w, view.h, side, dy, pads) + (box.width - view.w) / 2;
+    const a = outlineInset(view, side, dy, pads) + (box.width - view.w) / 2;
     return { ...p, x: p.x + (side === 3 ? a : -a) };
   }
   return p;
@@ -545,7 +551,14 @@ function drawNodeBody(
   else if (v?.icon) {
     // D298: the glyph takes the author's stroke, else nodeBorder (`node.stroke`, the gradient
     // under neo).
-    drawIcon(w, view, attrs.shapeAttrs, view.style.shape.stroke ?? paint.node.stroke, ctx);
+    drawIcon(
+      w,
+      view,
+      attrs.shapeAttrs,
+      view.style.shape.stroke ?? paint.node.stroke,
+      ctx,
+      flow.pads.pad
+    );
   } else {
     drawShape({
       kind: view.shape,
