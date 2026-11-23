@@ -145,6 +145,7 @@ e2e/diagrams/flowchart/baseline/themes/neo-dark.mmd 1 d091361dec4f56a7
 e2e/diagrams/flowchart/baseline/themes/neo.mmd 1 e27102eeb0433745
 e2e/diagrams/flowchart/baseline/themes/neutral.mmd 1 b46b4a590c5eb0b9
 e2e/diagrams/flowchart/baseline/themes/redux.mmd 1 c6325949a495588e
+e2e/diagrams/flowchart/nightly-check/1160-last-leg-before-arrowhead.mmd 1 66795c64c077cfb5
 e2e/diagrams/flowchart/nightly-check/classic/01-38-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd 1 b9dd4f67dc01b17a
 e2e/diagrams/flowchart/nightly-check/classic/02-39-should-render-a-flowchart-when-usemaxwidth-is-false.mmd 1 b7bda6ad684b0a63
 e2e/diagrams/flowchart/nightly-check/classic/03-40-should-add-edge-animation.mmd 4 a720be3f1f0ac906

@@ -16,7 +16,10 @@ export interface LayoutMetrics {
   readonly minPitch: number;
   /** Room between edge ends spread along one side of a compound (group) node. */
   readonly portSep: number;
-  /** Room kept clear between a rank and the nearest track. */
+  /**
+   * Room kept clear between a rank and the nearest track: in px, the last leg an arrowhead needs
+   * after the step off its track (D684).
+   */
   readonly trackMargin: number;
   /** Room between two tracks when a gap has to grow to hold them. */
   readonly trackPitch: number;
@@ -105,7 +108,9 @@ const PX_ENGINE: LayoutMetrics = freeze({
   portPitch: 16,
   minPitch: 8,
   portSep: 20,
-  trackMargin: 18,
+  // The largest point arrowhead's trim (redux, neo: 13.5), its lead (6) and a full corner (5), as
+  // a constant (D154, D684): a track any nearer the node is trimmed past its bend (#1160).
+  trackMargin: 24.5,
   trackPitch: 10,
   trackSpread: 14,
   levelMargin: 28,
