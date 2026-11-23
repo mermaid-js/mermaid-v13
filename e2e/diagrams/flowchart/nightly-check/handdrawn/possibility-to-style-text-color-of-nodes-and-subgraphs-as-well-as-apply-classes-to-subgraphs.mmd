@@ -1,8 +1,11 @@
 ---
-description:
+description: >-
   Verifies that CSS classes can set background and text color on both individual
   nodes and subgraphs, including a subgraph left without an explicit title,
-  under the hand-drawn look.
+  under the hand-drawn look. Subgraph id2 gets only the dark redBg fill, so its
+  title turns white: when the theme's text colour is unreadable on an author's
+  fill, node labels and subgraph titles turn black or white, whichever reads
+  better (R-THEME-12, D21). A colour the author sets (whiteTxt) wins.
 config:
   look: handDrawn
   flowchart:

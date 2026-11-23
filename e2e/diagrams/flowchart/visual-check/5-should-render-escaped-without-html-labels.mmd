@@ -1,8 +1,10 @@
 ---
-description:
-  Verifies HTML-tag escaping in a node label (<strong>Haiya</strong>) when
-  htmlLabels is disabled at both the top-level and flowchart-specific config,
-  using a longer arrow (---->) between the nodes.
+description: >-
+  A node label holding <strong>Haiya</strong>, with htmlLabels set to false at
+  the top level and under flowchart, joined to the next node by a longer arrow
+  (---->). v13 has no htmlLabels (D5): both keys are ignored with a
+  CONFIG_REMOVED_KEY warning, and the tag subset is formatting (D566), so Haiya
+  is drawn bold. v12 showed the tags as literal text when htmlLabels was false.
 config:
   htmlLabels: false
   flowchart:
