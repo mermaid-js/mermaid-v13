@@ -969,13 +969,13 @@ describe('flowchart render: neo gradient (D182, #229)', () => {
     });
   });
 
-  it('draws the fork and join bar hollow, stroked with the gradient as any outline (D683)', async () => {
+  it('fills the fork and join bar plainly, never with the gradient', async () => {
     const { tree } = await draw('flowchart LR\n  a@{ shape: fork }\n  b@{ shape: join }', {
       config: { theme: 'neo', output: { cssVariables: false } } as InitializeConfig,
     });
     for (const id of ['a', 'b']) {
       const bar = tree.children(byAst(tree, `n:${id}`)[0]!).find((c) => tree.tag(c) === 'rect')!;
-      expect(tree.getAttr(bar, 'fill'), id).toBe('#ffffff');
+      expect(tree.getAttr(bar, 'fill'), id).toBe('#000000');
       expect(tree.getAttr(bar, 'stroke'), id).toBe(URL);
     }
   });

@@ -439,10 +439,9 @@ function boxOf(polys: Pt[][]) {
   return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
 }
 
-// v12 at 63333fd8db (`browser.ts`, `console.ts`, `cloud.ts`, `waveRectangle.ts`, `forkJoin.ts`,
-// `stateEnd.ts`), with v12's `padding` (15, PADS.pad) round the label; fork and fr-circ hollow,
-// as v12 flowcharts showed them (decision 4 of #1163).
-describe('the v12 look of browser, cloud, console, flag, fork and fr-circ (#1152, #1167)', () => {
+// v12 at 63333fd8db (`browser.ts`, `console.ts`, `cloud.ts`), with v12's `padding` (15, PADS.pad)
+// round the label (D683).
+describe('the v12 look of browser, cloud and console (#1152, #1167)', () => {
   it('browser: rounded 12, at least 90 wide, an 18 high bar with three dots and an address bar', () => {
     const { size, els } = elements('browser', 40, 20);
     expect(size).toEqual({ w: 90, h: 68, dy: 9 });
@@ -508,47 +507,5 @@ describe('the v12 look of browser, cloud, console, flag, fork and fr-circ (#1152
       y1: size.h / 2,
     }))
       expect(Math.abs(drawn[k as keyof typeof drawn] - v), k).toBeLessThan(0.5);
-  });
-
-  it('flag: one sine cycle top and bottom, amplitude an eighth of the padded height', () => {
-    const { size } = elements('flag', 40, 20);
-    // 40 + 2 · 15 wide; the waves are h / 8 = 35 / 8 deep about a body 35 · 1.25 high.
-    expect(size).toEqual({ w: 70, h: 52.5, dy: 0 });
-    const [poly] = outlines('flag', size.w, size.h);
-    const a = 35 / 8;
-    // v12's 50 steps a side: the point nearest `x` (1.4 apart here).
-    const yAt = (pts: Pt[], x: number, top: boolean) =>
-      pts.find((p) => Math.abs(p[0] - x) <= 0.7 && p[1] < 0 === top)![1];
-    // The top right bulges up to the box, the bottom left down to it.
-    expect(yAt(poly!, 17.5, true)).toBeCloseTo(-26.25, 1);
-    expect(yAt(poly!, -17.5, true)).toBeCloseTo(-26.25 + 2 * a, 1);
-    expect(yAt(poly!, -17.5, false)).toBeCloseTo(26.25, 1);
-    expect(yAt(poly!, 35, true)).toBeCloseTo(-26.25 + a, 1);
-    expect(shapeInset('flag', size.w, size.h, 0, 17.5, PADS)).toBeCloseTo(0, 9);
-    expect(shapeInset('flag', size.w, size.h, 0, -17.5, PADS)).toBeCloseTo(2 * a, 9);
-    expect(shapeInset('flag', size.w, size.h, 2, 17.5, PADS)).toBeCloseTo(2 * a, 9);
-  });
-
-  it('fork: a 70 × 10 bar with square corners, filled and stroked as the outline', () => {
-    const { size, els } = elements('fork', 0, 0);
-    expect(size).toEqual({ w: 70, h: 10, dy: 0 });
-    expect(els).toHaveLength(1);
-    expect(els[0]).toMatchObject({
-      tag: 'rect',
-      width: '70',
-      height: '10',
-      fill: '#ffffff',
-      stroke: '#333333',
-    });
-    expect(els[0]!.rx).toBeUndefined();
-  });
-
-  it('fr-circ: a circle 14 across round one 5 across, both hollow', () => {
-    const { size, els } = elements('fr-circ', 0, 0);
-    expect(size).toEqual({ w: 14, h: 14, dy: 0 });
-    expect(els.map((e) => [e.tag, e.r, e.fill, e.stroke])).toEqual([
-      ['circle', '7', '#ffffff', '#333333'],
-      ['circle', '2.5', '#ffffff', '#333333'],
-    ]);
   });
 });

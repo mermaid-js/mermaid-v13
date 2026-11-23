@@ -191,15 +191,15 @@ export const filledCircle: Shape = {
     }),
 };
 
-/** v12 `stateEnd` as flowchart drew it: a ring 14 across round one 5 across, both hollow (D683). */
 export const framedCircle: Shape = {
   noLabel: true,
+  plain: true,
   inset: roundInset,
   span: roundSpan,
-  size: /* @__PURE__ */ fixed(14, 14),
-  draw: (w, W, _H, a) => {
+  size: /* @__PURE__ */ fixed(18, 18),
+  draw: (w, W, _H, a, line) => {
     drawCircle(w, W / 2, a);
-    drawCircle(w, (W * 5) / 28, { ...a, filter: undefined }, 'part');
+    drawCircle(w, W / 2 - 4, { ...line, fill: line.stroke }, 'part');
   },
 };
 
@@ -208,11 +208,13 @@ const narrow: Span = (W, H, s) => (s ? H : W) - 8;
 
 export const fork: Shape = {
   noLabel: true,
+  plain: true,
   span: narrow,
   // v12 forkJoin is 70 × 10 (D604); a diagram that flows sideways swaps the two.
   size: /* @__PURE__ */ fixed(70, 10),
-  // v12 flowcharts drew the bar hollow, with square corners, as any outline (D683).
-  draw: (w, W, H, a) => centred(w, W, H, a),
+  // v12 forkJoin: filled plain, stroked like the outline.
+  draw: (w, W, H, a, line) =>
+    centred(w, W, H, { ...line, stroke: a.stroke, fill: line.stroke, filter: a.filter }, 2),
 };
 
 const hourglassPoints = (W: number, H: number): number[] => [
@@ -526,39 +528,29 @@ export const stackedDocument: Shape = {
   },
 };
 
-/**
- * v12 `waveRectangle`: a body `h = th + pad` high whose top and bottom are each one sine cycle
- * `h / 8` deep (`H / 12` in its `1.5 h` box), the top right bulging up and the bottom left down.
- * How far both lines are above where they cross the sides, at `x`.
- */
-const flagWave = (W: number, H: number, x: number): number =>
-  (H / 12) * Math.sin((2 * Math.PI * x) / W);
-
-/** v12's 50 steps along each side. */
-const FLAG_STEPS = 50;
-
 export const flag: Shape = {
-  // `a` (H / 12) at the side's middle, rising and falling `a` about it.
-  inset: (W, H, side, t) => {
-    const a = H / 12;
-    const at = Math.min(W / 2, Math.max(-W / 2, t));
-    return side & 1 ? 0 : a + (side ? 1 : -1) * flagWave(W, H, at);
+  // The waves are 8 inside the box and rise and fall 5 about that, as `waveDip` for a control of 10.
+  inset: (W, _H, side, t) => {
+    const u = Math.min(1, (2 * Math.abs(t)) / W);
+    return side & 1 ? 0 : 8 + 20 * u * (1 - u) * ((side === 0) === t < 0 ? -1 : 1);
   },
-  // The sides are `2a` shorter than the box.
-  span: (W, H, s) => (s ? H - H / 6 : W) - 2 * CORNER,
-  size: (tw, th, p) => ({ w: tw + 2 * p.pad, h: 1.5 * (th + p.pad), dy: 0 }),
+  span: flat,
+  size: /* @__PURE__ */ grown(0, 16),
   draw: (w, W, H, a) => {
-    const y = H / 2 - H / 12;
-    const points: number[] = [];
-    for (let i = 0; i <= FLAG_STEPS; i++) {
-      const x = -W / 2 + (W * i) / FLAG_STEPS;
-      points.push(x, y - flagWave(W, H, x));
-    }
-    for (let i = 0; i <= FLAG_STEPS; i++) {
-      const x = W / 2 - (W * i) / FLAG_STEPS;
-      points.push(x, -y - flagWave(W, H, x));
-    }
-    poly(w, points, a);
+    const x = W / 2;
+    const y = H / 2 - 8;
+    const q = W / 4;
+    const d = w
+      .path()
+      .moveTo(-x, -y)
+      .quadTo(-x + q, -y - 10, 0, -y)
+      .quadTo(x - q, -y + 10, x, -y)
+      .lineTo(x, y)
+      .quadTo(x - q, y + 10, 0, y)
+      .quadTo(-x + q, y - 10, -x, y)
+      .close()
+      .done();
+    w.outline('node', 'path', { d, ...a });
   },
 };
 
