@@ -475,6 +475,11 @@ function layoutGraph(
         ...(e.endLabel ? { endLabel: size(e.endLabel) } : {}),
         ...(marker(e.startMarker) ? { startMarker: marker(e.startMarker)! } : {}),
         ...(marker(e.endMarker) ? { endMarker: marker(e.endMarker)! } : {}),
+        // The engine takes a marker at the target alone as given; others say where theirs are
+        // (D682): a label sits midway along the line the markers leave.
+        ...(e.startMarker !== 'none' || e.endMarker === 'none'
+          ? { heads: { source: e.startMarker !== 'none', target: e.endMarker !== 'none' } }
+          : {}),
       })
     ),
     ...spacing,

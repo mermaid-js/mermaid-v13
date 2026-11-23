@@ -161,6 +161,25 @@ function grown(graph: LayoutGraph, dir: Dir, tight: boolean): LayoutModel {
   return endLabels(done.graph, done.model, hooks.cell);
 }
 
+// The engine's edge for `e` from item `src` to `dst`: its label's size, the ends with a head
+// (D682), and its end labels with the room before each, `gap` past a middle label (D607).
+function toCEdge(graph: LayoutGraph, e: LayoutEdge, src: number, dst: number, gap: number): CEdge {
+  const ce: CEdge = {
+    src,
+    dst,
+    minlen: Math.max(1, Math.round(e.minLen)),
+    labelW: e.label?.width ?? 0,
+    labelH: e.label?.height ?? 0,
+    route: [],
+    labelX: 0,
+    labelY: 0,
+  };
+  if (e.heads) ce.heads = +e.heads.target | (2 * +e.heads.source);
+  if (e.startLabel) ce.start = { ...e.startLabel, along: before(graph, e, false) + gap };
+  if (e.endLabel) ce.end = { ...e.endLabel, along: before(graph, e, true) + gap };
+  return ce;
+}
+
 // The room along an edge before an end label (D102): `endLabelAlong` past the end's own marker,
 // and at the target past `headRoom` where that is longer (D607).
 function before(graph: LayoutGraph, e: LayoutEdge, head: boolean): number {
@@ -320,19 +339,7 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
       );
       loopSide[src] = below ? 2 : 1;
     }
-    const ce: CEdge = {
-      src,
-      dst,
-      minlen: Math.max(1, Math.round(e.minLen)),
-      labelW,
-      labelH,
-      route: [],
-      labelX: 0,
-      labelY: 0,
-    };
-    if (e.startLabel) ce.start = { ...e.startLabel, along: before(graph, e, false) + gap };
-    if (e.endLabel) ce.end = { ...e.endLabel, along: before(graph, e, true) + gap };
-    return ce;
+    return toCEdge(graph, e, src, dst, gap);
   });
 
   const routing = graph.routing ?? 'curved';

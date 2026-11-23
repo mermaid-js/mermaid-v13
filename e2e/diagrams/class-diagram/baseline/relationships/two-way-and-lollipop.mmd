@@ -1,9 +1,12 @@
 ---
-description: two-way relationships and lollipop interfaces
+description: >-
+  two-way relationships and lollipop interfaces; the labels of the two-way
+  relationships, with a marker at each end, sit midway between the classes
+  (D682)
 ---
 classDiagram
-  Animal <|--|> Zebra
-  Engine *--o Car
+  Animal <|--|> Zebra : kin
+  Engine *--o Car : powers
   Printer ()-- Document
   Document --() Serializable
   class Printer

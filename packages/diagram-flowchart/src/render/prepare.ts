@@ -457,7 +457,14 @@ function layoutGraph(
       if (typeof algorithm === 'string') group.algorithm = algorithm;
       return group;
     }),
-    edges: edges.map((e) => labelledEdge(b, e.id, e.source, e.target, e.label, e.edge.length ?? 1)),
+    edges: edges.map((e) => {
+      const edge = labelledEdge(b, e.id, e.source, e.target, e.label, e.edge.length ?? 1);
+      // The engine takes a head at the target alone as given; others say where theirs are (D682).
+      const source = e.start !== 'none';
+      const target = e.end !== 'none';
+      if (source || !target) edge.heads = { source, target };
+      return edge;
+    }),
     ...spacing,
     // Text output trims the empty margin, so in cells a margin would only eat into
     // `availableWidth` (`ascii.maxWidth`, D84): the profile's own (0) applies.

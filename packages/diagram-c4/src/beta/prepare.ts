@@ -290,9 +290,21 @@ function pxGraph(
     direction: model.direction,
     nodes,
     groups,
-    edges: edges.map((e) =>
-      labelledEdge(pxProfile.builder, e.id, e.relation.from, e.relation.to, labelBlock(e), 1)
-    ),
+    edges: edges.map((e) => {
+      const edge = labelledEdge(
+        pxProfile.builder,
+        e.id,
+        e.relation.from,
+        e.relation.to,
+        labelBlock(e),
+        1
+      );
+      // `Rel_Back` has its head at the source, `BiRel` at both ends (D682).
+      const { start, end } = e.relation;
+      if (start === 'arrow' || end === 'none')
+        edge.heads = { source: start === 'arrow', target: end === 'arrow' };
+      return edge;
+    }),
     spacing: { node: B.nodeSpacing, rank: B.rankSpacing, edge: B.edgeSpacing },
     routing: 'stepped',
     headRoom: M.arrow + B.arrowGap,

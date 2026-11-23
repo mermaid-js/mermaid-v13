@@ -85,6 +85,13 @@ export interface LayoutEdge {
   /** As `startMarker`, at the target end. */
   endMarker?: EndMarker;
   /**
+   * The ends that carry an arrowhead, which shortens the line there. Without it, only the target
+   * does. A label sits midway along the line that shows (D682): on an edge with a head at one end
+   * it moves toward the other end, by a constant, and with heads at both ends or none it stays
+   * midway between the two nodes.
+   */
+  heads?: { source: boolean; target: boolean };
+  /**
    * The side each end leaves or enters by (D501, architecture's `a:R -- L:b`). In `compass`, an
    * end with none takes the side `direction` gives (D327). `layered` treats it as a hint (D503):
    * ranks and node order stay, and only the end's route moves onto the side (not on the grid).

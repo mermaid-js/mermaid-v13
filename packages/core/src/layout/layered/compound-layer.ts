@@ -90,6 +90,7 @@ function layerEdges(c: Compound, level: Level, sized: boolean): LEdge[] {
     if (sized) {
       edge.labelW = vertical ? e.labelW : e.labelH;
       edge.labelH = vertical ? e.labelH : e.labelW;
+      edge.heads = e.heads ?? 1;
       edge.tailDx = endOffset(c, level, sized, le.a, le.e, true);
       edge.headDx = endOffset(c, level, sized, le.b, le.e, false);
       edge.tailFixed = heldEnd(c, le.a, le.e, true);

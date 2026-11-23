@@ -26,7 +26,7 @@ e2e/diagrams/class-diagram/baseline/relationships/cardinality-past-markers.mmd 1
 e2e/diagrams/class-diagram/baseline/relationships/cardinality.mmd 1 4cc1356669f6ddc8
 e2e/diagrams/class-diagram/baseline/relationships/self-and-multi.mmd 1 429bdf4fb1626104
 e2e/diagrams/class-diagram/baseline/relationships/two-self-loops.mmd 1 fe675912abb8cec1
-e2e/diagrams/class-diagram/baseline/relationships/two-way-and-lollipop.mmd 1 a63717e3374158aa
+e2e/diagrams/class-diagram/baseline/relationships/two-way-and-lollipop.mmd 1 18b3d101d2a9ca53
 e2e/diagrams/class-diagram/baseline/styles/classdef-and-style.mmd 1 656c1d57f5025e48
 e2e/diagrams/class-diagram/baseline/styles/hide-empty-members.mmd 1 5b0591c99bd026d9
 e2e/diagrams/class-diagram/baseline/text/emphasis-beside-code-span.mmd 1 212953c062a7da83

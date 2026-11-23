@@ -3,6 +3,7 @@
 // Changes from Pele: `const enum`s are `as const` objects, and index reads carry `!` for
 // noUncheckedIndexedAccess. `NODE_INPUTS`/`EDGE_INPUTS`/`layoutInputs` are new. Length
 // constants come from `opt.metrics` (D77), and `opt.grid` puts the layout on a grid (D140).
+// `LEdge.heads` is new, and the label rank's `headRoom` shift skips the grid, not `tracks` (D682).
 // The algorithm is otherwise unchanged.
 // cspell:ignore kepano lnode lnodes indeg topo cand maxs Köpf
 //
@@ -71,6 +72,8 @@ export interface LEdge {
   // Room an edge-end label takes along the flow next to each end (D102); its gap grows to it.
   tailEnd: number;
   headEnd: number;
+  // The ends with an arrowhead: 1 the head, 2 the tail, both or neither 3 or 0 (D682).
+  heads: number;
   reversed: boolean;
   points: number[];
   labelX: number;
@@ -89,9 +92,10 @@ export interface LayeredOptions {
   // The caller sets the ends of the edges on one side of a node apart itself, so two edges
   // between the same two nodes need no bend to keep them from being drawn as one.
   apart?: boolean;
-  // The room that the marker at the head of an edge takes. A rank of labels whose edges all
-  // head the same way sits half of this nearer their tails, so that each label is midway along
-  // the line that shows, and the curves either side of it have the same room to turn in.
+  // The room that the marker at the head of an edge takes. A rank of labels whose edges all have
+  // a head at the same one end (`LEdge.heads`) sits half of this nearer their other ends, so that
+  // each label is midway along the line that shows, and the curves either side of it have the
+  // same room to turn in (D682). Not on the grid, whose gaps are whole cells.
   headRoom?: number;
   // Keep each group contiguous within ranks. `of` maps nodes to groups; `parent` maps groups
   // to parents. Both use -1 for none.
@@ -139,6 +143,7 @@ export const EDGE_INPUTS = [
   'headFixed',
   'tailEnd',
   'headEnd',
+  'heads',
 ] as const satisfies readonly (keyof LEdge)[];
 
 /** Every input `layered` reads from `nodes` and `edges`. Equal inputs and options give equal layouts. */
@@ -158,7 +163,8 @@ export function layoutInputs(nodes: readonly LNode[], edges: readonly LEdge[]): 
       +e.tailFixed,
       +e.headFixed,
       e.tailEnd,
-      e.headEnd
+      e.headEnd,
+      e.heads
     );
   return inputs;
 }
@@ -180,6 +186,7 @@ export function ledge(tail: number, head: number, minlen = 1, labelW = 0, labelH
     headFixed: false,
     tailEnd: 0,
     headEnd: 0,
+    heads: 1,
     reversed: false,
     points: [],
     labelX: 0,
@@ -478,7 +485,9 @@ function layOut(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredRes
           H[d] = e.labelH;
           KIND[d] = Kind.Label;
           labelNode[ei] = d;
-          heads[r]! |= e.reversed ? 2 : 1;
+          // 1 where the label moves up the ranks, 2 down, 3 where it stays midway.
+          if (e.heads === 1 || e.heads === 2) heads[r]! |= (e.heads === 2) !== e.reversed ? 2 : 1;
+          else heads[r]! |= 3;
         } else {
           KIND[d] = Kind.Dummy;
         }
@@ -766,7 +775,7 @@ function layOut(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredRes
   const between = u8(maxRank + 1).fill(1);
   for (let i = 0; i < real; i++) between[RANK[i]!] = 0;
   for (let r = 1; r < maxRank; r++) {
-    if (opt.tracks || !between[r]! || (heads[r]! !== 1 && heads[r]! !== 2)) continue;
+    if (hooks || !between[r]! || (heads[r]! !== 1 && heads[r]! !== 2)) continue;
     const shift = Math.min((opt.headRoom ?? 0) / 2, gapUnder[heads[r]! === 1 ? r - 1 : r]! / 2);
     gapUnder[r - 1]! += heads[r]! === 1 ? -shift : shift;
     gapUnder[r]! += heads[r]! === 1 ? shift : -shift;
