@@ -126,10 +126,42 @@ export const FRAME = 8;
 export const NONE: Attrs = { fill: 'none', stroke: 'none' };
 
 export const flat: Span = (W, H, s) => (s ? H : W) - 2 * CORNER;
+/** A box with its top and bottom corners cut in by `cut`: ends spread along its slanted sides too. */
 export const flatAcross =
   (cut: (H: number) => number): Span =>
   (W, H, s) =>
-    s ? 0 : W - 2 * cut(H) - 2 * CORNER;
+    (s ? H : W - 2 * cut(H)) - 2 * CORNER;
+/**
+ * How far a polygon's outline (`points`, as {@link Shape.points}) is inside its box on `side` at
+ * `t`: where a line in from the side at `t` first meets it, `t` held within the polygon. It
+ * follows a slant, a notch or a point wherever along the side an end is.
+ */
+export const polygonInset =
+  (points: (W: number, H: number, p: Pads) => number[]): Inset =>
+  (W, H, side, t, p) => {
+    const c = points(W, H, p);
+    // `u` indexes the coordinate along the side, `u ^ 1` the one across it.
+    const u = side & 1;
+    const far = side === 1 || side === 2 ? 1 : -1;
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (let i = u; i < c.length; i += 2) {
+      lo = Math.min(lo, c[i]!);
+      hi = Math.max(hi, c[i]!);
+    }
+    const at = Math.min(hi, Math.max(lo, t));
+    let best = Infinity;
+    for (let i = 0; i < c.length; i += 2) {
+      const j = (i + 2) % c.length;
+      const [a, b] = [c[i + u]!, c[j + u]!];
+      if ((a - at) * (b - at) > 0) continue;
+      const [av, bv] = [c[i + (u ^ 1)]!, c[j + (u ^ 1)]!];
+      const v =
+        a === b ? far * Math.max(far * av, far * bv) : av + ((at - a) / (b - a)) * (bv - av);
+      best = Math.min(best, (u ? W : H) / 2 - far * v);
+    }
+    return best;
+  };
 export const bulge = (t: number, half: number, depth: number): number => {
   const k = Math.min(1, Math.abs(t) / half);
   return depth * (1 - Math.sqrt(1 - k * k));
@@ -236,6 +268,15 @@ export function frameLines(w: SvgWriter, W: number, H: number, line: Attrs): voi
  * `control` off that line.
  */
 export const WAVE = { depth: 10, control: 12 } as const;
+/**
+ * How far below its line a {@link wave} `2 · half` wide is at `x` from its middle. Each half is a
+ * quadratic curve, which dips `WAVE.control / 2` below the line on the left half and rises as far
+ * on the right: `24 u (1 - u)` off it, `u` the distance from the middle in half widths.
+ */
+export const waveDip = (x: number, half: number): number => {
+  const u = Math.min(1, Math.abs(x) / half);
+  return 2 * WAVE.control * u * (1 - u) * (x > 0 ? -1 : 1);
+};
 /** A lined shape's rule stands this far inside its left side. */
 export const RULE = 8;
 

@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { streamWriter, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
-import { drawShape, shapeInset, shapeSize, type Pads } from './shapes.ts';
+import { shapeNames } from '../parser/shapes.ts';
+import {
+  canonicalShape,
+  drawShape,
+  isDrawnShape,
+  shapeInset,
+  shapeSize,
+  shapeSpan,
+  type Pads,
+} from './shapes.ts';
 
 const xy = { x: 16, y: 8 };
 const PADS: Pads = {
@@ -93,7 +102,7 @@ function outlines(kind: string, W: number, H: number): Pt[][] {
   const svg = w.finish();
   const shift: Pt[] = [[0, 0]];
   const polygons: Pt[][] = [];
-  for (const m of svg.matchAll(/<(\/?)(g|polygon|rect|path)\b([^>]*)>/g)) {
+  for (const m of svg.matchAll(/<(\/?)(g|polygon|rect|path|circle)\b([^>]*)>/g)) {
     const [, closing, tag, attrs] = m;
     const [dx, dy] = shift.at(-1)!;
     const attr = (k: string): string => new RegExp(`\\b${k}="([^"]*)"`).exec(attrs!)?.[1] ?? '';
@@ -112,23 +121,61 @@ function outlines(kind: string, W: number, H: number): Pt[][] {
         );
       } else if (tag === 'rect') {
         const [x, y, rw, rh] = ['x', 'y', 'width', 'height'].map((k) => Number(attr(k)));
-        polygons.push([
-          at([x!, y!]),
-          at([x! + rw!, y!]),
-          at([x! + rw!, y! + rh!]),
-          at([x!, y! + rh!]),
-        ]);
+        const r = Math.min(Number(attr('rx') || 0), rw! / 2, rh! / 2);
+        // Each corner's quarter arc, clockwise from the top left.
+        const corners: [number, number, number][] = [
+          [x! + r, y! + r, Math.PI],
+          [x! + rw! - r, y! + r, -Math.PI / 2],
+          [x! + rw! - r, y! + rh! - r, 0],
+          [x! + r, y! + rh! - r, Math.PI / 2],
+        ];
+        polygons.push(
+          corners.flatMap(([cx, cy, a]) =>
+            Array.from({ length: 11 }, (_, i) => {
+              const b = a + (i * Math.PI) / 20;
+              return at([cx + r * Math.cos(b), cy + r * Math.sin(b)]);
+            })
+          )
+        );
+      } else if (tag === 'circle') {
+        const [cx, cy, r] = ['cx', 'cy', 'r'].map((k) => Number(attr(k) || 0));
+        polygons.push(
+          Array.from({ length: 80 }, (_, i) => {
+            const a = (i * Math.PI) / 40;
+            return at([cx! + r! * Math.cos(a), cy! + r! * Math.sin(a)]);
+          })
+        );
       } else polygons.push(flatten(attr('d')).map(at));
     }
   }
   return polygons;
 }
 
-/** A path of M, L, Q and Z commands as points, each curve in 40 steps. */
+/** The points of an SVG arc (no rotation) from `from`, in 40 steps. */
+function arc(from: Pt, [rx0, ry0, , large, sweep, x, y]: number[]): Pt[] {
+  const [hx, hy] = [(from[0] - x!) / 2, (from[1] - y!) / 2];
+  const grow = Math.sqrt(Math.max(1, (hx / rx0!) ** 2 + (hy / ry0!) ** 2));
+  const [rx, ry] = [rx0! * grow, ry0! * grow];
+  const den = rx * rx * hy * hy + ry * ry * hx * hx;
+  const k =
+    (large === sweep ? -1 : 1) * Math.sqrt(Math.max(0, (rx * rx * ry * ry - den) / (den || 1)));
+  const [cx, cy] = [(k * rx * hy) / ry, (-k * ry * hx) / rx];
+  const a0 = Math.atan2((hy - cy) / ry, (hx - cx) / rx);
+  let da = Math.atan2((-hy - cy) / ry, (-hx - cx) / rx) - a0;
+  if (sweep && da < 0) da += 2 * Math.PI;
+  if (!sweep && da > 0) da -= 2 * Math.PI;
+  const [mx, my] = [(from[0] + x!) / 2, (from[1] + y!) / 2];
+  return Array.from({ length: 40 }, (_, i): Pt => {
+    const a = a0 + (da * (i + 1)) / 40;
+    return [mx + cx + rx * Math.cos(a), my + cy + ry * Math.sin(a)];
+  });
+}
+
+/** A path of M, L, Q, A and Z commands as points, each curve in 40 steps. */
 function flatten(d: string): Pt[] {
   const out: Pt[] = [];
   const nums = (s: string) => s.trim().split(/[ ,]+/).map(Number);
-  for (const [, cmd, args] of d.matchAll(/([MLQ])([^MLQZ]*)/g)) {
+  for (const [, cmd, args] of d.matchAll(/([MLQA])([^MLQAZ]*)/g)) {
     const n = nums(args!);
     const last = out.at(-1)!;
     if (cmd === 'Q') {
@@ -138,7 +185,8 @@ function flatten(d: string): Pt[] {
           (1 - u) ** 2 * last[i]! + 2 * (1 - u) * u * n[i]! + u ** 2 * n[i + 2]!;
         out.push([b(0), b(1)]);
       }
-    } else out.push([n[0]!, n[1]!]);
+    } else if (cmd === 'A') out.push(...arc(last, n));
+    else out.push([n[0]!, n[1]!]);
   }
   return out;
 }
@@ -279,6 +327,75 @@ describe('extended shapes: triangles and stacks (#395, #403, D603)', () => {
         }
       }
       expect(bad).toEqual([]);
+    }
+  );
+});
+
+/** Kept clear at each end of a flat side (`CORNER` in `shared/src/shapes/kit.ts`). */
+const CORNER = 12;
+/** The layout's pitches between ends on one side (`portPitch`, `minPitch`, core `units.ts`). */
+const PORT_PITCH = 16;
+const MIN_PITCH = 8;
+/** Drawn shapes whose ends stay at the middle of a side: a point, and B4's (#1167) new cloud. */
+const UNSPREAD = ['anchor', 'cloud'];
+/** The shapes #1157 and #1164 give a span, and the slanted family's sideways one (#1149). */
+const SPREAD = [
+  ...['hourglass', 'bolt', 'tri', 'flip-tri', 'sl-rect', 'h-cyl', 'delay', 'curv-trap'],
+  ...['bow-rect', 'doc', 'tag-doc', 'lin-doc', 'docs', 'flag', 'folder', 'bucket', 'person'],
+  ...['bang', 'choice', 'brace', 'brace-r', 'braces'],
+  ...['lean-r', 'lean-l', 'trap-b', 'trap-t', 'odd'],
+];
+
+describe('edge ends spread along every shape (#1149, #1157, #1164)', () => {
+  it('gives every drawn shape a span both ways but a point and the cloud', () => {
+    const drawn = [...new Set(shapeNames().map(canonicalShape))].filter(isDrawnShape);
+    const none = drawn.filter((kind) => {
+      const { w, h } = shapeSize(kind, 80, 20, PADS);
+      return shapeSpan(kind, w, h, false) <= 0 || shapeSpan(kind, w, h, true) <= 0;
+    });
+    expect(none.sort()).toEqual(UNSPREAD);
+  });
+
+  it.each(
+    SPREAD.flatMap((kind) =>
+      [false, true].flatMap((sideways) =>
+        LABELS.map(([tw, th]) => [kind, sideways, tw, th] as const)
+      )
+    )
+  )(
+    'ends two edges on one side of %s apart and every end on the outline, sideways %s, label %s × %s',
+    (kind, sideways, tw, th) => {
+      const { w: W, h: H } = shapeSize(kind, tw, th, PADS);
+      const span = shapeSpan(kind, W, H, sideways);
+      // Two edges on a side get places at least `minPitch` apart, where the side has room for
+      // that past its corners (a lean shape 33.6 high gives 9.6, decision 2 of #1163).
+      const room = (sideways ? H : W) >= 2 * CORNER + MIN_PITCH;
+      if (room) expect(span).toBeGreaterThanOrEqual(MIN_PITCH);
+      const pitch = Math.min(PORT_PITCH, span);
+      // A bang's ends stop on the polygon through its spikes' tips, not in the notches.
+      const drawn = outlines(kind, W, H);
+      const layers = kind === 'bang' ? [drawn[0]!.filter((_, i) => i % 2 === 0)] : drawn;
+      const bad: string[] = [];
+      for (const side of sideways ? [1, 3] : [0, 2]) {
+        const [a, b] = [-pitch / 2, pitch / 2].map((t) => edgeEnd(kind, W, H, side, t));
+        if (room && Math.hypot(a![0] - b![0], a![1] - b![1]) < MIN_PITCH)
+          bad.push(`side ${side} shared`);
+        for (let k = -5; k <= 5; k++) {
+          const t = (k / 10) * span;
+          if (!onOutline(layers, edgeEnd(kind, W, H, side, t)))
+            bad.push(`side ${side} t ${t.toFixed(1)}`);
+        }
+      }
+      expect(bad).toEqual([]);
+    }
+  );
+
+  it.each([0, 1, 2, 3])(
+    'ends an edge at the middle of side %s of the bolt on its outline',
+    (side) => {
+      const { w: W, h: H } = shapeSize('bolt', 0, 0, PADS);
+      const [x, y] = edgeEnd('bolt', W, H, side, 0);
+      expect(against(outlines('bolt', W, H)[0]!, [x, y]).dist).toBeLessThan(1e-9);
     }
   );
 });
