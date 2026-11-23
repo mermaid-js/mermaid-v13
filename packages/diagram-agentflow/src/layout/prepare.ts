@@ -25,7 +25,12 @@ import { graphSpacing, groupPadding, labelledEdge, sideways } from '@mermaid-js/
 import type { AgentflowDiagramConfig } from '@mermaid-js/core/config';
 import type { CheckedStyle } from '@mermaid-js/core/svg';
 import { styleCache } from '@mermaid-js/shared/svg/document';
-import { curveReporter, curveRouting, type CurveKind } from '@mermaid-js/shared/svg/route';
+import {
+  curveReporter,
+  curveRouting,
+  DEFAULT_CURVE,
+  type CurveKind,
+} from '@mermaid-js/shared/svg/route';
 import { textStyle } from '@mermaid-js/shared/svg/graph';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type {
@@ -128,7 +133,7 @@ interface Measure {
   readonly cells: boolean;
   readonly font: FontKey;
   readonly geometry: ShapeGeometry;
-  /** The diagram's curve: `linkStyle default interpolate`, else `flowchart.curve`. */
+  /** The diagram's curve: `linkStyle default interpolate`, else `flowchart.curve`, else the default. */
   readonly curve: CurveKind;
   /** `curveKind` for this render: an unknown name warns once (D602). */
   readonly curveOf: (curve: string | undefined) => CurveKind;
@@ -173,7 +178,8 @@ export function prepareAgentflow(
     weight: 400,
   };
   const curveOf = curveReporter((w) => ctx.warn(w));
-  const curve = curveOf(model.defaultInterpolate ?? flowchart?.curve);
+  // With neither set, flowchart's default curve, as flowchart, class and requirement draw (D687).
+  const curve = curveOf(model.defaultInterpolate ?? flowchart?.curve ?? DEFAULT_CURVE);
   const m: Measure = {
     ctx,
     units,
