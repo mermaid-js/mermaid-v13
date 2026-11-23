@@ -429,7 +429,11 @@ function layoutGraph(
       if (g.subgraph.direction) group.direction = g.subgraph.direction;
       return group;
     }),
-    edges: edges.map((e) => labelledEdge(b, e.id, e.source, e.target, e.label)),
+    // A relationship has a cardinality marker at both ends, so its label stays midway (D682).
+    edges: edges.map((e) => ({
+      ...labelledEdge(b, e.id, e.source, e.target, e.label),
+      heads: { source: true, target: true },
+    })),
     ...spacing,
     // D116: er.diagramPadding (px) is the margin around the drawing. Text output trims the
     // empty margin, so in cells the profile's own applies (as the flowchart).

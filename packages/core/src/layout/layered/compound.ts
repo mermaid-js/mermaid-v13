@@ -53,6 +53,8 @@ export interface CEdge {
   minlen: number;
   labelW: number;
   labelH: number;
+  // The ends with an arrowhead, as `LEdge.heads`; the target's alone when absent.
+  heads?: number;
   // Sizes of the edge-end labels (D102), when the edge has them, and the room before each along
   // the edge (`endLabelAlong`, its marker or the head room, a gap to the middle label: D607).
   start?: { width: number; height: number; along: number };

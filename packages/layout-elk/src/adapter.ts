@@ -71,6 +71,7 @@ import type {
   LayoutOptions,
 } from 'elkjs/lib/elk-api.js';
 import { sideOf, type Rect } from './geometry.ts';
+import { offHead } from './heads.ts';
 import { elkConfigOf, groupOptions, rootOptions, type ElkConfig } from './options.ts';
 import { findCyclicEntryNodes, findSubgraphFeedbackEdges } from './passes.ts';
 import { crowdedEnds, LAST_LEG, type Pinned } from './spread.ts';
@@ -898,7 +899,8 @@ function readModel(graph: LayoutGraph, built: Built, elk: ElkConfig): LayoutMode
       const byElk = placedByElk
         ? ((kind === 'label' ? labelMoved.get(e.id) : undefined) ?? elkLabel(built, e.id, kind))
         : undefined;
-      return at(byElk ?? pointAlong(points, along));
+      const c = byElk ?? pointAlong(points, along);
+      return at(kind === 'label' ? offHead(points, c, (graph.headRoom ?? 0) / 2, e.heads) : c);
     };
     const model: LayoutModelEdge = {
       points: routePoints(points.map(at)),

@@ -300,6 +300,8 @@ function nodesAndEdges(
         minLen: 1,
         label: { width: e.label.width + patch.x, height: e.label.height + patch.y },
         ...marker(e),
+        // A `contains` marker sits at the source; the label moves away from it (D682).
+        ...(e.markerAt === 'source' ? { heads: { source: true, target: false } } : {}),
       })
     ),
   };
