@@ -818,9 +818,9 @@ function layOut(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredRes
     }
     // Tracks grow both gaps of a rank of labels and bends alike, so its labels stay where they
     // were put between their nodes (D682, D684). Not on the grid, whose gaps are whole cells.
-    if (opt.tracks && !hooks)
-      for (let r = 1; r < maxRank; r++)
-        if (between[r]) grow[r - 1] = grow[r] = Math.max(grow[r - 1]!, grow[r]!);
+    for (let r = 1; r < maxRank; r++)
+      if (opt.tracks && !hooks && between[r])
+        grow[r - 1] = grow[r] = Math.max(grow[r - 1]!, grow[r]!);
     for (let r = 0; r < maxRank; r++) gapUnder[r]! += grow[r]!;
   }
   roomForEnds(edges, RANK, direct, empty, gapUnder);

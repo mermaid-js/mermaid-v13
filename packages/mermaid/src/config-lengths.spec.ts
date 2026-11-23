@@ -30,7 +30,8 @@ const CASES: readonly Case[] = [
     keys: {
       minEntityWidth: 237,
       nodeSpacing: 37,
-      rankSpacing: 37,
+      // Above the room two tracks need (D684), so the gap does not take that room instead.
+      rankSpacing: 137,
       entityPadding: 31,
       diagramPadding: 41,
     },
