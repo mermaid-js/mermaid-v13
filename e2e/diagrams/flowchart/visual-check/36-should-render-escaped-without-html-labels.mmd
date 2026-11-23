@@ -1,8 +1,10 @@
 ---
-description:
-  Verifies that with htmlLabels disabled, an HTML tag written inside a node
-  label's quoted string (<strong>Haiya</strong>) is escaped and shown as literal
-  text rather than being interpreted as markup.
+description: >-
+  A node label holding <strong>Haiya</strong> in a quoted string, with
+  htmlLabels set to false at the top level and under flowchart. v13 has no
+  htmlLabels (D5): both keys are ignored with a CONFIG_REMOVED_KEY warning, and
+  the tag subset is formatting (D566), so Haiya is drawn bold. v12 showed the
+  tags as literal text when htmlLabels was false.
 config:
   htmlLabels: false
   flowchart:
