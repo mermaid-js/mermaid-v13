@@ -261,13 +261,22 @@ function directionOf(cnodes: CNode[], i: number): Dir | undefined {
   return dir;
 }
 
-function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks): LayoutModel {
-  const M = graph.metrics ?? pxProfile.engine;
-  // A length scaled for a tight layout; on the grid it stays a whole multiple of the cell.
-  const scaled = (v: number, scale: number): number =>
-    hooks && scale !== 1 ? hooks.scale(v, scale) : v * scale;
-  // The room the frame of a group takes on the grid, and the margin the cells are counted from.
-  const cell = hooks?.cell ?? 0;
+// A length scaled for a tight layout; on the grid it stays a whole multiple of the cell.
+type Scaled = (v: number, scale: number) => number;
+
+function scaler(hooks: GridHooks | undefined): Scaled {
+  return (v, scale) => (hooks && scale !== 1 ? hooks.scale(v, scale) : v * scale);
+}
+
+// The graph's nodes, then its groups, as the compound layout takes them, the place of each id
+// among them, and the band each group's title sits in. `cell` is the room the frame of a group
+// takes on the grid.
+function compoundNodes(
+  graph: LayoutGraph,
+  tight: boolean,
+  scaled: Scaled,
+  cell: number
+): { cnodes: CNode[]; index: Map<string, number>; bands: number[] } {
   const padScale = tight ? TIGHT_PAD : 1;
   const nodeCount = graph.nodes.length;
   const index = new Map<string, number>();
@@ -302,6 +311,100 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
   };
   graph.nodes.forEach((n, i) => (cnodes[i]!.parent = parentOf(n.parent)));
   graph.groups.forEach((g, j) => (cnodes[nodeCount + j]!.parent = parentOf(g.parent)));
+  return { cnodes, index, bands };
+}
+
+// The self-loops of each node: on which side they go (`side`, 2 below, 1 beside), how many there
+// are and how many have been placed (on the grid each takes its own pair of cells along the
+// side), and off the grid how far out those placed on each side reach (`used`, #768).
+interface Loops {
+  side: Uint8Array;
+  count: Int32Array;
+  seen: Int32Array;
+  used: Float64Array;
+}
+
+function loopsFor(n: number): Loops {
+  return {
+    side: new Uint8Array(n),
+    count: new Int32Array(n),
+    seen: new Int32Array(n),
+    used: new Float64Array(2 * n),
+  };
+}
+
+// Reserves the room of self-loop `e` on its node (`reserveLoop`), and gives the side it goes
+// on: 2 below the node, 1 beside it.
+function loopRoom(c: CNode, e: LayoutEdge, below: boolean, round: boolean, M: LayoutMetrics) {
+  reserveLoop(c, below, (below ? e.label?.height : e.label?.width) ?? 0, round, M);
+  return below ? 2 : 1;
+}
+
+// The options the compound layout runs with. Spacing is scaled down for a tight layout; on the
+// grid every edge runs at right angles on tracks, whatever routing asks (D78).
+function layeredOptions(
+  graph: LayoutGraph,
+  tight: boolean,
+  scaled: Scaled,
+  M: LayoutMetrics,
+  hooks: GridHooks | undefined
+): LayeredOptions {
+  const routing = graph.routing ?? 'curved';
+  return {
+    nodeSep: scaled(graph.spacing.node, tight ? TIGHT_NODE : 1),
+    edgeSep: graph.spacing.edge,
+    rankSep: scaled(graph.spacing.rank, tight ? TIGHT_RANK : 1),
+    portSep: M.portSep,
+    tracks: routing === 'stepped' || hooks !== undefined,
+    straight: routing === 'straight' && !hooks,
+    headRoom: graph.headRoom ?? 0,
+    metrics: M,
+    ...(hooks ? { grid: hooks } : {}),
+  };
+}
+
+// The margin round the drawing; on the grid, whole cells.
+function marginOf(graph: LayoutGraph, hooks: GridHooks | undefined): number {
+  const padding = graph.diagramPadding ?? 0;
+  return hooks ? Math.ceil(padding) : padding;
+}
+
+// The route of the next self-loop of node `src` (`loops.seen` counts them), round its box `b`.
+function loopModel(
+  loops: Loops,
+  src: number,
+  b: LayoutModelNode,
+  label: LayoutEdge['label'],
+  M: LayoutMetrics,
+  hooks: GridHooks | undefined
+): LayoutModelEdge {
+  const nth = loops.seen[src]!++;
+  const below = loops.side[src] === 2;
+  return hooks
+    ? hooks.loop(b, below, label, M, { nth, count: loops.count[src]! })
+    : selfLoop(b, below, label, M, nth, loops.used.subarray(2 * src));
+}
+
+// A compound route (x, y, axis triples) as route points, moved by `pad`.
+function routePoints(route: readonly number[], pad: number): RoutePoint[] {
+  const points: RoutePoint[] = [];
+  for (let p = 0; p + 2 < route.length; p += 3) {
+    points.push({
+      x: route[p]! + pad,
+      y: route[p + 1]! + pad,
+      axis: route[p + 2] === 1 ? 'h' : 'v',
+    });
+  }
+  return points;
+}
+
+function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks): LayoutModel {
+  const M = graph.metrics ?? pxProfile.engine;
+  const scaled = scaler(hooks);
+  // The room the frame of a group takes on the grid, and the margin the cells are counted from.
+  const cell = hooks?.cell ?? 0;
+  const nodeCount = graph.nodes.length;
+  const { cnodes, index, bands } = compoundNodes(graph, tight, scaled, cell);
 
   const ends = graph.edges.map((e) => [index.get(e.source)!, index.get(e.target)!] as const);
   hooks?.roomForMembers(cnodes, ends);
@@ -312,57 +415,25 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
     cnodes[i]!.span = n.span ?? Math.max(0, (sideways(i) ? n.height : n.width) - 2 * M.corner);
   });
 
-  // A self-loop sits beside its node, across the flow; the box laid out grows to hold it.
-  // How many self-loops each node has, and how many have been placed: on the grid each takes
-  // its own pair of cells along the side. Off the grid, how far out the loops already placed on
-  // each side of a node reach (#768). Made at the first loop.
-  let loopSide: Uint8Array | undefined;
-  let loopCount: Int32Array | undefined;
-  let loopsSeen: Int32Array | undefined;
-  let loopUsed: Float64Array | undefined;
+  // A self-loop sits beside its node, across the flow; the box laid out grows to hold it. The
+  // loops' record is made at the first loop.
+  let loops: Loops | undefined;
   const cedges: CEdge[] = graph.edges.map((e, k) => {
     const [src, dst] = ends[k]!;
-    const labelW = e.label?.width ?? 0;
-    const labelH = e.label?.height ?? 0;
-    // An end label next to a middle label keeps `endLabelAlong` from it too (D607).
-    const gap = e.label ? M.endLabelAlong : 0;
     if (src === dst) {
-      if (!loopCount) {
-        loopSide = new Uint8Array(cnodes.length);
-        loopCount = new Int32Array(cnodes.length);
-        loopsSeen = new Int32Array(cnodes.length);
-        loopUsed = new Float64Array(2 * cnodes.length);
-      }
-      loopCount[src]!++;
-      const below = sideways(src);
-      reserveLoop(
-        cnodes[src]!,
-        below,
-        below ? labelH : labelW,
-        src >= nodeCount || hooks !== undefined,
-        M
-      );
-      loopSide![src] = below ? 2 : 1;
+      loops ??= loopsFor(cnodes.length);
+      loops.count[src]!++;
+      const round = src >= nodeCount || hooks !== undefined;
+      loops.side[src] = loopRoom(cnodes[src]!, e, sideways(src), round, M);
     }
-    return toCEdge(graph, e, src, dst, gap);
+    // An end label next to a middle label keeps `endLabelAlong` from it too (D607).
+    return toCEdge(graph, e, src, dst, e.label ? M.endLabelAlong : 0);
   });
 
-  const routing = graph.routing ?? 'curved';
-  const opt: LayeredOptions = {
-    nodeSep: scaled(graph.spacing.node, tight ? TIGHT_NODE : 1),
-    edgeSep: graph.spacing.edge,
-    rankSep: scaled(graph.spacing.rank, tight ? TIGHT_RANK : 1),
-    portSep: M.portSep,
-    // On the grid every edge runs at right angles on tracks, whatever routing asks (D78).
-    tracks: routing === 'stepped' || hooks !== undefined,
-    straight: routing === 'straight' && !hooks,
-    headRoom: graph.headRoom ?? 0,
-    metrics: M,
-    ...(hooks ? { grid: hooks } : {}),
-  };
+  const opt = layeredOptions(graph, tight, scaled, M, hooks);
   const total = compoundLayout(cnodes, cedges, rootDir, opt);
 
-  const margin = hooks ? Math.ceil(graph.diagramPadding ?? 0) : (graph.diagramPadding ?? 0);
+  const margin = marginOf(graph, hooks);
   const pad = margin - cell / 2; // on the grid, a coordinate is a cell index (D78)
   const nodes = new Map<string, LayoutModelNode>();
   // The boxes of the nodes, then the groups, by index, for reading only.
@@ -378,25 +449,10 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean, hooks?: GridHooks
     const ce = cedges[k]!;
     const [src, dst] = ends[k]!;
     if (src === dst) {
-      const nth = loopsSeen![src]!++;
-      const slot = { nth, count: loopCount![src]! };
-      const below = loopSide![src] === 2;
-      edges.set(
-        e.id,
-        hooks
-          ? hooks.loop(boxes[src]!, below, e.label, M, slot)
-          : selfLoop(boxes[src]!, below, e.label, M, nth, loopUsed!.subarray(2 * src))
-      );
+      edges.set(e.id, loopModel(loops!, src, boxes[src]!, e.label, M, hooks));
       return;
     }
-    const points: RoutePoint[] = [];
-    for (let p = 0; p + 2 < ce.route.length; p += 3) {
-      points.push({
-        x: ce.route[p]! + pad,
-        y: ce.route[p + 1]! + pad,
-        axis: ce.route[p + 2] === 1 ? 'h' : 'v',
-      });
-    }
+    const points = routePoints(ce.route, pad);
     // On the grid an edge between a group and its own member runs down from the group's top
     // border into the member's top (compound.ts), whatever side the ends lie nearest.
     const own = hooks?.isOwnEdge(cnodes, src, dst) === true;
