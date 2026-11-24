@@ -844,13 +844,7 @@ function layOut(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredRes
     return gridRow ? gridRow(r, count, onTrack) : trackAt(r, count, onTrack);
   };
 
-  let minX = Infinity;
-  let maxX = -Infinity;
-  for (let i = 0; i < n; i++) {
-    const half = W[i]! / 2;
-    if (xs[i]! - half < minX) minX = xs[i]! - half;
-    if (xs[i]! + half > maxX) maxX = xs[i]! + half;
-  }
+  let [minX, maxX] = extentOf(xs, W, n);
   if (hooks) {
     minX = hooks.floor(minX);
     maxX = hooks.ceil(maxX);
@@ -2600,6 +2594,25 @@ export function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
   return [best, declared];
 }
 
+// How far across the flow the first `n` of nodes at `xs`, `W` wide, reach each way.
+function extentOf(xs: Float64Array, W: Float64Array, n: number): [number, number] {
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (let i = 0; i < n; i++) {
+    const half = W[i]! / 2;
+    if (xs[i]! - half < lo) lo = xs[i]! - half;
+    if (xs[i]! + half > hi) hi = xs[i]! + half;
+  }
+  return [lo, hi];
+}
+
+// The room each node, bend or port takes across the flow (`halfRoom`), by index.
+function gapsOf(g: Graph, opt: LayeredOptions): Float64Array {
+  const gap = f64(g.n);
+  for (let i = 0; i < g.n; i++) gap[i] = halfRoom(g, opt, i);
+  return gap;
+}
+
 // Half the room a node, bend or port takes across the flow, with its share of the gap beside it.
 // A port on a group's border is a point that an edge passes through, and needs no more than a bend.
 function halfRoom(g: Graph, opt: LayeredOptions, v: number): number {
@@ -2707,8 +2720,7 @@ function position(g: Graph, opt: LayeredOptions): Float64Array {
     pos,
   } = g;
   const segments = EF.length;
-  const gap = f64(n);
-  for (let i = 0; i < n; i++) gap[i] = halfRoom(g, opt, i);
+  const gap = gapsOf(g, opt);
 
   // The neighbours are in left-to-right order (`sortNeighbours`), so the medians are read off
   // directly.
@@ -2860,14 +2872,7 @@ function position(g: Graph, opt: LayeredOptions): Float64Array {
   const mins: number[] = [];
   const maxs: number[] = [];
   for (let k = 0; k < 4; k++) {
-    let lo = Infinity;
-    let hi = -Infinity;
-    const xs = results[k]!;
-    for (let i = 0; i < n; i++) {
-      const half = W[i]! / 2;
-      if (xs[i]! - half < lo) lo = xs[i]! - half;
-      if (xs[i]! + half > hi) hi = xs[i]! + half;
-    }
+    const [lo, hi] = extentOf(results[k]!, W, n);
     mins.push(lo);
     maxs.push(hi);
     if (hi - lo < bestWidth) {
