@@ -33,15 +33,18 @@ export function detectText(
     at = range.end;
   }
   text += src.slice(at);
-  if (!text.includes('%%')) return text;
-  const lines = text.split('\n');
-  const last = options.keepLastLineComment ? lines.length - 1 : -1;
-  return lines
-    .map((line, i) => {
-      const c = line.indexOf('%%');
-      return c < 0 || i === last ? line : line.slice(0, c).trimEnd();
-    })
-    .join('\n');
+  // Each line holding a `%%` loses it and what follows, then its trailing blanks; the rest of
+  // the text is copied in runs. With `keepLastLineComment` the last line (no LF after it) stays.
+  let out = '';
+  let from = 0;
+  for (let c = text.indexOf('%%'); c >= 0; c = text.indexOf('%%', from)) {
+    const eol = text.indexOf('\n', c);
+    if (eol < 0 && options.keepLastLineComment) break;
+    const line = text.lastIndexOf('\n', c) + 1;
+    out += text.slice(from, line) + text.slice(line, c).trimEnd();
+    from = eol < 0 ? text.length : eol;
+  }
+  return from === 0 ? text : out + text.slice(from);
 }
 
 /**

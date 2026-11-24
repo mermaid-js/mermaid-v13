@@ -74,6 +74,63 @@ const ROWS: readonly ((text: string) => boolean)[] = [
   (t) => t.length === 0,
 ];
 
+/** `detectText`'s comment cut as it was: every line split out, cut and joined again. */
+function cutPerLine(text: string, keepLastLineComment: boolean): string {
+  if (!text.includes('%%')) return text;
+  const lines = text.split('\n');
+  const last = keepLastLineComment ? lines.length - 1 : -1;
+  return lines
+    .map((line, i) => {
+      const c = line.indexOf('%%');
+      return c < 0 || i === last ? line : line.slice(0, c).trimEnd();
+    })
+    .join('\n');
+}
+
+describe('detectText', () => {
+  it('cuts comments as the per-line split did, with and without the last line kept', () => {
+    let compared = 0;
+    for (const src of sources(6000)) {
+      let pre: PreprocessResult;
+      try {
+        pre = preprocess(src);
+      } catch {
+        continue;
+      }
+      // Hiding `%%` (same length, so the directive ranges hold) gives the text with directives
+      // removed and nothing cut: what the cut starts from.
+      const hidden = src.replaceAll('%%', '\u0000\u0000');
+      for (const start of [0, diagramStart(src, pre)]) {
+        const uncut = detectText(hidden, start, pre).replaceAll('\u0000\u0000', '%%');
+        for (const keepLastLineComment of [false, true]) {
+          const got = detectText(src, start, pre, { keepLastLineComment });
+          if (got !== cutPerLine(uncut, keepLastLineComment))
+            expect.fail(JSON.stringify([src, start, keepLastLineComment]));
+          compared++;
+        }
+      }
+    }
+    expect(compared).toBeGreaterThan(15_000);
+  });
+
+  it.each([
+    ['a comment at offset zero', '%% c', false, ''],
+    ['a comment at offset zero, last line kept', '%% c', true, '%% c'],
+    ['trailing blanks before a comment', 'graph TD \t%% c\nA', false, 'graph TD\nA'],
+    ['CRLF lines', 'graph TD\r\n%% c\r\nA\r\n', false, 'graph TD\r\n\nA\r\n'],
+    ['consecutive comments', 'a %% 1\n%% 2\n%%3\nb', false, 'a\n\n\nb'],
+    ['an unterminated final comment', 'a\nb %% c', false, 'a\nb'],
+    ['an unterminated final comment kept', 'a %% 1\nb %% c', true, 'a\nb %% c'],
+    ['a final LF', 'a %% c\n', true, 'a\n'],
+    ['U+2028 is not a line break', 'a b %% c\nd', false, 'a b\nd'],
+    ['a comment after a blank line prefix', 'a\n   %% c\nb', false, 'a\n\nb'],
+  ])('%s', (_, src, keepLastLineComment, expected) => {
+    const pre = preprocess(src);
+    expect(detectText(src, 0, pre, { keepLastLineComment })).toBe(expected);
+    expect(cutPerLine(src, keepLastLineComment)).toBe(expected);
+  });
+});
+
 describe('firstPartyDetects', () => {
   it('gives every row the texts and the answers the per-row version gave', () => {
     let compared = 0;
