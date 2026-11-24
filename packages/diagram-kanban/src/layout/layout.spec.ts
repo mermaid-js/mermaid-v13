@@ -162,6 +162,30 @@ describe('kanban layout: the shared title row', () => {
   });
 });
 
+// A column title keeps the room under its last line that a one-line title has, however many
+// lines it wraps to (the title room): with the table measurer a 16 px line is shorter than the
+// 25 px row, so without it a title of two lines ends on the first card's top border.
+describe('kanban layout: the room under a column title', () => {
+  const roomUnder = (title: string): number => {
+    const { columns, cards } = layoutKanban(board(`  a[${title}]`, '    c[Card]'), {
+      config: { kanban: {} } as ResolvedConfig,
+      measurer: tableMeasurer,
+      units: pxProfile,
+      theme: createTheme(spec),
+      warn: () => undefined,
+    });
+    const label = columns[0]!.title!;
+    return cards[0]!.y - (label.y + label.height);
+  };
+
+  it('is the same under one, two and three lines', () => {
+    const one = roomUnder('One');
+    expect(one).toBeGreaterThan(0);
+    expect(roomUnder('One<br>two')).toBeCloseTo(one, 6);
+    expect(roomUnder('One<br>two<br>three')).toBeCloseTo(one, 6);
+  });
+});
+
 // D647: a ticket and an assignee that do not fit side by side on one row are stacked, as the
 // text output does. With `gridMeasurer` (8 px a character) the row is the card's 185 less 10 at
 // each side: 165 px. Twenty characters (160 px) fit; twenty-one (168 px) do not.
