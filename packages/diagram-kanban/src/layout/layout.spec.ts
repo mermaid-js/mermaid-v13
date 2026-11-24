@@ -136,7 +136,8 @@ describe('kanban layout: v12 label and column geometry', () => {
 
 // A second 12.2.0 render, `sectionWidth: 0`, a column title on three lines (72 px), one card
 // under it and one under a short title, and an empty column: every column took the 72 px
-// title row (heights 126, 126 and 97), both cards' tops sat at −300 + 72, and W was 200.
+// title row (heights 126, 126 and 97), both cards' tops sat at −300 + 72, and W was 200. The row
+// here is 73: 1 px more, the room the 25 px row leaves under a 24 px line (the title room).
 describe('kanban layout: the shared title row', () => {
   const input = board(
     '  a[Short]',
@@ -148,9 +149,9 @@ describe('kanban layout: the shared title row', () => {
 
   it('is the tallest title, shared by every column', () => {
     const layout = lay(input, { sectionWidth: 0 });
-    expect(layout.titleRow).toBe(72);
-    expect(layout.columns.map((c) => c.height)).toEqual([126, 126, 97]);
-    expect(layout.cards.map((c) => c.y)).toEqual([-228, -228]);
+    expect(layout.titleRow).toBe(73);
+    expect(layout.columns.map((c) => c.height)).toEqual([127, 127, 98]);
+    expect(layout.cards.map((c) => c.y)).toEqual([-227, -227]);
     expect(layout.sectionWidth).toBe(200);
   });
 

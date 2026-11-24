@@ -6,7 +6,7 @@
  * (pitfall 13).
  *
  * Kept from v12: columns `W` wide and `W + 5` apart, each its own height; one title row,
- * `max(25, tallest title)`, shared by all; cards `W − 15` wide, centred, 5 apart; a card's height
+ * `max(25, tallest title + the room a one-line title leaves under its line)`, shared by all; cards `W − 15` wide, centred, 5 apart; a card's height
  * `title + 20 + a`, with `a` half the taller of ticket and assignee (0 without either: checked
  * on a v12 render); the priority bar 2 in from the left, top and bottom. Changed: the margin is
  * `kanban.padding` (D378), `W` has a least value (`MIN_SECTION_WIDTH`), the bounds are what is
@@ -32,6 +32,7 @@ import {
   METRIC_AXIS,
   PX_META_ROW,
   STACKED_META_ROW,
+  TITLE_PROBE,
   type KanbanLengths,
   type KanbanUnits,
   type MetaRow,
@@ -200,13 +201,25 @@ function cardOf(
   };
 }
 
+/**
+ * The room the title row leaves under a one-line title: what its least height holds beyond one
+ * line of the title font. v12's HTML title had a 1.5 line height that left this room under every
+ * line it drew; the SVG title's lines are one font line apart and leave none, so a wrapped title
+ * adds it under its last line and keeps the gap a one-line title has above the cards.
+ */
+function titleRoom(env: Env): number {
+  const line = heightOf(env.measure(TITLE_PROBE, env.sectionWidth - env.lengths.titleInset));
+  return Math.max(0, env.lengths.titleRow - line);
+}
+
 export function layoutKanban(input: KanbanLayoutInput, ctx: KanbanLayoutContext): KanbanLayout {
   const env = envOf(ctx);
   const { lengths, sectionWidth: W } = env;
   const top = -COLUMN_TOP * W;
   // Titles first: the tallest sets the row every column shares.
   const titles = input.columns.map((c) => env.measure(c.title, W - lengths.titleInset));
-  const titleRow = Math.max(lengths.titleRow, ...titles.map(heightOf));
+  const room = titleRoom(env);
+  const titleRow = Math.max(lengths.titleRow, ...titles.map((t) => heightOf(t) + room));
   const columns: ColumnLayout[] = [];
   const cards: CardLayout[] = [];
   let ordinal = 0;
