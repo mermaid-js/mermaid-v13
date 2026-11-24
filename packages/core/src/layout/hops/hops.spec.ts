@@ -288,4 +288,46 @@ describe('hopStyle: the shared key and an engine section (D537)', () => {
   ] as const)('%s', (_, c, layers, section, expected) => {
     expect(hopStyle(config(c), layers as never, section)).toBe(expected);
   });
+
+  it('answers as the precedence read in full, every layer scanned, for every combination', () => {
+    // The precedence without its early answer when neither resolved value draws hops.
+    const VALUES = new Set<unknown>([false, true, 'arc', 'gap']);
+    type Layer = Record<string, unknown> | undefined;
+    const setIn = (layers: Layer[], pick: (l: Layer) => unknown) =>
+      layers.some((l) => VALUES.has((pick(l) as { lineHops?: unknown } | undefined)?.lineHops));
+    const reference = (c: Record<string, unknown>, layers: Layer[], section?: string) => {
+      const own =
+        section === undefined
+          ? undefined
+          : (c[section] as { lineHops?: unknown } | undefined)?.lineHops;
+      const shared = setIn(layers, (l) => l);
+      if (shared && c.lineHops === false) return false;
+      let v: unknown = own ?? c.lineHops;
+      if (section !== undefined && setIn(layers, (l) => l?.[section] as Layer)) v = own;
+      else if (shared) v = c.lineHops;
+      return v ? (v === 'gap' ? 'gap' : 'arc') : false;
+    };
+    const values = [undefined, null, false, true, 'arc', 'gap', 'zigzag', 0, ''];
+    let compared = 0;
+    for (const shared of values)
+      for (const own of values)
+        for (const layerShared of values)
+          for (const layerOwn of values)
+            for (const section of [undefined, 'elk']) {
+              const c = {
+                lineHops: shared,
+                elk: own === undefined ? undefined : { lineHops: own },
+              };
+              const layers: Layer[] = [
+                undefined,
+                { lineHops: layerShared },
+                { elk: { lineHops: layerOwn } },
+              ];
+              expect(hopStyle(config(c), layers as never, section)).toBe(
+                reference(c, layers, section)
+              );
+              compared++;
+            }
+    expect(compared).toBe(values.length ** 4 * 2);
+  });
 });
