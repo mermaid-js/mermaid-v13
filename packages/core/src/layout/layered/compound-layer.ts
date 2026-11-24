@@ -4,7 +4,7 @@
 // flat layout that orders the levels together, and the cache of levels laid out. The algorithm is unchanged.
 // cspell:ignore kepano lnode lnodes cnode
 //
-import type { CEdge } from './compound.ts';
+import type { CEdge, CNode } from './compound.ts';
 import { endpointBelow } from './compound-own.ts';
 import {
   opposite,
@@ -162,30 +162,66 @@ export function buildLayer(c: Compound, level: Level, sized: boolean): Layer {
 // The leaves and groups of the nodes as a flat graph, with the edges between leaves, laid out
 // ordering only. Nodes then take their mean x as `c.key`, and a group's far ports a `farHint`.
 function flatLayout(c: Compound): void {
-  const { nodes, edges, rootDir, key } = c;
+  const vertical = c.rootDir === 'TB' || c.rootDir === 'BT';
+  const flat = flatNodes(c.nodes, vertical);
+  const { ledges, ledgeOf } = flatEdges(c.edges, flat.leaf, vertical);
+  const laid = layered(flat.lnodes, ledges, {
+    ...c.opt,
+    groups: { of: Int32Array.from(flat.of), parent: Int32Array.from(flat.parent) },
+    orderOnly: true,
+  });
+  c.flatCrossings = Math.min(laid.crossings ?? 0, laid.declared ?? 0);
+  const last = flatKeys(c, flat.leaf, flat.lnodes);
+  c.farHint = farHintOf(c, ledges, ledgeOf, last);
+}
+
+// The flat graph's nodes: a layout node for each leaf (`leaf` gives its place), and for each
+// group its place among the groups (`group`) and its parent group's (`parent`); `of` gives each
+// leaf's group.
+function flatNodes(
+  nodes: CNode[],
+  vertical: boolean
+): { leaf: Int32Array; lnodes: LNode[]; of: number[]; parent: number[] } {
   const n = nodes.length;
-  const vertical = rootDir === 'TB' || rootDir === 'BT';
   const leaf = new Int32Array(n).fill(-1);
-  const group = new Int32Array(n).fill(-1);
+  const { group, parent } = groupSlots(nodes);
   const lnodes: LNode[] = [];
   const of: number[] = [];
-  const parent: number[] = [];
-  for (let i = 0; i < n; i++) {
-    if (!nodes[i]!.isGroup) continue;
-    group[i] = parent.length;
-    parent.push(-1);
-  }
   for (let i = 0; i < n; i++) {
     const p = nodes[i]!.parent;
     if (nodes[i]!.isGroup) parent[group[i]!] = p >= 0 ? group[p]! : -1;
     else {
       leaf[i] = lnodes.length;
-      lnodes.push(
-        lnode(vertical ? nodes[i]!.w : nodes[i]!.h, vertical ? nodes[i]!.h : nodes[i]!.w)
-      );
+      lnodes.push(flatLeaf(nodes[i]!, vertical));
       of.push(p >= 0 ? group[p]! : -1);
     }
   }
+  return { leaf, lnodes, of, parent };
+}
+
+// Each group's place among the groups, and a parent slot for each, still unset.
+function groupSlots(nodes: CNode[]): { group: Int32Array; parent: number[] } {
+  const group = new Int32Array(nodes.length).fill(-1);
+  const parent: number[] = [];
+  for (let i = 0; i < nodes.length; i++) {
+    if (!nodes[i]!.isGroup) continue;
+    group[i] = parent.length;
+    parent.push(-1);
+  }
+  return { group, parent };
+}
+
+// A leaf's layout node, across the flow first.
+function flatLeaf(node: CNode, vertical: boolean): LNode {
+  return lnode(vertical ? node.w : node.h, vertical ? node.h : node.w);
+}
+
+// The flat graph's edges, between leaves only, and the place of each among them (-1 for none).
+function flatEdges(
+  edges: CEdge[],
+  leaf: Int32Array,
+  vertical: boolean
+): { ledges: LEdge[]; ledgeOf: Int32Array } {
   const ledges: LEdge[] = [];
   const ledgeOf = new Int32Array(edges.length).fill(-1);
   edges.forEach((e, ei) => {
@@ -201,15 +237,16 @@ function flatLayout(c: Compound): void {
       )
     );
   });
-  const flat = layered(lnodes, ledges, {
-    ...c.opt,
-    groups: { of: Int32Array.from(of), parent: Int32Array.from(parent) },
-    orderOnly: true,
-  });
-  c.flatCrossings = Math.min(flat.crossings ?? 0, flat.declared ?? 0);
+  return { ledges, ledgeOf };
+}
+
+// Sets each node's key to its x in the flat layout, and each group's to the mean of its leaves'.
+// Gives the last rank each group occupies.
+function flatKeys(c: Compound, leaf: Int32Array, lnodes: LNode[]): Int32Array {
+  const { nodes, key } = c;
+  const n = nodes.length;
   const sum = new Float64Array(n);
   const count = new Int32Array(n);
-  // Last rank occupied by each group.
   const last = new Int32Array(n).fill(-1);
   for (let i = 0; i < n; i++) {
     if (leaf[i]! < 0) continue;
@@ -221,8 +258,22 @@ function flatLayout(c: Compound): void {
     }
   }
   for (let i = 0; i < n; i++) if (count[i]! > 0) key[i] = sum[i]! / count[i]!;
-  // Order outgoing ports at the group's last rank; break ties using the next rank.
-  c.farHint = (level: Level, port: PortEdge): number => {
+  return last;
+}
+
+// How much the place at the next rank counts in a far port's hint: little enough that it only
+// breaks ties between places at the group's last rank.
+const NEXT_RANK_WEIGHT = 1e-6;
+
+// Orders outgoing ports at the group's last rank; breaks ties using the next rank.
+function farHintOf(
+  c: Compound,
+  ledges: LEdge[],
+  ledgeOf: Int32Array,
+  last: Int32Array
+): (level: Level, port: PortEdge) => number {
+  const { edges, key } = c;
+  return (level, port) => {
     const le = ledgeOf[port.e]!;
     if (le < 0 || level.id < 0 || !port.out || port.side !== opposite(startSide(level.dir)))
       return NaN;
@@ -233,7 +284,7 @@ function flatLayout(c: Compound): void {
       if (points[k]! === last[level.id]!) inside = points[k + 1]!;
       if (points[k]! === last[level.id]! + 1) outside = points[k + 1]!;
     }
-    return inside + outside * 1e-6;
+    return inside + outside * NEXT_RANK_WEIGHT;
   };
 }
 
