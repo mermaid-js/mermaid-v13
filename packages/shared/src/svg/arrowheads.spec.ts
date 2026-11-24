@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { streamWriter } from '@mermaid-js/core/svg';
 import type { Attrs, SafeColor, SvgWriter } from '@mermaid-js/core/svg';
-import { marker, type Arrowheads, type LineEnd, type MarkerPaint } from './arrowheads.ts';
+import {
+  marker,
+  markerTrim,
+  pointTrim,
+  type Arrowheads,
+  type LineEnd,
+  type MarkerPaint,
+} from './arrowheads.ts';
 
 const g: Arrowheads = {
   gap: 1,
@@ -87,5 +94,41 @@ describe('marker', () => {
       marker(w, 'arrow_point', end, attrs, g);
     };
     expect(typeof typeChecks).toBe('function');
+  });
+});
+
+describe('markerTrim', () => {
+  const heads = (over: Partial<Arrowheads> = {}): Arrowheads => ({
+    ...g,
+    gap: 2,
+    length: 9,
+    ...over,
+  });
+
+  it('trims a point head past its gap and under its length less one', () => {
+    expect(markerTrim('arrow_point', heads())).toBe(2 + 8);
+  });
+
+  it('a point head of length one or less trims its gap only', () => {
+    expect(markerTrim('arrow_point', heads({ length: 1 }))).toBe(2);
+    expect(markerTrim('arrow_point', heads({ length: 0 }))).toBe(2);
+  });
+
+  it('trims a circle or cross head to its middle; any other type not at all', () => {
+    expect(markerTrim('arrow_circle', g)).toBe(1 + 3.5);
+    expect(markerTrim('arrow_cross', g)).toBe(2 + 4);
+    expect(markerTrim('arrow_open', g)).toBe(0);
+  });
+
+  it('pointTrim gives the point head trim from its gap and length alone', () => {
+    for (const [gap, length] of [
+      [2, 9],
+      [0, 0],
+      [4, 14],
+      [0, 1],
+      [1.5, 0.5],
+    ] as const) {
+      expect(pointTrim(gap, length)).toBe(markerTrim('arrow_point', heads({ gap, length })));
+    }
   });
 });

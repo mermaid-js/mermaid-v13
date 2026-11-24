@@ -7,7 +7,7 @@ import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { graphSpacing, groupPadding, labelledEdge, sideways } from '@mermaid-js/shared/layout';
 import type { CheckedStyle } from '@mermaid-js/core/svg';
-import { arrowheads, markerTrim } from '@mermaid-js/shared/svg/arrowheads';
+import { pointTrim } from '@mermaid-js/shared/svg/arrowheads';
 import { styleCache } from '@mermaid-js/shared/svg/document';
 import {
   FOLDED_TYPE_SIZE,
@@ -410,7 +410,8 @@ function layoutGraph(
   // Node spacing runs across the flow and rank spacing along it.
   // D601: a literal rank gap stays literal, but never below an arrowhead and its lead, so the
   // edge between two subframes stays visible (#399).
-  const head = markerTrim('arrow_point', arrowheads(m.ctx.theme)) + LEAD;
+  const { theme } = m.ctx;
+  const head = pointTrim(theme.number('arrowheadGap'), theme.number('arrowheadLength')) + LEAD;
   const spacing = graphSpacing(
     units,
     rootDir,
