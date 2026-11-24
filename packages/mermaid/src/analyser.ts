@@ -23,7 +23,13 @@ import {
   type Detection,
   type Parsed,
 } from './analysis-cache.ts';
-import { directiveConfig, type SiteConfigs, type Snapshot } from './config-snapshot.ts';
+import {
+  directiveConfig,
+  textConfig,
+  type SiteConfigs,
+  type Snapshot,
+  type TextConfigs,
+} from './config-snapshot.ts';
 import type { BlockHost } from './embeds.ts';
 import { toWarning, unsupportedDiagram } from './errors.ts';
 import type { AnyPlugin, Detected, Registry } from './registry.ts';
@@ -49,6 +55,8 @@ function warnOf(diagnostics: readonly Diagnostic[], warn: (w: Warning) => void):
 export class Analyser {
   /** The analyses of recent texts, each valid only for the snapshot it was made with. */
   readonly cache = new AnalysisCache<Analysis>();
+  /** The configs of recent diagram-text configs, by value, over each site config. */
+  private texts: TextConfigs = new WeakMap();
 
   /**
    * `claims`: what the registered extensions claim of a parse, read at each parse because the
@@ -65,6 +73,7 @@ export class Analyser {
   /** Drops every parsed text: a registration changes how texts detect, resolve and parse. */
   invalidate(): void {
     this.cache.clear();
+    this.texts = new WeakMap();
   }
 
   /** The author's config layers and the config they resolve to, over the site's and a host's. */
@@ -84,10 +93,9 @@ export class Analyser {
     // An embedded diagram (ADR-15) sets only its own options, with one warning for the rest.
     if (host) ({ front, directives } = host.layers(front, directives, hit.site, warn));
     // An embedded diagram starts from its host's config, and takes its theme.
-    let config: ResolvedConfig = resolveText(hit.site, front, directives, {
-      warn,
-      under: host?.config,
-    });
+    let config: ResolvedConfig = host
+      ? resolveText(hit.site, front, directives, { warn, under: host.config })
+      : textConfig(this.texts, hit, front, directives, warn);
     if (host) config = host.resolve(config, [section ?? []].flat());
     return { config, sources: [hit.site.site, front, ...directives] };
   }

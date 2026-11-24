@@ -5,11 +5,14 @@
  */
 import {
   CORE_DEFAULTS,
+  dataKey,
   KEY_TREE,
   resolveSite,
+  resolveText,
   type ConfigFragment,
   type ConfigInput,
   type MermaidConfig,
+  type ResolvedConfig,
   type ResolvedSite,
 } from '@mermaid-js/core/config';
 import type { Warning } from '@mermaid-js/core';
@@ -327,4 +330,45 @@ export class SiteConfigs {
     }
     return hit;
   }
+}
+
+/** A resolved diagram-text config and the warnings resolving it gave. */
+type TextConfig = [ResolvedConfig, readonly Warning[]];
+
+/** Resolved diagram-text configs, by site config, then by text config value. */
+export type TextConfigs = WeakMap<SiteConfig, Map<string, TextConfig>>;
+
+const TEXT_CONFIGS = 8;
+
+/**
+ * `resolveText` over `hit`'s site, kept for the last few text configs of each site config: it is
+ * a pure function of the site and the values of the front matter `config` and the directives, so
+ * equal values give the same frozen config and the same warnings, which are replayed. Keyed by
+ * those values (`dataKey`), never by the diagram's text: two diagrams share an entry only when
+ * their text configs are equal.
+ */
+export function textConfig(
+  texts: TextConfigs,
+  hit: SiteConfig,
+  front: ConfigInput | undefined,
+  directives: readonly ConfigInput[],
+  warn: (w: Warning) => void
+): ResolvedConfig {
+  const key = front || directives[0] ? dataKey([front, directives]) : undefined;
+  if (key === undefined) return resolveText(hit.site, front, directives, { warn });
+  let byKey = texts.get(hit);
+  if (!byKey) texts.set(hit, (byKey = new Map<string, TextConfig>()));
+  let t = byKey.get(key);
+  if (t) byKey.delete(key);
+  else {
+    const warnings: Warning[] = [];
+    t = [
+      resolveText(hit.site, front, directives, { warn: (w) => void warnings.push(w) }),
+      warnings,
+    ];
+    if (byKey.size >= TEXT_CONFIGS) byKey.delete(byKey.keys().next().value!);
+  }
+  byKey.set(key, t);
+  for (const w of t[1]) warn(w);
+  return t[0];
 }

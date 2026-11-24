@@ -128,3 +128,52 @@ describe('the parse cache', () => {
     expect(parses).toBe(1);
   });
 });
+
+describe('diagram-text configs', () => {
+  const front = (config: string, text = FLOW) => `---\nconfig:\n${config}\n---\n${text}`;
+
+  it('shares one frozen config between texts whose text configs are equal, and only those', async () => {
+    const m = createMermaid();
+    const a = await m.prepare(front('  theme: dark'));
+    const b = await m.prepare(front('  theme: dark', TITLED));
+    const c = await m.prepare(front('  theme: forest'));
+    const d = await m.prepare(`%%{init: {"theme": "dark"}}%%\n${FLOW}`);
+    expect(b.config).toBe(a.config);
+    expect(Object.isFrozen(a.config)).toBe(true);
+    expect(c.config).not.toBe(a.config);
+    expect(c.config.theme).toBe('forest');
+    // The same value as a directive is another layer: resolved on its own.
+    expect(d.config).not.toBe(a.config);
+    expect(d.config).toEqual(a.config);
+  });
+
+  it('gives every render of a kept text config its warnings', async () => {
+    const m = createMermaid();
+    const text = front(
+      '  notAKey: 1\n  securityLevel: loose\n  themeVariables:\n    primaryColor: "url(x)"'
+    );
+    await m.prepare(text);
+    const first = m.renderSync(text, { id: 'x' });
+    const codes = first.warnings.map((w) => w.code);
+    expect(codes).toEqual(
+      expect.arrayContaining(['CONFIG_UNKNOWN_KEY', 'CONFIG_SECURE_KEY', 'THEME_VARIABLE_DROPPED'])
+    );
+    const other = text.replace(FLOW, TITLED);
+    for (const t of [text, other, text]) {
+      const r = m.renderSync(t, { id: 'x' });
+      expect(r.warnings).toEqual(first.warnings);
+      // Another text is analysed afresh: its warnings are its own objects.
+      if (t === other) expect(r.warnings[0]).not.toBe(first.warnings[0]);
+    }
+  });
+
+  it('resolves text configs again over a new initialize() config', async () => {
+    const m = createMermaid();
+    const text = front('  theme: dark');
+    expect((await m.prepare(text)).config.theme).toBe('dark');
+    m.initialize({ secure: ['theme'] } as InitializeConfig);
+    const r = m.renderSync(text, { id: 'x' });
+    expect(r.warnings.map((w) => w.code)).toContain('CONFIG_SECURE_KEY');
+    expect((await m.prepare(text)).config.theme).not.toBe('dark');
+  });
+});
