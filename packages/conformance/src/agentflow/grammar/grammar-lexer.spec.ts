@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../../jison/oracle.ts';
-import { agentflowCases, agentflowCorpus } from '../corpus.ts';
+import { agentflowCases, agentflowCorpus, HEADER_COMMENT_CASE } from '../corpus.ts';
 import { asJison, grammarTokens } from './agentflow-grammar.ts';
 
 /** D463: the cases with a lone `%` in a label, which mermaid\@12.2.0 failed to lex. */
@@ -19,7 +19,8 @@ const LONE_PERCENT = [
  * Lexer modes first (notes/07): the `@lexer` section of `grammar/agentflow.ebnf` emits exactly
  * mermaid\@12's jison token stream (names and images, unnormalised) on the text v12's lexer
  * received, over the e2e fixtures, the v12 spec strings and the cases, but for D463's lone `%`
- * in a label (12.2.0 stops there with a lexical error; the grammar reads it as label text).
+ * in a label (12.2.0 stops there with a lexical error; the grammar reads it as label text) and
+ * D691's comments before the header (12.2.0 reads a `direction` or a link id there).
  */
 describe('agentflow grammar lexer', () => {
   it('builds the lexer input v12 lexed', async () => {
@@ -39,6 +40,7 @@ describe('agentflow grammar lexer', () => {
     const oracle = await loadJisonLexerOracle('agentflow');
     const diffs: string[] = [];
     const percent: string[] = [];
+    const headerComments: string[] = [];
     let compared = 0;
     for (const item of [...(await agentflowCorpus()), ...agentflowCases()]) {
       const v12 = (await oracle.tokens(item.source, { keepAppendedNewline: true }))?.map(
@@ -50,6 +52,10 @@ describe('agentflow grammar lexer', () => {
       if (JSON.stringify(ours) === JSON.stringify(v12)) continue;
       if (LONE_PERCENT.includes(item.id) && v12.at(-1)?.[0] === 'INVALID') {
         percent.push(item.id);
+        continue;
+      }
+      if (HEADER_COMMENT_CASE.test(item.id) && ours.some(([n]) => n === 'GRAPH')) {
+        headerComments.push(item.id);
         continue;
       }
       let at = 0;
@@ -64,5 +70,6 @@ describe('agentflow grammar lexer', () => {
     expect(compared).toBeGreaterThan(390);
     expect(diffs).toEqual([]);
     expect(percent.sort()).toEqual(LONE_PERCENT);
+    expect(headerComments).toHaveLength(3);
   }, 120_000);
 });

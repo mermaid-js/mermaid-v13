@@ -10,6 +10,8 @@
  * - `SPACE` is one blank a token;
  * - comments are in the text (see `source.ts`): `[ \t]*%%…` outside labels is a `Comment`
  *   token, and `%%…` inside a text, ellipse or trapezoid label is skipped (`Kind.Comment`);
+ * - before the header keyword a comment wins over `.*direction` and the link id (D691), which
+ *   12.2.0 tried first and so rejected `%% direction LR` and `%%x@y` there;
  * - a lone `%` is label text, as the jison rules `%(?!%)` intend (D463): mermaid 12.2.0
  *   compiled them to `(?!)` and stops there with a lexical error.
  *
@@ -216,6 +218,12 @@ class AgentflowLexer extends FlowLexer {
     if (!this.isComment(this.p)) return false;
     this.emit(Kind.Comment, this.p, this.lineBreak(this.p));
     return true;
+  }
+
+  /** A comment before the header keyword, whatever it holds (D691); then the family's rules. */
+  protected override initial(c: number): boolean {
+    if (this.firstGraph && (c === PERCENT || isBlank(c)) && this.comment()) return true;
+    return super.initial(c);
   }
 
   /** A `%%` comment where an id may start. */

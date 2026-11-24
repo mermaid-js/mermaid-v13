@@ -124,6 +124,33 @@ describe('agentflow model', () => {
     expect(parse(src, { maxTextSize: 10 }).model.flows[0]?.dir).toBeUndefined();
   });
 
+  it('skips a comment before the header whatever it holds (#1199, D691)', () => {
+    const body = 'agentflow-beta TB\n  a --> b';
+    const plain = parse(body).model;
+    for (const c of [
+      '%% direction LR\n',
+      '%% intent: direction LR flow\n',
+      '%%x@y\n',
+      '\n  %% one\n\t%% direction BT\n\n%% two a@b\n',
+      '%% direction LR\r\n%% c\r\n',
+      '%% agentflow-beta\n%% direction LR\n',
+      '---\ntitle: t\n---\n%% direction LR\n',
+      '%%{init: {}}%%\n%% direction LR\n',
+    ]) {
+      const { model, diagnostics } = parse(c + body);
+      expect(diagnostics, c).toEqual([]);
+      expect(model.direction, c).toBe('TB');
+      expect(
+        model.vertices.map((v) => v.id),
+        c
+      ).toEqual(plain.vertices.map((v) => v.id));
+      expect(
+        model.edges.map((e) => [e.start, e.end]),
+        c
+      ).toEqual([['a', 'b']]);
+    }
+  });
+
   it('keeps the edge whose end is the reserved `connectors` id', () => {
     const { model } = parse(af(' connectors --> b'));
     expect(model.vertices.map((v) => v.id)).toEqual(['b']);

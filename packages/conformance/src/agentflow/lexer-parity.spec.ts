@@ -3,7 +3,12 @@ import { agentflowTokens, AgentflowTokenKind, JISON_NAMES } from '@mermaid-js/di
 import { v12TokenText } from '../v12-entities.ts';
 import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
 import type { JisonLexerOracle, JisonToken } from '../jison/oracle.ts';
-import { agentflowGateCorpus, AGENTFLOW_VARIANTS } from './corpus.ts';
+import {
+  agentflowGateCorpus,
+  AGENTFLOW_VARIANTS,
+  HEADER_COMMENT_CASE,
+  splitAtHeader,
+} from './corpus.ts';
 
 /**
  * Lexer-parity gate (parser-method §1, #544): the v13 agentflow lexer emits the same terminals,
@@ -37,6 +42,8 @@ import { agentflowGateCorpus, AGENTFLOW_VARIANTS } from './corpus.ts';
  *   text, as the rules intend and as flowchart does. Each such source must match v12's
  *   stream for the same source with every lone `%` written as `!` (which every rule reads as
  *   it reads `%`, but the label ones), and the cases holding one are listed.
+ * - D691: a comment before the header that 12.2.0 read as a `direction` or a link id. Each such
+ *   source must match v12's stream for the same source with the text of those comments cut.
  * - D462 (`[/…/]` is a parallelogram of kind input) needs none: 12.2.0 already lexes it as
  *   `TRAPSTART TEXT INVTRAPEND`; it differs in v12's shape table after the tag, not in its
  *   lexer (the model parity of #546 lists it).
@@ -122,6 +129,30 @@ async function lonePercent(
   return JSON.stringify(swapped) === JSON.stringify(read);
 }
 
+/** `source` with every comment line before its header cut down to the `%%`. */
+function cutHeaderComments(source: string): string {
+  const [head, rest] = splitAtHeader(source);
+  return head.replace(/%%(?!\{)[^\r\n]*/g, '%%') + rest;
+}
+
+/**
+ * D691: v12 rejected the source before its header, and with the text of the comments there cut
+ * v12's stream is v13's.
+ */
+async function headerComment(
+  oracle: JisonLexerOracle,
+  source: string,
+  actual: JisonToken[]
+): Promise<boolean> {
+  const graph = actual.findIndex(([n]) => n === 'GRAPH');
+  const read = actual.map(
+    ([n, i], k): JisonToken => [n, n === 'COMMENT' && k < graph ? i.replace(/%%[^]*/, '%%') : i]
+  );
+  return (
+    JSON.stringify(await v12Tokens(oracle, cutHeaderComments(source))) === JSON.stringify(read)
+  );
+}
+
 describe('agentflow lexer parity with mermaid@12 (jison)', () => {
   it('emits the same tokens over the corpus, the cases and their variants', async () => {
     const oracle = await loadJisonLexerOracle('agentflow');
@@ -129,6 +160,7 @@ describe('agentflow lexer parity with mermaid@12 (jison)', () => {
     const diffs: { id: string; at: number; v12: JisonToken[]; v13: JisonToken[] }[] = [];
     const skipped: string[] = [];
     const percent: string[] = [];
+    const headerComments: string[] = [];
     let compared = 0;
     let e2e = 0;
     let specs = 0;
@@ -151,6 +183,10 @@ describe('agentflow lexer parity with mermaid@12 (jison)', () => {
         percent.push(item.id);
         continue;
       }
+      if (HEADER_COMMENT_CASE.test(item.id) && (await headerComment(oracle, item.source, actual))) {
+        headerComments.push(item.id);
+        continue;
+      }
       let at = 0;
       while (JSON.stringify(expected[at]) === JSON.stringify(actual[at])) at++;
       diffs.push({
@@ -162,7 +198,7 @@ describe('agentflow lexer parity with mermaid@12 (jison)', () => {
     }
     process.stdout.write(
       `lexer parity: ${compared} of ${items.length} sources lexed by v12, ` +
-        `${percent.length} D463 exclusions, ${skipped.length} skipped\n`
+        `${percent.length} D463 and ${headerComments.length} D691 exclusions, ${skipped.length} skipped\n`
     );
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
     expect(
@@ -170,7 +206,7 @@ describe('agentflow lexer parity with mermaid@12 (jison)', () => {
     ).toEqual([]);
     // Every e2e fixture, every harvested spec and syntax-page string and every case but one
     // reaches the lexer.
-    expect({ e2e, specs, cases }).toEqual({ e2e: 71, specs: 179, cases: 253 });
+    expect({ e2e, specs, cases }).toEqual({ e2e: 71, specs: 179, cases: 256 });
     // D463: the cases with a lone `%` in a text or trapezoid label, in each variant that keeps
     // it; a lone `%` elsewhere (ellipse and edge text, ids, strings, shape data) and `%%` in a
     // label lex as in v12.
@@ -180,6 +216,8 @@ describe('agentflow lexer parity with mermaid@12 (jison)', () => {
       )
     );
     expect(percent).toHaveLength(58);
+    // D691: the three cases, each in itself and the variants that change it.
+    expect(headerComments).toHaveLength(27);
     // The only source v12 does not lex: `agentflow-betax`, no agentflow to v12's detector
     // (`^\s*agentflow-beta\b`), in each variant that changes it.
     expect(skipped).toEqual(

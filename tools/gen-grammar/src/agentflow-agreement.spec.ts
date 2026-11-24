@@ -29,11 +29,16 @@ import { agreement, corpus, highlighters, ROOT } from './agreement-testing.ts';
  * Cases the generated highlighters read differently from the lexer (GAPS #549, the grammar
  * file's to fix, not this ticket's): a lone CR, which v12 lexes as a line break and the
  * highlighters as none (`header-cr`), and `%%{ }`, which is no directive to v12 but one to
- * TextMate and Monarch (`comment-directive-like`).
+ * TextMate and Monarch (`comment-directive-like`). TextMate and Monarch also read a line at a
+ * time, so they cannot see that the header is still to come and colour the comments of D691 as
+ * a `direction` or a link id (`header-comment-…`).
  */
 const HIGHLIGHTERS_DIFFER = new Set([
   'agentflow-cases/header-cr',
   'agentflow-cases/comment-directive-like',
+  'agentflow-cases/header-comment-direction',
+  'agentflow-cases/header-comment-direction-text',
+  'agentflow-cases/header-comment-link-id',
 ]);
 
 /** Rejected cases kept for their tokens: ids, `*`, `^`, `v`, `<`, `\\|`, `-`, `[|f:v|]`. */
